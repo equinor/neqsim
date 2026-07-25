@@ -13,6 +13,7 @@ import neqsim.util.unit.PowerUnit;
  * The canonical stored value is duty in watts. Positive and negative values remain supported for compatibility with
  * existing models; new equipment should use {@link EnergyPort} metadata to express physical direction instead of
  * encoding direction only in the duty sign.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -27,6 +28,7 @@ public class EnergyStream implements ProcessElementInterface, Cloneable {
   private String tagNumber = "";
   protected double duty = 0.0;
   private EnergyType energyType = EnergyType.UNSPECIFIED;
+  private EnergyQuality quality = new EnergyQuality();
 
   /** Creates an unnamed, unspecified energy stream with zero duty. */
   public EnergyStream() {
@@ -58,6 +60,7 @@ public class EnergyStream implements ProcessElementInterface, Cloneable {
     EnergyStream clonedStream = null;
     try {
       clonedStream = (EnergyStream) super.clone();
+      clonedStream.quality = quality.clone();
     } catch (Exception ex) {
       logger.error(ex.getMessage());
     }
@@ -89,6 +92,9 @@ public class EnergyStream implements ProcessElementInterface, Cloneable {
    * @param duty duty in W
    */
   public void setDuty(double duty) {
+    if (!Double.isFinite(duty)) {
+      throw new IllegalArgumentException("Energy-stream duty must be finite");
+    }
     this.duty = duty;
   }
 
@@ -194,6 +200,24 @@ public class EnergyStream implements ProcessElementInterface, Cloneable {
    */
   public void setEnergyType(EnergyType energyType) {
     this.energyType = Objects.requireNonNull(energyType, "energyType cannot be null");
+  }
+
+  /**
+   * Gets mutable energy-quality metadata.
+   *
+   * @return quality metadata
+   */
+  public EnergyQuality getQuality() {
+    return quality;
+  }
+
+  /**
+   * Replaces energy-quality metadata.
+   *
+   * @param quality quality metadata
+   */
+  public void setQuality(EnergyQuality quality) {
+    this.quality = Objects.requireNonNull(quality, "quality cannot be null");
   }
 
   /** {@inheritDoc} */
