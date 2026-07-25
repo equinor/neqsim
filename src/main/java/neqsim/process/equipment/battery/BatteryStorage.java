@@ -12,8 +12,8 @@ import neqsim.util.validation.ValidationResult;
  * Battery storage with state of charge, efficiencies, power limits, ramp response, trip behavior, and bus balancing.
  *
  * <p>
- * Stored capacity and state of charge use Wh for compatibility with the original charge/discharge API. Positive
- * battery power is discharge to the electrical bus and negative power is charging from the bus.
+ * Stored capacity and state of charge use Wh for compatibility with the original charge/discharge API. Positive battery
+ * power is discharge to the electrical bus and negative power is charging from the bus.
  * </p>
  *
  * @author esol
