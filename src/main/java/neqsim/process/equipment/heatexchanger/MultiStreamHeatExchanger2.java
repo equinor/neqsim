@@ -195,6 +195,19 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       logger.debug("Outlet temps before solving: " + outletTemps);
       logger.debug("Unknown flags: " + unknownOutlets);
     }
+    energyDiff();
+    publishHeatDuty();
+    setCalculationIdentifier(id);
+  }
+
+  /**
+   * Publishes recoverable exchanger duty to the inherited calculated heat port.
+   */
+  private void publishHeatDuty() {
+    if (getEnergyPort("heatDuty").isConnected()
+        && getEnergyPort("heatDuty").getMode() == neqsim.process.equipment.stream.EnergyPortMode.CALCULATED) {
+      getEnergyPort("heatDuty").setDuty(getDuty());
+    }
   }
 
   // ================================================================
@@ -1376,7 +1389,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   /** {@inheritDoc} */
   @Override
   public double getDuty() {
-    return 0.0;
+    return Math.max(Math.abs(hotLoad), Math.abs(coldLoad)) * 1000.0;
   }
 
   /** {@inheritDoc} */
