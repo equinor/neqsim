@@ -43,14 +43,11 @@ class EnergyStreamGraphTest {
   @Test
   void testEnergyBusSupportsMultipleProducersAndConsumers() {
     EnergyBus bus = new EnergyBus("electrical bus", EnergyType.ELECTRICAL);
-    EnergyUnit solar =
-        new EnergyUnit("solar", EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED, bus);
-    EnergyUnit wind =
-        new EnergyUnit("wind", EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED, bus);
-    EnergyUnit electrolyzer =
-        new EnergyUnit("electrolyzer", EnergyPortDirection.INPUT, EnergyPortMode.SPECIFICATION, bus);
-    EnergyUnit heater =
-        new EnergyUnit("heater", EnergyPortDirection.INPUT, EnergyPortMode.SPECIFICATION, bus);
+    EnergyUnit solar = new EnergyUnit("solar", EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED, bus);
+    EnergyUnit wind = new EnergyUnit("wind", EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED, bus);
+    EnergyUnit electrolyzer = new EnergyUnit("electrolyzer", EnergyPortDirection.INPUT, EnergyPortMode.SPECIFICATION,
+        bus);
+    EnergyUnit heater = new EnergyUnit("heater", EnergyPortDirection.INPUT, EnergyPortMode.SPECIFICATION, bus);
     ProcessSystem process = new ProcessSystem();
     process.add(electrolyzer);
     process.add(heater);
@@ -59,24 +56,19 @@ class EnergyStreamGraphTest {
 
     ProcessGraph graph = ProcessGraphBuilder.buildGraph(process);
 
-    long energyEdges =
-        graph.getEdges().stream()
-            .filter(edge -> edge.getEdgeType() == ProcessEdge.EdgeType.ENERGY)
-            .count();
+    long energyEdges = graph.getEdges().stream().filter(edge -> edge.getEdgeType() == ProcessEdge.EdgeType.ENERGY)
+        .count();
     assertEquals(4L, energyEdges);
   }
 
   @Test
   void testPointToPointStreamRejectsMultipleConsumers() {
     EnergyStream shaft = new EnergyStream("single shaft", EnergyType.SHAFT_WORK);
-    EnergyUnit expander =
-        new EnergyUnit("expander", EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED, shaft);
-    EnergyUnit compressorA =
-        new EnergyUnit(
-            "compressor A", EnergyPortDirection.INPUT, EnergyPortMode.SPECIFICATION, shaft);
-    EnergyUnit compressorB =
-        new EnergyUnit(
-            "compressor B", EnergyPortDirection.INPUT, EnergyPortMode.SPECIFICATION, shaft);
+    EnergyUnit expander = new EnergyUnit("expander", EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED, shaft);
+    EnergyUnit compressorA = new EnergyUnit("compressor A", EnergyPortDirection.INPUT, EnergyPortMode.SPECIFICATION,
+        shaft);
+    EnergyUnit compressorB = new EnergyUnit("compressor B", EnergyPortDirection.INPUT, EnergyPortMode.SPECIFICATION,
+        shaft);
     ProcessSystem process = new ProcessSystem();
     process.add(expander);
     process.add(compressorA);
