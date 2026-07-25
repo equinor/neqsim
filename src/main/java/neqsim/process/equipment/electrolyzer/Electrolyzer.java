@@ -271,7 +271,7 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
         waterInlet.setFlowRate(0.0, "mole/sec");
         waterInlet.run(id);
         setProductStreams(0.0, 0.0, inletPressure, inletPressure, tempK, id);
-        energyStream.setDuty(standbyPowerFraction * ratedPower);
+        getEnergyPort("electricalPower").setDuty(standbyPowerFraction * ratedPower);
         setEnergyStream(true);
         setCalculationIdentifier(id);
         return;
@@ -310,7 +310,7 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
     double deliveryPressure = hydrogenDeliveryPressure > 0.0 ? hydrogenDeliveryPressure : inletPressure;
     setProductStreams(hydrogenFlow, oxygenFlow, deliveryPressure, inletPressure, tempK, id);
 
-    energyStream.setDuty(stackPower);
+    getEnergyPort("electricalPower").setDuty(stackPower);
     setEnergyStream(true);
     setCalculationIdentifier(id);
   }
