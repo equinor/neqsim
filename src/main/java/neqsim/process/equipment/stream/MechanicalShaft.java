@@ -79,6 +79,8 @@ public class MechanicalShaft extends EnergyBus {
     this.speed = Math.min(speed, maximumSpeed);
     if (this.speed > 0.0) {
       getQuality().setShaftSpeed(this.speed);
+    } else {
+      getQuality().setShaftSpeed(Double.NaN);
     }
   }
 
