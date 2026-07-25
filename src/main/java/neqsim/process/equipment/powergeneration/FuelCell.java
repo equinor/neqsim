@@ -40,8 +40,7 @@ public class FuelCell extends TwoPortEquipment {
    */
   public FuelCell(String name) {
     super(name);
-    registerEnergyPort("electricalPower", EnergyType.ELECTRICAL, EnergyPortDirection.OUTPUT,
-        EnergyPortMode.CALCULATED);
+    registerEnergyPort("electricalPower", EnergyType.ELECTRICAL, EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED);
   }
 
   /**
