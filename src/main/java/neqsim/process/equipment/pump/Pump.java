@@ -519,7 +519,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
       thermoSystem.init(3);
       dH = 0.0;
       if (!isSetEnergyStream()) {
-        getEnergyStream().setDuty(0.0);
+        getEnergyPort("shaftPower").setDuty(0.0);
       }
       outStream.setThermoSystem(thermoSystem);
       finishRun(id);
@@ -663,7 +663,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
     // System.out.println("entropy inn.." + entropy);
     // thermoOps.PSflash(entropy);
     dH = thermoSystem.getEnthalpy() - hinn;
-    getEnergyStream().setDuty(dH);
+    getEnergyPort("shaftPower").setDuty(dH);
     outStream.setThermoSystem(thermoSystem);
     finishRun(id);
 
