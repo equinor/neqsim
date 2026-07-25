@@ -26,7 +26,11 @@ import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.failure.EquipmentFailureMode;
 import neqsim.process.equipment.iec81346.ReferenceDesignation;
+import neqsim.process.equipment.stream.EnergyPort;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
 import neqsim.process.equipment.stream.EnergyStream;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.util.report.Report;
 import neqsim.process.util.report.ReportConfig;
@@ -60,6 +64,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   public HashMap<String, String> properties = new HashMap<String, String>();
   public EnergyStream energyStream = new EnergyStream();
   private boolean isSetEnergyStream = false;
+  private final Map<String, EnergyPort> energyPorts = new LinkedHashMap<String, EnergyPort>();
   protected boolean isSolved = true;
   private boolean isActive = true;
   private boolean lockedInactive = false;
@@ -283,13 +288,98 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   }
 
   /**
+   * Registers a typed energy port on this equipment.
+   *
+   * <p>The first registered port is connected to the equipment's existing internal energy stream so
+   * legacy result reporting remains available without marking the stream as an external
+   * specification.
+   *
+   * @param portName unique port name
+   * @param energyType physical energy domain
+   * @param direction physical transfer direction
+   * @param mode calculation role
+   * @return the registered port
+   * @throws IllegalArgumentException if the port name is already registered
+   */
+  public EnergyPort registerEnergyPort(String portName, EnergyType energyType,
+      EnergyPortDirection direction, EnergyPortMode mode) {
+    if (energyPorts.containsKey(portName)) {
+      throw new IllegalArgumentException("Energy port already registered: " + portName);
+    }
+    EnergyPort port = new EnergyPort(portName, energyType, direction, mode);
+    if (energyPorts.isEmpty() && energyStream != null) {
+      port.connect(energyStream);
+    }
+    energyPorts.put(portName, port);
+    return port;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Map<String, EnergyPort> getEnergyPorts() {
+    return Collections.unmodifiableMap(energyPorts);
+  }
+
+  /**
+   * Gets a named energy port.
+   *
+   * @param portName port name
+   * @return the port, or {@code null} when no port has that name
+   */
+  public EnergyPort getEnergyPort(String portName) {
+    return energyPorts.get(portName);
+  }
+
+  /**
+   * Connects an energy stream to a named port and marks it as externally connected.
+   *
+   * @param portName port name
+   * @param stream energy stream to connect
+   * @throws IllegalArgumentException if the port does not exist or its type is incompatible
+   */
+  public void connectEnergyStream(String portName, EnergyStream stream) {
+    EnergyPort port = energyPorts.get(portName);
+    if (port == null) {
+      throw new IllegalArgumentException("Unknown energy port: " + portName);
+    }
+    port.connect(stream);
+    if (energyPorts.size() == 1) {
+      energyStream = stream;
+    }
+    setEnergyStream(true);
+  }
+
+  /**
+   * Disconnects the stream from a named energy port.
+   *
+   * @param portName port name
+   * @throws IllegalArgumentException if the port does not exist
+   */
+  public void disconnectEnergyStream(String portName) {
+    EnergyPort port = energyPorts.get(portName);
+    if (port == null) {
+      throw new IllegalArgumentException("Unknown energy port: " + portName);
+    }
+    port.disconnect();
+    if (energyPorts.size() == 1) {
+      setEnergyStream(false);
+    }
+  }
+
+  /**
    * Setter for the field <code>energyStream</code>.
+   *
+   * <p>For equipment exposing exactly one typed energy port, this legacy method also connects that
+   * port. Existing equipment without typed ports retains its original behavior.
    *
    * @param energyStream a {@link neqsim.process.equipment.stream.EnergyStream} object
    */
   public void setEnergyStream(EnergyStream energyStream) {
     setEnergyStream(true);
     this.energyStream = energyStream;
+    if (energyPorts.size() == 1) {
+      energyPorts.values().iterator().next().connect(energyStream);
+    }
   }
 
   /**
