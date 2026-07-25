@@ -71,6 +71,9 @@ Point-to-point `EnergyStream` connections reject multiple calculated producers o
 |---|---|---|
 | Pump, Compressor | `shaftPower` input | Calculated duty or external power specification |
 | Expander, SteamTurbine | `shaftPower` output | Calculated shaft power |
+| GasTurbine | `shaftPower` and `exhaustHeat` outputs | Calculated power/heat; shaft output can also be a fuel-sizing specification |
+| GasTurbineUnit | `shaftPower` output | Calculated delivered shaft power at the active demand and site limit |
+| CombinedCycleSystem | `electricalPower` output | Calculated combined-cycle generation |
 | Heater, Cooler | `heatDuty` bidirectional | Calculated duty or legacy external duty specification |
 | Condenser | `heatDuty` output | Calculated heat removal |
 | Reboiler | `heatDuty` input | Calculated duty or legacy external duty specification |
@@ -79,6 +82,7 @@ Point-to-point `EnergyStream` connections reject multiple calculated producers o
 | Electrolyzer | `electricalPower` input | Feed-calculated demand or connected power-driven specification |
 | CO2Electrolyzer, BioFeedstockPreparation | `electricalPower` input | Calculated demand |
 | AmmoniaSynthesisReactor | `reactionHeat` output | Calculated reaction heat |
+| StirredTankReactor | `heatDuty` bidirectional; `agitatorPower` input | Calculated or specified heat duty and calculated electrical demand |
 
 ## Reboiler duty reporting
 
