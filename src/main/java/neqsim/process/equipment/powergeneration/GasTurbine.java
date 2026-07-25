@@ -19,6 +19,7 @@ import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.stream.EnergyPort;
 import neqsim.process.equipment.stream.EnergyPortDirection;
 import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyStream;
 import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -131,6 +132,36 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
   public GasTurbine(String name, StreamInterface inletStream) {
     this(name);
     setInletStream(inletStream);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setEnergyStream(EnergyStream energyStream) {
+    super.setEnergyStream(energyStream);
+    super.connectEnergyStream("shaftPower", energyStream);
+    getEnergyPort("shaftPower").setMode(EnergyPortMode.SPECIFICATION);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void connectEnergyStream(String portName, EnergyStream stream) {
+    super.connectEnergyStream(portName, stream);
+    if ("shaftPower".equals(portName)) {
+      getEnergyPort(portName).setMode(EnergyPortMode.SPECIFICATION);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void disconnectEnergyStream(String portName) {
+    super.disconnectEnergyStream(portName);
+    if ("shaftPower".equals(portName)) {
+      getEnergyPort(portName).setMode(EnergyPortMode.CALCULATED);
+      if (drivenLoads.isEmpty() && auxiliaryPowerW <= 0.0) {
+        requiredPower = 0.0;
+        powerDemandMode = false;
+      }
+    }
   }
 
   /** {@inheritDoc} */
