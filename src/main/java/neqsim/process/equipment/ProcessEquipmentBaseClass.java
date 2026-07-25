@@ -290,9 +290,9 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   /**
    * Registers a typed energy port on this equipment.
    *
-   * <p>The first registered port is connected to the equipment's existing internal energy stream so
-   * legacy result reporting remains available without marking the stream as an external
-   * specification.
+   * <p>
+   * The first registered port is connected to the equipment's existing internal energy stream so legacy result
+   * reporting remains available without marking the stream as an external specification.
    *
    * @param portName unique port name
    * @param energyType physical energy domain
@@ -301,8 +301,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
    * @return the registered port
    * @throws IllegalArgumentException if the port name is already registered
    */
-  public EnergyPort registerEnergyPort(String portName, EnergyType energyType,
-      EnergyPortDirection direction, EnergyPortMode mode) {
+  public EnergyPort registerEnergyPort(String portName, EnergyType energyType, EnergyPortDirection direction,
+      EnergyPortMode mode) {
     if (energyPorts.containsKey(portName)) {
       throw new IllegalArgumentException("Energy port already registered: " + portName);
     }
@@ -369,8 +369,9 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   /**
    * Setter for the field <code>energyStream</code>.
    *
-   * <p>For equipment exposing exactly one typed energy port, this legacy method also connects that
-   * port. Existing equipment without typed ports retains its original behavior.
+   * <p>
+   * For equipment exposing exactly one typed energy port, this legacy method also connects that port. Existing
+   * equipment without typed ports retains its original behavior.
    *
    * @param energyStream a {@link neqsim.process.equipment.stream.EnergyStream} object
    */
