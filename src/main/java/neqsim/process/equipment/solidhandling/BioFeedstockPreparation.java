@@ -3,6 +3,9 @@ package neqsim.process.equipment.solidhandling;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.thermo.characterization.BioFeedstock;
 
@@ -63,6 +66,8 @@ public class BioFeedstockPreparation extends ProcessEquipmentBaseClass {
    */
   public BioFeedstockPreparation(String name) {
     super(name);
+    registerEnergyPort("electricalPower", EnergyType.ELECTRICAL, EnergyPortDirection.INPUT,
+        EnergyPortMode.CALCULATED);
   }
 
   /**
