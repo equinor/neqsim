@@ -107,14 +107,12 @@ public class ProcessEdge implements Serializable {
    * @param energyStream energy stream connecting the equipment
    * @param name edge name
    */
-  public ProcessEdge(int index, ProcessNode source, ProcessNode target,
-      EnergyStream energyStream, String name) {
+  public ProcessEdge(int index, ProcessNode source, ProcessNode target, EnergyStream energyStream, String name) {
     this.index = index;
     this.source = Objects.requireNonNull(source, "source cannot be null");
     this.target = Objects.requireNonNull(target, "target cannot be null");
     this.stream = null;
-    this.energyStream =
-        Objects.requireNonNull(energyStream, "energyStream cannot be null");
+    this.energyStream = Objects.requireNonNull(energyStream, "energyStream cannot be null");
     this.name = name != null ? name : generateName();
     this.edgeType = EdgeType.ENERGY;
   }
