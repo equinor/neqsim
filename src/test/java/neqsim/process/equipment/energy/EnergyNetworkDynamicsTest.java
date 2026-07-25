@@ -27,6 +27,8 @@ class EnergyNetworkDynamicsTest {
     shaft.setTripped(true);
     double coastedSpeed = shaft.advanceTransient(1.0);
     assertTrue(coastedSpeed < acceleratedSpeed);
+    shaft.setSpeed(0.0);
+    assertTrue(Double.isNaN(shaft.getQuality().getShaftSpeed()));
   }
 
   @Test
@@ -48,5 +50,12 @@ class EnergyNetworkDynamicsTest {
 
     assertEquals(500.0 - 100.0 / 0.95, battery.getStateOfCharge(), 1.0e-9);
     assertEquals(100.0, battery.getCurrentPower(), 1.0e-9);
+
+    double stateBeforeTrip = battery.getStateOfCharge();
+    battery.setTripped(true);
+    assertEquals(100.0, bus.solveBalance().getUnmetDemand(), 1.0e-9);
+    battery.runTransient(3600.0);
+    assertEquals(0.0, battery.getCurrentPower(), 1.0e-9);
+    assertEquals(stateBeforeTrip, battery.getStateOfCharge(), 1.0e-9);
   }
 }
