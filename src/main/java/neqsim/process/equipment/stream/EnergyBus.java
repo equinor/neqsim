@@ -112,7 +112,7 @@ public class EnergyBus extends EnergyStream {
     if (!Double.isFinite(power)) {
       throw new IllegalArgumentException("Energy bus contribution must be finite");
     }
-    contributions.put(participant, power);
+    contributions.put(resolveParticipantId(participant), power);
     invalidateSolution();
   }
 
@@ -134,7 +134,7 @@ public class EnergyBus extends EnergyStream {
    * @return signed contribution in W, or zero when absent
    */
   public double getContribution(String participant) {
-    Double contribution = contributions.get(participant);
+    Double contribution = contributions.get(resolveParticipantId(participant));
     return contribution == null ? 0.0 : contribution.doubleValue();
   }
 
@@ -156,7 +156,7 @@ public class EnergyBus extends EnergyStream {
    * @return positive injection, negative withdrawal, or zero when not allocated
    */
   public double getAllocation(String participant) {
-    Double allocation = allocations.get(participant);
+    Double allocation = allocations.get(resolveParticipantId(participant));
     return allocation == null ? 0.0 : allocation.doubleValue();
   }
 
@@ -177,8 +177,9 @@ public class EnergyBus extends EnergyStream {
    * @param participant participant identifier or legacy name
    */
   public void removeContribution(String participant) {
-    contributions.remove(participant);
-    allocations.remove(participant);
+    String participantId = resolveParticipantId(participant);
+    contributions.remove(participantId);
+    allocations.remove(participantId);
     invalidateSolution();
   }
 
@@ -186,6 +187,13 @@ public class EnergyBus extends EnergyStream {
   public void clearContributions() {
     contributions.clear();
     allocations.clear();
+    invalidateSolution();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setDuty(double duty) {
+    super.setDuty(duty);
     invalidateSolution();
   }
 
@@ -388,9 +396,10 @@ public class EnergyBus extends EnergyStream {
    * @return net power excluding that contribution in W
    */
   public double getNetPowerExcluding(String participant) {
+    String participantId = resolveParticipantId(participant);
     double netPower = super.getDuty();
     for (Map.Entry<String, Double> entry : contributions.entrySet()) {
-      if (!entry.getKey().equals(participant)) {
+      if (!entry.getKey().equals(participantId)) {
         netPower += entry.getValue().doubleValue();
       }
     }
@@ -551,6 +560,24 @@ public class EnergyBus extends EnergyStream {
     if (participant == null || participant.trim().isEmpty()) {
       throw new IllegalArgumentException("Energy bus participant cannot be null or empty");
     }
+  }
+
+  /**
+   * Resolves a legacy owner-name and port-name key to a stable participant identifier.
+   *
+   * @param participant stable identifier or legacy display key
+   * @return stable identifier when a registered display key matches, otherwise the supplied key
+   */
+  private String resolveParticipantId(String participant) {
+    if (registeredPorts.containsKey(participant)) {
+      return participant;
+    }
+    for (EnergyPort port : registeredPorts.values()) {
+      if (port.getParticipantName().equals(participant)) {
+        return port.getParticipantId();
+      }
+    }
+    return participant;
   }
 
   /**
