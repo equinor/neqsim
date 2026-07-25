@@ -477,7 +477,12 @@ public class EnergyPort implements Serializable {
     if (stream instanceof EnergyBus) {
       EnergyBus bus = (EnergyBus) stream;
       if (mode == EnergyPortMode.SPECIFICATION) {
+        boolean hadSolution = bus.hasSolution();
         setRequestedPower(Math.abs(duty));
+        if (!hadSolution) {
+          double contribution = direction == EnergyPortDirection.OUTPUT ? Math.abs(duty) : -Math.abs(duty);
+          bus.setContribution(participantId, contribution);
+        }
         return;
       }
       if (mode == EnergyPortMode.BALANCE) {
