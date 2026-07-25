@@ -15,9 +15,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,7 +28,11 @@ import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.failure.EquipmentFailureMode;
 import neqsim.process.equipment.iec81346.ReferenceDesignation;
+import neqsim.process.equipment.stream.EnergyPort;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
 import neqsim.process.equipment.stream.EnergyStream;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.util.report.Report;
 import neqsim.process.util.report.ReportConfig;
@@ -60,6 +66,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   public HashMap<String, String> properties = new HashMap<String, String>();
   public EnergyStream energyStream = new EnergyStream();
   private boolean isSetEnergyStream = false;
+  private final Map<String, EnergyPort> energyPorts = new LinkedHashMap<String, EnergyPort>();
+  private final Set<String> externallyConnectedEnergyPorts = new LinkedHashSet<String>();
   protected boolean isSolved = true;
   private boolean isActive = true;
   private boolean lockedInactive = false;
@@ -283,13 +291,136 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   }
 
   /**
+   * Registers a typed energy port on this equipment.
+   *
+   * <p>
+   * The first registered port is connected to the equipment's existing internal energy stream so legacy result
+   * reporting remains available without marking the stream as an external specification.
+   *
+   * @param portName unique port name
+   * @param energyType physical energy domain
+   * @param direction physical transfer direction
+   * @param mode calculation role
+   * @return the registered port
+   * @throws IllegalArgumentException if the port name is already registered
+   */
+  public EnergyPort registerEnergyPort(String portName, EnergyType energyType, EnergyPortDirection direction,
+      EnergyPortMode mode) {
+    if (energyPorts.containsKey(portName)) {
+      throw new IllegalArgumentException("Energy port already registered: " + portName);
+    }
+    EnergyPort port = new EnergyPort(portName, energyType, direction, mode);
+    port.setOwnerName(getName());
+    if (energyPorts.isEmpty() && energyStream != null) {
+      port.connect(energyStream);
+    }
+    energyPorts.put(portName, port);
+    return port;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Map<String, EnergyPort> getEnergyPorts() {
+    return Collections.unmodifiableMap(energyPorts);
+  }
+
+  /**
+   * Gets a named energy port.
+   *
+   * @param portName port name
+   * @return the port, or {@code null} when no port has that name
+   */
+  public EnergyPort getEnergyPort(String portName) {
+    return energyPorts.get(portName);
+  }
+
+  /**
+   * Connects an energy stream to a named port and marks it as externally connected.
+   *
+   * @param portName port name
+   * @param stream energy stream to connect
+   * @throws IllegalArgumentException if the port does not exist or its type is incompatible
+   */
+  public void connectEnergyStream(String portName, EnergyStream stream) {
+    EnergyPort port = requireEnergyPort(portName);
+    port.connect(stream);
+    externallyConnectedEnergyPorts.add(portName);
+    if (isLegacyEnergyPort(port)) {
+      energyStream = stream;
+    }
+    updateExternalEnergySpecificationFlag();
+  }
+
+  /**
+   * Connects an energy stream with an explicit calculation role.
+   *
+   * @param portName port name
+   * @param stream energy stream to connect
+   * @param mode calculation role for this connection
+   */
+  public void connectEnergyStream(String portName, EnergyStream stream, EnergyPortMode mode) {
+    EnergyPort port = requireEnergyPort(portName);
+    Objects.requireNonNull(mode, "mode cannot be null");
+    port.connect(stream);
+    port.setMode(mode);
+    externallyConnectedEnergyPorts.add(portName);
+    if (isLegacyEnergyPort(port)) {
+      energyStream = stream;
+    }
+    updateExternalEnergySpecificationFlag();
+  }
+
+  /**
+   * Sets the calculation role of a named energy port.
+   *
+   * @param portName port name
+   * @param mode calculation role
+   * @throws IllegalArgumentException if the port does not exist
+   */
+  public void setEnergyPortMode(String portName, EnergyPortMode mode) {
+    EnergyPort port = requireEnergyPort(portName);
+    port.setMode(mode);
+    updateExternalEnergySpecificationFlag();
+  }
+
+  /**
+   * Disconnects the stream from a named energy port.
+   *
+   * @param portName port name
+   * @throws IllegalArgumentException if the port does not exist
+   */
+  public void disconnectEnergyStream(String portName) {
+    EnergyPort port = requireEnergyPort(portName);
+    externallyConnectedEnergyPorts.remove(portName);
+    port.disconnect();
+    if (isLegacyEnergyPort(port)) {
+      energyStream = new EnergyStream(getName() + "." + portName + ".internal", port.getEnergyType());
+      port.connect(energyStream);
+    }
+    updateExternalEnergySpecificationFlag();
+  }
+
+  /**
    * Setter for the field <code>energyStream</code>.
+   *
+   * <p>
+   * For equipment exposing exactly one typed energy port, this legacy method also connects that port. Existing
+   * equipment without typed ports retains its original behavior.
    *
    * @param energyStream a {@link neqsim.process.equipment.stream.EnergyStream} object
    */
   public void setEnergyStream(EnergyStream energyStream) {
-    setEnergyStream(true);
+    Objects.requireNonNull(energyStream, "energyStream cannot be null");
+    if (energyPorts.isEmpty()) {
+      this.energyStream = energyStream;
+      setEnergyStream(true);
+      return;
+    }
+    EnergyPort legacyPort = energyPorts.values().iterator().next();
+    legacyPort.connect(energyStream);
+    externallyConnectedEnergyPorts.add(legacyPort.getName());
     this.energyStream = energyStream;
+    updateExternalEnergySpecificationFlag();
   }
 
   /**
@@ -307,7 +438,39 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
    * @return a boolean
    */
   public boolean isSetEnergyStream() {
-    return isSetEnergyStream;
+    if (energyPorts.isEmpty()) {
+      return isSetEnergyStream;
+    }
+    for (String portName : externallyConnectedEnergyPorts) {
+      EnergyPort port = energyPorts.get(portName);
+      if (port != null && port.isConnected() && port.getMode() == EnergyPortMode.SPECIFICATION) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private EnergyPort requireEnergyPort(String portName) {
+    EnergyPort port = energyPorts.get(portName);
+    if (port == null) {
+      throw new IllegalArgumentException("Unknown energy port: " + portName);
+    }
+    return port;
+  }
+
+  private boolean isLegacyEnergyPort(EnergyPort port) {
+    return !energyPorts.isEmpty() && energyPorts.values().iterator().next() == port;
+  }
+
+  private void updateExternalEnergySpecificationFlag() {
+    isSetEnergyStream = false;
+    for (String portName : externallyConnectedEnergyPorts) {
+      EnergyPort port = energyPorts.get(portName);
+      if (port != null && port.isConnected() && port.getMode() == EnergyPortMode.SPECIFICATION) {
+        isSetEnergyStream = true;
+        return;
+      }
+    }
   }
 
   /** {@inheritDoc} */

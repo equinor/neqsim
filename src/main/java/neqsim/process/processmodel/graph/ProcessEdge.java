@@ -2,6 +2,7 @@ package neqsim.process.processmodel.graph;
 
 import java.io.Serializable;
 import java.util.Objects;
+import neqsim.process.equipment.stream.EnergyStream;
 import neqsim.process.equipment.stream.StreamInterface;
 
 /**
@@ -45,8 +46,11 @@ public class ProcessEdge implements Serializable {
   /** The target node (downstream equipment). */
   private final ProcessNode target;
 
-  /** The stream this edge represents (may be null for control signals). */
+  /** The material stream this edge represents, when applicable. */
   private final StreamInterface stream;
+
+  /** The energy stream this edge represents, when applicable. */
+  private final EnergyStream energyStream;
 
   /** Name of this edge/stream. */
   private final String name;
@@ -76,6 +80,7 @@ public class ProcessEdge implements Serializable {
     this.source = Objects.requireNonNull(source, "source cannot be null");
     this.target = Objects.requireNonNull(target, "target cannot be null");
     this.stream = stream;
+    this.energyStream = null;
     this.name = name != null ? name : generateName();
     this.edgeType = edgeType != null ? edgeType : EdgeType.UNKNOWN;
   }
@@ -94,6 +99,25 @@ public class ProcessEdge implements Serializable {
   }
 
   /**
+   * Creates an energy edge.
+   *
+   * @param index unique index
+   * @param source source node
+   * @param target target node
+   * @param energyStream energy stream connecting the equipment
+   * @param name edge name
+   */
+  public ProcessEdge(int index, ProcessNode source, ProcessNode target, EnergyStream energyStream, String name) {
+    this.index = index;
+    this.source = Objects.requireNonNull(source, "source cannot be null");
+    this.target = Objects.requireNonNull(target, "target cannot be null");
+    this.stream = null;
+    this.energyStream = Objects.requireNonNull(energyStream, "energyStream cannot be null");
+    this.name = name != null ? name : generateName();
+    this.edgeType = EdgeType.ENERGY;
+  }
+
+  /**
    * Creates an edge without a stream (e.g., control signal).
    *
    * @param index unique index
@@ -103,7 +127,7 @@ public class ProcessEdge implements Serializable {
    * @param edgeType type of edge
    */
   public ProcessEdge(int index, ProcessNode source, ProcessNode target, String name, EdgeType edgeType) {
-    this(index, source, target, null, name, edgeType);
+    this(index, source, target, (StreamInterface) null, name, edgeType);
   }
 
   private String generateName() {
@@ -165,6 +189,15 @@ public class ProcessEdge implements Serializable {
    */
   public StreamInterface getStream() {
     return stream;
+  }
+
+  /**
+   * Gets the energy stream represented by this edge.
+   *
+   * @return energy stream, or {@code null} for non-energy edges
+   */
+  public EnergyStream getEnergyStream() {
+    return energyStream;
   }
 
   /**
@@ -271,6 +304,10 @@ public class ProcessEdge implements Serializable {
       } catch (Exception e) {
         features[7] = 0.0;
       }
+    }
+
+    if (energyStream != null) {
+      features[7] = Math.tanh(energyStream.getDuty() / 1.0e6);
     }
 
     // Back edge indicator

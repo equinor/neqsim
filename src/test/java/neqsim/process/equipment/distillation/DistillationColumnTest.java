@@ -9,6 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -568,6 +569,8 @@ public class DistillationColumnTest {
     double actualFlow = reboiler.getGasOutStream().getFlowRate("kg/hr")
         + reboiler.getLiquidOutStream().getFlowRate("kg/hr");
     assertEquals(expectedFlow, actualFlow, expectedFlow * 1.0e-8);
+    assertEquals(reboiler.getDuty(), reboiler.getEnergyStream().getDuty(), 1.0e-8);
+    assertEquals(EnergyType.HEAT, reboiler.getEnergyStream().getEnergyType());
   }
 
   /**

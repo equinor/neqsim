@@ -6,6 +6,10 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyStream;
+import neqsim.process.equipment.stream.EnergyType;
+import neqsim.process.equipment.stream.MechanicalShaft;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.util.Recycle;
 
@@ -379,6 +383,61 @@ public class PumpTest extends neqsim.NeqSimTest {
 
     Assertions.assertEquals(expectedPowerKw, pump.getPower("kW"), expectedPowerKw * 1.0e-8,
         "Hydraulic power must use density at the current inlet state");
+  }
+
+  @Test
+  void testRunWithShaftPowerEnergyStream() {
+    neqsim.thermo.system.SystemInterface water = new neqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 2.0);
+    water.addComponent("water", 1.0);
+    water.setMixingRule("classic");
+
+    Stream feed = new Stream("energy-driven pump feed", water);
+    feed.setFlowRate(100000.0, "kg/hr");
+    feed.setTemperature(25.0, "C");
+    feed.setPressure(2.0, "bara");
+    feed.run();
+    feed.getThermoSystem().initPhysicalProperties();
+
+    double efficiency = 0.75;
+    double shaftPower = 100.0e3;
+    double density = feed.getThermoSystem().getDensity("kg/m3");
+    double volumetricFlow = feed.getFlowRate("kg/sec") / density;
+    double expectedOutletPressure = feed.getPressure("Pa") + shaftPower * efficiency / volumetricFlow;
+
+    EnergyStream shaft = new EnergyStream("pump shaft", EnergyType.SHAFT_WORK);
+    shaft.setPower(shaftPower);
+    Pump pump = new Pump("energy-driven pump", feed);
+    pump.setIsentropicEfficiency(efficiency);
+    pump.setEnergyStream(shaft);
+
+    pump.run();
+
+    Assertions.assertEquals(expectedOutletPressure, pump.getOutletStream().getPressure("Pa"), 1.0);
+    Assertions.assertEquals(shaftPower, pump.getPower(), 1.0e-6);
+    Assertions.assertEquals(EnergyPortMode.SPECIFICATION, pump.getEnergyPort("shaftPower").getMode());
+  }
+
+  @Test
+  void testPressureSpecifiedPumpPublishesLoadToShaftBus() {
+    neqsim.thermo.system.SystemInterface water = new neqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 2.0);
+    water.addComponent("water", 1.0);
+    water.setMixingRule("classic");
+
+    Stream feed = new Stream("shaft bus pump feed", water);
+    feed.setFlowRate(100000.0, "kg/hr");
+    feed.run();
+
+    MechanicalShaft shaft = new MechanicalShaft("pump train");
+    Pump pump = new Pump("bus pump", feed);
+    pump.setOutletPressure(10.0, "bara");
+    pump.setIsentropicEfficiency(0.75);
+    pump.connectEnergyStream("shaftPower", shaft, EnergyPortMode.CALCULATED);
+
+    pump.run();
+
+    Assertions.assertTrue(pump.getPower() > 0.0);
+    Assertions.assertEquals(-pump.getPower(), shaft.getContribution("bus pump.shaftPower"), 1.0e-6);
+    Assertions.assertEquals(EnergyPortMode.CALCULATED, pump.getEnergyPort("shaftPower").getMode());
   }
 
 }
