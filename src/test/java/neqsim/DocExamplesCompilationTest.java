@@ -1567,6 +1567,7 @@ public class DocExamplesCompilationTest {
       assertNotNull(r.getStatus());
     }
   }
+
   /**
    * Energy-driven pump example from docs/process/energy_streams.md.
    */
@@ -1580,8 +1581,7 @@ public class DocExamplesCompilationTest {
     feed.setFlowRate(100000.0, "kg/hr");
     feed.run();
 
-    EnergyStream shaft =
-        new EnergyStream("pump shaft", EnergyType.SHAFT_WORK);
+    EnergyStream shaft = new EnergyStream("pump shaft", EnergyType.SHAFT_WORK);
     shaft.setPower(100.0, "kW");
 
     Pump pump = new Pump("energy-driven pump", feed);
