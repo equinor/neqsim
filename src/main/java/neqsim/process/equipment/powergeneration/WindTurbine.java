@@ -40,8 +40,7 @@ public class WindTurbine extends ProcessEquipmentBaseClass {
    */
   public WindTurbine(String name) {
     super(name);
-    registerEnergyPort("electricalPower", EnergyType.ELECTRICAL, EnergyPortDirection.OUTPUT,
-        EnergyPortMode.CALCULATED);
+    registerEnergyPort("electricalPower", EnergyType.ELECTRICAL, EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED);
   }
 
   /**
