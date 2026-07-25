@@ -306,7 +306,7 @@ pipe.runTransient(0.0, UUID.randomUUID());
 double[] initialPressure = pipe.getPressureProfile(); // Pa
 double initializedOutletPressure =
     initialPressure[initialPressure.length - 1] / 1.0e5;
-if (Math.abs(initializedOutletPressure - specifiedOutletPressure) > 1.0e-9) {
+if (Math.abs(initializedOutletPressure - specifiedOutletPressure) > 1.0e-6) {
     throw new IllegalStateException("Outlet pressure boundary was not preserved");
 }
 ```

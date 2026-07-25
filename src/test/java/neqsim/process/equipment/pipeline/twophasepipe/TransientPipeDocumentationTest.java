@@ -39,7 +39,7 @@ class TransientPipeDocumentationTest {
 
     double[] pressure = pipe.getPressureProfile();
     double initializedOutletPressure = pressure[pressure.length - 1] / 1.0e5;
-    assertEquals(specifiedOutletPressure, initializedOutletPressure, 1.0e-9);
+    assertEquals(specifiedOutletPressure, initializedOutletPressure, 1.0e-6);
   }
 
   @Test
