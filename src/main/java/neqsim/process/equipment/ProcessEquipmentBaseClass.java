@@ -351,6 +351,34 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   }
 
   /**
+   * Connects an energy stream with an explicit calculation role.
+   *
+   * @param portName port name
+   * @param stream energy stream to connect
+   * @param mode calculation role for this connection
+   */
+  public void connectEnergyStream(
+      String portName, EnergyStream stream, EnergyPortMode mode) {
+    connectEnergyStream(portName, stream);
+    setEnergyPortMode(portName, mode);
+  }
+
+  /**
+   * Sets the calculation role of a named energy port.
+   *
+   * @param portName port name
+   * @param mode calculation role
+   * @throws IllegalArgumentException if the port does not exist
+   */
+  public void setEnergyPortMode(String portName, EnergyPortMode mode) {
+    EnergyPort port = energyPorts.get(portName);
+    if (port == null) {
+      throw new IllegalArgumentException("Unknown energy port: " + portName);
+    }
+    port.setMode(mode);
+  }
+
+  /**
    * Disconnects the stream from a named energy port.
    *
    * @param portName port name
