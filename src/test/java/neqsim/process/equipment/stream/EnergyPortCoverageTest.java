@@ -13,13 +13,17 @@ import neqsim.process.equipment.electrolyzer.Electrolyzer;
 import neqsim.process.equipment.expander.Expander;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.powergeneration.CombinedCycleSystem;
 import neqsim.process.equipment.powergeneration.FuelCell;
+import neqsim.process.equipment.powergeneration.GasTurbine;
 import neqsim.process.equipment.powergeneration.SolarPanel;
 import neqsim.process.equipment.powergeneration.SteamTurbine;
 import neqsim.process.equipment.powergeneration.WindFarm;
 import neqsim.process.equipment.powergeneration.WindTurbine;
+import neqsim.process.equipment.powergeneration.gasturbine.GasTurbineUnit;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reactor.AmmoniaSynthesisReactor;
+import neqsim.process.equipment.reactor.StirredTankReactor;
 import neqsim.process.equipment.solidhandling.BioFeedstockPreparation;
 
 class EnergyPortCoverageTest {
@@ -46,6 +50,18 @@ class EnergyPortCoverageTest {
         EnergyPortMode.CALCULATED);
     assertPort(
         new SteamTurbine("steam turbine"),
+        "shaftPower",
+        EnergyType.SHAFT_WORK,
+        EnergyPortDirection.OUTPUT,
+        EnergyPortMode.CALCULATED);
+    assertPort(
+        new GasTurbine("gas turbine"),
+        "shaftPower",
+        EnergyType.SHAFT_WORK,
+        EnergyPortDirection.OUTPUT,
+        EnergyPortMode.CALCULATED);
+    assertPort(
+        new GasTurbineUnit("catalogue gas turbine"),
         "shaftPower",
         EnergyType.SHAFT_WORK,
         EnergyPortDirection.OUTPUT,
@@ -84,6 +100,25 @@ class EnergyPortCoverageTest {
         EnergyType.HEAT,
         EnergyPortDirection.OUTPUT,
         EnergyPortMode.CALCULATED);
+    StirredTankReactor reactor = new StirredTankReactor("CSTR");
+    assertPort(
+        reactor,
+        "heatDuty",
+        EnergyType.HEAT,
+        EnergyPortDirection.BIDIRECTIONAL,
+        EnergyPortMode.CALCULATED);
+    assertPort(
+        reactor,
+        "agitatorPower",
+        EnergyType.ELECTRICAL,
+        EnergyPortDirection.INPUT,
+        EnergyPortMode.CALCULATED);
+    assertPort(
+        new GasTurbine("gas turbine"),
+        "exhaustHeat",
+        EnergyType.HEAT,
+        EnergyPortDirection.OUTPUT,
+        EnergyPortMode.CALCULATED);
   }
 
   @Test
@@ -92,7 +127,8 @@ class EnergyPortCoverageTest {
       new SolarPanel("solar"),
       new WindTurbine("wind turbine"),
       new WindFarm("wind farm"),
-      new FuelCell("fuel cell")
+      new FuelCell("fuel cell"),
+      new CombinedCycleSystem("combined cycle")
     };
     for (ProcessEquipmentBaseClass generator : generators) {
       assertPort(
@@ -140,6 +176,8 @@ class EnergyPortCoverageTest {
     assertEquals(type, port.getEnergyType());
     assertEquals(direction, port.getDirection());
     assertEquals(mode, port.getMode());
-    assertEquals(type, equipment.getEnergyStream().getEnergyType());
+    if (port.isConnected()) {
+      assertEquals(type, port.getEnergyStream().getEnergyType());
+    }
   }
 }
