@@ -66,8 +66,7 @@ public class BioFeedstockPreparation extends ProcessEquipmentBaseClass {
    */
   public BioFeedstockPreparation(String name) {
     super(name);
-    registerEnergyPort("electricalPower", EnergyType.ELECTRICAL, EnergyPortDirection.INPUT,
-        EnergyPortMode.CALCULATED);
+    registerEnergyPort("electricalPower", EnergyType.ELECTRICAL, EnergyPortDirection.INPUT, EnergyPortMode.CALCULATED);
   }
 
   /**
