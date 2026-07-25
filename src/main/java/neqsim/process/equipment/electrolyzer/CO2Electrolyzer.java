@@ -52,8 +52,7 @@ public class CO2Electrolyzer extends ProcessEquipmentBaseClass {
    */
   public CO2Electrolyzer(String name) {
     super(name);
-    registerEnergyPort("electricalPower", EnergyType.ELECTRICAL, EnergyPortDirection.INPUT,
-        EnergyPortMode.CALCULATED);
+    registerEnergyPort("electricalPower", EnergyType.ELECTRICAL, EnergyPortDirection.INPUT, EnergyPortMode.CALCULATED);
     initializeDefaultElectronNumbers();
   }
 
