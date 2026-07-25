@@ -19,29 +19,17 @@ class EnergyStreamGraphTest {
   @Test
   void testCalculatedEnergyPortOrdersSpecificationConsumer() {
     EnergyStream shaft = new EnergyStream("shared-shaft", EnergyType.SHAFT_WORK);
-    EnergyUnit expander =
-        new EnergyUnit(
-            "expander",
-            EnergyPortDirection.OUTPUT,
-            EnergyPortMode.CALCULATED,
-            shaft);
-    EnergyUnit compressor =
-        new EnergyUnit(
-            "compressor",
-            EnergyPortDirection.INPUT,
-            EnergyPortMode.SPECIFICATION,
-            shaft);
+    EnergyUnit expander = new EnergyUnit("expander", EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED, shaft);
+    EnergyUnit compressor = new EnergyUnit("compressor", EnergyPortDirection.INPUT, EnergyPortMode.SPECIFICATION,
+        shaft);
     ProcessSystem process = new ProcessSystem();
     process.add(compressor);
     process.add(expander);
 
     ProcessGraph graph = ProcessGraphBuilder.buildGraph(process);
 
-    ProcessEdge energyEdge =
-        graph.getEdges().stream()
-            .filter(edge -> edge.getEdgeType() == ProcessEdge.EdgeType.ENERGY)
-            .findFirst()
-            .orElseThrow(() -> new AssertionError("Expected an energy dependency"));
+    ProcessEdge energyEdge = graph.getEdges().stream().filter(edge -> edge.getEdgeType() == ProcessEdge.EdgeType.ENERGY)
+        .findFirst().orElseThrow(() -> new AssertionError("Expected an energy dependency"));
     assertSame(shaft, energyEdge.getEnergyStream());
     assertEquals("expander", energyEdge.getSource().getName());
     assertEquals("compressor", energyEdge.getTarget().getName());
@@ -53,11 +41,7 @@ class EnergyStreamGraphTest {
   private static final class EnergyUnit extends ProcessEquipmentBaseClass {
     private static final long serialVersionUID = 1000L;
 
-    EnergyUnit(
-        String name,
-        EnergyPortDirection direction,
-        EnergyPortMode mode,
-        EnergyStream stream) {
+    EnergyUnit(String name, EnergyPortDirection direction, EnergyPortMode mode, EnergyStream stream) {
       super(name);
       registerEnergyPort("energy", EnergyType.SHAFT_WORK, direction, mode);
       connectEnergyStream("energy", stream);
