@@ -273,7 +273,13 @@ public class MechanicalShaft extends EnergyBus {
    * @return effective net power in W
    */
   private double getEffectiveNetPower() {
-    double netPower = getNetPower();
-    return tripped ? Math.min(0.0, netPower) : netPower;
+    if (!tripped) {
+      return getNetPower();
+    }
+    double loadPower = Math.min(0.0, duty);
+    for (Double contribution : getContributions().values()) {
+      loadPower += Math.min(0.0, contribution.doubleValue());
+    }
+    return loadPower;
   }
 }
