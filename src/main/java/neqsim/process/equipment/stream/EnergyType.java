@@ -3,9 +3,10 @@ package neqsim.process.equipment.stream;
 /**
  * Physical energy domain carried by an {@link EnergyStream}.
  *
- * <p>The type is metadata used to prevent accidental connections such as wiring an electrical
- * generator directly to a heat-duty port. {@link #UNSPECIFIED} preserves compatibility with legacy
- * energy streams that did not declare a domain.
+ * <p>
+ * The type is metadata used to prevent accidental connections such as wiring an electrical generator directly to a
+ * heat-duty port. {@link #UNSPECIFIED} preserves compatibility with legacy energy streams that did not declare a
+ * domain.
  *
  * @author NeqSim
  * @version 1.0
