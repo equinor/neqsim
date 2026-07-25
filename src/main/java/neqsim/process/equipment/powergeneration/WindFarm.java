@@ -267,7 +267,7 @@ public class WindFarm extends ProcessEquipmentBaseClass {
     capacityFactor = totalRated > 0 ? power / totalRated : 0.0;
 
     // Set energy stream (negative = produced/available)
-    getEnergyStream().setDuty(-power);
+    getEnergyPort("electricalPower").setDuty(-power);
     setCalculationIdentifier(id);
   }
 
