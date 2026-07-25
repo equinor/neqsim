@@ -24,7 +24,11 @@ import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFrictio
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction.InterfacialFrictionResult;
 import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.EnergyAllocation;
 import neqsim.process.equipment.stream.EnergyBus;
+import neqsim.process.equipment.stream.EnergyNetworkReport;
+import neqsim.process.equipment.stream.EnergyPort;
+import neqsim.process.equipment.stream.EnergyPortDirection;
 import neqsim.process.equipment.stream.EnergyPortMode;
 import neqsim.process.equipment.stream.EnergyStream;
 import neqsim.process.equipment.stream.EnergyType;
@@ -1618,4 +1622,42 @@ public class DocExamplesCompilationTest {
     assertEquals(1.8, sparePower, 1.0e-12);
   }
 
+  /**
+   * Deterministic allocation example from docs/process/energy_streams.md.
+   */
+  @Test
+  public void testEnergyNetworkAllocationDocumentationExample() {
+    EnergyBus allocatedGrid = new EnergyBus("allocated grid", EnergyType.ELECTRICAL);
+
+    EnergyPort generator = new EnergyPort("power", EnergyType.ELECTRICAL, EnergyPortDirection.OUTPUT,
+        EnergyPortMode.CALCULATED);
+    generator.setOwnerName("generator");
+    generator.connect(allocatedGrid);
+    generator.setDuty(100.0, "kW");
+
+    EnergyPort essentialLoad = new EnergyPort("power", EnergyType.ELECTRICAL, EnergyPortDirection.INPUT,
+        EnergyPortMode.SPECIFICATION);
+    essentialLoad.setOwnerName("essential load");
+    essentialLoad.setPriority(10);
+    essentialLoad.setRequestedPower(80.0, "kW");
+    essentialLoad.connect(allocatedGrid);
+
+    EnergyPort flexibleLoad = new EnergyPort("power", EnergyType.ELECTRICAL, EnergyPortDirection.INPUT,
+        EnergyPortMode.SPECIFICATION);
+    flexibleLoad.setOwnerName("flexible load");
+    flexibleLoad.setPriority(20);
+    flexibleLoad.setRequestedPower(80.0, "kW");
+    flexibleLoad.connect(allocatedGrid);
+
+    EnergyNetworkReport allocation = allocatedGrid.solveBalance();
+    double essentialAllocation = essentialLoad.getPowerMagnitude("kW");
+    double flexibleAllocation = flexibleLoad.getPowerMagnitude("kW");
+    double unmetDemand = allocation.getUnmetDemand();
+
+    assertEquals(80.0, essentialAllocation, 1.0e-12);
+    assertEquals(20.0, flexibleAllocation, 1.0e-12);
+    assertEquals(60.0, unmetDemand / 1000.0, 1.0e-12);
+  }
+
 }
+
