@@ -162,7 +162,7 @@ public class FuelCell extends TwoPortEquipment {
     power = efficiency * fuelEnergy;
     heatLoss = fuelEnergy - power;
 
-    getEnergyStream().setDuty(-power);
+    getEnergyPort("electricalPower").setDuty(-power);
     setCalculationIdentifier(id);
   }
 }
