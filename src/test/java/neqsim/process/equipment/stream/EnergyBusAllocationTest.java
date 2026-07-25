@@ -2,6 +2,7 @@ package neqsim.process.equipment.stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
@@ -26,6 +27,10 @@ class EnergyBusAllocationTest {
     assertEquals(-100.0 / 3.0, bus.getAllocation(second.getParticipantId()), 1.0e-12);
     assertEquals(50.0, report.getUnmetDemand(), 1.0e-12);
     assertEquals(100.0, report.getServedDemand(), 1.0e-12);
+
+    first.setDuty(first.getPowerMagnitude());
+    assertEquals(100.0 / 3.0, second.getPowerMagnitude(), 1.0e-12);
+    assertTrue(bus.hasSolution());
   }
 
   @Test
