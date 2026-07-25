@@ -242,11 +242,8 @@ public class EnergyBus extends EnergyStream {
 
     double externalSupply = Math.max(0.0, super.getDuty());
     double externalDemand = Math.max(0.0, -super.getDuty());
-    double registeredContribution = 0.0;
-
     for (EnergyPort port : registeredPorts.values()) {
       double contribution = getContribution(port.getParticipantId());
-      registeredContribution += contribution;
       if (port.getMode() == EnergyPortMode.CALCULATED) {
         if (contribution > 0.0) {
           producers.add(new DispatchEntry(port, contribution));
