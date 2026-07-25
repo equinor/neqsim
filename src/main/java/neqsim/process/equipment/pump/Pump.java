@@ -18,6 +18,7 @@ import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.process.electricaldesign.pump.PumpElectricalDesign;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortEquipment;
+import neqsim.process.equipment.stream.EnergyBus;
 import neqsim.process.equipment.stream.EnergyPortDirection;
 import neqsim.process.equipment.stream.EnergyPortMode;
 import neqsim.process.equipment.stream.EnergyStream;
@@ -707,6 +708,9 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
     thermoOps.PHflash(inletEnthalpy + dH, 0);
     thermoSystem.init(3);
     outStream.setThermoSystem(thermoSystem);
+    if (getEnergyPort("shaftPower").getEnergyStream() instanceof EnergyBus) {
+      getEnergyPort("shaftPower").setDuty(dH);
+    }
     finishRun(id);
   }
 
