@@ -1,25 +1,34 @@
 package neqsim.process.equipment.stream;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import neqsim.util.unit.PowerUnit;
 
 /**
- * Multi-party energy connection that aggregates named power contributions.
+ * Multi-party energy connection with deterministic allocation and balancing.
  *
  * <p>
- * Unlike the point-to-point {@link EnergyStream}, an energy bus can connect several calculated and specification ports.
- * Positive and negative contribution signs represent injection and withdrawal from the bus. The inherited duty is
- * retained as an optional external or balancing contribution.
+ * Positive contributions inject power and negative contributions withdraw power. Calculated ports publish fixed
+ * offers or demands, specification ports publish dispatchable requests, and balance ports absorb a surplus or cover a
+ * shortage within configured limits. Lower priority numbers are dispatched first; participants with equal priority
+ * are allocated proportionally and ordered by persistent participant identifier.
+ * </p>
  *
  * @author NeqSim
- * @version 1.0
+ * @version 2.0
  */
 public class EnergyBus extends EnergyStream {
   private static final long serialVersionUID = 1000L;
 
   private Map<String, Double> contributions = new LinkedHashMap<String, Double>();
+  private Map<String, Double> allocations = new LinkedHashMap<String, Double>();
+  private Map<String, EnergyPort> registeredPorts = new LinkedHashMap<String, EnergyPort>();
+  private boolean solutionValid = false;
+  private EnergyNetworkReport lastReport = null;
 
   /** Creates an unnamed bus with an unspecified energy domain. */
   public EnergyBus() {
@@ -50,29 +59,67 @@ public class EnergyBus extends EnergyStream {
   public EnergyBus clone() {
     EnergyBus clonedBus = (EnergyBus) super.clone();
     clonedBus.contributions = new LinkedHashMap<String, Double>(contributions);
+    clonedBus.allocations = new LinkedHashMap<String, Double>();
+    clonedBus.registeredPorts = new LinkedHashMap<String, EnergyPort>();
+    clonedBus.solutionValid = false;
+    clonedBus.lastReport = null;
     return clonedBus;
+  }
+
+  /**
+   * Registers a connected port using its stable participant identifier.
+   *
+   * @param port connected port
+   */
+  void registerPort(EnergyPort port) {
+    EnergyPort previous = registeredPorts.get(port.getParticipantId());
+    if (previous != null && previous != port) {
+      throw new IllegalArgumentException("Duplicate energy-bus participant identifier: " + port.getParticipantId());
+    }
+    registeredPorts.put(port.getParticipantId(), port);
+    invalidateSolution();
+  }
+
+  /**
+   * Unregisters a disconnected port and removes its network state.
+   *
+   * @param port disconnected port
+   */
+  void unregisterPort(EnergyPort port) {
+    registeredPorts.remove(port.getParticipantId());
+    contributions.remove(port.getParticipantId());
+    allocations.remove(port.getParticipantId());
+    invalidateSolution();
+  }
+
+  /**
+   * Gets registered ports keyed by persistent identifier.
+   *
+   * @return immutable registered-port map
+   */
+  public Map<String, EnergyPort> getRegisteredPorts() {
+    return Collections.unmodifiableMap(registeredPorts);
   }
 
   /**
    * Sets a named power contribution in watts.
    *
-   * @param participant unique participant or port name
+   * @param participant unique participant identifier or legacy participant name
    * @param power signed power contribution in W
    */
   public void setContribution(String participant, double power) {
-    if (participant == null || participant.trim().isEmpty()) {
-      throw new IllegalArgumentException("Energy bus participant cannot be null or empty");
-    }
+    validateParticipant(participant);
     if (!Double.isFinite(power)) {
       throw new IllegalArgumentException("Energy bus contribution must be finite");
     }
     contributions.put(participant, power);
+    invalidateSolution();
   }
 
   /**
    * Sets a named power contribution in a specified unit.
    *
-   * @param participant unique participant or port name
+   * @param participant unique participant identifier or legacy participant name
    * @param power signed power contribution
    * @param unit power unit
    */
@@ -83,7 +130,7 @@ public class EnergyBus extends EnergyStream {
   /**
    * Gets a participant contribution in watts.
    *
-   * @param participant participant or port name
+   * @param participant participant identifier or legacy name
    * @return signed contribution in W, or zero when absent
    */
   public double getContribution(String participant) {
@@ -94,7 +141,7 @@ public class EnergyBus extends EnergyStream {
   /**
    * Gets a participant contribution in a requested unit.
    *
-   * @param participant participant or port name
+   * @param participant participant identifier or legacy name
    * @param unit requested power unit
    * @return signed contribution in the requested unit
    */
@@ -103,17 +150,43 @@ public class EnergyBus extends EnergyStream {
   }
 
   /**
+   * Gets a participant's most recent signed allocation.
+   *
+   * @param participant stable participant identifier
+   * @return positive injection, negative withdrawal, or zero when not allocated
+   */
+  public double getAllocation(String participant) {
+    Double allocation = allocations.get(participant);
+    return allocation == null ? 0.0 : allocation.doubleValue();
+  }
+
+  /**
+   * Gets a participant allocation in a requested unit.
+   *
+   * @param participant stable participant identifier
+   * @param unit requested power unit
+   * @return signed allocation in the requested unit
+   */
+  public double getAllocation(String participant, String unit) {
+    return new PowerUnit(getAllocation(participant), "W").getValue(unit);
+  }
+
+  /**
    * Removes a participant contribution.
    *
-   * @param participant participant or port name
+   * @param participant participant identifier or legacy name
    */
   public void removeContribution(String participant) {
     contributions.remove(participant);
+    allocations.remove(participant);
+    invalidateSolution();
   }
 
-  /** Removes all named contributions while preserving the inherited balancing duty. */
+  /** Removes all contributions and allocations while preserving the inherited external duty. */
   public void clearContributions() {
     contributions.clear();
+    allocations.clear();
+    invalidateSolution();
   }
 
   /**
@@ -126,9 +199,169 @@ public class EnergyBus extends EnergyStream {
   }
 
   /**
-   * Gets the net bus duty in watts.
+   * Gets an immutable view of signed allocations in watts.
    *
-   * @return inherited balancing duty plus all named contributions in W
+   * @return allocations keyed by stable participant identifier
+   */
+  public Map<String, Double> getAllocations() {
+    return Collections.unmodifiableMap(allocations);
+  }
+
+  /**
+   * Checks whether the current offers and requests have been solved.
+   *
+   * @return {@code true} when allocation results are current
+   */
+  public boolean hasSolution() {
+    return solutionValid;
+  }
+
+  /** Marks allocation results stale without removing the previous report. */
+  public void invalidateSolution() {
+    solutionValid = false;
+  }
+
+  /**
+   * Solves generation, demand, balancing, curtailment, and shortage deterministically.
+   *
+   * @return auditable network report
+   */
+  public EnergyNetworkReport solveBalance() {
+    List<DispatchEntry> producers = new ArrayList<DispatchEntry>();
+    List<DispatchEntry> demands = new ArrayList<DispatchEntry>();
+    List<DispatchEntry> balancingGenerators = new ArrayList<DispatchEntry>();
+    List<DispatchEntry> balancingConsumers = new ArrayList<DispatchEntry>();
+
+    double externalSupply = Math.max(0.0, super.getDuty());
+    double externalDemand = Math.max(0.0, -super.getDuty());
+    double registeredContribution = 0.0;
+
+    for (EnergyPort port : registeredPorts.values()) {
+      double contribution = getContribution(port.getParticipantId());
+      registeredContribution += contribution;
+      if (port.getMode() == EnergyPortMode.CALCULATED) {
+        if (contribution > 0.0) {
+          producers.add(new DispatchEntry(port, contribution));
+        } else if (contribution < 0.0) {
+          demands.add(new DispatchEntry(port, -contribution));
+        }
+      } else if (port.getMode() == EnergyPortMode.SPECIFICATION) {
+        double request = boundedRequest(port);
+        if (port.getDirection() == EnergyPortDirection.OUTPUT) {
+          producers.add(new DispatchEntry(port, request));
+        } else {
+          demands.add(new DispatchEntry(port, request));
+        }
+      } else if (port.getMode() == EnergyPortMode.BALANCE) {
+        if (port.getDirection() != EnergyPortDirection.INPUT && port.getMaximumBalanceGeneration() > 0.0) {
+          balancingGenerators.add(new DispatchEntry(port, port.getMaximumBalanceGeneration()));
+        }
+        if (port.getDirection() != EnergyPortDirection.OUTPUT && port.getMaximumBalanceConsumption() > 0.0) {
+          balancingConsumers.add(new DispatchEntry(port, port.getMaximumBalanceConsumption()));
+        }
+      }
+    }
+
+    for (Map.Entry<String, Double> entry : contributions.entrySet()) {
+      if (registeredPorts.containsKey(entry.getKey())) {
+        continue;
+      }
+      if (entry.getValue().doubleValue() > 0.0) {
+        externalSupply += entry.getValue().doubleValue();
+      } else {
+        externalDemand -= entry.getValue().doubleValue();
+      }
+    }
+
+    double normalSupply = externalSupply + sumRequested(producers);
+    double requestedDemand = externalDemand + sumRequested(demands);
+    double availableBalancingGeneration = sumRequested(balancingGenerators);
+    double totalAvailableSupply = normalSupply + availableBalancingGeneration;
+    double demandAllocationLimit = Math.min(requestedDemand, totalAvailableSupply);
+
+    double participantDemandLimit = Math.max(0.0, demandAllocationLimit - externalDemand);
+    allocateByPriority(demands, participantDemandLimit);
+    double servedParticipantDemand = sumAllocated(demands);
+    double servedExternalDemand = Math.min(externalDemand, demandAllocationLimit);
+    double servedDemand = servedParticipantDemand + servedExternalDemand;
+
+    double availableBalancingConsumption = sumRequested(balancingConsumers);
+    double balancingConsumptionTarget =
+        Math.min(Math.max(0.0, normalSupply - servedDemand), availableBalancingConsumption);
+    double normalGenerationTarget = Math.min(normalSupply, servedDemand + balancingConsumptionTarget);
+    double participantGenerationTarget = Math.max(0.0, normalGenerationTarget - externalSupply);
+    allocateByPriority(producers, participantGenerationTarget);
+    double acceptedParticipantSupply = sumAllocated(producers);
+    double acceptedExternalSupply = Math.min(externalSupply, normalGenerationTarget);
+    double acceptedNormalSupply = acceptedParticipantSupply + acceptedExternalSupply;
+
+    double balancingGenerationTarget = Math.max(0.0, servedDemand - acceptedNormalSupply);
+    allocateByPriority(balancingGenerators, balancingGenerationTarget);
+    double balancingGeneration = sumAllocated(balancingGenerators);
+
+    double actualSurplus = Math.max(0.0, acceptedNormalSupply + balancingGeneration - servedDemand);
+    allocateByPriority(balancingConsumers, actualSurplus);
+    double balancingConsumption = sumAllocated(balancingConsumers);
+
+    allocations.clear();
+    updatePortNetworkState(producers, true);
+    updatePortNetworkState(demands, false);
+    updatePortNetworkState(balancingGenerators, true);
+    updatePortNetworkState(balancingConsumers, false);
+
+    double acceptedSupply = acceptedNormalSupply + balancingGeneration;
+    double offeredSupply = normalSupply + availableBalancingGeneration;
+    double unmetDemand = Math.max(0.0, requestedDemand - servedDemand);
+    double curtailedSupply =
+        Math.max(0.0, normalSupply - acceptedNormalSupply) + Math.max(0.0, availableBalancingGeneration
+            - balancingGeneration);
+
+    List<EnergyAllocation> allocationResults = createAllocationResults();
+    double conversionLoss = 0.0;
+    double operatingCostPerHour = 0.0;
+    double co2EmissionRate = 0.0;
+    for (EnergyPort port : registeredPorts.values()) {
+      conversionLoss += port.getConversionLoss();
+      double allocatedGeneration = Math.max(0.0, getAllocation(port.getParticipantId()));
+      double allocatedMWhPerHour = allocatedGeneration / 1.0e6;
+      operatingCostPerHour += allocatedMWhPerHour * port.getEnergyPricePerMWh();
+      co2EmissionRate += allocatedMWhPerHour * port.getEmissionFactorKgPerMWh();
+    }
+
+    lastReport = new EnergyNetworkReport(getName(), allocationResults, offeredSupply, acceptedSupply, requestedDemand,
+        servedDemand, unmetDemand, curtailedSupply, balancingGeneration, balancingConsumption, conversionLoss,
+        operatingCostPerHour, co2EmissionRate);
+    solutionValid = true;
+    return lastReport;
+  }
+
+  /**
+   * Alias for {@link #solveBalance()}.
+   *
+   * @return auditable network report
+   */
+  public EnergyNetworkReport solve() {
+    return solveBalance();
+  }
+
+  /**
+   * Gets the most recent network report.
+   *
+   * @return report, or {@code null} before the first solution
+   */
+  public EnergyNetworkReport getLastReport() {
+    return lastReport;
+  }
+
+  /**
+   * Gets the net unsatisfied bus duty in watts.
+   *
+   * <p>
+   * A positive result is surplus generation and a negative result is shortage. The value uses published calculated
+   * contributions and solved specification/balance contributions, so it remains a useful convergence residual.
+   * </p>
+   *
+   * @return net residual power in W
    */
   @Override
   public double getDuty() {
@@ -140,7 +373,7 @@ public class EnergyBus extends EnergyStream {
   }
 
   /**
-   * Alias for {@link #getDuty()} emphasizing the bus balance.
+   * Alias for {@link #getDuty()} emphasizing the bus residual.
    *
    * @return net bus power in W
    */
@@ -149,14 +382,9 @@ public class EnergyBus extends EnergyStream {
   }
 
   /**
-   * Gets the net bus power while excluding one participant's previous contribution.
+   * Gets the net bus power while excluding one participant's contribution.
    *
-   * <p>
-   * Specification consumers use this value when a process is run repeatedly. Excluding the consumer's own previous
-   * withdrawal prevents self-feedback from reducing its available power on every run.
-   * </p>
-   *
-   * @param participant participant or port contribution key to exclude
+   * @param participant participant identifier or legacy name to exclude
    * @return net power excluding that contribution in W
    */
   public double getNetPowerExcluding(String participant) {
@@ -172,7 +400,7 @@ public class EnergyBus extends EnergyStream {
   /**
    * Gets net bus power excluding one participant in a requested unit.
    *
-   * @param participant participant or port contribution key to exclude
+   * @param participant participant identifier or legacy name to exclude
    * @param unit requested power unit
    * @return net power excluding that contribution in the requested unit
    */
@@ -188,5 +416,160 @@ public class EnergyBus extends EnergyStream {
    */
   public double getNetPower(String unit) {
     return getDuty(unit);
+  }
+
+  /**
+   * Applies port minimum and maximum limits to a request.
+   *
+   * @param port requesting port
+   * @return bounded request in W
+   */
+  private static double boundedRequest(EnergyPort port) {
+    double request = Math.min(port.getRequestedPower(), port.getMaximumPower());
+    if (request > 0.0) {
+      request = Math.max(request, port.getMinimumPower());
+    }
+    return request;
+  }
+
+  /**
+   * Allocates a capacity across entries by priority and proportionally within an equal-priority group.
+   *
+   * @param entries dispatch entries
+   * @param available available power in W
+   */
+  private static void allocateByPriority(List<DispatchEntry> entries, double available) {
+    Collections.sort(entries, new Comparator<DispatchEntry>() {
+      /** {@inheritDoc} */
+      @Override
+      public int compare(DispatchEntry first, DispatchEntry second) {
+        int priorityComparison = Integer.compare(first.port.getPriority(), second.port.getPriority());
+        if (priorityComparison != 0) {
+          return priorityComparison;
+        }
+        return first.port.getParticipantId().compareTo(second.port.getParticipantId());
+      }
+    });
+    double remaining = Math.max(0.0, available);
+    int start = 0;
+    while (start < entries.size()) {
+      int end = start + 1;
+      int priority = entries.get(start).port.getPriority();
+      double groupRequest = entries.get(start).requested;
+      while (end < entries.size() && entries.get(end).port.getPriority() == priority) {
+        groupRequest += entries.get(end).requested;
+        end++;
+      }
+      double groupAllocation = Math.min(remaining, groupRequest);
+      for (int index = start; index < end; index++) {
+        DispatchEntry entry = entries.get(index);
+        entry.allocated = groupRequest > 0.0 ? groupAllocation * entry.requested / groupRequest : 0.0;
+      }
+      remaining -= groupAllocation;
+      start = end;
+    }
+  }
+
+  /**
+   * Sums requested power.
+   *
+   * @param entries dispatch entries
+   * @return requested power in W
+   */
+  private static double sumRequested(List<DispatchEntry> entries) {
+    double total = 0.0;
+    for (DispatchEntry entry : entries) {
+      total += entry.requested;
+    }
+    return total;
+  }
+
+  /**
+   * Sums allocated power.
+   *
+   * @param entries dispatch entries
+   * @return allocated power in W
+   */
+  private static double sumAllocated(List<DispatchEntry> entries) {
+    double total = 0.0;
+    for (DispatchEntry entry : entries) {
+      total += entry.allocated;
+    }
+    return total;
+  }
+
+  /**
+   * Stores signed allocation and solved contributions for dispatchable participants.
+   *
+   * @param entries dispatch entries
+   * @param generation {@code true} for generation, {@code false} for consumption
+   */
+  private void updatePortNetworkState(List<DispatchEntry> entries, boolean generation) {
+    for (DispatchEntry entry : entries) {
+      double signedAllocation = generation ? entry.allocated : -entry.allocated;
+      allocations.put(entry.port.getParticipantId(), signedAllocation);
+      if (entry.port.getMode() != EnergyPortMode.CALCULATED) {
+        contributions.put(entry.port.getParticipantId(), signedAllocation);
+      }
+    }
+  }
+
+  /**
+   * Creates immutable results for every registered participant.
+   *
+   * @return allocation results
+   */
+  private List<EnergyAllocation> createAllocationResults() {
+    List<EnergyAllocation> results = new ArrayList<EnergyAllocation>();
+    for (EnergyPort port : registeredPorts.values()) {
+      double requested;
+      double contribution = getContribution(port.getParticipantId());
+      if (port.getMode() == EnergyPortMode.CALCULATED) {
+        requested = Math.abs(contribution);
+      } else if (port.getMode() == EnergyPortMode.BALANCE) {
+        requested = getAllocation(port.getParticipantId()) >= 0.0 ? port.getMaximumBalanceGeneration()
+            : port.getMaximumBalanceConsumption();
+      } else {
+        requested = boundedRequest(port);
+      }
+      double allocated = Math.abs(getAllocation(port.getParticipantId()));
+      double unmet = port.getDirection() == EnergyPortDirection.INPUT ? Math.max(0.0, requested - allocated) : 0.0;
+      double curtailed =
+          port.getDirection() == EnergyPortDirection.OUTPUT ? Math.max(0.0, requested - allocated) : 0.0;
+      results.add(new EnergyAllocation(port.getParticipantId(), port.getParticipantName(), port.getMode(),
+          port.getDirection(), port.getPriority(), requested, allocated, unmet, curtailed));
+    }
+    return results;
+  }
+
+  /**
+   * Validates a participant key.
+   *
+   * @param participant participant key
+   */
+  private static void validateParticipant(String participant) {
+    if (participant == null || participant.trim().isEmpty()) {
+      throw new IllegalArgumentException("Energy bus participant cannot be null or empty");
+    }
+  }
+
+  /**
+   * Mutable working state used during one deterministic dispatch.
+   */
+  private static final class DispatchEntry {
+    private final EnergyPort port;
+    private final double requested;
+    private double allocated = 0.0;
+
+    /**
+     * Creates a dispatch entry.
+     *
+     * @param port participant port
+     * @param requested requested or offered power in W
+     */
+    private DispatchEntry(EnergyPort port, double requested) {
+      this.port = port;
+      this.requested = Math.max(0.0, requested);
+    }
   }
 }
