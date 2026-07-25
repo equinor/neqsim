@@ -678,7 +678,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
    * @throws IllegalArgumentException if power, efficiency, density, or flow is not positive
    */
   private void runWithSpecifiedShaftPower(double inletEnthalpy, UUID id) {
-    double shaftPower = getEnergyStream().getDuty();
+    double shaftPower = getEnergyPort("shaftPower").getPowerMagnitude();
     double efficiency = isentropicEfficiency > 1.0 ? isentropicEfficiency / 100.0 : isentropicEfficiency;
     if (!Double.isFinite(shaftPower) || shaftPower <= 0.0) {
       throw new IllegalArgumentException(
