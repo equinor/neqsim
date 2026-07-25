@@ -87,9 +87,10 @@ thermal conductivity, or other physical properties. Then use
 `fluid.hasPhaseType("gas")`, use
 `fluid.getPhase("gas").getDensity("kg/m3")` for the gas phase.
 
-The unit-aware getter does not by itself activate a Peneloux correction.
-Volume-shift behavior is defined by the selected thermodynamic system and its
-component parameters. Report the model and property path with density results.
+The unit-aware getter uses the initialized physical-property path; it does not
+select a volume-translation model. Any volume translation is determined by the
+configured thermodynamic system and its component parameters. Report the model
+and property path with density results.
 
 Reflash and reinitialize properties after changing temperature, pressure, or
 composition. For two-phase systems, also inspect phase-specific densities and
