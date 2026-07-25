@@ -120,8 +120,8 @@ class EnergyBusAllocationTest {
   void testIncompatibleUtilityQualityIsRejected() {
     EnergyBus steam = new EnergyBus("steam", EnergyType.HEAT);
     steam.getQuality().setUtilityLevel(UtilityLevel.LOW_PRESSURE_STEAM);
-    EnergyPort consumer =
-        new EnergyPort("heat", EnergyType.HEAT, EnergyPortDirection.INPUT, EnergyPortMode.SPECIFICATION);
+    EnergyPort consumer = new EnergyPort("heat", EnergyType.HEAT, EnergyPortDirection.INPUT,
+        EnergyPortMode.SPECIFICATION);
     consumer.setRequiredQuality(new EnergyQuality(UtilityLevel.HIGH_PRESSURE_STEAM));
 
     assertThrows(IllegalArgumentException.class, () -> consumer.connect(steam));
