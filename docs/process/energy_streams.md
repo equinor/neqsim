@@ -131,7 +131,8 @@ The `neqsim.process.equipment.energy` package provides process units with explic
 | `Generator` | shaft work → electrical |
 | `Gearbox` | shaft work → shaft work, with speed ratio |
 | `Inverter` | electrical → electrical, with voltage/frequency quality |
-| `Transformer` | electrical → electrical, with voltage ratio |\n| `PrimeMover` | chemical/fuel energy → shaft work |
+| `Transformer` | electrical → electrical, with voltage ratio |
+| `PrimeMover` | chemical/fuel energy → shaft work |
 
 `MotorDriveTrain` connects an electric motor to any pump, compressor, or other unit exposing `shaftPower`. `MotorAssistedDriveTrain` connects an expander, an assist motor, and a compressor to the same `MechanicalShaft`. The two network solvers then dispatch electrical supply to the motor and combined shaft supply to the compressor.
 
@@ -172,7 +173,9 @@ Every solved bus returns an `EnergyNetworkReport` containing offered and accepte
 | Electrolyzer | `electricalPower` input | Feed-calculated demand or connected power-driven specification |
 | CO2Electrolyzer, BioFeedstockPreparation | `electricalPower` input | Calculated demand |
 | AmmoniaSynthesisReactor | `reactionHeat` output | Calculated reaction heat |
-| StirredTankReactor | `heatDuty` bidirectional; `agitatorPower` input | Calculated or specified heat duty and calculated electrical demand |\n| HeatExchanger, MultiStreamHeatExchanger, LNGHeatExchanger | `heatDuty` bidirectional | Calculated recoverable heat |\n| Energy converters | `energyInput`, `energyOutput`, `heatLoss` | Specified input, calculated useful output and loss |
+| StirredTankReactor | `heatDuty` bidirectional; `agitatorPower` input | Calculated or specified heat duty and calculated electrical demand |
+| HeatExchanger, MultiStreamHeatExchanger, LNGHeatExchanger | `heatDuty` bidirectional | Calculated recoverable heat |
+| Energy converters | `energyInput`, `energyOutput`, `heatLoss` | Specified input, calculated useful output and loss |
 
 ## Reboiler duty reporting
 
