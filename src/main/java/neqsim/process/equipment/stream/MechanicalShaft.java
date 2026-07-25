@@ -4,10 +4,9 @@ package neqsim.process.equipment.stream;
  * Shared rotating shaft that balances mechanical power producers and loads.
  *
  * <p>
- * Producers add positive contributions with {@link #setGeneratedPower(String, double)}, while
- * compressors, pumps, and other loads add positive demands with
- * {@link #setConsumedPower(String, double)}. The inherited net bus power is positive when generation
- * exceeds demand and negative when the shaft is under-powered.
+ * Producers add positive contributions with {@link #setGeneratedPower(String, double)}, while compressors, pumps, and
+ * other loads add positive demands with {@link #setConsumedPower(String, double)}. The inherited net bus power is
+ * positive when generation exceeds demand and negative when the shaft is under-powered.
  *
  * @author NeqSim
  * @version 1.0
@@ -110,8 +109,7 @@ public class MechanicalShaft extends EnergyBus {
    * @param mechanicalEfficiency efficiency in the range (0, 1]
    */
   public void setMechanicalEfficiency(double mechanicalEfficiency) {
-    if (!Double.isFinite(mechanicalEfficiency) || mechanicalEfficiency <= 0.0
-        || mechanicalEfficiency > 1.0) {
+    if (!Double.isFinite(mechanicalEfficiency) || mechanicalEfficiency <= 0.0 || mechanicalEfficiency > 1.0) {
       throw new IllegalArgumentException("Shaft efficiency must be in (0, 1]");
     }
     this.mechanicalEfficiency = mechanicalEfficiency;
