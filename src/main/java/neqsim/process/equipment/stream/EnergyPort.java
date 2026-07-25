@@ -216,7 +216,13 @@ public class EnergyPort implements Serializable {
   public void setDuty(double duty) {
     EnergyStream stream = requireConnectedStream();
     if (stream instanceof EnergyBus) {
-      ((EnergyBus) stream).setContribution(getContributionKey(), duty);
+      double contribution = duty;
+      if (direction == EnergyPortDirection.INPUT) {
+        contribution = -Math.abs(duty);
+      } else if (direction == EnergyPortDirection.OUTPUT) {
+        contribution = Math.abs(duty);
+      }
+      ((EnergyBus) stream).setContribution(getContributionKey(), contribution);
     } else {
       stream.setDuty(duty);
     }
