@@ -17,6 +17,10 @@ import neqsim.process.design.AutoSizeable;
 import neqsim.process.electricaldesign.heatexchanger.HeatExchangerElectricalDesign;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortEquipment;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyStream;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.instrumentdesign.heatexchanger.HeatExchangerInstrumentDesign;
@@ -92,6 +96,7 @@ public class Heater extends TwoPortEquipment
    */
   public Heater(String name) {
     super(name);
+    registerEnergyPort("heatDuty", EnergyType.HEAT, EnergyPortDirection.BIDIRECTIONAL, EnergyPortMode.CALCULATED);
   }
 
   /**
@@ -101,10 +106,39 @@ public class Heater extends TwoPortEquipment
    * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public Heater(String name, StreamInterface inStream) {
-    super(name);
+    this(name);
     this.inStream = inStream;
     system = inStream.getThermoSystem().clone();
     outStream = new Stream("outStream", system);
+  }
+
+  /**
+   * Connects an external heat-duty specification using the legacy single-stream API.
+   *
+   * @param energyStream heat-duty stream
+   */
+  @Override
+  public void setEnergyStream(EnergyStream energyStream) {
+    super.setEnergyStream(energyStream);
+    getEnergyPort("heatDuty").setMode(EnergyPortMode.SPECIFICATION);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void connectEnergyStream(String portName, EnergyStream stream) {
+    super.connectEnergyStream(portName, stream);
+    if ("heatDuty".equals(portName)) {
+      getEnergyPort(portName).setMode(EnergyPortMode.SPECIFICATION);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void disconnectEnergyStream(String portName) {
+    super.disconnectEnergyStream(portName);
+    if ("heatDuty".equals(portName)) {
+      getEnergyPort(portName).setMode(EnergyPortMode.CALCULATED);
+    }
   }
 
   /** {@inheritDoc} */
