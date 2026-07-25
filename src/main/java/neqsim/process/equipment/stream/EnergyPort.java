@@ -20,7 +20,7 @@ import neqsim.util.unit.PowerUnit;
 public class EnergyPort implements Serializable {
   private static final long serialVersionUID = 1000L;
 
-  private final String participantId = UUID.randomUUID().toString();
+  private String participantId = UUID.randomUUID().toString();
   private final String name;
   private final EnergyType energyType;
   private final EnergyPortDirection direction;
@@ -63,6 +63,19 @@ public class EnergyPort implements Serializable {
    */
   public String getParticipantId() {
     return participantId;
+  }
+
+  /**
+   * Assigns a new participant identifier after a deserialized equipment copy collides with an existing bus participant.
+   *
+   * <p>
+   * Normal serialization preserves participant identity. Regeneration is only performed by
+   * {@link EnergyBus#registerPort(EnergyPort)} when two distinct port objects with the same serialized identifier are
+   * connected to one bus.
+   * </p>
+   */
+  void regenerateParticipantId() {
+    participantId = UUID.randomUUID().toString();
   }
 
   /**
@@ -478,6 +491,7 @@ public class EnergyPort implements Serializable {
       EnergyBus bus = (EnergyBus) stream;
       if (mode == EnergyPortMode.SPECIFICATION) {
         if (bus.hasSolution()) {
+          requestedPower = Math.abs(duty);
           return;
         }
         setRequestedPower(Math.abs(duty));
