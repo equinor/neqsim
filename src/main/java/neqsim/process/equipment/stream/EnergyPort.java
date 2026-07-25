@@ -117,9 +117,6 @@ public class EnergyPort implements Serializable {
    */
   public void connect(EnergyStream stream) {
     Objects.requireNonNull(stream, "stream cannot be null");
-    if (energyStream instanceof EnergyBus && energyStream != stream) {
-      ((EnergyBus) energyStream).removeContribution(getContributionKey());
-    }
     EnergyType streamType = stream.getEnergyType();
     if (streamType != EnergyType.UNSPECIFIED && energyType != EnergyType.UNSPECIFIED && streamType != energyType) {
       throw new IllegalArgumentException(
@@ -127,6 +124,9 @@ public class EnergyPort implements Serializable {
     }
     if (streamType == EnergyType.UNSPECIFIED && energyType != EnergyType.UNSPECIFIED) {
       stream.setEnergyType(energyType);
+    }
+    if (energyStream instanceof EnergyBus && energyStream != stream) {
+      ((EnergyBus) energyStream).removeContribution(getContributionKey());
     }
     energyStream = stream;
   }
