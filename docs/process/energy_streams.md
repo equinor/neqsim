@@ -7,7 +7,7 @@ description: Connect heat, shaft-work, and electrical duties between NeqSim unit
 
 Typed `EnergyPort` metadata separates three concepts:
 
-- `EnergyType`: `HEAT`, `SHAFT_WORK`, `ELECTRICAL`, or legacy `UNSPECIFIED`.
+- `EnergyType`: `HEAT`, `SHAFT_WORK`, `ELECTRICAL`, `CHEMICAL`, or legacy `UNSPECIFIED`.
 - `EnergyPortDirection`: physical flow relative to the equipment boundary.
 - `EnergyPortMode`: whether the equipment calculates the duty, reads it as a specification, or leaves it to a balance solver.
 
@@ -131,7 +131,7 @@ The `neqsim.process.equipment.energy` package provides process units with explic
 | `Generator` | shaft work → electrical |
 | `Gearbox` | shaft work → shaft work, with speed ratio |
 | `Inverter` | electrical → electrical, with voltage/frequency quality |
-| `Transformer` | electrical → electrical, with voltage ratio |
+| `Transformer` | electrical → electrical, with voltage ratio |\n| `PrimeMover` | chemical/fuel energy → shaft work |
 
 `MotorDriveTrain` connects an electric motor to any pump, compressor, or other unit exposing `shaftPower`. `MotorAssistedDriveTrain` connects an expander, an assist motor, and a compressor to the same `MechanicalShaft`. The two network solvers then dispatch electrical supply to the motor and combined shaft supply to the compressor.
 
@@ -153,7 +153,7 @@ The `neqsim.process.equipment.energy` package provides process units with explic
 
 `MechanicalShaft.advanceTransient(dt)` integrates rotational kinetic energy from the solved net shaft power. Moment of inertia, friction loss, maximum speed, acceleration/deceleration limits, and trip coastdown are configurable.
 
-Every solved bus returns an `EnergyNetworkReport` containing offered and accepted supply, requested and served demand, balancing generation/consumption, unmet demand, curtailment, conversion loss, delivery efficiency, operating cost, and CO2-equivalent rate. Set marginal price and emission factor on producer ports with `setEnergyPricePerMWh` and `setEmissionFactorKgPerMWh`.
+Every solved bus returns an `EnergyNetworkReport` containing offered and accepted supply, requested and served demand, balancing generation/consumption, unmet demand, curtailment, conversion loss, delivery efficiency, fuel-energy rate, operating cost, and CO2-equivalent rate. Set marginal price and emission factor on producer ports with `setEnergyPricePerMWh` and `setEmissionFactorKgPerMWh`.
 
 ## Equipment coverage
 
