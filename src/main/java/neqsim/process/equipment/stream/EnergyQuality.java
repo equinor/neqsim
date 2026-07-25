@@ -69,6 +69,8 @@ public class EnergyQuality implements Serializable, Cloneable {
     }
     return matchesWithinTolerance(voltage, required.voltage, 0.05)
         && matchesWithinTolerance(frequency, required.frequency, 0.02)
+        && matchesWithinTolerance(temperature, required.temperature, 0.02)
+        && matchesWithinTolerance(pressure, required.pressure, 0.05)
         && matchesWithinTolerance(shaftSpeed, required.shaftSpeed, 0.05);
   }
 
