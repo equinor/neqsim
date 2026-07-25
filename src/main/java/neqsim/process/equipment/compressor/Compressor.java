@@ -727,7 +727,7 @@ public class Compressor extends TwoPortEquipment
 
   private void finishRun(UUID id) {
     if (!isSetEnergyStream()) {
-      getEnergyStream().setDuty(dH);
+      getEnergyPort("shaftPower").setDuty(dH);
     }
     updateRecalculationState();
     if (thermalModel != null && thermalModel.isAutoSolve()) {
