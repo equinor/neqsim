@@ -3,10 +3,10 @@ package neqsim.process.equipment.stream;
 /**
  * Calculation role of an {@link EnergyPort} in a process simulation.
  *
- * <p>The mode is independent of the physical direction. For example, a pressure-specified pump has
- * an {@link EnergyPortDirection#INPUT} shaft port but calculates its required power, so that port is
- * {@link #CALCULATED}. A power-specified pump reads the same physical input port as a
- * {@link #SPECIFICATION}.
+ * <p>
+ * The mode is independent of the physical direction. For example, a pressure-specified pump has an
+ * {@link EnergyPortDirection#INPUT} shaft port but calculates its required power, so that port is {@link #CALCULATED}.
+ * A power-specified pump reads the same physical input port as a {@link #SPECIFICATION}.
  *
  * @author NeqSim
  * @version 1.0
