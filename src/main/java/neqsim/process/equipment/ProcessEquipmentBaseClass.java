@@ -427,7 +427,15 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
    * @return a boolean
    */
   public boolean isSetEnergyStream() {
-    return isSetEnergyStream;
+    if (!isSetEnergyStream || energyPorts.isEmpty()) {
+      return isSetEnergyStream;
+    }
+    for (EnergyPort port : energyPorts.values()) {
+      if (port.isConnected() && port.getMode() == EnergyPortMode.SPECIFICATION) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /** {@inheritDoc} */
