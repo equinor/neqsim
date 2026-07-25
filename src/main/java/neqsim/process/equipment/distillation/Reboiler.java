@@ -29,8 +29,7 @@ public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
    */
   public Reboiler(String name) {
     super(name);
-    registerEnergyPort(
-        "heatDuty", EnergyType.HEAT, EnergyPortDirection.INPUT, EnergyPortMode.CALCULATED);
+    registerEnergyPort("heatDuty", EnergyType.HEAT, EnergyPortDirection.INPUT, EnergyPortMode.CALCULATED);
   }
 
   /**
