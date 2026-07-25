@@ -9,9 +9,9 @@ import neqsim.util.unit.PowerUnit;
  * Multi-party energy connection that aggregates named power contributions.
  *
  * <p>
- * Unlike the point-to-point {@link EnergyStream}, an energy bus can connect several calculated and
- * specification ports. Positive and negative contribution signs represent injection and withdrawal
- * from the bus. The inherited duty is retained as an optional external or balancing contribution.
+ * Unlike the point-to-point {@link EnergyStream}, an energy bus can connect several calculated and specification ports.
+ * Positive and negative contribution signs represent injection and withdrawal from the bus. The inherited duty is
+ * retained as an optional external or balancing contribution.
  *
  * @author NeqSim
  * @version 1.0
