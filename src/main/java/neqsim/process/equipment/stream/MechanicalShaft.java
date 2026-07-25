@@ -157,7 +157,7 @@ public class MechanicalShaft extends EnergyBus {
       throw new IllegalArgumentException("Maximum shaft speed must be positive");
     }
     this.maximumSpeed = maximumSpeed;
-    speed = Math.min(speed, maximumSpeed);
+    setSpeed(Math.min(speed, maximumSpeed));
   }
 
   /**
