@@ -450,7 +450,7 @@ public class Heater extends TwoPortEquipment
     double newH = system.getEnthalpy();
     energyInput = newH - oldH;
     if (!isSetEnergyStream()) {
-      getEnergyStream().setDuty(energyInput);
+      getEnergyPort("heatDuty").setDuty(energyInput);
     }
     // system.setTemperature(temperatureOut);
     // testOps.TPflash();
