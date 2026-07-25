@@ -79,7 +79,7 @@ These connections remain stable when the flowsheet is executed repeatedly, and J
 
 ## Deterministic allocation and balancing
 
-For a state-of-art multi-party network, ports publish offers or requests and the bus solves one deterministic allocation. Lower priority numbers are served first; equal-priority participants share available power proportionally.
+For a state-of-the-art multi-party network, ports publish offers or requests and the bus solves one deterministic allocation. Lower priority numbers are served first; equal-priority participants share available power proportionally.
 
 ```java
 EnergyBus allocatedGrid = new EnergyBus("allocated grid", EnergyType.ELECTRICAL);
