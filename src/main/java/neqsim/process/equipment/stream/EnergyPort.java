@@ -143,6 +143,31 @@ public class EnergyPort implements Serializable {
   }
 
   /**
+   * Gets the non-negative transferred-power magnitude in watts.
+   *
+   * <p>
+   * This is the preferred accessor for typed ports because physical direction is represented by
+   * {@link #getDirection()} rather than by a legacy duty sign.
+   *
+   * @return absolute duty in W
+   * @throws IllegalStateException if no stream is connected
+   */
+  public double getPowerMagnitude() {
+    return Math.abs(getDuty());
+  }
+
+  /**
+   * Gets the non-negative transferred-power magnitude in a requested unit.
+   *
+   * @param unit requested power unit
+   * @return absolute duty in the requested unit
+   * @throws IllegalStateException if no stream is connected
+   */
+  public double getPowerMagnitude(String unit) {
+    return Math.abs(getDuty(unit));
+  }
+
+  /**
    * Gets the connected stream duty in a requested unit.
    *
    * @param unit requested power unit
