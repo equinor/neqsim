@@ -28,6 +28,9 @@ class EnergyNetworkSolverGraphTest {
 
     List<ProcessEquipmentInterface> order = ProcessGraphBuilder.buildGraph(process).getCalculationOrder();
 
+    assertTrue(order.contains(producer));
+    assertTrue(order.contains(solver));
+    assertTrue(order.contains(consumer));
     assertTrue(order.indexOf(producer) < order.indexOf(solver));
     assertTrue(order.indexOf(solver) < order.indexOf(consumer));
   }
