@@ -84,6 +84,9 @@ public class ThermalUtilitySource extends ProcessEquipmentBaseClass {
     if (!getEnergyPort(OUTPUT_PORT).isConnected()) {
       result.addError("energy", "Thermal utility output is not connected",
           "Connect " + OUTPUT_PORT + " to a UtilityEnergyBus");
+    } else if (!(getEnergyPort(OUTPUT_PORT).getEnergyStream() instanceof UtilityEnergyBus)) {
+      result.addError("energy", "Thermal utility output is not connected to a typed UtilityEnergyBus",
+          "Connect " + OUTPUT_PORT + " to a " + utilityLevel + " UtilityEnergyBus");
     } else if (getEnergyPort(OUTPUT_PORT).getEnergyStream() instanceof UtilityEnergyBus) {
       UtilityEnergyBus bus = (UtilityEnergyBus) getEnergyPort(OUTPUT_PORT).getEnergyStream();
       if (bus.getUtilityLevel() != utilityLevel) {
