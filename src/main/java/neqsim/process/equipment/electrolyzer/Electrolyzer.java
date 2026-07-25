@@ -4,6 +4,10 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyStream;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.Fluid;
@@ -121,6 +125,8 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
    */
   public Electrolyzer(String name) {
     super(name);
+    registerEnergyPort("electricalPower", EnergyType.ELECTRICAL, EnergyPortDirection.INPUT,
+        EnergyPortMode.CALCULATED);
   }
 
   /**
@@ -132,6 +138,38 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   public Electrolyzer(String name, StreamInterface inletStream) {
     this(name);
     setInletStream(inletStream);
+  }
+
+  /**
+   * Connects an external electrical-power specification and selects power-driven operation.
+   *
+   * @param energyStream electrical energy stream
+   */
+  @Override
+  public void setEnergyStream(EnergyStream energyStream) {
+    super.setEnergyStream(energyStream);
+    getEnergyPort("electricalPower").setMode(EnergyPortMode.SPECIFICATION);
+    setAvailablePower(Math.abs(energyStream.getDuty()));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void connectEnergyStream(String portName, EnergyStream stream) {
+    super.connectEnergyStream(portName, stream);
+    if ("electricalPower".equals(portName)) {
+      getEnergyPort(portName).setMode(EnergyPortMode.SPECIFICATION);
+      setAvailablePower(Math.abs(stream.getDuty()));
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void disconnectEnergyStream(String portName) {
+    super.disconnectEnergyStream(portName);
+    if ("electricalPower".equals(portName)) {
+      getEnergyPort(portName).setMode(EnergyPortMode.CALCULATED);
+      operationMode = OperationMode.WATER_FEED;
+    }
   }
 
   /**
@@ -202,6 +240,9 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    if (getEnergyPort("electricalPower").getMode() == EnergyPortMode.SPECIFICATION) {
+      setAvailablePower(Math.abs(getEnergyPort("electricalPower").getDuty()));
+    }
     double tempK = waterInlet.getTemperature("K");
     double inletPressure = waterInlet.getPressure("bara");
     curtailedPower = 0.0;
