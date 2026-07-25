@@ -7,9 +7,10 @@ package neqsim.process.equipment.stream;
  * The type is metadata used to prevent accidental connections such as wiring an electrical generator directly to a
  * heat-duty port. {@link #UNSPECIFIED} preserves compatibility with legacy energy streams that did not declare a
  * domain.
+ * </p>
  *
  * @author NeqSim
- * @version 1.0
+ * @version 2.0
  */
 public enum EnergyType {
   /** Legacy or otherwise unspecified energy domain. */
@@ -19,5 +20,7 @@ public enum EnergyType {
   /** Mechanical shaft work transferred between rotating equipment. */
   SHAFT_WORK,
   /** Electrical power transferred between electrical equipment and loads. */
-  ELECTRICAL
+  ELECTRICAL,
+  /** Chemical or fuel energy rate based on a declared heating-value convention. */
+  CHEMICAL
 }
