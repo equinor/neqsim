@@ -12,10 +12,10 @@ import neqsim.util.unit.PowerUnit;
  * Multi-party energy connection with deterministic allocation and balancing.
  *
  * <p>
- * Positive contributions inject power and negative contributions withdraw power. Calculated ports publish fixed
- * offers or demands, specification ports publish dispatchable requests, and balance ports absorb a surplus or cover a
- * shortage within configured limits. Lower priority numbers are dispatched first; participants with equal priority
- * are allocated proportionally and ordered by persistent participant identifier.
+ * Positive contributions inject power and negative contributions withdraw power. Calculated ports publish fixed offers
+ * or demands, specification ports publish dispatchable requests, and balance ports absorb a surplus or cover a shortage
+ * within configured limits. Lower priority numbers are dispatched first; participants with equal priority are allocated
+ * proportionally and ordered by persistent participant identifier.
  * </p>
  *
  * @author NeqSim
@@ -291,8 +291,8 @@ public class EnergyBus extends EnergyStream {
     double servedDemand = servedParticipantDemand + servedExternalDemand;
 
     double availableBalancingConsumption = sumRequested(balancingConsumers);
-    double balancingConsumptionTarget =
-        Math.min(Math.max(0.0, normalSupply - servedDemand), availableBalancingConsumption);
+    double balancingConsumptionTarget = Math.min(Math.max(0.0, normalSupply - servedDemand),
+        availableBalancingConsumption);
     double normalGenerationTarget = Math.min(normalSupply, servedDemand + balancingConsumptionTarget);
     double participantGenerationTarget = Math.max(0.0, normalGenerationTarget - externalSupply);
     allocateByPriority(producers, participantGenerationTarget);
@@ -538,8 +538,7 @@ public class EnergyBus extends EnergyStream {
       }
       double allocated = Math.abs(getAllocation(port.getParticipantId()));
       double unmet = port.getDirection() == EnergyPortDirection.INPUT ? Math.max(0.0, requested - allocated) : 0.0;
-      double curtailed =
-          port.getDirection() == EnergyPortDirection.OUTPUT ? Math.max(0.0, requested - allocated) : 0.0;
+      double curtailed = port.getDirection() == EnergyPortDirection.OUTPUT ? Math.max(0.0, requested - allocated) : 0.0;
       results.add(new EnergyAllocation(port.getParticipantId(), port.getParticipantName(), port.getMode(),
           port.getDirection(), port.getPriority(), requested, allocated, unmet, curtailed));
     }
