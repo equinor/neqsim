@@ -1,5 +1,7 @@
 package neqsim.process.equipment.stream;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -52,6 +54,23 @@ public class EnergyStream implements ProcessElementInterface, Cloneable {
   public EnergyStream(String name, EnergyType energyType) {
     this.name = name;
     this.energyType = Objects.requireNonNull(energyType, "energyType cannot be null");
+  }
+
+  /**
+   * Restores defaults introduced after the original serialized energy-stream format.
+   *
+   * @param input serialized object input
+   * @throws IOException if the stream cannot be read
+   * @throws ClassNotFoundException if a serialized class cannot be resolved
+   */
+  private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+    input.defaultReadObject();
+    if (energyType == null) {
+      energyType = EnergyType.UNSPECIFIED;
+    }
+    if (quality == null) {
+      quality = new EnergyQuality();
+    }
   }
 
   /** {@inheritDoc} */
