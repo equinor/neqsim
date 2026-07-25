@@ -357,8 +357,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
    * @param stream energy stream to connect
    * @param mode calculation role for this connection
    */
-  public void connectEnergyStream(
-      String portName, EnergyStream stream, EnergyPortMode mode) {
+  public void connectEnergyStream(String portName, EnergyStream stream, EnergyPortMode mode) {
     connectEnergyStream(portName, stream);
     setEnergyPortMode(portName, mode);
   }
