@@ -18,8 +18,8 @@ class EnergyConverterTest {
     MechanicalShaft shaft = new MechanicalShaft("shaft");
     EnergyPort grid = port("grid", EnergyType.ELECTRICAL, EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED,
         electricalBus);
-    EnergyPort load =
-        port("load", EnergyType.SHAFT_WORK, EnergyPortDirection.INPUT, EnergyPortMode.SPECIFICATION, shaft);
+    EnergyPort load = port("load", EnergyType.SHAFT_WORK, EnergyPortDirection.INPUT, EnergyPortMode.SPECIFICATION,
+        shaft);
     ElectricMotor motor = new ElectricMotor("motor", 0.95);
     motor.connectEnergyStream(EnergyConverter.INPUT_PORT, electricalBus, EnergyPortMode.SPECIFICATION);
     motor.connectEnergyStream(EnergyConverter.OUTPUT_PORT, shaft, EnergyPortMode.CALCULATED);
@@ -42,8 +42,8 @@ class EnergyConverterTest {
   void testConverterTransientRampAndTrip() {
     EnergyBus input = new EnergyBus("input", EnergyType.ELECTRICAL);
     EnergyBus output = new EnergyBus("output", EnergyType.ELECTRICAL);
-    EnergyPort source =
-        port("source", EnergyType.ELECTRICAL, EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED, input);
+    EnergyPort source = port("source", EnergyType.ELECTRICAL, EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED,
+        input);
     Inverter inverter = new Inverter("inverter");
     inverter.connectEnergyStream(EnergyConverter.INPUT_PORT, input, EnergyPortMode.SPECIFICATION);
     inverter.connectEnergyStream(EnergyConverter.OUTPUT_PORT, output, EnergyPortMode.CALCULATED);
