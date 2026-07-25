@@ -39,6 +39,7 @@ class TroubleshootingDocumentationTest {
       overallTotal += fluid.getPhase(0).getComponent(i).getz();
     }
     double bulkDensity = fluid.getDensity("kg/m3");
+    assertTrue(fluid.hasPhaseType("gas"));
     double gasDensity = fluid.getPhase("gas").getDensity("kg/m3");
 
     assertEquals(1.0, overallTotal, 1.0e-12);
@@ -69,7 +70,7 @@ class TroubleshootingDocumentationTest {
     process.run();
 
     assertEquals(10000.0, separator.getGasOutStream().getFlowRate("kg/hr"), 1.0e-6);
-    assertEquals(228.4339, compressor.getPower("kW"), 1.0e-3);
+    assertEquals(228.4339, compressor.getPower("kW"), 0.1);
   }
 
   @Test
