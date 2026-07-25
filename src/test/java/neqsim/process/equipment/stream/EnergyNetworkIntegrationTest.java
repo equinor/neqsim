@@ -50,8 +50,7 @@ class EnergyNetworkIntegrationTest extends neqsim.NeqSimTest {
 
     process.runSequential(UUID.randomUUID());
 
-    assertEquals(generatedPower, shaft.getContribution("expander.shaftPower"),
-        Math.max(1.0, generatedPower * 1.0e-10));
+    assertEquals(generatedPower, shaft.getContribution("expander.shaftPower"), Math.max(1.0, generatedPower * 1.0e-10));
     assertEquals(-generatedPower, shaft.getContribution("compressor.shaftPower"),
         Math.max(1.0, generatedPower * 1.0e-10));
   }
