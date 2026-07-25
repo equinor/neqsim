@@ -2,12 +2,14 @@ package neqsim.process.processmodel.graph;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.stream.EnergyBus;
 import neqsim.process.equipment.stream.EnergyPortDirection;
 import neqsim.process.equipment.stream.EnergyPortMode;
 import neqsim.process.equipment.stream.EnergyStream;
@@ -36,6 +38,51 @@ class EnergyStreamGraphTest {
 
     List<ProcessEquipmentInterface> order = graph.getCalculationOrder();
     assertTrue(order.indexOf(expander) < order.indexOf(compressor));
+  }
+
+  @Test
+  void testEnergyBusSupportsMultipleProducersAndConsumers() {
+    EnergyBus bus = new EnergyBus("electrical bus", EnergyType.ELECTRICAL);
+    EnergyUnit solar =
+        new EnergyUnit("solar", EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED, bus);
+    EnergyUnit wind =
+        new EnergyUnit("wind", EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED, bus);
+    EnergyUnit electrolyzer =
+        new EnergyUnit("electrolyzer", EnergyPortDirection.INPUT, EnergyPortMode.SPECIFICATION, bus);
+    EnergyUnit heater =
+        new EnergyUnit("heater", EnergyPortDirection.INPUT, EnergyPortMode.SPECIFICATION, bus);
+    ProcessSystem process = new ProcessSystem();
+    process.add(electrolyzer);
+    process.add(heater);
+    process.add(solar);
+    process.add(wind);
+
+    ProcessGraph graph = ProcessGraphBuilder.buildGraph(process);
+
+    long energyEdges =
+        graph.getEdges().stream()
+            .filter(edge -> edge.getEdgeType() == ProcessEdge.EdgeType.ENERGY)
+            .count();
+    assertEquals(4L, energyEdges);
+  }
+
+  @Test
+  void testPointToPointStreamRejectsMultipleConsumers() {
+    EnergyStream shaft = new EnergyStream("single shaft", EnergyType.SHAFT_WORK);
+    EnergyUnit expander =
+        new EnergyUnit("expander", EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED, shaft);
+    EnergyUnit compressorA =
+        new EnergyUnit(
+            "compressor A", EnergyPortDirection.INPUT, EnergyPortMode.SPECIFICATION, shaft);
+    EnergyUnit compressorB =
+        new EnergyUnit(
+            "compressor B", EnergyPortDirection.INPUT, EnergyPortMode.SPECIFICATION, shaft);
+    ProcessSystem process = new ProcessSystem();
+    process.add(expander);
+    process.add(compressorA);
+    process.add(compressorB);
+
+    assertThrows(IllegalStateException.class, () -> ProcessGraphBuilder.buildGraph(process));
   }
 
   private static final class EnergyUnit extends ProcessEquipmentBaseClass {
