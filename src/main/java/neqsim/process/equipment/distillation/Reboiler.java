@@ -139,7 +139,7 @@ public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
     // System.out.println("beta " + mixedStream.getThermoSystem().getBeta())
     duty = mixedStream.getFluid().getEnthalpy() - calcMixStreamEnthalpy0();
     if (!isSetEnergyStream()) {
-      getEnergyStream().setDuty(duty);
+      getEnergyPort("heatDuty").setDuty(duty);
     }
 
     mixedStream.setCalculationIdentifier(id);
