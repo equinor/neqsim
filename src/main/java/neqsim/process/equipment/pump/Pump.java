@@ -184,11 +184,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
    */
   public Pump(String name) {
     super(name);
-    registerEnergyPort(
-        "shaftPower",
-        EnergyType.SHAFT_WORK,
-        EnergyPortDirection.INPUT,
-        EnergyPortMode.CALCULATED);
+    registerEnergyPort("shaftPower", EnergyType.SHAFT_WORK, EnergyPortDirection.INPUT, EnergyPortMode.CALCULATED);
     initMechanicalDesign();
     initElectricalDesign();
   }
@@ -341,8 +337,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
         || pressure != lastOutletPressure || outTemperature != lastOutTemperature || speed != lastSpeed
         || minimumFlow != lastMinimumFlow || isentropicEfficiency != lastIsentropicEfficiency || dH != lastPower
         || useOutTemperature != lastUseOutTemperature || calculateAsCompressor != lastCalculateAsCompressor
-        || powerSet != lastPowerSet || pumpChart.isUsePumpChart() != lastUsePumpChart
-        || checkNPSH != lastCheckNPSH
+        || powerSet != lastPowerSet || pumpChart.isUsePumpChart() != lastUsePumpChart || checkNPSH != lastCheckNPSH
         || (isSetEnergyStream() && getEnergyStream().getDuty() != dH)) {
       return true;
     }
@@ -684,26 +679,21 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
    */
   private void runWithSpecifiedShaftPower(double inletEnthalpy, UUID id) {
     double shaftPower = getEnergyStream().getDuty();
-    double efficiency =
-        isentropicEfficiency > 1.0 ? isentropicEfficiency / 100.0 : isentropicEfficiency;
+    double efficiency = isentropicEfficiency > 1.0 ? isentropicEfficiency / 100.0 : isentropicEfficiency;
     if (!Double.isFinite(shaftPower) || shaftPower <= 0.0) {
       throw new IllegalArgumentException(
           "Connected shaft power for pump " + getName() + " must be finite and positive");
     }
     if (!Double.isFinite(efficiency) || efficiency <= 0.0 || efficiency > 1.0) {
-      throw new IllegalArgumentException(
-          "Isentropic efficiency for pump " + getName() + " must be in (0, 1]");
+      throw new IllegalArgumentException("Isentropic efficiency for pump " + getName() + " must be in (0, 1]");
     }
 
     inStream.getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     double densityInlet = inStream.getThermoSystem().getDensity("kg/m3");
     double volumetricFlow = inStream.getThermoSystem().getFlowRate("kg/sec") / densityInlet;
-    if (!Double.isFinite(densityInlet)
-        || densityInlet <= 0.0
-        || !Double.isFinite(volumetricFlow)
+    if (!Double.isFinite(densityInlet) || densityInlet <= 0.0 || !Double.isFinite(volumetricFlow)
         || volumetricFlow <= 0.0) {
-      throw new IllegalArgumentException(
-          "Pump " + getName() + " requires positive inlet density and volumetric flow");
+      throw new IllegalArgumentException("Pump " + getName() + " requires positive inlet density and volumetric flow");
     }
 
     double hydraulicPower = shaftPower * efficiency;
