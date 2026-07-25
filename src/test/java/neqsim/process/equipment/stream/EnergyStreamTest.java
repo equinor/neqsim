@@ -122,6 +122,7 @@ class EnergyStreamTest {
 
     assertEquals(a.hashCode(), b.hashCode());
   }
+
   @Test
   void testUnitAwareEnergyFlowAliases() {
     EnergyStream stream = new EnergyStream("motor-power", EnergyType.ELECTRICAL);
@@ -134,8 +135,7 @@ class EnergyStreamTest {
 
   @Test
   void testEnergyStreamIsProcessElement() {
-    ProcessElementInterface element =
-        new EnergyStream("shaft-work", EnergyType.SHAFT_WORK);
+    ProcessElementInterface element = new EnergyStream("shaft-work", EnergyType.SHAFT_WORK);
 
     assertEquals("shaft-work", element.getName());
     assertEquals(EnergyType.SHAFT_WORK, ((EnergyStream) element).getEnergyType());
