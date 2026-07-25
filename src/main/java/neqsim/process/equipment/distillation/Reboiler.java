@@ -1,6 +1,10 @@
 package neqsim.process.equipment.distillation;
 
 import java.util.UUID;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyStream;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -25,6 +29,37 @@ public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
    */
   public Reboiler(String name) {
     super(name);
+    registerEnergyPort(
+        "heatDuty", EnergyType.HEAT, EnergyPortDirection.INPUT, EnergyPortMode.CALCULATED);
+  }
+
+  /**
+   * Connects an external heat-duty specification using the legacy single-stream API.
+   *
+   * @param energyStream heat-duty stream
+   */
+  @Override
+  public void setEnergyStream(EnergyStream energyStream) {
+    super.setEnergyStream(energyStream);
+    getEnergyPort("heatDuty").setMode(EnergyPortMode.SPECIFICATION);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void connectEnergyStream(String portName, EnergyStream stream) {
+    super.connectEnergyStream(portName, stream);
+    if ("heatDuty".equals(portName)) {
+      getEnergyPort(portName).setMode(EnergyPortMode.SPECIFICATION);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void disconnectEnergyStream(String portName) {
+    super.disconnectEnergyStream(portName);
+    if ("heatDuty".equals(portName)) {
+      getEnergyPort(portName).setMode(EnergyPortMode.CALCULATED);
+    }
   }
 
   /**
@@ -104,6 +139,9 @@ public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
 
     // System.out.println("beta " + mixedStream.getThermoSystem().getBeta())
     duty = mixedStream.getFluid().getEnthalpy() - calcMixStreamEnthalpy0();
+    if (!isSetEnergyStream()) {
+      getEnergyStream().setDuty(duty);
+    }
 
     mixedStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
