@@ -2,27 +2,41 @@ package neqsim.process.equipment.stream;
 
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.UUID;
+import neqsim.util.unit.PowerUnit;
 
 /**
  * Named, typed connection point between process equipment and an {@link EnergyStream}.
  *
  * <p>
- * An energy port separates three concerns that were previously implicit in the sign of a duty: the physical energy
- * domain, the physical transfer direction, and the calculation role. This lets graph-based schedulers order an energy
- * producer before a consumer without changing the legacy {@code EnergyStream} duty convention.
+ * An energy port separates the physical domain, transfer direction, calculation role, requested power, and allocated
+ * power. Each port owns a persistent participant identifier so an energy network remains valid when equipment is
+ * renamed.
+ * </p>
  *
  * @author NeqSim
- * @version 1.0
+ * @version 2.0
  */
 public class EnergyPort implements Serializable {
   private static final long serialVersionUID = 1000L;
 
+  private final String participantId = UUID.randomUUID().toString();
   private final String name;
   private final EnergyType energyType;
   private final EnergyPortDirection direction;
   private EnergyPortMode mode;
   private String ownerName = "";
   private EnergyStream energyStream;
+  private int priority = 100;
+  private double requestedPower = 0.0;
+  private double minimumPower = 0.0;
+  private double maximumPower = Double.POSITIVE_INFINITY;
+  private double maximumBalanceGeneration = 0.0;
+  private double maximumBalanceConsumption = 0.0;
+  private double energyPricePerMWh = 0.0;
+  private double emissionFactorKgPerMWh = 0.0;
+  private double conversionLoss = 0.0;
+  private EnergyQuality requiredQuality = new EnergyQuality();
 
   /**
    * Creates an unconnected energy port.
@@ -43,6 +57,15 @@ public class EnergyPort implements Serializable {
   }
 
   /**
+   * Gets the persistent network-participant identifier.
+   *
+   * @return participant identifier
+   */
+  public String getParticipantId() {
+    return participantId;
+  }
+
+  /**
    * Gets the port name.
    *
    * @return port name
@@ -52,7 +75,7 @@ public class EnergyPort implements Serializable {
   }
 
   /**
-   * Gets the owning equipment name used for energy-bus contribution keys.
+   * Gets the owning equipment name used for display and reporting.
    *
    * @return owner name, or an empty string when the port is standalone
    */
@@ -61,12 +84,21 @@ public class EnergyPort implements Serializable {
   }
 
   /**
-   * Sets the owning equipment name used for energy-bus contribution keys.
+   * Sets the owning equipment display name.
    *
    * @param ownerName equipment name
    */
   public void setOwnerName(String ownerName) {
     this.ownerName = Objects.requireNonNull(ownerName, "ownerName cannot be null");
+  }
+
+  /**
+   * Gets a human-readable participant name.
+   *
+   * @return owner and port name
+   */
+  public String getParticipantName() {
+    return ownerName.isEmpty() ? name : ownerName + "." + name;
   }
 
   /**
@@ -103,6 +135,219 @@ public class EnergyPort implements Serializable {
    */
   public void setMode(EnergyPortMode mode) {
     this.mode = Objects.requireNonNull(mode, "mode cannot be null");
+    invalidateBusSolution();
+  }
+
+  /**
+   * Gets dispatch priority.
+   *
+   * @return priority, where lower values are dispatched first
+   */
+  public int getPriority() {
+    return priority;
+  }
+
+  /**
+   * Sets dispatch priority.
+   *
+   * @param priority priority, where lower values are dispatched first
+   */
+  public void setPriority(int priority) {
+    this.priority = priority;
+    invalidateBusSolution();
+  }
+
+  /**
+   * Gets requested power.
+   *
+   * @return non-negative request in W
+   */
+  public double getRequestedPower() {
+    return requestedPower;
+  }
+
+  /**
+   * Gets requested power in a requested unit.
+   *
+   * @param unit power unit
+   * @return request in the requested unit
+   */
+  public double getRequestedPower(String unit) {
+    return new PowerUnit(requestedPower, "W").getValue(unit);
+  }
+
+  /**
+   * Sets requested power for a specification port.
+   *
+   * @param requestedPower non-negative request in W
+   */
+  public void setRequestedPower(double requestedPower) {
+    if (!Double.isFinite(requestedPower) || requestedPower < 0.0) {
+      throw new IllegalArgumentException("Requested power must be non-negative and finite");
+    }
+    this.requestedPower = requestedPower;
+    invalidateBusSolution();
+  }
+
+  /**
+   * Sets requested power in a specified unit.
+   *
+   * @param requestedPower non-negative request
+   * @param unit power unit
+   */
+  public void setRequestedPower(double requestedPower, String unit) {
+    setRequestedPower(new PowerUnit(requestedPower, unit).getValue("W"));
+  }
+
+  /**
+   * Sets normal operating limits.
+   *
+   * @param minimumPower minimum dispatched power in W
+   * @param maximumPower maximum dispatched power in W
+   */
+  public void setPowerLimits(double minimumPower, double maximumPower) {
+    if (!Double.isFinite(minimumPower) || minimumPower < 0.0) {
+      throw new IllegalArgumentException("Minimum power must be non-negative and finite");
+    }
+    if (Double.isNaN(maximumPower) || maximumPower < minimumPower) {
+      throw new IllegalArgumentException("Maximum power must be at least the minimum power");
+    }
+    this.minimumPower = minimumPower;
+    this.maximumPower = maximumPower;
+    invalidateBusSolution();
+  }
+
+  /**
+   * Gets minimum operating power.
+   *
+   * @return minimum power in W
+   */
+  public double getMinimumPower() {
+    return minimumPower;
+  }
+
+  /**
+   * Gets maximum operating power.
+   *
+   * @return maximum power in W
+   */
+  public double getMaximumPower() {
+    return maximumPower;
+  }
+
+  /**
+   * Sets available balancing limits.
+   *
+   * @param generationLimit maximum power injected into the bus in W
+   * @param consumptionLimit maximum power absorbed from the bus in W
+   */
+  public void setBalanceLimits(double generationLimit, double consumptionLimit) {
+    if (!Double.isFinite(generationLimit) || generationLimit < 0.0 || !Double.isFinite(consumptionLimit)
+        || consumptionLimit < 0.0) {
+      throw new IllegalArgumentException("Balance limits must be non-negative and finite");
+    }
+    maximumBalanceGeneration = generationLimit;
+    maximumBalanceConsumption = consumptionLimit;
+    invalidateBusSolution();
+  }
+
+  /**
+   * Gets maximum balancing generation.
+   *
+   * @return generation limit in W
+   */
+  public double getMaximumBalanceGeneration() {
+    return maximumBalanceGeneration;
+  }
+
+  /**
+   * Gets maximum balancing consumption.
+   *
+   * @return consumption limit in W
+   */
+  public double getMaximumBalanceConsumption() {
+    return maximumBalanceConsumption;
+  }
+
+  /**
+   * Sets marginal energy price used by network reports.
+   *
+   * @param price price per MWh
+   */
+  public void setEnergyPricePerMWh(double price) {
+    if (!Double.isFinite(price)) {
+      throw new IllegalArgumentException("Energy price must be finite");
+    }
+    energyPricePerMWh = price;
+  }
+
+  /**
+   * Gets marginal energy price.
+   *
+   * @return price per MWh
+   */
+  public double getEnergyPricePerMWh() {
+    return energyPricePerMWh;
+  }
+
+  /**
+   * Sets the emission factor used by network reports.
+   *
+   * @param factor CO2-equivalent factor in kg/MWh
+   */
+  public void setEmissionFactorKgPerMWh(double factor) {
+    if (!Double.isFinite(factor) || factor < 0.0) {
+      throw new IllegalArgumentException("Emission factor must be non-negative and finite");
+    }
+    emissionFactorKgPerMWh = factor;
+  }
+
+  /**
+   * Gets the emission factor.
+   *
+   * @return CO2-equivalent factor in kg/MWh
+   */
+  public double getEmissionFactorKgPerMWh() {
+    return emissionFactorKgPerMWh;
+  }
+
+  /**
+   * Sets conversion loss reported by the connected conversion equipment.
+   *
+   * @param conversionLoss loss in W
+   */
+  public void setConversionLoss(double conversionLoss) {
+    if (!Double.isFinite(conversionLoss) || conversionLoss < 0.0) {
+      throw new IllegalArgumentException("Conversion loss must be non-negative and finite");
+    }
+    this.conversionLoss = conversionLoss;
+  }
+
+  /**
+   * Gets reported conversion loss.
+   *
+   * @return loss in W
+   */
+  public double getConversionLoss() {
+    return conversionLoss;
+  }
+
+  /**
+   * Gets required quality metadata.
+   *
+   * @return required quality
+   */
+  public EnergyQuality getRequiredQuality() {
+    return requiredQuality;
+  }
+
+  /**
+   * Sets required quality metadata.
+   *
+   * @param requiredQuality required quality
+   */
+  public void setRequiredQuality(EnergyQuality requiredQuality) {
+    this.requiredQuality = Objects.requireNonNull(requiredQuality, "requiredQuality cannot be null");
   }
 
   /**
@@ -111,9 +356,10 @@ public class EnergyPort implements Serializable {
    * <p>
    * A legacy stream with type {@link EnergyType#UNSPECIFIED} adopts the port type. A typed stream can only be connected
    * to a port of the same type or to an unspecified port.
+   * </p>
    *
    * @param stream energy stream to connect
-   * @throws IllegalArgumentException if the stream and port energy types conflict
+   * @throws IllegalArgumentException if stream type or specified quality conflicts with this port
    */
   public void connect(EnergyStream stream) {
     Objects.requireNonNull(stream, "stream cannot be null");
@@ -125,16 +371,22 @@ public class EnergyPort implements Serializable {
     if (streamType == EnergyType.UNSPECIFIED && energyType != EnergyType.UNSPECIFIED) {
       stream.setEnergyType(energyType);
     }
+    if (!stream.getQuality().satisfies(requiredQuality)) {
+      throw new IllegalArgumentException("Energy quality is incompatible with port " + getParticipantName());
+    }
     if (energyStream instanceof EnergyBus && energyStream != stream) {
-      ((EnergyBus) energyStream).removeContribution(getContributionKey());
+      ((EnergyBus) energyStream).unregisterPort(this);
     }
     energyStream = stream;
+    if (stream instanceof EnergyBus) {
+      ((EnergyBus) stream).registerPort(this);
+    }
   }
 
   /** Disconnects the current energy stream, if any. */
   public void disconnect() {
     if (energyStream instanceof EnergyBus) {
-      ((EnergyBus) energyStream).removeContribution(getContributionKey());
+      ((EnergyBus) energyStream).unregisterPort(this);
     }
     energyStream = null;
   }
@@ -168,9 +420,13 @@ public class EnergyPort implements Serializable {
     if (stream instanceof EnergyBus) {
       EnergyBus bus = (EnergyBus) stream;
       if (mode == EnergyPortMode.CALCULATED) {
-        return bus.getContribution(getContributionKey());
+        return bus.getContribution(participantId);
       }
-      return bus.getNetPowerExcluding(getContributionKey());
+      if (bus.hasSolution()) {
+        double allocation = bus.getAllocation(participantId);
+        return direction == EnergyPortDirection.BIDIRECTIONAL ? allocation : Math.abs(allocation);
+      }
+      return bus.getNetPowerExcluding(participantId);
     }
     return stream.getDuty();
   }
@@ -178,24 +434,11 @@ public class EnergyPort implements Serializable {
   /**
    * Gets the non-negative transferred-power magnitude in watts.
    *
-   * <p>
-   * This is the preferred accessor for typed ports because physical direction is represented by {@link #getDirection()}
-   * rather than by a legacy duty sign.
-   *
    * @return absolute duty in W
    * @throws IllegalStateException if no stream is connected
    */
   public double getPowerMagnitude() {
-    double duty = getDuty();
-    if (energyStream instanceof EnergyBus && mode != EnergyPortMode.CALCULATED) {
-      if (direction == EnergyPortDirection.INPUT) {
-        return Math.max(0.0, duty);
-      }
-      if (direction == EnergyPortDirection.OUTPUT) {
-        return Math.max(0.0, -duty);
-      }
-    }
-    return Math.abs(duty);
+    return Math.abs(getDuty());
   }
 
   /**
@@ -206,7 +449,7 @@ public class EnergyPort implements Serializable {
    * @throws IllegalStateException if no stream is connected
    */
   public double getPowerMagnitude(String unit) {
-    return new neqsim.util.unit.PowerUnit(getPowerMagnitude(), "W").getValue(unit);
+    return new PowerUnit(getPowerMagnitude(), "W").getValue(unit);
   }
 
   /**
@@ -217,27 +460,37 @@ public class EnergyPort implements Serializable {
    * @throws IllegalStateException if no stream is connected
    */
   public double getDuty(String unit) {
-    return new neqsim.util.unit.PowerUnit(getDuty(), "W").getValue(unit);
+    return new PowerUnit(getDuty(), "W").getValue(unit);
   }
 
   /**
-   * Sets the connected stream duty in watts.
+   * Sets calculated power or a specification request in watts.
    *
    * @param duty duty in W
    * @throws IllegalStateException if no stream is connected
    */
   public void setDuty(double duty) {
+    if (!Double.isFinite(duty)) {
+      throw new IllegalArgumentException("Energy-port duty must be finite");
+    }
     EnergyStream stream = requireConnectedStream();
     if (stream instanceof EnergyBus) {
+      EnergyBus bus = (EnergyBus) stream;
+      if (mode == EnergyPortMode.SPECIFICATION) {
+        setRequestedPower(Math.abs(duty));
+        return;
+      }
+      if (mode == EnergyPortMode.BALANCE) {
+        setRequestedPower(Math.abs(duty));
+        return;
+      }
       double contribution = duty;
       if (direction == EnergyPortDirection.INPUT) {
         contribution = -Math.abs(duty);
       } else if (direction == EnergyPortDirection.OUTPUT) {
         contribution = Math.abs(duty);
-      } else if (mode == EnergyPortMode.SPECIFICATION) {
-        contribution = -duty;
       }
-      ((EnergyBus) stream).setContribution(getContributionKey(), contribution);
+      bus.setContribution(participantId, contribution);
     } else {
       stream.setDuty(duty);
     }
@@ -251,13 +504,21 @@ public class EnergyPort implements Serializable {
    * @throws IllegalStateException if no stream is connected
    */
   public void setDuty(double duty, String unit) {
-    setDuty(new neqsim.util.unit.PowerUnit(duty, unit).getValue("W"));
+    setDuty(new PowerUnit(duty, unit).getValue("W"));
   }
 
-  private String getContributionKey() {
-    return ownerName.isEmpty() ? name : ownerName + "." + name;
+  /** Invalidates the connected bus solution after a port setting changes. */
+  private void invalidateBusSolution() {
+    if (energyStream instanceof EnergyBus) {
+      ((EnergyBus) energyStream).invalidateSolution();
+    }
   }
 
+  /**
+   * Gets the connected stream or raises a configuration error.
+   *
+   * @return connected stream
+   */
   private EnergyStream requireConnectedStream() {
     if (energyStream == null) {
       throw new IllegalStateException("Energy port " + name + " is not connected");
