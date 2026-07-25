@@ -74,7 +74,9 @@ public class EnergyBus extends EnergyStream {
   void registerPort(EnergyPort port) {
     EnergyPort previous = registeredPorts.get(port.getParticipantId());
     if (previous != null && previous != port) {
-      throw new IllegalArgumentException("Duplicate energy-bus participant identifier: " + port.getParticipantId());
+      do {
+        port.regenerateParticipantId();
+      } while (registeredPorts.containsKey(port.getParticipantId()));
     }
     registeredPorts.put(port.getParticipantId(), port);
     invalidateSolution();
