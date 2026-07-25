@@ -3,6 +3,8 @@ package neqsim.process.equipment.stream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.battery.BatteryStorage;
+import neqsim.process.equipment.powergeneration.SolarPanel;
 
 class EnergyBusTest {
 
@@ -41,4 +43,27 @@ class EnergyBusTest {
     assertEquals(0.8, shaft.getNetPower("MW"), 1.0e-12);
     assertEquals(EnergyType.SHAFT_WORK, shaft.getEnergyType());
   }
+  @Test
+  void testEquipmentPortsPublishDirectedBusContributions() {
+    EnergyBus bus = new EnergyBus("electrical bus", EnergyType.ELECTRICAL);
+    SolarPanel solar = new SolarPanel("solar", 1000.0, 10.0, 0.20);
+    solar.connectEnergyStream("electricalPower", bus, EnergyPortMode.CALCULATED);
+    solar.run();
+
+    BatteryStorage battery = new BatteryStorage("battery", 10.0e6);
+    battery.connectEnergyStream("electricalPower", bus, EnergyPortMode.CALCULATED);
+    battery.charge(1000.0, 1.0);
+    battery.run();
+
+    assertEquals(2000.0, bus.getContribution("solar.electricalPower"), 1.0e-12);
+    assertEquals(-1000.0, bus.getContribution("battery.electricalPower"), 1.0e-12);
+    assertEquals(1000.0, bus.getNetPower(), 1.0e-12);
+
+    battery.discharge(500.0, 1.0);
+    battery.run();
+
+    assertEquals(500.0, bus.getContribution("battery.electricalPower"), 1.0e-12);
+    assertEquals(2500.0, bus.getNetPower(), 1.0e-12);
+  }
+
 }
