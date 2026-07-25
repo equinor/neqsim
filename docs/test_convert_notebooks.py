@@ -3,7 +3,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from convert_notebooks import convert_all_notebooks
+from convert_notebooks import (
+    CURATED_NOTEBOOKS,
+    convert_all_notebooks,
+    create_examples_index,
+)
 
 
 def write_notebook(path: Path, title: str, documentation_metadata=None) -> None:
@@ -88,6 +92,57 @@ class ConvertNotebooksTest(unittest.TestCase):
             self.assertIn('title: "InvalidMetadata"', generated_content)
             self.assertIn(
                 'description: "Jupyter notebook tutorial for NeqSim"',
+                generated_content,
+            )
+
+
+    def test_index_preserves_curated_notebooks(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            index_path = Path(temp_dir) / "index.md"
+
+            create_examples_index(temp_dir)
+
+            generated_content = index_path.read_text(encoding="utf-8")
+            for entry in CURATED_NOTEBOOKS:
+                self.assertIn(entry["title"], generated_content)
+                self.assertIn(entry["path"], generated_content)
+
+    def test_index_uses_metadata_and_encodes_space_in_links(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            examples_dir = Path(temp_dir)
+            notebook_path = examples_dir / "process equipmentutl.ipynb"
+            write_notebook(
+                notebook_path,
+                "Notebook title",
+                {
+                    "title": "Process equipment utilities",
+                    "description": "Equipment | utilities\nworkflow",
+                },
+            )
+
+            create_examples_index(examples_dir)
+
+            generated_content = (
+                examples_dir / "index.md"
+            ).read_text(encoding="utf-8")
+            self.assertIn(
+                "**Process equipment utilities**",
+                generated_content,
+            )
+            self.assertIn(
+                r"Equipment \| utilities workflow",
+                generated_content,
+            )
+            self.assertIn(
+                "[Markdown](process%20equipmentutl.md)",
+                generated_content,
+            )
+            self.assertIn(
+                "docs/examples/process%20equipmentutl.ipynb",
+                generated_content,
+            )
+            self.assertNotIn(
+                "(process equipmentutl.md)",
                 generated_content,
             )
 
