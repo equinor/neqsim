@@ -563,7 +563,7 @@ public class Expander extends Compressor implements ExpanderInterface {
       dH = hout - hinn;
       thermoOps.PHflash(hout, 0);
     }
-    getEnergyStream().setDuty(-dH);
+    getEnergyPort("shaftPower").setDuty(-dH);
     // thermoSystem.display();
     outStream.setThermoSystem(getThermoSystem());
     setCalculationIdentifier(id);
