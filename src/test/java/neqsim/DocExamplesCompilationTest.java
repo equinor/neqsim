@@ -24,9 +24,11 @@ import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFrictio
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction.InterfacialFrictionResult;
 import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.EnergyBus;
 import neqsim.process.equipment.stream.EnergyPortMode;
 import neqsim.process.equipment.stream.EnergyStream;
 import neqsim.process.equipment.stream.EnergyType;
+import neqsim.process.equipment.stream.MechanicalShaft;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.fielddevelopment.concept.DevelopmentCaseTemplate;
@@ -1594,6 +1596,26 @@ public class DocExamplesCompilationTest {
 
     assertTrue(outletPressure > feed.getPressure("bara"));
     assertEquals(EnergyPortMode.SPECIFICATION, mode);
+  }
+
+  /**
+   * Energy bus and mechanical shaft examples from docs/process/energy_streams.md.
+   */
+  @Test
+  public void testEnergyBusDocumentationExamples() {
+    EnergyBus grid = new EnergyBus("main electrical bus", EnergyType.ELECTRICAL);
+    grid.setContribution("solar", 2.0, "MW");
+    grid.setContribution("electrolyzer", -1.5, "MW");
+    double reserve = grid.getNetPower("kW");
+
+    MechanicalShaft shaftTrain = new MechanicalShaft("expander-compressor shaft");
+    shaftTrain.setMechanicalEfficiency(0.98);
+    shaftTrain.setGeneratedPower("expander", 10.0e6);
+    shaftTrain.setConsumedPower("compressor", 8.0e6);
+    double sparePower = shaftTrain.getNetPower("MW");
+
+    assertEquals(500.0, reserve, 1.0e-12);
+    assertEquals(1.8, sparePower, 1.0e-12);
   }
 
 }
