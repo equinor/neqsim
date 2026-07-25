@@ -307,6 +307,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
       throw new IllegalArgumentException("Energy port already registered: " + portName);
     }
     EnergyPort port = new EnergyPort(portName, energyType, direction, mode);
+    port.setOwnerName(getName());
     if (energyPorts.isEmpty() && energyStream != null) {
       port.connect(energyStream);
     }
