@@ -43,6 +43,7 @@ class EnergyBusTest {
     assertEquals(0.8, shaft.getNetPower("MW"), 1.0e-12);
     assertEquals(EnergyType.SHAFT_WORK, shaft.getEnergyType());
   }
+
   @Test
   void testEquipmentPortsPublishDirectedBusContributions() {
     EnergyBus bus = new EnergyBus("electrical bus", EnergyType.ELECTRICAL);
