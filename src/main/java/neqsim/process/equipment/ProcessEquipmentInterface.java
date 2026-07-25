@@ -208,9 +208,9 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   /**
    * Returns the named energy ports exposed by this equipment.
    *
-   * <p>The default is empty so existing equipment remains source and binary compatible. Equipment
-   * backed by {@link ProcessEquipmentBaseClass} can register typed ports for graph discovery and
-   * validation.
+   * <p>
+   * The default is empty so existing equipment remains source and binary compatible. Equipment backed by
+   * {@link ProcessEquipmentBaseClass} can register typed ports for graph discovery and validation.
    *
    * @return unmodifiable map keyed by port name
    */
