@@ -129,7 +129,7 @@ public class WindTurbine extends ProcessEquipmentBaseClass {
   @Override
   public void run(UUID id) {
     power = 0.5 * airDensity * rotorArea * Math.pow(windSpeed, 3.0) * powerCoefficient;
-    getEnergyStream().setDuty(-power);
+    getEnergyPort("electricalPower").setDuty(-power);
     setCalculationIdentifier(id);
   }
 }
