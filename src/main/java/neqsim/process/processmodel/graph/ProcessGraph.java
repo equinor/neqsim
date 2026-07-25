@@ -295,15 +295,13 @@ public class ProcessGraph implements Serializable {
    * @param energyStream energy stream connecting them
    * @return the created energy edge
    */
-  public ProcessEdge addEnergyEdge(
-      ProcessNode source, ProcessNode target, EnergyStream energyStream) {
+  public ProcessEdge addEnergyEdge(ProcessNode source, ProcessNode target, EnergyStream energyStream) {
     Objects.requireNonNull(source, "source cannot be null");
     Objects.requireNonNull(target, "target cannot be null");
     Objects.requireNonNull(energyStream, "energyStream cannot be null");
 
     int index = edges.size();
-    ProcessEdge edge =
-        new ProcessEdge(index, source, target, energyStream, energyStream.getName());
+    ProcessEdge edge = new ProcessEdge(index, source, target, energyStream, energyStream.getName());
     edges.add(edge);
     source.addOutgoingEdge(edge);
     target.addIncomingEdge(edge);
