@@ -241,8 +241,8 @@ public class BatteryStorage extends ProcessEquipmentBaseClass {
     if (tripped) {
       targetPower = 0.0;
     }
-    if (getEnergyPort(ELECTRICAL_PORT).getMode() == EnergyPortMode.BALANCE
-        && Double.isFinite(maximumChargePower) && Double.isFinite(maximumDischargePower)) {
+    if (getEnergyPort(ELECTRICAL_PORT).getMode() == EnergyPortMode.BALANCE && Double.isFinite(maximumChargePower)
+        && Double.isFinite(maximumDischargePower)) {
       getEnergyPort(ELECTRICAL_PORT).setBalanceLimits(tripped ? 0.0 : maximumDischargePower,
           tripped ? 0.0 : maximumChargePower);
     }
