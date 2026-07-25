@@ -95,7 +95,7 @@ public class SolarPanel extends ProcessEquipmentBaseClass {
   @Override
   public void run(UUID id) {
     power = irradiance * panelArea * efficiency;
-    getEnergyStream().setDuty(-power);
+    getEnergyPort("electricalPower").setDuty(-power);
     setEnergyStream(true);
     setCalculationIdentifier(id);
   }
