@@ -65,6 +65,20 @@ double sparePower = shaftTrain.getNetPower("MW");
 
 Point-to-point `EnergyStream` connections reject multiple calculated producers or specification consumers during graph construction. Use `EnergyBus` for intentional multi-party distribution.
 
+## Coupled networks and repeated execution
+
+When a specification consumer is connected to an `EnergyBus`, it reads the net power excluding its own contribution from the previous run. After calculation, supported consumers publish their actual withdrawal back to the bus. This makes repeated steady-state runs stable instead of progressively subtracting the same load.
+
+`getNetPowerExcluding(String)` exposes the same balance operation for custom dispatch logic. Input and output ports convert equipment power to negative withdrawals and positive injections. A bidirectional specification port treats positive equipment duty as a bus withdrawal, which supports recovered-heat links such as condenser to heater.
+
+The process graph orders calculated producers before specification consumers. This applies to coupled networks such as:
+
+- expander → `MechanicalShaft` → compressor or pump
+- solar or other generation → electrical `EnergyBus` → electrolyzer
+- condenser heat output → heat-recovery `EnergyBus` → heater
+
+These connections remain stable when the flowsheet is executed repeatedly, and Java serialization preserves shared bus identity, port metadata, and named contributions.
+
 ## Equipment coverage
 
 | Equipment group | Typed port | Supported role |
