@@ -90,7 +90,7 @@ class EnergyStreamGraphTest {
 
     EnergyUnit(String name, EnergyPortDirection direction, EnergyPortMode mode, EnergyStream stream) {
       super(name);
-      registerEnergyPort("energy", EnergyType.SHAFT_WORK, direction, mode);
+      registerEnergyPort("energy", stream.getEnergyType(), direction, mode);
       connectEnergyStream("energy", stream);
     }
 
