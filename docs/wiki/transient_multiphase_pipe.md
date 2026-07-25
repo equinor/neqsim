@@ -140,7 +140,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 // Define this as a class field in the enclosing example class.
 private static final Logger logger =
-    LogManager.getLogger(TransientPipeExample.class);
+    LogManager.getLogger("TransientPipeExample");
 
 // Create two-phase fluid
 SystemInterface fluid = new SystemSrkEos(300, 50); // 300 K, 50 bar
