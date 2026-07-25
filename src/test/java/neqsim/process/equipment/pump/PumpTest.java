@@ -419,8 +419,7 @@ public class PumpTest extends neqsim.NeqSimTest {
 
   @Test
   void testPressureSpecifiedPumpPublishesLoadToShaftBus() {
-    neqsim.thermo.system.SystemInterface water =
-        new neqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 2.0);
+    neqsim.thermo.system.SystemInterface water = new neqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 2.0);
     water.addComponent("water", 1.0);
     water.setMixingRule("classic");
 
@@ -437,8 +436,7 @@ public class PumpTest extends neqsim.NeqSimTest {
     pump.run();
 
     Assertions.assertTrue(pump.getPower() > 0.0);
-    Assertions.assertEquals(
-        -pump.getPower(), shaft.getContribution("bus pump.shaftPower"), 1.0e-6);
+    Assertions.assertEquals(-pump.getPower(), shaft.getContribution("bus pump.shaftPower"), 1.0e-6);
     Assertions.assertEquals(EnergyPortMode.CALCULATED, pump.getEnergyPort("shaftPower").getMode());
   }
 
