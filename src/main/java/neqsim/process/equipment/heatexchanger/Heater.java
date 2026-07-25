@@ -17,6 +17,7 @@ import neqsim.process.design.AutoSizeable;
 import neqsim.process.electricaldesign.heatexchanger.HeatExchangerElectricalDesign;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortEquipment;
+import neqsim.process.equipment.stream.EnergyBus;
 import neqsim.process.equipment.stream.EnergyPortDirection;
 import neqsim.process.equipment.stream.EnergyPortMode;
 import neqsim.process.equipment.stream.EnergyStream;
@@ -421,7 +422,11 @@ public class Heater extends TwoPortEquipment
     system.init(2);
     double oldH = system.getEnthalpy();
     if (isSetEnergyStream()) {
-      energyInput = -energyStream.getDuty();
+      if (getEnergyPort("heatDuty").getEnergyStream() instanceof EnergyBus) {
+        energyInput = getEnergyPort("heatDuty").getPowerMagnitude();
+      } else {
+        energyInput = -getEnergyPort("heatDuty").getDuty();
+      }
     }
     double newEnthalpy = energyInput + oldH;
     system.setPressure(system.getPressure() - pressureDrop, pressureUnit);
@@ -449,7 +454,7 @@ public class Heater extends TwoPortEquipment
     system.init(3);
     double newH = system.getEnthalpy();
     energyInput = newH - oldH;
-    if (!isSetEnergyStream()) {
+    if (!isSetEnergyStream() || getEnergyPort("heatDuty").getEnergyStream() instanceof EnergyBus) {
       getEnergyPort("heatDuty").setDuty(energyInput);
     }
     // system.setTemperature(temperatureOut);
