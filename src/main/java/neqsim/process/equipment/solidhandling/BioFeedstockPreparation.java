@@ -175,7 +175,7 @@ public class BioFeedstockPreparation extends ProcessEquipmentBaseClass {
     preparedBulkVolumeM3PerHr = preparedFeedRateKgPerHr / preparedDensity;
     massClosureFraction = (preparedFeedRateKgPerHr + waterRemovedKgPerHr + drySolidsLostKgPerHr) / wetFeedRateKgPerHr;
 
-    getEnergyStream().setDuty(powerKW * 1000.0);
+    getEnergyPort("electricalPower").setDuty(powerKW * 1000.0);
     setCalculationIdentifier(id);
   }
 
