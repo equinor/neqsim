@@ -523,10 +523,8 @@ public final class ProcessGraphBuilder {
     // physical direction, determines scheduling order. This supports both a
     // generator driving a load and a pressure-specified load publishing its
     // calculated demand to a driver or utility model.
-    Map<EnergyStream, ProcessEquipmentInterface> energyToProducer =
-        new IdentityHashMap<EnergyStream, ProcessEquipmentInterface>();
-    Map<EnergyStream, ProcessEquipmentInterface> energyToConsumer =
-        new IdentityHashMap<EnergyStream, ProcessEquipmentInterface>();
+    Map<EnergyStream, ProcessEquipmentInterface> energyToProducer = new IdentityHashMap<EnergyStream, ProcessEquipmentInterface>();
+    Map<EnergyStream, ProcessEquipmentInterface> energyToConsumer = new IdentityHashMap<EnergyStream, ProcessEquipmentInterface>();
 
     for (ProcessEquipmentInterface unit : units) {
       for (EnergyPort port : unit.getEnergyPorts().values()) {
@@ -537,32 +535,21 @@ public final class ProcessGraphBuilder {
         if (port.getMode() == EnergyPortMode.CALCULATED) {
           ProcessEquipmentInterface previous = energyToProducer.put(stream, unit);
           if (previous != null && previous != unit) {
-            throw new IllegalStateException(
-                "Energy stream "
-                    + stream.getName()
-                    + " has multiple calculation producers: "
-                    + previous.getName()
-                    + " and "
-                    + unit.getName());
+            throw new IllegalStateException("Energy stream " + stream.getName()
+                + " has multiple calculation producers: " + previous.getName() + " and " + unit.getName());
           }
         } else if (port.getMode() == EnergyPortMode.SPECIFICATION) {
           ProcessEquipmentInterface previous = energyToConsumer.put(stream, unit);
           if (previous != null && previous != unit) {
             throw new IllegalStateException(
-                "Energy stream "
-                    + stream.getName()
-                    + " has multiple specification consumers: "
-                    + previous.getName()
-                    + " and "
-                    + unit.getName()
-                    + ". Use a dedicated energy bus for shared distribution.");
+                "Energy stream " + stream.getName() + " has multiple specification consumers: " + previous.getName()
+                    + " and " + unit.getName() + ". Use a dedicated energy bus for shared distribution.");
           }
         }
       }
     }
 
-    for (Map.Entry<EnergyStream, ProcessEquipmentInterface> entry :
-        energyToConsumer.entrySet()) {
+    for (Map.Entry<EnergyStream, ProcessEquipmentInterface> entry : energyToConsumer.entrySet()) {
       ProcessEquipmentInterface producer = energyToProducer.get(entry.getKey());
       ProcessEquipmentInterface consumer = entry.getValue();
       if (producer != null && producer != consumer) {
@@ -1053,19 +1040,15 @@ public final class ProcessGraphBuilder {
    * @param targetEquipment equipment reading the energy duty as a specification
    * @param stream connected energy stream
    */
-  private static void addEnergyEdgeIfAbsent(
-      ProcessGraph graph,
-      ProcessEquipmentInterface sourceEquipment,
-      ProcessEquipmentInterface targetEquipment,
-      EnergyStream stream) {
+  private static void addEnergyEdgeIfAbsent(ProcessGraph graph, ProcessEquipmentInterface sourceEquipment,
+      ProcessEquipmentInterface targetEquipment, EnergyStream stream) {
     ProcessNode sourceNode = graph.getNode(sourceEquipment);
     ProcessNode targetNode = graph.getNode(targetEquipment);
     if (sourceNode == null || targetNode == null) {
       return;
     }
     for (ProcessEdge edge : sourceNode.getOutgoingEdges()) {
-      if (edge.getTarget() == targetNode
-          && edge.getEdgeType() == ProcessEdge.EdgeType.ENERGY
+      if (edge.getTarget() == targetNode && edge.getEdgeType() == ProcessEdge.EdgeType.ENERGY
           && edge.getEnergyStream() == stream) {
         return;
       }
