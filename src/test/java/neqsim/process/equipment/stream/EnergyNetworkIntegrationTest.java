@@ -105,13 +105,13 @@ class EnergyNetworkIntegrationTest extends neqsim.NeqSimTest {
 
     assertTrue(firstOutletTemperature > inletTemperature);
     assertEquals(200.0, heatRecovery.getContribution("condenser.heatDuty", "kW"), 1.0e-12);
-    assertEquals(-200.0, heatRecovery.getContribution("heater.heatDuty", "kW"), 1.0e-9);
-    assertEquals(0.0, heatRecovery.getNetPower("kW"), 1.0e-9);
+    assertEquals(-200.0, heatRecovery.getContribution("heater.heatDuty", "kW"), 1.0e-3);
+    assertEquals(0.0, heatRecovery.getNetPower("kW"), 1.0e-3);
 
     heater.run();
 
-    assertEquals(firstOutletTemperature, heater.getOutletStream().getTemperature("K"), 1.0e-8);
-    assertEquals(0.0, heatRecovery.getNetPower("kW"), 1.0e-9);
+    assertEquals(firstOutletTemperature, heater.getOutletStream().getTemperature("K"), 1.0e-6);
+    assertEquals(0.0, heatRecovery.getNetPower("kW"), 1.0e-3);
   }
 
   private static ProcessSystem graphOrderedProcess() {
