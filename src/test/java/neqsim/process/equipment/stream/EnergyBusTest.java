@@ -2,6 +2,13 @@ package neqsim.process.equipment.stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.Arrays;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.battery.BatteryStorage;
 import neqsim.process.equipment.powergeneration.SolarPanel;
@@ -30,6 +37,77 @@ class EnergyBusTest {
     assertNotSame(bus, clone);
     assertEquals(100.0, bus.getContribution("heater"), 1.0e-12);
     assertEquals(200.0, clone.getContribution("heater"), 1.0e-12);
+  }
+
+  @Test
+  void testSpecificationConsumerExcludesItsPreviousWithdrawal() {
+    EnergyBus bus = new EnergyBus("electrical bus", EnergyType.ELECTRICAL);
+    EnergyPort generator = new EnergyPort("power", EnergyType.ELECTRICAL, EnergyPortDirection.OUTPUT,
+        EnergyPortMode.CALCULATED);
+    generator.setOwnerName("generator");
+    generator.connect(bus);
+    generator.setDuty(500.0);
+
+    EnergyPort consumer = new EnergyPort("power", EnergyType.ELECTRICAL, EnergyPortDirection.INPUT,
+        EnergyPortMode.SPECIFICATION);
+    consumer.setOwnerName("consumer");
+    consumer.connect(bus);
+
+    assertEquals(500.0, consumer.getPowerMagnitude(), 1.0e-12);
+    consumer.setDuty(500.0);
+    assertEquals(0.0, bus.getNetPower(), 1.0e-12);
+    assertEquals(500.0, consumer.getPowerMagnitude(), 1.0e-12);
+  }
+
+  @Test
+  void testBidirectionalSpecificationRecordsHeatWithdrawal() {
+    EnergyBus bus = new EnergyBus("heat recovery", EnergyType.HEAT);
+    EnergyPort condenser = new EnergyPort("heatDuty", EnergyType.HEAT, EnergyPortDirection.OUTPUT,
+        EnergyPortMode.CALCULATED);
+    condenser.setOwnerName("condenser");
+    condenser.connect(bus);
+    condenser.setDuty(-1000.0);
+
+    EnergyPort heater = new EnergyPort("heatDuty", EnergyType.HEAT, EnergyPortDirection.BIDIRECTIONAL,
+        EnergyPortMode.SPECIFICATION);
+    heater.setOwnerName("heater");
+    heater.connect(bus);
+    heater.setDuty(heater.getPowerMagnitude());
+
+    assertEquals(1000.0, bus.getContribution("condenser.heatDuty"), 1.0e-12);
+    assertEquals(-1000.0, bus.getContribution("heater.heatDuty"), 1.0e-12);
+    assertEquals(0.0, bus.getNetPower(), 1.0e-12);
+  }
+
+  @Test
+  void testSerializationPreservesSharedBusIdentityAndMetadata() throws Exception {
+    EnergyBus bus = new EnergyBus("serialized bus", EnergyType.ELECTRICAL);
+    EnergyPort producer = new EnergyPort("power", EnergyType.ELECTRICAL, EnergyPortDirection.OUTPUT,
+        EnergyPortMode.CALCULATED);
+    producer.setOwnerName("producer");
+    producer.connect(bus);
+    producer.setDuty(250.0);
+    EnergyPort consumer = new EnergyPort("power", EnergyType.ELECTRICAL, EnergyPortDirection.INPUT,
+        EnergyPortMode.SPECIFICATION);
+    consumer.setOwnerName("consumer");
+    consumer.connect(bus);
+
+    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
+      output.writeObject(Arrays.asList(producer, consumer));
+    }
+
+    List<?> restored;
+    try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+      restored = (List<?>) input.readObject();
+    }
+
+    EnergyPort restoredProducer = (EnergyPort) restored.get(0);
+    EnergyPort restoredConsumer = (EnergyPort) restored.get(1);
+    assertSame(restoredProducer.getEnergyStream(), restoredConsumer.getEnergyStream());
+    assertEquals(EnergyType.ELECTRICAL, restoredProducer.getEnergyType());
+    assertEquals(EnergyPortMode.SPECIFICATION, restoredConsumer.getMode());
+    assertEquals(250.0, restoredConsumer.getPowerMagnitude(), 1.0e-12);
   }
 
   @Test
