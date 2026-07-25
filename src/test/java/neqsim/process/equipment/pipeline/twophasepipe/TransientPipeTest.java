@@ -94,6 +94,35 @@ class TransientPipeTest {
     // No exceptions should be thrown
   }
 
+  @Test
+  void testExplicitOutletPressureSurvivesInitialization() {
+    SystemInterface fluid = new SystemSrkEos(300.0, 80.0);
+    fluid.addComponent("methane", 0.8);
+    fluid.addComponent("n-pentane", 0.2);
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+
+    Stream inlet = new Stream("explicit outlet inlet", fluid);
+    inlet.setFlowRate(5.0, "kg/sec");
+    inlet.run();
+
+    TransientPipe pipe = new TransientPipe("explicit outlet pipe", inlet);
+    pipe.setLength(200.0);
+    pipe.setDiameter(0.15);
+    pipe.setNumberOfSections(10);
+    pipe.setOutletBoundaryCondition(BoundaryCondition.CONSTANT_PRESSURE);
+
+    double specifiedOutletPressure = 42.0;
+    pipe.setOutletPressure(specifiedOutletPressure);
+    pipe.runTransient(0.0, java.util.UUID.randomUUID());
+
+    double[] pressureProfile = pipe.getPressureProfile();
+    assertNotNull(pressureProfile);
+    double initializedOutletPressure = pressureProfile[pressureProfile.length - 1] / 1.0e5;
+    assertEquals(specifiedOutletPressure, initializedOutletPressure, 1.0e-9,
+        "Initialization must preserve an explicitly specified outlet pressure");
+  }
+
   @Disabled("Integration test - requires thermodynamic calculations")
   @Test
   void testSimulationWithGasCondensate() {
