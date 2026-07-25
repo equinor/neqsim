@@ -104,6 +104,19 @@ class EnergyBusAllocationTest {
   }
 
   @Test
+  void testChemicalBusReportsFuelEnergyRate() {
+    EnergyBus fuelBus = new EnergyBus("fuel gas energy", EnergyType.CHEMICAL);
+    EnergyPort fuelSupply = port("fuel supply", EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED, fuelBus);
+    EnergyPort primeMover = port("prime mover", EnergyPortDirection.INPUT, EnergyPortMode.SPECIFICATION, fuelBus);
+    fuelSupply.setDuty(10.0e6);
+    primeMover.setRequestedPower(8.0e6);
+
+    EnergyNetworkReport report = fuelBus.solveBalance();
+
+    assertEquals(8.0, report.getFuelEnergyRate("MW"), 1.0e-12);
+  }
+
+  @Test
   void testIncompatibleUtilityQualityIsRejected() {
     EnergyBus steam = new EnergyBus("steam", EnergyType.HEAT);
     steam.getQuality().setUtilityLevel(UtilityLevel.LOW_PRESSURE_STEAM);
