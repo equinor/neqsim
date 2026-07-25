@@ -924,7 +924,7 @@ public class Compressor extends TwoPortEquipment
     }
 
     if (isSetEnergyStream()) {
-      setPower(energyStream.getDuty());
+      setPower(getEnergyPort("shaftPower").getPowerMagnitude());
     }
 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
