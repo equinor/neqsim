@@ -15,7 +15,7 @@
 
 Typed energy streams now support deterministic multi-party dispatch rather than relying only on sequential net-duty
 updates. The implementation adds explicit requests, allocations, priorities, balancing, shortages, curtailment,
-persistent participant IDs, energy-quality metadata, conversion equipment, utility levels, transient storage/shaft
+persistent participant IDs, energy-quality metadata, conversion equipment, utility levels, fuel-energy reporting, transient storage/shaft
 behavior, and auditable cost/emissions reporting.
 
 ### New capability
@@ -23,7 +23,7 @@ behavior, and auditable cost/emissions reporting.
 - `EnergyBus.solveBalance()` and `EnergyNetworkSolver`: priority/proportional dispatch with real `BALANCE` mode.
 - `EnergyNetworkReport`: supply, demand, unmet load, curtailment, balancing, loss, efficiency, cost, and CO2.
 - `EnergyQuality` and `UtilityLevel`: voltage/frequency, thermal grade, pressure, temperature, and shaft speed.
-- `ElectricMotor`, `Generator`, `Gearbox`, `Inverter`, and `Transformer`: explicit conversion and heat loss.
+- `ElectricMotor`, `Generator`, `Gearbox`, `Inverter`, `Transformer`, and `PrimeMover`: explicit conversion and heat loss.
 - `MotorDriveTrain` and `MotorAssistedDriveTrain`: pump/compressor electrical drives and expander motor assist.
 - `UtilityEnergyBus`, `ThermalUtilitySource`, and `ThermalUtilityConsumer`: typed steam, hot-oil, water, and
   refrigeration networks.
