@@ -191,7 +191,7 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
     requestedPower.setDuty(20.0, "MW");
     GasTurbine gasturb = new GasTurbine("turbine", fuelStream);
     gasturb.setThermalEfficiency(0.35);
-    gasturb.connectEnergyStream("shaftPower", requestedPower, EnergyPortMode.SPECIFICATION);
+    gasturb.setEnergyStream(requestedPower);
     gasturb.run();
 
     assertEquals(20.0, gasturb.getPower() / 1.0e6, 1e-9);
