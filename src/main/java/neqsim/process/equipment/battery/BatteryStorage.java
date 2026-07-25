@@ -180,7 +180,8 @@ public class BatteryStorage extends ProcessEquipmentBaseClass {
     this.maximumChargePower = maximumChargePower;
     this.maximumDischargePower = maximumDischargePower;
     if (Double.isFinite(maximumChargePower) && Double.isFinite(maximumDischargePower)) {
-      getEnergyPort(ELECTRICAL_PORT).setBalanceLimits(maximumDischargePower, maximumChargePower);
+      getEnergyPort(ELECTRICAL_PORT).setBalanceLimits(tripped ? 0.0 : maximumDischargePower,
+          tripped ? 0.0 : maximumChargePower);
     }
   }
 
@@ -240,6 +241,11 @@ public class BatteryStorage extends ProcessEquipmentBaseClass {
     if (tripped) {
       targetPower = 0.0;
     }
+    if (getEnergyPort(ELECTRICAL_PORT).getMode() == EnergyPortMode.BALANCE
+        && Double.isFinite(maximumChargePower) && Double.isFinite(maximumDischargePower)) {
+      getEnergyPort(ELECTRICAL_PORT).setBalanceLimits(tripped ? 0.0 : maximumDischargePower,
+          tripped ? 0.0 : maximumChargePower);
+    }
   }
 
   /**
@@ -265,7 +271,7 @@ public class BatteryStorage extends ProcessEquipmentBaseClass {
       throw new IllegalArgumentException("Battery timestep must be non-negative and finite");
     }
     double requestedPower = tripped ? 0.0 : targetPower;
-    if (getEnergyPort(ELECTRICAL_PORT).isConnected()
+    if (!tripped && getEnergyPort(ELECTRICAL_PORT).isConnected()
         && getEnergyPort(ELECTRICAL_PORT).getMode() == EnergyPortMode.BALANCE
         && getEnergyPort(ELECTRICAL_PORT).getEnergyStream() instanceof EnergyBus
         && ((EnergyBus) getEnergyPort(ELECTRICAL_PORT).getEnergyStream()).hasSolution()) {
