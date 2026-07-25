@@ -207,16 +207,16 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
    */
   @Override
   public void setEnergyStream(EnergyStream energyStream) {
-    super.setEnergyStream(energyStream);
-    getEnergyPort("shaftPower").setMode(EnergyPortMode.SPECIFICATION);
+    super.connectEnergyStream("shaftPower", energyStream, EnergyPortMode.SPECIFICATION);
   }
 
   /** {@inheritDoc} */
   @Override
   public void connectEnergyStream(String portName, EnergyStream stream) {
-    super.connectEnergyStream(portName, stream);
     if ("shaftPower".equals(portName)) {
-      getEnergyPort(portName).setMode(EnergyPortMode.SPECIFICATION);
+      super.connectEnergyStream(portName, stream, EnergyPortMode.SPECIFICATION);
+    } else {
+      super.connectEnergyStream(portName, stream);
     }
   }
 
