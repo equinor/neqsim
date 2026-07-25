@@ -10,12 +10,8 @@ class EnergyPortTest {
 
   @Test
   void testConnectAdoptsPortEnergyType() {
-    EnergyPort port =
-        new EnergyPort(
-            "shaftPower",
-            EnergyType.SHAFT_WORK,
-            EnergyPortDirection.INPUT,
-            EnergyPortMode.SPECIFICATION);
+    EnergyPort port = new EnergyPort("shaftPower", EnergyType.SHAFT_WORK, EnergyPortDirection.INPUT,
+        EnergyPortMode.SPECIFICATION);
     EnergyStream stream = new EnergyStream("driver");
 
     port.connect(stream);
@@ -27,26 +23,17 @@ class EnergyPortTest {
 
   @Test
   void testRejectsIncompatibleEnergyType() {
-    EnergyPort heatPort =
-        new EnergyPort(
-            "heatDuty",
-            EnergyType.HEAT,
-            EnergyPortDirection.INPUT,
-            EnergyPortMode.SPECIFICATION);
-    EnergyStream electricalStream =
-        new EnergyStream("electrical", EnergyType.ELECTRICAL);
+    EnergyPort heatPort = new EnergyPort("heatDuty", EnergyType.HEAT, EnergyPortDirection.INPUT,
+        EnergyPortMode.SPECIFICATION);
+    EnergyStream electricalStream = new EnergyStream("electrical", EnergyType.ELECTRICAL);
 
     assertThrows(IllegalArgumentException.class, () -> heatPort.connect(electricalStream));
   }
 
   @Test
   void testUnitAwareDutyDelegation() {
-    EnergyPort port =
-        new EnergyPort(
-            "generator",
-            EnergyType.ELECTRICAL,
-            EnergyPortDirection.OUTPUT,
-            EnergyPortMode.CALCULATED);
+    EnergyPort port = new EnergyPort("generator", EnergyType.ELECTRICAL, EnergyPortDirection.OUTPUT,
+        EnergyPortMode.CALCULATED);
     port.connect(new EnergyStream("power"));
 
     port.setDuty(750.0, "kW");
@@ -56,12 +43,8 @@ class EnergyPortTest {
 
   @Test
   void testUnconnectedDutyAccessFailsClearly() {
-    EnergyPort port =
-        new EnergyPort(
-            "heatDuty",
-            EnergyType.HEAT,
-            EnergyPortDirection.INPUT,
-            EnergyPortMode.SPECIFICATION);
+    EnergyPort port = new EnergyPort("heatDuty", EnergyType.HEAT, EnergyPortDirection.INPUT,
+        EnergyPortMode.SPECIFICATION);
 
     assertThrows(IllegalStateException.class, port::getDuty);
   }
