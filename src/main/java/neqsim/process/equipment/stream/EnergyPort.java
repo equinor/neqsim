@@ -1,5 +1,7 @@
 package neqsim.process.equipment.stream;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
@@ -54,6 +56,25 @@ public class EnergyPort implements Serializable {
     this.energyType = Objects.requireNonNull(energyType, "energyType cannot be null");
     this.direction = Objects.requireNonNull(direction, "direction cannot be null");
     this.mode = Objects.requireNonNull(mode, "mode cannot be null");
+  }
+
+  /**
+   * Restores defaults introduced after the original serialized energy-port format.
+   *
+   * @param input serialized object input
+   * @throws IOException if the stream cannot be read
+   * @throws ClassNotFoundException if a serialized class cannot be resolved
+   */
+  private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+    input.defaultReadObject();
+    if (participantId == null) {
+      participantId = UUID.randomUUID().toString();
+      priority = 100;
+      maximumPower = Double.POSITIVE_INFINITY;
+    }
+    if (requiredQuality == null) {
+      requiredQuality = new EnergyQuality();
+    }
   }
 
   /**
