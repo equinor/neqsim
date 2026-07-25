@@ -147,7 +147,7 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   @Override
   public void setEnergyStream(EnergyStream energyStream) {
     super.connectEnergyStream("electricalPower", energyStream, EnergyPortMode.SPECIFICATION);
-    setAvailablePower(Math.abs(energyStream.getDuty()));
+    setAvailablePower(getEnergyPort("electricalPower").getPowerMagnitude());
   }
 
   /** {@inheritDoc} */
@@ -155,7 +155,7 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   public void connectEnergyStream(String portName, EnergyStream stream) {
     if ("electricalPower".equals(portName)) {
       super.connectEnergyStream(portName, stream, EnergyPortMode.SPECIFICATION);
-      setAvailablePower(Math.abs(stream.getDuty()));
+      setAvailablePower(getEnergyPort(portName).getPowerMagnitude());
     } else {
       super.connectEnergyStream(portName, stream);
     }
@@ -240,7 +240,7 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   @Override
   public void run(UUID id) {
     if (getEnergyPort("electricalPower").getMode() == EnergyPortMode.SPECIFICATION) {
-      setAvailablePower(Math.abs(getEnergyPort("electricalPower").getDuty()));
+      setAvailablePower(getEnergyPort("electricalPower").getPowerMagnitude());
     }
     double tempK = waterInlet.getTemperature("K");
     double inletPressure = waterInlet.getPressure("bara");
