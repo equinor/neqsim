@@ -383,14 +383,14 @@ public class CO2Electrolyzer extends ProcessEquipmentBaseClass {
 
   private void updateEnergyConsumption(double electronMolesPerSecond) {
     if (electronMolesPerSecond <= 0.0) {
-      energyStream.setDuty(0.0);
+      getEnergyPort("electricalPower").setDuty(0.0);
       setEnergyStream(true);
       return;
     }
     double effectiveElectrons = electronMolesPerSecond / Math.max(currentEfficiency, 1e-6);
     double current = effectiveElectrons * FARADAY_CONSTANT;
     double power = current * cellVoltage;
-    energyStream.setDuty(power);
+    getEnergyPort("electricalPower").setDuty(power);
     setEnergyStream(true);
   }
 
