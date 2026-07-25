@@ -206,7 +206,7 @@ public class EnergyPort implements Serializable {
    * @throws IllegalStateException if no stream is connected
    */
   public double getPowerMagnitude(String unit) {
-    return Math.abs(getDuty(unit));
+    return new neqsim.util.unit.PowerUnit(getPowerMagnitude(), "W").getValue(unit);
   }
 
   /**
