@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -38,6 +40,25 @@ class EnergyStreamGraphTest {
 
     List<ProcessEquipmentInterface> order = graph.getCalculationOrder();
     assertTrue(order.indexOf(expander) < order.indexOf(compressor));
+  }
+
+  @Test
+  void testGraphExecutionIsIndependentOfInsertionOrder() {
+    EnergyStream heat = new EnergyStream("recovered heat", EnergyType.HEAT);
+    List<String> runOrder = new ArrayList<String>();
+    EnergyUnit producer = new EnergyUnit("producer", EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED, heat,
+        runOrder);
+    EnergyUnit consumer = new EnergyUnit("consumer", EnergyPortDirection.INPUT, EnergyPortMode.SPECIFICATION, heat,
+        runOrder);
+    ProcessSystem process = new ProcessSystem();
+    process.add(consumer);
+    process.add(producer);
+    process.setUseOptimizedExecution(false);
+    process.setUseGraphBasedExecution(true);
+
+    process.runSequential(UUID.randomUUID());
+
+    assertEquals(Arrays.asList("producer", "consumer"), runOrder);
   }
 
   @Test
@@ -79,15 +100,25 @@ class EnergyStreamGraphTest {
 
   private static final class EnergyUnit extends ProcessEquipmentBaseClass {
     private static final long serialVersionUID = 1000L;
+    private final List<String> runOrder;
 
     EnergyUnit(String name, EnergyPortDirection direction, EnergyPortMode mode, EnergyStream stream) {
+      this(name, direction, mode, stream, null);
+    }
+
+    EnergyUnit(String name, EnergyPortDirection direction, EnergyPortMode mode, EnergyStream stream,
+        List<String> runOrder) {
       super(name);
+      this.runOrder = runOrder;
       registerEnergyPort("energy", stream.getEnergyType(), direction, mode);
       connectEnergyStream("energy", stream);
     }
 
     @Override
     public void run(UUID id) {
+      if (runOrder != null) {
+        runOrder.add(getName());
+      }
       setCalculationIdentifier(id);
     }
   }
