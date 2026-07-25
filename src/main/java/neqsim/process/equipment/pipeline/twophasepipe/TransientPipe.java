@@ -498,8 +498,8 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
 
     if (!outletPressureExplicitlySet) {
       outletPressureValue = inletPressureValue - hydrostaticDrop - frictionDrop;
-      outletPressureValue = Math.max(outletPressureValue, 1e5); // Minimum 1 bar
     }
+    outletPressureValue = Math.max(outletPressureValue, 1e5); // Minimum 1 bar
 
     // Initialize sections with linear pressure profile
     for (int i = 0; i < numberOfSections; i++) {
