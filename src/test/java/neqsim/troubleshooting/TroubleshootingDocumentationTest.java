@@ -93,8 +93,7 @@ class TroubleshootingDocumentationTest {
     envelopeFluid.addComponent("n-butane", 0.03);
     envelopeFluid.setMixingRule("classic");
 
-    ThermodynamicOperations envelopeOperations =
-        new ThermodynamicOperations(envelopeFluid);
+    ThermodynamicOperations envelopeOperations = new ThermodynamicOperations(envelopeFluid);
     envelopeOperations.calcPTphaseEnvelope();
     double[] dewTemperatures = envelopeOperations.get("dewT");
     double[] bubbleTemperatures = envelopeOperations.get("bubT");
