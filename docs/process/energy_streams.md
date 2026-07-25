@@ -107,7 +107,7 @@ flexibleLoad.connect(allocatedGrid);
 EnergyNetworkReport allocation = allocatedGrid.solveBalance();
 double essentialAllocation = essentialLoad.getPowerMagnitude("kW"); // 80 kW
 double flexibleAllocation = flexibleLoad.getPowerMagnitude("kW");   // 20 kW
-double unmetDemand = allocation.getUnmetDemand();                   // 60 kW
+double unmetDemand = allocation.getUnmetDemand();                   // 60000 W
 ```
 
 A `BALANCE` port can inject power during shortage and absorb power during surplus. Configure its generation and consumption limits with `setBalanceLimits`. `BatteryStorage.enableAutomaticBalancing` provides this behavior with state-of-charge, charge/discharge efficiency, power limits, ramp response, and trip handling.
