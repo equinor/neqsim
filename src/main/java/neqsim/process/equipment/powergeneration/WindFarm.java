@@ -119,8 +119,7 @@ public class WindFarm extends ProcessEquipmentBaseClass {
    */
   public WindFarm(String name) {
     super(name);
-    registerEnergyPort("electricalPower", EnergyType.ELECTRICAL, EnergyPortDirection.OUTPUT,
-        EnergyPortMode.CALCULATED);
+    registerEnergyPort("electricalPower", EnergyType.ELECTRICAL, EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED);
   }
 
   /**
