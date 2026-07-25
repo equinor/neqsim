@@ -26,6 +26,10 @@ import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.StandardConstraintType;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyStream;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.compressor.CompressorMechanicalDesign;
 import neqsim.process.ml.StateVector;
@@ -217,6 +221,7 @@ public class Compressor extends TwoPortEquipment
    */
   public Compressor(String name) {
     super(name);
+    registerEnergyPort("shaftPower", EnergyType.SHAFT_WORK, EnergyPortDirection.INPUT, EnergyPortMode.CALCULATED);
     initMechanicalDesign();
     initElectricalDesign();
     initInstrumentDesign();
@@ -244,6 +249,35 @@ public class Compressor extends TwoPortEquipment
     this(name);
     if (interpolateMapLookup) {
       compressorChart = new CompressorChartAlternativeMapLookup();
+    }
+  }
+
+  /**
+   * Connects an external shaft-power specification using the legacy single-stream API.
+   *
+   * @param energyStream shaft-work stream
+   */
+  @Override
+  public void setEnergyStream(EnergyStream energyStream) {
+    super.setEnergyStream(energyStream);
+    getEnergyPort("shaftPower").setMode(EnergyPortMode.SPECIFICATION);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void connectEnergyStream(String portName, EnergyStream stream) {
+    super.connectEnergyStream(portName, stream);
+    if ("shaftPower".equals(portName)) {
+      getEnergyPort(portName).setMode(EnergyPortMode.SPECIFICATION);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void disconnectEnergyStream(String portName) {
+    super.disconnectEnergyStream(portName);
+    if ("shaftPower".equals(portName)) {
+      getEnergyPort(portName).setMode(EnergyPortMode.CALCULATED);
     }
   }
 
@@ -692,6 +726,9 @@ public class Compressor extends TwoPortEquipment
   }
 
   private void finishRun(UUID id) {
+    if (!isSetEnergyStream()) {
+      getEnergyStream().setDuty(dH);
+    }
     updateRecalculationState();
     if (thermalModel != null && thermalModel.isAutoSolve()) {
       thermalModel.solveSteadyState(this);
