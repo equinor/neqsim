@@ -318,11 +318,9 @@ public class EnergyBus extends EnergyStream {
     updatePortNetworkState(balancingConsumers, false);
 
     double acceptedSupply = acceptedNormalSupply + balancingGeneration;
-    double offeredSupply = normalSupply + availableBalancingGeneration;
+    double offeredSupply = normalSupply + balancingGeneration;
     double unmetDemand = Math.max(0.0, requestedDemand - servedDemand);
-    double curtailedSupply =
-        Math.max(0.0, normalSupply - acceptedNormalSupply) + Math.max(0.0, availableBalancingGeneration
-            - balancingGeneration);
+    double curtailedSupply = Math.max(0.0, normalSupply - acceptedNormalSupply);
 
     List<EnergyAllocation> allocationResults = createAllocationResults();
     double conversionLoss = 0.0;
