@@ -1659,4 +1659,3 @@ public class DocExamplesCompilationTest {
   }
 
 }
-
