@@ -125,8 +125,7 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
    */
   public Electrolyzer(String name) {
     super(name);
-    registerEnergyPort("electricalPower", EnergyType.ELECTRICAL, EnergyPortDirection.INPUT,
-        EnergyPortMode.CALCULATED);
+    registerEnergyPort("electricalPower", EnergyType.ELECTRICAL, EnergyPortDirection.INPUT, EnergyPortMode.CALCULATED);
   }
 
   /**
