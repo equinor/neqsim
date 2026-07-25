@@ -386,8 +386,7 @@ public class PumpTest extends neqsim.NeqSimTest {
 
   @Test
   void testRunWithShaftPowerEnergyStream() {
-    neqsim.thermo.system.SystemInterface water =
-        new neqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 2.0);
+    neqsim.thermo.system.SystemInterface water = new neqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 2.0);
     water.addComponent("water", 1.0);
     water.setMixingRule("classic");
 
@@ -402,11 +401,9 @@ public class PumpTest extends neqsim.NeqSimTest {
     double shaftPower = 100.0e3;
     double density = feed.getThermoSystem().getDensity("kg/m3");
     double volumetricFlow = feed.getFlowRate("kg/sec") / density;
-    double expectedOutletPressure =
-        feed.getPressure("Pa") + shaftPower * efficiency / volumetricFlow;
+    double expectedOutletPressure = feed.getPressure("Pa") + shaftPower * efficiency / volumetricFlow;
 
-    EnergyStream shaft =
-        new EnergyStream("pump shaft", EnergyType.SHAFT_WORK);
+    EnergyStream shaft = new EnergyStream("pump shaft", EnergyType.SHAFT_WORK);
     shaft.setPower(shaftPower);
     Pump pump = new Pump("energy-driven pump", feed);
     pump.setIsentropicEfficiency(efficiency);
@@ -414,11 +411,9 @@ public class PumpTest extends neqsim.NeqSimTest {
 
     pump.run();
 
-    Assertions.assertEquals(
-        expectedOutletPressure, pump.getOutletStream().getPressure("Pa"), 1.0);
+    Assertions.assertEquals(expectedOutletPressure, pump.getOutletStream().getPressure("Pa"), 1.0);
     Assertions.assertEquals(shaftPower, pump.getPower(), 1.0e-6);
-    Assertions.assertEquals(
-        EnergyPortMode.SPECIFICATION, pump.getEnergyPort("shaftPower").getMode());
+    Assertions.assertEquals(EnergyPortMode.SPECIFICATION, pump.getEnergyPort("shaftPower").getMode());
   }
 
 }
