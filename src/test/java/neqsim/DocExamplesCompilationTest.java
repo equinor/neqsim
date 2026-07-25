@@ -24,7 +24,6 @@ import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFrictio
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction.InterfacialFrictionResult;
 import neqsim.process.equipment.separator.Separator;
-import neqsim.process.equipment.stream.EnergyAllocation;
 import neqsim.process.equipment.stream.EnergyBus;
 import neqsim.process.equipment.stream.EnergyNetworkReport;
 import neqsim.process.equipment.stream.EnergyPort;
