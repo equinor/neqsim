@@ -146,18 +146,18 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
    */
   @Override
   public void setEnergyStream(EnergyStream energyStream) {
-    super.setEnergyStream(energyStream);
-    getEnergyPort("electricalPower").setMode(EnergyPortMode.SPECIFICATION);
+    super.connectEnergyStream("electricalPower", energyStream, EnergyPortMode.SPECIFICATION);
     setAvailablePower(Math.abs(energyStream.getDuty()));
   }
 
   /** {@inheritDoc} */
   @Override
   public void connectEnergyStream(String portName, EnergyStream stream) {
-    super.connectEnergyStream(portName, stream);
     if ("electricalPower".equals(portName)) {
-      getEnergyPort(portName).setMode(EnergyPortMode.SPECIFICATION);
+      super.connectEnergyStream(portName, stream, EnergyPortMode.SPECIFICATION);
       setAvailablePower(Math.abs(stream.getDuty()));
+    } else {
+      super.connectEnergyStream(portName, stream);
     }
   }
 
