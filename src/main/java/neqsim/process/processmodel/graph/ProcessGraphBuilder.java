@@ -525,12 +525,9 @@ public final class ProcessGraphBuilder {
     // physical direction, determines scheduling order. A point-to-point
     // EnergyStream permits one producer and one consumer; EnergyBus supports
     // multi-party generation, demand, and balancing.
-    Map<EnergyStream, List<ProcessEquipmentInterface>> energyToProducers =
-        new IdentityHashMap<EnergyStream, List<ProcessEquipmentInterface>>();
-    Map<EnergyStream, List<ProcessEquipmentInterface>> energyToConsumers =
-        new IdentityHashMap<EnergyStream, List<ProcessEquipmentInterface>>();
-    Map<EnergyStream, EnergyNetworkSolver> energyToSolver =
-        new IdentityHashMap<EnergyStream, EnergyNetworkSolver>();
+    Map<EnergyStream, List<ProcessEquipmentInterface>> energyToProducers = new IdentityHashMap<EnergyStream, List<ProcessEquipmentInterface>>();
+    Map<EnergyStream, List<ProcessEquipmentInterface>> energyToConsumers = new IdentityHashMap<EnergyStream, List<ProcessEquipmentInterface>>();
+    Map<EnergyStream, EnergyNetworkSolver> energyToSolver = new IdentityHashMap<EnergyStream, EnergyNetworkSolver>();
 
     for (ProcessEquipmentInterface unit : units) {
       if (unit instanceof EnergyNetworkSolver) {
@@ -553,8 +550,7 @@ public final class ProcessGraphBuilder {
         if (port.getMode() == EnergyPortMode.CALCULATED) {
           targetMap = energyToProducers;
           role = "calculation producers";
-        } else if (port.getMode() == EnergyPortMode.SPECIFICATION
-            || port.getMode() == EnergyPortMode.BALANCE) {
+        } else if (port.getMode() == EnergyPortMode.SPECIFICATION || port.getMode() == EnergyPortMode.BALANCE) {
           targetMap = energyToConsumers;
           role = "specification or balance consumers";
         }
