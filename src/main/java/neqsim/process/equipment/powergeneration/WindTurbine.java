@@ -1,6 +1,9 @@
 package neqsim.process.equipment.powergeneration;
 
 import java.util.UUID;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 
 /**
@@ -37,6 +40,8 @@ public class WindTurbine extends ProcessEquipmentBaseClass {
    */
   public WindTurbine(String name) {
     super(name);
+    registerEnergyPort("electricalPower", EnergyType.ELECTRICAL, EnergyPortDirection.OUTPUT,
+        EnergyPortMode.CALCULATED);
   }
 
   /**
