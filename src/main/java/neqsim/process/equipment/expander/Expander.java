@@ -3,6 +3,9 @@ package neqsim.process.equipment.expander;
 import java.util.UUID;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.expander.ExpanderMechanicalDesign;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -63,6 +66,7 @@ public class Expander extends Compressor implements ExpanderInterface {
    */
   public Expander(String name) {
     super(name);
+    registerEnergyPort("shaftPower", EnergyType.SHAFT_WORK, EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED);
     initExpanderMechanicalDesign();
   }
 
@@ -73,8 +77,8 @@ public class Expander extends Compressor implements ExpanderInterface {
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public Expander(String name, StreamInterface inletStream) {
-    super(name, inletStream);
-    initExpanderMechanicalDesign();
+    this(name);
+    setInletStream(inletStream);
   }
 
   /**
@@ -559,9 +563,7 @@ public class Expander extends Compressor implements ExpanderInterface {
       dH = hout - hinn;
       thermoOps.PHflash(hout, 0);
     }
-    if (isSetEnergyStream()) {
-      energyStream.setDuty(-dH);
-    }
+    getEnergyStream().setDuty(-dH);
     // thermoSystem.display();
     outStream.setThermoSystem(getThermoSystem());
     setCalculationIdentifier(id);
