@@ -130,11 +130,17 @@ U = [ρ_G·α_G, ρ_L·α_L, ρ_m·u, ρ_m·e]
 ### Basic Horizontal Pipeline
 
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.pipeline.twophasepipe.LiquidAccumulationTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.TransientPipe;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+
+// Define this as a class field in the enclosing example class.
+private static final Logger logger =
+    LogManager.getLogger(TransientPipeExample.class);
 
 // Create two-phase fluid
 SystemInterface fluid = new SystemSrkEos(300, 50); // 300 K, 50 bar
@@ -197,8 +203,8 @@ pipe.run();
 LiquidAccumulationTracker accumulationTracker = pipe.getAccumulationTracker();
 for (LiquidAccumulationTracker.AccumulationZone zone
         : accumulationTracker.getAccumulationZones()) {
-    System.out.println("Zone starts at: " + zone.startPosition + " m");
-    System.out.println("Accumulated volume: " + zone.liquidVolume + " m³");
+    logger.info("Zone starts at: {} m", zone.startPosition);
+    logger.info("Accumulated volume: {} m³", zone.liquidVolume);
 }
 ```
 
@@ -251,7 +257,7 @@ pipe.run();
 // when both oil and aqueous phases are present.
 double[] pressure = pipe.getPressureProfile(); // Pa
 double deltaPBar = (pressure[0] - pressure[pressure.length - 1]) / 1.0e5;
-System.out.println("Pipeline pressure drop: " + deltaPBar + " bar");
+logger.info("Pipeline pressure drop: {} bar", deltaPBar);
 ```
 
 ## Configuration Options
@@ -352,7 +358,7 @@ double frequency = slugTracker.getSlugFrequency();
 
 // Detailed statistics
 String stats = slugTracker.getStatisticsString();
-System.out.println(stats);
+logger.info("{}", stats);
 ```
 
 **Note:** Both `TransientPipe` (drift-flux) and `TwoFluidPipe` (two-fluid) use the same `SlugTracker` and `LiquidAccumulationTracker` components, but may predict different slug frequencies due to their underlying holdup models. See the [Two-Fluid Model documentation](two_fluid_model#comparison-with-drift-flux-model-transientpipe) for a detailed comparison.
@@ -364,11 +370,11 @@ LiquidAccumulationTracker tracker = pipe.getAccumulationTracker();
 
 for (LiquidAccumulationTracker.AccumulationZone zone
         : tracker.getAccumulationZones()) {
-    System.out.println("Zone start: " + zone.startPosition + " m");
-    System.out.println("Zone end: " + zone.endPosition + " m");
-    System.out.println("Accumulated volume: " + zone.liquidVolume + " m³");
-    System.out.println("Maximum volume: " + zone.maxVolume + " m³");
-    System.out.println("Is overflowing: " + zone.isOverflowing);
+    logger.info("Zone start: {} m", zone.startPosition);
+    logger.info("Zone end: {} m", zone.endPosition);
+    logger.info("Accumulated volume: {} m³", zone.liquidVolume);
+    logger.info("Maximum volume: {} m³", zone.maxVolume);
+    logger.info("Is overflowing: {}", zone.isOverflowing);
 }
 ```
 
@@ -382,8 +388,7 @@ FlowRegimeDetector detector = new FlowRegimeDetector();
 
 for (PipeSection section : sections) {
     FlowRegime regime = detector.detectFlowRegime(section);
-    System.out.println("Position " + section.getPosition() + 
-                       ": " + regime);
+    logger.info("Position {}: {}", section.getPosition(), regime);
 }
 ```
 
@@ -395,10 +400,10 @@ DriftFluxModel model = new DriftFluxModel();
 for (PipeSection section : sections) {
     DriftFluxParameters params = model.calculateDriftFlux(section);
     
-    System.out.println("C0 = " + params.C0);
-    System.out.println("Drift velocity = " + params.driftVelocity + " m/s");
-    System.out.println("Void fraction = " + params.voidFraction);
-    System.out.println("Slip ratio = " + params.slipRatio);
+    logger.info("C0 = {}", params.C0);
+    logger.info("Drift velocity = {} m/s", params.driftVelocity);
+    logger.info("Void fraction = {}", params.voidFraction);
+    logger.info("Slip ratio = {}", params.slipRatio);
 }
 ```
 
@@ -410,14 +415,14 @@ PipeSection[] sections = pipe.getSections();
 for (int i = 0; i < sections.length; i++) {
     PipeSection s = sections[i];
     
-    System.out.printf("Section %d (x=%.1f m):%n", i, s.getPosition());
-    System.out.printf("  Pressure: %.2f bar%n", s.getPressure()/1e5);
-    System.out.printf("  Temperature: %.1f K%n", s.getTemperature());
-    System.out.printf("  Liquid holdup: %.3f%n", s.getLiquidHoldup());
-    System.out.printf("  Gas velocity: %.2f m/s%n", s.getGasVelocity());
-    System.out.printf("  Liquid velocity: %.2f m/s%n", s.getLiquidVelocity());
-    System.out.printf("  Flow regime: %s%n", s.getFlowRegime());
-    System.out.printf("  Is low point: %b%n", s.isLowPoint());
+    logger.info("Section {} (x={} m)", i, s.getPosition());
+    logger.info("Pressure: {} bar", s.getPressure() / 1.0e5);
+    logger.info("Temperature: {} K", s.getTemperature());
+    logger.info("Liquid holdup: {}", s.getLiquidHoldup());
+    logger.info("Gas velocity: {} m/s", s.getGasVelocity());
+    logger.info("Liquid velocity: {} m/s", s.getLiquidVelocity());
+    logger.info("Flow regime: {}", s.getFlowRegime());
+    logger.info("Is low point: {}", s.isLowPoint());
 }
 ```
 
@@ -609,8 +614,8 @@ tp.run();
 double[] pressures = tp.getPressureProfile();
 double dpTransient = (pressures[0] - pressures[pressures.length - 1]) / 1e5;
 
-System.out.println("Beggs & Brill: " + dpBeggsBrill + " bar");
-System.out.println("TransientPipe: " + dpTransient + " bar");
+logger.info("Beggs & Brill: {} bar", dpBeggsBrill);
+logger.info("TransientPipe: {} bar", dpTransient);
 ```
 
 ### References for Model Comparison
