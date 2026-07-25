@@ -175,8 +175,8 @@ public class EnergyPort implements Serializable {
    * Gets the non-negative transferred-power magnitude in watts.
    *
    * <p>
-   * This is the preferred accessor for typed ports because physical direction is represented by
-   * {@link #getDirection()} rather than by a legacy duty sign.
+   * This is the preferred accessor for typed ports because physical direction is represented by {@link #getDirection()}
+   * rather than by a legacy duty sign.
    *
    * @return absolute duty in W
    * @throws IllegalStateException if no stream is connected
