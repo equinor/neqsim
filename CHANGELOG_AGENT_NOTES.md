@@ -9,6 +9,35 @@
 
 ---
 
+## 2026-07-25 — New: Energy Networks v3
+
+### Summary
+
+Typed energy streams now support deterministic multi-party dispatch rather than relying only on sequential net-duty
+updates. The implementation adds explicit requests, allocations, priorities, balancing, shortages, curtailment,
+persistent participant IDs, energy-quality metadata, conversion equipment, utility levels, transient storage/shaft
+behavior, and auditable cost/emissions reporting.
+
+### New capability
+
+- `EnergyBus.solveBalance()` and `EnergyNetworkSolver`: priority/proportional dispatch with real `BALANCE` mode.
+- `EnergyNetworkReport`: supply, demand, unmet load, curtailment, balancing, loss, efficiency, cost, and CO2.
+- `EnergyQuality` and `UtilityLevel`: voltage/frequency, thermal grade, pressure, temperature, and shaft speed.
+- `ElectricMotor`, `Generator`, `Gearbox`, `Inverter`, and `Transformer`: explicit conversion and heat loss.
+- `MotorDriveTrain` and `MotorAssistedDriveTrain`: pump/compressor electrical drives and expander motor assist.
+- `UtilityEnergyBus`, `ThermalUtilitySource`, and `ThermalUtilityConsumer`: typed steam, hot-oil, water, and
+  refrigeration networks.
+- `MechanicalShaft.advanceTransient(dt)` and dynamic `BatteryStorage`: inertia/SOC, ramp limits, and trips.
+- Two-stream, multi-stream, and LNG heat exchangers publish calculated recoverable heat.
+
+### Compatibility
+
+Legacy sequential buses and owner-name/port-name contribution lookup remain supported. Internal network bookkeeping
+uses stable serialized participant IDs, so equipment renaming no longer changes allocation identity.
+
+---
+
+
 ---
 
 ## 2026-07-15 — New: `CompressorChartIGV` (vendor IGV-position chart family, Phase 2)
