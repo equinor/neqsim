@@ -70,8 +70,7 @@ public class ThermalUtilityConsumer extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    allocatedPower =
-        getEnergyPort(INPUT_PORT).isConnected() ? getEnergyPort(INPUT_PORT).getPowerMagnitude() : 0.0;
+    allocatedPower = getEnergyPort(INPUT_PORT).isConnected() ? getEnergyPort(INPUT_PORT).getPowerMagnitude() : 0.0;
     setCalculationIdentifier(id);
   }
 
