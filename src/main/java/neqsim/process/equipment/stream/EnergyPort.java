@@ -165,8 +165,12 @@ public class EnergyPort implements Serializable {
    */
   public double getDuty() {
     EnergyStream stream = requireConnectedStream();
-    if (stream instanceof EnergyBus && mode == EnergyPortMode.CALCULATED) {
-      return ((EnergyBus) stream).getContribution(getContributionKey());
+    if (stream instanceof EnergyBus) {
+      EnergyBus bus = (EnergyBus) stream;
+      if (mode == EnergyPortMode.CALCULATED) {
+        return bus.getContribution(getContributionKey());
+      }
+      return bus.getNetPowerExcluding(getContributionKey());
     }
     return stream.getDuty();
   }
@@ -182,7 +186,16 @@ public class EnergyPort implements Serializable {
    * @throws IllegalStateException if no stream is connected
    */
   public double getPowerMagnitude() {
-    return Math.abs(getDuty());
+    double duty = getDuty();
+    if (energyStream instanceof EnergyBus && mode != EnergyPortMode.CALCULATED) {
+      if (direction == EnergyPortDirection.INPUT) {
+        return Math.max(0.0, duty);
+      }
+      if (direction == EnergyPortDirection.OUTPUT) {
+        return Math.max(0.0, -duty);
+      }
+    }
+    return Math.abs(duty);
   }
 
   /**
@@ -221,6 +234,8 @@ public class EnergyPort implements Serializable {
         contribution = -Math.abs(duty);
       } else if (direction == EnergyPortDirection.OUTPUT) {
         contribution = Math.abs(duty);
+      } else if (mode == EnergyPortMode.SPECIFICATION) {
+        contribution = -duty;
       }
       ((EnergyBus) stream).setContribution(getContributionKey(), contribution);
     } else {
