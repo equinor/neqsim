@@ -38,6 +38,10 @@ src/main/java/neqsim/
   physicalproperties/    Density, viscosity, conductivity, surface tension
   process/equipment/     33 equipment packages:
     stream/ separator/ compressor/ pump/ valve/ heatexchanger/
+    energy/              EnergyNetworkSolver, EnergyConverter, motors/generators,
+                         gearboxes/inverters/transformers, typed utility buses
+    stream/               EnergyBus deterministic allocation, EnergyQuality,
+                         EnergyNetworkReport, transient MechanicalShaft
     pipeline/ distillation/ mixer/ splitter/ expander/ reactor/
     pipeline/routing/     PipingRouteBuilder — STID/E3D line-list route
                           hydraulics to serial PipeBeggsAndBrills models
