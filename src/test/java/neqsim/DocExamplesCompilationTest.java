@@ -21,8 +21,12 @@ import neqsim.process.equipment.distillation.internals.ColumnInternalsDesigner;
 import neqsim.process.equipment.heatexchanger.CoolingWaterSystem;
 import neqsim.process.equipment.heatexchanger.FiredHeater;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
+import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction.InterfacialFrictionResult;
 import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyStream;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.fielddevelopment.concept.DevelopmentCaseTemplate;
@@ -1563,4 +1567,33 @@ public class DocExamplesCompilationTest {
       assertNotNull(r.getStatus());
     }
   }
+  /**
+   * Energy-driven pump example from docs/process/energy_streams.md.
+   */
+  @Test
+  public void testEnergyDrivenPumpDocumentationExample() {
+    SystemInterface water = new SystemSrkEos(298.15, 2.0);
+    water.addComponent("water", 1.0);
+    water.setMixingRule("classic");
+
+    Stream feed = new Stream("pump feed", water);
+    feed.setFlowRate(100000.0, "kg/hr");
+    feed.run();
+
+    EnergyStream shaft =
+        new EnergyStream("pump shaft", EnergyType.SHAFT_WORK);
+    shaft.setPower(100.0, "kW");
+
+    Pump pump = new Pump("energy-driven pump", feed);
+    pump.setIsentropicEfficiency(0.75);
+    pump.setEnergyStream(shaft);
+    pump.run();
+
+    double outletPressure = pump.getOutletStream().getPressure("bara");
+    EnergyPortMode mode = pump.getEnergyPort("shaftPower").getMode();
+
+    assertTrue(outletPressure > feed.getPressure("bara"));
+    assertEquals(EnergyPortMode.SPECIFICATION, mode);
+  }
+
 }
