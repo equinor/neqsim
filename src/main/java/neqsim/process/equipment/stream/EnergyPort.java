@@ -21,6 +21,7 @@ public class EnergyPort implements Serializable {
   private final EnergyType energyType;
   private final EnergyPortDirection direction;
   private EnergyPortMode mode;
+  private String ownerName = "";
   private EnergyStream energyStream;
 
   /**
@@ -48,6 +49,24 @@ public class EnergyPort implements Serializable {
    */
   public String getName() {
     return name;
+  }
+
+  /**
+   * Gets the owning equipment name used for energy-bus contribution keys.
+   *
+   * @return owner name, or an empty string when the port is standalone
+   */
+  public String getOwnerName() {
+    return ownerName;
+  }
+
+  /**
+   * Sets the owning equipment name used for energy-bus contribution keys.
+   *
+   * @param ownerName equipment name
+   */
+  public void setOwnerName(String ownerName) {
+    this.ownerName = Objects.requireNonNull(ownerName, "ownerName cannot be null");
   }
 
   /**
@@ -98,6 +117,9 @@ public class EnergyPort implements Serializable {
    */
   public void connect(EnergyStream stream) {
     Objects.requireNonNull(stream, "stream cannot be null");
+    if (energyStream instanceof EnergyBus && energyStream != stream) {
+      ((EnergyBus) energyStream).removeContribution(getContributionKey());
+    }
     EnergyType streamType = stream.getEnergyType();
     if (streamType != EnergyType.UNSPECIFIED && energyType != EnergyType.UNSPECIFIED && streamType != energyType) {
       throw new IllegalArgumentException(
@@ -111,6 +133,9 @@ public class EnergyPort implements Serializable {
 
   /** Disconnects the current energy stream, if any. */
   public void disconnect() {
+    if (energyStream instanceof EnergyBus) {
+      ((EnergyBus) energyStream).removeContribution(getContributionKey());
+    }
     energyStream = null;
   }
 
@@ -139,7 +164,11 @@ public class EnergyPort implements Serializable {
    * @throws IllegalStateException if no stream is connected
    */
   public double getDuty() {
-    return requireConnectedStream().getDuty();
+    EnergyStream stream = requireConnectedStream();
+    if (stream instanceof EnergyBus && mode == EnergyPortMode.CALCULATED) {
+      return ((EnergyBus) stream).getContribution(getContributionKey());
+    }
+    return stream.getDuty();
   }
 
   /**
@@ -175,7 +204,7 @@ public class EnergyPort implements Serializable {
    * @throws IllegalStateException if no stream is connected
    */
   public double getDuty(String unit) {
-    return requireConnectedStream().getDuty(unit);
+    return new neqsim.util.unit.PowerUnit(getDuty(), "W").getValue(unit);
   }
 
   /**
@@ -185,7 +214,12 @@ public class EnergyPort implements Serializable {
    * @throws IllegalStateException if no stream is connected
    */
   public void setDuty(double duty) {
-    requireConnectedStream().setDuty(duty);
+    EnergyStream stream = requireConnectedStream();
+    if (stream instanceof EnergyBus) {
+      ((EnergyBus) stream).setContribution(getContributionKey(), duty);
+    } else {
+      stream.setDuty(duty);
+    }
   }
 
   /**
@@ -196,7 +230,11 @@ public class EnergyPort implements Serializable {
    * @throws IllegalStateException if no stream is connected
    */
   public void setDuty(double duty, String unit) {
-    requireConnectedStream().setDuty(duty, unit);
+    setDuty(new neqsim.util.unit.PowerUnit(duty, unit).getValue("W"));
+  }
+
+  private String getContributionKey() {
+    return ownerName.isEmpty() ? name : ownerName + "." + name;
   }
 
   private EnergyStream requireConnectedStream() {
