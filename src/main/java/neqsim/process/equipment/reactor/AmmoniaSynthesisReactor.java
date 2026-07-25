@@ -244,7 +244,7 @@ public class AmmoniaSynthesisReactor extends TwoPortEquipment {
     outStream.setThermoSystem(outSystem);
     outStream.run(id);
 
-    getEnergyStream().setDuty(heatDuty);
+    getEnergyPort("reactionHeat").setDuty(heatDuty);
     setCalculationIdentifier(id);
   }
 
