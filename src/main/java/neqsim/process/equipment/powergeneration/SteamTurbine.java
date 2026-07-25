@@ -126,7 +126,7 @@ public class SteamTurbine extends TwoPortEquipment implements CapacityConstraine
     }
 
     this.power = actualWork; // Watts (positive = power produced)
-    getEnergyStream().setDuty(-power);
+    getEnergyPort("shaftPower").setDuty(-power);
 
     outStream.setThermoSystem(outletFluid);
     outStream.setCalculationIdentifier(id);
