@@ -3,8 +3,6 @@ title: "Transient Multiphase Pipe Model"
 description: "Configure and validate NeqSim's drift-flux transient pipeline model, including pressure boundaries, terrain effects, liquid accumulation, and profile results."
 ---
 
-# Transient Multiphase Pipe Model
-
 ## Overview
 
 The `TransientPipe` class provides a 1D transient multiphase (gas-liquid) flow simulator for pipelines. It uses the drift-flux formulation combined with mechanistic flow regime detection to model complex phenomena like terrain-induced slugging, liquid accumulation at low points, and transient pressure wave propagation.
@@ -361,7 +359,7 @@ String stats = slugTracker.getStatisticsString();
 logger.info("{}", stats);
 ```
 
-**Note:** Both `TransientPipe` (drift-flux) and `TwoFluidPipe` (two-fluid) use the same `SlugTracker` and `LiquidAccumulationTracker` components, but may predict different slug frequencies due to their underlying holdup models. See the [Two-Fluid Model documentation](two_fluid_model#comparison-with-drift-flux-model-transientpipe) for a detailed comparison.
+**Note:** Both `TransientPipe` (drift-flux) and `TwoFluidPipe` (two-fluid) use the same `SlugTracker` and `LiquidAccumulationTracker` components, but may predict different slug frequencies due to their underlying holdup models. See the [Two-Fluid Model documentation](two_fluid_model.md#comparison-with-drift-flux-model-transientpipe) for a detailed comparison.
 
 ### Accumulation Zones
 
@@ -626,6 +624,6 @@ logger.info("TransientPipe: {} bar", dpTransient);
 
 ## See Also
 
-- [Pipeline Flow Equations](pipeline_flow_equations)
-- [Pipeline Model Recommendations](pipeline_model_recommendations)
-- [Process Simulation](advanced_process_simulation)
+- [Pipeline Flow Equations](pipeline_flow_equations.md)
+- [Pipeline Model Recommendations](pipeline_model_recommendations.md)
+- [Process Simulation](advanced_process_simulation.md)
