@@ -31,7 +31,6 @@ class TransientPipeDocumentationTest {
     pipe.setDiameter(0.15);
     pipe.setNumberOfSections(10);
     pipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_FLOW);
-    pipe.setInletMassFlow(5.0);
     pipe.setOutletBoundaryCondition(BoundaryCondition.CONSTANT_PRESSURE);
 
     double specifiedOutletPressure = 30.0;

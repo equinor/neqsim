@@ -278,15 +278,17 @@ System.out.println("Pipeline pressure drop: " + deltaPBar + " bar");
 ### Boundary Conditions
 
 The default inlet boundary is `CONSTANT_FLOW`, and the default outlet boundary is
-`CONSTANT_PRESSURE`. Set a receiving pressure explicitly before the first
-`run()` or `runTransient()` call when the downstream pressure is known:
+`CONSTANT_PRESSURE`. The connected inlet stream supplies the mass flow during
+initialization and is re-read by each `runTransient()` call, so set the initial
+flow with `inlet.setFlowRate(...)` as shown in the quick start. Set a receiving
+pressure explicitly before the first `run()` or `runTransient()` call when the
+downstream pressure is known:
 
 ```java
 import java.util.UUID;
 import neqsim.process.equipment.pipeline.twophasepipe.TransientPipe.BoundaryCondition;
 
 pipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_FLOW);
-pipe.setInletMassFlow(5.0); // kg/s
 
 pipe.setOutletBoundaryCondition(BoundaryCondition.CONSTANT_PRESSURE);
 double specifiedOutletPressure = 30.0; // bara
