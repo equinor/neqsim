@@ -25,7 +25,7 @@ public class EnergyStream implements ProcessElementInterface, Cloneable {
 
   private String name = "";
   private String tagNumber = "";
-  private double duty = 0.0;
+  protected double duty = 0.0;
   private EnergyType energyType = EnergyType.UNSPECIFIED;
 
   /** Creates an unnamed, unspecified energy stream with zero duty. */
@@ -80,7 +80,7 @@ public class EnergyStream implements ProcessElementInterface, Cloneable {
    * @return duty in the requested unit
    */
   public double getDuty(String unit) {
-    return new PowerUnit(duty, "W").getValue(unit);
+    return new PowerUnit(getDuty(), "W").getValue(unit);
   }
 
   /**
@@ -99,7 +99,7 @@ public class EnergyStream implements ProcessElementInterface, Cloneable {
    * @param unit power unit
    */
   public void setDuty(double duty, String unit) {
-    this.duty = new PowerUnit(duty, unit).getValue("W");
+    setDuty(new PowerUnit(duty, unit).getValue("W"));
   }
 
   /**
