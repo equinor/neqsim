@@ -149,6 +149,38 @@ public class EnergyBus extends EnergyStream {
   }
 
   /**
+   * Gets the net bus power while excluding one participant's previous contribution.
+   *
+   * <p>
+   * Specification consumers use this value when a process is run repeatedly. Excluding the consumer's own previous
+   * withdrawal prevents self-feedback from reducing its available power on every run.
+   * </p>
+   *
+   * @param participant participant or port contribution key to exclude
+   * @return net power excluding that contribution in W
+   */
+  public double getNetPowerExcluding(String participant) {
+    double netPower = super.getDuty();
+    for (Map.Entry<String, Double> entry : contributions.entrySet()) {
+      if (!entry.getKey().equals(participant)) {
+        netPower += entry.getValue().doubleValue();
+      }
+    }
+    return netPower;
+  }
+
+  /**
+   * Gets net bus power excluding one participant in a requested unit.
+   *
+   * @param participant participant or port contribution key to exclude
+   * @param unit requested power unit
+   * @return net power excluding that contribution in the requested unit
+   */
+  public double getNetPowerExcluding(String participant, String unit) {
+    return new PowerUnit(getNetPowerExcluding(participant), "W").getValue(unit);
+  }
+
+  /**
    * Gets net bus power in a requested unit.
    *
    * @param unit requested power unit
