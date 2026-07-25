@@ -118,8 +118,7 @@ class EnergyPortTest {
 
     private TestEquipment(String name) {
       super(name);
-      registerEnergyPort("heatDuty", EnergyType.HEAT, EnergyPortDirection.BIDIRECTIONAL,
-          EnergyPortMode.CALCULATED);
+      registerEnergyPort("heatDuty", EnergyType.HEAT, EnergyPortDirection.BIDIRECTIONAL, EnergyPortMode.CALCULATED);
     }
 
     @Override
