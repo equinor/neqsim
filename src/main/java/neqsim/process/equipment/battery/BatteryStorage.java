@@ -1,6 +1,9 @@
 package neqsim.process.equipment.battery;
 
 import java.util.UUID;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 
 /**
@@ -32,6 +35,8 @@ public class BatteryStorage extends ProcessEquipmentBaseClass {
    */
   public BatteryStorage(String name, double capacity) {
     super(name);
+    registerEnergyPort("electricalPower", EnergyType.ELECTRICAL, EnergyPortDirection.BIDIRECTIONAL,
+        EnergyPortMode.CALCULATED);
     this.capacity = capacity;
     this.stateOfCharge = 0.0;
   }
