@@ -536,7 +536,7 @@ public class EnergyBus extends EnergyStream {
   }
 
   /**
-   * Stores signed allocation and solved contributions for dispatchable participants.
+   * Accumulates signed allocations for one dispatch leg.
    *
    * @param entries dispatch entries
    * @param generation {@code true} for generation, {@code false} for consumption
