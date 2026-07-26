@@ -1,0 +1,40 @@
+name: Integrated Energy Cleanup
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - 'src/main/java/neqsim/process/equipment/energy/CoupledProcessEnergySolver.java'
+      - '.github/workflows/fix-coupled-energy-state-artifact.yml'
+      - '.github/workflows/integrated-energy-cleanup.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out PR branch
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - name: Apply integrated cleanup
+        shell: python
+        run: |
+          from pathlib import Path
+          solver = Path('src/main/java/neqsim/process/equipment/energy/CoupledProcessEnergySolver.java')
+          text = solver.read_text(encoding='utf-8')
+          text = text.replace('        putFinite(state, prefix + "operatingCostPerHour", report.getOperatingCostPerHour());\n', '')
+          text = text.replace('        putFinite(state, prefix + "co2EmissionRateKgPerHour", report.getCo2EmissionRate());\n', '')
+          solver.write_text(text, encoding='utf-8')
+          Path('.github/workflows/fix-coupled-energy-state-artifact.yml').unlink(missing_ok=True)
+          Path('.github/workflows/integrated-energy-cleanup.yml').unlink(missing_ok=True)
+      - name: Commit cleanup
+        shell: bash
+        run: |
+          git config user.name "neqsim-energy-cleanup"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "Fix integrated energy convergence cleanup"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
