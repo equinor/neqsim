@@ -1,0 +1,35 @@
+name: Apply Integrated Energy Formatting
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - '.github/workflows/apply-integrated-energy-formatting.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  format-and-clean:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Apply Spotless and remove helper
+        run: |
+          bash devtools/run_spotless.sh apply
+          rm .github/workflows/apply-integrated-energy-formatting.yml
+      - name: Commit formatted sources
+        run: |
+          git config user.name "neqsim-energy-validation"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/main/java src/test/java .github/workflows/apply-integrated-energy-formatting.yml
+          git commit -m "style: format integrated energy sources"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
