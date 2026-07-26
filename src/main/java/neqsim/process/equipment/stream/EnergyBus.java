@@ -383,8 +383,8 @@ public class EnergyBus extends EnergyStream {
     double realizedBalancingGeneration = sumRequested(realizedBalancingGenerators);
     double realizedBalancingConsumption = sumRequested(realizedBalancingConsumers);
     double totalAvailableSupply = normalSupply + realizedBalancingGeneration + availableBalancingGeneration;
-    double demandAllocationLimit =
-        Math.min(requestedDemand, Math.max(0.0, totalAvailableSupply - realizedBalancingConsumption));
+    double demandAllocationLimit = Math.min(requestedDemand,
+        Math.max(0.0, totalAvailableSupply - realizedBalancingConsumption));
 
     double participantDemandLimit = Math.max(0.0, demandAllocationLimit - externalDemand);
     allocateByPriority(demands, participantDemandLimit);
@@ -393,9 +393,9 @@ public class EnergyBus extends EnergyStream {
     double servedDemand = servedParticipantDemand + servedExternalDemand;
 
     double availableBalancingConsumption = sumRequested(balancingConsumers);
-    double balancingConsumptionTarget =
-        Math.min(Math.max(0.0, normalSupply + realizedBalancingGeneration - servedDemand
-            - realizedBalancingConsumption), availableBalancingConsumption);
+    double balancingConsumptionTarget = Math.min(
+        Math.max(0.0, normalSupply + realizedBalancingGeneration - servedDemand - realizedBalancingConsumption),
+        availableBalancingConsumption);
     double normalGenerationTarget = Math.min(normalSupply, Math.max(0.0,
         servedDemand + realizedBalancingConsumption + balancingConsumptionTarget - realizedBalancingGeneration));
     double participantGenerationTarget = Math.max(0.0, normalGenerationTarget - externalSupply);
