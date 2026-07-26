@@ -19,6 +19,9 @@ public enum EnergyDispatchStrategy {
   /** Lower marginal energy price dispatches first; equal-price and equal-priority sources share proportionally. */
   MINIMUM_COST,
 
-  /** Lower CO2-equivalent emission factor dispatches first; equal-factor and equal-priority sources share proportionally. */
+  /**
+   * Lower CO2-equivalent emission factor dispatches first; equal-factor and equal-priority sources share
+   * proportionally.
+   */
   MINIMUM_EMISSIONS
 }

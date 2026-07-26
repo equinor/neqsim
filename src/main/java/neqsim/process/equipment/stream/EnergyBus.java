@@ -16,8 +16,8 @@ import neqsim.util.unit.PowerUnit;
  * <p>
  * Positive contributions inject power and negative contributions withdraw power. Calculated ports publish fixed offers
  * or demands, specification ports publish dispatchable requests, and balance ports absorb a surplus or cover a shortage
- * within configured limits. Demand is always served by priority, proportionally within equal-priority groups. Generation
- * defaults to the same policy and can optionally use minimum-cost or minimum-emissions merit order.
+ * within configured limits. Demand is always served by priority, proportionally within equal-priority groups.
+ * Generation defaults to the same policy and can optionally use minimum-cost or minimum-emissions merit order.
  * </p>
  *
  * @author NeqSim
@@ -658,8 +658,7 @@ public class EnergyBus extends EnergyStream {
       double metric = getDispatchMetric(entries.get(start), strategy);
       int priority = entries.get(start).port.getPriority();
       double groupRequest = entries.get(start).requested;
-      while (end < entries.size()
-          && Double.compare(getDispatchMetric(entries.get(end), strategy), metric) == 0
+      while (end < entries.size() && Double.compare(getDispatchMetric(entries.get(end), strategy), metric) == 0
           && entries.get(end).port.getPriority() == priority) {
         groupRequest += entries.get(end).requested;
         end++;
