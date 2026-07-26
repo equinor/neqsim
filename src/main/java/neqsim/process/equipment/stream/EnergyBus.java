@@ -16,12 +16,12 @@ import neqsim.util.unit.PowerUnit;
  * <p>
  * Positive contributions inject power and negative contributions withdraw power. Calculated ports publish fixed offers
  * or demands, specification ports publish dispatchable requests, and balance ports absorb a surplus or cover a shortage
- * within configured limits. Lower priority numbers are dispatched first; participants with equal priority are allocated
- * proportionally and ordered by persistent participant identifier.
+ * within configured limits. Demand is always served by priority, proportionally within equal-priority groups. Generation
+ * defaults to the same policy and can optionally use minimum-cost or minimum-emissions merit order.
  * </p>
  *
  * @author NeqSim
- * @version 2.0
+ * @version 3.0
  */
 public class EnergyBus extends EnergyStream {
   private static final long serialVersionUID = 1000L;
@@ -32,6 +32,7 @@ public class EnergyBus extends EnergyStream {
   private Map<String, Double> realizedBalancePowers = new LinkedHashMap<String, Double>();
   private boolean solutionValid = false;
   private EnergyNetworkReport lastReport = null;
+  private EnergyDispatchStrategy dispatchStrategy = EnergyDispatchStrategy.PRIORITY_PROPORTIONAL;
 
   /** Creates an unnamed bus with an unspecified energy domain. */
   public EnergyBus() {
@@ -58,7 +59,7 @@ public class EnergyBus extends EnergyStream {
   }
 
   /**
-   * Restores collection defaults for energy buses serialized before allocation support was introduced.
+   * Restores collection and strategy defaults for energy buses serialized before allocation support was introduced.
    *
    * @param input serialized object input
    * @throws IOException if the stream cannot be read
@@ -77,6 +78,9 @@ public class EnergyBus extends EnergyStream {
     }
     if (realizedBalancePowers == null) {
       realizedBalancePowers = new LinkedHashMap<String, Double>();
+    }
+    if (dispatchStrategy == null) {
+      dispatchStrategy = EnergyDispatchStrategy.PRIORITY_PROPORTIONAL;
     }
   }
 
@@ -129,6 +133,36 @@ public class EnergyBus extends EnergyStream {
    */
   public Map<String, EnergyPort> getRegisteredPorts() {
     return Collections.unmodifiableMap(registeredPorts);
+  }
+
+  /**
+   * Gets the producer dispatch strategy.
+   *
+   * @return current strategy
+   */
+  public EnergyDispatchStrategy getDispatchStrategy() {
+    return dispatchStrategy;
+  }
+
+  /**
+   * Sets the producer dispatch strategy.
+   *
+   * <p>
+   * The strategy applies separately to normal producers and balancing generators. Demand continues to use its existing
+   * priority/proportional allocation, and balancing generation remains reserve that is considered only after normal
+   * generation.
+   * </p>
+   *
+   * @param dispatchStrategy producer dispatch strategy
+   */
+  public void setDispatchStrategy(EnergyDispatchStrategy dispatchStrategy) {
+    if (dispatchStrategy == null) {
+      throw new IllegalArgumentException("Energy dispatch strategy is required");
+    }
+    if (this.dispatchStrategy != dispatchStrategy) {
+      this.dispatchStrategy = dispatchStrategy;
+      invalidateSolution();
+    }
   }
 
   /**
@@ -221,9 +255,7 @@ public class EnergyBus extends EnergyStream {
     invalidateSolution();
   }
 
-  /**
-   * Clears realized powers reported by balance equipment before a new transient dispatch.
-   */
+  /** Clears realized powers reported by balance equipment before a new transient dispatch. */
   public void clearRealizedBalancePowers() {
     if (!realizedBalancePowers.isEmpty()) {
       realizedBalancePowers.clear();
@@ -399,14 +431,14 @@ public class EnergyBus extends EnergyStream {
     double normalGenerationTarget = Math.min(normalSupply, Math.max(0.0,
         servedDemand + realizedBalancingConsumption + balancingConsumptionTarget - realizedBalancingGeneration));
     double participantGenerationTarget = Math.max(0.0, normalGenerationTarget - externalSupply);
-    allocateByPriority(producers, participantGenerationTarget);
+    allocateGeneration(producers, participantGenerationTarget);
     double acceptedParticipantSupply = sumAllocated(producers);
     double acceptedExternalSupply = Math.min(externalSupply, normalGenerationTarget);
     double acceptedNormalSupply = acceptedParticipantSupply + acceptedExternalSupply;
 
     double balancingGenerationTarget = Math.max(0.0, servedDemand + realizedBalancingConsumption
         + balancingConsumptionTarget - acceptedNormalSupply - realizedBalancingGeneration);
-    allocateByPriority(balancingGenerators, balancingGenerationTarget);
+    allocateGeneration(balancingGenerators, balancingGenerationTarget);
     double balancingGeneration = realizedBalancingGeneration + sumAllocated(balancingGenerators);
 
     double actualSurplus = Math.max(0.0,
@@ -550,6 +582,15 @@ public class EnergyBus extends EnergyStream {
     return request;
   }
 
+  /** Allocates producer entries using the selected strategy. */
+  private void allocateGeneration(List<DispatchEntry> entries, double available) {
+    if (dispatchStrategy == EnergyDispatchStrategy.PRIORITY_PROPORTIONAL) {
+      allocateByPriority(entries, available);
+    } else {
+      allocateByMeritOrder(entries, available, dispatchStrategy);
+    }
+  }
+
   /**
    * Allocates a capacity across entries by priority and proportionally within an equal-priority group.
    *
@@ -579,12 +620,74 @@ public class EnergyBus extends EnergyStream {
         end++;
       }
       double groupAllocation = Math.min(remaining, groupRequest);
-      for (int index = start; index < end; index++) {
-        DispatchEntry entry = entries.get(index);
-        entry.allocated = groupRequest > 0.0 ? groupAllocation * entry.requested / groupRequest : 0.0;
-      }
+      allocateGroup(entries, start, end, groupRequest, groupAllocation);
       remaining -= groupAllocation;
       start = end;
+    }
+  }
+
+  /**
+   * Allocates generation by marginal cost or emissions and uses priority as a secondary operational discriminator.
+   *
+   * @param entries generation entries
+   * @param available accepted generation target in W
+   * @param strategy merit-order strategy
+   */
+  private static void allocateByMeritOrder(List<DispatchEntry> entries, double available,
+      final EnergyDispatchStrategy strategy) {
+    Collections.sort(entries, new Comparator<DispatchEntry>() {
+      /** {@inheritDoc} */
+      @Override
+      public int compare(DispatchEntry first, DispatchEntry second) {
+        int metricComparison = Double.compare(getDispatchMetric(first, strategy), getDispatchMetric(second, strategy));
+        if (metricComparison != 0) {
+          return metricComparison;
+        }
+        int priorityComparison = Integer.compare(first.port.getPriority(), second.port.getPriority());
+        if (priorityComparison != 0) {
+          return priorityComparison;
+        }
+        return first.port.getParticipantId().compareTo(second.port.getParticipantId());
+      }
+    });
+
+    double remaining = Math.max(0.0, available);
+    int start = 0;
+    while (start < entries.size()) {
+      int end = start + 1;
+      double metric = getDispatchMetric(entries.get(start), strategy);
+      int priority = entries.get(start).port.getPriority();
+      double groupRequest = entries.get(start).requested;
+      while (end < entries.size()
+          && Double.compare(getDispatchMetric(entries.get(end), strategy), metric) == 0
+          && entries.get(end).port.getPriority() == priority) {
+        groupRequest += entries.get(end).requested;
+        end++;
+      }
+      double groupAllocation = Math.min(remaining, groupRequest);
+      allocateGroup(entries, start, end, groupRequest, groupAllocation);
+      remaining -= groupAllocation;
+      start = end;
+    }
+  }
+
+  /** Gets the merit-order metric for one producer. */
+  private static double getDispatchMetric(DispatchEntry entry, EnergyDispatchStrategy strategy) {
+    if (strategy == EnergyDispatchStrategy.MINIMUM_COST) {
+      return entry.port.getEnergyPricePerMWh();
+    }
+    if (strategy == EnergyDispatchStrategy.MINIMUM_EMISSIONS) {
+      return entry.port.getEmissionFactorKgPerMWh();
+    }
+    throw new IllegalArgumentException("Merit-order allocation requires a cost or emissions strategy");
+  }
+
+  /** Allocates one equal-merit group proportionally. */
+  private static void allocateGroup(List<DispatchEntry> entries, int start, int end, double groupRequest,
+      double groupAllocation) {
+    for (int index = start; index < end; index++) {
+      DispatchEntry entry = entries.get(index);
+      entry.allocated = groupRequest > 0.0 ? groupAllocation * entry.requested / groupRequest : 0.0;
     }
   }
 
@@ -687,9 +790,7 @@ public class EnergyBus extends EnergyStream {
     return participant;
   }
 
-  /**
-   * Mutable working state used during one deterministic dispatch.
-   */
+  /** Mutable working state used during one deterministic dispatch. */
   private static final class DispatchEntry {
     private final EnergyPort port;
     private final double requested;
