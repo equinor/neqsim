@@ -90,6 +90,7 @@ class EnergyBusAllocationTest {
 
     assertEquals(50.0, bus.getAllocation(storage.getParticipantId()), 1.0e-12);
     assertEquals(50.0, storage.getDuty(), 1.0e-12);
+    assertEquals(110.0, shortage.getOfferedSupply(), 1.0e-12);
     assertEquals(0.0, shortage.getUnmetDemand(), 1.0e-12);
 
     producer.setDuty(150.0);
