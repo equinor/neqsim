@@ -79,7 +79,13 @@ public class EnergyNetworkSolver extends ProcessEquipmentBaseClass {
    * @return immutable report list
    */
   public List<EnergyNetworkReport> getReports() {
-    return Collections.unmodifiableList(reports);
+    List<EnergyNetworkReport> currentReports = new ArrayList<EnergyNetworkReport>();
+    for (EnergyBus energyBus : energyBuses) {
+      if (energyBus.getLastReport() != null) {
+        currentReports.add(energyBus.getLastReport());
+      }
+    }
+    return Collections.unmodifiableList(currentReports);
   }
 
   /** {@inheritDoc} */
@@ -95,6 +101,9 @@ public class EnergyNetworkSolver extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt, UUID id) {
+    for (EnergyBus energyBus : energyBuses) {
+      energyBus.clearRealizedBalancePowers();
+    }
     run(id);
     increaseTime(dt);
   }
@@ -121,6 +130,6 @@ public class EnergyNetworkSolver extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(reports);
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(getReports());
   }
 }
