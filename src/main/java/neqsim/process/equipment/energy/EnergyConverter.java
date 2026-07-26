@@ -17,11 +17,12 @@ import neqsim.util.validation.ValidationResult;
  * <p>
  * The input is a specification port, the useful output is a calculated port, and conversion losses are available as a
  * calculated heat port. This common implementation is used by motors, generators, gearboxes, inverters, and
- * transformers.
+ * transformers. Subclasses can override the protected conversion methods to provide load-dependent performance while
+ * retaining common network, ramp, trip, and conservation behavior.
  * </p>
  *
  * @author NeqSim
- * @version 1.0
+ * @version 1.1
  */
 public class EnergyConverter extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000L;
@@ -82,16 +83,21 @@ public class EnergyConverter extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Gets conversion efficiency.
+   * Gets nominal conversion efficiency.
    *
-   * @return efficiency from zero to one
+   * <p>
+   * Subclasses with performance maps may use a different operating efficiency at the current load. Use
+   * {@link #getOperatingEfficiency()} for the efficiency realized by the latest calculation.
+   * </p>
+   *
+   * @return nominal efficiency from zero to one
    */
   public double getEfficiency() {
     return efficiency;
   }
 
   /**
-   * Sets conversion efficiency.
+   * Sets nominal conversion efficiency.
    *
    * @param efficiency efficiency greater than zero and at most one
    */
@@ -176,7 +182,7 @@ public class EnergyConverter extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Gets the current allocated input power.
+   * Gets the current realized input power.
    *
    * @return input power in W
    */
@@ -203,6 +209,42 @@ public class EnergyConverter extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Gets realized total conversion efficiency from the latest calculation.
+   *
+   * @return output divided by realized input, or zero when no input is consumed
+   */
+  public double getOperatingEfficiency() {
+    return currentInputPower > 0.0 ? currentOutputPower / currentInputPower : 0.0;
+  }
+
+  /**
+   * Calculates input power required for a requested useful output.
+   *
+   * <p>
+   * The default implementation uses nominal efficiency and idle loss. Subclasses may override the protected inverse
+   * conversion method to apply load-, speed-, or ambient-dependent performance maps.
+   * </p>
+   *
+   * @param outputPower requested useful output in W
+   * @return required input in W
+   * @throws IllegalArgumentException when the output is invalid or exceeds configured capability
+   */
+  public double getRequiredInputPowerForOutput(double outputPower) {
+    if (!Double.isFinite(outputPower) || outputPower < 0.0) {
+      throw new IllegalArgumentException("Requested output power must be non-negative and finite");
+    }
+    double requiredInput = calculateRequiredInputForOutput(outputPower);
+    if (!Double.isFinite(requiredInput) || requiredInput < 0.0) {
+      throw new IllegalStateException("Converter performance model returned invalid required input power");
+    }
+    if (Double.isFinite(maximumInputPower)
+        && requiredInput > maximumInputPower + Math.max(1.0e-9, maximumInputPower * 1.0e-12)) {
+      throw new IllegalArgumentException("Requested output exceeds the converter input-power capability");
+    }
+    return requiredInput;
+  }
+
+  /**
    * Checks whether the converter is tripped.
    *
    * @return {@code true} when tripped
@@ -226,8 +268,9 @@ public class EnergyConverter extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    double input = readAvailableInput();
-    publish(input, calculateTargetOutput(input));
+    double availableInput = readAvailableInput();
+    double output = calculateTargetOutput(availableInput);
+    publish(calculateRealizedInput(availableInput, output), output);
     setCalculationIdentifier(id);
   }
 
@@ -238,8 +281,8 @@ public class EnergyConverter extends ProcessEquipmentBaseClass {
       throw new IllegalArgumentException("Converter timestep must be non-negative and finite");
     }
 
-    double input = readAvailableInput();
-    double targetOutput = calculateTargetOutput(input);
+    double availableInput = readAvailableInput();
+    double targetOutput = calculateTargetOutput(availableInput);
     double maximumChange = rampRate * dt;
     double rampedOutput = targetOutput;
     if (Double.isFinite(maximumChange) && Math.abs(targetOutput - currentOutputPower) > maximumChange) {
@@ -250,11 +293,40 @@ public class EnergyConverter extends ProcessEquipmentBaseClass {
     // Ramp limits therefore constrain increases, while a loss of input immediately caps output at the
     // thermodynamically available target.
     double output = Math.min(targetOutput, Math.max(0.0, rampedOutput));
-    double effectiveInput = output > 0.0 ? output / efficiency + idleLoss : 0.0;
-    effectiveInput = Math.min(input, effectiveInput);
-    publish(effectiveInput, output);
+    publish(calculateRealizedInput(availableInput, output), output);
     increaseTime(dt);
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Calculates useful steady-state output from available input.
+   *
+   * <p>
+   * Subclasses can override this method to apply performance maps. Implementations must return a finite non-negative
+   * output that can be supported by the supplied input.
+   * </p>
+   *
+   * @param input available input power in W
+   * @return useful output in W
+   */
+  protected double calculateTargetOutput(double input) {
+    if (tripped || input <= idleLoss) {
+      return 0.0;
+    }
+    return (input - idleLoss) * efficiency;
+  }
+
+  /**
+   * Calculates required input for useful output.
+   *
+   * @param output useful output power in W
+   * @return required input power in W
+   */
+  protected double calculateRequiredInputForOutput(double output) {
+    if (output <= 0.0) {
+      return 0.0;
+    }
+    return output / efficiency + idleLoss;
   }
 
   /**
@@ -269,29 +341,30 @@ public class EnergyConverter extends ProcessEquipmentBaseClass {
     return Math.min(maximumInputPower, getEnergyPort(INPUT_PORT).getPowerMagnitude());
   }
 
-  /**
-   * Calculates useful steady-state output.
-   *
-   * @param input input power in W
-   * @return useful output in W
-   */
-  private double calculateTargetOutput(double input) {
-    if (tripped || input <= idleLoss) {
-      return 0.0;
+  /** Calculates input actually consumed by the realized output. */
+  private double calculateRealizedInput(double availableInput, double output) {
+    if (output > 0.0) {
+      return Math.min(availableInput, getRequiredInputPowerForOutput(output));
     }
-    return (input - idleLoss) * efficiency;
+    if (availableInput > 0.0 && availableInput <= idleLoss) {
+      return availableInput;
+    }
+    return 0.0;
   }
 
   /**
    * Publishes converter results to connected output and loss ports.
    *
-   * @param input input power in W
+   * @param input realized input power in W
    * @param output useful output power in W
    */
   private void publish(double input, double output) {
-    currentInputPower = Math.max(0.0, input);
-    currentOutputPower = Math.max(0.0, output);
-    heatLoss = Math.max(0.0, currentInputPower - currentOutputPower);
+    if (!Double.isFinite(input) || input < 0.0 || !Double.isFinite(output) || output < 0.0 || output > input) {
+      throw new IllegalStateException("Energy converter result violates finite non-negative energy conservation");
+    }
+    currentInputPower = input;
+    currentOutputPower = output;
+    heatLoss = currentInputPower - currentOutputPower;
 
     EnergyPort outputPort = getEnergyPort(OUTPUT_PORT);
     outputPort.setConversionLoss(heatLoss);
@@ -332,7 +405,8 @@ public class EnergyConverter extends ProcessEquipmentBaseClass {
     result.put("inputPowerW", currentInputPower);
     result.put("outputPowerW", currentOutputPower);
     result.put("heatLossW", heatLoss);
-    result.put("efficiency", efficiency);
+    result.put("nominalEfficiency", efficiency);
+    result.put("operatingEfficiency", getOperatingEfficiency());
     result.put("tripped", tripped);
     return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(result);
   }

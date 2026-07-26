@@ -66,7 +66,7 @@ public class MotorAssistedDriveTrain implements Serializable {
       throw new IllegalArgumentException("Drive-train power targets must be non-negative and finite");
     }
     compressor.getEnergyPort("shaftPower").setRequestedPower(compressorPower);
-    assistMotor.setRequestedInputPower(motorAssistPower / assistMotor.getEfficiency() + assistMotor.getIdleLoss());
+    assistMotor.setRequestedInputPower(assistMotor.getRequiredInputPowerForOutput(motorAssistPower));
   }
 
   /**
