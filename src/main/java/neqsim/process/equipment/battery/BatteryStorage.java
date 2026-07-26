@@ -174,8 +174,8 @@ public class BatteryStorage extends ProcessEquipmentBaseClass {
    * @param maximumDischargePower maximum discharging power in W
    */
   public void setPowerLimits(double maximumChargePower, double maximumDischargePower) {
-    if (!Double.isFinite(maximumChargePower) || maximumChargePower < 0.0
-        || !Double.isFinite(maximumDischargePower) || maximumDischargePower < 0.0) {
+    if (!Double.isFinite(maximumChargePower) || maximumChargePower < 0.0 || !Double.isFinite(maximumDischargePower)
+        || maximumDischargePower < 0.0) {
       throw new IllegalArgumentException("Battery power limits must be non-negative and finite");
     }
     this.maximumChargePower = maximumChargePower;
