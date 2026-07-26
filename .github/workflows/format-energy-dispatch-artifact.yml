@@ -1,0 +1,38 @@
+name: Format Energy Dispatch Artifact
+
+on:
+  push:
+    branches:
+      - feature/energy-dispatch-strategies
+    paths:
+      - 'src/main/java/neqsim/process/equipment/stream/EnergyBus.java'
+      - 'src/main/java/neqsim/process/equipment/stream/EnergyDispatchStrategy.java'
+      - '.github/workflows/format-energy-dispatch-artifact.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v7
+      - name: Set up Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Apply Spotless formatting
+        run: bash devtools/run_spotless.sh apply
+      - name: Upload formatted sources
+        uses: actions/upload-artifact@v4
+        with:
+          name: formatted-energy-dispatch-sources
+          path: |
+            src/main/java/neqsim/process/equipment/stream/EnergyBus.java
+            src/main/java/neqsim/process/equipment/stream/EnergyDispatchStrategy.java
+          if-no-files-found: error
+          retention-days: 7
