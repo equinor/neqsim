@@ -2885,7 +2885,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     }
 
     // Check pressure logic
-    double initialPressure = thermoSystem != null ? thermoSystem.getPressure() / 1e5 : 0;
+    double initialPressure = thermoSystem != null ? thermoSystem.getPressure() : 0;
     double backPressureBar = backPressure / 1e5;
     if (backPressureBar >= initialPressure) {
       errors.add(String.format("Back pressure (%.1f bar) >= initial pressure (%.1f bar). No flow will occur.",
@@ -2954,7 +2954,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
 
     // Additional non-critical warnings
     if (thermoSystem != null) {
-      double initialPressure = thermoSystem.getPressure() / 1e5;
+      double initialPressure = thermoSystem.getPressure();
       if (initialPressure > 700) {
         warnings.add(String.format("Very high pressure (%.0f bar). Ensure equation of state is valid for this range.",
             initialPressure));

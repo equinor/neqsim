@@ -637,6 +637,37 @@ public class VesselDepressurizationTest {
   }
 
   @Test
+  @DisplayName("Validation interprets thermodynamic pressure in bar")
+  void testValidationPressureUnits() {
+    Stream feed = createTestStream(300.0, 80.0);
+
+    VesselDepressurization vessel = new VesselDepressurization("valid pressure units", feed);
+    vessel.setVolume(1.0);
+    vessel.setOrificeDiameter(0.01);
+    vessel.setBackPressure(1.2);
+    vessel.run();
+
+    vessel.validate();
+    java.util.List<String> warnings = vessel.validateWithWarnings();
+    assertTrue(warnings.stream().noneMatch(warning -> warning.startsWith("ERROR:")),
+        "Valid 80 bar vessel with 1.2 bar backpressure must not produce a validation error");
+
+    Stream highPressureFeed = createTestStream(300.0, 750.0);
+    VesselDepressurization highPressureVessel =
+        new VesselDepressurization("high pressure warning", highPressureFeed);
+    highPressureVessel.setVolume(1.0);
+    highPressureVessel.setOrificeDiameter(0.01);
+    highPressureVessel.setBackPressure(1.2);
+    highPressureVessel.run();
+
+    java.util.List<String> highPressureWarnings = highPressureVessel.validateWithWarnings();
+    assertTrue(
+        highPressureWarnings.stream().anyMatch(
+            warning -> warning.contains("Very high pressure (750 bar)")),
+        "A 750 bar vessel must trigger the high-pressure equation-of-state warning");
+  }
+
+  @Test
   @DisplayName("Test validate() catches errors")
   void testValidateMethod() {
     Stream feed = createTestStream(300.0, 50.0);
