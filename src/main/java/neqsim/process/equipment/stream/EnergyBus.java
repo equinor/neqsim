@@ -347,7 +347,7 @@ public class EnergyBus extends EnergyStream {
     }
 
     double acceptedSupply = acceptedNormalSupply + balancingGeneration;
-    double offeredSupply = normalSupply + balancingGeneration;
+    double offeredSupply = normalSupply + availableBalancingGeneration;
     double unmetDemand = Math.max(0.0, requestedDemand - servedDemand);
     double curtailedSupply = Math.max(0.0, normalSupply - acceptedNormalSupply);
 
