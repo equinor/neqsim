@@ -63,10 +63,8 @@ class SeparatorTest extends neqsim.NeqSimTest {
     ((StreamInterface) processOps.getUnit("inlet stream")).setFlowRate(1.0, "MSm3/day");
     processOps.run();
 
-    double separatorEntropyProduction =
-        Assertions.assertDoesNotThrow(() -> sep.getEntropyProduction("J/K"));
-    double processEntropyProduction =
-        Assertions.assertDoesNotThrow(() -> processOps.getEntropyProduction("J/K"));
+    double separatorEntropyProduction = Assertions.assertDoesNotThrow(() -> sep.getEntropyProduction("J/K"));
+    double processEntropyProduction = Assertions.assertDoesNotThrow(() -> processOps.getEntropyProduction("J/K"));
 
     Assertions.assertTrue(Double.isFinite(separatorEntropyProduction));
     Assertions.assertTrue(Double.isFinite(processEntropyProduction));
