@@ -1,5 +1,6 @@
 package neqsim.process.equipment.energy;
 
+import java.util.UUID;
 import neqsim.process.equipment.stream.EnergyPort;
 import neqsim.process.equipment.stream.EnergyQuality;
 import neqsim.process.equipment.stream.EnergyType;
@@ -29,18 +30,53 @@ public class Inverter extends EnergyConverter {
   /**
    * Sets output electrical quality.
    *
+   * <p>
+   * Voltage and frequency are updated on the existing output quality object so temperature, pressure, utility level, and
+   * future metadata are preserved.
+   * </p>
+   *
    * @param voltage output voltage in V
    * @param frequency output frequency in Hz
    */
   public void setOutputElectricalQuality(double voltage, double frequency) {
-    EnergyQuality quality = new EnergyQuality();
-    quality.setVoltage(voltage);
-    quality.setFrequency(frequency);
+    EnergyQuality validation = new EnergyQuality();
+    validation.setVoltage(voltage);
+    validation.setFrequency(frequency);
     outputVoltage = voltage;
     outputFrequency = frequency;
+    publishOutputElectricalQuality();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void run(UUID id) {
+    super.run(id);
+    publishOutputElectricalQuality();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void runTransient(double dt, UUID id) {
+    super.runTransient(dt, id);
+    publishOutputElectricalQuality();
+  }
+
+  /** Publishes configured voltage and frequency without replacing other output quality metadata. */
+  private void publishOutputElectricalQuality() {
     EnergyPort output = getEnergyPort(OUTPUT_PORT);
-    if (output.isConnected()) {
+    if (!output.isConnected()) {
+      return;
+    }
+    EnergyQuality quality = output.getEnergyStream().getQuality();
+    if (quality == null) {
+      quality = new EnergyQuality();
       output.getEnergyStream().setQuality(quality);
+    }
+    if (Double.isFinite(outputVoltage)) {
+      quality.setVoltage(outputVoltage);
+    }
+    if (Double.isFinite(outputFrequency)) {
+      quality.setFrequency(outputFrequency);
     }
   }
 
