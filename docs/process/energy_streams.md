@@ -121,6 +121,25 @@ process.add(network);
 
 The graph schedules calculated participants before the solver and specification or balance participants after it.
 
+## Coupled process-energy convergence
+
+A single graph-ordered run gives the correct causal sequence, but an energy-limited consumer can publish a revised request after the network has already been solved. Use `CoupledProcessEnergySolver` to repeat the complete process until stream pressure, temperature, mass flow, energy requests, allocations, shortages, curtailment, and losses stop changing.
+
+```java
+CoupledProcessEnergySolver coupledSolver = new CoupledProcessEnergySolver(process);
+coupledSolver.setMaximumIterations(50);
+coupledSolver.setProcessTolerance(1.0e-6);
+coupledSolver.setPowerTolerance(1.0e3); // 1 kW
+coupledSolver.setRelaxationFactor(0.5);
+
+CoupledProcessEnergyResult result = coupledSolver.solve();
+if (!result.isConverged()) {
+  throw new IllegalStateException(result.toJson());
+}
+```
+
+The relaxation factor is applied only to `SPECIFICATION` requests between complete process runs. A value of one disables damping; values below one stabilize oscillating feedback such as available motor power changing compressor operation, which then changes the next compressor-power request. The result contains iteration-by-iteration process and power residuals plus immutable reports from the final energy-network solution.
+
 ## Conversion equipment and rotating drives
 
 The `neqsim.process.equipment.energy` package provides process units with explicit input, useful-output, and heat-loss ports:
@@ -128,7 +147,7 @@ The `neqsim.process.equipment.energy` package provides process units with explic
 | Equipment | Conversion |
 |---|---|
 | `ElectricMotor` | electrical → shaft work |
-| `Generator` | shaft work → electrical |
+| `Generator` | shaft work → electricity |
 | `Gearbox` | shaft work → shaft work, with speed ratio |
 | `Inverter` | electrical → electrical, with voltage/frequency quality |
 | `Transformer` | electrical → electrical, with voltage ratio |
