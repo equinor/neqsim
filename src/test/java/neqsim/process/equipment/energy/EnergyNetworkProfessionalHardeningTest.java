@@ -47,6 +47,9 @@ class EnergyNetworkProfessionalHardeningTest {
     assertEquals(14.5, inverter.getHeatLoss(), 1.0e-12);
     assertEquals(inverter.getInputPower(), inverter.getOutputPower() + inverter.getHeatLoss(), 1.0e-12);
     assertThrows(IllegalArgumentException.class, () -> inverter.runTransient(-1.0, UUID.randomUUID()));
+    assertThrows(IllegalArgumentException.class, () -> inverter.runTransient(Double.NaN, UUID.randomUUID()));
+    assertThrows(IllegalArgumentException.class,
+        () -> inverter.runTransient(Double.POSITIVE_INFINITY, UUID.randomUUID()));
   }
 
   @Test
