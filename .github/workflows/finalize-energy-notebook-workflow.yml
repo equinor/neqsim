@@ -1,0 +1,62 @@
+name: Finalize Energy Notebook Workflow
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - '.github/workflows/finalize-energy-notebook-workflow.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out validation branch
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - name: Remove obsolete stacked-branch assembly
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('.github/workflows/energy-notebook-execution.yml')
+          text = path.read_text(encoding='utf-8')
+          old = '''      - name: Assemble implementation branches for execution
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git config user.name "neqsim-notebook-runner"
+          git config user.email "actions@users.noreply.github.com"
+          branches=(
+            feature/energy-network-professional-hardening
+            feature/electric-motor-performance-integration
+            feature/converter-load-efficiency-curves
+            feature/thermal-utility-mass-flow
+            feature/thermal-utility-quality-exergy
+            feature/thermal-utility-hydraulics
+            feature/energy-dispatch-strategies
+            feature/energy-time-series-simulation
+            feature/energy-unit-commitment
+            feature/offshore-energy-reference-case
+          )
+          for branch in "${branches[@]}"; do
+            git fetch origin "$branch:refs/remotes/origin/$branch"
+            git merge --no-edit -X ours "origin/$branch"
+          done
+
+'''
+          if old not in text:
+              raise SystemExit('Expected obsolete branch-assembly block was not found')
+          path.write_text(text.replace(old, ''), encoding='utf-8')
+      - name: Commit finalized workflow and remove helper
+        shell: bash
+        run: |
+          set -euxo pipefail
+          rm .github/workflows/finalize-energy-notebook-workflow.yml
+          git config user.name "neqsim-ci-maintenance"
+          git config user.email "actions@users.noreply.github.com"
+          git add .github/workflows/energy-notebook-execution.yml .github/workflows/finalize-energy-notebook-workflow.yml
+          git commit -m "ci: run energy notebooks directly from integrated master"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
