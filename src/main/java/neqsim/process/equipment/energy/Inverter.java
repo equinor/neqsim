@@ -39,9 +39,12 @@ public class Inverter extends EnergyConverter {
    * @param frequency output frequency in Hz
    */
   public void setOutputElectricalQuality(double voltage, double frequency) {
-    EnergyQuality validation = new EnergyQuality();
-    validation.setVoltage(voltage);
-    validation.setFrequency(frequency);
+    if (!Double.isFinite(voltage) || voltage <= 0.0) {
+      throw new IllegalArgumentException("Output voltage must be positive and finite");
+    }
+    if (!Double.isFinite(frequency) || frequency <= 0.0) {
+      throw new IllegalArgumentException("Output frequency must be positive and finite");
+    }
     outputVoltage = voltage;
     outputFrequency = frequency;
     publishOutputElectricalQuality();
