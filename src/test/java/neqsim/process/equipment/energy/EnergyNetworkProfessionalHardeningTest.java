@@ -22,8 +22,8 @@ class EnergyNetworkProfessionalHardeningTest {
   void testTransientConverterOutputIsLimitedByAvailableInput() {
     EnergyBus inputBus = new EnergyBus("input bus", EnergyType.ELECTRICAL);
     EnergyBus outputBus = new EnergyBus("output bus", EnergyType.ELECTRICAL);
-    EnergyPort source = port("source", EnergyType.ELECTRICAL, EnergyPortDirection.OUTPUT,
-        EnergyPortMode.CALCULATED, inputBus);
+    EnergyPort source = port("source", EnergyType.ELECTRICAL, EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED,
+        inputBus);
 
     Inverter inverter = new Inverter("inverter");
     inverter.setEfficiency(0.95);
@@ -104,8 +104,8 @@ class EnergyNetworkProfessionalHardeningTest {
     ElectricMotor assistMotor = new ElectricMotor("assist motor");
     EnergyBus electricalBus = new EnergyBus("assist electrical bus", EnergyType.ELECTRICAL);
     MechanicalShaft shaft = new MechanicalShaft("common shaft");
-    MotorAssistedDriveTrain driveTrain =
-        new MotorAssistedDriveTrain(expander, compressor, assistMotor, electricalBus, shaft);
+    MotorAssistedDriveTrain driveTrain = new MotorAssistedDriveTrain(expander, compressor, assistMotor, electricalBus,
+        shaft);
 
     assertTrue(driveTrain.validateSetup().isValid());
 
