@@ -546,10 +546,38 @@ public class EnergyPort implements Serializable {
     setDuty(new PowerUnit(duty, unit).getValue("W"));
   }
 
+  /**
+   * Reports power physically realized by balance equipment after transient constraints are applied.
+   *
+   * @param actualPower positive generation or negative consumption in W
+   * @return updated energy-network report
+   * @throws IllegalStateException if this is not a connected energy-bus balance port
+   */
+  public EnergyNetworkReport reportRealizedBalancePower(double actualPower) {
+    EnergyStream stream = requireConnectedStream();
+    if (!(stream instanceof EnergyBus) || mode != EnergyPortMode.BALANCE) {
+      throw new IllegalStateException("Realized balance power requires an energy-bus balance port");
+    }
+    return ((EnergyBus) stream).reportRealizedBalancePower(this, actualPower);
+  }
+
+  /**
+   * Clears previously realized balance power before a new transient dispatch.
+   */
+  public void clearRealizedBalancePower() {
+    EnergyStream stream = requireConnectedStream();
+    if (!(stream instanceof EnergyBus) || mode != EnergyPortMode.BALANCE) {
+      throw new IllegalStateException("Realized balance power requires an energy-bus balance port");
+    }
+    ((EnergyBus) stream).clearRealizedBalancePower(participantId);
+  }
+
   /** Invalidates the connected bus solution after a port setting changes. */
   private void invalidateBusSolution() {
     if (energyStream instanceof EnergyBus) {
-      ((EnergyBus) energyStream).invalidateSolution();
+      EnergyBus energyBus = (EnergyBus) energyStream;
+      energyBus.clearRealizedBalancePower(participantId);
+      energyBus.invalidateSolution();
     }
   }
 
