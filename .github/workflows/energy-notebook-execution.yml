@@ -1,0 +1,112 @@
+name: Execute Energy Network Notebooks
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - 'examples/notebooks/energy_networks/**'
+      - '.github/workflows/energy-notebook-execution.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  execute-notebooks:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'feature/energy-network-example-notebooks'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Check out notebook branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Assemble implementation branches for execution
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git config user.name "neqsim-notebook-runner"
+          git config user.email "actions@users.noreply.github.com"
+          branches=(
+            feature/energy-network-professional-hardening
+            feature/electric-motor-performance-integration
+            feature/converter-load-efficiency-curves
+            feature/thermal-utility-mass-flow
+            feature/thermal-utility-quality-exergy
+            feature/thermal-utility-hydraulics
+            feature/energy-dispatch-strategies
+            feature/energy-time-series-simulation
+            feature/energy-unit-commitment
+            feature/offshore-energy-reference-case
+          )
+          for branch in "${branches[@]}"; do
+            git fetch origin "$branch:refs/remotes/origin/$branch"
+            git merge --no-edit -X ours "origin/$branch"
+          done
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Build workspace classes
+        run: ./mvnw -q -DskipTests package
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install notebook runtime
+        run: python -m pip install --upgrade pip nbformat nbconvert jupyter pandas matplotlib numpy jpype1
+
+      - name: Execute notebooks through devtools workspace classes
+        env:
+          NEQSIM_PROJECT_ROOT: ${{ github.workspace }}
+          MPLBACKEND: Agg
+        shell: bash
+        run: |
+          set -euxo pipefail
+          for notebook in examples/notebooks/energy_networks/*.ipynb; do
+            python -m jupyter nbconvert \
+              --to notebook \
+              --execute \
+              --inplace \
+              --ExecutePreprocessor.timeout=1200 \
+              --ExecutePreprocessor.kernel_name=python3 \
+              "$notebook"
+          done
+
+      - name: Validate executed notebooks
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          notebooks = sorted(Path('examples/notebooks/energy_networks').glob('*.ipynb'))
+          assert len(notebooks) == 4, notebooks
+          for path in notebooks:
+              data = json.loads(path.read_text(encoding='utf-8'))
+              code_cells = [cell for cell in data['cells'] if cell['cell_type'] == 'code']
+              assert code_cells, path
+              assert all(cell.get('execution_count') is not None for cell in code_cells), path
+              errors = [out for cell in code_cells for out in cell.get('outputs', []) if out.get('output_type') == 'error']
+              assert not errors, (path, errors)
+              figures = [out for cell in code_cells for out in cell.get('outputs', []) if out.get('output_type') == 'display_data' and 'image/png' in out.get('data', {})]
+              assert len(figures) >= 3, (path, len(figures))
+              print(f'{path}: {len(code_cells)} code cells, {len(figures)} figures')
+          PY
+
+      - name: Upload executed notebooks
+        uses: actions/upload-artifact@v4
+        with:
+          name: executed-energy-network-notebooks
+          path: examples/notebooks/energy_networks/*.ipynb
+          if-no-files-found: error
+          retention-days: 14
