@@ -218,11 +218,29 @@ public class ElectricMotor extends EnergyConverter {
       return 0.0;
     }
     double availablePower = performanceModel.getAvailablePower(speed) * 1000.0;
-    double derating = performanceModel.getAmbientDeratingFactor();
+    double derating = getCombinedEnvironmentalDeratingFactor();
     if (!Double.isFinite(availablePower) || !Double.isFinite(derating)) {
       throw new IllegalStateException("Motor performance model returned non-finite capability");
     }
-    return Math.max(0.0, availablePower * Math.max(0.0, Math.min(1.0, derating)));
+    return Math.max(0.0, availablePower * derating);
+  }
+
+  /**
+   * Gets combined ambient-temperature and altitude derating.
+   *
+   * <p>
+   * The legacy driver returns early below 40 degrees Celsius, which omits altitude derating. The energy-network motor
+   * preserves that driver behavior for temperature while applying the missing altitude factor whenever the early return
+   * is active.
+   * </p>
+   */
+  private double getCombinedEnvironmentalDeratingFactor() {
+    double derating = performanceModel.getAmbientDeratingFactor();
+    if (performanceModel.getAmbientTemperature() <= 40.0 && performanceModel.getAltitude() > 1000.0) {
+      double altitudeDerating = 1.0 - 0.01 * (performanceModel.getAltitude() - 1000.0) / 100.0;
+      derating *= altitudeDerating;
+    }
+    return Math.max(0.5, Math.min(1.0, derating));
   }
 
   /** {@inheritDoc} */
