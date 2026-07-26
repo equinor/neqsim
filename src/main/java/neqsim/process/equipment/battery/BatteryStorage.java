@@ -13,8 +13,8 @@ import neqsim.util.validation.ValidationResult;
  *
  * <p>
  * Stored capacity and state of charge use Wh for compatibility with the original charge/discharge API. On an
- * {@link EnergyBus}, positive battery power is discharge to the bus and negative power is charging. Legacy point-to-point
- * streams retain their historical opposite sign convention.
+ * {@link EnergyBus}, positive battery power is discharge to the bus and negative power is charging. Legacy
+ * point-to-point streams retain their historical opposite sign convention.
  * </p>
  *
  * @author esol
