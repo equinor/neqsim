@@ -29,6 +29,7 @@ public class EnergyBus extends EnergyStream {
   private Map<String, Double> contributions = new LinkedHashMap<String, Double>();
   private Map<String, Double> allocations = new LinkedHashMap<String, Double>();
   private Map<String, EnergyPort> registeredPorts = new LinkedHashMap<String, EnergyPort>();
+  private Map<String, Double> realizedBalancePowers = new LinkedHashMap<String, Double>();
   private boolean solutionValid = false;
   private EnergyNetworkReport lastReport = null;
 
@@ -74,6 +75,9 @@ public class EnergyBus extends EnergyStream {
     if (registeredPorts == null) {
       registeredPorts = new LinkedHashMap<String, EnergyPort>();
     }
+    if (realizedBalancePowers == null) {
+      realizedBalancePowers = new LinkedHashMap<String, Double>();
+    }
   }
 
   /** {@inheritDoc} */
@@ -83,6 +87,7 @@ public class EnergyBus extends EnergyStream {
     clonedBus.contributions = new LinkedHashMap<String, Double>(contributions);
     clonedBus.allocations = new LinkedHashMap<String, Double>();
     clonedBus.registeredPorts = new LinkedHashMap<String, EnergyPort>();
+    clonedBus.realizedBalancePowers = new LinkedHashMap<String, Double>();
     clonedBus.solutionValid = false;
     clonedBus.lastReport = null;
     return clonedBus;
@@ -113,6 +118,7 @@ public class EnergyBus extends EnergyStream {
     registeredPorts.remove(port.getParticipantId());
     contributions.remove(port.getParticipantId());
     allocations.remove(port.getParticipantId());
+    realizedBalancePowers.remove(port.getParticipantId());
     invalidateSolution();
   }
 
@@ -211,7 +217,60 @@ public class EnergyBus extends EnergyStream {
   public void clearContributions() {
     contributions.clear();
     allocations.clear();
+    realizedBalancePowers.clear();
     invalidateSolution();
+  }
+
+  /**
+   * Clears realized powers reported by balance equipment before a new transient dispatch.
+   */
+  public void clearRealizedBalancePowers() {
+    if (!realizedBalancePowers.isEmpty()) {
+      realizedBalancePowers.clear();
+      invalidateSolution();
+    }
+  }
+
+  /**
+   * Clears one balance participant's previously realized power.
+   *
+   * @param participantId stable participant identifier
+   */
+  void clearRealizedBalancePower(String participantId) {
+    if (realizedBalancePowers.remove(participantId) != null) {
+      invalidateSolution();
+    }
+  }
+
+  /**
+   * Records a balance participant's physically realized power and redispatches the remaining network.
+   *
+   * <p>
+   * This keeps transient ramp, trip, and stored-energy constraints consistent with allocations and network
+   * shortfall/curtailment reporting. The realized participant is treated as fixed until it is cleared for the next
+   * transient dispatch.
+   * </p>
+   *
+   * @param port reporting balance port
+   * @param actualPower positive generation or negative consumption in W
+   * @return updated network report
+   */
+  EnergyNetworkReport reportRealizedBalancePower(EnergyPort port, double actualPower) {
+    if (port.getMode() != EnergyPortMode.BALANCE || registeredPorts.get(port.getParticipantId()) != port) {
+      throw new IllegalArgumentException("Realized power can only be reported by a registered balance port");
+    }
+    if (!Double.isFinite(actualPower)) {
+      throw new IllegalArgumentException("Realized balance power must be finite");
+    }
+    if (port.getDirection() == EnergyPortDirection.INPUT && actualPower > 0.0) {
+      throw new IllegalArgumentException("An input balance port cannot report generated power");
+    }
+    if (port.getDirection() == EnergyPortDirection.OUTPUT && actualPower < 0.0) {
+      throw new IllegalArgumentException("An output balance port cannot report consumed power");
+    }
+    realizedBalancePowers.put(port.getParticipantId(), actualPower);
+    invalidateSolution();
+    return solveBalance();
   }
 
   /** {@inheritDoc} */
@@ -266,6 +325,9 @@ public class EnergyBus extends EnergyStream {
     List<DispatchEntry> demands = new ArrayList<DispatchEntry>();
     List<DispatchEntry> balancingGenerators = new ArrayList<DispatchEntry>();
     List<DispatchEntry> balancingConsumers = new ArrayList<DispatchEntry>();
+    List<DispatchEntry> realizedBalancingGenerators = new ArrayList<DispatchEntry>();
+    List<DispatchEntry> realizedBalancingConsumers = new ArrayList<DispatchEntry>();
+    double offeredBalancingGeneration = 0.0;
 
     double externalSupply = Math.max(0.0, super.getDuty());
     double externalDemand = Math.max(0.0, -super.getDuty());
@@ -285,6 +347,16 @@ public class EnergyBus extends EnergyStream {
           demands.add(new DispatchEntry(port, request));
         }
       } else if (port.getMode() == EnergyPortMode.BALANCE) {
+        offeredBalancingGeneration += port.getMaximumBalanceGeneration();
+        Double realizedPower = realizedBalancePowers.get(port.getParticipantId());
+        if (realizedPower != null) {
+          if (realizedPower.doubleValue() > 0.0) {
+            realizedBalancingGenerators.add(new DispatchEntry(port, realizedPower.doubleValue()));
+          } else if (realizedPower.doubleValue() < 0.0) {
+            realizedBalancingConsumers.add(new DispatchEntry(port, -realizedPower.doubleValue()));
+          }
+          continue;
+        }
         if (port.getDirection() != EnergyPortDirection.INPUT && port.getMaximumBalanceGeneration() > 0.0) {
           balancingGenerators.add(new DispatchEntry(port, port.getMaximumBalanceGeneration()));
         }
@@ -308,8 +380,11 @@ public class EnergyBus extends EnergyStream {
     double normalSupply = externalSupply + sumRequested(producers);
     double requestedDemand = externalDemand + sumRequested(demands);
     double availableBalancingGeneration = sumRequested(balancingGenerators);
-    double totalAvailableSupply = normalSupply + availableBalancingGeneration;
-    double demandAllocationLimit = Math.min(requestedDemand, totalAvailableSupply);
+    double realizedBalancingGeneration = sumRequested(realizedBalancingGenerators);
+    double realizedBalancingConsumption = sumRequested(realizedBalancingConsumers);
+    double totalAvailableSupply = normalSupply + realizedBalancingGeneration + availableBalancingGeneration;
+    double demandAllocationLimit =
+        Math.min(requestedDemand, Math.max(0.0, totalAvailableSupply - realizedBalancingConsumption));
 
     double participantDemandLimit = Math.max(0.0, demandAllocationLimit - externalDemand);
     allocateByPriority(demands, participantDemandLimit);
@@ -318,28 +393,34 @@ public class EnergyBus extends EnergyStream {
     double servedDemand = servedParticipantDemand + servedExternalDemand;
 
     double availableBalancingConsumption = sumRequested(balancingConsumers);
-    double balancingConsumptionTarget = Math.min(Math.max(0.0, normalSupply - servedDemand),
-        availableBalancingConsumption);
-    double normalGenerationTarget = Math.min(normalSupply, servedDemand + balancingConsumptionTarget);
+    double balancingConsumptionTarget =
+        Math.min(Math.max(0.0, normalSupply + realizedBalancingGeneration - servedDemand
+            - realizedBalancingConsumption), availableBalancingConsumption);
+    double normalGenerationTarget = Math.min(normalSupply, Math.max(0.0,
+        servedDemand + realizedBalancingConsumption + balancingConsumptionTarget - realizedBalancingGeneration));
     double participantGenerationTarget = Math.max(0.0, normalGenerationTarget - externalSupply);
     allocateByPriority(producers, participantGenerationTarget);
     double acceptedParticipantSupply = sumAllocated(producers);
     double acceptedExternalSupply = Math.min(externalSupply, normalGenerationTarget);
     double acceptedNormalSupply = acceptedParticipantSupply + acceptedExternalSupply;
 
-    double balancingGenerationTarget = Math.max(0.0, servedDemand - acceptedNormalSupply);
+    double balancingGenerationTarget = Math.max(0.0, servedDemand + realizedBalancingConsumption
+        + balancingConsumptionTarget - acceptedNormalSupply - realizedBalancingGeneration);
     allocateByPriority(balancingGenerators, balancingGenerationTarget);
-    double balancingGeneration = sumAllocated(balancingGenerators);
+    double balancingGeneration = realizedBalancingGeneration + sumAllocated(balancingGenerators);
 
-    double actualSurplus = Math.max(0.0, acceptedNormalSupply + balancingGeneration - servedDemand);
+    double actualSurplus = Math.max(0.0,
+        acceptedNormalSupply + balancingGeneration - servedDemand - realizedBalancingConsumption);
     allocateByPriority(balancingConsumers, actualSurplus);
-    double balancingConsumption = sumAllocated(balancingConsumers);
+    double balancingConsumption = realizedBalancingConsumption + sumAllocated(balancingConsumers);
 
     allocations.clear();
     updatePortNetworkState(producers, true);
     updatePortNetworkState(demands, false);
     updatePortNetworkState(balancingGenerators, true);
     updatePortNetworkState(balancingConsumers, false);
+    updatePortNetworkState(realizedBalancingGenerators, true);
+    updatePortNetworkState(realizedBalancingConsumers, false);
     for (EnergyPort port : registeredPorts.values()) {
       if (port.getMode() != EnergyPortMode.CALCULATED) {
         contributions.put(port.getParticipantId(), getAllocation(port.getParticipantId()));
@@ -347,7 +428,7 @@ public class EnergyBus extends EnergyStream {
     }
 
     double acceptedSupply = acceptedNormalSupply + balancingGeneration;
-    double offeredSupply = normalSupply + availableBalancingGeneration;
+    double offeredSupply = normalSupply + offeredBalancingGeneration;
     double unmetDemand = Math.max(0.0, requestedDemand - servedDemand);
     double curtailedSupply = Math.max(0.0, normalSupply - acceptedNormalSupply);
 
