@@ -113,6 +113,10 @@ public class MotorDriveTrain implements Serializable {
       result.addError("energy", "Motor is not connected to the configured electrical bus",
           "Reconnect motor energyInput to the electrical bus");
     }
+    if (motor.getEnergyPort(EnergyConverter.OUTPUT_PORT).getEnergyStream() != shaft) {
+      result.addError("energy", "Motor is not connected to the configured shaft",
+          "Reconnect motor energyOutput to the mechanical shaft");
+    }
     if (drivenEquipment.getEnergyPort("shaftPower").getEnergyStream() != shaft) {
       result.addError("energy", "Driven equipment is not connected to the configured shaft",
           "Reconnect shaftPower to the mechanical shaft");
