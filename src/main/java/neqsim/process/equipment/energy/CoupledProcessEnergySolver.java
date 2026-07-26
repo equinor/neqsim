@@ -22,14 +22,14 @@ import neqsim.process.processmodel.ProcessSystem;
  * Iterates a complete {@link ProcessSystem} until process states and connected energy networks converge together.
  *
  * <p>
- * A normal graph-ordered process run evaluates energy producers, an {@link EnergyNetworkSolver}, and energy consumers in
- * causal order. Equipment downstream of the network solver can, however, publish a revised request for the next run.
- * This class performs that outer fixed-point iteration and checks both stream-state changes and energy-network changes.
+ * A graph-ordered process run evaluates energy producers, an {@link EnergyNetworkSolver}, and energy consumers in causal
+ * order. Equipment downstream of the network solver can, however, publish a revised request for the next run. This
+ * class performs that outer fixed-point iteration and checks both stream-state changes and energy-network changes.
  * </p>
  *
  * <p>
- * Under-relaxation is applied to {@link EnergyPortMode#SPECIFICATION} requests between process runs. It therefore damps
- * power-demand feedback without overwriting calculated process stream states or calculated generation.
+ * Under-relaxation is applied to {@link EnergyPortMode#SPECIFICATION} requests between process runs. It damps power
+ * feedback without overwriting calculated process stream states or calculated generation.
  * </p>
  *
  * @author NeqSim
@@ -317,7 +317,7 @@ public class CoupledProcessEnergySolver implements Serializable {
         Double previousApplied = appliedRequests.get(port);
         double prior = previousApplied == null ? rawRequest : previousApplied.doubleValue();
         double relaxedRequest = prior + relaxationFactor * (rawRequest - prior);
-        if (Double.doubleToLongBits(relaxedRequest) != Double.doubleToLongBits(rawRequest)) {
+        if (Double.doubleToLongBits(relaxedRequest) != Double.doubleToLongBits(prior)) {
           port.setRequestedPower(relaxedRequest);
         }
         appliedRequests.put(port, relaxedRequest);
@@ -325,16 +325,22 @@ public class CoupledProcessEnergySolver implements Serializable {
     }
   }
 
-  /** Captures pressure, temperature, and mass flow for every process stream. */
+  /** Captures all distinct inlet, outlet, and standalone streams in deterministic discovery order. */
   private Map<String, Double> captureProcessState() {
-    Map<String, Double> state = new LinkedHashMap<String, Double>();
-    List<ProcessEquipmentInterface> units = process.getUnitOperations();
-    for (int index = 0; index < units.size(); index++) {
-      ProcessEquipmentInterface unit = units.get(index);
-      if (!(unit instanceof StreamInterface)) {
-        continue;
+    Set<StreamInterface> uniqueStreams =
+        Collections.newSetFromMap(new IdentityHashMap<StreamInterface, Boolean>());
+    List<StreamInterface> streams = new ArrayList<StreamInterface>();
+    for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (unit instanceof StreamInterface && uniqueStreams.add((StreamInterface) unit)) {
+        streams.add((StreamInterface) unit);
       }
-      StreamInterface stream = (StreamInterface) unit;
+      addUniqueStreams(unit.getInletStreams(), uniqueStreams, streams);
+      addUniqueStreams(unit.getOutletStreams(), uniqueStreams, streams);
+    }
+
+    Map<String, Double> state = new LinkedHashMap<String, Double>();
+    for (int index = 0; index < streams.size(); index++) {
+      StreamInterface stream = streams.get(index);
       String name = stream.getName() == null ? "stream" : stream.getName();
       String prefix = index + ":" + name + ":";
       putFinite(state, prefix + "pressurePa", stream.getPressure("Pa"));
@@ -342,6 +348,16 @@ public class CoupledProcessEnergySolver implements Serializable {
       putFinite(state, prefix + "massFlowKgPerSec", stream.getFlowRate("kg/sec"));
     }
     return state;
+  }
+
+  /** Adds non-null streams once using identity semantics. */
+  private static void addUniqueStreams(List<StreamInterface> candidates, Set<StreamInterface> uniqueStreams,
+      List<StreamInterface> streams) {
+    for (StreamInterface candidate : candidates) {
+      if (candidate != null && uniqueStreams.add(candidate)) {
+        streams.add(candidate);
+      }
+    }
   }
 
   /** Captures allocations, requests, contributions, limits, and report totals for every energy bus. */
@@ -369,7 +385,12 @@ public class CoupledProcessEnergySolver implements Serializable {
         putFinite(state, prefix + "servedDemandW", report.getServedDemand());
         putFinite(state, prefix + "unmetDemandW", report.getUnmetDemand());
         putFinite(state, prefix + "curtailedSupplyW", report.getCurtailedSupply());
+        putFinite(state, prefix + "balancingGenerationW", report.getBalancingGeneration());
+        putFinite(state, prefix + "balancingConsumptionW", report.getBalancingConsumption());
         putFinite(state, prefix + "conversionLossW", report.getConversionLoss());
+        putFinite(state, prefix + "fuelEnergyRateW", report.getFuelEnergyRate());
+        putFinite(state, prefix + "operatingCostPerHour", report.getOperatingCostPerHour());
+        putFinite(state, prefix + "co2EmissionRateKgPerHour", report.getCo2EmissionRate());
       }
     }
     return state;
