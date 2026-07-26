@@ -174,16 +174,14 @@ public class BatteryStorage extends ProcessEquipmentBaseClass {
    * @param maximumDischargePower maximum discharging power in W
    */
   public void setPowerLimits(double maximumChargePower, double maximumDischargePower) {
-    if (Double.isNaN(maximumChargePower) || maximumChargePower < 0.0 || Double.isNaN(maximumDischargePower)
-        || maximumDischargePower < 0.0) {
-      throw new IllegalArgumentException("Battery power limits must be non-negative");
+    if (!Double.isFinite(maximumChargePower) || maximumChargePower < 0.0
+        || !Double.isFinite(maximumDischargePower) || maximumDischargePower < 0.0) {
+      throw new IllegalArgumentException("Battery power limits must be non-negative and finite");
     }
     this.maximumChargePower = maximumChargePower;
     this.maximumDischargePower = maximumDischargePower;
-    if (Double.isFinite(maximumChargePower) && Double.isFinite(maximumDischargePower)) {
-      getEnergyPort(ELECTRICAL_PORT).setBalanceLimits(tripped ? 0.0 : maximumDischargePower,
-          tripped ? 0.0 : maximumChargePower);
-    }
+    getEnergyPort(ELECTRICAL_PORT).setBalanceLimits(tripped ? 0.0 : maximumDischargePower,
+        tripped ? 0.0 : maximumChargePower);
   }
 
   /**
@@ -261,7 +259,7 @@ public class BatteryStorage extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    publishPower();
+    publishPower(false);
     setCalculationIdentifier(id);
   }
 
@@ -272,11 +270,17 @@ public class BatteryStorage extends ProcessEquipmentBaseClass {
       throw new IllegalArgumentException("Battery timestep must be non-negative and finite");
     }
     double requestedPower = tripped ? 0.0 : targetPower;
-    if (!tripped && getEnergyPort(ELECTRICAL_PORT).isConnected()
+    if (getEnergyPort(ELECTRICAL_PORT).isConnected()
         && getEnergyPort(ELECTRICAL_PORT).getMode() == EnergyPortMode.BALANCE
-        && getEnergyPort(ELECTRICAL_PORT).getEnergyStream() instanceof EnergyBus
-        && ((EnergyBus) getEnergyPort(ELECTRICAL_PORT).getEnergyStream()).hasSolution()) {
-      requestedPower = getEnergyPort(ELECTRICAL_PORT).getDuty();
+        && getEnergyPort(ELECTRICAL_PORT).getEnergyStream() instanceof EnergyBus) {
+      EnergyBus energyBus = (EnergyBus) getEnergyPort(ELECTRICAL_PORT).getEnergyStream();
+      getEnergyPort(ELECTRICAL_PORT).clearRealizedBalancePower();
+      if (!energyBus.hasSolution()) {
+        energyBus.solveBalance();
+      }
+      if (!tripped) {
+        requestedPower = getEnergyPort(ELECTRICAL_PORT).getDuty();
+      }
     }
     requestedPower = Math.max(-maximumChargePower, Math.min(maximumDischargePower, requestedPower));
 
@@ -305,18 +309,25 @@ public class BatteryStorage extends ProcessEquipmentBaseClass {
       stateOfCharge += storedEnergy;
     }
 
-    publishPower();
+    publishPower(true);
     increaseTime(dt);
     setCalculationIdentifier(id);
   }
 
-  /** Publishes current battery power without overwriting a solved balance contribution. */
-  private void publishPower() {
+  /**
+   * Publishes current battery power.
+   *
+   * @param reconcileBalance whether transient balance power should be reconciled with the bus allocation
+   */
+  private void publishPower(boolean reconcileBalance) {
     if (!getEnergyPort(ELECTRICAL_PORT).isConnected()) {
       return;
     }
     if (getEnergyPort(ELECTRICAL_PORT).getMode() == EnergyPortMode.BALANCE
         && getEnergyPort(ELECTRICAL_PORT).getEnergyStream() instanceof EnergyBus) {
+      if (reconcileBalance) {
+        getEnergyPort(ELECTRICAL_PORT).reportRealizedBalancePower(currentPower);
+      }
       return;
     }
     if (getEnergyPort(ELECTRICAL_PORT).getEnergyStream() instanceof EnergyBus) {
