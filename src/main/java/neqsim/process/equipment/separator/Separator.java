@@ -2739,7 +2739,8 @@ public class Separator extends ProcessEquipmentBaseClass
   public double getEntropyProduction(String unit) {
     double entrop = 0.0;
     for (int i = 0; i < numberOfInputStreams; i++) {
-      if (inletStreamMixer.getStream(i).getFlowRate(unit) > 1e-10) {
+      // The method argument is an entropy unit, so use an explicit flow unit for screening.
+      if (inletStreamMixer.getStream(i).getFlowRate("kg/sec") > 1e-10) {
         inletStreamMixer.getStream(i).getFluid().init(3);
         entrop += inletStreamMixer.getStream(i).getFluid().getEntropy();
       }
