@@ -1,5 +1,7 @@
 package neqsim.process.equipment.stream;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,6 +15,7 @@ import neqsim.util.unit.PowerUnit;
  * The canonical stored value is duty in watts. Positive and negative values remain supported for compatibility with
  * existing models; new equipment should use {@link EnergyPort} metadata to express physical direction instead of
  * encoding direction only in the duty sign.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -27,6 +30,7 @@ public class EnergyStream implements ProcessElementInterface, Cloneable {
   private String tagNumber = "";
   protected double duty = 0.0;
   private EnergyType energyType = EnergyType.UNSPECIFIED;
+  private EnergyQuality quality = new EnergyQuality();
 
   /** Creates an unnamed, unspecified energy stream with zero duty. */
   public EnergyStream() {
@@ -52,12 +56,30 @@ public class EnergyStream implements ProcessElementInterface, Cloneable {
     this.energyType = Objects.requireNonNull(energyType, "energyType cannot be null");
   }
 
+  /**
+   * Restores defaults introduced after the original serialized energy-stream format.
+   *
+   * @param input serialized object input
+   * @throws IOException if the stream cannot be read
+   * @throws ClassNotFoundException if a serialized class cannot be resolved
+   */
+  private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+    input.defaultReadObject();
+    if (energyType == null) {
+      energyType = EnergyType.UNSPECIFIED;
+    }
+    if (quality == null) {
+      quality = new EnergyQuality();
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public EnergyStream clone() {
     EnergyStream clonedStream = null;
     try {
       clonedStream = (EnergyStream) super.clone();
+      clonedStream.quality = quality.clone();
     } catch (Exception ex) {
       logger.error(ex.getMessage());
     }
@@ -85,6 +107,12 @@ public class EnergyStream implements ProcessElementInterface, Cloneable {
 
   /**
    * Sets the duty in watts.
+   *
+   * <p>
+   * Legacy point-to-point streams retain support for non-finite intermediate values used by existing equipment fallback
+   * calculations. Multi-party {@link EnergyBus} connections reject non-finite duties because allocation requires finite
+   * inputs.
+   * </p>
    *
    * @param duty duty in W
    */
@@ -194,6 +222,24 @@ public class EnergyStream implements ProcessElementInterface, Cloneable {
    */
   public void setEnergyType(EnergyType energyType) {
     this.energyType = Objects.requireNonNull(energyType, "energyType cannot be null");
+  }
+
+  /**
+   * Gets mutable energy-quality metadata.
+   *
+   * @return quality metadata
+   */
+  public EnergyQuality getQuality() {
+    return quality;
+  }
+
+  /**
+   * Replaces energy-quality metadata.
+   *
+   * @param quality quality metadata
+   */
+  public void setQuality(EnergyQuality quality) {
+    this.quality = Objects.requireNonNull(quality, "quality cannot be null");
   }
 
   /** {@inheritDoc} */

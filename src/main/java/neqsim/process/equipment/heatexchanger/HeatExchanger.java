@@ -564,6 +564,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   public void run(UUID id) {
     if (useDeltaT) {
       runDeltaT(id);
+      publishHeatDuty();
       updateLastState();
       return;
     }
@@ -685,8 +686,19 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
        */
     }
 
+    publishHeatDuty();
     updateLastState();
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Publishes recoverable exchanger duty to the inherited calculated heat port.
+   */
+  private void publishHeatDuty() {
+    if (getEnergyPort("heatDuty").isConnected()
+        && getEnergyPort("heatDuty").getMode() == neqsim.process.equipment.stream.EnergyPortMode.CALCULATED) {
+      getEnergyPort("heatDuty").setDuty(Math.abs(duty));
+    }
   }
 
   /** {@inheritDoc} */

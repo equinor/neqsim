@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortInterface;
 import neqsim.process.equipment.ejector.Ejector;
+import neqsim.process.equipment.energy.EnergyNetworkSolver;
 import neqsim.process.equipment.expander.TurboExpanderCompressor;
 import neqsim.process.equipment.flare.FlareStack;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
@@ -526,8 +527,19 @@ public final class ProcessGraphBuilder {
     // multi-party generation, demand, and balancing.
     Map<EnergyStream, List<ProcessEquipmentInterface>> energyToProducers = new IdentityHashMap<EnergyStream, List<ProcessEquipmentInterface>>();
     Map<EnergyStream, List<ProcessEquipmentInterface>> energyToConsumers = new IdentityHashMap<EnergyStream, List<ProcessEquipmentInterface>>();
+    Map<EnergyStream, EnergyNetworkSolver> energyToSolver = new IdentityHashMap<EnergyStream, EnergyNetworkSolver>();
 
     for (ProcessEquipmentInterface unit : units) {
+      if (unit instanceof EnergyNetworkSolver) {
+        EnergyNetworkSolver solver = (EnergyNetworkSolver) unit;
+        for (EnergyBus bus : solver.getEnergyBuses()) {
+          EnergyNetworkSolver previous = energyToSolver.put(bus, solver);
+          if (previous != null && previous != solver) {
+            throw new IllegalStateException("Energy bus " + bus.getName() + " is assigned to multiple solvers: "
+                + previous.getName() + " and " + solver.getName());
+          }
+        }
+      }
       for (EnergyPort port : unit.getEnergyPorts().values()) {
         if (!port.isConnected()) {
           continue;
@@ -538,9 +550,9 @@ public final class ProcessGraphBuilder {
         if (port.getMode() == EnergyPortMode.CALCULATED) {
           targetMap = energyToProducers;
           role = "calculation producers";
-        } else if (port.getMode() == EnergyPortMode.SPECIFICATION) {
+        } else if (port.getMode() == EnergyPortMode.SPECIFICATION || port.getMode() == EnergyPortMode.BALANCE) {
           targetMap = energyToConsumers;
-          role = "specification consumers";
+          role = "specification or balance consumers";
         }
         if (targetMap == null) {
           continue;
@@ -562,14 +574,41 @@ public final class ProcessGraphBuilder {
 
     for (Map.Entry<EnergyStream, List<ProcessEquipmentInterface>> entry : energyToProducers.entrySet()) {
       List<ProcessEquipmentInterface> consumers = energyToConsumers.get(entry.getKey());
-      if (consumers == null) {
+      EnergyNetworkSolver solver = energyToSolver.get(entry.getKey());
+      if (solver != null) {
+        for (ProcessEquipmentInterface producer : entry.getValue()) {
+          if (producer != solver) {
+            addEnergyEdgeIfAbsent(graph, producer, solver, entry.getKey());
+          }
+        }
+        if (consumers != null) {
+          for (ProcessEquipmentInterface consumer : consumers) {
+            if (consumer != solver) {
+              addEnergyEdgeIfAbsent(graph, solver, consumer, entry.getKey());
+            }
+          }
+        }
+      } else if (consumers != null) {
+        for (ProcessEquipmentInterface producer : entry.getValue()) {
+          for (ProcessEquipmentInterface consumer : consumers) {
+            if (producer != consumer) {
+              addEnergyEdgeIfAbsent(graph, producer, consumer, entry.getKey());
+            }
+          }
+        }
+      }
+    }
+
+    // A bus can contain only specification/balance participants and a solver
+    // (for example a grid connection or pre-populated external contribution).
+    for (Map.Entry<EnergyStream, List<ProcessEquipmentInterface>> entry : energyToConsumers.entrySet()) {
+      EnergyNetworkSolver solver = energyToSolver.get(entry.getKey());
+      if (solver == null || energyToProducers.containsKey(entry.getKey())) {
         continue;
       }
-      for (ProcessEquipmentInterface producer : entry.getValue()) {
-        for (ProcessEquipmentInterface consumer : consumers) {
-          if (producer != consumer) {
-            addEnergyEdgeIfAbsent(graph, producer, consumer, entry.getKey());
-          }
+      for (ProcessEquipmentInterface consumer : entry.getValue()) {
+        if (consumer != solver) {
+          addEnergyEdgeIfAbsent(graph, solver, consumer, entry.getKey());
         }
       }
     }

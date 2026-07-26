@@ -7,7 +7,7 @@ description: Connect heat, shaft-work, and electrical duties between NeqSim unit
 
 Typed `EnergyPort` metadata separates three concepts:
 
-- `EnergyType`: `HEAT`, `SHAFT_WORK`, `ELECTRICAL`, or legacy `UNSPECIFIED`.
+- `EnergyType`: `HEAT`, `SHAFT_WORK`, `ELECTRICAL`, `CHEMICAL`, or legacy `UNSPECIFIED`.
 - `EnergyPortDirection`: physical flow relative to the equipment boundary.
 - `EnergyPortMode`: whether the equipment calculates the duty, reads it as a specification, or leaves it to a balance solver.
 
@@ -77,6 +77,85 @@ The process graph orders calculated producers before specification consumers. Th
 
 These connections remain stable when the flowsheet is executed repeatedly, and Java serialization preserves shared bus identity, port metadata, and named contributions.
 
+## Deterministic allocation and balancing
+
+For a state-of-the-art multi-party network, ports publish offers or requests and the bus solves one deterministic allocation. Lower priority numbers are served first; equal-priority participants share available power proportionally.
+
+```java
+EnergyBus allocatedGrid = new EnergyBus("allocated grid", EnergyType.ELECTRICAL);
+
+EnergyPort generator = new EnergyPort("power", EnergyType.ELECTRICAL,
+    EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED);
+generator.setOwnerName("generator");
+generator.connect(allocatedGrid);
+generator.setDuty(100.0, "kW");
+
+EnergyPort essentialLoad = new EnergyPort("power", EnergyType.ELECTRICAL,
+    EnergyPortDirection.INPUT, EnergyPortMode.SPECIFICATION);
+essentialLoad.setOwnerName("essential load");
+essentialLoad.setPriority(10);
+essentialLoad.setRequestedPower(80.0, "kW");
+essentialLoad.connect(allocatedGrid);
+
+EnergyPort flexibleLoad = new EnergyPort("power", EnergyType.ELECTRICAL,
+    EnergyPortDirection.INPUT, EnergyPortMode.SPECIFICATION);
+flexibleLoad.setOwnerName("flexible load");
+flexibleLoad.setPriority(20);
+flexibleLoad.setRequestedPower(80.0, "kW");
+flexibleLoad.connect(allocatedGrid);
+
+EnergyNetworkReport allocation = allocatedGrid.solveBalance();
+double essentialAllocation = essentialLoad.getPowerMagnitude("kW"); // 80 kW
+double flexibleAllocation = flexibleLoad.getPowerMagnitude("kW");   // 20 kW
+double unmetDemand = allocation.getUnmetDemand();                   // 60000 W
+```
+
+A `BALANCE` port can inject power during shortage and absorb power during surplus. Configure its generation and consumption limits with `setBalanceLimits`. `BatteryStorage.enableAutomaticBalancing` provides this behavior with state-of-charge, charge/discharge efficiency, power limits, ramp response, and trip handling.
+
+When a bus is part of a graph-executed process, add an `EnergyNetworkSolver` to make allocation an explicit scheduling node:
+
+```java
+EnergyNetworkSolver network = new EnergyNetworkSolver("electrical allocation", allocatedGrid);
+process.add(network);
+```
+
+The graph schedules calculated participants before the solver and specification or balance participants after it.
+
+## Conversion equipment and rotating drives
+
+The `neqsim.process.equipment.energy` package provides process units with explicit input, useful-output, and heat-loss ports:
+
+| Equipment | Conversion |
+|---|---|
+| `ElectricMotor` | electrical → shaft work |
+| `Generator` | shaft work → electrical |
+| `Gearbox` | shaft work → shaft work, with speed ratio |
+| `Inverter` | electrical → electrical, with voltage/frequency quality |
+| `Transformer` | electrical → electrical, with voltage ratio |
+| `PrimeMover` | chemical/fuel energy → shaft work |
+
+`MotorDriveTrain` connects an electric motor to any pump, compressor, or other unit exposing `shaftPower`. `MotorAssistedDriveTrain` connects an expander, an assist motor, and a compressor to the same `MechanicalShaft`. The two network solvers then dispatch electrical supply to the motor and combined shaft supply to the compressor.
+
+## Energy quality and utility levels
+
+`EnergyQuality` adds voltage, frequency, temperature, pressure, and shaft-speed metadata. Ports may declare required quality, and incompatible specified qualities are rejected during connection.
+
+`UtilityEnergyBus` represents typed thermal utilities:
+
+- high-, medium-, and low-pressure steam
+- hot oil
+- cooling and chilled water
+- refrigeration
+- ambient cooling
+
+`ThermalUtilitySource` and `ThermalUtilityConsumer` participate in the same allocation, shortage, cost, and emissions reporting as electrical and shaft networks. Heaters, coolers, condensers, reboilers, two-stream heat exchangers, multi-stream exchangers, and `LNGHeatExchanger` publish or consume typed heat duties.
+
+## Dynamics and reporting
+
+`MechanicalShaft.advanceTransient(dt)` integrates rotational kinetic energy from the solved net shaft power. Moment of inertia, friction loss, maximum speed, acceleration/deceleration limits, and trip coastdown are configurable.
+
+Every solved bus returns an `EnergyNetworkReport` containing offered and accepted supply, requested and served demand, balancing generation/consumption, unmet demand, curtailment, conversion loss, delivery efficiency, fuel-energy rate, operating cost, and CO2-equivalent rate. Set marginal price and emission factor on producer ports with `setEnergyPricePerMWh` and `setEmissionFactorKgPerMWh`.
+
 ## Equipment coverage
 
 | Equipment group | Typed port | Supported role |
@@ -90,11 +169,13 @@ These connections remain stable when the flowsheet is executed repeatedly, and J
 | Condenser | `heatDuty` output | Calculated heat removal |
 | Reboiler | `heatDuty` input | Calculated duty or legacy external duty specification |
 | SolarPanel, WindTurbine, WindFarm, FuelCell | `electricalPower` output | Calculated generation |
-| BatteryStorage | `electricalPower` bidirectional | Calculated charge/discharge |
+| BatteryStorage | `electricalPower` bidirectional | Calculated charge/discharge or automatic balance |
 | Electrolyzer | `electricalPower` input | Feed-calculated demand or connected power-driven specification |
 | CO2Electrolyzer, BioFeedstockPreparation | `electricalPower` input | Calculated demand |
 | AmmoniaSynthesisReactor | `reactionHeat` output | Calculated reaction heat |
 | StirredTankReactor | `heatDuty` bidirectional; `agitatorPower` input | Calculated or specified heat duty and calculated electrical demand |
+| HeatExchanger, MultiStreamHeatExchanger, LNGHeatExchanger | `heatDuty` bidirectional | Calculated recoverable heat |
+| Energy converters | `energyInput`, `energyOutput`, `heatLoss` | Specified input, calculated useful output and loss |
 
 ## Reboiler duty reporting
 

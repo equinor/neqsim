@@ -10,6 +10,7 @@ import neqsim.process.equipment.electrolyzer.Electrolyzer;
 import neqsim.process.equipment.electrolyzer.ElectrolyzerIVCharacteristic;
 import neqsim.process.equipment.electrolyzer.ElectrolyzerTechnology;
 import neqsim.process.equipment.expander.Expander;
+import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.powergeneration.SolarPanel;
 import neqsim.process.processmodel.ProcessSystem;
@@ -86,6 +87,34 @@ class EnergyNetworkIntegrationTest extends neqsim.NeqSimTest {
     assertEquals(firstStackPower, electrolyzer.getStackPower(), Math.max(1.0, firstStackPower * 1.0e-10));
     assertEquals(-firstStackPower, bus.getContribution("electrolyzer.electricalPower"),
         Math.max(1.0, firstStackPower * 1.0e-10));
+  }
+
+  @Test
+  void testTwoStreamHeatExchangerPublishesCalculatedRecoveryDuty() {
+    SystemInterface hotFluid = new SystemSrkEos(373.15, 20.0);
+    hotFluid.addComponent("methane", 1.0);
+    hotFluid.setMixingRule("classic");
+    Stream hot = new Stream("hot feed", hotFluid);
+    hot.setFlowRate(0.2, "MSm3/day");
+    hot.run();
+
+    SystemInterface coldFluid = new SystemSrkEos(273.15, 20.0);
+    coldFluid.addComponent("methane", 1.0);
+    coldFluid.setMixingRule("classic");
+    Stream cold = new Stream("cold feed", coldFluid);
+    cold.setFlowRate(0.2, "MSm3/day");
+    cold.run();
+
+    EnergyBus recovery = new EnergyBus("exchanger recovery", EnergyType.HEAT);
+    HeatExchanger exchanger = new HeatExchanger("feed exchanger", hot, cold);
+    exchanger.setUAvalue(10000.0);
+    exchanger.connectEnergyStream("heatDuty", recovery, EnergyPortMode.CALCULATED);
+
+    exchanger.run();
+
+    assertTrue(exchanger.getDuty() > 0.0);
+    assertEquals(exchanger.getDuty(), recovery.getContribution("feed exchanger.heatDuty"),
+        Math.max(1.0, exchanger.getDuty() * 1.0e-10));
   }
 
   @Test

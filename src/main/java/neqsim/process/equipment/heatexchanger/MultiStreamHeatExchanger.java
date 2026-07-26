@@ -676,8 +676,19 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
       logger.info("iterations: " + iterations);
       iterations = 0;
     }
+    publishHeatDuty();
     setCalculationIdentifier(id);
     firstTime = true;
+  }
+
+  /**
+   * Publishes recoverable exchanger duty to the inherited calculated heat port.
+   */
+  private void publishHeatDuty() {
+    if (getEnergyPort("heatDuty").isConnected()
+        && getEnergyPort("heatDuty").getMode() == neqsim.process.equipment.stream.EnergyPortMode.CALCULATED) {
+      getEnergyPort("heatDuty").setDuty(Math.abs(duty));
+    }
   }
 
   /**
