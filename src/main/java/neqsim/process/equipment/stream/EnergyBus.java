@@ -217,6 +217,9 @@ public class EnergyBus extends EnergyStream {
   /** {@inheritDoc} */
   @Override
   public void setDuty(double duty) {
+    if (!Double.isFinite(duty)) {
+      throw new IllegalArgumentException("Energy-bus duty must be finite");
+    }
     super.setDuty(duty);
     invalidateSolution();
   }
@@ -337,6 +340,11 @@ public class EnergyBus extends EnergyStream {
     updatePortNetworkState(demands, false);
     updatePortNetworkState(balancingGenerators, true);
     updatePortNetworkState(balancingConsumers, false);
+    for (EnergyPort port : registeredPorts.values()) {
+      if (port.getMode() != EnergyPortMode.CALCULATED) {
+        contributions.put(port.getParticipantId(), getAllocation(port.getParticipantId()));
+      }
+    }
 
     double acceptedSupply = acceptedNormalSupply + balancingGeneration;
     double offeredSupply = normalSupply + balancingGeneration;
@@ -536,10 +544,9 @@ public class EnergyBus extends EnergyStream {
   private void updatePortNetworkState(List<DispatchEntry> entries, boolean generation) {
     for (DispatchEntry entry : entries) {
       double signedAllocation = generation ? entry.allocated : -entry.allocated;
-      allocations.put(entry.port.getParticipantId(), signedAllocation);
-      if (entry.port.getMode() != EnergyPortMode.CALCULATED) {
-        contributions.put(entry.port.getParticipantId(), signedAllocation);
-      }
+      Double previousAllocation = allocations.get(entry.port.getParticipantId());
+      allocations.put(entry.port.getParticipantId(),
+          (previousAllocation == null ? 0.0 : previousAllocation.doubleValue()) + signedAllocation);
     }
   }
 
