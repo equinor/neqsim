@@ -390,8 +390,6 @@ public class CoupledProcessEnergySolver implements Serializable {
         putFinite(state, prefix + "balancingConsumptionW", report.getBalancingConsumption());
         putFinite(state, prefix + "conversionLossW", report.getConversionLoss());
         putFinite(state, prefix + "fuelEnergyRateW", report.getFuelEnergyRate());
-        putFinite(state, prefix + "operatingCostPerHour", report.getOperatingCostPerHour());
-        putFinite(state, prefix + "co2EmissionRateKgPerHour", report.getCo2EmissionRate());
       }
     }
     return state;
