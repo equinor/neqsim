@@ -66,7 +66,7 @@ public class MotorAssistedDriveTrain implements Serializable {
       throw new IllegalArgumentException("Drive-train power targets must be non-negative and finite");
     }
     compressor.getEnergyPort("shaftPower").setRequestedPower(compressorPower);
-    assistMotor.setRequestedInputPower(motorAssistPower / assistMotor.getEfficiency() + assistMotor.getIdleLoss());
+    assistMotor.setRequestedInputPower(assistMotor.getRequiredInputPowerForOutput(motorAssistPower));
   }
 
   /**
@@ -105,6 +105,10 @@ public class MotorAssistedDriveTrain implements Serializable {
     if (assistMotor.getEnergyPort(EnergyConverter.INPUT_PORT).getEnergyStream() != electricalBus) {
       result.addError("energy", "Assist motor is not connected to the electrical bus",
           "Reconnect motor energyInput to the electrical bus");
+    }
+    if (assistMotor.getEnergyPort(EnergyConverter.OUTPUT_PORT).getEnergyStream() != shaft) {
+      result.addError("energy", "Assist motor is not connected to the common shaft",
+          "Reconnect motor energyOutput to the common shaft");
     }
     return result;
   }

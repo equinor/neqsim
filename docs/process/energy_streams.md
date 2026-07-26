@@ -121,6 +121,25 @@ process.add(network);
 
 The graph schedules calculated participants before the solver and specification or balance participants after it.
 
+## Coupled process-energy convergence
+
+A single graph-ordered run gives the correct causal sequence, but an energy-limited consumer can publish a revised request after the network has already been solved. Use `CoupledProcessEnergySolver` to repeat the complete process until stream pressure, temperature, mass flow, energy requests, allocations, shortages, curtailment, and losses stop changing.
+
+```java
+CoupledProcessEnergySolver coupledSolver = new CoupledProcessEnergySolver(process);
+coupledSolver.setMaximumIterations(50);
+coupledSolver.setProcessTolerance(1.0e-6);
+coupledSolver.setPowerTolerance(1.0e3); // 1 kW
+coupledSolver.setRelaxationFactor(0.5);
+
+CoupledProcessEnergyResult result = coupledSolver.solve();
+if (!result.isConverged()) {
+  throw new IllegalStateException(result.toJson());
+}
+```
+
+The relaxation factor is applied only to `SPECIFICATION` requests between complete process runs. A value of one disables damping; values below one stabilize oscillating feedback such as available motor power changing compressor operation, which then changes the next compressor-power request. The result contains iteration-by-iteration process and power residuals plus immutable reports from the final energy-network solution.
+
 ## Conversion equipment and rotating drives
 
 The `neqsim.process.equipment.energy` package provides process units with explicit input, useful-output, and heat-loss ports:
@@ -128,7 +147,7 @@ The `neqsim.process.equipment.energy` package provides process units with explic
 | Equipment | Conversion |
 |---|---|
 | `ElectricMotor` | electrical → shaft work |
-| `Generator` | shaft work → electrical |
+| `Generator` | shaft work → electricity |
 | `Gearbox` | shaft work → shaft work, with speed ratio |
 | `Inverter` | electrical → electrical, with voltage/frequency quality |
 | `Transformer` | electrical → electrical, with voltage ratio |
@@ -149,6 +168,43 @@ The `neqsim.process.equipment.energy` package provides process units with explic
 - ambient cooling
 
 `ThermalUtilitySource` and `ThermalUtilityConsumer` participate in the same allocation, shortage, cost, and emissions reporting as electrical and shaft networks. Heaters, coolers, condensers, reboilers, two-stream heat exchangers, multi-stream exchangers, and `LNGHeatExchanger` publish or consume typed heat duties.
+
+### Thermodynamic utility mass flow
+
+Configure explicit supply and return states when the utility network must report physical circulation rather than only thermal power. Specific enthalpy is supplied in J/kg, allowing the values to come from NeqSim, vendor data, or another qualified property package.
+
+```java
+ThermalUtilityState steamSupply =
+    new ThermalUtilityState(425.0, 4.0e5, 2.8e6);
+ThermalUtilityState condensateReturn =
+    new ThermalUtilityState(383.0, 4.0e5, 0.6e6);
+
+UtilityEnergyBus lpSteam = new UtilityEnergyBus(
+    "LP steam", UtilityLevel.LOW_PRESSURE_STEAM,
+    steamSupply, condensateReturn);
+
+ThermalUtilitySource boiler =
+    new ThermalUtilitySource("boiler", UtilityLevel.LOW_PRESSURE_STEAM);
+ThermalUtilityConsumer reboiler =
+    new ThermalUtilityConsumer("reboiler", UtilityLevel.LOW_PRESSURE_STEAM);
+boiler.connectEnergyStream(ThermalUtilitySource.OUTPUT_PORT,
+    lpSteam, EnergyPortMode.CALCULATED);
+reboiler.connectEnergyStream(ThermalUtilityConsumer.INPUT_PORT,
+    lpSteam, EnergyPortMode.SPECIFICATION);
+boiler.setAvailablePower(2.0e6);
+reboiler.setRequestedPower(1.5e6);
+
+boiler.run();
+lpSteam.solveBalance();
+reboiler.run();
+
+double servedSteamKgPerSecond = lpSteam.getServedMassFlow();
+double curtailedSteamKgPerSecond = lpSteam.getCurtailedMassFlow();
+double servedSteamTonPerHour = lpSteam.getMassFlowForDuty(
+    lpSteam.getLastReport().getServedDemand(), "W", "ton/hr");
+```
+
+Heating utilities require supply enthalpy above return enthalpy. Cooling-water, chilled-water, refrigeration, and ambient-cooling utilities require return enthalpy above supply enthalpy because they absorb process heat. The solved bus exposes requested, served, offered, accepted, unmet, and curtailed mass-flow equivalents.
 
 ## Dynamics and reporting
 

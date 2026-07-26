@@ -63,7 +63,7 @@ public class MotorDriveTrain implements Serializable {
       throw new IllegalArgumentException("Requested shaft power must be non-negative and finite");
     }
     drivenEquipment.getEnergyPort("shaftPower").setRequestedPower(shaftPower);
-    motor.setRequestedInputPower(shaftPower / motor.getEfficiency() + motor.getIdleLoss());
+    motor.setRequestedInputPower(motor.getRequiredInputPowerForOutput(shaftPower));
   }
 
   /**
@@ -112,6 +112,10 @@ public class MotorDriveTrain implements Serializable {
     if (motor.getEnergyPort(EnergyConverter.INPUT_PORT).getEnergyStream() != electricalBus) {
       result.addError("energy", "Motor is not connected to the configured electrical bus",
           "Reconnect motor energyInput to the electrical bus");
+    }
+    if (motor.getEnergyPort(EnergyConverter.OUTPUT_PORT).getEnergyStream() != shaft) {
+      result.addError("energy", "Motor is not connected to the configured shaft",
+          "Reconnect motor energyOutput to the mechanical shaft");
     }
     if (drivenEquipment.getEnergyPort("shaftPower").getEnergyStream() != shaft) {
       result.addError("energy", "Driven equipment is not connected to the configured shaft",

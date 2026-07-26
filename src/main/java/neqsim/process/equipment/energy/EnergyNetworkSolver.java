@@ -74,18 +74,17 @@ public class EnergyNetworkSolver extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Gets reports from the most recent run.
+   * Gets report snapshots created by the most recent solver run.
    *
-   * @return immutable report list
+   * <p>
+   * Reports are retained by this solver rather than re-read from mutable bus state, so solving one of the buses outside
+   * this unit does not change the meaning of "most recent run".
+   * </p>
+   *
+   * @return immutable defensive copy of the report list
    */
   public List<EnergyNetworkReport> getReports() {
-    List<EnergyNetworkReport> currentReports = new ArrayList<EnergyNetworkReport>();
-    for (EnergyBus energyBus : energyBuses) {
-      if (energyBus.getLastReport() != null) {
-        currentReports.add(energyBus.getLastReport());
-      }
-    }
-    return Collections.unmodifiableList(currentReports);
+    return Collections.unmodifiableList(new ArrayList<EnergyNetworkReport>(reports));
   }
 
   /** {@inheritDoc} */
