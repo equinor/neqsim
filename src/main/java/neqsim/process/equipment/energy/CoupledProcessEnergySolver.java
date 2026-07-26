@@ -209,6 +209,10 @@ public class CoupledProcessEnergySolver implements Serializable {
    * @return immutable convergence result with iteration history and final network reports
    */
   public CoupledProcessEnergyResult solve() {
+    if (minimumIterations > maximumIterations) {
+      throw new IllegalStateException("Minimum iterations cannot exceed maximum iterations");
+    }
+
     List<EnergyBus> energyBuses = collectEnergyBuses();
     if (energyBuses.isEmpty()) {
       throw new IllegalStateException(
