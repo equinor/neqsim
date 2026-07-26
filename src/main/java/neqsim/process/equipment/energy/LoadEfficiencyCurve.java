@@ -50,8 +50,7 @@ public final class LoadEfficiencyCurve implements Serializable {
     }
     for (int index = 1; index < loadFractions.length; index++) {
       if (loadFraction <= loadFractions[index]) {
-        double fraction = (loadFraction - loadFractions[index - 1])
-            / (loadFractions[index] - loadFractions[index - 1]);
+        double fraction = (loadFraction - loadFractions[index - 1]) / (loadFractions[index] - loadFractions[index - 1]);
         return efficiencies[index - 1] + fraction * (efficiencies[index] - efficiencies[index - 1]);
       }
     }

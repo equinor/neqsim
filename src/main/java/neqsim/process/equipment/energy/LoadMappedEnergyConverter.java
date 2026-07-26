@@ -5,9 +5,11 @@ import neqsim.process.equipment.stream.EnergyType;
 /**
  * Energy converter with optional rated output and piecewise-linear load-efficiency curve.
  *
- * <p>Without a curve, the inherited constant-efficiency behavior is unchanged. With a curve,
- * efficiency is evaluated from useful output divided by rated useful output, and forward conversion
- * is solved by bounded bisection to preserve energy conservation.</p>
+ * <p>
+ * Without a curve, the inherited constant-efficiency behavior is unchanged. With a curve, efficiency is evaluated from
+ * useful output divided by rated useful output, and forward conversion is solved by bounded bisection to preserve
+ * energy conservation.
+ * </p>
  */
 public class LoadMappedEnergyConverter extends EnergyConverter {
   private static final long serialVersionUID = 1000L;

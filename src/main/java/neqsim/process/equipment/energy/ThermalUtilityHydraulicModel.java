@@ -5,9 +5,11 @@ import java.io.Serializable;
 /**
  * Single-header hydraulic screening model for a thermal utility circulation loop.
  *
- * <p>The model uses Darcy-Weisbach pressure loss with a Haaland friction-factor correlation and
- * optional aggregate local-loss coefficient. It is intended for utility-header screening and
- * capacity checks, not detailed network or two-phase steam-distribution design.</p>
+ * <p>
+ * The model uses Darcy-Weisbach pressure loss with a Haaland friction-factor correlation and optional aggregate
+ * local-loss coefficient. It is intended for utility-header screening and capacity checks, not detailed network or
+ * two-phase steam-distribution design.
+ * </p>
  */
 public final class ThermalUtilityHydraulicModel implements Serializable {
   private static final long serialVersionUID = 1000L;

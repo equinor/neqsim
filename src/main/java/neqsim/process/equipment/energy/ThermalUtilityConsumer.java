@@ -73,9 +73,8 @@ public class ThermalUtilityConsumer extends ProcessEquipmentBaseClass {
    * Sets the process temperature and minimum utility approach that must be feasible.
    *
    * <p>
-   * A heating utility must have supply temperature at least {@code processTemperature + minimumApproachTemperature}.
-   * A cooling utility must have supply temperature at most
-   * {@code processTemperature - minimumApproachTemperature}.
+   * A heating utility must have supply temperature at least {@code processTemperature + minimumApproachTemperature}. A
+   * cooling utility must have supply temperature at most {@code processTemperature - minimumApproachTemperature}.
    * </p>
    *
    * @param processTemperature process-side target temperature in K
@@ -155,9 +154,8 @@ public class ThermalUtilityConsumer extends ProcessEquipmentBaseClass {
       if (utilityBus.getUtilityLevel() != utilityLevel) {
         result.addError("energy", "Connected utility level does not satisfy the consumer requirement",
             "Connect " + INPUT_PORT + " to a " + utilityLevel + " UtilityEnergyBus");
-      } else if (hasProcessTemperatureRequirement()
-          && !ThermalUtilityQualityAnalysis.canServeProcessTemperature(utilityBus, requiredProcessTemperature,
-              minimumApproachTemperature)) {
+      } else if (hasProcessTemperatureRequirement() && !ThermalUtilityQualityAnalysis
+          .canServeProcessTemperature(utilityBus, requiredProcessTemperature, minimumApproachTemperature)) {
         result.addError("energy", "Connected utility temperature grade cannot satisfy the process requirement",
             "Select a hotter heating utility, a colder cooling utility, or reduce the minimum approach temperature");
       }
