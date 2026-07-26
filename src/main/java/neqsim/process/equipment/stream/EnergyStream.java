@@ -109,9 +109,9 @@ public class EnergyStream implements ProcessElementInterface, Cloneable {
    * Sets the duty in watts.
    *
    * <p>
-   * Legacy point-to-point streams retain support for non-finite intermediate values used by existing equipment
-   * fallback calculations. Multi-party {@link EnergyBus} connections reject non-finite duties because allocation
-   * requires finite inputs.
+   * Legacy point-to-point streams retain support for non-finite intermediate values used by existing equipment fallback
+   * calculations. Multi-party {@link EnergyBus} connections reject non-finite duties because allocation requires finite
+   * inputs.
    * </p>
    *
    * @param duty duty in W
