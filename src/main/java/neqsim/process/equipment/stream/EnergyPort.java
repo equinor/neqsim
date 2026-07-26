@@ -457,8 +457,7 @@ public class EnergyPort implements Serializable {
         return bus.getContribution(participantId);
       }
       if (bus.hasSolution()) {
-        double allocation = bus.getAllocation(participantId);
-        return direction == EnergyPortDirection.BIDIRECTIONAL ? allocation : Math.abs(allocation);
+        return bus.getAllocation(participantId);
       }
       return bus.getNetPowerExcluding(participantId);
     }
@@ -504,11 +503,11 @@ public class EnergyPort implements Serializable {
    * @throws IllegalStateException if no stream is connected
    */
   public void setDuty(double duty) {
-    if (!Double.isFinite(duty)) {
-      throw new IllegalArgumentException("Energy-port duty must be finite");
-    }
     EnergyStream stream = requireConnectedStream();
     if (stream instanceof EnergyBus) {
+      if (!Double.isFinite(duty)) {
+        throw new IllegalArgumentException("Energy-port duty must be finite on an energy bus");
+      }
       EnergyBus bus = (EnergyBus) stream;
       if (mode == EnergyPortMode.SPECIFICATION) {
         if (bus.hasSolution()) {
