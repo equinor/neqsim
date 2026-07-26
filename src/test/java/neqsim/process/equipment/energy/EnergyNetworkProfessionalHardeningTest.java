@@ -66,6 +66,22 @@ class EnergyNetworkProfessionalHardeningTest {
   }
 
   @Test
+  void testInverterRejectsInvalidSetpointsWithoutChangingConfiguredQuality() {
+    EnergyBus outputBus = new EnergyBus("validated quality bus", EnergyType.ELECTRICAL);
+    Inverter inverter = new Inverter("validated inverter");
+    inverter.connectEnergyStream(EnergyConverter.OUTPUT_PORT, outputBus, EnergyPortMode.CALCULATED);
+    inverter.setOutputElectricalQuality(690.0, 50.0);
+
+    assertThrows(IllegalArgumentException.class,
+        () -> inverter.setOutputElectricalQuality(Double.NaN, 50.0));
+    assertThrows(IllegalArgumentException.class, () -> inverter.setOutputElectricalQuality(690.0, 0.0));
+    assertEquals(690.0, inverter.getOutputVoltage(), 1.0e-12);
+    assertEquals(50.0, inverter.getOutputFrequency(), 1.0e-12);
+    assertEquals(690.0, outputBus.getQuality().getVoltage(), 1.0e-12);
+    assertEquals(50.0, outputBus.getQuality().getFrequency(), 1.0e-12);
+  }
+
+  @Test
   void testInverterPublishesQualityWhenConfiguredBeforeConnection() {
     Inverter inverter = new Inverter("late-connected inverter");
     inverter.setOutputElectricalQuality(400.0, 60.0);
