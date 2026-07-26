@@ -63,7 +63,7 @@ public class MotorDriveTrain implements Serializable {
       throw new IllegalArgumentException("Requested shaft power must be non-negative and finite");
     }
     drivenEquipment.getEnergyPort("shaftPower").setRequestedPower(shaftPower);
-    motor.setRequestedInputPower(shaftPower / motor.getEfficiency() + motor.getIdleLoss());
+    motor.setRequestedInputPower(motor.getRequiredInputPowerForOutput(shaftPower));
   }
 
   /**
