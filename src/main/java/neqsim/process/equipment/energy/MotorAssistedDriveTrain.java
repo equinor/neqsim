@@ -106,6 +106,10 @@ public class MotorAssistedDriveTrain implements Serializable {
       result.addError("energy", "Assist motor is not connected to the electrical bus",
           "Reconnect motor energyInput to the electrical bus");
     }
+    if (assistMotor.getEnergyPort(EnergyConverter.OUTPUT_PORT).getEnergyStream() != shaft) {
+      result.addError("energy", "Assist motor is not connected to the common shaft",
+          "Reconnect motor energyOutput to the common shaft");
+    }
     return result;
   }
 }

@@ -23,6 +23,9 @@ public class UtilityEnergyBus extends EnergyBus {
    */
   public UtilityEnergyBus(String name, UtilityLevel utilityLevel) {
     super(name, EnergyType.HEAT);
+    if (utilityLevel == null || utilityLevel == UtilityLevel.UNSPECIFIED) {
+      throw new IllegalArgumentException("A specified utility level is required");
+    }
     getQuality().setUtilityLevel(utilityLevel);
   }
 
@@ -36,7 +39,7 @@ public class UtilityEnergyBus extends EnergyBus {
    */
   public UtilityEnergyBus(String name, UtilityLevel utilityLevel, double supplyTemperature, double returnTemperature) {
     this(name, utilityLevel);
-    getQuality().setTemperature(supplyTemperature);
+    setSupplyTemperature(supplyTemperature);
     setReturnTemperature(returnTemperature);
   }
 

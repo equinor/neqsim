@@ -234,14 +234,24 @@ public class EnergyConverter extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt, UUID id) {
+    if (!Double.isFinite(dt) || dt < 0.0) {
+      throw new IllegalArgumentException("Converter timestep must be non-negative and finite");
+    }
+
     double input = readAvailableInput();
     double targetOutput = calculateTargetOutput(input);
-    double maximumChange = rampRate * Math.max(0.0, dt);
-    double output = targetOutput;
+    double maximumChange = rampRate * dt;
+    double rampedOutput = targetOutput;
     if (Double.isFinite(maximumChange) && Math.abs(targetOutput - currentOutputPower) > maximumChange) {
-      output = currentOutputPower + Math.copySign(maximumChange, targetOutput - currentOutputPower);
+      rampedOutput = currentOutputPower + Math.copySign(maximumChange, targetOutput - currentOutputPower);
     }
-    double effectiveInput = output > 0.0 ? Math.min(input, output / efficiency + idleLoss) : 0.0;
+
+    // A memoryless converter cannot sustain a ramp-limited output using energy that is no longer available.
+    // Ramp limits therefore constrain increases, while a loss of input immediately caps output at the
+    // thermodynamically available target.
+    double output = Math.min(targetOutput, Math.max(0.0, rampedOutput));
+    double effectiveInput = output > 0.0 ? output / efficiency + idleLoss : 0.0;
+    effectiveInput = Math.min(input, effectiveInput);
     publish(effectiveInput, output);
     increaseTime(dt);
     setCalculationIdentifier(id);
