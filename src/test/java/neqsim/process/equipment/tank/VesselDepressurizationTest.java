@@ -653,17 +653,14 @@ public class VesselDepressurizationTest {
         "Valid 80 bar vessel with 1.2 bar backpressure must not produce a validation error");
 
     Stream highPressureFeed = createTestStream(300.0, 750.0);
-    VesselDepressurization highPressureVessel =
-        new VesselDepressurization("high pressure warning", highPressureFeed);
+    VesselDepressurization highPressureVessel = new VesselDepressurization("high pressure warning", highPressureFeed);
     highPressureVessel.setVolume(1.0);
     highPressureVessel.setOrificeDiameter(0.01);
     highPressureVessel.setBackPressure(1.2);
     highPressureVessel.run();
 
     java.util.List<String> highPressureWarnings = highPressureVessel.validateWithWarnings();
-    assertTrue(
-        highPressureWarnings.stream().anyMatch(
-            warning -> warning.contains("Very high pressure (750 bar)")),
+    assertTrue(highPressureWarnings.stream().anyMatch(warning -> warning.contains("Very high pressure (750 bar)")),
         "A 750 bar vessel must trigger the high-pressure equation-of-state warning");
   }
 
