@@ -17,6 +17,7 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.distillation.ColumnSpecification;
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.distillation.RateBasedPackedColumn;
+import neqsim.process.equipment.energy.EnergyNetworkSolver;
 import neqsim.process.equipment.distillation.internals.ColumnInternalsDesigner;
 import neqsim.process.equipment.heatexchanger.CoolingWaterSystem;
 import neqsim.process.equipment.heatexchanger.FiredHeater;
@@ -1653,6 +1654,11 @@ public class DocExamplesCompilationTest {
     double flexibleAllocation = flexibleLoad.getPowerMagnitude("kW");
     double unmetDemand = allocation.getUnmetDemand();
 
+    EnergyNetworkSolver network = new EnergyNetworkSolver("electrical allocation", allocatedGrid);
+    ProcessSystem process = new ProcessSystem();
+    process.add(network);
+
+    assertEquals(1, network.getEnergyBuses().size());
     assertEquals(80.0, essentialAllocation, 1.0e-12);
     assertEquals(20.0, flexibleAllocation, 1.0e-12);
     assertEquals(60.0, unmetDemand / 1000.0, 1.0e-12);
