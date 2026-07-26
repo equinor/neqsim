@@ -4,8 +4,6 @@ description: "Engineering workflows that convert NeqSim process models into gove
 keywords: "engineering, design cases, equipment sizing, discipline calculations, DEXPI, CFIHOS, engineering handover"
 ---
 
-# Engineering with NeqSim
-
 Engineering is a distinct NeqSim topic. Process simulation predicts how a modeled facility behaves. Engineering uses
 those results to establish governing cases, select dimensions and ratings, verify constraints, document assumptions,
 and prepare controlled deliverables for review and handover.
@@ -19,14 +17,14 @@ has been supplied and accepted for the declared purpose.
 
 | Resource | Use it for |
 | --- | --- |
-| [Current Engineering Capabilities](current-capabilities) | The implemented APIs, discipline scope, qualification gates, deliverables, and lifecycle workflow available now |
-| [Engineering Guide](guide) | A practical, gated path from a validated process model to a review-ready package |
-| [Design Cases and Governing Envelopes](design-cases-and-envelopes) | Controlled case definitions, metrics, isolated execution, limits, and governing-value selection |
-| [DEXPI Engineering Guide](dexpi-guide) | Selecting, generating, validating, and qualifying DEXPI Plant, Process, Proteus, and pyDEXPI exchanges |
-| [Engineering Deliverables and Handover](deliverables-and-handover) | Coordinated packages, registers, DEXPI, CFIHOS, approvals, manifests, and revisions |
-| [Engineering Simulator Foundations](../integration/engineering-simulator-foundations) | Core concepts: isolated cases, provenance, readiness, uncertainty, and verification |
-| [Process-to-Engineering Simulator](../integration/process-to-engineering-simulator) | Closed-loop case execution, sizing, application of selected dimensions, reruns, and convergence |
-| [Complete Offshore Engineering Study](../integration/complete-offshore-process-engineering-study) | A full-facility executed example with discipline calculations and handover artifacts |
+| [Current Engineering Capabilities](current-capabilities.md) | The implemented APIs, discipline scope, qualification gates, deliverables, and lifecycle workflow available now |
+| [Engineering Guide](guide.md) | A practical, gated path from a validated process model to a review-ready package |
+| [Design Cases and Governing Envelopes](design-cases-and-envelopes.md) | Controlled case definitions, metrics, isolated execution, limits, and governing-value selection |
+| [DEXPI Engineering Guide](dexpi-guide.md) | Selecting, generating, validating, and qualifying DEXPI Plant, Process, Proteus, and pyDEXPI exchanges |
+| [Engineering Deliverables and Handover](deliverables-and-handover.md) | Coordinated packages, registers, DEXPI, CFIHOS, approvals, manifests, and revisions |
+| [Engineering Simulator Foundations](../integration/engineering-simulator-foundations.md) | Core concepts: isolated cases, provenance, readiness, uncertainty, and verification |
+| [Process-to-Engineering Simulator](../integration/process-to-engineering-simulator.md) | Closed-loop case execution, sizing, application of selected dimensions, reruns, and convergence |
+| [Complete Offshore Engineering Study](../integration/complete-offshore-process-engineering-study.md) | A full-facility executed example with discipline calculations and handover artifacts |
 
 ## Engineering workflow
 
@@ -65,24 +63,24 @@ basis, governing case, method identity, units, warnings, uncertainty, constraint
 
 | Topic | Documentation |
 | --- | --- |
-| Controlled case definitions and governing metrics | [Design Cases and Governing Envelopes](design-cases-and-envelopes) |
-| Process design workflow | [Process Design Guide](../process/process_design_guide) |
-| Explicit design framework and constraints | [Design Framework](../process/DESIGN_FRAMEWORK) |
-| Isolated deterministic case execution | [Engineering Simulator Foundations](../integration/engineering-simulator-foundations) |
-| Iterative sizing and process/design convergence | [Process-to-Engineering Simulator](../integration/process-to-engineering-simulator) |
-| Numerical health and engineering closure | [Numerical Health and Engineering Closure](../integration/numerical-health-and-engineering-closure) |
-| Current implementation and workflow selection | [Current Engineering Capabilities](current-capabilities) |
+| Controlled case definitions and governing metrics | [Design Cases and Governing Envelopes](design-cases-and-envelopes.md) |
+| Process design workflow | [Process Design Guide](../process/process_design_guide.md) |
+| Explicit design framework and constraints | [Design Framework](../process/DESIGN_FRAMEWORK.md) |
+| Isolated deterministic case execution | [Engineering Simulator Foundations](../integration/engineering-simulator-foundations.md) |
+| Iterative sizing and process/design convergence | [Process-to-Engineering Simulator](../integration/process-to-engineering-simulator.md) |
+| Numerical health and engineering closure | [Numerical Health and Engineering Closure](../integration/numerical-health-and-engineering-closure.md) |
+| Current implementation and workflow selection | [Current Engineering Capabilities](current-capabilities.md) |
 
 ### Equipment and discipline engineering
 
 | Discipline | Documentation |
 | --- | --- |
-| Equipment and mechanical | [Mechanical Design](../process/mechanical_design), [Design Standards](../process/mechanical_design_standards), [Equipment Datasheets](../process/equipment_datasheets) |
-| Piping and pipelines | [Topside Piping Design](../process/topside_piping_design), [Pipeline Mechanical Design](../process/pipeline_mechanical_design), [Piping Route Builder](../process/piping_route_builder) |
-| Valves and instruments | [Valve Mechanical Design](../process/ValveMechanicalDesign), [Instrument Design](../process/instrument-design) |
-| Electrical and drivers | [Electrical Design](../process/electrical-design), [Motor Mechanical Design](../process/motor-mechanical-design) |
-| Wells and subsea | [Well Mechanical Design](../process/well_mechanical_design), [SURF and Subsea Equipment](../process/SURF_SUBSEA_EQUIPMENT) |
-| Utilities and energy | [Engineering Utilities](../process/engineering_utilities_v2), [Exergy Analysis](../process/exergy-analysis) |
+| Equipment and mechanical | [Mechanical Design](../process/mechanical_design.md), [Design Standards](../process/mechanical_design_standards.md), [Equipment Datasheets](../process/equipment_datasheets.md) |
+| Piping and pipelines | [Topside Piping Design](../process/topside_piping_design.md), [Pipeline Mechanical Design](../process/pipeline_mechanical_design.md), [Piping Route Builder](../process/piping_route_builder.md) |
+| Valves and instruments | [Valve Mechanical Design](../process/ValveMechanicalDesign.md), [Instrument Design](../process/instrument-design.md) |
+| Electrical and drivers | [Electrical Design](../process/electrical-design.md), [Motor Mechanical Design](../process/motor-mechanical-design.md) |
+| Wells and subsea | [Well Mechanical Design](../process/well_mechanical_design.md), [SURF and Subsea Equipment](../process/SURF_SUBSEA_EQUIPMENT.md) |
+| Utilities and energy | [Engineering Utilities](../process/engineering_utilities_v2.md), [Exergy Analysis](../process/exergy-analysis.md) |
 
 ### Safety and operability
 
@@ -95,22 +93,22 @@ remain controlled engineering decisions.
 | --- | --- |
 | Safety systems | [Safety Documentation](../safety/) |
 | Risk, reliability, and SIS integration | [Risk and Reliability](../risk/) |
-| Governed scenario and design-loop integration | [Process-to-Engineering Simulator](../integration/process-to-engineering-simulator#safety-and-scenario-integration) |
-| P&ID control and safeguarding synthesis | [P&ID Design Synthesis](../pid-design-synthesis) |
-| HAZOP, LOPA, and draft SRS traceability | [HAZOP and LOPA to Draft SRS Handoff](../process/safety/hazop-lopa-srs-handoff) |
-| NCS ESD/HIPPS verification | [NOG-070, SIL, and STS-0131 ESD](../safety/nog070_sil_sts0131_esd) |
+| Governed scenario and design-loop integration | [Process-to-Engineering Simulator](../integration/process-to-engineering-simulator.md#safety-and-scenario-integration) |
+| P&ID control and safeguarding synthesis | [P&ID Design Synthesis](../pid-design-synthesis.md) |
+| HAZOP, LOPA, and draft SRS traceability | [HAZOP and LOPA to Draft SRS Handoff](../process/safety/hazop-lopa-srs-handoff.md) |
+| NCS ESD/HIPPS verification | [NOG-070, SIL, and STS-0131 ESD](../safety/nog070_sil_sts0131_esd.md) |
 
 ### Deliverables, exchange, and handover
 
 | Topic | Documentation |
 | --- | --- |
-| DEXPI workflow selection and qualification | [DEXPI Engineering Guide](dexpi-guide) |
-| Package layers, issue workflow, and consumer checks | [Engineering Deliverables and Handover](deliverables-and-handover) |
-| Canonical engineering graph and DEXPI | [DEXPI Engineering Generation](../integration/dexpi-engineering-generation) |
-| End-to-end artifact and approval workflow | [Process Model to Engineering Workflow](../integration/process-to-engineering-workflow) |
-| Controlled engineering data handover | [CFIHOS 2.0 Engineering Handover](../integration/cfihos-20-engineering-handover) |
-| Controlled-pilot qualification | [Engineering Production Vertical Slice](../integration/engineering-production-vertical-slice) |
-| Evidence and production readiness | [Process-to-Engineering Production Readiness](../integration/process-to-engineering-simulator#production-readiness-qualification), [Industrial Method Qualification](../integration/industrial-method-qualification) |
+| DEXPI workflow selection and qualification | [DEXPI Engineering Guide](dexpi-guide.md) |
+| Package layers, issue workflow, and consumer checks | [Engineering Deliverables and Handover](deliverables-and-handover.md) |
+| Canonical engineering graph and DEXPI | [DEXPI Engineering Generation](../integration/dexpi-engineering-generation.md) |
+| End-to-end artifact and approval workflow | [Process Model to Engineering Workflow](../integration/process-to-engineering-workflow.md) |
+| Controlled engineering data handover | [CFIHOS 2.0 Engineering Handover](../integration/cfihos-20-engineering-handover.md) |
+| Controlled-pilot qualification | [Engineering Production Vertical Slice](../integration/engineering-production-vertical-slice.md) |
+| Evidence and production readiness | [Process-to-Engineering Production Readiness](../integration/process-to-engineering-simulator.md#production-readiness-qualification), [Industrial Method Qualification](../integration/industrial-method-qualification.md) |
 
 ### Change management
 
@@ -120,21 +118,21 @@ approvals that have become stale.
 
 | Topic | Documentation |
 | --- | --- |
-| Controlled change events | [Model Change Events](../process/model-change-events) |
-| Dependency-derived impact scope | [Model Impact Analysis](../process/model-impact-analysis) |
-| Portable integrity-protected model packages | [Process-to-Engineering Simulator](../integration/process-to-engineering-simulator#coordinated-package-outputs) |
-| Revision-aware package generation | [Process Model to Engineering Workflow](../integration/process-to-engineering-workflow) |
+| Controlled change events | [Model Change Events](../process/model-change-events.md) |
+| Dependency-derived impact scope | [Model Impact Analysis](../process/model-impact-analysis.md) |
+| Portable integrity-protected model packages | [Process-to-Engineering Simulator](../integration/process-to-engineering-simulator.md#coordinated-package-outputs) |
+| Revision-aware package generation | [Process Model to Engineering Workflow](../integration/process-to-engineering-workflow.md) |
 
 ## Executable learning path
 
-1. Review [Current Engineering Capabilities](current-capabilities), then use the [Engineering Guide](guide) to choose
+1. Review [Current Engineering Capabilities](current-capabilities.md), then use the [Engineering Guide](guide.md) to choose
    the appropriate workflow and gates.
 2. Run the focused [`process_to_engineering_simulator.ipynb`](https://github.com/equinor/neqsim/blob/master/examples/notebooks/process_to_engineering_simulator.ipynb)
    example for the closed design loop.
 3. Run the
    [`complete_offshore_process_engineering_study.ipynb`](https://github.com/equinor/neqsim/blob/master/examples/notebooks/complete_offshore_process_engineering_study.ipynb)
    example to see a multi-discipline facility package.
-4. Use the [Process Model to Engineering Workflow](../integration/process-to-engineering-workflow) when moving from a
+4. Use the [Process Model to Engineering Workflow](../integration/process-to-engineering-workflow.md) when moving from a
    single `ProcessSystem` to governed multi-area delivery.
 5. Run the
    [`engineering_production_qualification_workflow.ipynb`](https://github.com/equinor/neqsim/blob/master/examples/notebooks/engineering_production_qualification_workflow.ipynb)
