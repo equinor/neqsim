@@ -26,6 +26,8 @@ class EnergyBusAllocationTest {
 
     assertEquals(-100.0 * 2.0 / 3.0, bus.getAllocation(first.getParticipantId()), 1.0e-12);
     assertEquals(-100.0 / 3.0, bus.getAllocation(second.getParticipantId()), 1.0e-12);
+    assertEquals(-100.0 * 2.0 / 3.0, first.getDuty(), 1.0e-12);
+    assertEquals(100.0 * 2.0 / 3.0, first.getPowerMagnitude(), 1.0e-12);
     assertEquals(50.0, report.getUnmetDemand(), 1.0e-12);
     assertEquals(100.0, report.getServedDemand(), 1.0e-12);
 
@@ -87,6 +89,7 @@ class EnergyBusAllocationTest {
     EnergyNetworkReport shortage = bus.solveBalance();
 
     assertEquals(50.0, bus.getAllocation(storage.getParticipantId()), 1.0e-12);
+    assertEquals(50.0, storage.getDuty(), 1.0e-12);
     assertEquals(0.0, shortage.getUnmetDemand(), 1.0e-12);
 
     producer.setDuty(150.0);
