@@ -17,34 +17,10 @@ jobs:
     timeout-minutes: 90
 
     steps:
-      - name: Check out notebook branch
-        uses: actions/checkout@v4
+      - name: Check out integrated branch
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          fetch-depth: 0
-
-      - name: Assemble implementation branches for execution
-        shell: bash
-        run: |
-          set -euxo pipefail
-          git config user.name "neqsim-notebook-runner"
-          git config user.email "actions@users.noreply.github.com"
-          branches=(
-            feature/energy-network-professional-hardening
-            feature/electric-motor-performance-integration
-            feature/converter-load-efficiency-curves
-            feature/thermal-utility-mass-flow
-            feature/thermal-utility-quality-exergy
-            feature/thermal-utility-hydraulics
-            feature/energy-dispatch-strategies
-            feature/energy-time-series-simulation
-            feature/energy-unit-commitment
-            feature/offshore-energy-reference-case
-          )
-          for branch in "${branches[@]}"; do
-            git fetch origin "$branch:refs/remotes/origin/$branch"
-            git merge --no-edit -X ours "origin/$branch"
-          done
 
       - name: Set up Java 21
         uses: actions/setup-java@v5
@@ -57,7 +33,7 @@ jobs:
         run: ./mvnw -q -DskipTests package
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 
@@ -154,11 +130,7 @@ jobs:
           failed=0
           for notebook in examples/notebooks/energy_networks/*.ipynb; do
             name="$(basename "$notebook" .ipynb)"
-            echo "Executing $notebook"
-            if python -m jupyter nbconvert \
-              --to notebook \
-              --execute \
-              --inplace \
+            if python -m jupyter nbconvert --to notebook --execute --inplace \
               --ExecutePreprocessor.timeout=1200 \
               --ExecutePreprocessor.kernel_name=python3 \
               "$notebook" >"notebook-execution-logs/${name}.log" 2>&1; then
