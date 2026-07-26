@@ -79,8 +79,8 @@ class EnergyNetworkDynamicsTest {
     battery.runTransient(1.0);
 
     assertEquals(10.0, battery.getCurrentPower(), 1.0e-9);
-    assertEquals(10.0, bus.getAllocation(
-        battery.getEnergyPort(BatteryStorage.ELECTRICAL_PORT).getParticipantId()), 1.0e-9);
+    assertEquals(10.0, bus.getAllocation(battery.getEnergyPort(BatteryStorage.ELECTRICAL_PORT).getParticipantId()),
+        1.0e-9);
     assertEquals(-10.0, bus.getAllocation(load.getParticipantId()), 1.0e-9);
     assertEquals(10.0, bus.getLastReport().getServedDemand(), 1.0e-9);
     assertEquals(90.0, bus.getLastReport().getUnmetDemand(), 1.0e-9);
@@ -91,9 +91,7 @@ class EnergyNetworkDynamicsTest {
   void testBatteryRejectsNonFinitePowerLimits() {
     BatteryStorage battery = new BatteryStorage("battery", 1000.0);
 
-    assertThrows(IllegalArgumentException.class,
-        () -> battery.setPowerLimits(Double.POSITIVE_INFINITY, 100.0));
-    assertThrows(IllegalArgumentException.class,
-        () -> battery.setPowerLimits(100.0, Double.POSITIVE_INFINITY));
+    assertThrows(IllegalArgumentException.class, () -> battery.setPowerLimits(Double.POSITIVE_INFINITY, 100.0));
+    assertThrows(IllegalArgumentException.class, () -> battery.setPowerLimits(100.0, Double.POSITIVE_INFINITY));
   }
 }
