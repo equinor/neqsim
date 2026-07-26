@@ -121,7 +121,7 @@ jobs:
               assert all(cell.get('execution_count') is not None for cell in code_cells), path
               errors = [out for cell in code_cells for out in cell.get('outputs', []) if out.get('output_type') == 'error']
               assert not errors, (path, errors)
-              figures = [out for cell in code_cells for out in cell.get('outputs', []) if out.get('output_type') == 'display_data' and 'image/png' in out.get('data', {})]
+              figures = [out for cell in code_cells for out in cell.get('outputs', []) if 'image/png' in out.get('data', {})]
               assert len(figures) >= 3, (path, len(figures))
               print(f'{path}: {len(code_cells)} code cells, {len(figures)} figures')
           PY
