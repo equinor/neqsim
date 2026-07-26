@@ -71,16 +71,37 @@ jobs:
           MPLBACKEND: Agg
         shell: bash
         run: |
-          set -euxo pipefail
+          set -u
+          mkdir -p notebook-execution-logs
+          failed=0
           for notebook in examples/notebooks/energy_networks/*.ipynb; do
-            python -m jupyter nbconvert \
+            name="$(basename "$notebook" .ipynb)"
+            echo "Executing $notebook"
+            if python -m jupyter nbconvert \
               --to notebook \
               --execute \
               --inplace \
               --ExecutePreprocessor.timeout=1200 \
               --ExecutePreprocessor.kernel_name=python3 \
-              "$notebook"
+              "$notebook" >"notebook-execution-logs/${name}.log" 2>&1; then
+              echo "PASS $notebook" | tee -a notebook-execution-logs/summary.txt
+            else
+              echo "FAIL $notebook" | tee -a notebook-execution-logs/summary.txt
+              failed=1
+            fi
           done
+          echo "$failed" > notebook-execution-logs/failed-count.txt
+
+      - name: Upload notebook diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: energy-network-notebook-diagnostics
+          path: |
+            examples/notebooks/energy_networks/*.ipynb
+            notebook-execution-logs/**
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Validate executed notebooks
         shell: bash
@@ -91,6 +112,8 @@ jobs:
 
           notebooks = sorted(Path('examples/notebooks/energy_networks').glob('*.ipynb'))
           assert len(notebooks) == 4, notebooks
+          failed_count = int(Path('notebook-execution-logs/failed-count.txt').read_text().strip())
+          assert failed_count == 0, Path('notebook-execution-logs/summary.txt').read_text()
           for path in notebooks:
               data = json.loads(path.read_text(encoding='utf-8'))
               code_cells = [cell for cell in data['cells'] if cell['cell_type'] == 'code']
@@ -104,6 +127,7 @@ jobs:
           PY
 
       - name: Upload executed notebooks
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: executed-energy-network-notebooks
