@@ -42,6 +42,11 @@ public final class CoupledProcessEnergyResult implements Serializable {
      * @param converged whether both configured tolerances were satisfied
      */
     public IterationResult(int iteration, double processResidual, double powerResidual, boolean converged) {
+      if (iteration <= 0) {
+        throw new IllegalArgumentException("Iteration number must be greater than zero");
+      }
+      validateResidual("Process residual", processResidual);
+      validateResidual("Power residual", powerResidual);
       this.iteration = iteration;
       this.processResidual = processResidual;
       this.powerResidual = powerResidual;
@@ -107,6 +112,29 @@ public final class CoupledProcessEnergyResult implements Serializable {
   public CoupledProcessEnergyResult(boolean converged, TerminationReason terminationReason, int iterations,
       double maximumProcessResidual, double maximumPowerResidual, List<IterationResult> iterationHistory,
       List<EnergyNetworkReport> energyReports) {
+    if (terminationReason == null) {
+      throw new IllegalArgumentException("Termination reason is required");
+    }
+    if (iterations < 0) {
+      throw new IllegalArgumentException("Iterations cannot be negative");
+    }
+    validateResidual("Maximum process residual", maximumProcessResidual);
+    validateResidual("Maximum power residual", maximumPowerResidual);
+    if (iterationHistory == null) {
+      throw new IllegalArgumentException("Iteration history is required");
+    }
+    if (energyReports == null) {
+      throw new IllegalArgumentException("Energy reports are required");
+    }
+    if (iterationHistory.size() != iterations) {
+      throw new IllegalArgumentException("Iteration history size must equal the completed iteration count");
+    }
+    if (converged != (terminationReason == TerminationReason.CONVERGED)) {
+      throw new IllegalArgumentException("Converged state and termination reason are inconsistent");
+    }
+    requireNoNullElements(iterationHistory, "Iteration history cannot contain null entries");
+    requireNoNullElements(energyReports, "Energy reports cannot contain null entries");
+
     this.converged = converged;
     this.terminationReason = terminationReason;
     this.iterations = iterations;
@@ -114,6 +142,22 @@ public final class CoupledProcessEnergyResult implements Serializable {
     this.maximumPowerResidual = maximumPowerResidual;
     this.iterationHistory = new ArrayList<IterationResult>(iterationHistory);
     this.energyReports = new ArrayList<EnergyNetworkReport>(energyReports);
+  }
+
+  /** Validates a residual while allowing positive infinity before a second iteration exists. */
+  private static void validateResidual(String name, double residual) {
+    if (Double.isNaN(residual) || residual < 0.0) {
+      throw new IllegalArgumentException(name + " must be non-negative and not NaN");
+    }
+  }
+
+  /** Validates that a public result list contains no null elements. */
+  private static void requireNoNullElements(List<?> values, String message) {
+    for (Object value : values) {
+      if (value == null) {
+        throw new IllegalArgumentException(message);
+      }
+    }
   }
 
   /**
