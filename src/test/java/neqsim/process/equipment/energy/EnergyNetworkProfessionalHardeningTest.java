@@ -72,8 +72,7 @@ class EnergyNetworkProfessionalHardeningTest {
     inverter.connectEnergyStream(EnergyConverter.OUTPUT_PORT, outputBus, EnergyPortMode.CALCULATED);
     inverter.setOutputElectricalQuality(690.0, 50.0);
 
-    assertThrows(IllegalArgumentException.class,
-        () -> inverter.setOutputElectricalQuality(Double.NaN, 50.0));
+    assertThrows(IllegalArgumentException.class, () -> inverter.setOutputElectricalQuality(Double.NaN, 50.0));
     assertThrows(IllegalArgumentException.class, () -> inverter.setOutputElectricalQuality(690.0, 0.0));
     assertEquals(690.0, inverter.getOutputVoltage(), 1.0e-12);
     assertEquals(50.0, inverter.getOutputFrequency(), 1.0e-12);
