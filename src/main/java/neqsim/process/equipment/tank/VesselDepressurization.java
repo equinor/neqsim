@@ -2885,11 +2885,11 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     }
 
     // Check pressure logic
-    double initialPressure = thermoSystem != null ? thermoSystem.getPressure() : 0;
+    double initialPressureBar = thermoSystem != null ? thermoSystem.getPressure() : 0;
     double backPressureBar = backPressure / 1e5;
-    if (backPressureBar >= initialPressure) {
+    if (backPressureBar >= initialPressureBar) {
       errors.add(String.format("Back pressure (%.1f bar) >= initial pressure (%.1f bar). No flow will occur.",
-          backPressureBar, initialPressure));
+          backPressureBar, initialPressureBar));
     }
 
     // Check orifice size
@@ -2954,10 +2954,10 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
 
     // Additional non-critical warnings
     if (thermoSystem != null) {
-      double initialPressure = thermoSystem.getPressure();
-      if (initialPressure > 700) {
+      double initialPressureBar = thermoSystem.getPressure();
+      if (initialPressureBar > 700) {
         warnings.add(String.format("Very high pressure (%.0f bar). Ensure equation of state is valid for this range.",
-            initialPressure));
+            initialPressureBar));
       }
 
       double temperature = thermoSystem.getTemperature();
