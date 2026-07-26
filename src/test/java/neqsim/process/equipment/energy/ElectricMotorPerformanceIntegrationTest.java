@@ -79,6 +79,20 @@ class ElectricMotorPerformanceIntegrationTest {
   }
 
   @Test
+  void testAltitudeDeratingIsAppliedAtStandardAmbientTemperature() {
+    ElectricMotorDriver performance = new ElectricMotorDriver(1000.0, 3000.0, 0.96);
+    performance.setAmbientTemperature(15.0);
+    performance.setAltitude(2000.0);
+
+    ElectricMotor motor = new ElectricMotor("high-altitude motor");
+    motor.setPerformanceModel(performance);
+    motor.setOperatingSpeed(3000.0);
+
+    assertEquals(900.0e3, motor.getAvailableShaftPower(), 1.0e-9);
+    assertThrows(IllegalArgumentException.class, () -> motor.getRequiredInputPowerForOutput(900.1e3));
+  }
+
+  @Test
   void testFixedSpeedViolationBecomesValidWhenVfdRangeIsEnabled() {
     ElectricMotorDriver performance = new ElectricMotorDriver(1000.0, 3000.0, 0.96);
     EnergyBus electricalBus = new EnergyBus("vfd electrical bus", EnergyType.ELECTRICAL);
