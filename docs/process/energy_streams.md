@@ -150,6 +150,43 @@ The `neqsim.process.equipment.energy` package provides process units with explic
 
 `ThermalUtilitySource` and `ThermalUtilityConsumer` participate in the same allocation, shortage, cost, and emissions reporting as electrical and shaft networks. Heaters, coolers, condensers, reboilers, two-stream heat exchangers, multi-stream exchangers, and `LNGHeatExchanger` publish or consume typed heat duties.
 
+### Thermodynamic utility mass flow
+
+Configure explicit supply and return states when the utility network must report physical circulation rather than only thermal power. Specific enthalpy is supplied in J/kg, allowing the values to come from NeqSim, vendor data, or another qualified property package.
+
+```java
+ThermalUtilityState steamSupply =
+    new ThermalUtilityState(425.0, 4.0e5, 2.8e6);
+ThermalUtilityState condensateReturn =
+    new ThermalUtilityState(383.0, 4.0e5, 0.6e6);
+
+UtilityEnergyBus lpSteam = new UtilityEnergyBus(
+    "LP steam", UtilityLevel.LOW_PRESSURE_STEAM,
+    steamSupply, condensateReturn);
+
+ThermalUtilitySource boiler =
+    new ThermalUtilitySource("boiler", UtilityLevel.LOW_PRESSURE_STEAM);
+ThermalUtilityConsumer reboiler =
+    new ThermalUtilityConsumer("reboiler", UtilityLevel.LOW_PRESSURE_STEAM);
+boiler.connectEnergyStream(ThermalUtilitySource.OUTPUT_PORT,
+    lpSteam, EnergyPortMode.CALCULATED);
+reboiler.connectEnergyStream(ThermalUtilityConsumer.INPUT_PORT,
+    lpSteam, EnergyPortMode.SPECIFICATION);
+boiler.setAvailablePower(2.0e6);
+reboiler.setRequestedPower(1.5e6);
+
+boiler.run();
+lpSteam.solveBalance();
+reboiler.run();
+
+double servedSteamKgPerSecond = lpSteam.getServedMassFlow();
+double curtailedSteamKgPerSecond = lpSteam.getCurtailedMassFlow();
+double servedSteamTonPerHour = lpSteam.getMassFlowForDuty(
+    lpSteam.getLastReport().getServedDemand(), "W", "ton/hr");
+```
+
+Heating utilities require supply enthalpy above return enthalpy. Cooling-water, chilled-water, refrigeration, and ambient-cooling utilities require return enthalpy above supply enthalpy because they absorb process heat. The solved bus exposes requested, served, offered, accepted, unmet, and curtailed mass-flow equivalents.
+
 ## Dynamics and reporting
 
 `MechanicalShaft.advanceTransient(dt)` integrates rotational kinetic energy from the solved net shaft power. Moment of inertia, friction loss, maximum speed, acceleration/deceleration limits, and trip coastdown are configurable.
