@@ -351,9 +351,9 @@ public class EnergyBus extends EnergyStream {
         Double realizedPower = realizedBalancePowers.get(port.getParticipantId());
         if (realizedPower != null) {
           if (realizedPower.doubleValue() > 0.0) {
-            realizedBalancingGenerators.add(new DispatchEntry(port, realizedPower.doubleValue()));
+            realizedBalancingGenerators.add(new DispatchEntry(port, realizedPower.doubleValue(), true));
           } else if (realizedPower.doubleValue() < 0.0) {
-            realizedBalancingConsumers.add(new DispatchEntry(port, -realizedPower.doubleValue()));
+            realizedBalancingConsumers.add(new DispatchEntry(port, -realizedPower.doubleValue(), true));
           }
           continue;
         }
@@ -704,6 +704,20 @@ public class EnergyBus extends EnergyStream {
     private DispatchEntry(EnergyPort port, double requested) {
       this.port = port;
       this.requested = Math.max(0.0, requested);
+    }
+
+    /**
+     * Creates a dispatch entry with optional fixed full allocation.
+     *
+     * @param port participant port
+     * @param requested requested or offered power in W
+     * @param fixedAllocation whether allocated power is fixed at the requested value
+     */
+    private DispatchEntry(EnergyPort port, double requested, boolean fixedAllocation) {
+      this(port, requested);
+      if (fixedAllocation) {
+        allocated = this.requested;
+      }
     }
   }
 }
