@@ -11,9 +11,11 @@ import neqsim.util.validation.ValidationResult;
 /**
  * Dispatchable generation unit with startup, minimum-load, ramp, and minimum up/down constraints.
  *
- * <p>The unit publishes calculated generation through {@value #OUTPUT_PORT}. A positive requested
- * power is an on-command; zero is an off-command. Transient execution applies chronological
- * commitment constraints and records cumulative startup cost and startup emissions.</p>
+ * <p>
+ * The unit publishes calculated generation through {@value #OUTPUT_PORT}. A positive requested power is an on-command;
+ * zero is an off-command. Transient execution applies chronological commitment constraints and records cumulative
+ * startup cost and startup emissions.
+ * </p>
  */
 public class CommittedEnergyGenerator extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000L;
@@ -30,8 +32,8 @@ public class CommittedEnergyGenerator extends ProcessEquipmentBaseClass {
     private final double requestedPower;
     private final double generatedPower;
 
-    private StepResult(boolean committed, boolean started, boolean stopped, boolean startBlocked,
-        boolean stopBlocked, double requestedPower, double generatedPower) {
+    private StepResult(boolean committed, boolean started, boolean stopped, boolean startBlocked, boolean stopBlocked,
+        double requestedPower, double generatedPower) {
       this.committed = committed;
       this.started = started;
       this.stopped = stopped;
@@ -98,9 +100,8 @@ public class CommittedEnergyGenerator extends ProcessEquipmentBaseClass {
   }
 
   public void setPowerLimits(double minimumStablePower, double maximumPower) {
-    if (!Double.isFinite(minimumStablePower) || minimumStablePower < 0.0
-        || !Double.isFinite(maximumPower) || maximumPower <= 0.0
-        || minimumStablePower > maximumPower) {
+    if (!Double.isFinite(minimumStablePower) || minimumStablePower < 0.0 || !Double.isFinite(maximumPower)
+        || maximumPower <= 0.0 || minimumStablePower > maximumPower) {
       throw new IllegalArgumentException("Power limits must be finite and satisfy 0 <= minimum <= maximum");
     }
     this.minimumStablePower = minimumStablePower;
@@ -220,8 +221,7 @@ public class CommittedEnergyGenerator extends ProcessEquipmentBaseClass {
 
     double target = 0.0;
     if (committed) {
-      target = wantsOn ? Math.max(minimumStablePower, Math.min(maximumPower, requestedPower))
-          : minimumStablePower;
+      target = wantsOn ? Math.max(minimumStablePower, Math.min(maximumPower, requestedPower)) : minimumStablePower;
     }
     double maximumIncrease = rampUpRate * dt;
     double maximumDecrease = rampDownRate * dt;
@@ -238,8 +238,8 @@ public class CommittedEnergyGenerator extends ProcessEquipmentBaseClass {
 
     timeInState += dt;
     publish();
-    lastStepResult = new StepResult(committed, started, stopped, startBlocked, stopBlocked,
-        requestedPower, currentPower);
+    lastStepResult = new StepResult(committed, started, stopped, startBlocked, stopBlocked, requestedPower,
+        currentPower);
     increaseTime(dt);
     setCalculationIdentifier(id);
   }

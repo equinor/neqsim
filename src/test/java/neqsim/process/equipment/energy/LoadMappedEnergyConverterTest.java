@@ -13,8 +13,8 @@ import neqsim.process.equipment.stream.EnergyType;
 
 class LoadMappedEnergyConverterTest {
 
-  private static final LoadEfficiencyCurve CURVE =
-      new LoadEfficiencyCurve(new double[] {0.25, 0.5, 1.0}, new double[] {0.80, 0.90, 0.96});
+  private static final LoadEfficiencyCurve CURVE = new LoadEfficiencyCurve(new double[] { 0.25, 0.5, 1.0 },
+      new double[] { 0.80, 0.90, 0.96 });
 
   @Test
   void testCurveInterpolationAndValidation() {
@@ -22,7 +22,7 @@ class LoadMappedEnergyConverterTest {
     assertEquals(0.85, CURVE.getEfficiency(0.375), 1.0e-12);
     assertEquals(0.96, CURVE.getEfficiency(1.2), 1.0e-12);
     assertThrows(IllegalArgumentException.class,
-        () -> new LoadEfficiencyCurve(new double[] {0.5, 0.5}, new double[] {0.9, 0.95}));
+        () -> new LoadEfficiencyCurve(new double[] { 0.5, 0.5 }, new double[] { 0.9, 0.95 }));
   }
 
   @Test
@@ -58,16 +58,14 @@ class LoadMappedEnergyConverterTest {
     primeMover.setRatedOutputPower(5.0e6);
     primeMover.setLoadEfficiencyCurve(CURVE);
     assertEquals(5.0e6 / 0.96, primeMover.getRequiredInputPowerForOutput(5.0e6), 1.0e-9);
-    assertThrows(IllegalArgumentException.class,
-        () -> primeMover.getRequiredInputPowerForOutput(5.1e6));
+    assertThrows(IllegalArgumentException.class, () -> primeMover.getRequiredInputPowerForOutput(5.1e6));
   }
 
   @Test
   void testCurveRequiresRatingAndCanBeCleared() {
     Generator generator = new Generator("fallback", 0.97);
     generator.setLoadEfficiencyCurve(CURVE);
-    assertThrows(IllegalStateException.class,
-        () -> generator.getRequiredInputPowerForOutput(100.0e3));
+    assertThrows(IllegalStateException.class, () -> generator.getRequiredInputPowerForOutput(100.0e3));
     generator.clearLoadEfficiencyCurve();
     assertFalse(generator.hasLoadEfficiencyCurve());
     assertEquals(100.0e3 / 0.97, generator.getRequiredInputPowerForOutput(100.0e3), 1.0e-9);

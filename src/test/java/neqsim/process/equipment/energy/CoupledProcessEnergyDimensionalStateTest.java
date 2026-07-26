@@ -27,25 +27,21 @@ class CoupledProcessEnergyDimensionalStateTest {
 
     Method capture = CoupledProcessEnergySolver.class.getDeclaredMethod("captureEnergyState", java.util.List.class);
     capture.setAccessible(true);
-    Map<String, Double> before =
-        (Map<String, Double>) capture.invoke(null, Collections.singletonList(bus));
+    Map<String, Double> before = (Map<String, Double>) capture.invoke(null, Collections.singletonList(bus));
 
     producer.setEnergyPricePerMWh(1000.0);
     producer.setEmissionFactorKgPerMWh(5000.0);
     bus.solveBalance();
-    Map<String, Double> after =
-        (Map<String, Double>) capture.invoke(null, Collections.singletonList(bus));
+    Map<String, Double> after = (Map<String, Double>) capture.invoke(null, Collections.singletonList(bus));
 
-    Method residual = CoupledProcessEnergySolver.class.getDeclaredMethod("maximumAbsoluteChange", Map.class,
-        Map.class);
+    Method residual = CoupledProcessEnergySolver.class.getDeclaredMethod("maximumAbsoluteChange", Map.class, Map.class);
     residual.setAccessible(true);
     double powerResidual = ((Double) residual.invoke(null, before, after)).doubleValue();
 
     assertEquals(0.0, powerResidual, 1.0e-12);
   }
 
-  private static EnergyPort port(String owner, EnergyPortDirection direction, EnergyPortMode mode,
-      EnergyBus bus) {
+  private static EnergyPort port(String owner, EnergyPortDirection direction, EnergyPortMode mode, EnergyBus bus) {
     EnergyPort port = new EnergyPort("power", EnergyType.ELECTRICAL, direction, mode);
     port.setOwnerName(owner);
     port.connect(bus);

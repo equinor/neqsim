@@ -54,12 +54,10 @@ public final class ThermalUtilityQualityAnalysis {
       throw new IllegalStateException(
           "Configure positive finite utility supply and return temperatures before exergy analysis");
     }
-    if (Math.abs(supplyTemperature - returnTemperature)
-        <= Math.max(supplyTemperature, returnTemperature) * 1.0e-12) {
+    if (Math.abs(supplyTemperature - returnTemperature) <= Math.max(supplyTemperature, returnTemperature) * 1.0e-12) {
       return 0.5 * (supplyTemperature + returnTemperature);
     }
-    double logarithmicMean = (supplyTemperature - returnTemperature)
-        / Math.log(supplyTemperature / returnTemperature);
+    double logarithmicMean = (supplyTemperature - returnTemperature) / Math.log(supplyTemperature / returnTemperature);
     if (!Double.isFinite(logarithmicMean) || logarithmicMean <= 0.0) {
       throw new IllegalStateException("Utility temperatures do not define a finite logarithmic-mean temperature");
     }

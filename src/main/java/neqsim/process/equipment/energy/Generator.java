@@ -5,8 +5,10 @@ import neqsim.process.equipment.stream.EnergyType;
 /**
  * Generator converting shaft work to electrical power.
  *
- * <p>An optional rated output and {@link LoadEfficiencyCurve} provide part-load performance while
- * the default remains constant 97 percent efficiency.</p>
+ * <p>
+ * An optional rated output and {@link LoadEfficiencyCurve} provide part-load performance while the default remains
+ * constant 97 percent efficiency.
+ * </p>
  *
  * @author NeqSim
  * @version 2.0

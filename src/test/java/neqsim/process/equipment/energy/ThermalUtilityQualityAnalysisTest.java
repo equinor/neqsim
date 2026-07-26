@@ -12,8 +12,7 @@ class ThermalUtilityQualityAnalysisTest {
     assertTrue(ThermalUtilityQualityAnalysis.canServeProcessTemperature(steam, 400.0, 10.0));
     assertFalse(ThermalUtilityQualityAnalysis.canServeProcessTemperature(steam, 420.0, 10.0));
 
-    UtilityEnergyBus coolingWater =
-        new UtilityEnergyBus("cooling water", UtilityLevel.COOLING_WATER, 293.0, 313.0);
+    UtilityEnergyBus coolingWater = new UtilityEnergyBus("cooling water", UtilityLevel.COOLING_WATER, 293.0, 313.0);
     assertTrue(ThermalUtilityQualityAnalysis.canServeProcessTemperature(coolingWater, 310.0, 10.0));
     assertFalse(ThermalUtilityQualityAnalysis.canServeProcessTemperature(coolingWater, 300.0, 10.0));
   }
