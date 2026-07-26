@@ -22,9 +22,9 @@ import neqsim.process.processmodel.ProcessSystem;
  * Iterates a complete {@link ProcessSystem} until process states and connected energy networks converge together.
  *
  * <p>
- * A graph-ordered process run evaluates energy producers, an {@link EnergyNetworkSolver}, and energy consumers in causal
- * order. Equipment downstream of the network solver can, however, publish a revised request for the next run. This
- * class performs that outer fixed-point iteration and checks both stream-state changes and energy-network changes.
+ * A graph-ordered process run evaluates energy producers, an {@link EnergyNetworkSolver}, and energy consumers in
+ * causal order. Equipment downstream of the network solver can, however, publish a revised request for the next run.
+ * This class performs that outer fixed-point iteration and checks both stream-state changes and energy-network changes.
  * </p>
  *
  * <p>
@@ -220,8 +220,7 @@ public class CoupledProcessEnergySolver implements Serializable {
 
     Map<String, Double> previousProcessState = null;
     Map<String, Double> previousEnergyState = null;
-    List<CoupledProcessEnergyResult.IterationResult> history =
-        new ArrayList<CoupledProcessEnergyResult.IterationResult>();
+    List<CoupledProcessEnergyResult.IterationResult> history = new ArrayList<CoupledProcessEnergyResult.IterationResult>();
     double processResidual = Double.POSITIVE_INFINITY;
     double powerResidual = Double.POSITIVE_INFINITY;
 
@@ -295,8 +294,7 @@ public class CoupledProcessEnergySolver implements Serializable {
   }
 
   /** Stores the request actually applied before the first coupled iteration. */
-  private static void initializeAppliedRequests(List<EnergyBus> energyBuses,
-      Map<EnergyPort, Double> appliedRequests) {
+  private static void initializeAppliedRequests(List<EnergyBus> energyBuses, Map<EnergyPort, Double> appliedRequests) {
     for (EnergyBus energyBus : energyBuses) {
       for (EnergyPort port : energyBus.getRegisteredPorts().values()) {
         if (port.getMode() == EnergyPortMode.SPECIFICATION) {
@@ -327,8 +325,7 @@ public class CoupledProcessEnergySolver implements Serializable {
 
   /** Captures all distinct inlet, outlet, and standalone streams in deterministic discovery order. */
   private Map<String, Double> captureProcessState() {
-    Set<StreamInterface> uniqueStreams =
-        Collections.newSetFromMap(new IdentityHashMap<StreamInterface, Boolean>());
+    Set<StreamInterface> uniqueStreams = Collections.newSetFromMap(new IdentityHashMap<StreamInterface, Boolean>());
     List<StreamInterface> streams = new ArrayList<StreamInterface>();
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       if (unit instanceof StreamInterface && uniqueStreams.add((StreamInterface) unit)) {
