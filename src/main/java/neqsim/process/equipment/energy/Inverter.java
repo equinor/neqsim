@@ -31,8 +31,8 @@ public class Inverter extends EnergyConverter {
    * Sets output electrical quality.
    *
    * <p>
-   * Voltage and frequency are updated on the existing output quality object so temperature, pressure, utility level, and
-   * future metadata are preserved.
+   * Voltage and frequency are updated on the existing output quality object so temperature, pressure, utility level,
+   * and future metadata are preserved.
    * </p>
    *
    * @param voltage output voltage in V
