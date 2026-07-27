@@ -405,8 +405,18 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
   @Test
   void testCopy() {
     ProcessSystem sys2 = p.copy();
-    Assertions.assertTrue(p.equals(sys2));
-    Assertions.assertEquals(p, sys2);
+    // ProcessSystem uses identity equality, so a copy is deliberately not equal to its source.
+    Assertions.assertNotSame(p, sys2);
+    Assertions.assertNotEquals(p, sys2);
+    // The copy must still be structurally equivalent.
+    Assertions.assertEquals(p.getUnitOperations().size(), sys2.getUnitOperations().size());
+    Assertions.assertEquals(p.getAllUnitNames(), sys2.getAllUnitNames());
+    // ...and independent: renaming a unit in the copy must not touch the original.
+    if (!sys2.getUnitOperations().isEmpty()) {
+      String originalName = p.getUnitOperations().get(0).getName();
+      sys2.getUnitOperations().get(0).setName(originalName + " copy");
+      Assertions.assertEquals(originalName, p.getUnitOperations().get(0).getName());
+    }
   }
 
   @Test

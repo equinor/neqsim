@@ -165,6 +165,18 @@ public class NaphtaliSandholmSolver {
   /** Whether to initialize the MESH variables from the converged column tray state. */
   private boolean warmStartFromColumn = false;
 
+  /**
+   * Largest per-tray, per-component molar imbalance (relative to total feed) accepted by the early-exit branches.
+   *
+   * <p>
+   * The early-exit branches historically gated only on {@link #computeMassBalanceError()}, which is the overall column
+   * closure {@code V[N-1] + L[0] = feed}. That scalar is satisfied by profiles that leak one species from one tray into
+   * another, so a state with a large per-component imbalance was accepted as converged. Every early exit now also
+   * requires {@link #computeMaxComponentImbalance()} to be within this tolerance.
+   * </p>
+   */
+  private double componentImbalanceTolerance = 5.0e-3;
+
   /** Whether tray N-1 is a condenser with reflux ratio specification. */
   private boolean hasCondenser;
 
@@ -199,6 +211,15 @@ public class NaphtaliSandholmSolver {
 
   /** Mass balance error (fractional) from the last solve. */
   private double lastMassBalanceError;
+
+  /**
+   * Maximum relative tray energy imbalance of the accepted solution, or {@code Double.NaN} when it could not be
+   * evaluated.
+   */
+  private double lastEnergyResidual = Double.NaN;
+
+  /** Scaled MESH residual norm of the accepted solution. */
+  private double lastResidualNorm = Double.NaN;
 
   /** Solve time in seconds from the last solve. */
   private double lastSolveTimeSeconds;
@@ -260,19 +281,37 @@ public class NaphtaliSandholmSolver {
   /**
    * Get the latest temperature residual reported by the solver.
    *
-   * @return latest temperature residual in Kelvin
+   * <p>
+   * This simultaneous-correction solver has no successive-substitution sweep, so it does not produce a tray-temperature
+   * change between iterations. It therefore reports {@code Double.NaN} and the column convergence gate falls back to
+   * the MESH residual vector, which is this solver's actual convergence measure. Reporting a fabricated zero here made
+   * {@link DistillationColumn#solved()} return {@code true} for solutions whose MESH material balance was grossly
+   * violated.
+   * </p>
+   *
+   * @return {@code Double.NaN}, because this solver does not compute a temperature residual
    */
   double getLastTemperatureResidual() {
-    return 0.0;
+    return Double.NaN;
   }
 
   /**
    * Get the latest energy residual reported by the solver.
    *
-   * @return latest scaled energy residual
+   * @return maximum relative tray energy imbalance of the accepted solution, or {@code Double.NaN} when it could not be
+   * evaluated
    */
   double getLastEnergyResidual() {
-    return 0.0;
+    return lastEnergyResidual;
+  }
+
+  /**
+   * Get the scaled MESH residual norm of the accepted solution.
+   *
+   * @return residual norm, or {@code Double.NaN} when no solve has completed
+   */
+  double getLastResidualNorm() {
+    return lastResidualNorm;
   }
 
   /**
@@ -415,6 +454,43 @@ public class NaphtaliSandholmSolver {
   }
 
   /**
+   * Set the largest per-component tray imbalance an early-exit branch may accept.
+   *
+   * @param tolerance imbalance relative to total feed flow, must be finite and greater than zero
+   * @throws IllegalArgumentException if {@code tolerance} is not finite and positive
+   */
+  public void setComponentImbalanceTolerance(double tolerance) {
+    if (!(tolerance > 0.0) || !Double.isFinite(tolerance)) {
+      throw new IllegalArgumentException("Component imbalance tolerance must be finite and positive, was " + tolerance);
+    }
+    this.componentImbalanceTolerance = tolerance;
+  }
+
+  /**
+   * Check whether the current tray state closes each component balance well enough to be accepted early.
+   *
+   * <p>
+   * The overall column closure and the residual norm can both mask a species leaking between trays, so an early exit
+   * that skips Newton refinement must confirm the per-component balance separately.
+   * </p>
+   *
+   * @param stageName solver stage requesting the early exit, used for diagnostics
+   * @return {@code true} when the worst per-component imbalance is within tolerance
+   */
+  private boolean componentImbalanceAcceptable(String stageName) {
+    double componentImbalance = computeMaxComponentImbalance();
+    if (componentImbalance <= componentImbalanceTolerance) {
+      return true;
+    }
+    logger.info(
+        "NS: refusing the {} early exit because the worst per-component tray imbalance is {}% of the feed, "
+            + "above the {}% tolerance. The overall column balance is closed, so this leak is only visible "
+            + "per component. Continuing to Newton refinement.",
+        stageName, componentImbalance * 100.0, componentImbalanceTolerance * 100.0);
+    return false;
+  }
+
+  /**
    * Set scaled residual convergence tolerance.
    *
    * @param residualTolerance positive scaled residual tolerance
@@ -499,7 +575,8 @@ public class NaphtaliSandholmSolver {
       // energy is in the 1-5% range, run Sum-Rates (which adjusts T from the
       // energy balance) — that refines T without invoking Newton, which is
       // documented to diverge for the no-condenser/T-spec topology.
-      if (useOverallMBClosure && mbErrorBP < 0.005 && energyErrorBP < 0.01) {
+      if (useOverallMBClosure && mbErrorBP < 0.005 && energyErrorBP < 0.01
+          && componentImbalanceAcceptable("Bubble-Point")) {
         logger.info("NS: mass+energy balance OK (mb={}%, E={}%), accepting solution",
             String.format("%.4f", mbErrorBP * 100), String.format("%.2f", energyErrorBP * 100));
         logger.debug("NS: accepting Bubble-Point solution without Sum-Rates correction");
@@ -522,7 +599,8 @@ public class NaphtaliSandholmSolver {
         norm = vectorNorm(residual);
         double mbAfterSR = computeMassBalanceError();
         double energyAfterSR = computeMaxRelativeEnergyError();
-        if (mbAfterSR < 0.005 && energyAfterSR < 0.05 && norm < tolerance) {
+        if (mbAfterSR < 0.005 && energyAfterSR < 0.05 && norm < tolerance
+            && componentImbalanceAcceptable("Sum-Rates")) {
           logger.debug("NS: Sum-Rates residual is below tolerance; accepting solution");
           applyResultsToColumn(id, 0, norm, startTime);
           return true;
@@ -541,7 +619,8 @@ public class NaphtaliSandholmSolver {
         // sensitivities propagate exponentially — observed Newton blowup
         // from ||F||=4 to 1e5 in one step). Once SR has closed mass balance
         // and energy balance, accept that result and skip Newton.
-        if (useOverallMBClosure && mbAfterSR < 0.05 && energyAfterSR < 0.05) {
+        if (useOverallMBClosure && mbAfterSR < 0.05 && energyAfterSR < 0.05
+            && componentImbalanceAcceptable("Sum-Rates without Newton")) {
           logger.debug("NS: accepting Sum-Rates result without Newton because overall-MB closure is ill-conditioned "
               + "(mass balance={}%, energy={}%);", mbAfterSR * 100, energyAfterSR * 100);
           applyResultsToColumn(id, 0, norm, startTime);
@@ -581,7 +660,7 @@ public class NaphtaliSandholmSolver {
           double eErr = computeMaxRelativeEnergyError();
           logger.info("NS Newton: bestNorm={} massBalErr={}% energyErr={}%", String.format("%.6e", bestNorm),
               String.format("%.4f", mbErr * 100), String.format("%.2f", eErr * 100));
-          if (mbErr < 0.01) {
+          if (mbErr < 0.01 && componentImbalanceAcceptable("Newton time-limit")) {
             applyResultsToColumn(id, iter, bestNorm, startTime);
             return true;
           }
@@ -708,7 +787,7 @@ public class NaphtaliSandholmSolver {
               logger.info("NS: stagnation detected (bestNorm={}, massBalErr={}%, energyErr={}%)",
                   String.format("%.6e", bestNorm), String.format("%.4f", mbErr * 100),
                   String.format("%.2f", eErr * 100));
-              if (mbErr < 0.005) {
+              if (mbErr < 0.005 && componentImbalanceAcceptable("Newton stagnation")) {
                 logger.info("NS: mass balance within 0.5%, accepting (energy={}%)", String.format("%.2f", eErr * 100));
                 applyResultsToColumn(id, iter, bestNorm, startTime);
                 return true;
@@ -725,7 +804,9 @@ public class NaphtaliSandholmSolver {
       logger.warn("Naphtali-Sandholm did not converge in {} iterations, ||F|| = {}", maxIterations,
           String.format("%.6e", norm));
       applyResultsToColumn(id, maxIterations, norm, startTime);
-      return norm < tolerance * 100; // partial convergence
+      // Partial convergence is only acceptable when each component balance still closes; a leaky
+      // profile must be reported as not accepted so the column does not present it as a solution.
+      return norm < tolerance * 100 && componentImbalanceAcceptable("partial convergence");
     } catch (Exception ex) {
       logger.error("Naphtali-Sandholm solver exception", ex);
       logger.error("NS EXCEPTION: {}: {}", ex.getClass().getName(), ex.getMessage());
@@ -743,6 +824,8 @@ public class NaphtaliSandholmSolver {
     lastBlockLinearSolveCount = 0;
     lastDenseLinearSolveCount = 0;
     lastLinearSolveTimeSeconds = 0.0;
+    lastEnergyResidual = Double.NaN;
+    lastResidualNorm = Double.NaN;
   }
 
   /**
@@ -4527,10 +4610,18 @@ public class NaphtaliSandholmSolver {
 
     double solveTime = (System.nanoTime() - startTime) / 1.0e9;
 
-    // Store solve metrics for retrieval by the column
+    // Store solve metrics for retrieval by the column. The energy residual is evaluated on the
+    // applied state so the column does not have to trust a solver-supplied constant.
     lastIterations = iterations;
     lastMassBalanceError = massBalErr;
     lastSolveTimeSeconds = solveTime;
+    lastResidualNorm = finalNorm;
+    try {
+      lastEnergyResidual = computeMaxRelativeEnergyError();
+    } catch (Exception ex) {
+      logger.debug("Could not evaluate Naphtali-Sandholm energy residual", ex);
+      lastEnergyResidual = Double.NaN;
+    }
 
     logger.info(
         "Naphtali-Sandholm results: iter={}, ||F||={}, "

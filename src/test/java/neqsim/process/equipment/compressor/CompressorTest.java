@@ -310,7 +310,10 @@ class CompressorTest extends neqsim.NeqSimTest {
     expander1.setEnergyStream(estream1);
     expander1.run();
 
-    assertEquals(481376.2230301, estream1.getDuty(), 0.01);
+    // Reference values for the shipped Expander.DEFAULT_EXPANDER_CALC_STEPS polytropic
+    // resolution. They shift by about 0.3 % if the step count is changed - see
+    // ExpanderPolytropicStepsTest for the documented discretization tolerance.
+    assertEquals(480088.3292990218, estream1.getDuty(), 0.01);
 
     compressor1 = new Compressor("compressor 1", expander1.getOutletStream());
     compressor1.setUsePolytropicCalc(true);
@@ -320,7 +323,7 @@ class CompressorTest extends neqsim.NeqSimTest {
     compressor1.setCalcPressureOut(true);
     compressor1.run();
 
-    assertEquals(481376.2230301, compressor1.getPower(), 0.01);
+    assertEquals(480088.3292990218, compressor1.getPower(), 0.01);
 
     processOps = new ProcessSystem();
     processOps.add(inletStream);
@@ -328,7 +331,7 @@ class CompressorTest extends neqsim.NeqSimTest {
     processOps.add(compressor1);
     processOps.run();
 
-    assertEquals(81.61462472, compressor1.getOutletPressure(), 0.01);
+    assertEquals(81.52079245659715, compressor1.getOutletPressure(), 0.01);
   }
 
   /**

@@ -147,6 +147,49 @@ T_jt = float(valve.getOutletStream().getTemperature('C'))  # Correct JT temperat
 | 4 | Adjust reflux ratio — start with a high ratio (>2x minimum) and reduce | High reflux is easier to converge |
 | 5 | Check condenser/reboiler configuration matches the separation | Total condenser for liquid products, partial for vapor |
 
+### Column runs hundreds of iterations / dominates ProcessModel runtime
+
+**Symptom:** one column takes tens of seconds per solve and the outer
+`ProcessModel` loop never finishes, even though `setMaxNumberOfIterations(10)`
+was called.
+
+| Step | Action | Why It Helps |
+|------|--------|-------------|
+| 1 | `column.setMaxNumberOfIterations(n, true)` (or `setHardIterationCap(true)`) | The 1-arg setter is only a SOFT floor: the effective budget is `max(n, 5*trays)` plus overflow expansion. Check with `getEffectiveMaxNumberOfIterations()` |
+| 2 | `column.setRelaxationFactor(0.3)` | The adaptive damping controller clamps at `minSequentialRelaxation` (default 0.5). `setRelaxationFactor` lowers that floor, so damping below 0.5 now actually takes effect and breaks tray-temperature limit cycles. `setMinSequentialRelaxation` / `setMinInsideOutRelaxation` set it explicitly |
+| 3 | `column.setTemperatureToleranceRelative(1e-3)` | The default absolute tolerance (~0.02-0.03 K) can be 10x tighter than the enclosing `ProcessModel` gate (1e-3 relative ≈ 0.27 K), so the column chases a residual the plant already accepts |
+
+### Column reports solved() == true but the answer is wrong
+
+**Symptom:** `solved()` is `true`, the residuals printed by
+`getConvergenceDiagnostics()` look clean, but the product split, reboiler duty or
+tray profile disagrees with every other solver (vapour traffic collapsing
+mid-column is a giveaway).
+
+| Step | Action | Why It Helps |
+|------|--------|-------------|
+| 1 | Read `per-tray material imbalance` in `getConvergenceDiagnostics()` (or `getLastTrayMaterialBalanceError()`) | Anything above `getTrayMaterialBalanceTolerance()` (default 0.02) means at least one tray does not close its own component balance, so the profile is not a solution even when the overall feed/product balance is closed. Do **not** use the MESH `material:` infinity norm for this — it is dominated by trace components |
+| 2 | Cross-check with a second solver | Run the same feed through `DAMPED_SUBSTITUTION` and a simultaneous solver. Agreement within a few percent is evidence; a 30-50 % difference in product split means one of them is wrong |
+| 3 | Check `getLastSolveStatus()` | `FALLBACK_PRODUCTS` means the products came from an overall feed flash, not the tray solution. `FAILED` means the solver rejected its own result |
+| 4 | Do not loosen `setTemperatureTolerance` to force a pass | A loosened tolerance can be satisfied by the warm start in a single iteration and returns an unconverged profile that *looks* converged |
+
+> `NAPHTALI_SANDHOLM` reports `Double.NaN` as its temperature residual because it
+> has no successive-substitution sweep. That is intentional: for that solver the
+> MESH residual vector is the convergence measure, and `solved()` requires the
+> MESH gate to be active instead.
+
+## ProcessModel Boundary Convergence
+
+**Symptom:** `getConvergenceSummary()` reports a relative error but not where it
+comes from — most confusingly `Flow rate: 1.00e+00`.
+
+| Step | Action | Why It Helps |
+|------|--------|-------------|
+| 1 | `model.getWorstBoundaryStreamName("flow")` (also `"temperature"`, `"pressure"`) | Names the boundary stream that produced the reported maximum. The summary and `getConvergenceReportJson()` (`errors.flow.worstStream`) now include it |
+| 2 | `model.getNonConvergedBoundaryStreamErrors()` | Every boundary stream outside tolerance, worst first, with `previousFlow` / `currentFlow` |
+| 3 | Check `isFlowCollapsedToZero()` on the offender | A relative flow error of **exactly 1.0** means the stream went from non-zero to zero between outer passes — an upstream unit stopped producing it (failed run, closed splitter, bypassed train). That is an upstream fault, not a slowly converging recycle |
+| 4 | Check `isFlowStartedFromZero()` | Mirror case: a seeded/low-flow stream starting up. Usually harmless, converges on the next pass |
+
 ## Process Equipment Errors
 
 ### Compressor: Negative or Unreasonable Power

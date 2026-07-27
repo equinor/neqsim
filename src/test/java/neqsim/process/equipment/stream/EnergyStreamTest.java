@@ -85,8 +85,11 @@ class EnergyStreamTest {
     EnergyStream b = new EnergyStream("b");
     b.setDuty(100.0);
 
-    // equals is based on duty value only
-    assertTrue(a.equals(b));
+    // Identity equality: duty is mutable, so two distinct streams are never equal even when they
+    // currently carry the same duty. Compare getDuty() when a value comparison is intended.
+    assertFalse(a.equals(b));
+    assertTrue(a.equals(a));
+    assertEquals(a.getDuty(), b.getDuty(), 1e-12);
   }
 
   @Test
@@ -117,10 +120,16 @@ class EnergyStreamTest {
     EnergyStream a = new EnergyStream("a");
     a.setDuty(100.0);
 
-    EnergyStream b = new EnergyStream("b");
-    b.setDuty(100.0);
+    // The hash must be stable across a duty change: an EnergyStream held as a HashMap key or
+    // HashSet element has to stay reachable after the flowsheet runs.
+    int before = a.hashCode();
+    a.setDuty(250.0);
+    assertEquals(before, a.hashCode());
 
-    assertEquals(a.hashCode(), b.hashCode());
+    java.util.Set<EnergyStream> registry = new java.util.HashSet<EnergyStream>();
+    registry.add(a);
+    a.setDuty(-40.0);
+    assertTrue(registry.contains(a));
   }
 
   @Test
