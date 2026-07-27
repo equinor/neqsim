@@ -1,0 +1,25 @@
+name: Temporary kij calibration
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/kij-calibration.yml"
+      - "src/main/java/neqsim/thermo/util/benchmark/**"
+      - "src/test/java/neqsim/thermo/util/benchmark/**"
+
+permissions:
+  contents: read
+
+jobs:
+  calibrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Run focused calibration
+        run: ./mvnw -Dtest=ThermodynamicBenchmarkTest#calibratesCubicModelsAgainstPublishedData test
