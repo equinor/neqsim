@@ -403,7 +403,7 @@ public final class CompressorOperatingPointResult implements Serializable {
   }
 
   private OperatingStatus determineOperatingStatus() {
-    if (!isFiniteNonNegative(flowM3PerHour) || !isFiniteNonNegative(powerKW)
+    if (!isFiniteNonNegative(flowM3PerHour) || !isFinite(powerKW)
         || !isFinite(actualDischargePressureBara)) {
       return OperatingStatus.INVALID;
     }
