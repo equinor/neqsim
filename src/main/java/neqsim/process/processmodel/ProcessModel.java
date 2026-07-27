@@ -292,6 +292,139 @@ public class ProcessModel implements Runnable, Serializable {
   private boolean lastAllProcessesSolved = false;
   private boolean lastBoundaryValuesConverged = false;
   private int lastBoundaryStreamCount = 0;
+  /** Per-boundary-stream convergence errors recorded on the last outer iteration. */
+  private List<BoundaryStreamError> lastBoundaryStreamErrors = new ArrayList<>();
+
+  /**
+   * Per-stream convergence diagnostics for a single boundary stream.
+   *
+   * <p>
+   * Recorded on every outer iteration so that a non-converged model can name the stream responsible for the reported
+   * maximum flow, temperature or pressure error instead of only reporting the magnitude.
+   * </p>
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  public static final class BoundaryStreamError implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    /** Name of the boundary stream. */
+    private final String streamName;
+    /** Relative flow-rate error between the two last outer iterations. */
+    private final double flowError;
+    /** Relative temperature error between the two last outer iterations. */
+    private final double temperatureError;
+    /** Relative pressure error between the two last outer iterations. */
+    private final double pressureError;
+    /** Flow rate on the previous outer iteration in kg/hr. */
+    private final double previousFlow;
+    /** Flow rate on the current outer iteration in kg/hr. */
+    private final double currentFlow;
+
+    /**
+     * Creates a boundary stream error record.
+     *
+     * @param streamName name of the boundary stream
+     * @param flowError relative flow-rate error
+     * @param temperatureError relative temperature error
+     * @param pressureError relative pressure error
+     * @param previousFlow previous-iteration flow rate in kg/hr
+     * @param currentFlow current-iteration flow rate in kg/hr
+     */
+    private BoundaryStreamError(String streamName, double flowError, double temperatureError, double pressureError,
+        double previousFlow, double currentFlow) {
+      this.streamName = streamName;
+      this.flowError = flowError;
+      this.temperatureError = temperatureError;
+      this.pressureError = pressureError;
+      this.previousFlow = previousFlow;
+      this.currentFlow = currentFlow;
+    }
+
+    /**
+     * Name of the boundary stream.
+     *
+     * @return the stream name
+     */
+    public String getStreamName() {
+      return streamName;
+    }
+
+    /**
+     * Relative flow-rate error between the two last outer iterations.
+     *
+     * @return relative flow error
+     */
+    public double getFlowError() {
+      return flowError;
+    }
+
+    /**
+     * Relative temperature error between the two last outer iterations.
+     *
+     * @return relative temperature error
+     */
+    public double getTemperatureError() {
+      return temperatureError;
+    }
+
+    /**
+     * Relative pressure error between the two last outer iterations.
+     *
+     * @return relative pressure error
+     */
+    public double getPressureError() {
+      return pressureError;
+    }
+
+    /**
+     * Flow rate recorded on the previous outer iteration.
+     *
+     * @return previous flow rate in kg/hr
+     */
+    public double getPreviousFlow() {
+      return previousFlow;
+    }
+
+    /**
+     * Flow rate recorded on the current outer iteration.
+     *
+     * @return current flow rate in kg/hr
+     */
+    public double getCurrentFlow() {
+      return currentFlow;
+    }
+
+    /**
+     * Largest of the flow, temperature and pressure relative errors.
+     *
+     * @return maximum relative error for this stream
+     */
+    public double getMaxError() {
+      return Math.max(flowError, Math.max(temperatureError, pressureError));
+    }
+
+    /**
+     * Whether the stream flow collapsed from a non-zero value to (numerically) zero between the two last outer
+     * iterations. This produces a relative flow error of exactly 1.0 and usually means an upstream unit stopped
+     * producing the stream rather than a slowly converging recycle.
+     *
+     * @return {@code true} when the flow dropped from non-zero to zero
+     */
+    public boolean isFlowCollapsedToZero() {
+      return Math.abs(previousFlow) > 1e-9 && Math.abs(currentFlow) <= 1e-9;
+    }
+
+    /**
+     * Whether the stream flow started from (numerically) zero and became non-zero between the two last outer
+     * iterations.
+     *
+     * @return {@code true} when the flow started up from zero
+     */
+    public boolean isFlowStartedFromZero() {
+      return Math.abs(previousFlow) <= 1e-9 && Math.abs(currentFlow) > 1e-9;
+    }
+  }
 
   /**
    * Checks if the model is running in step mode.
@@ -1317,6 +1450,7 @@ public class ProcessModel implements Runnable, Serializable {
       lastAllProcessesSolved = true;
       lastBoundaryValuesConverged = true;
       lastBoundaryStreamCount = areaPlan.boundaryStreams.size();
+      lastBoundaryStreamErrors = new ArrayList<>();
       runAllProcessStepsWithHooks(1);
       notifyModelComplete(1, true);
       publishModelEvent(ProcessEvent.EventType.SIMULATION_COMPLETE, "ProcessModel step mode completed",
@@ -1331,6 +1465,7 @@ public class ProcessModel implements Runnable, Serializable {
       lastAllProcessesSolved = false;
       lastBoundaryValuesConverged = false;
       lastBoundaryStreamCount = 0;
+      lastBoundaryStreamErrors = new ArrayList<>();
 
       // Capture initial stream states for convergence tracking. Restrict to
       // streams that cross area boundaries - these are the only streams whose
@@ -1396,7 +1531,8 @@ public class ProcessModel implements Runnable, Serializable {
 
       if (!modelConverged && iterations >= maxIterations) {
         logger.warn("ProcessModel reached max iterations (" + maxIterations + ") without full convergence. Flow error: "
-            + lastMaxFlowError + ", Temp error: " + lastMaxTemperatureError);
+            + lastMaxFlowError + formatWorstStreamSuffix("flow") + ", Temp error: " + lastMaxTemperatureError
+            + formatWorstStreamSuffix("temperature"));
         publishModelEvent(ProcessEvent.EventType.WARNING, "ProcessModel did not converge after " + maxIterations
             + " iterations. Max error: " + String.format("%.2e", getError()), ProcessEvent.Severity.WARNING);
       }
@@ -2236,6 +2372,11 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Calculate maximum relative errors between previous and current stream states.
    *
+   * <p>
+   * Also records the per-stream errors in {@link #getLastBoundaryStreamErrors()} so that a non-converged model can name
+   * the stream responsible for each reported maximum error.
+   * </p>
+   *
    * @param previous previous stream states
    * @param current current stream states
    * @return array of [maxFlowError, maxTempError, maxPressError]
@@ -2244,6 +2385,7 @@ public class ProcessModel implements Runnable, Serializable {
     double maxFlowErr = 0.0;
     double maxTempErr = 0.0;
     double maxPressErr = 0.0;
+    List<BoundaryStreamError> streamErrors = new ArrayList<>();
 
     for (Object key : current.keySet()) {
       if (previous.containsKey(key)) {
@@ -2270,10 +2412,148 @@ public class ProcessModel implements Runnable, Serializable {
         double pressBase = Math.max(prev[2], 1e-10);
         double pressErr = Math.abs(curr[2] - prev[2]) / pressBase;
         maxPressErr = Math.max(maxPressErr, pressErr);
+
+        streamErrors.add(new BoundaryStreamError(getStreamName(key), flowErr, tempErr, pressErr, prev[0], curr[0]));
       }
     }
 
+    lastBoundaryStreamErrors = streamErrors;
     return new double[] { maxFlowErr, maxTempErr, maxPressErr };
+  }
+
+  /**
+   * Resolve a readable name for a boundary stream object.
+   *
+   * @param streamObject boundary stream object
+   * @return the stream name, or a generic identity label when unavailable
+   */
+  private String getStreamName(Object streamObject) {
+    if (streamObject instanceof StreamInterface) {
+      String name = ((StreamInterface) streamObject).getName();
+      if (name != null && !name.trim().isEmpty()) {
+        return name;
+      }
+    }
+    return "unnamed stream@" + Integer.toHexString(System.identityHashCode(streamObject));
+  }
+
+  /**
+   * Per-boundary-stream convergence errors recorded on the last completed outer iteration.
+   *
+   * <p>
+   * Use this to identify which boundary stream drives a reported maximum error. A stream with
+   * {@link BoundaryStreamError#isFlowCollapsedToZero()} set explains the characteristic relative flow error of exactly
+   * 1.0 that appears when an upstream area stops producing a stream between outer passes.
+   * </p>
+   *
+   * @return unmodifiable list of per-stream errors, sorted by descending maximum error
+   */
+  public List<BoundaryStreamError> getLastBoundaryStreamErrors() {
+    List<BoundaryStreamError> sorted = new ArrayList<>(
+        lastBoundaryStreamErrors == null ? new ArrayList<BoundaryStreamError>() : lastBoundaryStreamErrors);
+    java.util.Collections.sort(sorted, new java.util.Comparator<BoundaryStreamError>() {
+      @Override
+      public int compare(BoundaryStreamError first, BoundaryStreamError second) {
+        return Double.compare(second.getMaxError(), first.getMaxError());
+      }
+    });
+    return java.util.Collections.unmodifiableList(sorted);
+  }
+
+  /**
+   * Name of the boundary stream responsible for the reported maximum error of the given variable.
+   *
+   * @param variable one of {@code "flow"}, {@code "temperature"} or {@code "pressure"} (case-insensitive)
+   * @return the worst-offending stream name, or an empty string when no boundary stream data is available
+   * @throws IllegalArgumentException if {@code variable} is not a recognized variable name
+   */
+  public String getWorstBoundaryStreamName(String variable) {
+    BoundaryStreamError worst = getWorstBoundaryStreamError(variable);
+    return worst == null ? "" : worst.getStreamName();
+  }
+
+  /**
+   * Boundary stream record responsible for the reported maximum error of the given variable.
+   *
+   * @param variable one of {@code "flow"}, {@code "temperature"} or {@code "pressure"} (case-insensitive)
+   * @return the worst-offending stream record, or {@code null} when no boundary stream data is available
+   * @throws IllegalArgumentException if {@code variable} is not a recognized variable name
+   */
+  public BoundaryStreamError getWorstBoundaryStreamError(String variable) {
+    if (variable == null) {
+      throw new IllegalArgumentException("variable must be one of flow, temperature or pressure");
+    }
+    String key = variable.trim().toLowerCase(Locale.US);
+    if (!"flow".equals(key) && !"temperature".equals(key) && !"pressure".equals(key)) {
+      throw new IllegalArgumentException(
+          "variable must be one of flow, temperature or pressure, was '" + variable + "'");
+    }
+    BoundaryStreamError worst = null;
+    double worstError = -1.0;
+    if (lastBoundaryStreamErrors != null) {
+      for (BoundaryStreamError streamError : lastBoundaryStreamErrors) {
+        double error;
+        if ("flow".equals(key)) {
+          error = streamError.getFlowError();
+        } else if ("temperature".equals(key)) {
+          error = streamError.getTemperatureError();
+        } else {
+          error = streamError.getPressureError();
+        }
+        if (error > worstError) {
+          worstError = error;
+          worst = streamError;
+        }
+      }
+    }
+    return worst;
+  }
+
+  /**
+   * Boundary streams whose flow, temperature or pressure error exceeded the configured tolerance on the last outer
+   * iteration.
+   *
+   * @return unmodifiable list of offending streams, sorted by descending maximum error
+   */
+  public List<BoundaryStreamError> getNonConvergedBoundaryStreamErrors() {
+    List<BoundaryStreamError> offenders = new ArrayList<>();
+    for (BoundaryStreamError streamError : getLastBoundaryStreamErrors()) {
+      if (streamError.getFlowError() >= flowTolerance || streamError.getTemperatureError() >= temperatureTolerance
+          || streamError.getPressureError() >= pressureTolerance) {
+        offenders.add(streamError);
+      }
+    }
+    return java.util.Collections.unmodifiableList(offenders);
+  }
+
+  /**
+   * Formats the worst-offending stream name for a convergence summary line.
+   *
+   * @param variable variable name (flow, temperature or pressure)
+   * @return a parenthesized stream reference, or an empty string when unavailable
+   */
+  private String formatWorstStreamSuffix(String variable) {
+    BoundaryStreamError worst = getWorstBoundaryStreamError(variable);
+    if (worst == null) {
+      return "";
+    }
+    return " [worst: " + worst.getStreamName() + formatFlowTransitionNote(worst) + "]";
+  }
+
+  /**
+   * Describes a zero-crossing flow transition that produces a relative flow error of exactly 1.0.
+   *
+   * @param streamError stream error record to describe
+   * @return a short note, or an empty string when the flow did not cross zero
+   */
+  private String formatFlowTransitionNote(BoundaryStreamError streamError) {
+    if (streamError.isFlowCollapsedToZero()) {
+      return " (flow collapsed to zero)";
+    }
+    if (streamError.isFlowStartedFromZero()) {
+      return " (flow started from zero)";
+    }
+    return "";
   }
 
   /**
@@ -2290,14 +2570,31 @@ public class ProcessModel implements Runnable, Serializable {
     sb.append("Boundary values converged: ").append(lastBoundaryValuesConverged ? "YES" : "NO").append("\n");
     sb.append("All process areas solved: ").append(lastAllProcessesSolved ? "YES" : "NO").append("\n");
     sb.append("\nFinal Errors (relative):\n");
-    sb.append(String.format(Locale.US, "  Flow rate:    %.2e (tolerance: %.2e) %s\n", lastMaxFlowError, flowTolerance,
-        lastMaxFlowError < flowTolerance ? "OK" : "NOT CONVERGED"));
+    sb.append(String.format(Locale.US, "  Flow rate:    %.2e (tolerance: %.2e) %s%s\n", lastMaxFlowError, flowTolerance,
+        lastMaxFlowError < flowTolerance ? "OK" : "NOT CONVERGED", formatWorstStreamSuffix("flow")));
 
-    sb.append(String.format(Locale.US, "  Temperature:  %.2e (tolerance: %.2e) %s\n", lastMaxTemperatureError,
-        temperatureTolerance, lastMaxTemperatureError < temperatureTolerance ? "OK" : "NOT CONVERGED"));
+    sb.append(String.format(Locale.US, "  Temperature:  %.2e (tolerance: %.2e) %s%s\n", lastMaxTemperatureError,
+        temperatureTolerance, lastMaxTemperatureError < temperatureTolerance ? "OK" : "NOT CONVERGED",
+        formatWorstStreamSuffix("temperature")));
 
-    sb.append(String.format(Locale.US, "  Pressure:     %.2e (tolerance: %.2e) %s\n", lastMaxPressureError,
-        pressureTolerance, lastMaxPressureError < pressureTolerance ? "OK" : "NOT CONVERGED"));
+    sb.append(String.format(Locale.US, "  Pressure:     %.2e (tolerance: %.2e) %s%s\n", lastMaxPressureError,
+        pressureTolerance, lastMaxPressureError < pressureTolerance ? "OK" : "NOT CONVERGED",
+        formatWorstStreamSuffix("pressure")));
+
+    List<BoundaryStreamError> offenders = getNonConvergedBoundaryStreamErrors();
+    if (!offenders.isEmpty()) {
+      sb.append("\nBoundary streams outside tolerance (worst first):\n");
+      int shown = Math.min(offenders.size(), 10);
+      for (int i = 0; i < shown; i++) {
+        BoundaryStreamError streamError = offenders.get(i);
+        sb.append(String.format(Locale.US, "  %-30s flow=%.2e temp=%.2e press=%.2e%s\n", streamError.getStreamName(),
+            streamError.getFlowError(), streamError.getTemperatureError(), streamError.getPressureError(),
+            formatFlowTransitionNote(streamError)));
+      }
+      if (offenders.size() > shown) {
+        sb.append("  ... and ").append(offenders.size() - shown).append(" more\n");
+      }
+    }
 
     sb.append("\nProcess Status:\n");
     for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
@@ -2361,8 +2658,16 @@ public class ProcessModel implements Runnable, Serializable {
    * <p>
    * Top-level fields: {@code schemaVersion}, {@code converged}, {@code iterations}, {@code maxIterations},
    * {@code boundaryStreamCount}, {@code boundaryValuesConverged}, {@code allProcessesSolved}, {@code maxError}, an
-   * {@code errors} object (flow/temperature/pressure value, tolerance and converged flag) and an {@code areas} array
-   * (one object per process area with {@code name}, {@code solved} and {@code unsolvedUnits}).
+   * {@code errors} object (flow/temperature/pressure value, tolerance, converged flag and the {@code worstStream} that
+   * drove the error), a {@code boundaryStreamErrors} array naming every boundary stream outside tolerance, and an
+   * {@code areas} array (one object per process area with {@code name}, {@code solved} and {@code unsolvedUnits}).
+   * </p>
+   *
+   * <p>
+   * Each boundary stream entry carries {@code name}, {@code flowError}, {@code temperatureError},
+   * {@code pressureError}, {@code previousFlowKgPerHr}, {@code currentFlowKgPerHr}, {@code flowCollapsedToZero} and
+   * {@code flowStartedFromZero}. A relative flow error of exactly 1.0 together with {@code flowCollapsedToZero} means
+   * the stream stopped flowing between outer passes rather than converging slowly.
    * </p>
    *
    * @return a JSON string describing the convergence outcome of the last run
@@ -2379,10 +2684,16 @@ public class ProcessModel implements Runnable, Serializable {
     root.addProperty("maxError", getError());
 
     JsonObject errors = new JsonObject();
-    errors.add("flow", buildErrorEntry(lastMaxFlowError, flowTolerance));
-    errors.add("temperature", buildErrorEntry(lastMaxTemperatureError, temperatureTolerance));
-    errors.add("pressure", buildErrorEntry(lastMaxPressureError, pressureTolerance));
+    errors.add("flow", buildErrorEntry(lastMaxFlowError, flowTolerance, "flow"));
+    errors.add("temperature", buildErrorEntry(lastMaxTemperatureError, temperatureTolerance, "temperature"));
+    errors.add("pressure", buildErrorEntry(lastMaxPressureError, pressureTolerance, "pressure"));
     root.add("errors", errors);
+
+    JsonArray boundaryStreamErrors = new JsonArray();
+    for (BoundaryStreamError streamError : getNonConvergedBoundaryStreamErrors()) {
+      boundaryStreamErrors.add(buildBoundaryStreamErrorEntry(streamError));
+    }
+    root.add("boundaryStreamErrors", boundaryStreamErrors);
 
     JsonArray areas = new JsonArray();
     for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
@@ -2408,13 +2719,39 @@ public class ProcessModel implements Runnable, Serializable {
    *
    * @param error the relative error value for the variable
    * @param tolerance the convergence tolerance for the variable
-   * @return a JSON object with {@code value}, {@code tolerance} and {@code converged} fields
+   * @param variable variable name used to look up the worst-offending boundary stream
+   * @return a JSON object with {@code value}, {@code tolerance}, {@code converged} and {@code worstStream} fields
    */
-  private JsonObject buildErrorEntry(double error, double tolerance) {
+  private JsonObject buildErrorEntry(double error, double tolerance, String variable) {
     JsonObject entry = new JsonObject();
     entry.addProperty("value", error);
     entry.addProperty("tolerance", tolerance);
     entry.addProperty("converged", error < tolerance);
+    BoundaryStreamError worst = getWorstBoundaryStreamError(variable);
+    if (worst == null) {
+      entry.add("worstStream", null);
+    } else {
+      entry.add("worstStream", buildBoundaryStreamErrorEntry(worst));
+    }
+    return entry;
+  }
+
+  /**
+   * Builds a per-boundary-stream error entry for {@link #getConvergenceReportJson()}.
+   *
+   * @param streamError the stream error record to serialize
+   * @return a JSON object describing the stream and its convergence errors
+   */
+  private JsonObject buildBoundaryStreamErrorEntry(BoundaryStreamError streamError) {
+    JsonObject entry = new JsonObject();
+    entry.addProperty("name", streamError.getStreamName());
+    entry.addProperty("flowError", streamError.getFlowError());
+    entry.addProperty("temperatureError", streamError.getTemperatureError());
+    entry.addProperty("pressureError", streamError.getPressureError());
+    entry.addProperty("previousFlowKgPerHr", streamError.getPreviousFlow());
+    entry.addProperty("currentFlowKgPerHr", streamError.getCurrentFlow());
+    entry.addProperty("flowCollapsedToZero", streamError.isFlowCollapsedToZero());
+    entry.addProperty("flowStartedFromZero", streamError.isFlowStartedFromZero());
     return entry;
   }
 

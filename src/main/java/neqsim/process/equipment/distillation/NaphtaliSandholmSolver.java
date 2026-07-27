@@ -200,6 +200,15 @@ public class NaphtaliSandholmSolver {
   /** Mass balance error (fractional) from the last solve. */
   private double lastMassBalanceError;
 
+  /**
+   * Maximum relative tray energy imbalance of the accepted solution, or {@code Double.NaN} when it could not be
+   * evaluated.
+   */
+  private double lastEnergyResidual = Double.NaN;
+
+  /** Scaled MESH residual norm of the accepted solution. */
+  private double lastResidualNorm = Double.NaN;
+
   /** Solve time in seconds from the last solve. */
   private double lastSolveTimeSeconds;
 
@@ -260,19 +269,37 @@ public class NaphtaliSandholmSolver {
   /**
    * Get the latest temperature residual reported by the solver.
    *
-   * @return latest temperature residual in Kelvin
+   * <p>
+   * This simultaneous-correction solver has no successive-substitution sweep, so it does not produce a tray-temperature
+   * change between iterations. It therefore reports {@code Double.NaN} and the column convergence gate falls back to
+   * the MESH residual vector, which is this solver's actual convergence measure. Reporting a fabricated zero here made
+   * {@link DistillationColumn#solved()} return {@code true} for solutions whose MESH material balance was grossly
+   * violated.
+   * </p>
+   *
+   * @return {@code Double.NaN}, because this solver does not compute a temperature residual
    */
   double getLastTemperatureResidual() {
-    return 0.0;
+    return Double.NaN;
   }
 
   /**
    * Get the latest energy residual reported by the solver.
    *
-   * @return latest scaled energy residual
+   * @return maximum relative tray energy imbalance of the accepted solution, or {@code Double.NaN} when it could not be
+   * evaluated
    */
   double getLastEnergyResidual() {
-    return 0.0;
+    return lastEnergyResidual;
+  }
+
+  /**
+   * Get the scaled MESH residual norm of the accepted solution.
+   *
+   * @return residual norm, or {@code Double.NaN} when no solve has completed
+   */
+  double getLastResidualNorm() {
+    return lastResidualNorm;
   }
 
   /**
@@ -743,6 +770,8 @@ public class NaphtaliSandholmSolver {
     lastBlockLinearSolveCount = 0;
     lastDenseLinearSolveCount = 0;
     lastLinearSolveTimeSeconds = 0.0;
+    lastEnergyResidual = Double.NaN;
+    lastResidualNorm = Double.NaN;
   }
 
   /**
@@ -4527,10 +4556,18 @@ public class NaphtaliSandholmSolver {
 
     double solveTime = (System.nanoTime() - startTime) / 1.0e9;
 
-    // Store solve metrics for retrieval by the column
+    // Store solve metrics for retrieval by the column. The energy residual is evaluated on the
+    // applied state so the column does not have to trust a solver-supplied constant.
     lastIterations = iterations;
     lastMassBalanceError = massBalErr;
     lastSolveTimeSeconds = solveTime;
+    lastResidualNorm = finalNorm;
+    try {
+      lastEnergyResidual = computeMaxRelativeEnergyError();
+    } catch (Exception ex) {
+      logger.debug("Could not evaluate Naphtali-Sandholm energy residual", ex);
+      lastEnergyResidual = Double.NaN;
+    }
 
     logger.info(
         "Naphtali-Sandholm results: iter={}, ||F||={}, "

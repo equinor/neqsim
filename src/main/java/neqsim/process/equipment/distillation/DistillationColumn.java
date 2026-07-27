@@ -78,6 +78,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /** Default scaled MESH residual tolerance when residual gating is enabled. */
   private static final double DEFAULT_MESH_RESIDUAL_TOLERANCE = 1.0;
   /**
+   * Default tolerance for the per-tray component material imbalance relative to tray throughput.
+   *
+   * <p>
+   * The MESH {@code MATERIAL} entries scale each component by its own throughput, so they are dominated by trace
+   * components and cannot be gated. The throughput-weighted per-tray imbalance is the usable measure, and it is bounded
+   * by 1 so it needs a tolerance below the 1.0 infinity-norm tolerance to take part in the gate at all.
+   * </p>
+   */
+  private static final double DEFAULT_TRAY_MATERIAL_BALANCE_TOLERANCE = 2.0e-2;
+  /**
    * Default product draw residual tolerance when MESH residual gating is enabled.
    */
   private static final double DEFAULT_MESH_PRODUCT_DRAW_RESIDUAL_TOLERANCE = 2.0e-2;
@@ -126,6 +136,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double enthalpyBalanceTolerance = DEFAULT_ENTHALPY_BALANCE_TOLERANCE;
   /** Scaled MESH residual convergence tolerance. */
   private double meshResidualTolerance = DEFAULT_MESH_RESIDUAL_TOLERANCE;
+
+  /** Tolerance for the throughput-weighted per-tray component material imbalance. */
+  private double trayMaterialBalanceTolerance = DEFAULT_TRAY_MATERIAL_BALANCE_TOLERANCE;
   /** Scaled terminal product-draw residual convergence tolerance. */
   private double meshProductDrawResidualTolerance = DEFAULT_MESH_PRODUCT_DRAW_RESIDUAL_TOLERANCE;
   /** Maximum number of candidate cases allowed in tray optimization searches. */
@@ -670,6 +683,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double lastEnergyResidual = 0.0;
   /** Last maximum raw internal tray traffic divided by external feed flow. */
   private double lastInternalTrafficRatio = 0.0;
+
+  /** Largest per-tray relative component material imbalance from the latest solve. */
+  private double lastTrayMaterialBalanceError = Double.NaN;
   /** Last reported top specification residual. */
   private double lastTopSpecificationResidual = 0.0;
   /** Last reported bottom specification residual. */
@@ -1634,6 +1650,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /** Update the stored MESH residual diagnostics for the current column state. */
   private void updateMeshResiduals() {
     lastMeshResidual = ColumnMeshResidualEvaluator.evaluate(this);
+    lastTrayMaterialBalanceError = ColumnMeshResidualEvaluator.evaluateMaxTrayMaterialImbalance(this);
   }
 
   /**
@@ -2247,8 +2264,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     markSolverTypeUsed(SolverType.NAPHTALI_SANDHOLM);
 
     double temperatureResidual = accepted ? solver.getLastTemperatureResidual() : 1.0e10;
-    finalizeNaphtaliSolve(id, solver.getLastIterations(), temperatureResidual, solver.getLastMassBalanceError(),
-        solver.getLastEnergyResidual(), startTime);
+    finalizeNaphtaliSolve(id, accepted, solver.getLastIterations(), temperatureResidual,
+        solver.getLastMassBalanceError(), solver.getLastEnergyResidual(), startTime);
     hasBeenSolvedBefore = true;
     lastTotalFeedFlow = -1.0;
     hasNaphtaliSandholmWarmState = accepted;
@@ -2400,19 +2417,24 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Finalize a direct Naphtali-Sandholm solve without invoking generic product reconciliation.
    *
+   * <p>
+   * The mass, energy and internal-traffic diagnostics are recomputed from the applied tray state rather than trusted
+   * from the solver, so {@link #solved()} is gated on the column that callers actually receive.
+   * </p>
+   *
    * @param id calculation identifier
+   * @param accepted {@code true} when the solver accepted its own result
    * @param iterations number of solver iterations
-   * @param temperatureResidual final temperature residual
+   * @param temperatureResidual final temperature residual, {@code Double.NaN} when the solver does not produce one
    * @param massResidual final mass residual
    * @param energyResidual final energy residual
    * @param startTime nano time when the solve started
    */
-  private void finalizeNaphtaliSolve(UUID id, int iterations, double temperatureResidual, double massResidual,
-      double energyResidual, long startTime) {
+  private void finalizeNaphtaliSolve(UUID id, boolean accepted, int iterations, double temperatureResidual,
+      double massResidual, double energyResidual, long startTime) {
     err = temperatureResidual;
     lastIterationCount = iterations;
     lastTemperatureResidual = temperatureResidual;
-    lastMassResidual = massResidual;
     lastEnergyResidual = energyResidual;
     lastSolveTimeSeconds = (System.nanoTime() - startTime) / 1.0e9;
     lastUsedFeedFlashFallback = false;
@@ -2423,11 +2445,22 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem());
     liquidOutStream.setCalculationIdentifier(id);
 
+    // Recompute the balance diagnostics from the applied state. The solver reports its own
+    // internal mass balance only, and never touched lastInternalTrafficRatio at all, so a stale
+    // ratio from a previous solver run used to leak into the solved() gate.
+    lastMassResidual = Math.max(massResidual, getExternalMassBalanceError());
+    lastInternalTrafficRatio = getInternalTrafficRatio();
+
     for (int i = 0; i < numberOfTrays; i++) {
       trays.get(i).setCalculationIdentifier(id);
     }
-    lastSolveStatus = SolveStatus.RECONCILED_PRODUCTS;
-    lastSolveStatusReason = "Naphtali-Sandholm direct products were applied";
+    if (accepted) {
+      lastSolveStatus = SolveStatus.RECONCILED_PRODUCTS;
+      lastSolveStatusReason = "Naphtali-Sandholm direct products were applied";
+    } else {
+      lastSolveStatus = SolveStatus.FAILED;
+      lastSolveStatusReason = "Naphtali-Sandholm solver did not accept its result";
+    }
     setCalculationIdentifier(id);
   }
 
@@ -5372,8 +5405,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (hardIterationCap) {
       return Math.max(1, maxNumberOfIterations);
     }
-    int trayBasedLimit = (int) Math.ceil(Math.max(5.0, numberOfTrays * TRAY_ITERATION_FACTOR));
-    return Math.max(Math.max(1, maxNumberOfIterations), trayBasedLimit);
+    return Math.max(Math.max(1, maxNumberOfIterations), computeTrayBasedIterationLimit());
+  }
+
+  /**
+   * Adaptive iteration floor derived from the number of theoretical stages.
+   *
+   * @return tray-based iteration budget
+   */
+  private int computeTrayBasedIterationLimit() {
+    return (int) Math.ceil(Math.max(5.0, numberOfTrays * TRAY_ITERATION_FACTOR));
   }
 
   /**
@@ -7573,10 +7614,89 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Set relaxation factor for the damped solver.
    *
-   * @param relaxationFactor value between 0 and 1
+   * <p>
+   * The adaptive damping controller clamps the sequential step from below at {@link #getMinSequentialRelaxation()}
+   * (default 0.5). To make a request below that floor effective, this setter also lowers the sequential and inside-out
+   * relaxation floors to the requested value; otherwise a caller asking for heavy damping (for example 0.2 to break a
+   * limit cycle) would be silently ignored. Use {@link #setMinSequentialRelaxation(double)} afterwards if a different
+   * floor is wanted.
+   * </p>
+   *
+   * @param relaxationFactor damping factor, must be finite and greater than zero (values at or below 1 damp the step)
+   * @throws IllegalArgumentException if {@code relaxationFactor} is not finite and positive
    */
   public void setRelaxationFactor(double relaxationFactor) {
+    if (!isPositiveFinite(relaxationFactor)) {
+      throw new IllegalArgumentException("Relaxation factor must be finite and positive, was " + relaxationFactor);
+    }
     this.relaxationFactor = relaxationFactor;
+    if (relaxationFactor < minSequentialRelaxation) {
+      this.minSequentialRelaxation = relaxationFactor;
+    }
+    if (relaxationFactor < minInsideOutRelaxation) {
+      this.minInsideOutRelaxation = relaxationFactor;
+    }
+  }
+
+  /**
+   * Get the configured relaxation factor for the damped solver.
+   *
+   * @return relaxation factor applied to the first damped iteration
+   */
+  public double getRelaxationFactor() {
+    return relaxationFactor;
+  }
+
+  /**
+   * Set the lowest relaxation factor the adaptive damping controller may fall back to in the sequential (direct and
+   * damped substitution) solvers.
+   *
+   * <p>
+   * Lower this below the 0.5 default when a column oscillates in a limit cycle instead of converging; the adaptive
+   * controller can then damp the tray sweep further after a residual increase.
+   * </p>
+   *
+   * @param minRelaxation minimum relaxation factor, must be finite, greater than zero and at most 1
+   * @throws IllegalArgumentException if {@code minRelaxation} is not finite, not positive or greater than 1
+   */
+  public void setMinSequentialRelaxation(double minRelaxation) {
+    if (!isPositiveFinite(minRelaxation) || minRelaxation > 1.0) {
+      throw new IllegalArgumentException(
+          "Minimum sequential relaxation must be finite and in the range (0, 1], was " + minRelaxation);
+    }
+    this.minSequentialRelaxation = minRelaxation;
+  }
+
+  /**
+   * Get the lowest relaxation factor used by the sequential solvers.
+   *
+   * @return minimum sequential relaxation factor
+   */
+  public double getMinSequentialRelaxation() {
+    return minSequentialRelaxation;
+  }
+
+  /**
+   * Set the lowest relaxation factor used for the inside-out tear streams.
+   *
+   * @param minRelaxation minimum relaxation factor, must be finite, greater than zero and at most 1
+   * @throws IllegalArgumentException if {@code minRelaxation} is not finite, not positive or greater than 1
+   */
+  public void setMinInsideOutRelaxation(double minRelaxation) {
+    if (!isPositiveFinite(minRelaxation) || minRelaxation > 1.0) {
+      throw new IllegalArgumentException(
+          "Minimum inside-out relaxation must be finite and in the range (0, 1], was " + minRelaxation);
+    }
+    this.minInsideOutRelaxation = minRelaxation;
+  }
+
+  /**
+   * Get the lowest relaxation factor used for the inside-out tear streams.
+   *
+   * @return minimum inside-out relaxation factor
+   */
+  public double getMinInsideOutRelaxation() {
+    return minInsideOutRelaxation;
   }
 
   /**
@@ -7647,7 +7767,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     // tolerance, which kept enclosing Recycle/ProcessSystem loops iterating to their timeout.
     // lastTemperatureResidual and lastSolveStatus are both written by finalizeSolve() and both
     // cleared by resetLastSolveMetrics(), so they stay consistent with each other.
-    boolean temperatureSolved = lastTemperatureResidual < getEffectiveTemperatureTolerance();
+    boolean temperatureSolved;
+    if (Double.isNaN(lastTemperatureResidual)) {
+      // A simultaneous-correction solver has no successive-substitution sweep and therefore no
+      // tray-temperature change between iterations. Its convergence measure is the MESH residual
+      // vector, so require that gate to be active rather than treating a missing residual as a
+      // pass. Accepting a fabricated zero here previously let a Naphtali-Sandholm solution with a
+      // 79 % component material imbalance report solved() == true.
+      temperatureSolved = isEffectiveMeshResidualToleranceEnforced();
+    } else {
+      temperatureSolved = lastTemperatureResidual < getEffectiveTemperatureTolerance();
+    }
     boolean massSolved = lastMassResidual <= getEffectiveMassBalanceTolerance();
     boolean energySolved = !enforceEnergyBalanceTolerance
         || lastEnergyResidual <= getEffectiveEnthalpyBalanceTolerance();
@@ -7681,7 +7811,29 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       return false;
     }
     return lastMeshResidual.isFinite() && lastMeshResidual.getInfinityNorm() <= meshResidualTolerance
-        && productDrawResidualsSatisfied();
+        && boundedMeshResidualsSatisfied() && productDrawResidualsSatisfied();
+  }
+
+  /**
+   * Check whether the per-tray component material balance satisfies its dedicated tolerance.
+   *
+   * <p>
+   * A closed overall feed/product balance does not imply that each tray closes its own component balance. This gate
+   * catches a tray profile that is not a solution even though the column-level balance looks perfect.
+   * </p>
+   *
+   * @return {@code true} when the worst per-tray relative material imbalance is within tolerance
+   */
+  private boolean boundedMeshResidualsSatisfied() {
+    double summationResidual = getLastMeshResidualNorm(ColumnMeshEquationType.SUMMATION);
+    if (!Double.isFinite(summationResidual) || summationResidual > trayMaterialBalanceTolerance) {
+      return false;
+    }
+    if (Double.isNaN(lastTrayMaterialBalanceError)) {
+      return true;
+    }
+    return Double.isFinite(lastTrayMaterialBalanceError)
+        && lastTrayMaterialBalanceError <= trayMaterialBalanceTolerance;
   }
 
   /**
@@ -8198,6 +8350,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         .append(", energy: ").append(getLastMeshEnergyResidualNorm()).append(", product draw: ")
         .append(getLastMeshProductDrawResidualNorm()).append(", specification: ")
         .append(getLastMeshSpecificationResidualNorm()).append("\n");
+    diagnostics.append("      per-tray material imbalance: ").append(lastTrayMaterialBalanceError)
+        .append(" (tolerance ").append(trayMaterialBalanceTolerance).append(")\n");
 
     diagnostics.append("  Feed trays:\n");
     if (feedStreams.isEmpty()) {
@@ -8272,6 +8426,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           .append(SolverType.NAPHTALI_SANDHOLM).append(" or ").append(SolverType.MESH_RESIDUAL)
           .append(" or inspect reflux, boilup, and product specifications before trusting the ")
           .append("product split.\n");
+      count++;
+    }
+    if (Double.isFinite(lastTrayMaterialBalanceError) && lastTrayMaterialBalanceError > trayMaterialBalanceTolerance) {
+      diagnostics.append("    - Per-tray component material imbalance is ").append(lastTrayMaterialBalanceError)
+          .append(", above the tolerance of ").append(trayMaterialBalanceTolerance)
+          .append(". At least one tray does not close its own component balance, so the tray profile ")
+          .append("is not a solution even if the overall feed/product balance looks closed. ")
+          .append("Do not trust tray temperatures, duties or internal traffic from this run.\n");
       count++;
     }
     if (!solved) {
@@ -8380,6 +8542,44 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Access the tolerance applied to the throughput-weighted per-tray component material imbalance.
+   *
+   * @return per-tray material balance tolerance
+   */
+  public double getTrayMaterialBalanceTolerance() {
+    return trayMaterialBalanceTolerance;
+  }
+
+  /**
+   * Set the tolerance applied to the throughput-weighted per-tray component material imbalance.
+   *
+   * @param tolerance relative imbalance tolerance, must be finite, greater than zero and at most 1
+   * @throws IllegalArgumentException if {@code tolerance} is not finite, not positive or greater than 1
+   */
+  public void setTrayMaterialBalanceTolerance(double tolerance) {
+    if (!isPositiveFinite(tolerance) || tolerance > 1.0) {
+      throw new IllegalArgumentException(
+          "Tray material balance tolerance must be finite and in the range (0, 1], was " + tolerance);
+    }
+    this.trayMaterialBalanceTolerance = tolerance;
+  }
+
+  /**
+   * Largest per-tray component material imbalance relative to that tray's molar throughput.
+   *
+   * <p>
+   * Unlike the MESH {@code MATERIAL} infinity norm, this measure is not dominated by trace components. A value well
+   * above {@link #getTrayMaterialBalanceTolerance()} means at least one tray does not close its own component balance,
+   * so the tray profile is not a solution even when the overall feed/product balance is closed.
+   * </p>
+   *
+   * @return worst relative per-tray material imbalance, or {@code Double.NaN} when not evaluated
+   */
+  public double getLastTrayMaterialBalanceError() {
+    return lastTrayMaterialBalanceError;
+  }
+
+  /**
    * Access the configured scaled product-draw residual tolerance.
    *
    * @return product-draw residual tolerance
@@ -8448,13 +8648,50 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * This sets a lower bound on the solver iteration budget only; the solver may still expand beyond it via the adaptive
    * tray-based floor and the iteration-overflow expansion. To treat the value as a HARD maximum, use
    * {@link #setMaxNumberOfIterations(int, boolean)} with {@code hardCap = true} or call
-   * {@link #setHardIterationCap(boolean)}.
+   * {@link #setHardIterationCap(boolean)}. A warning is logged when the requested value is below the adaptive
+   * tray-based budget, because the request then has no effect on runtime.
    * </p>
    *
    * @param maxIter a int
    */
   public void setMaxNumberOfIterations(int maxIter) {
     this.maxNumberOfIterations = Math.max(1, maxIter);
+    int trayBasedLimit = computeTrayBasedIterationLimit();
+    if (!hardIterationCap && this.maxNumberOfIterations < trayBasedLimit) {
+      logger.warn("DistillationColumn '{}': setMaxNumberOfIterations({}) is a soft floor only. The adaptive tray-based "
+          + "budget of {} iterations ({} trays) still applies and may be expanded further, so the request "
+          + "does not limit runtime. Use setMaxNumberOfIterations({}, true) or setHardIterationCap(true) to "
+          + "enforce a hard cap.", getName(), maxIter, trayBasedLimit, numberOfTrays, maxIter);
+    }
+  }
+
+  /**
+   * Getter for the field <code>maxNumberOfIterations</code>.
+   *
+   * <p>
+   * This is the configured value, which is only a lower bound unless {@link #isHardIterationCap()} is {@code true}. Use
+   * {@link #getEffectiveMaxNumberOfIterations()} to see the iteration budget the solver will actually use.
+   * </p>
+   *
+   * @return the configured maximum number of iterations
+   */
+  public int getMaxNumberOfIterations() {
+    return maxNumberOfIterations;
+  }
+
+  /**
+   * Get the base iteration budget the solver will actually use for this column.
+   *
+   * <p>
+   * When {@link #isHardIterationCap()} is {@code false} this is {@code max(maxNumberOfIterations, 5 * numberOfTrays)}
+   * and may still be expanded by the iteration-overflow and polish extensions. When the hard cap is enabled it equals
+   * {@link #getMaxNumberOfIterations()}.
+   * </p>
+   *
+   * @return the effective base iteration limit
+   */
+  public int getEffectiveMaxNumberOfIterations() {
+    return computeIterationLimit();
   }
 
   /**
@@ -9570,6 +9807,68 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   public void setTemperatureTolerance(double tol) {
     this.temperatureTolerance = tol;
     this.temperatureToleranceCustomized = true;
+  }
+
+  /**
+   * Set the temperature convergence tolerance from a relative tolerance.
+   *
+   * <p>
+   * The absolute tolerance in Kelvin is {@code relativeTolerance * referenceTemperature}, where the reference
+   * temperature is taken from {@link #getReferenceTemperature()} (average tray temperature after a solve, otherwise the
+   * average external feed temperature, otherwise 300&nbsp;K). Use this to align a column inside a
+   * {@link neqsim.process.processmodel.ProcessModel} with the plant-level boundary tolerance: the default absolute
+   * tolerance can be an order of magnitude tighter than the model gate, which makes the column iterate long after the
+   * plant would accept the result.
+   * </p>
+   *
+   * @param relativeTolerance relative temperature tolerance, must be finite and greater than zero (for example 1.0e-3
+   * to match a ProcessModel boundary tolerance of 1e-3)
+   * @return the resulting absolute temperature tolerance in Kelvin
+   * @throws IllegalArgumentException if {@code relativeTolerance} is not finite and positive
+   */
+  public double setTemperatureToleranceRelative(double relativeTolerance) {
+    if (!isPositiveFinite(relativeTolerance)) {
+      throw new IllegalArgumentException(
+          "Relative temperature tolerance must be finite and positive, was " + relativeTolerance);
+    }
+    setTemperatureTolerance(relativeTolerance * getReferenceTemperature());
+    return temperatureTolerance;
+  }
+
+  /**
+   * Reference temperature used to convert relative tolerances to absolute Kelvin values.
+   *
+   * @return average tray temperature when the column holds a solved state, otherwise the average external feed
+   * temperature, otherwise 300&nbsp;K
+   */
+  public double getReferenceTemperature() {
+    double sum = 0.0;
+    int count = 0;
+    for (int i = 0; i < numberOfTrays && i < trays.size(); i++) {
+      SimpleTray tray = trays.get(i);
+      if (tray == null || tray.getOutletStream() == null || tray.getOutletStream().getFluid() == null) {
+        continue;
+      }
+      double temperature = tray.getOutletStream().getTemperature("K");
+      if (Double.isFinite(temperature) && temperature > 0.0) {
+        sum += temperature;
+        count++;
+      }
+    }
+    if (count > 0) {
+      return sum / count;
+    }
+    for (StreamInterface feed : getAllExternalFeedStreams()) {
+      if (feed == null || feed.getFluid() == null) {
+        continue;
+      }
+      double temperature = feed.getTemperature("K");
+      if (Double.isFinite(temperature) && temperature > 0.0) {
+        sum += temperature;
+        count++;
+      }
+    }
+    return count > 0 ? sum / count : 300.0;
   }
 
   /**
@@ -11116,6 +11415,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastEnergyResidual = 0.0;
     lastSolveTimeSeconds = 0.0;
     lastInternalTrafficRatio = 0.0;
+    lastTrayMaterialBalanceError = Double.NaN;
     lastInternalTrafficGuardReached = false;
     lastUsedFeedFlashFallback = false;
     lastSolveStatus = SolveStatus.NOT_RUN;
@@ -12103,10 +12403,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Get the strict status of the latest column solve.
    *
-   * @return latest solve status
+   * <p>
+   * The status is transient, so a column restored from a serialized model reports {@link SolveStatus#NOT_RUN} rather
+   * than {@code null}: the restored tray state is data, not evidence that the solver ran in this session.
+   * </p>
+   *
+   * @return latest solve status, never {@code null}
    */
   public SolveStatus getLastSolveStatus() {
-    return lastSolveStatus;
+    return lastSolveStatus == null ? SolveStatus.NOT_RUN : lastSolveStatus;
   }
 
   /**
@@ -12115,7 +12420,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return concise status reason, or an empty string if none is available
    */
   public String getLastSolveStatusReason() {
-    return lastSolveStatusReason;
+    return lastSolveStatusReason == null ? "" : lastSolveStatusReason;
   }
 
   /**
@@ -12945,7 +13250,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       if (solver != null) {
         col.setSolverType(solver);
       }
-      if (relaxation >= 0) {
+      if (relaxation > 0) {
         col.setRelaxationFactor(relaxation);
       }
       if (diameter >= 0) {

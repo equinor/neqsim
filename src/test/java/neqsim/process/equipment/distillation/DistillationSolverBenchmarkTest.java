@@ -232,7 +232,18 @@ public class DistillationSolverBenchmarkTest {
 
     for (int i = 0; i < solvers.length; i++) {
       DistillationColumn col = runProfiledDeethanizer(solvers[i]);
-      assertTrue(col.solved(), solvers[i].name() + " should converge: " + col.getConvergenceDiagnostics());
+      if (solvers[i] == DistillationColumn.SolverType.NAPHTALI_SANDHOLM) {
+        // Known limitation, guarded by naphtaliSandholmSolverRunsOnDeethanizer: the accepted
+        // Naphtali-Sandholm profile closes the overall feed/product balance but leaves a ~7%
+        // per-tray component material imbalance, so it does not satisfy solved(). It used to
+        // report converged only because the solver returned fabricated zero temperature and
+        // energy residuals. Products are still compared against the other solvers below.
+        assertFalse(col.solved(),
+            "NAPHTALI_SANDHOLM is expected to miss the per-tray material balance on the deethanizer case; "
+                + "update this test when the solver is fixed: " + col.getConvergenceDiagnostics());
+      } else {
+        assertTrue(col.solved(), solvers[i].name() + " should converge: " + col.getConvergenceDiagnostics());
+      }
       assertAcceptedSolveStatus(col, solvers[i]);
       assertFalse(col.wasFeedFlashFallbackApplied(),
           solvers[i].name() + " should not use fallback products on the deethanizer case");
@@ -677,16 +688,33 @@ public class DistillationSolverBenchmarkTest {
 
   /**
    * Test that the Naphtali-Sandholm solver runs and records full MESH residual diagnostics.
+   *
+   * <p>
+   * This documents a known solver limitation rather than a passing convergence: the accepted profile closes the overall
+   * feed/product balance to well inside 0.5 % but leaves a per-tray component material imbalance far above tolerance,
+   * so {@link DistillationColumn#solved()} must report {@code false}. Before the residual reporting was fixed, the
+   * solver returned hard-coded zero temperature and energy residuals, which satisfied two of the three gates
+   * unconditionally and made this case look converged. Tighten this test to {@code assertTrue(column.solved())} once
+   * the solver closes the tray balances.
+   * </p>
    */
   @Test
   public void naphtaliSandholmSolverRunsOnDeethanizer() {
     DistillationColumn column = runProfiledDeethanizer(DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
 
-    assertTrue(column.solved(), "Naphtali-Sandholm solver should converge: " + column.getConvergenceDiagnostics());
     assertNotNull(column.getLastMeshResidual(), "Naphtali-Sandholm solver should record MESH diagnostics");
     assertTrue(Double.isFinite(column.getLastMeshResidualNorm()),
         "Naphtali-Sandholm solver should report a finite residual norm");
-    assertTrue(column.getLastIterationCount() > 0, "Naphtali-Sandholm solver should report iteration metrics");
+    assertTrue(Double.isNaN(column.getLastTemperatureResidual()),
+        "Naphtali-Sandholm has no successive-substitution sweep and must not fabricate a temperature residual");
+
+    double trayImbalance = column.getLastTrayMaterialBalanceError();
+    assertTrue(Double.isFinite(trayImbalance), "per-tray material imbalance should be evaluated");
+    assertTrue(trayImbalance > column.getTrayMaterialBalanceTolerance(),
+        "known limitation: the deethanizer profile is expected to miss the per-tray material balance, was "
+            + trayImbalance);
+    assertFalse(column.solved(), "a profile that does not close its tray material balance must not report solved(): "
+        + column.getConvergenceDiagnostics());
 
     double massBalance = Math
         .abs(100.0 - column.getGasOutStream().getFlowRate("kg/hr") - column.getLiquidOutStream().getFlowRate("kg/hr"))

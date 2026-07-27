@@ -9,6 +9,79 @@
 
 ---
 
+## 2026-07-27 — Column convergence gate corrected, solver runtime knobs reachable, ProcessModel per-boundary-stream diagnostics
+
+### Summary
+
+`DistillationColumn.solved()` could return `true` for a tray profile that violated the MESH component
+material balance by 79 %, because two of the three residual gates were fed fabricated zeros and the
+third had a tolerance no bounded residual can exceed. Separately, three configuration knobs were
+silently ignored or unreachable, so a column inside a `ProcessModel` could burn hundreds of
+iterations per solve with no way to stop it, and `ProcessModel` reported convergence-error magnitudes
+without naming the stream that produced them.
+
+### `DistillationColumn` — convergence gate (correctness)
+
+| Problem | Fix |
+|---|---|
+| `NaphtaliSandholmSolver.getLastTemperatureResidual()` and `getLastEnergyResidual()` were `return 0.0;` stubs. The column stored those zeros, so the temperature gate passed unconditionally and the energy gate reported a perfect balance for any solution | The temperature getter returns `Double.NaN` (this solver has no successive-substitution sweep, so it genuinely has no such residual) and the energy getter returns the real `computeMaxRelativeEnergyError()` of the accepted state. `solved()` treats a `NaN` temperature residual by requiring the MESH residual gate to be active instead — the actual convergence measure of a simultaneous-correction solver |
+| The MESH gate could not reject a broken component material balance. The `MATERIAL` residual entries scale each component by its **own** throughput, so a trace component moving from 1e-25 to 1.2e-25 mol/hr produces the same 0.17 residual as a 17 % imbalance on the key component — and they were compared against `meshResidualTolerance = 1.0`, which a residual bounded by 1 can never exceed | New throughput-weighted per-tray measure `getLastTrayMaterialBalanceError()` (summed absolute tray imbalance / tray molar throughput, trace-insensitive) gated by `getTrayMaterialBalanceTolerance()` / `setTrayMaterialBalanceTolerance(t)`, default `2.0e-2` |
+| `finalizeNaphtaliSolve()` never recomputed `lastInternalTrafficRatio`, so a stale ratio from a previously used solver leaked into the gate, and it reported `RECONCILED_PRODUCTS` even when the solver had rejected its own result | The mass residual and internal traffic ratio are recomputed from the applied tray state, and a rejected solve is reported as `SolveStatus.FAILED` |
+| `lastSolveStatus` is `transient`, so a column restored from a serialized model returned `null` from `getLastSolveStatus()` | Both `getLastSolveStatus()` and `getLastSolveStatusReason()` are now null-safe (`NOT_RUN` / `""`) |
+
+`getConvergenceDiagnostics()` prints the per-tray material imbalance next to its tolerance and adds a
+recommendation when it is exceeded.
+
+> **Behavior change:** a solve whose tray profile does not close the per-tray component material
+> balance now reports `solved() == false` where it previously reported `true`. The products are
+> unchanged — only the verdict is. Callers that gate on `solved()` will start seeing failures they
+> were previously blind to.
+
+### `DistillationColumn` — runtime knobs
+
+| Problem | Fix |
+|---|---|
+| `setMaxNumberOfIterations(n)` is only a **soft floor** — the effective budget is `max(n, 5 × trays)` plus the overflow expansion, so `setMaxNumberOfIterations(10)` on an 11-tray column still ran ~187 iterations | Now logs a warning when the request is below the tray-based floor. New `getMaxNumberOfIterations()` (configured) and `getEffectiveMaxNumberOfIterations()` (what the solver will use). Use the existing `setMaxNumberOfIterations(n, true)` / `setHardIterationCap(true)` for a hard cap |
+| `minSequentialRelaxation = 0.5` was private with no setter and clamped `setRelaxationFactor` from below, so damping below 0.5 was impossible | `setRelaxationFactor(f)` now also lowers the sequential and inside-out relaxation floors, and validates that `f` is finite and positive. New `setMinSequentialRelaxation` / `getMinSequentialRelaxation`, `setMinInsideOutRelaxation` / `getMinInsideOutRelaxation`, `getRelaxationFactor` |
+| The default absolute temperature tolerance (~0.02–0.03 K) can be ~10× tighter than the enclosing `ProcessModel` boundary gate (1e-3 relative ≈ 0.27 K) | New `setTemperatureToleranceRelative(rel)` (returns the resulting absolute K value) and `getReferenceTemperature()` (average tray temperature, else average external feed temperature, else 300 K) |
+
+```java
+column.setMaxNumberOfIterations(20, true);       // HARD cap, not a floor
+column.setRelaxationFactor(0.3);                 // now actually damps below 0.5
+column.setTemperatureToleranceRelative(1.0e-3);  // match the plant-level gate
+```
+
+> **Behavior change:** `setRelaxationFactor(0.0)` (or a non-finite value) now throws
+> `IllegalArgumentException` instead of disabling the update. `DistillationColumn.Builder`
+> only forwards a relaxation factor that is strictly positive.
+
+### `ProcessModel`
+
+`getConvergenceSummary()` and `getConvergenceReportJson()` now name the offending boundary stream:
+
+| API | What it does |
+|---|---|
+| `getLastBoundaryStreamErrors()` | Per-stream flow/temperature/pressure errors from the last outer iteration, worst first |
+| `getNonConvergedBoundaryStreamErrors()` | Same list filtered to streams outside tolerance |
+| `getWorstBoundaryStreamName(variable)` / `getWorstBoundaryStreamError(variable)` | Worst offender for `"flow"`, `"temperature"` or `"pressure"` |
+| `BoundaryStreamError.isFlowCollapsedToZero()` / `isFlowStartedFromZero()` | Explains a relative flow error of **exactly 1.0** — the stream stopped (or started) flowing between outer passes, i.e. an upstream fault rather than a slow recycle |
+
+JSON report gains `errors.{flow,temperature,pressure}.worstStream` and a top-level
+`boundaryStreamErrors` array (`name`, `flowError`, `temperatureError`, `pressureError`,
+`previousFlowKgPerHr`, `currentFlowKgPerHr`, `flowCollapsedToZero`, `flowStartedFromZero`).
+
+### Agents / skills updated
+
+- `neqsim-distillation-design` — new "Runtime control: iteration budget, damping and tolerance" section.
+- `neqsim-troubleshooting` — new "Column runs hundreds of iterations" and "ProcessModel Boundary Convergence" playbooks.
+
+### Tests
+
+`DistillationColumnConvergenceGateTest`, `DistillationColumnSolverTuningTest`,
+`ProcessModelBoundaryStreamDiagnosticsTest`.
+
+---
+
 ## 2026-07-27 — Flowsheet performance switches, shared CPA warm-start policy, identity-equality follow-ups
 
 ### Summary
