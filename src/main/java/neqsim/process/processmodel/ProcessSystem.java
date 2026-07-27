@@ -102,6 +102,11 @@ public class ProcessSystem extends SimulationBaseClass {
   private final Map<String, Integer> equipmentCounter = new HashMap<>();
   private ProcessEquipmentInterface lastAddedUnit = null;
   private transient ProcessSystem initialStateSnapshot;
+  /**
+   * Multiphase (three-phase) flash setting applied to every fluid in this process system. {@code null} means the
+   * multiphase check of each fluid is left untouched. See {@link #setMultiPhaseCheck(boolean)}.
+   */
+  private Boolean multiPhaseCheck = null;
   private double massBalanceErrorThreshold = 0.1; // Default 0.1% error threshold
   private double minimumFlowForMassBalanceError = 1e-6; // Default 1e-6 kg/sec
 
@@ -854,6 +859,109 @@ public class ProcessSystem extends SimulationBaseClass {
       }
     }
     return count;
+  }
+
+  /**
+   * Enables or disables the multiphase (three-phase) flash on every fluid in this process system.
+   *
+   * <p>
+   * Turning the multiphase check off on a process area that is known to be two-phase only (for example a dry-gas
+   * compression train) avoids the extra phase-stability work in every flash and can speed up the solve considerably.
+   * The setting is applied immediately to all fluids currently held by the unit operations and their inlet/outlet
+   * streams, is propagated to nested {@link ModuleInterface} sub-processes, and is re-applied at the start of every
+   * {@link #run(UUID)} and {@link #run_step(UUID)} so equipment that temporarily enables the check (for example
+   * {@link neqsim.process.equipment.separator.ThreePhaseSeparator}) cannot leak the setting into the rest of the area.
+   * </p>
+   *
+   * <p>
+   * If this method is never called the multiphase check of each fluid is left untouched.
+   * </p>
+   *
+   * @param enabled true to enable the multiphase flash, false to turn it off for this process system
+   * @return the number of distinct fluids updated
+   */
+  public int setMultiPhaseCheck(boolean enabled) {
+    this.multiPhaseCheck = Boolean.valueOf(enabled);
+    return applyMultiPhaseCheck();
+  }
+
+  /**
+   * Returns the multiphase-check setting configured for this process system.
+   *
+   * @return {@link Boolean#TRUE} or {@link Boolean#FALSE} if {@link #setMultiPhaseCheck(boolean)} has been called, or
+   * null when the multiphase check of each fluid is left untouched
+   */
+  public Boolean getMultiPhaseCheck() {
+    return multiPhaseCheck;
+  }
+
+  /**
+   * Applies the configured multiphase-check setting to every fluid in this process system. Does nothing when
+   * {@link #setMultiPhaseCheck(boolean)} has not been called.
+   *
+   * @return the number of distinct fluids updated
+   */
+  private int applyMultiPhaseCheck() {
+    if (multiPhaseCheck == null) {
+      return 0;
+    }
+    boolean enabled = multiPhaseCheck.booleanValue();
+    java.util.Set<SystemInterface> visited = Collections.newSetFromMap(new IdentityHashMap<SystemInterface, Boolean>());
+    int count = 0;
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit == null) {
+        continue;
+      }
+      if (unit instanceof ModuleInterface) {
+        ProcessSystem subProcess = ((ModuleInterface) unit).getOperations();
+        if (subProcess != null && subProcess != this) {
+          count += subProcess.setMultiPhaseCheck(enabled);
+        }
+        continue;
+      }
+      count += applyMultiPhaseCheck(unit.getThermoSystem(), enabled, visited);
+      count += applyMultiPhaseCheck(unit.getInletStreams(), enabled, visited);
+      count += applyMultiPhaseCheck(unit.getOutletStreams(), enabled, visited);
+    }
+    return count;
+  }
+
+  /**
+   * Applies the multiphase-check setting to the fluids of a list of streams.
+   *
+   * @param streams the streams to update; may be null
+   * @param enabled true to enable the multiphase flash, false to turn it off
+   * @param visited identity set of fluids already updated, used to avoid double counting shared fluids
+   * @return the number of distinct fluids updated
+   */
+  private int applyMultiPhaseCheck(List<StreamInterface> streams, boolean enabled,
+      java.util.Set<SystemInterface> visited) {
+    if (streams == null) {
+      return 0;
+    }
+    int count = 0;
+    for (StreamInterface stream : streams) {
+      if (stream != null) {
+        count += applyMultiPhaseCheck(stream.getThermoSystem(), enabled, visited);
+      }
+    }
+    return count;
+  }
+
+  /**
+   * Applies the multiphase-check setting to a single fluid.
+   *
+   * @param fluid the fluid to update; may be null
+   * @param enabled true to enable the multiphase flash, false to turn it off
+   * @param visited identity set of fluids already updated, used to avoid double counting shared fluids
+   * @return 1 if the fluid was updated, otherwise 0
+   */
+  private int applyMultiPhaseCheck(SystemInterface fluid, boolean enabled, java.util.Set<SystemInterface> visited) {
+    if (fluid == null || !visited.add(fluid)) {
+      return 0;
+    }
+    fluid.setMultiPhaseCheck(enabled);
+    return 1;
   }
 
   /**
@@ -2056,6 +2164,7 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public synchronized void runParallel(UUID id) throws InterruptedException {
     resetActiveStates();
+    applyMultiPhaseCheck();
     // Publish simulation start event
     publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.INFO, getName(),
         "Parallel simulation started with " + unitOperations.size() + " units", ProcessEvent.Severity.INFO));
@@ -2474,6 +2583,7 @@ public class ProcessSystem extends SimulationBaseClass {
     try {
       resetExecutionProfile();
       resetActiveStates();
+      applyMultiPhaseCheck();
       long wallStart = System.nanoTime();
       boolean prevWarmStart = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
       if (useFlashWarmStart) {
@@ -2688,6 +2798,7 @@ public class ProcessSystem extends SimulationBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run_step(UUID id) {
+    applyMultiPhaseCheck();
     for (int i = 0; i < unitOperations.size(); i++) {
       try {
         if (Thread.currentThread().isInterrupted()) {

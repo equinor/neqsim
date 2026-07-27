@@ -151,6 +151,43 @@ Future<?> task = model.runAsTask();
 task.get();
 ```
 
+### Multiphase (Three-Phase) Flash Control
+
+The three-phase flash can be switched on or off per process area. On a large
+multi-area plant this is usually the cheapest available speed-up: the separation
+trains keep the check (free water, glycol, MEG), while the recompression,
+export-compression and fuel-gas areas — which are known to be two-phase only —
+skip the extra phase-stability analysis on every flash of every recycle
+iteration.
+
+```java
+// All areas at once
+int fluidsUpdated = model.setMultiPhaseCheck(true);
+
+// ...then turn it off only where a third phase cannot form.
+// Returns the number of fluids updated, or -1 if the area name is unknown.
+model.setMultiPhaseCheck("Export train A", false);
+model.setMultiPhaseCheck("Export train B", false);
+model.setMultiPhaseCheck("TEX process A", false);
+```
+
+Python:
+
+```python
+plant.setMultiPhaseCheck(True)                       # baseline for all areas
+plant.setMultiPhaseCheck("Export train A", False)    # dry gas only
+plant.setMultiPhaseCheck("Export train B", False)
+
+if plant.setMultiPhaseCheck("typo in area name", False) == -1:
+    raise KeyError("no such process area")
+```
+
+The per-area setting is stored on the child `ProcessSystem` and re-applied at the
+start of each of its runs, so it survives the repeated area passes of
+`run()` / `runUntilConverged(...)` / step mode. See
+[ProcessSystem](process_system.md#multiphase-three-phase-flash-control) for the
+full semantics and the correctness warning.
+
 ---
 
 ## Convergence Tracking

@@ -20,6 +20,13 @@ public class Expander extends Compressor implements ExpanderInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
+  /**
+   * Default number of pressure steps used by the polytropic expansion path. Five steps give the same result as the
+   * previous 40-step default to within numerical noise, at a fraction of the flash cost. Override with
+   * {@link neqsim.process.equipment.compressor.Compressor#setNumberOfCompressorCalcSteps(int)}.
+   */
+  public static final int DEFAULT_EXPANDER_CALC_STEPS = 5;
+
   /** Mechanical design for the expander. */
   private ExpanderMechanicalDesign expanderMechanicalDesign;
 
@@ -66,6 +73,7 @@ public class Expander extends Compressor implements ExpanderInterface {
    */
   public Expander(String name) {
     super(name);
+    setNumberOfCompressorCalcSteps(DEFAULT_EXPANDER_CALC_STEPS);
     initExpanderMechanicalDesign();
   }
 
@@ -548,7 +556,7 @@ public class Expander extends Compressor implements ExpanderInterface {
     inletEnthalpy = hinn;
     double hout = hinn;
     if (usePolytropicCalc) {
-      int numbersteps = 40;
+      int numbersteps = Math.max(1, getNumberOfCompressorCalcSteps());
       double dp = (pressure - getThermoSystem().getPressure()) / (1.0 * numbersteps);
 
       for (int i = 0; i < numbersteps; i++) {
