@@ -102,6 +102,11 @@ public class ProcessSystem extends SimulationBaseClass {
   private final Map<String, Integer> equipmentCounter = new HashMap<>();
   private ProcessEquipmentInterface lastAddedUnit = null;
   private transient ProcessSystem initialStateSnapshot;
+  /**
+   * Multiphase (three-phase) flash setting applied to every fluid in this process system. {@code null} means the
+   * multiphase check of each fluid is left untouched. See {@link #setMultiPhaseCheck(boolean)}.
+   */
+  private Boolean multiPhaseCheck = null;
   private double massBalanceErrorThreshold = 0.1; // Default 0.1% error threshold
   private double minimumFlowForMassBalanceError = 1e-6; // Default 1e-6 kg/sec
 
@@ -857,6 +862,109 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Enables or disables the multiphase (three-phase) flash on every fluid in this process system.
+   *
+   * <p>
+   * Turning the multiphase check off on a process area that is known to be two-phase only (for example a dry-gas
+   * compression train) avoids the extra phase-stability work in every flash and can speed up the solve considerably.
+   * The setting is applied immediately to all fluids currently held by the unit operations and their inlet/outlet
+   * streams, is propagated to nested {@link ModuleInterface} sub-processes, and is re-applied at the start of every
+   * {@link #run(UUID)} and {@link #run_step(UUID)} so equipment that temporarily enables the check (for example
+   * {@link neqsim.process.equipment.separator.ThreePhaseSeparator}) cannot leak the setting into the rest of the area.
+   * </p>
+   *
+   * <p>
+   * If this method is never called the multiphase check of each fluid is left untouched.
+   * </p>
+   *
+   * @param enabled true to enable the multiphase flash, false to turn it off for this process system
+   * @return the number of distinct fluids updated
+   */
+  public int setMultiPhaseCheck(boolean enabled) {
+    this.multiPhaseCheck = Boolean.valueOf(enabled);
+    return applyMultiPhaseCheck();
+  }
+
+  /**
+   * Returns the multiphase-check setting configured for this process system.
+   *
+   * @return {@link Boolean#TRUE} or {@link Boolean#FALSE} if {@link #setMultiPhaseCheck(boolean)} has been called, or
+   * null when the multiphase check of each fluid is left untouched
+   */
+  public Boolean getMultiPhaseCheck() {
+    return multiPhaseCheck;
+  }
+
+  /**
+   * Applies the configured multiphase-check setting to every fluid in this process system. Does nothing when
+   * {@link #setMultiPhaseCheck(boolean)} has not been called.
+   *
+   * @return the number of distinct fluids updated
+   */
+  private int applyMultiPhaseCheck() {
+    if (multiPhaseCheck == null) {
+      return 0;
+    }
+    boolean enabled = multiPhaseCheck.booleanValue();
+    java.util.Set<SystemInterface> visited = Collections.newSetFromMap(new IdentityHashMap<SystemInterface, Boolean>());
+    int count = 0;
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit == null) {
+        continue;
+      }
+      if (unit instanceof ModuleInterface) {
+        ProcessSystem subProcess = ((ModuleInterface) unit).getOperations();
+        if (subProcess != null && subProcess != this) {
+          count += subProcess.setMultiPhaseCheck(enabled);
+        }
+        continue;
+      }
+      count += applyMultiPhaseCheck(unit.getThermoSystem(), enabled, visited);
+      count += applyMultiPhaseCheck(unit.getInletStreams(), enabled, visited);
+      count += applyMultiPhaseCheck(unit.getOutletStreams(), enabled, visited);
+    }
+    return count;
+  }
+
+  /**
+   * Applies the multiphase-check setting to the fluids of a list of streams.
+   *
+   * @param streams the streams to update; may be null
+   * @param enabled true to enable the multiphase flash, false to turn it off
+   * @param visited identity set of fluids already updated, used to avoid double counting shared fluids
+   * @return the number of distinct fluids updated
+   */
+  private int applyMultiPhaseCheck(List<StreamInterface> streams, boolean enabled,
+      java.util.Set<SystemInterface> visited) {
+    if (streams == null) {
+      return 0;
+    }
+    int count = 0;
+    for (StreamInterface stream : streams) {
+      if (stream != null) {
+        count += applyMultiPhaseCheck(stream.getThermoSystem(), enabled, visited);
+      }
+    }
+    return count;
+  }
+
+  /**
+   * Applies the multiphase-check setting to a single fluid.
+   *
+   * @param fluid the fluid to update; may be null
+   * @param enabled true to enable the multiphase flash, false to turn it off
+   * @param visited identity set of fluids already updated, used to avoid double counting shared fluids
+   * @return 1 if the fluid was updated, otherwise 0
+   */
+  private int applyMultiPhaseCheck(SystemInterface fluid, boolean enabled, java.util.Set<SystemInterface> visited) {
+    if (fluid == null || !visited.add(fluid)) {
+      return 0;
+    }
+    fluid.setMultiPhaseCheck(enabled);
+    return 1;
+  }
+
+  /**
    * Validates the process system setup before execution.
    *
    * <p>
@@ -1562,7 +1670,10 @@ public class ProcessSystem extends SimulationBaseClass {
 
     List<ProcessEquipmentInterface> iterativeSection = new ArrayList<>();
     if (firstIterativeLevel >= 0) {
-      java.util.Set<ProcessEquipmentInterface> iterativeSet = new java.util.HashSet<>();
+      // Identity based: equipment hashCode()/equals() are content based and mutate while the
+      // flowsheet runs, and two distinct units can compare equal across process areas.
+      java.util.Set<ProcessEquipmentInterface> iterativeSet = java.util.Collections
+          .newSetFromMap(new IdentityHashMap<ProcessEquipmentInterface, Boolean>());
       for (int levelIdx = firstIterativeLevel; levelIdx < levels.size(); levelIdx++) {
         for (ProcessNode node : levels.get(levelIdx)) {
           iterativeSet.add(node.getEquipment());
@@ -2056,6 +2167,7 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public synchronized void runParallel(UUID id) throws InterruptedException {
     resetActiveStates();
+    applyMultiPhaseCheck();
     // Publish simulation start event
     publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.INFO, getName(),
         "Parallel simulation started with " + unitOperations.size() + " units", ProcessEvent.Severity.INFO));
@@ -2474,6 +2586,7 @@ public class ProcessSystem extends SimulationBaseClass {
     try {
       resetExecutionProfile();
       resetActiveStates();
+      applyMultiPhaseCheck();
       long wallStart = System.nanoTime();
       boolean prevWarmStart = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
       if (useFlashWarmStart) {
@@ -2688,6 +2801,7 @@ public class ProcessSystem extends SimulationBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run_step(UUID id) {
+    applyMultiPhaseCheck();
     for (int i = 0; i < unitOperations.size(); i++) {
       try {
         if (Thread.currentThread().isInterrupted()) {
@@ -3156,7 +3270,10 @@ public class ProcessSystem extends SimulationBaseClass {
     if (start == null) {
       throw new IllegalArgumentException("No unit named '" + startUnitName + "' in process");
     }
-    java.util.Set<ProcessEquipmentInterface> visited = new java.util.LinkedHashSet<ProcessEquipmentInterface>();
+    // Identity based: equipment hashCode()/equals() are content based and mutate while the
+    // flowsheet runs, so an equals-based set can mark a different-but-equal unit as visited.
+    java.util.Set<ProcessEquipmentInterface> visited = java.util.Collections
+        .newSetFromMap(new IdentityHashMap<ProcessEquipmentInterface, Boolean>());
     java.util.Deque<ProcessEquipmentInterface> stack = new java.util.ArrayDeque<ProcessEquipmentInterface>();
     stack.push(start);
     while (!stack.isEmpty()) {
@@ -3333,7 +3450,9 @@ public class ProcessSystem extends SimulationBaseClass {
     if (start == null) {
       throw new IllegalArgumentException("No unit named '" + startUnitName + "' in process");
     }
-    java.util.Set<ProcessEquipmentInterface> visited = new java.util.LinkedHashSet<ProcessEquipmentInterface>();
+    // Identity based: see deactivateSection(String).
+    java.util.Set<ProcessEquipmentInterface> visited = java.util.Collections
+        .newSetFromMap(new IdentityHashMap<ProcessEquipmentInterface, Boolean>());
     java.util.Deque<ProcessEquipmentInterface> stack = new java.util.ArrayDeque<ProcessEquipmentInterface>();
     stack.push(start);
     while (!stack.isEmpty()) {
@@ -5474,7 +5593,22 @@ public class ProcessSystem extends SimulationBaseClass {
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * <b>Warning - value based and mutable.</b> The hash is derived from the current contents of the process system
+   * ({@code time}, {@code timeStepNumber}, the measurement history and every unit operation), so it changes while the
+   * model runs. A {@code ProcessSystem} must therefore never be used as a key in a {@link java.util.HashMap} or as an
+   * element of a {@link java.util.HashSet}: entries stored before {@code run()} become unreachable afterwards, which
+   * surfaces as silent lookup misses and duplicate registrations rather than as an exception. Use
+   * {@link java.util.IdentityHashMap} (or a set created from one via {@code Collections.newSetFromMap}) whenever a
+   * registry keyed on process identity is needed, and
+   * {@link neqsim.process.processmodel.lifecycle.ProcessModelState#compare} when two models must be compared by value.
+   * </p>
+   *
+   * @return content-based hash of the current process-system state
+   */
   @Override
   public String getReport_json() {
     return new Report(this).generateJsonReport();

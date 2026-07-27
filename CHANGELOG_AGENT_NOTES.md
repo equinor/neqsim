@@ -9,6 +9,119 @@
 
 ---
 
+## 2026-07-27 — Fix: never use `ProcessSystem` or process equipment as a hash-map key
+
+### Summary
+
+`ProcessSystem.hashCode()` and `ProcessEquipmentBaseClass.hashCode()` are **value based over
+mutable state**. `ProcessSystem` hashes `time`, `timeStepNumber`, the measurement history and
+every unit operation; equipment hashes `report`, `properties`, `conditionAnalysisMessage` and
+the attached controllers. All of those are rewritten by `run()`, so the hash of a process or a
+unit changes as the model solves.
+
+Using such an object as a `HashMap` key or `HashSet` element violates the `Map` contract: after
+a run the entry sits in the wrong bucket, so lookups miss. It never returns a *wrong* value —
+`equals()` still guards — which is why the failure is silent: caches degrade to permanent
+misses, registries lose entries and re-register duplicates, and stale entries are never
+collected.
+
+### What changed
+
+- `PFDLayoutPolicy.roleCache` / `phaseCache` — were `HashMap` keyed on equipment and streams.
+  These are long-lived caches, so they were guaranteed to stop resolving after the first
+  `run()`. Now `IdentityHashMap`.
+- `ProcessSystem.buildHybridPlan()` — the `iterativeSet` membership set is now identity based.
+- `ProcessSystem.deactivateSection(String)` / `activateSection(String)` — the `visited`
+  traversal sets are now identity based. Besides the mutable-hash issue, an equals-based set
+  could mark a *different* unit as already visited when two units share a name, which happens
+  across the areas of a `ProcessModel`.
+- Both `hashCode()` methods now carry an explicit JavaDoc warning.
+
+This aligns the remaining call sites with the pattern already used by `ProcessModel`,
+`JsonProcessExporter`, `KValueProcessSimulator`, the DEXPI writers and the Graphviz exporters.
+
+### Migration
+
+No API change. **Agents and downstream code:** never key a map or set on `ProcessSystem`,
+`ProcessEquipmentInterface` or `StreamInterface`. Use:
+
+```java
+Map<StreamInterface, Foo> byStream = new IdentityHashMap<StreamInterface, Foo>();
+Set<ProcessEquipmentInterface> seen =
+    Collections.newSetFromMap(new IdentityHashMap<ProcessEquipmentInterface, Boolean>());
+```
+
+To compare two models **by value**, use `ProcessModelState.compare(oldState, newState)` rather
+than `equals()`.
+
+---
+
+## 2026-07-27 — New: per-area three-phase flash control (`setMultiPhaseCheck`)
+
+### Summary
+
+The multiphase (three-phase) flash can now be switched on or off for a whole
+`ProcessSystem`, and per area on a `ProcessModel`. On a large multi-area plant the
+separation trains keep the check (free water, glycol, MEG), while areas that are known to be
+two-phase only — recompression, export compression, fuel gas — skip the extra
+phase-stability analysis on every flash of every recycle iteration.
+
+### What changed
+
+- `ProcessSystem.setMultiPhaseCheck(boolean)` — applies the setting to every fluid held by
+  the unit operations and their inlet/outlet streams, propagates into nested
+  `ModuleInterface` sub-processes, and returns the number of distinct fluids updated
+  (identity-based, so a shared fluid counts once).
+- `ProcessSystem.getMultiPhaseCheck()` — returns `TRUE`, `FALSE`, or `null` when the method
+  has never been called.
+- The setting is **re-applied at the start of every run** (`run(UUID)`, `runParallel(UUID)`,
+  `run_step(UUID)`), so equipment that temporarily enables the check —
+  `ThreePhaseSeparator` does this for its own flash — cannot leak three-phase mode into the
+  rest of the area across recycle iterations.
+- `ProcessModel.setMultiPhaseCheck(boolean)` — all areas; returns the total fluids updated.
+- `ProcessModel.setMultiPhaseCheck(String areaName, boolean)` — one area; returns `-1` if the
+  area name is unknown.
+
+```java
+plant.setMultiPhaseCheck(true);                    // baseline for all areas
+plant.setMultiPhaseCheck("Export train A", false); // dry gas only
+compressionTrain.setMultiPhaseCheck(false);        // single ProcessSystem
+```
+
+### Migration
+
+None. The default is unset (`getMultiPhaseCheck()` returns `null`), which leaves the
+multiphase flag of each fluid exactly as the fluid was built, so existing models are
+unaffected until the method is called.
+
+**Correctness warning for agents:** only disable the check where the absence of a third
+phase is known from the process, not assumed. Turning it off on an area where free water, an
+aqueous glycol/MEG phase, or a liquid CO2 phase can form silently produces a two-phase
+answer.
+
+Docs: [`docs/process/processmodel/process_system.md`](docs/process/processmodel/process_system.md),
+[`docs/process/processmodel/process_model.md`](docs/process/processmodel/process_model.md).
+Test: `src/test/java/neqsim/process/processmodel/ProcessSystemMultiPhaseCheckTest.java`.
+
+---
+
+## 2026-07-27 — Change: `Expander` polytropic path defaults to 5 pressure steps
+
+### Summary
+
+`Expander.run()` integrated the polytropic expansion over a hard-coded 40 pressure steps,
+i.e. 40 flashes per expander per iteration. The step count is now taken from the inherited
+`Compressor.getNumberOfCompressorCalcSteps()` and the `Expander` constructor seeds it with
+`Expander.DEFAULT_EXPANDER_CALC_STEPS = 5`. Five steps reproduce the 40-step result to within
+numerical noise at a fraction of the flash cost, which matters in recycle loops where the
+expander is re-run every iteration.
+
+### Migration
+
+None required. To restore the previous resolution — or to raise it for a strongly
+non-ideal fluid — call `expander.setNumberOfCompressorCalcSteps(40)`. Results may move in
+the last significant digits; re-baseline any test that asserted expander outlet enthalpy or
+temperature to a tolerance tighter than the integration error.
 ## 2026-07-27 — Breaking: `ProcessSystem` and process equipment use identity equality
 
 ### Summary
