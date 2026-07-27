@@ -66,7 +66,7 @@ public class PSFlashWarmStartPolicyTest {
    */
   @Test
   public void richTegCpaFlashConvergesRepeatablyAtNearbyPressures() {
-    double[] dischargePressuresBara = new double[] {1.35, 1.50};
+    double[] dischargePressuresBara = new double[] { 1.35, 1.50 };
 
     for (double dischargePressureBara : dischargePressuresBara) {
       SystemInterface system = createRichTegFluid();
