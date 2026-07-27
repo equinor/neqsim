@@ -3035,6 +3035,31 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
+   * Returns an immutable, capacity-aware operating-point result.
+   *
+   * <p>
+   * The result adds pressure-target classification, anti-surge recycle losses, and detached
+   * capacity-constraint snapshots to the legacy {@link #getOperatingPoint()} map.
+   * </p>
+   *
+   * @return typed compressor operating-point result
+   */
+  public CompressorOperatingPointResult getOperatingPointResult() {
+    return CompressorOperatingPointResult.from(this);
+  }
+
+  /**
+   * Returns an immutable operating-point result with a caller-defined pressure tolerance.
+   *
+   * @param pressureToleranceFraction non-negative relative discharge-pressure tolerance
+   * @return typed compressor operating-point result
+   */
+  public CompressorOperatingPointResult getOperatingPointResult(
+      double pressureToleranceFraction) {
+    return CompressorOperatingPointResult.from(this, pressureToleranceFraction);
+  }
+
+  /**
    * Setter for the field <code>antiSurge</code>.
    *
    * @param antiSurge a {@link neqsim.process.equipment.compressor.AntiSurge} object
@@ -5182,44 +5207,30 @@ public class Compressor extends TwoPortEquipment
         }));
 
     // Surge margin constraint
-    // getDistanceToSurge() returns a ratio: (currentFlow / surgeFlow) - 1
-    // e.g., 0.5 means current flow is 50% above surge flow
-    // For utilization: 0 margin = 100% utilized (at surge), large margin = low
-    // utilization
-    addCapacityConstraint(
-        StandardConstraintType.COMPRESSOR_SURGE_MARGIN.createConstraint().setDesignValue(100.0).setMinValue(10.0) // Minimum
-            // 10%
-            // surge
-            // margin
-            // required
-            .setWarningThreshold(0.85) // Warning at 85% utilization (15% margin)
-            .setValueSupplier(() -> {
-              double marginRatio = this.getDistanceToSurge();
-              if (marginRatio <= 0 || Double.isNaN(marginRatio) || Double.isInfinite(marginRatio)) {
-                return 100.0; // At or below surge = 100% utilized
-              }
-              // Convert ratio to utilization: utilization = 1 / (1 + marginRatio)
-              // e.g., margin=0.5 -> utilization = 1/1.5 = 66.7%
-              return 100.0 / (1.0 + marginRatio);
-            }).setEnabled(chartActive));
+    // The capacity abstraction expects the raw physical margin as current value and
+    // represents a minimum-good constraint with designValue = Double.MAX_VALUE.
+    // getDistanceToSurge() returns (currentFlow / surgeFlow) - 1.
+    addCapacityConstraint(StandardConstraintType.COMPRESSOR_SURGE_MARGIN.createConstraint()
+        .setDesignValue(Double.MAX_VALUE).setMinValue(10.0).setWarningThreshold(0.85)
+        .setValueSupplier(() -> {
+          double marginRatio = this.getDistanceToSurge();
+          if (Double.isNaN(marginRatio) || Double.isInfinite(marginRatio)) {
+            return Double.MAX_VALUE;
+          }
+          return marginRatio * 100.0;
+        }).setEnabled(chartActive));
 
     // Stonewall margin constraint
-    // getDistanceToStoneWall() returns a ratio: (stoneWallFlow / currentFlow) - 1
-    // e.g., 0.5 means stonewall is 50% above current flow
-    addCapacityConstraint(
-        StandardConstraintType.COMPRESSOR_STONEWALL_MARGIN.createConstraint().setDesignValue(100.0).setMinValue(5.0) // Minimum
-            // 5%
-            // stonewall
-            // margin
-            .setWarningThreshold(0.90) // Warning at 90% utilization (10% margin)
-            .setValueSupplier(() -> {
-              double marginRatio = this.getDistanceToStoneWall();
-              if (marginRatio <= 0 || Double.isNaN(marginRatio) || Double.isInfinite(marginRatio)) {
-                return 100.0; // At or above stonewall = 100% utilized
-              }
-              // Convert ratio to utilization: utilization = 1 / (1 + marginRatio)
-              return 100.0 / (1.0 + marginRatio);
-            }).setEnabled(chartActive));
+    // getDistanceToStoneWall() returns (stoneWallFlow / currentFlow) - 1.
+    addCapacityConstraint(StandardConstraintType.COMPRESSOR_STONEWALL_MARGIN.createConstraint()
+        .setDesignValue(Double.MAX_VALUE).setMinValue(5.0).setWarningThreshold(0.90)
+        .setValueSupplier(() -> {
+          double marginRatio = this.getDistanceToStoneWall();
+          if (Double.isNaN(marginRatio) || Double.isInfinite(marginRatio)) {
+            return Double.MAX_VALUE;
+          }
+          return marginRatio * 100.0;
+        }).setEnabled(chartActive));
 
     // Discharge temperature constraint
     // Track actual discharge temperature vs maximum allowable
