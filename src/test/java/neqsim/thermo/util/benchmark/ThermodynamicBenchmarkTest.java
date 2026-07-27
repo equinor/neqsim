@@ -38,11 +38,8 @@ class ThermodynamicBenchmarkTest {
   @Test
   void calculatesAardBiasRmsAndMaximumError() throws Exception {
     Dataset dataset = H2CO2PhaseEquilibriumData.load();
-    Report report =
-        ThermodynamicBenchmark.run(
-            "synthetic +2 percent",
-            dataset,
-            point -> point.getExperimentalValue() * 1.02);
+    Report report = ThermodynamicBenchmark.run("synthetic +2 percent", dataset,
+        point -> point.getExperimentalValue() * 1.02);
 
     assertEquals(2.0, report.getAverageAbsoluteRelativeDeviationPercent(), 1.0e-12);
     assertEquals(2.0, report.getBiasPercent(), 1.0e-12);
@@ -56,29 +53,13 @@ class ThermodynamicBenchmarkTest {
     Map<String, Double> composition = new LinkedHashMap<String, Double>();
     composition.put("CO2", 0.96);
     composition.put("hydrogen", 0.04);
-    Point point =
-        new Point(
-            Property.BUBBLE_POINT_PRESSURE,
-            273.15,
-            36.5,
-            36.5,
-            0.5,
-            "bara",
-            composition);
-    Dataset dataset =
-        new Dataset(
-            "uncertainty test",
-            "test citation",
-            "10.0000/test",
-            "test data",
-            java.util.Collections.singletonList(point));
+    Point point = new Point(Property.BUBBLE_POINT_PRESSURE, 273.15, 36.5, 36.5, 0.5, "bara", composition);
+    Dataset dataset = new Dataset("uncertainty test", "test citation", "10.0000/test", "test data",
+        java.util.Collections.singletonList(point));
 
     Report report = ThermodynamicBenchmark.run("test model", dataset, value -> 37.5);
 
-    assertEquals(
-        2.0,
-        report.getRows().get(0).getUncertaintyNormalizedResidual(),
-        1.0e-12);
+    assertEquals(2.0, report.getRows().get(0).getUncertaintyNormalizedResidual(), 1.0e-12);
   }
 
   @Test
@@ -87,27 +68,15 @@ class ThermodynamicBenchmarkTest {
     composition.put("CO2", 0.90);
     composition.put("hydrogen", 0.04);
 
-    assertThrows(
-        IllegalArgumentException.class,
-        () ->
-            new Point(
-                Property.BUBBLE_POINT_PRESSURE,
-                273.15,
-                36.5,
-                36.5,
-                Double.NaN,
-                "bara",
-                composition));
+    assertThrows(IllegalArgumentException.class,
+        () -> new Point(Property.BUBBLE_POINT_PRESSURE, 273.15, 36.5, 36.5, Double.NaN, "bara", composition));
   }
 
   @Test
   void exposesConfiguredNeqSimModel() {
-    NeqSimPhaseEquilibriumPrediction prediction =
-        new NeqSimPhaseEquilibriumPrediction(
-            NeqSimPhaseEquilibriumPrediction.Model.GERG_2008_H2);
+    NeqSimPhaseEquilibriumPrediction prediction = new NeqSimPhaseEquilibriumPrediction(
+        NeqSimPhaseEquilibriumPrediction.Model.GERG_2008_H2);
 
-    assertEquals(
-        NeqSimPhaseEquilibriumPrediction.Model.GERG_2008_H2,
-        prediction.getModel());
+    assertEquals(NeqSimPhaseEquilibriumPrediction.Model.GERG_2008_H2, prediction.getModel());
   }
 }
