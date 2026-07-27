@@ -398,7 +398,13 @@ public class CapacityConstraint implements Serializable {
    * @return true if current value exceeds max value
    */
   public boolean isHardLimitExceeded() {
-    if (type != ConstraintType.HARD || maxValue == Double.MAX_VALUE) {
+    if (type != ConstraintType.HARD) {
+      return false;
+    }
+    if (isMinimumConstraint()) {
+      return getCurrentValue() < minValue;
+    }
+    if (maxValue == Double.MAX_VALUE) {
       return false;
     }
     return getCurrentValue() > maxValue;
