@@ -9,6 +9,70 @@
 
 ---
 
+## 2026-07-27 — Fix: `DistillationColumn.solved()` no longer contradicts the reported solve status
+
+### Summary
+
+`DistillationColumn.solved()` could return `false` for a column whose
+`getLastSolveStatus()` was `RIGOROUS_CONVERGED` and whose residuals — as reported by
+`getLastTemperatureResidual()` and `getConvergenceDiagnostics()` — were all inside their
+tolerances. Observed on a TEG regeneration column: reported temperature residual
+`0.0168 K` against a `0.05 K` tolerance, while the internal gate saw `0.270`.
+
+Cause: the convergence gate tested the private working field `err` instead of
+`lastTemperatureResidual`. `err` is the live iteration variable of every inner solver loop —
+reset to `1e10` or `0.0` on solver entry and accumulated tray by tray — so any solver pass
+that exits before `finalizeSolve()` leaves it holding a partial value.
+
+Impact: enclosing `Recycle`, `ProcessSystem`, and `ProcessModel` loops never saw the column
+as converged and kept iterating until an iteration cap or wall-clock timeout, then returned a
+partially converged state. Downstream consumers saw very long run times and results that
+drifted between runs.
+
+### What changed
+
+- `residualConvergenceSatisfied()` now gates on `lastTemperatureResidual`, the same value
+  reported by `getLastTemperatureResidual()` and `getConvergenceDiagnostics()`. Both it and
+  `lastSolveStatus` are written by `finalizeSolve()` and cleared by `resetLastSolveMetrics()`,
+  so they stay consistent.
+- `internalTrafficSatisfied()` now compares against `MAX_SOLVED_INTERNAL_TRAFFIC_TO_FEED_RATIO`
+  (100) instead of the relaxed-update limit `MAX_RELAXED_INTERNAL_TRAFFIC_TO_FEED_RATIO` (1e5).
+- Guarded fallback products now log a warning. When the tray solution is rejected,
+  `updateProductsFromOverallFeedFlash()` replaces the public products with a **single
+  equilibrium flash of the mixed feeds**. The residual getters are computed against those
+  fallback products and therefore look converged. Check `getLastSolveStatus()` —
+  `FALLBACK_PRODUCTS` means product flows and duties are not a rigorous column result.
+- A non-finite reboiler or condenser duty after a solve is now logged instead of being
+  silently returned by `getDuty()`.
+- `massBalanceCheck()` and `componentMassBalanceCheck()` use `logger.debug` instead of
+  `System.out.println`.
+
+### Migration
+
+No API change. Callers that worked around the old behaviour by ignoring `solved()` can now
+rely on it. When reading column results programmatically, always check
+`getLastSolveStatus()` in addition to the residual getters.
+
+Regression test: `src/test/java/neqsim/process/equipment/distillation/DistillationColumnSolvedConsistencyTest.java`.
+
+---
+
+## 2026-05-14 — Breaking: `Condenser.setRefluxRatio()` now means L/D, not a split fraction
+
+### Summary
+
+Before PR #2156 the value passed to `Condenser.setRefluxRatio(r)` was used directly as the
+split fraction of the condensed liquid returned as reflux:
+
+```java
+mixedStreamSplitter.setSplitFactors(new double[] {r, 1.0 - r});
+```
+
+It is now interpreted as a true reflux ratio `R = L/D` and converted internally:
+
+```java
+double refluxFraction = r <= 0.0 ? 0.0 : r / (1.0 + r);
+mixedStreamSplitter.setSplitFactors(new double[] {refluxFraction, 1.0 - refluxFraction});
 ## 2026-07-27 — Fix: never use `ProcessSystem` or process equipment as a hash-map key
 
 ### Summary
@@ -90,6 +154,10 @@ compressionTrain.setMultiPhaseCheck(false);        // single ProcessSystem
 
 ### Migration
 
+Any model calibrated against the old meaning runs at a different reflux and must be re-tuned.
+To reproduce the old split fraction `f`, pass `R = f / (1 - f)`.
+
+Affected: TEG regeneration and other columns that call `getCondenser().setRefluxRatio(...)`.
 None. The default is unset (`getMultiPhaseCheck()` returns `null`), which leaves the
 multiphase flag of each fluid exactly as the fluid was built, so existing models are
 unaffected until the method is called.
