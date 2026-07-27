@@ -1156,6 +1156,13 @@ public class NaphtaliSandholmSolver {
       return false;
     }
 
+    // Collect into scratch arrays first. Bailing out part way through would otherwise leave T, V, L
+    // and liq holding a mixture of scaled tray values and initializer defaults, which the cold
+    // initializer only happens to repair because it rewrites every entry.
+    double[] warmTemperature = new double[N];
+    double[] warmVapor = new double[N];
+    double[] warmLiquid = new double[N];
+    double[][] warmLiquidComponent = new double[N][C];
     for (int trayIndex = 0; trayIndex < N; trayIndex++) {
       SimpleTray tray = (SimpleTray) column.getTray(trayIndex);
       StreamInterface gasStream = tray.getGasOutStream();
@@ -1167,14 +1174,29 @@ public class NaphtaliSandholmSolver {
           || !Double.isFinite(trayTemperature)) {
         return false;
       }
-      T[trayIndex] = Double.isNaN(fixedTemperature[trayIndex]) ? trayTemperature : fixedTemperature[trayIndex];
-      V[trayIndex] = gasFlow;
-      L[trayIndex] = liquidFlow;
       SystemInterface liquidSystem = liquidStream.getThermoSystem();
-      for (int componentIndex = 0; componentIndex < C; componentIndex++) {
-        liq[trayIndex][componentIndex] = Math.max(liquidFlow * liquidSystem.getComponent(componentIndex).getx(),
-            1.0e-20);
+      if (liquidSystem == null || liquidSystem.getNumberOfComponents() != C) {
+        // The tray fluid describes a different component set than the feeds this solver was built
+        // from, so component index i does not mean the same species on both sides.
+        logger.info("NS: skipping scaled warm MESH state because tray {} carries {} components instead of {}",
+            trayIndex, liquidSystem == null ? -1 : liquidSystem.getNumberOfComponents(), C);
+        return false;
       }
+      warmTemperature[trayIndex] = Double.isNaN(fixedTemperature[trayIndex]) ? trayTemperature
+          : fixedTemperature[trayIndex];
+      warmVapor[trayIndex] = gasFlow;
+      warmLiquid[trayIndex] = liquidFlow;
+      for (int componentIndex = 0; componentIndex < C; componentIndex++) {
+        warmLiquidComponent[trayIndex][componentIndex] = Math
+            .max(liquidFlow * liquidSystem.getComponent(componentIndex).getx(), 1.0e-20);
+      }
+    }
+
+    for (int trayIndex = 0; trayIndex < N; trayIndex++) {
+      T[trayIndex] = warmTemperature[trayIndex];
+      V[trayIndex] = warmVapor[trayIndex];
+      L[trayIndex] = warmLiquid[trayIndex];
+      System.arraycopy(warmLiquidComponent[trayIndex], 0, liq[trayIndex], 0, C);
     }
     logger.info("NS: initialized warm MESH state from converged trays with flow scale {}", flowScaleFactor);
     return true;

@@ -320,19 +320,15 @@ public class OptimizedVUflash extends Flash {
   @Override
   public void run() {
     boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
-    double startPressure = system.getPressure();
-    double startTemperature = system.getTemperature();
-    boolean warmStartSafe = neqsim.thermo.ThermodynamicModelSettings.isInnerFlashWarmStartSafe(system);
     try {
-      solveFromCurrentState(warmStartSafe);
-      if (!warmStartSafe && !isSolutionAcceptable()) {
-        // Cold inner flashes can lose a phase and strand the Newton iteration on a state that
-        // violates the volume specification. Retry once from the incoming state with warm-started
-        // inner flashes, which continue the trajectory of the previous converged vessel state.
-        system.setPressure(startPressure);
-        system.setTemperature(startTemperature);
-        solveFromCurrentState(true);
-      }
+      // Warm start is required here for every model, including CPA. Unlike the iterative outer
+      // flashes governed by ThermodynamicModelSettings.isInnerFlashWarmStartSafe(system), the VU
+      // flash marches a transient vessel inventory in small P/T steps around the previous
+      // converged state, so the previous K-values are the natural seed. Restarting each inner
+      // flash cold lets the Newton iteration drop a phase mid-iteration and strand the vessel on a
+      // state that violates the volume specification - and because solveQ() leaves the system at
+      // its last iterate, that state then seeds every following transient step.
+      solveFromCurrentState(true);
       if (!isSolutionAcceptable()) {
         logger.warn("OptimizedVUflash did not reach the volume/energy specification");
       }

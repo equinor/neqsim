@@ -449,8 +449,15 @@ final class ColumnSolverFactory {
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
       column.markSolverTypeUsed(getSolverType());
-      DistillationColumn warmStartCandidate = isAutoCandidateProbeMode() ? null : createDampedFallbackCandidate(column);
-      DistillationColumn fallbackCandidate = shouldPrepareAcceleratedFallback() ? createDampedFallbackCandidate(column)
+      // createDampedFallbackCandidate is a full serialization deep copy of every tray fluid. Skip
+      // it when the exact warm-state cache is going to answer this call: the reuse path performs no
+      // solver work, so neither the warm-start validation candidate nor the fallback candidate can
+      // ever be consumed, and copying the column would dominate the cost of the whole invocation.
+      boolean exactReuseExpected = !isAutoCandidateProbeMode() && column.willReuseNaphtaliSandholmWarmState();
+      DistillationColumn warmStartCandidate = isAutoCandidateProbeMode() || exactReuseExpected ? null
+          : createDampedFallbackCandidate(column);
+      DistillationColumn fallbackCandidate = shouldPrepareAcceleratedFallback() && !exactReuseExpected
+          ? createDampedFallbackCandidate(column)
           : null;
       boolean accepted = false;
       boolean fallbackApplied = false;
@@ -839,8 +846,11 @@ final class ColumnSolverFactory {
    * @return finite scalar score where lower is better
    */
   private static double scoreResult(ColumnSolveResult result, DistillationColumn candidate) {
-    double score = residualScore(result.getTemperatureResidual()) + residualScore(result.getMassResidual())
-        + residualScore(result.getEnergyResidual()) + residualScore(result.getProductDrawResidualNorm());
+    // A simultaneous-correction solver reports NaN for the successive-substitution temperature
+    // residual because it never performs a tray sweep. That is a "not applicable", not a diverged
+    // residual, so it must not draw the 1e9 non-finite penalty and rank the candidate last.
+    double score = optionalResidualScore(result.getTemperatureResidual()) + residualScore(result.getMassResidual())
+        + optionalResidualScore(result.getEnergyResidual()) + residualScore(result.getProductDrawResidualNorm());
     if (Double.isFinite(result.getMeshResidualNorm())) {
       score += residualScore(result.getMeshResidualNorm());
     }
@@ -864,6 +874,24 @@ final class ColumnSolverFactory {
       return 1.0e9;
     }
     return Math.abs(residual);
+  }
+
+  /**
+   * Convert a residual that a solver may legitimately not produce into a scoring contribution.
+   *
+   * <p>
+   * {@code Double.NaN} means "this solver has no such residual" and contributes nothing, while an infinite value is a
+   * diverged residual and keeps the full penalty.
+   * </p>
+   *
+   * @param residual candidate residual value, possibly {@code Double.NaN}
+   * @return finite non-negative residual score
+   */
+  private static double optionalResidualScore(double residual) {
+    if (Double.isNaN(residual)) {
+      return 0.0;
+    }
+    return residualScore(residual);
   }
 
   /**

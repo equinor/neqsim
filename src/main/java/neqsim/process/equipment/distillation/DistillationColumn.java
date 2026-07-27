@@ -619,8 +619,26 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private transient boolean hasNaphtaliSandholmWarmState = false;
   /** Fingerprint of the external inputs and column specifications for the accepted Naphtali-Sandholm solution. */
   private transient long lastNaphtaliSandholmInputSignature = Long.MIN_VALUE;
-  /** Thermodynamic identity fingerprint required for compatible Naphtali-Sandholm warm starts. */
-  private transient long lastNaphtaliSandholmThermodynamicIdentitySignature = Long.MIN_VALUE;
+  /**
+   * Thermodynamic identity fingerprint of the feeds the current tray network was built for.
+   *
+   * <p>
+   * Written by {@link #init()}, which is the only place that rebuilds the tray fluids. A mismatch against the current
+   * feeds means the tray network describes a different component set, equation of state, or mixing rule and must be
+   * rebuilt before it can seed any solver.
+   * </p>
+   */
+  private transient long trayStateThermodynamicIdentitySignature = Long.MIN_VALUE;
+  /**
+   * Whether the current tray state was produced by {@link NaphtaliSandholmSolver} on this column instance.
+   *
+   * <p>
+   * A damped or MESH fallback candidate adopted through {@link #acceptSolvedStateCandidate(DistillationColumn)}
+   * replaces the tray network, so its state must never be committed to the Naphtali-Sandholm warm-state cache even when
+   * the reported solver type stays {@link SolverType#NAPHTALI_SANDHOLM} for telemetry continuity.
+   * </p>
+   */
+  private transient boolean naphtaliSandholmStateOwned = false;
   /** Whether the latest Naphtali-Sandholm result was an exact reuse of an accepted warm state. */
   private transient boolean lastNaphtaliSandholmWarmStateReused = false;
 
@@ -1088,6 +1106,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
     setDoInitializion(false);
 
+    // The tray fluids are about to be rebuilt from the current feeds, so record which thermodynamic
+    // identity they describe. Any later solve that sees a different identity must initialize again
+    // instead of reusing or warm-starting from a tray network built for other components.
+    trayStateThermodynamicIdentitySignature = calculateThermodynamicIdentitySignature();
+    naphtaliSandholmStateOwned = false;
+    hasNaphtaliSandholmWarmState = false;
+
     captureDirectExternalTrayFeeds();
     resetTrayInputsToExternalFeeds();
 
@@ -1222,15 +1247,21 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
   /**
    * Commit the current finalized column inputs as a reusable Naphtali-Sandholm warm state.
+   *
+   * <p>
+   * {@link #naphtaliSandholmStateOwned} is part of the gate because
+   * {@link #acceptNaphtaliWarmStartCandidate(DistillationColumn, String)} keeps reporting
+   * {@link SolverType#NAPHTALI_SANDHOLM} after adopting a state produced by the residual-monitored solver. Committing
+   * that state would cache a MESH result under the Naphtali-Sandholm key.
+   * </p>
    */
   private void commitNaphtaliSandholmWarmState() {
-    boolean acceptedNaphtaliSolve = lastSolverTypeUsed == SolverType.NAPHTALI_SANDHOLM
+    boolean acceptedNaphtaliSolve = naphtaliSandholmStateOwned && lastSolverTypeUsed == SolverType.NAPHTALI_SANDHOLM
         && (lastSolveStatus == SolveStatus.RIGOROUS_CONVERGED || lastSolveStatus == SolveStatus.RECONCILED_PRODUCTS)
         && !isDoInitializion();
     hasNaphtaliSandholmWarmState = acceptedNaphtaliSolve;
     if (acceptedNaphtaliSolve) {
       lastNaphtaliSandholmInputSignature = calculateNaphtaliSandholmInputSignature();
-      lastNaphtaliSandholmThermodynamicIdentitySignature = calculateNaphtaliSandholmThermodynamicIdentitySignature();
     }
   }
 
@@ -2224,11 +2255,20 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     long startTime = System.nanoTime();
-    long thermodynamicIdentitySignature = calculateNaphtaliSandholmThermodynamicIdentitySignature();
-    boolean thermodynamicIdentityMatches = thermodynamicIdentitySignature == lastNaphtaliSandholmThermodynamicIdentitySignature;
+    long thermodynamicIdentitySignature = calculateThermodynamicIdentitySignature();
+    // Compare against the identity the tray network was built for, not against the identity of the
+    // last accepted Naphtali-Sandholm solve. The tray fluids are what a warm start reads, and they
+    // are only rebuilt by init(). Gating this on hasBeenSolvedBefore is not safe either: that flag
+    // is transient and is reset to false by the serialization copy behind every fallback candidate.
+    boolean thermodynamicIdentityMatches = thermodynamicIdentitySignature == trayStateThermodynamicIdentitySignature;
     lastNaphtaliSandholmWarmStateReused = false;
-    if (hasBeenSolvedBefore && !thermodynamicIdentityMatches) {
+    if (!thermodynamicIdentityMatches) {
+      // The tray network describes other components, another equation of state, or another mixing
+      // rule. Nothing carried over from the previous solve is a meaningful starting point, so the
+      // column is treated exactly like one that has never been solved.
       hasNaphtaliSandholmWarmState = false;
+      naphtaliSandholmStateOwned = false;
+      hasBeenSolvedBefore = false;
       setDoInitializion(true);
     }
     long inputSignature = calculateNaphtaliSandholmInputSignature();
@@ -2250,7 +2290,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       originalFeedFlowRates.put(entry.getKey(), flowRates);
     }
 
-    if (isDoInitializion()) {
+    boolean initialized = isDoInitializion();
+    if (initialized) {
       this.init();
     }
     prepareColumnForSolve();
@@ -2258,7 +2299,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     NaphtaliSandholmSolver solver = new NaphtaliSandholmSolver(this, originalFeedSystems, originalFeedFlowRates);
     solver.setMaxIterations(maxNumberOfIterations);
     solver.setTolerance(1.0e-8);
-    boolean useWarmStart = hasBeenSolvedBefore && !isDoInitializion() && thermodynamicIdentityMatches;
+    boolean useWarmStart = hasBeenSolvedBefore && !initialized && thermodynamicIdentityMatches;
     solver.setWarmStartFromColumn(useWarmStart);
     boolean accepted = solver.solve(id);
     if (!accepted && useWarmStart) {
@@ -2277,10 +2318,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         solver.getLastMassBalanceError(), solver.getLastEnergyResidual(), startTime);
     hasBeenSolvedBefore = true;
     lastTotalFeedFlow = -1.0;
+    // The solver wrote the tray network of this column instance, so the state is eligible for the
+    // warm-state cache. init() has already recorded the matching thermodynamic identity.
+    naphtaliSandholmStateOwned = true;
+    trayStateThermodynamicIdentitySignature = thermodynamicIdentitySignature;
     hasNaphtaliSandholmWarmState = accepted;
     if (accepted) {
       lastNaphtaliSandholmInputSignature = inputSignature;
-      lastNaphtaliSandholmThermodynamicIdentitySignature = thermodynamicIdentitySignature;
     }
 
     if (!accepted) {
@@ -2299,8 +2343,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     boolean acceptedStatus = lastSolveStatus == SolveStatus.RIGOROUS_CONVERGED
         || lastSolveStatus == SolveStatus.RECONCILED_PRODUCTS;
     boolean signatureMatches = inputSignature == lastNaphtaliSandholmInputSignature;
-    boolean reusable = hasNaphtaliSandholmWarmState && lastSolverTypeUsed == SolverType.NAPHTALI_SANDHOLM
-        && acceptedStatus && !isDoInitializion() && signatureMatches;
+    boolean reusable = hasNaphtaliSandholmWarmState && naphtaliSandholmStateOwned
+        && lastSolverTypeUsed == SolverType.NAPHTALI_SANDHOLM && acceptedStatus && !isDoInitializion()
+        && signatureMatches;
     return reusable;
   }
 
@@ -2311,6 +2356,28 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   boolean wasNaphtaliSandholmWarmStateReused() {
     return lastNaphtaliSandholmWarmStateReused;
+  }
+
+  /**
+   * Predict whether the next Naphtali-Sandholm invocation will be answered from the exact warm-state cache.
+   *
+   * <p>
+   * Evaluating the two fingerprints costs one pass over the feeds and column configuration, which is negligible next to
+   * the serialization deep copy a caller would otherwise make to prepare a fallback candidate that the reuse path can
+   * never consume.
+   * </p>
+   *
+   * @return {@code true} when {@link #solveNaphtaliSandholm(UUID)} is expected to reuse the accepted state without
+   * running the solver
+   */
+  boolean willReuseNaphtaliSandholmWarmState() {
+    if (feedStreams.isEmpty() || numberOfTrays == 1 || isDoInitializion()) {
+      return false;
+    }
+    if (calculateThermodynamicIdentitySignature() != trayStateThermodynamicIdentitySignature) {
+      return false;
+    }
+    return canReuseNaphtaliSandholmWarmState(calculateNaphtaliSandholmInputSignature());
   }
 
   /**
@@ -2397,7 +2464,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Calculate the thermodynamic identity required to reuse a tray state as a numerical warm start.
+   * Calculate the thermodynamic identity the tray network must be built for.
    *
    * <p>
    * Operating conditions and specifications are deliberately excluded. A pressure, temperature, flow, or specification
@@ -2407,7 +2474,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *
    * @return thermodynamic identity fingerprint
    */
-  private long calculateNaphtaliSandholmThermodynamicIdentitySignature() {
+  private long calculateThermodynamicIdentitySignature() {
     long signature = 1125899906842597L;
     List<Integer> feedTrayNumbers = new ArrayList<Integer>(feedStreams.keySet());
     Collections.sort(feedTrayNumbers);
@@ -2417,7 +2484,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       List<StreamInterface> trayFeeds = feedStreams.get(trayNumber);
       signature = updateNaphtaliSandholmInputSignature(signature, trayFeeds.size());
       for (StreamInterface feed : trayFeeds) {
-        signature = updateNaphtaliSandholmThermodynamicIdentitySignature(signature, feed.getThermoSystem());
+        signature = updateThermodynamicIdentitySignature(signature, feed.getThermoSystem());
       }
     }
     return signature;
@@ -2443,7 +2510,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param system feed thermodynamic system
    * @return updated fingerprint
    */
-  private long updateNaphtaliSandholmThermodynamicIdentitySignature(long signature, SystemInterface system) {
+  private long updateThermodynamicIdentitySignature(long signature, SystemInterface system) {
     long updatedSignature = updateNaphtaliSandholmThermodynamicModelSignature(signature, system);
     String[] componentNames = system.getComponentNames();
     updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, componentNames.length);
@@ -2834,6 +2901,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.hasBeenSolvedBefore = candidate.hasBeenSolvedBefore;
     this.lastTotalFeedFlow = candidate.lastTotalFeedFlow;
     this.doInitializion = candidate.doInitializion;
+    // The tray network now belongs to the candidate, so every cached fingerprint that described the
+    // replaced trays is void. The warm state is dropped rather than carried over; when the adopted
+    // state is a legitimate accepted answer the caller re-arms it through
+    // acceptNaphtaliWarmStartCandidate and commitNaphtaliSandholmWarmState recomputes the
+    // fingerprint from the inputs that are actually in force.
+    this.trayStateThermodynamicIdentitySignature = candidate.trayStateThermodynamicIdentitySignature;
+    this.naphtaliSandholmStateOwned = false;
+    this.hasNaphtaliSandholmWarmState = false;
+    this.lastNaphtaliSandholmInputSignature = Long.MIN_VALUE;
+    this.lastNaphtaliSandholmWarmStateReused = false;
     this.solverTypeExplicitlySet = candidate.solverTypeExplicitlySet;
     this.fullFractionatorFastPathEnabled = candidate.fullFractionatorFastPathEnabled;
     this.lastSolverTypeUsed = candidate.lastSolverTypeUsed;
@@ -2958,6 +3035,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * diagnostics still show the attempted linearization work.
    * </p>
    *
+   * <p>
+   * The adopted tray state is a converged answer for the inputs currently in force, so the column re-arms the
+   * warm-state cache. {@link #commitNaphtaliSandholmWarmState()} then recomputes the input fingerprint from those
+   * inputs rather than reusing the fingerprint of the rejected candidate.
+   * </p>
+   *
    * @param candidate solved warm-start candidate to keep
    * @param reason reason the direct Naphtali-Sandholm candidate was rejected
    */
@@ -2977,6 +3060,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     acceptSolvedStateCandidate(candidate);
     lastSolverTypeUsed = SolverType.NAPHTALI_SANDHOLM;
     lastSolveStatusReason = reason;
+    naphtaliSandholmStateOwned = true;
     lastNaphtaliAnalyticJacobianColumns = analyticJacobianColumns;
     lastNaphtaliFiniteDifferenceJacobianColumns = finiteDifferenceJacobianColumns;
     lastNaphtaliThermoEvaluationCount = thermoEvaluationCount;
@@ -5027,6 +5111,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastMeshResidual = null;
     terminalGasProductDrawStream = null;
     terminalLiquidProductDrawStream = null;
+    trayStateThermodynamicIdentitySignature = Long.MIN_VALUE;
     err = 1.0e10;
     resetLastSolveMetrics();
 
@@ -7902,10 +7987,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (Double.isNaN(lastTemperatureResidual)) {
       // A simultaneous-correction solver has no successive-substitution sweep and therefore no
       // tray-temperature change between iterations. Its convergence measure is the MESH residual
-      // vector, so require that gate to be active rather than treating a missing residual as a
-      // pass. Accepting a fabricated zero here previously let a Naphtali-Sandholm solution with a
-      // 79 % component material imbalance report solved() == true.
-      temperatureSolved = isEffectiveMeshResidualToleranceEnforced();
+      // vector, so substitute that gate instead of treating a missing residual as a pass.
+      // Accepting a fabricated zero here previously let a Naphtali-Sandholm solution with a 79 %
+      // component material imbalance report solved() == true.
+      //
+      // When a caller has explicitly switched the MESH gate off, falling back to it would make
+      // such a column report solved() == false forever, which is the opposite of what turning a
+      // gate off means. In that case the remaining mass, energy, traffic and specification gates
+      // carry the contract on their own.
+      temperatureSolved = isEffectiveMeshResidualToleranceEnforced() || isMeshResidualToleranceExplicitlyDisabled();
     } else {
       temperatureSolved = lastTemperatureResidual < getEffectiveTemperatureTolerance();
     }
@@ -7980,6 +8070,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       return enforceMeshResidualTolerance;
     }
     return isResidualGatedSolverType(solverType) || isResidualGatedSolverType(lastSolverTypeUsed);
+  }
+
+  /**
+   * Check whether a caller has explicitly turned the MESH residual gate off.
+   *
+   * @return {@code true} when {@code setEnforceMeshResidualTolerance(false)} was called
+   */
+  private boolean isMeshResidualToleranceExplicitlyDisabled() {
+    return enforceMeshResidualToleranceCustomized && !enforceMeshResidualTolerance;
   }
 
   /**
@@ -11551,6 +11650,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastInitializationReport = "";
     lastAutoSolverHistory = new ArrayList<String>();
     lastSpecificationHomotopyStepCount = 0;
+    // A reset means the column no longer holds a result, so it cannot hold a reusable one either.
+    hasNaphtaliSandholmWarmState = false;
+    naphtaliSandholmStateOwned = false;
+    lastNaphtaliSandholmInputSignature = Long.MIN_VALUE;
+    lastNaphtaliSandholmWarmStateReused = false;
     resetInsideOutTelemetry();
     resetNaphtaliTelemetry();
     terminalGasProductDrawStream = null;
