@@ -24,7 +24,7 @@ class PhysicalPropertiesPackageDocumentationTest {
     assertPositiveFinite(fluid.getPhase("gas").getViscosity("kg/msec"));
     assertPositiveFinite(fluid.getPhase("gas").getThermalConductivity("W/mK"));
     assertPositiveFinite(fluid.getPhase("gas").getDensity("kg/m3"));
-    assertPositiveFinite(fluid.getPhase("gas").getKinematicViscosity());
+    assertPositiveFinite(fluid.getPhase("gas").getPhysicalProperties().getKinematicViscosity());
   }
 
   @Test
