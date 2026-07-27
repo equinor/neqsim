@@ -701,10 +701,10 @@ back pressure greater than or equal to the initial pressure and calculated heat 
 vessel geometry. It logs non-critical configuration warnings.
 
 `validateWithWarnings()` does not throw configuration errors. It returns them with an `ERROR:`
-prefix together with non-critical warnings. Initial pressures above 700 bar produce an
-`equation-of-state` validity warning, not an error. For example, an 80 bara initial state with 1.2
-bara back pressure is valid, while a 750 bara initial state with the same back pressure remains
-valid but produces the high-pressure warning.
+prefix together with non-critical warnings. Initial pressures above 700 bar produce a non-critical
+warning to confirm that the equation of state is valid for the pressure range. For example, an 80
+bara initial state with 1.2 bara back pressure is valid, while a 750 bara initial state with the same
+back pressure remains valid but produces the high-pressure warning.
 
 ### Orifice Sizing (API 521)
 
