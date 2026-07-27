@@ -619,6 +619,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private transient boolean hasNaphtaliSandholmWarmState = false;
   /** Fingerprint of the external inputs and column specifications for the accepted Naphtali-Sandholm solution. */
   private transient long lastNaphtaliSandholmInputSignature = Long.MIN_VALUE;
+  /** Thermodynamic identity fingerprint required for compatible Naphtali-Sandholm warm starts. */
+  private transient long lastNaphtaliSandholmThermodynamicIdentitySignature = Long.MIN_VALUE;
   /** Whether the latest Naphtali-Sandholm result was an exact reuse of an accepted warm state. */
   private transient boolean lastNaphtaliSandholmWarmStateReused = false;
 
@@ -1228,6 +1230,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     hasNaphtaliSandholmWarmState = acceptedNaphtaliSolve;
     if (acceptedNaphtaliSolve) {
       lastNaphtaliSandholmInputSignature = calculateNaphtaliSandholmInputSignature();
+      lastNaphtaliSandholmThermodynamicIdentitySignature = calculateNaphtaliSandholmThermodynamicIdentitySignature();
     }
   }
 
@@ -2221,8 +2224,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     long startTime = System.nanoTime();
-    long inputSignature = calculateNaphtaliSandholmInputSignature();
+    long thermodynamicIdentitySignature = calculateNaphtaliSandholmThermodynamicIdentitySignature();
+    boolean thermodynamicIdentityMatches = thermodynamicIdentitySignature == lastNaphtaliSandholmThermodynamicIdentitySignature;
     lastNaphtaliSandholmWarmStateReused = false;
+    if (hasBeenSolvedBefore && !thermodynamicIdentityMatches) {
+      hasNaphtaliSandholmWarmState = false;
+      setDoInitializion(true);
+    }
+    long inputSignature = calculateNaphtaliSandholmInputSignature();
     if (canReuseNaphtaliSandholmWarmState(inputSignature)) {
       reuseNaphtaliSandholmWarmState(id, startTime);
       return true;
@@ -2249,7 +2258,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     NaphtaliSandholmSolver solver = new NaphtaliSandholmSolver(this, originalFeedSystems, originalFeedFlowRates);
     solver.setMaxIterations(maxNumberOfIterations);
     solver.setTolerance(1.0e-8);
-    boolean useWarmStart = hasBeenSolvedBefore && !isDoInitializion();
+    boolean useWarmStart = hasBeenSolvedBefore && !isDoInitializion() && thermodynamicIdentityMatches;
     solver.setWarmStartFromColumn(useWarmStart);
     boolean accepted = solver.solve(id);
     if (!accepted && useWarmStart) {
@@ -2270,7 +2279,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastTotalFeedFlow = -1.0;
     hasNaphtaliSandholmWarmState = accepted;
     if (accepted) {
-      lastNaphtaliSandholmInputSignature = calculateNaphtaliSandholmInputSignature();
+      lastNaphtaliSandholmInputSignature = inputSignature;
+      lastNaphtaliSandholmThermodynamicIdentitySignature = thermodynamicIdentitySignature;
     }
 
     if (!accepted) {
@@ -2331,15 +2341,32 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     long signature = 1125899906842597L;
     List<Integer> feedTrayNumbers = new ArrayList<Integer>(feedStreams.keySet());
     Collections.sort(feedTrayNumbers);
+    signature = updateNaphtaliSandholmInputSignature(signature, feedTrayNumbers.size());
     for (Integer trayNumber : feedTrayNumbers) {
       signature = updateNaphtaliSandholmInputSignature(signature, trayNumber.longValue());
-      for (StreamInterface feed : feedStreams.get(trayNumber)) {
+      List<StreamInterface> trayFeeds = feedStreams.get(trayNumber);
+      signature = updateNaphtaliSandholmInputSignature(signature, trayFeeds.size());
+      for (StreamInterface feed : trayFeeds) {
         SystemInterface system = feed.getThermoSystem();
+        signature = updateNaphtaliSandholmThermodynamicModelSignature(signature, system);
         signature = updateNaphtaliSandholmInputSignature(signature, feed.getFlowRate("mol/hr"));
         signature = updateNaphtaliSandholmInputSignature(signature, feed.getTemperature("K"));
         signature = updateNaphtaliSandholmInputSignature(signature, feed.getPressure("bara"));
-        for (double moleFraction : system.getMolarComposition()) {
-          signature = updateNaphtaliSandholmInputSignature(signature, moleFraction);
+
+        String[] componentNames = system.getComponentNames();
+        double[] moleFractions = system.getMolarComposition();
+        signature = updateNaphtaliSandholmInputSignature(signature, componentNames.length);
+        signature = updateNaphtaliSandholmInputSignature(signature, moleFractions.length);
+        int pairedComponentCount = Math.min(componentNames.length, moleFractions.length);
+        for (int componentIndex = 0; componentIndex < pairedComponentCount; componentIndex++) {
+          signature = updateNaphtaliSandholmInputSignature(signature, componentNames[componentIndex]);
+          signature = updateNaphtaliSandholmInputSignature(signature, moleFractions[componentIndex]);
+        }
+        for (int componentIndex = pairedComponentCount; componentIndex < componentNames.length; componentIndex++) {
+          signature = updateNaphtaliSandholmInputSignature(signature, componentNames[componentIndex]);
+        }
+        for (int componentIndex = pairedComponentCount; componentIndex < moleFractions.length; componentIndex++) {
+          signature = updateNaphtaliSandholmInputSignature(signature, moleFractions[componentIndex]);
         }
       }
     }
@@ -2367,6 +2394,63 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     signature = updateColumnConfigurationSignature(signature);
 
     return signature;
+  }
+
+  /**
+   * Calculate the thermodynamic identity required to reuse a tray state as a numerical warm start.
+   *
+   * <p>
+   * Operating conditions and specifications are deliberately excluded. A pressure, temperature, flow, or specification
+   * change should run the solver but may still reuse compatible tray unknowns. Feed layout, component identities,
+   * thermodynamic model, and mixing rule define the structure that must be rebuilt by {@link #init()} when changed.
+   * </p>
+   *
+   * @return thermodynamic identity fingerprint
+   */
+  private long calculateNaphtaliSandholmThermodynamicIdentitySignature() {
+    long signature = 1125899906842597L;
+    List<Integer> feedTrayNumbers = new ArrayList<Integer>(feedStreams.keySet());
+    Collections.sort(feedTrayNumbers);
+    signature = updateNaphtaliSandholmInputSignature(signature, feedTrayNumbers.size());
+    for (Integer trayNumber : feedTrayNumbers) {
+      signature = updateNaphtaliSandholmInputSignature(signature, trayNumber.longValue());
+      List<StreamInterface> trayFeeds = feedStreams.get(trayNumber);
+      signature = updateNaphtaliSandholmInputSignature(signature, trayFeeds.size());
+      for (StreamInterface feed : trayFeeds) {
+        signature = updateNaphtaliSandholmThermodynamicIdentitySignature(signature, feed.getThermoSystem());
+      }
+    }
+    return signature;
+  }
+
+  /**
+   * Add the model-level identity shared by exact-reuse and warm-start fingerprints.
+   *
+   * @param signature fingerprint accumulated so far
+   * @param system feed thermodynamic system
+   * @return updated fingerprint
+   */
+  private long updateNaphtaliSandholmThermodynamicModelSignature(long signature, SystemInterface system) {
+    long updatedSignature = updateNaphtaliSandholmInputSignature(signature, system.getClass().getName());
+    updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, system.getModelName());
+    return updateNaphtaliSandholmInputSignature(updatedSignature, system.getMixingRuleName());
+  }
+
+  /**
+   * Add model and ordered component identities to a thermodynamic warm-start fingerprint.
+   *
+   * @param signature fingerprint accumulated so far
+   * @param system feed thermodynamic system
+   * @return updated fingerprint
+   */
+  private long updateNaphtaliSandholmThermodynamicIdentitySignature(long signature, SystemInterface system) {
+    long updatedSignature = updateNaphtaliSandholmThermodynamicModelSignature(signature, system);
+    String[] componentNames = system.getComponentNames();
+    updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, componentNames.length);
+    for (String componentName : componentNames) {
+      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, componentName);
+    }
+    return updatedSignature;
   }
 
   /**
