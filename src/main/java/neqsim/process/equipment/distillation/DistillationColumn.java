@@ -7462,7 +7462,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * satisfied
    */
   private boolean residualConvergenceSatisfied() {
-    boolean temperatureSolved = err < getEffectiveTemperatureTolerance();
+    // Gate on lastTemperatureResidual, not on the working field err. err is the live iteration
+    // variable of every inner solver loop: it is reset to 1e10 or 0.0 on solver entry and
+    // accumulated tray by tray, so any solver pass that exits before finalizeSolve() leaves it
+    // holding a partial value. That made solved() report false while getLastSolveStatus() said
+    // RIGOROUS_CONVERGED and every residual printed by getConvergenceDiagnostics() was inside
+    // tolerance, which kept enclosing Recycle/ProcessSystem loops iterating to their timeout.
+    // lastTemperatureResidual and lastSolveStatus are both written by finalizeSolve() and both
+    // cleared by resetLastSolveMetrics(), so they stay consistent with each other.
+    boolean temperatureSolved = lastTemperatureResidual < getEffectiveTemperatureTolerance();
     boolean massSolved = lastMassResidual <= getEffectiveMassBalanceTolerance();
     boolean energySolved = !enforceEnergyBalanceTolerance
         || lastEnergyResidual <= getEffectiveEnthalpyBalanceTolerance();
@@ -7476,8 +7484,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return {@code true} if the latest maximum internal traffic ratio is acceptable
    */
   private boolean internalTrafficSatisfied() {
+    // The solved-state guard must use the solved-state limit. Comparing against the relaxed
+    // update limit (1e5) let a column that circulates orders of magnitude more internal traffic
+    // than it is fed still report solved().
     return Double.isFinite(lastInternalTrafficRatio) && !lastInternalTrafficGuardReached
-        && lastInternalTrafficRatio <= MAX_RELAXED_INTERNAL_TRAFFIC_TO_FEED_RATIO;
+        && lastInternalTrafficRatio <= MAX_SOLVED_INTERNAL_TRAFFIC_TO_FEED_RATIO;
   }
 
   /**
@@ -9464,8 +9475,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       massOutput[i] = trays.get(i).getThermoSystem().getFlowRate("kg/hr");
       massBalance[i] = massInput[i] - massOutput[i];
 
-      System.out.println("Tray " + i + ": #in=" + numberOfInputStreams + ", massIn=" + massInput[i] + ", massOut="
-          + massOutput[i] + ", balance=" + massBalance[i]);
+      logger.debug("Tray {}: #in={}, massIn={}, massOut={}, balance={}", Integer.valueOf(i),
+          Integer.valueOf(numberOfInputStreams), Double.valueOf(massInput[i]), Double.valueOf(massOutput[i]),
+          Double.valueOf(massBalance[i]));
     }
     double massError = 0.0;
     for (int i = 0; i < numberOfTrays; i++) {
@@ -9504,8 +9516,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
 
       massBalance[i] = massInput[i] - massOutput[i];
-      System.out.println("Tray " + i + ", comp=" + componentName + ", #in=" + numberOfInputStreams + ", massIn="
-          + massInput[i] + ", massOut=" + massOutput[i] + ", balance=" + massBalance[i]);
+      logger.debug("Tray {}, comp={}, #in={}, massIn={}, massOut={}, balance={}", Integer.valueOf(i), componentName,
+          Integer.valueOf(numberOfInputStreams), Double.valueOf(massInput[i]), Double.valueOf(massOutput[i]),
+          Double.valueOf(massBalance[i]));
     }
 
     double massError = 0.0;
@@ -9978,7 +9991,27 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       updateMeshResiduals();
     }
     updateLastSolveStatus(productReconciled, fallbackProductsApplied);
+    warnOnNonFiniteColumnEndDuty();
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Warn when the reboiler or condenser duty is not a finite number after a solve.
+   *
+   * <p>
+   * A non-finite duty means the column-end energy balance could not be evaluated. It is silently propagated to callers
+   * through {@code getDuty()}, so it must at least be reported.
+   * </p>
+   */
+  private void warnOnNonFiniteColumnEndDuty() {
+    if (hasReboiler && getReboiler() != null && !Double.isFinite(getReboiler().getDuty())) {
+      logger.warn("Column {} finished with a non-finite reboiler duty ({}); the column-end energy balance "
+          + "could not be evaluated", getName(), Double.valueOf(getReboiler().getDuty()));
+    }
+    if (hasCondenser && getCondenser() != null && !Double.isFinite(getCondenser().getDuty())) {
+      logger.warn("Column {} finished with a non-finite condenser duty ({}); the column-end energy balance "
+          + "could not be evaluated", getName(), Double.valueOf(getCondenser().getDuty()));
+    }
   }
 
   /**
@@ -10042,6 +10075,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (fallbackProductsApplied) {
       setLastSolveStatus(SolveStatus.FALLBACK_PRODUCTS,
           "Public products were generated from guarded fallback flash products");
+      // The public products are now a single equilibrium flash of the mixed feeds, not the tray
+      // solution. The residual getters are computed against those fallback products and therefore
+      // look converged, so this warning is the only signal a caller gets. Callers must check
+      // getLastSolveStatus() and not the residuals alone.
+      logger.warn("Column {} returned guarded fallback products from an overall feed flash; "
+          + "tray solution was rejected and product flows/duties are not a rigorous column result", getName());
       return;
     }
     if (lastInternalTrafficGuardReached) {
@@ -10949,8 +10988,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Prints a simple energy balance for each tray to the console. The method calculates the total enthalpy of all inlet
-   * streams and compares it with the outlet enthalpy in order to highlight any discrepancies in the column setup.
+   * Logs a simple energy balance for each tray. The method calculates the total enthalpy of all inlet streams and
+   * compares it with the outlet enthalpy in order to highlight any discrepancies in the column setup.
    */
   public void energyBalanceCheck() {
     double[] energyInput = new double[numberOfTrays];
@@ -10965,8 +11004,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       energyOutput[i] += trays.get(i).getLiquidOutStream().getFluid().getEnthalpy();
       energyBalance[i] = energyInput[i] - energyOutput[i];
 
-      System.out.println("Tray " + i + ", #in=" + numberOfInputStreams + ", eIn=" + energyInput[i] + ", eOut="
-          + energyOutput[i] + ", balance=" + energyBalance[i]);
+      logger.debug("Tray {}, #in={}, eIn={}, eOut={}, balance={}", Integer.valueOf(i),
+          Integer.valueOf(numberOfInputStreams), Double.valueOf(energyInput[i]), Double.valueOf(energyOutput[i]),
+          Double.valueOf(energyBalance[i]));
     }
   }
 
@@ -11019,9 +11059,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     // Display
     column.displayResult();
-    System.out.println("Gas out:");
+    logger.info("Gas out:");
     column.getGasOutStream().getThermoSystem().display();
-    System.out.println("Liquid out:");
+    logger.info("Liquid out:");
     column.getLiquidOutStream().getThermoSystem().display();
   }
 
