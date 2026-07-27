@@ -781,7 +781,7 @@ public class EclipseFluidReadWrite {
           fluid.getPhase(i).getComponent(name).setRacketZ(0.29056 - 0.08775 * ACF.get(counter));
         }
         if (fluid.getPhase(0).getComponent(name).isIsTBPfraction()) {
-          fluid.changeComponentName(name, names.get(counter).replaceAll("_PC", "") + pseudoName);
+          fluid.changeComponentName(name, names.get(counter).replaceAll("_PC", "") + activePseudoName);
         } else {
         }
       }
