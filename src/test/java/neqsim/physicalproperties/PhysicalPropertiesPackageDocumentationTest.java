@@ -38,8 +38,12 @@ class PhysicalPropertiesPackageDocumentationTest {
     fluid.initPhysicalProperties();
 
     assertPositiveFinite(fluid.getPhase("gas").getViscosity("kg/msec"));
+    fluid.initPhysicalProperties("DENSITY");
+    assertPositiveFinite(fluid.getPhase("gas").getDensity("kg/m3"));
     fluid.initPhysicalProperties("VISCOSITY");
     assertPositiveFinite(fluid.getPhase("gas").getViscosity("kg/msec"));
+    fluid.initPhysicalProperties("CONDUCTIVITY");
+    assertPositiveFinite(fluid.getPhase("gas").getThermalConductivity("W/mK"));
     assertThrows(RuntimeException.class, () -> fluid.initPhysicalProperties("GLYCOL"));
   }
 
