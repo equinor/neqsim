@@ -61,14 +61,12 @@ public class CompressorOperatingPointResultTest {
     assertEquals(50.0, result.getInletPressureBara(), 1.0e-8);
     assertEquals(100.0, result.getRequestedDischargePressureBara(), 1.0e-8);
     assertEquals(100.0, result.getActualDischargePressureBara(), 1.0e-6);
-    assertEquals(CompressorOperatingPointResult.PressureTargetStatus.ON_TARGET,
-        result.getPressureTargetStatus());
+    assertEquals(CompressorOperatingPointResult.PressureTargetStatus.ON_TARGET, result.getPressureTargetStatus());
     assertFalse(result.isChartActive());
     assertTrue(result.isWithinChart());
     assertEquals(0.0, result.getRequiredRecycleFraction(), 0.0);
     assertEquals(0.0, result.getRecyclePowerLossKW(), 0.0);
-    assertEquals(CompressorOperatingPointResult.OperatingStatus.VALID,
-        result.getOperatingStatus());
+    assertEquals(CompressorOperatingPointResult.OperatingStatus.VALID, result.getOperatingStatus());
     assertTrue(result.isFeasible());
     assertNotNull(result.getConstraints());
   }
@@ -80,21 +78,18 @@ public class CompressorOperatingPointResultTest {
 
     CompressorOperatingPointResult result = compressor.getOperatingPointResult(0.02);
 
-    assertEquals(CompressorOperatingPointResult.PressureTargetStatus.BELOW_TARGET,
-        result.getPressureTargetStatus());
+    assertEquals(CompressorOperatingPointResult.PressureTargetStatus.BELOW_TARGET, result.getPressureTargetStatus());
     assertEquals(-0.05, result.getDischargePressureErrorFraction(), 1.0e-12);
-    assertEquals(CompressorOperatingPointResult.OperatingStatus.PRESSURE_TARGET_NOT_MET,
-        result.getOperatingStatus());
+    assertEquals(CompressorOperatingPointResult.OperatingStatus.PRESSURE_TARGET_NOT_MET, result.getOperatingStatus());
     assertFalse(result.isFeasible());
   }
 
   /** Verifies that the result reuses the universal capacity and bottleneck API. */
   @Test
   public void testCapacityBottleneckIsPropagated() {
-    CapacityConstraint customLimit =
-        new CapacityConstraint("vendorPowerLimit", "kW", CapacityConstraint.ConstraintType.HARD)
-            .setDesignValue(1000.0).setMaxValue(1000.0).setCurrentValue(1200.0)
-            .setSeverity(CapacityConstraint.ConstraintSeverity.HARD);
+    CapacityConstraint customLimit = new CapacityConstraint("vendorPowerLimit", "kW",
+        CapacityConstraint.ConstraintType.HARD).setDesignValue(1000.0).setMaxValue(1000.0).setCurrentValue(1200.0)
+        .setSeverity(CapacityConstraint.ConstraintSeverity.HARD);
     compressor.addCapacityConstraint(customLimit);
 
     CompressorOperatingPointResult result = compressor.getOperatingPointResult();
@@ -103,8 +98,7 @@ public class CompressorOperatingPointResultTest {
     assertTrue(result.isHardLimitExceeded());
     assertEquals("vendorPowerLimit", result.getLimitingConstraint());
     assertEquals(1.2, result.getMaximumCapacityUtilization(), 1.0e-12);
-    assertEquals(CompressorOperatingPointResult.OperatingStatus.CAPACITY_LIMIT,
-        result.getOperatingStatus());
+    assertEquals(CompressorOperatingPointResult.OperatingStatus.CAPACITY_LIMIT, result.getOperatingStatus());
     CompressorOperatingPointResult.ConstraintSnapshot snapshot = result.getConstraints().stream()
         .filter(value -> value.getName().equals("vendorPowerLimit")).findFirst().orElse(null);
     assertNotNull(snapshot);
@@ -131,8 +125,7 @@ public class CompressorOperatingPointResultTest {
     assertFalse(Double.isNaN(result.getDistanceToStonewall()));
     assertTrue(result.getRequiredRecycleFraction() >= 0.0);
     assertTrue(result.getRequiredRecycleFraction() <= 1.0);
-    assertEquals(result.getPowerKW() * result.getRequiredRecycleFraction(),
-        result.getRecyclePowerLossKW(), 1.0e-8);
+    assertEquals(result.getPowerKW() * result.getRequiredRecycleFraction(), result.getRecyclePowerLossKW(), 1.0e-8);
     assertEquals(result.getRecyclePowerLossKW(), result.getRecycleCoolerDutyKW(), 1.0e-8);
 
     CapacityConstraint surge = compressor.getCapacityConstraints().get("surgeMargin");
@@ -142,8 +135,7 @@ public class CompressorOperatingPointResultTest {
     assertTrue(surge.isMinimumConstraint());
     assertTrue(stonewall.isMinimumConstraint());
     assertEquals(compressor.getDistanceToSurge() * 100.0, surge.getCurrentValue(), 1.0e-8);
-    assertEquals(compressor.getDistanceToStoneWall() * 100.0, stonewall.getCurrentValue(),
-        1.0e-8);
+    assertEquals(compressor.getDistanceToStoneWall() * 100.0, stonewall.getCurrentValue(), 1.0e-8);
 
     String json = result.toJson();
     assertTrue(json.contains("\"operatingStatus\""));
@@ -161,8 +153,7 @@ public class CompressorOperatingPointResultTest {
     }
 
     CompressorOperatingPointResult restored;
-    try (ObjectInputStream input =
-        new ObjectInputStream(new ByteArrayInputStream(buffer.toByteArray()))) {
+    try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(buffer.toByteArray()))) {
       restored = (CompressorOperatingPointResult) input.readObject();
     }
 
