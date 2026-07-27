@@ -106,8 +106,8 @@ class ThermodynamicBenchmarkTest {
     BinaryInteractionParameterFitter prFitter = new BinaryInteractionParameterFitter(dataset,
         parameter -> new NeqSimPhaseEquilibriumPrediction(NeqSimPhaseEquilibriumPrediction.Model.PR, parameter));
 
-    BinaryInteractionParameterFitter.Result srk = srkFitter.fit(-0.05, 0.2, 1.0e-3, 12);
-    BinaryInteractionParameterFitter.Result pr = prFitter.fit(-0.05, 0.2, 1.0e-3, 12);
+    BinaryInteractionParameterFitter.Result srk = srkFitter.fit(-0.5, 0.2, 1.0e-4, 20);
+    BinaryInteractionParameterFitter.Result pr = prFitter.fit(-0.5, 0.2, 1.0e-4, 20);
 
     throw new AssertionError("CALIBRATION SRK kij=" + srk.getBinaryInteractionParameter() + " RMSRE="
         + srk.getRootMeanSquareRelativeErrorPercent() + "; PR kij=" + pr.getBinaryInteractionParameter() + " RMSRE="
