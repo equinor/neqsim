@@ -52,15 +52,12 @@ public class PressureBoundaryCapacityIntegrationTest {
     PressureBoundaryOptimizer optimizer = new PressureBoundaryOptimizer(process, feed, export);
     optimizer.setMinSurgeMargin(0.15);
     optimizer.configureCompressorCharts();
-    compressor.addCapacityConstraint(
-        new CapacityConstraint("vendorLimit", "-", CapacityConstraint.ConstraintType.SOFT)
-            .setDesignValue(1.0).setCurrentValue(0.8)
-            .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT));
+    compressor.addCapacityConstraint(new CapacityConstraint("vendorLimit", "-", CapacityConstraint.ConstraintType.SOFT)
+        .setDesignValue(1.0).setCurrentValue(0.8).setSeverity(CapacityConstraint.ConstraintSeverity.SOFT));
 
     Method factory = PressureBoundaryOptimizer.class.getDeclaredMethod("createCompressorConstraints");
     factory.setAccessible(true);
-    List<OptimizationConstraint> constraints =
-        (List<OptimizationConstraint>) factory.invoke(optimizer);
+    List<OptimizationConstraint> constraints = (List<OptimizationConstraint>) factory.invoke(optimizer);
 
     assertConstraintPresent(constraints, "ExportCompressor_speed");
     assertConstraintPresent(constraints, "ExportCompressor_power");
@@ -73,13 +70,11 @@ public class PressureBoundaryCapacityIntegrationTest {
     CapacityConstraint surge = compressor.getCapacityConstraints().get("surgeMargin");
     assertNotNull(surge);
     assertEquals(15.0, surge.getMinValue(), 0.0);
-    OptimizationConstraint surgeOptimization =
-        getConstraint(constraints, "ExportCompressor_surgeMargin");
+    OptimizationConstraint surgeOptimization = getConstraint(constraints, "ExportCompressor_surgeMargin");
     assertEquals(1.0 - surge.getUtilization(), surgeOptimization.margin(process), 1.0e-12);
   }
 
-  private static void assertConstraintPresent(List<OptimizationConstraint> constraints,
-      String name) {
+  private static void assertConstraintPresent(List<OptimizationConstraint> constraints, String name) {
     assertTrue(hasConstraint(constraints, name), "Expected optimizer constraint " + name);
   }
 
@@ -87,8 +82,7 @@ public class PressureBoundaryCapacityIntegrationTest {
     return getConstraint(constraints, name) != null;
   }
 
-  private static OptimizationConstraint getConstraint(List<OptimizationConstraint> constraints,
-      String name) {
+  private static OptimizationConstraint getConstraint(List<OptimizationConstraint> constraints, String name) {
     for (OptimizationConstraint constraint : constraints) {
       if (name.equals(constraint.getName())) {
         return constraint;
