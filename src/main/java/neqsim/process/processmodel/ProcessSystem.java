@@ -5476,39 +5476,6 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + Objects.hash(alarmManager, measurementDevices, measurementHistory, name,
-        recycleController, surroundingTemperature, time, timeStep, timeStepNumber, unitOperations);
-    return result;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null) {
-      return false;
-    }
-    if (getClass() != obj.getClass()) {
-      return false;
-    }
-    ProcessSystem other = (ProcessSystem) obj;
-    return Objects.equals(alarmManager, other.alarmManager)
-        && Objects.equals(measurementDevices, other.measurementDevices) && Objects.equals(name, other.name)
-        && Objects.equals(recycleController, other.recycleController)
-        && Objects.equals(measurementHistory, other.measurementHistory)
-        && Double.doubleToLongBits(surroundingTemperature) == Double.doubleToLongBits(other.surroundingTemperature)
-        && Double.doubleToLongBits(time) == Double.doubleToLongBits(other.time)
-        && Double.doubleToLongBits(timeStep) == Double.doubleToLongBits(other.timeStep)
-        && timeStepNumber == other.timeStepNumber && Objects.equals(unitOperations, other.unitOperations);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public String getReport_json() {
     return new Report(this).generateJsonReport();
   }
@@ -5721,27 +5688,6 @@ public class ProcessSystem extends SimulationBaseClass {
         array[index++] = Arrays.copyOf(entry, entry.length);
       }
       return array;
-    }
-
-    @Override
-    public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + maxSize;
-      result = prime * result + Arrays.deepHashCode(toArray());
-      return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj) {
-        return true;
-      }
-      if (obj == null || getClass() != obj.getClass()) {
-        return false;
-      }
-      MeasurementHistory other = (MeasurementHistory) obj;
-      return maxSize == other.maxSize && Arrays.deepEquals(toArray(), other.toArray());
     }
   }
 
