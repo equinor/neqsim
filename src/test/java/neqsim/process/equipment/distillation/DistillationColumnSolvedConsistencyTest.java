@@ -90,9 +90,25 @@ public class DistillationColumnSolvedConsistencyTest extends neqsim.NeqSimTest {
     process.run();
 
     DistillationColumn column = (DistillationColumn) process.getUnit("TEG regeneration column");
+
+    boolean convergedStatus = column.getLastSolveStatus() == DistillationColumn.SolveStatus.RIGOROUS_CONVERGED
+        || column.getLastSolveStatus() == DistillationColumn.SolveStatus.RECONCILED_PRODUCTS;
+    Assertions.assertTrue(convergedStatus,
+        "Column did not converge on the first run, cannot check solved() stability. Status was "
+            + column.getLastSolveStatus() + ": " + column.getLastSolveStatusReason());
+
     boolean firstSolved = column.solved();
+    Assertions.assertTrue(firstSolved,
+        "Column should be solved() on the first run when status/residuals indicate convergence. Diagnostics:\n"
+            + column.getConvergenceDiagnostics());
 
     process.run();
+
+    convergedStatus = column.getLastSolveStatus() == DistillationColumn.SolveStatus.RIGOROUS_CONVERGED
+        || column.getLastSolveStatus() == DistillationColumn.SolveStatus.RECONCILED_PRODUCTS;
+    Assertions.assertTrue(convergedStatus,
+        "Column did not converge on the second run, cannot check solved() stability. Status was "
+            + column.getLastSolveStatus() + ": " + column.getLastSolveStatusReason());
 
     Assertions.assertEquals(firstSolved, column.solved(),
         "solved() flipped on a warm re-solve of an unchanged column. Diagnostics:\n"
