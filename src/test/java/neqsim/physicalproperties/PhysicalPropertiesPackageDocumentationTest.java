@@ -65,8 +65,7 @@ class PhysicalPropertiesPackageDocumentationTest {
 
     assertInstanceOf(FrictionTheoryViscosityMethod.class,
         fluid.getPhase("gas").getPhysicalProperties().getViscosityModel());
-    assertInstanceOf(LBCViscosityMethod.class,
-        fluid.getPhase("oil").getPhysicalProperties().getViscosityModel());
+    assertInstanceOf(LBCViscosityMethod.class, fluid.getPhase("oil").getPhysicalProperties().getViscosityModel());
     assertPositiveFinite(fluid.getPhase("gas").getViscosity("cP"));
     assertPositiveFinite(fluid.getPhase("oil").getViscosity("cP"));
   }
