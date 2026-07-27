@@ -3,8 +3,6 @@ title: "Complete offshore process engineering study"
 description: "End-to-end engineering study of the comparesimulations offshore oil-and-gas process, from process benchmark through discipline calculations, DEXPI package, and readiness gaps."
 ---
 
-# Complete offshore process engineering study
-
 The executable
 [`complete_offshore_process_engineering_study.ipynb`](https://github.com/equinor/neqsim/blob/master/examples/notebooks/complete_offshore_process_engineering_study.ipynb)
 applies NeqSim's process-to-engineering workflow to the complete process in the
