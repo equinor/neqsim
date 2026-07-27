@@ -1670,7 +1670,10 @@ public class ProcessSystem extends SimulationBaseClass {
 
     List<ProcessEquipmentInterface> iterativeSection = new ArrayList<>();
     if (firstIterativeLevel >= 0) {
-      java.util.Set<ProcessEquipmentInterface> iterativeSet = new java.util.HashSet<>();
+      // Identity based: equipment hashCode()/equals() are content based and mutate while the
+      // flowsheet runs, and two distinct units can compare equal across process areas.
+      java.util.Set<ProcessEquipmentInterface> iterativeSet = java.util.Collections
+          .newSetFromMap(new IdentityHashMap<ProcessEquipmentInterface, Boolean>());
       for (int levelIdx = firstIterativeLevel; levelIdx < levels.size(); levelIdx++) {
         for (ProcessNode node : levels.get(levelIdx)) {
           iterativeSet.add(node.getEquipment());
@@ -3267,7 +3270,10 @@ public class ProcessSystem extends SimulationBaseClass {
     if (start == null) {
       throw new IllegalArgumentException("No unit named '" + startUnitName + "' in process");
     }
-    java.util.Set<ProcessEquipmentInterface> visited = new java.util.LinkedHashSet<ProcessEquipmentInterface>();
+    // Identity based: equipment hashCode()/equals() are content based and mutate while the
+    // flowsheet runs, so an equals-based set can mark a different-but-equal unit as visited.
+    java.util.Set<ProcessEquipmentInterface> visited = java.util.Collections
+        .newSetFromMap(new IdentityHashMap<ProcessEquipmentInterface, Boolean>());
     java.util.Deque<ProcessEquipmentInterface> stack = new java.util.ArrayDeque<ProcessEquipmentInterface>();
     stack.push(start);
     while (!stack.isEmpty()) {
@@ -3444,7 +3450,9 @@ public class ProcessSystem extends SimulationBaseClass {
     if (start == null) {
       throw new IllegalArgumentException("No unit named '" + startUnitName + "' in process");
     }
-    java.util.Set<ProcessEquipmentInterface> visited = new java.util.LinkedHashSet<ProcessEquipmentInterface>();
+    // Identity based: see deactivateSection(String).
+    java.util.Set<ProcessEquipmentInterface> visited = java.util.Collections
+        .newSetFromMap(new IdentityHashMap<ProcessEquipmentInterface, Boolean>());
     java.util.Deque<ProcessEquipmentInterface> stack = new java.util.ArrayDeque<ProcessEquipmentInterface>();
     stack.push(start);
     while (!stack.isEmpty()) {
@@ -5585,7 +5593,22 @@ public class ProcessSystem extends SimulationBaseClass {
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * <b>Warning - value based and mutable.</b> The hash is derived from the current contents of the process system
+   * ({@code time}, {@code timeStepNumber}, the measurement history and every unit operation), so it changes while the
+   * model runs. A {@code ProcessSystem} must therefore never be used as a key in a {@link java.util.HashMap} or as an
+   * element of a {@link java.util.HashSet}: entries stored before {@code run()} become unreachable afterwards, which
+   * surfaces as silent lookup misses and duplicate registrations rather than as an exception. Use
+   * {@link java.util.IdentityHashMap} (or a set created from one via {@code Collections.newSetFromMap}) whenever a
+   * registry keyed on process identity is needed, and
+   * {@link neqsim.process.processmodel.lifecycle.ProcessModelState#compare} when two models must be compared by value.
+   * </p>
+   *
+   * @return content-based hash of the current process-system state
+   */
   @Override
   public int hashCode() {
     final int prime = 31;

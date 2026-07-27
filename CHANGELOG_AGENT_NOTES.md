@@ -9,6 +9,53 @@
 
 ---
 
+## 2026-07-27 — Fix: never use `ProcessSystem` or process equipment as a hash-map key
+
+### Summary
+
+`ProcessSystem.hashCode()` and `ProcessEquipmentBaseClass.hashCode()` are **value based over
+mutable state**. `ProcessSystem` hashes `time`, `timeStepNumber`, the measurement history and
+every unit operation; equipment hashes `report`, `properties`, `conditionAnalysisMessage` and
+the attached controllers. All of those are rewritten by `run()`, so the hash of a process or a
+unit changes as the model solves.
+
+Using such an object as a `HashMap` key or `HashSet` element violates the `Map` contract: after
+a run the entry sits in the wrong bucket, so lookups miss. It never returns a *wrong* value —
+`equals()` still guards — which is why the failure is silent: caches degrade to permanent
+misses, registries lose entries and re-register duplicates, and stale entries are never
+collected.
+
+### What changed
+
+- `PFDLayoutPolicy.roleCache` / `phaseCache` — were `HashMap` keyed on equipment and streams.
+  These are long-lived caches, so they were guaranteed to stop resolving after the first
+  `run()`. Now `IdentityHashMap`.
+- `ProcessSystem.buildHybridPlan()` — the `iterativeSet` membership set is now identity based.
+- `ProcessSystem.deactivateSection(String)` / `activateSection(String)` — the `visited`
+  traversal sets are now identity based. Besides the mutable-hash issue, an equals-based set
+  could mark a *different* unit as already visited when two units share a name, which happens
+  across the areas of a `ProcessModel`.
+- Both `hashCode()` methods now carry an explicit JavaDoc warning.
+
+This aligns the remaining call sites with the pattern already used by `ProcessModel`,
+`JsonProcessExporter`, `KValueProcessSimulator`, the DEXPI writers and the Graphviz exporters.
+
+### Migration
+
+No API change. **Agents and downstream code:** never key a map or set on `ProcessSystem`,
+`ProcessEquipmentInterface` or `StreamInterface`. Use:
+
+```java
+Map<StreamInterface, Foo> byStream = new IdentityHashMap<StreamInterface, Foo>();
+Set<ProcessEquipmentInterface> seen =
+    Collections.newSetFromMap(new IdentityHashMap<ProcessEquipmentInterface, Boolean>());
+```
+
+To compare two models **by value**, use `ProcessModelState.compare(oldState, newState)` rather
+than `equals()`.
+
+---
+
 ## 2026-07-27 — New: per-area three-phase flash control (`setMultiPhaseCheck`)
 
 ### Summary

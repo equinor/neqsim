@@ -552,7 +552,22 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
     return null;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * <b>Warning - value based and mutable.</b> The hash is derived from mutable state ({@code report},
+   * {@code properties}, {@code conditionAnalysisMessage} and the attached controllers), so it changes whenever the
+   * owning flowsheet runs. Process equipment must therefore never be used as a key in a {@link java.util.HashMap} or as
+   * an element of a {@link java.util.HashSet}: entries stored before {@code run()} become unreachable afterwards, which
+   * surfaces as silent lookup misses rather than as an exception. Two distinct units can also compare equal when they
+   * share a name, which happens across process areas of a {@code ProcessModel}. Use {@link java.util.IdentityHashMap}
+   * (or a set created from one via {@code Collections.newSetFromMap}) for any registry, cache or graph-traversal set
+   * keyed on equipment.
+   * </p>
+   *
+   * @return content-based hash of the current equipment state
+   */
   @Override
   public int hashCode() {
     final int prime = 31;
