@@ -12,6 +12,7 @@ import java.io.ObjectOutputStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.capacity.CapacityConstraint;
+import neqsim.process.equipment.expander.Expander;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -141,6 +142,61 @@ public class CompressorOperatingPointResultTest {
     assertTrue(json.contains("\"operatingStatus\""));
     assertTrue(json.contains("\"pressureTargetStatus\""));
     assertTrue(json.contains("\"constraints\""));
+  }
+
+  /** Verifies that undefined map margins fail closed as violated minimum constraints. */
+  @Test
+  public void testUndefinedMapMarginsViolateMinimumConstraints() {
+    Compressor undefinedMargins = new Compressor("undefined margins", compressor.getInletStream()) {
+      private static final long serialVersionUID = 1000L;
+
+      @Override
+      public double getDistanceToSurge() {
+        return Double.NaN;
+      }
+
+      @Override
+      public double getDistanceToStoneWall() {
+        return Double.POSITIVE_INFINITY;
+      }
+    };
+    undefinedMargins.setOutletPressure(100.0, "bara");
+    undefinedMargins.setUsePolytropicCalc(true);
+    undefinedMargins.setPolytropicEfficiency(0.75);
+    undefinedMargins.run();
+
+    CompressorChartGenerator generator = new CompressorChartGenerator(undefinedMargins);
+    generator.setChartType("interpolate and extrapolate");
+    undefinedMargins.setCompressorChart(generator.generateCompressorChart("normal curves"));
+    undefinedMargins.reinitializeCapacityConstraints();
+
+    CapacityConstraint surge = undefinedMargins.getCapacityConstraints().get("surgeMargin");
+    CapacityConstraint stonewall = undefinedMargins.getCapacityConstraints().get("stonewallMargin");
+    assertNotNull(surge);
+    assertNotNull(stonewall);
+    assertEquals(0.0, surge.getCurrentValue(), 0.0);
+    assertEquals(0.0, stonewall.getCurrentValue(), 0.0);
+    assertTrue(surge.isViolated());
+    assertTrue(stonewall.isViolated());
+
+    CompressorOperatingPointResult result = undefinedMargins.getOperatingPointResult();
+    assertEquals(CompressorOperatingPointResult.OperatingStatus.CAPACITY_LIMIT, result.getOperatingStatus());
+    assertFalse(result.isFeasible());
+  }
+
+  /** Verifies that signed recovered power does not invalidate an inherited expander result. */
+  @Test
+  public void testExpanderRecoveredPowerIsValid() {
+    Expander expander = new Expander("turboexpander", compressor.getInletStream());
+    expander.setOutletPressure(20.0, "bara");
+    expander.setIsentropicEfficiency(0.80);
+    expander.run();
+
+    CompressorOperatingPointResult result = expander.getOperatingPointResult();
+
+    assertTrue(result.getPowerKW() < 0.0);
+    assertEquals(CompressorOperatingPointResult.OperatingStatus.VALID, result.getOperatingStatus());
+    assertTrue(result.isFeasible());
   }
 
   /** Verifies that the detached result survives Java serialization. */
