@@ -16,9 +16,8 @@ public class CapacityConstraintMinimumLimitTest {
   /** Verifies utilization and hard-limit behavior on both sides of a minimum. */
   @Test
   public void testHardMinimumConstraint() {
-    CapacityConstraint margin =
-        new CapacityConstraint("surgeMargin", "%", CapacityConstraint.ConstraintType.HARD)
-            .setDesignValue(Double.MAX_VALUE).setMinValue(10.0).setCurrentValue(15.0);
+    CapacityConstraint margin = new CapacityConstraint("surgeMargin", "%", CapacityConstraint.ConstraintType.HARD)
+        .setDesignValue(Double.MAX_VALUE).setMinValue(10.0).setCurrentValue(15.0);
 
     assertTrue(margin.isMinimumConstraint());
     assertEquals(10.0 / 15.0, margin.getUtilization(), 1.0e-12);
@@ -35,9 +34,8 @@ public class CapacityConstraintMinimumLimitTest {
   /** Verifies that equality with the minimum remains feasible. */
   @Test
   public void testMinimumBoundaryIsFeasible() {
-    CapacityConstraint margin =
-        new CapacityConstraint("stonewallMargin", "%", CapacityConstraint.ConstraintType.HARD)
-            .setDesignValue(Double.MAX_VALUE).setMinValue(5.0).setCurrentValue(5.0);
+    CapacityConstraint margin = new CapacityConstraint("stonewallMargin", "%", CapacityConstraint.ConstraintType.HARD)
+        .setDesignValue(Double.MAX_VALUE).setMinValue(5.0).setCurrentValue(5.0);
 
     assertEquals(1.0, margin.getUtilization(), 0.0);
     assertFalse(margin.isViolated());
