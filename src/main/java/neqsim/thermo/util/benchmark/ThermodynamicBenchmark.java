@@ -10,12 +10,13 @@ import java.util.Map;
  * Reusable, uncertainty-aware comparison of thermodynamic model predictions with experimental data.
  *
  * <p>
- * Experimental values, units, composition, uncertainty, and provenance remain attached to every
- * point so benchmark results are auditable and suitable for regression testing.
+ * Experimental values, units, composition, uncertainty, and provenance remain attached to every point so benchmark
+ * results are auditable and suitable for regression testing.
  * </p>
  */
 public final class ThermodynamicBenchmark {
-  private ThermodynamicBenchmark() {}
+  private ThermodynamicBenchmark() {
+  }
 
   /** Thermodynamic properties supported by the benchmark framework. */
   public enum Property {
@@ -58,15 +59,12 @@ public final class ThermodynamicBenchmark {
      * @param unit unit of the measured value
      * @param composition mole-fraction composition
      */
-    public Point(Property property, double temperatureK, double pressureBara,
-        double experimentalValue, double standardUncertainty, String unit,
-        Map<String, Double> composition) {
-      if (property == null || unit == null || unit.trim().isEmpty() || composition == null
-          || composition.isEmpty()) {
+    public Point(Property property, double temperatureK, double pressureBara, double experimentalValue,
+        double standardUncertainty, String unit, Map<String, Double> composition) {
+      if (property == null || unit == null || unit.trim().isEmpty() || composition == null || composition.isEmpty()) {
         throw new IllegalArgumentException("Property, unit, and composition are required");
       }
-      if (!Double.isFinite(temperatureK) || temperatureK <= 0.0
-          || !Double.isFinite(experimentalValue)) {
+      if (!Double.isFinite(temperatureK) || temperatureK <= 0.0 || !Double.isFinite(experimentalValue)) {
         throw new IllegalArgumentException("Temperature and experimental value must be finite");
       }
       double compositionSum = 0.0;
@@ -145,8 +143,8 @@ public final class ThermodynamicBenchmark {
      * @param points experimental points
      */
     public Dataset(String name, String citation, String doi, String license, List<Point> points) {
-      if (name == null || name.trim().isEmpty() || citation == null || doi == null
-          || license == null || points == null || points.isEmpty()) {
+      if (name == null || name.trim().isEmpty() || citation == null || doi == null || license == null || points == null
+          || points.isEmpty()) {
         throw new IllegalArgumentException("Dataset metadata and points are required");
       }
       this.name = name;
@@ -204,13 +202,12 @@ public final class ThermodynamicBenchmark {
     private Row(Point point, double predictedValue) {
       this.point = point;
       this.predictedValue = predictedValue;
-      this.signedRelativeErrorPercent =
-          100.0 * (predictedValue - point.getExperimentalValue()) / point.getExperimentalValue();
+      this.signedRelativeErrorPercent = 100.0 * (predictedValue - point.getExperimentalValue())
+          / point.getExperimentalValue();
       double uncertainty = point.getStandardUncertainty();
-      this.uncertaintyNormalizedResidual =
-          Double.isFinite(uncertainty) && uncertainty > 0.0
-              ? (predictedValue - point.getExperimentalValue()) / uncertainty
-              : Double.NaN;
+      this.uncertaintyNormalizedResidual = Double.isFinite(uncertainty) && uncertainty > 0.0
+          ? (predictedValue - point.getExperimentalValue()) / uncertainty
+          : Double.NaN;
     }
 
     /** @return experimental point */
@@ -310,10 +307,8 @@ public final class ThermodynamicBenchmark {
    * @return aggregate report
    * @throws Exception when any prediction fails or is non-finite
    */
-  public static Report run(String modelName, Dataset dataset, Prediction prediction)
-      throws Exception {
-    if (modelName == null || modelName.trim().isEmpty() || dataset == null
-        || prediction == null) {
+  public static Report run(String modelName, Dataset dataset, Prediction prediction) throws Exception {
+    if (modelName == null || modelName.trim().isEmpty() || dataset == null || prediction == null) {
       throw new IllegalArgumentException("Model name, dataset, and prediction are required");
     }
     List<Row> rows = new ArrayList<Row>();
