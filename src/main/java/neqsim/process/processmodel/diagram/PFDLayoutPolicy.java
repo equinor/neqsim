@@ -60,8 +60,9 @@ public class PFDLayoutPolicy implements Serializable {
   private static final long serialVersionUID = 1000L;
 
   /**
-   * Cache for equipment role classifications. Keyed by object identity: equipment {@code hashCode()} is content based
-   * and changes when the flowsheet runs, so a plain {@code HashMap} would lose every entry after the first run.
+   * Cache for equipment role classifications. Keyed by object identity so the cache is insulated from any equality
+   * semantics the equipment classes may adopt: a role is a property of one specific unit instance, never of a
+   * different-but-equal unit.
    */
   private final Map<ProcessEquipmentInterface, EquipmentRole> roleCache = new IdentityHashMap<ProcessEquipmentInterface, EquipmentRole>();
 

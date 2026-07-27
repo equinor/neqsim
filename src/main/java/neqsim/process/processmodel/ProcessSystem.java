@@ -70,6 +70,15 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 /**
  * Represents a process system containing unit operations.
  *
+ * <p>
+ * <b>Identity equality.</b> {@code ProcessSystem} does not override {@link Object#equals(Object)} or
+ * {@link Object#hashCode()}, so two process systems are equal only when they are the same instance. The previous
+ * value-based implementation hashed mutable state ({@code time}, {@code timeStepNumber}, the measurement history and
+ * every unit operation), all of which is rewritten by {@link #run()}; an entry stored in a {@link java.util.HashMap}
+ * before a run therefore became unreachable afterwards. To compare two models by value use
+ * {@link neqsim.process.processmodel.lifecycle.ProcessModelState#compare}.
+ * </p>
+ *
  * @author esol
  */
 public class ProcessSystem extends SimulationBaseClass {
@@ -447,7 +456,8 @@ public class ProcessSystem extends SimulationBaseClass {
     getUnitOperations().add(position, operation);
     invalidateStructureCaches();
     if (propertyInitLevel != null) {
-      applyPropertyInitLevel(operation, propertyInitLevel);
+      applyPropertyInitLevel(operation, propertyInitLevel,
+          Collections.newSetFromMap(new IdentityHashMap<StreamInterface, Boolean>()));
     }
     if (operation instanceof ModuleInterface) {
       ((ModuleInterface) operation).initializeModule();
@@ -466,13 +476,25 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * @param operation the unit operation to configure; ignored when null
    * @param level the property-initialization level to apply; must not be null
+   * @param visited identity set of streams already updated, used to avoid double counting shared streams
+   * @return the number of distinct streams updated
    */
-  private void applyPropertyInitLevel(ProcessEquipmentInterface operation, Stream.PropertyInitLevel level) {
+  private int applyPropertyInitLevel(ProcessEquipmentInterface operation, Stream.PropertyInitLevel level,
+      java.util.Set<StreamInterface> visited) {
     if (operation == null) {
-      return;
+      return 0;
     }
-    if (operation instanceof Stream) {
+    int count = 0;
+    if (operation instanceof ModuleInterface) {
+      ProcessSystem subProcess = ((ModuleInterface) operation).getOperations();
+      if (subProcess != null && subProcess != this) {
+        return subProcess.setPropertyInitLevel(level);
+      }
+      return 0;
+    }
+    if (operation instanceof Stream && visited.add((StreamInterface) operation)) {
       ((Stream) operation).setPropertyInitLevel(level);
+      count++;
     }
     try {
       List<StreamInterface> connected = new ArrayList<StreamInterface>();
@@ -483,13 +505,33 @@ public class ProcessSystem extends SimulationBaseClass {
         connected.addAll(operation.getOutletStreams());
       }
       for (StreamInterface connectedStream : connected) {
-        if (connectedStream instanceof Stream) {
+        if (connectedStream instanceof Stream && visited.add(connectedStream)) {
           ((Stream) connectedStream).setPropertyInitLevel(level);
+          count++;
         }
       }
     } catch (Exception ex) {
       logger.debug("could not propagate property init level to streams of " + operation.getName(), ex);
     }
+    return count;
+  }
+
+  /**
+   * Applies the configured property-initialization level to every stream in this process system. Does nothing when
+   * {@link #setPropertyInitLevel(Stream.PropertyInitLevel)} has not been called.
+   *
+   * @return the number of distinct streams updated
+   */
+  private int applyPropertyInitLevel() {
+    if (propertyInitLevel == null) {
+      return 0;
+    }
+    java.util.Set<StreamInterface> visited = Collections.newSetFromMap(new IdentityHashMap<StreamInterface, Boolean>());
+    int count = 0;
+    for (ProcessEquipmentInterface operation : getUnitOperations()) {
+      count += applyPropertyInitLevel(operation, propertyInitLevel, visited);
+    }
+    return count;
   }
 
   /**
@@ -499,25 +541,31 @@ public class ProcessSystem extends SimulationBaseClass {
    * By default each stream runs {@code initProperties()} after its flash, which evaluates mass density, viscosity,
    * thermal conductivity and diffusivity. Selecting {@link Stream.PropertyInitLevel#DENSITY_ONLY} evaluates the mass
    * density only and skips the transport-property correlations, which measures roughly an order of magnitude faster per
-   * stream and typically removes a significant share of the wall time of a large flowsheet. Use it when the flowsheet
-   * only needs mass and energy balances; switch back to {@link Stream.PropertyInitLevel#FULL} before reading
-   * viscosities or thermal conductivities from stream fluids.
+   * stream and typically removes a significant share of the wall time of a large flowsheet.
    * </p>
    *
    * <p>
-   * The level is applied immediately to all units already present and to any unit added afterwards.
+   * <b>Warning - transport properties read back as zero.</b> {@link Stream.PropertyInitLevel#DENSITY_ONLY} does not
+   * throw when a transport property is requested afterwards; {@code getViscosity()}, {@code getThermalConductivity()}
+   * and the diffusion coefficients simply return {@code 0.0}. Only use it for flowsheets that need mass and energy
+   * balances, and switch back to {@link Stream.PropertyInitLevel#FULL} before any pipeline, heat-exchanger,
+   * mechanical-design or flow-assurance calculation that reads transport properties.
+   * </p>
+   *
+   * <p>
+   * The setting is applied immediately to all streams currently held by the unit operations, is propagated to nested
+   * {@link ModuleInterface} sub-processes, is applied to any unit added afterwards, and is re-applied at the start of
+   * every execution entry point ({@link #run(UUID)}, {@link #run_step(UUID)}, {@link #runSequential(UUID)},
+   * {@link #runParallel(UUID)}, {@link #runHybrid(UUID)}, {@link #runDataflow(UUID)} and
+   * {@link #runTransient(double, UUID)}).
    * </p>
    *
    * @param level the level to apply; null restores per-stream control without changing already applied settings
+   * @return the number of distinct streams updated
    */
-  public void setPropertyInitLevel(Stream.PropertyInitLevel level) {
+  public int setPropertyInitLevel(Stream.PropertyInitLevel level) {
     this.propertyInitLevel = level;
-    if (level == null) {
-      return;
-    }
-    for (ProcessEquipmentInterface operation : getUnitOperations()) {
-      applyPropertyInitLevel(operation, level);
-    }
+    return applyPropertyInitLevel();
   }
 
   /**
@@ -960,7 +1008,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * compression train) avoids the extra phase-stability work in every flash and can speed up the solve considerably.
    * The setting is applied immediately to all fluids currently held by the unit operations and their inlet/outlet
    * streams, is propagated to nested {@link ModuleInterface} sub-processes, and is re-applied at the start of every
-   * {@link #run(UUID)} and {@link #run_step(UUID)} so equipment that temporarily enables the check (for example
+   * execution entry point ({@link #run(UUID)}, {@link #run_step(UUID)}, {@link #runSequential(UUID)},
+   * {@link #runParallel(UUID)}, {@link #runHybrid(UUID)}, {@link #runDataflow(UUID)} and
+   * {@link #runTransient(double, UUID)}) so equipment that temporarily enables the check (for example
    * {@link neqsim.process.equipment.separator.ThreePhaseSeparator}) cannot leak the setting into the rest of the area.
    * </p>
    *
@@ -1053,6 +1103,22 @@ public class ProcessSystem extends SimulationBaseClass {
     }
     fluid.setMultiPhaseCheck(enabled);
     return 1;
+  }
+
+  /**
+   * Re-applies every flowsheet-wide fluid and stream setting configured on this process system.
+   *
+   * <p>
+   * Called at the start of each execution entry point ({@link #run(UUID)}, {@link #run_step(UUID)},
+   * {@link #runSequential(UUID)}, {@link #runParallel(UUID)}, {@link #runHybrid(UUID)}, {@link #runDataflow(UUID)} and
+   * {@link #runTransient(double, UUID)}) so that equipment which temporarily changes a setting - for example
+   * {@link neqsim.process.equipment.separator.ThreePhaseSeparator} enabling the multiphase check - cannot leak it into
+   * the rest of the area, and so that streams created after the setting was configured are covered as well.
+   * </p>
+   */
+  private void applyFlowsheetWideSettings() {
+    applyMultiPhaseCheck();
+    applyPropertyInitLevel();
   }
 
   /**
@@ -1761,8 +1827,8 @@ public class ProcessSystem extends SimulationBaseClass {
 
     List<ProcessEquipmentInterface> iterativeSection = new ArrayList<>();
     if (firstIterativeLevel >= 0) {
-      // Identity based: equipment hashCode()/equals() are content based and mutate while the
-      // flowsheet runs, and two distinct units can compare equal across process areas.
+      // Identity based: the traversal must treat each unit as a distinct node regardless of any
+      // future equality semantics, so membership is decided by object identity only.
       java.util.Set<ProcessEquipmentInterface> iterativeSet = java.util.Collections
           .newSetFromMap(new IdentityHashMap<ProcessEquipmentInterface, Boolean>());
       for (int levelIdx = firstIterativeLevel; levelIdx < levels.size(); levelIdx++) {
@@ -1875,6 +1941,7 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public synchronized void runHybrid(UUID id) throws InterruptedException {
     resetActiveStates();
+    applyFlowsheetWideSettings();
     HybridExecutionPlan plan = getCachedHybridPlan();
 
     // Run setters first (sequential, they set conditions)
@@ -2258,7 +2325,7 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public synchronized void runParallel(UUID id) throws InterruptedException {
     resetActiveStates();
-    applyMultiPhaseCheck();
+    applyFlowsheetWideSettings();
     // Publish simulation start event
     publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.INFO, getName(),
         "Parallel simulation started with " + unitOperations.size() + " units", ProcessEvent.Severity.INFO));
@@ -2384,6 +2451,7 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public synchronized void runDataflow(UUID id) throws InterruptedException {
     resetActiveStates();
+    applyFlowsheetWideSettings();
     publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.INFO, getName(),
         "Dataflow simulation started with " + unitOperations.size() + " units", ProcessEvent.Severity.INFO));
 
@@ -2677,7 +2745,7 @@ public class ProcessSystem extends SimulationBaseClass {
     try {
       resetExecutionProfile();
       resetActiveStates();
-      applyMultiPhaseCheck();
+      applyFlowsheetWideSettings();
       long wallStart = System.nanoTime();
       boolean prevWarmStart = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
       if (useFlashWarmStart) {
@@ -2776,6 +2844,7 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public synchronized void runSequential(UUID id) {
     resetActiveStates();
+    applyFlowsheetWideSettings();
     // Determine execution order: use graph-based if enabled, otherwise use
     // insertion order
     List<ProcessEquipmentInterface> executionOrder;
@@ -2892,7 +2961,7 @@ public class ProcessSystem extends SimulationBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run_step(UUID id) {
-    applyMultiPhaseCheck();
+    applyFlowsheetWideSettings();
     for (int i = 0; i < unitOperations.size(); i++) {
       try {
         if (Thread.currentThread().isInterrupted()) {
@@ -3361,8 +3430,8 @@ public class ProcessSystem extends SimulationBaseClass {
     if (start == null) {
       throw new IllegalArgumentException("No unit named '" + startUnitName + "' in process");
     }
-    // Identity based: equipment hashCode()/equals() are content based and mutate while the
-    // flowsheet runs, so an equals-based set can mark a different-but-equal unit as visited.
+    // Identity based: the traversal must visit each unit exactly once as a distinct node,
+    // regardless of any future equality semantics.
     java.util.Set<ProcessEquipmentInterface> visited = java.util.Collections
         .newSetFromMap(new IdentityHashMap<ProcessEquipmentInterface, Boolean>());
     java.util.Deque<ProcessEquipmentInterface> stack = new java.util.ArrayDeque<ProcessEquipmentInterface>();
@@ -3965,6 +4034,7 @@ public class ProcessSystem extends SimulationBaseClass {
   @Override
   public synchronized void runTransient(double dt, UUID id) {
     ensureInitialStateSnapshot();
+    applyFlowsheetWideSettings();
 
     // Publish pre-timestep event
     publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.STATE_CHANGE, getName(),
@@ -5684,22 +5754,7 @@ public class ProcessSystem extends SimulationBaseClass {
     }
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * <b>Warning - value based and mutable.</b> The hash is derived from the current contents of the process system
-   * ({@code time}, {@code timeStepNumber}, the measurement history and every unit operation), so it changes while the
-   * model runs. A {@code ProcessSystem} must therefore never be used as a key in a {@link java.util.HashMap} or as an
-   * element of a {@link java.util.HashSet}: entries stored before {@code run()} become unreachable afterwards, which
-   * surfaces as silent lookup misses and duplicate registrations rather than as an exception. Use
-   * {@link java.util.IdentityHashMap} (or a set created from one via {@code Collections.newSetFromMap}) whenever a
-   * registry keyed on process identity is needed, and
-   * {@link neqsim.process.processmodel.lifecycle.ProcessModelState#compare} when two models must be compared by value.
-   * </p>
-   *
-   * @return content-based hash of the current process-system state
-   */
+  /** {@inheritDoc} */
   @Override
   public String getReport_json() {
     return new Report(this).generateJsonReport();

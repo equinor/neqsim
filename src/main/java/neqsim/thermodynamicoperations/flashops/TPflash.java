@@ -772,6 +772,12 @@ public class TPflash extends Flash {
     boolean previousWarmStart = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
     MULTIPHASE_RESCUE_ACTIVE.set(Boolean.TRUE);
     try {
+      // Warm start is required here for every model, including CPA. Unlike the iterative outer
+      // flashes (PH/PS/PV/TV/...), which are governed by
+      // ThermodynamicModelSettings.isInnerFlashWarmStartSafe(system), this rescue deliberately
+      // continues from a seed flash at a nearby temperature: carrying the seed K-values over to
+      // the target temperature is the mechanism that finds the extra phase. Disabling it would
+      // defeat the rescue.
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
       double seedTemperature = Math.max(1.0, targetTemperature - MULTIPHASE_RESCUE_TEMPERATURE_STEP);
       candidate.setTemperature(seedTemperature, "K");

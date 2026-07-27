@@ -21,9 +21,15 @@ public class Expander extends Compressor implements ExpanderInterface {
   private static final long serialVersionUID = 1000;
 
   /**
-   * Default number of pressure steps used by the polytropic expansion path. Five steps give the same result as the
-   * previous 40-step default to within numerical noise, at a fraction of the flash cost. Override with
-   * {@link neqsim.process.equipment.compressor.Compressor#setNumberOfCompressorCalcSteps(int)}.
+   * Default number of pressure steps used by the polytropic expansion path.
+   *
+   * <p>
+   * The path used a hard-coded 40 steps before this constant was introduced. Five steps reproduce the 40-step result to
+   * within about 0.1 K outlet temperature and 0.5 % shaft power on a 90 to 30 bara rich-gas expansion (see
+   * {@code ExpanderPolytropicStepsTest}) at a fraction of the flash cost. Restore the previous resolution with
+   * {@link neqsim.process.equipment.compressor.Compressor#setNumberOfCompressorCalcSteps(int)} when an exact match with
+   * an older model is required.
+   * </p>
    */
   public static final int DEFAULT_EXPANDER_CALC_STEPS = 5;
 

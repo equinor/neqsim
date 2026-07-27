@@ -44,11 +44,30 @@ public class EclipseFluidReadWrite {
    * spend most of their build time re-parsing identical text. The cache stores an independent copy and every read
    * returns a fresh object, so callers may freely mutate the fluid they receive.
    * </p>
+   *
+   * <p>
+   * The cache is a bounded least-recently-used map (see {@link #getMaxCacheSize()}) so that a long-running service that
+   * reads many distinct fluid files - or the same file repeatedly after edits - cannot grow without limit.
+   * </p>
    */
-  private static final java.util.Map<String, SystemInterface> fluidCache = new java.util.concurrent.ConcurrentHashMap<String, SystemInterface>();
+  private static final java.util.Map<String, SystemInterface> fluidCache = java.util.Collections
+      .synchronizedMap(new java.util.LinkedHashMap<String, SystemInterface>(16, 0.75f, true) {
+        private static final long serialVersionUID = 1000L;
+
+        @Override
+        protected boolean removeEldestEntry(java.util.Map.Entry<String, SystemInterface> eldest) {
+          return size() > maxCacheSize;
+        }
+      });
+
+  /** Default number of parsed E300 fluids retained by the cache. */
+  public static final int DEFAULT_MAX_CACHE_SIZE = 64;
+
+  /** Upper bound on the number of parsed E300 fluids retained by the cache. */
+  private static volatile int maxCacheSize = DEFAULT_MAX_CACHE_SIZE;
 
   /** When true (default), parsed E300 files are cached and repeated reads are served from the cache. */
-  private static boolean useCache = true;
+  private static volatile boolean useCache = true;
 
   /**
    * Enables or disables caching of parsed E300 fluid files.
@@ -78,6 +97,36 @@ public class EclipseFluidReadWrite {
   }
 
   /**
+   * Returns the maximum number of parsed E300 fluids retained by the cache.
+   *
+   * @return the cache capacity
+   */
+  public static int getMaxCacheSize() {
+    return maxCacheSize;
+  }
+
+  /**
+   * Sets the maximum number of parsed E300 fluids retained by the cache. The least recently used entries are evicted
+   * once the cache exceeds this size.
+   *
+   * @param maxCacheSizeIn the cache capacity; must be at least 1
+   * @throws IllegalArgumentException if {@code maxCacheSizeIn} is less than 1
+   */
+  public static void setMaxCacheSize(int maxCacheSizeIn) {
+    if (maxCacheSizeIn < 1) {
+      throw new IllegalArgumentException("maxCacheSize must be at least 1");
+    }
+    maxCacheSize = maxCacheSizeIn;
+    synchronized (fluidCache) {
+      java.util.Iterator<java.util.Map.Entry<String, SystemInterface>> it = fluidCache.entrySet().iterator();
+      while (fluidCache.size() > maxCacheSizeIn && it.hasNext()) {
+        it.next();
+        it.remove();
+      }
+    }
+  }
+
+  /**
    * Clears the parsed E300 fluid cache.
    */
   public static void clearCache() {
@@ -87,11 +136,18 @@ public class EclipseFluidReadWrite {
   /**
    * Builds the cache key for an E300 file.
    *
+   * <p>
+   * {@link #pseudoName} is part of the key because it changes how components are named while the file is parsed. It is
+   * read once here and passed through the whole read, so a concurrent change of the static field cannot mismatch a
+   * cached entry with the prefix it was parsed under.
+   * </p>
+   *
    * @param file the E300 file being read; must exist
-   * @return a key combining absolute path, last-modified timestamp, file length and the active pseudo-name prefix
+   * @param activePseudoName the pseudo-name prefix in force for this read
+   * @return a key combining absolute path, last-modified timestamp, file length and the pseudo-name prefix
    */
-  private static String cacheKey(File file) {
-    return file.getAbsolutePath() + "|" + file.lastModified() + "|" + file.length() + "|" + pseudoName;
+  private static String cacheKey(File file, String activePseudoName) {
+    return file.getAbsolutePath() + "|" + file.lastModified() + "|" + file.length() + "|" + activePseudoName;
   }
 
   /**
@@ -357,9 +413,11 @@ public class EclipseFluidReadWrite {
 
     // Serve repeated reads of an unchanged file from the parse cache. Only the auto-created
     // path is cacheable - when the caller supplies its own fluid the components must be added
-    // to that exact instance.
+    // to that exact instance. The pseudo-name prefix is snapshotted here so a concurrent change
+    // of the static field cannot mismatch a cached entry with the prefix it was parsed under.
+    String activePseudoName = pseudoName;
     boolean cacheable = forcedFluid == null && useCache;
-    String key = cacheable ? cacheKey(file) : null;
+    String key = cacheable ? cacheKey(file, activePseudoName) : null;
     if (cacheable) {
       SystemInterface cached = fluidCache.get(key);
       if (cached != null) {

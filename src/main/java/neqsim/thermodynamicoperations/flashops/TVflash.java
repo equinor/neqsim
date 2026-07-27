@@ -249,7 +249,8 @@ public class TVflash extends Flash {
     try {
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
       tpFlash.run();
-      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+      neqsim.thermo.ThermodynamicModelSettings
+          .setUseWarmStartKValues(neqsim.thermo.ThermodynamicModelSettings.isInnerFlashWarmStartSafe(system));
       solveQ();
     } finally {
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);

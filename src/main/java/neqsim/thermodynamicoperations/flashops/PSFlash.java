@@ -138,16 +138,16 @@ public class PSFlash extends QfuncFlash {
    * Check whether K-value warm starts are suitable for the inner TP flashes.
    *
    * <p>
-   * CPA association-site fractions can change strongly with temperature. Reusing K-values while the PS solver moves
-   * through temperature space may therefore increase TP-flash work or bias the iteration path. Cubic EOS models retain
-   * the established warm-start acceleration.
+   * Delegates to {@link neqsim.thermo.ThermodynamicModelSettings#isInnerFlashWarmStartSafe} so that every iterative
+   * flash shares one policy. CPA association-site fractions can change strongly with temperature, so reusing K-values
+   * while the PS solver moves through temperature space may increase TP-flash work or bias the iteration path. Cubic
+   * EOS models retain the established warm-start acceleration.
    * </p>
    *
    * @return {@code true} when inner TP flashes may reuse K-values
    */
   protected boolean isInnerTpFlashWarmStartSafe() {
-    String modelName = system == null || system.getModelName() == null ? "" : system.getModelName();
-    return !modelName.toUpperCase(java.util.Locale.ROOT).contains("CPA");
+    return neqsim.thermo.ThermodynamicModelSettings.isInnerFlashWarmStartSafe(system);
   }
 
   /** {@inheritDoc} */

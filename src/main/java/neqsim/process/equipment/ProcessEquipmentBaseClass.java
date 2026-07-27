@@ -42,6 +42,18 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 /**
  * Abstract ProcessEquipmentBaseClass class.
  *
+ * <p>
+ * <b>Identity equality.</b> Process equipment does not override {@link Object#equals(Object)} or
+ * {@link Object#hashCode()}, so two units are equal only when they are the same instance. The previous value-based
+ * implementations hashed mutable state ({@code report}, {@code properties}, the attached controllers and the
+ * thermodynamic system), all of which is rewritten by {@code run()}; an entry stored in a {@link java.util.HashMap}
+ * before a run therefore became unreachable afterwards, and two distinct units sharing a name compared equal across
+ * process areas of a {@code ProcessModel}. Registries, caches and graph-traversal sets keyed on equipment may now use a
+ * plain {@link java.util.HashMap}/{@link java.util.HashSet}; {@link java.util.IdentityHashMap} remains equivalent and
+ * is used where the intent is explicitly identity based. To compare two models by value use
+ * {@link neqsim.process.processmodel.lifecycle.ProcessModelState#compare}.
+ * </p>
+ *
  * @author ESOL
  * @version $Id: $Id
  */
@@ -551,22 +563,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
     return null;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * <b>Warning - value based and mutable.</b> The hash is derived from mutable state ({@code report},
-   * {@code properties}, {@code conditionAnalysisMessage} and the attached controllers), so it changes whenever the
-   * owning flowsheet runs. Process equipment must therefore never be used as a key in a {@link java.util.HashMap} or as
-   * an element of a {@link java.util.HashSet}: entries stored before {@code run()} become unreachable afterwards, which
-   * surfaces as silent lookup misses rather than as an exception. Two distinct units can also compare equal when they
-   * share a name, which happens across process areas of a {@code ProcessModel}. Use {@link java.util.IdentityHashMap}
-   * (or a set created from one via {@code Collections.newSetFromMap}) for any registry, cache or graph-traversal set
-   * keyed on equipment.
-   * </p>
-   *
-   * @return content-based hash of the current equipment state
-   */
+  /** {@inheritDoc} */
   @Override
   public String toJson() {
     return null;

@@ -192,7 +192,8 @@ public class VUflashQfunc extends Flash {
     try {
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
       tpFlash.run();
-      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+      neqsim.thermo.ThermodynamicModelSettings
+          .setUseWarmStartKValues(neqsim.thermo.ThermodynamicModelSettings.isInnerFlashWarmStartSafe(system));
       // logger.info("internaleng: " + system.getInternalEnergy());
       // logger.info("volume: " + system.getVolume());
       solveQ();

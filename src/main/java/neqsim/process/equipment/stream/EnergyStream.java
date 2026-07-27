@@ -17,6 +17,13 @@ import neqsim.util.unit.PowerUnit;
  * encoding direction only in the duty sign.
  * </p>
  *
+ * <p>
+ * <b>Identity equality.</b> An energy stream is a mutable connection, not a value: {@code duty} is rewritten on every
+ * flowsheet run. It therefore inherits {@link Object#equals(Object)} and {@link Object#hashCode()} and is equal only to
+ * itself, consistent with {@code ProcessSystem} and the process-equipment classes. Compare duties explicitly with
+ * {@link #getDuty()} when a value comparison is intended.
+ * </p>
+ *
  * @author asmund
  * @version $Id: $Id
  */
@@ -240,28 +247,6 @@ public class EnergyStream implements ProcessElementInterface, Cloneable {
    */
   public void setQuality(EnergyQuality quality) {
     this.quality = Objects.requireNonNull(quality, "quality cannot be null");
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(duty);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null) {
-      return false;
-    }
-    if (getClass() != obj.getClass()) {
-      return false;
-    }
-    EnergyStream other = (EnergyStream) obj;
-    return Double.doubleToLongBits(duty) == Double.doubleToLongBits(other.duty);
   }
 
   /** {@inheritDoc} */
