@@ -13,6 +13,16 @@ public final class EngineeringDesignUpdate implements Serializable {
     void apply(ProcessSystem process, double value);
   }
 
+  /** Defines how proposals from more than one module may govern a shared design variable. */
+  public enum ConflictResolution {
+    /** More than one module proposing the key is a configuration error. */
+    REQUIRE_UNIQUE,
+    /** Select the largest proposed value after confirming identical units and rules. */
+    GOVERNING_MAXIMUM,
+    /** Select the smallest proposed value after confirming identical units and rules. */
+    GOVERNING_MINIMUM
+  }
+
   private final String key;
   private final double requiredValue;
   private final String unit;
@@ -21,6 +31,7 @@ public final class EngineeringDesignUpdate implements Serializable {
   private final double[] candidates;
   private final DesignCandidate[] designCandidates;
   private final Applier applier;
+  private final ConflictResolution conflictResolution;
 
   private EngineeringDesignUpdate(Builder builder) {
     key = requireText(builder.key, "key");
@@ -51,6 +62,7 @@ public final class EngineeringDesignUpdate implements Serializable {
       }
     }
     applier = builder.applier;
+    conflictResolution = builder.conflictResolution;
   }
 
   public static Builder builder(String key, double requiredValue, String unit) {
@@ -75,6 +87,11 @@ public final class EngineeringDesignUpdate implements Serializable {
 
   public double getRelativeTolerance() {
     return relativeTolerance;
+  }
+
+  /** @return declared shared-variable conflict resolution */
+  public ConflictResolution getConflictResolution() {
+    return conflictResolution;
   }
 
   public double selectedValue() {
@@ -130,6 +147,7 @@ public final class EngineeringDesignUpdate implements Serializable {
     private double[] candidates;
     private DesignCandidate[] designCandidates;
     private Applier applier;
+    private ConflictResolution conflictResolution = ConflictResolution.REQUIRE_UNIQUE;
 
     private Builder(String key, double requiredValue, String unit) {
       this.key = key;
@@ -162,6 +180,20 @@ public final class EngineeringDesignUpdate implements Serializable {
 
     public Builder applier(Applier value) {
       applier = value;
+      return this;
+    }
+
+    /**
+     * Declare how this update may be combined with proposals for the same key from other modules.
+     *
+     * @param value explicit governing rule
+     * @return this builder
+     */
+    public Builder conflictResolution(ConflictResolution value) {
+      if (value == null) {
+        throw new IllegalArgumentException("conflictResolution must not be null");
+      }
+      conflictResolution = value;
       return this;
     }
 

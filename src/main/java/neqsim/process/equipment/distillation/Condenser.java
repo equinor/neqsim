@@ -1,6 +1,9 @@
 package neqsim.process.equipment.distillation;
 
 import java.util.UUID;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -33,6 +36,7 @@ public class Condenser extends SimpleTray {
    */
   public Condenser(String name) {
     super(name);
+    registerEnergyPort("heatDuty", EnergyType.HEAT, EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED);
   }
 
   /**
@@ -204,7 +208,7 @@ public class Condenser extends SimpleTray {
     // System.out.println("temperature: " +
     // mixedStream.getThermoSystem().getTemperature());
     duty = mixedStream.getFluid().getEnthalpy() - calcMixStreamEnthalpy0();
-    energyStream.setDuty(duty);
+    getEnergyPort("heatDuty").setDuty(duty);
     // System.out.println("beta " + mixedStream.getThermoSystem().getBeta())
 
     setCalculationIdentifier(id);

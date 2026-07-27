@@ -467,16 +467,18 @@ if (optimizer.isModuleMode()) {
     System.out.println("Optimizing module: " + optimizer.getModule().getName());
 }
 
-// Configure and run
+// Configure validation and auto-sizing across the module
 optimizer
     .autoSizeEquipment(1.2)
-    .applyDefaultConstraints()
-    .setObjective(ObjectiveType.MAXIMIZE_PRODUCTION);
+    .applyDefaultConstraints();
 
 DesignResult result = optimizer.optimize();
 ```
 
-Constraints are evaluated across **all nested ProcessSystems** in the module hierarchy.
+Constraints are evaluated across **all nested ProcessSystems** in the module hierarchy. The result
+status is `AUTO_SIZED`, not `OPTIMIZED`, because no search was performed. Configured bounded search
+through `DesignOptimizer` currently requires a single `ProcessSystem`; use
+`ProductionOptimizer` with `ProcessModelOptimizationView` for whole-module optimization.
 
 ---
 

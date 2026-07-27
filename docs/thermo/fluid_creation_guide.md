@@ -31,6 +31,7 @@ Creating a fluid in NeqSim follows a consistent pattern:
 ```java
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 // 1. Create the fluid with initial temperature (K) and pressure (bara)
 SystemInterface fluid = new SystemSrkEos(298.15, 10.0);
@@ -43,19 +44,24 @@ fluid.addComponent("propane", 0.05);
 // 3. Set up the mixing rule
 fluid.setMixingRule("classic");
 
-// 4. Initialize the fluid
-fluid.init(0);
+// 4. Calculate equilibrium, then initialize physical properties
+ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+operations.TPflash();
+fluid.initProperties();
 ```
 
 ### Constructor Parameters
 
-All fluid system classes accept these constructor signatures:
+Most equation-of-state system classes provide a temperature/pressure constructor:
 
 | Constructor | Description |
 |-------------|-------------|
-| `SystemXXX()` | Default: 298.15 K, 1.0 bara |
-| `SystemXXX(T, P)` | Temperature (K), Pressure (bara) |
-| `SystemXXX(T, P, checkForSolids)` | With solid phase checking enabled |
+| `SystemXXX(T, P)` | Temperature in K and absolute pressure in bara |
+| `SystemXXX()` | Model-specific defaults; do not assume one common state |
+| `SystemXXX(T, P, checkForSolids)` | Available on many, but not all, system classes |
+
+Use the explicit `(T, P)` form in reproducible examples. Check the selected
+class's JavaDoc before using a default or solid-checking overload.
 
 ---
 
@@ -221,9 +227,14 @@ $$
 
 ### 5.1 GERG-2008
 
-The ISO 20765-2 standard for natural gas. Highest accuracy for custody transfer and fiscal metering.
+NeqSim includes a GERG-2008 implementation for the ISO 20765-2 natural-gas
+reference equation. The current `SystemGERG2008Eos` source explicitly marks
+parts of the implementation unfinished. Treat it as a calculation and
+validation tool, not as sole evidence for custody-transfer or fiscal acceptance.
 
-**Supported components (21):** Methane, Nitrogen, CO2, Ethane, Propane, n-Butane, i-Butane, n-Pentane, i-Pentane, n-Hexane, n-Heptane, n-Octane, n-Nonane, n-Decane, Hydrogen, Oxygen, CO, Water, Helium, Argon.
+**Mapped GERG-2008 components (21):** Methane, Nitrogen, CO2, Ethane, Propane,
+n-Butane, i-Butane, n-Pentane, i-Pentane, n-Hexane, n-Heptane, n-Octane,
+n-Nonane, n-Decane, Hydrogen, Oxygen, CO, Water, H2S, Helium, Argon.
 
 ```java
 import neqsim.thermo.system.SystemGERG2008Eos;
@@ -235,7 +246,7 @@ fluid.addComponent("propane", 0.03);
 fluid.addComponent("nitrogen", 0.02);
 fluid.createDatabase(true);
 
-// Access GERG-specific properties
+// Access the GERG-specific density for comparison with validated references
 double density = fluid.getPhase(0).getDensity_GERG2008();
 ```
 
@@ -261,7 +272,7 @@ fluid.addComponent("oxygen", 0.02);
 | `SystemSpanWagnerEos` | Span-Wagner equation for CO2 |
 | `SystemLeachmanEos` | Leachman equation for hydrogen |
 | `SystemBWRSEos` | Benedict-Webb-Rubin-Starling |
-| `SystemBnsEos` | BNS equation of state |
+| `SystemBnsEos` | Burgoyne-Nielsen-Stanko Peng-Robinson correlation |
 
 ---
 
@@ -332,7 +343,7 @@ fluid.addComponent("methane", 0.7);
 fluid.addComponent("CO2", 0.15);
 fluid.addComponent("H2S", 0.05);
 fluid.addComponent("water", 0.1);
-fluid.addSalinity(2.0, "mole/sec");  // Add salinity
+fluid.addSalinity(2.0, "mole/sec");  // Salt-equivalent molar flow, not concentration
 fluid.setMixingRule(11);  // Soreide-Whitson mixing rule
 ```
 
@@ -421,7 +432,8 @@ For `addComponent(name, value, unit)`:
 
 ### 9.3 Common Component Names
 
-NeqSim's database includes hundreds of components. Common names:
+NeqSim uses a database-backed component catalog. Verify exact names in the
+[component list](component_list); common examples include:
 
 **Hydrocarbons:**
 `methane`, `ethane`, `propane`, `i-butane`, `n-butane`, `i-pentane`, `n-pentane`, `n-hexane`, `n-heptane`, `n-octane`, `n-nonane`, `n-decane`
@@ -445,13 +457,12 @@ For petroleum fluids, NeqSim supports TBP (True Boiling Point) and plus-fraction
 
 ```java
 SystemInterface oil = new SystemSrkEos(350.0, 100.0);
-oil.createDatabase(true);  // Required before adding TBP fractions
 
-// addTBPfraction(name, moles, molarMass [g/mol], density [g/cm3])
-oil.addTBPfraction("C7", 0.05, 96.0, 0.738);
-oil.addTBPfraction("C8", 0.04, 107.0, 0.765);
-oil.addTBPfraction("C9", 0.03, 121.0, 0.781);
-oil.addTBPfraction("C10", 0.02, 134.0, 0.792);
+// addTBPfraction(name, molarFlow, molarMass [kg/mol], specificGravity)
+oil.addTBPfraction("C7", 0.05, 0.096, 0.738);
+oil.addTBPfraction("C8", 0.04, 0.107, 0.765);
+oil.addTBPfraction("C9", 0.03, 0.121, 0.781);
+oil.addTBPfraction("C10", 0.02, 0.134, 0.792);
 
 oil.setMixingRule("classic");
 ```
@@ -459,8 +470,9 @@ oil.setMixingRule("classic");
 ### 10.2 Plus Fractions
 
 ```java
-// addPlusFraction(name, moles, molarMass [g/mol], density [g/cm3])
-oil.addPlusFraction("C20+", 0.10, 350.0, 0.88);
+// Use a numeric label; NeqSim stores the pseudo-component with a _PC suffix.
+// addPlusFraction(name, molarFlow, molarMass [kg/mol], specificGravity)
+oil.addPlusFraction("C20", 0.10, 0.350, 0.88);
 ```
 
 ### 10.3 TBP Characterization Models
@@ -547,16 +559,16 @@ public class WaterHydrocarbonExample {
 }
 ```
 
-### 11.3 High-Accuracy Fiscal Metering (GERG-2008)
+### 11.3 GERG-2008 Density Comparison
 
 ```java
 import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-public class FiscalMeteringExample {
+public class GergDensityComparisonExample {
     public static void main(String[] args) {
-        // GERG-2008 for custody transfer accuracy
+        // Compare NeqSim's GERG-2008 result with an approved reference
         SystemInterface gas = new SystemGERG2008Eos(288.15, 40.0);
 
         gas.addComponent("methane", 0.92);
@@ -587,7 +599,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 public class OilCharacterizationExample {
     public static void main(String[] args) {
         SystemInterface oil = new SystemPrEos(350.0, 150.0);
-        oil.createDatabase(true);
 
         // Light ends
         oil.addComponent("nitrogen", 0.005);
@@ -601,14 +612,14 @@ public class OilCharacterizationExample {
         oil.addComponent("n-pentane", 0.02);
         oil.addComponent("n-hexane", 0.03);
 
-        // TBP fractions (moles, MW g/mol, density g/cm3)
-        oil.addTBPfraction("C7", 0.05, 96.0, 0.738);
-        oil.addTBPfraction("C8", 0.04, 107.0, 0.765);
-        oil.addTBPfraction("C9", 0.03, 121.0, 0.781);
-        oil.addTBPfraction("C10", 0.02, 134.0, 0.792);
+        // TBP fractions (molar flow, molar mass kg/mol, specific gravity)
+        oil.addTBPfraction("C7", 0.05, 0.096, 0.738);
+        oil.addTBPfraction("C8", 0.04, 0.107, 0.765);
+        oil.addTBPfraction("C9", 0.03, 0.121, 0.781);
+        oil.addTBPfraction("C10", 0.02, 0.134, 0.792);
 
-        // Plus fraction
-        oil.addPlusFraction("C11+", 0.18, 250.0, 0.85);
+        // Use a numeric label; NeqSim stores this as C11_PC.
+        oil.addPlusFraction("C11", 0.18, 0.250, 0.85);
 
         oil.setMixingRule("classic");
 
@@ -635,28 +646,32 @@ public class OilCharacterizationExample {
 | Water-hydrocarbon | `SystemSrkCPAstatoil` | `CLASSIC_TX_CPA` (10) |
 | Glycol dehydration | `SystemSrkCPAstatoil` | `CPA_MIX` (7) |
 | Sour gas / brine | `SystemSoreideWhitson` | `SOREIDE_WHITSON` (11) |
-| Fiscal metering | `SystemGERG2008Eos` | N/A |
+| Natural-gas reference-property comparison | `SystemGERG2008Eos` | N/A |
 | CCS / CO2 transport | `SystemEOSCGEos` | N/A |
 | Electrolyte solutions | `SystemElectrolyteCPAstatoil` | N/A |
 | Polar organics | `SystemUNIFAC` or `SystemNRTL` | N/A |
 
 ### Decision Flow
 
-1. **Is high accuracy required for custody transfer?** → Use GERG-2008
-2. **Does the system contain water, glycols, or alcohols?** → Use CPA models
+1. **Is a validated natural-gas reference calculation required?** → Evaluate
+   GERG-2008 against the applicable composition range and an approved reference
+2. **Does the system contain water, glycols, or alcohols?** → Evaluate CPA models
 3. **Is it a sour gas system with brine?** → Use Søreide-Whitson
 4. **Is it a standard hydrocarbon system?** → Use SRK or PR
 5. **Does it contain electrolytes?** → Use Electrolyte-CPA or Pitzer
 6. **Is it a non-ideal organic mixture?** → Use UNIFAC or NRTL
 
-### Performance vs. Accuracy Trade-offs
+### Model-Coverage Trade-offs
 
-| Model Type | Speed | Accuracy | Best For |
-|------------|-------|----------|----------|
-| Cubic (SRK/PR) | Fast | Good | General process simulation |
-| CPA | Medium | Very Good | Polar/associating systems |
-| GERG-2008 | Slow | Excellent | Fiscal metering, calibration |
-| UNIFAC | Medium | Good | Chemical process design |
+Accuracy depends on composition, state, parameters, and validation data; the
+labels below describe model scope rather than guaranteed error.
+
+| Model Type | Typical Cost | Intended Scope |
+|------------|--------------|----------------|
+| Cubic (SRK/PR) | Low | General hydrocarbon process calculations |
+| CPA | Moderate | Associating mixtures within a validated parameter set |
+| GERG-2008 | Higher | Natural-gas reference-property comparisons |
+| UNIFAC | Moderate | Screening non-ideal liquid mixtures with available groups |
 
 ---
 

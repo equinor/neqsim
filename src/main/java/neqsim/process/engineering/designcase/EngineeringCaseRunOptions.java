@@ -9,11 +9,13 @@ public final class EngineeringCaseRunOptions implements Serializable {
   private final int parallelism;
   private final boolean requireConvergence;
   private final EngineeringNumericalHealthCriteria numericalHealthCriteria;
+  private final EngineeringCaseFailurePolicy failurePolicy;
 
   private EngineeringCaseRunOptions(Builder builder) {
     parallelism = builder.parallelism;
     requireConvergence = builder.requireConvergence;
     numericalHealthCriteria = builder.numericalHealthCriteria;
+    failurePolicy = builder.failurePolicy;
   }
 
   public static Builder builder() {
@@ -36,11 +38,17 @@ public final class EngineeringCaseRunOptions implements Serializable {
     return numericalHealthCriteria;
   }
 
+  /** @return incomplete-result propagation policy */
+  public EngineeringCaseFailurePolicy getFailurePolicy() {
+    return failurePolicy;
+  }
+
   /** Builder for case execution options. */
   public static final class Builder {
     private int parallelism = 1;
     private boolean requireConvergence = true;
     private EngineeringNumericalHealthCriteria numericalHealthCriteria;
+    private EngineeringCaseFailurePolicy failurePolicy = EngineeringCaseFailurePolicy.RETURN_PARTIAL;
 
     public Builder parallelism(int value) {
       if (value < 1) {
@@ -61,6 +69,20 @@ public final class EngineeringCaseRunOptions implements Serializable {
         throw new IllegalArgumentException("numericalHealthCriteria must not be null");
       }
       numericalHealthCriteria = value;
+      return this;
+    }
+
+    /**
+     * Configure how incomplete runs are propagated.
+     *
+     * @param value explicit failure policy
+     * @return this builder
+     */
+    public Builder failurePolicy(EngineeringCaseFailurePolicy value) {
+      if (value == null) {
+        throw new IllegalArgumentException("failurePolicy must not be null");
+      }
+      failurePolicy = value;
       return this;
     }
 

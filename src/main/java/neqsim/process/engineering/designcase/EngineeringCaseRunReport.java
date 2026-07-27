@@ -37,6 +37,30 @@ public final class EngineeringCaseRunReport implements Serializable {
     return envelope;
   }
 
+  /** @return whether every configured metric has a governing value and no case failed */
+  public boolean isComplete() {
+    return envelope.isComplete();
+  }
+
+  /** @return whether the complete envelope is assessed and within every configured limit */
+  public boolean isAccepted() {
+    return envelope.isAccepted();
+  }
+
+  /**
+   * Require a complete governing envelope.
+   *
+   * @return this report when complete
+   * @throws EngineeringCaseExecutionException when incomplete; the exception retains this report
+   */
+  public EngineeringCaseRunReport requireComplete() {
+    if (!isComplete()) {
+      throw new EngineeringCaseExecutionException(
+          "Engineering case set " + caseSetId + " did not produce a complete governing envelope", this);
+    }
+    return this;
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> result = new LinkedHashMap<String, Object>();
     result.put("schemaVersion", "engineering_case_run.v1");
@@ -44,6 +68,8 @@ public final class EngineeringCaseRunReport implements Serializable {
     result.put("definitionFingerprint", definitionFingerprint);
     result.put("resultFingerprint", resultFingerprint);
     result.put("envelope", envelope.toMap());
+    result.put("complete", Boolean.valueOf(isComplete()));
+    result.put("accepted", Boolean.valueOf(isAccepted()));
     result.put("isolatedProcessCopies", Boolean.TRUE);
     result.put("engineeringApprovalRequired", Boolean.TRUE);
     return result;

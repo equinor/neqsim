@@ -26,6 +26,11 @@ import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.StandardConstraintType;
+import neqsim.process.equipment.stream.EnergyBus;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyStream;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.compressor.CompressorMechanicalDesign;
 import neqsim.process.ml.StateVector;
@@ -217,10 +222,25 @@ public class Compressor extends TwoPortEquipment
    */
   public Compressor(String name) {
     super(name);
+    registerEnergyPort("shaftPower", EnergyType.SHAFT_WORK, getShaftPowerDirection(), EnergyPortMode.CALCULATED);
     initMechanicalDesign();
     initElectricalDesign();
     initInstrumentDesign();
     initializeCapacityConstraints();
+  }
+
+  /**
+   * Gets the physical direction of the shaft-power port.
+   *
+   * <p>
+   * Subclasses such as expanders override this hook so the inherited constructor registers the port once with the
+   * correct direction.
+   * </p>
+   *
+   * @return shaft-power direction
+   */
+  protected EnergyPortDirection getShaftPowerDirection() {
+    return EnergyPortDirection.INPUT;
   }
 
   /**
@@ -244,6 +264,35 @@ public class Compressor extends TwoPortEquipment
     this(name);
     if (interpolateMapLookup) {
       compressorChart = new CompressorChartAlternativeMapLookup();
+    }
+  }
+
+  /**
+   * Connects an external shaft-power specification using the legacy single-stream API.
+   *
+   * @param energyStream shaft-work stream
+   */
+  @Override
+  public void setEnergyStream(EnergyStream energyStream) {
+    super.connectEnergyStream("shaftPower", energyStream, EnergyPortMode.SPECIFICATION);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void connectEnergyStream(String portName, EnergyStream stream) {
+    if ("shaftPower".equals(portName)) {
+      super.connectEnergyStream(portName, stream, EnergyPortMode.SPECIFICATION);
+    } else {
+      super.connectEnergyStream(portName, stream);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void disconnectEnergyStream(String portName) {
+    super.disconnectEnergyStream(portName);
+    if ("shaftPower".equals(portName)) {
+      getEnergyPort(portName).setMode(EnergyPortMode.CALCULATED);
     }
   }
 
@@ -692,6 +741,9 @@ public class Compressor extends TwoPortEquipment
   }
 
   private void finishRun(UUID id) {
+    if (!isSetEnergyStream() || getEnergyPort("shaftPower").getEnergyStream() instanceof EnergyBus) {
+      getEnergyPort("shaftPower").setDuty(dH);
+    }
     updateRecalculationState();
     if (thermalModel != null && thermalModel.isAutoSolve()) {
       thermalModel.solveSteadyState(this);
@@ -887,7 +939,7 @@ public class Compressor extends TwoPortEquipment
     }
 
     if (isSetEnergyStream()) {
-      setPower(energyStream.getDuty());
+      setPower(getEnergyPort("shaftPower").getPowerMagnitude());
     }
 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());

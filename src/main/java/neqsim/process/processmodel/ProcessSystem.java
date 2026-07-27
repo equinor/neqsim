@@ -7947,8 +7947,8 @@ public class ProcessSystem extends SimulationBaseClass {
   // Mechanical Design and Cost Estimation API
   // ============================================================================
 
-  /** System-level mechanical design (lazy initialized). */
-  private transient neqsim.process.mechanicaldesign.SystemMechanicalDesign systemMechanicalDesign;
+  /** System-level mechanical design (lazy initialized and persisted with the process). */
+  private neqsim.process.mechanicaldesign.SystemMechanicalDesign systemMechanicalDesign;
 
   /** Process-level cost estimate (lazy initialized). */
   private transient neqsim.process.costestimation.ProcessCostEstimate processCostEstimate;
@@ -7957,8 +7957,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * Initialize mechanical design for all equipment in the process.
    *
    * <p>
-   * This method calls initMechanicalDesign() on each equipment item, preparing them for mechanical design calculations.
-   * Should be called after process simulation has run.
+   * This method initializes equipment that does not yet have a mechanical design. Existing design objects are retained
+   * so configured standards, limits, and sizing inputs remain part of the process design state. It should be called
+   * after process simulation has run.
    * </p>
    *
    * <p>
@@ -7968,7 +7969,7 @@ public class ProcessSystem extends SimulationBaseClass {
   public void initAllMechanicalDesigns() {
     for (ProcessEquipmentInterface equipment : unitOperations) {
       if (equipment != null) {
-        equipment.initMechanicalDesign();
+        getOrInitializeMechanicalDesign(equipment);
       }
     }
   }
@@ -7988,14 +7989,28 @@ public class ProcessSystem extends SimulationBaseClass {
   public void runAllMechanicalDesigns() {
     for (ProcessEquipmentInterface equipment : unitOperations) {
       if (equipment != null) {
-        // Ensure mechanical design is initialized
-        equipment.initMechanicalDesign();
-        neqsim.process.mechanicaldesign.MechanicalDesign mecDesign = equipment.getMechanicalDesign();
+        neqsim.process.mechanicaldesign.MechanicalDesign mecDesign = getOrInitializeMechanicalDesign(equipment);
         if (mecDesign != null) {
           mecDesign.calcDesign();
         }
       }
     }
+  }
+
+  /**
+   * Return the current mechanical design, initializing it only when it is absent.
+   *
+   * @param equipment process equipment
+   * @return persistent mechanical design, or {@code null} when the equipment provides none
+   */
+  private neqsim.process.mechanicaldesign.MechanicalDesign getOrInitializeMechanicalDesign(
+      ProcessEquipmentInterface equipment) {
+    neqsim.process.mechanicaldesign.MechanicalDesign mechanicalDesign = equipment.getMechanicalDesign();
+    if (mechanicalDesign == null) {
+      equipment.initMechanicalDesign();
+      mechanicalDesign = equipment.getMechanicalDesign();
+    }
+    return mechanicalDesign;
   }
 
   /**
@@ -8201,8 +8216,7 @@ public class ProcessSystem extends SimulationBaseClass {
     if (equipment == null) {
       return null;
     }
-    equipment.initMechanicalDesign();
-    neqsim.process.mechanicaldesign.MechanicalDesign mecDesign = equipment.getMechanicalDesign();
+    neqsim.process.mechanicaldesign.MechanicalDesign mecDesign = getOrInitializeMechanicalDesign(equipment);
     if (mecDesign != null) {
       mecDesign.calcDesign();
     }

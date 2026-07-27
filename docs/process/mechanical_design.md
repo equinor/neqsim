@@ -125,6 +125,10 @@ MechanicalDesign mecDesign = separator.getMechanicalDesign();
 // Set design standards (optional - uses defaults if not specified)
 mecDesign.setCompanySpecificDesignStandards("Equinor");
 
+// Prefer explicit units for operating conditions; canonical storage is bara and K
+mecDesign.setMaxOperationPressure(1450.38, "psia");
+mecDesign.setMaxOperationTemperature(250.0, "F");
+
 // Calculate design
 mecDesign.calcDesign();
 
@@ -138,6 +142,30 @@ double designPressure = mecDesign.getMaxDesignPressure(); // bara
 // Display results in GUI
 mecDesign.displayResults();
 ```
+
+### Declared design conditions and units
+
+`DesignConditions` stores data-sheet declarations separately from calculated sizing results. Legacy
+single-argument setters retain their documented canonical units: pressure in `bara`, temperature in
+degrees Celsius, and corrosion allowance in `mm`. Unit-aware overloads should be preferred for new
+code:
+
+```java
+DesignConditions conditions = separator.getDesignConditions();
+conditions.setDesignPressure(1450.38, "psia");
+conditions.setMaxDesignTemperature(250.0, "F");
+conditions.setMinDesignTemperature(-50.0, "C");
+conditions.setReliefSetPressure(100.0, "barg");
+conditions.setCorrosionAllowance(0.125, "in");
+
+double designPressureBara = conditions.getDesignPressure("bara");
+double maximumTemperatureC = conditions.getMaxDesignTemperature("C");
+```
+
+`DesignConditionValue` adds an immutable typed representation for pressure, temperature, and length
+conditions. `DesignConditions.getCondition(type)` and `getConditions()` expose typed defensive
+snapshots. Values are converted to the condition's canonical unit on creation, invalid units fail
+closed, and physically impossible pressure, temperature, or corrosion values are rejected.
 
 ### System-Wide Mechanical Design
 
@@ -158,8 +186,20 @@ SystemMechanicalDesign sysMecDesign = new SystemMechanicalDesign(process);
 // Set company standards for all equipment
 sysMecDesign.setCompanySpecificDesignStandards("Equinor");
 
-// Run design calculations for all equipment
-sysMecDesign.runDesignCalculation();
+// Prefer the structured API so partial system totals cannot be mistaken for complete results
+SystemMechanicalDesignResult calculation =
+    sysMecDesign.calculate(SystemDesignExecutionMode.BEST_EFFORT);
+if (!calculation.isComplete()) {
+  for (EquipmentDesignOutcome outcome : calculation.getEquipmentOutcomes()) {
+    if (outcome.getStatus() == EquipmentDesignOutcome.Status.FAILED) {
+      logger.error("Design failed for {}: {}", outcome.getEquipmentName(), outcome.getMessage());
+    }
+  }
+}
+
+// The aggregate is cached on the ProcessSystem and survives copy/serialization
+boolean calculated = sysMecDesign.hasRunDesignCalculation();
+long revision = sysMecDesign.getDesignCalculationRevision();
 
 // Access aggregated results
 double totalWeight = sysMecDesign.getTotalWeight();           // kg
@@ -177,6 +217,22 @@ Map<String, Integer> countByType = sysMecDesign.getEquipmentCountByType();
 // Print summary report
 System.out.println(sysMecDesign.generateSummaryReport());
 ```
+
+System-wide calculation reuses each equipment's current `MechanicalDesign` object. Standards,
+limits, and sizing inputs configured before the call are therefore preserved. Repeated calls
+replace the aggregate totals instead of accumulating them and increment the calculation revision.
+The system-level result is serialized with `ProcessSystem`, including its equipment summaries and
+breakdowns. Collection getters return defensive snapshots, so modifying a returned summary does not
+alter the stored design state.
+
+`calculate(BEST_EFFORT)` continues with independent equipment after a calculation error and returns
+an immutable outcome for every item. Aggregate weights, dimensions, and utilities then contain only
+successfully calculated equipment, and `isComplete()` is false. `calculate(FAIL_FAST)` stops on the
+first failure and throws `SystemMechanicalDesignException`; `getPartialResult()` preserves the
+calculated, failed, and skipped outcomes. Exception class and message are included in the serialized
+result, while stack traces remain in the application log. The legacy `runDesignCalculation()` method
+retains best-effort behavior for source compatibility; inspect `getLastCalculationResult()` before
+using its aggregates.
 
 ## JSON Export
 

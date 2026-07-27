@@ -17,12 +17,22 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.distillation.ColumnSpecification;
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.distillation.RateBasedPackedColumn;
+import neqsim.process.equipment.energy.EnergyNetworkSolver;
 import neqsim.process.equipment.distillation.internals.ColumnInternalsDesigner;
 import neqsim.process.equipment.heatexchanger.CoolingWaterSystem;
 import neqsim.process.equipment.heatexchanger.FiredHeater;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
+import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction.InterfacialFrictionResult;
 import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.EnergyBus;
+import neqsim.process.equipment.stream.EnergyNetworkReport;
+import neqsim.process.equipment.stream.EnergyPort;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyStream;
+import neqsim.process.equipment.stream.EnergyType;
+import neqsim.process.equipment.stream.MechanicalShaft;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.fielddevelopment.concept.DevelopmentCaseTemplate;
@@ -1563,4 +1573,95 @@ public class DocExamplesCompilationTest {
       assertNotNull(r.getStatus());
     }
   }
+
+  /**
+   * Energy-driven pump example from docs/process/energy_streams.md.
+   */
+  @Test
+  public void testEnergyDrivenPumpDocumentationExample() {
+    SystemInterface water = new SystemSrkEos(298.15, 2.0);
+    water.addComponent("water", 1.0);
+    water.setMixingRule("classic");
+
+    Stream feed = new Stream("pump feed", water);
+    feed.setFlowRate(100000.0, "kg/hr");
+    feed.run();
+
+    EnergyStream shaft = new EnergyStream("pump shaft", EnergyType.SHAFT_WORK);
+    shaft.setPower(100.0, "kW");
+
+    Pump pump = new Pump("energy-driven pump", feed);
+    pump.setIsentropicEfficiency(0.75);
+    pump.setEnergyStream(shaft);
+    pump.run();
+
+    double outletPressure = pump.getOutletStream().getPressure("bara");
+    EnergyPortMode mode = pump.getEnergyPort("shaftPower").getMode();
+
+    assertTrue(outletPressure > feed.getPressure("bara"));
+    assertEquals(EnergyPortMode.SPECIFICATION, mode);
+  }
+
+  /**
+   * Energy bus and mechanical shaft examples from docs/process/energy_streams.md.
+   */
+  @Test
+  public void testEnergyBusDocumentationExamples() {
+    EnergyBus grid = new EnergyBus("main electrical bus", EnergyType.ELECTRICAL);
+    grid.setContribution("solar", 2.0, "MW");
+    grid.setContribution("electrolyzer", -1.5, "MW");
+    double reserve = grid.getNetPower("kW");
+
+    MechanicalShaft shaftTrain = new MechanicalShaft("expander-compressor shaft");
+    shaftTrain.setMechanicalEfficiency(0.98);
+    shaftTrain.setGeneratedPower("expander", 10.0e6);
+    shaftTrain.setConsumedPower("compressor", 8.0e6);
+    double sparePower = shaftTrain.getNetPower("MW");
+
+    assertEquals(500.0, reserve, 1.0e-12);
+    assertEquals(1.8, sparePower, 1.0e-12);
+  }
+
+  /**
+   * Deterministic allocation example from docs/process/energy_streams.md.
+   */
+  @Test
+  public void testEnergyNetworkAllocationDocumentationExample() {
+    EnergyBus allocatedGrid = new EnergyBus("allocated grid", EnergyType.ELECTRICAL);
+
+    EnergyPort generator = new EnergyPort("power", EnergyType.ELECTRICAL, EnergyPortDirection.OUTPUT,
+        EnergyPortMode.CALCULATED);
+    generator.setOwnerName("generator");
+    generator.connect(allocatedGrid);
+    generator.setDuty(100.0, "kW");
+
+    EnergyPort essentialLoad = new EnergyPort("power", EnergyType.ELECTRICAL, EnergyPortDirection.INPUT,
+        EnergyPortMode.SPECIFICATION);
+    essentialLoad.setOwnerName("essential load");
+    essentialLoad.setPriority(10);
+    essentialLoad.setRequestedPower(80.0, "kW");
+    essentialLoad.connect(allocatedGrid);
+
+    EnergyPort flexibleLoad = new EnergyPort("power", EnergyType.ELECTRICAL, EnergyPortDirection.INPUT,
+        EnergyPortMode.SPECIFICATION);
+    flexibleLoad.setOwnerName("flexible load");
+    flexibleLoad.setPriority(20);
+    flexibleLoad.setRequestedPower(80.0, "kW");
+    flexibleLoad.connect(allocatedGrid);
+
+    EnergyNetworkReport allocation = allocatedGrid.solveBalance();
+    double essentialAllocation = essentialLoad.getPowerMagnitude("kW");
+    double flexibleAllocation = flexibleLoad.getPowerMagnitude("kW");
+    double unmetDemand = allocation.getUnmetDemand();
+
+    EnergyNetworkSolver network = new EnergyNetworkSolver("electrical allocation", allocatedGrid);
+    ProcessSystem process = new ProcessSystem();
+    process.add(network);
+
+    assertEquals(1, network.getEnergyBuses().size());
+    assertEquals(80.0, essentialAllocation, 1.0e-12);
+    assertEquals(20.0, flexibleAllocation, 1.0e-12);
+    assertEquals(60.0, unmetDemand / 1000.0, 1.0e-12);
+  }
+
 }

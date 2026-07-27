@@ -44,7 +44,11 @@ public class PlugFlowReactorTest extends neqsim.NeqSimTest {
     pfr.setEnergyMode(PlugFlowReactor.EnergyMode.ISOTHERMAL);
     pfr.setNumberOfSteps(50);
     pfr.setKeyComponent("methane");
+    pfr.setThermodynamicCoupling(PlugFlowReactor.ThermodynamicCoupling.FULLY_COUPLED);
     pfr.run();
+
+    assertTrue(pfr.getThermodynamicStateEvaluationCount() >= 4 * pfr.getNumberOfSteps(),
+        "RK4 must evaluate a synchronized thermodynamic state at every sub-stage");
 
     // Check positive conversion
     double conversion = pfr.getConversion();
@@ -133,7 +137,11 @@ public class PlugFlowReactorTest extends neqsim.NeqSimTest {
     pfr.setDiameter(0.10, "m");
     pfr.setEnergyMode(PlugFlowReactor.EnergyMode.ISOTHERMAL);
     pfr.setNumberOfSteps(40);
+    pfr.setCatalystEffectivenessEnabled(true);
     pfr.run();
+
+    assertTrue(pfr.getLastCatalystEffectivenessFactor() > 0.0 && pfr.getLastCatalystEffectivenessFactor() <= 1.0,
+        "Packed-bed effectiveness must be in the physical interval (0, 1]");
 
     // Pressure drop should be positive in packed bed
     double dP = pfr.getPressureDrop();
@@ -248,6 +256,18 @@ public class PlugFlowReactorTest extends neqsim.NeqSimTest {
   @Test
   public void testConfigurationSettersGetters() {
     PlugFlowReactor pfr = new PlugFlowReactor("PFR-config");
+
+    assertEquals(PlugFlowReactor.ThermodynamicCoupling.FROZEN_PROPERTIES, pfr.getThermodynamicCoupling());
+
+    pfr.setThermodynamicCoupling(PlugFlowReactor.ThermodynamicCoupling.FULLY_COUPLED);
+    assertEquals(PlugFlowReactor.ThermodynamicCoupling.FULLY_COUPLED, pfr.getThermodynamicCoupling());
+
+    pfr.setCatalystMolecularDiffusivity(2.0e-5);
+    assertEquals(2.0e-5, pfr.getCatalystMolecularDiffusivity(), 1.0e-12);
+
+    assertTrue(!pfr.isCatalystEffectivenessEnabled());
+    pfr.setCatalystEffectivenessEnabled(true);
+    assertTrue(pfr.isCatalystEffectivenessEnabled());
 
     pfr.setLength(10.0, "m");
     assertEquals(10.0, pfr.getLength(), 1e-10);

@@ -1,278 +1,204 @@
 ---
 title: Mixers and Splitters
-description: Documentation for stream mixing and splitting equipment in NeqSim.
+description: Combine and divide NeqSim process streams with mass, component, and energy checks.
 ---
 
-# Mixers and Splitters
+Mixers combine material streams, while splitters divide one stream without changing its
+thermodynamic state or composition. The public classes are in
+`neqsim.process.equipment.mixer` and `neqsim.process.equipment.splitter`.
 
-Documentation for stream mixing and splitting equipment in NeqSim.
+## Capabilities
 
-## Table of Contents
-- [Overview](#overview)
-- [Mixer](#mixer)
-- [Splitter](#splitter)
-- [Static Mixer](#static-mixer)
-- [Examples](#examples)
+| Class | Use |
+| --- | --- |
+| `Mixer` | Combine two or more streams and calculate an outlet state |
+| `StaticMixer` | Use the alternative static-mixing implementation |
+| `Splitter` | Divide one stream by relative factors or specified outlet flow rates |
 
----
-
-## Overview
-
-**Location:** `neqsim.process.equipment.mixer`, `neqsim.process.equipment.splitter`
-
-**Classes:**
-| Class               | Description                 |
-| ------------------- | --------------------------- |
-| `Mixer`             | Combine multiple streams    |
-| `MixerInterface`    | Mixer interface             |
-| `Splitter`          | Split stream into fractions |
-| `SplitterInterface` | Splitter interface          |
-| `StaticMixer`       | Static mixing element       |
-
----
+The stream accessors return `StreamInterface`. Keep that interface type unless a downstream API
+specifically requires the concrete `Stream` class.
 
 ## Mixer
 
-Combine multiple streams into one outlet stream.
+In its default mode, `Mixer` applies total mass and component balances and calculates the outlet
+temperature from an enthalpy balance:
 
-### Basic Usage
+$$
+\dot{m}_{\mathrm{out}}=\sum_i \dot{m}_i
+$$
+
+$$
+\dot{H}_{\mathrm{out}}=\sum_i \dot{H}_i
+$$
+
+For component $j$, the outlet mole fraction is molar-flow weighted:
+
+$$
+x_{j,\mathrm{out}}=
+\frac{\sum_i \dot{n}_i x_{j,i}}{\sum_i \dot{n}_i}
+$$
+
+Here, $\dot{m}$ is mass flow, $\dot{n}$ is molar flow, $\dot{H}$ is enthalpy
+flow, and $x_j$ is mole fraction.
+
+### Complete mixer example
 
 ```java
 import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.thermo.system.SystemSrkEos;
+
+SystemSrkEos richFluid = new SystemSrkEos(300.0, 30.0);
+richFluid.addComponent("methane", 0.80);
+richFluid.addComponent("ethane", 0.15);
+richFluid.addComponent("propane", 0.05);
+richFluid.setMixingRule("classic");
+
+Stream richGas = new Stream("rich gas", richFluid);
+richGas.setFlowRate(5000.0, "kg/hr");
+richGas.run();
+
+SystemSrkEos leanFluid = new SystemSrkEos(310.0, 32.0);
+leanFluid.addComponent("methane", 0.95);
+leanFluid.addComponent("ethane", 0.04);
+leanFluid.addComponent("propane", 0.01);
+leanFluid.setMixingRule("classic");
+
+Stream leanGas = new Stream("lean gas", leanFluid);
+leanGas.setFlowRate(3000.0, "kg/hr");
+leanGas.run();
 
 Mixer mixer = new Mixer("M-100");
-mixer.addStream(stream1);
-mixer.addStream(stream2);
-mixer.addStream(stream3);
+mixer.addStream(richGas);
+mixer.addStream(leanGas);
 mixer.run();
 
-Stream mixed = mixer.getOutletStream();
+StreamInterface mixedGas = mixer.getOutletStream();
+double mixedFlowKgPerHour = mixedGas.getFlowRate("kg/hr");
+double mixedTemperatureC = mixedGas.getTemperature("C");
 ```
 
-### Mixing Calculation
+The example produces $8000\ \mathrm{kg/h}$. A focused documentation test verifies the flow,
+enthalpy closure, component result, and pressure diagnostics.
 
-The mixer performs mass and energy balance:
+### Pressure behavior and diagnostics
 
-$$\dot{m}_{out} = \sum_i \dot{m}_i$$
-
-$$\dot{m}_{out} \cdot h_{out} = \sum_i \dot{m}_i \cdot h_i$$
-
-$$x_{j,out} = \frac{\sum_i \dot{m}_i \cdot x_{j,i}}{\sum_i \dot{m}_i}$$
-
-> **Note:** The outlet temperature of a mixer is **calculated** from the energy balance of the inlet streams — there is no `setOutletTemperature()` method for the mixer. If you need to control the temperature after mixing, use a downstream `Heater` or `Cooler`.
-
-### Pressure Handling
+`Mixer` sets the outlet pressure to the lowest active inlet pressure. It does not provide an
+independent `setOutletPressure` specification. If active inlet pressures differ by more than the
+configured tolerance, the calculation continues at the lowest pressure and records a diagnostic:
 
 ```java
-// Default: outlet pressure = minimum inlet pressure
+mixer.setPressureMismatchTolerance(0.5);
 mixer.run();
 
-// Or specify outlet pressure
-mixer.setOutletPressure(20.0, "bara");
+boolean pressureMismatch = mixer.isPressureMismatch();
+double pressureSpreadBar = mixer.getInletPressureSpread();
+double minimumInletPressureBara = mixer.getMinInletPressure();
+double maximumInletPressureBara = mixer.getMaxInletPressure();
+```
+
+A material mixer is not a hydraulic pressure-drop model. Use an upstream valve, compressor, pump,
+or pipeline model when pressure equalization or pressure loss must be represented explicitly.
+
+### Specified outlet temperature
+
+`setOutletTemperature(double)` is available and expects kelvin. It changes the calculation from
+the default enthalpy-balanced mode to a specified-temperature TP flash:
+
+```java
+mixer.setOutletTemperature(305.15);
 mixer.run();
 ```
 
----
+Use this mode only when the outlet temperature is an imposed boundary condition. For an auditable
+heating or cooling duty, retain the energy-balanced mixer and add a downstream `Heater` or
+`Cooler`.
 
 ## Splitter
 
-Split a stream into multiple fractions.
+`Splitter` clones the inlet thermodynamic state and composition into each outlet and changes only
+the amount of material. For normalized split factors $f_k$:
 
-### Basic Usage
+$$
+\dot{m}_k=f_k\dot{m}_{\mathrm{in}},
+\qquad
+\sum_k f_k=1
+$$
+
+### Relative split factors
+
+`setSplitFactors` treats its values as relative weights. It clamps negative values to zero and
+normalizes the remaining weights, so at least one value must be positive. The values do not have
+to sum to one. For example, `{7.0, 3.0}` becomes `{0.7, 0.3}`.
+
+The following splitter snippets continue from `mixedGas`, which is created in the complete mixer
+example above.
 
 ```java
-import neqsim.process.equipment.splitter.Splitter;
-
-// Split into 2 streams
-Splitter splitter = new Splitter("SP-100", inletStream, 2);
-splitter.setSplitFactors(new double[]{0.7, 0.3});  // 70% and 30%
+// Continue from the complete mixer example above.
+Splitter splitter = new Splitter("SP-100", mixedGas, 2);
+splitter.setSplitFactors(new double[] {7.0, 3.0});
 splitter.run();
 
-Stream split1 = splitter.getSplitStream(0);  // 70%
-Stream split2 = splitter.getSplitStream(1);  // 30%
+StreamInterface product = splitter.getSplitStream(0);
+StreamInterface recycle = splitter.getSplitStream(1);
 ```
 
-### Split Factor Specification
+### Specified flows and remainder outlets
+
+Use `setFlowRates` when one or more outlet flow rates are known. `Splitter.REMAINDER` (equal to
+`-1.0`) marks an outlet that receives material left after the fixed demands:
 
 ```java
-// By mass fractions (must sum to 1.0)
-splitter.setSplitFactors(new double[]{0.5, 0.3, 0.2});
-
-// By flow rates
-splitter.setFlowRates(new double[]{100.0, 60.0, 40.0}, "kg/hr");
-```
-
-### Properties
-
-All split streams have identical:
-- Temperature
-- Pressure
-- Composition (mole fractions)
-
-Only flow rate differs.
-
----
-
-## Static Mixer
-
-For inline mixing with pressure drop.
-
-### Usage
-
-```java
-import neqsim.process.equipment.mixer.StaticMixer;
-
-StaticMixer staticMixer = new StaticMixer("Static Mixer");
-staticMixer.addStream(stream1);
-staticMixer.addStream(stream2);
-staticMixer.setPressureDrop(0.5, "bara");
-staticMixer.run();
-```
-
----
-
-## Examples
-
-### Example 1: Simple Stream Mixing
-
-```java
-import neqsim.thermo.system.SystemSrkEos;
-import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.mixer.Mixer;
-
-// Stream 1: Rich gas
-SystemSrkEos gas1 = new SystemSrkEos(300.0, 50.0);
-gas1.addComponent("methane", 0.80);
-gas1.addComponent("ethane", 0.15);
-gas1.addComponent("propane", 0.05);
-gas1.setMixingRule("classic");
-
-Stream stream1 = new Stream("Rich Gas", gas1);
-stream1.setFlowRate(5000.0, "kg/hr");
-stream1.run();
-
-// Stream 2: Lean gas
-SystemSrkEos gas2 = new SystemSrkEos(310.0, 50.0);
-gas2.addComponent("methane", 0.95);
-gas2.addComponent("ethane", 0.04);
-gas2.addComponent("propane", 0.01);
-gas2.setMixingRule("classic");
-
-Stream stream2 = new Stream("Lean Gas", gas2);
-stream2.setFlowRate(3000.0, "kg/hr");
-stream2.run();
-
-// Mix streams
-Mixer mixer = new Mixer("M-100");
-mixer.addStream(stream1);
-mixer.addStream(stream2);
-mixer.run();
-
-// Results
-Stream mixed = mixer.getOutletStream();
-System.out.println("Mixed flow: " + mixed.getFlowRate("kg/hr") + " kg/hr");
-System.out.println("Mixed temp: " + mixed.getTemperature("C") + " C");
-System.out.println("Methane: " + mixed.getFluid().getMoleFraction("methane"));
-```
-
-### Example 2: Recycle Split
-
-```java
-// Main process stream
-Stream processStream = new Stream("Process", processFluid);
-processStream.setFlowRate(10000.0, "kg/hr");
-processStream.run();
-
-// Split: 90% product, 10% recycle
-Splitter splitter = new Splitter("Recycle Splitter", processStream, 2);
-splitter.setSplitFactors(new double[]{0.90, 0.10});
-splitter.run();
-
-Stream product = splitter.getSplitStream(0);
-Stream recycle = splitter.getSplitStream(1);
-
-System.out.println("Product: " + product.getFlowRate("kg/hr") + " kg/hr");
-System.out.println("Recycle: " + recycle.getFlowRate("kg/hr") + " kg/hr");
-```
-
-### Example 3: Multiple Stream Manifold
-
-```java
-// Create manifold mixer for 4 wells
-Mixer manifold = new Mixer("Production Manifold");
-
-for (int i = 1; i <= 4; i++) {
-    SystemSrkEos wellFluid = new SystemSrkEos(350.0, 100.0 - i * 5);
-    wellFluid.addComponent("methane", 0.85);
-    wellFluid.addComponent("ethane", 0.08);
-    wellFluid.addComponent("propane", 0.05);
-    wellFluid.addComponent("water", 0.02);
-    wellFluid.setMixingRule("classic");
-
-    Stream wellStream = new Stream("Well " + i, wellFluid);
-    wellStream.setFlowRate(1000.0 + i * 200, "Sm3/day");
-    wellStream.run();
-
-    manifold.addStream(wellStream);
-}
-
-manifold.run();
-
-System.out.println("Total production: " + manifold.getOutletStream().getFlowRate("Sm3/day") + " Sm3/day");
-System.out.println("Manifold pressure: " + manifold.getOutletStream().getPressure("bara") + " bara");
-```
-
-### Example 4: Product Distribution
-
-```java
-// Gas from separator
-Stream gasProduct = separator.getGasOutStream();
-
-// Distribute to 3 customers
-Splitter distributor = new Splitter("Gas Distribution", gasProduct, 3);
-
-// Set by flow rates
-double[] rates = {5000.0, 3000.0, 2000.0};  // Sm3/hr
-distributor.setFlowRates(rates, "Sm3/hr");
+// Continue from the complete mixer example above.
+Splitter distributor = new Splitter("distribution splitter", mixedGas, 2);
+distributor.setFlowRates(
+    new double[] {2500.0, Splitter.REMAINDER},
+    "kg/hr");
 distributor.run();
 
-for (int i = 0; i < 3; i++) {
-    Stream customerStream = distributor.getSplitStream(i);
-    System.out.println("Customer " + (i+1) + ": " + customerStream.getFlowRate("Sm3/hr") + " Sm3/hr");
-}
+StreamInterface fixedDemand = distributor.getSplitStream(0);
+StreamInterface remainingFlow = distributor.getSplitStream(1);
 ```
 
-### Example 5: Bypass Configuration
+If several outlets use `Splitter.REMAINDER`, they share the leftover flow equally. If fixed
+positive demands exceed the inlet flow, NeqSim scales them proportionally to the available flow
+and assigns zero to remainder outlets. Other negative fixed-flow values are invalid and are
+clamped to zero.
+
+## Static mixer
+
+`StaticMixer` supports the same multi-inlet connection pattern but uses its own mixing
+implementation. This snippet reuses `richGas` and `leanGas` from the complete mixer example:
 
 ```java
-// Main stream
-Stream mainStream = new Stream("Main", fluid);
-mainStream.setFlowRate(1000.0, "kg/hr");
-mainStream.run();
+// Continue from the complete mixer example above.
+StaticMixer staticMixer = new StaticMixer("MX-101");
+staticMixer.addStream(richGas);
+staticMixer.addStream(leanGas);
+staticMixer.run();
 
-// Split: 80% through heater, 20% bypass
-Splitter bypass = new Splitter("Bypass", mainStream, 2);
-bypass.setSplitFactors(new double[]{0.80, 0.20});
-bypass.run();
-
-// Heat 80%
-Heater heater = new Heater("E-100", bypass.getSplitStream(0));
-heater.setOutletTemperature(400.0, "K");
-heater.run();
-
-// Remix
-Mixer remix = new Mixer("M-100");
-remix.addStream(heater.getOutletStream());
-remix.addStream(bypass.getSplitStream(1));
-remix.run();
-
-System.out.println("Bypass temp control: " + remix.getOutletStream().getTemperature("K") + " K");
+StreamInterface staticMixerOutlet = staticMixer.getOutletStream();
 ```
 
----
+`StaticMixer` does not expose a `setPressureDrop` method. Add a valve or pipe model when the
+pressure loss through a physical mixing element is part of the engineering question.
 
-## Related Documentation
+## Validation checklist
 
-- [Equipment Index](index.md) - All equipment
-- [Streams](streams) - Stream handling
-- [Controllers](../controllers) - Adjusters and recycles
+- Run every inlet stream before running a stand-alone mixer or splitter.
+- Check mixer mass and enthalpy closure in the default energy-balanced mode.
+- Inspect mixer pressure-mismatch diagnostics; do not silently mix materially different
+  pressures.
+- Check that splitter outlet flows sum to the inlet flow.
+- Use `StreamInterface` for mixer and splitter outlet accessors.
+- Add equipment to a `ProcessSystem` in upstream-to-downstream order for integrated simulations.
+
+## Related documentation
+
+- [Equipment index](index.md)
+- [Streams](streams)
+- [Heat exchangers](heat_exchangers)
+- [Valves](valves)
+- [Controllers and recycles](../controllers)

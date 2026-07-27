@@ -14,9 +14,15 @@ import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.process.electricaldesign.pump.PumpElectricalDesign;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortEquipment;
+import neqsim.process.equipment.stream.EnergyBus;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyStream;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.pump.PumpMechanicalDesign;
 import neqsim.process.util.monitor.PumpResponse;
@@ -179,6 +185,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
    */
   public Pump(String name) {
     super(name);
+    registerEnergyPort("shaftPower", EnergyType.SHAFT_WORK, EnergyPortDirection.INPUT, EnergyPortMode.CALCULATED);
     initMechanicalDesign();
     initElectricalDesign();
   }
@@ -192,6 +199,35 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
   public Pump(String name, StreamInterface inletStream) {
     this(name);
     setInletStream(inletStream);
+  }
+
+  /**
+   * Connects an external shaft-power specification using the legacy single-stream API.
+   *
+   * @param energyStream shaft-work stream
+   */
+  @Override
+  public void setEnergyStream(EnergyStream energyStream) {
+    super.connectEnergyStream("shaftPower", energyStream, EnergyPortMode.SPECIFICATION);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void connectEnergyStream(String portName, EnergyStream stream) {
+    if ("shaftPower".equals(portName)) {
+      super.connectEnergyStream(portName, stream, EnergyPortMode.SPECIFICATION);
+    } else {
+      super.connectEnergyStream(portName, stream);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void disconnectEnergyStream(String portName) {
+    super.disconnectEnergyStream(portName);
+    if ("shaftPower".equals(portName)) {
+      getEnergyPort(portName).setMode(EnergyPortMode.CALCULATED);
+    }
   }
 
   /** {@inheritDoc} */
@@ -302,7 +338,8 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
         || pressure != lastOutletPressure || outTemperature != lastOutTemperature || speed != lastSpeed
         || minimumFlow != lastMinimumFlow || isentropicEfficiency != lastIsentropicEfficiency || dH != lastPower
         || useOutTemperature != lastUseOutTemperature || calculateAsCompressor != lastCalculateAsCompressor
-        || powerSet != lastPowerSet || pumpChart.isUsePumpChart() != lastUsePumpChart || checkNPSH != lastCheckNPSH) {
+        || powerSet != lastPowerSet || pumpChart.isUsePumpChart() != lastUsePumpChart || checkNPSH != lastCheckNPSH
+        || (isSetEnergyStream() && getEnergyStream().getDuty() != dH)) {
       return true;
     }
     double flow = inletSystem.getFlowRate("kg/hr");
@@ -482,6 +519,9 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
       thermoSystem.setPressure(pressure, pressureUnit);
       thermoSystem.init(3);
       dH = 0.0;
+      if (!isSetEnergyStream()) {
+        getEnergyPort("shaftPower").setDuty(0.0);
+      }
       outStream.setThermoSystem(thermoSystem);
       finishRun(id);
       return;
@@ -495,6 +535,11 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
     inStream.getThermoSystem().init(3);
     double hinn = inStream.getThermoSystem().getEnthalpy();
     double entropy = inStream.getThermoSystem().getEntropy();
+
+    if (isSetEnergyStream()) {
+      runWithSpecifiedShaftPower(hinn, id);
+      return;
+    }
 
     if (useOutTemperature) {
       thermoSystem = inStream.getThermoSystem().clone();
@@ -522,6 +567,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
         thermoOps.PHflash(hout, 0);
       } else if (pumpChart.isUsePumpChart()) {
         thermoSystem = inStream.getThermoSystem().clone();
+        inStream.getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
         double flowRate_m3hr = inStream.getThermoSystem().getFlowRate("m3/hr");
         double densityInlet = inStream.getThermoSystem().getDensity("kg/m3");
 
@@ -596,8 +642,10 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
         thermoSystem = inStream.getThermoSystem().clone();
         thermoSystem.setPressure(pressure, pressureUnit);
 
-        // Calculate hydraulic power and shaft power
-        double volumetricFlow = thermoSystem.getFlowRate("kg/sec") / thermoSystem.getDensity("kg/m3"); // m³/s
+        // Calculate hydraulic power and shaft power using the inlet liquid density.
+        inStream.getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+        double densityInlet = inStream.getThermoSystem().getDensity("kg/m3");
+        double volumetricFlow = thermoSystem.getFlowRate("kg/sec") / densityInlet; // m³/s
         double deltaP_Pa = thermoSystem.getPressure("Pa") - inStream.getThermoSystem().getPressure("Pa");
         double hydraulicPower = volumetricFlow * deltaP_Pa; // W
         double shaftPower = hydraulicPower / isentropicEfficiency; // W
@@ -616,10 +664,54 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
     // System.out.println("entropy inn.." + entropy);
     // thermoOps.PSflash(entropy);
     dH = thermoSystem.getEnthalpy() - hinn;
+    getEnergyPort("shaftPower").setDuty(dH);
     outStream.setThermoSystem(thermoSystem);
     finishRun(id);
 
     // outStream.run(id);
+  }
+
+  /**
+   * Calculates outlet pressure and state from a connected shaft-power specification.
+   *
+   * @param inletEnthalpy total inlet enthalpy in J
+   * @param id calculation identifier
+   * @throws IllegalArgumentException if power, efficiency, density, or flow is not positive
+   */
+  private void runWithSpecifiedShaftPower(double inletEnthalpy, UUID id) {
+    double shaftPower = getEnergyPort("shaftPower").getPowerMagnitude();
+    double efficiency = isentropicEfficiency > 1.0 ? isentropicEfficiency / 100.0 : isentropicEfficiency;
+    if (!Double.isFinite(shaftPower) || shaftPower <= 0.0) {
+      throw new IllegalArgumentException(
+          "Connected shaft power for pump " + getName() + " must be finite and positive");
+    }
+    if (!Double.isFinite(efficiency) || efficiency <= 0.0 || efficiency > 1.0) {
+      throw new IllegalArgumentException("Isentropic efficiency for pump " + getName() + " must be in (0, 1]");
+    }
+
+    inStream.getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+    double densityInlet = inStream.getThermoSystem().getDensity("kg/m3");
+    double volumetricFlow = inStream.getThermoSystem().getFlowRate("kg/sec") / densityInlet;
+    if (!Double.isFinite(densityInlet) || densityInlet <= 0.0 || !Double.isFinite(volumetricFlow)
+        || volumetricFlow <= 0.0) {
+      throw new IllegalArgumentException("Pump " + getName() + " requires positive inlet density and volumetric flow");
+    }
+
+    double hydraulicPower = shaftPower * efficiency;
+    double deltaPressure = hydraulicPower / volumetricFlow;
+    thermoSystem = inStream.getThermoSystem().clone();
+    thermoSystem.setPressure(inStream.getThermoSystem().getPressure("Pa") + deltaPressure, "Pa");
+    pressure = thermoSystem.getPressure(pressureUnit);
+
+    ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
+    dH = shaftPower;
+    thermoOps.PHflash(inletEnthalpy + dH, 0);
+    thermoSystem.init(3);
+    outStream.setThermoSystem(thermoSystem);
+    if (getEnergyPort("shaftPower").getEnergyStream() instanceof EnergyBus) {
+      getEnergyPort("shaftPower").setDuty(dH);
+    }
+    finishRun(id);
   }
 
   /** {@inheritDoc} */

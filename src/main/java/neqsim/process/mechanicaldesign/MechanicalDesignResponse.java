@@ -379,10 +379,10 @@ public class MechanicalDesignResponse implements java.io.Serializable {
 
     // Design conditions
     this.maxDesignPressure = mecDesign.getMaxDesignPressure();
-    this.maxDesignTemperature = mecDesign.getDesignMaxTemperatureLimit();
-    this.minDesignTemperature = mecDesign.getDesignMinTemperatureLimit();
+    this.maxDesignTemperature = mecDesign.getDesignMaxTemperatureLimit("C");
+    this.minDesignTemperature = mecDesign.getDesignMinTemperatureLimit("C");
     this.maxOperatingPressure = mecDesign.getMaxOperationPressure();
-    this.maxOperatingTemperature = mecDesign.getMaxOperationTemperature();
+    this.maxOperatingTemperature = mecDesign.getMaxOperationTemperature("C");
 
     // Dimensions
     this.innerDiameter = mecDesign.getInnerDiameter();

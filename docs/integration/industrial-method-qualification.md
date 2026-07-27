@@ -20,6 +20,13 @@ The result is machine-readable and can report `QUALIFIED_FOR_SERVICE`, `UNREGIST
 `INCOMPLETE_QUALIFICATION`, `MISSING_INDEPENDENT_BENCHMARK`, `USE_NOT_QUALIFIED`,
 `INSUFFICIENT_SERVICE_CONTEXT` or `OUTSIDE_QUALIFIED_ENVELOPE`.
 
+Numeric regression health is intentionally reported separately from qualification. An
+`EngineeringBenchmarkSuite.Report` exposes `areAllBenchmarksPassed()` and
+`getFailedBenchmarkIds()` for executable baseline checks, while `isPassed()` continues to require a
+passing independently reviewed, non-regression benchmark for every required exact method version.
+This prevents a green internal regression suite from being presented as independent engineering
+qualification.
+
 ## Define and assess a method
 
 ```java

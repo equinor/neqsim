@@ -1,15 +1,23 @@
 package neqsim.process.design;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.ToDoubleFunction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessModule;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.util.optimizer.ProductionOptimizer;
 
 /**
  * Integrated design-to-optimization workflow manager.
@@ -31,6 +39,7 @@ import neqsim.process.processmodel.ProcessSystem;
  *
  * <pre>
  * DesignResult result = DesignOptimizer.forProcess(process).autoSizeEquipment(1.2).applyDefaultConstraints()
+ *     .configureFeedRateOptimization("feed", 50000.0, 200000.0, "kg/hr")
  *     .setObjective(ObjectiveType.MAXIMIZE_PRODUCTION).optimize();
  * </pre>
  *
@@ -48,6 +57,18 @@ public class DesignOptimizer {
   private boolean autoSizeEnabled = false;
   private ObjectiveType objective = ObjectiveType.MAXIMIZE_PRODUCTION;
   private List<String> excludedEquipment = new ArrayList<>();
+  private boolean defaultConstraintsEnabled = false;
+  private String optimizationFeedStreamName;
+  private String productStreamName;
+  private double optimizationLowerBound;
+  private double optimizationUpperBound;
+  private String optimizationRateUnit = "kg/hr";
+  private double optimizationTolerance = 1.0e-3;
+  private int optimizationMaxIterations = 30;
+  private ProductionOptimizer.SearchMode searchMode = ProductionOptimizer.SearchMode.BINARY_FEASIBILITY;
+  private boolean searchModeExplicitlySet = false;
+  private ProductionOptimizer.OptimizationObjective customObjective;
+  private List<ProductionOptimizer.OptimizationConstraint> optimizationConstraints = new ArrayList<>();
 
   /**
    * Objective types for optimization.
@@ -130,6 +151,9 @@ public class DesignOptimizer {
    * @return this optimizer for chaining
    */
   public DesignOptimizer autoSizeEquipment(double safetyFactor) {
+    if (Double.isNaN(safetyFactor) || Double.isInfinite(safetyFactor) || safetyFactor < 1.0) {
+      throw new IllegalArgumentException("Safety factor must be finite and at least 1.0");
+    }
     this.safetyFactor = safetyFactor;
     this.autoSizeEnabled = true;
     return this;
@@ -150,7 +174,7 @@ public class DesignOptimizer {
    * @return this optimizer for chaining
    */
   public DesignOptimizer applyDefaultConstraints() {
-    // Constraints are applied during optimization based on equipment types
+    defaultConstraintsEnabled = true;
     return this;
   }
 
@@ -161,7 +185,112 @@ public class DesignOptimizer {
    * @return this optimizer for chaining
    */
   public DesignOptimizer setObjective(ObjectiveType objective) {
-    this.objective = objective;
+    this.objective = Objects.requireNonNull(objective, "Objective type is required");
+    return this;
+  }
+
+  /**
+   * Configure a bounded feed-rate search.
+   *
+   * <p>
+   * Calling {@link #optimize()} without this configuration performs validation and optional auto-sizing only; it does
+   * not claim that an optimization search ran.
+   * </p>
+   *
+   * @param feedStreamName manipulated feed stream name
+   * @param lowerBound lower feed-rate bound
+   * @param upperBound upper feed-rate bound
+   * @param rateUnit feed-rate unit
+   * @return this optimizer for chaining
+   */
+  public DesignOptimizer configureFeedRateOptimization(String feedStreamName, double lowerBound, double upperBound,
+      String rateUnit) {
+    if (feedStreamName == null || feedStreamName.trim().isEmpty()) {
+      throw new IllegalArgumentException("Feed stream name is required");
+    }
+    if (Double.isNaN(lowerBound) || Double.isInfinite(lowerBound) || lowerBound < 0.0 || Double.isNaN(upperBound)
+        || Double.isInfinite(upperBound) || upperBound <= lowerBound) {
+      throw new IllegalArgumentException("Optimization bounds must be finite with 0 <= lower < upper");
+    }
+    if (rateUnit == null || rateUnit.trim().isEmpty()) {
+      throw new IllegalArgumentException("Rate unit is required");
+    }
+    this.optimizationFeedStreamName = feedStreamName;
+    this.optimizationLowerBound = lowerBound;
+    this.optimizationUpperBound = upperBound;
+    this.optimizationRateUnit = rateUnit;
+    return this;
+  }
+
+  /**
+   * Select the product stream used by oil- or gas-production objectives.
+   *
+   * @param productStreamName product stream name
+   * @return this optimizer for chaining
+   */
+  public DesignOptimizer setProductStream(String productStreamName) {
+    if (productStreamName == null || productStreamName.trim().isEmpty()) {
+      throw new IllegalArgumentException("Product stream name is required");
+    }
+    this.productStreamName = productStreamName;
+    return this;
+  }
+
+  /**
+   * Set search convergence controls.
+   *
+   * @param tolerance decision-variable tolerance in the configured rate unit
+   * @param maxIterations maximum search iterations
+   * @return this optimizer for chaining
+   */
+  public DesignOptimizer setSearchConvergence(double tolerance, int maxIterations) {
+    if (Double.isNaN(tolerance) || Double.isInfinite(tolerance) || tolerance <= 0.0) {
+      throw new IllegalArgumentException("Search tolerance must be finite and positive");
+    }
+    if (maxIterations <= 0) {
+      throw new IllegalArgumentException("Maximum iterations must be positive");
+    }
+    this.optimizationTolerance = tolerance;
+    this.optimizationMaxIterations = maxIterations;
+    return this;
+  }
+
+  /**
+   * Select the search algorithm used by the production optimizer.
+   *
+   * @param searchMode search algorithm
+   * @return this optimizer for chaining
+   */
+  public DesignOptimizer setSearchMode(ProductionOptimizer.SearchMode searchMode) {
+    this.searchMode = Objects.requireNonNull(searchMode, "Search mode is required");
+    this.searchModeExplicitlySet = true;
+    return this;
+  }
+
+  /**
+   * Configure the evaluator used when {@link ObjectiveType#CUSTOM} is selected.
+   *
+   * @param name objective name
+   * @param evaluator process objective evaluator
+   * @param maximize {@code true} to maximize, {@code false} to minimize
+   * @return this optimizer for chaining
+   */
+  public DesignOptimizer setCustomObjective(String name, ToDoubleFunction<ProcessSystem> evaluator, boolean maximize) {
+    ProductionOptimizer.ObjectiveType direction = maximize ? ProductionOptimizer.ObjectiveType.MAXIMIZE
+        : ProductionOptimizer.ObjectiveType.MINIMIZE;
+    customObjective = new ProductionOptimizer.OptimizationObjective(name, evaluator, 1.0, direction);
+    objective = ObjectiveType.CUSTOM;
+    return this;
+  }
+
+  /**
+   * Add an explicit process constraint to the bounded search.
+   *
+   * @param constraint optimization constraint
+   * @return this optimizer for chaining
+   */
+  public DesignOptimizer addOptimizationConstraint(ProductionOptimizer.OptimizationConstraint constraint) {
+    optimizationConstraints.add(Objects.requireNonNull(constraint, "Optimization constraint is required"));
     return this;
   }
 
@@ -189,41 +318,40 @@ public class DesignOptimizer {
     DesignResult result = new DesignResult(process != null ? process : getFirstProcessSystem());
 
     try {
-      // Step 1: Run baseline
       logger.info("Running baseline simulation...");
       runSimulation();
 
-      // Step 2: Auto-size equipment if enabled
       if (autoSizeEnabled) {
         logger.info("Auto-sizing equipment with safety factor: " + safetyFactor);
         autoSizeAllEquipment();
-        runSimulation(); // Re-run after sizing
+        runSimulation();
       }
 
-      // Step 3: Record results (simplified - full optimization will be added later)
-      result.setConverged(true);
-      result.setIterations(1);
-
-      // Record flow rate
-      StreamInterface productStream = findProductStream();
-      if (productStream != null) {
-        result.addOptimizedFlowRate(productStream.getName(), productStream.getFlowRate("kg/hr"));
-        result.setObjectiveValue(productStream.getFlowRate("kg/hr"));
+      if (defaultConstraintsEnabled) {
+        initializeDefaultConstraints(result);
       }
 
-      // Record equipment sizes
+      if (optimizationFeedStreamName == null) {
+        result.setExecutionStatus(
+            autoSizeEnabled ? DesignResult.ExecutionStatus.AUTO_SIZED : DesignResult.ExecutionStatus.VALIDATED);
+        result.setConverged(false);
+        result.setIterations(0);
+        result.addWarning("No optimization search was performed. Configure explicit feed-rate bounds with "
+            + "configureFeedRateOptimization(...) before calling optimize().");
+      } else {
+        runConfiguredOptimization(result);
+      }
+
       recordEquipmentSizes(result);
-
-      // Record constraint status
       recordConstraintStatus(result);
-
-      // Check for violations
       checkViolations(result);
 
-      logger.info("Design complete. Violations: " + result.hasViolations());
+      logger.info("Design workflow complete. Status: " + result.getExecutionStatus() + ", violations: "
+          + result.hasViolations());
 
     } catch (Exception e) {
       logger.error("Design failed: " + e.getMessage(), e);
+      result.setExecutionStatus(DesignResult.ExecutionStatus.FAILED);
       result.setConverged(false);
       result.addViolation("Design failed: " + e.getMessage());
     }
@@ -249,8 +377,21 @@ public class DesignOptimizer {
    */
   public DesignResult validate() {
     DesignResult result = new DesignResult(process != null ? process : getFirstProcessSystem());
-    runSimulation();
-    checkViolations(result);
+    try {
+      runSimulation();
+      if (defaultConstraintsEnabled) {
+        initializeDefaultConstraints(result);
+      }
+      recordEquipmentSizes(result);
+      recordConstraintStatus(result);
+      checkViolations(result);
+      result.setExecutionStatus(DesignResult.ExecutionStatus.VALIDATED);
+      result.setConverged(false);
+    } catch (Exception e) {
+      logger.error("Design validation failed: " + e.getMessage(), e);
+      result.setExecutionStatus(DesignResult.ExecutionStatus.FAILED);
+      result.addViolation("Design validation failed: " + e.getMessage());
+    }
     return result;
   }
 
@@ -265,6 +406,170 @@ public class DesignOptimizer {
     } else if (module != null) {
       module.run();
     }
+  }
+
+  /**
+   * Delegate an explicitly configured bounded search to the production optimizer.
+   *
+   * @param result design result to populate
+   */
+  private void runConfiguredOptimization(DesignResult result) {
+    if (process == null) {
+      throw new IllegalStateException("Configured optimization currently requires a ProcessSystem, not a module");
+    }
+    StreamInterface feedStream = requireStream(optimizationFeedStreamName, "optimization feed");
+    ProductionOptimizer.SearchMode effectiveSearchMode = effectiveSearchMode();
+    ProductionOptimizer.OptimizationConfig config = new ProductionOptimizer.OptimizationConfig(optimizationLowerBound,
+        optimizationUpperBound).rateUnit(optimizationRateUnit).tolerance(optimizationTolerance)
+        .maxIterations(optimizationMaxIterations).searchMode(effectiveSearchMode);
+    ProductionOptimizer.OptimizationObjective configuredObjective = createObjective(feedStream);
+    ProductionOptimizer engine = new ProductionOptimizer();
+    ProductionOptimizer.OptimizationResult optimizationResult = engine.optimize(process, feedStream, config,
+        Collections.singletonList(configuredObjective), new ArrayList<>(optimizationConstraints));
+
+    // The search engine evaluates many mutable process states. Restore and run the selected point so the process and
+    // the returned result describe the same operating condition.
+    feedStream.setFlowRate(optimizationResult.getOptimalRate(), optimizationRateUnit);
+    runSimulation();
+
+    result.setIterations(optimizationResult.getIterationHistory().size());
+    result.setConverged(isToleranceConverged(effectiveSearchMode));
+    if (!result.isConverged()) {
+      result.addWarning("The selected search mode did not demonstrate decision-variable tolerance convergence "
+          + "within the configured iteration limit.");
+    }
+    for (Map.Entry<String, Double> entry : optimizationResult.getDecisionVariables().entrySet()) {
+      result.addDecisionVariable(entry.getKey(), entry.getValue());
+    }
+    result.addOptimizedFlowRate(feedStream.getName(), optimizationResult.getOptimalRate());
+    Double objectiveValue = optimizationResult.getObjectiveValues().get(configuredObjective.getName());
+    result.setObjectiveValue(objectiveValue == null ? optimizationResult.getScore() : objectiveValue.doubleValue());
+
+    for (ProductionOptimizer.ConstraintStatus status : optimizationResult.getConstraintStatuses()) {
+      if (status.violated()) {
+        result.addViolation(
+            "Optimization constraint " + status.getName() + " violated with margin " + status.getMargin());
+      }
+    }
+    if (optimizationResult.isFeasible()) {
+      result.setExecutionStatus(DesignResult.ExecutionStatus.OPTIMIZED);
+    } else {
+      result.setExecutionStatus(DesignResult.ExecutionStatus.INFEASIBLE);
+      result.setConverged(false);
+      result.addViolation(optimizationResult.getInfeasibilityDiagnosis());
+    }
+  }
+
+  /**
+   * Create the selected objective with explicit phase and stream semantics.
+   *
+   * @param feedStream manipulated feed stream
+   * @return production optimizer objective
+   */
+  private ProductionOptimizer.OptimizationObjective createObjective(final StreamInterface feedStream) {
+    if (objective == ObjectiveType.CUSTOM) {
+      if (customObjective == null) {
+        throw new IllegalStateException("CUSTOM objective requires setCustomObjective(...)");
+      }
+      return customObjective;
+    }
+    if (objective == ObjectiveType.MAXIMIZE_PRODUCTION) {
+      return new ProductionOptimizer.OptimizationObjective("total production",
+          proc -> feedStream.getFlowRate(optimizationRateUnit), 1.0, ProductionOptimizer.ObjectiveType.MAXIMIZE);
+    }
+    if (objective == ObjectiveType.MAXIMIZE_OIL) {
+      final StreamInterface product = requireConfiguredProductStream();
+      return new ProductionOptimizer.OptimizationObjective("oil production",
+          proc -> phaseFlow(product, "oil", optimizationRateUnit), 1.0, ProductionOptimizer.ObjectiveType.MAXIMIZE);
+    }
+    if (objective == ObjectiveType.MAXIMIZE_GAS) {
+      final StreamInterface product = requireConfiguredProductStream();
+      return new ProductionOptimizer.OptimizationObjective("gas production",
+          proc -> phaseFlow(product, "gas", optimizationRateUnit), 1.0, ProductionOptimizer.ObjectiveType.MAXIMIZE);
+    }
+    return new ProductionOptimizer.OptimizationObjective("total energy", proc -> totalEnergyRequirement(), 1.0,
+        ProductionOptimizer.ObjectiveType.MINIMIZE);
+  }
+
+  /**
+   * Use feasibility search for throughput and a score search for all other objectives unless explicitly selected.
+   *
+   * @return effective search mode
+   */
+  private ProductionOptimizer.SearchMode effectiveSearchMode() {
+    if (!searchModeExplicitlySet && objective != ObjectiveType.MAXIMIZE_PRODUCTION) {
+      return ProductionOptimizer.SearchMode.GOLDEN_SECTION_SCORE;
+    }
+    return searchMode;
+  }
+
+  /**
+   * Check whether interval-reduction algorithms can reach the configured tolerance before their iteration cap.
+   *
+   * @param effectiveSearchMode selected search mode
+   * @return true when tolerance convergence is guaranteed by the configured interval and iteration count
+   */
+  private boolean isToleranceConverged(ProductionOptimizer.SearchMode effectiveSearchMode) {
+    double span = optimizationUpperBound - optimizationLowerBound;
+    if (span <= optimizationTolerance) {
+      return true;
+    }
+    if (effectiveSearchMode == ProductionOptimizer.SearchMode.BINARY_FEASIBILITY) {
+      double required = Math.ceil(Math.log(span / optimizationTolerance) / Math.log(2.0));
+      return optimizationMaxIterations >= required;
+    }
+    if (effectiveSearchMode == ProductionOptimizer.SearchMode.GOLDEN_SECTION_SCORE) {
+      double phi = 0.5 * (Math.sqrt(5.0) - 1.0);
+      double required = Math.ceil(Math.log(optimizationTolerance / span) / Math.log(phi));
+      return optimizationMaxIterations >= required;
+    }
+    return false;
+  }
+
+  /** @return explicitly configured product stream */
+  private StreamInterface requireConfiguredProductStream() {
+    if (productStreamName == null) {
+      throw new IllegalStateException(objective + " requires setProductStream(...)");
+    }
+    return requireStream(productStreamName, "product");
+  }
+
+  /**
+   * Resolve and type-check a named stream.
+   *
+   * @param name equipment name
+   * @param role diagnostic role
+   * @return stream
+   */
+  private StreamInterface requireStream(String name, String role) {
+    ProcessEquipmentInterface equipment = process.getUnit(name);
+    if (!(equipment instanceof StreamInterface)) {
+      throw new IllegalArgumentException("Configured " + role + " '" + name + "' is not a process stream");
+    }
+    return (StreamInterface) equipment;
+  }
+
+  /** @return phase flow, or zero when the requested phase is absent */
+  private double phaseFlow(StreamInterface stream, String phaseType, String unit) {
+    if (!stream.getFluid().hasPhaseType(phaseType)) {
+      return 0.0;
+    }
+    return stream.getFluid().getPhase(phaseType).getFlowRate(unit);
+  }
+
+  /** @return total compressor, pump, and absolute heater duty in kW */
+  private double totalEnergyRequirement() {
+    double total = 0.0;
+    for (ProcessEquipmentInterface equipment : getAllUnitOperations()) {
+      if (equipment instanceof Compressor) {
+        total += Math.abs(((Compressor) equipment).getPower("kW"));
+      } else if (equipment instanceof Pump) {
+        total += Math.abs(((Pump) equipment).getPower("kW"));
+      } else if (equipment instanceof Heater) {
+        total += Math.abs(((Heater) equipment).getDuty()) / 1000.0;
+      }
+    }
+    return total;
   }
 
   /**
@@ -315,16 +620,20 @@ public class DesignOptimizer {
     }
   }
 
-  private StreamInterface findProductStream() {
-    // Find the last stream in the process as the product
-    List<ProcessEquipmentInterface> units = getAllUnitOperations();
-    for (int i = units.size() - 1; i >= 0; i--) {
-      ProcessEquipmentInterface equipment = units.get(i);
-      if (equipment instanceof StreamInterface) {
-        return (StreamInterface) equipment;
+  /**
+   * Materialize lazy equipment constraints and report equipment that has no executable defaults.
+   *
+   * @param result design result receiving applicability warnings
+   */
+  private void initializeDefaultConstraints(DesignResult result) {
+    for (ProcessEquipmentInterface equipment : getAllUnitOperations()) {
+      if (equipment instanceof CapacityConstrainedEquipment && !excludedEquipment.contains(equipment.getName())) {
+        CapacityConstrainedEquipment constrained = (CapacityConstrainedEquipment) equipment;
+        if (constrained.isCapacityAnalysisEnabled() && constrained.getCapacityConstraints().isEmpty()) {
+          result.addWarning(equipment.getName() + " has no executable default capacity constraints");
+        }
       }
     }
-    return null;
   }
 
   private void recordEquipmentSizes(DesignResult result) {
@@ -345,9 +654,12 @@ public class DesignOptimizer {
         CapacityConstrainedEquipment constrained = (CapacityConstrainedEquipment) equipment;
         for (neqsim.process.equipment.capacity.CapacityConstraint constraint : constrained.getCapacityConstraints()
             .values()) {
-          double utilized = constraint.getCurrentValue() / constraint.getMaxValue();
+          if (!constraint.isEnabled()) {
+            continue;
+          }
+          double utilized = constraint.getUtilization();
           result.addConstraintStatus(equipment.getName(), constraint.getName(), constraint.getCurrentValue(),
-              constraint.getMaxValue(), utilized);
+              constraint.getDisplayDesignValue(), utilized);
         }
       }
     }
@@ -359,7 +671,10 @@ public class DesignOptimizer {
         CapacityConstrainedEquipment constrained = (CapacityConstrainedEquipment) equipment;
         for (neqsim.process.equipment.capacity.CapacityConstraint constraint : constrained.getCapacityConstraints()
             .values()) {
-          double utilized = constraint.getCurrentValue() / constraint.getMaxValue();
+          if (!constraint.isEnabled()) {
+            continue;
+          }
+          double utilized = constraint.getUtilization();
           if (utilized > 1.0) {
             result.addViolation(equipment.getName() + ": " + constraint.getName() + " exceeded ("
                 + String.format("%.1f%% utilization", utilized * 100) + ")");

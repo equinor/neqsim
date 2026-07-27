@@ -16,7 +16,7 @@ description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engin
 <div class="cta-buttons" style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin: 2rem 0;">
   <a href="wiki/getting_started.html" class="cta-button primary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #159957; color: white;">🚀 Get Started</a>
   <a href="https://github.com/equinor/neqsim" class="cta-button secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #fff; color: #24292e; border: 2px solid #e1e4e8;">⭐ Star on GitHub</a>
-  <a href="manual/neqsim_reference_manual.html" class="cta-button secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #fff; color: #24292e; border: 2px solid #e1e4e8;">📖 Reference Manual</a>
+  <a href="REFERENCE_MANUAL_INDEX.html" class="cta-button secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #fff; color: #24292e; border: 2px solid #e1e4e8;">📖 Reference Manual Index</a>
   <a href="https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html" class="cta-button secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #fff; color: #24292e; border: 2px solid #e1e4e8;">📘 JavaDoc API</a>
 </div>
 
@@ -33,7 +33,7 @@ description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engin
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="java-getting-started.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Getting Started with Java</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Install, first calculations, developer setup</span></li>
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="docker-getting-started.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Build &amp; Run with Docker</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Build the container; use NeqSim from Java and Python</span></li>
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="modules.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Modules Overview</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Architecture and package structure</span></li>
-<li style="padding: 0.5rem 0;"><a href="REFERENCE_MANUAL_INDEX.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Reference Manual</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Complete API documentation</span></li>
+<li style="padding: 0.5rem 0;"><a href="REFERENCE_MANUAL_INDEX.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Reference Manual Index</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Topic index for guides, workflows, and examples</span></li>
 </ul>
 </div>
 
@@ -221,15 +221,15 @@ System.out.println("Compressibility: " + gas.getZ());
 
 <hr class="section-divider" style="border: none; height: 2px; background: linear-gradient(to right, transparent, #159957, transparent); margin: 2rem 0;">
 
-## 📚 Interactive Reference Manual
+## 📚 Reference Manual Index
 
 <div style="background: linear-gradient(135deg, #f0f7ff 0%, #fff 100%); border: 1px solid #c8e1ff; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;">
-<p style="margin: 0 0 1rem 0;">The <a href="manual/neqsim_reference_manual.html"><strong>Interactive Reference Manual</strong></a> provides a searchable, navigable guide to all NeqSim packages:</p>
+<p style="margin: 0 0 1rem 0;">The <a href="REFERENCE_MANUAL_INDEX.html"><strong>Reference Manual Index</strong></a> organizes the documentation collection by topic and links to current guides, examples, and package references:</p>
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
-<div style="display: flex; align-items: center; gap: 0.5rem;">✅ Complete package hierarchy</div>
-<div style="display: flex; align-items: center; gap: 0.5rem;">✅ Class and interface listings</div>
-<div style="display: flex; align-items: center; gap: 0.5rem;">✅ Usage examples and snippets</div>
-<div style="display: flex; align-items: center; gap: 0.5rem;">✅ Cross-referenced links</div>
+<div style="display: flex; align-items: center; gap: 0.5rem;">✅ Topic-based navigation</div>
+<div style="display: flex; align-items: center; gap: 0.5rem;">✅ Setup, thermodynamics, process, and engineering guides</div>
+<div style="display: flex; align-items: center; gap: 0.5rem;">✅ Usage guides and verified examples</div>
+<div style="display: flex; align-items: center; gap: 0.5rem;">✅ Cross-referenced documentation</div>
 </div>
 </div>
 
