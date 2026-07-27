@@ -37,8 +37,7 @@ public final class NeqSimPhaseEquilibriumPrediction implements Prediction {
   }
 
   /**
-   * Creates a cubic-EOS phase-equilibrium prediction adapter with a custom constant H2-CO2
-   * interaction parameter.
+   * Creates a cubic-EOS phase-equilibrium prediction adapter with a custom constant H2-CO2 interaction parameter.
    *
    * @param model cubic equation-of-state configuration
    * @param hydrogenCarbonDioxideKij dimensionless constant H2-CO2 binary interaction parameter
@@ -67,8 +66,7 @@ public final class NeqSimPhaseEquilibriumPrediction implements Prediction {
   /** {@inheritDoc} */
   @Override
   public double predict(Point point) throws Exception {
-    if (point.getProperty() != Property.BUBBLE_POINT_PRESSURE
-        && point.getProperty() != Property.DEW_POINT_PRESSURE) {
+    if (point.getProperty() != Property.BUBBLE_POINT_PRESSURE && point.getProperty() != Property.DEW_POINT_PRESSURE) {
       throw new IllegalArgumentException("Only bubble- and dew-point pressures are supported");
     }
     SystemInterface system = createSystem(point.getTemperatureK(), point.getPressureBara());
@@ -79,8 +77,7 @@ public final class NeqSimPhaseEquilibriumPrediction implements Prediction {
       system.createDatabase(true);
       system.setMixingRule(2);
       if (Double.isFinite(hydrogenCarbonDioxideKij)) {
-        system.setBinaryInteractionParameter(
-            "hydrogen", "CO2", hydrogenCarbonDioxideKij);
+        system.setBinaryInteractionParameter("hydrogen", "CO2", hydrogenCarbonDioxideKij);
       }
     }
     ThermodynamicOperations operations = new ThermodynamicOperations(system);
@@ -92,8 +89,7 @@ public final class NeqSimPhaseEquilibriumPrediction implements Prediction {
     double pressureBara = system.getPressure("bara");
     if (!Double.isFinite(pressureBara) || pressureBara <= 0.0) {
       throw new IllegalStateException(
-          model + " returned invalid " + point.getProperty() + " at "
-              + point.getTemperatureK() + " K");
+          model + " returned invalid " + point.getProperty() + " at " + point.getTemperatureK() + " K");
     }
     return pressureBara;
   }
