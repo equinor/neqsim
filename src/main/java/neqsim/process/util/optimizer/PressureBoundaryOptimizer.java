@@ -817,9 +817,13 @@ public class PressureBoundaryOptimizer implements Serializable {
   /**
    * Sets the minimum surge margin for compressors.
    *
-   * @param minSurgeMargin the minimum surge margin (e.g., 0.10 for 10%)
+   * @param minSurgeMargin finite, positive minimum surge margin (e.g., 0.10 for 10%)
+   * @throws IllegalArgumentException if {@code minSurgeMargin} is not finite and positive
    */
   public void setMinSurgeMargin(double minSurgeMargin) {
+    if (Double.isNaN(minSurgeMargin) || Double.isInfinite(minSurgeMargin) || minSurgeMargin <= 0.0) {
+      throw new IllegalArgumentException("minSurgeMargin must be finite and greater than zero");
+    }
     this.minSurgeMargin = minSurgeMargin;
   }
 
