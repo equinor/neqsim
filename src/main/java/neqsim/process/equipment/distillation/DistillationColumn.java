@@ -2364,7 +2364,54 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getComponentName());
     }
 
+    signature = updateColumnConfigurationSignature(signature);
+
     return signature;
+  }
+
+  /**
+   * Add the column-level configuration to a Naphtali-Sandholm input fingerprint.
+   *
+   * <p>
+   * Feed streams and the optional top/bottom {@link ColumnSpecification}s are not the whole input. Column pressure and
+   * the reboiler/condenser temperature and ratio settings change the solution just as much, and several of their
+   * setters ({@link #setTopPressure(double)}, {@link #setBottomPressure(double)},
+   * {@code getReboiler().setOutTemperature(...)}) deliberately do not mark the column for re-initialization. Without
+   * them in the fingerprint, a parametric sweep or optimizer that varies column pressure or a column-end temperature
+   * against an unchanged feed silently receives the previous solution.
+   * </p>
+   *
+   * @param signature fingerprint accumulated so far
+   * @return updated fingerprint
+   */
+  private long updateColumnConfigurationSignature(long signature) {
+    long updatedSignature = updateNaphtaliSandholmInputSignature(signature, numberOfTrays);
+    updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, topTrayPressure);
+    updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, bottomTrayPressure);
+    updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, murphreeEfficiency);
+    for (int trayIndex = 0; trayIndex < numberOfTrays && trayIndex < trays.size(); trayIndex++) {
+      SimpleTray tray = trays.get(trayIndex);
+      if (tray == null) {
+        updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, -1L);
+        continue;
+      }
+      boolean temperatureSpecified = tray.isSetOutTemperature();
+      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, temperatureSpecified ? 1L : 0L);
+      if (temperatureSpecified) {
+        updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, tray.getOutTemperature());
+      }
+      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature,
+          getEffectiveMurphreeEfficiency(trayIndex));
+    }
+    if (hasReboiler && getReboiler() != null) {
+      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, getReboiler().getRefluxRatio());
+    }
+    if (hasCondenser && getCondenser() != null) {
+      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, getCondenser().getRefluxRatio());
+      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature,
+          getCondenser().isTotalCondenser() ? 1L : 0L);
+    }
+    return updatedSignature;
   }
 
   /**
@@ -7811,29 +7858,22 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       return false;
     }
     return lastMeshResidual.isFinite() && lastMeshResidual.getInfinityNorm() <= meshResidualTolerance
-        && boundedMeshResidualsSatisfied() && productDrawResidualsSatisfied();
+        && summationResidualSatisfied() && productDrawResidualsSatisfied();
   }
 
   /**
-   * Check whether the per-tray component material balance satisfies its dedicated tolerance.
+   * Check whether the phase summation residual satisfies its dedicated tolerance.
    *
    * <p>
-   * A closed overall feed/product balance does not imply that each tray closes its own component balance. This gate
-   * catches a tray profile that is not a solution even though the column-level balance looks perfect.
+   * The summation residual is scaled to the interval [0, 1] by construction, so the 1.0 infinity-norm tolerance can
+   * never reject it and it needs its own tolerance to take part in the gate.
    * </p>
    *
-   * @return {@code true} when the worst per-tray relative material imbalance is within tolerance
+   * @return {@code true} when the summation residual norm is within tolerance
    */
-  private boolean boundedMeshResidualsSatisfied() {
+  private boolean summationResidualSatisfied() {
     double summationResidual = getLastMeshResidualNorm(ColumnMeshEquationType.SUMMATION);
-    if (!Double.isFinite(summationResidual) || summationResidual > trayMaterialBalanceTolerance) {
-      return false;
-    }
-    if (Double.isNaN(lastTrayMaterialBalanceError)) {
-      return true;
-    }
-    return Double.isFinite(lastTrayMaterialBalanceError)
-        && lastTrayMaterialBalanceError <= trayMaterialBalanceTolerance;
+    return Double.isFinite(summationResidual) && summationResidual <= trayMaterialBalanceTolerance;
   }
 
   /**

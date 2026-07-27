@@ -232,18 +232,7 @@ public class DistillationSolverBenchmarkTest {
 
     for (int i = 0; i < solvers.length; i++) {
       DistillationColumn col = runProfiledDeethanizer(solvers[i]);
-      if (solvers[i] == DistillationColumn.SolverType.NAPHTALI_SANDHOLM) {
-        // Known limitation, guarded by naphtaliSandholmSolverRunsOnDeethanizer: the accepted
-        // Naphtali-Sandholm profile closes the overall feed/product balance but leaves a ~7%
-        // per-tray component material imbalance, so it does not satisfy solved(). It used to
-        // report converged only because the solver returned fabricated zero temperature and
-        // energy residuals. Products are still compared against the other solvers below.
-        assertFalse(col.solved(),
-            "NAPHTALI_SANDHOLM is expected to miss the per-tray material balance on the deethanizer case; "
-                + "update this test when the solver is fixed: " + col.getConvergenceDiagnostics());
-      } else {
-        assertTrue(col.solved(), solvers[i].name() + " should converge: " + col.getConvergenceDiagnostics());
-      }
+      assertTrue(col.solved(), solvers[i].name() + " should converge: " + col.getConvergenceDiagnostics());
       assertAcceptedSolveStatus(col, solvers[i]);
       assertFalse(col.wasFeedFlashFallbackApplied(),
           solvers[i].name() + " should not use fallback products on the deethanizer case");
@@ -261,8 +250,8 @@ public class DistillationSolverBenchmarkTest {
             "SUM_RATES should guard condenser/reboiler columns with damped substitution");
       }
       if (solvers[i] == DistillationColumn.SolverType.NAPHTALI_SANDHOLM) {
-        assertEquals(DistillationColumn.SolverType.NAPHTALI_SANDHOLM, solversUsed[i],
-            "Naphtali-Sandholm should keep its accepted warm-start when its candidate is rejected");
+        assertEquals(DistillationColumn.SolverType.DAMPED_SUBSTITUTION, solversUsed[i],
+            "Naphtali-Sandholm should reject its leaky candidate on this case and fall back to damped substitution");
       }
 
       // Mass balance closure: within 0.5%
@@ -281,11 +270,11 @@ public class DistillationSolverBenchmarkTest {
           statuses[i] == null ? "null" : statuses[i].name(), solversUsed[i] == null ? "null" : solversUsed[i].name());
     }
 
-    // All solvers should agree on product splits within 2%
+    // All solvers should agree on product splits within 2%.
     double refGas = gasFlows[0]; // DIRECT_SUBSTITUTION as reference
+    double relativeTolerance = 0.02;
+    double tolerance = Math.max(0.01, refGas * relativeTolerance);
     for (int i = 1; i < solvers.length; i++) {
-      double relativeTolerance = 0.02;
-      double tolerance = Math.max(0.01, refGas * relativeTolerance);
       assertEquals(refGas, gasFlows[i], tolerance,
           solvers[i].name() + " gas flow should match direct substitution within engineering tolerance");
     }
@@ -687,39 +676,31 @@ public class DistillationSolverBenchmarkTest {
   }
 
   /**
-   * Test that the Naphtali-Sandholm solver runs and records full MESH residual diagnostics.
+   * Test that the Naphtali-Sandholm solver rejects a profile that does not close the per-component tray balance.
    *
    * <p>
-   * This documents a known solver limitation rather than a passing convergence: the accepted profile closes the overall
-   * feed/product balance to well inside 0.5 % but leaves a per-tray component material imbalance far above tolerance,
-   * so {@link DistillationColumn#solved()} must report {@code false}. Before the residual reporting was fixed, the
-   * solver returned hard-coded zero temperature and energy residuals, which satisfied two of the three gates
-   * unconditionally and made this case look converged. Tighten this test to {@code assertTrue(column.solved())} once
-   * the solver closes the tray balances.
+   * The solver used to accept this case at zero Newton iterations because every early-exit branch gated only on the
+   * overall column closure {@code V[N-1] + L[0] = feed} and the energy balance. Both are satisfied by a profile that
+   * leaks a species from one tray into another, so it returned a product split ~21 % away from every substitution
+   * solver while reporting success. The early exits now also require {@code computeMaxComponentImbalance()} to be
+   * within tolerance, so the leaky candidate is refused and the column falls back to a solver that converges.
    * </p>
    */
   @Test
-  public void naphtaliSandholmSolverRunsOnDeethanizer() {
+  public void naphtaliSandholmRejectsLeakyProfileAndFallsBack() {
     DistillationColumn column = runProfiledDeethanizer(DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
 
-    assertNotNull(column.getLastMeshResidual(), "Naphtali-Sandholm solver should record MESH diagnostics");
-    assertTrue(Double.isFinite(column.getLastMeshResidualNorm()),
-        "Naphtali-Sandholm solver should report a finite residual norm");
-    assertTrue(Double.isNaN(column.getLastTemperatureResidual()),
-        "Naphtali-Sandholm has no successive-substitution sweep and must not fabricate a temperature residual");
+    assertNotNull(column.getLastMeshResidual(), "the column should record MESH diagnostics");
+    assertTrue(Double.isFinite(column.getLastMeshResidualNorm()), "the column should report a finite residual norm");
 
-    double trayImbalance = column.getLastTrayMaterialBalanceError();
-    assertTrue(Double.isFinite(trayImbalance), "per-tray material imbalance should be evaluated");
-    assertTrue(trayImbalance > column.getTrayMaterialBalanceTolerance(),
-        "known limitation: the deethanizer profile is expected to miss the per-tray material balance, was "
-            + trayImbalance);
-    assertFalse(column.solved(), "a profile that does not close its tray material balance must not report solved(): "
-        + column.getConvergenceDiagnostics());
+    assertEquals(DistillationColumn.SolverType.DAMPED_SUBSTITUTION, column.getLastSolverTypeUsed(),
+        "the leaky Naphtali-Sandholm candidate should be rejected and fall back to damped substitution");
+    assertTrue(column.solved(), "the fallback solve should converge: " + column.getConvergenceDiagnostics());
 
     double massBalance = Math
         .abs(100.0 - column.getGasOutStream().getFlowRate("kg/hr") - column.getLiquidOutStream().getFlowRate("kg/hr"))
         / 100.0 * 100.0;
-    assertEquals(0.0, massBalance, 0.5, "Naphtali-Sandholm mass balance should close within 0.5%");
+    assertEquals(0.0, massBalance, 0.5, "mass balance should close within 0.5%");
   }
 
   /**

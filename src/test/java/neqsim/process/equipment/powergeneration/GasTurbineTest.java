@@ -39,7 +39,13 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
     GasTurbine gasturb = new GasTurbine("turbine");
     gasturb.setInletStream(gasStream);
 
-    Assertions.assertEquals(new GasTurbine("turbine", gasStream), gasturb);
+    // GasTurbine uses identity equality (see ProcessEqualityIdentityTest), so the setter is
+    // verified on the resulting state rather than by comparing against a second instance.
+    GasTurbine reference = new GasTurbine("turbine", gasStream);
+    Assertions.assertSame(gasStream, gasturb.getInletStream());
+    Assertions.assertSame(reference.getInletStream(), gasturb.getInletStream());
+    assertNotNull(gasturb.airStream);
+    assertNotNull(gasturb.airCompressor);
   }
 
   @Test
