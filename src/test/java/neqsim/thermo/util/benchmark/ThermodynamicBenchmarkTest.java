@@ -127,13 +127,20 @@ class ThermodynamicBenchmarkTest {
     Report prValidation = ThermodynamicBenchmark.run("PR fitted", ternary,
         new NeqSimPhaseEquilibriumPrediction(NeqSimPhaseEquilibriumPrediction.Model.PR,
             pr.getBinaryInteractionParameter()));
+    Report srkDefault = ThermodynamicBenchmark.run("SRK default", binary,
+        new NeqSimPhaseEquilibriumPrediction(NeqSimPhaseEquilibriumPrediction.Model.SRK));
+    Report prDefault = ThermodynamicBenchmark.run("PR default", binary,
+        new NeqSimPhaseEquilibriumPrediction(NeqSimPhaseEquilibriumPrediction.Model.PR));
 
     throw new AssertionError("CALIBRATION SRK kij=" + srk.getBinaryInteractionParameter() + " RMSRE="
         + srk.getRootMeanSquareRelativeErrorPercent() + " trainAARD="
         + srkTrain.getAverageAbsoluteRelativeDeviationPercent() + " validationAARD="
-        + srkValidation.getAverageAbsoluteRelativeDeviationPercent() + "; PR kij="
-        + pr.getBinaryInteractionParameter() + " RMSRE=" + pr.getRootMeanSquareRelativeErrorPercent()
-        + " trainAARD=" + prTrain.getAverageAbsoluteRelativeDeviationPercent() + " validationAARD="
-        + prValidation.getAverageAbsoluteRelativeDeviationPercent());
+        + srkValidation.getAverageAbsoluteRelativeDeviationPercent() + " defaultTrainAARD="
+        + srkDefault.getAverageAbsoluteRelativeDeviationPercent() + "; PR kij="
+        + pr.getBinaryInteractionParameter() + " RMSRE="
+        + pr.getRootMeanSquareRelativeErrorPercent() + " trainAARD="
+        + prTrain.getAverageAbsoluteRelativeDeviationPercent() + " validationAARD="
+        + prValidation.getAverageAbsoluteRelativeDeviationPercent() + " defaultTrainAARD="
+        + prDefault.getAverageAbsoluteRelativeDeviationPercent());
   }
 }
