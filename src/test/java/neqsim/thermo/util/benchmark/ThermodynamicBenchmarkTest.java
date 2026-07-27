@@ -73,6 +73,20 @@ class ThermodynamicBenchmarkTest {
   }
 
   @Test
+  void rejectsInvalidStateValueAndUncertainty() {
+    Map<String, Double> composition = new LinkedHashMap<String, Double>();
+    composition.put("CO2", 0.96);
+    composition.put("hydrogen", 0.04);
+
+    assertThrows(IllegalArgumentException.class,
+        () -> new Point(Property.BUBBLE_POINT_PRESSURE, 273.15, 0.0, 36.5, Double.NaN, "bara", composition));
+    assertThrows(IllegalArgumentException.class,
+        () -> new Point(Property.BUBBLE_POINT_PRESSURE, 273.15, 36.5, 0.0, Double.NaN, "bara", composition));
+    assertThrows(IllegalArgumentException.class,
+        () -> new Point(Property.BUBBLE_POINT_PRESSURE, 273.15, 36.5, 36.5, -0.1, "bara", composition));
+  }
+
+  @Test
   void exposesConfiguredNeqSimModel() {
     NeqSimPhaseEquilibriumPrediction prediction = new NeqSimPhaseEquilibriumPrediction(
         NeqSimPhaseEquilibriumPrediction.Model.GERG_2008_H2);
