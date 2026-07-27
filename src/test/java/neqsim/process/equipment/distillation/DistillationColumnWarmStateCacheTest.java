@@ -242,7 +242,8 @@ public class DistillationColumnWarmStateCacheTest {
       double feedComponentFlow = feedFlow * feedComposition[componentIndex];
       double productComponentFlow = gasFlow * gasComposition[componentIndex]
           + liquidFlow * liquidComposition[componentIndex];
-      assertEquals(feedComponentFlow, productComponentFlow, 5.0e-3 * feedFlow,
+      assertEquals(feedComponentFlow, productComponentFlow,
+          Math.max(1.0e-6, 5.0e-3 * Math.abs(feedComponentFlow)),
           "component balance must close for " + feedComponents[componentIndex]);
     }
 
