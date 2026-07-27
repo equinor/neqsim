@@ -697,9 +697,10 @@ List<String> warnings = vessel.validateWithWarnings();  // returns errors and wa
 ```
 
 `validate()` rejects configurations that cannot produce a meaningful simulation, including a
-back pressure greater than or equal to the initial pressure. For `CALCULATED` or `TRANSIENT_WALL`
-heat transfer, it also rejects a non-positive vessel length or diameter; the default dimensions are
-positive. It logs non-critical configuration warnings.
+back pressure greater than or equal to the initial pressure. When the calculation type is
+`ENERGY_BALANCE` and heat transfer is `CALCULATED` or `TRANSIENT_WALL`, it also rejects a
+non-positive vessel length or diameter; the default dimensions are positive. It logs non-critical
+configuration warnings.
 
 `validateWithWarnings()` does not throw configuration errors. It returns them with an `ERROR:`
 prefix together with non-critical warnings. Initial pressures above 700 bar produce a non-critical
