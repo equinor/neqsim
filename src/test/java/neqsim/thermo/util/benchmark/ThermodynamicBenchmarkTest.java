@@ -5,7 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.util.benchmark.ThermodynamicBenchmark.Dataset;
 import neqsim.thermo.util.benchmark.ThermodynamicBenchmark.Point;
@@ -101,16 +104,36 @@ class ThermodynamicBenchmarkTest {
   @Test
   void calibratesCubicModelsAgainstPublishedData() throws Exception {
     Dataset dataset = H2CO2PhaseEquilibriumData.load();
-    BinaryInteractionParameterFitter srkFitter = new BinaryInteractionParameterFitter(dataset,
+    List<Integer> binaryIndexes = IntStream.range(0, 12).boxed().collect(Collectors.toList());
+    List<Integer> ternaryIndexes = IntStream.range(12, 24).boxed().collect(Collectors.toList());
+    Dataset binary = BinaryInteractionParameterFitter.subset(dataset, binaryIndexes, "binary calibration");
+    Dataset ternary = BinaryInteractionParameterFitter.subset(dataset, ternaryIndexes, "ternary validation");
+    BinaryInteractionParameterFitter srkFitter = new BinaryInteractionParameterFitter(binary,
         parameter -> new NeqSimPhaseEquilibriumPrediction(NeqSimPhaseEquilibriumPrediction.Model.SRK, parameter));
-    BinaryInteractionParameterFitter prFitter = new BinaryInteractionParameterFitter(dataset,
+    BinaryInteractionParameterFitter prFitter = new BinaryInteractionParameterFitter(binary,
         parameter -> new NeqSimPhaseEquilibriumPrediction(NeqSimPhaseEquilibriumPrediction.Model.PR, parameter));
 
     BinaryInteractionParameterFitter.Result srk = srkFitter.fit(-0.5, 0.2, 1.0e-4, 20);
     BinaryInteractionParameterFitter.Result pr = prFitter.fit(-0.5, 0.2, 1.0e-4, 20);
+    Report srkTrain = ThermodynamicBenchmark.run("SRK fitted", binary,
+        new NeqSimPhaseEquilibriumPrediction(NeqSimPhaseEquilibriumPrediction.Model.SRK,
+            srk.getBinaryInteractionParameter()));
+    Report srkValidation = ThermodynamicBenchmark.run("SRK fitted", ternary,
+        new NeqSimPhaseEquilibriumPrediction(NeqSimPhaseEquilibriumPrediction.Model.SRK,
+            srk.getBinaryInteractionParameter()));
+    Report prTrain = ThermodynamicBenchmark.run("PR fitted", binary,
+        new NeqSimPhaseEquilibriumPrediction(NeqSimPhaseEquilibriumPrediction.Model.PR,
+            pr.getBinaryInteractionParameter()));
+    Report prValidation = ThermodynamicBenchmark.run("PR fitted", ternary,
+        new NeqSimPhaseEquilibriumPrediction(NeqSimPhaseEquilibriumPrediction.Model.PR,
+            pr.getBinaryInteractionParameter()));
 
     throw new AssertionError("CALIBRATION SRK kij=" + srk.getBinaryInteractionParameter() + " RMSRE="
-        + srk.getRootMeanSquareRelativeErrorPercent() + "; PR kij=" + pr.getBinaryInteractionParameter() + " RMSRE="
-        + pr.getRootMeanSquareRelativeErrorPercent());
+        + srk.getRootMeanSquareRelativeErrorPercent() + " trainAARD="
+        + srkTrain.getAverageAbsoluteRelativeDeviationPercent() + " validationAARD="
+        + srkValidation.getAverageAbsoluteRelativeDeviationPercent() + "; PR kij="
+        + pr.getBinaryInteractionParameter() + " RMSRE=" + pr.getRootMeanSquareRelativeErrorPercent()
+        + " trainAARD=" + prTrain.getAverageAbsoluteRelativeDeviationPercent() + " validationAARD="
+        + prValidation.getAverageAbsoluteRelativeDeviationPercent());
   }
 }
