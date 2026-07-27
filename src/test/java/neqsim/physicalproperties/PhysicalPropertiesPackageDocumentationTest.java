@@ -1,10 +1,12 @@
 package neqsim.physicalproperties;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.FrictionTheoryViscosityMethod;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.LBCViscosityMethod;
 import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -16,9 +18,9 @@ class PhysicalPropertiesPackageDocumentationTest {
   @Test
   void basicOverviewExampleCalculatesPositiveGasProperties() {
     SystemInterface fluid = createNaturalGas(298.15, 50.0);
-    fluid.setPhysicalPropertyModel(PhysicalPropertyModel.DEFAULT);
 
     new ThermodynamicOperations(fluid).TPflash();
+    fluid.setPhysicalPropertyModel(PhysicalPropertyModel.DEFAULT);
     fluid.initPhysicalProperties();
 
     assertPositiveFinite(fluid.getPhase("gas").getViscosity("kg/msec"));
@@ -31,8 +33,8 @@ class PhysicalPropertiesPackageDocumentationTest {
   void modelSetSelectionUsesPhysicalPropertyModelApi() {
     SystemInterface fluid = createNaturalGas(298.15, 50.0);
 
-    fluid.setPhysicalPropertyModel(PhysicalPropertyModel.GLYCOL);
     new ThermodynamicOperations(fluid).TPflash();
+    fluid.setPhysicalPropertyModel(PhysicalPropertyModel.GLYCOL);
     fluid.initPhysicalProperties();
 
     assertPositiveFinite(fluid.getPhase("gas").getViscosity("kg/msec"));
@@ -61,10 +63,10 @@ class PhysicalPropertiesPackageDocumentationTest {
     fluid.getPhase("gas").initPhysicalProperties();
     fluid.getPhase("oil").initPhysicalProperties();
 
-    assertEquals("FrictionTheoryViscosityMethod",
-        fluid.getPhase("gas").getPhysicalProperties().getViscosityModel().getClass().getSimpleName());
-    assertEquals("LBCViscosityMethod",
-        fluid.getPhase("oil").getPhysicalProperties().getViscosityModel().getClass().getSimpleName());
+    assertInstanceOf(FrictionTheoryViscosityMethod.class,
+        fluid.getPhase("gas").getPhysicalProperties().getViscosityModel());
+    assertInstanceOf(LBCViscosityMethod.class,
+        fluid.getPhase("oil").getPhysicalProperties().getViscosityModel());
     assertPositiveFinite(fluid.getPhase("gas").getViscosity("cP"));
     assertPositiveFinite(fluid.getPhase("oil").getViscosity("cP"));
   }
