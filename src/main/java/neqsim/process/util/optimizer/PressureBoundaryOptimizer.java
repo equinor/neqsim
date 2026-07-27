@@ -570,10 +570,9 @@ public class PressureBoundaryOptimizer implements Serializable {
     for (final Compressor comp : compressors) {
       Map<String, CapacityConstraint> equipmentConstraints = comp.getCapacityConstraints();
 
-      // Preserve the public optimizer setting by applying it to the same physical
-      // minimum-margin constraint used by bottleneck detection and external optimizers.
       CapacityConstraint surgeMargin = equipmentConstraints.get("surgeMargin");
-      if (surgeMargin != null && surgeMargin.isMinimumConstraint()) {
+      if (surgeMargin != null && surgeMargin.isMinimumConstraint() && minSurgeMargin > 0.0
+          && !Double.isNaN(minSurgeMargin) && !Double.isInfinite(minSurgeMargin)) {
         surgeMargin.setMinValue(minSurgeMargin * 100.0);
       }
 
