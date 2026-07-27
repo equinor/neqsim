@@ -5213,7 +5213,7 @@ public class Compressor extends TwoPortEquipment
         .setDesignValue(Double.MAX_VALUE).setMinValue(10.0).setWarningThreshold(0.85).setValueSupplier(() -> {
           double marginRatio = this.getDistanceToSurge();
           if (Double.isNaN(marginRatio) || Double.isInfinite(marginRatio)) {
-            return Double.MAX_VALUE;
+            return 0.0;
           }
           return marginRatio * 100.0;
         }).setEnabled(chartActive));
@@ -5224,7 +5224,7 @@ public class Compressor extends TwoPortEquipment
         .setDesignValue(Double.MAX_VALUE).setMinValue(5.0).setWarningThreshold(0.90).setValueSupplier(() -> {
           double marginRatio = this.getDistanceToStoneWall();
           if (Double.isNaN(marginRatio) || Double.isInfinite(marginRatio)) {
-            return Double.MAX_VALUE;
+            return 0.0;
           }
           return marginRatio * 100.0;
         }).setEnabled(chartActive));
