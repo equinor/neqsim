@@ -9,6 +9,39 @@
 
 ---
 
+## 2026-07-27 — Capacity-aware compressor operating points and optimizer alignment
+
+### Summary
+
+Compressor reporting, bottleneck detection, and pressure-boundary optimization now use the same
+capacity-constraint semantics. A typed immutable result provides a stable handoff to field-life,
+energy, emissions, and external calculation tools without replacing the existing map/JSON API.
+
+### New API
+
+| API | What it does |
+|---|---|
+| `Compressor.getOperatingPointResult()` | Returns physical performance, map status, recycle losses, pressure-target status, limiting constraint, and detached capacity snapshots |
+| `Compressor.getOperatingPointResult(tolerance)` | Uses a caller-defined relative discharge-pressure tolerance |
+| `CompressorOperatingPointResult.toJson()` | Exports the typed result as schema-versioned JSON |
+
+### Capacity and optimization behavior
+
+- Surge and stonewall are now true minimum-good constraints: their current values are physical
+  margin percentages, and configured minima are 10 % and 5 % by default.
+- Hard minimum constraints now report `isHardLimitExceeded() == true` below their minimum.
+- `PressureBoundaryOptimizer` consumes every enabled, non-design, non-advisory compressor
+  `CapacityConstraint`. Custom power and speed settings remain explicit additional overrides.
+
+> **Behavior change:** a compressor below its required surge or stonewall margin is now infeasible
+> to bottleneck and optimization APIs. Previously the already-normalized margin supplier prevented
+> the minimum value from becoming a violation.
+
+### Tests
+
+`CompressorOperatingPointResultTest`, `CapacityConstraintMinimumLimitTest`, and
+`PressureBoundaryCapacityIntegrationTest`.
+
 ## 2026-07-27 — Column convergence gate corrected, solver runtime knobs reachable, ProcessModel per-boundary-stream diagnostics
 
 ### Summary
