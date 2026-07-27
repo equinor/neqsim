@@ -44,6 +44,10 @@ public class OptimizedVUflash extends Flash {
   private static final int MAX_ITERATIONS = 100;
   private static final double MIN_DAMPING = 0.05;
   private static final double MAX_DAMPING = 0.8;
+  /** Relative volume residual accepted as a converged VU solution. */
+  private static final double SOLUTION_VOLUME_TOL = 1.0e-3;
+  /** Relative energy residual accepted as a converged VU solution. */
+  private static final double SOLUTION_ENERGY_TOL = 1.0e-3;
 
   // Performance tracking - instance-level to avoid cross-contamination between different systems
   private double lastPressure = Double.NaN;
@@ -265,19 +269,73 @@ public class OptimizedVUflash extends Flash {
     return nyPres;
   }
 
+  /**
+   * Checks whether the state currently held by the system actually satisfies the volume and internal-energy
+   * specification. {@link #solveQ()} leaves the system at its last iterate even when the Newton iteration diverges, so
+   * the caller must verify the result before accepting it - an unverified iterate becomes the initial state of the next
+   * transient step and can corrupt an entire dynamic run.
+   *
+   * @return true when pressure, temperature, volume and energy are finite and both specifications are met
+   */
+  private boolean isSolutionAcceptable() {
+    try {
+      double pressure = system.getPressure();
+      double temperature = system.getTemperature();
+      if (!Double.isFinite(pressure) || !Double.isFinite(temperature) || pressure <= 0.0 || temperature <= 0.0) {
+        return false;
+      }
+      double volume = system.getVolume();
+      double enthalpy = system.getEnthalpy();
+      if (!Double.isFinite(volume) || !Double.isFinite(enthalpy) || Vspec <= 0.0) {
+        return false;
+      }
+      double volumeError = Math.abs((volume - Vspec) / Vspec);
+      double enthalpyTarget = Uspec + pressure * Vspec;
+      double energyError = Math.abs((enthalpy - enthalpyTarget) / Math.max(Math.abs(enthalpyTarget), 1.0));
+      return volumeError < SOLUTION_VOLUME_TOL && energyError < SOLUTION_ENERGY_TOL;
+    } catch (RuntimeException ex) {
+      logger.warn("Could not evaluate VU flash residuals: " + ex.getMessage());
+      return false;
+    }
+  }
+
+  /**
+   * Runs the initialization TP flash cold and then the Newton iteration with the requested inner warm-start setting.
+   *
+   * @param warmStartInnerFlashes whether the inner TP flashes of the Newton iteration may reuse K-values
+   */
+  private void solveFromCurrentState(boolean warmStartInnerFlashes) {
+    lastPressure = Double.NaN;
+    lastTemperature = Double.NaN;
+    isWellBehaved = true;
+    // The first TP flash always runs COLD (Wilson K) so that stale K-values from an unrelated
+    // flash at a different P/T cannot bias the solution.
+    neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+    tpFlash.run();
+    neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(warmStartInnerFlashes);
+    solveQ();
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run() {
-    // First TPflash runs COLD (Wilson K) to avoid bias from stale K-values;
-    // warm-start enabled only for subsequent iterations.
     boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    double startPressure = system.getPressure();
+    double startTemperature = system.getTemperature();
+    boolean warmStartSafe = neqsim.thermo.ThermodynamicModelSettings.isInnerFlashWarmStartSafe(system);
     try {
-      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
-      // Minimal TP flash for initialization
-      tpFlash.run();
-      neqsim.thermo.ThermodynamicModelSettings
-          .setUseWarmStartKValues(neqsim.thermo.ThermodynamicModelSettings.isInnerFlashWarmStartSafe(system));
-      solveQ();
+      solveFromCurrentState(warmStartSafe);
+      if (!warmStartSafe && !isSolutionAcceptable()) {
+        // Cold inner flashes can lose a phase and strand the Newton iteration on a state that
+        // violates the volume specification. Retry once from the incoming state with warm-started
+        // inner flashes, which continue the trajectory of the previous converged vessel state.
+        system.setPressure(startPressure);
+        system.setTemperature(startTemperature);
+        solveFromCurrentState(true);
+      }
+      if (!isSolutionAcceptable()) {
+        logger.warn("OptimizedVUflash did not reach the volume/energy specification");
+      }
     } finally {
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
     }

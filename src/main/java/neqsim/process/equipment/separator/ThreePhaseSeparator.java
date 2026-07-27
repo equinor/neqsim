@@ -73,6 +73,13 @@ public class ThreePhaseSeparator extends Separator {
   /** Water outlet valve flow fraction (0.0 = fully closed, 1.0 = fully open). */
   private double waterOutletFlowFraction = 1.0;
 
+  /** Last known gas outlet valve capacity [kg/hr], retained while the gas phase is absent. */
+  private double gasOutletCapacity = 0.0;
+  /** Last known oil outlet valve capacity [kg/hr], retained while the oil phase is absent. */
+  private double oilOutletCapacity = 0.0;
+  /** Last known water outlet valve capacity [kg/hr], retained while the aqueous phase is absent. */
+  private double waterOutletCapacity = 0.0;
+
   /**
    * Constructor for ThreePhaseSeparator.
    *
@@ -766,14 +773,26 @@ public class ThreePhaseSeparator extends Separator {
    * multiphase stream flash.
    * </p>
    *
+   * <p>
+   * When the phase is momentarily absent the outlet is emptied, which also wipes its configured flow rate. The capacity
+   * is therefore carried in {@code rememberedCapacity} and restored when the phase reappears; without this the outlet
+   * valve would stay permanently shut after a single phase dropout and the corresponding control loop would lose its
+   * manipulated variable.
+   * </p>
+   *
    * @param outletStream outlet stream to refresh
    * @param sourceSystem freshly flashed vessel system, optionally including entrainment
    * @param phaseType phase type to copy to the outlet
    * @param id calculation identifier
+   * @param rememberedCapacity outlet valve capacity [kg/hr] from the previous transient step, or 0 when unknown
+   * @return the outlet valve capacity [kg/hr] to remember for the next transient step
    */
-  private void refreshTransientOutlet(StreamInterface outletStream, SystemInterface sourceSystem, String phaseType,
-      UUID id) {
+  private double refreshTransientOutlet(StreamInterface outletStream, SystemInterface sourceSystem, String phaseType,
+      UUID id, double rememberedCapacity) {
     double configuredFlowRate = outletStream.getFlowRate("kg/hr");
+    if (configuredFlowRate <= 1.0e-9 && rememberedCapacity > 1.0e-9) {
+      configuredFlowRate = rememberedCapacity;
+    }
     if (sourceSystem.hasPhaseType(phaseType)) {
       outletStream.setThermoSystemFromPhase(sourceSystem, phaseType);
       outletStream.setFlowRate(configuredFlowRate, "kg/hr");
@@ -784,6 +803,7 @@ public class ThreePhaseSeparator extends Separator {
       outletStream.setThermoSystem(emptySystem);
     }
     finalizePhaseOutlet(outletStream, id);
+    return configuredFlowRate;
   }
 
   /** {@inheritDoc} */
@@ -898,9 +918,9 @@ public class ThreePhaseSeparator extends Separator {
         outletSystem.addPhaseFractionToPhase(aqueousInOil, aqueousInOilSpec, specifiedStream, "aqueous", "oil");
       }
 
-      refreshTransientOutlet(gasOutStream, outletSystem, "gas", id);
-      refreshTransientOutlet(liquidOutStream, outletSystem, "oil", id);
-      refreshTransientOutlet(waterOutStream, outletSystem, "aqueous", id);
+      gasOutletCapacity = refreshTransientOutlet(gasOutStream, outletSystem, "gas", id, gasOutletCapacity);
+      oilOutletCapacity = refreshTransientOutlet(liquidOutStream, outletSystem, "oil", id, oilOutletCapacity);
+      waterOutletCapacity = refreshTransientOutlet(waterOutStream, outletSystem, "aqueous", id, waterOutletCapacity);
       inletStreamMixer.setPressure(thermoSystem.getPressure());
 
       liquidLevel = 0.0;
