@@ -8,8 +8,10 @@ import neqsim.thermo.util.benchmark.ThermodynamicBenchmark.Point;
 /**
  * Bounded one-dimensional regression of a constant cubic-EOS binary interaction parameter.
  *
- * <p>The objective is the mean squared relative error. This gives bubble- and dew-point
- * pressures comparable influence even when their absolute pressure levels differ.</p>
+ * <p>
+ * The objective is the mean squared relative error. This gives bubble- and dew-point pressures comparable influence
+ * even when their absolute pressure levels differ.
+ * </p>
  */
 public final class BinaryInteractionParameterFitter {
   /** Creates model predictions for a trial binary interaction parameter. */
@@ -79,13 +81,10 @@ public final class BinaryInteractionParameterFitter {
    * @return fitted parameter and in-sample objective
    * @throws Exception when a model prediction fails
    */
-  public Result fit(double lowerBound, double upperBound, double tolerance, int maximumEvaluations)
-      throws Exception {
-    if (!Double.isFinite(lowerBound) || !Double.isFinite(upperBound)
-        || lowerBound >= upperBound || !Double.isFinite(tolerance) || tolerance <= 0.0
-        || maximumEvaluations < 3) {
-      throw new IllegalArgumentException(
-          "Valid bounds, tolerance, and evaluation limit are required");
+  public Result fit(double lowerBound, double upperBound, double tolerance, int maximumEvaluations) throws Exception {
+    if (!Double.isFinite(lowerBound) || !Double.isFinite(upperBound) || lowerBound >= upperBound
+        || !Double.isFinite(tolerance) || tolerance <= 0.0 || maximumEvaluations < 3) {
+      throw new IllegalArgumentException("Valid bounds, tolerance, and evaluation limit are required");
     }
 
     double left = lowerBound;
@@ -135,8 +134,7 @@ public final class BinaryInteractionParameterFitter {
    * @return immutable dataset subset retaining source provenance
    */
   public static Dataset subset(Dataset source, List<Integer> indexes, String name) {
-    if (source == null || indexes == null || indexes.isEmpty() || name == null
-        || name.trim().isEmpty()) {
+    if (source == null || indexes == null || indexes.isEmpty() || name == null || name.trim().isEmpty()) {
       throw new IllegalArgumentException("Source, indexes, and subset name are required");
     }
     List<Point> points = new ArrayList<Point>();
@@ -150,16 +148,14 @@ public final class BinaryInteractionParameterFitter {
   }
 
   private double objective(double binaryInteractionParameter) throws Exception {
-    ThermodynamicBenchmark.Prediction prediction =
-        predictionFactory.create(binaryInteractionParameter);
+    ThermodynamicBenchmark.Prediction prediction = predictionFactory.create(binaryInteractionParameter);
     double squaredRelativeErrorSum = 0.0;
     for (Point point : dataset.getPoints()) {
       double predictedValue = prediction.predict(point);
       if (!Double.isFinite(predictedValue)) {
         throw new IllegalStateException("Non-finite prediction during parameter regression");
       }
-      double relativeError =
-          (predictedValue - point.getExperimentalValue()) / point.getExperimentalValue();
+      double relativeError = (predictedValue - point.getExperimentalValue()) / point.getExperimentalValue();
       squaredRelativeErrorSum += relativeError * relativeError;
     }
     return squaredRelativeErrorSum / dataset.getPoints().size();
