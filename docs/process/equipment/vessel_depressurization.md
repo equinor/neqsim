@@ -702,7 +702,7 @@ vessel geometry. It logs non-critical configuration warnings.
 
 `validateWithWarnings()` does not throw configuration errors. It returns them with an `ERROR:`
 prefix together with non-critical warnings. Initial pressures above 700 bar produce an
-Equation-of-State validity warning, not an error. For example, an 80 bara initial state with 1.2
+`equation-of-state` validity warning, not an error. For example, an 80 bara initial state with 1.2
 bara back pressure is valid, while a 750 bara initial state with the same back pressure remains
 valid but produces the high-pressure warning.
 
