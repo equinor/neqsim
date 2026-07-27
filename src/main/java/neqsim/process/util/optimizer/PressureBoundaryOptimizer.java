@@ -443,6 +443,9 @@ public class PressureBoundaryOptimizer implements Serializable {
 
     for (Compressor comp : compressors) {
       if (comp.getCompressorChart() == null || !comp.getCompressorChart().isUseCompressorChart()) {
+        Map<String, CapacityConstraint> retainedConstraints =
+            new LinkedHashMap<String, CapacityConstraint>(comp.getCapacityConstraints());
+
         // Run to establish baseline
         process.run();
 
@@ -454,6 +457,16 @@ public class PressureBoundaryOptimizer implements Serializable {
         comp.setUsePolytropicCalc(true);
         comp.setSolveSpeed(true);
         comp.getCompressorChart().setUseCompressorChart(true);
+
+        // Default map constraints were initialized before the chart existed and are
+        // therefore disabled. Recreate those defaults now, while retaining caller-added
+        // constraints that are not part of the standard compressor constraint set.
+        comp.reinitializeCapacityConstraints();
+        for (Map.Entry<String, CapacityConstraint> entry : retainedConstraints.entrySet()) {
+          if (!comp.getCapacityConstraints().containsKey(entry.getKey())) {
+            comp.addCapacityConstraint(entry.getValue());
+          }
+        }
 
         logger.info("Configured compressor chart for: {}", comp.getName());
       }
