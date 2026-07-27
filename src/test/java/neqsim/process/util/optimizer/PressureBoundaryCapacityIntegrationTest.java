@@ -51,9 +51,9 @@ public class PressureBoundaryCapacityIntegrationTest {
 
     PressureBoundaryOptimizer optimizer = new PressureBoundaryOptimizer(process, feed, export);
     optimizer.setMinSurgeMargin(0.15);
-    optimizer.configureCompressorCharts();
     compressor.addCapacityConstraint(new CapacityConstraint("vendorLimit", "-", CapacityConstraint.ConstraintType.SOFT)
         .setDesignValue(1.0).setCurrentValue(0.8).setSeverity(CapacityConstraint.ConstraintSeverity.SOFT));
+    optimizer.configureCompressorCharts();
 
     Method factory = PressureBoundaryOptimizer.class.getDeclaredMethod("createCompressorConstraints");
     factory.setAccessible(true);
