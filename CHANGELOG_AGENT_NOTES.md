@@ -9,6 +9,55 @@
 
 ---
 
+## 2026-07-27 — New: per-area three-phase flash control (`setMultiPhaseCheck`)
+
+### Summary
+
+The multiphase (three-phase) flash can now be switched on or off for a whole
+`ProcessSystem`, and per area on a `ProcessModel`. On a large multi-area plant the
+separation trains keep the check (free water, glycol, MEG), while areas that are known to be
+two-phase only — recompression, export compression, fuel gas — skip the extra
+phase-stability analysis on every flash of every recycle iteration.
+
+### What changed
+
+- `ProcessSystem.setMultiPhaseCheck(boolean)` — applies the setting to every fluid held by
+  the unit operations and their inlet/outlet streams, propagates into nested
+  `ModuleInterface` sub-processes, and returns the number of distinct fluids updated
+  (identity-based, so a shared fluid counts once).
+- `ProcessSystem.getMultiPhaseCheck()` — returns `TRUE`, `FALSE`, or `null` when the method
+  has never been called.
+- The setting is **re-applied at the start of every run** (`run(UUID)`, `runParallel(UUID)`,
+  `run_step(UUID)`), so equipment that temporarily enables the check —
+  `ThreePhaseSeparator` does this for its own flash — cannot leak three-phase mode into the
+  rest of the area across recycle iterations.
+- `ProcessModel.setMultiPhaseCheck(boolean)` — all areas; returns the total fluids updated.
+- `ProcessModel.setMultiPhaseCheck(String areaName, boolean)` — one area; returns `-1` if the
+  area name is unknown.
+
+```java
+plant.setMultiPhaseCheck(true);                    // baseline for all areas
+plant.setMultiPhaseCheck("Export train A", false); // dry gas only
+compressionTrain.setMultiPhaseCheck(false);        // single ProcessSystem
+```
+
+### Migration
+
+None. The default is unset (`getMultiPhaseCheck()` returns `null`), which leaves the
+multiphase flag of each fluid exactly as the fluid was built, so existing models are
+unaffected until the method is called.
+
+**Correctness warning for agents:** only disable the check where the absence of a third
+phase is known from the process, not assumed. Turning it off on an area where free water, an
+aqueous glycol/MEG phase, or a liquid CO2 phase can form silently produces a two-phase
+answer.
+
+Docs: [`docs/process/processmodel/process_system.md`](docs/process/processmodel/process_system.md),
+[`docs/process/processmodel/process_model.md`](docs/process/processmodel/process_model.md).
+Test: `src/test/java/neqsim/process/processmodel/ProcessSystemMultiPhaseCheckTest.java`.
+
+---
+
 ## 2026-07-25 — New: Energy Networks v3
 
 ### Summary
