@@ -25,6 +25,7 @@ public final class NeqSimPhaseEquilibriumPrediction implements Prediction {
   }
 
   private final Model model;
+  private final double hydrogenCarbonDioxideKij;
 
   /**
    * Creates a phase-equilibrium prediction adapter.
@@ -32,10 +33,25 @@ public final class NeqSimPhaseEquilibriumPrediction implements Prediction {
    * @param model equation-of-state configuration
    */
   public NeqSimPhaseEquilibriumPrediction(Model model) {
+    this(model, Double.NaN);
+  }
+
+  /**
+   * Creates a cubic-EOS phase-equilibrium prediction adapter with a custom constant H2-CO2
+   * interaction parameter.
+   *
+   * @param model cubic equation-of-state configuration
+   * @param hydrogenCarbonDioxideKij dimensionless constant H2-CO2 binary interaction parameter
+   */
+  public NeqSimPhaseEquilibriumPrediction(Model model, double hydrogenCarbonDioxideKij) {
     if (model == null) {
       throw new IllegalArgumentException("Model is required");
     }
+    if (Double.isFinite(hydrogenCarbonDioxideKij) && model != Model.SRK && model != Model.PR) {
+      throw new IllegalArgumentException("A custom kij is supported only for SRK and PR");
+    }
     this.model = model;
+    this.hydrogenCarbonDioxideKij = hydrogenCarbonDioxideKij;
   }
 
   /** @return configured equation-of-state model */
@@ -43,10 +59,16 @@ public final class NeqSimPhaseEquilibriumPrediction implements Prediction {
     return model;
   }
 
+  /** @return configured H2-CO2 interaction parameter, or NaN when database values are used */
+  public double getHydrogenCarbonDioxideKij() {
+    return hydrogenCarbonDioxideKij;
+  }
+
   /** {@inheritDoc} */
   @Override
   public double predict(Point point) throws Exception {
-    if (point.getProperty() != Property.BUBBLE_POINT_PRESSURE && point.getProperty() != Property.DEW_POINT_PRESSURE) {
+    if (point.getProperty() != Property.BUBBLE_POINT_PRESSURE
+        && point.getProperty() != Property.DEW_POINT_PRESSURE) {
       throw new IllegalArgumentException("Only bubble- and dew-point pressures are supported");
     }
     SystemInterface system = createSystem(point.getTemperatureK(), point.getPressureBara());
@@ -56,6 +78,10 @@ public final class NeqSimPhaseEquilibriumPrediction implements Prediction {
     if (model == Model.SRK || model == Model.PR) {
       system.createDatabase(true);
       system.setMixingRule(2);
+      if (Double.isFinite(hydrogenCarbonDioxideKij)) {
+        system.setBinaryInteractionParameter(
+            "hydrogen", "CO2", hydrogenCarbonDioxideKij);
+      }
     }
     ThermodynamicOperations operations = new ThermodynamicOperations(system);
     if (point.getProperty() == Property.BUBBLE_POINT_PRESSURE) {
@@ -66,7 +92,8 @@ public final class NeqSimPhaseEquilibriumPrediction implements Prediction {
     double pressureBara = system.getPressure("bara");
     if (!Double.isFinite(pressureBara) || pressureBara <= 0.0) {
       throw new IllegalStateException(
-          model + " returned invalid " + point.getProperty() + " at " + point.getTemperatureK() + " K");
+          model + " returned invalid " + point.getProperty() + " at "
+              + point.getTemperatureK() + " K");
     }
     return pressureBara;
   }
