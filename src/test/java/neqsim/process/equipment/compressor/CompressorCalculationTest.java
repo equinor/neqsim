@@ -89,9 +89,17 @@ public class CompressorCalculationTest extends neqsim.NeqSimTest {
 
   @Test
   public void testCompressorChartEquals() {
-    Assertions.assertEquals(comp1, comp1.copy());
+    // Compressor uses identity equality, so copy fidelity is asserted on the copied state itself.
+    // CompressorChart is an immutable-style value object and keeps content-based equals.
+    Compressor copyWithoutCurves = (Compressor) comp1.copy();
+    Assertions.assertNotSame(comp1, copyWithoutCurves);
+    Assertions.assertEquals(comp1.getCompressorChart(), copyWithoutCurves.getCompressorChart());
+
     setCurves();
-    Assertions.assertEquals(comp1, comp1.copy());
+    Compressor copyWithCurves = (Compressor) comp1.copy();
+    Assertions.assertNotSame(comp1, copyWithCurves);
+    Assertions.assertEquals(comp1.getCompressorChart(), copyWithCurves.getCompressorChart());
+    Assertions.assertEquals(comp1.getName(), copyWithCurves.getName());
   }
 
   @Test

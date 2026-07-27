@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -65,6 +66,30 @@ public class ColumnSpecificationTest {
     assertThrows(IllegalArgumentException.class,
         () -> new ColumnSpecification(ColumnSpecification.SpecificationType.DUTY,
             ColumnSpecification.ProductLocation.TOP, Double.NaN));
+  }
+
+  /**
+   * Verifies that the warm-state signature distinguishes component names with colliding Java string hashes.
+   *
+   * @throws ReflectiveOperationException if the private signature builder cannot be invoked
+   */
+  @Test
+  public void warmStateSignatureDistinguishesComponentNameHashCollisions() throws ReflectiveOperationException {
+    assertEquals("Aa".hashCode(), "BB".hashCode(), "test requires a known Java String hash collision");
+
+    DistillationColumn column = new DistillationColumn("SignatureColumn", 3, true, true);
+    Method signatureMethod = DistillationColumn.class.getDeclaredMethod("calculateNaphtaliSandholmInputSignature");
+    signatureMethod.setAccessible(true);
+
+    column.setTopSpecification(new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+        ColumnSpecification.ProductLocation.TOP, 0.95, "Aa"));
+    long aaSignature = ((Long) signatureMethod.invoke(column)).longValue();
+
+    column.setTopSpecification(new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+        ColumnSpecification.ProductLocation.TOP, 0.95, "BB"));
+    long bbSignature = ((Long) signatureMethod.invoke(column)).longValue();
+
+    assertNotEquals(aaSignature, bbSignature, "warm-state signatures must retain full component-name content");
   }
 
   /**

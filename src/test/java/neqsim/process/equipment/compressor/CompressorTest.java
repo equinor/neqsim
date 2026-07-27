@@ -76,7 +76,11 @@ class CompressorTest extends neqsim.NeqSimTest {
 
       Assertions.assertTrue(cmp.getName().compareTo(cmp2.getName()) == 0);
 
-      Assertions.assertTrue(cmp.equals(cmp2));
+      // Compressor uses identity equality, so the round trip is verified on the restored state.
+      Assertions.assertNotSame(cmp, cmp2);
+      Assertions.assertEquals(cmp.getCompressorChart(), cmp2.getCompressorChart());
+      Assertions.assertEquals(cmp.getOutletPressure(), cmp2.getOutletPressure(), 1e-9);
+      Assertions.assertEquals(cmp.getPolytropicEfficiency(), cmp2.getPolytropicEfficiency(), 1e-9);
     } catch (Exception ex) {
       logger.warn("Exceptions happen!", ex);
     } finally {

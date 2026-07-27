@@ -602,6 +602,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private transient double lastTotalFeedFlow = -1.0;
 
+  /** Whether this column retains an accepted Naphtali-Sandholm solution eligible for exact input reuse. */
+  private transient boolean hasNaphtaliSandholmWarmState = false;
+  /** Fingerprint of the external inputs and column specifications for the accepted Naphtali-Sandholm solution. */
+  private transient long lastNaphtaliSandholmInputSignature = Long.MIN_VALUE;
+  /** Whether the latest Naphtali-Sandholm result was an exact reuse of an accepted warm state. */
+  private transient boolean lastNaphtaliSandholmWarmStateReused = false;
+
   /** Mechanical design for the distillation column. */
   private DistillationColumnMechanicalDesign mechanicalDesign;
 
@@ -1186,11 +1193,26 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     applyFullFractionatorFastPath();
     if (hasActiveColumnTearVariables()) {
       solveWithColumnTearVariables(id);
+      commitNaphtaliSandholmWarmState();
       ensureSolveTimeIncludesElapsedWallTime(runStartTime);
       return;
     }
     solveConfiguredColumn(id);
+    commitNaphtaliSandholmWarmState();
     ensureSolveTimeIncludesElapsedWallTime(runStartTime);
+  }
+
+  /**
+   * Commit the current finalized column inputs as a reusable Naphtali-Sandholm warm state.
+   */
+  private void commitNaphtaliSandholmWarmState() {
+    boolean acceptedNaphtaliSolve = lastSolverTypeUsed == SolverType.NAPHTALI_SANDHOLM
+        && (lastSolveStatus == SolveStatus.RIGOROUS_CONVERGED || lastSolveStatus == SolveStatus.RECONCILED_PRODUCTS)
+        && !isDoInitializion();
+    hasNaphtaliSandholmWarmState = acceptedNaphtaliSolve;
+    if (acceptedNaphtaliSolve) {
+      lastNaphtaliSandholmInputSignature = calculateNaphtaliSandholmInputSignature();
+    }
   }
 
   /**
@@ -2182,6 +2204,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     long startTime = System.nanoTime();
+    long inputSignature = calculateNaphtaliSandholmInputSignature();
+    lastNaphtaliSandholmWarmStateReused = false;
+    if (canReuseNaphtaliSandholmWarmState(inputSignature)) {
+      reuseNaphtaliSandholmWarmState(id, startTime);
+      return true;
+    }
 
     Map<Integer, List<SystemInterface>> originalFeedSystems = new java.util.HashMap<>();
     Map<Integer, List<Double>> originalFeedFlowRates = new java.util.HashMap<>();
@@ -2204,7 +2232,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     NaphtaliSandholmSolver solver = new NaphtaliSandholmSolver(this, originalFeedSystems, originalFeedFlowRates);
     solver.setMaxIterations(maxNumberOfIterations);
     solver.setTolerance(1.0e-8);
+    boolean useWarmStart = hasBeenSolvedBefore && !isDoInitializion();
+    solver.setWarmStartFromColumn(useWarmStart);
     boolean accepted = solver.solve(id);
+    if (!accepted && useWarmStart) {
+      logger.info("Naphtali-Sandholm warm start rejected for column {}; retrying with cold initialization", getName());
+      solver = new NaphtaliSandholmSolver(this, originalFeedSystems, originalFeedFlowRates);
+      solver.setMaxIterations(maxNumberOfIterations);
+      solver.setTolerance(1.0e-8);
+      solver.setWarmStartFromColumn(false);
+      accepted = solver.solve(id);
+    }
     storeNaphtaliTelemetry(solver);
     markSolverTypeUsed(SolverType.NAPHTALI_SANDHOLM);
 
@@ -2213,11 +2251,150 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         solver.getLastEnergyResidual(), startTime);
     hasBeenSolvedBefore = true;
     lastTotalFeedFlow = -1.0;
+    hasNaphtaliSandholmWarmState = accepted;
+    if (accepted) {
+      lastNaphtaliSandholmInputSignature = calculateNaphtaliSandholmInputSignature();
+    }
 
     if (!accepted) {
       logger.warn("Naphtali-Sandholm solver did not fully converge for column {}", getName());
     }
     return accepted;
+  }
+
+  /**
+   * Decide whether the prior Naphtali-Sandholm solution remains valid for this invocation.
+   *
+   * @param inputSignature fingerprint of current external feeds and active column specifications
+   * @return {@code true} when the accepted tray solution can be reused without another solver invocation
+   */
+  private boolean canReuseNaphtaliSandholmWarmState(long inputSignature) {
+    boolean acceptedStatus = lastSolveStatus == SolveStatus.RIGOROUS_CONVERGED
+        || lastSolveStatus == SolveStatus.RECONCILED_PRODUCTS;
+    boolean signatureMatches = inputSignature == lastNaphtaliSandholmInputSignature;
+    boolean reusable = hasNaphtaliSandholmWarmState && lastSolverTypeUsed == SolverType.NAPHTALI_SANDHOLM
+        && acceptedStatus && !isDoInitializion() && signatureMatches;
+    return reusable;
+  }
+
+  /**
+   * Check whether the latest Naphtali-Sandholm result reused an exact accepted warm state.
+   *
+   * @return {@code true} when no initializer or Newton iterations were required
+   */
+  boolean wasNaphtaliSandholmWarmStateReused() {
+    return lastNaphtaliSandholmWarmStateReused;
+  }
+
+  /**
+   * Reuse an accepted Naphtali-Sandholm solution when all external inputs are unchanged.
+   *
+   * @param id calculation identifier for the requested invocation
+   * @param startTime nano time when this invocation started
+   */
+  private void reuseNaphtaliSandholmWarmState(UUID id, long startTime) {
+    lastIterationCount = 0;
+    lastNaphtaliSandholmWarmStateReused = true;
+    lastSolveTimeSeconds = (System.nanoTime() - startTime) / 1.0e9;
+    gasOutStream.setCalculationIdentifier(id);
+    liquidOutStream.setCalculationIdentifier(id);
+    for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
+      trays.get(trayIndex).setCalculationIdentifier(id);
+    }
+    setCalculationIdentifier(id);
+    lastSolveStatusReason = "Reused unchanged Naphtali-Sandholm solution";
+  }
+
+  /**
+   * Calculate a deterministic fingerprint of inputs that affect a Naphtali-Sandholm solve.
+   *
+   * @return input and specification fingerprint
+   */
+  private long calculateNaphtaliSandholmInputSignature() {
+    long signature = 1125899906842597L;
+    List<Integer> feedTrayNumbers = new ArrayList<Integer>(feedStreams.keySet());
+    Collections.sort(feedTrayNumbers);
+    for (Integer trayNumber : feedTrayNumbers) {
+      signature = updateNaphtaliSandholmInputSignature(signature, trayNumber.longValue());
+      for (StreamInterface feed : feedStreams.get(trayNumber)) {
+        SystemInterface system = feed.getThermoSystem();
+        signature = updateNaphtaliSandholmInputSignature(signature, feed.getFlowRate("mol/hr"));
+        signature = updateNaphtaliSandholmInputSignature(signature, feed.getTemperature("K"));
+        signature = updateNaphtaliSandholmInputSignature(signature, feed.getPressure("bara"));
+        for (double moleFraction : system.getMolarComposition()) {
+          signature = updateNaphtaliSandholmInputSignature(signature, moleFraction);
+        }
+      }
+    }
+
+    signature = updateNaphtaliSandholmInputSignature(signature, topSpecification == null ? 0L : 1L);
+    if (topSpecification != null) {
+      signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getType().ordinal());
+      signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getLocation().ordinal());
+      signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getTargetValue());
+      signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getTolerance());
+      signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getMaxIterations());
+      signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getComponentName());
+    }
+
+    signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification == null ? 0L : 1L);
+    if (bottomSpecification != null) {
+      signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getType().ordinal());
+      signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getLocation().ordinal());
+      signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getTargetValue());
+      signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getTolerance());
+      signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getMaxIterations());
+      signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getComponentName());
+    }
+
+    return signature;
+  }
+
+  /**
+   * Add one numeric input to a Naphtali-Sandholm input fingerprint.
+   *
+   * @param signature fingerprint accumulated so far
+   * @param value numeric input value
+   * @return updated fingerprint
+   */
+  private long updateNaphtaliSandholmInputSignature(long signature, double value) {
+    return updateNaphtaliSandholmInputSignature(signature, Double.doubleToLongBits(value));
+  }
+
+  /**
+   * Add one integral input to a Naphtali-Sandholm input fingerprint.
+   *
+   * @param signature fingerprint accumulated so far
+   * @param value integral input value
+   * @return updated fingerprint
+   */
+  private long updateNaphtaliSandholmInputSignature(long signature, long value) {
+    return 31L * signature + value;
+  }
+
+  /**
+   * Add complete text content to a Naphtali-Sandholm input fingerprint.
+   *
+   * <p>
+   * The null marker and text length distinguish {@code null}, an empty string, and sequences that otherwise share a
+   * prefix. Each UTF-16 character is folded with an independent 64-bit FNV-style step so the cache gate does not depend
+   * on a 32-bit string hash.
+   * </p>
+   *
+   * @param signature fingerprint accumulated so far
+   * @param value text input, which may be null
+   * @return updated fingerprint
+   */
+  private long updateNaphtaliSandholmInputSignature(long signature, String value) {
+    if (value == null) {
+      return updateNaphtaliSandholmInputSignature(signature, -1L);
+    }
+    long updatedSignature = updateNaphtaliSandholmInputSignature(signature, value.length());
+    for (int index = 0; index < value.length(); index++) {
+      updatedSignature ^= value.charAt(index);
+      updatedSignature *= 0x100000001b3L;
+    }
+    return updatedSignature;
   }
 
   /**

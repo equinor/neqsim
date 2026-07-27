@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -3540,54 +3539,6 @@ public class Compressor extends TwoPortEquipment
       // System.out.println("valve opening " + this.percentValveOpening + " %");
     }
     setCalculationIdentifier(id);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = super.hashCode();
-    result = prime * result + Objects.hash(antiSurge, compressorChart, dH, inletEnthalpy, inStream,
-        isentropicEfficiency, numberOfCompressorCalcSteps, outStream, outTemperature, polytropicEfficiency,
-        polytropicExponent, polytropicFluidHead, polytropicHead, polytropicHeadMeter, polytropicMethod, powerSet,
-        pressure, pressureUnit, speed, thermoSystem, useGERG2008, useLeachman, useVega, useOutTemperature,
-        usePolytropicCalc, useRigorousPolytropicMethod);
-    return result;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (!super.equals(obj)) {
-      return false;
-    }
-    if (getClass() != obj.getClass()) {
-      return false;
-    }
-    Compressor other = (Compressor) obj;
-    return Objects.equals(antiSurge, other.antiSurge) && Objects.equals(compressorChart, other.compressorChart)
-        && Double.doubleToLongBits(dH) == Double.doubleToLongBits(other.dH)
-        && Double.doubleToLongBits(inletEnthalpy) == Double.doubleToLongBits(other.inletEnthalpy)
-        && Objects.equals(inStream, other.inStream)
-        && Double.doubleToLongBits(isentropicEfficiency) == Double.doubleToLongBits(other.isentropicEfficiency)
-        && numberOfCompressorCalcSteps == other.numberOfCompressorCalcSteps
-        && Objects.equals(outStream, other.outStream)
-        && Double.doubleToLongBits(outTemperature) == Double.doubleToLongBits(other.outTemperature)
-        && Double.doubleToLongBits(polytropicEfficiency) == Double.doubleToLongBits(other.polytropicEfficiency)
-        && Double.doubleToLongBits(polytropicExponent) == Double.doubleToLongBits(other.polytropicExponent)
-        && Double.doubleToLongBits(polytropicFluidHead) == Double.doubleToLongBits(other.polytropicFluidHead)
-        && Double.doubleToLongBits(polytropicHead) == Double.doubleToLongBits(other.polytropicHead)
-        && Double.doubleToLongBits(polytropicHeadMeter) == Double.doubleToLongBits(other.polytropicHeadMeter)
-        && Objects.equals(polytropicMethod, other.polytropicMethod) && powerSet == other.powerSet
-        && Double.doubleToLongBits(pressure) == Double.doubleToLongBits(other.pressure)
-        && Objects.equals(pressureUnit, other.pressureUnit) && speed == other.speed
-        && Objects.equals(thermoSystem, other.thermoSystem) && useGERG2008 == other.useGERG2008
-        && useLeachman == other.useLeachman && useVega == other.useVega && useOutTemperature == other.useOutTemperature
-        && usePolytropicCalc == other.usePolytropicCalc
-        && useRigorousPolytropicMethod == other.useRigorousPolytropicMethod;
   }
 
   /** {@inheritDoc} */

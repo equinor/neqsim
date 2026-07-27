@@ -245,14 +245,6 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    */
   public double LCV();
 
-  /** {@inheritDoc} */
-  @Override
-  public boolean equals(Object o);
-
-  /** {@inheritDoc} */
-  @Override
-  public int hashCode();
-
   /**
    * Calculates the hydrocarbon dew point of the stream.
    *

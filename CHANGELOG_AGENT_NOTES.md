@@ -122,6 +122,58 @@ None required. To restore the previous resolution — or to raise it for a stron
 non-ideal fluid — call `expander.setNumberOfCompressorCalcSteps(40)`. Results may move in
 the last significant digits; re-baseline any test that asserted expander outlet enthalpy or
 temperature to a tolerance tighter than the integration error.
+## 2026-07-27 — Breaking: `ProcessSystem` and process equipment use identity equality
+
+### Summary
+
+`ProcessSystem`, `ProcessEquipmentBaseClass`, `Compressor`, `Mixer` and `Separator` implemented
+value-based `equals()`/`hashCode()` over **mutable** state. `ProcessSystem` hashed `time`,
+`timeStepNumber`, the measurement history and every unit operation; the equipment classes hashed
+`report`, `properties`, the attached controllers and their thermodynamic systems. All of that is
+rewritten by `run()`.
+
+A hash that changes while the object is a key breaks the `Map` contract: after a run the entry sits
+in the wrong bucket, so lookups miss. It never returned a *wrong* value — `equals()` still guarded —
+which is why the failure was silent: caches degraded to permanent misses, registries lost entries
+and re-registered duplicates, and stale entries were never collected. The overrides were also
+expensive (`Arrays.deepHashCode(report)` plus a recursive hash over every unit operation) and
+semantically ambiguous — "is this the same flowsheet" is a different question from "is this the
+same object".
+
+These types now inherit identity semantics from `Object`, so the hash is stable for the lifetime of
+the instance.
+
+### What changed
+
+Removed `equals()` and `hashCode()` from:
+
+- `ProcessSystem` (and its private `MeasurementHistory` helper, which only existed to serve them)
+- `ProcessEquipmentBaseClass`
+- `Compressor`, `Mixer`, `Separator` — these called `super.equals()`/`super.hashCode()`, so they
+  had to go with the base class to keep the hierarchy consistent
+
+The redundant `equals`/`hashCode` re-declarations in `ProcessEquipmentInterface` and
+`StreamInterface` were removed as well; they only restated `Object` methods and now implied an
+override that no longer exists.
+
+Genuine immutable value objects are **unchanged** — `ProcessConnection`, `ProcessNode`,
+`ProcessEdge`, `CompressorChart`, `CompressorCurve`, `BoundaryCurve`, `FunctionalLocation`,
+`ReferenceDesignation`, `EnergyStream`, the design-standard and cost classes all keep their
+value semantics.
+
+### Migration
+
+- `processA.equals(processB)` and `compressorA.equals(compressorB)` now return `true` only for the
+  same instance. Two independently built but identically configured objects no longer compare equal.
+- To compare two models **by value**, use `ProcessModelState.compare(oldState, newState)` (or
+  `ProcessSystemState`), which reports modified parameters and added/removed equipment.
+- `ProcessSystem.getUnitOperations().contains(unit)` and similar list lookups are now identity
+  checks. This is the intended meaning and fixes the case where two distinct units compared equal
+  because they shared a name — which happens across the areas of a `ProcessModel`.
+- Hash-based collections keyed on a process or a unit now work as expected. `IdentityHashMap` is
+  still the more explicit choice and remains correct.
+
+Regression test: `src/test/java/neqsim/process/processmodel/ProcessEqualityIdentityTest.java`.
 
 ---
 
