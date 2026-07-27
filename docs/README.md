@@ -57,11 +57,11 @@ System.out.println("Compressibility: " + gas.getZ());
 | Topic | Documentation | Description |
 |---------|---------------|-------------|
 | Engineering workflows | [engineering/](engineering/) | Design cases, governing envelopes, sizing, discipline verification, deliverables, and lifecycle evidence |
-| Engineering guide | [engineering/guide.md](engineering/guide) | Practical path from a validated process model to a review-ready engineering package |
-| Current capabilities | [engineering/current-capabilities.md](engineering/current-capabilities) | Implemented entry points, discipline modules, qualification layers, readiness levels, and review boundaries |
-| Design cases and envelopes | [engineering/design-cases-and-envelopes.md](engineering/design-cases-and-envelopes) | Controlled case definitions, metrics, limits, isolated execution, and governing values |
-| DEXPI engineering guide | [engineering/dexpi-guide.md](engineering/dexpi-guide) | Select, generate, validate, and qualify DEXPI exchanges |
-| Deliverables and handover | [engineering/deliverables-and-handover.md](engineering/deliverables-and-handover) | Coordinated packages, DEXPI, CFIHOS, approvals, manifests, and revisions |
+| Engineering guide | [engineering/guide.md](engineering/guide.md) | Practical path from a validated process model to a review-ready engineering package |
+| Current capabilities | [engineering/current-capabilities.md](engineering/current-capabilities.md) | Implemented entry points, discipline modules, qualification layers, readiness levels, and review boundaries |
+| Design cases and envelopes | [engineering/design-cases-and-envelopes.md](engineering/design-cases-and-envelopes.md) | Controlled case definitions, metrics, limits, isolated execution, and governing values |
+| DEXPI engineering guide | [engineering/dexpi-guide.md](engineering/dexpi-guide.md) | Select, generate, validate, and qualify DEXPI exchanges |
+| Deliverables and handover | [engineering/deliverables-and-handover.md](engineering/deliverables-and-handover.md) | Coordinated packages, DEXPI, CFIHOS, approvals, manifests, and revisions |
 
 ### PVT and Reservoir
 
@@ -210,79 +210,79 @@ Specialized guides for advanced features and use cases:
 
 | Guide | Description |
 |-------|-------------|
-| [ESD_BLOWDOWN_SYSTEM.md](safety/ESD_BLOWDOWN_SYSTEM) | Emergency shutdown and blowdown systems |
-| [HIPPS_SUMMARY.md](safety/HIPPS_SUMMARY) | High Integrity Pressure Protection Systems |
-| [hipps_implementation.md](safety/hipps_implementation) | HIPPS implementation details |
-| [hipps_safety_logic.md](safety/hipps_safety_logic) | HIPPS safety logic |
-| [INTEGRATED_SAFETY_SYSTEMS.md](safety/INTEGRATED_SAFETY_SYSTEMS) | Integrated safety systems overview |
-| [layered_safety_architecture.md](safety/layered_safety_architecture) | Layered safety architecture |
-| [sis_logic_implementation.md](safety/sis_logic_implementation) | SIS logic implementation |
-| [SAFETY_SIMULATION_ROADMAP.md](safety/SAFETY_SIMULATION_ROADMAP) | Safety simulation roadmap |
+| [ESD_BLOWDOWN_SYSTEM.md](safety/ESD_BLOWDOWN_SYSTEM.md) | Emergency shutdown and blowdown systems |
+| [HIPPS_SUMMARY.md](safety/HIPPS_SUMMARY.md) | High Integrity Pressure Protection Systems |
+| [hipps_implementation.md](safety/hipps_implementation.md) | HIPPS implementation details |
+| [hipps_safety_logic.md](safety/hipps_safety_logic.md) | HIPPS safety logic |
+| [INTEGRATED_SAFETY_SYSTEMS.md](safety/INTEGRATED_SAFETY_SYSTEMS.md) | Integrated safety systems overview |
+| [layered_safety_architecture.md](safety/layered_safety_architecture.md) | Layered safety architecture |
+| [sis_logic_implementation.md](safety/sis_logic_implementation.md) | SIS logic implementation |
+| [SAFETY_SIMULATION_ROADMAP.md](safety/SAFETY_SIMULATION_ROADMAP.md) | Safety simulation roadmap |
 
 ### Process Logic and Control
 
 | Guide | Description |
 |-------|-------------|
-| [process_logic_framework.md](simulation/process_logic_framework) | Process logic framework |
-| [ProcessLogicEnhancements.md](simulation/ProcessLogicEnhancements) | Logic enhancements |
-| [advanced_process_logic.md](simulation/advanced_process_logic) | Advanced process logic |
-| [alarm_system_guide.md](safety/alarm_system_guide) | Alarm system guide |
-| [alarm_triggered_logic_example.md](safety/alarm_triggered_logic_example) | Alarm-triggered logic |
-| [mpc_integration.md](integration/mpc_integration) | MPC integration |
+| [process_logic_framework.md](simulation/process_logic_framework.md) | Process logic framework |
+| [ProcessLogicEnhancements.md](simulation/ProcessLogicEnhancements.md) | Logic enhancements |
+| [advanced_process_logic.md](simulation/advanced_process_logic.md) | Advanced process logic |
+| [alarm_system_guide.md](safety/alarm_system_guide.md) | Alarm system guide |
+| [alarm_triggered_logic_example.md](safety/alarm_triggered_logic_example.md) | Alarm-triggered logic |
+| [mpc_integration.md](integration/mpc_integration.md) | MPC integration |
 
 ### Dynamic Simulation
 
 | Guide | Description |
 |-------|-------------|
-| [fire_blowdown_capabilities.md](safety/fire_blowdown_capabilities) | Fire and blowdown simulation |
-| [fire_heat_transfer_enhancements.md](safety/fire_heat_transfer_enhancements) | Fire heat transfer |
-| [psv_dynamic_sizing_example.md](safety/psv_dynamic_sizing_example) | PSV dynamic sizing |
-| [rupture_disk_dynamic_behavior.md](safety/rupture_disk_dynamic_behavior) | Rupture disk behavior |
-| [turboexpander_compressor_model.md](simulation/turboexpander_compressor_model) | Turboexpander modeling |
+| [fire_blowdown_capabilities.md](safety/fire_blowdown_capabilities.md) | Fire and blowdown simulation |
+| [fire_heat_transfer_enhancements.md](safety/fire_heat_transfer_enhancements.md) | Fire heat transfer |
+| [psv_dynamic_sizing_example.md](safety/psv_dynamic_sizing_example.md) | PSV dynamic sizing |
+| [rupture_disk_dynamic_behavior.md](safety/rupture_disk_dynamic_behavior.md) | Rupture disk behavior |
+| [turboexpander_compressor_model.md](simulation/turboexpander_compressor_model.md) | Turboexpander modeling |
 
 ### Well and Reservoir
 
 | Guide | Description |
 |-------|-------------|
-| [well_simulation_guide.md](simulation/well_simulation_guide) | Well simulation guide |
-| [well_and_choke_simulation.md](simulation/well_and_choke_simulation) | Choke simulation |
-| [field_development_engine.md](simulation/field_development_engine) | Field development |
+| [well_simulation_guide.md](simulation/well_simulation_guide.md) | Well simulation guide |
+| [well_and_choke_simulation.md](simulation/well_and_choke_simulation.md) | Choke simulation |
+| [field_development_engine.md](simulation/field_development_engine.md) | Field development |
 
 ### PVT and Characterization
 
 | Guide | Description |
 |-------|-------------|
-| [pvt_workflow.md](pvtsimulation/pvt_workflow) | PVT workflow |
-| [blackoil_pvt_export.md](pvtsimulation/blackoil_pvt_export) | Black oil PVT export |
-| [whitson_pvt_reader.md](pvtsimulation/whitson_pvt_reader) | Whitson PVT reader |
-| [fluid_characterization_mathematics.md](pvtsimulation/fluid_characterization_mathematics) | Characterization math |
+| [pvt_workflow.md](pvtsimulation/pvt_workflow.md) | PVT workflow |
+| [blackoil_pvt_export.md](pvtsimulation/blackoil_pvt_export.md) | Black oil PVT export |
+| [whitson_pvt_reader.md](pvtsimulation/whitson_pvt_reader.md) | Whitson PVT reader |
+| [fluid_characterization_mathematics.md](pvtsimulation/fluid_characterization_mathematics.md) | Characterization math |
 
 ### Advanced Features
 
 | Guide | Description |
 |-------|-------------|
-| [parallel_process_simulation.md](simulation/parallel_process_simulation) | Parallel simulation |
-| [recycle_acceleration_guide.md](simulation/recycle_acceleration_guide) | Recycle convergence |
-| [graph_based_process_simulation.md](simulation/graph_based_process_simulation) | Graph-based simulation |
-| [differentiable_thermodynamics.md](simulation/differentiable_thermodynamics) | Auto-differentiation |
-| [equipment_factory.md](simulation/equipment_factory) | Equipment factory |
-| [dexpi-reader.md](integration/dexpi-reader) | DEXPI P&ID reader |
+| [parallel_process_simulation.md](simulation/parallel_process_simulation.md) | Parallel simulation |
+| [recycle_acceleration_guide.md](simulation/recycle_acceleration_guide.md) | Recycle convergence |
+| [graph_based_process_simulation.md](simulation/graph_based_process_simulation.md) | Graph-based simulation |
+| [differentiable_thermodynamics.md](simulation/differentiable_thermodynamics.md) | Auto-differentiation |
+| [equipment_factory.md](simulation/equipment_factory.md) | Equipment factory |
+| [dexpi-reader.md](integration/dexpi-reader.md) | DEXPI P&ID reader |
 
 ### Integration
 
 | Guide | Description |
 |-------|-------------|
-| [ai_platform_integration.md](integration/ai_platform_integration) | AI/ML integration |
-| [ml_integration.md](integration/ml_integration) | Machine learning |
-| [REAL_TIME_INTEGRATION_GUIDE.md](integration/REAL_TIME_INTEGRATION_GUIDE) | Real-time systems |
-| [QRA_INTEGRATION_GUIDE.md](integration/QRA_INTEGRATION_GUIDE) | QRA integration |
+| [ai_platform_integration.md](integration/ai_platform_integration.md) | AI/ML integration |
+| [ml_integration.md](integration/ml_integration.md) | Machine learning |
+| [REAL_TIME_INTEGRATION_GUIDE.md](integration/REAL_TIME_INTEGRATION_GUIDE.md) | Real-time systems |
+| [QRA_INTEGRATION_GUIDE.md](integration/QRA_INTEGRATION_GUIDE.md) | QRA integration |
 
 ### Development
 
 | Guide | Description |
 |-------|-------------|
-| [DEVELOPER_SETUP.md](development/DEVELOPER_SETUP) | Development environment setup |
-| [contributing-structure.md](development/contributing-structure) | Contributing guidelines |
+| [DEVELOPER_SETUP.md](development/DEVELOPER_SETUP.md) | Development environment setup |
+| [contributing-structure.md](development/contributing-structure.md) | Contributing guidelines |
 
 ---
 
@@ -343,4 +343,4 @@ Specialized guides for advanced features and use cases:
 
 - [NeqSim GitHub Repository](https://github.com/equinor/neqsim)
 - [neqsim-python](https://github.com/equinor/neqsim-python)
-- [Example Notebooks](examples/index)
+- [Example Notebooks](examples/index.md)
