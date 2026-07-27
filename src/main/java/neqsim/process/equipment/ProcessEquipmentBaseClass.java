@@ -10,7 +10,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -552,40 +551,22 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
     return null;
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + Arrays.deepHashCode(report);
-    result = prime * result + Objects.hash(conditionAnalysisMessage, controller, controllerMap, energyStream,
-        flowValveController, hasController, isSetEnergyStream, name, properties, specification);
-    return result;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null) {
-      return false;
-    }
-    if (getClass() != obj.getClass()) {
-      return false;
-    }
-    ProcessEquipmentBaseClass other = (ProcessEquipmentBaseClass) obj;
-    return Objects.equals(conditionAnalysisMessage, other.conditionAnalysisMessage)
-        && Objects.equals(controller, other.controller) && Objects.equals(controllerMap, other.controllerMap)
-        && Objects.equals(energyStream, other.energyStream)
-        && Objects.equals(flowValveController, other.flowValveController) && hasController == other.hasController
-        && isSetEnergyStream == other.isSetEnergyStream && Objects.equals(name, other.name)
-        && Objects.equals(properties, other.properties) && Arrays.deepEquals(report, other.report)
-        && Objects.equals(specification, other.specification);
-  }
-
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * <b>Warning - value based and mutable.</b> The hash is derived from mutable state ({@code report},
+   * {@code properties}, {@code conditionAnalysisMessage} and the attached controllers), so it changes whenever the
+   * owning flowsheet runs. Process equipment must therefore never be used as a key in a {@link java.util.HashMap} or as
+   * an element of a {@link java.util.HashSet}: entries stored before {@code run()} become unreachable afterwards, which
+   * surfaces as silent lookup misses rather than as an exception. Two distinct units can also compare equal when they
+   * share a name, which happens across process areas of a {@code ProcessModel}. Use {@link java.util.IdentityHashMap}
+   * (or a set created from one via {@code Collections.newSetFromMap}) for any registry, cache or graph-traversal set
+   * keyed on equipment.
+   * </p>
+   *
+   * @return content-based hash of the current equipment state
+   */
   @Override
   public String toJson() {
     return null;

@@ -678,6 +678,57 @@ process.setGlobalTolerance(1e-6);
 process.setMaxRecycleIterations(50);
 ```
 
+### Multiphase (Three-Phase) Flash Control
+
+Every flash performed by the equipment in a process area either does or does not
+run the extra phase-stability analysis that can split a second liquid out of the
+mixture. On an area that is known to be two-phase only — a dry-gas recompression
+train, an export-compression train, a fuel-gas header — that work is pure
+overhead, and it is repeated on every unit of every recycle iteration.
+
+`setMultiPhaseCheck(boolean)` switches the three-phase flash on or off for the
+whole area in one call:
+
+```java
+// Turn the three-phase flash off on a dry-gas area
+int fluidsUpdated = compressionTrain.setMultiPhaseCheck(false);
+
+// ...and back on where a water phase can appear
+separationTrain.setMultiPhaseCheck(true);
+
+// Query the current setting (null = never configured)
+Boolean setting = compressionTrain.getMultiPhaseCheck();
+```
+
+Behaviour:
+
+- The setting is applied **immediately** to every fluid held by the unit
+  operations and by their inlet and outlet streams, and is propagated into nested
+  `ModuleInterface` sub-processes. The return value is the number of distinct
+  fluids updated (a fluid shared by two units is counted once).
+- It is **re-applied at the start of every run** (`run(UUID)`,
+  `runParallel(UUID)` and `run_step(UUID)`), so equipment that temporarily
+  enables the check — `ThreePhaseSeparator` does this for its own flash — cannot
+  leak three-phase mode into the rest of the area across recycle iterations.
+- The default is **unset** (`getMultiPhaseCheck()` returns `null`), which leaves
+  the multiphase flag of each fluid exactly as the fluid was built. Existing
+  models are unaffected until the method is called.
+
+> **Warning:** turning the check off on an area where a second liquid phase
+> really does form (free water, an aqueous phase from a glycol or MEG stream, a
+> liquid CO2 phase) will silently produce a two-phase answer. Only disable it
+> where the absence of a third phase is known from the process, not assumed.
+
+Python:
+
+```python
+compression_train.setMultiPhaseCheck(False)
+separation_train.setMultiPhaseCheck(True)
+```
+
+See [ProcessModel](process_model.md#multiphase-three-phase-flash-control) for the
+per-area version on multi-area plants.
+
 ### Process Modules
 
 ```java
