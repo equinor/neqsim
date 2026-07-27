@@ -1,10 +1,15 @@
 package neqsim.process.equipment.distillation;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
@@ -104,4 +109,305 @@ public class DistillationColumnWarmStateCacheTest {
     assertTrue(column.getLastSolveStatusReason().contains("Reused"),
         "an unchanged column should reuse the accepted warm state, reason was " + column.getLastSolveStatusReason());
   }
+
+  /** Molar feed rate used to make identity-only input changes collide with the legacy fingerprint. */
+  private static final double IDENTITY_TEST_FLOW_MOL_PER_HOUR = 100000.0;
+
+  /**
+   * Column subclass that records real initialization passes without changing solver behavior.
+   */
+  private static final class TrackingDistillationColumn extends DistillationColumn {
+    private int initializationCount = 0;
+
+    private TrackingDistillationColumn(String name, int numberOfTrays, boolean hasReboiler, boolean hasCondenser) {
+      super(name, numberOfTrays, hasReboiler, hasCondenser);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void init() {
+      boolean initializationRequested = isDoInitializion();
+      super.init();
+      if (initializationRequested) {
+        initializationCount++;
+      }
+    }
+
+    private int getInitializationCount() {
+      return initializationCount;
+    }
+  }
+
+  /** Feed and column references used when replacing a solved feed thermodynamic system. */
+  private static final class ColumnCase {
+    private final Stream feed;
+    private final TrackingDistillationColumn column;
+
+    private ColumnCase(Stream feed, TrackingDistillationColumn column) {
+      this.feed = feed;
+      this.column = column;
+    }
+  }
+
+  /**
+   * Build a hydrocarbon fluid whose numeric composition can remain unchanged while identity changes.
+   *
+   * @param usePengRobinson whether to use PR instead of SRK
+   * @param middleComponent component at numeric composition index one
+   * @param mixingRule integer mixing-rule identifier
+   * @return configured fluid
+   */
+  private static SystemInterface createIdentityTestFluid(boolean usePengRobinson, String middleComponent,
+      int mixingRule) {
+    SystemInterface fluid;
+    if (usePengRobinson) {
+      fluid = new SystemPrEos(273.15 + 20.0, 10.0);
+    } else {
+      fluid = new SystemSrkEos(273.15 + 20.0, 10.0);
+    }
+    fluid.addComponent("propane", 40.0);
+    fluid.addComponent(middleComponent, 30.0);
+    fluid.addComponent("n-pentane", 30.0);
+    fluid.setMixingRule(mixingRule);
+    return fluid;
+  }
+
+  /**
+   * Build a small identity-regression column at a fixed molar feed rate.
+   *
+   * @param fluid feed thermodynamic system
+   * @return feed and column references
+   */
+  private static ColumnCase buildIdentityColumnCase(SystemInterface fluid) {
+    Stream feed = new Stream("identity feed", fluid);
+    configureIdentityFeed(feed);
+
+    TrackingDistillationColumn column = new TrackingDistillationColumn("identity cache column", 6, true, false);
+    column.addFeedStream(feed, 3);
+    column.setTopPressure(10.0);
+    column.setBottomPressure(10.5);
+    column.getReboiler().setOutTemperature(273.15 + 80.0);
+    column.setSolverType(DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
+    return new ColumnCase(feed, column);
+  }
+
+  /**
+   * Apply conditions that deliberately keep every legacy numeric fingerprint input unchanged.
+   *
+   * @param feed feed to configure
+   */
+  private static void configureIdentityFeed(Stream feed) {
+    feed.setFlowRate(IDENTITY_TEST_FLOW_MOL_PER_HOUR, "mol/hr");
+    feed.setTemperature(20.0, "C");
+    feed.setPressure(10.0, "bara");
+    feed.run();
+  }
+
+  /**
+   * Replace a solved feed with a thermodynamically different system at identical numeric inputs.
+   *
+   * @param columnCase solved column case
+   * @param replacementFluid replacement thermodynamic system
+   */
+  private static void replaceFeedFluid(ColumnCase columnCase, SystemInterface replacementFluid) {
+    columnCase.feed.setThermoSystem(replacementFluid);
+    configureIdentityFeed(columnCase.feed);
+  }
+
+  /**
+   * Verify finite, physical product states and component/total molar closure.
+   *
+   * @param columnCase solved column case
+   */
+  private static void assertPhysicalAndBalanced(ColumnCase columnCase) {
+    StreamInterface gas = columnCase.column.getGasOutStream();
+    StreamInterface liquid = columnCase.column.getLiquidOutStream();
+    String[] feedComponents = columnCase.feed.getThermoSystem().getComponentNames();
+    assertArrayEquals(feedComponents, gas.getThermoSystem().getComponentNames(),
+        "overhead must use the current feed component identities");
+    assertArrayEquals(feedComponents, liquid.getThermoSystem().getComponentNames(),
+        "bottoms must use the current feed component identities");
+
+    double feedFlow = columnCase.feed.getFlowRate("mol/hr");
+    double gasFlow = gas.getFlowRate("mol/hr");
+    double liquidFlow = liquid.getFlowRate("mol/hr");
+    assertTrue(Double.isFinite(gasFlow) && gasFlow > 0.0, "overhead flow must be finite and positive");
+    assertTrue(Double.isFinite(liquidFlow) && liquidFlow > 0.0, "bottoms flow must be finite and positive");
+    assertEquals(feedFlow, gasFlow + liquidFlow, 5.0e-3 * feedFlow, "total product flow must close the feed");
+
+    double[] feedComposition = columnCase.feed.getThermoSystem().getMolarComposition();
+    double[] gasComposition = gas.getThermoSystem().getMolarComposition();
+    double[] liquidComposition = liquid.getThermoSystem().getMolarComposition();
+    for (int componentIndex = 0; componentIndex < feedComponents.length; componentIndex++) {
+      double feedComponentFlow = feedFlow * feedComposition[componentIndex];
+      double productComponentFlow = gasFlow * gasComposition[componentIndex]
+          + liquidFlow * liquidComposition[componentIndex];
+      assertEquals(feedComponentFlow, productComponentFlow, 5.0e-3 * feedFlow,
+          "component balance must close for " + feedComponents[componentIndex]);
+    }
+
+    assertPhysicalStream(gas);
+    assertPhysicalStream(liquid);
+  }
+
+  /**
+   * Verify physical temperature, pressure, and composition bounds.
+   *
+   * @param stream product stream
+   */
+  private static void assertPhysicalStream(StreamInterface stream) {
+    assertTrue(Double.isFinite(stream.getTemperature("K")) && stream.getTemperature("K") > 150.0
+        && stream.getTemperature("K") < 800.0, "product temperature must be physical");
+    assertTrue(Double.isFinite(stream.getPressure("bara")) && stream.getPressure("bara") > 0.0,
+        "product pressure must be physical");
+    double compositionSum = 0.0;
+    for (double moleFraction : stream.getThermoSystem().getMolarComposition()) {
+      assertTrue(Double.isFinite(moleFraction) && moleFraction >= -1.0e-12 && moleFraction <= 1.0 + 1.0e-12,
+          "product mole fractions must stay bounded");
+      compositionSum += moleFraction;
+    }
+    assertEquals(1.0, compositionSum, 1.0e-8, "product mole fractions must sum to one");
+  }
+
+  /**
+   * Compare a re-solved mutated column with a newly constructed cold-reference column.
+   *
+   * @param expected fresh cold-reference column
+   * @param actual mutated and re-solved column
+   */
+  private static void assertColdReferenceEquivalent(DistillationColumn expected, DistillationColumn actual) {
+    assertStreamEquivalent(expected.getGasOutStream(), actual.getGasOutStream());
+    assertStreamEquivalent(expected.getLiquidOutStream(), actual.getLiquidOutStream());
+  }
+
+  /**
+   * Compare product identity, flow, temperature, pressure, and composition.
+   *
+   * @param expected cold-reference stream
+   * @param actual re-solved stream
+   */
+  private static void assertStreamEquivalent(StreamInterface expected, StreamInterface actual) {
+    assertArrayEquals(expected.getThermoSystem().getComponentNames(), actual.getThermoSystem().getComponentNames());
+    assertEquals(expected.getThermoSystem().getModelName(), actual.getThermoSystem().getModelName());
+    assertEquals(expected.getThermoSystem().getMixingRuleName(), actual.getThermoSystem().getMixingRuleName());
+
+    double expectedFlow = expected.getFlowRate("mol/hr");
+    assertEquals(expectedFlow, actual.getFlowRate("mol/hr"), Math.max(1.0e-6, Math.abs(expectedFlow) * 2.0e-5));
+    assertEquals(expected.getTemperature("K"), actual.getTemperature("K"), 2.0e-4);
+    assertEquals(expected.getPressure("bara"), actual.getPressure("bara"), 1.0e-8);
+
+    double[] expectedComposition = expected.getThermoSystem().getMolarComposition();
+    double[] actualComposition = actual.getThermoSystem().getMolarComposition();
+    assertEquals(expectedComposition.length, actualComposition.length);
+    for (int componentIndex = 0; componentIndex < expectedComposition.length; componentIndex++) {
+      assertEquals(expectedComposition[componentIndex], actualComposition[componentIndex], 2.0e-6);
+    }
+  }
+
+  /**
+   * Verify that the newly solved state becomes the next exact zero-iteration cache hit.
+   *
+   * @param columnCase solved column case
+   */
+  private static void assertNextRunReusesExactly(ColumnCase columnCase) {
+    int initializationCount = columnCase.column.getInitializationCount();
+    double gasFlow = columnCase.column.getGasOutStream().getFlowRate("mol/hr");
+    double liquidFlow = columnCase.column.getLiquidOutStream().getFlowRate("mol/hr");
+
+    columnCase.column.run();
+
+    assertTrue(columnCase.column.wasNaphtaliSandholmWarmStateReused(),
+        "the unchanged replacement state must become exactly reusable");
+    assertEquals(initializationCount, columnCase.column.getInitializationCount(),
+        "exact reuse must not initialize the column");
+    assertEquals(gasFlow, columnCase.column.getGasOutStream().getFlowRate("mol/hr"), 1.0e-9);
+    assertEquals(liquidFlow, columnCase.column.getLiquidOutStream().getFlowRate("mol/hr"), 1.0e-9);
+  }
+
+  /**
+   * A component-name change with identical numeric mole fractions must invalidate exact reuse and rebuild tray fluids.
+   */
+  @Test
+  public void componentIdentityChangeForcesColdInitialization() {
+    ColumnCase mutated = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 2));
+    mutated.column.run();
+    int initialInitializationCount = mutated.column.getInitializationCount();
+
+    replaceFeedFluid(mutated, createIdentityTestFluid(false, "i-butane", 2));
+    mutated.column.run();
+
+    assertFalse(mutated.column.wasNaphtaliSandholmWarmStateReused(),
+        "different component identities must not reuse the previous products");
+    assertTrue(mutated.column.getInitializationCount() > initialInitializationCount,
+        "different component identities must force column initialization");
+
+    ColumnCase coldReference = buildIdentityColumnCase(createIdentityTestFluid(false, "i-butane", 2));
+    coldReference.column.run();
+    assertColdReferenceEquivalent(coldReference.column, mutated.column);
+    assertPhysicalAndBalanced(mutated);
+    assertNextRunReusesExactly(mutated);
+  }
+
+  /**
+   * Changing from SRK to PR at identical feed numbers must invalidate exact reuse and rebuild tray fluids.
+   */
+  @Test
+  public void equationOfStateChangeForcesColdInitialization() {
+    ColumnCase mutated = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 2));
+    mutated.column.run();
+    int initialInitializationCount = mutated.column.getInitializationCount();
+
+    replaceFeedFluid(mutated, createIdentityTestFluid(true, "n-butane", 2));
+    mutated.column.run();
+
+    assertFalse(mutated.column.wasNaphtaliSandholmWarmStateReused(),
+        "a different equation of state must not reuse the previous products");
+    assertTrue(mutated.column.getInitializationCount() > initialInitializationCount,
+        "a different equation of state must force column initialization");
+
+    ColumnCase coldReference = buildIdentityColumnCase(createIdentityTestFluid(true, "n-butane", 2));
+    coldReference.column.run();
+    assertColdReferenceEquivalent(coldReference.column, mutated.column);
+    assertPhysicalAndBalanced(mutated);
+    assertNextRunReusesExactly(mutated);
+
+    int initializationCountBeforeNearbyPoint = mutated.column.getInitializationCount();
+    mutated.column.getReboiler().setOutTemperature(273.15 + 82.0);
+    mutated.column.run();
+    assertFalse(mutated.column.wasNaphtaliSandholmWarmStateReused(),
+        "a nearby operating point must be solved rather than exactly reused");
+    assertEquals(initializationCountBeforeNearbyPoint, mutated.column.getInitializationCount(),
+        "an unchanged thermodynamic identity should preserve the iterative warm start");
+
+    ColumnCase nearbyColdReference = buildIdentityColumnCase(createIdentityTestFluid(true, "n-butane", 2));
+    nearbyColdReference.column.getReboiler().setOutTemperature(273.15 + 82.0);
+    nearbyColdReference.column.run();
+    assertColdReferenceEquivalent(nearbyColdReference.column, mutated.column);
+    assertPhysicalAndBalanced(mutated);
+  }
+
+  /**
+   * Changing the mixing rule at identical feed numbers must invalidate exact reuse and rebuild tray fluids.
+   */
+  @Test
+  public void mixingRuleChangeForcesColdInitialization() {
+    ColumnCase mutated = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 2));
+    mutated.column.run();
+    int initialInitializationCount = mutated.column.getInitializationCount();
+
+    replaceFeedFluid(mutated, createIdentityTestFluid(false, "n-butane", 1));
+    mutated.column.run();
+
+    assertFalse(mutated.column.wasNaphtaliSandholmWarmStateReused(),
+        "a different mixing rule must not reuse the previous products");
+    assertTrue(mutated.column.getInitializationCount() > initialInitializationCount,
+        "a different mixing rule must force column initialization");
+
+    ColumnCase coldReference = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 1));
+    coldReference.column.run();
+    assertColdReferenceEquivalent(coldReference.column, mutated.column);
+    assertPhysicalAndBalanced(mutated);
+    assertNextRunReusesExactly(mutated);
+  }
+
 }
