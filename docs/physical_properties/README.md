@@ -41,9 +41,9 @@ public class PhysicalPropertiesOverview {
     fluid.addComponent("methane", 0.90);
     fluid.addComponent("ethane", 0.10);
     fluid.setMixingRule("classic");
-    fluid.setPhysicalPropertyModel(PhysicalPropertyModel.DEFAULT);
 
     new ThermodynamicOperations(fluid).TPflash();
+    fluid.setPhysicalPropertyModel(PhysicalPropertyModel.DEFAULT);
     fluid.initPhysicalProperties();
 
     double viscosityPas = fluid.getPhase("gas").getViscosity("kg/msec");
