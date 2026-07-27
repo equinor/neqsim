@@ -2877,7 +2877,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    */
   public void validate() {
     List<String> errors = new ArrayList<>();
-    List<String> warnings = new ArrayList<>();
+    List<String> warnings = collectConfigurationWarnings();
 
     // Check basic setup
     if (thermoSystem == null) {
@@ -2885,12 +2885,40 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     }
 
     // Check pressure logic
-    double initialPressure = thermoSystem != null ? thermoSystem.getPressure() / 1e5 : 0;
+    double initialPressureBar = thermoSystem != null ? thermoSystem.getPressure() : 0;
     double backPressureBar = backPressure / 1e5;
-    if (backPressureBar >= initialPressure) {
+    if (backPressureBar >= initialPressureBar) {
       errors.add(String.format("Back pressure (%.1f bar) >= initial pressure (%.1f bar). No flow will occur.",
-          backPressureBar, initialPressure));
+          backPressureBar, initialPressureBar));
     }
+
+    // Check heat transfer settings
+    if (calculationType == CalculationType.ENERGY_BALANCE) {
+      if (heatTransferType == HeatTransferType.CALCULATED || heatTransferType == HeatTransferType.TRANSIENT_WALL) {
+        if (vesselLength <= 0 || vesselDiameter <= 0) {
+          errors.add("Vessel geometry required for calculated heat transfer. " + "Call setVesselGeometry().");
+        }
+      }
+    }
+
+    // Log warnings
+    for (String warning : warnings) {
+      logger.warn("Validation warning: {}", warning);
+    }
+
+    // Throw on errors
+    if (!errors.isEmpty()) {
+      throw new IllegalStateException("Vessel configuration errors:\n- " + String.join("\n- ", errors));
+    }
+  }
+
+  /**
+   * Collects non-critical configuration warnings shared by both validation entry points.
+   *
+   * @return configuration warning messages
+   */
+  private List<String> collectConfigurationWarnings() {
+    List<String> warnings = new ArrayList<>();
 
     // Check orifice size
     double orificeArea = Math.PI * orificeDiameter * orificeDiameter / 4.0;
@@ -2911,15 +2939,6 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
           + "Gas and liquid wall temperatures will be identical.");
     }
 
-    // Check heat transfer settings
-    if (calculationType == CalculationType.ENERGY_BALANCE) {
-      if (heatTransferType == HeatTransferType.CALCULATED || heatTransferType == HeatTransferType.TRANSIENT_WALL) {
-        if (vesselLength <= 0 || vesselDiameter <= 0) {
-          errors.add("Vessel geometry required for calculated heat transfer. " + "Call setVesselGeometry().");
-        }
-      }
-    }
-
     // Check volume consistency
     double calculatedVolume = Math.PI * vesselDiameter * vesselDiameter / 4.0 * vesselLength;
     if (Math.abs(calculatedVolume - volume) / volume > 0.01) {
@@ -2927,15 +2946,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
           + "Heat transfer area may be inconsistent.", volume, calculatedVolume));
     }
 
-    // Log warnings
-    for (String warning : warnings) {
-      logger.warn("Validation warning: {}", warning);
-    }
-
-    // Throw on errors
-    if (!errors.isEmpty()) {
-      throw new IllegalStateException("Vessel configuration errors:\n- " + String.join("\n- ", errors));
-    }
+    return warnings;
   }
 
   /**
@@ -2952,12 +2963,14 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
       warnings.add("ERROR: " + e.getMessage());
     }
 
+    warnings.addAll(collectConfigurationWarnings());
+
     // Additional non-critical warnings
     if (thermoSystem != null) {
-      double initialPressure = thermoSystem.getPressure() / 1e5;
-      if (initialPressure > 700) {
+      double initialPressureBar = thermoSystem.getPressure();
+      if (initialPressureBar > 700) {
         warnings.add(String.format("Very high pressure (%.0f bar). Ensure equation of state is valid for this range.",
-            initialPressure));
+            initialPressureBar));
       }
 
       double temperature = thermoSystem.getTemperature();
