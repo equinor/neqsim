@@ -75,7 +75,7 @@ public class PressureBoundaryCapacityIntegrationTest {
 
     CapacityConstraint surge = compressor.getCapacityConstraints().get("surgeMargin");
     assertNotNull(surge);
-    assertEquals(15.0, surge.getMinValue(), 0.0);
+    assertEquals(15.0, surge.getMinValue(), 1.0e-12);
     OptimizationConstraint surgeOptimization = getConstraint(constraints, "ExportCompressor_surgeMargin");
     assertEquals(1.0 - surge.getUtilization(), surgeOptimization.margin(process), 1.0e-12);
   }
