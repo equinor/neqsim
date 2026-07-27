@@ -51,7 +51,7 @@ public class PhysicalPropertiesOverview {
         fluid.getPhase("gas").getThermalConductivity("W/mK");
     double densityKgPerM3 = fluid.getPhase("gas").getDensity("kg/m3");
     double kinematicViscosityM2PerS =
-        fluid.getPhase("gas").getKinematicViscosity();
+        fluid.getPhase("gas").getPhysicalProperties().getKinematicViscosity();
 
     if (viscosityPas <= 0.0
         || conductivityWPerMeterK <= 0.0
@@ -152,7 +152,7 @@ After initialization, the most common phase accessors are:
 | Thermal conductivity with unit | `getThermalConductivity("W/mK")` | requested unit |
 | Mass density | `getDensity()` | kg/m³ |
 | Mass density with unit | `getDensity("kg/m3")` | requested unit |
-| Kinematic viscosity | `getKinematicViscosity()` | m²/s |
+| Kinematic viscosity | `getPhysicalProperties().getKinematicViscosity()` | m²/s |
 
 Diffusion coefficients are available from the phase's `PhysicalProperties` object. See the
 [diffusivity guide](diffusivity_models.md) for Maxwell-Stefan, Fick, and effective diffusion
