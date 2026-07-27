@@ -15,16 +15,15 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Immutable, capacity-aware snapshot of one compressor operating point.
  *
  * <p>
- * The result combines thermodynamic performance, compressor-map position, anti-surge recycle
- * screening, pressure-target status, and the universal NeqSim capacity constraints. It is intended
- * for production optimization, bottleneck analysis, field-life studies, and exchange with external
- * energy and emissions tools.
+ * The result combines thermodynamic performance, compressor-map position, anti-surge recycle screening, pressure-target
+ * status, and the universal NeqSim capacity constraints. It is intended for production optimization, bottleneck
+ * analysis, field-life studies, and exchange with external energy and emissions tools.
  * </p>
  *
  * <p>
- * All physical values use fixed units stated in the getter names and JavaDoc. Values that cannot be
- * evaluated are represented by {@link Double#NaN}. The result does not retain references to the
- * compressor or its mutable constraints.
+ * All physical values use fixed units stated in the getter names and JavaDoc. Values that cannot be evaluated are
+ * represented by {@link Double#NaN}. The result does not retain references to the compressor or its mutable
+ * constraints.
  * </p>
  *
  * @author NeqSim
@@ -283,30 +282,25 @@ public final class CompressorOperatingPointResult implements Serializable {
     powerKW = safeDouble(() -> compressor.getPower("kW"));
     inletPressureBara = inlet == null ? Double.NaN : safeDouble(() -> inlet.getPressure("bara"));
     requestedDischargePressureBara = safeDouble(compressor::getOutletPressure);
-    actualDischargePressureBara =
-        outlet == null ? Double.NaN : safeDouble(() -> outlet.getPressure("bara"));
-    dischargeTemperatureC =
-        outlet == null ? Double.NaN : safeDouble(() -> outlet.getTemperature("C"));
+    actualDischargePressureBara = outlet == null ? Double.NaN : safeDouble(() -> outlet.getPressure("bara"));
+    dischargeTemperatureC = outlet == null ? Double.NaN : safeDouble(() -> outlet.getTemperature("C"));
 
-    dischargePressureErrorFraction =
-        calculateRelativeError(actualDischargePressureBara, requestedDischargePressureBara);
-    pressureTargetStatus =
-        determinePressureTargetStatus(dischargePressureErrorFraction, pressureToleranceFraction);
+    dischargePressureErrorFraction = calculateRelativeError(actualDischargePressureBara,
+        requestedDischargePressureBara);
+    pressureTargetStatus = determinePressureTargetStatus(dischargePressureErrorFraction, pressureToleranceFraction);
 
-    chartActive = safeBoolean(() -> compressor.getCompressorChart() != null
-        && compressor.getCompressorChart().isUseCompressorChart());
+    chartActive = safeBoolean(
+        () -> compressor.getCompressorChart() != null && compressor.getCompressorChart().isUseCompressorChart());
     inSurge = chartActive && safeBoolean(compressor::isSurge);
     inStonewall = chartActive && safeBoolean(compressor::isStoneWall);
     withinChart = !chartActive || (!inSurge && !inStonewall);
     distanceToSurge = chartActive ? safeDouble(compressor::getDistanceToSurge) : Double.NaN;
-    distanceToStonewall =
-        chartActive ? safeDouble(compressor::getDistanceToStoneWall) : Double.NaN;
+    distanceToStonewall = chartActive ? safeDouble(compressor::getDistanceToStoneWall) : Double.NaN;
     surgeFlowM3PerHour = chartActive ? safeDouble(compressor::getSurgeFlowRate) : Double.NaN;
-    surgeControlLineFlowM3PerHour =
-        chartActive ? safeDouble(compressor::getControlLineFlow) : Double.NaN;
-    requiredRecycleFraction =
-        chartActive ? clampFraction(safeDouble(compressor::getRequiredRecycleFractionToControlLine))
-            : 0.0;
+    surgeControlLineFlowM3PerHour = chartActive ? safeDouble(compressor::getControlLineFlow) : Double.NaN;
+    requiredRecycleFraction = chartActive
+        ? clampFraction(safeDouble(compressor::getRequiredRecycleFractionToControlLine))
+        : 0.0;
     recyclePowerLossKW = chartActive
         ? safeDouble(() -> compressor.getAntiSurgeRecyclePower(requiredRecycleFraction, "kW"))
         : 0.0;
@@ -342,8 +336,7 @@ public final class CompressorOperatingPointResult implements Serializable {
    * @return immutable operating-point result
    * @throws IllegalArgumentException if compressor is null or tolerance is invalid
    */
-  public static CompressorOperatingPointResult from(Compressor compressor,
-      double pressureToleranceFraction) {
+  public static CompressorOperatingPointResult from(Compressor compressor, double pressureToleranceFraction) {
     if (compressor == null) {
       throw new IllegalArgumentException("compressor must not be null");
     }
@@ -375,8 +368,8 @@ public final class CompressorOperatingPointResult implements Serializable {
     }
   }
 
-  private static String determineLimitingConstraint(CapacityConstraint bottleneck,
-      boolean inSurge, boolean inStonewall) {
+  private static String determineLimitingConstraint(CapacityConstraint bottleneck, boolean inSurge,
+      boolean inStonewall) {
     if (bottleneck != null) {
       return bottleneck.getName();
     }
@@ -396,8 +389,7 @@ public final class CompressorOperatingPointResult implements Serializable {
     return (actual - target) / Math.abs(target);
   }
 
-  private static PressureTargetStatus determinePressureTargetStatus(double relativeError,
-      double tolerance) {
+  private static PressureTargetStatus determinePressureTargetStatus(double relativeError, double tolerance) {
     if (!isFinite(relativeError)) {
       return PressureTargetStatus.NOT_EVALUATED;
     }
