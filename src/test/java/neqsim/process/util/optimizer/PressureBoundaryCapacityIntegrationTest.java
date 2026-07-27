@@ -54,10 +54,8 @@ public class PressureBoundaryCapacityIntegrationTest {
     assertThrows(IllegalArgumentException.class, () -> optimizer.setMinSurgeMargin(0.0));
     assertThrows(IllegalArgumentException.class, () -> optimizer.setMinSurgeMargin(-0.10));
     assertThrows(IllegalArgumentException.class, () -> optimizer.setMinSurgeMargin(Double.NaN));
-    assertThrows(IllegalArgumentException.class,
-        () -> optimizer.setMinSurgeMargin(Double.POSITIVE_INFINITY));
-    assertThrows(IllegalArgumentException.class,
-        () -> optimizer.setMinSurgeMargin(Double.NEGATIVE_INFINITY));
+    assertThrows(IllegalArgumentException.class, () -> optimizer.setMinSurgeMargin(Double.POSITIVE_INFINITY));
+    assertThrows(IllegalArgumentException.class, () -> optimizer.setMinSurgeMargin(Double.NEGATIVE_INFINITY));
     optimizer.setMinSurgeMargin(0.15);
     compressor.addCapacityConstraint(new CapacityConstraint("vendorLimit", "-", CapacityConstraint.ConstraintType.SOFT)
         .setDesignValue(1.0).setCurrentValue(0.8).setSeverity(CapacityConstraint.ConstraintSeverity.SOFT));
