@@ -105,6 +105,26 @@ Test: `src/test/java/neqsim/process/processmodel/ProcessSystemMultiPhaseCheckTes
 
 ---
 
+## 2026-07-27 — Change: `Expander` polytropic path defaults to 5 pressure steps
+
+### Summary
+
+`Expander.run()` integrated the polytropic expansion over a hard-coded 40 pressure steps,
+i.e. 40 flashes per expander per iteration. The step count is now taken from the inherited
+`Compressor.getNumberOfCompressorCalcSteps()` and the `Expander` constructor seeds it with
+`Expander.DEFAULT_EXPANDER_CALC_STEPS = 5`. Five steps reproduce the 40-step result to within
+numerical noise at a fraction of the flash cost, which matters in recycle loops where the
+expander is re-run every iteration.
+
+### Migration
+
+None required. To restore the previous resolution — or to raise it for a strongly
+non-ideal fluid — call `expander.setNumberOfCompressorCalcSteps(40)`. Results may move in
+the last significant digits; re-baseline any test that asserted expander outlet enthalpy or
+temperature to a tolerance tighter than the integration error.
+
+---
+
 ## 2026-07-25 — New: Energy Networks v3
 
 ### Summary
