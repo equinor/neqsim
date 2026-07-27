@@ -348,15 +348,25 @@ public final class CompressorOperatingPointResult implements Serializable {
 
   private static List<ConstraintSnapshot> snapshotConstraints(Compressor compressor) {
     List<ConstraintSnapshot> result = new ArrayList<ConstraintSnapshot>();
+    Map<String, CapacityConstraint> constraints;
     try {
-      for (Map.Entry<String, CapacityConstraint> entry : compressor.getCapacityConstraints().entrySet()) {
-        if (entry.getValue() != null) {
-          result.add(new ConstraintSnapshot(entry.getValue()));
-        }
-      }
+      constraints = compressor.getCapacityConstraints();
     } catch (Exception ex) {
       return Collections.emptyList();
     }
+
+    for (Map.Entry<String, CapacityConstraint> entry : constraints.entrySet()) {
+      CapacityConstraint constraint = entry.getValue();
+      if (constraint == null) {
+        continue;
+      }
+      try {
+        result.add(new ConstraintSnapshot(constraint));
+      } catch (Exception ex) {
+        // Ignore individual constraint failures to preserve partial snapshots.
+      }
+    }
+
     return Collections.unmodifiableList(result);
   }
 
