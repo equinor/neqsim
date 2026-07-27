@@ -102,7 +102,8 @@ public class PUflash extends Flash {
     try {
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
       tpFlash.run();
-      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+      neqsim.thermo.ThermodynamicModelSettings
+          .setUseWarmStartKValues(neqsim.thermo.ThermodynamicModelSettings.isInnerFlashWarmStartSafe(system));
       // System.out.println("internal energy start: " + system.getInternalEnergy());
       solveQ();
     } finally {

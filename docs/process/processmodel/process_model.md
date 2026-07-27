@@ -188,6 +188,39 @@ start of each of its runs, so it survives the repeated area passes of
 [ProcessSystem](process_system.md#multiphase-three-phase-flash-control) for the
 full semantics and the correctness warning.
 
+### Physical-Property Initialization Level
+
+`setPropertyInitLevel` follows exactly the same plant-wide / per-area pattern and
+controls how much of `initProperties()` runs after each stream flash. Selecting
+`DENSITY_ONLY` skips the viscosity, thermal-conductivity and diffusivity
+correlations.
+
+```java
+// Mass balances only across the plant...
+int streamsUpdated = model.setPropertyInitLevel(Stream.PropertyInitLevel.DENSITY_ONLY);
+
+// ...but full properties where transport properties are actually read.
+// Returns the number of streams updated, or -1 if the area name is unknown.
+model.setPropertyInitLevel("Subsea", Stream.PropertyInitLevel.FULL);
+model.setPropertyInitLevel("Cooling water", Stream.PropertyInitLevel.FULL);
+```
+
+Python:
+
+```python
+PropertyInitLevel = jneqsim.process.equipment.stream.Stream.PropertyInitLevel
+
+plant.setPropertyInitLevel(PropertyInitLevel.DENSITY_ONLY)
+plant.setPropertyInitLevel("Subsea", PropertyInitLevel.FULL)
+
+if plant.setPropertyInitLevel("typo in area name", PropertyInitLevel.FULL) == -1:
+    raise KeyError("no such process area")
+```
+
+> **Warning:** under `DENSITY_ONLY` the skipped properties read back as `0.0`
+> rather than raising. See
+> [ProcessSystem](process_system.md#physical-property-initialization-level).
+
 ---
 
 ## Convergence Tracking

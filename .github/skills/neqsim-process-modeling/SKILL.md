@@ -118,6 +118,39 @@ not assumed.** Free water, an aqueous glycol/MEG phase, or a liquid CO2 phase
 will be silently missed. Keep the check ON for inlet separation, produced-water,
 glycol/MEG, and CO2-rich areas.
 
+## Per-Area Property-Initialization Level (Speed-Up)
+
+Every `Stream.run()` ends with `initProperties()`, which evaluates mass density,
+viscosity, thermal conductivity and diffusivity. Selecting `DENSITY_ONLY` skips
+the transport-property correlations and is roughly an order of magnitude cheaper
+per stream.
+
+```java
+plant.setPropertyInitLevel(Stream.PropertyInitLevel.DENSITY_ONLY); // whole plant
+plant.setPropertyInitLevel("Subsea", Stream.PropertyInitLevel.FULL); // one area
+compressionTrain.setPropertyInitLevel(Stream.PropertyInitLevel.DENSITY_ONLY);
+feedStream.setPropertyInitLevel(Stream.PropertyInitLevel.FULL);      // one stream
+```
+
+- Same API shape as `setMultiPhaseCheck`: `ProcessSystem.setPropertyInitLevel`
+  returns the number of streams updated, `ProcessModel.setPropertyInitLevel(area,
+  level)` returns `-1` for an unknown area, the setting propagates into nested
+  `ModuleInterface` sub-processes, is applied to units added afterwards, and is
+  re-applied at the start of every run.
+- Default is unset (`null`): each stream keeps `PropertyInitLevel.FULL`.
+
+> **⚠ `DENSITY_ONLY` makes transport properties read back as ZERO, not throw.**
+> `getViscosity()`, `getThermalConductivity()` and the diffusion coefficients
+> return `0.0`. That silently corrupts pipeline pressure drop, heat-exchanger UA,
+> mechanical design, and every flow-assurance calculation. Use it only for
+> mass/energy-balance solves, and set the level back to `FULL` (or call
+> `getFluid().initProperties()` on the stream) before reading transport
+> properties.
+
+Both switches are re-applied by `run(UUID)`, `run_step(UUID)`,
+`runSequential(UUID)`, `runParallel(UUID)`, `runHybrid(UUID)`,
+`runDataflow(UUID)` and `runTransient(double, UUID)`.
+
 ## Required Checks
 
 - Temperatures and pressures use explicit units in setters.

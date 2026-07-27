@@ -706,10 +706,12 @@ Behaviour:
   operations and by their inlet and outlet streams, and is propagated into nested
   `ModuleInterface` sub-processes. The return value is the number of distinct
   fluids updated (a fluid shared by two units is counted once).
-- It is **re-applied at the start of every run** (`run(UUID)`,
-  `runParallel(UUID)` and `run_step(UUID)`), so equipment that temporarily
-  enables the check — `ThreePhaseSeparator` does this for its own flash — cannot
-  leak three-phase mode into the rest of the area across recycle iterations.
+- It is **re-applied at the start of every run** — `run(UUID)`,
+  `run_step(UUID)`, `runSequential(UUID)`, `runParallel(UUID)`, `runHybrid(UUID)`,
+  `runDataflow(UUID)` and `runTransient(double, UUID)` — so equipment that
+  temporarily enables the check (`ThreePhaseSeparator` does this for its own
+  flash) cannot leak three-phase mode into the rest of the area across recycle
+  iterations.
 - The default is **unset** (`getMultiPhaseCheck()` returns `null`), which leaves
   the multiphase flag of each fluid exactly as the fluid was built. Existing
   models are unaffected until the method is called.
@@ -724,6 +726,57 @@ Python:
 ```python
 compression_train.setMultiPhaseCheck(False)
 separation_train.setMultiPhaseCheck(True)
+```
+
+See [ProcessModel](process_model.md#multiphase-three-phase-flash-control) for the
+per-area version on multi-area plants.
+
+### Physical-Property Initialization Level
+
+Every `Stream.run()` ends with `initProperties()`, which evaluates mass density,
+viscosity, thermal conductivity and diffusivity. The transport-property
+correlations dominate that cost, and a flowsheet that only needs mass and energy
+balances never reads them.
+
+`setPropertyInitLevel(Stream.PropertyInitLevel)` selects how much of that work is
+done, for the whole area in one call:
+
+```java
+// Mass balances only: skip viscosity, thermal conductivity and diffusivity
+int streamsUpdated = compressionTrain.setPropertyInitLevel(Stream.PropertyInitLevel.DENSITY_ONLY);
+
+// ...and back to the full set before a flow-assurance or heat-exchanger study
+compressionTrain.setPropertyInitLevel(Stream.PropertyInitLevel.FULL);
+
+// Query the current setting (null = never configured, streams stay on FULL)
+Stream.PropertyInitLevel level = compressionTrain.getPropertyInitLevel();
+```
+
+The API deliberately mirrors `setMultiPhaseCheck`:
+
+- Applied **immediately** to every `Stream` held by the unit operations and by
+  their inlet and outlet streams, propagated into nested `ModuleInterface`
+  sub-processes, and applied to any unit added afterwards. The return value is
+  the number of distinct streams updated.
+- **Re-applied at the start of every run**, through the same seven entry points
+  listed above.
+- The default is **unset** (`getPropertyInitLevel()` returns `null`), which
+  leaves each stream on `PropertyInitLevel.FULL` — the historical behaviour.
+- A single stream can still be overridden with
+  `Stream.setPropertyInitLevel(level)`.
+
+> **Warning:** `DENSITY_ONLY` does **not** throw when a transport property is
+> requested afterwards — `getViscosity()`, `getThermalConductivity()` and the
+> diffusion coefficients return `0.0`. That silently corrupts pipeline pressure
+> drop, heat-exchanger UA, mechanical design and every flow-assurance
+> calculation. Switch back to `FULL` (or call `getFluid().initProperties()` on
+> the stream) before reading transport properties.
+
+Python:
+
+```python
+PropertyInitLevel = jneqsim.process.equipment.stream.Stream.PropertyInitLevel
+compression_train.setPropertyInitLevel(PropertyInitLevel.DENSITY_ONLY)
 ```
 
 See [ProcessModel](process_model.md#multiphase-three-phase-flash-control) for the

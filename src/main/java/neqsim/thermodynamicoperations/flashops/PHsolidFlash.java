@@ -67,7 +67,8 @@ public class PHsolidFlash extends Flash {
     double t_oldold = 0.0;
     // ThermodynamicOperations ops = new ThermodynamicOperations(system);
     tpFlash.run();
-    neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+    neqsim.thermo.ThermodynamicModelSettings
+        .setUseWarmStartKValues(neqsim.thermo.ThermodynamicModelSettings.isInnerFlashWarmStartSafe(system));
     double dt = 10;
     do {
       iter++;

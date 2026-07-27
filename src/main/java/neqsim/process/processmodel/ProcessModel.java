@@ -2640,6 +2640,50 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
+   * Sets the physical-property initialization level used by every stream in every process area of this model.
+   *
+   * <p>
+   * Selecting {@link neqsim.process.equipment.stream.Stream.PropertyInitLevel#DENSITY_ONLY} skips the viscosity,
+   * thermal-conductivity and diffusivity correlations after every stream flash, which is substantially cheaper on a
+   * large plant. Use {@link #setPropertyInitLevel(String, neqsim.process.equipment.stream.Stream.PropertyInitLevel)} to
+   * configure a single area, for example to keep full properties in a flow-assurance or heat-exchanger area while
+   * running the rest of the plant on mass balances only.
+   * </p>
+   *
+   * <p>
+   * <b>Warning - transport properties read back as zero</b> under {@code DENSITY_ONLY}; see
+   * {@link ProcessSystem#setPropertyInitLevel(neqsim.process.equipment.stream.Stream.PropertyInitLevel)}.
+   * </p>
+   *
+   * @param level the level to apply; null restores per-stream control without changing already applied settings
+   * @return the total number of distinct streams updated across all areas
+   * @see ProcessSystem#setPropertyInitLevel(neqsim.process.equipment.stream.Stream.PropertyInitLevel)
+   */
+  public int setPropertyInitLevel(neqsim.process.equipment.stream.Stream.PropertyInitLevel level) {
+    int total = 0;
+    for (ProcessSystem area : processes.values()) {
+      total += area.setPropertyInitLevel(level);
+    }
+    return total;
+  }
+
+  /**
+   * Sets the physical-property initialization level used by every stream of a single process area.
+   *
+   * @param areaName the name the {@link ProcessSystem} was registered with in {@link #add(String, ProcessSystem)}
+   * @param level the level to apply; null restores per-stream control without changing already applied settings
+   * @return the number of distinct streams updated, or -1 if no area with the given name exists
+   * @see ProcessSystem#setPropertyInitLevel(neqsim.process.equipment.stream.Stream.PropertyInitLevel)
+   */
+  public int setPropertyInitLevel(String areaName, neqsim.process.equipment.stream.Stream.PropertyInitLevel level) {
+    ProcessSystem area = processes.get(areaName);
+    if (area == null) {
+      return -1;
+    }
+    return area.setPropertyInitLevel(level);
+  }
+
+  /**
    * Creates a Graphviz exporter for common plant-wide and per-area DOT diagrams.
    *
    * @return a new {@link ProcessModelGraphvizExporter} for this model

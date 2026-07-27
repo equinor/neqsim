@@ -20,11 +20,14 @@ import neqsim.thermo.system.SystemSrkEos;
  * Guards the identity-key contract for process objects.
  *
  * <p>
- * {@code ProcessSystem.hashCode()} and {@code ProcessEquipmentBaseClass.hashCode()} are value based over state that
- * {@code run()} rewrites, so these types must never be used as {@code HashMap} keys. Registries, caches and
- * graph-traversal sets keyed on a process, a unit operation or a stream must use {@link IdentityHashMap}. These tests
- * lock in that the identity-based pattern survives a run, and that the section traversal helpers - which were converted
- * from equals-based sets to identity-based sets - keep working.
+ * Registries, caches and graph-traversal sets keyed on a process, a unit operation or a stream must keep working across
+ * a {@code run()}. {@link IdentityHashMap} is used for those internally because it is insulated from any equality
+ * semantics the process classes may adopt. These tests lock in that the identity-keyed pattern survives a run, and that
+ * the section traversal helpers - which use identity-based visited sets - keep working.
+ * </p>
+ *
+ * <p>
+ * The complementary {@link ProcessEqualityIdentityTest} covers the equality contract of the types themselves.
  * </p>
  */
 public class ProcessObjectIdentityKeyTest extends neqsim.NeqSimTest {

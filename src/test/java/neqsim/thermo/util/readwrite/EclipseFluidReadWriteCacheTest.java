@@ -2,11 +2,13 @@ package neqsim.thermo.util.readwrite;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -35,6 +37,7 @@ class EclipseFluidReadWriteCacheTest extends neqsim.NeqSimTest {
   public void resetCache() {
     EclipseFluidReadWrite.pseudoName = "";
     EclipseFluidReadWrite.setUseCache(true);
+    EclipseFluidReadWrite.setMaxCacheSize(EclipseFluidReadWrite.DEFAULT_MAX_CACHE_SIZE);
     EclipseFluidReadWrite.clearCache();
   }
 
@@ -70,5 +73,40 @@ class EclipseFluidReadWriteCacheTest extends neqsim.NeqSimTest {
     SystemInterface cached = EclipseFluidReadWrite.read(fluidFile);
     assertEquals(uncached.getNumberOfComponents(), cached.getNumberOfComponents());
     assertNotSame(uncached, cached);
+  }
+
+  @Test
+  public void testCacheIsBoundedAndStillCorrectAfterEviction() {
+    assertEquals(EclipseFluidReadWrite.DEFAULT_MAX_CACHE_SIZE, EclipseFluidReadWrite.getMaxCacheSize());
+
+    SystemInterface reference = EclipseFluidReadWrite.read(fluidFile);
+
+    // Shrink the cache to a single entry, then push the entry out by reading the same file under a
+    // different pseudo-name prefix (which is part of the cache key). The next read of the original
+    // key must re-parse and still produce the same fluid.
+    EclipseFluidReadWrite.setMaxCacheSize(1);
+    EclipseFluidReadWrite.pseudoName = "PSEUDO_";
+    EclipseFluidReadWrite.read(fluidFile);
+    EclipseFluidReadWrite.pseudoName = "";
+
+    SystemInterface afterEviction = EclipseFluidReadWrite.read(fluidFile);
+    assertEquals(reference.getNumberOfComponents(), afterEviction.getNumberOfComponents());
+    double[] referenceComposition = reference.getMolarComposition();
+    double[] evictedComposition = afterEviction.getMolarComposition();
+    for (int i = 0; i < referenceComposition.length; i++) {
+      assertEquals(referenceComposition[i], evictedComposition[i], 1e-12);
+    }
+
+    EclipseFluidReadWrite.setMaxCacheSize(EclipseFluidReadWrite.DEFAULT_MAX_CACHE_SIZE);
+  }
+
+  @Test
+  public void testMaxCacheSizeMustBePositive() {
+    assertThrows(IllegalArgumentException.class, new Executable() {
+      @Override
+      public void execute() {
+        EclipseFluidReadWrite.setMaxCacheSize(0);
+      }
+    });
   }
 }

@@ -9,6 +9,125 @@
 
 ---
 
+## 2026-07-27 — Flowsheet performance switches, shared CPA warm-start policy, identity-equality follow-ups
+
+### Summary
+
+Follow-up pass over the process/flash performance work merged the same day. It documents three
+public APIs that shipped undocumented, makes two closely related flowsheet-wide switches behave
+the same way, extends the CPA warm-start policy from two flash routines to all of them, and
+corrects documentation that contradicted the identity-equality change.
+
+### New public API (previously undocumented)
+
+| API | What it does |
+|---|---|
+| `Stream.PropertyInitLevel` (`FULL`, `DENSITY_ONLY`) | Selects how much of `initProperties()` runs after each stream flash. |
+| `Stream.setPropertyInitLevel(level)` / `getPropertyInitLevel()` | Per-stream control. |
+| `ProcessSystem.setPropertyInitLevel(level)` → `int` | Flowsheet-wide control; returns the number of streams updated. |
+| `ProcessModel.setPropertyInitLevel(level)` / `setPropertyInitLevel(area, level)` | Plant-wide and per-area control (new in this pass). |
+| `EclipseFluidReadWrite.setUseCache` / `isUseCache` / `clearCache` | Enables and clears the parsed-E300 fluid cache. |
+| `EclipseFluidReadWrite.setMaxCacheSize` / `getMaxCacheSize` / `DEFAULT_MAX_CACHE_SIZE` | Bounds that cache (new in this pass). |
+
+> **⚠ `PropertyInitLevel.DENSITY_ONLY` reads transport properties back as zero.**
+> It skips the viscosity, thermal-conductivity and diffusivity correlations. Those getters do
+> **not** throw afterwards — `getViscosity()`, `getThermalConductivity()` and the diffusion
+> coefficients simply return `0.0`. Only use it for flowsheets that need mass and energy
+> balances; switch back to `PropertyInitLevel.FULL` before any pipeline, heat-exchanger,
+> mechanical-design or flow-assurance calculation that reads transport properties.
+
+```java
+// Fast material-balance solve of a big plant, full properties in the flow-assurance area only.
+plant.setPropertyInitLevel(Stream.PropertyInitLevel.DENSITY_ONLY);
+plant.setPropertyInitLevel("subsea", Stream.PropertyInitLevel.FULL);
+plant.run();
+```
+
+### `setPropertyInitLevel` and `setMultiPhaseCheck` now behave the same
+
+`ProcessSystem.setPropertyInitLevel` previously returned `void`, was not propagated into nested
+`ModuleInterface` sub-processes, had no `ProcessModel` delegation, and was not re-applied when the
+model ran. It now matches `setMultiPhaseCheck` on all four points.
+
+**Migration:** `setPropertyInitLevel` returns `int` instead of `void`. Existing call sites compile
+unchanged; only a caller that assigned the result of a `void` method (not possible) would break.
+
+Both settings are now re-applied at the start of **every** execution entry point — `run(UUID)`,
+`run_step(UUID)`, `runSequential(UUID)`, `runParallel(UUID)`, `runHybrid(UUID)`,
+`runDataflow(UUID)` and `runTransient(double, UUID)`. Previously only `run`, `run_step` and
+`runParallel` re-applied `setMultiPhaseCheck`, so a `ThreePhaseSeparator` that turned the
+multiphase check back on leaked it into the rest of the area under the other four entry points.
+
+### CPA K-value warm starts: one policy, all iterative flashes
+
+New shared predicate:
+
+```java
+neqsim.thermo.ThermodynamicModelSettings.isInnerFlashWarmStartSafe(SystemInterface system)
+```
+
+Returns `false` for CPA models (by model name, plus a `PhaseCPAInterface` check), `true` for cubic
+EOS. `PHflash.isInnerTpFlashWarmStartSafe()` and `PSFlash.isInnerTpFlashWarmStartSafe()` — which
+carried byte-identical copies of this logic — now delegate to it.
+
+The policy is applied to the remaining iterative flashes from issue #2110, which all enabled
+K-value reuse unconditionally: `THflash`, `TSFlash`, `TUflash`, `TVflash`, `TVfractionFlash`,
+`VSflash`, `VHflashQfunc`, `VUflashQfunc`, `ImprovedVUflashQfunc`, `OptimizedVUflash`,
+`PHsolidFlash`, `PUflash`, `PVFflash`, `PVflash`, `PVrefluxflash`, `QfuncFlash`.
+
+`TPflash`'s multiphase-rescue path deliberately keeps an unconditional warm start for every model:
+it continues from a seed flash at a nearby temperature, and carrying the seed K-values over is the
+mechanism that finds the extra phase.
+
+**Impact:** CPA flowsheets (TEG/MEG/glycol, water-bearing) avoid the documented CPA runtime
+regression in these flashes. Cubic EOS behaviour is unchanged. No tolerance, convergence-acceptance
+or flash-equation change.
+
+### `EnergyStream` now uses identity equality
+
+`EnergyStream.hashCode()` returned `Objects.hashCode(duty)` and `equals()` compared duty only, but
+`duty` is rewritten by `setDuty()` on every run — the same mutable-hash defect that motivated
+removing `equals`/`hashCode` from `ProcessSystem` and the process-equipment classes. Two distinct
+energy streams also compared equal whenever their duties matched.
+
+**Migration:** `energyStreamA.equals(energyStreamB)` is now `true` only for the same instance.
+Compare `getDuty()` explicitly when a value comparison is intended.
+
+### `EclipseFluidReadWrite` cache is bounded
+
+The parsed-fluid cache was an unbounded `ConcurrentHashMap`, so a long-running service reading many
+distinct E300 files (or the same file repeatedly after edits, since the key includes the
+last-modified timestamp) grew without limit. It is now an LRU map capped at
+`DEFAULT_MAX_CACHE_SIZE = 64`, adjustable with `setMaxCacheSize(int)`. The mutable
+`public static pseudoName` is also snapshotted once per read, so a concurrent change of that field
+can no longer mismatch a cached entry with the prefix it was parsed under.
+
+### Documentation corrections
+
+The identity-equality change removed `equals`/`hashCode` from `ProcessSystem`,
+`ProcessEquipmentBaseClass`, `Compressor`, `Mixer` and `Separator`. Javadoc added afterwards still
+described those hashes as "value based and mutable", and had been attached to `getReport_json()`
+and `toJson()` — both `String`-returning methods that then carried a wrong
+`@return content-based hash …` tag. Those blocks are removed and a correct identity-equality note
+now sits in the class Javadoc of `ProcessSystem`, `ProcessEquipmentBaseClass` and `EnergyStream`.
+The `PFDLayoutPolicy` cache comments and the `ProcessObjectIdentityKeyTest` class Javadoc were
+corrected the same way.
+
+`Expander.DEFAULT_EXPANDER_CALC_STEPS` (5, down from a hard-coded 40) claimed "the same result …
+to within numerical noise". Measured on a 90 → 30 bara rich-gas expansion the difference is about
+**0.06 K** outlet temperature out of a 51 K drop and under 0.5 % shaft power — now stated
+quantitatively and locked in by `ExpanderPolytropicStepsTest`.
+
+### Agents and skills to update
+
+- `neqsim-process-modeling`, `neqsim-platform-modeling` — the two flowsheet-wide performance
+  switches and the `DENSITY_ONLY` transport-property warning.
+- `neqsim-api-patterns` — `EclipseFluidReadWrite` cache controls.
+- `neqsim-troubleshooting` — "viscosity/thermal conductivity is zero" now has a second cause:
+  a stream running at `PropertyInitLevel.DENSITY_ONLY`.
+
+---
+
 ## 2026-07-27 — Fix: `DistillationColumn.solved()` no longer contradicts the reported solve status
 
 ### Summary

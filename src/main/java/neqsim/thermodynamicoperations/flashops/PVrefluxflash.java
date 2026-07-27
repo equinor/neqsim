@@ -47,7 +47,8 @@ public class PVrefluxflash extends Flash {
       double t_old = 0;
       double t_oldold = 0.0;
       tpFlash.run();
-      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+      neqsim.thermo.ThermodynamicModelSettings
+          .setUseWarmStartKValues(neqsim.thermo.ThermodynamicModelSettings.isInnerFlashWarmStartSafe(system));
       double dt = 1.0;
       do {
         iter++;

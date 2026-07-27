@@ -93,4 +93,69 @@ public class ProcessSystemMultiPhaseCheckTest extends neqsim.NeqSimTest {
     model.add("separation", buildArea("separation"));
     assertEquals(-1, model.setMultiPhaseCheck("does not exist", false));
   }
+
+  @Test
+  public void settingIsReAppliedWhenEquipmentTurnsTheCheckBackOn() {
+    ProcessSystem process = buildArea("area");
+    assertTrue(process.setMultiPhaseCheck(false) > 0);
+    process.run();
+    assertFalse(process.getUnit("area sep").getFluid().doMultiPhaseCheck());
+
+    // Simulate a unit that turns the multiphase check back on mid-solve (ThreePhaseSeparator does
+    // exactly this). The next run must restore the flowsheet-wide setting instead of leaking it.
+    for (neqsim.process.equipment.ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (unit.getFluid() != null) {
+        unit.getFluid().setMultiPhaseCheck(true);
+      }
+    }
+    process.run();
+    assertFalse(process.getUnit("area feed").getFluid().doMultiPhaseCheck());
+    assertFalse(process.getUnit("area sep").getFluid().doMultiPhaseCheck());
+  }
+
+  @Test
+  public void settingIsReAppliedByEveryRunEntryPoint() throws InterruptedException {
+    ProcessSystem process = buildArea("area");
+    assertTrue(process.setMultiPhaseCheck(false) > 0);
+
+    process.getUnit("area sep").getFluid().setMultiPhaseCheck(true);
+    process.runSequential(java.util.UUID.randomUUID());
+    assertFalse(process.getUnit("area sep").getFluid().doMultiPhaseCheck());
+
+    process.getUnit("area sep").getFluid().setMultiPhaseCheck(true);
+    process.runParallel(java.util.UUID.randomUUID());
+    assertFalse(process.getUnit("area sep").getFluid().doMultiPhaseCheck());
+
+    process.getUnit("area sep").getFluid().setMultiPhaseCheck(true);
+    process.run_step(java.util.UUID.randomUUID());
+    assertFalse(process.getUnit("area sep").getFluid().doMultiPhaseCheck());
+  }
+
+  @Test
+  public void propertyInitLevelIsAppliedPerAreaAndSurvivesRun() {
+    ProcessSystem separation = buildArea("separation");
+    ProcessSystem compression = buildArea("compression");
+
+    ProcessModel model = new ProcessModel();
+    model.add("separation", separation);
+    model.add("compression", compression);
+
+    assertNull(separation.getPropertyInitLevel());
+    assertTrue(model.setPropertyInitLevel(Stream.PropertyInitLevel.DENSITY_ONLY) > 0);
+    assertEquals(Stream.PropertyInitLevel.DENSITY_ONLY, separation.getPropertyInitLevel());
+    assertEquals(Stream.PropertyInitLevel.DENSITY_ONLY, compression.getPropertyInitLevel());
+
+    // Restore full properties in the separation area only - same per-area granularity as
+    // setMultiPhaseCheck(String, boolean).
+    assertTrue(model.setPropertyInitLevel("separation", Stream.PropertyInitLevel.FULL) > 0);
+    assertEquals(-1, model.setPropertyInitLevel("does not exist", Stream.PropertyInitLevel.FULL));
+
+    model.run();
+
+    assertEquals(Stream.PropertyInitLevel.FULL,
+        ((Stream) separation.getUnit("separation feed")).getPropertyInitLevel());
+    assertEquals(Stream.PropertyInitLevel.DENSITY_ONLY,
+        ((Stream) compression.getUnit("compression feed")).getPropertyInitLevel());
+    assertTrue(separation.getUnit("separation feed").getFluid().getViscosity("kg/msec") > 0.0);
+  }
 }

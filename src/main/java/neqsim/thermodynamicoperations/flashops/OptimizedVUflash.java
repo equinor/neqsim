@@ -275,7 +275,8 @@ public class OptimizedVUflash extends Flash {
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
       // Minimal TP flash for initialization
       tpFlash.run();
-      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+      neqsim.thermo.ThermodynamicModelSettings
+          .setUseWarmStartKValues(neqsim.thermo.ThermodynamicModelSettings.isInnerFlashWarmStartSafe(system));
       solveQ();
     } finally {
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
