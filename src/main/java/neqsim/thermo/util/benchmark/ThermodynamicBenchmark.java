@@ -64,12 +64,11 @@ public final class ThermodynamicBenchmark {
       if (property == null || unit == null || unit.trim().isEmpty() || composition == null || composition.isEmpty()) {
         throw new IllegalArgumentException("Property, unit, and composition are required");
       }
-      if (!Double.isFinite(temperatureK) || temperatureK <= 0.0 || !Double.isFinite(pressureBara)
-          || pressureBara <= 0.0 || !Double.isFinite(experimentalValue) || experimentalValue == 0.0) {
+      if (!Double.isFinite(temperatureK) || temperatureK <= 0.0 || !Double.isFinite(pressureBara) || pressureBara <= 0.0
+          || !Double.isFinite(experimentalValue) || experimentalValue == 0.0) {
         throw new IllegalArgumentException("Temperature, pressure, and experimental value must be physical and finite");
       }
-      if (!Double.isNaN(standardUncertainty)
-          && (!Double.isFinite(standardUncertainty) || standardUncertainty < 0.0)) {
+      if (!Double.isNaN(standardUncertainty) && (!Double.isFinite(standardUncertainty) || standardUncertainty < 0.0)) {
         throw new IllegalArgumentException("Standard uncertainty must be non-negative or NaN");
       }
       double compositionSum = 0.0;
