@@ -2602,6 +2602,44 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
+   * Enables or disables the multiphase (three-phase) flash on every fluid in every process area of this model.
+   *
+   * <p>
+   * Turning the multiphase check off on areas known to be two-phase only avoids the extra phase-stability work in every
+   * flash and can speed up the solve considerably. Use {@link #setMultiPhaseCheck(String, boolean)} to configure a
+   * single area, for example to keep the check on in the separation trains but turn it off in the compression and
+   * export areas.
+   * </p>
+   *
+   * @param enabled true to enable the multiphase flash, false to turn it off in all areas
+   * @return the total number of distinct fluids updated across all areas
+   * @see ProcessSystem#setMultiPhaseCheck(boolean)
+   */
+  public int setMultiPhaseCheck(boolean enabled) {
+    int total = 0;
+    for (ProcessSystem area : processes.values()) {
+      total += area.setMultiPhaseCheck(enabled);
+    }
+    return total;
+  }
+
+  /**
+   * Enables or disables the multiphase (three-phase) flash on every fluid of a single process area.
+   *
+   * @param areaName the name the {@link ProcessSystem} was registered with in {@link #add(String, ProcessSystem)}
+   * @param enabled true to enable the multiphase flash, false to turn it off in this area
+   * @return the number of distinct fluids updated, or -1 if no area with the given name exists
+   * @see ProcessSystem#setMultiPhaseCheck(boolean)
+   */
+  public int setMultiPhaseCheck(String areaName, boolean enabled) {
+    ProcessSystem area = processes.get(areaName);
+    if (area == null) {
+      return -1;
+    }
+    return area.setMultiPhaseCheck(enabled);
+  }
+
+  /**
    * Creates a Graphviz exporter for common plant-wide and per-area DOT diagrams.
    *
    * @return a new {@link ProcessModelGraphvizExporter} for this model

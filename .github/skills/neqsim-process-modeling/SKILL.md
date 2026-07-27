@@ -92,6 +92,32 @@ index; maps from vendor curve sheets; limits from datasheets + piping class. For
 the governed enterprise checklist and readiness gates use
 `enterprise-process-model-build-verify` (`target_fidelity="optimization_ready"`).
 
+## Per-Area Three-Phase Flash Control (Speed-Up)
+
+Switch the multiphase (three-phase) flash off on areas that are known to be
+two-phase only. On a multi-area plant this is usually the cheapest speed-up
+available, because the extra phase-stability analysis otherwise runs on every
+flash of every unit of every recycle iteration.
+
+```java
+plant.setMultiPhaseCheck(true);                    // baseline for all areas
+plant.setMultiPhaseCheck("Export train A", false); // dry gas: no third phase
+compressionTrain.setMultiPhaseCheck(false);        // a single ProcessSystem
+```
+
+- `ProcessSystem.setMultiPhaseCheck(boolean)` returns the number of distinct
+  fluids updated; `getMultiPhaseCheck()` returns `TRUE`/`FALSE`/`null` (unset).
+- `ProcessModel.setMultiPhaseCheck(String areaName, boolean)` returns `-1` for an
+  unknown area name — check it, do not assume the call landed.
+- The setting is re-applied at the start of each run, so a `ThreePhaseSeparator`
+  temporarily enabling the check cannot leak three-phase mode into the area.
+- Default is unset: fluids keep whatever flag they were built with.
+
+**Only disable it where the absence of a third phase is known from the process,
+not assumed.** Free water, an aqueous glycol/MEG phase, or a liquid CO2 phase
+will be silently missed. Keep the check ON for inlet separation, produced-water,
+glycol/MEG, and CO2-rich areas.
+
 ## Required Checks
 
 - Temperatures and pressures use explicit units in setters.

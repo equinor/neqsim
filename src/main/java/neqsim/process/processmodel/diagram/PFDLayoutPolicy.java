@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -59,11 +59,16 @@ import neqsim.thermo.system.SystemInterface;
 public class PFDLayoutPolicy implements Serializable {
   private static final long serialVersionUID = 1000L;
 
-  /** Cache for equipment role classifications. */
-  private final Map<ProcessEquipmentInterface, EquipmentRole> roleCache = new HashMap<>();
+  /**
+   * Cache for equipment role classifications. Keyed by object identity: equipment {@code hashCode()} is content based
+   * and changes when the flowsheet runs, so a plain {@code HashMap} would lose every entry after the first run.
+   */
+  private final Map<ProcessEquipmentInterface, EquipmentRole> roleCache = new IdentityHashMap<ProcessEquipmentInterface, EquipmentRole>();
 
-  /** Cache for stream phase classifications. */
-  private final Map<StreamInterface, StreamPhase> phaseCache = new HashMap<>();
+  /**
+   * Cache for stream phase classifications. Keyed by object identity for the same reason as {@link #roleCache}.
+   */
+  private final Map<StreamInterface, StreamPhase> phaseCache = new IdentityHashMap<StreamInterface, StreamPhase>();
 
   /**
    * Stream phase classification based on vapor/liquid fraction.

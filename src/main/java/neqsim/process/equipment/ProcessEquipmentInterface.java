@@ -315,14 +315,6 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    */
   public String[][] getResultTable();
 
-  /** {@inheritDoc} */
-  @Override
-  public boolean equals(Object o);
-
-  /** {@inheritDoc} */
-  @Override
-  public int hashCode();
-
   /**
    * Serializes the Process Equipment along with its state to a JSON string.
    *
