@@ -212,7 +212,7 @@ The map / JSON contains the following fields:
 
 | Field | Unit | Description |
 |-------|------|-------------|
-| `schemaVersion` | — | JSON schema version (`"1.0"`) |
+| `schemaVersion` | — | JSON schema version (`"1.1"`) |
 | `name` | — | Compressor name |
 | `flow_m3hr` | m³/hr | Inlet actual volumetric flow rate |
 | `head_kJkg` | kJ/kg | Polytropic fluid head |
@@ -231,6 +231,30 @@ The map / JSON contains the following fields:
 
 When no chart is active, `withinChart` is `true` and `limitingConstraint` is `no_chart`.
 Values that cannot be computed are returned as `NaN`.
+
+### Capacity-aware typed result
+
+For optimization, bottleneck analysis, field-life studies, or exchange with tools such as eCalc,
+use the immutable typed result. It adds the calculated-versus-requested discharge pressure,
+pressure-target status, anti-surge recycle and cooler losses, maximum capacity utilization, the
+limiting constraint, and detached snapshots of every compressor constraint.
+
+```java
+CompressorOperatingPointResult result = compressor.getOperatingPointResult(0.02);
+boolean feasible = result.isFeasible();
+String limitingConstraint = result.getLimitingConstraint();
+double recycleLossKW = result.getRecyclePowerLossKW();
+List<CompressorOperatingPointResult.ConstraintSnapshot> constraints =
+    result.getConstraints();
+String resultJson = result.toJson();
+```
+
+The result reuses the same `CapacityConstraint` objects as
+`ProcessSystem.findBottleneck()` and `CapacityConstraintAdapter`.
+`PressureBoundaryOptimizer` also consumes these constraints, so surge, stonewall, speed,
+driver power, discharge temperature, and custom vendor limits have identical semantics in
+reporting and optimization. Explicit optimizer power and speed settings remain additional
+overrides.
 
 ---
 
