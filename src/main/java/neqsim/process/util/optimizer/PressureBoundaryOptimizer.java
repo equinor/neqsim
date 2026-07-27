@@ -570,19 +570,15 @@ public class PressureBoundaryOptimizer implements Serializable {
       for (final CapacityConstraint equipmentConstraint : equipmentConstraints.values()) {
         if (!equipmentConstraint.isEnabled()
             || equipmentConstraint.getType() == CapacityConstraint.ConstraintType.DESIGN
-            || equipmentConstraint.getSeverity()
-                == CapacityConstraint.ConstraintSeverity.ADVISORY) {
+            || equipmentConstraint.getSeverity() == CapacityConstraint.ConstraintSeverity.ADVISORY) {
           continue;
         }
-        ConstraintSeverity severity =
-            equipmentConstraint.getSeverity() == CapacityConstraint.ConstraintSeverity.SOFT
-                ? ConstraintSeverity.SOFT
-                : ConstraintSeverity.HARD;
+        ConstraintSeverity severity = equipmentConstraint.getSeverity() == CapacityConstraint.ConstraintSeverity.SOFT
+            ? ConstraintSeverity.SOFT
+            : ConstraintSeverity.HARD;
         double penaltyWeight = severity == ConstraintSeverity.HARD ? 10.0 : 1.0;
-        constraints.add(new OptimizationConstraint(
-            comp.getName() + "_" + equipmentConstraint.getName(),
-            proc -> equipmentConstraint.getUtilization(), 1.0,
-            ConstraintDirection.LESS_THAN, severity, penaltyWeight,
+        constraints.add(new OptimizationConstraint(comp.getName() + "_" + equipmentConstraint.getName(),
+            proc -> equipmentConstraint.getUtilization(), 1.0, ConstraintDirection.LESS_THAN, severity, penaltyWeight,
             equipmentConstraint.getDescription()));
       }
 
@@ -590,20 +586,17 @@ public class PressureBoundaryOptimizer implements Serializable {
       // than, or independent of, the equipment design constraints.
       if (maxPowerLimit < Double.MAX_VALUE) {
         constraints.add(new OptimizationConstraint(comp.getName() + "_configuredPowerLimit",
-            proc -> comp.getPower("kW"), maxPowerLimit, ConstraintDirection.LESS_THAN,
-            ConstraintSeverity.HARD, 5.0,
+            proc -> comp.getPower("kW"), maxPowerLimit, ConstraintDirection.LESS_THAN, ConstraintSeverity.HARD, 5.0,
             "Compressor " + comp.getName() + " power must be < " + maxPowerLimit + " kW"));
       }
       if (maxSpeedLimit < Double.MAX_VALUE) {
-        constraints.add(new OptimizationConstraint(comp.getName() + "_configuredMaxSpeed",
-            proc -> comp.getSpeed(), maxSpeedLimit, ConstraintDirection.LESS_THAN,
-            ConstraintSeverity.HARD, 5.0,
+        constraints.add(new OptimizationConstraint(comp.getName() + "_configuredMaxSpeed", proc -> comp.getSpeed(),
+            maxSpeedLimit, ConstraintDirection.LESS_THAN, ConstraintSeverity.HARD, 5.0,
             "Compressor " + comp.getName() + " speed must be < " + maxSpeedLimit + " RPM"));
       }
       if (minSpeedLimit > 0) {
-        constraints.add(new OptimizationConstraint(comp.getName() + "_configuredMinSpeed",
-            proc -> comp.getSpeed(), minSpeedLimit, ConstraintDirection.GREATER_THAN,
-            ConstraintSeverity.HARD, 5.0,
+        constraints.add(new OptimizationConstraint(comp.getName() + "_configuredMinSpeed", proc -> comp.getSpeed(),
+            minSpeedLimit, ConstraintDirection.GREATER_THAN, ConstraintSeverity.HARD, 5.0,
             "Compressor " + comp.getName() + " speed must be > " + minSpeedLimit + " RPM"));
       }
     }
