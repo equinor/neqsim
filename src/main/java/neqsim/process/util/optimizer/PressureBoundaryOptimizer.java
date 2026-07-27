@@ -443,8 +443,8 @@ public class PressureBoundaryOptimizer implements Serializable {
 
     for (Compressor comp : compressors) {
       if (comp.getCompressorChart() == null || !comp.getCompressorChart().isUseCompressorChart()) {
-        Map<String, CapacityConstraint> retainedConstraints =
-            new LinkedHashMap<String, CapacityConstraint>(comp.getCapacityConstraints());
+        Map<String, CapacityConstraint> retainedConstraints = new LinkedHashMap<String, CapacityConstraint>(
+            comp.getCapacityConstraints());
 
         // Run to establish baseline
         process.run();
