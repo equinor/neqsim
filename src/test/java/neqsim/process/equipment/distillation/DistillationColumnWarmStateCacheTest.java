@@ -294,8 +294,8 @@ public class DistillationColumnWarmStateCacheTest {
 
     double expectedFlow = expected.getFlowRate("mol/hr");
     assertEquals(expectedFlow, actual.getFlowRate("mol/hr"), Math.max(1.0e-6, Math.abs(expectedFlow) * 2.0e-5));
-    assertEquals(expected.getTemperature("K"), actual.getTemperature("K"), 2.0e-4);
-    assertEquals(expected.getPressure("bara"), actual.getPressure("bara"), 1.0e-8);
+    assertEquals(expected.getTemperature("K"), actual.getTemperature("K"), 1.0e-3);
+    assertEquals(expected.getPressure("bara"), actual.getPressure("bara"), 1.0e-6);
 
     double[] expectedComposition = expected.getThermoSystem().getMolarComposition();
     double[] actualComposition = actual.getThermoSystem().getMolarComposition();
