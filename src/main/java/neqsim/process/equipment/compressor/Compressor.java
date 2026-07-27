@@ -3038,8 +3038,8 @@ public class Compressor extends TwoPortEquipment
    * Returns an immutable, capacity-aware operating-point result.
    *
    * <p>
-   * The result adds pressure-target classification, anti-surge recycle losses, and detached
-   * capacity-constraint snapshots to the legacy {@link #getOperatingPoint()} map.
+   * The result adds pressure-target classification, anti-surge recycle losses, and detached capacity-constraint
+   * snapshots to the legacy {@link #getOperatingPoint()} map.
    * </p>
    *
    * @return typed compressor operating-point result
@@ -3054,8 +3054,7 @@ public class Compressor extends TwoPortEquipment
    * @param pressureToleranceFraction non-negative relative discharge-pressure tolerance
    * @return typed compressor operating-point result
    */
-  public CompressorOperatingPointResult getOperatingPointResult(
-      double pressureToleranceFraction) {
+  public CompressorOperatingPointResult getOperatingPointResult(double pressureToleranceFraction) {
     return CompressorOperatingPointResult.from(this, pressureToleranceFraction);
   }
 
@@ -5211,8 +5210,7 @@ public class Compressor extends TwoPortEquipment
     // represents a minimum-good constraint with designValue = Double.MAX_VALUE.
     // getDistanceToSurge() returns (currentFlow / surgeFlow) - 1.
     addCapacityConstraint(StandardConstraintType.COMPRESSOR_SURGE_MARGIN.createConstraint()
-        .setDesignValue(Double.MAX_VALUE).setMinValue(10.0).setWarningThreshold(0.85)
-        .setValueSupplier(() -> {
+        .setDesignValue(Double.MAX_VALUE).setMinValue(10.0).setWarningThreshold(0.85).setValueSupplier(() -> {
           double marginRatio = this.getDistanceToSurge();
           if (Double.isNaN(marginRatio) || Double.isInfinite(marginRatio)) {
             return Double.MAX_VALUE;
@@ -5223,8 +5221,7 @@ public class Compressor extends TwoPortEquipment
     // Stonewall margin constraint
     // getDistanceToStoneWall() returns (stoneWallFlow / currentFlow) - 1.
     addCapacityConstraint(StandardConstraintType.COMPRESSOR_STONEWALL_MARGIN.createConstraint()
-        .setDesignValue(Double.MAX_VALUE).setMinValue(5.0).setWarningThreshold(0.90)
-        .setValueSupplier(() -> {
+        .setDesignValue(Double.MAX_VALUE).setMinValue(5.0).setWarningThreshold(0.90).setValueSupplier(() -> {
           double marginRatio = this.getDistanceToStoneWall();
           if (Double.isNaN(marginRatio) || Double.isInfinite(marginRatio)) {
             return Double.MAX_VALUE;
