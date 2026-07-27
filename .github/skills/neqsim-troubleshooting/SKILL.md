@@ -77,10 +77,11 @@ compressor power or a non-finite separator duty downstream.
 | Step | Action | Why It Helps |
 |------|--------|-------------|
 | 1 | Call `fluid.initProperties()` after flash | **Most common cause.** `init(3)` does NOT initialize transport properties. `initProperties()` calls both `init(2)` + `initPhysicalProperties()` |
-| 2 | Check `fluid.getNumberOfPhases()` — property may be for a phase that doesn't exist | Requesting gas-phase viscosity when only liquid exists returns 0 |
-| 3 | Use `fluid.hasPhaseType("gas")` before accessing gas-phase properties | Phase existence varies with conditions |
-| 4 | For viscosity at very low pressures (<1 bara), check if the correlation is valid | Some viscosity models have limited pressure range |
-| 5 | For mixtures with unusual components (mercury, H2S at trace levels), check if physical property parameters exist in the database | Missing Lennard-Jones or critical parameters give zero |
+| 2 | Check `stream.getPropertyInitLevel()` / `process.getPropertyInitLevel()` | **Second most common cause in a flowsheet.** `Stream.PropertyInitLevel.DENSITY_ONLY` deliberately skips viscosity, thermal conductivity and diffusivity — they read back as `0.0`, not as an error. Set the level back to `FULL` (per stream, per `ProcessSystem`, or per `ProcessModel` area) and re-run |
+| 3 | Check `fluid.getNumberOfPhases()` — property may be for a phase that doesn't exist | Requesting gas-phase viscosity when only liquid exists returns 0 |
+| 4 | Use `fluid.hasPhaseType("gas")` before accessing gas-phase properties | Phase existence varies with conditions |
+| 5 | For viscosity at very low pressures (<1 bara), check if the correlation is valid | Some viscosity models have limited pressure range |
+| 6 | For mixtures with unusual components (mercury, H2S at trace levels), check if physical property parameters exist in the database | Missing Lennard-Jones or critical parameters give zero |
 
 ## Wrong JT / Isenthalpic Expansion Temperature
 
