@@ -1,6 +1,7 @@
 package neqsim.pvtsimulation.simulation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -60,5 +61,8 @@ public class DifferentialLiberationTest {
     assertEquals(1.0533007759, differentialLiberation.getBo()[pressures.length - 1], 0.001);
     assertEquals(0.0, differentialLiberation.getRs()[pressures.length - 1], 0.001);
     assertEquals(805.6468027140055, differentialLiberation.getOilDensity()[pressures.length - 1], 0.001);
+    assertTrue(differentialLiberation.validateBoMonotonicity());
+    assertTrue(differentialLiberation.validateRsMonotonicity());
+    assertTrue(differentialLiberation.validateOilDensityMonotonicity());
   }
 }

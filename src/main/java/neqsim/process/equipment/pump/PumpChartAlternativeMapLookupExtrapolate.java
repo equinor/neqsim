@@ -112,6 +112,16 @@ public class PumpChartAlternativeMapLookupExtrapolate extends CompressorChartAlt
 
   /** {@inheritDoc} */
   @Override
+  public double getBestEfficiencyFlowRate(double speed) {
+    double[] speeds = getSpeeds();
+    if (speeds == null || speeds.length == 0 || speeds[0] <= 0.0 || speed <= 0.0) {
+      return 0.0;
+    }
+    return getBestEfficiencyFlowRate() * speed / speeds[0];
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getSpecificSpeed() {
     double flowBEP = getBestEfficiencyFlowRate();
     if (flowBEP <= 0) {

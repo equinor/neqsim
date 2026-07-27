@@ -8,6 +8,7 @@ import neqsim.process.engineering.design.EngineeringDesignState;
 import neqsim.process.engineering.design.EngineeringDesignUpdate;
 import neqsim.process.engineering.designcase.EngineeringCaseRunReport;
 import neqsim.process.engineering.designcase.EngineeringDesignEnvelope;
+import neqsim.process.mechanicaldesign.pump.PumpApi610DesignCalculator;
 import neqsim.process.processmodel.ProcessSystem;
 
 /** Selects pump driver rating and verifies the minimum simulated NPSH margin. */
@@ -41,7 +42,10 @@ public final class PumpPackageDesignModule implements EngineeringDesignModule {
     EngineeringDesignEnvelope.GoverningValue power = DesignModuleSupport.requireMetric(caseReport, powerMetricId);
     EngineeringDesignEnvelope.GoverningValue npsh = DesignModuleSupport.requireMetric(caseReport, npshMarginMetricId);
     double requiredPower = power.getValue() * (1.0 + driverMarginFraction);
-    double selectedPower = select(requiredPower);
+    double selectedPower = PumpApi610DesignCalculator.selectDriverRating(requiredPower, driverCandidatesKw);
+    if (!Double.isFinite(selectedPower)) {
+      throw new IllegalStateException("No pump driver candidate satisfies " + requiredPower + " kW");
+    }
     String powerKey = pumpTag + ".driverRatedPower";
     String utilizationKey = pumpTag + ".driverUtilization";
     String npshKey = pumpTag + ".minimumNpshMargin";
@@ -58,18 +62,5 @@ public final class PumpPackageDesignModule implements EngineeringDesignModule {
             minimumNpshMarginM, "m", EngineeringDesignConstraint.Comparison.MINIMUM))
         .warning("Vendor curve, minimum continuous stable flow, seal system, start-up and runout require review")
         .build();
-  }
-
-  private double select(double required) {
-    double selected = Double.POSITIVE_INFINITY;
-    for (double candidate : driverCandidatesKw) {
-      if (candidate >= required) {
-        selected = Math.min(selected, candidate);
-      }
-    }
-    if (!Double.isFinite(selected)) {
-      throw new IllegalStateException("No pump driver candidate satisfies " + required + " kW");
-    }
-    return selected;
   }
 }

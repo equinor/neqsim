@@ -18,6 +18,7 @@ import json
 import re
 from pathlib import Path
 from datetime import datetime
+from urllib.parse import quote
 
 # Ensure Unicode output works on Windows consoles (cp1252 by default).
 for _stream in (sys.stdout, sys.stderr):
@@ -65,20 +66,35 @@ def notebook_to_markdown(notebook_path):
         nb = json.load(f)
 
     notebook_name = Path(notebook_path).stem
-    title = notebook_name.replace('_', ' ').replace('-', ' ')
+    documentation_metadata = nb.get('metadata', {}).get('neqsim_docs', {})
+    if not isinstance(documentation_metadata, dict):
+        documentation_metadata = {}
+    title = documentation_metadata.get(
+        'title',
+        notebook_name.replace('_', ' ').replace('-', ' '),
+    )
+    description = documentation_metadata.get(
+        'description',
+        'Jupyter notebook tutorial for NeqSim',
+    )
+    generated_title = (
+        f"# {title}\n\n"
+        if documentation_metadata.get('show_generated_title', True)
+        else ''
+    )
+    title_yaml = json.dumps(str(title), ensure_ascii=False)
+    description_yaml = json.dumps(str(description), ensure_ascii=False)
 
     # Jekyll front matter
     front_matter = f"""---
 layout: default
-title: "{title}"
-description: "Jupyter notebook tutorial for NeqSim"
+title: {title_yaml}
+description: {description_yaml}
 parent: Examples
 nav_order: 1
 ---
 
-# {title}
-
-> **Note:** This is an auto-generated Markdown version of the Jupyter notebook
+{generated_title}> **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`{notebook_name}.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/{notebook_name}.ipynb).
 > You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/{notebook_name}.ipynb)
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/{notebook_name}.ipynb).
@@ -197,6 +213,84 @@ def convert_all_notebooks(examples_dir):
     print("\nDone!")
 
 
+
+CURATED_NOTEBOOKS = (
+    {
+        "title": "Complete Offshore Process Engineering Study",
+        "description": (
+            "Full three-stage oil/gas process benchmark, closed design loop, "
+            "discipline results, closed-loop SIF/reliability/HAZOP-LOPA-SRS/"
+            "facility-response lifecycle, revisioned model packages, change "
+            "revalidation, method benchmarks, and inline PyDEXPI P&ID rendering"
+        ),
+        "path": (
+            "examples/notebooks/"
+            "complete_offshore_process_engineering_study.ipynb"
+        ),
+        "guide": "../integration/complete-offshore-process-engineering-study",
+    },
+    {
+        "title": "Full DEXPI Engineering ProcessSystem",
+        "description": (
+            "Executed line-list, relief, SIL/PFD/voting, shutdown, PSV, "
+            "blowdown/flare, materials, readiness, and governed DEXPI workflow"
+        ),
+        "path": (
+            "examples/notebooks/"
+            "dexpi_engineering_full_processsystem.ipynb"
+        ),
+    },
+    {
+        "title": "DEXPI Engineering ProcessModel",
+        "description": (
+            "Executed multi-area packages with area-specific engineering "
+            "inputs and readiness comparison"
+        ),
+        "path": (
+            "examples/notebooks/"
+            "dexpi_engineering_processmodel.ipynb"
+        ),
+    },
+    {
+        "title": "DEXPI P&ID Visualization",
+        "description": (
+            "Executed, dependency-light native DEXPI/Proteus parser and "
+            "deterministic structural P&ID PNG/SVG renderer with a committed "
+            "figure"
+        ),
+        "path": "examples/notebooks/dexpi_pid_visualization.ipynb",
+    },
+)
+
+
+def markdown_table_cell(value):
+    """Return one normalized, escaped Markdown table cell."""
+
+    return " ".join(str(value).split()).replace("|", r"\|")
+
+
+def notebook_view_links(repository_path, markdown_path=None, guide=None):
+    """Build URL-safe Markdown, nbviewer, and Colab links for one notebook."""
+
+    encoded_repository_path = quote(repository_path, safe="/")
+    links = []
+    if guide:
+        links.append(f"[Guide]({guide})")
+    if markdown_path:
+        links.append(f"[Markdown]({quote(markdown_path, safe='/')})")
+    links.extend(
+        (
+            "[nbviewer]("
+            "https://nbviewer.org/github/equinor/neqsim/blob/master/"
+            f"{encoded_repository_path})",
+            "[Colab]("
+            "https://colab.research.google.com/github/equinor/neqsim/"
+            f"blob/master/{encoded_repository_path})",
+        )
+    )
+    return r" \| ".join(links)
+
+
 def create_examples_index(examples_dir):
     """
     Create an index.md file listing all notebooks.
@@ -231,17 +325,38 @@ Interactive Python notebooks using NeqSim through [neqsim-python](https://github
 |----------|-------------|--------------|
 """
 
+    for entry in CURATED_NOTEBOOKS:
+        content += (
+            f"| **{markdown_table_cell(entry['title'])}** | "
+            f"{markdown_table_cell(entry['description'])} | "
+            f"{notebook_view_links(entry['path'], guide=entry.get('guide'))} |\n"
+        )
+
     for nb in notebooks:
         name = nb.stem
-        title = name.replace('_', ' ').replace('-', ' ')
-
-        # Create links
-        md_link = f"[Markdown]({name}.md)"
-        nbviewer_link = f"[nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/{name}.ipynb)"
-        colab_link = f"[Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/{name}.ipynb)"
-        github_link = f"[GitHub](https://github.com/equinor/neqsim/blob/master/docs/examples/{name}.ipynb)"
-
-        content += f"| **{title}** | See notebook for details | {md_link} \\| {nbviewer_link} \\| {colab_link} |\n"
+        with open(nb, 'r', encoding='utf-8') as notebook_file:
+            notebook = json.load(notebook_file)
+        documentation_metadata = (
+            notebook.get('metadata', {}).get('neqsim_docs', {})
+        )
+        if not isinstance(documentation_metadata, dict):
+            documentation_metadata = {}
+        title = documentation_metadata.get(
+            'title',
+            name.replace('_', ' ').replace('-', ' '),
+        )
+        description = documentation_metadata.get(
+            'description',
+            'See notebook for details',
+        )
+        links = notebook_view_links(
+            f"docs/examples/{name}.ipynb",
+            f"{name}.md",
+        )
+        content += (
+            f"| **{markdown_table_cell(title)}** | "
+            f"{markdown_table_cell(description)} | {links} |\n"
+        )
 
     if java_files:
         content += """
@@ -255,7 +370,11 @@ Example Java code demonstrating NeqSim APIs:
         for java_file in java_files:
             name = java_file.stem
             title = name.replace('_', ' ')
-            github_link = f"https://github.com/equinor/neqsim/blob/master/docs/examples/{java_file.name}"
+            encoded_name = quote(java_file.name, safe="")
+            github_link = (
+                "https://github.com/equinor/neqsim/blob/master/"
+                f"docs/examples/{encoded_name}"
+            )
             content += f"| [{title}]({github_link}) | Java example |\n"
 
     if md_files:
@@ -268,7 +387,7 @@ Additional documentation and guides:
         for md_file in md_files:
             name = md_file.stem
             title = name.replace('_', ' ').replace('-', ' ').title()
-            content += f"- [{title}]({md_file.name})\n"
+            content += f"- [{title}]({quote(md_file.name, safe='')})\n"
 
     content += """
 ---

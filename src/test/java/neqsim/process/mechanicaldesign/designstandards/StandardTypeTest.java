@@ -22,15 +22,15 @@ class StandardTypeTest {
 
   @Test
   void testGetName() {
-    assertEquals("Pipeline systems", StandardType.NORSOK_L_001.getName());
+    assertEquals("Piping and layout", StandardType.NORSOK_L_001.getName());
     assertEquals("Pressure Vessels Division 1", StandardType.ASME_VIII_DIV1.getName());
   }
 
   @Test
   void testGetDefaultVersion() {
-    assertEquals("Rev 6", StandardType.NORSOK_L_001.getDefaultVersion());
-    assertEquals("2021", StandardType.ASME_VIII_DIV1.getDefaultVersion());
-    assertEquals("8th Ed", StandardType.API_617.getDefaultVersion());
+    assertEquals("2017", StandardType.NORSOK_L_001.getDefaultVersion());
+    assertEquals("2025", StandardType.ASME_VIII_DIV1.getDefaultVersion());
+    assertEquals("9th Ed", StandardType.API_617.getDefaultVersion());
   }
 
   @Test
@@ -168,6 +168,6 @@ class StandardTypeTest {
     String str = StandardType.ASME_VIII_DIV1.toString();
     assertNotNull(str);
     assertTrue(str.contains("ASME-VIII-Div1"));
-    assertTrue(str.contains("2021"));
+    assertTrue(str.contains("2025"));
   }
 }

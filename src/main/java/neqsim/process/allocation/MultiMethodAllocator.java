@@ -319,8 +319,10 @@ public class MultiMethodAllocator {
     int numComp = componentNames.length;
 
     double[] originalRate = new double[numSources];
+    SystemInterface[] originalFluid = new SystemInterface[numSources];
     for (int s = 0; s < numSources; s++) {
       originalRate[s] = sources.get(s).getFeedStream().getFlowRate(MASS_FLOW_UNIT);
+      originalFluid[s] = sources.get(s).getFeedStream().getFluid().clone();
     }
 
     double[][][] alloc = new double[numSources][numCustody][numComp];
@@ -341,6 +343,7 @@ public class MultiMethodAllocator {
       }
     } finally {
       for (int s = 0; s < numSources; s++) {
+        sources.get(s).getFeedStream().setFluid(originalFluid[s].clone());
         sources.get(s).getFeedStream().setFlowRate(originalRate[s], MASS_FLOW_UNIT);
       }
       baseCase.run();

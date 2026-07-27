@@ -1,5 +1,6 @@
 package neqsim.process.mechanicaldesign.pump;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.mechanicaldesign.pump.PumpApi610DesignCalculator.DataSource;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -83,6 +85,15 @@ public class PumpMechanicalDesignTest {
     double hydraulicPower = pump.getPower() / 1000.0; // Convert to kW
     assertTrue(driverPower >= hydraulicPower, "Driver power should be >= hydraulic power");
     logger.info("Driver power: " + driverPower + " kW");
+  }
+
+  @Test
+  public void testAbsorbedPowerIsNotEfficiencyCorrectedTwice() {
+    double absorbedPower = pump.getPower("kW");
+
+    assertEquals(absorbedPower, mechDesign.getAbsorbedPower(), Math.max(1.0e-9, absorbedPower * 1.0e-9));
+    assertEquals(absorbedPower * mechDesign.getDriverMargin(),
+        mechDesign.getApi610Assessment().getRequiredDriverPowerKw(), Math.max(1.0e-9, absorbedPower * 1.0e-9));
   }
 
   @Test
@@ -259,5 +270,64 @@ public class PumpMechanicalDesignTest {
         logger.info("  Issue: " + issue);
       }
     }
+  }
+
+  @Test
+  public void testVendorCurveDrivesBepSpeedAndNpshInputs() {
+    double[] speed = new double[] { 1000.0 };
+    double[][] flow = new double[][] { { 10.0, 20.0, 30.0, 40.0, 50.0, 60.0 } };
+    double[][] head = new double[][] { { 120.0, 118.0, 115.0, 110.0, 103.0, 94.0 } };
+    double[][] efficiency = new double[][] { { 60.0, 70.0, 78.0, 82.0, 81.0, 76.0 } };
+    double[][] npsh = new double[][] { { 2.0, 2.2, 2.5, 3.0, 3.8, 4.8 } };
+    pump.getPumpChart().setCurves(new double[] {}, speed, flow, head, efficiency);
+    pump.getPumpChart().setHeadUnit("meter");
+    pump.getPumpChart().setNPSHCurve(npsh);
+    pump.setSpeed(1000.0);
+    pump.getInletStream().setFlowRate(40000.0, "kg/hr");
+    pump.getInletStream().run();
+    pump.run();
+
+    mechDesign.calcDesign();
+
+    assertEquals(1000.0, mechDesign.getRatedSpeed(), 1.0e-12);
+    assertTrue(mechDesign.getBepFlow() > 30.0 && mechDesign.getBepFlow() < 60.0);
+    assertEquals(DataSource.VENDOR_CURVE, mechDesign.getApi610Assessment().getBepSource());
+    assertEquals(DataSource.VENDOR_CURVE, mechDesign.getApi610Assessment().getNpshrSource());
+    assertTrue(mechDesign.getNpshRequired() > 2.0 && mechDesign.getNpshRequired() < 5.0);
+  }
+
+  @Test
+  public void testPurchaserPressureInputsSurviveRepeatedCalculation() {
+    mechDesign.setMaximumSuctionPressure(7.0);
+    mechDesign.setShutoffHead(123.0);
+
+    mechDesign.calcDesign();
+    mechDesign.calcDesign();
+
+    assertEquals(123.0, mechDesign.getApi610Assessment().getGoverningShutoffHeadM(), 1.0e-12);
+    assertEquals(DataSource.PURCHASER_INPUT, mechDesign.getApi610Assessment().getShutoffHeadSource());
+    assertTrue(mechDesign.getApi610Assessment().getRequiredCasingPressureBara() > 7.0);
+  }
+
+  @Test
+  public void testRecommendedAndPurchaserSelectedTypeAreDistinguished() {
+    assertEquals(DataSource.SCREENING_ESTIMATE, mechDesign.getApi610Assessment().getPumpTypeSource());
+
+    mechDesign.setApi610PumpType(PumpApi610DesignCalculator.Api610PumpType.OH2);
+    mechDesign.calcDesign();
+
+    assertEquals(DataSource.PURCHASER_INPUT, mechDesign.getApi610Assessment().getPumpTypeSource());
+  }
+
+  @Test
+  public void testPumpResponseIncludesApi610ScreeningAndCalculatedFields() {
+    PumpMechanicalDesignResponse response = mechDesign.getResponse();
+    String json = response.toJson();
+
+    assertNotNull(response.getApi610Screening());
+    assertEquals(mechDesign.getAbsorbedPower(), response.getAbsorbedPower(), 1.0e-12);
+    assertEquals(mechDesign.getHydraulicPower(), response.getHydraulicPower(), 1.0e-12);
+    assertTrue(json.contains("\"api610Screening\""));
+    assertTrue(json.contains("\"api610TypeCode\""));
   }
 }

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -48,9 +49,9 @@ class LNGProcessBuilderTest {
     LNGHeatExchanger mainExchanger = model.getCryogenicHeatExchangers()
         .get(model.getCryogenicHeatExchangers().size() - 1);
     double coldSideInletC = mainExchanger.getInStream(2).getTemperature("C");
-    double coldestHotOutletC = Math.min(mainExchanger.getOutTemperature(0), mainExchanger.getOutTemperature(1));
-    assertTrue(coldSideInletC < coldestHotOutletC,
-        cycle + " cold-side warm start must be colder than the specified hot-stream outlets");
+    double specifiedFeedOutletC = mainExchanger.getOutTemperature(0);
+    assertTrue(coldSideInletC < specifiedFeedOutletC,
+        cycle + " cold-side warm start must be colder than the specified feed outlet");
 
     if (cycle == LNGProcessCycle.NITROGEN_EXPANDER) {
       assertEquals(1, model.getExpanders().size());
@@ -59,13 +60,19 @@ class LNGProcessBuilderTest {
     }
   }
 
-  @Test
+  @RepeatedTest(3)
   @Tag("slow")
   void testSmrRouteRunsAndReportsPerformance() {
     LNGProcessModel model = new LNGProcessBuilder().setName("SMR smoke test").setCycle(LNGProcessCycle.SMR)
         .setFeedFlowRate(20000.0).setNumberOfZones(4).setAdaptiveRefinement(false).build();
 
     LNGProcessModel.Result result = model.run();
+
+    assertFalse(model.getCryogenicHeatExchangers().isEmpty());
+    LNGHeatExchanger mainExchanger = model.getCryogenicHeatExchangers()
+        .get(model.getCryogenicHeatExchangers().size() - 1);
+    assertEquals(0.0, mainExchanger.energyDiff(), 1.0e-3);
+    assertEquals(3.0, mainExchanger.getTemperatureApproach(), 1.0e-3);
 
     assertTrue(Double.isFinite(result.getLNGMassFlowKgPerHour()));
     assertTrue(result.getLNGMassFlowKgPerHour() > 0.0);

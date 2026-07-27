@@ -8,6 +8,9 @@ import java.util.Set;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.reactor.GibbsReactor;
 import neqsim.process.equipment.stream.Stream;
@@ -49,6 +52,7 @@ public class CO2Electrolyzer extends ProcessEquipmentBaseClass {
    */
   public CO2Electrolyzer(String name) {
     super(name);
+    registerEnergyPort("electricalPower", EnergyType.ELECTRICAL, EnergyPortDirection.INPUT, EnergyPortMode.CALCULATED);
     initializeDefaultElectronNumbers();
   }
 
@@ -378,14 +382,14 @@ public class CO2Electrolyzer extends ProcessEquipmentBaseClass {
 
   private void updateEnergyConsumption(double electronMolesPerSecond) {
     if (electronMolesPerSecond <= 0.0) {
-      energyStream.setDuty(0.0);
+      getEnergyPort("electricalPower").setDuty(0.0);
       setEnergyStream(true);
       return;
     }
     double effectiveElectrons = electronMolesPerSecond / Math.max(currentEfficiency, 1e-6);
     double current = effectiveElectrons * FARADAY_CONSTANT;
     double power = current * cellVoltage;
-    energyStream.setDuty(power);
+    getEnergyPort("electricalPower").setDuty(power);
     setEnergyStream(true);
   }
 

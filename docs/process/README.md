@@ -3,8 +3,6 @@ title: Process Simulation Package
 description: The `process` package provides process equipment, unit operations, controllers, and process system management for building complete flowsheets.
 ---
 
-# Process Simulation Package
-
 The `process` package provides process equipment, unit operations, controllers, and process system management for building complete flowsheets.
 
 For controlled design cases, equipment and discipline sizing, safety verification, engineering deliverables, and
@@ -48,6 +46,7 @@ This documentation is organized into the following sections:
 | [bioprocessing.md](bioprocessing) | **Bio-processing** — reactors, fermenters, solid-liquid separators, LLE, evaporators, dryers, crystallizers |
 | [neqsim-studio.md](neqsim-studio) | **NeqSim Studio (Python)** — newcomer-friendly process builder: natural language, templates, guided wizard, edit-by-chat, recipe gallery |
 | [processmodel/](processmodel/) | ProcessSystem and flowsheet management |
+| [energy_streams.md](energy_streams.md) | **Energy streams** — typed heat, shaft-work, and electrical ports, unit-aware duties, graph ordering, and energy-driven equipment |
 | [process_json_export_and_e300_fluids.md](process_json_export_and_e300_fluids) | **Process JSON export** — self-contained ProcessSystem/ProcessModel JSON for MCP, including E300-equivalent component properties and volume correction |
 | [simulation-hooks-and-events.md](simulation-hooks-and-events) | **Lifecycle hooks, event bus, auto-validation** for ProcessSystem and ProcessModel |
 | [model-change-events.md](model-change-events) | **Governed model revisions** — versioned change events, idempotent publication, fingerprints, and durable replay |
@@ -146,6 +145,8 @@ This documentation is organized into the following sections:
 |----------|-------------|
 | [EQUIPMENT_DESIGN_PARAMETERS.md](EQUIPMENT_DESIGN_PARAMETERS) | **Equipment design parameters, autoSize vs MechanicalDesign guide** |
 | [mechanical_design_standards.md](mechanical_design_standards) | Design standards (NORSOK, ASME, API, DNV, etc.) |
+| [process_design_standards_program.md](process_design_standards_program) | Standards priorities, evidence gates, requirement coverage, and change control |
+| [standard_design_kernel_migration.md](standard_design_kernel_migration) | Migrate global editions, metadata factories, mutable calculators, and legacy case execution to typed kernels |
 | [mechanical_design_database.md](mechanical_design_database) | Data sources, database schemas, and CSV configuration |
 | [pipeline_mechanical_design.md](pipeline_mechanical_design) | Pipeline mechanical design (wall thickness, stress, buckling, corrosion) |
 | [topside_piping_design.md](topside_piping_design) | **Topside piping design (velocity, support, vibration per ASME B31.3)** |
@@ -194,8 +195,9 @@ This documentation is organized into the following sections:
 | Membranes | [membranes.md](equipment/membranes) | MembraneSeparator |
 | Flares | [flares.md](equipment/flares) | Flare, FlareStack |
 | Electrolyzers | [electrolyzers.md](equipment/electrolyzers) | Electrolyzer, CO2Electrolyzer |
-| Filters | [filters.md](equipment/filters) | Filter, CharCoalFilter |
+| Filters | [filters.md](equipment/filters) | Particle, coalescing, strainer, and media filters with dynamic loading and mechanical design |
 | H2S Scavengers | [H2S_scavenger_guide.md](H2S_scavenger_guide) | H2S chemical scavenging (triazine, glyoxal, iron sponge) |
+| **Sulfur Recovery** | [sulfur_recovery.md](sulfur_recovery) | Integrated Claus furnace, WHB, converters, sulfur condensers, TGTU recycle, incineration, and KPIs |
 | Reactors | [reactors.md](equipment/reactors) | GibbsReactor |
 | Pipelines | [pipelines.md](equipment/pipelines) | Pipeline, AdiabaticPipe, TopsidePiping, Riser |
 | **Water Hammer Screening** | [water_hammer_implementation.md](../wiki/water_hammer_implementation.md) | WaterHammerPipe, WaterHammerStudy, MCP runWaterHammer |

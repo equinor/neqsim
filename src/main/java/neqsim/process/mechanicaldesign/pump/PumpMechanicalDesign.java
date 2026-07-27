@@ -8,7 +8,10 @@ import javax.swing.JTable;
 import neqsim.process.costestimation.pump.PumpCostEstimate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.pump.Pump;
+import neqsim.process.equipment.pump.PumpChartInterface;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.pump.PumpApi610DesignCalculator.Api610PumpType;
+import neqsim.process.mechanicaldesign.pump.PumpApi610DesignCalculator.DataSource;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
@@ -61,9 +64,6 @@ public class PumpMechanicalDesign extends MechanicalDesign {
 
   /** Driver sizing margin for large pumps (&gt; 55 kW) per API 610. */
   private static final double DRIVER_MARGIN_LARGE = 1.10;
-
-  /** Design pressure margin factor. */
-  private static final double DESIGN_PRESSURE_MARGIN = 1.10;
 
   /** Design temperature margin [C]. */
   private static final double DESIGN_TEMPERATURE_MARGIN = 30.0;
@@ -226,10 +226,16 @@ public class PumpMechanicalDesign extends MechanicalDesign {
   private double maxContinuousFlowFraction = 1.20;
 
   /** Preferred operating region - low limit as fraction of BEP. */
-  private double porLowFraction = 0.80;
+  private double porLowFraction = 0.70;
 
   /** Preferred operating region - high limit as fraction of BEP. */
-  private double porHighFraction = 1.10;
+  private double porHighFraction = 1.20;
+
+  /** Rated-point region - low limit as fraction of furnished BEP. */
+  private double ratedPointLowFraction = 0.80;
+
+  /** Rated-point region - high limit as fraction of furnished BEP. */
+  private double ratedPointHighFraction = 1.10;
 
   /** Allowable operating region - low limit as fraction of BEP. */
   private double aorLowFraction = 0.60;
@@ -242,6 +248,54 @@ public class PumpMechanicalDesign extends MechanicalDesign {
 
   /** Head margin factor. */
   private double headMarginFactor = 1.05;
+
+  /** Minimum absolute NPSH margin [m] used by the API 610 screening profile. */
+  private double minimumNpshMarginM = 1.0;
+
+  /** Exact API 610 construction type selected or recommended. */
+  private Api610PumpType api610PumpType = Api610PumpType.UNSPECIFIED;
+
+  /** True when the exact API 610 type was supplied rather than estimated. */
+  private boolean api610PumpTypeUserSpecified = false;
+
+  /** Current rated/duty flow [m3/h]. */
+  private double ratedFlow = Double.NaN;
+
+  /** Current rated/duty head [m]. */
+  private double ratedHead = Double.NaN;
+
+  /** Absorbed shaft power from the process pump [kW]. */
+  private double absorbedPower = Double.NaN;
+
+  /** Hydraulic liquid power at the duty point [kW]. */
+  private double hydraulicPower = Double.NaN;
+
+  /** Maximum suction pressure used for casing screening [bara]. */
+  private double maximumSuctionPressure = Double.NaN;
+
+  /** True when maximum suction pressure was explicitly supplied by the purchaser. */
+  private boolean maximumSuctionPressureUserSpecified = false;
+
+  /** Furnished casing MAWP supplied by purchaser or vendor [bara]. */
+  private double furnishedCasingMawp = Double.NaN;
+
+  /** Shutoff head from a vendor curve or purchaser input [m]. */
+  private double shutoffHead = Double.NaN;
+
+  /** True when shutoff head was explicitly supplied by the purchaser. */
+  private boolean shutoffHeadUserSpecified = false;
+
+  /** Source of the BEP values. */
+  private DataSource bepDataSource = DataSource.NOT_AVAILABLE;
+
+  /** Source of the NPSHr value. */
+  private DataSource npshrDataSource = DataSource.NOT_AVAILABLE;
+
+  /** Source of the shutoff head value. */
+  private DataSource shutoffHeadDataSource = DataSource.NOT_AVAILABLE;
+
+  /** API 610 screening calculator and auditable result. */
+  private final PumpApi610DesignCalculator api610Assessment = new PumpApi610DesignCalculator();
 
   /**
    * Constructor for PumpMechanicalDesign.
@@ -261,7 +315,8 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     Pump pump = (Pump) getProcessEquipment();
 
     // Ensure pump has been run
-    if (pump.getInletStream() == null || pump.getInletStream().getThermoSystem() == null) {
+    if (pump.getInletStream() == null || pump.getOutletStream() == null
+        || pump.getInletStream().getThermoSystem() == null) {
       return;
     }
 
@@ -270,48 +325,78 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     double dischargePressure = pump.getOutletStream().getPressure("bara");
     double suctionTemperature = pump.getInletStream().getTemperature("C");
     double dischargeTemperature = pump.getOutletStream().getTemperature("C");
-    double massFlowRate = pump.getInletStream().getFlowRate("kg/hr");
     double volumeFlowRate = pump.getInletStream().getFlowRate("m3/hr");
     double density = pump.getInletStream().getThermoSystem().getDensity("kg/m3");
-    double hydraulicPowerKW = pump.getPower("kW");
+    absorbedPower = pump.getPower("kW");
 
     // Calculate differential pressure and head
     double differentialPressure = dischargePressure - suctionPressure;
-    double pumpHead = (differentialPressure * 1e5) / (density * GRAVITY); // meters
+    double pumpHead = density > 0.0 ? (differentialPressure * 1e5) / (density * GRAVITY) : Double.NaN;
+    ratedFlow = volumeFlowRate;
+    ratedHead = pumpHead;
+    hydraulicPower = density > 0.0 && volumeFlowRate > 0.0 && pumpHead > 0.0
+        ? density * GRAVITY * volumeFlowRate / 3600.0 * pumpHead / 1000.0
+        : Double.NaN;
 
     // Get or estimate pump efficiency
-    pumpEfficiency = pump.getIsentropicEfficiency();
+    pumpEfficiency = normalizeEfficiency(pump.getIsentropicEfficiency());
     if (pumpEfficiency <= 0 || pumpEfficiency > 1.0) {
       pumpEfficiency = DEFAULT_PUMP_EFFICIENCY;
     }
 
-    // Calculate design conditions with margins
-    designPressure = dischargePressure * DESIGN_PRESSURE_MARGIN;
-    designTemperature = Math.max(suctionTemperature, dischargeTemperature) + DESIGN_TEMPERATURE_MARGIN;
-
-    // Calculate specific speeds
-    if (volumeFlowRate > 0 && pumpHead > 0) {
-      ratedSpeed = estimateOptimalSpeed(volumeFlowRate, pumpHead);
-      calculateSpecificSpeeds(volumeFlowRate, pumpHead, ratedSpeed);
+    if (!(absorbedPower > 0.0) && hydraulicPower > 0.0) {
+      absorbedPower = hydraulicPower / pumpEfficiency;
     }
 
-    // Select pump type based on specific speed
-    selectPumpType();
+    // Preserve the process-model shaft speed. Estimate only if it is unavailable.
+    ratedSpeed = pump.getSpeed();
+    if (!(ratedSpeed > 0.0) && volumeFlowRate > 0.0 && pumpHead > 0.0) {
+      ratedSpeed = estimateOptimalSpeed(volumeFlowRate, pumpHead);
+    }
+
+    // Prefer vendor performance data for BEP, shutoff head and NPSHr.
+    populateVendorCurveData(pump, ratedSpeed, density);
+
+    npshRequired = pump.getNPSHRequired();
+    npshAvailable = pump.getNPSHAvailable();
+    if (pump.getPumpChart() != null && pump.getPumpChart().isUsePumpChart() && pump.getPumpChart().hasNPSHCurve()) {
+      npshrDataSource = DataSource.VENDOR_CURVE;
+    } else if (npshRequired > 0.0) {
+      npshrDataSource = DataSource.SCREENING_ESTIMATE;
+    } else {
+      npshrDataSource = DataSource.NOT_AVAILABLE;
+    }
+    npshMargin = Double.isFinite(npshAvailable) && npshRequired > 0.0 ? npshAvailable - npshRequired : Double.NaN;
+
+    // Calculate specific speeds on explicit SI and customary suction-specific-speed bases.
+    double specificSpeedFlow = bepFlow > 0.0 ? bepFlow : volumeFlowRate;
+    double specificSpeedHead = bepHead > 0.0 ? bepHead : pumpHead;
+    if (specificSpeedFlow > 0.0 && specificSpeedHead > 0.0 && ratedSpeed > 0.0) {
+      calculateSpecificSpeeds(specificSpeedFlow, specificSpeedHead, ratedSpeed);
+    }
+
+    // Select a preliminary construction type only when the purchaser has not fixed one.
+    selectPumpType(pumpHead);
+
+    if (!maximumSuctionPressureUserSpecified) {
+      maximumSuctionPressure = suctionPressure;
+    }
+    double governingShutoffHead = shutoffHead > 0.0 ? shutoffHead : pumpHead * 1.10;
+    designPressure = maximumSuctionPressure + density * GRAVITY * governingShutoffHead / 1.0e5;
+    designPressure = Math.max(designPressure, dischargePressure);
+    designTemperature = Math.max(suctionTemperature, dischargeTemperature) + DESIGN_TEMPERATURE_MARGIN;
 
     // Calculate impeller sizing
     calculateImpellerSizing(volumeFlowRate, pumpHead, ratedSpeed);
 
     // Calculate shaft sizing
-    calculateShaftSizing(hydraulicPowerKW, ratedSpeed, pumpEfficiency);
+    calculateShaftSizing(absorbedPower, ratedSpeed);
 
     // Calculate casing design
     calculateCasingDesign(designPressure, designTemperature);
 
     // Calculate driver sizing
-    calculateDriverSizing(hydraulicPowerKW, pumpEfficiency);
-
-    // Estimate NPSH required
-    estimateNpshRequired(volumeFlowRate, ratedSpeed);
+    calculateDriverSizing(absorbedPower);
 
     // Calculate nozzle sizes
     calculateNozzleSizes(volumeFlowRate);
@@ -322,11 +407,14 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     // Calculate module dimensions
     calculateModuleDimensions();
 
-    // Set operating range
-    bepFlow = volumeFlowRate;
-    bepHead = pumpHead;
-    minimumFlow = volumeFlowRate * 0.3; // Typical minimum stable flow
-    maximumFlow = volumeFlowRate * 1.2; // Typical maximum flow
+    // Set operating range. Vendor BEP is preferred; current duty is only a preliminary fallback.
+    double operatingRangeBasis = bepFlow > 0.0 ? bepFlow : volumeFlowRate;
+    minimumFlow = operatingRangeBasis * minContinuousFlowFraction;
+    maximumFlow = operatingRangeBasis * maxContinuousFlowFraction;
+    maxDesignVolumeFlow = maximumFlow;
+    maxDesignPower = driverPower;
+
+    configureAndRunApi610Assessment(suctionPressure, density);
   }
 
   /**
@@ -361,6 +449,84 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     return closestSpeed;
   }
 
+  private double normalizeEfficiency(double efficiency) {
+    if (efficiency > 1.0 && efficiency <= 100.0) {
+      return efficiency / 100.0;
+    }
+    return efficiency;
+  }
+
+  private void populateVendorCurveData(Pump pump, double speedRpm, double densityKgM3) {
+    bepFlow = Double.NaN;
+    bepHead = Double.NaN;
+    bepDataSource = DataSource.NOT_AVAILABLE;
+    if (!shutoffHeadUserSpecified) {
+      shutoffHead = Double.NaN;
+      shutoffHeadDataSource = DataSource.NOT_AVAILABLE;
+    }
+    PumpChartInterface chart = pump.getPumpChart();
+    if (chart == null || !chart.isUsePumpChart() || !(speedRpm > 0.0)) {
+      return;
+    }
+    double chartBepFlow = chart.getBestEfficiencyFlowRate(speedRpm);
+    if (chartBepFlow > 0.0) {
+      double chartBepHead = convertChartHeadToMeters(chart.getHead(chartBepFlow, speedRpm), chart.getHeadUnit(),
+          densityKgM3);
+      if (chartBepHead > 0.0) {
+        bepFlow = chartBepFlow;
+        bepHead = chartBepHead;
+        bepDataSource = DataSource.VENDOR_CURVE;
+      }
+    }
+    if (!shutoffHeadUserSpecified) {
+      double chartShutoffHead = convertChartHeadToMeters(chart.getHead(0.0, speedRpm), chart.getHeadUnit(),
+          densityKgM3);
+      if (chartShutoffHead > 0.0) {
+        shutoffHead = chartShutoffHead;
+        shutoffHeadDataSource = DataSource.VENDOR_CURVE;
+      }
+    }
+  }
+
+  private double convertChartHeadToMeters(double chartHead, String unit, double densityKgM3) {
+    if (!(chartHead > 0.0) || unit == null) {
+      return Double.NaN;
+    }
+    if (unit.equals("meter") || unit.equals("m")) {
+      return chartHead;
+    }
+    if (unit.equals("kJ/kg")) {
+      return chartHead * 1000.0 / GRAVITY;
+    }
+    if (unit.equals("bar") && densityKgM3 > 0.0) {
+      return chartHead * 1.0e5 / (densityKgM3 * GRAVITY);
+    }
+    return Double.NaN;
+  }
+
+  private void configureAndRunApi610Assessment(double suctionPressureBara, double densityKgM3) {
+    api610Assessment.setPumpType(api610PumpType,
+        api610PumpTypeUserSpecified ? DataSource.PURCHASER_INPUT : DataSource.SCREENING_ESTIMATE);
+    api610Assessment.setDutyPoint(ratedFlow, ratedHead, ratedSpeed, densityKgM3, absorbedPower);
+    api610Assessment.setDutyPointSource(DataSource.PROCESS_MODEL);
+    api610Assessment.setBepPoint(bepFlow, bepHead, bepDataSource);
+    api610Assessment.setNpsh(npshAvailable, npshRequired, npshrDataSource);
+    api610Assessment.setOperatingRegions(porLowFraction, porHighFraction, aorLowFraction, aorHighFraction);
+    api610Assessment.setRatedPointRegion(ratedPointLowFraction, ratedPointHighFraction);
+    api610Assessment.setNpshCriteria(npshMarginFactor, minimumNpshMarginM);
+    api610Assessment.setDriverCriteria(driverMargin, null);
+    api610Assessment.setPressureBasis(
+        Double.isFinite(maximumSuctionPressure) ? maximumSuctionPressure : suctionPressureBara, furnishedCasingMawp,
+        shutoffHead, shutoffHeadDataSource);
+    api610Assessment.setSeallessPump(sealType == SealType.MAGNETIC_DRIVE || sealType == SealType.CANNED_MOTOR);
+    api610Assessment.calculate();
+    double selectedDriver = api610Assessment.getSelectedDriverPowerKw();
+    if (selectedDriver > 0.0) {
+      driverPower = selectedDriver;
+      maxDesignPower = selectedDriver;
+    }
+  }
+
   /**
    * Calculate specific speeds for pump classification.
    *
@@ -369,34 +535,56 @@ public class PumpMechanicalDesign extends MechanicalDesign {
    * @param speedRpm pump speed in rpm
    */
   private void calculateSpecificSpeeds(double flowM3h, double headM, double speedRpm) {
-    double flowM3min = flowM3h / 60.0;
+    double flowM3s = flowM3h / 3600.0;
 
-    // Specific speed: Ns = N * sqrt(Q) / H^0.75
-    specificSpeed = speedRpm * Math.sqrt(flowM3min) / Math.pow(headM, 0.75);
+    // SI specific speed: N * sqrt(Q[m3/s]) / H[m]^0.75.
+    specificSpeed = speedRpm * Math.sqrt(flowM3s) / Math.pow(headM, 0.75);
 
-    // Suction specific speed: Nss = N * sqrt(Q) / NPSHr^0.75
-    // Estimate NPSHr first, then calculate
-    double estimatedNpshr = 3.0 + 0.001 * speedRpm * Math.sqrt(flowM3min);
-    suctionSpecificSpeed = speedRpm * Math.sqrt(flowM3min) / Math.pow(estimatedNpshr, 0.75);
+    // Conventional US suction specific speed, compatible with common API purchaser limits.
+    if (npshRequired > 0.0) {
+      double flowPerEyeGpm = flowM3h * 4.402867;
+      if (api610PumpType == Api610PumpType.BB1) {
+        flowPerEyeGpm /= 2.0;
+      }
+      double npshFeet = npshRequired * 3.28084;
+      suctionSpecificSpeed = speedRpm * Math.sqrt(flowPerEyeGpm) / Math.pow(npshFeet, 0.75);
+    } else {
+      suctionSpecificSpeed = Double.NaN;
+    }
   }
 
   /**
    * Select pump type based on specific speed and application.
    */
-  private void selectPumpType() {
-    // General guidelines for pump type selection
-    if (specificSpeed < 50) {
-      // Low flow, high head - multistage
+  private void selectPumpType(double totalHeadM) {
+    if (api610PumpTypeUserSpecified) {
+      mapApi610TypeToLegacyFamily();
+      return;
+    }
+    if (totalHeadM > 250.0) {
       pumpType = PumpType.BETWEEN_BEARINGS;
-      numberOfStages = (int) Math.ceil(300.0 / specificSpeed);
-    } else if (specificSpeed < 300) {
-      // Normal range - single stage overhung
-      pumpType = PumpType.OVERHUNG;
-      numberOfStages = 1;
+      numberOfStages = Math.max(2, (int) Math.ceil(totalHeadM / 200.0));
+      api610PumpType = numberOfStages > 2 ? Api610PumpType.BB3 : Api610PumpType.BB2;
     } else {
-      // High flow, low head - mixed/axial flow
       pumpType = PumpType.OVERHUNG;
       numberOfStages = 1;
+      api610PumpType = Api610PumpType.OH2;
+    }
+  }
+
+  private void mapApi610TypeToLegacyFamily() {
+    String code = api610PumpType.name();
+    if (code.startsWith("OH")) {
+      pumpType = PumpType.OVERHUNG;
+      numberOfStages = 1;
+    } else if (code.startsWith("BB")) {
+      pumpType = PumpType.BETWEEN_BEARINGS;
+      if (api610PumpType == Api610PumpType.BB3 || api610PumpType == Api610PumpType.BB4
+          || api610PumpType == Api610PumpType.BB5) {
+        numberOfStages = Math.max(2, numberOfStages);
+      }
+    } else if (code.startsWith("VS")) {
+      pumpType = PumpType.VERTICALLY_SUSPENDED;
     }
   }
 
@@ -444,19 +632,15 @@ public class PumpMechanicalDesign extends MechanicalDesign {
    *
    * @param powerKW shaft power in kW
    * @param speedRpm shaft speed in rpm
-   * @param efficiency pump efficiency
    */
-  private void calculateShaftSizing(double powerKW, double speedRpm, double efficiency) {
+  private void calculateShaftSizing(double powerKW, double speedRpm) {
     if (speedRpm <= 0) {
       shaftDiameter = 40.0; // Default
       return;
     }
 
-    // Shaft power considering efficiency
-    double shaftPowerKW = powerKW / efficiency;
-
     // Calculate torque: T = P * 60 / (2 * pi * N) [kNm]
-    double torqueKNm = (shaftPowerKW * 60.0) / (2.0 * Math.PI * speedRpm);
+    double torqueKNm = (powerKW * 60.0) / (2.0 * Math.PI * speedRpm);
     double torqueNm = torqueKNm * 1000.0;
 
     // Shaft diameter from shear stress: d = (16*T / (pi*tau))^(1/3)
@@ -510,34 +694,28 @@ public class PumpMechanicalDesign extends MechanicalDesign {
   /**
    * Calculate driver sizing with appropriate margins per API 610.
    *
-   * @param hydraulicPowerKW hydraulic power in kW
-   * @param efficiency pump efficiency
+   * @param absorbedPowerKW absorbed shaft power in kW
    */
-  private void calculateDriverSizing(double hydraulicPowerKW, double efficiency) {
-    // Shaft power = hydraulic power / efficiency
-    double shaftPowerKW = hydraulicPowerKW / efficiency;
-
+  private void calculateDriverSizing(double absorbedPowerKW) {
     // Select margin based on power range per API 610
-    if (shaftPowerKW < 22.0) {
+    if (absorbedPowerKW < 22.0) {
       driverMargin = DRIVER_MARGIN_SMALL;
-    } else if (shaftPowerKW < 55.0) {
+    } else if (absorbedPowerKW <= 55.0) {
       driverMargin = DRIVER_MARGIN_MEDIUM;
     } else {
       driverMargin = DRIVER_MARGIN_LARGE;
     }
 
     // Driver power with margin
-    driverPower = shaftPowerKW * driverMargin;
+    driverPower = absorbedPowerKW * driverMargin;
 
     // Round up to standard motor sizes (IEC frame sizes)
     double[] standardPowers = { 0.75, 1.1, 1.5, 2.2, 3.0, 4.0, 5.5, 7.5, 11.0, 15.0, 18.5, 22.0, 30.0, 37.0, 45.0, 55.0,
         75.0, 90.0, 110.0, 132.0, 160.0, 200.0, 250.0, 315.0, 400.0 };
 
-    for (double standardPower : standardPowers) {
-      if (standardPower >= driverPower) {
-        driverPower = standardPower;
-        break;
-      }
+    double selectedPower = PumpApi610DesignCalculator.selectDriverRating(driverPower, standardPowers);
+    if (selectedPower > 0.0) {
+      driverPower = selectedPower;
     }
   }
 
@@ -682,9 +860,9 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     moduleHeight = Math.max(0.5, impellerDiameter / 1000.0 + 0.3);
 
     // Set outer diameter for reporting
-    outerDiameter = impellerDiameter * 1.15 + 2.0 * casingWallThickness;
-    innerDiameter = impellerDiameter * 1.15;
-    tantanLength = impellerWidth * numberOfStages;
+    outerDiameter = (impellerDiameter * 1.15 + 2.0 * casingWallThickness) / 1000.0;
+    innerDiameter = impellerDiameter * 1.15 / 1000.0;
+    tantanLength = impellerWidth * numberOfStages / 1000.0;
     this.wallThickness = casingWallThickness;
   }
 
@@ -708,6 +886,13 @@ public class PumpMechanicalDesign extends MechanicalDesign {
    */
   public void setPumpType(PumpType pumpType) {
     this.pumpType = pumpType;
+    if (pumpType == PumpType.OVERHUNG) {
+      setApi610PumpType(Api610PumpType.OH2);
+    } else if (pumpType == PumpType.BETWEEN_BEARINGS) {
+      setApi610PumpType(Api610PumpType.BB3);
+    } else if (pumpType == PumpType.VERTICALLY_SUSPENDED) {
+      setApi610PumpType(Api610PumpType.VS1);
+    }
   }
 
   /**
@@ -738,6 +923,15 @@ public class PumpMechanicalDesign extends MechanicalDesign {
   }
 
   /**
+   * Get the estimated impeller outlet width.
+   *
+   * @return impeller width in mm
+   */
+  public double getImpellerWidth() {
+    return impellerWidth;
+  }
+
+  /**
    * Get the shaft diameter.
    *
    * @return shaft diameter in mm
@@ -753,6 +947,15 @@ public class PumpMechanicalDesign extends MechanicalDesign {
    */
   public double getDriverPower() {
     return driverPower;
+  }
+
+  /**
+   * Get the driver sizing multiplier applied to absorbed power.
+   *
+   * @return driver margin factor
+   */
+  public double getDriverMargin() {
+    return driverMargin;
   }
 
   /**
@@ -816,6 +1019,180 @@ public class PumpMechanicalDesign extends MechanicalDesign {
    */
   public double getNpshRequired() {
     return npshRequired;
+  }
+
+  /**
+   * Get NPSH available from the process suction state.
+   *
+   * @return NPSHa in m, or NaN when unavailable
+   */
+  public double getNpshAvailable() {
+    return npshAvailable;
+  }
+
+  /**
+   * Get absolute NPSH margin.
+   *
+   * @return NPSHa minus NPSHr in m, or NaN when unavailable
+   */
+  public double getNpshMargin() {
+    return npshMargin;
+  }
+
+  /**
+   * Get NPSH ratio.
+   *
+   * @return NPSHa divided by NPSHr, or NaN when unavailable
+   */
+  public double getNpshMarginRatio() {
+    return npshRequired > 0.0 && Double.isFinite(npshAvailable) ? npshAvailable / npshRequired : Double.NaN;
+  }
+
+  /**
+   * Get casing wall thickness from the preliminary pressure-boundary estimate.
+   *
+   * @return casing wall thickness in mm
+   */
+  public double getCasingWallThickness() {
+    return casingWallThickness;
+  }
+
+  /**
+   * Get preliminary calculated casing MAWP.
+   *
+   * @return estimated MAWP in bara
+   */
+  public double getMaxAllowableWorkingPressure() {
+    return maxAllowableWorkingPressure;
+  }
+
+  /**
+   * Get rated process flow.
+   *
+   * @return rated flow in m3/h
+   */
+  public double getRatedFlow() {
+    return ratedFlow;
+  }
+
+  /**
+   * Get rated process head.
+   *
+   * @return rated head in m
+   */
+  public double getRatedHead() {
+    return ratedHead;
+  }
+
+  /**
+   * Get vendor BEP flow.
+   *
+   * @return BEP flow in m3/h, or NaN when a vendor curve is unavailable
+   */
+  public double getBepFlow() {
+    return bepFlow;
+  }
+
+  /**
+   * Get vendor BEP head.
+   *
+   * @return BEP head in m, or NaN when a vendor curve is unavailable
+   */
+  public double getBepHead() {
+    return bepHead;
+  }
+
+  /**
+   * Get normalized pump efficiency.
+   *
+   * @return efficiency as a fraction
+   */
+  public double getPumpEfficiency() {
+    return pumpEfficiency;
+  }
+
+  /**
+   * Get absorbed shaft power.
+   *
+   * @return absorbed power in kW
+   */
+  public double getAbsorbedPower() {
+    return absorbedPower;
+  }
+
+  /**
+   * Get hydraulic liquid power.
+   *
+   * @return hydraulic power in kW
+   */
+  public double getHydraulicPower() {
+    return hydraulicPower;
+  }
+
+  /**
+   * Get exact API 610 construction type.
+   *
+   * @return selected or recommended construction type
+   */
+  public Api610PumpType getApi610PumpType() {
+    return api610PumpType;
+  }
+
+  /**
+   * Set exact API 610 construction type from purchaser or vendor data.
+   *
+   * @param type exact API 610 construction type
+   */
+  public void setApi610PumpType(Api610PumpType type) {
+    this.api610PumpType = type == null ? Api610PumpType.UNSPECIFIED : type;
+    this.api610PumpTypeUserSpecified = this.api610PumpType != Api610PumpType.UNSPECIFIED;
+    if (this.api610PumpTypeUserSpecified) {
+      mapApi610TypeToLegacyFamily();
+    }
+  }
+
+  /**
+   * Set maximum suction pressure used for maximum-discharge-pressure screening.
+   *
+   * @param pressureBara maximum suction pressure in bara
+   */
+  public void setMaximumSuctionPressure(double pressureBara) {
+    this.maximumSuctionPressure = pressureBara;
+    this.maximumSuctionPressureUserSpecified = Double.isFinite(pressureBara) && pressureBara > 0.0;
+  }
+
+  /**
+   * Set furnished casing MAWP for verification.
+   *
+   * @param mawpBara furnished casing MAWP in bara
+   */
+  public void setFurnishedCasingMawp(double mawpBara) {
+    this.furnishedCasingMawp = mawpBara;
+  }
+
+  /**
+   * Set purchaser or vendor shutoff head.
+   *
+   * @param headM shutoff head in m
+   */
+  public void setShutoffHead(double headM) {
+    this.shutoffHead = headM;
+    this.shutoffHeadUserSpecified = Double.isFinite(headM) && headM > 0.0;
+    this.shutoffHeadDataSource = this.shutoffHeadUserSpecified ? DataSource.PURCHASER_INPUT : DataSource.NOT_AVAILABLE;
+  }
+
+  /**
+   * Get the auditable API 610 design screening calculator and latest result.
+   *
+   * <p>
+   * Optional vendor evidence such as bearing ratings, shaft deflection, critical speed, nozzle-load utilization and
+   * vibration may be configured directly on this value-only object before the next {@link #calcDesign()} call.
+   * </p>
+   *
+   * @return API 610 screening calculator
+   */
+  public PumpApi610DesignCalculator getApi610Assessment() {
+    return api610Assessment;
   }
 
   /**
@@ -956,6 +1333,24 @@ public class PumpMechanicalDesign extends MechanicalDesign {
    */
   public void setNpshMarginFactor(double factor) {
     this.npshMarginFactor = factor;
+  }
+
+  /**
+   * Gets the minimum absolute NPSH margin.
+   *
+   * @return minimum NPSHa minus NPSHr in m
+   */
+  public double getMinimumNpshMarginM() {
+    return minimumNpshMarginM;
+  }
+
+  /**
+   * Sets the minimum absolute NPSH margin.
+   *
+   * @param minimumMarginM minimum NPSHa minus NPSHr in m
+   */
+  public void setMinimumNpshMarginM(double minimumMarginM) {
+    this.minimumNpshMarginM = minimumMarginM;
   }
 
   /**
@@ -1159,9 +1554,8 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     }
 
     // Validate operating point vs BEP
-    if (bepFlow > 0) {
-      double operatingFlow = bepFlow; // Assuming design point = BEP
-      if (!validateOperatingInPOR(operatingFlow, bepFlow)) {
+    if (bepFlow > 0 && ratedFlow > 0) {
+      if (!validateOperatingInPOR(ratedFlow, bepFlow)) {
         result.addIssue("Operating point outside Preferred Operating Region (POR)");
       }
     }
@@ -1175,6 +1569,13 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     // Validate design margins
     if (driverMargin < 1.05) {
       result.addIssue("Driver power margin " + String.format("%.2f", driverMargin) + " below recommended 1.05");
+    }
+
+    for (PumpApi610DesignCalculator.Check check : api610Assessment.getChecks()) {
+      if (check.getStatus() == PumpApi610DesignCalculator.CheckStatus.FAIL
+          || check.getStatus() == PumpApi610DesignCalculator.CheckStatus.WARNING) {
+        result.addIssue(check.getId() + " [" + check.getStatus() + "]: " + check.getMessage());
+      }
     }
 
     result.setValid(result.getIssues().isEmpty());
@@ -1204,16 +1605,23 @@ public class PumpMechanicalDesign extends MechanicalDesign {
           this.hydraulicPowerMargin = value;
           break;
         case "PreferredOperatingRegionLow":
-          this.porLowFraction = value;
+          // Legacy data rows contain the 80-110% rated-point band, not the wider POR.
+          this.ratedPointLowFraction = value;
           break;
         case "PreferredOperatingRegionHigh":
-          this.porHighFraction = value;
+          this.ratedPointHighFraction = value;
           break;
         case "AllowableOperatingRegionLow":
           this.aorLowFraction = value;
           break;
         case "AllowableOperatingRegionHigh":
           this.aorHighFraction = value;
+          break;
+        case "MinContinuousFlow":
+          this.minContinuousFlowFraction = value;
+          break;
+        case "MaxContinuousFlow":
+          this.maxContinuousFlowFraction = value;
           break;
         case "SuctionSpecificSpeedMax":
           this.maxSuctionSpecificSpeed = value;
@@ -1226,6 +1634,12 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     } catch (Exception ex) {
       // Use default values if database lookup fails
     }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void readDesignSpecifications() {
+    loadProcessDesignParameters();
   }
 
   /**

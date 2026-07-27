@@ -15,8 +15,9 @@ import neqsim.process.engineering.EngineeringProject;
 import neqsim.process.engineering.EngineeringRequirement;
 import neqsim.process.engineering.EngineeringSimulationRunner;
 import neqsim.process.engineering.LineDesignInput;
-import neqsim.process.engineering.designcase.DesignCaseEngine;
 import neqsim.process.engineering.designcase.EngineeringCaseRunOptions;
+import neqsim.process.engineering.designcase.EngineeringCaseRunReport;
+import neqsim.process.engineering.designcase.EngineeringCaseRunner;
 import neqsim.process.engineering.designcase.EngineeringDesignEnvelope;
 import neqsim.process.engineering.designcase.EngineeringDesignCaseMatrix;
 import neqsim.process.engineering.dexpi.DexpiEngineeringExporter;
@@ -264,8 +265,9 @@ public final class EngineeringDeliverableCompiler {
     EngineeringDesignEnvelope envelope = null;
     List<EngineeringCalculation> envelopeCalculations = new ArrayList<EngineeringCalculation>();
     if (!project.getExecutableDesignCases().isEmpty() && !project.getEngineeringMetrics().isEmpty()) {
-      envelope = DesignCaseEngine.run(project.getEngineeringProcessSystem(), project.getExecutableDesignCases(),
-          project.getEngineeringMetrics());
+      EngineeringCaseRunReport caseReport = EngineeringCaseRunner.run(project.getEngineeringProcessSystem(),
+          EngineeringSimulationRunner.buildCaseSet(project), EngineeringCaseRunOptions.sequential());
+      envelope = caseReport.getEnvelope();
       envelopeCalculations.addAll(envelope.toCalculations());
     }
     List<EngineeringCalculation> dagCalculations = new ArrayList<EngineeringCalculation>(project.getCalculations());

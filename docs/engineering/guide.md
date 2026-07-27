@@ -61,6 +61,12 @@ approved hazard-review basis.
 
 Gate check: every design variable and calculated load can be traced to the case that governs it.
 
+Require `EngineeringCaseRunReport.isComplete()` before using the envelope as a closed design basis.
+Completeness and acceptance are separate: `isAccepted()` additionally requires configured limits and
+no violations. Workflows that must stop on incomplete coverage can select
+`EngineeringCaseFailurePolicy.THROW_WITH_PARTIAL_RESULT`; the thrown exception retains the partial
+report for diagnosis and audit.
+
 ## Gate 3: Run isolated cases and create governing envelopes
 
 Run cases on independent copies. This prevents one case or design update from contaminating another and preserves the
@@ -92,6 +98,18 @@ Use `EngineeringDesignLoop` through explicit discipline modules, or use an
 Typical loop variables include separator diameter and length, pipe inside diameter, valve Cv, driver rating,
 exchanger area, instrument range, pressure rating, and preliminary relief or blowdown targets.
 
+Discipline modules declare upstream module IDs through `EngineeringDesignModule.getDependencies()`.
+`EngineeringDesignDependencyGraph` validates missing IDs, duplicate IDs, self-dependencies, and cycles,
+then evaluates deterministic topological levels. Updates from one level are selected and applied before
+the next level is evaluated, so downstream modules consume current-iteration design state rather than
+an accidentally alphabetical or one-iteration-old value.
+
+Two modules may not silently overwrite the same design-variable key. The default
+`REQUIRE_UNIQUE` policy throws `EngineeringDesignConflictException` with the module IDs, units, and
+proposed values. A genuinely shared upper- or lower-governing variable must declare the same explicit
+`GOVERNING_MAXIMUM` or `GOVERNING_MINIMUM` rule on every proposal. Unit or rule disagreement still
+fails closed, and the selected state's `sourceModule` retains the governing owner.
+
 Gate check:
 
 - all cases converged after the final design update;
@@ -99,6 +117,7 @@ Gate check:
 - every declared constraint passes;
 - no hidden screening default was used;
 - all selected values retain method, units, governing case, and input evidence; and
+- the module dependency graph is valid and every shared-variable selection has an explicit governing rule;
 - the source process model remains unchanged.
 
 See [Process-to-Engineering Simulator](../integration/process-to-engineering-simulator) for configuration patterns,

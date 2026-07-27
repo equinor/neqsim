@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import neqsim.process.ProcessElementInterface;
 
 class EnergyStreamTest {
 
@@ -121,4 +122,23 @@ class EnergyStreamTest {
 
     assertEquals(a.hashCode(), b.hashCode());
   }
+
+  @Test
+  void testUnitAwareEnergyFlowAliases() {
+    EnergyStream stream = new EnergyStream("motor-power", EnergyType.ELECTRICAL);
+    stream.setEnergyFlow(1.5, "MW");
+
+    assertEquals(1.5e6, stream.getDuty(), 1e-10);
+    assertEquals(1500.0, stream.getPower("kW"), 1e-10);
+    assertEquals(1.5, stream.getEnergyFlow("MW"), 1e-10);
+  }
+
+  @Test
+  void testEnergyStreamIsProcessElement() {
+    ProcessElementInterface element = new EnergyStream("shaft-work", EnergyType.SHAFT_WORK);
+
+    assertEquals("shaft-work", element.getName());
+    assertEquals(EnergyType.SHAFT_WORK, ((EnergyStream) element).getEnergyType());
+  }
+
 }

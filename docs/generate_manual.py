@@ -683,6 +683,8 @@ FULL_MANUAL_STRUCTURE = {
             ("Mechanical Design", "process/mechanical_design.md"),
             ("Equipment Design Parameters", "process/EQUIPMENT_DESIGN_PARAMETERS.md"),
             ("Design Standards", "process/mechanical_design_standards.md"),
+            ("Standards Implementation Program", "process/process_design_standards_program.md"),
+            ("Typed Standards Migration", "process/standard_design_kernel_migration.md"),
             ("Design Database", "process/mechanical_design_database.md"),
             ("Pipeline Mechanical Design", "process/pipeline_mechanical_design.md"),
             ("Topside Piping Design", "process/topside_piping_design.md"),

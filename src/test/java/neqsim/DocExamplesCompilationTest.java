@@ -17,12 +17,22 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.distillation.ColumnSpecification;
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.distillation.RateBasedPackedColumn;
+import neqsim.process.equipment.energy.EnergyNetworkSolver;
 import neqsim.process.equipment.distillation.internals.ColumnInternalsDesigner;
 import neqsim.process.equipment.heatexchanger.CoolingWaterSystem;
 import neqsim.process.equipment.heatexchanger.FiredHeater;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
+import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction.InterfacialFrictionResult;
 import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.EnergyBus;
+import neqsim.process.equipment.stream.EnergyNetworkReport;
+import neqsim.process.equipment.stream.EnergyPort;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyStream;
+import neqsim.process.equipment.stream.EnergyType;
+import neqsim.process.equipment.stream.MechanicalShaft;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.fielddevelopment.concept.DevelopmentCaseTemplate;
@@ -60,6 +70,7 @@ import neqsim.thermo.system.FluidBuilder;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPitzer;
+import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -70,6 +81,103 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 public class DocExamplesCompilationTest {
+
+  /**
+   * Quick-start example shared by docs/index.md and docs/README.md.
+   */
+  @Test
+  public void testDocumentationLandingPageQuickStart() {
+    SystemInterface gas = new SystemSrkEos(298.15, 50.0);
+    gas.addComponent("methane", 0.90);
+    gas.addComponent("ethane", 0.05);
+    gas.addComponent("propane", 0.03);
+    gas.addComponent("CO2", 0.02);
+    gas.setMixingRule("classic");
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(gas);
+    ops.TPflash();
+    gas.initProperties();
+
+    assertTrue(gas.getDensity("kg/m3") > 35.0);
+    assertTrue(gas.getDensity("kg/m3") < 50.0);
+    assertTrue(gas.getZ() > 0.8);
+    assertTrue(gas.getZ() < 1.0);
+  }
+
+  /**
+   * State-flash example from docs/thermodynamicoperations/README.md.
+   */
+  @Test
+  public void testThermodynamicOperationsStateFlashDocs() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.07);
+    fluid.addComponent("propane", 0.03);
+    fluid.setMixingRule("classic");
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.TPflash();
+    fluid.initProperties();
+
+    double initialEnthalpy = fluid.getEnthalpy();
+    fluid.setPressure(30.0, "bara");
+    operations.PHflash(initialEnthalpy);
+    assertEquals(initialEnthalpy, fluid.getEnthalpy(), 1.0e-3);
+
+    double initialEntropy = fluid.getEntropy();
+    fluid.setPressure(70.0, "bara");
+    operations.PSflash(initialEntropy);
+    assertEquals(initialEntropy, fluid.getEntropy(), 1.0e-6);
+  }
+
+  /**
+   * PT-envelope example from docs/thermodynamicoperations/README.md.
+   */
+  @Test
+  public void testThermodynamicOperationsPhaseEnvelopeDocs() {
+    SystemInterface fluid = new SystemSrkEos(280.0, 10.0);
+    fluid.addComponent("methane", 0.75);
+    fluid.addComponent("ethane", 0.12);
+    fluid.addComponent("propane", 0.08);
+    fluid.addComponent("n-butane", 0.05);
+    fluid.setMixingRule("classic");
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.calcPTphaseEnvelope();
+    double[] cricondenbar = operations.get("cricondenbar");
+    double[] cricondentherm = operations.get("cricondentherm");
+
+    assertTrue(cricondenbar.length >= 2);
+    assertTrue(cricondentherm.length >= 2);
+    assertTrue(cricondenbar[1] > 0.0);
+    assertTrue(cricondentherm[0] > 0.0);
+  }
+
+  /**
+   * Reactive-flash example from docs/thermodynamicoperations/README.md.
+   */
+  @Test
+  public void testThermodynamicOperationsReactiveFlashDocs() {
+    SystemInterface reactive = new SystemSrkEos(600.0, 1.0);
+    reactive.addComponent("CO", 0.25);
+    reactive.addComponent("water", 0.25);
+    reactive.addComponent("CO2", 0.25);
+    reactive.addComponent("hydrogen", 0.25);
+    reactive.setMixingRule("classic");
+    reactive.setMaxNumberOfPhases(1);
+    reactive.setNumberOfPhases(1);
+    reactive.init(0);
+    reactive.init(1);
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(reactive);
+    operations.reactiveTPflash();
+
+    double compositionSum = 0.0;
+    for (int i = 0; i < reactive.getPhase(0).getNumberOfComponents(); i++) {
+      compositionSum += reactive.getPhase(0).getComponent(i).getx();
+    }
+    assertEquals(1.0, compositionSum, 1.0e-10);
+  }
 
   /**
    * FluidBuilder fluent API example from docs/util/engineering_utilities.md.
@@ -1465,4 +1573,95 @@ public class DocExamplesCompilationTest {
       assertNotNull(r.getStatus());
     }
   }
+
+  /**
+   * Energy-driven pump example from docs/process/energy_streams.md.
+   */
+  @Test
+  public void testEnergyDrivenPumpDocumentationExample() {
+    SystemInterface water = new SystemSrkEos(298.15, 2.0);
+    water.addComponent("water", 1.0);
+    water.setMixingRule("classic");
+
+    Stream feed = new Stream("pump feed", water);
+    feed.setFlowRate(100000.0, "kg/hr");
+    feed.run();
+
+    EnergyStream shaft = new EnergyStream("pump shaft", EnergyType.SHAFT_WORK);
+    shaft.setPower(100.0, "kW");
+
+    Pump pump = new Pump("energy-driven pump", feed);
+    pump.setIsentropicEfficiency(0.75);
+    pump.setEnergyStream(shaft);
+    pump.run();
+
+    double outletPressure = pump.getOutletStream().getPressure("bara");
+    EnergyPortMode mode = pump.getEnergyPort("shaftPower").getMode();
+
+    assertTrue(outletPressure > feed.getPressure("bara"));
+    assertEquals(EnergyPortMode.SPECIFICATION, mode);
+  }
+
+  /**
+   * Energy bus and mechanical shaft examples from docs/process/energy_streams.md.
+   */
+  @Test
+  public void testEnergyBusDocumentationExamples() {
+    EnergyBus grid = new EnergyBus("main electrical bus", EnergyType.ELECTRICAL);
+    grid.setContribution("solar", 2.0, "MW");
+    grid.setContribution("electrolyzer", -1.5, "MW");
+    double reserve = grid.getNetPower("kW");
+
+    MechanicalShaft shaftTrain = new MechanicalShaft("expander-compressor shaft");
+    shaftTrain.setMechanicalEfficiency(0.98);
+    shaftTrain.setGeneratedPower("expander", 10.0e6);
+    shaftTrain.setConsumedPower("compressor", 8.0e6);
+    double sparePower = shaftTrain.getNetPower("MW");
+
+    assertEquals(500.0, reserve, 1.0e-12);
+    assertEquals(1.8, sparePower, 1.0e-12);
+  }
+
+  /**
+   * Deterministic allocation example from docs/process/energy_streams.md.
+   */
+  @Test
+  public void testEnergyNetworkAllocationDocumentationExample() {
+    EnergyBus allocatedGrid = new EnergyBus("allocated grid", EnergyType.ELECTRICAL);
+
+    EnergyPort generator = new EnergyPort("power", EnergyType.ELECTRICAL, EnergyPortDirection.OUTPUT,
+        EnergyPortMode.CALCULATED);
+    generator.setOwnerName("generator");
+    generator.connect(allocatedGrid);
+    generator.setDuty(100.0, "kW");
+
+    EnergyPort essentialLoad = new EnergyPort("power", EnergyType.ELECTRICAL, EnergyPortDirection.INPUT,
+        EnergyPortMode.SPECIFICATION);
+    essentialLoad.setOwnerName("essential load");
+    essentialLoad.setPriority(10);
+    essentialLoad.setRequestedPower(80.0, "kW");
+    essentialLoad.connect(allocatedGrid);
+
+    EnergyPort flexibleLoad = new EnergyPort("power", EnergyType.ELECTRICAL, EnergyPortDirection.INPUT,
+        EnergyPortMode.SPECIFICATION);
+    flexibleLoad.setOwnerName("flexible load");
+    flexibleLoad.setPriority(20);
+    flexibleLoad.setRequestedPower(80.0, "kW");
+    flexibleLoad.connect(allocatedGrid);
+
+    EnergyNetworkReport allocation = allocatedGrid.solveBalance();
+    double essentialAllocation = essentialLoad.getPowerMagnitude("kW");
+    double flexibleAllocation = flexibleLoad.getPowerMagnitude("kW");
+    double unmetDemand = allocation.getUnmetDemand();
+
+    EnergyNetworkSolver network = new EnergyNetworkSolver("electrical allocation", allocatedGrid);
+    ProcessSystem process = new ProcessSystem();
+    process.add(network);
+
+    assertEquals(1, network.getEnergyBuses().size());
+    assertEquals(80.0, essentialAllocation, 1.0e-12);
+    assertEquals(20.0, flexibleAllocation, 1.0e-12);
+    assertEquals(60.0, unmetDemand / 1000.0, 1.0e-12);
+  }
+
 }

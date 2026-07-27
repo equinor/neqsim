@@ -125,6 +125,10 @@ MechanicalDesign mecDesign = separator.getMechanicalDesign();
 // Set design standards (optional - uses defaults if not specified)
 mecDesign.setCompanySpecificDesignStandards("Equinor");
 
+// Prefer explicit units for operating conditions; canonical storage is bara and K
+mecDesign.setMaxOperationPressure(1450.38, "psia");
+mecDesign.setMaxOperationTemperature(250.0, "F");
+
 // Calculate design
 mecDesign.calcDesign();
 
@@ -138,6 +142,30 @@ double designPressure = mecDesign.getMaxDesignPressure(); // bara
 // Display results in GUI
 mecDesign.displayResults();
 ```
+
+### Declared design conditions and units
+
+`DesignConditions` stores data-sheet declarations separately from calculated sizing results. Legacy
+single-argument setters retain their documented canonical units: pressure in `bara`, temperature in
+degrees Celsius, and corrosion allowance in `mm`. Unit-aware overloads should be preferred for new
+code:
+
+```java
+DesignConditions conditions = separator.getDesignConditions();
+conditions.setDesignPressure(1450.38, "psia");
+conditions.setMaxDesignTemperature(250.0, "F");
+conditions.setMinDesignTemperature(-50.0, "C");
+conditions.setReliefSetPressure(100.0, "barg");
+conditions.setCorrosionAllowance(0.125, "in");
+
+double designPressureBara = conditions.getDesignPressure("bara");
+double maximumTemperatureC = conditions.getMaxDesignTemperature("C");
+```
+
+`DesignConditionValue` adds an immutable typed representation for pressure, temperature, and length
+conditions. `DesignConditions.getCondition(type)` and `getConditions()` expose typed defensive
+snapshots. Values are converted to the condition's canonical unit on creation, invalid units fail
+closed, and physically impossible pressure, temperature, or corrosion values are rejected.
 
 ### System-Wide Mechanical Design
 
@@ -158,8 +186,20 @@ SystemMechanicalDesign sysMecDesign = new SystemMechanicalDesign(process);
 // Set company standards for all equipment
 sysMecDesign.setCompanySpecificDesignStandards("Equinor");
 
-// Run design calculations for all equipment
-sysMecDesign.runDesignCalculation();
+// Prefer the structured API so partial system totals cannot be mistaken for complete results
+SystemMechanicalDesignResult calculation =
+    sysMecDesign.calculate(SystemDesignExecutionMode.BEST_EFFORT);
+if (!calculation.isComplete()) {
+  for (EquipmentDesignOutcome outcome : calculation.getEquipmentOutcomes()) {
+    if (outcome.getStatus() == EquipmentDesignOutcome.Status.FAILED) {
+      logger.error("Design failed for {}: {}", outcome.getEquipmentName(), outcome.getMessage());
+    }
+  }
+}
+
+// The aggregate is cached on the ProcessSystem and survives copy/serialization
+boolean calculated = sysMecDesign.hasRunDesignCalculation();
+long revision = sysMecDesign.getDesignCalculationRevision();
 
 // Access aggregated results
 double totalWeight = sysMecDesign.getTotalWeight();           // kg
@@ -177,6 +217,22 @@ Map<String, Integer> countByType = sysMecDesign.getEquipmentCountByType();
 // Print summary report
 System.out.println(sysMecDesign.generateSummaryReport());
 ```
+
+System-wide calculation reuses each equipment's current `MechanicalDesign` object. Standards,
+limits, and sizing inputs configured before the call are therefore preserved. Repeated calls
+replace the aggregate totals instead of accumulating them and increment the calculation revision.
+The system-level result is serialized with `ProcessSystem`, including its equipment summaries and
+breakdowns. Collection getters return defensive snapshots, so modifying a returned summary does not
+alter the stored design state.
+
+`calculate(BEST_EFFORT)` continues with independent equipment after a calculation error and returns
+an immutable outcome for every item. Aggregate weights, dimensions, and utilities then contain only
+successfully calculated equipment, and `isComplete()` is false. `calculate(FAIL_FAST)` stops on the
+first failure and throws `SystemMechanicalDesignException`; `getPartialResult()` preserves the
+calculated, failed, and skipped outcomes. Exception class and message are included in the serialized
+result, while stack traces remain in the application log. The legacy `runDesignCalculation()` method
+retains best-effort behavior for source compatibility; inspect `getLastCalculationResult()` before
+using its aggregates.
 
 ## JSON Export
 
@@ -484,8 +540,8 @@ separator.getMechanicalDesign().loadProcessDesignParameters();  // Loads from Te
 |-----------|--------|------|---------------|-------------|
 | NPSH margin factor | `getNpshMarginFactor()` | - | 1.1-1.3 | NPSHa / NPSHr requirement |
 | Hydraulic power margin | `getHydraulicPowerMargin()` | - | 1.05-1.15 | Driver sizing margin |
-| POR low fraction | `getPorLowFraction()` | - | 0.70-0.80 | Preferred Operating Region low limit (of BEP) |
-| POR high fraction | `getPorHighFraction()` | - | 1.10-1.15 | Preferred Operating Region high limit (of BEP) |
+| POR low fraction | `getPorLowFraction()` | - | 0.70 | Preferred Operating Region low limit (of BEP) |
+| POR high fraction | `getPorHighFraction()` | - | 1.20 | Preferred Operating Region high limit (of BEP) |
 | AOR low fraction | `getAorLowFraction()` | - | 0.60-0.70 | Allowable Operating Region low limit |
 | AOR high fraction | `getAorHighFraction()` | - | 1.20-1.30 | Allowable Operating Region high limit |
 | Maximum suction specific speed | `getMaxSuctionSpecificSpeed()` | - | 8000-13000 | Nss limit for stable operation |
@@ -696,6 +752,10 @@ Design calculations include:
 ```java
 PumpMechanicalDesign pumpDesign =
     (PumpMechanicalDesign) pump.getMechanicalDesign();
+pumpDesign.setApi610PumpType(PumpApi610DesignCalculator.Api610PumpType.OH2);
+pumpDesign.setMaximumSuctionPressure(8.0); // bara, purchaser maximum
+pumpDesign.setFurnishedCasingMawp(25.0);  // bara, vendor value
+pumpDesign.calcDesign();
 
 // Key parameters
 double specificSpeed = pumpDesign.getSpecificSpeed();
@@ -711,16 +771,27 @@ double aorLow = pumpDesign.getAorLowFraction();   // Allowable Operating Region
 double aorHigh = pumpDesign.getAorHighFraction();
 double maxNss = pumpDesign.getMaxSuctionSpecificSpeed();
 double headMargin = pumpDesign.getHeadMarginFactor();
+
+// Structured API 610 screening result
+PumpApi610DesignCalculator api610 = pumpDesign.getApi610Assessment();
+PumpApi610DesignCalculator.AssessmentStatus status = api610.getAssessmentStatus();
+List<PumpApi610DesignCalculator.Check> checks = api610.getChecks();
 ```
 
 Design calculations include:
-- Pump type selection (OH, BB, VS) based on application
+- Exact API 610 construction type (OH1-OH6, BB1-BB5 or VS1-VS7), supplied by the purchaser or preliminarily recommended
 - Impeller sizing from affinity laws
-- NPSH margin verification against requirements
-- Driver margin per API 610 (10-25%)
-- Seal type selection
-- Operating region validation (POR/AOR vs BEP)
-- Suction specific speed verification
+- Speed-aware vendor BEP, shutoff-head and NPSHr ingestion
+- Rated-point, POR and AOR screening relative to vendor BEP
+- NPSH head and ratio margin verification
+- Maximum-discharge-pressure, furnished MAWP and preliminary hydrotest-pressure screening
+- Driver selection without double-counting pump efficiency
+- ISO 281 rolling-element bearing life when vendor bearing load data are supplied
+- Vendor-evidence checks for shaft deflection, critical speed, nozzle loads and vibration
+
+The result is an API 610 13th-edition engineering screen, not a certificate of conformity. Checks that require vendor
+geometry, loads, analysis or test data return `NOT_EVALUATED` until those data are provided. Project criteria and the
+purchased standard remain governing.
 
 ### Valves (IEC 60534)
 

@@ -238,6 +238,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Document             | Path                                                                                           | Description                               |
 | -------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------- |
 | Process Overview     | [docs/process/README.md](process/)                                                             | Process simulation module                 |
+| Energy Streams & Equipment Ports | [docs/process/energy_streams.md](process/energy_streams.md)                  | Typed heat, shaft-work, and electrical connections, unit-aware duties, buses, and shafts |
 | NeqSim Studio (Python) | [docs/process/neqsim-studio.md](process/neqsim-studio)                                        | Newcomer-friendly Python process builder (natural language, templates, wizard, edit-by-chat, gallery) |
 | Process Guide        | [docs/wiki/process_simulation.md](wiki/process_simulation)                                     | Process simulation guide                  |
 | Advanced Process     | [docs/wiki/advanced_process_simulation.md](wiki/advanced_process_simulation)                   | Advanced techniques                       |
@@ -301,7 +302,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **H2S Scavenger**  | [docs/process/H2S_scavenger_guide.md](process/H2S_scavenger_guide)             | **Chemical scavenging of H2S from gas - triazine, glyoxal, iron sponge, caustic, liquid redox**                                                                                                                    |
 | Membrane           | [docs/wiki/membrane_separation.md](wiki/membrane_separation)                   | Membrane separation                                                                                                                                                                                                |
 | Membrane Equipment | [docs/process/equipment/membranes.md](process/equipment/membranes)             | Membrane equipment                                                                                                                                                                                                 |
-| Filters            | [docs/process/equipment/filters.md](process/equipment/filters)                 | Filter equipment, dynamic solids loading, breakthrough, backwash/regeneration, and sulfur `S8` capture with pressure-drop buildup                                                                                   |
+| Filters            | [docs/process/equipment/filters.md](process/equipment/filters)                 | Oil and gas filter types, beta-ratio capture, measured/flow-scaled/Ergun pressure drop, dynamic loading, bypass, sulfur `S8` capture, and mechanical design                                                            |
 | Water Treatment    | [docs/process/equipment/water_treatment.md](process/equipment/water_treatment) | **Hydrocyclones (physics-based d50, DSD integration, PDR model, liner sizing, OSPAR compliance, ASME VIII mechanical design), GasFlotationUnit (IGF/DGF, per-stage efficiency, reject flow)**, produced water treatment trains, OIW limits |
 
 ### Chapter 15: Rotating Equipment
@@ -486,6 +487,8 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Mechanical Design Report**      | [docs/process/mechanical_design.md#comprehensive-mechanical-design-report-json](process/mechanical_design#comprehensive-mechanical-design-report-json) | **Combined JSON output for all mechanical design data (equipment + piping)**                                                     |
 | **Compressor Casing Design**      | [docs/process/CompressorMechanicalDesign.md#casing-wall-thickness-asme-viii-div-1-ug-27](process/CompressorMechanicalDesign#casing-wall-thickness-asme-viii-div-1-ug-27) | **Compressor casing design per API 617 / ASME VIII: wall thickness, material selection, flange rating, nozzle loads, NACE MR0175, thermal growth, split-line bolts, barrel casing** |
 | Design Standards                  | [docs/process/mechanical_design_standards.md](process/mechanical_design_standards)                                                                     | Design standards                                                                                                                 |
+| **Standards Implementation Program** | [docs/process/process_design_standards_program.md](process/process_design_standards_program)                                                         | Standards priorities, evidence gates, requirement coverage, and change control                                                   |
+| **Typed Standards Migration**     | [docs/process/standard_design_kernel_migration.md](process/standard_design_kernel_migration)                                                           | Fail-closed migration to explicit editions, kernels, requirement packs, and complete case envelopes                              |
 | Design Database                   | [docs/process/mechanical_design_database.md](process/mechanical_design_database)                                                                       | Design database                                                                                                                  |
 | **Pipeline Mechanical Design**    | [docs/process/pipeline_mechanical_design.md](process/pipeline_mechanical_design)                                                                       | **Comprehensive pipeline mechanical design with wall thickness, stress analysis, cost estimation**                               |
 | **Topside Piping Design**         | [docs/process/topside_piping_design.md](process/topside_piping_design)                                                                                 | **Topside piping design with velocity, support spacing, vibration (AIV/FIV), stress analysis per ASME B31.3**                    |
@@ -1219,7 +1222,7 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 | ---------------------- | ------- |
 | Wiki/Tutorials         | 60      |
 | Thermodynamics         | 26      |
-| Process Simulation     | 48      |
+| Process Simulation     | 49      |
 | Safety Systems         | 18      |
 | **Risk Simulation**    | **13**  |
 | Field Development      | 11      |

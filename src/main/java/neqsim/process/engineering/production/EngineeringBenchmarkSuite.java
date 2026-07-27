@@ -72,6 +72,44 @@ public final class EngineeringBenchmarkSuite implements Serializable {
       return !requiredMethods.isEmpty() && qualifyingMethods.containsAll(requiredMethods);
     }
 
+    /**
+     * Check numeric regression tolerances independently of evidence qualification.
+     *
+     * <p>
+     * A passing regression baseline protects implementation behavior but does not qualify a method. Use
+     * {@link #isPassed()} for the independently reviewed production-readiness gate.
+     * </p>
+     *
+     * @return true when the report contains at least one benchmark and every numeric check passes
+     */
+    public boolean areAllBenchmarksPassed() {
+      if (benchmarks.isEmpty()) {
+        return false;
+      }
+      for (EngineeringValidationBenchmark benchmark : benchmarks) {
+        if (!benchmark.isPassed()) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    /** @return immutable IDs of benchmark cases outside their numeric tolerances */
+    public List<String> getFailedBenchmarkIds() {
+      List<String> failed = new ArrayList<String>();
+      for (EngineeringValidationBenchmark benchmark : benchmarks) {
+        if (!benchmark.isPassed()) {
+          failed.add(benchmark.getId());
+        }
+      }
+      return Collections.unmodifiableList(failed);
+    }
+
+    /** @return immutable benchmark records evaluated by this report */
+    public List<EngineeringValidationBenchmark> getBenchmarks() {
+      return benchmarks;
+    }
+
     public Set<String> getMissingQualifyingMethods() {
       Set<String> missing = new LinkedHashSet<String>(requiredMethods);
       missing.removeAll(qualifyingMethods);
@@ -88,6 +126,7 @@ public final class EngineeringBenchmarkSuite implements Serializable {
 
     public Map<String, Object> toMap() {
       Map<String, Object> result = new LinkedHashMap<String, Object>();
+      result.put("schemaVersion", "engineering_benchmark_suite.v1");
       result.put("suiteId", id);
       result.put("revision", revision);
       result.put("requiredMethods", new ArrayList<String>(requiredMethods));
@@ -98,6 +137,8 @@ public final class EngineeringBenchmarkSuite implements Serializable {
         rows.add(benchmark.toMap());
       }
       result.put("benchmarks", rows);
+      result.put("allBenchmarksPassed", Boolean.valueOf(areAllBenchmarksPassed()));
+      result.put("failedBenchmarkIds", new ArrayList<String>(getFailedBenchmarkIds()));
       result.put("passed", Boolean.valueOf(isPassed()));
       result.put("engineeringApprovalRequired", Boolean.TRUE);
       return result;

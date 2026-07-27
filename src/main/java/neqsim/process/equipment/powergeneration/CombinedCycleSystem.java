@@ -12,6 +12,9 @@ import neqsim.process.design.AutoSizeable;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.equipment.capacity.CapacityConstraint;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.stream.StreamInterface;
 
 /**
@@ -93,6 +96,7 @@ public class CombinedCycleSystem extends TwoPortEquipment implements CapacityCon
    */
   public CombinedCycleSystem(String name) {
     super(name);
+    registerEnergyPort("electricalPower", EnergyType.ELECTRICAL, EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED);
   }
 
   /**
@@ -102,7 +106,8 @@ public class CombinedCycleSystem extends TwoPortEquipment implements CapacityCon
    * @param fuelGasInlet fuel gas stream to the gas turbine
    */
   public CombinedCycleSystem(String name, StreamInterface fuelGasInlet) {
-    super(name, fuelGasInlet);
+    this(name);
+    setInletStream(fuelGasInlet);
   }
 
   /** {@inheritDoc} */
@@ -130,6 +135,7 @@ public class CombinedCycleSystem extends TwoPortEquipment implements CapacityCon
       logger.warn("Gas turbine exhaust not available, estimating HRSG from heat balance");
       totalPower = gasTurbinePower;
       overallEfficiency = fuelEnergyInput > 0 ? totalPower / fuelEnergyInput : 0.0;
+      getEnergyPort("electricalPower").setDuty(totalPower);
       setCalculationIdentifier(id);
       return;
     }
@@ -156,6 +162,7 @@ public class CombinedCycleSystem extends TwoPortEquipment implements CapacityCon
     // Set outlet stream (gas exhausting from HRSG stack)
     outStream.setThermoSystem(hrsg.getOutletStream().getThermoSystem().clone());
     outStream.setCalculationIdentifier(id);
+    getEnergyPort("electricalPower").setDuty(totalPower);
     setCalculationIdentifier(id);
   }
 

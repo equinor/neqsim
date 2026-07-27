@@ -231,6 +231,7 @@ class RootCauseAnalyzerTest {
 
     assertEquals(Hypothesis.EvaluationStatus.UNSUPPORTED, result.getStatus());
     assertEquals(Hypothesis.EvaluationStatus.UNSUPPORTED, h.getVerificationStatus());
+    assertEquals(0.5, result.getScore(), 0.001);
     assertEquals(0.0, result.getCoverage(), 0.001);
     assertEquals(0.4, h.getConfidenceScore(), 0.001);
   }

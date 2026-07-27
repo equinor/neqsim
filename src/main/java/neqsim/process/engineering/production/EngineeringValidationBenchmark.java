@@ -98,6 +98,11 @@ public final class EngineeringValidationBenchmark implements Serializable {
     return new Builder(id, methodId, methodVersion);
   }
 
+  /** @return stable benchmark case identifier */
+  public String getId() {
+    return id;
+  }
+
   public String getMethodId() {
     return methodId;
   }

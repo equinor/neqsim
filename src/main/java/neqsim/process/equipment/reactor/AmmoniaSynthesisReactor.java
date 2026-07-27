@@ -6,6 +6,9 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.TwoPortEquipment;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -139,6 +142,7 @@ public class AmmoniaSynthesisReactor extends TwoPortEquipment {
    */
   public AmmoniaSynthesisReactor(String name) {
     super(name);
+    registerEnergyPort("reactionHeat", EnergyType.HEAT, EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED);
   }
 
   /**
@@ -148,7 +152,8 @@ public class AmmoniaSynthesisReactor extends TwoPortEquipment {
    * @param inletStream the synthesis gas feed stream
    */
   public AmmoniaSynthesisReactor(String name, StreamInterface inletStream) {
-    super(name, inletStream);
+    this(name);
+    setInletStream(inletStream);
   }
 
   /** {@inheritDoc} */
@@ -239,7 +244,7 @@ public class AmmoniaSynthesisReactor extends TwoPortEquipment {
     outStream.setThermoSystem(outSystem);
     outStream.run(id);
 
-    getEnergyStream().setDuty(heatDuty);
+    getEnergyPort("reactionHeat").setDuty(heatDuty);
     setCalculationIdentifier(id);
   }
 

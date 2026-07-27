@@ -373,4 +373,43 @@ class EjectorTest {
     double lastER = curve.get(curve.size() - 1)[1];
     assertTrue(firstER >= lastER, "entrainment ratio should generally decrease with higher discharge pressure");
   }
+
+  @Test
+  void diffuserSizingUsesDischargeStateDensity() {
+    SystemInterface motiveFluid = new SystemSrkEos(273.15 + 40.0, 70.0);
+    motiveFluid.addComponent("methane", 0.90);
+    motiveFluid.addComponent("ethane", 0.10);
+    motiveFluid.setMixingRule("classic");
+
+    Stream motiveStream = new Stream("density-test motive", motiveFluid);
+    motiveStream.setFlowRate(10000.0, "kg/hr");
+    motiveStream.run();
+
+    SystemInterface suctionFluid = new SystemSrkEos(273.15 + 15.0, 5.0);
+    suctionFluid.addComponent("methane", 0.90);
+    suctionFluid.addComponent("ethane", 0.10);
+    suctionFluid.setMixingRule("classic");
+
+    Stream suctionStream = new Stream("density-test suction", suctionFluid);
+    suctionStream.setFlowRate(2500.0, "kg/hr");
+    suctionStream.run();
+
+    Ejector ejector = new Ejector("diffuser density test", motiveStream, suctionStream);
+    ejector.setMixingPressure(4.0);
+    ejector.setDischargePressure(15.0);
+    ejector.setDesignDiffuserOutletVelocity(0.1);
+    ejector.run();
+
+    EjectorMechanicalDesign design = ejector.getMechanicalDesign();
+    double totalMassFlow = motiveStream.getFlowRate("kg/sec") + suctionStream.getFlowRate("kg/sec");
+    double densityUsedForSizing = totalMassFlow / (design.getDiffuserOutletArea() * design.getDiffuserOutletVelocity());
+
+    SystemInterface independentlyInitializedOutlet = ejector.getOutStream().getThermoSystem().clone();
+    independentlyInitializedOutlet.initPhysicalProperties();
+    double expectedDischargeDensity = independentlyInitializedOutlet.getDensity("kg/m3");
+
+    assertEquals(expectedDischargeDensity, densityUsedForSizing, expectedDischargeDensity * 1.0e-5,
+        "Diffuser area must use density at the flashed discharge state");
+  }
+
 }
