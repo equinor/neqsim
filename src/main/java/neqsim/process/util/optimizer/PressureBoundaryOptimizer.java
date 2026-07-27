@@ -11,6 +11,7 @@ import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorChartGenerator;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -554,27 +555,55 @@ public class PressureBoundaryOptimizer implements Serializable {
     List<OptimizationConstraint> constraints = new ArrayList<OptimizationConstraint>();
 
     for (final Compressor comp : compressors) {
-      // Surge margin constraint
-      constraints.add(new OptimizationConstraint(comp.getName() + "_surgeMargin", proc -> comp.getDistanceToSurge(),
-          minSurgeMargin, ConstraintDirection.GREATER_THAN, ConstraintSeverity.HARD, 10.0,
-          "Compressor " + comp.getName() + " must maintain surge margin > " + minSurgeMargin));
+      Map<String, CapacityConstraint> equipmentConstraints = comp.getCapacityConstraints();
 
-      // Power limit constraint
-      if (maxPowerLimit < Double.MAX_VALUE) {
-        constraints.add(new OptimizationConstraint(comp.getName() + "_power", proc -> comp.getPower("kW"),
-            maxPowerLimit, ConstraintDirection.LESS_THAN, ConstraintSeverity.HARD, 5.0,
-            "Compressor " + comp.getName() + " power must be < " + maxPowerLimit + " kW"));
+      // Preserve the public optimizer setting by applying it to the same physical
+      // minimum-margin constraint used by bottleneck detection and external optimizers.
+      CapacityConstraint surgeMargin = equipmentConstraints.get("surgeMargin");
+      if (surgeMargin != null && surgeMargin.isMinimumConstraint()) {
+        surgeMargin.setMinValue(minSurgeMargin * 100.0);
       }
 
-      // Speed limits
+      // Reuse all enabled equipment constraints. This keeps pressure-boundary
+      // optimization aligned with ProcessSystem.findBottleneck(), capacity reports,
+      // and CapacityConstraintAdapter instead of maintaining a second constraint list.
+      for (final CapacityConstraint equipmentConstraint : equipmentConstraints.values()) {
+        if (!equipmentConstraint.isEnabled()
+            || equipmentConstraint.getType() == CapacityConstraint.ConstraintType.DESIGN
+            || equipmentConstraint.getSeverity()
+                == CapacityConstraint.ConstraintSeverity.ADVISORY) {
+          continue;
+        }
+        ConstraintSeverity severity =
+            equipmentConstraint.getSeverity() == CapacityConstraint.ConstraintSeverity.SOFT
+                ? ConstraintSeverity.SOFT
+                : ConstraintSeverity.HARD;
+        double penaltyWeight = severity == ConstraintSeverity.HARD ? 10.0 : 1.0;
+        constraints.add(new OptimizationConstraint(
+            comp.getName() + "_" + equipmentConstraint.getName(),
+            proc -> equipmentConstraint.getUtilization(), 1.0,
+            ConstraintDirection.LESS_THAN, severity, penaltyWeight,
+            equipmentConstraint.getDescription()));
+      }
+
+      // Explicit caller limits remain additional overrides when they are tighter
+      // than, or independent of, the equipment design constraints.
+      if (maxPowerLimit < Double.MAX_VALUE) {
+        constraints.add(new OptimizationConstraint(comp.getName() + "_configuredPowerLimit",
+            proc -> comp.getPower("kW"), maxPowerLimit, ConstraintDirection.LESS_THAN,
+            ConstraintSeverity.HARD, 5.0,
+            "Compressor " + comp.getName() + " power must be < " + maxPowerLimit + " kW"));
+      }
       if (maxSpeedLimit < Double.MAX_VALUE) {
-        constraints.add(new OptimizationConstraint(comp.getName() + "_maxSpeed", proc -> comp.getSpeed(), maxSpeedLimit,
-            ConstraintDirection.LESS_THAN, ConstraintSeverity.HARD, 5.0,
+        constraints.add(new OptimizationConstraint(comp.getName() + "_configuredMaxSpeed",
+            proc -> comp.getSpeed(), maxSpeedLimit, ConstraintDirection.LESS_THAN,
+            ConstraintSeverity.HARD, 5.0,
             "Compressor " + comp.getName() + " speed must be < " + maxSpeedLimit + " RPM"));
       }
       if (minSpeedLimit > 0) {
-        constraints.add(new OptimizationConstraint(comp.getName() + "_minSpeed", proc -> comp.getSpeed(), minSpeedLimit,
-            ConstraintDirection.GREATER_THAN, ConstraintSeverity.HARD, 5.0,
+        constraints.add(new OptimizationConstraint(comp.getName() + "_configuredMinSpeed",
+            proc -> comp.getSpeed(), minSpeedLimit, ConstraintDirection.GREATER_THAN,
+            ConstraintSeverity.HARD, 5.0,
             "Compressor " + comp.getName() + " speed must be > " + minSpeedLimit + " RPM"));
       }
     }
