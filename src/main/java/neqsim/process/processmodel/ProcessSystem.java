@@ -46,6 +46,7 @@ import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.equipment.mixer.MixerInterface;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reactor.FurnaceBurner;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.Adjuster;
 import neqsim.process.equipment.util.Calculator;
@@ -266,6 +267,18 @@ public class ProcessSystem extends SimulationBaseClass {
   private boolean useFlashWarmStart = false;
 
   /**
+   * Flowsheet-wide physical-property initialization level applied to every {@link Stream} in this process system.
+   *
+   * <p>
+   * {@code null} (default) means each stream keeps its own setting, i.e. the historical
+   * {@link Stream.PropertyInitLevel#FULL} behaviour. Setting it to {@link Stream.PropertyInitLevel#DENSITY_ONLY} via
+   * {@link #setPropertyInitLevel(Stream.PropertyInitLevel)} skips the viscosity, thermal-conductivity and diffusivity
+   * correlations after every stream flash, which is roughly an order of magnitude cheaper.
+   * </p>
+   */
+  private Stream.PropertyInitLevel propertyInitLevel = null;
+
+  /**
    * When true, per-unit execution timing is recorded during simulation. After run() completes, call
    * {@link #getExecutionProfile()} to retrieve a map from equipment name to cumulative execution time in milliseconds.
    * Enable via {@link #setProfilingEnabled(boolean)}.
@@ -433,9 +446,87 @@ public class ProcessSystem extends SimulationBaseClass {
 
     getUnitOperations().add(position, operation);
     invalidateStructureCaches();
+    if (propertyInitLevel != null) {
+      applyPropertyInitLevel(operation, propertyInitLevel);
+    }
     if (operation instanceof ModuleInterface) {
       ((ModuleInterface) operation).initializeModule();
     }
+  }
+
+  /**
+   * Applies a physical-property initialization level to a single unit operation.
+   *
+   * <p>
+   * The level is applied to the unit itself when it is a {@link Stream}, and to every inlet and outlet stream it
+   * exposes through {@link ProcessEquipmentInterface#getInletStreams()} and
+   * {@link ProcessEquipmentInterface#getOutletStreams()}, so streams that are owned by a separator, mixer or splitter
+   * (and therefore never registered directly in the process system) are covered as well.
+   * </p>
+   *
+   * @param operation the unit operation to configure; ignored when null
+   * @param level the property-initialization level to apply; must not be null
+   */
+  private void applyPropertyInitLevel(ProcessEquipmentInterface operation, Stream.PropertyInitLevel level) {
+    if (operation == null) {
+      return;
+    }
+    if (operation instanceof Stream) {
+      ((Stream) operation).setPropertyInitLevel(level);
+    }
+    try {
+      List<StreamInterface> connected = new ArrayList<StreamInterface>();
+      if (operation.getInletStreams() != null) {
+        connected.addAll(operation.getInletStreams());
+      }
+      if (operation.getOutletStreams() != null) {
+        connected.addAll(operation.getOutletStreams());
+      }
+      for (StreamInterface connectedStream : connected) {
+        if (connectedStream instanceof Stream) {
+          ((Stream) connectedStream).setPropertyInitLevel(level);
+        }
+      }
+    } catch (Exception ex) {
+      logger.debug("could not propagate property init level to streams of " + operation.getName(), ex);
+    }
+  }
+
+  /**
+   * Sets the physical-property initialization level used by every {@link Stream} in this process system.
+   *
+   * <p>
+   * By default each stream runs {@code initProperties()} after its flash, which evaluates mass density, viscosity,
+   * thermal conductivity and diffusivity. Selecting {@link Stream.PropertyInitLevel#DENSITY_ONLY} evaluates the mass
+   * density only and skips the transport-property correlations, which measures roughly an order of magnitude faster per
+   * stream and typically removes a significant share of the wall time of a large flowsheet. Use it when the flowsheet
+   * only needs mass and energy balances; switch back to {@link Stream.PropertyInitLevel#FULL} before reading
+   * viscosities or thermal conductivities from stream fluids.
+   * </p>
+   *
+   * <p>
+   * The level is applied immediately to all units already present and to any unit added afterwards.
+   * </p>
+   *
+   * @param level the level to apply; null restores per-stream control without changing already applied settings
+   */
+  public void setPropertyInitLevel(Stream.PropertyInitLevel level) {
+    this.propertyInitLevel = level;
+    if (level == null) {
+      return;
+    }
+    for (ProcessEquipmentInterface operation : getUnitOperations()) {
+      applyPropertyInitLevel(operation, level);
+    }
+  }
+
+  /**
+   * Gets the flowsheet-wide physical-property initialization level.
+   *
+   * @return the configured level, or null when each stream controls its own level
+   */
+  public Stream.PropertyInitLevel getPropertyInitLevel() {
+    return propertyInitLevel;
   }
 
   /**
