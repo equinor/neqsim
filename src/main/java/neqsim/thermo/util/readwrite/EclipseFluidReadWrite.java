@@ -35,6 +35,66 @@ public class EclipseFluidReadWrite {
   public static String pseudoName = "";
 
   /**
+   * Cache of parsed E300 fluids, keyed on the absolute file path, its last-modified timestamp and length, and the
+   * {@link #pseudoName} prefix in force when the file was parsed.
+   *
+   * <p>
+   * Parsing an E300 file costs on the order of 50 ms while cloning the resulting fluid costs less than 0.1 ms, so
+   * flowsheets that build many fluids from the same file (one per feed stream, per scenario or per optimizer trial)
+   * spend most of their build time re-parsing identical text. The cache stores an independent copy and every read
+   * returns a fresh object, so callers may freely mutate the fluid they receive.
+   * </p>
+   */
+  private static final java.util.Map<String, SystemInterface> fluidCache = new java.util.concurrent.ConcurrentHashMap<String, SystemInterface>();
+
+  /** When true (default), parsed E300 files are cached and repeated reads are served from the cache. */
+  private static boolean useCache = true;
+
+  /**
+   * Enables or disables caching of parsed E300 fluid files.
+   *
+   * <p>
+   * The cache key includes the file's last-modified timestamp and length, so edits to a file on disk are picked up
+   * automatically. Disable the cache only when files are rewritten within the same timestamp resolution or when the
+   * extra memory is undesirable. Disabling also clears the cache.
+   * </p>
+   *
+   * @param useCacheIn true to cache parsed fluids (default), false to parse on every read
+   */
+  public static void setUseCache(boolean useCacheIn) {
+    useCache = useCacheIn;
+    if (!useCacheIn) {
+      clearCache();
+    }
+  }
+
+  /**
+   * Returns whether parsed E300 fluid files are cached.
+   *
+   * @return true if caching is enabled
+   */
+  public static boolean isUseCache() {
+    return useCache;
+  }
+
+  /**
+   * Clears the parsed E300 fluid cache.
+   */
+  public static void clearCache() {
+    fluidCache.clear();
+  }
+
+  /**
+   * Builds the cache key for an E300 file.
+   *
+   * @param file the E300 file being read; must exist
+   * @return a key combining absolute path, last-modified timestamp, file length and the active pseudo-name prefix
+   */
+  private static String cacheKey(File file) {
+    return file.getAbsolutePath() + "|" + file.lastModified() + "|" + file.length() + "|" + pseudoName;
+  }
+
+  /**
    * Maps common E300 component aliases to NeqSim database component names.
    *
    * @param name component name read from the E300 {@code CNAMES} section
@@ -293,6 +353,18 @@ public class EclipseFluidReadWrite {
     if (!file.canRead()) {
       throw new IllegalArgumentException(
           "Eclipse fluid file cannot be read: " + inputFile + ". Check file permissions.");
+    }
+
+    // Serve repeated reads of an unchanged file from the parse cache. Only the auto-created
+    // path is cacheable - when the caller supplies its own fluid the components must be added
+    // to that exact instance.
+    boolean cacheable = forcedFluid == null && useCache;
+    String key = cacheable ? cacheKey(file) : null;
+    if (cacheable) {
+      SystemInterface cached = fluidCache.get(key);
+      if (cached != null) {
+        return cached.clone();
+      }
     }
 
     neqsim.thermo.system.SystemInterface fluid = (forcedFluid != null) ? forcedFluid
@@ -731,6 +803,9 @@ public class EclipseFluidReadWrite {
           ex);
     } catch (Exception ex) {
       throw new IllegalArgumentException("Error parsing Eclipse fluid file: " + inputFile + ". " + ex.getMessage(), ex);
+    }
+    if (cacheable) {
+      fluidCache.put(key, fluid.clone());
     }
     return fluid;
   }
