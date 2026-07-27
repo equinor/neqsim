@@ -64,7 +64,14 @@ public final class H2CO2PhaseEquilibriumData {
         if (nitrogenFraction > 0.0) {
           composition.put("nitrogen", nitrogenFraction);
         }
-        Property property = "bubble".equals(values[2]) ? Property.BUBBLE_POINT_PRESSURE : Property.DEW_POINT_PRESSURE;
+        Property property;
+        if ("bubble".equals(values[2])) {
+          property = Property.BUBBLE_POINT_PRESSURE;
+        } else if ("dew".equals(values[2])) {
+          property = Property.DEW_POINT_PRESSURE;
+        } else {
+          throw new IOException("Unknown phase-equilibrium property " + values[2]);
+        }
         points.add(new Point(property, temperatureK, pressureBara, pressureBara, Double.NaN, "bara", composition));
       }
     }
