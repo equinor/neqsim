@@ -249,8 +249,8 @@ List<CompressorOperatingPointResult.ConstraintSnapshot> constraints =
 String resultJson = result.toJson();
 ```
 
-The result reuses the same `CapacityConstraint` objects as
-`ProcessSystem.findBottleneck()` and `CapacityConstraintAdapter`.
+The result evaluates the same `CapacityConstraint` definitions used by
+`ProcessSystem.findBottleneck()` and `CapacityConstraintAdapter`, but returns detached snapshots for safe exchange.
 `PressureBoundaryOptimizer` also consumes these constraints, so surge, stonewall, speed,
 driver power, discharge temperature, and custom vendor limits have identical semantics in
 reporting and optimization. Explicit optimizer power and speed settings remain additional
