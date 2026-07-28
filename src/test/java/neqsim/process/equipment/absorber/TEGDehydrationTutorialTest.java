@@ -86,6 +86,8 @@ class TEGDehydrationTutorialTest extends NeqSimTest {
     double leanWaterFlow = componentFlow(leanTeg, "water");
     double productWaterFlow = componentFlow(productGas, "water");
     double richWaterFlow = componentFlow(richTeg, "water");
+    double waterTransferred = wetWaterFlow - productWaterFlow;
+    double richTegFlow = richTeg.getFlowRate("kg/hr");
     double waterResidual = wetWaterFlow + leanWaterFlow - productWaterFlow - richWaterFlow;
     double totalMassResidual = wetGas.getFlowRate("kg/hr") + leanTeg.getFlowRate("kg/hr")
         - productGas.getFlowRate("kg/hr") - richTeg.getFlowRate("kg/hr");
@@ -96,8 +98,9 @@ class TEGDehydrationTutorialTest extends NeqSimTest {
     assertEquals(778.927, wetWater * 1.0e6, 0.1);
     assertEquals(46.034, productWater * 1.0e6, 0.1);
     assertTrue(productWater < wetWater);
-    assertTrue(wetWaterFlow - productWaterFlow > 20.0);
-    assertTrue(richTeg.getFlowRate("kg/hr") > leanTeg.getFlowRate("kg/hr"));
+    assertEquals(23.286223, waterTransferred, 0.01);
+    assertEquals(3045.903167, richTegFlow, 0.01);
+    assertTrue(richTegFlow > leanTeg.getFlowRate("kg/hr"));
     assertTrue(mixedContact.getFluid().getNumberOfPhases() > 1);
     assertEquals(wetWaterFlow + leanWaterFlow, componentFlow(mixedContact, "water"), 1.0e-8);
     assertEquals(0.0, waterResidual, 1.0e-8);
