@@ -682,7 +682,7 @@ public class DistillationColumnWarmStateCacheTest {
 
     ColumnCase warmCase = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 2));
     configureDampedSubstitution(warmCase.column);
-    configureBottomRecoverySpecification(warmCase.column, targetRecovery);
+    configureBottomPentaneRecoverySpecification(warmCase.column, targetRecovery);
     warmCase.column.run();
     assertTrue(warmCase.column.solved(), warmCase.column.getConvergenceDiagnostics());
     assertEquals(0.0, warmCase.column.getLastBottomSpecificationResidual(),
@@ -703,7 +703,7 @@ public class DistillationColumnWarmStateCacheTest {
 
     ColumnCase coldReference = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 2));
     configureDampedSubstitution(coldReference.column);
-    configureBottomRecoverySpecification(coldReference.column, targetRecovery);
+    configureBottomPentaneRecoverySpecification(coldReference.column, targetRecovery);
     coldReference.column.setTopPressure(9.0);
     coldReference.column.setBottomPressure(9.5);
     coldReference.column.run();
@@ -732,12 +732,12 @@ public class DistillationColumnWarmStateCacheTest {
   }
 
   /**
-   * Configure an adjustable bottom component-recovery specification.
+   * Configure an adjustable n-pentane bottom-recovery specification.
    *
    * @param column column to configure
    * @param targetRecovery target bottom recovery fraction
    */
-  private static void configureBottomRecoverySpecification(DistillationColumn column, double targetRecovery) {
+  private static void configureBottomPentaneRecoverySpecification(DistillationColumn column, double targetRecovery) {
     column.setBottomComponentRecovery("n-pentane", targetRecovery);
     column.getBottomSpecification().setTolerance(5.0e-3);
     column.getBottomSpecification().setMaxIterations(15);
