@@ -235,7 +235,7 @@ public class CompressorOperatingPointResultTest {
     assertEquals(0.0, recycleLossKW, 0.0);
     assertEquals(0.02, result.getPressureToleranceFraction(), 0.0);
     assertEquals("1.0", result.getSchemaVersion());
-    assertTrue(resultJson.contains("\\\"schemaVersion\\\":\\\"1.0\\\""));
+    assertTrue(resultJson.contains("\"schemaVersion\":\"1.0\""));
     assertThrows(UnsupportedOperationException.class, constraints::clear);
     assertThrows(IllegalArgumentException.class, () -> compressor.getOperatingPointResult(-0.01));
   }
