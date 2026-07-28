@@ -9746,7 +9746,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * </p>
    */
   private void refreshInternalExternalFeedSystems() {
-    for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
+    for (int trayIndex = 0; trayIndex < trays.size(); trayIndex++) {
       List<StreamInterface> externalFeeds = getExternalFeedStreams(trayIndex);
       for (int streamIndex = 0; streamIndex < externalFeeds.size(); streamIndex++) {
         SystemInterface cloned = externalFeeds.get(streamIndex).getThermoSystem().clone();
