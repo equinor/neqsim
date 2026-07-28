@@ -61,6 +61,30 @@ public class DistillationColumnSolverTuningTest {
   }
 
   /**
+   * Damping must reduce the applied update without reducing the fixed-point residual used for convergence.
+   */
+  @Test
+  public void reportedResidualIsUndampedFixedPointMismatch() {
+    DistillationColumn column = buildColumn(6);
+    column.getReboiler().setOutTemperature(273.15 + 80.0);
+    column.setSolverType(DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
+    column.run();
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+
+    column.setRelaxationFactor(0.2);
+    column.getTray(2).setTemperature(column.getTray(2).getTemperature() + 1.0);
+    column.setMaxNumberOfIterations(1, true);
+    column.run();
+
+    double appliedStep = column.getLastAppliedTemperatureStepResidual();
+    double fixedPointResidual = column.getLastTemperatureResidual();
+    assertTrue(appliedStep > 0.0, "the perturbed state must produce an applied temperature step");
+    assertTrue(fixedPointResidual > 0.0, "the perturbed state must produce a fixed-point residual");
+    assertEquals(0.2 * fixedPointResidual, appliedStep, Math.max(1.0e-10, 1.0e-8 * fixedPointResidual),
+        "relaxation must scale only the applied step, not the convergence residual");
+  }
+
+  /**
    * A relaxation factor above the floor must leave the floor untouched.
    */
   @Test
