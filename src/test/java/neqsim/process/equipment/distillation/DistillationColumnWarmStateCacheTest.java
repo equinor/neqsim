@@ -675,6 +675,8 @@ public class DistillationColumnWarmStateCacheTest {
   public void adjustableSpecificationStillInvalidatesFixedPressureChange() {
     ColumnCase calibration = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 2));
     configureDampedSubstitution(calibration.column);
+    calibration.column.setTopPressure(9.0);
+    calibration.column.setBottomPressure(9.5);
     calibration.column.run();
     assertTrue(calibration.column.solved(), calibration.column.getConvergenceDiagnostics());
     double targetRecovery = getBottomComponentRecovery(calibration, "n-pentane");
@@ -682,13 +684,13 @@ public class DistillationColumnWarmStateCacheTest {
 
     ColumnCase warmCase = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 2));
     configureDampedSubstitution(warmCase.column);
-    configureBottomPentaneRecoverySpecification(warmCase.column, targetRecovery);
     warmCase.column.run();
     assertTrue(warmCase.column.solved(), warmCase.column.getConvergenceDiagnostics());
-    assertEquals(0.0, warmCase.column.getLastBottomSpecificationResidual(),
-        warmCase.column.getBottomSpecification().getTolerance(), "initial bottom recovery specification must converge");
+    assertNotEquals(targetRecovery, getBottomComponentRecovery(warmCase, "n-pentane"), 1.0e-3,
+        "the nearby pressure point must exercise a distinct recovery state");
     int baselineInitializationCount = warmCase.column.getInitializationCount();
 
+    configureBottomPentaneRecoverySpecification(warmCase.column, targetRecovery);
     warmCase.column.setTopPressure(9.0);
     warmCase.column.setBottomPressure(9.5);
     warmCase.column.run();
