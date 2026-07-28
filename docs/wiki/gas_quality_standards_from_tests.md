@@ -4,7 +4,7 @@ description: "Trace the current ISO 6976 gas-quality regression coverage for cal
 ---
 
 This page explains the numerical evidence in
-[`Standard_ISO6976Test`](../../src/test/java/neqsim/standards/gasquality/Standard_ISO6976Test.java).
+[`Standard_ISO6976Test`](https://github.com/equinor/neqsim/blob/master/src/test/java/neqsim/standards/gasquality/Standard_ISO6976Test.java).
 Use it with the [ISO 6976 calculation guide](../standards/iso6976_calorific_values.md),
 which documents the API, editions, units, and engineering boundaries.
 
