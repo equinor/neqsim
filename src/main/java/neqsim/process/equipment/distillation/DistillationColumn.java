@@ -5455,7 +5455,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         double newTemp = oldtemps[i] + effectiveRelaxation * (updated - oldtemps[i]);
         trays.get(i).setTemperature(newTemp);
         appliedTemperatureStepResidual += Math.abs(newTemp - oldtemps[i]);
-        temperatureResidual += Math.abs(newTemp - oldtemps[i]);
+        temperatureResidual += Math.abs(updated - oldtemps[i]);
       }
       temperatureResidual /= Math.max(1, numberOfTrays);
       appliedTemperatureStepResidual /= Math.max(1, numberOfTrays);
