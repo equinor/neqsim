@@ -464,14 +464,19 @@ public class DistillationColumnWarmStateCacheTest {
   private static void assertSequentialSpecificationChange(double targetTemperatureC) {
     ColumnCase warmCase = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 2));
     configureDampedSubstitution(warmCase.column);
+    double inletTemperature = warmCase.feed.getTemperature("K");
     warmCase.column.run();
     assertTrue(warmCase.column.solved(), warmCase.column.getConvergenceDiagnostics());
+    assertEquals(inletTemperature, warmCase.feed.getTemperature("K"), 1.0e-9,
+        "column initialization must not change the caller-owned feed temperature");
     int baselineInitializationCount = warmCase.column.getInitializationCount();
 
     warmCase.column.getReboiler().setOutTemperature(273.15 + targetTemperatureC);
     warmCase.column.run();
 
     assertTrue(warmCase.column.solved(), warmCase.column.getConvergenceDiagnostics());
+    assertEquals(inletTemperature, warmCase.feed.getTemperature("K"), 1.0e-9,
+        "column reinitialization must not change the caller-owned feed temperature");
     assertEquals(baselineInitializationCount + 1, warmCase.column.getInitializationCount(),
         "a changed fixed reboiler temperature must rebuild the sequential initialization exactly once");
     assertTrue(warmCase.column.getLastIterationCount() <= 30,
