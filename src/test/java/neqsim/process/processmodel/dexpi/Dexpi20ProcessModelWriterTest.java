@@ -48,10 +48,9 @@ class Dexpi20ProcessModelWriterTest {
     Path plantXml = outputDirectory.resolve("plant.dexpi.xml");
     Path processXml = outputDirectory.resolve("process.dexpi.xml");
 
-    Dexpi20ConformanceAssessment.Report plantReport =
-        Dexpi20XmlWriter.writeAndAssess(process, plantXml.toFile());
-    Dexpi20ConformanceAssessment.Report processReport =
-        Dexpi20ProcessModelWriter.writeAndAssess(process, processXml.toFile());
+    Dexpi20ConformanceAssessment.Report plantReport = Dexpi20XmlWriter.writeAndAssess(process, plantXml.toFile());
+    Dexpi20ConformanceAssessment.Report processReport = Dexpi20ProcessModelWriter.writeAndAssess(process,
+        processXml.toFile());
 
     assertTrue(plantReport.isSchemaAndProfileConformant(), plantReport.getErrors().toString());
     assertTrue(processReport.isSchemaAndProfileConformant(), processReport.getErrors().toString());
