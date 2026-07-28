@@ -975,7 +975,11 @@ public class Separator extends ProcessEquipmentBaseClass
       }
 
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-      thermoOps.VUflash(gasVolume + liquidVolume, newEnergy, "m3", "J", true);
+      // Preserve the nearby equilibrium seed only for associating fluids. Cubic EOS dynamics
+      // retain the legacy cold initialization and its established trajectory.
+      boolean warmStartInitialization =
+          !neqsim.thermo.ThermodynamicModelSettings.isInnerFlashWarmStartSafe(thermoSystem);
+      thermoOps.VUflash(gasVolume + liquidVolume, newEnergy, "m3", "J", warmStartInitialization);
       thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
       // Update entrainment fractions from performance calculator during transient
