@@ -1,0 +1,105 @@
+package neqsim.process.equipment.absorber;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Test;
+import neqsim.NeqSimTest;
+import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.util.StreamSaturatorUtil;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
+
+/**
+ * Executes the conservative equilibrium-contact example in
+ * docs/tutorials/teg_dehydration_tutorial.md.
+ */
+class TEGDehydrationTutorialTest extends NeqSimTest {
+  private static final Logger logger =
+      LogManager.getLogger(TEGDehydrationTutorialTest.class);
+
+  private static double componentFlow(StreamInterface stream, String componentName) {
+    ComponentInterface component = stream.getFluid().getComponent(componentName);
+    return component == null ? 0.0 : component.getFlowRate("kg/hr");
+  }
+
+  @Test
+  void equilibriumContactExampleConservesMass() {
+    SystemSrkCPAstatoil gasFluid = new SystemSrkCPAstatoil(273.15 + 30.0, 70.0);
+    gasFluid.addComponent("methane", 0.90);
+    gasFluid.addComponent("ethane", 0.05);
+    gasFluid.addComponent("propane", 0.02);
+    gasFluid.addComponent("CO2", 0.02);
+    gasFluid.addComponent("nitrogen", 0.01);
+    gasFluid.setMixingRule(10);
+
+    Stream gasFeed = new Stream("dry gas basis", gasFluid);
+    gasFeed.setFlowRate(1.0, "MSm3/day");
+    gasFeed.setTemperature(30.0, "C");
+    gasFeed.setPressure(70.0, "bara");
+
+    StreamSaturatorUtil saturator = new StreamSaturatorUtil("water saturator", gasFeed);
+
+    SystemSrkCPAstatoil tegFluid = new SystemSrkCPAstatoil(273.15 + 30.0, 70.0);
+    tegFluid.addComponent("TEG", 99.5, "kg/hr");
+    tegFluid.addComponent("water", 0.5, "kg/hr");
+    tegFluid.setMixingRule(10);
+
+    Stream leanTeg = new Stream("lean TEG", tegFluid);
+    leanTeg.setFlowRate(3000.0, "kg/hr");
+    leanTeg.setTemperature(30.0, "C");
+    leanTeg.setPressure(70.0, "bara");
+
+    Mixer equilibriumContact = new Mixer("equilibrium contact");
+    equilibriumContact.addStream(saturator.getOutletStream());
+    equilibriumContact.addStream(leanTeg);
+
+    Separator phaseSplitter =
+        new Separator("gas and rich TEG separator", equilibriumContact.getOutletStream());
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(gasFeed);
+    process.add(saturator);
+    process.add(leanTeg);
+    process.add(equilibriumContact);
+    process.add(phaseSplitter);
+    process.run();
+
+    StreamInterface wetGas = saturator.getOutletStream();
+    StreamInterface productGas = phaseSplitter.getGasOutStream();
+    StreamInterface richTeg = phaseSplitter.getLiquidOutStream();
+
+    double wetWater =
+        wetGas.getFluid().getPhase(0).getComponent("water").getx();
+    double productWater =
+        productGas.getFluid().getPhase(0).getComponent("water").getx();
+
+    double wetWaterFlow = componentFlow(wetGas, "water");
+    double leanWaterFlow = componentFlow(leanTeg, "water");
+    double productWaterFlow = componentFlow(productGas, "water");
+    double richWaterFlow = componentFlow(richTeg, "water");
+    double waterResidual =
+        wetWaterFlow + leanWaterFlow - productWaterFlow - richWaterFlow;
+    double totalMassResidual =
+        wetGas.getFlowRate("kg/hr") + leanTeg.getFlowRate("kg/hr")
+            - productGas.getFlowRate("kg/hr")
+            - richTeg.getFlowRate("kg/hr");
+
+    logger.info("Wet gas water {} mol-ppm", wetWater * 1.0e6);
+    logger.info("Product gas water {} mol-ppm", productWater * 1.0e6);
+
+    assertEquals(778.927, wetWater * 1.0e6, 0.1);
+    assertEquals(46.034, productWater * 1.0e6, 0.1);
+    assertTrue(productWater < wetWater);
+    assertTrue(wetWaterFlow - productWaterFlow > 20.0);
+    assertTrue(richTeg.getFlowRate("kg/hr") > leanTeg.getFlowRate("kg/hr"));
+    assertEquals(0.0, waterResidual, 1.0e-8);
+    assertEquals(0.0, totalMassResidual, 1.0e-8);
+  }
+}
