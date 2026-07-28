@@ -975,7 +975,7 @@ public class Separator extends ProcessEquipmentBaseClass
       }
 
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-      thermoOps.VUflash(gasVolume + liquidVolume, newEnergy, "m3", "J");
+      thermoOps.VUflash(gasVolume + liquidVolume, newEnergy, "m3", "J", true);
       thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
       // Update entrainment fractions from performance calculator during transient
