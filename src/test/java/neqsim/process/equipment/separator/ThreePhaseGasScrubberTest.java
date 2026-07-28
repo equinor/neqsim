@@ -10,6 +10,7 @@ import neqsim.process.measurementdevice.PressureTransmitter;
 import neqsim.process.measurementdevice.WaterLevelTransmitter;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Tests for {@link ThreePhaseGasScrubber} and vertical-orientation behaviour of {@link ThreePhaseSeparator}, covering
@@ -22,11 +23,31 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 class ThreePhaseGasScrubberTest {
 
   /**
-   * Builds a gas + oil + water three-phase fluid.
+   * Builds a computationally light gas + oil + water fluid for the dynamic controller tests.
+   *
+   * <p>
+   * These tests exercise separator inventory and control behavior over hundreds of transient steps, not association
+   * thermodynamics. The focused CPA transient test below retains coverage of the associating-fluid VU-flash path.
+   * </p>
    *
    * @return a three-phase thermodynamic system
    */
   private static SystemInterface makeThreePhaseFluid() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 50.0, 15.0);
+    fluid.addComponent("methane", 85.0);
+    fluid.addComponent("n-heptane", 15.0);
+    fluid.addComponent("water", 50.0);
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+    return fluid;
+  }
+
+  /**
+   * Builds the associating three-phase fluid used by the focused CPA transient smoke test.
+   *
+   * @return a three-phase CPA thermodynamic system
+   */
+  private static SystemInterface makeCpaThreePhaseFluid() {
     SystemInterface fluid = new SystemSrkCPAstatoil(273.15 + 50.0, 15.0);
     fluid.addComponent("methane", 85.0);
     fluid.addComponent("ethane", 5.0);
@@ -47,7 +68,18 @@ class ThreePhaseGasScrubberTest {
    * @return a solved {@link ThreePhaseGasScrubber}
    */
   private static ThreePhaseGasScrubber makeScrubber(String name) {
-    Stream feed = new Stream("feed", makeThreePhaseFluid());
+    return makeScrubber(name, makeThreePhaseFluid());
+  }
+
+  /**
+   * Builds a vertical three-phase scrubber from the supplied fluid and runs the initial steady-state solution.
+   *
+   * @param name equipment name
+   * @param fluid feed fluid
+   * @return a solved {@link ThreePhaseGasScrubber}
+   */
+  private static ThreePhaseGasScrubber makeScrubber(String name, SystemInterface fluid) {
+    Stream feed = new Stream("feed", fluid);
     feed.setTemperature(50.0, "C");
     feed.setPressure(15.0, "bara");
     feed.setFlowRate(5000.0, "kg/hr");
@@ -151,6 +183,27 @@ class ThreePhaseGasScrubberTest {
     Assertions.assertTrue(sep.getWaterLevel() >= 0.0);
     Assertions.assertTrue(sep.getOilLevel() >= sep.getWaterLevel() - 1e-9,
         "oil level (water+oil) must be >= water level");
+  }
+
+  /**
+   * One transient step with the full CPA fluid must retain a finite physical vessel state. This keeps the associating
+   * VU-flash path covered without repeating the same expensive flash for every controller-integration time step.
+   */
+  @Test
+  void testCpaTransientFlashRemainsPhysical() {
+    ThreePhaseGasScrubber scrubber = makeScrubber("CPA transient", makeCpaThreePhaseFluid());
+    scrubber.setCalculateSteadyState(false);
+    scrubber.runTransient(3.0, UUID.randomUUID());
+
+    Assertions.assertTrue(Double.isFinite(scrubber.getWaterLevel()), "CPA water level must be finite");
+    Assertions.assertTrue(Double.isFinite(scrubber.getOilLevel()), "CPA oil level must be finite");
+    Assertions.assertTrue(scrubber.getWaterLevel() >= 0.0, "CPA water level must be non-negative");
+    Assertions.assertTrue(scrubber.getOilLevel() >= scrubber.getWaterLevel() - 1e-6,
+        "CPA oil level must remain above the water level");
+    Assertions.assertTrue(Double.isFinite(scrubber.getThermoSystem().getPressure("bara")),
+        "CPA vessel pressure must be finite");
+    Assertions.assertTrue(scrubber.getThermoSystem().getPressure("bara") > 0.0,
+        "CPA vessel pressure must remain positive");
   }
 
   /**
