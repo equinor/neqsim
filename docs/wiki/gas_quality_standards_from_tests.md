@@ -18,8 +18,8 @@ reference, a real-gas reference state, and a volume basis.
 
 `getValue(...)` reports energy properties in kJ per cubic metre on the configured
 reference basis. The table converts those assertions to MJ/m³ for readability.
-`testCalculate` asserts GCV and WI; `testCalculate2` asserts relative density for
-the same composition and reference conditions.
+`testCalculate` asserts GCV and WI. `testCalculate2` uses a separately initialized
+SRK system with the same four component amounts and asserts relative density.
 
 | Property | Regression value | Unit |
 | --- | ---: | --- |
@@ -82,10 +82,11 @@ approximation before using the result for design, fiscal, or contractual work.
 
 ## Full-property and stream coverage
 
-`testCalculate2` checks the 0/15.55 °C fixture across superior and inferior
-calorific values, superior and inferior Wobbe indices, relative density,
-compression factor, and molar mass. `testCalculate3` uses a different gas at
-15/15 °C and verifies the same property family. It also confirms that
+`testCalculate2` creates a separate SRK system, loads the component database,
+uses mixing rule 2, and configures the standard at 0/15.55 °C. It checks
+superior and inferior calorific values, superior and inferior Wobbe indices,
+relative density, compression factor, and molar mass. `testCalculate3` uses a
+different gas at 15/15 °C and verifies the same property family. It also confirms that
 `Stream.getGCV(...)` and `Stream.getWI(...)` agree with the standard calculation
 after the stream has run.
 
