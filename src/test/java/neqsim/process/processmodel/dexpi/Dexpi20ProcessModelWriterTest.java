@@ -39,6 +39,35 @@ class Dexpi20ProcessModelWriterTest {
   }
 
   @Test
+  void documentationExampleWritesAssessedPlantAndProcessExchanges() throws Exception {
+    ProcessSystem process = documentationProcess();
+    process.run();
+
+    Path outputDirectory = temporaryDirectory.resolve("dexpi-output");
+    Files.createDirectories(outputDirectory);
+    Path plantXml = outputDirectory.resolve("plant.dexpi.xml");
+    Path processXml = outputDirectory.resolve("process.dexpi.xml");
+
+    Dexpi20ConformanceAssessment.Report plantReport =
+        Dexpi20XmlWriter.writeAndAssess(process, plantXml.toFile());
+    Dexpi20ConformanceAssessment.Report processReport =
+        Dexpi20ProcessModelWriter.writeAndAssess(process, processXml.toFile());
+
+    assertTrue(plantReport.isSchemaAndProfileConformant(), plantReport.getErrors().toString());
+    assertTrue(processReport.isSchemaAndProfileConformant(), processReport.getErrors().toString());
+
+    Path plantReportFile = outputDirectory.resolve("plant.dexpi.conformance.json");
+    Path processReportFile = outputDirectory.resolve("process.dexpi.conformance.json");
+    Files.write(plantReportFile, plantReport.toJson().getBytes(StandardCharsets.UTF_8));
+    Files.write(processReportFile, processReport.toJson().getBytes(StandardCharsets.UTF_8));
+
+    assertTrue(Files.size(plantXml) > 0L);
+    assertTrue(Files.size(processXml) > 0L);
+    assertTrue(Files.size(plantReportFile) > 0L);
+    assertTrue(Files.size(processReportFile) > 0L);
+  }
+
+  @Test
   void plantAndProcessAssessmentsCannotBeInterchanged() throws Exception {
     Path plant = temporaryDirectory.resolve("plant.dexpi.xml");
     Dexpi20XmlWriter.write(process(), plant.toFile());
@@ -76,6 +105,26 @@ class Dexpi20ProcessModelWriterTest {
     assertTrue(report.getErrors().toString().contains("NominalDirection"));
     assertTrue(report.getErrors().toString().contains("ConnectorReference"));
     assertTrue(report.getErrors().toString().contains("Source reference"));
+  }
+
+  private ProcessSystem documentationProcess() {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 40.0);
+    fluid.addComponent("methane", 0.8);
+    fluid.addComponent("n-heptane", 0.2);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("10-FEED-001", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    Separator separator = new Separator("10-VA-001", feed);
+    Compressor compressor = new Compressor("10-KA-001", separator.getGasOutStream());
+    compressor.setOutletPressure(80.0);
+
+    ProcessSystem process = new ProcessSystem();
+    process.setName("DEXPI 2.0 example");
+    process.add(feed);
+    process.add(separator);
+    process.add(compressor);
+    return process;
   }
 
   private ProcessSystem process() {
