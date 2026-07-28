@@ -663,6 +663,85 @@ public class DistillationColumnWarmStateCacheTest {
   }
 
   /**
+   * An adjustable product specification must not suppress invalidation of other fixed column inputs.
+   *
+   * <p>
+   * The bottom recovery target manipulates the reboiler temperature internally. A nearby pressure change is independent
+   * of that manipulated degree of freedom and must rebuild the sequential tray initialization before solving the same
+   * recovery target. The rebuilt solution must agree with a fresh column at the changed pressure.
+   * </p>
+   */
+  @Test
+  public void adjustableSpecificationStillInvalidatesFixedPressureChange() {
+    ColumnCase calibration = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 2));
+    configureDampedSubstitution(calibration.column);
+    calibration.column.run();
+    assertTrue(calibration.column.solved(), calibration.column.getConvergenceDiagnostics());
+    double targetRecovery = getBottomComponentRecovery(calibration, "n-pentane");
+    assertTrue(targetRecovery > 0.0 && targetRecovery < 1.0, "calibrated recovery must be physical");
+
+    ColumnCase warmCase = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 2));
+    configureDampedSubstitution(warmCase.column);
+    configureBottomRecoverySpecification(warmCase.column, targetRecovery);
+    warmCase.column.run();
+    assertTrue(warmCase.column.solved(), warmCase.column.getConvergenceDiagnostics());
+    assertEquals(0.0, warmCase.column.getLastBottomSpecificationResidual(),
+        warmCase.column.getBottomSpecification().getTolerance(), "initial bottom recovery specification must converge");
+    int baselineInitializationCount = warmCase.column.getInitializationCount();
+
+    warmCase.column.setTopPressure(9.0);
+    warmCase.column.setBottomPressure(9.5);
+    warmCase.column.run();
+
+    assertTrue(warmCase.column.solved(), warmCase.column.getConvergenceDiagnostics());
+    assertEquals(baselineInitializationCount + 1, warmCase.column.getInitializationCount(),
+        "a fixed pressure change must rebuild even while bottom recovery adjusts reboiler temperature");
+    assertEquals(0.0, warmCase.column.getLastBottomSpecificationResidual(),
+        warmCase.column.getBottomSpecification().getTolerance(), "changed-pressure recovery specification must converge");
+    assertPhysicalAndBalanced(warmCase);
+
+    ColumnCase coldReference = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 2));
+    configureDampedSubstitution(coldReference.column);
+    configureBottomRecoverySpecification(coldReference.column, targetRecovery);
+    coldReference.column.setTopPressure(9.0);
+    coldReference.column.setBottomPressure(9.5);
+    coldReference.column.run();
+
+    assertTrue(coldReference.column.solved(), coldReference.column.getConvergenceDiagnostics());
+    assertEquals(0.0, coldReference.column.getLastBottomSpecificationResidual(),
+        coldReference.column.getBottomSpecification().getTolerance(), "cold-reference recovery specification must converge");
+    assertColdReferenceEquivalent(coldReference.column, warmCase.column);
+    assertPhysicalAndBalanced(coldReference);
+  }
+
+  /**
+   * Calculate component recovery in the bottom product.
+   *
+   * @param columnCase solved column case
+   * @param componentName component to evaluate
+   * @return bottom recovery fraction
+   */
+  private static double getBottomComponentRecovery(ColumnCase columnCase, String componentName) {
+    double feedComponentFlow = columnCase.feed.getFlowRate("mol/hr")
+        * columnCase.feed.getThermoSystem().getComponent(componentName).getz();
+    double bottomComponentFlow = columnCase.column.getLiquidOutStream().getFlowRate("mol/hr")
+        * columnCase.column.getLiquidOutStream().getThermoSystem().getComponent(componentName).getz();
+    return bottomComponentFlow / feedComponentFlow;
+  }
+
+  /**
+   * Configure an adjustable bottom component-recovery specification.
+   *
+   * @param column column to configure
+   * @param targetRecovery target bottom recovery fraction
+   */
+  private static void configureBottomRecoverySpecification(DistillationColumn column, double targetRecovery) {
+    column.setBottomComponentRecovery("n-pentane", targetRecovery);
+    column.getBottomSpecification().setTolerance(5.0e-3);
+    column.getBottomSpecification().setMaxIterations(15);
+  }
+
+  /**
    * Sequential warm starts must be invalidated when a fixed reboiler temperature changes.
    *
    * <p>
