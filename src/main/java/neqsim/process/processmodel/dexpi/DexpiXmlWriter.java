@@ -84,8 +84,7 @@ public final class DexpiXmlWriter {
   private static final org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager
       .getLogger(DexpiXmlWriter.class);
   private static final Pattern NON_IDENTIFIER = Pattern.compile("[^A-Za-z0-9_-]");
-  private static final Pattern COMMON_SAFETY_TRIP_TAG =
-      Pattern.compile("^(?:[PLTF](?:S|A)(?:HH|LL)|FSL)$");
+  private static final Pattern COMMON_SAFETY_TRIP_TAG = Pattern.compile("^(?:[PLTF](?:S|A)(?:HH|LL)|FSL)$");
   private static final transient ThreadLocal<DecimalFormat> DECIMAL_FORMAT = ThreadLocal.withInitial(() -> {
     DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(Locale.ROOT);
     DecimalFormat format = new DecimalFormat("0.############", symbols);
@@ -2864,8 +2863,7 @@ public final class DexpiXmlWriter {
    * @param hipps HIPPS final element
    * @param sensorTag sensor tag, or {@code null} when describing the final element
    */
-  private static void appendHippsSafetyMetadata(Document document, Element parent, HIPPSValve hipps,
-      String sensorTag) {
+  private static void appendHippsSafetyMetadata(Document document, Element parent, HIPPSValve hipps, String sensorTag) {
     Element safetyAttributes = document.createElement("GenericAttributes");
     safetyAttributes.setAttribute("Set", "SafetyInstrumentedFunction");
     appendGenericAttribute(document, safetyAttributes, "SafetyFunctionType", "HIPPS");
