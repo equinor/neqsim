@@ -1,5 +1,6 @@
 package neqsim.process.processmodel.dexpi;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -17,7 +18,9 @@ import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.tank.Tank;
+import neqsim.process.equipment.valve.HIPPSValve;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.measurementdevice.PressureTransmitter;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -626,6 +629,92 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     String resetXml = resetOut.toString(StandardCharsets.UTF_8.name());
     assertTrue(resetXml.contains("SchemaVersion=\"4.1.1\""),
         "Resetting to PROTEUS_4_1_1 should restore the 4.1.1 schema version");
+  }
+
+  /**
+   * Tests that common high-high, low-low, and low-flow trip tags are exported as SIS instruments while an ordinary
+   * process transmitter remains assigned to the DCS.
+   *
+   * @throws IOException if writing fails
+   */
+  @Test
+  public void testCommonSafetyTripTagsUseSisAssignment() throws IOException {
+    Stream feed = createFeedStream();
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+
+    String[] safetyTags = { "PSHH-101", "PAHH-102", "LSHH-103", "TSHH-104", "FSL-105" };
+    for (String tag : safetyTags) {
+      process.add(new PressureTransmitter(tag, feed));
+    }
+    process.add(new PressureTransmitter("PT-106", feed));
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DexpiXmlWriter.writeDexpi20(process, out);
+    String xml = out.toString(StandardCharsets.UTF_8.name());
+
+    for (String tag : safetyTags) {
+      assertTrue(xml.contains("Name=\"TagNameAssignmentClass\" Value=\"" + tag + "\""),
+          tag + " should be present in the export");
+    }
+    assertEquals(safetyTags.length, countOccurrences(xml, "Name=\"ControlSystem\" Value=\"SIS\""),
+        "Every safety-trip instrument should be assigned to SIS");
+    assertEquals(1, countOccurrences(xml, "Name=\"ControlSystem\" Value=\"DCS\""),
+        "The ordinary process transmitter should remain assigned to DCS");
+  }
+
+  /**
+   * Tests that a HIPPS loop retains its final-element class, SIL rating, voting architecture, and sensor membership.
+   *
+   * @throws IOException if writing fails
+   */
+  @Test
+  public void testHippsSafetySemanticsExport() throws IOException {
+    Stream feed = createFeedStream();
+    HIPPSValve hipps = new HIPPSValve("HIPPS-XV-101", feed);
+    hipps.setOutletPressure(45.0);
+    hipps.setSILRating(3);
+    hipps.setVotingLogic(HIPPSValve.VotingLogic.TWO_OUT_OF_THREE);
+    hipps.setProofTestInterval(8760.0);
+    hipps.setClosureTime(6.0);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(hipps);
+    String[] sensorTags = { "PSHH-101A", "PSHH-101B", "PSHH-101C" };
+    for (String tag : sensorTags) {
+      PressureTransmitter transmitter = new PressureTransmitter(tag, feed);
+      hipps.addPressureTransmitter(transmitter);
+      process.add(transmitter);
+    }
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DexpiXmlWriter.writeDexpi20(process, out);
+    String xml = out.toString(StandardCharsets.UTF_8.name());
+
+    int hippsId = xml.indexOf("ID=\"HIPPS-XV-101\"");
+    assertTrue(hippsId >= 0, "HIPPS final element should be present");
+    int componentStart = xml.lastIndexOf("<PipingComponent", hippsId);
+    int componentEnd = xml.indexOf("</PipingComponent>", hippsId);
+    assertTrue(componentStart >= 0 && componentEnd > hippsId, "HIPPS should export as a piping component");
+    String hippsComponent = xml.substring(componentStart, componentEnd);
+    assertTrue(hippsComponent.contains("ComponentClass=\"GateValve\""),
+        "HIPPS final element should not be reduced to a generic control globe valve");
+    assertFalse(hippsComponent.contains("ComponentClass=\"GlobeValve\""),
+        "HIPPS final element must preserve its shutdown-valve identity");
+
+    assertTrue(xml.contains("Name=\"SafetyFunctionTag\" Value=\"HIPPS-XV-101\""));
+    assertTrue(xml.contains("Name=\"SafetyIntegrityLevel\" Value=\"3\""));
+    assertTrue(xml.contains("Name=\"VotingArchitecture\" Value=\"2oo3\""));
+    assertTrue(xml.contains("Name=\"FinalElementTag\" Value=\"HIPPS-XV-101\""));
+    assertTrue(xml.contains("Name=\"SensorTags\" Value=\"PSHH-101A,PSHH-101B,PSHH-101C\""));
+    assertTrue(xml.contains("Name=\"SafeState\" Value=\"Closed\""));
+    assertTrue(xml.contains("Name=\"ProofTestInterval\" Unit=\"h\" Value=\"8760\""));
+    assertTrue(xml.contains("Name=\"ClosureTime\" Unit=\"s\" Value=\"6\""));
+    assertEquals(3, countOccurrences(xml, "Name=\"FunctionalRole\" Value=\"Sensor\""));
+    assertEquals(1, countOccurrences(xml, "Name=\"FunctionalRole\" Value=\"FinalElement\""));
+    assertEquals(4, countOccurrences(xml, "Name=\"SafetyIntegrityLevel\" Value=\"3\""),
+        "SIL 3 should be available on the final element and each of the three trip sensors");
   }
 
   /**
