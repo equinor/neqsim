@@ -16,13 +16,19 @@ TP flash. It then configures `Standard_ISO6976` with a 0 °C volume reference, a
 15.55 °C combustion-energy reference, a real-gas reference state, and a volume
 basis.
 
-The current assertions are:
+`getValue(...)` reports energy properties in kJ per cubic metre on the configured
+reference basis. The table converts those assertions to MJ/m³ for readability.
+`testCalculate` asserts GCV and WI; `testCalculate2` asserts relative density for
+the same composition and reference conditions.
 
 | Property | Regression value | Unit |
 | --- | ---: | --- |
 | Superior calorific value (`GCV`) | 39.61457 | MJ/m³ |
 | Superior Wobbe index (`WI`) | 51.70101 | MJ/m³ |
 | Relative density | 0.5870995 | dimensionless |
+
+The exact energy assertions before conversion are 39614.56783352743 kJ/m³ for
+GCV and 51701.01275822569 kJ/m³ for WI.
 
 The superior Wobbe index is related to the superior calorific value by
 
@@ -40,8 +46,9 @@ basis with every result.
 `testCalculate` verifies that `WI` and `WobbeIndex` both resolve to
 `SuperiorWobbeIndex`. The separate `testWIAliasVariesWithComposition` regression
 prevents the alias from returning a composition-independent value: its lean
-98 mol% methane / 2 mol% ethane gas gives approximately 53.86 MJ/m³, while its
-richer methane/ethane/propane gas gives approximately 58.38 MJ/m³.
+98 mol% methane / 2 mol% ethane test target is approximately 53860 kJ/m³
+(53.86 MJ/m³), while its richer methane/ethane/propane target is approximately
+58380 kJ/m³ (58.38 MJ/m³).
 
 These values are software regression anchors for the specified fixtures and
 reference conditions. They are not universal sales-gas limits.
@@ -51,8 +58,8 @@ reference conditions. They are not universal sales-gas limits.
 `testCalculateWithWrongReferenceState` deliberately sets unsupported reference
 temperatures. When a value is requested, `checkReferenceCondition()` changes an
 unsupported combustion-energy reference to 25 °C and an unsupported volume
-reference to 15 °C, and logs both corrections. The resulting GCV assertion is
-37.49935 MJ/m³.
+reference to 15 °C, and logs both corrections. The test asserts
+37499.35392575905 kJ/m³ (37.49935 MJ/m³) for the resulting GCV.
 
 This fallback keeps the calculation running, but it also changes the requested
 basis. Validate reference temperatures before calculation instead of treating
@@ -63,9 +70,9 @@ explained in the primary guide.
 ## Pseudo-components and unsupported species
 
 `testCalculateWithPSeudo` adds a `C10` TBP fraction and asserts a resulting GCV
-of 42.37776 MJ/m³. This proves that the current fallback route remains
-numerically stable for that fixture; it does not prove explicit ISO 6976
-coverage for the pseudo-component.
+of 42377.76099372482 kJ/m³ (42.37776 MJ/m³). This proves that the current fallback
+route remains numerically stable for that fixture; it does not prove explicit
+ISO 6976 coverage for the pseudo-component.
 
 For hydrocarbon, TBP, and plus fractions not found in the ISO data table,
 `Standard_ISO6976` substitutes n-heptane data and records the original component
