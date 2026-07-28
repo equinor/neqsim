@@ -616,6 +616,10 @@ public class DistillationColumnWarmStateCacheTest {
     warmCase.column.run();
 
     assertTrue(warmCase.column.solved(), warmCase.column.getConvergenceDiagnostics());
+    assertTrue(warmCase.column.wasSequentialWarmStateReused(),
+        "an unchanged accepted sequential case must use exact input reuse");
+    assertEquals(0, warmCase.column.getLastIterationCount(),
+        "exact sequential reuse must require no new tray iterations");
     assertEquals(acceptedInitializationCount, warmCase.column.getInitializationCount(),
         "an unchanged re-run must retain the accepted sequential warm state");
     assertEquals(gasFlow, warmCase.column.getGasOutStream().getFlowRate("mol/hr"),
