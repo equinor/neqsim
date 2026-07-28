@@ -55,6 +55,7 @@ import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.tank.Tank;
+import neqsim.process.equipment.valve.HIPPSValve;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.LevelTransmitter;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
@@ -83,6 +84,8 @@ public final class DexpiXmlWriter {
   private static final org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager
       .getLogger(DexpiXmlWriter.class);
   private static final Pattern NON_IDENTIFIER = Pattern.compile("[^A-Za-z0-9_-]");
+  private static final Pattern COMMON_SAFETY_TRIP_TAG =
+      Pattern.compile("^(?:[PLTF](?:S|A)(?:HH|LL)|FSL)$");
   private static final transient ThreadLocal<DecimalFormat> DECIMAL_FORMAT = ThreadLocal.withInitial(() -> {
     DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(Locale.ROOT);
     DecimalFormat format = new DecimalFormat("0.############", symbols);
@@ -1310,6 +1313,9 @@ public final class DexpiXmlWriter {
     if (genericAttributes.hasChildNodes()) {
       element.appendChild(genericAttributes);
     }
+    if (unit instanceof HIPPSValve) {
+      appendHippsSafetyMetadata(document, element, (HIPPSValve) unit, null);
+    }
 
     return element;
   }
@@ -1874,6 +1880,7 @@ public final class DexpiXmlWriter {
     for (Map.Entry<String, MeasurementDeviceInterface> entry : transmitters.entrySet()) {
       String tag = entry.getKey();
       MeasurementDeviceInterface device = entry.getValue();
+      HIPPSValve hippsFunction = findHippsForTransmitter(device, processSystem);
 
       String[] parsed = parseIsaTag(tag);
       String category = parsed[0];
@@ -1941,6 +1948,9 @@ public final class DexpiXmlWriter {
         appendGenericAttribute(document, pifAttrs, "TagConformanceWarning", tagCheck.getMessage());
       }
       pif.appendChild(pifAttrs);
+      if (hippsFunction != null) {
+        appendHippsSafetyMetadata(document, pif, hippsFunction, tag);
+      }
 
       // ConnectionPoints (5 signal nodes)
       if (hasPosition) {
@@ -2019,7 +2029,7 @@ public final class DexpiXmlWriter {
       pif.appendChild(psgf);
 
       // System assignment (DCS by default; SIS for safety tags)
-      String systemAssignment = detectSafetySystem(tag) ? "SIS" : "DCS";
+      String systemAssignment = hippsFunction != null || detectSafetySystem(tag) ? "SIS" : "DCS";
       Element sysAttrs = document.createElement("GenericAttributes");
       sysAttrs.setAttribute("Set", "SystemAssignment");
       appendGenericAttribute(document, sysAttrs, "ControlSystem", systemAssignment);
@@ -2027,7 +2037,8 @@ public final class DexpiXmlWriter {
 
       // SIL marking for safety-instrumented functions (NORSOK Z-003 / IEC 61511)
       if ("SIS".equals(systemAssignment) && hasPosition) {
-        DexpiLayoutEngine.appendSilMarker(document, pif, 1, cx, cy);
+        int silRating = hippsFunction == null ? 1 : hippsFunction.getSILRating();
+        DexpiLayoutEngine.appendSilMarker(document, pif, silRating, cx, cy);
       }
 
       // Look for matching controller (e.g. PT-xxx -> PC-xxx)
@@ -2783,6 +2794,9 @@ public final class DexpiXmlWriter {
    * @return the DEXPI ComponentClass (GlobeValve, GateValve, BallValve, CheckValve, ButterflyValve)
    */
   private static String reverseMapValveClass(ProcessEquipmentInterface unit) {
+    if (unit instanceof HIPPSValve) {
+      return "GateValve";
+    }
     String name = unit.getName();
     if (name != null) {
       String upper = name.toUpperCase(Locale.ROOT);
@@ -2818,7 +2832,64 @@ public final class DexpiXmlWriter {
     String prefix = dashIndex > 0 ? tag.substring(0, dashIndex) : tag;
     String upper = prefix.toUpperCase(Locale.ROOT);
     return upper.startsWith("XV") || upper.startsWith("SD") || upper.startsWith("ZS") || upper.startsWith("SV")
-        || upper.contains("ESD") || upper.contains("HIPPS");
+        || upper.contains("ESD") || upper.contains("HIPPS") || COMMON_SAFETY_TRIP_TAG.matcher(upper).matches();
+  }
+
+  /**
+   * Finds the HIPPS final element that uses a measurement device as one of its trip sensors.
+   *
+   * @param device measurement device to locate
+   * @param processSystem process model containing the HIPPS valve
+   * @return associated HIPPS valve, or {@code null} when the device is not part of a HIPPS function
+   */
+  private static HIPPSValve findHippsForTransmitter(MeasurementDeviceInterface device, ProcessSystem processSystem) {
+    for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
+      if (unit instanceof HIPPSValve) {
+        HIPPSValve hipps = (HIPPSValve) unit;
+        for (MeasurementDeviceInterface configuredDevice : hipps.getPressureTransmitters()) {
+          if (configuredDevice == device) {
+            return hipps;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Appends explicit IEC 61511 metadata for a HIPPS sensor or final element.
+   *
+   * @param document XML document
+   * @param parent element receiving the metadata
+   * @param hipps HIPPS final element
+   * @param sensorTag sensor tag, or {@code null} when describing the final element
+   */
+  private static void appendHippsSafetyMetadata(Document document, Element parent, HIPPSValve hipps,
+      String sensorTag) {
+    Element safetyAttributes = document.createElement("GenericAttributes");
+    safetyAttributes.setAttribute("Set", "SafetyInstrumentedFunction");
+    appendGenericAttribute(document, safetyAttributes, "SafetyFunctionType", "HIPPS");
+    appendGenericAttribute(document, safetyAttributes, "SafetyFunctionTag", hipps.getName());
+    appendGenericAttribute(document, safetyAttributes, "FunctionalRole", sensorTag == null ? "FinalElement" : "Sensor");
+    appendGenericAttribute(document, safetyAttributes, "SensorTag", sensorTag);
+
+    List<String> sensorTags = new ArrayList<>();
+    for (MeasurementDeviceInterface sensor : hipps.getPressureTransmitters()) {
+      if (!isBlank(sensor.getName())) {
+        sensorTags.add(sensor.getName());
+      }
+    }
+    appendGenericAttribute(document, safetyAttributes, "SensorTags", String.join(",", sensorTags));
+    appendGenericAttribute(document, safetyAttributes, "FinalElementTag", hipps.getName());
+    appendGenericAttribute(document, safetyAttributes, "SafetyIntegrityLevel", String.valueOf(hipps.getSILRating()));
+    if (hipps.getVotingLogic() != null) {
+      appendGenericAttribute(document, safetyAttributes, "VotingArchitecture", hipps.getVotingLogic().getNotation());
+    }
+    appendGenericAttribute(document, safetyAttributes, "SafeState", "Closed");
+    appendNumericAttribute(document, safetyAttributes, "ProofTestInterval", hipps.getProofTestInterval(), "h");
+    appendNumericAttribute(document, safetyAttributes, "ClosureTime", hipps.getClosureTime(), "s");
+    appendGenericAttribute(document, safetyAttributes, "ControlSystem", "SIS");
+    parent.appendChild(safetyAttributes);
   }
 
   /**
