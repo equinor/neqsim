@@ -322,7 +322,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
     System.out.println("total moles " + thermoSystem.getTotalNumberOfMoles());
 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-    thermoOps.VUflash(volume1, newEnergy);
+    thermoOps.VUflash(volume1, newEnergy, true);
 
     setOutComposition(thermoSystem);
     setTempPres(thermoSystem.getTemperature(), thermoSystem.getPressure());
