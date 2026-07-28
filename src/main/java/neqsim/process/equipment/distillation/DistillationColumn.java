@@ -630,6 +630,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private transient long trayStateThermodynamicIdentitySignature = Long.MIN_VALUE;
   /**
+   * Fingerprint of fixed column inputs used to build the current sequential tray initialization.
+   *
+   * <p>
+   * Feed operating conditions are intentionally excluded so nearby feed cases retain their warm start.
+   * </p>
+   */
+  private transient long lastSequentialInitializationSignature = Long.MIN_VALUE;
+  /**
    * Whether the current tray state was produced by {@link NaphtaliSandholmSolver} on this column instance.
    *
    * <p>
@@ -1112,6 +1120,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     // identity they describe. Any later solve that sees a different identity must initialize again
     // instead of reusing or warm-starting from a tray network built for other components.
     trayStateThermodynamicIdentitySignature = calculateThermodynamicIdentitySignature();
+    lastSequentialInitializationSignature = calculateSequentialInitializationSignature();
     naphtaliSandholmStateOwned = false;
     hasNaphtaliSandholmWarmState = false;
 
@@ -2403,6 +2412,21 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Calculate a deterministic fingerprint of fixed inputs that define a sequential initialization.
+   *
+   * <p>
+   * Feed flow, temperature, pressure, and composition are excluded because ordinary nearby feed changes are the main
+   * benefit of a sequential warm start. Thermodynamic model and component identity are checked separately.
+   * </p>
+   *
+   * @return fixed column-configuration fingerprint
+   */
+  private long calculateSequentialInitializationSignature() {
+    long signature = 1125899906842597L;
+    return updateColumnConfigurationSignature(signature);
+  }
+
+  /**
    * Calculate a deterministic fingerprint of inputs that affect a Naphtali-Sandholm solve.
    *
    * @return input and specification fingerprint
@@ -2911,6 +2935,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     // acceptNaphtaliWarmStartCandidate and commitNaphtaliSandholmWarmState recomputes the
     // fingerprint from the inputs that are actually in force.
     this.trayStateThermodynamicIdentitySignature = candidate.trayStateThermodynamicIdentitySignature;
+    this.lastSequentialInitializationSignature = candidate.lastSequentialInitializationSignature;
     this.naphtaliSandholmStateOwned = false;
     this.hasNaphtaliSandholmWarmState = false;
     this.lastNaphtaliSandholmInputSignature = Long.MIN_VALUE;
@@ -5116,6 +5141,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     terminalGasProductDrawStream = null;
     terminalLiquidProductDrawStream = null;
     trayStateThermodynamicIdentitySignature = Long.MIN_VALUE;
+    lastSequentialInitializationSignature = Long.MIN_VALUE;
     err = 1.0e10;
     resetLastSolveMetrics();
 
@@ -5306,6 +5332,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (numberOfTrays == 1) {
       solveSingleTray(id);
       return;
+    }
+
+    long currentThermodynamicIdentitySignature = calculateThermodynamicIdentitySignature();
+    long currentSequentialInitializationSignature = calculateSequentialInitializationSignature();
+    boolean thermodynamicIdentityChanged = currentThermodynamicIdentitySignature != trayStateThermodynamicIdentitySignature;
+    boolean columnConfigurationChanged = currentSequentialInitializationSignature != lastSequentialInitializationSignature;
+    if (hasBeenSolvedBefore && !isDoInitializion()
+        && (thermodynamicIdentityChanged || (!hasAdjustableSpecifications() && columnConfigurationChanged))) {
+      logger.info("Sequential warm start is incompatible with current inputs for column {}; "
+          + "rebuilding tray initialization.", getName());
+      hasBeenSolvedBefore = false;
+      setDoInitializion(true);
     }
 
     if (isDoInitializion()) {
@@ -11677,6 +11715,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     naphtaliSandholmStateOwned = false;
     lastNaphtaliSandholmInputSignature = Long.MIN_VALUE;
     lastNaphtaliSandholmWarmStateReused = false;
+    lastSequentialInitializationSignature = Long.MIN_VALUE;
     resetInsideOutTelemetry();
     resetNaphtaliTelemetry();
     terminalGasProductDrawStream = null;

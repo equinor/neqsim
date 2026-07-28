@@ -13,7 +13,7 @@ import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Regression tests for the Naphtali-Sandholm warm-state cache introduced with the warm-solve speed-up.
+ * Regression tests for column warm-state compatibility and cache invalidation.
  *
  * <p>
  * The cache reuses an accepted tray solution when a fingerprint of the solver inputs is unchanged. The fingerprint
@@ -438,6 +438,86 @@ public class DistillationColumnWarmStateCacheTest {
     assertColdReferenceEquivalent(coldReference.column, mutated.column);
     assertPhysicalAndBalanced(mutated);
     assertNextRunReusesExactly(mutated);
+  }
+
+  /**
+   * Sequential warm starts must be invalidated when a fixed reboiler temperature changes.
+   *
+   * <p>
+   * The 90 C case previously converged to a path-dependent product split, while the 100 C case reached the internal
+   * traffic guard. Both targets are feasible from a cold initialization. After the configuration change is detected,
+   * the sequential solver must rebuild once, agree with the cold reference, and retain the new state on an unchanged
+   * re-run.
+   * </p>
+   */
+  @Test
+  public void sequentialSpecificationChangeMatchesColdReferenceAndIsRepeatable() {
+    assertSequentialSpecificationChange(90.0);
+    assertSequentialSpecificationChange(100.0);
+  }
+
+  /**
+   * Verify one changed fixed-temperature target against a cold reference and an unchanged re-run.
+   *
+   * @param targetTemperatureC changed reboiler temperature in degrees Celsius
+   */
+  private static void assertSequentialSpecificationChange(double targetTemperatureC) {
+    ColumnCase warmCase = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 2));
+    configureDampedSubstitution(warmCase.column);
+    warmCase.column.run();
+    assertTrue(warmCase.column.solved(), warmCase.column.getConvergenceDiagnostics());
+    int baselineInitializationCount = warmCase.column.getInitializationCount();
+
+    warmCase.column.getReboiler().setOutTemperature(273.15 + targetTemperatureC);
+    warmCase.column.run();
+
+    assertTrue(warmCase.column.solved(), warmCase.column.getConvergenceDiagnostics());
+    assertEquals(baselineInitializationCount + 1, warmCase.column.getInitializationCount(),
+        "a changed fixed reboiler temperature must rebuild the sequential initialization exactly once");
+    assertTrue(warmCase.column.getLastIterationCount() <= 30,
+        "the rebuilt solve should remain within the established cold-reference iteration budget");
+    assertPhysicalAndBalanced(warmCase);
+
+    ColumnCase coldReference = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 2));
+    configureDampedSubstitution(coldReference.column);
+    coldReference.column.getReboiler().setOutTemperature(273.15 + targetTemperatureC);
+    coldReference.column.run();
+
+    assertTrue(coldReference.column.solved(), coldReference.column.getConvergenceDiagnostics());
+    assertColdReferenceEquivalent(coldReference.column, warmCase.column);
+    assertPhysicalAndBalanced(coldReference);
+
+    int acceptedInitializationCount = warmCase.column.getInitializationCount();
+    double gasFlow = warmCase.column.getGasOutStream().getFlowRate("mol/hr");
+    double liquidFlow = warmCase.column.getLiquidOutStream().getFlowRate("mol/hr");
+    double[] gasComposition = warmCase.column.getGasOutStream().getThermoSystem().getMolarComposition().clone();
+    double[] liquidComposition = warmCase.column.getLiquidOutStream().getThermoSystem().getMolarComposition().clone();
+
+    warmCase.column.run();
+
+    assertTrue(warmCase.column.solved(), warmCase.column.getConvergenceDiagnostics());
+    assertEquals(acceptedInitializationCount, warmCase.column.getInitializationCount(),
+        "an unchanged re-run must retain the accepted sequential warm state");
+    assertEquals(gasFlow, warmCase.column.getGasOutStream().getFlowRate("mol/hr"),
+        Math.max(1.0e-9, Math.abs(gasFlow) * 1.0e-5), "an unchanged re-run must reproduce overhead flow");
+    assertEquals(liquidFlow, warmCase.column.getLiquidOutStream().getFlowRate("mol/hr"),
+        Math.max(1.0e-9, Math.abs(liquidFlow) * 1.0e-5), "an unchanged re-run must reproduce bottoms flow");
+    assertArrayEquals(gasComposition, warmCase.column.getGasOutStream().getThermoSystem().getMolarComposition(), 1.0e-7,
+        "an unchanged re-run must reproduce overhead composition");
+    assertArrayEquals(liquidComposition, warmCase.column.getLiquidOutStream().getThermoSystem().getMolarComposition(),
+        1.0e-7, "an unchanged re-run must reproduce bottoms composition");
+    assertPhysicalAndBalanced(warmCase);
+  }
+
+  /**
+   * Configure the deterministic low-relaxation sequential regression solver.
+   *
+   * @param column column to configure
+   */
+  private static void configureDampedSubstitution(DistillationColumn column) {
+    column.setSolverType(DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
+    column.setRelaxationFactor(0.2);
+    column.setMaxNumberOfIterations(120, true);
   }
 
 }
