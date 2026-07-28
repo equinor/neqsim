@@ -324,8 +324,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
     // Preserve the nearby equilibrium seed only for associating fluids. Cubic EOS dynamics
     // retain the legacy cold initialization and its established trajectory.
-    boolean warmStartInitialization =
-        !neqsim.thermo.ThermodynamicModelSettings.isInnerFlashWarmStartSafe(thermoSystem);
+    boolean warmStartInitialization = !neqsim.thermo.ThermodynamicModelSettings.isInnerFlashWarmStartSafe(thermoSystem);
     thermoOps.VUflash(volume1, newEnergy, warmStartInitialization);
 
     setOutComposition(thermoSystem);
