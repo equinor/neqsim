@@ -11911,6 +11911,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastNaphtaliSandholmInputSignature = Long.MIN_VALUE;
     lastNaphtaliSandholmWarmStateReused = false;
     lastSequentialInitializationSignature = Long.MIN_VALUE;
+    hasSequentialExactReuseState = false;
+    lastSequentialInputSignature = Long.MIN_VALUE;
+    lastSequentialWarmStateReused = false;
     resetInsideOutTelemetry();
     resetNaphtaliTelemetry();
     terminalGasProductDrawStream = null;
