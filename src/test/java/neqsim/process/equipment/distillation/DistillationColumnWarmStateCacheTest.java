@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
@@ -489,6 +490,51 @@ public class DistillationColumnWarmStateCacheTest {
     assertColdReferenceEquivalent(coldReference.column, mutated.column);
     assertPhysicalAndBalanced(mutated);
     assertNextRunReusesExactly(mutated);
+  }
+
+  /**
+   * Cold initialization must preserve caller-owned feeds when direct and registered feeds were attached in reverse order.
+   */
+  @Test
+  public void coldInitializationPreservesReverseAttachedFeedIdentity() {
+    Stream directFeed =
+        new Stream("reverse-order direct feed", createIdentityTestFluid(false, "n-butane", 2));
+    configureDirectFeed(directFeed);
+    Stream registeredFeed =
+        new Stream("reverse-order registered feed", createIdentityTestFluid(false, "n-butane", 2));
+    configureIdentityFeed(registeredFeed);
+    SystemInterface directFeedSystem = directFeed.getThermoSystem();
+    SystemInterface registeredFeedSystem = registeredFeed.getThermoSystem();
+
+    TrackingDistillationColumn column =
+        new TrackingDistillationColumn("reverse-order feed column", 6, true, false);
+    column.getTray(2).addStream(directFeed);
+    column.addFeedStream(registeredFeed, 2);
+    column.setTopPressure(10.0);
+    column.setBottomPressure(10.5);
+    column.getReboiler().setOutTemperature(273.15 + 80.0);
+    configureDampedSubstitution(column);
+
+    column.run();
+
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    assertSame(directFeedSystem, directFeed.getThermoSystem(),
+        "cold preparation must not replace the caller-owned direct-feed system");
+    assertSame(registeredFeedSystem, registeredFeed.getThermoSystem(),
+        "cold preparation must not replace the caller-owned registered-feed system");
+    assertEquals(30.0, directFeed.getTemperature("C"), 1.0e-9,
+        "cold preparation must preserve the direct-feed temperature");
+    assertEquals(20.0, registeredFeed.getTemperature("C"), 1.0e-9,
+        "cold preparation must preserve the registered-feed temperature");
+
+    double totalFeedFlow =
+        directFeed.getFlowRate("mol/hr") + registeredFeed.getFlowRate("mol/hr");
+    double totalProductFlow = column.getGasOutStream().getFlowRate("mol/hr")
+        + column.getLiquidOutStream().getFlowRate("mol/hr");
+    assertEquals(totalFeedFlow, totalProductFlow, 5.0e-3 * totalFeedFlow,
+        "reverse-order registered and direct feeds must close the total molar balance");
+    assertPhysicalStream(column.getGasOutStream());
+    assertPhysicalStream(column.getLiquidOutStream());
   }
 
   /**
