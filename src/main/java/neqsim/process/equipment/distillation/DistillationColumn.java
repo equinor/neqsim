@@ -1116,6 +1116,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
     setDoInitializion(false);
 
+    // Capture legacy direct feeds before recording the identity of the tray network. Otherwise the
+    // first initialized state omits those feeds from the fingerprint and appears incompatible on
+    // the next unchanged solve.
+    captureDirectExternalTrayFeeds();
+
     // The tray fluids are about to be rebuilt from the current feeds, so record which thermodynamic
     // identity they describe. Any later solve that sees a different identity must initialize again
     // instead of reusing or warm-starting from a tray network built for other components.
@@ -1124,7 +1129,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     naphtaliSandholmStateOwned = false;
     hasNaphtaliSandholmWarmState = false;
 
-    captureDirectExternalTrayFeeds();
     resetTrayInputsToExternalFeeds();
     cloneExternalTrayInputsForInitialization();
 
@@ -2504,12 +2508,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private long calculateThermodynamicIdentitySignature() {
     long signature = 1125899906842597L;
-    List<Integer> feedTrayNumbers = new ArrayList<Integer>(feedStreams.keySet());
-    Collections.sort(feedTrayNumbers);
-    signature = updateNaphtaliSandholmInputSignature(signature, feedTrayNumbers.size());
-    for (Integer trayNumber : feedTrayNumbers) {
+    Set<Integer> externalFeedTrayNumberSet = new HashSet<Integer>(feedStreams.keySet());
+    externalFeedTrayNumberSet.addAll(directExternalFeedStreams.keySet());
+    List<Integer> externalFeedTrayNumbers = new ArrayList<Integer>(externalFeedTrayNumberSet);
+    Collections.sort(externalFeedTrayNumbers);
+    signature = updateNaphtaliSandholmInputSignature(signature, externalFeedTrayNumbers.size());
+    for (Integer trayNumber : externalFeedTrayNumbers) {
       signature = updateNaphtaliSandholmInputSignature(signature, trayNumber.longValue());
-      List<StreamInterface> trayFeeds = feedStreams.get(trayNumber);
+      List<StreamInterface> trayFeeds = getExternalFeedStreams(trayNumber.intValue());
       signature = updateNaphtaliSandholmInputSignature(signature, trayFeeds.size());
       for (StreamInterface feed : trayFeeds) {
         signature = updateThermodynamicIdentitySignature(signature, feed.getThermoSystem());
