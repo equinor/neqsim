@@ -228,8 +228,7 @@ public class CompressorOperatingPointResultTest {
     boolean feasible = result.isFeasible();
     String limitingConstraint = result.getLimitingConstraint();
     double recycleLossKW = result.getRecyclePowerLossKW();
-    List<CompressorOperatingPointResult.ConstraintSnapshot> constraints =
-        result.getConstraints();
+    List<CompressorOperatingPointResult.ConstraintSnapshot> constraints = result.getConstraints();
     String resultJson = result.toJson();
 
     assertTrue(feasible);
@@ -239,7 +238,6 @@ public class CompressorOperatingPointResultTest {
     assertEquals("1.0", result.getSchemaVersion());
     assertTrue(resultJson.contains("\"schemaVersion\":\"1.0\""));
     assertThrows(UnsupportedOperationException.class, constraints::clear);
-    assertThrows(IllegalArgumentException.class,
-        () -> compressor.getOperatingPointResult(-0.01));
+    assertThrows(IllegalArgumentException.class, () -> compressor.getOperatingPointResult(-0.01));
   }
 }
