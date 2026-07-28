@@ -359,16 +359,18 @@ public class OptimizedVUflash extends Flash {
       // Every Newton-loop TP flash may reuse K-values. The initialization flash does so only when
       // the caller identifies the state as the previous point on a continuous dynamic trajectory.
       solveFromCurrentState(warmStartInitialization, true);
-      if (warmStartInitialization && !isSolutionAcceptable()) {
+      boolean solutionAcceptable = isSolutionAcceptable();
+      if (warmStartInitialization && !solutionAcceptable) {
         // A warm seed is an optimization, never a correctness requirement. Retry once from the
         // incoming P/T with a cold initialization if the nearby-state assumption was invalid.
         coldFallbackUsed = true;
         system.setPressure(startPressure);
         system.setTemperature(startTemperature);
         solveFromCurrentState(false, true);
+        solutionAcceptable = isSolutionAcceptable();
       }
-      if (!isSolutionAcceptable()) {
-        lastRunConverged = false;
+      lastRunConverged = solutionAcceptable;
+      if (!solutionAcceptable) {
         logger.warn("OptimizedVUflash did not reach the volume/energy specification");
       }
     } finally {
@@ -386,9 +388,9 @@ public class OptimizedVUflash extends Flash {
   }
 
   /**
-   * Returns whether the most recent solve met both volume and energy specifications.
+   * Returns whether the most recent solve met the accepted volume and energy residual criteria.
    *
-   * @return true when the last run converged
+   * @return true when the final state satisfied both accepted residual criteria
    */
   public boolean isLastRunConverged() {
     return lastRunConverged;
