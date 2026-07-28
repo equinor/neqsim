@@ -5802,7 +5802,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return index of the lowest feed tray in the column
    */
   private int prepareColumnForSolve() {
-    int firstFeedTrayNumber = feedStreams.keySet().stream().min(Integer::compareTo).get();
+    int firstFeedTrayNumber = getFirstExternalFeedTrayNumber();
 
     if (bottomTrayPressure < 0) {
       bottomTrayPressure = getTray(firstFeedTrayNumber).getStream(0).getPressure();
