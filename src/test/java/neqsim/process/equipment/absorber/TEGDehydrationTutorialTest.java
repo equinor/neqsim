@@ -17,12 +17,10 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 
 /**
- * Executes the conservative equilibrium-contact example in
- * docs/tutorials/teg_dehydration_tutorial.md.
+ * Executes the conservative equilibrium-contact example in docs/tutorials/teg_dehydration_tutorial.md.
  */
 class TEGDehydrationTutorialTest extends NeqSimTest {
-  private static final Logger logger =
-      LogManager.getLogger(TEGDehydrationTutorialTest.class);
+  private static final Logger logger = LogManager.getLogger(TEGDehydrationTutorialTest.class);
 
   private static double componentFlow(StreamInterface stream, String componentName) {
     ComponentInterface component = stream.getFluid().getComponent(componentName);
@@ -60,8 +58,7 @@ class TEGDehydrationTutorialTest extends NeqSimTest {
     equilibriumContact.addStream(saturator.getOutletStream());
     equilibriumContact.addStream(leanTeg);
 
-    Separator phaseSplitter =
-        new Separator("gas and rich TEG separator", equilibriumContact.getOutletStream());
+    Separator phaseSplitter = new Separator("gas and rich TEG separator", equilibriumContact.getOutletStream());
 
     ProcessSystem process = new ProcessSystem();
     process.add(gasFeed);
@@ -75,21 +72,16 @@ class TEGDehydrationTutorialTest extends NeqSimTest {
     StreamInterface productGas = phaseSplitter.getGasOutStream();
     StreamInterface richTeg = phaseSplitter.getLiquidOutStream();
 
-    double wetWater =
-        wetGas.getFluid().getPhase(0).getComponent("water").getx();
-    double productWater =
-        productGas.getFluid().getPhase(0).getComponent("water").getx();
+    double wetWater = wetGas.getFluid().getPhase(0).getComponent("water").getx();
+    double productWater = productGas.getFluid().getPhase(0).getComponent("water").getx();
 
     double wetWaterFlow = componentFlow(wetGas, "water");
     double leanWaterFlow = componentFlow(leanTeg, "water");
     double productWaterFlow = componentFlow(productGas, "water");
     double richWaterFlow = componentFlow(richTeg, "water");
-    double waterResidual =
-        wetWaterFlow + leanWaterFlow - productWaterFlow - richWaterFlow;
-    double totalMassResidual =
-        wetGas.getFlowRate("kg/hr") + leanTeg.getFlowRate("kg/hr")
-            - productGas.getFlowRate("kg/hr")
-            - richTeg.getFlowRate("kg/hr");
+    double waterResidual = wetWaterFlow + leanWaterFlow - productWaterFlow - richWaterFlow;
+    double totalMassResidual = wetGas.getFlowRate("kg/hr") + leanTeg.getFlowRate("kg/hr")
+        - productGas.getFlowRate("kg/hr") - richTeg.getFlowRate("kg/hr");
 
     logger.info("Wet gas water {} mol-ppm", wetWater * 1.0e6);
     logger.info("Product gas water {} mol-ppm", productWater * 1.0e6);
