@@ -2418,7 +2418,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     hasSequentialExactReuseState = hasBeenSolvedBefore && acceptedStatus && !isDoInitializion()
         && !hasAdjustableSpecifications() && !hasActiveColumnTearVariables();
     if (hasSequentialExactReuseState) {
-      lastSequentialInputSignature = calculateNaphtaliSandholmInputSignature();
+      lastSequentialInputSignature = calculateSequentialExactReuseSignature();
     }
   }
 
@@ -2490,6 +2490,67 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
     setCalculationIdentifier(id);
     lastSolveStatusReason = "Reused unchanged Naphtali-Sandholm solution";
+  }
+
+  /**
+   * Calculate a deterministic fingerprint for exact sequential-state reuse.
+   *
+   * <p>
+   * The external-input fingerprint alone is insufficient because advanced callers and solver tests can deliberately
+   * perturb tray states between invocations. Include the accepted tray and exposed product states so such edits trigger
+   * a real solve instead of being hidden by the exact-reuse path.
+   * </p>
+   *
+   * @return fingerprint of external inputs, tray states, and public products
+   */
+  private long calculateSequentialExactReuseSignature() {
+    long signature = calculateNaphtaliSandholmInputSignature();
+    signature = updateSequentialStreamStateSignature(signature, gasOutStream);
+    signature = updateSequentialStreamStateSignature(signature, liquidOutStream);
+    signature = updateNaphtaliSandholmInputSignature(signature, trays.size());
+    for (SimpleTray tray : trays) {
+      if (tray == null || tray.getThermoSystem() == null) {
+        signature = updateNaphtaliSandholmInputSignature(signature, -1L);
+        continue;
+      }
+      signature = updateNaphtaliSandholmInputSignature(signature, tray.getTemperature());
+      signature = updateSequentialSystemStateSignature(signature, tray.getThermoSystem());
+    }
+    return signature;
+  }
+
+  /**
+   * Add a stream thermodynamic state to the exact sequential-reuse fingerprint.
+   *
+   * @param signature fingerprint accumulated so far
+   * @param stream stream to fingerprint
+   * @return updated fingerprint
+   */
+  private long updateSequentialStreamStateSignature(long signature, StreamInterface stream) {
+    if (stream == null || stream.getThermoSystem() == null) {
+      return updateNaphtaliSandholmInputSignature(signature, -1L);
+    }
+    return updateSequentialSystemStateSignature(signature, stream.getThermoSystem());
+  }
+
+  /**
+   * Add a complete thermodynamic system state to the exact sequential-reuse fingerprint.
+   *
+   * @param signature fingerprint accumulated so far
+   * @param system thermodynamic system to fingerprint
+   * @return updated fingerprint
+   */
+  private long updateSequentialSystemStateSignature(long signature, SystemInterface system) {
+    long updatedSignature = updateNaphtaliSandholmThermodynamicModelSignature(signature, system);
+    updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, system.getTemperature());
+    updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, system.getPressure());
+    updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, system.getTotalNumberOfMoles());
+    double[] composition = system.getMolarComposition();
+    updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, composition.length);
+    for (double moleFraction : composition) {
+      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, moleFraction);
+    }
+    return updatedSignature;
   }
 
   /**
@@ -5415,7 +5476,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       return;
     }
 
-    long currentSequentialInputSignature = calculateNaphtaliSandholmInputSignature();
+    long currentSequentialInputSignature = calculateSequentialExactReuseSignature();
     if (canReuseSequentialWarmState(currentSequentialInputSignature)) {
       reuseSequentialWarmState(id, invocationStartTime);
       return;
