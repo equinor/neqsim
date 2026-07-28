@@ -1054,9 +1054,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * Performs a VU flash with an explicit initialization policy.
    *
    * <p>
-   * Warm initialization is intended for a continuous dynamic trajectory whose current system is
-   * the immediately preceding converged state. Independent flashes should use the cold-default
-   * overload.
+   * Warm initialization is intended for a continuous dynamic trajectory whose current system is the immediately
+   * preceding converged state. Independent flashes should use the cold-default overload.
    * </p>
    *
    * @param volume specified volume
@@ -1089,14 +1088,12 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass();
       break;
     case "kJ/kg":
-      conversionFactorEntr =
-          1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
+      conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
       break;
     default:
       break;
     }
-    VUflash(volume * conversionFactorV, energy / conversionFactorEntr,
-        warmStartInitialization);
+    VUflash(volume * conversionFactorV, energy / conversionFactorEntr, warmStartInitialization);
   }
 
   /**
@@ -1120,8 +1117,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     if (isPureComponentWithinInternalEnergyRange(Uspec)) {
       operation = new VUflashSingleComp(system, Vspec, Uspec);
     } else {
-      operation =
-          new OptimizedVUflash(system, Vspec, Uspec, warmStartInitialization);
+      operation = new OptimizedVUflash(system, Vspec, Uspec, warmStartInitialization);
     }
     getOperation().run();
   }
