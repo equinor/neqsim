@@ -1,38 +1,99 @@
 ---
-title: "Gas quality standards validated by ISO 6976 tests"
-description: "The ISO 6976 calorific value and Wobbe index calculations are verified in `Standard_ISO6976Test`. This page summarizes the tested configurations and equations so you can align custom gas-quality runs ..."
+title: "ISO 6976 regression evidence"
+description: "Trace the current ISO 6976 gas-quality regression coverage for calorific value, Wobbe index, reference conditions, aliases, and unsupported components."
 ---
 
-# Gas quality standards validated by ISO 6976 tests
+This page explains the numerical evidence in
+[`Standard_ISO6976Test`](../../src/test/java/neqsim/standards/gasquality/Standard_ISO6976Test.java).
+Use it with the [ISO 6976 calculation guide](../standards/iso6976_calorific_values.md),
+which documents the API, editions, units, and engineering boundaries.
 
-The ISO 6976 calorific value and Wobbe index calculations are verified in `Standard_ISO6976Test`. This page summarizes the tested configurations and equations so you can align custom gas-quality runs with the regression suite.
+## Reference fixture and expected values
 
-## Base ISO 6976 calculation
+`testCalculate` builds an SRK gas at 20 °C and 1.0 bara, adds methane, ethane,
+nitrogen, and carbon dioxide, applies the classic mixing rule, and performs a
+TP flash. It then configures `Standard_ISO6976` with a 0 °C volume reference, a
+15.55 °C combustion-energy reference, a real-gas reference state, and a volume
+basis.
 
-`testCalculate` initializes a dry natural gas at 20 °C and 1 bar with a classic mixing rule and executes `Standard_ISO6976.calculate()` using volume-based reference conditions (0 °C volume base, 15.55 °C energy base).【F:src/test/java/neqsim/standards/gasquality/Standard_ISO6976Test.java†L23-L47】 The test confirms the gross calorific value (GCV) of 39,614.57 kJ/Sm³ and Wobbe index (WI) of 44.61 MJ/Sm³.
+The current assertions are:
 
-The Wobbe index relation checked in the test is
+| Property | Regression value | Unit |
+| --- | ---: | --- |
+| Superior calorific value (`GCV`) | 39.61457 | MJ/m³ |
+| Superior Wobbe index (`WI`) | 51.70101 | MJ/m³ |
+| Relative density | 0.5870995 | dimensionless |
 
-$
-WI = \frac{GCV}{\sqrt{\rho_r}}\ ,
-$
+The superior Wobbe index is related to the superior calorific value by
 
-where $\rho_r$ is the relative density. Matching the test values indicates both combustion energy and density normalization are consistent with ISO 6976.
+$$
+W_s = \frac{H_s}{\sqrt{d}}
+$$
 
-## Handling reference condition overrides
+where $H_s$ is the superior calorific value on the selected basis and $d$ is
+the relative density on the same reference basis. Report both reference
+temperatures, the real or ideal reference state, and the volume, mass, or molar
+basis with every result.
 
-`testCalculateWithWrongReferenceState` shows that if non-standard reference temperatures are provided, the standard falls back to defined bases (15 °C for energy, 0 °C for volume) while still computing GCV and WI.【F:src/test/java/neqsim/standards/gasquality/Standard_ISO6976Test.java†L49-L73】 Use this behavior to guard against user input errors without failing calculations.
+## Aliases and composition sensitivity
 
-## Including pseudo-components
+`testCalculate` verifies that `WI` and `WobbeIndex` both resolve to
+`SuperiorWobbeIndex`. The separate `testWIAliasVariesWithComposition` regression
+prevents the alias from returning a composition-independent value: its lean
+98 mol% methane / 2 mol% ethane gas gives approximately 53.86 MJ/m³, while its
+richer methane/ethane/propane gas gives approximately 58.38 MJ/m³.
 
-`testCalculateWithPSeudo` adds a TBP pseudo-fraction to the gas and re-runs the calculation to verify heavier fractions contribute to higher heating value (GCV ≈ 42,378 kJ/Sm³).【F:src/test/java/neqsim/standards/gasquality/Standard_ISO6976Test.java†L75-L96】 The setup demonstrates that ISO 6976 evaluation tolerates lumped heavy ends when a classic mixing rule and full flash initialization are applied.
+These values are software regression anchors for the specified fixtures and
+reference conditions. They are not universal sales-gas limits.
 
-## Full-property audit
+## Invalid reference temperatures
 
-`testCalculate2` and `testCalculate3` sweep alternative temperatures and reference pairs to assert a complete property set: compression factor, superior/inferior calorific values, Wobbe indices, relative density, and molar mass.【F:src/test/java/neqsim/standards/gasquality/Standard_ISO6976Test.java†L98-L200】 The tests also run a process `Stream` to ensure downstream WI reporting matches the standard calculation.
+`testCalculateWithWrongReferenceState` deliberately sets unsupported reference
+temperatures. When a value is requested, `checkReferenceCondition()` changes an
+unsupported combustion-energy reference to 25 °C and an unsupported volume
+reference to 15 °C, and logs both corrections. The resulting GCV assertion is
+37.49935 MJ/m³.
 
-When configuring your own gas-quality evaluations:
+This fallback keeps the calculation running, but it also changes the requested
+basis. Validate reference temperatures before calculation instead of treating
+the fallback as input validation. For the 1995 implementation, use the volume
+reference temperatures with implemented corrections—0, 15, 15.55, or 20 °C—as
+explained in the primary guide.
 
-- Always initialize the thermodynamic system (`init(0)`) before calling the standard.
-- Select reference temperatures explicitly; unexpected inputs will be corrected but should be avoided for traceability.
-- Validate both GCV and Wobbe index against expected tolerances to confirm combustion properties are consistent.
+## Pseudo-components and unsupported species
+
+`testCalculateWithPSeudo` adds a `C10` TBP fraction and asserts a resulting GCV
+of 42.37776 MJ/m³. This proves that the current fallback route remains
+numerically stable for that fixture; it does not prove explicit ISO 6976
+coverage for the pseudo-component.
+
+For hydrocarbon, TBP, and plus fractions not found in the ISO data table,
+`Standard_ISO6976` substitutes n-heptane data and records the original component
+name in `getComponentsNotDefinedByStandard()`. Other unsupported component types
+use different fallback mappings. Always inspect that list and disclose any
+approximation before using the result for design, fiscal, or contractual work.
+
+## Full-property and stream coverage
+
+`testCalculate2` checks the 0/15.55 °C fixture across superior and inferior
+calorific values, superior and inferior Wobbe indices, relative density,
+compression factor, and molar mass. `testCalculate3` uses a different gas at
+15/15 °C and verifies the same property family. It also confirms that
+`Stream.getGCV(...)` and `Stream.getWI(...)` agree with the standard calculation
+after the stream has run.
+
+Initialize or flash the thermodynamic system so that its composition and state
+are current before constructing the standard. Use the same preparation,
+reference conditions, and basis when comparing a custom calculation with a
+regression value.
+
+## Interpretation boundary
+
+The tests establish repeatable NeqSim results for defined inputs and catch
+software regressions in aliases, reference handling, composition response, and
+stream integration. They do not establish sampling quality, measurement
+uncertainty, laboratory conformity, contractual compliance, or certification to
+a particular ISO 6976 edition.
+
+See the [standards package overview](../standards/README.md) for the broader
+measurement and reporting checks.
