@@ -77,9 +77,9 @@ public class OptimizedVUflash extends Flash {
    * Constructor for an optimized VU flash with an explicit initialization policy.
    *
    * <p>
-   * Warm initialization is intended for continuous dynamic calculations where the supplied system
-   * is the immediately preceding converged state. Standalone flashes should retain the cold
-   * default so unrelated states cannot seed each other.
+   * Warm initialization is intended for continuous dynamic calculations where the supplied system is the immediately
+   * preceding converged state. Standalone flashes should retain the cold default so unrelated states cannot seed each
+   * other.
    * </p>
    *
    * @param system thermodynamic system to flash
@@ -87,8 +87,7 @@ public class OptimizedVUflash extends Flash {
    * @param Uspec specified internal energy
    * @param warmStartInitialization whether the initialization TP flash may reuse current K-values
    */
-  public OptimizedVUflash(SystemInterface system, double Vspec, double Uspec,
-      boolean warmStartInitialization) {
+  public OptimizedVUflash(SystemInterface system, double Vspec, double Uspec, boolean warmStartInitialization) {
     this.system = system;
     this.tpFlash = new TPflash(system);
     this.Vspec = Vspec;
@@ -338,13 +337,11 @@ public class OptimizedVUflash extends Flash {
    *
    * @param warmStartInnerFlashes whether the inner TP flashes of the Newton iteration may reuse K-values
    */
-  private void solveFromCurrentState(boolean warmStartInitialFlash,
-      boolean warmStartInnerFlashes) {
+  private void solveFromCurrentState(boolean warmStartInitialFlash, boolean warmStartInnerFlashes) {
     lastPressure = Double.NaN;
     lastTemperature = Double.NaN;
     isWellBehaved = true;
-    neqsim.thermo.ThermodynamicModelSettings
-        .setUseWarmStartKValues(warmStartInitialFlash);
+    neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(warmStartInitialFlash);
     tpFlash.run();
     neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(warmStartInnerFlashes);
     solveQ();
