@@ -697,7 +697,8 @@ public class DistillationColumnWarmStateCacheTest {
     assertEquals(baselineInitializationCount + 1, warmCase.column.getInitializationCount(),
         "a fixed pressure change must rebuild even while bottom recovery adjusts reboiler temperature");
     assertEquals(0.0, warmCase.column.getLastBottomSpecificationResidual(),
-        warmCase.column.getBottomSpecification().getTolerance(), "changed-pressure recovery specification must converge");
+        warmCase.column.getBottomSpecification().getTolerance(),
+        "changed-pressure recovery specification must converge");
     assertPhysicalAndBalanced(warmCase);
 
     ColumnCase coldReference = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 2));
@@ -709,7 +710,8 @@ public class DistillationColumnWarmStateCacheTest {
 
     assertTrue(coldReference.column.solved(), coldReference.column.getConvergenceDiagnostics());
     assertEquals(0.0, coldReference.column.getLastBottomSpecificationResidual(),
-        coldReference.column.getBottomSpecification().getTolerance(), "cold-reference recovery specification must converge");
+        coldReference.column.getBottomSpecification().getTolerance(),
+        "cold-reference recovery specification must converge");
     assertColdReferenceEquivalent(coldReference.column, warmCase.column);
     assertPhysicalAndBalanced(coldReference);
   }
