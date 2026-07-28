@@ -521,6 +521,41 @@ public class DistillationColumnWarmStateCacheTest {
   }
 
   /**
+   * A direct side-feed operating-point change must invalidate exact Naphtali-Sandholm reuse.
+   */
+  @Test
+  public void directTrayFeedOperatingPointChangeInvalidatesNaphtaliReuse() {
+    DirectFeedColumnCase mutated = buildDirectFeedColumnCase(createIdentityTestFluid(false, "n-butane", 2));
+    mutated.column.setSolverType(DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
+    mutated.column.run();
+    assertTrue(mutated.column.solved(), mutated.column.getConvergenceDiagnostics());
+
+    mutated.column.run();
+    assertTrue(mutated.column.wasNaphtaliSandholmWarmStateReused(),
+        "an unchanged direct-feed case must reuse the accepted simultaneous solution");
+    double originalOverheadFlow = mutated.column.getGasOutStream().getFlowRate("mol/hr");
+
+    mutated.directFeed.setFlowRate(0.22 * IDENTITY_TEST_FLOW_MOL_PER_HOUR, "mol/hr");
+    mutated.directFeed.run();
+
+    assertFalse(mutated.column.willReuseNaphtaliSandholmWarmState(),
+        "a direct side-feed flow change must invalidate exact simultaneous-solver reuse");
+    mutated.column.run();
+
+    assertTrue(mutated.column.solved(), mutated.column.getConvergenceDiagnostics());
+    assertFalse(mutated.column.wasNaphtaliSandholmWarmStateReused(),
+        "the changed direct feed must be solved rather than answered from the old cache");
+    assertNotEquals(originalOverheadFlow, mutated.column.getGasOutStream().getFlowRate("mol/hr"), 1.0,
+        "a 10 percent direct-feed flow change must alter the product flow");
+    assertEquals(20.0, mutated.registeredFeed.getTemperature("C"), 1.0e-9,
+        "direct-feed cache checks must not mutate the registered caller-owned feed");
+    assertEquals(30.0, mutated.directFeed.getTemperature("C"), 1.0e-9,
+        "direct-feed cache checks must not mutate the direct caller-owned feed");
+    assertPhysicalStream(mutated.column.getGasOutStream());
+    assertPhysicalStream(mutated.column.getLiquidOutStream());
+  }
+
+  /**
    * Sequential warm starts must be invalidated when a fixed reboiler temperature changes.
    *
    * <p>
