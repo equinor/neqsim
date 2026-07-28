@@ -5470,7 +5470,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         massEnergyEvaluated = true;
       }
 
-      double tempScaled = err / baseTempTolerance;
+      // Keep adaptive damping calibrated to the step actually applied; convergence uses the
+      // undamped fixed-point residual in err.
+      double tempScaled = appliedTemperatureStepResidual / baseTempTolerance;
       double massScaled = massErr / baseMassTolerance;
       double energyScaled = energyErr / baseEnergyTolerance;
       double combinedResidual = Math.max(tempScaled, massScaled);
