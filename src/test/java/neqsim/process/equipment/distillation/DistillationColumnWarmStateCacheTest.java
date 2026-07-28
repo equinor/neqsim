@@ -654,11 +654,9 @@ public class DistillationColumnWarmStateCacheTest {
     assertEquals(0, live.column.getLastIterationCount(),
         "exact reuse of an adopted candidate must require no new tray iterations");
     assertEquals(acceptedGasFlow, live.column.getGasOutStream().getFlowRate("mol/hr"),
-        Math.max(1.0e-9, Math.abs(acceptedGasFlow) * 1.0e-5),
-        "adopted exact reuse must preserve overhead flow");
+        Math.max(1.0e-9, Math.abs(acceptedGasFlow) * 1.0e-5), "adopted exact reuse must preserve overhead flow");
     assertEquals(acceptedLiquidFlow, live.column.getLiquidOutStream().getFlowRate("mol/hr"),
-        Math.max(1.0e-9, Math.abs(acceptedLiquidFlow) * 1.0e-5),
-        "adopted exact reuse must preserve bottoms flow");
+        Math.max(1.0e-9, Math.abs(acceptedLiquidFlow) * 1.0e-5), "adopted exact reuse must preserve bottoms flow");
     assertEquals(20.0, live.feed.getTemperature("C"), 1.0e-9,
         "candidate adoption and exact reuse must preserve the caller-owned feed");
     assertPhysicalAndBalanced(live);
