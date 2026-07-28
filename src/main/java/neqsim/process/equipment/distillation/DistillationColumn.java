@@ -630,6 +630,20 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private transient long trayStateThermodynamicIdentitySignature = Long.MIN_VALUE;
   /**
+   * Fingerprint of fixed column inputs used to build the current sequential tray initialization.
+   *
+   * <p>
+   * Feed operating conditions are intentionally excluded so nearby feed cases retain their warm start.
+   * </p>
+   */
+  private transient long lastSequentialInitializationSignature = Long.MIN_VALUE;
+  /** Whether an accepted sequential solution is eligible for exact unchanged-input reuse. */
+  private transient boolean hasSequentialExactReuseState = false;
+  /** Full input fingerprint associated with the accepted sequential solution. */
+  private transient long lastSequentialInputSignature = Long.MIN_VALUE;
+  /** Whether the latest sequential invocation reused an exact accepted state. */
+  private transient boolean lastSequentialWarmStateReused = false;
+  /**
    * Whether the current tray state was produced by {@link NaphtaliSandholmSolver} on this column instance.
    *
    * <p>
@@ -1108,15 +1122,22 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
     setDoInitializion(false);
 
+    // Capture legacy direct feeds before recording the identity of the tray network. Otherwise the
+    // first initialized state omits those feeds from the fingerprint and appears incompatible on
+    // the next unchanged solve.
+    captureDirectExternalTrayFeeds();
+
     // The tray fluids are about to be rebuilt from the current feeds, so record which thermodynamic
     // identity they describe. Any later solve that sees a different identity must initialize again
     // instead of reusing or warm-starting from a tray network built for other components.
     trayStateThermodynamicIdentitySignature = calculateThermodynamicIdentitySignature();
+    lastSequentialInitializationSignature = calculateSequentialInitializationSignature();
     naphtaliSandholmStateOwned = false;
     hasNaphtaliSandholmWarmState = false;
+    hasSequentialExactReuseState = false;
 
-    captureDirectExternalTrayFeeds();
     resetTrayInputsToExternalFeeds();
+    cloneExternalTrayInputsForInitialization();
 
     // If feed streams are empty, nothing to do
     if (feedStreams.isEmpty() && directExternalFeedStreams.isEmpty()) {
@@ -1208,6 +1229,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     trays.get(0).replaceStream(streamNumb, trays.get(1).getLiquidOutStream());
     trays.get(0).init();
     trays.get(0).run();
+
+    // Tray profile construction intentionally seeds internal feed clones at local tray
+    // temperatures. Restore the caller-owned feed thermodynamic states before the actual
+    // column solver starts so the solved mass and energy balances use the requested feeds.
+    refreshInternalExternalFeedSystems();
   }
 
   /**
@@ -2247,7 +2273,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return {@code true} when the Naphtali-Sandholm solver accepted its direct result
    */
   boolean solveNaphtaliSandholm(UUID id) {
-    if (feedStreams.isEmpty()) {
+    captureDirectExternalTrayFeeds();
+    if (feedStreams.isEmpty() && directExternalFeedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return false;
     }
@@ -2282,15 +2309,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     Map<Integer, List<SystemInterface>> originalFeedSystems = new java.util.HashMap<>();
     Map<Integer, List<Double>> originalFeedFlowRates = new java.util.HashMap<>();
-    for (Map.Entry<Integer, List<StreamInterface>> entry : feedStreams.entrySet()) {
+    Set<Integer> externalFeedTrayNumberSet = new HashSet<Integer>(feedStreams.keySet());
+    externalFeedTrayNumberSet.addAll(directExternalFeedStreams.keySet());
+    for (Integer trayNumber : externalFeedTrayNumberSet) {
       List<SystemInterface> clones = new java.util.ArrayList<>();
       List<Double> flowRates = new java.util.ArrayList<>();
-      for (StreamInterface feed : entry.getValue()) {
+      for (StreamInterface feed : getExternalFeedStreams(trayNumber.intValue())) {
         clones.add(feed.getThermoSystem().clone());
         flowRates.add(feed.getFlowRate("mol/hr"));
       }
-      originalFeedSystems.put(entry.getKey(), clones);
-      originalFeedFlowRates.put(entry.getKey(), flowRates);
+      originalFeedSystems.put(trayNumber, clones);
+      originalFeedFlowRates.put(trayNumber, flowRates);
     }
 
     boolean initialized = isDoInitializion();
@@ -2362,6 +2391,66 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Decide whether an accepted sequential solution can be reused for identical inputs.
+   *
+   * <p>
+   * Exact reuse is deliberately disabled for adjustable specifications and active outer tear variables. Those
+   * calculations can change targets or internal return streams outside the fixed sequential input fingerprint.
+   * </p>
+   *
+   * @param inputSignature full current input fingerprint
+   * @return {@code true} when no new sequential iterations are required
+   */
+  private boolean canReuseSequentialWarmState(long inputSignature) {
+    boolean acceptedStatus = lastSolveStatus == SolveStatus.RIGOROUS_CONVERGED
+        || lastSolveStatus == SolveStatus.RECONCILED_PRODUCTS;
+    return hasSequentialExactReuseState && hasBeenSolvedBefore && acceptedStatus && !isDoInitializion()
+        && !hasAdjustableSpecifications() && !hasActiveColumnTearVariables()
+        && inputSignature == lastSequentialInputSignature;
+  }
+
+  /**
+   * Record an accepted sequential solution for exact unchanged-input reuse.
+   */
+  private void commitSequentialWarmState() {
+    boolean acceptedStatus = lastSolveStatus == SolveStatus.RIGOROUS_CONVERGED
+        || lastSolveStatus == SolveStatus.RECONCILED_PRODUCTS;
+    hasSequentialExactReuseState = hasBeenSolvedBefore && acceptedStatus && !isDoInitializion()
+        && !hasAdjustableSpecifications() && !hasActiveColumnTearVariables();
+    if (hasSequentialExactReuseState) {
+      lastSequentialInputSignature = calculateSequentialExactReuseSignature();
+    }
+  }
+
+  /**
+   * Reuse the accepted sequential products and tray state for identical inputs.
+   *
+   * @param id calculation identifier for the requested invocation
+   * @param startTime nano time when this invocation started
+   */
+  private void reuseSequentialWarmState(UUID id, long startTime) {
+    lastIterationCount = 0;
+    lastSequentialWarmStateReused = true;
+    lastSolveTimeSeconds = (System.nanoTime() - startTime) / 1.0e9;
+    gasOutStream.setCalculationIdentifier(id);
+    liquidOutStream.setCalculationIdentifier(id);
+    for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
+      trays.get(trayIndex).setCalculationIdentifier(id);
+    }
+    setCalculationIdentifier(id);
+    lastSolveStatusReason = "Reused unchanged sequential solution";
+  }
+
+  /**
+   * Check whether the latest sequential invocation reused an exact accepted state.
+   *
+   * @return {@code true} when no initializer or tray iteration was required
+   */
+  boolean wasSequentialWarmStateReused() {
+    return lastSequentialWarmStateReused;
+  }
+
+  /**
    * Predict whether the next Naphtali-Sandholm invocation will be answered from the exact warm-state cache.
    *
    * <p>
@@ -2374,7 +2463,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * running the solver
    */
   boolean willReuseNaphtaliSandholmWarmState() {
-    if (feedStreams.isEmpty() || numberOfTrays == 1 || isDoInitializion()) {
+    captureDirectExternalTrayFeeds();
+    if ((feedStreams.isEmpty() && directExternalFeedStreams.isEmpty()) || numberOfTrays == 1 || isDoInitializion()) {
       return false;
     }
     if (calculateThermodynamicIdentitySignature() != trayStateThermodynamicIdentitySignature) {
@@ -2403,18 +2493,97 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Calculate a deterministic fingerprint for exact sequential-state reuse.
+   *
+   * <p>
+   * The external-input fingerprint alone is insufficient because advanced callers and solver tests can deliberately
+   * perturb tray states between invocations. Include the accepted tray and exposed product states so such edits trigger
+   * a real solve instead of being hidden by the exact-reuse path.
+   * </p>
+   *
+   * @return fingerprint of external inputs, tray states, and public products
+   */
+  private long calculateSequentialExactReuseSignature() {
+    long signature = calculateNaphtaliSandholmInputSignature();
+    signature = updateSequentialStreamStateSignature(signature, gasOutStream);
+    signature = updateSequentialStreamStateSignature(signature, liquidOutStream);
+    signature = updateNaphtaliSandholmInputSignature(signature, trays.size());
+    for (SimpleTray tray : trays) {
+      StreamInterface trayOutlet = tray == null ? null : tray.getOutletStream();
+      if (trayOutlet == null || trayOutlet.getThermoSystem() == null) {
+        signature = updateNaphtaliSandholmInputSignature(signature, -1L);
+        continue;
+      }
+      signature = updateNaphtaliSandholmInputSignature(signature, tray.getTemperature());
+      signature = updateSequentialSystemStateSignature(signature, trayOutlet.getThermoSystem());
+    }
+    return signature;
+  }
+
+  /**
+   * Add a stream thermodynamic state to the exact sequential-reuse fingerprint.
+   *
+   * @param signature fingerprint accumulated so far
+   * @param stream stream to fingerprint
+   * @return updated fingerprint
+   */
+  private long updateSequentialStreamStateSignature(long signature, StreamInterface stream) {
+    if (stream == null || stream.getThermoSystem() == null) {
+      return updateNaphtaliSandholmInputSignature(signature, -1L);
+    }
+    return updateSequentialSystemStateSignature(signature, stream.getThermoSystem());
+  }
+
+  /**
+   * Add a complete thermodynamic system state to the exact sequential-reuse fingerprint.
+   *
+   * @param signature fingerprint accumulated so far
+   * @param system thermodynamic system to fingerprint
+   * @return updated fingerprint
+   */
+  private long updateSequentialSystemStateSignature(long signature, SystemInterface system) {
+    long updatedSignature = updateNaphtaliSandholmThermodynamicModelSignature(signature, system);
+    updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, system.getTemperature());
+    updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, system.getPressure());
+    updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, system.getTotalNumberOfMoles());
+    double[] composition = system.getMolarComposition();
+    updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, composition.length);
+    for (double moleFraction : composition) {
+      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, moleFraction);
+    }
+    return updatedSignature;
+  }
+
+  /**
+   * Calculate a deterministic fingerprint of fixed inputs that define a sequential initialization.
+   *
+   * <p>
+   * Feed flow, temperature, pressure, and composition are excluded because ordinary nearby feed changes are the main
+   * benefit of a sequential warm start. Thermodynamic model and component identity are checked separately.
+   * </p>
+   *
+   * @return fixed column-configuration fingerprint
+   */
+  private long calculateSequentialInitializationSignature() {
+    long signature = 1125899906842597L;
+    return updateColumnConfigurationSignature(signature);
+  }
+
+  /**
    * Calculate a deterministic fingerprint of inputs that affect a Naphtali-Sandholm solve.
    *
    * @return input and specification fingerprint
    */
   private long calculateNaphtaliSandholmInputSignature() {
     long signature = 1125899906842597L;
-    List<Integer> feedTrayNumbers = new ArrayList<Integer>(feedStreams.keySet());
-    Collections.sort(feedTrayNumbers);
-    signature = updateNaphtaliSandholmInputSignature(signature, feedTrayNumbers.size());
-    for (Integer trayNumber : feedTrayNumbers) {
+    Set<Integer> externalFeedTrayNumberSet = new HashSet<Integer>(feedStreams.keySet());
+    externalFeedTrayNumberSet.addAll(directExternalFeedStreams.keySet());
+    List<Integer> externalFeedTrayNumbers = new ArrayList<Integer>(externalFeedTrayNumberSet);
+    Collections.sort(externalFeedTrayNumbers);
+    signature = updateNaphtaliSandholmInputSignature(signature, externalFeedTrayNumbers.size());
+    for (Integer trayNumber : externalFeedTrayNumbers) {
       signature = updateNaphtaliSandholmInputSignature(signature, trayNumber.longValue());
-      List<StreamInterface> trayFeeds = feedStreams.get(trayNumber);
+      List<StreamInterface> trayFeeds = getExternalFeedStreams(trayNumber.intValue());
       signature = updateNaphtaliSandholmInputSignature(signature, trayFeeds.size());
       for (StreamInterface feed : trayFeeds) {
         SystemInterface system = feed.getThermoSystem();
@@ -2479,12 +2648,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private long calculateThermodynamicIdentitySignature() {
     long signature = 1125899906842597L;
-    List<Integer> feedTrayNumbers = new ArrayList<Integer>(feedStreams.keySet());
-    Collections.sort(feedTrayNumbers);
-    signature = updateNaphtaliSandholmInputSignature(signature, feedTrayNumbers.size());
-    for (Integer trayNumber : feedTrayNumbers) {
+    Set<Integer> externalFeedTrayNumberSet = new HashSet<Integer>(feedStreams.keySet());
+    externalFeedTrayNumberSet.addAll(directExternalFeedStreams.keySet());
+    List<Integer> externalFeedTrayNumbers = new ArrayList<Integer>(externalFeedTrayNumberSet);
+    Collections.sort(externalFeedTrayNumbers);
+    signature = updateNaphtaliSandholmInputSignature(signature, externalFeedTrayNumbers.size());
+    for (Integer trayNumber : externalFeedTrayNumbers) {
       signature = updateNaphtaliSandholmInputSignature(signature, trayNumber.longValue());
-      List<StreamInterface> trayFeeds = feedStreams.get(trayNumber);
+      List<StreamInterface> trayFeeds = getExternalFeedStreams(trayNumber.intValue());
       signature = updateNaphtaliSandholmInputSignature(signature, trayFeeds.size());
       for (StreamInterface feed : trayFeeds) {
         signature = updateThermodynamicIdentitySignature(signature, feed.getThermoSystem());
@@ -2905,12 +3076,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.hasBeenSolvedBefore = candidate.hasBeenSolvedBefore;
     this.lastTotalFeedFlow = candidate.lastTotalFeedFlow;
     this.doInitializion = candidate.doInitializion;
-    // The tray network now belongs to the candidate, so every cached fingerprint that described the
-    // replaced trays is void. The warm state is dropped rather than carried over; when the adopted
-    // state is a legitimate accepted answer the caller re-arms it through
-    // acceptNaphtaliWarmStartCandidate and commitNaphtaliSandholmWarmState recomputes the
-    // fingerprint from the inputs that are actually in force.
+    // The tray network now belongs to the candidate, so cache ownership must follow the adopted
+    // state explicitly. An accepted sequential candidate carries the full input fingerprint needed
+    // for safe unchanged-input reuse; invocation telemetry must describe the next live invocation.
+    // Naphtali-Sandholm ownership is dropped unless the caller explicitly re-arms it through
+    // acceptNaphtaliWarmStartCandidate and commitNaphtaliSandholmWarmState.
     this.trayStateThermodynamicIdentitySignature = candidate.trayStateThermodynamicIdentitySignature;
+    this.lastSequentialInitializationSignature = candidate.lastSequentialInitializationSignature;
+    this.hasSequentialExactReuseState = candidate.hasSequentialExactReuseState;
+    this.lastSequentialInputSignature = candidate.lastSequentialInputSignature;
+    this.lastSequentialWarmStateReused = false;
     this.naphtaliSandholmStateOwned = false;
     this.hasNaphtaliSandholmWarmState = false;
     this.lastNaphtaliSandholmInputSignature = Long.MIN_VALUE;
@@ -5116,6 +5291,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     terminalGasProductDrawStream = null;
     terminalLiquidProductDrawStream = null;
     trayStateThermodynamicIdentitySignature = Long.MIN_VALUE;
+    lastSequentialInitializationSignature = Long.MIN_VALUE;
     err = 1.0e10;
     resetLastSolveMetrics();
 
@@ -5296,9 +5472,21 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param initialRelaxation relaxation factor applied to the first iteration
    */
   private void solveSequential(UUID id, double initialRelaxation) {
-    if (feedStreams.isEmpty()) {
+    long invocationStartTime = System.nanoTime();
+    lastSequentialWarmStateReused = false;
+    captureDirectExternalTrayFeeds();
+    if (feedStreams.isEmpty() && directExternalFeedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
+    }
+
+    if (hasSequentialExactReuseState) {
+      long currentSequentialInputSignature = calculateSequentialExactReuseSignature();
+      if (canReuseSequentialWarmState(currentSequentialInputSignature)) {
+        reuseSequentialWarmState(id, invocationStartTime);
+        return;
+      }
+      hasSequentialExactReuseState = false;
     }
 
     int firstFeedTrayNumber = prepareColumnForSolve();
@@ -5306,6 +5494,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (numberOfTrays == 1) {
       solveSingleTray(id);
       return;
+    }
+
+    long currentThermodynamicIdentitySignature = calculateThermodynamicIdentitySignature();
+    long currentSequentialInitializationSignature = calculateSequentialInitializationSignature();
+    boolean thermodynamicIdentityChanged = currentThermodynamicIdentitySignature != trayStateThermodynamicIdentitySignature;
+    boolean columnConfigurationChanged = currentSequentialInitializationSignature != lastSequentialInitializationSignature;
+    if (hasBeenSolvedBefore && !isDoInitializion()
+        && (thermodynamicIdentityChanged || (!hasAdjustableSpecifications() && columnConfigurationChanged))) {
+      logger.info("Sequential warm start is incompatible with current inputs for column {}; "
+          + "rebuilding tray initialization.", getName());
+      hasBeenSolvedBefore = false;
+      setDoInitializion(true);
     }
 
     if (isDoInitializion()) {
@@ -5605,6 +5805,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     finalizeSolve(id, iter, err, massErr, energyErr, startTime);
+    commitSequentialWarmState();
   }
 
   /**
@@ -5757,7 +5958,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return index of the lowest feed tray in the column
    */
   private int prepareColumnForSolve() {
-    int firstFeedTrayNumber = feedStreams.keySet().stream().min(Integer::compareTo).get();
+    int firstFeedTrayNumber = getFirstExternalFeedTrayNumber();
 
     if (bottomTrayPressure < 0) {
       bottomTrayPressure = getTray(firstFeedTrayNumber).getStream(0).getPressure();
@@ -5774,15 +5975,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       trays.get(i).setPressure(bottomTrayPressure - i * dp);
     }
 
-    int[] numeroffeeds = new int[numberOfTrays];
-    for (Entry<Integer, List<StreamInterface>> entry : feedStreams.entrySet()) {
-      int feedTrayNumber = entry.getKey();
-      List<StreamInterface> trayFeeds = entry.getValue();
-      for (StreamInterface feedStream : trayFeeds) {
-        numeroffeeds[feedTrayNumber]++;
-        SystemInterface cloned = feedStream.getThermoSystem().clone();
-        trays.get(feedTrayNumber).getStream(numeroffeeds[feedTrayNumber] - 1).setThermoSystem(cloned);
-      }
+    // Before initialization, tray inputs can still be caller-owned feeds in attachment order.
+    // init() establishes a deterministic external-feed order, creates internal clones, and
+    // refreshes those clones after profile seeding. Refresh only an existing initialized network.
+    if (!isDoInitializion()) {
+      refreshInternalExternalFeedSystems();
     }
 
     return firstFeedTrayNumber;
@@ -9671,6 +9868,43 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Replace caller-owned external tray feeds with internal stream clones before profile seeding.
+   *
+   * <p>
+   * {@link SimpleTray#init()} intentionally seeds all tray inlets at the tray temperature. Keeping an internal clone
+   * preserves that established numerical initialization while preventing the column from changing the temperature or
+   * enthalpy state of streams owned by its caller.
+   * </p>
+   */
+  private void cloneExternalTrayInputsForInitialization() {
+    for (int trayIndex = 0; trayIndex < trays.size(); trayIndex++) {
+      List<StreamInterface> externalFeeds = getExternalFeedStreams(trayIndex);
+      for (int streamIndex = 0; streamIndex < externalFeeds.size(); streamIndex++) {
+        trays.get(trayIndex).replaceStream(streamIndex, externalFeeds.get(streamIndex).clone());
+      }
+    }
+  }
+
+  /**
+   * Refresh internal feed clones from their caller-owned source streams.
+   *
+   * <p>
+   * The external feeds occupy the leading tray-input positions after initialization. Replacing only their thermodynamic
+   * systems preserves the internal stream objects and inter-tray wiring while applying current flow, temperature,
+   * pressure, composition, EOS, and mixing-rule state.
+   * </p>
+   */
+  private void refreshInternalExternalFeedSystems() {
+    for (int trayIndex = 0; trayIndex < trays.size(); trayIndex++) {
+      List<StreamInterface> externalFeeds = getExternalFeedStreams(trayIndex);
+      for (int streamIndex = 0; streamIndex < externalFeeds.size(); streamIndex++) {
+        SystemInterface cloned = externalFeeds.get(streamIndex).getThermoSystem().clone();
+        trays.get(trayIndex).getStream(streamIndex).setThermoSystem(cloned);
+      }
+    }
+  }
+
+  /**
    * Get the lowest tray index containing an external feed stream.
    *
    * @return first external feed tray index
@@ -9730,6 +9964,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     String streamName = stream.getName();
     if (streamName == null || streamName.trim().isEmpty()) {
       return false;
+    }
+    for (StreamInterface knownExternalFeed : knownExternalFeeds) {
+      if (knownExternalFeed != null && streamName.equals(knownExternalFeed.getName())) {
+        // Initialization uses internal clones so caller-owned feeds are not mutated. A same-name
+        // tray input is that clone, not a newly connected legacy side feed.
+        return false;
+      }
     }
     if (registeredFeedNames.contains(streamName)) {
       // A tray input that shares a registered feed name but a different identity is a clone left by
@@ -11677,6 +11918,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     naphtaliSandholmStateOwned = false;
     lastNaphtaliSandholmInputSignature = Long.MIN_VALUE;
     lastNaphtaliSandholmWarmStateReused = false;
+    lastSequentialInitializationSignature = Long.MIN_VALUE;
+    hasSequentialExactReuseState = false;
+    lastSequentialInputSignature = Long.MIN_VALUE;
+    lastSequentialWarmStateReused = false;
     resetInsideOutTelemetry();
     resetNaphtaliTelemetry();
     terminalGasProductDrawStream = null;

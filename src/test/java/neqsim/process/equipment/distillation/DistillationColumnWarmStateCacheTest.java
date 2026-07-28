@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
@@ -13,7 +14,7 @@ import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Regression tests for the Naphtali-Sandholm warm-state cache introduced with the warm-solve speed-up.
+ * Regression tests for column warm-state compatibility and cache invalidation.
  *
  * <p>
  * The cache reuses an accepted tray solution when a fingerprint of the solver inputs is unchanged. The fingerprint
@@ -149,6 +150,19 @@ public class DistillationColumnWarmStateCacheTest {
     }
   }
 
+  /** Registered feed, legacy direct side feed, and column used by direct-feed compatibility tests. */
+  private static final class DirectFeedColumnCase {
+    private final Stream registeredFeed;
+    private final Stream directFeed;
+    private final TrackingDistillationColumn column;
+
+    private DirectFeedColumnCase(Stream registeredFeed, Stream directFeed, TrackingDistillationColumn column) {
+      this.registeredFeed = registeredFeed;
+      this.directFeed = directFeed;
+      this.column = column;
+    }
+  }
+
   /**
    * Build a hydrocarbon fluid whose numeric composition can remain unchanged while identity changes.
    *
@@ -192,6 +206,21 @@ public class DistillationColumnWarmStateCacheTest {
   }
 
   /**
+   * Build a column with one registered feed and one legacy side feed connected directly to a tray.
+   *
+   * @param directFluid thermodynamic system for the direct side feed
+   * @return direct-feed column case
+   */
+  private static DirectFeedColumnCase buildDirectFeedColumnCase(SystemInterface directFluid) {
+    ColumnCase registeredCase = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 2));
+    Stream directFeed = new Stream("legacy direct side feed", directFluid);
+    configureDirectFeed(directFeed);
+    registeredCase.column.getTray(2).addStream(directFeed);
+    configureDampedSubstitution(registeredCase.column);
+    return new DirectFeedColumnCase(registeredCase.feed, directFeed, registeredCase.column);
+  }
+
+  /**
    * Apply conditions that deliberately keep every legacy numeric fingerprint input unchanged.
    *
    * @param feed feed to configure
@@ -199,6 +228,18 @@ public class DistillationColumnWarmStateCacheTest {
   private static void configureIdentityFeed(Stream feed) {
     feed.setFlowRate(IDENTITY_TEST_FLOW_MOL_PER_HOUR, "mol/hr");
     feed.setTemperature(20.0, "C");
+    feed.setPressure(10.0, "bara");
+    feed.run();
+  }
+
+  /**
+   * Apply fixed operating conditions to a legacy direct side feed.
+   *
+   * @param feed direct side feed to configure
+   */
+  private static void configureDirectFeed(Stream feed) {
+    feed.setFlowRate(0.2 * IDENTITY_TEST_FLOW_MOL_PER_HOUR, "mol/hr");
+    feed.setTemperature(30.0, "C");
     feed.setPressure(10.0, "bara");
     feed.run();
   }
@@ -212,6 +253,17 @@ public class DistillationColumnWarmStateCacheTest {
   private static void replaceFeedFluid(ColumnCase columnCase, SystemInterface replacementFluid) {
     columnCase.feed.setThermoSystem(replacementFluid);
     configureIdentityFeed(columnCase.feed);
+  }
+
+  /**
+   * Replace the direct side feed at unchanged numeric operating conditions.
+   *
+   * @param columnCase direct-feed case to mutate
+   * @param replacementFluid replacement thermodynamic system
+   */
+  private static void replaceDirectFeedFluid(DirectFeedColumnCase columnCase, SystemInterface replacementFluid) {
+    columnCase.directFeed.setThermoSystem(replacementFluid);
+    configureDirectFeed(columnCase.directFeed);
   }
 
   /**
@@ -438,6 +490,265 @@ public class DistillationColumnWarmStateCacheTest {
     assertColdReferenceEquivalent(coldReference.column, mutated.column);
     assertPhysicalAndBalanced(mutated);
     assertNextRunReusesExactly(mutated);
+  }
+
+  /**
+   * Cold initialization must preserve caller-owned feeds when direct and registered feeds were attached in reverse
+   * order.
+   */
+  @Test
+  public void coldInitializationPreservesReverseAttachedFeedIdentity() {
+    Stream directFeed = new Stream("reverse-order direct feed", createIdentityTestFluid(false, "n-butane", 2));
+    configureDirectFeed(directFeed);
+    Stream registeredFeed = new Stream("reverse-order registered feed", createIdentityTestFluid(false, "n-butane", 2));
+    configureIdentityFeed(registeredFeed);
+    SystemInterface directFeedSystem = directFeed.getThermoSystem();
+    SystemInterface registeredFeedSystem = registeredFeed.getThermoSystem();
+
+    TrackingDistillationColumn column = new TrackingDistillationColumn("reverse-order feed column", 6, true, false);
+    column.getTray(2).addStream(directFeed);
+    column.addFeedStream(registeredFeed, 2);
+    column.setTopPressure(10.0);
+    column.setBottomPressure(10.5);
+    column.getReboiler().setOutTemperature(273.15 + 80.0);
+    configureDampedSubstitution(column);
+
+    column.run();
+
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    assertSame(directFeedSystem, directFeed.getThermoSystem(),
+        "cold preparation must not replace the caller-owned direct-feed system");
+    assertSame(registeredFeedSystem, registeredFeed.getThermoSystem(),
+        "cold preparation must not replace the caller-owned registered-feed system");
+    assertEquals(30.0, directFeed.getTemperature("C"), 1.0e-9,
+        "cold preparation must preserve the direct-feed temperature");
+    assertEquals(20.0, registeredFeed.getTemperature("C"), 1.0e-9,
+        "cold preparation must preserve the registered-feed temperature");
+
+    double totalFeedFlow = directFeed.getFlowRate("mol/hr") + registeredFeed.getFlowRate("mol/hr");
+    double totalProductFlow = column.getGasOutStream().getFlowRate("mol/hr")
+        + column.getLiquidOutStream().getFlowRate("mol/hr");
+    assertEquals(totalFeedFlow, totalProductFlow, 5.0e-3 * totalFeedFlow,
+        "reverse-order registered and direct feeds must close the total molar balance");
+    assertPhysicalStream(column.getGasOutStream());
+    assertPhysicalStream(column.getLiquidOutStream());
+  }
+
+  /**
+   * A direct-feed-only sequential column must scale its divergence guard from the physical feed flow.
+   *
+   * <p>
+   * Legacy direct tray feeds are valid external feeds. Ignoring them when setting the internal-traffic threshold leaves
+   * the threshold at the 1000 kg/h floor and rejects this otherwise ordinary multicomponent stripper before it can
+   * converge.
+   * </p>
+   */
+  @Test
+  public void directOnlySequentialColumnUsesExternalFeedScaleForDivergenceGuard() {
+    Stream directFeed = new Stream("direct-only feed", createIdentityTestFluid(false, "n-butane", 2));
+    configureIdentityFeed(directFeed);
+
+    TrackingDistillationColumn column = new TrackingDistillationColumn("direct-only sequential column", 6, true, false);
+    column.getTray(3).addStream(directFeed);
+    column.setTopPressure(10.0);
+    column.setBottomPressure(10.5);
+    column.getReboiler().setOutTemperature(273.15 + 80.0);
+    configureDampedSubstitution(column);
+
+    column.run();
+
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    assertTrue(column.getLastIterationCount() <= 120,
+        "the direct-feed-only solve must remain inside the deterministic hard cap");
+    assertEquals(20.0, directFeed.getTemperature("C"), 1.0e-9,
+        "direct-feed handling must preserve the caller-owned feed temperature");
+    assertPhysicalAndBalanced(new ColumnCase(directFeed, column));
+  }
+
+  /**
+   * A legacy direct tray feed participates in the same thermodynamic-identity gate as registered feeds.
+   */
+  @Test
+  public void directTrayFeedIdentityChangeForcesColdInitialization() {
+    DirectFeedColumnCase mutated = buildDirectFeedColumnCase(createIdentityTestFluid(false, "n-butane", 2));
+    mutated.column.run();
+    assertTrue(mutated.column.solved(), mutated.column.getConvergenceDiagnostics());
+    int initialInitializationCount = mutated.column.getInitializationCount();
+
+    replaceDirectFeedFluid(mutated, createIdentityTestFluid(false, "i-butane", 2));
+    mutated.column.run();
+
+    assertTrue(mutated.column.solved(), mutated.column.getConvergenceDiagnostics());
+    assertEquals(initialInitializationCount + 1, mutated.column.getInitializationCount(),
+        "a direct side-feed identity change must rebuild the sequential initialization exactly once");
+    assertEquals(20.0, mutated.registeredFeed.getTemperature("C"), 1.0e-9,
+        "direct-feed handling must not mutate the registered caller-owned feed");
+    assertEquals(30.0, mutated.directFeed.getTemperature("C"), 1.0e-9,
+        "direct-feed handling must not mutate the direct caller-owned feed");
+
+    DirectFeedColumnCase coldReference = buildDirectFeedColumnCase(createIdentityTestFluid(false, "i-butane", 2));
+    coldReference.column.run();
+    assertTrue(coldReference.column.solved(), coldReference.column.getConvergenceDiagnostics());
+    assertColdReferenceEquivalent(coldReference.column, mutated.column);
+    assertPhysicalStream(mutated.column.getGasOutStream());
+    assertPhysicalStream(mutated.column.getLiquidOutStream());
+  }
+
+  /**
+   * A direct side-feed operating-point change must invalidate exact Naphtali-Sandholm reuse.
+   */
+  @Test
+  public void directTrayFeedOperatingPointChangeInvalidatesNaphtaliReuse() {
+    DirectFeedColumnCase mutated = buildDirectFeedColumnCase(createIdentityTestFluid(false, "n-butane", 2));
+    mutated.column.setSolverType(DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
+    mutated.column.run();
+    assertTrue(mutated.column.solved(), mutated.column.getConvergenceDiagnostics());
+
+    mutated.column.run();
+    assertTrue(mutated.column.wasNaphtaliSandholmWarmStateReused(),
+        "an unchanged direct-feed case must reuse the accepted simultaneous solution");
+    double originalOverheadFlow = mutated.column.getGasOutStream().getFlowRate("mol/hr");
+
+    mutated.directFeed.setFlowRate(0.22 * IDENTITY_TEST_FLOW_MOL_PER_HOUR, "mol/hr");
+    mutated.directFeed.run();
+
+    assertFalse(mutated.column.willReuseNaphtaliSandholmWarmState(),
+        "a direct side-feed flow change must invalidate exact simultaneous-solver reuse");
+    mutated.column.run();
+
+    assertTrue(mutated.column.solved(), mutated.column.getConvergenceDiagnostics());
+    assertFalse(mutated.column.wasNaphtaliSandholmWarmStateReused(),
+        "the changed direct feed must be solved rather than answered from the old cache");
+    assertNotEquals(originalOverheadFlow, mutated.column.getGasOutStream().getFlowRate("mol/hr"), 1.0,
+        "a 10 percent direct-feed flow change must alter the product flow");
+    assertEquals(20.0, mutated.registeredFeed.getTemperature("C"), 1.0e-9,
+        "direct-feed cache checks must not mutate the registered caller-owned feed");
+    assertEquals(30.0, mutated.directFeed.getTemperature("C"), 1.0e-9,
+        "direct-feed cache checks must not mutate the direct caller-owned feed");
+    assertPhysicalStream(mutated.column.getGasOutStream());
+    assertPhysicalStream(mutated.column.getLiquidOutStream());
+  }
+
+  /**
+   * An accepted damped candidate must retain ownership of its exact sequential reuse fingerprint.
+   */
+  @Test
+  public void acceptedSequentialCandidateRetainsExactReuseState() {
+    ColumnCase live = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 2));
+    configureDampedSubstitution(live.column);
+    ColumnCase candidate = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 2));
+    configureDampedSubstitution(candidate.column);
+
+    candidate.column.run();
+
+    assertTrue(candidate.column.solved(), candidate.column.getConvergenceDiagnostics());
+    double acceptedGasFlow = candidate.column.getGasOutStream().getFlowRate("mol/hr");
+    double acceptedLiquidFlow = candidate.column.getLiquidOutStream().getFlowRate("mol/hr");
+    live.column.acceptDampedFallbackCandidate(candidate.column, "accepted sequential candidate");
+
+    live.column.run();
+
+    assertTrue(live.column.solved(), live.column.getConvergenceDiagnostics());
+    assertTrue(live.column.wasSequentialWarmStateReused(),
+        "an adopted accepted sequential candidate must remain exactly reusable");
+    assertEquals(0, live.column.getLastIterationCount(),
+        "exact reuse of an adopted candidate must require no new tray iterations");
+    assertEquals(acceptedGasFlow, live.column.getGasOutStream().getFlowRate("mol/hr"),
+        Math.max(1.0e-9, Math.abs(acceptedGasFlow) * 1.0e-5), "adopted exact reuse must preserve overhead flow");
+    assertEquals(acceptedLiquidFlow, live.column.getLiquidOutStream().getFlowRate("mol/hr"),
+        Math.max(1.0e-9, Math.abs(acceptedLiquidFlow) * 1.0e-5), "adopted exact reuse must preserve bottoms flow");
+    assertEquals(20.0, live.feed.getTemperature("C"), 1.0e-9,
+        "candidate adoption and exact reuse must preserve the caller-owned feed");
+    assertPhysicalAndBalanced(live);
+  }
+
+  /**
+   * Sequential warm starts must be invalidated when a fixed reboiler temperature changes.
+   *
+   * <p>
+   * The 90 C case previously converged to a path-dependent product split, while the 100 C case reached the internal
+   * traffic guard. Both targets are feasible from a cold initialization. After the configuration change is detected,
+   * the sequential solver must rebuild once, agree with the cold reference, and retain the new state on an unchanged
+   * re-run.
+   * </p>
+   */
+  @Test
+  public void sequentialSpecificationChangeMatchesColdReferenceAndIsRepeatable() {
+    assertSequentialSpecificationChange(90.0);
+    assertSequentialSpecificationChange(100.0);
+  }
+
+  /**
+   * Verify one changed fixed-temperature target against a cold reference and an unchanged re-run.
+   *
+   * @param targetTemperatureC changed reboiler temperature in degrees Celsius
+   */
+  private static void assertSequentialSpecificationChange(double targetTemperatureC) {
+    ColumnCase warmCase = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 2));
+    configureDampedSubstitution(warmCase.column);
+    double inletTemperature = warmCase.feed.getTemperature("K");
+    warmCase.column.run();
+    assertTrue(warmCase.column.solved(), warmCase.column.getConvergenceDiagnostics());
+    assertEquals(inletTemperature, warmCase.feed.getTemperature("K"), 1.0e-9,
+        "column initialization must not change the caller-owned feed temperature");
+    int baselineInitializationCount = warmCase.column.getInitializationCount();
+
+    warmCase.column.getReboiler().setOutTemperature(273.15 + targetTemperatureC);
+    warmCase.column.run();
+
+    assertTrue(warmCase.column.solved(), warmCase.column.getConvergenceDiagnostics());
+    assertEquals(inletTemperature, warmCase.feed.getTemperature("K"), 1.0e-9,
+        "column reinitialization must not change the caller-owned feed temperature");
+    assertEquals(baselineInitializationCount + 1, warmCase.column.getInitializationCount(),
+        "a changed fixed reboiler temperature must rebuild the sequential initialization exactly once");
+    assertTrue(warmCase.column.getLastIterationCount() <= 30,
+        "the rebuilt solve should remain within the established cold-reference iteration budget");
+    assertPhysicalAndBalanced(warmCase);
+
+    ColumnCase coldReference = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 2));
+    configureDampedSubstitution(coldReference.column);
+    coldReference.column.getReboiler().setOutTemperature(273.15 + targetTemperatureC);
+    coldReference.column.run();
+
+    assertTrue(coldReference.column.solved(), coldReference.column.getConvergenceDiagnostics());
+    assertColdReferenceEquivalent(coldReference.column, warmCase.column);
+    assertPhysicalAndBalanced(coldReference);
+
+    int acceptedInitializationCount = warmCase.column.getInitializationCount();
+    double gasFlow = warmCase.column.getGasOutStream().getFlowRate("mol/hr");
+    double liquidFlow = warmCase.column.getLiquidOutStream().getFlowRate("mol/hr");
+    double[] gasComposition = warmCase.column.getGasOutStream().getThermoSystem().getMolarComposition().clone();
+    double[] liquidComposition = warmCase.column.getLiquidOutStream().getThermoSystem().getMolarComposition().clone();
+
+    warmCase.column.run();
+
+    assertTrue(warmCase.column.solved(), warmCase.column.getConvergenceDiagnostics());
+    assertTrue(warmCase.column.wasSequentialWarmStateReused(),
+        "an unchanged accepted sequential case must use exact input reuse");
+    assertEquals(0, warmCase.column.getLastIterationCount(),
+        "exact sequential reuse must require no new tray iterations");
+    assertEquals(acceptedInitializationCount, warmCase.column.getInitializationCount(),
+        "an unchanged re-run must retain the accepted sequential warm state");
+    assertEquals(gasFlow, warmCase.column.getGasOutStream().getFlowRate("mol/hr"),
+        Math.max(1.0e-9, Math.abs(gasFlow) * 1.0e-5), "an unchanged re-run must reproduce overhead flow");
+    assertEquals(liquidFlow, warmCase.column.getLiquidOutStream().getFlowRate("mol/hr"),
+        Math.max(1.0e-9, Math.abs(liquidFlow) * 1.0e-5), "an unchanged re-run must reproduce bottoms flow");
+    assertArrayEquals(gasComposition, warmCase.column.getGasOutStream().getThermoSystem().getMolarComposition(), 1.0e-7,
+        "an unchanged re-run must reproduce overhead composition");
+    assertArrayEquals(liquidComposition, warmCase.column.getLiquidOutStream().getThermoSystem().getMolarComposition(),
+        1.0e-7, "an unchanged re-run must reproduce bottoms composition");
+    assertPhysicalAndBalanced(warmCase);
+  }
+
+  /**
+   * Configure the deterministic low-relaxation sequential regression solver.
+   *
+   * @param column column to configure
+   */
+  private static void configureDampedSubstitution(DistillationColumn column) {
+    column.setSolverType(DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
+    column.setRelaxationFactor(0.2);
+    column.setMaxNumberOfIterations(120, true);
   }
 
 }
