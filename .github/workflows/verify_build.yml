@@ -145,7 +145,7 @@ jobs:
         shell: bash
         run: |
           mapfile -t slow_files < <(
-            grep -rl --include='*Test.java' '@Tag("slow")' src/test/java | sort
+            grep -rl --include='*.java' '@Tag("slow")' src/test/java | sort
           )
           selected=()
           for index in "${!slow_files[@]}"; do
