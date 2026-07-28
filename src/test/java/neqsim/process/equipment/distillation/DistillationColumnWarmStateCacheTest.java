@@ -214,7 +214,7 @@ public class DistillationColumnWarmStateCacheTest {
     ColumnCase registeredCase = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 2));
     Stream directFeed = new Stream("legacy direct side feed", directFluid);
     configureDirectFeed(directFeed);
-    registeredCase.column.getTray(4).addStream(directFeed);
+    registeredCase.column.getTray(2).addStream(directFeed);
     configureDampedSubstitution(registeredCase.column);
     return new DirectFeedColumnCase(registeredCase.feed, directFeed, registeredCase.column);
   }
