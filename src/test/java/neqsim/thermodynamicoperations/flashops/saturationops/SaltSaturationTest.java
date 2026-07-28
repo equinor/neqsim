@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Arrays;
 import java.util.List;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
@@ -16,6 +17,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author ESOL
  * @version $Id$
  */
+@Tag("slow")
 class SaltSaturationTest {
   private static final double SATURATION_RATIO_TOLERANCE = 1.0e-3;
   private static final double PLUMMER_BUSENBERG_CALCITE_KSP_TOLERANCE = 1.0e-8;
