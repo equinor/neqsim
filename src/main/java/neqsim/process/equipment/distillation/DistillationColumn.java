@@ -5972,7 +5972,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       trays.get(i).setPressure(bottomTrayPressure - i * dp);
     }
 
-    refreshInternalExternalFeedSystems();
+    // Before initialization, tray inputs can still be caller-owned feeds in attachment order.
+    // init() establishes a deterministic external-feed order, creates internal clones, and
+    // refreshes those clones after profile seeding. Refresh only an existing initialized network.
+    if (!isDoInitializion()) {
+      refreshInternalExternalFeedSystems();
+    }
 
     return firstFeedTrayNumber;
   }
