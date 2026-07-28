@@ -64,9 +64,17 @@ public final class TegEquilibriumScreening {
 
   private static double componentFlow(
       StreamInterface stream, String componentName) {
-    ComponentInterface component =
-        stream.getFluid().getComponent(componentName);
-    return component == null ? 0.0 : component.getFlowRate("kg/hr");
+    double flow = 0.0;
+    for (int phaseNumber = 0;
+        phaseNumber < stream.getFluid().getNumberOfPhases();
+        phaseNumber++) {
+      ComponentInterface component = stream.getFluid()
+          .getPhase(phaseNumber).getComponent(componentName);
+      if (component != null) {
+        flow += component.getFlowRate("kg/hr");
+      }
+    }
+    return flow;
   }
 
   public static void main(String[] args) {
@@ -206,10 +214,15 @@ rich_teg = phase_splitter.getLiquidOutStream()
 
 
 def component_flow(stream, component_name):
-    component = stream.getFluid().getComponent(component_name)
-    if component is None:
-        return 0.0
-    return component.getFlowRate("kg/hr")
+    fluid = stream.getFluid()
+    flow = 0.0
+    for phase_number in range(fluid.getNumberOfPhases()):
+        component = (
+            fluid.getPhase(phase_number).getComponent(component_name)
+        )
+        if component is not None:
+            flow += component.getFlowRate("kg/hr")
+    return flow
 
 
 wet_water = wet_gas.getFluid().getPhase(0).getComponent("water").getx()
