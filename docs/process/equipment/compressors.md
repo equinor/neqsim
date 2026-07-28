@@ -236,9 +236,10 @@ Values that cannot be computed are returned as `NaN`.
 ### Capacity-aware operating-point result
 
 Use the immutable typed result for optimization, bottleneck analysis, field-life studies, or
-exchange with tools such as eCalc. Call it only after the compressor has been configured and
-solved with `compressor.run()`. The example below continues from the solved compressor in
-[Basic Usage](#basic-usage).
+exchange with tools such as eCalc. Obtain it only after the compressor has been configured and
+solved, either directly with `compressor.run()` or as part of a solved `ProcessSystem` with
+`process.run()`. The imports below provide a standalone compilation context; create and solve
+the `compressor` variable as shown in [Basic Usage](#basic-usage).
 
 ```java
 import java.util.List;
