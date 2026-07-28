@@ -493,21 +493,19 @@ public class DistillationColumnWarmStateCacheTest {
   }
 
   /**
-   * Cold initialization must preserve caller-owned feeds when direct and registered feeds were attached in reverse order.
+   * Cold initialization must preserve caller-owned feeds when direct and registered feeds were attached in reverse
+   * order.
    */
   @Test
   public void coldInitializationPreservesReverseAttachedFeedIdentity() {
-    Stream directFeed =
-        new Stream("reverse-order direct feed", createIdentityTestFluid(false, "n-butane", 2));
+    Stream directFeed = new Stream("reverse-order direct feed", createIdentityTestFluid(false, "n-butane", 2));
     configureDirectFeed(directFeed);
-    Stream registeredFeed =
-        new Stream("reverse-order registered feed", createIdentityTestFluid(false, "n-butane", 2));
+    Stream registeredFeed = new Stream("reverse-order registered feed", createIdentityTestFluid(false, "n-butane", 2));
     configureIdentityFeed(registeredFeed);
     SystemInterface directFeedSystem = directFeed.getThermoSystem();
     SystemInterface registeredFeedSystem = registeredFeed.getThermoSystem();
 
-    TrackingDistillationColumn column =
-        new TrackingDistillationColumn("reverse-order feed column", 6, true, false);
+    TrackingDistillationColumn column = new TrackingDistillationColumn("reverse-order feed column", 6, true, false);
     column.getTray(2).addStream(directFeed);
     column.addFeedStream(registeredFeed, 2);
     column.setTopPressure(10.0);
@@ -527,8 +525,7 @@ public class DistillationColumnWarmStateCacheTest {
     assertEquals(20.0, registeredFeed.getTemperature("C"), 1.0e-9,
         "cold preparation must preserve the registered-feed temperature");
 
-    double totalFeedFlow =
-        directFeed.getFlowRate("mol/hr") + registeredFeed.getFlowRate("mol/hr");
+    double totalFeedFlow = directFeed.getFlowRate("mol/hr") + registeredFeed.getFlowRate("mol/hr");
     double totalProductFlow = column.getGasOutStream().getFlowRate("mol/hr")
         + column.getLiquidOutStream().getFlowRate("mol/hr");
     assertEquals(totalFeedFlow, totalProductFlow, 5.0e-3 * totalFeedFlow,
