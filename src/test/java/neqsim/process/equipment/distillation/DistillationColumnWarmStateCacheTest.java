@@ -496,8 +496,7 @@ public class DistillationColumnWarmStateCacheTest {
    */
   @Test
   public void directTrayFeedIdentityChangeForcesColdInitialization() {
-    DirectFeedColumnCase mutated =
-        buildDirectFeedColumnCase(createIdentityTestFluid(false, "n-butane", 2));
+    DirectFeedColumnCase mutated = buildDirectFeedColumnCase(createIdentityTestFluid(false, "n-butane", 2));
     mutated.column.run();
     assertTrue(mutated.column.solved(), mutated.column.getConvergenceDiagnostics());
     int initialInitializationCount = mutated.column.getInitializationCount();
@@ -513,8 +512,7 @@ public class DistillationColumnWarmStateCacheTest {
     assertEquals(30.0, mutated.directFeed.getTemperature("C"), 1.0e-9,
         "direct-feed handling must not mutate the direct caller-owned feed");
 
-    DirectFeedColumnCase coldReference =
-        buildDirectFeedColumnCase(createIdentityTestFluid(false, "i-butane", 2));
+    DirectFeedColumnCase coldReference = buildDirectFeedColumnCase(createIdentityTestFluid(false, "i-butane", 2));
     coldReference.column.run();
     assertTrue(coldReference.column.solved(), coldReference.column.getConvergenceDiagnostics());
     assertColdReferenceEquivalent(coldReference.column, mutated.column);
