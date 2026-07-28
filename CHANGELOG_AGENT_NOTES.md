@@ -13,11 +13,11 @@
 
 ### Summary
 
-Continuous separator and tank calculations now initialize each VU flash from the immediately
-preceding converged thermodynamic state. This preserves CPA association and phase-equilibrium work
-between nearby time steps. Standalone VU flashes keep their previous cold-start behavior, and a
-dynamic warm initialization retries once from the incoming pressure and temperature if it does not
-satisfy the volume and internal-energy residuals.
+Continuous separator and tank calculations with associating fluids now initialize each VU flash
+from the immediately preceding converged thermodynamic state. This preserves CPA association and
+phase-equilibrium work between nearby time steps. Cubic-EOS dynamics and standalone VU flashes keep
+their previous cold-start behavior, and a dynamic warm initialization retries once from the
+incoming pressure and temperature if it does not satisfy the volume and internal-energy residuals.
 
 ### New API
 
@@ -26,18 +26,20 @@ satisfy the volume and internal-energy residuals.
 | `ThermodynamicOperations.VUflash(Vspec, Uspec, warmStartInitialization)` | Explicitly selects warm or cold initialization for a VU flash |
 | `ThermodynamicOperations.VUflash(volume, energy, volumeUnit, energyUnit, warmStartInitialization)` | Unit-aware version of the same option |
 | `OptimizedVUflash.getLastIterationCount()` | Reports the Newton iterations used by the last solve |
-| `OptimizedVUflash.isLastRunConverged()` | Reports whether the last solve met its convergence criteria |
+| `OptimizedVUflash.isLastRunConverged()` | Reports whether the final state met the accepted V/U residual criteria |
 | `OptimizedVUflash.wasColdFallbackUsed()` | Reports whether a requested warm initialization needed the cold retry |
 
 ### Dynamic behavior
 
 `Separator.runTransient`, `ThreePhaseSeparator.runTransient`, and `Tank.runTransient` opt in to
-warm initialization. Existing VU-flash overloads and steady-state calls remain cold by default.
+warm initialization for associating fluids. Cubic-EOS dynamics, existing VU-flash overloads, and
+steady-state calls remain cold by default.
 
 ### Test
 
 `VUFlashTest.testDynamicCpaVUflashUsesBoundedWarmStarts` covers repeated, nearby three-phase
 SRK-CPA VU flashes and verifies bounded convergence without a cold fallback.
+`DynamicCompressorNotebookRegressionTest` protects the established cubic-EOS dynamic trajectory.
 
 ---
 
