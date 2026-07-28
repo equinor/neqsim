@@ -66,8 +66,9 @@ file; it is a different official information model.
 
 ## Native DEXPI 2.0 export
 
-The following complete example builds and runs a small process, exports the Plant and Process profiles separately,
-checks both reports, and writes each report beside the exact XML it assessed:
+Save the following complete Java 8 program as `Dexpi20ExportExample.java`. It builds and runs a small process,
+exports the Plant and Process profiles separately, checks both reports, and writes each report beside the exact XML
+it assessed:
 
 ```java
 import java.io.File;
@@ -83,47 +84,55 @@ import neqsim.process.processmodel.dexpi.Dexpi20ProcessModelWriter;
 import neqsim.process.processmodel.dexpi.Dexpi20XmlWriter;
 import neqsim.thermo.system.SystemSrkEos;
 
-SystemSrkEos fluid = new SystemSrkEos(298.15, 40.0);
-fluid.addComponent("methane", 0.8);
-fluid.addComponent("n-heptane", 0.2);
-fluid.setMixingRule("classic");
 
-Stream feed = new Stream("10-FEED-001", fluid);
-feed.setFlowRate(1000.0, "kg/hr");
-Separator separator = new Separator("10-VA-001", feed);
-Compressor compressor =
-    new Compressor("10-KA-001", separator.getGasOutStream());
-compressor.setOutletPressure(80.0);
+public final class Dexpi20ExportExample {
+  private Dexpi20ExportExample() {
+  }
 
-ProcessSystem process = new ProcessSystem();
-process.setName("DEXPI 2.0 example");
-process.add(feed);
-process.add(separator);
-process.add(compressor);
-process.run();
+  public static void main(String[] args) throws Exception {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 40.0);
+    fluid.addComponent("methane", 0.8);
+    fluid.addComponent("n-heptane", 0.2);
+    fluid.setMixingRule("classic");
 
-Path outputDirectory = new File("dexpi-output").toPath();
-Files.createDirectories(outputDirectory);
-Path plantXml = outputDirectory.resolve("plant.dexpi.xml");
-Path processXml = outputDirectory.resolve("process.dexpi.xml");
+    Stream feed = new Stream("10-FEED-001", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    Separator separator = new Separator("10-VA-001", feed);
+    Compressor compressor =
+        new Compressor("10-KA-001", separator.getGasOutStream());
+    compressor.setOutletPressure(80.0);
 
-Dexpi20ConformanceAssessment.Report plantReport =
-    Dexpi20XmlWriter.writeAndAssess(process, plantXml.toFile());
-Dexpi20ConformanceAssessment.Report processReport =
-    Dexpi20ProcessModelWriter.writeAndAssess(process, processXml.toFile());
+    ProcessSystem process = new ProcessSystem();
+    process.setName("DEXPI 2.0 example");
+    process.add(feed);
+    process.add(separator);
+    process.add(compressor);
+    process.run();
 
-if (!plantReport.isSchemaAndProfileConformant()
-    || !processReport.isSchemaAndProfileConformant()) {
-  throw new IllegalStateException(
-      "DEXPI 2.0 schema or supported-profile validation failed");
+    Path outputDirectory = new File("dexpi-output").toPath();
+    Files.createDirectories(outputDirectory);
+    Path plantXml = outputDirectory.resolve("plant.dexpi.xml");
+    Path processXml = outputDirectory.resolve("process.dexpi.xml");
+
+    Dexpi20ConformanceAssessment.Report plantReport =
+        Dexpi20XmlWriter.writeAndAssess(process, plantXml.toFile());
+    Dexpi20ConformanceAssessment.Report processReport =
+        Dexpi20ProcessModelWriter.writeAndAssess(process, processXml.toFile());
+
+    if (!plantReport.isSchemaAndProfileConformant()
+        || !processReport.isSchemaAndProfileConformant()) {
+      throw new IllegalStateException(
+          "DEXPI 2.0 schema or supported-profile validation failed");
+    }
+
+    Files.write(
+        outputDirectory.resolve("plant.dexpi.conformance.json"),
+        plantReport.toJson().getBytes(StandardCharsets.UTF_8));
+    Files.write(
+        outputDirectory.resolve("process.dexpi.conformance.json"),
+        processReport.toJson().getBytes(StandardCharsets.UTF_8));
+  }
 }
-
-Files.write(
-    outputDirectory.resolve("plant.dexpi.conformance.json"),
-    plantReport.toJson().getBytes(StandardCharsets.UTF_8));
-Files.write(
-    outputDirectory.resolve("process.dexpi.conformance.json"),
-    processReport.toJson().getBytes(StandardCharsets.UTF_8));
 ```
 
 The explicit `Files.write(...)` calls create the JSON sidecars; `writeAndAssess(...)` returns a report but does not
