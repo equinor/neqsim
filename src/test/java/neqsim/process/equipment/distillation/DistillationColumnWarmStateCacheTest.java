@@ -630,6 +630,41 @@ public class DistillationColumnWarmStateCacheTest {
   }
 
   /**
+   * An accepted damped candidate must retain ownership of its exact sequential reuse fingerprint.
+   */
+  @Test
+  public void acceptedSequentialCandidateRetainsExactReuseState() {
+    ColumnCase live = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 2));
+    configureDampedSubstitution(live.column);
+    ColumnCase candidate = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 2));
+    configureDampedSubstitution(candidate.column);
+
+    candidate.column.run();
+
+    assertTrue(candidate.column.solved(), candidate.column.getConvergenceDiagnostics());
+    double acceptedGasFlow = candidate.column.getGasOutStream().getFlowRate("mol/hr");
+    double acceptedLiquidFlow = candidate.column.getLiquidOutStream().getFlowRate("mol/hr");
+    live.column.acceptDampedFallbackCandidate(candidate.column, "accepted sequential candidate");
+
+    live.column.run();
+
+    assertTrue(live.column.solved(), live.column.getConvergenceDiagnostics());
+    assertTrue(live.column.wasSequentialWarmStateReused(),
+        "an adopted accepted sequential candidate must remain exactly reusable");
+    assertEquals(0, live.column.getLastIterationCount(),
+        "exact reuse of an adopted candidate must require no new tray iterations");
+    assertEquals(acceptedGasFlow, live.column.getGasOutStream().getFlowRate("mol/hr"),
+        Math.max(1.0e-9, Math.abs(acceptedGasFlow) * 1.0e-5),
+        "adopted exact reuse must preserve overhead flow");
+    assertEquals(acceptedLiquidFlow, live.column.getLiquidOutStream().getFlowRate("mol/hr"),
+        Math.max(1.0e-9, Math.abs(acceptedLiquidFlow) * 1.0e-5),
+        "adopted exact reuse must preserve bottoms flow");
+    assertEquals(20.0, live.feed.getTemperature("C"), 1.0e-9,
+        "candidate adoption and exact reuse must preserve the caller-owned feed");
+    assertPhysicalAndBalanced(live);
+  }
+
+  /**
    * Sequential warm starts must be invalidated when a fixed reboiler temperature changes.
    *
    * <p>
