@@ -697,6 +697,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private int lastIterationCount = 0;
   /** Last recorded average temperature residual in Kelvin. */
   private double lastTemperatureResidual = 0.0;
+  /** Last average tray-temperature step applied by the sequential solver in Kelvin. */
+  private double lastAppliedTemperatureStepResidual = Double.NaN;
   /** Last recorded relative mass balance residual. */
   private double lastMassResidual = 0.0;
   /** Last recorded relative enthalpy residual. */
@@ -1223,6 +1225,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   @Override
   public void run(UUID id) {
     long runStartTime = System.nanoTime();
+    lastAppliedTemperatureStepResidual = Double.NaN;
     lastInternalTrafficGuardReached = false;
     internalTrafficCapActive = false;
     lastSpecificationHomotopyStepCount = 0;
@@ -2868,6 +2871,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.err = candidate.err;
     this.lastIterationCount = candidate.lastIterationCount;
     this.lastTemperatureResidual = candidate.lastTemperatureResidual;
+    this.lastAppliedTemperatureStepResidual = candidate.lastAppliedTemperatureStepResidual;
     this.lastMassResidual = candidate.lastMassResidual;
     this.lastEnergyResidual = candidate.lastEnergyResidual;
     this.lastTopSpecificationResidual = candidate.lastTopSpecificationResidual;
@@ -5441,6 +5445,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
 
       double temperatureResidual = 0.0;
+      double appliedTemperatureStepResidual = 0.0;
       double effectiveRelaxation = Math.max(minTemperatureRelaxation, Math.min(1.0, relaxation));
       for (int i = 0; i < numberOfTrays; i++) {
         double updated = trays.get(i).getThermoSystem().getTemperature();
@@ -5449,9 +5454,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         }
         double newTemp = oldtemps[i] + effectiveRelaxation * (updated - oldtemps[i]);
         trays.get(i).setTemperature(newTemp);
+        appliedTemperatureStepResidual += Math.abs(newTemp - oldtemps[i]);
         temperatureResidual += Math.abs(newTemp - oldtemps[i]);
       }
       temperatureResidual /= Math.max(1, numberOfTrays);
+      appliedTemperatureStepResidual /= Math.max(1, numberOfTrays);
+      lastAppliedTemperatureStepResidual = appliedTemperatureStepResidual;
       err = temperatureResidual;
 
       boolean evaluateBalances = shouldEvaluateBalances(iter, iterationLimit, polishing, err, baseTempTolerance,
@@ -8125,6 +8133,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Retrieve the average tray-temperature step applied by the latest sequential-solver iteration.
+   *
+   * @return average applied temperature step in Kelvin, or {@link Double#NaN} when the latest run did not execute the
+   * sequential solver
+   */
+  public double getLastAppliedTemperatureStepResidual() {
+    return lastAppliedTemperatureStepResidual;
+  }
+
+  /**
    * Retrieve the latest relative mass residual.
    *
    * @return relative mass balance residual
@@ -8560,6 +8578,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     diagnostics.append("  Residuals:\n");
     diagnostics.append("    temperature: ").append(lastTemperatureResidual).append(" K (tolerance ")
         .append(getEffectiveTemperatureTolerance()).append(")\n");
+    diagnostics.append("    applied temperature step: ").append(lastAppliedTemperatureStepResidual).append(" K\n");
     diagnostics.append("    mass: ").append(lastMassResidual).append(" (tolerance ")
         .append(getEffectiveMassBalanceTolerance()).append(")\n");
     diagnostics.append("    energy: ").append(lastEnergyResidual).append(" (tolerance ")
@@ -11634,6 +11653,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     err = 1.0e10;
     lastIterationCount = 0;
     lastTemperatureResidual = 0.0;
+    lastAppliedTemperatureStepResidual = Double.NaN;
     lastMassResidual = 0.0;
     lastEnergyResidual = 0.0;
     lastSolveTimeSeconds = 0.0;
