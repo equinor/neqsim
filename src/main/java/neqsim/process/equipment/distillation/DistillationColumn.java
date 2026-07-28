@@ -1222,6 +1222,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     trays.get(0).replaceStream(streamNumb, trays.get(1).getLiquidOutStream());
     trays.get(0).init();
     trays.get(0).run();
+
+    // Tray profile construction intentionally seeds internal feed clones at local tray
+    // temperatures. Restore the caller-owned feed thermodynamic states before the actual
+    // column solver starts so the solved mass and energy balances use the requested feeds.
+    refreshInternalExternalFeedSystems();
   }
 
   /**
@@ -2261,7 +2266,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return {@code true} when the Naphtali-Sandholm solver accepted its direct result
    */
   boolean solveNaphtaliSandholm(UUID id) {
-    if (feedStreams.isEmpty()) {
+    captureDirectExternalTrayFeeds();
+    if (feedStreams.isEmpty() && directExternalFeedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return false;
     }
@@ -2296,15 +2302,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     Map<Integer, List<SystemInterface>> originalFeedSystems = new java.util.HashMap<>();
     Map<Integer, List<Double>> originalFeedFlowRates = new java.util.HashMap<>();
-    for (Map.Entry<Integer, List<StreamInterface>> entry : feedStreams.entrySet()) {
+    Set<Integer> externalFeedTrayNumberSet = new HashSet<Integer>(feedStreams.keySet());
+    externalFeedTrayNumberSet.addAll(directExternalFeedStreams.keySet());
+    for (Integer trayNumber : externalFeedTrayNumberSet) {
       List<SystemInterface> clones = new java.util.ArrayList<>();
       List<Double> flowRates = new java.util.ArrayList<>();
-      for (StreamInterface feed : entry.getValue()) {
+      for (StreamInterface feed : getExternalFeedStreams(trayNumber.intValue())) {
         clones.add(feed.getThermoSystem().clone());
         flowRates.add(feed.getFlowRate("mol/hr"));
       }
-      originalFeedSystems.put(entry.getKey(), clones);
-      originalFeedFlowRates.put(entry.getKey(), flowRates);
+      originalFeedSystems.put(trayNumber, clones);
+      originalFeedFlowRates.put(trayNumber, flowRates);
     }
 
     boolean initialized = isDoInitializion();
@@ -2388,7 +2396,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * running the solver
    */
   boolean willReuseNaphtaliSandholmWarmState() {
-    if (feedStreams.isEmpty() || numberOfTrays == 1 || isDoInitializion()) {
+    captureDirectExternalTrayFeeds();
+    if ((feedStreams.isEmpty() && directExternalFeedStreams.isEmpty()) || numberOfTrays == 1
+        || isDoInitializion()) {
       return false;
     }
     if (calculateThermodynamicIdentitySignature() != trayStateThermodynamicIdentitySignature) {
@@ -2438,12 +2448,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private long calculateNaphtaliSandholmInputSignature() {
     long signature = 1125899906842597L;
-    List<Integer> feedTrayNumbers = new ArrayList<Integer>(feedStreams.keySet());
-    Collections.sort(feedTrayNumbers);
-    signature = updateNaphtaliSandholmInputSignature(signature, feedTrayNumbers.size());
-    for (Integer trayNumber : feedTrayNumbers) {
+    Set<Integer> externalFeedTrayNumberSet = new HashSet<Integer>(feedStreams.keySet());
+    externalFeedTrayNumberSet.addAll(directExternalFeedStreams.keySet());
+    List<Integer> externalFeedTrayNumbers = new ArrayList<Integer>(externalFeedTrayNumberSet);
+    Collections.sort(externalFeedTrayNumbers);
+    signature = updateNaphtaliSandholmInputSignature(signature, externalFeedTrayNumbers.size());
+    for (Integer trayNumber : externalFeedTrayNumbers) {
       signature = updateNaphtaliSandholmInputSignature(signature, trayNumber.longValue());
-      List<StreamInterface> trayFeeds = feedStreams.get(trayNumber);
+      List<StreamInterface> trayFeeds = getExternalFeedStreams(trayNumber.intValue());
       signature = updateNaphtaliSandholmInputSignature(signature, trayFeeds.size());
       for (StreamInterface feed : trayFeeds) {
         SystemInterface system = feed.getThermoSystem();
@@ -5329,7 +5341,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param initialRelaxation relaxation factor applied to the first iteration
    */
   private void solveSequential(UUID id, double initialRelaxation) {
-    if (feedStreams.isEmpty()) {
+    captureDirectExternalTrayFeeds();
+    if (feedStreams.isEmpty() && directExternalFeedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
     }
@@ -5819,13 +5832,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       trays.get(i).setPressure(bottomTrayPressure - i * dp);
     }
 
-    for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
-      List<StreamInterface> externalFeeds = getExternalFeedStreams(trayIndex);
-      for (int streamIndex = 0; streamIndex < externalFeeds.size(); streamIndex++) {
-        SystemInterface cloned = externalFeeds.get(streamIndex).getThermoSystem().clone();
-        trays.get(trayIndex).getStream(streamIndex).setThermoSystem(cloned);
-      }
-    }
+    refreshInternalExternalFeedSystems();
 
     return firstFeedTrayNumber;
   }
@@ -9726,6 +9733,26 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       List<StreamInterface> externalFeeds = getExternalFeedStreams(trayIndex);
       for (int streamIndex = 0; streamIndex < externalFeeds.size(); streamIndex++) {
         trays.get(trayIndex).replaceStream(streamIndex, externalFeeds.get(streamIndex).clone());
+      }
+    }
+  }
+
+  /**
+   * Refresh internal feed clones from their caller-owned source streams.
+   *
+   * <p>
+   * The external feeds occupy the leading tray-input positions after initialization.
+   * Replacing only their thermodynamic systems preserves the internal stream objects and
+   * inter-tray wiring while applying current flow, temperature, pressure, composition, EOS,
+   * and mixing-rule state.
+   * </p>
+   */
+  private void refreshInternalExternalFeedSystems() {
+    for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
+      List<StreamInterface> externalFeeds = getExternalFeedStreams(trayIndex);
+      for (int streamIndex = 0; streamIndex < externalFeeds.size(); streamIndex++) {
+        SystemInterface cloned = externalFeeds.get(streamIndex).getThermoSystem().clone();
+        trays.get(trayIndex).getStream(streamIndex).setThermoSystem(cloned);
       }
     }
   }
