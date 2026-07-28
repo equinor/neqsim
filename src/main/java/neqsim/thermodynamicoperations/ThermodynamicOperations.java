@@ -1047,6 +1047,25 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @param unitEnergy a {@link java.lang.String} object
    */
   public void VUflash(double volume, double energy, String unitVol, String unitEnergy) {
+    VUflash(volume, energy, unitVol, unitEnergy, false);
+  }
+
+  /**
+   * Performs a VU flash with an explicit initialization policy.
+   *
+   * <p>
+   * Warm initialization is intended for a continuous dynamic trajectory whose current system is the immediately
+   * preceding converged state. Independent flashes should use the cold-default overload.
+   * </p>
+   *
+   * @param volume specified volume
+   * @param energy specified internal energy
+   * @param unitVol volume unit
+   * @param unitEnergy energy unit
+   * @param warmStartInitialization whether the initialization TP flash may reuse current K-values
+   */
+  public void VUflash(double volume, double energy, String unitVol, String unitEnergy,
+      boolean warmStartInitialization) {
     double conversionFactorV = 1.0;
     double conversionFactorEntr = 1.0;
 
@@ -1074,7 +1093,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     default:
       break;
     }
-    VUflash(volume * conversionFactorV, energy / conversionFactorEntr);
+    VUflash(volume * conversionFactorV, energy / conversionFactorEntr, warmStartInitialization);
   }
 
   /**
@@ -1084,10 +1103,21 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @param Uspec a double
    */
   public void VUflash(double Vspec, double Uspec) {
+    VUflash(Vspec, Uspec, false);
+  }
+
+  /**
+   * Performs a VU flash with an explicit initialization policy.
+   *
+   * @param Vspec specified volume in NeqSim internal units
+   * @param Uspec specified internal energy in NeqSim internal units
+   * @param warmStartInitialization whether the initialization TP flash may reuse current K-values
+   */
+  public void VUflash(double Vspec, double Uspec, boolean warmStartInitialization) {
     if (isPureComponentWithinInternalEnergyRange(Uspec)) {
       operation = new VUflashSingleComp(system, Vspec, Uspec);
     } else {
-      operation = new OptimizedVUflash(system, Vspec, Uspec);
+      operation = new OptimizedVUflash(system, Vspec, Uspec, warmStartInitialization);
     }
     getOperation().run();
   }
