@@ -24,11 +24,8 @@ class TEGDehydrationTutorialTest extends NeqSimTest {
 
   private static double componentFlow(StreamInterface stream, String componentName) {
     double flow = 0.0;
-    for (int phaseNumber = 0;
-        phaseNumber < stream.getFluid().getNumberOfPhases();
-        phaseNumber++) {
-      ComponentInterface component =
-          stream.getFluid().getPhase(phaseNumber).getComponent(componentName);
+    for (int phaseNumber = 0; phaseNumber < stream.getFluid().getNumberOfPhases(); phaseNumber++) {
+      ComponentInterface component = stream.getFluid().getPhase(phaseNumber).getComponent(componentName);
       if (component != null) {
         flow += component.getFlowRate("kg/hr");
       }
@@ -102,8 +99,7 @@ class TEGDehydrationTutorialTest extends NeqSimTest {
     assertTrue(wetWaterFlow - productWaterFlow > 20.0);
     assertTrue(richTeg.getFlowRate("kg/hr") > leanTeg.getFlowRate("kg/hr"));
     assertTrue(mixedContact.getFluid().getNumberOfPhases() > 1);
-    assertEquals(
-        wetWaterFlow + leanWaterFlow, componentFlow(mixedContact, "water"), 1.0e-8);
+    assertEquals(wetWaterFlow + leanWaterFlow, componentFlow(mixedContact, "water"), 1.0e-8);
     assertEquals(0.0, waterResidual, 1.0e-8);
     assertEquals(0.0, totalMassResidual, 1.0e-8);
   }
