@@ -88,7 +88,8 @@ Select the model set before initializing the properties. For example, call
 The string overload of `initPhysicalProperties` selects a
 `PhysicalPropertyType` such as `DYNAMIC_VISCOSITY`; it does not select a
 `PhysicalPropertyModel`. Therefore, `initPhysicalProperties("GLYCOL")` is not a model-set
-selection call.
+selection call. For compatibility, the legacy keys `DENSITY`, `VISCOSITY`, and `CONDUCTIVITY`
+map to `MASS_DENSITY`, `DYNAMIC_VISCOSITY`, and `THERMAL_CONDUCTIVITY`, respectively.
 
 ## Overriding individual phase models
 
