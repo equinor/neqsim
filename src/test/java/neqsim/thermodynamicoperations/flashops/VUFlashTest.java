@@ -41,9 +41,9 @@ class VUFlashTest {
   }
 
   /**
-   * A sequence of nearby CPA VU flashes, as used by dynamic separators, must reuse the previous
-   * equilibrium state instead of cold-starting every time. The iteration bound is deterministic
-   * and protects the transient path from the multi-hour regression seen in the scrubber suite.
+   * A sequence of nearby CPA VU flashes, as used by dynamic separators, must reuse the previous equilibrium state
+   * instead of cold-starting every time. The iteration bound is deterministic and protects the transient path from the
+   * multi-hour regression seen in the scrubber suite.
    */
   @Test
   void testDynamicCpaVUflashUsesBoundedWarmStarts() {
@@ -73,8 +73,7 @@ class VUFlashTest {
       OptimizedVUflash flash = (OptimizedVUflash) operations.getOperation();
       assertTrue(flash.isLastRunConverged(), "dynamic CPA VU flash must converge at step " + step);
       assertTrue(flash.getLastIterationCount() <= 20,
-          "dynamic CPA VU flash must remain bounded at step " + step + ", iterations="
-              + flash.getLastIterationCount());
+          "dynamic CPA VU flash must remain bounded at step " + step + ", iterations=" + flash.getLastIterationCount());
       assertFalse(flash.wasColdFallbackUsed(), "nearby dynamic state must not require a cold fallback");
       assertTrue(fluid.hasPhaseType("gas"), "gas phase retained at step " + step);
       assertTrue(fluid.hasPhaseType("oil"), "oil phase retained at step " + step);
