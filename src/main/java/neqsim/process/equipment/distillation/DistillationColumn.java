@@ -2509,12 +2509,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     signature = updateSequentialStreamStateSignature(signature, liquidOutStream);
     signature = updateNaphtaliSandholmInputSignature(signature, trays.size());
     for (SimpleTray tray : trays) {
-      if (tray == null || tray.getThermoSystem() == null) {
+      StreamInterface trayOutlet = tray == null ? null : tray.getOutletStream();
+      if (trayOutlet == null || trayOutlet.getThermoSystem() == null) {
         signature = updateNaphtaliSandholmInputSignature(signature, -1L);
         continue;
       }
       signature = updateNaphtaliSandholmInputSignature(signature, tray.getTemperature());
-      signature = updateSequentialSystemStateSignature(signature, tray.getThermoSystem());
+      signature = updateSequentialSystemStateSignature(signature, trayOutlet.getThermoSystem());
     }
     return signature;
   }
@@ -5476,12 +5477,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       return;
     }
 
-    long currentSequentialInputSignature = calculateSequentialExactReuseSignature();
-    if (canReuseSequentialWarmState(currentSequentialInputSignature)) {
-      reuseSequentialWarmState(id, invocationStartTime);
-      return;
+    if (hasSequentialExactReuseState) {
+      long currentSequentialInputSignature = calculateSequentialExactReuseSignature();
+      if (canReuseSequentialWarmState(currentSequentialInputSignature)) {
+        reuseSequentialWarmState(id, invocationStartTime);
+        return;
+      }
+      hasSequentialExactReuseState = false;
     }
-    hasSequentialExactReuseState = false;
 
     int firstFeedTrayNumber = prepareColumnForSolve();
 
