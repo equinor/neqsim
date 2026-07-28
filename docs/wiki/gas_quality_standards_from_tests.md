@@ -10,11 +10,11 @@ which documents the API, editions, units, and engineering boundaries.
 
 ## Reference fixture and expected values
 
-`testCalculate` builds an SRK gas at 20 °C and 1.0 bara, adds methane, ethane,
-nitrogen, and carbon dioxide, applies the classic mixing rule, and performs a
-TP flash. It then configures `Standard_ISO6976` with a 0 °C volume reference, a
-15.55 °C combustion-energy reference, a real-gas reference state, and a volume
-basis.
+The shared `setUpBeforeClass` fixture builds an SRK gas at 20 °C and 1.0 bara,
+adds methane, ethane, nitrogen, and carbon dioxide, applies the classic mixing
+rule, and performs a TP flash. `testCalculate` then configures
+`Standard_ISO6976` with a 0 °C volume reference, a 15.55 °C combustion-energy
+reference, a real-gas reference state, and a volume basis.
 
 `getValue(...)` reports energy properties in kJ per cubic metre on the configured
 reference basis. The table converts those assertions to MJ/m³ for readability.
