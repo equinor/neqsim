@@ -149,6 +149,19 @@ public class DistillationColumnWarmStateCacheTest {
     }
   }
 
+  /** Registered feed, legacy direct side feed, and column used by direct-feed compatibility tests. */
+  private static final class DirectFeedColumnCase {
+    private final Stream registeredFeed;
+    private final Stream directFeed;
+    private final TrackingDistillationColumn column;
+
+    private DirectFeedColumnCase(Stream registeredFeed, Stream directFeed, TrackingDistillationColumn column) {
+      this.registeredFeed = registeredFeed;
+      this.directFeed = directFeed;
+      this.column = column;
+    }
+  }
+
   /**
    * Build a hydrocarbon fluid whose numeric composition can remain unchanged while identity changes.
    *
@@ -192,6 +205,21 @@ public class DistillationColumnWarmStateCacheTest {
   }
 
   /**
+   * Build a column with one registered feed and one legacy side feed connected directly to a tray.
+   *
+   * @param directFluid thermodynamic system for the direct side feed
+   * @return direct-feed column case
+   */
+  private static DirectFeedColumnCase buildDirectFeedColumnCase(SystemInterface directFluid) {
+    ColumnCase registeredCase = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 2));
+    Stream directFeed = new Stream("legacy direct side feed", directFluid);
+    configureDirectFeed(directFeed);
+    registeredCase.column.getTray(4).addStream(directFeed);
+    configureDampedSubstitution(registeredCase.column);
+    return new DirectFeedColumnCase(registeredCase.feed, directFeed, registeredCase.column);
+  }
+
+  /**
    * Apply conditions that deliberately keep every legacy numeric fingerprint input unchanged.
    *
    * @param feed feed to configure
@@ -199,6 +227,18 @@ public class DistillationColumnWarmStateCacheTest {
   private static void configureIdentityFeed(Stream feed) {
     feed.setFlowRate(IDENTITY_TEST_FLOW_MOL_PER_HOUR, "mol/hr");
     feed.setTemperature(20.0, "C");
+    feed.setPressure(10.0, "bara");
+    feed.run();
+  }
+
+  /**
+   * Apply fixed operating conditions to a legacy direct side feed.
+   *
+   * @param feed direct side feed to configure
+   */
+  private static void configureDirectFeed(Stream feed) {
+    feed.setFlowRate(0.2 * IDENTITY_TEST_FLOW_MOL_PER_HOUR, "mol/hr");
+    feed.setTemperature(30.0, "C");
     feed.setPressure(10.0, "bara");
     feed.run();
   }
@@ -212,6 +252,17 @@ public class DistillationColumnWarmStateCacheTest {
   private static void replaceFeedFluid(ColumnCase columnCase, SystemInterface replacementFluid) {
     columnCase.feed.setThermoSystem(replacementFluid);
     configureIdentityFeed(columnCase.feed);
+  }
+
+  /**
+   * Replace the direct side feed at unchanged numeric operating conditions.
+   *
+   * @param columnCase direct-feed case to mutate
+   * @param replacementFluid replacement thermodynamic system
+   */
+  private static void replaceDirectFeedFluid(DirectFeedColumnCase columnCase, SystemInterface replacementFluid) {
+    columnCase.directFeed.setThermoSystem(replacementFluid);
+    configureDirectFeed(columnCase.directFeed);
   }
 
   /**
@@ -438,6 +489,37 @@ public class DistillationColumnWarmStateCacheTest {
     assertColdReferenceEquivalent(coldReference.column, mutated.column);
     assertPhysicalAndBalanced(mutated);
     assertNextRunReusesExactly(mutated);
+  }
+
+  /**
+   * A legacy direct tray feed participates in the same thermodynamic-identity gate as registered feeds.
+   */
+  @Test
+  public void directTrayFeedIdentityChangeForcesColdInitialization() {
+    DirectFeedColumnCase mutated =
+        buildDirectFeedColumnCase(createIdentityTestFluid(false, "n-butane", 2));
+    mutated.column.run();
+    assertTrue(mutated.column.solved(), mutated.column.getConvergenceDiagnostics());
+    int initialInitializationCount = mutated.column.getInitializationCount();
+
+    replaceDirectFeedFluid(mutated, createIdentityTestFluid(false, "i-butane", 2));
+    mutated.column.run();
+
+    assertTrue(mutated.column.solved(), mutated.column.getConvergenceDiagnostics());
+    assertEquals(initialInitializationCount + 1, mutated.column.getInitializationCount(),
+        "a direct side-feed identity change must rebuild the sequential initialization exactly once");
+    assertEquals(20.0, mutated.registeredFeed.getTemperature("C"), 1.0e-9,
+        "direct-feed handling must not mutate the registered caller-owned feed");
+    assertEquals(30.0, mutated.directFeed.getTemperature("C"), 1.0e-9,
+        "direct-feed handling must not mutate the direct caller-owned feed");
+
+    DirectFeedColumnCase coldReference =
+        buildDirectFeedColumnCase(createIdentityTestFluid(false, "i-butane", 2));
+    coldReference.column.run();
+    assertTrue(coldReference.column.solved(), coldReference.column.getConvergenceDiagnostics());
+    assertColdReferenceEquivalent(coldReference.column, mutated.column);
+    assertPhysicalStream(mutated.column.getGasOutStream());
+    assertPhysicalStream(mutated.column.getLiquidOutStream());
   }
 
   /**
