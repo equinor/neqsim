@@ -947,7 +947,7 @@ print(f"Mechanical efficiency: {comp.getMechanicalEfficiency()*100:.1f}%")
 
 - [Compressor Curves](compressor_curves.md) - Detailed curve documentation, templates, and MW correction
 - [Compressor Anti-Surge and Coordinated Control](compressor_antisurge_control.md) - Surge protection and coordinated control
-- [CompressorShaft (multiple bodies on one shaft)](compressor_shaft) - Common-speed multi-body strings on a single driver
+- [CompressorShaft (multiple bodies on one shaft)](compressor_shaft.md) - Common-speed multi-body strings on a single driver
 - [Process Package](../) - Package overview
-- [Expanders](expanders) - Expansion equipment
-- [Pumps](pumps) - Liquid compression
+- [Expanders](expanders.md) - Expansion equipment
+- [Pumps](pumps.md) - Liquid compression
