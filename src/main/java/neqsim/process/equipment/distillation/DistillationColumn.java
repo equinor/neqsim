@@ -1202,21 +1202,43 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     // Link upward
     for (int i = 1; i < numberOfTrays; i++) {
       trays.get(i).addStream(trays.get(i - 1).getGasOutStream());
-      trays.get(i).init();
+      initializeInternalTrayInputTemperatures(i);
       trays.get(i).run();
     }
 
     // Link downward
     for (int i = numberOfTrays - 2; i >= 1; i--) {
       trays.get(i).addStream(trays.get(i + 1).getLiquidOutStream());
-      trays.get(i).init();
+      initializeInternalTrayInputTemperatures(i);
       trays.get(i).run();
     }
 
     int streamNumb = (trays.get(0)).getNumberOfInputStreams() - 1;
     trays.get(0).replaceStream(streamNumb, trays.get(1).getLiquidOutStream());
-    trays.get(0).init();
+    initializeInternalTrayInputTemperatures(0);
     trays.get(0).run();
+  }
+
+  /**
+   * Seed generated inter-tray streams at the receiving tray temperature without modifying caller-owned feeds.
+   *
+   * <p>
+   * {@link SimpleTray#init()} applies its temperature to every inlet. During column relinking that can include an
+   * external feed, silently changing the feed temperature and enthalpy used by later solves. Only generated internal
+   * traffic needs the profile seed; registered and directly connected external feeds must retain their inlet state.
+   * </p>
+   *
+   * @param trayIndex tray whose generated inlet streams should be seeded
+   */
+  private void initializeInternalTrayInputTemperatures(int trayIndex) {
+    SimpleTray tray = trays.get(trayIndex);
+    List<StreamInterface> externalFeeds = getExternalFeedStreams(trayIndex);
+    for (int streamIndex = 0; streamIndex < tray.getNumberOfInputStreams(); streamIndex++) {
+      StreamInterface inputStream = tray.getStream(streamIndex);
+      if (!containsStreamByIdentity(externalFeeds, inputStream) && inputStream.getThermoSystem() != null) {
+        inputStream.getThermoSystem().setTemperature(tray.getTemperature());
+      }
+    }
   }
 
   /**
