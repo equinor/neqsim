@@ -4,11 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.capacity.CapacityConstraint;
@@ -218,4 +220,24 @@ public class CompressorOperatingPointResultTest {
     assertEquals(original.getPowerKW(), restored.getPowerKW(), 0.0);
     assertSame(original.getOperatingStatus(), restored.getOperatingStatus());
   }
+  /** Verifies every API call and contract shown in the capacity-aware documentation snippet. */
+  @Test
+  public void testCapacityAwareDocumentationSnippet() {
+    CompressorOperatingPointResult result = compressor.getOperatingPointResult(0.02);
+    boolean feasible = result.isFeasible();
+    String limitingConstraint = result.getLimitingConstraint();
+    double recycleLossKW = result.getRecyclePowerLossKW();
+    List<CompressorOperatingPointResult.ConstraintSnapshot> constraints = result.getConstraints();
+    String resultJson = result.toJson();
+
+    assertTrue(feasible);
+    assertEquals("no_chart", limitingConstraint);
+    assertEquals(0.0, recycleLossKW, 0.0);
+    assertEquals(0.02, result.getPressureToleranceFraction(), 0.0);
+    assertEquals("1.0", result.getSchemaVersion());
+    assertTrue(resultJson.contains("\\\"schemaVersion\\\":\\\"1.0\\\""));
+    assertThrows(UnsupportedOperationException.class, constraints::clear);
+    assertThrows(IllegalArgumentException.class, () -> compressor.getOperatingPointResult(-0.01));
+  }
+
 }
