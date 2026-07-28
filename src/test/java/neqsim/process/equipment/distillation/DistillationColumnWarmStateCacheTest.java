@@ -495,19 +495,17 @@ public class DistillationColumnWarmStateCacheTest {
    * A direct-feed-only sequential column must scale its divergence guard from the physical feed flow.
    *
    * <p>
-   * Legacy direct tray feeds are valid external feeds. Ignoring them when setting the internal-traffic
-   * threshold leaves the threshold at the 1000 kg/h floor and rejects this otherwise ordinary
-   * multicomponent stripper before it can converge.
+   * Legacy direct tray feeds are valid external feeds. Ignoring them when setting the internal-traffic threshold leaves
+   * the threshold at the 1000 kg/h floor and rejects this otherwise ordinary multicomponent stripper before it can
+   * converge.
    * </p>
    */
   @Test
   public void directOnlySequentialColumnUsesExternalFeedScaleForDivergenceGuard() {
-    Stream directFeed =
-        new Stream("direct-only feed", createIdentityTestFluid(false, "n-butane", 2));
+    Stream directFeed = new Stream("direct-only feed", createIdentityTestFluid(false, "n-butane", 2));
     configureIdentityFeed(directFeed);
 
-    TrackingDistillationColumn column =
-        new TrackingDistillationColumn("direct-only sequential column", 6, true, false);
+    TrackingDistillationColumn column = new TrackingDistillationColumn("direct-only sequential column", 6, true, false);
     column.getTray(3).addStream(directFeed);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.5);
