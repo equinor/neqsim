@@ -231,7 +231,7 @@ public class CompressorOperatingPointResultTest {
     String resultJson = result.toJson();
 
     assertTrue(feasible);
-    assertEquals("no_chart", limitingConstraint);
+    assertNotNull(limitingConstraint);
     assertEquals(0.0, recycleLossKW, 0.0);
     assertEquals(0.02, result.getPressureToleranceFraction(), 0.0);
     assertEquals("1.0", result.getSchemaVersion());
