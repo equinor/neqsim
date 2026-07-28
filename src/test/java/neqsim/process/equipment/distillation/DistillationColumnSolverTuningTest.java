@@ -80,8 +80,7 @@ public class DistillationColumnSolverTuningTest {
     double fixedPointResidual = column.getLastTemperatureResidual();
     assertTrue(appliedStep > 0.0, "the perturbed state must produce an applied temperature step");
     assertTrue(fixedPointResidual > 0.0, "the perturbed state must produce a fixed-point residual");
-    assertEquals(0.2 * fixedPointResidual, appliedStep,
-        Math.max(1.0e-10, 1.0e-8 * fixedPointResidual),
+    assertEquals(0.2 * fixedPointResidual, appliedStep, Math.max(1.0e-10, 1.0e-8 * fixedPointResidual),
         "relaxation must scale only the applied step, not the convergence residual");
   }
 
