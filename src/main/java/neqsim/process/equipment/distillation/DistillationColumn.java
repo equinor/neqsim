@@ -637,6 +637,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * </p>
    */
   private transient long lastSequentialInitializationSignature = Long.MIN_VALUE;
+  /** Whether an accepted sequential solution is eligible for exact unchanged-input reuse. */
+  private transient boolean hasSequentialExactReuseState = false;
+  /** Full input fingerprint associated with the accepted sequential solution. */
+  private transient long lastSequentialInputSignature = Long.MIN_VALUE;
+  /** Whether the latest sequential invocation reused an exact accepted state. */
+  private transient boolean lastSequentialWarmStateReused = false;
   /**
    * Whether the current tray state was produced by {@link NaphtaliSandholmSolver} on this column instance.
    *
@@ -1128,6 +1134,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastSequentialInitializationSignature = calculateSequentialInitializationSignature();
     naphtaliSandholmStateOwned = false;
     hasNaphtaliSandholmWarmState = false;
+    hasSequentialExactReuseState = false;
 
     resetTrayInputsToExternalFeeds();
     cloneExternalTrayInputsForInitialization();
@@ -2381,6 +2388,66 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   boolean wasNaphtaliSandholmWarmStateReused() {
     return lastNaphtaliSandholmWarmStateReused;
+  }
+
+  /**
+   * Decide whether an accepted sequential solution can be reused for identical inputs.
+   *
+   * <p>
+   * Exact reuse is deliberately disabled for adjustable specifications and active outer tear variables. Those
+   * calculations can change targets or internal return streams outside the fixed sequential input fingerprint.
+   * </p>
+   *
+   * @param inputSignature full current input fingerprint
+   * @return {@code true} when no new sequential iterations are required
+   */
+  private boolean canReuseSequentialWarmState(long inputSignature) {
+    boolean acceptedStatus = lastSolveStatus == SolveStatus.RIGOROUS_CONVERGED
+        || lastSolveStatus == SolveStatus.RECONCILED_PRODUCTS;
+    return hasSequentialExactReuseState && hasBeenSolvedBefore && acceptedStatus && !isDoInitializion()
+        && !hasAdjustableSpecifications() && !hasActiveColumnTearVariables()
+        && inputSignature == lastSequentialInputSignature;
+  }
+
+  /**
+   * Record an accepted sequential solution for exact unchanged-input reuse.
+   */
+  private void commitSequentialWarmState() {
+    boolean acceptedStatus = lastSolveStatus == SolveStatus.RIGOROUS_CONVERGED
+        || lastSolveStatus == SolveStatus.RECONCILED_PRODUCTS;
+    hasSequentialExactReuseState = hasBeenSolvedBefore && acceptedStatus && !isDoInitializion()
+        && !hasAdjustableSpecifications() && !hasActiveColumnTearVariables();
+    if (hasSequentialExactReuseState) {
+      lastSequentialInputSignature = calculateNaphtaliSandholmInputSignature();
+    }
+  }
+
+  /**
+   * Reuse the accepted sequential products and tray state for identical inputs.
+   *
+   * @param id calculation identifier for the requested invocation
+   * @param startTime nano time when this invocation started
+   */
+  private void reuseSequentialWarmState(UUID id, long startTime) {
+    lastIterationCount = 0;
+    lastSequentialWarmStateReused = true;
+    lastSolveTimeSeconds = (System.nanoTime() - startTime) / 1.0e9;
+    gasOutStream.setCalculationIdentifier(id);
+    liquidOutStream.setCalculationIdentifier(id);
+    for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
+      trays.get(trayIndex).setCalculationIdentifier(id);
+    }
+    setCalculationIdentifier(id);
+    lastSolveStatusReason = "Reused unchanged sequential solution";
+  }
+
+  /**
+   * Check whether the latest sequential invocation reused an exact accepted state.
+   *
+   * @return {@code true} when no initializer or tray iteration was required
+   */
+  boolean wasSequentialWarmStateReused() {
+    return lastSequentialWarmStateReused;
   }
 
   /**
@@ -5340,11 +5407,20 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param initialRelaxation relaxation factor applied to the first iteration
    */
   private void solveSequential(UUID id, double initialRelaxation) {
+    long invocationStartTime = System.nanoTime();
+    lastSequentialWarmStateReused = false;
     captureDirectExternalTrayFeeds();
     if (feedStreams.isEmpty() && directExternalFeedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
     }
+
+    long currentSequentialInputSignature = calculateNaphtaliSandholmInputSignature();
+    if (canReuseSequentialWarmState(currentSequentialInputSignature)) {
+      reuseSequentialWarmState(id, invocationStartTime);
+      return;
+    }
+    hasSequentialExactReuseState = false;
 
     int firstFeedTrayNumber = prepareColumnForSolve();
 
@@ -5662,6 +5738,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     finalizeSolve(id, iter, err, massErr, energyErr, startTime);
+    commitSequentialWarmState();
   }
 
   /**
