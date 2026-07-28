@@ -322,7 +322,11 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
     System.out.println("total moles " + thermoSystem.getTotalNumberOfMoles());
 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-    thermoOps.VUflash(volume1, newEnergy, true);
+    // Preserve the nearby equilibrium seed only for associating fluids. Cubic EOS dynamics
+    // retain the legacy cold initialization and its established trajectory.
+    boolean warmStartInitialization =
+        !neqsim.thermo.ThermodynamicModelSettings.isInnerFlashWarmStartSafe(thermoSystem);
+    thermoOps.VUflash(volume1, newEnergy, warmStartInitialization);
 
     setOutComposition(thermoSystem);
     setTempPres(thermoSystem.getTemperature(), thermoSystem.getPressure());
