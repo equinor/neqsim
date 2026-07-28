@@ -2397,8 +2397,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   boolean willReuseNaphtaliSandholmWarmState() {
     captureDirectExternalTrayFeeds();
-    if ((feedStreams.isEmpty() && directExternalFeedStreams.isEmpty()) || numberOfTrays == 1
-        || isDoInitializion()) {
+    if ((feedStreams.isEmpty() && directExternalFeedStreams.isEmpty()) || numberOfTrays == 1 || isDoInitializion()) {
       return false;
     }
     if (calculateThermodynamicIdentitySignature() != trayStateThermodynamicIdentitySignature) {
@@ -9741,10 +9740,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Refresh internal feed clones from their caller-owned source streams.
    *
    * <p>
-   * The external feeds occupy the leading tray-input positions after initialization.
-   * Replacing only their thermodynamic systems preserves the internal stream objects and
-   * inter-tray wiring while applying current flow, temperature, pressure, composition, EOS,
-   * and mixing-rule state.
+   * The external feeds occupy the leading tray-input positions after initialization. Replacing only their thermodynamic
+   * systems preserves the internal stream objects and inter-tray wiring while applying current flow, temperature,
+   * pressure, composition, EOS, and mixing-rule state.
    * </p>
    */
   private void refreshInternalExternalFeedSystems() {
