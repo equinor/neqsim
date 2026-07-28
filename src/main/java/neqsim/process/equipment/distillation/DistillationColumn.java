@@ -3076,13 +3076,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.hasBeenSolvedBefore = candidate.hasBeenSolvedBefore;
     this.lastTotalFeedFlow = candidate.lastTotalFeedFlow;
     this.doInitializion = candidate.doInitializion;
-    // The tray network now belongs to the candidate, so every cached fingerprint that described the
-    // replaced trays is void. The warm state is dropped rather than carried over; when the adopted
-    // state is a legitimate accepted answer the caller re-arms it through
-    // acceptNaphtaliWarmStartCandidate and commitNaphtaliSandholmWarmState recomputes the
-    // fingerprint from the inputs that are actually in force.
+    // The tray network now belongs to the candidate, so cache ownership must follow the adopted
+    // state explicitly. An accepted sequential candidate carries the full input fingerprint needed
+    // for safe unchanged-input reuse; invocation telemetry must describe the next live invocation.
+    // Naphtali-Sandholm ownership is dropped unless the caller explicitly re-arms it through
+    // acceptNaphtaliWarmStartCandidate and commitNaphtaliSandholmWarmState.
     this.trayStateThermodynamicIdentitySignature = candidate.trayStateThermodynamicIdentitySignature;
     this.lastSequentialInitializationSignature = candidate.lastSequentialInitializationSignature;
+    this.hasSequentialExactReuseState = candidate.hasSequentialExactReuseState;
+    this.lastSequentialInputSignature = candidate.lastSequentialInputSignature;
+    this.lastSequentialWarmStateReused = false;
     this.naphtaliSandholmStateOwned = false;
     this.hasNaphtaliSandholmWarmState = false;
     this.lastNaphtaliSandholmInputSignature = Long.MIN_VALUE;
