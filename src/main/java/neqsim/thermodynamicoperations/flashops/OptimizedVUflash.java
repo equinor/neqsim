@@ -333,8 +333,9 @@ public class OptimizedVUflash extends Flash {
   }
 
   /**
-   * Runs the initialization TP flash cold and then the Newton iteration with the requested inner warm-start setting.
+   * Runs the initialization TP flash and Newton iteration with their requested warm-start settings.
    *
+   * @param warmStartInitialFlash whether the initialization TP flash may reuse current K-values
    * @param warmStartInnerFlashes whether the inner TP flashes of the Newton iteration may reuse K-values
    */
   private void solveFromCurrentState(boolean warmStartInitialFlash, boolean warmStartInnerFlashes) {
