@@ -1126,6 +1126,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     captureDirectExternalTrayFeeds();
     resetTrayInputsToExternalFeeds();
+    cloneExternalTrayInputsForInitialization();
 
     // If feed streams are empty, nothing to do
     if (feedStreams.isEmpty() && directExternalFeedStreams.isEmpty()) {
@@ -1202,43 +1203,21 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     // Link upward
     for (int i = 1; i < numberOfTrays; i++) {
       trays.get(i).addStream(trays.get(i - 1).getGasOutStream());
-      initializeInternalTrayInputTemperatures(i);
+      trays.get(i).init();
       trays.get(i).run();
     }
 
     // Link downward
     for (int i = numberOfTrays - 2; i >= 1; i--) {
       trays.get(i).addStream(trays.get(i + 1).getLiquidOutStream());
-      initializeInternalTrayInputTemperatures(i);
+      trays.get(i).init();
       trays.get(i).run();
     }
 
     int streamNumb = (trays.get(0)).getNumberOfInputStreams() - 1;
     trays.get(0).replaceStream(streamNumb, trays.get(1).getLiquidOutStream());
-    initializeInternalTrayInputTemperatures(0);
+    trays.get(0).init();
     trays.get(0).run();
-  }
-
-  /**
-   * Seed generated inter-tray streams at the receiving tray temperature without modifying caller-owned feeds.
-   *
-   * <p>
-   * {@link SimpleTray#init()} applies its temperature to every inlet. During column relinking that can include an
-   * external feed, silently changing the feed temperature and enthalpy used by later solves. Only generated internal
-   * traffic needs the profile seed; registered and directly connected external feeds must retain their inlet state.
-   * </p>
-   *
-   * @param trayIndex tray whose generated inlet streams should be seeded
-   */
-  private void initializeInternalTrayInputTemperatures(int trayIndex) {
-    SimpleTray tray = trays.get(trayIndex);
-    List<StreamInterface> externalFeeds = getExternalFeedStreams(trayIndex);
-    for (int streamIndex = 0; streamIndex < tray.getNumberOfInputStreams(); streamIndex++) {
-      StreamInterface inputStream = tray.getStream(streamIndex);
-      if (!containsStreamByIdentity(externalFeeds, inputStream) && inputStream.getThermoSystem() != null) {
-        inputStream.getThermoSystem().setTemperature(tray.getTemperature());
-      }
-    }
   }
 
   /**
@@ -5834,14 +5813,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       trays.get(i).setPressure(bottomTrayPressure - i * dp);
     }
 
-    int[] numeroffeeds = new int[numberOfTrays];
-    for (Entry<Integer, List<StreamInterface>> entry : feedStreams.entrySet()) {
-      int feedTrayNumber = entry.getKey();
-      List<StreamInterface> trayFeeds = entry.getValue();
-      for (StreamInterface feedStream : trayFeeds) {
-        numeroffeeds[feedTrayNumber]++;
-        SystemInterface cloned = feedStream.getThermoSystem().clone();
-        trays.get(feedTrayNumber).getStream(numeroffeeds[feedTrayNumber] - 1).setThermoSystem(cloned);
+    for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
+      List<StreamInterface> externalFeeds = getExternalFeedStreams(trayIndex);
+      for (int streamIndex = 0; streamIndex < externalFeeds.size(); streamIndex++) {
+        SystemInterface cloned = externalFeeds.get(streamIndex).getThermoSystem().clone();
+        trays.get(trayIndex).getStream(streamIndex).setThermoSystem(cloned);
       }
     }
 
@@ -9731,6 +9707,24 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Replace caller-owned external tray feeds with internal stream clones before profile seeding.
+   *
+   * <p>
+   * {@link SimpleTray#init()} intentionally seeds all tray inlets at the tray temperature. Keeping an internal clone
+   * preserves that established numerical initialization while preventing the column from changing the temperature or
+   * enthalpy state of streams owned by its caller.
+   * </p>
+   */
+  private void cloneExternalTrayInputsForInitialization() {
+    for (int trayIndex = 0; trayIndex < trays.size(); trayIndex++) {
+      List<StreamInterface> externalFeeds = getExternalFeedStreams(trayIndex);
+      for (int streamIndex = 0; streamIndex < externalFeeds.size(); streamIndex++) {
+        trays.get(trayIndex).replaceStream(streamIndex, externalFeeds.get(streamIndex).clone());
+      }
+    }
+  }
+
+  /**
    * Get the lowest tray index containing an external feed stream.
    *
    * @return first external feed tray index
@@ -9790,6 +9784,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     String streamName = stream.getName();
     if (streamName == null || streamName.trim().isEmpty()) {
       return false;
+    }
+    for (StreamInterface knownExternalFeed : knownExternalFeeds) {
+      if (knownExternalFeed != null && streamName.equals(knownExternalFeed.getName())) {
+        // Initialization uses internal clones so caller-owned feeds are not mutated. A same-name
+        // tray input is that clone, not a newly connected legacy side feed.
+        return false;
+      }
     }
     if (registeredFeedNames.contains(streamName)) {
       // A tray input that shares a registered feed name but a different identity is a clone left by
