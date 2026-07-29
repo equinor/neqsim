@@ -230,9 +230,12 @@ public class TPflash extends Flash {
     if (safeAcceleration) {
       for (i = 0; i < nc; i++) {
         double logKStep = acceleratedLnK[i] - savedLnK[i];
+        if (!Double.isFinite(acceleratedLnK[i]) || Math.abs(logKStep) > MAX_ACCELERATION_LOG_K_STEP) {
+          safeAcceleration = false;
+          break;
+        }
         acceleratedK[i] = Math.exp(acceleratedLnK[i]);
-        if (!Double.isFinite(acceleratedLnK[i]) || !Double.isFinite(acceleratedK[i])
-            || acceleratedK[i] <= 0.0 || Math.abs(logKStep) > MAX_ACCELERATION_LOG_K_STEP) {
+        if (!Double.isFinite(acceleratedK[i]) || acceleratedK[i] <= 0.0) {
           safeAcceleration = false;
           break;
         }
