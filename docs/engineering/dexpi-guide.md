@@ -1,7 +1,7 @@
 ---
 title: "DEXPI Engineering Guide"
-description: "Practical guide to selecting, generating, validating, qualifying, and governing DEXPI exchanges from NeqSim process and engineering models."
-keywords: "DEXPI, DEXPI 2.0, Proteus, P&ID, PFD, BFD, pyDEXPI, engineering graph, conformance, round trip"
+description: "Practical guide to selecting, generating, validating, qualifying, and governing DEXPI exchanges, including SIS and HIPPS semantics."
+keywords: "DEXPI, DEXPI 2.0, Proteus, P&ID, PFD, BFD, pyDEXPI, SIS, HIPPS, safety function, engineering graph, conformance, round trip"
 ---
 
 This guide helps you choose the correct NeqSim DEXPI workflow. DEXPI is an engineering information-exchange format:
@@ -30,6 +30,22 @@ unqualified tag lookup.
 
 Use this path for compatibility, visualization, and existing Proteus exchanges. Do not present it as native DEXPI 2.0
 by changing the file header or namespace.
+
+### SIS and HIPPS semantics
+
+Proteus-compatible `DexpiXmlWriter` exports classify common safety-trip tags such as `PSHH`, `PAHH`, `LSHH`,
+`TSHH`, and `FSL` as SIS instruments; ordinary process transmitters remain assigned to the DCS. A configured
+`HIPPSValve` is exported as a gate-valve final element. The valve and each pressure transmitter registered with
+`HIPPSValve.addPressureTransmitter(...)` carry the configured safety-function tag, functional role, sensor/final-element
+membership, SIL, voting architecture, closed safe state, proof-test interval in hours, closure time in seconds, and
+`ControlSystem=SIS`.
+
+This mapping applies to the Proteus-compatible body produced by `DexpiXmlWriter`, including the pyDEXPI-friendly
+variant. It is not currently implemented by the native `Dexpi20XmlWriter`; do not assume that switching writers
+preserves these HIPPS attributes. In either profile, exported configuration is exchange evidence, not SIL verification,
+an approved safety-requirements specification, or permission to claim safeguard credit. See
+[HIPPS implementation](../safety/hipps_implementation.md) and
+[SIS logic implementation](../safety/sis_logic_implementation.md) for the simulation-side models.
 
 ### Native DEXPI 2.0 Plant model
 
