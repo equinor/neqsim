@@ -697,6 +697,8 @@ public class TPflash extends Flash {
         }
         if (gasgib * (1.0 - Math.signum(gasgib) * 1e-8) < liqgib) {
           system.setPhaseType(0, PhaseType.GAS);
+        } else {
+          system.setPhaseType(0, PhaseType.LIQUID);
         }
       } catch (Exception e) {
         system.setPhaseType(0, PhaseType.GAS);
