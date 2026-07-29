@@ -63,7 +63,6 @@ class TPflashCubicRootSelectionTest {
       maximumLogFugacityResidual = Math.max(maximumLogFugacityResidual,
           Math.abs(Math.log(firstPhaseFugacity / secondPhaseFugacity)));
     }
-    assertTrue(maximumLogFugacityResidual < 1.0e-8,
-        "maximum log fugacity residual was " + maximumLogFugacityResidual);
+    assertTrue(maximumLogFugacityResidual < 1.0e-8, "maximum log fugacity residual was " + maximumLogFugacityResidual);
   }
 }
