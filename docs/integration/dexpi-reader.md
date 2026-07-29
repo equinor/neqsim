@@ -1,13 +1,11 @@
 ---
 title: "DEXPI P&ID Import, Export and Visualization"
-description: "Complete DEXPI integration for NeqSim — import P&ID XML into runnable process models, export professional P&ID drawings with ISO 10628 symbols, auto-layout, instruments, mechanical design data, and configurable visualization."
-keywords: "DEXPI, P&ID, piping and instrumentation diagram, XML import, XML export, ISO 10628, process flow diagram, PFD, visualization"
+description: "Complete DEXPI integration for NeqSim — import P&ID XML, export professional drawings, and preserve supported SIS and HIPPS semantics."
+keywords: "DEXPI, P&ID, piping and instrumentation diagram, XML import, XML export, ISO 10628, process flow diagram, PFD, SIS, HIPPS, safety function, visualization"
 ---
 
-# DEXPI P&ID Import, Export and Visualization
-
 > New to the available exchange profiles? Start with the
-> [DEXPI Engineering Guide](../engineering/dexpi-guide) to choose between Proteus compatibility, pyDEXPI rendering,
+> [DEXPI Engineering Guide](../engineering/dexpi-guide.md) to choose between Proteus compatibility, pyDEXPI rendering,
 > native DEXPI 2.0 Plant/P&ID, native Process/PFD/BFD, and governed engineering-package workflows.
 
 NeqSim provides a complete [DEXPI](https://dexpi.org/) integration that supports:
