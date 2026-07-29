@@ -246,6 +246,37 @@ V2.0.0 XSD, and run reference and supported-profile semantic checks. See
 [DEXPI 2.0 native exchange and conformance](dexpi-20-conformance.md) for exact scope, mappings, and
 qualification requirements.
 
+### SIS and HIPPS semantics in Proteus-compatible exports
+
+The `DexpiXmlWriter` path preserves configured safeguarding semantics in its Proteus-compatible plant-model body:
+
+| Source model or tag | Exported semantics |
+|---|---|
+| `PSHH`, `PAHH`, `LSHH`, `TSHH`, or `FSL` instrument tag | `SystemAssignment/ControlSystem=SIS`; an ordinary process transmitter remains DCS |
+| Existing shutdown identifiers such as `XV`, `SD`, `ZS`, `SV`, `ESD`, or `HIPPS` | SIS assignment according to the writer's tag classifier |
+| `HIPPSValve` | `GateValve` final element with closed safe state |
+| Pressure transmitter registered with `HIPPSValve.addPressureTransmitter(...)` | HIPPS sensor role and membership in the same safety function |
+
+For a HIPPS final element and its registered sensors, the writer emits a `SafetyInstrumentedFunction` generic-attribute
+set containing `SafetyFunctionType`, `SafetyFunctionTag`, `FunctionalRole`, `SensorTag`, `SensorTags`,
+`FinalElementTag`, `SafetyIntegrityLevel`, `VotingArchitecture`, `SafeState`, `ProofTestInterval` in hours,
+`ClosureTime` in seconds, and `ControlSystem=SIS`. Diagram SIL markers use the configured HIPPS SIL when the
+instrument has a layout position.
+
+Association is object-based: add the same transmitter objects both to the `HIPPSValve` and the `ProcessSystem`.
+A similar tag that is not registered with the valve may still be classified as SIS by its tag, but it does not receive
+HIPPS membership metadata.
+
+These mappings are implemented by `DexpiXmlWriter.write(...)`, `writeForPyDexpi(...)`, and the related
+Proteus-compatible export variants. They are not currently implemented by `Dexpi20XmlWriter`. Native DEXPI 2.0
+exports therefore require a separate semantic coverage review; do not infer HIPPS preservation from a successful
+schema/profile report. Exported SIL and voting data record configured model values only. They do not verify PFDavg,
+hardware-fault tolerance, independence, proof-test effectiveness, an IEC 61511 safety-requirements specification, or
+project approval.
+
+See [HIPPS implementation](../safety/hipps_implementation.md) and
+[SIS logic implementation](../safety/sis_logic_implementation.md) for the simulation-side models.
+
 ### Line data and NORSOK line numbers
 
 Each piping connection carries operating line data and a NORSOK Z-003 line-identification label:
@@ -273,6 +304,7 @@ The writer reverse-maps Java classes to DEXPI `ComponentClass` strings:
 | `Cooler` | `AirCoolingSystem` | `RDS327938` |
 | `HeatExchanger` | `ShellAndTubeHeatExchanger` | `RDS327918` |
 | `Heater` | `FiredHeater` | `RDS327914` |
+| `HIPPSValve` | `GateValve` | `RDS415208` |
 | `ThrottlingValve` | `GlobeValve` (tag prefix may map to gate/ball/check/butterfly) | `RDS415212` |
 | `Expander` | `Expander` | `RDS414776` |
 | `Mixer` | `Mixer` | `RDS4149564` |
