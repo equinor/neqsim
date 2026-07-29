@@ -179,9 +179,9 @@ System.out.println("Compressibility: " + gas.getZ());
 <h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #f44336; color: #24292e; font-size: 1.25rem;">🔧 Troubleshooting</h3>
 <p style="color: #6a737d; margin-bottom: 1rem;">Solutions to common problems</p>
 <ul style="list-style: none; padding: 0; margin: 0;">
-<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#flash-convergence-issues" style="color: #155799; text-decoration: none;">Flash Convergence</a></li>
-<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#density-issues" style="color: #155799; text-decoration: none;">Density Issues</a></li>
-<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#python-integration-issues" style="color: #155799; text-decoration: none;">Python Integration</a></li>
+<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#flash-convergence-and-unexpected-phases" style="color: #155799; text-decoration: none;">Flash Convergence</a></li>
+<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#density-and-physical-properties" style="color: #155799; text-decoration: none;">Density Issues</a></li>
+<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#python-gateway-and-overload-errors" style="color: #155799; text-decoration: none;">Python Integration</a></li>
 </ul>
 </div>
 
