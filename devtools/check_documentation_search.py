@@ -79,7 +79,6 @@ def parse_front_matter(path: Path) -> Tuple[Dict[str, str], str]:
     return fields, "\n".join(lines[end + 1 :]).strip()
 
 
-
 def markdown_prose(text: str) -> str:
     """Return Markdown text without fenced or inline code."""
 
@@ -118,6 +117,7 @@ def relative_notebook_link_errors(path: Path, body: str) -> List[str]:
             "from GitHub Pages; use an absolute GitHub or Colab URL"
         )
     return errors
+
 
 def relative_sources(paths: Iterable[Path]) -> List[str]:
     """Return source paths in the same form emitted by Jekyll's ``page.path``."""
