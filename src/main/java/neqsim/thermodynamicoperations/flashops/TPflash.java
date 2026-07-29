@@ -53,8 +53,8 @@ public class TPflash extends Flash {
    * Maximum accepted change in ln(K) from one GDEM/DEM extrapolation.
    *
    * <p>
-   * A bounded log-space step prevents a nearly unit dominant eigenvalue from turning a
-   * small successive-substitution correction into an arbitrarily large K-value jump.
+   * A bounded log-space step prevents a nearly unit dominant eigenvalue from turning a small successive-substitution
+   * correction into an arbitrarily large K-value jump.
    * </p>
    */
   private static final double MAX_ACCELERATION_LOG_K_STEP = 2.0;
