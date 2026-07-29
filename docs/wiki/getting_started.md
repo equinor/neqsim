@@ -326,11 +326,25 @@ valve.setController(controller);
 ## Examples and tutorials
 
 ### Jupyter Notebooks
-- [ESP Pump Tutorial](../examples/ESP_Pump_Tutorial.ipynb)
-- [PVT Simulation and Tuning](../examples/PVT_Simulation_and_Tuning.ipynb)
-- [MPC Integration Tutorial](../examples/MPC_Integration_Tutorial.ipynb)
-- [AI Platform Integration](../examples/AIPlatformIntegration.ipynb)
-- [Graph-Based Simulation](../examples/GraphBasedProcessSimulation.ipynb)
+
+GitHub Pages publishes the rendered tutorial pages, while the source notebooks remain
+available on GitHub and can be opened directly in Google Colab.
+
+- [ESP Pump Tutorial](../examples/ESP_Pump_Tutorial.html)
+  ([Jupyter notebook](https://github.com/equinor/neqsim/blob/master/docs/examples/ESP_Pump_Tutorial.ipynb)
+  | [Open in Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/ESP_Pump_Tutorial.ipynb))
+- [PVT Simulation and Tuning](../examples/PVT_Simulation_and_Tuning.html)
+  ([Jupyter notebook](https://github.com/equinor/neqsim/blob/master/docs/examples/PVT_Simulation_and_Tuning.ipynb)
+  | [Open in Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/PVT_Simulation_and_Tuning.ipynb))
+- [MPC Integration Tutorial](../examples/MPC_Integration_Tutorial.html)
+  ([Jupyter notebook](https://github.com/equinor/neqsim/blob/master/docs/examples/MPC_Integration_Tutorial.ipynb)
+  | [Open in Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/MPC_Integration_Tutorial.ipynb))
+- [AI Platform Integration](../examples/AIPlatformIntegration.html)
+  ([Jupyter notebook](https://github.com/equinor/neqsim/blob/master/docs/examples/AIPlatformIntegration.ipynb)
+  | [Open in Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/AIPlatformIntegration.ipynb))
+- [Graph-Based Simulation](../examples/GraphBasedProcessSimulation.html)
+  ([Jupyter notebook](https://github.com/equinor/neqsim/blob/master/docs/examples/GraphBasedProcessSimulation.ipynb)
+  | [Open in Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/GraphBasedProcessSimulation.ipynb))
 
 ### Documentation Links
 - Work through the [Usage examples](usage_examples) for end-to-end flows in both Java and Python.
