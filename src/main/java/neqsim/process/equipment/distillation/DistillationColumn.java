@@ -2566,7 +2566,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private long calculateSequentialInitializationSignature() {
     long signature = 1125899906842597L;
-    return updateColumnConfigurationSignature(signature);
+    return updateSequentialInitializationConfigurationSignature(signature);
   }
 
   /**
@@ -2710,6 +2710,35 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return updated fingerprint
    */
   private long updateColumnConfigurationSignature(long signature) {
+    return updateColumnConfigurationSignature(signature, false);
+  }
+
+  /**
+   * Add configuration inputs that require rebuilding sequential tray initialization.
+   *
+   * <p>
+   * An adjustable top or bottom product specification changes the corresponding condenser or reboiler temperature
+   * inside its outer solve. Those manipulated temperatures are deliberately excluded here so the specification solver
+   * can retain nearby tray states between trial points. Every independent fixed configuration input remains
+   * fingerprinted.
+   * </p>
+   *
+   * @param signature fingerprint accumulated so far
+   * @return updated fingerprint
+   */
+  private long updateSequentialInitializationConfigurationSignature(long signature) {
+    return updateColumnConfigurationSignature(signature, true);
+  }
+
+  /**
+   * Add column configuration inputs to a fingerprint.
+   *
+   * @param signature fingerprint accumulated so far
+   * @param ignoreSpecificationManipulatedTemperatures whether to omit endpoint temperatures adjusted by active product
+   * specifications
+   * @return updated fingerprint
+   */
+  private long updateColumnConfigurationSignature(long signature, boolean ignoreSpecificationManipulatedTemperatures) {
     long updatedSignature = updateNaphtaliSandholmInputSignature(signature, numberOfTrays);
     updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, topTrayPressure);
     updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, bottomTrayPressure);
@@ -2720,10 +2749,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, -1L);
         continue;
       }
-      boolean temperatureSpecified = tray.isSetOutTemperature();
-      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, temperatureSpecified ? 1L : 0L);
-      if (temperatureSpecified) {
-        updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, tray.getOutTemperature());
+      boolean specificationManipulatedTemperature = ignoreSpecificationManipulatedTemperatures
+          && isSpecificationManipulatedTemperature(trayIndex);
+      if (specificationManipulatedTemperature) {
+        updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, 2L);
+      } else {
+        boolean temperatureSpecified = tray.isSetOutTemperature();
+        updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, temperatureSpecified ? 1L : 0L);
+        if (temperatureSpecified) {
+          updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, tray.getOutTemperature());
+        }
       }
       updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature,
           getEffectiveMurphreeEfficiency(trayIndex));
@@ -2737,6 +2772,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           getCondenser().isTotalCondenser() ? 1L : 0L);
     }
     return updatedSignature;
+  }
+
+  /**
+   * Check whether an active outer specification owns a tray endpoint temperature.
+   *
+   * @param trayIndex zero-based tray index
+   * @return {@code true} for a condenser/reboiler temperature manipulated by an active specification
+   */
+  private boolean isSpecificationManipulatedTemperature(int trayIndex) {
+    boolean bottomTemperature = trayIndex == 0 && hasReboiler && needsAdjustment(bottomSpecification);
+    boolean topTemperature = trayIndex == numberOfTrays - 1 && hasCondenser && needsAdjustment(topSpecification);
+    return bottomTemperature || topTemperature;
   }
 
   /**
@@ -5500,8 +5547,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     long currentSequentialInitializationSignature = calculateSequentialInitializationSignature();
     boolean thermodynamicIdentityChanged = currentThermodynamicIdentitySignature != trayStateThermodynamicIdentitySignature;
     boolean columnConfigurationChanged = currentSequentialInitializationSignature != lastSequentialInitializationSignature;
-    if (hasBeenSolvedBefore && !isDoInitializion()
-        && (thermodynamicIdentityChanged || (!hasAdjustableSpecifications() && columnConfigurationChanged))) {
+    if (hasBeenSolvedBefore && !isDoInitializion() && (thermodynamicIdentityChanged || columnConfigurationChanged)) {
       logger.info("Sequential warm start is incompatible with current inputs for column {}; "
           + "rebuilding tray initialization.", getName());
       hasBeenSolvedBefore = false;
