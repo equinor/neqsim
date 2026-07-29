@@ -1763,8 +1763,8 @@ class LoopedPipeNetworkTest {
     network.getNode("wellhead").setTemperature(inletTemperatureK);
     network.addFixedPressureSinkNode("platform", 40.0);
 
-    LoopedPipeNetwork.NetworkPipe networkPipe =
-        network.addMultiphasePipe("wellhead", "platform", "flowline", lengthM, diameterM);
+    LoopedPipeNetwork.NetworkPipe networkPipe = network.addMultiphasePipe("wellhead", "platform", "flowline", lengthM,
+        diameterM);
     networkPipe.setRoughness(roughnessM);
     networkPipe.setMultiphaseSegments(segments);
     network.run();
@@ -1780,8 +1780,7 @@ class LoopedPipeNetworkTest {
     standaloneInlet.setFlowRate(flowRateKgHr, "kg/hr");
     standaloneInlet.run();
 
-    PipeBeggsAndBrills standalonePipe =
-        new PipeBeggsAndBrills("standalone Beggs-Brill", standaloneInlet);
+    PipeBeggsAndBrills standalonePipe = new PipeBeggsAndBrills("standalone Beggs-Brill", standaloneInlet);
     standalonePipe.setLength(lengthM);
     standalonePipe.setDiameter(diameterM);
     standalonePipe.setPipeWallRoughness(roughnessM);
@@ -1808,8 +1807,7 @@ class LoopedPipeNetworkTest {
 
     network.addSourceNode("wellhead", 80.0, 0.0);
     network.addFixedPressureSinkNode("platform", 40.0);
-    LoopedPipeNetwork.NetworkPipe flowline =
-        network.addPipe("wellhead", "platform", "flowline", 15000.0, 0.2);
+    LoopedPipeNetwork.NetworkPipe flowline = network.addPipe("wellhead", "platform", "flowline", 15000.0, 0.2);
 
     network.run();
 
