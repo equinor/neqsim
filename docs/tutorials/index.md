@@ -50,4 +50,4 @@ Coming soon! For now, see the [NeqSim Colab notebooks](https://github.com/EvenSo
 - **[Cookbook](../cookbook/index.md)** - Quick recipes for specific tasks
 - **[Examples](../examples/index.md)** - Jupyter notebooks and code samples
 - **[Troubleshooting](../troubleshooting/index.md)** - Common issues and solutions
-- **[JavaDoc API](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html)** - Complete API reference
+- **[JavaDoc API](https://equinor.github.io/neqsim/javadoc/index.html)** - Complete API reference
