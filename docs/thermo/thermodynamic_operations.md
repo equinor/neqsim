@@ -67,8 +67,8 @@ portable exact output values.
 | `TPflash()` | temperature and pressure | phase amounts and compositions | separator or pipeline state |
 | `PHflash(H)` | pressure and total enthalpy | temperature and phase equilibrium | valve, heater, or heat exchanger |
 | `PSflash(S)` | pressure and total entropy | temperature and phase equilibrium | ideal compressor or expander reference |
-| `TVflash(V)` | temperature and total volume | pressure and phase equilibrium | fixed-volume screening |
-| `VUflash(V, U)` | total volume and internal energy | temperature, pressure, and phases | dynamic vessel calculations |
+| `TVflash(V, "m3")` | temperature and total volume | pressure and phase equilibrium | fixed-volume screening |
+| `VUflash(V, U, "m3", "J")` | total volume and internal energy | temperature, pressure, and phases | dynamic vessel calculations |
 
 The no-unit `PHflash` and `PSflash` overloads use total system enthalpy and entropy in NeqSim's
 internal SI representation. Prefer the overloads with explicit unit strings when values originate
