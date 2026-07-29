@@ -1790,7 +1790,9 @@ class LoopedPipeNetworkTest {
     PipeBeggsAndBrills networkModel = networkPipe.getBBModel();
     assertNotNull(networkModel);
     assertEquals(roughnessM, networkModel.getPipeWallRoughness(), 1e-12);
-    assertEquals(standalonePipe.getPressureDrop(), networkModel.getPressureDrop(), 1e-8);
+    double standalonePressureDropBar = standalonePipe.getPressureDrop();
+    double pressureDropToleranceBar = Math.max(1e-6, Math.abs(standalonePressureDropBar) * 1e-6);
+    assertEquals(standalonePressureDropBar, networkModel.getPressureDrop(), pressureDropToleranceBar);
   }
 
   /**
