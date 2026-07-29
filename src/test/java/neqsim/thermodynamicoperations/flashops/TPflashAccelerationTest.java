@@ -1,0 +1,41 @@
+package neqsim.thermodynamicoperations.flashops;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPrEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
+
+class TPflashAccelerationTest {
+  @Test
+  void testUnsafeDemExtrapolationFallsBackToSuccessiveSubstitution() {
+    SystemInterface system = new SystemPrEos(300.0, 50.0);
+    system.addComponent("methane", 0.8);
+    system.addComponent("n-heptane", 0.2);
+    system.setMixingRule("classic");
+    system.setMultiPhaseCheck(false);
+    new ThermodynamicOperations(system).TPflash();
+
+    TPflash flash = new TPflash(system);
+    double methaneKBefore = system.getPhase(0).getComponent(0).getK();
+    double heptaneKBefore = system.getPhase(0).getComponent(1).getK();
+    double betaBefore = system.getBeta();
+
+    flash.lnK[0] = Math.log(methaneKBefore);
+    flash.lnK[1] = Math.log(heptaneKBefore);
+    flash.oldDeltalnK[0] = 0.99;
+    flash.oldoldDeltalnK[0] = 1.0;
+    flash.deltalnK[0] = 0.1;
+
+    flash.accselerateSucsSubs();
+
+    double methaneKAfter = system.getPhase(0).getComponent(0).getK();
+    double heptaneKAfter = system.getPhase(0).getComponent(1).getK();
+    assertTrue(Double.isFinite(methaneKAfter));
+    assertTrue(Double.isFinite(heptaneKAfter));
+    assertEquals(methaneKBefore, methaneKAfter, 1.0e-10);
+    assertEquals(heptaneKBefore, heptaneKAfter, 1.0e-10);
+    assertEquals(betaBefore, system.getBeta(), 1.0e-10);
+  }
+}
