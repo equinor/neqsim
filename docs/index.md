@@ -17,7 +17,7 @@ description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engin
   <a href="wiki/getting_started.html" class="cta-button primary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #159957; color: white;">🚀 Get Started</a>
   <a href="https://github.com/equinor/neqsim" class="cta-button secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #fff; color: #24292e; border: 2px solid #e1e4e8;">⭐ Star on GitHub</a>
   <a href="REFERENCE_MANUAL_INDEX.html" class="cta-button secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #fff; color: #24292e; border: 2px solid #e1e4e8;">📖 Reference Manual Index</a>
-  <a href="https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html" class="cta-button secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #fff; color: #24292e; border: 2px solid #e1e4e8;">📘 JavaDoc API</a>
+  <a href="https://equinor.github.io/neqsim/javadoc/index.html" class="cta-button secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #fff; color: #24292e; border: 2px solid #e1e4e8;">📘 JavaDoc API</a>
 </div>
 
 <hr class="section-divider" style="border: none; height: 2px; background: linear-gradient(to right, transparent, #159957, transparent); margin: 2rem 0;">
@@ -179,9 +179,9 @@ System.out.println("Compressibility: " + gas.getZ());
 <h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #f44336; color: #24292e; font-size: 1.25rem;">🔧 Troubleshooting</h3>
 <p style="color: #6a737d; margin-bottom: 1rem;">Solutions to common problems</p>
 <ul style="list-style: none; padding: 0; margin: 0;">
-<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#flash-convergence-issues" style="color: #155799; text-decoration: none;">Flash Convergence</a></li>
-<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#density-issues" style="color: #155799; text-decoration: none;">Density Issues</a></li>
-<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#python-integration-issues" style="color: #155799; text-decoration: none;">Python Integration</a></li>
+<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#flash-convergence-and-unexpected-phases" style="color: #155799; text-decoration: none;">Flash Convergence</a></li>
+<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#density-and-physical-properties" style="color: #155799; text-decoration: none;">Density Issues</a></li>
+<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#python-gateway-and-overload-errors" style="color: #155799; text-decoration: none;">Python Integration</a></li>
 </ul>
 </div>
 
