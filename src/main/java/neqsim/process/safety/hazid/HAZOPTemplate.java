@@ -87,8 +87,8 @@ public class HAZOPTemplate implements Serializable {
    * Construct a HAZOP node template with explicit process-equipment metadata.
    *
    * <p>
-   * Equipment metadata enables {@link HazopConsequenceAutoPopulator} to select compatible flow-deviation mappings.
-   * Use the two-argument constructor for an explicitly manual, equipment-neutral template.
+   * Equipment metadata enables {@link HazopConsequenceAutoPopulator} to select compatible flow-deviation mappings. Use
+   * the two-argument constructor for an explicitly manual, equipment-neutral template.
    *
    * @param nodeId HAZOP node identifier (e.g. "Node-12: Inlet line to V-100")
    * @param designIntent narrative of the design intent for the node

@@ -174,7 +174,7 @@ public class HazopConsequenceAutoPopulatorTest {
 
     HazopConsequenceAutoPopulator populator = new HazopConsequenceAutoPopulator();
     List<HAZOPTemplate> nodes = HAZOPTemplate.fromProcessSystem(process);
-    String[] neutralTypes = {"Stream", "ThrottlingValve", "Separator", "Cooler"};
+    String[] neutralTypes = { "Stream", "ThrottlingValve", "Separator", "Cooler" };
     for (String equipmentType : neutralTypes) {
       HAZOPTemplate populated = populator.populate(findNode(nodes, equipmentType));
       HAZOPDeviation noFlow = findDeviation(populated, GuideWord.NO, Parameter.FLOW);
@@ -184,13 +184,13 @@ public class HazopConsequenceAutoPopulatorTest {
       assertTrue(noFlow.recommendation.toLowerCase().contains("facilitator confirmation required"));
     }
 
-    HAZOPDeviation compressorNoFlow =
-        findDeviation(populator.populate(findNode(nodes, "Compressor")), GuideWord.NO, Parameter.FLOW);
+    HAZOPDeviation compressorNoFlow = findDeviation(populator.populate(findNode(nodes, "Compressor")), GuideWord.NO,
+        Parameter.FLOW);
     assertTrue(compressorNoFlow.consequence.toLowerCase().contains("surge"));
     assertFalse(compressorNoFlow.recommendation.contains("PumpDeadheadAnalyzer"));
 
-    HAZOPDeviation pumpNoFlow =
-        findDeviation(populator.populate(findNode(nodes, "Pump")), GuideWord.NO, Parameter.FLOW);
+    HAZOPDeviation pumpNoFlow = findDeviation(populator.populate(findNode(nodes, "Pump")), GuideWord.NO,
+        Parameter.FLOW);
     assertTrue(pumpNoFlow.consequence.contains("Pump deadhead"));
     assertTrue(pumpNoFlow.recommendation.contains("PumpDeadheadAnalyzer"));
   }
@@ -203,8 +203,7 @@ public class HazopConsequenceAutoPopulatorTest {
     HAZOPTemplate manual = new HAZOPTemplate("Manual node", "Facilitator-defined design intent");
     manual.addDeviation(GuideWord.NO, Parameter.FLOW, "TBD", "TBD", "TBD", null);
 
-    HAZOPDeviation noFlow =
-        new HazopConsequenceAutoPopulator().populate(manual).getDeviations().get(0);
+    HAZOPDeviation noFlow = new HazopConsequenceAutoPopulator().populate(manual).getDeviations().get(0);
     assertTrue(noFlow.consequence.contains("Pump deadhead"));
     assertTrue(noFlow.recommendation.contains("PumpDeadheadAnalyzer"));
   }

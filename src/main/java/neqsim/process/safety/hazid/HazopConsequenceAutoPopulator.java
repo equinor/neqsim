@@ -178,8 +178,8 @@ public final class HazopConsequenceAutoPopulator implements Serializable {
    * Build equipment-specific mappings for flow deviations where a defensible common mechanism exists.
    *
    * <p>
-   * Equipment/flow combinations not listed here are deliberately handled by {@link #neutralFlowMapping} so they
-   * cannot silently inherit a mapping for another equipment category.
+   * Equipment/flow combinations not listed here are deliberately handled by {@link #neutralFlowMapping} so they cannot
+   * silently inherit a mapping for another equipment category.
    *
    * @return an insertion-ordered map keyed by equipment category, guide-word and parameter
    */
@@ -305,8 +305,7 @@ public final class HazopConsequenceAutoPopulator implements Serializable {
     if (category == EquipmentCategory.GENERIC) {
       return mappingFor(guideWord, parameter);
     }
-    HazopConsequenceMapping equipmentMapping =
-        EQUIPMENT_CATALOGUE.get(equipmentKey(category, guideWord, parameter));
+    HazopConsequenceMapping equipmentMapping = EQUIPMENT_CATALOGUE.get(equipmentKey(category, guideWord, parameter));
     if (equipmentMapping != null) {
       return equipmentMapping;
     }
@@ -385,8 +384,8 @@ public final class HazopConsequenceAutoPopulator implements Serializable {
     if (source == null) {
       throw new IllegalArgumentException("source must not be null");
     }
-    HAZOPTemplate populated =
-        new HAZOPTemplate(source.getNodeId(), source.getDesignIntent(), source.getEquipmentType());
+    HAZOPTemplate populated = new HAZOPTemplate(source.getNodeId(), source.getDesignIntent(),
+        source.getEquipmentType());
     for (HAZOPDeviation d : source.getDeviations()) {
       HazopConsequenceMapping mapping = mappingFor(d.guideWord, d.parameter, source.getEquipmentType());
       if (mapping == null) {

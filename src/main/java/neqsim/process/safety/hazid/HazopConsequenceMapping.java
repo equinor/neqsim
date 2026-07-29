@@ -101,7 +101,7 @@ public final class HazopConsequenceMapping implements Serializable {
    * @param standardReference governing industry standard reference (must not be null)
    * @param typicalSafeguard typical engineered safeguard or review prompt (must not be null)
    * @param facilitatorConfirmationRequired whether the mapping is a neutral fallback that requires facilitator
-   *        confirmation
+   * confirmation
    */
   public HazopConsequenceMapping(GuideWord guideWord, Parameter parameter, EquipmentCategory equipmentCategory,
       String consequenceMechanism, String recommendedCalculator, String standardReference, String typicalSafeguard,
