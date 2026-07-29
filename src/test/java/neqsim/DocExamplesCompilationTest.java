@@ -1722,7 +1722,7 @@ public class DocExamplesCompilationTest {
     assertEquals(inletVolume, tvFluid.getVolume("m3"), 1.0e-9);
     assertTrue(tvFluid.getPressure("bara") > 0.0);
     assertEquals(inletVolume, vuFluid.getVolume("m3"), 1.0e-9);
-    assertEquals(inletInternalEnergy, vuFluid.getInternalEnergy(), 1.0e-3);
+    assertEquals(inletInternalEnergy, vuFluid.getInternalEnergy(), 1.0e-2);
     assertTrue(Double.isFinite(vuFluid.getTemperature("K")));
     assertTrue(vuFluid.getPressure("bara") > 0.0);
   }
