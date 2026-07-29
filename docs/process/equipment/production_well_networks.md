@@ -266,12 +266,26 @@ friction and gravity based on bulk fluid properties.
 **Convenience method:**
 
 ```java
-network.addMultiphasePipe("mp1", "manifold", "platform",
+network.addMultiphasePipe("manifold", "platform", "mp1",
     15000.0,         // length [m]
-    0.3,             // ID [m]
-    0.0,             // inclination [degrees]
-    20);             // number of segments
+    0.3);            // ID [m]
 ```
+
+Pipe roughness is specified in metres throughout the network and
+`PipeBeggsAndBrills` APIs. For example, commercial-steel roughness can be set
+with `network.getPipe("mp1").setRoughness(4.5e-5)`.
+
+To use Beggs–Brill for ordinary pipes added afterwards, configure the
+network-wide default before calling `addPipe`:
+
+```java
+network.setPipeModelType(LoopedPipeNetwork.PipeModelType.BEGGS_BRILL);
+network.addPipe("manifold", "platform", "mp1", 15000.0, 0.3);
+```
+
+The setting applies only to later `addPipe` calls. It does not change existing
+pipes or elements created with specialized methods such as `addChoke` and
+`addTubing`. `addMultiphasePipe` always selects Beggs–Brill explicitly.
 
 ---
 
@@ -890,6 +904,13 @@ pressure residuals.
 ### Convenience Methods on LoopedPipeNetwork
 
 ```java
+// Default model for ordinary pipes added afterwards
+void setPipeModelType(PipeModelType type)
+
+// Ordinary pipe using the configured default model
+NetworkPipe addPipe(String fromNode, String toNode, String pipeName,
+    double length_m, double diameter_m)
+
 // Well IPR (oil or gas PI model)
 void addWellIPR(String name, String fromNode, String toNode,
     double reservoirPressure_bara, double pi, boolean gasIPR)
@@ -911,10 +932,9 @@ void addTubing(String name, String fromNode, String toNode,
     double length_m, double diameter_m,
     double inclination_deg, int segments)
 
-// Multiphase pipe (segmented horizontal/inclined)
-void addMultiphasePipe(String name, String fromNode, String toNode,
-    double length_m, double diameter_m,
-    double inclination_deg, int segments)
+// Multiphase pipe using Beggs-Brill explicitly
+NetworkPipe addMultiphasePipe(String fromNode, String toNode,
+    String elementName, double length_m, double diameter_m)
 
 // Liquid pump / booster
 NetworkPipe addPump(String fromNode, String toNode, String name,

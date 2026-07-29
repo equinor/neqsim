@@ -743,7 +743,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   /**
    * Setter for the field <code>pipeWallRoughness</code>.
    *
-   * @param pipeWallRoughness the pipeWallRoughness to set
+   * @param pipeWallRoughness pipe wall roughness in meters
    */
   @Override
   public void setPipeWallRoughness(double pipeWallRoughness) {
