@@ -19,11 +19,16 @@ This Java 8 program performs a TP flash at 25 °C and 50 bara, initializes prope
 calculates the state after an isenthalpic pressure reduction to 30 bara.
 
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public final class ThermodynamicOperationsQuickStart {
+  private static final Logger logger =
+      LogManager.getLogger(ThermodynamicOperationsQuickStart.class);
+
   private ThermodynamicOperationsQuickStart() {}
 
   public static void main(String[] args) {
@@ -45,12 +50,10 @@ public final class ThermodynamicOperationsQuickStart {
     operations.PHflash(inletEnthalpy);
     fluid.initProperties();
 
-    System.out.printf("Gas fraction: %.6f mol/mol%n", vaporFraction);
-    System.out.printf("Inlet density: %.3f kg/m3%n", inletDensity);
-    System.out.printf("Outlet temperature: %.3f C%n", fluid.getTemperature("C"));
-    System.out.printf(
-        "Enthalpy residual: %.6g J%n",
-        fluid.getEnthalpy() - inletEnthalpy);
+    logger.info("Gas fraction: {} mol/mol", vaporFraction);
+    logger.info("Inlet density: {} kg/m3", inletDensity);
+    logger.info("Outlet temperature: {} C", fluid.getTemperature("C"));
+    logger.info("Enthalpy residual: {} J", fluid.getEnthalpy() - inletEnthalpy);
   }
 }
 ```
