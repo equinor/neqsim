@@ -1711,8 +1711,8 @@ class LoopedPipeNetworkTest {
     NetworkCompositionConvergenceReport report = network.updateCompositionalMixingWithReport();
     SystemInterface mixed = network.getNodeFluid("mix");
 
-    double methaneMolarFlow = 1.0 / methane.getMolarMass();
-    double decaneMolarFlow = 1.0 / decane.getMolarMass();
+    double methaneMolarFlow = 1.0 / methane.getComponent("methane").getMolarMass();
+    double decaneMolarFlow = 1.0 / decane.getComponent("nC10").getMolarMass();
     double expectedMethaneFraction = methaneMolarFlow / (methaneMolarFlow + decaneMolarFlow);
     double actualMethaneFraction = mixed.getComponent("methane").getz();
 
