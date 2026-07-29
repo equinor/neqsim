@@ -68,6 +68,7 @@ public class HAZOPFromProcessSystemTest {
     HAZOPTemplate separatorNode = findNode(nodes, "hp-separator");
     boolean hasLevel = false;
     boolean hasPressure = false;
+    boolean hasNoFlow = false;
     for (HAZOPTemplate.HAZOPDeviation d : separatorNode.getDeviations()) {
       if (d.parameter == HAZOPTemplate.Parameter.LEVEL) {
         hasLevel = true;
@@ -75,9 +76,13 @@ public class HAZOPFromProcessSystemTest {
       if (d.parameter == HAZOPTemplate.Parameter.PRESSURE) {
         hasPressure = true;
       }
+      if (d.guideWord == HAZOPTemplate.GuideWord.NO && d.parameter == HAZOPTemplate.Parameter.FLOW) {
+        hasNoFlow = true;
+      }
     }
     assertTrue(hasLevel, "separator node should seed LEVEL deviations");
     assertTrue(hasPressure, "separator node should seed PRESSURE deviations");
+    assertTrue(hasNoFlow, "separator node should seed NO FLOW deviation");
   }
 
   @Test
@@ -98,6 +103,16 @@ public class HAZOPFromProcessSystemTest {
     List<HAZOPTemplate> nodes = HAZOPTemplate.fromProcessSystem(process);
     HAZOPTemplate separatorNode = findNode(nodes, "hp-separator");
     assertTrue(separatorNode.getDesignIntent().contains("hp-separator"), "design intent should mention the unit name");
+  }
+
+  @Test
+  public void processDerivedNodesCarryEquipmentTypeMetadata() {
+    List<HAZOPTemplate> nodes = HAZOPTemplate.fromProcessSystem(process);
+    assertEquals("Stream", findNode(nodes, "feed").getEquipmentType());
+    assertEquals("ThrottlingValve", findNode(nodes, "inlet-valve").getEquipmentType());
+    assertEquals("Separator", findNode(nodes, "hp-separator").getEquipmentType());
+    assertEquals("Compressor", findNode(nodes, "export-compressor").getEquipmentType());
+    assertEquals("Cooler", findNode(nodes, "export-cooler").getEquipmentType());
   }
 
   @Test

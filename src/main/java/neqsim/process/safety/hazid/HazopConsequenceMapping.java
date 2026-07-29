@@ -33,10 +33,36 @@ import neqsim.process.safety.hazid.HAZOPTemplate.Parameter;
 public final class HazopConsequenceMapping implements Serializable {
   private static final long serialVersionUID = 1L;
 
+  /**
+   * Equipment category used to constrain an auto-population mapping.
+   */
+  public enum EquipmentCategory {
+    /** Equipment-neutral mapping used by manual templates and as a generic non-flow fallback. */
+    GENERIC,
+    /** Material stream. */
+    STREAM,
+    /** Flow-control or throttling valve. */
+    VALVE,
+    /** Liquid pump. */
+    PUMP,
+    /** Compressor or expander. */
+    COMPRESSOR,
+    /** Separator or scrubber. */
+    SEPARATOR,
+    /** Heater, cooler, heat exchanger, reboiler or condenser. */
+    HEAT_EXCHANGER,
+    /** Pipe or pipeline. */
+    PIPELINE,
+    /** Recognised process equipment that does not fit another category. */
+    OTHER
+  }
+
   /** Guide-word the mapping applies to. */
   private final GuideWord guideWord;
   /** Process parameter the mapping applies to. */
   private final Parameter parameter;
+  /** Equipment category the mapping applies to. */
+  private final EquipmentCategory equipmentCategory;
   /** Physical consequence mechanism description. */
   private final String consequenceMechanism;
   /** Recommended NeqSim calculator (class or facade name) that quantifies the scenario. */
@@ -45,6 +71,8 @@ public final class HazopConsequenceMapping implements Serializable {
   private final String standardReference;
   /** Typical engineered safeguard for the deviation. */
   private final String typicalSafeguard;
+  /** Whether the mapping is a neutral fallback requiring facilitator confirmation. */
+  private final boolean facilitatorConfirmationRequired;
 
   /**
    * Construct an immutable consequence mapping.
@@ -58,12 +86,34 @@ public final class HazopConsequenceMapping implements Serializable {
    */
   public HazopConsequenceMapping(GuideWord guideWord, Parameter parameter, String consequenceMechanism,
       String recommendedCalculator, String standardReference, String typicalSafeguard) {
+    this(guideWord, parameter, EquipmentCategory.GENERIC, consequenceMechanism, recommendedCalculator,
+        standardReference, typicalSafeguard, false);
+  }
+
+  /**
+   * Construct an immutable equipment-aware consequence mapping.
+   *
+   * @param guideWord HAZOP guide-word (must not be null)
+   * @param parameter HAZOP process parameter (must not be null)
+   * @param equipmentCategory equipment category this mapping applies to (must not be null)
+   * @param consequenceMechanism physical consequence mechanism description (must not be null)
+   * @param recommendedCalculator recommended NeqSim calculator name or review method (must not be null)
+   * @param standardReference governing industry standard reference (must not be null)
+   * @param typicalSafeguard typical engineered safeguard or review prompt (must not be null)
+   * @param facilitatorConfirmationRequired whether the mapping is a neutral fallback that requires facilitator
+   * confirmation
+   */
+  public HazopConsequenceMapping(GuideWord guideWord, Parameter parameter, EquipmentCategory equipmentCategory,
+      String consequenceMechanism, String recommendedCalculator, String standardReference, String typicalSafeguard,
+      boolean facilitatorConfirmationRequired) {
     this.guideWord = guideWord;
     this.parameter = parameter;
+    this.equipmentCategory = equipmentCategory;
     this.consequenceMechanism = consequenceMechanism;
     this.recommendedCalculator = recommendedCalculator;
     this.standardReference = standardReference;
     this.typicalSafeguard = typicalSafeguard;
+    this.facilitatorConfirmationRequired = facilitatorConfirmationRequired;
   }
 
   /**
@@ -82,6 +132,15 @@ public final class HazopConsequenceMapping implements Serializable {
    */
   public Parameter getParameter() {
     return parameter;
+  }
+
+  /**
+   * Get the equipment category the mapping applies to.
+   *
+   * @return the equipment category
+   */
+  public EquipmentCategory getEquipmentCategory() {
+    return equipmentCategory;
   }
 
   /**
@@ -118,6 +177,15 @@ public final class HazopConsequenceMapping implements Serializable {
    */
   public String getTypicalSafeguard() {
     return typicalSafeguard;
+  }
+
+  /**
+   * Return whether this mapping is a neutral fallback requiring facilitator confirmation.
+   *
+   * @return true when a HAZOP facilitator must confirm the equipment-specific consequence and safeguards
+   */
+  public boolean isFacilitatorConfirmationRequired() {
+    return facilitatorConfirmationRequired;
   }
 
   /**
