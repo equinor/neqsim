@@ -246,6 +246,8 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Process Design       | [docs/process/process_design_guide.md](process/process_design_guide)                           | Process design guide                      |
 | Design Framework     | [docs/process/DESIGN_FRAMEWORK.md](process/DESIGN_FRAMEWORK)                                   | Automated design & optimization framework |
 | Pipeline Network Optimization | [docs/process/pipeline_network_optimization.md](process/pipeline_network_optimization) | NLP optimizer, sparse solver, Pareto, benchmarks |
+| Gas Network Operations | [docs/process/gas_network_operations.md](process/gas_network_operations) | Conservative mixing, edge-local thermal hydraulics, quality, allocation, and linepack |
+| Oil Network Operations | [docs/process/oil_network_operations.md](process/oil_network_operations) | Pumps, crude assays, tanks, parcels, blending, and cargo scheduling |
 
 ### Chapter 12: Process Systems & Models
 

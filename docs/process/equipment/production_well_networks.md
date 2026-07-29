@@ -18,6 +18,7 @@ Newton-Raphson Global Gradient Algorithm (NR-GGA) solver.
 - [Tubing VLP Model](#tubing-vlp-model)
 - [Multiphase Pipe Flow](#multiphase-pipe-flow)
 - [Building a Production Network](#building-a-production-network)
+- [Transmission and Terminal Extensions](#transmission-and-terminal-extensions)
 - [Solver Details](#solver-details)
 - [Usage Examples](#usage-examples)
 - [Results and Inspection](#results-and-inspection)
@@ -48,6 +49,9 @@ its own physics:
 | **CHOKE** | Valve flow equation (IEC 60534-style) | Wellhead/surface chokes |
 | **TUBING** | Gravity + friction (VLP) | Vertical tubing strings |
 | **MULTIPHASE_PIPE** | Segmented multiphase correlations | Subsea flowlines |
+| **COMPRESSOR** | Gas pressure rise, power, and chart constraints | Gas compression stations |
+| **PUMP** | Liquid pressure rise, pump curve, power, and NPSH | Oil export boosters |
+| **REGULATOR** | Downstream pressure control | Delivery pressure control |
 
 All element types participate in the same Newton-Raphson global gradient
 solver. The Schur complement reduction handles any mix of elements in a single
@@ -65,7 +69,10 @@ public enum NetworkElementType {
     WELL_IPR,         // Inflow Performance Relationship
     CHOKE,            // Valve / choke with Kv rating
     TUBING,           // Vertical tubing with gravity + friction
-    MULTIPHASE_PIPE   // Segmented multiphase pipe flow
+    MULTIPHASE_PIPE,  // Segmented multiphase pipe flow
+    COMPRESSOR,       // Gas pressure-rise edge
+    PUMP,             // Liquid pressure-rise edge
+    REGULATOR         // Pressure-control edge
 }
 ```
 
@@ -366,6 +373,53 @@ net.setTolerance(500.0);
 net.setMaxIterations(500);
 net.run();
 ```
+
+---
+
+## Transmission and Terminal Extensions
+
+The production-network solver also supports heterogeneous transmission and
+terminal studies:
+
+- conservative component-molar-flow mixing by component identity;
+- optional edge-local composition and thermal/hydraulic coupling;
+- distance/elevation, ambient-temperature, and heat-transfer profiles;
+- typed gas/oil quality profiles at any named node;
+- bounded whole-network decisions and hard/soft constraints;
+- multi-period gas linepack and nominations;
+- first-class liquid pump/booster edges;
+- crude assays, parcels, tanks, blends, and cargo schedules.
+
+Legacy hydraulics use one `fluidTemplate` for all edges. Enable coupled mode
+only when source composition, condensation, compression temperature, or heat
+transfer can materially change allocation:
+
+```java
+network.setCompositionalHydraulicsEnabled(true);
+network.setThermalHydraulicsEnabled(true);
+network.setCouplingMaxIterations(20);
+network.setCouplingTolerances(1.0e-5, 100.0);
+network.run();
+
+NetworkCouplingReport report =
+    network.getNetworkCouplingReport();
+```
+
+At a mixing node, component molar flows are conserved and aligned by component
+name. The mixed fluid is pressure/enthalpy flashed and initialized. Loops use a
+synchronous fixed-point iteration. Incompatible EOS classes, mixing rules, or
+pseudo-component definitions fail explicitly.
+
+Use the dedicated guides for units, assumptions, API examples, JSON behavior,
+and limitations:
+
+- [Gas Network Operations and Optimization](../gas_network_operations)
+- [Oil Pipeline and Terminal Operations](../oil_network_operations)
+- [Pipeline Network Optimization](../pipeline_network_optimization)
+
+The NCS-style examples use synthetic compositions, capacities, quality limits,
+and nominations. Current operator data, approved assays, commercial
+agreements, and validated asset models remain controlling.
 
 ---
 
@@ -862,6 +916,15 @@ void addMultiphasePipe(String name, String fromNode, String toNode,
     double length_m, double diameter_m,
     double inclination_deg, int segments)
 
+// Liquid pump / booster
+NetworkPipe addPump(String fromNode, String toNode, String name,
+    double outletPressure_bara, double efficiency)
+NetworkPipe addPumpDifferentialPressure(
+    String fromNode, String toNode, String name,
+    double differentialPressure_bar, double efficiency)
+NetworkPipe addPumpWithCurve(
+    String fromNode, String toNode, String name, Pump pump)
+
 // Fixed-pressure sink (separator, platform)
 void addFixedPressureSinkNode(String name, double pressure_bara)
 ```
@@ -904,6 +967,18 @@ int getTubingSegments()
 void setTubingSegments(int n)
 int getMultiphaseSegments()
 void setMultiphaseSegments(int n)
+
+// Pump fields and constraint residuals
+PumpOperatingMode getPumpOperatingMode()
+void setPumpOperatingMode(PumpOperatingMode mode)
+double getPumpSpeed()
+void setPumpSpeed(double rpm)
+double getPumpPowerKW()
+double getPumpHeadM()
+double getPumpPowerResidualKW()
+double getPumpMinimumFlowResidualKgS()
+double getPumpNpshResidualM()
+String getPumpOperatingStatus()
 ```
 
 ### NetworkElementType Enum
@@ -914,7 +989,10 @@ public enum NetworkElementType {
     WELL_IPR,
     CHOKE,
     TUBING,
-    MULTIPHASE_PIPE
+    MULTIPHASE_PIPE,
+    COMPRESSOR,
+    PUMP,
+    REGULATOR
 }
 ```
 

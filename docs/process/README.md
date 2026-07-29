@@ -206,6 +206,8 @@ This documentation is organized into the following sections:
 | **LNG Liquefaction** | [lng_liquefaction.md](lng_liquefaction) | LNGProcessBuilder, LNGProcessModel, LNGProcessBenchmark, LNGHeatExchanger |
 | **Hydrogen Production** | [hydrogen_production.md](hydrogen_production) | SMR/ATR/POX route templates, ReformerFurnace, CatalyticTubeReformer, AutothermalReformer, PartialOxidationReactor, PSACascade, Electrolyzer |
 | Looped Networks | [looped_networks.md](equipment/looped_networks) | LoopedPipeNetwork, Hardy Cross solver |
+| Gas Network Operations | [gas_network_operations.md](gas_network_operations) | Conservative mixing, coupled hydraulics, quality, optimization, and linepack |
+| Oil Network Operations | [oil_network_operations.md](oil_network_operations) | Pumps, assays, tanks, parcels, blends, and cargo scheduling |
 | Tanks | [tanks.md](equipment/tanks) | Tank, VesselDepressurization |
 | Wells | [wells.md](equipment/wells) | Well equipment |
 | Subsea Trees | [subsea_trees.md](equipment/subsea_trees) | SubseaTree, valve control |

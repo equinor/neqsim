@@ -1,0 +1,241 @@
+---
+title: "Gas Network Operations and Optimization"
+description: "Conservative composition mixing, coupled thermal hydraulics, point quality, whole-network optimization, and EOS linepack for gas networks."
+---
+
+This guide describes the `LoopedPipeNetwork` workflow for heterogeneous gas
+sources, contractual handover points, constrained allocation, and multi-period
+linepack. The examples use public NCS context and synthetic data. They are
+engineering demonstrations, not capacity forecasts or contractual
+specifications.
+
+The executed companion notebook is
+[`norwegian_ncs_gas_network_optimization.ipynb`](../../examples/notebooks/process/norwegian_ncs_gas_network_optimization.ipynb).
+
+## Calculation sequence
+
+Use the capabilities in this order:
+
+1. Define compatible source fluids and network topology.
+2. Enable edge-local composition and thermal coupling where the global-template
+   screening mode is insufficient.
+3. Assign a typed quality profile to each governed point.
+4. Register bounded decisions, constraints, and objectives.
+5. Solve a steady candidate or a discrete planning horizon.
+6. Inspect hydraulic, composition, quality, and inventory residuals before
+   accepting the result.
+
+## Conservative component mixing
+
+Junction mixing conserves component molar flow. For inlet \(j\) with mass rate
+\(\dot m_j\), molar mass \(M_j\), and component mole fraction \(z_{i,j}\):
+
+\[
+\dot n_i = \sum_j \frac{\dot m_j}{M_j} z_{i,j},
+\qquad
+z_{i,\mathrm{mix}} =
+\frac{\dot n_i}{\sum_k \dot n_k}.
+\]
+
+Components are aligned by component name, not array position. Compatible
+slates are unioned. The mixed state is flashed at solved node pressure using
+the inlet enthalpy-flow sum. The implementation iterates synchronously, so
+loops and flow reversals do not depend on edge insertion order.
+
+```java
+network.setNodeFluid("rich source", richGas);
+network.setNodeFluid("lean source", leanGas);
+
+NetworkCompositionConvergenceReport mixing =
+    network.updateCompositionalMixingWithReport();
+
+if (!mixing.isConverged()
+    || mixing.getMaxComponentMassBalanceResidualKgS() > 1.0e-9) {
+  throw new IllegalStateException(mixing.getMessage());
+}
+```
+
+Mixing rejects incompatible EOS classes, mixing rules, and conflicting
+TBP/plus-fraction definitions. Re-characterize unlike assays to a declared
+common slate before mixing.
+
+## Coupled composition, heat transfer, and hydraulics
+
+Legacy mode uses one `fluidTemplate` on every edge. It remains the default for
+backward compatibility and fast screening. Enable coupled mode when local
+composition, condensation, compression temperature, or heat transfer can
+change capacity:
+
+```java
+network.setCompositionalHydraulicsEnabled(true);
+network.setThermalHydraulicsEnabled(true);
+network.setCouplingMaxIterations(20);
+network.setCouplingTolerances(1.0e-5, 100.0); // kg/s, Pa
+
+LoopedPipeNetwork.NetworkPipe export =
+    network.addPipe("hub", "delivery", "export", 120000.0, 1.0);
+export.setElevationProfile(
+    new double[] {0.0, 40000.0, 120000.0},
+    new double[] {-100.0, -320.0, -20.0});
+export.setAmbientTemperatureProfile(
+    new double[] {0.0, 120000.0},
+    new double[] {278.15, 283.15});
+export.setHeatTransferProfile(
+    new double[] {0.0, 120000.0},
+    new double[] {4.0, 7.0});
+
+network.run();
+NetworkCouplingReport coupling = network.getNetworkCouplingReport();
+```
+
+Profile distances are measured from `fromNode` in metres. Elevation is metres,
+ambient temperature is kelvin, and overall heat-transfer coefficient is
+W/(m² K). On flow reversal the physical inlet switches to `toNode`; route
+profiles are traversed in the opposite direction.
+
+The outer report separates:
+
+- final hydraulic convergence;
+- maximum edge-flow change in kg/s;
+- maximum node-pressure change in Pa;
+- maximum node-temperature change in K;
+- conservative composition residuals.
+
+## Point-specific gas quality
+
+`NetworkQualityProfile` is assigned to a named node. Different points can have
+different metrics, references, versions, provenance, and named exceptions.
+
+```java
+NetworkQualityProfile delivery =
+    new NetworkQualityProfile("Synthetic Area D handover")
+        .withEffectivePeriod("education-v1", "2026-01-01", null)
+        .withProvenance("Synthetic limits for the public example");
+
+delivery.addUpperLimit(
+    GasQualityMetric.CO2_MOLE_PERCENT, 2.5, "mol%");
+delivery.addRange(
+    GasQualityMetric.WOBBE_INDEX, 40.0, 60.0, "MJ/Sm3",
+    new QualityReference().withIso6976Reference(15.0, 15.0));
+delivery.addUpperLimit(
+    GasQualityMetric.HYDROCARBON_DEW_POINT_TEMPERATURE,
+    -10.0, "C", QualityReference.atPressure(50.0, "barg"));
+
+network.setQualityProfile("delivery", delivery);
+network.run();
+NetworkQualityComplianceReport report =
+    network.getQualityComplianceReport("delivery");
+```
+
+Each result includes value, unit, lower/upper limit, signed nearest-limit
+margin, status, method, provenance, and reference conditions.
+`NOT_CALCULABLE` is non-compliant. Use measured attributes with an explicit
+method, provenance, effective date, and blending rule when a contaminant is not
+represented rigorously in the EOS fluid.
+
+Pressure references distinguish `bara` and `barg`. ISO 6976 volume and
+combustion reference temperatures are stored separately.
+
+## Whole-network optimization
+
+`NetworkOptimizer` supports registered decisions, objective terms, and typed
+hard/soft constraints. Candidate state is restored after every evaluation.
+
+```java
+NetworkOptimizer optimizer = new NetworkOptimizer(network);
+optimizer.addDecisionVariable(new NetworkDecisionVariable(
+    "source.rich.rate",
+    NetworkDecisionVariable.Type.SOURCE_RATE,
+    "rich source", "kg/hr",
+    NetworkDecisionVariable.RateBasis.MASS,
+    10000.0, 250000.0));
+optimizer.addDecisionVariable(new NetworkDecisionVariable(
+    "edge.export.availability",
+    NetworkDecisionVariable.Type.EDGE_AVAILABILITY,
+    "export", "-", NetworkDecisionVariable.RateBasis.NONE,
+    0.1, 1.0));
+optimizer.addObjective(NetworkObjectives.maximizeThroughput(1.0));
+optimizer.addConstraint(NetworkConstraints.convergence());
+optimizer.addConstraint(NetworkConstraints.qualityCompliance(true));
+
+NetworkOptimizer.OptimizationResult optimum = optimizer.optimize();
+```
+
+BOBYQA is a bounded local derivative-free method. CMA-ES is a deterministic
+seeded population method for less smooth cases. Neither proves global
+optimality. Scale soft constraints explicitly, use finite bounds, and verify
+the selected candidate independently.
+
+`ProcessAutomation` exposes addresses such as:
+
+```text
+network.node.delivery.pressure
+network.source.rich source.rate
+network.sink.delivery.nomination
+network.edge.export.flowRate
+network.edge.export.availability
+network.compressor.export station.speed
+```
+
+Rate-bearing decisions carry an explicit mass, molar, standard-volume,
+actual-volume, or energy basis.
+
+## Multi-period linepack
+
+`NetworkPlanningHorizon` uses a discrete inventory balance:
+
+\[
+
+L_{p,t+1} = L_{p,t} + \Delta t
+(\dot m_{p,t}^{in} - \dot m_{p,t}^{out}
+\quad - \dot m_{p,t}^{fuel} - \dot m_{p,t}^{loss}).
+
+\]
+
+Initial linepack is calculated from pipe volume, average absolute pressure,
+temperature, local composition, and EOS \(Z\). Component inventories are
+carried in moles and reported together with mass and standard volume.
+
+```java
+NetworkPlanningHorizon horizon =
+    new NetworkPlanningHorizon(network);
+horizon.addHourlyPeriods("2026-01-01T00:00:00Z", 24);
+horizon.setInitialLinepackFromSolvedState();
+horizon.addNomination("delivery", demand, "kg/hr");
+horizon.derateElement("export compressor", 8, 14, 0.0);
+horizon.setFuelSchedule("export", fuel, "kg/s");
+horizon.setLinepackBounds("export", minimumKg, maximumKg);
+horizon.setTerminalLinepackTarget("export", targetKg);
+
+NetworkScheduleResult schedule = horizon.optimize();
+```
+
+The planning layer is a steady-period screening model. It does not replace a
+high-frequency transient pipeline simulation for rapid valve actions, thermal
+fronts, surge, or control-system verification.
+
+## JSON and reproducibility
+
+Quality profiles, compliance reports, candidate evaluations, and planning
+results support JSON serialization. `LoopedPipeNetwork.fromJson(...)` restores
+topology and element configuration. Thermodynamic fluids and chart-backed
+equipment delegates are not embedded; reattach them before solving.
+
+For reproducible studies, record:
+
+- NeqSim revision and EOS/mixing rule;
+- component and pseudo-component definitions;
+- route/thermal profiles and units;
+- optimizer seed, bounds, scales, and tolerances;
+- quality profile version and provenance;
+- initial/terminal linepack and period duration.
+
+## Public context and limitations
+
+- [Norsk Petroleum: the oil and gas pipeline system](https://www.norskpetroleum.no/en/production-and-exports/the-oil-and-gas-pipeline-system/)
+- [Original public NCS gas notebook](https://github.com/EvenSol/NeqSim-Colab/blob/master/notebooks/process/norwegian_ncs_gas_network_optimization.ipynb)
+
+Named facilities and corridors provide public context only. The repository
+examples use synthetic compositions, capacities, commercial limits, and
+nominations. Current contracts, approved operator models, metering standards,
+and asset data remain controlling.
