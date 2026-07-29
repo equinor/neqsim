@@ -79,8 +79,8 @@ class TEGDehydrationTutorialTest extends NeqSimTest {
     StreamInterface productGas = phaseSplitter.getGasOutStream();
     StreamInterface richTeg = phaseSplitter.getLiquidOutStream();
 
-    double wetWater = wetGas.getFluid().getPhase(0).getComponent("water").getx();
-    double productWater = productGas.getFluid().getPhase(0).getComponent("water").getx();
+    double wetWater = wetGas.getFluid().getPhase("gas").getComponent("water").getx();
+    double productWater = productGas.getFluid().getPhase("gas").getComponent("water").getx();
 
     double wetWaterFlow = componentFlow(wetGas, "water");
     double leanWaterFlow = componentFlow(leanTeg, "water");
