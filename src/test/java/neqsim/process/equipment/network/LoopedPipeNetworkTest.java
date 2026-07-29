@@ -1741,6 +1741,30 @@ class LoopedPipeNetworkTest {
   }
 
   /**
+   * Test that the configured pipe model applies to ordinary pipes added afterwards.
+   */
+  @Test
+  void testConfiguredBeggsBrillAppliesToAddedPipe() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("ConfiguredMultiphaseNet");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+    network.setPipeModelType(LoopedPipeNetwork.PipeModelType.BEGGS_BRILL);
+
+    network.addSourceNode("wellhead", 80.0, 0.0);
+    network.addFixedPressureSinkNode("platform", 40.0);
+    LoopedPipeNetwork.NetworkPipe flowline =
+        network.addPipe("wellhead", "platform", "flowline", 15000.0, 0.2);
+
+    network.run();
+
+    assertTrue(network.isConverged(), "Configured multiphase pipe network should converge");
+    assertEquals(LoopedPipeNetwork.NetworkElementType.MULTIPHASE_PIPE, flowline.getElementType());
+    assertEquals("BB-Multiphase", flowline.getFlowRegime());
+  }
+
+  /**
    * Test VFP table export (Improvement #8).
    */
   @Test
