@@ -1840,8 +1840,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * Existing pipes and elements created by the specialized factory methods are not changed.
    * </p>
    *
-   * @param type pipe model type ({@link PipeModelType#DARCY_WEISBACH} or
-   *        {@link PipeModelType#BEGGS_BRILL})
+   * @param type pipe model type ({@link PipeModelType#DARCY_WEISBACH} or {@link PipeModelType#BEGGS_BRILL})
    */
   public void setPipeModelType(PipeModelType type) {
     this.pipeModelType = type;
