@@ -126,9 +126,9 @@ public final class TegEquilibriumScreening {
     StreamInterface productGas = phaseSplitter.getGasOutStream();
     StreamInterface richTeg = phaseSplitter.getLiquidOutStream();
 
-    double wetWater = wetGas.getFluid().getPhase(0)
+    double wetWater = wetGas.getFluid().getPhase("gas")
         .getComponent("water").getx();
-    double productWater = productGas.getFluid().getPhase(0)
+    double productWater = productGas.getFluid().getPhase("gas")
         .getComponent("water").getx();
 
     double wetWaterFlow = componentFlow(wetGas, "water");
@@ -225,9 +225,9 @@ def component_flow(stream, component_name):
     return flow
 
 
-wet_water = wet_gas.getFluid().getPhase(0).getComponent("water").getx()
+wet_water = wet_gas.getFluid().getPhase("gas").getComponent("water").getx()
 product_water = (
-    product_gas.getFluid().getPhase(0).getComponent("water").getx()
+    product_gas.getFluid().getPhase("gas").getComponent("water").getx()
 )
 wet_water_flow = component_flow(wet_gas, "water")
 lean_water_flow = component_flow(lean_teg, "water")
