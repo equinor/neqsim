@@ -152,8 +152,8 @@ public class ColumnStudyRegressionTest {
       assertEquals(DistillationColumn.SolverType.NAPHTALI_SANDHOLM, registeredColumn.getLastSolverTypeUsed(),
           "registered-feed reference should be accepted by the simultaneous solver");
 
-      StreamInterface directMainFeed = createStream("direct_main_feed_" + caseIndex, baseFluid,
-          MAIN_FEED_COMPOSITION, MAIN_FEED_TEMPERATURE_C, MAIN_FEED_PRESSURE_BARA, MAIN_FEED_MASS_FLOW_KG_HR);
+      StreamInterface directMainFeed = createStream("direct_main_feed_" + caseIndex, baseFluid, MAIN_FEED_COMPOSITION,
+          MAIN_FEED_TEMPERATURE_C, MAIN_FEED_PRESSURE_BARA, MAIN_FEED_MASS_FLOW_KG_HR);
       StreamInterface directTopFeed = createStream("legacy_direct_top_feed_" + caseIndex, baseFluid,
           TOP_FEED_COMPOSITION, TOP_FEED_TEMPERATURE_C, TOP_FEED_PRESSURE_BARA,
           TOP_FEED_MASS_FLOW_KG_HR * topFeedFactor);
@@ -348,9 +348,10 @@ public class ColumnStudyRegressionTest {
     double compositionSum = 0.0;
     double[] composition = product.getThermoSystem().getMolarComposition();
     for (int componentIndex = 0; componentIndex < composition.length; componentIndex++) {
-      assertTrue(Double.isFinite(composition[componentIndex]) && composition[componentIndex] >= 0.0
-          && composition[componentIndex] <= 1.0, label + " composition should remain physical at component "
-              + componentIndex);
+      assertTrue(
+          Double.isFinite(composition[componentIndex]) && composition[componentIndex] >= 0.0
+              && composition[componentIndex] <= 1.0,
+          label + " composition should remain physical at component " + componentIndex);
       compositionSum += composition[componentIndex];
     }
     assertEquals(1.0, compositionSum, 1.0e-8, label + " composition should remain normalized");
