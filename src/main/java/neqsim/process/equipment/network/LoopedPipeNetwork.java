@@ -3858,7 +3858,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
         inletStream.run();
 
         bbPipe = new PipeBeggsAndBrills(pipe.getName() + "_bb", inletStream);
-        bbPipe.setPipeWallRoughness(pipe.getRoughness() * 1000.0); // m -> mm
+        bbPipe.setPipeWallRoughness(pipe.getRoughness());
         bbPipe.setLength(pipe.getLength());
         bbPipe.setDiameter(pipe.getDiameter());
         bbPipe.setNumberOfIncrements(pipe.getMultiphaseSegments());
