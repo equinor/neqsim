@@ -4661,6 +4661,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       NetworkNode downstreamNode = nodes.get(downstreamNodeName);
       SystemInterface pipeFluid = fluid.clone();
       pipeFluid.setPressure(upstreamNode.getPressure() / 1.0e5, "bara");
+      pipeFluid.setTemperature(upstreamNode.getTemperature(), "K");
 
       PipeBeggsAndBrills bbPipe = pipe.getBBModel();
       Stream inletStream;
