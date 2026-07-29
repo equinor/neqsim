@@ -1664,4 +1664,70 @@ public class DocExamplesCompilationTest {
     assertEquals(60.0, unmetDemand / 1000.0, 1.0e-12);
   }
 
+  /**
+   * Complete Java quick start and operation table from docs/thermo/thermodynamic_operations.md.
+   */
+  @Test
+  public void testThermodynamicOperationsOverviewQuickStart() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.07);
+    fluid.addComponent("propane", 0.03);
+    fluid.setMixingRule("classic");
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.TPflash();
+    fluid.initProperties();
+
+    assertTrue(fluid.hasPhaseType("gas"));
+    double vaporFraction = fluid.getPhaseFraction("gas", "mole");
+    double inletDensity = fluid.getDensity("kg/m3");
+    double inletEnthalpy = fluid.getEnthalpy();
+    double inletEntropy = fluid.getEntropy();
+    double inletVolume = fluid.getVolume("m3");
+    double inletInternalEnergy = fluid.getInternalEnergy();
+    double inletSpecificInternalEnergy = fluid.getInternalEnergy("J/kg");
+    SystemInterface initialState = fluid.clone();
+
+    double gasDensity = fluid.getPhase("gas").getDensity("kg/m3");
+    assertTrue(gasDensity > 35.0);
+    assertTrue(gasDensity < 50.0);
+
+    fluid.setPressure(30.0, "bara");
+    operations.PHflash(inletEnthalpy);
+    fluid.initProperties();
+
+    SystemInterface psFluid = initialState.clone();
+    psFluid.setPressure(70.0, "bara");
+    ThermodynamicOperations psOperations = new ThermodynamicOperations(psFluid);
+    psOperations.PSflash(inletEntropy);
+    psFluid.initProperties();
+
+    SystemInterface tvFluid = initialState.clone();
+    tvFluid.setPressure(25.0, "bara");
+    ThermodynamicOperations tvOperations = new ThermodynamicOperations(tvFluid);
+    tvOperations.TVflash(inletVolume, "m3");
+    tvFluid.initProperties();
+
+    SystemInterface vuFluid = initialState.clone();
+    vuFluid.setTemperature(310.0, "K");
+    vuFluid.setPressure(35.0, "bara");
+    ThermodynamicOperations vuOperations = new ThermodynamicOperations(vuFluid);
+    vuOperations.VUflash(inletVolume, inletSpecificInternalEnergy, "m3", "J/kg");
+    vuFluid.initProperties();
+
+    assertTrue(vaporFraction > 0.999);
+    assertTrue(inletDensity > 35.0);
+    assertTrue(inletDensity < 50.0);
+    assertTrue(Double.isFinite(fluid.getTemperature("C")));
+    assertEquals(inletEnthalpy, fluid.getEnthalpy(), 1.0e-3);
+    assertEquals(inletEntropy, psFluid.getEntropy(), 1.0e-6);
+    assertEquals(inletVolume, tvFluid.getVolume("m3"), 1.0e-9);
+    assertTrue(tvFluid.getPressure("bara") > 0.0);
+    assertEquals(inletVolume, vuFluid.getVolume("m3"), 1.0e-9);
+    assertEquals(inletInternalEnergy, vuFluid.getInternalEnergy(), 1.0e-2);
+    assertTrue(Double.isFinite(vuFluid.getTemperature("K")));
+    assertTrue(vuFluid.getPressure("bara") > 0.0);
+  }
+
 }
