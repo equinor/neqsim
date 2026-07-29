@@ -20,6 +20,32 @@ from pathlib import Path
 from datetime import datetime
 from urllib.parse import quote
 
+NOTEBOOK_DOCUMENTATION_OVERRIDES = {
+    "process equipmentutl": {
+        "title": (
+            "Reservoir-to-Market Optimisation with NeqSim Process Equipment"
+        ),
+        "description": (
+            "Executed reservoir-to-market process-equipment workflow with "
+            "field-life depletion, well and flowline hydraulics, export "
+            "compression, production optimisation, and value-chain economics."
+        ),
+        "show_generated_title": False,
+    },
+}
+
+
+def get_notebook_documentation_metadata(notebook, notebook_name):
+    """Return bounded legacy defaults updated by notebook-owned metadata."""
+
+    documentation_metadata = dict(
+        NOTEBOOK_DOCUMENTATION_OVERRIDES.get(notebook_name, {})
+    )
+    notebook_metadata = notebook.get("metadata", {}).get("neqsim_docs", {})
+    if isinstance(notebook_metadata, dict):
+        documentation_metadata.update(notebook_metadata)
+    return documentation_metadata
+
 # Ensure Unicode output works on Windows consoles (cp1252 by default).
 for _stream in (sys.stdout, sys.stderr):
     try:
@@ -66,9 +92,10 @@ def notebook_to_markdown(notebook_path):
         nb = json.load(f)
 
     notebook_name = Path(notebook_path).stem
-    documentation_metadata = nb.get('metadata', {}).get('neqsim_docs', {})
-    if not isinstance(documentation_metadata, dict):
-        documentation_metadata = {}
+    documentation_metadata = get_notebook_documentation_metadata(
+        nb,
+        notebook_name,
+    )
     title = documentation_metadata.get(
         'title',
         notebook_name.replace('_', ' ').replace('-', ' '),
@@ -84,6 +111,10 @@ def notebook_to_markdown(notebook_path):
     )
     title_yaml = json.dumps(str(title), ensure_ascii=False)
     description_yaml = json.dumps(str(description), ensure_ascii=False)
+    encoded_notebook_filename = quote(
+        f"{notebook_name}.ipynb",
+        safe="",
+    )
 
     # Jekyll front matter
     front_matter = f"""---
@@ -95,9 +126,9 @@ nav_order: 1
 ---
 
 {generated_title}> **Note:** This is an auto-generated Markdown version of the Jupyter notebook
-> [`{notebook_name}.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/{notebook_name}.ipynb).
-> You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/{notebook_name}.ipynb)
-> or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/{notebook_name}.ipynb).
+> [`{notebook_name}.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/{encoded_notebook_filename}).
+> You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/{encoded_notebook_filename})
+> or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/{encoded_notebook_filename}).
 
 ---
 
@@ -313,8 +344,6 @@ nav_order: 5
 has_children: true
 ---
 
-# NeqSim Examples
-
 This section contains tutorials, code examples, and Jupyter notebooks demonstrating NeqSim capabilities.
 
 ## Jupyter Notebook Tutorials
@@ -336,11 +365,10 @@ Interactive Python notebooks using NeqSim through [neqsim-python](https://github
         name = nb.stem
         with open(nb, 'r', encoding='utf-8') as notebook_file:
             notebook = json.load(notebook_file)
-        documentation_metadata = (
-            notebook.get('metadata', {}).get('neqsim_docs', {})
+        documentation_metadata = get_notebook_documentation_metadata(
+            notebook,
+            name,
         )
-        if not isinstance(documentation_metadata, dict):
-            documentation_metadata = {}
         title = documentation_metadata.get(
             'title',
             name.replace('_', ' ').replace('-', ' '),
