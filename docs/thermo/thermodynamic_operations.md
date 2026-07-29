@@ -42,6 +42,9 @@ public final class ThermodynamicOperationsQuickStart {
     operations.TPflash();
     fluid.initProperties();
 
+    if (!fluid.hasPhaseType("gas")) {
+      throw new IllegalStateException("Expected a gas phase after the TP flash");
+    }
     double vaporFraction = fluid.getPhaseFraction("gas", "mole");
     double inletDensity = fluid.getDensity("kg/m3");
     double inletEnthalpy = fluid.getEnthalpy();
