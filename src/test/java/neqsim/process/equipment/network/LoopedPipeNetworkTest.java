@@ -12,7 +12,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.reservoir.SimpleReservoir;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -1738,6 +1740,58 @@ class LoopedPipeNetworkTest {
     assertNotNull(flowline);
     assertEquals(LoopedPipeNetwork.NetworkElementType.MULTIPHASE_PIPE, flowline.getElementType());
     assertTrue(Math.abs(flowline.getFlowRate()) > 0, "Flowline should have non-zero flow");
+  }
+
+  /**
+   * Test that network and standalone Beggs-Brill models use the same metre-based roughness.
+   */
+  @Test
+  void testMultiphasePipeRoughnessMatchesStandaloneBeggsBrill() {
+    double inletPressureBar = 80.0;
+    double inletTemperatureK = 288.15;
+    double lengthM = 15000.0;
+    double diameterM = 0.2;
+    double roughnessM = 4.5e-5;
+    int segments = 20;
+
+    LoopedPipeNetwork network = new LoopedPipeNetwork("RoughnessParityNet");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+    network.addSourceNode("wellhead", inletPressureBar, 0.0);
+    network.getNode("wellhead").setTemperature(inletTemperatureK);
+    network.addFixedPressureSinkNode("platform", 40.0);
+
+    LoopedPipeNetwork.NetworkPipe networkPipe =
+        network.addMultiphasePipe("wellhead", "platform", "flowline", lengthM, diameterM);
+    networkPipe.setRoughness(roughnessM);
+    networkPipe.setMultiphaseSegments(segments);
+    network.run();
+
+    assertTrue(network.isConverged(), "Multiphase pipe network should converge");
+    assertEquals("BB-Multiphase", networkPipe.getFlowRegime());
+
+    double flowRateKgHr = Math.abs(networkPipe.getFlowRate()) * 3600.0;
+    SystemInterface standaloneFluid = testGas.clone();
+    standaloneFluid.setPressure(inletPressureBar, "bara");
+    standaloneFluid.setTemperature(inletTemperatureK, "K");
+    Stream standaloneInlet = new Stream("standalone inlet", standaloneFluid);
+    standaloneInlet.setFlowRate(flowRateKgHr, "kg/hr");
+    standaloneInlet.run();
+
+    PipeBeggsAndBrills standalonePipe =
+        new PipeBeggsAndBrills("standalone Beggs-Brill", standaloneInlet);
+    standalonePipe.setLength(lengthM);
+    standalonePipe.setDiameter(diameterM);
+    standalonePipe.setPipeWallRoughness(roughnessM);
+    standalonePipe.setNumberOfIncrements(segments);
+    standalonePipe.run();
+
+    PipeBeggsAndBrills networkModel = networkPipe.getBBModel();
+    assertNotNull(networkModel);
+    assertEquals(roughnessM, networkModel.getPipeWallRoughness(), 1e-12);
+    assertEquals(standalonePipe.getPressureDrop(), networkModel.getPressureDrop(), 1e-8);
   }
 
   /**
