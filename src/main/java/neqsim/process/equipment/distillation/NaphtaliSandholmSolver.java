@@ -836,10 +836,11 @@ public class NaphtaliSandholmSolver {
     hasReboiler = column.hasReboiler();
     hasCondenser = column.hasCondenser();
 
-    // Get number of components from the first feed
-    Map<Integer, List<StreamInterface>> feedMap = column.getFeedStreams();
+    // Get number of components from the first external feed. This includes legacy
+    // side feeds connected directly to a tray as well as registered column feeds.
     StreamInterface firstFeed = null;
-    for (List<StreamInterface> feeds : feedMap.values()) {
+    for (int trayIndex = 0; trayIndex < N; trayIndex++) {
+      List<StreamInterface> feeds = column.getExternalFeedStreams(trayIndex);
       if (!feeds.isEmpty()) {
         firstFeed = feeds.get(0);
         break;
@@ -908,14 +909,14 @@ public class NaphtaliSandholmSolver {
       }
     }
 
-    // Process feed streams
+    // Process every external feed in the same deterministic tray/stream order used
+    // when DistillationColumn captured originalFeedSystems and flow rates.
     // Use originalFeedSystems (cloned before init() corrupted them) if available.
-    for (Map.Entry<Integer, List<StreamInterface>> entry : feedMap.entrySet()) {
-      int trayIdx = entry.getKey();
-      if (trayIdx < 0 || trayIdx >= N) {
+    for (int trayIdx = 0; trayIdx < N; trayIdx++) {
+      List<StreamInterface> feeds = column.getExternalFeedStreams(trayIdx);
+      if (feeds.isEmpty()) {
         continue;
       }
-      List<StreamInterface> feeds = entry.getValue();
       List<SystemInterface> origSystems = (originalFeedSystems != null) ? originalFeedSystems.get(trayIdx) : null;
 
       for (int fi = 0; fi < feeds.size(); fi++) {
@@ -1242,10 +1243,11 @@ public class NaphtaliSandholmSolver {
     // initial T-profile.
     double feedTemp = 0;
     double feedTempWeight = 0;
-    Map<Integer, List<StreamInterface>> feedMap = column.getFeedStreams();
-    for (Map.Entry<Integer, List<StreamInterface>> entry : feedMap.entrySet()) {
-      int trayIdx = entry.getKey();
-      List<StreamInterface> feeds = entry.getValue();
+    for (int trayIdx = 0; trayIdx < N; trayIdx++) {
+      List<StreamInterface> feeds = column.getExternalFeedStreams(trayIdx);
+      if (feeds.isEmpty()) {
+        continue;
+      }
       List<SystemInterface> origSystems = (originalFeedSystems != null) ? originalFeedSystems.get(trayIdx) : null;
       for (int fi = 0; fi < feeds.size(); fi++) {
         StreamInterface feed = feeds.get(fi);
