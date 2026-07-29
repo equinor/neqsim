@@ -689,7 +689,7 @@ List<String> getTearStreamVariableNames()
 ## See Also
 
 - [Graph-Based Process Simulation](graph_based_process_simulation) - Detailed guide on graph algorithms and sensitivity analysis
-- 📓 [GraphBasedProcessSimulation.ipynb](../examples/GraphBasedProcessSimulation.ipynb) - Interactive Jupyter notebook example
+- 📓 [GraphBasedProcessSimulation.ipynb](https://github.com/equinor/neqsim/blob/master/docs/examples/GraphBasedProcessSimulation.ipynb) - Interactive Jupyter notebook example
 
 ---
 

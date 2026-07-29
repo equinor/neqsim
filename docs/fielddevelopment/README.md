@@ -292,8 +292,8 @@ The following developer notebooks import NeqSim Java classes from the workspace 
 
 | Notebook | Description |
 |----------|-------------|
-| [field_development_decision_engine.ipynb](../../examples/notebooks/field_development_decision_engine.ipynb) | Standardized concept templates, lifecycle emissions, MCDA ranking, portfolio optimization, and report-ready tables |
-| [field_development_process_reservoir_coupling.ipynb](../../examples/notebooks/field_development_process_reservoir_coupling.ipynb) | Tieback route networks, multi-well gathering allocation, concept-to-process linking, and VFP/schedule export |
+| [field_development_decision_engine.ipynb](https://github.com/equinor/neqsim/blob/master/examples/notebooks/field_development_decision_engine.ipynb) | Standardized concept templates, lifecycle emissions, MCDA ranking, portfolio optimization, and report-ready tables |
+| [field_development_process_reservoir_coupling.ipynb](https://github.com/equinor/neqsim/blob/master/examples/notebooks/field_development_process_reservoir_coupling.ipynb) | Tieback route networks, multi-well gathering allocation, concept-to-process linking, and VFP/schedule export |
 
 ---
 

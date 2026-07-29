@@ -107,7 +107,7 @@ SIL target, test interval, or safe state. Those inputs require a traceable hazar
 process-coupled study, continue with [Monte Carlo simulation](monte-carlo.md), [dynamic risk](dynamic-simulation.md),
 [SIS integration](sis-integration.md), and [process topology](topology.md). Python users should access these Java
 classes through the supported `from neqsim import jneqsim` gateway; see the
-[advanced risk notebook](../examples/AdvancedRiskFramework_Tutorial.ipynb) for the complete setup.
+[advanced risk notebook](https://github.com/equinor/neqsim/blob/master/docs/examples/AdvancedRiskFramework_Tutorial.ipynb) for the complete setup.
 
 ---
 
@@ -182,7 +182,7 @@ neqsim.process
 
 - [NeqSim Main Documentation](../index)
 - [Process Simulation Guide](../process/)
-- [Advanced Risk Framework Tutorial (Jupyter)](../examples/AdvancedRiskFramework_Tutorial.ipynb)
+- [Advanced Risk Framework Tutorial (Jupyter)](https://github.com/equinor/neqsim/blob/master/docs/examples/AdvancedRiskFramework_Tutorial.ipynb)
 - [Examples Index](../examples/index)
 - [OREDA Handbook](https://www.oreda.com/)
 - [ISO 14224 - Petroleum and natural gas industries](https://www.iso.org/standard/64076.html)

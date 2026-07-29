@@ -1,13 +1,13 @@
 ---
 title: Pipeline Network Solver Enhancement Proposal
-description: The Hardy Cross looped network solver has been implemented in NeqSim. See the [example notebook](../examples/LoopedPipelineNetworkExample.ipynb) for usage examples.
+description: The Hardy Cross looped network solver has been implemented in NeqSim. See the [example notebook](https://github.com/equinor/neqsim/blob/master/docs/examples/LoopedPipelineNetworkExample.ipynb) for usage examples.
 ---
 
 # Pipeline Network Solver Enhancement Proposal
 
 ## Implementation Status: ✅ COMPLETE
 
-The Hardy Cross looped network solver has been implemented in NeqSim. See the [example notebook](../examples/LoopedPipelineNetworkExample.ipynb) for usage examples.
+The Hardy Cross looped network solver has been implemented in NeqSim. See the [example notebook](https://github.com/equinor/neqsim/blob/master/docs/examples/LoopedPipelineNetworkExample.ipynb) for usage examples.
 
 ### Implemented Classes
 

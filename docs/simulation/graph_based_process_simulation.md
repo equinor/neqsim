@@ -978,7 +978,7 @@ For most users, simply using `process.runOptimal()` provides the best of both wo
 
 A complete interactive example is available in the examples directory:
 
-📓 **[GraphBasedProcessSimulation.ipynb](../examples/GraphBasedProcessSimulation.ipynb)**
+📓 **[GraphBasedProcessSimulation.ipynb](https://github.com/equinor/neqsim/blob/master/docs/examples/GraphBasedProcessSimulation.ipynb)**
 
 The notebook demonstrates:
 - Graph construction and analysis

@@ -158,6 +158,6 @@ Each `TieInPeriodResult` contains the scheduled satellite load, deferred backlog
 
 ## Related Examples
 
-- [Field Development Decision Engine](../../examples/notebooks/field_development_decision_engine.ipynb)
-- [Field Development Process and Reservoir Coupling](../../examples/notebooks/field_development_process_reservoir_coupling.ipynb)
-- [Host Tie-In Capacity and Holdback Notebook](../../examples/notebooks/host_tie_in_capacity_and_holdback.ipynb)
+- [Field Development Decision Engine](https://github.com/equinor/neqsim/blob/master/examples/notebooks/field_development_decision_engine.ipynb)
+- [Field Development Process and Reservoir Coupling](https://github.com/equinor/neqsim/blob/master/examples/notebooks/field_development_process_reservoir_coupling.ipynb)
+- [Host Tie-In Capacity and Holdback Notebook](https://github.com/equinor/neqsim/blob/master/examples/notebooks/host_tie_in_capacity_and_holdback.ipynb)

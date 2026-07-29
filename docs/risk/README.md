@@ -52,7 +52,7 @@ System.out.println("Expected production: " + result.getExpectedProduction());
 
 For comprehensive examples, see:
 - [RiskFrameworkQuickStart.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/safety/risk/examples/RiskFrameworkQuickStart.java)
-- [Advanced Risk Framework Tutorial](../examples/AdvancedRiskFramework_Tutorial.ipynb)
+- [Advanced Risk Framework Tutorial](https://github.com/equinor/neqsim/blob/master/docs/examples/AdvancedRiskFramework_Tutorial.ipynb)
 
 ## Feature Documentation
 

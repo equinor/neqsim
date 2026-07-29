@@ -347,6 +347,6 @@ LNGShipModel
 
 ## Example Notebooks
 
-- [LNG Ageing Basics](../../examples/notebooks/lng_ageing_basics.ipynb) — Single-tank simulation with visualization
-- [LNG Advanced Features](../../examples/notebooks/lng_ageing_advanced.ipynb) — Tank geometry, sloshing, methane number, rollover
-- [LNG Ship Voyage Simulation](../../examples/notebooks/lng_ship_voyage.ipynb) — Multi-tank Q-Max carrier voyage
+- [LNG Ageing Basics](https://github.com/equinor/neqsim/blob/master/examples/notebooks/lng_ageing_basics.ipynb) — Single-tank simulation with visualization
+- [LNG Advanced Features](https://github.com/equinor/neqsim/blob/master/examples/notebooks/lng_ageing_advanced.ipynb) — Tank geometry, sloshing, methane number, rollover
+- [LNG Ship Voyage Simulation](https://github.com/equinor/neqsim/blob/master/examples/notebooks/lng_ship_voyage.ipynb) — Multi-tank Q-Max carrier voyage

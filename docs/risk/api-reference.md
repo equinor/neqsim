@@ -555,5 +555,5 @@ DegradedOperationResult optResult = opt.optimizeWithEquipmentDown(failure);
 
 - [Overview](overview)
 - [Mathematical Reference](mathematical-reference)
-- [Advanced Risk Framework Tutorial](../examples/AdvancedRiskFramework_Tutorial.ipynb)
+- [Advanced Risk Framework Tutorial](https://github.com/equinor/neqsim/blob/master/docs/examples/AdvancedRiskFramework_Tutorial.ipynb)
 - [Examples Index](../examples/index)

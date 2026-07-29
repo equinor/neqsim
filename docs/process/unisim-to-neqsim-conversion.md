@@ -944,7 +944,7 @@ if not result.isError():
 - [Process Simulation Package](README.md) — Overview of NeqSim process simulation
 - [ProcessSystem and Flowsheet Management](processmodel/) — How ProcessSystem and ProcessModel work
 - [Jupyter Development Workflow](../development/jupyter_development_workflow.md) — Using notebooks for NeqSim development
-- [UniSim Conversion Notebook](../../examples/notebooks/unisim_to_neqsim_conversion.ipynb) — Interactive example notebook
+- [UniSim Conversion Notebook](https://github.com/equinor/neqsim/blob/master/examples/notebooks/unisim_to_neqsim_conversion.ipynb) — Interactive example notebook
 
 ---
 

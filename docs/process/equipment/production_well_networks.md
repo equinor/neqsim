@@ -840,8 +840,8 @@ pressure residuals.
 - [Looped Pipeline Networks](looped_networks) — Hardy Cross and NR-GGA solver fundamentals
 - [Pipeline Networks (Basic)](networks) — PipeFlowNetwork and WellFlowlineNetwork
 - [Pipelines](pipelines) — Individual pipeline modeling with Beggs-Brill, OLGA
-- [Production Network Notebook](../../../examples/notebooks/production_well_network.ipynb) — 8 worked examples with plots
-- [Looped Network Notebook](../../../examples/notebooks/looped_pipe_network.ipynb) — 6 examples of pipe-only networks
+- [Production Network Notebook](https://github.com/equinor/neqsim/blob/master/examples/notebooks/production_well_network.ipynb) — 8 worked examples with plots
+- [Looped Network Notebook](https://github.com/equinor/neqsim/blob/master/examples/notebooks/looped_pipe_network.ipynb) — 6 examples of pipe-only networks
 
 ---
 

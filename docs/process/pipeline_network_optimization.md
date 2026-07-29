@@ -185,4 +185,4 @@ print(f"Production: {result.totalProductionKgHr:.0f} kg/hr")
 
 ## Related Documentation
 
-- [Pipeline Network Optimization Notebook](../../examples/notebooks/pipeline_network_optimization.ipynb)
+- [Pipeline Network Optimization Notebook](https://github.com/equinor/neqsim/blob/master/examples/notebooks/pipeline_network_optimization.ipynb)

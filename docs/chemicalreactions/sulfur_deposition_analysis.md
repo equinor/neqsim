@@ -234,7 +234,7 @@ Sulfur species thermodynamic data is stored in:
 
 A comprehensive Jupyter notebook demonstrating all capabilities is available at:
 
-[examples/sulfurtask/SulfurDepositionAnalysis.ipynb](../../examples/sulfurtask/SulfurDepositionAnalysis.ipynb)
+[examples/sulfurtask/SulfurDepositionAnalysis.ipynb](https://github.com/equinor/neqsim/blob/master/examples/sulfurtask/SulfurDepositionAnalysis.ipynb)
 
 The notebook covers:
 1. Gas composition setup with H₂S and S₈

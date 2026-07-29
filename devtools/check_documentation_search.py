@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate that every NeqSim documentation page is represented in site search."""
+"""Validate NeqSim documentation sources and generated site-search coverage."""
 
 from __future__ import annotations
 
@@ -16,6 +16,11 @@ DOCS = ROOT / "docs"
 SEARCH_TEMPLATE = DOCS / "search-index.json"
 SEARCH_SCRIPT = DOCS / "assets" / "js" / "search.js"
 NON_CONTENT_HTML_DIRS = {"_includes", "_layouts"}
+NOTEBOOK_LINK_PATTERN = re.compile(
+    r"""(?:\[[^\]]*\]\(\s*|href=["'])
+    (?P<target>[^)\s"']+\.ipynb(?:[?#][^)\s"']*)?)""",
+    re.IGNORECASE | re.VERBOSE,
+)
 
 
 def markdown_files() -> List[Path]:
@@ -74,6 +79,46 @@ def parse_front_matter(path: Path) -> Tuple[Dict[str, str], str]:
     return fields, "\n".join(lines[end + 1 :]).strip()
 
 
+
+def markdown_prose(text: str) -> str:
+    """Return Markdown text without fenced or inline code."""
+
+    prose: List[str] = []
+    fence_character = ""
+    fence_length = 0
+    for line in text.splitlines():
+        fence = re.match(r"^\s*(\x60{3,}|~{3,})", line)
+        if fence_character:
+            if (
+                fence
+                and fence.group(1)[0] == fence_character
+                and len(fence.group(1)) >= fence_length
+            ):
+                fence_character = ""
+                fence_length = 0
+            continue
+        if fence:
+            fence_character = fence.group(1)[0]
+            fence_length = len(fence.group(1))
+            continue
+        prose.append(re.sub(r"\x60+[^\x60]*\x60+", "", line))
+    return "\n".join(prose)
+
+
+def relative_notebook_link_errors(path: Path, body: str) -> List[str]:
+    """Reject notebook links that GitHub Pages cannot publish."""
+
+    errors: List[str] = []
+    for match in NOTEBOOK_LINK_PATTERN.finditer(markdown_prose(body)):
+        target = match.group("target").strip("<>")
+        if re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", target) or target.startswith("//"):
+            continue
+        errors.append(
+            f"{path.relative_to(ROOT)}: relative notebook link {target} is excluded "
+            "from GitHub Pages; use an absolute GitHub or Colab URL"
+        )
+    return errors
+
 def relative_sources(paths: Iterable[Path]) -> List[str]:
     """Return source paths in the same form emitted by Jekyll's ``page.path``."""
     return [path.relative_to(DOCS).as_posix() for path in paths]
@@ -96,6 +141,7 @@ def source_audit() -> List[str]:
                 errors.append(f"{path.relative_to(ROOT)}: front matter needs a non-empty {field}")
         if not body:
             errors.append(f"{path.relative_to(ROOT)}: documentation body is empty")
+        errors.extend(relative_notebook_link_errors(path, body))
 
     template = SEARCH_TEMPLATE.read_text(encoding="utf-8")
     required_template_contracts = {
