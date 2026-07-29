@@ -45,8 +45,8 @@ class SimpleTEGAbsorberTest extends NeqSimTest {
     Set<String> componentNames = new LinkedHashSet<String>();
     for (StreamInterface stream : streams) {
       for (int phaseNumber = 0; phaseNumber < stream.getFluid().getNumberOfPhases(); phaseNumber++) {
-        for (int componentNumber = 0;
-            componentNumber < stream.getFluid().getPhase(phaseNumber).getNumberOfComponents(); componentNumber++) {
+        for (int componentNumber = 0; componentNumber < stream.getFluid().getPhase(phaseNumber)
+            .getNumberOfComponents(); componentNumber++) {
           componentNames.add(stream.getFluid().getPhase(phaseNumber).getComponent(componentNumber).getName());
         }
       }
@@ -117,8 +117,8 @@ class SimpleTEGAbsorberTest extends NeqSimTest {
         dryGas.getFlowRate("kg/hr") + richTeg.getFlowRate("kg/hr"), BALANCE_TOLERANCE_KG_PER_HOUR,
         "The absorber total mass balance must close");
     for (String componentName : componentNames(absorberCase.wetGas, absorberCase.leanTeg)) {
-      double inletComponentFlow =
-          componentFlow(absorberCase.wetGas, componentName) + componentFlow(absorberCase.leanTeg, componentName);
+      double inletComponentFlow = componentFlow(absorberCase.wetGas, componentName)
+          + componentFlow(absorberCase.leanTeg, componentName);
       double outletComponentFlow = componentFlow(dryGas, componentName) + componentFlow(richTeg, componentName);
       assertEquals(inletComponentFlow, outletComponentFlow, BALANCE_TOLERANCE_KG_PER_HOUR,
           "The absorber component balance must close for " + componentName);
