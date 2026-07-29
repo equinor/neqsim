@@ -60,7 +60,6 @@ class ConvertNotebooksTest(unittest.TestCase):
             )
             self.assertNotIn(f"# {curated_title}", generated_content)
             self.assertEqual(generated_content.count("# Notebook title"), 1)
-
     def test_converter_repairs_legacy_process_equipment_guide(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             examples_dir = Path(temp_dir)
@@ -74,7 +73,10 @@ class ConvertNotebooksTest(unittest.TestCase):
             convert_all_notebooks(examples_dir)
 
             generated_content = markdown_path.read_text(encoding="utf-8")
-            self.assertIn(f"title: {json.dumps(title)}", generated_content)
+            self.assertIn(
+                f"title: {json.dumps(title, ensure_ascii=False)}",
+                generated_content,
+            )
             self.assertIn(
                 "field-life depletion, well and flowline hydraulics",
                 generated_content,
