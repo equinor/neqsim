@@ -316,12 +316,17 @@ requires pressure letdown, flash-gas handling, lean/rich heat exchange,
 reboiling and stripping, cooling, pumping, makeup, and recycle convergence.
 
 NeqSim does not currently provide the `GlycolDehydrationModule` API previously
-shown on this page. Do not copy that obsolete example. The existing
-`SimpleTEGAbsorber` also has an open component-balance defect tracked in
-[issue #2659](https://github.com/equinor/neqsim/issues/2659). Until that defect
-is fixed and regression-tested, use a conservative equilibrium contact for
-screening and do not interpret `SimpleTEGAbsorber` results as a complete material
-balance.
+shown on this page. Do not copy that obsolete example. `SimpleTEGAbsorber` is
+available for stage-efficiency screening and now conserves the complete gas and
+solvent inventories even when the two feeds start with different component
+lists. Its gas and rich-TEG outlets close both the water-component and total
+mass balances; this behavior is protected by the regression for
+[issue #2659](https://github.com/equinor/neqsim/issues/2659).
+
+The conservative outlet behavior does not turn `SimpleTEGAbsorber` into a
+rate-based equipment model. Continue to apply the packing, hydraulics,
+mass-transfer, regeneration, and operating-envelope limitations described
+above, and verify component and total balances for every engineering case.
 
 ## Sensitivity studies
 
