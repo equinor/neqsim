@@ -30,8 +30,7 @@ public class NetworkConstraintResult implements Serializable {
    * @param unit residual unit
    * @param message diagnostic
    */
-  public NetworkConstraintResult(String name, boolean hard,
-      double residual, double scale, boolean active, String unit,
+  public NetworkConstraintResult(String name, boolean hard, double residual, double scale, boolean active, String unit,
       String message) {
     this.name = name;
     this.hard = hard;

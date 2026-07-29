@@ -47,11 +47,9 @@ public class NetworkQualityResult implements Serializable {
    * @param provenance source
    * @param message diagnostic
    */
-  public NetworkQualityResult(String metricKey,
-      String attributeName, Double value, String unit,
-      QualityReference reference, Double lowerLimit,
-      Double upperLimit, Double margin, Status status,
-      String method, String provenance, String message) {
+  public NetworkQualityResult(String metricKey, String attributeName, Double value, String unit,
+      QualityReference reference, Double lowerLimit, Double upperLimit, Double margin, Status status, String method,
+      String provenance, String message) {
     this.metricKey = metricKey;
     this.attributeName = attributeName;
     this.value = value;

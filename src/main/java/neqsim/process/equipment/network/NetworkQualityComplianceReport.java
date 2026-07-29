@@ -27,19 +27,16 @@ public class NetworkQualityComplianceReport implements Serializable {
    * @param profile quality profile
    * @param results metric results
    */
-  public NetworkQualityComplianceReport(String nodeName,
-      NetworkQualityProfile profile,
+  public NetworkQualityComplianceReport(String nodeName, NetworkQualityProfile profile,
       List<NetworkQualityResult> results) {
     this.nodeName = nodeName;
     this.profileName = profile.getName();
     this.profileVersion = profile.getVersion();
-    this.namedExceptions =
-        new ArrayList<String>(profile.getNamedExceptions());
+    this.namedExceptions = new ArrayList<String>(profile.getNamedExceptions());
     this.results = new ArrayList<NetworkQualityResult>(results);
     boolean allPass = true;
     for (NetworkQualityResult result : results) {
-      if (result.getStatus()
-          != NetworkQualityResult.Status.PASS) {
+      if (result.getStatus() != NetworkQualityResult.Status.PASS) {
         allPass = false;
         break;
       }
@@ -89,7 +86,6 @@ public class NetworkQualityComplianceReport implements Serializable {
    * @return report
    */
   public static NetworkQualityComplianceReport fromJson(String json) {
-    return new Gson().fromJson(json,
-        NetworkQualityComplianceReport.class);
+    return new Gson().fromJson(json, NetworkQualityComplianceReport.class);
   }
 }

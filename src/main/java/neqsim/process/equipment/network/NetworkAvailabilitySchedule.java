@@ -18,8 +18,7 @@ public class NetworkAvailabilitySchedule implements Serializable {
    * @param edgeName edge name
    * @param periodCount period count
    */
-  public NetworkAvailabilitySchedule(String edgeName,
-      int periodCount) {
+  public NetworkAvailabilitySchedule(String edgeName, int periodCount) {
     this.edgeName = edgeName;
     this.availability = new double[periodCount];
     Arrays.fill(availability, 1.0);
@@ -32,16 +31,12 @@ public class NetworkAvailabilitySchedule implements Serializable {
    * @param toPeriod exclusive end
    * @param fraction availability from 0 to 1
    */
-  public void derate(int fromPeriod, int toPeriod,
-      double fraction) {
+  public void derate(int fromPeriod, int toPeriod, double fraction) {
     if (fraction < 0.0 || fraction > 1.0) {
-      throw new IllegalArgumentException(
-          "Availability must be between 0 and 1");
+      throw new IllegalArgumentException("Availability must be between 0 and 1");
     }
-    if (fromPeriod < 0 || toPeriod > availability.length
-        || fromPeriod >= toPeriod) {
-      throw new IllegalArgumentException(
-          "Invalid availability period range");
+    if (fromPeriod < 0 || toPeriod > availability.length || fromPeriod >= toPeriod) {
+      throw new IllegalArgumentException("Invalid availability period range");
     }
     for (int index = fromPeriod; index < toPeriod; index++) {
       availability[index] = fraction;

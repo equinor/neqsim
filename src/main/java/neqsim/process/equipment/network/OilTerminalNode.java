@@ -12,10 +12,8 @@ public class OilTerminalNode implements Serializable {
   private static final long serialVersionUID = 1000L;
 
   private final String name;
-  private final Map<String, OilTerminalTank> tanks =
-      new LinkedHashMap<String, OilTerminalTank>();
-  private final Map<String, Boolean> routeAvailability =
-      new LinkedHashMap<String, Boolean>();
+  private final Map<String, OilTerminalTank> tanks = new LinkedHashMap<String, OilTerminalTank>();
+  private final Map<String, Boolean> routeAvailability = new LinkedHashMap<String, Boolean>();
 
   /**
    * Create a terminal.
@@ -49,8 +47,7 @@ public class OilTerminalNode implements Serializable {
   public OilTerminalTank getTank(String tankName) {
     OilTerminalTank tank = tanks.get(tankName);
     if (tank == null) {
-      throw new IllegalArgumentException(
-          "Unknown terminal tank: " + tankName);
+      throw new IllegalArgumentException("Unknown terminal tank: " + tankName);
     }
     return tank;
   }

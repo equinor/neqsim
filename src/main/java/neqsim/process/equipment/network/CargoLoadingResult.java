@@ -23,8 +23,7 @@ public class CargoLoadingResult implements Serializable {
    * @param parcel loaded parcel
    * @param qualityReport quality result
    */
-  public CargoLoadingResult(String cargoId, int periodIndex,
-      String tankName, CrudeParcel parcel,
+  public CargoLoadingResult(String cargoId, int periodIndex, String tankName, CrudeParcel parcel,
       NetworkQualityComplianceReport qualityReport) {
     this.cargoId = cargoId;
     this.periodIndex = periodIndex;

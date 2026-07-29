@@ -4,8 +4,7 @@ import java.io.Serializable;
 import com.google.gson.GsonBuilder;
 
 /**
- * Explicit pressure, temperature, standard-volume, and test basis for a
- * quality limit.
+ * Explicit pressure, temperature, standard-volume, and test basis for a quality limit.
  */
 public class QualityReference implements Serializable {
   private static final long serialVersionUID = 1000L;
@@ -19,7 +18,8 @@ public class QualityReference implements Serializable {
   private String basis;
 
   /** Create an empty reference condition. */
-  public QualityReference() {}
+  public QualityReference() {
+  }
 
   /**
    * Create a pressure reference.
@@ -58,11 +58,9 @@ public class QualityReference implements Serializable {
    * @param temperatureUnit temperature unit
    * @return reference
    */
-  public static QualityReference atPressureAndTemperature(
-      double pressureValue, String pressureUnit,
+  public static QualityReference atPressureAndTemperature(double pressureValue, String pressureUnit,
       double temperatureValue, String temperatureUnit) {
-    QualityReference reference =
-        atPressure(pressureValue, pressureUnit);
+    QualityReference reference = atPressure(pressureValue, pressureUnit);
     reference.temperature = temperatureValue;
     reference.temperatureUnit = temperatureUnit;
     return reference;
@@ -75,12 +73,9 @@ public class QualityReference implements Serializable {
    * @param combustionTemperatureC combustion reference in C
    * @return this reference
    */
-  public QualityReference withIso6976Reference(
-      double volumeTemperatureC,
-      double combustionTemperatureC) {
+  public QualityReference withIso6976Reference(double volumeTemperatureC, double combustionTemperatureC) {
     volumeReferenceTemperatureC = volumeTemperatureC;
-    combustionReferenceTemperatureC =
-        combustionTemperatureC;
+    combustionReferenceTemperatureC = combustionTemperatureC;
     return this;
   }
 
@@ -137,11 +132,9 @@ public class QualityReference implements Serializable {
    */
   public double getPressureBara() {
     if (pressure == null || pressureUnit == null) {
-      throw new IllegalStateException(
-          "A pressure reference is required");
+      throw new IllegalStateException("A pressure reference is required");
     }
-    if ("bara".equalsIgnoreCase(pressureUnit)
-        || "bar".equalsIgnoreCase(pressureUnit)) {
+    if ("bara".equalsIgnoreCase(pressureUnit) || "bar".equalsIgnoreCase(pressureUnit)) {
       return pressure;
     }
     if ("barg".equalsIgnoreCase(pressureUnit)) {
@@ -153,8 +146,7 @@ public class QualityReference implements Serializable {
     if ("kPa".equalsIgnoreCase(pressureUnit)) {
       return pressure / 100.0;
     }
-    throw new IllegalArgumentException(
-        "Unsupported pressure unit: " + pressureUnit);
+    throw new IllegalArgumentException("Unsupported pressure unit: " + pressureUnit);
   }
 
   /**
@@ -164,18 +156,15 @@ public class QualityReference implements Serializable {
    */
   public double getTemperatureK() {
     if (temperature == null || temperatureUnit == null) {
-      throw new IllegalStateException(
-          "A temperature reference is required");
+      throw new IllegalStateException("A temperature reference is required");
     }
     if ("K".equalsIgnoreCase(temperatureUnit)) {
       return temperature;
     }
-    if ("C".equalsIgnoreCase(temperatureUnit)
-        || "degC".equalsIgnoreCase(temperatureUnit)) {
+    if ("C".equalsIgnoreCase(temperatureUnit) || "degC".equalsIgnoreCase(temperatureUnit)) {
       return temperature + 273.15;
     }
-    throw new IllegalArgumentException(
-        "Unsupported temperature unit: " + temperatureUnit);
+    throw new IllegalArgumentException("Unsupported temperature unit: " + temperatureUnit);
   }
 
   /**

@@ -17,11 +17,9 @@ public enum GasQualityMetric implements NetworkQualityMetric {
   /** Named-component mole percentage. */
   COMPONENT_MOLE_PERCENT("componentMolePercent", "mol%"),
   /** Hydrocarbon dew-point temperature at a specified pressure. */
-  HYDROCARBON_DEW_POINT_TEMPERATURE(
-      "hydrocarbonDewPointTemperature", "C"),
+  HYDROCARBON_DEW_POINT_TEMPERATURE("hydrocarbonDewPointTemperature", "C"),
   /** Hydrocarbon dew-point pressure at a specified temperature. */
-  HYDROCARBON_DEW_POINT_PRESSURE(
-      "hydrocarbonDewPointPressure", "barg"),
+  HYDROCARBON_DEW_POINT_PRESSURE("hydrocarbonDewPointPressure", "barg"),
   /** Water dew-point temperature. */
   WATER_DEW_POINT_TEMPERATURE("waterDewPointTemperature", "C"),
   /** Maximum pressure on the phase envelope. */

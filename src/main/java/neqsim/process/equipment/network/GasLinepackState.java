@@ -30,30 +30,22 @@ public class GasLinepackState implements Serializable {
   private final double massBalanceResidualKg;
   private final double maxComponentBalanceResidualMol;
 
-  private GasLinepackState(String edgeName, double massKg,
-      double molarInventoryMol, double pressurePa,
-      double temperatureK, double compressibilityFactor,
-      double pipeVolumeM3, Map<String, Double> componentMoles,
-      Map<String, Double> componentMolarMassKgMol,
-      double massBalanceResidualKg,
+  private GasLinepackState(String edgeName, double massKg, double molarInventoryMol, double pressurePa,
+      double temperatureK, double compressibilityFactor, double pipeVolumeM3, Map<String, Double> componentMoles,
+      Map<String, Double> componentMolarMassKgMol, double massBalanceResidualKg,
       double maxComponentBalanceResidualMol) {
     this.edgeName = edgeName;
     this.massKg = massKg;
     this.molarInventoryMol = molarInventoryMol;
-    this.standardVolumeSm3 = molarInventoryMol * GAS_CONSTANT
-        * STANDARD_TEMPERATURE_K / STANDARD_PRESSURE_PA;
+    this.standardVolumeSm3 = molarInventoryMol * GAS_CONSTANT * STANDARD_TEMPERATURE_K / STANDARD_PRESSURE_PA;
     this.pressurePa = pressurePa;
     this.temperatureK = temperatureK;
     this.compressibilityFactor = compressibilityFactor;
     this.pipeVolumeM3 = pipeVolumeM3;
-    this.componentMoles =
-        new LinkedHashMap<String, Double>(componentMoles);
-    this.componentMolarMassKgMol =
-        new LinkedHashMap<String, Double>(
-            componentMolarMassKgMol);
+    this.componentMoles = new LinkedHashMap<String, Double>(componentMoles);
+    this.componentMolarMassKgMol = new LinkedHashMap<String, Double>(componentMolarMassKgMol);
     this.massBalanceResidualKg = massBalanceResidualKg;
-    this.maxComponentBalanceResidualMol =
-        maxComponentBalanceResidualMol;
+    this.maxComponentBalanceResidualMol = maxComponentBalanceResidualMol;
   }
 
   /**
@@ -63,26 +55,20 @@ public class GasLinepackState implements Serializable {
    * @param edgeName edge name
    * @return EOS-based linepack state
    */
-  public static GasLinepackState fromSolvedState(
-      LoopedPipeNetwork network, String edgeName) {
-    LoopedPipeNetwork.NetworkPipe edge =
-        network.getPipe(edgeName);
-    double volume = Math.PI * edge.getDiameter()
-        * edge.getDiameter() / 4.0 * edge.getLength();
+  public static GasLinepackState fromSolvedState(LoopedPipeNetwork network, String edgeName) {
+    LoopedPipeNetwork.NetworkPipe edge = network.getPipe(edgeName);
+    double volume = Math.PI * edge.getDiameter() * edge.getDiameter() / 4.0 * edge.getLength();
     if (!(volume > 0.0)) {
-      throw new IllegalArgumentException(
-          "Linepack requires positive pipe volume");
+      throw new IllegalArgumentException("Linepack requires positive pipe volume");
     }
     boolean forward = edge.getFlowRate() >= 0.0;
-    String upstreamName =
-        forward ? edge.getFromNode() : edge.getToNode();
+    String upstreamName = forward ? edge.getFromNode() : edge.getToNode();
     SystemInterface inlet = edge.getInletFluid();
     if (inlet == null) {
       inlet = network.getNodeFluid(upstreamName).clone();
     }
     SystemInterface outlet = edge.getOutletFluid();
-    double temperature = outlet == null
-        ? inlet.getTemperature()
+    double temperature = outlet == null ? inlet.getTemperature()
         : (inlet.getTemperature() + outlet.getTemperature()) / 2.0;
     double pressure = (network.getNode(edge.getFromNode()).getPressure()
         + network.getNode(edge.getToNode()).getPressure()) / 2.0;
@@ -90,36 +76,25 @@ public class GasLinepackState implements Serializable {
     averageFluid.setPressure(pressure / 1.0e5, "bara");
     averageFluid.setTemperature(temperature, "K");
     try {
-      ThermodynamicOperations operations =
-          new ThermodynamicOperations(averageFluid);
+      ThermodynamicOperations operations = new ThermodynamicOperations(averageFluid);
       operations.TPflash();
       averageFluid.initProperties();
     } catch (Exception ex) {
       throw new IllegalStateException(
-          "Unable to calculate linepack state for edge '"
-              + edgeName + "': " + ex.getMessage(),
-          ex);
+          "Unable to calculate linepack state for edge '" + edgeName + "': " + ex.getMessage(), ex);
     }
     double z = averageFluid.getZ();
-    double moles = pressure * volume
-        / (Math.max(z, 1.0e-12) * GAS_CONSTANT * temperature);
-    Map<String, Double> componentMoles =
-        new LinkedHashMap<String, Double>();
-    Map<String, Double> molarMasses =
-        new LinkedHashMap<String, Double>();
+    double moles = pressure * volume / (Math.max(z, 1.0e-12) * GAS_CONSTANT * temperature);
+    Map<String, Double> componentMoles = new LinkedHashMap<String, Double>();
+    Map<String, Double> molarMasses = new LinkedHashMap<String, Double>();
     double[] composition = averageFluid.getMolarComposition();
-    for (int index = 0;
-        index < averageFluid.getNumberOfComponents(); index++) {
-      ComponentInterface component =
-          averageFluid.getPhase(0).getComponent(index);
-      componentMoles.put(component.getComponentName(),
-          moles * composition[index]);
-      molarMasses.put(component.getComponentName(),
-          component.getMolarMass());
+    for (int index = 0; index < averageFluid.getNumberOfComponents(); index++) {
+      ComponentInterface component = averageFluid.getPhase(0).getComponent(index);
+      componentMoles.put(component.getComponentName(), moles * composition[index]);
+      molarMasses.put(component.getComponentName(), component.getMolarMass());
     }
     double mass = moles * averageFluid.getMolarMass();
-    return new GasLinepackState(edgeName, mass, moles, pressure,
-        temperature, z, volume, componentMoles, molarMasses,
+    return new GasLinepackState(edgeName, mass, moles, pressure, temperature, z, volume, componentMoles, molarMasses,
         0.0, 0.0);
   }
 
@@ -134,109 +109,69 @@ public class GasLinepackState implements Serializable {
    * @param inletFluid inlet composition and molar mass
    * @return closing linepack state
    */
-  public GasLinepackState advance(double durationSeconds,
-      double inletKgS, double outletKgS, double fuelKgS,
+  public GasLinepackState advance(double durationSeconds, double inletKgS, double outletKgS, double fuelKgS,
       double lossKgS, SystemInterface inletFluid) {
     if (inletFluid == null) {
-      throw new IllegalArgumentException(
-          "An inlet fluid is required for component conservation");
+      throw new IllegalArgumentException("An inlet fluid is required for component conservation");
     }
     SystemInterface preparedInlet = inletFluid.clone();
     try {
-      ThermodynamicOperations operations =
-          new ThermodynamicOperations(preparedInlet);
+      ThermodynamicOperations operations = new ThermodynamicOperations(preparedInlet);
       operations.TPflash();
       preparedInlet.initProperties();
     } catch (Exception ex) {
       throw new IllegalStateException(
-          "Unable to initialize inlet composition for linepack edge '"
-              + edgeName + "': " + ex.getMessage(),
-          ex);
+          "Unable to initialize inlet composition for linepack edge '" + edgeName + "': " + ex.getMessage(), ex);
     }
-    Map<String, Double> closing =
-        new LinkedHashMap<String, Double>(componentMoles);
-    Map<String, Double> closingMolarMasses =
-        new LinkedHashMap<String, Double>(
-            componentMolarMassKgMol);
-    double inletMolarRate =
-        inletKgS / preparedInlet.getMolarMass();
-    double totalWithdrawalKgS =
-        outletKgS + fuelKgS + lossKgS;
-    double currentMolarMass = massKg
-        / Math.max(molarInventoryMol, 1.0e-30);
-    double withdrawalMolarRate =
-        totalWithdrawalKgS / currentMolarMass;
-    double[] inletComposition =
-        preparedInlet.getMolarComposition();
+    Map<String, Double> closing = new LinkedHashMap<String, Double>(componentMoles);
+    Map<String, Double> closingMolarMasses = new LinkedHashMap<String, Double>(componentMolarMassKgMol);
+    double inletMolarRate = inletKgS / preparedInlet.getMolarMass();
+    double totalWithdrawalKgS = outletKgS + fuelKgS + lossKgS;
+    double currentMolarMass = massKg / Math.max(molarInventoryMol, 1.0e-30);
+    double withdrawalMolarRate = totalWithdrawalKgS / currentMolarMass;
+    double[] inletComposition = preparedInlet.getMolarComposition();
 
-    for (int index = 0;
-        index < preparedInlet.getNumberOfComponents(); index++) {
-      ComponentInterface component =
-          preparedInlet.getPhase(0).getComponent(index);
+    for (int index = 0; index < preparedInlet.getNumberOfComponents(); index++) {
+      ComponentInterface component = preparedInlet.getPhase(0).getComponent(index);
       String componentName = component.getComponentName();
       Double existing = closing.get(componentName);
-      double inletComponentMoles = durationSeconds
-          * inletMolarRate * inletComposition[index];
-      closing.put(componentName,
-          (existing == null ? 0.0 : existing)
-              + inletComponentMoles);
-      closingMolarMasses.put(componentName,
-          component.getMolarMass());
+      double inletComponentMoles = durationSeconds * inletMolarRate * inletComposition[index];
+      closing.put(componentName, (existing == null ? 0.0 : existing) + inletComponentMoles);
+      closingMolarMasses.put(componentName, component.getMolarMass());
     }
 
     double maxComponentResidual = 0.0;
-    for (Map.Entry<String, Double> entry :
-        componentMoles.entrySet()) {
-      double moleFraction = entry.getValue()
-          / Math.max(molarInventoryMol, 1.0e-30);
-      double withdrawalMoles = durationSeconds
-          * withdrawalMolarRate * moleFraction;
-      double newMoles = closing.get(entry.getKey())
-          - withdrawalMoles;
+    for (Map.Entry<String, Double> entry : componentMoles.entrySet()) {
+      double moleFraction = entry.getValue() / Math.max(molarInventoryMol, 1.0e-30);
+      double withdrawalMoles = durationSeconds * withdrawalMolarRate * moleFraction;
+      double newMoles = closing.get(entry.getKey()) - withdrawalMoles;
       if (newMoles < -1.0e-8) {
-        throw new IllegalStateException(
-            "Linepack withdrawal exceeds component inventory for "
-                + entry.getKey());
+        throw new IllegalStateException("Linepack withdrawal exceeds component inventory for " + entry.getKey());
       }
       closing.put(entry.getKey(), Math.max(0.0, newMoles));
-      double reconstructed = closing.get(entry.getKey())
-          - entry.getValue()
-              - durationSeconds * inletMolarRate
-              * inletComponentFraction(preparedInlet,
-                  entry.getKey())
-          + withdrawalMoles;
-      maxComponentResidual = Math.max(maxComponentResidual,
-          Math.abs(reconstructed));
+      double reconstructed = closing.get(entry.getKey()) - entry.getValue()
+          - durationSeconds * inletMolarRate * inletComponentFraction(preparedInlet, entry.getKey()) + withdrawalMoles;
+      maxComponentResidual = Math.max(maxComponentResidual, Math.abs(reconstructed));
     }
 
     double closingMoles = 0.0;
     double closingMass = 0.0;
     for (Map.Entry<String, Double> entry : closing.entrySet()) {
       closingMoles += entry.getValue();
-      Double molarMass =
-          closingMolarMasses.get(entry.getKey());
+      Double molarMass = closingMolarMasses.get(entry.getKey());
       if (molarMass == null) {
-        throw new IllegalStateException(
-            "Missing molar mass for linepack component "
-                + entry.getKey());
+        throw new IllegalStateException("Missing molar mass for linepack component " + entry.getKey());
       }
       closingMass += entry.getValue() * molarMass;
     }
-    double expectedMass = massKg + durationSeconds
-        * (inletKgS - outletKgS - fuelKgS - lossKgS);
+    double expectedMass = massKg + durationSeconds * (inletKgS - outletKgS - fuelKgS - lossKgS);
     double massResidual = closingMass - expectedMass;
-    double closingPressure = closingMoles
-        * compressibilityFactor * GAS_CONSTANT * temperatureK
-        / pipeVolumeM3;
-    return new GasLinepackState(edgeName, closingMass,
-        closingMoles, closingPressure, temperatureK,
-        compressibilityFactor, pipeVolumeM3, closing,
-        closingMolarMasses, massResidual,
-        maxComponentResidual);
+    double closingPressure = closingMoles * compressibilityFactor * GAS_CONSTANT * temperatureK / pipeVolumeM3;
+    return new GasLinepackState(edgeName, closingMass, closingMoles, closingPressure, temperatureK,
+        compressibilityFactor, pipeVolumeM3, closing, closingMolarMasses, massResidual, maxComponentResidual);
   }
 
-  private double inletComponentFraction(SystemInterface fluid,
-      String componentName) {
+  private double inletComponentFraction(SystemInterface fluid, String componentName) {
     if (!fluid.hasComponent(componentName)) {
       return 0.0;
     }

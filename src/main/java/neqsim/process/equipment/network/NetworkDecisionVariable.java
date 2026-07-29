@@ -91,33 +91,24 @@ public class NetworkDecisionVariable implements Serializable {
    * @param lowerBound finite lower bound
    * @param upperBound finite upper bound
    */
-  public NetworkDecisionVariable(String name, Type type,
-      String targetName, String unit, RateBasis rateBasis,
+  public NetworkDecisionVariable(String name, Type type, String targetName, String unit, RateBasis rateBasis,
       double lowerBound, double upperBound) {
-    this(name, type, targetName, unit, rateBasis, lowerBound,
-        upperBound, null, null);
+    this(name, type, targetName, unit, rateBasis, lowerBound, upperBound, null, null);
   }
 
-  private NetworkDecisionVariable(String name, Type type,
-      String targetName, String unit, RateBasis rateBasis,
-      double lowerBound, double upperBound, Getter getter,
-      Setter setter) {
+  private NetworkDecisionVariable(String name, Type type, String targetName, String unit, RateBasis rateBasis,
+      double lowerBound, double upperBound, Getter getter, Setter setter) {
     if (name == null || name.trim().isEmpty()) {
-      throw new IllegalArgumentException(
-          "Decision variable name cannot be empty");
+      throw new IllegalArgumentException("Decision variable name cannot be empty");
     }
-    if (!Double.isFinite(lowerBound)
-        || !Double.isFinite(upperBound)
-        || upperBound <= lowerBound) {
-      throw new IllegalArgumentException(
-          "Decision variable bounds must be finite and increasing");
+    if (!Double.isFinite(lowerBound) || !Double.isFinite(upperBound) || upperBound <= lowerBound) {
+      throw new IllegalArgumentException("Decision variable bounds must be finite and increasing");
     }
     this.name = name;
     this.type = type;
     this.targetName = targetName;
     this.unit = unit;
-    this.rateBasis =
-        rateBasis == null ? RateBasis.NONE : rateBasis;
+    this.rateBasis = rateBasis == null ? RateBasis.NONE : rateBasis;
     this.lowerBound = lowerBound;
     this.upperBound = upperBound;
     this.customGetter = getter;
@@ -135,15 +126,12 @@ public class NetworkDecisionVariable implements Serializable {
    * @param setter setter
    * @return variable
    */
-  public static NetworkDecisionVariable custom(String name,
-      String unit, double lowerBound, double upperBound,
+  public static NetworkDecisionVariable custom(String name, String unit, double lowerBound, double upperBound,
       Getter getter, Setter setter) {
     if (getter == null || setter == null) {
-      throw new IllegalArgumentException(
-          "Custom getter and setter are required");
+      throw new IllegalArgumentException("Custom getter and setter are required");
     }
-    return new NetworkDecisionVariable(name, Type.CUSTOM, null,
-        unit, RateBasis.NONE, lowerBound, upperBound, getter,
+    return new NetworkDecisionVariable(name, Type.CUSTOM, null, unit, RateBasis.NONE, lowerBound, upperBound, getter,
         setter);
   }
 
@@ -193,19 +181,15 @@ public class NetworkDecisionVariable implements Serializable {
       return customGetter.get(network);
     }
     if (type == Type.SOURCE_RATE) {
-      return fromKgPerSecond(
-          -network.getNode(targetName).getDemand(), unit);
+      return fromKgPerSecond(-network.getNode(targetName).getDemand(), unit);
     }
     if (type == Type.SINK_NOMINATION) {
-      return fromKgPerSecond(
-          network.getNode(targetName).getDemand(), unit);
+      return fromKgPerSecond(network.getNode(targetName).getDemand(), unit);
     }
     if (type == Type.SOURCE_PRESSURE) {
-      return fromPascal(
-          network.getNode(targetName).getPressure(), unit);
+      return fromPascal(network.getNode(targetName).getPressure(), unit);
     }
-    LoopedPipeNetwork.NetworkPipe edge =
-        network.getPipe(targetName);
+    LoopedPipeNetwork.NetworkPipe edge = network.getPipe(targetName);
     switch (type) {
     case CHOKE_OPENING:
       return edge.getChokeOpening();
@@ -219,8 +203,7 @@ public class NetworkDecisionVariable implements Serializable {
     case EDGE_AVAILABILITY:
       return edge.getAvailability();
     default:
-      throw new IllegalStateException(
-          "Unsupported decision variable type: " + type);
+      throw new IllegalStateException("Unsupported decision variable type: " + type);
     }
   }
 
@@ -231,33 +214,26 @@ public class NetworkDecisionVariable implements Serializable {
    * @param value value in the configured unit
    */
   public void setValue(LoopedPipeNetwork network, double value) {
-    if (value < lowerBound || value > upperBound
-        || !Double.isFinite(value)) {
-      throw new IllegalArgumentException(
-          "Value for " + name + " is outside ["
-              + lowerBound + ", " + upperBound + "]");
+    if (value < lowerBound || value > upperBound || !Double.isFinite(value)) {
+      throw new IllegalArgumentException("Value for " + name + " is outside [" + lowerBound + ", " + upperBound + "]");
     }
     if (type == Type.CUSTOM) {
       customSetter.set(network, value);
       return;
     }
     if (type == Type.SOURCE_RATE) {
-      network.getNode(targetName)
-          .setDemand(-toKgPerSecond(value, unit));
+      network.getNode(targetName).setDemand(-toKgPerSecond(value, unit));
       return;
     }
     if (type == Type.SINK_NOMINATION) {
-      network.getNode(targetName)
-          .setDemand(toKgPerSecond(value, unit));
+      network.getNode(targetName).setDemand(toKgPerSecond(value, unit));
       return;
     }
     if (type == Type.SOURCE_PRESSURE) {
-      network.getNode(targetName)
-          .setPressure(toPascal(value, unit));
+      network.getNode(targetName).setPressure(toPascal(value, unit));
       return;
     }
-    LoopedPipeNetwork.NetworkPipe edge =
-        network.getPipe(targetName);
+    LoopedPipeNetwork.NetworkPipe edge = network.getPipe(targetName);
     switch (type) {
     case CHOKE_OPENING:
       edge.setChokeOpening(value);
@@ -276,63 +252,53 @@ public class NetworkDecisionVariable implements Serializable {
       edge.setAvailability(value);
       break;
     default:
-      throw new IllegalStateException(
-          "Unsupported decision variable type: " + type);
+      throw new IllegalStateException("Unsupported decision variable type: " + type);
     }
   }
 
   private static double toKgPerSecond(double value, String unit) {
-    if ("kg/s".equalsIgnoreCase(unit)
-        || "kg/sec".equalsIgnoreCase(unit)) {
+    if ("kg/s".equalsIgnoreCase(unit) || "kg/sec".equalsIgnoreCase(unit)) {
       return value;
     }
     if ("kg/hr".equalsIgnoreCase(unit)) {
       return value / 3600.0;
     }
-    throw new IllegalArgumentException(
-        "Unsupported mass-rate unit: " + unit);
+    throw new IllegalArgumentException("Unsupported mass-rate unit: " + unit);
   }
 
-  private static double fromKgPerSecond(double value,
-      String unit) {
-    if ("kg/s".equalsIgnoreCase(unit)
-        || "kg/sec".equalsIgnoreCase(unit)) {
+  private static double fromKgPerSecond(double value, String unit) {
+    if ("kg/s".equalsIgnoreCase(unit) || "kg/sec".equalsIgnoreCase(unit)) {
       return value;
     }
     if ("kg/hr".equalsIgnoreCase(unit)) {
       return value * 3600.0;
     }
-    throw new IllegalArgumentException(
-        "Unsupported mass-rate unit: " + unit);
+    throw new IllegalArgumentException("Unsupported mass-rate unit: " + unit);
   }
 
   private static double toPascal(double value, String unit) {
     if ("Pa".equalsIgnoreCase(unit)) {
       return value;
     }
-    if ("bara".equalsIgnoreCase(unit)
-        || "bar".equalsIgnoreCase(unit)) {
+    if ("bara".equalsIgnoreCase(unit) || "bar".equalsIgnoreCase(unit)) {
       return value * 1.0e5;
     }
     if ("barg".equalsIgnoreCase(unit)) {
       return (value + 1.01325) * 1.0e5;
     }
-    throw new IllegalArgumentException(
-        "Unsupported pressure unit: " + unit);
+    throw new IllegalArgumentException("Unsupported pressure unit: " + unit);
   }
 
   private static double fromPascal(double value, String unit) {
     if ("Pa".equalsIgnoreCase(unit)) {
       return value;
     }
-    if ("bara".equalsIgnoreCase(unit)
-        || "bar".equalsIgnoreCase(unit)) {
+    if ("bara".equalsIgnoreCase(unit) || "bar".equalsIgnoreCase(unit)) {
       return value / 1.0e5;
     }
     if ("barg".equalsIgnoreCase(unit)) {
       return value / 1.0e5 - 1.01325;
     }
-    throw new IllegalArgumentException(
-        "Unsupported pressure unit: " + unit);
+    throw new IllegalArgumentException("Unsupported pressure unit: " + unit);
   }
 }

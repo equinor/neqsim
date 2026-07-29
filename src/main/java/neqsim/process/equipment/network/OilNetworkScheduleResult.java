@@ -36,26 +36,17 @@ public class OilNetworkScheduleResult implements Serializable {
    * @param activeConstraints residuals
    * @param message diagnostic
    */
-  public OilNetworkScheduleResult(boolean feasible,
-      List<OilSchedulePeriodResult> periods,
-      Map<String, CargoLoadingResult> cargoes,
-      Map<String, TankInventoryState> terminalInventories,
-      double massBalanceResidualKg,
-      double maxComponentBalanceResidualKg,
-      Map<String, Double> activeConstraints, String message) {
+  public OilNetworkScheduleResult(boolean feasible, List<OilSchedulePeriodResult> periods,
+      Map<String, CargoLoadingResult> cargoes, Map<String, TankInventoryState> terminalInventories,
+      double massBalanceResidualKg, double maxComponentBalanceResidualKg, Map<String, Double> activeConstraints,
+      String message) {
     this.feasible = feasible;
-    this.periods =
-        new ArrayList<OilSchedulePeriodResult>(periods);
-    this.cargoes =
-        new LinkedHashMap<String, CargoLoadingResult>(cargoes);
-    this.terminalInventories =
-        new LinkedHashMap<String, TankInventoryState>(
-            terminalInventories);
+    this.periods = new ArrayList<OilSchedulePeriodResult>(periods);
+    this.cargoes = new LinkedHashMap<String, CargoLoadingResult>(cargoes);
+    this.terminalInventories = new LinkedHashMap<String, TankInventoryState>(terminalInventories);
     this.massBalanceResidualKg = massBalanceResidualKg;
-    this.maxComponentBalanceResidualKg =
-        maxComponentBalanceResidualKg;
-    this.activeConstraints =
-        new LinkedHashMap<String, Double>(activeConstraints);
+    this.maxComponentBalanceResidualKg = maxComponentBalanceResidualKg;
+    this.activeConstraints = new LinkedHashMap<String, Double>(activeConstraints);
     this.message = message;
   }
 
@@ -101,8 +92,7 @@ public class OilNetworkScheduleResult implements Serializable {
 
   /** @return stable JSON */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting()
-        .serializeSpecialFloatingPointValues().create().toJson(this);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(this);
   }
 
   /**
@@ -112,7 +102,6 @@ public class OilNetworkScheduleResult implements Serializable {
    * @return result
    */
   public static OilNetworkScheduleResult fromJson(String json) {
-    return new Gson().fromJson(json,
-        OilNetworkScheduleResult.class);
+    return new Gson().fromJson(json, OilNetworkScheduleResult.class);
   }
 }

@@ -30,16 +30,13 @@ public class NetworkQualityLimit implements Serializable {
    * @param method method or standard
    * @param provenance limit provenance
    */
-  public NetworkQualityLimit(NetworkQualityMetric metric,
-      Double lowerLimit, Double upperLimit, String unit,
-      QualityReference reference, String attributeName,
-      String method, String provenance) {
+  public NetworkQualityLimit(NetworkQualityMetric metric, Double lowerLimit, Double upperLimit, String unit,
+      QualityReference reference, String attributeName, String method, String provenance) {
     if (metric == null) {
       throw new IllegalArgumentException("Metric cannot be null");
     }
     if (lowerLimit == null && upperLimit == null) {
-      throw new IllegalArgumentException(
-          "At least one quality limit is required");
+      throw new IllegalArgumentException("At least one quality limit is required");
     }
     this.metricKey = metric.getKey();
     this.domain = metric.getDomain();

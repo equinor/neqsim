@@ -25,11 +25,9 @@ public class CrudeParcel implements Serializable {
    * @param route route
    * @param provenance source
    */
-  public CrudeParcel(String id, double massKg, CrudeAssay assay,
-      int entryPeriod, String route, String provenance) {
+  public CrudeParcel(String id, double massKg, CrudeAssay assay, int entryPeriod, String route, String provenance) {
     if (!(massKg > 0.0)) {
-      throw new IllegalArgumentException(
-          "Parcel mass must be positive");
+      throw new IllegalArgumentException("Parcel mass must be positive");
     }
     this.id = id;
     this.massKg = massKg;

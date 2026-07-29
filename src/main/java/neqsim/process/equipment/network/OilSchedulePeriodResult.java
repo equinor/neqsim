@@ -32,27 +32,16 @@ public class OilSchedulePeriodResult implements Serializable {
    * @param loadedCargoes cargo results
    * @param constraintResiduals residuals
    */
-  public OilSchedulePeriodResult(NetworkPeriod period,
-      boolean feasible,
-      Map<String, TankInventoryState> openingInventories,
-      Map<String, TankInventoryState> closingInventories,
-      List<String> receivedParcels,
-      List<CargoLoadingResult> loadedCargoes,
-      Map<String, Double> constraintResiduals) {
+  public OilSchedulePeriodResult(NetworkPeriod period, boolean feasible,
+      Map<String, TankInventoryState> openingInventories, Map<String, TankInventoryState> closingInventories,
+      List<String> receivedParcels, List<CargoLoadingResult> loadedCargoes, Map<String, Double> constraintResiduals) {
     this.period = period;
     this.feasible = feasible;
-    this.openingInventories =
-        new LinkedHashMap<String, TankInventoryState>(
-            openingInventories);
-    this.closingInventories =
-        new LinkedHashMap<String, TankInventoryState>(
-            closingInventories);
-    this.receivedParcels =
-        new ArrayList<String>(receivedParcels);
-    this.loadedCargoes =
-        new ArrayList<CargoLoadingResult>(loadedCargoes);
-    this.constraintResiduals =
-        new LinkedHashMap<String, Double>(constraintResiduals);
+    this.openingInventories = new LinkedHashMap<String, TankInventoryState>(openingInventories);
+    this.closingInventories = new LinkedHashMap<String, TankInventoryState>(closingInventories);
+    this.receivedParcels = new ArrayList<String>(receivedParcels);
+    this.loadedCargoes = new ArrayList<CargoLoadingResult>(loadedCargoes);
+    this.constraintResiduals = new LinkedHashMap<String, Double>(constraintResiduals);
   }
 
   /** @return period */

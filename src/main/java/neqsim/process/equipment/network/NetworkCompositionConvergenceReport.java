@@ -9,8 +9,7 @@ import com.google.gson.GsonBuilder;
 /**
  * Convergence and conservation diagnostics for network composition mixing.
  */
-public final class NetworkCompositionConvergenceReport
-    implements Serializable {
+public final class NetworkCompositionConvergenceReport implements Serializable {
   private static final long serialVersionUID = 1000L;
 
   private final boolean converged;
@@ -27,32 +26,24 @@ public final class NetworkCompositionConvergenceReport
    *
    * @param converged true when all configured residual tolerances were met
    * @param iterations number of synchronous composition iterations
-   * @param maxMoleFractionResidual maximum absolute component mole-fraction
-   *        change
+   * @param maxMoleFractionResidual maximum absolute component mole-fraction change
    * @param maxTemperatureResidualK maximum absolute temperature change in K
-   * @param maxComponentBalanceResidualMolS maximum component balance residual
-   *        in mol/s
-   * @param maxComponentMassBalanceResidualKgS maximum component mass balance
-   *        residual in kg/s
+   * @param maxComponentBalanceResidualMolS maximum component balance residual in mol/s
+   * @param maxComponentMassBalanceResidualKgS maximum component mass balance residual in kg/s
    * @param message diagnostic summary
    * @param nodeResults per-node mixing results
    */
-  public NetworkCompositionConvergenceReport(boolean converged, int iterations,
-      double maxMoleFractionResidual, double maxTemperatureResidualK,
-      double maxComponentBalanceResidualMolS,
-      double maxComponentMassBalanceResidualKgS, String message,
-      Map<String, NetworkMixingResult> nodeResults) {
+  public NetworkCompositionConvergenceReport(boolean converged, int iterations, double maxMoleFractionResidual,
+      double maxTemperatureResidualK, double maxComponentBalanceResidualMolS, double maxComponentMassBalanceResidualKgS,
+      String message, Map<String, NetworkMixingResult> nodeResults) {
     this.converged = converged;
     this.iterations = iterations;
     this.maxMoleFractionResidual = maxMoleFractionResidual;
     this.maxTemperatureResidualK = maxTemperatureResidualK;
-    this.maxComponentBalanceResidualMolS =
-        maxComponentBalanceResidualMolS;
-    this.maxComponentMassBalanceResidualKgS =
-        maxComponentMassBalanceResidualKgS;
+    this.maxComponentBalanceResidualMolS = maxComponentBalanceResidualMolS;
+    this.maxComponentMassBalanceResidualKgS = maxComponentMassBalanceResidualKgS;
     this.message = message;
-    this.nodeResults =
-        new LinkedHashMap<String, NetworkMixingResult>(nodeResults);
+    this.nodeResults = new LinkedHashMap<String, NetworkMixingResult>(nodeResults);
   }
 
   /**

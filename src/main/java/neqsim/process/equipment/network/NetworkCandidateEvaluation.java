@@ -14,30 +14,22 @@ import com.google.gson.GsonBuilder;
 public class NetworkCandidateEvaluation implements Serializable {
   private static final long serialVersionUID = 1000L;
 
-  private final Map<String, Double> decisions =
-      new LinkedHashMap<String, Double>();
-  private final Map<String, String> decisionUnits =
-      new LinkedHashMap<String, String>();
-  private final Map<String, String> rateBases =
-      new LinkedHashMap<String, String>();
-  private final Map<String, Double> objectiveTerms =
-      new LinkedHashMap<String, Double>();
-  private final List<NetworkConstraintResult> constraints =
-      new ArrayList<NetworkConstraintResult>();
-  private final List<String> activeConstraints =
-      new ArrayList<String>();
+  private final Map<String, Double> decisions = new LinkedHashMap<String, Double>();
+  private final Map<String, String> decisionUnits = new LinkedHashMap<String, String>();
+  private final Map<String, String> rateBases = new LinkedHashMap<String, String>();
+  private final Map<String, Double> objectiveTerms = new LinkedHashMap<String, Double>();
+  private final List<NetworkConstraintResult> constraints = new ArrayList<NetworkConstraintResult>();
+  private final List<String> activeConstraints = new ArrayList<String>();
   private double objectiveValue;
   private double penalty;
   private boolean feasible;
   private boolean solverConverged;
   private String message;
 
-  void addDecision(NetworkDecisionVariable variable,
-      double value) {
+  void addDecision(NetworkDecisionVariable variable, double value) {
     decisions.put(variable.getName(), value);
     decisionUnits.put(variable.getName(), variable.getUnit());
-    rateBases.put(variable.getName(),
-        variable.getRateBasis().name());
+    rateBases.put(variable.getName(), variable.getRateBasis().name());
   }
 
   void addObjectiveTerm(String name, double value) {

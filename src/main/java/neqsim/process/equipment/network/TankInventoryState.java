@@ -33,10 +33,8 @@ public class TankInventoryState implements Serializable {
    * @param componentMassKg components
    * @param parcelMassKg parcel identities
    */
-  public TankInventoryState(String tankName, double massKg,
-      double capacityKg, double heelKg, boolean available,
-      String mixingMode, Map<String, Double> componentMassKg,
-      Map<String, Double> parcelMassKg) {
+  public TankInventoryState(String tankName, double massKg, double capacityKg, double heelKg, boolean available,
+      String mixingMode, Map<String, Double> componentMassKg, Map<String, Double> parcelMassKg) {
     this.tankName = tankName;
     this.massKg = massKg;
     this.capacityKg = capacityKg;
@@ -44,10 +42,8 @@ public class TankInventoryState implements Serializable {
     this.ullageKg = capacityKg - massKg;
     this.available = available;
     this.mixingMode = mixingMode;
-    this.componentMassKg =
-        new LinkedHashMap<String, Double>(componentMassKg);
-    this.parcelMassKg =
-        new LinkedHashMap<String, Double>(parcelMassKg);
+    this.componentMassKg = new LinkedHashMap<String, Double>(componentMassKg);
+    this.parcelMassKg = new LinkedHashMap<String, Double>(parcelMassKg);
   }
 
   /** @return tank name */

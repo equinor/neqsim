@@ -9,9 +9,8 @@ import java.util.Map;
  * Conservative component-flow result for one network mixing node.
  *
  * <p>
- * Component rates are molar flow rates in mol/s. The result records the inlet
- * totals used to construct the thermodynamic state and the numerical closure
- * error after converting the mixed composition back to component flow.
+ * Component rates are molar flow rates in mol/s. The result records the inlet totals used to construct the
+ * thermodynamic state and the numerical closure error after converting the mixed composition back to component flow.
  * </p>
  */
 public final class NetworkMixingResult implements Serializable {
@@ -34,28 +33,21 @@ public final class NetworkMixingResult implements Serializable {
    * @param totalMolarFlowMolS total inlet molar flow in mol/s
    * @param pressurePa mixed-state pressure in Pa absolute
    * @param temperatureK mixed-state temperature in K
-   * @param maxComponentBalanceResidualMolS maximum absolute component balance
-   *        residual in mol/s
-   * @param maxComponentMassBalanceResidualKgS maximum absolute component mass
-   *        balance residual in kg/s
+   * @param maxComponentBalanceResidualMolS maximum absolute component balance residual in mol/s
+   * @param maxComponentMassBalanceResidualKgS maximum absolute component mass balance residual in kg/s
    * @param componentMolarFlowMolS component molar inlet flows in mol/s
    */
-  public NetworkMixingResult(String nodeName, double totalMassFlowKgS,
-      double totalMolarFlowMolS, double pressurePa, double temperatureK,
-      double maxComponentBalanceResidualMolS,
-      double maxComponentMassBalanceResidualKgS,
+  public NetworkMixingResult(String nodeName, double totalMassFlowKgS, double totalMolarFlowMolS, double pressurePa,
+      double temperatureK, double maxComponentBalanceResidualMolS, double maxComponentMassBalanceResidualKgS,
       Map<String, Double> componentMolarFlowMolS) {
     this.nodeName = nodeName;
     this.totalMassFlowKgS = totalMassFlowKgS;
     this.totalMolarFlowMolS = totalMolarFlowMolS;
     this.pressurePa = pressurePa;
     this.temperatureK = temperatureK;
-    this.maxComponentBalanceResidualMolS =
-        maxComponentBalanceResidualMolS;
-    this.maxComponentMassBalanceResidualKgS =
-        maxComponentMassBalanceResidualKgS;
-    this.componentMolarFlowMolS =
-        new LinkedHashMap<String, Double>(componentMolarFlowMolS);
+    this.maxComponentBalanceResidualMolS = maxComponentBalanceResidualMolS;
+    this.maxComponentMassBalanceResidualKgS = maxComponentMassBalanceResidualKgS;
+    this.componentMolarFlowMolS = new LinkedHashMap<String, Double>(componentMolarFlowMolS);
   }
 
   /**

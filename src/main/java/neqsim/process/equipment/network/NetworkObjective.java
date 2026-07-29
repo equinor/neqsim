@@ -24,8 +24,7 @@ public interface NetworkObjective extends Serializable {
    * Evaluate the current solved state.
    *
    * <p>
-   * Larger weighted values are always preferred. Minimization terms should
-   * return a negative cost.
+   * Larger weighted values are always preferred. Minimization terms should return a negative cost.
    * </p>
    *
    * @param network network

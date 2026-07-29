@@ -24,13 +24,11 @@ public class CrudeBlendResult implements Serializable {
    * @param componentMassKg component masses
    * @param massBalanceResidualKg closure residual
    */
-  public CrudeBlendResult(CrudeAssay assay, double totalMassKg,
-      Map<String, Double> componentMassKg,
+  public CrudeBlendResult(CrudeAssay assay, double totalMassKg, Map<String, Double> componentMassKg,
       double massBalanceResidualKg) {
     this.assay = assay;
     this.totalMassKg = totalMassKg;
-    this.componentMassKg =
-        new LinkedHashMap<String, Double>(componentMassKg);
+    this.componentMassKg = new LinkedHashMap<String, Double>(componentMassKg);
     this.massBalanceResidualKg = massBalanceResidualKg;
   }
 

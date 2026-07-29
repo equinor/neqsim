@@ -21,18 +21,14 @@ public class NetworkPeriod implements Serializable {
    * @param startIso ISO-8601 start instant
    * @param durationSeconds duration in seconds
    */
-  public NetworkPeriod(int index, String startIso,
-      double durationSeconds) {
+  public NetworkPeriod(int index, String startIso, double durationSeconds) {
     if (!(durationSeconds > 0.0)) {
-      throw new IllegalArgumentException(
-          "Period duration must be positive");
+      throw new IllegalArgumentException("Period duration must be positive");
     }
     Instant startInstant = Instant.parse(startIso);
     this.index = index;
     this.start = startInstant.toString();
-    this.end = startInstant
-        .plusMillis(Math.round(durationSeconds * 1000.0))
-        .toString();
+    this.end = startInstant.plusMillis(Math.round(durationSeconds * 1000.0)).toString();
     this.durationSeconds = durationSeconds;
   }
 

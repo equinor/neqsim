@@ -27,8 +27,7 @@ public class NetworkMeasuredAttribute implements Serializable {
    * @param effectiveDate ISO-8601 date
    * @param blendingRule explicit blending rule
    */
-  public NetworkMeasuredAttribute(String name, double value,
-      String unit, String method, String provenance,
+  public NetworkMeasuredAttribute(String name, double value, String unit, String method, String provenance,
       String effectiveDate, String blendingRule) {
     this.name = name;
     this.value = value;

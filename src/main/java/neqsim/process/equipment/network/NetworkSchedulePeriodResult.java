@@ -30,26 +30,17 @@ public class NetworkSchedulePeriodResult implements Serializable {
    * @param constraintResiduals named non-negative residuals
    * @param qualityReports point-specific quality reports
    */
-  public NetworkSchedulePeriodResult(NetworkPeriod period,
-      boolean feasible,
-      Map<String, GasLinepackState> openingLinepack,
-      Map<String, GasLinepackState> closingLinepack,
-      Map<String, double[]> pipeFlowsKgS,
-      Map<String, Double> constraintResiduals,
+  public NetworkSchedulePeriodResult(NetworkPeriod period, boolean feasible,
+      Map<String, GasLinepackState> openingLinepack, Map<String, GasLinepackState> closingLinepack,
+      Map<String, double[]> pipeFlowsKgS, Map<String, Double> constraintResiduals,
       Map<String, NetworkQualityComplianceReport> qualityReports) {
     this.period = period;
     this.feasible = feasible;
-    this.openingLinepack =
-        new LinkedHashMap<String, GasLinepackState>(openingLinepack);
-    this.closingLinepack =
-        new LinkedHashMap<String, GasLinepackState>(closingLinepack);
-    this.pipeFlowsKgS =
-        new LinkedHashMap<String, double[]>(pipeFlowsKgS);
-    this.constraintResiduals =
-        new LinkedHashMap<String, Double>(constraintResiduals);
-    this.qualityReports =
-        new LinkedHashMap<String, NetworkQualityComplianceReport>(
-            qualityReports);
+    this.openingLinepack = new LinkedHashMap<String, GasLinepackState>(openingLinepack);
+    this.closingLinepack = new LinkedHashMap<String, GasLinepackState>(closingLinepack);
+    this.pipeFlowsKgS = new LinkedHashMap<String, double[]>(pipeFlowsKgS);
+    this.constraintResiduals = new LinkedHashMap<String, Double>(constraintResiduals);
+    this.qualityReports = new LinkedHashMap<String, NetworkQualityComplianceReport>(qualityReports);
   }
 
   /** @return period */
@@ -83,8 +74,7 @@ public class NetworkSchedulePeriodResult implements Serializable {
   }
 
   /** @return point-specific quality reports */
-  public Map<String, NetworkQualityComplianceReport>
-      getQualityReports() {
+  public Map<String, NetworkQualityComplianceReport> getQualityReports() {
     return Collections.unmodifiableMap(qualityReports);
   }
 }

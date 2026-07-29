@@ -3,8 +3,7 @@ package neqsim.process.equipment.network;
 import java.io.Serializable;
 
 /**
- * Period series with explicit mass, molar, standard-volume, actual-volume, or
- * energy basis.
+ * Period series with explicit mass, molar, standard-volume, actual-volume, or energy basis.
  */
 public class NetworkNomination implements Serializable {
   private static final long serialVersionUID = 1000L;
@@ -24,12 +23,10 @@ public class NetworkNomination implements Serializable {
    * @param basis explicit rate basis
    * @param toleranceFraction allowed relative deviation
    */
-  public NetworkNomination(String pointName, double[] values,
-      String unit, NetworkDecisionVariable.RateBasis basis,
+  public NetworkNomination(String pointName, double[] values, String unit, NetworkDecisionVariable.RateBasis basis,
       double toleranceFraction) {
     if (values == null || values.length == 0) {
-      throw new IllegalArgumentException(
-          "Nomination series cannot be empty");
+      throw new IllegalArgumentException("Nomination series cannot be empty");
     }
     this.pointName = pointName;
     this.values = values.clone();

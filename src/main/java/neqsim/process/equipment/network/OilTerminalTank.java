@@ -45,13 +45,10 @@ public class OilTerminalTank implements Serializable {
    * @param maximumWithdrawalKgS withdrawal limit
    * @param mixingMode mixing mode
    */
-  public OilTerminalTank(String name, double capacityKg,
-      double heelKg, double maximumReceiptKgS,
+  public OilTerminalTank(String name, double capacityKg, double heelKg, double maximumReceiptKgS,
       double maximumWithdrawalKgS, MixingMode mixingMode) {
-    if (!(capacityKg > 0.0) || heelKg < 0.0
-        || heelKg >= capacityKg) {
-      throw new IllegalArgumentException(
-          "Tank capacity and heel are invalid");
+    if (!(capacityKg > 0.0) || heelKg < 0.0 || heelKg >= capacityKg) {
+      throw new IllegalArgumentException("Tank capacity and heel are invalid");
     }
     this.name = name;
     this.capacityKg = capacityKg;
@@ -80,10 +77,8 @@ public class OilTerminalTank implements Serializable {
    * @param parcel opening parcel
    */
   public void addOpeningInventory(CrudeParcel parcel) {
-    if (getMassKg() + parcel.getMassKg()
-        > capacityKg + 1.0e-9) {
-      throw new IllegalStateException(
-          "Opening inventory exceeds capacity for " + name);
+    if (getMassKg() + parcel.getMassKg() > capacityKg + 1.0e-9) {
+      throw new IllegalStateException("Opening inventory exceeds capacity for " + name);
     }
     lots.add(new TankLot(parcel, parcel.getMassKg()));
   }
@@ -96,18 +91,12 @@ public class OilTerminalTank implements Serializable {
    */
   public void receive(CrudeParcel parcel, double durationSeconds) {
     requireAvailable();
-    double newReceipt =
-        receivedThisPeriodKg + parcel.getMassKg();
-    if (maximumReceiptKgS > 0.0
-        && newReceipt > maximumReceiptKgS * durationSeconds
-            + 1.0e-9) {
-      throw new IllegalStateException(
-          "Tank receipt-rate limit exceeded for " + name);
+    double newReceipt = receivedThisPeriodKg + parcel.getMassKg();
+    if (maximumReceiptKgS > 0.0 && newReceipt > maximumReceiptKgS * durationSeconds + 1.0e-9) {
+      throw new IllegalStateException("Tank receipt-rate limit exceeded for " + name);
     }
-    if (getMassKg() + parcel.getMassKg()
-        > capacityKg + 1.0e-9) {
-      throw new IllegalStateException(
-          "Tank capacity/ullage exceeded for " + name);
+    if (getMassKg() + parcel.getMassKg() > capacityKg + 1.0e-9) {
+      throw new IllegalStateException("Tank capacity/ullage exceeded for " + name);
     }
     lots.add(new TankLot(parcel, parcel.getMassKg()));
     receivedThisPeriodKg = newReceipt;
@@ -123,73 +112,53 @@ public class OilTerminalTank implements Serializable {
    * @param durationSeconds period duration
    * @return withdrawn parcel
    */
-  public CrudeParcel withdraw(String parcelId, double massKg,
-      int periodIndex, String route, double durationSeconds) {
+  public CrudeParcel withdraw(String parcelId, double massKg, int periodIndex, String route, double durationSeconds) {
     requireAvailable();
-    if (!(massKg > 0.0)
-        || getMassKg() - massKg < heelKg - 1.0e-9) {
-      throw new IllegalStateException(
-          "Withdrawal violates inventory heel for " + name);
+    if (!(massKg > 0.0) || getMassKg() - massKg < heelKg - 1.0e-9) {
+      throw new IllegalStateException("Withdrawal violates inventory heel for " + name);
     }
-    double newWithdrawal =
-        withdrawnThisPeriodKg + massKg;
-    if (maximumWithdrawalKgS > 0.0
-        && newWithdrawal
-            > maximumWithdrawalKgS * durationSeconds + 1.0e-9) {
-      throw new IllegalStateException(
-          "Tank withdrawal-rate limit exceeded for " + name);
+    double newWithdrawal = withdrawnThisPeriodKg + massKg;
+    if (maximumWithdrawalKgS > 0.0 && newWithdrawal > maximumWithdrawalKgS * durationSeconds + 1.0e-9) {
+      throw new IllegalStateException("Tank withdrawal-rate limit exceeded for " + name);
     }
 
     CrudeParcel output;
     if (mixingMode == MixingMode.PERFECT_MIXED) {
-      output = withdrawPerfectlyMixed(
-          parcelId, massKg, periodIndex, route);
+      output = withdrawPerfectlyMixed(parcelId, massKg, periodIndex, route);
     } else {
-      output = withdrawSegregated(
-          parcelId, massKg, periodIndex, route);
+      output = withdrawSegregated(parcelId, massKg, periodIndex, route);
     }
     withdrawnThisPeriodKg = newWithdrawal;
     return output;
   }
 
-  private CrudeParcel withdrawPerfectlyMixed(String parcelId,
-      double massKg, int periodIndex, String route) {
+  private CrudeParcel withdrawPerfectlyMixed(String parcelId, double massKg, int periodIndex, String route) {
     double openingMass = getMassKg();
-    List<CrudeParcel> inventoryParcels =
-        new ArrayList<CrudeParcel>();
+    List<CrudeParcel> inventoryParcels = new ArrayList<CrudeParcel>();
     for (TankLot lot : lots) {
-      inventoryParcels.add(new CrudeParcel(
-          lot.parcel.getId(), lot.massKg, lot.parcel.getAssay(),
-          lot.parcel.getEntryPeriod(), lot.parcel.getRoute(),
-          lot.parcel.getProvenance()));
+      inventoryParcels.add(new CrudeParcel(lot.parcel.getId(), lot.massKg, lot.parcel.getAssay(),
+          lot.parcel.getEntryPeriod(), lot.parcel.getRoute(), lot.parcel.getProvenance()));
     }
-    CrudeBlendResult blend = CrudeAssay.blend(
-        name + " mixed inventory", inventoryParcels);
-    double remainingFraction =
-        (openingMass - massKg) / openingMass;
+    CrudeBlendResult blend = CrudeAssay.blend(name + " mixed inventory", inventoryParcels);
+    double remainingFraction = (openingMass - massKg) / openingMass;
     for (TankLot lot : lots) {
       lot.massKg *= remainingFraction;
     }
     removeEmptyLots();
-    return new CrudeParcel(parcelId, massKg, blend.getAssay(),
-        periodIndex, route, "Perfectly mixed withdrawal from "
-            + name);
+    return new CrudeParcel(parcelId, massKg, blend.getAssay(), periodIndex, route,
+        "Perfectly mixed withdrawal from " + name);
   }
 
-  private CrudeParcel withdrawSegregated(String parcelId,
-      double massKg, int periodIndex, String route) {
+  private CrudeParcel withdrawSegregated(String parcelId, double massKg, int periodIndex, String route) {
     TankLot first = lots.get(0);
     if (first.massKg + 1.0e-9 < massKg) {
-      throw new IllegalStateException(
-          "Segregated withdrawal would cross a parcel boundary in "
-              + name
-              + "; request a smaller parcel or explicitly blend");
+      throw new IllegalStateException("Segregated withdrawal would cross a parcel boundary in " + name
+          + "; request a smaller parcel or explicitly blend");
     }
     first.massKg -= massKg;
     CrudeAssay assay = first.parcel.getAssay();
     removeEmptyLots();
-    return new CrudeParcel(parcelId, massKg, assay, periodIndex,
-        route, "Segregated FIFO withdrawal from " + name);
+    return new CrudeParcel(parcelId, massKg, assay, periodIndex, route, "Segregated FIFO withdrawal from " + name);
   }
 
   private void removeEmptyLots() {
@@ -216,29 +185,21 @@ public class OilTerminalTank implements Serializable {
    * @return state
    */
   public TankInventoryState snapshot() {
-    Map<String, Double> componentMass =
-        new LinkedHashMap<String, Double>();
-    Map<String, Double> parcelMass =
-        new LinkedHashMap<String, Double>();
+    Map<String, Double> componentMass = new LinkedHashMap<String, Double>();
+    Map<String, Double> parcelMass = new LinkedHashMap<String, Double>();
     for (TankLot lot : lots) {
       parcelMass.put(lot.parcel.getId(), lot.massKg);
       SystemInterface fluid = lot.parcel.getAssay().getFluid();
       double averageMolarMass = fluid.getMolarMass();
       double[] composition = fluid.getMolarComposition();
-      for (int index = 0;
-          index < fluid.getNumberOfComponents(); index++) {
-        ComponentInterface component =
-            fluid.getPhase(0).getComponent(index);
-        double mass = lot.massKg * composition[index]
-            * component.getMolarMass() / averageMolarMass;
-        Double existing =
-            componentMass.get(component.getComponentName());
-        componentMass.put(component.getComponentName(),
-            (existing == null ? 0.0 : existing) + mass);
+      for (int index = 0; index < fluid.getNumberOfComponents(); index++) {
+        ComponentInterface component = fluid.getPhase(0).getComponent(index);
+        double mass = lot.massKg * composition[index] * component.getMolarMass() / averageMolarMass;
+        Double existing = componentMass.get(component.getComponentName());
+        componentMass.put(component.getComponentName(), (existing == null ? 0.0 : existing) + mass);
       }
     }
-    return new TankInventoryState(name, getMassKg(), capacityKg,
-        heelKg, available, mixingMode.name(), componentMass,
+    return new TankInventoryState(name, getMassKg(), capacityKg, heelKg, available, mixingMode.name(), componentMass,
         parcelMass);
   }
 
@@ -278,8 +239,7 @@ public class OilTerminalTank implements Serializable {
    * @return copied tank and inventory
    */
   public OilTerminalTank copy() {
-    OilTerminalTank copied = new OilTerminalTank(name, capacityKg,
-        heelKg, maximumReceiptKgS, maximumWithdrawalKgS,
+    OilTerminalTank copied = new OilTerminalTank(name, capacityKg, heelKg, maximumReceiptKgS, maximumWithdrawalKgS,
         mixingMode);
     copied.available = available;
     for (TankLot lot : lots) {
@@ -290,8 +250,7 @@ public class OilTerminalTank implements Serializable {
 
   private void requireAvailable() {
     if (!available) {
-      throw new IllegalStateException(
-          "Tank is unavailable: " + name);
+      throw new IllegalStateException("Tank is unavailable: " + name);
     }
   }
 

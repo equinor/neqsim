@@ -4,8 +4,7 @@ import java.io.Serializable;
 import com.google.gson.GsonBuilder;
 
 /**
- * Convergence diagnostics for coupled hydraulic, composition, and thermal
- * network calculations.
+ * Convergence diagnostics for coupled hydraulic, composition, and thermal network calculations.
  */
 public final class NetworkCouplingReport implements Serializable {
   private static final long serialVersionUID = 1000L;
@@ -31,12 +30,9 @@ public final class NetworkCouplingReport implements Serializable {
    * @param compositionReport most recent composition convergence report
    * @param message diagnostic summary
    */
-  public NetworkCouplingReport(boolean converged,
-      boolean hydraulicConverged, int outerIterations,
-      double maxFlowResidualKgS, double maxPressureResidualPa,
-      double maxTemperatureResidualK,
-      NetworkCompositionConvergenceReport compositionReport,
-      String message) {
+  public NetworkCouplingReport(boolean converged, boolean hydraulicConverged, int outerIterations,
+      double maxFlowResidualKgS, double maxPressureResidualPa, double maxTemperatureResidualK,
+      NetworkCompositionConvergenceReport compositionReport, String message) {
     this.converged = converged;
     this.hydraulicConverged = hydraulicConverged;
     this.outerIterations = outerIterations;

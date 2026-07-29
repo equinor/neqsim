@@ -6,8 +6,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Cargo mass, loading window, berth, tank preferences, and synthetic quality
- * profile.
+ * Cargo mass, loading window, berth, tank preferences, and synthetic quality profile.
  */
 public class CargoNomination implements Serializable {
   private static final long serialVersionUID = 1000L;
@@ -33,11 +32,8 @@ public class CargoNomination implements Serializable {
    * @param qualityProfile synthetic/contractual profile
    * @param preferredTanks ordered tank preferences
    */
-  public CargoNomination(String cargoId, double massKg,
-      int earliestPeriod, int latestPeriod, String berth,
-      double maximumLoadingRateKgS,
-      NetworkQualityProfile qualityProfile,
-      List<String> preferredTanks) {
+  public CargoNomination(String cargoId, double massKg, int earliestPeriod, int latestPeriod, String berth,
+      double maximumLoadingRateKgS, NetworkQualityProfile qualityProfile, List<String> preferredTanks) {
     this.cargoId = cargoId;
     this.massKg = massKg;
     this.earliestPeriod = earliestPeriod;
@@ -45,8 +41,7 @@ public class CargoNomination implements Serializable {
     this.berth = berth;
     this.maximumLoadingRateKgS = maximumLoadingRateKgS;
     this.qualityProfile = qualityProfile;
-    this.preferredTanks =
-        new ArrayList<String>(preferredTanks);
+    this.preferredTanks = new ArrayList<String>(preferredTanks);
   }
 
   /** @return cargo identifier */

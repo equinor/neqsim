@@ -581,8 +581,7 @@ public class ProcessAutomation {
     ProcessEquipmentInterface unit = findUnit(areaName, unitName);
 
     if (unit instanceof LoopedPipeNetwork && parts.length == 3) {
-      return getNetworkProperty((LoopedPipeNetwork) unit, parts[1],
-          parts[2], unitOfMeasure);
+      return getNetworkProperty((LoopedPipeNetwork) unit, parts[1], parts[2], unitOfMeasure);
     }
 
     if (parts.length == 2) {
@@ -634,8 +633,7 @@ public class ProcessAutomation {
     ProcessEquipmentInterface unit = findUnit(areaName, unitName);
 
     if (unit instanceof LoopedPipeNetwork && parts.length == 3) {
-      setNetworkProperty((LoopedPipeNetwork) unit, parts[1],
-          parts[2], value, unitOfMeasure);
+      setNetworkProperty((LoopedPipeNetwork) unit, parts[1], parts[2], value, unitOfMeasure);
       this.dirty = true;
       return;
     }
@@ -859,8 +857,7 @@ public class ProcessAutomation {
     boolean handledOutlets = false;
 
     if (unit instanceof LoopedPipeNetwork) {
-      return enrichVariableMetadata(buildNetworkVariableList(
-          unitName, (LoopedPipeNetwork) unit));
+      return enrichVariableMetadata(buildNetworkVariableList(unitName, (LoopedPipeNetwork) unit));
     }
 
     // Universal equipment-level outputs
@@ -1112,105 +1109,55 @@ public class ProcessAutomation {
    * @param network network
    * @return variables
    */
-  private List<SimulationVariable> buildNetworkVariableList(
-      String unitName, LoopedPipeNetwork network) {
-    List<SimulationVariable> vars =
-        new ArrayList<SimulationVariable>();
+  private List<SimulationVariable> buildNetworkVariableList(String unitName, LoopedPipeNetwork network) {
+    List<SimulationVariable> vars = new ArrayList<SimulationVariable>();
     for (String nodeName : network.getNodeNames()) {
-      LoopedPipeNetwork.NetworkNode node =
-          network.getNode(nodeName);
-      vars.add(new SimulationVariable(
-          unitName + ".node." + nodeName + ".pressure",
-          "node." + nodeName + ".pressure", VariableType.OUTPUT,
-          "bara", "Solved network node pressure"));
-      vars.add(new SimulationVariable(
-          unitName + ".node." + nodeName + ".temperature",
-          "node." + nodeName + ".temperature",
-          VariableType.OUTPUT, "K",
-          "Solved network node temperature"));
+      LoopedPipeNetwork.NetworkNode node = network.getNode(nodeName);
+      vars.add(new SimulationVariable(unitName + ".node." + nodeName + ".pressure", "node." + nodeName + ".pressure",
+          VariableType.OUTPUT, "bara", "Solved network node pressure"));
+      vars.add(new SimulationVariable(unitName + ".node." + nodeName + ".temperature",
+          "node." + nodeName + ".temperature", VariableType.OUTPUT, "K", "Solved network node temperature"));
       if (node.getType() == LoopedPipeNetwork.NodeType.SOURCE) {
-        vars.add(new SimulationVariable(
-            unitName + ".source." + nodeName + ".rate",
-            "source." + nodeName + ".rate", VariableType.INPUT,
-            "kg/hr", "Source mass-rate decision")
-            .withBounds(Double.valueOf(0.0), null));
-        vars.add(new SimulationVariable(
-            unitName + ".source." + nodeName + ".pressure",
-            "source." + nodeName + ".pressure",
-            VariableType.INPUT, "bara",
-            "Source pressure decision")
-            .withBounds(Double.valueOf(0.01), null));
-      } else if (node.getType()
-          == LoopedPipeNetwork.NodeType.SINK) {
-        vars.add(new SimulationVariable(
-            unitName + ".sink." + nodeName + ".nomination",
-            "sink." + nodeName + ".nomination",
-            VariableType.INPUT, "kg/hr",
-            "Sink mass nomination")
-            .withBounds(Double.valueOf(0.0), null));
+        vars.add(new SimulationVariable(unitName + ".source." + nodeName + ".rate", "source." + nodeName + ".rate",
+            VariableType.INPUT, "kg/hr", "Source mass-rate decision").withBounds(Double.valueOf(0.0), null));
+        vars.add(
+            new SimulationVariable(unitName + ".source." + nodeName + ".pressure", "source." + nodeName + ".pressure",
+                VariableType.INPUT, "bara", "Source pressure decision").withBounds(Double.valueOf(0.01), null));
+      } else if (node.getType() == LoopedPipeNetwork.NodeType.SINK) {
+        vars.add(
+            new SimulationVariable(unitName + ".sink." + nodeName + ".nomination", "sink." + nodeName + ".nomination",
+                VariableType.INPUT, "kg/hr", "Sink mass nomination").withBounds(Double.valueOf(0.0), null));
       }
     }
 
     for (String edgeName : network.getPipeNames()) {
-      LoopedPipeNetwork.NetworkPipe edge =
-          network.getPipe(edgeName);
-      vars.add(new SimulationVariable(
-          unitName + ".edge." + edgeName + ".flowRate",
-          "edge." + edgeName + ".flowRate",
-          VariableType.OUTPUT, "kg/hr",
-          "Solved edge mass flow"));
-      vars.add(new SimulationVariable(
-          unitName + ".edge." + edgeName + ".pressureDrop",
-          "edge." + edgeName + ".pressureDrop",
-          VariableType.OUTPUT, "bar",
-          "Signed edge pressure loss"));
-      vars.add(new SimulationVariable(
-          unitName + ".edge." + edgeName + ".availability",
-          "edge." + edgeName + ".availability",
-          VariableType.INPUT, "-",
-          "Edge availability or derating fraction")
+      LoopedPipeNetwork.NetworkPipe edge = network.getPipe(edgeName);
+      vars.add(new SimulationVariable(unitName + ".edge." + edgeName + ".flowRate", "edge." + edgeName + ".flowRate",
+          VariableType.OUTPUT, "kg/hr", "Solved edge mass flow"));
+      vars.add(new SimulationVariable(unitName + ".edge." + edgeName + ".pressureDrop",
+          "edge." + edgeName + ".pressureDrop", VariableType.OUTPUT, "bar", "Signed edge pressure loss"));
+      vars.add(new SimulationVariable(unitName + ".edge." + edgeName + ".availability",
+          "edge." + edgeName + ".availability", VariableType.INPUT, "-", "Edge availability or derating fraction")
           .withBounds(Double.valueOf(0.0), Double.valueOf(1.0)));
 
-      if (edge.getElementType()
-          == LoopedPipeNetwork.NetworkElementType.CHOKE) {
-        vars.add(new SimulationVariable(
-            unitName + ".choke." + edgeName + ".opening",
-            "choke." + edgeName + ".opening",
-            VariableType.INPUT, "%", "Choke opening")
-            .withBounds(Double.valueOf(0.0),
-                Double.valueOf(100.0)));
-      } else if (edge.getElementType()
-          == LoopedPipeNetwork.NetworkElementType.REGULATOR) {
-        vars.add(new SimulationVariable(
-            unitName + ".regulator." + edgeName + ".setPoint",
-            "regulator." + edgeName + ".setPoint",
-            VariableType.INPUT, "bara",
-            "Regulator absolute-pressure set point")
+      if (edge.getElementType() == LoopedPipeNetwork.NetworkElementType.CHOKE) {
+        vars.add(new SimulationVariable(unitName + ".choke." + edgeName + ".opening", "choke." + edgeName + ".opening",
+            VariableType.INPUT, "%", "Choke opening").withBounds(Double.valueOf(0.0), Double.valueOf(100.0)));
+      } else if (edge.getElementType() == LoopedPipeNetwork.NetworkElementType.REGULATOR) {
+        vars.add(new SimulationVariable(unitName + ".regulator." + edgeName + ".setPoint",
+            "regulator." + edgeName + ".setPoint", VariableType.INPUT, "bara", "Regulator absolute-pressure set point")
             .withBounds(Double.valueOf(0.01), null));
-      } else if (edge.getElementType()
-          == LoopedPipeNetwork.NetworkElementType.COMPRESSOR) {
-        vars.add(new SimulationVariable(
-            unitName + ".compressor." + edgeName + ".speed",
-            "compressor." + edgeName + ".speed",
-            VariableType.INPUT, "rpm", "Compressor speed")
-            .withBounds(Double.valueOf(0.0), null));
-        vars.add(new SimulationVariable(
-            unitName + ".compressor." + edgeName + ".power",
-            "compressor." + edgeName + ".power",
-            VariableType.OUTPUT, "kW",
-            "Calculated compressor power"));
-      } else if (edge.getElementType()
-          == LoopedPipeNetwork.NetworkElementType.PUMP) {
-        vars.add(new SimulationVariable(
-            unitName + ".pump." + edgeName + ".speed",
-            "pump." + edgeName + ".speed",
-            VariableType.INPUT, "rpm", "Pump speed")
-            .withBounds(Double.valueOf(0.0), null));
-        vars.add(new SimulationVariable(
-            unitName + ".pump." + edgeName + ".power",
-            "pump." + edgeName + ".power",
-            VariableType.OUTPUT, "kW",
-            "Calculated pump shaft power"));
+      } else if (edge.getElementType() == LoopedPipeNetwork.NetworkElementType.COMPRESSOR) {
+        vars.add(
+            new SimulationVariable(unitName + ".compressor." + edgeName + ".speed", "compressor." + edgeName + ".speed",
+                VariableType.INPUT, "rpm", "Compressor speed").withBounds(Double.valueOf(0.0), null));
+        vars.add(new SimulationVariable(unitName + ".compressor." + edgeName + ".power",
+            "compressor." + edgeName + ".power", VariableType.OUTPUT, "kW", "Calculated compressor power"));
+      } else if (edge.getElementType() == LoopedPipeNetwork.NetworkElementType.PUMP) {
+        vars.add(new SimulationVariable(unitName + ".pump." + edgeName + ".speed", "pump." + edgeName + ".speed",
+            VariableType.INPUT, "rpm", "Pump speed").withBounds(Double.valueOf(0.0), null));
+        vars.add(new SimulationVariable(unitName + ".pump." + edgeName + ".power", "pump." + edgeName + ".power",
+            VariableType.OUTPUT, "kW", "Calculated pump shaft power"));
       }
     }
     return vars;
@@ -1225,49 +1172,36 @@ public class ProcessAutomation {
    * @param unit requested unit
    * @return value
    */
-  private double getNetworkProperty(LoopedPipeNetwork network,
-      String group, String targetAndProperty, String unit) {
-    String[] targetProperty =
-        splitNetworkTargetProperty(targetAndProperty);
+  private double getNetworkProperty(LoopedPipeNetwork network, String group, String targetAndProperty, String unit) {
+    String[] targetProperty = splitNetworkTargetProperty(targetAndProperty);
     String target = targetProperty[0];
     String property = targetProperty[1];
     if ("node".equals(group)) {
-      LoopedPipeNetwork.NetworkNode node =
-          network.getNode(target);
+      LoopedPipeNetwork.NetworkNode node = network.getNode(target);
       if ("pressure".equals(property)) {
-        return convertPressureFromPa(
-            node.getPressure(), unit, "bara");
+        return convertPressureFromPa(node.getPressure(), unit, "bara");
       }
       if ("temperature".equals(property)) {
-        return convertTemperatureFromK(
-            node.getTemperature(), unit, "K");
+        return convertTemperatureFromK(node.getTemperature(), unit, "K");
       }
     } else if ("source".equals(group)) {
-      LoopedPipeNetwork.NetworkNode node =
-          network.getNode(target);
+      LoopedPipeNetwork.NetworkNode node = network.getNode(target);
       if ("rate".equals(property)) {
-        return convertMassRateFromKgS(
-            -node.getDemand(), unit, "kg/hr");
+        return convertMassRateFromKgS(-node.getDemand(), unit, "kg/hr");
       }
       if ("pressure".equals(property)) {
-        return convertPressureFromPa(
-            node.getPressure(), unit, "bara");
+        return convertPressureFromPa(node.getPressure(), unit, "bara");
       }
-    } else if ("sink".equals(group)
-        && "nomination".equals(property)) {
-      return convertMassRateFromKgS(
-          network.getNode(target).getDemand(), unit, "kg/hr");
+    } else if ("sink".equals(group) && "nomination".equals(property)) {
+      return convertMassRateFromKgS(network.getNode(target).getDemand(), unit, "kg/hr");
     } else {
-      LoopedPipeNetwork.NetworkPipe edge =
-          network.getPipe(target);
+      LoopedPipeNetwork.NetworkPipe edge = network.getPipe(target);
       if ("edge".equals(group)) {
         if ("flowRate".equals(property)) {
-          return convertMassRateFromKgS(
-              edge.getFlowRate(), unit, "kg/hr");
+          return convertMassRateFromKgS(edge.getFlowRate(), unit, "kg/hr");
         }
         if ("pressureDrop".equals(property)) {
-          return convertPressureFromPa(
-              edge.getHeadLoss(), unit, "bar");
+          return convertPressureFromPa(edge.getHeadLoss(), unit, "bar");
         }
         if ("availability".equals(property)) {
           return edge.getAvailability();
@@ -1286,18 +1220,13 @@ public class ProcessAutomation {
         if ("power".equals(property)) {
           return edge.getPumpPowerKW();
         }
-      } else if ("choke".equals(group)
-          && "opening".equals(property)) {
+      } else if ("choke".equals(group) && "opening".equals(property)) {
         return edge.getChokeOpening();
-      } else if ("regulator".equals(group)
-          && "setPoint".equals(property)) {
-        return convertPressureFromPa(
-            edge.getRegulatorSetPoint(), unit, "bara");
+      } else if ("regulator".equals(group) && "setPoint".equals(property)) {
+        return convertPressureFromPa(edge.getRegulatorSetPoint(), unit, "bara");
       }
     }
-    throw new IllegalArgumentException(
-        "Unknown network address group/property: " + group + "."
-            + targetAndProperty);
+    throw new IllegalArgumentException("Unknown network address group/property: " + group + "." + targetAndProperty);
   }
 
   /**
@@ -1309,158 +1238,117 @@ public class ProcessAutomation {
    * @param value value
    * @param unit unit
    */
-  private void setNetworkProperty(LoopedPipeNetwork network,
-      String group, String targetAndProperty, double value,
+  private void setNetworkProperty(LoopedPipeNetwork network, String group, String targetAndProperty, double value,
       String unit) {
-    String[] targetProperty =
-        splitNetworkTargetProperty(targetAndProperty);
+    String[] targetProperty = splitNetworkTargetProperty(targetAndProperty);
     String target = targetProperty[0];
     String property = targetProperty[1];
     if ("source".equals(group)) {
-      LoopedPipeNetwork.NetworkNode node =
-          network.getNode(target);
+      LoopedPipeNetwork.NetworkNode node = network.getNode(target);
       if ("rate".equals(property)) {
-        node.setDemand(-convertMassRateToKgS(
-            value, unit, "kg/hr"));
+        node.setDemand(-convertMassRateToKgS(value, unit, "kg/hr"));
         return;
       }
       if ("pressure".equals(property)) {
-        node.setPressure(convertPressureToPa(
-            value, unit, "bara"));
+        node.setPressure(convertPressureToPa(value, unit, "bara"));
         return;
       }
-    } else if ("sink".equals(group)
-        && "nomination".equals(property)) {
-      network.getNode(target).setDemand(convertMassRateToKgS(
-          value, unit, "kg/hr"));
+    } else if ("sink".equals(group) && "nomination".equals(property)) {
+      network.getNode(target).setDemand(convertMassRateToKgS(value, unit, "kg/hr"));
       return;
     } else {
-      LoopedPipeNetwork.NetworkPipe edge =
-          network.getPipe(target);
-      if ("edge".equals(group)
-          && "availability".equals(property)) {
+      LoopedPipeNetwork.NetworkPipe edge = network.getPipe(target);
+      if ("edge".equals(group) && "availability".equals(property)) {
         edge.setAvailability(value);
         return;
       }
-      if ("compressor".equals(group)
-          && "speed".equals(property)) {
+      if ("compressor".equals(group) && "speed".equals(property)) {
         edge.setCompressorSpeed(value);
         return;
       }
-      if ("pump".equals(group)
-          && "speed".equals(property)) {
+      if ("pump".equals(group) && "speed".equals(property)) {
         edge.setPumpSpeed(value);
         return;
       }
-      if ("choke".equals(group)
-          && "opening".equals(property)) {
+      if ("choke".equals(group) && "opening".equals(property)) {
         edge.setChokeOpening(value);
         return;
       }
-      if ("regulator".equals(group)
-          && "setPoint".equals(property)) {
-        edge.setRegulatorSetPoint(convertPressureToPa(
-            value, unit, "bara"));
+      if ("regulator".equals(group) && "setPoint".equals(property)) {
+        edge.setRegulatorSetPoint(convertPressureToPa(value, unit, "bara"));
         return;
       }
     }
-    throw new IllegalArgumentException(
-        "Read-only or unknown network address: " + group + "."
-            + targetAndProperty);
+    throw new IllegalArgumentException("Read-only or unknown network address: " + group + "." + targetAndProperty);
   }
 
-  private String[] splitNetworkTargetProperty(
-      String targetAndProperty) {
+  private String[] splitNetworkTargetProperty(String targetAndProperty) {
     int separator = targetAndProperty.lastIndexOf('.');
-    if (separator <= 0
-        || separator >= targetAndProperty.length() - 1) {
-      throw new IllegalArgumentException(
-          "Network address must include target and property");
+    if (separator <= 0 || separator >= targetAndProperty.length() - 1) {
+      throw new IllegalArgumentException("Network address must include target and property");
     }
-    return new String[] {
-        targetAndProperty.substring(0, separator),
-        targetAndProperty.substring(separator + 1)};
+    return new String[] { targetAndProperty.substring(0, separator), targetAndProperty.substring(separator + 1) };
   }
 
-  private double convertMassRateFromKgS(double value, String unit,
-      String defaultUnit) {
-    String requested =
-        unit == null || unit.trim().isEmpty() ? defaultUnit : unit;
-    if ("kg/s".equalsIgnoreCase(requested)
-        || "kg/sec".equalsIgnoreCase(requested)) {
+  private double convertMassRateFromKgS(double value, String unit, String defaultUnit) {
+    String requested = unit == null || unit.trim().isEmpty() ? defaultUnit : unit;
+    if ("kg/s".equalsIgnoreCase(requested) || "kg/sec".equalsIgnoreCase(requested)) {
       return value;
     }
     if ("kg/hr".equalsIgnoreCase(requested)) {
       return value * 3600.0;
     }
-    throw new IllegalArgumentException(
-        "Unsupported network mass-rate unit: " + requested);
+    throw new IllegalArgumentException("Unsupported network mass-rate unit: " + requested);
   }
 
-  private double convertMassRateToKgS(double value, String unit,
-      String defaultUnit) {
-    String supplied =
-        unit == null || unit.trim().isEmpty() ? defaultUnit : unit;
-    if ("kg/s".equalsIgnoreCase(supplied)
-        || "kg/sec".equalsIgnoreCase(supplied)) {
+  private double convertMassRateToKgS(double value, String unit, String defaultUnit) {
+    String supplied = unit == null || unit.trim().isEmpty() ? defaultUnit : unit;
+    if ("kg/s".equalsIgnoreCase(supplied) || "kg/sec".equalsIgnoreCase(supplied)) {
       return value;
     }
     if ("kg/hr".equalsIgnoreCase(supplied)) {
       return value / 3600.0;
     }
-    throw new IllegalArgumentException(
-        "Unsupported network mass-rate unit: " + supplied);
+    throw new IllegalArgumentException("Unsupported network mass-rate unit: " + supplied);
   }
 
-  private double convertPressureFromPa(double value, String unit,
-      String defaultUnit) {
-    String requested =
-        unit == null || unit.trim().isEmpty() ? defaultUnit : unit;
+  private double convertPressureFromPa(double value, String unit, String defaultUnit) {
+    String requested = unit == null || unit.trim().isEmpty() ? defaultUnit : unit;
     if ("Pa".equalsIgnoreCase(requested)) {
       return value;
     }
-    if ("bara".equalsIgnoreCase(requested)
-        || "bar".equalsIgnoreCase(requested)) {
+    if ("bara".equalsIgnoreCase(requested) || "bar".equalsIgnoreCase(requested)) {
       return value / 1.0e5;
     }
     if ("barg".equalsIgnoreCase(requested)) {
       return value / 1.0e5 - 1.01325;
     }
-    throw new IllegalArgumentException(
-        "Unsupported network pressure unit: " + requested);
+    throw new IllegalArgumentException("Unsupported network pressure unit: " + requested);
   }
 
-  private double convertPressureToPa(double value, String unit,
-      String defaultUnit) {
-    String supplied =
-        unit == null || unit.trim().isEmpty() ? defaultUnit : unit;
+  private double convertPressureToPa(double value, String unit, String defaultUnit) {
+    String supplied = unit == null || unit.trim().isEmpty() ? defaultUnit : unit;
     if ("Pa".equalsIgnoreCase(supplied)) {
       return value;
     }
-    if ("bara".equalsIgnoreCase(supplied)
-        || "bar".equalsIgnoreCase(supplied)) {
+    if ("bara".equalsIgnoreCase(supplied) || "bar".equalsIgnoreCase(supplied)) {
       return value * 1.0e5;
     }
     if ("barg".equalsIgnoreCase(supplied)) {
       return (value + 1.01325) * 1.0e5;
     }
-    throw new IllegalArgumentException(
-        "Unsupported network pressure unit: " + supplied);
+    throw new IllegalArgumentException("Unsupported network pressure unit: " + supplied);
   }
 
-  private double convertTemperatureFromK(double value, String unit,
-      String defaultUnit) {
-    String requested =
-        unit == null || unit.trim().isEmpty() ? defaultUnit : unit;
+  private double convertTemperatureFromK(double value, String unit, String defaultUnit) {
+    String requested = unit == null || unit.trim().isEmpty() ? defaultUnit : unit;
     if ("K".equalsIgnoreCase(requested)) {
       return value;
     }
-    if ("C".equalsIgnoreCase(requested)
-        || "degC".equalsIgnoreCase(requested)) {
+    if ("C".equalsIgnoreCase(requested) || "degC".equalsIgnoreCase(requested)) {
       return value - 273.15;
     }
-    throw new IllegalArgumentException(
-        "Unsupported network temperature unit: " + requested);
+    throw new IllegalArgumentException("Unsupported network temperature unit: " + requested);
   }
 
   /**

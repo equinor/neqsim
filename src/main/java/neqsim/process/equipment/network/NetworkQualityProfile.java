@@ -18,10 +18,8 @@ public class NetworkQualityProfile implements Serializable {
   private String effectiveFrom;
   private String effectiveTo;
   private String provenance;
-  private final List<String> namedExceptions =
-      new ArrayList<String>();
-  private final List<NetworkQualityLimit> limits =
-      new ArrayList<NetworkQualityLimit>();
+  private final List<String> namedExceptions = new ArrayList<String>();
+  private final List<NetworkQualityLimit> limits = new ArrayList<NetworkQualityLimit>();
 
   /**
    * Create a named quality profile.
@@ -30,8 +28,7 @@ public class NetworkQualityProfile implements Serializable {
    */
   public NetworkQualityProfile(String name) {
     if (name == null || name.trim().isEmpty()) {
-      throw new IllegalArgumentException(
-          "Quality profile name cannot be empty");
+      throw new IllegalArgumentException("Quality profile name cannot be empty");
     }
     this.name = name;
   }
@@ -49,8 +46,7 @@ public class NetworkQualityProfile implements Serializable {
    * @param to ISO-8601 effective end, or null
    * @return this profile
    */
-  public NetworkQualityProfile withEffectivePeriod(
-      String profileVersion, String from, String to) {
+  public NetworkQualityProfile withEffectivePeriod(String profileVersion, String from, String to) {
     version = profileVersion;
     effectiveFrom = from;
     effectiveTo = to;
@@ -87,8 +83,7 @@ public class NetworkQualityProfile implements Serializable {
    * @param unit unit
    * @return this profile
    */
-  public NetworkQualityProfile addUpperLimit(
-      NetworkQualityMetric metric, double upper, String unit) {
+  public NetworkQualityProfile addUpperLimit(NetworkQualityMetric metric, double upper, String unit) {
     return addUpperLimit(metric, upper, unit, null);
   }
 
@@ -101,11 +96,9 @@ public class NetworkQualityProfile implements Serializable {
    * @param reference reference condition
    * @return this profile
    */
-  public NetworkQualityProfile addUpperLimit(
-      NetworkQualityMetric metric, double upper, String unit,
+  public NetworkQualityProfile addUpperLimit(NetworkQualityMetric metric, double upper, String unit,
       QualityReference reference) {
-    limits.add(new NetworkQualityLimit(metric, null, upper, unit,
-        reference, null, null, provenance));
+    limits.add(new NetworkQualityLimit(metric, null, upper, unit, reference, null, null, provenance));
     return this;
   }
 
@@ -117,10 +110,8 @@ public class NetworkQualityProfile implements Serializable {
    * @param unit unit
    * @return this profile
    */
-  public NetworkQualityProfile addLowerLimit(
-      NetworkQualityMetric metric, double lower, String unit) {
-    limits.add(new NetworkQualityLimit(metric, lower, null, unit,
-        null, null, null, provenance));
+  public NetworkQualityProfile addLowerLimit(NetworkQualityMetric metric, double lower, String unit) {
+    limits.add(new NetworkQualityLimit(metric, lower, null, unit, null, null, null, provenance));
     return this;
   }
 
@@ -134,11 +125,9 @@ public class NetworkQualityProfile implements Serializable {
    * @param reference reference condition
    * @return this profile
    */
-  public NetworkQualityProfile addRange(
-      NetworkQualityMetric metric, double lower, double upper,
-      String unit, QualityReference reference) {
-    limits.add(new NetworkQualityLimit(metric, lower, upper, unit,
-        reference, null, null, provenance));
+  public NetworkQualityProfile addRange(NetworkQualityMetric metric, double lower, double upper, String unit,
+      QualityReference reference) {
+    limits.add(new NetworkQualityLimit(metric, lower, upper, unit, reference, null, null, provenance));
     return this;
   }
 
@@ -149,12 +138,9 @@ public class NetworkQualityProfile implements Serializable {
    * @param upperMolPercent upper limit in mol%
    * @return this profile
    */
-  public NetworkQualityProfile addComponentUpperLimit(
-      String componentName, double upperMolPercent) {
-    limits.add(new NetworkQualityLimit(
-        GasQualityMetric.COMPONENT_MOLE_PERCENT, null,
-        upperMolPercent, "mol%", null, componentName,
-        "EOS composition", provenance));
+  public NetworkQualityProfile addComponentUpperLimit(String componentName, double upperMolPercent) {
+    limits.add(new NetworkQualityLimit(GasQualityMetric.COMPONENT_MOLE_PERCENT, null, upperMolPercent, "mol%", null,
+        componentName, "EOS composition", provenance));
     return this;
   }
 
@@ -169,14 +155,11 @@ public class NetworkQualityProfile implements Serializable {
    * @param method test/calculation method
    * @return this profile
    */
-  public NetworkQualityProfile addMeasuredAttributeLimit(
-      String domain, String attributeName, Double lower,
+  public NetworkQualityProfile addMeasuredAttributeLimit(String domain, String attributeName, Double lower,
       Double upper, String unit, String method) {
-    NetworkQualityMetric metric = "oil".equalsIgnoreCase(domain)
-        ? OilQualityMetric.MEASURED_ATTRIBUTE
+    NetworkQualityMetric metric = "oil".equalsIgnoreCase(domain) ? OilQualityMetric.MEASURED_ATTRIBUTE
         : GasQualityMetric.MEASURED_ATTRIBUTE;
-    limits.add(new NetworkQualityLimit(metric, lower, upper, unit,
-        null, attributeName, method, provenance));
+    limits.add(new NetworkQualityLimit(metric, lower, upper, unit, null, attributeName, method, provenance));
     return this;
   }
 

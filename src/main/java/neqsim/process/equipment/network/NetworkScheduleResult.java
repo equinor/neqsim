@@ -34,22 +34,15 @@ public class NetworkScheduleResult implements Serializable {
    * @param activeConstraints binding/violated residuals
    * @param message diagnostic
    */
-  public NetworkScheduleResult(boolean feasible,
-      double objectiveValue,
-      List<NetworkSchedulePeriodResult> periods,
-      Map<String, GasLinepackState> initialLinepack,
-      Map<String, GasLinepackState> terminalLinepack,
+  public NetworkScheduleResult(boolean feasible, double objectiveValue, List<NetworkSchedulePeriodResult> periods,
+      Map<String, GasLinepackState> initialLinepack, Map<String, GasLinepackState> terminalLinepack,
       Map<String, Double> activeConstraints, String message) {
     this.feasible = feasible;
     this.objectiveValue = objectiveValue;
-    this.periods =
-        new ArrayList<NetworkSchedulePeriodResult>(periods);
-    this.initialLinepack =
-        new LinkedHashMap<String, GasLinepackState>(initialLinepack);
-    this.terminalLinepack =
-        new LinkedHashMap<String, GasLinepackState>(terminalLinepack);
-    this.activeConstraints =
-        new LinkedHashMap<String, Double>(activeConstraints);
+    this.periods = new ArrayList<NetworkSchedulePeriodResult>(periods);
+    this.initialLinepack = new LinkedHashMap<String, GasLinepackState>(initialLinepack);
+    this.terminalLinepack = new LinkedHashMap<String, GasLinepackState>(terminalLinepack);
+    this.activeConstraints = new LinkedHashMap<String, Double>(activeConstraints);
     this.message = message;
   }
 
@@ -90,8 +83,7 @@ public class NetworkScheduleResult implements Serializable {
 
   /** @return stable JSON */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting()
-        .serializeSpecialFloatingPointValues().create().toJson(this);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(this);
   }
 
   /**
