@@ -1679,6 +1679,7 @@ public class DocExamplesCompilationTest {
     operations.TPflash();
     fluid.initProperties();
 
+    assertTrue(fluid.hasPhaseType("gas"));
     double vaporFraction = fluid.getPhaseFraction("gas", "mole");
     double inletDensity = fluid.getDensity("kg/m3");
     double inletEnthalpy = fluid.getEnthalpy();
@@ -1688,7 +1689,6 @@ public class DocExamplesCompilationTest {
     double inletSpecificInternalEnergy = fluid.getInternalEnergy("J/kg");
     SystemInterface initialState = fluid.clone();
 
-    assertTrue(fluid.hasPhaseType("gas"));
     double gasDensity = fluid.getPhase("gas").getDensity("kg/m3");
     assertTrue(gasDensity > 35.0);
     assertTrue(gasDensity < 50.0);
