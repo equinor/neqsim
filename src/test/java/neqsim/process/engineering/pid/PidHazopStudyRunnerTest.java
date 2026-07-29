@@ -27,6 +27,7 @@ public class PidHazopStudyRunnerTest extends NeqSimTest {
     assertTrue(report.toJson().contains("creditedSafeguardTags"));
     assertTrue(report.toJson().contains("IEC 61882"));
     assertTrue(report.toJson().contains("workshopDecision"));
+    assertTrue(report.toJson().contains("Facilitator confirmation required"));
   }
 
   @Test
