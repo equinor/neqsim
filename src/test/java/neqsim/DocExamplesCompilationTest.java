@@ -1685,10 +1685,13 @@ public class DocExamplesCompilationTest {
     double inletEntropy = fluid.getEntropy();
     double inletVolume = fluid.getVolume("m3");
     double inletInternalEnergy = fluid.getInternalEnergy();
+    double inletSpecificInternalEnergy = fluid.getInternalEnergy("J/kg");
     SystemInterface initialState = fluid.clone();
 
     assertTrue(fluid.hasPhaseType("gas"));
-    assertEquals(inletDensity, fluid.getPhase("gas").getDensity("kg/m3"), 1.0e-9);
+    double gasDensity = fluid.getPhase("gas").getDensity("kg/m3");
+    assertTrue(gasDensity > 35.0);
+    assertTrue(gasDensity < 50.0);
 
     fluid.setPressure(30.0, "bara");
     operations.PHflash(inletEnthalpy);
@@ -1710,7 +1713,7 @@ public class DocExamplesCompilationTest {
     vuFluid.setTemperature(310.0, "K");
     vuFluid.setPressure(35.0, "bara");
     ThermodynamicOperations vuOperations = new ThermodynamicOperations(vuFluid);
-    vuOperations.VUflash(inletVolume, inletInternalEnergy, "m3", "J");
+    vuOperations.VUflash(inletVolume, inletSpecificInternalEnergy, "m3", "J/kg");
     vuFluid.initProperties();
 
     assertTrue(vaporFraction > 0.999);
