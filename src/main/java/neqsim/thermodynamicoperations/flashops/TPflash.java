@@ -212,10 +212,13 @@ public class TPflash extends Flash {
     double[] acceleratedLnK = new double[nc];
     boolean safeAcceleration = true;
     if (!useGDEM) {
-      if (!Double.isFinite(lambda) || lambda <= 0.0 || lambda >= 1.0) {
+      if (!Double.isFinite(lambda) || Math.abs(1.0 - lambda) < 1.0e-12) {
         safeAcceleration = false;
       } else {
         double lambdaFactor = lambda / (1.0 - lambda);
+        if (!Double.isFinite(lambdaFactor)) {
+          safeAcceleration = false;
+        }
         for (i = 0; i < nc; i++) {
           acceleratedLnK[i] = lnK[i] + lambdaFactor * deltalnK[i];
         }
