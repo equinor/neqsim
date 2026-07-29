@@ -1664,4 +1664,35 @@ public class DocExamplesCompilationTest {
     assertEquals(60.0, unmetDemand / 1000.0, 1.0e-12);
   }
 
+
+  /**
+   * Complete Java quick start from docs/thermo/thermodynamic_operations.md.
+   */
+  @Test
+  public void testThermodynamicOperationsOverviewQuickStart() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.07);
+    fluid.addComponent("propane", 0.03);
+    fluid.setMixingRule("classic");
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.TPflash();
+    fluid.initProperties();
+
+    double vaporFraction = fluid.getPhaseFraction("gas", "mole");
+    double inletDensity = fluid.getDensity("kg/m3");
+    double inletEnthalpy = fluid.getEnthalpy();
+
+    fluid.setPressure(30.0, "bara");
+    operations.PHflash(inletEnthalpy);
+    fluid.initProperties();
+
+    assertTrue(vaporFraction > 0.999);
+    assertTrue(inletDensity > 35.0);
+    assertTrue(inletDensity < 50.0);
+    assertTrue(Double.isFinite(fluid.getTemperature("C")));
+    assertEquals(inletEnthalpy, fluid.getEnthalpy(), 1.0e-3);
+  }
+
 }
