@@ -8,8 +8,8 @@ import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPflashCubicRootSelectionTest {
-  private static final String[] COMPONENTS = {"methane", "ethane", "propane", "n-heptane", "nC10"};
-  private static final double[] FEED = {0.72, 0.08, 0.05, 0.10, 0.05};
+  private static final String[] COMPONENTS = { "methane", "ethane", "propane", "n-heptane", "nC10" };
+  private static final double[] FEED = { 0.72, 0.08, 0.05, 0.10, 0.05 };
 
   @Test
   void ordinaryAndMultiphaseFlashSelectSameLowestGibbsCubicRoots() {
@@ -52,8 +52,7 @@ class TPflashCubicRootSelectionTest {
     for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
       double recoveredFeed = 0.0;
       for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
-        recoveredFeed += system.getBeta(phaseIndex)
-            * system.getPhase(phaseIndex).getComponent(componentIndex).getx();
+        recoveredFeed += system.getBeta(phaseIndex) * system.getPhase(phaseIndex).getComponent(componentIndex).getx();
       }
       assertEquals(FEED[componentIndex], recoveredFeed, 1.0e-12);
 
@@ -61,8 +60,8 @@ class TPflashCubicRootSelectionTest {
           * system.getPhase(0).getComponent(componentIndex).getFugacityCoefficient();
       double secondPhaseFugacity = system.getPhase(1).getComponent(componentIndex).getx()
           * system.getPhase(1).getComponent(componentIndex).getFugacityCoefficient();
-      maximumLogFugacityResidual =
-          Math.max(maximumLogFugacityResidual, Math.abs(Math.log(firstPhaseFugacity / secondPhaseFugacity)));
+      maximumLogFugacityResidual = Math.max(maximumLogFugacityResidual,
+          Math.abs(Math.log(firstPhaseFugacity / secondPhaseFugacity)));
     }
     assertTrue(maximumLogFugacityResidual < 1.0e-10);
   }
