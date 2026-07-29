@@ -264,6 +264,10 @@ network.addMultiphasePipe("manifold", "platform", "mp1",
     0.3);            // ID [m]
 ```
 
+Pipe roughness is specified in metres throughout the network and
+`PipeBeggsAndBrills` APIs. For example, commercial-steel roughness can be set
+with `network.getPipe("mp1").setRoughness(4.5e-5)`.
+
 To use Beggs–Brill for ordinary pipes added afterwards, configure the
 network-wide default before calling `addPipe`:
 
