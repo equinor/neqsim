@@ -262,21 +262,28 @@ print(f"Total mass residual: {total_mass_residual:.3e} kg/h")
 
 ## Expected screening results
 
-With NeqSim 3.16.0, Python 3.12.13, and OpenJDK 17.0.19, the clean Python
-execution gives:
+The clean public-release execution used NeqSim 3.16.0, Python 3.12.13,
+and OpenJDK 17.0.19. The focused Java regression also runs against the current
+repository implementation. Use the narrow engineering envelopes below rather
+than a sub-ppm golden tolerance because compatible solver and runtime changes
+can slightly shift the equilibrium result while preserving the model behavior
+and balances.
 
-| Result | Value |
-| --- | ---: |
-| Saturated-gas water content | 778.927 mol-ppm |
-| Equilibrium product-gas water content | 46.034 mol-ppm |
-| Water transferred to the liquid phase | 23.286223 kg/h |
-| Water-component residual | $5.54\times10^{-13}$ kg/h |
-| Total mass residual | $3.37\times10^{-11}$ kg/h |
+| Result | Clean 3.16.0 result | Regression envelope |
+| --- | ---: | ---: |
+| Saturated-gas water content | 778.927 mol-ppm | 700--900 mol-ppm |
+| Equilibrium product-gas water content | 46.034 mol-ppm | 40--55 mol-ppm |
+| Water transferred to the liquid phase | 23.286223 kg/h | 22--25 kg/h |
+| Rich-liquid flow | 3,045.903 kg/h | 3,040--3,050 kg/h |
+| Water-component residual | $5.54\times10^{-13}$ kg/h | absolute value below $10^{-8}$ kg/h |
+| Total mass residual | $3.37\times10^{-11}$ kg/h | absolute value below $10^{-8}$ kg/h |
 
-The rich-liquid flow is 3,045.903 kg/h. Its increase is larger than the water
-transfer because the equilibrium liquid also absorbs some hydrocarbon and acid
-gas. Inspect all component balances before using the result to size downstream
-regeneration equipment.
+For example, the Java 21 full-suite run on the current repository head produced
+47.685 mol-ppm product-gas water. Both results represent more than 90% removal
+of gas-phase water and satisfy the conservation criteria. The rich-liquid
+increase is larger than the water transfer because the equilibrium liquid also
+absorbs some hydrocarbon and acid gas. Inspect all component balances before
+using the result to size downstream regeneration equipment.
 
 ## Balance equations
 
