@@ -50,7 +50,7 @@ public final class ThermodynamicOperationsQuickStart {
     operations.PHflash(inletEnthalpy);
     fluid.initProperties();
 
-    logger.info("Gas fraction: {} mol/mol", vaporFraction);
+    logger.info("Inlet gas fraction: {} mol/mol", vaporFraction);
     logger.info("Inlet density: {} kg/m3", inletDensity);
     logger.info("Outlet temperature: {} C", fluid.getTemperature("C"));
     logger.info("Enthalpy residual: {} J", fluid.getEnthalpy() - inletEnthalpy);
@@ -71,12 +71,12 @@ portable exact output values.
 | `PHflash(H)` | pressure and total enthalpy | temperature and phase equilibrium | valve, heater, or heat exchanger |
 | `PSflash(S)` | pressure and total entropy | temperature and phase equilibrium | ideal compressor or expander reference |
 | `TVflash(V, "m3")` | temperature and total volume | pressure and phase equilibrium | fixed-volume screening |
-| `VUflash(V, U, "m3", "J")` | total volume and internal energy | temperature, pressure, and phases | dynamic vessel calculations |
+| `VUflash(V, u, "m3", "J/kg")` | total volume and specific internal energy | temperature, pressure, and phases | dynamic vessel calculations |
 
 The no-unit `PHflash` and `PSflash` overloads use total system enthalpy and entropy in NeqSim's
-internal SI representation. Prefer the overloads with explicit unit strings when values originate
-outside NeqSim. Volume and energy specifications are extensive quantities, so preserve the
-system's material amount when copying a specification between fluids.
+internal SI representation. Prefer supported explicit unit strings when values originate outside
+NeqSim. A total-volume specification belongs to the fluid inventory from which it was calculated,
+so preserve the system's material amount when copying it between states.
 
 ## Property initialization boundary
 
