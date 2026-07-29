@@ -125,6 +125,70 @@ public class ColumnStudyRegressionTest {
   }
 
   /**
+   * Verify that a legacy top feed connected directly to a tray participates in the simultaneous MESH equations.
+   *
+   * <p>
+   * The public column API registers feeds in the column feed map, while legacy workflows connect side feeds and
+   * stripping gas through {@code getTray(index).addStream(stream)}. Both connections describe the same physical inlet
+   * and must therefore produce the same Naphtali-Sandholm solution. The nearby operating point guards against a
+   * coincidental match at one flow rate.
+   * </p>
+   */
+  @Test
+  public void legacyDirectTopFeedParticipatesInNaphtaliSandholmEquations() {
+    double[] topFeedFactors = { 1.0, 1.1 };
+    for (int caseIndex = 0; caseIndex < topFeedFactors.length; caseIndex++) {
+      double topFeedFactor = topFeedFactors[caseIndex];
+      SystemInterface baseFluid = createBaseFluid();
+      StreamInterface registeredMainFeed = createStream("registered_main_feed_" + caseIndex, baseFluid,
+          MAIN_FEED_COMPOSITION, MAIN_FEED_TEMPERATURE_C, MAIN_FEED_PRESSURE_BARA, MAIN_FEED_MASS_FLOW_KG_HR);
+      StreamInterface registeredTopFeed = createStream("registered_top_feed_" + caseIndex, baseFluid,
+          TOP_FEED_COMPOSITION, TOP_FEED_TEMPERATURE_C, TOP_FEED_PRESSURE_BARA,
+          TOP_FEED_MASS_FLOW_KG_HR * topFeedFactor);
+      DistillationColumn registeredColumn = createColumn(registeredMainFeed, registeredTopFeed, false);
+      registeredColumn.run();
+      assertColumnSolveIsValid(registeredColumn, registeredMainFeed, registeredTopFeed,
+          "registered-feed reference at factor " + topFeedFactor);
+      assertEquals(DistillationColumn.SolverType.NAPHTALI_SANDHOLM, registeredColumn.getLastSolverTypeUsed(),
+          "registered-feed reference should be accepted by the simultaneous solver");
+
+      StreamInterface directMainFeed = createStream("direct_main_feed_" + caseIndex, baseFluid,
+          MAIN_FEED_COMPOSITION, MAIN_FEED_TEMPERATURE_C, MAIN_FEED_PRESSURE_BARA, MAIN_FEED_MASS_FLOW_KG_HR);
+      StreamInterface directTopFeed = createStream("legacy_direct_top_feed_" + caseIndex, baseFluid,
+          TOP_FEED_COMPOSITION, TOP_FEED_TEMPERATURE_C, TOP_FEED_PRESSURE_BARA,
+          TOP_FEED_MASS_FLOW_KG_HR * topFeedFactor);
+      DistillationColumn directColumn = createColumn(directMainFeed, directTopFeed, true);
+      directColumn.run();
+      assertColumnSolveIsValid(directColumn, directMainFeed, directTopFeed,
+          "legacy direct-feed case at factor " + topFeedFactor);
+      assertEquals(DistillationColumn.SolverType.NAPHTALI_SANDHOLM, directColumn.getLastSolverTypeUsed(),
+          "a direct tray feed must participate in Naphtali-Sandholm rather than force a fallback");
+
+      ColumnProductSummary registeredProducts = getProductSummary(registeredColumn);
+      ColumnProductSummary directProducts = getProductSummary(directColumn);
+      assertProductSummaryWithinRelativeTolerance(registeredProducts, directProducts, 1.0e-5,
+          "registered and direct connections should describe the same physical column");
+      assertComponentMassBalances(directMainFeed, directTopFeed, directColumn);
+      assertTrue(Double.isFinite(directColumn.getLastMeshMaterialResidualNorm()),
+          "direct-feed material residual should be finite");
+      assertTrue(Double.isFinite(directColumn.getLastMeshEnergyResidualNorm()),
+          "direct-feed energy residual should be finite");
+      assertWithinRelativeTolerance(registeredColumn.getLastMeshMaterialResidualNorm(),
+          directColumn.getLastMeshMaterialResidualNorm(), 1.0e-4,
+          "direct-feed material residual should match the registered reference");
+      assertWithinRelativeTolerance(registeredColumn.getLastMeshEnergyResidualNorm(),
+          directColumn.getLastMeshEnergyResidualNorm(), 1.0e-4,
+          "direct-feed energy residual should match the registered reference");
+      assertEquals(REBOILER_TEMPERATURE_C, directColumn.getReboiler().getTemperature() - 273.15, 1.0e-6,
+          "the fixed reboiler-temperature specification should be satisfied");
+      assertPhysicalProduct(directColumn.getGasOutStream(), "overhead");
+      assertPhysicalProduct(directColumn.getLiquidOutStream(), "bottoms");
+      assertTrue(directColumn.getLastIterationCount() <= 300,
+          "direct-feed simultaneous solve should remain inside the configured iteration budget");
+    }
+  }
+
+  /**
    * Reports cold, unchanged warm, and 10-percent-increased inlet solve times for the column-study case.
    *
    * <p>
@@ -271,6 +335,28 @@ public class ColumnStudyRegressionTest {
   }
 
   /**
+   * Assert finite, positive flow, temperature, and normalized composition for a terminal product.
+   *
+   * @param product terminal product stream
+   * @param label product label used in assertion messages
+   */
+  private void assertPhysicalProduct(StreamInterface product, String label) {
+    assertTrue(Double.isFinite(product.getFlowRate("kg/hr")) && product.getFlowRate("kg/hr") > 0.0,
+        label + " flow should be finite and positive");
+    assertTrue(Double.isFinite(product.getTemperature()) && product.getTemperature() > 0.0,
+        label + " temperature should be finite and positive");
+    double compositionSum = 0.0;
+    double[] composition = product.getThermoSystem().getMolarComposition();
+    for (int componentIndex = 0; componentIndex < composition.length; componentIndex++) {
+      assertTrue(Double.isFinite(composition[componentIndex]) && composition[componentIndex] >= 0.0
+          && composition[componentIndex] <= 1.0, label + " composition should remain physical at component "
+              + componentIndex);
+      compositionSum += composition[componentIndex];
+    }
+    assertEquals(1.0, compositionSum, 1.0e-8, label + " composition should remain normalized");
+  }
+
+  /**
    * Assert that a completed column solve converged and preserves the external mass balance.
    *
    * @param column solved column
@@ -371,9 +457,26 @@ public class ColumnStudyRegressionTest {
    * @return configured column ready to run
    */
   private DistillationColumn createColumn(StreamInterface feedStream, StreamInterface topFeedStream) {
+    return createColumn(feedStream, topFeedStream, false);
+  }
+
+  /**
+   * Create and configure the column-study distillation column with a selected top-feed connection style.
+   *
+   * @param feedStream main column feed
+   * @param topFeedStream external top reflux feed
+   * @param directTopFeed whether to connect the top feed directly to its tray for legacy compatibility testing
+   * @return configured column ready to run
+   */
+  private DistillationColumn createColumn(StreamInterface feedStream, StreamInterface topFeedStream,
+      boolean directTopFeed) {
     DistillationColumn column = new DistillationColumn("20VE105_205_standalone", NUMBER_OF_TRAYS, true, false);
     column.addFeedStream(feedStream, answerTrayToNeqSimStage(5));
-    column.addFeedStream(topFeedStream, answerTrayToNeqSimStage(1));
+    if (directTopFeed) {
+      column.getTray(answerTrayToNeqSimStage(1)).addStream(topFeedStream);
+    } else {
+      column.addFeedStream(topFeedStream, answerTrayToNeqSimStage(1));
+    }
     column.setTopPressure(TOP_PRESSURE_BARA);
     column.setBottomPressure(getCompensatedBottomPressure());
     column.getReboiler().setOutletTemperature(273.15 + REBOILER_TEMPERATURE_C);
