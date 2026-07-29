@@ -1834,9 +1834,13 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Set the pipe flow model type.
+   * Set the flow model used by pipes created by subsequent calls to {@link #addPipe}.
    *
-   * @param type pipe model type (DARCY_WEISBACH or BEGGS_BRILL)
+   * <p>
+   * Existing pipes and elements created by the specialized factory methods are not changed.
+   * </p>
+   *
+   * @param type pipe model type ({@link PipeModelType#DARCY_WEISBACH} or {@link PipeModelType#BEGGS_BRILL})
    */
   public void setPipeModelType(PipeModelType type) {
     this.pipeModelType = type;
@@ -1960,6 +1964,11 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   /**
    * Add a pipe connecting two nodes.
    *
+   * <p>
+   * The pipe uses the model selected by {@link #setPipeModelType(PipeModelType)}. The default is
+   * {@link PipeModelType#DARCY_WEISBACH}.
+   * </p>
+   *
    * @param fromNode source node name
    * @param toNode target node name
    * @param pipeName pipe name
@@ -1985,6 +1994,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     NetworkPipe pipe = new NetworkPipe(pipeName, fromNode, toNode);
     pipe.setLength(lengthM);
     pipe.setDiameter(diameterM);
+    if (pipeModelType == PipeModelType.BEGGS_BRILL) {
+      pipe.setElementType(NetworkElementType.MULTIPHASE_PIPE);
+    }
     pipes.put(pipeName, pipe);
     pipeNames.add(pipeName);
 
@@ -3845,7 +3857,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
         inletStream.run();
 
         bbPipe = new PipeBeggsAndBrills(pipe.getName() + "_bb", inletStream);
-        bbPipe.setPipeWallRoughness(pipe.getRoughness() * 1000.0); // m -> mm
+        bbPipe.setPipeWallRoughness(pipe.getRoughness());
         bbPipe.setLength(pipe.getLength());
         bbPipe.setDiameter(pipe.getDiameter());
         bbPipe.setNumberOfIncrements(pipe.getMultiphaseSegments());
