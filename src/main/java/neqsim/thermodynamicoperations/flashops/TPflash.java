@@ -49,6 +49,15 @@ public class TPflash extends Flash {
    * than this even when the incipient phase fraction is tiny.
    */
   private static final double TRIVIAL_SPLIT_COMPOSITION_TOLERANCE = 1.0e-6;
+  /**
+   * Maximum accepted change in ln(K) from one GDEM/DEM extrapolation.
+   *
+   * <p>
+   * A bounded log-space step prevents a nearly unit dominant eigenvalue from turning a
+   * small successive-substitution correction into an arbitrarily large K-value jump.
+   * </p>
+   */
+  private static final double MAX_ACCELERATION_LOG_K_STEP = 2.0;
   /** Guard preventing recursive rescue attempts while the local seed flash is running. */
   private static final ThreadLocal<Boolean> MULTIPHASE_RESCUE_ACTIVE = new ThreadLocal<Boolean>() {
     @Override
@@ -200,23 +209,47 @@ public class TPflash extends Flash {
       useGDEM = mu1 > 0 && mu2 > 0 && mu1 < 1.5 && mu2 < 1.5;
     }
 
-    neqsim.thermo.phase.PhaseInterface ph0 = system.getPhase(0);
-    neqsim.thermo.phase.PhaseInterface ph1 = system.getPhase(1);
+    double[] acceleratedLnK = new double[nc];
+    boolean safeAcceleration = true;
     if (!useGDEM) {
-      double lambdaFactor = lambda / (1.0 - lambda);
-      for (i = 0; i < nc; i++) {
-        lnK[i] += lambdaFactor * deltalnK[i];
-        double expK = Math.exp(lnK[i]);
-        ph0.getComponent(i).setK(expK);
-        ph1.getComponent(i).setK(expK);
+      if (!Double.isFinite(lambda) || lambda <= 0.0 || lambda >= 1.0) {
+        safeAcceleration = false;
+      } else {
+        double lambdaFactor = lambda / (1.0 - lambda);
+        for (i = 0; i < nc; i++) {
+          acceleratedLnK[i] = lnK[i] + lambdaFactor * deltalnK[i];
+        }
       }
     } else {
       for (i = 0; i < nc; i++) {
-        lnK[i] += mu1 * deltalnK[i] + mu2 * oldDeltalnK[i];
-        double expK = Math.exp(lnK[i]);
-        ph0.getComponent(i).setK(expK);
-        ph1.getComponent(i).setK(expK);
+        acceleratedLnK[i] = lnK[i] + mu1 * deltalnK[i] + mu2 * oldDeltalnK[i];
       }
+    }
+
+    double[] acceleratedK = new double[nc];
+    if (safeAcceleration) {
+      for (i = 0; i < nc; i++) {
+        double logKStep = acceleratedLnK[i] - savedLnK[i];
+        acceleratedK[i] = Math.exp(acceleratedLnK[i]);
+        if (!Double.isFinite(acceleratedLnK[i]) || !Double.isFinite(acceleratedK[i])
+            || acceleratedK[i] <= 0.0 || Math.abs(logKStep) > MAX_ACCELERATION_LOG_K_STEP) {
+          safeAcceleration = false;
+          break;
+        }
+      }
+    }
+
+    if (!safeAcceleration) {
+      sucsSubs();
+      return;
+    }
+
+    neqsim.thermo.phase.PhaseInterface ph0 = system.getPhase(0);
+    neqsim.thermo.phase.PhaseInterface ph1 = system.getPhase(1);
+    for (i = 0; i < nc; i++) {
+      lnK[i] = acceleratedLnK[i];
+      ph0.getComponent(i).setK(acceleratedK[i]);
+      ph1.getComponent(i).setK(acceleratedK[i]);
     }
     double oldBeta = system.getBeta();
     try {
