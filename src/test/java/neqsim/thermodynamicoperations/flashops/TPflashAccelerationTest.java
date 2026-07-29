@@ -38,4 +38,27 @@ class TPflashAccelerationTest {
     assertEquals(heptaneKBefore, heptaneKAfter, 1.0e-10);
     assertEquals(betaBefore, system.getBeta(), 1.0e-10);
   }
+
+  @Test
+  void testBoundedDemExtrapolationAboveUnitEigenvalueIsPreserved() {
+    SystemInterface system = new SystemPrEos(300.0, 50.0);
+    system.addComponent("methane", 0.8);
+    system.addComponent("n-heptane", 0.2);
+    system.setMixingRule("classic");
+    system.setMultiPhaseCheck(false);
+    new ThermodynamicOperations(system).TPflash();
+
+    TPflash flash = new TPflash(system);
+    double methaneKBefore = system.getPhase(0).getComponent(0).getK();
+    flash.lnK[0] = Math.log(methaneKBefore);
+    flash.lnK[1] = Math.log(system.getPhase(0).getComponent(1).getK());
+    flash.oldDeltalnK[0] = 1.04;
+    flash.oldoldDeltalnK[0] = 1.0;
+    flash.deltalnK[0] = 0.01;
+
+    flash.accselerateSucsSubs();
+
+    double expectedLogKStep = 1.04 / (1.0 - 1.04) * 0.01;
+    assertEquals(Math.exp(expectedLogKStep), system.getPhase(0).getComponent(0).getK() / methaneKBefore, 1.0e-10);
+  }
 }
