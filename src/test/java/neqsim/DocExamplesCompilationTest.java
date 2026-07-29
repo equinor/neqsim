@@ -1664,7 +1664,6 @@ public class DocExamplesCompilationTest {
     assertEquals(60.0, unmetDemand / 1000.0, 1.0e-12);
   }
 
-
   /**
    * Complete Java quick start and operation table from docs/thermo/thermodynamic_operations.md.
    */
