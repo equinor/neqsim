@@ -116,6 +116,21 @@ public class NetworkOptimizer {
   /** Last optimization result. */
   private OptimizationResult lastResult;
 
+  /** Registered whole-network decision variables. */
+  private final List<NetworkDecisionVariable> decisionVariables = new ArrayList<NetworkDecisionVariable>();
+
+  /** Registered typed constraints. */
+  private final List<NetworkConstraint> constraints = new ArrayList<NetworkConstraint>();
+
+  /** Composable objective terms. */
+  private final List<NetworkObjective> objectives = new ArrayList<NetworkObjective>();
+
+  /** Candidate trajectory from the latest generalized optimization. */
+  private final List<NetworkCandidateEvaluation> trajectory = new ArrayList<NetworkCandidateEvaluation>();
+
+  /** Deterministic random seed. */
+  private long deterministicSeed = 42L;
+
   /**
    * Create a new network optimizer.
    *
@@ -225,6 +240,136 @@ public class NetworkOptimizer {
   }
 
   /**
+   * Register a bounded whole-network decision variable.
+   *
+   * @param variable decision variable
+   */
+  public void addDecisionVariable(NetworkDecisionVariable variable) {
+    if (variable == null) {
+      throw new IllegalArgumentException("Decision variable cannot be null");
+    }
+    decisionVariables.add(variable);
+  }
+
+  /**
+   * Register a typed hard or soft constraint.
+   *
+   * @param constraint constraint
+   */
+  public void addConstraint(NetworkConstraint constraint) {
+    if (constraint == null) {
+      throw new IllegalArgumentException("Constraint cannot be null");
+    }
+    constraints.add(constraint);
+  }
+
+  /**
+   * Add a composable objective term.
+   *
+   * @param objective objective
+   */
+  public void addObjective(NetworkObjective objective) {
+    if (objective == null) {
+      throw new IllegalArgumentException("Objective cannot be null");
+    }
+    objectives.add(objective);
+  }
+
+  /**
+   * Clear generalized variables, constraints, objectives, and trajectory.
+   */
+  public void clearGeneralizedProblem() {
+    decisionVariables.clear();
+    constraints.clear();
+    objectives.clear();
+    trajectory.clear();
+  }
+
+  /** @return immutable registered decision variables */
+  public List<NetworkDecisionVariable> getDecisionVariables() {
+    return Collections.unmodifiableList(decisionVariables);
+  }
+
+  /** @return immutable registered constraints */
+  public List<NetworkConstraint> getConstraints() {
+    return Collections.unmodifiableList(constraints);
+  }
+
+  /** @return immutable registered objective terms */
+  public List<NetworkObjective> getObjectives() {
+    return Collections.unmodifiableList(objectives);
+  }
+
+  /** @return immutable latest candidate trajectory */
+  public List<NetworkCandidateEvaluation> getTrajectory() {
+    return Collections.unmodifiableList(trajectory);
+  }
+
+  /**
+   * Set deterministic optimizer seed.
+   *
+   * @param seed seed
+   */
+  public void setDeterministicSeed(long seed) {
+    deterministicSeed = seed;
+  }
+
+  /**
+   * Discover common source, sink, choke, regulator, compressor, and route decision variables with finite
+   * caller-supplied bounds.
+   *
+   * <p>
+   * Source and sink rate bounds are in kg/hr. Pressure bounds are in bara. Existing registered variables are retained.
+   * </p>
+   *
+   * @param minimumRateKgHr minimum source/sink rate
+   * @param maximumRateKgHr maximum source/sink rate
+   * @param minimumPressureBara minimum source pressure
+   * @param maximumPressureBara maximum source pressure
+   */
+  public void discoverDecisionVariables(double minimumRateKgHr, double maximumRateKgHr, double minimumPressureBara,
+      double maximumPressureBara) {
+    for (String nodeName : network.getNodeNames()) {
+      LoopedPipeNetwork.NetworkNode node = network.getNode(nodeName);
+      if (node.getType() == LoopedPipeNetwork.NodeType.SOURCE) {
+        addDecisionVariable(
+            new NetworkDecisionVariable("source." + nodeName + ".rate", NetworkDecisionVariable.Type.SOURCE_RATE,
+                nodeName, "kg/hr", NetworkDecisionVariable.RateBasis.MASS, minimumRateKgHr, maximumRateKgHr));
+        addDecisionVariable(new NetworkDecisionVariable("source." + nodeName + ".pressure",
+            NetworkDecisionVariable.Type.SOURCE_PRESSURE, nodeName, "bara", NetworkDecisionVariable.RateBasis.NONE,
+            minimumPressureBara, maximumPressureBara));
+      } else if (node.getType() == LoopedPipeNetwork.NodeType.SINK) {
+        addDecisionVariable(new NetworkDecisionVariable("sink." + nodeName + ".nomination",
+            NetworkDecisionVariable.Type.SINK_NOMINATION, nodeName, "kg/hr", NetworkDecisionVariable.RateBasis.MASS,
+            minimumRateKgHr, maximumRateKgHr));
+      }
+    }
+    for (String edgeName : network.getPipeNames()) {
+      LoopedPipeNetwork.NetworkPipe edge = network.getPipe(edgeName);
+      if (edge.getElementType() == LoopedPipeNetwork.NetworkElementType.CHOKE) {
+        addDecisionVariable(
+            new NetworkDecisionVariable("choke." + edgeName + ".opening", NetworkDecisionVariable.Type.CHOKE_OPENING,
+                edgeName, "%", NetworkDecisionVariable.RateBasis.NONE, 1.0, 100.0));
+      } else if (edge.getElementType() == LoopedPipeNetwork.NetworkElementType.REGULATOR) {
+        addDecisionVariable(new NetworkDecisionVariable("regulator." + edgeName + ".setPoint",
+            NetworkDecisionVariable.Type.REGULATOR_SET_POINT, edgeName, "bara", NetworkDecisionVariable.RateBasis.NONE,
+            minimumPressureBara, maximumPressureBara));
+      } else if (edge.getElementType() == LoopedPipeNetwork.NetworkElementType.COMPRESSOR) {
+        addDecisionVariable(new NetworkDecisionVariable("compressor." + edgeName + ".speed",
+            NetworkDecisionVariable.Type.COMPRESSOR_SPEED, edgeName, "rpm", NetworkDecisionVariable.RateBasis.NONE,
+            1000.0, 15000.0));
+      } else if (edge.getElementType() == LoopedPipeNetwork.NetworkElementType.PUMP) {
+        addDecisionVariable(
+            new NetworkDecisionVariable("pump." + edgeName + ".speed", NetworkDecisionVariable.Type.PUMP_SPEED,
+                edgeName, "rpm", NetworkDecisionVariable.RateBasis.NONE, 100.0, 10000.0));
+      }
+      addDecisionVariable(new NetworkDecisionVariable("edge." + edgeName + ".availability",
+          NetworkDecisionVariable.Type.EDGE_AVAILABILITY, edgeName, "-", NetworkDecisionVariable.RateBasis.NONE, 1.0e-4,
+          1.0));
+    }
+  }
+
+  /**
    * Run single-objective optimization of choke openings.
    *
    * <p>
@@ -235,6 +380,9 @@ public class NetworkOptimizer {
    * @return optimization result with optimal choke openings, objective value, and diagnostics
    */
   public OptimizationResult optimize() {
+    if (!decisionVariables.isEmpty()) {
+      return optimizeRegisteredProblem();
+    }
     long startTime = System.currentTimeMillis();
 
     // Discover choke elements
@@ -305,6 +453,234 @@ public class NetworkOptimizer {
         lastResult.objectiveValue, totalProd, lastResult.elapsedMs));
 
     return lastResult;
+  }
+
+  /**
+   * Evaluate a bounded whole-network candidate and restore the original decision state before returning.
+   *
+   * @param values values in registered-variable order
+   * @return structured evaluation
+   */
+  public NetworkCandidateEvaluation evaluateCandidate(double[] values) {
+    if (values == null || values.length != decisionVariables.size()) {
+      throw new IllegalArgumentException("Candidate length must match registered decision variables");
+    }
+    double[] original = readDecisionValues();
+    NetworkCandidateEvaluation evaluation = new NetworkCandidateEvaluation();
+    boolean candidateApplied = true;
+    try {
+      for (int index = 0; index < values.length; index++) {
+        NetworkDecisionVariable variable = decisionVariables.get(index);
+        variable.setValue(network, values[index]);
+        evaluation.addDecision(variable, values[index]);
+      }
+      network.run();
+      boolean solverConverged = network.isConverged();
+      evaluation.setSolverConverged(solverConverged);
+
+      double objectiveValue = 0.0;
+      if (objectives.isEmpty()) {
+        double value = evaluateLegacyObjectiveWithoutPenalty();
+        evaluation.addObjectiveTerm(objectiveType.name(), value);
+        objectiveValue = value;
+      } else {
+        for (NetworkObjective objective : objectives) {
+          double term = objective.evaluate(network);
+          evaluation.addObjectiveTerm(objective.getName(), term);
+          objectiveValue += objective.getWeight() * term;
+        }
+      }
+      evaluation.setObjectiveValue(objectiveValue);
+
+      boolean feasible = solverConverged;
+      double penalty = solverConverged ? 0.0 : 1.0e12;
+      for (NetworkConstraint constraint : constraints) {
+        NetworkConstraintResult result = constraint.evaluate(network);
+        evaluation.addConstraint(result);
+        if (!result.isSatisfied()) {
+          if (result.isHard()) {
+            feasible = false;
+            penalty += 1.0e9 + constraintPenalty * result.getScaledResidual();
+          } else {
+            penalty += constraintPenalty * result.getScaledResidual() * result.getScaledResidual();
+          }
+        }
+      }
+      evaluation.setFeasible(feasible);
+      evaluation.setPenalty(penalty);
+      evaluation.setMessage(feasible ? "Candidate evaluated successfully" : "Candidate is infeasible");
+    } catch (Exception ex) {
+      evaluation.setFeasible(false);
+      evaluation.setSolverConverged(false);
+      evaluation.setPenalty(1.0e12);
+      evaluation.setMessage("Candidate evaluation failed: " + ex.getMessage());
+    } finally {
+      if (candidateApplied) {
+        restoreDecisionValues(original);
+        try {
+          network.run();
+        } catch (Exception ex) {
+          logger.warn("Failed to rerun network after candidate-state restoration: {}", ex.getMessage());
+        }
+      }
+    }
+    return evaluation;
+  }
+
+  /**
+   * Evaluate a named candidate map.
+   *
+   * @param candidate variable-name to value
+   * @return structured evaluation
+   */
+  public NetworkCandidateEvaluation evaluateCandidate(Map<String, Double> candidate) {
+    double[] values = readDecisionValues();
+    for (int index = 0; index < decisionVariables.size(); index++) {
+      NetworkDecisionVariable variable = decisionVariables.get(index);
+      Double value = candidate.get(variable.getName());
+      if (value != null) {
+        values[index] = value;
+      }
+    }
+    return evaluateCandidate(values);
+  }
+
+  /**
+   * Optimize the registered generalized problem in normalized coordinates.
+   *
+   * @return optimization result
+   */
+  private OptimizationResult optimizeRegisteredProblem() {
+    long startTime = System.currentTimeMillis();
+    trajectory.clear();
+    final int variableCount = decisionVariables.size();
+    final double[] initialValues = readDecisionValues();
+    final double[] normalizedInitial = normalizeDecisionValues(initialValues);
+    final double[] normalizedLower = new double[variableCount];
+    final double[] normalizedUpper = new double[variableCount];
+    Arrays.fill(normalizedUpper, 1.0);
+
+    ObjectiveFunction objectiveFunction = new ObjectiveFunction(normalized -> {
+      double[] candidate = denormalizeDecisionValues(normalized);
+      NetworkCandidateEvaluation evaluation = evaluateCandidate(candidate);
+      trajectory.add(evaluation);
+      double scalar = -evaluation.getObjectiveValue() + evaluation.getPenalty();
+      return Double.isFinite(scalar) ? scalar : 1.0e12;
+    });
+
+    PointValuePair result;
+    try {
+      if (algorithm == Algorithm.CMAES) {
+        double[] sigma = new double[variableCount];
+        Arrays.fill(sigma, 0.2);
+        int populationSize = 4 + (int) (3.0 * Math.log(variableCount));
+        CMAESOptimizer optimizer = new CMAESOptimizer(maxEvaluations, 1.0e-8, true, 0, 10,
+            new MersenneTwister(deterministicSeed), false, null);
+        result = optimizer.optimize(new MaxEval(maxEvaluations), objectiveFunction, GoalType.MINIMIZE,
+            new InitialGuess(normalizedInitial), new SimpleBounds(normalizedLower, normalizedUpper),
+            new CMAESOptimizer.Sigma(sigma), new CMAESOptimizer.PopulationSize(populationSize));
+      } else {
+        int interpolationPoints = Math.min(2 * variableCount + 1, (variableCount + 1) * (variableCount + 2) / 2);
+        interpolationPoints = Math.max(interpolationPoints, variableCount + 2);
+        BOBYQAOptimizer optimizer = new BOBYQAOptimizer(interpolationPoints, 0.2, 1.0e-6);
+        result = optimizer.optimize(new MaxEval(maxEvaluations), objectiveFunction, GoalType.MINIMIZE,
+            new InitialGuess(normalizedInitial), new SimpleBounds(normalizedLower, normalizedUpper));
+      }
+    } catch (Exception ex) {
+      logger.warn("Generalized network optimization failed: {}", ex.getMessage());
+      result = new PointValuePair(normalizedInitial, 1.0e12);
+    }
+
+    double[] optimalValues = denormalizeDecisionValues(result.getPoint());
+    NetworkCandidateEvaluation finalEvaluation = evaluateCandidate(optimalValues);
+    applyDecisionValues(optimalValues);
+    try {
+      network.run();
+    } catch (Exception ex) {
+      logger.warn("Final generalized network state failed: {}", ex.getMessage());
+    }
+
+    lastResult = new OptimizationResult();
+    lastResult.converged = finalEvaluation.isFeasible();
+    lastResult.objectiveValue = finalEvaluation.getObjectiveValue();
+    lastResult.totalProductionKgHr = network.getTotalSinkFlow() * 3600.0;
+    lastResult.totalCompressorPowerKW = getTotalCompressorPower();
+    lastResult.algorithm = algorithm.name();
+    lastResult.objectiveTypeName = objectives.isEmpty() ? objectiveType.name() : "COMPOSITE";
+    lastResult.elapsedMs = System.currentTimeMillis() - startTime;
+    lastResult.functionEvaluations = trajectory.size();
+    lastResult.message = finalEvaluation.getMessage();
+    lastResult.candidateEvaluation = finalEvaluation;
+    lastResult.decisionValues = new LinkedHashMap<String, Double>(finalEvaluation.getDecisions());
+    lastResult.activeConstraints = new ArrayList<String>(finalEvaluation.getActiveConstraints());
+    return lastResult;
+  }
+
+  private double evaluateLegacyObjectiveWithoutPenalty() {
+    double production = network.getTotalSinkFlow() * 3600.0;
+    switch (objectiveType) {
+    case MAX_REVENUE:
+      double revenue = 0.0;
+      Map<String, double[]> allocation = network.getWellAllocationResults();
+      if (allocation != null && !allocation.isEmpty()) {
+        for (double[] values : allocation.values()) {
+          revenue += values[1];
+        }
+      } else {
+        revenue = production;
+      }
+      return revenue;
+    case MIN_COMPRESSOR_POWER:
+      return -getTotalCompressorPower();
+    case MAX_SPECIFIC_PRODUCTION:
+      return production / Math.max(getTotalCompressorPower(), 1.0);
+    case MAX_PRODUCTION:
+    default:
+      return production;
+    }
+  }
+
+  private double[] readDecisionValues() {
+    double[] values = new double[decisionVariables.size()];
+    for (int index = 0; index < values.length; index++) {
+      values[index] = decisionVariables.get(index).getValue(network);
+    }
+    return values;
+  }
+
+  private void restoreDecisionValues(double[] values) {
+    try {
+      applyDecisionValues(values);
+    } catch (Exception ex) {
+      logger.error("Unable to restore network decision state: {}", ex.getMessage());
+    }
+  }
+
+  private void applyDecisionValues(double[] values) {
+    for (int index = 0; index < values.length; index++) {
+      decisionVariables.get(index).setValue(network, values[index]);
+    }
+  }
+
+  private double[] normalizeDecisionValues(double[] values) {
+    double[] normalized = new double[values.length];
+    for (int index = 0; index < values.length; index++) {
+      NetworkDecisionVariable variable = decisionVariables.get(index);
+      normalized[index] = (values[index] - variable.getLowerBound())
+          / (variable.getUpperBound() - variable.getLowerBound());
+      normalized[index] = Math.max(0.0, Math.min(1.0, normalized[index]));
+    }
+    return normalized;
+  }
+
+  private double[] denormalizeDecisionValues(double[] normalized) {
+    double[] values = new double[normalized.length];
+    for (int index = 0; index < normalized.length; index++) {
+      NetworkDecisionVariable variable = decisionVariables.get(index);
+      values[index] = variable.getLowerBound()
+          + Math.max(0.0, Math.min(1.0, normalized[index])) * (variable.getUpperBound() - variable.getLowerBound());
+    }
+    return values;
   }
 
   /**
@@ -674,6 +1050,15 @@ public class NetworkOptimizer {
     /** Descriptive message. */
     public String message;
 
+    /** Generalized candidate contract, or null for legacy choke-only runs. */
+    public NetworkCandidateEvaluation candidateEvaluation;
+
+    /** Named generalized decisions, including units in candidateEvaluation. */
+    public Map<String, Double> decisionValues;
+
+    /** Binding or nearly binding constraints. */
+    public List<String> activeConstraints;
+
     /**
      * Per-well results: choke name to [rate_kghr, opening_pct, dp_bar].
      */
@@ -702,7 +1087,22 @@ public class NetworkOptimizer {
           sb.append(String.format("  %s: %.1f%%%n", chokeNames.get(i), chokeOpenings[i]));
         }
       }
+      if (decisionValues != null && !decisionValues.isEmpty()) {
+        sb.append("Decisions:\n");
+        for (Map.Entry<String, Double> entry : decisionValues.entrySet()) {
+          sb.append(String.format("  %s: %.6g%n", entry.getKey(), entry.getValue()));
+        }
+      }
       return sb.toString();
+    }
+
+    /**
+     * Serialize the optimization result and candidate diagnostics.
+     *
+     * @return stable JSON
+     */
+    public String toJson() {
+      return new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(this);
     }
   }
 }

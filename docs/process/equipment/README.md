@@ -93,6 +93,8 @@ This folder contains detailed documentation for all process equipment in NeqSim.
 | **Risers** | [pipelines.md#risers](pipelines#risers) | **SCR, TTR, Flexible, Lazy-Wave risers** |
 | Networks | [networks.md](networks) | Pipeline network modeling |
 | Looped Networks | [looped_networks.md](looped_networks) | Hardy Cross solver for loops |
+| Gas Network Operations | [../gas_network_operations.md](../gas_network_operations) | Coupled gas quality, optimization, and linepack |
+| Oil Network Operations | [../oil_network_operations.md](../oil_network_operations) | Oil pumps, terminal tanks, parcels, and cargo schedules |
 | Manifolds | [manifolds.md](manifolds) | Multi-stream routing |
 
 ### Flow Measurement
