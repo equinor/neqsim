@@ -250,7 +250,7 @@ The `DexpiXmlWriter` path preserves configured safeguarding semantics in its Pro
 
 | Source model or tag | Exported semantics |
 |---|---|
-| `PSHH`, `PAHH`, `LSHH`, `TSHH`, or `FSL` instrument tag | `SystemAssignment/ControlSystem=SIS`; an ordinary process transmitter remains DCS |
+| `PSHH`, `PAHH`, `LSHH`, `TSHH`, or `FSL` instrument tag | `GenericAttributes Set="SystemAssignment"` containing `ControlSystem=SIS`; an ordinary process transmitter remains DCS |
 | Existing shutdown identifiers such as `XV`, `SD`, `ZS`, `SV`, `ESD`, or `HIPPS` | SIS assignment according to the writer's tag classifier |
 | `HIPPSValve` | `GateValve` final element with closed safe state |
 | Pressure transmitter registered with `HIPPSValve.addPressureTransmitter(...)` | HIPPS sensor role and membership in the same safety function |
