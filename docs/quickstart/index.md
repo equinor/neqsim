@@ -5,7 +5,7 @@ description: Get up and running with NeqSim in 5 minutes. Quick start guides for
 
 Get up and running with NeqSim in 5 minutes. Choose your platform:
 
-> **Documentation Version:** These guides are for NeqSim 3.x. Check the [Maven Central](https://search.maven.org/search?q=g:%22com.equinor.neqsim%22%20AND%20a:%22neqsim%22) page for the latest version number.
+> **Documentation Version:** These guides are for NeqSim 3.x. Check the [Maven Central](https://central.sonatype.com/artifact/com.equinor.neqsim/neqsim) page for the latest version number.
 
 | Platform | Best For | Time to First Calculation |
 |----------|----------|---------------------------|
