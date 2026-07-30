@@ -135,9 +135,8 @@ class ThreeFluidSectionTest {
 
   @Test
   void testThreeLayerGeometryConservesSegmentAreaAcrossPipeDiameters() {
-    double[] diameters = {0.05, 0.10, 0.30, 1.0, 2.0};
-    double[][] holdupSets = {{0.94, 0.05, 0.01}, {0.80, 0.15, 0.05}, {0.50, 0.30, 0.20},
-        {0.10, 0.45, 0.45}};
+    double[] diameters = { 0.05, 0.10, 0.30, 1.0, 2.0 };
+    double[][] holdupSets = { { 0.94, 0.05, 0.01 }, { 0.80, 0.15, 0.05 }, { 0.50, 0.30, 0.20 }, { 0.10, 0.45, 0.45 } };
 
     for (double diameter : diameters) {
       for (double[] holdups : holdupSets) {
@@ -159,8 +158,17 @@ class ThreeFluidSectionTest {
   }
 
   private static double circularSegmentArea(double level, double diameter) {
+    if (level <= 0.0) {
+      return 0.0;
+    }
+    if (level >= diameter) {
+      return Math.PI * diameter * diameter / 4.0;
+    }
+
     double radius = diameter / 2.0;
-    double theta = 2.0 * Math.acos(1.0 - 2.0 * level / diameter);
+    double cosineArgument = 1.0 - 2.0 * level / diameter;
+    cosineArgument = Math.max(-1.0, Math.min(1.0, cosineArgument));
+    double theta = 2.0 * Math.acos(cosineArgument);
     return radius * radius * (theta - Math.sin(theta)) / 2.0;
   }
 
