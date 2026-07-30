@@ -374,10 +374,9 @@ public class ProcessSystemParallelTransientTest extends neqsim.NeqSimTest {
     SystemSrkEos fluid = new SystemSrkEos(298.15, 20.0);
     fluid.addComponent("methane", 1.0);
     Stream feed = new Stream("feed", fluid);
-    BlockingHeater upstream = new BlockingHeater("upstream", feed, upstreamStarted, releaseUpstream,
-        upstreamCompleted);
-    DependencyRecordingHeater downstream = new DependencyRecordingHeater("downstream",
-        upstream.getOutletStream(), upstreamCompleted, downstreamObservedIncompleteUpstream, downstreamStarted);
+    BlockingHeater upstream = new BlockingHeater("upstream", feed, upstreamStarted, releaseUpstream, upstreamCompleted);
+    DependencyRecordingHeater downstream = new DependencyRecordingHeater("downstream", upstream.getOutletStream(),
+        upstreamCompleted, downstreamObservedIncompleteUpstream, downstreamStarted);
 
     ProcessSystem process = new ProcessSystem();
     process.add(upstream);
