@@ -594,6 +594,7 @@ public class TPflash extends Flash {
         // applied on this path, as it can discard a genuine split the stability test overlooked.
         collapseTrivialMultiphaseSplit();
         rescueLiquidLiquidEndpoint();
+        rescueAqueousEndpoint();
         return;
       }
     }
@@ -779,6 +780,7 @@ public class TPflash extends Flash {
     collapseTrivialMultiphaseSplit();
     normalizeActivePhaseFractions();
     rescueLiquidLiquidEndpoint();
+    rescueAqueousEndpoint();
 
     // Final chemical equilibrium call after all phase reordering
     // This ensures chemical equilibrium is solved on the final phase configuration
@@ -857,6 +859,71 @@ public class TPflash extends Flash {
     } catch (Exception ex) {
       logger.debug("Liquid-liquid endpoint refinement failed: {}", ex.getMessage());
     }
+  }
+
+  /**
+   * Refines an ordinary water-rich endpoint with the multiphase stability solver.
+   *
+   * <p>
+   * The ordinary flash searches only the cubic gas/oil roots and can therefore leave a substantial
+   * water fraction dissolved in a hydrocarbon-labelled phase even when a lower-Gibbs aqueous split
+   * exists. The one-mol-percent feed guard keeps trace-water process flashes on the existing fast
+   * path. A cloned multiphase candidate replaces the ordinary state only through the same strict
+   * phase-fraction, distinct-composition, and Gibbs-energy checks used by the liquid-liquid rescue.
+   * </p>
+   */
+  private void rescueAqueousEndpoint() {
+    if (system.doMultiPhaseCheck() || system.isChemicalSystem() || system.hasIons() || solidCheck
+        || system.isMultiphaseWaxCheck() || system.getNumberOfPhases() > 2) {
+      return;
+    }
+
+    double waterFeedFraction = 0.0;
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      if (system.getPhase(phaseIndex).getType() == PhaseType.AQUEOUS) {
+        return;
+      }
+    }
+    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents();
+        componentIndex++) {
+      neqsim.thermo.component.ComponentInterface component =
+          system.getPhase(0).getComponent(componentIndex);
+      if ("water".equalsIgnoreCase(component.getComponentName())) {
+        waterFeedFraction = component.getz();
+        break;
+      }
+    }
+    if (waterFeedFraction < 0.01) {
+      return;
+    }
+
+    double referenceGibbsEnergy = system.getGibbsEnergy();
+    SystemInterface candidate = system.clone();
+    try {
+      candidate.setMultiPhaseCheck(true);
+      new TPflash(candidate, candidate.doSolidPhaseCheck()).run();
+      if (candidate.getNumberOfPhases() == 2 && containsAqueousPhase(candidate)
+          && isLowerGibbsMultiphaseCandidate(candidate, referenceGibbsEnergy)) {
+        copyFlashStateFrom(candidate);
+      }
+    } catch (Exception ex) {
+      logger.debug("Aqueous endpoint refinement failed: {}", ex.getMessage());
+    }
+  }
+
+  /**
+   * Checks whether a candidate contains an aqueous phase.
+   *
+   * @param candidate candidate system to inspect
+   * @return true when one candidate phase is aqueous
+   */
+  private boolean containsAqueousPhase(SystemInterface candidate) {
+    for (int phaseIndex = 0; phaseIndex < candidate.getNumberOfPhases(); phaseIndex++) {
+      if (candidate.getPhase(phaseIndex).getType() == PhaseType.AQUEOUS) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
