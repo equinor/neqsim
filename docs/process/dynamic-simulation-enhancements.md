@@ -545,10 +545,10 @@ thread pool for every timestep in long dynamic studies.
 If the thread calling `runTransient(...)` is interrupted while waiting for
 parallel equipment, NeqSim restores the caller's interrupt status and stops
 waiting. Later parallel passes in the same timestep observe that status and do
-not submit additional equipment work. Already submitted equipment tasks are
-not forcibly cancelled because unit-operation state updates are not
-transactionally interruptible. Callers should therefore treat an interrupted
-timestep as incomplete rather than as an atomic rollback.
+not submit additional equipment work. Queued futures are cancelled without
+interrupting equipment already updating state. Because those running updates
+are not transactionally interruptible, callers should still treat an
+interrupted timestep as incomplete rather than as an atomic rollback.
 
 **Note:** Parallel execution is beneficial for flowsheets with many independent
 equipment units. For small flowsheets or tightly coupled equipment (recycles),

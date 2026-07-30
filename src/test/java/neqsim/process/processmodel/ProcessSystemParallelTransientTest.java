@@ -151,6 +151,41 @@ public class ProcessSystemParallelTransientTest extends neqsim.NeqSimTest {
   }
 
   /**
+   * Transient unit that signals when execution starts.
+   */
+  private static final class SignallingTransientUnit extends ProcessEquipmentBaseClass {
+    private static final long serialVersionUID = 1000L;
+    private final transient CountDownLatch started;
+    private final AtomicInteger executionCount;
+
+    /**
+     * Creates a signalling unit.
+     *
+     * @param started latch signalled when execution starts
+     * @param executionCount shared execution counter
+     */
+    private SignallingTransientUnit(CountDownLatch started, AtomicInteger executionCount) {
+      super("signalling-unit");
+      this.started = started;
+      this.executionCount = executionCount;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void run(UUID id) {
+      setCalculationIdentifier(id);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void runTransient(double dt, UUID id) {
+      executionCount.incrementAndGet();
+      started.countDown();
+      setCalculationIdentifier(id);
+    }
+  }
+
+  /**
    * Repeated transient steps must reuse the configured bounded worker set instead of creating a new executor for every
    * step.
    */
@@ -283,6 +318,49 @@ public class ProcessSystemParallelTransientTest extends neqsim.NeqSimTest {
           "Interrupted semi-implicit step submitted a second parallel equipment pass");
     } finally {
       release.countDown();
+      processRunner.join(2000L);
+    }
+  }
+
+  /**
+   * Interrupting a parallel transient wait must cancel queued equipment work without interrupting a unit already
+   * updating its state.
+   *
+   * @throws Exception if the test thread cannot coordinate with the process runner
+   */
+  @Test
+  public void interruptCancelsQueuedEquipmentWithoutInterruptingRunningTask() throws Exception {
+    CountDownLatch blockingStarted = new CountDownLatch(1);
+    CountDownLatch releaseBlocking = new CountDownLatch(1);
+    CountDownLatch queuedStarted = new CountDownLatch(1);
+    AtomicInteger queuedExecutionCount = new AtomicInteger();
+    ProcessSystem process = new ProcessSystem();
+    process.add(new BlockingTransientUnit(blockingStarted, releaseBlocking));
+    process.add(new SignallingTransientUnit(queuedStarted, queuedExecutionCount));
+    process.setParallelTransientEnabled(true);
+    process.setTransientThreadPoolSize(1);
+
+    Thread processRunner = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        process.runTransient(1.0, UUID.randomUUID());
+      }
+    });
+
+    try {
+      processRunner.start();
+      assertTrue(blockingStarted.await(5L, TimeUnit.SECONDS), "Blocking equipment did not start");
+      processRunner.interrupt();
+      processRunner.join(2000L);
+      assertFalse(processRunner.isAlive(), "Interrupted process runner did not return promptly");
+      assertEquals(0, queuedExecutionCount.get(), "Queued equipment ran before the blocking unit was released");
+
+      releaseBlocking.countDown();
+      assertFalse(queuedStarted.await(500L, TimeUnit.MILLISECONDS),
+          "Queued equipment continued executing after runTransient returned");
+      assertEquals(0, queuedExecutionCount.get(), "Queued equipment mutated state after runTransient returned");
+    } finally {
+      releaseBlocking.countDown();
       processRunner.join(2000L);
     }
   }

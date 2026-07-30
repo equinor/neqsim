@@ -385,8 +385,8 @@ For large flowsheets with independent branches, enable
 with `process.setTransientThreadPoolSize(n)`. The per-process worker pool is
 created lazily and reused across timesteps; changing the worker count or
 disabling the option retires it. If the caller is interrupted while waiting,
-NeqSim restores the interrupt status and later passes skip task submission, but
-does not forcibly cancel equipment already updating state, so treat that
+NeqSim restores the interrupt status, cancels queued work without interrupting
+equipment already updating state, and skips later task submission. Treat that
 timestep as incomplete. Keep parallel execution off for tightly coupled
 sequential equipment or recycle loops unless their transient dependencies have
 been verified.

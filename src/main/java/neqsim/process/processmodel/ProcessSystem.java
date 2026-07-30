@@ -4160,8 +4160,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * an independent task. This is suitable when equipment units are loosely coupled (no data dependencies within a
    * single timestep). If the caller is interrupted while waiting, its interrupt status is restored and the wait loop
    * stops. A subsequent pass observes that status and returns without submitting more tasks. Already submitted
-   * equipment tasks are not cancelled because interrupting state mutation inside equipment is not guaranteed to be
-   * safe.
+   * equipment that is queued is cancelled without interrupting tasks already updating state.
    *
    * @param dt time step in seconds
    * @param id calculation identifier
@@ -4184,11 +4183,15 @@ public class ProcessSystem extends SimulationBaseClass {
         }
       }));
     }
-    for (Future<?> f : futures) {
+    for (int i = 0; i < futures.size(); i++) {
+      Future<?> f = futures.get(i);
       try {
         f.get();
       } catch (InterruptedException ex) {
         Thread.currentThread().interrupt();
+        for (int pendingIndex = i; pendingIndex < futures.size(); pendingIndex++) {
+          futures.get(pendingIndex).cancel(false);
+        }
         logger.warn("Parallel transient execution interrupted; caller interrupt status restored");
         break;
       } catch (ExecutionException ex) {
