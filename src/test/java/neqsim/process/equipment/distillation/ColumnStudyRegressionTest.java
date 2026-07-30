@@ -312,35 +312,73 @@ public class ColumnStudyRegressionTest {
   }
 
   /**
-   * Verify that a configured pumparound uses the coordinated residual-monitored fallback.
+   * Verify that a liquid pumparound participates directly in the simultaneous material and energy balances.
    *
    * <p>
-   * Pumparound returns are outer tear streams and are not yet feed terms in the Naphtali-Sandholm equation system.
-   * Routing this configuration through MESH_RESIDUAL prevents the simultaneous solver from applying a liquid split that
-   * omits the return stream.
+   * The draw is an internal recycle rather than a product: the configured fraction must leave the draw tray, return
+   * with the same component inventory at the specified lower temperature, and disappear from the external column
+   * balance. Two nearby draw fractions guard against a coincidental result at one operating point.
    * </p>
    */
   @Test
-  public void naphtaliSandholmDefersPumparoundToCoupledFallback() {
-    SystemInterface baseFluid = createBaseFluid();
-    StreamInterface feedStream = createStream("pumparound_main_feed", baseFluid, MAIN_FEED_COMPOSITION,
-        MAIN_FEED_TEMPERATURE_C, MAIN_FEED_PRESSURE_BARA, MAIN_FEED_MASS_FLOW_KG_HR);
-    StreamInterface topFeedStream = createStream("pumparound_top_feed", baseFluid, TOP_FEED_COMPOSITION,
-        TOP_FEED_TEMPERATURE_C, TOP_FEED_PRESSURE_BARA, TOP_FEED_MASS_FLOW_KG_HR);
-    DistillationColumn column = createColumn(feedStream, topFeedStream);
-    column.addLiquidPumparound("column-study pumparound", answerTrayToNeqSimStage(7), answerTrayToNeqSimStage(5), 0.03,
-        5.0);
+  public void naphtaliSandholmPumparoundParticipatesInMeshBalances() {
+    double[] drawFractions = { 0.03, 0.05 };
+    double previousDrawFlow = 0.0;
+    for (int caseIndex = 0; caseIndex < drawFractions.length; caseIndex++) {
+      double drawFraction = drawFractions[caseIndex];
+      SystemInterface baseFluid = createBaseFluid();
+      StreamInterface feedStream = createStream("pumparound_main_feed_" + caseIndex, baseFluid,
+          MAIN_FEED_COMPOSITION, MAIN_FEED_TEMPERATURE_C, MAIN_FEED_PRESSURE_BARA, MAIN_FEED_MASS_FLOW_KG_HR);
+      StreamInterface topFeedStream = createStream("pumparound_top_feed_" + caseIndex, baseFluid,
+          TOP_FEED_COMPOSITION, TOP_FEED_TEMPERATURE_C, TOP_FEED_PRESSURE_BARA, TOP_FEED_MASS_FLOW_KG_HR);
+      DistillationColumn column = createColumn(feedStream, topFeedStream);
+      int drawTrayNumber = answerTrayToNeqSimStage(7);
+      DistillationColumn.ColumnPumparound pumparound = column.addLiquidPumparound(
+          "column-study pumparound " + caseIndex, drawTrayNumber, answerTrayToNeqSimStage(5), drawFraction, 5.0);
 
-    column.run();
+      column.run();
 
-    assertEquals(DistillationColumn.SolverType.MESH_RESIDUAL, column.getLastSolverTypeUsed(),
-        "an active pumparound should avoid the incomplete simultaneous return-stream formulation");
-    assertTrue(column.solved(), "pumparound fallback should satisfy the active convergence gates");
-    assertTrue(column.isLastColumnTearConverged(), "pumparound return-stream tear should converge");
-    // This regression owns solver coordination. Detailed pumparound product accounting is a
-    // separate outer-tear concern and must not be used to validate the Naphtali side-draw equations.
-    assertPhysicalProduct(column.getGasOutStream(), "pumparound overhead");
-    assertPhysicalProduct(column.getLiquidOutStream(), "pumparound bottoms");
+      assertEquals(DistillationColumn.SolverType.NAPHTALI_SANDHOLM, column.getLastSolverTypeUsed(),
+          () -> "pumparound case should be accepted by the simultaneous solver\n"
+              + column.getConvergenceDiagnostics());
+      assertEquals(DistillationColumn.SolveStatus.RIGOROUS_CONVERGED, column.getLastSolveStatus(),
+          "pumparound case should close without terminal-product reconciliation");
+      assertTrue(column.solved(), "pumparound case should satisfy the active convergence gates");
+      assertTrue(column.isLastColumnTearConverged(), "pumparound stream materialization should complete");
+      assertTrue(column.getLastColumnTearIterationCount() <= 2,
+          "direct pumparound coupling should not require a repeated column tear solve");
+
+      StreamInterface internalLiquid = column.getTray(drawTrayNumber).getLiquidOutStream();
+      StreamInterface drawStream = pumparound.getDrawStream();
+      StreamInterface returnStream = pumparound.getReturnStream();
+      double internalMolarFlow = internalLiquid.getFlowRate("mol/hr");
+      double drawMolarFlow = drawStream.getFlowRate("mol/hr");
+      double actualDrawFraction = drawMolarFlow / (internalMolarFlow + drawMolarFlow);
+      assertEquals(drawFraction, actualDrawFraction, 1.0e-6,
+          "the applied tray streams must preserve the configured pumparound split");
+      assertEquals(drawMolarFlow, returnStream.getFlowRate("mol/hr"), Math.max(1.0e-6, 1.0e-8 * drawMolarFlow),
+          "pumparound draw and return molar flows should match");
+      assertEquals(drawStream.getTemperature() - 5.0, returnStream.getTemperature(), 1.0e-6,
+          "pumparound return temperature should preserve the specified drop");
+      assertTrue(drawStream.getFlowRate("kg/hr") > previousDrawFlow,
+          "pumparound flow should increase at the nearby higher draw fraction");
+      previousDrawFlow = drawStream.getFlowRate("kg/hr");
+
+      assertOverallMassBalance(feedStream, topFeedStream, column);
+      assertComponentMassBalances(feedStream, topFeedStream, column);
+      assertTrue(Double.isFinite(column.getLastMeshMaterialResidualNorm()),
+          "pumparound material residual should be finite");
+      assertTrue(Double.isFinite(column.getLastMeshEnergyResidualNorm()),
+          "pumparound energy residual should be finite");
+      assertEquals(REBOILER_TEMPERATURE_C, column.getReboiler().getTemperature() - 273.15, 1.0e-6,
+          "the fixed reboiler-temperature specification should be satisfied");
+      assertPhysicalProduct(column.getGasOutStream(), "pumparound overhead");
+      assertPhysicalProduct(column.getLiquidOutStream(), "pumparound bottoms");
+      assertPhysicalProduct(drawStream, "pumparound draw");
+      assertPhysicalProduct(returnStream, "pumparound return");
+      assertTrue(column.getLastIterationCount() <= 300,
+          "pumparound simultaneous solve should remain inside the configured iteration budget");
+    }
   }
 
   /**
