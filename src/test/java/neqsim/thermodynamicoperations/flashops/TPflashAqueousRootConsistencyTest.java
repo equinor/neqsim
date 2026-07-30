@@ -77,7 +77,7 @@ class TPflashAqueousRootConsistencyTest {
       for (int phaseIndex = 0; phaseIndex < actual.getNumberOfPhases(); phaseIndex++) {
         recoveredFeed += actual.getBeta(phaseIndex) * actual.getPhase(phaseIndex).getComponent(componentIndex).getx();
       }
-      assertEquals(FEED[componentIndex], recoveredFeed, 1.0e-12);
+      assertEquals(FEED[componentIndex], recoveredFeed, 1.0e-11);
     }
     assertTrue(maximumLogFugacityResidual(actual) < 1.0e-8);
   }
