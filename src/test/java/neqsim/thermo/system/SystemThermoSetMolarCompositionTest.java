@@ -15,6 +15,31 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest {
 
   SystemInterface sys;
 
+  private static final class CountingSystemSrkEos extends SystemSrkEos {
+    private static final long serialVersionUID = 1L;
+    private int fugacityInitCount;
+
+    CountingSystemSrkEos(double temperature, double pressure) {
+      super(temperature, pressure);
+    }
+
+    @Override
+    public void init(int initType) {
+      if (initType == 1) {
+        fugacityInitCount++;
+      }
+      super.init(initType);
+    }
+
+    void resetFugacityInitCount() {
+      fugacityInitCount = 0;
+    }
+
+    int getFugacityInitCount() {
+      return fugacityInitCount;
+    }
+  }
+
   @BeforeEach
   void setup() {
     sys = new SystemSrkEos(298.0, 300.0);
@@ -103,6 +128,40 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest {
     double flowRate = sys.getFlowRate("kg/hr");
 
     assertEquals(876223.6458342039, flowRate, 1e-3);
+  }
+
+  @Test
+  void setFlowRateSkipsFugacityInitializationForDensityIndependentUnits() {
+    String[] units = { "kg/hr", "mole/hr", "MSm3/day", "idSm3/hr" };
+    double[] rates = { 50000.0, 3600.0, 1.0, 1000.0 };
+
+    for (int i = 0; i < units.length; i++) {
+      CountingSystemSrkEos fluid = new CountingSystemSrkEos(298.0, 10.0);
+      fluid.addComponent("methane", 0.8);
+      fluid.addComponent("ethane", 0.2);
+      fluid.setMixingRule("classic");
+      fluid.init(0);
+      fluid.resetFugacityInitCount();
+
+      fluid.setTotalFlowRate(rates[i], units[i]);
+
+      assertEquals(0, fluid.getFugacityInitCount(), units[i] + " does not require EOS fugacity initialization");
+    }
+  }
+
+  @Test
+  void setActualVolumeFlowRateRetainsFugacityInitialization() {
+    CountingSystemSrkEos fluid = new CountingSystemSrkEos(298.0, 10.0);
+    fluid.addComponent("methane", 0.8);
+    fluid.addComponent("ethane", 0.2);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+    fluid.resetFugacityInitCount();
+
+    fluid.setTotalFlowRate(1000.0, "m3/hr");
+
+    assertEquals(1, fluid.getFugacityInitCount(), "actual-volume conversion requires an EOS density");
+    assertEquals(1000.0, fluid.getFlowRate("m3/hr"), 1e-6);
   }
 
   @Test
