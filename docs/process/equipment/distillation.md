@@ -17,7 +17,7 @@ column model for absorption and stripping. The main implementation lives in
 | Solvers | `SolverType` | Direct, damped, inside-out, adaptive matrix inside-out, Wegstein, sum-rates, Newton temperature correction, Naphtali-Sandholm, MESH residual, and `AUTO` with candidate tracing. |
 | Formal specifications | `ColumnSpecification`, convenience setters | Product purity, component recovery, reflux ratio, product flow rate, duty specifications, and staged specification homotopy for difficult product targets. |
 | Side products | `setGasSideDrawFraction`, `setLiquidSideDrawFraction`, `addSideDrawFlowSpecification` | Side draws are external product streams and are included in outlet stream and mass-balance reporting. |
-| Pumparounds | `addLiquidPumparound` | Internal liquid draw/return circuits solved as column tear variables. |
+| Pumparounds | `addLiquidPumparound` | Internal liquid draw/return circuits; Naphtali-Sandholm couples their mass and energy terms directly, while sequential solvers use column tear variables. |
 | Hardware modes | `CondenserMode`, `ReboilerMode` | Partial or total condenser, fixed liquid reflux split, equilibrium reboiler, and vapor boilup ratio mode. |
 | Hydraulics and sizing | `calcColumnInternals`, `enableHydraulicPressureDropCoupling` | Rates tray or packing hydraulics and can couple total pressure drop back into the pressure profile. |
 | Efficiency | `setMurphreeEfficiency`, `setMurphreeEfficiencies` | Column-wide and per-stage Murphree vapor efficiency correction. |
@@ -183,7 +183,7 @@ required.
 | `WEGSTEIN` | Accelerated successive substitution after warm-up. | Well-conditioned fixed-point problems. |
 | `SUM_RATES` | Flow-corrected tearing method. | Absorbers, strippers, and flow-sensitive columns. |
 | `NEWTON` | Tray-temperature Newton accelerator. | Difficult temperature convergence. It is not full simultaneous MESH Newton. |
-| `NAPHTALI_SANDHOLM` | Guarded simultaneous correction of MESH blocks after inside-out warm start. | Residual-driven hydrocarbon fractionators. |
+| `NAPHTALI_SANDHOLM` | Guarded simultaneous correction of MESH equations, including nonlocal pumparound draw/return terms. | Residual-driven hydrocarbon fractionators. |
 | `MESH_RESIDUAL` | Inside-out initialization plus full residual auditing. | Material, equilibrium, summation, energy, product-draw, and spec residual checks. |
 | `AUTO` | Runs a feasibility pre-screen, initializes a copied candidate, solves a relaxed damped base case, probes candidate strategies on column copies, and accepts the first solved non-fallback candidate or the best valid fallback. | Agent workflows and uncertain cases where robust automatic selection and diagnostics are useful. |
 
@@ -239,7 +239,12 @@ traffic and the latest tear-variable diagnostics report non-convergence.
 ## Pumparounds
 
 Liquid pumparounds are internal draw/return circuits. They are not external products and do not
-appear in `getOutletStreams()`.
+appear in `getOutletStreams()`. With `NAPHTALI_SANDHOLM`, the configured draw fraction is removed
+from the draw tray and returned to the configured tray in the same MESH equation system. The return
+preserves component flow and uses the draw composition at `drawTemperature - temperatureDrop` for
+its enthalpy. Because this link can connect non-adjacent trays, the solver uses a dense numerical
+Jacobian only for active pumparound cases; ordinary columns retain the block-tridiagonal path.
+Sequential solvers retain the established outer tear-stream iteration.
 
 ```java
 DistillationColumn.ColumnPumparound pumparound = column.addLiquidPumparound("PA-1", 4, 6,
@@ -253,7 +258,9 @@ double latestChange = column.getLastPumparoundRelativeChange();
 ```
 
 The `temperatureDrop` argument is in Kelvin. Positive values cool the returned liquid; negative
-values heat it. A non-finite or below-zero-K return temperature fails explicitly.
+values heat it. A non-finite or below-zero-K return temperature fails explicitly. For a direct
+Naphtali-Sandholm solve, `getLastPumparoundRelativeChange()` is zero because the stream object is
+materialized from the simultaneous solution rather than converged as an outer tear variable.
 
 ## Hydraulics and Pressure-Drop Coupling
 
