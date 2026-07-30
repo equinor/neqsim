@@ -35,7 +35,10 @@ Each timestep:
    enabled. Setter units are excluded from these explicit, semi-implicit, and
    parallel equipment passes.
 4. Standalone controllers run; equipment-embedded controllers retain their
-   equipment-specific execution timing for compatibility.
+   equipment-specific execution timing for compatibility. Controller ownership
+   is identity-based: registering an embedded controller separately, or adding
+   one standalone controller instance repeatedly, does not update its PID state
+   more than once per timestep.
 5. Measurement devices are sampled, alarms are evaluated, and history is stored.
 
 ## Basic Dynamic Setup
