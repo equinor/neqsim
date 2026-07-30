@@ -334,9 +334,9 @@ public class ColumnStudyRegressionTest {
           TOP_FEED_TEMPERATURE_C, TOP_FEED_PRESSURE_BARA, TOP_FEED_MASS_FLOW_KG_HR);
       DistillationColumn column = createColumn(feedStream, topFeedStream);
       int drawTrayNumber = answerTrayToNeqSimStage(7);
-      DistillationColumn.ColumnPumparound pumparound =
-          column.addLiquidPumparound("column-study pumparound " + caseIndex, drawTrayNumber,
-              answerTrayToNeqSimStage(5), initialCircuitDrawFraction, 5.0);
+      DistillationColumn.ColumnPumparound pumparound = column.addLiquidPumparound(
+          "column-study pumparound " + caseIndex, drawTrayNumber, answerTrayToNeqSimStage(5),
+          initialCircuitDrawFraction, 5.0);
       // The tray setter is public and is also used by operating-point studies. Withdrawal and
       // return terms must use this same applied fraction after configuration.
       column.getTray(drawTrayNumber).setLiquidPumparoundDrawFraction(drawFraction);
