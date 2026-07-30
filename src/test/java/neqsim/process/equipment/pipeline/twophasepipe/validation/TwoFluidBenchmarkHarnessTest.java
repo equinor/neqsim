@@ -96,26 +96,22 @@ class TwoFluidBenchmarkHarnessTest {
   @Test
   void testPreservesNonFiniteSentinelsDuringInterpolation() {
     Snapshot spatial = new Snapshot(0.0, new double[] { 0.0, 100.0 },
-        java.util.Collections.singletonMap("severe_slugging_number",
-            new double[] { Double.POSITIVE_INFINITY, 2.0 }));
+        java.util.Collections.singletonMap("severe_slugging_number", new double[] { Double.POSITIVE_INFINITY, 2.0 }));
 
     assertTrue(Double.isInfinite(spatial.valueAt("severe_slugging_number", 25.0)));
     assertEquals(2.0, spatial.valueAt("severe_slugging_number", 75.0), 0.0);
 
     Snapshot t0 = new Snapshot(0.0, new double[] { 0.0 },
-        java.util.Collections.singletonMap("severe_slugging_number",
-            new double[] { Double.POSITIVE_INFINITY }));
+        java.util.Collections.singletonMap("severe_slugging_number", new double[] { Double.POSITIVE_INFINITY }));
     Snapshot t10 = new Snapshot(10.0, new double[] { 0.0 },
         java.util.Collections.singletonMap("severe_slugging_number", new double[] { 2.0 }));
-    BenchmarkPoint earlyPoint =
-        new BenchmarkPoint("early", 2.0, 0.0, "severe_slugging_number", 0.0, 0.0, 0.0, "unit");
-    BenchmarkPoint latePoint =
-        new BenchmarkPoint("late", 8.0, 0.0, "severe_slugging_number", 2.0, 0.0, 0.0, "unit");
+    BenchmarkPoint earlyPoint = new BenchmarkPoint("early", 2.0, 0.0, "severe_slugging_number", 0.0, 0.0, 0.0, "unit");
+    BenchmarkPoint latePoint = new BenchmarkPoint("late", 8.0, 0.0, "severe_slugging_number", 2.0, 0.0, 0.0, "unit");
 
-    Comparison early =
-        TwoFluidBenchmarkHarness.compare(Arrays.asList(t0, t10), java.util.Collections.singletonList(earlyPoint));
-    Comparison late =
-        TwoFluidBenchmarkHarness.compare(Arrays.asList(t0, t10), java.util.Collections.singletonList(latePoint));
+    Comparison early = TwoFluidBenchmarkHarness.compare(Arrays.asList(t0, t10),
+        java.util.Collections.singletonList(earlyPoint));
+    Comparison late = TwoFluidBenchmarkHarness.compare(Arrays.asList(t0, t10),
+        java.util.Collections.singletonList(latePoint));
 
     assertTrue(Double.isInfinite(early.getRows().get(0).getModelValue()));
     assertTrue(late.isPassed(), late.failureSummary());
