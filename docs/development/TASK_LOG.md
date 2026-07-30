@@ -36,12 +36,6 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
-### 2026-07-30 — Reuse parallel transient workers across timesteps
-**Type:** E (Feature)
-**Keywords:** dynamic simulation, runTransient, ProcessSystem, parallel transient, executor reuse, thread pool, scalability
-**Solution:** `ProcessSystem` now owns a lazy reusable transient executor; regression coverage is in `ProcessSystemParallelTransientTest`, with behavior documented in `docs/process/dynamic-simulation-enhancements.md`.
-**Notes:** The prior implementation created and destroyed a fixed thread pool on every transient step. An isolated 8-unit, 200-step orchestration baseline with two configured workers completed all 1600 unit executions but created 400 distinct worker threads; the reusable executor reduced that stable scheduling metric to 2. The pool is transient model runtime state, uses daemon workers with a 60-second idle timeout, and is retired when parallel execution is disabled or its size changes. Parallel transient execution remains opt-in and suitable only when equipment dependencies permit concurrent execution.
-
 ### 2026-07-16 — Historical FeS wall inventory to elemental-sulfur compressor deposition
 **Type:** E (Feature) / B (Process)
 **Keywords:** iron sulfide, FeS, mackinawite, pyrrhotite, siderite, FeCO3, carbon steel, seawater, oxygen ingress, nitrogen purge, elemental sulfur, S8, wall inventory, compressor deposit, entrained condensate, warm shaft

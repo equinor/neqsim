@@ -2912,11 +2912,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       updateMeshResiduals();
     }
     boolean hasActiveSideDraw = hasActiveSideDrawFractions();
-    if (accepted && (!hasActiveSideDraw || residualConvergenceSatisfied())) {
+    if (accepted && hasActiveSideDraw && residualConvergenceSatisfied()) {
       lastSolveStatus = SolveStatus.RIGOROUS_CONVERGED;
-      lastSolveStatusReason = hasActiveSideDraw
-          ? "Naphtali-Sandholm side-draw products satisfy the active rigorous convergence gates"
-          : "Naphtali-Sandholm solver accepted its direct tray products";
+      lastSolveStatusReason = "Naphtali-Sandholm side-draw products satisfy the active rigorous convergence gates";
+    } else if (accepted && !hasActiveSideDraw) {
+      lastSolveStatus = SolveStatus.RECONCILED_PRODUCTS;
+      lastSolveStatusReason = "Naphtali-Sandholm direct products were applied";
     } else {
       lastSolveStatus = SolveStatus.FAILED;
       lastSolveStatusReason = accepted ? "Applied Naphtali-Sandholm side-draw state failed the active convergence gates"
