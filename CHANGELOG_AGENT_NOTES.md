@@ -9,6 +9,41 @@
 
 ---
 
+## 2026-07-30 — TwoFluidPipe closure diagnostics exposed as profiles
+
+### Summary
+
+`TwoFluidPipe` now exposes the closure diagnostics already calculated for each
+`TwoFluidSection`. The steady-state and transient report CSVs include the new profiles, and the
+benchmark harness captures their numeric values and risk flags for comparison with public
+simulator exports or field data.
+
+### New API
+
+| API | What it does |
+|---|---|
+| `getOilWaterFlowRegimeProfile()` | Reports the oil-water flow configuration by section |
+| `getWaterWettingProfile()` | Reports water-wetting flags for corrosion screening |
+| `getWaterDropoutRiskProfile()` | Reports water dropout or accumulation flags |
+| `getEntrainmentFractionProfile()` | Reports estimated liquid entrainment fractions |
+| `getEntrainedDropletDiameterProfile()` | Reports characteristic entrained droplet diameters |
+| `getSevereSluggingNumberProfile()` | Reports the riser-base severe-slugging stability number |
+| `getSevereSlugPotentialProfile()` | Reports severe-slugging risk flags |
+
+### Reporting and validation
+
+`TwoFluidPipeReport` appends the closure profiles to its steady-state and transient CSV exports.
+`TwoFluidBenchmarkHarness` adds `entrainment_fraction`, `entrained_droplet_diameter_m`,
+`severe_slugging_number`, `water_wetting_flag`, `water_dropout_risk_flag`, and
+`severe_slug_potential_flag`.
+
+### Tests
+
+`TwoFluidPipeReportTest` verifies profile shape, physical bounds, and report columns.
+`TwoFluidBenchmarkHarnessTest` verifies capture and comparison of the new benchmark variables.
+
+---
+
 ## 2026-07-28 — Dynamic VU flashes preserve nearby CPA state
 
 ### Summary
