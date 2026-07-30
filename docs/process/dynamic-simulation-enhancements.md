@@ -522,6 +522,12 @@ double actualDt = process.runTransientAdaptive(1.0, id);
 The adaptive algorithm compares state changes between the full step and two
 half-steps, reducing or increasing $\Delta t$ based on the relative error.
 
+Setter units form a dedicated pre-step specification phase. Each setter receives
+exactly one `runTransient(dt, id)` call per process timestep, so its specification
+is applied once and its own clock advances by the same $\Delta t$ as the process.
+Setters are excluded from the later explicit, semi-implicit, and parallel
+equipment passes.
+
 ### 5.2 Parallel Transient Execution
 
 For large flowsheets, equipment-level transient calculations can be run in
@@ -587,7 +593,7 @@ process.setIntegrationMethod(IntegrationMethod.RUNGE_KUTTA_4);    // Higher-orde
 
 ## 6. Test Coverage
 
-The features in this guide are covered by four focused test classes with 69
+The features in this guide are covered by five focused test classes with 72
 total tests:
 
 | Test Class | Tests | Coverage |
@@ -596,11 +602,12 @@ total tests:
 | `DynamicImprovementsPhase2Test` | 27 | Sensor faults, valve nonlinearities, adaptive timestep, parallel transient, integration methods, JSON process builder |
 | `DynamicImprovementsPhase3Test` | 16 | Transmitter filter, alarm shelving, separator internals, HX thermal model, distillation MESH dynamics |
 | `ProcessSystemParallelTransientTest` | 9 | Worker reuse, copy lifecycle, dependency ordering, independent-level concurrency, and interruption behavior at waits and level boundaries |
+| `ProcessSystemTransientSetterTest` | 3 | Single setter application, repeated-step clock advancement, and explicit, semi-implicit, and parallel execution |
 
 Run all tests:
 
 ```bash
-./mvnw test -Dtest=DynamicImprovementsTest,DynamicImprovementsPhase2Test,DynamicImprovementsPhase3Test,ProcessSystemParallelTransientTest
+./mvnw test -Dtest=DynamicImprovementsTest,DynamicImprovementsPhase2Test,DynamicImprovementsPhase3Test,ProcessSystemParallelTransientTest,ProcessSystemTransientSetterTest
 ```
 
 ---

@@ -3258,6 +3258,13 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param id the calculation identifier for this timestep
    */
   private void runUnitTransientSkippingInactive(ProcessEquipmentInterface unit, double dt, UUID id) {
+    // Setters are a dedicated pre-step specification phase. They have already
+    // received one runTransient(dt, id) call, including their single clock
+    // advance, and must not be integrated again in explicit, semi-implicit, or
+    // parallel equipment passes.
+    if (unit instanceof Setter) {
+      return;
+    }
     // Honor only the explicit user lock during dynamic stepping. Units that were
     // auto-bypassed by the low-flow heuristic on a previous (possibly steady-state)
     // pass must be given a chance to re-evaluate each timestep: they may hold dynamic
@@ -4064,7 +4071,18 @@ public class ProcessSystem extends SimulationBaseClass {
     runTransient(getTimeStep(), UUID.randomUUID());
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Advances one transient process timestep.
+   *
+   * <p>
+   * Setter units execute once as a dedicated pre-step specification phase through their transient contract. They are
+   * excluded from subsequent equipment integration passes so explicit, semi-implicit, and parallel stepping apply each
+   * setter once and advance its clock by exactly {@code dt}.
+   * </p>
+   *
+   * @param dt timestep in seconds
+   * @param id calculation identifier shared by the timestep
+   */
   @Override
   public synchronized void runTransient(double dt, UUID id) {
     ensureInitialStateSnapshot();
@@ -4079,7 +4097,7 @@ public class ProcessSystem extends SimulationBaseClass {
     for (int i = 0; i < unitOperations.size(); i++) {
       ProcessEquipmentInterface unit = unitOperations.get(i);
       if (unit instanceof Setter) {
-        unit.run(id);
+        unit.runTransient(dt, id);
       }
     }
 
