@@ -35,6 +35,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 public class NaphtaliSandholmSolver {
+  /** Maximum number of minimum line-search steps allowed without reducing the residual norm. */
+  private static final int MAX_NON_DESCENT_LINE_SEARCH_STEPS = 3;
 
   /** Logger for this class. */
   private static final Logger logger = LogManager.getLogger(NaphtaliSandholmSolver.class);
@@ -716,9 +718,12 @@ public class NaphtaliSandholmSolver {
 
       int failedSteps = 0;
       int stagnationCount = 0;
+      int nonDescentLineSearchSteps = 0;
+      int completedNewtonIterations = 0;
       double prevBestNorm = bestNorm;
 
       for (int iter = 1; iter <= maxIterations; iter++) {
+        completedNewtonIterations = iter;
         // Time guard for Newton iterations
         if (System.nanoTime() - newtonStart > maxNewtonTimeNs) {
           logger.info("NS Newton: time limit reached at iter {}", iter);
@@ -778,6 +783,14 @@ public class NaphtaliSandholmSolver {
 
         // Line search: backtrack if step increases residual norm
         double alpha = lineSearch(dx, norm);
+        if (alpha <= 0.0) {
+          logger.debug("NS: line search found no finite trial step; restoring best state");
+          restoreTrayState(bestLiq, bestT, bestV);
+          evaluateThermo();
+          residual = computeResidual();
+          norm = vectorNorm(residual);
+          break;
+        }
 
         // Apply update with step size alpha
         applyUpdate(dx, alpha);
@@ -832,6 +845,21 @@ public class NaphtaliSandholmSolver {
           continue;
         }
 
+        if (newNorm >= norm) {
+          nonDescentLineSearchSteps++;
+          if (nonDescentLineSearchSteps >= MAX_NON_DESCENT_LINE_SEARCH_STEPS) {
+            restoreTrayState(bestLiq, bestT, bestV);
+            evaluateThermo();
+            residual = computeResidual();
+            norm = vectorNorm(residual);
+            logger.debug(
+                "NS: stopped after {} minimum line-search steps without residual descent; "
+                    + "restored best norm {}",
+                nonDescentLineSearchSteps, String.format("%.6e", norm));
+            break;
+          }
+        }
+
         norm = newNorm;
         failedSteps = 0;
 
@@ -869,9 +897,9 @@ public class NaphtaliSandholmSolver {
         }
       }
 
-      logger.warn("Naphtali-Sandholm did not converge in {} iterations, ||F|| = {}", maxIterations,
+      logger.warn("Naphtali-Sandholm did not converge in {} iterations, ||F|| = {}", completedNewtonIterations,
           String.format("%.6e", norm));
-      applyResultsToColumn(id, maxIterations, norm, startTime);
+      applyResultsToColumn(id, completedNewtonIterations, norm, startTime);
       // Partial convergence is only acceptable when each component balance still closes; a leaky
       // profile must be reported as not accepted so the column does not present it as a solution.
       return norm < tolerance * 100 && meshClosureAcceptable("partial convergence");
@@ -4262,7 +4290,8 @@ public class NaphtaliSandholmSolver {
       saveV[j] = V[j];
     }
 
-    double bestAlpha = alpha;
+    double bestAlpha = 0.0;
+    double bestTrialNorm = Double.POSITIVE_INFINITY;
 
     for (int bt = 0; bt < maxBacktrack; bt++) {
       // Trial update
@@ -4281,12 +4310,23 @@ public class NaphtaliSandholmSolver {
       double[] Ftrial = computeResidual();
       double trialNorm = vectorNorm(Ftrial);
 
-      if (trialNorm < (1.0 - c * alpha) * currentNorm || alpha < 0.01) {
+      if (Double.isFinite(trialNorm) && trialNorm < bestTrialNorm) {
+        bestTrialNorm = trialNorm;
         bestAlpha = alpha;
+      }
+      if (Double.isFinite(trialNorm) && trialNorm < (1.0 - c * alpha) * currentNorm) {
+        bestAlpha = alpha;
+        break;
+      }
+      if (alpha < 0.01) {
         break;
       }
 
       alpha *= rho;
+    }
+
+    if (bestTrialNorm >= currentNorm) {
+      bestAlpha = Math.min(bestAlpha, alpha);
     }
 
     // ALWAYS restore the original state — the main loop's applyUpdate handles the

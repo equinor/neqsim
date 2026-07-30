@@ -183,7 +183,7 @@ required.
 | `WEGSTEIN` | Accelerated successive substitution after warm-up. | Well-conditioned fixed-point problems. |
 | `SUM_RATES` | Flow-corrected tearing method. | Absorbers, strippers, and flow-sensitive columns. |
 | `NEWTON` | Tray-temperature Newton accelerator. | Difficult temperature convergence. It is not full simultaneous MESH Newton. |
-| `NAPHTALI_SANDHOLM` | Guarded simultaneous correction of MESH blocks after inside-out warm start. | Residual-driven hydrocarbon fractionators. |
+| `NAPHTALI_SANDHOLM` | Guarded simultaneous correction of MESH blocks after inside-out warm start, with early return to coordinated fallback after repeated non-descent minimum steps. | Residual-driven hydrocarbon fractionators. |
 | `MESH_RESIDUAL` | Inside-out initialization plus full residual auditing. | Material, equilibrium, summation, energy, product-draw, and spec residual checks. |
 | `AUTO` | Runs a feasibility pre-screen, initializes a copied candidate, solves a relaxed damped base case, probes candidate strategies on column copies, and accepts the first solved non-fallback candidate or the best valid fallback. | Agent workflows and uncertain cases where robust automatic selection and diagnostics are useful. |
 
