@@ -130,13 +130,13 @@ public class ColumnStudyRegressionTest {
 
   /**
    * Reject a severely perturbed warm start without spending the entire Newton iteration budget on repeated non-descent
-   * minimum steps.
+   * line-search steps.
    *
    * <p>
    * The accepted column-study solution is deliberately perturbed by up to 90 K before a direct simultaneous-correction
    * warm start. The case is outside the local Newton basin, but it remains a finite, realistic multicomponent
    * hydrocarbon column state. The solver should preserve its best physical state and return control to the coordinated
-   * fallback path once three minimum line-search steps have failed to reduce the MESH residual.
+   * fallback path once three line-search steps have failed to reduce the MESH residual.
    * </p>
    */
   @Test

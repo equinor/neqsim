@@ -35,7 +35,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 public class NaphtaliSandholmSolver {
-  /** Maximum number of minimum line-search steps allowed without reducing the residual norm. */
+  /** Maximum number of non-descent line-search steps allowed before restoring the best state. */
   private static final int MAX_NON_DESCENT_LINE_SEARCH_STEPS = 3;
 
   /** Logger for this class. */
@@ -852,8 +852,7 @@ public class NaphtaliSandholmSolver {
             evaluateThermo();
             residual = computeResidual();
             norm = vectorNorm(residual);
-            logger.debug(
-                "NS: stopped after {} minimum line-search steps without residual descent; " + "restored best norm {}",
+            logger.debug("NS: stopped after {} non-descent line-search steps; restored best norm {}",
                 nonDescentLineSearchSteps, String.format("%.6e", norm));
             break;
           }
