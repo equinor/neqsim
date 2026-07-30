@@ -3,6 +3,7 @@ package neqsim.process.equipment.distillation;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.lang.reflect.Method;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 import neqsim.process.equipment.stream.Stream;
@@ -173,4 +174,29 @@ public class DistillationColumnSolverTuningTest {
       }
     });
   }
+
+  /**
+   * Exactly 100 percent liquid withdrawal disconnects the internal downflow and must avoid the Naphtali-Sandholm
+   * initialization divisions by the remaining liquid fraction. A nearby supported fraction must retain the requested
+   * simultaneous solver rather than introducing an arbitrary broad cutoff.
+   *
+   * @throws Exception if the guarded solver selector cannot be inspected
+   */
+  @Test
+  public void fullLiquidWithdrawalUsesResidualFallbackAtExactBoundary() throws Exception {
+    DistillationColumn column = buildColumn(6);
+    column.setSolverType(DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
+    int drawTrayNumber = 3;
+    Method selector = DistillationColumn.class.getDeclaredMethod("getEffectiveSolverTypeForRun");
+    selector.setAccessible(true);
+
+    column.setLiquidSideDrawFraction(drawTrayNumber, 1.0);
+    assertEquals(DistillationColumn.SolverType.MESH_RESIDUAL, selector.invoke(column),
+        "100 percent liquid withdrawal must avoid singular Naphtali-Sandholm initialization");
+
+    column.setLiquidSideDrawFraction(drawTrayNumber, 0.99);
+    assertEquals(DistillationColumn.SolverType.NAPHTALI_SANDHOLM, selector.invoke(column),
+        "a nearby positive internal-flow fraction should remain on the simultaneous solver");
+  }
+
 }

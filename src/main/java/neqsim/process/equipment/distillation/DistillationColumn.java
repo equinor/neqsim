@@ -1779,6 +1779,27 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Check whether a liquid side draw removes all liquid traffic from any stage.
+   *
+   * <p>
+   * Naphtali-Sandholm initialization propagates liquid traffic by dividing by the fraction that remains for the tray
+   * below. The exact full-withdrawal boundary has a zero divisor and must use a solver that does not rely on that
+   * initialization. Fractions below one retain positive internal traffic and remain supported by the simultaneous
+   * solver.
+   * </p>
+   *
+   * @return {@code true} when at least one liquid side-draw fraction is exactly one
+   */
+  private boolean hasFullyWithdrawnLiquidStage() {
+    for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
+      if (trays.get(trayIndex).getLiquidSideDrawFraction() >= 1.0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Select the solver to use for the current run after guarded default heuristics are applied.
    *
    * @return solver strategy to execute for this run
@@ -1803,6 +1824,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     // equation system.
     if (effectiveSolverType == SolverType.NAPHTALI_SANDHOLM && !pumparounds.isEmpty()) {
       logger.debug("Using MESH_RESIDUAL for column {} because active pumparounds require outer return-stream coupling",
+          getName());
+      return SolverType.MESH_RESIDUAL;
+    }
+    if (effectiveSolverType == SolverType.NAPHTALI_SANDHOLM && hasFullyWithdrawnLiquidStage()) {
+      logger.debug("Using MESH_RESIDUAL for column {} because a full liquid side draw leaves zero internal downflow",
           getName());
       return SolverType.MESH_RESIDUAL;
     }
