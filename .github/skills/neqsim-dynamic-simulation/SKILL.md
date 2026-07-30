@@ -39,8 +39,10 @@ Each timestep:
    coalesced by object identity and the timestep calculation identifier. Merely
    attaching a controller to equipment that does not execute it must not suppress
    the standalone update; repeated standalone registration runs once per step.
-   Custom controllers integrated by equipment must report the completed identifier
-   through `hasRunTransient(UUID)`.
+   `ControllerDeviceBaseClass` also makes repeated calls with one identifier
+   idempotent, including semi-implicit equipment passes. Custom controllers
+   integrated by equipment must implement the same identifier contract through
+   `hasRunTransient(UUID)`.
 5. Measurement devices are sampled, alarms are evaluated, and history is stored.
 
 ## Basic Dynamic Setup
