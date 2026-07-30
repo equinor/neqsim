@@ -99,7 +99,13 @@ public final class TwoFluidBenchmarkHarness {
   }
 
   /**
-   * Compare transient snapshots against benchmark points using linear interpolation in time and position.
+   * Compare transient snapshots against benchmark points.
+   *
+   * <p>
+   * Continuous profiles use linear interpolation in time and position. Variables ending in {@code _flag} use
+   * nearest-neighbour sampling so boolean indicators remain binary. Intervals with a non-finite endpoint also use
+   * nearest-neighbour sampling to preserve diagnostic sentinels without producing {@link Double#NaN}.
+   * </p>
    *
    * @param snapshots model snapshots
    * @param referencePoints reference points
@@ -147,7 +153,24 @@ public final class TwoFluidBenchmarkHarness {
 
     double fraction = (point.getTimeSeconds() - lower.getTimeSeconds()) / dt;
     fraction = Math.max(0.0, Math.min(1.0, fraction));
+    return interpolateValues(lowerValue, upperValue, fraction, isDiscreteVariable(point.getVariable()));
+  }
+
+  private static double interpolateValues(double lowerValue, double upperValue, double fraction, boolean discrete) {
+    if (fraction <= 0.0) {
+      return lowerValue;
+    }
+    if (fraction >= 1.0) {
+      return upperValue;
+    }
+    if (discrete || !Double.isFinite(lowerValue) || !Double.isFinite(upperValue)) {
+      return fraction < 0.5 ? lowerValue : upperValue;
+    }
     return lowerValue + fraction * (upperValue - lowerValue);
+  }
+
+  private static boolean isDiscreteVariable(String variable) {
+    return normalize(variable).endsWith("_flag");
   }
 
   private static Map<String, Integer> parseHeader(String line) {
@@ -285,7 +308,8 @@ public final class TwoFluidBenchmarkHarness {
     }
 
     public double valueAt(String variable, double positionMeters) {
-      double[] values = variables.get(normalize(variable));
+      String normalizedVariable = normalize(variable);
+      double[] values = variables.get(normalizedVariable);
       if (values == null || values.length == 0) {
         throw new IllegalArgumentException("No model profile for variable: " + variable);
       }
@@ -293,10 +317,10 @@ public final class TwoFluidBenchmarkHarness {
         throw new IllegalArgumentException("Position and value profile lengths differ for " + variable + ": "
             + positionsMeters.length + " vs " + values.length);
       }
-      return interpolatePosition(positionMeters, positionsMeters, values);
+      return interpolatePosition(positionMeters, positionsMeters, values, isDiscreteVariable(normalizedVariable));
     }
 
-    private double interpolatePosition(double x, double[] positions, double[] values) {
+    private double interpolatePosition(double x, double[] positions, double[] values, boolean discrete) {
       if (x <= positions[0]) {
         return values[0];
       }
@@ -311,7 +335,7 @@ public final class TwoFluidBenchmarkHarness {
             return values[i];
           }
           double fraction = (x - positions[i]) / dx;
-          return values[i] + fraction * (values[i + 1] - values[i]);
+          return interpolateValues(values[i], values[i + 1], fraction, discrete);
         }
       }
       return values[last];
