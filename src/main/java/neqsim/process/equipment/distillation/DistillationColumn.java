@@ -1792,11 +1792,21 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     // recycle loop). This skips the expensive feasibility pre-screen, candidate cloning and
     // multi-solver scoring that AUTO performs on every call. Adjustable specifications keep the
     // full AUTO path because their continuation/homotopy logic depends on it.
+    SolverType effectiveSolverType = solverType;
     if (solverType == SolverType.AUTO && hasBeenSolvedBefore && autoWarmStartSolver != null
         && autoWarmStartSolver != SolverType.AUTO && !hasAdjustableSpecifications()) {
-      return autoWarmStartSolver;
+      effectiveSolverType = autoWarmStartSolver;
     }
-    return solverType;
+    // Pumparound returns are converged by the outer tear loop and are not yet assembled as
+    // Naphtali-Sandholm feed terms. Keep that coordinated configuration on the established
+    // residual-monitored solver until both withdrawal and return participate in one simultaneous
+    // equation system.
+    if (effectiveSolverType == SolverType.NAPHTALI_SANDHOLM && !pumparounds.isEmpty()) {
+      logger.debug("Using MESH_RESIDUAL for column {} because active pumparounds require outer return-stream coupling",
+          getName());
+      return SolverType.MESH_RESIDUAL;
+    }
+    return effectiveSolverType;
   }
 
   /**
@@ -2270,7 +2280,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * </p>
    *
    * @param id calculation identifier
-   * @return {@code true} when the Naphtali-Sandholm solver accepted its direct result
+   * @return {@code true} when the solver accepted its direct result and, for active side draws, the applied state
+   * satisfies the active rigorous convergence gates
    */
   boolean solveNaphtaliSandholm(UUID id) {
     captureDirectExternalTrayFeeds();
@@ -2354,15 +2365,22 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     // warm-state cache. init() has already recorded the matching thermodynamic identity.
     naphtaliSandholmStateOwned = true;
     trayStateThermodynamicIdentitySignature = thermodynamicIdentitySignature;
-    hasNaphtaliSandholmWarmState = accepted;
-    if (accepted) {
+    boolean hasActiveSideDraw = hasActiveSideDrawFractions();
+    // This PR makes the applied-state gate authoritative for side-draw columns because
+    // intermediate products expose any species leakage. Preserve the established direct
+    // solver acceptance contract for columns without side draws; broadening that contract
+    // changes their warm-state/fallback behavior and belongs in a separate migration.
+    boolean appliedResultAccepted = accepted && (!hasActiveSideDraw || solved());
+    hasNaphtaliSandholmWarmState = appliedResultAccepted;
+    if (appliedResultAccepted) {
       lastNaphtaliSandholmInputSignature = inputSignature;
     }
 
-    if (!accepted) {
-      logger.warn("Naphtali-Sandholm solver did not fully converge for column {}", getName());
+    if (!appliedResultAccepted) {
+      logger.warn("Naphtali-Sandholm solver did not satisfy the active rigorous convergence gates for column {}",
+          getName());
     }
-    return accepted;
+    return appliedResultAccepted;
   }
 
   /**
@@ -2762,6 +2780,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
       updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature,
           getEffectiveMurphreeEfficiency(trayIndex));
+      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, tray.getGasSideDrawFraction());
+      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, tray.getLiquidSideDrawFraction());
     }
     if (hasReboiler && getReboiler() != null) {
       updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, getReboiler().getRefluxRatio());
@@ -2834,6 +2854,21 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Check whether any tray exposes a configured gas or liquid side product.
+   *
+   * @return {@code true} when at least one side-draw fraction is positive
+   */
+  private boolean hasActiveSideDrawFractions() {
+    for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
+      SimpleTray tray = trays.get(trayIndex);
+      if (tray.getGasSideDrawFraction() > 0.0 || tray.getLiquidSideDrawFraction() > 0.0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Finalize a direct Naphtali-Sandholm solve without invoking generic product reconciliation.
    *
    * <p>
@@ -2873,12 +2908,19 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     for (int i = 0; i < numberOfTrays; i++) {
       trays.get(i).setCalculationIdentifier(id);
     }
-    if (accepted) {
-      lastSolveStatus = SolveStatus.RECONCILED_PRODUCTS;
-      lastSolveStatusReason = "Naphtali-Sandholm direct products were applied";
+    if (isEffectiveMeshResidualToleranceEnforced() || lastMeshResidual != null) {
+      updateMeshResiduals();
+    }
+    boolean hasActiveSideDraw = hasActiveSideDrawFractions();
+    if (accepted && (!hasActiveSideDraw || residualConvergenceSatisfied())) {
+      lastSolveStatus = SolveStatus.RIGOROUS_CONVERGED;
+      lastSolveStatusReason = hasActiveSideDraw
+          ? "Naphtali-Sandholm side-draw products satisfy the active rigorous convergence gates"
+          : "Naphtali-Sandholm solver accepted its direct tray products";
     } else {
       lastSolveStatus = SolveStatus.FAILED;
-      lastSolveStatusReason = "Naphtali-Sandholm solver did not accept its result";
+      lastSolveStatusReason = accepted ? "Applied Naphtali-Sandholm side-draw state failed the active convergence gates"
+          : "Naphtali-Sandholm solver did not accept its result";
     }
     setCalculationIdentifier(id);
   }

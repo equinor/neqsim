@@ -189,6 +189,159 @@ public class ColumnStudyRegressionTest {
   }
 
   /**
+   * Verify that an intermediate liquid side draw participates in the simultaneous material and energy balances.
+   *
+   * <p>
+   * A tray side-draw fraction splits the total liquid leaving that tray between the internal downflow and the external
+   * product. The Naphtali-Sandholm equations and the streams applied back to the tray must use the same split. Two
+   * nearby draw fractions guard against a coincidental result at one operating point.
+   * </p>
+   */
+  @Test
+  public void naphtaliSandholmLiquidSideDrawParticipatesInMeshBalances() {
+    double[] drawFractions = { 0.05, 0.08 };
+    double previousSideDrawFlow = 0.0;
+    for (int caseIndex = 0; caseIndex < drawFractions.length; caseIndex++) {
+      double drawFraction = drawFractions[caseIndex];
+      SystemInterface baseFluid = createBaseFluid();
+      StreamInterface feedStream = createStream("side_draw_main_feed_" + caseIndex, baseFluid, MAIN_FEED_COMPOSITION,
+          MAIN_FEED_TEMPERATURE_C, MAIN_FEED_PRESSURE_BARA, MAIN_FEED_MASS_FLOW_KG_HR);
+      StreamInterface topFeedStream = createStream("side_draw_top_feed_" + caseIndex, baseFluid, TOP_FEED_COMPOSITION,
+          TOP_FEED_TEMPERATURE_C, TOP_FEED_PRESSURE_BARA, TOP_FEED_MASS_FLOW_KG_HR);
+      DistillationColumn column = createColumn(feedStream, topFeedStream);
+      int drawTrayNumber = answerTrayToNeqSimStage(7);
+      column.setLiquidSideDrawFraction(drawTrayNumber, drawFraction);
+
+      column.run();
+
+      assertEquals(DistillationColumn.SolverType.NAPHTALI_SANDHOLM, column.getLastSolverTypeUsed(),
+          () -> "side-draw case should be accepted by the simultaneous solver\n" + column.getConvergenceDiagnostics());
+      assertEquals(DistillationColumn.SolveStatus.RIGOROUS_CONVERGED, column.getLastSolveStatus(),
+          "side-draw case should close without terminal-product reconciliation");
+      assertTrue(column.solved(), "side-draw case should satisfy the active convergence gates");
+
+      StreamInterface internalLiquid = column.getTray(drawTrayNumber).getLiquidOutStream();
+      StreamInterface sideDraw = column.getSideDrawStream(drawTrayNumber, DistillationColumn.SideDrawPhase.LIQUID);
+      double internalLiquidMolarFlow = internalLiquid.getFlowRate("mol/hr");
+      double sideDrawMolarFlow = sideDraw.getFlowRate("mol/hr");
+      double actualDrawFraction = sideDrawMolarFlow / (internalLiquidMolarFlow + sideDrawMolarFlow);
+      assertEquals(drawFraction, actualDrawFraction, 1.0e-6,
+          "the applied tray streams must preserve the configured liquid split");
+      double sideDrawFlow = sideDraw.getFlowRate("kg/hr");
+      assertTrue(sideDrawFlow > previousSideDrawFlow,
+          "the side-product flow should increase at the nearby higher draw fraction");
+      previousSideDrawFlow = sideDrawFlow;
+
+      double totalFeedMassFlow = feedStream.getFlowRate("kg/hr") + topFeedStream.getFlowRate("kg/hr");
+      double totalProductMassFlow = column.getGasOutStream().getFlowRate("kg/hr")
+          + column.getLiquidOutStream().getFlowRate("kg/hr") + sideDrawFlow;
+      assertEquals(totalFeedMassFlow, totalProductMassFlow, TOTAL_MASS_BALANCE_TOLERANCE_KG_HR,
+          "terminal and side products should close the overall mass balance");
+      assertEquals(0.0, column.getMassBalance("kg/hr"), TOTAL_MASS_BALANCE_TOLERANCE_KG_HR,
+          "column mass-balance diagnostics should include the side product");
+      assertComponentMassBalancesWithSideDraw(feedStream, topFeedStream, sideDraw, column);
+
+      assertTrue(Double.isFinite(column.getLastMeshMaterialResidualNorm()),
+          "side-draw material residual should be finite");
+      assertTrue(Double.isFinite(column.getLastMeshEnergyResidualNorm()), "side-draw energy residual should be finite");
+      assertEquals(REBOILER_TEMPERATURE_C, column.getReboiler().getTemperature() - 273.15, 1.0e-6,
+          "the fixed reboiler-temperature specification should be satisfied");
+      assertPhysicalProduct(column.getGasOutStream(), "overhead");
+      assertPhysicalProduct(column.getLiquidOutStream(), "bottoms");
+      assertPhysicalProduct(sideDraw, "liquid side draw");
+      assertTrue(column.getLastIterationCount() <= 300,
+          "side-draw simultaneous solve should remain inside the configured iteration budget");
+    }
+  }
+
+  /**
+   * Verify that an intermediate vapor side draw uses the same rigorous phase split as the liquid path.
+   */
+  @Test
+  public void naphtaliSandholmGasSideDrawParticipatesInMeshBalances() {
+    double drawFraction = 0.05;
+    SystemInterface baseFluid = createBaseFluid();
+    StreamInterface feedStream = createStream("gas_side_draw_main_feed", baseFluid, MAIN_FEED_COMPOSITION,
+        MAIN_FEED_TEMPERATURE_C, MAIN_FEED_PRESSURE_BARA, MAIN_FEED_MASS_FLOW_KG_HR);
+    StreamInterface topFeedStream = createStream("gas_side_draw_top_feed", baseFluid, TOP_FEED_COMPOSITION,
+        TOP_FEED_TEMPERATURE_C, TOP_FEED_PRESSURE_BARA, TOP_FEED_MASS_FLOW_KG_HR);
+    DistillationColumn column = createColumn(feedStream, topFeedStream);
+    int drawTrayNumber = answerTrayToNeqSimStage(4);
+    column.setGasSideDrawFraction(drawTrayNumber, drawFraction);
+
+    column.run();
+
+    assertEquals(DistillationColumn.SolverType.NAPHTALI_SANDHOLM, column.getLastSolverTypeUsed(),
+        () -> "gas side-draw case should be accepted by the simultaneous solver\n"
+            + column.getConvergenceDiagnostics());
+    assertEquals(DistillationColumn.SolveStatus.RIGOROUS_CONVERGED, column.getLastSolveStatus(),
+        "gas side-draw case should close without terminal-product reconciliation");
+    assertTrue(column.solved(), "gas side-draw case should satisfy the active convergence gates");
+
+    StreamInterface internalVapor = column.getTray(drawTrayNumber).getGasOutStream();
+    StreamInterface sideDraw = column.getSideDrawStream(drawTrayNumber, DistillationColumn.SideDrawPhase.GAS);
+    double internalVaporMolarFlow = internalVapor.getFlowRate("mol/hr");
+    double sideDrawMolarFlow = sideDraw.getFlowRate("mol/hr");
+    double actualDrawFraction = sideDrawMolarFlow / (internalVaporMolarFlow + sideDrawMolarFlow);
+    assertEquals(drawFraction, actualDrawFraction, 1.0e-6,
+        "the applied tray streams must preserve the configured vapor split");
+
+    double sideDrawFlow = sideDraw.getFlowRate("kg/hr");
+    double totalFeedMassFlow = feedStream.getFlowRate("kg/hr") + topFeedStream.getFlowRate("kg/hr");
+    double totalProductMassFlow = column.getGasOutStream().getFlowRate("kg/hr")
+        + column.getLiquidOutStream().getFlowRate("kg/hr") + sideDrawFlow;
+    assertEquals(totalFeedMassFlow, totalProductMassFlow, TOTAL_MASS_BALANCE_TOLERANCE_KG_HR,
+        "terminal and vapor side products should close the overall mass balance");
+    assertEquals(0.0, column.getMassBalance("kg/hr"), TOTAL_MASS_BALANCE_TOLERANCE_KG_HR,
+        "column mass-balance diagnostics should include the vapor side product");
+    assertComponentMassBalancesWithSideDraw(feedStream, topFeedStream, sideDraw, column);
+
+    assertTrue(Double.isFinite(column.getLastMeshMaterialResidualNorm()),
+        "gas side-draw material residual should be finite");
+    assertTrue(Double.isFinite(column.getLastMeshEnergyResidualNorm()),
+        "gas side-draw energy residual should be finite");
+    assertEquals(REBOILER_TEMPERATURE_C, column.getReboiler().getTemperature() - 273.15, 1.0e-6,
+        "the fixed reboiler-temperature specification should be satisfied");
+    assertPhysicalProduct(column.getGasOutStream(), "gas-side-draw overhead");
+    assertPhysicalProduct(column.getLiquidOutStream(), "gas-side-draw bottoms");
+    assertPhysicalProduct(sideDraw, "gas side draw");
+    assertTrue(column.getLastIterationCount() <= 300,
+        "gas side-draw simultaneous solve should remain inside the configured iteration budget");
+  }
+
+  /**
+   * Verify that a configured pumparound uses the coordinated residual-monitored fallback.
+   *
+   * <p>
+   * Pumparound returns are outer tear streams and are not yet feed terms in the Naphtali-Sandholm equation system.
+   * Routing this configuration through MESH_RESIDUAL prevents the simultaneous solver from applying a liquid split that
+   * omits the return stream.
+   * </p>
+   */
+  @Test
+  public void naphtaliSandholmDefersPumparoundToCoupledFallback() {
+    SystemInterface baseFluid = createBaseFluid();
+    StreamInterface feedStream = createStream("pumparound_main_feed", baseFluid, MAIN_FEED_COMPOSITION,
+        MAIN_FEED_TEMPERATURE_C, MAIN_FEED_PRESSURE_BARA, MAIN_FEED_MASS_FLOW_KG_HR);
+    StreamInterface topFeedStream = createStream("pumparound_top_feed", baseFluid, TOP_FEED_COMPOSITION,
+        TOP_FEED_TEMPERATURE_C, TOP_FEED_PRESSURE_BARA, TOP_FEED_MASS_FLOW_KG_HR);
+    DistillationColumn column = createColumn(feedStream, topFeedStream);
+    column.addLiquidPumparound("column-study pumparound", answerTrayToNeqSimStage(7), answerTrayToNeqSimStage(5), 0.03,
+        5.0);
+
+    column.run();
+
+    assertEquals(DistillationColumn.SolverType.MESH_RESIDUAL, column.getLastSolverTypeUsed(),
+        "an active pumparound should avoid the incomplete simultaneous return-stream formulation");
+    assertTrue(column.solved(), "pumparound fallback should satisfy the active convergence gates");
+    assertTrue(column.isLastColumnTearConverged(), "pumparound return-stream tear should converge");
+    // This regression owns solver coordination. Detailed pumparound product accounting is a
+    // separate outer-tear concern and must not be used to validate the Naphtali side-draw equations.
+    assertPhysicalProduct(column.getGasOutStream(), "pumparound overhead");
+    assertPhysicalProduct(column.getLiquidOutStream(), "pumparound bottoms");
+  }
+
+  /**
    * Reports cold, unchanged warm, and 10-percent-increased inlet solve times for the column-study case.
    *
    * <p>
@@ -574,6 +727,33 @@ public class ColumnStudyRegressionTest {
           + getComponentMassFlowKgPerHour(bottomsFluid, componentIndex);
       assertEquals(componentIn, componentOut, COMPONENT_MASS_BALANCE_TOLERANCE_KG_HR,
           "component mass balance mismatch for " + COMPONENT_NAMES[componentIndex]);
+    }
+  }
+
+  /**
+   * Assert per-component mass closure when an intermediate liquid side product is present.
+   *
+   * @param feedStream main column feed
+   * @param topFeedStream external top reflux feed
+   * @param sideDraw intermediate side-product stream
+   * @param column solved column
+   */
+  private void assertComponentMassBalancesWithSideDraw(StreamInterface feedStream, StreamInterface topFeedStream,
+      StreamInterface sideDraw, DistillationColumn column) {
+    SystemInterface feedFluid = feedStream.getThermoSystem();
+    SystemInterface topFeedFluid = topFeedStream.getThermoSystem();
+    SystemInterface overheadFluid = column.getGasOutStream().getThermoSystem();
+    SystemInterface bottomsFluid = column.getLiquidOutStream().getThermoSystem();
+    SystemInterface sideDrawFluid = sideDraw.getThermoSystem();
+
+    for (int componentIndex = 0; componentIndex < COMPONENT_NAMES.length; componentIndex++) {
+      double componentIn = getComponentMassFlowKgPerHour(feedFluid, componentIndex)
+          + getComponentMassFlowKgPerHour(topFeedFluid, componentIndex);
+      double componentOut = getComponentMassFlowKgPerHour(overheadFluid, componentIndex)
+          + getComponentMassFlowKgPerHour(bottomsFluid, componentIndex)
+          + getComponentMassFlowKgPerHour(sideDrawFluid, componentIndex);
+      assertEquals(componentIn, componentOut, COMPONENT_MASS_BALANCE_TOLERANCE_KG_HR,
+          "side-draw component mass balance mismatch for " + COMPONENT_NAMES[componentIndex]);
     }
   }
 
