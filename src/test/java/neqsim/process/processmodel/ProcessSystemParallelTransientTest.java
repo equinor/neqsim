@@ -103,6 +103,54 @@ public class ProcessSystemParallelTransientTest extends neqsim.NeqSimTest {
   }
 
   /**
+   * Transient unit that detects overlapping invocations while the first invocation is blocked.
+   */
+  private static final class ReentrantBlockingTransientUnit extends ProcessEquipmentBaseClass {
+    private static final long serialVersionUID = 1000L;
+    private final transient CountDownLatch firstStarted;
+    private final transient CountDownLatch secondStarted;
+    private final transient CountDownLatch release;
+    private final AtomicInteger executionCount = new AtomicInteger();
+
+    /**
+     * Creates a blocking unit that reports its first and second invocations.
+     *
+     * @param firstStarted latch signalled when the first invocation starts
+     * @param secondStarted latch signalled if a second invocation starts before release
+     * @param release latch controlling when invocations may finish
+     */
+    private ReentrantBlockingTransientUnit(CountDownLatch firstStarted, CountDownLatch secondStarted,
+        CountDownLatch release) {
+      super("reentrant-blocking-unit");
+      this.firstStarted = firstStarted;
+      this.secondStarted = secondStarted;
+      this.release = release;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void run(UUID id) {
+      setCalculationIdentifier(id);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void runTransient(double dt, UUID id) {
+      if (executionCount.incrementAndGet() == 1) {
+        firstStarted.countDown();
+      } else {
+        secondStarted.countDown();
+      }
+      try {
+        release.await();
+      } catch (InterruptedException ex) {
+        Thread.currentThread().interrupt();
+      }
+      setCalculationIdentifier(id);
+    }
+  }
+
+  /**
    * Repeated transient steps must reuse the configured bounded worker set instead of creating a new executor for every
    * step.
    */
@@ -194,6 +242,45 @@ public class ProcessSystemParallelTransientTest extends neqsim.NeqSimTest {
       processRunner.join(2000L);
       assertFalse(processRunner.isAlive(), "Interrupted process runner did not return promptly");
       assertTrue(interruptStatusAfterRun.get(), "Parallel transient execution cleared the caller's interrupt status");
+    } finally {
+      release.countDown();
+      processRunner.join(2000L);
+    }
+  }
+
+  /**
+   * An interrupted semi-implicit step must not submit its second parallel equipment pass while the first pass can still
+   * be mutating equipment state.
+   *
+   * @throws Exception if the test thread cannot coordinate with the process runner
+   */
+  @Test
+  public void interruptedSemiImplicitStepDoesNotSubmitSecondParallelPass() throws Exception {
+    CountDownLatch firstStarted = new CountDownLatch(1);
+    CountDownLatch secondStarted = new CountDownLatch(1);
+    CountDownLatch release = new CountDownLatch(1);
+    Set<String> workerNames = Collections.synchronizedSet(new HashSet<String>());
+    AtomicInteger executionCount = new AtomicInteger();
+    ProcessSystem process = new ProcessSystem();
+    process.add(new ReentrantBlockingTransientUnit(firstStarted, secondStarted, release));
+    process.add(new ThreadRecordingUnit("recording-unit", workerNames, executionCount));
+    process.setParallelTransientEnabled(true);
+    process.setTransientThreadPoolSize(4);
+    process.setIntegrationMethod(ProcessSystem.IntegrationMethod.SEMI_IMPLICIT);
+
+    Thread processRunner = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        process.runTransient(1.0, UUID.randomUUID());
+      }
+    });
+
+    try {
+      processRunner.start();
+      assertTrue(firstStarted.await(5L, TimeUnit.SECONDS), "First semi-implicit equipment pass did not start");
+      processRunner.interrupt();
+      assertFalse(secondStarted.await(500L, TimeUnit.MILLISECONDS),
+          "Interrupted semi-implicit step submitted a second parallel equipment pass");
     } finally {
       release.countDown();
       processRunner.join(2000L);
