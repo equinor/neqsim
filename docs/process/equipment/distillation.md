@@ -203,7 +203,9 @@ iteration counts, solve times, and fallback notes. For product-specification cas
 
 Side draws withdraw a fraction of tray vapor or liquid traffic. They are true external product
 streams: `getOutletStreams()` includes them, and `getMassBalance(unit)` subtracts them from the
-feed-product balance.
+feed-product balance. The sequential tray solvers and `NAPHTALI_SANDHOLM` both remove the withdrawn
+phase from inter-tray material and energy traffic; the Naphtali-Sandholm solver also fingerprints the
+configured split so a changed draw cannot reuse an incompatible warm state.
 
 ```java
 column.setGasSideDrawFraction(6, 0.05);
