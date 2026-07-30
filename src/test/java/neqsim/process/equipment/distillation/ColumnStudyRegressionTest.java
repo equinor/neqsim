@@ -117,6 +117,8 @@ public class ColumnStudyRegressionTest {
     column.run();
 
     assertTrue(column.solved(), "Column-study case should converge with Naphtali-Sandholm");
+    assertEquals(DistillationColumn.SolveStatus.RECONCILED_PRODUCTS, column.getLastSolveStatus(),
+        "a no-side-draw direct result should preserve the established reconciled-product status");
     assertEquals(17, column.getLastIterationCount(), "Newton iteration count guards against premature SR acceptance");
     assertTrayTemperatureProfile(column);
     assertTrayPressureProfile(column);
