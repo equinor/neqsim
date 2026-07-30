@@ -375,6 +375,16 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
+   * Set a pre-built liquid pumparound draw stream to be returned by
+   * {@link #getLiquidPumparoundDrawStream()}.
+   *
+   * @param stream liquid pumparound draw stream
+   */
+  void setCachedLiquidPumparoundDrawStream(StreamInterface stream) {
+    this.cachedLiquidPumparoundDrawStream = stream;
+  }
+
+  /**
    * getGasOutStream.
    *
    * @return a {@link neqsim.process.equipment.stream.Stream} object
