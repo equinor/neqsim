@@ -444,6 +444,8 @@ public class ProcessSystemParallelTransientTest extends neqsim.NeqSimTest {
         process.runTransient(1.0, UUID.randomUUID());
       }
     });
+    processRunner.setDaemon(true);
+    processRunner.setName("NeqSim-Test-Connected-Transient");
 
     try {
       processRunner.start();
@@ -483,6 +485,8 @@ public class ProcessSystemParallelTransientTest extends neqsim.NeqSimTest {
         process.runTransient(1.0, UUID.randomUUID());
       }
     });
+    processRunner.setDaemon(true);
+    processRunner.setName("NeqSim-Test-Independent-Transient");
 
     try {
       processRunner.start();
