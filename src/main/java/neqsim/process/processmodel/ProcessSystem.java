@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -4157,7 +4158,9 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Runs all equipment transient calculations in parallel using an ExecutorService. Each equipment unit is submitted as
    * an independent task. This is suitable when equipment units are loosely coupled (no data dependencies within a
-   * single timestep).
+   * single timestep). If the caller is interrupted while waiting, its interrupt status is restored and the wait loop
+   * stops. Already submitted equipment tasks are not cancelled because interrupting state mutation inside equipment is
+   * not guaranteed to be safe.
    *
    * @param dt time step in seconds
    * @param id calculation identifier
@@ -4179,8 +4182,13 @@ public class ProcessSystem extends SimulationBaseClass {
     for (Future<?> f : futures) {
       try {
         f.get();
-      } catch (Exception ex) {
-        logger.error("Parallel transient execution failed: " + ex.getMessage(), ex);
+      } catch (InterruptedException ex) {
+        Thread.currentThread().interrupt();
+        logger.warn("Parallel transient execution interrupted; caller interrupt status restored");
+        break;
+      } catch (ExecutionException ex) {
+        Throwable cause = ex.getCause();
+        logger.error("Parallel transient equipment execution failed", cause == null ? ex : cause);
       }
     }
   }

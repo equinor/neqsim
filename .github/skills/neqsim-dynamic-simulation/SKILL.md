@@ -384,9 +384,11 @@ For large flowsheets with independent branches, enable
 `process.setParallelTransientEnabled(true)` and set the maximum worker count
 with `process.setTransientThreadPoolSize(n)`. The per-process worker pool is
 created lazily and reused across timesteps; changing the worker count or
-disabling the option retires it. Keep parallel execution off for tightly
-coupled sequential equipment or recycle loops unless their transient
-dependencies have been verified.
+disabling the option retires it. If the caller is interrupted while waiting,
+NeqSim restores the interrupt status but does not forcibly cancel equipment
+already updating state, so treat that timestep as incomplete. Keep parallel
+execution off for tightly coupled sequential equipment or recycle loops unless
+their transient dependencies have been verified.
 
 ## Python Dynamic Simulation
 

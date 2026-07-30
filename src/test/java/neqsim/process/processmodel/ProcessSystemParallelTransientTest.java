@@ -1,11 +1,20 @@
 package neqsim.process.processmodel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
@@ -55,6 +64,45 @@ public class ProcessSystemParallelTransientTest extends neqsim.NeqSimTest {
   }
 
   /**
+   * Transient unit that blocks until released so the process runner can be interrupted while waiting on its future.
+   */
+  private static final class BlockingTransientUnit extends ProcessEquipmentBaseClass {
+    private static final long serialVersionUID = 1000L;
+    private final transient CountDownLatch started;
+    private final transient CountDownLatch release;
+
+    /**
+     * Creates a blocking unit.
+     *
+     * @param started latch signalled when execution starts
+     * @param release latch controlling when execution may finish
+     */
+    private BlockingTransientUnit(CountDownLatch started, CountDownLatch release) {
+      super("blocking-unit");
+      this.started = started;
+      this.release = release;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void run(UUID id) {
+      setCalculationIdentifier(id);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void runTransient(double dt, UUID id) {
+      started.countDown();
+      try {
+        release.await();
+      } catch (InterruptedException ex) {
+        Thread.currentThread().interrupt();
+      }
+      setCalculationIdentifier(id);
+    }
+  }
+
+  /**
    * Repeated transient steps must reuse the configured bounded worker set instead of creating a new executor for every
    * step.
    */
@@ -88,7 +136,7 @@ public class ProcessSystemParallelTransientTest extends neqsim.NeqSimTest {
    * Runtime worker pools must not participate in process serialization or copying.
    */
   @Test
-  public void parallelTransientExecutorIsExcludedFromCopies() {
+  public void parallelTransientExecutorIsExcludedFromCopies() throws Exception {
     Set<String> workerNames = Collections.synchronizedSet(new HashSet<String>());
     AtomicInteger executionCount = new AtomicInteger();
     ProcessSystem process = new ProcessSystem();
@@ -97,11 +145,71 @@ public class ProcessSystemParallelTransientTest extends neqsim.NeqSimTest {
     process.setParallelTransientEnabled(true);
     process.setTransientThreadPoolSize(2);
     process.runTransient(1.0, UUID.randomUUID());
+    ExecutorService originalExecutor = getParallelTransientExecutor(process);
+    assertNotNull(originalExecutor, "Original process must create its configured transient executor");
 
     ProcessSystem copiedProcess = process.copy();
+    assertNull(getParallelTransientExecutor(copiedProcess),
+        "A copied process must not contain the original executor runtime resource");
     copiedProcess.runTransient(1.0, UUID.randomUUID());
+    ExecutorService copiedExecutor = getParallelTransientExecutor(copiedProcess);
+    assertNotNull(copiedExecutor, "Copied process must lazily create a replacement executor");
 
     assertEquals(1.0, process.getTime(), 1.0e-12);
     assertEquals(2.0, copiedProcess.getTime(), 1.0e-12);
+    assertNotSame(originalExecutor, copiedExecutor, "The copied process must create its own transient executor");
+  }
+
+  /**
+   * Interrupting the caller while it waits for parallel transient equipment must preserve the caller's interrupt flag
+   * and allow it to return promptly.
+   *
+   * @throws Exception if the test thread cannot coordinate with the process runner
+   */
+  @Test
+  public void preservesCallerInterruptStatusWhileWaitingForEquipment() throws Exception {
+    CountDownLatch started = new CountDownLatch(1);
+    CountDownLatch release = new CountDownLatch(1);
+    Set<String> workerNames = Collections.synchronizedSet(new HashSet<String>());
+    AtomicInteger executionCount = new AtomicInteger();
+    AtomicBoolean interruptStatusAfterRun = new AtomicBoolean();
+    ProcessSystem process = new ProcessSystem();
+    process.add(new BlockingTransientUnit(started, release));
+    process.add(new ThreadRecordingUnit("recording-unit", workerNames, executionCount));
+    process.setParallelTransientEnabled(true);
+    process.setTransientThreadPoolSize(2);
+
+    Thread processRunner = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        process.runTransient(1.0, UUID.randomUUID());
+        interruptStatusAfterRun.set(Thread.currentThread().isInterrupted());
+      }
+    });
+
+    try {
+      processRunner.start();
+      assertTrue(started.await(5L, TimeUnit.SECONDS), "Blocking unit did not start");
+      processRunner.interrupt();
+      processRunner.join(2000L);
+      assertFalse(processRunner.isAlive(), "Interrupted process runner did not return promptly");
+      assertTrue(interruptStatusAfterRun.get(), "Parallel transient execution cleared the caller's interrupt status");
+    } finally {
+      release.countDown();
+      processRunner.join(2000L);
+    }
+  }
+
+  /**
+   * Reads the executor runtime field for copy-lifecycle regression assertions.
+   *
+   * @param process process system to inspect
+   * @return current transient executor, or {@code null} when none has been created
+   * @throws Exception if reflection cannot access the private field
+   */
+  private static ExecutorService getParallelTransientExecutor(ProcessSystem process) throws Exception {
+    Field field = ProcessSystem.class.getDeclaredField("parallelTransientExecutor");
+    field.setAccessible(true);
+    return (ExecutorService) field.get(process);
   }
 }

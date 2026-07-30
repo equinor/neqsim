@@ -542,6 +542,13 @@ allows idle daemon workers to time out after 60 seconds. Changing
 retires the existing pool. This avoids creating and destroying a complete
 thread pool for every timestep in long dynamic studies.
 
+If the thread calling `runTransient(...)` is interrupted while waiting for
+parallel equipment, NeqSim restores the caller's interrupt status and stops
+waiting. Already submitted equipment tasks are not forcibly cancelled because
+unit-operation state updates are not transactionally interruptible. Callers
+should therefore treat an interrupted timestep as incomplete rather than as an
+atomic rollback.
+
 **Note:** Parallel execution is beneficial for flowsheets with many independent
 equipment units. For small flowsheets or tightly coupled equipment (recycles),
 the overhead may outweigh the benefit.
