@@ -76,6 +76,52 @@ class TwoFluidBenchmarkHarnessTest {
     assertTrue(comparison.isPassed(), comparison.failureSummary());
   }
 
+  @Test
+  void testKeepsFlagInterpolationBinary() {
+    Snapshot t0 = new Snapshot(0.0, new double[] { 0.0, 100.0 },
+        java.util.Collections.singletonMap("water_wetting_flag", new double[] { 0.0, 1.0 }));
+    Snapshot t10 = new Snapshot(10.0, new double[] { 0.0, 100.0 },
+        java.util.Collections.singletonMap("water_wetting_flag", new double[] { 1.0, 0.0 }));
+    List<BenchmarkPoint> points = Arrays.asList(
+        new BenchmarkPoint("early", 2.0, 75.0, "water_wetting_flag", 1.0, 0.0, 0.0, "unit"),
+        new BenchmarkPoint("late", 8.0, 75.0, "water_wetting_flag", 0.0, 0.0, 0.0, "unit"));
+
+    Comparison comparison = TwoFluidBenchmarkHarness.compare(Arrays.asList(t10, t0), points);
+
+    assertTrue(comparison.isPassed(), comparison.failureSummary());
+    assertEquals(1.0, comparison.getRows().get(0).getModelValue(), 0.0);
+    assertEquals(0.0, comparison.getRows().get(1).getModelValue(), 0.0);
+  }
+
+  @Test
+  void testPreservesNonFiniteSentinelsDuringInterpolation() {
+    Snapshot spatial = new Snapshot(0.0, new double[] { 0.0, 100.0 },
+        java.util.Collections.singletonMap("severe_slugging_number",
+            new double[] { Double.POSITIVE_INFINITY, 2.0 }));
+
+    assertTrue(Double.isInfinite(spatial.valueAt("severe_slugging_number", 25.0)));
+    assertEquals(2.0, spatial.valueAt("severe_slugging_number", 75.0), 0.0);
+
+    Snapshot t0 = new Snapshot(0.0, new double[] { 0.0 },
+        java.util.Collections.singletonMap("severe_slugging_number",
+            new double[] { Double.POSITIVE_INFINITY }));
+    Snapshot t10 = new Snapshot(10.0, new double[] { 0.0 },
+        java.util.Collections.singletonMap("severe_slugging_number", new double[] { 2.0 }));
+    BenchmarkPoint earlyPoint =
+        new BenchmarkPoint("early", 2.0, 0.0, "severe_slugging_number", 0.0, 0.0, 0.0, "unit");
+    BenchmarkPoint latePoint =
+        new BenchmarkPoint("late", 8.0, 0.0, "severe_slugging_number", 2.0, 0.0, 0.0, "unit");
+
+    Comparison early =
+        TwoFluidBenchmarkHarness.compare(Arrays.asList(t0, t10), java.util.Collections.singletonList(earlyPoint));
+    Comparison late =
+        TwoFluidBenchmarkHarness.compare(Arrays.asList(t0, t10), java.util.Collections.singletonList(latePoint));
+
+    assertTrue(Double.isInfinite(early.getRows().get(0).getModelValue()));
+    assertTrue(late.isPassed(), late.failureSummary());
+    assertEquals(2.0, late.getRows().get(0).getModelValue(), 0.0);
+  }
+
   private TwoFluidPipe createSolvedWetGasPipe() {
     SystemInterface fluid = new SystemSrkEos(273.15 + 35.0, 60.0);
     fluid.addComponent("methane", 0.92);
