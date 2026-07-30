@@ -4270,7 +4270,7 @@ public class NaphtaliSandholmSolver {
    *
    * @param dx Newton direction
    * @param currentNorm current residual norm
-   * @return step size alpha in (0, 1]
+   * @return step size alpha in [0, 1]; zero when no finite trial exists
    */
   private double lineSearch(double[] dx, double currentNorm) {
     double alpha = 1.0;
