@@ -208,8 +208,11 @@ if (!comparison.isPassed()) {
 }
 ```
 
-For transient comparisons, capture and pass a list of snapshots. The harness interpolates in both
-time and position. Comparison results can be exported as CSV:
+For transient comparisons, capture and pass a list of snapshots. The harness uses linear
+interpolation in time and position for continuous profiles. Variables ending in `_flag` use
+nearest-neighbour sampling so boolean diagnostics remain `0.0` or `1.0`. Intervals containing a
+non-finite diagnostic sentinel also use the nearest endpoint instead of producing `NaN`.
+Comparison results can be exported as CSV:
 
 ```java
 String comparisonCsv = TwoFluidPipeReport.toComparisonCsv(comparison);
