@@ -1584,11 +1584,9 @@ public class NaphtaliSandholmSolver {
           for (int i = 0; i < C; i++) {
             double feedComponent = feedLiq[j][i] + feedVap[j][i];
             double vaporFromBelow = j > 0 ? internalVaporFraction[j - 1] * previousVapor[i] : 0.0;
-            double pumparoundReturn = activePumparound
-                ? getSeedPumparoundComponentReturn(j, i, previousLiquid)
-                : 0.0;
-            double requiredLiquidFromAbove = seedVapor[j][i] + seedLiquid[j][i] - vaporFromBelow
-                - feedComponent - pumparoundReturn;
+            double pumparoundReturn = activePumparound ? getSeedPumparoundComponentReturn(j, i, previousLiquid) : 0.0;
+            double requiredLiquidFromAbove = seedVapor[j][i] + seedLiquid[j][i] - vaporFromBelow - feedComponent
+                - pumparoundReturn;
             double nextLiquid = requiredLiquidFromAbove / Math.max(internalLiquidFraction[j + 1], 1.0e-12);
             seedLiquid[j + 1][i] = Math.max(nextLiquid, 1.0e-15);
           }
@@ -1601,11 +1599,9 @@ public class NaphtaliSandholmSolver {
         seedVapor[N - 1][i] = overheadComponent[i];
         double feedComponent = feedLiq[N - 1][i] + feedVap[N - 1][i];
         double vaporFromBelow = N >= 2 ? internalVaporFraction[N - 2] * seedVapor[N - 2][i] : 0.0;
-        double pumparoundReturn = activePumparound
-            ? getSeedPumparoundComponentReturn(N - 1, i, previousLiquid)
-            : 0.0;
-        seedLiquid[N - 1][i] = Math.max(
-            vaporFromBelow + feedComponent + pumparoundReturn - seedVapor[N - 1][i], 1.0e-15);
+        double pumparoundReturn = activePumparound ? getSeedPumparoundComponentReturn(N - 1, i, previousLiquid) : 0.0;
+        seedLiquid[N - 1][i] = Math.max(vaporFromBelow + feedComponent + pumparoundReturn - seedVapor[N - 1][i],
+            1.0e-15);
       }
 
       if (!activePumparound) {
@@ -1615,8 +1611,7 @@ public class NaphtaliSandholmSolver {
       for (int j = 0; j < N; j++) {
         for (int i = 0; i < C; i++) {
           double scale = Math.max(Math.abs(seedLiquid[j][i]), 1.0e-12 * flowScale);
-          maxRelativeChange = Math.max(maxRelativeChange,
-              Math.abs(seedLiquid[j][i] - previousLiquid[j][i]) / scale);
+          maxRelativeChange = Math.max(maxRelativeChange, Math.abs(seedLiquid[j][i] - previousLiquid[j][i]) / scale);
         }
       }
       if (maxRelativeChange < 1.0e-8) {
@@ -1629,8 +1624,8 @@ public class NaphtaliSandholmSolver {
    * Seed a mass-balanced initial guess for direct Newton entry.
    *
    * <p>
-   * Used when {@code useOverallMBClosure} is active (T-spec'd reboiler with no boilup specification), and when
-   * nonlocal pumparound returns require direct Newton entry. Bypasses the BP-Wilson V-cascade — which is unstable for
+   * Used when {@code useOverallMBClosure} is active (T-spec'd reboiler with no boilup specification), and when nonlocal
+   * pumparound returns require direct Newton entry. Bypasses the BP-Wilson V-cascade — which is unstable for
    * wide-boiling stripper topologies — and replaces it with a sweep that:
    * </p>
    * <ol>
@@ -1756,14 +1751,11 @@ public class NaphtaliSandholmSolver {
         for (int j = 0; j < N - 1; j++) {
           double vaporFromBelow = j > 0 ? internalVaporFraction[j - 1] * V[j - 1] : 0.0;
           double pumparoundReturn = getSeedPumparoundTotalReturn(j, previousLiquidTotals);
-          double requiredLiquidFromAbove = V[j] + L[j] - vaporFromBelow - feedTotalPerTray[j]
-              - pumparoundReturn;
-          L[j + 1] = Math.max(
-              requiredLiquidFromAbove / Math.max(internalLiquidFraction[j + 1], 1.0e-12),
+          double requiredLiquidFromAbove = V[j] + L[j] - vaporFromBelow - feedTotalPerTray[j] - pumparoundReturn;
+          L[j + 1] = Math.max(requiredLiquidFromAbove / Math.max(internalLiquidFraction[j + 1], 1.0e-12),
               1.0e-6 * totalFeed);
           double scale = Math.max(Math.abs(L[j + 1]), 1.0e-12 * totalFeed);
-          maxRelativeChange = Math.max(maxRelativeChange,
-              Math.abs(L[j + 1] - previousLiquidTotals[j + 1]) / scale);
+          maxRelativeChange = Math.max(maxRelativeChange, Math.abs(L[j + 1] - previousLiquidTotals[j + 1]) / scale);
         }
         if (maxRelativeChange < 1.0e-8) {
           break;
