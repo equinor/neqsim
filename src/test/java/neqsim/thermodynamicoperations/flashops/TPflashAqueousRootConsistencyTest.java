@@ -62,7 +62,8 @@ class TPflashAqueousRootConsistencyTest {
       assertTrue(actual.getPhase(phaseIndex).getZ() > 0.0);
 
       double compositionTotal = 0.0;
-      for (int componentIndex = 0; componentIndex < expected.getPhase(phaseIndex).getNumberOfComponents(); componentIndex++) {
+      for (int componentIndex = 0; componentIndex < expected.getPhase(phaseIndex)
+          .getNumberOfComponents(); componentIndex++) {
         double expectedComposition = expected.getPhase(phaseIndex).getComponent(componentIndex).getx();
         double actualComposition = actual.getPhase(phaseIndex).getComponent(componentIndex).getx();
         assertEquals(expectedComposition, actualComposition, 1.0e-12);
@@ -85,9 +86,11 @@ class TPflashAqueousRootConsistencyTest {
   private double maximumLogFugacityResidual(SystemInterface system) {
     double maximumResidual = 0.0;
     for (int componentIndex = 0; componentIndex < FEED.length; componentIndex++) {
-      double firstLogFugacity = Math.log(Math.max(system.getPhase(0).getComponent(componentIndex).getx(), Double.MIN_NORMAL))
+      double firstLogFugacity = Math
+          .log(Math.max(system.getPhase(0).getComponent(componentIndex).getx(), Double.MIN_NORMAL))
           + Math.log(system.getPhase(0).getComponent(componentIndex).getFugacityCoefficient());
-      double secondLogFugacity = Math.log(Math.max(system.getPhase(1).getComponent(componentIndex).getx(), Double.MIN_NORMAL))
+      double secondLogFugacity = Math
+          .log(Math.max(system.getPhase(1).getComponent(componentIndex).getx(), Double.MIN_NORMAL))
           + Math.log(system.getPhase(1).getComponent(componentIndex).getFugacityCoefficient());
       maximumResidual = Math.max(maximumResidual, Math.abs(firstLogFugacity - secondLogFugacity));
     }
