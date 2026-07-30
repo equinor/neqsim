@@ -763,8 +763,8 @@ public class NaphtaliSandholmSolver {
 
         // A pumparound couples non-adjacent draw and return trays, so its Jacobian is
         // not block tridiagonal. Ordinary columns retain the fast block solve.
-        double[] dx =
-            hasActivePumparounds() ? solveDenseLU(jacobian, residual) : solveBlockTridiagonal(jacobian, residual);
+        double[] dx = hasActivePumparounds() ? solveDenseLU(jacobian, residual)
+            : solveBlockTridiagonal(jacobian, residual);
         if (dx == null) {
           // Fall back to full LU solve for an ordinary column whose block factorization failed.
           dx = hasActivePumparounds() ? null : solveDenseLU(jacobian, residual);
@@ -2994,9 +2994,9 @@ public class NaphtaliSandholmSolver {
    * Refresh return enthalpies from each draw tray's current liquid composition and temperature.
    *
    * <p>
-   * The circuit preserves draw-tray pressure, matching {@link DistillationColumn.ColumnPumparound}
-   * stream materialization. A positive temperature drop therefore represents heat removed by the
-   * pumparound cooler without adding an external material feed.
+   * The circuit preserves draw-tray pressure, matching {@link DistillationColumn.ColumnPumparound} stream
+   * materialization. A positive temperature drop therefore represents heat removed by the pumparound cooler without
+   * adding an external material feed.
    * </p>
    */
   private void refreshPumparoundReturnEnthalpies() {
@@ -3015,8 +3015,8 @@ public class NaphtaliSandholmSolver {
       if (!Double.isFinite(returnTemperature) || returnTemperature <= 0.0) {
         throw new IllegalStateException("Pumparound return temperature must be finite and above 0 K");
       }
-      pumparoundReturnEnthalpy[circuitIndex] =
-          computeSinglePhaseEnthalpy(composition, returnTemperature, P[drawTray] / 1.0e5, false);
+      pumparoundReturnEnthalpy[circuitIndex] = computeSinglePhaseEnthalpy(composition, returnTemperature,
+          P[drawTray] / 1.0e5, false);
     }
   }
 
@@ -3025,8 +3025,7 @@ public class NaphtaliSandholmSolver {
     double returnedFlow = 0.0;
     for (DistillationColumn.ColumnPumparound pumparound : pumparounds) {
       if (pumparound.getReturnTrayNumber() == tray) {
-        returnedFlow +=
-            pumparound.getDrawFraction() * liq[pumparound.getDrawTrayNumber()][component];
+        returnedFlow += pumparound.getDrawFraction() * liq[pumparound.getDrawTrayNumber()][component];
       }
     }
     return returnedFlow;
@@ -4845,15 +4844,15 @@ public class NaphtaliSandholmSolver {
         tray.setCachedLiquidOutStream(new neqsim.process.equipment.stream.Stream("liq_" + j, liqSystem));
 
         if (liquidSideDrawFraction[j] > 0.0) {
-          SystemInterface liquidSideSystem =
-              createAppliedPhaseSystem(j, liq[j], liquidSideDrawFraction[j], PhaseType.LIQUID);
+          SystemInterface liquidSideSystem = createAppliedPhaseSystem(j, liq[j], liquidSideDrawFraction[j],
+              PhaseType.LIQUID);
           tray.setCachedLiquidSideDrawStream(
               new neqsim.process.equipment.stream.Stream("liq_side_" + j, liquidSideSystem));
         }
 
         if (liquidPumparoundFraction[j] > 0.0) {
-          SystemInterface pumparoundDrawSystem =
-              createAppliedPhaseSystem(j, liq[j], liquidPumparoundFraction[j], PhaseType.LIQUID);
+          SystemInterface pumparoundDrawSystem = createAppliedPhaseSystem(j, liq[j], liquidPumparoundFraction[j],
+              PhaseType.LIQUID);
           tray.setCachedLiquidPumparoundDrawStream(
               new neqsim.process.equipment.stream.Stream("liq_pumparound_" + j, pumparoundDrawSystem));
         }
