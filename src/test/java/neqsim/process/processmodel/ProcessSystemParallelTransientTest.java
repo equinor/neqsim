@@ -17,7 +17,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
+import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
+import neqsim.process.measurementdevice.MeasurementDeviceBaseClass;
 
 /**
  * Regression tests for parallel transient execution in {@link ProcessSystem}.
@@ -182,6 +184,55 @@ public class ProcessSystemParallelTransientTest extends neqsim.NeqSimTest {
       executionCount.incrementAndGet();
       started.countDown();
       setCalculationIdentifier(id);
+    }
+  }
+
+  /**
+   * Standalone controller that records transient scan execution.
+   */
+  private static final class CountingController extends ControllerDeviceBaseClass {
+    private static final long serialVersionUID = 1000L;
+    private final AtomicInteger executionCount;
+
+    /**
+     * Creates a counting controller.
+     *
+     * @param executionCount shared execution counter
+     */
+    private CountingController(AtomicInteger executionCount) {
+      super("counting-controller");
+      this.executionCount = executionCount;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void runTransient(double initResponse, double dt, UUID id) {
+      executionCount.incrementAndGet();
+    }
+  }
+
+  /**
+   * Measurement device that records each value scan.
+   */
+  private static final class CountingMeasurement extends MeasurementDeviceBaseClass {
+    private static final long serialVersionUID = 1000L;
+    private final AtomicInteger executionCount;
+
+    /**
+     * Creates a counting measurement.
+     *
+     * @param executionCount shared execution counter
+     */
+    private CountingMeasurement(AtomicInteger executionCount) {
+      super("counting-measurement", "-");
+      this.executionCount = executionCount;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public double getMeasuredValue(String unit) {
+      executionCount.incrementAndGet();
+      return 0.0;
     }
   }
 
@@ -359,6 +410,49 @@ public class ProcessSystemParallelTransientTest extends neqsim.NeqSimTest {
       assertFalse(queuedStarted.await(500L, TimeUnit.MILLISECONDS),
           "Queued equipment continued executing after runTransient returned");
       assertEquals(0, queuedExecutionCount.get(), "Queued equipment mutated state after runTransient returned");
+    } finally {
+      releaseBlocking.countDown();
+      processRunner.join(2000L);
+    }
+  }
+
+  /**
+   * An interrupted parallel equipment pass must abort controller and measurement phases that could otherwise race with
+   * equipment still updating state.
+   *
+   * @throws Exception if the test thread cannot coordinate with the process runner
+   */
+  @Test
+  public void interruptAbortsRemainingTransientStepPhases() throws Exception {
+    CountDownLatch blockingStarted = new CountDownLatch(1);
+    CountDownLatch releaseBlocking = new CountDownLatch(1);
+    Set<String> workerNames = Collections.synchronizedSet(new HashSet<String>());
+    AtomicInteger equipmentExecutionCount = new AtomicInteger();
+    AtomicInteger controllerExecutionCount = new AtomicInteger();
+    AtomicInteger measurementExecutionCount = new AtomicInteger();
+    ProcessSystem process = new ProcessSystem();
+    process.add(new BlockingTransientUnit(blockingStarted, releaseBlocking));
+    process.add(new ThreadRecordingUnit("recording-unit", workerNames, equipmentExecutionCount));
+    process.add(new CountingController(controllerExecutionCount));
+    process.add(new CountingMeasurement(measurementExecutionCount));
+    process.setParallelTransientEnabled(true);
+    process.setTransientThreadPoolSize(2);
+
+    Thread processRunner = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        process.runTransient(1.0, UUID.randomUUID());
+      }
+    });
+
+    try {
+      processRunner.start();
+      assertTrue(blockingStarted.await(5L, TimeUnit.SECONDS), "Blocking equipment did not start");
+      processRunner.interrupt();
+      processRunner.join(2000L);
+      assertFalse(processRunner.isAlive(), "Interrupted process runner did not return promptly");
+      assertEquals(0, controllerExecutionCount.get(), "Controller scan ran after equipment interruption");
+      assertEquals(0, measurementExecutionCount.get(), "Measurement scan ran after equipment interruption");
     } finally {
       releaseBlocking.countDown();
       processRunner.join(2000L);

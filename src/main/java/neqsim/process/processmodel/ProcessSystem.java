@@ -4102,7 +4102,9 @@ public class ProcessSystem extends SimulationBaseClass {
     // by low-flow bypass keeps its current state during the timestep — same skip gate as
     // the steady run() path (runUnitProfiled). See docs/process/processmodel/low_flow_bypass.md.
     if (parallelTransientEnabled && unitOperations.size() > 1) {
-      runEquipmentTransientParallel(dt, id);
+      if (!runEquipmentTransientParallel(dt, id)) {
+        return;
+      }
     } else {
       for (int i = 0; i < unitOperations.size(); i++) {
         runUnitTransientSkippingInactive(unitOperations.get(i), dt, id);
@@ -4112,7 +4114,9 @@ public class ProcessSystem extends SimulationBaseClass {
     // Semi-implicit: run a second pass for improved stability
     if (integrationMethod == IntegrationMethod.SEMI_IMPLICIT) {
       if (parallelTransientEnabled && unitOperations.size() > 1) {
-        runEquipmentTransientParallel(dt, id);
+        if (!runEquipmentTransientParallel(dt, id)) {
+          return;
+        }
       } else {
         for (int i = 0; i < unitOperations.size(); i++) {
           runUnitTransientSkippingInactive(unitOperations.get(i), dt, id);
@@ -4164,11 +4168,12 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * @param dt time step in seconds
    * @param id calculation identifier
+   * @return {@code true} if the equipment pass completed, or {@code false} if the caller was interrupted
    */
-  private void runEquipmentTransientParallel(double dt, UUID id) {
+  private boolean runEquipmentTransientParallel(double dt, UUID id) {
     if (Thread.currentThread().isInterrupted()) {
       logger.warn("Parallel transient execution skipped because the caller is interrupted");
-      return;
+      return false;
     }
     ExecutorService executor = getParallelTransientExecutor();
     List<Future<?>> futures = new ArrayList<Future<?>>(unitOperations.size());
@@ -4193,12 +4198,13 @@ public class ProcessSystem extends SimulationBaseClass {
           futures.get(pendingIndex).cancel(false);
         }
         logger.warn("Parallel transient execution interrupted; caller interrupt status restored");
-        break;
+        return false;
       } catch (ExecutionException ex) {
         Throwable cause = ex.getCause();
         logger.error("Parallel transient equipment execution failed", cause == null ? ex : cause);
       }
     }
+    return true;
   }
 
   /**

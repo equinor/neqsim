@@ -547,8 +547,10 @@ parallel equipment, NeqSim restores the caller's interrupt status and stops
 waiting. Later parallel passes in the same timestep observe that status and do
 not submit additional equipment work. Queued futures are cancelled without
 interrupting equipment already updating state. Because those running updates
-are not transactionally interruptible, callers should still treat an
-interrupted timestep as incomplete rather than as an atomic rollback.
+are not transactionally interruptible, NeqSim aborts the remaining controller,
+measurement, result-storage, and event-publication phases for that timestep.
+Callers should still treat an interrupted timestep as incomplete rather than as
+an atomic rollback.
 
 **Note:** Parallel execution is beneficial for flowsheets with many independent
 equipment units. For small flowsheets or tightly coupled equipment (recycles),
