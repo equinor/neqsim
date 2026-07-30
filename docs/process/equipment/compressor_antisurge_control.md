@@ -103,7 +103,7 @@ The coordinated case is the closest representation of plant control philosophy i
 
 The executable example is:
 
-- [Dynamic compressor good maps notebook](../../../examples/notebooks/process/dynamic_compressor_good_maps.ipynb)
+- [Dynamic compressor good maps notebook](https://github.com/equinor/neqsim/blob/master/examples/notebooks/process/dynamic_compressor_good_maps.ipynb)
 
 The notebook demonstrates:
 

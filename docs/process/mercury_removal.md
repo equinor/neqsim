@@ -370,4 +370,4 @@ Each error includes a remediation hint for automated recovery.
 - [Adsorption Isotherm Models](../thermo/adsorption_isotherms.md) — Thermodynamic adsorption theory
 - [Cost Estimation API](COST_ESTIMATION_API_REFERENCE.md) — General cost estimation framework
 - [Mechanical Design](mechanical_design.md) — General mechanical design framework
-- [Jupyter Notebook Tutorial](../examples/MercuryRemoval_LNG_Pretreatment.ipynb) — Interactive Python tutorial
+- [Jupyter Notebook Tutorial](https://github.com/equinor/neqsim/blob/master/docs/examples/MercuryRemoval_LNG_Pretreatment.ipynb) — Interactive Python tutorial

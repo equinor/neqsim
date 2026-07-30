@@ -1866,7 +1866,7 @@ This notebook demonstrated the **complete operational planning workflow**:
 ### Related Documentation
 
 - [Risk Simulation Framework](../risk/index.md)
-- [Production Bottleneck Analysis](ProductionSystem_BottleneckAnalysis.ipynb)
-- [Multi-Scenario VFP Tutorial](MultiScenarioVFP_Tutorial.ipynb)
-- [Field Development Workflow](FieldDevelopmentWorkflow.ipynb)
+- [Production Bottleneck Analysis](https://github.com/equinor/neqsim/blob/master/docs/examples/ProductionSystem_BottleneckAnalysis.ipynb)
+- [Multi-Scenario VFP Tutorial](https://github.com/equinor/neqsim/blob/master/docs/examples/MultiScenarioVFP_Tutorial.ipynb)
+- [Field Development Workflow](https://github.com/equinor/neqsim/blob/master/docs/examples/FieldDevelopmentWorkflow.ipynb)
 

@@ -1094,7 +1094,7 @@ print(f"Min gas T: {float(vessel.getMinimumTemperatureReached('C')):.1f} C")
 
 ## Related Documentation
 
-- [HTC Literature Comparison](../../../examples/CNGtankmodelling/CNG_HTC_Literature_Comparison.ipynb) - Validation against published experimental data
+- [HTC Literature Comparison](https://github.com/equinor/neqsim/blob/master/examples/CNGtankmodelling/CNG_HTC_Literature_Comparison.ipynb) - Validation against published experimental data
 - [QRA Integration Guide](../../integration/QRA_INTEGRATION_GUIDE.md) - Safety analysis integration
 - [Fire Heat Transfer](../../safety/fire_heat_transfer_enhancements.md) - Fire exposure and blowdown enhancements
 - [Tank Equipment](tanks.md) - General tank modeling

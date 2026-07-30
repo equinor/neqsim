@@ -124,6 +124,6 @@ the released rate is the minimum of reaction kinetics, available FeS and oxygen 
 
 ## Example notebook
 
-[`examples/notebooks/IronSulfideWallSulfurDeposition.ipynb`](../../../examples/notebooks/IronSulfideWallSulfurDeposition.ipynb)
+[`examples/notebooks/IronSulfideWallSulfurDeposition.ipynb`](https://github.com/equinor/neqsim/blob/master/examples/notebooks/IronSulfideWallSulfurDeposition.ipynb)
 uses the reported 10 kg/h nitrogen stream with 2% oxygen as a screening example and connects the wall
 source to a local warm-shaft solid flash.

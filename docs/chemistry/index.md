@@ -101,9 +101,9 @@ release, 47 chemistry tests pass and serve as the regression baseline.
 
 ## Worked example notebooks
 
-- [Chemical integrity digital twin](../../examples/notebooks/chemical_integrity_digital_twin.ipynb) — end-to-end subsea-tieback case study (scale + corrosion + deposition + scavenger).
-- [Scale prediction workflow](../../examples/notebooks/chemistry_scale_prediction_workflow.ipynb) — Davies SI sweeps over temperature, pH and seawater mixing fraction.
-- [Corrosion inhibitor design](../../examples/notebooks/chemistry_corrosion_inhibitor_design.ipynb) — Langmuir + Nesic dose-response and minimum-dose optimization.
+- [Chemical integrity digital twin](https://github.com/equinor/neqsim/blob/master/examples/notebooks/chemical_integrity_digital_twin.ipynb) — end-to-end subsea-tieback case study (scale + corrosion + deposition + scavenger).
+- [Scale prediction workflow](https://github.com/equinor/neqsim/blob/master/examples/notebooks/chemistry_scale_prediction_workflow.ipynb) — Davies SI sweeps over temperature, pH and seawater mixing fraction.
+- [Corrosion inhibitor design](https://github.com/equinor/neqsim/blob/master/examples/notebooks/chemistry_corrosion_inhibitor_design.ipynb) — Langmuir + Nesic dose-response and minimum-dose optimization.
 
 ## Related documentation
 

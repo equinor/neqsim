@@ -278,7 +278,7 @@ where $k_s$ is the salting coefficient and $I$ is the ionic strength.
 
 ## Related Resources
 
-- [H2S Distribution Modeling Notebook](../examples/H2S_Distribution_Modeling.ipynb)
+- [H2S Distribution Modeling Notebook](https://github.com/equinor/neqsim/blob/master/docs/examples/H2S_Distribution_Modeling.ipynb)
 - [Electrolyte CPA Model](ElectrolyteCPAModel.md) - For systems with ionic species
 - [Soreide Whitson Model](SoreideWhitsonModel.md) - For brine-hydrocarbon systems
 - [Chemical Reactions in NeqSim](../chemicalreactions/index.md)
