@@ -5473,19 +5473,20 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public void setTotalFlowRate(double flowRate, String flowunit) {
     init(0);
-    try {
-      init(1);
-    } catch (Exception ex) {
-      logger.error(ex.getMessage());
-    }
     double density = 0.0;
-    if (flowunit.equals("Am3/hr") || flowunit.equals("Am3/min") || flowunit.equals("gallons/min")
-        || flowunit.equals("Am3/sec") || flowunit.equals("m3/hr") || flowunit.equals("m3/min")
-        || flowunit.equals("m3/sec") || flowunit.equals("m3/day")) {
+    boolean requiresActualDensity =
+        flowunit.equals("Am3/hr") || flowunit.equals("Am3/min") || flowunit.equals("gallons/min")
+            || flowunit.equals("Am3/sec") || flowunit.equals("m3/hr") || flowunit.equals("m3/min")
+            || flowunit.equals("m3/sec") || flowunit.equals("m3/day");
+    if (requiresActualDensity) {
+      try {
+        init(1);
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
+      }
       initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+      density = getPhase(0).getDensity("kg/m3");
     }
-
-    density = getPhase(0).getDensity("kg/m3");
     if (flowunit.equals("idSm3/hr") || flowunit.equals("idSm3/min") || flowunit.equals("idSm3/sec")
         || flowunit.equals("gallons/min")) {
       density = getIdealLiquidDensity("kg/m3");
