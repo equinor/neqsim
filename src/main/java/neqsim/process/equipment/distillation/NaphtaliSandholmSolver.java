@@ -2990,6 +2990,16 @@ public class NaphtaliSandholmSolver {
     return pumparounds != null && !pumparounds.isEmpty();
   }
 
+  /** Return whether a tray supplies a configured pumparound draw. */
+  private boolean isPumparoundDrawTray(int tray) {
+    for (DistillationColumn.ColumnPumparound pumparound : pumparounds) {
+      if (pumparound.getDrawTrayNumber() == tray) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /**
    * Refresh return enthalpies from each draw tray's current liquid composition and temperature.
    *
@@ -3169,7 +3179,11 @@ public class NaphtaliSandholmSolver {
         double h = Math.max(Math.abs(origVal) * pertSize, minPert);
         setVariable(jj, k, origVal + h);
         evaluateThermoForTray(jj);
-        refreshPumparoundReturnEnthalpies();
+        boolean returnPropertiesChanged =
+            densePumparoundJacobian && isPumparoundDrawTray(jj) && k <= C;
+        if (returnPropertiesChanged) {
+          refreshPumparoundReturnEnthalpies();
+        }
 
         if (densePumparoundJacobian) {
           double[] Fpert = computeResidual();
@@ -3190,7 +3204,9 @@ public class NaphtaliSandholmSolver {
 
         setVariable(jj, k, origVal);
         evaluateThermoForTray(jj);
-        refreshPumparoundReturnEnthalpies();
+        if (returnPropertiesChanged) {
+          refreshPumparoundReturnEnthalpies();
+        }
       }
     }
 
