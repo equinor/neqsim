@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-07-10"
+last_verified: "2026-07-30"
 ---
 
 # Dynamic Simulation Guidance
@@ -27,11 +27,13 @@ historian tag mapping, and event schedule before running `runTransient`.
 
 NeqSim dynamic simulation uses the `runTransient(double dt)` method on `ProcessSystem`.
 Each timestep:
-1. Flowsheet-wide settings and setter units are applied.
+1. Flowsheet-wide settings are applied. Each setter unit receives exactly one
+   transient call, applying its specification and advancing its own clock once.
 2. Simulation time advances, then due events and field inputs are applied.
 3. Equipment updates, including its thermodynamic calculations, run in insertion
    order or dependency-aware graph levels when parallel transient execution is
-   enabled.
+   enabled. Setter units are excluded from these explicit, semi-implicit, and
+   parallel equipment passes.
 4. Standalone controllers run; equipment-embedded controllers retain their
    equipment-specific execution timing for compatibility.
 5. Measurement devices are sampled, alarms are evaluated, and history is stored.
