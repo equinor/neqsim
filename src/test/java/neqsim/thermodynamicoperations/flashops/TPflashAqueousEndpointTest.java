@@ -45,7 +45,7 @@ class TPflashAqueousEndpointTest {
     system.setMixingRule("classic");
     system.setMultiPhaseCheck(multiphaseCheck);
     new ThermodynamicOperations(system).TPflash();
-    system.init(3);
+    system.initProperties();
     return system;
   }
 
@@ -66,7 +66,6 @@ class TPflashAqueousEndpointTest {
       maximumLogFugacityResidual = Math.max(maximumLogFugacityResidual,
           Math.abs(Math.log(firstPhaseFugacity / secondPhaseFugacity)));
     }
-    assertTrue(maximumLogFugacityResidual < 1.0e-8,
-        "maximum log fugacity residual was " + maximumLogFugacityResidual);
+    assertTrue(maximumLogFugacityResidual < 1.0e-8, "maximum log fugacity residual was " + maximumLogFugacityResidual);
   }
 }
