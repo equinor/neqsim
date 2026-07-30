@@ -34,11 +34,13 @@ Each timestep:
    order or dependency-aware graph levels when parallel transient execution is
    enabled. Setter units are excluded from these explicit, semi-implicit, and
    parallel equipment passes.
-4. Standalone controllers run; equipment-embedded controllers retain their
-   equipment-specific execution timing for compatibility. Controller ownership
-   is identity-based: registering an embedded controller separately, or adding
-   one standalone controller instance repeatedly, does not update its PID state
-   more than once per timestep.
+4. Standalone controllers run; controllers actually executed inside equipment
+   retain their equipment-specific timing for compatibility. Execution is
+   coalesced by object identity and the timestep calculation identifier. Merely
+   attaching a controller to equipment that does not execute it must not suppress
+   the standalone update; repeated standalone registration runs once per step.
+   Custom controllers integrated by equipment must report the completed identifier
+   through `hasRunTransient(UUID)`.
 5. Measurement devices are sampled, alarms are evaluated, and history is stored.
 
 ## Basic Dynamic Setup
