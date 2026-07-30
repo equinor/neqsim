@@ -1429,6 +1429,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       StreamInterface drawStream = getTray(pumparound.getDrawTrayNumber()).getLiquidPumparoundDrawStream();
       maxRelativeChange = Math.max(maxRelativeChange, pumparound.updateReturnStream(drawStream, id));
     }
+    // Naphtali-Sandholm includes the draw and cooled return in one equation system. The
+    // stream update above only materializes that accepted state, so it is not an outer
+    // tear variable and must not trigger a second identical column solve.
+    if (lastSolverTypeUsed == SolverType.NAPHTALI_SANDHOLM) {
+      lastPumparoundRelativeChange = 0.0;
+      return 0.0;
+    }
     lastPumparoundRelativeChange = maxRelativeChange;
     if (maxRelativeChange > 1.0e-12) {
       columnTearVariablesChanged = true;
@@ -1796,15 +1803,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (solverType == SolverType.AUTO && hasBeenSolvedBefore && autoWarmStartSolver != null
         && autoWarmStartSolver != SolverType.AUTO && !hasAdjustableSpecifications()) {
       effectiveSolverType = autoWarmStartSolver;
-    }
-    // Pumparound returns are converged by the outer tear loop and are not yet assembled as
-    // Naphtali-Sandholm feed terms. Keep that coordinated configuration on the established
-    // residual-monitored solver until both withdrawal and return participate in one simultaneous
-    // equation system.
-    if (effectiveSolverType == SolverType.NAPHTALI_SANDHOLM && !pumparounds.isEmpty()) {
-      logger.debug("Using MESH_RESIDUAL for column {} because active pumparounds require outer return-stream coupling",
-          getName());
-      return SolverType.MESH_RESIDUAL;
     }
     return effectiveSolverType;
   }
@@ -2782,6 +2780,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           getEffectiveMurphreeEfficiency(trayIndex));
       updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, tray.getGasSideDrawFraction());
       updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, tray.getLiquidSideDrawFraction());
+      updatedSignature =
+          updateNaphtaliSandholmInputSignature(updatedSignature, tray.getLiquidPumparoundDrawFraction());
+    }
+    updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, pumparounds.size());
+    for (ColumnPumparound pumparound : pumparounds) {
+      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, pumparound.getDrawTrayNumber());
+      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, pumparound.getReturnTrayNumber());
+      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, pumparound.getDrawFraction());
+      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, pumparound.getTemperatureDrop());
     }
     if (hasReboiler && getReboiler() != null) {
       updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, getReboiler().getRefluxRatio());
