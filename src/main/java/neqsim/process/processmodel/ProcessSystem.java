@@ -19,6 +19,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.ProcessElementInterface;
@@ -164,11 +172,11 @@ public class ProcessSystem extends SimulationBaseClass {
    * Reusable worker pool for parallel transient execution. The executor is transient because threads and executor
    * services are runtime resources rather than process-model state.
    */
-  private transient java.util.concurrent.ExecutorService parallelTransientExecutor;
+  private transient ExecutorService parallelTransientExecutor;
   /** Worker count used to create {@link #parallelTransientExecutor}. */
   private transient int parallelTransientExecutorSize;
   /** Counter used to give reusable transient workers stable diagnostic names. */
-  private static final java.util.concurrent.atomic.AtomicInteger TRANSIENT_WORKER_COUNTER = new java.util.concurrent.atomic.AtomicInteger();
+  private static final AtomicInteger TRANSIENT_WORKER_COUNTER = new AtomicInteger();
 
   /**
    * Pluggable integration strategy advertised to equipment during {@code runTransient}. Defaults to
@@ -4155,8 +4163,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param id calculation identifier
    */
   private void runEquipmentTransientParallel(double dt, UUID id) {
-    java.util.concurrent.ExecutorService executor = getParallelTransientExecutor();
-    List<java.util.concurrent.Future<?>> futures = new ArrayList<java.util.concurrent.Future<?>>(unitOperations.size());
+    ExecutorService executor = getParallelTransientExecutor();
+    List<Future<?>> futures = new ArrayList<Future<?>>(unitOperations.size());
     for (int i = 0; i < unitOperations.size(); i++) {
       final ProcessEquipmentInterface unit = unitOperations.get(i);
       final double stepSize = dt;
@@ -4168,7 +4176,7 @@ public class ProcessSystem extends SimulationBaseClass {
         }
       }));
     }
-    for (java.util.concurrent.Future<?> f : futures) {
+    for (Future<?> f : futures) {
       try {
         f.get();
       } catch (Exception ex) {
@@ -4184,14 +4192,14 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * @return reusable executor sized by {@link #getTransientThreadPoolSize()}
    */
-  private synchronized java.util.concurrent.ExecutorService getParallelTransientExecutor() {
+  private synchronized ExecutorService getParallelTransientExecutor() {
     if (parallelTransientExecutor != null && !parallelTransientExecutor.isShutdown()
         && parallelTransientExecutorSize == transientThreadPoolSize) {
       return parallelTransientExecutor;
     }
     shutdownParallelTransientExecutor();
-    final java.util.concurrent.ThreadFactory defaultFactory = java.util.concurrent.Executors.defaultThreadFactory();
-    java.util.concurrent.ThreadFactory daemonFactory = new java.util.concurrent.ThreadFactory() {
+    final ThreadFactory defaultFactory = Executors.defaultThreadFactory();
+    ThreadFactory daemonFactory = new ThreadFactory() {
       @Override
       public Thread newThread(Runnable task) {
         Thread worker = defaultFactory.newThread(task);
@@ -4200,9 +4208,8 @@ public class ProcessSystem extends SimulationBaseClass {
         return worker;
       }
     };
-    java.util.concurrent.ThreadPoolExecutor executor = (java.util.concurrent.ThreadPoolExecutor) java.util.concurrent.Executors
-        .newFixedThreadPool(transientThreadPoolSize, daemonFactory);
-    executor.setKeepAliveTime(60L, java.util.concurrent.TimeUnit.SECONDS);
+    ThreadPoolExecutor executor = new ThreadPoolExecutor(transientThreadPoolSize, transientThreadPoolSize, 60L,
+        TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), daemonFactory);
     executor.allowCoreThreadTimeOut(true);
     parallelTransientExecutor = executor;
     parallelTransientExecutorSize = transientThreadPoolSize;
