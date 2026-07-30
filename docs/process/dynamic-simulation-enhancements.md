@@ -535,6 +535,23 @@ process.setTransientThreadPoolSize(4); // Number of worker threads
 process.runTransient();
 ```
 
+The configured workers are reused across timesteps. NeqSim creates the executor
+lazily for each `ProcessSystem`, keeps it out of serialized model state, and
+allows idle daemon workers to time out after 60 seconds. Changing
+`setTransientThreadPoolSize(...)` or disabling parallel transient execution
+retires the existing pool. This avoids creating and destroying a complete
+thread pool for every timestep in long dynamic studies.
+
+If the thread calling `runTransient(...)` is interrupted while waiting for
+parallel equipment, NeqSim restores the caller's interrupt status and stops
+waiting. Later parallel passes in the same timestep observe that status and do
+not submit additional equipment work. Queued futures are cancelled without
+interrupting equipment already updating state. Because those running updates
+are not transactionally interruptible, NeqSim aborts the remaining controller,
+measurement, result-storage, and event-publication phases for that timestep.
+Callers should still treat an interrupted timestep as incomplete rather than as
+an atomic rollback.
+
 **Note:** Parallel execution is beneficial for flowsheets with many independent
 equipment units. For small flowsheets or tightly coupled equipment (recycles),
 the overhead may outweigh the benefit.
