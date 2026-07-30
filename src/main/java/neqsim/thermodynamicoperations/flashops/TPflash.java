@@ -810,8 +810,8 @@ public class TPflash extends Flash {
    * </p>
    *
    * <p>
-   * The guard deliberately excludes multi-liquid endpoints, any endpoint containing a gas or aqueous phase, chemical and
-   * electrolyte systems, and solid/wax calculations. Thus ordinary gas, gas-liquid, and established liquid-liquid
+   * The guard deliberately excludes multi-liquid endpoints, any endpoint containing a gas or aqueous phase, chemical
+   * and electrolyte systems, and solid/wax calculations. Thus ordinary gas, gas-liquid, and established liquid-liquid
    * process flashes remain on the existing fast path without an additional flash or property initialization.
    * </p>
    */
