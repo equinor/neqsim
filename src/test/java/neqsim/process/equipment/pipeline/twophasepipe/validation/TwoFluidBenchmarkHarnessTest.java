@@ -36,6 +36,13 @@ class TwoFluidBenchmarkHarnessTest {
     TwoFluidPipe pipe = createSolvedWetGasPipe();
     Snapshot snapshot = TwoFluidBenchmarkHarness.capture(pipe);
 
+    assertTrue(snapshot.getAvailableVariables().contains("entrainment_fraction"));
+    assertTrue(snapshot.getAvailableVariables().contains("entrained_droplet_diameter_m"));
+    assertTrue(snapshot.getAvailableVariables().contains("severe_slugging_number"));
+    assertTrue(snapshot.getAvailableVariables().contains("water_wetting_flag"));
+    assertTrue(snapshot.getAvailableVariables().contains("water_dropout_risk_flag"));
+    assertTrue(snapshot.getAvailableVariables().contains("severe_slug_potential_flag"));
+
     double inletPressure = pipe.getPressureProfile()[0] * 1e-5;
     double outletPressure = pipe.getPressureProfile()[pipe.getPressureProfile().length - 1] * 1e-5;
     double averageHoldup = Arrays.stream(pipe.getLiquidHoldupProfile()).average()
@@ -45,7 +52,9 @@ class TwoFluidBenchmarkHarnessTest {
             "generated"),
         new BenchmarkPoint("fixture", 0.0, pipe.getPositionProfile()[pipe.getPositionProfile().length - 1],
             "pressure_bara", outletPressure, 0.05, 0.001, "generated"),
-        new BenchmarkPoint("fixture", 0.0, 500.0, "liquid_holdup", averageHoldup, 0.20, 1.0, "generated"));
+        new BenchmarkPoint("fixture", 0.0, 500.0, "liquid_holdup", averageHoldup, 0.20, 1.0, "generated"),
+        new BenchmarkPoint("fixture", 0.0, pipe.getPositionProfile()[0], "entrainment_fraction",
+            pipe.getEntrainmentFractionProfile()[0], 1.0e-12, 0.0, "generated"));
 
     Comparison comparison = TwoFluidBenchmarkHarness.compare(snapshot, reference);
 
