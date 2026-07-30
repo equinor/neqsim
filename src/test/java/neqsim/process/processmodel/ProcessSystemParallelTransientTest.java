@@ -11,8 +11,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -199,6 +201,58 @@ public class ProcessSystemParallelTransientTest extends neqsim.NeqSimTest {
       executionCount.incrementAndGet();
       started.countDown();
       setCalculationIdentifier(id);
+    }
+  }
+
+  /**
+   * Direct executor that interrupts the submitting thread after completing its first task. This creates a deterministic
+   * interruption at the barrier between two dependency levels.
+   */
+  private static final class InterruptAfterFirstTaskExecutor extends AbstractExecutorService {
+    private final AtomicBoolean interruptAfterNextTask = new AtomicBoolean(true);
+    private volatile boolean shutdown;
+
+    /** {@inheritDoc} */
+    @Override
+    public void shutdown() {
+      shutdown = true;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public java.util.List<Runnable> shutdownNow() {
+      shutdown = true;
+      return Collections.emptyList();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean isShutdown() {
+      return shutdown;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean isTerminated() {
+      return shutdown;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean awaitTermination(long timeout, TimeUnit unit) {
+      return shutdown;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void execute(Runnable command) {
+      if (shutdown) {
+        throw new RejectedExecutionException("executor is shut down");
+      }
+      command.run();
+      if (interruptAfterNextTask.compareAndSet(true, false)) {
+        Thread.currentThread().interrupt();
+      }
     }
   }
 
@@ -442,6 +496,42 @@ public class ProcessSystemParallelTransientTest extends neqsim.NeqSimTest {
   }
 
   /**
+   * An interrupt observed after one dependency level completes must prevent submission of downstream equipment.
+   *
+   * @throws Exception if the deterministic executor cannot be installed
+   */
+  @Test
+  public void interruptBetweenDependencyLevelsDoesNotSubmitDownstreamEquipment() throws Exception {
+    CountDownLatch upstreamStarted = new CountDownLatch(1);
+    CountDownLatch releaseUpstream = new CountDownLatch(0);
+    CountDownLatch downstreamStarted = new CountDownLatch(1);
+    AtomicBoolean upstreamCompleted = new AtomicBoolean();
+    AtomicBoolean downstreamObservedIncompleteUpstream = new AtomicBoolean();
+
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 20.0);
+    fluid.addComponent("methane", 1.0);
+    Stream feed = new Stream("feed", fluid);
+    BlockingHeater upstream = new BlockingHeater("upstream", feed, upstreamStarted, releaseUpstream, upstreamCompleted);
+    DependencyRecordingHeater downstream = new DependencyRecordingHeater("downstream", upstream.getOutletStream(),
+        upstreamCompleted, downstreamObservedIncompleteUpstream, downstreamStarted);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(upstream);
+    process.add(downstream);
+    process.setParallelTransientEnabled(true);
+    process.setTransientThreadPoolSize(1);
+    setParallelTransientExecutor(process, new InterruptAfterFirstTaskExecutor(), 1);
+
+    try {
+      process.runTransient(1.0, UUID.randomUUID());
+      assertTrue(Thread.currentThread().isInterrupted(), "Boundary interrupt status was not preserved");
+      assertEquals(1L, downstreamStarted.getCount(), "Downstream equipment was submitted after a boundary interrupt");
+    } finally {
+      Thread.interrupted();
+    }
+  }
+
+  /**
    * Runtime worker pools must not participate in process serialization or copying.
    */
   @Test
@@ -645,5 +735,23 @@ public class ProcessSystemParallelTransientTest extends neqsim.NeqSimTest {
     Field field = ProcessSystem.class.getDeclaredField("parallelTransientExecutor");
     field.setAccessible(true);
     return (ExecutorService) field.get(process);
+  }
+
+  /**
+   * Installs a deterministic executor for level-boundary interruption testing.
+   *
+   * @param process process system to configure
+   * @param executor executor to install
+   * @param size configured executor size
+   * @throws Exception if reflection cannot access the private runtime fields
+   */
+  private static void setParallelTransientExecutor(ProcessSystem process, ExecutorService executor, int size)
+      throws Exception {
+    Field executorField = ProcessSystem.class.getDeclaredField("parallelTransientExecutor");
+    executorField.setAccessible(true);
+    executorField.set(process, executor);
+    Field sizeField = ProcessSystem.class.getDeclaredField("parallelTransientExecutorSize");
+    sizeField.setAccessible(true);
+    sizeField.setInt(process, size);
   }
 }
