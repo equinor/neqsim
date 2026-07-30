@@ -1433,7 +1433,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     // stream update above only materializes that accepted state, so it is not an outer
     // tear variable and must not trigger a second identical column solve.
     if (lastSolverTypeUsed == SolverType.NAPHTALI_SANDHOLM) {
-      lastPumparoundRelativeChange = 0.0;
+      lastPumparoundRelativeChange = maxRelativeChange;
       return 0.0;
     }
     lastPumparoundRelativeChange = maxRelativeChange;
