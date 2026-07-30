@@ -136,6 +136,9 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
    */
   @Override
   public void runTransient(double initResponse, double dt, UUID id) {
+    if (hasRunTransient(id)) {
+      return;
+    }
     if (!isActive) {
       totalTime += dt;
       response = initResponse;
