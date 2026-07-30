@@ -195,7 +195,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 │                                                                                 │
 │  IF ordinary flash, water feed ≥ 0.01, and no aqueous phase:                    │
 │     → Evaluate a cloned TPmultiflash candidate                                  │
-│     → Accept only a two-phase aqueous candidate with lower Gibbs energy,        │
+│     → Accept any two-phase candidate with lower Gibbs energy,                   │
 │       bounded/normalized phase fractions, and distinct phase compositions       │
 │                                                                                 │
 │  IF chemical system:                                                            │
@@ -215,7 +215,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 | `maxNumberOfIterations` | 50 | Maximum iterations per convergence loop |
 | Convergence tolerance | 1e-10 | Deviation threshold for K-value convergence |
 | Gibbs increase tolerance | 1e-8 | Relative increase that triggers K-reset |
-| Ordinary aqueous-refinement feed threshold | 0.01 mole fraction water | Avoid multiphase overhead for trace-water flashes; the cloned candidate remains subject to Gibbs and phase-quality acceptance checks |
+| Ordinary water-rich refinement feed threshold | 0.01 mole fraction water | Avoid multiphase overhead for trace-water flashes; accept an already-computed two-phase candidate only through Gibbs and phase-quality checks, independent of its phase labels |
 
 ### 1.1 Problem Formulation
 
