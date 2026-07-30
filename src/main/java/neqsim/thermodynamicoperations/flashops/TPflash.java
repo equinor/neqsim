@@ -902,8 +902,7 @@ public class TPflash extends Flash {
     try {
       candidate.setMultiPhaseCheck(true);
       new TPflash(candidate, candidate.doSolidPhaseCheck()).run();
-      if (candidate.getNumberOfPhases() == 2
-          && isLowerGibbsMultiphaseCandidate(candidate, referenceGibbsEnergy)) {
+      if (candidate.getNumberOfPhases() == 2 && isLowerGibbsMultiphaseCandidate(candidate, referenceGibbsEnergy)) {
         copyFlashStateFrom(candidate);
       }
     } catch (Exception ex) {
