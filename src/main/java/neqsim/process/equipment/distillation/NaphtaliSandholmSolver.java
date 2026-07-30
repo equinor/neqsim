@@ -3165,8 +3165,8 @@ public class NaphtaliSandholmSolver {
    * Compute the Jacobian matrix numerically using finite differences.
    *
    * <p>
-   * Ordinary columns retain the block-tridiagonal structure: for a variable on tray jj, only residuals on trays
-   * jj-1, jj, and jj+1 are differentiated. An active pumparound can connect non-adjacent trays, so that opt-in path
+   * Ordinary columns retain the block-tridiagonal structure: for a variable on tray jj, only residuals on trays jj-1,
+   * jj, and jj+1 are differentiated. An active pumparound can connect non-adjacent trays, so that opt-in path
    * differentiates every residual row and is solved as a dense system. Only tray jj thermodynamics are re-evaluated;
    * pumparound return enthalpy is refreshed when jj supplies a changed draw composition or temperature.
    * </p>
