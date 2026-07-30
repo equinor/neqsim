@@ -802,24 +802,22 @@ public class TPflash extends Flash {
    * Refines an ordinary liquid-only endpoint with the multiphase stability solver.
    *
    * <p>
-   * The ordinary two-phase flash primarily searches for a vapor-liquid split. For a liquid-only
-   * endpoint it can therefore converge to a local single-liquid state or to a metastable
-   * liquid-liquid split even though Michelsen tangent-plane stability analysis finds a lower-Gibbs
-   * liquid-liquid equilibrium. A cloned candidate is evaluated with multiphase checking enabled
-   * and replaces the ordinary result only when the existing strict phase-fraction,
+   * The ordinary two-phase flash primarily searches for a vapor-liquid split. For a liquid-only endpoint it can
+   * therefore converge to a local single-liquid state or to a metastable liquid-liquid split even though Michelsen
+   * tangent-plane stability analysis finds a lower-Gibbs liquid-liquid equilibrium. A cloned candidate is evaluated
+   * with multiphase checking enabled and replaces the ordinary result only when the existing strict phase-fraction,
    * distinct-composition, and Gibbs-energy acceptance checks pass.
    * </p>
    *
    * <p>
-   * The guard deliberately excludes any endpoint containing a gas or aqueous phase, chemical and
-   * electrolyte systems, and solid/wax calculations. Thus ordinary gas and gas-liquid process
-   * flashes remain on the existing fast path without an additional flash or property
-   * initialization.
+   * The guard deliberately excludes multi-liquid endpoints, any endpoint containing a gas or aqueous phase, chemical and
+   * electrolyte systems, and solid/wax calculations. Thus ordinary gas, gas-liquid, and established liquid-liquid
+   * process flashes remain on the existing fast path without an additional flash or property initialization.
    * </p>
    */
   private void rescueLiquidLiquidEndpoint() {
-    if (system.doMultiPhaseCheck() || system.getNumberOfPhases() < 1 || system.getNumberOfPhases() > 2
-        || system.isChemicalSystem() || system.hasIons() || solidCheck || system.isMultiphaseWaxCheck()) {
+    if (system.doMultiPhaseCheck() || system.getNumberOfPhases() != 1 || system.isChemicalSystem() || system.hasIons()
+        || solidCheck || system.isMultiphaseWaxCheck()) {
       return;
     }
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
@@ -852,8 +850,6 @@ public class TPflash extends Flash {
         }
         candidate.getPhase(phaseIndex).normalize();
       }
-      candidate.init(0);
-      candidate.init(1);
       new TPflash(candidate, candidate.doSolidPhaseCheck()).run();
       if (isLowerGibbsMultiphaseCandidate(candidate, referenceGibbsEnergy)) {
         copyFlashStateFrom(candidate);
@@ -882,8 +878,7 @@ public class TPflash extends Flash {
     boolean hasHeavyHydrocarbon = false;
     int numberOfComponents = system.getPhase(0).getNumberOfComponents();
     for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
-      neqsim.thermo.component.ComponentInterface component =
-          system.getPhase(0).getComponent(componentIndex);
+      neqsim.thermo.component.ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
       double feedFraction = component.getz();
       if (feedFraction <= LIQUID_LIQUID_ACTIVE_COMPONENT_LIMIT) {
         continue;
@@ -902,10 +897,8 @@ public class TPflash extends Flash {
         nonHydrocarbonFraction += feedFraction;
       }
     }
-    return nonHydrocarbonFraction >= LIQUID_LIQUID_NON_HYDROCARBON_FRACTION_LIMIT
-        && hasHeavyHydrocarbon
-        && maximumCriticalTemperature - minimumCriticalTemperature
-            >= LIQUID_LIQUID_CRITICAL_TEMPERATURE_SPAN;
+    return nonHydrocarbonFraction >= LIQUID_LIQUID_NON_HYDROCARBON_FRACTION_LIMIT && hasHeavyHydrocarbon
+        && maximumCriticalTemperature - minimumCriticalTemperature >= LIQUID_LIQUID_CRITICAL_TEMPERATURE_SPAN;
   }
 
   /**
