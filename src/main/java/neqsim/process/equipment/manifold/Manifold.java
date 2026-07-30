@@ -175,12 +175,28 @@ public class Manifold extends ProcessEquipmentBaseClass
     localsplitter.setSplitFactors(splitFactors);
   }
 
+  /**
+   * Propagates the low-flow bypass threshold to the internal mixer and splitter.
+   *
+   * <p>
+   * {@link #run(UUID)} delegates all work to those two internal units, so without this propagation a
+   * {@code setMinimumFlow()} (or a {@code ProcessSystem.setSectionLowFlowThreshold()}) call on a Manifold would be
+   * silently ignored and the manifold would keep flashing a stagnant dead leg.
+   * </p>
+   */
+  private void propagateMinimumFlow() {
+    localmixer.setMinimumFlow(getMinimumFlow());
+    localsplitter.setMinimumFlow(getMinimumFlow());
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    propagateMinimumFlow();
     localmixer.run(id);
     refreshLocalSplitter();
     localsplitter.run(id);
+    isActive(localsplitter.isActive());
   }
 
   /** {@inheritDoc} */

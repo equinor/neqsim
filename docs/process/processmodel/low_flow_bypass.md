@@ -57,7 +57,33 @@ Currently wired with inline auto-bypass:
 | `Separator` | Both gas and liquid outlets forced to `0 kg/hr`. |
 | `Heater` (cooler / electric heater) | Outlet inherits inlet at the set pressure with `Q = 0`. |
 | `Compressor` | Outlet inherits inlet at the set pressure with `power = 0`. |
+| `Pump` | Outlet inherits inlet at the set pressure with `power = 0`. |
+| `Manifold` | Threshold is forwarded to the internal mixer and splitter; all branch outlets forced to `0 kg/hr`. |
+| `ThrottlingValve` | Outlet published at the **valve outlet pressure** with zero moles. |
+| `PipeBeggsAndBrills` | Inlet state passed straight through (no friction, `dP = 0`). |
+| `MultiStreamHeatExchanger` | Bypassed only when **all** sides are stagnant; each outlet is a clone of its inlet. |
 | `Mixer` | Handles zero-flow inlets natively (no explicit guard needed). |
+
+> **Downstream effect matters.** `ThrottlingValve`, `PipeBeggsAndBrills` and
+> `MultiStreamHeatExchanger` still **write their outlet streams** when bypassed,
+> rather than returning without touching them. A valve in particular publishes
+> its specified let-down pressure at zero flow, so a downstream mixer,
+> separator or pipeline sees a consistent pressure boundary instead of a stale
+> one. `Mixer.mixStream()` independently ignores inlets at or below its own
+> `minimumFlow` when picking the outlet pressure, so a dead branch can never
+> drag the live train down to its pressure.
+
+> **Opt-in.** The bypasses on `ThrottlingValve`, `PipeBeggsAndBrills` and
+> `MultiStreamHeatExchanger` fire only when a threshold **above** the default
+> sentinel `ProcessEquipmentBaseClass.DEFAULT_MINIMUM_FLOW` (`1e-20 kg/hr`) has
+> been configured. Deactivating on the default would permanently skip a unit
+> that is merely momentarily dry inside a recycle loop — for example a JT valve
+> on a separator liquid outlet before any liquid has formed — because the
+> scheduler skips inactive units for the remainder of the solve pass.
+
+> **Units.** `minimumFlow` is **kg/hr for every equipment type**. Use
+> `setMinimumFlow(value, unit)` / `getMinimumFlow(unit)` to avoid hand-conversion
+> (`kg/hr`, `kg/sec`, `kg/min`, `kg/day`, `tonne/hr`, `tonne/day`, `lb/hr`).
 
 ### 2. `ProcessSystem.setSectionLowFlowThreshold(threshold)`
 
@@ -71,6 +97,12 @@ htTrain.setSectionLowFlowThreshold(1.0); // bypass entire train when feed < 1 kg
 
 The full plant can also be set in one call via
 `ProcessModel.setSectionLowFlowThreshold(threshold)`.
+
+Both accept a unit string:
+
+```java
+htTrain.setSectionLowFlowThreshold(1.2, "tonne/day"); // == 50 kg/hr
+```
 
 ### 3. Manual lock: `setLockedInactive(true)` / `deactivateSection(...)`
 
@@ -181,9 +213,42 @@ them again.
 
 ## ProcessModel convergence
 
-`ProcessModel.calculateConvergenceErrors` skips any boundary stream whose
-magnitude is below `1e-9 kg/hr` before computing relative error, so a
-bypassed section does **not** prevent the active areas from converging.
+The plant-level convergence gate is a **maximum over relative** boundary-stream
+errors, which is pathological for a stagnant leg: `0.007 kg/hr` of wobble on a
+`0.1 kg/hr` dead branch is a `6.6e-02` relative error and buries a real
+`443 kg/hr` residual on a `138 t/hr` export stream (`3.2e-03`). Two filters make
+the gate report the residual that actually matters.
+
+### Boundary flow floor
+
+`ProcessModel.calculateConvergenceErrors` drops any boundary stream whose
+magnitude is below `getBoundaryFlowFloor()` before computing relative error, so
+a bypassed section does **not** prevent the active areas from converging. The
+default `ProcessModel.DEFAULT_BOUNDARY_FLOW_FLOOR` (`1e-9 kg/hr`) excludes only
+numerically-zero streams; raise it to exclude physically negligible legs too:
+
+```java
+plant.setBoundaryFlowFloor(1.0); // ignore boundary streams below 1 kg/hr
+```
+
+### Absolute flow tolerance
+
+A stream is flow-converged when **either** its relative error is below the
+relative tolerance **or** its absolute flow change is below the absolute
+tolerance (kg/hr) — the standard industrial form of the criterion:
+
+```java
+boolean ok = plant.runUntilConverged(15, 1e-3, 1.0); // rel 1e-3 OR abs 1 kg/hr
+```
+
+The default (`0.0`) preserves the historical relative-only behaviour. Both
+filters also apply to `getNonConvergedBoundaryStreamErrors()`, so the offender
+list names only streams that matter, and `getConvergenceSummary()` prints the
+absolute delta next to each relative error plus a `Flow filters:` line when
+either filter is active.
+
+`BoundaryStreamError.getAbsoluteFlowChange()` exposes the same delta
+programmatically.
 
 ## Feed-flow configuration patterns
 

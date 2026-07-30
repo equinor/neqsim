@@ -143,12 +143,12 @@ public class PumpCapacityStrategy implements EquipmentCapacityStrategy {
       constraints.put("npshMargin", npshConstraint);
     }
 
-    // Flow rate constraint (using minimum flow as lower limit)
+    // Flow rate constraint (using the low-flow threshold as lower limit, kg/hr)
     double minFlow = pump.getMinimumFlow();
     if (minFlow > 0 && pump.getInletStream() != null && pump.getInletStream().getThermoSystem() != null) {
-      CapacityConstraint flowConstraint = new CapacityConstraint("flowRate").setMinValue(minFlow).setUnit("m3/hr")
+      CapacityConstraint flowConstraint = new CapacityConstraint("flowRate").setMinValue(minFlow).setUnit("kg/hr")
           .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-          .setValueSupplier(() -> pump.getInletStream().getFlowRate("m3/hr"));
+          .setValueSupplier(() -> pump.getInletStream().getFlowRate("kg/hr"));
       constraints.put("flowRate", flowConstraint);
     }
 

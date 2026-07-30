@@ -189,6 +189,38 @@ comes from — most confusingly `Flow rate: 1.00e+00`.
 | 2 | `model.getNonConvergedBoundaryStreamErrors()` | Every boundary stream outside tolerance, worst first, with `previousFlow` / `currentFlow` |
 | 3 | Check `isFlowCollapsedToZero()` on the offender | A relative flow error of **exactly 1.0** means the stream went from non-zero to zero between outer passes — an upstream unit stopped producing it (failed run, closed splitter, bypassed train). That is an upstream fault, not a slowly converging recycle |
 | 4 | Check `isFlowStartedFromZero()` | Mirror case: a seeded/low-flow stream starting up. Usually harmless, converges on the next pass |
+| 5 | Check `getAbsoluteFlowChange()` on the offender | The decisive test. A large *relative* error on a tiny *absolute* change is numerical noise on a stagnant leg, not a process residual |
+
+### Symptom: a stagnant dead leg dominates the convergence gate
+
+`getConvergenceSummary()` reports e.g. `Flow rate: 6.56e-02 (gas export ht)` and
+the model never converges, while the real residual sits on a large stream. The
+gate is a **max over relative errors**, so `0.007 kg/hr` of wobble on a
+`0.1 kg/hr` branch beats a genuine `443 kg/hr` residual on a `138 t/hr` export
+stream (`3.2e-03`).
+
+```java
+// 1. Do not solve the stagnant section at all (units auto-bypass).
+//    Manifold, ThrottlingValve, PipeBeggsAndBrills and MultiStreamHeatExchanger
+//    honour this too, and still publish their outlet pressure at zero flow.
+plant.get("HT injection process A").setSectionLowFlowThreshold(50.0, "kg/hr");
+
+// 2. Keep the dead leg out of the plant convergence metric.
+plant.setBoundaryFlowFloor(1.0);                      // drop sub-1 kg/hr streams
+
+// 3. Converge on relative OR absolute flow change.
+boolean ok = plant.runUntilConverged(15, 1e-3, 1.0);  // rel 1e-3 OR abs 1 kg/hr
+```
+
+Both filters also apply to `getNonConvergedBoundaryStreamErrors()`, so the
+offender list stops being dominated by noise. `getConvergenceSummary()` prints
+the absolute Δflow next to each relative error and a `Flow filters:` line when a
+filter is active.
+
+> **Gotcha:** `setSectionLowFlowThreshold()` deactivates units for the remainder
+> of the solve pass. Do not set it on a section that is legitimately dry only on
+> the first recycle iteration (e.g. a JT valve on a separator liquid outlet) —
+> it will never recover within that pass.
 
 ## Process Equipment Errors
 
