@@ -3179,8 +3179,7 @@ public class NaphtaliSandholmSolver {
         double h = Math.max(Math.abs(origVal) * pertSize, minPert);
         setVariable(jj, k, origVal + h);
         evaluateThermoForTray(jj);
-        boolean returnPropertiesChanged =
-            densePumparoundJacobian && isPumparoundDrawTray(jj) && k <= C;
+        boolean returnPropertiesChanged = densePumparoundJacobian && isPumparoundDrawTray(jj) && k <= C;
         if (returnPropertiesChanged) {
           refreshPumparoundReturnEnthalpies();
         }
