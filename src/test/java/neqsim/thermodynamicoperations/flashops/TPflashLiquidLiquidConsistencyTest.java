@@ -72,11 +72,11 @@ class TPflashLiquidLiquidConsistencyTest {
       }
       assertEquals(FEED[componentIndex], recoveredFeed, 1.0e-10);
 
-      double firstPhaseLogFugacity = Math.log(Math.max(
-          system.getPhase(0).getComponent(componentIndex).getx(), Double.MIN_NORMAL))
+      double firstPhaseLogFugacity = Math
+          .log(Math.max(system.getPhase(0).getComponent(componentIndex).getx(), Double.MIN_NORMAL))
           + Math.log(system.getPhase(0).getComponent(componentIndex).getFugacityCoefficient());
-      double secondPhaseLogFugacity = Math.log(Math.max(
-          system.getPhase(1).getComponent(componentIndex).getx(), Double.MIN_NORMAL))
+      double secondPhaseLogFugacity = Math
+          .log(Math.max(system.getPhase(1).getComponent(componentIndex).getx(), Double.MIN_NORMAL))
           + Math.log(system.getPhase(1).getComponent(componentIndex).getFugacityCoefficient());
       maximumLogFugacityResidual = Math.max(maximumLogFugacityResidual,
           Math.abs(firstPhaseLogFugacity - secondPhaseLogFugacity));
