@@ -268,6 +268,12 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
 
   /** {@inheritDoc} */
   @Override
+  public boolean hasRunTransient(UUID id) {
+    return id != null && id.equals(calcIdentifier);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void setControllerSetPoint(double signal) {
     this.controllerSetPoint = signal;
   }
