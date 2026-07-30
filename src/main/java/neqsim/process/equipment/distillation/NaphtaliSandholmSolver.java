@@ -548,7 +548,7 @@ public class NaphtaliSandholmSolver {
    */
   private boolean hasActiveSideDraws() {
     for (int j = 0; j < N; j++) {
-      if (internalLiquidFraction[j] < 1.0 || internalVaporFraction[j] < 1.0) {
+      if (liquidSideDrawFraction[j] > 0.0 || internalVaporFraction[j] < 1.0) {
         return true;
       }
     }
@@ -3820,7 +3820,7 @@ public class NaphtaliSandholmSolver {
       if (useOverallQreb) {
         qRebOverall = internalLiquidFraction[0] * L[0] * hL[0] + internalVaporFraction[N - 1] * V[N - 1] * hV[N - 1];
         for (int jj = 0; jj < N; jj++) {
-          qRebOverall += (1.0 - internalLiquidFraction[jj]) * L[jj] * hL[jj];
+          qRebOverall += liquidSideDrawFraction[jj] * L[jj] * hL[jj];
           qRebOverall += (1.0 - internalVaporFraction[jj]) * V[jj] * hV[jj];
           qRebOverall -= feedLTotal[jj] * feedHL[jj];
           qRebOverall -= feedVTotal[jj] * feedHV[jj];
@@ -3953,7 +3953,7 @@ public class NaphtaliSandholmSolver {
         for (int j = 0; j < N; j++) {
           nonBottomProducts += (1.0 - internalVaporFraction[j]) * V[j];
           if (j > 0) {
-            nonBottomProducts += (1.0 - internalLiquidFraction[j]) * L[j];
+            nonBottomProducts += liquidSideDrawFraction[j] * L[j];
           }
         }
         L[0] = Math.max(totalFeedMolesField - nonBottomProducts, totalFeedMolesField * 0.001);
