@@ -536,9 +536,10 @@ time, integral, derivative, or event-log state twice. Merely attaching a control
 to equipment that does not execute it does not suppress the standalone update.
 Repeated standalone registration is also coalesced to one update per timestep;
 distinct controller objects remain independent even if they share a name.
-`ControllerDeviceBaseClass` tracks the identifier automatically; custom controller
-implementations that integrate inside equipment should implement
-`hasRunTransient(UUID)`.
+`ControllerDeviceBaseClass` tracks the identifier automatically and makes
+repeated calls with one identifier idempotent, including semi-implicit equipment
+passes. Custom controller implementations that integrate inside equipment should
+implement `hasRunTransient(UUID)` and the same one-update-per-identifier contract.
 
 ### 5.2 Parallel Transient Execution
 
@@ -605,7 +606,7 @@ process.setIntegrationMethod(IntegrationMethod.RUNGE_KUTTA_4);    // Higher-orde
 
 ## 6. Test Coverage
 
-The features in this guide are covered by six focused test classes with 76
+The features in this guide are covered by six focused test classes with 77
 total tests:
 
 | Test Class | Tests | Coverage |
@@ -615,7 +616,7 @@ total tests:
 | `DynamicImprovementsPhase3Test` | 16 | Transmitter filter, alarm shelving, separator internals, HX thermal model, distillation MESH dynamics |
 | `ProcessSystemParallelTransientTest` | 9 | Worker reuse, copy lifecycle, dependency ordering, independent-level concurrency, and interruption behavior at waits and level boundaries |
 | `ProcessSystemTransientSetterTest` | 3 | Single setter application, repeated-step clock advancement, and explicit, semi-implicit, and parallel execution |
-| `ProcessSystemTransientControllerTest` | 4 | Equipment execution, attachment-only fallback, duplicate standalone registration, identity semantics, and repeated timesteps |
+| `ProcessSystemTransientControllerTest` | 5 | Equipment execution, semi-implicit passes, attachment-only fallback, duplicate standalone registration, identity semantics, and repeated timesteps |
 
 Run all tests:
 
