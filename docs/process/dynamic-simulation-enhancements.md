@@ -542,19 +542,30 @@ allows idle daemon workers to time out after 60 seconds. Changing
 retires the existing pool. This avoids creating and destroying a complete
 thread pool for every timestep in long dynamic studies.
 
+Parallel transient execution uses the same cached process graph as steady-state
+parallel execution. Equipment is partitioned into topological levels: all
+upstream groups in one level finish before downstream equipment is submitted,
+while independent groups in the same level can use separate workers. Groups
+that must share mutable inlet state execute sequentially within one worker.
+This prevents a downstream unit from observing a partially updated upstream
+stream merely because both units were submitted in the same timestep.
+
 If the thread calling `runTransient(...)` is interrupted while waiting for
 parallel equipment, NeqSim restores the caller's interrupt status and stops
-waiting. Later parallel passes in the same timestep observe that status and do
-not submit additional equipment work. Queued futures are cancelled without
-interrupting equipment already updating state. Because those running updates
-are not transactionally interruptible, NeqSim aborts the remaining controller,
-measurement, result-storage, and event-publication phases for that timestep.
-Callers should still treat an interrupted timestep as incomplete rather than as
-an atomic rollback.
+waiting. No downstream level is submitted. Later parallel passes in the same
+timestep observe that status and do not submit additional equipment work.
+Queued futures are cancelled without interrupting equipment already updating
+state. Because those running updates are not transactionally interruptible,
+NeqSim aborts the remaining controller, measurement, result-storage, and
+event-publication phases for that timestep. Callers should still treat an
+interrupted timestep as incomplete rather than as an atomic rollback.
 
 **Note:** Parallel execution is beneficial for flowsheets with many independent
-equipment units. For small flowsheets or tightly coupled equipment (recycles),
-the overhead may outweigh the benefit.
+branches. Topological ordering covers feed-forward stream dependencies, but it
+does not define iteration or rollback for recycle loops and other implicit
+couplings. Keep the option disabled for those cases until their transient
+convergence contract is explicitly supported. For small flowsheets, the
+scheduling overhead may also outweigh the benefit.
 
 ### 5.3 Integration Methods
 
@@ -576,13 +587,15 @@ process.setIntegrationMethod(IntegrationMethod.RUNGE_KUTTA_4);    // Higher-orde
 
 ## 6. Test Coverage
 
-All features are covered by three test classes with 59 total tests:
+The features in this guide are covered by four focused test classes with 67
+total tests:
 
 | Test Class | Tests | Coverage |
 |-----------|-------|----------|
 | `DynamicImprovementsTest` | 17 | Controller modes, 2-DOF PID, SFC, control structures, gain scheduling, event logging, performance metrics |
 | `DynamicImprovementsPhase2Test` | 26 | Sensor faults, valve nonlinearities, adaptive timestep, parallel transient, integration methods, JSON process builder |
 | `DynamicImprovementsPhase3Test` | 16 | Transmitter filter, alarm shelving, separator internals, HX thermal model, distillation MESH dynamics |
+| `ProcessSystemParallelTransientTest` | 8 | Worker reuse, copy lifecycle, dependency ordering, independent-level concurrency, and interruption behavior |
 
 Run all tests:
 
