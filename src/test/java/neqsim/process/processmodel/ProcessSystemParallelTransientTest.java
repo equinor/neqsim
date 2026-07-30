@@ -11,15 +11,21 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
+import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.measurementdevice.MeasurementDeviceBaseClass;
+import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Regression tests for parallel transient execution in {@link ProcessSystem}.
@@ -80,7 +86,18 @@ public class ProcessSystemParallelTransientTest extends neqsim.NeqSimTest {
      * @param release latch controlling when execution may finish
      */
     private BlockingTransientUnit(CountDownLatch started, CountDownLatch release) {
-      super("blocking-unit");
+      this("blocking-unit", started, release);
+    }
+
+    /**
+     * Creates a named blocking unit.
+     *
+     * @param name unit name
+     * @param started latch signalled when execution starts
+     * @param release latch controlling when execution may finish
+     */
+    private BlockingTransientUnit(String name, CountDownLatch started, CountDownLatch release) {
+      super(name);
       this.started = started;
       this.release = release;
     }
@@ -188,6 +205,135 @@ public class ProcessSystemParallelTransientTest extends neqsim.NeqSimTest {
   }
 
   /**
+   * Direct executor that interrupts the submitting thread after completing its first task. This creates a deterministic
+   * interruption at the barrier between two dependency levels.
+   */
+  private static final class InterruptAfterFirstTaskExecutor extends AbstractExecutorService {
+    private final AtomicBoolean interruptAfterNextTask = new AtomicBoolean(true);
+    private volatile boolean shutdown;
+
+    /** {@inheritDoc} */
+    @Override
+    public void shutdown() {
+      shutdown = true;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public java.util.List<Runnable> shutdownNow() {
+      shutdown = true;
+      return Collections.emptyList();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean isShutdown() {
+      return shutdown;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean isTerminated() {
+      return shutdown;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean awaitTermination(long timeout, TimeUnit unit) {
+      return shutdown;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void execute(Runnable command) {
+      if (shutdown) {
+        throw new RejectedExecutionException("executor is shut down");
+      }
+      command.run();
+      if (interruptAfterNextTask.compareAndSet(true, false)) {
+        Thread.currentThread().interrupt();
+      }
+    }
+  }
+
+  /**
+   * Two-port unit that blocks while representing an upstream dynamic calculation.
+   */
+  private static final class BlockingHeater extends Heater {
+    private static final long serialVersionUID = 1000L;
+    private final transient CountDownLatch started;
+    private final transient CountDownLatch release;
+    private final AtomicBoolean completed;
+
+    /**
+     * Creates a blocking upstream heater.
+     *
+     * @param name unit name
+     * @param inletStream inlet stream
+     * @param started latch signalled when execution starts
+     * @param release latch controlling when execution may finish
+     * @param completed flag set after the upstream state update completes
+     */
+    private BlockingHeater(String name, StreamInterface inletStream, CountDownLatch started, CountDownLatch release,
+        AtomicBoolean completed) {
+      super(name, inletStream);
+      this.started = started;
+      this.release = release;
+      this.completed = completed;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void runTransient(double dt, UUID id) {
+      started.countDown();
+      try {
+        release.await();
+      } catch (InterruptedException ex) {
+        Thread.currentThread().interrupt();
+      }
+      completed.set(true);
+      setCalculationIdentifier(id);
+    }
+  }
+
+  /**
+   * Downstream two-port unit that records whether it started before its upstream dependency completed.
+   */
+  private static final class DependencyRecordingHeater extends Heater {
+    private static final long serialVersionUID = 1000L;
+    private final AtomicBoolean upstreamCompleted;
+    private final AtomicBoolean observedIncompleteUpstream;
+    private final transient CountDownLatch started;
+
+    /**
+     * Creates a downstream dependency observer.
+     *
+     * @param name unit name
+     * @param inletStream upstream outlet stream
+     * @param upstreamCompleted upstream completion flag
+     * @param observedIncompleteUpstream flag set if this unit starts too early
+     * @param started latch signalled when this unit starts
+     */
+    private DependencyRecordingHeater(String name, StreamInterface inletStream, AtomicBoolean upstreamCompleted,
+        AtomicBoolean observedIncompleteUpstream, CountDownLatch started) {
+      super(name, inletStream);
+      this.upstreamCompleted = upstreamCompleted;
+      this.observedIncompleteUpstream = observedIncompleteUpstream;
+      this.started = started;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void runTransient(double dt, UUID id) {
+      if (!upstreamCompleted.get()) {
+        observedIncompleteUpstream.set(true);
+      }
+      started.countDown();
+      setCalculationIdentifier(id);
+    }
+  }
+
+  /**
    * Standalone controller that records transient scan execution.
    */
   private static final class CountingController extends ControllerDeviceBaseClass {
@@ -264,6 +410,129 @@ public class ProcessSystemParallelTransientTest extends neqsim.NeqSimTest {
     assertTrue(workerNames.size() <= numberOfWorkers,
         "Expected at most " + numberOfWorkers + " reused workers, but observed " + workerNames);
     assertEquals(numberOfSteps, process.getTime(), 1.0e-12);
+  }
+
+  /**
+   * Connected equipment must respect stream-dependency order even when transient parallelism is enabled.
+   *
+   * @throws Exception if the test thread cannot coordinate with the process runner
+   */
+  @Test
+  public void connectedEquipmentWaitsForUpstreamTransientCompletion() throws Exception {
+    CountDownLatch upstreamStarted = new CountDownLatch(1);
+    CountDownLatch releaseUpstream = new CountDownLatch(1);
+    CountDownLatch downstreamStarted = new CountDownLatch(1);
+    AtomicBoolean upstreamCompleted = new AtomicBoolean();
+    AtomicBoolean downstreamObservedIncompleteUpstream = new AtomicBoolean();
+
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 20.0);
+    fluid.addComponent("methane", 1.0);
+    Stream feed = new Stream("feed", fluid);
+    BlockingHeater upstream = new BlockingHeater("upstream", feed, upstreamStarted, releaseUpstream, upstreamCompleted);
+    DependencyRecordingHeater downstream = new DependencyRecordingHeater("downstream", upstream.getOutletStream(),
+        upstreamCompleted, downstreamObservedIncompleteUpstream, downstreamStarted);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(upstream);
+    process.add(downstream);
+    process.setParallelTransientEnabled(true);
+    process.setTransientThreadPoolSize(2);
+
+    Thread processRunner = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        process.runTransient(1.0, UUID.randomUUID());
+      }
+    });
+    processRunner.setDaemon(true);
+    processRunner.setName("NeqSim-Test-Connected-Transient");
+
+    try {
+      processRunner.start();
+      assertTrue(upstreamStarted.await(5L, TimeUnit.SECONDS), "Upstream equipment did not start");
+      downstreamStarted.await(500L, TimeUnit.MILLISECONDS);
+      releaseUpstream.countDown();
+      processRunner.join(5000L);
+
+      assertFalse(processRunner.isAlive(), "Transient process did not finish after releasing upstream equipment");
+      assertTrue(downstreamStarted.getCount() == 0L, "Downstream equipment did not execute");
+      assertFalse(downstreamObservedIncompleteUpstream.get(),
+          "Downstream equipment started before its stream-producing dependency completed");
+    } finally {
+      releaseUpstream.countDown();
+      processRunner.join(2000L);
+    }
+  }
+
+  /**
+   * Units in the same dependency level must retain parallel execution after introducing level barriers.
+   *
+   * @throws Exception if the test thread cannot coordinate with the process runner
+   */
+  @Test
+  public void independentEquipmentWithinLevelStillRunsConcurrently() throws Exception {
+    CountDownLatch bothStarted = new CountDownLatch(2);
+    CountDownLatch release = new CountDownLatch(1);
+    ProcessSystem process = new ProcessSystem();
+    process.add(new BlockingTransientUnit("independent-a", bothStarted, release));
+    process.add(new BlockingTransientUnit("independent-b", bothStarted, release));
+    process.setParallelTransientEnabled(true);
+    process.setTransientThreadPoolSize(2);
+
+    Thread processRunner = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        process.runTransient(1.0, UUID.randomUUID());
+      }
+    });
+    processRunner.setDaemon(true);
+    processRunner.setName("NeqSim-Test-Independent-Transient");
+
+    try {
+      processRunner.start();
+      assertTrue(bothStarted.await(5L, TimeUnit.SECONDS),
+          "Independent equipment in the same dependency level did not execute concurrently");
+    } finally {
+      release.countDown();
+      processRunner.join(5000L);
+    }
+    assertFalse(processRunner.isAlive(), "Parallel transient process did not finish after releasing both units");
+  }
+
+  /**
+   * An interrupt observed after one dependency level completes must prevent submission of downstream equipment.
+   *
+   * @throws Exception if the deterministic executor cannot be installed
+   */
+  @Test
+  public void interruptBetweenDependencyLevelsDoesNotSubmitDownstreamEquipment() throws Exception {
+    CountDownLatch upstreamStarted = new CountDownLatch(1);
+    CountDownLatch releaseUpstream = new CountDownLatch(0);
+    CountDownLatch downstreamStarted = new CountDownLatch(1);
+    AtomicBoolean upstreamCompleted = new AtomicBoolean();
+    AtomicBoolean downstreamObservedIncompleteUpstream = new AtomicBoolean();
+
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 20.0);
+    fluid.addComponent("methane", 1.0);
+    Stream feed = new Stream("feed", fluid);
+    BlockingHeater upstream = new BlockingHeater("upstream", feed, upstreamStarted, releaseUpstream, upstreamCompleted);
+    DependencyRecordingHeater downstream = new DependencyRecordingHeater("downstream", upstream.getOutletStream(),
+        upstreamCompleted, downstreamObservedIncompleteUpstream, downstreamStarted);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(upstream);
+    process.add(downstream);
+    process.setParallelTransientEnabled(true);
+    process.setTransientThreadPoolSize(1);
+    setParallelTransientExecutor(process, new InterruptAfterFirstTaskExecutor(), 1);
+
+    try {
+      process.runTransient(1.0, UUID.randomUUID());
+      assertTrue(Thread.currentThread().isInterrupted(), "Boundary interrupt status was not preserved");
+      assertEquals(1L, downstreamStarted.getCount(), "Downstream equipment was submitted after a boundary interrupt");
+    } finally {
+      Thread.interrupted();
+    }
   }
 
   /**
@@ -470,5 +739,23 @@ public class ProcessSystemParallelTransientTest extends neqsim.NeqSimTest {
     Field field = ProcessSystem.class.getDeclaredField("parallelTransientExecutor");
     field.setAccessible(true);
     return (ExecutorService) field.get(process);
+  }
+
+  /**
+   * Installs a deterministic executor for level-boundary interruption testing.
+   *
+   * @param process process system to configure
+   * @param executor executor to install
+   * @param size configured executor size
+   * @throws Exception if reflection cannot access the private runtime fields
+   */
+  private static void setParallelTransientExecutor(ProcessSystem process, ExecutorService executor, int size)
+      throws Exception {
+    Field executorField = ProcessSystem.class.getDeclaredField("parallelTransientExecutor");
+    executorField.setAccessible(true);
+    executorField.set(process, executor);
+    Field sizeField = ProcessSystem.class.getDeclaredField("parallelTransientExecutorSize");
+    sizeField.setAccessible(true);
+    sizeField.setInt(process, size);
   }
 }

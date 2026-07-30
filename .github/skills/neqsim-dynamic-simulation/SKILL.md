@@ -27,10 +27,14 @@ historian tag mapping, and event schedule before running `runTransient`.
 
 NeqSim dynamic simulation uses the `runTransient(double dt)` method on `ProcessSystem`.
 Each timestep:
-1. All measurement devices read current values
-2. All controllers calculate new outputs
-3. All equipment updates for the timestep
-4. Flash calculations update thermodynamic state
+1. Flowsheet-wide settings and setter units are applied.
+2. Simulation time advances, then due events and field inputs are applied.
+3. Equipment updates, including its thermodynamic calculations, run in insertion
+   order or dependency-aware graph levels when parallel transient execution is
+   enabled.
+4. Standalone controllers run; equipment-embedded controllers retain their
+   equipment-specific execution timing for compatibility.
+5. Measurement devices are sampled, alarms are evaluated, and history is stored.
 
 ## Basic Dynamic Setup
 
@@ -384,12 +388,15 @@ For large flowsheets with independent branches, enable
 `process.setParallelTransientEnabled(true)` and set the maximum worker count
 with `process.setTransientThreadPoolSize(n)`. The per-process worker pool is
 created lazily and reused across timesteps; changing the worker count or
-disabling the option retires it. If the caller is interrupted while waiting,
-NeqSim restores the interrupt status, cancels queued work without interrupting
-equipment already updating state, and aborts the remaining timestep phases.
-Treat that timestep as incomplete. Keep parallel execution off for tightly
-coupled sequential equipment or recycle loops unless their transient
-dependencies have been verified.
+disabling the option retires it. Execution follows cached process-graph levels,
+so upstream groups complete before downstream equipment is submitted while
+independent groups within a level remain parallel. If the caller is interrupted
+while waiting, NeqSim restores the interrupt status, cancels queued work without
+interrupting equipment already updating state, does not submit downstream
+levels, and aborts the remaining timestep phases. Treat that timestep as
+incomplete. Graph ordering does not define transient recycle convergence or
+rollback, so keep parallel execution off for recycle loops and other implicit
+couplings until their transient contract is explicitly supported.
 
 ## Python Dynamic Simulation
 
