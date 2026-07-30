@@ -354,10 +354,16 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     }
 
     double inletMolarFlow = getInletStream().getThermoSystem().getFlowRate("mole/sec");
+    if (isBelowLowFlowThreshold()) {
+      isActive(false);
+      applyZeroFlowState(id);
+      return;
+    }
     if (isNegligibleFlow(inletMolarFlow)) {
       applyZeroFlowState(id);
       return;
     }
+    isActive(true);
 
     thermoSystem.init(2);
 
@@ -495,10 +501,16 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     thermoSystem = inStream.getThermoSystem().clone();
 
     double inletMolarFlow = inStream.getThermoSystem().getFlowRate("mole/sec");
+    if (isBelowLowFlowThreshold()) {
+      isActive(false);
+      applyZeroFlowState(id);
+      return;
+    }
     if (isNegligibleFlow(inletMolarFlow)) {
       applyZeroFlowState(id);
       return;
     }
+    isActive(true);
 
     thermoSystem.init(2);
     double enthalpy = thermoSystem.getEnthalpy();
@@ -585,6 +597,56 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     return !Double.isFinite(flow) || Math.abs(flow) <= minimumMolarFlow;
   }
 
+  /**
+   * Checks whether the inlet mass flow is below the configured low-flow bypass threshold.
+   *
+   * <p>
+   * A valve does not "skip its run" the way most equipment does, because downstream units (typically a mixer or a
+   * separator) still need a correctly specified outlet pressure even at zero flow. The valve therefore routes to
+   * {@link #applyZeroFlowState(UUID)}, which publishes the outlet pressure with zero moles instead of returning without
+   * touching the outlet stream.
+   * </p>
+   *
+   * <p>
+   * The check is opt-in: it only fires when a threshold above
+   * {@link neqsim.process.equipment.ProcessEquipmentBaseClass#DEFAULT_MINIMUM_FLOW} has been configured. Deactivating
+   * on the default sentinel would permanently skip a valve that is merely momentarily dry inside a recycle loop (e.g. a
+   * JT valve on a separator liquid outlet before liquid has formed), because {@code ProcessSystem} skips inactive units
+   * for the remainder of the solve pass.
+   * </p>
+   *
+   * @return true when an explicit threshold is configured and the inlet mass flow is below it
+   */
+  private boolean isBelowLowFlowThreshold() {
+    double threshold = getMinimumFlow();
+    if (!(threshold > neqsim.process.equipment.ProcessEquipmentBaseClass.DEFAULT_MINIMUM_FLOW)) {
+      return false;
+    }
+    try {
+      return getInletStream().getFlowRate("kg/hr") < threshold;
+    } catch (RuntimeException ex) {
+      logger.debug("Could not read inlet flow for low-flow check on '{}'", getName());
+      return false;
+    }
+  }
+
+  /**
+   * Publishes a zero-flow outlet state that still carries the valve outlet pressure.
+   *
+   * <p>
+   * This is what makes a bypassed valve safe for downstream units: the outlet stream keeps the inlet composition and is
+   * set to the valve outlet pressure with zero moles, so a downstream mixer, separator or pipeline sees a consistent
+   * pressure boundary rather than a stale or unset one.
+   * </p>
+   *
+   * <p>
+   * Note that this method deliberately does NOT deactivate the valve. A momentarily dry valve inside a recycle loop
+   * must keep being re-run so it can recover when flow returns; only the explicit low-flow threshold path marks the
+   * valve inactive.
+   * </p>
+   *
+   * @param id current calculation identifier
+   */
   private void applyZeroFlowState(UUID id) {
     molarFlow = 0.0;
     double targetPressure = pressure;

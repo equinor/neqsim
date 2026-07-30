@@ -20,8 +20,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -3381,6 +3381,19 @@ public class ProcessSystem extends SimulationBaseClass {
     for (ProcessEquipmentInterface unit : unitOperations) {
       unit.setMinimumFlow(thresholdKgPerHour);
     }
+  }
+
+  /**
+   * Sets the low-flow bypass threshold on every unit operation in this process, expressed in a chosen mass-flow unit.
+   *
+   * @param threshold low-flow cutoff expressed in {@code unit} (must be &gt;= 0)
+   * @param unit mass-flow unit; see
+   * {@link neqsim.process.equipment.ProcessEquipmentBaseClass#setMinimumFlow(double, String)}
+   * @throws IllegalArgumentException if the threshold is negative or the unit is not a recognised mass-flow unit
+   */
+  public void setSectionLowFlowThreshold(double threshold, String unit) {
+    setSectionLowFlowThreshold(
+        threshold * neqsim.process.equipment.ProcessEquipmentBaseClass.massFlowConversionToKgPerHour(unit));
   }
 
   /**
