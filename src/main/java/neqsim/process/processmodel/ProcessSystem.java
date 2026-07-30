@@ -168,8 +168,7 @@ public class ProcessSystem extends SimulationBaseClass {
   /** Worker count used to create {@link #parallelTransientExecutor}. */
   private transient int parallelTransientExecutorSize;
   /** Counter used to give reusable transient workers stable diagnostic names. */
-  private static final java.util.concurrent.atomic.AtomicInteger TRANSIENT_WORKER_COUNTER =
-      new java.util.concurrent.atomic.AtomicInteger();
+  private static final java.util.concurrent.atomic.AtomicInteger TRANSIENT_WORKER_COUNTER = new java.util.concurrent.atomic.AtomicInteger();
 
   /**
    * Pluggable integration strategy advertised to equipment during {@code runTransient}. Defaults to
@@ -4201,9 +4200,8 @@ public class ProcessSystem extends SimulationBaseClass {
         return worker;
       }
     };
-    java.util.concurrent.ThreadPoolExecutor executor =
-        (java.util.concurrent.ThreadPoolExecutor) java.util.concurrent.Executors
-            .newFixedThreadPool(transientThreadPoolSize, daemonFactory);
+    java.util.concurrent.ThreadPoolExecutor executor = (java.util.concurrent.ThreadPoolExecutor) java.util.concurrent.Executors
+        .newFixedThreadPool(transientThreadPoolSize, daemonFactory);
     executor.setKeepAliveTime(60L, java.util.concurrent.TimeUnit.SECONDS);
     executor.allowCoreThreadTimeOut(true);
     parallelTransientExecutor = executor;
