@@ -528,6 +528,13 @@ is applied once and its own clock advances by the same $\Delta t$ as the process
 Setters are excluded from the later explicit, semi-implicit, and parallel
 equipment passes.
 
+Controller execution is identity-based. A controller attached to equipment runs
+inside that equipment's transient update. Registering the same object separately
+with `process.add(controller)` keeps it discoverable but does not run its time,
+integral, derivative, or event-log state twice. Repeated standalone registration
+is also coalesced to one update per timestep; distinct controller objects remain
+independent even if they share a name.
+
 ### 5.2 Parallel Transient Execution
 
 For large flowsheets, equipment-level transient calculations can be run in
@@ -593,7 +600,7 @@ process.setIntegrationMethod(IntegrationMethod.RUNGE_KUTTA_4);    // Higher-orde
 
 ## 6. Test Coverage
 
-The features in this guide are covered by five focused test classes with 72
+The features in this guide are covered by six focused test classes with 75
 total tests:
 
 | Test Class | Tests | Coverage |
@@ -603,11 +610,12 @@ total tests:
 | `DynamicImprovementsPhase3Test` | 16 | Transmitter filter, alarm shelving, separator internals, HX thermal model, distillation MESH dynamics |
 | `ProcessSystemParallelTransientTest` | 9 | Worker reuse, copy lifecycle, dependency ordering, independent-level concurrency, and interruption behavior at waits and level boundaries |
 | `ProcessSystemTransientSetterTest` | 3 | Single setter application, repeated-step clock advancement, and explicit, semi-implicit, and parallel execution |
+| `ProcessSystemTransientControllerTest` | 3 | Equipment ownership, duplicate standalone registration, identity semantics, and repeated timesteps |
 
 Run all tests:
 
 ```bash
-./mvnw test -Dtest=DynamicImprovementsTest,DynamicImprovementsPhase2Test,DynamicImprovementsPhase3Test,ProcessSystemParallelTransientTest,ProcessSystemTransientSetterTest
+./mvnw test -Dtest=DynamicImprovementsTest,DynamicImprovementsPhase2Test,DynamicImprovementsPhase3Test,ProcessSystemParallelTransientTest,ProcessSystemTransientSetterTest,ProcessSystemTransientControllerTest
 ```
 
 ---
