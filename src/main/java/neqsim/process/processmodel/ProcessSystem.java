@@ -4159,8 +4159,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * Runs all equipment transient calculations in parallel using an ExecutorService. Each equipment unit is submitted as
    * an independent task. This is suitable when equipment units are loosely coupled (no data dependencies within a
    * single timestep). If the caller is interrupted while waiting, its interrupt status is restored and the wait loop
-   * stops. A subsequent pass observes that status and returns without submitting more tasks. Already submitted equipment
-   * tasks are not cancelled because interrupting state mutation inside equipment is not guaranteed to be safe.
+   * stops. A subsequent pass observes that status and returns without submitting more tasks. Already submitted
+   * equipment tasks are not cancelled because interrupting state mutation inside equipment is not guaranteed to be
+   * safe.
    *
    * @param dt time step in seconds
    * @param id calculation identifier
