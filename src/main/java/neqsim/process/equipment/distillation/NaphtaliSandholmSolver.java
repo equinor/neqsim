@@ -135,8 +135,20 @@ public class NaphtaliSandholmSolver {
   /** Fraction of total tray vapor that continues upward after a side draw. */
   private double[] internalVaporFraction;
 
-  /** Fraction of total tray liquid that continues downward after a side draw. */
+  /** Fraction of total tray liquid that continues downward after all local liquid withdrawals. */
   private double[] internalLiquidFraction;
+
+  /** Fraction of total tray liquid withdrawn as an external side product. */
+  private double[] liquidSideDrawFraction;
+
+  /** Fraction of total tray liquid withdrawn into a pumparound circuit. */
+  private double[] liquidPumparoundFraction;
+
+  /** Configured liquid pumparound circuits. */
+  private List<DistillationColumn.ColumnPumparound> pumparounds;
+
+  /** Cooled/heated pumparound return enthalpy in J/mol, indexed by circuit. */
+  private double[] pumparoundReturnEnthalpy;
 
   /** Heat input Q_j in J/hr on the solver flow basis for tray j. */
   private double[] Q;
@@ -595,6 +607,10 @@ public class NaphtaliSandholmSolver {
       if (warmStartFromColumn) {
         logger.info("NS: using converged tray MESH state as a direct Newton warm start");
         bpConverged = true;
+      } else if (hasActivePumparounds()) {
+        logger.info("NS: entering Newton directly because pumparound returns add nonlocal MESH coupling");
+        seedSolutionForDirectNewton();
+        bpConverged = true;
       } else if (useOverallMBClosure) {
         logger.info("NS: bypassing BP/SR (useOverallMBClosure active) — direct Newton");
         seedSolutionForDirectNewton();
@@ -652,7 +668,7 @@ public class NaphtaliSandholmSolver {
         applyResultsToColumn(id, 0, norm, startTime);
         return true;
       }
-      if (!warmStartFromColumn && mbErrorBP < 0.005 && energyErrorBP >= 0.01) {
+      if (!warmStartFromColumn && !hasActivePumparounds() && mbErrorBP < 0.005 && energyErrorBP >= 0.01) {
         // Mass balance OK but energy not — use Sum-Rates method to correct T
         // The BP method determines T from bubble-point (sum Kx = 1), which
         // fails for wide-boiling / absorber columns. SR determines T from
@@ -745,11 +761,13 @@ public class NaphtaliSandholmSolver {
         // Compute Jacobian analytically
         double[][] jacobian = computeJacobian(residual);
 
-        // Solve J * dx = F using block-tridiagonal solver
-        double[] dx = solveBlockTridiagonal(jacobian, residual);
+        // A pumparound couples non-adjacent draw and return trays, so its Jacobian is
+        // not block tridiagonal. Ordinary columns retain the fast block solve.
+        double[] dx =
+            hasActivePumparounds() ? solveDenseLU(jacobian, residual) : solveBlockTridiagonal(jacobian, residual);
         if (dx == null) {
-          // Fall back to full LU solve
-          dx = solveDenseLU(jacobian, residual);
+          // Fall back to full LU solve for an ordinary column whose block factorization failed.
+          dx = hasActivePumparounds() ? null : solveDenseLU(jacobian, residual);
           if (dx == null) {
             logger.error("Naphtali-Sandholm: linear solver failed at iteration {}", iter);
             // Restore best state and try to continue with smaller steps
@@ -961,6 +979,10 @@ public class NaphtaliSandholmSolver {
     feedVTotal = new double[N];
     internalVaporFraction = new double[N];
     internalLiquidFraction = new double[N];
+    liquidSideDrawFraction = new double[N];
+    liquidPumparoundFraction = new double[N];
+    pumparounds = column.getPumparounds();
+    pumparoundReturnEnthalpy = new double[pumparounds.size()];
     Q = new double[N];
     fixedTemperature = new double[N];
     Arrays.fill(fixedTemperature, Double.NaN);
@@ -978,7 +1000,9 @@ public class NaphtaliSandholmSolver {
         P[j] = fallbackPressure;
       }
       internalVaporFraction[j] = 1.0 - tray.getGasSideDrawFraction();
-      internalLiquidFraction[j] = 1.0 - tray.getLiquidSideDrawFraction();
+      liquidSideDrawFraction[j] = tray.getLiquidSideDrawFraction();
+      liquidPumparoundFraction[j] = tray.getLiquidPumparoundDrawFraction();
+      internalLiquidFraction[j] = 1.0 - liquidSideDrawFraction[j] - liquidPumparoundFraction[j];
     }
 
     // Process every external feed in the same deterministic tray/stream order used
@@ -1490,6 +1514,7 @@ public class NaphtaliSandholmSolver {
     for (int j = 0; j < N; j++) {
       evaluateThermoForTray(j);
     }
+    refreshPumparoundReturnEnthalpies();
   }
 
   /**
@@ -1841,7 +1866,7 @@ public class NaphtaliSandholmSolver {
       double out = internalVaporFraction[N - 1] * vap[N - 1][i] + internalLiquidFraction[0] * liq[0][i];
       for (int j = 0; j < N; j++) {
         out += (1.0 - internalVaporFraction[j]) * vap[j][i];
-        out += (1.0 - internalLiquidFraction[j]) * liq[j][i];
+        out += liquidSideDrawFraction[j] * liq[j][i];
       }
       double err = Math.abs(out - Fi[i]) / Math.max(Fi[i], 1e-20);
       if (err > maxCompMBerr) {
@@ -2799,6 +2824,7 @@ public class NaphtaliSandholmSolver {
       if (j < N - 1) {
         hIn += Math.abs(internalLiquidFraction[j + 1] * L[j + 1] * hL[j + 1]);
       }
+      hIn += Math.abs(getPumparoundEnergyReturn(j));
       double scale = Math.max(hOut, hIn);
       if (scale > 1e-10) {
         double relErr = Math.abs(eErr[j]) / scale;
@@ -2837,6 +2863,7 @@ public class NaphtaliSandholmSolver {
       if (feedMolesJ > 1e-10) {
         hIn += feedLTotal[j] * feedHL[j] + feedVTotal[j] * feedHV[j];
       }
+      hIn += getPumparoundEnergyReturn(j);
       eErr[j] = hOut - hIn;
     }
     return eErr;
@@ -2958,6 +2985,66 @@ public class NaphtaliSandholmSolver {
     return sum;
   }
 
+  /** Return whether at least one liquid pumparound is active. */
+  private boolean hasActivePumparounds() {
+    return pumparounds != null && !pumparounds.isEmpty();
+  }
+
+  /**
+   * Refresh return enthalpies from each draw tray's current liquid composition and temperature.
+   *
+   * <p>
+   * The circuit preserves draw-tray pressure, matching {@link DistillationColumn.ColumnPumparound}
+   * stream materialization. A positive temperature drop therefore represents heat removed by the
+   * pumparound cooler without adding an external material feed.
+   * </p>
+   */
+  private void refreshPumparoundReturnEnthalpies() {
+    if (!hasActivePumparounds()) {
+      return;
+    }
+    for (int circuitIndex = 0; circuitIndex < pumparounds.size(); circuitIndex++) {
+      DistillationColumn.ColumnPumparound pumparound = pumparounds.get(circuitIndex);
+      int drawTray = pumparound.getDrawTrayNumber();
+      double drawLiquid = Math.max(L[drawTray], 1.0e-20);
+      double[] composition = new double[C];
+      for (int i = 0; i < C; i++) {
+        composition[i] = liq[drawTray][i] / drawLiquid;
+      }
+      double returnTemperature = T[drawTray] - pumparound.getTemperatureDrop();
+      if (!Double.isFinite(returnTemperature) || returnTemperature <= 0.0) {
+        throw new IllegalStateException("Pumparound return temperature must be finite and above 0 K");
+      }
+      pumparoundReturnEnthalpy[circuitIndex] =
+          computeSinglePhaseEnthalpy(composition, returnTemperature, P[drawTray] / 1.0e5, false);
+    }
+  }
+
+  /** Get the component flow returned by all pumparounds entering one tray, in mol/hr. */
+  private double getPumparoundComponentReturn(int tray, int component) {
+    double returnedFlow = 0.0;
+    for (DistillationColumn.ColumnPumparound pumparound : pumparounds) {
+      if (pumparound.getReturnTrayNumber() == tray) {
+        returnedFlow +=
+            pumparound.getDrawFraction() * liq[pumparound.getDrawTrayNumber()][component];
+      }
+    }
+    return returnedFlow;
+  }
+
+  /** Get the enthalpy rate returned by all pumparounds entering one tray, in J/hr. */
+  private double getPumparoundEnergyReturn(int tray) {
+    double returnedEnergy = 0.0;
+    for (int circuitIndex = 0; circuitIndex < pumparounds.size(); circuitIndex++) {
+      DistillationColumn.ColumnPumparound pumparound = pumparounds.get(circuitIndex);
+      if (pumparound.getReturnTrayNumber() == tray) {
+        int drawTray = pumparound.getDrawTrayNumber();
+        returnedEnergy += pumparound.getDrawFraction() * L[drawTray] * pumparoundReturnEnthalpy[circuitIndex];
+      }
+    }
+    return returnedEnergy;
+  }
+
   /**
    * Compute the MESH residual vector.
    *
@@ -3008,8 +3095,9 @@ public class NaphtaliSandholmSolver {
           Mij -= internalVaporFraction[j - 1] * vap[j - 1][i];
         }
 
-        // Feed
+        // External feed and internal pumparound return
         Mij -= feedLiq[j][i] + feedVap[j][i];
+        Mij -= getPumparoundComponentReturn(j, i);
 
         F[base + i] = Mij / flowScale;
       }
@@ -3028,8 +3116,9 @@ public class NaphtaliSandholmSolver {
           Hj -= internalVaporFraction[j - 1] * V[j - 1] * hV[j - 1];
         }
 
-        // Feed enthalpies
+        // External-feed and internal pumparound-return enthalpies
         Hj -= feedLTotal[j] * feedHL[j] + feedVTotal[j] * feedHV[j];
+        Hj -= getPumparoundEnergyReturn(j);
 
         // Heat duty
         Hj -= Q[j];
@@ -3072,35 +3161,37 @@ public class NaphtaliSandholmSolver {
     double[][] J = new double[totalVars][totalVars];
     double pertSize = 1e-4;
     double minPert = 1e-8;
+    boolean densePumparoundJacobian = hasActivePumparounds();
 
     for (int jj = 0; jj < N; jj++) {
       for (int k = 0; k < varsPerTray; k++) {
         int varIdx = jj * varsPerTray + k;
-
-        // Save original value
         double origVal = getVariable(jj, k);
         double h = Math.max(Math.abs(origVal) * pertSize, minPert);
-
-        // Perturb
         setVariable(jj, k, origVal + h);
-
-        // Re-evaluate thermo ONLY for the tray whose variable changed
         evaluateThermoForTray(jj);
+        refreshPumparoundReturnEnthalpies();
 
-        // Compute perturbed residuals for affected trays (j-1, j, j+1)
-        int jStart = Math.max(0, jj - 1);
-        int jEnd = Math.min(N - 1, jj + 1);
-        for (int j = jStart; j <= jEnd; j++) {
-          double[] Fpert = computeResidualForTray(j);
-          int rowBase = j * varsPerTray;
-          for (int eq = 0; eq < varsPerTray; eq++) {
-            J[rowBase + eq][varIdx] = (Fpert[eq] - F0[rowBase + eq]) / h;
+        if (densePumparoundJacobian) {
+          double[] Fpert = computeResidual();
+          for (int row = 0; row < totalVars; row++) {
+            J[row][varIdx] = (Fpert[row] - F0[row]) / h;
+          }
+        } else {
+          int jStart = Math.max(0, jj - 1);
+          int jEnd = Math.min(N - 1, jj + 1);
+          for (int j = jStart; j <= jEnd; j++) {
+            double[] Fpert = computeResidualForTray(j);
+            int rowBase = j * varsPerTray;
+            for (int eq = 0; eq < varsPerTray; eq++) {
+              J[rowBase + eq][varIdx] = (Fpert[eq] - F0[rowBase + eq]) / h;
+            }
           }
         }
 
-        // Restore
         setVariable(jj, k, origVal);
         evaluateThermoForTray(jj);
+        refreshPumparoundReturnEnthalpies();
       }
     }
 
@@ -3132,6 +3223,7 @@ public class NaphtaliSandholmSolver {
         Mij -= internalVaporFraction[j - 1] * vap[j - 1][i];
       }
       Mij -= feedLiq[j][i] + feedVap[j][i];
+      Mij -= getPumparoundComponentReturn(j, i);
 
       Fj[i] = Mij / flowScale;
     }
@@ -3148,6 +3240,7 @@ public class NaphtaliSandholmSolver {
         Hj -= internalVaporFraction[j - 1] * V[j - 1] * hV[j - 1];
       }
       Hj -= feedLTotal[j] * feedHL[j] + feedVTotal[j] * feedHV[j];
+      Hj -= getPumparoundEnergyReturn(j);
       Hj -= Q[j];
 
       double trayFlow = Math.max(Lj + V[j], flowScale);
@@ -3362,6 +3455,11 @@ public class NaphtaliSandholmSolver {
    * </p>
    */
   private void runBostonSullivanRefinement() {
+    // The classic block-tridiagonal refinement cannot represent a nonlocal
+    // draw-to-return circuit. The full Newton residual below owns that coupling.
+    if (hasActivePumparounds()) {
+      return;
+    }
     if (!enableBostonSullivan) {
       return;
     }
@@ -4082,7 +4180,7 @@ public class NaphtaliSandholmSolver {
     double productFlow = internalVaporFraction[N - 1] * V[N - 1] + internalLiquidFraction[0] * L[0];
     for (int j = 0; j < N; j++) {
       productFlow += (1.0 - internalVaporFraction[j]) * V[j];
-      productFlow += (1.0 - internalLiquidFraction[j]) * L[j];
+      productFlow += liquidSideDrawFraction[j] * L[j];
     }
     return Math.abs(productFlow - totalFeedFlow) / Math.max(totalFeedFlow, 1e-20);
   }
@@ -4119,6 +4217,7 @@ public class NaphtaliSandholmSolver {
           mij -= internalVaporFraction[j - 1] * vap[j - 1][i];
         }
         mij -= feedLiq[j][i] + feedVap[j][i];
+        mij -= getPumparoundComponentReturn(j, i);
         double rel = Math.abs(mij) / denom;
         if (rel > worst) {
           worst = rel;
@@ -4659,10 +4758,10 @@ public class NaphtaliSandholmSolver {
    * @param startTime start time in nanoseconds
    */
   private void applyResultsToColumn(UUID id, int iterations, double finalNorm, long startTime) {
-    boolean hasActiveSideDraw = false;
+    boolean hasActivePhaseSplit = false;
     for (int j = 0; j < N; j++) {
       if (internalVaporFraction[j] < 1.0 || internalLiquidFraction[j] < 1.0) {
-        hasActiveSideDraw = true;
+        hasActivePhaseSplit = true;
         break;
       }
     }
@@ -4729,7 +4828,7 @@ public class NaphtaliSandholmSolver {
       // Build gas and liquid output streams from the flashed tray system
       tray.invalidateOutStreamCache();
 
-      if (hasActiveSideDraw) {
+      if (hasActivePhaseSplit) {
         // Materialize each split from the solver's component flow vector. Setting
         // composition and total flow separately allows normalization and phase
         // reinitialization to drift from the accepted species inventory.
@@ -4745,11 +4844,18 @@ public class NaphtaliSandholmSolver {
         SystemInterface liqSystem = createAppliedPhaseSystem(j, liq[j], internalLiquidFraction[j], PhaseType.LIQUID);
         tray.setCachedLiquidOutStream(new neqsim.process.equipment.stream.Stream("liq_" + j, liqSystem));
 
-        if (internalLiquidFraction[j] < 1.0) {
-          SystemInterface liquidSideSystem = createAppliedPhaseSystem(j, liq[j], 1.0 - internalLiquidFraction[j],
-              PhaseType.LIQUID);
+        if (liquidSideDrawFraction[j] > 0.0) {
+          SystemInterface liquidSideSystem =
+              createAppliedPhaseSystem(j, liq[j], liquidSideDrawFraction[j], PhaseType.LIQUID);
           tray.setCachedLiquidSideDrawStream(
               new neqsim.process.equipment.stream.Stream("liq_side_" + j, liquidSideSystem));
+        }
+
+        if (liquidPumparoundFraction[j] > 0.0) {
+          SystemInterface pumparoundDrawSystem =
+              createAppliedPhaseSystem(j, liq[j], liquidPumparoundFraction[j], PhaseType.LIQUID);
+          tray.setCachedLiquidPumparoundDrawStream(
+              new neqsim.process.equipment.stream.Stream("liq_pumparound_" + j, pumparoundDrawSystem));
         }
       } else {
         SystemInterface gasSystem = referenceSystem.clone();
@@ -4786,7 +4892,7 @@ public class NaphtaliSandholmSolver {
     double productFlow = topFlow + botFlow;
     for (int j = 0; j < N; j++) {
       productFlow += (1.0 - internalVaporFraction[j]) * V[j];
-      productFlow += (1.0 - internalLiquidFraction[j]) * L[j];
+      productFlow += liquidSideDrawFraction[j] * L[j];
     }
     double massBalErr = Math.abs(productFlow - totalFeedFlow) / Math.max(totalFeedFlow, 1e-20);
 
