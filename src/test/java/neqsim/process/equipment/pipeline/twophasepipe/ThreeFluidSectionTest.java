@@ -136,8 +136,7 @@ class ThreeFluidSectionTest {
   @Test
   void testThreeLayerGeometryConservesSegmentAreaAcrossPipeDiameters() {
     double[] diameters = { 0.05, 0.10, 0.30, 1.0, 2.0 };
-    double[][] holdupSets = {
-        { 0.94, 0.05, 0.01 }, // Near-single-gas
+    double[][] holdupSets = { { 0.94, 0.05, 0.01 }, // Near-single-gas
         { 0.80, 0.15, 0.05 }, // Gas-rich
         { 0.50, 0.30, 0.20 }, // Mixed holdup
         { 0.10, 0.45, 0.45 }, // Liquid-rich
