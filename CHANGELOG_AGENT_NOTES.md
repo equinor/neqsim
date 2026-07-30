@@ -9,6 +9,116 @@
 
 ---
 
+## 2026-07-30 — TwoFluidPipe closure diagnostics exposed as profiles
+
+### Summary
+
+`TwoFluidPipe` now exposes the closure diagnostics already calculated for each
+`TwoFluidSection`. The steady-state and transient report CSVs include the new profiles, and the
+benchmark harness captures their numeric values and risk flags for comparison with public
+simulator exports or field data.
+
+### New API
+
+| API | What it does |
+|---|---|
+| `getOilWaterFlowRegimeProfile()` | Reports the oil-water flow configuration by section |
+| `getWaterWettingProfile()` | Reports water-wetting flags for corrosion screening |
+| `getWaterDropoutRiskProfile()` | Reports water dropout or accumulation flags |
+| `getEntrainmentFractionProfile()` | Reports estimated liquid entrainment fractions |
+| `getEntrainedDropletDiameterProfile()` | Reports characteristic entrained droplet diameters |
+| `getSevereSluggingNumberProfile()` | Reports the riser-base severe-slugging stability number |
+| `getSevereSlugPotentialProfile()` | Reports severe-slugging risk flags |
+
+### Reporting and validation
+
+`TwoFluidPipeReport` appends the closure profiles to its steady-state and transient CSV exports.
+`TwoFluidBenchmarkHarness` adds `entrainment_fraction`, `entrained_droplet_diameter_m`,
+`severe_slugging_number`, `water_wetting_flag`, `water_dropout_risk_flag`, and
+`severe_slug_potential_flag`.
+
+Continuous benchmark profiles use linear interpolation. Variables ending in `_flag` and intervals
+with non-finite diagnostic sentinels use nearest-neighbour sampling, preserving binary flags and
+avoiding interpolation-generated `NaN` values.
+
+### Tests
+
+`TwoFluidPipeReportTest` verifies profile shape, physical bounds, and report columns.
+`TwoFluidBenchmarkHarnessTest` verifies capture, continuous interpolation, discrete flag sampling,
+non-finite sentinel handling, and comparison of the new benchmark variables.
+
+---
+
+## 2026-07-30 — Boundary-flow convergence filters and wider low-flow bypass coverage
+
+### Summary
+
+Multi-area plant convergence used a pure **maximum-of-relative-errors** gate with a hard-coded
+`1e-9 kg/hr` exclusion floor. A stagnant dead leg carrying `0.1 kg/hr` could wobble by
+`0.007 kg/hr` — a `6.6e-02` relative error — and dominate the gate, masking a real `443 kg/hr`
+residual on a `138 t/hr` export stream (`3.2e-03`). The floor is now configurable and an absolute
+flow criterion has been added. The low-flow section bypass has also been extended to the equipment
+that previously ignored it, and now always publishes the bypassed unit's outlet state so downstream
+units keep a valid pressure boundary.
+
+### New API
+
+| API | What it does |
+|---|---|
+| `ProcessModel.setBoundaryFlowFloor(kgPerHour)` / `getBoundaryFlowFloor()` | Boundary streams below this flow are excluded from the convergence metric and from `getNonConvergedBoundaryStreamErrors()`. Default `ProcessModel.DEFAULT_BOUNDARY_FLOW_FLOOR` = `1e-9` |
+| `ProcessModel.runUntilConverged(maxIter, relTol, absFlowTolKgPerHr)` | A stream is flow-converged when relative error &lt; `relTol` **OR** absolute change &lt; `absFlowTol` |
+| `ProcessModel.setAbsoluteFlowTolerance(kgPerHour)` / `getAbsoluteFlowTolerance()` | Same criterion, set independently of the run call. Default `0.0` = legacy relative-only |
+| `ProcessModel.BoundaryStreamError.getAbsoluteFlowChange()` | Absolute Δflow (kg/hr) for a boundary stream — tells noise from residual at a glance |
+| `ProcessEquipmentBaseClass.setMinimumFlow(value, unit)` / `getMinimumFlow(unit)` | Unit-aware low-flow threshold (`kg/hr`, `kg/sec`, `kg/min`, `kg/day`, `tonne/hr`, `tonne/day`, `lb/hr`) |
+| `ProcessEquipmentBaseClass.massFlowConversionToKgPerHour(unit)` | Static conversion helper used by the above |
+| `ProcessEquipmentBaseClass.DEFAULT_MINIMUM_FLOW` | `1e-20` sentinel meaning "no explicit threshold configured" |
+| `ProcessSystem.setSectionLowFlowThreshold(value, unit)` | Unit-aware section threshold |
+
+### Behaviour changes
+
+- **`Manifold` bug fix.** `setMinimumFlow()` / `setSectionLowFlowThreshold()` on a `Manifold` was a
+  silent no-op because `run()` delegates to an internal mixer and splitter that never received the
+  threshold. It is now propagated, and the manifold reports `isActive()` from its splitter.
+- **`Pump` unit fix.** `Pump.run()` compared `minimumFlow` against **kg/sec** while every other
+  equipment and `ProcessSystem.setSectionLowFlowThreshold()` use **kg/hr**, so a plant-wide
+  threshold of 50 kg/hr silently meant 50 kg/sec (180 000 kg/hr) for pumps and bypassed them at any
+  normal flow. `minimumFlow` is now kg/hr everywhere. `PumpCapacityStrategy` likewise changed its
+  `flowRate` constraint from `m3/hr` to `kg/hr`.
+- **New bypass coverage (opt-in).** `ThrottlingValve`, `PipeBeggsAndBrills` and
+  `MultiStreamHeatExchanger` now honour the threshold. They fire **only** when a threshold above
+  `DEFAULT_MINIMUM_FLOW` is configured, because deactivating on the default would permanently skip a
+  unit that is momentarily dry inside a recycle loop (the scheduler skips inactive units for the
+  rest of the solve pass). `MultiStreamHeatExchanger` bypasses only when *all* sides are stagnant.
+- **Downstream-safe bypass.** The three new bypasses still write their outlet streams: the valve
+  publishes its specified let-down pressure with zero moles, the pipe and exchanger pass the inlet
+  state through. `Mixer.mixStream()` already ignores inlets at or below its own `minimumFlow` when
+  choosing the outlet pressure, so a dead branch cannot drag the live train down.
+- **`getConvergenceSummary()`** now prints the absolute Δflow next to each relative error and adds a
+  `Flow filters:` line when a non-default floor or absolute tolerance is active.
+
+### Migration
+
+No action required — all defaults reproduce the previous behaviour. For plants with stagnant legs:
+
+```java
+plant.setBoundaryFlowFloor(1.0);                       // drop sub-1 kg/hr boundary streams
+boolean ok = plant.runUntilConverged(15, 1e-3, 1.0);   // rel 1e-3 OR abs 1 kg/hr
+```
+
+If you previously called `pump.setMinimumFlow(x)` intending kg/sec, multiply by 3600.
+
+### Tests
+
+`ProcessModelConvergenceFilterTest`, `LowFlowBypassDownstreamEffectTest`, `ManifoldLowFlowTest`,
+`PumpLowFlowThresholdTest`.
+
+### Docs / skills to update
+
+`docs/process/processmodel/low_flow_bypass.md` (updated), `neqsim-troubleshooting`,
+`neqsim-platform-modeling`, `neqsim-agentic-process-optimization`.
+
+---
+
 ## 2026-07-28 — Dynamic VU flashes preserve nearby CPA state
 
 ### Summary

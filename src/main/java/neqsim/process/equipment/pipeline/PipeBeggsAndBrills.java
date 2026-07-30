@@ -1435,8 +1435,62 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     if (calculationMode == CalculationMode.CALCULATE_FLOW_RATE) {
       runWithSpecifiedOutletPressure(id);
     } else {
+      if (applyLowFlowBypass(id)) {
+        return;
+      }
       runWithSpecifiedFlowRate(id);
     }
+  }
+
+  /**
+   * Bypasses the pipeline when the inlet mass flow is below the configured low-flow threshold.
+   *
+   * <p>
+   * A stagnant leg has no friction and no meaningful hold-up, so the inlet state is passed straight through to the
+   * outlet. Crucially the outlet stream IS still written (rather than left untouched as a plain
+   * {@code checkAndHandleLowFlow} early return would do), because downstream units - typically a mixer, a valve or a
+   * separator - need a consistent pressure and composition boundary even at zero flow.
+   * </p>
+   *
+   * <p>
+   * Only applies to the default {@link CalculationMode#CALCULATE_OUTLET_PRESSURE} mode; in
+   * {@link CalculationMode#CALCULATE_FLOW_RATE} mode the flow rate is the unknown being solved for, so a low inlet flow
+   * is an iteration state rather than a bypass condition.
+   * </p>
+   *
+   * <p>
+   * The check is opt-in: it only fires when a threshold above
+   * {@link neqsim.process.equipment.ProcessEquipmentBaseClass#DEFAULT_MINIMUM_FLOW} has been configured, so a pipeline
+   * that is momentarily dry inside a recycle loop is not permanently skipped for the rest of the solve pass.
+   * </p>
+   *
+   * @param id current calculation identifier
+   * @return true when the pipeline was bypassed and {@code run()} should return immediately
+   */
+  private boolean applyLowFlowBypass(UUID id) {
+    double threshold = getMinimumFlow();
+    if (!(threshold > neqsim.process.equipment.ProcessEquipmentBaseClass.DEFAULT_MINIMUM_FLOW) || inStream == null) {
+      return false;
+    }
+    double inletFlow;
+    try {
+      inletFlow = inStream.getFlowRate("kg/hr");
+    } catch (RuntimeException ex) {
+      logger.debug("Could not read inlet flow for low-flow check on '{}'", getName());
+      return false;
+    }
+    if (inletFlow >= threshold) {
+      isActive(true);
+      return false;
+    }
+    isActive(false);
+    pressureDrop = 0.0;
+    totalPressureDrop = 0.0;
+    system = inStream.getThermoSystem().clone();
+    outStream.setThermoSystem(system);
+    outStream.setCalculationIdentifier(id);
+    setCalculationIdentifier(id);
+    return true;
   }
 
   /**

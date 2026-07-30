@@ -427,6 +427,9 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    if (applyLowFlowBypass(id)) {
+      return;
+    }
     if (firstTime) {
       firstTime = false;
 
@@ -679,6 +682,59 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     publishHeatDuty();
     setCalculationIdentifier(id);
     firstTime = true;
+  }
+
+  /**
+   * Bypasses the exchanger when every inlet stream is below the configured low-flow threshold.
+   *
+   * <p>
+   * A multi-stream exchanger is only bypassed when ALL of its sides are stagnant - a single dead side is a legitimate
+   * operating case that the normal enthalpy balance already handles by contributing zero duty.
+   * </p>
+   *
+   * <p>
+   * When bypassed, each outlet stream is written as a clone of its inlet (same temperature, pressure and composition)
+   * rather than left untouched, so downstream units - typically a valve, mixer or separator - still see a consistent
+   * pressure and composition boundary at zero flow.
+   * </p>
+   *
+   * <p>
+   * The check is opt-in: it only fires when a threshold above
+   * {@link neqsim.process.equipment.ProcessEquipmentBaseClass#DEFAULT_MINIMUM_FLOW} has been configured, so an
+   * exchanger whose sides are momentarily empty inside a recycle loop is not permanently skipped for the rest of the
+   * solve pass.
+   * </p>
+   *
+   * @param id current calculation identifier
+   * @return true when the exchanger was bypassed and {@code run()} should return immediately
+   */
+  private boolean applyLowFlowBypass(UUID id) {
+    double threshold = getMinimumFlow();
+    if (!(threshold > neqsim.process.equipment.ProcessEquipmentBaseClass.DEFAULT_MINIMUM_FLOW) || inStreams.isEmpty()
+        || inStreams.size() != outStreams.size()) {
+      return false;
+    }
+    for (StreamInterface inStream : inStreams) {
+      try {
+        if (inStream.getFlowRate("kg/hr") >= threshold) {
+          isActive(true);
+          return false;
+        }
+      } catch (RuntimeException ex) {
+        logger.debug("Could not read inlet flow for low-flow check on '{}'", getName());
+        isActive(true);
+        return false;
+      }
+    }
+    isActive(false);
+    duty = 0.0;
+    for (int i = 0; i < outStreams.size(); i++) {
+      StreamInterface outStream = outStreams.get(i);
+      outStream.setThermoSystem(inStreams.get(i).getThermoSystem().clone());
+      outStream.setCalculationIdentifier(id);
+    }
+    setCalculationIdentifier(id);
+    return true;
   }
 
   /**
