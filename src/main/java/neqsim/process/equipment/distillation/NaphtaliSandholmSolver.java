@@ -3059,8 +3059,7 @@ public class NaphtaliSandholmSolver {
       DistillationColumn.ColumnPumparound pumparound = pumparounds.get(circuitIndex);
       if (pumparound.getReturnTrayNumber() == tray) {
         int drawTray = pumparound.getDrawTrayNumber();
-        returnedEnergy +=
-            liquidPumparoundFraction[drawTray] * L[drawTray] * pumparoundReturnEnthalpy[circuitIndex];
+        returnedEnergy += liquidPumparoundFraction[drawTray] * L[drawTray] * pumparoundReturnEnthalpy[circuitIndex];
       }
     }
     return returnedEnergy;
