@@ -117,6 +117,7 @@ class ProcessSystemExecutionPreparationTest {
     heater.setOutletTemperature(310.0);
     heater.setMinimumFlow(1.0);
     ProcessSystem process = new ProcessSystem("low-flow-reactivation");
+    process.setUseOptimizedExecution(true);
     process.add(feed);
     process.add(heater);
 
