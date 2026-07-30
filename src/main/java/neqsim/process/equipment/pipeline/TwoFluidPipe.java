@@ -11,6 +11,7 @@ import neqsim.process.equipment.pipeline.twophasepipe.SlugTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.ThermodynamicCoupling;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegimeDetector.OilWaterFlowRegime;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.ConservativeStateLimiter;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.TimeIntegrator;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -4743,6 +4744,123 @@ public class TwoFluidPipe extends Pipeline {
       regimes[i] = sections[i].getFlowRegime();
     }
     return regimes;
+  }
+
+  /**
+   * Get oil-water flow regime at each section.
+   *
+   * @return oil-water flow regime profile; an entry is {@code null} when the closure has not been evaluated
+   */
+  public OilWaterFlowRegime[] getOilWaterFlowRegimeProfile() {
+    if (sections == null) {
+      return new OilWaterFlowRegime[0];
+    }
+    OilWaterFlowRegime[] regimes = new OilWaterFlowRegime[numberOfSections];
+    for (int i = 0; i < numberOfSections; i++) {
+      regimes[i] = sections[i].getOilWaterFlowRegime();
+    }
+    return regimes;
+  }
+
+  /**
+   * Get the water-wetting diagnostic at each section.
+   *
+   * @return water-wetting flags for corrosion screening
+   */
+  public boolean[] getWaterWettingProfile() {
+    if (sections == null) {
+      return new boolean[0];
+    }
+    boolean[] profile = new boolean[numberOfSections];
+    for (int i = 0; i < numberOfSections; i++) {
+      profile[i] = sections[i].isWaterWetting();
+    }
+    return profile;
+  }
+
+  /**
+   * Get the water-dropout diagnostic at each section.
+   *
+   * @return water-dropout risk flags
+   */
+  public boolean[] getWaterDropoutRiskProfile() {
+    if (sections == null) {
+      return new boolean[0];
+    }
+    boolean[] profile = new boolean[numberOfSections];
+    for (int i = 0; i < numberOfSections; i++) {
+      profile[i] = sections[i].isWaterDropoutRisk();
+    }
+    return profile;
+  }
+
+  /**
+   * Get estimated liquid entrainment fraction at each section.
+   *
+   * @return entrainment fraction profile, bounded from 0 to 1
+   */
+  public double[] getEntrainmentFractionProfile() {
+    if (sections == null) {
+      return new double[0];
+    }
+    double[] profile = new double[numberOfSections];
+    for (int i = 0; i < numberOfSections; i++) {
+      profile[i] = sections[i].getEntrainmentFraction();
+    }
+    return profile;
+  }
+
+  /**
+   * Get characteristic entrained droplet diameter at each section.
+   *
+   * @return entrained droplet diameter profile in metres
+   */
+  public double[] getEntrainedDropletDiameterProfile() {
+    if (sections == null) {
+      return new double[0];
+    }
+    double[] profile = new double[numberOfSections];
+    for (int i = 0; i < numberOfSections; i++) {
+      profile[i] = sections[i].getEntrainedDropletDiameter();
+    }
+    return profile;
+  }
+
+  /**
+   * Get the severe-slugging stability number at each section.
+   *
+   * <p>
+   * Values below 1 indicate elevated severe-slugging risk. Sections where the diagnostic is not applicable retain
+   * {@link Double#POSITIVE_INFINITY}.
+   * </p>
+   *
+   * @return severe-slugging stability-number profile
+   */
+  public double[] getSevereSluggingNumberProfile() {
+    if (sections == null) {
+      return new double[0];
+    }
+    double[] profile = new double[numberOfSections];
+    for (int i = 0; i < numberOfSections; i++) {
+      profile[i] = sections[i].getSevereSluggingNumber();
+    }
+    return profile;
+  }
+
+  /**
+   * Get the severe-slugging risk flag at each section.
+   *
+   * @return severe-slugging potential flags
+   */
+  public boolean[] getSevereSlugPotentialProfile() {
+    if (sections == null) {
+      return new boolean[0];
+    }
+    boolean[] profile = new boolean[numberOfSections];
+    for (int i = 0; i < numberOfSections; i++) {
+      profile[i] = sections[i].isSevereSlugPotential();
+    }
+    return profile;
   }
 
   /**

@@ -28,7 +28,20 @@ class TwoFluidPipeReportTest {
     String steadyCsv = TwoFluidPipeReport.toSteadyStateProfileCsv(pipe);
     assertTrue(steadyCsv.startsWith("position_m,pressure_bara,temperature_C"));
     assertTrue(steadyCsv.contains("flow_regime"));
+    assertTrue(steadyCsv.contains("entrainment_fraction"));
+    assertTrue(steadyCsv.contains("severe_slugging_number"));
     assertEquals(pipe.getPositionProfile().length + 1, steadyCsv.split("\\R").length);
+
+    int sectionCount = pipe.getPositionProfile().length;
+    assertEquals(sectionCount, pipe.getOilWaterFlowRegimeProfile().length);
+    assertEquals(sectionCount, pipe.getWaterWettingProfile().length);
+    assertEquals(sectionCount, pipe.getWaterDropoutRiskProfile().length);
+    assertEquals(sectionCount, pipe.getEntrainmentFractionProfile().length);
+    assertEquals(sectionCount, pipe.getEntrainedDropletDiameterProfile().length);
+    assertEquals(sectionCount, pipe.getSevereSluggingNumberProfile().length);
+    assertEquals(sectionCount, pipe.getSevereSlugPotentialProfile().length);
+    assertTrue(Arrays.stream(pipe.getEntrainmentFractionProfile()).allMatch(value -> value >= 0.0 && value <= 1.0));
+    assertTrue(Arrays.stream(pipe.getEntrainedDropletDiameterProfile()).allMatch(value -> value >= 0.0));
 
     List<TwoFluidPipeReport.ProfileSnapshot> snapshots = TwoFluidPipeReport.newSnapshotList();
     snapshots.add(TwoFluidPipeReport.capture(pipe));

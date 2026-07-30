@@ -43,6 +43,13 @@ After `pipe.run()`, the following methods provide one value per pipe section:
 | `getWaterVelocityProfile()` | m/s | Water velocity when oil-water slip is active |
 | `getOilWaterSlipProfile()` | m/s | Oil velocity minus water velocity |
 | `getFlowRegimeProfile()` | enum | Gas-liquid flow regime by section |
+| `getOilWaterFlowRegimeProfile()` | enum | Oil-water flow configuration by section |
+| `getWaterWettingProfile()` | boolean | Water-wetting indicator for corrosion screening |
+| `getWaterDropoutRiskProfile()` | boolean | Water dropout / accumulation risk |
+| `getEntrainmentFractionProfile()` | fraction | Estimated liquid entrainment in annular/mist flow |
+| `getEntrainedDropletDiameterProfile()` | m | Characteristic entrained droplet diameter |
+| `getSevereSluggingNumberProfile()` | dimensionless | Riser-base stability indicator |
+| `getSevereSlugPotentialProfile()` | boolean | Severe-slugging risk flag |
 | `getHeatTransferProfile()` | W/(m2 K) | Heat-transfer coefficient profile, when configured |
 | `getSurfaceTemperatureProfile()` | K | Ambient/surface temperature profile, when configured |
 
@@ -52,16 +59,19 @@ Example Java extraction:
 pipe.run();
 
 double[] x = pipe.getPositionProfile();
-double[] pressureBara = pipe.getPressureProfile();
+double[] pressurePa = pipe.getPressureProfile();
 double[] temperatureC = pipe.getTemperatureProfile("C");
 double[] liquidHoldup = pipe.getLiquidHoldupProfile();
 double[] waterCut = pipe.getWaterCutProfile();
 double[] gasVelocity = pipe.getGasVelocityProfile();
 double[] liquidVelocity = pipe.getLiquidVelocityProfile();
 PipeSection.FlowRegime[] regimes = pipe.getFlowRegimeProfile();
+double[] entrainment = pipe.getEntrainmentFractionProfile();
+double[] severeSluggingNumber = pipe.getSevereSluggingNumberProfile();
+boolean[] waterWetting = pipe.getWaterWettingProfile();
 
 for (int i = 0; i < x.length; i++) {
-  double pBara = pressureBara[i] * 1.0e-5;
+  double pBara = pressurePa[i] * 1.0e-5;
   System.out.printf("%8.1f,%10.4f,%8.3f,%8.5f,%8.5f,%8.3f,%8.3f,%s%n",
       x[i], pBara, temperatureC[i], liquidHoldup[i], waterCut[i],
       gasVelocity[i], liquidVelocity[i], regimes[i]);
@@ -106,7 +116,9 @@ Recommended transient CSV columns:
 ```text
 time_s,position_m,pressure_bara,temperature_C,liquid_holdup,water_cut,
 gas_velocity_m_s,liquid_velocity_m_s,oil_velocity_m_s,water_velocity_m_s,
-flow_regime
+flow_regime,oil_water_flow_regime,water_wetting,water_dropout_risk,
+entrainment_fraction,entrained_droplet_diameter_m,severe_slugging_number,
+severe_slug_potential
 ```
 
 ## Summary metrics
@@ -133,21 +145,22 @@ Use these methods for an executive summary or design report:
 
 ## Closure diagnostics
 
-The two-fluid closure pass updates additional section-level diagnostics that are useful for model
-review and validation:
+The two-fluid closure pass updates additional diagnostics that are useful for model review and
+validation. Each value is available both on `TwoFluidSection` and as a top-level
+`TwoFluidPipe` profile:
 
-| Section API | Description |
-|-------------|-------------|
-| `getOilWaterFlowRegime()` | Oil-water flow configuration |
-| `isWaterWetting()` | Water-wetting indicator for corrosion screening |
-| `isWaterDropoutRisk()` | Water dropout / accumulation risk |
-| `getEntrainmentFraction()` | Estimated liquid entrainment fraction in annular/mist flow |
-| `getEntrainedDropletDiameter()` | Characteristic entrained droplet diameter |
-| `getSevereSluggingNumber()` | Riser-base stability indicator |
-| `isSevereSlugPotential()` | Severe slugging risk flag |
+| Section API | Pipe profile API | Description |
+|-------------|------------------|-------------|
+| `getOilWaterFlowRegime()` | `getOilWaterFlowRegimeProfile()` | Oil-water flow configuration |
+| `isWaterWetting()` | `getWaterWettingProfile()` | Water-wetting indicator for corrosion screening |
+| `isWaterDropoutRisk()` | `getWaterDropoutRiskProfile()` | Water dropout / accumulation risk |
+| `getEntrainmentFraction()` | `getEntrainmentFractionProfile()` | Estimated liquid entrainment fraction |
+| `getEntrainedDropletDiameter()` | `getEntrainedDropletDiameterProfile()` | Entrained droplet diameter |
+| `getSevereSluggingNumber()` | `getSevereSluggingNumberProfile()` | Riser-base stability indicator |
+| `isSevereSlugPotential()` | `getSevereSlugPotentialProfile()` | Severe-slugging risk flag |
 
-These values are stored on `TwoFluidSection` objects. They are not yet exposed as top-level
-`TwoFluidPipe` profile arrays, so a future report exporter should add profile accessors for them.
+The steady-state and transient profile CSV exporters include these diagnostics. Boolean values are
+written as `true` or `false`; a missing oil-water regime is written as an empty field.
 
 ## Benchmark comparison format
 
@@ -171,6 +184,12 @@ gas_velocity_m_s
 liquid_velocity_m_s
 oil_velocity_m_s
 water_velocity_m_s
+entrainment_fraction
+entrained_droplet_diameter_m
+severe_slugging_number
+water_wetting_flag
+water_dropout_risk_flag
+severe_slug_potential_flag
 ```
 
 Example use:
@@ -189,8 +208,11 @@ if (!comparison.isPassed()) {
 }
 ```
 
-For transient comparisons, capture and pass a list of snapshots. The harness interpolates in both
-time and position. Comparison results can be exported as CSV:
+For transient comparisons, capture and pass a list of snapshots. The harness uses linear
+interpolation in time and position for continuous profiles. Variables ending in `_flag` use
+nearest-neighbour sampling so boolean diagnostics remain `0.0` or `1.0`. Intervals containing a
+non-finite diagnostic sentinel also use the nearest endpoint instead of producing `NaN`.
+Comparison results can be exported as CSV:
 
 ```java
 String comparisonCsv = TwoFluidPipeReport.toComparisonCsv(comparison);
@@ -205,7 +227,8 @@ For long oil and gas flowlines, report at least:
 - Boundary conditions: inlet stream, flow rate, outlet pressure, transient changes.
 - Thermodynamics: fluid model, flash interval, mass-transfer relaxation time, heat-transfer setup.
 - Pressure and temperature profiles.
-- Liquid holdup, water cut, phase velocity, and flow-regime profiles.
+- Liquid holdup, water cut, phase velocity, flow-regime, entrainment, wetting, and severe-slugging
+  profiles.
 - Slug statistics and terrain low-point liquid accumulation.
 - Hydrate/wax/thermal risk sections if thresholds are configured.
 - Erosional velocity margin and maximum mixture velocity.
@@ -216,7 +239,5 @@ For long oil and gas flowlines, report at least:
 The current API is adequate for engineering studies and benchmark development. A polished
 industrial report workflow should still add:
 
-- Top-level profile accessors for closure diagnostics such as entrainment fraction, water wetting,
-  and severe slugging number.
 - Plot templates for pressure, temperature, holdup, water cut, flow regime, and slug events.
 - Direct import of OLGA/LedaFlow export formats where licensing allows it.
