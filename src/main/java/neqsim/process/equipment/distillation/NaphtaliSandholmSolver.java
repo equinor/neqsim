@@ -853,8 +853,7 @@ public class NaphtaliSandholmSolver {
             residual = computeResidual();
             norm = vectorNorm(residual);
             logger.debug(
-                "NS: stopped after {} minimum line-search steps without residual descent; "
-                    + "restored best norm {}",
+                "NS: stopped after {} minimum line-search steps without residual descent; " + "restored best norm {}",
                 nonDescentLineSearchSteps, String.format("%.6e", norm));
             break;
           }

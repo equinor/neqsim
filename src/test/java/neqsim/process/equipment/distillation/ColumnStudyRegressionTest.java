@@ -129,8 +129,8 @@ public class ColumnStudyRegressionTest {
   }
 
   /**
-   * Reject a severely perturbed warm start without spending the entire Newton iteration budget on repeated
-   * non-descent minimum steps.
+   * Reject a severely perturbed warm start without spending the entire Newton iteration budget on repeated non-descent
+   * minimum steps.
    *
    * <p>
    * The accepted column-study solution is deliberately perturbed by up to 90 K before a direct simultaneous-correction
