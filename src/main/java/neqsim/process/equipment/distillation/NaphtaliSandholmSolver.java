@@ -1517,6 +1517,114 @@ public class NaphtaliSandholmSolver {
     refreshPumparoundReturnEnthalpies();
   }
 
+  /** Get a lagged total pumparound return for a direct-Newton seed sweep, in mol/hr. */
+  private double getSeedPumparoundTotalReturn(int tray, double[] seedLiquidTotals) {
+    double returnedFlow = 0.0;
+    for (DistillationColumn.ColumnPumparound pumparound : pumparounds) {
+      if (pumparound.getReturnTrayNumber() == tray) {
+        int drawTray = pumparound.getDrawTrayNumber();
+        returnedFlow += liquidPumparoundFraction[drawTray] * seedLiquidTotals[drawTray];
+      }
+    }
+    return returnedFlow;
+  }
+
+  /** Get a lagged component pumparound return for a direct-Newton seed sweep, in mol/hr. */
+  private double getSeedPumparoundComponentReturn(int tray, int component, double[][] seedLiquid) {
+    double returnedFlow = 0.0;
+    for (DistillationColumn.ColumnPumparound pumparound : pumparounds) {
+      if (pumparound.getReturnTrayNumber() == tray) {
+        int drawTray = pumparound.getDrawTrayNumber();
+        returnedFlow += liquidPumparoundFraction[drawTray] * seedLiquid[drawTray][component];
+      }
+    }
+    return returnedFlow;
+  }
+
+  /**
+   * Forward-shoot component flows for the direct-Newton seed.
+   *
+   * <p>
+   * Pumparound returns are nonlocal: a return tray can be visited before its draw tray in the forward sweep. A bounded
+   * fixed-point iteration therefore lags the draw inventory by one sweep. This only constructs the initial guess; the
+   * subsequent Newton solve still enforces the fully simultaneous return terms.
+   * </p>
+   *
+   * @param seedLiquid liquid component-flow seed by tray, in mol/hr
+   * @param seedVapor vapor component-flow seed by tray, in mol/hr
+   * @param seedK Wilson K-value seed by tray
+   * @param bottomsComponent component bottoms-flow anchors, in mol/hr
+   * @param overheadComponent component overhead-flow anchors, in mol/hr
+   */
+  private void shootDirectNewtonSeedComponentFlows(double[][] seedLiquid, double[][] seedVapor, double[][] seedK,
+      double[] bottomsComponent, double[] overheadComponent) {
+    boolean activePumparound = hasActivePumparounds();
+    int maxSeedSweeps = activePumparound ? 12 : 1;
+    double[][] previousLiquid = new double[N][C];
+
+    for (int sweep = 0; sweep < maxSeedSweeps; sweep++) {
+      for (int j = 0; j < N; j++) {
+        System.arraycopy(seedLiquid[j], 0, previousLiquid[j], 0, C);
+      }
+      System.arraycopy(bottomsComponent, 0, seedLiquid[0], 0, C);
+      double[] previousVapor = new double[C];
+
+      for (int j = 0; j < N; j++) {
+        double sumKx = 0.0;
+        for (int i = 0; i < C; i++) {
+          sumKx += seedK[j][i] * seedLiquid[j][i] / Math.max(L[j], 1.0e-20);
+        }
+        double normalization = Math.max(sumKx, 1.0e-20);
+        for (int i = 0; i < C; i++) {
+          double yi = (seedK[j][i] * seedLiquid[j][i] / Math.max(L[j], 1.0e-20)) / normalization;
+          seedVapor[j][i] = yi * V[j];
+        }
+
+        if (j < N - 1) {
+          for (int i = 0; i < C; i++) {
+            double feedComponent = feedLiq[j][i] + feedVap[j][i];
+            double vaporFromBelow = j > 0 ? internalVaporFraction[j - 1] * previousVapor[i] : 0.0;
+            double pumparoundReturn = activePumparound
+                ? getSeedPumparoundComponentReturn(j, i, previousLiquid)
+                : 0.0;
+            double requiredLiquidFromAbove = seedVapor[j][i] + seedLiquid[j][i] - vaporFromBelow
+                - feedComponent - pumparoundReturn;
+            double nextLiquid = requiredLiquidFromAbove / Math.max(internalLiquidFraction[j + 1], 1.0e-12);
+            seedLiquid[j + 1][i] = Math.max(nextLiquid, 1.0e-15);
+          }
+          System.arraycopy(seedVapor[j], 0, previousVapor, 0, C);
+        }
+      }
+
+      // Preserve the estimated overhead split while satisfying the top-tray component balance.
+      for (int i = 0; i < C; i++) {
+        seedVapor[N - 1][i] = overheadComponent[i];
+        double feedComponent = feedLiq[N - 1][i] + feedVap[N - 1][i];
+        double vaporFromBelow = N >= 2 ? internalVaporFraction[N - 2] * seedVapor[N - 2][i] : 0.0;
+        double pumparoundReturn = activePumparound
+            ? getSeedPumparoundComponentReturn(N - 1, i, previousLiquid)
+            : 0.0;
+        seedLiquid[N - 1][i] = Math.max(
+            vaporFromBelow + feedComponent + pumparoundReturn - seedVapor[N - 1][i], 1.0e-15);
+      }
+
+      if (!activePumparound) {
+        break;
+      }
+      double maxRelativeChange = 0.0;
+      for (int j = 0; j < N; j++) {
+        for (int i = 0; i < C; i++) {
+          double scale = Math.max(Math.abs(seedLiquid[j][i]), 1.0e-12 * flowScale);
+          maxRelativeChange = Math.max(maxRelativeChange,
+              Math.abs(seedLiquid[j][i] - previousLiquid[j][i]) / scale);
+        }
+      }
+      if (maxRelativeChange < 1.0e-8) {
+        break;
+      }
+    }
+  }
+
   /**
    * Seed a mass-balanced initial guess for direct Newton entry.
    *
@@ -1637,6 +1745,31 @@ public class NaphtaliSandholmSolver {
       L[j + 1] = Math.max(L[j + 1], 1e-6 * totalFeed);
     }
 
+    // Reconcile the nonlocal pumparound return into the seed traffic. The return is lagged by
+    // one sweep because its draw tray may occur later in this bottom-up traversal.
+    if (hasActivePumparounds()) {
+      for (int sweep = 0; sweep < 12; sweep++) {
+        double[] previousLiquidTotals = L.clone();
+        L[0] = bottomsTotal;
+        double maxRelativeChange = 0.0;
+        for (int j = 0; j < N - 1; j++) {
+          double vaporFromBelow = j > 0 ? internalVaporFraction[j - 1] * V[j - 1] : 0.0;
+          double pumparoundReturn = getSeedPumparoundTotalReturn(j, previousLiquidTotals);
+          double requiredLiquidFromAbove = V[j] + L[j] - vaporFromBelow - feedTotalPerTray[j]
+              - pumparoundReturn;
+          L[j + 1] = Math.max(
+              requiredLiquidFromAbove / Math.max(internalLiquidFraction[j + 1], 1.0e-12),
+              1.0e-6 * totalFeed);
+          double scale = Math.max(Math.abs(L[j + 1]), 1.0e-12 * totalFeed);
+          maxRelativeChange = Math.max(maxRelativeChange,
+              Math.abs(L[j + 1] - previousLiquidTotals[j + 1]) / scale);
+        }
+        if (maxRelativeChange < 1.0e-8) {
+          break;
+        }
+      }
+    }
+
     // ----- 5. Per-component flows via forward shooting from reboiler -----
     // Boundary at j=0: L_i[0] = bottoms_i.
     // At each tray j, vapor leaving uses Wilson-K equilibrium with x[j]:
@@ -1644,7 +1777,6 @@ public class NaphtaliSandholmSolver {
     // Then component MB to advance: L_i[j+1] = V_i[j] + L_i[j] - V_i[j-1] - F_i[j]
     double[][] Liloc = new double[N][C];
     double[][] Viloc = new double[N][C];
-    double[] VimPrev = new double[C]; // V_i[-1] = 0
     for (int i = 0; i < C; i++) {
       Liloc[0][i] = bottoms_i[i];
     }
@@ -1660,49 +1792,7 @@ public class NaphtaliSandholmSolver {
       }
     }
 
-    for (int j = 0; j < N; j++) {
-      // y_i ∝ K_ij × x_i[j]; renormalize to sum=1; then V_i[j] = y_i × V[j].
-      double sumKx = 0;
-      for (int i = 0; i < C; i++) {
-        sumKx += Kseed[j][i] * Liloc[j][i] / Math.max(L[j], 1e-20);
-      }
-      double norm = Math.max(sumKx, 1e-20);
-      for (int i = 0; i < C; i++) {
-        double yi = (Kseed[j][i] * Liloc[j][i] / Math.max(L[j], 1e-20)) / norm;
-        Viloc[j][i] = yi * V[j];
-      }
-
-      if (j < N - 1) {
-        // Component MB on tray j (steady state): V_i[j-1] + L_i[j+1] + F_i[j] = V_i[j]
-        // + L_i[j]
-        for (int i = 0; i < C; i++) {
-          double Fij = feedLiq[j][i] + feedVap[j][i];
-          double vaporFromBelow = j > 0 ? internalVaporFraction[j - 1] * VimPrev[i] : 0.0;
-          double liquidToTrayBelow = Viloc[j][i] + Liloc[j][i] - vaporFromBelow - Fij;
-          double Lnext = liquidToTrayBelow / Math.max(internalLiquidFraction[j + 1], 1e-12);
-          Liloc[j + 1][i] = Math.max(Lnext, 1e-15);
-        }
-        System.arraycopy(Viloc[j], 0, VimPrev, 0, C);
-      }
-    }
-
-    // ----- 6. Enforce overhead boundary condition: V_i[N-1] = overhead_i -----
-    // The shoot generally over/undershoots the per-component overhead because
-    // the seed K-values are not at equilibrium. Project the top vapor onto
-    // the Kremser-derived split (it is what we want to honour for component
-    // MB at the column outlet).
-    for (int i = 0; i < C; i++) {
-      Viloc[N - 1][i] = overhead_i[i];
-    }
-    // Recompute L_i[N-1] from top-tray MB so per-tray MB still holds at top:
-    // V_i[N-2] + L_i[N] (=0) + F_i[N-1] = V_i[N-1] + L_i[N-1]
-    // ⇒ L_i[N-1] = V_i[N-2] + F_i[N-1] - V_i[N-1]
-    for (int i = 0; i < C; i++) {
-      double Fij = feedLiq[N - 1][i] + feedVap[N - 1][i];
-      double VimN2 = (N >= 2) ? Viloc[N - 2][i] : 0.0;
-      double Lnew = internalVaporFraction[N - 2] * VimN2 + Fij - Viloc[N - 1][i];
-      Liloc[N - 1][i] = Math.max(Lnew, 1e-15);
-    }
+    shootDirectNewtonSeedComponentFlows(Liloc, Viloc, Kseed, bottoms_i, overhead_i);
 
     // ----- 6.5. Iterative tray-by-tray bubble-point T refinement -----
     // The default T-seed is a linear ramp between reboiler and top, which
@@ -1778,39 +1868,8 @@ public class NaphtaliSandholmSolver {
         }
       }
 
-      // Re-shoot per-component flows with updated K-values.
-      for (int i = 0; i < C; i++) {
-        VimPrev[i] = 0.0;
-      }
-      for (int j = 0; j < N; j++) {
-        double sumKxJ = 0;
-        for (int i = 0; i < C; i++) {
-          sumKxJ += Kseed[j][i] * Liloc[j][i] / Math.max(L[j], 1e-20);
-        }
-        double normJ = Math.max(sumKxJ, 1e-20);
-        for (int i = 0; i < C; i++) {
-          double yi = (Kseed[j][i] * Liloc[j][i] / Math.max(L[j], 1e-20)) / normJ;
-          Viloc[j][i] = yi * V[j];
-        }
-        if (j < N - 1) {
-          for (int i = 0; i < C; i++) {
-            double Fij = feedLiq[j][i] + feedVap[j][i];
-            double vaporFromBelow = j > 0 ? internalVaporFraction[j - 1] * VimPrev[i] : 0.0;
-            double liquidToTrayBelow = Viloc[j][i] + Liloc[j][i] - vaporFromBelow - Fij;
-            double Lnext = liquidToTrayBelow / Math.max(internalLiquidFraction[j + 1], 1e-12);
-            Liloc[j + 1][i] = Math.max(Lnext, 1e-15);
-          }
-          System.arraycopy(Viloc[j], 0, VimPrev, 0, C);
-        }
-      }
-      // Re-enforce overhead boundary.
-      for (int i = 0; i < C; i++) {
-        Viloc[N - 1][i] = overhead_i[i];
-        double Fij = feedLiq[N - 1][i] + feedVap[N - 1][i];
-        double VimN2 = (N >= 2) ? Viloc[N - 2][i] : 0.0;
-        double Lnew = internalVaporFraction[N - 2] * VimN2 + Fij - Viloc[N - 1][i];
-        Liloc[N - 1][i] = Math.max(Lnew, 1e-15);
-      }
+      // Re-shoot per-component flows with updated K-values and the lagged nonlocal return seed.
+      shootDirectNewtonSeedComponentFlows(Liloc, Viloc, Kseed, bottoms_i, overhead_i);
       // Refresh L[j] totals from new component flows (V[j] is held; it carries
       // the boilup / overhead anchor).
       for (int j = 0; j < N; j++) {
