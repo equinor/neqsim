@@ -2786,7 +2786,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     for (ColumnPumparound pumparound : pumparounds) {
       updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, pumparound.getDrawTrayNumber());
       updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, pumparound.getReturnTrayNumber());
-      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, pumparound.getDrawFraction());
       updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, pumparound.getTemperatureDrop());
     }
     if (hasReboiler && getReboiler() != null) {
