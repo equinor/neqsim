@@ -327,10 +327,10 @@ public class ColumnStudyRegressionTest {
     for (int caseIndex = 0; caseIndex < drawFractions.length; caseIndex++) {
       double drawFraction = drawFractions[caseIndex];
       SystemInterface baseFluid = createBaseFluid();
-      StreamInterface feedStream = createStream("pumparound_main_feed_" + caseIndex, baseFluid,
-          MAIN_FEED_COMPOSITION, MAIN_FEED_TEMPERATURE_C, MAIN_FEED_PRESSURE_BARA, MAIN_FEED_MASS_FLOW_KG_HR);
-      StreamInterface topFeedStream = createStream("pumparound_top_feed_" + caseIndex, baseFluid,
-          TOP_FEED_COMPOSITION, TOP_FEED_TEMPERATURE_C, TOP_FEED_PRESSURE_BARA, TOP_FEED_MASS_FLOW_KG_HR);
+      StreamInterface feedStream = createStream("pumparound_main_feed_" + caseIndex, baseFluid, MAIN_FEED_COMPOSITION,
+          MAIN_FEED_TEMPERATURE_C, MAIN_FEED_PRESSURE_BARA, MAIN_FEED_MASS_FLOW_KG_HR);
+      StreamInterface topFeedStream = createStream("pumparound_top_feed_" + caseIndex, baseFluid, TOP_FEED_COMPOSITION,
+          TOP_FEED_TEMPERATURE_C, TOP_FEED_PRESSURE_BARA, TOP_FEED_MASS_FLOW_KG_HR);
       DistillationColumn column = createColumn(feedStream, topFeedStream);
       int drawTrayNumber = answerTrayToNeqSimStage(7);
       DistillationColumn.ColumnPumparound pumparound = column.addLiquidPumparound(
@@ -339,8 +339,7 @@ public class ColumnStudyRegressionTest {
       column.run();
 
       assertEquals(DistillationColumn.SolverType.NAPHTALI_SANDHOLM, column.getLastSolverTypeUsed(),
-          () -> "pumparound case should be accepted by the simultaneous solver\n"
-              + column.getConvergenceDiagnostics());
+          () -> "pumparound case should be accepted by the simultaneous solver\n" + column.getConvergenceDiagnostics());
       assertEquals(DistillationColumn.SolveStatus.RIGOROUS_CONVERGED, column.getLastSolveStatus(),
           "pumparound case should close without terminal-product reconciliation");
       assertTrue(column.solved(), "pumparound case should satisfy the active convergence gates");
