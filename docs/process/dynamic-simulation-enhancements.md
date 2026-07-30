@@ -587,7 +587,7 @@ process.setIntegrationMethod(IntegrationMethod.RUNGE_KUTTA_4);    // Higher-orde
 
 ## 6. Test Coverage
 
-The features in this guide are covered by four focused test classes with 67
+The features in this guide are covered by four focused test classes with 68
 total tests:
 
 | Test Class | Tests | Coverage |
@@ -595,7 +595,7 @@ total tests:
 | `DynamicImprovementsTest` | 17 | Controller modes, 2-DOF PID, SFC, control structures, gain scheduling, event logging, performance metrics |
 | `DynamicImprovementsPhase2Test` | 26 | Sensor faults, valve nonlinearities, adaptive timestep, parallel transient, integration methods, JSON process builder |
 | `DynamicImprovementsPhase3Test` | 16 | Transmitter filter, alarm shelving, separator internals, HX thermal model, distillation MESH dynamics |
-| `ProcessSystemParallelTransientTest` | 8 | Worker reuse, copy lifecycle, dependency ordering, independent-level concurrency, and interruption behavior |
+| `ProcessSystemParallelTransientTest` | 9 | Worker reuse, copy lifecycle, dependency ordering, independent-level concurrency, and interruption behavior at waits and level boundaries |
 
 Run all tests:
 
