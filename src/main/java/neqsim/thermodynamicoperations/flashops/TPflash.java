@@ -44,6 +44,8 @@ public class TPflash extends Flash {
   private static final double LIQUID_LIQUID_ACTIVE_COMPONENT_LIMIT = 1.0e-6;
   /** Minimum critical-temperature span (K) for liquid-liquid refinement. */
   private static final double LIQUID_LIQUID_CRITICAL_TEMPERATURE_SPAN = 150.0;
+  /** Minimum water feed fraction for ordinary aqueous endpoint refinement. */
+  private static final double AQUEOUS_REFINEMENT_WATER_FRACTION_LIMIT = 0.01;
   /**
    * Minimum extensive Gibbs-energy reduction (J) required for the spurious-multiphase rescue to collapse a two-phase
    * result to a single phase. Avoids false triggers from numerical noise.
@@ -893,7 +895,7 @@ public class TPflash extends Flash {
         break;
       }
     }
-    if (waterFeedFraction < 0.01) {
+    if (waterFeedFraction < AQUEOUS_REFINEMENT_WATER_FRACTION_LIMIT) {
       return;
     }
 
