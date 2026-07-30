@@ -37,10 +37,15 @@ simulator exports or field data.
 `severe_slugging_number`, `water_wetting_flag`, `water_dropout_risk_flag`, and
 `severe_slug_potential_flag`.
 
+Continuous benchmark profiles use linear interpolation. Variables ending in `_flag` and intervals
+with non-finite diagnostic sentinels use nearest-neighbour sampling, preserving binary flags and
+avoiding interpolation-generated `NaN` values.
+
 ### Tests
 
 `TwoFluidPipeReportTest` verifies profile shape, physical bounds, and report columns.
-`TwoFluidBenchmarkHarnessTest` verifies capture and comparison of the new benchmark variables.
+`TwoFluidBenchmarkHarnessTest` verifies capture, continuous interpolation, discrete flag sampling,
+non-finite sentinel handling, and comparison of the new benchmark variables.
 
 ---
 
