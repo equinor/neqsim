@@ -82,7 +82,14 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   protected boolean isSolved = true;
   private boolean isActive = true;
   private boolean lockedInactive = false;
-  private double minimumFlow = 1e-20;
+
+  /**
+   * Default low-flow bypass threshold in kg/hr. This value acts as an "off" sentinel: equipment that only bypasses on
+   * an explicitly configured threshold tests for {@code getMinimumFlow() > DEFAULT_MINIMUM_FLOW}.
+   */
+  public static final double DEFAULT_MINIMUM_FLOW = 1e-20;
+
+  private double minimumFlow = DEFAULT_MINIMUM_FLOW;
 
   /**
    * Flag to enable/disable capacity analysis for this equipment. When disabled, this equipment is excluded from
@@ -590,9 +597,9 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   }
 
   /**
-   * Getter for the field <code>minimumFlow</code>, e.g., the minimum flow rate for the pump.
+   * Getter for the field <code>minimumFlow</code>, the low-flow bypass threshold in kg/hr.
    *
-   * @return a double
+   * @return low-flow bypass threshold in kg/hr
    */
   @Override
   public double getMinimumFlow() {
@@ -600,13 +607,84 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   }
 
   /**
-   * Setter for the field <code>minimumFlow</code>, e.g., the minimum flow rate for the pump.
+   * Setter for the field <code>minimumFlow</code>, the low-flow bypass threshold in kg/hr.
    *
-   * @param minimumFlow a double
+   * <p>
+   * Equipment whose primary inlet mass flow falls below this value auto-bypasses via
+   * {@link #checkAndHandleLowFlow(neqsim.process.equipment.stream.StreamInterface, UUID)}. The unit is kg/hr for every
+   * equipment type.
+   * </p>
+   *
+   * @param minimumFlow low-flow bypass threshold in kg/hr
    */
   @Override
   public void setMinimumFlow(double minimumFlow) {
     this.minimumFlow = minimumFlow;
+  }
+
+  /**
+   * Sets the low-flow bypass threshold in a chosen mass-flow unit.
+   *
+   * <p>
+   * The threshold is stored internally in kg/hr. This overload removes the need for callers to hand-convert, which was
+   * a recurring source of silent errors (a "50" meant as tonnes/day silently becoming 50 kg/hr, or vice versa).
+   * </p>
+   *
+   * @param minimumFlow low-flow bypass threshold expressed in {@code unit}
+   * @param unit mass-flow unit; one of kg/hr, kg/h, kg/sec, kg/s, kg/min, tonne/hr, ton/hr, tonne/day, ton/day, MT/hr,
+   * lb/hr, lbm/hr
+   * @throws IllegalArgumentException if the unit is not a recognised mass-flow unit
+   */
+  public void setMinimumFlow(double minimumFlow, String unit) {
+    setMinimumFlow(minimumFlow * massFlowConversionToKgPerHour(unit));
+  }
+
+  /**
+   * Gets the low-flow bypass threshold expressed in a chosen mass-flow unit.
+   *
+   * @param unit mass-flow unit; see {@link #setMinimumFlow(double, String)} for the accepted values
+   * @return the low-flow bypass threshold in {@code unit}
+   * @throws IllegalArgumentException if the unit is not a recognised mass-flow unit
+   */
+  public double getMinimumFlow(String unit) {
+    return getMinimumFlow() / massFlowConversionToKgPerHour(unit);
+  }
+
+  /**
+   * Conversion factor from a mass-flow unit to kg/hr.
+   *
+   * <p>
+   * Deliberately limited to mass-flow units: the low-flow threshold is compared against
+   * {@code stream.getFlowRate("kg/hr")}, and volumetric or molar units would require a fluid that a not-yet-solved unit
+   * operation does not have.
+   * </p>
+   *
+   * @param unit mass-flow unit name (case-insensitive, surrounding whitespace ignored)
+   * @return the factor that converts a value in {@code unit} to kg/hr
+   * @throws IllegalArgumentException if {@code unit} is null or not a recognised mass-flow unit
+   */
+  public static double massFlowConversionToKgPerHour(String unit) {
+    if (unit == null) {
+      throw new IllegalArgumentException("Mass-flow unit must not be null");
+    }
+    String key = unit.trim().toLowerCase(java.util.Locale.US);
+    if (key.equals("kg/hr") || key.equals("kg/h") || key.equals("kg/hour")) {
+      return 1.0;
+    } else if (key.equals("kg/sec") || key.equals("kg/s")) {
+      return 3600.0;
+    } else if (key.equals("kg/min")) {
+      return 60.0;
+    } else if (key.equals("kg/day")) {
+      return 1.0 / 24.0;
+    } else if (key.equals("tonne/hr") || key.equals("ton/hr") || key.equals("mt/hr") || key.equals("t/hr")) {
+      return 1000.0;
+    } else if (key.equals("tonne/day") || key.equals("ton/day") || key.equals("t/day")) {
+      return 1000.0 / 24.0;
+    } else if (key.equals("lb/hr") || key.equals("lbm/hr")) {
+      return 0.45359237;
+    }
+    throw new IllegalArgumentException("Unsupported mass-flow unit '" + unit
+        + "' for the low-flow threshold. Use kg/hr, kg/sec, kg/min, kg/day, " + "tonne/hr, tonne/day or lb/hr.");
   }
 
   /**

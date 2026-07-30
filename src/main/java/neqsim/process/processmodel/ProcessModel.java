@@ -283,6 +283,21 @@ public class ProcessModel implements Runnable, Serializable {
   private double temperatureTolerance = 1e-4;
   private double pressureTolerance = 1e-4;
 
+  /** Default boundary-stream flow floor in kg/hr (streams below this are ignored entirely). */
+  public static final double DEFAULT_BOUNDARY_FLOW_FLOOR = 1e-9;
+
+  /**
+   * Boundary streams whose flow is below this value (kg/hr) are excluded from the convergence metric entirely.
+   */
+  private double boundaryFlowFloor = DEFAULT_BOUNDARY_FLOW_FLOOR;
+
+  /**
+   * Absolute flow tolerance in kg/hr. A boundary stream is flow-converged when EITHER its relative flow error is below
+   * {@link #flowTolerance} OR its absolute flow change is below this value. Default 0.0 preserves the historical
+   * relative-only behaviour.
+   */
+  private double absoluteFlowTolerance = 0.0;
+
   // Convergence tracking
   private int lastIterationCount = 0;
   private double lastMaxFlowError = Double.MAX_VALUE;
@@ -393,6 +408,20 @@ public class ProcessModel implements Runnable, Serializable {
      */
     public double getCurrentFlow() {
       return currentFlow;
+    }
+
+    /**
+     * Absolute change in flow rate between the two last outer iterations.
+     *
+     * <p>
+     * A large relative error on a very small absolute change is numerical noise on a stagnant leg rather than a real
+     * process residual; use this value to tell the two apart.
+     * </p>
+     *
+     * @return absolute flow change in kg/hr
+     */
+    public double getAbsoluteFlowChange() {
+      return Math.abs(currentFlow - previousFlow);
     }
 
     /**
@@ -2377,11 +2406,16 @@ public class ProcessModel implements Runnable, Serializable {
    * the stream responsible for each reported maximum error.
    * </p>
    *
+   * <p>
+   * Package-private (rather than private) so the boundary-flow floor and absolute-flow-tolerance filters can be unit
+   * tested directly without constructing an oscillating multi-area plant.
+   * </p>
+   *
    * @param previous previous stream states
    * @param current current stream states
    * @return array of [maxFlowError, maxTempError, maxPressError]
    */
-  private double[] calculateConvergenceErrors(Map<?, double[]> previous, Map<?, double[]> current) {
+  double[] calculateConvergenceErrors(Map<?, double[]> previous, Map<?, double[]> current) {
     double maxFlowErr = 0.0;
     double maxTempErr = 0.0;
     double maxPressErr = 0.0;
@@ -2393,15 +2427,24 @@ public class ProcessModel implements Runnable, Serializable {
         double[] curr = current.get(key);
 
         // Skip near-zero (inactive / bypassed) boundary streams so that low-flow
-        // sections do not block global convergence.
-        if (Math.max(Math.abs(prev[0]), Math.abs(curr[0])) < 1e-9) {
+        // sections do not block global convergence. The floor is configurable via
+        // setBoundaryFlowFloor() because the default (1e-9 kg/hr) excludes nothing
+        // in practice - a stagnant dead leg carrying a fraction of a kg/hr still
+        // produces a large RELATIVE error and dominates the plant-wide maximum.
+        if (Math.max(Math.abs(prev[0]), Math.abs(curr[0])) < boundaryFlowFloor) {
           continue;
         }
 
         // Flow rate relative error (with min threshold to avoid div by zero)
         double flowBase = Math.max(Math.abs(prev[0]), 1e-10);
         double flowErr = Math.abs(curr[0] - prev[0]) / flowBase;
-        maxFlowErr = Math.max(maxFlowErr, flowErr);
+        // A stream whose ABSOLUTE flow change is negligible is converged for
+        // engineering purposes even when the relative error is large (tiny
+        // denominator). The true relative error is still recorded below so the
+        // per-stream diagnostics remain honest.
+        if (Math.abs(curr[0] - prev[0]) >= absoluteFlowTolerance) {
+          maxFlowErr = Math.max(maxFlowErr, flowErr);
+        }
 
         // Temperature relative error (use Kelvin to avoid issues near 0)
         double tempBase = Math.max(prev[1], 1.0);
@@ -2518,7 +2561,9 @@ public class ProcessModel implements Runnable, Serializable {
   public List<BoundaryStreamError> getNonConvergedBoundaryStreamErrors() {
     List<BoundaryStreamError> offenders = new ArrayList<>();
     for (BoundaryStreamError streamError : getLastBoundaryStreamErrors()) {
-      if (streamError.getFlowError() >= flowTolerance || streamError.getTemperatureError() >= temperatureTolerance
+      boolean flowConverged = streamError.getFlowError() < flowTolerance
+          || streamError.getAbsoluteFlowChange() < absoluteFlowTolerance;
+      if (!flowConverged || streamError.getTemperatureError() >= temperatureTolerance
           || streamError.getPressureError() >= pressureTolerance) {
         offenders.add(streamError);
       }
@@ -2581,15 +2626,20 @@ public class ProcessModel implements Runnable, Serializable {
         pressureTolerance, lastMaxPressureError < pressureTolerance ? "OK" : "NOT CONVERGED",
         formatWorstStreamSuffix("pressure")));
 
+    if (absoluteFlowTolerance > 0.0 || boundaryFlowFloor > DEFAULT_BOUNDARY_FLOW_FLOOR) {
+      sb.append(String.format(Locale.US, "  Flow filters: absolute tolerance %.3g kg/hr, boundary floor %.3g kg/hr\n",
+          absoluteFlowTolerance, boundaryFlowFloor));
+    }
+
     List<BoundaryStreamError> offenders = getNonConvergedBoundaryStreamErrors();
     if (!offenders.isEmpty()) {
       sb.append("\nBoundary streams outside tolerance (worst first):\n");
       int shown = Math.min(offenders.size(), 10);
       for (int i = 0; i < shown; i++) {
         BoundaryStreamError streamError = offenders.get(i);
-        sb.append(String.format(Locale.US, "  %-30s flow=%.2e temp=%.2e press=%.2e%s\n", streamError.getStreamName(),
-            streamError.getFlowError(), streamError.getTemperatureError(), streamError.getPressureError(),
-            formatFlowTransitionNote(streamError)));
+        sb.append(String.format(Locale.US, "  %-30s flow=%.2e (%.3g kg/hr) temp=%.2e press=%.2e%s\n",
+            streamError.getStreamName(), streamError.getFlowError(), streamError.getAbsoluteFlowChange(),
+            streamError.getTemperatureError(), streamError.getPressureError(), formatFlowTransitionNote(streamError)));
       }
       if (offenders.size() > shown) {
         sb.append("  ... and ").append(offenders.size() - shown).append(" more\n");
@@ -2643,6 +2693,90 @@ public class ProcessModel implements Runnable, Serializable {
     setTolerance(tolerance);
     run();
     return modelConverged;
+  }
+
+  /**
+   * Runs the model until convergence using a combined relative AND absolute flow criterion.
+   *
+   * <p>
+   * A boundary stream counts as flow-converged when EITHER its relative flow error is below {@code tolerance} OR its
+   * absolute flow change is below {@code absoluteFlowTolerance} (kg/hr). This is the standard industrial form and is
+   * the recommended way to run plants that contain stagnant or nearly-stagnant legs: a stream carrying 0.1 kg/hr can
+   * swing 6 % between outer passes (0.007 kg/hr in absolute terms) and would otherwise dominate the relative maximum
+   * and mask a genuine multi-hundred kg/hr residual elsewhere in the plant.
+   * </p>
+   *
+   * @param maxIterations maximum number of outer iterations to attempt; must be at least 1
+   * @param tolerance relative convergence tolerance applied to flow, temperature and pressure; must be a finite
+   * positive value
+   * @param absoluteFlowTolerance absolute flow tolerance in kg/hr; must be finite and non-negative. Use 0.0 for the
+   * historical relative-only behaviour
+   * @return true if the model converged within the iteration limit, false otherwise
+   * @throws IllegalArgumentException if maxIterations is less than 1, tolerance is not a finite positive number, or
+   * absoluteFlowTolerance is negative or not finite
+   */
+  public boolean runUntilConverged(int maxIterations, double tolerance, double absoluteFlowTolerance) {
+    setAbsoluteFlowTolerance(absoluteFlowTolerance);
+    return runUntilConverged(maxIterations, tolerance);
+  }
+
+  /**
+   * Absolute flow tolerance used by the boundary-stream convergence check.
+   *
+   * @return absolute flow tolerance in kg/hr (0.0 means relative-only checking)
+   */
+  public double getAbsoluteFlowTolerance() {
+    return absoluteFlowTolerance;
+  }
+
+  /**
+   * Sets the absolute flow tolerance used by the boundary-stream convergence check.
+   *
+   * <p>
+   * A boundary stream is flow-converged when EITHER its relative flow error is below the relative tolerance OR its
+   * absolute flow change is below this value. Setting 0.0 restores pure relative checking.
+   * </p>
+   *
+   * @param absoluteFlowTolerance absolute flow tolerance in kg/hr; must be finite and non-negative
+   * @throws IllegalArgumentException if the value is negative or not finite
+   */
+  public void setAbsoluteFlowTolerance(double absoluteFlowTolerance) {
+    if (Double.isNaN(absoluteFlowTolerance) || Double.isInfinite(absoluteFlowTolerance)
+        || absoluteFlowTolerance < 0.0) {
+      throw new IllegalArgumentException(
+          "absoluteFlowTolerance must be a finite non-negative number, was " + absoluteFlowTolerance);
+    }
+    this.absoluteFlowTolerance = absoluteFlowTolerance;
+  }
+
+  /**
+   * Flow floor below which a boundary stream is excluded from the convergence metric entirely.
+   *
+   * @return boundary flow floor in kg/hr
+   */
+  public double getBoundaryFlowFloor() {
+    return boundaryFlowFloor;
+  }
+
+  /**
+   * Sets the flow floor below which a boundary stream is excluded from the convergence metric entirely.
+   *
+   * <p>
+   * Streams carrying less than this value are treated as inactive plumbing (a stagnant dead leg, a bypassed section, or
+   * a tell-tale seed stream) and neither contribute to the reported maximum errors nor appear in
+   * {@link #getNonConvergedBoundaryStreamErrors()}. The default {@link #DEFAULT_BOUNDARY_FLOW_FLOOR} excludes only
+   * numerically-zero streams; raise it to exclude physically negligible legs as well.
+   * </p>
+   *
+   * @param boundaryFlowFloor flow floor in kg/hr; must be finite and non-negative
+   * @throws IllegalArgumentException if the value is negative or not finite
+   */
+  public void setBoundaryFlowFloor(double boundaryFlowFloor) {
+    if (Double.isNaN(boundaryFlowFloor) || Double.isInfinite(boundaryFlowFloor) || boundaryFlowFloor < 0.0) {
+      throw new IllegalArgumentException(
+          "boundaryFlowFloor must be a finite non-negative number, was " + boundaryFlowFloor);
+    }
+    this.boundaryFlowFloor = boundaryFlowFloor;
   }
 
   /**
