@@ -233,9 +233,10 @@ targets manipulated through condenser or reboiler temperature.
   temperature, and vapor flow as tray variables.
 - Builds a finite-difference block-tridiagonal Jacobian from neighboring tray couplings and uses a
   guarded Newton line search with flow and temperature trust limits.
-- Allows at most three line-search steps that fail to reduce the MESH residual. Repeated non-descent
-  restores the best finite tray state and returns the actual iteration count so the
-  column can proceed to its coordinated fallback instead of exhausting the Newton budget.
+- Allows at most three line-search steps that fail to reduce the MESH residual. After three such
+  non-descent steps, the solver restores the best finite tray state and returns the actual iteration
+  count so the column can proceed to its coordinated fallback instead of exhausting the Newton
+  budget.
 - Supports optional `setSeedTemperature(stageIndex, temperatureK)` warm-start guesses. Seeds are
   initial values only; they do not pin tray temperatures or replace energy-balance residuals.
 - Accepts the Newton-refined state only when the scaled MESH residual improves; otherwise the
