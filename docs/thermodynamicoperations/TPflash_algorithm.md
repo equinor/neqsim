@@ -196,7 +196,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 │  IF ordinary flash, water feed ≥ 0.01, and no aqueous phase:                    │
 │     → Evaluate a cloned TPmultiflash candidate                                  │
 │     → Accept only a two-phase aqueous candidate with lower Gibbs energy,        │
-│       bounded phase fractions, normalized material balance, and distinct phases │
+│       bounded/normalized phase fractions, and distinct phase compositions       │
 │                                                                                 │
 │  IF chemical system:                                                            │
 │     → Final chemical equilibrium solve in aqueous/liquid phases                 │
