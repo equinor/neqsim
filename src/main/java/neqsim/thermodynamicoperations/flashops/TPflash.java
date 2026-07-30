@@ -909,7 +909,6 @@ public class TPflash extends Flash {
     }
   }
 
-
   /**
    * Screens for a non-aqueous, non-hydrocarbon-rich, high-volatility-contrast liquid mixture.
    *
