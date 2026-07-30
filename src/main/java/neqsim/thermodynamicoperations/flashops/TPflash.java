@@ -38,6 +38,12 @@ public class TPflash extends Flash {
   private static final double MULTIPHASE_RESCUE_LIQUID_SUM_Z_OVER_K_LIMIT = 5.0;
   /** Minimum log K spread for liquid endpoint rescue. */
   private static final double MULTIPHASE_RESCUE_LIQUID_LOG_K_SPREAD_LIMIT = 3.0;
+  /** Minimum feed fraction of non-hydrocarbon components for liquid-liquid refinement. */
+  private static final double LIQUID_LIQUID_NON_HYDROCARBON_FRACTION_LIMIT = 0.20;
+  /** Minimum active feed fraction used when screening components for liquid-liquid refinement. */
+  private static final double LIQUID_LIQUID_ACTIVE_COMPONENT_LIMIT = 1.0e-6;
+  /** Minimum critical-temperature span (K) for liquid-liquid refinement. */
+  private static final double LIQUID_LIQUID_CRITICAL_TEMPERATURE_SPAN = 150.0;
   /**
    * Minimum extensive Gibbs-energy reduction (J) required for the spurious-multiphase rescue to collapse a two-phase
    * result to a single phase. Avoids false triggers from numerical noise.
@@ -587,6 +593,7 @@ public class TPflash extends Flash {
         // solution of the flash equations. The Gibbs-based spurious rescue is intentionally NOT
         // applied on this path, as it can discard a genuine split the stability test overlooked.
         collapseTrivialMultiphaseSplit();
+        rescueLiquidLiquidEndpoint();
         return;
       }
     }
@@ -771,6 +778,7 @@ public class TPflash extends Flash {
     rescueSpuriousMultiphaseEndpoint();
     collapseTrivialMultiphaseSplit();
     normalizeActivePhaseFractions();
+    rescueLiquidLiquidEndpoint();
 
     // Final chemical equilibrium call after all phase reordering
     // This ensures chemical equilibrium is solved on the final phase configuration
@@ -788,6 +796,116 @@ public class TPflash extends Flash {
         logger.warn("Final chemical eq init failed: " + ex.getMessage());
       }
     }
+  }
+
+  /**
+   * Refines an ordinary liquid-only endpoint with the multiphase stability solver.
+   *
+   * <p>
+   * The ordinary two-phase flash primarily searches for a vapor-liquid split. For a liquid-only
+   * endpoint it can therefore converge to a local single-liquid state or to a metastable
+   * liquid-liquid split even though Michelsen tangent-plane stability analysis finds a lower-Gibbs
+   * liquid-liquid equilibrium. A cloned candidate is evaluated with multiphase checking enabled
+   * and replaces the ordinary result only when the existing strict phase-fraction,
+   * distinct-composition, and Gibbs-energy acceptance checks pass.
+   * </p>
+   *
+   * <p>
+   * The guard deliberately excludes any endpoint containing a gas or aqueous phase, chemical and
+   * electrolyte systems, and solid/wax calculations. Thus ordinary gas and gas-liquid process
+   * flashes remain on the existing fast path without an additional flash or property
+   * initialization.
+   * </p>
+   */
+  private void rescueLiquidLiquidEndpoint() {
+    if (system.doMultiPhaseCheck() || system.getNumberOfPhases() < 1 || system.getNumberOfPhases() > 2
+        || system.isChemicalSystem() || system.hasIons() || solidCheck || system.isMultiphaseWaxCheck()) {
+      return;
+    }
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      PhaseType phaseType = system.getPhase(phaseIndex).getType();
+      if (!(phaseType == PhaseType.OIL || phaseType == PhaseType.LIQUID)) {
+        return;
+      }
+    }
+
+    if (!hasPotentialLiquidLiquidInstability()) {
+      return;
+    }
+
+    double referenceGibbsEnergy = system.getGibbsEnergy();
+    SystemInterface candidate = system.clone();
+    try {
+      candidate.setMultiPhaseCheck(true);
+      candidate.setNumberOfPhases(2);
+      candidate.setPhaseIndex(0, 0);
+      candidate.setPhaseIndex(1, 1);
+      candidate.setPhaseType(0, PhaseType.GAS);
+      candidate.setPhaseType(1, PhaseType.OIL);
+      candidate.setBeta(0, 0.5);
+      candidate.setBeta(1, 0.5);
+      for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
+        for (int componentIndex = 0; componentIndex < candidate.getPhase(phaseIndex)
+            .getNumberOfComponents(); componentIndex++) {
+          candidate.getPhase(phaseIndex).getComponent(componentIndex)
+              .setx(candidate.getPhase(phaseIndex).getComponent(componentIndex).getz());
+        }
+        candidate.getPhase(phaseIndex).normalize();
+      }
+      candidate.init(0);
+      candidate.init(1);
+      new TPflash(candidate, candidate.doSolidPhaseCheck()).run();
+      if (isLowerGibbsMultiphaseCandidate(candidate, referenceGibbsEnergy)) {
+        copyFlashStateFrom(candidate);
+      }
+    } catch (Exception ex) {
+      logger.debug("Liquid-liquid endpoint refinement failed: {}", ex.getMessage());
+    }
+  }
+
+  /**
+   * Screens for a non-aqueous, non-hydrocarbon-rich, high-volatility-contrast liquid mixture.
+   *
+   * <p>
+   * Liquid-liquid demixing in non-aqueous cubic-EOS process mixtures is most relevant when a substantial
+   * polar/inert/non-hydrocarbon fraction coexists with a much less volatile hydrocarbon. The screen uses only feed
+   * composition and immutable component critical data; it performs no property initialization or trial-phase
+   * calculation. The subsequent tangent-plane stability calculation remains the authoritative decision.
+   * </p>
+   *
+   * @return true when the cheap composition screen justifies multiphase stability refinement
+   */
+  private boolean hasPotentialLiquidLiquidInstability() {
+    double nonHydrocarbonFraction = 0.0;
+    double minimumCriticalTemperature = Double.POSITIVE_INFINITY;
+    double maximumCriticalTemperature = Double.NEGATIVE_INFINITY;
+    boolean hasHeavyHydrocarbon = false;
+    int numberOfComponents = system.getPhase(0).getNumberOfComponents();
+    for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
+      neqsim.thermo.component.ComponentInterface component =
+          system.getPhase(0).getComponent(componentIndex);
+      double feedFraction = component.getz();
+      if (feedFraction <= LIQUID_LIQUID_ACTIVE_COMPONENT_LIMIT) {
+        continue;
+      }
+      if ("water".equalsIgnoreCase(component.getComponentName())) {
+        return false;
+      }
+      double criticalTemperature = component.getTC();
+      minimumCriticalTemperature = Math.min(minimumCriticalTemperature, criticalTemperature);
+      maximumCriticalTemperature = Math.max(maximumCriticalTemperature, criticalTemperature);
+      if (component.isHydrocarbon()) {
+        if (criticalTemperature > system.getTemperature() + LIQUID_LIQUID_CRITICAL_TEMPERATURE_SPAN) {
+          hasHeavyHydrocarbon = true;
+        }
+      } else {
+        nonHydrocarbonFraction += feedFraction;
+      }
+    }
+    return nonHydrocarbonFraction >= LIQUID_LIQUID_NON_HYDROCARBON_FRACTION_LIMIT
+        && hasHeavyHydrocarbon
+        && maximumCriticalTemperature - minimumCriticalTemperature
+            >= LIQUID_LIQUID_CRITICAL_TEMPERATURE_SPAN;
   }
 
   /**
