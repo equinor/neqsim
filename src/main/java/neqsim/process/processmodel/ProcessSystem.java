@@ -612,9 +612,10 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * Add a standalone controller device to the process system. Controllers added here participate in the explicit
-   * controller scan during {@code runTransient}. A controller instance that is also attached to equipment remains
-   * discoverable in this list but is executed only through its equipment owner. Repeated standalone registration of the
-   * same instance likewise schedules one controller update per timestep.
+   * controller scan during {@code runTransient}. Each controller identity is scheduled at most once in that scan. A
+   * controller that already reports the current timestep calculation identifier, for example after equipment-owned
+   * execution, is not advanced again. Merely attaching a controller to equipment that does not execute it does not
+   * suppress its standalone update.
    *
    * @param controllerDevice a {@link neqsim.process.controllerdevice.ControllerDeviceInterface} object
    */
@@ -4161,18 +4162,15 @@ public class ProcessSystem extends SimulationBaseClass {
     }
 
     // Explicit controller scan phase: run standalone controllers registered via
-    // add(ControllerDeviceInterface). Reserve equipment-owned controller identities
-    // because those controllers already ran inside equipment runTransient(). Reusing
-    // the same identity in the standalone list must not integrate controller state
-    // (time, integral, derivative, event log) a second time.
+    // add(ControllerDeviceInterface). Identity coalescing prevents repeated standalone
+    // registration from integrating mutable state more than once. The calculation
+    // identifier distinguishes a controller actually executed inside equipment from one
+    // merely attached to equipment for association or discovery.
     java.util.Set<ControllerDeviceInterface> scheduledControllers = java.util.Collections
         .newSetFromMap(new IdentityHashMap<ControllerDeviceInterface, Boolean>());
-    for (int i = 0; i < unitOperations.size(); i++) {
-      scheduledControllers.addAll(unitOperations.get(i).getControllers());
-    }
     for (int i = 0; i < controllerDevices.size(); i++) {
       ControllerDeviceInterface ctrl = controllerDevices.get(i);
-      if (scheduledControllers.add(ctrl) && ctrl.isActive()) {
+      if (scheduledControllers.add(ctrl) && ctrl.isActive() && !ctrl.hasRunTransient(id)) {
         ctrl.runTransient(ctrl.getResponse(), dt, id);
       }
     }
