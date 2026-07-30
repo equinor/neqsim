@@ -160,6 +160,16 @@ public class ProcessSystem extends SimulationBaseClass {
   private boolean parallelTransientEnabled = false;
   /** Thread pool size for parallel transient execution. */
   private int transientThreadPoolSize = Runtime.getRuntime().availableProcessors();
+  /**
+   * Reusable worker pool for parallel transient execution. The executor is transient because threads and executor
+   * services are runtime resources rather than process-model state.
+   */
+  private transient java.util.concurrent.ExecutorService parallelTransientExecutor;
+  /** Worker count used to create {@link #parallelTransientExecutor}. */
+  private transient int parallelTransientExecutorSize;
+  /** Counter used to give reusable transient workers stable diagnostic names. */
+  private static final java.util.concurrent.atomic.AtomicInteger TRANSIENT_WORKER_COUNTER =
+      new java.util.concurrent.atomic.AtomicInteger();
 
   /**
    * Pluggable integration strategy advertised to equipment during {@code runTransient}. Defaults to
@@ -4146,8 +4156,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param id calculation identifier
    */
   private void runEquipmentTransientParallel(double dt, UUID id) {
-    java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors
-        .newFixedThreadPool(transientThreadPoolSize);
+    java.util.concurrent.ExecutorService executor = getParallelTransientExecutor();
     List<java.util.concurrent.Future<?>> futures = new ArrayList<java.util.concurrent.Future<?>>(unitOperations.size());
     for (int i = 0; i < unitOperations.size(); i++) {
       final ProcessEquipmentInterface unit = unitOperations.get(i);
@@ -4167,7 +4176,50 @@ public class ProcessSystem extends SimulationBaseClass {
         logger.error("Parallel transient execution failed: " + ex.getMessage(), ex);
       }
     }
-    executor.shutdown();
+  }
+
+  /**
+   * Returns the reusable executor for parallel transient steps, creating it lazily for the configured worker count.
+   * Core workers are allowed to time out after one minute of inactivity so discarded process models do not retain idle
+   * threads indefinitely.
+   *
+   * @return reusable executor sized by {@link #getTransientThreadPoolSize()}
+   */
+  private synchronized java.util.concurrent.ExecutorService getParallelTransientExecutor() {
+    if (parallelTransientExecutor != null && !parallelTransientExecutor.isShutdown()
+        && parallelTransientExecutorSize == transientThreadPoolSize) {
+      return parallelTransientExecutor;
+    }
+    shutdownParallelTransientExecutor();
+    final java.util.concurrent.ThreadFactory defaultFactory = java.util.concurrent.Executors.defaultThreadFactory();
+    java.util.concurrent.ThreadFactory daemonFactory = new java.util.concurrent.ThreadFactory() {
+      @Override
+      public Thread newThread(Runnable task) {
+        Thread worker = defaultFactory.newThread(task);
+        worker.setDaemon(true);
+        worker.setName("NeqSim-Transient-Worker-" + TRANSIENT_WORKER_COUNTER.getAndIncrement());
+        return worker;
+      }
+    };
+    java.util.concurrent.ThreadPoolExecutor executor =
+        (java.util.concurrent.ThreadPoolExecutor) java.util.concurrent.Executors
+            .newFixedThreadPool(transientThreadPoolSize, daemonFactory);
+    executor.setKeepAliveTime(60L, java.util.concurrent.TimeUnit.SECONDS);
+    executor.allowCoreThreadTimeOut(true);
+    parallelTransientExecutor = executor;
+    parallelTransientExecutorSize = transientThreadPoolSize;
+    return parallelTransientExecutor;
+  }
+
+  /**
+   * Retires the reusable parallel transient executor, if one has been created.
+   */
+  private synchronized void shutdownParallelTransientExecutor() {
+    if (parallelTransientExecutor != null) {
+      parallelTransientExecutor.shutdown();
+      parallelTransientExecutor = null;
+      parallelTransientExecutorSize = 0;
+    }
   }
 
   /**
@@ -4541,12 +4593,16 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Enables or disables multi-threaded equipment execution during transient steps.
+   * Enables or disables multi-threaded equipment execution during transient steps. Disabling the feature retires any
+   * reusable transient worker pool owned by this process system.
    *
    * @param enabled true to enable parallel execution
    */
-  public void setParallelTransientEnabled(boolean enabled) {
+  public synchronized void setParallelTransientEnabled(boolean enabled) {
     this.parallelTransientEnabled = enabled;
+    if (!enabled) {
+      shutdownParallelTransientExecutor();
+    }
   }
 
   /**
@@ -4559,12 +4615,17 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Sets the thread pool size for parallel transient execution.
+   * Sets the thread pool size for parallel transient execution. Changing the size retires the existing reusable worker
+   * pool; a replacement is created lazily on the next parallel transient step.
    *
    * @param poolSize number of threads
    */
-  public void setTransientThreadPoolSize(int poolSize) {
-    this.transientThreadPoolSize = Math.max(1, poolSize);
+  public synchronized void setTransientThreadPoolSize(int poolSize) {
+    int normalizedPoolSize = Math.max(1, poolSize);
+    if (normalizedPoolSize != transientThreadPoolSize) {
+      transientThreadPoolSize = normalizedPoolSize;
+      shutdownParallelTransientExecutor();
+    }
   }
 
   /**
