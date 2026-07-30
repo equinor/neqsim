@@ -71,16 +71,16 @@ public class NaphtaliSandholmSolver {
   /** Tray pressures in Pa, indexed [0..N-1]. */
   private double[] P;
 
-  /** Total vapor flow leaving tray j in mol/s, indexed [0..N-1]. */
+  /** Total vapor flow leaving tray j in mol/hr, indexed [0..N-1]. */
   private double[] V;
 
-  /** Total liquid flow leaving tray j in mol/s, indexed [0..N-1]. */
+  /** Total liquid flow leaving tray j in mol/hr, indexed [0..N-1]. */
   private double[] L;
 
-  /** Liquid component flows l_{i,j} in mol/s. Indexed [j][i]. */
+  /** Liquid component flows l_{i,j} in mol/hr. Indexed [j][i]. */
   private double[][] liq;
 
-  /** Vapor component flows v_{i,j} in mol/s. Indexed [j][i]. */
+  /** Vapor component flows v_{i,j} in mol/hr. Indexed [j][i]. */
   private double[][] vap;
 
   /** K-values K_{i,j}. Indexed [j][i]. */
@@ -107,12 +107,12 @@ public class NaphtaliSandholmSolver {
   private double[] hV;
 
   /**
-   * Feed liquid component flows F_L_{i,j} in mol/s. Indexed [j][i]. Zero for non-feed trays.
+   * Feed liquid component flows F_L_{i,j} in mol/hr. Indexed [j][i]. Zero for non-feed trays.
    */
   private double[][] feedLiq;
 
   /**
-   * Feed vapor component flows F_V_{i,j} in mol/s. Indexed [j][i]. Zero for non-feed trays.
+   * Feed vapor component flows F_V_{i,j} in mol/hr. Indexed [j][i]. Zero for non-feed trays.
    */
   private double[][] feedVap;
 
@@ -126,13 +126,19 @@ public class NaphtaliSandholmSolver {
    */
   private double[] feedHV;
 
-  /** Total feed liquid flow on tray j in mol/s. */
+  /** Total feed liquid flow on tray j in mol/hr. */
   private double[] feedLTotal;
 
-  /** Total feed vapor flow on tray j in mol/s. */
+  /** Total feed vapor flow on tray j in mol/hr. */
   private double[] feedVTotal;
 
-  /** Heat input Q_j in J/s (watts) for tray j. */
+  /** Fraction of total tray vapor that continues upward after a side draw. */
+  private double[] internalVaporFraction;
+
+  /** Fraction of total tray liquid that continues downward after a side draw. */
+  private double[] internalLiquidFraction;
+
+  /** Heat input Q_j in J/hr on the solver flow basis for tray j. */
   private double[] Q;
 
   /**
@@ -479,15 +485,79 @@ public class NaphtaliSandholmSolver {
    */
   private boolean componentImbalanceAcceptable(String stageName) {
     double componentImbalance = computeMaxComponentImbalance();
-    if (componentImbalance <= componentImbalanceTolerance) {
+    double activeTolerance = hasActiveSideDraws() ? Math.min(componentImbalanceTolerance, tolerance)
+        : componentImbalanceTolerance;
+    if (componentImbalance <= activeTolerance) {
       return true;
     }
     logger.info(
         "NS: refusing the {} early exit because the worst per-component tray imbalance is {}% of the feed, "
-            + "above the {}% tolerance. The overall column balance is closed, so this leak is only visible "
+            + "above the active {}% tolerance. The overall column balance is closed, so this leak is only visible "
             + "per component. Continuing to Newton refinement.",
-        stageName, componentImbalance * 100.0, componentImbalanceTolerance * 100.0);
+        stageName, componentImbalance * 100.0, activeTolerance * 100.0);
     return false;
+  }
+
+  /**
+   * Check component material balances and the vapor-composition summation equation before accepting a shortcut state.
+   *
+   * <p>
+   * A side draw exposes intermediate tray traffic as an external product, so trace-component closure must use the full
+   * solver tolerance rather than the legacy shortcut tolerance relative to total feed. Result materialization also
+   * requires {@code sum(K*x)=1}; otherwise normalizing the vapor composition rescales every vapor component flow.
+   * Newton's full residual already contains both equations. No-side-draw cases retain the established shortcut gate.
+   * </p>
+   *
+   * @param stageName solver stage requesting acceptance, used for diagnostics
+   * @return {@code true} when the active component and summation equations satisfy their tolerances
+   */
+  private boolean meshClosureAcceptable(String stageName) {
+    if (!componentImbalanceAcceptable(stageName)) {
+      return false;
+    }
+    if (!hasActiveSideDraws()) {
+      return true;
+    }
+    double summationResidual = computeMaxSummationResidual();
+    if (summationResidual <= tolerance) {
+      return true;
+    }
+    logger.info(
+        "NS: refusing the {} acceptance because max abs(sum(K*x)-1)={} exceeds the {} residual tolerance; "
+            + "normalizing that vapor composition would break component conservation. Continuing to Newton refinement.",
+        stageName, summationResidual, tolerance);
+    return false;
+  }
+
+  /**
+   * Check whether any tray withdraws liquid or vapor as an external side product.
+   *
+   * @return {@code true} when an active liquid or vapor side draw is present
+   */
+  private boolean hasActiveSideDraws() {
+    for (int j = 0; j < N; j++) {
+      if (internalLiquidFraction[j] < 1.0 || internalVaporFraction[j] < 1.0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Compute the worst vapor-composition summation residual across all trays.
+   *
+   * @return maximum absolute value of {@code sum_i(K_i*x_i)-1}
+   */
+  private double computeMaxSummationResidual() {
+    double worst = 0.0;
+    for (int j = 0; j < N; j++) {
+      double sumKx = 0.0;
+      for (int i = 0; i < C; i++) {
+        sumKx += K[j][i] * liq[j][i] / Math.max(L[j], 1.0e-20);
+      }
+      worst = Math.max(worst, Math.abs(sumKx - 1.0));
+    }
+    return worst;
   }
 
   /**
@@ -575,8 +645,7 @@ public class NaphtaliSandholmSolver {
       // energy is in the 1-5% range, run Sum-Rates (which adjusts T from the
       // energy balance) — that refines T without invoking Newton, which is
       // documented to diverge for the no-condenser/T-spec topology.
-      if (useOverallMBClosure && mbErrorBP < 0.005 && energyErrorBP < 0.01
-          && componentImbalanceAcceptable("Bubble-Point")) {
+      if (useOverallMBClosure && mbErrorBP < 0.005 && energyErrorBP < 0.01 && meshClosureAcceptable("Bubble-Point")) {
         logger.info("NS: mass+energy balance OK (mb={}%, E={}%), accepting solution",
             String.format("%.4f", mbErrorBP * 100), String.format("%.2f", energyErrorBP * 100));
         logger.debug("NS: accepting Bubble-Point solution without Sum-Rates correction");
@@ -599,8 +668,7 @@ public class NaphtaliSandholmSolver {
         norm = vectorNorm(residual);
         double mbAfterSR = computeMassBalanceError();
         double energyAfterSR = computeMaxRelativeEnergyError();
-        if (mbAfterSR < 0.005 && energyAfterSR < 0.05 && norm < tolerance
-            && componentImbalanceAcceptable("Sum-Rates")) {
+        if (mbAfterSR < 0.005 && energyAfterSR < 0.05 && norm < tolerance && meshClosureAcceptable("Sum-Rates")) {
           logger.debug("NS: Sum-Rates residual is below tolerance; accepting solution");
           applyResultsToColumn(id, 0, norm, startTime);
           return true;
@@ -620,7 +688,7 @@ public class NaphtaliSandholmSolver {
         // from ||F||=4 to 1e5 in one step). Once SR has closed mass balance
         // and energy balance, accept that result and skip Newton.
         if (useOverallMBClosure && mbAfterSR < 0.05 && energyAfterSR < 0.05
-            && componentImbalanceAcceptable("Sum-Rates without Newton")) {
+            && meshClosureAcceptable("Sum-Rates without Newton")) {
           logger.debug("NS: accepting Sum-Rates result without Newton because overall-MB closure is ill-conditioned "
               + "(mass balance={}%, energy={}%);", mbAfterSR * 100, energyAfterSR * 100);
           applyResultsToColumn(id, 0, norm, startTime);
@@ -660,7 +728,7 @@ public class NaphtaliSandholmSolver {
           double eErr = computeMaxRelativeEnergyError();
           logger.info("NS Newton: bestNorm={} massBalErr={}% energyErr={}%", String.format("%.6e", bestNorm),
               String.format("%.4f", mbErr * 100), String.format("%.2f", eErr * 100));
-          if (mbErr < 0.01 && componentImbalanceAcceptable("Newton time-limit")) {
+          if (mbErr < 0.01 && meshClosureAcceptable("Newton time-limit")) {
             applyResultsToColumn(id, iter, bestNorm, startTime);
             return true;
           }
@@ -787,7 +855,7 @@ public class NaphtaliSandholmSolver {
               logger.info("NS: stagnation detected (bestNorm={}, massBalErr={}%, energyErr={}%)",
                   String.format("%.6e", bestNorm), String.format("%.4f", mbErr * 100),
                   String.format("%.2f", eErr * 100));
-              if (mbErr < 0.005 && componentImbalanceAcceptable("Newton stagnation")) {
+              if (mbErr < 0.005 && meshClosureAcceptable("Newton stagnation")) {
                 logger.info("NS: mass balance within 0.5%, accepting (energy={}%)", String.format("%.2f", eErr * 100));
                 applyResultsToColumn(id, iter, bestNorm, startTime);
                 return true;
@@ -806,7 +874,7 @@ public class NaphtaliSandholmSolver {
       applyResultsToColumn(id, maxIterations, norm, startTime);
       // Partial convergence is only acceptable when each component balance still closes; a leaky
       // profile must be reported as not accepted so the column does not present it as a solution.
-      return norm < tolerance * 100 && componentImbalanceAcceptable("partial convergence");
+      return norm < tolerance * 100 && meshClosureAcceptable("partial convergence");
     } catch (Exception ex) {
       logger.error("Naphtali-Sandholm solver exception", ex);
       logger.error("NS EXCEPTION: {}: {}", ex.getClass().getName(), ex.getMessage());
@@ -891,6 +959,8 @@ public class NaphtaliSandholmSolver {
     feedHV = new double[N];
     feedLTotal = new double[N];
     feedVTotal = new double[N];
+    internalVaporFraction = new double[N];
+    internalLiquidFraction = new double[N];
     Q = new double[N];
     fixedTemperature = new double[N];
     Arrays.fill(fixedTemperature, Double.NaN);
@@ -907,6 +977,8 @@ public class NaphtaliSandholmSolver {
       } else {
         P[j] = fallbackPressure;
       }
+      internalVaporFraction[j] = 1.0 - tray.getGasSideDrawFraction();
+      internalLiquidFraction[j] = 1.0 - tray.getLiquidSideDrawFraction();
     }
 
     // Process every external feed in the same deterministic tray/stream order used
@@ -1524,19 +1596,20 @@ public class NaphtaliSandholmSolver {
     double boilup = Math.max(overheadTotal - sumFvap, 0.02 * totalFeed);
     V[0] = boilup;
     for (int j = 1; j < N; j++) {
-      V[j] = V[j - 1] + feedVapPerTray[j];
+      V[j] = internalVaporFraction[j - 1] * V[j - 1] + feedVapPerTray[j];
       V[j] = Math.max(V[j], 1e-6 * totalFeed);
     }
     V[N - 1] = overheadTotal; // enforce top boundary
 
-    // L profile by global per-tray MB walking up:
-    // L[j+1] = V[j] + L[j] - V[j-1] - F[j] (V[-1] = 0)
+    // L profile by global per-tray MB walking up. Incoming traffic is the
+    // fraction left after the upstream side draw; L[j] and V[j] remain the
+    // total phase flows before the local withdrawal.
     L[0] = bottomsTotal;
-    double VbelowTotal = 0.0;
     for (int j = 0; j < N - 1; j++) {
-      L[j + 1] = V[j] + L[j] - VbelowTotal - feedTotalPerTray[j];
+      double vaporFromBelow = j > 0 ? internalVaporFraction[j - 1] * V[j - 1] : 0.0;
+      double liquidToTrayBelow = V[j] + L[j] - vaporFromBelow - feedTotalPerTray[j];
+      L[j + 1] = liquidToTrayBelow / Math.max(internalLiquidFraction[j + 1], 1e-12);
       L[j + 1] = Math.max(L[j + 1], 1e-6 * totalFeed);
-      VbelowTotal = V[j];
     }
 
     // ----- 5. Per-component flows via forward shooting from reboiler -----
@@ -1579,7 +1652,9 @@ public class NaphtaliSandholmSolver {
         // + L_i[j]
         for (int i = 0; i < C; i++) {
           double Fij = feedLiq[j][i] + feedVap[j][i];
-          double Lnext = Viloc[j][i] + Liloc[j][i] - VimPrev[i] - Fij;
+          double vaporFromBelow = j > 0 ? internalVaporFraction[j - 1] * VimPrev[i] : 0.0;
+          double liquidToTrayBelow = Viloc[j][i] + Liloc[j][i] - vaporFromBelow - Fij;
+          double Lnext = liquidToTrayBelow / Math.max(internalLiquidFraction[j + 1], 1e-12);
           Liloc[j + 1][i] = Math.max(Lnext, 1e-15);
         }
         System.arraycopy(Viloc[j], 0, VimPrev, 0, C);
@@ -1600,7 +1675,7 @@ public class NaphtaliSandholmSolver {
     for (int i = 0; i < C; i++) {
       double Fij = feedLiq[N - 1][i] + feedVap[N - 1][i];
       double VimN2 = (N >= 2) ? Viloc[N - 2][i] : 0.0;
-      double Lnew = VimN2 + Fij - Viloc[N - 1][i];
+      double Lnew = internalVaporFraction[N - 2] * VimN2 + Fij - Viloc[N - 1][i];
       Liloc[N - 1][i] = Math.max(Lnew, 1e-15);
     }
 
@@ -1695,7 +1770,9 @@ public class NaphtaliSandholmSolver {
         if (j < N - 1) {
           for (int i = 0; i < C; i++) {
             double Fij = feedLiq[j][i] + feedVap[j][i];
-            double Lnext = Viloc[j][i] + Liloc[j][i] - VimPrev[i] - Fij;
+            double vaporFromBelow = j > 0 ? internalVaporFraction[j - 1] * VimPrev[i] : 0.0;
+            double liquidToTrayBelow = Viloc[j][i] + Liloc[j][i] - vaporFromBelow - Fij;
+            double Lnext = liquidToTrayBelow / Math.max(internalLiquidFraction[j + 1], 1e-12);
             Liloc[j + 1][i] = Math.max(Lnext, 1e-15);
           }
           System.arraycopy(Viloc[j], 0, VimPrev, 0, C);
@@ -1706,7 +1783,7 @@ public class NaphtaliSandholmSolver {
         Viloc[N - 1][i] = overhead_i[i];
         double Fij = feedLiq[N - 1][i] + feedVap[N - 1][i];
         double VimN2 = (N >= 2) ? Viloc[N - 2][i] : 0.0;
-        double Lnew = VimN2 + Fij - Viloc[N - 1][i];
+        double Lnew = internalVaporFraction[N - 2] * VimN2 + Fij - Viloc[N - 1][i];
         Liloc[N - 1][i] = Math.max(Lnew, 1e-15);
       }
       // Refresh L[j] totals from new component flows (V[j] is held; it carries
@@ -1761,7 +1838,11 @@ public class NaphtaliSandholmSolver {
     // Component-MB diagnostic: per-component feed vs (overhead + bottoms).
     double maxCompMBerr = 0;
     for (int i = 0; i < C; i++) {
-      double out = vap[N - 1][i] + liq[0][i];
+      double out = internalVaporFraction[N - 1] * vap[N - 1][i] + internalLiquidFraction[0] * liq[0][i];
+      for (int j = 0; j < N; j++) {
+        out += (1.0 - internalVaporFraction[j]) * vap[j][i];
+        out += (1.0 - internalLiquidFraction[j]) * liq[j][i];
+      }
       double err = Math.abs(out - Fi[i]) / Math.max(Fi[i], 1e-20);
       if (err > maxCompMBerr) {
         maxCompMBerr = err;
@@ -2171,7 +2252,7 @@ public class NaphtaliSandholmSolver {
         double numerator = 0;
         if (j < N - 1) {
           // Liquid from tray above: L_{j+1} * (hL_{j+1} - hL_j)
-          numerator += L[j + 1] * (hL[j + 1] - hL[j]);
+          numerator += internalLiquidFraction[j + 1] * L[j + 1] * (hL[j + 1] - hL[j]);
         }
         if (j > 0) {
           // Vapor from tray below enters with hV_{j-1}, already mixed
@@ -2195,7 +2276,7 @@ public class NaphtaliSandholmSolver {
         // V_j = [L_{j+1}*(hL_{j+1}-hL_j) + V_{j-1}*(hV_{j-1}-hL_j) + F*hF - F*hL_j + Q]
         // / (hV_j - hL_j)
         if (j > 0) {
-          numerator += V[j - 1] * (hV[j - 1] - hL[j]);
+          numerator += internalVaporFraction[j - 1] * V[j - 1] * (hV[j - 1] - hL[j]);
         }
 
         double newV = numerator / denominator;
@@ -2537,14 +2618,16 @@ public class NaphtaliSandholmSolver {
         // V[0] = boilupRatio * L[0] gets enforced below by cascade
       }
       // Reboiler vapor anchor: V[0] = L[1] + feed[0] - L[0]
-      newV[0] = Math.max(newL[1] + feedLTotal[0] + feedVTotal[0] - newL[0], 1e-10);
+      newV[0] = Math.max(internalLiquidFraction[1] * newL[1] + feedLTotal[0] + feedVTotal[0] - newL[0], 1e-10);
       // Cascade up: V[j] = V[j-1] + L[j+1] - L[j] + feed[j], j=1..N-2
       for (int j = 1; j < N - 1; j++) {
         double netFeed = feedLTotal[j] + feedVTotal[j];
-        newV[j] = Math.max(newV[j - 1] + newL[j + 1] - newL[j] + netFeed, 1e-10);
+        newV[j] = Math.max(internalVaporFraction[j - 1] * newV[j - 1] + internalLiquidFraction[j + 1] * newL[j + 1]
+            - newL[j] + netFeed, 1e-10);
       }
       // Top: V[N-1] = V[N-2] + feed[N-1] - L[N-1] (no L[N])
-      newV[N - 1] = Math.max(newV[N - 2] + feedLTotal[N - 1] + feedVTotal[N - 1] - newL[N - 1], 1e-10);
+      newV[N - 1] = Math
+          .max(internalVaporFraction[N - 2] * newV[N - 2] + feedLTotal[N - 1] + feedVTotal[N - 1] - newL[N - 1], 1e-10);
 
       // Blend with current to damp the change (stability)
       for (int j = 0; j < N; j++) {
@@ -2604,10 +2687,10 @@ public class NaphtaliSandholmSolver {
           double hOutJ = V[j] * hV[j] + L[j] * hL[j];
           double hInJ = 0;
           if (j > 0) {
-            hInJ += V[j - 1] * hV[j - 1];
+            hInJ += internalVaporFraction[j - 1] * V[j - 1] * hV[j - 1];
           }
           if (j < N - 1) {
-            hInJ += L[j + 1] * hL[j + 1];
+            hInJ += internalLiquidFraction[j + 1] * L[j + 1] * hL[j + 1];
           }
           double feedH = feedLTotal[j] * feedHL[j] + feedVTotal[j] * feedHV[j];
           double hInTotal = hInJ + feedH;
@@ -2711,10 +2794,10 @@ public class NaphtaliSandholmSolver {
       double hOut = Math.abs(V[j] * hV[j] + L[j] * hL[j]);
       double hIn = 0;
       if (j > 0) {
-        hIn += Math.abs(V[j - 1] * hV[j - 1]);
+        hIn += Math.abs(internalVaporFraction[j - 1] * V[j - 1] * hV[j - 1]);
       }
       if (j < N - 1) {
-        hIn += Math.abs(L[j + 1] * hL[j + 1]);
+        hIn += Math.abs(internalLiquidFraction[j + 1] * L[j + 1] * hL[j + 1]);
       }
       double scale = Math.max(hOut, hIn);
       if (scale > 1e-10) {
@@ -2729,11 +2812,11 @@ public class NaphtaliSandholmSolver {
    * Compute energy balance error for each tray.
    *
    * <p>
-   * E_j = H_out_j - H_in_j where H_out_j = V[j]*hV[j] + L[j]*hL[j] and H_in_j = V[j-1]*hV[j-1] + L[j+1]*hL[j+1] +
-   * feedEnthalpy[j].
+   * E_j = H_out_j - H_in_j. Incoming inter-tray phase flows are multiplied by the fraction remaining after the upstream
+   * side draw; the withdrawn fraction is an external product rather than traffic to the adjacent tray.
    * </p>
    *
-   * @return array of energy errors per tray in J
+   * @return array of energy-rate errors per tray in J/h
    */
   private double[] computeEnergyErrors() {
     double[] eErr = new double[N];
@@ -2741,10 +2824,10 @@ public class NaphtaliSandholmSolver {
       double hOut = V[j] * hV[j] + L[j] * hL[j];
       double hIn = 0;
       if (j > 0) {
-        hIn += V[j - 1] * hV[j - 1];
+        hIn += internalVaporFraction[j - 1] * V[j - 1] * hV[j - 1];
       }
       if (j < N - 1) {
-        hIn += L[j + 1] * hL[j + 1];
+        hIn += internalLiquidFraction[j + 1] * L[j + 1] * hL[j + 1];
       }
       // Feed enthalpy
       double feedMolesJ = 0;
@@ -2763,8 +2846,9 @@ public class NaphtaliSandholmSolver {
    * Solve the tridiagonal material balance for a single component.
    *
    * <p>
-   * For component i, the material balance on tray j gives: a_j * l_{i,j-1} + b_j * l_{i,j} + c_j * l_{i,j+1} = d_j
-   * where a_j = -K_{i,j-1}*V_{j-1}/L_{j-1}, b_j = 1 + K_{i,j}*V_j/L_j, c_j = -1
+   * For component i, the material balance on tray j gives: a_j * l_{i,j-1} + b_j * l_{i,j} + c_j * l_{i,j+1} = d_j,
+   * where a_j = -fV_{j-1}*K_{i,j-1}*V_{j-1}/L_{j-1}, b_j = 1 + K_{i,j}*V_j/L_j, and c_j = -fL_{j+1}. The factors fV and
+   * fL are the vapor and liquid fractions remaining as inter-tray traffic after any side draw.
    * </p>
    *
    * @param comp component index
@@ -2776,9 +2860,9 @@ public class NaphtaliSandholmSolver {
     double[] d = new double[N]; // RHS
 
     for (int j = 0; j < N; j++) {
-      a[j] = (j > 0) ? -K[j - 1][comp] * V[j - 1] / Math.max(L[j - 1], 1e-20) : 0.0;
+      a[j] = (j > 0) ? -internalVaporFraction[j - 1] * K[j - 1][comp] * V[j - 1] / Math.max(L[j - 1], 1e-20) : 0.0;
       b[j] = 1.0 + K[j][comp] * V[j] / Math.max(L[j], 1e-20);
-      c[j] = (j < N - 1) ? -1.0 : 0.0;
+      c[j] = (j < N - 1) ? -internalLiquidFraction[j + 1] : 0.0;
       d[j] = feedLiq[j][comp] + feedVap[j][comp];
     }
 
@@ -2916,12 +3000,12 @@ public class NaphtaliSandholmSolver {
 
         // Liquid from tray above (j+1)
         if (j < N - 1) {
-          Mij -= liq[j + 1][i];
+          Mij -= internalLiquidFraction[j + 1] * liq[j + 1][i];
         }
 
         // Vapor from tray below (j-1)
         if (j > 0) {
-          Mij -= vap[j - 1][i];
+          Mij -= internalVaporFraction[j - 1] * vap[j - 1][i];
         }
 
         // Feed
@@ -2938,10 +3022,10 @@ public class NaphtaliSandholmSolver {
         double Hj = Lj * hL[j] + V[j] * hV[j];
 
         if (j < N - 1) {
-          Hj -= L[j + 1] * hL[j + 1];
+          Hj -= internalLiquidFraction[j + 1] * L[j + 1] * hL[j + 1];
         }
         if (j > 0) {
-          Hj -= V[j - 1] * hV[j - 1];
+          Hj -= internalVaporFraction[j - 1] * V[j - 1] * hV[j - 1];
         }
 
         // Feed enthalpies
@@ -3042,10 +3126,10 @@ public class NaphtaliSandholmSolver {
       double Mij = liq[j][i] + vap[j][i];
 
       if (j < N - 1) {
-        Mij -= liq[j + 1][i];
+        Mij -= internalLiquidFraction[j + 1] * liq[j + 1][i];
       }
       if (j > 0) {
-        Mij -= vap[j - 1][i];
+        Mij -= internalVaporFraction[j - 1] * vap[j - 1][i];
       }
       Mij -= feedLiq[j][i] + feedVap[j][i];
 
@@ -3058,10 +3142,10 @@ public class NaphtaliSandholmSolver {
     } else {
       double Hj = Lj * hL[j] + V[j] * hV[j];
       if (j < N - 1) {
-        Hj -= L[j + 1] * hL[j + 1];
+        Hj -= internalLiquidFraction[j + 1] * L[j + 1] * hL[j + 1];
       }
       if (j > 0) {
-        Hj -= V[j - 1] * hV[j - 1];
+        Hj -= internalVaporFraction[j - 1] * V[j - 1] * hV[j - 1];
       }
       Hj -= feedLTotal[j] * feedHL[j] + feedVTotal[j] * feedHV[j];
       Hj -= Q[j];
@@ -3408,12 +3492,12 @@ public class NaphtaliSandholmSolver {
             bDiag[j] = L[j] + V[j] * Kij;
             if (j > 0) {
               double Kjm1 = alpha[j - 1][i] * Kb[j - 1];
-              aDiag[j] = -V[j - 1] * Kjm1;
+              aDiag[j] = -internalVaporFraction[j - 1] * V[j - 1] * Kjm1;
             } else {
               aDiag[j] = 0;
             }
             if (j < N - 1) {
-              cDiag[j] = -L[j + 1];
+              cDiag[j] = -internalLiquidFraction[j + 1] * L[j + 1];
             } else {
               cDiag[j] = 0;
             }
@@ -3550,7 +3634,7 @@ public class NaphtaliSandholmSolver {
       // For T-pin reboiler stripper: Q[0] (reboiler duty) is the IMPLICIT
       // free variable that holds T[0] at its pinned value. Compute it from
       // overall column energy balance at the current state:
-      // Q_reb = L[0]*hL[0] + V[N-1]*hV[N-1]
+      // Q_reb = sum(all terminal and side-product enthalpy rates)
       // - sum_j(F_L[j]*hF_L[j] + F_V[j]*hF_V[j])
       // - sum_j(Q[j] for j!=0)
       // This gives the duty needed to close the overall EB given current
@@ -3558,8 +3642,10 @@ public class NaphtaliSandholmSolver {
       double qRebOverall = 0.0;
       boolean useOverallQreb = hasReboiler && useOverallMBClosure;
       if (useOverallQreb) {
-        qRebOverall = L[0] * hL[0] + V[N - 1] * hV[N - 1];
+        qRebOverall = internalLiquidFraction[0] * L[0] * hL[0] + internalVaporFraction[N - 1] * V[N - 1] * hV[N - 1];
         for (int jj = 0; jj < N; jj++) {
+          qRebOverall += (1.0 - internalLiquidFraction[jj]) * L[jj] * hL[jj];
+          qRebOverall += (1.0 - internalVaporFraction[jj]) * V[jj] * hV[jj];
           qRebOverall -= feedLTotal[jj] * feedHL[jj];
           qRebOverall -= feedVTotal[jj] * feedHV[jj];
           if (jj != 0) {
@@ -3580,7 +3666,7 @@ public class NaphtaliSandholmSolver {
           }
           double num = -L[0] * hL[0];
           if (N > 1) {
-            num += L[1] * hL[1];
+            num += internalLiquidFraction[1] * L[1] * hL[1];
           }
           num += feedLTotal[0] * feedHL[0];
           num += feedVTotal[0] * feedHV[0];
@@ -3627,10 +3713,10 @@ public class NaphtaliSandholmSolver {
         }
         double num = 0;
         if (j < N - 1) {
-          num += L[j + 1] * (hL[j + 1] - hL[j]);
+          num += internalLiquidFraction[j + 1] * L[j + 1] * (hL[j + 1] - hL[j]);
         }
         if (j > 0) {
-          num += V[j - 1] * (hV[j - 1] - hL[j]);
+          num += internalVaporFraction[j - 1] * V[j - 1] * (hV[j - 1] - hL[j]);
         }
         num += feedLTotal[j] * (feedHL[j] - hL[j]);
         num += feedVTotal[j] * (feedHV[j] - hL[j]);
@@ -3687,13 +3773,21 @@ public class NaphtaliSandholmSolver {
       // L[j+1] = L[j] + V[j] - V[j-1] - Fmol[j] (rearranged tray-j MB)
       // starting from L[0] from overall MB closure.
       if (hasReboiler && useOverallMBClosure) {
-        L[0] = Math.max(totalFeedMolesField - V[N - 1], totalFeedMolesField * 0.001);
+        double nonBottomProducts = internalVaporFraction[N - 1] * V[N - 1];
+        for (int j = 0; j < N; j++) {
+          nonBottomProducts += (1.0 - internalVaporFraction[j]) * V[j];
+          if (j > 0) {
+            nonBottomProducts += (1.0 - internalLiquidFraction[j]) * L[j];
+          }
+        }
+        L[0] = Math.max(totalFeedMolesField - nonBottomProducts, totalFeedMolesField * 0.001);
       }
       for (int j = 0; j < N - 1; j++) {
         // tray-j MB: V[j-1] + L[j+1] + F[j] = V[j] + L[j]
         // -> L[j+1] = L[j] + V[j] - (j>0 ? V[j-1] : 0) - F[j]
-        double Vprev = (j > 0) ? V[j - 1] : 0.0;
-        double newLjp1 = L[j] + V[j] - Vprev - Fmol[j];
+        double vaporFromBelow = j > 0 ? internalVaporFraction[j - 1] * V[j - 1] : 0.0;
+        double liquidToTrayBelow = L[j] + V[j] - vaporFromBelow - Fmol[j];
+        double newLjp1 = liquidToTrayBelow / Math.max(internalLiquidFraction[j + 1], 1e-12);
         if (newLjp1 < 1e-10) {
           newLjp1 = 1e-10;
         }
@@ -3972,8 +4066,8 @@ public class NaphtaliSandholmSolver {
    * Compute the overall mass balance error as a fraction of total feed.
    *
    * <p>
-   * The overall mass balance is: V[N-1] + L[0] = total_feed. This method returns the absolute relative error |V[N-1] +
-   * L[0] - feed| / feed.
+   * Products comprise the terminal vapor and liquid flows remaining after their tray splits plus every vapor and liquid
+   * side draw. This method returns the absolute product-versus-feed difference divided by total feed.
    * </p>
    *
    * @return mass balance error as a fraction (0.005 = 0.5%)
@@ -3985,20 +4079,23 @@ public class NaphtaliSandholmSolver {
         totalFeedFlow += feedLiq[j][i] + feedVap[j][i];
       }
     }
-    double topFlow = V[N - 1]; // vapor leaving top tray
-    double botFlow = L[0]; // liquid leaving bottom tray
-    return Math.abs(topFlow + botFlow - totalFeedFlow) / Math.max(totalFeedFlow, 1e-20);
+    double productFlow = internalVaporFraction[N - 1] * V[N - 1] + internalLiquidFraction[0] * L[0];
+    for (int j = 0; j < N; j++) {
+      productFlow += (1.0 - internalVaporFraction[j]) * V[j];
+      productFlow += (1.0 - internalLiquidFraction[j]) * L[j];
+    }
+    return Math.abs(productFlow - totalFeedFlow) / Math.max(totalFeedFlow, 1e-20);
   }
 
   /**
    * Maximum per-tray, per-component molar imbalance, expressed relative to the total feed molar flow.
    *
    * <p>
-   * For each tray j and component i this evaluates the MESH M-residual {@code feed_{j,i} + liq_{j+1,i} + vap_{j-1,i} -
-   * liq_{j,i} - vap_{j,i}} (the same equation that {@link #computeResidual()} packs into the F vector), takes the
-   * absolute value, and divides by the total feed flow. Returning the worst value across all (j, i) pairs exposes
-   * leakage on individual species, which the scalar {@link #computeMassBalanceError()} (overall column closure) and the
-   * L2 norm {@code ||F||} can both mask.
+   * For each tray j and component i this evaluates the MESH M-residual using only the fractions of {@code liq[j+1][i]}
+   * and {@code vap[j-1][i]} remaining after upstream side draws (the same equation that {@link #computeResidual()}
+   * packs into the F vector), takes the absolute value, and divides by the total feed flow. Returning the worst value
+   * across all (j, i) pairs exposes leakage on individual species, which the scalar {@link #computeMassBalanceError()}
+   * (overall column closure) and the L2 norm {@code ||F||} can both mask.
    * </p>
    *
    * @return maximum relative component imbalance (1.0e-3 = 0.1%)
@@ -4016,10 +4113,10 @@ public class NaphtaliSandholmSolver {
       for (int i = 0; i < C; i++) {
         double mij = liq[j][i] + vap[j][i];
         if (j < N - 1) {
-          mij -= liq[j + 1][i];
+          mij -= internalLiquidFraction[j + 1] * liq[j + 1][i];
         }
         if (j > 0) {
-          mij -= vap[j - 1][i];
+          mij -= internalVaporFraction[j - 1] * vap[j - 1][i];
         }
         mij -= feedLiq[j][i] + feedVap[j][i];
         double rel = Math.abs(mij) / denom;
@@ -4514,12 +4611,46 @@ public class NaphtaliSandholmSolver {
   }
 
   /**
+   * Create an applied single-phase stream system from the solver's component flow inventory.
+   *
+   * <p>
+   * Component flows are assigned atomically in mol/hr so normalization cannot change the accepted species inventory.
+   * The single-phase configuration is applied after {@code init(0)} because initialization may rebuild the phase list.
+   * </p>
+   *
+   * @param trayIndex tray index
+   * @param componentFlows solver component flows in mol/hr
+   * @param fraction fraction routed to this stream
+   * @param phaseType intended phase type
+   * @return initialized stream thermodynamic system
+   */
+  private SystemInterface createAppliedPhaseSystem(int trayIndex, double[] componentFlows, double fraction,
+      PhaseType phaseType) {
+    double[] appliedComponentFlows = new double[C];
+    for (int i = 0; i < C; i++) {
+      appliedComponentFlows[i] = Math.max(0.0, fraction * componentFlows[i]);
+    }
+
+    SystemInterface system = referenceSystem.clone();
+    system.setTemperature(T[trayIndex]);
+    system.setPressure(P[trayIndex] / 1e5);
+    system.setComponentFlowRates(appliedComponentFlows, "mol/hr");
+    system.init(0);
+    system.setNumberOfPhases(1);
+    system.setPhaseType(0, phaseType);
+    system.setForcePhaseTypes(true);
+    system.init(2);
+    return system;
+  }
+
+  /**
    * Apply the converged solution back to the DistillationColumn trays.
    *
    * <p>
-   * For each tray, creates a two-phase thermo system at the converged T, P, and overall composition (from liquid +
-   * vapor flows), performs a TPflash, then extracts the gas phase via {@code phaseToSystem(0)} and the liquid phase via
-   * {@code phaseToSystem(1)}. The phase flow rates are set to V[j] and L[j] from the solver variables.
+   * For each tray, creates a two-phase thermo system at the converged T, P, and overall composition for tray-state
+   * reporting. When a side draw is active, internal and side-product streams are materialized from the solver's vapor
+   * and liquid component-flow arrays so each split preserves the accepted species inventory exactly. Columns without
+   * side draws retain the established equilibrium-composition materialization path.
    * </p>
    *
    * @param id calculation identifier
@@ -4528,6 +4659,14 @@ public class NaphtaliSandholmSolver {
    * @param startTime start time in nanoseconds
    */
   private void applyResultsToColumn(UUID id, int iterations, double finalNorm, long startTime) {
+    boolean hasActiveSideDraw = false;
+    for (int j = 0; j < N; j++) {
+      if (internalVaporFraction[j] < 1.0 || internalLiquidFraction[j] < 1.0) {
+        hasActiveSideDraw = true;
+        break;
+      }
+    }
+
     for (int j = 0; j < N; j++) {
       SimpleTray tray = (SimpleTray) column.getTray(j);
 
@@ -4538,16 +4677,12 @@ public class NaphtaliSandholmSolver {
       }
       L[j] = Math.max(sumLiq, 1e-20);
 
-      // Liquid composition x
+      // Established equilibrium-composition path for columns without side draws.
       double[] x = new double[C];
+      double[] y = new double[C];
+      double sumY = 0.0;
       for (int i = 0; i < C; i++) {
         x[i] = liq[j][i] / L[j];
-      }
-
-      // Vapor composition y from K-values
-      double[] y = new double[C];
-      double sumY = 0;
-      for (int i = 0; i < C; i++) {
         y[i] = K[j][i] * x[i];
         sumY += y[i];
       }
@@ -4594,31 +4729,49 @@ public class NaphtaliSandholmSolver {
       // Build gas and liquid output streams from the flashed tray system
       tray.invalidateOutStreamCache();
 
-      // Build gas stream using the solver's own K-value-derived vapor composition
-      // y[].
-      // We do NOT use phaseToSystem(0) because with multiPhaseCheck and heavy
-      // pseudo-components, phase 0 after TPflash can be a heavy liquid phase
-      // (not vapor), leading to inverted compositions (100% C39-C80* in overhead).
-      SystemInterface gasSystem = referenceSystem.clone();
-      gasSystem.setTemperature(T[j]);
-      gasSystem.setPressure(P[j] / 1e5);
-      gasSystem.setTotalNumberOfMoles(V[j] / 3600.0);
-      gasSystem.setMolarComposition(y);
-      gasSystem.setNumberOfPhases(1);
-      gasSystem.init(0);
-      gasSystem.init(2);
-      tray.setCachedGasOutStream(new neqsim.process.equipment.stream.Stream("gas_" + j, gasSystem));
+      if (hasActiveSideDraw) {
+        // Materialize each split from the solver's component flow vector. Setting
+        // composition and total flow separately allows normalization and phase
+        // reinitialization to drift from the accepted species inventory.
+        SystemInterface gasSystem = createAppliedPhaseSystem(j, vap[j], internalVaporFraction[j], PhaseType.GAS);
+        tray.setCachedGasOutStream(new neqsim.process.equipment.stream.Stream("gas_" + j, gasSystem));
 
-      // Build liquid stream using the solver's liquid composition x[]
-      SystemInterface liqSystem = referenceSystem.clone();
-      liqSystem.setTemperature(T[j]);
-      liqSystem.setPressure(P[j] / 1e5);
-      liqSystem.setTotalNumberOfMoles(L[j] / 3600.0);
-      liqSystem.setMolarComposition(x);
-      liqSystem.setNumberOfPhases(1);
-      liqSystem.init(0);
-      liqSystem.init(2);
-      tray.setCachedLiquidOutStream(new neqsim.process.equipment.stream.Stream("liq_" + j, liqSystem));
+        if (internalVaporFraction[j] < 1.0) {
+          SystemInterface gasSideSystem = createAppliedPhaseSystem(j, vap[j], 1.0 - internalVaporFraction[j],
+              PhaseType.GAS);
+          tray.setCachedGasSideDrawStream(new neqsim.process.equipment.stream.Stream("gas_side_" + j, gasSideSystem));
+        }
+
+        SystemInterface liqSystem = createAppliedPhaseSystem(j, liq[j], internalLiquidFraction[j], PhaseType.LIQUID);
+        tray.setCachedLiquidOutStream(new neqsim.process.equipment.stream.Stream("liq_" + j, liqSystem));
+
+        if (internalLiquidFraction[j] < 1.0) {
+          SystemInterface liquidSideSystem = createAppliedPhaseSystem(j, liq[j], 1.0 - internalLiquidFraction[j],
+              PhaseType.LIQUID);
+          tray.setCachedLiquidSideDrawStream(
+              new neqsim.process.equipment.stream.Stream("liq_side_" + j, liquidSideSystem));
+        }
+      } else {
+        SystemInterface gasSystem = referenceSystem.clone();
+        gasSystem.setTemperature(T[j]);
+        gasSystem.setPressure(P[j] / 1e5);
+        gasSystem.setTotalNumberOfMoles(V[j] / 3600.0);
+        gasSystem.setMolarComposition(y);
+        gasSystem.setNumberOfPhases(1);
+        gasSystem.init(0);
+        gasSystem.init(2);
+        tray.setCachedGasOutStream(new neqsim.process.equipment.stream.Stream("gas_" + j, gasSystem));
+
+        SystemInterface liqSystem = referenceSystem.clone();
+        liqSystem.setTemperature(T[j]);
+        liqSystem.setPressure(P[j] / 1e5);
+        liqSystem.setTotalNumberOfMoles(L[j] / 3600.0);
+        liqSystem.setMolarComposition(x);
+        liqSystem.setNumberOfPhases(1);
+        liqSystem.init(0);
+        liqSystem.init(2);
+        tray.setCachedLiquidOutStream(new neqsim.process.equipment.stream.Stream("liq_" + j, liqSystem));
+      }
     }
 
     // Compute mass balance error for diagnostics
@@ -4628,9 +4781,14 @@ public class NaphtaliSandholmSolver {
         totalFeedFlow += feedLiq[j][i] + feedVap[j][i];
       }
     }
-    double topFlow = V[N - 1]; // vapor leaving top tray
-    double botFlow = L[0]; // liquid leaving bottom tray
-    double massBalErr = Math.abs(topFlow + botFlow - totalFeedFlow) / Math.max(totalFeedFlow, 1e-20);
+    double topFlow = internalVaporFraction[N - 1] * V[N - 1];
+    double botFlow = internalLiquidFraction[0] * L[0];
+    double productFlow = topFlow + botFlow;
+    for (int j = 0; j < N; j++) {
+      productFlow += (1.0 - internalVaporFraction[j]) * V[j];
+      productFlow += (1.0 - internalLiquidFraction[j]) * L[j];
+    }
+    double massBalErr = Math.abs(productFlow - totalFeedFlow) / Math.max(totalFeedFlow, 1e-20);
 
     double solveTime = (System.nanoTime() - startTime) / 1.0e9;
 
