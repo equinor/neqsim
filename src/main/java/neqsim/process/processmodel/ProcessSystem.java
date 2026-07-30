@@ -1444,7 +1444,10 @@ public class ProcessSystem extends SimulationBaseClass {
   public void runOptimized(UUID id) {
     enterRunScope();
     try {
-      resetActiveStates();
+      // The concrete method selected below applies flowsheet-wide settings and
+      // performs the active-state reset when runOptimized() is called directly.
+      // When run() delegates here, its outer run scope already performed the
+      // active-state reset, so repeating preparation in this dispatcher is wasteful.
       if (hasAdjusters()) {
         // Adjusters create implicit feedback loops via signal connections and
         // iterate on a target variable. The graph partitioner cannot represent
@@ -2744,8 +2747,12 @@ public class ProcessSystem extends SimulationBaseClass {
     boolean runThrew = false;
     try {
       resetExecutionProfile();
-      resetActiveStates();
-      applyFlowsheetWideSettings();
+      // runOptimized() establishes an inner run scope before selecting a concrete
+      // execution method. Reset active states here while this scope is outermost;
+      // the legacy sequential path performs its own reset at the same run depth.
+      if (useOptimizedExecution) {
+        resetActiveStates();
+      }
       long wallStart = System.nanoTime();
       boolean prevWarmStart = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
       if (useFlashWarmStart) {
