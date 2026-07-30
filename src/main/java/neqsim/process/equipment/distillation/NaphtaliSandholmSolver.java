@@ -2991,7 +2991,8 @@ public class NaphtaliSandholmSolver {
       return false;
     }
     for (DistillationColumn.ColumnPumparound pumparound : pumparounds) {
-      if (pumparound.getDrawFraction() > 0.0) {
+      int drawTray = pumparound.getDrawTrayNumber();
+      if (liquidPumparoundFraction[drawTray] > 0.0) {
         return true;
       }
     }
@@ -3001,7 +3002,8 @@ public class NaphtaliSandholmSolver {
   /** Return whether a tray supplies a positive-flow configured pumparound draw. */
   private boolean isPumparoundDrawTray(int tray) {
     for (DistillationColumn.ColumnPumparound pumparound : pumparounds) {
-      if (pumparound.getDrawFraction() > 0.0 && pumparound.getDrawTrayNumber() == tray) {
+      int drawTray = pumparound.getDrawTrayNumber();
+      if (liquidPumparoundFraction[drawTray] > 0.0 && drawTray == tray) {
         return true;
       }
     }
@@ -3043,7 +3045,8 @@ public class NaphtaliSandholmSolver {
     double returnedFlow = 0.0;
     for (DistillationColumn.ColumnPumparound pumparound : pumparounds) {
       if (pumparound.getReturnTrayNumber() == tray) {
-        returnedFlow += pumparound.getDrawFraction() * liq[pumparound.getDrawTrayNumber()][component];
+        int drawTray = pumparound.getDrawTrayNumber();
+        returnedFlow += liquidPumparoundFraction[drawTray] * liq[drawTray][component];
       }
     }
     return returnedFlow;
@@ -3056,7 +3059,8 @@ public class NaphtaliSandholmSolver {
       DistillationColumn.ColumnPumparound pumparound = pumparounds.get(circuitIndex);
       if (pumparound.getReturnTrayNumber() == tray) {
         int drawTray = pumparound.getDrawTrayNumber();
-        returnedEnergy += pumparound.getDrawFraction() * L[drawTray] * pumparoundReturnEnthalpy[circuitIndex];
+        returnedEnergy +=
+            liquidPumparoundFraction[drawTray] * L[drawTray] * pumparoundReturnEnthalpy[circuitIndex];
       }
     }
     return returnedEnergy;
