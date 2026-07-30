@@ -357,6 +357,24 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
+   * Set a pre-built gas side-draw stream to be returned by {@link #getGasSideDrawStream()}.
+   *
+   * @param stream the side-draw gas stream
+   */
+  void setCachedGasSideDrawStream(StreamInterface stream) {
+    this.cachedGasSideDrawStream = stream;
+  }
+
+  /**
+   * Set a pre-built liquid side-draw stream to be returned by {@link #getLiquidSideDrawStream()}.
+   *
+   * @param stream the side-draw liquid stream
+   */
+  void setCachedLiquidSideDrawStream(StreamInterface stream) {
+    this.cachedLiquidSideDrawStream = stream;
+  }
+
+  /**
    * getGasOutStream.
    *
    * @return a {@link neqsim.process.equipment.stream.Stream} object
