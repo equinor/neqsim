@@ -11,6 +11,7 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -27,6 +28,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -1739,7 +1741,14 @@ public class ProcessSystem extends SimulationBaseClass {
           singleGroup.add(level);
           plan.add(singleGroup);
         } else {
-          plan.add(groupNodesBySharedInputStreams(level));
+          List<List<ProcessNode>> groups = groupNodesBySharedInputStreams(level);
+          Collections.sort(groups, new Comparator<List<ProcessNode>>() {
+            @Override
+            public int compare(List<ProcessNode> left, List<ProcessNode> right) {
+              return Integer.compare(left.get(0).getIndex(), right.get(0).getIndex());
+            }
+          });
+          plan.add(groups);
         }
       }
       cachedParallelPlan = plan;
@@ -4167,11 +4176,12 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Runs all equipment transient calculations in parallel using an ExecutorService. Each equipment unit is submitted as
-   * an independent task. This is suitable when equipment units are loosely coupled (no data dependencies within a
-   * single timestep). If the caller is interrupted while waiting, its interrupt status is restored and the wait loop
-   * stops. A subsequent pass observes that status and returns without submitting more tasks. Already submitted
-   * equipment that is queued is cancelled without interrupting tasks already updating state.
+   * Runs transient calculations in dependency order using the cached process-graph levels. Independent groups within a
+   * level execute in parallel; a downstream level is not submitted until every upstream group has completed. If the
+   * caller is interrupted while waiting, its interrupt status is restored and the wait loop stops. Each dependency
+   * level checks that status before submitting work, so an interrupt at a level boundary does not enqueue downstream
+   * equipment. Already submitted equipment that is queued is cancelled without interrupting tasks already updating
+   * state.
    *
    * @param dt time step in seconds
    * @param id calculation identifier
@@ -4183,32 +4193,50 @@ public class ProcessSystem extends SimulationBaseClass {
       return false;
     }
     ExecutorService executor = getParallelTransientExecutor();
-    List<Future<?>> futures = new ArrayList<Future<?>>(unitOperations.size());
-    for (int i = 0; i < unitOperations.size(); i++) {
-      final ProcessEquipmentInterface unit = unitOperations.get(i);
-      final double stepSize = dt;
-      final UUID calcId = id;
-      futures.add(executor.submit(new Runnable() {
-        @Override
-        public void run() {
-          runUnitTransientSkippingInactive(unit, stepSize, calcId);
-        }
-      }));
-    }
-    for (int i = 0; i < futures.size(); i++) {
-      Future<?> f = futures.get(i);
-      try {
-        f.get();
-      } catch (InterruptedException ex) {
-        Thread.currentThread().interrupt();
-        for (int pendingIndex = i; pendingIndex < futures.size(); pendingIndex++) {
-          futures.get(pendingIndex).cancel(false);
-        }
-        logger.warn("Parallel transient execution interrupted; caller interrupt status restored");
+    final AtomicBoolean stopRequested = new AtomicBoolean(false);
+    for (List<List<ProcessNode>> levelGroups : getCachedParallelPlan()) {
+      if (Thread.currentThread().isInterrupted()) {
+        stopRequested.set(true);
+        logger.warn("Parallel transient execution stopped before submitting the next dependency level");
         return false;
-      } catch (ExecutionException ex) {
-        Throwable cause = ex.getCause();
-        logger.error("Parallel transient equipment execution failed", cause == null ? ex : cause);
+      }
+      List<Future<?>> futures = new ArrayList<Future<?>>(levelGroups.size());
+      for (List<ProcessNode> group : levelGroups) {
+        final List<ProcessNode> groupToRun = group;
+        final double stepSize = dt;
+        final UUID calcId = id;
+        futures.add(executor.submit(new Runnable() {
+          @Override
+          public void run() {
+            for (ProcessNode node : groupToRun) {
+              if (stopRequested.get()) {
+                return;
+              }
+              try {
+                runUnitTransientSkippingInactive(node.getEquipment(), stepSize, calcId);
+              } catch (Exception ex) {
+                logger.error("Parallel transient equipment execution failed for {}", node.getName(), ex);
+              }
+            }
+          }
+        }));
+      }
+      for (int i = 0; i < futures.size(); i++) {
+        Future<?> f = futures.get(i);
+        try {
+          f.get();
+        } catch (InterruptedException ex) {
+          stopRequested.set(true);
+          Thread.currentThread().interrupt();
+          for (int pendingIndex = i; pendingIndex < futures.size(); pendingIndex++) {
+            futures.get(pendingIndex).cancel(false);
+          }
+          logger.warn("Parallel transient execution interrupted; caller interrupt status restored");
+          return false;
+        } catch (ExecutionException ex) {
+          Throwable cause = ex.getCause();
+          logger.error("Parallel transient equipment execution failed", cause == null ? ex : cause);
+        }
       }
     }
     return true;
@@ -4627,8 +4655,10 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Enables or disables multi-threaded equipment execution during transient steps. Disabling the feature retires any
-   * reusable transient worker pool owned by this process system.
+   * Enables or disables multi-threaded equipment execution during transient steps. Stream dependencies are respected
+   * through process-graph level barriers, while independent groups in the same level may execute concurrently. Recycle
+   * and other iterative transient couplings still require separate convergence semantics. Disabling the feature retires
+   * any reusable transient worker pool owned by this process system.
    *
    * @param enabled true to enable parallel execution
    */
