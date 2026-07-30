@@ -867,11 +867,11 @@ public class TPflash extends Flash {
    * Refines an ordinary water-rich endpoint with the multiphase stability solver.
    *
    * <p>
-   * The ordinary flash searches only the cubic gas/oil roots and can therefore leave a substantial
-   * water fraction dissolved in a hydrocarbon-labelled phase even when a lower-Gibbs aqueous split
-   * exists. The one-mol-percent feed guard keeps trace-water process flashes on the existing fast
-   * path. A cloned multiphase candidate replaces the ordinary state only through the same strict
-   * phase-fraction, distinct-composition, and Gibbs-energy checks used by the liquid-liquid rescue.
+   * The ordinary flash searches only the cubic gas/oil roots and can therefore leave a substantial water fraction
+   * dissolved in a hydrocarbon-labelled phase even when a lower-Gibbs aqueous split exists. The one-mol-percent feed
+   * guard keeps trace-water process flashes on the existing fast path. A cloned multiphase candidate replaces the
+   * ordinary state only through the same strict phase-fraction, distinct-composition, and Gibbs-energy checks used by
+   * the liquid-liquid rescue.
    * </p>
    */
   private void rescueAqueousEndpoint() {
@@ -881,15 +881,11 @@ public class TPflash extends Flash {
     }
 
     double waterFeedFraction = 0.0;
-    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
-      if (system.getPhase(phaseIndex).getType() == PhaseType.AQUEOUS) {
-        return;
-      }
+    if (system.hasPhaseType(PhaseType.AQUEOUS)) {
+      return;
     }
-    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents();
-        componentIndex++) {
-      neqsim.thermo.component.ComponentInterface component =
-          system.getPhase(0).getComponent(componentIndex);
+    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
+      neqsim.thermo.component.ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
       if ("water".equalsIgnoreCase(component.getComponentName())) {
         waterFeedFraction = component.getz();
         break;
@@ -904,7 +900,7 @@ public class TPflash extends Flash {
     try {
       candidate.setMultiPhaseCheck(true);
       new TPflash(candidate, candidate.doSolidPhaseCheck()).run();
-      if (candidate.getNumberOfPhases() == 2 && containsAqueousPhase(candidate)
+      if (candidate.getNumberOfPhases() == 2 && candidate.hasPhaseType(PhaseType.AQUEOUS)
           && isLowerGibbsMultiphaseCandidate(candidate, referenceGibbsEnergy)) {
         copyFlashStateFrom(candidate);
       }
@@ -913,20 +909,6 @@ public class TPflash extends Flash {
     }
   }
 
-  /**
-   * Checks whether a candidate contains an aqueous phase.
-   *
-   * @param candidate candidate system to inspect
-   * @return true when one candidate phase is aqueous
-   */
-  private boolean containsAqueousPhase(SystemInterface candidate) {
-    for (int phaseIndex = 0; phaseIndex < candidate.getNumberOfPhases(); phaseIndex++) {
-      if (candidate.getPhase(phaseIndex).getType() == PhaseType.AQUEOUS) {
-        return true;
-      }
-    }
-    return false;
-  }
 
   /**
    * Screens for a non-aqueous, non-hydrocarbon-rich, high-volatility-contrast liquid mixture.
