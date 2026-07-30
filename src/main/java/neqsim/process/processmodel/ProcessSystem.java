@@ -4178,9 +4178,10 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Runs transient calculations in dependency order using the cached process-graph levels. Independent groups within a
    * level execute in parallel; a downstream level is not submitted until every upstream group has completed. If the
-   * caller is interrupted while waiting, its interrupt status is restored and the wait loop stops. A subsequent pass
-   * observes that status and returns without submitting more tasks. Already submitted equipment that is queued is
-   * cancelled without interrupting tasks already updating state.
+   * caller is interrupted while waiting, its interrupt status is restored and the wait loop stops. Each dependency
+   * level checks that status before submitting work, so an interrupt at a level boundary does not enqueue downstream
+   * equipment. Already submitted equipment that is queued is cancelled without interrupting tasks already updating
+   * state.
    *
    * @param dt time step in seconds
    * @param id calculation identifier
@@ -4194,6 +4195,11 @@ public class ProcessSystem extends SimulationBaseClass {
     ExecutorService executor = getParallelTransientExecutor();
     final AtomicBoolean stopRequested = new AtomicBoolean(false);
     for (List<List<ProcessNode>> levelGroups : getCachedParallelPlan()) {
+      if (Thread.currentThread().isInterrupted()) {
+        stopRequested.set(true);
+        logger.warn("Parallel transient execution stopped before submitting the next dependency level");
+        return false;
+      }
       List<Future<?>> futures = new ArrayList<Future<?>>(levelGroups.size());
       for (List<ProcessNode> group : levelGroups) {
         final List<ProcessNode> groupToRun = group;
