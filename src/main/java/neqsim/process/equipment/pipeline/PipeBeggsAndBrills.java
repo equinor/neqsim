@@ -1453,7 +1453,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * </p>
    *
    * <p>
-   * Only applies to the default {@link CalculationMode#CALCULATE_PRESSURE_DROP} mode; in
+   * Only applies to the default {@link CalculationMode#CALCULATE_OUTLET_PRESSURE} mode; in
    * {@link CalculationMode#CALCULATE_FLOW_RATE} mode the flow rate is the unknown being solved for, so a low inlet flow
    * is an iteration state rather than a bypass condition.
    * </p>
