@@ -44,8 +44,8 @@ public class TPflash extends Flash {
   private static final double LIQUID_LIQUID_ACTIVE_COMPONENT_LIMIT = 1.0e-6;
   /** Minimum critical-temperature span (K) for liquid-liquid refinement. */
   private static final double LIQUID_LIQUID_CRITICAL_TEMPERATURE_SPAN = 150.0;
-  /** Minimum water feed fraction for ordinary aqueous endpoint refinement. */
-  private static final double AQUEOUS_REFINEMENT_WATER_FRACTION_LIMIT = 0.01;
+  /** Minimum water feed fraction for ordinary water-rich endpoint refinement. */
+  private static final double WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT = 0.01;
   /**
    * Minimum extensive Gibbs-energy reduction (J) required for the spurious-multiphase rescue to collapse a two-phase
    * result to a single phase. Avoids false triggers from numerical noise.
@@ -596,7 +596,7 @@ public class TPflash extends Flash {
         // applied on this path, as it can discard a genuine split the stability test overlooked.
         collapseTrivialMultiphaseSplit();
         rescueLiquidLiquidEndpoint();
-        rescueAqueousEndpoint();
+        rescueWaterRichEndpoint();
         return;
       }
     }
@@ -782,7 +782,7 @@ public class TPflash extends Flash {
     collapseTrivialMultiphaseSplit();
     normalizeActivePhaseFractions();
     rescueLiquidLiquidEndpoint();
-    rescueAqueousEndpoint();
+    rescueWaterRichEndpoint();
 
     // Final chemical equilibrium call after all phase reordering
     // This ensures chemical equilibrium is solved on the final phase configuration
@@ -868,13 +868,15 @@ public class TPflash extends Flash {
    *
    * <p>
    * The ordinary flash searches only the cubic gas/oil roots and can therefore leave a substantial water fraction
-   * dissolved in a hydrocarbon-labelled phase even when a lower-Gibbs aqueous split exists. The one-mol-percent feed
-   * guard keeps trace-water process flashes on the existing fast path. A cloned multiphase candidate replaces the
-   * ordinary state only through the same strict phase-fraction, distinct-composition, and Gibbs-energy checks used by
-   * the liquid-liquid rescue.
+   * dissolved in hydrocarbon-labelled phases, or miss a lower-Gibbs gas-oil split when water makes the generic
+   * hydrocarbon endpoint screen inapplicable. The one-mol-percent feed guard keeps trace-water process flashes on the
+   * existing fast path. A cloned multiphase candidate replaces the ordinary state only when it contains exactly two
+   * phases and passes the same strict phase-fraction, distinct-composition, and Gibbs-energy checks used by the
+   * liquid-liquid rescue. The candidate need not contain an aqueous-labelled phase: phase stability and Gibbs energy,
+   * rather than the expected phase label, decide whether the already-computed candidate is accepted.
    * </p>
    */
-  private void rescueAqueousEndpoint() {
+  private void rescueWaterRichEndpoint() {
     if (system.doMultiPhaseCheck() || system.isChemicalSystem() || system.hasIons() || solidCheck
         || system.isMultiphaseWaxCheck() || system.getNumberOfPhases() > 2) {
       return;
@@ -891,7 +893,7 @@ public class TPflash extends Flash {
         break;
       }
     }
-    if (waterFeedFraction < AQUEOUS_REFINEMENT_WATER_FRACTION_LIMIT) {
+    if (waterFeedFraction < WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT) {
       return;
     }
 
@@ -900,12 +902,12 @@ public class TPflash extends Flash {
     try {
       candidate.setMultiPhaseCheck(true);
       new TPflash(candidate, candidate.doSolidPhaseCheck()).run();
-      if (candidate.getNumberOfPhases() == 2 && candidate.hasPhaseType(PhaseType.AQUEOUS)
+      if (candidate.getNumberOfPhases() == 2
           && isLowerGibbsMultiphaseCandidate(candidate, referenceGibbsEnergy)) {
         copyFlashStateFrom(candidate);
       }
     } catch (Exception ex) {
-      logger.debug("Aqueous endpoint refinement failed: {}", ex.getMessage());
+      logger.debug("Water-rich endpoint refinement failed: {}", ex.getMessage());
     }
   }
 
