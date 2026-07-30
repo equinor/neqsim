@@ -205,7 +205,6 @@ public class ColumnStudyRegressionTest {
     double previousSideDrawFlow = 0.0;
     for (int caseIndex = 0; caseIndex < drawFractions.length; caseIndex++) {
       double drawFraction = drawFractions[caseIndex];
-      double initialCircuitDrawFraction = caseIndex == 0 ? drawFraction : drawFractions[0];
       SystemInterface baseFluid = createBaseFluid();
       StreamInterface feedStream = createStream("side_draw_main_feed_" + caseIndex, baseFluid, MAIN_FEED_COMPOSITION,
           MAIN_FEED_TEMPERATURE_C, MAIN_FEED_PRESSURE_BARA, MAIN_FEED_MASS_FLOW_KG_HR);
@@ -327,6 +326,7 @@ public class ColumnStudyRegressionTest {
     double previousDrawFlow = 0.0;
     for (int caseIndex = 0; caseIndex < drawFractions.length; caseIndex++) {
       double drawFraction = drawFractions[caseIndex];
+      double initialCircuitDrawFraction = caseIndex == 0 ? drawFraction : drawFractions[0];
       SystemInterface baseFluid = createBaseFluid();
       StreamInterface feedStream = createStream("pumparound_main_feed_" + caseIndex, baseFluid, MAIN_FEED_COMPOSITION,
           MAIN_FEED_TEMPERATURE_C, MAIN_FEED_PRESSURE_BARA, MAIN_FEED_MASS_FLOW_KG_HR);
