@@ -3,6 +3,7 @@ package neqsim.thermodynamicoperations.flashops;
 import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -46,6 +47,10 @@ public class TPflash extends Flash {
   private static final double LIQUID_LIQUID_CRITICAL_TEMPERATURE_SPAN = 150.0;
   /** Minimum water feed fraction for ordinary water-rich endpoint refinement. */
   private static final double WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT = 0.01;
+  /** Maximum accepted log-fugacity residual when selecting an alternate cubic root. */
+  private static final double PHASE_ROOT_EQUILIBRIUM_TOLERANCE = 1.0e-8;
+  /** Cubic phase roots evaluated by the post-convergence aqueous root check. */
+  private static final PhaseType[] CUBIC_ROOT_PHASE_TYPES = { PhaseType.GAS, PhaseType.LIQUID };
   /**
    * Minimum extensive Gibbs-energy reduction (J) required for the spurious-multiphase rescue to collapse a two-phase
    * result to a single phase. Avoids false triggers from numerical noise.
@@ -595,6 +600,7 @@ public class TPflash extends Flash {
         // solution of the flash equations. The Gibbs-based spurious rescue is intentionally NOT
         // applied on this path, as it can discard a genuine split the stability test overlooked.
         collapseTrivialMultiphaseSplit();
+        rescueLowerGibbsPhaseRoot();
         rescueLiquidLiquidEndpoint();
         rescueWaterRichEndpoint();
         return;
@@ -781,6 +787,7 @@ public class TPflash extends Flash {
     rescueSpuriousMultiphaseEndpoint();
     collapseTrivialMultiphaseSplit();
     normalizeActivePhaseFractions();
+    rescueLowerGibbsPhaseRoot();
     rescueLiquidLiquidEndpoint();
     rescueWaterRichEndpoint();
 
@@ -1144,6 +1151,101 @@ public class TPflash extends Flash {
     }
     system.normalizeBeta();
     system.init(1);
+  }
+
+  /**
+   * Selects a lower-Gibbs cubic root for an already-converged ordinary aqueous split.
+   *
+   * <p>
+   * A cubic EOS can have both vapor-like and liquid-like roots at the converged phase composition. The ordinary flash
+   * may retain the higher-Gibbs root while the multiphase path retains the lower root, even when both paths return
+   * identical phase fractions and compositions. Each cubic root is therefore evaluated on a cloned non-aqueous phase.
+   * The live phase is replaced only when the alternate root lowers extensive Gibbs energy and already satisfies
+   * component fugacity equality against the unchanged aqueous phase within {@link #PHASE_ROOT_EQUILIBRIUM_TOLERANCE}.
+   * Material balance and phase fractions are unchanged.
+   * </p>
+   *
+   * <p>
+   * The check is limited to neutral, ordinary, exactly-two-phase aqueous results. Dry hydrocarbon flashes,
+   * multiphase-enabled flashes, chemical/electrolyte systems, and solid/wax calculations remain on their existing fast
+   * paths.
+   * </p>
+   */
+  private void rescueLowerGibbsPhaseRoot() {
+    if (system.doMultiPhaseCheck() || system.getNumberOfPhases() != 2 || system.isChemicalSystem() || system.hasIons()
+        || solidCheck || system.isMultiphaseWaxCheck() || !system.hasPhaseType(PhaseType.AQUEOUS)) {
+      return;
+    }
+
+    int selectedPhase = -1;
+    PhaseType selectedRoot = null;
+    PhaseInterface selectedPhaseState = null;
+    double maximumGibbsReduction = 0.0;
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      PhaseInterface phase = system.getPhase(phaseIndex);
+      PhaseType phaseType = phase.getType();
+      if (!(phaseType == PhaseType.GAS || phaseType == PhaseType.OIL || phaseType == PhaseType.LIQUID)) {
+        continue;
+      }
+      double currentGibbs = phase.getGibbsEnergy();
+      for (PhaseType trialRoot : CUBIC_ROOT_PHASE_TYPES) {
+        try {
+          PhaseInterface trialPhase = phase.clone();
+          trialPhase.init(system.getTotalNumberOfMoles(), trialPhase.getNumberOfComponents(), 1, trialRoot,
+              system.getBeta(phaseIndex));
+          for (int componentIndex = 0; componentIndex < trialPhase.getNumberOfComponents(); componentIndex++) {
+            trialPhase.getComponent(componentIndex).fugcoef(trialPhase);
+          }
+          double gibbsReduction = currentGibbs - trialPhase.getGibbsEnergy();
+          double fugacityResidual = maximumLogFugacityResidualWithReplacement(phaseIndex, trialPhase);
+          if (Double.isFinite(gibbsReduction) && gibbsReduction > maximumGibbsReduction
+              && fugacityResidual < PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
+            maximumGibbsReduction = gibbsReduction;
+            selectedPhase = phaseIndex;
+            selectedRoot = trialRoot;
+            selectedPhaseState = trialPhase;
+          }
+        } catch (Exception ex) {
+          logger.debug("Alternate phase-root comparison failed for {}: {}", trialRoot, ex.getMessage());
+        }
+      }
+    }
+    double gibbsTolerance = Math.max(1.0e-6, Math.abs(system.getGibbsEnergy()) * 1.0e-8);
+    if (selectedPhase < 0 || maximumGibbsReduction <= gibbsTolerance) {
+      return;
+    }
+
+    int storageIndex = system.getPhaseIndex(selectedPhase);
+    system.setPhase(selectedPhaseState, storageIndex);
+    system.setPhaseType(selectedPhase, selectedRoot);
+  }
+
+  /**
+   * Calculates the largest equilibrium residual after replacing one phase with an alternate cubic root.
+   *
+   * @param phaseIndex active phase to replace
+   * @param replacement initialized replacement phase
+   * @return maximum absolute log-fugacity residual
+   */
+  private double maximumLogFugacityResidualWithReplacement(int phaseIndex, PhaseInterface replacement) {
+    int otherPhaseIndex = phaseIndex == 0 ? 1 : 0;
+    double maximumResidual = 0.0;
+    for (int componentIndex = 0; componentIndex < replacement.getNumberOfComponents(); componentIndex++) {
+      if (system.getPhase(0).getComponent(componentIndex).getz() <= 1.0e-50) {
+        continue;
+      }
+      double replacementLogFugacity = Math
+          .log(Math.max(replacement.getComponent(componentIndex).getx(), Double.MIN_NORMAL))
+          + Math.log(replacement.getComponent(componentIndex).getFugacityCoefficient());
+      double otherLogFugacity = Math
+          .log(Math.max(system.getPhase(otherPhaseIndex).getComponent(componentIndex).getx(), Double.MIN_NORMAL))
+          + Math.log(system.getPhase(otherPhaseIndex).getComponent(componentIndex).getFugacityCoefficient());
+      if (!Double.isFinite(replacementLogFugacity) || !Double.isFinite(otherLogFugacity)) {
+        return Double.POSITIVE_INFINITY;
+      }
+      maximumResidual = Math.max(maximumResidual, Math.abs(replacementLogFugacity - otherLogFugacity));
+    }
+    return maximumResidual;
   }
 
   /**
