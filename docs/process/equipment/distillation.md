@@ -259,8 +259,9 @@ double latestChange = column.getLastPumparoundRelativeChange();
 
 The `temperatureDrop` argument is in Kelvin. Positive values cool the returned liquid; negative
 values heat it. A non-finite or below-zero-K return temperature fails explicitly. For a direct
-Naphtali-Sandholm solve, `getLastPumparoundRelativeChange()` is zero because the stream object is
-materialized from the simultaneous solution rather than converged as an outer tear variable.
+Naphtali-Sandholm solve, `getLastPumparoundRelativeChange()` reports the stream-materialization
+change for diagnostics, but that change does not trigger a second column solve because the circuit
+already participates in the simultaneous equations.
 
 ## Hydraulics and Pressure-Drop Coupling
 
