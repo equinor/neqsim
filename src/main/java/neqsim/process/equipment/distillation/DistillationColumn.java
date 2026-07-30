@@ -2780,8 +2780,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           getEffectiveMurphreeEfficiency(trayIndex));
       updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, tray.getGasSideDrawFraction());
       updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, tray.getLiquidSideDrawFraction());
-      updatedSignature =
-          updateNaphtaliSandholmInputSignature(updatedSignature, tray.getLiquidPumparoundDrawFraction());
+      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, tray.getLiquidPumparoundDrawFraction());
     }
     updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, pumparounds.size());
     for (ColumnPumparound pumparound : pumparounds) {
