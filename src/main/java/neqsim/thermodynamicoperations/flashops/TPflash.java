@@ -50,7 +50,7 @@ public class TPflash extends Flash {
   /** Maximum accepted log-fugacity residual when selecting an alternate cubic root. */
   private static final double PHASE_ROOT_EQUILIBRIUM_TOLERANCE = 1.0e-8;
   /** Cubic phase roots evaluated by the post-convergence aqueous root check. */
-  private static final PhaseType[] CUBIC_ROOT_PHASE_TYPES = {PhaseType.GAS, PhaseType.LIQUID};
+  private static final PhaseType[] CUBIC_ROOT_PHASE_TYPES = { PhaseType.GAS, PhaseType.LIQUID };
   /**
    * Minimum extensive Gibbs-energy reduction (J) required for the spurious-multiphase rescue to collapse a two-phase
    * result to a single phase. Avoids false triggers from numerical noise.
@@ -1161,8 +1161,8 @@ public class TPflash extends Flash {
    * may retain the higher-Gibbs root while the multiphase path retains the lower root, even when both paths return
    * identical phase fractions and compositions. Each cubic root is therefore evaluated on a cloned non-aqueous phase.
    * The live phase is replaced only when the alternate root lowers extensive Gibbs energy and already satisfies
-   * component fugacity equality against the unchanged aqueous phase within
-   * {@link #PHASE_ROOT_EQUILIBRIUM_TOLERANCE}. Material balance and phase fractions are unchanged.
+   * component fugacity equality against the unchanged aqueous phase within {@link #PHASE_ROOT_EQUILIBRIUM_TOLERANCE}.
+   * Material balance and phase fractions are unchanged.
    * </p>
    *
    * <p>
@@ -1172,9 +1172,8 @@ public class TPflash extends Flash {
    * </p>
    */
   private void rescueLowerGibbsPhaseRoot() {
-    if (system.doMultiPhaseCheck() || system.getNumberOfPhases() != 2 || system.isChemicalSystem()
-        || system.hasIons() || solidCheck || system.isMultiphaseWaxCheck()
-        || !system.hasPhaseType(PhaseType.AQUEOUS)) {
+    if (system.doMultiPhaseCheck() || system.getNumberOfPhases() != 2 || system.isChemicalSystem() || system.hasIons()
+        || solidCheck || system.isMultiphaseWaxCheck() || !system.hasPhaseType(PhaseType.AQUEOUS)) {
       return;
     }
 
@@ -1192,15 +1191,13 @@ public class TPflash extends Flash {
       for (PhaseType trialRoot : CUBIC_ROOT_PHASE_TYPES) {
         try {
           PhaseInterface trialPhase = phase.clone();
-          trialPhase.init(system.getTotalNumberOfMoles(), trialPhase.getNumberOfComponents(), 1,
-              trialRoot, system.getBeta(phaseIndex));
-          for (int componentIndex = 0; componentIndex < trialPhase
-              .getNumberOfComponents(); componentIndex++) {
+          trialPhase.init(system.getTotalNumberOfMoles(), trialPhase.getNumberOfComponents(), 1, trialRoot,
+              system.getBeta(phaseIndex));
+          for (int componentIndex = 0; componentIndex < trialPhase.getNumberOfComponents(); componentIndex++) {
             trialPhase.getComponent(componentIndex).fugcoef(trialPhase);
           }
           double gibbsReduction = currentGibbs - trialPhase.getGibbsEnergy();
-          double fugacityResidual =
-              maximumLogFugacityResidualWithReplacement(phaseIndex, trialPhase);
+          double fugacityResidual = maximumLogFugacityResidualWithReplacement(phaseIndex, trialPhase);
           if (Double.isFinite(gibbsReduction) && gibbsReduction > maximumGibbsReduction
               && fugacityResidual < PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
             maximumGibbsReduction = gibbsReduction;
@@ -1209,8 +1206,7 @@ public class TPflash extends Flash {
             selectedPhaseState = trialPhase;
           }
         } catch (Exception ex) {
-          logger.debug("Alternate phase-root comparison failed for {}: {}", trialRoot,
-              ex.getMessage());
+          logger.debug("Alternate phase-root comparison failed for {}: {}", trialRoot, ex.getMessage());
         }
       }
     }
@@ -1231,28 +1227,23 @@ public class TPflash extends Flash {
    * @param replacement initialized replacement phase
    * @return maximum absolute log-fugacity residual
    */
-  private double maximumLogFugacityResidualWithReplacement(int phaseIndex,
-      PhaseInterface replacement) {
+  private double maximumLogFugacityResidualWithReplacement(int phaseIndex, PhaseInterface replacement) {
     int otherPhaseIndex = phaseIndex == 0 ? 1 : 0;
     double maximumResidual = 0.0;
-    for (int componentIndex = 0; componentIndex < replacement.getNumberOfComponents();
-        componentIndex++) {
+    for (int componentIndex = 0; componentIndex < replacement.getNumberOfComponents(); componentIndex++) {
       if (system.getPhase(0).getComponent(componentIndex).getz() <= 1.0e-50) {
         continue;
       }
-      double replacementLogFugacity =
-          Math.log(Math.max(replacement.getComponent(componentIndex).getx(), Double.MIN_NORMAL))
-              + Math.log(replacement.getComponent(componentIndex).getFugacityCoefficient());
-      double otherLogFugacity = Math.log(Math.max(
-          system.getPhase(otherPhaseIndex).getComponent(componentIndex).getx(),
-          Double.MIN_NORMAL))
-          + Math.log(system.getPhase(otherPhaseIndex).getComponent(componentIndex)
-              .getFugacityCoefficient());
+      double replacementLogFugacity = Math
+          .log(Math.max(replacement.getComponent(componentIndex).getx(), Double.MIN_NORMAL))
+          + Math.log(replacement.getComponent(componentIndex).getFugacityCoefficient());
+      double otherLogFugacity = Math
+          .log(Math.max(system.getPhase(otherPhaseIndex).getComponent(componentIndex).getx(), Double.MIN_NORMAL))
+          + Math.log(system.getPhase(otherPhaseIndex).getComponent(componentIndex).getFugacityCoefficient());
       if (!Double.isFinite(replacementLogFugacity) || !Double.isFinite(otherLogFugacity)) {
         return Double.POSITIVE_INFINITY;
       }
-      maximumResidual =
-          Math.max(maximumResidual, Math.abs(replacementLogFugacity - otherLogFugacity));
+      maximumResidual = Math.max(maximumResidual, Math.abs(replacementLogFugacity - otherLogFugacity));
     }
     return maximumResidual;
   }
