@@ -134,6 +134,37 @@ class ThreeFluidSectionTest {
   }
 
   @Test
+  void testThreeLayerGeometryConservesSegmentAreaAcrossPipeDiameters() {
+    double[] diameters = {0.05, 0.10, 0.30, 1.0, 2.0};
+    double[][] holdupSets = {{0.94, 0.05, 0.01}, {0.80, 0.15, 0.05}, {0.50, 0.30, 0.20},
+        {0.10, 0.45, 0.45}};
+
+    for (double diameter : diameters) {
+      for (double[] holdups : holdupSets) {
+        ThreeFluidSection testSection = new ThreeFluidSection(0.0, 10.0, diameter, 0.0);
+        testSection.setHoldups(holdups[0], holdups[1], holdups[2]);
+        testSection.updateThreeLayerGeometry();
+
+        double waterAreaFromLevel = circularSegmentArea(testSection.getWaterLevel(), diameter);
+        double combinedLiquidLevel = testSection.getWaterLevel() + testSection.getOilLevel();
+        double combinedLiquidAreaFromLevel = circularSegmentArea(combinedLiquidLevel, diameter);
+        double totalArea = testSection.getArea();
+
+        assertEquals(testSection.getWaterArea(), waterAreaFromLevel, 1e-12 * totalArea,
+            "Water level must reproduce water holdup area for D=" + diameter + " m");
+        assertEquals(testSection.getWaterArea() + testSection.getOilArea(), combinedLiquidAreaFromLevel,
+            1e-12 * totalArea, "Combined liquid level must reproduce liquid holdup area for D=" + diameter + " m");
+      }
+    }
+  }
+
+  private static double circularSegmentArea(double level, double diameter) {
+    double radius = diameter / 2.0;
+    double theta = 2.0 * Math.acos(1.0 - 2.0 * level / diameter);
+    return radius * radius * (theta - Math.sin(theta)) / 2.0;
+  }
+
+  @Test
   void testWettedPerimetersArePositive() {
     section.setHoldups(0.5, 0.3, 0.2);
     section.updateThreeLayerGeometry();
