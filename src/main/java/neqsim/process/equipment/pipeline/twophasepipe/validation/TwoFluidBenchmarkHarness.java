@@ -78,6 +78,12 @@ public final class TwoFluidBenchmarkHarness {
     variables.put("liquid_velocity_m_s", pipe.getLiquidVelocityProfile());
     variables.put("oil_velocity_m_s", pipe.getOilVelocityProfile());
     variables.put("water_velocity_m_s", pipe.getWaterVelocityProfile());
+    variables.put("entrainment_fraction", pipe.getEntrainmentFractionProfile());
+    variables.put("entrained_droplet_diameter_m", pipe.getEntrainedDropletDiameterProfile());
+    variables.put("severe_slugging_number", pipe.getSevereSluggingNumberProfile());
+    variables.put("water_wetting_flag", toDouble(pipe.getWaterWettingProfile()));
+    variables.put("water_dropout_risk_flag", toDouble(pipe.getWaterDropoutRiskProfile()));
+    variables.put("severe_slug_potential_flag", toDouble(pipe.getSevereSlugPotentialProfile()));
     return new Snapshot(pipe.getSimulationTime(), pipe.getPositionProfile(), variables);
   }
 
@@ -179,6 +185,14 @@ public final class TwoFluidBenchmarkHarness {
       scaled[i] = values[i] * factor;
     }
     return scaled;
+  }
+
+  private static double[] toDouble(boolean[] values) {
+    double[] numeric = new double[values.length];
+    for (int i = 0; i < values.length; i++) {
+      numeric[i] = values[i] ? 1.0 : 0.0;
+    }
+    return numeric;
   }
 
   /** One reference sample from an external simulator or field data set. */
