@@ -528,12 +528,17 @@ is applied once and its own clock advances by the same $\Delta t$ as the process
 Setters are excluded from the later explicit, semi-implicit, and parallel
 equipment passes.
 
-Controller execution is identity-based. A controller attached to equipment runs
-inside that equipment's transient update. Registering the same object separately
-with `process.add(controller)` keeps it discoverable but does not run its time,
-integral, derivative, or event-log state twice. Repeated standalone registration
-is also coalesced to one update per timestep; distinct controller objects remain
-independent even if they share a name.
+Controller execution is coalesced by object identity and timestep calculation
+identifier. Equipment that actually integrates a controller passes the same
+calculation identifier to the controller; registering that object separately with
+`process.add(controller)` therefore keeps it discoverable without advancing its
+time, integral, derivative, or event-log state twice. Merely attaching a controller
+to equipment that does not execute it does not suppress the standalone update.
+Repeated standalone registration is also coalesced to one update per timestep;
+distinct controller objects remain independent even if they share a name.
+`ControllerDeviceBaseClass` tracks the identifier automatically; custom controller
+implementations that integrate inside equipment should implement
+`hasRunTransient(UUID)`.
 
 ### 5.2 Parallel Transient Execution
 
@@ -600,7 +605,7 @@ process.setIntegrationMethod(IntegrationMethod.RUNGE_KUTTA_4);    // Higher-orde
 
 ## 6. Test Coverage
 
-The features in this guide are covered by six focused test classes with 75
+The features in this guide are covered by six focused test classes with 76
 total tests:
 
 | Test Class | Tests | Coverage |
@@ -610,7 +615,7 @@ total tests:
 | `DynamicImprovementsPhase3Test` | 16 | Transmitter filter, alarm shelving, separator internals, HX thermal model, distillation MESH dynamics |
 | `ProcessSystemParallelTransientTest` | 9 | Worker reuse, copy lifecycle, dependency ordering, independent-level concurrency, and interruption behavior at waits and level boundaries |
 | `ProcessSystemTransientSetterTest` | 3 | Single setter application, repeated-step clock advancement, and explicit, semi-implicit, and parallel execution |
-| `ProcessSystemTransientControllerTest` | 3 | Equipment ownership, duplicate standalone registration, identity semantics, and repeated timesteps |
+| `ProcessSystemTransientControllerTest` | 4 | Equipment execution, attachment-only fallback, duplicate standalone registration, identity semantics, and repeated timesteps |
 
 Run all tests:
 
