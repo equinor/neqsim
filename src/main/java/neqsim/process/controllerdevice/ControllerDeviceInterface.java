@@ -98,6 +98,23 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
   public void runTransient(double initResponse, double dt, UUID id);
 
   /**
+   * Reports whether this controller has already completed the transient update identified by {@code id}.
+   *
+   * <p>
+   * Equipment that integrates a controller inside its own {@code runTransient} implementation passes through the
+   * process timestep identifier. The process-level standalone controller phase uses this method to avoid advancing the
+   * same controller state twice. Implementations that do not track calculation identifiers retain the conservative
+   * default and are executed by the standalone phase.
+   * </p>
+   *
+   * @param id calculation identifier for the current process timestep
+   * @return {@code true} only when this controller completed a transient update with the same identifier
+   */
+  public default boolean hasRunTransient(UUID id) {
+    return false;
+  }
+
+  /**
    * getResponse.
    *
    * @return a double
