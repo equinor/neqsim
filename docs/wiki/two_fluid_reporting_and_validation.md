@@ -59,7 +59,7 @@ Example Java extraction:
 pipe.run();
 
 double[] x = pipe.getPositionProfile();
-double[] pressureBara = pipe.getPressureProfile();
+double[] pressurePa = pipe.getPressureProfile();
 double[] temperatureC = pipe.getTemperatureProfile("C");
 double[] liquidHoldup = pipe.getLiquidHoldupProfile();
 double[] waterCut = pipe.getWaterCutProfile();
@@ -71,7 +71,7 @@ double[] severeSluggingNumber = pipe.getSevereSluggingNumberProfile();
 boolean[] waterWetting = pipe.getWaterWettingProfile();
 
 for (int i = 0; i < x.length; i++) {
-  double pBara = pressureBara[i] * 1.0e-5;
+  double pBara = pressurePa[i] * 1.0e-5;
   System.out.printf("%8.1f,%10.4f,%8.3f,%8.5f,%8.5f,%8.3f,%8.3f,%s%n",
       x[i], pBara, temperatureC[i], liquidHoldup[i], waterCut[i],
       gasVelocity[i], liquidVelocity[i], regimes[i]);
