@@ -159,7 +159,7 @@ public class ColumnStudyRegressionTest {
     NaphtaliSandholmSolver solver = new NaphtaliSandholmSolver(column);
     solver.setWarmStartFromColumn(true);
     solver.setMaxIterations(80);
-    boolean accepted = solver.solve(UUID.randomUUID());
+    boolean accepted = solver.solve(new UUID(0L, 1L));
 
     assertFalse(accepted, "the severely perturbed state must be rejected for coordinated fallback");
     assertTrue(solver.getLastIterations() <= 30,

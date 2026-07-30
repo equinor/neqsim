@@ -4324,10 +4324,6 @@ public class NaphtaliSandholmSolver {
       alpha *= rho;
     }
 
-    if (bestTrialNorm >= currentNorm) {
-      bestAlpha = Math.min(bestAlpha, alpha);
-    }
-
     // ALWAYS restore the original state — the main loop's applyUpdate handles the
     // final step
     for (int j = 0; j < N; j++) {
