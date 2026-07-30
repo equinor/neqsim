@@ -2985,15 +2985,23 @@ public class NaphtaliSandholmSolver {
     return sum;
   }
 
-  /** Return whether at least one liquid pumparound is active. */
+  /** Return whether at least one liquid pumparound has a positive draw fraction. */
   private boolean hasActivePumparounds() {
-    return pumparounds != null && !pumparounds.isEmpty();
+    if (pumparounds == null) {
+      return false;
+    }
+    for (DistillationColumn.ColumnPumparound pumparound : pumparounds) {
+      if (pumparound.getDrawFraction() > 0.0) {
+        return true;
+      }
+    }
+    return false;
   }
 
-  /** Return whether a tray supplies a configured pumparound draw. */
+  /** Return whether a tray supplies a positive-flow configured pumparound draw. */
   private boolean isPumparoundDrawTray(int tray) {
     for (DistillationColumn.ColumnPumparound pumparound : pumparounds) {
-      if (pumparound.getDrawTrayNumber() == tray) {
+      if (pumparound.getDrawFraction() > 0.0 && pumparound.getDrawTrayNumber() == tray) {
         return true;
       }
     }
@@ -3157,9 +3165,10 @@ public class NaphtaliSandholmSolver {
    * Compute the Jacobian matrix numerically using finite differences.
    *
    * <p>
-   * The Jacobian has block-tridiagonal structure. Only entries in the tri-diagonal bands are computed. For variable k
-   * on tray jj, we compute d(residual_j)/d(var_{jj,k}) for j in {jj-1, jj, jj+1}. After perturbing a variable on tray
-   * jj, only tray jj's thermo is re-evaluated (K-values, enthalpies depend only on local T and x).
+   * Ordinary columns retain the block-tridiagonal structure: for a variable on tray jj, only residuals on trays
+   * jj-1, jj, and jj+1 are differentiated. An active pumparound can connect non-adjacent trays, so that opt-in path
+   * differentiates every residual row and is solved as a dense system. Only tray jj thermodynamics are re-evaluated;
+   * pumparound return enthalpy is refreshed when jj supplies a changed draw composition or temperature.
    * </p>
    *
    * @param F0 current residual vector
