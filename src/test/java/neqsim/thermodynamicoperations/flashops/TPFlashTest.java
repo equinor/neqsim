@@ -89,7 +89,8 @@ class TPFlashTest {
     testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
     testSystem.initProperties();
-    double expected = -552559.256480;
+    // The stable ordinary endpoint now matches the existing multiphase reference in testRun4.
+    double expected = -936973.1969586421;
     double deviation = Math.abs((testSystem.getEnthalpy() - expected) / expected * 100);
     assertEquals(0.0, deviation, 0.5);
   }

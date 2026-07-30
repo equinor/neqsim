@@ -44,6 +44,8 @@ public class TPflash extends Flash {
   private static final double LIQUID_LIQUID_ACTIVE_COMPONENT_LIMIT = 1.0e-6;
   /** Minimum critical-temperature span (K) for liquid-liquid refinement. */
   private static final double LIQUID_LIQUID_CRITICAL_TEMPERATURE_SPAN = 150.0;
+  /** Minimum water feed fraction for ordinary aqueous endpoint refinement. */
+  private static final double AQUEOUS_REFINEMENT_WATER_FRACTION_LIMIT = 0.01;
   /**
    * Minimum extensive Gibbs-energy reduction (J) required for the spurious-multiphase rescue to collapse a two-phase
    * result to a single phase. Avoids false triggers from numerical noise.
@@ -594,6 +596,7 @@ public class TPflash extends Flash {
         // applied on this path, as it can discard a genuine split the stability test overlooked.
         collapseTrivialMultiphaseSplit();
         rescueLiquidLiquidEndpoint();
+        rescueAqueousEndpoint();
         return;
       }
     }
@@ -779,6 +782,7 @@ public class TPflash extends Flash {
     collapseTrivialMultiphaseSplit();
     normalizeActivePhaseFractions();
     rescueLiquidLiquidEndpoint();
+    rescueAqueousEndpoint();
 
     // Final chemical equilibrium call after all phase reordering
     // This ensures chemical equilibrium is solved on the final phase configuration
@@ -856,6 +860,52 @@ public class TPflash extends Flash {
       }
     } catch (Exception ex) {
       logger.debug("Liquid-liquid endpoint refinement failed: {}", ex.getMessage());
+    }
+  }
+
+  /**
+   * Refines an ordinary water-rich endpoint with the multiphase stability solver.
+   *
+   * <p>
+   * The ordinary flash searches only the cubic gas/oil roots and can therefore leave a substantial water fraction
+   * dissolved in a hydrocarbon-labelled phase even when a lower-Gibbs aqueous split exists. The one-mol-percent feed
+   * guard keeps trace-water process flashes on the existing fast path. A cloned multiphase candidate replaces the
+   * ordinary state only through the same strict phase-fraction, distinct-composition, and Gibbs-energy checks used by
+   * the liquid-liquid rescue.
+   * </p>
+   */
+  private void rescueAqueousEndpoint() {
+    if (system.doMultiPhaseCheck() || system.isChemicalSystem() || system.hasIons() || solidCheck
+        || system.isMultiphaseWaxCheck() || system.getNumberOfPhases() > 2) {
+      return;
+    }
+
+    double waterFeedFraction = 0.0;
+    if (system.hasPhaseType(PhaseType.AQUEOUS)) {
+      return;
+    }
+    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
+      neqsim.thermo.component.ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
+      if ("water".equalsIgnoreCase(component.getComponentName())) {
+        waterFeedFraction = component.getz();
+        break;
+      }
+    }
+    if (waterFeedFraction < AQUEOUS_REFINEMENT_WATER_FRACTION_LIMIT) {
+      return;
+    }
+
+    double referenceGibbsEnergy = system.getGibbsEnergy();
+    SystemInterface candidate = system.clone();
+    try {
+      candidate.setMultiPhaseCheck(true);
+      new TPflash(candidate, candidate.doSolidPhaseCheck()).run();
+      if (candidate.getNumberOfPhases() == 2 && candidate.hasPhaseType(PhaseType.AQUEOUS)
+          && isLowerGibbsMultiphaseCandidate(candidate, referenceGibbsEnergy)) {
+        copyFlashStateFrom(candidate);
+      }
+    } catch (Exception ex) {
+      logger.debug("Aqueous endpoint refinement failed: {}", ex.getMessage());
     }
   }
 
