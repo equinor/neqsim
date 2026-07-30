@@ -270,8 +270,7 @@ enum, and JSON handling.
 ## Related Documentation
 
 - [Pipeline Network Optimization Notebook](https://github.com/equinor/neqsim/blob/master/examples/notebooks/pipeline_network_optimization.ipynb)
-- [Pipeline Network Optimization Notebook](../../examples/notebooks/pipeline_network_optimization.ipynb)
 - [Gas Network Operations and Optimization](gas_network_operations)
 - [Oil Pipeline and Terminal Operations](oil_network_operations)
-- [Executed synthetic NCS gas example](../../examples/notebooks/process/norwegian_ncs_gas_network_optimization.ipynb)
-- [Executed synthetic NCS oil example](../../examples/notebooks/process/norwegian_ncs_oil_network_optimization.ipynb)
+- [Executed synthetic NCS gas example](https://github.com/equinor/neqsim/blob/master/examples/notebooks/process/norwegian_ncs_gas_network_optimization.ipynb)
+- [Executed synthetic NCS oil example](https://github.com/equinor/neqsim/blob/master/examples/notebooks/process/norwegian_ncs_oil_network_optimization.ipynb)

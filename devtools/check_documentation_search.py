@@ -17,7 +17,7 @@ SEARCH_TEMPLATE = DOCS / "search-index.json"
 SEARCH_SCRIPT = DOCS / "assets" / "js" / "search.js"
 NON_CONTENT_HTML_DIRS = {"_includes", "_layouts"}
 NOTEBOOK_LINK_PATTERN = re.compile(
-    r"""(?:\[[^\]]*\]\(\s*|href=["'])
+    r"""(?:\[[^\]]*\]\(\s*|href\s*=\s*["'])
     (?P<target>[^)\s"']+\.ipynb(?:[?#][^)\s"']*)?)""",
     re.IGNORECASE | re.VERBOSE,
 )
@@ -104,11 +104,14 @@ def markdown_prose(text: str) -> str:
     return "\n".join(prose)
 
 
-def relative_notebook_link_errors(path: Path, body: str) -> List[str]:
-    """Reject notebook links that GitHub Pages cannot publish."""
+def relative_notebook_link_errors(
+    path: Path, text: str, *, strip_markdown_code: bool = True
+) -> List[str]:
+    """Reject relative notebook links that GitHub Pages cannot publish."""
 
     errors: List[str] = []
-    for match in NOTEBOOK_LINK_PATTERN.finditer(markdown_prose(body)):
+    link_source = markdown_prose(text) if strip_markdown_code else text
+    for match in NOTEBOOK_LINK_PATTERN.finditer(link_source):
         target = match.group("target").strip("<>")
         if re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", target) or target.startswith("//"):
             continue
@@ -165,6 +168,13 @@ def source_audit() -> List[str]:
             errors.append(
                 f"docs/search-index.json: standalone HTML page {relative} needs a discoverable entry"
             )
+        errors.extend(
+            relative_notebook_link_errors(
+                path,
+                path.read_text(encoding="utf-8-sig"),
+                strip_markdown_code=False,
+            )
+        )
 
     script = SEARCH_SCRIPT.read_text(encoding="utf-8")
     required_script_contracts = {

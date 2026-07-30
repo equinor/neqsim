@@ -8,7 +8,7 @@ cargo scheduling. `LoopedPipeNetwork` handles pipes and pumps;
 `OilNetworkSchedule` handles receipts, storage, blending, and loading windows.
 
 The executed companion notebook is
-[`norwegian_ncs_oil_network_optimization.ipynb`](../../examples/notebooks/process/norwegian_ncs_oil_network_optimization.ipynb).
+[`norwegian_ncs_oil_network_optimization.ipynb`](https://github.com/equinor/neqsim/blob/master/examples/notebooks/process/norwegian_ncs_oil_network_optimization.ipynb).
 It uses synthetic Sture/Mongstad-style data and synthetic quality limits. It
 does not represent operator acceptance criteria.
 

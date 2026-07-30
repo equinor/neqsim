@@ -10,7 +10,7 @@ engineering demonstrations, not capacity forecasts or contractual
 specifications.
 
 The executed companion notebook is
-[`norwegian_ncs_gas_network_optimization.ipynb`](../../examples/notebooks/process/norwegian_ncs_gas_network_optimization.ipynb).
+[`norwegian_ncs_gas_network_optimization.ipynb`](https://github.com/equinor/neqsim/blob/master/examples/notebooks/process/norwegian_ncs_gas_network_optimization.ipynb).
 
 ## Calculation sequence
 
