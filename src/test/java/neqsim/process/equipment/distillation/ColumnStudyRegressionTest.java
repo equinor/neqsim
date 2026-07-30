@@ -357,7 +357,7 @@ public class ColumnStudyRegressionTest {
           "the applied tray streams must preserve the configured pumparound split");
       assertEquals(drawMolarFlow, returnStream.getFlowRate("mol/hr"), Math.max(1.0e-6, 1.0e-8 * drawMolarFlow),
           "pumparound draw and return molar flows should match");
-      assertEquals(drawStream.getTemperature() - 5.0, returnStream.getTemperature(), 1.0e-6,
+      assertEquals(drawStream.getTemperature() - pumparound.getTemperatureDrop(), returnStream.getTemperature(), 1.0e-6,
           "pumparound return temperature should preserve the specified drop");
       assertTrue(drawStream.getFlowRate("kg/hr") > previousDrawFlow,
           "pumparound flow should increase at the nearby higher draw fraction");
