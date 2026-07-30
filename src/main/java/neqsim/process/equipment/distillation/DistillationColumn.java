@@ -2914,8 +2914,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     boolean hasActiveSideDraw = hasActiveSideDrawFractions();
     if (accepted && hasActiveSideDraw && residualConvergenceSatisfied()) {
       lastSolveStatus = SolveStatus.RIGOROUS_CONVERGED;
-      lastSolveStatusReason =
-          "Naphtali-Sandholm side-draw products satisfy the active rigorous convergence gates";
+      lastSolveStatusReason = "Naphtali-Sandholm side-draw products satisfy the active rigorous convergence gates";
     } else if (accepted && !hasActiveSideDraw) {
       lastSolveStatus = SolveStatus.RECONCILED_PRODUCTS;
       lastSolveStatusReason = "Naphtali-Sandholm direct products were applied";
