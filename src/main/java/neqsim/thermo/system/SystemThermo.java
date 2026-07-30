@@ -5474,10 +5474,9 @@ public abstract class SystemThermo implements SystemInterface {
   public void setTotalFlowRate(double flowRate, String flowunit) {
     init(0);
     double density = 0.0;
-    boolean requiresActualDensity =
-        flowunit.equals("Am3/hr") || flowunit.equals("Am3/min") || flowunit.equals("gallons/min")
-            || flowunit.equals("Am3/sec") || flowunit.equals("m3/hr") || flowunit.equals("m3/min")
-            || flowunit.equals("m3/sec") || flowunit.equals("m3/day");
+    boolean requiresActualDensity = flowunit.equals("Am3/hr") || flowunit.equals("Am3/min")
+        || flowunit.equals("gallons/min") || flowunit.equals("Am3/sec") || flowunit.equals("m3/hr")
+        || flowunit.equals("m3/min") || flowunit.equals("m3/sec") || flowunit.equals("m3/day");
     if (requiresActualDensity) {
       try {
         init(1);
