@@ -758,7 +758,7 @@ public class NaphtaliSandholmSolver {
           return true;
         }
 
-        // Compute Jacobian analytically
+        // Compute the finite-difference Jacobian
         double[][] jacobian = computeJacobian(residual);
 
         // A pumparound couples non-adjacent draw and return trays, so its Jacobian is
@@ -1629,8 +1629,9 @@ public class NaphtaliSandholmSolver {
    * Seed a mass-balanced initial guess for direct Newton entry.
    *
    * <p>
-   * Used when {@code useOverallMBClosure} is active (T-spec'd reboiler with no boilup specification). Bypasses the
-   * BP-Wilson V-cascade — which is unstable for wide-boiling stripper topologies — and replaces it with a sweep that:
+   * Used when {@code useOverallMBClosure} is active (T-spec'd reboiler with no boilup specification), and when
+   * nonlocal pumparound returns require direct Newton entry. Bypasses the BP-Wilson V-cascade — which is unstable for
+   * wide-boiling stripper topologies — and replaces it with a sweep that:
    * </p>
    * <ol>
    * <li>Anchors V[N-1] (top vapor leaving column) to total feed minus a sensible bottoms estimate, so the overall MB
