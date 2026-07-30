@@ -23,7 +23,6 @@ public class ProcessSystemTransientControllerTest extends neqsim.NeqSimTest {
   private static final class CountingController extends ControllerDeviceBaseClass {
     private static final long serialVersionUID = 1000L;
     private final AtomicInteger executionCount = new AtomicInteger();
-    private UUID lastTransientIdentifier;
 
     /**
      * Creates an active counting controller.
@@ -33,19 +32,29 @@ public class ProcessSystemTransientControllerTest extends neqsim.NeqSimTest {
     private CountingController(String name) {
       super(name);
       setActive(true);
+      setUnit("bara");
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public double getMeasuredValue() {
+      return 0.0;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public double getMeasuredValue(String unit) {
+      return 0.0;
     }
 
     /** {@inheritDoc} */
     @Override
     public void runTransient(double initResponse, double dt, UUID id) {
-      executionCount.incrementAndGet();
-      lastTransientIdentifier = id;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public boolean hasRunTransient(UUID id) {
-      return id != null && id.equals(lastTransientIdentifier);
+      boolean alreadyCompleted = hasRunTransient(id);
+      super.runTransient(initResponse, dt, id);
+      if (!alreadyCompleted) {
+        executionCount.incrementAndGet();
+      }
     }
 
     /**
@@ -79,6 +88,35 @@ public class ProcessSystemTransientControllerTest extends neqsim.NeqSimTest {
     process.add(feed);
     process.add(valve);
     process.add(controller);
+    process.run();
+
+    process.runTransient(1.0, UUID.randomUUID());
+
+    assertEquals(1, controller.getExecutionCount());
+  }
+
+  /**
+   * Semi-implicit equipment passes share one timestep identifier and must integrate controller state once.
+   */
+  @Test
+  public void semiImplicitEquipmentPassesRunControllerOnce() {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 20.0);
+    fluid.addComponent("methane", 1.0);
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    ThrottlingValve valve = new ThrottlingValve("valve", feed);
+    valve.setOutletPressure(10.0, "bara");
+    valve.setCalculateSteadyState(false);
+
+    CountingController controller = new CountingController("pressure controller");
+    valve.setController(controller);
+
+    ProcessSystem process = new ProcessSystem("semi-implicit controller ownership");
+    process.add(feed);
+    process.add(valve);
+    process.add(controller);
+    process.setIntegrationMethod(ProcessSystem.IntegrationMethod.SEMI_IMPLICIT);
     process.run();
 
     process.runTransient(1.0, UUID.randomUUID());
