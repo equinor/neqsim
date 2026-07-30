@@ -1,7 +1,9 @@
 package neqsim.process.equipment.distillation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
@@ -124,6 +126,48 @@ public class ColumnStudyRegressionTest {
     assertTrayPressureProfile(column);
     assertOverallMassBalance(feedStream, topFeedStream, column);
     assertComponentMassBalances(feedStream, topFeedStream, column);
+  }
+
+  /**
+   * Reject a severely perturbed warm start without spending the entire Newton iteration budget on repeated non-descent
+   * line-search steps.
+   *
+   * <p>
+   * The initialized column-study state is deliberately perturbed by up to 90 K before a direct simultaneous-correction
+   * warm start. The case is outside the local Newton basin, but it remains a finite, realistic multicomponent
+   * hydrocarbon column state. The solver should preserve its best physical state and return control to the coordinated
+   * fallback path once three line-search steps have failed to reduce the MESH residual.
+   * </p>
+   */
+  @Test
+  public void severeWarmStartPerturbationStopsNonDescentNewtonStall() {
+    SystemInterface baseFluid = createBaseFluid();
+    StreamInterface feedStream = createStream("stall_guard_main_feed", baseFluid, MAIN_FEED_COMPOSITION,
+        MAIN_FEED_TEMPERATURE_C, MAIN_FEED_PRESSURE_BARA, MAIN_FEED_MASS_FLOW_KG_HR);
+    StreamInterface topFeedStream = createStream("stall_guard_top_feed", baseFluid, TOP_FEED_COMPOSITION,
+        TOP_FEED_TEMPERATURE_C, TOP_FEED_PRESSURE_BARA, TOP_FEED_MASS_FLOW_KG_HR);
+    DistillationColumn column = createColumn(feedStream, topFeedStream);
+    column.init();
+
+    for (int trayIndex = 0; trayIndex < column.getNumberOfTrays(); trayIndex++) {
+      double perturbedTemperature = column.getTray(trayIndex).getTemperature()
+          + 90.0 * Math.sin((trayIndex + 1.0) * 1.9);
+      column.getTray(trayIndex).setTemperature(perturbedTemperature);
+      column.getTray(trayIndex).getThermoSystem().setTemperature(perturbedTemperature);
+    }
+
+    NaphtaliSandholmSolver solver = new NaphtaliSandholmSolver(column);
+    solver.setWarmStartFromColumn(true);
+    solver.setMaxIterations(80);
+    boolean accepted = solver.solve(new UUID(0L, 1L));
+
+    assertFalse(accepted, "the severely perturbed state must be rejected for coordinated fallback");
+    assertTrue(solver.getLastIterations() <= 30,
+        "the non-descent guard should stop the stalled Newton solve before the 80-iteration cap");
+    assertTrue(solver.getLastMassBalanceError() < 1.0e-3,
+        "the restored best state should preserve total molar closure before fallback");
+    assertPhysicalProduct(column.getGasOutStream(), "stalled warm-start gas product");
+    assertPhysicalProduct(column.getLiquidOutStream(), "stalled warm-start liquid product");
   }
 
   /**
