@@ -12,6 +12,7 @@ import java.util.Map;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegimeDetector.OilWaterFlowRegime;
 import neqsim.process.equipment.pipeline.twophasepipe.validation.TwoFluidBenchmarkHarness;
 
 /**
@@ -38,6 +39,13 @@ public final class TwoFluidPipeReport {
     private final double[] oilVelocity;
     private final double[] waterVelocity;
     private final FlowRegime[] flowRegime;
+    private final OilWaterFlowRegime[] oilWaterFlowRegime;
+    private final boolean[] waterWetting;
+    private final boolean[] waterDropoutRisk;
+    private final double[] entrainmentFraction;
+    private final double[] entrainedDropletDiameter;
+    private final double[] severeSluggingNumber;
+    private final boolean[] severeSlugPotential;
 
     private ProfileSnapshot(TwoFluidPipe pipe) {
       this.timeSeconds = pipe.getSimulationTime();
@@ -53,6 +61,13 @@ public final class TwoFluidPipeReport {
       this.oilVelocity = pipe.getOilVelocityProfile();
       this.waterVelocity = pipe.getWaterVelocityProfile();
       this.flowRegime = pipe.getFlowRegimeProfile();
+      this.oilWaterFlowRegime = pipe.getOilWaterFlowRegimeProfile();
+      this.waterWetting = pipe.getWaterWettingProfile();
+      this.waterDropoutRisk = pipe.getWaterDropoutRiskProfile();
+      this.entrainmentFraction = pipe.getEntrainmentFractionProfile();
+      this.entrainedDropletDiameter = pipe.getEntrainedDropletDiameterProfile();
+      this.severeSluggingNumber = pipe.getSevereSluggingNumberProfile();
+      this.severeSlugPotential = pipe.getSevereSlugPotentialProfile();
     }
 
     public double getTimeSeconds() {
@@ -235,7 +250,9 @@ public final class TwoFluidPipeReport {
     }
     csv.append("position_m,pressure_bara,temperature_C,liquid_holdup,water_cut,oil_holdup,")
         .append("water_holdup,gas_velocity_m_s,liquid_velocity_m_s,oil_velocity_m_s,")
-        .append("water_velocity_m_s,flow_regime\n");
+        .append("water_velocity_m_s,flow_regime,oil_water_flow_regime,water_wetting,")
+        .append("water_dropout_risk,entrainment_fraction,entrained_droplet_diameter_m,")
+        .append("severe_slugging_number,severe_slug_potential\n");
 
     for (int i = 0; i < snapshot.positionMeters.length; i++) {
       if (includeTime) {
@@ -250,7 +267,16 @@ public final class TwoFluidPipeReport {
           .append(format(valueAt(snapshot.oilVelocity, i))).append(',')
           .append(format(valueAt(snapshot.waterVelocity, i))).append(',')
           .append(snapshot.flowRegime.length > i && snapshot.flowRegime[i] != null ? snapshot.flowRegime[i].name() : "")
-          .append('\n');
+          .append(',')
+          .append(snapshot.oilWaterFlowRegime.length > i && snapshot.oilWaterFlowRegime[i] != null
+              ? snapshot.oilWaterFlowRegime[i].name()
+              : "")
+          .append(',').append(valueAt(snapshot.waterWetting, i)).append(',')
+          .append(valueAt(snapshot.waterDropoutRisk, i)).append(',')
+          .append(format(valueAt(snapshot.entrainmentFraction, i))).append(',')
+          .append(format(valueAt(snapshot.entrainedDropletDiameter, i))).append(',')
+          .append(format(valueAt(snapshot.severeSluggingNumber, i))).append(',')
+          .append(valueAt(snapshot.severeSlugPotential, i)).append('\n');
     }
     return csv.toString();
   }
@@ -264,6 +290,10 @@ public final class TwoFluidPipeReport {
 
   private static double valueAt(double[] values, int index) {
     return values.length > index ? values[index] : Double.NaN;
+  }
+
+  private static boolean valueAt(boolean[] values, int index) {
+    return values.length > index && values[index];
   }
 
   private static String csvRow(String type, Object position, double value, String unit, String description) {
