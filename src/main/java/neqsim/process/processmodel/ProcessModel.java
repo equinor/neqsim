@@ -1393,10 +1393,12 @@ public class ProcessModel implements Runnable, Serializable {
    * single scheduler can coordinate events across all areas.
    * </p>
    *
-   * @param dt timestep size in seconds (must be {@code > 0})
+   * @param dt finite timestep size in seconds (must be {@code > 0})
    * @param id calculation UUID forwarded to each child {@code ProcessSystem.runTransient}
+   * @throws IllegalArgumentException if {@code dt} is not finite and greater than zero
    */
   public void runTransient(double dt, UUID id) {
+    ProcessSystem.validateTransientTimestep(dt);
     for (ProcessSystem area : processes.values()) {
       area.runTransient(dt, id);
     }
