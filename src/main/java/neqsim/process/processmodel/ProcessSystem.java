@@ -105,6 +105,11 @@ public class ProcessSystem extends SimulationBaseClass {
 
   transient Thread thisThread;
   private MeasurementHistory measurementHistory = new MeasurementHistory();
+  /**
+   * Whether transient steps append measurement rows to {@link #measurementHistory}. A boxed value preserves the
+   * historical enabled default when deserializing process models written before this setting existed.
+   */
+  private volatile Boolean recordMeasurementHistory = Boolean.TRUE;
   private double surroundingTemperature = 288.15;
   private int timeStepNumber = 0;
   /**
@@ -4207,22 +4212,24 @@ public class ProcessSystem extends SimulationBaseClass {
         "Controllers completed for timestep " + timeStepNumber, ProcessEvent.Severity.DEBUG));
 
     timeStepNumber++;
-    String[] row = new String[1 + 3 * measurementDevices.size()];
-    if (row.length > 0) {
+    String[] row = null;
+    if (isMeasurementHistoryRecordingEnabled()) {
+      row = new String[1 + 3 * measurementDevices.size()];
       row[0] = Double.toString(time);
     }
     for (int i = 0; i < measurementDevices.size(); i++) {
       MeasurementDeviceInterface device = measurementDevices.get(i);
       double measuredValue = device.getMeasuredValue();
-      row[3 * i + 1] = device.getName();
-      row[3 * i + 2] = Double.toString(measuredValue);
-      row[3 * i + 3] = device.getUnit();
+      if (row != null) {
+        row[3 * i + 1] = device.getName();
+        row[3 * i + 2] = Double.toString(measuredValue);
+        row[3 * i + 3] = device.getUnit();
+      }
       alarmManager.evaluateMeasurement(device, measuredValue, dt, time);
     }
-    if (measurementDevices.isEmpty()) {
-      row[0] = Double.toString(time);
+    if (row != null) {
+      measurementHistory.add(row);
     }
-    measurementHistory.add(row);
     setCalculationIdentifier(id);
   }
 
@@ -5107,6 +5114,27 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Enables or disables appending measurement-history rows during transient execution. Measurement devices and alarms
+   * continue to be evaluated when recording is disabled. Recording is enabled by default for compatibility. Disabling
+   * it avoids row allocation and retained history growth in long-running simulations that use an external historian or
+   * do not consume {@link #getHistorySnapshot()}.
+   *
+   * @param enabled {@code true} to append a row after each transient step
+   */
+  public void setMeasurementHistoryRecordingEnabled(boolean enabled) {
+    recordMeasurementHistory = Boolean.valueOf(enabled);
+  }
+
+  /**
+   * Returns whether transient steps append rows to the measurement history.
+   *
+   * @return {@code true} when measurement history recording is enabled
+   */
+  public boolean isMeasurementHistoryRecordingEnabled() {
+    return recordMeasurementHistory == null || recordMeasurementHistory.booleanValue();
+  }
+
+  /**
    * Sets the maximum number of entries retained in the measurement history. A value less than or equal to zero disables
    * truncation (unbounded history).
    *
@@ -5191,6 +5219,7 @@ public class ProcessSystem extends SimulationBaseClass {
     equipmentCounter.putAll(source.equipmentCounter);
     lastAddedUnit = source.lastAddedUnit;
     measurementHistory = source.measurementHistory.copy();
+    recordMeasurementHistory = source.recordMeasurementHistory;
     thisThread = null;
     setCalculationIdentifier(source.getCalculationIdentifier());
   }
