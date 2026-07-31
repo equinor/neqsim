@@ -614,7 +614,7 @@ process.setIntegrationMethod(IntegrationMethod.RUNGE_KUTTA_4);    // Higher-orde
 
 ## 6. Test Coverage
 
-The features in this guide are covered by seven focused test classes with 80
+The features in this guide are covered by seven focused test classes with 81
 total tests:
 
 | Test Class | Tests | Coverage |
@@ -625,7 +625,7 @@ total tests:
 | `ProcessSystemParallelTransientTest` | 9 | Worker reuse, copy lifecycle, dependency ordering, independent-level concurrency, and interruption behavior at waits and level boundaries |
 | `ProcessSystemTransientSetterTest` | 3 | Single setter application, repeated-step clock advancement, and explicit, semi-implicit, and parallel execution |
 | `ProcessSystemTransientControllerTest` | 5 | Equipment execution, semi-implicit passes, attachment-only fallback, duplicate standalone registration, identity semantics, and repeated timesteps |
-| `ProcessSystemTransientAlgebraicTimeTest` | 3 | Repeated algebraic evaluation, semi-implicit recycle iteration, low-flow completion identifiers, and one clock advance per timestep |
+| `ProcessSystemTransientAlgebraicTimeTest` | 4 | Repeated algebraic evaluation, semi-implicit recycle iteration, low-flow completion identifiers, null-ID compatibility, and one clock advance per timestep |
 
 Run all tests:
 
