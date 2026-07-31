@@ -121,6 +121,9 @@ public class RecycleController implements java.io.Serializable {
    */
   public boolean solvedCurrentPriorityLevel() {
     for (Recycle recyc : recycleArray) {
+      if (isDeactivated(recyc)) {
+        continue;
+      }
       if (recyc.getPriority() == currentPriorityLevel) {
         if (!recyc.solved()) {
           return false;
@@ -128,6 +131,22 @@ public class RecycleController implements java.io.Serializable {
       }
     }
     return true;
+  }
+
+  /**
+   * Reports whether a recycle is currently bypassed and must therefore be excluded from the convergence gates.
+   *
+   * <p>
+   * A recycle is bypassed either because the user locked it inactive or because its loop flow fell below the configured
+   * low-flow cutoff. Such a recycle never executes its balance equations, so requiring it to converge would keep the
+   * whole flowsheet iterating on a dead leg.
+   * </p>
+   *
+   * @param recycle recycle to test
+   * @return true when the recycle is locked inactive or has been auto-deactivated on low flow
+   */
+  private static boolean isDeactivated(Recycle recycle) {
+    return recycle.isLockedInactive() || !recycle.isActive();
   }
 
   /**
@@ -170,6 +189,9 @@ public class RecycleController implements java.io.Serializable {
    */
   public boolean solvedAll() {
     for (Recycle recyc : recycleArray) {
+      if (isDeactivated(recyc)) {
+        continue;
+      }
       if (logger.isDebugEnabled()) {
         logger.debug(recyc.getName() + " solved " + recyc.solved());
       }
@@ -191,6 +213,9 @@ public class RecycleController implements java.io.Serializable {
   public double getMaxNormalizedError() {
     double maxNorm = 0.0;
     for (Recycle recyc : recycleArray) {
+      if (isDeactivated(recyc)) {
+        continue;
+      }
       maxNorm = Math.max(maxNorm, normalizedError(recyc.getErrorFlow(), recyc.getFlowTolerance()));
       maxNorm = Math.max(maxNorm, normalizedError(recyc.getErrorComposition(), recyc.getCompositionTolerance()));
       maxNorm = Math.max(maxNorm, normalizedError(recyc.getErrorTemperature(), recyc.getTemperatureTolerance()));
