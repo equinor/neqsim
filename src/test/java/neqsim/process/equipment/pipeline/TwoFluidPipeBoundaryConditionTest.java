@@ -388,6 +388,38 @@ class TwoFluidPipeBoundaryConditionTest {
     assertEquals(BoundaryCondition.CONSTANT_FLOW, pipe.getInletBoundaryCondition());
   }
 
+  @Test
+  @DisplayName("CONSTANT_FLOW rate step changes domain mass only through boundary fluxes")
+  void testConstantFlowStepDoesNotCreateDomainMass() {
+    double initialFlowRate = 6.0;
+    double timeStep = 1.0e-3;
+    double[] steppedFlowRates = {12.0, 30.0};
+
+    for (double steppedFlowRate : steppedFlowRates) {
+      TwoFluidPipe transientPipe =
+          createRegressionPipe("mass-balance-" + steppedFlowRate, createTwoPhaseFluid(),
+              initialFlowRate, 75.0, 58.0);
+      transientPipe.setLength(3000.0);
+      transientPipe.setNumberOfSections(12);
+      transientPipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_FLOW);
+      transientPipe.setInletMassFlow(initialFlowRate, "kg/sec");
+      transientPipe.run();
+
+      double massBefore = transientPipe.getTotalMassInventory();
+      transientPipe.setInletMassFlow(steppedFlowRate, "kg/sec");
+      transientPipe.runTransient(timeStep, UUID.randomUUID());
+      double massAfter = transientPipe.getTotalMassInventory();
+
+      double massChange = Math.abs(massAfter - massBefore);
+      double boundaryFluxEnvelope =
+          2.0 * (initialFlowRate + steppedFlowRate) * timeStep;
+      assertTrue(massChange <= boundaryFluxEnvelope,
+          "A short rate step must not create domain-volume-scaled mass. Flow step "
+              + initialFlowRate + " -> " + steppedFlowRate + " kg/s changed inventory by "
+              + massChange + " kg; flux envelope was " + boundaryFluxEnvelope + " kg");
+    }
+  }
+
   // =====================================================================
   // Stationary and Transient Boundary Regression Tests
   // =====================================================================
