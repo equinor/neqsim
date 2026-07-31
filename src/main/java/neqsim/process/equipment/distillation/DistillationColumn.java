@@ -7321,7 +7321,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * The method alternates between: (1) bubble-point temperature calculations on each tray, and (2) flow rate
    * corrections using the sum-rates formula of Burningham and Otto (1967). Once an accepted result is available, an
    * invocation with an identical sequential-input fingerprint reuses that tray and product state without another flash
-   * sweep. Changed feed, tray, product, or configuration state invalidates the fingerprint and executes the solver normally.
+   * sweep. Changed feed, tray, product, or configuration state invalidates the fingerprint and executes the solver
+   * normally.
    * </p>
    *
    * @param id calculation identifier
