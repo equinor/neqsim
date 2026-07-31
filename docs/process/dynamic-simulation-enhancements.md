@@ -614,7 +614,7 @@ process.setIntegrationMethod(IntegrationMethod.RUNGE_KUTTA_4);    // Higher-orde
 
 ## 6. Test Coverage
 
-The features in this guide are covered by six focused test classes with 77
+The features in this guide are covered by seven focused test classes with 80
 total tests:
 
 | Test Class | Tests | Coverage |
