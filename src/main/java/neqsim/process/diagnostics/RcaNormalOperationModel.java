@@ -47,6 +47,8 @@ public final class RcaNormalOperationModel implements Serializable {
     }
 
     List<String> signalNames = normalWindows.get(0).getSignalNames();
+    java.util.Set<String> operatingConditionNames =
+        normalWindows.get(0).getOperatingConditions().keySet();
     Map<String, List<RcaProcessWindow>> grouped = new LinkedHashMap<String, List<RcaProcessWindow>>();
     for (RcaProcessWindow window : normalWindows) {
       if (window == null) {
@@ -54,6 +56,10 @@ public final class RcaNormalOperationModel implements Serializable {
       }
       if (!signalNames.equals(window.getSignalNames())) {
         throw new IllegalArgumentException("all normal windows must contain the same ordered signal schema");
+      }
+      if (!operatingConditionNames.equals(window.getOperatingConditions().keySet())) {
+        throw new IllegalArgumentException(
+            "all normal windows must contain the same operating-condition schema");
       }
       List<RcaProcessWindow> regimeWindows = grouped.get(window.getRegimeId());
       if (regimeWindows == null) {
