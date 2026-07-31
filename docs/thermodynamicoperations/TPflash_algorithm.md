@@ -193,7 +193,9 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 │  Order phases by density                                                        │
 │  Final system.init(1)                                                           │
 │                                                                                 │
-│  IF ordinary flash, water feed ≥ 0.01, and no aqueous phase:                    │
+│  IF ordinary flash and water feed ≥ 0.01:                                       │
+│     → Refine a missing aqueous phase, or an existing two-phase aqueous           │
+│       endpoint only when max |Δ ln(fᵢ)| ≥ 1e-8                                  │
 │     → Evaluate a cloned TPmultiflash candidate                                  │
 │     → Accept any two-phase candidate with lower Gibbs energy,                   │
 │       bounded/normalized phase fractions, and distinct phase compositions       │
@@ -220,7 +222,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 | `maxNumberOfIterations` | 50 | Maximum iterations per convergence loop |
 | Convergence tolerance | 1e-10 | Deviation threshold for K-value convergence |
 | Gibbs increase tolerance | 1e-8 | Relative increase that triggers K-reset |
-| Ordinary water-rich refinement feed threshold | 0.01 mole fraction water | Avoid multiphase overhead for trace-water flashes; accept an already-computed two-phase candidate only through Gibbs and phase-quality checks, independent of its phase labels |
+| Ordinary water-rich refinement feed threshold | 0.01 mole fraction water | Avoid multiphase overhead for trace-water flashes; existing two-phase aqueous endpoints additionally require `max abs(Delta ln(f_i)) >= 1e-8` before refinement |
 | Aqueous cubic-root equilibrium tolerance | 1e-8 in `max abs(Delta ln(f_i))` | Accept an alternate root only when it lowers Gibbs energy and already satisfies component fugacity equality |
 
 ### 1.1 Problem Formulation
@@ -1656,6 +1658,9 @@ Commercial process simulators do not publish all implementation details, but pub
 - Pure-component fallback trials improve LLE/VLLE detection where Wilson K-based trials can report positive TPD even though a liquid-liquid split exists.
 - Explicit multiphase hydrocarbon flashes now retry a local lower-temperature seed before accepting an ambiguous single-phase endpoint, and keep the retry only if it gives a lower-Gibbs multiphase result.
 - A cheap post-flash K-envelope gate skips that rescue for clearly single-phase hydrocarbon endpoints, preserving ordinary `setMultiPhaseCheck(true)` speed.
+- Water-rich ordinary endpoints are not accepted from an aqueous phase label alone. An existing two-phase aqueous
+  endpoint is sent to multiphase refinement only when `max abs(Delta ln(f_i)) >= 1e-8`, and the candidate still must
+  lower Gibbs energy and pass phase-quality checks.
 - Ordinary neutral aqueous splits now compare both cubic roots of the non-aqueous phase at the converged composition. An alternate root is retained only when it lowers Gibbs energy and already satisfies `max abs(Delta ln(f_i)) < 1e-8`; no extra TPflash or multiphase stability calculation is run.
 - Enhanced stability checks are gated to polar, associating, electrolyte, sour, or explicitly requested multiphase systems, limiting unnecessary hydrocarbon phase-map artifacts.
 

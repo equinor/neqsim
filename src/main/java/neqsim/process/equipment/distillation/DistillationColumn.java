@@ -7319,13 +7319,19 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * The sum-rates method adjusts tray liquid flow rates based on the ratio of computed to assumed total flow leaving
    * each tray. This is effective for absorber and stripper columns where the temperature profile is relatively flat.
    * The method alternates between: (1) bubble-point temperature calculations on each tray, and (2) flow rate
-   * corrections using the sum-rates formula of Burningham and Otto (1967).
+   * corrections using the sum-rates formula of Burningham and Otto (1967). Once an accepted result is available, an
+   * invocation with an identical sequential-input fingerprint reuses that tray and product state without another flash
+   * sweep. Changed feed, tray, product, or configuration state invalidates the fingerprint and executes the solver
+   * normally.
    * </p>
    *
    * @param id calculation identifier
    */
   void solveSumRates(UUID id) {
-    if (feedStreams.isEmpty()) {
+    long invocationStartTime = System.nanoTime();
+    lastSequentialWarmStateReused = false;
+    captureDirectExternalTrayFeeds();
+    if (feedStreams.isEmpty() && directExternalFeedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
     }
@@ -7338,6 +7344,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
             "Sum-rates is guarded to damped substitution for columns with condenser/reboiler " + "energy equipment");
       }
       return;
+    }
+
+    if (hasSequentialExactReuseState) {
+      long currentSequentialInputSignature = calculateSequentialExactReuseSignature();
+      if (canReuseSequentialWarmState(currentSequentialInputSignature)) {
+        reuseSequentialWarmState(id, invocationStartTime);
+        return;
+      }
+      hasSequentialExactReuseState = false;
     }
 
     int firstFeedTrayNumber = prepareColumnForSolve();
@@ -7461,6 +7476,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     finalizeSolve(id, iter, err, massErr, energyErr, startTime);
+    hasBeenSolvedBefore = true;
+    lastTotalFeedFlow = getTotalExternalFeedFlowKgPerHour();
+    commitSequentialWarmState();
   }
 
   /**
