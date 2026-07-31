@@ -4,8 +4,6 @@ description: "Normal-only, evidence-grounded root-cause analysis using a dynamic
 keywords: "AgentRCA, root cause analysis, fault diagnosis, digital twin, dynamic simulation, sensor fault, gas leak, blockage, slugging"
 ---
 
-# AgentRCA Dynamic Fault Benchmark
-
 ## Purpose
 
 `AgentRcaDynamicProcessBenchmark` is a deterministic NeqSim reproduction of the
@@ -62,10 +60,12 @@ RcaDiagnosis leakDiagnosis =
     result.getDiagnosis(
         AgentRcaDynamicProcessBenchmark.Scenario.EXPORT_GAS_LEAK);
 
-logger.info("Top diagnosis: {}",
-    leakDiagnosis.getTopHypothesis().getName());
-logger.info("Auditable evidence: {}", leakDiagnosis.toJson());
+String topDiagnosis = leakDiagnosis.getTopHypothesis().getName();
+String auditableEvidence = leakDiagnosis.toJson();
 ```
+
+The diagnosis and evidence strings can be logged, stored with the process
+snapshot, or passed to an optional narrative reasoning layer.
 
 The reusable diagnostic layer is independent of this example flowsheet:
 
