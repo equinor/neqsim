@@ -2649,7 +2649,11 @@ public class ProcessModel implements Runnable, Serializable {
     sb.append("\nProcess Status:\n");
     for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
       boolean processSolved = entry.getValue().solved();
-      sb.append(String.format(Locale.US, "  %-30s: %s\n", entry.getKey(), processSolved ? "SOLVED" : "NOT SOLVED"));
+      List<String> bypassedUnits = getBypassedUnitNames(entry.getValue());
+      String bypassNote = bypassedUnits.isEmpty() ? ""
+          : String.format(Locale.US, " (%d unit(s) bypassed on low flow)", bypassedUnits.size());
+      sb.append(String.format(Locale.US, "  %-30s: %s%s\n", entry.getKey(), processSolved ? "SOLVED" : "NOT SOLVED",
+          bypassNote));
       if (!processSolved) {
         List<String> unsolvedUnits = getUnsolvedUnitNames(entry.getValue());
         if (!unsolvedUnits.isEmpty()) {
@@ -2842,6 +2846,11 @@ public class ProcessModel implements Runnable, Serializable {
         }
       }
       area.add("unsolvedUnits", unsolved);
+      JsonArray bypassed = new JsonArray();
+      for (String unitName : getBypassedUnitNames(entry.getValue())) {
+        bypassed.add(unitName);
+      }
+      area.add("bypassedUnits", bypassed);
       areas.add(area);
     }
     root.add("areas", areas);
@@ -2892,13 +2901,38 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Gets names of unit operations that currently report unsolved status.
    *
+   * <p>
+   * Bypassed units (locked inactive, or auto-bypassed because their inlet flow fell below the configured low-flow
+   * threshold) are excluded: they never execute, so their {@code solved()} flag carries no information. Use
+   * {@link #getBypassedUnitNames(ProcessSystem)} to list those separately.
+   * </p>
+   *
    * @param process process system to inspect
    * @return list of unsolved unit names in process execution order
    */
   private List<String> getUnsolvedUnitNames(ProcessSystem process) {
     List<String> names = new ArrayList<>();
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (unit.isLockedInactive() || !unit.isActive()) {
+        continue;
+      }
       if (!unit.solved()) {
+        names.add(unit.getName());
+      }
+    }
+    return names;
+  }
+
+  /**
+   * Gets names of unit operations that are currently bypassed in the given process area.
+   *
+   * @param process process system to inspect
+   * @return list of bypassed unit names in process execution order
+   */
+  private List<String> getBypassedUnitNames(ProcessSystem process) {
+    List<String> names = new ArrayList<>();
+    for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (unit.isLockedInactive() || !unit.isActive()) {
         names.add(unit.getName());
       }
     }
