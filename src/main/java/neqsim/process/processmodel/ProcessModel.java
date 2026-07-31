@@ -1429,7 +1429,7 @@ public class ProcessModel implements Runnable, Serializable {
    *
    * @param dt finite timestep size in seconds (must be {@code > 0})
    * @param id calculation UUID forwarded to each child {@code ProcessSystem.runTransient}
-   * @throws IllegalArgumentException if {@code dt} is not finite and greater than zero
+   * @throws IllegalArgumentException if {@code dt} is non-finite or not greater than zero
    */
   public void runTransient(double dt, UUID id) {
     ProcessSystem.validateTransientTimestep(dt);
