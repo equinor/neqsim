@@ -281,7 +281,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * When true, lifecycle events are published to the ProcessEventBus singleton during simulation. Default is false for
    * zero overhead when not needed. Enable via setPublishEvents(true).
    */
-  private boolean publishEvents = false;
+  private volatile boolean publishEvents = false;
 
   /**
    * When true, validateSetup() is auto-invoked on each equipment unit before the first iteration. Validation warnings
@@ -4123,11 +4123,14 @@ public class ProcessSystem extends SimulationBaseClass {
     ensureInitialStateSnapshot();
     applyFlowsheetWideSettings();
 
-    // Publish pre-timestep event
-    publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.STATE_CHANGE, getName(),
-        "Transient timestep " + timeStepNumber + " starting at t=" + String.format("%.3f", time) + " s, dt="
-            + String.format("%.4f", dt) + " s",
-        ProcessEvent.Severity.DEBUG));
+    // Construct transient events lazily: publishing is disabled by default, and building
+    // descriptions, IDs, timestamps, and property maps is otherwise pure overhead.
+    if (publishEvents) {
+      publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.STATE_CHANGE, getName(),
+          "Transient timestep " + timeStepNumber + " starting at t=" + String.format("%.3f", time) + " s, dt="
+              + String.format("%.4f", dt) + " s",
+          ProcessEvent.Severity.DEBUG));
+    }
 
     for (int i = 0; i < unitOperations.size(); i++) {
       ProcessEquipmentInterface unit = unitOperations.get(i);
@@ -4208,8 +4211,10 @@ public class ProcessSystem extends SimulationBaseClass {
     }
 
     // Publish post-controller, pre-measurement event
-    publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.STATE_CHANGE, getName(),
-        "Controllers completed for timestep " + timeStepNumber, ProcessEvent.Severity.DEBUG));
+    if (publishEvents) {
+      publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.STATE_CHANGE, getName(),
+          "Controllers completed for timestep " + timeStepNumber, ProcessEvent.Severity.DEBUG));
+    }
 
     timeStepNumber++;
     String[] row = null;
