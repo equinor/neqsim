@@ -152,8 +152,7 @@ public final class RcaEvidence implements Serializable {
     private final double lagOneCorrelationDifference;
 
     SignalEvidence(String signalName, double observedMean, double normalMean, double meanZScore,
-        double logVarianceRatio, double logRangeRatio, double normalizedSlope,
-        double lagOneCorrelationDifference) {
+        double logVarianceRatio, double logRangeRatio, double normalizedSlope, double lagOneCorrelationDifference) {
       this.signalName = signalName;
       this.observedMean = observedMean;
       this.normalMean = normalMean;
@@ -250,8 +249,7 @@ public final class RcaEvidence implements Serializable {
     private final double observedCorrelation;
     private final double difference;
 
-    CorrelationEvidence(String firstSignal, String secondSignal, double normalCorrelation,
-        double observedCorrelation) {
+    CorrelationEvidence(String firstSignal, String secondSignal, double normalCorrelation, double observedCorrelation) {
       this.firstSignal = firstSignal;
       this.secondSignal = secondSignal;
       this.normalCorrelation = normalCorrelation;
