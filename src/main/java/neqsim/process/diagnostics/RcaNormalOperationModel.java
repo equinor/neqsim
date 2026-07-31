@@ -121,8 +121,7 @@ public final class RcaNormalOperationModel implements Serializable {
     validateWindow(window);
     RegimeMatch match = matchRegime(window);
     RegimeStatistics normal = match.statistics;
-    Map<String, RcaEvidence.SignalEvidence> signalEvidence =
-        new LinkedHashMap<String, RcaEvidence.SignalEvidence>();
+    Map<String, RcaEvidence.SignalEvidence> signalEvidence = new LinkedHashMap<String, RcaEvidence.SignalEvidence>();
     double overallAnomaly = 0.0;
 
     for (String signalName : signalNames) {
@@ -132,13 +131,11 @@ public final class RcaNormalOperationModel implements Serializable {
       double meanZ = (observed.mean - reference.mean) / reference.safeStandardDeviation();
       double logVarianceRatio = Math.log((observed.variance + EPSILON) / (reference.variance + EPSILON));
       double logRangeRatio = Math.log((observed.range + EPSILON) / (reference.range + EPSILON));
-      double normalizedSlope =
-          observed.slope * Math.max(1.0, values.length - 1.0) / reference.safeStandardDeviation();
+      double normalizedSlope = observed.slope * Math.max(1.0, values.length - 1.0) / reference.safeStandardDeviation();
       double lagDifference = observed.lagOneCorrelation - reference.lagOneCorrelation;
 
-      RcaEvidence.SignalEvidence evidence =
-          new RcaEvidence.SignalEvidence(signalName, observed.mean, reference.mean, meanZ, logVarianceRatio,
-              logRangeRatio, normalizedSlope, lagDifference);
+      RcaEvidence.SignalEvidence evidence = new RcaEvidence.SignalEvidence(signalName, observed.mean, reference.mean,
+          meanZ, logVarianceRatio, logRangeRatio, normalizedSlope, lagDifference);
       signalEvidence.put(signalName, evidence);
       overallAnomaly = Math.max(overallAnomaly, Math.abs(meanZ) / 3.0);
       overallAnomaly = Math.max(overallAnomaly, Math.abs(logVarianceRatio) / Math.log(4.0));
@@ -152,11 +149,10 @@ public final class RcaNormalOperationModel implements Serializable {
       for (int j = i + 1; j < signalNames.size(); j++) {
         String first = signalNames.get(i);
         String second = signalNames.get(j);
-        double observedCorrelation =
-            correlation(window.getSignalInternal(first), window.getSignalInternal(second));
+        double observedCorrelation = correlation(window.getSignalInternal(first), window.getSignalInternal(second));
         double normalCorrelation = normal.correlations[i][j];
-        RcaEvidence.CorrelationEvidence evidence =
-            new RcaEvidence.CorrelationEvidence(first, second, normalCorrelation, observedCorrelation);
+        RcaEvidence.CorrelationEvidence evidence = new RcaEvidence.CorrelationEvidence(first, second, normalCorrelation,
+            observedCorrelation);
         correlations.add(evidence);
         overallAnomaly = Math.max(overallAnomaly, Math.abs(evidence.getDifference()) / 0.5);
       }
@@ -183,8 +179,7 @@ public final class RcaNormalOperationModel implements Serializable {
       for (Map.Entry<String, Double> condition : candidate.operatingConditions.entrySet()) {
         Double observed = window.getOperatingConditions().get(condition.getKey());
         if (observed == null) {
-          throw new IllegalArgumentException(
-              "test window is missing operating condition " + condition.getKey());
+          throw new IllegalArgumentException("test window is missing operating condition " + condition.getKey());
         }
         double scale = conditionScales.get(condition.getKey()).doubleValue();
         double delta = (observed.doubleValue() - condition.getValue().doubleValue()) / scale;
