@@ -368,8 +368,10 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     setErrorPressure(0.0);
     lastIterationStream = mixedStream.clone();
     outletStream.setThermoSystem(mixedStream.getThermoSystem());
-    outletStream.setCalculationIdentifier(id);
-    setCalculationIdentifier(id);
+    if (id != null) {
+      outletStream.setCalculationIdentifier(id);
+      setCalculationIdentifier(id);
+    }
   }
 
   /** {@inheritDoc} */
