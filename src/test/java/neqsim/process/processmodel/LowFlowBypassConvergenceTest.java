@@ -2,9 +2,11 @@ package neqsim.process.processmodel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.equipment.stream.Stream;
@@ -201,5 +203,70 @@ public class LowFlowBypassConvergenceTest {
     feedB.run();
     assertEquals(100.0, manifold.getMassBalance("kg/hr"), 1.0e-3,
         "manifold balance must be outlets - inlets, with the correct sign");
+  }
+
+  /**
+   * A recycle must offer a scale-independent (absolute, kg/hr) flow criterion alongside the legacy residual.
+   *
+   * <p>
+   * {@link Recycle#flowBalanceCheck()} returns an absolute kg/sec residual below 1 kg/sec and a percentage above it, so
+   * a single {@code setTolerance()} value means different things on different loops. The absolute criterion is opt-in
+   * (default 0.0 keeps the legacy behaviour) and satisfies the flow gate when the loop flow moves by less than the
+   * configured kg/hr.
+   * </p>
+   */
+  @Test
+  public void recycleAcceptsAnAbsoluteFlowTolerance() {
+    Recycle recycle = new Recycle("tolerance probe");
+    assertEquals(0.0, recycle.getAbsoluteFlowTolerance(), 1.0e-12,
+        "the absolute criterion must be disabled by default");
+
+    recycle.setAbsoluteFlowTolerance(2.5);
+    assertEquals(2.5, recycle.getAbsoluteFlowTolerance(), 1.0e-12);
+
+    assertThrows(IllegalArgumentException.class, new Executable() {
+      @Override
+      public void execute() {
+        recycle.setAbsoluteFlowTolerance(-1.0);
+      }
+    });
+  }
+
+  /**
+   * The absolute flow change must be reported in kg/hr and must let a large, slowly-moving loop converge on the
+   * absolute criterion even when the legacy percentage residual is still above its tolerance.
+   */
+  @Test
+  public void recycleConvergesOnTheAbsoluteFlowCriterion() {
+    Stream loopFeed = new Stream("loop feed", gas());
+    loopFeed.setFlowRate(50000.0, "kg/hr");
+    loopFeed.setTemperature(25.0, "C");
+    loopFeed.setPressure(10.0, "bara");
+    loopFeed.run();
+
+    Stream tear = new Stream("tear", gas().clone());
+    tear.setFlowRate(50000.0, "kg/hr");
+    tear.setTemperature(25.0, "C");
+    tear.setPressure(10.0, "bara");
+    tear.run();
+
+    Recycle recycle = new Recycle("big loop");
+    recycle.addStream(loopFeed);
+    recycle.setOutletStream(tear);
+    // Percentage residual gate so tight it cannot be met by the step below.
+    recycle.setTolerance(1.0e-8);
+    recycle.run();
+
+    // Move the loop by 1 kg/hr on a 50 t/hr stream: 0.002 % - real convergence, but
+    // above the 1e-8 percentage gate.
+    loopFeed.setFlowRate(50001.0, "kg/hr");
+    loopFeed.run();
+    recycle.run();
+
+    assertEquals(1.0, recycle.getAbsoluteFlowChange(), 1.0e-6, "the absolute change must be reported in kg/hr");
+    assertFalse(recycle.solved(), "with the absolute criterion disabled the tight percentage gate must still fail");
+
+    recycle.setAbsoluteFlowTolerance(5.0);
+    assertTrue(recycle.solved(), "a 1 kg/hr move on a 50 t/hr loop must satisfy a 5 kg/hr absolute tolerance");
   }
 }
