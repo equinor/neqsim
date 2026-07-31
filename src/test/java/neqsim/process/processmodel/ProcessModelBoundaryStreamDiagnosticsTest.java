@@ -11,6 +11,7 @@ import org.junit.jupiter.api.function.Executable;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -121,5 +122,45 @@ class ProcessModelBoundaryStreamDiagnosticsTest {
         model.getWorstBoundaryStreamError("massflow");
       }
     });
+  }
+
+  /**
+   * Splitters auto-name their outlets {@code "Split Stream_0"}, {@code "Split Stream_1"}, ... so the same name appears
+   * on every splitter in a plant. The diagnostics must name the producing unit as well, otherwise an offending boundary
+   * stream cannot be traced to a splitter.
+   */
+  @Test
+  void testBoundaryStreamErrorsNameTheProducingSplitter() {
+    Stream feed = new Stream("feed", createGasFluid());
+    feed.setFlowRate(1000.0, "kg/hr");
+    feed.setTemperature(25.0, "C");
+    feed.setPressure(50.0, "bara");
+    Splitter splitter = new Splitter("gas splitter", feed, 2);
+    splitter.setSplitFactors(new double[] { 0.6, 0.4 });
+
+    ProcessSystem upstream = new ProcessSystem("upstream");
+    upstream.add(feed);
+    upstream.add(splitter);
+
+    StreamInterface branch = splitter.getSplitStream(0);
+    Separator downstreamSeparator = new Separator("downstream separator", branch);
+    ProcessSystem downstream = new ProcessSystem("downstream");
+    downstream.add(branch);
+    downstream.add(downstreamSeparator);
+
+    ProcessModel model = new ProcessModel();
+    model.add("upstream", upstream);
+    model.add("downstream", downstream);
+    model.runUntilConverged(5, 1e-4);
+
+    ProcessModel.BoundaryStreamError splitBranch = null;
+    for (ProcessModel.BoundaryStreamError error : model.getLastBoundaryStreamErrors()) {
+      if ("Split Stream_0".equals(error.getStreamName())) {
+        splitBranch = error;
+      }
+    }
+    assertNotNull(splitBranch, "the split branch must be tracked as a boundary stream");
+    assertEquals("upstream::gas splitter", splitBranch.getProducerLabel());
+    assertEquals("upstream::gas splitter -> Split Stream_0", splitBranch.getQualifiedName());
   }
 }

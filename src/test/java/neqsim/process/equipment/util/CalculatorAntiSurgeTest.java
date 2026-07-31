@@ -253,4 +253,51 @@ public class CalculatorAntiSurgeTest {
         + " m3/hr) must respect the surge-flow cap (" + surgeFlow + " m3/hr)");
     assertTrue(recycleAtSuction >= 0.0, "recycle must be non-negative, got " + recycleAtSuction);
   }
+
+  /**
+   * A positive surge-control margin set on the COMPRESSOR must move the recycle target to the right of the surge line.
+   *
+   * <p>
+   * The legacy control law drives the operating point to {@code inletFlow == surgeFlow}, i.e. exactly onto the surge
+   * line with zero margin, which is not how any machine is operated. The margin is a property of the machine and its
+   * chart ({@link Compressor#setSurgeControlMargin(double)} / {@link Compressor#getControlLineFlow()}), so the
+   * calculator reads it from the compressor rather than owning a duplicate setting. The target becomes
+   * {@code surgeFlow * (1 + margin)}, so for the same operating point the calculator must ask for strictly more
+   * recycle.
+   * </p>
+   */
+  @Test
+  public void testSurgeControlMarginIncreasesTheRecycleTarget() {
+    assertEquals(0.0, buildCompressorWithSurgeCurve(20000.0).getSurgeControlMargin(), 1.0e-12,
+        "default compressor margin must stay 0.0 so legacy models are unchanged");
+
+    double recycleNoMargin = runAntiSurgeOnceAndReadRecycle(0.0);
+    double recycleWithMargin = runAntiSurgeOnceAndReadRecycle(0.10);
+
+    assertTrue(recycleWithMargin > recycleNoMargin,
+        "a 10 % control margin must ask for more recycle than control on the surge line itself: " + recycleNoMargin
+            + " -> " + recycleWithMargin + " kg/hr");
+  }
+
+  /**
+   * Builds a turned-down compressor with an anti-surge splitter, runs one anti-surge step with the given control margin
+   * set on the compressor, and returns the resulting recycle mass flow.
+   *
+   * @param margin the surge-control margin as a fraction of the surge flow
+   * @return the recycle leg mass flow in kg/hr after one calculator step
+   */
+  private double runAntiSurgeOnceAndReadRecycle(double margin) {
+    Compressor comp = buildCompressorWithSurgeCurve(20000.0);
+    comp.setSurgeControlMargin(margin);
+    Splitter splitter = new Splitter("anti surge splitter", comp.getOutletStream(), 2);
+    splitter.setFlowRates(new double[] { -1.0, 1.0 }, "kg/hr");
+    splitter.run();
+
+    Calculator calc = new Calculator("anti surge calc");
+    calc.addInputVariable(comp);
+    calc.setOutputVariable(splitter);
+    calc.runAntiSurgeCalc(UUID.randomUUID());
+
+    return splitter.getSplitStream(1).getFlowRate("kg/hr");
+  }
 }

@@ -178,4 +178,41 @@ public class MultiStreamHeatExchangerTest {
 
     heatEx.toJson();
   }
+
+  /**
+   * Every feed and product must be reachable through the generic stream-introspection API. Topology walks, DEXPI export
+   * and the ProcessModel boundary-stream detection use these lists, so a missing outlet silently hides a cross-area
+   * link and lets a plant report convergence while a downstream consumer is out of balance.
+   */
+  @Test
+  void testAllStreamsAreExposedForTopology() {
+    Stream stream1 = new Stream("Stream1", testSystem.clone());
+    stream1.setTemperature(100.0, "C");
+    stream1.setFlowRate(1000.0, "kg/hr");
+    stream1.run();
+
+    Stream stream2 = new Stream("Stream2", testSystem.clone());
+    stream2.setTemperature(20.0, "C");
+    stream2.setFlowRate(310.0, "kg/hr");
+    stream2.run();
+
+    Stream stream3 = new Stream("Stream3", testSystem.clone());
+    stream3.setTemperature(0.0, "C");
+    stream3.setFlowRate(200.0, "kg/hr");
+    stream3.run();
+
+    MultiStreamHeatExchanger heatEx = new MultiStreamHeatExchanger("heatEx");
+    heatEx.addInStream(stream1);
+    heatEx.addInStream(stream2);
+    heatEx.addInStream(stream3);
+
+    assertEquals(3, heatEx.getInletStreams().size());
+    assertEquals(3, heatEx.getOutletStreams().size());
+    for (int i = 0; i < 3; i++) {
+      assertTrue(heatEx.getOutletStreams().contains(heatEx.getOutStream(i)),
+          "outlet " + i + " must be discoverable through getOutletStreams()");
+    }
+    assertTrue(heatEx.getInletStreams().contains(stream3), "the third feed must be discoverable");
+    assertEquals(heatEx.getOutStream(0), heatEx.getOutletStream());
+  }
 }
