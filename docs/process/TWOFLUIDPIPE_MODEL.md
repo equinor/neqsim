@@ -381,6 +381,25 @@ root-mean-square pressure difference across all sections; for compact tests a li
 useful sanity check. For multiphase cases, also compare liquid, oil, and water holdup profiles so
 the dynamic calculation has settled hydraulically, not only acoustically.
 
+Transient holdup is reconstructed from the phase masses advanced by the finite-volume equations.
+There is no separate post-step projection toward the steady-state holdup correlation. Such a
+projection changes phase inventory without a boundary flux or mass-transfer source and makes the
+error scale with pipe length. The earlier unreferenced 4 s relaxation time has therefore been
+removed; steady-state closures remain part of initialization and the local closure/source terms.
+
+For a domain with no external mass source, validate the discrete balance
+
+$$
+M(t + \Delta t) - M(t) =
+\int_t^{t+\Delta t} \left(\dot m_{in} - \dot m_{out}\right)\,dt,
+\qquad
+M = \sum_i \left(m'_{g,i} + m'_{o,i} + m'_{w,i}\right)\Delta x_i .
+$$
+
+Use `getTotalMassInventory()` to read $M$ in kg directly from the conservative gas, oil, and water
+masses. A steady-state solution remains a useful long-time comparison, but agreement must result
+from the transient balances and closure forces rather than overwriting the conserved state.
+
 ### Boundary Conditions
 
 Use `setInletBoundaryCondition(...)` and `setOutletBoundaryCondition(...)` for explicit boundary
