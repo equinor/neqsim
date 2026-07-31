@@ -82,7 +82,7 @@ public class SumRatesExactReuseTest {
       assertTrue(column.solved(), column.getConvergenceDiagnostics());
       assertFalse(column.wasSequentialWarmStateReused());
       assertTrue(column.getLastIterationCount() > 0);
-      assertNotEquals(gasFlow, column.getGasOutStream().getFlowRate("kg/hr"));
+      assertNotEquals(gasFlow, column.getGasOutStream().getFlowRate("kg/hr"), 1.0e-6);
       double totalFeedFlow = gasFeed.getFlowRate("kg/hr") + operatingPoints[pointIndex][1];
       double totalProductFlow = column.getGasOutStream().getFlowRate("kg/hr")
           + column.getLiquidOutStream().getFlowRate("kg/hr");
