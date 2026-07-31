@@ -41,6 +41,17 @@ for (int i = 0; i < 600; i++) {
 }
 ```
 
+Each transient step records a measurement-history row by default. For long-running
+simulations that use an external historian or do not call `getHistorySnapshot()`, disable
+the internal rows while retaining measurement and alarm evaluation:
+
+```java
+process.setMeasurementHistoryRecordingEnabled(false);
+```
+
+Re-enable recording with `true`. Existing history is retained until `clearHistory()` is
+called; `setHistoryCapacity(int)` can instead bound the number of retained rows.
+
 ## What `instrumentAndControl()` Creates
 
 The method scans all equipment in the process and adds instrumentation based on
