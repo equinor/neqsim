@@ -88,4 +88,30 @@ public class RcaDiagnosisEngineTest extends NeqSimTest {
     }
     assertTrue(failed);
   }
+
+  /**
+   * Verifies that trimming names cannot silently overwrite a signal or regime coordinate.
+   */
+  @Test
+  public void testWindowRejectsNamesThatCollideAfterNormalization() {
+    boolean signalFailed = false;
+    try {
+      RcaProcessWindow.builder("TEST", 1.0)
+          .signal("pressure", new double[] {10.0, 10.1, 9.9})
+          .signal(" pressure ", new double[] {11.0, 11.1, 10.9}).build();
+    } catch (IllegalArgumentException expected) {
+      signalFailed = true;
+    }
+    assertTrue(signalFailed);
+
+    boolean conditionFailed = false;
+    try {
+      RcaProcessWindow.builder("TEST", 1.0).operatingCondition("flow", 100.0)
+          .operatingCondition(" flow ", 101.0)
+          .signal("pressure", new double[] {10.0, 10.1, 9.9}).build();
+    } catch (IllegalArgumentException expected) {
+      conditionFailed = true;
+    }
+    assertTrue(conditionFailed);
+  }
 }
