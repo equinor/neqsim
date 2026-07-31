@@ -89,8 +89,7 @@ public class ProcessSystemTransientAlgebraicTimeTest extends neqsim.NeqSimTest {
     assertEquals(2, recycle.getIterations());
     assertEquals(4.0, recycle.getTime(), 0.0);
     assertEquals(previousIdentifier, recycle.getCalculationIdentifier());
-    assertEquals(previousOutletIdentifier,
-        recycle.getOutletStream().getCalculationIdentifier());
+    assertEquals(previousOutletIdentifier, recycle.getOutletStream().getCalculationIdentifier());
   }
 
   private static Recycle createRecycle(double flowRate) {
