@@ -79,7 +79,9 @@ public class ProcessSystemTransientAlgebraicTimeTest extends neqsim.NeqSimTest {
   public void nullIdentifierPreservesPreviousIdentifierAndClockBehavior() {
     Recycle recycle = createRecycle(0.0);
     UUID previousIdentifier = UUID.randomUUID();
+    UUID previousOutletIdentifier = UUID.randomUUID();
     recycle.setCalculationIdentifier(previousIdentifier);
+    recycle.getOutletStream().setCalculationIdentifier(previousOutletIdentifier);
 
     recycle.runTransient(2.0, null);
     recycle.runTransient(2.0, null);
@@ -87,6 +89,8 @@ public class ProcessSystemTransientAlgebraicTimeTest extends neqsim.NeqSimTest {
     assertEquals(2, recycle.getIterations());
     assertEquals(4.0, recycle.getTime(), 0.0);
     assertEquals(previousIdentifier, recycle.getCalculationIdentifier());
+    assertEquals(previousOutletIdentifier,
+        recycle.getOutletStream().getCalculationIdentifier());
   }
 
   private static Recycle createRecycle(double flowRate) {
