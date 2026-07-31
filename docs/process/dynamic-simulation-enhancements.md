@@ -519,6 +519,12 @@ double actualDt = process.runTransientAdaptive(1.0, id);
 // actualDt may be smaller or larger than the requested 1.0
 ```
 
+Every `ProcessSystem` and `ProcessModel` transient entry point requires a
+finite, positive timestep. Zero, negative, NaN, and infinite values throw
+`IllegalArgumentException` before snapshots, setters, events, process areas,
+equipment, controllers, clocks, or identifiers can change. Adaptive stepping
+rejects invalid requested values instead of silently clamping them.
+
 The adaptive algorithm compares state changes between the full step and two
 half-steps, reducing or increasing $\Delta t$ based on the relative error.
 
@@ -614,7 +620,7 @@ process.setIntegrationMethod(IntegrationMethod.RUNGE_KUTTA_4);    // Higher-orde
 
 ## 6. Test Coverage
 
-The features in this guide are covered by seven focused test classes with 81
+The features in this guide are covered by eight focused test classes with 85
 total tests:
 
 | Test Class | Tests | Coverage |
@@ -626,11 +632,12 @@ total tests:
 | `ProcessSystemTransientSetterTest` | 3 | Single setter application, repeated-step clock advancement, and explicit, semi-implicit, and parallel execution |
 | `ProcessSystemTransientControllerTest` | 5 | Equipment execution, semi-implicit passes, attachment-only fallback, duplicate standalone registration, identity semantics, and repeated timesteps |
 | `ProcessSystemTransientAlgebraicTimeTest` | 4 | Repeated algebraic evaluation, semi-implicit recycle iteration, low-flow completion identifiers, null-ID compatibility, and one clock advance per timestep |
+| `ProcessSystemTransientTimestepValidationTest` | 4 | Finite-positive process, adaptive, and multi-area timestep preflight plus valid nearby steps |
 
 Run all tests:
 
 ```bash
-./mvnw test -Dtest=DynamicImprovementsTest,DynamicImprovementsPhase2Test,DynamicImprovementsPhase3Test,ProcessSystemParallelTransientTest,ProcessSystemTransientSetterTest,ProcessSystemTransientControllerTest,ProcessSystemTransientAlgebraicTimeTest
+./mvnw test -Dtest=DynamicImprovementsTest,DynamicImprovementsPhase2Test,DynamicImprovementsPhase3Test,ProcessSystemParallelTransientTest,ProcessSystemTransientSetterTest,ProcessSystemTransientControllerTest,ProcessSystemTransientAlgebraicTimeTest,ProcessSystemTransientTimestepValidationTest
 ```
 
 ---
