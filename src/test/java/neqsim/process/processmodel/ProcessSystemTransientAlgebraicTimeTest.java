@@ -71,6 +71,24 @@ public class ProcessSystemTransientAlgebraicTimeTest extends neqsim.NeqSimTest {
     assertEquals(id, recycle.getCalculationIdentifier());
   }
 
+  /**
+   * Null identifiers retain the legacy behavior: every evaluation advances time and no identifier
+   * is written by the shared transient boundary.
+   */
+  @Test
+  public void nullIdentifierPreservesPreviousIdentifierAndClockBehavior() {
+    Recycle recycle = createRecycle(0.0);
+    UUID previousIdentifier = UUID.randomUUID();
+    recycle.setCalculationIdentifier(previousIdentifier);
+
+    recycle.runTransient(2.0, null);
+    recycle.runTransient(2.0, null);
+
+    assertEquals(2, recycle.getIterations());
+    assertEquals(4.0, recycle.getTime(), 0.0);
+    assertEquals(previousIdentifier, recycle.getCalculationIdentifier());
+  }
+
   private static Recycle createRecycle(double flowRate) {
     SystemSrkEos fluid = new SystemSrkEos(298.15, 10.0);
     fluid.addComponent("methane", 1.0);
