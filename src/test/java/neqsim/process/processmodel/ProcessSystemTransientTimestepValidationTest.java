@@ -11,8 +11,8 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /** Regression tests for finite-positive transient timestep validation. */
 public class ProcessSystemTransientTimestepValidationTest extends neqsim.NeqSimTest {
-  private static final double[] INVALID_TIMESTEPS = new double[] {0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY,
-      Double.NEGATIVE_INFINITY};
+  private static final double[] INVALID_TIMESTEPS = new double[] { 0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY,
+      Double.NEGATIVE_INFINITY };
 
   /**
    * Invalid direct process steps must fail before clocks, identifiers, or algebraic equipment state change.
