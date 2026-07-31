@@ -21,8 +21,7 @@ public final class RcaDiagnosis implements Serializable {
 
   RcaDiagnosis(RcaEvidence evidence, List<RankedHypothesis> rankedHypotheses) {
     this.evidence = evidence;
-    this.rankedHypotheses =
-        Collections.unmodifiableList(new ArrayList<RankedHypothesis>(rankedHypotheses));
+    this.rankedHypotheses = Collections.unmodifiableList(new ArrayList<RankedHypothesis>(rankedHypotheses));
   }
 
   /**
