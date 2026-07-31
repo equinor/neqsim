@@ -109,7 +109,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Whether transient steps append measurement rows to {@link #measurementHistory}. A boxed value preserves the
    * historical enabled default when deserializing process models written before this setting existed.
    */
-  private Boolean recordMeasurementHistory = Boolean.TRUE;
+  private volatile Boolean recordMeasurementHistory = Boolean.TRUE;
   private double surroundingTemperature = 288.15;
   private int timeStepNumber = 0;
   /**
