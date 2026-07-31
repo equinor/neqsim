@@ -58,6 +58,9 @@ public final class RcaProcessWindow implements Serializable {
           throw new IllegalArgumentException("signal " + name + " contains a non-finite value at index " + i);
         }
       }
+      if (copiedSignals.containsKey(name)) {
+        throw new IllegalArgumentException("duplicate signal name after normalization: " + name);
+      }
       copiedSignals.put(name, values);
     }
 
@@ -67,6 +70,9 @@ public final class RcaProcessWindow implements Serializable {
       Double value = entry.getValue();
       if (value == null || !Double.isFinite(value.doubleValue())) {
         throw new IllegalArgumentException("operating condition " + name + " must be finite");
+      }
+      if (copiedConditions.containsKey(name)) {
+        throw new IllegalArgumentException("duplicate operating-condition name after normalization: " + name);
       }
       copiedConditions.put(name, value);
     }
