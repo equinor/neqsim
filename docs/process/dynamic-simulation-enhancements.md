@@ -541,6 +541,14 @@ repeated calls with one identifier idempotent, including semi-implicit equipment
 passes. Custom controller implementations that integrate inside equipment should
 implement `hasRunTransient(UUID)` and the same one-update-per-identifier contract.
 
+Steady-state equipment can be evaluated more than once while a solver refines one
+physical timestep. The default `SimulationInterface.runTransient(dt, id)` still
+executes `run(id)` on every evaluation, so algebraic recycles retain both
+semi-implicit passes, but advances the equipment clock only on the first
+successful evaluation of a non-null calculation identifier. A new identifier
+advances time for the next physical step. This keeps algebraic solver iterations
+separate from simulated time, including normal low-flow returns.
+
 ### 5.2 Parallel Transient Execution
 
 For large flowsheets, equipment-level transient calculations can be run in
@@ -606,7 +614,7 @@ process.setIntegrationMethod(IntegrationMethod.RUNGE_KUTTA_4);    // Higher-orde
 
 ## 6. Test Coverage
 
-The features in this guide are covered by six focused test classes with 77
+The features in this guide are covered by seven focused test classes with 81
 total tests:
 
 | Test Class | Tests | Coverage |
@@ -617,11 +625,12 @@ total tests:
 | `ProcessSystemParallelTransientTest` | 9 | Worker reuse, copy lifecycle, dependency ordering, independent-level concurrency, and interruption behavior at waits and level boundaries |
 | `ProcessSystemTransientSetterTest` | 3 | Single setter application, repeated-step clock advancement, and explicit, semi-implicit, and parallel execution |
 | `ProcessSystemTransientControllerTest` | 5 | Equipment execution, semi-implicit passes, attachment-only fallback, duplicate standalone registration, identity semantics, and repeated timesteps |
+| `ProcessSystemTransientAlgebraicTimeTest` | 4 | Repeated algebraic evaluation, semi-implicit recycle iteration, low-flow completion identifiers, null-ID compatibility, and one clock advance per timestep |
 
 Run all tests:
 
 ```bash
-./mvnw test -Dtest=DynamicImprovementsTest,DynamicImprovementsPhase2Test,DynamicImprovementsPhase3Test,ProcessSystemParallelTransientTest,ProcessSystemTransientSetterTest,ProcessSystemTransientControllerTest
+./mvnw test -Dtest=DynamicImprovementsTest,DynamicImprovementsPhase2Test,DynamicImprovementsPhase3Test,ProcessSystemParallelTransientTest,ProcessSystemTransientSetterTest,ProcessSystemTransientControllerTest,ProcessSystemTransientAlgebraicTimeTest
 ```
 
 ---
