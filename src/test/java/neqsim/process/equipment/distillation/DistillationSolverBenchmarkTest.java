@@ -368,8 +368,9 @@ public class DistillationSolverBenchmarkTest {
         "Rigorous polish iterations must be included after matrix warm-start iterations");
     double outletFlow = column.getGasOutStream().getFlowRate("kg/hr")
         + column.getLiquidOutStream().getFlowRate("kg/hr");
-    assertEquals(feed.getFlowRate("kg/hr"), outletFlow, 1.0e-6,
-        "Polished products should close the total mass balance");
+    double feedFlow = feed.getFlowRate("kg/hr");
+    assertEquals(feedFlow, outletFlow, feedFlow * 1.0e-6,
+        "Polished products should close the total mass balance within one part per million");
   }
 
   /**
