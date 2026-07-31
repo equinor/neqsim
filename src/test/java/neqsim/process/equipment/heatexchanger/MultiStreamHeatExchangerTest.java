@@ -149,9 +149,17 @@ public class MultiStreamHeatExchangerTest {
     // separator2.getFluid().prettyPrint();
     // heatEx.getOutStream(0).getFluid().prettyPrint();
 
-    assertTrue(separator2.getFluid().getTemperature("C") < heatEx.getOutStream(1).getTemperature("C"));
-    assertEquals(25.0, heatEx.getOutStream(1).getTemperature("C"), 1e-3);
-    assertEquals(25.0, heatEx.getOutStream(2).getTemperature("C"), 1e-3);
+    double hotInletTemperature = separator.getGasOutStream().getTemperature("C");
+    for (int coldStreamIndex = 1; coldStreamIndex <= 2; coldStreamIndex++) {
+      double coldInletTemperature = heatEx.getInStream(coldStreamIndex).getTemperature("C");
+      double coldOutletTemperature = heatEx.getOutStream(coldStreamIndex).getTemperature("C");
+      double actualTemperatureApproach = hotInletTemperature - coldOutletTemperature;
+      assertTrue(coldOutletTemperature > coldInletTemperature, "cold stream " + coldStreamIndex
+          + " should be heated: inlet=" + coldInletTemperature + " C, outlet=" + coldOutletTemperature + " C");
+      assertTrue(actualTemperatureApproach >= heatEx.getTemperatureApproach() - 1e-3,
+          "cold stream " + coldStreamIndex + " must respect the specified minimum temperature approach: specified="
+              + heatEx.getTemperatureApproach() + " C, actual=" + actualTemperatureApproach + " C");
+    }
 
     heatEx.setUAvalue(5000);
     operations.run();
