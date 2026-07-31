@@ -189,7 +189,26 @@ public class Calculator extends ProcessEquipmentBaseClass {
       return;
     }
 
-    // If the compressor is comfortably above the surge line WITHOUT the help of the
+    // The control law targets the compressor's anti-surge CONTROL LINE, not the surge
+    // line itself. The margin is a property of the machine and its chart, so it is
+    // read from the compressor (Compressor.setSurgeControlMargin / getControlLineFlow)
+    // rather than duplicated here - the same value already drives
+    // CompressorAntiSurgeApplication, AntiSurgeController and the operating-envelope
+    // design checks, so one setting now governs every consumer.
+    //
+    // With the compressor default of 0.0 the control flow IS the surge flow, which
+    // reproduces the legacy behaviour. Set a margin of 0.05-0.10 on the compressor to
+    // make the converged operating point keep a realistic distance from surge instead
+    // of sitting exactly on the surge line. The locally clamped surgeFlow is used as
+    // the basis (rather than calling getControlLineFlow() directly) so the
+    // gross-extrapolation guard above still applies.
+    double controlMargin = compressor.getSurgeControlMargin();
+    if (!Double.isFinite(controlMargin) || controlMargin < 0.0) {
+      controlMargin = 0.0;
+    }
+    double controlFlow = surgeFlow * (1.0 + controlMargin);
+
+    // If the compressor is comfortably above the control line WITHOUT the help of the
     // recycle, close the recycle valve to (effectively) zero. This short-circuit
     // avoids the proportional step overshooting when the machine is operating far
     // from surge on fresh feed alone.
@@ -206,29 +225,29 @@ public class Calculator extends ProcessEquipmentBaseClass {
     // justify closing the recycle - and lets the proportional step below close the
     // valve gradually when the recycle is what is holding the machine up.
     double freshFeed = inletFlow - Math.max(currentRecycle, 0.0);
-    if (freshFeed > 1.2 * surgeFlow) {
+    if (freshFeed > 1.2 * controlFlow) {
       double minRecycle = Math.max(inletFlow / 1.0e6, 1.0e-6);
       applyRecycleSetpoint(antiSurgeSplitter, minRecycle, suctionDensity, useMassSetpoint, id);
       return;
     }
 
     // Proportional anti-surge step with a per-iteration bound. The step is
-    // proportional to the surge-inlet gap (NOT to (gap - currentRecycle)) so
-    // the fixed point is inletFlow == surgeFlow regardless of the recycle
+    // proportional to the controlFlow-inlet gap (NOT to (gap - currentRecycle)) so
+    // the fixed point is inletFlow == controlFlow regardless of the recycle
     // path topology. This matches the legacy formula exactly while adding a
     // 25%-of-max-flow per-iteration cap to prevent single-step overshoot.
-    double rawStep = antiSurgeProportionalGain * (surgeFlow - inletFlow);
-    double maxStep = 0.25 * Math.max(currentRecycle, Math.max(inletFlow, surgeFlow));
+    double rawStep = antiSurgeProportionalGain * (controlFlow - inletFlow);
+    double maxStep = 0.25 * Math.max(currentRecycle, Math.max(inletFlow, controlFlow));
     double cappedStep = Math.max(-maxStep, Math.min(maxStep, rawStep));
     double flowAntiSurge = Math.max(currentRecycle + cappedStep, inletFlow / 1.0e6);
 
     // Absolute upper bound on the recycle setpoint. The recycle required to hold
-    // the compressor on the surge line can never exceed the surge flow itself, so
-    // capping at a generous multiple of the surge flow leaves normal operation
+    // the compressor on the control line can never exceed the control flow itself, so
+    // capping at a generous multiple of the control flow leaves normal operation
     // untouched while breaking the geometric runaway that otherwise inflates the
     // recycle without bound (e.g. an injection-compressor recycle growing to tens
     // of millions of m3/hr) and stops the outer recycle loop from converging.
-    double maxRecycle = ANTI_SURGE_MAX_RECYCLE_FACTOR * surgeFlow;
+    double maxRecycle = ANTI_SURGE_MAX_RECYCLE_FACTOR * controlFlow;
     if (flowAntiSurge > maxRecycle) {
       flowAntiSurge = maxRecycle;
     }

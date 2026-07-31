@@ -52,6 +52,18 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   private double temperatureTolerance = 1e-2;
   private double pressureTolerance = 1e-2;
 
+  /**
+   * Absolute change in loop mass flow (kg/hr) between the last two iterations. Unlike {@link #getErrorFlow()} this is
+   * always a mass flow, so it can be compared against a physically meaningful tolerance.
+   */
+  private double absoluteFlowChange = Double.NaN;
+
+  /**
+   * Absolute flow tolerance in kg/hr. A value of 0.0 (the default) disables the criterion and restores pure
+   * {@link #getErrorFlow()} checking.
+   */
+  private double absoluteFlowTolerance = 0.0;
+
   private double minimumFlow = 1e-20;
 
   // Acceleration method settings
@@ -366,6 +378,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     setErrorFlow(0.0);
     setErrorTemperature(0.0);
     setErrorPressure(0.0);
+    absoluteFlowChange = 0.0;
     lastIterationStream = mixedStream.clone();
     outletStream.setThermoSystem(mixedStream.getThermoSystem());
     outletStream.setCalculationIdentifier(id);
@@ -445,11 +458,26 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * massBalanceCheck.
+   * Flow residual between this iteration and the previous one.
    *
-   * @return a double
+   * <p>
+   * <b>The returned value is not dimensionally uniform.</b> Below 1 kg/sec it is the ABSOLUTE change in kg/sec; at or
+   * above 1 kg/sec it is the RELATIVE change in PERCENT. A {@link #setFlowTolerance(double)} of 0.1 therefore means
+   * "0.1 kg/sec" on a small loop but "0.1 %" on a large one, and the meaning flips discontinuously across the 1 kg/sec
+   * threshold. A returned value of exactly 100 means the loop carried no flow on the previous iteration (a recycle that
+   * collapsed and re-opened), not "100 kg/sec".
+   * </p>
+   *
+   * <p>
+   * This behaviour is retained for backward compatibility. Use {@link #getAbsoluteFlowChange()} for a properly
+   * dimensioned residual (kg/hr) and {@link #setAbsoluteFlowTolerance(double)} for a scale-independent convergence
+   * criterion.
+   * </p>
+   *
+   * @return the flow residual, in kg/sec below 1 kg/sec and in percent at or above 1 kg/sec
    */
   public double flowBalanceCheck() {
+    absoluteFlowChange = Math.abs(mixedStream.getFlowRate("kg/hr") - lastIterationStream.getFlowRate("kg/hr"));
     double abs_sum_errorFlow = 0.0;
     if (mixedStream.getFlowRate("kg/sec") < 1.0) {
       abs_sum_errorFlow += Math.abs(mixedStream.getFlowRate("kg/sec") - lastIterationStream.getFlowRate("kg/sec"));
@@ -905,12 +933,20 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    * <p>
    * A recycle that has been deactivated by the low-flow cutoff (see {@link #setMinimumFlow(double)}) is reported as
    * solved: it carries no meaningful inventory, so there is nothing left to converge and holding the flowsheet open for
-   * it would only burn the iteration budget on a dead leg.
+   * it would only burn the iteration budget on a dead leg. A recycle that the user locked inactive is likewise treated
+   * as solved, because it never executes.
+   * </p>
+   *
+   * <p>
+   * The flow criterion is satisfied when EITHER the {@link #getErrorFlow()} residual is below
+   * {@link #getFlowTolerance()} OR the absolute loop-flow change is below {@link #getAbsoluteFlowTolerance()} (kg/hr).
+   * The absolute term is disabled by default; enabling it gives a scale-independent criterion, which matters because
+   * {@link #flowBalanceCheck()} is an absolute kg/sec residual on small loops and a percentage on large ones.
    * </p>
    */
   @Override
   public boolean solved() {
-    if (!isActive() && iterations > 0) {
+    if (isLockedInactive() || (!isActive() && iterations > 0)) {
       return true;
     }
 
@@ -920,7 +956,10 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
       return true;
     }
 
-    if (Math.abs(this.errorComposition) < compositionTolerance && Math.abs(this.errorFlow) < flowTolerance
+    boolean flowConverged = Math.abs(this.errorFlow) < flowTolerance || (absoluteFlowTolerance > 0.0
+        && Double.isFinite(absoluteFlowChange) && absoluteFlowChange < absoluteFlowTolerance);
+
+    if (Math.abs(this.errorComposition) < compositionTolerance && flowConverged
         && Math.abs(this.errorTemperature) < temperatureTolerance && Math.abs(this.errorPressure) < pressureTolerance
         && iterations > 1) {
       return true;
@@ -986,6 +1025,52 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   public void setOutletStream(StreamInterface outletStream) {
     this.outletStream = outletStream;
     lastIterationStream = this.outletStream.clone();
+  }
+
+  /**
+   * Absolute change in loop mass flow between the last two iterations.
+   *
+   * <p>
+   * Unlike {@link #getErrorFlow()}, which is an absolute kg/sec residual on loops below 1 kg/sec and a percentage above
+   * it, this is always a mass flow and can therefore be compared against a physically meaningful limit.
+   * </p>
+   *
+   * @return the absolute loop-flow change in kg/hr, or NaN before the first balance check
+   */
+  public double getAbsoluteFlowChange() {
+    return absoluteFlowChange;
+  }
+
+  /**
+   * Absolute flow tolerance used by the recycle convergence check.
+   *
+   * @return the absolute flow tolerance in kg/hr (0.0 means the criterion is disabled)
+   */
+  public double getAbsoluteFlowTolerance() {
+    return absoluteFlowTolerance;
+  }
+
+  /**
+   * Sets an absolute flow tolerance for the recycle convergence check.
+   *
+   * <p>
+   * The recycle counts as flow-converged when EITHER {@link #getErrorFlow()} is below {@link #getFlowTolerance()} OR
+   * the absolute loop-flow change is below this value. This is the standard industrial form of the criterion and is the
+   * recommended way to get a scale-independent tolerance, because {@link #flowBalanceCheck()} switches between an
+   * absolute kg/sec residual and a percentage at 1 kg/sec. It mirrors
+   * {@link neqsim.process.processmodel.ProcessModel#setAbsoluteFlowTolerance(double)} at the recycle level.
+   * </p>
+   *
+   * @param absoluteFlowTolerance the absolute flow tolerance in kg/hr; must be finite and non-negative. Use 0.0 to
+   * disable the criterion (the default)
+   * @throws IllegalArgumentException if the value is negative or not finite
+   */
+  public void setAbsoluteFlowTolerance(double absoluteFlowTolerance) {
+    if (!Double.isFinite(absoluteFlowTolerance) || absoluteFlowTolerance < 0.0) {
+      throw new IllegalArgumentException(
+          "absoluteFlowTolerance must be a finite non-negative number, was " + absoluteFlowTolerance);
+    }
+    this.absoluteFlowTolerance = absoluteFlowTolerance;
   }
 
   /** {@inheritDoc} */
