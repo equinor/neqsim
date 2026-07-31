@@ -4487,6 +4487,30 @@ public class TwoFluidPipe extends Pipeline {
   // ============ Result access methods ============
 
   /**
+   * Get the total gas, oil, and water mass stored in the computational domain.
+   *
+   * <p>
+   * The inventory is integrated directly from the conservative phase masses per unit length. It is therefore suitable
+   * for checking the finite-volume balance
+   * {@code M(t + dt) - M(t) = integral(mDotIn - mDotOut) dt} for cases without external mass sources.
+   * </p>
+   *
+   * @return total domain mass in kg
+   */
+  public double getTotalMassInventory() {
+    if (sections == null) {
+      return 0.0;
+    }
+
+    double mass = 0.0;
+    for (TwoFluidSection sec : sections) {
+      mass += (sec.getGasMassPerLength() + sec.getOilMassPerLength() + sec.getWaterMassPerLength())
+          * sec.getLength();
+    }
+    return mass;
+  }
+
+  /**
    * Get total liquid inventory in the pipe.
    *
    * <p>
