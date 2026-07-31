@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-07-30"
+last_verified: "2026-07-31"
 ---
 
 # Dynamic Simulation Guidance
@@ -34,6 +34,10 @@ Each timestep:
    order or dependency-aware graph levels when parallel transient execution is
    enabled. Setter units are excluded from these explicit, semi-implicit, and
    parallel equipment passes.
+   Steady-state algebraic equipment still evaluates on every requested pass,
+   but its local clock advances once per non-null timestep calculation identifier.
+   Reusing an identifier may refine a recycle without advancing physical time;
+   use a new identifier for the next timestep.
 4. Standalone controllers run; controllers actually executed inside equipment
    retain their equipment-specific timing for compatibility. Execution is
    coalesced by object identity and the timestep calculation identifier. Merely

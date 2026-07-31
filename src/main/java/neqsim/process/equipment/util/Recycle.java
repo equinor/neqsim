@@ -357,7 +357,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    * </p>
    *
    * @param inletSystem clone of the (negligible) inlet thermodynamic system to publish on the outlet
-   * @param id current calculation identifier
+   * @param id current calculation identifier; {@code null} leaves existing recycle and outlet identifiers unchanged
    */
   private void deactivateOnLowFlow(SystemInterface inletSystem, UUID id) {
     isActive(false);
@@ -368,8 +368,10 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     setErrorPressure(0.0);
     lastIterationStream = mixedStream.clone();
     outletStream.setThermoSystem(mixedStream.getThermoSystem());
-    outletStream.setCalculationIdentifier(id);
-    setCalculationIdentifier(id);
+    if (id != null) {
+      outletStream.setCalculationIdentifier(id);
+      setCalculationIdentifier(id);
+    }
   }
 
   /** {@inheritDoc} */
