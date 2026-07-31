@@ -4081,6 +4081,18 @@ public class ProcessSystem extends SimulationBaseClass {
    */
 
   /**
+   * Validates a requested transient timestep before any process state is changed.
+   *
+   * @param dt timestep in seconds
+   * @throws IllegalArgumentException if {@code dt} is not finite and greater than zero
+   */
+  static void validateTransientTimestep(double dt) {
+    if (!Double.isFinite(dt) || dt <= 0.0) {
+      throw new IllegalArgumentException("Transient timestep must be finite and greater than zero: " + dt);
+    }
+  }
+
+  /**
    * runTransient.
    */
   public void runTransient() {
@@ -4098,9 +4110,11 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * @param dt timestep in seconds
    * @param id calculation identifier shared by the timestep
+   * @throws IllegalArgumentException if {@code dt} is not finite and greater than zero
    */
   @Override
   public synchronized void runTransient(double dt, UUID id) {
+    validateTransientTimestep(dt);
     ensureInitialStateSnapshot();
     applyFlowsheetWideSettings();
 
@@ -4332,8 +4346,10 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param dt the requested timestep in seconds
    * @param id calculation identifier
    * @return the actual timestep used (may differ from dt)
+   * @throws IllegalArgumentException if {@code dt} is not finite and greater than zero
    */
   public double runTransientAdaptive(double dt, UUID id) {
+    validateTransientTimestep(dt);
     if (!adaptiveTimestepEnabled) {
       runTransient(dt, id);
       return dt;
