@@ -119,6 +119,7 @@ This documentation is organized into the following sections:
 | Document | Description |
 |----------|-------------|
 | [dynamic-simulation.md](dynamic-simulation) | **Dynamic simulation helper — auto-instruments a sized steady-state process with transmitters and PID controllers for transient simulation** |
+| [agent-rca-dynamic-fault-benchmark.md](agent-rca-dynamic-fault-benchmark) | **AgentRCA dynamic fault benchmark — normal-only evidence and ranked diagnoses for controlled sensor bias, gas leaks, blockage, and imposed multiphase slugging excitation** |
 
 **Key Features:**
 - `DynamicProcessHelper` — one-call conversion from steady-state to dynamic
