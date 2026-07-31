@@ -150,7 +150,7 @@ public final class AgentRcaDynamicProcessBenchmark {
             3.0, 5.0, "A positive transmitter bias raises only the reported pressure.")
         .signalRule(SEPARATOR_PRESSURE, RcaFaultHypothesis.Metric.LOG_VARIANCE_RATIO,
             RcaFaultHypothesis.Expectation.NEAR_ZERO, Math.log(2.0), 1.0,
-            "A constant bias changes level but should not materially change pressure variance.")
+            "A constant bias changes the reported mean but should not materially change pressure variance.")
         .signalRule(SEPARATOR_INLET_FLOW, RcaFaultHypothesis.Metric.MEAN_Z_SCORE,
             RcaFaultHypothesis.Expectation.NEAR_ZERO, 2.0, 1.0,
             "A sensor-only fault must not alter process inlet flow.")
@@ -361,6 +361,8 @@ public final class AgentRcaDynamicProcessBenchmark {
     process.add(gasOutletValve);
     process.add(exportSplitter);
     process.add(liquidOutletValve);
+    process.add(pressureTransmitter);
+    process.add(levelTransmitter);
     process.run();
     process.storeInitialState();
     process.setTimeStep(DEFAULT_TIME_STEP_SECONDS);
