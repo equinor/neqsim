@@ -7320,8 +7320,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * each tray. This is effective for absorber and stripper columns where the temperature profile is relatively flat.
    * The method alternates between: (1) bubble-point temperature calculations on each tray, and (2) flow rate
    * corrections using the sum-rates formula of Burningham and Otto (1967). Once an accepted result is available, an
-   * invocation with an identical feed and column-configuration fingerprint reuses that tray and product state without
-   * another flash sweep. Changed feed states or settings invalidate the fingerprint and execute the solver normally.
+   * invocation with an identical sequential-input fingerprint reuses that tray and product state without another flash
+   * sweep. Changed feed, tray, product, or configuration state invalidates the fingerprint and executes the solver normally.
    * </p>
    *
    * @param id calculation identifier
