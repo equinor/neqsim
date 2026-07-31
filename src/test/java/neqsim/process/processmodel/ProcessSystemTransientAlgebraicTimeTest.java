@@ -15,8 +15,8 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 public class ProcessSystemTransientAlgebraicTimeTest extends neqsim.NeqSimTest {
   /**
-   * Semi-implicit evaluation may refine an algebraic recycle twice, but both evaluations belong to
-   * one physical timestep.
+   * Semi-implicit evaluation may refine an algebraic recycle twice, but both evaluations belong to one physical
+   * timestep.
    */
   @Test
   public void semiImplicitRecycleAdvancesClockOnce() {
@@ -36,8 +36,7 @@ public class ProcessSystemTransientAlgebraicTimeTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * Reusing one identifier refines the same step without moving time; a new identifier owns a new
-   * timestep.
+   * Reusing one identifier refines the same step without moving time; a new identifier owns a new timestep.
    */
   @Test
   public void calculationIdentifierOwnsAlgebraicClockAdvance() {
@@ -53,8 +52,8 @@ public class ProcessSystemTransientAlgebraicTimeTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * A normal low-flow return must still record completion so a second algebraic evaluation cannot
-   * advance the local clock again.
+   * A normal low-flow return must still record completion so a second algebraic evaluation cannot advance the local
+   * clock again.
    */
   @Test
   public void lowFlowRecycleRecordsTimestepIdentifier() {
