@@ -393,12 +393,11 @@ class TwoFluidPipeBoundaryConditionTest {
   void testConstantFlowStepDoesNotCreateDomainMass() {
     double initialFlowRate = 6.0;
     double timeStep = 1.0e-3;
-    double[] steppedFlowRates = {12.0, 30.0};
+    double[] steppedFlowRates = { 12.0, 30.0 };
 
     for (double steppedFlowRate : steppedFlowRates) {
-      TwoFluidPipe transientPipe =
-          createRegressionPipe("mass-balance-" + steppedFlowRate, createTwoPhaseFluid(),
-              initialFlowRate, 75.0, 58.0);
+      TwoFluidPipe transientPipe = createRegressionPipe("mass-balance-" + steppedFlowRate, createTwoPhaseFluid(),
+          initialFlowRate, 75.0, 58.0);
       transientPipe.setLength(3000.0);
       transientPipe.setNumberOfSections(12);
       transientPipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_FLOW);
@@ -411,12 +410,11 @@ class TwoFluidPipeBoundaryConditionTest {
       double massAfter = transientPipe.getTotalMassInventory();
 
       double massChange = Math.abs(massAfter - massBefore);
-      double boundaryFluxEnvelope =
-          2.0 * (initialFlowRate + steppedFlowRate) * timeStep;
+      double boundaryFluxEnvelope = 2.0 * (initialFlowRate + steppedFlowRate) * timeStep;
       assertTrue(massChange <= boundaryFluxEnvelope,
-          "A short rate step must not create domain-volume-scaled mass. Flow step "
-              + initialFlowRate + " -> " + steppedFlowRate + " kg/s changed inventory by "
-              + massChange + " kg; flux envelope was " + boundaryFluxEnvelope + " kg");
+          "A short rate step must not create domain-volume-scaled mass. Flow step " + initialFlowRate + " -> "
+              + steppedFlowRate + " kg/s changed inventory by " + massChange + " kg; flux envelope was "
+              + boundaryFluxEnvelope + " kg");
     }
   }
 
