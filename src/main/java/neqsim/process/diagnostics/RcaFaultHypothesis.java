@@ -132,8 +132,8 @@ public final class RcaFaultHypothesis implements Serializable {
      * @param rationale engineering rationale
      * @return this builder
      */
-    public Builder signalRule(String signalName, Metric metric, Expectation expectation, double scale,
-        double weight, String rationale) {
+    public Builder signalRule(String signalName, Metric metric, Expectation expectation, double scale, double weight,
+        String rationale) {
       rules.add(new EvidenceRule(signalName, null, metric, expectation, scale, weight, rationale));
       return this;
     }
@@ -149,10 +149,10 @@ public final class RcaFaultHypothesis implements Serializable {
      * @param rationale engineering rationale
      * @return this builder
      */
-    public Builder correlationRule(String firstSignal, String secondSignal, Expectation expectation,
-        double scale, double weight, String rationale) {
-      rules.add(new EvidenceRule(firstSignal, secondSignal, Metric.ABS_CORRELATION_CHANGE, expectation, scale,
-          weight, rationale));
+    public Builder correlationRule(String firstSignal, String secondSignal, Expectation expectation, double scale,
+        double weight, String rationale) {
+      rules.add(new EvidenceRule(firstSignal, secondSignal, Metric.ABS_CORRELATION_CHANGE, expectation, scale, weight,
+          rationale));
       return this;
     }
 
@@ -195,8 +195,8 @@ public final class RcaFaultHypothesis implements Serializable {
     private final double weight;
     private final String rationale;
 
-    private EvidenceRule(String firstSignal, String secondSignal, Metric metric, Expectation expectation,
-        double scale, double weight, String rationale) {
+    private EvidenceRule(String firstSignal, String secondSignal, Metric metric, Expectation expectation, double scale,
+        double weight, String rationale) {
       if (metric == null || expectation == null) {
         throw new IllegalArgumentException("metric and expectation must not be null");
       }
@@ -209,8 +209,7 @@ public final class RcaFaultHypothesis implements Serializable {
       if (metric != Metric.OVERALL_ANOMALY && (firstSignal == null || firstSignal.trim().isEmpty())) {
         throw new IllegalArgumentException("signal name is required for " + metric);
       }
-      if (metric == Metric.ABS_CORRELATION_CHANGE
-          && (secondSignal == null || secondSignal.trim().isEmpty())) {
+      if (metric == Metric.ABS_CORRELATION_CHANGE && (secondSignal == null || secondSignal.trim().isEmpty())) {
         throw new IllegalArgumentException("two signal names are required for a correlation rule");
       }
       this.firstSignal = firstSignal == null ? null : firstSignal.trim();
