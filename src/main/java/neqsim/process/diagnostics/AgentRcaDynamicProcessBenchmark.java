@@ -22,10 +22,10 @@ import neqsim.thermo.system.SystemPrEos;
  * Reproducible AgentRCA-style benchmark driven by a dynamic NeqSim process.
  *
  * <p>
- * The benchmark trains {@link RcaNormalOperationModel} only on normal operation and evaluates controlled pressure-sensor
- * bias, an export-gas leak, inlet-valve blockage and imposed multiphase slugging excitation. The process is a synthetic
- * gas/liquid feed, inlet valve, dynamic separator and pressure-controlled outlet valves. All values are public,
- * deterministic and intended for testing and teaching rather than equipment design.
+ * The benchmark trains {@link RcaNormalOperationModel} only on normal operation and evaluates controlled
+ * pressure-sensor bias, an export-gas leak, inlet-valve blockage and imposed multiphase slugging excitation. The
+ * process is a synthetic gas/liquid feed, inlet valve, dynamic separator and pressure-controlled outlet valves. All
+ * values are public, deterministic and intended for testing and teaching rather than equipment design.
  * </p>
  *
  * <p>
@@ -100,18 +100,17 @@ public final class AgentRcaDynamicProcessBenchmark {
    * @return benchmark result with windows and diagnoses
    */
   public BenchmarkResult runBenchmark() {
-    ScenarioRun trainingRun =
-        runScenario(Scenario.NORMAL, DEFAULT_TIME_STEP_SECONDS, DEFAULT_WINDOW_SAMPLES, 0L);
-    RcaNormalOperationModel normalModel =
-        RcaNormalOperationModel.fit(Collections.singletonList(trainingRun.getWindow()));
+    ScenarioRun trainingRun = runScenario(Scenario.NORMAL, DEFAULT_TIME_STEP_SECONDS, DEFAULT_WINDOW_SAMPLES, 0L);
+    RcaNormalOperationModel normalModel = RcaNormalOperationModel
+        .fit(Collections.singletonList(trainingRun.getWindow()));
     List<RcaFaultHypothesis> hypotheses = createDefaultHypotheses();
     RcaDiagnosisEngine engine = new RcaDiagnosisEngine();
     Map<Scenario, ScenarioRun> runs = new EnumMap<Scenario, ScenarioRun>(Scenario.class);
     Map<Scenario, RcaDiagnosis> diagnoses = new EnumMap<Scenario, RcaDiagnosis>(Scenario.class);
 
     for (Scenario scenario : Scenario.values()) {
-      ScenarioRun run =
-          runScenario(scenario, DEFAULT_TIME_STEP_SECONDS, DEFAULT_WINDOW_SAMPLES, 100L + scenario.ordinal());
+      ScenarioRun run = runScenario(scenario, DEFAULT_TIME_STEP_SECONDS, DEFAULT_WINDOW_SAMPLES,
+          100L + scenario.ordinal());
       runs.put(scenario, run);
       diagnoses.put(scenario, engine.diagnose(normalModel, run.getWindow(), hypotheses));
     }
@@ -137,9 +136,8 @@ public final class AgentRcaDynamicProcessBenchmark {
         .signalRule(SEPARATOR_PRESSURE, RcaFaultHypothesis.Metric.MEAN_Z_SCORE,
             RcaFaultHypothesis.Expectation.NEAR_ZERO, 2.0, 1.0,
             "Separator pressure should remain near its condition-specific baseline.")
-        .signalRule(GAS_EXPORT_FLOW, RcaFaultHypothesis.Metric.MEAN_Z_SCORE,
-            RcaFaultHypothesis.Expectation.NEAR_ZERO, 2.0, 1.0,
-            "Gas export should remain near its condition-specific baseline.")
+        .signalRule(GAS_EXPORT_FLOW, RcaFaultHypothesis.Metric.MEAN_Z_SCORE, RcaFaultHypothesis.Expectation.NEAR_ZERO,
+            2.0, 1.0, "Gas export should remain near its condition-specific baseline.")
         .signalRule(LIQUID_EXPORT_FLOW, RcaFaultHypothesis.Metric.MEAN_Z_SCORE,
             RcaFaultHypothesis.Expectation.NEAR_ZERO, 2.0, 1.0,
             "Liquid export should remain near its condition-specific baseline.")
@@ -148,35 +146,29 @@ public final class AgentRcaDynamicProcessBenchmark {
     hypotheses.add(RcaFaultHypothesis
         .builder(Scenario.PRESSURE_SENSOR_BIAS.name(),
             "The pressure transmitter is biased high while related physical flows and level remain normal.")
-        .signalRule(SEPARATOR_PRESSURE, RcaFaultHypothesis.Metric.MEAN_Z_SCORE,
-            RcaFaultHypothesis.Expectation.POSITIVE, 3.0, 5.0,
-            "A positive transmitter bias raises only the reported pressure.")
+        .signalRule(SEPARATOR_PRESSURE, RcaFaultHypothesis.Metric.MEAN_Z_SCORE, RcaFaultHypothesis.Expectation.POSITIVE,
+            3.0, 5.0, "A positive transmitter bias raises only the reported pressure.")
         .signalRule(SEPARATOR_PRESSURE, RcaFaultHypothesis.Metric.LOG_VARIANCE_RATIO,
             RcaFaultHypothesis.Expectation.NEAR_ZERO, Math.log(2.0), 1.0,
             "A constant bias changes level but should not materially change pressure variance.")
         .signalRule(SEPARATOR_INLET_FLOW, RcaFaultHypothesis.Metric.MEAN_Z_SCORE,
             RcaFaultHypothesis.Expectation.NEAR_ZERO, 2.0, 1.0,
             "A sensor-only fault must not alter process inlet flow.")
-        .signalRule(GAS_EXPORT_FLOW, RcaFaultHypothesis.Metric.MEAN_Z_SCORE,
-            RcaFaultHypothesis.Expectation.NEAR_ZERO, 2.0, 1.0,
-            "A sensor-only fault must not alter gas export.")
+        .signalRule(GAS_EXPORT_FLOW, RcaFaultHypothesis.Metric.MEAN_Z_SCORE, RcaFaultHypothesis.Expectation.NEAR_ZERO,
+            2.0, 1.0, "A sensor-only fault must not alter gas export.")
         .signalRule(LIQUID_EXPORT_FLOW, RcaFaultHypothesis.Metric.MEAN_Z_SCORE,
-            RcaFaultHypothesis.Expectation.NEAR_ZERO, 2.0, 1.0,
-            "A sensor-only fault must not alter liquid export.")
+            RcaFaultHypothesis.Expectation.NEAR_ZERO, 2.0, 1.0, "A sensor-only fault must not alter liquid export.")
         .build());
 
-    hypotheses.add(RcaFaultHypothesis
-        .builder(Scenario.EXPORT_GAS_LEAK.name(),
-            "Export gas is diverted after the gas outlet valve while upstream separator behavior remains close to normal.")
-        .signalRule(GAS_EXPORT_FLOW, RcaFaultHypothesis.Metric.MEAN_Z_SCORE,
-            RcaFaultHypothesis.Expectation.NEGATIVE, 3.0, 5.0,
-            "A downstream gas leak reduces delivered export gas.")
+    hypotheses.add(RcaFaultHypothesis.builder(Scenario.EXPORT_GAS_LEAK.name(),
+        "Export gas is diverted after the gas outlet valve while upstream separator behavior remains close to normal.")
+        .signalRule(GAS_EXPORT_FLOW, RcaFaultHypothesis.Metric.MEAN_Z_SCORE, RcaFaultHypothesis.Expectation.NEGATIVE,
+            3.0, 5.0, "A downstream gas leak reduces delivered export gas.")
         .signalRule(GAS_EXPORT_FLOW, RcaFaultHypothesis.Metric.NORMALIZED_SLOPE,
             RcaFaultHypothesis.Expectation.NEGATIVE, 2.0, 2.0,
             "The controlled leak grows progressively through the evaluation window.")
         .signalRule(SEPARATOR_INLET_FLOW, RcaFaultHypothesis.Metric.MEAN_Z_SCORE,
-            RcaFaultHypothesis.Expectation.NEAR_ZERO, 2.0, 1.0,
-            "The downstream leak does not restrict separator feed.")
+            RcaFaultHypothesis.Expectation.NEAR_ZERO, 2.0, 1.0, "The downstream leak does not restrict separator feed.")
         .signalRule(LIQUID_EXPORT_FLOW, RcaFaultHypothesis.Metric.MEAN_Z_SCORE,
             RcaFaultHypothesis.Expectation.NEAR_ZERO, 2.0, 1.0,
             "A gas-only export leak should not directly remove liquid product.")
@@ -186,17 +178,13 @@ public final class AgentRcaDynamicProcessBenchmark {
         .builder(Scenario.INLET_BLOCKAGE.name(),
             "Loss of effective inlet-valve flow coefficient restricts both gas and liquid entering the separator.")
         .signalRule(SEPARATOR_INLET_FLOW, RcaFaultHypothesis.Metric.MEAN_Z_SCORE,
-            RcaFaultHypothesis.Expectation.NEGATIVE, 3.0, 5.0,
-            "An inlet restriction reduces total separator feed.")
-        .signalRule(GAS_EXPORT_FLOW, RcaFaultHypothesis.Metric.MEAN_Z_SCORE,
-            RcaFaultHypothesis.Expectation.NEGATIVE, 3.0, 2.0,
-            "Reduced separator feed propagates to gas export.")
-        .signalRule(LIQUID_EXPORT_FLOW, RcaFaultHypothesis.Metric.MEAN_Z_SCORE,
-            RcaFaultHypothesis.Expectation.NEGATIVE, 3.0, 2.0,
-            "Reduced separator feed propagates to liquid export.")
-        .signalRule(FEED_TOTAL_FLOW, RcaFaultHypothesis.Metric.MEAN_Z_SCORE,
-            RcaFaultHypothesis.Expectation.NEAR_ZERO, 2.0, 1.0,
-            "Upstream feed setpoints remain unchanged while the restriction grows.")
+            RcaFaultHypothesis.Expectation.NEGATIVE, 3.0, 5.0, "An inlet restriction reduces total separator feed.")
+        .signalRule(GAS_EXPORT_FLOW, RcaFaultHypothesis.Metric.MEAN_Z_SCORE, RcaFaultHypothesis.Expectation.NEGATIVE,
+            3.0, 2.0, "Reduced separator feed propagates to gas export.")
+        .signalRule(LIQUID_EXPORT_FLOW, RcaFaultHypothesis.Metric.MEAN_Z_SCORE, RcaFaultHypothesis.Expectation.NEGATIVE,
+            3.0, 2.0, "Reduced separator feed propagates to liquid export.")
+        .signalRule(FEED_TOTAL_FLOW, RcaFaultHypothesis.Metric.MEAN_Z_SCORE, RcaFaultHypothesis.Expectation.NEAR_ZERO,
+            2.0, 1.0, "Upstream feed setpoints remain unchanged while the restriction grows.")
         .build());
 
     hypotheses.add(RcaFaultHypothesis
@@ -211,8 +199,8 @@ public final class AgentRcaDynamicProcessBenchmark {
         .signalRule(LIQUID_EXPORT_FLOW, RcaFaultHypothesis.Metric.LOG_VARIANCE_RATIO,
             RcaFaultHypothesis.Expectation.POSITIVE, Math.log(2.0), 2.0,
             "The liquid outlet carries a delayed oscillatory response.")
-        .correlationRule(LIQUID_FEED_FLOW, SEPARATOR_LEVEL, RcaFaultHypothesis.Expectation.LARGE_ABSOLUTE,
-            0.3, 1.0, "Slugging changes the normal coupling between liquid feed and vessel inventory.")
+        .correlationRule(LIQUID_FEED_FLOW, SEPARATOR_LEVEL, RcaFaultHypothesis.Expectation.LARGE_ABSOLUTE, 0.3, 1.0,
+            "Slugging changes the normal coupling between liquid feed and vessel inventory.")
         .overallRule(RcaFaultHypothesis.Expectation.POSITIVE, 1.0, 1.0,
             "Slugging produces a distributed multivariate anomaly, not an isolated noisy tag.")
         .build());
@@ -253,8 +241,7 @@ public final class AgentRcaDynamicProcessBenchmark {
       applyScenario(fixture, scenario, severity, i);
       fixture.process.runTransient(timeStepSeconds, UUID.randomUUID());
 
-      feedTotalFlow[i] =
-          fixture.gasFeed.getFlowRate("kg/hr") + fixture.liquidFeed.getFlowRate("kg/hr");
+      feedTotalFlow[i] = fixture.gasFeed.getFlowRate("kg/hr") + fixture.liquidFeed.getFlowRate("kg/hr");
       separatorInletFlow[i] = fixture.inletValve.getOutletStream().getFlowRate("kg/hr");
       separatorPressure[i] = fixture.pressureTransmitter.getMeasuredValue("bara");
       separatorLevel[i] = fixture.levelTransmitter.getMeasuredValue("");
@@ -263,17 +250,16 @@ public final class AgentRcaDynamicProcessBenchmark {
       liquidFeedFlow[i] = fixture.liquidFeed.getFlowRate("kg/hr");
       double leakFlow = fixture.exportSplitter.getSplitStream(1).getFlowRate("kg/hr");
       leakedMassKg += leakFlow * timeStepSeconds / 3600.0;
-      validatePhysicalState(fixture, separatorPressure[i], separatorLevel[i], separatorInletFlow[i],
-          gasExportFlow[i], liquidExportFlow[i], leakFlow);
+      validatePhysicalState(fixture, separatorPressure[i], separatorLevel[i], separatorInletFlow[i], gasExportFlow[i],
+          liquidExportFlow[i], leakFlow);
     }
 
     RcaProcessWindow window = RcaProcessWindow.builder(scenario.name(), timeStepSeconds)
         .operatingCondition("gas_feed_setpoint_kg_hr", BASE_GAS_FLOW_KG_HR)
-        .operatingCondition("liquid_feed_setpoint_kg_hr", BASE_LIQUID_FLOW_KG_HR)
-        .signal(FEED_TOTAL_FLOW, feedTotalFlow).signal(SEPARATOR_INLET_FLOW, separatorInletFlow)
-        .signal(SEPARATOR_PRESSURE, separatorPressure).signal(SEPARATOR_LEVEL, separatorLevel)
-        .signal(GAS_EXPORT_FLOW, gasExportFlow).signal(LIQUID_EXPORT_FLOW, liquidExportFlow)
-        .signal(LIQUID_FEED_FLOW, liquidFeedFlow).build();
+        .operatingCondition("liquid_feed_setpoint_kg_hr", BASE_LIQUID_FLOW_KG_HR).signal(FEED_TOTAL_FLOW, feedTotalFlow)
+        .signal(SEPARATOR_INLET_FLOW, separatorInletFlow).signal(SEPARATOR_PRESSURE, separatorPressure)
+        .signal(SEPARATOR_LEVEL, separatorLevel).signal(GAS_EXPORT_FLOW, gasExportFlow)
+        .signal(LIQUID_EXPORT_FLOW, liquidExportFlow).signal(LIQUID_FEED_FLOW, liquidFeedFlow).build();
     return new ScenarioRun(scenario, window, leakedMassKg, fixture.inletValve.getFoulingFraction(),
         fixture.separator.getGasOutStream().getPressure("bara"), fixture.separator.getLiquidLevel());
   }
@@ -281,7 +267,7 @@ public final class AgentRcaDynamicProcessBenchmark {
   private static void setNormalFeeds(ProcessFixture fixture) {
     fixture.gasFeed.setFlowRate(BASE_GAS_FLOW_KG_HR, "kg/hr");
     fixture.liquidFeed.setFlowRate(BASE_LIQUID_FLOW_KG_HR, "kg/hr");
-    fixture.exportSplitter.setSplitFactors(new double[] {1.0, 0.0});
+    fixture.exportSplitter.setSplitFactors(new double[] { 1.0, 0.0 });
     fixture.inletValve.setFoulingFraction(0.0);
   }
 
@@ -290,7 +276,7 @@ public final class AgentRcaDynamicProcessBenchmark {
     switch (scenario) {
     case EXPORT_GAS_LEAK:
       double leakFraction = 0.25 * severity;
-      fixture.exportSplitter.setSplitFactors(new double[] {1.0 - leakFraction, leakFraction});
+      fixture.exportSplitter.setSplitFactors(new double[] { 1.0 - leakFraction, leakFraction });
       break;
     case INLET_BLOCKAGE:
       fixture.inletValve.setFoulingFraction(0.75 * severity);
@@ -298,8 +284,7 @@ public final class AgentRcaDynamicProcessBenchmark {
     case MULTIPHASE_SLUGGING:
       double wave = Math.sin(2.0 * Math.PI * sampleIndex / 12.0);
       double amplitude = 0.15 + 0.70 * severity;
-      fixture.liquidFeed.setFlowRate(Math.max(10.0, BASE_LIQUID_FLOW_KG_HR * (1.0 + amplitude * wave)),
-          "kg/hr");
+      fixture.liquidFeed.setFlowRate(Math.max(10.0, BASE_LIQUID_FLOW_KG_HR * (1.0 + amplitude * wave)), "kg/hr");
       fixture.gasFeed.setFlowRate(BASE_GAS_FLOW_KG_HR * (1.0 - 0.20 * amplitude * wave), "kg/hr");
       break;
     case NORMAL:
@@ -349,21 +334,19 @@ public final class AgentRcaDynamicProcessBenchmark {
     separator.setLiquidLevel(0.35);
     separator.setCalculateSteadyState(false);
 
-    ThrottlingValve gasOutletValve =
-        new ThrottlingValve("gas outlet valve", separator.getGasOutStream());
+    ThrottlingValve gasOutletValve = new ThrottlingValve("gas outlet valve", separator.getGasOutStream());
     gasOutletValve.setOutletPressure(5.0, "bara");
     gasOutletValve.setCalculateSteadyState(false);
 
     Splitter exportSplitter = new Splitter("export gas leak junction", gasOutletValve.getOutletStream(), 2);
-    exportSplitter.setSplitFactors(new double[] {1.0, 0.0});
+    exportSplitter.setSplitFactors(new double[] { 1.0, 0.0 });
 
-    ThrottlingValve liquidOutletValve =
-        new ThrottlingValve("liquid outlet valve", separator.getLiquidOutStream());
+    ThrottlingValve liquidOutletValve = new ThrottlingValve("liquid outlet valve", separator.getLiquidOutStream());
     liquidOutletValve.setOutletPressure(5.0, "bara");
     liquidOutletValve.setCalculateSteadyState(false);
 
-    PressureTransmitter pressureTransmitter =
-        new PressureTransmitter("separator pressure transmitter", separator.getGasOutStream());
+    PressureTransmitter pressureTransmitter = new PressureTransmitter("separator pressure transmitter",
+        separator.getGasOutStream());
     pressureTransmitter.setUnit("bara");
     pressureTransmitter.setNoiseStdDev(0.02);
     pressureTransmitter.setRandomSeed(87123L + seedOffset);
@@ -381,8 +364,8 @@ public final class AgentRcaDynamicProcessBenchmark {
     process.run();
     process.storeInitialState();
     process.setTimeStep(DEFAULT_TIME_STEP_SECONDS);
-    return new ProcessFixture(process, gasFeed, liquidFeed, inletValve, separator, gasOutletValve,
-        liquidOutletValve, exportSplitter, pressureTransmitter, levelTransmitter);
+    return new ProcessFixture(process, gasFeed, liquidFeed, inletValve, separator, gasOutletValve, liquidOutletValve,
+        exportSplitter, pressureTransmitter, levelTransmitter);
   }
 
   private static void validatePhysicalState(ProcessFixture fixture, double pressureBara, double level,
@@ -393,14 +376,13 @@ public final class AgentRcaDynamicProcessBenchmark {
     if (!Double.isFinite(level) || level < 0.0 || level > 1.0) {
       throw new IllegalStateException("separator liquid level must remain within [0, 1]");
     }
-    double[] flows = {inletFlowKgHr, gasExportFlowKgHr, liquidExportFlowKgHr, leakFlowKgHr};
+    double[] flows = { inletFlowKgHr, gasExportFlowKgHr, liquidExportFlowKgHr, leakFlowKgHr };
     for (double flow : flows) {
       if (!Double.isFinite(flow) || flow < -1.0e-9) {
         throw new IllegalStateException("all process flows must remain finite and non-negative");
       }
     }
-    if (!Double.isFinite(fixture.inletValve.getEffectiveKv())
-        || fixture.inletValve.getEffectiveKv() <= 0.0) {
+    if (!Double.isFinite(fixture.inletValve.getEffectiveKv()) || fixture.inletValve.getEffectiveKv() <= 0.0) {
       throw new IllegalStateException("inlet valve effective Kv must remain finite and positive");
     }
   }
@@ -417,9 +399,8 @@ public final class AgentRcaDynamicProcessBenchmark {
     private final PressureTransmitter pressureTransmitter;
     private final LevelTransmitter levelTransmitter;
 
-    private ProcessFixture(ProcessSystem process, Stream gasFeed, Stream liquidFeed,
-        ThrottlingValve inletValve, Separator separator, ThrottlingValve gasOutletValve,
-        ThrottlingValve liquidOutletValve, Splitter exportSplitter,
+    private ProcessFixture(ProcessSystem process, Stream gasFeed, Stream liquidFeed, ThrottlingValve inletValve,
+        Separator separator, ThrottlingValve gasOutletValve, ThrottlingValve liquidOutletValve, Splitter exportSplitter,
         PressureTransmitter pressureTransmitter, LevelTransmitter levelTransmitter) {
       this.process = process;
       this.gasFeed = gasFeed;
@@ -449,8 +430,7 @@ public final class AgentRcaDynamicProcessBenchmark {
     private final double finalSeparatorLevel;
 
     private ScenarioRun(Scenario scenario, RcaProcessWindow window, double leakedMassKg,
-        double finalInletValveFoulingFraction, double finalSeparatorPressureBara,
-        double finalSeparatorLevel) {
+        double finalInletValveFoulingFraction, double finalSeparatorPressureBara, double finalSeparatorLevel) {
       this.scenario = scenario;
       this.window = window;
       this.leakedMassKg = leakedMassKg;
@@ -528,8 +508,7 @@ public final class AgentRcaDynamicProcessBenchmark {
     private BenchmarkResult(ScenarioRun normalTrainingRun, Map<Scenario, ScenarioRun> scenarioRuns,
         Map<Scenario, RcaDiagnosis> diagnoses) {
       this.normalTrainingRun = normalTrainingRun;
-      this.scenarioRuns =
-          Collections.unmodifiableMap(new EnumMap<Scenario, ScenarioRun>(scenarioRuns));
+      this.scenarioRuns = Collections.unmodifiableMap(new EnumMap<Scenario, ScenarioRun>(scenarioRuns));
       this.diagnoses = Collections.unmodifiableMap(new EnumMap<Scenario, RcaDiagnosis>(diagnoses));
     }
 
