@@ -103,6 +103,11 @@ public class Compressor extends TwoPortEquipment
    * of the surge line). A value of 0 disables the control-line concept.
    */
   private double surgeControlMargin = 0.0;
+  /**
+   * True once {@link #setSurgeControlMargin(double)} has been called. Lets consumers with their own historical default
+   * distinguish "not configured" from "configured to zero".
+   */
+  private boolean surgeControlMarginSet = false;
   private double polytropicHead = 0;
   private double polytropicFluidHead = 0;
   private double polytropicHeadMeter = 0.0;
@@ -2690,6 +2695,7 @@ public class Compressor extends TwoPortEquipment
       throw new IllegalArgumentException("surgeControlMargin can not be less than 0");
     }
     this.surgeControlMargin = fraction;
+    this.surgeControlMarginSet = true;
   }
 
   /**
@@ -2699,6 +2705,21 @@ public class Compressor extends TwoPortEquipment
    */
   public double getSurgeControlMargin() {
     return surgeControlMargin;
+  }
+
+  /**
+   * Check whether the anti-surge control-line margin has been set explicitly on this compressor.
+   *
+   * <p>
+   * Consumers that carry their own historical default margin (for example {@link AntiSurgeRecycleCalculator} and
+   * {@link CompressorConstraintConfig}) use this to let an explicit compressor setting win while still distinguishing
+   * it from the unconfigured default of 0.
+   * </p>
+   *
+   * @return true if {@link #setSurgeControlMargin(double)} has been called
+   */
+  public boolean isSurgeControlMarginSet() {
+    return surgeControlMarginSet;
   }
 
   /**

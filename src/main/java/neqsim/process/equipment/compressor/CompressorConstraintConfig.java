@@ -47,7 +47,10 @@ public class CompressorConstraintConfig implements Serializable {
   /** Minimum stonewall margin as fraction of stonewall flow (0-1). */
   private double minStonewallMargin = 0.05;
 
-  /** Anti-surge control line margin above surge line (0-1). */
+  /**
+   * Anti-surge control line margin above surge line (0-1). Used as the fallback when the compressor itself has no
+   * explicit margin - see {@link #getAntiSurgeControlMargin(Compressor)}.
+   */
   private double antiSurgeControlMargin = 0.15;
 
   /** Anti-surge recycle valve maximum opening (0-1). */
@@ -215,11 +218,35 @@ public class CompressorConstraintConfig implements Serializable {
   }
 
   /**
-   * Gets the anti-surge control margin.
+   * Gets the anti-surge control margin configured on this config object.
+   *
+   * <p>
+   * Prefer {@link #getAntiSurgeControlMargin(Compressor)} when a compressor is available, so that a control line set on
+   * the machine is not silently overridden by this config default.
+   * </p>
    *
    * @return control margin as fraction (0-1)
    */
   public double getAntiSurgeControlMargin() {
+    return antiSurgeControlMargin;
+  }
+
+  /**
+   * Gets the anti-surge control margin to use for a given compressor.
+   *
+   * <p>
+   * The compressor is the single place a control line should be configured, so an explicit
+   * {@link Compressor#setSurgeControlMargin(double)} wins over this config's value. Without an explicit machine setting
+   * the config default applies.
+   * </p>
+   *
+   * @param compressor the compressor to resolve the margin for; may be null
+   * @return control margin as fraction (0-1)
+   */
+  public double getAntiSurgeControlMargin(Compressor compressor) {
+    if (compressor != null && compressor.isSurgeControlMarginSet()) {
+      return compressor.getSurgeControlMargin();
+    }
     return antiSurgeControlMargin;
   }
 
