@@ -96,9 +96,8 @@ public class RcaDiagnosisEngineTest extends NeqSimTest {
   public void testWindowRejectsNamesThatCollideAfterNormalization() {
     boolean signalFailed = false;
     try {
-      RcaProcessWindow.builder("TEST", 1.0)
-          .signal("pressure", new double[] {10.0, 10.1, 9.9})
-          .signal(" pressure ", new double[] {11.0, 11.1, 10.9}).build();
+      RcaProcessWindow.builder("TEST", 1.0).signal("pressure", new double[] { 10.0, 10.1, 9.9 })
+          .signal(" pressure ", new double[] { 11.0, 11.1, 10.9 }).build();
     } catch (IllegalArgumentException expected) {
       signalFailed = true;
     }
@@ -106,9 +105,8 @@ public class RcaDiagnosisEngineTest extends NeqSimTest {
 
     boolean conditionFailed = false;
     try {
-      RcaProcessWindow.builder("TEST", 1.0).operatingCondition("flow", 100.0)
-          .operatingCondition(" flow ", 101.0)
-          .signal("pressure", new double[] {10.0, 10.1, 9.9}).build();
+      RcaProcessWindow.builder("TEST", 1.0).operatingCondition("flow", 100.0).operatingCondition(" flow ", 101.0)
+          .signal("pressure", new double[] { 10.0, 10.1, 9.9 }).build();
     } catch (IllegalArgumentException expected) {
       conditionFailed = true;
     }
