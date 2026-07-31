@@ -49,9 +49,7 @@ public class AgentRcaDynamicProcessBenchmarkTest extends NeqSimTest {
         - mean(
             runs.get(Scenario.NORMAL).getWindow().getSignal(AgentRcaDynamicProcessBenchmark.SEPARATOR_PRESSURE)) > 1.5);
     assertTrue(variance(runs.get(Scenario.MULTIPHASE_SLUGGING).getWindow()
-        .getSignal(AgentRcaDynamicProcessBenchmark.LIQUID_FEED_FLOW)) > 10.0
-            * variance(
-                runs.get(Scenario.NORMAL).getWindow().getSignal(AgentRcaDynamicProcessBenchmark.LIQUID_FEED_FLOW)));
+        .getSignal(AgentRcaDynamicProcessBenchmark.LIQUID_FEED_FLOW)) > 100.0);
   }
 
   /**
