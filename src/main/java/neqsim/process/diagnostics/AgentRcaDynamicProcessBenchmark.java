@@ -131,7 +131,7 @@ public final class AgentRcaDynamicProcessBenchmark {
 
     hypotheses.add(RcaFaultHypothesis
         .builder(Scenario.NORMAL.name(), "All measured variables remain close to the matched normal regime.")
-        .overallRule(RcaFaultHypothesis.Expectation.NEAR_ZERO, 1.0, 4.0,
+        .overallRule(RcaFaultHypothesis.Expectation.NEAR_ZERO, 2.0, 4.0,
             "Normal operation should not contain a large multivariate anomaly.")
         .signalRule(SEPARATOR_PRESSURE, RcaFaultHypothesis.Metric.MEAN_Z_SCORE,
             RcaFaultHypothesis.Expectation.NEAR_ZERO, 2.0, 1.0,
