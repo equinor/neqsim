@@ -3485,7 +3485,6 @@ public class TwoFluidPipe extends Pipeline {
     setCalculationIdentifier(id);
   }
 
-
   /**
    * Validate and correct state vector to prevent numerical instabilities.
    *
