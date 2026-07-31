@@ -386,6 +386,9 @@ There is no separate post-step projection toward the steady-state holdup correla
 projection changes phase inventory without a boundary flux or mass-transfer source and makes the
 error scale with pipe length. The earlier unreferenced 4 s relaxation time has therefore been
 removed; steady-state closures remain part of initialization and the local closure/source terms.
+Auxiliary terrain and slug trackers may maintain primitive diagnostics, but they do not rebuild the
+finite-volume phase masses. Conservative source or flux coupling for those trackers remains future
+model-development work.
 
 For a domain with no external mass source, validate the discrete balance
 
