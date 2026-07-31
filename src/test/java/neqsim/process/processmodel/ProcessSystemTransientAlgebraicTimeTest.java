@@ -72,8 +72,8 @@ public class ProcessSystemTransientAlgebraicTimeTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * Null identifiers retain the legacy behavior: every evaluation advances time and no identifier
-   * is written by the shared transient boundary.
+   * Null identifiers retain the legacy behavior: every evaluation advances time and no identifier is written by the
+   * shared transient boundary.
    */
   @Test
   public void nullIdentifierPreservesPreviousIdentifierAndClockBehavior() {
