@@ -134,7 +134,9 @@ public interface SimulationInterface extends NamedInterface, Runnable, Serializa
     if (getCalculateSteadyState()) {
       boolean alreadyEvaluatedForStep = id != null && id.equals(getCalculationIdentifier());
       run(id);
-      setCalculationIdentifier(id);
+      if (id != null) {
+        setCalculationIdentifier(id);
+      }
       if (!alreadyEvaluatedForStep) {
         increaseTime(dt);
       }
