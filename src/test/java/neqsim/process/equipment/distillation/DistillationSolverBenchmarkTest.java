@@ -357,8 +357,20 @@ public class DistillationSolverBenchmarkTest {
         "Large columns should attempt the matrix warm-start stage");
     assertTrue(column.wasMatrixInsideOutWarmStartUsed(),
         "Regression case should accept the matrix warm start before polishing");
+    double matrixTemperatureTolerance = Math.max(column.getTemperatureTolerance(), 5.0e-2);
+    assertTrue(column.getLastMatrixInsideOutTemperatureResidual() <= matrixTemperatureTolerance,
+        "Matrix warm start should meet its configured temperature tolerance before rigorous polishing");
+    int matrixIterationLimit = Math.max(2,
+        Math.min(Math.max(4, column.getNumberOfTrays()), Math.max(2, column.getMaxNumberOfIterations() / 4)));
+    assertTrue(column.getLastMatrixInsideOutIterationCount() < matrixIterationLimit,
+        "Matrix warm start should converge before its configured iteration cap");
     assertTrue(column.getLastIterationCount() > column.getLastMatrixInsideOutIterationCount(),
         "Rigorous polish iterations must be included after matrix warm-start iterations");
+    double outletFlow = column.getGasOutStream().getFlowRate("kg/hr")
+        + column.getLiquidOutStream().getFlowRate("kg/hr");
+    double feedFlow = feed.getFlowRate("kg/hr");
+    assertEquals(feedFlow, outletFlow, feedFlow * 1.0e-6,
+        "Polished products should close the total mass balance within one part per million");
   }
 
   /**
