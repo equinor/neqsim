@@ -394,6 +394,7 @@ class TwoFluidPipeBoundaryConditionTest {
     double initialFlowRate = 6.0;
     double timeStep = 1.0e-3;
     double[] steppedFlowRates = { 12.0, 30.0 };
+    UUID calculationId = UUID.fromString("00000000-0000-0000-0000-000000002718");
 
     for (double steppedFlowRate : steppedFlowRates) {
       TwoFluidPipe transientPipe = createRegressionPipe("mass-balance-" + steppedFlowRate, createTwoPhaseFluid(),
@@ -406,7 +407,7 @@ class TwoFluidPipeBoundaryConditionTest {
 
       double massBefore = transientPipe.getTotalMassInventory();
       transientPipe.setInletMassFlow(steppedFlowRate, "kg/sec");
-      transientPipe.runTransient(timeStep, UUID.randomUUID());
+      transientPipe.runTransient(timeStep, calculationId);
       double massAfter = transientPipe.getTotalMassInventory();
 
       double massChange = Math.abs(massAfter - massBefore);
