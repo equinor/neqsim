@@ -75,12 +75,10 @@ public class RcaDiagnosisEngineTest extends NeqSimTest {
    */
   @Test
   public void testNormalWindowsRequireConsistentOperatingConditionSchema() {
-    RcaProcessWindow first = RcaProcessWindow.builder("FIRST", 1.0)
-        .operatingCondition("gas_flow", 100.0).operatingCondition("liquid_flow", 10.0)
-        .signal("pressure", new double[] {10.0, 10.1, 9.9}).build();
-    RcaProcessWindow second = RcaProcessWindow.builder("SECOND", 1.0)
-        .operatingCondition("gas_flow", 120.0)
-        .signal("pressure", new double[] {11.0, 11.1, 10.9}).build();
+    RcaProcessWindow first = RcaProcessWindow.builder("FIRST", 1.0).operatingCondition("gas_flow", 100.0)
+        .operatingCondition("liquid_flow", 10.0).signal("pressure", new double[] { 10.0, 10.1, 9.9 }).build();
+    RcaProcessWindow second = RcaProcessWindow.builder("SECOND", 1.0).operatingCondition("gas_flow", 120.0)
+        .signal("pressure", new double[] { 11.0, 11.1, 10.9 }).build();
 
     boolean failed = false;
     try {
