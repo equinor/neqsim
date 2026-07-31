@@ -357,7 +357,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    * </p>
    *
    * @param inletSystem clone of the (negligible) inlet thermodynamic system to publish on the outlet
-   * @param id current calculation identifier
+   * @param id current calculation identifier; {@code null} leaves existing recycle and outlet identifiers unchanged
    */
   private void deactivateOnLowFlow(SystemInterface inletSystem, UUID id) {
     isActive(false);
