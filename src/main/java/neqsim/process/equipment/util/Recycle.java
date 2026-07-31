@@ -344,6 +344,34 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
   }
 
+  /**
+   * Deactivates this recycle because its loop flow has collapsed below the configured {@link #getMinimumFlow()} cutoff.
+   *
+   * <p>
+   * A recycle below the cutoff carries no physically meaningful inventory, so it is marked inactive and its four
+   * residuals are reported as exactly zero. The previous-iteration snapshot is refreshed at the same time; without that
+   * refresh the flow, temperature and pressure balance checks would keep comparing the (negligible) current stream
+   * against a stale pre-collapse snapshot, so the recycle would report {@code solved() == false} forever. That in turn
+   * makes the owning {@link neqsim.process.processmodel.ProcessSystem} report NOT SOLVED and spend its whole iteration
+   * budget on a dead leg.
+   * </p>
+   *
+   * @param inletSystem clone of the (negligible) inlet thermodynamic system to publish on the outlet
+   * @param id current calculation identifier
+   */
+  private void deactivateOnLowFlow(SystemInterface inletSystem, UUID id) {
+    isActive(false);
+    mixedStream.setThermoSystem(inletSystem);
+    setErrorCompositon(0.0);
+    setErrorFlow(0.0);
+    setErrorTemperature(0.0);
+    setErrorPressure(0.0);
+    lastIterationStream = mixedStream.clone();
+    outletStream.setThermoSystem(mixedStream.getThermoSystem());
+    outletStream.setCalculationIdentifier(id);
+    setCalculationIdentifier(id);
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
@@ -355,14 +383,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     double enthalpy = 0.0;
     SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
     if (numberOfInputStreams == 1 && thermoSystem2.getFlowRate("kg/hr") < minimumFlow) {
-      isActive(false);
-      mixedStream.setThermoSystem(thermoSystem2);
-      setErrorCompositon(0.0);
-      setErrorFlow(flowBalanceCheck());
-      setErrorTemperature(temperatureBalanceCheck());
-      setErrorPressure(pressureBalanceCheck());
-      outletStream.setThermoSystem(mixedStream.getThermoSystem());
-      outletStream.setCalculationIdentifier(id);
+      deactivateOnLowFlow(thermoSystem2, id);
       return;
     }
     mixedStream.setThermoSystem(thermoSystem2);
@@ -375,14 +396,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
       mixStream();
 
       if (mixedStream.getFlowRate("kg/hr") < minimumFlow) {
-        isActive(false);
-        mixedStream.setThermoSystem(thermoSystem2);
-        setErrorCompositon(0.0);
-        setErrorFlow(flowBalanceCheck());
-        setErrorTemperature(temperatureBalanceCheck());
-        setErrorPressure(pressureBalanceCheck());
-        outletStream.setThermoSystem(mixedStream.getThermoSystem());
-        outletStream.setCalculationIdentifier(id);
+        deactivateOnLowFlow(thermoSystem2, id);
         return;
       }
 
@@ -885,11 +899,24 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     this.priority = priority;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * A recycle that has been deactivated by the low-flow cutoff (see {@link #setMinimumFlow(double)}) is reported as
+   * solved: it carries no meaningful inventory, so there is nothing left to converge and holding the flowsheet open for
+   * it would only burn the iteration budget on a dead leg.
+   * </p>
+   */
   @Override
   public boolean solved() {
-    if (getOutletStream().getFlowRate("kg/hr") < 1e-20 && lastIterationStream.getFlowRate("kg/hr") < 1e-20
-        && iterations > 1) {
+    if (!isActive() && iterations > 0) {
+      return true;
+    }
+
+    double zeroFlowFloor = Math.max(minimumFlow, 1e-20);
+    if (getOutletStream().getFlowRate("kg/hr") < zeroFlowFloor
+        && lastIterationStream.getFlowRate("kg/hr") < zeroFlowFloor && iterations > 1) {
       return true;
     }
 

@@ -754,11 +754,25 @@ public class Manifold extends ProcessEquipmentBaseClass
   // MASS BALANCE AND JSON
   // ============================================================================
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * The balance is taken directly across the manifold's own boundary: the sum of the streams fed into the internal
+   * mixer against the sum of the split outlets. Deriving the inlet total from the internal mixer's residual instead
+   * ({@code mixer.getMassBalance() + mixerOutlet}) double-counted that residual and reported the manifold imbalance
+   * with the opposite sign whenever the internal mixer was not itself perfectly balanced - which is exactly the
+   * mid-iteration state a mass-balance check is used to detect.
+   * </p>
+   */
   @Override
   public double getMassBalance(String unit) {
-    double inletFlow = localmixer.getMassBalance(unit)
-        + localmixer.getOutletStream().getThermoSystem().getFlowRate(unit);
+    double inletFlow = 0.0;
+    for (StreamInterface inlet : localmixer.getInletStreams()) {
+      if (inlet != null && inlet.getThermoSystem() != null) {
+        inletFlow += inlet.getThermoSystem().getFlowRate(unit);
+      }
+    }
     double outletFlow = 0.0;
     for (int i = 0; i < getNumberOfOutputStreams(); i++) {
       outletFlow += getSplitStream(i).getThermoSystem().getFlowRate(unit);

@@ -4385,16 +4385,29 @@ public class ProcessSystem extends SimulationBaseClass {
     return currentDt;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Units that are bypassed - either locked inactive by the user or auto-bypassed because their inlet flow fell below
+   * the configured low-flow threshold (see {@link #setSectionLowFlowThreshold(double)}) - are excluded from the check.
+   * A bypassed unit never executes, so its {@code solved()} flag carries no information and would otherwise make an
+   * otherwise fully converged area report NOT SOLVED.
+   * </p>
+   */
   @Override
   public boolean solved() {
     /* */
     if (recycleController.solvedAll()) {
       for (int i = 0; i < unitOperations.size(); i++) {
-        if (logger.isDebugEnabled()) {
-          logger.debug("unit " + unitOperations.get(i).getName() + " solved: " + unitOperations.get(i).solved());
+        ProcessEquipmentInterface unit = unitOperations.get(i);
+        if (unit.isLockedInactive() || !unit.isActive()) {
+          continue;
         }
-        if (!unitOperations.get(i).solved()) {
+        if (logger.isDebugEnabled()) {
+          logger.debug("unit " + unit.getName() + " solved: " + unit.solved());
+        }
+        if (!unit.solved()) {
           return false;
         }
       }
@@ -5522,20 +5535,27 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Check mass balance of all unit operations in the process system.
    *
+   * <p>
+   * Bypassed units (locked inactive or auto-bypassed on low flow) are still reported, but are tagged via
+   * {@link MassBalanceResult#isBypassed()} so callers can exclude them: a unit that never executed has no meaningful
+   * inlet/outlet balance, and on a near-zero dead leg the percentage error degenerates towards 100 %.
+   * </p>
+   *
    * @param unit unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
    * @return a map with unit operation name as key and mass balance result as value
    */
   public Map<String, MassBalanceResult> checkMassBalance(String unit) {
     Map<String, MassBalanceResult> massBalanceResults = new HashMap<>();
     for (ProcessEquipmentInterface unitOp : unitOperations) {
+      boolean bypassed = unitOp.isLockedInactive() || !unitOp.isActive();
       try {
         double massBalanceError = unitOp.getMassBalance(unit);
         double inletFlow = calculateInletFlow(unitOp, unit);
         double percentError = calculatePercentError(massBalanceError, inletFlow);
-        massBalanceResults.put(unitOp.getName(), new MassBalanceResult(massBalanceError, percentError, unit));
+        massBalanceResults.put(unitOp.getName(), new MassBalanceResult(massBalanceError, percentError, unit, bypassed));
       } catch (Exception e) {
         logger.warn("Failed to calculate mass balance for unit: " + unitOp.getName(), e);
-        massBalanceResults.put(unitOp.getName(), new MassBalanceResult(Double.NaN, Double.NaN, unit));
+        massBalanceResults.put(unitOp.getName(), new MassBalanceResult(Double.NaN, Double.NaN, unit, bypassed));
       }
     }
     return massBalanceResults;
@@ -5553,6 +5573,13 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Get unit operations that failed mass balance check based on percentage error threshold.
    *
+   * <p>
+   * Bypassed units and units whose inlet flow is below their own low-flow cutoff
+   * ({@link neqsim.process.equipment.ProcessEquipmentInterface#getMinimumFlow()}) are skipped: a leg that has been
+   * declared negligible cannot produce a meaningful percentage balance, and a near-zero stream trivially reports ~100 %
+   * error.
+   * </p>
+   *
    * @param unit unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
    * @param percentThreshold percentage error threshold (default: 0.1%)
    * @return a map with failed unit operation names and their mass balance results
@@ -5563,8 +5590,15 @@ public class ProcessSystem extends SimulationBaseClass {
 
     // Convert minimum flow threshold to the requested unit
     double minimumFlowInUnit = minimumFlowForMassBalanceError;
+    // Conversion of a unit's own low-flow cutoff (always kg/hr) into the requested
+    // reporting unit. NaN means "no meaningful conversion", so the per-unit cutoff
+    // filter is skipped for that reporting unit.
+    double kgPerHourToUnit = Double.NaN;
     if (unit.equals("kg/hr")) {
       minimumFlowInUnit *= 3600.0; // kg/sec to kg/hr
+      kgPerHourToUnit = 1.0;
+    } else if (unit.equals("kg/sec")) {
+      kgPerHourToUnit = 1.0 / 3600.0;
     } else if (unit.equals("mole/sec")) {
       // For mole/sec, we use the kg/sec threshold as approximation
       // since we don't have molecular weight info here
@@ -5573,12 +5607,25 @@ public class ProcessSystem extends SimulationBaseClass {
 
     for (Map.Entry<String, MassBalanceResult> entry : allResults.entrySet()) {
       MassBalanceResult result = entry.getValue();
+      if (result.isBypassed()) {
+        continue;
+      }
       ProcessEquipmentInterface unitOp = getUnit(entry.getKey());
       double inletFlow = calculateInletFlow(unitOp, unit);
 
       // Skip units with insignificant inlet flow
       if (Math.abs(inletFlow) < minimumFlowInUnit) {
         continue;
+      }
+
+      // Skip units whose inlet flow is below their own configured low-flow cutoff: the
+      // leg has explicitly been declared negligible, so a percentage balance on it is
+      // numerical noise rather than a mass-conservation defect.
+      if (unitOp != null && !Double.isNaN(kgPerHourToUnit)) {
+        double unitCutoff = unitOp.getMinimumFlow() * kgPerHourToUnit;
+        if (unitCutoff > 0.0 && Math.abs(inletFlow) < unitCutoff) {
+          continue;
+        }
       }
 
       if (Double.isNaN(result.getPercentError()) || Math.abs(result.getPercentError()) > percentThreshold) {
@@ -5869,6 +5916,7 @@ public class ProcessSystem extends SimulationBaseClass {
     private final double absoluteError;
     private final double percentError;
     private final String unit;
+    private final boolean bypassed;
 
     /**
      * Constructor for MassBalanceResult.
@@ -5878,9 +5926,23 @@ public class ProcessSystem extends SimulationBaseClass {
      * @param unit unit of measurement
      */
     public MassBalanceResult(double absoluteError, double percentError, String unit) {
+      this(absoluteError, percentError, unit, false);
+    }
+
+    /**
+     * Constructor for MassBalanceResult.
+     *
+     * @param absoluteError absolute mass balance error (outlet - inlet)
+     * @param percentError percentage error
+     * @param unit unit of measurement
+     * @param bypassed true when the unit was bypassed (locked inactive or auto-bypassed on low flow) and the balance
+     * therefore carries no information
+     */
+    public MassBalanceResult(double absoluteError, double percentError, String unit, boolean bypassed) {
       this.absoluteError = absoluteError;
       this.percentError = percentError;
       this.unit = unit;
+      this.bypassed = bypassed;
     }
 
     /**
@@ -5910,9 +5972,23 @@ public class ProcessSystem extends SimulationBaseClass {
       return unit;
     }
 
+    /**
+     * Reports whether the unit was bypassed when the balance was taken.
+     *
+     * <p>
+     * A bypassed unit never executed, so its inlet/outlet balance is not a mass-conservation result. Callers should
+     * exclude these from pass/fail reporting; {@link ProcessSystem#getFailedMassBalance(String, double)} already does.
+     * </p>
+     *
+     * @return true when the unit was locked inactive or auto-bypassed on low flow
+     */
+    public boolean isBypassed() {
+      return bypassed;
+    }
+
     @Override
     public String toString() {
-      return String.format("%.6f %s (%.4f%%)", absoluteError, unit, percentError);
+      return String.format("%.6f %s (%.4f%%)%s", absoluteError, unit, percentError, bypassed ? " [bypassed]" : "");
     }
   }
 
