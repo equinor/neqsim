@@ -53,13 +53,12 @@ public final class RcaProcessWindow implements Serializable {
       } else if (values.length != expectedSamples) {
         throw new IllegalArgumentException("all signals must contain the same number of samples");
       }
-      double[] copy = values.clone();
-      for (int i = 0; i < copy.length; i++) {
-        if (!Double.isFinite(copy[i])) {
+      for (int i = 0; i < values.length; i++) {
+        if (!Double.isFinite(values[i])) {
           throw new IllegalArgumentException("signal " + name + " contains a non-finite value at index " + i);
         }
       }
-      copiedSignals.put(name, copy);
+      copiedSignals.put(name, values);
     }
 
     Map<String, Double> copiedConditions = new LinkedHashMap<String, Double>();
