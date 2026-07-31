@@ -11,9 +11,9 @@ import java.util.Map;
  * Immutable multivariate process-data window used for evidence-grounded root-cause analysis.
  *
  * <p>
- * A window contains raw engineering values rather than pre-standardized values. A
- * {@link RcaNormalOperationModel} is responsible for matching the window to a normal operating regime and
- * standardizing its deviations. Signal arrays and operating-condition values are defensively copied.
+ * A window contains raw engineering values rather than pre-standardized values. A {@link RcaNormalOperationModel} is
+ * responsible for matching the window to a normal operating regime and standardizing its deviations. Signal arrays and
+ * operating-condition values are defensively copied.
  * </p>
  *
  * @author Even Solbraa
