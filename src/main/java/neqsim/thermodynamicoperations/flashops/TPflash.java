@@ -875,12 +875,12 @@ public class TPflash extends Flash {
    *
    * <p>
    * The ordinary flash searches only the cubic gas/oil roots and can therefore leave a substantial water fraction
-   * dissolved in hydrocarbon-labelled phases, or miss a lower-Gibbs gas-oil split when water makes the generic
-   * hydrocarbon endpoint screen inapplicable. The one-mol-percent feed guard keeps trace-water process flashes on the
-   * existing fast path. A cloned multiphase candidate replaces the ordinary state only when it contains exactly two
-   * phases and passes the same strict phase-fraction, distinct-composition, and Gibbs-energy checks used by the
-   * liquid-liquid rescue. The candidate need not contain an aqueous-labelled phase: phase stability and Gibbs energy,
-   * rather than the expected phase label, decide whether the already-computed candidate is accepted.
+   * dissolved in a hydrocarbon-labelled phase even when a lower-Gibbs aqueous split exists. An existing aqueous phase
+   * label is not by itself proof of equilibrium: phase typing can identify a water-rich phase after the ordinary
+   * gas/oil iteration has stopped. Such an endpoint is refined only when its component fugacity residual exceeds
+   * {@link #PHASE_ROOT_EQUILIBRIUM_TOLERANCE}. The one-mol-percent feed guard keeps trace-water process flashes on the
+   * existing fast path. A cloned multiphase candidate replaces the ordinary state only through the same strict
+   * phase-fraction, distinct-composition, and Gibbs-energy checks used by the liquid-liquid rescue.
    * </p>
    */
   private void rescueWaterRichEndpoint() {
@@ -889,10 +889,11 @@ public class TPflash extends Flash {
       return;
     }
 
-    double waterFeedFraction = 0.0;
-    if (system.hasPhaseType(PhaseType.AQUEOUS)) {
+    boolean hasAqueousPhase = system.hasPhaseType(PhaseType.AQUEOUS);
+    if (hasAqueousPhase && system.getNumberOfPhases() < 2) {
       return;
     }
+    double waterFeedFraction = 0.0;
     for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
       neqsim.thermo.component.ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
       if ("water".equalsIgnoreCase(component.getComponentName())) {
@@ -901,6 +902,10 @@ public class TPflash extends Flash {
       }
     }
     if (waterFeedFraction < WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT) {
+      return;
+    }
+    if (hasAqueousPhase
+        && maximumLogFugacityResidualWithReplacement(0, system.getPhase(0)) < PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
       return;
     }
 
