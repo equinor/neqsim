@@ -905,8 +905,7 @@ public class TPflash extends Flash {
       return;
     }
     if (hasAqueousPhase
-        && maximumLogFugacityResidualWithReplacement(0, system.getPhase(0))
-            < PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
+        && maximumLogFugacityResidualWithReplacement(0, system.getPhase(0)) < PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
       return;
     }
 

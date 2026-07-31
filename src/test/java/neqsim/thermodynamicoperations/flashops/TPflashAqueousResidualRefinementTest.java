@@ -9,9 +9,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPflashAqueousResidualRefinementTest {
-  private static final String[] COMPONENTS = {
-      "nitrogen", "methane", "ethane", "propane", "nC10", "water"
-  };
+  private static final String[] COMPONENTS = { "nitrogen", "methane", "ethane", "propane", "nC10", "water" };
   private static final double[] FEED = { 0.01, 0.75, 0.08, 0.04, 0.02, 0.10 };
 
   @Test
@@ -71,8 +69,7 @@ class TPflashAqueousResidualRefinementTest {
     for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
       double recoveredFeed = 0.0;
       for (int phaseIndex = 0; phaseIndex < actual.getNumberOfPhases(); phaseIndex++) {
-        recoveredFeed += actual.getBeta(phaseIndex)
-            * actual.getPhase(phaseIndex).getComponent(componentIndex).getx();
+        recoveredFeed += actual.getBeta(phaseIndex) * actual.getPhase(phaseIndex).getComponent(componentIndex).getx();
       }
       assertEquals(FEED[componentIndex], recoveredFeed, 1.0e-11);
     }
@@ -88,8 +85,7 @@ class TPflashAqueousResidualRefinementTest {
       double secondLogFugacity = Math
           .log(Math.max(system.getPhase(1).getComponent(componentIndex).getx(), Double.MIN_NORMAL))
           + Math.log(system.getPhase(1).getComponent(componentIndex).getFugacityCoefficient());
-      maximumResidual =
-          Math.max(maximumResidual, Math.abs(firstLogFugacity - secondLogFugacity));
+      maximumResidual = Math.max(maximumResidual, Math.abs(firstLogFugacity - secondLogFugacity));
     }
     return maximumResidual;
   }
