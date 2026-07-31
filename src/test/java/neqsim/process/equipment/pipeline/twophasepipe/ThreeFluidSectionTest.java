@@ -134,6 +134,49 @@ class ThreeFluidSectionTest {
   }
 
   @Test
+  void testThreeLayerGeometryConservesSegmentAreaAcrossPipeDiameters() {
+    double[] diameters = { 0.05, 0.10, 0.30, 1.0, 2.0 };
+    double[][] holdupSets = { { 0.94, 0.05, 0.01 }, // Near-single-gas
+        { 0.80, 0.15, 0.05 }, // Gas-rich
+        { 0.50, 0.30, 0.20 }, // Mixed holdup
+        { 0.10, 0.45, 0.45 }, // Liquid-rich
+    };
+
+    for (double diameter : diameters) {
+      for (double[] holdups : holdupSets) {
+        ThreeFluidSection testSection = new ThreeFluidSection(0.0, 10.0, diameter, 0.0);
+        testSection.setHoldups(holdups[0], holdups[1], holdups[2]);
+        testSection.updateThreeLayerGeometry();
+
+        double waterAreaFromLevel = circularSegmentArea(testSection.getWaterLevel(), diameter);
+        double combinedLiquidLevel = testSection.getWaterLevel() + testSection.getOilLevel();
+        double combinedLiquidAreaFromLevel = circularSegmentArea(combinedLiquidLevel, diameter);
+        double totalArea = testSection.getArea();
+
+        assertEquals(testSection.getWaterArea(), waterAreaFromLevel, 1e-12 * totalArea,
+            "Water level must reproduce water holdup area for D=" + diameter + " m");
+        assertEquals(testSection.getWaterArea() + testSection.getOilArea(), combinedLiquidAreaFromLevel,
+            1e-12 * totalArea, "Combined liquid level must reproduce liquid holdup area for D=" + diameter + " m");
+      }
+    }
+  }
+
+  private static double circularSegmentArea(double level, double diameter) {
+    if (level <= 0.0) {
+      return 0.0;
+    }
+    if (level >= diameter) {
+      return Math.PI * diameter * diameter / 4.0;
+    }
+
+    double radius = diameter / 2.0;
+    double cosineArgument = 1.0 - 2.0 * level / diameter;
+    cosineArgument = Math.max(-1.0, Math.min(1.0, cosineArgument));
+    double theta = 2.0 * Math.acos(cosineArgument);
+    return radius * radius * (theta - Math.sin(theta)) / 2.0;
+  }
+
+  @Test
   void testWettedPerimetersArePositive() {
     section.setHoldups(0.5, 0.3, 0.2);
     section.updateThreeLayerGeometry();

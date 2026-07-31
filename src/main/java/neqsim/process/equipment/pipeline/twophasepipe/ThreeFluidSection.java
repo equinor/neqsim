@@ -294,9 +294,11 @@ public class ThreeFluidSection extends TwoFluidSection {
       double theta = 2.0 * Math.acos(arg);
       double area = r * r * (theta - Math.sin(theta)) / 2.0;
 
-      // Derivative: dA/dh = 2*r*sqrt(h*(d-h))
+      // Exact circular-segment derivative: dA/dh = 2*sqrt(h*(d-h)).
+      // It has units of length; multiplying by radius would make the Newton step
+      // depend on pipe diameter and violate geometric similarity.
       double sqrtTerm = Math.sqrt(Math.max(0.0, h * (d - h)));
-      double dArea_dh = 2.0 * r * sqrtTerm;
+      double dArea_dh = 2.0 * sqrtTerm;
 
       double error = area - targetArea;
       if (Math.abs(error) < 1e-12 * totalArea) {
