@@ -26,6 +26,10 @@ historian tag mapping, and event schedule before running `runTransient`.
 ## Dynamic Simulation Architecture
 
 NeqSim dynamic simulation uses the `runTransient(double dt)` method on `ProcessSystem`.
+Pass a finite, positive timestep. Process and model entry points reject zero,
+negative, NaN, and infinite values before any area or equipment state changes.
+Adaptive stepping rejects invalid requests rather than clamping them.
+
 Each timestep:
 1. Flowsheet-wide settings are applied. Each setter unit receives exactly one
    transient call, applying its specification and advancing its own clock once.
