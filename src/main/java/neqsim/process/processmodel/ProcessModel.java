@@ -94,6 +94,9 @@ public class ProcessModel implements Runnable, Serializable {
     /** Areas that consume each boundary stream, keyed by stream identity. */
     private final Map<Object, java.util.Set<ProcessSystem>> boundaryConsumers;
 
+    /** Producing {@code "area::unit"} label for each stream, keyed by stream identity. */
+    private final Map<Object, String> streamProducers;
+
     /** Structure versions observed when this plan was built. */
     private final Map<ProcessSystem, Long> structureVersions;
 
@@ -104,15 +107,18 @@ public class ProcessModel implements Runnable, Serializable {
      * @param successors downstream area adjacency map
      * @param boundaryStreams streams crossing process-area boundaries
      * @param boundaryConsumers consumer areas for each boundary stream
+     * @param streamProducers producing {@code "area::unit"} label per stream identity
      * @param structureVersions process structure versions observed while building the plan
      */
     private AreaExecutionPlan(List<List<ProcessSystem>> levels,
         Map<ProcessSystem, java.util.Set<ProcessSystem>> successors, java.util.Set<Object> boundaryStreams,
-        Map<Object, java.util.Set<ProcessSystem>> boundaryConsumers, Map<ProcessSystem, Long> structureVersions) {
+        Map<Object, java.util.Set<ProcessSystem>> boundaryConsumers, Map<Object, String> streamProducers,
+        Map<ProcessSystem, Long> structureVersions) {
       this.levels = levels;
       this.successors = successors;
       this.boundaryStreams = boundaryStreams;
       this.boundaryConsumers = boundaryConsumers;
+      this.streamProducers = streamProducers;
       this.structureVersions = structureVersions;
     }
   }
@@ -325,6 +331,8 @@ public class ProcessModel implements Runnable, Serializable {
     private static final long serialVersionUID = 1000L;
     /** Name of the boundary stream. */
     private final String streamName;
+    /** Producing {@code "area::unit"} label, or an empty string when unknown. */
+    private final String producerLabel;
     /** Relative flow-rate error between the two last outer iterations. */
     private final double flowError;
     /** Relative temperature error between the two last outer iterations. */
@@ -340,15 +348,17 @@ public class ProcessModel implements Runnable, Serializable {
      * Creates a boundary stream error record.
      *
      * @param streamName name of the boundary stream
+     * @param producerLabel producing {@code "area::unit"} label, or {@code null} when unknown
      * @param flowError relative flow-rate error
      * @param temperatureError relative temperature error
      * @param pressureError relative pressure error
      * @param previousFlow previous-iteration flow rate in kg/hr
      * @param currentFlow current-iteration flow rate in kg/hr
      */
-    private BoundaryStreamError(String streamName, double flowError, double temperatureError, double pressureError,
-        double previousFlow, double currentFlow) {
+    private BoundaryStreamError(String streamName, String producerLabel, double flowError, double temperatureError,
+        double pressureError, double previousFlow, double currentFlow) {
       this.streamName = streamName;
+      this.producerLabel = producerLabel == null ? "" : producerLabel;
       this.flowError = flowError;
       this.temperatureError = temperatureError;
       this.pressureError = pressureError;
@@ -363,6 +373,30 @@ public class ProcessModel implements Runnable, Serializable {
      */
     public String getStreamName() {
       return streamName;
+    }
+
+    /**
+     * Producing unit of this boundary stream as {@code "area::unit"}.
+     *
+     * <p>
+     * Equipment that auto-names its outlets (splitters emit {@code "Split Stream_0"}, {@code "Split Stream_1"}, ...)
+     * produces identical stream names all over a large plant, so the stream name alone cannot identify the offender.
+     * This label names the unit that produced the stream.
+     * </p>
+     *
+     * @return {@code "area::unit"}, or an empty string when the producer is unknown
+     */
+    public String getProducerLabel() {
+      return producerLabel;
+    }
+
+    /**
+     * Stream name qualified by its producing unit, e.g. {@code "sep train B::gassplitter2 -> Split Stream_1"}.
+     *
+     * @return the qualified name, or the plain stream name when the producer is unknown
+     */
+    public String getQualifiedName() {
+      return producerLabel.isEmpty() ? streamName : producerLabel + " -> " + streamName;
     }
 
     /**
@@ -2091,12 +2125,13 @@ public class ProcessModel implements Runnable, Serializable {
     Map<ProcessSystem, java.util.Set<ProcessSystem>> successorMap = new IdentityHashMap<>();
     java.util.Set<Object> boundaryStreams = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     Map<Object, java.util.Set<ProcessSystem>> boundaryConsumers = new IdentityHashMap<>();
+    Map<Object, String> streamProducers = new IdentityHashMap<>();
     for (ProcessSystem process : allProcesses) {
       successorMap.put(process, java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>()));
     }
 
     if (n == 0) {
-      return new AreaExecutionPlan(new ArrayList<>(), successorMap, boundaryStreams, boundaryConsumers,
+      return new AreaExecutionPlan(new ArrayList<>(), successorMap, boundaryStreams, boundaryConsumers, streamProducers,
           structureVersions);
     }
 
@@ -2126,6 +2161,7 @@ public class ProcessModel implements Runnable, Serializable {
                 .getOutletStreams();
             if (outletStreams != null) {
               outs.addAll(outletStreams);
+              recordStreamProducers(streamProducers, outletStreams, p, unit);
             }
           } catch (Exception e) {
             // Not all equipment implements getOutletStreams cleanly; ignore.
@@ -2240,7 +2276,8 @@ public class ProcessModel implements Runnable, Serializable {
         single.add(p);
         fallback.add(single);
       }
-      return new AreaExecutionPlan(fallback, successorMap, boundaryStreams, boundaryConsumers, structureVersions);
+      return new AreaExecutionPlan(fallback, successorMap, boundaryStreams, boundaryConsumers, streamProducers,
+          structureVersions);
     }
 
     int maxLevel = 0;
@@ -2254,7 +2291,39 @@ public class ProcessModel implements Runnable, Serializable {
     for (int i = 0; i < n; i++) {
       levels.get(level[i]).add(allProcesses.get(i));
     }
-    return new AreaExecutionPlan(levels, successorMap, boundaryStreams, boundaryConsumers, structureVersions);
+    return new AreaExecutionPlan(levels, successorMap, boundaryStreams, boundaryConsumers, streamProducers,
+        structureVersions);
+  }
+
+  /**
+   * Records the producing {@code "area::unit"} label for each outlet stream of a unit.
+   *
+   * <p>
+   * The first producer wins so the label is deterministic in insertion order. Streams that a unit merely forwards
+   * (already produced upstream) therefore keep their original producer.
+   * </p>
+   *
+   * @param streamProducers identity map to populate
+   * @param outletStreams outlet streams of the unit
+   * @param area process area owning the unit
+   * @param unit the producing unit
+   */
+  private void recordStreamProducers(Map<Object, String> streamProducers, java.util.List<StreamInterface> outletStreams,
+      ProcessSystem area, Object unit) {
+    String unitName = null;
+    if (unit instanceof neqsim.process.equipment.ProcessEquipmentInterface) {
+      unitName = ((neqsim.process.equipment.ProcessEquipmentInterface) unit).getName();
+    }
+    if (unitName == null || unitName.trim().isEmpty()) {
+      return;
+    }
+    String areaName = area == null ? null : area.getName();
+    String label = (areaName == null || areaName.trim().isEmpty()) ? unitName : areaName + "::" + unitName;
+    for (StreamInterface outlet : outletStreams) {
+      if (outlet != null && !streamProducers.containsKey(outlet)) {
+        streamProducers.put(outlet, label);
+      }
+    }
   }
 
   /**
@@ -2456,7 +2525,8 @@ public class ProcessModel implements Runnable, Serializable {
         double pressErr = Math.abs(curr[2] - prev[2]) / pressBase;
         maxPressErr = Math.max(maxPressErr, pressErr);
 
-        streamErrors.add(new BoundaryStreamError(getStreamName(key), flowErr, tempErr, pressErr, prev[0], curr[0]));
+        streamErrors.add(new BoundaryStreamError(getStreamName(key), getStreamProducerLabel(key), flowErr, tempErr,
+            pressErr, prev[0], curr[0]));
       }
     }
 
@@ -2478,6 +2548,24 @@ public class ProcessModel implements Runnable, Serializable {
       }
     }
     return "unnamed stream@" + Integer.toHexString(System.identityHashCode(streamObject));
+  }
+
+  /**
+   * Resolve the producing {@code "area::unit"} label for a boundary stream object.
+   *
+   * @param streamObject boundary stream object
+   * @return the producer label, or an empty string when the producer cannot be resolved
+   */
+  private String getStreamProducerLabel(Object streamObject) {
+    if (streamObject == null || processes.isEmpty()) {
+      return "";
+    }
+    try {
+      String label = getAreaExecutionPlan().streamProducers.get(streamObject);
+      return label == null ? "" : label;
+    } catch (Exception e) {
+      return "";
+    }
   }
 
   /**
@@ -2582,7 +2670,7 @@ public class ProcessModel implements Runnable, Serializable {
     if (worst == null) {
       return "";
     }
-    return " [worst: " + worst.getStreamName() + formatFlowTransitionNote(worst) + "]";
+    return " [worst: " + worst.getQualifiedName() + formatFlowTransitionNote(worst) + "]";
   }
 
   /**
@@ -2638,7 +2726,7 @@ public class ProcessModel implements Runnable, Serializable {
       for (int i = 0; i < shown; i++) {
         BoundaryStreamError streamError = offenders.get(i);
         sb.append(String.format(Locale.US, "  %-30s flow=%.2e (%.3g kg/hr) temp=%.2e press=%.2e%s\n",
-            streamError.getStreamName(), streamError.getFlowError(), streamError.getAbsoluteFlowChange(),
+            streamError.getQualifiedName(), streamError.getFlowError(), streamError.getAbsoluteFlowChange(),
             streamError.getTemperatureError(), streamError.getPressureError(), formatFlowTransitionNote(streamError)));
       }
       if (offenders.size() > shown) {
@@ -2888,6 +2976,8 @@ public class ProcessModel implements Runnable, Serializable {
   private JsonObject buildBoundaryStreamErrorEntry(BoundaryStreamError streamError) {
     JsonObject entry = new JsonObject();
     entry.addProperty("name", streamError.getStreamName());
+    entry.addProperty("producer", streamError.getProducerLabel());
+    entry.addProperty("qualifiedName", streamError.getQualifiedName());
     entry.addProperty("flowError", streamError.getFlowError());
     entry.addProperty("temperatureError", streamError.getTemperatureError());
     entry.addProperty("pressureError", streamError.getPressureError());

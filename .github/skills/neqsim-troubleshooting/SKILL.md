@@ -222,6 +222,40 @@ filter is active.
 > the first recycle iteration (e.g. a JT valve on a separator liquid outlet) —
 > it will never recover within that pass.
 
+### "Converged: YES" but a unit is out of mass balance
+
+The plant gate says every boundary stream is inside tolerance, yet
+`checkMassBalance()` flags a downstream unit by ~1 %. The two disagree because
+the link between the areas is **invisible to boundary detection**, not because
+the tolerance is too loose.
+
+`ProcessModel` discovers boundary streams through `getInletStreams()` /
+`getOutletStreams()`. Equipment that stores its streams in its own private lists
+and does not override those two methods falls back to the inherited two-port
+`inStream`/`outStream` — often never assigned — and so reports **no**
+connections. Such a link is dropped from both the convergence gate and the
+incremental dirty-area propagation, so the consumer never gets re-run.
+
+Diagnosis — do not start by loosening tolerances:
+
+1. List the units that fail mass balance and trace what feeds them.
+2. If **only** the units fed by one equipment type are unbalanced while every
+   other unit is exactly `0.0000 %`, suspect missing stream introspection on
+   that type.
+3. Confirm with `unit.getInletStreams().size()` / `getOutletStreams().size()` —
+   a multi-port unit reporting 0 or 1 is the bug.
+
+```java
+// Any multi-port equipment MUST expose all ports, or it is invisible to
+// topology walks, DEXPI export, ProcessConnection and boundary detection.
+List<StreamInterface> in = heatEx.getInletStreams();   // expect all feeds
+List<StreamInterface> out = heatEx.getOutletStreams(); // expect all products
+```
+
+> Fixed for `MultiStreamHeatExchanger` in PR #2712; the two-stream
+> `HeatExchanger` always overrode both. Apply the same override when adding new
+> multi-port equipment.
+
 ## Process Equipment Errors
 
 ### Compressor: Negative or Unreasonable Power

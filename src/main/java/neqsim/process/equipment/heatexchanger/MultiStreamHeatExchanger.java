@@ -141,6 +141,59 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     return outStreams.get(i);
   }
 
+  /**
+   * Returns all inlet streams of the multi-stream heat exchanger.
+   *
+   * <p>
+   * Without this override the inherited two-port implementation reports the (unset) single {@code inStream}, so a
+   * multi-stream exchanger looks unconnected to topology walks, DEXPI export and the {@code ProcessModel} boundary
+   * stream detection - the latter would then silently drop a cross-area link and report convergence while a downstream
+   * consumer is still out of balance.
+   * </p>
+   *
+   * @return a list containing the non-null inlet streams, in feed order
+   */
+  @Override
+  public List<StreamInterface> getInletStreams() {
+    List<StreamInterface> inlets = new ArrayList<StreamInterface>();
+    for (StreamInterface stream : inStreams) {
+      if (stream != null) {
+        inlets.add(stream);
+      }
+    }
+    return inlets;
+  }
+
+  /**
+   * Returns all outlet streams of the multi-stream heat exchanger.
+   *
+   * @return a list containing the non-null outlet streams, in feed order
+   */
+  @Override
+  public List<StreamInterface> getOutletStreams() {
+    List<StreamInterface> outlets = new ArrayList<StreamInterface>();
+    for (StreamInterface stream : outStreams) {
+      if (stream != null) {
+        outlets.add(stream);
+      }
+    }
+    return outlets;
+  }
+
+  /**
+   * Returns the first outlet stream of the multi-stream heat exchanger.
+   *
+   * <p>
+   * Use {@link #getOutStream(int)} to address a specific side.
+   * </p>
+   *
+   * @return the outlet stream for feed side 0, or null when no feed has been added
+   */
+  @Override
+  public StreamInterface getOutletStream() {
+    return outStreams.isEmpty() ? null : outStreams.get(0);
+  }
+
   /** {@inheritDoc} */
   @Override
   public StreamInterface getInStream(int i) {
