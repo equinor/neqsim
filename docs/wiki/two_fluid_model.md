@@ -712,6 +712,17 @@ For gas-oil-water systems, `ThreeFluidSection` and `ThreeFluidConservationEquati
         └─────────────────┘
 ```
 
+`ThreeFluidSection` obtains the water and combined-liquid levels by inverting the
+circular-segment area:
+
+$$A(h)=\frac{r^2}{2}\left(\theta-\sin\theta\right),\qquad\theta=2\cos^{-1}\left(1-\frac{2h}{D}\right)$$
+
+The Newton iteration uses the exact derivative
+$$\frac{\mathrm{d}A}{\mathrm{d}h}=2\sqrt{h(D-h)}$$
+so the recovered levels, wetted perimeters, and interfacial widths remain geometrically
+similar across pipe diameters. The regression test checks both the water layer and the
+combined oil-water layer from 0.05 m to 2.0 m diameter.
+
 ## Simulation Modes: Steady-State vs Transient
 
 The `TwoFluidPipe` supports two simulation modes: steady-state initialization via `run()` and incremental transient simulation via `runTransient()`.
