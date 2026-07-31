@@ -3463,7 +3463,6 @@ public class TwoFluidPipe extends Pipeline {
           trackOutletSlugs();
         }
 
-        synchronizeConservativeStateWithPrimitiveState();
       }
 
       // 9. Update temperature profile if heat transfer is enabled
@@ -3486,25 +3485,6 @@ public class TwoFluidPipe extends Pipeline {
     setCalculationIdentifier(id);
   }
 
-  /**
-   * Synchronize conservative variables after models have changed primitive section state.
-   *
-   * <p>
-   * The transient solver advances conservative masses and momenta, while terrain accumulation and slug-return models
-   * may explicitly update primitive holdups and velocities. This method keeps the next transient state extraction and
-   * inventory reporting consistent with those accepted submodel updates.
-   * </p>
-   */
-  private void synchronizeConservativeStateWithPrimitiveState() {
-    if (sections == null) {
-      return;
-    }
-    for (TwoFluidSection sec : sections) {
-      if (sec != null) {
-        sec.updateConservativeVariables();
-      }
-    }
-  }
 
   /**
    * Validate and correct state vector to prevent numerical instabilities.
