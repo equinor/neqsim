@@ -1,7 +1,9 @@
 package neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
@@ -23,7 +25,7 @@ class OnePhaseFlowConvergenceTest extends neqsim.NeqSimTest {
     PipeFlowSystem pipe = createInitializedPipe();
     OnePhaseFlowConvergenceReport report = runCompositionStep(pipe, 30.0);
 
-    assertEquals(ConvergenceReason.MAX_ITERATIONS_REACHED, report.getReason());
+    assertEquals(ConvergenceReason.DENSITY_INCONSISTENT, report.getReason());
     assertEquals(100, report.getNonlinearIterations());
     assertTrue(report.getRelativeFiniteVolumeMassResidual() < 1.0e-12,
         "The authoritative finite-volume inventory must close to roundoff: " + report.getFiniteVolumeMassResidualKg()
@@ -70,16 +72,33 @@ class OnePhaseFlowConvergenceTest extends neqsim.NeqSimTest {
     assertTrue(fifteenSecond.getRelativeFiniteVolumeMassResidual() < 1.0e-12);
   }
 
+  @Test
+  void compatibilityModeReturnsTheFailedReportWithoutThrowing() {
+    PipeFlowSystem pipe = createInitializedPipe();
+    configureCompositionStep(pipe, 30.0);
+
+    assertFalse(pipe.isFailOnNonConvergence());
+    assertDoesNotThrow(() -> pipe.solveTransient(20));
+    assertEquals(ConvergenceReason.DENSITY_INCONSISTENT, pipe.getConvergenceReport().getReason());
+    assertDoesNotThrow(() -> OnePhaseFlowConvergenceReport.notRun().toJson());
+  }
+
   private static OnePhaseFlowConvergenceReport runCompositionStep(PipeFlowSystem pipe, double timeStep) {
-    SystemInterface eventGas = createGas(0.80, 0.20);
-    pipe.getTimeSeries().setTimes(new double[] { 0.0, timeStep });
-    pipe.getTimeSeries().setInletThermoSystems(new SystemInterface[] { eventGas });
-    pipe.getTimeSeries().setNumberOfTimeStepsInInterval(1);
+    configureCompositionStep(pipe, timeStep);
+    pipe.setFailOnNonConvergence(true);
+    assertTrue(pipe.isFailOnNonConvergence());
 
     IllegalStateException failure = assertThrows(IllegalStateException.class, () -> pipe.solveTransient(20));
     OnePhaseFlowConvergenceReport report = pipe.getConvergenceReport();
     assertEquals(report.getMessage(), failure.getMessage());
     return report;
+  }
+
+  private static void configureCompositionStep(PipeFlowSystem pipe, double timeStep) {
+    SystemInterface eventGas = createGas(0.80, 0.20);
+    pipe.getTimeSeries().setTimes(new double[] { 0.0, timeStep });
+    pipe.getTimeSeries().setInletThermoSystems(new SystemInterface[] { eventGas });
+    pipe.getTimeSeries().setNumberOfTimeStepsInInterval(1);
   }
 
   private static PipeFlowSystem createInitializedPipe() {
