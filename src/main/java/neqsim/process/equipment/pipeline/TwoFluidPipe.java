@@ -3463,7 +3463,6 @@ public class TwoFluidPipe extends Pipeline {
           trackOutletSlugs();
         }
 
-        synchronizeConservativeStateWithPrimitiveState();
       }
 
       // 9. Update temperature profile if heat transfer is enabled
@@ -3479,97 +3478,11 @@ public class TwoFluidPipe extends Pipeline {
       timeIntegrator.advanceTime(dtActual);
     }
 
-    if (relaxHoldupTowardSteadyClosure(dt)) {
-      reconstructPressureProfile();
-      applyBoundaryConditions();
-      validateSectionStates();
-    }
-
     // Update outlet stream and result arrays
     updateOutletStream();
     updateResultArrays();
 
     setCalculationIdentifier(id);
-  }
-
-  /**
-   * Relax transient phase holdups toward the same local closure used by the steady solver.
-   *
-   * <p>
-   * The transient conservative update carries inventory and momentum, while the two-fluid closure supplies the
-   * slip/holdup relation. Applying a mild relaxation for open-flow boundary conditions keeps long transients consistent
-   * with the stationary solution after a changed pressure boundary.
-   * </p>
-   *
-   * @param dt elapsed transient step in seconds
-   * @return true if the section primitive state was relaxed
-   */
-  private boolean relaxHoldupTowardSteadyClosure(double dt) {
-    if (sections == null || sections.length == 0 || dt <= 0.0) {
-      return false;
-    }
-    if (outletBCType == BoundaryCondition.CLOSED || inletBCType == BoundaryCondition.CLOSED) {
-      return false;
-    }
-
-    double massFlow = inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet ? inletMassFlow
-        : getInletStream().getFlowRate("kg/sec");
-    if (massFlow <= 0.0) {
-      return false;
-    }
-
-    double[] phaseMassFractions = calculateInletPhaseMassFractions(getInletStream().getFluid());
-    double mDotGas = massFlow * phaseMassFractions[0];
-    double mDotLiq = massFlow * (phaseMassFractions[1] + phaseMassFractions[2]);
-    double area = Math.PI * diameter * diameter / 4.0;
-    double relaxation = 1.0 - Math.exp(-dt / 4.0);
-
-    for (int i = 0; i < numberOfSections; i++) {
-      TwoFluidSection sec = sections[i];
-      TwoFluidSection prev = i > 0 ? sections[i - 1] : null;
-      double[] targetHoldups = calculateLocalHoldup(sec, prev, mDotGas, mDotLiq, area);
-      double alphaL = sec.getLiquidHoldup() + relaxation * (targetHoldups[0] - sec.getLiquidHoldup());
-      alphaL = Math.max(0.0, Math.min(1.0, alphaL));
-      double alphaG = 1.0 - alphaL;
-
-      sec.setLiquidHoldup(alphaL);
-      sec.setGasHoldup(alphaG);
-      if (alphaG > 0.001 && sec.getGasDensity() > 0.0) {
-        sec.setGasVelocity(mDotGas / (area * alphaG * sec.getGasDensity()));
-      }
-      if (alphaL > 0.001 && sec.getLiquidDensity() > 0.0) {
-        sec.setLiquidVelocity(mDotLiq / (area * alphaL * sec.getLiquidDensity()));
-        updateLiquidPhaseSplit(sec, prev, alphaL, area);
-      } else {
-        sec.setLiquidVelocity(0.0);
-        sec.setWaterHoldup(0.0);
-        sec.setOilHoldup(0.0);
-      }
-      sec.updateDerivedQuantities();
-      sec.updateStratifiedGeometry();
-      sec.updateConservativeVariables();
-    }
-    return true;
-  }
-
-  /**
-   * Synchronize conservative variables after models have changed primitive section state.
-   *
-   * <p>
-   * The transient solver advances conservative masses and momenta, while terrain accumulation, slug return, and closure
-   * relaxation deliberately update primitive holdups and velocities. This method keeps the next transient state
-   * extraction and inventory reporting consistent with those accepted primitive updates.
-   * </p>
-   */
-  private void synchronizeConservativeStateWithPrimitiveState() {
-    if (sections == null) {
-      return;
-    }
-    for (TwoFluidSection sec : sections) {
-      if (sec != null) {
-        sec.updateConservativeVariables();
-      }
-    }
   }
 
   /**
@@ -4485,6 +4398,29 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   // ============ Result access methods ============
+
+  /**
+   * Get the total gas, oil, and water mass stored in the computational domain.
+   *
+   * <p>
+   * The inventory is integrated directly from the conservative phase masses per unit length. It is therefore suitable
+   * for checking the finite-volume balance {@code M(t + dt) - M(t) = integral(mDotIn - mDotOut) dt} for cases without
+   * external mass sources.
+   * </p>
+   *
+   * @return total domain mass in kg
+   */
+  public double getTotalMassInventory() {
+    if (sections == null) {
+      return 0.0;
+    }
+
+    double mass = 0.0;
+    for (TwoFluidSection sec : sections) {
+      mass += (sec.getGasMassPerLength() + sec.getOilMassPerLength() + sec.getWaterMassPerLength()) * sec.getLength();
+    }
+    return mass;
+  }
 
   /**
    * Get total liquid inventory in the pipe.

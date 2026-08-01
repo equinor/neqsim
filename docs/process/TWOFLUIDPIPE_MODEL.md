@@ -378,8 +378,33 @@ while (elapsedTime < 60.0) {
 For regression tests, compare the transient profile after the boundary change with a second
 `TwoFluidPipe` solved directly at the new boundary condition. A practical pressure-profile metric is
 root-mean-square pressure difference across all sections; for compact tests a limit of 1-2 bar is a
-useful sanity check. For multiphase cases, also compare liquid, oil, and water holdup profiles so
-the dynamic calculation has settled hydraulically, not only acoustically.
+useful sanity check. Treat acoustic pressure settling and material-inventory settling as separate
+checks. Pressure waves can settle quickly, while liquid, oil, and water holdup profiles may require
+one or more residence times to approach a stationary distribution. Do not impose the pressure-test
+horizon on holdup convergence or force agreement by reconstructing conservative phase masses from
+the stationary closure.
+
+Transient holdup is reconstructed from the phase masses advanced by the finite-volume equations.
+There is no separate post-step projection toward the steady-state holdup correlation. Such a
+projection changes phase inventory without a boundary flux or mass-transfer source and makes the
+error scale with pipe length. The earlier unreferenced 4 s relaxation time has therefore been
+removed; steady-state closures remain part of initialization and the local closure/source terms.
+Auxiliary terrain and slug trackers may maintain primitive diagnostics, but they do not rebuild the
+finite-volume phase masses. Conservative source or flux coupling for those trackers remains future
+model-development work.
+
+For a domain with no external mass source, validate the discrete balance
+
+$$
+M(t + \Delta t) - M(t) =
+\int_t^{t+\Delta t} \left(\dot m_{in} - \dot m_{out}\right)\,dt,
+\qquad
+M = \sum_i \left(m'_{g,i} + m'_{o,i} + m'_{w,i}\right)\Delta x_i .
+$$
+
+Use `getTotalMassInventory()` to read $M$ in kg directly from the conservative gas, oil, and water
+masses. A steady-state solution remains a useful long-time comparison, but agreement must result
+from the transient balances and closure forces rather than overwriting the conserved state.
 
 ### Boundary Conditions
 
