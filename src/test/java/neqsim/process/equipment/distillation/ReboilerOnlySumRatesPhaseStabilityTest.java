@@ -18,6 +18,7 @@ import neqsim.thermo.system.SystemSrkEos;
 public class ReboilerOnlySumRatesPhaseStabilityTest {
   private static final String[] COMPONENTS = { "methane", "ethane", "propane", "n-butane", "nC10" };
   private static final double[] BASE_GAS_COMPOSITION = { 0.70, 0.15, 0.10, 0.05, 1.0e-10 };
+  private static final double PHASE_STABLE_REFERENCE_TEMPERATURE_TOLERANCE = 5.0e-6;
 
   /** Column and its external feeds for container and invalidation tests. */
   private static final class ColumnCase {
@@ -170,6 +171,9 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
           gasComposition, DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
       ColumnCase sumRates = createColumnCase("sum-rates " + pointIndex, point[0], point[1], point[2], point[3],
           gasComposition, DistillationColumn.SolverType.SUM_RATES);
+      // Compare at the same terminal target used internally by native reboiler-only SUM_RATES.
+      // Production damped solves retain their established configured tolerance.
+      damped.column.setTemperatureTolerance(PHASE_STABLE_REFERENCE_TEMPERATURE_TOLERANCE);
       if (pointIndex == 2) {
         for (int trayIndex = 0; trayIndex < damped.column.getNumberOfTrays(); trayIndex++) {
           double seedTemperature = 330.15 - 1.5 * trayIndex;
