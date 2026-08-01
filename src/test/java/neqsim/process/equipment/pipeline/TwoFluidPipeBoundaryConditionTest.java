@@ -716,8 +716,8 @@ class TwoFluidPipeBoundaryConditionTest {
     assertPressureProfilePhysical(transientPipe);
     assertTrue(settling.settled,
         name + " pressure profile should settle within " + maxReasonableTime + " s. Settling time: "
-            + settling.elapsedTime
-            + " s, pressure RMS: " + settling.pressureRmsPa + " Pa, liquid holdup RMS: " + settling.liquidHoldupRms);
+            + settling.elapsedTime + " s, pressure RMS: " + settling.pressureRmsPa + " Pa, liquid holdup RMS: "
+            + settling.liquidHoldupRms);
   }
 
   /**
@@ -813,9 +813,9 @@ class TwoFluidPipeBoundaryConditionTest {
    * Check acoustic pressure-profile convergence against a stationary target.
    *
    * <p>
-   * Liquid inventory can require a much longer material-residence time to reach its stationary
-   * distribution. Holdup differences remain recorded in {@link SettlingResult} for diagnostics,
-   * but must not be used to gate this bounded pressure-response check.
+   * Liquid inventory can require a much longer material-residence time to reach its stationary distribution. Holdup
+   * differences remain recorded in {@link SettlingResult} for diagnostics, but must not be used to gate this bounded
+   * pressure-response check.
    * </p>
    *
    * @param result current settling result
