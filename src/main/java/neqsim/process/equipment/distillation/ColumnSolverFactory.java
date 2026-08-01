@@ -136,8 +136,7 @@ final class ColumnSolverFactory {
           "feasibility pre-screen valid=" + feasibility.isValid() + ", warnings=" + feasibility.hasWarnings());
       appendAutoFeasibilitySummary(summary, feasibility);
 
-      ColumnSolveResult preferredResult =
-          runPreferredReboilerOnlySumRates(column, id, summary, feasibilityReport);
+      ColumnSolveResult preferredResult = runPreferredReboilerOnlySumRates(column, id, summary, feasibilityReport);
       if (preferredResult != null) {
         return preferredResult;
       }
@@ -664,8 +663,7 @@ final class ColumnSolverFactory {
     }
     prepareAutoCandidate(candidate, DistillationColumn.SolverType.SUM_RATES);
     try {
-      ColumnSolveResult result =
-          runAutoProbeCandidate(candidate, DistillationColumn.SolverType.SUM_RATES, id);
+      ColumnSolveResult result = runAutoProbeCandidate(candidate, DistillationColumn.SolverType.SUM_RATES, id);
       appendAutoCandidateSummary(summary, DistillationColumn.SolverType.SUM_RATES, result,
           autoProbeNote(DistillationColumn.SolverType.SUM_RATES, candidate, result));
       if (!isAcceptableAutoCandidate(candidate, result)) {
@@ -679,8 +677,8 @@ final class ColumnSolverFactory {
     } catch (RuntimeException exception) {
       appendAutoCandidateSummary(summary, DistillationColumn.SolverType.SUM_RATES, null,
           "preferred candidate failed: " + exception.getMessage());
-      DistillationColumn.logger.debug("Preferred reboiler-only SUM_RATES candidate failed for {}.",
-          column.getName(), exception);
+      DistillationColumn.logger.debug("Preferred reboiler-only SUM_RATES candidate failed for {}.", column.getName(),
+          exception);
       return null;
     }
   }
