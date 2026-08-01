@@ -98,6 +98,19 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /** Product reconciliation drift above this level is reported as a non-rigorous solve status. */
   private static final double PRODUCT_RECONCILIATION_STATUS_TOLERANCE = 2.0e-2;
   /**
+   * Maximum minority phase fraction canonicalized out of a separated terminal product.
+   *
+   * <p>
+   * Sequential column solvers can approach the same dew-point boundary from opposite sides and expose a numerical trace
+   * phase in only one product. A phase smaller than this limit contributes less than one part in one hundred million to
+   * the product inventory. Merging it into the dominant, intended outlet phase gives the separated product a
+   * solver-independent phase identity without discarding component moles.
+   * </p>
+   */
+  private static final double TERMINAL_PRODUCT_TRACE_PHASE_FRACTION = 1.0e-8;
+  /** Tighter internal SUM_RATES target for solver-independent reboiler-only product temperatures. */
+  private static final double REBOILER_ONLY_PHASE_STABLE_TEMPERATURE_TOLERANCE_FACTOR = 5.0e-2;
+  /**
    * Maximum internal tray traffic accepted after divergence recovery relative to external feed.
    */
   private static final double MAX_SOLVED_INTERNAL_TRAFFIC_TO_FEED_RATIO = 100.0;
@@ -6001,6 +6014,25 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Derive the internal sum-rates temperature target used for terminal phase stability.
+   *
+   * <p>
+   * Reboiler-only columns can end immediately beside a top-product dew-point boundary. Native sum-rates needs a small
+   * internal margin so its exposed product temperature agrees with the established damped solution within the
+   * configured public tolerance. Other sequential solvers retain their existing convergence target.
+   * </p>
+   *
+   * @return internal sum-rates temperature target in Kelvin
+   */
+  private double getSumRatesTerminalTemperatureTolerance() {
+    double effectiveTolerance = getEffectiveTemperatureTolerance();
+    if (hasReboiler && !hasCondenser) {
+      return effectiveTolerance * REBOILER_ONLY_PHASE_STABLE_TEMPERATURE_TOLERANCE_FACTOR;
+    }
+    return effectiveTolerance;
+  }
+
+  /**
    * Derive the effective mass balance tolerance based on column complexity unless overridden.
    *
    * @return adaptive mass balance tolerance (relative)
@@ -7326,10 +7358,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Decide whether sum-rates acceleration should be routed to the guarded damped solver.
    *
-   * @return {@code true} when the sum-rates accelerator should be guarded by damped substitution
+   * @return {@code true} when a condenser requires the sum-rates accelerator to use damped substitution
    */
   private boolean useGuardedSumRatesFallback() {
-    return hasCondenser || hasReboiler;
+    return hasCondenser;
   }
 
   /**
@@ -7369,8 +7401,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       markSolverTypeUsed(SolverType.DAMPED_SUBSTITUTION);
       solveDampedSubstitution(id);
       if (lastSolveStatus == SolveStatus.RIGOROUS_CONVERGED || lastSolveStatus == SolveStatus.RECONCILED_PRODUCTS) {
-        setLastSolveStatus(lastSolveStatus,
-            "Sum-rates is guarded to damped substitution for columns with condenser/reboiler " + "energy equipment");
+        setLastSolveStatus(lastSolveStatus, "Sum-rates is guarded to damped substitution for columns with a condenser");
       }
       return;
     }
@@ -7407,7 +7438,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     int baseIterationLimit = computeIterationLimit();
     int iterationLimit = baseIterationLimit;
-    double baseTempTolerance = getEffectiveTemperatureTolerance();
+    double baseTempTolerance = getSumRatesTerminalTemperatureTolerance();
     double baseMassTolerance = getEffectiveMassBalanceTolerance();
     double baseEnergyTolerance = getEffectiveEnthalpyBalanceTolerance();
     boolean massEnergyEvaluated = false;
@@ -11069,6 +11100,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     captureTerminalProductDrawStreams(id);
     boolean productReconciled = updateProductsFromExternalComponentBalance(id);
+    canonicalizeTerminalTracePhase(gasOutStream, true, id);
+    canonicalizeTerminalTracePhase(liquidOutStream, false, id);
     lastInternalTrafficRatio = getInternalTrafficRatio();
     if (!internalTrafficSatisfied()) {
       capInternalTrayTraffic();
@@ -11256,6 +11289,93 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
     SystemInterface system = productStream.getThermoSystem();
     return system.hasPhaseType("oil") || system.hasPhaseType("liquid") || system.hasPhaseType("aqueous");
+  }
+
+  /**
+   * Canonicalize an immaterial minority phase in a separated terminal product.
+   *
+   * <p>
+   * The public gas and liquid products are phase-separated outlets, but the final product TP flash can retain a phase
+   * with a beta of only a few parts per billion when the result lies on a dew- or bubble-point boundary. Different
+   * sequential solvers can approach that boundary from opposite sides even after satisfying the same numerical
+   * tolerances. When the intended outlet phase owns all but {@link #TERMINAL_PRODUCT_TRACE_PHASE_FRACTION} of the
+   * product inventory, rebuild the stream as that single phase using the complete component-mole vector. This changes
+   * neither total nor per-component flow and avoids treating a numerical trace as a distinct process product.
+   * </p>
+   *
+   * @param productStream public terminal product to inspect
+   * @param gasProduct {@code true} for the top gas product, {@code false} for the bottom liquid product
+   * @param id calculation identifier to retain on a rebuilt stream
+   */
+  private void canonicalizeTerminalTracePhase(StreamInterface productStream, boolean gasProduct, UUID id) {
+    if (productStream == null || productStream.getThermoSystem() == null) {
+      return;
+    }
+    SystemInterface system = productStream.getThermoSystem();
+    if (system.getNumberOfPhases() != 2) {
+      return;
+    }
+
+    int intendedPhaseIndex = -1;
+    double intendedPhaseFraction = -1.0;
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      String phaseTypeName = system.getPhase(phaseIndex).getPhaseTypeName();
+      boolean intendedPhase = gasProduct ? "gas".equalsIgnoreCase(phaseTypeName)
+          : "oil".equalsIgnoreCase(phaseTypeName) || "liquid".equalsIgnoreCase(phaseTypeName)
+              || "aqueous".equalsIgnoreCase(phaseTypeName);
+      double phaseFraction = system.getBeta(phaseIndex);
+      if (intendedPhase && Double.isFinite(phaseFraction) && phaseFraction > intendedPhaseFraction) {
+        intendedPhaseIndex = phaseIndex;
+        intendedPhaseFraction = phaseFraction;
+      }
+    }
+    if (intendedPhaseIndex < 0) {
+      return;
+    }
+
+    int unintendedPhaseIndex = intendedPhaseIndex == 0 ? 1 : 0;
+    double unintendedPhaseFraction = system.getBeta(unintendedPhaseIndex);
+    double[] componentMoles = getComponentMoles(system);
+    if (!isTerminalTracePhaseCanonicalizationCandidate(system.getNumberOfPhases(), intendedPhaseFraction,
+        unintendedPhaseFraction, componentMoles)) {
+      return;
+    }
+
+    String rawPhaseTypeName = system.getPhase(intendedPhaseIndex).getPhaseTypeName();
+    String intendedPhaseTypeName = gasProduct ? "gas"
+        : "oil".equalsIgnoreCase(rawPhaseTypeName) ? "oil"
+            : "aqueous".equalsIgnoreCase(rawPhaseTypeName) ? "aqueous" : "liquid";
+    updateProductStreamWithForcedPhase(productStream, componentMoles, intendedPhaseTypeName, id);
+  }
+
+  /**
+   * Check the numerical prerequisites for conservative terminal trace-phase canonicalization.
+   *
+   * @param numberOfPhases number of product phases
+   * @param intendedPhaseFraction beta of the intended outlet phase
+   * @param unintendedPhaseFraction beta of the single unintended phase
+   * @param componentMoles complete product component-mole vector
+   * @return {@code true} when the state is finite, normalized, non-negative, and within the trace limit
+   */
+  static boolean isTerminalTracePhaseCanonicalizationCandidate(int numberOfPhases, double intendedPhaseFraction,
+      double unintendedPhaseFraction, double[] componentMoles) {
+    double phaseFractionSum = intendedPhaseFraction + unintendedPhaseFraction;
+    if (numberOfPhases != 2 || !Double.isFinite(intendedPhaseFraction) || !Double.isFinite(unintendedPhaseFraction)
+        || unintendedPhaseFraction <= 0.0 || unintendedPhaseFraction > TERMINAL_PRODUCT_TRACE_PHASE_FRACTION
+        || intendedPhaseFraction < 1.0 - TERMINAL_PRODUCT_TRACE_PHASE_FRACTION
+        || intendedPhaseFraction > 1.0 + TERMINAL_PRODUCT_TRACE_PHASE_FRACTION || !Double.isFinite(phaseFractionSum)
+        || Math.abs(phaseFractionSum - 1.0) > TERMINAL_PRODUCT_TRACE_PHASE_FRACTION || componentMoles == null) {
+      return false;
+    }
+
+    double totalComponentMoles = 0.0;
+    for (double componentMole : componentMoles) {
+      if (!Double.isFinite(componentMole) || componentMole < 0.0) {
+        return false;
+      }
+      totalComponentMoles += componentMole;
+    }
+    return Double.isFinite(totalComponentMoles) && totalComponentMoles > 0.0;
   }
 
   /** Cap cached internal tray outlet streams to the emergency traffic limit. */

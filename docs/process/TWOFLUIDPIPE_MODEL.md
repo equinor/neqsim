@@ -397,24 +397,49 @@ At the steady-to-transient handoff, `run()` converts the final pressure, phase-h
 velocity profiles into conservative phase mass, momentum, and energy exactly once. This conversion
 defines the initial condition and advances no simulation time. For three-phase flow, the oil and
 water momenta retain the independent phase velocities from the steady slip closure rather than being
-collapsed to the bulk-liquid velocity. After the transient solve starts,
-the conservative phase masses own cell inventory. A stream-connected inlet may update boundary
-composition and velocity for its inlet flux, but it must not replace the first finite-volume cell's
-oil or water mass. This prevents an unchanged, near-zero-time handoff from producing an inventory or
-holdup jump that scales with pipe volume.
+collapsed to the bulk-liquid velocity. After the transient solve starts, the conservative phase
+masses own cell inventory. A stream-connected inlet may update boundary composition and velocity for
+its inlet flux, but it must not replace the first finite-volume cell's oil or water mass. This prevents
+an unchanged, near-zero-time handoff from producing an inventory or holdup jump that scales with pipe
+volume.
 
-For a domain with no external mass source, validate the discrete balance
+For each phase $k$ and for the total domain, validate the discrete balance
 
 $$
-M(t + \Delta t) - M(t) =
-\int_t^{t+\Delta t} \left(\dot m_{in} - \dot m_{out}\right)\,dt,
+M_k(t + \Delta t) - M_k(t) =
+\int_t^{t+\Delta t} \left(\dot m_{k,in} - \dot m_{k,out} + S_k\right)\,dt,
 \qquad
 M = \sum_i \left(m'_{g,i} + m'_{o,i} + m'_{w,i}\right)\Delta x_i .
 $$
 
 Use `getTotalMassInventory()` to read $M$ in kg directly from the conservative gas, oil, and water
-masses. A steady-state solution remains a useful long-time comparison, but agreement must result
-from the transient balances and closure forces rather than overwriting the conserved state.
+masses. After each `runTransient(...)`, `getLastMassBalanceReport()` provides initial and final
+inventory, integrated inlet and outlet fluxes, integrated sources, signed residual in kg, and
+relative residual for `GAS`, `OIL`, `WATER`, `LIQUID`, and `TOTAL`:
+
+```java
+pipe.runTransient(0.1, UUID.randomUUID());
+TwoFluidMassBalanceReport balance = pipe.getLastMassBalanceReport();
+double totalResidualKg = balance.getResidualKg(TwoFluidMassBalanceReport.Phase.TOTAL);
+double totalRelativeResidual = balance.getRelativeResidual(TwoFluidMassBalanceReport.Phase.TOTAL);
+boolean closes = balance.isWithinTolerance(TwoFluidMassBalanceReport.Phase.TOTAL, 1.0e-7, 1.0e-10);
+```
+
+The boundary and source integrals use the accepted internal substeps and the same Euler,
+Runge-Kutta, or IMEX stage weights as the conservative update. For deterministic regression cases,
+an absolute tolerance of $10^{-7}$ kg or a relative tolerance of $10^{-10}$ is appropriate; choose a
+larger engineering tolerance for long simulations after demonstrating time-step and mesh
+sensitivity. Positivity limiting or any future non-conservative correction appears explicitly as a
+non-zero residual rather than being hidden.
+
+Gas-liquid phase transfer is added to one phase and removed from the other, so it cancels from the
+total source. Oil-water segregation is represented by separate phase momentum and face fluxes; it
+does not use a local oil-to-water mass relaxation. The IMEX pressure correction likewise changes
+phase momenta, not phase masses. Closed boundaries therefore have zero integrated boundary flux,
+while open boundaries close against the actual phase-resolved inlet and outlet fluxes.
+
+A steady-state solution remains a useful long-time comparison, but agreement must result from the
+transient balances and closure forces rather than overwriting the conserved state.
 
 ### Boundary Conditions
 
@@ -461,7 +486,7 @@ Guidelines:
 | Section length | Keep `dx = length / sections` small enough to resolve terrain and holdup changes. A low point or riser should span several sections, not one cell. |
 | Time step | Start with 0.5-2 s for compact regression models and 5-60 s for long slow-flow pipelines when adaptive time stepping is enabled. Reduce it for valve closures, slug fronts, or fast pressure waves. |
 | Adaptive stepping | `setEnableAdaptiveTimestepping(true)` is recommended for difficult multiphase transients. It recomputes the stable internal step as velocities and holdups change. |
-| CFL number | `setCflNumber(0.3-0.8)` is typical. Lower values are more stable; higher values are faster but less conservative. |
+| CFL number | `setCflNumber(0.3-0.8)` is typical. Lower values provide more stability margin and temporal resolution; higher values are faster. |
 | Settling time | Run until pressure and holdup profiles stop changing or match a new stationary reference. The required physical time scales with pipeline length, flow velocity, compressibility, and liquid inventory. |
 
 For a pressure-boundary step, a compact 300 m regression pipe may settle in a few seconds. A real
@@ -515,7 +540,7 @@ Select the time integration method via `setTimeIntegrationMethod(TimeIntegrator.
 | `SSP_RK3` | Acoustic | Strong Stability Preserving RK3 |
 | `RK2` | Acoustic | Heun's method (2nd order) |
 | `EULER` | Acoustic | Forward Euler (1st order) |
-| `IMEX_PRESSURE_CORRECTION` | Convective only | Semi-implicit; ~10x larger dt. Not recommended for vertical risers. |
+| `IMEX_PRESSURE_CORRECTION` | Convective only | Semi-implicit momentum pressure correction with conservative explicit phase-mass transport; ~10x larger dt. Not recommended for vertical risers. |
 
 ```java
 pipe.setTimeIntegrationMethod(TimeIntegrator.Method.RK4);       // default

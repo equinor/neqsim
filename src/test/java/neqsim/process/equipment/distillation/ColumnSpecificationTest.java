@@ -570,19 +570,22 @@ public class ColumnSpecificationTest {
   }
 
   /**
-   * Test that AUTO reports deferred candidate fallbacks instead of rerunning damped substitution inside every rejected
-   * probe.
+   * Test that AUTO accepts preferred sum-rates or reports deferred fallback work instead of rerunning damped
+   * substitution inside every rejected probe.
    */
   @Test
-  public void autoSolverDefersCandidateFallbackWork() {
+  public void autoSolverDefersCandidateFallbackWorkOrAcceptsPreferredSumRates() {
     DistillationColumn column = createLeanGasFractionator();
 
     column.run();
 
     assertTrue(column.solved(), column.getConvergenceDiagnostics());
-    assertTrue(column.getLastAutoSolverSummary().contains("duplicate damped probe skipped"));
-    assertTrue(column.getLastAutoSolverSummary().contains("damped fallback deferred")
-        || column.getLastSolverTypeUsed() != DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
+    String summary = column.getLastAutoSolverSummary();
+    boolean preferredSumRatesAccepted = column.getLastSolverTypeUsed() == DistillationColumn.SolverType.SUM_RATES
+        && summary.contains("SUM_RATES: solved=true");
+    assertTrue(preferredSumRatesAccepted || summary.contains("duplicate damped probe skipped"), summary);
+    assertTrue(preferredSumRatesAccepted || summary.contains("damped fallback deferred")
+        || column.getLastSolverTypeUsed() != DistillationColumn.SolverType.DAMPED_SUBSTITUTION, summary);
   }
 
   /**

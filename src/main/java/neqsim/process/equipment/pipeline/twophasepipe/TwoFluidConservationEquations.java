@@ -129,6 +129,53 @@ public class TwoFluidConservationEquations implements Serializable {
   /** Timestep for virtual mass force calculation. */
   private double dt = 0.01;
 
+  /** Most recent phase-resolved boundary and source rates calculated by {@link #calcRHS}. */
+  private MassBalanceRate lastMassBalanceRate = new MassBalanceRate(new double[3], new double[3], new double[3]);
+
+  /**
+   * Instantaneous phase-resolved terms in the finite-volume domain mass balance.
+   */
+  public static final class MassBalanceRate implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private final double[] inletMassFlowKgPerSecond;
+    private final double[] outletMassFlowKgPerSecond;
+    private final double[] sourceMassFlowKgPerSecond;
+
+    private MassBalanceRate(double[] inletMassFlowKgPerSecond, double[] outletMassFlowKgPerSecond,
+        double[] sourceMassFlowKgPerSecond) {
+      this.inletMassFlowKgPerSecond = inletMassFlowKgPerSecond.clone();
+      this.outletMassFlowKgPerSecond = outletMassFlowKgPerSecond.clone();
+      this.sourceMassFlowKgPerSecond = sourceMassFlowKgPerSecond.clone();
+    }
+
+    /**
+     * Get gas, oil, and water inlet mass-flow rates.
+     *
+     * @return three-element array in kg/s
+     */
+    public double[] getInletMassFlowKgPerSecond() {
+      return inletMassFlowKgPerSecond.clone();
+    }
+
+    /**
+     * Get gas, oil, and water outlet mass-flow rates.
+     *
+     * @return three-element array in kg/s
+     */
+    public double[] getOutletMassFlowKgPerSecond() {
+      return outletMassFlowKgPerSecond.clone();
+    }
+
+    /**
+     * Get gas, oil, and water domain-integrated source rates.
+     *
+     * @return three-element array in kg/s
+     */
+    public double[] getSourceMassFlowKgPerSecond() {
+      return sourceMassFlowKgPerSecond.clone();
+    }
+  }
+
   /**
    * Constructor.
    */
@@ -168,6 +215,11 @@ public class TwoFluidConservationEquations implements Serializable {
     // Calculate source terms for each cell
     double[][] sources = calcSourceTerms(sections);
 
+    // Calculate the two external boundary fluxes once. These exact values are also
+    // retained for a stage-consistent domain mass-balance diagnostic.
+    double[] inletFlux = calcInletFlux(sections[0]);
+    double[] outletFlux = calcOutletFlux(sections[nCells - 1]);
+
     // Assemble RHS: dU/dt = -1/dx_i * (F_{i+1/2} - F_{i-1/2}) + S_i
     //
     // Boundary treatment:
@@ -181,13 +233,13 @@ public class TwoFluidConservationEquations implements Serializable {
         // Inlet cell: Inlet BC maintains the state, so inlet flux = outlet flux from cell 0
         // This creates a "quasi-steady" inlet where what enters = what leaves for the cell
         // The mass is replenished by the boundary condition after each step
-        fluxLeft = calcInletFlux(sections[0]);
+        fluxLeft = inletFlux;
         fluxRight = fluxes[0];
       } else if (i == nCells - 1) {
         // Outlet cell: left flux from last interface, right flux uses extrapolation
         // For transmissive outlet, we compute the outgoing flux from the outlet cell state
         fluxLeft = fluxes[nCells - 2];
-        fluxRight = calcOutletFlux(sections[nCells - 1]);
+        fluxRight = outletFlux;
       } else {
         // Interior cells: use interface fluxes normally
         fluxLeft = fluxes[i - 1];
@@ -202,7 +254,27 @@ public class TwoFluidConservationEquations implements Serializable {
       }
     }
 
+    double[] inletMassFlow = { inletFlux[IDX_GAS_MASS], inletFlux[IDX_OIL_MASS], inletFlux[IDX_WATER_MASS] };
+    double[] outletMassFlow = { outletFlux[IDX_GAS_MASS], outletFlux[IDX_OIL_MASS], outletFlux[IDX_WATER_MASS] };
+    double[] sourceMassFlow = new double[3];
+    for (int i = 0; i < nCells; i++) {
+      double sectionLength = sections[i].getLength();
+      sourceMassFlow[0] += sources[i][IDX_GAS_MASS] * sectionLength;
+      sourceMassFlow[1] += sources[i][IDX_OIL_MASS] * sectionLength;
+      sourceMassFlow[2] += sources[i][IDX_WATER_MASS] * sectionLength;
+    }
+    lastMassBalanceRate = new MassBalanceRate(inletMassFlow, outletMassFlow, sourceMassFlow);
+
     return dUdt;
+  }
+
+  /**
+   * Get the phase-resolved boundary and source rates from the most recent right-hand-side evaluation.
+   *
+   * @return immutable mass-balance rate snapshot
+   */
+  public MassBalanceRate getLastMassBalanceRate() {
+    return lastMassBalanceRate;
   }
 
   /**
@@ -545,71 +617,12 @@ public class TwoFluidConservationEquations implements Serializable {
       // Assemble source terms - now with separate oil and water mass equations
       sources[i][IDX_GAS_MASS] = Gamma_G;
 
-      // Oil and water mass sources (no phase change between oil/water for now)
-      // Gravity-driven segregation source term for water accumulation in low points
-      //
-      // Physical basis: Water (denser) tends to accumulate in valleys while oil
-      // (lighter) accumulates at peaks. The settling rate depends on:
-      // - Density difference (buoyancy driving force)
-      // - Pipe inclination (gravity component)
-      // - Liquid holdup (more liquid = more stratification potential)
-      // - Residence time (slower flow = more settling)
-      //
-      // We use a relaxation approach rather than direct advection to maintain stability.
-      double waterSegregationSource = 0;
-      double oilSegregationSource = 0;
-
-      if (rhoW > rhoO && rhoO > 100 && alphaL > 0.05 && alphaW > 1e-6 && alphaO > 1e-6) {
-        // Settling velocity based on Stokes law for droplets
-        double deltaRho = rhoW - rhoO;
-        double muL_eff = sec.getLiquidViscosity();
-        if (muL_eff < 1e-6)
-          muL_eff = 1e-3; // Default viscosity
-        double dropletDiameter = 0.002; // 2 mm typical droplet
-        double stokesVelocity = deltaRho * GRAVITY * dropletDiameter * dropletDiameter / (18.0 * muL_eff);
-        stokesVelocity = Math.min(stokesVelocity, 0.1); // Cap at 10 cm/s
-
-        // Settling is enhanced in inclined sections
-        // In downhill (sinTheta < 0): water moves forward faster (settles ahead)
-        // In uphill (sinTheta > 0): water slips back (accumulates)
-        double inclinationEffect = Math.abs(sinTheta);
-
-        // Detect valleys (low points) by checking if we're at a local minimum
-        // Valley = previous section going down, next section going up
-        boolean isValley = false;
-        boolean isPeak = false;
-        if (i > 0 && i < nCells - 1) {
-          double elevPrev = sections[i - 1].getElevation();
-          double elevCurr = sec.getElevation();
-          double elevNext = sections[i + 1].getElevation();
-          isValley = (elevPrev > elevCurr) && (elevNext > elevCurr);
-          isPeak = (elevPrev < elevCurr) && (elevNext < elevCurr);
-        }
-
-        // Base settling rate (kg/m/s) - proportional to density difference and gravity
-        double baseRate = 0.0001 * deltaRho * GRAVITY * A;
-
-        if (isValley) {
-          // In valleys: water accumulates, increase local water cut
-          // Rate limited by available oil and existing water content
-          double maxWaterIncrease = alphaO * rhoO * A * 0.001; // Max 0.1% per time unit
-          waterSegregationSource = Math.min(baseRate * (1.0 + 5.0 * inclinationEffect), maxWaterIncrease);
-          oilSegregationSource = -waterSegregationSource * rhoO / rhoW; // Mass balance
-        } else if (isPeak) {
-          // At peaks: water drains faster, decrease local water cut
-          double maxWaterDecrease = alphaW * rhoW * A * 0.001; // Max 0.1% per time unit
-          waterSegregationSource = -Math.min(baseRate * (1.0 + 3.0 * inclinationEffect), maxWaterDecrease);
-          oilSegregationSource = -waterSegregationSource * rhoO / rhoW;
-        } else if (sinTheta > 0.01) {
-          // Uphill sections: water slips back slightly
-          double slipRate = baseRate * 0.3 * sinTheta;
-          waterSegregationSource = Math.min(slipRate, alphaO * rhoO * A * 0.0005);
-          oilSegregationSource = -waterSegregationSource * rhoO / rhoW;
-        }
-      }
-
-      sources[i][IDX_OIL_MASS] = Gamma_L * (1.0 - waterCut) + oilSegregationSource;
-      sources[i][IDX_WATER_MASS] = Gamma_L * waterCut + waterSegregationSource;
+      // Oil-water segregation is driven by the separate momentum equations and
+      // transported through phase fluxes. A local mass relaxation would convert oil
+      // into water (or vice versa) and, because their densities differ, would also
+      // change total inventory without a conservative face flux.
+      sources[i][IDX_OIL_MASS] = Gamma_L * (1.0 - waterCut);
+      sources[i][IDX_WATER_MASS] = Gamma_L * waterCut;
 
       // Virtual mass force calculation (Drew & Lahey, 1987)
       // F_vm = C_vm * alpha_dispersed * rho_continuous * (dv_dispersed/dt - dv_continuous/dt)

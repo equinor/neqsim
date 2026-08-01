@@ -181,11 +181,11 @@ required.
 | `INSIDE_OUT` | Inside-out style flow correction with K-value tracking and polishing. | General deethanizer/depropanizer and multi-feed work. |
 | `MATRIX_INSIDE_OUT` | Adaptive matrix warm start plus rigorous inside-out polishing. | Larger hydrocarbon fractionators where matrix setup cost is justified. |
 | `WEGSTEIN` | Accelerated successive substitution after warm-up. | Well-conditioned fixed-point problems. |
-| `SUM_RATES` | Flow-corrected tearing method. | Absorbers, strippers, and flow-sensitive columns. |
+| `SUM_RATES` | Flow-corrected tearing method. Native for columns without a condenser; condenser configurations remain guarded to damped substitution. | Absorbers, reboiler-only strippers, and flow-sensitive columns. |
 | `NEWTON` | Tray-temperature Newton accelerator. | Difficult temperature convergence. It is not full simultaneous MESH Newton. |
 | `NAPHTALI_SANDHOLM` | Guarded simultaneous correction of MESH blocks after inside-out warm start, with early return to coordinated fallback after repeated non-descent steps. | Residual-driven hydrocarbon fractionators. |
 | `MESH_RESIDUAL` | Inside-out initialization plus full residual auditing. | Material, equilibrium, summation, energy, product-draw, and spec residual checks. |
-| `AUTO` | Runs a feasibility pre-screen, initializes a copied candidate, solves a relaxed damped base case, probes candidate strategies on column copies, and accepts the first solved non-fallback candidate or the best valid fallback. | Agent workflows and uncertain cases where robust automatic selection and diagnostics are useful. |
+| `AUTO` | Runs a feasibility pre-screen and copy-based candidate probes. Fixed-specification reboiler-only strippers try native `SUM_RATES` first; other configurations retain the relaxed damped base and guarded fallback ladder. | Agent workflows and uncertain cases where robust automatic selection and diagnostics are useful. |
 
 ```java
 column.setSolverType(DistillationColumn.SolverType.AUTO);
@@ -439,7 +439,16 @@ absorber.run();
 ```
 
 For a stripper with a reboiler and no condenser, use `new DistillationColumn("Stripper", 8, true,
-false)`.
+false)`. Explicit `SUM_RATES` and `AUTO` use the native sum-rates path for a fixed-specification
+reboiler-only stripper. Condenser-only and full condenser/reboiler columns remain guarded to damped
+substitution because reflux and overhead-energy coupling are not represented directly by the
+sum-rates accelerator.
+
+Separated terminal products use a canonical trace-phase rule: if the intended gas or liquid phase
+contains all but `1e-8` of the product mole inventory, the smaller phase is merged into that intended
+outlet while preserving every component mole. This prevents a parts-per-billion phase from changing
+the reported product phase count solely because two converged sequential solvers approached a dew-
+or bubble-point boundary from opposite sides. Material phase fractions above `1e-8` are retained.
 
 ## Troubleshooting
 

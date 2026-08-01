@@ -193,6 +193,12 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 │  Order phases by density                                                        │
 │  Final system.init(1)                                                           │
 │                                                                                 │
+│  IF aqueous multiphase checking follows an accepted stable single-phase test:    │
+│     → Reject an endpoint only when a phase composition contains non-finite or     │
+│       out-of-range values, or fails |Σxᵢ - 1| ≤ 1e-8                            │
+│     → Keep normalized endpoints for model-specific convergence and refinement    │
+│       paths                                                                       │
+│                                                                                 │
 │  IF ordinary flash and water feed ≥ 0.01:                                       │
 │     → Refine a missing aqueous phase, or an existing two-phase aqueous           │
 │       endpoint when max |Δ ln(fᵢ)| ≥ 1e-8 or max |Δzᵢ| ≥ 1e-8                   │
@@ -225,6 +231,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 | Ordinary water-rich refinement feed threshold | 0.01 mole fraction water | Avoid multiphase overhead for trace-water flashes; existing two-phase aqueous endpoints additionally require `max abs(Delta ln(f_i)) >= 1e-8` or `max abs(Delta z_i) >= 1e-8` before refinement |
 | Water-rich material-balance tolerance | 1e-8 in `max abs(Delta z_i)` | Reject a non-conservative reference before comparing feasible Gibbs minima |
 | Aqueous cubic-root equilibrium tolerance | 1e-8 in `max abs(Delta ln(f_i))` | Accept an alternate root only when it lowers Gibbs energy and already satisfies component fugacity equality |
+| Stable-single-phase aqueous-seed gate | `1e-8` in phase-composition normalization | Reject only a structurally invalid aqueous trial whose composition is non-finite, out of `[0, 1]`, or unnormalized; leave normalized endpoints to model-specific convergence and refinement paths |
 
 ### 1.1 Problem Formulation
 
@@ -1664,6 +1671,11 @@ Commercial process simulators do not publish all implementation details, but pub
   balance has `max abs(Delta z_i) >= 1e-8`. A feasible candidate normally must lower Gibbs energy; when the reference
   is non-conservative and its Gibbs energy is therefore not comparable, the candidate must instead independently pass
   phase-fraction, composition-normalization, material-balance, fugacity, and distinct-composition checks.
+- When the tangent-plane stability path has already accepted a homogeneous state, an unnormalized aqueous trial seed
+  cannot replace it. The guard is deliberately structural: each active phase composition must be finite, bounded in
+  `[0, 1]`, and normalized within `1e-8`. It does not impose a universal material-balance or fugacity threshold on
+  normalized endpoints because specialized fluid and solid-phase models retain their existing convergence and
+  refinement paths.
 - Ordinary neutral aqueous splits now compare both cubic roots of the non-aqueous phase at the converged composition. An alternate root is retained only when it lowers Gibbs energy and already satisfies `max abs(Delta ln(f_i)) < 1e-8`; no extra TPflash or multiphase stability calculation is run.
 - Enhanced stability checks are gated to polar, associating, electrolyte, sour, or explicitly requested multiphase systems, limiting unnecessary hydrocarbon phase-map artifacts.
 
