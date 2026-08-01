@@ -64,8 +64,8 @@ public class ReboilerOnlySumRatesPerformanceTest {
     int dampedIterations = damped.getLastIterationCount();
     int sumRatesIterations = sumRates.getLastIterationCount();
     assertTrue(sumRatesIterations * 4 <= dampedIterations * 3,
-        caseName + " SUM_RATES must use at least 25% fewer iterations; damped=" + dampedIterations
-            + ", sum-rates=" + sumRatesIterations);
+        caseName + " SUM_RATES must use at least 25% fewer iterations; damped=" + dampedIterations + ", sum-rates="
+            + sumRatesIterations);
   }
 
   /** Representative and nearby operating points must retain deterministic work reduction. */
