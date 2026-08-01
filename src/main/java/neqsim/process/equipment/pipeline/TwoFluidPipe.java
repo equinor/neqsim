@@ -1380,7 +1380,18 @@ public class TwoFluidPipe extends Pipeline {
     // Initialize the finite-volume state from the final converged primitives exactly once,
     // before the transient solver makes conservative phase mass authoritative.
     for (TwoFluidSection sec : sections) {
+      double oilVelocity = sec.getOilVelocity();
+      double waterVelocity = sec.getWaterVelocity();
       sec.updateConservativeVariables();
+      if (sec.getOilHoldup() > 1.0e-12 && sec.getWaterHoldup() > 1.0e-12) {
+        // Preserve the independent phase velocities produced by the three-phase steady closure;
+        // updateConservativeVariables() otherwise initializes both momenta from bulk-liquid velocity.
+        double oilMomentum = sec.getOilMassPerLength() * oilVelocity;
+        double waterMomentum = sec.getWaterMassPerLength() * waterVelocity;
+        sec.setOilMomentumPerLength(oilMomentum);
+        sec.setWaterMomentumPerLength(waterMomentum);
+        sec.setLiquidMomentumPerLength(oilMomentum + waterMomentum);
+      }
     }
 
     // Store initial profiles
