@@ -11335,25 +11335,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     int unintendedPhaseIndex = intendedPhaseIndex == 0 ? 1 : 0;
     double unintendedPhaseFraction = system.getBeta(unintendedPhaseIndex);
-    double phaseFractionSum = intendedPhaseFraction + unintendedPhaseFraction;
-    if (!Double.isFinite(unintendedPhaseFraction) || unintendedPhaseFraction <= 0.0
-        || unintendedPhaseFraction > TERMINAL_PRODUCT_TRACE_PHASE_FRACTION
-        || intendedPhaseFraction < 1.0 - TERMINAL_PRODUCT_TRACE_PHASE_FRACTION
-        || intendedPhaseFraction > 1.0 + TERMINAL_PRODUCT_TRACE_PHASE_FRACTION
-        || !Double.isFinite(phaseFractionSum)
-        || Math.abs(phaseFractionSum - 1.0) > TERMINAL_PRODUCT_TRACE_PHASE_FRACTION) {
-      return;
-    }
-
     double[] componentMoles = getComponentMoles(system);
-    double totalComponentMoles = 0.0;
-    for (double componentMole : componentMoles) {
-      if (!Double.isFinite(componentMole) || componentMole < 0.0) {
-        return;
-      }
-      totalComponentMoles += componentMole;
-    }
-    if (!Double.isFinite(totalComponentMoles) || totalComponentMoles <= 0.0) {
+    if (!isTerminalTracePhaseCanonicalizationCandidate(system.getNumberOfPhases(), intendedPhaseFraction,
+        unintendedPhaseFraction, componentMoles)) {
       return;
     }
 
@@ -11362,6 +11346,38 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         : "oil".equalsIgnoreCase(rawPhaseTypeName) ? "oil"
             : "aqueous".equalsIgnoreCase(rawPhaseTypeName) ? "aqueous" : "liquid";
     updateProductStreamWithForcedPhase(productStream, componentMoles, intendedPhaseTypeName, id);
+  }
+
+  /**
+   * Check the numerical prerequisites for conservative terminal trace-phase canonicalization.
+   *
+   * @param numberOfPhases number of product phases
+   * @param intendedPhaseFraction beta of the intended outlet phase
+   * @param unintendedPhaseFraction beta of the single unintended phase
+   * @param componentMoles complete product component-mole vector
+   * @return {@code true} when the state is finite, normalized, non-negative, and within the trace limit
+   */
+  static boolean isTerminalTracePhaseCanonicalizationCandidate(int numberOfPhases, double intendedPhaseFraction,
+      double unintendedPhaseFraction, double[] componentMoles) {
+    double phaseFractionSum = intendedPhaseFraction + unintendedPhaseFraction;
+    if (numberOfPhases != 2 || !Double.isFinite(intendedPhaseFraction)
+        || !Double.isFinite(unintendedPhaseFraction) || unintendedPhaseFraction <= 0.0
+        || unintendedPhaseFraction > TERMINAL_PRODUCT_TRACE_PHASE_FRACTION
+        || intendedPhaseFraction < 1.0 - TERMINAL_PRODUCT_TRACE_PHASE_FRACTION
+        || intendedPhaseFraction > 1.0 + TERMINAL_PRODUCT_TRACE_PHASE_FRACTION
+        || !Double.isFinite(phaseFractionSum)
+        || Math.abs(phaseFractionSum - 1.0) > TERMINAL_PRODUCT_TRACE_PHASE_FRACTION || componentMoles == null) {
+      return false;
+    }
+
+    double totalComponentMoles = 0.0;
+    for (double componentMole : componentMoles) {
+      if (!Double.isFinite(componentMole) || componentMole < 0.0) {
+        return false;
+      }
+      totalComponentMoles += componentMole;
+    }
+    return Double.isFinite(totalComponentMoles) && totalComponentMoles > 0.0;
   }
 
   /** Cap cached internal tray outlet streams to the emergency traffic limit. */
