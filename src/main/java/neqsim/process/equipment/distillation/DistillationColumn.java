@@ -11360,12 +11360,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   static boolean isTerminalTracePhaseCanonicalizationCandidate(int numberOfPhases, double intendedPhaseFraction,
       double unintendedPhaseFraction, double[] componentMoles) {
     double phaseFractionSum = intendedPhaseFraction + unintendedPhaseFraction;
-    if (numberOfPhases != 2 || !Double.isFinite(intendedPhaseFraction)
-        || !Double.isFinite(unintendedPhaseFraction) || unintendedPhaseFraction <= 0.0
-        || unintendedPhaseFraction > TERMINAL_PRODUCT_TRACE_PHASE_FRACTION
+    if (numberOfPhases != 2 || !Double.isFinite(intendedPhaseFraction) || !Double.isFinite(unintendedPhaseFraction)
+        || unintendedPhaseFraction <= 0.0 || unintendedPhaseFraction > TERMINAL_PRODUCT_TRACE_PHASE_FRACTION
         || intendedPhaseFraction < 1.0 - TERMINAL_PRODUCT_TRACE_PHASE_FRACTION
-        || intendedPhaseFraction > 1.0 + TERMINAL_PRODUCT_TRACE_PHASE_FRACTION
-        || !Double.isFinite(phaseFractionSum)
+        || intendedPhaseFraction > 1.0 + TERMINAL_PRODUCT_TRACE_PHASE_FRACTION || !Double.isFinite(phaseFractionSum)
         || Math.abs(phaseFractionSum - 1.0) > TERMINAL_PRODUCT_TRACE_PHASE_FRACTION || componentMoles == null) {
       return false;
     }
