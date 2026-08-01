@@ -3,6 +3,9 @@ package neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolv
 import java.io.Serializable;
 import java.util.Arrays;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonNull;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializer;
 
 /**
  * Immutable convergence and total-mass diagnostics from a one-phase pipe-flow solve.
@@ -260,7 +263,12 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().create().toJson(this);
+    JsonSerializer<Double> finiteDoubleSerializer = (value, type, context) -> value != null && Double.isFinite(value)
+        ? new JsonPrimitive(value)
+        : JsonNull.INSTANCE;
+    return new GsonBuilder().registerTypeAdapter(Double.class, finiteDoubleSerializer)
+        .registerTypeAdapter(Double.TYPE, finiteDoubleSerializer).serializeNulls().setPrettyPrinting().create()
+        .toJson(this);
   }
 
   private static double[] copy(double[] values) {
