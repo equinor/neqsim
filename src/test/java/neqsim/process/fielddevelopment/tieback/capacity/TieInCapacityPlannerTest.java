@@ -138,8 +138,7 @@ class TieInCapacityPlannerTest {
     HostFacility host = HostFacility.builder("Host E").gasCapacity(10.0).processModel(model).build();
     ProductionProfileSeries base = new ProductionProfileSeries("base").addPeriod(2028, 1.0, 0.0, 0.0, 0.0);
     ProductionProfileSeries satellite = new ProductionProfileSeries("satellite").addPeriod(2028, 4.0, 0.0, 0.0, 0.0);
-    HostTieInPoint tieInPoint = new HostTieInPoint("gathering::Host Feed", "kg/hr")
-        .setGasToProcessRateFactor(1000.0);
+    HostTieInPoint tieInPoint = new HostTieInPoint("gathering::Host Feed", "kg/hr").setGasToProcessRateFactor(1000.0);
 
     TieInCapacityResult result = new TieInCapacityPlanner(host).setHostProductionProfile(base)
         .setSatelliteProductionProfile(satellite).setTieInPoint(tieInPoint).setProcessUtilizationLimit(1.0).run();
