@@ -373,7 +373,7 @@ fraction diagnostics, film/heat-transfer model choices, and equation-oriented re
 
 | Getter | Description |
 |--------|-------------|
-| `solved()` | Current convergence flag. |
+| `solved()` | Current convergence flag, including active side-draw, pumparound, and hydraulic outer tears. |
 | `getLastSolverTypeUsed()` | Concrete solver that completed the latest run, especially useful when requested solver is `AUTO`. |
 | `getLastSolveStatus()` | Strict solve status: rigorous convergence, reconciled products, fallback products, failure, or not run. |
 | `getLastSolveStatusReason()` | Concise explanation for fallback or rejected candidate states. |
@@ -401,6 +401,12 @@ fraction diagnostics, film/heat-transfer model choices, and equation-oriented re
 | `getLastMeshProductDrawResidualNorm()` | Terminal product-draw residual norm. |
 | `getLastMeshSpecificationResidualNorm()` | Active endpoint specification residual norm. |
 | `getLastMeshResidualVector()` | Copy of the complete scaled residual vector. |
+
+An accepted inner tray solution is not sufficient when an outer tear variable is active. If the
+side-draw, pumparound, or hydraulic tear stops or exhausts its iteration budget above tolerance,
+`solved()` returns `false`, `getLastSolveStatus()` returns `FAILED`, and
+`getLastSolveStatusReason()` reports the outer residual, tolerance, and iteration count. Product
+streams remain available for diagnostics but must not be treated as a converged process result.
 
 The MESH residual gate is diagnostic-only for legacy sequential solvers by default. It is effective
 by default for `NAPHTALI_SANDHOLM` and `MESH_RESIDUAL`; call
