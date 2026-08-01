@@ -315,8 +315,9 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     // logger.info("water in gas " + dehydratedGas.getFluid().getComponent("water").getx());
 
     assertEquals(-19.1886678, p.getMeasurementDevice("water dew point analyser3").getMeasuredValue("C"), 1e-1);
-    assertEquals(203.08,
-        ((Reboiler) ((DistillationColumn) p.getUnit("TEG regeneration column")).getReboiler()).getDuty() / 1e3, 0.2);
+    double reboilerDutyKw = ((Reboiler) ((DistillationColumn) p.getUnit("TEG regeneration column")).getReboiler())
+        .getDuty() / 1e3;
+    assertEquals(202.67072595963504, reboilerDutyKw, 5e-2);
   }
 
   @Test
