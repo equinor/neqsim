@@ -632,9 +632,11 @@ class TwoFluidPipeBoundaryConditionTest {
     double liquidVelocityRms = rmsDifference(handoffPipe.getLiquidVelocityProfile(), liquidVelocityBefore);
     boolean hasOilWaterSlip = "three-phase".equals(name);
     double oilVelocityRms = hasOilWaterSlip
-        ? rmsDifferenceInterior(handoffPipe.getOilVelocityProfile(), oilVelocityBefore) : 0.0;
+        ? rmsDifferenceInterior(handoffPipe.getOilVelocityProfile(), oilVelocityBefore)
+        : 0.0;
     double waterVelocityRms = hasOilWaterSlip
-        ? rmsDifferenceInterior(handoffPipe.getWaterVelocityProfile(), waterVelocityBefore) : 0.0;
+        ? rmsDifferenceInterior(handoffPipe.getWaterVelocityProfile(), waterVelocityBefore)
+        : 0.0;
     double massChangeKg = Math.abs(handoffPipe.getTotalMassInventory() - massBefore);
 
     logger.printf(org.apache.logging.log4j.Level.INFO,
@@ -655,12 +657,12 @@ class TwoFluidPipeBoundaryConditionTest {
     if (hasOilWaterSlip) {
       assertTrue(rmsDifferenceInterior(oilVelocityBefore, waterVelocityBefore) > 1.0e-3,
           "Three-phase regression case must exercise non-zero oil/water slip");
-      assertTrue(oilVelocityRms <= 1.0e-4, name
-          + " interior oil velocity changed across an unchanged near-zero-time handoff: RMS " + oilVelocityRms
-          + " m/s");
-      assertTrue(waterVelocityRms <= 1.0e-4, name
-          + " interior water velocity changed across an unchanged near-zero-time handoff: RMS " + waterVelocityRms
-          + " m/s");
+      assertTrue(oilVelocityRms <= 1.0e-4,
+          name + " interior oil velocity changed across an unchanged near-zero-time handoff: RMS " + oilVelocityRms
+              + " m/s");
+      assertTrue(waterVelocityRms <= 1.0e-4,
+          name + " interior water velocity changed across an unchanged near-zero-time handoff: RMS " + waterVelocityRms
+              + " m/s");
     }
     assertTrue(massChangeKg <= 4.0 * flowRateKgSec * timeStep,
         name + " domain mass changed faster than the boundary-flux envelope: " + massChangeKg + " kg");
