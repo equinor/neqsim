@@ -121,7 +121,7 @@ gas.initPhysicalProperties();
 gas.setTotalFlowRate(10.0, "MSm3/day");
 
 // Configure pipeline
-FlowSystemInterface pipe = new PipeFlowSystem();
+PipeFlowSystem pipe = new PipeFlowSystem();
 pipe.setInletThermoSystem(gas);
 pipe.setNumberOfLegs(10);
 pipe.setNumberOfNodesInLeg(20);
@@ -206,12 +206,13 @@ pipe.getTimeSeries().setInletThermoSystems(systems);
 pipe.getTimeSeries().setNumberOfTimeStepsInInterval(5);
 
 // Run transient simulation with full physics (type 20 = momentum + mass + energy + composition).
-// A coupled state that does not satisfy the finite-volume, EOS-density, and total-mass
-// criteria throws IllegalStateException instead of returning a stale result.
+// Strict mode throws when the finite-volume, EOS-density, and total-mass criteria fail.
+pipe.setFailOnNonConvergence(true);
 try {
     pipe.solveTransient(20);
 } catch (IllegalStateException nonConvergence) {
-    OnePhaseFlowConvergenceReport report = pipe.getConvergenceReport();
+    neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFlowConvergenceReport
+        report = pipe.getConvergenceReport();
     throw new IllegalStateException(report.toJson(), nonConvergence);
 }
 ```
@@ -219,8 +220,8 @@ try {
 ### Convergence and Total-Mass Diagnostics
 
 `PipeFlowSystem.getConvergenceReport()` returns an immutable report for the latest solve. For
-transient solver types that include total mass (`1`, `10`, and `20`), a completed solve requires
-all of the following:
+positive transient solver types that include total mass (including `1`, `10`, and `20`), a
+completed solve requires all of the following:
 
 - the nonlinear update residual is at most `1e-10`;
 - the maximum relative difference between the finite-volume and EOS density is at most `1e-8`;
@@ -229,11 +230,12 @@ all of the following:
 
 The report contains both residual histories, iteration count, initial/final finite-volume and EOS
 inventories in kg, integrated inlet and outlet masses in kg, and absolute/relative closure errors.
-If a transient mass/EOS solve misses any criterion, `solveTransient(...)` throws
-`IllegalStateException`; inspect the report to distinguish algebraic, density-consistency, and
-mass-balance failures. Node zero is a prescribed upstream boundary. The first accumulating
-control volume is node one, so the inlet density is imposed at row zero and only physical control
-volumes contribute to linepack.
+For backward-compatible control flow, the default logs a warning and returns the failed report.
+Call `pipe.setFailOnNonConvergence(true)` to make `solveTransient(...)` throw
+`IllegalStateException`; the report is recorded before either behavior and distinguishes
+algebraic, density-consistency, and mass-balance failures. Node zero is a prescribed upstream
+boundary. The first accumulating control volume is node one, so the inlet density is imposed at
+row zero and only physical control volumes contribute to linepack.
 
 ## Compositional Tracking
 
