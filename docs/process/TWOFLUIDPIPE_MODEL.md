@@ -378,8 +378,11 @@ while (elapsedTime < 60.0) {
 For regression tests, compare the transient profile after the boundary change with a second
 `TwoFluidPipe` solved directly at the new boundary condition. A practical pressure-profile metric is
 root-mean-square pressure difference across all sections; for compact tests a limit of 1-2 bar is a
-useful sanity check. For multiphase cases, also compare liquid, oil, and water holdup profiles so
-the dynamic calculation has settled hydraulically, not only acoustically.
+useful sanity check. Treat acoustic pressure settling and material-inventory settling as separate
+checks. Pressure waves can settle quickly, while liquid, oil, and water holdup profiles may require
+one or more residence times to approach a stationary distribution. Do not impose the pressure-test
+horizon on holdup convergence or force agreement by reconstructing conservative phase masses from
+the stationary closure.
 
 Transient holdup is reconstructed from the phase masses advanced by the finite-volume equations.
 There is no separate post-step projection toward the steady-state holdup correlation. Such a
