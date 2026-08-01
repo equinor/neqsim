@@ -22,6 +22,14 @@ public class HeaterTest {
     }
 
     @Override
+    public InitTrackingSystemSrkEos clone() {
+      InitTrackingSystemSrkEos cloned = (InitTrackingSystemSrkEos) super.clone();
+      cloned.levelTwoCalls = levelTwoCalls;
+      cloned.levelThreeCalls = levelThreeCalls;
+      return cloned;
+    }
+
+    @Override
     public void init(int initType) {
       super.init(initType);
       if (levelTwoCalls != null && initType == 2) {
