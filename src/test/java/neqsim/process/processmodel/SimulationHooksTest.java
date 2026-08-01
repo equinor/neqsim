@@ -212,6 +212,43 @@ class SimulationHooksTest {
   }
 
   /**
+   * Transient lifecycle events must retain their enabled semantics while the default disabled mode remains silent.
+   */
+  @Test
+  void testTransientEventsRespectPublishingSetting() {
+    ProcessSystem process = new ProcessSystem("transient event process");
+    process.setMeasurementHistoryRecordingEnabled(false);
+
+    ProcessEventBus bus = ProcessEventBus.getInstance();
+    bus.clearHistory();
+    List<ProcessEvent> captured = new ArrayList<>();
+    ProcessEventListener listener = new ProcessEventListener() {
+      @Override
+      public void onEvent(ProcessEvent event) {
+        captured.add(event);
+      }
+    };
+
+    bus.subscribe(listener);
+    try {
+      process.runTransient(1.0, java.util.UUID.randomUUID());
+      assertTrue(captured.isEmpty(), "Disabled transient publishing should remain silent");
+
+      process.setPublishEvents(true);
+      process.runTransient(1.0, java.util.UUID.randomUUID());
+      assertEquals(2, captured.size(), "Enabled transient publishing should emit both lifecycle events");
+      assertTrue(captured.stream().allMatch(e -> e.getType() == ProcessEvent.EventType.STATE_CHANGE));
+
+      process.setPublishEvents(false);
+      process.runTransient(1.0, java.util.UUID.randomUUID());
+      assertEquals(2, captured.size(), "Disabling publishing again should stop transient events");
+    } finally {
+      bus.unsubscribe(listener);
+      bus.clearHistory();
+    }
+  }
+
+  /**
    * Test that auto-validation runs without errors on a valid process.
    */
   @Test
