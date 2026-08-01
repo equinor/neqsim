@@ -77,9 +77,9 @@ class OnePhaseFlowConvergenceTest extends neqsim.NeqSimTest {
     pipe.getTimeSeries().setNumberOfTimeStepsInInterval(1);
 
     IllegalStateException failure = assertThrows(IllegalStateException.class, () -> pipe.solveTransient(20));
-    assertTrue(failure.getMessage().contains("EOS/FV density"));
-    assertTrue(failure.getMessage().contains("FV mass residual"));
-    return pipe.getConvergenceReport();
+    OnePhaseFlowConvergenceReport report = pipe.getConvergenceReport();
+    assertEquals(report.getMessage(), failure.getMessage());
+    return report;
   }
 
   private static PipeFlowSystem createInitializedPipe() {
