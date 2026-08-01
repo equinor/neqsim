@@ -2785,8 +2785,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *
    * <p>
    * Feed streams and the optional top/bottom {@link ColumnSpecification}s are not the whole input. Column pressure and
-   * the reboiler/condenser temperature and ratio settings change the solution just as much, and several of their
-   * setters ({@link #setTopPressure(double)}, {@link #setBottomPressure(double)},
+   * the reboiler/condenser temperature, operating mode, and ratio settings change the solution just as much, and
+   * several of their setters ({@link #setTopPressure(double)}, {@link #setBottomPressure(double)},
    * {@code getReboiler().setOutTemperature(...)}) deliberately do not mark the column for re-initialization. Without
    * them in the fingerprint, a parametric sweep or optimizer that varies column pressure or a column-end temperature
    * against an unchanged feed silently receives the previous solution.
@@ -2852,6 +2852,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, tray.getLiquidSideDrawFraction());
     }
     if (hasReboiler && getReboiler() != null) {
+      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, getReboiler().isRefluxSet() ? 1L : 0L);
       updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, getReboiler().getRefluxRatio());
     }
     if (hasCondenser && getCondenser() != null) {
