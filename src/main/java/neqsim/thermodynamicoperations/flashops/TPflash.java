@@ -584,6 +584,7 @@ public class TPflash extends Flash {
           logger.debug("Post-stability init failed: {}", ex.getMessage());
         }
         rescueSinglePhaseMultiphaseEndpoint();
+        rejectInfeasibleMultiphaseEndpointAfterStableSinglePhase();
 
         // Chemical equilibrium for stable single-phase case
         if (system.isChemicalSystem()) {
@@ -1474,6 +1475,34 @@ public class TPflash extends Flash {
     if (logger.isDebugEnabled()) {
       logger.debug("Collapsing trivial two-phase split: max composition difference {} < {}", maxCompositionDifference,
           TRIVIAL_SPLIT_COMPOSITION_TOLERANCE);
+    }
+    collapseToReferenceSinglePhase();
+  }
+
+  /**
+   * Rejects an infeasible two-phase result created while checking an already stable single-phase state.
+   *
+   * <p>
+   * The multiphase stability path can seed a trial phase at a small positive phase fraction. If the beta solver does
+   * not move that seed to an equilibrium solution, the seed can survive the generic minimum-beta cleanup even though
+   * its composition is not normalized, it does not reconstruct the feed, and component fugacities are unequal. The
+   * preceding stability analysis has already accepted the homogeneous state, so such an infeasible trial must not
+   * replace it. A genuine incipient phase is retained because it independently passes the same strict balance,
+   * normalization, distinct-composition, and fugacity checks used for water-rich candidate acceptance.
+   * </p>
+   *
+   * <p>
+   * Chemical and ionic systems are excluded because their equilibrium constraints include reactions or ion
+   * partitioning beyond the neutral two-phase fugacity test.
+   * </p>
+   */
+  private void rejectInfeasibleMultiphaseEndpointAfterStableSinglePhase() {
+    if (system.getNumberOfPhases() != 2 || system.isChemicalSystem() || system.hasIons()
+        || referenceSinglePhaseType == null || isBalancedEquilibriumCandidate(system)) {
+      return;
+    }
+    if (logger.isDebugEnabled()) {
+      logger.debug("Rejecting infeasible multiphase endpoint after stable single-phase check");
     }
     collapseToReferenceSinglePhase();
   }
