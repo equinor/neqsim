@@ -103,6 +103,8 @@ public class DistillationColumnWarmStateCacheTest {
         "activating ratio mode must update the overhead flow");
     assertNotEquals(firstBottomFlow, column.getLiquidOutStream().getFlowRate("kg/hr"), 1.0,
         "activating ratio mode must update the bottoms flow");
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    assertPhysicalAndBalanced(new ColumnCase(column.getFeedStreams(3).get(0), column));
   }
 
   /**
