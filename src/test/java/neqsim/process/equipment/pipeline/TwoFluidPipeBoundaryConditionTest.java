@@ -801,7 +801,7 @@ class TwoFluidPipeBoundaryConditionTest {
       result.settled = isSettledToStationaryPressureProfile(result);
       if (result.settled) {
         logger.printf(org.apache.logging.log4j.Level.INFO,
-            "%s reached new stationary state in %.1f s " + "(pressure RMS %.0f Pa, liquid holdup RMS %.4f)%n",
+            "%s pressure profile settled in %.1f s " + "(pressure RMS %.0f Pa, liquid holdup RMS %.4f)%n",
             transientPipe.getName(), result.elapsedTime, result.pressureRmsPa, result.liquidHoldupRms);
         return result;
       }
