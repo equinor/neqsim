@@ -98,6 +98,9 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
       for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
         result[componentIndex] += system.getPhase(phaseIndex).getComponent(componentIndex).getNumberOfMolesInPhase();
       }
+      if (result[componentIndex] <= 0.0 && system.getNumberOfPhases() > 0) {
+        result[componentIndex] = system.getPhase(0).getComponent(componentIndex).getNumberOfmoles();
+      }
     }
     return result;
   }
