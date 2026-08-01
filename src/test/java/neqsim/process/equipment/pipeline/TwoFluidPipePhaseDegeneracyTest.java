@@ -18,16 +18,14 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /** Regression tests for gas-liquid phase appearance and disappearance in {@link TwoFluidPipe}. */
 class TwoFluidPipePhaseDegeneracyTest {
-  private static final double[] LIQUID_MASS_FLOW_SWEEP =
-      {0.0, 0.5e-10, 0.99e-10, 1.01e-10, 2.0e-10, 1.0e-9, 1.0e-8};
+  private static final double[] LIQUID_MASS_FLOW_SWEEP = { 0.0, 0.5e-10, 0.99e-10, 1.01e-10, 2.0e-10, 1.0e-9, 1.0e-8 };
 
   @Test
   void testLocalClosureApproachesPureGasContinuously() throws Exception {
-    OLGAModelType[] modelTypes =
-        {OLGAModelType.FULL, OLGAModelType.SIMPLIFIED, OLGAModelType.DRIFT_FLUX};
-    FlowRegime[] regimes = {FlowRegime.STRATIFIED_SMOOTH, FlowRegime.ANNULAR,
-        FlowRegime.SLUG, FlowRegime.DISPERSED_BUBBLE};
-    double[] inclinations = {0.0, Math.toRadians(2.0), Math.toRadians(-2.0)};
+    OLGAModelType[] modelTypes = { OLGAModelType.FULL, OLGAModelType.SIMPLIFIED, OLGAModelType.DRIFT_FLUX };
+    FlowRegime[] regimes = { FlowRegime.STRATIFIED_SMOOTH, FlowRegime.ANNULAR, FlowRegime.SLUG,
+        FlowRegime.DISPERSED_BUBBLE };
+    double[] inclinations = { 0.0, Math.toRadians(2.0), Math.toRadians(-2.0) };
 
     for (OLGAModelType modelType : modelTypes) {
       for (FlowRegime regime : regimes) {
@@ -67,8 +65,7 @@ class TwoFluidPipePhaseDegeneracyTest {
           pureGasPressureDrop = pressureDrop;
         } else {
           assertTrue(maximumHoldup > 0.0);
-          assertTrue(maximumHoldup < 1.0e-4,
-              modelType + " public run imposed a finite trace-liquid inventory");
+          assertTrue(maximumHoldup < 1.0e-4, modelType + " public run imposed a finite trace-liquid inventory");
           assertTrue(Math.abs(pressureDrop - pureGasPressureDrop) < 100.0,
               modelType + " pressure drop did not approach its pure-gas limit");
         }
@@ -148,8 +145,7 @@ class TwoFluidPipePhaseDegeneracyTest {
 
     pipe.run();
     assertTrue(maximum(pipe.getLiquidHoldupProfile()) < 1.0e-4);
-    pipe.runTransient(1.0e-6,
-        UUID.fromString("00000000-0000-0000-0000-000000012733"));
+    pipe.runTransient(1.0e-6, UUID.fromString("00000000-0000-0000-0000-000000012733"));
 
     assertTrue(maximum(pipe.getLiquidHoldupProfile()) < 1.0e-4);
     assertAllFinite(pipe.getGasVelocityProfile());
@@ -170,17 +166,16 @@ class TwoFluidPipePhaseDegeneracyTest {
 
     double gasMassPerLength = 0.8 * 40.0 * area;
     double waterMassPerLength = 0.2 * 1000.0 * area;
-    section.setStateVector(
-        new double[] {gasMassPerLength, 0.0, waterMassPerLength, gasMassPerLength, 0.0,
-            waterMassPerLength * 0.1, 0.0});
+    section.setStateVector(new double[] { gasMassPerLength, 0.0, waterMassPerLength, gasMassPerLength, 0.0,
+        waterMassPerLength * 0.1, 0.0 });
     section.extractPrimitiveVariables();
     assertEquals(0.0, section.getOilMassPerLength(), 0.0);
     assertEquals(0.0, section.getOilHoldup(), 0.0);
     assertTrue(section.getWaterHoldup() > 0.0);
 
     double oilMassPerLength = 0.2 * 700.0 * area;
-    section.setStateVector(new double[] {gasMassPerLength, oilMassPerLength, 0.0, gasMassPerLength,
-        oilMassPerLength * 0.1, 0.0, 0.0});
+    section.setStateVector(
+        new double[] { gasMassPerLength, oilMassPerLength, 0.0, gasMassPerLength, oilMassPerLength * 0.1, 0.0, 0.0 });
     section.extractPrimitiveVariables();
     assertEquals(0.0, section.getWaterMassPerLength(), 0.0);
     assertEquals(0.0, section.getWaterHoldup(), 0.0);
@@ -200,7 +195,7 @@ class TwoFluidPipePhaseDegeneracyTest {
     assertEquals(0.0, section.calcOilWaterInterfacialShear(), 0.0);
 
     double previousShear = 0.0;
-    for (double waterHoldup : new double[] {1.0e-12, 1.0e-10, 1.0e-8, 1.0e-6}) {
+    for (double waterHoldup : new double[] { 1.0e-12, 1.0e-10, 1.0e-8, 1.0e-6 }) {
       section.setWaterHoldup(waterHoldup);
       double shear = section.calcOilWaterInterfacialShear();
       assertTrue(Double.isFinite(shear));
@@ -258,8 +253,7 @@ class TwoFluidPipePhaseDegeneracyTest {
     double area = Math.PI * 0.2 * 0.2 / 4.0;
     double previousHoldup = -1.0;
     for (double liquidMassFlow : LIQUID_MASS_FLOW_SWEEP) {
-      double[] result =
-          (double[]) closure.invoke(pipe, section, null, 1.0, liquidMassFlow, area);
+      double[] result = (double[]) closure.invoke(pipe, section, null, 1.0, liquidMassFlow, area);
       double liquidHoldup = result[0];
 
       assertTrue(Double.isFinite(liquidHoldup));
@@ -270,8 +264,7 @@ class TwoFluidPipePhaseDegeneracyTest {
       } else {
         assertTrue(liquidHoldup > 0.0);
         assertTrue(liquidHoldup < 1.0e-4,
-            modelType + "/" + regime + " imposed a finite trace-liquid inventory at "
-                + liquidMassFlow + " kg/s");
+            modelType + "/" + regime + " imposed a finite trace-liquid inventory at " + liquidMassFlow + " kg/s");
         double inventoryKgPerKilometre = liquidHoldup * 700.0 * area * 1000.0;
         assertTrue(inventoryKgPerKilometre < 2.0,
             modelType + "/" + regime + " created excessive trace-liquid line inventory");

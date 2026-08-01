@@ -420,8 +420,8 @@ public class TwoFluidPipe extends Pipeline {
    * Optional absolute liquid-holdup floor for explicitly configured fixed-floor mode.
    *
    * <p>
-   * This value is applied only when minimum-slip enforcement is enabled and adaptive-only mode is disabled. It is not
-   * a numerical positivity safeguard and is never applied to an absent phase.
+   * This value is applied only when minimum-slip enforcement is enabled and adaptive-only mode is disabled. It is not a
+   * numerical positivity safeguard and is never applied to an absent phase.
    * </p>
    *
    * <p>
@@ -485,9 +485,9 @@ public class TwoFluidPipe extends Pipeline {
    * Minimum film thickness for annular flow (m).
    *
    * <p>
-   * A nonzero film floor is applied only in explicit fixed-floor mode: minimum-slip enforcement enabled,
-   * adaptive-only mode disabled, and a positive {@link #minimumLiquidHoldup}. The stored default is 0.1 mm. It is a
-   * user-selectable wetting-film assumption, not a numerical phase-presence threshold.
+   * A nonzero film floor is applied only in explicit fixed-floor mode: minimum-slip enforcement enabled, adaptive-only
+   * mode disabled, and a positive {@link #minimumLiquidHoldup}. The stored default is 0.1 mm. It is a user-selectable
+   * wetting-film assumption, not a numerical phase-presence threshold.
    * </p>
    */
   private double minimumFilmThickness = 0.0001; // 0.1 mm
@@ -1160,8 +1160,7 @@ public class TwoFluidPipe extends Pipeline {
       inletSec.setLiquidHoldup(h0[0]);
       inletSec.setGasHoldup(h0[1]);
       inletSec.setGasVelocity(calculateFinitePhaseVelocity(mDotGas, h0[1], inletSec.getGasDensity(), area, 100.0));
-      inletSec
-          .setLiquidVelocity(calculateFinitePhaseVelocity(mDotLiq, h0[0], inletSec.getLiquidDensity(), area, 50.0));
+      inletSec.setLiquidVelocity(calculateFinitePhaseVelocity(mDotLiq, h0[0], inletSec.getLiquidDensity(), area, 50.0));
       if (inletSec.getWaterDensity() > 0 && inletSec.getOilDensity() > 0 && h0[0] > 0.0) {
         updateLiquidPhaseSplit(inletSec, null, h0[0], area);
       }
@@ -1289,8 +1288,7 @@ public class TwoFluidPipe extends Pipeline {
 
         // Update velocities based on new holdups
         sec.setGasVelocity(calculateFinitePhaseVelocity(localMDotG, alphaG_new, sec.getGasDensity(), area, 100.0));
-        sec.setLiquidVelocity(
-            calculateFinitePhaseVelocity(localMDotL, alphaL_new, sec.getLiquidDensity(), area, 50.0));
+        sec.setLiquidVelocity(calculateFinitePhaseVelocity(localMDotL, alphaL_new, sec.getLiquidDensity(), area, 50.0));
 
         // Update water and oil holdups for three-phase flow
         // Check if this is a three-phase system (both oil and water densities set)
@@ -2261,8 +2259,7 @@ public class TwoFluidPipe extends Pipeline {
 
   /** @return true when the user explicitly selected a non-adaptive physical film floor. */
   private boolean usesExplicitPhysicalFilmFloor() {
-    return enforceMinimumSlip && !useAdaptiveMinimumOnly && minimumLiquidHoldup > 0.0
-        && minimumFilmThickness > 0.0;
+    return enforceMinimumSlip && !useAdaptiveMinimumOnly && minimumLiquidHoldup > 0.0 && minimumFilmThickness > 0.0;
   }
 
   /**
@@ -2418,8 +2415,8 @@ public class TwoFluidPipe extends Pipeline {
       if (perturbedAlpha <= alphaL) {
         break;
       }
-      double perturbedResidual = calculateStratifiedMomentumResidual(perturbedAlpha, vsG, vsL, rhoG, rhoL, muG, muL,
-          D, theta);
+      double perturbedResidual = calculateStratifiedMomentumResidual(perturbedAlpha, vsG, vsL, rhoG, rhoL, muG, muL, D,
+          theta);
       double derivative = (perturbedResidual - residual) / (perturbedAlpha - alphaL);
       if (!Double.isFinite(derivative) || Math.abs(derivative) < CLOSURE_DENOMINATOR_EPSILON) {
         break;
@@ -2448,8 +2445,7 @@ public class TwoFluidPipe extends Pipeline {
     double interfaceWidth = D * Math.sin(beta / 2.0);
     double liquidHydraulicDiameter = 4.0 * liquidArea
         / Math.max(CLOSURE_DENOMINATOR_EPSILON, liquidPerimeter + interfaceWidth);
-    double gasHydraulicDiameter =
-        4.0 * gasArea / Math.max(CLOSURE_DENOMINATOR_EPSILON, gasPerimeter + interfaceWidth);
+    double gasHydraulicDiameter = 4.0 * gasArea / Math.max(CLOSURE_DENOMINATOR_EPSILON, gasPerimeter + interfaceWidth);
 
     double liquidVelocity = vsL / Math.max(CLOSURE_DENOMINATOR_EPSILON, alphaL);
     double gasVelocity = vsG / Math.max(CLOSURE_DENOMINATOR_EPSILON, alphaG);
@@ -2457,22 +2453,19 @@ public class TwoFluidPipe extends Pipeline {
         / Math.max(CLOSURE_DENOMINATOR_EPSILON, muL);
     double gasReynolds = rhoG * Math.abs(gasVelocity) * gasHydraulicDiameter
         / Math.max(CLOSURE_DENOMINATOR_EPSILON, muG);
-    double liquidFriction = liquidReynolds < 2000.0
-        ? 16.0 / Math.max(CLOSURE_DENOMINATOR_EPSILON, liquidReynolds)
+    double liquidFriction = liquidReynolds < 2000.0 ? 16.0 / Math.max(CLOSURE_DENOMINATOR_EPSILON, liquidReynolds)
         : 0.046 / Math.pow(liquidReynolds, 0.2);
-    double gasFriction = gasReynolds < 2000.0
-        ? 16.0 / Math.max(CLOSURE_DENOMINATOR_EPSILON, gasReynolds)
+    double gasFriction = gasReynolds < 2000.0 ? 16.0 / Math.max(CLOSURE_DENOMINATOR_EPSILON, gasReynolds)
         : 0.046 / Math.pow(gasReynolds, 0.2);
     double interfacialFriction = gasFriction * (1.0 + 75.0 * alphaL);
 
     double liquidWallShear = liquidFriction * rhoL * liquidVelocity * Math.abs(liquidVelocity) / 2.0;
     double gasWallShear = gasFriction * rhoG * gasVelocity * Math.abs(gasVelocity) / 2.0;
     double relativeVelocity = gasVelocity - liquidVelocity;
-    double interfacialShear =
-        interfacialFriction * rhoG * relativeVelocity * Math.abs(relativeVelocity) / 2.0;
+    double interfacialShear = interfacialFriction * rhoG * relativeVelocity * Math.abs(relativeVelocity) / 2.0;
 
-    double gasPressureGradient = gasWallShear * gasPerimeter / gasArea
-        + interfacialShear * interfaceWidth / gasArea + rhoG * 9.81 * Math.sin(theta);
+    double gasPressureGradient = gasWallShear * gasPerimeter / gasArea + interfacialShear * interfaceWidth / gasArea
+        + rhoG * 9.81 * Math.sin(theta);
     double liquidPressureGradient = liquidWallShear * liquidPerimeter / liquidArea
         - interfacialShear * interfaceWidth / liquidArea + rhoL * 9.81 * Math.sin(theta);
     return gasPressureGradient - liquidPressureGradient;
@@ -4273,8 +4266,7 @@ public class TwoFluidPipe extends Pipeline {
     }
     double alphaG = inlet.getGasHoldup();
     double[] phaseMassFractions = calculateInletPhaseMassFractions(inFluid);
-    double vTarget =
-        calculateFinitePhaseVelocity(massFlow * phaseMassFractions[0], alphaG, rhoG, area, 100.0);
+    double vTarget = calculateFinitePhaseVelocity(massFlow * phaseMassFractions[0], alphaG, rhoG, area, 100.0);
 
     double cTarget = Math.max(inlet.getGasSoundSpeed(), 1.0);
     double Jplus = vTarget + 2.0 * cTarget / (gammaEff - 1.0);
