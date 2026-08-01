@@ -255,8 +255,7 @@ public class TwoFluidConservationEquations implements Serializable {
     }
 
     double[] inletMassFlow = { inletFlux[IDX_GAS_MASS], inletFlux[IDX_OIL_MASS], inletFlux[IDX_WATER_MASS] };
-    double[] outletMassFlow = { outletFlux[IDX_GAS_MASS], outletFlux[IDX_OIL_MASS],
-        outletFlux[IDX_WATER_MASS] };
+    double[] outletMassFlow = { outletFlux[IDX_GAS_MASS], outletFlux[IDX_OIL_MASS], outletFlux[IDX_WATER_MASS] };
     double[] sourceMassFlow = new double[3];
     for (int i = 0; i < nCells; i++) {
       double sectionLength = sections[i].getLength();
