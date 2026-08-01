@@ -973,6 +973,54 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
+   * Resolves a stream reference across the process areas in this model.
+   *
+   * <p>
+   * Area-qualified references use {@code "area::streamRef"}, where {@code streamRef} follows
+   * {@link ProcessSystem#resolveStreamReference(String)} conventions such as {@code feed}, {@code separator.gasOut}, or
+   * {@code splitter.split0}. An unqualified reference is accepted only when exactly one process area resolves it. If
+   * multiple areas contain the same unqualified reference, this method throws so callers cannot silently modify the
+   * wrong train.
+   * </p>
+   *
+   * @param reference area-qualified or unqualified stream reference
+   * @return resolved stream, or {@code null} when the area or stream does not exist
+   * @throws IllegalArgumentException if an unqualified reference matches more than one process area
+   */
+  public StreamInterface resolveStreamReference(String reference) {
+    if (reference == null || reference.trim().isEmpty()) {
+      return null;
+    }
+    String normalizedReference = reference.trim();
+    int areaSeparator = normalizedReference.indexOf("::");
+    if (areaSeparator >= 0) {
+      String areaName = normalizedReference.substring(0, areaSeparator).trim();
+      String localReference = normalizedReference.substring(areaSeparator + 2).trim();
+      if (areaName.isEmpty() || localReference.isEmpty()) {
+        return null;
+      }
+      ProcessSystem processSystem = processes.get(areaName);
+      return processSystem == null ? null : processSystem.resolveStreamReference(localReference);
+    }
+
+    StreamInterface resolved = null;
+    String resolvedArea = null;
+    for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
+      StreamInterface candidate = entry.getValue().resolveStreamReference(normalizedReference);
+      if (candidate == null) {
+        continue;
+      }
+      if (resolved != null) {
+        throw new IllegalArgumentException("Ambiguous stream reference '" + normalizedReference + "' in areas '"
+            + resolvedArea + "' and '" + entry.getKey() + "'; use area::streamRef");
+      }
+      resolved = candidate;
+      resolvedArea = entry.getKey();
+    }
+    return resolved;
+  }
+
+  /**
    * Returns the aggregated structured outcome of the most recent run across all process areas.
    *
    * <p>
