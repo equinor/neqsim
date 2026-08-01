@@ -388,6 +388,47 @@ public class ColumnStudyRegressionTest {
   }
 
   /**
+   * Verify that an exhausted pumparound tear solve cannot report the column as solved.
+   *
+   * <p>
+   * The inner tray solve can converge while the outer pumparound return-stream tear remains open. A one-iteration limit
+   * and strict tolerance reproduce that distinction deterministically at two nearby draw fractions.
+   * </p>
+   */
+  @Test
+  public void unconvergedPumparoundTearDoesNotReportSolved() {
+    final double tearTolerance = 1.0e-16;
+    double[] drawFractions = { 0.03, 0.04 };
+    for (int caseIndex = 0; caseIndex < drawFractions.length; caseIndex++) {
+      SystemInterface baseFluid = createBaseFluid();
+      StreamInterface feedStream = createStream("limited_pumparound_main_feed_" + caseIndex, baseFluid,
+          MAIN_FEED_COMPOSITION, MAIN_FEED_TEMPERATURE_C, MAIN_FEED_PRESSURE_BARA, MAIN_FEED_MASS_FLOW_KG_HR);
+      StreamInterface topFeedStream = createStream("limited_pumparound_top_feed_" + caseIndex, baseFluid,
+          TOP_FEED_COMPOSITION, TOP_FEED_TEMPERATURE_C, TOP_FEED_PRESSURE_BARA, TOP_FEED_MASS_FLOW_KG_HR);
+      DistillationColumn column = createColumn(feedStream, topFeedStream);
+      column.addLiquidPumparound("limited column-study pumparound", answerTrayToNeqSimStage(7),
+          answerTrayToNeqSimStage(5), drawFractions[caseIndex], 5.0);
+      column.setMaxColumnTearIterations(1);
+      column.setMaxPumparoundIterations(1);
+      column.setColumnTearTolerance(tearTolerance);
+
+      column.run();
+
+      assertFalse(column.isLastColumnTearConverged(),
+          "one outer iteration should leave the pumparound tear open at draw fraction " + drawFractions[caseIndex]);
+      assertTrue(column.getLastColumnTearResidual() > tearTolerance,
+          "reported tear residual should remain above the configured tolerance");
+      assertFalse(column.solved(), "an open outer tear must make the public solved status false");
+      assertEquals(DistillationColumn.SolveStatus.FAILED, column.getLastSolveStatus(),
+          "an exhausted outer tear must be reported as a failed column solve");
+      assertTrue(column.getLastSolveStatusReason().contains("tear"),
+          "the failure reason should identify the unconverged tear-variable solve");
+      assertPhysicalProduct(column.getGasOutStream(), "limited-pumparound overhead");
+      assertPhysicalProduct(column.getLiquidOutStream(), "limited-pumparound bottoms");
+    }
+  }
+
+  /**
    * Reports cold, unchanged warm, and 10-percent-increased inlet solve times for the column-study case.
    *
    * <p>

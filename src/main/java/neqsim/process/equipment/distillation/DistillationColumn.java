@@ -1356,12 +1356,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         updateSideDrawSpecificationResidualsOnly();
         lastColumnTearResidual = Math.max(relativeChange, getMaxSideDrawSpecificationResidual());
         lastColumnTearConverged = lastColumnTearResidual <= tolerance;
+        finalizeColumnTearConvergenceStatus(tolerance);
         return;
       }
       if (!columnTearVariablesChanged) {
         updateSideDrawSpecificationResidualsOnly();
         lastColumnTearResidual = Math.max(relativeChange, getMaxSideDrawSpecificationResidual());
         lastColumnTearConverged = false;
+        finalizeColumnTearConvergenceStatus(tolerance);
         return;
       }
       if (iteration < iterationLimit - 1) {
@@ -1373,6 +1375,33 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     updateSideDrawSpecificationResidualsOnly();
     lastColumnTearResidual = Math.max(lastColumnTearResidual, getMaxSideDrawSpecificationResidual());
     lastColumnTearConverged = lastColumnTearResidual <= tolerance;
+    finalizeColumnTearConvergenceStatus(tolerance);
+  }
+
+  /**
+   * Make an exhausted outer tear authoritative for the public column solve status.
+   *
+   * <p>
+   * Inner tray solvers call {@link #solved()} while the outer tear loop is still active, so the outer gate cannot be
+   * added directly to the generic residual predicate without triggering premature accelerator fallbacks. This method is
+   * called only after an outer convergence decision has been made. It preserves an existing inner failure reason and
+   * converts only an otherwise accepted inner result to a failed coordinated solve.
+   * </p>
+   *
+   * @param tolerance active outer tear-variable tolerance
+   */
+  private void finalizeColumnTearConvergenceStatus(double tolerance) {
+    if (lastColumnTearConverged) {
+      return;
+    }
+    boolean innerSolveAccepted = lastSolveStatus == SolveStatus.RIGOROUS_CONVERGED
+        || lastSolveStatus == SolveStatus.RECONCILED_PRODUCTS;
+    if (!innerSolveAccepted) {
+      return;
+    }
+    lastSolveStatus = SolveStatus.FAILED;
+    lastSolveStatusReason = "Column tear-variable solve did not converge after " + lastColumnTearIterationCount
+        + " iteration(s): residual " + lastColumnTearResidual + " exceeds tolerance " + tolerance;
   }
 
   /**
