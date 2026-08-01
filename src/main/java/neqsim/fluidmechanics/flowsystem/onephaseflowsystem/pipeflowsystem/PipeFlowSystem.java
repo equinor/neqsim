@@ -1,6 +1,8 @@
 package neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem;
 
 import java.util.UUID;
+import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFixedStaggeredGrid;
+import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFlowConvergenceReport;
 import neqsim.fluidmechanics.util.fluidmechanicsvisualization.flowsystemvisualization.onephaseflowvisualization.pipeflowvisualization.PipeFlowVisualization;
 import neqsim.thermo.system.SystemInterface;
 
@@ -18,6 +20,23 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
    * Constructor for PipeFlowSystem.
    */
   public PipeFlowSystem() {
+  }
+
+  /**
+   * Get nonlinear convergence and total-mass diagnostics from the latest pipe solve.
+   *
+   * <p>
+   * The returned report is immutable. Before the first solve it has reason
+   * {@link OnePhaseFlowConvergenceReport.ConvergenceReason#NOT_RUN}.
+   * </p>
+   *
+   * @return latest one-phase convergence report
+   */
+  public OnePhaseFlowConvergenceReport getConvergenceReport() {
+    if (flowSolver instanceof OnePhaseFixedStaggeredGrid) {
+      return ((OnePhaseFixedStaggeredGrid) flowSolver).getLastConvergenceReport();
+    }
+    return OnePhaseFlowConvergenceReport.notRun();
   }
 
   /** {@inheritDoc} */
