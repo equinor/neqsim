@@ -34,6 +34,7 @@ jobs:
             run_tests:
               - '**/*.java'
               - '**/*.xml'
+              - '.github/workflows/verify_build.yml'
 
   test_javadoc:
     name: Assert javadoc with Java 21 on Ubuntu
