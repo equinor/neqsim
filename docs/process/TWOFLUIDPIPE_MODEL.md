@@ -395,7 +395,9 @@ model-development work.
 
 At the steady-to-transient handoff, `run()` converts the final pressure, phase-holdup, density, and
 velocity profiles into conservative phase mass, momentum, and energy exactly once. This conversion
-defines the initial condition and advances no simulation time. After the transient solve starts,
+defines the initial condition and advances no simulation time. For three-phase flow, the oil and
+water momenta retain the independent phase velocities from the steady slip closure rather than being
+collapsed to the bulk-liquid velocity. After the transient solve starts,
 the conservative phase masses own cell inventory. A stream-connected inlet may update boundary
 composition and velocity for its inlet flux, but it must not replace the first finite-volume cell's
 oil or water mass. This prevents an unchanged, near-zero-time handoff from producing an inventory or
