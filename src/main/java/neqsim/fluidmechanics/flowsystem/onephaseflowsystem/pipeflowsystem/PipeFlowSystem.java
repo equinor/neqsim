@@ -15,6 +15,7 @@ import neqsim.thermo.system.SystemInterface;
 public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflowsystem.OnePhaseFlowSystem {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  private boolean failOnNonConvergence;
 
   /**
    * Constructor for PipeFlowSystem.
@@ -37,6 +38,36 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
       return ((OnePhaseFixedStaggeredGrid) flowSolver).getLastConvergenceReport();
     }
     return OnePhaseFlowConvergenceReport.notRun();
+  }
+
+  /**
+   * Configure whether a transient solve throws when its convergence report fails.
+   *
+   * <p>
+   * The default is false for source and behavioral compatibility. Failed convergence is still recorded by
+   * {@link #getConvergenceReport()} and logged as a warning.
+   * </p>
+   *
+   * @param failOnNonConvergence true to throw after recording a failed report
+   */
+  public void setFailOnNonConvergence(boolean failOnNonConvergence) {
+    this.failOnNonConvergence = failOnNonConvergence;
+    configureConvergencePolicy();
+  }
+
+  /**
+   * Check whether failed transient convergence throws.
+   *
+   * @return true when strict fail-loud mode is enabled
+   */
+  public boolean isFailOnNonConvergence() {
+    return failOnNonConvergence;
+  }
+
+  private void configureConvergencePolicy() {
+    if (flowSolver instanceof OnePhaseFixedStaggeredGrid) {
+      ((OnePhaseFixedStaggeredGrid) flowSolver).setFailOnNonConvergence(failOnNonConvergence);
+    }
   }
 
   /** {@inheritDoc} */
@@ -88,6 +119,7 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
     // getTotalNumberOfNodes());
     flowSolver = new neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFixedStaggeredGrid(
         this, getSystemLength(), getTotalNumberOfNodes(), false);
+    configureConvergencePolicy();
     flowSolver.setSolverType(type);
     flowSolver.solveTDMA();
     getTimeSeries().init(this);
@@ -101,6 +133,7 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
     getTimeSeries().init(this);
     display = new PipeFlowVisualization(this.getTotalNumberOfNodes(), getTimeSeries().getTime().length);
     flowSolver.setDynamic(true);
+    configureConvergencePolicy();
     flowSolver.setSolverType(type);
 
     int outletNodeIndex = getTotalNumberOfNodes() - 1;
