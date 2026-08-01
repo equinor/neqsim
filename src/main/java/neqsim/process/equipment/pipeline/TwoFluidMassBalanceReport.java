@@ -6,11 +6,9 @@ import java.io.Serializable;
  * Discrete phase and total-mass balance for one accepted {@link TwoFluidPipe} transient call.
  *
  * <p>
- * Boundary and source terms are integrated with the same Runge-Kutta stage weights as the
- * conservative state. The signed residual is
- * {@code final - initial - (inlet - outlet + source)}. A positive source adds mass to the
- * reported phase. Oil and water source terms include gas-liquid phase transfer splits; their sum
- * is the liquid source.
+ * Boundary and source terms are integrated with the same Runge-Kutta stage weights as the conservative state. The
+ * signed residual is {@code final - initial - (inlet - outlet + source)}. A positive source adds mass to the reported
+ * phase. Oil and water source terms include gas-liquid phase transfer splits; their sum is the liquid source.
  * </p>
  */
 public final class TwoFluidMassBalanceReport implements Serializable {
@@ -188,9 +186,8 @@ public final class TwoFluidMassBalanceReport implements Serializable {
    * Get absolute residual relative to the largest relevant inventory or integrated transfer.
    *
    * <p>
-   * The denominator is the maximum of initial inventory, final inventory, and the sum of absolute
-   * inlet, outlet, and source contributions. This definition remains finite for phase appearance
-   * from zero initial inventory.
+   * The denominator is the maximum of initial inventory, final inventory, and the sum of absolute inlet, outlet, and
+   * source contributions. This definition remains finite for phase appearance from zero initial inventory.
    * </p>
    *
    * @param phase phase or aggregate
@@ -217,7 +214,6 @@ public final class TwoFluidMassBalanceReport implements Serializable {
     if (absoluteToleranceKg < 0.0 || relativeTolerance < 0.0) {
       throw new IllegalArgumentException("Mass-balance tolerances must be non-negative");
     }
-    return Math.abs(getResidualKg(phase)) <= absoluteToleranceKg
-        || getRelativeResidual(phase) <= relativeTolerance;
+    return Math.abs(getResidualKg(phase)) <= absoluteToleranceKg || getRelativeResidual(phase) <= relativeTolerance;
   }
 }
