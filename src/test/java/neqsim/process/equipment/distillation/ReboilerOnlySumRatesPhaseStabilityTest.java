@@ -62,8 +62,8 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
     Stream gasFeed = createFeed(name + " rich gas", createFluid(gasTemperature, pressure, gasComposition), gasFlowRate,
         pressure);
     Stream solventFeed = createFeed(name + " lean solvent",
-        createFluid(298.15, pressure, new double[] { 1.0e-10, 1.0e-10, 1.0e-10, 1.0e-10, 1.0 }),
-        solventFlowRate, pressure);
+        createFluid(298.15, pressure, new double[] { 1.0e-10, 1.0e-10, 1.0e-10, 1.0e-10, 1.0 }), solventFlowRate,
+        pressure);
     DistillationColumn column = new DistillationColumn(name, 10, true, false);
     column.addFeedStream(gasFeed, 1);
     column.addFeedStream(solventFeed, column.getNumberOfTrays() - 1);
@@ -96,8 +96,7 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
     double[] result = new double[system.getNumberOfComponents()];
     for (int componentIndex = 0; componentIndex < result.length; componentIndex++) {
       for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
-        result[componentIndex] +=
-            system.getPhase(phaseIndex).getComponent(componentIndex).getNumberOfMolesInPhase();
+        result[componentIndex] += system.getPhase(phaseIndex).getComponent(componentIndex).getNumberOfMolesInPhase();
       }
     }
     return result;
@@ -132,14 +131,13 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
     assertEquals("gas", sumRates.getGasOutStream().getThermoSystem().getPhase(0).getPhaseTypeName());
     assertEquals(1.0, sumRates.getGasOutStream().getThermoSystem().getBeta(0), 1.0e-12);
 
-    assertEquals(damped.getGasOutStream().getFlowRate("kg/hr"),
-        sumRates.getGasOutStream().getFlowRate("kg/hr"), 1.0e-3);
-    assertEquals(damped.getLiquidOutStream().getFlowRate("kg/hr"),
-        sumRates.getLiquidOutStream().getFlowRate("kg/hr"), 1.0e-3);
-    assertEquals(damped.getGasOutStream().getTemperature("K"), sumRates.getGasOutStream().getTemperature("K"),
+    assertEquals(damped.getGasOutStream().getFlowRate("kg/hr"), sumRates.getGasOutStream().getFlowRate("kg/hr"),
+        1.0e-3);
+    assertEquals(damped.getLiquidOutStream().getFlowRate("kg/hr"), sumRates.getLiquidOutStream().getFlowRate("kg/hr"),
+        1.0e-3);
+    assertEquals(damped.getGasOutStream().getTemperature("K"), sumRates.getGasOutStream().getTemperature("K"), 1.0e-4);
+    assertEquals(damped.getLiquidOutStream().getTemperature("K"), sumRates.getLiquidOutStream().getTemperature("K"),
         1.0e-4);
-    assertEquals(damped.getLiquidOutStream().getTemperature("K"),
-        sumRates.getLiquidOutStream().getTemperature("K"), 1.0e-4);
     assertEquals(damped.getReboiler().getDuty(), sumRates.getReboiler().getDuty(), 0.25);
 
     double[] dampedComposition = damped.getGasOutStream().getThermoSystem().getMolarComposition();
@@ -156,8 +154,7 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
   /** Native sum-rates must match the damped phase state and products across the issue envelope. */
   @Test
   public void nativeSumRatesMatchesDampedAcrossNearbyOperatingAndInitializationPoints() {
-    double[][] operatingPoints = {
-        { 313.15, 1200.0, 30.0, 1000.0, 0.70, 0.15, 0.10, 0.05 },
+    double[][] operatingPoints = { { 313.15, 1200.0, 30.0, 1000.0, 0.70, 0.15, 0.10, 0.05 },
         { 318.15, 1300.0, 30.0, 1000.0, 0.70, 0.15, 0.10, 0.05 },
         { 315.15, 1250.0, 29.5, 980.0, 0.69, 0.16, 0.10, 0.05 },
         { 316.15, 1275.0, 30.5, 1020.0, 0.71, 0.14, 0.09, 0.06 } };
