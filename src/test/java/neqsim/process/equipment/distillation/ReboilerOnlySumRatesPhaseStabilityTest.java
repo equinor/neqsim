@@ -241,13 +241,13 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
   @Test
   public void terminalTracePhaseCandidateRequiresFiniteNormalizedTwoPhaseState() {
     double[] componentMoles = { 1.0, 2.0 };
-    assertTrue(DistillationColumn.isTerminalTracePhaseCanonicalizationCandidate(2, 1.0 - 3.0e-9, 3.0e-9,
-        componentMoles));
-    assertFalse(DistillationColumn.isTerminalTracePhaseCanonicalizationCandidate(3, 1.0 - 3.0e-9, 3.0e-9,
-        componentMoles));
+    assertTrue(
+        DistillationColumn.isTerminalTracePhaseCanonicalizationCandidate(2, 1.0 - 3.0e-9, 3.0e-9, componentMoles));
+    assertFalse(
+        DistillationColumn.isTerminalTracePhaseCanonicalizationCandidate(3, 1.0 - 3.0e-9, 3.0e-9, componentMoles));
     assertFalse(DistillationColumn.isTerminalTracePhaseCanonicalizationCandidate(2, 0.9, 3.0e-9, componentMoles));
-    assertFalse(DistillationColumn.isTerminalTracePhaseCanonicalizationCandidate(2, 1.0 - 3.0e-9, Double.NaN,
-        componentMoles));
+    assertFalse(
+        DistillationColumn.isTerminalTracePhaseCanonicalizationCandidate(2, 1.0 - 3.0e-9, Double.NaN, componentMoles));
     assertFalse(DistillationColumn.isTerminalTracePhaseCanonicalizationCandidate(2, 1.0 - 3.0e-9, 3.0e-9,
         new double[] { 1.0, Double.POSITIVE_INFINITY }));
     assertFalse(DistillationColumn.isTerminalTracePhaseCanonicalizationCandidate(2, 1.0 - 3.0e-9, 3.0e-9,
