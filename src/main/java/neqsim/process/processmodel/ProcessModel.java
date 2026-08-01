@@ -304,6 +304,36 @@ public class ProcessModel implements Runnable, Serializable {
    */
   private double absoluteFlowTolerance = 0.0;
 
+  /**
+   * Default noise-floor fraction of the detected plant mass-flow scale used by the auto-tuner. A stream carrying less
+   * than one part per million of the largest stream in the plant is numerical plumbing, not process flow.
+   */
+  public static final double DEFAULT_AUTO_TUNING_FLOW_FRACTION = 1.0e-6;
+
+  /** Whether {@link #runUntilConverged(int)} auto-derives the flow noise filters from the plant flow scale. */
+  private boolean autoConvergenceTuning = true;
+
+  /** Whether the auto-tuner may also auto-bypass units whose inlet flow is below the noise floor. */
+  private boolean autoLowFlowBypass = true;
+
+  /** Noise-floor fraction of the detected plant mass-flow scale (see {@link #DEFAULT_AUTO_TUNING_FLOW_FRACTION}). */
+  private double autoTuningFlowFraction = DEFAULT_AUTO_TUNING_FLOW_FRACTION;
+
+  /** True once {@link #setBoundaryFlowFloor(double)} has been called, so the auto-tuner must not override it. */
+  private boolean boundaryFlowFloorExplicit = false;
+
+  /** True once {@link #setAbsoluteFlowTolerance(double)} has been called, so the auto-tuner must not override it. */
+  private boolean absoluteFlowToleranceExplicit = false;
+
+  /** Largest boundary/stream mass flow (kg/hr) detected by the auto-tuner on the last run. */
+  private double detectedPlantFlowScale = 0.0;
+
+  /** Flow scale the auto-tuner last applied its thresholds for; used to detect a ramping plant. */
+  private transient double autoTuningAppliedScale = 0.0;
+
+  /** Human-readable description of what the auto-tuner did on the last run. */
+  private String autoTuningSummary = "";
+
   // Convergence tracking
   private int lastIterationCount = 0;
   private double lastMaxFlowError = Double.MAX_VALUE;
@@ -1589,6 +1619,7 @@ public class ProcessModel implements Runnable, Serializable {
       lastBoundaryStreamCount = boundaryStreams.size();
       Map<Object, double[]> previousBoundaryStreamStates = captureBoundaryStreamStates(boundaryStreams);
       java.util.Set<ProcessSystem> dirtyAreas = null;
+      resetAutoTuningRunState();
 
       int iterations = 0;
       while (!Thread.currentThread().isInterrupted() && iterations < maxIterations) {
@@ -1601,6 +1632,7 @@ public class ProcessModel implements Runnable, Serializable {
 
         // Capture current stream states and calculate errors
         Map<Object, double[]> currentBoundaryStreamStates = captureBoundaryStreamStates(boundaryStreams);
+        applyAutoConvergenceTuning(currentBoundaryStreamStates);
         double[] errors = calculateConvergenceErrors(previousBoundaryStreamStates, currentBoundaryStreamStates);
         java.util.Set<Object> changedBoundaryStreams = findChangedBoundaryStreams(previousBoundaryStreamStates,
             currentBoundaryStreamStates);
@@ -2768,6 +2800,9 @@ public class ProcessModel implements Runnable, Serializable {
       sb.append(String.format(Locale.US, "  Flow filters: absolute tolerance %.3g kg/hr, boundary floor %.3g kg/hr\n",
           absoluteFlowTolerance, boundaryFlowFloor));
     }
+    if (!autoTuningSummary.isEmpty()) {
+      sb.append("  Auto-tuning:  ").append(autoTuningSummary).append("\n");
+    }
 
     List<BoundaryStreamError> offenders = getNonConvergedBoundaryStreamErrors();
     if (!offenders.isEmpty()) {
@@ -2800,6 +2835,56 @@ public class ProcessModel implements Runnable, Serializable {
       }
     }
     return sb.toString();
+  }
+
+  /**
+   * Runs the model until convergence with automatic convergence tuning, using the currently configured iteration limit
+   * and tolerances.
+   *
+   * @return true if the model converged within the iteration limit, false otherwise
+   */
+  public boolean runUntilConverged() {
+    return runUntilConverged(maxIterations);
+  }
+
+  /**
+   * Runs the model until convergence, letting NeqSim work out the flow noise filters by itself.
+   *
+   * <p>
+   * This is the recommended entry point for large multi-area plants. It behaves like
+   * {@link #runUntilConverged(int, double)} with the currently configured relative tolerance (default {@code 1e-4}, or
+   * whatever {@link #setTolerance(double)} was last given), but with {@linkplain #isAutoConvergenceTuning() automatic
+   * convergence tuning} the model no longer needs hand-picked, plant-specific numbers for the boundary flow floor, the
+   * absolute flow tolerance or the per-section low-flow bypass threshold.
+   * </p>
+   *
+   * <p>
+   * After the first outer sweep the largest mass flow anywhere in the plant is measured and every flow-noise threshold
+   * is derived from it as a fraction ({@link #getAutoTuningFlowFraction()}, default
+   * {@value #DEFAULT_AUTO_TUNING_FLOW_FRACTION}) of that scale. The same model therefore self-configures across
+   * scenarios and production years without editing any convergence parameter, and a dead leg carrying a seed flow is
+   * recognised as noise rather than dominating the plant-wide relative error. Anything set explicitly by the caller
+   * (via {@link #setBoundaryFlowFloor(double)}, {@link #setAbsoluteFlowTolerance(double)} or a per-unit
+   * {@code setMinimumFlow}) always wins over the automatic value.
+   * </p>
+   *
+   * <p>
+   * Call {@link #getAutoTuningSummary()} afterwards to see the detected flow scale and the thresholds that were
+   * applied, or {@link #setAutoConvergenceTuning(boolean) setAutoConvergenceTuning(false)} to opt out entirely.
+   * </p>
+   *
+   * @param maxIterations maximum number of outer iterations to attempt; must be at least 1
+   * @return true if the model converged within the iteration limit, false otherwise
+   * @throws IllegalArgumentException if maxIterations is less than 1
+   */
+  public boolean runUntilConverged(int maxIterations) {
+    if (maxIterations < 1) {
+      throw new IllegalArgumentException("maxIterations must be at least 1, was " + maxIterations);
+    }
+    setRunStep(false);
+    setMaxIterations(maxIterations);
+    run();
+    return modelConverged;
   }
 
   /**
@@ -2889,6 +2974,7 @@ public class ProcessModel implements Runnable, Serializable {
           "absoluteFlowTolerance must be a finite non-negative number, was " + absoluteFlowTolerance);
     }
     this.absoluteFlowTolerance = absoluteFlowTolerance;
+    this.absoluteFlowToleranceExplicit = true;
   }
 
   /**
@@ -2919,6 +3005,236 @@ public class ProcessModel implements Runnable, Serializable {
           "boundaryFlowFloor must be a finite non-negative number, was " + boundaryFlowFloor);
     }
     this.boundaryFlowFloor = boundaryFlowFloor;
+    this.boundaryFlowFloorExplicit = true;
+  }
+
+  /**
+   * Whether the model derives its flow-noise convergence filters automatically from the plant flow scale.
+   *
+   * @return true if automatic convergence tuning is enabled (default)
+   */
+  public boolean isAutoConvergenceTuning() {
+    return autoConvergenceTuning;
+  }
+
+  /**
+   * Enables or disables automatic convergence tuning.
+   *
+   * <p>
+   * When enabled (the default) the first outer sweep measures the largest mass flow in the plant and derives the
+   * boundary flow floor, the absolute flow tolerance and - when {@link #isAutoLowFlowBypass()} is also on - the
+   * per-unit low-flow bypass threshold from it. Disabling restores the historical behaviour where every one of those
+   * numbers has to be supplied per plant. Values the caller set explicitly are never overridden either way.
+   * </p>
+   *
+   * @param autoConvergenceTuning true to let the model tune its own flow-noise filters
+   */
+  public void setAutoConvergenceTuning(boolean autoConvergenceTuning) {
+    this.autoConvergenceTuning = autoConvergenceTuning;
+  }
+
+  /**
+   * Whether the auto-tuner may bypass units whose inlet flow is below the detected noise floor.
+   *
+   * @return true if automatic low-flow bypass is enabled (default)
+   */
+  public boolean isAutoLowFlowBypass() {
+    return autoLowFlowBypass;
+  }
+
+  /**
+   * Enables or disables automatic low-flow bypass of stagnant sections.
+   *
+   * <p>
+   * A dead leg (a shut-in injection train, a recompression stage switched off by a split factor) drains towards zero
+   * one unit per outer pass and keeps perturbing the convergence gate for tens of iterations. When enabled, units whose
+   * inlet flow falls below the detected noise floor are marked inactive for the rest of the run and stop being solved;
+   * they reactivate automatically if flow returns. Units with a caller-supplied {@code setMinimumFlow} are never
+   * touched.
+   * </p>
+   *
+   * @param autoLowFlowBypass true to auto-bypass negligible-flow units
+   */
+  public void setAutoLowFlowBypass(boolean autoLowFlowBypass) {
+    this.autoLowFlowBypass = autoLowFlowBypass;
+  }
+
+  /**
+   * Noise-floor fraction of the detected plant flow scale used by the auto-tuner.
+   *
+   * @return the fraction (default {@value #DEFAULT_AUTO_TUNING_FLOW_FRACTION})
+   */
+  public double getAutoTuningFlowFraction() {
+    return autoTuningFlowFraction;
+  }
+
+  /**
+   * Sets the noise-floor fraction of the detected plant flow scale used by the auto-tuner.
+   *
+   * <p>
+   * Raise it to be more aggressive about ignoring small streams (faster, more forgiving convergence), lower it to keep
+   * smaller streams inside the convergence metric. A 1000 t/hr plant with the default {@code 1e-6} gets a 1 kg/hr noise
+   * floor.
+   * </p>
+   *
+   * @param autoTuningFlowFraction fraction of the largest plant mass flow; must be finite and in [0, 1)
+   * @throws IllegalArgumentException if the value is not finite or outside [0, 1)
+   */
+  public void setAutoTuningFlowFraction(double autoTuningFlowFraction) {
+    if (Double.isNaN(autoTuningFlowFraction) || Double.isInfinite(autoTuningFlowFraction)
+        || autoTuningFlowFraction < 0.0 || autoTuningFlowFraction >= 1.0) {
+      throw new IllegalArgumentException(
+          "autoTuningFlowFraction must be a finite value in [0, 1), was " + autoTuningFlowFraction);
+    }
+    this.autoTuningFlowFraction = autoTuningFlowFraction;
+  }
+
+  /**
+   * Largest mass flow (kg/hr) detected anywhere in the plant on the last run.
+   *
+   * @return the detected plant flow scale in kg/hr, or 0.0 if the model has not run with auto-tuning enabled
+   */
+  public double getDetectedPlantFlowScale() {
+    return detectedPlantFlowScale;
+  }
+
+  /**
+   * Human-readable description of what the auto-tuner detected and applied on the last run.
+   *
+   * @return a one-line summary, or an empty string when auto-tuning did not run
+   */
+  public String getAutoTuningSummary() {
+    return autoTuningSummary;
+  }
+
+  /**
+   * Restores every threshold the auto-tuner applied, returning the model to its unconfigured state.
+   *
+   * <p>
+   * Units whose low-flow threshold was written by the auto-tuner get it reset and are reactivated. Explicitly
+   * configured values are left untouched.
+   * </p>
+   *
+   * @return the number of units whose auto-assigned low-flow threshold was cleared
+   */
+  public int resetAutoTuning() {
+    int cleared = 0;
+    for (ProcessSystem process : processes.values()) {
+      cleared += process.resetAutoLowFlowThreshold();
+    }
+    if (!boundaryFlowFloorExplicit) {
+      boundaryFlowFloor = DEFAULT_BOUNDARY_FLOW_FLOOR;
+    }
+    if (!absoluteFlowToleranceExplicit) {
+      absoluteFlowTolerance = 0.0;
+    }
+    autoTuningAppliedScale = 0.0;
+    detectedPlantFlowScale = 0.0;
+    autoTuningSummary = "";
+    return cleared;
+  }
+
+  /** Clears the per-run auto-tuning bookkeeping so a re-run re-measures the plant flow scale. */
+  private void resetAutoTuningRunState() {
+    autoTuningAppliedScale = 0.0;
+    if (!autoConvergenceTuning) {
+      autoTuningSummary = "";
+    }
+  }
+
+  /**
+   * Derives the flow-noise convergence filters from the plant's own throughput.
+   *
+   * <p>
+   * Called once per outer iteration. The scale is the total mass flow entering the plant across its feed boundary
+   * (recycles and internal streams excluded), so it is the physical throughput rather than the largest number found
+   * anywhere in the flowsheet - a not-yet-solved internal stream can carry an arbitrary flow and would otherwise set a
+   * meaningless scale. Thresholds are only re-applied when the throughput has grown materially, which keeps the
+   * per-iteration cost negligible.
+   * </p>
+   *
+   * @param boundaryStates current boundary-stream states, {@code [flow kg/hr, temperature K, pressure bara]}
+   */
+  private void applyAutoConvergenceTuning(Map<Object, double[]> boundaryStates) {
+    if (!autoConvergenceTuning) {
+      return;
+    }
+    double scale = Math.max(detectedPlantFlowScale, getTotalFeedFlowRate());
+    if (!(scale > 0.0) || Double.isInfinite(scale)) {
+      return;
+    }
+    detectedPlantFlowScale = scale;
+
+    // Re-apply only on the first pass or when the plant has grown materially since.
+    if (autoTuningAppliedScale > 0.0 && scale < 2.0 * autoTuningAppliedScale) {
+      return;
+    }
+    autoTuningAppliedScale = scale;
+
+    double noiseFloor = scale * autoTuningFlowFraction;
+    if (!boundaryFlowFloorExplicit) {
+      boundaryFlowFloor = Math.max(DEFAULT_BOUNDARY_FLOW_FLOOR, noiseFloor);
+    }
+    if (!absoluteFlowToleranceExplicit) {
+      absoluteFlowTolerance = noiseFloor;
+    }
+    int bypassCandidates = autoLowFlowBypass ? applyAutoLowFlowThreshold(noiseFloor) : 0;
+
+    autoTuningSummary = String.format(Locale.US,
+        "auto-tuned to a plant feed rate of %.4g kg/hr: boundary floor %.3g kg/hr, absolute flow tolerance "
+            + "%.3g kg/hr, low-flow bypass %.3g kg/hr on %d unit(s)",
+        scale, boundaryFlowFloor, absoluteFlowTolerance, autoLowFlowBypass ? noiseFloor : 0.0, bypassCandidates);
+    logger.debug("ProcessModel {}", autoTuningSummary);
+  }
+
+  /**
+   * Writes the auto-derived low-flow bypass threshold onto every unit that has no caller-supplied threshold.
+   *
+   * @param thresholdKgPerHour low-flow bypass threshold in kg/hr
+   * @return the number of units the auto-tuner manages
+   */
+  private int applyAutoLowFlowThreshold(double thresholdKgPerHour) {
+    int managed = 0;
+    for (ProcessSystem process : processes.values()) {
+      managed += process.applyAutoLowFlowThreshold(thresholdKgPerHour);
+    }
+    return managed;
+  }
+
+  /**
+   * Total mass flow entering the whole model across its feed boundary.
+   *
+   * <p>
+   * A stream produced by any area - including a cross-area link or a recycle target - is not a feed, so this is the
+   * plant throughput rather than a sum of internal traffic.
+   * </p>
+   *
+   * @return total feed mass flow in kg/hr, or 0.0 when no feed stream could be read
+   */
+  public double getTotalFeedFlowRate() {
+    java.util.Set<StreamInterface> produced = java.util.Collections
+        .newSetFromMap(new java.util.IdentityHashMap<StreamInterface, Boolean>());
+    java.util.Set<StreamInterface> inlets = java.util.Collections
+        .newSetFromMap(new java.util.IdentityHashMap<StreamInterface, Boolean>());
+    for (ProcessSystem process : processes.values()) {
+      process.collectProducedStreams(produced);
+      process.collectInletStreams(inlets);
+    }
+    double total = 0.0;
+    for (StreamInterface stream : inlets) {
+      if (produced.contains(stream)) {
+        continue;
+      }
+      try {
+        double flow = stream.getFlowRate("kg/hr");
+        if (!Double.isNaN(flow) && !Double.isInfinite(flow) && flow > 0.0) {
+          total += flow;
+        }
+      } catch (RuntimeException ex) {
+        logger.debug("Could not read feed flow rate while detecting the plant flow scale", ex);
+      }
+    }
+    return total;
   }
 
   /**
@@ -2964,6 +3280,16 @@ public class ProcessModel implements Runnable, Serializable {
     errors.add("temperature", buildErrorEntry(lastMaxTemperatureError, temperatureTolerance, "temperature"));
     errors.add("pressure", buildErrorEntry(lastMaxPressureError, pressureTolerance, "pressure"));
     root.add("errors", errors);
+
+    JsonObject autoTuning = new JsonObject();
+    autoTuning.addProperty("enabled", autoConvergenceTuning);
+    autoTuning.addProperty("lowFlowBypassEnabled", autoLowFlowBypass);
+    autoTuning.addProperty("flowFraction", autoTuningFlowFraction);
+    autoTuning.addProperty("detectedPlantFlowScaleKgPerHr", detectedPlantFlowScale);
+    autoTuning.addProperty("boundaryFlowFloorKgPerHr", boundaryFlowFloor);
+    autoTuning.addProperty("absoluteFlowToleranceKgPerHr", absoluteFlowTolerance);
+    autoTuning.addProperty("summary", autoTuningSummary);
+    root.add("autoTuning", autoTuning);
 
     JsonArray boundaryStreamErrors = new JsonArray();
     for (BoundaryStreamError streamError : getNonConvergedBoundaryStreamErrors()) {

@@ -136,6 +136,18 @@ public class ProcessSystem extends SimulationBaseClass {
   private double massBalanceErrorThreshold = 0.1; // Default 0.1% error threshold
   private double minimumFlowForMassBalanceError = 1e-6; // Default 1e-6 kg/sec
 
+  /** Units whose low-flow bypass threshold is managed by the automatic convergence tuner. */
+  private transient java.util.Set<ProcessEquipmentInterface> autoTunedLowFlowUnits;
+
+  /** Low-flow bypass threshold (kg/hr) the auto-tuner last wrote onto {@link #autoTunedLowFlowUnits}. */
+  private transient double autoAppliedLowFlowThreshold = 0.0;
+
+  /** Whether {@link #runUntilConverged(int)} derives its low-flow bypass threshold from the process flow scale. */
+  private boolean autoConvergenceTuning = true;
+
+  /** Noise-floor fraction of the largest process mass flow used by {@link #runUntilConverged(int)}. */
+  private double autoTuningFlowFraction = 1.0e-6;
+
   // Transient simulation settings
   private int maxTransientIterations = 3; // Number of iterations within each time step
   private boolean enableMassBalanceTracking = false;
@@ -3475,6 +3487,351 @@ public class ProcessSystem extends SimulationBaseClass {
       }
     }
     return bypassed;
+  }
+
+  /**
+   * Largest mass flow found on any unit inlet or outlet stream in this process.
+   *
+   * <p>
+   * Streams that cannot be read - typically because the unit has not been solved yet - are skipped.
+   * </p>
+   *
+   * @return the largest mass flow in kg/hr, or 0.0 when no stream could be read
+   */
+  public double getMaxStreamFlowRate() {
+    double largest = 0.0;
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      largest = Math.max(largest, largestFlowIn(unit.getInletStreams()));
+      largest = Math.max(largest, largestFlowIn(unit.getOutletStreams()));
+    }
+    return largest;
+  }
+
+  /**
+   * Streams that enter this process from outside it: inlet streams of some unit that no unit in this process produces.
+   *
+   * <p>
+   * This is the process mass-balance boundary on the feed side, and it is what {@link #getTotalFeedFlowRate()} sums.
+   * Recycle loops are excluded automatically because a recycle's target stream is an outlet of the
+   * {@link neqsim.process.equipment.util.Recycle} unit.
+   * </p>
+   *
+   * @return identity-distinct list of feed streams (may be empty)
+   */
+  public java.util.List<neqsim.process.equipment.stream.StreamInterface> getFeedStreams() {
+    java.util.Set<neqsim.process.equipment.stream.StreamInterface> produced = java.util.Collections
+        .newSetFromMap(new java.util.IdentityHashMap<neqsim.process.equipment.stream.StreamInterface, Boolean>());
+    collectProducedStreams(produced);
+    java.util.Set<neqsim.process.equipment.stream.StreamInterface> inlets = java.util.Collections
+        .newSetFromMap(new java.util.IdentityHashMap<neqsim.process.equipment.stream.StreamInterface, Boolean>());
+    collectInletStreams(inlets);
+    java.util.List<neqsim.process.equipment.stream.StreamInterface> feeds = new java.util.ArrayList<neqsim.process.equipment.stream.StreamInterface>();
+    for (neqsim.process.equipment.stream.StreamInterface stream : inlets) {
+      if (!produced.contains(stream)) {
+        feeds.add(stream);
+      }
+    }
+    return feeds;
+  }
+
+  /**
+   * Total mass flow entering this process across its feed boundary.
+   *
+   * <p>
+   * This is the physical throughput of the flowsheet and the reference scale used by automatic convergence tuning. It
+   * is deliberately a sum over the feed boundary rather than a maximum over all streams: an internal recycle or a
+   * not-yet-solved stream can carry an arbitrarily large flow and would otherwise set a meaningless scale.
+   * </p>
+   *
+   * @return total feed mass flow in kg/hr, or 0.0 when no feed stream could be read
+   */
+  public double getTotalFeedFlowRate() {
+    double total = 0.0;
+    for (neqsim.process.equipment.stream.StreamInterface stream : getFeedStreams()) {
+      try {
+        double flow = stream.getFlowRate("kg/hr");
+        if (!Double.isNaN(flow) && !Double.isInfinite(flow) && flow > 0.0) {
+          total += flow;
+        }
+      } catch (RuntimeException ex) {
+        logger.debug("Could not read feed flow rate while detecting the process flow scale", ex);
+      }
+    }
+    return total;
+  }
+
+  /**
+   * Adds every stream produced by a unit in this process to the supplied identity set.
+   *
+   * @param produced set to add to
+   */
+  void collectProducedStreams(java.util.Set<neqsim.process.equipment.stream.StreamInterface> produced) {
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      java.util.List<neqsim.process.equipment.stream.StreamInterface> outlets;
+      try {
+        outlets = unit.getOutletStreams();
+      } catch (RuntimeException ex) {
+        continue;
+      }
+      if (outlets == null) {
+        continue;
+      }
+      for (neqsim.process.equipment.stream.StreamInterface stream : outlets) {
+        if (stream != null && stream != unit) {
+          produced.add(stream);
+        }
+      }
+    }
+  }
+
+  /**
+   * Adds every stream consumed by a unit in this process to the supplied identity set.
+   *
+   * @param inlets set to add to
+   */
+  void collectInletStreams(java.util.Set<neqsim.process.equipment.stream.StreamInterface> inlets) {
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      java.util.List<neqsim.process.equipment.stream.StreamInterface> streams;
+      try {
+        streams = unit.getInletStreams();
+      } catch (RuntimeException ex) {
+        continue;
+      }
+      if (streams == null) {
+        continue;
+      }
+      for (neqsim.process.equipment.stream.StreamInterface stream : streams) {
+        if (stream != null && stream != unit) {
+          inlets.add(stream);
+        }
+      }
+    }
+  }
+
+  /**
+   * Largest readable mass flow in a list of streams.
+   *
+   * @param streams streams to inspect; may be null or contain nulls
+   * @return the largest mass flow in kg/hr, or 0.0 when none could be read
+   */
+  private double largestFlowIn(java.util.List<neqsim.process.equipment.stream.StreamInterface> streams) {
+    if (streams == null) {
+      return 0.0;
+    }
+    double largest = 0.0;
+    for (neqsim.process.equipment.stream.StreamInterface stream : streams) {
+      if (stream == null) {
+        continue;
+      }
+      try {
+        double flow = stream.getFlowRate("kg/hr");
+        if (!Double.isNaN(flow) && !Double.isInfinite(flow)) {
+          largest = Math.max(largest, Math.abs(flow));
+        }
+      } catch (RuntimeException ex) {
+        logger.debug("Could not read flow rate while detecting the process flow scale", ex);
+      }
+    }
+    return largest;
+  }
+
+  /**
+   * Applies an automatically derived low-flow bypass threshold to every unit that has no caller-supplied threshold.
+   *
+   * <p>
+   * Unlike {@link #setSectionLowFlowThreshold(double)} this never overwrites a threshold the caller configured, and it
+   * remembers which units it manages so {@link #resetAutoLowFlowThreshold()} can undo it. Units whose inlet flow falls
+   * below the threshold auto-bypass on their next run and reactivate automatically if flow returns.
+   * </p>
+   *
+   * @param thresholdKgPerHour low-flow bypass threshold in kg/hr; must be &gt;= 0
+   * @return the number of units now managed by the automatic threshold
+   * @throws IllegalArgumentException if the threshold is negative or not finite
+   */
+  public int applyAutoLowFlowThreshold(double thresholdKgPerHour) {
+    if (Double.isNaN(thresholdKgPerHour) || Double.isInfinite(thresholdKgPerHour) || thresholdKgPerHour < 0.0) {
+      throw new IllegalArgumentException(
+          "Low-flow threshold must be a finite non-negative number, was " + thresholdKgPerHour);
+    }
+    if (autoTunedLowFlowUnits == null) {
+      autoTunedLowFlowUnits = java.util.Collections
+          .newSetFromMap(new java.util.IdentityHashMap<ProcessEquipmentInterface, Boolean>());
+    }
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (autoTunedLowFlowUnits.contains(unit)) {
+        continue;
+      }
+      double configured = unit.getMinimumFlow();
+      boolean userConfigured = configured > neqsim.process.equipment.ProcessEquipmentBaseClass.DEFAULT_MINIMUM_FLOW
+          && configured != autoAppliedLowFlowThreshold;
+      if (!userConfigured) {
+        autoTunedLowFlowUnits.add(unit);
+      }
+    }
+    for (ProcessEquipmentInterface unit : autoTunedLowFlowUnits) {
+      unit.setMinimumFlow(thresholdKgPerHour);
+      // Apply the verdict immediately: the recalculation cache would otherwise skip a unit
+      // whose inputs have not changed, so a threshold set after a solve would never take
+      // effect. The unit's own run() re-evaluates and reactivates it if flow returns.
+      if (!unit.isLockedInactive()) {
+        double flow = primaryFlowOf(unit);
+        if (!Double.isNaN(flow) && flow < thresholdKgPerHour) {
+          unit.isActive(false);
+        }
+      }
+    }
+    autoAppliedLowFlowThreshold = thresholdKgPerHour;
+    return autoTunedLowFlowUnits.size();
+  }
+
+  /**
+   * Mass flow that decides whether a unit is stagnant: its primary inlet stream, or - for source units such as a feed
+   * {@link neqsim.process.equipment.stream.Stream} - its own outlet.
+   *
+   * @param unit unit operation to inspect
+   * @return the deciding mass flow in kg/hr, or {@code Double.NaN} when it cannot be read
+   */
+  private double primaryFlowOf(ProcessEquipmentInterface unit) {
+    double flow = firstReadableFlow(unit.getInletStreams());
+    if (Double.isNaN(flow)) {
+      flow = firstReadableFlow(unit.getOutletStreams());
+    }
+    return flow;
+  }
+
+  /**
+   * Mass flow of the first stream in a list that can be read.
+   *
+   * @param streams streams to inspect; may be null or contain nulls
+   * @return the mass flow in kg/hr, or {@code Double.NaN} when none could be read
+   */
+  private double firstReadableFlow(java.util.List<neqsim.process.equipment.stream.StreamInterface> streams) {
+    if (streams == null) {
+      return Double.NaN;
+    }
+    for (neqsim.process.equipment.stream.StreamInterface stream : streams) {
+      if (stream == null) {
+        continue;
+      }
+      try {
+        double flow = stream.getFlowRate("kg/hr");
+        if (!Double.isNaN(flow) && !Double.isInfinite(flow)) {
+          return flow;
+        }
+      } catch (RuntimeException ex) {
+        logger.debug("Could not read flow rate while applying the automatic low-flow threshold", ex);
+      }
+    }
+    return Double.NaN;
+  }
+
+  /**
+   * Clears every low-flow bypass threshold written by {@link #applyAutoLowFlowThreshold(double)} and reactivates the
+   * affected units. Thresholds the caller configured are left untouched.
+   *
+   * @return the number of units whose automatic threshold was cleared
+   */
+  public int resetAutoLowFlowThreshold() {
+    if (autoTunedLowFlowUnits == null) {
+      return 0;
+    }
+    int cleared = autoTunedLowFlowUnits.size();
+    for (ProcessEquipmentInterface unit : autoTunedLowFlowUnits) {
+      unit.setMinimumFlow(neqsim.process.equipment.ProcessEquipmentBaseClass.DEFAULT_MINIMUM_FLOW);
+      if (!unit.isLockedInactive()) {
+        unit.isActive(true);
+      }
+    }
+    autoTunedLowFlowUnits.clear();
+    autoAppliedLowFlowThreshold = 0.0;
+    return cleared;
+  }
+
+  /**
+   * Runs this process until it is solved, letting NeqSim work out its own low-flow filtering.
+   *
+   * <p>
+   * {@link #run()} already iterates the internal recycles to convergence, so a single pass is normally enough. This
+   * wrapper adds two things a large flowsheet needs and that otherwise have to be hand-configured per model: after the
+   * first pass the largest mass flow in the process is measured and every unit without an explicit threshold gets a
+   * low-flow bypass cutoff of {@link #getAutoTuningFlowFraction()} times that scale, so stagnant legs stop being
+   * solved; and the process is then re-run until {@link #solved()} or the pass budget is spent.
+   * </p>
+   *
+   * @param maxIterations maximum number of full process passes to attempt; must be at least 1
+   * @return true if the process solved within the pass budget
+   * @throws IllegalArgumentException if maxIterations is less than 1
+   */
+  public boolean runUntilConverged(int maxIterations) {
+    if (maxIterations < 1) {
+      throw new IllegalArgumentException("maxIterations must be at least 1, was " + maxIterations);
+    }
+    run();
+    boolean tuned = false;
+    if (autoConvergenceTuning) {
+      double scale = getTotalFeedFlowRate();
+      if (scale > 0.0 && !Double.isInfinite(scale)) {
+        tuned = applyAutoLowFlowThreshold(scale * autoTuningFlowFraction) > 0;
+      }
+    }
+    int passes = 1;
+    while (passes < maxIterations && (tuned || !solved())) {
+      run();
+      passes++;
+      tuned = false;
+    }
+    return solved();
+  }
+
+  /**
+   * Runs this process until it is solved, using a default budget of 10 passes.
+   *
+   * @return true if the process solved within the pass budget
+   */
+  public boolean runUntilConverged() {
+    return runUntilConverged(10);
+  }
+
+  /**
+   * Whether {@link #runUntilConverged(int)} derives its low-flow bypass threshold from the process flow scale.
+   *
+   * @return true if automatic convergence tuning is enabled (default)
+   */
+  public boolean isAutoConvergenceTuning() {
+    return autoConvergenceTuning;
+  }
+
+  /**
+   * Enables or disables automatic convergence tuning for {@link #runUntilConverged(int)}.
+   *
+   * @param autoConvergenceTuning true to let the process tune its own low-flow bypass threshold
+   */
+  public void setAutoConvergenceTuning(boolean autoConvergenceTuning) {
+    this.autoConvergenceTuning = autoConvergenceTuning;
+  }
+
+  /**
+   * Noise-floor fraction of the largest process mass flow used by {@link #runUntilConverged(int)}.
+   *
+   * @return the fraction (default 1e-6)
+   */
+  public double getAutoTuningFlowFraction() {
+    return autoTuningFlowFraction;
+  }
+
+  /**
+   * Sets the noise-floor fraction of the largest process mass flow used by {@link #runUntilConverged(int)}.
+   *
+   * @param autoTuningFlowFraction fraction of the largest mass flow; must be finite and in [0, 1)
+   * @throws IllegalArgumentException if the value is not finite or outside [0, 1)
+   */
+  public void setAutoTuningFlowFraction(double autoTuningFlowFraction) {
+    if (Double.isNaN(autoTuningFlowFraction) || Double.isInfinite(autoTuningFlowFraction)
+        || autoTuningFlowFraction < 0.0 || autoTuningFlowFraction >= 1.0) {
+      throw new IllegalArgumentException(
+          "autoTuningFlowFraction must be a finite value in [0, 1), was " + autoTuningFlowFraction);
+    }
+    this.autoTuningFlowFraction = autoTuningFlowFraction;
   }
 
   /**
