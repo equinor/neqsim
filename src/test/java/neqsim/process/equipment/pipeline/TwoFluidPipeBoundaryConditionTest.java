@@ -604,8 +604,8 @@ class TwoFluidPipeBoundaryConditionTest {
    * @param inletPressureBara inlet pressure in bara
    * @param outletPressureBara outlet pressure in bara
    */
-  private void assertSteadyStateToTransientHandoffIsContinuous(String name, SystemInterface fluid,
-      double flowRateKgSec, double inletPressureBara, double outletPressureBara) {
+  private void assertSteadyStateToTransientHandoffIsContinuous(String name, SystemInterface fluid, double flowRateKgSec,
+      double inletPressureBara, double outletPressureBara) {
     TwoFluidPipe handoffPipe = createRegressionPipe(name + "-handoff", fluid, flowRateKgSec, inletPressureBara,
         outletPressureBara);
     handoffPipe.setThermodynamicUpdateInterval(Integer.MAX_VALUE);
