@@ -3466,8 +3466,8 @@ public class TwoFluidPipe extends Pipeline {
         }
       }
 
-      accumulateAcceptedMassBalance(stageMassBalanceRates, dtActual, integratedInletMassKg,
-          integratedOutletMassKg, integratedSourceMassKg);
+      accumulateAcceptedMassBalance(stageMassBalanceRates, dtActual, integratedInletMassKg, integratedOutletMassKg,
+          integratedSourceMassKg);
       acceptedElapsedTime += dtActual;
       acceptedSubsteps++;
 
@@ -4531,8 +4531,8 @@ public class TwoFluidPipe extends Pipeline {
    * Get the discrete mass balance from the most recent {@link #runTransient(double, UUID)} call.
    *
    * <p>
-   * Boundary fluxes and source terms are integrated with the same stage weights as the configured time integrator.
-   * The report includes gas, oil, water, combined-liquid, and total residuals in kg and relative form. A steady-state
+   * Boundary fluxes and source terms are integrated with the same stage weights as the configured time integrator. The
+   * report includes gas, oil, water, combined-liquid, and total residuals in kg and relative form. A steady-state
    * {@link #run(UUID)} clears the previous report.
    * </p>
    *
