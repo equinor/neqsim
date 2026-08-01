@@ -3685,6 +3685,35 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Gives every recycle without an explicit absolute flow tolerance the supplied flow noise floor.
+   *
+   * <p>
+   * A tear stream otherwise converges on {@link neqsim.process.equipment.util.Recycle#flowBalanceCheck()}, which is an
+   * absolute kg/sec residual on small loops but a percentage on large ones. Handing it the same kg/hr noise floor the
+   * plant-wide gate uses makes the two criteria agree, so a loop cannot report itself solved on a looser basis than the
+   * model demands, nor keep iterating on a residual the model already accepts.
+   * </p>
+   *
+   * @param thresholdKgPerHour absolute flow tolerance in kg/hr; must be &gt;= 0
+   * @return the number of recycles the tolerance was applied to
+   * @throws IllegalArgumentException if the threshold is negative or not finite
+   */
+  public int applyAutoRecycleFlowTolerance(double thresholdKgPerHour) {
+    if (Double.isNaN(thresholdKgPerHour) || Double.isInfinite(thresholdKgPerHour) || thresholdKgPerHour < 0.0) {
+      throw new IllegalArgumentException(
+          "Recycle flow tolerance must be a finite non-negative number, was " + thresholdKgPerHour);
+    }
+    int applied = 0;
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof neqsim.process.equipment.util.Recycle
+          && ((neqsim.process.equipment.util.Recycle) unit).applyAutoAbsoluteFlowTolerance(thresholdKgPerHour)) {
+        applied++;
+      }
+    }
+    return applied;
+  }
+
+  /**
    * Mass flow that decides whether a unit is stagnant: its primary inlet stream, or - for source units such as a feed
    * {@link neqsim.process.equipment.stream.Stream} - its own outlet.
    *
@@ -3753,7 +3782,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * <p>
    * {@link #run()} already iterates the internal recycles to convergence, so a single pass is normally enough. This
    * wrapper adds two things a large flowsheet needs and that otherwise have to be hand-configured per model: after the
-   * first pass the largest mass flow in the process is measured and every unit without an explicit threshold gets a
+   * first pass the total feed flow entering the process is measured and every unit without an explicit threshold gets a
    * low-flow bypass cutoff of {@link #getAutoTuningFlowFraction()} times that scale, so stagnant legs stop being
    * solved; and the process is then re-run until {@link #solved()} or the pass budget is spent.
    * </p>
@@ -3771,7 +3800,9 @@ public class ProcessSystem extends SimulationBaseClass {
     if (autoConvergenceTuning) {
       double scale = getTotalFeedFlowRate();
       if (scale > 0.0 && !Double.isInfinite(scale)) {
-        tuned = applyAutoLowFlowThreshold(scale * autoTuningFlowFraction) > 0;
+        double noiseFloor = scale * autoTuningFlowFraction;
+        applyAutoRecycleFlowTolerance(noiseFloor);
+        tuned = applyAutoLowFlowThreshold(noiseFloor) > 0;
       }
     }
     int passes = 1;
@@ -3811,7 +3842,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Noise-floor fraction of the largest process mass flow used by {@link #runUntilConverged(int)}.
+   * Noise-floor fraction of the total process feed flow used by {@link #runUntilConverged(int)}.
    *
    * @return the fraction (default 1e-6)
    */
@@ -3820,9 +3851,9 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Sets the noise-floor fraction of the largest process mass flow used by {@link #runUntilConverged(int)}.
+   * Sets the noise-floor fraction of the total process feed flow used by {@link #runUntilConverged(int)}.
    *
-   * @param autoTuningFlowFraction fraction of the largest mass flow; must be finite and in [0, 1)
+   * @param autoTuningFlowFraction fraction of the total feed flow; must be finite and in [0, 1)
    * @throws IllegalArgumentException if the value is not finite or outside [0, 1)
    */
   public void setAutoTuningFlowFraction(double autoTuningFlowFraction) {

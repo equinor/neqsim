@@ -2859,8 +2859,8 @@ public class ProcessModel implements Runnable, Serializable {
    * </p>
    *
    * <p>
-   * After the first outer sweep the largest mass flow anywhere in the plant is measured and every flow-noise threshold
-   * is derived from it as a fraction ({@link #getAutoTuningFlowFraction()}, default
+   * After the first outer sweep the total mass flow entering the plant across its feed boundary is measured and every
+   * flow-noise threshold is derived from it as a fraction ({@link #getAutoTuningFlowFraction()}, default
    * {@value #DEFAULT_AUTO_TUNING_FLOW_FRACTION}) of that scale. The same model therefore self-configures across
    * scenarios and production years without editing any convergence parameter, and a dead leg carrying a seed flow is
    * recognised as noise rather than dominating the plant-wide relative error. Anything set explicitly by the caller
@@ -3021,7 +3021,7 @@ public class ProcessModel implements Runnable, Serializable {
    * Enables or disables automatic convergence tuning.
    *
    * <p>
-   * When enabled (the default) the first outer sweep measures the largest mass flow in the plant and derives the
+   * When enabled (the default) the first outer sweep measures the plant's total feed throughput and derives the
    * boundary flow floor, the absolute flow tolerance and - when {@link #isAutoLowFlowBypass()} is also on - the
    * per-unit low-flow bypass threshold from it. Disabling restores the historical behaviour where every one of those
    * numbers has to be supplied per plant. Values the caller set explicitly are never overridden either way.
@@ -3073,11 +3073,11 @@ public class ProcessModel implements Runnable, Serializable {
    *
    * <p>
    * Raise it to be more aggressive about ignoring small streams (faster, more forgiving convergence), lower it to keep
-   * smaller streams inside the convergence metric. A 1000 t/hr plant with the default {@code 1e-6} gets a 1 kg/hr noise
-   * floor.
+   * smaller streams inside the convergence metric. A plant fed 1000 t/hr with the default {@code 1e-6} gets a 1 kg/hr
+   * noise floor.
    * </p>
    *
-   * @param autoTuningFlowFraction fraction of the largest plant mass flow; must be finite and in [0, 1)
+   * @param autoTuningFlowFraction fraction of the total plant feed flow; must be finite and in [0, 1)
    * @throws IllegalArgumentException if the value is not finite or outside [0, 1)
    */
   public void setAutoTuningFlowFraction(double autoTuningFlowFraction) {
@@ -3090,7 +3090,7 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
-   * Largest mass flow (kg/hr) detected anywhere in the plant on the last run.
+   * Total feed mass flow (kg/hr) detected across the plant boundary on the last run.
    *
    * @return the detected plant flow scale in kg/hr, or 0.0 if the model has not run with auto-tuning enabled
    */
@@ -3179,11 +3179,16 @@ public class ProcessModel implements Runnable, Serializable {
       absoluteFlowTolerance = noiseFloor;
     }
     int bypassCandidates = autoLowFlowBypass ? applyAutoLowFlowThreshold(noiseFloor) : 0;
+    int recyclesTuned = 0;
+    for (ProcessSystem process : processes.values()) {
+      recyclesTuned += process.applyAutoRecycleFlowTolerance(noiseFloor);
+    }
 
     autoTuningSummary = String.format(Locale.US,
         "auto-tuned to a plant feed rate of %.4g kg/hr: boundary floor %.3g kg/hr, absolute flow tolerance "
-            + "%.3g kg/hr, low-flow bypass %.3g kg/hr on %d unit(s)",
-        scale, boundaryFlowFloor, absoluteFlowTolerance, autoLowFlowBypass ? noiseFloor : 0.0, bypassCandidates);
+            + "%.3g kg/hr, low-flow bypass %.3g kg/hr on %d unit(s), recycle flow tolerance on %d loop(s)",
+        scale, boundaryFlowFloor, absoluteFlowTolerance, autoLowFlowBypass ? noiseFloor : 0.0, bypassCandidates,
+        recyclesTuned);
     logger.debug("ProcessModel {}", autoTuningSummary);
   }
 
