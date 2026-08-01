@@ -584,7 +584,7 @@ public class TPflash extends Flash {
           logger.debug("Post-stability init failed: {}", ex.getMessage());
         }
         rescueSinglePhaseMultiphaseEndpoint();
-        rejectInfeasibleMultiphaseEndpointAfterStableSinglePhase();
+        rejectUnnormalizedAqueousEndpointAfterStableSinglePhase();
 
         // Chemical equilibrium for stable single-phase case
         if (system.isChemicalSystem()) {
@@ -1480,31 +1480,46 @@ public class TPflash extends Flash {
   }
 
   /**
-   * Rejects an infeasible two-phase result created while checking an already stable single-phase state.
+   * Rejects an unnormalized aqueous trial phase created while checking an already stable single-phase state.
    *
    * <p>
-   * The multiphase stability path can seed a trial phase at a small positive phase fraction. If the beta solver does
-   * not move that seed to an equilibrium solution, the seed can survive the generic minimum-beta cleanup even though
-   * its composition is not normalized, it does not reconstruct the feed, and component fugacities are unequal. The
-   * preceding stability analysis has already accepted the homogeneous state, so such an infeasible trial must not
-   * replace it. A genuine incipient phase is retained because it independently passes the same strict balance,
-   * normalization, distinct-composition, and fugacity checks used for water-rich candidate acceptance.
+   * The multiphase stability path can seed an aqueous trial phase at a small positive phase fraction. If the beta
+   * solver does not move that seed, its composition can remain unnormalized and survive the generic minimum-beta
+   * cleanup. Such a structurally invalid trial must not replace the accepted homogeneous state.
    * </p>
    *
    * <p>
-   * Chemical and ionic systems are excluded because their equilibrium constraints include reactions or ion
-   * partitioning beyond the neutral two-phase fugacity test.
+   * This guard deliberately does not impose a universal material-balance or fugacity-residual threshold. Some
+   * specialized fluid and solid-phase models use model-specific convergence and refinement paths, so normalized
+   * endpoints remain available to those paths. Chemical, ionic, solid, wax, and non-aqueous endpoints are excluded.
    * </p>
    */
-  private void rejectInfeasibleMultiphaseEndpointAfterStableSinglePhase() {
-    if (system.getNumberOfPhases() != 2 || system.isChemicalSystem() || system.hasIons()
-        || referenceSinglePhaseType == null || isBalancedEquilibriumCandidate(system)) {
+  private void rejectUnnormalizedAqueousEndpointAfterStableSinglePhase() {
+    if (system.getNumberOfPhases() != 2 || system.isChemicalSystem() || system.hasIons() || solidCheck
+        || system.isMultiphaseWaxCheck() || referenceSinglePhaseType == null
+        || !system.hasPhaseType(PhaseType.AQUEOUS)) {
       return;
     }
-    if (logger.isDebugEnabled()) {
-      logger.debug("Rejecting infeasible multiphase endpoint after stable single-phase check");
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      double compositionTotal = 0.0;
+      for (int componentIndex = 0; componentIndex < system.getPhase(phaseIndex)
+          .getNumberOfComponents(); componentIndex++) {
+        double phaseComposition = system.getPhase(phaseIndex).getComponent(componentIndex).getx();
+        if (!Double.isFinite(phaseComposition) || phaseComposition < 0.0 || phaseComposition > 1.0) {
+          collapseToReferenceSinglePhase();
+          return;
+        }
+        compositionTotal += phaseComposition;
+      }
+      if (!Double.isFinite(compositionTotal)
+          || Math.abs(compositionTotal - 1.0) > WATER_RICH_MATERIAL_BALANCE_TOLERANCE) {
+        if (logger.isDebugEnabled()) {
+          logger.debug("Rejecting unnormalized aqueous endpoint after stable single-phase check");
+        }
+        collapseToReferenceSinglePhase();
+        return;
+      }
     }
-    collapseToReferenceSinglePhase();
   }
 
   /**
