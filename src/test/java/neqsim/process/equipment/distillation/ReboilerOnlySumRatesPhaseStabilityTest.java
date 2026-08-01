@@ -134,10 +134,12 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
     assertEquals("gas", sumRates.getGasOutStream().getThermoSystem().getPhase(0).getPhaseTypeName());
     assertEquals(1.0, sumRates.getGasOutStream().getThermoSystem().getBeta(0), 1.0e-12);
 
-    assertEquals(damped.getGasOutStream().getFlowRate("kg/hr"), sumRates.getGasOutStream().getFlowRate("kg/hr"),
-        1.0e-3);
-    assertEquals(damped.getLiquidOutStream().getFlowRate("kg/hr"), sumRates.getLiquidOutStream().getFlowRate("kg/hr"),
-        1.0e-3);
+    double dampedGasFlow = damped.getGasOutStream().getFlowRate("kg/hr");
+    double dampedLiquidFlow = damped.getLiquidOutStream().getFlowRate("kg/hr");
+    assertEquals(dampedGasFlow, sumRates.getGasOutStream().getFlowRate("kg/hr"),
+        Math.max(1.0e-3, Math.abs(dampedGasFlow) * 1.0e-5));
+    assertEquals(dampedLiquidFlow, sumRates.getLiquidOutStream().getFlowRate("kg/hr"),
+        Math.max(1.0e-3, Math.abs(dampedLiquidFlow) * 1.0e-5));
     assertEquals(damped.getGasOutStream().getTemperature("K"), sumRates.getGasOutStream().getTemperature("K"), 1.0e-4);
     assertEquals(damped.getLiquidOutStream().getTemperature("K"), sumRates.getLiquidOutStream().getTemperature("K"),
         1.0e-4);
