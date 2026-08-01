@@ -9,7 +9,8 @@ Brownfield tieback decisions often fail because a host has spare capacity on pap
 
 1. Compare base-host production and satellite production against host nameplate capacities.
 2. Allocate constrained capacity with a clear policy.
-3. Optionally inject accepted production into an attached `ProcessSystem` and check equipment capacity constraints.
+3. Optionally inject accepted production into an attached `ProcessSystem` or multi-area `ProcessModel` and check
+   equipment capacity constraints across the complete host.
 4. Quantify held-back or deferred production and screen a debottleneck investment.
 
 Use this for early DG0-DG2 screening when the question is not only whether a route is hydraulically feasible, but whether the host can process the combined production without unacceptable holdback.
@@ -22,7 +23,7 @@ Use this for early DG0-DG2 screening when the question is not only whether a rou
 | `ProductionProfileSeries` | Ordered base-host or satellite production time series |
 | `CapacityAllocationPolicy` | Allocation rule: `BASE_FIRST`, `SATELLITE_FIRST`, `PRO_RATA`, or `VALUE_WEIGHTED` |
 | `HoldbackPolicy` | Holdback rule: curtail constrained production or defer it to later periods |
-| `HostTieInPoint` | Maps profile rates to a stream flow in an attached `ProcessSystem` |
+| `HostTieInPoint` | Maps profile rates to a stream flow in an attached `ProcessSystem` or `ProcessModel` |
 | `TieInCapacityPlanner` | Runs nameplate, process-capacity, holdback, and debottleneck calculations |
 | `TieInCapacityResult` | Aggregated result with period tables, totals, bottleneck summary, and decisions |
 
@@ -115,6 +116,44 @@ System.out.println(result.getPeriodResults().get(0).getProcessBottleneck());
 ```
 
 The example maps 1.0 MSm3/d gas to 1000 kg/hr. The host stream hard limit is 2500 kg/hr, so the planner accepts about 1.5 MSm3/d of the 4.0 MSm3/d satellite request after considering the base load.
+
+### Multi-Area Brownfield Host
+
+Use a `ProcessModel` when gathering, processing, utilities, and export are separate composable areas. Qualify the tie-in
+stream as `area::streamReference`; returned utilization keys and the limiting equipment retain the same area
+provenance.
+
+```java
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.processmodel.ProcessModel;
+
+ProcessSystem gathering = new ProcessSystem("gathering");
+gathering.add(hostFeed);
+
+Separator inletSeparator = new Separator("Inlet Separator", hostFeed);
+inletSeparator.addCapacityConstraint(
+    new CapacityConstraint("separatorFeedFlow", "kg/hr", ConstraintType.HARD)
+        .setDesignValue(2500.0)
+        .setValueSupplier(() -> hostFeed.getFlowRate("kg/hr")));
+ProcessSystem processing = new ProcessSystem("processing");
+processing.add(inletSeparator);
+
+ProcessModel hostModel = new ProcessModel();
+hostModel.add("gathering", gathering);
+hostModel.add("processing", processing);
+
+HostFacility multiAreaHost = HostFacility.builder("Example Host")
+    .gasCapacity(10.0)
+    .processModel(hostModel)
+    .build();
+HostTieInPoint qualifiedTieIn = new HostTieInPoint("gathering::Host Feed", "kg/hr")
+    .setGasToProcessRateFactor(1000.0);
+```
+
+The planner runs every area for each trial. If the separator is limiting, the period result reports
+`processing::Inlet Separator`; after the study it restores the original host-feed rate and reruns the full model. Bare
+stream names remain supported when unique across all areas. Duplicate bare names fail closed, so parallel trains must
+be addressed explicitly.
 
 ## Allocation Policies
 
