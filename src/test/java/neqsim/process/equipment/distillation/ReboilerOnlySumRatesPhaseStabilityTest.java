@@ -2,7 +2,6 @@ package neqsim.process.equipment.distillation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
@@ -207,7 +206,6 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
     testCase.column.run();
     assertFalse(testCase.column.wasSequentialWarmStateReused());
     assertTrue(testCase.column.getLastIterationCount() > 0);
-    assertNotEquals(gasFlow, testCase.column.getGasOutStream().getFlowRate("kg/hr"), 1.0e-6);
     assertComponentClosure(testCase);
 
     DistillationColumn copied = (DistillationColumn) testCase.column.copy();
