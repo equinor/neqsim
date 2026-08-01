@@ -246,8 +246,8 @@ public class DistillationSolverBenchmarkTest {
       statuses[i] = col.getLastSolveStatus();
       solversUsed[i] = col.getLastSolverTypeUsed();
       if (solvers[i] == DistillationColumn.SolverType.SUM_RATES) {
-        assertEquals(DistillationColumn.SolverType.DAMPED_SUBSTITUTION, solversUsed[i],
-            "SUM_RATES should guard condenser/reboiler columns with damped substitution");
+        assertEquals(DistillationColumn.SolverType.SUM_RATES, solversUsed[i],
+            "SUM_RATES should remain native for the reboiler-only deethanizer");
       }
       if (solvers[i] == DistillationColumn.SolverType.NAPHTALI_SANDHOLM) {
         assertEquals(DistillationColumn.SolverType.DAMPED_SUBSTITUTION, solversUsed[i],
