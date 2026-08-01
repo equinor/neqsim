@@ -94,9 +94,10 @@ stability during the matrix warm-start stage.
   more than 5 %, increases when it shrinks by more than 2 %.
 - Adaptive default tolerances scale with column complexity. The base values are 9e-3 K for
   temperature and 1.6e-2 relative for mass and energy residuals unless the user overrides them.
-- Reboiler-only sequential solves use a tighter internal temperature target while keeping the public
-  tolerance unchanged. This ensures terminal product temperatures from damped and sum-rates solves
-  agree within the configured tolerance near phase boundaries.
+- Native reboiler-only `SUM_RATES` solves use a tighter internal temperature target while keeping
+  the public tolerance unchanged. Other sequential solvers retain their established convergence
+  target; the margin ensures sum-rates terminal products agree with the damped reference near phase
+  boundaries.
 - A separated terminal product whose unintended minority phase is at most `1e-8` of the mole
   inventory is rebuilt as the intended outlet phase using the complete component-mole vector. This
   canonical phase definition preserves total and per-component flow while preventing a numerical
