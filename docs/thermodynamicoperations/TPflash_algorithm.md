@@ -195,10 +195,10 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 │                                                                                 │
 │  IF ordinary flash and water feed ≥ 0.01:                                       │
 │     → Refine a missing aqueous phase, or an existing two-phase aqueous           │
-│       endpoint only when max |Δ ln(fᵢ)| ≥ 1e-8                                  │
+│       endpoint when max |Δ ln(fᵢ)| ≥ 1e-8 or max |Δzᵢ| ≥ 1e-8                   │
 │     → Evaluate a cloned TPmultiflash candidate                                  │
-│     → Accept any two-phase candidate with lower Gibbs energy,                   │
-│       bounded/normalized phase fractions, and distinct phase compositions       │
+│     → Accept a lower-Gibbs physical candidate, or replace a non-conservative     │
+│       reference only with a balanced, equilibrated physical candidate            │
 │                                                                                 │
 │  IF ordinary, neutral, exactly-two-phase result contains an aqueous phase:       │
 │     → Evaluate gas-like and liquid-like roots of the non-aqueous cubic phase     │
@@ -222,7 +222,8 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 | `maxNumberOfIterations` | 50 | Maximum iterations per convergence loop |
 | Convergence tolerance | 1e-10 | Deviation threshold for K-value convergence |
 | Gibbs increase tolerance | 1e-8 | Relative increase that triggers K-reset |
-| Ordinary water-rich refinement feed threshold | 0.01 mole fraction water | Avoid multiphase overhead for trace-water flashes; existing two-phase aqueous endpoints additionally require `max abs(Delta ln(f_i)) >= 1e-8` before refinement |
+| Ordinary water-rich refinement feed threshold | 0.01 mole fraction water | Avoid multiphase overhead for trace-water flashes; existing two-phase aqueous endpoints additionally require `max abs(Delta ln(f_i)) >= 1e-8` or `max abs(Delta z_i) >= 1e-8` before refinement |
+| Water-rich material-balance tolerance | 1e-8 in `max abs(Delta z_i)` | Reject a non-conservative reference before comparing feasible Gibbs minima |
 | Aqueous cubic-root equilibrium tolerance | 1e-8 in `max abs(Delta ln(f_i))` | Accept an alternate root only when it lowers Gibbs energy and already satisfies component fugacity equality |
 
 ### 1.1 Problem Formulation
@@ -1659,8 +1660,10 @@ Commercial process simulators do not publish all implementation details, but pub
 - Explicit multiphase hydrocarbon flashes now retry a local lower-temperature seed before accepting an ambiguous single-phase endpoint, and keep the retry only if it gives a lower-Gibbs multiphase result.
 - A cheap post-flash K-envelope gate skips that rescue for clearly single-phase hydrocarbon endpoints, preserving ordinary `setMultiPhaseCheck(true)` speed.
 - Water-rich ordinary endpoints are not accepted from an aqueous phase label alone. An existing two-phase aqueous
-  endpoint is sent to multiphase refinement only when `max abs(Delta ln(f_i)) >= 1e-8`, and the candidate still must
-  lower Gibbs energy and pass phase-quality checks.
+  endpoint is sent to multiphase refinement when `max abs(Delta ln(f_i)) >= 1e-8` or its phase-recombined component
+  balance has `max abs(Delta z_i) >= 1e-8`. A feasible candidate normally must lower Gibbs energy; when the reference
+  is non-conservative and its Gibbs energy is therefore not comparable, the candidate must instead independently pass
+  phase-fraction, composition-normalization, material-balance, fugacity, and distinct-composition checks.
 - Ordinary neutral aqueous splits now compare both cubic roots of the non-aqueous phase at the converged composition. An alternate root is retained only when it lowers Gibbs energy and already satisfies `max abs(Delta ln(f_i)) < 1e-8`; no extra TPflash or multiphase stability calculation is run.
 - Enhanced stability checks are gated to polar, associating, electrolyte, sour, or explicitly requested multiphase systems, limiting unnecessary hydrocarbon phase-map artifacts.
 
