@@ -419,6 +419,13 @@ class TwoFluidPipeBoundaryConditionTest {
     }
   }
 
+  @Test
+  @DisplayName("Steady-state handoff preserves inventory and avoids an O(1) hydraulic jump")
+  void testSteadyStateToTransientHandoffIsContinuous() {
+    assertSteadyStateToTransientHandoffIsContinuous("two-phase", createTwoPhaseFluid(), 6.0, 75.0, 58.0);
+    assertSteadyStateToTransientHandoffIsContinuous("three-phase", createThreePhaseFluid(), 6.0, 80.0, 60.0);
+  }
+
   // =====================================================================
   // Stationary and Transient Boundary Regression Tests
   // =====================================================================
@@ -586,6 +593,55 @@ class TwoFluidPipeBoundaryConditionTest {
     regressionPipe.setCflNumber(0.8);
     regressionPipe.setSteadyStateMaxWallClockTime(1.0);
     return regressionPipe;
+  }
+
+  /**
+   * Verify that switching numerical modes without changing a boundary does not introduce an O(1) state jump.
+   *
+   * @param name case name
+   * @param fluid inlet fluid
+   * @param flowRateKgSec flow rate in kg/s
+   * @param inletPressureBara inlet pressure in bara
+   * @param outletPressureBara outlet pressure in bara
+   */
+  private void assertSteadyStateToTransientHandoffIsContinuous(String name, SystemInterface fluid,
+      double flowRateKgSec, double inletPressureBara, double outletPressureBara) {
+    TwoFluidPipe handoffPipe = createRegressionPipe(name + "-handoff", fluid, flowRateKgSec, inletPressureBara,
+        outletPressureBara);
+    handoffPipe.setThermodynamicUpdateInterval(Integer.MAX_VALUE);
+    handoffPipe.run();
+
+    double[] pressureBefore = handoffPipe.getPressureProfile();
+    double[] liquidHoldupBefore = handoffPipe.getLiquidHoldupProfile();
+    double[] gasVelocityBefore = handoffPipe.getGasVelocityProfile();
+    double[] liquidVelocityBefore = handoffPipe.getLiquidVelocityProfile();
+    double massBefore = handoffPipe.getTotalMassInventory();
+
+    double timeStep = 1.0e-9;
+    UUID calculationId = UUID.fromString("00000000-0000-0000-0000-000000002723");
+    handoffPipe.runTransient(timeStep, calculationId);
+
+    double pressureRmsPa = rmsDifference(handoffPipe.getPressureProfile(), pressureBefore);
+    double liquidHoldupRms = rmsDifference(handoffPipe.getLiquidHoldupProfile(), liquidHoldupBefore);
+    double gasVelocityRms = rmsDifference(handoffPipe.getGasVelocityProfile(), gasVelocityBefore);
+    double liquidVelocityRms = rmsDifference(handoffPipe.getLiquidVelocityProfile(), liquidVelocityBefore);
+    double massChangeKg = Math.abs(handoffPipe.getTotalMassInventory() - massBefore);
+
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "%s steady/transient handoff: pressure RMS %.6f Pa, holdup RMS %.9f, "
+            + "gas velocity RMS %.9f m/s, liquid velocity RMS %.9f m/s, mass change %.9g kg%n",
+        name, pressureRmsPa, liquidHoldupRms, gasVelocityRms, liquidVelocityRms, massChangeKg);
+
+    assertTrue(pressureRmsPa <= 500.0,
+        name + " pressure changed sharply across an unchanged near-zero-time handoff: RMS " + pressureRmsPa + " Pa");
+    assertTrue(liquidHoldupRms <= 1.0e-7,
+        name + " liquid holdup changed across an unchanged near-zero-time handoff: RMS " + liquidHoldupRms);
+    assertTrue(gasVelocityRms <= 0.10,
+        name + " gas velocity changed across an unchanged near-zero-time handoff: RMS " + gasVelocityRms + " m/s");
+    assertTrue(liquidVelocityRms <= 0.05, name
+        + " liquid velocity changed across an unchanged near-zero-time handoff: RMS " + liquidVelocityRms + " m/s");
+    assertTrue(massChangeKg <= 4.0 * flowRateKgSec * timeStep,
+        name + " domain mass changed faster than the boundary-flux envelope: " + massChangeKg + " kg");
   }
 
   /**
