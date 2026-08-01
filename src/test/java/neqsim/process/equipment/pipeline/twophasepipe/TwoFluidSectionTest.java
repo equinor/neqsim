@@ -313,13 +313,14 @@ public class TwoFluidSectionTest {
   void testPhaseAppearanceAndDisappearanceRemainFiniteAndConservative() {
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
     equations.setIncludeMassTransfer(true);
+    double dtSeconds = 1.0;
 
     TwoFluidSection[] appearing = createUniformTransferSections(0.0, 0.1);
     double initialAppearingMass = totalMassPerLength(appearing[1]);
     double[][] appearanceRate = equations.calcRHS(appearing, 10.0);
     double[] appearedState = appearing[1].getStateVector();
     for (int equation = 0; equation < appearedState.length; equation++) {
-      appearedState[equation] += appearanceRate[1][equation];
+      appearedState[equation] += dtSeconds * appearanceRate[1][equation];
     }
     appearing[1].setStateVector(appearedState);
     appearing[1].extractPrimitiveVariables();
@@ -333,7 +334,7 @@ public class TwoFluidSectionTest {
     double[][] disappearanceRate = equations.calcRHS(disappearing, 10.0);
     double[] disappearedState = disappearing[1].getStateVector();
     for (int equation = 0; equation < disappearedState.length; equation++) {
-      disappearedState[equation] += disappearanceRate[1][equation];
+      disappearedState[equation] += dtSeconds * disappearanceRate[1][equation];
     }
     disappearing[1].setStateVector(disappearedState);
     disappearing[1].extractPrimitiveVariables();
