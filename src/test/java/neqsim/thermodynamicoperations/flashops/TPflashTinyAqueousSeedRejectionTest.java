@@ -72,8 +72,7 @@ class TPflashTinyAqueousSeedRejectionTest {
     for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
       double recoveredFeed = 0.0;
       for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
-        recoveredFeed +=
-            system.getBeta(phaseIndex) * system.getPhase(phaseIndex).getComponent(componentIndex).getx();
+        recoveredFeed += system.getBeta(phaseIndex) * system.getPhase(phaseIndex).getComponent(componentIndex).getx();
       }
       maximumResidual = Math.max(maximumResidual,
           Math.abs(system.getPhase(0).getComponent(componentIndex).getz() - recoveredFeed));
