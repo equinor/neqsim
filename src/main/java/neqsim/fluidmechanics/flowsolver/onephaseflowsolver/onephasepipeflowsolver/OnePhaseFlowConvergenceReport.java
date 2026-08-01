@@ -263,9 +263,8 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    JsonSerializer<Double> finiteDoubleSerializer = (value, type, context) -> value != null && Double.isFinite(value)
-        ? new JsonPrimitive(value)
-        : JsonNull.INSTANCE;
+    JsonSerializer<Double> finiteDoubleSerializer = (value, type,
+        context) -> value != null && Double.isFinite(value) ? new JsonPrimitive(value) : JsonNull.INSTANCE;
     return new GsonBuilder().registerTypeAdapter(Double.class, finiteDoubleSerializer)
         .registerTypeAdapter(Double.TYPE, finiteDoubleSerializer).serializeNulls().setPrettyPrinting().create()
         .toJson(this);
