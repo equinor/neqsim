@@ -101,10 +101,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Maximum minority phase fraction canonicalized out of a separated terminal product.
    *
    * <p>
-   * Sequential column solvers can approach the same dew-point boundary from opposite sides and expose a numerical
-   * trace phase in only one product. A phase smaller than this limit contributes less than one part in one hundred
-   * million to the product inventory. Merging it into the dominant, intended outlet phase gives the separated product
-   * a solver-independent phase identity without discarding component moles.
+   * Sequential column solvers can approach the same dew-point boundary from opposite sides and expose a numerical trace
+   * phase in only one product. A phase smaller than this limit contributes less than one part in one hundred million to
+   * the product inventory. Merging it into the dominant, intended outlet phase gives the separated product a
+   * solver-independent phase identity without discarding component moles.
    * </p>
    */
   private static final double TERMINAL_PRODUCT_TRACE_PHASE_FRACTION = 1.0e-8;
@@ -11300,10 +11300,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * The public gas and liquid products are phase-separated outlets, but the final product TP flash can retain a phase
    * with a beta of only a few parts per billion when the result lies on a dew- or bubble-point boundary. Different
    * sequential solvers can approach that boundary from opposite sides even after satisfying the same numerical
-   * tolerances. When the intended outlet phase owns all but
-   * {@link #TERMINAL_PRODUCT_TRACE_PHASE_FRACTION} of the product inventory, rebuild the stream as that single phase
-   * using the complete component-mole vector. This changes neither total nor per-component flow and avoids treating a
-   * numerical trace as a distinct process product.
+   * tolerances. When the intended outlet phase owns all but {@link #TERMINAL_PRODUCT_TRACE_PHASE_FRACTION} of the
+   * product inventory, rebuild the stream as that single phase using the complete component-mole vector. This changes
+   * neither total nor per-component flow and avoids treating a numerical trace as a distinct process product.
    * </p>
    *
    * @param productStream public terminal product to inspect
