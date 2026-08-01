@@ -502,7 +502,8 @@ public class TieInCapacityPlanner implements Serializable {
       double targetFlow = calculateTargetProcessRate(originalFlow, acceptedBase, acceptedSatellite);
       stream.setFlowRate(targetFlow, tieInPoint.getProcessRateUnit());
       runDetailedModel(processModel, processSystem);
-      BottleneckResult bottleneck = processModel == null ? processSystem.findBottleneck() : processModel.findBottleneck();
+      BottleneckResult bottleneck = processModel == null ? processSystem.findBottleneck()
+          : processModel.findBottleneck();
       Map<String, Double> utilizationSummary = processModel == null ? processSystem.getCapacityUtilizationSummary()
           : processModel.getCapacityUtilizationSummary();
       double utilization = bottleneck.hasBottleneck() ? bottleneck.getUtilization() : 0.0;
