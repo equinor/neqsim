@@ -79,11 +79,11 @@ stability during the matrix warm-start stage.
 | `INSIDE_OUT` | `solveInsideOut()` | Quadrat-structure inside-out method: streams are relaxed against previous iterates while tray properties update using enthalpy-driven temperature corrections. | Balances mass/energy less frequently to reduce cost and supports a polishing phase for tight tolerances. |
 | `MATRIX_INSIDE_OUT` | `solveMatrixInsideOut()` | Adaptive matrix inside-out mode that bypasses matrix setup for small columns and otherwise solves component-balance tridiagonal systems as a warm start before rigorous inside-out polishing. | Avoids warm-start overhead on small columns while preserving a matrix path for larger hydrocarbon fractionators. |
 | `WEGSTEIN` | `solveWegstein()` | Wegstein acceleration on the sequential temperature map after direct-substitution warm-up. | Speeds up well-conditioned fixed-point problems. |
-| `SUM_RATES` | `solveSumRates()` | Flow-corrected tearing method that adjusts relaxation from tray sum-rate behavior. | Useful for absorber and stripper style columns. |
+| `SUM_RATES` | `solveSumRates()` | Flow-corrected tearing method that adjusts relaxation from tray sum-rate behavior. | Native for absorbers and reboiler-only strippers; condenser configurations remain guarded to damped substitution. |
 | `NEWTON` | `solveNewton()` | Finite-difference Newton correction on tray temperatures with line search. | A tray-temperature accelerator, not a full simultaneous MESH Newton solver. |
 | `NAPHTALI_SANDHOLM` | `solveNaphtaliSandholm()` | Inside-out warm start followed by guarded simultaneous Newton correction of liquid component flows, tray temperatures, and vapor flows. | Best for rigorous residual-driven MESH convergence on well-conditioned hydrocarbon fractionators. |
 | `MESH_RESIDUAL` | `solveMeshResidual()` | Inside-out initialization followed by full MESH residual evaluation. | Best for auditing material, equilibrium, summation, energy, specification, and product-draw residuals. |
-| `AUTO` | `ColumnSolverFactory.AutoSolver` | Runs a feasibility pre-screen, initializes a copied candidate, solves a relaxed damped base case, probes built-in candidate solvers on copies, and accepts the first solved non-fallback candidate or best valid fallback. | Useful when an agent or workflow should request robust automatic solver selection while still reporting the concrete solver through `getLastSolverTypeUsed()`. |
+| `AUTO` | `ColumnSolverFactory.AutoSolver` | Runs a feasibility pre-screen and copy-based solver probes. A fixed-specification reboiler-only stripper tries native sum-rates before paying for the relaxed damped base; other configurations retain the robust base/fallback ladder. | Useful when an agent or workflow should request robust automatic solver selection while still reporting the concrete solver through `getLastSolverTypeUsed()`. |
 
 ### Sequential substitution details
 
@@ -94,14 +94,25 @@ stability during the matrix warm-start stage.
   more than 5 %, increases when it shrinks by more than 2 %.
 - Adaptive default tolerances scale with column complexity. The base values are 9e-3 K for
   temperature and 1.6e-2 relative for mass and energy residuals unless the user overrides them.
+- Native reboiler-only `SUM_RATES` solves use a tighter internal temperature target while keeping
+  the public tolerance unchanged. Other sequential solvers retain their established convergence
+  target; the margin ensures sum-rates terminal products agree with the damped reference near phase
+  boundaries.
+- A separated terminal product whose unintended minority phase is at most `1e-8` of the mole
+  inventory is rebuilt as the intended outlet phase using the complete component-mole vector. This
+  canonical phase definition preserves total and per-component flow while preventing a numerical
+  parts-per-billion trace from creating solver-dependent product phase counts. Larger phase
+  fractions remain untouched.
 
 ### Automatic solver pipeline
 
 `AUTO` mode is intended for workflows where the caller wants a robust answer and diagnostics rather
 than a specific numerical method. The pipeline first calls `screenSpecificationFeasibility()` and
 adds a `FEASIBILITY_SCREEN` entry to the automatic solver summary. It then creates a candidate copy,
-tries shortcut or thermodynamic-profile initialization, runs a relaxed `DAMPED_SUBSTITUTION` base
-solve, and probes an ordered candidate list on copies of that warmed base state.
+tries native `SUM_RATES` first for a fixed-specification reboiler-only stripper. If that candidate is
+not applicable or is rejected, `AUTO` tries shortcut or thermodynamic-profile initialization, runs a
+relaxed `DAMPED_SUBSTITUTION` base solve, and probes an ordered candidate list on copies of that
+warmed base state.
 
 The candidate order depends on column structure:
 
@@ -111,8 +122,8 @@ The candidate order depends on column structure:
   substitution;
 - two-ended columns without adjustable product specs use matrix or regular inside-out candidates
   when tray count justifies them;
-- absorber or stripper style columns without one terminal heat device try `SUM_RATES` before
-  damped and direct substitution.
+- fixed-specification absorber and reboiler-only stripper configurations without a condenser can
+  accept native `SUM_RATES`; condenser-only configurations remain guarded to damped substitution.
 
 Candidate probes do not run their own nested damped fallback solves. `AUTO` accepts the first solved
 candidate that did not rely on guarded fallback products; otherwise it scores the available results
@@ -305,7 +316,7 @@ for any equation of state available in NeqSim (SRK, CPA, GERG-2008, etc.). The
 | `INSIDE_OUT` | Three-sweep IO with stripping factor correction and K-value tracking | Multi-feed, general-purpose, debugging |
 | `MATRIX_INSIDE_OUT` | Adaptive matrix warm start plus rigorous inside-out polish; bypasses matrix setup for small columns | Larger hydrocarbon columns where the matrix warm start can help |
 | `WEGSTEIN` | Wegstein acceleration of successive substitution | Fast convergence on well-posed problems |
-| `SUM_RATES` | Flow-corrected tearing method | Absorbers and strippers |
+| `SUM_RATES` | Flow-corrected tearing method, native without a condenser and guarded otherwise | Absorbers and reboiler-only strippers |
 | `NEWTON` | Newton-Raphson tray-temperature correction accelerator | Difficult temperature convergence cases |
 | `NAPHTALI_SANDHOLM` | Simultaneous MESH residual Newton correction with guarded acceptance | Rigorous residual convergence checks |
 | `MESH_RESIDUAL` | Inside-out initialization with MESH residual diagnostics | Residual auditing and diagnostics |
