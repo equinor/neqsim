@@ -292,8 +292,8 @@ public class HostFacility implements Serializable {
           primaryBottleneckName = getAreaQualifiedBottleneckName(primary);
           primaryBottleneckUtilization = primary.getUtilization();
           processOk = primary.getUtilization() < 0.95 && !processModel.isAnyHardLimitExceeded();
-          processMessage = String.format("Primary process bottleneck %s at %.0f%% utilization",
-              primaryBottleneckName, primary.getUtilizationPercent());
+          processMessage = String.format("Primary process bottleneck %s at %.0f%% utilization", primaryBottleneckName,
+              primary.getUtilizationPercent());
         } else {
           processMessage = "Process model has no enabled capacity constraints";
         }
