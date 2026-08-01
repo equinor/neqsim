@@ -130,10 +130,10 @@ public class ReboilerOnlySumRatesPerformanceTest {
   }
 
   private static void assertDeterministicIterationReduction() {
-    BenchmarkCase damped =
-        createCase("damped iteration baseline", 313.15, 1200.0, DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
-    BenchmarkCase sumRates =
-        createCase("sum-rates iteration candidate", 313.15, 1200.0, DistillationColumn.SolverType.SUM_RATES);
+    BenchmarkCase damped = createCase("damped iteration baseline", 313.15, 1200.0,
+        DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
+    BenchmarkCase sumRates = createCase("sum-rates iteration candidate", 313.15, 1200.0,
+        DistillationColumn.SolverType.SUM_RATES);
     damped.column.run();
     sumRates.column.run();
 
