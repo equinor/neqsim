@@ -49,6 +49,8 @@ public class TPflash extends Flash {
   private static final double WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT = 0.01;
   /** Maximum accepted component material-balance residual for water-rich endpoint refinement. */
   private static final double WATER_RICH_MATERIAL_BALANCE_TOLERANCE = 1.0e-8;
+  /** Maximum accepted phase-composition normalization residual for an aqueous trial seed. */
+  private static final double AQUEOUS_SEED_COMPOSITION_NORMALIZATION_TOLERANCE = 1.0e-8;
   /** Maximum accepted log-fugacity residual when selecting an alternate cubic root. */
   private static final double PHASE_ROOT_EQUILIBRIUM_TOLERANCE = 1.0e-8;
   /** Cubic phase roots evaluated by the post-convergence aqueous root check. */
@@ -1506,15 +1508,20 @@ public class TPflash extends Flash {
           .getNumberOfComponents(); componentIndex++) {
         double phaseComposition = system.getPhase(phaseIndex).getComponent(componentIndex).getx();
         if (!Double.isFinite(phaseComposition) || phaseComposition < 0.0 || phaseComposition > 1.0) {
+          if (logger.isDebugEnabled()) {
+            logger.debug("Rejecting invalid aqueous endpoint composition: phase={}, component={}, x={}", phaseIndex,
+                componentIndex, phaseComposition);
+          }
           collapseToReferenceSinglePhase();
           return;
         }
         compositionTotal += phaseComposition;
       }
       if (!Double.isFinite(compositionTotal)
-          || Math.abs(compositionTotal - 1.0) > WATER_RICH_MATERIAL_BALANCE_TOLERANCE) {
+          || Math.abs(compositionTotal - 1.0) > AQUEOUS_SEED_COMPOSITION_NORMALIZATION_TOLERANCE) {
         if (logger.isDebugEnabled()) {
-          logger.debug("Rejecting unnormalized aqueous endpoint after stable single-phase check");
+          logger.debug("Rejecting unnormalized aqueous endpoint composition: phase={}, sum(x)={}", phaseIndex,
+              compositionTotal);
         }
         collapseToReferenceSinglePhase();
         return;
