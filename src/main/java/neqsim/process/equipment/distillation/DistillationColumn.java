@@ -108,7 +108,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * </p>
    */
   private static final double TERMINAL_PRODUCT_TRACE_PHASE_FRACTION = 1.0e-8;
-  /** Tighter internal target needed for solver-independent reboiler-only terminal product temperatures. */
+  /** Tighter internal SUM_RATES target for solver-independent reboiler-only product temperatures. */
   private static final double REBOILER_ONLY_PHASE_STABLE_TEMPERATURE_TOLERANCE_FACTOR = 5.0e-2;
   /**
    * Maximum internal tray traffic accepted after divergence recovery relative to external feed.
@@ -5743,7 +5743,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       polishIterationLimit = maxNumberOfIterations;
       maxIterationLimit = maxNumberOfIterations;
     }
-    double baseTempTolerance = getSequentialTerminalTemperatureTolerance();
+    double baseTempTolerance = getEffectiveTemperatureTolerance();
     double baseMassTolerance = getEffectiveMassBalanceTolerance();
     double baseEnergyTolerance = getEffectiveEnthalpyBalanceTolerance();
     double polishTempTolerance = Math.min(baseTempTolerance, TEMPERATURE_POLISH_TARGET);
@@ -6014,18 +6014,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Derive the internal sequential-solver temperature target used for terminal phase stability.
+   * Derive the internal sum-rates temperature target used for terminal phase stability.
    *
    * <p>
-   * Reboiler-only columns can end immediately beside a top-product dew-point boundary. Solving only to the public
-   * temperature tolerance lets two sequential algorithms stop at measurably different terminal temperatures. A small
-   * internal margin for this configuration makes their exposed product temperatures agree within the configured
-   * tolerance; the public tolerance and API remain unchanged.
+   * Reboiler-only columns can end immediately beside a top-product dew-point boundary. Native sum-rates needs a small
+   * internal margin so its exposed product temperature agrees with the established damped solution within the
+   * configured public tolerance. Other sequential solvers retain their existing convergence target.
    * </p>
    *
-   * @return internal temperature target in Kelvin
+   * @return internal sum-rates temperature target in Kelvin
    */
-  private double getSequentialTerminalTemperatureTolerance() {
+  private double getSumRatesTerminalTemperatureTolerance() {
     double effectiveTolerance = getEffectiveTemperatureTolerance();
     if (hasReboiler && !hasCondenser) {
       return effectiveTolerance * REBOILER_ONLY_PHASE_STABLE_TEMPERATURE_TOLERANCE_FACTOR;
@@ -7359,7 +7358,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Decide whether sum-rates acceleration should be routed to the guarded damped solver.
    *
-   * @return {@code true} when the sum-rates accelerator should be guarded by damped substitution
+   * @return {@code true} when a condenser requires the sum-rates accelerator to use damped substitution
    */
   private boolean useGuardedSumRatesFallback() {
     return hasCondenser;
@@ -7403,7 +7402,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       solveDampedSubstitution(id);
       if (lastSolveStatus == SolveStatus.RIGOROUS_CONVERGED || lastSolveStatus == SolveStatus.RECONCILED_PRODUCTS) {
         setLastSolveStatus(lastSolveStatus,
-            "Sum-rates is guarded to damped substitution for columns with condenser/reboiler " + "energy equipment");
+            "Sum-rates is guarded to damped substitution for columns with a condenser");
       }
       return;
     }
@@ -7440,7 +7439,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     int baseIterationLimit = computeIterationLimit();
     int iterationLimit = baseIterationLimit;
-    double baseTempTolerance = getSequentialTerminalTemperatureTolerance();
+    double baseTempTolerance = getSumRatesTerminalTemperatureTolerance();
     double baseMassTolerance = getEffectiveMassBalanceTolerance();
     double baseEnergyTolerance = getEffectiveEnthalpyBalanceTolerance();
     boolean massEnergyEvaluated = false;
