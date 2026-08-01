@@ -1,5 +1,7 @@
 package neqsim.process.equipment.pipeline;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -638,6 +640,9 @@ public class TwoFluidPipe extends Pipeline {
 
   /** Flag indicating transient mode (inlet P is free, not fixed from stream). */
   private boolean isTransientMode = false;
+
+  /** Discrete mass balance from the most recent transient call. */
+  private TwoFluidMassBalanceReport lastMassBalanceReport = null;
 
   // ============ Results storage ============
 
@@ -3241,6 +3246,8 @@ public class TwoFluidPipe extends Pipeline {
 
   @Override
   public void run(UUID id) {
+    lastMassBalanceReport = null;
+
     // Initialize sections
     initializeSections();
 
@@ -3262,6 +3269,20 @@ public class TwoFluidPipe extends Pipeline {
   @Override
   public void runTransient(double dt, UUID id) {
     isTransientMode = true;
+    lastMassBalanceReport = null;
+    double[] initialMassKg = getPhaseMassInventoriesKg();
+    double[] integratedInletMassKg = new double[3];
+    double[] integratedOutletMassKg = new double[3];
+    double[] integratedSourceMassKg = new double[3];
+    double acceptedElapsedTime = 0.0;
+    int acceptedSubsteps = 0;
+
+    // Boundary changes must affect the first accepted finite-volume step. With the
+    // conservative state initialized by run(), this updates flux primitives and
+    // momenta only; it does not replace cell phase inventory.
+    applyBoundaryConditions();
+    validateSectionStates();
+
     boolean isIMEX = (timeIntegrator.getMethod() == TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION);
 
     // Calculate initial stable time step (OLGA-style: CFL from current velocities)
@@ -3310,10 +3331,18 @@ public class TwoFluidPipe extends Pipeline {
 
       // 3. Calculate RHS and advance solution
       final double dtFinal = dtActual;
+      final List<TwoFluidConservationEquations.MassBalanceRate> stageMassBalanceRates = new ArrayList<>();
 
       TimeIntegrator.RHSFunction rhs = (state, t) -> {
         equations.applyState(sections, state);
-        return equations.calcRHS(sections, dx);
+        // Boundary conditions are part of the semi-discrete operator and must be
+        // enforced for every Runge-Kutta stage, not only after an accepted step.
+        // This is especially important for CLOSED boundaries because intermediate
+        // stage momenta can otherwise create a spurious boundary flux.
+        applyBoundaryConditions();
+        double[][] derivative = equations.calcRHS(sections, dx);
+        stageMassBalanceRates.add(equations.getLastMassBalanceRate());
+        return derivative;
       };
 
       // For IMEX: provide cell sound speeds and densities for implicit pressure solve
@@ -3437,6 +3466,11 @@ public class TwoFluidPipe extends Pipeline {
         }
       }
 
+      accumulateAcceptedMassBalance(stageMassBalanceRates, dtActual, integratedInletMassKg,
+          integratedOutletMassKg, integratedSourceMassKg);
+      acceptedElapsedTime += dtActual;
+      acceptedSubsteps++;
+
       // 8. Update accumulation tracking and slug tracking
       if (enableSlugTracking && slugTrackingMode != SlugTrackingMode.DISABLED) {
         accumulationTracker.updateAccumulation(sections, dtActual);
@@ -3502,7 +3536,54 @@ public class TwoFluidPipe extends Pipeline {
     updateOutletStream();
     updateResultArrays();
 
+    lastMassBalanceReport = new TwoFluidMassBalanceReport(acceptedElapsedTime, acceptedSubsteps, initialMassKg,
+        getPhaseMassInventoriesKg(), integratedInletMassKg, integratedOutletMassKg, integratedSourceMassKg);
+
     setCalculationIdentifier(id);
+  }
+
+  private void accumulateAcceptedMassBalance(List<TwoFluidConservationEquations.MassBalanceRate> stageRates,
+      double timeStepSeconds, double[] inletMassKg, double[] outletMassKg, double[] sourceMassKg) {
+    double[] weights = getMassBalanceStageWeights(stageRates.size());
+    for (int stage = 0; stage < stageRates.size(); stage++) {
+      TwoFluidConservationEquations.MassBalanceRate rate = stageRates.get(stage);
+      double[] inletRate = rate.getInletMassFlowKgPerSecond();
+      double[] outletRate = rate.getOutletMassFlowKgPerSecond();
+      double[] sourceRate = rate.getSourceMassFlowKgPerSecond();
+      double weightedTime = weights[stage] * timeStepSeconds;
+      for (int phase = 0; phase < 3; phase++) {
+        inletMassKg[phase] += inletRate[phase] * weightedTime;
+        outletMassKg[phase] += outletRate[phase] * weightedTime;
+        sourceMassKg[phase] += sourceRate[phase] * weightedTime;
+      }
+    }
+  }
+
+  private double[] getMassBalanceStageWeights(int stageCount) {
+    TimeIntegrator.Method method = timeIntegrator.getMethod();
+    double[] weights;
+    switch (method) {
+    case EULER:
+    case IMEX_PRESSURE_CORRECTION:
+      weights = new double[] { 1.0 };
+      break;
+    case RK2:
+      weights = new double[] { 0.5, 0.5 };
+      break;
+    case RK4:
+      weights = new double[] { 1.0 / 6.0, 1.0 / 3.0, 1.0 / 3.0, 1.0 / 6.0 };
+      break;
+    case SSP_RK3:
+      weights = new double[] { 1.0 / 6.0, 1.0 / 6.0, 2.0 / 3.0 };
+      break;
+    default:
+      throw new IllegalStateException("Unsupported time integration method: " + method);
+    }
+    if (stageCount != weights.length) {
+      throw new IllegalStateException(
+          "Expected " + weights.length + " mass-balance stages for " + method + " but received " + stageCount);
+    }
+    return weights;
   }
 
   /**
@@ -4427,15 +4508,38 @@ public class TwoFluidPipe extends Pipeline {
    * @return total domain mass in kg
    */
   public double getTotalMassInventory() {
+    double[] phaseMasses = getPhaseMassInventoriesKg();
+    return phaseMasses[0] + phaseMasses[1] + phaseMasses[2];
+  }
+
+  private double[] getPhaseMassInventoriesKg() {
+    double[] phaseMasses = new double[3];
     if (sections == null) {
-      return 0.0;
+      return phaseMasses;
     }
 
-    double mass = 0.0;
     for (TwoFluidSection sec : sections) {
-      mass += (sec.getGasMassPerLength() + sec.getOilMassPerLength() + sec.getWaterMassPerLength()) * sec.getLength();
+      double sectionLength = sec.getLength();
+      phaseMasses[0] += sec.getGasMassPerLength() * sectionLength;
+      phaseMasses[1] += sec.getOilMassPerLength() * sectionLength;
+      phaseMasses[2] += sec.getWaterMassPerLength() * sectionLength;
     }
-    return mass;
+    return phaseMasses;
+  }
+
+  /**
+   * Get the discrete mass balance from the most recent {@link #runTransient(double, UUID)} call.
+   *
+   * <p>
+   * Boundary fluxes and source terms are integrated with the same stage weights as the configured time integrator.
+   * The report includes gas, oil, water, combined-liquid, and total residuals in kg and relative form. A steady-state
+   * {@link #run(UUID)} clears the previous report.
+   * </p>
+   *
+   * @return last transient mass-balance report, or {@code null} before a transient call
+   */
+  public TwoFluidMassBalanceReport getLastMassBalanceReport() {
+    return lastMassBalanceReport;
   }
 
   /**
