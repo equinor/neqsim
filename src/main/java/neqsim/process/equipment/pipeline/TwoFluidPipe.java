@@ -1086,6 +1086,8 @@ public class TwoFluidPipe extends Pipeline {
    * <li><b>Phase 2 — Iterative refinement:</b> Under-relaxed fixed-point iteration with sparse flash updates (every
    * {@code ssFlashInterval} iterations) to account for condensation effects. Includes a wall-clock time guard to
    * prevent infinite run times.</li>
+   * <li><b>Transient handoff:</b> Converts the final primitive profiles to conservative phase mass, momentum, and
+   * energy once, so the first transient step starts from the reported steady state.</li>
    * </ul>
    */
   private void runSteadyState() {
@@ -1372,6 +1374,13 @@ public class TwoFluidPipe extends Pipeline {
     // Update outlet pressure from converged profile (if not user-specified)
     if (!outletPressureSet) {
       outletPressure = sections[numberOfSections - 1].getPressure();
+    }
+
+    // The steady solver works in primitive pressure, holdup, and velocity variables.
+    // Initialize the finite-volume state from the final converged primitives exactly once,
+    // before the transient solver makes conservative phase mass authoritative.
+    for (TwoFluidSection sec : sections) {
+      sec.updateConservativeVariables();
     }
 
     // Store initial profiles
@@ -3995,13 +4004,9 @@ public class TwoFluidPipe extends Pipeline {
       inlet.setWaterHoldup(alphaW_target);
       inlet.setOilHoldup(alphaO_target);
 
-      // Update mass per length to be consistent with holdups
-      inlet.setWaterMassPerLength(alphaW_target * rhoWater * area);
-      inlet.setOilMassPerLength(alphaO_target * rhoOil * area);
-
-      // Update momentum to be consistent with velocities
-      // Note: We do NOT reset the mass per length here - that would violate mass conservation
-      // The solver evolves the mass, we only set velocities for flux calculation
+      // The inlet flux uses these primitive boundary values. Do not overwrite the
+      // finite-volume phase masses: they are cell inventory advanced by the PDE.
+      // Replacing them here would create a domain-volume-scaled mass impulse.
       inlet.setGasMomentumPerLength(inlet.getGasMassPerLength() * inlet.getGasVelocity());
       inlet.setOilMomentumPerLength(inlet.getOilMassPerLength() * inlet.getOilVelocity());
       inlet.setWaterMomentumPerLength(inlet.getWaterMassPerLength() * inlet.getWaterVelocity());
