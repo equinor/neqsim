@@ -7401,8 +7401,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       markSolverTypeUsed(SolverType.DAMPED_SUBSTITUTION);
       solveDampedSubstitution(id);
       if (lastSolveStatus == SolveStatus.RIGOROUS_CONVERGED || lastSolveStatus == SolveStatus.RECONCILED_PRODUCTS) {
-        setLastSolveStatus(lastSolveStatus,
-            "Sum-rates is guarded to damped substitution for columns with a condenser");
+        setLastSolveStatus(lastSolveStatus, "Sum-rates is guarded to damped substitution for columns with a condenser");
       }
       return;
     }
