@@ -393,6 +393,14 @@ Auxiliary terrain and slug trackers may maintain primitive diagnostics, but they
 finite-volume phase masses. Conservative source or flux coupling for those trackers remains future
 model-development work.
 
+At the steady-to-transient handoff, `run()` converts the final pressure, phase-holdup, density, and
+velocity profiles into conservative phase mass, momentum, and energy exactly once. This conversion
+defines the initial condition and advances no simulation time. After the transient solve starts,
+the conservative phase masses own cell inventory. A stream-connected inlet may update boundary
+composition and velocity for its inlet flux, but it must not replace the first finite-volume cell's
+oil or water mass. This prevents an unchanged, near-zero-time handoff from producing an inventory or
+holdup jump that scales with pipe volume.
+
 For a domain with no external mass source, validate the discrete balance
 
 $$
