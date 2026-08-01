@@ -49,6 +49,8 @@ public class TPflash extends Flash {
   private static final double WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT = 0.01;
   /** Maximum accepted component material-balance residual for water-rich endpoint refinement. */
   private static final double WATER_RICH_MATERIAL_BALANCE_TOLERANCE = 1.0e-8;
+  /** Maximum accepted phase-composition normalization residual for an aqueous trial seed. */
+  private static final double AQUEOUS_SEED_COMPOSITION_NORMALIZATION_TOLERANCE = 1.0e-8;
   /** Maximum accepted log-fugacity residual when selecting an alternate cubic root. */
   private static final double PHASE_ROOT_EQUILIBRIUM_TOLERANCE = 1.0e-8;
   /** Cubic phase roots evaluated by the post-convergence aqueous root check. */
@@ -584,6 +586,7 @@ public class TPflash extends Flash {
           logger.debug("Post-stability init failed: {}", ex.getMessage());
         }
         rescueSinglePhaseMultiphaseEndpoint();
+        rejectUnnormalizedAqueousEndpointAfterStableSinglePhase();
 
         // Chemical equilibrium for stable single-phase case
         if (system.isChemicalSystem()) {
@@ -1476,6 +1479,54 @@ public class TPflash extends Flash {
           TRIVIAL_SPLIT_COMPOSITION_TOLERANCE);
     }
     collapseToReferenceSinglePhase();
+  }
+
+  /**
+   * Rejects an unnormalized aqueous trial phase created while checking an already stable single-phase state.
+   *
+   * <p>
+   * The multiphase stability path can seed an aqueous trial phase at a small positive phase fraction. If the beta
+   * solver does not move that seed, its composition can remain unnormalized and survive the generic minimum-beta
+   * cleanup. Such a structurally invalid trial must not replace the accepted homogeneous state.
+   * </p>
+   *
+   * <p>
+   * This guard deliberately does not impose a universal material-balance or fugacity-residual threshold. Some
+   * specialized fluid and solid-phase models use model-specific convergence and refinement paths, so normalized
+   * endpoints remain available to those paths. Chemical, ionic, solid, wax, and non-aqueous endpoints are excluded.
+   * </p>
+   */
+  private void rejectUnnormalizedAqueousEndpointAfterStableSinglePhase() {
+    if (system.getNumberOfPhases() != 2 || system.isChemicalSystem() || system.hasIons() || solidCheck
+        || system.isMultiphaseWaxCheck() || referenceSinglePhaseType == null
+        || !system.hasPhaseType(PhaseType.AQUEOUS)) {
+      return;
+    }
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      double compositionTotal = 0.0;
+      for (int componentIndex = 0; componentIndex < system.getPhase(phaseIndex)
+          .getNumberOfComponents(); componentIndex++) {
+        double phaseComposition = system.getPhase(phaseIndex).getComponent(componentIndex).getx();
+        if (!Double.isFinite(phaseComposition) || phaseComposition < 0.0 || phaseComposition > 1.0) {
+          if (logger.isDebugEnabled()) {
+            logger.debug("Rejecting invalid aqueous endpoint composition: phase={}, component={}, x={}", phaseIndex,
+                componentIndex, phaseComposition);
+          }
+          collapseToReferenceSinglePhase();
+          return;
+        }
+        compositionTotal += phaseComposition;
+      }
+      if (!Double.isFinite(compositionTotal)
+          || Math.abs(compositionTotal - 1.0) > AQUEOUS_SEED_COMPOSITION_NORMALIZATION_TOLERANCE) {
+        if (logger.isDebugEnabled()) {
+          logger.debug("Rejecting unnormalized aqueous endpoint composition: phase={}, sum(x)={}", phaseIndex,
+              compositionTotal);
+        }
+        collapseToReferenceSinglePhase();
+        return;
+      }
+    }
   }
 
   /**
