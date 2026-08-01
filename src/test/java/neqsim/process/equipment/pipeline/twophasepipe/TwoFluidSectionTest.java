@@ -294,6 +294,124 @@ public class TwoFluidSectionTest {
   }
 
   @Test
+  void testTerrainSegregationDoesNotCreateOilOrWaterMass() {
+    TwoFluidSection upstream = createThreePhaseBalanceSection(0.0, 1.0, -0.1);
+    TwoFluidSection valley = createThreePhaseBalanceSection(10.0, 0.0, 0.1);
+    TwoFluidSection downstream = createThreePhaseBalanceSection(20.0, 1.0, 0.1);
+    TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
+
+    equations.calcRHS(new TwoFluidSection[] { upstream, valley, downstream }, 10.0);
+
+    double[] sourceRates = equations.getLastMassBalanceRate().getSourceMassFlowKgPerSecond();
+    assertEquals(0.0, sourceRates[0] + sourceRates[1] + sourceRates[2], 1.0e-12,
+        "Oil-water segregation must be represented by momentum and fluxes, not a net domain mass source");
+    assertEquals(0.0, sourceRates[1], 1.0e-12, "Segregation must not convert oil mass locally");
+    assertEquals(0.0, sourceRates[2], 1.0e-12, "Segregation must not create water mass locally");
+  }
+
+  @Test
+  void testPhaseAppearanceAndDisappearanceRemainFiniteAndConservative() {
+    TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
+    equations.setIncludeMassTransfer(true);
+    double dtSeconds = 1.0;
+
+    TwoFluidSection[] appearing = createUniformTransferSections(0.0, 0.1);
+    double initialAppearingMass = totalMassPerLength(appearing[1]);
+    double[][] appearanceRate = equations.calcRHS(appearing, 10.0);
+    double[] appearedState = appearing[1].getStateVector();
+    for (int equation = 0; equation < appearedState.length; equation++) {
+      appearedState[equation] += dtSeconds * appearanceRate[1][equation];
+    }
+    appearing[1].setStateVector(appearedState);
+    appearing[1].extractPrimitiveVariables();
+
+    assertTrue(appearing[1].getGasMassPerLength() > 0.0, "Evaporation should make gas appear");
+    assertEquals(initialAppearingMass, totalMassPerLength(appearing[1]), 1.0e-12);
+    assertFiniteNonNegativePhaseMasses(appearing[1]);
+
+    TwoFluidSection[] disappearing = createUniformTransferSections(0.01, -0.1);
+    double initialDisappearingMass = totalMassPerLength(disappearing[1]);
+    double[][] disappearanceRate = equations.calcRHS(disappearing, 10.0);
+    double[] disappearedState = disappearing[1].getStateVector();
+    for (int equation = 0; equation < disappearedState.length; equation++) {
+      disappearedState[equation] += dtSeconds * disappearanceRate[1][equation];
+    }
+    disappearing[1].setStateVector(disappearedState);
+    disappearing[1].extractPrimitiveVariables();
+
+    assertEquals(0.0, disappearing[1].getGasMassPerLength(), 1.0e-12,
+        "Condensation should allow gas to disappear without a negative phase mass");
+    assertEquals(initialDisappearingMass, totalMassPerLength(disappearing[1]), 1.0e-12);
+    assertFiniteNonNegativePhaseMasses(disappearing[1]);
+  }
+
+  private TwoFluidSection[] createUniformTransferSections(double gasMassPerLength, double massTransferRateKgPerSecond) {
+    TwoFluidSection[] transferSections = new TwoFluidSection[3];
+    for (int index = 0; index < transferSections.length; index++) {
+      TwoFluidSection transferSection = createThreePhaseBalanceSection(index * 10.0, 0.0, 0.0);
+      transferSection.setGasMassPerLength(gasMassPerLength);
+      transferSection.setGasMomentumPerLength(0.0);
+      transferSection.setOilVelocity(0.0);
+      transferSection.setWaterVelocity(0.0);
+      transferSection.setLiquidVelocity(0.0);
+      transferSection.setOilMomentumPerLength(0.0);
+      transferSection.setWaterMomentumPerLength(0.0);
+      transferSection.setLiquidMomentumPerLength(0.0);
+      transferSection.setMassTransferRate(massTransferRateKgPerSecond);
+      transferSection.extractPrimitiveVariables();
+      transferSections[index] = transferSection;
+    }
+    return transferSections;
+  }
+
+  private double totalMassPerLength(TwoFluidSection balanceSection) {
+    return balanceSection.getGasMassPerLength() + balanceSection.getOilMassPerLength()
+        + balanceSection.getWaterMassPerLength();
+  }
+
+  private void assertFiniteNonNegativePhaseMasses(TwoFluidSection balanceSection) {
+    assertTrue(Double.isFinite(balanceSection.getGasMassPerLength()));
+    assertTrue(Double.isFinite(balanceSection.getOilMassPerLength()));
+    assertTrue(Double.isFinite(balanceSection.getWaterMassPerLength()));
+    assertTrue(balanceSection.getGasMassPerLength() >= 0.0);
+    assertTrue(balanceSection.getOilMassPerLength() >= 0.0);
+    assertTrue(balanceSection.getWaterMassPerLength() >= 0.0);
+  }
+
+  private TwoFluidSection createThreePhaseBalanceSection(double position, double elevation, double inclination) {
+    TwoFluidSection balanceSection = new TwoFluidSection(position, 10.0, 0.1, inclination);
+    balanceSection.setElevation(elevation);
+    balanceSection.setPressure(50.0e5);
+    balanceSection.setTemperature(300.0);
+    balanceSection.setGasDensity(40.0);
+    balanceSection.setOilDensity(700.0);
+    balanceSection.setWaterDensity(1000.0);
+    balanceSection.setLiquidDensity(850.0);
+    balanceSection.setGasViscosity(1.2e-5);
+    balanceSection.setOilViscosity(1.0e-3);
+    balanceSection.setWaterViscosity(1.0e-3);
+    balanceSection.setLiquidViscosity(1.0e-3);
+    balanceSection.setGasSoundSpeed(300.0);
+    balanceSection.setLiquidSoundSpeed(1200.0);
+    balanceSection.setGasEnthalpy(1.0e5);
+    balanceSection.setLiquidEnthalpy(5.0e4);
+    balanceSection.setSurfaceTension(0.02);
+    balanceSection.setGasHoldup(0.6);
+    balanceSection.setLiquidHoldup(0.4);
+    balanceSection.setOilHoldup(0.2);
+    balanceSection.setWaterHoldup(0.2);
+    balanceSection.setWaterCut(0.5);
+    balanceSection.setOilFractionInLiquid(0.5);
+    balanceSection.setGasVelocity(3.0);
+    balanceSection.setLiquidVelocity(0.5);
+    balanceSection.setOilVelocity(0.55);
+    balanceSection.setWaterVelocity(0.45);
+    balanceSection.updateConservativeVariables();
+    balanceSection.updateDerivedQuantities();
+    return balanceSection;
+  }
+
+  @Test
   void testShearStresses() {
     section.setGasWallShear(5.0);
     section.setLiquidWallShear(15.0);

@@ -511,10 +511,10 @@ public class TimeIntegrator implements Serializable {
    * <ol>
    * <li><b>Predictor (explicit):</b> Advance mass and momentum using the explicit RHS (advection + source terms) to
    * obtain intermediate values U*.</li>
-   * <li><b>Pressure correction (implicit):</b> Solve a tridiagonal Helmholtz equation for the pressure correction dp
-   * that enforces mass conservation implicitly. The pressure wave equation dp - (c*dt/dx)^2 * d^2(dp)/dx^2 = RHS
-   * removes the acoustic CFL constraint.</li>
-   * <li><b>Corrector:</b> Update momenta using the pressure correction gradient.</li>
+   * <li><b>Pressure correction (implicit):</b> Solve a tridiagonal Helmholtz equation for the pressure correction dp.
+   * The pressure wave equation dp - (c*dt/dx)^2 * d^2(dp)/dx^2 = RHS removes the acoustic CFL constraint.</li>
+   * <li><b>Corrector:</b> Update phase momenta using the pressure correction gradient while leaving the phase masses
+   * from the conservative predictor unchanged.</li>
    * </ol>
    *
    * <p>
@@ -634,22 +634,15 @@ public class TimeIntegrator implements Serializable {
         dpdx = (dp[i + 1] - dp[i - 1]) / (2.0 * imexDx);
       }
 
-      // Correct mass equations with implicit pressure contribution.
-      double c = Math.max(cellSoundSpeeds[i], 1.0);
       double area = getCellArea(i);
-      double massCorrectionTotal = area * dp[i] / (c * c);
 
-      // Distribute mass correction proportionally to existing phase masses
+      // Phase masses remain exactly as advanced by the conservative explicit
+      // predictor. Pressure correction acts on momenta; directly adding area*dp/c^2
+      // to cell mass would be an unbalanced volume source.
       double totalMass = 0;
       int nMassEq = Math.min(3, nVars);
       for (int k = 0; k < nMassEq; k++) {
         totalMass += Math.max(Ustar[i][k], 0);
-      }
-      if (totalMass > 1e-12) {
-        for (int k = 0; k < nMassEq; k++) {
-          double fraction = Math.max(Ustar[i][k], 0) / totalMass;
-          Unew[i][k] = Ustar[i][k] + fraction * massCorrectionTotal;
-        }
       }
 
       // Correct momentum equations using the two-fluid pressure source:
