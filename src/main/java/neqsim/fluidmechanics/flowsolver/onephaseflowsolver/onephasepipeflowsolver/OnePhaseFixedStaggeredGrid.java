@@ -43,6 +43,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   protected double[] oldImpuls;
   protected double[] oldEnergy;
   private OnePhaseFlowConvergenceReport lastConvergenceReport = OnePhaseFlowConvergenceReport.notRun();
+  private boolean failOnNonConvergence;
 
   /**
    * Constructor for OnePhaseFixedStaggeredGrid.
@@ -95,6 +96,24 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
    */
   public OnePhaseFlowConvergenceReport getLastConvergenceReport() {
     return lastConvergenceReport == null ? OnePhaseFlowConvergenceReport.notRun() : lastConvergenceReport;
+  }
+
+  /**
+   * Configure whether a transient solve throws when the convergence report fails.
+   *
+   * @param failOnNonConvergence true to throw after recording a failed report; false to log a warning and return
+   */
+  public void setFailOnNonConvergence(boolean failOnNonConvergence) {
+    this.failOnNonConvergence = failOnNonConvergence;
+  }
+
+  /**
+   * Check whether failed transient convergence throws.
+   *
+   * @return true when strict fail-loud mode is enabled
+   */
+  public boolean isFailOnNonConvergence() {
+    return failOnNonConvergence;
   }
 
   /**
@@ -1069,7 +1088,10 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         Arrays.copyOf(nonlinearUpdateHistory, iterTop), Arrays.copyOf(densityResidualHistory, iterTop));
 
     if (dynamic && solverType > 0 && !lastConvergenceReport.isConverged()) {
-      throw new IllegalStateException(lastConvergenceReport.getMessage());
+      if (failOnNonConvergence) {
+        throw new IllegalStateException(lastConvergenceReport.getMessage());
+      }
+      logger.warn("{}", lastConvergenceReport.getMessage());
     }
 
     initFinalResults();
@@ -1179,13 +1201,13 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     if (!diagnosticsAreFinite(nonlinearUpdate, densityResidual, relativeFiniteVolumeMassResidual,
         relativeThermodynamicMassResidual)) {
       reason = OnePhaseFlowConvergenceReport.ConvergenceReason.NON_FINITE_RESIDUAL;
-    } else if (!hasConverged(nonlinearUpdate, densityResidual) && nonlinearIterations >= MAXIMUM_NONLINEAR_ITERATIONS) {
-      reason = OnePhaseFlowConvergenceReport.ConvergenceReason.MAX_ITERATIONS_REACHED;
     } else if (dynamic && solverType > 0 && densityResidual > DENSITY_RELATIVE_TOLERANCE) {
       reason = OnePhaseFlowConvergenceReport.ConvergenceReason.DENSITY_INCONSISTENT;
     } else if (dynamic && solverType > 0 && (relativeFiniteVolumeMassResidual > MASS_BALANCE_RELATIVE_TOLERANCE
         || relativeThermodynamicMassResidual > MASS_BALANCE_RELATIVE_TOLERANCE)) {
       reason = OnePhaseFlowConvergenceReport.ConvergenceReason.MASS_BALANCE_FAILED;
+    } else if (!hasConverged(nonlinearUpdate, densityResidual) && nonlinearIterations >= MAXIMUM_NONLINEAR_ITERATIONS) {
+      reason = OnePhaseFlowConvergenceReport.ConvergenceReason.MAX_ITERATIONS_REACHED;
     } else {
       reason = OnePhaseFlowConvergenceReport.ConvergenceReason.CONVERGED;
     }
