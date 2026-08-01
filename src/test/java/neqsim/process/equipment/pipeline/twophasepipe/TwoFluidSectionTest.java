@@ -344,8 +344,7 @@ public class TwoFluidSectionTest {
     assertFiniteNonNegativePhaseMasses(disappearing[1]);
   }
 
-  private TwoFluidSection[] createUniformTransferSections(double gasMassPerLength,
-      double massTransferRateKgPerSecond) {
+  private TwoFluidSection[] createUniformTransferSections(double gasMassPerLength, double massTransferRateKgPerSecond) {
     TwoFluidSection[] transferSections = new TwoFluidSection[3];
     for (int index = 0; index < transferSections.length; index++) {
       TwoFluidSection transferSection = createThreePhaseBalanceSection(index * 10.0, 0.0, 0.0);
