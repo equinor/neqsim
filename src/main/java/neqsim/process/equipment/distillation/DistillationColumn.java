@@ -11312,7 +11312,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       return;
     }
     SystemInterface system = productStream.getThermoSystem();
-    if (system.getNumberOfPhases() <= 1) {
+    if (system.getNumberOfPhases() != 2) {
       return;
     }
 
@@ -11332,23 +11332,35 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (intendedPhaseIndex < 0) {
       return;
     }
-    double unintendedPhaseFraction = 0.0;
-    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
-      if (phaseIndex == intendedPhaseIndex) {
-        continue;
-      }
-      double phaseFraction = system.getBeta(phaseIndex);
-      if (!Double.isFinite(phaseFraction) || phaseFraction < 0.0) {
-        return;
-      }
-      unintendedPhaseFraction += phaseFraction;
-    }
-    if (unintendedPhaseFraction > TERMINAL_PRODUCT_TRACE_PHASE_FRACTION) {
+
+    int unintendedPhaseIndex = intendedPhaseIndex == 0 ? 1 : 0;
+    double unintendedPhaseFraction = system.getBeta(unintendedPhaseIndex);
+    double phaseFractionSum = intendedPhaseFraction + unintendedPhaseFraction;
+    if (!Double.isFinite(unintendedPhaseFraction) || unintendedPhaseFraction <= 0.0
+        || unintendedPhaseFraction > TERMINAL_PRODUCT_TRACE_PHASE_FRACTION
+        || intendedPhaseFraction < 1.0 - TERMINAL_PRODUCT_TRACE_PHASE_FRACTION
+        || intendedPhaseFraction > 1.0 + TERMINAL_PRODUCT_TRACE_PHASE_FRACTION
+        || !Double.isFinite(phaseFractionSum)
+        || Math.abs(phaseFractionSum - 1.0) > TERMINAL_PRODUCT_TRACE_PHASE_FRACTION) {
       return;
     }
 
     double[] componentMoles = getComponentMoles(system);
-    String intendedPhaseTypeName = system.getPhase(intendedPhaseIndex).getPhaseTypeName();
+    double totalComponentMoles = 0.0;
+    for (double componentMole : componentMoles) {
+      if (!Double.isFinite(componentMole) || componentMole < 0.0) {
+        return;
+      }
+      totalComponentMoles += componentMole;
+    }
+    if (!Double.isFinite(totalComponentMoles) || totalComponentMoles <= 0.0) {
+      return;
+    }
+
+    String rawPhaseTypeName = system.getPhase(intendedPhaseIndex).getPhaseTypeName();
+    String intendedPhaseTypeName = gasProduct ? "gas"
+        : "oil".equalsIgnoreCase(rawPhaseTypeName) ? "oil"
+            : "aqueous".equalsIgnoreCase(rawPhaseTypeName) ? "aqueous" : "liquid";
     updateProductStreamWithForcedPhase(productStream, componentMoles, intendedPhaseTypeName, id);
   }
 
