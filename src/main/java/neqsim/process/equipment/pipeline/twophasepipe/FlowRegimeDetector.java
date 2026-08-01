@@ -109,9 +109,8 @@ public class FlowRegimeDetector implements Serializable {
    * Detect flow regime for a pipe section.
    *
    * <p>
-   * Uses superficial velocity ratios rather than holdup for single-phase detection. This correctly identifies
-   * gas-dominant flows with low liquid loading as two-phase rather than single-phase gas, ensuring proper slip and
-   * accumulation calculations.
+   * Uses conservative phase holdups for single-phase detection. This keeps any positive phase inventory in the
+   * two-phase regime path even when its superficial velocity is arbitrarily small.
    * </p>
    *
    * @param section The pipe section with current state
@@ -120,26 +119,20 @@ public class FlowRegimeDetector implements Serializable {
   public FlowRegime detectFlowRegime(PipeSection section) {
     double U_SL = section.getSuperficialLiquidVelocity();
     double U_SG = section.getSuperficialGasVelocity();
-    double U_M = U_SL + U_SG;
+    double alphaL = section.getLiquidHoldup();
+    double alphaG = section.getGasHoldup();
 
-    // Single phase checks using superficial velocity ratios (not holdup)
-    // This correctly identifies low liquid loading as two-phase, not single-phase gas
-    // Critical: Using holdup (alpha_L < 0.001) causes premature single-phase classification
-    // for lean gas systems where liquid accumulation detection is needed
-    double liquidFraction = (U_M > 1e-10) ? U_SL / U_M : 0.0;
-    double gasFraction = (U_M > 1e-10) ? U_SG / U_M : 0.0;
-
-    // Only classify as single-phase if truly negligible flow of the other phase
-    // Use 1e-6 m/s threshold (essentially zero flow) instead of 0.1% holdup
-    if (U_SL < 1e-6 && U_SG > 1e-6) {
+    // Conservative phase holdup owns phase presence. A small positive superficial
+    // velocity is not equivalent to an absent phase and must not trigger a regime jump.
+    if (alphaL <= 0.0 && alphaG > 0.0) {
       return FlowRegime.SINGLE_PHASE_GAS;
     }
-    if (U_SG < 1e-6 && U_SL > 1e-6) {
+    if (alphaG <= 0.0 && alphaL > 0.0) {
       return FlowRegime.SINGLE_PHASE_LIQUID;
     }
-    if (U_M < 1e-6) {
-      // No flow - default to single phase liquid (static condition)
-      return FlowRegime.SINGLE_PHASE_LIQUID;
+    if (alphaL <= 0.0 && alphaG <= 0.0) {
+      // Uninitialized state: use exact nonzero flow only as a fallback.
+      return U_SG != 0.0 ? FlowRegime.SINGLE_PHASE_GAS : FlowRegime.SINGLE_PHASE_LIQUID;
     }
 
     // Use minimum slip criterion if selected
