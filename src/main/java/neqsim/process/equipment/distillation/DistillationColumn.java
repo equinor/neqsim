@@ -98,6 +98,19 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /** Product reconciliation drift above this level is reported as a non-rigorous solve status. */
   private static final double PRODUCT_RECONCILIATION_STATUS_TOLERANCE = 2.0e-2;
   /**
+   * Maximum minority phase fraction canonicalized out of a separated terminal product.
+   *
+   * <p>
+   * Sequential column solvers can approach the same dew-point boundary from opposite sides and expose a numerical
+   * trace phase in only one product. A phase smaller than this limit contributes less than one part in one hundred
+   * million to the product inventory. Merging it into the dominant, intended outlet phase gives the separated product
+   * a solver-independent phase identity without discarding component moles.
+   * </p>
+   */
+  private static final double TERMINAL_PRODUCT_TRACE_PHASE_FRACTION = 1.0e-8;
+  /** Tighter internal target needed for solver-independent reboiler-only terminal product temperatures. */
+  private static final double REBOILER_ONLY_PHASE_STABLE_TEMPERATURE_TOLERANCE_FACTOR = 5.0e-2;
+  /**
    * Maximum internal tray traffic accepted after divergence recovery relative to external feed.
    */
   private static final double MAX_SOLVED_INTERNAL_TRAFFIC_TO_FEED_RATIO = 100.0;
@@ -5730,7 +5743,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       polishIterationLimit = maxNumberOfIterations;
       maxIterationLimit = maxNumberOfIterations;
     }
-    double baseTempTolerance = getEffectiveTemperatureTolerance();
+    double baseTempTolerance = getSequentialTerminalTemperatureTolerance();
     double baseMassTolerance = getEffectiveMassBalanceTolerance();
     double baseEnergyTolerance = getEffectiveEnthalpyBalanceTolerance();
     double polishTempTolerance = Math.min(baseTempTolerance, TEMPERATURE_POLISH_TARGET);
@@ -5998,6 +6011,26 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       return temperatureTolerance;
     }
     return DEFAULT_TEMPERATURE_TOLERANCE * computeToleranceComplexityMultiplier();
+  }
+
+  /**
+   * Derive the internal sequential-solver temperature target used for terminal phase stability.
+   *
+   * <p>
+   * Reboiler-only columns can end immediately beside a top-product dew-point boundary. Solving only to the public
+   * temperature tolerance lets two sequential algorithms stop at measurably different terminal temperatures. A small
+   * internal margin for this configuration makes their exposed product temperatures agree within the configured
+   * tolerance; the public tolerance and API remain unchanged.
+   * </p>
+   *
+   * @return internal temperature target in Kelvin
+   */
+  private double getSequentialTerminalTemperatureTolerance() {
+    double effectiveTolerance = getEffectiveTemperatureTolerance();
+    if (hasReboiler && !hasCondenser) {
+      return effectiveTolerance * REBOILER_ONLY_PHASE_STABLE_TEMPERATURE_TOLERANCE_FACTOR;
+    }
+    return effectiveTolerance;
   }
 
   /**
@@ -7329,7 +7362,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return {@code true} when the sum-rates accelerator should be guarded by damped substitution
    */
   private boolean useGuardedSumRatesFallback() {
-    return hasCondenser || hasReboiler;
+    return hasCondenser;
   }
 
   /**
@@ -7407,7 +7440,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     int baseIterationLimit = computeIterationLimit();
     int iterationLimit = baseIterationLimit;
-    double baseTempTolerance = getEffectiveTemperatureTolerance();
+    double baseTempTolerance = getSequentialTerminalTemperatureTolerance();
     double baseMassTolerance = getEffectiveMassBalanceTolerance();
     double baseEnergyTolerance = getEffectiveEnthalpyBalanceTolerance();
     boolean massEnergyEvaluated = false;
@@ -11069,6 +11102,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     captureTerminalProductDrawStreams(id);
     boolean productReconciled = updateProductsFromExternalComponentBalance(id);
+    canonicalizeTerminalTracePhase(gasOutStream, true, id);
+    canonicalizeTerminalTracePhase(liquidOutStream, false, id);
     lastInternalTrafficRatio = getInternalTrafficRatio();
     if (!internalTrafficSatisfied()) {
       capInternalTrayTraffic();
@@ -11256,6 +11291,68 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
     SystemInterface system = productStream.getThermoSystem();
     return system.hasPhaseType("oil") || system.hasPhaseType("liquid") || system.hasPhaseType("aqueous");
+  }
+
+  /**
+   * Canonicalize an immaterial minority phase in a separated terminal product.
+   *
+   * <p>
+   * The public gas and liquid products are phase-separated outlets, but the final product TP flash can retain a phase
+   * with a beta of only a few parts per billion when the result lies on a dew- or bubble-point boundary. Different
+   * sequential solvers can approach that boundary from opposite sides even after satisfying the same numerical
+   * tolerances. When the intended outlet phase owns all but
+   * {@link #TERMINAL_PRODUCT_TRACE_PHASE_FRACTION} of the product inventory, rebuild the stream as that single phase
+   * using the complete component-mole vector. This changes neither total nor per-component flow and avoids treating a
+   * numerical trace as a distinct process product.
+   * </p>
+   *
+   * @param productStream public terminal product to inspect
+   * @param gasProduct {@code true} for the top gas product, {@code false} for the bottom liquid product
+   * @param id calculation identifier to retain on a rebuilt stream
+   */
+  private void canonicalizeTerminalTracePhase(StreamInterface productStream, boolean gasProduct, UUID id) {
+    if (productStream == null || productStream.getThermoSystem() == null) {
+      return;
+    }
+    SystemInterface system = productStream.getThermoSystem();
+    if (system.getNumberOfPhases() <= 1) {
+      return;
+    }
+
+    int intendedPhaseIndex = -1;
+    double intendedPhaseFraction = -1.0;
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      String phaseTypeName = system.getPhase(phaseIndex).getPhaseTypeName();
+      boolean intendedPhase = gasProduct ? "gas".equalsIgnoreCase(phaseTypeName)
+          : "oil".equalsIgnoreCase(phaseTypeName) || "liquid".equalsIgnoreCase(phaseTypeName)
+              || "aqueous".equalsIgnoreCase(phaseTypeName);
+      double phaseFraction = system.getBeta(phaseIndex);
+      if (intendedPhase && Double.isFinite(phaseFraction) && phaseFraction > intendedPhaseFraction) {
+        intendedPhaseIndex = phaseIndex;
+        intendedPhaseFraction = phaseFraction;
+      }
+    }
+    if (intendedPhaseIndex < 0) {
+      return;
+    }
+    double unintendedPhaseFraction = 0.0;
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      if (phaseIndex == intendedPhaseIndex) {
+        continue;
+      }
+      double phaseFraction = system.getBeta(phaseIndex);
+      if (!Double.isFinite(phaseFraction) || phaseFraction < 0.0) {
+        return;
+      }
+      unintendedPhaseFraction += phaseFraction;
+    }
+    if (unintendedPhaseFraction > TERMINAL_PRODUCT_TRACE_PHASE_FRACTION) {
+      return;
+    }
+
+    double[] componentMoles = getComponentMoles(system);
+    String intendedPhaseTypeName = system.getPhase(intendedPhaseIndex).getPhaseTypeName();
+    updateProductStreamWithForcedPhase(productStream, componentMoles, intendedPhaseTypeName, id);
   }
 
   /** Cap cached internal tray outlet streams to the emergency traffic limit. */
