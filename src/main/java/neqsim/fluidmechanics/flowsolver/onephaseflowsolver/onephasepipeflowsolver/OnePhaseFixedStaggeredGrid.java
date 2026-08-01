@@ -42,8 +42,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   protected double[] oldInternalEnergy;
   protected double[] oldImpuls;
   protected double[] oldEnergy;
-  private OnePhaseFlowConvergenceReport lastConvergenceReport =
-      OnePhaseFlowConvergenceReport.notRun();
+  private OnePhaseFlowConvergenceReport lastConvergenceReport = OnePhaseFlowConvergenceReport.notRun();
 
   /**
    * Constructor for OnePhaseFixedStaggeredGrid.
@@ -95,8 +94,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
    * @return immutable convergence and total-mass report
    */
   public OnePhaseFlowConvergenceReport getLastConvergenceReport() {
-    return lastConvergenceReport == null ? OnePhaseFlowConvergenceReport.notRun()
-        : lastConvergenceReport;
+    return lastConvergenceReport == null ? OnePhaseFlowConvergenceReport.notRun() : lastConvergenceReport;
   }
 
   /**
@@ -1065,12 +1063,10 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       nonlinearUpdateHistory[iterTop - 1] = Math.abs(maxDiff);
       densityResidualHistory[iterTop - 1] = densityResidual;
       // System.out.println("maxDiff " + maxDiff);
-    } while (!hasConverged(maxDiff, densityResidual)
-        && iterTop < MAXIMUM_NONLINEAR_ITERATIONS); // diffMatrix.norm2()/sol2Matrix.norm2())>0.1);
+    } while (!hasConverged(maxDiff, densityResidual) && iterTop < MAXIMUM_NONLINEAR_ITERATIONS); // diffMatrix.norm2()/sol2Matrix.norm2())>0.1);
 
-    lastConvergenceReport = createConvergenceReport(iterTop, maxDiff, densityResidual,
-        initialFiniteVolumeMass, Arrays.copyOf(nonlinearUpdateHistory, iterTop),
-        Arrays.copyOf(densityResidualHistory, iterTop));
+    lastConvergenceReport = createConvergenceReport(iterTop, maxDiff, densityResidual, initialFiniteVolumeMass,
+        Arrays.copyOf(nonlinearUpdateHistory, iterTop), Arrays.copyOf(densityResidualHistory, iterTop));
 
     if (dynamic && solverType > 0 && !lastConvergenceReport.isConverged()) {
       throw new IllegalStateException(lastConvergenceReport.getMessage());
@@ -1117,8 +1113,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   }
 
   private double getControlVolume(int node) {
-    return pipe.getNode(node).getGeometry().getArea()
-        * pipe.getNode(node).getGeometry().getNodeLength();
+    return pipe.getNode(node).getGeometry().getArea() * pipe.getNode(node).getGeometry().getNodeLength();
   }
 
   private double calculateMaximumRelativeDensityResidual() {
@@ -1129,10 +1124,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     for (int i = 1; i < numberOfNodes; i++) {
       double finiteVolumeDensity = sol2Matrix.get(i, 0);
       double thermodynamicDensity = pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity();
-      double scale = Math.max(Math.max(Math.abs(finiteVolumeDensity),
-          Math.abs(thermodynamicDensity)), 1.0e-30);
-      maximum = Math.max(maximum,
-          Math.abs(finiteVolumeDensity - thermodynamicDensity) / scale);
+      double scale = Math.max(Math.max(Math.abs(finiteVolumeDensity), Math.abs(thermodynamicDensity)), 1.0e-30);
+      maximum = Math.max(maximum, Math.abs(finiteVolumeDensity - thermodynamicDensity) / scale);
     }
     return maximum;
   }
@@ -1147,8 +1140,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       return Double.NaN;
     }
 
-    double inletMassFlow = inletVelocity * pipe.getNode(0).getGeometry().getArea()
-        * sol2Matrix.get(0, 0);
+    double inletMassFlow = inletVelocity * pipe.getNode(0).getGeometry().getArea() * sol2Matrix.get(0, 0);
     return timeStep * inletMassFlow;
   }
 
@@ -1162,68 +1154,53 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       return Double.NaN;
     }
 
-    double outletMassFlow = outletVelocity
-        * pipe.getNode(numberOfNodes - 1).getGeometry().getArea()
+    double outletMassFlow = outletVelocity * pipe.getNode(numberOfNodes - 1).getGeometry().getArea()
         * sol2Matrix.get(numberOfNodes - 1, 0);
     return timeStep * outletMassFlow;
   }
 
-  private OnePhaseFlowConvergenceReport createConvergenceReport(int nonlinearIterations,
-      double nonlinearUpdate, double densityResidual, double initialFiniteVolumeMass,
-      double[] nonlinearHistory, double[] densityHistory) {
+  private OnePhaseFlowConvergenceReport createConvergenceReport(int nonlinearIterations, double nonlinearUpdate,
+      double densityResidual, double initialFiniteVolumeMass, double[] nonlinearHistory, double[] densityHistory) {
     double finalFiniteVolumeMass = dynamic ? calculateFiniteVolumeMass() : Double.NaN;
     double finalThermodynamicMass = dynamic ? calculateThermodynamicMass() : Double.NaN;
     double inletBoundaryMass = calculateInletBoundaryMass();
     double outletBoundaryMass = calculateOutletBoundaryMass();
     double netBoundaryMass = inletBoundaryMass - outletBoundaryMass;
-    double finiteVolumeMassResidual = dynamic
-        ? finalFiniteVolumeMass - initialFiniteVolumeMass - netBoundaryMass
+    double finiteVolumeMassResidual = dynamic ? finalFiniteVolumeMass - initialFiniteVolumeMass - netBoundaryMass
         : Double.NaN;
-    double thermodynamicMassResidual = dynamic
-        ? finalThermodynamicMass - initialFiniteVolumeMass - netBoundaryMass
+    double thermodynamicMassResidual = dynamic ? finalThermodynamicMass - initialFiniteVolumeMass - netBoundaryMass
         : Double.NaN;
-    double massScale = dynamic
-        ? Math.max(Math.max(Math.abs(initialFiniteVolumeMass), Math.abs(netBoundaryMass)), 1.0)
+    double massScale = dynamic ? Math.max(Math.max(Math.abs(initialFiniteVolumeMass), Math.abs(netBoundaryMass)), 1.0)
         : Double.NaN;
-    double relativeFiniteVolumeMassResidual = dynamic
-        ? Math.abs(finiteVolumeMassResidual) / massScale
-        : Double.NaN;
-    double relativeThermodynamicMassResidual = dynamic
-        ? Math.abs(thermodynamicMassResidual) / massScale
-        : Double.NaN;
+    double relativeFiniteVolumeMassResidual = dynamic ? Math.abs(finiteVolumeMassResidual) / massScale : Double.NaN;
+    double relativeThermodynamicMassResidual = dynamic ? Math.abs(thermodynamicMassResidual) / massScale : Double.NaN;
 
     OnePhaseFlowConvergenceReport.ConvergenceReason reason;
     if (!diagnosticsAreFinite(nonlinearUpdate, densityResidual, relativeFiniteVolumeMassResidual,
         relativeThermodynamicMassResidual)) {
       reason = OnePhaseFlowConvergenceReport.ConvergenceReason.NON_FINITE_RESIDUAL;
-    } else if (!hasConverged(nonlinearUpdate, densityResidual)
-        && nonlinearIterations >= MAXIMUM_NONLINEAR_ITERATIONS) {
+    } else if (!hasConverged(nonlinearUpdate, densityResidual) && nonlinearIterations >= MAXIMUM_NONLINEAR_ITERATIONS) {
       reason = OnePhaseFlowConvergenceReport.ConvergenceReason.MAX_ITERATIONS_REACHED;
-    } else if (dynamic && solverType > 0
-        && densityResidual > DENSITY_RELATIVE_TOLERANCE) {
+    } else if (dynamic && solverType > 0 && densityResidual > DENSITY_RELATIVE_TOLERANCE) {
       reason = OnePhaseFlowConvergenceReport.ConvergenceReason.DENSITY_INCONSISTENT;
-    } else if (dynamic && solverType > 0
-        && (relativeFiniteVolumeMassResidual > MASS_BALANCE_RELATIVE_TOLERANCE
-            || relativeThermodynamicMassResidual > MASS_BALANCE_RELATIVE_TOLERANCE)) {
+    } else if (dynamic && solverType > 0 && (relativeFiniteVolumeMassResidual > MASS_BALANCE_RELATIVE_TOLERANCE
+        || relativeThermodynamicMassResidual > MASS_BALANCE_RELATIVE_TOLERANCE)) {
       reason = OnePhaseFlowConvergenceReport.ConvergenceReason.MASS_BALANCE_FAILED;
     } else {
       reason = OnePhaseFlowConvergenceReport.ConvergenceReason.CONVERGED;
     }
 
     String message = "One-phase pipe solve " + reason + " after " + nonlinearIterations
-        + " nonlinear iterations: update=" + Math.abs(nonlinearUpdate) + " (tolerance "
-        + NONLINEAR_UPDATE_TOLERANCE + "), EOS/FV density=" + densityResidual
-        + " (tolerance " + DENSITY_RELATIVE_TOLERANCE + "), FV mass residual="
-        + finiteVolumeMassResidual + " kg, EOS mass residual=" + thermodynamicMassResidual
-        + " kg (relative tolerance " + MASS_BALANCE_RELATIVE_TOLERANCE + ").";
+        + " nonlinear iterations: update=" + Math.abs(nonlinearUpdate) + " (tolerance " + NONLINEAR_UPDATE_TOLERANCE
+        + "), EOS/FV density=" + densityResidual + " (tolerance " + DENSITY_RELATIVE_TOLERANCE + "), FV mass residual="
+        + finiteVolumeMassResidual + " kg, EOS mass residual=" + thermodynamicMassResidual + " kg (relative tolerance "
+        + MASS_BALANCE_RELATIVE_TOLERANCE + ").";
 
-    return new OnePhaseFlowConvergenceReport(reason, dynamic, solverType,
-        nonlinearIterations, NONLINEAR_UPDATE_TOLERANCE, DENSITY_RELATIVE_TOLERANCE,
-        MASS_BALANCE_RELATIVE_TOLERANCE, Math.abs(nonlinearUpdate), densityResidual,
-        initialFiniteVolumeMass, finalFiniteVolumeMass, finalThermodynamicMass,
-        inletBoundaryMass, outletBoundaryMass, netBoundaryMass, finiteVolumeMassResidual,
-        thermodynamicMassResidual,
-        relativeFiniteVolumeMassResidual, relativeThermodynamicMassResidual,
+    return new OnePhaseFlowConvergenceReport(reason, dynamic, solverType, nonlinearIterations,
+        NONLINEAR_UPDATE_TOLERANCE, DENSITY_RELATIVE_TOLERANCE, MASS_BALANCE_RELATIVE_TOLERANCE,
+        Math.abs(nonlinearUpdate), densityResidual, initialFiniteVolumeMass, finalFiniteVolumeMass,
+        finalThermodynamicMass, inletBoundaryMass, outletBoundaryMass, netBoundaryMass, finiteVolumeMassResidual,
+        thermodynamicMassResidual, relativeFiniteVolumeMassResidual, relativeThermodynamicMassResidual,
         nonlinearHistory, densityHistory, message);
   }
 
@@ -1235,7 +1212,6 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     if (!dynamic) {
       return true;
     }
-    return Double.isFinite(relativeFiniteVolumeMassResidual)
-        && Double.isFinite(relativeThermodynamicMassResidual);
+    return Double.isFinite(relativeFiniteVolumeMassResidual) && Double.isFinite(relativeThermodynamicMassResidual);
   }
 }

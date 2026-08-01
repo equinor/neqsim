@@ -8,9 +8,9 @@ import com.google.gson.GsonBuilder;
  * Immutable convergence and total-mass diagnostics from a one-phase pipe-flow solve.
  *
  * <p>
- * Nonlinear iterate changes, EOS-to-finite-volume density consistency, and transient total-mass
- * closure are reported separately. A small update does not establish convergence when the
- * thermodynamic density is inconsistent with the conservative density solution.
+ * Nonlinear iterate changes, EOS-to-finite-volume density consistency, and transient total-mass closure are reported
+ * separately. A small update does not establish convergence when the thermodynamic density is inconsistent with the
+ * conservative density solution.
  * </p>
  */
 public final class OnePhaseFlowConvergenceReport implements Serializable {
@@ -98,13 +98,12 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
    */
   public OnePhaseFlowConvergenceReport(ConvergenceReason reason, boolean dynamic, int solverType,
       int nonlinearIterations, double nonlinearUpdateTolerance, double densityRelativeTolerance,
-      double massBalanceRelativeTolerance, double maximumRelativeNonlinearUpdate,
-      double maximumRelativeDensityResidual, double initialFiniteVolumeMassKg,
-      double finalFiniteVolumeMassKg, double finalThermodynamicMassKg,
+      double massBalanceRelativeTolerance, double maximumRelativeNonlinearUpdate, double maximumRelativeDensityResidual,
+      double initialFiniteVolumeMassKg, double finalFiniteVolumeMassKg, double finalThermodynamicMassKg,
       double inletBoundaryMassKg, double outletBoundaryMassKg, double netBoundaryMassKg,
-      double finiteVolumeMassResidualKg, double thermodynamicMassResidualKg,
-      double relativeFiniteVolumeMassResidual, double relativeThermodynamicMassResidual,
-      double[] nonlinearUpdateHistory, double[] densityResidualHistory, String message) {
+      double finiteVolumeMassResidualKg, double thermodynamicMassResidualKg, double relativeFiniteVolumeMassResidual,
+      double relativeThermodynamicMassResidual, double[] nonlinearUpdateHistory, double[] densityResidualHistory,
+      String message) {
     this.reason = reason;
     this.dynamic = dynamic;
     this.solverType = solverType;
@@ -135,11 +134,9 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
    * @return not-run report
    */
   public static OnePhaseFlowConvergenceReport notRun() {
-    return new OnePhaseFlowConvergenceReport(ConvergenceReason.NOT_RUN, false, -1, 0,
-        Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN,
-        Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN,
-        Double.NaN, Double.NaN, Double.NaN, new double[0], new double[0],
-        "The solver has not run.");
+    return new OnePhaseFlowConvergenceReport(ConvergenceReason.NOT_RUN, false, -1, 0, Double.NaN, Double.NaN,
+        Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN,
+        Double.NaN, Double.NaN, Double.NaN, Double.NaN, new double[0], new double[0], "The solver has not run.");
   }
 
   /** @return reason why the solve stopped */
