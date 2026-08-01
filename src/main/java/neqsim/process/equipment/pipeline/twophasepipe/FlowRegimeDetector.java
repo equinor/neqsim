@@ -109,9 +109,8 @@ public class FlowRegimeDetector implements Serializable {
    * Detect flow regime for a pipe section.
    *
    * <p>
-   * Uses superficial velocity ratios rather than holdup for single-phase detection. This correctly identifies
-   * gas-dominant flows with low liquid loading as two-phase rather than single-phase gas, ensuring proper slip and
-   * accumulation calculations.
+   * Uses conservative phase holdups for single-phase detection. This keeps any positive phase inventory in the
+   * two-phase regime path even when its superficial velocity is arbitrarily small.
    * </p>
    *
    * @param section The pipe section with current state

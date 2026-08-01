@@ -94,6 +94,24 @@ class TwoFluidPipePhaseDegeneracyTest {
   }
 
   @Test
+  void testReverseFlowUsesPhaseFlowMagnitudesForHoldup() throws Exception {
+    Method closure = getLocalHoldupClosure();
+    double area = Math.PI * 0.2 * 0.2 / 4.0;
+
+    for (OLGAModelType modelType : OLGAModelType.values()) {
+      TwoFluidPipe pipe = createPipe();
+      pipe.setOLGAModelType(modelType);
+      TwoFluidSection section = createSection(0.0, FlowRegime.STRATIFIED_SMOOTH);
+      double[] forward = (double[]) closure.invoke(pipe, section, null, 1.0, 1.0e-8, area);
+      double[] reverse = (double[]) closure.invoke(pipe, section, null, -1.0, -1.0e-8, area);
+
+      assertEquals(forward[0], reverse[0], 0.0);
+      assertEquals(forward[1], reverse[1], 0.0);
+      assertTrue(reverse[0] > 0.0, modelType + " reverse flow was misclassified as an absent liquid phase");
+    }
+  }
+
+  @Test
   void testPureGasPublicRunAndTransientKeepLiquidExactlyAbsent() {
     for (OLGAModelType modelType : OLGAModelType.values()) {
       TwoFluidPipe pipe = createPipe();
@@ -309,6 +327,9 @@ class TwoFluidPipePhaseDegeneracyTest {
 
     Stream inlet = new Stream("controlled-phase-degeneracy-inlet", fluid);
     inlet.setFlowRate(1.0 + liquidMassFlow, "kg/sec");
+    // Do not run a TP flash here: this fixture deliberately controls a metastable trace phase.
+    // setFlowRate updates the already initialized phase flow rates without removing that phase.
+    assertTrue(inlet.getFluid().getPhase("oil").getFlowRate("kg/sec") > 0.0);
     TwoFluidPipe pipe = new TwoFluidPipe("controlled-phase-degeneracy-pipe", inlet);
     pipe.setDiameter(0.2);
     return pipe;
