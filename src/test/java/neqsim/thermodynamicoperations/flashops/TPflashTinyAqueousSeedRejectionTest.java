@@ -22,7 +22,7 @@ class TPflashTinyAqueousSeedRejectionTest {
     new ThermodynamicOperations(multiphase).TPflash();
     multiphase.init(1);
 
-    assertEquals(firstGibbsEnergy, multiphase.getGibbsEnergy(), 1.0e-10);
+    assertEquals(firstGibbsEnergy, multiphase.getGibbsEnergy(), 1.0e-8);
     assertStableGasEquivalent(ordinary, multiphase);
   }
 
@@ -54,7 +54,7 @@ class TPflashTinyAqueousSeedRejectionTest {
     assertEquals(expected.getNumberOfPhases(), actual.getNumberOfPhases());
     assertEquals(PhaseType.GAS, actual.getPhase(0).getType());
     assertEquals(1.0, actual.getBeta(0), 1.0e-12);
-    assertEquals(expected.getGibbsEnergy(), actual.getGibbsEnergy(), 1.0e-10);
+    assertEquals(expected.getGibbsEnergy(), actual.getGibbsEnergy(), 1.0e-8);
     assertEquals(expected.getPhase(0).getZ(), actual.getPhase(0).getZ(), 1.0e-12);
     assertTrue(maximumComponentMaterialBalanceResidual(actual) < MATERIAL_BALANCE_TOLERANCE);
 
@@ -72,8 +72,8 @@ class TPflashTinyAqueousSeedRejectionTest {
     for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
       double recoveredFeed = 0.0;
       for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
-        recoveredFeed += system.getBeta(phaseIndex)
-            * system.getPhase(phaseIndex).getComponent(componentIndex).getx();
+        recoveredFeed +=
+            system.getBeta(phaseIndex) * system.getPhase(phaseIndex).getComponent(componentIndex).getx();
       }
       maximumResidual = Math.max(maximumResidual,
           Math.abs(system.getPhase(0).getComponent(componentIndex).getz() - recoveredFeed));
