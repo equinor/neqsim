@@ -312,10 +312,10 @@ class TwoFluidPipePhaseDegeneracyTest {
     }
 
     SystemInterface fluid = new SystemSrkEos(293.15, 80.0);
-    fluid.addComponent("methane", 1.0, 0);
     double methaneMolarMass = 0.016043;
     double decaneMolarMass = 0.142286;
-    double liquidMoles = liquidMassFlow * methaneMolarMass / decaneMolarMass;
+    fluid.addComponent("methane", 1.0 / methaneMolarMass, 0);
+    double liquidMoles = liquidMassFlow / decaneMolarMass;
     fluid.addComponent("nC10", liquidMoles, 1);
     fluid.setMixingRule("classic");
     fluid.setPhaseType(0, PhaseType.GAS);
@@ -326,10 +326,10 @@ class TwoFluidPipePhaseDegeneracyTest {
     fluid.initPhysicalProperties();
 
     Stream inlet = new Stream("controlled-phase-degeneracy-inlet", fluid);
-    inlet.setFlowRate(1.0 + liquidMassFlow, "kg/sec");
     // Do not run a TP flash here: this fixture deliberately controls a metastable trace phase.
-    // setFlowRate updates the already initialized phase flow rates without removing that phase.
-    assertTrue(inlet.getFluid().getPhase("oil").getFlowRate("kg/sec") > 0.0);
+    // Component mole rates directly define the intended phase mass flows without re-scaling phase 0.
+    double initializedLiquidMassFlow = inlet.getFluid().getPhase("oil").getFlowRate("kg/sec");
+    assertEquals(liquidMassFlow, initializedLiquidMassFlow, liquidMassFlow * 1.0e-3);
     TwoFluidPipe pipe = new TwoFluidPipe("controlled-phase-degeneracy-pipe", inlet);
     pipe.setDiameter(0.2);
     return pipe;
