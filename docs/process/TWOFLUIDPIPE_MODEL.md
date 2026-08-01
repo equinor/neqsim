@@ -17,6 +17,8 @@ The NeqSim `TwoFluidPipe` model implements a transient two-fluid multiphase flow
 
 This document provides comprehensive documentation of the model's capabilities, governing equations, and usage.
 
+The selectable closure sets are literature-inspired NeqSim implementations. Historical API names containing `OLGA` are retained for compatibility and do not claim numerical equivalence with OLGA, LedaFlow, or another commercial simulator.
+
 ## Conservation Equations
 
 ### Mass Conservation
@@ -120,14 +122,14 @@ detector.setInversionConstant(0.5); // Decarre-Fabre constant (default 0.5)
 
 ### Minimum Holdup Configuration
 
-The model enforces a minimum liquid holdup to prevent unrealistically low values in gas-dominant systems. By default, an **adaptive minimum** is used that scales with the no-slip holdup, making it suitable for both lean gas and rich condensate systems.
+The default **adaptive minimum** is a closure relation that scales with no-slip holdup and tends continuously to zero as liquid input vanishes. It is not a phase-presence threshold. Exact phase presence comes from the conservative gas, oil, and water masses: an absent phase has zero mass, holdup, and velocity.
 
 #### Configuration Methods
 
 | Method | Default | Description |
 |--------|---------|-------------|
 | `setUseAdaptiveMinimumOnly(boolean)` | `true` | Use correlation-based minimum only |
-| `setMinimumLiquidHoldup(double)` | 0.001 | Absolute floor (when adaptive-only = false) |
+| `setMinimumLiquidHoldup(double)` | 0.001 | Optional absolute floor in fixed-floor mode; zero disables it |
 | `setMinimumSlipFactor(double)` | 2.0 | Multiplier for no-slip holdup |
 | `setEnforceMinimumSlip(boolean)` | `true` | Enable/disable minimum constraint |
 
@@ -149,10 +151,12 @@ For rich gas condensate (> 5% liquid loading), either mode works:
 // Option 1: Adaptive (recommended)
 pipe.setUseAdaptiveMinimumOnly(true);
 
-// Option 2: Fixed floor (OLGA-style)
+// Option 2: Explicit calibrated wetting-film floor
 pipe.setUseAdaptiveMinimumOnly(false);
 pipe.setMinimumLiquidHoldup(0.01);  // 1% floor
 ```
+
+Fixed-floor mode is opt-in and should be used only when a nonzero wetting film is supported by the fluid, wall-wetting, and flow-regime data. Even in this mode, an exactly absent phase remains exactly absent. `setMinimumLiquidHoldup(0.0)` therefore produces no absolute floor.
 
 #### Minimum Holdup Correlations
 
@@ -165,6 +169,17 @@ The adaptive minimum uses Beggs-Brill type correlations:
 | Annular | Film model + 1.065 × λL^0.5824 / Fr^0.0609 | Distributed flow |
 
 Where λL = no-slip liquid holdup, Fr = Froude number = v²/(g×D)
+
+### Phase Disappearance and Numerical Regularization
+
+`TwoFluidPipe` keeps closure regularization separate from conserved state:
+
+- `1e-14` protects closure denominators only; it is never written as holdup or mass.
+- The stratified closure uses a continuous trace-liquid asymptote for λL at or below `1e-6` to avoid singular circular-segment geometry.
+- The drift-flux correction is smoothly withdrawn with weight `λL / (λL + 1e-3)` near pure gas, so its two-phase distribution parameters cannot leave a finite liquid intercept.
+- Adaptive-minimum and disabled-minimum modes impose no absolute holdup floor. Oil and water split fractions are allowed to reach exact endpoints of zero and one.
+
+These values regularize local constitutive equations; they do not declare that a phase is present. The implementation is literature-inspired and does not claim numerical equivalence with OLGA, LedaFlow, or another commercial simulator.
 
 ### Stratified Flow Holdup
 The `calculateStratifiedHoldupMomentumBalance()` method calculates liquid holdup from momentum balance:
@@ -550,7 +565,7 @@ TimeIntegrator.Method current = pipe.getTimeIntegrationMethod(); // query
 
 ### Adaptive Timestepping
 
-OLGA-style adaptive timestepping provides robustness for challenging geometries. Enable via
+Adaptive timestepping provides robustness for challenging geometries. Enable via
 `setEnableAdaptiveTimestepping(true)`.
 
 Algorithm per macro-step:

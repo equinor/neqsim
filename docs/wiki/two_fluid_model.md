@@ -7,6 +7,8 @@ description: "This document describes the two-fluid model implementation in NeqS
 
 This document describes the two-fluid model implementation in NeqSim for transient multiphase pipeline simulation.
 
+The selectable closure sets are literature-inspired NeqSim implementations. Historical API names containing `OLGA` are retained for compatibility and do not claim numerical equivalence with OLGA, LedaFlow, or another commercial simulator.
+
 For practical result extraction, long-flowline reporting, and comparison with OLGA/LedaFlow or
 field data, see [TwoFluidPipe Reporting and Validation](two_fluid_reporting_and_validation).
 
@@ -210,7 +212,7 @@ double[] tempF = pipe.getTemperatureProfile("F");   // Fahrenheit
 
 ### Minimum Holdup Constraints
 
-The model applies a minimum liquid holdup constraint to prevent unrealistically low values in gas-dominant systems. This is based on OLGA's observation that even at high velocities, a thin liquid film remains on the pipe wall.
+The default adaptive minimum is a closure relation, not a phase-presence threshold. It tends continuously to zero with the no-slip liquid fraction. Exact phase presence comes from conservative gas, oil, and water masses, so an absent phase has zero mass, holdup, and velocity.
 
 **Default behavior (adaptive minimum):**
 
@@ -223,13 +225,15 @@ pipe.setUseAdaptiveMinimumOnly(true);   // Default
 pipe.setMinimumSlipFactor(2.0);         // Default multiplier
 ```
 
-**For more conservative OLGA-style behavior:**
+**For an explicit calibrated wetting-film floor:**
 
 ```java
 // Apply absolute floor in addition to correlation
 pipe.setUseAdaptiveMinimumOnly(false);
 pipe.setMinimumLiquidHoldup(0.01);  // 1% absolute minimum
 ```
+
+Fixed-floor mode is opt-in and should be supported by fluid, wall-wetting, and flow-regime data. It is never applied to an exactly absent phase, and `setMinimumLiquidHoldup(0.0)` disables the absolute floor.
 
 ### Configuration Options
 
@@ -261,13 +265,15 @@ The adaptive minimum uses Beggs-Brill type correlations:
 
 - **Stratified flow:** `αL = 0.98 × λL^0.4846 / Fr^0.0868`
 - **Slug/Churn flow:** `αL = 0.845 × λL^0.5351 / Fr^0.0173`
-- **Annular flow:** Film model with minimum thickness + correlation
+- **Annular flow:** Film model + correlation; a nonzero minimum film is used only in explicit fixed-floor mode
 
 Where:
 - `λL` = No-slip liquid holdup (input liquid volume fraction)
 - `Fr` = Froude number = v²/(g×D)
 
 For lean gas systems with λL = 0.003, the stratified correlation gives αL ≈ 0.007 (0.7%), which is more realistic than a fixed 1% floor.
+
+Numerical closure protection is separate from state: `1e-14` is used only in denominators, the stratified closure switches continuously to its trace-liquid asymptote at λL `1e-6`, and the drift-flux correction is withdrawn with `λL / (λL + 1e-3)`. These constants do not create phase inventory. The closure sets are literature-inspired NeqSim implementations and do not claim numerical equivalence with OLGA, LedaFlow, or another commercial simulator.
 
 ## Closure Relations
 
