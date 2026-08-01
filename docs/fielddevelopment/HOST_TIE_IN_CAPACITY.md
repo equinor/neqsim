@@ -124,8 +124,23 @@ stream as `area::streamReference`; returned utilization keys and the limiting eq
 provenance.
 
 ```java
+import neqsim.process.equipment.capacity.CapacityConstraint;
+import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
 import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.fielddevelopment.tieback.HostFacility;
+import neqsim.process.fielddevelopment.tieback.capacity.HostTieInPoint;
 import neqsim.process.processmodel.ProcessModel;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+
+SystemInterface hostFluid = new SystemSrkEos(288.15, 60.0);
+hostFluid.addComponent("methane", 1.0);
+hostFluid.setMixingRule("classic");
+
+final Stream hostFeed = new Stream("Host Feed", hostFluid);
+hostFeed.setFlowRate(1000.0, "kg/hr");
 
 ProcessSystem gathering = new ProcessSystem("gathering");
 gathering.add(hostFeed);
