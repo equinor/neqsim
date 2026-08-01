@@ -25,8 +25,8 @@ class TwoFluidPipeMassBalanceTest {
     assertReportCloses(fine);
     assertTrue(coarse.getInletMassKg(Phase.TOTAL) > 0.0);
     assertTrue(coarse.getOutletMassKg(Phase.TOTAL) > 0.0);
-    assertTrue(Math.abs(fine.getResidualKg(Phase.TOTAL))
-        <= 10.0 * Math.abs(coarse.getResidualKg(Phase.TOTAL)) + ABSOLUTE_BALANCE_TOLERANCE_KG);
+    assertTrue(Math.abs(fine.getResidualKg(Phase.TOTAL)) <= 10.0 * Math.abs(coarse.getResidualKg(Phase.TOTAL))
+        + ABSOLUTE_BALANCE_TOLERANCE_KG);
   }
 
   @Test
@@ -134,8 +134,8 @@ class TwoFluidPipeMassBalanceTest {
     assertTrue(report.getAcceptedSubsteps() > 0);
     for (Phase phase : Phase.values()) {
       assertTrue(report.isWithinTolerance(phase, ABSOLUTE_BALANCE_TOLERANCE_KG, RELATIVE_BALANCE_TOLERANCE),
-          phase + " residual was " + report.getResidualKg(phase) + " kg (relative "
-              + report.getRelativeResidual(phase) + ")");
+          phase + " residual was " + report.getResidualKg(phase) + " kg (relative " + report.getRelativeResidual(phase)
+              + ")");
     }
   }
 }
