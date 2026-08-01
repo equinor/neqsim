@@ -77,6 +77,35 @@ public class DistillationColumnWarmStateCacheTest {
   }
 
   /**
+   * Changing only the active reboiler operating mode must invalidate an otherwise identical warm state.
+   *
+   * <p>
+   * The legacy tray API stores a default reflux ratio even while ratio control is inactive. Activating that same
+   * numeric ratio changes the reboiler from temperature/equilibrium operation to a PV reflux flash, so the mode flag is
+   * part of the mathematical problem even though the stored ratio value is unchanged.
+   * </p>
+   */
+  @Test
+  public void reboilerModeChangeWithUnchangedStoredRatioInvalidatesWarmState() {
+    DistillationColumn column = buildColumn();
+    column.run();
+    double firstGasFlow = column.getGasOutStream().getFlowRate("kg/hr");
+    double firstBottomFlow = column.getLiquidOutStream().getFlowRate("kg/hr");
+    double storedRatio = column.getReboiler().getRefluxRatio();
+    assertFalse(column.getReboiler().isRefluxSet(), "the baseline should use temperature/equilibrium operation");
+
+    column.getReboiler().setRefluxRatio(storedRatio);
+    column.run();
+
+    assertFalse(column.wasNaphtaliSandholmWarmStateReused(),
+        "activating ratio mode must solve the changed reboiler equations instead of reusing the old state");
+    assertNotEquals(firstGasFlow, column.getGasOutStream().getFlowRate("kg/hr"), 1.0,
+        "activating ratio mode must update the overhead flow");
+    assertNotEquals(firstBottomFlow, column.getLiquidOutStream().getFlowRate("kg/hr"), 1.0,
+        "activating ratio mode must update the bottoms flow");
+  }
+
+  /**
    * A column pressure change must invalidate the warm state. {@code setTopPressure} and {@code setBottomPressure} do
    * not mark the column for re-initialization either.
    */
