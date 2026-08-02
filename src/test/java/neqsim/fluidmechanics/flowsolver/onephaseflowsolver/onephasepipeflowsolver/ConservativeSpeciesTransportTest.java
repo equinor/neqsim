@@ -100,15 +100,18 @@ class ConservativeSpeciesTransportTest {
           new String[] { "carrier", "tracer" }, profile, new double[] { 0.0, 1.0 }, cellMass, cellMass, faceFlow,
           timeStepSeconds);
       assertTrue(report.isConverged(), report.getMessage());
+      assertTrue(report.getMaximumRelativeInventoryResidual() < 1.0e-13, report.getMessage());
+      assertEquals(0.0, report.getMaximumMassFractionSumError(), 0.0);
       profile = report.getMassFractionProfile();
       double outlet = profile[1][cells - 1];
       double responseIncrement = outlet - previousOutlet;
       responseMass += responseIncrement;
-      responseFirstMoment += step * timeStepSeconds * responseIncrement;
+      responseFirstMoment += (step + 1.0) * timeStepSeconds * responseIncrement;
       previousOutlet = outlet;
     }
     assertEquals(1.0, responseMass, 1.0e-14, "Step-response increments must integrate to one");
-    return responseFirstMoment / responseMass;
+    double inletEventFirstMoment = timeStepSeconds;
+    return responseFirstMoment / responseMass - inletEventFirstMoment;
   }
 
   private static double analyticalTracer(int steps, int cell, double cellMassKg, double massFlowKgPerSecond,
