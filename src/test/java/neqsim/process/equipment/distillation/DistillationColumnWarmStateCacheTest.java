@@ -145,6 +145,11 @@ public class DistillationColumnWarmStateCacheTest {
     assertTrue(column.solved(), column.getConvergenceDiagnostics());
     double storedRatio = column.getCondenser().getRefluxRatio();
 
+    column.run();
+    assertTrue(column.wasSequentialWarmStateReused(),
+        "an unchanged condenser case must be eligible for exact sequential-state reuse");
+    assertEquals(0, column.getLastIterationCount(), "unchanged exact reuse must execute zero tray iterations");
+
     column.getCondenser().setRefluxRatio(storedRatio);
     column.run();
 
