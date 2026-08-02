@@ -297,8 +297,7 @@ public class MultiStreamHeatExchangerTest {
     int actualLevelThreeCalls = fluid.getLevelThreeCalls();
 
     assertEquals(expectedEntropy, actualEntropy, Math.max(1.0e-10, Math.abs(expectedEntropy) * 1.0e-12));
-    assertTrue(actualLevelTwoCalls >= 2 * streamCount,
-        "Every inlet and outlet still requires caloric initialization");
+    assertTrue(actualLevelTwoCalls >= 2 * streamCount, "Every inlet and outlet still requires caloric initialization");
     assertEquals(0, actualLevelThreeCalls, "Entropy diagnostics must not calculate composition derivatives");
 
     double heatBalance = 0.0;
@@ -333,9 +332,8 @@ public class MultiStreamHeatExchangerTest {
     }
 
     int coldStream = heatExchanger.getInletStreams().size() - 1;
-    return entropy + Math.abs(heatExchanger.getDuty())
-        * (1.0 / heatExchanger.getInStream(coldStream).getTemperature()
-            - 1.0 / heatExchanger.getInStream(0).getTemperature());
+    return entropy + Math.abs(heatExchanger.getDuty()) * (1.0 / heatExchanger.getInStream(coldStream).getTemperature()
+        - 1.0 / heatExchanger.getInStream(0).getTemperature());
   }
 
   /**
