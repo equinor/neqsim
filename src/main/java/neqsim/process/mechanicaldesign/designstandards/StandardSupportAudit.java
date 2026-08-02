@@ -110,6 +110,20 @@ public final class StandardSupportAudit {
           "Simply supported first-mode beam frequency and current/wave dimensionless screening with "
               + "caller-controlled response triggers only; soil/shoulder stiffness, multi-span interaction, response "
               + "models, direct-wave loading, ULS/FLS, fatigue, sensors, intervention, and conformity remain external.");
+    case DNV_RP_F109:
+      EquipmentDesignKernelRegistry.Lookup stabilityImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING, stabilityImplementation.isImplemented(),
+          registryImplementation, stabilityImplementation.getImplementationClassName(),
+          "Vertical equilibrium, transparent absolute-static lateral stability, and externally supplied response "
+              + "displacement checks only; generalized design tables, dynamic response generation, environmental "
+              + "statistics, soil-model qualification, and conformity assessment remain external.");
+    case DNV_ST_F101:
+      EquipmentDesignKernelRegistry.Lookup pipelineImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING, pipelineImplementation.isImplemented(),
+          registryImplementation, pipelineImplementation.getImplementationClassName(),
+          "Typed 2021 screening for containment, collapse, propagation buckling, load interaction, fatigue, pressure "
+              + "cases, de-rating, safety class, ovality, fabrication route, and installation strain; clause-complete "
+              + "conformity and engineering approval remain external.");
     default:
       return getCategorySupport(standardType, registryImplementation);
     }

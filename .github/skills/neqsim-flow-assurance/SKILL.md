@@ -1,6 +1,6 @@
 ---
 name: neqsim-flow-assurance
-description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion (NORSOK M-506, de Waard-Milliams, FeCO3 film), mineral scale (saturation index, scale kinetics, brine mixing / seawater incompatibility), scale/solids valve plugging & Cv/opening drift (ValveScaleDrift), scale/deposit remediation & dissolver/solvent/wash selection for cleaning fouled equipment (ScaleRemediationAdvisor), elemental sulfur (S8) deposition from oxygen ingress / H2S oxidation at pressure or temperature letdown (compressor inlets, valves, dry-gas seals, letdown stations), per-segment pipeline corrosion+scale profiles, pipeline hydraulics, water/liquid hammer screening, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
+description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion (NORSOK M-506, de Waard-Milliams, FeCO3 film), mineral scale (saturation index, scale kinetics, brine mixing / seawater incompatibility), scale/solids valve plugging & Cv/opening drift (ValveScaleDrift), scale/deposit remediation & dissolver/solvent/wash selection for cleaning fouled equipment (ScaleRemediationAdvisor), elemental sulfur (S8) deposition from oxygen ingress / H2S oxidation at pressure or temperature letdown (compressor inlets, valves, dry-gas seals, letdown stations), per-segment pipeline corrosion+scale profiles, pipeline hydraulics, DNV-RP-F109 on-bottom stability screening, DNV-RP-F105 free-span screening, water/liquid hammer screening, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
 last_verified: "2026-08-02"
 ---
 
@@ -19,6 +19,7 @@ NeqSim code patterns.
 - CO2 and H2S corrosion rate estimation
 - Elemental sulfur (S8) deposition risk at pressure/temperature letdown (compressor inlets, control/letdown valves, dry-gas seals, filters)
 - Pipeline pressure drop and temperature profile
+- DNV-RP-F109 vertical and lateral on-bottom stability screening
 - Water hammer/liquid hammer screening for fast valve closure, pump trip, or check-valve slam
 - Multiphase flow pattern prediction (slug, annular, stratified)
 - Thermal insulation sizing for subsea pipelines
@@ -30,7 +31,9 @@ NeqSim code patterns.
 |--------|-----------|-----------------|
 | Pipeline design | DNV-ST-F101, NORSOK L-001, ASME B31.4/B31.8 | Wall thickness, design factors, corrosion allowance |
 | Corrosion | NORSOK M-001, DNV-RP-F112, ISO 21457 | Material selection, CO2/H2S corrosion rates |
-| Subsea pipelines | DNV-RP-F109, DNV-RP-F105, NORSOK U-001 | On-bottom stability and free-span assessment |
+| On-bottom stability | DNV-RP-F109 | Vertical stability, absolute lateral stability, displacement acceptance |
+| Free spans | DNV-RP-F105 | Free-span response and fatigue assessment |
+| Subsea systems | NORSOK U-001 | Subsea production-system requirements |
 | Hydrate management | DNV-RP-F116 | Hydrate prevention and remediation |
 | GRP piping | ISO 14692 | Non-metallic pipe design |
 | Pipeline integrity | DNV-RP-F116, API 1160 | Integrity management |
@@ -39,6 +42,12 @@ For fast acoustic transients, also load `neqsim-water-hammer`. Use
 `WaterHammerStudy` or MCP `runWaterHammer` with STID route geometry, tagreader
 event windows, and valve/pump event schedules; use this flow-assurance skill for
 the broader operating-envelope and mitigation context.
+
+For on-bottom stability, load `neqsim-subsea-and-wells` and use the typed
+`DnvRpF109OnBottomStabilityKernel`. It provides a transparent absolute-static
+screen and checks externally calculated response displacements. It does not
+contain generalized design tables, produce dynamic response, qualify environmental
+or soil models, or claim DNV conformity. A pass still requires independent review.
 
 ## 1. Hydrate Analysis
 

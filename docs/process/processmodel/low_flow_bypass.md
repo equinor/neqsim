@@ -250,6 +250,44 @@ either filter is active.
 `BoundaryStreamError.getAbsoluteFlowChange()` exposes the same delta
 programmatically.
 
+## Automatic convergence tuning
+
+For large `ProcessModel` flowsheets, the no-tolerance overload derives the flow
+filters from the total feed-boundary mass flow and then performs a full
+validation sweep with the new settings:
+
+```java
+boolean converged = plant.runUntilConverged(40);
+System.out.println(plant.getAutoTuningSummary());
+```
+
+The default noise-floor fraction is `1e-6`. It drives the boundary-flow floor,
+the absolute flow-change tolerance, recycle tolerance, and (when enabled)
+per-equipment low-flow thresholds. Auto-tuned runs may also enable adaptive
+Wegstein acceleration on stalled recycles unless the caller explicitly opted
+out. Ordinary `ProcessSystem.run()` retains legacy direct substitution. The feed
+boundary is used deliberately: internal recycles and not-yet-solved streams
+cannot inflate the reference scale.
+
+Automatic low-flow ownership is conservative:
+
+- A non-default value set with `unit.setMinimumFlow(...)` is caller-owned and is
+  never overwritten or cleared by the tuner.
+- Caller ownership still wins if the explicit value happens to equal the last
+  automatically assigned value.
+- Automatic ownership survives `ProcessSystem.copy()`, and
+  `resetAutoTuning()` / `resetAutoLowFlowThreshold()` only clear values that
+  remain auto-owned.
+- A changed threshold forces one real equipment evaluation before convergence
+  can be reported, so low-flow outlet handling is executed rather than leaving
+  stale state behind.
+
+Small streams can still be physically important (for example chemical or
+inhibitor injection). Protect those units with an explicit threshold, change
+the scale with `setAutoTuningFlowFraction(...)`, disable only automatic bypass
+with `setAutoLowFlowBypass(false)`, or disable all automatic convergence tuning
+with `setAutoConvergenceTuning(false)`.
+
 ## Feed-flow configuration patterns
 
 When you intentionally turn off a downstream section, you also have to

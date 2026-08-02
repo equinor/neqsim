@@ -64,10 +64,36 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    */
   private double absoluteFlowTolerance = 0.0;
 
+  /** True once the caller has set an absolute flow tolerance, which then survives auto-tuning. */
+  private boolean absoluteFlowToleranceExplicit = false;
+
   private double minimumFlow = 1e-20;
 
   // Acceleration method settings
   private AccelerationMethod accelerationMethod = AccelerationMethod.DIRECT_SUBSTITUTION;
+
+  /** True once the caller has chosen an acceleration method; the adaptive upgrade then stands down. */
+  private boolean accelerationMethodExplicit = false;
+  /** Whether a stalling direct-substitution loop may upgrade itself to Wegstein. */
+  private boolean adaptiveAcceleration = false;
+  /** True once the caller has explicitly enabled or disabled adaptive acceleration. */
+  private boolean adaptiveAccelerationExplicit = false;
+  /** True when automatic convergence tuning, rather than the caller, enabled adaptive acceleration. */
+  private boolean adaptiveAccelerationAutoManaged = false;
+  /** True when the adaptive logic (not the caller) selected the current acceleration method. */
+  private boolean accelerationAutoUpgraded = false;
+  /** Flow error of the previous pass, used to detect a stalling loop. */
+  private double previousErrorFlow = Double.NaN;
+  /** Consecutive passes whose flow error failed to shrink materially. */
+  private int stallingPasses = 0;
+  /** A pass counts as stalling when the flow error is still above this fraction of the previous one. */
+  private static final double ADAPTIVE_STALL_RATIO = 0.7;
+  /** Consecutive stalling passes required before switching to Wegstein. */
+  private static final int ADAPTIVE_STALL_PASSES = 3;
+  /** q-factor ceiling applied on an adaptive upgrade so an oscillating loop can damp rather than only accelerate. */
+  private static final double ADAPTIVE_WEGSTEIN_Q_MAX = 0.9;
+  /** True once the caller has chosen a Wegstein q-factor ceiling. */
+  private boolean wegsteinQMaxExplicit = false;
 
   // Wegstein acceleration fields
   /** Minimum bound for Wegstein q-factor to prevent divergence. */
@@ -188,9 +214,27 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
 
   /**
    * resetIterations.
+   *
+   * <p>
+   * Called at the start of every process pass. The adaptive-acceleration bookkeeping deliberately survives it: a tear
+   * stream that closes across process areas is updated only once per outer pass, so a stall counter that reset here
+   * could never reach its threshold and the loop would stay on direct substitution forever. Use
+   * {@link #resetAdaptiveAcceleration()} for a genuine fresh start.
+   * </p>
    */
   public void resetIterations() {
     iterations = 0;
+    resetAccelerationState();
+  }
+
+  /** Clears the adaptive-acceleration bookkeeping and returns the loop to direct substitution. */
+  public void resetAdaptiveAcceleration() {
+    previousErrorFlow = Double.NaN;
+    stallingPasses = 0;
+    if (accelerationAutoUpgraded) {
+      accelerationMethod = AccelerationMethod.DIRECT_SUBSTITUTION;
+      accelerationAutoUpgraded = false;
+    }
     resetAccelerationState();
   }
 
@@ -444,6 +488,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     setErrorFlow(flowBalanceCheck());
     setErrorTemperature(temperatureBalanceCheck());
     setErrorPressure(pressureBalanceCheck());
+    updateAdaptiveAcceleration();
     lastIterationStream = mixedStream.clone();
     outletStream.setThermoSystem(mixedStream.getThermoSystem());
     outletStream.setCalculationIdentifier(id);
@@ -591,8 +636,130 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    */
   public void setAccelerationMethod(AccelerationMethod method) {
     this.accelerationMethod = method;
+    this.accelerationMethodExplicit = true;
+    this.accelerationAutoUpgraded = false;
     // Reset acceleration state when method changes
     resetAccelerationState();
+  }
+
+  /**
+   * Whether a direct-substitution loop that stops converging may switch itself to Wegstein acceleration.
+   *
+   * @return true if adaptive acceleration is enabled
+   */
+  public boolean isAdaptiveAcceleration() {
+    return adaptiveAcceleration;
+  }
+
+  /**
+   * Enables or disables adaptive acceleration explicitly.
+   *
+   * <p>
+   * Direct substitution is robust but converges slowly, and a low-flow loop can oscillate instead of settling, forcing
+   * the surrounding process to iterate to its budget. When enabled, a loop whose flow error stops shrinking for
+   * {@value #ADAPTIVE_STALL_PASSES} consecutive passes switches itself to {@link AccelerationMethod#WEGSTEIN}, which
+   * damps the oscillation and converges to the same solution. Calling
+   * {@link #setAccelerationMethod(AccelerationMethod)} pins the method and disables the upgrade.
+   * </p>
+   *
+   * <p>
+   * Adaptive acceleration is disabled for an ordinary legacy {@code ProcessSystem.run()}. Automatic convergence tuning
+   * may enable it for {@code runUntilConverged(...)} unless the caller has made an explicit choice here.
+   * </p>
+   *
+   * @param adaptiveAcceleration true to let a stalling loop accelerate itself
+   */
+  public void setAdaptiveAcceleration(boolean adaptiveAcceleration) {
+    this.adaptiveAcceleration = adaptiveAcceleration;
+    adaptiveAccelerationExplicit = true;
+    adaptiveAccelerationAutoManaged = false;
+    if (!adaptiveAcceleration && accelerationAutoUpgraded) {
+      resetAdaptiveAcceleration();
+    }
+  }
+
+  /**
+   * Enables adaptive acceleration on behalf of automatic convergence tuning.
+   *
+   * @return true when the tuner owns adaptive acceleration for this recycle
+   */
+  public boolean applyAutoAdaptiveAcceleration() {
+    if (adaptiveAccelerationExplicit) {
+      return false;
+    }
+    adaptiveAcceleration = true;
+    adaptiveAccelerationAutoManaged = true;
+    return true;
+  }
+
+  /**
+   * Clears an automatically enabled adaptive-acceleration setting without touching a caller-owned choice.
+   *
+   * @return true when an automatic setting was cleared
+   */
+  public boolean resetAutoAdaptiveAcceleration() {
+    if (!adaptiveAccelerationAutoManaged) {
+      return false;
+    }
+    adaptiveAcceleration = false;
+    adaptiveAccelerationAutoManaged = false;
+    resetAdaptiveAcceleration();
+    return true;
+  }
+
+  /**
+   * Whether automatic convergence tuning owns the adaptive-acceleration setting.
+   *
+   * @return true when the setting is auto-managed
+   */
+  public boolean isAdaptiveAccelerationAutoManaged() {
+    return adaptiveAccelerationAutoManaged;
+  }
+
+  /**
+   * Whether the current acceleration method was selected by the adaptive logic rather than by the caller.
+   *
+   * @return true if this loop upgraded itself to an accelerated method
+   */
+  public boolean isAccelerationAutoUpgraded() {
+    return accelerationAutoUpgraded;
+  }
+
+  /**
+   * Upgrades a stalling direct-substitution loop to Wegstein acceleration.
+   *
+   * <p>
+   * Called once per pass after the errors have been evaluated. A pass counts as stalling when the flow error is still
+   * above {@value #ADAPTIVE_STALL_RATIO} of the previous one - i.e. the loop is oscillating or crawling rather than
+   * contracting.
+   * </p>
+   */
+  private void updateAdaptiveAcceleration() {
+    if (!adaptiveAcceleration || accelerationMethodExplicit
+        || accelerationMethod != AccelerationMethod.DIRECT_SUBSTITUTION) {
+      return;
+    }
+    double error = Math.abs(getErrorFlow());
+    if (Double.isNaN(error) || Double.isInfinite(error)) {
+      return;
+    }
+    if (!Double.isNaN(previousErrorFlow) && error > ADAPTIVE_STALL_RATIO * previousErrorFlow) {
+      stallingPasses++;
+    } else {
+      stallingPasses = 0;
+    }
+    previousErrorFlow = error;
+    if (stallingPasses >= ADAPTIVE_STALL_PASSES) {
+      accelerationMethod = AccelerationMethod.WEGSTEIN;
+      accelerationAutoUpgraded = true;
+      stallingPasses = 0;
+      // The default ceiling of 0.0 only permits extrapolation; an oscillating loop needs a positive q to damp.
+      if (!wegsteinQMaxExplicit) {
+        wegsteinQMax = ADAPTIVE_WEGSTEIN_Q_MAX;
+      }
+      resetAccelerationState();
+      logger.debug("Recycle {} stalled on direct substitution - switching to Wegstein acceleration", getName());
+    }
   }
 
   /**
@@ -631,6 +798,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    */
   public void setWegsteinQMax(double qMax) {
     this.wegsteinQMax = qMax;
+    this.wegsteinQMaxExplicit = true;
   }
 
   /**
@@ -1073,6 +1241,41 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
           "absoluteFlowTolerance must be a finite non-negative number, was " + absoluteFlowTolerance);
     }
     this.absoluteFlowTolerance = absoluteFlowTolerance;
+    this.absoluteFlowToleranceExplicit = true;
+  }
+
+  /**
+   * Applies an automatically derived absolute flow tolerance, unless the caller already set one.
+   *
+   * <p>
+   * Used by the process-level auto-tuner so a tear stream is judged on the same flow noise floor as the plant-wide
+   * convergence gate. Without it a recycle keeps iterating on a residual the surrounding model already accepts, or -
+   * worse - reports itself solved on a looser criterion than the plant demands.
+   * </p>
+   *
+   * @param absoluteFlowTolerance the absolute flow tolerance in kg/hr; must be finite and non-negative
+   * @return true if the value was applied, false if an explicit tolerance is already in force
+   */
+  public boolean applyAutoAbsoluteFlowTolerance(double absoluteFlowTolerance) {
+    if (absoluteFlowToleranceExplicit || !Double.isFinite(absoluteFlowTolerance) || absoluteFlowTolerance < 0.0) {
+      return false;
+    }
+    this.absoluteFlowTolerance = absoluteFlowTolerance;
+    return true;
+  }
+
+  /**
+   * Clears an automatically assigned absolute flow tolerance before a fresh process scenario.
+   *
+   * @return true when an automatic value was cleared, false when the caller owns the tolerance
+   */
+  public boolean resetAutoAbsoluteFlowTolerance() {
+    if (absoluteFlowToleranceExplicit) {
+      return false;
+    }
+    boolean changed = absoluteFlowTolerance != 0.0;
+    absoluteFlowTolerance = 0.0;
+    return changed;
   }
 
   /** {@inheritDoc} */
@@ -1101,6 +1304,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   @Override
   public void setMinimumFlow(double minimumFlow) {
     this.minimumFlow = minimumFlow;
+    super.setMinimumFlow(minimumFlow);
   }
 
   /** {@inheritDoc} */
