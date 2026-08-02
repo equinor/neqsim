@@ -9,6 +9,29 @@
 
 ---
 
+## 2026-08-02 — Pump NPSH capacity constraint direction corrected
+
+### Summary
+
+`PumpCapacityStrategy` now represents NPSH headroom (`NPSHA - NPSHR`, metres) as a true minimum
+HARD constraint. The previous strategy set the minimum headroom as both a design value and a
+minimum, which selected `current/design` utilization and therefore classified a pump with abundant
+NPSH headroom as overloaded. Utilization is now `minimumHeadroom/currentHeadroom`: values below
+1.0 are feasible, exactly 1.0 is at the limit, and values above 1.0 violate the minimum.
+
+### Compatibility and engineering basis
+
+No public API or pump thermodynamic calculation changed. The strategy default remains a screening
+value; installed studies should use service- and vendor-specific NPSH margin requirements. This
+follows the Hydraulic Institute convention that adequate NPSH is a minimum-availability condition.
+
+### Tests
+
+`PumpCapacityStrategyTest` covers safe, exact-limit, and violated operating points using an executed
+water-pump process case and checks normalized utilization plus HARD-limit behavior.
+
+---
+
 ## 2026-07-30 — TwoFluidPipe closure diagnostics exposed as profiles
 
 ### Summary

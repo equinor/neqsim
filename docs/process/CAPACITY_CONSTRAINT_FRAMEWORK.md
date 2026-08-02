@@ -230,12 +230,19 @@ CapacityConstraint speedConstraint = new CapacityConstraint("speed", "RPM", Cons
 | Method | Returns | Description |
 |--------|---------|-------------|
 | `getCurrentValue()` | `double` | Current value from the valueSupplier |
-| `getUtilization()` | `double` | Current value / design value (1.0 = 100%) |
+| `getUtilization()` | `double` | Current/design for maximum constraints; minimum/current for minimum constraints (1.0 = limit) |
 | `getUtilizationPercent()` | `double` | Utilization as percentage |
 | `isViolated()` | `boolean` | True if utilization > 1.0 |
-| `isHardLimitExceeded()` | `boolean` | True if HARD constraint exceeds max value |
+| `isHardLimitExceeded()` | `boolean` | True if a HARD maximum is exceeded or a HARD minimum is undershot |
 | `isNearLimit()` | `boolean` | True if above warning threshold (default 90%) |
-| `getMargin()` | `double` | Remaining headroom (1.0 - utilization) |
+| `getMargin()` | `double` | Remaining normalized headroom (1.0 - utilization) |
+
+> **Minimum constraints:** Set `minValue` and leave `designValue` unset. This makes utilization
+> `minimum/current`, so safe values above the minimum remain below 100%. Setting the same value as
+> both design and minimum changes the direction to `current/design` and is incorrect for minimum
+> NPSH headroom, minimum stable flow, residence time, or similar limits. Required NPSH margin is
+> service- and pump-specific; use vendor or applicable Hydraulic Institute design data instead of
+> treating a generic screening default as an approved installed limit.
 
 ### 2. CapacityConstrainedEquipment (Interface)
 

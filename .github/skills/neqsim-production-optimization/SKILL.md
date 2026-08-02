@@ -530,3 +530,4 @@ Map<String, Double> breakdown = decom.getBreakdown();
 | Ignoring water cut increase | Overstated revenue, understated OPEX | Model watercut trajectory, include water treatment costs |
 | Over-producing from best wells | Premature water/gas coning | Balanced withdrawal per reservoir zone |
 | Ignoring backpressure coupling | Wrong wellhead pressures | Network solver captures well-to-well interactions |
+| Encoding minimum limits as design/max constraints | Safe NPSH, minimum-flow, or residence-time margins appear overloaded | Use `setMinValue(...)` without `setDesignValue(...)`; use a HARD constraint type for trip/infeasibility limits |
