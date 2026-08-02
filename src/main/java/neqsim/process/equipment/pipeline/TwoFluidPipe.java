@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.pipeline.twophasepipe.FlowRegimeDetector;
 import neqsim.process.equipment.pipeline.twophasepipe.LagrangianSlugTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.LiquidAccumulationTracker;
+import neqsim.process.equipment.pipeline.twophasepipe.SevereSluggingSystemDiagnostic;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
 import neqsim.process.equipment.pipeline.twophasepipe.SlugTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.ThermodynamicCoupling;
@@ -2839,22 +2840,22 @@ public class TwoFluidPipe extends Pipeline {
       }
     }
 
-    // ========== RISER BASE ACCUMULATION (Severe Slugging Model) ==========
+    // ========== RISER-BASE LIQUID FALLBACK CLOSURE ==========
     else if (isRiserBase && enableSevereSlugModel) {
-      // Riser base is particularly prone to severe slugging
-      // Use Pots severe slugging criterion: PI = (P_sep * L_riser) / (rho_L * g * H_riser)
+      // This local carryover closure adjusts holdup only. System severe-slugging stability is
+      // evaluated separately by evaluateSevereSluggingSystem().
 
-      // Simplified criterion: gas velocity must exceed critical to prevent buildup
+      // Gas velocity must exceed the local carryover velocity to prevent buildup
       double sinTheta = Math.sin(inclination);
       double vCritRiser = 1.5 * Math.sqrt(g * diameter * dRho * sinTheta / Math.max(rhoG, 1.0));
 
       if (vsG < vCritRiser) {
-        // Severe slugging conditions - high accumulation
+        // Local liquid-fallback conditions - high accumulation
         // Enhanced: use stronger factor for very low velocities
         double velocityRatio = vsG / vCritRiser;
         double severityFactor = 1.0 + 4.0 * Math.pow(1.0 - velocityRatio, 1.5);
         enhancedHoldup = Math.min(0.90, baseHoldup * severityFactor);
-        sec.setSevereSlugPotential(true);
+        sec.setInclinedSectionLiquidFallbackPotential(true);
       }
     }
 
@@ -4848,24 +4849,33 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Get the severe-slugging stability number at each section.
+   * Get the local inclined-section gas-carryover number at each section.
    *
-   * <p>
-   * Values below 1 indicate elevated severe-slugging risk. Sections where the diagnostic is not applicable retain
-   * {@link Double#POSITIVE_INFINITY}.
-   * </p>
+   * <p>Values below 1 indicate possible liquid fallback. The number is a local closure screen;
+   * it does not diagnose severe slugging in a flowline-riser system.</p>
    *
-   * @return severe-slugging stability-number profile
+   * @return local gas-carryover-number profile
    */
-  public double[] getSevereSluggingNumberProfile() {
+  public double[] getInclinedSectionGasCarryoverNumberProfile() {
     if (sections == null) {
       return new double[0];
     }
     double[] profile = new double[numberOfSections];
     for (int i = 0; i < numberOfSections; i++) {
-      profile[i] = sections[i].getSevereSluggingNumber();
+      profile[i] = sections[i].getInclinedSectionGasCarryoverNumber();
     }
     return profile;
+  }
+
+  /**
+   * Legacy alias for {@link #getInclinedSectionGasCarryoverNumberProfile()}.
+   *
+   * @return local gas-carryover-number profile
+   * @deprecated The returned quantity is not a severe-slugging system stability number.
+   */
+  @Deprecated
+  public double[] getSevereSluggingNumberProfile() {
+    return getInclinedSectionGasCarryoverNumberProfile();
   }
 
   /**
@@ -4882,6 +4892,108 @@ public class TwoFluidPipe extends Pipeline {
       profile[i] = sections[i].isSevereSlugPotential();
     }
     return profile;
+  }
+
+  /**
+   * Evaluate severe-slugging stability for a flowline feeding a constant-area riser.
+   *
+   * <p>The solved section states provide upstream gas volume, average riser holdup and
+   * density, riser height, and absolute outlet pressure. The default gas-cap void fraction
+   * is 0.89, following the air-water basis used in Taitel's published comparison.</p>
+   *
+   * @param riserBaseSection index of the first continuously rising section
+   * @return explicit system-level stability result
+   */
+  public SevereSluggingSystemDiagnostic.Result evaluateSevereSluggingSystem(
+      int riserBaseSection) {
+    return evaluateSevereSluggingSystem(riserBaseSection, 0.89, 0.0);
+  }
+
+  /**
+   * Evaluate severe-slugging stability with explicit gas-cap and static-choke inputs.
+   *
+   * <p>The static choke pressure drop is added to absolute outlet pressure. It represents
+   * one operating point only; dynamic choke response is outside this quasi-steady diagnostic.
+   * Three-phase systems and non-stratified feeders return a not-applicable status.</p>
+   *
+   * @param riserBaseSection index of the first continuously rising section
+   * @param gasCapVoidFraction void fraction alpha-prime in the penetrating gas cap
+   * @param staticChokePressureDropPa fixed choke pressure drop in Pa
+   * @return explicit system-level stability result
+   */
+  public SevereSluggingSystemDiagnostic.Result evaluateSevereSluggingSystem(
+      int riserBaseSection, double gasCapVoidFraction, double staticChokePressureDropPa) {
+    if (sections == null || sections.length != numberOfSections) {
+      throw new IllegalStateException("Run the pipe before evaluating flowline-riser stability");
+    }
+    if (riserBaseSection <= 0 || riserBaseSection >= sections.length) {
+      throw new IllegalArgumentException(
+          "riserBaseSection must be between 1 and numberOfSections - 1");
+    }
+
+    double referenceArea = sections[riserBaseSection].getArea();
+    double upstreamGasVolume = 0.0;
+    double riserVolume = 0.0;
+    double riserLiquidVolume = 0.0;
+    double riserLiquidMass = 0.0;
+    double riserHeight = 0.0;
+    boolean topologyValid = true;
+    boolean flowlineStratified = true;
+    boolean flowlineContainsGasAndLiquid = false;
+    boolean threePhase = false;
+
+    for (int i = 0; i < sections.length; i++) {
+      TwoFluidSection section = sections[i];
+      double cellVolume = section.getArea() * section.getLength();
+      if (Math.abs(section.getArea() - referenceArea) > 1.0e-6 * referenceArea) {
+        topologyValid = false;
+      }
+      if (section.getOilHoldup() > 1.0e-10 && section.getWaterHoldup() > 1.0e-10) {
+        threePhase = true;
+      }
+
+      if (i < riserBaseSection) {
+        upstreamGasVolume += section.getGasHoldup() * cellVolume;
+        topologyValid &= section.getInclination() <= Math.toRadians(1.0);
+        if (section.getGasHoldup() > 1.0e-10 && section.getLiquidHoldup() > 1.0e-10) {
+          flowlineContainsGasAndLiquid = true;
+          FlowRegime regime = section.getFlowRegime();
+          flowlineStratified &= regime == FlowRegime.STRATIFIED_SMOOTH
+              || regime == FlowRegime.STRATIFIED_WAVY;
+        }
+      } else {
+        topologyValid &= section.getInclination() > Math.toRadians(1.0);
+        riserHeight += Math.sin(section.getInclination()) * section.getLength();
+        riserVolume += cellVolume;
+        double liquidVolume = section.getLiquidHoldup() * cellVolume;
+        riserLiquidVolume += liquidVolume;
+        riserLiquidMass += liquidVolume * section.getLiquidDensity();
+      }
+    }
+
+    flowlineStratified &= flowlineContainsGasAndLiquid;
+    double riserLiquidHoldup = riserVolume > 0.0 ? riserLiquidVolume / riserVolume : 0.0;
+    double liquidDensity = riserLiquidVolume > 0.0 ? riserLiquidMass / riserLiquidVolume : 1.0;
+    topologyValid &= riserHeight > 0.0;
+
+    SevereSluggingSystemDiagnostic.Input input = SevereSluggingSystemDiagnostic.Input.builder()
+        .upstreamGasVolumeM3(upstreamGasVolume).riserAreaM2(referenceArea)
+        .riserHeightM(Math.max(riserHeight, 1.0e-12))
+        .separatorPressurePa(sections[sections.length - 1].getPressure())
+        .staticChokePressureDropPa(staticChokePressureDropPa)
+        .liquidDensityKgPerM3(liquidDensity).riserLiquidHoldup(riserLiquidHoldup)
+        .gasCapVoidFraction(gasCapVoidFraction).validFlowlineRiserTopology(topologyValid)
+        .flowlineStratified(flowlineStratified).threePhase(threePhase).build();
+    SevereSluggingSystemDiagnostic.Result result =
+        SevereSluggingSystemDiagnostic.evaluate(input);
+
+    for (TwoFluidSection section : sections) {
+      section.setSevereSlugPotential(false);
+    }
+    if (result.isSevereSluggingPossible()) {
+      sections[riserBaseSection].setSevereSlugPotential(true);
+    }
+    return result;
   }
 
   /**
