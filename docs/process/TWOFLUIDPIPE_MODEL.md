@@ -235,9 +235,9 @@ rising section:
 SevereSluggingSystemDiagnostic.Result stability =
     pipe.evaluateSevereSluggingSystem(riserBaseSection);
 
-if (stability.isApplicable() && stability.isSevereSluggingPossible()) {
-    System.out.printf("Pressure margin: %.0f Pa%n", stability.getPressureMarginPa());
-}
+boolean severeSluggingPossible =
+    stability.isApplicable() && stability.isSevereSluggingPossible();
+double pressureMarginPa = stability.getPressureMarginPa();
 ```
 
 The implementation uses the quasi-steady Taitel (1986) condition:
