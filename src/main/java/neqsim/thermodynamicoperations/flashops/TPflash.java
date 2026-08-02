@@ -100,6 +100,30 @@ public class TPflash extends Flash {
    */
   private PhaseType referenceSinglePhaseType = null;
 
+  /** Compact pre-multiphase snapshot used only for balanced neutral aqueous endpoints. */
+  private static final class AqueousTwoPhaseState {
+    private final PhaseType[] phaseTypes = new PhaseType[2];
+    private final double[] betas = new double[2];
+    private final double[][] compositions;
+    private final double[] kValues;
+
+    private AqueousTwoPhaseState(SystemInterface source) {
+      int numberOfComponents = source.getPhase(0).getNumberOfComponents();
+      compositions = new double[2][numberOfComponents];
+      kValues = new double[numberOfComponents];
+      for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
+        phaseTypes[phaseIndex] = source.getPhase(phaseIndex).getType();
+        betas[phaseIndex] = source.getBeta(phaseIndex);
+        for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
+          compositions[phaseIndex][componentIndex] = source.getPhase(phaseIndex).getComponent(componentIndex).getx();
+        }
+      }
+      for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
+        kValues[componentIndex] = source.getPhase(0).getComponent(componentIndex).getK();
+      }
+    }
+  }
+
   /**
    * Constructor for TPflash.
    */
@@ -735,8 +759,10 @@ public class TPflash extends Flash {
       sucsSubs();
     }
     if (system.doMultiPhaseCheck()) {
+      AqueousTwoPhaseState balancedAqueousReference = balancedAqueousReferenceBeforeMultiphaseCheck();
       TPmultiflash operation = new TPmultiflash(system, system.doSolidPhaseCheck());
       operation.run();
+      restoreBalancedAqueousReferenceAfterInvalidPhaseRemoval(balancedAqueousReference);
       rescueSinglePhaseMultiphaseEndpoint();
       // rescueSpuriousMultiphaseEndpoint() is called once at the end of runInternal()
       // after orderByDensity(), so it is intentionally not repeated here.
@@ -1189,6 +1215,58 @@ public class TPflash extends Flash {
       maximumFugacityResidual = Math.max(maximumFugacityResidual, Math.abs(firstLogFugacity - secondLogFugacity));
     }
     return maximumFugacityResidual < PHASE_ROOT_EQUILIBRIUM_TOLERANCE;
+  }
+
+  /**
+   * Captures a feasible aqueous equilibrium before multiphase phase-appearance trials.
+   *
+   * <p>
+   * The compact snapshot is restricted to neutral, exactly-two-phase aqueous endpoints that already satisfy the strict
+   * feasibility and equilibrium checks. It avoids a full system clone, and other flashes allocate no snapshot.
+   * </p>
+   *
+   * @return balanced state, or {@code null} when recovery is not applicable
+   */
+  private AqueousTwoPhaseState balancedAqueousReferenceBeforeMultiphaseCheck() {
+    if (system.getNumberOfPhases() != 2 || system.isChemicalSystem() || system.hasIons() || solidCheck
+        || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck() || !system.hasPhaseType(PhaseType.AQUEOUS)
+        || !isBalancedEquilibriumCandidate(system)) {
+      return null;
+    }
+    return new AqueousTwoPhaseState(system);
+  }
+
+  /**
+   * Restores a feasible aqueous equilibrium when a rejected phase-appearance trial leaves an invalid two-phase
+   * endpoint.
+   *
+   * <p>
+   * A balanced gas/aqueous flash can be temporarily expanded to three phases when tangent-plane stability testing finds
+   * a near-boundary hydrocarbon-liquid trial. If that trial disappears during {@link TPmultiflash} cleanup, the
+   * remaining phases can retain phase fractions from the rejected three-phase iterate. Composition normalization alone
+   * does not repair the resulting component material-balance or fugacity residuals. The pre-trial state is restored
+   * only when the final endpoint still has exactly two phases including an aqueous phase and fails the same strict
+   * acceptance checks. Genuine three-phase results and feasible multiphase refinements are unchanged.
+   * </p>
+   *
+   * @param balancedReference feasible pre-trial state, or {@code null} when recovery is not applicable
+   */
+  private void restoreBalancedAqueousReferenceAfterInvalidPhaseRemoval(AqueousTwoPhaseState balancedReference) {
+    if (balancedReference == null || system.getNumberOfPhases() != 2 || !system.hasPhaseType(PhaseType.AQUEOUS)
+        || isBalancedEquilibriumCandidate(system)) {
+      return;
+    }
+    for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
+      system.setPhaseType(phaseIndex, balancedReference.phaseTypes[phaseIndex]);
+      system.setBeta(phaseIndex, balancedReference.betas[phaseIndex]);
+      for (int componentIndex = 0; componentIndex < balancedReference.compositions[phaseIndex].length; componentIndex++) {
+        system.getPhase(phaseIndex).getComponent(componentIndex)
+            .setx(balancedReference.compositions[phaseIndex][componentIndex]);
+        system.getPhase(phaseIndex).getComponent(componentIndex).setK(balancedReference.kValues[componentIndex]);
+      }
+    }
+    system.normalizeBeta();
+    system.init(1);
   }
 
   /**

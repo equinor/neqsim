@@ -182,7 +182,10 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 │ STEP 7: POST-PROCESSING                                                         │
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │  IF multiPhaseCheck enabled:                                                    │
+│     → Preserve an already balanced neutral two-phase aqueous reference          │
 │     → Delegate to TPmultiflash for stability analysis and phase split           │
+│     → If a rejected third-phase trial leaves an invalid two-phase aqueous       │
+│       endpoint, restore the balanced reference                                  │
 │  ELSE:                                                                          │
 │     → Final phase type check (gas vs liquid Gibbs energy)                       │
 │                                                                                 │
@@ -232,6 +235,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 | Water-rich material-balance tolerance | 1e-8 in `max abs(Delta z_i)` | Reject a non-conservative reference before comparing feasible Gibbs minima |
 | Aqueous cubic-root equilibrium tolerance | 1e-8 in `max abs(Delta ln(f_i))` | Accept an alternate root only when it lowers Gibbs energy and already satisfies component fugacity equality |
 | Stable-single-phase aqueous-seed gate | `1e-8` in phase-composition normalization | Reject only a structurally invalid aqueous trial whose composition is non-finite, out of `[0, 1]`, or unnormalized; leave normalized endpoints to model-specific convergence and refinement paths |
+| Post-removal aqueous recovery | `1e-8` in `max abs(Delta z_i)` and `max abs(Delta ln(f_i))` | Restore a balanced neutral two-phase aqueous reference only when a rejected third-phase trial leaves the final two-phase endpoint infeasible; genuine three-phase and already feasible endpoints are retained |
 
 ### 1.1 Problem Formulation
 
@@ -1676,6 +1680,10 @@ Commercial process simulators do not publish all implementation details, but pub
   `[0, 1]`, and normalized within `1e-8`. It does not impose a universal material-balance or fugacity threshold on
   normalized endpoints because specialized fluid and solid-phase models retain their existing convergence and
   refinement paths.
+- A neutral, balanced two-phase aqueous state is preserved before multiphase phase-appearance trials. If a trial third
+  phase is subsequently removed but its phase fractions leave the surviving two-phase state outside `1e-8` component
+  material-balance or fugacity tolerances, the pre-trial state is restored. The recovery does not run another flash and
+  is not considered for chemical, ionic, solid, wax, genuine three-phase, or already feasible endpoints.
 - Ordinary neutral aqueous splits now compare both cubic roots of the non-aqueous phase at the converged composition. An alternate root is retained only when it lowers Gibbs energy and already satisfies `max abs(Delta ln(f_i)) < 1e-8`; no extra TPflash or multiphase stability calculation is run.
 - Enhanced stability checks are gated to polar, associating, electrolyte, sour, or explicitly requested multiphase systems, limiting unnecessary hydrocarbon phase-map artifacts.
 
