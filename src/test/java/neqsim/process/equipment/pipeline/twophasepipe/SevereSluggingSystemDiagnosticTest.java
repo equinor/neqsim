@@ -16,7 +16,8 @@ import neqsim.process.equipment.pipeline.twophasepipe.SevereSluggingSystemDiagno
 class SevereSluggingSystemDiagnosticTest {
   private static Input.Builder baseInput() {
     return Input.builder().upstreamGasVolumeM3(20.0).riserAreaM2(0.1).riserHeightM(100.0).separatorPressurePa(500_000.0)
-        .liquidDensityKgPerM3(800.0).riserLiquidHoldup(0.9).gasCapVoidFraction(0.8);
+        .liquidDensityKgPerM3(800.0).riserLiquidHoldup(0.9).gasCapVoidFraction(0.8)
+        .validFlowlineRiserTopology(true).flowlineStratified(true).flowlineContainsGasAndLiquid(true);
   }
 
   @Test
