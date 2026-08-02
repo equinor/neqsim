@@ -105,6 +105,7 @@ class OnePhaseFlowConvergenceTest extends neqsim.NeqSimTest {
     PipeFlowSystem pipe = createInitializedPipe();
     configureCompositionStep(pipe, 30.0);
 
+    assertFalse(pipe.isFailOnNonConvergence());
     assertDoesNotThrow(() -> pipe.solveTransient(1));
     assertEquals(ConvergenceReason.CONVERGED, pipe.getConvergenceReport().getReason());
     assertTrue(pipe.getConvergenceReport().isNonlinearMetricEquationResidual());
