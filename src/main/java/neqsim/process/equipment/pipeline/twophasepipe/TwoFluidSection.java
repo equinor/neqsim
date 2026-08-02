@@ -361,18 +361,15 @@ public class TwoFluidSection extends PipeSection {
 
     // Calculate water cut from mass values BEFORE normalization to preserve ratio
     double calculatedWaterCut = waterCut; // Keep existing as default
-    if (alphaL > 1e-10) {
+    if (alphaL > 0.0) {
       calculatedWaterCut = alphaW / alphaL;
-    } else if (oilMassPerLength + waterMassPerLength > 1e-12) {
-      // Calculate from mass if holdups are too small
-      calculatedWaterCut = waterMassPerLength / (oilMassPerLength + waterMassPerLength);
     }
-    // Clamp water cut to valid range with some margin
-    calculatedWaterCut = Math.max(0.001, Math.min(0.999, calculatedWaterCut));
+    // Preserve exact oil-only and water-only conservative states.
+    calculatedWaterCut = Math.max(0.0, Math.min(1.0, calculatedWaterCut));
 
     // Normalize holdups to sum to 1
     double total = alphaG + alphaL;
-    if (total > 1e-10) {
+    if (total > 0.0) {
       double scale = 1.0 / total;
       alphaG *= scale;
       alphaL *= scale;
@@ -677,18 +674,13 @@ public class TwoFluidSection extends PipeSection {
    * @return Oil-water interfacial shear stress (Pa), positive when oil flows faster than water
    */
   public double calcOilWaterInterfacialShear() {
-    // Only relevant for three-phase flow
-    if (waterHoldup < 0.001 || oilHoldup < 0.001) {
+    // Conservative phase presence owns the endpoint; do not use a finite holdup cutoff.
+    if (waterHoldup <= 0.0 || oilHoldup <= 0.0) {
       return 0.0;
     }
 
     // Relative velocity between oil and water
     double deltaV = oilVelocity - waterVelocity;
-
-    // If no significant slip, no shear
-    if (Math.abs(deltaV) < 0.001) {
-      return 0.0;
-    }
 
     // Regime-dependent friction factor
     double f_ow;
@@ -720,8 +712,12 @@ public class TwoFluidSection extends PipeSection {
     // Average density at interface
     double rhoAvg = 0.5 * (oilDensity + waterDensity);
 
+    // Withdraw the two-liquid closure continuously as either liquid phase disappears.
+    double liquidHoldup = oilHoldup + waterHoldup;
+    double phaseAvailability = 4.0 * oilHoldup * waterHoldup / (liquidHoldup * liquidHoldup);
+
     // Interfacial shear stress (Pa)
-    double tau_ow = f_ow * rhoAvg * Math.abs(deltaV) * deltaV / 2.0;
+    double tau_ow = phaseAvailability * f_ow * rhoAvg * Math.abs(deltaV) * deltaV / 2.0;
 
     return tau_ow;
   }
@@ -886,7 +882,7 @@ public class TwoFluidSection extends PipeSection {
   public double getLiquidHoldup() {
     // Return sum of oil and water if they're being used
     double totalLiq = oilHoldup + waterHoldup;
-    if (totalLiq > 1e-6) {
+    if (totalLiq > 0.0) {
       return totalLiq;
     }
     // Fall back to parent's value
@@ -909,24 +905,24 @@ public class TwoFluidSection extends PipeSection {
     super.setLiquidHoldup(liquidHoldup);
 
     // Update oil and water holdups proportionally
-    if (oldLiquidHoldup > 1e-10 && liquidHoldup > 1e-10) {
+    if (oldLiquidHoldup > 0.0 && liquidHoldup > 0.0) {
       double scaleFactor = liquidHoldup / oldLiquidHoldup;
       oilHoldup = oilHoldup * scaleFactor;
       waterHoldup = waterHoldup * scaleFactor;
 
       // Ensure they don't exceed the new liquid holdup
       double totalLiqHoldup = oilHoldup + waterHoldup;
-      if (totalLiqHoldup > liquidHoldup + 1e-10) {
+      if (totalLiqHoldup > liquidHoldup) {
         double norm = liquidHoldup / totalLiqHoldup;
         oilHoldup *= norm;
         waterHoldup *= norm;
       }
-    } else if (liquidHoldup > 1e-10) {
-      // Old holdup was near zero - use water cut to distribute
+    } else if (liquidHoldup > 0.0) {
+      // Old holdup was exactly zero - use water cut to distribute
       oilHoldup = liquidHoldup * (1.0 - waterCut);
       waterHoldup = liquidHoldup * waterCut;
     } else {
-      // New holdup is near zero
+      // New holdup is exactly zero
       oilHoldup = 0;
       waterHoldup = 0;
     }

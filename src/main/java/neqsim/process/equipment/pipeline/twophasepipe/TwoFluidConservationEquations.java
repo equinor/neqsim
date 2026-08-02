@@ -296,7 +296,7 @@ public class TwoFluidConservationEquations implements Serializable {
       rhoG = 1.0; // Default gas density
     double vG = sec.getGasVelocity();
     double alphaG = sec.getGasHoldup();
-    alphaG = Math.max(0.001, Math.min(0.999, alphaG));
+    alphaG = Math.max(0.0, Math.min(1.0, alphaG));
     flux[IDX_GAS_MASS] = alphaG * rhoG * vG * A;
     flux[IDX_GAS_MOMENTUM] = alphaG * rhoG * vG * vG * A + alphaG * sec.getPressure() * A;
 
@@ -306,10 +306,7 @@ public class TwoFluidConservationEquations implements Serializable {
       rhoO = 700.0; // Default oil density
     double vO = sec.getOilVelocity();
     double alphaO = sec.getOilHoldup();
-    // If oil holdup is zero but we have liquid, estimate from liquid holdup
-    if (alphaO < 1e-10 && sec.getLiquidHoldup() > 0.01) {
-      alphaO = sec.getLiquidHoldup() * sec.getOilFractionInLiquid();
-    }
+    // Phase-resolved boundary holdup is authoritative; do not reconstruct an absent oil phase.
     alphaO = Math.max(0, Math.min(1 - alphaG, alphaO));
     flux[IDX_OIL_MASS] = alphaO * rhoO * vO * A;
     flux[IDX_OIL_MOMENTUM] = alphaO * rhoO * vO * vO * A + alphaO * sec.getPressure() * A;
@@ -320,10 +317,7 @@ public class TwoFluidConservationEquations implements Serializable {
       rhoW = 1000.0; // Default water density
     double vW = sec.getWaterVelocity();
     double alphaW = sec.getWaterHoldup();
-    // If water holdup is zero but we have liquid, estimate from liquid holdup
-    if (alphaW < 1e-10 && sec.getLiquidHoldup() > 0.01) {
-      alphaW = sec.getLiquidHoldup() * sec.getWaterCut();
-    }
+    // Phase-resolved boundary holdup is authoritative; do not reconstruct an absent water phase.
     alphaW = Math.max(0, Math.min(1 - alphaG - alphaO, alphaW));
     flux[IDX_WATER_MASS] = alphaW * rhoW * vW * A;
     flux[IDX_WATER_MOMENTUM] = alphaW * rhoW * vW * vW * A + alphaW * sec.getPressure() * A;
@@ -441,7 +435,10 @@ public class TwoFluidConservationEquations implements Serializable {
       return Double.POSITIVE_INFINITY;
     }
 
-    double alphaL = Math.max(sec.getLiquidHoldup(), 1e-6);
+    double alphaL = sec.getLiquidHoldup();
+    if (alphaL <= 0.0) {
+      return Double.POSITIVE_INFINITY;
+    }
     double rhoG = Math.max(sec.getGasDensity(), 0.1);
     double rhoL = Math.max(sec.getLiquidDensity(), 100.0);
     double densityContrast = Math.max(rhoL - rhoG, 1.0);

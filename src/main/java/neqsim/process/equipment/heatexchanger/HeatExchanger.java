@@ -771,9 +771,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     for (int i = 0; i < 2; i++) {
       UUID id = UUID.randomUUID();
       inStream[i].run(id);
-      inStream[i].getFluid().init(3);
+      inStream[i].getFluid().init(2);
       outStream[i].run(id);
-      outStream[i].getFluid().init(3);
+      outStream[i].getFluid().init(2);
       entrop += outStream[i].getThermoSystem().getEntropy(unit) - inStream[i].getThermoSystem().getEntropy(unit);
     }
 
