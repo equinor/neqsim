@@ -104,6 +104,23 @@ class SevereSluggingSystemDiagnosticTest {
     assertEquals(first.getCriticalTopPressurePa(), restored.getCriticalTopPressurePa(), 0.0);
   }
 
+  @SuppressWarnings("deprecation")
+  @Test
+  void preservesLegacyLocalScreenWithoutSettingSystemRisk() {
+    TwoFluidSection section = new TwoFluidSection(0.0, 10.0, 0.2, Math.toRadians(45.0));
+    section.setInclinedSectionGasCarryoverNumber(0.75);
+    section.setInclinedSectionLiquidFallbackPotential(true);
+
+    assertEquals(0.75, section.getSevereSluggingNumber(), 0.0);
+    assertTrue(section.isInclinedSectionLiquidFallbackPotential());
+    assertFalse(section.isSevereSlugPotential());
+
+    TwoFluidSection cloned = section.clone();
+    assertEquals(0.75, cloned.getInclinedSectionGasCarryoverNumber(), 0.0);
+    assertTrue(cloned.isInclinedSectionLiquidFallbackPotential());
+    assertFalse(cloned.isSevereSlugPotential());
+  }
+
   @Test
   void validatesUnitsAndFractionsAtConstruction() {
     assertThrows(IllegalArgumentException.class,
