@@ -1659,8 +1659,8 @@ public class ProcessModel implements Runnable, Serializable {
         // Notify iteration complete
         boolean boundaryDrivenModel = !boundaryStreams.isEmpty();
         boolean minimumIterationsMet = boundaryStreams.isEmpty() || iterations > 1;
-        boolean iterConverged = valuesConverged && minimumIterationsMet
-            && (allProcessesSolved || boundaryDrivenModel) && !autoTuningChanged;
+        boolean iterConverged = valuesConverged && minimumIterationsMet && (allProcessesSolved || boundaryDrivenModel)
+            && !autoTuningChanged;
         notifyIterationComplete(iterations, iterConverged, maxError);
 
         // Converged if all processes solved AND values are not changing

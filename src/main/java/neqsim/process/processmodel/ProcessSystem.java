@@ -3670,8 +3670,7 @@ public class ProcessSystem extends SimulationBaseClass {
         continue;
       }
       if (unit instanceof neqsim.process.equipment.ProcessEquipmentBaseClass
-          && ((neqsim.process.equipment.ProcessEquipmentBaseClass) unit)
-              .applyAutoMinimumFlow(thresholdKgPerHour)) {
+          && ((neqsim.process.equipment.ProcessEquipmentBaseClass) unit).applyAutoMinimumFlow(thresholdKgPerHour)) {
         managed++;
       }
     }
