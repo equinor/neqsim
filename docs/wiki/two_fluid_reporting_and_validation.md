@@ -48,8 +48,9 @@ After `pipe.run()`, the following methods provide one value per pipe section:
 | `getWaterDropoutRiskProfile()` | boolean | Water dropout / accumulation risk |
 | `getEntrainmentFractionProfile()` | fraction | Estimated liquid entrainment in annular/mist flow |
 | `getEntrainedDropletDiameterProfile()` | m | Characteristic entrained droplet diameter |
-| `getSevereSluggingNumberProfile()` | dimensionless | Riser-base stability indicator |
-| `getSevereSlugPotentialProfile()` | boolean | Severe-slugging risk flag |
+| `getInclinedSectionGasCarryoverNumberProfile()` | dimensionless | Local uphill liquid-carryover screen; not a system stability criterion |
+| `getSevereSluggingNumberProfile()` | dimensionless | Deprecated alias for the local carryover screen |
+| `getSevereSlugPotentialProfile()` | boolean | Result flag from the most recent explicit flowline-riser evaluation |
 | `getHeatTransferProfile()` | W/(m2 K) | Heat-transfer coefficient profile, when configured |
 | `getSurfaceTemperatureProfile()` | K | Ambient/surface temperature profile, when configured |
 
@@ -67,7 +68,7 @@ double[] gasVelocity = pipe.getGasVelocityProfile();
 double[] liquidVelocity = pipe.getLiquidVelocityProfile();
 PipeSection.FlowRegime[] regimes = pipe.getFlowRegimeProfile();
 double[] entrainment = pipe.getEntrainmentFractionProfile();
-double[] severeSluggingNumber = pipe.getSevereSluggingNumberProfile();
+double[] gasCarryoverNumber = pipe.getInclinedSectionGasCarryoverNumberProfile();
 boolean[] waterWetting = pipe.getWaterWettingProfile();
 
 for (int i = 0; i < x.length; i++) {
@@ -121,6 +122,11 @@ entrainment_fraction,entrained_droplet_diameter_m,severe_slugging_number,
 severe_slug_potential
 ```
 
+The `severe_slugging_number` header is retained for CSV compatibility. It contains the local
+inclined-section gas-carryover number, not the explicit system stability result. Call
+`evaluateSevereSluggingSystem(...)` before exporting if `severe_slug_potential` should contain
+a system-level classification.
+
 ## Summary metrics
 
 Use these methods for an executive summary or design report:
@@ -156,8 +162,9 @@ validation. Each value is available both on `TwoFluidSection` and as a top-level
 | `isWaterDropoutRisk()` | `getWaterDropoutRiskProfile()` | Water dropout / accumulation risk |
 | `getEntrainmentFraction()` | `getEntrainmentFractionProfile()` | Estimated liquid entrainment fraction |
 | `getEntrainedDropletDiameter()` | `getEntrainedDropletDiameterProfile()` | Entrained droplet diameter |
-| `getSevereSluggingNumber()` | `getSevereSluggingNumberProfile()` | Riser-base stability indicator |
-| `isSevereSlugPotential()` | `getSevereSlugPotentialProfile()` | Severe-slugging risk flag |
+| `getInclinedSectionGasCarryoverNumber()` | `getInclinedSectionGasCarryoverNumberProfile()` | Local uphill liquid-carryover screen |
+| `getSevereSluggingNumber()` | `getSevereSluggingNumberProfile()` | Deprecated aliases for the same local screen |
+| `isSevereSlugPotential()` | `getSevereSlugPotentialProfile()` | Last explicit flowline-riser system result |
 
 The steady-state and transient profile CSV exporters include these diagnostics. Boolean values are
 written as `true` or `false`; a missing oil-water regime is written as an empty field.
