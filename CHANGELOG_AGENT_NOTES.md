@@ -9,6 +9,22 @@
 
 ---
 
+## 2026-08-02 — Directed capacity margins in process-model throughput results
+
+### Corrected
+
+`ProcessModelSimulationEvaluator.BottleneckStatus` and `ThroughputCaseRow` now preserve whether an
+equipment bottleneck is minimum-directed. Minimum-only constraints report their finite
+`getDisplayDesignValue()` limit instead of the internal unset `Double.MAX_VALUE` design sentinel.
+Engineering-unit `capacityMargin` is `current - minimum` for lower limits and remains
+`limit - current` for upper limits, so non-negative consistently means feasible.
+
+### Compatibility and reporting
+
+Existing constructors remain available and default to maximum-directed behavior. JSON case rows
+and CSV throughput traces add `minimumConstraint`; the CSV column is inserted after `designValue`.
+No thermodynamic, hydraulic, utilization, feasibility, or optimizer search calculation changed.
+
 ## 2026-08-02 — DNV-RP-F101 isolated metal-loss pressure screening added
 
 ### Added
