@@ -1310,10 +1310,13 @@ public class TPflash extends Flash {
       return;
     }
     system.init(1);
+    double referenceGibbsEnergy = balancedReference.gibbsEnergy;
     double collapsedGibbsEnergy = system.getGibbsEnergy();
-    double gibbsTolerance = Math.max(1.0e-6, Math.abs(balancedReference.gibbsEnergy) * 1.0e-8);
-    if (!Double.isFinite(collapsedGibbsEnergy)
-        || balancedReference.gibbsEnergy >= collapsedGibbsEnergy - gibbsTolerance) {
+    if (!Double.isFinite(referenceGibbsEnergy) || !Double.isFinite(collapsedGibbsEnergy)) {
+      return;
+    }
+    double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceGibbsEnergy) * 1.0e-8);
+    if (referenceGibbsEnergy >= collapsedGibbsEnergy - gibbsTolerance) {
       return;
     }
     restoreBalancedTwoPhaseState(balancedReference);
