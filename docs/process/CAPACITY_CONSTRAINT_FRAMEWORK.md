@@ -244,6 +244,12 @@ CapacityConstraint speedConstraint = new CapacityConstraint("speed", "RPM", Cons
 > service- and pump-specific; use vendor or applicable Hydraulic Institute design data instead of
 > treating a generic screening default as an approved installed limit.
 
+`ProcessModelSimulationEvaluator.BottleneckStatus` and `ThroughputCaseRow` preserve this direction
+with `isMinimumConstraint()`. Their reported design value is the applicable finite limit. The
+engineering-unit capacity margin is positive on the feasible side: `limit - current` for maximum
+constraints and `current - limit` for minimum constraints. This convention prevents a minimum-only
+constraint's internal unset design sentinel from appearing in JSON or CSV throughput results.
+
 ### 2. CapacityConstrainedEquipment (Interface)
 
 Interface that equipment classes implement to participate in capacity tracking.
@@ -2055,4 +2061,3 @@ double util = expander.getMaxUtilization(); // |getPower| / 5000 kW, no spurious
 - [Mechanical Design](mechanical_design)
 - [Optimizer Plugin Architecture](optimization/OPTIMIZER_PLUGIN_ARCHITECTURE)
 - [Optimization Examples](../examples/index)
-
