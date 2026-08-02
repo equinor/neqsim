@@ -34,6 +34,9 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   private static final double FINITE_DIFFERENCE_RELATIVE_STEP = 1.0e-7;
   private static final int COUPLED_HALF_BANDWIDTH = 2;
   private static final int COUPLED_JACOBIAN_COLORS = 2 * COUPLED_HALF_BANDWIDTH + 1;
+  private static final int MAXIMUM_SPECIES_COUPLING_ITERATIONS = 100;
+  private static final double SPECIES_COUPLING_TOLERANCE = 1.0e-10;
+  private static final double THERMODYNAMIC_COMPOSITION_TOLERANCE = 1.0e-10;
 
   Matrix diffMatrix;
   int iter = 0;
@@ -48,7 +51,9 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   protected double[] oldImpuls;
   protected double[] oldEnergy;
   private OnePhaseFlowConvergenceReport lastConvergenceReport = OnePhaseFlowConvergenceReport.notRun();
+  private OnePhaseSpeciesConservationReport lastSpeciesConservationReport = OnePhaseSpeciesConservationReport.notRun();
   private boolean failOnNonConvergence;
+  private boolean conservativeSpeciesTransportEnabled;
   private double[] coupledMassEquationScale;
   private double[] coupledMomentumEquationScale;
 
@@ -103,6 +108,34 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
    */
   public OnePhaseFlowConvergenceReport getLastConvergenceReport() {
     return lastConvergenceReport == null ? OnePhaseFlowConvergenceReport.notRun() : lastConvergenceReport;
+  }
+
+  /**
+   * Get conservative component-inventory diagnostics from the most recent solve.
+   *
+   * @return immutable species-conservation report
+   */
+  public OnePhaseSpeciesConservationReport getLastSpeciesConservationReport() {
+    return lastSpeciesConservationReport == null ? OnePhaseSpeciesConservationReport.notRun()
+        : lastSpeciesConservationReport;
+  }
+
+  /**
+   * Enable conservative n-1 species transport on the validated isothermal solver-type-1 path.
+   *
+   * @param enabled true to couple positive-flow component inventories to hydraulics and EOS
+   */
+  public void setConservativeSpeciesTransportEnabled(boolean enabled) {
+    conservativeSpeciesTransportEnabled = enabled;
+  }
+
+  /**
+   * Check whether conservative species transport is enabled.
+   *
+   * @return true when the opt-in conservative component path is active
+   */
+  public boolean isConservativeSpeciesTransportEnabled() {
+    return conservativeSpeciesTransportEnabled;
   }
 
   /**
@@ -994,7 +1027,12 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     initMatrix();
 
     if (dynamic && solverType == 1) {
-      solveCoupledHydraulicEos(initialFiniteVolumeMass);
+      if (conservativeSpeciesTransportEnabled) {
+        solveCoupledHydraulicEosSpecies(initialFiniteVolumeMass);
+      } else {
+        solveCoupledHydraulicEos(initialFiniteVolumeMass);
+        lastSpeciesConservationReport = OnePhaseSpeciesConservationReport.notRun();
+      }
       initFinalResults();
       return;
     }
@@ -1120,6 +1158,188 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     }
 
     initFinalResults();
+  }
+
+  private void solveCoupledHydraulicEosSpecies(double initialFiniteVolumeMass) {
+    double maximumCompositionChange = Double.POSITIVE_INFINITY;
+    double densityResidual = Double.POSITIVE_INFINITY;
+    double[] compositionChangeHistory = new double[MAXIMUM_SPECIES_COUPLING_ITERATIONS];
+    double[] speciesDensityHistory = new double[MAXIMUM_SPECIES_COUPLING_ITERATIONS];
+    int couplingIteration = 0;
+
+    while (couplingIteration < MAXIMUM_SPECIES_COUPLING_ITERATIONS
+        && (maximumCompositionChange > SPECIES_COUPLING_TOLERANCE || densityResidual > DENSITY_RELATIVE_TOLERANCE)) {
+      solveCoupledHydraulicEos(initialFiniteVolumeMass);
+      OnePhaseSpeciesConservationReport candidate = solveConservativeSpeciesStep();
+      if (!candidate.isConverged()) {
+        lastSpeciesConservationReport = candidate;
+        handleSpeciesFailure(candidate);
+        return;
+      }
+      maximumCompositionChange = maximumConservativeCompositionChange(candidate);
+      synchronizeThermodynamicComposition(candidate);
+      densityResidual = calculateMaximumRelativeDensityResidual();
+      compositionChangeHistory[couplingIteration] = maximumCompositionChange;
+      speciesDensityHistory[couplingIteration] = densityResidual;
+      lastSpeciesConservationReport = candidate;
+      couplingIteration++;
+    }
+
+    lastSpeciesConservationReport = lastSpeciesConservationReport.withCouplingDiagnostics(couplingIteration,
+        Arrays.copyOf(compositionChangeHistory, couplingIteration),
+        Arrays.copyOf(speciesDensityHistory, couplingIteration));
+    double thermodynamicSyncError = calculateMaximumThermodynamicMassFractionError(lastSpeciesConservationReport);
+    lastSpeciesConservationReport = lastSpeciesConservationReport.withThermodynamicSync(thermodynamicSyncError,
+        THERMODYNAMIC_COMPOSITION_TOLERANCE);
+    OnePhaseFlowConvergenceReport hydraulicReport = lastConvergenceReport;
+    double[] densityHistory = hydraulicReport.getDensityResidualHistory();
+    if (densityHistory.length > 0) {
+      densityHistory[densityHistory.length - 1] = densityResidual;
+    }
+    lastConvergenceReport = createConvergenceReport(hydraulicReport.getNonlinearIterations(),
+        hydraulicReport.getMaximumRelativeNonlinearUpdate(), densityResidual, initialFiniteVolumeMass,
+        hydraulicReport.getNonlinearUpdateHistory(), densityHistory, false, null, true);
+
+    if (maximumCompositionChange > SPECIES_COUPLING_TOLERANCE || densityResidual > DENSITY_RELATIVE_TOLERANCE) {
+      lastSpeciesConservationReport = lastSpeciesConservationReport.withReason(
+          OnePhaseSpeciesConservationReport.ConservationReason.THERMODYNAMIC_SYNC_FAILED,
+          "Hydraulic/species fixed point did not converge after " + couplingIteration
+              + " iterations: maximum mass-fraction change=" + maximumCompositionChange + " (tolerance "
+              + SPECIES_COUPLING_TOLERANCE + "), EOS/FV density=" + densityResidual + " (tolerance "
+              + DENSITY_RELATIVE_TOLERANCE + ").");
+    }
+
+    if (!lastSpeciesConservationReport.isConverged()) {
+      handleSpeciesFailure(lastSpeciesConservationReport);
+    }
+    if (!lastConvergenceReport.isConverged()) {
+      handleHydraulicFailure(lastConvergenceReport);
+    }
+  }
+
+  private OnePhaseSpeciesConservationReport solveConservativeSpeciesStep() {
+    int components = pipe.getNode(0).getBulkSystem().getPhase(0).getNumberOfComponents();
+    int cells = numberOfNodes - 2;
+    String[] componentNames = new String[components];
+    double[][] previousMassFraction = new double[components][cells];
+    double[] inletMassFraction = new double[components];
+    double[] previousCellMassKg = new double[cells];
+    double[] finalCellMassKg = new double[cells];
+    double[] faceMassFlowKgPerSecond = new double[cells + 1];
+
+    for (int component = 0; component < components; component++) {
+      componentNames[component] = pipe.getNode(0).getBulkSystem().getPhase(0).getComponent(component).getName();
+      inletMassFraction[component] = componentMassFraction(0, component);
+      for (int cell = 0; cell < cells; cell++) {
+        previousMassFraction[component][cell] = oldComposition[component][cell + 1];
+      }
+    }
+    for (int cell = 0; cell < cells; cell++) {
+      int node = cell + 1;
+      double volume = getControlVolume(node);
+      previousCellMassKg[cell] = oldDensity[node] * volume;
+      finalCellMassKg[cell] = sol2Matrix.get(node, 0) * volume;
+    }
+    faceMassFlowKgPerSecond[0] = pipe.getNode(1).getVelocityIn().doubleValue() * pipe.getNode(0).getGeometry().getArea()
+        * sol2Matrix.get(0, 0);
+    for (int face = 1; face < cells; face++) {
+      int upstreamNode = face;
+      faceMassFlowKgPerSecond[face] = pipe.getNode(upstreamNode).getVelocityOut().doubleValue()
+          * pipe.getNode(upstreamNode).getGeometry().getArea() * sol2Matrix.get(upstreamNode, 0);
+    }
+    int outletCellNode = numberOfNodes - 2;
+    faceMassFlowKgPerSecond[cells] = pipe.getNode(outletCellNode).getVelocityOut().doubleValue()
+        * pipe.getNode(outletCellNode).getGeometry().getArea() * sol2Matrix.get(outletCellNode, 0);
+
+    return ConservativeSpeciesTransport.solve(componentNames, previousMassFraction, inletMassFraction,
+        previousCellMassKg, finalCellMassKg, faceMassFlowKgPerSecond, timeStep);
+  }
+
+  private double maximumConservativeCompositionChange(OnePhaseSpeciesConservationReport report) {
+    double[][] massFraction = report.getMassFractionProfile();
+    double maximum = 0.0;
+    for (int component = 0; component < massFraction.length; component++) {
+      for (int cell = 0; cell < massFraction[component].length; cell++) {
+        maximum = Math.max(maximum,
+            Math.abs(massFraction[component][cell] - componentMassFraction(cell + 1, component)));
+      }
+    }
+    return maximum;
+  }
+
+  private void synchronizeThermodynamicComposition(OnePhaseSpeciesConservationReport report) {
+    double[][] massFraction = report.getMassFractionProfile();
+    for (int cell = 0; cell < massFraction[0].length; cell++) {
+      int node = cell + 1;
+      double[] moleFraction = massToMoleFractions(node, massFraction, cell);
+      pipe.getNode(node).getBulkSystem().setMolarComposition(moleFraction);
+      pipe.getNode(node).getBulkSystem().init(0);
+      pipe.getNode(node).getBulkSystem().init(1);
+      pipe.getNode(node).init();
+      for (int component = 0; component < massFraction.length; component++) {
+        sol4Matrix[component].set(node, 0, massFraction[component][cell]);
+      }
+    }
+
+    int outletNode = numberOfNodes - 1;
+    double[] outletMoleFraction = massToMoleFractions(numberOfNodes - 2, massFraction, massFraction[0].length - 1);
+    pipe.getNode(outletNode).getBulkSystem().setMolarComposition(outletMoleFraction);
+    pipe.getNode(outletNode).getBulkSystem().init(0);
+    pipe.getNode(outletNode).getBulkSystem().init(1);
+    pipe.getNode(outletNode).init();
+    for (int component = 0; component < massFraction.length; component++) {
+      sol4Matrix[component].set(outletNode, 0, massFraction[component][massFraction[component].length - 1]);
+    }
+  }
+
+  private double[] massToMoleFractions(int node, double[][] massFraction, int cell) {
+    int components = massFraction.length;
+    double[] moleFraction = new double[components];
+    double molarDenominator = 0.0;
+    for (int component = 0; component < components; component++) {
+      molarDenominator += massFraction[component][cell]
+          / pipe.getNode(node).getBulkSystem().getPhase(0).getComponent(component).getMolarMass();
+    }
+    double independentSum = 0.0;
+    for (int component = 0; component < components - 1; component++) {
+      moleFraction[component] = massFraction[component][cell]
+          / pipe.getNode(node).getBulkSystem().getPhase(0).getComponent(component).getMolarMass() / molarDenominator;
+      independentSum += moleFraction[component];
+    }
+    moleFraction[components - 1] = 1.0 - independentSum;
+    return moleFraction;
+  }
+
+  private double calculateMaximumThermodynamicMassFractionError(OnePhaseSpeciesConservationReport report) {
+    double[][] massFraction = report.getMassFractionProfile();
+    double maximum = 0.0;
+    for (int component = 0; component < massFraction.length; component++) {
+      for (int cell = 0; cell < massFraction[component].length; cell++) {
+        maximum = Math.max(maximum,
+            Math.abs(massFraction[component][cell] - componentMassFraction(cell + 1, component)));
+      }
+    }
+    return maximum;
+  }
+
+  private double componentMassFraction(int node, int component) {
+    return pipe.getNode(node).getBulkSystem().getPhase(0).getComponent(component).getx()
+        * pipe.getNode(node).getBulkSystem().getPhase(0).getComponent(component).getMolarMass()
+        / pipe.getNode(node).getBulkSystem().getPhase(0).getMolarMass();
+  }
+
+  private void handleSpeciesFailure(OnePhaseSpeciesConservationReport report) {
+    if (failOnNonConvergence) {
+      throw new IllegalStateException(report.getMessage());
+    }
+    logger.warn("{}", report.getMessage());
+  }
+
+  private void handleHydraulicFailure(OnePhaseFlowConvergenceReport report) {
+    if (failOnNonConvergence) {
+      throw new IllegalStateException(report.getMessage());
+    }
+    logger.warn("{}", report.getMessage());
   }
 
   private void solveCoupledHydraulicEos(double initialFiniteVolumeMass) {
