@@ -9,6 +9,30 @@
 
 ---
 
+## 2026-08-02 — DNV-RP-F101 isolated metal-loss pressure screening added
+
+### Added
+
+`DnvRpF101CorrodedPipelineScreeningKernel` implements a fail-closed calculation for the current
+`DNV-RP-F101 2019-09+AMD:2025-09` basis. Its narrow scope is one isolated longitudinal metal-loss
+defect under internal pressure. It reports assessment depth, remaining wall, length correction,
+uncorroded and defect failure pressures, a caller-controlled pressure limit, utilization, margin,
+and within-limit status.
+
+### Required evidence and migration
+
+Measured defect geometry, depth allowance, assessment wall thickness, characteristic ultimate
+tensile strength, internal/external pressures, caller-controlled pressure factor, applicability,
+and verification attestations are explicit inputs. Interacting or complex defects, combined
+compression, probabilistic assessment, inspection-uncertainty derivation, corrosion growth,
+crack-like damage, repair, and fitness-for-service approval remain external.
+
+Agents must not convert a NORSOK M-506 corrosion rate or projected uniform loss into inspected
+RP-F101 defect geometry. The RP-F101 kernel is also separate from and does not replace DNV-ST-F101
+pressure containment, collapse, propagation/local buckling, load interaction, fatigue,
+incidental/test pressure, de-rating, safety class, ovality, fabrication route, or installation
+strain.
+
 ## 2026-08-02 — DNV-RP-F105 added as a first-mode free-span screening kernel
 
 ### Added

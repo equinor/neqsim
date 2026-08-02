@@ -58,4 +58,3 @@ NORSOK-U-001,Sec5,DesignLifeYears,25,years,General,Design service life
 NORSOK-U-001,Sec5,CorrosionAllowance,3.0,mm,General,Standard corrosion allowance
 NORSOK-U-001,Sec6,FoundationSafetyFactor,2.0,,Foundation,Bearing capacity factor
 NORSOK-U-001,Sec7,SubseaTreeTestPressure,1.50,,SubseaTree,FAT pressure factor
-

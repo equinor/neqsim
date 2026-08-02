@@ -1,6 +1,6 @@
 ---
 name: neqsim-subsea-and-wells
-description: "Subsea production systems, DNV-RP-F109 on-bottom stability screening, DNV-RP-F105 free-span screening, well design, SURF cost estimation, and tieback analysis with NeqSim. USE WHEN: designing subsea fields, screening pipeline/cable/umbilical seabed stability, sizing flowlines and umbilicals, estimating well costs, performing casing design, running tieback comparisons, or configuring subsea equipment (trees, manifolds, boosters, risers)."
+description: "Subsea production systems, DNV-RP-F109 on-bottom stability screening, DNV-RP-F105 free-span screening, DNV-RP-F101 corroded-pipeline screening, well design, SURF cost estimation, and tieback analysis with NeqSim. USE WHEN: designing subsea fields, screening pipeline/cable/umbilical seabed stability or inspected metal loss, sizing flowlines and umbilicals, estimating well costs, performing casing design, running tieback comparisons, or configuring subsea equipment (trees, manifolds, boosters, risers)."
 last_verified: "2026-08-02"
 ---
 
@@ -316,6 +316,21 @@ caller-controlled response triggers into PASS/FAIL against DNV: soil and span-sh
 multi-span interaction, detailed VIV/direct-wave response, ULS/FLS, fatigue, monitoring, and
 intervention remain a controlled external assessment.
 
+### Corroded-pipeline screening (DNV-RP-F101)
+
+For an explicit current `DNV-RP-F101 2019-09+AMD:2025-09` basis, use
+`DnvRpF101CorrodedPipelineScreeningKernel` only for one verified isolated longitudinal metal-loss
+defect under internal pressure. Supply assessment wall thickness, measured maximum depth and axial
+length, caller-controlled depth allowance, characteristic ultimate tensile strength,
+internal/external absolute pressures, and a verified project-controlled pressure factor.
+
+Keep interacting/complex defects, combined longitudinal compression, probabilistic and inspection-
+accuracy models, corrosion growth, crack/dent/gouge/blister or weld damage, repair, inspection
+interval, and fitness-for-service approval external. M-506 rate prediction is not inspected defect
+sizing. RP-F101 does not replace DNV-ST-F101 pressure containment, collapse, propagation/local
+buckling, interaction, fatigue, pressure cases, de-rating, safety class, ovality, fabrication, or
+installation-strain checks.
+
 ### Pipeline Mechanical Design
 
 ```java
@@ -473,6 +488,7 @@ Map<String, Double> allocation = optimizer.optimize();
 | Subsea production | API 17A-17Q | Subsea equipment specs |
 | Risers | API 2RD / DNV-OS-F201 | Riser design |
 | Flowlines | DNV-RP-F105 2025-12 | Use `DnvRpF105FreeSpanScreeningKernel` for first-mode/dimensionless escalation screening; retain detailed response and acceptance externally |
+| Corroded flowlines/risers | DNV-RP-F101 2019-09+AMD:2025-09 | Use `DnvRpF101CorrodedPipelineScreeningKernel` only for verified isolated longitudinal metal loss under internal pressure; retain full integrity assessment and ST-F101 design checks externally |
 | Fatigue | DNV-RP-C203 | S-N curves, fatigue life |
 
 ---
