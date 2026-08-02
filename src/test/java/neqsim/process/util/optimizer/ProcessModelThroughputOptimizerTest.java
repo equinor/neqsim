@@ -127,6 +127,25 @@ class ProcessModelThroughputOptimizerTest {
   }
 
   /**
+   * Adds a synthetic minimum headroom constraint that decreases as production rises.
+   *
+   * @param fixture model fixture
+   * @param minimumHeadroom minimum permitted headroom
+   */
+  private void addMinimumHeadroomCapacity(final ModelFixture fixture, double minimumHeadroom) {
+    CapacityConstraint availableHeadroom = new CapacityConstraint("availableHeadroom", "kg/hr", ConstraintType.HARD)
+        .setMinValue(minimumHeadroom).setSeverity(ConstraintSeverity.HARD).setValueSupplier(new DoubleSupplier() {
+          /** {@inheritDoc} */
+          @Override
+          public double getAsDouble() {
+            return 50000.0 - fixture.feed.getFlowRate("kg/hr");
+          }
+        });
+    fixture.separator.clearCapacityConstraints();
+    fixture.separator.addCapacityConstraint(availableHeadroom);
+  }
+
+  /**
    * Creates a throughput optimizer with feed scaling and gas export objective.
    *
    * @param fixture model fixture
@@ -189,6 +208,38 @@ class ProcessModelThroughputOptimizerTest {
     assertTrue(fixture.separator.getCapacityConstraints().containsKey("installedGasCapacity"));
     assertEquals(1.5, result.getOptimalMultiplier(), 0.02);
     assertTrue(new String(Files.readAllBytes(caseTable), StandardCharsets.UTF_8).contains("activeConstraint"));
+  }
+
+  /**
+   * Verifies finite, correctly signed engineering margins for minimum-directed bottlenecks.
+   *
+   * @throws Exception if CSV export fails
+   */
+  @Test
+  void minimumConstraintProducesDirectedThroughputMargins() throws Exception {
+    ModelFixture fixture = createModelFixture();
+    addMinimumHeadroomCapacity(fixture, 35000.0);
+
+    ProcessModelThroughputResult result = createOptimizer(fixture).findMaximumThroughput(1.0, 2.0, 0.01);
+    ThroughputCaseRow best = result.getBestFeasibleCase();
+    ThroughputCaseRow firstLimit = result.getFirstInfeasibleCase();
+
+    assertNotNull(best);
+    assertNotNull(firstLimit);
+    assertEquals(1.5, result.getOptimalMultiplier(), 0.02);
+    assertTrue(best.isMinimumConstraint());
+    assertTrue(firstLimit.isMinimumConstraint());
+    assertEquals(35000.0, best.getDesignValue(), 1.0e-12);
+    assertTrue(best.getCapacityMargin() >= 0.0, "safe minimum constraint must have non-negative margin");
+    assertTrue(firstLimit.getCapacityMargin() < 0.0, "violated minimum constraint must have negative margin");
+    assertTrue(Double.isFinite(best.getCapacityMargin()));
+    assertTrue(Double.isFinite(firstLimit.getCapacityMargin()));
+
+    Path caseTable = temporaryDirectory.resolve("minimum_constraint_trace.csv");
+    result.exportToCSV(caseTable);
+    String csv = new String(Files.readAllBytes(caseTable), StandardCharsets.UTF_8);
+    assertTrue(csv.contains("minimumConstraint"));
+    assertTrue(result.toJson().contains("\"minimumConstraint\": true"));
   }
 
   /**
