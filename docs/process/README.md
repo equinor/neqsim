@@ -150,6 +150,8 @@ This documentation is organized into the following sections:
 | [standard_design_kernel_migration.md](standard_design_kernel_migration) | Migrate global editions, metadata factories, mutable calculators, and legacy case execution to typed kernels |
 | [mechanical_design_database.md](mechanical_design_database) | Data sources, database schemas, and CSV configuration |
 | [pipeline_mechanical_design.md](pipeline_mechanical_design) | Pipeline mechanical design (wall thickness, stress, buckling, corrosion) |
+| [dnv_rp_f109_on_bottom_stability.md](dnv_rp_f109_on_bottom_stability) | **DNV-RP-F109 on-bottom stability screening** — typed vertical, transparent absolute-static lateral, and external-response displacement checks with fail-closed readiness |
+| [dnv_st_f101_pipeline_screening.md](dnv_st_f101_pipeline_screening) | **Fail-closed DNV-ST-F101:2021 pipeline limit-state screening with explicit review boundary** |
 | [topside_piping_design.md](topside_piping_design) | **Topside piping design (velocity, support, vibration per ASME B31.3)** |
 | [riser_mechanical_design.md](riser_mechanical_design) | Riser design (catenary, VIV, fatigue per DNV-OS-F201) |
 | [well_mechanical_design.md](well_mechanical_design) | **Well casing/tubing design, barrier verification, cost estimation per NORSOK D-010, API 5CT** |

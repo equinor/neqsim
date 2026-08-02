@@ -47,6 +47,10 @@ public class TPflash extends Flash {
   private static final double LIQUID_LIQUID_CRITICAL_TEMPERATURE_SPAN = 150.0;
   /** Minimum water feed fraction for ordinary water-rich endpoint refinement. */
   private static final double WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT = 0.01;
+  /** Maximum stored water K-value that justifies checking a collapsed water-bearing endpoint. */
+  private static final double WATER_PHASE_COLLAPSE_WATER_K_UPPER_LIMIT = 1.0e-2;
+  /** Minimum stored non-water K-value that justifies checking a collapsed water-bearing endpoint. */
+  private static final double WATER_PHASE_COLLAPSE_VOLATILE_K_LOWER_LIMIT = 10.0;
   /** Maximum accepted component material-balance residual for water-rich endpoint refinement. */
   private static final double WATER_RICH_MATERIAL_BALANCE_TOLERANCE = 1.0e-8;
   /** Maximum accepted phase-composition normalization residual for an aqueous trial seed. */
@@ -99,18 +103,22 @@ public class TPflash extends Flash {
    * the start of {@link #runInternal()}. Used as the collapse target when the spurious-multiphase rescue triggers.
    */
   private PhaseType referenceSinglePhaseType = null;
+  /** True after the bounded water-bearing ordinary-flash retry has been attempted in this run. */
+  private boolean waterBearingRescueAttempted = false;
 
-  /** Compact pre-multiphase snapshot used only for balanced neutral aqueous endpoints. */
-  private static final class AqueousTwoPhaseState {
+  /** Compact pre-multiphase snapshot used only for balanced neutral water-bearing endpoints. */
+  private static final class BalancedTwoPhaseState {
     private final PhaseType[] phaseTypes = new PhaseType[2];
     private final double[] betas = new double[2];
     private final double[][] compositions;
     private final double[] kValues;
+    private final double gibbsEnergy;
 
-    private AqueousTwoPhaseState(SystemInterface source) {
+    private BalancedTwoPhaseState(SystemInterface source) {
       int numberOfComponents = source.getPhase(0).getNumberOfComponents();
       compositions = new double[2][numberOfComponents];
       kValues = new double[numberOfComponents];
+      gibbsEnergy = source.getGibbsEnergy();
       for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
         phaseTypes[phaseIndex] = source.getPhase(phaseIndex).getType();
         betas[phaseIndex] = source.getBeta(phaseIndex);
@@ -417,6 +425,7 @@ public class TPflash extends Flash {
    */
   private void runInternal() {
     resetStabilityDiagnostics();
+    waterBearingRescueAttempted = false;
     findLowestGibbsPhaseIsChecked = false;
     int minGibbsPhase = 0;
     double minimumGibbsEnergy = 0;
@@ -593,6 +602,7 @@ public class TPflash extends Flash {
           // logger.info("one phase flash is stable - checking multiphase flash....");
           TPmultiflash operation = new TPmultiflash(system, system.doSolidPhaseCheck());
           operation.run();
+          rescueSinglePhaseWaterBearingEndpoint();
           rescueSinglePhaseMultiphaseEndpoint();
         }
         if (solidCheck) {
@@ -609,6 +619,7 @@ public class TPflash extends Flash {
         } catch (Exception ex) {
           logger.debug("Post-stability init failed: {}", ex.getMessage());
         }
+        rescueSinglePhaseWaterBearingEndpoint();
         rescueSinglePhaseMultiphaseEndpoint();
         rejectUnnormalizedAqueousEndpointAfterStableSinglePhase();
 
@@ -759,10 +770,12 @@ public class TPflash extends Flash {
       sucsSubs();
     }
     if (system.doMultiPhaseCheck()) {
-      AqueousTwoPhaseState balancedAqueousReference = balancedAqueousReferenceBeforeMultiphaseCheck();
+      BalancedTwoPhaseState balancedWaterBearingReference = balancedWaterBearingReferenceBeforeMultiphaseCheck();
       TPmultiflash operation = new TPmultiflash(system, system.doSolidPhaseCheck());
       operation.run();
-      restoreBalancedAqueousReferenceAfterInvalidPhaseRemoval(balancedAqueousReference);
+      restoreBalancedAqueousReferenceAfterInvalidPhaseRemoval(balancedWaterBearingReference);
+      restoreLowerGibbsReferenceAfterSinglePhaseCollapse(balancedWaterBearingReference);
+      rescueSinglePhaseWaterBearingEndpoint();
       rescueSinglePhaseMultiphaseEndpoint();
       // rescueSpuriousMultiphaseEndpoint() is called once at the end of runInternal()
       // after orderByDensity(), so it is intentionally not repeated here.
@@ -807,6 +820,7 @@ public class TPflash extends Flash {
         i--; // indices shift after removal — re-check the (new) phase at i
       }
     }
+    rescueSinglePhaseWaterBearingEndpoint();
     rescueSinglePhaseMultiphaseEndpoint();
     system.orderByDensity();
     try {
@@ -814,8 +828,10 @@ public class TPflash extends Flash {
     } catch (Exception ex) {
       logger.warn("Final init after orderByDensity failed: " + ex.getMessage());
     }
+    rescueSinglePhaseWaterBearingEndpoint();
     rescueSinglePhaseMultiphaseEndpoint();
     rescueSpuriousMultiphaseEndpoint();
+    rescueSinglePhaseWaterBearingEndpoint();
     collapseTrivialMultiphaseSplit();
     normalizeActivePhaseFractions();
     rescueLowerGibbsPhaseRoot();
@@ -1218,22 +1234,39 @@ public class TPflash extends Flash {
   }
 
   /**
-   * Captures a feasible aqueous equilibrium before multiphase phase-appearance trials.
+   * Captures a feasible water-bearing equilibrium before multiphase phase-appearance trials.
    *
    * <p>
-   * The compact snapshot is restricted to neutral, exactly-two-phase aqueous endpoints that already satisfy the strict
-   * feasibility and equilibrium checks. It avoids a full system clone, and other flashes allocate no snapshot.
+   * The compact snapshot is restricted to neutral, exactly-two-phase endpoints that contain an aqueous phase or at
+   * least one mole percent water and already satisfy the strict feasibility and equilibrium checks. It avoids a full
+   * system clone, and dry flashes allocate no snapshot.
    * </p>
    *
    * @return balanced state, or {@code null} when recovery is not applicable
    */
-  private AqueousTwoPhaseState balancedAqueousReferenceBeforeMultiphaseCheck() {
+  private BalancedTwoPhaseState balancedWaterBearingReferenceBeforeMultiphaseCheck() {
     if (system.getNumberOfPhases() != 2 || system.isChemicalSystem() || system.hasIons() || solidCheck
-        || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck() || !system.hasPhaseType(PhaseType.AQUEOUS)
+        || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck()
+        || (!system.hasPhaseType(PhaseType.AQUEOUS) && !hasSubstantialWaterFeed())
         || !isBalancedEquilibriumCandidate(system)) {
       return null;
     }
-    return new AqueousTwoPhaseState(system);
+    return new BalancedTwoPhaseState(system);
+  }
+
+  /**
+   * Checks whether water is a substantial feed component in the current flash.
+   *
+   * @return true when the water feed mole fraction is at least the water-rich refinement limit
+   */
+  private boolean hasSubstantialWaterFeed() {
+    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
+      neqsim.thermo.component.ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
+      if ("water".equalsIgnoreCase(component.getComponentName())) {
+        return component.getz() >= WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT;
+      }
+    }
+    return false;
   }
 
   /**
@@ -1251,12 +1284,53 @@ public class TPflash extends Flash {
    *
    * @param balancedReference feasible pre-trial state, or {@code null} when recovery is not applicable
    */
-  private void restoreBalancedAqueousReferenceAfterInvalidPhaseRemoval(AqueousTwoPhaseState balancedReference) {
+  private void restoreBalancedAqueousReferenceAfterInvalidPhaseRemoval(BalancedTwoPhaseState balancedReference) {
     if (balancedReference == null || system.getNumberOfPhases() != 2 || !system.hasPhaseType(PhaseType.AQUEOUS)
         || isBalancedEquilibriumCandidate(system)) {
       return;
     }
+    restoreBalancedTwoPhaseState(balancedReference);
+  }
+
+  /**
+   * Restores a lower-Gibbs feasible split when multiphase cleanup collapses it to one phase.
+   *
+   * <p>
+   * A successful ordinary two-phase flash is already a feasible phase-split candidate. If the subsequent multiphase
+   * stability path removes a phase and returns a one-phase state with higher extensive Gibbs energy, the collapse
+   * cannot represent the stable minimum. This gate is limited to neutral water-bearing systems and requires the
+   * ordinary reference to pass the strict material-balance, composition, phase-fraction, and fugacity checks before it
+   * is captured.
+   * </p>
+   *
+   * @param balancedReference feasible pre-trial state, or {@code null} when recovery is not applicable
+   */
+  private void restoreLowerGibbsReferenceAfterSinglePhaseCollapse(BalancedTwoPhaseState balancedReference) {
+    if (balancedReference == null || system.getNumberOfPhases() != 1) {
+      return;
+    }
+    system.init(1);
+    double referenceGibbsEnergy = balancedReference.gibbsEnergy;
+    double collapsedGibbsEnergy = system.getGibbsEnergy();
+    if (!Double.isFinite(referenceGibbsEnergy) || !Double.isFinite(collapsedGibbsEnergy)) {
+      return;
+    }
+    double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceGibbsEnergy) * 1.0e-8);
+    if (referenceGibbsEnergy >= collapsedGibbsEnergy - gibbsTolerance) {
+      return;
+    }
+    restoreBalancedTwoPhaseState(balancedReference);
+  }
+
+  /**
+   * Restores phase types, fractions, compositions, and K-values from a compact two-phase snapshot.
+   *
+   * @param balancedReference feasible pre-trial state to restore
+   */
+  private void restoreBalancedTwoPhaseState(BalancedTwoPhaseState balancedReference) {
+    system.setNumberOfPhases(2);
     for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
+      system.setPhaseIndex(phaseIndex, phaseIndex);
       system.setPhaseType(phaseIndex, balancedReference.phaseTypes[phaseIndex]);
       system.setBeta(phaseIndex, balancedReference.betas[phaseIndex]);
       for (int componentIndex = 0; componentIndex < balancedReference.compositions[phaseIndex].length; componentIndex++) {
@@ -1267,6 +1341,73 @@ public class TPflash extends Flash {
     }
     system.normalizeBeta();
     system.init(1);
+  }
+
+  /**
+   * Retries a suspicious water-bearing single-phase collapse through the ordinary flash path.
+   *
+   * <p>
+   * In some high-pressure CO2/water states the multiphase solver removes an aqueous phase even though the ordinary
+   * flash converges to a feasible lower-Gibbs oil/aqueous split. The stored post-removal K-values retain a strong phase
+   * preference: water has a very small K-value while at least one non-water component has a large K-value. Only this
+   * inexpensive screen triggers the retry. The ordinary result replaces the collapsed state only after it passes the
+   * existing phase-fraction, distinct-composition, and lower-Gibbs acceptance checks.
+   * </p>
+   */
+  private void rescueSinglePhaseWaterBearingEndpoint() {
+    if (waterBearingRescueAttempted || !shouldRetryCollapsedWaterBearingEndpoint()) {
+      return;
+    }
+    waterBearingRescueAttempted = true;
+    system.init(1);
+    double referenceGibbsEnergy = system.getGibbsEnergy();
+    SystemInterface candidate = system.clone();
+    MULTIPHASE_RESCUE_ACTIVE.set(Boolean.TRUE);
+    try {
+      candidate.setMultiPhaseCheck(false);
+      new TPflash(candidate, candidate.doSolidPhaseCheck()).run();
+      if (isLowerGibbsMultiphaseCandidate(candidate, referenceGibbsEnergy)
+          && isBalancedEquilibriumCandidate(candidate)) {
+        copyFlashStateFrom(candidate);
+      }
+    } catch (Exception ex) {
+      logger.debug("Water-bearing endpoint recovery failed: {}", ex.getMessage());
+    } finally {
+      MULTIPHASE_RESCUE_ACTIVE.set(Boolean.FALSE);
+    }
+  }
+
+  /**
+   * Screens a collapsed water-bearing endpoint using retained phase-preference K-values.
+   *
+   * @return true when a bounded ordinary-flash retry is justified
+   */
+  private boolean shouldRetryCollapsedWaterBearingEndpoint() {
+    if (!system.doMultiPhaseCheck() || system.getNumberOfPhases() != 1 || system.isChemicalSystem() || system.hasIons()
+        || solidCheck || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck()
+        || MULTIPHASE_RESCUE_ACTIVE.get().booleanValue()) {
+      return false;
+    }
+    boolean hasSubstantialWaterWithSmallK = false;
+    boolean hasVolatileNonWaterComponent = false;
+    neqsim.thermo.phase.PhaseInterface phase = system.getPhase(0);
+    for (int componentIndex = 0; componentIndex < phase.getNumberOfComponents(); componentIndex++) {
+      neqsim.thermo.component.ComponentInterface component = phase.getComponent(componentIndex);
+      if (component.getz() <= 1.0e-50) {
+        continue;
+      }
+      double kValue = component.getK();
+      if (!Double.isFinite(kValue) || kValue <= 0.0) {
+        return false;
+      }
+      if ("water".equalsIgnoreCase(component.getComponentName())) {
+        hasSubstantialWaterWithSmallK = component.getz() >= WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT
+            && kValue < WATER_PHASE_COLLAPSE_WATER_K_UPPER_LIMIT;
+      } else if (kValue > WATER_PHASE_COLLAPSE_VOLATILE_K_LOWER_LIMIT) {
+        hasVolatileNonWaterComponent = true;
+      }
+    }
+    return hasSubstantialWaterWithSmallK && hasVolatileNonWaterComponent;
   }
 
   /**

@@ -172,6 +172,74 @@ water-pump process case and checks normalized utilization plus HARD-limit behavi
 
 ---
 
+## 2026-08-02 — Typed DNV-RP-F109 on-bottom stability screening
+
+### Summary
+
+NeqSim now exposes a fail-closed `SCREENING` kernel for DNV-RP-F109 edition
+`2021-05+AMD 2025-09`. It covers vertical equilibrium, a transparent
+absolute-static lateral screen, and acceptance checks for displacement supplied by
+an externally validated generalized or dynamic response model. Every calculated
+result remains `CALCULATED_REVIEW_REQUIRED`.
+
+### New API
+
+| API | What it does |
+|---|---|
+| `DnvRpF109OnBottomStabilityInput` | Carries explicit asset, geometry, environmental, hydrodynamic, soil, factor, and response-model inputs without numerical project defaults |
+| `DnvRpF109OnBottomStabilityCalculator` | Calculates normal Morison loads, lift, vertical equilibrium, friction/passive lateral resistance, required submerged weight, and specific gravity |
+| `DnvRpF109OnBottomStabilityAssessment` | Returns immutable load-case intermediates, limit-state checks, governing utilization, and approval-required state |
+| `DnvRpF109OnBottomStabilityKernel` | Enforces edition, equipment applicability, complete inputs, unique cases, and external-response evidence before calculation |
+| `StandardType.DNV_RP_F109` | Adds current publisher-sourced standard discovery for pipelines, flexible pipes, cables, and umbilicals |
+
+### Boundary and migration
+
+No existing API changes. The kernel does not reproduce generalized design tables,
+generate dynamic response, derive environmental statistics, qualify pipe-soil
+models, or claim DNV conformity. Use the licensed current RP and independent
+engineering review for design approval. The `neqsim-subsea-and-wells`,
+`neqsim-flow-assurance`, and `neqsim-standards-lookup` skills now route on-bottom
+stability work to the typed kernel; the previous incorrect association of
+DNV-RP-F109 with cooldown/no-touch time has been removed. Two unreferenced legacy
+CSV rows that presented 1.1 lateral and vertical factors as generic standard
+defaults were also removed; factors must now be traceable project inputs.
+
+### Tests and example
+
+`DnvRpF109OnBottomStabilityKernelTest` checks fail-closed readiness, static and
+external-response routes, directional loading, hydrodynamic and soil monotonicity,
+displacement limits, registry discovery, and the audit boundary. The executed
+`dnv_rp_f109_on_bottom_stability.ipynb` notebook demonstrates load-case results,
+velocity sensitivity, and the submerged-weight/friction design space.
+
+---
+
+## 2026-08-02 — Typed DNV-ST-F101 pipeline screening kernel
+
+### New API
+
+- `DnvStF101PipelineDesignInput` keeps the standard edition, safety class, fabrication route,
+  geometry, ovality, material de-rating, operating/incidental/test pressures, combined loads,
+  fatigue spectrum, and installation strain explicit.
+- `DnvStF101PipelineDesignKernel` is registered for `StandardType.DNV_ST_F101` with
+  `SCREENING` maturity and always returns a review-required calculated result.
+- `DnvStF101PipelineAssessment` reports separate utilization checks for pressure containment,
+  collapse, propagation buckling, local-buckling load interaction, fatigue, ovality, and
+  installation strain.
+- `PipelineMechanicalDesign.assessDnvStF101(input, context)` exposes the kernel from the pipeline
+  mechanical-design object without mutating the process model.
+
+### Migration and governance
+
+- Do not use `PipeMechanicalDesignCalculator.DNV_OS_F101` for current DNV-ST-F101 work.
+- `PipelineMechanicalDesign.calcDesign()` now fails closed for the `DNV-ST-F101` string code;
+  it no longer silently selects ASME B31.8.
+- Passing checks are option-screening evidence only. The licensed standard, project amendments,
+  detailed load cases, installation analysis, fabrication records, and independent engineering
+  verification remain required.
+
+---
+
 ## 2026-07-30 — TwoFluidPipe closure diagnostics exposed as profiles
 
 ### Summary

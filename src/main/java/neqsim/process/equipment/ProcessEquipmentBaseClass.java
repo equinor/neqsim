@@ -91,6 +91,18 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
 
   private double minimumFlow = DEFAULT_MINIMUM_FLOW;
 
+  /** Whether the caller, rather than the process auto-tuner, selected {@link #minimumFlow}. */
+  private boolean minimumFlowExplicitlyConfigured = false;
+
+  /** Whether {@link #minimumFlow} is currently owned by the automatic convergence tuner. */
+  private boolean minimumFlowAutoManaged = false;
+
+  /** Forces one real equipment evaluation after the low-flow threshold changes. */
+  private boolean minimumFlowRecalculationPending = false;
+
+  /** Guards the public setter while the auto-tuner assigns or clears its own value. */
+  private transient boolean assigningAutoMinimumFlow = false;
+
   /**
    * Flag to enable/disable capacity analysis for this equipment. When disabled, this equipment is excluded from
    * bottleneck detection, capacity utilization summaries, and optimization routines.
@@ -620,6 +632,98 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   @Override
   public void setMinimumFlow(double minimumFlow) {
     this.minimumFlow = minimumFlow;
+    minimumFlowRecalculationPending = true;
+    if (!assigningAutoMinimumFlow) {
+      minimumFlowExplicitlyConfigured = Double.compare(minimumFlow, DEFAULT_MINIMUM_FLOW) != 0;
+      minimumFlowAutoManaged = false;
+    }
+  }
+
+  /**
+   * Applies a low-flow threshold owned by the automatic process-convergence tuner.
+   *
+   * <p>
+   * A caller-supplied non-default value always wins. Ownership is stored on the equipment itself so it survives
+   * {@code ProcessSystem.copy()} and so a caller override made after tuning cannot be overwritten by a later retune or
+   * reset.
+   * </p>
+   *
+   * @param minimumFlow automatically derived threshold in kg/hr
+   * @return true when this equipment is managed by the auto-tuner, false when an explicit value is protected
+   * @throws IllegalArgumentException if {@code minimumFlow} is negative or not finite
+   */
+  public boolean applyAutoMinimumFlow(double minimumFlow) {
+    if (Double.isNaN(minimumFlow) || Double.isInfinite(minimumFlow) || minimumFlow < 0.0) {
+      throw new IllegalArgumentException(
+          "Automatic minimum flow must be a finite non-negative number, was " + minimumFlow);
+    }
+    if (minimumFlowExplicitlyConfigured) {
+      return false;
+    }
+    if (!minimumFlowAutoManaged && Double.compare(getMinimumFlow(), DEFAULT_MINIMUM_FLOW) != 0) {
+      minimumFlowExplicitlyConfigured = true;
+      return false;
+    }
+    assigningAutoMinimumFlow = true;
+    try {
+      setMinimumFlow(minimumFlow);
+    } finally {
+      assigningAutoMinimumFlow = false;
+    }
+    minimumFlowAutoManaged = true;
+    return true;
+  }
+
+  /**
+   * Clears an automatically assigned low-flow threshold.
+   *
+   * @return true when an automatic threshold was cleared, false when the current value belongs to the caller
+   */
+  public boolean resetAutoMinimumFlow() {
+    if (!minimumFlowAutoManaged) {
+      return false;
+    }
+    assigningAutoMinimumFlow = true;
+    try {
+      setMinimumFlow(DEFAULT_MINIMUM_FLOW);
+    } finally {
+      assigningAutoMinimumFlow = false;
+    }
+    minimumFlowAutoManaged = false;
+    minimumFlowExplicitlyConfigured = false;
+    return true;
+  }
+
+  /**
+   * Returns whether the caller explicitly configured a non-default low-flow threshold.
+   *
+   * @return true for a caller-owned threshold
+   */
+  public boolean isMinimumFlowExplicitlyConfigured() {
+    return minimumFlowExplicitlyConfigured;
+  }
+
+  /**
+   * Returns whether the current low-flow threshold is owned by the process auto-tuner.
+   *
+   * @return true for an automatically managed threshold
+   */
+  public boolean isMinimumFlowAutoManaged() {
+    return minimumFlowAutoManaged;
+  }
+
+  /**
+   * Returns whether the threshold changed since the last successful equipment evaluation.
+   *
+   * @return true when process scheduling must force one evaluation
+   */
+  public boolean isMinimumFlowRecalculationPending() {
+    return minimumFlowRecalculationPending;
+  }
+
+  /** Marks the current low-flow threshold as evaluated successfully. */
+  public void clearMinimumFlowRecalculationPending() {
+    minimumFlowRecalculationPending = false;
   }
 
   /**

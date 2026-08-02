@@ -127,6 +127,20 @@ public final class StandardSupportAudit {
               + "caller-controlled depth allowance and pressure factor; inspection uncertainty derivation, "
               + "interacting/complex defects, combined loading, cracking, growth, probabilistic calibration, "
               + "fitness-for-service acceptance, and DNV-ST-F101 design checks remain external.");
+    case DNV_RP_F109:
+      EquipmentDesignKernelRegistry.Lookup stabilityImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING, stabilityImplementation.isImplemented(),
+          registryImplementation, stabilityImplementation.getImplementationClassName(),
+          "Vertical equilibrium, transparent absolute-static lateral stability, and externally supplied response "
+              + "displacement checks only; generalized design tables, dynamic response generation, environmental "
+              + "statistics, soil-model qualification, and conformity assessment remain external.");
+    case DNV_ST_F101:
+      EquipmentDesignKernelRegistry.Lookup pipelineImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING, pipelineImplementation.isImplemented(),
+          registryImplementation, pipelineImplementation.getImplementationClassName(),
+          "Typed 2021 screening for containment, collapse, propagation buckling, load interaction, fatigue, pressure "
+              + "cases, de-rating, safety class, ovality, fabrication route, and installation strain; clause-complete "
+              + "conformity and engineering approval remain external.");
     default:
       return getCategorySupport(standardType, registryImplementation);
     }

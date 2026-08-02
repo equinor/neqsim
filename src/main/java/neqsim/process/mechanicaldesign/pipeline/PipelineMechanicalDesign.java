@@ -1,5 +1,8 @@
 package neqsim.process.mechanicaldesign.pipeline;
 
+import neqsim.process.engineering.calculation.DnvStF101PipelineDesignKernel;
+import neqsim.process.engineering.calculation.EngineeringCalculationContext;
+import neqsim.process.engineering.calculation.EngineeringCalculationResult;
 import neqsim.process.corrosion.NorsokM001MaterialSelection;
 import neqsim.process.corrosion.NorsokM506CorrosionRate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -21,7 +24,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * This class integrates pipeline mechanical design calculations with the NeqSim mechanical design framework, providing:
  * </p>
  * <ul>
- * <li>Wall thickness calculation per ASME B31.3/B31.4/B31.8 and DNV-OS-F101</li>
+ * <li>Wall thickness calculation per ASME B31.3/B31.4/B31.8 and legacy DNV-OS-F101</li>
+ * <li>Typed, fail-closed DNV-ST-F101:2021 limit-state screening</li>
  * <li>CO2 corrosion rate assessment per NORSOK M-506</li>
  * <li>Material selection and corrosion allowance per NORSOK M-001</li>
  * <li>Integration with TORG (Technical Requirements Documents)</li>
@@ -217,6 +221,7 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
   /** {@inheritDoc} */
   @Override
   public void readDesignSpecifications() {
+    requireTypedDnvStF101Path();
     super.readDesignSpecifications();
 
     // Load from database based on company standards
@@ -242,6 +247,7 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
   /** {@inheritDoc} */
   @Override
   public void calcDesign() {
+    requireTypedDnvStF101Path();
     super.calcDesign();
 
     // Sync calculator with current settings
@@ -306,6 +312,31 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
    */
   public boolean isDesignSafe() {
     return getCalculator().isDesignSafe();
+  }
+
+  /**
+   * Run the typed DNV-ST-F101:2021 screening kernel without mutating the pipeline.
+   *
+   * <p>
+   * All structural, pressure-case, fatigue, fabrication, and installation inputs remain explicit. A calculated result
+   * always requires independent engineering review.
+   * </p>
+   *
+   * @param input complete DNV-ST-F101 screening input
+   * @param context traceable engineering calculation context, or {@code null}
+   * @return readiness-gated, review-required assessment
+   */
+  public EngineeringCalculationResult<DnvStF101PipelineAssessment> assessDnvStF101(DnvStF101PipelineDesignInput input,
+      EngineeringCalculationContext context) {
+    return new DnvStF101PipelineDesignKernel().calculate(input, context);
+  }
+
+  /** Block the mutable legacy calculation path when current DNV-ST-F101 is selected. */
+  private void requireTypedDnvStF101Path() {
+    if ("DNV-ST-F101".equals(designStandardCode)) {
+      throw new IllegalStateException("DNV-ST-F101 requires assessDnvStF101(input, context); the legacy calcDesign "
+          + "path is not a current-edition implementation");
+    }
   }
 
   /**
