@@ -2857,7 +2857,7 @@ public class ProcessModel implements Runnable, Serializable {
    * {@link #runUntilConverged(int, double)} with the currently configured relative tolerance (default {@code 1e-4}, or
    * whatever {@link #setTolerance(double)} was last given), but with {@linkplain #isAutoConvergenceTuning() automatic
    * convergence tuning} the model no longer needs hand-picked, plant-specific numbers for the boundary flow floor, the
-   * absolute flow tolerance or the per-section low-flow bypass threshold.
+   * absolute flow tolerance, per-section low-flow bypass threshold, or stalled-recycle acceleration.
    * </p>
    *
    * <p>
@@ -2867,7 +2867,8 @@ public class ProcessModel implements Runnable, Serializable {
    * scenarios and production years without editing any convergence parameter, and a dead leg carrying a seed flow is
    * recognised as noise rather than dominating the plant-wide relative error. Anything set explicitly by the caller
    * (via {@link #setBoundaryFlowFloor(double)}, {@link #setAbsoluteFlowTolerance(double)} or a per-unit
-   * {@code setMinimumFlow}) always wins over the automatic value.
+   * {@code setMinimumFlow}) always wins over the automatic value. A caller choice made with
+   * {@code Recycle.setAdaptiveAcceleration(...)} likewise takes precedence.
    * </p>
    *
    * <p>
@@ -3150,6 +3151,7 @@ public class ProcessModel implements Runnable, Serializable {
     for (ProcessSystem process : processes.values()) {
       process.resetAutoLowFlowThreshold();
       process.resetAutoRecycleFlowTolerance();
+      process.resetAutoRecycleAdaptiveAcceleration();
     }
   }
 
@@ -3191,15 +3193,18 @@ public class ProcessModel implements Runnable, Serializable {
     }
     int bypassCandidates = autoLowFlowBypass ? applyAutoLowFlowThreshold(noiseFloor) : 0;
     int recyclesTuned = 0;
+    int adaptiveRecycles = 0;
     for (ProcessSystem process : processes.values()) {
       recyclesTuned += process.applyAutoRecycleFlowTolerance(noiseFloor);
+      adaptiveRecycles += process.applyAutoRecycleAdaptiveAcceleration();
     }
 
     autoTuningSummary = String.format(Locale.US,
         "auto-tuned to a plant feed rate of %.4g kg/hr: boundary floor %.3g kg/hr, absolute flow tolerance "
-            + "%.3g kg/hr, low-flow bypass %.3g kg/hr on %d unit(s), recycle flow tolerance on %d loop(s)",
+            + "%.3g kg/hr, low-flow bypass %.3g kg/hr on %d unit(s), recycle flow tolerance on %d loop(s), "
+            + "adaptive acceleration on %d loop(s)",
         scale, boundaryFlowFloor, absoluteFlowTolerance, autoLowFlowBypass ? noiseFloor : 0.0, bypassCandidates,
-        recyclesTuned);
+        recyclesTuned, adaptiveRecycles);
     logger.debug("ProcessModel {}", autoTuningSummary);
     return true;
   }

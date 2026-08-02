@@ -89,11 +89,11 @@ class RecycleAdaptiveAccelerationTest {
     return process;
   }
 
-  /** Adaptive acceleration is on by default and leaves the method at direct substitution until a loop stalls. */
+  /** Ordinary process runs retain legacy direct substitution until automatic tuning or the caller opts in. */
   @Test
-  void testAdaptiveAccelerationIsOnByDefault() {
+  void testAdaptiveAccelerationIsOffByDefault() {
     Recycle recycle = new Recycle("recycle");
-    assertTrue(recycle.isAdaptiveAcceleration());
+    assertFalse(recycle.isAdaptiveAcceleration());
     assertFalse(recycle.isAccelerationAutoUpgraded());
     assertEquals(AccelerationMethod.DIRECT_SUBSTITUTION, recycle.getAccelerationMethod());
   }
@@ -126,8 +126,9 @@ class RecycleAdaptiveAccelerationTest {
   @Test
   void testRecycleStillConvergesWithAdaptiveAcceleration() {
     ProcessSystem process = buildRecycleProcess();
-    process.run();
     Recycle recycle = (Recycle) process.getUnit("recycle");
+    recycle.setAdaptiveAcceleration(true);
+    process.run();
     assertTrue(recycle.solved(), "recycle should converge with adaptive acceleration enabled");
   }
 
@@ -136,6 +137,7 @@ class RecycleAdaptiveAccelerationTest {
   void testAdaptiveAccelerationUpgradesSlowRecycle() {
     ProcessSystem adaptiveProcess = buildRecycleProcess(0.8);
     Recycle adaptiveRecycle = (Recycle) adaptiveProcess.getUnit("recycle");
+    adaptiveRecycle.setAdaptiveAcceleration(true);
     adaptiveProcess.run();
 
     assertTrue(adaptiveRecycle.isAccelerationAutoUpgraded(),
@@ -153,6 +155,7 @@ class RecycleAdaptiveAccelerationTest {
   void testResetIterationsKeepsAdaptiveState() {
     ProcessSystem process = buildRecycleProcess();
     Recycle recycle = (Recycle) process.getUnit("recycle");
+    recycle.setAdaptiveAcceleration(true);
     process.run();
     recycle.resetIterations();
     assertEquals(0, recycle.getIterations());
@@ -164,10 +167,28 @@ class RecycleAdaptiveAccelerationTest {
   void testResetAdaptiveAccelerationRestoresDirectSubstitution() {
     ProcessSystem process = buildRecycleProcess();
     Recycle recycle = (Recycle) process.getUnit("recycle");
+    recycle.setAdaptiveAcceleration(true);
     process.run();
     recycle.resetAdaptiveAcceleration();
     assertEquals(AccelerationMethod.DIRECT_SUBSTITUTION, recycle.getAccelerationMethod());
     assertFalse(recycle.isAccelerationAutoUpgraded());
+  }
+
+  /** Automatic tuning may enable adaptive acceleration, but an explicit caller opt-out always wins. */
+  @Test
+  void testAutoAdaptiveAccelerationRespectsExplicitChoice() {
+    Recycle automatic = new Recycle("automatic");
+    assertTrue(automatic.applyAutoAdaptiveAcceleration());
+    assertTrue(automatic.isAdaptiveAcceleration());
+    assertTrue(automatic.isAdaptiveAccelerationAutoManaged());
+    assertTrue(automatic.resetAutoAdaptiveAcceleration());
+    assertFalse(automatic.isAdaptiveAcceleration());
+    assertFalse(automatic.isAdaptiveAccelerationAutoManaged());
+
+    Recycle configured = new Recycle("configured");
+    configured.setAdaptiveAcceleration(false);
+    assertFalse(configured.applyAutoAdaptiveAcceleration());
+    assertFalse(configured.isAdaptiveAcceleration());
   }
 
   /** The auto-tuner may set an absolute flow tolerance, but must never overwrite an explicit one. */

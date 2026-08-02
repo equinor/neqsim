@@ -75,7 +75,11 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   /** True once the caller has chosen an acceleration method; the adaptive upgrade then stands down. */
   private boolean accelerationMethodExplicit = false;
   /** Whether a stalling direct-substitution loop may upgrade itself to Wegstein. */
-  private boolean adaptiveAcceleration = true;
+  private boolean adaptiveAcceleration = false;
+  /** True once the caller has explicitly enabled or disabled adaptive acceleration. */
+  private boolean adaptiveAccelerationExplicit = false;
+  /** True when automatic convergence tuning, rather than the caller, enabled adaptive acceleration. */
+  private boolean adaptiveAccelerationAutoManaged = false;
   /** True when the adaptive logic (not the caller) selected the current acceleration method. */
   private boolean accelerationAutoUpgraded = false;
   /** Flow error of the previous pass, used to detect a stalling loop. */
@@ -641,30 +645,75 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   /**
    * Whether a direct-substitution loop that stops converging may switch itself to Wegstein acceleration.
    *
-   * @return true if adaptive acceleration is enabled (default)
+   * @return true if adaptive acceleration is enabled
    */
   public boolean isAdaptiveAcceleration() {
     return adaptiveAcceleration;
   }
 
   /**
-   * Enables or disables adaptive acceleration.
+   * Enables or disables adaptive acceleration explicitly.
    *
    * <p>
    * Direct substitution is robust but converges slowly, and a low-flow loop can oscillate instead of settling, forcing
-   * the surrounding process to iterate to its budget. When enabled (the default) a loop whose flow error stops
-   * shrinking for {@value #ADAPTIVE_STALL_PASSES} consecutive passes switches itself to
-   * {@link AccelerationMethod#WEGSTEIN}, which damps the oscillation and converges to the same solution. Calling
+   * the surrounding process to iterate to its budget. When enabled, a loop whose flow error stops shrinking for
+   * {@value #ADAPTIVE_STALL_PASSES} consecutive passes switches itself to {@link AccelerationMethod#WEGSTEIN}, which
+   * damps the oscillation and converges to the same solution. Calling
    * {@link #setAccelerationMethod(AccelerationMethod)} pins the method and disables the upgrade.
+   * </p>
+   *
+   * <p>
+   * Adaptive acceleration is disabled for an ordinary legacy {@code ProcessSystem.run()}. Automatic convergence tuning
+   * may enable it for {@code runUntilConverged(...)} unless the caller has made an explicit choice here.
    * </p>
    *
    * @param adaptiveAcceleration true to let a stalling loop accelerate itself
    */
   public void setAdaptiveAcceleration(boolean adaptiveAcceleration) {
     this.adaptiveAcceleration = adaptiveAcceleration;
+    adaptiveAccelerationExplicit = true;
+    adaptiveAccelerationAutoManaged = false;
     if (!adaptiveAcceleration && accelerationAutoUpgraded) {
       resetAdaptiveAcceleration();
     }
+  }
+
+  /**
+   * Enables adaptive acceleration on behalf of automatic convergence tuning.
+   *
+   * @return true when the tuner owns adaptive acceleration for this recycle
+   */
+  public boolean applyAutoAdaptiveAcceleration() {
+    if (adaptiveAccelerationExplicit) {
+      return false;
+    }
+    adaptiveAcceleration = true;
+    adaptiveAccelerationAutoManaged = true;
+    return true;
+  }
+
+  /**
+   * Clears an automatically enabled adaptive-acceleration setting without touching a caller-owned choice.
+   *
+   * @return true when an automatic setting was cleared
+   */
+  public boolean resetAutoAdaptiveAcceleration() {
+    if (!adaptiveAccelerationAutoManaged) {
+      return false;
+    }
+    adaptiveAcceleration = false;
+    adaptiveAccelerationAutoManaged = false;
+    resetAdaptiveAcceleration();
+    return true;
+  }
+
+  /**
+   * Whether automatic convergence tuning owns the adaptive-acceleration setting.
+   *
+   * @return true when the setting is auto-managed
+   */
+  public boolean isAdaptiveAccelerationAutoManaged() {
+    return adaptiveAccelerationAutoManaged;
   }
 
   /**

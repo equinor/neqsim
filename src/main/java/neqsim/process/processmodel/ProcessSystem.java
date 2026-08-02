@@ -3723,6 +3723,36 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Enables adaptive acceleration on recycles whose caller has not explicitly enabled or disabled it.
+   *
+   * @return the number of recycles managed by automatic convergence tuning
+   */
+  int applyAutoRecycleAdaptiveAcceleration() {
+    int managed = 0;
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof Recycle && ((Recycle) unit).applyAutoAdaptiveAcceleration()) {
+        managed++;
+      }
+    }
+    return managed;
+  }
+
+  /**
+   * Clears adaptive acceleration previously enabled by automatic convergence tuning.
+   *
+   * @return the number of automatically managed recycle settings cleared
+   */
+  int resetAutoRecycleAdaptiveAcceleration() {
+    int cleared = 0;
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof Recycle && ((Recycle) unit).resetAutoAdaptiveAcceleration()) {
+        cleared++;
+      }
+    }
+    return cleared;
+  }
+
+  /**
    * Mass flow that decides whether a unit is stagnant: its primary inlet stream, or - for source units such as a feed
    * {@link neqsim.process.equipment.stream.Stream} - its own outlet.
    *
@@ -3791,7 +3821,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * wrapper adds two things a large flowsheet needs and that otherwise have to be hand-configured per model: after the
    * first pass the total feed flow entering the process is measured and every unit without an explicit threshold gets a
    * low-flow bypass cutoff of {@link #getAutoTuningFlowFraction()} times that scale, so stagnant legs stop being
-   * solved; and the process is then re-run until {@link #solved()} or the pass budget is spent.
+   * solved. Recycles without an explicit adaptive-acceleration setting may upgrade a stalled direct-substitution loop
+   * to Wegstein during this auto-tuned run. The process is then re-run until {@link #solved()} or the pass budget is
+   * spent.
    * </p>
    *
    * @param maxIterations maximum number of full process passes to attempt; must be at least 1
@@ -3805,6 +3837,8 @@ public class ProcessSystem extends SimulationBaseClass {
     if (autoConvergenceTuning) {
       resetAutoLowFlowThreshold();
       resetAutoRecycleFlowTolerance();
+      resetAutoRecycleAdaptiveAcceleration();
+      applyAutoRecycleAdaptiveAcceleration();
     }
     run();
     boolean tuned = false;

@@ -263,9 +263,11 @@ System.out.println(plant.getAutoTuningSummary());
 
 The default noise-floor fraction is `1e-6`. It drives the boundary-flow floor,
 the absolute flow-change tolerance, recycle tolerance, and (when enabled)
-per-equipment low-flow thresholds. The feed boundary is used deliberately:
-internal recycles and not-yet-solved streams cannot inflate the reference
-scale.
+per-equipment low-flow thresholds. Auto-tuned runs may also enable adaptive
+Wegstein acceleration on stalled recycles unless the caller explicitly opted
+out. Ordinary `ProcessSystem.run()` retains legacy direct substitution. The feed
+boundary is used deliberately: internal recycles and not-yet-solved streams
+cannot inflate the reference scale.
 
 Automatic low-flow ownership is conservative:
 

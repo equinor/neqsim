@@ -272,8 +272,12 @@ System.out.println(model.getAutoTuningSummary());
 
 Caller settings always take precedence. Explicit
 `setBoundaryFlowFloor(...)`, `setAbsoluteFlowTolerance(...)`, and per-equipment
-`setMinimumFlow(...)` values are not overwritten. This ownership also survives
-`ProcessSystem.copy()` and reset operations.
+`setMinimumFlow(...)` values are not overwritten. During an auto-tuned run,
+recycles without a caller-owned setting may also enable adaptive Wegstein
+acceleration if direct substitution stalls. Ordinary `ProcessSystem.run()`
+retains legacy direct substitution; call `recycle.setAdaptiveAcceleration(true)`
+to opt in there, or `setAdaptiveAcceleration(false)` to pin an opt-out. Automatic
+ownership survives `ProcessSystem.copy()` and reset operations.
 
 Use the two-argument overload when you also want to set the relative tolerance:
 
