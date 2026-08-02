@@ -132,6 +132,22 @@ class OnePhaseFlowConvergenceTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void reversedFlowFailsLoudlyOnTheCoupledPath() {
+    PipeFlowSystem pipe = createInitializedPipe(3);
+    configureCompositionStep(pipe, 30.0);
+    pipe.getNode(2).setVelocityIn(-Math.abs(pipe.getNode(2).getVelocityIn().doubleValue()));
+    pipe.setFailOnNonConvergence(true);
+
+    boolean rejected = false;
+    try {
+      pipe.solveTransient(1);
+    } catch (IllegalStateException exception) {
+      rejected = exception.getMessage().contains("supports positive flow only");
+    }
+    assertTrue(rejected, "Unvalidated reversed flow must fail with an actionable limit message.");
+  }
+
+  @Test
   void unchangedBoundaryIsAHydraulicFixedPoint() {
     PipeFlowSystem pipe = createInitializedPipe();
     double[] pressure = pressures(pipe);
