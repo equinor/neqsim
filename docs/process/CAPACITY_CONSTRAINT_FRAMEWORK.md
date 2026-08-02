@@ -2061,3 +2061,4 @@ double util = expander.getMaxUtilization(); // |getPower| / 5000 kW, no spurious
 - [Mechanical Design](mechanical_design)
 - [Optimizer Plugin Architecture](optimization/OPTIMIZER_PLUGIN_ARCHITECTURE)
 - [Optimization Examples](../examples/index)
+
