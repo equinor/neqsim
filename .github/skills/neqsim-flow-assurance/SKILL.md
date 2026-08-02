@@ -30,7 +30,7 @@ NeqSim code patterns.
 |--------|-----------|-----------------|
 | Pipeline design | DNV-ST-F101, NORSOK L-001, ASME B31.4/B31.8 | Wall thickness, design factors, corrosion allowance |
 | Corrosion | NORSOK M-001, DNV-RP-F112, ISO 21457 | Material selection, CO2/H2S corrosion rates |
-| Subsea pipelines | DNV-RP-F109, NORSOK U-001 | On-bottom stability, span assessment |
+| Subsea pipelines | DNV-RP-F109, DNV-RP-F105, NORSOK U-001 | On-bottom stability and free-span assessment |
 | Hydrate management | DNV-RP-F116 | Hydrate prevention and remediation |
 | GRP piping | ISO 14692 | Non-metallic pipe design |
 | Pipeline integrity | DNV-RP-F116, API 1160 | Integrity management |
@@ -220,6 +220,20 @@ double outletP = pipe.getOutletStream().getPressure();  // bara
 double outletT = pipe.getOutletStream().getTemperature() - 273.15;  // C
 double dP = feedStream.getPressure() - outletP;  // pressure drop
 ```
+
+### DNV-RP-F105 free-span routing
+
+When a hydraulics or environment study feeds an explicit current `DNV-RP-F105 2025-12` free-span
+screen, route verified structural and environmental inputs through
+`DnvRpF105FreeSpanScreeningKernel`. Keep steel and hydrodynamic diameters distinct and use velocities
+normal to the span. Effective modal mass, axial force, span geometry, and response-trigger basis are
+external structural inputs, not quantities inferred silently from a hydraulic pipe object.
+
+The kernel is a simply supported first-mode/dimensionless escalation screen. Its Strouhal number,
+frequency-ratio band, and reduced-velocity triggers are project-controlled and cannot be called DNV
+limits. Keep soil/shoulder and multi-span response, VIV amplitudes, direct wave loading, ULS/FLS,
+fatigue, monitoring, and intervention external. Never relabel
+`PipeMechanicalDesignCalculator.calculateAllowableSpanLength(...)` as F105 evidence.
 
 ### Beggs and Brill Multiphase Correlation
 

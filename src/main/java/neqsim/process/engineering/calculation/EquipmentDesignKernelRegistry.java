@@ -93,6 +93,7 @@ public final class EquipmentDesignKernelRegistry {
     register(kernels, new NorsokM506CorrosionDesignKernel());
     register(kernels, new Iso5167OrificeMeteringKernel());
     register(kernels, new DnvRpC203FatigueDesignKernel());
+    register(kernels, new DnvRpF105FreeSpanScreeningKernel());
     KERNELS = Collections.unmodifiableMap(kernels);
   }
 

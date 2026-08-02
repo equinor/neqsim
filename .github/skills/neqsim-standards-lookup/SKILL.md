@@ -40,6 +40,7 @@ The index file `standards_index.csv` maps equipment types to applicable standard
 | Orifice plate / differential-pressure metering | ISO 5167-1/-2, AGA 3 / API MPMS 14.3 | Use `Iso5167OrificeMeteringKernel` for strict ISO 5167-2:2022 screening; keep `Standard_AGA3` for an AGA/API basis and `Orifice` for process simulation |
 | CO2 corrosion / materials selection | NORSOK M-506, ISO 15156 / NACE MR0175, NORSOK M-001 | Use `NorsokM506CorrosionDesignKernel` for strict M-506 screening; use `NorsokM506ElectrolyteBridge` for a rigorous brine pH/FeCO3 basis and keep `NorsokM506CorrosionRate` for legacy sweeps |
 | Offshore steel fatigue | DNV-RP-C203 | Use `DnvRpC203FatigueDesignKernel` with a verified project-controlled S-N curve and stress spectrum; do not report legacy pipeline/riser shortcuts as exact-edition C203 evidence |
+| Submarine-pipeline free spans | DNV-RP-F105 | Use `DnvRpF105FreeSpanScreeningKernel` for the current 2025-12 first-mode/dimensionless screen; project response triggers are not DNV acceptance criteria and the legacy allowable-span calculator is not F105 evidence |
 | Mineral scale / produced water | (industry practice; Davies + Ksp(T)) | `ElectrolyteScaleCalculator` / `ScaleKinetics` / `BrineMixingScaleEvaluator` (`process.chemistry.scale`) |
 
 ## TR/NORSOK Integration Classes
@@ -88,6 +89,24 @@ evidence itself. Retain curve/detail selection, environment, fabrication, thickn
 basis, structural stress derivation, load combinations, rainflow counting, inspection plan, and
 accountable approval externally. The older pipeline/riser fatigue methods have inconsistent embedded
 intercepts and remain legacy estimates, not exact-edition C203 calculations.
+
+### DNV-RP-F105 execution rule
+
+For an explicit DNV-RP-F105 basis, use
+`neqsim.process.engineering.calculation.DnvRpF105FreeSpanScreeningKernel`. It supports only the
+catalogued unamended `2025-12` edition for `Pipeline` and `AdiabaticPipe`. The kernel evaluates a
+simply supported Euler-Bernoulli first mode with caller-supplied effective modal mass and axial
+force, then reports current/wave frequency ratios, reduced velocities, and Keulegan-Carpenter
+number. Steel outside diameter and hydrodynamic diameter are separate inputs.
+
+Treat the geometry, structural-model, environmental, and project-trigger verification Booleans as
+attestations whose evidence must be retained externally. Strouhal number, frequency-ratio band, and
+reduced-velocity limits are caller-controlled escalation triggers, not embedded DNV requirements or
+acceptance decisions. Keep soil/shoulder stiffness, interacting spans, detailed in-line/cross-flow
+VIV and direct-wave response, ULS/FLS, fatigue, monitoring, intervention, and conformity open.
+
+`PipeMechanicalDesignCalculator.calculateAllowableSpanLength(...)` is a legacy fixed-assumption
+estimate with fallback and cap behavior. Never report that output as current-edition F105 evidence.
 
 Use these Java classes when a task references Equinor technical requirements,
 STS0131, TR1965, TR2237, or NORSOK P-002:

@@ -295,7 +295,7 @@ double Ppr = calc.calculatePropagationBucklingPressure();
 // Buckle arrestors required if Ppr < Pe
 ```
 
-### Allowable Free Span Length
+### Legacy Allowable Free Span Estimate
 
 Based on vortex-induced vibration (VIV) avoidance:
 
@@ -311,6 +311,13 @@ Where:
 double currentVelocity = 0.5;  // m/s
 double spanLength = calc.calculateAllowableSpanLength(currentVelocity);
 ```
+
+This method is a compatibility estimate with fixed assumptions and fallback/cap behavior. It is not
+edition-aware and must not be presented as DNV-RP-F105 evidence. For an explicit current
+`DNV-RP-F105 2025-12` basis, use `DnvRpF105FreeSpanScreeningKernel`. It exposes the effective mass,
+axial force, hydrodynamic diameter, current/wave environment, and project-controlled response
+triggers without claiming a safe span or DNV acceptance. See the
+[DNV-RP-F105 first-mode free-span guide](mechanical_design/dnv_rp_f105_free_span).
 
 ---
 
