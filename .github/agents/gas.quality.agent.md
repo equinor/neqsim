@@ -27,11 +27,17 @@ All classes in `neqsim.standards.gasquality`:
 | ISO 6578 | `Standard_ISO6578` | LNG custody transfer |
 | ISO 15112 | `Standard_ISO15112` | Energy determination in gas metering |
 | AGA 3 | `Standard_AGA3` | Orifice metering |
+| ISO 5167-1/-2 (2022) | `Iso5167OrificeMeteringKernel` | Fail-closed concentric orifice-plate screening with explicit edition and applicability |
 | AGA 7 | `Standard_AGA7` | Turbine meter measurement |
 | GPA 2145 | `Standard_GPA2145` | Physical constants for hydrocarbons |
 | GPA 2172 | `Standard_GPA2172` | Gas analysis |
 | EN 16723 | `Standard_EN16723` | Natural gas and biomethane specs |
 | EN 16726 | `Standard_EN16726` | European gas quality |
+
+For a named ISO 5167 calculation, prefer `Iso5167OrificeMeteringKernel` over `Standard_AGA3`.
+Supply upstream properties from the governing process condition, select gas/vapour service and the
+actual tapping arrangement, and retain installation and uncertainty evidence outside the kernel.
+Use `Standard_AGA3` only when AGA 3/API MPMS 14.3 is the governing standard.
 
 ## Typical Workflow
 ```java

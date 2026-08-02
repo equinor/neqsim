@@ -59,6 +59,11 @@ class StandardSupportAuditTest {
     assertEquals("NorsokM506CorrosionDesignKernel",
         StandardSupportAudit.getSupport(StandardType.NORSOK_M_506).getCalculationImplementation());
     assertTrue(StandardSupportAudit.getSupport(StandardType.NORSOK_M_506).isRegistryConnected());
+    assertEquals(StandardSupportLevel.CATALOGUED,
+        StandardSupportAudit.getSupport(StandardType.ISO_5167_1).getSupportLevel());
+    assertEquals("Iso5167OrificeMeteringKernel",
+        StandardSupportAudit.getSupport(StandardType.ISO_5167_2).getCalculationImplementation());
+    assertTrue(StandardSupportAudit.getSupport(StandardType.ISO_5167_2).isRegistryConnected());
     assertFalse(StandardSupportAudit.getSupport(StandardType.API_660).isRegistryConnected());
     assertTrue(StandardSupportAudit.getSupport(StandardType.API_660).getCalculationImplementation()
         .startsWith("StandardRequirementPackRegistry"));

@@ -10,6 +10,7 @@ import java.util.Map;
 public final class StandardCatalog {
   private static final String VERIFIED_ON = "2026-07-21";
   private static final String M506_VERIFIED_ON = "2026-08-02";
+  private static final String ISO_5167_VERIFIED_ON = "2026-08-02";
   private static final String NORSOK_P = "https://standard.no/en/sectors/petroleum/norsok-standards/p-process";
   private static final String NORSOK_L = "https://standard.no/en/sectors/energi-og-klima/petroleum/norsok-standard-categories/l-piping--layout/";
   private static final String NORSOK_M = "https://standard.no/en/sectors/energi-og-klima/petroleum/norsok-standard-categories/m-material/";
@@ -24,6 +25,8 @@ public final class StandardCatalog {
   private static final String API_CATALOG = "https://www.api.org/products-and-services/standards/digital-catalog";
   private static final String API_REFINING_2025 = "https://www.api.org/-/media/files/publications/2025-catalog/06_refining_2025.pdf";
   private static final String DNV_F101 = "https://www.dnv.com/energy/standards-guidelines/dnv-st-f101-submarine-pipeline-systems/";
+  private static final String ISO_5167_1_SOURCE = "https://www.iso.org/standard/79179.html";
+  private static final String ISO_5167_2_SOURCE = "https://www.iso.org/standard/79180.html";
   private static final String IEC_61511_SOURCE = "https://webstore.iec.ch/en/publication/5527";
   private static final Map<StandardType, StandardCatalogEntry> ENTRIES;
 
@@ -58,6 +61,10 @@ public final class StandardCatalog {
     current(entries, API_REFINING_2025, StandardType.API_526);
 
     current(entries, DNV_F101, StandardType.DNV_ST_F101);
+    entries.put(StandardType.ISO_5167_1, new StandardCatalogEntry(StandardType.ISO_5167_1,
+        StandardLifecycleStatus.CURRENT, null, ISO_5167_1_SOURCE, ISO_5167_VERIFIED_ON));
+    entries.put(StandardType.ISO_5167_2, new StandardCatalogEntry(StandardType.ISO_5167_2,
+        StandardLifecycleStatus.CURRENT, null, ISO_5167_2_SOURCE, ISO_5167_VERIFIED_ON));
     current(entries, "https://www.iso.org/standard/75144.html", StandardType.ISO_23251);
     current(entries, "https://www.iso.org/standard/50826.html", StandardType.ISO_4126_1);
     current(entries, "https://www.iso.org/standard/55440.html", StandardType.ISO_10418);

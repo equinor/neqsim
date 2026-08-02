@@ -85,6 +85,17 @@ public final class StandardSupportAudit {
           "Edition-aware adapter around the existing simplified CO2-corrosion model; wetting, water chemistry, "
               + "materials selection, localized corrosion, sour-service qualification, inhibitor availability, and "
               + "conformity assessment remain outside the calculation.");
+    case ISO_5167_1:
+      return new StandardSupport(standardType, StandardSupportLevel.CATALOGUED, false, registryImplementation,
+          NO_CALCULATION, "The general principles and requirements are catalogued as the companion basis for "
+              + "orifice-plate metering; no standalone Part 1 calculation is exposed.");
+    case ISO_5167_2:
+      EquipmentDesignKernelRegistry.Lookup meteringImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING, meteringImplementation.isImplemented(),
+          registryImplementation, meteringImplementation.getImplementationClassName(),
+          "Single-phase, full-pipe, subsonic, non-pulsating concentric orifice-plate flow calculation only; "
+              + "plate inspection, installation, tapping geometry evidence, uncertainty, calibration, and "
+              + "custody-transfer acceptance remain outside the calculation.");
     default:
       return getCategorySupport(standardType, registryImplementation);
     }

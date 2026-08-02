@@ -132,11 +132,12 @@ with no violations.
 
 ## 6. Run regression and qualification gates
 
-`StandardDesignKernelVerificationSuite.evaluateRegression()` executes the six registered exact
+`StandardDesignKernelVerificationSuite.evaluateRegression()` executes the seven registered exact
 kernel editions, numeric API baselines, API 526 SI/customary equivalence, and API 12J
-metre/micrometre equivalence, plus NORSOK M-506 rate/inhibitor regression. API 526, API 610, API 617,
+metre/micrometre equivalence, NORSOK M-506 rate/inhibitor regression, and ISO 5167-2 liquid-flow and
+expansibility identities. API 526, API 610, API 617,
 and API 12J are evaluated as explicit historical edition labels; the suite does not reclassify them
-as current. M-506 supports the catalogued current 2017 edition but remains screening-only.
+as current. M-506 and ISO 5167-2 support their catalogued current editions but remain screening-only.
 Require `areAllBenchmarksPassed()` in regression CI. Do not use that flag as qualification:
 `isPassed()` requires independently reviewed, non-regression evidence for every exact
 `method@version`.

@@ -48,17 +48,20 @@ public final class StandardDesignKernelVerificationSuite {
     Api617CompressorDesignKernel compressorKernel = new Api617CompressorDesignKernel();
     Api12JSeparatorDesignKernel separatorKernel = new Api12JSeparatorDesignKernel();
     NorsokM506CorrosionDesignKernel corrosionKernel = new NorsokM506CorrosionDesignKernel();
+    Iso5167OrificeMeteringKernel meteringKernel = new Iso5167OrificeMeteringKernel();
 
     EngineeringBenchmarkSuite suite = new EngineeringBenchmarkSuite(SUITE_ID, REVISION)
         .requireMethod(methodKey(pumpKernel)).requireMethod(methodKey(reliefKernel))
         .requireMethod(methodKey(orificeKernel)).requireMethod(methodKey(compressorKernel))
-        .requireMethod(methodKey(separatorKernel)).requireMethod(methodKey(corrosionKernel));
+        .requireMethod(methodKey(separatorKernel)).requireMethod(methodKey(corrosionKernel))
+        .requireMethod(methodKey(meteringKernel));
     suite.add(pumpBenchmark(pumpKernel));
     suite.add(reliefBenchmark(reliefKernel));
     suite.add(orificeBenchmark(orificeKernel));
     suite.add(compressorBenchmark(compressorKernel));
     suite.add(separatorBenchmark(separatorKernel));
     suite.add(corrosionBenchmark(corrosionKernel));
+    suite.add(meteringBenchmark(meteringKernel));
     return suite.evaluate();
   }
 
@@ -172,6 +175,26 @@ public final class StandardDesignKernelVerificationSuite {
             base == null ? FAILURE_SENTINEL
                 : Math.abs(base.getProjectedUniformWallLossMm() - 25.0 * base.getCorrectedCorrosionRateMmPerYear()),
             "mm", 1.0e-12, 0.0)
+        .build();
+  }
+
+  private static EngineeringValidationBenchmark meteringBenchmark(Iso5167OrificeMeteringKernel kernel) {
+    Iso5167OrificeMeteringKernel.Input input = Iso5167OrificeMeteringKernel.Input
+        .builder(StandardEdition.defaultEdition(StandardType.ISO_5167_2), "Orifice")
+        .serviceType(Iso5167OrificeMeteringKernel.ServiceType.LIQUID)
+        .tapType(Iso5167OrificeMeteringKernel.TapType.FLANGE).pipeInternalDiameterM(0.1).orificeBoreDiameterM(0.05)
+        .upstreamPressurePaAbsolute(500000.0).downstreamPressurePaAbsolute(480000.0).upstreamDensityKgPerM3(998.0)
+        .upstreamDynamicViscosityPaS(0.001).singlePhase(true).conduitRunningFull(true).subsonicThroughoutMeter(true)
+        .pulsatingFlow(false).geometryAndInstallationVerified(true).build();
+    EngineeringCalculationResult<Iso5167OrificeMeteringAssessment> result = kernel.calculate(input, null);
+    Iso5167OrificeMeteringAssessment value = result.getValue();
+    return baseline("iso-5167-2-liquid-orifice", kernel)
+        .check("calculatedReviewRequired", 1.0, calculated(result), "flag", 0.0, 0.0)
+        .check("massFlowRate", 7.767376324178196, value == null ? FAILURE_SENTINEL : value.getMassFlowRateKgPerS(),
+            "kg/s", 1.0e-12, 1.0e-12)
+        .check("betaRatio", 0.5, value == null ? FAILURE_SENTINEL : value.getBetaRatio(), "fraction", 1.0e-12, 1.0e-12)
+        .check("liquidExpansibility", 1.0, value == null ? FAILURE_SENTINEL : value.getExpansibilityFactor(),
+            "fraction", 0.0, 0.0)
         .build();
   }
 
