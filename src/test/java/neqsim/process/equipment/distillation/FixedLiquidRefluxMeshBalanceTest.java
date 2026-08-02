@@ -66,8 +66,7 @@ public class FixedLiquidRefluxMeshBalanceTest {
     double condenserProductFlow = condenserLiquidProduct.getFlowRate("mol/hr");
     double[] overheadComposition = overhead.getThermoSystem().getMolarComposition().clone();
     double[] bottomsComposition = bottoms.getThermoSystem().getMolarComposition().clone();
-    double[] condenserProductComposition =
-        condenserLiquidProduct.getThermoSystem().getMolarComposition().clone();
+    double[] condenserProductComposition = condenserLiquidProduct.getThermoSystem().getMolarComposition().clone();
 
     column.run();
 
@@ -77,12 +76,9 @@ public class FixedLiquidRefluxMeshBalanceTest {
     assertEquals(bottomsFlow, column.getLiquidOutStream().getFlowRate("mol/hr"),
         Math.max(1.0e-9, Math.abs(bottomsFlow) * 1.0e-8), "unchanged bottoms flow must repeat");
     assertEquals(condenserProductFlow, column.getCondenser().getLiquidProductStream().getFlowRate("mol/hr"),
-        Math.max(1.0e-9, Math.abs(condenserProductFlow) * 1.0e-8),
-        "unchanged condenser liquid product must repeat");
-    assertCompositionEquals(overheadComposition,
-        column.getGasOutStream().getThermoSystem().getMolarComposition());
-    assertCompositionEquals(bottomsComposition,
-        column.getLiquidOutStream().getThermoSystem().getMolarComposition());
+        Math.max(1.0e-9, Math.abs(condenserProductFlow) * 1.0e-8), "unchanged condenser liquid product must repeat");
+    assertCompositionEquals(overheadComposition, column.getGasOutStream().getThermoSystem().getMolarComposition());
+    assertCompositionEquals(bottomsComposition, column.getLiquidOutStream().getThermoSystem().getMolarComposition());
     assertCompositionEquals(condenserProductComposition,
         column.getCondenser().getLiquidProductStream().getThermoSystem().getMolarComposition());
     assertThreeProductBalance(columnCase.feed, column.getGasOutStream(), column.getLiquidOutStream(),
@@ -129,8 +125,8 @@ public class FixedLiquidRefluxMeshBalanceTest {
    * @param bottoms bottoms product
    * @param condenserLiquidProduct condenser liquid product
    */
-  private static void assertThreeProductBalance(StreamInterface feed, StreamInterface overhead,
-      StreamInterface bottoms, StreamInterface condenserLiquidProduct) {
+  private static void assertThreeProductBalance(StreamInterface feed, StreamInterface overhead, StreamInterface bottoms,
+      StreamInterface condenserLiquidProduct) {
     double feedFlow = feed.getFlowRate("mol/hr");
     double productFlow = overhead.getFlowRate("mol/hr") + bottoms.getFlowRate("mol/hr")
         + condenserLiquidProduct.getFlowRate("mol/hr");
@@ -144,8 +140,7 @@ public class FixedLiquidRefluxMeshBalanceTest {
       double productComponentFlow = componentFlow(overhead, componentNames[componentIndex])
           + componentFlow(bottoms, componentNames[componentIndex])
           + componentFlow(condenserLiquidProduct, componentNames[componentIndex]);
-      assertEquals(feedComponentFlow, productComponentFlow,
-          Math.max(1.0e-6, Math.abs(feedComponentFlow) * 5.0e-3),
+      assertEquals(feedComponentFlow, productComponentFlow, Math.max(1.0e-6, Math.abs(feedComponentFlow) * 5.0e-3),
           "component balance must close for " + componentNames[componentIndex]);
     }
   }
@@ -177,8 +172,8 @@ public class FixedLiquidRefluxMeshBalanceTest {
     }
     double compositionSum = 0.0;
     for (double moleFraction : stream.getThermoSystem().getMolarComposition()) {
-      assertTrue(Double.isFinite(moleFraction) && moleFraction >= -1.0e-12
-          && moleFraction <= 1.0 + 1.0e-12, "product composition must be finite and bounded");
+      assertTrue(Double.isFinite(moleFraction) && moleFraction >= -1.0e-12 && moleFraction <= 1.0 + 1.0e-12,
+          "product composition must be finite and bounded");
       compositionSum += moleFraction;
     }
     assertEquals(1.0, compositionSum, 1.0e-8, "product composition must be normalized");
