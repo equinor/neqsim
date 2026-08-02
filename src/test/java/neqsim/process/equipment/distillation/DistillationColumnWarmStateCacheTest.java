@@ -77,6 +77,37 @@ public class DistillationColumnWarmStateCacheTest {
   }
 
   /**
+   * Changing only the active reboiler operating mode must invalidate an otherwise identical warm state.
+   *
+   * <p>
+   * The legacy tray API stores a default reflux ratio even while ratio control is inactive. Activating that same
+   * numeric ratio changes the reboiler from temperature/equilibrium operation to a PV reflux flash, so the mode flag is
+   * part of the mathematical problem even though the stored ratio value is unchanged.
+   * </p>
+   */
+  @Test
+  public void reboilerModeChangeWithUnchangedStoredRatioInvalidatesWarmState() {
+    DistillationColumn column = buildColumn();
+    column.run();
+    double firstGasFlow = column.getGasOutStream().getFlowRate("kg/hr");
+    double firstBottomFlow = column.getLiquidOutStream().getFlowRate("kg/hr");
+    double storedRatio = column.getReboiler().getRefluxRatio();
+    assertFalse(column.getReboiler().isRefluxSet(), "the baseline should use temperature/equilibrium operation");
+
+    column.getReboiler().setRefluxRatio(storedRatio);
+    column.run();
+
+    assertFalse(column.wasNaphtaliSandholmWarmStateReused(),
+        "activating ratio mode must solve the changed reboiler equations instead of reusing the old state");
+    assertNotEquals(firstGasFlow, column.getGasOutStream().getFlowRate("kg/hr"), 1.0,
+        "activating ratio mode must update the overhead flow");
+    assertNotEquals(firstBottomFlow, column.getLiquidOutStream().getFlowRate("kg/hr"), 1.0,
+        "activating ratio mode must update the bottoms flow");
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    assertPhysicalAndBalanced(column.getFeedStreams(3).get(0), column);
+  }
+
+  /**
    * A column pressure change must invalidate the warm state. {@code setTopPressure} and {@code setBottomPressure} do
    * not mark the column for re-initialization either.
    */
@@ -272,22 +303,32 @@ public class DistillationColumnWarmStateCacheTest {
    * @param columnCase solved column case
    */
   private static void assertPhysicalAndBalanced(ColumnCase columnCase) {
-    StreamInterface gas = columnCase.column.getGasOutStream();
-    StreamInterface liquid = columnCase.column.getLiquidOutStream();
-    String[] feedComponents = columnCase.feed.getThermoSystem().getComponentNames();
+    assertPhysicalAndBalanced(columnCase.feed, columnCase.column);
+  }
+
+  /**
+   * Verify finite, physical products and component/total molar closure for general stream and column types.
+   *
+   * @param feed column feed
+   * @param column solved column
+   */
+  private static void assertPhysicalAndBalanced(StreamInterface feed, DistillationColumn column) {
+    StreamInterface gas = column.getGasOutStream();
+    StreamInterface liquid = column.getLiquidOutStream();
+    String[] feedComponents = feed.getThermoSystem().getComponentNames();
     assertArrayEquals(feedComponents, gas.getThermoSystem().getComponentNames(),
         "overhead must use the current feed component identities");
     assertArrayEquals(feedComponents, liquid.getThermoSystem().getComponentNames(),
         "bottoms must use the current feed component identities");
 
-    double feedFlow = columnCase.feed.getFlowRate("mol/hr");
+    double feedFlow = feed.getFlowRate("mol/hr");
     double gasFlow = gas.getFlowRate("mol/hr");
     double liquidFlow = liquid.getFlowRate("mol/hr");
     assertTrue(Double.isFinite(gasFlow) && gasFlow > 0.0, "overhead flow must be finite and positive");
     assertTrue(Double.isFinite(liquidFlow) && liquidFlow > 0.0, "bottoms flow must be finite and positive");
     assertEquals(feedFlow, gasFlow + liquidFlow, 5.0e-3 * feedFlow, "total product flow must close the feed");
 
-    double[] feedComposition = columnCase.feed.getThermoSystem().getMolarComposition();
+    double[] feedComposition = feed.getThermoSystem().getMolarComposition();
     double[] gasComposition = gas.getThermoSystem().getMolarComposition();
     double[] liquidComposition = liquid.getThermoSystem().getMolarComposition();
     for (int componentIndex = 0; componentIndex < feedComponents.length; componentIndex++) {
