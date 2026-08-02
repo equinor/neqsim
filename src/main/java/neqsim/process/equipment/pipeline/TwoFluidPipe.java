@@ -529,8 +529,8 @@ public class TwoFluidPipe extends Pipeline {
    * Critical holdup for terrain-induced slug initiation.
    *
    * <p>
-   * When liquid holdup in a low point exceeds this value, a terrain-induced slug is initiated. The
-   * default 0.6 is an empirical NeqSim setting, not a published commercial-simulator default.
+   * When liquid holdup in a low point exceeds this value, a terrain-induced slug is initiated. The default 0.6 is an
+   * empirical NeqSim setting, not a published commercial-simulator default.
    * </p>
    */
   private double terrainSlugCriticalHoldup = 0.6;
@@ -549,8 +549,8 @@ public class TwoFluidPipe extends Pipeline {
    * Enable empirical terrain-slug and riser-base liquid-fallback closures.
    *
    * <p>
-   * The serialized field name is retained for compatibility. These local closures are separate from
-   * the explicit flowline-riser system diagnostic.
+   * The serialized field name is retained for compatibility. These local closures are separate from the explicit
+   * flowline-riser system diagnostic.
    * </p>
    */
   private boolean enableSevereSlugModel = true;
@@ -572,8 +572,8 @@ public class TwoFluidPipe extends Pipeline {
    * Flow regime transition hysteresis factor.
    *
    * <p>
-   * NeqSim applies this hysteresis to prevent rapid switching between flow regimes. A value of
-   * 0.1 means a 10% band around transition boundaries.
+   * NeqSim applies this hysteresis to prevent rapid switching between flow regimes. A value of 0.1 means a 10% band
+   * around transition boundaries.
    * </p>
    */
   private double flowRegimeHysteresis = 0.1;
@@ -1854,8 +1854,7 @@ public class TwoFluidPipe extends Pipeline {
    * Update temperature using multi-layer thermal model.
    *
    * <p>
-   * This method implements radial heat transfer through multiple concentric layers. The heat
-   * transfer calculation uses:
+   * This method implements radial heat transfer through multiple concentric layers. The heat transfer calculation uses:
    * </p>
    * <ul>
    * <li>Inner convective resistance from fluid to pipe wall</li>
@@ -4874,8 +4873,8 @@ public class TwoFluidPipe extends Pipeline {
    * Get the local inclined-section liquid-fallback screen at each section.
    *
    * <p>
-   * This profile is maintained by local closure calculations. It is separate from the explicit
-   * flowline-riser severe-slugging system classification.
+   * This profile is maintained by local closure calculations. It is separate from the explicit flowline-riser
+   * severe-slugging system classification.
    * </p>
    *
    * @return local liquid-fallback flags
@@ -4906,10 +4905,9 @@ public class TwoFluidPipe extends Pipeline {
    * Get the most recent explicit severe-slugging system classification as a section profile.
    *
    * <p>
-   * The profile is all false until {@link #evaluateSevereSluggingSystem(int)} is called. An
-   * applicable unstable result marks only the selected riser-base section. Each subsequent
-   * {@link #runTransient(double, UUID)} call invalidates and clears the classification because the
-   * section state has changed.
+   * The profile is all false until {@link #evaluateSevereSluggingSystem(int)} is called. An applicable unstable result
+   * marks only the selected riser-base section. Each subsequent {@link #runTransient(double, UUID)} call invalidates
+   * and clears the classification because the section state has changed.
    * </p>
    *
    * @return explicit system-classification flags
@@ -4951,8 +4949,8 @@ public class TwoFluidPipe extends Pipeline {
    * </p>
    *
    * <p>
-   * Evaluation clears the previous system-classification profile and marks the selected riser-base
-   * section only when the result is applicable and unstable.
+   * Evaluation clears the previous system-classification profile and marks the selected riser-base section only when
+   * the result is applicable and unstable.
    * </p>
    *
    * @param riserBaseSection index of the first continuously rising section
@@ -4969,8 +4967,8 @@ public class TwoFluidPipe extends Pipeline {
       throw new IllegalArgumentException("riserBaseSection must be between 1 and numberOfSections - 1");
     }
 
-    SevereSluggingSystemDiagnostic.Input input = SevereSluggingSystemDiagnostic.fromSections(sections,
-        riserBaseSection, gasCapVoidFraction, staticChokePressureDropPa);
+    SevereSluggingSystemDiagnostic.Input input = SevereSluggingSystemDiagnostic.fromSections(sections, riserBaseSection,
+        gasCapVoidFraction, staticChokePressureDropPa);
     SevereSluggingSystemDiagnostic.Result result = SevereSluggingSystemDiagnostic.evaluate(input);
 
     clearSevereSluggingSystemClassification();
@@ -5064,8 +5062,7 @@ public class TwoFluidPipe extends Pipeline {
    * </p>
    * <ul>
    * <li><b>SIMPLIFIED:</b> Simple slug unit model with basic tracking</li>
-   * <li><b>LAGRANGIAN:</b> Detailed tracking with wake effects, frequency-based initiation,
-   * and slug statistics</li>
+   * <li><b>LAGRANGIAN:</b> Detailed tracking with wake effects, frequency-based initiation, and slug statistics</li>
    * <li><b>DISABLED:</b> No slug tracking</li>
    * </ul>
    *
@@ -6337,8 +6334,7 @@ public class TwoFluidPipe extends Pipeline {
    * Legacy alias for {@link #setEnableTerrainSlugClosures(boolean)}.
    *
    * @param enable true to enable the local closures
-   * @deprecated This switch does not enable or disable the explicit severe-slugging system
-   *             diagnostic.
+   * @deprecated This switch does not enable or disable the explicit severe-slugging system diagnostic.
    */
   @Deprecated
   public void setEnableSevereSlugModel(boolean enable) {
@@ -6349,8 +6345,7 @@ public class TwoFluidPipe extends Pipeline {
    * Legacy alias for {@link #isEnableTerrainSlugClosures()}.
    *
    * @return true if the local closures are enabled
-   * @deprecated This value does not report availability of the explicit severe-slugging system
-   *             diagnostic.
+   * @deprecated This value does not report availability of the explicit severe-slugging system diagnostic.
    */
   @Deprecated
   public boolean isEnableSevereSlugModel() {

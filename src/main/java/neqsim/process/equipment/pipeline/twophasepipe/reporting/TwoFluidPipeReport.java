@@ -68,8 +68,7 @@ public final class TwoFluidPipeReport {
       this.entrainmentFraction = pipe.getEntrainmentFractionProfile();
       this.entrainedDropletDiameter = pipe.getEntrainedDropletDiameterProfile();
       this.inclinedSectionGasCarryoverNumber = pipe.getInclinedSectionGasCarryoverNumberProfile();
-      this.inclinedSectionLiquidFallbackPotential = pipe
-          .getInclinedSectionLiquidFallbackPotentialProfile();
+      this.inclinedSectionLiquidFallbackPotential = pipe.getInclinedSectionLiquidFallbackPotentialProfile();
       this.severeSlugPotential = pipe.getSevereSlugPotentialProfile();
     }
 
@@ -255,8 +254,7 @@ public final class TwoFluidPipeReport {
         .append("water_holdup,gas_velocity_m_s,liquid_velocity_m_s,oil_velocity_m_s,")
         .append("water_velocity_m_s,flow_regime,oil_water_flow_regime,water_wetting,")
         .append("water_dropout_risk,entrainment_fraction,entrained_droplet_diameter_m,")
-        .append("inclined_section_gas_carryover_number,")
-        .append("inclined_section_liquid_fallback_potential,")
+        .append("inclined_section_gas_carryover_number,").append("inclined_section_liquid_fallback_potential,")
         .append("severe_slugging_number,severe_slug_potential\n");
 
     for (int i = 0; i < snapshot.positionMeters.length; i++) {

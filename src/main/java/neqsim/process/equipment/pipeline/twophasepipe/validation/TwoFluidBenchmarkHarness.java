@@ -80,8 +80,7 @@ public final class TwoFluidBenchmarkHarness {
     variables.put("water_velocity_m_s", pipe.getWaterVelocityProfile());
     variables.put("entrainment_fraction", pipe.getEntrainmentFractionProfile());
     variables.put("entrained_droplet_diameter_m", pipe.getEntrainedDropletDiameterProfile());
-    variables.put("inclined_section_gas_carryover_number",
-        pipe.getInclinedSectionGasCarryoverNumberProfile());
+    variables.put("inclined_section_gas_carryover_number", pipe.getInclinedSectionGasCarryoverNumberProfile());
     variables.put("inclined_section_liquid_fallback_flag",
         toDouble(pipe.getInclinedSectionLiquidFallbackPotentialProfile()));
     // Deprecated key retained for benchmark-file compatibility.
