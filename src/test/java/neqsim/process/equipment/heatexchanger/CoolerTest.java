@@ -212,6 +212,10 @@ class CoolerTest {
     double actualEntropy = cooler.getEntropyProduction("J/K");
     int actualLevelTwoCalls = fluid.getLevelTwoCalls();
     int actualLevelThreeCalls = fluid.getLevelThreeCalls();
+    double actualInletEnthalpy = cooler.getInletStream().getFluid().getEnthalpy();
+    double actualOutletEnthalpy = cooler.getOutletStream().getFluid().getEnthalpy();
+    double actualInletFlow = cooler.getInletStream().getFlowRate("kg/hr");
+    double actualOutletFlow = cooler.getOutletStream().getFlowRate("kg/hr");
     int actualInletPhases = cooler.getInletStream().getFluid().getNumberOfPhases();
     int actualOutletPhases = cooler.getOutletStream().getFluid().getNumberOfPhases();
 
@@ -220,9 +224,13 @@ class CoolerTest {
     assertEquals(expectedEntropy, actualEntropy, Math.max(1.0e-10, Math.abs(expectedEntropy) * 1.0e-12));
     assertTrue(actualLevelTwoCalls >= 2, "Both inlet and outlet still require caloric initialization");
     assertEquals(0, actualLevelThreeCalls, "Entropy diagnostics must not calculate composition derivatives");
-    assertEquals(outletEnthalpy - inletEnthalpy, cooler.getDuty(),
+    assertEquals(inletEnthalpy, actualInletEnthalpy, Math.max(1.0e-6, Math.abs(inletEnthalpy) * 1.0e-12));
+    assertEquals(outletEnthalpy, actualOutletEnthalpy, Math.max(1.0e-6, Math.abs(outletEnthalpy) * 1.0e-12));
+    assertEquals(actualOutletEnthalpy - actualInletEnthalpy, cooler.getDuty(),
         Math.max(1.0e-6, Math.abs(cooler.getDuty()) * 1.0e-8));
-    assertEquals(inletFlow, outletFlow, 1.0e-8);
+    assertEquals(inletFlow, actualInletFlow, 1.0e-8);
+    assertEquals(outletFlow, actualOutletFlow, 1.0e-8);
+    assertEquals(actualInletFlow, actualOutletFlow, 1.0e-8);
     assertEquals(inletPhases, actualInletPhases);
     assertEquals(outletPhases, actualOutletPhases);
   }
