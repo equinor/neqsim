@@ -36,8 +36,7 @@ class TPflashWaterBearingPhaseCollapseRecoveryTest {
     assertDeterministicRepeat(multiphase);
   }
 
-  private SystemInterface createCo2WaterSystem(boolean pengRobinson, double pressureBara,
-      boolean multiphaseCheck) {
+  private SystemInterface createCo2WaterSystem(boolean pengRobinson, double pressureBara, boolean multiphaseCheck) {
     SystemInterface system = pengRobinson ? new SystemPrEos(250.0, pressureBara)
         : new SystemSrkEos(250.0, pressureBara);
     system.addComponent("CO2", 0.75);
@@ -100,8 +99,7 @@ class TPflashWaterBearingPhaseCollapseRecoveryTest {
     for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
       double recoveredFeed = 0.0;
       for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
-        recoveredFeed += system.getBeta(phaseIndex)
-            * system.getPhase(phaseIndex).getComponent(componentIndex).getx();
+        recoveredFeed += system.getBeta(phaseIndex) * system.getPhase(phaseIndex).getComponent(componentIndex).getx();
       }
       maximumResidual = Math.max(maximumResidual,
           Math.abs(system.getPhase(0).getComponent(componentIndex).getz() - recoveredFeed));
