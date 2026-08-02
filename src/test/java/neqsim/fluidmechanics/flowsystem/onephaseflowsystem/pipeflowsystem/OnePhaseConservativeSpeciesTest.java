@@ -105,8 +105,7 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     SystemInterface baselineGas = createGas(0.95, 0.05);
     SystemInterface pulseGas = createGas(0.80, 0.20);
 
-    OnePhaseSpeciesConservationReport baseline = runTransientStep(pipe,
-        baselineGas.clone(), timeStepSeconds);
+    OnePhaseSpeciesConservationReport baseline = runTransientStep(pipe, baselineGas.clone(), timeStepSeconds);
     assertTrue(baseline.isConverged(), baseline.getMessage());
     double baselineOutlet = last(baseline.getMassFractionProfile()[nitrogen]);
     double initialInventoryKg = baseline.getFinalInventoryKg()[nitrogen];
@@ -123,12 +122,9 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
       report = runTransientStep(pipe, inlet, timeStepSeconds);
 
       assertTrue(report.isConverged(), report.getMessage());
-      assertTrue(pipe.getConvergenceReport().isConverged(),
-          pipe.getConvergenceReport().getMessage());
-      assertTrue(report.getMaximumRelativeInventoryResidual() <= 1.0e-8,
-          report.getMessage());
-      assertTrue(report.getMaximumThermodynamicMassFractionError() <= 1.0e-10,
-          report.getMessage());
+      assertTrue(pipe.getConvergenceReport().isConverged(), pipe.getConvergenceReport().getMessage());
+      assertTrue(report.getMaximumRelativeInventoryResidual() <= 1.0e-8, report.getMessage());
+      assertTrue(report.getMaximumThermodynamicMassFractionError() <= 1.0e-10, report.getMessage());
       cumulativeInletKg += report.getInletBoundaryMassKg()[nitrogen];
       cumulativeOutletKg += report.getOutletBoundaryMassKg()[nitrogen];
       double outlet = last(report.getMassFractionProfile()[nitrogen]);
@@ -136,8 +132,7 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
       if (step == 0) {
         assertEquals(initialInventoryKg, report.getInitialInventoryKg()[nitrogen],
             Math.max(1.0, initialInventoryKg) * 1.0e-10);
-        pulseInletMassFraction = report.getInletBoundaryMassKg()[nitrogen]
-            / sum(report.getInletBoundaryMassKg());
+        pulseInletMassFraction = report.getInletBoundaryMassKg()[nitrogen] / sum(report.getInletBoundaryMassKg());
       }
       if (step == pulseSteps - 1) {
         pulseEndOutlet = outlet;
@@ -145,8 +140,7 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     }
 
     double finalInventoryKg = report.getFinalInventoryKg()[nitrogen];
-    double cumulativeResidualKg = finalInventoryKg - initialInventoryKg - cumulativeInletKg
-        + cumulativeOutletKg;
+    double cumulativeResidualKg = finalInventoryKg - initialInventoryKg - cumulativeInletKg + cumulativeOutletKg;
     double cumulativeScaleKg = Math.max(Math.max(initialInventoryKg, cumulativeInletKg), 1.0);
     double eventAmplitude = pulseInletMassFraction - baselineOutlet;
     double recoveredOutlet = last(report.getMassFractionProfile()[nitrogen]);
@@ -173,8 +167,8 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     return pipe;
   }
 
-  private static OnePhaseSpeciesConservationReport runTransientStep(PipeFlowSystem pipe,
-      SystemInterface inlet, double timeStepSeconds) {
+  private static OnePhaseSpeciesConservationReport runTransientStep(PipeFlowSystem pipe, SystemInterface inlet,
+      double timeStepSeconds) {
     pipe.getTimeSeries().setTimes(new double[] { 0.0, timeStepSeconds });
     pipe.getTimeSeries().setInletThermoSystems(new SystemInterface[] { inlet });
     pipe.getTimeSeries().setNumberOfTimeStepsInInterval(1);
