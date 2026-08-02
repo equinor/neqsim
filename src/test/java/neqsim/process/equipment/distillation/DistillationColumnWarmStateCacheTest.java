@@ -189,7 +189,7 @@ public class DistillationColumnWarmStateCacheTest {
         "activating ratio mode must solve the changed condenser equations instead of reusing equilibrium products");
     assertTrue(column.getLastIterationCount() > 0, "the changed condenser equations must execute tray iterations");
     assertTrue(column.solved(), column.getConvergenceDiagnostics());
-    assertPhysicalAndBalancedAllowingZeroProduct(column.getFeedStreams(3).get(0), column);
+    assertPhysicalAndBalancedAllowingZeroProduct(column.getFeedStreams(1).get(0), column);
   }
 
   /**
@@ -220,7 +220,7 @@ public class DistillationColumnWarmStateCacheTest {
         "fixed liquid separation must solve its own equations instead of reusing ratio-controlled products");
     assertTrue(column.getLastIterationCount() > 0, "the changed condenser equations must execute tray iterations");
     assertTrue(column.solved(), column.getConvergenceDiagnostics());
-    assertPhysicalAndBalancedWithCondenserProduct(column.getFeedStreams(3).get(0), column);
+    assertPhysicalAndBalancedWithCondenserProduct(column.getFeedStreams(1).get(0), column);
   }
 
   /**
