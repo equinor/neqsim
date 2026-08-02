@@ -1,7 +1,7 @@
 ---
 name: run neqsim flow assurance analysis
-description: Performs flow assurance studies using NeqSim — hydrate prediction, wax appearance temperature, asphaltene stability, CO2/H2S corrosion, pipeline pressure drop, DNV-RP-F109 on-bottom stability, DNV-RP-F105 free-span screening, slug flow, and thermal-hydraulic analysis. Supports steady-state and transient pipe flow with heat transfer.
-argument-hint: Describe the flow assurance study — e.g., "hydrate formation temperature for wet gas at 100 bara", "wax appearance temperature for waxy crude", "screen on-bottom stability for a 20-inch subsea line", "pipeline pressure drop and temperature profile for 50 km subsea line", or "asphaltene stability screening for reservoir fluid under gas injection".
+description: Performs flow assurance studies using NeqSim — hydrate prediction, wax appearance temperature, asphaltene stability, CO2/H2S corrosion, inspected metal-loss screening, pipeline pressure drop, DNV-RP-F109 on-bottom stability, DNV-RP-F105 free-span screening, slug flow, and thermal-hydraulic analysis. Supports steady-state and transient pipe flow with heat transfer.
+argument-hint: Describe the flow assurance study — e.g., "hydrate formation temperature for wet gas at 100 bara", "screen inspected metal loss in a subsea line", "screen on-bottom stability for a 20-inch subsea line", or "pipeline pressure drop and temperature profile for 50 km subsea line".
 ---
 You are a flow assurance engineer for NeqSim.
 
@@ -35,7 +35,7 @@ Identify and apply relevant standards for every flow assurance study. Common sta
 | GRP piping | ISO 14692 | Non-metallic pipe design |
 | Hydrate management | DNV-RP-F116 | Hydrate prevention/remediation in subsea systems |
 | Flow measurement | AGA 3/7, ISO 5167 | Orifice/turbine meter design |
-| Pipeline integrity | DNV-RP-F116, API 1160 | Integrity management |
+| Pipeline integrity | DNV-RP-F101, DNV-RP-F116, API 1160 | Inspected metal-loss remaining strength and integrity management |
 
 Load the `neqsim-standards-lookup` skill for equipment-to-standards mapping and database query patterns.
 
@@ -101,6 +101,14 @@ from the hydraulic model; require verified structural/environmental evidence. Tr
 triggers as project-controlled escalation criteria, not DNV limits. Keep detailed VIV/direct-wave
 response, support/soil and multi-span models, ULS/FLS, fatigue, monitoring, and intervention open,
 and never relabel the legacy `calculateAllowableSpanLength(...)` estimate as F105 evidence.
+
+When verified inspection data feeds an explicit current `DNV-RP-F101 2019-09+AMD:2025-09`
+remaining-strength basis, use `DnvRpF101CorrodedPipelineScreeningKernel` only for one isolated
+longitudinal metal-loss defect under internal pressure. Do not infer defect depth/length from an
+M-506 rate or projected uniform loss. Require verified geometry, inspection allowance, material
+strength, pressure basis, caller-controlled pressure factor, and applicability. Keep defect
+interaction/complex profiles, combined compression, probabilistic and growth assessment,
+crack-like damage, repair, fitness-for-service approval, and all DNV-ST-F101 design checks external.
 
 ## Pipe Flow Networks
 ```java

@@ -10,6 +10,7 @@ import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
+import neqsim.mathlib.generalmath.BandedLinearSystemSolver;
 import neqsim.mathlib.generalmath.TDMAsolve;
 
 /**
@@ -26,9 +27,13 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   static Logger logger = LogManager.getLogger(OnePhaseFixedStaggeredGrid.class);
 
   private static final int MAXIMUM_NONLINEAR_ITERATIONS = 100;
-  private static final double NONLINEAR_UPDATE_TOLERANCE = 1.0e-10;
+  private static final double NONLINEAR_RESIDUAL_TOLERANCE = 1.0e-10;
   private static final double DENSITY_RELATIVE_TOLERANCE = 1.0e-8;
   private static final double MASS_BALANCE_RELATIVE_TOLERANCE = 1.0e-8;
+  private static final int MAXIMUM_COUPLED_ITERATIONS = 12;
+  private static final double FINITE_DIFFERENCE_RELATIVE_STEP = 1.0e-7;
+  private static final int COUPLED_HALF_BANDWIDTH = 2;
+  private static final int COUPLED_JACOBIAN_COLORS = 2 * COUPLED_HALF_BANDWIDTH + 1;
 
   Matrix diffMatrix;
   int iter = 0;
@@ -44,6 +49,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   protected double[] oldEnergy;
   private OnePhaseFlowConvergenceReport lastConvergenceReport = OnePhaseFlowConvergenceReport.notRun();
   private boolean failOnNonConvergence;
+  private double[] coupledMassEquationScale;
+  private double[] coupledMomentumEquationScale;
 
   /**
    * Constructor for OnePhaseFixedStaggeredGrid.
@@ -347,25 +354,25 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     }
 
     int i = numberOfNodes - 1;
-    double Ae = pipe.getNode(i).getGeometry().getArea();
-    double Aw = pipe.getNode(i - 1).getGeometry().getArea();
-
-    double Fe = pipe.getNode(i).getVelocity() * Ae;
-    double Fw = pipe.getNode(i).getVelocityIn().doubleValue() * Aw;
-
-    if (dynamic) {
-      oldMass[i] = 1.0 / timeStep * pipe.getNode(i).getGeometry().getArea()
-          * pipe.getNode(i).getGeometry().getNodeLength();
+    if (dynamic && solverType == 1) {
+      // The last node prescribes outlet pressure and is not an accumulating control volume.
+      a[i] = 0.0;
+      b[i] = 1.0;
+      c[i] = 0.0;
+      r[i] = pipe.getNode(i).getBulkSystem().getPhase(0).getDensity();
     } else {
-      oldMass[i] = 0.0;
+      double ae = pipe.getNode(i).getGeometry().getArea();
+      double aw = pipe.getNode(i - 1).getGeometry().getArea();
+      double fe = pipe.getNode(i).getVelocity() * ae;
+      double fw = pipe.getNode(i).getVelocityIn().doubleValue() * aw;
+      oldMass[i] = dynamic
+          ? 1.0 / timeStep * pipe.getNode(i).getGeometry().getArea() * pipe.getNode(i).getGeometry().getNodeLength()
+          : 0.0;
+      a[i] = -Math.max(fw, 0.0);
+      c[i] = -Math.max(-fe, 0.0);
+      b[i] = -a[i] - c[i] + fe - fw + oldMass[i];
+      r[i] = oldMass[i] * oldDensity[i];
     }
-    a[i] = Math.max(Fw, 0);
-    c[i] = Math.max(-Fe, 0);
-    b[i] = a[i] + c[i] + (Fe - Fw) + oldMass[i];
-    r[i] = oldMass[i] * oldDensity[i];
-    // setter ligningen paa rett form
-    a[i] = -a[i];
-    c[i] = -c[i];
   }
 
   /**
@@ -986,6 +993,12 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     }
     initMatrix();
 
+    if (dynamic && solverType == 1) {
+      solveCoupledHydraulicEos(initialFiniteVolumeMass);
+      initFinalResults();
+      return;
+    }
+
     do {
       maxDiff = 0;
       iterTop++;
@@ -1084,8 +1097,20 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       // System.out.println("maxDiff " + maxDiff);
     } while (!hasConverged(maxDiff, densityResidual) && iterTop < MAXIMUM_NONLINEAR_ITERATIONS); // diffMatrix.norm2()/sol2Matrix.norm2())>0.1);
 
+    if (!dynamic && solverType == 1) {
+      OnePhaseFixedStaggeredGrid refinement = new OnePhaseFixedStaggeredGrid(pipe, pipe.getSystemLength(),
+          numberOfNodes, false);
+      refinement.setSolverType(solverType);
+      refinement.initMatrix();
+      refinement.solveCoupledHydraulicEos(Double.NaN);
+      lastConvergenceReport = refinement.getLastConvergenceReport();
+      initFinalResults();
+      return;
+    }
+
     lastConvergenceReport = createConvergenceReport(iterTop, maxDiff, densityResidual, initialFiniteVolumeMass,
-        Arrays.copyOf(nonlinearUpdateHistory, iterTop), Arrays.copyOf(densityResidualHistory, iterTop));
+        Arrays.copyOf(nonlinearUpdateHistory, iterTop), Arrays.copyOf(densityResidualHistory, iterTop), false, null,
+        false);
 
     if (dynamic && solverType > 0 && !lastConvergenceReport.isConverged()) {
       if (failOnNonConvergence) {
@@ -1097,11 +1122,243 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     initFinalResults();
   }
 
+  private void solveCoupledHydraulicEos(double initialFiniteVolumeMass) {
+    ensureSupportedCoupledFlowDirection();
+    double[] state = getCoupledState();
+    initializeCoupledEquationScales(state);
+    double residual = maximumAbsolute(calculateCoupledResidual(state));
+    double[] nonlinearHistory = new double[MAXIMUM_COUPLED_ITERATIONS + 1];
+    double[] densityHistory = new double[MAXIMUM_COUPLED_ITERATIONS + 1];
+    int iteration = 0;
+    boolean lineSearchFailed = false;
+    String numericalFailureDetail = null;
+
+    nonlinearHistory[0] = residual;
+    densityHistory[0] = calculateMaximumRelativeDensityResidual();
+    while (residual > NONLINEAR_RESIDUAL_TOLERANCE && iteration < MAXIMUM_COUPLED_ITERATIONS) {
+      double[] update;
+      try {
+        double[] values = calculateCoupledResidual(state);
+        double[][] jacobian = calculateCoupledBandedJacobian(state);
+        double[] rightHandSide = new double[values.length];
+        for (int row = 0; row < values.length; row++) {
+          rightHandSide[row] = -values[row];
+        }
+        update = BandedLinearSystemSolver.solve(jacobian, COUPLED_HALF_BANDWIDTH, COUPLED_HALF_BANDWIDTH,
+            rightHandSide);
+      } catch (RuntimeException exception) {
+        applyCoupledState(state);
+        numericalFailureDetail = exception.getClass().getSimpleName()
+            + (exception.getMessage() == null ? "" : ": " + exception.getMessage());
+        break;
+      }
+      double step = 1.0;
+      boolean accepted = false;
+      while (step >= 1.0 / 65536.0) {
+        double[] candidate = state.clone();
+        for (int variable = 0; variable < candidate.length; variable++) {
+          candidate[variable] += step * update[variable];
+        }
+        double candidateResidual = safeCoupledResidual(candidate, state);
+        if (Double.isFinite(candidateResidual) && candidateResidual < residual) {
+          state = candidate;
+          residual = candidateResidual;
+          accepted = true;
+          break;
+        }
+        step *= 0.5;
+      }
+      iteration++;
+      nonlinearHistory[iteration] = residual;
+      applyCoupledState(state);
+      densityHistory[iteration] = calculateMaximumRelativeDensityResidual();
+      if (!accepted) {
+        lineSearchFailed = true;
+        break;
+      }
+    }
+
+    applyCoupledState(state);
+    double densityResidual = calculateMaximumRelativeDensityResidual();
+    lastConvergenceReport = createConvergenceReport(iteration, residual, densityResidual, initialFiniteVolumeMass,
+        Arrays.copyOf(nonlinearHistory, iteration + 1), Arrays.copyOf(densityHistory, iteration + 1), lineSearchFailed,
+        numericalFailureDetail, true);
+    if (dynamic && !lastConvergenceReport.isConverged()) {
+      if (failOnNonConvergence) {
+        throw new IllegalStateException(lastConvergenceReport.getMessage());
+      }
+      logger.warn("{}", lastConvergenceReport.getMessage());
+    }
+  }
+
+  private void ensureSupportedCoupledFlowDirection() {
+    for (int node = 1; node < numberOfNodes - 1; node++) {
+      if (!Double.isFinite(pipe.getNode(node).getVelocityIn().doubleValue())
+          || !Double.isFinite(pipe.getNode(node).getVelocityOut().doubleValue())
+          || pipe.getNode(node).getVelocityIn().doubleValue() <= 0.0
+          || pipe.getNode(node).getVelocityOut().doubleValue() <= 0.0) {
+        throw new IllegalStateException(
+            "The coupled one-phase hydraulic/EOS solver currently supports positive flow only; "
+                + "reversed-flow boundary equations are not yet validated.");
+      }
+    }
+  }
+
+  private double safeCoupledResidual(double[] candidate, double[] rollbackState) {
+    for (int node = 1; node < numberOfNodes - 1; node++) {
+      int pressureVariable = 2 * (node - 1);
+      if (!Double.isFinite(candidate[pressureVariable]) || candidate[pressureVariable] <= 0.0) {
+        return Double.POSITIVE_INFINITY;
+      }
+    }
+    for (int velocityVariable = 1; velocityVariable < candidate.length; velocityVariable += 2) {
+      if (!Double.isFinite(candidate[velocityVariable]) || candidate[velocityVariable] <= 0.0) {
+        return Double.POSITIVE_INFINITY;
+      }
+    }
+    try {
+      return maximumAbsolute(calculateCoupledResidual(candidate));
+    } catch (RuntimeException exception) {
+      applyCoupledState(rollbackState);
+      return Double.POSITIVE_INFINITY;
+    }
+  }
+
+  private double[][] calculateCoupledBandedJacobian(double[] state) {
+    try {
+      int size = state.length;
+      double[][] jacobian = new double[size][2 * COUPLED_HALF_BANDWIDTH + 1];
+      double[] steps = new double[size];
+      for (int variable = 0; variable < size; variable++) {
+        steps[variable] = FINITE_DIFFERENCE_RELATIVE_STEP * Math.max(Math.abs(state[variable]), 1.0);
+      }
+
+      for (int color = 0; color < COUPLED_JACOBIAN_COLORS; color++) {
+        double[] lower = state.clone();
+        double[] upper = state.clone();
+        for (int variable = color; variable < size; variable += COUPLED_JACOBIAN_COLORS) {
+          lower[variable] -= steps[variable];
+          upper[variable] += steps[variable];
+        }
+        double[] lowerResidual = calculateCoupledResidual(lower);
+        double[] upperResidual = calculateCoupledResidual(upper);
+        for (int row = 0; row < size; row++) {
+          int firstColumn = Math.max(0, row - COUPLED_HALF_BANDWIDTH);
+          int lastColumn = Math.min(size - 1, row + COUPLED_HALF_BANDWIDTH);
+          for (int column = firstColumn; column <= lastColumn; column++) {
+            if (column % COUPLED_JACOBIAN_COLORS == color) {
+              setCoupledJacobianEntry(jacobian, row, column,
+                  (upperResidual[row] - lowerResidual[row]) / (2.0 * steps[column]));
+            }
+          }
+        }
+      }
+
+      applyCoupledState(state);
+      setMassConservationMatrixTDMA();
+      for (int node = 1; node < numberOfNodes - 1; node++) {
+        int massRow = 2 * (node - 1);
+        if (node > 1) {
+          setCoupledJacobianEntry(jacobian, massRow, massRow - 2, a[node]
+              / pipe.getNode(node - 1).getBulkSystem().getPhase(0).getdPdrho() / coupledMassEquationScale[node]);
+        }
+        setCoupledJacobianEntry(jacobian, massRow, massRow,
+            b[node] / pipe.getNode(node).getBulkSystem().getPhase(0).getdPdrho() / coupledMassEquationScale[node]);
+      }
+      return jacobian;
+    } finally {
+      applyCoupledState(state);
+    }
+  }
+
+  private void setCoupledJacobianEntry(double[][] jacobian, int row, int column, double value) {
+    jacobian[row][column - row + COUPLED_HALF_BANDWIDTH] = value;
+  }
+
+  private double[] calculateCoupledResidual(double[] state) {
+    applyCoupledState(state);
+    int physicalCells = numberOfNodes - 2;
+    double[] values = new double[2 * physicalCells];
+    setMassConservationMatrixTDMA();
+    for (int node = 1; node < numberOfNodes - 1; node++) {
+      double value = a[node] * sol2Matrix.get(node - 1, 0) + b[node] * sol2Matrix.get(node, 0) - r[node];
+      value += c[node] * sol2Matrix.get(node + 1, 0);
+      values[2 * (node - 1)] = value / coupledMassEquationScale[node];
+    }
+    setImpulsMatrixTDMA();
+    for (int node = 2; node < numberOfNodes; node++) {
+      double value = a[node] * solMatrix.get(node - 1, 0) + b[node] * solMatrix.get(node, 0) - r[node];
+      if (node < numberOfNodes - 1) {
+        value += c[node] * solMatrix.get(node + 1, 0);
+      }
+      values[2 * (node - 2) + 1] = value / coupledMomentumEquationScale[node];
+    }
+    return values;
+  }
+
+  private double[] getCoupledState() {
+    double[] state = new double[2 * (numberOfNodes - 2)];
+    for (int node = 1; node < numberOfNodes - 1; node++) {
+      int cell = node - 1;
+      state[2 * cell] = pipe.getNode(node).getBulkSystem().getPressure();
+      state[2 * cell + 1] = pipe.getNode(node + 1).getVelocityIn().doubleValue();
+    }
+    return state;
+  }
+
+  private void initializeCoupledEquationScales(double[] state) {
+    applyCoupledState(state);
+    coupledMassEquationScale = new double[numberOfNodes];
+    coupledMomentumEquationScale = new double[numberOfNodes];
+    setMassConservationMatrixTDMA();
+    for (int node = 1; node < numberOfNodes - 1; node++) {
+      double termScale = Math.abs(r[node]) + Math.abs(a[node] * sol2Matrix.get(node - 1, 0))
+          + Math.abs(b[node] * sol2Matrix.get(node, 0));
+      termScale += Math.abs(c[node] * sol2Matrix.get(node + 1, 0));
+      coupledMassEquationScale[node] = Math.max(termScale, 1.0);
+    }
+    setImpulsMatrixTDMA();
+    for (int node = 2; node < numberOfNodes; node++) {
+      double termScale = Math.abs(r[node]) + Math.abs(a[node] * solMatrix.get(node - 1, 0))
+          + Math.abs(b[node] * solMatrix.get(node, 0));
+      if (node < numberOfNodes - 1) {
+        termScale += Math.abs(c[node] * solMatrix.get(node + 1, 0));
+      }
+      coupledMomentumEquationScale[node] = Math.max(termScale, 1.0);
+    }
+  }
+
+  private void applyCoupledState(double[] state) {
+    for (int node = 1; node < numberOfNodes - 1; node++) {
+      pipe.getNode(node).getBulkSystem().setPressure(state[2 * (node - 1)]);
+      pipe.getNode(node).init();
+    }
+    for (int node = 2; node < numberOfNodes; node++) {
+      pipe.getNode(node).setVelocityIn(state[2 * (node - 2) + 1]);
+    }
+    for (int node = 0; node < numberOfNodes; node++) {
+      solMatrix.set(node, 0, pipe.getNode(node).getVelocityIn().doubleValue());
+    }
+    initVelocity(1);
+    for (int node = 0; node < numberOfNodes; node++) {
+      solMatrix.set(node, 0, pipe.getNode(node).getVelocityIn().doubleValue());
+      sol2Matrix.set(node, 0, pipe.getNode(node).getBulkSystem().getPhase(0).getDensity());
+    }
+  }
+
+  private double maximumAbsolute(double[] values) {
+    double maximum = 0.0;
+    for (double value : values) {
+      maximum = Math.max(maximum, Math.abs(value));
+    }
+    return maximum;
+  }
+
   private boolean hasConverged(double nonlinearUpdate, double densityResidual) {
     if (!Double.isFinite(nonlinearUpdate) || !Double.isFinite(densityResidual)) {
       return false;
     }
-    if (Math.abs(nonlinearUpdate) > NONLINEAR_UPDATE_TOLERANCE) {
+    if (Math.abs(nonlinearUpdate) > NONLINEAR_RESIDUAL_TOLERANCE) {
       return false;
     }
     return !dynamic || solverType <= 0 || densityResidual <= DENSITY_RELATIVE_TOLERANCE;
@@ -1112,7 +1369,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       return Double.NaN;
     }
     double mass = 0.0;
-    for (int i = 1; i < numberOfNodes; i++) {
+    for (int i = 1; i < getAccumulatingNodeLimit(); i++) {
       mass += oldDensity[i] * getControlVolume(i);
     }
     return mass;
@@ -1120,7 +1377,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
 
   private double calculateFiniteVolumeMass() {
     double mass = 0.0;
-    for (int i = 1; i < numberOfNodes; i++) {
+    for (int i = 1; i < getAccumulatingNodeLimit(); i++) {
       mass += sol2Matrix.get(i, 0) * getControlVolume(i);
     }
     return mass;
@@ -1128,7 +1385,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
 
   private double calculateThermodynamicMass() {
     double mass = 0.0;
-    for (int i = 1; i < numberOfNodes; i++) {
+    for (int i = 1; i < getAccumulatingNodeLimit(); i++) {
       mass += pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity() * getControlVolume(i);
     }
     return mass;
@@ -1138,12 +1395,16 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     return pipe.getNode(node).getGeometry().getArea() * pipe.getNode(node).getGeometry().getNodeLength();
   }
 
+  private int getAccumulatingNodeLimit() {
+    return solverType == 1 ? numberOfNodes - 1 : numberOfNodes;
+  }
+
   private double calculateMaximumRelativeDensityResidual() {
     if (solverType <= 0) {
       return 0.0;
     }
     double maximum = 0.0;
-    for (int i = 1; i < numberOfNodes; i++) {
+    for (int i = 1; i < getAccumulatingNodeLimit(); i++) {
       double finiteVolumeDensity = sol2Matrix.get(i, 0);
       double thermodynamicDensity = pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity();
       double scale = Math.max(Math.max(Math.abs(finiteVolumeDensity), Math.abs(thermodynamicDensity)), 1.0e-30);
@@ -1171,18 +1432,23 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       return Double.NaN;
     }
 
-    double outletVelocity = pipe.getNode(numberOfNodes - 1).getVelocity();
+    double outletVelocity = solverType == 1 ? pipe.getNode(numberOfNodes - 1).getVelocityIn().doubleValue()
+        : pipe.getNode(numberOfNodes - 1).getVelocity();
     if (outletVelocity < 0.0) {
       return Double.NaN;
     }
 
-    double outletMassFlow = outletVelocity * pipe.getNode(numberOfNodes - 1).getGeometry().getArea()
-        * sol2Matrix.get(numberOfNodes - 1, 0);
+    // For solver type 1, node N - 2 owns the east-face area and density in the last
+    // authoritative finite-volume mass row. The boundary node only prescribes pressure.
+    int densityNode = solverType == 1 ? numberOfNodes - 2 : numberOfNodes - 1;
+    double outletMassFlow = outletVelocity * pipe.getNode(densityNode).getGeometry().getArea()
+        * sol2Matrix.get(densityNode, 0);
     return timeStep * outletMassFlow;
   }
 
   private OnePhaseFlowConvergenceReport createConvergenceReport(int nonlinearIterations, double nonlinearUpdate,
-      double densityResidual, double initialFiniteVolumeMass, double[] nonlinearHistory, double[] densityHistory) {
+      double densityResidual, double initialFiniteVolumeMass, double[] nonlinearHistory, double[] densityHistory,
+      boolean lineSearchFailed, String numericalFailureDetail, boolean nonlinearMetricEquationResidual) {
     double finalFiniteVolumeMass = dynamic ? calculateFiniteVolumeMass() : Double.NaN;
     double finalThermodynamicMass = dynamic ? calculateThermodynamicMass() : Double.NaN;
     double inletBoundaryMass = calculateInletBoundaryMass();
@@ -1198,32 +1464,41 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     double relativeThermodynamicMassResidual = dynamic ? Math.abs(thermodynamicMassResidual) / massScale : Double.NaN;
 
     OnePhaseFlowConvergenceReport.ConvergenceReason reason;
-    if (!diagnosticsAreFinite(nonlinearUpdate, densityResidual, relativeFiniteVolumeMassResidual,
+    if (numericalFailureDetail != null) {
+      reason = OnePhaseFlowConvergenceReport.ConvergenceReason.NUMERICAL_FAILURE;
+    } else if (!diagnosticsAreFinite(nonlinearUpdate, densityResidual, relativeFiniteVolumeMassResidual,
         relativeThermodynamicMassResidual)) {
       reason = OnePhaseFlowConvergenceReport.ConvergenceReason.NON_FINITE_RESIDUAL;
+    } else if (lineSearchFailed) {
+      reason = OnePhaseFlowConvergenceReport.ConvergenceReason.LINE_SEARCH_FAILED;
     } else if (dynamic && solverType > 0 && densityResidual > DENSITY_RELATIVE_TOLERANCE) {
       reason = OnePhaseFlowConvergenceReport.ConvergenceReason.DENSITY_INCONSISTENT;
     } else if (dynamic && solverType > 0 && (relativeFiniteVolumeMassResidual > MASS_BALANCE_RELATIVE_TOLERANCE
         || relativeThermodynamicMassResidual > MASS_BALANCE_RELATIVE_TOLERANCE)) {
       reason = OnePhaseFlowConvergenceReport.ConvergenceReason.MASS_BALANCE_FAILED;
-    } else if (!hasConverged(nonlinearUpdate, densityResidual) && nonlinearIterations >= MAXIMUM_NONLINEAR_ITERATIONS) {
+    } else if (!hasConverged(nonlinearUpdate, densityResidual)) {
       reason = OnePhaseFlowConvergenceReport.ConvergenceReason.MAX_ITERATIONS_REACHED;
     } else {
       reason = OnePhaseFlowConvergenceReport.ConvergenceReason.CONVERGED;
     }
 
-    String message = "One-phase pipe solve " + reason + " after " + nonlinearIterations
-        + " nonlinear iterations: update=" + Math.abs(nonlinearUpdate) + " (tolerance " + NONLINEAR_UPDATE_TOLERANCE
+    String nonlinearMetricLabel = nonlinearMetricEquationResidual ? "scaled equation residual="
+        : "relative nonlinear update=";
+    String message = "One-phase pipe solve " + reason + " after " + nonlinearIterations + " nonlinear iterations: "
+        + nonlinearMetricLabel + Math.abs(nonlinearUpdate) + " (tolerance " + NONLINEAR_RESIDUAL_TOLERANCE
         + "), EOS/FV density=" + densityResidual + " (tolerance " + DENSITY_RELATIVE_TOLERANCE + "), FV mass residual="
         + finiteVolumeMassResidual + " kg, EOS mass residual=" + thermodynamicMassResidual + " kg (relative tolerance "
         + MASS_BALANCE_RELATIVE_TOLERANCE + ").";
+    if (numericalFailureDetail != null) {
+      message += " Numerical failure: " + numericalFailureDetail + ".";
+    }
 
     return new OnePhaseFlowConvergenceReport(reason, dynamic, solverType, nonlinearIterations,
-        NONLINEAR_UPDATE_TOLERANCE, DENSITY_RELATIVE_TOLERANCE, MASS_BALANCE_RELATIVE_TOLERANCE,
+        NONLINEAR_RESIDUAL_TOLERANCE, DENSITY_RELATIVE_TOLERANCE, MASS_BALANCE_RELATIVE_TOLERANCE,
         Math.abs(nonlinearUpdate), densityResidual, initialFiniteVolumeMass, finalFiniteVolumeMass,
         finalThermodynamicMass, inletBoundaryMass, outletBoundaryMass, netBoundaryMass, finiteVolumeMassResidual,
         thermodynamicMassResidual, relativeFiniteVolumeMassResidual, relativeThermodynamicMassResidual,
-        nonlinearHistory, densityHistory, message);
+        nonlinearHistory, densityHistory, message, nonlinearMetricEquationResidual);
   }
 
   private boolean diagnosticsAreFinite(double nonlinearUpdate, double densityResidual,

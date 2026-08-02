@@ -531,7 +531,7 @@ transport properties (viscosity, thermal conductivity, density).
 | **BWRS EOS** | Only CH4 + C2H6 parameterized | Use SRK/PR instead |
 | **NACE MR0175 material selection** | No systematic material logic | Manual standard lookup |
 | **Site-specific flare consequences** | Point-source radiation, neutral Gaussian centerline dispersion, spherical noise, tip-Mach screening and API 537 flame geometry are available | Use validated specialist models for complex terrain/weather, toxic/combustion detail and final siting |
-| **API 2000 tank venting** | No in-/out-breathing tank vent sizing (thermal + pump-in/out) | Use general relief methods manually; flag as gap in `capability_assessment.md` |
+| **API 2000 detailed vent sizing** | `Api2000TankVentingScreeningKernel` aggregates caller-controlled normal/emergency demand and screens rated capacity/pressure; API demand tables/equations, vent area, device selection, and line losses are not implemented | Use the typed kernel for current-edition screening; retain licensed demand derivation and detailed device/network design externally |
 | **Full pipeline network** | LoopedPipeNetwork: NR-GGA solver, 120+ wells, IPR (PI/Vogel/Fetkovich), chokes, tubing VLP, Beggs-Brill multiphase, compressors, regulators, artificial lift (gas lift/ESP/jet/rod pump), water handling, sand erosion (DNV RP O501), corrosion (de Waard-Milliams/NORSOK M-506), GHG emissions tracking | Full-featured production network |
 | **DNV-RP-F109 generalized/dynamic response** | Transparent absolute-static screen and external-displacement acceptance check only | Supply a validated external response; NeqSim does not reproduce generalized tables, generate dynamic response, or establish conformity |
 
@@ -595,7 +595,7 @@ transport properties (viscosity, thermal conductivity, density).
 | Depressurization? | ✅ | `ProcessSystem.runTransient()` |
 | PSV sizing (gas / liquid, fire case)? | ✅ | `ReliefValveSizing` (`neqsim.process.util.fire`) |
 | Two-phase PSV (API 520 omega / HEM)? | ✅ | `ReliefValveSizing.calculateTwoPhaseReliefArea(...)` (Leung omega method) |
-| Tank venting (API 2000)? | ❌ | Not available — genuine gap; write a NIP |
+| Tank venting (API 2000)? | 🔧 | `Api2000TankVentingScreeningKernel` — caller-controlled normal/emergency demand aggregation and rated-capacity/pressure screen; no API table lookup or vent sizing |
 | Monte Carlo? | ✅ | `MonteCarloSimulator` |
 | Heat integration? | ✅ | `PinchAnalyzer` |
 | Amine sweetening? | ⚠️ Basic | Kent-Eisenberg model |
@@ -664,6 +664,6 @@ capability_readiness: READY | READY_WITH_WORKAROUNDS | NEEDS_NIP | BLOCKED
 `file_search`) before writing a NIP. This map is corrected as capabilities land —
 e.g. two-phase PSV sizing (`ReliefValveSizing.calculateTwoPhaseReliefArea`,
 API 520 omega method) is **already present** and must not be re-flagged as
-missing. Confirmed live gaps (e.g. **API 2000 tank venting**) are recorded in
+missing. Confirmed partial capabilities (e.g. **API 2000 screening without detailed vent sizing**) are recorded in
 section J; add newly confirmed gaps there so the next scout does not repeat the
 search.

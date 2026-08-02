@@ -1,6 +1,6 @@
 ---
 name: neqsim-flow-assurance
-description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion (NORSOK M-506, de Waard-Milliams, FeCO3 film), mineral scale (saturation index, scale kinetics, brine mixing / seawater incompatibility), scale/solids valve plugging & Cv/opening drift (ValveScaleDrift), scale/deposit remediation & dissolver/solvent/wash selection for cleaning fouled equipment (ScaleRemediationAdvisor), elemental sulfur (S8) deposition from oxygen ingress / H2S oxidation at pressure or temperature letdown (compressor inlets, valves, dry-gas seals, letdown stations), per-segment pipeline corrosion+scale profiles, pipeline hydraulics, DNV-RP-F109 on-bottom stability screening, DNV-RP-F105 free-span screening, water/liquid hammer screening, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
+description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion (NORSOK M-506, de Waard-Milliams, FeCO3 film), mineral scale (saturation index, scale kinetics, brine mixing / seawater incompatibility), scale/solids valve plugging & Cv/opening drift (ValveScaleDrift), scale/deposit remediation & dissolver/solvent/wash selection for cleaning fouled equipment (ScaleRemediationAdvisor), elemental sulfur (S8) deposition from oxygen ingress / H2S oxidation at pressure or temperature letdown (compressor inlets, valves, dry-gas seals, letdown stations), per-segment pipeline corrosion+scale profiles, inspected metal-loss screening, pipeline hydraulics, DNV-RP-F109 on-bottom stability screening, DNV-RP-F105 free-span screening, water/liquid hammer screening, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
 last_verified: "2026-08-02"
 ---
 
@@ -36,7 +36,7 @@ NeqSim code patterns.
 | Subsea systems | NORSOK U-001 | Subsea production-system requirements |
 | Hydrate management | DNV-RP-F116 | Hydrate prevention and remediation |
 | GRP piping | ISO 14692 | Non-metallic pipe design |
-| Pipeline integrity | DNV-RP-F116, API 1160 | Integrity management |
+| Pipeline integrity | DNV-RP-F101, DNV-RP-F116, API 1160 | Inspected metal-loss remaining strength and integrity management |
 
 For fast acoustic transients, also load `neqsim-water-hammer`. Use
 `WaterHammerStudy` or MCP `runWaterHammer` with STID route geometry, tagreader
@@ -243,6 +243,19 @@ frequency-ratio band, and reduced-velocity triggers are project-controlled and c
 limits. Keep soil/shoulder and multi-span response, VIV amplitudes, direct wave loading, ULS/FLS,
 fatigue, monitoring, and intervention external. Never relabel
 `PipeMechanicalDesignCalculator.calculateAllowableSpanLength(...)` as F105 evidence.
+
+### DNV-RP-F101 inspected metal-loss routing
+
+When inspection data feeds an explicit current `DNV-RP-F101 2019-09+AMD:2025-09` screen, route one
+verified isolated longitudinal metal-loss defect under internal pressure through
+`DnvRpF101CorrodedPipelineScreeningKernel`. Require the measured depth and axial length,
+assessment wall-thickness definition, inspection/growth allowance, characteristic ultimate
+tensile strength, internal/external absolute pressures, and project-controlled pressure factor.
+
+Do not infer defect geometry from hydraulic corrosion-rate calculations or projected uniform wall
+loss. The typed kernel does not handle defect interaction or complex profiles, longitudinal
+compression, probabilistic assessment, crack-like damage, repair, or fitness-for-service approval.
+It also does not replace DNV-ST-F101 original-design checks.
 
 ### Beggs and Brill Multiphase Correlation
 
