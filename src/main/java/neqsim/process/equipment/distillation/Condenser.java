@@ -90,6 +90,15 @@ public class Condenser extends SimpleTray {
   }
 
   /**
+   * Checks whether a reflux equation is active.
+   *
+   * @return {@code true} when ratio-controlled or fixed liquid reflux is configured
+   */
+  public boolean isRefluxSet() {
+    return refluxIsSet;
+  }
+
+  /**
    * Setter for the field <code>refluxRatio</code>.
    *
    * @param refluxRatio the refluxRatio to set
