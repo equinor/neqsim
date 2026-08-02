@@ -82,6 +82,17 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     assertTrue(exception.getMessage().contains("supports positive flow only"));
   }
 
+  @Test
+  void reportDoesNotRemainStaleAfterNonConservativeSolverPath() {
+    PipeFlowSystem pipe = runCompositionStep(3, 30.0);
+    assertTrue(pipe.getSpeciesConservationReport().isConverged());
+
+    pipe.solveTransient(0);
+
+    assertEquals(OnePhaseSpeciesConservationReport.ConservationReason.NOT_RUN,
+        pipe.getSpeciesConservationReport().getReason());
+  }
+
   static PipeFlowSystem runCompositionStep(int nodes, double timeStep) {
     PipeFlowSystem pipe = createInitializedPipe(nodes);
     pipe.setConservativeSpeciesTransport(true);
