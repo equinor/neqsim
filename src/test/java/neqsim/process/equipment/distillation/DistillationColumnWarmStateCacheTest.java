@@ -68,6 +68,7 @@ public class DistillationColumnWarmStateCacheTest {
     fluid.setMixingRule("classic");
 
     Stream feed = new Stream("binary condenser feed", fluid);
+    feed.setFlowRate(2.0, "mol/sec");
     feed.run();
 
     DistillationColumn column = new DistillationColumn("condenser cache column", 1, true, true);
