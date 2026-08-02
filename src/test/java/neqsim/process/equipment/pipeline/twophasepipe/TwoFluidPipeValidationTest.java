@@ -17,9 +17,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * Correlation comparisons and physical-trend regression tests for TwoFluidPipe.
  *
  * <p>
- * The cases include a Beggs-Brill comparison and NeqSim scenario checks inspired by public
- * multiphase-flow literature. Scenario smoke tests are not experimental validation and do not
- * establish equivalence with a commercial simulator.
+ * The cases include a Beggs-Brill comparison and NeqSim scenario checks inspired by public multiphase-flow literature.
+ * Scenario smoke tests are not experimental validation and do not establish equivalence with a commercial simulator.
  * </p>
  *
  * <p>
@@ -488,8 +487,10 @@ class TwoFluidPipeValidationTest {
     /**
      * Smoke-test a low-rate flowline-riser state and the explicit system diagnostic.
      *
-     * <p>This checks topology extraction and finite solved holdup; it is not a validation of a
-     * dynamic severe-slug cycle or a published transition point.</p>
+     * <p>
+     * This checks topology extraction and finite solved holdup; it is not a validation of a dynamic severe-slug cycle
+     * or a published transition point.
+     * </p>
      */
     @Test
     @DisplayName("Severe slugging: Riser base conditions")
@@ -527,10 +528,8 @@ class TwoFluidPipeValidationTest {
       flowline.run();
 
       int riserBaseSection = 24;
-      SevereSluggingSystemDiagnostic.Result stability =
-          flowline.evaluateSevereSluggingSystem(riserBaseSection);
-      assertNotEquals(SevereSluggingSystemDiagnostic.Status.NOT_APPLICABLE_INVALID_TOPOLOGY,
-          stability.getStatus());
+      SevereSluggingSystemDiagnostic.Result stability = flowline.evaluateSevereSluggingSystem(riserBaseSection);
+      assertNotEquals(SevereSluggingSystemDiagnostic.Status.NOT_APPLICABLE_INVALID_TOPOLOGY, stability.getStatus());
 
       // Check conditions at riser base
       double[] holdupProfile = flowline.getLiquidHoldupProfile();
