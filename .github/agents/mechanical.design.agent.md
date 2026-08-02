@@ -1,6 +1,6 @@
 ---
 name: run neqsim mechanical design
-description: Performs mechanical design and CAPEX calculations for process equipment and process systems — wall thickness, pipeline free-span/VIV screening, material selection, weight estimation, CostEstimateResult reconciliation, and cost analysis per ASME, API, DNV, ISO, NORSOK, and AACE-style estimate classes. Supports separators, pipelines, heat exchangers, compressors, valves, vessels, topsides, SURF, subsea, and well rollups with company-specific TR document requirements.
+description: Performs mechanical design and CAPEX calculations for process equipment and process systems — wall thickness, pipeline free-span/VIV and corroded-pipeline metal-loss screening, material selection, weight estimation, CostEstimateResult reconciliation, and cost analysis per ASME, API, DNV, ISO, NORSOK, and AACE-style estimate classes. Supports separators, pipelines, heat exchangers, compressors, valves, vessels, topsides, SURF, subsea, and well rollups with company-specific TR document requirements.
 argument-hint: Describe the equipment or process for mechanical design and cost estimation — e.g., "design a 20-inch export pipeline for 150 bara per DNV-OS-F101", "size an HP separator vessel per ASME VIII Div.1", "estimate topsides CAPEX for this process", or "mechanical design for a subsea manifold with operator TR requirements".
 ---
 
@@ -171,6 +171,22 @@ Do not treat `PipeMechanicalDesignCalculator.calculateAllowableSpanLength(...)` 
 F105. It is a legacy fixed-assumption estimate with arbitrary fallback/cap behavior. Keep support and
 soil stiffness, interacting spans, detailed VIV/direct-wave response, ULS/FLS, fatigue, monitoring,
 intervention, and accountable approval external.
+
+### DNV-RP-F101 corroded-pipeline work
+
+For an explicit current-edition F101 remaining-strength basis, use
+`DnvRpF101CorrodedPipelineScreeningKernel`. Supply verified assessment wall thickness, measured
+isolated longitudinal defect depth and length, caller-controlled depth allowance, characteristic
+ultimate tensile strength, internal/external pressures, pressure factor, and applicability. Report
+failure pressure, caller-controlled limit, utilization, and margin as `SCREENING`, not fitness-for-
+service approval.
+
+Do not derive measured defect dimensions from `NorsokM506CorrosionDesignKernel` projected uniform
+wall loss. Keep interaction/complex-profile and combined-load assessment, inspection uncertainty,
+growth, probabilistic methods, crack-like damage, repair, and approval external. This RP-F101 path
+does not replace DNV-ST-F101 pressure containment, collapse, propagation/local buckling, load
+interaction, fatigue, incidental/test pressure, de-rating, safety class, ovality, fabrication
+route, or installation-strain work.
 
 ## Data Sources
 - Material properties: `designdata/MaterialPipeProperties.csv`, `MaterialPlateProperties.csv`

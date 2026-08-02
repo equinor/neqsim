@@ -51,13 +51,14 @@ public final class StandardDesignKernelVerificationSuite {
     Iso5167OrificeMeteringKernel meteringKernel = new Iso5167OrificeMeteringKernel();
     DnvRpC203FatigueDesignKernel fatigueKernel = new DnvRpC203FatigueDesignKernel();
     DnvRpF105FreeSpanScreeningKernel freeSpanKernel = new DnvRpF105FreeSpanScreeningKernel();
+    DnvRpF101CorrodedPipelineScreeningKernel metalLossKernel = new DnvRpF101CorrodedPipelineScreeningKernel();
 
     EngineeringBenchmarkSuite suite = new EngineeringBenchmarkSuite(SUITE_ID, REVISION)
         .requireMethod(methodKey(pumpKernel)).requireMethod(methodKey(reliefKernel))
         .requireMethod(methodKey(orificeKernel)).requireMethod(methodKey(compressorKernel))
         .requireMethod(methodKey(separatorKernel)).requireMethod(methodKey(corrosionKernel))
         .requireMethod(methodKey(meteringKernel)).requireMethod(methodKey(fatigueKernel))
-        .requireMethod(methodKey(freeSpanKernel));
+        .requireMethod(methodKey(freeSpanKernel)).requireMethod(methodKey(metalLossKernel));
     suite.add(pumpBenchmark(pumpKernel));
     suite.add(reliefBenchmark(reliefKernel));
     suite.add(orificeBenchmark(orificeKernel));
@@ -67,6 +68,7 @@ public final class StandardDesignKernelVerificationSuite {
     suite.add(meteringBenchmark(meteringKernel));
     suite.add(fatigueBenchmark(fatigueKernel));
     suite.add(freeSpanBenchmark(freeSpanKernel));
+    suite.add(metalLossBenchmark(metalLossKernel));
     return suite.evaluate();
   }
 
@@ -244,6 +246,29 @@ public final class StandardDesignKernelVerificationSuite {
             value == null ? FAILURE_SENTINEL : value.getWaveReducedVelocity(), "dimensionless", 1.0e-12, 1.0e-12)
         .check("detailedResponseTriggered", 1.0,
             value != null && value.isDetailedResponseAssessmentRequired() ? 1.0 : 0.0, "flag", 0.0, 0.0)
+        .build();
+  }
+
+  private static EngineeringValidationBenchmark metalLossBenchmark(DnvRpF101CorrodedPipelineScreeningKernel kernel) {
+    DnvRpF101CorrodedPipelineScreeningKernel.Input input = DnvRpF101CorrodedPipelineScreeningKernel.Input
+        .builder(StandardEdition.defaultEdition(StandardType.DNV_RP_F101), "Pipeline").steelOuterDiameterM(0.508)
+        .assessmentWallThicknessM(0.0127).measuredDefectDepthM(0.004).defectDepthAllowanceM(0.0005)
+        .defectAxialLengthM(0.2).characteristicUltimateTensileStrengthPa(535.0e6).internalPressurePaAbsolute(10.1e6)
+        .externalPressurePaAbsolute(0.1e6).callerControlledPressureFactor(0.72).geometryVerified(true)
+        .inspectionSizingVerified(true).materialStrengthVerified(true).pressureBasisVerified(true)
+        .projectFactorVerified(true).isolatedLongitudinalMetalLossApplicabilityVerified(true).build();
+    EngineeringCalculationResult<DnvRpF101CorrodedPipelineAssessment> result = kernel.calculate(input, null);
+    DnvRpF101CorrodedPipelineAssessment value = result.getValue();
+    return baseline("dnv-rp-f101-isolated-metal-loss-regression", kernel)
+        .check("calculatedReviewRequired", 1.0, calculated(result), "flag", 0.0, 0.0)
+        .check("calculatedFailurePressure", 22346646.7258146,
+            value == null ? FAILURE_SENTINEL : value.getCalculatedFailurePressurePa(), "Pa", 1.0e-8, 1.0e-12)
+        .check("callerControlledPressureLimit", 16089585.64258651,
+            value == null ? FAILURE_SENTINEL : value.getCallerControlledPressureLimitPa(), "Pa", 1.0e-8, 1.0e-12)
+        .check("pressureUtilization", 0.6215200454591963,
+            value == null ? FAILURE_SENTINEL : value.getPressureUtilization(), "fraction", 1.0e-15, 1.0e-12)
+        .check("withinCallerControlledLimit", 1.0,
+            value != null && value.isWithinCallerControlledPressureLimit() ? 1.0 : 0.0, "flag", 0.0, 0.0)
         .build();
   }
 

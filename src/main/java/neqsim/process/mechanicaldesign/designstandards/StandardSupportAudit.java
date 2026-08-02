@@ -110,6 +110,14 @@ public final class StandardSupportAudit {
           "Simply supported first-mode beam frequency and current/wave dimensionless screening with "
               + "caller-controlled response triggers only; soil/shoulder stiffness, multi-span interaction, response "
               + "models, direct-wave loading, ULS/FLS, fatigue, sensors, intervention, and conformity remain external.");
+    case DNV_RP_F101:
+      EquipmentDesignKernelRegistry.Lookup defectImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING, defectImplementation.isImplemented(),
+          registryImplementation, defectImplementation.getImplementationClassName(),
+          "Isolated longitudinal metal-loss defect failure-pressure equation under internal pressure only, with "
+              + "caller-controlled depth allowance and pressure factor; inspection uncertainty derivation, "
+              + "interacting/complex defects, combined loading, cracking, growth, probabilistic calibration, "
+              + "fitness-for-service acceptance, and DNV-ST-F101 design checks remain external.");
     default:
       return getCategorySupport(standardType, registryImplementation);
     }

@@ -103,6 +103,18 @@ class StandardCatalogTest {
   }
 
   @Test
+  void currentDnvRpF101EditionHasPublisherEvidenceAndExecutableKernel() {
+    StandardCatalogEntry entry = StandardCatalog.get(StandardType.DNV_RP_F101);
+
+    assertEquals(StandardLifecycleStatus.CURRENT, entry.getLifecycleStatus());
+    assertEquals("2019-09+AMD:2025-09", entry.getStandardType().getDefaultVersion());
+    assertTrue(entry.getPublisherSourceUrl().contains("dnv-rp-f101"));
+    assertEquals("2026-08-02", entry.getVerifiedOn());
+    assertTrue(StandardRegistry.getDesignKernel(StandardType.DNV_RP_F101)
+        .supports(StandardEdition.defaultEdition(StandardType.DNV_RP_F101)));
+  }
+
+  @Test
   void f105ResourceCatalogDoesNotExposeLegacyPseudoCriteriaAsCurrent() {
     String index = resourceText("/designdata/standards/standards_index.csv");
     String values = resourceText("/designdata/standards/dnv_iso_en_standards.csv");

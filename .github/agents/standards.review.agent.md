@@ -1,6 +1,6 @@
 ---
 name: review technical standards compliance
-description: Reviews NeqSim process systems, calculations, and extracted technical documents against standards and technical requirements such as DNV-RP-F105 free-span screening, STS0131, TR1965, TR2237, NORSOK S-001, and NORSOK P-002. Uses calculated evidence from standards-aware NeqSim classes and produces compliance findings with remediation actions.
+description: Reviews NeqSim process systems, calculations, and extracted technical documents against standards and technical requirements such as DNV-RP-F101 corroded-pipeline screening, DNV-RP-F105 free-span screening, STS0131, TR1965, TR2237, NORSOK S-001, and NORSOK P-002. Uses calculated evidence from standards-aware NeqSim classes and produces compliance findings with remediation actions.
 argument-hint: Describe the process system, task folder, standard, or document set to review — e.g., "review this gas scrubber against TR1965", "check pipeline sizing against NORSOK P-002", or "generate a standards compliance report for this ProcessSystem".
 ---
 
@@ -31,6 +31,7 @@ Use these classes before writing custom checks:
 | ISO 5167-2 orifice-plate metering | `Iso5167OrificeMeteringKernel` with explicit service, tapping, geometry, properties, and applicability attestations |
 | DNV-RP-C203 fatigue screening | `DnvRpC203FatigueDesignKernel` with a verified controlled curve, stress bins, factors, exposure, and damage basis |
 | DNV-RP-F105 free-span screening | `DnvRpF105FreeSpanScreeningKernel` with verified span geometry, first-mode structural basis, environment, and project-controlled response triggers |
+| DNV-RP-F101 isolated metal-loss screening | `DnvRpF101CorrodedPipelineScreeningKernel` with verified inspected defect geometry, material/pressure basis, and caller-controlled allowance and pressure factor |
 
 ## Workflow
 
@@ -71,6 +72,15 @@ applicability, environment, and actual project trigger source; Boolean attestati
 Treat trigger results as escalation findings, not DNV PASS/FAIL. Keep soil/shoulder and interacting-
 span stiffness, detailed VIV/direct-wave response, ULS/FLS, fatigue, monitoring, intervention, and
 conformity open. Never report `calculateAllowableSpanLength(...)` as F105 evidence.
+
+For DNV-RP-F101, require the typed kernel for the current `2019-09+AMD:2025-09` basis. Verify the
+inspection geometry and uncertainty/growth allowance, assessment wall-thickness definition,
+material strength, pressure cases, project pressure factor, and isolated longitudinal metal-loss
+applicability; Boolean attestations are not proof. Treat the within-factor result as a screening
+finding, not fitness-for-service acceptance. Keep interacting/complex defects, combined
+compression, probabilistic methods, crack-like damage, repair, and approval open. Never infer
+defect geometry from M-506 corrosion-rate output, and never treat RP-F101 as replacing DNV-ST-F101
+pipeline-system design checks.
 
 ## Evidence Rules
 

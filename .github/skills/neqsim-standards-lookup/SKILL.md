@@ -41,6 +41,7 @@ The index file `standards_index.csv` maps equipment types to applicable standard
 | CO2 corrosion / materials selection | NORSOK M-506, ISO 15156 / NACE MR0175, NORSOK M-001 | Use `NorsokM506CorrosionDesignKernel` for strict M-506 screening; use `NorsokM506ElectrolyteBridge` for a rigorous brine pH/FeCO3 basis and keep `NorsokM506CorrosionRate` for legacy sweeps |
 | Offshore steel fatigue | DNV-RP-C203 | Use `DnvRpC203FatigueDesignKernel` with a verified project-controlled S-N curve and stress spectrum; do not report legacy pipeline/riser shortcuts as exact-edition C203 evidence |
 | Submarine-pipeline free spans | DNV-RP-F105 | Use `DnvRpF105FreeSpanScreeningKernel` for the current 2025-12 first-mode/dimensionless screen; project response triggers are not DNV acceptance criteria and the legacy allowable-span calculator is not F105 evidence |
+| Inspected pipeline metal loss | DNV-RP-F101 | Use `DnvRpF101CorrodedPipelineScreeningKernel` for the current isolated longitudinal defect/internal-pressure screen; measured geometry and caller-controlled factors are evidence, not values inferred from M-506, and ST-F101 design checks remain separate |
 | Mineral scale / produced water | (industry practice; Davies + Ksp(T)) | `ElectrolyteScaleCalculator` / `ScaleKinetics` / `BrineMixingScaleEvaluator` (`process.chemistry.scale`) |
 
 ## TR/NORSOK Integration Classes
@@ -107,6 +108,27 @@ VIV and direct-wave response, ULS/FLS, fatigue, monitoring, intervention, and co
 
 `PipeMechanicalDesignCalculator.calculateAllowableSpanLength(...)` is a legacy fixed-assumption
 estimate with fallback and cap behavior. Never report that output as current-edition F105 evidence.
+
+### DNV-RP-F101 execution rule
+
+For an explicit DNV-RP-F101 basis, use
+`neqsim.process.engineering.calculation.DnvRpF101CorrodedPipelineScreeningKernel`. It supports the
+catalogued `2019-09+AMD:2025-09` edition and only calculates the deterministic isolated
+longitudinal metal-loss equation under internal pressure. Require externally verified assessment
+wall thickness, measured defect depth and length, caller-controlled depth allowance,
+characteristic ultimate tensile strength, internal/external pressures, caller-controlled pressure
+factor, and isolated-defect applicability.
+
+Treat every verification Boolean as an attestation, not the evidence itself. Keep inspection
+accuracy and growth derivation, factor selection, interacting/complex defects, combined
+longitudinal compression, probabilistic methods, crack/dent/gouge/blister or weld damage, repair,
+fitness-for-service acceptance, and accountable approval external. Do not turn
+`NorsokM506CorrosionAssessment.getProjectedUniformWallLossMm()` into RP-F101 defect dimensions.
+
+RP-F101 remaining-strength screening is not DNV-ST-F101 original design. It does not replace
+pressure containment, collapse, propagation buckling, local buckling, load interaction, fatigue,
+incidental/test pressure, de-rating, safety class, ovality, fabrication route, or installation
+strain checks.
 
 Use these Java classes when a task references Equinor technical requirements,
 STS0131, TR1965, TR2237, or NORSOK P-002:

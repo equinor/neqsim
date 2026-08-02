@@ -47,8 +47,10 @@ Standard-specific equipment calculations are registered explicitly. The current 
 screening kernels for API 617 compressor-casing checks, API 610 pump checks, API 521 relief-scenario
 evaluation, API 526 standard-orifice selection, API 12J separator-performance checks, and NORSOK
 M-506 CO2-corrosion screening, ISO 5167-2 concentric orifice-plate metering, DNV-RP-C203
-S-N/Palmgren-Miner fatigue screening with caller-controlled curve data, and DNV-RP-F105 simply
-supported first-mode/dimensionless free-span screening with caller-controlled response triggers.
+S-N/Palmgren-Miner fatigue screening with caller-controlled curve data, DNV-RP-F105 simply
+supported first-mode/dimensionless free-span screening with caller-controlled response triggers,
+and DNV-RP-F101 isolated metal-loss/internal-pressure screening with caller-controlled defect
+allowance and pressure factor.
 Unsupported editions, inapplicable equipment types, and incomplete inputs return blocked results.
 All remain preliminary engineering screens and do not claim certification or construction
 readiness.
@@ -61,6 +63,9 @@ identity. The C203 case pins per-bin damage, design-fatigue-factor multiplicatio
 damage utilization without treating the demonstration curve as DNV table data.
 The F105 case pins modal frequency, current/wave reduced velocities, and detailed-response trigger
 behavior without treating project trigger values as DNV acceptance criteria.
+The F101 case pins isolated-defect failure pressure, caller-controlled pressure limit, utilization,
+and within-limit status without treating project factors as DNV acceptance criteria or replacing
+DNV-ST-F101 design checks.
 Inspect
 `report.areAllBenchmarksPassed()` for regression health and `report.getFailedBenchmarkIds()` for
 diagnosis. The records are deliberately classified as `REGRESSION_BASELINE`; therefore

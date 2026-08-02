@@ -33,7 +33,7 @@ NeqSim code patterns.
 | Subsea pipelines | DNV-RP-F109, DNV-RP-F105, NORSOK U-001 | On-bottom stability and free-span assessment |
 | Hydrate management | DNV-RP-F116 | Hydrate prevention and remediation |
 | GRP piping | ISO 14692 | Non-metallic pipe design |
-| Pipeline integrity | DNV-RP-F116, API 1160 | Integrity management |
+| Pipeline integrity | DNV-RP-F101, DNV-RP-F116, API 1160 | Inspected metal-loss remaining strength and integrity management |
 
 For fast acoustic transients, also load `neqsim-water-hammer`. Use
 `WaterHammerStudy` or MCP `runWaterHammer` with STID route geometry, tagreader
@@ -234,6 +234,19 @@ frequency-ratio band, and reduced-velocity triggers are project-controlled and c
 limits. Keep soil/shoulder and multi-span response, VIV amplitudes, direct wave loading, ULS/FLS,
 fatigue, monitoring, and intervention external. Never relabel
 `PipeMechanicalDesignCalculator.calculateAllowableSpanLength(...)` as F105 evidence.
+
+### DNV-RP-F101 inspected metal-loss routing
+
+When inspection data feeds an explicit current `DNV-RP-F101 2019-09+AMD:2025-09` screen, route one
+verified isolated longitudinal metal-loss defect under internal pressure through
+`DnvRpF101CorrodedPipelineScreeningKernel`. Require the measured depth and axial length,
+assessment wall-thickness definition, inspection/growth allowance, characteristic ultimate
+tensile strength, internal/external absolute pressures, and project-controlled pressure factor.
+
+Do not infer defect geometry from hydraulic corrosion-rate calculations or projected uniform wall
+loss. The typed kernel does not handle defect interaction or complex profiles, longitudinal
+compression, probabilistic assessment, crack-like damage, repair, or fitness-for-service approval.
+It also does not replace DNV-ST-F101 original-design checks.
 
 ### Beggs and Brill Multiphase Correlation
 

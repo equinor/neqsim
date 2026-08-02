@@ -681,6 +681,21 @@ See the [Corrosion Analysis Module](corrosion/) for full API reference:
 | [NORSOK M-001 API](corrosion/norsok_m001_material_selection) | Material selection |
 | [Pipeline Integration](corrosion/pipeline_corrosion_integration) | Integration workflow |
 
+### Existing metal-loss defects
+
+Corrosion-rate prediction and remaining-strength assessment are different workflows.
+`NorsokM506CorrosionDesignKernel` predicts a simplified CO2 corrosion rate and projected uniform
+wall loss. For an inspected isolated longitudinal metal-loss defect under internal pressure, use
+`DnvRpF101CorrodedPipelineScreeningKernel` with verified measured geometry, depth allowance,
+material strength, pressure basis, and caller-controlled factor. See the
+[DNV-RP-F101 isolated metal-loss guide](mechanical_design/dnv_rp_f101_corroded_pipeline).
+
+Do not infer inspected defect dimensions from the M-506 rate output. The RP-F101 screen does not
+handle interacting or complex defects, combined longitudinal compression, cracking, probabilistic
+assessment, repair, or fitness-for-service approval. It also does not replace DNV-ST-F101 pressure
+containment, collapse, propagation/local buckling, interaction, fatigue, pressure-case, de-rating,
+safety-class, ovality, fabrication, or installation-strain checks.
+
 ---
 
 ## Examples

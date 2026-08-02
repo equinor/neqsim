@@ -70,6 +70,9 @@ class StandardSupportAuditTest {
     assertEquals("DnvRpF105FreeSpanScreeningKernel",
         StandardSupportAudit.getSupport(StandardType.DNV_RP_F105).getCalculationImplementation());
     assertTrue(StandardSupportAudit.getSupport(StandardType.DNV_RP_F105).isRegistryConnected());
+    assertEquals("DnvRpF101CorrodedPipelineScreeningKernel",
+        StandardSupportAudit.getSupport(StandardType.DNV_RP_F101).getCalculationImplementation());
+    assertTrue(StandardSupportAudit.getSupport(StandardType.DNV_RP_F101).isRegistryConnected());
     assertFalse(StandardSupportAudit.getSupport(StandardType.API_660).isRegistryConnected());
     assertTrue(StandardSupportAudit.getSupport(StandardType.API_660).getCalculationImplementation()
         .startsWith("StandardRequirementPackRegistry"));
