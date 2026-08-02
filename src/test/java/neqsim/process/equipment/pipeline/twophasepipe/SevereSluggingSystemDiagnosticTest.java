@@ -69,6 +69,9 @@ class SevereSluggingSystemDiagnosticTest {
         SevereSluggingSystemDiagnostic.evaluate(baseInput().flowlineStratified(false).build()).getStatus());
     assertEquals(Status.NOT_APPLICABLE_SINGLE_PHASE,
         SevereSluggingSystemDiagnostic.evaluate(baseInput().upstreamGasVolumeM3(0.0).build()).getStatus());
+    assertEquals(Status.NOT_APPLICABLE_SINGLE_PHASE,
+        SevereSluggingSystemDiagnostic
+            .evaluate(baseInput().flowlineContainsGasAndLiquid(false).flowlineStratified(false).build()).getStatus());
     assertEquals(Status.NOT_VALIDATED_THREE_PHASE,
         SevereSluggingSystemDiagnostic.evaluate(baseInput().threePhase(true).build()).getStatus());
 
