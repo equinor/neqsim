@@ -161,6 +161,37 @@ public class DistillationColumnWarmStateCacheTest {
   }
 
   /**
+   * Switching between the two active reflux equation sets must invalidate an otherwise identical warm state.
+   *
+   * <p>
+   * Both ratio-controlled PV flashing and fixed liquid separation set the legacy reflux-active flag. The fixed split
+   * therefore needs its own configuration identity even when the stored ratio and total-condenser flag do not change.
+   * </p>
+   */
+  @Test
+  public void fixedLiquidRefluxModeInvalidatesRatioWarmState() {
+    DistillationColumn column = buildCondenserColumn();
+    double storedRatio = column.getCondenser().getRefluxRatio();
+    column.getCondenser().setRefluxRatio(storedRatio);
+    column.run();
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+
+    column.run();
+    assertTrue(column.wasSequentialWarmStateReused(),
+        "an unchanged ratio-controlled condenser must be eligible for exact sequential-state reuse");
+    assertEquals(0, column.getLastIterationCount(), "unchanged exact reuse must execute zero tray iterations");
+
+    column.getCondenser().setSeparation_with_liquid_reflux(true, 0.0, "kg/hr");
+    column.run();
+
+    assertFalse(column.wasSequentialWarmStateReused(),
+        "fixed liquid separation must solve its own equations instead of reusing ratio-controlled products");
+    assertTrue(column.getLastIterationCount() > 0, "the changed condenser equations must execute tray iterations");
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    assertPhysicalAndBalancedWithCondenserProduct(column.getFeedStreams(1).get(0), column);
+  }
+
+  /**
    * A column pressure change must invalidate the warm state. {@code setTopPressure} and {@code setBottomPressure} do
    * not mark the column for re-initialization either.
    */
@@ -430,6 +461,54 @@ public class DistillationColumnWarmStateCacheTest {
 
     assertPhysicalStream(gas);
     assertPhysicalStream(liquid);
+  }
+
+  /**
+   * Verify physical products and component/total closure when fixed liquid separation adds a third product.
+   *
+   * @param feed column feed
+   * @param column solved column
+   */
+  private static void assertPhysicalAndBalancedWithCondenserProduct(StreamInterface feed,
+      DistillationColumn column) {
+    StreamInterface gas = column.getGasOutStream();
+    StreamInterface liquid = column.getLiquidOutStream();
+    StreamInterface condenserLiquid = column.getCondenser().getLiquidProductStream();
+    assertTrue(condenserLiquid != null, "fixed liquid separation must expose its liquid product");
+
+    double feedFlow = feed.getFlowRate("mol/hr");
+    double gasFlow = gas.getFlowRate("mol/hr");
+    double liquidFlow = liquid.getFlowRate("mol/hr");
+    double condenserLiquidFlow = condenserLiquid.getFlowRate("mol/hr");
+    assertTrue(Double.isFinite(gasFlow) && gasFlow >= 0.0, "overhead flow must be finite and non-negative");
+    assertTrue(Double.isFinite(liquidFlow) && liquidFlow >= 0.0, "bottoms flow must be finite and non-negative");
+    assertTrue(Double.isFinite(condenserLiquidFlow) && condenserLiquidFlow >= 0.0,
+        "condenser liquid product flow must be finite and non-negative");
+    assertTrue(gasFlow + liquidFlow + condenserLiquidFlow > 0.0, "at least one product must carry flow");
+    assertEquals(feedFlow, gasFlow + liquidFlow + condenserLiquidFlow, 5.0e-3 * feedFlow,
+        "all three product flows must close the feed");
+
+    String[] feedComponents = feed.getThermoSystem().getComponentNames();
+    assertArrayEquals(feedComponents, gas.getThermoSystem().getComponentNames());
+    assertArrayEquals(feedComponents, liquid.getThermoSystem().getComponentNames());
+    assertArrayEquals(feedComponents, condenserLiquid.getThermoSystem().getComponentNames());
+    double[] feedComposition = feed.getThermoSystem().getMolarComposition();
+    double[] gasComposition = gas.getThermoSystem().getMolarComposition();
+    double[] liquidComposition = liquid.getThermoSystem().getMolarComposition();
+    double[] condenserLiquidComposition = condenserLiquid.getThermoSystem().getMolarComposition();
+    for (int componentIndex = 0; componentIndex < feedComponents.length; componentIndex++) {
+      double feedComponentFlow = feedFlow * feedComposition[componentIndex];
+      double productComponentFlow = gasFlow * gasComposition[componentIndex]
+          + liquidFlow * liquidComposition[componentIndex]
+          + condenserLiquidFlow * condenserLiquidComposition[componentIndex];
+      assertEquals(feedComponentFlow, productComponentFlow,
+          Math.max(1.0e-6, 5.0e-3 * Math.abs(feedComponentFlow)),
+          "component balance must close for " + feedComponents[componentIndex]);
+    }
+
+    assertPhysicalStream(gas);
+    assertPhysicalStream(liquid);
+    assertPhysicalStream(condenserLiquid);
   }
 
   /**
