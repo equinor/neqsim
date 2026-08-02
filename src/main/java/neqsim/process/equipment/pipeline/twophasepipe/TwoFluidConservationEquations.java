@@ -433,8 +433,10 @@ public class TwoFluidConservationEquations implements Serializable {
   /**
    * Calculate a local inclined-section gas-carryover screen.
    *
-   * <p>The result contains no upstream gas volume, riser height, top pressure, or choke
-   * response and therefore must not be interpreted as a severe-slugging system criterion.</p>
+   * <p>
+   * The result contains no upstream gas volume, riser height, top pressure, or choke response and therefore must not be
+   * interpreted as a severe-slugging system criterion.
+   * </p>
    */
   private double calcInclinedSectionGasCarryoverNumber(TwoFluidSection sec) {
     if (sec.getInclination() <= Math.toRadians(5.0)) {
