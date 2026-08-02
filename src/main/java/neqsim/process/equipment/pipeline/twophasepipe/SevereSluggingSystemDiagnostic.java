@@ -85,7 +85,10 @@ public final class SevereSluggingSystemDiagnostic {
       threePhase = builder.threePhase;
     }
 
-    /** Creates a builder. Numeric quantities without documented defaults must be supplied. */
+    /**
+     * Creates a builder. Numeric quantities without documented defaults must be supplied;
+     * applicability flags default to false and must be confirmed explicitly.
+     */
     public static Builder builder() {
       return new Builder();
     }
@@ -152,9 +155,9 @@ public final class SevereSluggingSystemDiagnostic {
       private double liquidDensityKgPerM3 = Double.NaN;
       private double riserLiquidHoldup = Double.NaN;
       private double gasCapVoidFraction = 0.89;
-      private boolean validFlowlineRiserTopology = true;
-      private boolean flowlineStratified = true;
-      private boolean flowlineContainsGasAndLiquid = true;
+      private boolean validFlowlineRiserTopology;
+      private boolean flowlineStratified;
+      private boolean flowlineContainsGasAndLiquid;
       private boolean threePhase;
 
       private Builder() {
