@@ -270,12 +270,19 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
     return relativeThermodynamicMassResidual;
   }
 
-  /** @return defensive copy of nonlinear convergence-metric history */
+  /**
+   * @return defensive copy of nonlinear convergence-metric history; the coupled path includes the
+   *         initial residual at index zero followed by one entry per completed Newton iteration,
+   *         while staged legacy paths retain one entry per iteration
+   */
   public double[] getNonlinearUpdateHistory() {
     return copy(nonlinearUpdateHistory);
   }
 
-  /** @return defensive copy of EOS/FV density residual history */
+  /**
+   * @return defensive copy of EOS/FV density residual history using the same indexing convention
+   *         as {@link #getNonlinearUpdateHistory()}
+   */
   public double[] getDensityResidualHistory() {
     return copy(densityResidualHistory);
   }
