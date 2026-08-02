@@ -136,9 +136,9 @@ public class PumpCapacityStrategy implements EquipmentCapacityStrategy {
     double npshAvailable = pump.getNPSHAvailable();
     double npshRequired = pump.getNPSHRequired();
     if (npshAvailable > 0 && npshRequired > 0) {
-      CapacityConstraint npshConstraint =
-          new CapacityConstraint("npshMargin", "m", CapacityConstraint.ConstraintType.HARD)
-              .setMinValue(minNpshMargin).setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
+      CapacityConstraint npshConstraint = new CapacityConstraint("npshMargin", "m",
+          CapacityConstraint.ConstraintType.HARD).setMinValue(minNpshMargin)
+          .setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
           .setValueSupplier(() -> pump.getNPSHAvailable() - pump.getNPSHRequired());
       constraints.put("npshMargin", npshConstraint);
     }
