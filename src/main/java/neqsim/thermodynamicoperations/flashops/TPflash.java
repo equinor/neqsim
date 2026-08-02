@@ -839,6 +839,7 @@ public class TPflash extends Flash {
     rescueLowerGibbsHydrocarbonPhaseRoots();
     rescueLiquidLiquidEndpoint();
     rescueWaterRichEndpoint();
+    rescueLowerGibbsPhaseRoot();
 
     // Final chemical equilibrium call after all phase reordering
     // This ensures chemical equilibrium is solved on the final phase configuration

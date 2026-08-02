@@ -2421,6 +2421,8 @@ public class TPmultiflash extends TPflash {
         }
       }
 
+      rescueStalledThreePhaseEndpoint();
+
       // For electrolyte systems: ensure only one aqueous phase - the one with most aqueous content
       // Other phases classified as AQUEOUS should be reclassified as OIL with ions removed
       // Also applies to systems with ions even without chemical reactions
@@ -2607,5 +2609,120 @@ public class TPmultiflash extends TPflash {
        * if (!secondTime) { secondTime = true; doStabilityAnalysis = false; run(); }
        */
     }
+  }
+
+  /**
+   * Removes a non-persistent phase when a neutral three-phase beta solve stalls above the equilibrium tolerances.
+   *
+   * <p>
+   * The bounded active-set fallback tests each possible phase removal on a clone, accepts only a normalized,
+   * material-balanced, fugacity-equal candidate, and selects the lowest-Gibbs candidate. The live system changes only
+   * when that candidate also lowers Gibbs energy relative to the stalled three-phase state. Chemical, electrolyte,
+   * solid, wax, and already-converged three-phase systems retain their existing paths.
+   * </p>
+   */
+  private void rescueStalledThreePhaseEndpoint() {
+    if (system.getNumberOfPhases() != 3 || system.isChemicalSystem() || system.hasIons()
+        || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck() || isFeasiblePhaseEquilibrium(system)) {
+      return;
+    }
+
+    system.init(1);
+    double stalledGibbsEnergy = system.getGibbsEnergy();
+    if (!Double.isFinite(stalledGibbsEnergy)) {
+      return;
+    }
+
+    int phaseToRemove = -1;
+    double lowestGibbsEnergy = Double.POSITIVE_INFINITY;
+    for (int phaseIndex = 0; phaseIndex < 3; phaseIndex++) {
+      SystemInterface candidate = system.clone();
+      candidate.removePhaseKeepTotalComposition(phaseIndex);
+      candidate.normalizeBeta();
+      candidate.init(1);
+
+      TPmultiflash candidateSolver = new TPmultiflash(candidate, false);
+      candidateSolver.setDoubleArrays();
+      for (int refinement = 0; refinement < 3 && !isFeasiblePhaseEquilibrium(candidate); refinement++) {
+        candidateSolver.solveBeta();
+      }
+      if (!isFeasiblePhaseEquilibrium(candidate)) {
+        continue;
+      }
+
+      double candidateGibbsEnergy = candidate.getGibbsEnergy();
+      if (Double.isFinite(candidateGibbsEnergy) && candidateGibbsEnergy < lowestGibbsEnergy) {
+        lowestGibbsEnergy = candidateGibbsEnergy;
+        phaseToRemove = phaseIndex;
+      }
+    }
+
+    double gibbsTolerance = Math.max(1.0e-6, Math.abs(stalledGibbsEnergy) * 1.0e-8);
+    if (phaseToRemove < 0 || lowestGibbsEnergy >= stalledGibbsEnergy - gibbsTolerance) {
+      return;
+    }
+
+    system.removePhaseKeepTotalComposition(phaseToRemove);
+    system.normalizeBeta();
+    system.init(1);
+    setDoubleArrays();
+    for (int refinement = 0; refinement < 3 && !isFeasiblePhaseEquilibrium(system); refinement++) {
+      solveBeta();
+    }
+  }
+
+  private boolean isFeasiblePhaseEquilibrium(SystemInterface candidate) {
+    double betaTotal = 0.0;
+    int numberOfPhases = candidate.getNumberOfPhases();
+    for (int phaseIndex = 0; phaseIndex < numberOfPhases; phaseIndex++) {
+      double beta = candidate.getBeta(phaseIndex);
+      if (!Double.isFinite(beta) || beta <= 10.0 * phaseFractionMinimumLimit || beta > 1.0) {
+        return false;
+      }
+      betaTotal += beta;
+
+      double compositionTotal = 0.0;
+      for (int componentIndex = 0; componentIndex < candidate.getPhase(phaseIndex)
+          .getNumberOfComponents(); componentIndex++) {
+        double composition = candidate.getPhase(phaseIndex).getComponent(componentIndex).getx();
+        if (!Double.isFinite(composition) || composition < 0.0 || composition > 1.0) {
+          return false;
+        }
+        compositionTotal += composition;
+      }
+      if (Math.abs(compositionTotal - 1.0) > 1.0e-8) {
+        return false;
+      }
+    }
+    if (Math.abs(betaTotal - 1.0) > 1.0e-8) {
+      return false;
+    }
+
+    int numberOfComponents = candidate.getPhase(0).getNumberOfComponents();
+    for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
+      double feedComposition = candidate.getPhase(0).getComponent(componentIndex).getz();
+      double recoveredComposition = 0.0;
+      double referenceLogFugacity = Double.NaN;
+      for (int phaseIndex = 0; phaseIndex < numberOfPhases; phaseIndex++) {
+        double composition = candidate.getPhase(phaseIndex).getComponent(componentIndex).getx();
+        recoveredComposition += candidate.getBeta(phaseIndex) * composition;
+        double fugacityCoefficient = candidate.getPhase(phaseIndex).getComponent(componentIndex)
+            .getFugacityCoefficient();
+        double logFugacity = Math.log(Math.max(composition, Double.MIN_NORMAL))
+            + Math.log(fugacityCoefficient);
+        if (!Double.isFinite(logFugacity)) {
+          return false;
+        }
+        if (phaseIndex == 0) {
+          referenceLogFugacity = logFugacity;
+        } else if (Math.abs(referenceLogFugacity - logFugacity) > 1.0e-8) {
+          return false;
+        }
+      }
+      if (!Double.isFinite(recoveredComposition) || Math.abs(feedComposition - recoveredComposition) > 1.0e-8) {
+        return false;
+      }
+    }
+    return true;
   }
 }
