@@ -67,6 +67,7 @@ public final class SevereSluggingSystemDiagnostic {
     private final double gasCapVoidFraction;
     private final boolean validFlowlineRiserTopology;
     private final boolean flowlineStratified;
+    private final boolean flowlineContainsGasAndLiquid;
     private final boolean threePhase;
 
     private Input(Builder builder) {
@@ -80,6 +81,7 @@ public final class SevereSluggingSystemDiagnostic {
       gasCapVoidFraction = fraction(builder.gasCapVoidFraction, "gasCapVoidFraction", false);
       validFlowlineRiserTopology = builder.validFlowlineRiserTopology;
       flowlineStratified = builder.flowlineStratified;
+      flowlineContainsGasAndLiquid = builder.flowlineContainsGasAndLiquid;
       threePhase = builder.threePhase;
     }
 
@@ -131,6 +133,11 @@ public final class SevereSluggingSystemDiagnostic {
       return flowlineStratified;
     }
 
+    /** Return whether gas and liquid are both present in the feeding flowline. */
+    public boolean flowlineContainsGasAndLiquid() {
+      return flowlineContainsGasAndLiquid;
+    }
+
     public boolean isThreePhase() {
       return threePhase;
     }
@@ -147,6 +154,7 @@ public final class SevereSluggingSystemDiagnostic {
       private double gasCapVoidFraction = 0.89;
       private boolean validFlowlineRiserTopology = true;
       private boolean flowlineStratified = true;
+      private boolean flowlineContainsGasAndLiquid = true;
       private boolean threePhase;
 
       private Builder() {
@@ -205,6 +213,12 @@ public final class SevereSluggingSystemDiagnostic {
 
       public Builder flowlineStratified(boolean value) {
         flowlineStratified = value;
+        return this;
+      }
+
+      /** Set whether both phases are present in the feeding flowline. */
+      public Builder flowlineContainsGasAndLiquid(boolean value) {
+        flowlineContainsGasAndLiquid = value;
         return this;
       }
 
@@ -288,7 +302,8 @@ public final class SevereSluggingSystemDiagnostic {
     if (input.isThreePhase()) {
       return notApplicable(Status.NOT_VALIDATED_THREE_PHASE);
     }
-    if (input.getUpstreamGasVolumeM3() == 0.0 || input.getRiserLiquidHoldup() == 0.0) {
+    if (input.getUpstreamGasVolumeM3() == 0.0 || input.getRiserLiquidHoldup() == 0.0
+        || !input.flowlineContainsGasAndLiquid()) {
       return notApplicable(Status.NOT_APPLICABLE_SINGLE_PHASE);
     }
     if (!input.isFlowlineStratified()) {
