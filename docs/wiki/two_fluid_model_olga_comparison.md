@@ -534,10 +534,9 @@ pipe.runTransient(7200.0);  // 2 hours
 int riserBaseSection = 40;
 SevereSluggingSystemDiagnostic.Result stability =
     pipe.evaluateSevereSluggingSystem(riserBaseSection);
-if (stability.isSevereSluggingPossible()) {
-    System.out.println("WARNING: Taitel system screen is unstable");
-    System.out.println("Pressure margin [Pa]: " + stability.getPressureMarginPa());
-}
+boolean severeSluggingPossible = stability.isSevereSluggingPossible();
+double pressureMarginPa = stability.getPressureMarginPa();
+// Pass the status and margin to the application's logger or monitoring system.
 
 // Get holdup profile
 double[] positions = pipe.getPositionProfile();
