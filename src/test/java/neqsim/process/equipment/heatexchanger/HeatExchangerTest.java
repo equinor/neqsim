@@ -32,6 +32,9 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
     @Override
     public InitTrackingSystemSrkEos clone() {
       InitTrackingSystemSrkEos cloned = (InitTrackingSystemSrkEos) super.clone();
+      if (cloned == null) {
+        throw new IllegalStateException("Failed to clone initialization-tracking fluid");
+      }
       cloned.levelTwoCalls = levelTwoCalls;
       cloned.levelThreeCalls = levelThreeCalls;
       return cloned;
