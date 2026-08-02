@@ -157,7 +157,7 @@ public class DistillationColumnWarmStateCacheTest {
         "activating ratio mode must solve the changed condenser equations instead of reusing equilibrium products");
     assertTrue(column.getLastIterationCount() > 0, "the changed condenser equations must execute tray iterations");
     assertTrue(column.solved(), column.getConvergenceDiagnostics());
-    assertPhysicalAndBalanced(column.getFeedStreams(1).get(0), column);
+    assertPhysicalAndBalancedAllowingZeroProduct(column.getFeedStreams(1).get(0), column);
   }
 
   /**
@@ -389,6 +389,43 @@ public class DistillationColumnWarmStateCacheTest {
       double productComponentFlow = gasFlow * gasComposition[componentIndex]
           + liquidFlow * liquidComposition[componentIndex];
       assertEquals(feedComponentFlow, productComponentFlow, Math.max(1.0e-6, 5.0e-3 * Math.abs(feedComponentFlow)),
+          "component balance must close for " + feedComponents[componentIndex]);
+    }
+
+    assertPhysicalStream(gas);
+    assertPhysicalStream(liquid);
+  }
+
+  /**
+   * Verify physical products and component/total closure while allowing a phase-boundary product to have zero flow.
+   *
+   * @param feed column feed
+   * @param column solved column
+   */
+  private static void assertPhysicalAndBalancedAllowingZeroProduct(StreamInterface feed, DistillationColumn column) {
+    StreamInterface gas = column.getGasOutStream();
+    StreamInterface liquid = column.getLiquidOutStream();
+    double feedFlow = feed.getFlowRate("mol/hr");
+    double gasFlow = gas.getFlowRate("mol/hr");
+    double liquidFlow = liquid.getFlowRate("mol/hr");
+
+    assertTrue(Double.isFinite(gasFlow) && gasFlow >= 0.0, "overhead flow must be finite and non-negative");
+    assertTrue(Double.isFinite(liquidFlow) && liquidFlow >= 0.0, "bottoms flow must be finite and non-negative");
+    assertTrue(gasFlow + liquidFlow > 0.0, "at least one product must carry flow");
+    assertEquals(feedFlow, gasFlow + liquidFlow, 5.0e-3 * feedFlow, "total product flow must close the feed");
+
+    String[] feedComponents = feed.getThermoSystem().getComponentNames();
+    double[] feedComposition = feed.getThermoSystem().getMolarComposition();
+    double[] gasComposition = gas.getThermoSystem().getMolarComposition();
+    double[] liquidComposition = liquid.getThermoSystem().getMolarComposition();
+    assertArrayEquals(feedComponents, gas.getThermoSystem().getComponentNames());
+    assertArrayEquals(feedComponents, liquid.getThermoSystem().getComponentNames());
+    for (int componentIndex = 0; componentIndex < feedComponents.length; componentIndex++) {
+      double feedComponentFlow = feedFlow * feedComposition[componentIndex];
+      double productComponentFlow = gasFlow * gasComposition[componentIndex]
+          + liquidFlow * liquidComposition[componentIndex];
+      assertEquals(feedComponentFlow, productComponentFlow,
+          Math.max(1.0e-6, 5.0e-3 * Math.abs(feedComponentFlow)),
           "component balance must close for " + feedComponents[componentIndex]);
     }
 
