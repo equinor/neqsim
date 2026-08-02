@@ -437,6 +437,9 @@ public class TwoFluidConservationEquations implements Serializable {
    * The result contains no upstream gas volume, riser height, top pressure, or choke response and therefore must not be
    * interpreted as a severe-slugging system criterion.
    * </p>
+   *
+   * @param sec local solved pipe section
+   * @return dimensionless gas-carryover number, or positive infinity when not applicable
    */
   private double calcInclinedSectionGasCarryoverNumber(TwoFluidSection sec) {
     if (sec.getInclination() <= Math.toRadians(5.0)) {

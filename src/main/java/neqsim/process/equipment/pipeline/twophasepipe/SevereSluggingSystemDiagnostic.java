@@ -294,6 +294,89 @@ public final class SevereSluggingSystemDiagnostic {
     }
   }
 
+  /**
+   * Build a system descriptor from solved pipe sections.
+   *
+   * <p>
+   * Sections before {@code riserBaseSection} form the level or downward-inclined feeder. Their
+   * gas-filled cell volumes are summed using each section's own area, so a flowline-to-riser
+   * diameter change is permitted. Sections from {@code riserBaseSection} onward must form a
+   * continuously rising, constant-area riser. The last section pressure is interpreted as the
+   * absolute pressure at the riser outlet.
+   * </p>
+   *
+   * @param sections solved sections in flow direction
+   * @param riserBaseSection index of the first continuously rising section
+   * @param gasCapVoidFraction void fraction alpha-prime in the penetrating gas cap
+   * @param staticChokePressureDropPa fixed pressure drop between the riser outlet and separator,
+   *        in Pa
+   * @return immutable system input with geometry, inventory, phase, and flow-regime evidence
+   */
+  public static Input fromSections(TwoFluidSection[] sections, int riserBaseSection,
+      double gasCapVoidFraction, double staticChokePressureDropPa) {
+    if (sections == null || sections.length < 2) {
+      throw new IllegalArgumentException("sections must contain a flowline and riser");
+    }
+    if (riserBaseSection <= 0 || riserBaseSection >= sections.length) {
+      throw new IllegalArgumentException("riserBaseSection must be between 1 and sections.length - 1");
+    }
+
+    double referenceArea = sections[riserBaseSection].getArea();
+    double upstreamGasVolume = 0.0;
+    double riserVolume = 0.0;
+    double riserLiquidVolume = 0.0;
+    double riserLiquidMass = 0.0;
+    double riserHeight = 0.0;
+    boolean topologyValid = true;
+    boolean flowlineStratified = true;
+    boolean flowlineContainsGasAndLiquid = false;
+    boolean threePhase = false;
+
+    for (int i = 0; i < sections.length; i++) {
+      TwoFluidSection section = sections[i];
+      if (section == null) {
+        throw new IllegalArgumentException("sections must not contain null entries");
+      }
+      double cellVolume = section.getArea() * section.getLength();
+      if (section.getOilHoldup() > 1.0e-10 && section.getWaterHoldup() > 1.0e-10) {
+        threePhase = true;
+      }
+
+      if (i < riserBaseSection) {
+        upstreamGasVolume += section.getGasHoldup() * cellVolume;
+        topologyValid &= section.getInclination() <= Math.toRadians(1.0);
+        if (section.getGasHoldup() > 1.0e-10 && section.getLiquidHoldup() > 1.0e-10) {
+          flowlineContainsGasAndLiquid = true;
+          PipeSection.FlowRegime regime = section.getFlowRegime();
+          flowlineStratified &= regime == PipeSection.FlowRegime.STRATIFIED_SMOOTH
+              || regime == PipeSection.FlowRegime.STRATIFIED_WAVY;
+        }
+      } else {
+        topologyValid &= Math.abs(section.getArea() - referenceArea) <= 1.0e-6 * referenceArea;
+        topologyValid &= section.getInclination() > Math.toRadians(1.0);
+        riserHeight += Math.sin(section.getInclination()) * section.getLength();
+        riserVolume += cellVolume;
+        double liquidVolume = section.getLiquidHoldup() * cellVolume;
+        riserLiquidVolume += liquidVolume;
+        riserLiquidMass += liquidVolume * section.getLiquidDensity();
+      }
+    }
+
+    flowlineStratified &= flowlineContainsGasAndLiquid;
+    double riserLiquidHoldup = riserVolume > 0.0 ? riserLiquidVolume / riserVolume : 0.0;
+    double liquidDensity = riserLiquidVolume > 0.0 ? riserLiquidMass / riserLiquidVolume : 1.0;
+    topologyValid &= riserHeight > 0.0;
+
+    return Input.builder().upstreamGasVolumeM3(upstreamGasVolume).riserAreaM2(referenceArea)
+        .riserHeightM(Math.max(riserHeight, 1.0e-12))
+        .separatorPressurePa(sections[sections.length - 1].getPressure())
+        .staticChokePressureDropPa(staticChokePressureDropPa)
+        .liquidDensityKgPerM3(liquidDensity).riserLiquidHoldup(riserLiquidHoldup)
+        .gasCapVoidFraction(gasCapVoidFraction).validFlowlineRiserTopology(topologyValid)
+        .flowlineStratified(flowlineStratified)
+        .flowlineContainsGasAndLiquid(flowlineContainsGasAndLiquid).threePhase(threePhase).build();
+  }
+
   /** Evaluates the input using the Taitel quasi-steady stability condition. */
   public static Result evaluate(Input input) {
     if (input == null) {

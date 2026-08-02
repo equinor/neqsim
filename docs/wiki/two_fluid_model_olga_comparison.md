@@ -367,7 +367,7 @@ The slugs merge:
 ### Slug Tracking Modes
 
 ```java
-// Full OLGA-style Lagrangian tracking (default)
+// Detailed NeqSim Lagrangian tracking (default)
 pipe.setSlugTrackingMode(TwoFluidPipe.SlugTrackingMode.LAGRANGIAN);
 
 // Simplified slug unit model
@@ -420,9 +420,10 @@ $$
 
 Use `evaluateSevereSluggingSystem(riserBaseSection)` after solving the pipe. The result reports
 applicability, stable/unstable status, critical top pressure, pressure margin, stability ratio,
-and gas-expansion head. It rejects non-stratified, single-phase, three-phase, variable-area,
-and invalid flowline–riser topologies. This screen does not predict dynamic slug cycles and is
-not a claim of equivalence to a commercial simulator.
+and gas-expansion head. A flowline-to-riser diameter change is permitted, while the continuously
+rising riser itself must have constant area. The diagnostic rejects non-stratified, single-phase,
+three-phase, variable-area-riser, and invalid flowline–riser topologies. This screen does not
+predict dynamic slug cycles and is not a claim of equivalence to a commercial simulator.
 
 
 ---
@@ -521,7 +522,7 @@ double[] elevations = {0, -50, -100, -50, -150, 0};      // m (relative)
 // Set terrain profile
 pipe.setTerrainProfile(distances, elevations);
 pipe.setEnableTerrainTracking(true);
-pipe.setEnableSevereSlugModel(true);
+pipe.setEnableTerrainSlugClosures(true);
 
 // Configure terrain parameters
 pipe.setTerrainSlugCriticalHoldup(0.6);
@@ -737,7 +738,7 @@ Where $c$ is the mixture sound speed. Typical CFL = 0.5-0.8 for stability.
 
 ---
 
-## Recommendations for OLGA-Equivalent Results
+## Recommendations for Reproducible NeqSim Results
 
 1. **Use FULL model type** for best accuracy:
    ```java
@@ -753,7 +754,7 @@ Where $c$ is the mixture sound speed. Typical CFL = 0.5-0.8 for stability.
 3. **Enable terrain tracking** for undulating pipelines:
    ```java
    pipe.setEnableTerrainTracking(true);
-   pipe.setEnableSevereSlugModel(true);
+   pipe.setEnableTerrainSlugClosures(true);
    ```
 
 4. **Configure minimum holdup** based on system:

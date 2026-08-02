@@ -51,6 +51,50 @@ class SevereSluggingSystemDiagnosticTest {
   }
 
   @Test
+  void extractsVariableAreaFlowlineAndConstantAreaRiser() {
+    TwoFluidSection[] sections = new TwoFluidSection[] {
+        section(100.0, 0.20, Math.toRadians(-2.0), 0.60, 0.40,
+            PipeSection.FlowRegime.STRATIFIED_SMOOTH, 300_000.0),
+        section(200.0, 0.30, 0.0, 0.50, 0.50, PipeSection.FlowRegime.STRATIFIED_WAVY,
+            280_000.0),
+        section(20.0, 0.10, Math.toRadians(30.0), 0.20, 0.80,
+            PipeSection.FlowRegime.SLUG, 240_000.0),
+        section(30.0, 0.10, Math.toRadians(90.0), 0.30, 0.70,
+            PipeSection.FlowRegime.SLUG, 200_000.0) };
+
+    Input input = SevereSluggingSystemDiagnostic.fromSections(sections, 2, 0.89, 0.0);
+    double expectedGasVolume = sections[0].getArea() * 100.0 * 0.60
+        + sections[1].getArea() * 200.0 * 0.50;
+
+    assertTrue(input.hasValidFlowlineRiserTopology());
+    assertTrue(input.isFlowlineStratified());
+    assertTrue(input.flowlineContainsGasAndLiquid());
+    assertEquals(expectedGasVolume, input.getUpstreamGasVolumeM3(), 1.0e-12);
+    assertEquals(40.0, input.getRiserHeightM(), 1.0e-12);
+    assertEquals(0.74, input.getRiserLiquidHoldup(), 1.0e-12);
+    assertEquals(800.0, input.getLiquidDensityKgPerM3(), 1.0e-12);
+    assertEquals(200_000.0, input.getSeparatorPressurePa(), 0.0);
+    assertTrue(SevereSluggingSystemDiagnostic.evaluate(input).isApplicable());
+  }
+
+  @Test
+  void rejectsAreaChangeInsideRiserButNotAtFlowlineRiserTransition() {
+    TwoFluidSection[] sections = new TwoFluidSection[] {
+        section(100.0, 0.20, 0.0, 0.60, 0.40,
+            PipeSection.FlowRegime.STRATIFIED_SMOOTH, 300_000.0),
+        section(20.0, 0.10, Math.toRadians(30.0), 0.20, 0.80,
+            PipeSection.FlowRegime.SLUG, 240_000.0),
+        section(30.0, 0.12, Math.toRadians(90.0), 0.30, 0.70,
+            PipeSection.FlowRegime.SLUG, 200_000.0) };
+
+    Input input = SevereSluggingSystemDiagnostic.fromSections(sections, 1, 0.89, 0.0);
+
+    assertFalse(input.hasValidFlowlineRiserTopology());
+    assertEquals(Status.NOT_APPLICABLE_INVALID_TOPOLOGY,
+        SevereSluggingSystemDiagnostic.evaluate(input).getStatus());
+  }
+
+  @Test
   void higherRiserAndTopPressureAreStabilisingTrends() {
     Result shortRiser = SevereSluggingSystemDiagnostic
         .evaluate(baseInput().riserHeightM(50.0).separatorPressurePa(800_000.0).build());
@@ -124,5 +168,16 @@ class SevereSluggingSystemDiagnosticTest {
     assertThrows(IllegalArgumentException.class, () -> baseInput().riserAreaM2(Double.NaN).build());
     assertThrows(IllegalArgumentException.class, () -> baseInput().gasCapVoidFraction(0.0).build());
     assertThrows(IllegalArgumentException.class, () -> baseInput().riserLiquidHoldup(1.01).build());
+  }
+
+  private static TwoFluidSection section(double lengthM, double diameterM, double inclinationRad,
+      double gasHoldup, double liquidHoldup, PipeSection.FlowRegime regime, double pressurePa) {
+    TwoFluidSection section = new TwoFluidSection(0.0, lengthM, diameterM, inclinationRad);
+    section.setGasHoldup(gasHoldup);
+    section.setLiquidHoldup(liquidHoldup);
+    section.setLiquidDensity(800.0);
+    section.setPressure(pressurePa);
+    section.setFlowRegime(regime);
+    return section;
   }
 }

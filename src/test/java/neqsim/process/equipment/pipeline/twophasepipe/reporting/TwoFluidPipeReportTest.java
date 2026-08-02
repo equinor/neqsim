@@ -29,6 +29,8 @@ class TwoFluidPipeReportTest {
     assertTrue(steadyCsv.startsWith("position_m,pressure_bara,temperature_C"));
     assertTrue(steadyCsv.contains("flow_regime"));
     assertTrue(steadyCsv.contains("entrainment_fraction"));
+    assertTrue(steadyCsv.contains("inclined_section_gas_carryover_number"));
+    assertTrue(steadyCsv.contains("inclined_section_liquid_fallback_potential"));
     assertTrue(steadyCsv.contains("severe_slugging_number"));
     assertEquals(pipe.getPositionProfile().length + 1, steadyCsv.split("\\R").length);
 
@@ -39,6 +41,7 @@ class TwoFluidPipeReportTest {
     assertEquals(sectionCount, pipe.getEntrainmentFractionProfile().length);
     assertEquals(sectionCount, pipe.getEntrainedDropletDiameterProfile().length);
     assertEquals(sectionCount, pipe.getInclinedSectionGasCarryoverNumberProfile().length);
+    assertEquals(sectionCount, pipe.getInclinedSectionLiquidFallbackPotentialProfile().length);
     assertEquals(sectionCount, pipe.getSevereSlugPotentialProfile().length);
     assertTrue(Arrays.stream(pipe.getEntrainmentFractionProfile()).allMatch(value -> value >= 0.0 && value <= 1.0));
     assertTrue(Arrays.stream(pipe.getEntrainedDropletDiameterProfile()).allMatch(value -> value >= 0.0));

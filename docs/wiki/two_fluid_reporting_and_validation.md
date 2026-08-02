@@ -49,6 +49,7 @@ After `pipe.run()`, the following methods provide one value per pipe section:
 | `getEntrainmentFractionProfile()` | fraction | Estimated liquid entrainment in annular/mist flow |
 | `getEntrainedDropletDiameterProfile()` | m | Characteristic entrained droplet diameter |
 | `getInclinedSectionGasCarryoverNumberProfile()` | dimensionless | Local uphill liquid-carryover screen; not a system stability criterion |
+| `getInclinedSectionLiquidFallbackPotentialProfile()` | boolean | Local fallback flag from the carryover screen |
 | `getSevereSluggingNumberProfile()` | dimensionless | Deprecated alias for the local carryover screen |
 | `getSevereSlugPotentialProfile()` | boolean | Result flag from the most recent explicit flowline-riser evaluation |
 | `getHeatTransferProfile()` | W/(m2 K) | Heat-transfer coefficient profile, when configured |
@@ -69,6 +70,7 @@ double[] liquidVelocity = pipe.getLiquidVelocityProfile();
 PipeSection.FlowRegime[] regimes = pipe.getFlowRegimeProfile();
 double[] entrainment = pipe.getEntrainmentFractionProfile();
 double[] gasCarryoverNumber = pipe.getInclinedSectionGasCarryoverNumberProfile();
+boolean[] localFallback = pipe.getInclinedSectionLiquidFallbackPotentialProfile();
 boolean[] waterWetting = pipe.getWaterWettingProfile();
 
 for (int i = 0; i < x.length; i++) {
@@ -118,12 +120,14 @@ Recommended transient CSV columns:
 time_s,position_m,pressure_bara,temperature_C,liquid_holdup,water_cut,
 gas_velocity_m_s,liquid_velocity_m_s,oil_velocity_m_s,water_velocity_m_s,
 flow_regime,oil_water_flow_regime,water_wetting,water_dropout_risk,
-entrainment_fraction,entrained_droplet_diameter_m,severe_slugging_number,
-severe_slug_potential
+entrainment_fraction,entrained_droplet_diameter_m,
+inclined_section_gas_carryover_number,inclined_section_liquid_fallback_potential,
+severe_slugging_number,severe_slug_potential
 ```
 
-The `severe_slugging_number` header is retained for CSV compatibility. It contains the local
-inclined-section gas-carryover number, not the explicit system stability result. Call
+The `severe_slugging_number` header is retained as a deprecated duplicate for CSV compatibility.
+It contains the local inclined-section gas-carryover number, not the explicit system stability
+result. New consumers should use `inclined_section_gas_carryover_number`. Call
 `evaluateSevereSluggingSystem(...)` before exporting if `severe_slug_potential` should contain
 a system-level classification.
 
@@ -163,11 +167,14 @@ validation. Each value is available both on `TwoFluidSection` and as a top-level
 | `getEntrainmentFraction()` | `getEntrainmentFractionProfile()` | Estimated liquid entrainment fraction |
 | `getEntrainedDropletDiameter()` | `getEntrainedDropletDiameterProfile()` | Entrained droplet diameter |
 | `getInclinedSectionGasCarryoverNumber()` | `getInclinedSectionGasCarryoverNumberProfile()` | Local uphill liquid-carryover screen |
+| `isInclinedSectionLiquidFallbackPotential()` | `getInclinedSectionLiquidFallbackPotentialProfile()` | Local fallback flag |
 | `getSevereSluggingNumber()` | `getSevereSluggingNumberProfile()` | Deprecated aliases for the same local screen |
 | `isSevereSlugPotential()` | `getSevereSlugPotentialProfile()` | Last explicit flowline-riser system result |
 
 The steady-state and transient profile CSV exporters include these diagnostics. Boolean values are
 written as `true` or `false`; a missing oil-water regime is written as an empty field.
+The system-result profile is meaningful only after `evaluateSevereSluggingSystem(...)` and is
+cleared when the next transient step changes the solved state.
 
 ## Benchmark comparison format
 
@@ -193,11 +200,16 @@ oil_velocity_m_s
 water_velocity_m_s
 entrainment_fraction
 entrained_droplet_diameter_m
+inclined_section_gas_carryover_number
+inclined_section_liquid_fallback_flag
 severe_slugging_number
 water_wetting_flag
 water_dropout_risk_flag
 severe_slug_potential_flag
 ```
+
+`severe_slugging_number` is the deprecated benchmark key for
+`inclined_section_gas_carryover_number`; it is retained only for existing comparison files.
 
 Example use:
 

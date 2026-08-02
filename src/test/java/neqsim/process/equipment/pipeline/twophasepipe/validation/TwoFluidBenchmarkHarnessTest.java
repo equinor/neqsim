@@ -38,6 +38,8 @@ class TwoFluidBenchmarkHarnessTest {
 
     assertTrue(snapshot.getAvailableVariables().contains("entrainment_fraction"));
     assertTrue(snapshot.getAvailableVariables().contains("entrained_droplet_diameter_m"));
+    assertTrue(snapshot.getAvailableVariables().contains("inclined_section_gas_carryover_number"));
+    assertTrue(snapshot.getAvailableVariables().contains("inclined_section_liquid_fallback_flag"));
     assertTrue(snapshot.getAvailableVariables().contains("severe_slugging_number"));
     assertTrue(snapshot.getAvailableVariables().contains("water_wetting_flag"));
     assertTrue(snapshot.getAvailableVariables().contains("water_dropout_risk_flag"));

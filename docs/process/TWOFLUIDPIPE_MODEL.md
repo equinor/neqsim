@@ -260,10 +260,18 @@ a not-applicable status for invalid topology, non-stratified feeders, single-pha
 unvalidated oil–water–gas cases. It predicts a stability boundary, not slug frequency, slug
 length, or transient cycle amplitude.
 
+The flowline and riser may have different diameters, and each flowline section contributes its
+own solved gas volume. Only the rising sections must have constant area. The public
+`SevereSluggingSystemDiagnostic.fromSections(...)` factory exposes the extracted descriptor for
+unit checking, audit, and reuse outside `TwoFluidPipe`.
+
 The old `getSevereSluggingNumberProfile()` method is retained as a deprecated serialization/API
 alias. Its values are the local inclined-section gas-carryover screen now exposed accurately as
 `getInclinedSectionGasCarryoverNumberProfile()`; they must not be used as a flowline–riser
 stability criterion.
+The associated local flag is available from
+`getInclinedSectionLiquidFallbackPotentialProfile()`. `getSevereSlugPotentialProfile()` is
+reserved for the explicit system result and is cleared by the next transient step.
 
 Reference: Taitel, Y. (1986), *Stability of Severe Slugging*, International Journal of
 Multiphase Flow 12(2), 203–217, [doi:10.1016/0301-9322(86)90026-1](https://doi.org/10.1016/0301-9322(86)90026-1).
@@ -353,7 +361,8 @@ System.out.println(pipe.getThermalSummary());
 | Water dropout | Velocity/holdup criterion | Accumulation risk flag |
 | **Terrain Effects** |
 | Low point accumulation | Froude criterion | Fr < 0.5 triggers accumulation |
-| Riser base slugging | Pots criterion | πSS > 1.0 indicates severe slugging |
+| Riser-base liquid fallback | Local gas-carryover screen | Indicates possible local fallback only |
+| Flowline-riser stability | Taitel (1986) quasi-steady criterion | Explicit topology-aware system diagnostic |
 | Uphill fallback | Turner model | Critical gas velocity check |
 | **Thermal Model** |
 | Multi-layer heat transfer | Series resistance | RadialThermalLayer class |
@@ -644,13 +653,13 @@ pipe.setSteadyStateMaxWallClockTime(60.0); // Allow 60 seconds
 - `testPressureDropComparison` - Compares pressure drop predictions between models
 
 **Pipeline Scenario Validation:**
-- `testOVIPCase1HorizontalGasCondensate` - 2km horizontal pipe, gas-condensate, 6-inch
-- `testOVIPCase2UphillRiserAccumulation` - 500m vertical riser, riser base accumulation
+- `testHorizontalGasCondensateScenario` - 2km horizontal pipe, gas-condensate, 6-inch
+- `testUphillRiserAccumulationScenario` - 500m vertical riser, riser-base accumulation
 - `testTerrainTrackingLowPointAccumulation` - V-shaped terrain with 30m dip
 - `testVelocityEffectOnHoldup` - High vs low velocity holdup comparison
 
 **Terrain-Induced Slugging Patterns:**
-- `testSevereSlugConditions` - Flowline + 200m riser, severe slugging (Pots criterion)
+- `testSevereSlugConditions` - Flowline-riser topology extraction smoke test; not a published dynamic validation case
 - `testHillyTerrainMultipleLowPoints` - Sinusoidal terrain ±20m, 3 low points
 - `testDownhillDrainage` - 50m downhill slope, liquid drainage validation
 

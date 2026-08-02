@@ -181,7 +181,7 @@ public class TwoFluidPipe extends Pipeline {
   /** Slug tracker (simplified model). */
   private SlugTracker slugTracker;
 
-  /** Lagrangian slug tracker (OLGA-style full tracking). */
+  /** Detailed Lagrangian slug tracker. */
   private LagrangianSlugTracker lagrangianSlugTracker;
 
   /**
@@ -190,7 +190,7 @@ public class TwoFluidPipe extends Pipeline {
   public enum SlugTrackingMode {
     /** Simplified slug unit model. */
     SIMPLIFIED,
-    /** Full Lagrangian tracking (OLGA-style). */
+    /** Detailed Lagrangian tracking. */
     LAGRANGIAN,
     /** No slug tracking. */
     DISABLED
@@ -281,7 +281,7 @@ public class TwoFluidPipe extends Pipeline {
   /** Soil/burial thermal resistance (m²·K/W). */
   private double soilThermalResistance = 0.0;
 
-  /** Multi-layer thermal calculator for OLGA-style radial heat transfer. */
+  /** Multi-layer radial heat-transfer calculator. */
   private MultilayerThermalCalculator thermalCalculator = null;
 
   /** Enable multi-layer thermal model (vs simple U-value). */
@@ -516,7 +516,7 @@ public class TwoFluidPipe extends Pipeline {
   // ============ OLGA Terrain Tracking Parameters ============
 
   /**
-   * Enable full OLGA-style terrain tracking.
+   * Enable empirical NeqSim terrain tracking.
    *
    * <p>
    * When enabled, uses OLGA's terrain tracking algorithm which: - Identifies all low points and high points - Tracks
@@ -529,8 +529,8 @@ public class TwoFluidPipe extends Pipeline {
    * Critical holdup for terrain-induced slug initiation.
    *
    * <p>
-   * When liquid holdup in a low point exceeds this value, a terrain-induced slug is initiated. Default 0.6 based on
-   * OLGA recommendations.
+   * When liquid holdup in a low point exceeds this value, a terrain-induced slug is initiated. The
+   * default 0.6 is an empirical NeqSim setting, not a published commercial-simulator default.
    * </p>
    */
   private double terrainSlugCriticalHoldup = 0.6;
@@ -540,17 +540,17 @@ public class TwoFluidPipe extends Pipeline {
    *
    * <p>
    * Controls how much liquid falls back in uphill sections when gas velocity is insufficient to carry liquid upward.
-   * Higher values mean more liquid accumulation. OLGA default ~0.3.
+   * Higher values mean more liquid accumulation. The default 0.3 is an empirical NeqSim setting.
    * </p>
    */
   private double liquidFallbackCoefficient = 0.3;
 
   /**
-   * Enable severe slugging detection and modeling.
+   * Enable empirical terrain-slug and riser-base liquid-fallback closures.
    *
    * <p>
-   * Severe slugging occurs at riser bases when liquid periodically blocks gas flow. This cyclic phenomenon can cause
-   * large pressure and flow oscillations.
+   * The serialized field name is retained for compatibility. These local closures are separate from
+   * the explicit flowline-riser system diagnostic.
    * </p>
    */
   private boolean enableSevereSlugModel = true;
@@ -572,8 +572,8 @@ public class TwoFluidPipe extends Pipeline {
    * Flow regime transition hysteresis factor.
    *
    * <p>
-   * OLGA uses hysteresis to prevent rapid switching between flow regimes. A value of 0.1 means 10% hysteresis band
-   * around transition boundaries.
+   * NeqSim applies this hysteresis to prevent rapid switching between flow regimes. A value of
+   * 0.1 means a 10% band around transition boundaries.
    * </p>
    */
   private double flowRegimeHysteresis = 0.1;
@@ -1854,8 +1854,8 @@ public class TwoFluidPipe extends Pipeline {
    * Update temperature using multi-layer thermal model.
    *
    * <p>
-   * This method implements OLGA-style radial heat transfer through multiple concentric layers. The heat transfer
-   * calculation uses:
+   * This method implements radial heat transfer through multiple concentric layers. The heat
+   * transfer calculation uses:
    * </p>
    * <ul>
    * <li>Inner convective resistance from fluid to pipe wall</li>
@@ -2557,7 +2557,7 @@ public class TwoFluidPipe extends Pipeline {
     double WeG = rhoG * vsG * vsG * D / sigma;
     double ReL = rhoL * vsL * D / muL;
 
-    // Entrainment fraction (OLGA uses modified Ishii-Mishima)
+    // Entrainment fraction from the selected NeqSim closure set
     double entrainment = 0.0;
     if (WeG > 0 && ReL > 0) {
       double entrainmentArg = 7.25e-7 * Math.pow(WeG, 1.25) * Math.pow(ReL, 0.25);
@@ -2736,7 +2736,7 @@ public class TwoFluidPipe extends Pipeline {
    * Calculate terrain-induced liquid accumulation enhancement using OLGA methodology.
    *
    * <p>
-   * This implements the full OLGA terrain tracking algorithm which accounts for:
+   * This implements empirical NeqSim terrain holdup modifiers which account for:
    * </p>
    * <ul>
    * <li><b>Low Point Accumulation:</b> Liquid pools in valleys due to gravity. The volume of accumulated liquid depends
@@ -2790,7 +2790,7 @@ public class TwoFluidPipe extends Pipeline {
     // ========== LOW POINT ACCUMULATION (OLGA Valley Model) ==========
     if (isLowPoint || sec.isLowPoint()) {
       // At low points, liquid accumulates due to gravity pooling
-      // OLGA uses a modified Froude number criterion for accumulation
+      // NeqSim uses a modified Froude-number screen for accumulation
 
       // Elevation change into the low point
       double elevChange = (prev != null) ? Math.abs(sec.getElevation() - prev.getElevation()) : 0;
@@ -3261,6 +3261,7 @@ public class TwoFluidPipe extends Pipeline {
   public void runTransient(double dt, UUID id) {
     isTransientMode = true;
     lastMassBalanceReport = null;
+    clearSevereSluggingSystemClassification();
     double[] initialMassKg = getPhaseMassInventoriesKg();
     double[] integratedInletMassKg = new double[3];
     double[] integratedOutletMassKg = new double[3];
@@ -3276,7 +3277,7 @@ public class TwoFluidPipe extends Pipeline {
 
     boolean isIMEX = (timeIntegrator.getMethod() == TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION);
 
-    // Calculate initial stable time step (OLGA-style: CFL from current velocities)
+    // Calculate initial stable time step from the current-velocity CFL limit
     double dtCFL = isIMEX ? calcConvectiveTimeStep() : calcStableTimeStep();
     if (enableAdaptiveTimestepping) {
       dtCFL *= adaptiveDtFactor;
@@ -3470,7 +3471,7 @@ public class TwoFluidPipe extends Pipeline {
         double inletMixtureVelocity = sections[0].getMixtureVelocity();
 
         if (slugTrackingMode == SlugTrackingMode.LAGRANGIAN) {
-          // OLGA-style full Lagrangian tracking
+          // Detailed Lagrangian tracking
           lagrangianSlugTracker.setReferenceVelocity(inletMixtureVelocity);
 
           // Check for terrain-induced slug initiation from accumulation zones
@@ -4870,6 +4871,27 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
+   * Get the local inclined-section liquid-fallback screen at each section.
+   *
+   * <p>
+   * This profile is maintained by local closure calculations. It is separate from the explicit
+   * flowline-riser severe-slugging system classification.
+   * </p>
+   *
+   * @return local liquid-fallback flags
+   */
+  public boolean[] getInclinedSectionLiquidFallbackPotentialProfile() {
+    if (sections == null) {
+      return new boolean[0];
+    }
+    boolean[] profile = new boolean[numberOfSections];
+    for (int i = 0; i < numberOfSections; i++) {
+      profile[i] = sections[i].isInclinedSectionLiquidFallbackPotential();
+    }
+    return profile;
+  }
+
+  /**
    * Legacy alias for {@link #getInclinedSectionGasCarryoverNumberProfile()}.
    *
    * @return local gas-carryover-number profile
@@ -4881,9 +4903,16 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Get the severe-slugging risk flag at each section.
+   * Get the most recent explicit severe-slugging system classification as a section profile.
    *
-   * @return severe-slugging potential flags
+   * <p>
+   * The profile is all false until {@link #evaluateSevereSluggingSystem(int)} is called. An
+   * applicable unstable result marks only the selected riser-base section. Each subsequent
+   * {@link #runTransient(double, UUID)} call invalidates and clears the classification because the
+   * section state has changed.
+   * </p>
+   *
+   * @return explicit system-classification flags
    */
   public boolean[] getSevereSlugPotentialProfile() {
     if (sections == null) {
@@ -4921,6 +4950,11 @@ public class TwoFluidPipe extends Pipeline {
    * return a not-applicable status.
    * </p>
    *
+   * <p>
+   * Evaluation clears the previous system-classification profile and marks the selected riser-base
+   * section only when the result is applicable and unstable.
+   * </p>
+   *
    * @param riserBaseSection index of the first continuously rising section
    * @param gasCapVoidFraction void fraction alpha-prime in the penetrating gas cap
    * @param staticChokePressureDropPa fixed choke pressure drop in Pa
@@ -4935,66 +4969,27 @@ public class TwoFluidPipe extends Pipeline {
       throw new IllegalArgumentException("riserBaseSection must be between 1 and numberOfSections - 1");
     }
 
-    double referenceArea = sections[riserBaseSection].getArea();
-    double upstreamGasVolume = 0.0;
-    double riserVolume = 0.0;
-    double riserLiquidVolume = 0.0;
-    double riserLiquidMass = 0.0;
-    double riserHeight = 0.0;
-    boolean topologyValid = true;
-    boolean flowlineStratified = true;
-    boolean flowlineContainsGasAndLiquid = false;
-    boolean threePhase = false;
-
-    for (int i = 0; i < sections.length; i++) {
-      TwoFluidSection section = sections[i];
-      double cellVolume = section.getArea() * section.getLength();
-      if (Math.abs(section.getArea() - referenceArea) > 1.0e-6 * referenceArea) {
-        topologyValid = false;
-      }
-      if (section.getOilHoldup() > 1.0e-10 && section.getWaterHoldup() > 1.0e-10) {
-        threePhase = true;
-      }
-
-      if (i < riserBaseSection) {
-        upstreamGasVolume += section.getGasHoldup() * cellVolume;
-        topologyValid &= section.getInclination() <= Math.toRadians(1.0);
-        if (section.getGasHoldup() > 1.0e-10 && section.getLiquidHoldup() > 1.0e-10) {
-          flowlineContainsGasAndLiquid = true;
-          FlowRegime regime = section.getFlowRegime();
-          flowlineStratified &= regime == FlowRegime.STRATIFIED_SMOOTH || regime == FlowRegime.STRATIFIED_WAVY;
-        }
-      } else {
-        topologyValid &= section.getInclination() > Math.toRadians(1.0);
-        riserHeight += Math.sin(section.getInclination()) * section.getLength();
-        riserVolume += cellVolume;
-        double liquidVolume = section.getLiquidHoldup() * cellVolume;
-        riserLiquidVolume += liquidVolume;
-        riserLiquidMass += liquidVolume * section.getLiquidDensity();
-      }
-    }
-
-    flowlineStratified &= flowlineContainsGasAndLiquid;
-    double riserLiquidHoldup = riserVolume > 0.0 ? riserLiquidVolume / riserVolume : 0.0;
-    double liquidDensity = riserLiquidVolume > 0.0 ? riserLiquidMass / riserLiquidVolume : 1.0;
-    topologyValid &= riserHeight > 0.0;
-
-    SevereSluggingSystemDiagnostic.Input input = SevereSluggingSystemDiagnostic.Input.builder()
-        .upstreamGasVolumeM3(upstreamGasVolume).riserAreaM2(referenceArea).riserHeightM(Math.max(riserHeight, 1.0e-12))
-        .separatorPressurePa(sections[sections.length - 1].getPressure())
-        .staticChokePressureDropPa(staticChokePressureDropPa).liquidDensityKgPerM3(liquidDensity)
-        .riserLiquidHoldup(riserLiquidHoldup).gasCapVoidFraction(gasCapVoidFraction)
-        .validFlowlineRiserTopology(topologyValid).flowlineStratified(flowlineStratified)
-        .flowlineContainsGasAndLiquid(flowlineContainsGasAndLiquid).threePhase(threePhase).build();
+    SevereSluggingSystemDiagnostic.Input input = SevereSluggingSystemDiagnostic.fromSections(sections,
+        riserBaseSection, gasCapVoidFraction, staticChokePressureDropPa);
     SevereSluggingSystemDiagnostic.Result result = SevereSluggingSystemDiagnostic.evaluate(input);
 
-    for (TwoFluidSection section : sections) {
-      section.setSevereSlugPotential(false);
-    }
+    clearSevereSluggingSystemClassification();
     if (result.isSevereSluggingPossible()) {
       sections[riserBaseSection].setSevereSlugPotential(true);
     }
     return result;
+  }
+
+  /** Clear the section marker produced by the explicit system diagnostic. */
+  private void clearSevereSluggingSystemClassification() {
+    if (sections == null) {
+      return;
+    }
+    for (TwoFluidSection section : sections) {
+      if (section != null) {
+        section.setSevereSlugPotential(false);
+      }
+    }
   }
 
   /**
@@ -5044,7 +5039,7 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Get Lagrangian slug tracker for OLGA-style slug tracking.
+   * Get the detailed Lagrangian slug tracker.
    *
    * @return Lagrangian slug tracker
    */
@@ -5069,8 +5064,8 @@ public class TwoFluidPipe extends Pipeline {
    * </p>
    * <ul>
    * <li><b>SIMPLIFIED:</b> Simple slug unit model with basic tracking</li>
-   * <li><b>LAGRANGIAN:</b> Full OLGA-style Lagrangian tracking with wake effects, frequency-based initiation, and
-   * detailed statistics</li>
+   * <li><b>LAGRANGIAN:</b> Detailed tracking with wake effects, frequency-based initiation,
+   * and slug statistics</li>
    * <li><b>DISABLED:</b> No slug tracking</li>
    * </ul>
    *
@@ -5085,7 +5080,7 @@ public class TwoFluidPipe extends Pipeline {
    * Configure Lagrangian slug tracker parameters.
    *
    * <p>
-   * This method provides access to advanced slug tracking configuration for the OLGA-style Lagrangian model.
+   * This method provides access to detailed Lagrangian slug-tracking configuration.
    * </p>
    *
    * @param enableInletGeneration enable hydrodynamic slug generation at inlet
@@ -6321,21 +6316,45 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Enable or disable severe slugging model for risers.
+   * Enable or disable empirical terrain-slug and riser-base liquid-fallback closures.
    *
-   * @param enable true to enable severe slugging detection (default true)
+   * @param enable true to enable the local closures
    */
-  public void setEnableSevereSlugModel(boolean enable) {
+  public void setEnableTerrainSlugClosures(boolean enable) {
     this.enableSevereSlugModel = enable;
   }
 
   /**
-   * Check if severe slugging model is enabled.
+   * Check whether empirical terrain-slug and riser-base liquid-fallback closures are enabled.
    *
-   * @return true if severe slugging model is enabled
+   * @return true if the local closures are enabled
    */
-  public boolean isEnableSevereSlugModel() {
+  public boolean isEnableTerrainSlugClosures() {
     return enableSevereSlugModel;
+  }
+
+  /**
+   * Legacy alias for {@link #setEnableTerrainSlugClosures(boolean)}.
+   *
+   * @param enable true to enable the local closures
+   * @deprecated This switch does not enable or disable the explicit severe-slugging system
+   *             diagnostic.
+   */
+  @Deprecated
+  public void setEnableSevereSlugModel(boolean enable) {
+    setEnableTerrainSlugClosures(enable);
+  }
+
+  /**
+   * Legacy alias for {@link #isEnableTerrainSlugClosures()}.
+   *
+   * @return true if the local closures are enabled
+   * @deprecated This value does not report availability of the explicit severe-slugging system
+   *             diagnostic.
+   */
+  @Deprecated
+  public boolean isEnableSevereSlugModel() {
+    return isEnableTerrainSlugClosures();
   }
 
   /**
@@ -6577,7 +6596,7 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Enable multi-layer thermal model for OLGA-style radial heat transfer.
+   * Enable the multi-layer radial heat-transfer model.
    *
    * <p>
    * When enabled, uses the MultilayerThermalCalculator for accurate heat transfer with proper modeling of:
