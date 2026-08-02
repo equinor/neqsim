@@ -9,6 +9,122 @@
 
 ---
 
+## 2026-08-02 — DNV-RP-F105 added as a first-mode free-span screening kernel
+
+### Added
+
+`DnvRpF105FreeSpanScreeningKernel` implements an edition-aware, fail-closed screen for
+`DNV-RP-F105 2025-12`. It calculates a simply supported Euler-Bernoulli first-mode frequency with
+externally derived effective mass and axial force, then reports current/wave frequency ratios,
+reduced velocities, and Keulegan-Carpenter number. Steel and hydrodynamic diameters are distinct.
+
+### Required evidence and migration
+
+Geometry, structural-model, environmental, and project-trigger verification are mandatory caller
+attestations. Strouhal number, frequency-ratio band, and reduced-velocity triggers are
+project-controlled evidence; they are not embedded DNV criteria or acceptance decisions. Soil and
+span-shoulder stiffness, interacting spans, response amplitudes, direct wave loading, ULS/FLS,
+fatigue, monitoring, intervention, and conformity remain external.
+
+`PipeMechanicalDesignCalculator.calculateAllowableSpanLength(...)` remains compatible but is a
+legacy fixed-assumption estimate with fallback/cap behavior. Agents must not relabel it as F105 and
+must route an explicit current-edition basis through the typed kernel.
+
+The standards resource index now records the current F105 edition/applicability. Unverified legacy
+CSV values labelled as F105 safety factors, fatigue factors, allowable stress, and maximum span were
+removed rather than relabelled as current. The generic transient-pipe surge allowance is now
+identified as project basis, not F105.
+
+---
+
+## 2026-08-02 — DNV-RP-C203 added as a controlled-curve fatigue kernel
+
+### Added
+
+`DnvRpC203FatigueDesignKernel` implements the S-N and Palmgren-Miner arithmetic for the current
+`2024-10+AMD:2025-10` basis. It accepts immutable spectrum bins, stress-range factors, a design
+fatigue factor, damage limit, and a caller-supplied single-slope or continuous bi-linear curve.
+`DnvRpC203FatigueAssessment` reports per-bin cycles to failure and damage, cumulative raw and design
+damage, utilization, governing bin, and linear-extrapolated life.
+
+### Required evidence and migration
+
+NeqSim deliberately does not embed or select licensed DNV S-N tables. Curve and spectrum
+verification flags are attestations and both are required before calculation. Curve/detail
+selection, structural stress derivation, environment/thickness factors, SCFs, rainflow counting,
+load combination, inspection planning, and conformity remain external.
+
+Existing pipeline and riser fatigue methods remain compatible but use inconsistent embedded
+parameters. Agents must call them legacy estimates and must route an explicit current-edition C203
+basis through the typed kernel with a controlled project curve.
+
+---
+
+## 2026-08-02 — ISO 5167-1/-2 added to the edition-aware standards pipeline
+
+### Added
+
+`ISO-5167-1 2022` and `ISO-5167-2 2022` are catalogued separately with ISO publisher lifecycle
+sources. Part 1 records the companion general-principles basis; Part 2 registers the new
+`Iso5167OrificeMeteringKernel` for `Orifice` equipment.
+
+The kernel reuses the existing `Orifice` Reader-Harris/Gallagher and pressure-loss equations through
+an immutable, unit-explicit contract. Liquid service uses an explicit expansibility factor of one,
+while gas/vapour service requires kappa and applies the existing compressible correction. The typed
+result records beta ratio, differential and pressure ratios, discharge and expansibility factors,
+mass and actual-volume flow, pipe Reynolds number, permanent pressure loss, and iteration count.
+
+### Applicability and boundary
+
+The adapter fails closed for unsupported editions or amendments, non-`Orifice` equipment,
+multiphase/part-full/pulsating/non-subsonic flow, pipe diameter outside 50 mm to 1,000 mm, beta ratio
+outside the implemented 0.10 to 0.75 screen, Reynolds number below 5,000, invalid absolute
+pressures/properties, and missing external geometry/installation verification. That verification is
+a caller attestation; NeqSim does not inspect the installed meter.
+
+The method remains `SCREENING`. It does not replace purchased ISO 5167-1/-2 documents, uncertainty
+analysis, calibration, plate and tapping inspection, straight-length verification, pulsation or
+two-phase analysis, custody-transfer acceptance, or accountable engineering approval. Existing
+`Orifice`, `Standard_AGA3`, and `GpsaOrificeCalculator` entry points remain available under their
+respective process-simulation and AGA/API/GPSA bases.
+
+### Documentation and example
+
+Added `docs/process/measurement/iso_5167_orifice_metering.md` and an executed
+`examples/notebooks/iso_5167_orifice_metering_kernel.ipynb`. The common regression suite, support
+matrix, migration/program/design-framework guides, standards lookup skill, standards reviewer, and
+gas-quality agent now cover the exact ISO path and its exclusions.
+
+## 2026-08-02 — NORSOK M-506 added to the edition-aware standards kernel registry
+
+### Summary
+
+The existing mutable `NorsokM506CorrosionRate` calculation now has a strict common-kernel adapter.
+`NORSOK-M-506 2017` is catalogued with publisher lifecycle evidence, exact-edition support, equipment
+applicability, readiness blockers, immutable inputs and outputs, and regression coverage.
+
+### New API
+
+| API | What it does |
+|---|---|
+| `NorsokM506CorrosionDesignKernel` | Runs the existing simplified calculation only after edition, applicability, range, and input-quality checks pass |
+| `NorsokM506CorrosionDesignKernel.Input.builder(...)` | Retains unit-explicit raw inputs without the legacy setters' silent clamping |
+| `NorsokM506CorrosionAssessment` | Reports rate, pH, fugacity, correction factors, wall shear, and projected uniform wall loss as an immutable review-gated snapshot |
+
+### Migration
+
+Use the kernel for new auditable studies. Keep `NorsokM506CorrosionRate` for legacy mutable workflows
+and sweeps, and use `NorsokM506ElectrolyteBridge` when an electrolyte-model pH or FeCO3 saturation
+ratio is required. The projected wall loss is not a code corrosion allowance or acceptance decision.
+
+### Agent and skill behavior
+
+Standards and flow-assurance guidance now route explicit M-506 compliance work through the common
+kernel and require the screening boundary, purchased-standard review, and NeqSim FeCO3 extension to
+remain visible.
+
+---
+
 ## 2026-08-02 — Pump NPSH capacity constraint direction corrected
 
 ### Summary

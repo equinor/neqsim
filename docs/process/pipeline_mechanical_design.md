@@ -302,7 +302,7 @@ double Ppr = calc.calculatePropagationBucklingPressure();
 // Buckle arrestors required if Ppr < Pe
 ```
 
-### Allowable Free Span Length
+### Legacy Allowable Free Span Estimate
 
 Based on vortex-induced vibration (VIV) avoidance:
 
@@ -318,6 +318,13 @@ Where:
 double currentVelocity = 0.5;  // m/s
 double spanLength = calc.calculateAllowableSpanLength(currentVelocity);
 ```
+
+This method is a compatibility estimate with fixed assumptions and fallback/cap behavior. It is not
+edition-aware and must not be presented as DNV-RP-F105 evidence. For an explicit current
+`DNV-RP-F105 2025-12` basis, use `DnvRpF105FreeSpanScreeningKernel`. It exposes the effective mass,
+axial force, hydrodynamic diameter, current/wave environment, and project-controlled response
+triggers without claiming a safe span or DNV acceptance. See the
+[DNV-RP-F105 first-mode free-span guide](mechanical_design/dnv_rp_f105_free_span).
 
 ---
 
@@ -419,9 +426,9 @@ Per ASME B16.5:
 int flangeClass = calc.selectFlangeClass();  // Based on design pressure
 ```
 
-### Fatigue Life Estimation
+### Legacy Fatigue Life Estimation
 
-Per DNV-RP-C203 (D-curve):
+The compatibility calculator uses one embedded single-slope estimate:
 
 $$N = \frac{10^{11.764}}{S^3}$$
 
@@ -431,6 +438,12 @@ double stressRange = 50.0;  // MPa
 double cyclesPerYear = 1e6;
 double fatigueLife = calc.estimateFatigueLife(stressRange, cyclesPerYear);
 ```
+
+This shortcut does not select an edition, environment, detail category, thickness basis, or
+verified stress spectrum, and its embedded parameter differs from the riser data-source default.
+Do not report it as current-edition DNV-RP-C203 evidence. For an explicit C203 basis, use
+`DnvRpC203FatigueDesignKernel` with a project-controlled curve and verified stress bins; see
+[DNV-RP-C203 S-N and Miner fatigue screening](mechanical_design/dnv_rp_c203_fatigue).
 
 ### Insulation Thickness
 

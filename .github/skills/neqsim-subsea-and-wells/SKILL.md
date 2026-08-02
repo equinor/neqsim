@@ -1,6 +1,6 @@
 ---
 name: neqsim-subsea-and-wells
-description: "Subsea production systems, DNV-RP-F109 on-bottom stability screening, well design, SURF cost estimation, and tieback analysis with NeqSim. USE WHEN: designing subsea fields, screening pipeline/cable/umbilical seabed stability, sizing flowlines and umbilicals, estimating well costs, performing casing design, running tieback comparisons, or configuring subsea equipment (trees, manifolds, boosters, risers)."
+description: "Subsea production systems, DNV-RP-F109 on-bottom stability screening, DNV-RP-F105 free-span screening, well design, SURF cost estimation, and tieback analysis with NeqSim. USE WHEN: designing subsea fields, screening pipeline/cable/umbilical seabed stability, sizing flowlines and umbilicals, estimating well costs, performing casing design, running tieback comparisons, or configuring subsea equipment (trees, manifolds, boosters, risers)."
 last_verified: "2026-08-02"
 ---
 
@@ -302,6 +302,20 @@ double pressureDrop = feedStream.getPressure() - pipeline.getOutletPressure();
 double arrivalTemp = pipeline.getOutletTemperature() - 273.15;  // °C
 ```
 
+### Free-span screening (DNV-RP-F105)
+
+For an explicit current `DNV-RP-F105 2025-12` basis, use
+`DnvRpF105FreeSpanScreeningKernel`. Supply surveyed span/pipe geometry, a separate hydrodynamic
+diameter, accepted effective modal mass and axial force, normal current/wave inputs, and verified
+project response triggers. The kernel reports a simply supported first-mode frequency and common
+dimensionless groups only.
+
+Do not use `PipeMechanicalDesignCalculator.calculateAllowableSpanLength(...)` as F105 evidence. It
+is a legacy fixed-assumption estimate with fallback/cap behavior. Do not turn the typed kernel's
+caller-controlled response triggers into PASS/FAIL against DNV: soil and span-shoulder stiffness,
+multi-span interaction, detailed VIV/direct-wave response, ULS/FLS, fatigue, monitoring, and
+intervention remain a controlled external assessment.
+
 ### Pipeline Mechanical Design
 
 ```java
@@ -458,7 +472,7 @@ Map<String, Double> allocation = optimizer.optimize();
 | Pressure vessels | ASME VIII Div.1/2 | Separator, vessel sizing |
 | Subsea production | API 17A-17Q | Subsea equipment specs |
 | Risers | API 2RD / DNV-OS-F201 | Riser design |
-| Free spans | DNV-RP-F105 | Free-spanning pipelines |
+| Flowlines | DNV-RP-F105 2025-12 | Use `DnvRpF105FreeSpanScreeningKernel` for first-mode/dimensionless escalation screening; retain detailed response and acceptance externally |
 | Fatigue | DNV-RP-C203 | S-N curves, fatigue life |
 
 ---

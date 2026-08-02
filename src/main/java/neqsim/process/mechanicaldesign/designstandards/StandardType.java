@@ -40,6 +40,8 @@ public enum StandardType {
       new String[] { "Separator", "ThreePhaseSeparator", "Compressor", "Pump" }, "separator process design"),
   NORSOK_M_001("NORSOK-M-001", "Materials selection", "2025",
       new String[] { "Pipeline", "Separator", "ThreePhaseSeparator" }, "material plate design codes"),
+  NORSOK_M_506("NORSOK-M-506", "CO2 corrosion rate calculation model", "2017",
+      new String[] { "Pipeline", "AdiabaticPipe", "Pipe" }, "corrosion design codes"),
   NORSOK_M_630("NORSOK-M-630", "Material data sheets for piping", "2020",
       new String[] { "AdiabaticPipe", "Pipe", "Valve" }, "material pipe design codes"),
   NORSOK_S_001("NORSOK-S-001", "Technical safety", "2020+AC:2021",
@@ -101,11 +103,13 @@ public enum StandardType {
       new String[] { "Separator", "ThreePhaseSeparator", "GasScrubber" }, "separator process design"),
 
   // DNV Standards (Det Norske Veritas)
+  DNV_RP_C203("DNV-RP-C203", "Fatigue design of offshore steel structures", "2024-10+AMD:2025-10",
+      new String[] { "Pipeline", "AdiabaticPipe", "Pipe", "Riser", "OffshoreStructure" }, "fatigue design standards"),
   DNV_ST_F101("DNV-ST-F101", "Submarine Pipeline Systems", "2021",
       new String[] { "Pipeline", "AdiabaticPipe", "PipeBeggsAndBrills" }, "pipeline design codes"),
   DNV_OS_F101("DNV-OS-F101", "Submarine Pipeline Systems (Legacy)", "2013",
       new String[] { "Pipeline", "AdiabaticPipe" }, "pipeline design codes"),
-  DNV_RP_F105("DNV-RP-F105", "Free Spanning Pipelines", "2021", new String[] { "Pipeline", "AdiabaticPipe" },
+  DNV_RP_F105("DNV-RP-F105", "Free spanning pipelines", "2025-12", new String[] { "Pipeline", "AdiabaticPipe" },
       "pipeline design codes"),
   DNV_RP_F109("DNV-RP-F109", "On-bottom Stability Design of Submarine Pipelines, Cables and Umbilicals",
       "2021-05+AMD 2025-09",
@@ -113,6 +117,10 @@ public enum StandardType {
       "pipeline design codes"),
 
   // ISO Standards
+  ISO_5167_1("ISO-5167-1", "Differential-pressure flow measurement - General principles", "2022",
+      new String[] { "Orifice" }, "flow measurement standards"),
+  ISO_5167_2("ISO-5167-2", "Differential-pressure flow measurement - Orifice plates", "2022",
+      new String[] { "Orifice" }, "flow measurement standards"),
   ISO_13623("ISO-13623", "Pipeline Transportation Systems", "2017", new String[] { "Pipeline", "AdiabaticPipe" },
       "pipeline design codes"),
   ISO_15649("ISO-15649", "Petroleum and Natural Gas Process Piping", "2001", new String[] { "AdiabaticPipe", "Pipe" },

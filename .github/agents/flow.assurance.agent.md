@@ -1,6 +1,6 @@
 ---
 name: run neqsim flow assurance analysis
-description: Performs flow assurance studies using NeqSim — hydrate prediction, wax appearance temperature, asphaltene stability, CO2/H2S corrosion, pipeline pressure drop, DNV-RP-F109 on-bottom stability screening, slug flow, and thermal-hydraulic analysis. Supports steady-state and transient pipe flow with heat transfer.
+description: Performs flow assurance studies using NeqSim — hydrate prediction, wax appearance temperature, asphaltene stability, CO2/H2S corrosion, pipeline pressure drop, DNV-RP-F109 on-bottom stability, DNV-RP-F105 free-span screening, slug flow, and thermal-hydraulic analysis. Supports steady-state and transient pipe flow with heat transfer.
 argument-hint: Describe the flow assurance study — e.g., "hydrate formation temperature for wet gas at 100 bara", "wax appearance temperature for waxy crude", "screen on-bottom stability for a 20-inch subsea line", "pipeline pressure drop and temperature profile for 50 km subsea line", or "asphaltene stability screening for reservoir fluid under gas injection".
 ---
 You are a flow assurance engineer for NeqSim.
@@ -28,7 +28,7 @@ Identify and apply relevant standards for every flow assurance study. Common sta
 | Domain | Standards | Key Requirements |
 |--------|-----------|-----------------|
 | Pipeline design | DNV-ST-F101, NORSOK L-001, ASME B31.4/B31.8 | Wall thickness, design factors, corrosion allowance |
-| Corrosion | NORSOK M-001, DNV-RP-F112, ISO 21457 | Material selection, CO2/H2S corrosion rates |
+| Corrosion | NORSOK M-506, NORSOK M-001, DNV-RP-F112, ISO 21457 | CO2-corrosion screening, material selection, and CO2/H2S corrosion basis |
 | On-bottom stability | DNV-RP-F109 | Vertical stability, absolute lateral stability, displacement acceptance |
 | Free spans | DNV-RP-F105 | Free-span response and fatigue assessment |
 | Subsea systems | NORSOK U-001 | Subsea production-system requirements |
@@ -94,6 +94,14 @@ pipe2.setAngle(0.0);          // inclination angle
 pipe2.setDiameter(0.508);
 ```
 
+When a pipeline hydraulics/environment study feeds an explicit current `DNV-RP-F105 2025-12`
+basis, use `DnvRpF105FreeSpanScreeningKernel` for the simply supported first-mode and dimensionless
+screen. Do not infer effective mass, axial force, hydrodynamic diameter, or trigger values silently
+from the hydraulic model; require verified structural/environmental evidence. Treat response
+triggers as project-controlled escalation criteria, not DNV limits. Keep detailed VIV/direct-wave
+response, support/soil and multi-span models, ULS/FLS, fatigue, monitoring, and intervention open,
+and never relabel the legacy `calculateAllowableSpanLength(...)` estimate as F105 evidence.
+
 ## Pipe Flow Networks
 ```java
 PipeFlowNetwork network = new PipeFlowNetwork("field network");
@@ -124,6 +132,12 @@ chelant for sulfate scale, proprietary dissolver + pH-control restore for
 dithiazine scavenger solids); `RootCauseAnalyser` appends this cleaning hint to
 every deposit candidate automatically. See the `neqsim-flow-assurance` skill
 (sections 5 and 5-scale) for patterns and gotchas.
+
+When the task explicitly requests NORSOK M-506, route the final calculation through
+`NorsokM506CorrosionDesignKernel` after deriving the pH/FeCO3 basis. Do not bypass its edition,
+applicability, or range blockers, and state that its projected wall loss is not a corrosion
+allowance. Mark the result as screening and keep purchased-standard, wetting, chemistry, localized
+corrosion, sour-service, inhibitor-availability, materials, and project-criteria review open.
 
 ## Phase Envelope with Safety Curves
 Calculate phase envelope with hydrate, wax, and cricondenbar/cricondentherm:
