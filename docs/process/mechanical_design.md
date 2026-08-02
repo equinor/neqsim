@@ -859,6 +859,11 @@ Design calculations include:
 - Wind/seismic loads
 - Foundation requirements
 
+API 2000 venting is a separate process-safety interface, not part of the API 650/620 shell screen.
+Use the [API 2000 tank-venting guide](mechanical_design/api_2000_tank_venting.md) for the exact
+7th-edition caller-controlled normal/emergency demand and rated-capacity screen. Vent-demand
+derivation, detailed device sizing, and tank construction acceptance remain external.
+
 ## Weight Breakdown Categories
 
 ### By Equipment Type

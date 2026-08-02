@@ -1,6 +1,6 @@
 ---
 name: run neqsim mechanical design
-description: Performs mechanical design and CAPEX calculations for process equipment and process systems — wall thickness, pipeline limit-state and free-span/VIV screening, material selection, weight estimation, CostEstimateResult reconciliation, and cost analysis per ASME, API, DNV, ISO, NORSOK, and AACE-style estimate classes. Supports separators, pipelines, heat exchangers, compressors, valves, vessels, topsides, SURF, subsea, and well rollups with company-specific TR document requirements.
+description: Performs mechanical design and CAPEX calculations for process equipment and process systems — wall thickness, pipeline limit-state, free-span/VIV, and corroded-pipeline metal-loss screening, material selection, weight estimation, CostEstimateResult reconciliation, and cost analysis per ASME, API, DNV, ISO, NORSOK, and AACE-style estimate classes. Supports separators, pipelines, heat exchangers, compressors, valves, vessels, topsides, SURF, subsea, and well rollups with company-specific TR document requirements.
 argument-hint: Describe the equipment or process for mechanical design and cost estimation — e.g., "screen a 20-inch export pipeline for 150 bara per DNV-ST-F101:2021", "size an HP separator vessel per ASME VIII Div.1", "estimate topsides CAPEX for this process", or "mechanical design for a subsea manifold with operator TR requirements".
 ---
 
@@ -175,6 +175,34 @@ Do not treat `PipeMechanicalDesignCalculator.calculateAllowableSpanLength(...)` 
 F105. It is a legacy fixed-assumption estimate with arbitrary fallback/cap behavior. Keep support and
 soil stiffness, interacting spans, detailed VIV/direct-wave response, ULS/FLS, fatigue, monitoring,
 intervention, and accountable approval external.
+
+### DNV-RP-F101 corroded-pipeline work
+
+For an explicit current-edition F101 remaining-strength basis, use
+`DnvRpF101CorrodedPipelineScreeningKernel`. Supply verified assessment wall thickness, measured
+isolated longitudinal defect depth and length, caller-controlled depth allowance, characteristic
+ultimate tensile strength, internal/external pressures, pressure factor, and applicability. Report
+failure pressure, caller-controlled limit, utilization, and margin as `SCREENING`, not fitness-for-
+service approval.
+
+Do not derive measured defect dimensions from `NorsokM506CorrosionDesignKernel` projected uniform
+wall loss. Keep interaction/complex-profile and combined-load assessment, inspection uncertainty,
+growth, probabilistic methods, crack-like damage, repair, and approval external. This RP-F101 path
+does not replace DNV-ST-F101 pressure containment, collapse, propagation/local buckling, load
+interaction, fatigue, incidental/test pressure, de-rating, safety class, ovality, fabrication
+route, or installation-strain work.
+
+### API 2000 tank-venting work
+
+For a current-edition fixed-roof tank venting basis, use `Api2000TankVentingScreeningKernel`.
+Supply verified caller-controlled normal movement/thermal/other demands, total emergency demand,
+rated device/system capacities at stated pressure/vacuum conditions, common gas reference
+conditions, and tank positive/vacuum limits. Report demand, utilization, and margins as
+`SCREENING`, not device sizing or API compliance.
+
+Do not use `FireProtectionDesign` or generic PSV sizing as a silent substitute for API 2000 tank
+vent demand. Keep API demand tables/equations, scenarios, vent area/device selection, losses,
+flame arresters, blanketing, refrigerated/floating-roof service, testing, and approval external.
 
 ## DNV-ST-F101 pipeline work
 

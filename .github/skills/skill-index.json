@@ -1,4 +1,19 @@
 {
+  "dnv rp f101": [
+    "neqsim-standards-lookup",
+    "neqsim-subsea-and-wells",
+    "neqsim-flow-assurance"
+  ],
+  "corroded pipeline screening": [
+    "neqsim-subsea-and-wells",
+    "neqsim-standards-lookup",
+    "neqsim-flow-assurance"
+  ],
+  "pipeline metal loss assessment": [
+    "neqsim-standards-lookup",
+    "neqsim-subsea-and-wells",
+    "neqsim-flow-assurance"
+  ],
   "dnv rp f105": [
     "neqsim-standards-lookup",
     "neqsim-subsea-and-wells",

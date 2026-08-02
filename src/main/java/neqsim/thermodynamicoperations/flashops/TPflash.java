@@ -641,6 +641,7 @@ public class TPflash extends Flash {
         // applied on this path, as it can discard a genuine split the stability test overlooked.
         collapseTrivialMultiphaseSplit();
         rescueLowerGibbsPhaseRoot();
+        rescueLowerGibbsHydrocarbonPhaseRoots();
         rescueLiquidLiquidEndpoint();
         rescueWaterRichEndpoint();
         return;
@@ -835,6 +836,7 @@ public class TPflash extends Flash {
     collapseTrivialMultiphaseSplit();
     normalizeActivePhaseFractions();
     rescueLowerGibbsPhaseRoot();
+    rescueLowerGibbsHydrocarbonPhaseRoots();
     rescueLiquidLiquidEndpoint();
     rescueWaterRichEndpoint();
 
@@ -1495,9 +1497,9 @@ public class TPflash extends Flash {
    * </p>
    *
    * <p>
-   * The check is limited to neutral, ordinary, exactly-two-phase aqueous results. Dry hydrocarbon flashes,
-   * multiphase-enabled flashes, chemical/electrolyte systems, and solid/wax calculations remain on their existing fast
-   * paths.
+   * The check is limited to neutral, ordinary, exactly-two-phase aqueous results. Dry hydrocarbon roots are handled by
+   * {@link #rescueLowerGibbsHydrocarbonPhaseRoots()}; multiphase-enabled flashes, chemical/electrolyte systems, and
+   * solid/wax calculations remain on their existing paths.
    * </p>
    */
   private void rescueLowerGibbsPhaseRoot() {
@@ -1573,6 +1575,122 @@ public class TPflash extends Flash {
         return Double.POSITIVE_INFINITY;
       }
       maximumResidual = Math.max(maximumResidual, Math.abs(replacementLogFugacity - otherLogFugacity));
+    }
+    return maximumResidual;
+  }
+
+  /**
+   * Corrects an inverted vapor/liquid cubic-root assignment in an ordinary hydrocarbon flash.
+   *
+   * <p>
+   * Near a critical boundary the ordinary two-phase iteration can converge the light and heavy compositions while
+   * retaining the liquid cubic root on the light phase and the vapor root on the heavy phase. This is a stationary
+   * flash-equation solution, but it has a higher Gibbs energy than the same split with the roots assigned consistently.
+   * A cheap molar-mass ordering check avoids trial-root work on normally labelled results. For an inverted result, the
+   * two roots are evaluated together on cloned phases. The replacement is accepted only when it lowers extensive Gibbs
+   * energy beyond numerical noise and satisfies component fugacity equality within
+   * {@link #PHASE_ROOT_EQUILIBRIUM_TOLERANCE}. Compositions, phase fractions, and material balance are unchanged.
+   * </p>
+   *
+   * <p>
+   * The safeguard is limited to neutral, ordinary, exactly-two-phase hydrocarbon/inert systems. Multiphase-enabled,
+   * aqueous, chemical/electrolyte, and solid/wax calculations retain their existing paths.
+   * </p>
+   */
+  private void rescueLowerGibbsHydrocarbonPhaseRoots() {
+    if (system.doMultiPhaseCheck() || system.getNumberOfPhases() != 2 || system.isChemicalSystem() || system.hasIons()
+        || solidCheck || system.isMultiphaseWaxCheck() || system.hasPhaseType(PhaseType.AQUEOUS)) {
+      return;
+    }
+
+    int gasPhaseIndex = -1;
+    int liquidPhaseIndex = -1;
+    boolean hasHydrocarbon = false;
+    for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
+      PhaseType phaseType = system.getPhase(phaseIndex).getType();
+      if (phaseType == PhaseType.GAS) {
+        gasPhaseIndex = phaseIndex;
+      } else if (phaseType == PhaseType.OIL || phaseType == PhaseType.LIQUID) {
+        liquidPhaseIndex = phaseIndex;
+      } else {
+        return;
+      }
+    }
+    if (gasPhaseIndex < 0 || liquidPhaseIndex < 0) {
+      return;
+    }
+    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
+      neqsim.thermo.component.ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
+      if (component.getz() <= 1.0e-50) {
+        continue;
+      }
+      if (!component.isHydrocarbon() && !component.isInert()) {
+        return;
+      }
+      hasHydrocarbon |= component.isHydrocarbon();
+    }
+    if (!hasHydrocarbon
+        || system.getPhase(gasPhaseIndex).getMolarMass() <= system.getPhase(liquidPhaseIndex).getMolarMass()) {
+      return;
+    }
+
+    try {
+      PhaseInterface lightPhase = system.getPhase(liquidPhaseIndex).clone();
+      lightPhase.init(system.getTotalNumberOfMoles(), lightPhase.getNumberOfComponents(), 1, PhaseType.GAS,
+          system.getBeta(liquidPhaseIndex));
+      PhaseInterface heavyPhase = system.getPhase(gasPhaseIndex).clone();
+      heavyPhase.init(system.getTotalNumberOfMoles(), heavyPhase.getNumberOfComponents(), 1, PhaseType.LIQUID,
+          system.getBeta(gasPhaseIndex));
+      for (int componentIndex = 0; componentIndex < lightPhase.getNumberOfComponents(); componentIndex++) {
+        lightPhase.getComponent(componentIndex).fugcoef(lightPhase);
+        heavyPhase.getComponent(componentIndex).fugcoef(heavyPhase);
+      }
+      double fugacityResidual = maximumLogFugacityResidual(lightPhase, heavyPhase);
+      double trialGibbsEnergy = lightPhase.getGibbsEnergy() + heavyPhase.getGibbsEnergy();
+      double currentGibbsEnergy = system.getGibbsEnergy();
+      double gibbsReduction = currentGibbsEnergy - trialGibbsEnergy;
+      double gibbsTolerance = Math.max(1.0e-6, Math.abs(currentGibbsEnergy) * 1.0e-8);
+      if (!Double.isFinite(gibbsReduction) || gibbsReduction <= gibbsTolerance
+          || fugacityResidual >= PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
+        return;
+      }
+
+      lightPhase.setType(PhaseType.GAS);
+      heavyPhase.setType(PhaseType.OIL);
+      int lightStorageIndex = system.getPhaseIndex(liquidPhaseIndex);
+      int heavyStorageIndex = system.getPhaseIndex(gasPhaseIndex);
+      system.setPhase(lightPhase, lightStorageIndex);
+      system.setPhase(heavyPhase, heavyStorageIndex);
+      system.setPhaseType(liquidPhaseIndex, PhaseType.GAS);
+      system.setPhaseType(gasPhaseIndex, PhaseType.OIL);
+      system.setPhaseIndex(0, lightStorageIndex);
+      system.setPhaseIndex(1, heavyStorageIndex);
+    } catch (Exception ex) {
+      logger.debug("Hydrocarbon phase-root comparison failed: {}", ex.getMessage());
+    }
+  }
+
+  /**
+   * Calculates the largest equilibrium residual between two initialized trial phases.
+   *
+   * @param firstPhase first initialized phase
+   * @param secondPhase second initialized phase
+   * @return maximum absolute log-fugacity residual
+   */
+  private double maximumLogFugacityResidual(PhaseInterface firstPhase, PhaseInterface secondPhase) {
+    double maximumResidual = 0.0;
+    for (int componentIndex = 0; componentIndex < firstPhase.getNumberOfComponents(); componentIndex++) {
+      if (system.getPhase(0).getComponent(componentIndex).getz() <= 1.0e-50) {
+        continue;
+      }
+      double firstLogFugacity = Math.log(Math.max(firstPhase.getComponent(componentIndex).getx(), Double.MIN_NORMAL))
+          + Math.log(firstPhase.getComponent(componentIndex).getFugacityCoefficient());
+      double secondLogFugacity = Math.log(Math.max(secondPhase.getComponent(componentIndex).getx(), Double.MIN_NORMAL))
+          + Math.log(secondPhase.getComponent(componentIndex).getFugacityCoefficient());
+      if (!Double.isFinite(firstLogFugacity) || !Double.isFinite(secondLogFugacity)) {
+        return Double.POSITIVE_INFINITY;
+      }
+      maximumResidual = Math.max(maximumResidual, Math.abs(firstLogFugacity - secondLogFugacity));
     }
     return maximumResidual;
   }

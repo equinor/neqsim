@@ -33,7 +33,7 @@ The index file `standards_index.csv` maps equipment types to applicable standard
 | Pipeline, AdiabaticPipe, MultiphasePipe | NORSOK L-001, ASME B31.3/B31.4/B31.8, DNV-ST-F101 | `norsok_standards.csv`, `asme_standards.csv`, `dnv_iso_en_standards.csv` |
 | Pipeline, FlexiblePipe, Cable, Umbilical on seabed | DNV-RP-F109 | Typed kernel `DnvRpF109OnBottomStabilityKernel`; project values remain explicit inputs |
 | HeatExchanger, Heater, Cooler | API 660/661, TEMA | `api_standards.csv` |
-| Tank | API 650/620 | `api_standards.csv` |
+| Tank | API 650/620, API 2000 | Use `Api2000TankVentingScreeningKernel` for current 7th-edition caller-controlled normal/emergency demand and rated-capacity screening; `api_standards.csv` covers catalog data |
 | Valve | ASME B31.3 | `asme_standards.csv` |
 | Subsea equipment | NORSOK U-001, DNV-ST-F101 | `norsok_standards.csv`, `subsea_standards.csv` |
 | Well casing/tubing | API 5CT, API TR 5C3, NORSOK D-010 | `api_standards.csv`, `norsok_standards.csv` |
@@ -42,6 +42,8 @@ The index file `standards_index.csv` maps equipment types to applicable standard
 | CO2 corrosion / materials selection | NORSOK M-506, ISO 15156 / NACE MR0175, NORSOK M-001 | Use `NorsokM506CorrosionDesignKernel` for strict M-506 screening; use `NorsokM506ElectrolyteBridge` for a rigorous brine pH/FeCO3 basis and keep `NorsokM506CorrosionRate` for legacy sweeps |
 | Offshore steel fatigue | DNV-RP-C203 | Use `DnvRpC203FatigueDesignKernel` with a verified project-controlled S-N curve and stress spectrum; do not report legacy pipeline/riser shortcuts as exact-edition C203 evidence |
 | Submarine-pipeline free spans | DNV-RP-F105 | Use `DnvRpF105FreeSpanScreeningKernel` for the current 2025-12 first-mode/dimensionless screen; project response triggers are not DNV acceptance criteria and the legacy allowable-span calculator is not F105 evidence |
+| Inspected pipeline metal loss | DNV-RP-F101 | Use `DnvRpF101CorrodedPipelineScreeningKernel` for the current isolated longitudinal defect/internal-pressure screen; measured geometry and caller-controlled factors are evidence, not values inferred from M-506, and ST-F101 design checks remain separate |
+| Fixed-roof tank venting | API 2000 | Use `Api2000TankVentingScreeningKernel` for the current 7th-edition caller-controlled demand/capacity screen; do not infer licensed demand factors or report it as device sizing/conformity |
 | Mineral scale / produced water | (industry practice; Davies + Ksp(T)) | `ElectrolyteScaleCalculator` / `ScaleKinetics` / `BrineMixingScaleEvaluator` (`process.chemistry.scale`) |
 
 ### DNV-RP-F109 implementation status
@@ -135,6 +137,42 @@ VIV and direct-wave response, ULS/FLS, fatigue, monitoring, intervention, and co
 
 `PipeMechanicalDesignCalculator.calculateAllowableSpanLength(...)` is a legacy fixed-assumption
 estimate with fallback and cap behavior. Never report that output as current-edition F105 evidence.
+
+### DNV-RP-F101 execution rule
+
+For an explicit DNV-RP-F101 basis, use
+`neqsim.process.engineering.calculation.DnvRpF101CorrodedPipelineScreeningKernel`. It supports the
+catalogued `2019-09+AMD:2025-09` edition and only calculates the deterministic isolated
+longitudinal metal-loss equation under internal pressure. Require externally verified assessment
+wall thickness, measured defect depth and length, caller-controlled depth allowance,
+characteristic ultimate tensile strength, internal/external pressures, caller-controlled pressure
+factor, and isolated-defect applicability.
+
+Treat every verification Boolean as an attestation, not the evidence itself. Keep inspection
+accuracy and growth derivation, factor selection, interacting/complex defects, combined
+longitudinal compression, probabilistic methods, crack/dent/gouge/blister or weld damage, repair,
+fitness-for-service acceptance, and accountable approval external. Do not turn
+`NorsokM506CorrosionAssessment.getProjectedUniformWallLossMm()` into RP-F101 defect dimensions.
+
+RP-F101 remaining-strength screening is not DNV-ST-F101 original design. It does not replace
+pressure containment, collapse, propagation buckling, local buckling, load interaction, fatigue,
+incidental/test pressure, de-rating, safety class, ovality, fabrication route, or installation
+strain checks.
+
+### API 2000 execution rule
+
+For an explicit API 2000 basis, use
+`neqsim.process.engineering.calculation.Api2000TankVentingScreeningKernel`. It supports only the
+catalogued unamended `7th Ed` for caller-verified non-refrigerated fixed-roof `Tank` or
+`SimpleTankFiller` service. Supply maximum filling/withdrawal rates, caller-controlled movement
+ratios, externally established thermal/other normal demands, total emergency demand, rated
+normal/emergency capacities, their rated pressure/vacuum conditions, tank limits, and one common
+gas-volume reference state.
+
+Treat the evidence Booleans as attestations, not proof. Keep API demand tables/equations, scenario
+derivation, vent area and device selection, manufacturer curves, pressure losses, flame arresters,
+blanketing, external floating roofs, refrigerated storage, installation/testing, and conformity
+external. An adequate caller-controlled constraint result is not API compliance.
 
 Use these Java classes when a task references Equinor technical requirements,
 STS0131, TR1965, TR2237, or NORSOK P-002:
