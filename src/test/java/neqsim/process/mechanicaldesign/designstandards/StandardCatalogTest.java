@@ -77,6 +77,18 @@ class StandardCatalogTest {
   }
 
   @Test
+  void currentDnvRpC203EditionHasPublisherEvidenceAndExecutableKernel() {
+    StandardCatalogEntry entry = StandardCatalog.get(StandardType.DNV_RP_C203);
+
+    assertEquals(StandardLifecycleStatus.CURRENT, entry.getLifecycleStatus());
+    assertEquals("2024-10+AMD:2025-10", entry.getStandardType().getDefaultVersion());
+    assertTrue(entry.getPublisherSourceUrl().contains("dnv-rp-c203"));
+    assertEquals("2026-08-02", entry.getVerifiedOn());
+    assertTrue(StandardRegistry.getDesignKernel(StandardType.DNV_RP_C203)
+        .supports(StandardEdition.defaultEdition(StandardType.DNV_RP_C203)));
+  }
+
+  @Test
   void requirementPacksReferenceLoadableCapabilitiesAndCurrentEditions() throws Exception {
     StandardType[] packedStandards = { StandardType.NORSOK_P_002, StandardType.NORSOK_S_001, StandardType.ISO_10418,
         StandardType.IEC_61511, StandardType.API_520_PART_1, StandardType.NORSOK_M_001, StandardType.API_650,

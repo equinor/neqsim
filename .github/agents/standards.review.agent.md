@@ -29,6 +29,7 @@ Use these classes before writing custom checks:
 | Combined review | `new StandardsDesignReview().review(process)` |
 | NORSOK M-506 CO2-corrosion screening | `NorsokM506CorrosionDesignKernel` with an explicit `StandardEdition` and immutable `Input` |
 | ISO 5167-2 orifice-plate metering | `Iso5167OrificeMeteringKernel` with explicit service, tapping, geometry, properties, and applicability attestations |
+| DNV-RP-C203 fatigue screening | `DnvRpC203FatigueDesignKernel` with a verified controlled curve, stress bins, factors, exposure, and damage basis |
 
 ## Workflow
 
@@ -56,6 +57,12 @@ geometry, tapping, and installation evidence; the Boolean attestations are not p
 inspection, straight lengths, uncertainty, calibration, pulsation, custody-transfer acceptance, and
 project metering procedure open. Do not substitute `Standard_AGA3` unless AGA 3/API MPMS 14.3 is
 the governing basis.
+
+For DNV-RP-C203, require the typed kernel for the current `2024-10+AMD:2025-10` basis. Verify the
+actual controlled curve source and stress-spectrum derivation; the input attestations are not proof.
+Keep curve/detail selection, structural stress, SCFs, thickness/environment, fabrication, rainflow
+counting, simultaneous loads, inspection, and conformity open. Treat the older pipeline and riser
+fatigue methods as legacy estimates because their embedded intercepts are inconsistent.
 
 ## Evidence Rules
 

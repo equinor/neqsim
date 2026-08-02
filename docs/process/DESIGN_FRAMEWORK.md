@@ -46,7 +46,8 @@ The design framework consists of several integrated components:
 Standard-specific equipment calculations are registered explicitly. The current registry exposes
 screening kernels for API 617 compressor-casing checks, API 610 pump checks, API 521 relief-scenario
 evaluation, API 526 standard-orifice selection, API 12J separator-performance checks, and NORSOK
-M-506 CO2-corrosion screening, plus ISO 5167-2 concentric orifice-plate metering.
+M-506 CO2-corrosion screening, ISO 5167-2 concentric orifice-plate metering, and DNV-RP-C203
+S-N/Palmgren-Miner fatigue screening with caller-controlled curve data.
 Unsupported editions, inapplicable equipment types, and incomplete inputs return blocked results.
 All remain preliminary engineering screens and do not claim certification or construction
 readiness.
@@ -55,7 +56,8 @@ The executable `StandardDesignKernelVerificationSuite.evaluateRegression()` runs
 kernel against deterministic numeric baselines. It includes SI/customary equivalence at the API 526
 orifice boundary, metre/micrometre equivalence for API 12J, and M-506 rate/inhibitor regression.
 The ISO 5167 case pins liquid-service flow, beta ratio, and the incompressible expansibility
-identity.
+identity. The C203 case pins per-bin damage, design-fatigue-factor multiplication, and cumulative
+damage utilization without treating the demonstration curve as DNV table data.
 Inspect
 `report.areAllBenchmarksPassed()` for regression health and `report.getFailedBenchmarkIds()` for
 diagnosis. The records are deliberately classified as `REGRESSION_BASELINE`; therefore

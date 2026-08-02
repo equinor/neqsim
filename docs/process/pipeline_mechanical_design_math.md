@@ -392,7 +392,7 @@ $$f_n > 1.3 \cdot f_s$$
 
 ## Fatigue Analysis
 
-### S-N Curve (DNV-RP-C203)
+### Legacy embedded S-N examples
 
 $$N = \frac{a}{S^m}$$
 
@@ -403,6 +403,12 @@ $$N = \frac{a}{S^m}$$
 | E | $10^{11.610}$ | 3.0 | Butt welds |
 | F | $10^{11.455}$ | 3.0 | Fillet welds |
 | W3 | $10^{10.970}$ | 3.0 | Poor quality welds |
+
+These values document legacy NeqSim examples and are not a controlled transcription of the current
+DNV-RP-C203 edition. They differ from parameters embedded elsewhere in the legacy riser path. For an
+explicit `DNV-RP-C203 2024-10+AMD:2025-10` basis, obtain the applicable curve from the licensed
+project source and pass it to `DnvRpC203FatigueDesignKernel`. The kernel performs the S-N and
+Palmgren-Miner arithmetic but deliberately does not select a curve or detail category.
 
 ### Fatigue Life
 
@@ -498,7 +504,7 @@ where $h_{weld}$ = hours per weld (typically 4-8 hours depending on diameter).
 2. **ASME B31.4** - Pipeline Transportation Systems for Liquids and Slurries (2022)
 3. **ASME B31.8** - Gas Transmission and Distribution Piping Systems (2022)
 4. **DNV-OS-F101** - Submarine Pipeline Systems (2021)
-5. **DNV-RP-C203** - Fatigue Design of Offshore Steel Structures (2021)
+5. **DNV-RP-C203** - Fatigue Design of Offshore Steel Structures (edition 2024-10, amended 2025-10; licensed project source required)
 6. **API 5L** - Specification for Line Pipe (2018)
 7. **ISO 13623** - Petroleum and Natural Gas Industries — Pipeline Transportation Systems (2017)
 8. **Timoshenko, S.P.** - Theory of Elastic Stability (1961)

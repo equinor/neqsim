@@ -412,9 +412,9 @@ Per ASME B16.5:
 int flangeClass = calc.selectFlangeClass();  // Based on design pressure
 ```
 
-### Fatigue Life Estimation
+### Legacy Fatigue Life Estimation
 
-Per DNV-RP-C203 (D-curve):
+The compatibility calculator uses one embedded single-slope estimate:
 
 $$N = \frac{10^{11.764}}{S^3}$$
 
@@ -424,6 +424,12 @@ double stressRange = 50.0;  // MPa
 double cyclesPerYear = 1e6;
 double fatigueLife = calc.estimateFatigueLife(stressRange, cyclesPerYear);
 ```
+
+This shortcut does not select an edition, environment, detail category, thickness basis, or
+verified stress spectrum, and its embedded parameter differs from the riser data-source default.
+Do not report it as current-edition DNV-RP-C203 evidence. For an explicit C203 basis, use
+`DnvRpC203FatigueDesignKernel` with a project-controlled curve and verified stress bins; see
+[DNV-RP-C203 S-N and Miner fatigue screening](mechanical_design/dnv_rp_c203_fatigue).
 
 ### Insulation Thickness
 

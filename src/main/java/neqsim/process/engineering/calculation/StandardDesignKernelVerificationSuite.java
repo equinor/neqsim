@@ -49,12 +49,13 @@ public final class StandardDesignKernelVerificationSuite {
     Api12JSeparatorDesignKernel separatorKernel = new Api12JSeparatorDesignKernel();
     NorsokM506CorrosionDesignKernel corrosionKernel = new NorsokM506CorrosionDesignKernel();
     Iso5167OrificeMeteringKernel meteringKernel = new Iso5167OrificeMeteringKernel();
+    DnvRpC203FatigueDesignKernel fatigueKernel = new DnvRpC203FatigueDesignKernel();
 
     EngineeringBenchmarkSuite suite = new EngineeringBenchmarkSuite(SUITE_ID, REVISION)
         .requireMethod(methodKey(pumpKernel)).requireMethod(methodKey(reliefKernel))
         .requireMethod(methodKey(orificeKernel)).requireMethod(methodKey(compressorKernel))
         .requireMethod(methodKey(separatorKernel)).requireMethod(methodKey(corrosionKernel))
-        .requireMethod(methodKey(meteringKernel));
+        .requireMethod(methodKey(meteringKernel)).requireMethod(methodKey(fatigueKernel));
     suite.add(pumpBenchmark(pumpKernel));
     suite.add(reliefBenchmark(reliefKernel));
     suite.add(orificeBenchmark(orificeKernel));
@@ -62,6 +63,7 @@ public final class StandardDesignKernelVerificationSuite {
     suite.add(separatorBenchmark(separatorKernel));
     suite.add(corrosionBenchmark(corrosionKernel));
     suite.add(meteringBenchmark(meteringKernel));
+    suite.add(fatigueBenchmark(fatigueKernel));
     return suite.evaluate();
   }
 
@@ -195,6 +197,26 @@ public final class StandardDesignKernelVerificationSuite {
         .check("betaRatio", 0.5, value == null ? FAILURE_SENTINEL : value.getBetaRatio(), "fraction", 1.0e-12, 1.0e-12)
         .check("liquidExpansibility", 1.0, value == null ? FAILURE_SENTINEL : value.getExpansibilityFactor(),
             "fraction", 0.0, 0.0)
+        .build();
+  }
+
+  private static EngineeringValidationBenchmark fatigueBenchmark(DnvRpC203FatigueDesignKernel kernel) {
+    DnvRpC203FatigueDesignKernel.Input input = DnvRpC203FatigueDesignKernel.Input
+        .builder(StandardEdition.defaultEdition(StandardType.DNV_RP_C203), "Pipeline")
+        .snCurve(DnvRpC203FatigueDesignKernel.SnCurve.singleSlope("PROJECT-CONTROLLED-DEMO", 12.0, 3.0))
+        .addStressBin("high range", 100.0, 1.0e5).addStressBin("moderate range", 50.0, 2.0e5)
+        .stressConcentrationFactor(1.0).thicknessCorrectionFactor(1.0).otherStressRangeFactor(1.0)
+        .designFatigueFactor(3.0).minerDamageLimit(1.0).assessedExposureYears(20.0).curveDefinitionVerified(true)
+        .stressSpectrumVerified(true).build();
+    EngineeringCalculationResult<DnvRpC203FatigueAssessment> result = kernel.calculate(input, null);
+    DnvRpC203FatigueAssessment value = result.getValue();
+    return baseline("dnv-rp-c203-sn-miner-regression", kernel)
+        .check("calculatedReviewRequired", 1.0, calculated(result), "flag", 0.0, 0.0)
+        .check("rawMinerDamage", 0.125, value == null ? FAILURE_SENTINEL : value.getRawMinerDamage(), "fraction",
+            1.0e-12, 1.0e-12)
+        .check("designMinerDamage", 0.375, value == null ? FAILURE_SENTINEL : value.getDesignMinerDamage(), "fraction",
+            1.0e-12, 1.0e-12)
+        .check("withinDamageLimit", 1.0, value != null && value.isWithinDamageLimit() ? 1.0 : 0.0, "flag", 0.0, 0.0)
         .build();
   }
 
