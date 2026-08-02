@@ -166,8 +166,8 @@ public final class StandardSupportAudit {
       return new StandardSupport(standardType, StandardSupportLevel.SCREENING, pipelineImplementation.isImplemented(),
           registryImplementation, pipelineImplementation.getImplementationClassName(),
           "Typed 2021 screening for containment, collapse, propagation buckling, load interaction, fatigue, pressure "
-               + "cases, de-rating, safety class, ovality, fabrication route, and installation strain; clause-complete "
-               + "conformity and engineering approval remain external.");
+            + "cases, de-rating, safety class, ovality, fabrication route, and installation strain; clause-complete "
+            + "conformity and engineering approval remain external.");
     default:
       return getCategorySupport(standardType, registryImplementation);
     }
