@@ -64,8 +64,7 @@ final class ColumnMeshResidualEvaluator {
         double feedIn = state.getFeedComponentFlow(tray, comp);
         double vaporOut = state.getVaporComponentFlow(tray, comp);
         double liquidOut = state.getLiquidComponentFlow(tray, comp);
-        double condenserLiquidProductOut = condenserLiquidProductComponentFlow(column, tray,
-            componentNames[comp]);
+        double condenserLiquidProductOut = condenserLiquidProductComponentFlow(column, tray, componentNames[comp]);
         double inlet = vaporIn + liquidIn + feedIn;
         double outlet = vaporOut + liquidOut + condenserLiquidProductOut;
         imbalance += Math.abs(outlet - inlet);
