@@ -298,10 +298,11 @@ defensive copies and `toJson()` is suitable for Python-side result capture.
 
 This path has been regression-tested for a single coupled isothermal composition-change step with
 positive flow. The isolated conservative kernel is also checked over repeated uniform-cell steps.
-For constant cell mass \(M\), face mass flow \(F\), and timestep \(\Delta t\), the regression
+For constant cell mass $M$, face mass flow $F$, and timestep $\Delta t$, the regression
 compares every cell with the closed-form repeated solution of the implicit upwind recurrence. It
-also obtains the outlet-response first moment at two timesteps and recovers the mass-coordinate
-residence time \(\sum_P M_P/F\). These checks establish the algebraic transport speed for the
+also subtracts the inlet-event first moment from the outlet-response first moment at two timesteps
+and recovers the mass-coordinate residence time $\sum_P M_P/F$. These checks establish the
+algebraic transport speed for the
 isolated kernel; they do not establish a coupled compressible-pipeline breakthrough prediction.
 
 Zero or reversed face flow fails explicitly because an external upwind composition is not yet
