@@ -365,8 +365,9 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       double aw = pipe.getNode(i - 1).getGeometry().getArea();
       double fe = pipe.getNode(i).getVelocity() * ae;
       double fw = pipe.getNode(i).getVelocityIn().doubleValue() * aw;
-      oldMass[i] = dynamic ? 1.0 / timeStep * pipe.getNode(i).getGeometry().getArea()
-          * pipe.getNode(i).getGeometry().getNodeLength() : 0.0;
+      oldMass[i] = dynamic
+          ? 1.0 / timeStep * pipe.getNode(i).getGeometry().getArea() * pipe.getNode(i).getGeometry().getNodeLength()
+          : 0.0;
       a[i] = -Math.max(fw, 0.0);
       c[i] = -Math.max(-fe, 0.0);
       b[i] = -a[i] - c[i] + fe - fw;
@@ -1097,8 +1098,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     } while (!hasConverged(maxDiff, densityResidual) && iterTop < MAXIMUM_NONLINEAR_ITERATIONS); // diffMatrix.norm2()/sol2Matrix.norm2())>0.1);
 
     if (!dynamic && solverType > 0) {
-      OnePhaseFixedStaggeredGrid refinement =
-          new OnePhaseFixedStaggeredGrid(pipe, pipe.getSystemLength(), numberOfNodes, false);
+      OnePhaseFixedStaggeredGrid refinement = new OnePhaseFixedStaggeredGrid(pipe, pipe.getSystemLength(),
+          numberOfNodes, false);
       refinement.setSolverType(solverType);
       refinement.initMatrix();
       refinement.solveCoupledHydraulicEos(Double.NaN);
@@ -1138,8 +1139,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       for (int row = 0; row < values.length; row++) {
         rightHandSide[row] = -values[row];
       }
-      double[] update = BandedLinearSystemSolver.solve(jacobian, COUPLED_HALF_BANDWIDTH,
-          COUPLED_HALF_BANDWIDTH, rightHandSide);
+      double[] update = BandedLinearSystemSolver.solve(jacobian, COUPLED_HALF_BANDWIDTH, COUPLED_HALF_BANDWIDTH,
+          rightHandSide);
       double step = 1.0;
       boolean accepted = false;
       while (step >= 1.0 / 65536.0) {
@@ -1167,9 +1168,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
 
     applyCoupledState(state);
     double densityResidual = calculateMaximumRelativeDensityResidual();
-    lastConvergenceReport = createConvergenceReport(iteration, residual, densityResidual,
-        initialFiniteVolumeMass, Arrays.copyOf(nonlinearHistory, iteration + 1),
-        Arrays.copyOf(densityHistory, iteration + 1));
+    lastConvergenceReport = createConvergenceReport(iteration, residual, densityResidual, initialFiniteVolumeMass,
+        Arrays.copyOf(nonlinearHistory, iteration + 1), Arrays.copyOf(densityHistory, iteration + 1));
     if (dynamic && !lastConvergenceReport.isConverged()) {
       if (failOnNonConvergence) {
         throw new IllegalStateException(lastConvergenceReport.getMessage());
@@ -1209,8 +1209,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     double[][] jacobian = new double[size][2 * COUPLED_HALF_BANDWIDTH + 1];
     double[] steps = new double[size];
     for (int variable = 0; variable < size; variable++) {
-      steps[variable] = FINITE_DIFFERENCE_RELATIVE_STEP
-          * Math.max(Math.abs(state[variable]), 1.0);
+      steps[variable] = FINITE_DIFFERENCE_RELATIVE_STEP * Math.max(Math.abs(state[variable]), 1.0);
     }
 
     for (int color = 0; color < COUPLED_JACOBIAN_COLORS; color++) {
@@ -1240,18 +1239,15 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       int massRow = 2 * (node - 1);
       if (node > 1) {
         setCoupledJacobianEntry(jacobian, massRow, massRow - 2,
-            a[node] / pipe.getNode(node - 1).getBulkSystem().getPhase(0).getdPdrho()
-                / coupledMassEquationScale[node]);
+            a[node] / pipe.getNode(node - 1).getBulkSystem().getPhase(0).getdPdrho() / coupledMassEquationScale[node]);
       }
       setCoupledJacobianEntry(jacobian, massRow, massRow,
-          b[node] / pipe.getNode(node).getBulkSystem().getPhase(0).getdPdrho()
-              / coupledMassEquationScale[node]);
+          b[node] / pipe.getNode(node).getBulkSystem().getPhase(0).getdPdrho() / coupledMassEquationScale[node]);
     }
     return jacobian;
   }
 
-  private void setCoupledJacobianEntry(double[][] jacobian, int row, int column,
-      double value) {
+  private void setCoupledJacobianEntry(double[][] jacobian, int row, int column, double value) {
     jacobian[row][column - row + COUPLED_HALF_BANDWIDTH] = value;
   }
 
@@ -1261,8 +1257,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     double[] values = new double[2 * physicalCells];
     setMassConservationMatrixTDMA();
     for (int node = 1; node < numberOfNodes - 1; node++) {
-      double value = a[node] * sol2Matrix.get(node - 1, 0)
-          + b[node] * sol2Matrix.get(node, 0) - r[node];
+      double value = a[node] * sol2Matrix.get(node - 1, 0) + b[node] * sol2Matrix.get(node, 0) - r[node];
       if (node < numberOfNodes - 1) {
         value += c[node] * sol2Matrix.get(node + 1, 0);
       }
@@ -1270,8 +1265,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     }
     setImpulsMatrixTDMA();
     for (int node = 2; node < numberOfNodes; node++) {
-      double value = a[node] * solMatrix.get(node - 1, 0)
-          + b[node] * solMatrix.get(node, 0) - r[node];
+      double value = a[node] * solMatrix.get(node - 1, 0) + b[node] * solMatrix.get(node, 0) - r[node];
       if (node < numberOfNodes - 1) {
         value += c[node] * solMatrix.get(node + 1, 0);
       }
@@ -1296,8 +1290,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     coupledMomentumEquationScale = new double[numberOfNodes];
     setMassConservationMatrixTDMA();
     for (int node = 1; node < numberOfNodes - 1; node++) {
-      double termScale = Math.abs(r[node])
-          + Math.abs(a[node] * sol2Matrix.get(node - 1, 0))
+      double termScale = Math.abs(r[node]) + Math.abs(a[node] * sol2Matrix.get(node - 1, 0))
           + Math.abs(b[node] * sol2Matrix.get(node, 0));
       if (node < numberOfNodes - 1) {
         termScale += Math.abs(c[node] * sol2Matrix.get(node + 1, 0));
@@ -1306,8 +1299,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     }
     setImpulsMatrixTDMA();
     for (int node = 2; node < numberOfNodes; node++) {
-      double termScale = Math.abs(r[node])
-          + Math.abs(a[node] * solMatrix.get(node - 1, 0))
+      double termScale = Math.abs(r[node]) + Math.abs(a[node] * solMatrix.get(node - 1, 0))
           + Math.abs(b[node] * solMatrix.get(node, 0));
       if (node < numberOfNodes - 1) {
         termScale += Math.abs(c[node] * solMatrix.get(node + 1, 0));
@@ -1420,8 +1412,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       return Double.NaN;
     }
 
-    double outletVelocity = solverType == 1
-        ? pipe.getNode(numberOfNodes - 1).getVelocityIn().doubleValue()
+    double outletVelocity = solverType == 1 ? pipe.getNode(numberOfNodes - 1).getVelocityIn().doubleValue()
         : pipe.getNode(numberOfNodes - 1).getVelocity();
     if (outletVelocity < 0.0) {
       return Double.NaN;
@@ -1466,10 +1457,9 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
 
     String message = "One-phase pipe solve " + reason + " after " + nonlinearIterations
         + " nonlinear iterations: scaled equation residual=" + Math.abs(nonlinearUpdate) + " (tolerance "
-        + NONLINEAR_RESIDUAL_TOLERANCE
-        + "), EOS/FV density=" + densityResidual + " (tolerance " + DENSITY_RELATIVE_TOLERANCE + "), FV mass residual="
-        + finiteVolumeMassResidual + " kg, EOS mass residual=" + thermodynamicMassResidual + " kg (relative tolerance "
-        + MASS_BALANCE_RELATIVE_TOLERANCE + ").";
+        + NONLINEAR_RESIDUAL_TOLERANCE + "), EOS/FV density=" + densityResidual + " (tolerance "
+        + DENSITY_RELATIVE_TOLERANCE + "), FV mass residual=" + finiteVolumeMassResidual + " kg, EOS mass residual="
+        + thermodynamicMassResidual + " kg (relative tolerance " + MASS_BALANCE_RELATIVE_TOLERANCE + ").";
 
     return new OnePhaseFlowConvergenceReport(reason, dynamic, solverType, nonlinearIterations,
         NONLINEAR_RESIDUAL_TOLERANCE, DENSITY_RELATIVE_TOLERANCE, MASS_BALANCE_RELATIVE_TOLERANCE,

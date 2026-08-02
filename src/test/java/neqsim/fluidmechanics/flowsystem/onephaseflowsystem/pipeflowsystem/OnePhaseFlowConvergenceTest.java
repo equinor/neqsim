@@ -63,23 +63,19 @@ class OnePhaseFlowConvergenceTest extends neqsim.NeqSimTest {
     assertTrue(thirtySecondA.isConverged());
     assertEquals(2.0, thirtySecondA.getInletBoundaryMassKg() / fifteenSecond.getInletBoundaryMassKg(), 5.0e-3,
         "Integrated inlet mass must scale with timestep for the same boundary event.");
-    assertTrue(fifteenSecond.getRelativeFiniteVolumeMassResidual()
-        < fifteenSecond.getMassBalanceRelativeTolerance());
+    assertTrue(fifteenSecond.getRelativeFiniteVolumeMassResidual() < fifteenSecond.getMassBalanceRelativeTolerance());
   }
 
   @Test
   void coupledSolveConvergesAcrossGridRefinement() {
-    for (int nodes : new int[] {3, 12, 40}) {
+    for (int nodes : new int[] { 3, 12, 40 }) {
       OnePhaseFlowConvergenceReport report = runCompositionStep(createInitializedPipe(nodes), 30.0);
 
       assertEquals(ConvergenceReason.CONVERGED, report.getReason(),
           "Coupled solve must converge for " + nodes + " nodes: " + report.getMessage());
-      assertTrue(report.getMaximumRelativeDensityResidual()
-          <= report.getDensityRelativeTolerance());
-      assertTrue(report.getRelativeFiniteVolumeMassResidual()
-          < report.getMassBalanceRelativeTolerance());
-      assertTrue(report.getRelativeThermodynamicMassResidual()
-          < report.getMassBalanceRelativeTolerance());
+      assertTrue(report.getMaximumRelativeDensityResidual() <= report.getDensityRelativeTolerance());
+      assertTrue(report.getRelativeFiniteVolumeMassResidual() < report.getMassBalanceRelativeTolerance());
+      assertTrue(report.getRelativeThermodynamicMassResidual() < report.getMassBalanceRelativeTolerance());
     }
   }
 
@@ -98,8 +94,8 @@ class OnePhaseFlowConvergenceTest extends neqsim.NeqSimTest {
     PipeFlowSystem pipe = createInitializedPipe();
     double[] pressure = pressures(pipe);
     double[] velocity = velocities(pipe);
-    pipe.getTimeSeries().setTimes(new double[] {0.0, 30.0});
-    pipe.getTimeSeries().setInletThermoSystems(new SystemInterface[] {createGas(0.95, 0.05)});
+    pipe.getTimeSeries().setTimes(new double[] { 0.0, 30.0 });
+    pipe.getTimeSeries().setInletThermoSystems(new SystemInterface[] { createGas(0.95, 0.05) });
     pipe.getTimeSeries().setNumberOfTimeStepsInInterval(1);
     pipe.setFailOnNonConvergence(true);
 
