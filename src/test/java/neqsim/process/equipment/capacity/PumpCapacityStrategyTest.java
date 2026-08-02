@@ -2,6 +2,7 @@ package neqsim.process.equipment.capacity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
@@ -60,6 +61,8 @@ class PumpCapacityStrategyTest {
    */
   private CapacityConstraint getNpshConstraint(Pump pump, double minimumHeadroom) {
     PumpCapacityStrategy strategy = new PumpCapacityStrategy(minimumHeadroom, 1.1);
-    return strategy.getConstraints(pump).get("npshMargin");
+    CapacityConstraint constraint = strategy.getConstraints(pump).get("npshMargin");
+    assertNotNull(constraint, "fixture must generate an NPSH headroom constraint");
+    return constraint;
   }
 }
