@@ -918,7 +918,7 @@ public class TPflash extends Flash {
    * </p>
    */
   private void rescueWaterRichEndpoint() {
-    if (system.doMultiPhaseCheck() || system.isChemicalSystem() || system.hasIons() || solidCheck || system.doSolidPhaseCheck()
+    if (system.doMultiPhaseCheck() || system.isChemicalSystem() || system.hasIons() || solidCheck
         || system.isMultiphaseWaxCheck() || system.getNumberOfPhases() > 2) {
       return;
     }
@@ -1229,7 +1229,7 @@ public class TPflash extends Flash {
    */
   private AqueousTwoPhaseState balancedAqueousReferenceBeforeMultiphaseCheck() {
     if (system.getNumberOfPhases() != 2 || system.isChemicalSystem() || system.hasIons() || solidCheck
-        || system.isMultiphaseWaxCheck() || !system.hasPhaseType(PhaseType.AQUEOUS)
+        || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck() || !system.hasPhaseType(PhaseType.AQUEOUS)
         || !isBalancedEquilibriumCandidate(system)) {
       return null;
     }
@@ -1245,8 +1245,8 @@ public class TPflash extends Flash {
    * a near-boundary hydrocarbon-liquid trial. If that trial disappears during {@link TPmultiflash} cleanup, the
    * remaining phases can retain phase fractions from the rejected three-phase iterate. Composition normalization alone
    * does not repair the resulting component material-balance or fugacity residuals. The pre-trial state is restored
-   * only when the final endpoint still has exactly two phases including an aqueous phase and fails the same strict acceptance checks.
-   * Genuine three-phase results and feasible multiphase refinements are unchanged.
+   * only when the final endpoint still has exactly two phases including an aqueous phase and fails the same strict
+   * acceptance checks. Genuine three-phase results and feasible multiphase refinements are unchanged.
    * </p>
    *
    * @param balancedReference feasible pre-trial state, or {@code null} when recovery is not applicable
