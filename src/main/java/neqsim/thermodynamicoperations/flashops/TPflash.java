@@ -767,8 +767,7 @@ public class TPflash extends Flash {
       sucsSubs();
     }
     if (system.doMultiPhaseCheck()) {
-      BalancedTwoPhaseState balancedWaterBearingReference =
-          balancedWaterBearingReferenceBeforeMultiphaseCheck();
+      BalancedTwoPhaseState balancedWaterBearingReference = balancedWaterBearingReferenceBeforeMultiphaseCheck();
       TPmultiflash operation = new TPmultiflash(system, system.doSolidPhaseCheck());
       operation.run();
       restoreBalancedAqueousReferenceAfterInvalidPhaseRemoval(balancedWaterBearingReference);
@@ -1377,8 +1376,8 @@ public class TPflash extends Flash {
    * @return true when a bounded ordinary-flash retry is justified
    */
   private boolean shouldRetryCollapsedWaterBearingEndpoint() {
-    if (!system.doMultiPhaseCheck() || system.getNumberOfPhases() != 1 || system.isChemicalSystem()
-        || system.hasIons() || solidCheck || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck()
+    if (!system.doMultiPhaseCheck() || system.getNumberOfPhases() != 1 || system.isChemicalSystem() || system.hasIons()
+        || solidCheck || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck()
         || MULTIPHASE_RESCUE_ACTIVE.get().booleanValue()) {
       return false;
     }
