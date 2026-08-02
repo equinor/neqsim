@@ -53,6 +53,7 @@ final class ColumnMeshResidualEvaluator {
    */
   static double evaluateMaxTrayMaterialImbalance(DistillationColumn column) {
     ColumnMeshState state = ColumnMeshState.from(column);
+    String[] componentNames = state.getComponentNames();
     double worstImbalance = 0.0;
     for (int tray = 0; tray < state.getTrayCount(); tray++) {
       double imbalance = 0.0;
@@ -64,7 +65,7 @@ final class ColumnMeshResidualEvaluator {
         double vaporOut = state.getVaporComponentFlow(tray, comp);
         double liquidOut = state.getLiquidComponentFlow(tray, comp);
         double condenserLiquidProductOut = condenserLiquidProductComponentFlow(column, tray,
-            state.getComponentNames()[comp]);
+            componentNames[comp]);
         double inlet = vaporIn + liquidIn + feedIn;
         double outlet = vaporOut + liquidOut + condenserLiquidProductOut;
         imbalance += Math.abs(outlet - inlet);
@@ -132,7 +133,11 @@ final class ColumnMeshResidualEvaluator {
     if (liquidProduct == null || liquidProduct.getFluid() == null) {
       return 0.0;
     }
-    return liquidProduct.getFluid().getComponent(componentName).getTotalFlowRate("mol/hr");
+    try {
+      return liquidProduct.getFluid().getComponent(componentName).getTotalFlowRate("mol/hr");
+    } catch (Exception ex) {
+      return 0.0;
+    }
   }
 
   /**
