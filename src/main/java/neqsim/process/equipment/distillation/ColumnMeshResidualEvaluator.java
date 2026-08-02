@@ -29,7 +29,7 @@ final class ColumnMeshResidualEvaluator {
   static ColumnMeshResidual evaluate(DistillationColumn column) {
     ColumnMeshState state = ColumnMeshState.from(column);
     ResidualBuilder builder = new ResidualBuilder();
-    addMaterialResiduals(state, builder);
+    addMaterialResiduals(column, state, builder);
     addEquilibriumResiduals(column, state, builder);
     addSummationResiduals(state, builder);
     addEnergyResiduals(column, builder);
@@ -63,8 +63,10 @@ final class ColumnMeshResidualEvaluator {
         double feedIn = state.getFeedComponentFlow(tray, comp);
         double vaporOut = state.getVaporComponentFlow(tray, comp);
         double liquidOut = state.getLiquidComponentFlow(tray, comp);
+        double condenserLiquidProductOut = condenserLiquidProductComponentFlow(column, tray,
+            state.getComponentNames()[comp]);
         double inlet = vaporIn + liquidIn + feedIn;
-        double outlet = vaporOut + liquidOut;
+        double outlet = vaporOut + liquidOut + condenserLiquidProductOut;
         imbalance += Math.abs(outlet - inlet);
         throughput += Math.abs(inlet) + Math.abs(outlet);
       }
@@ -81,10 +83,12 @@ final class ColumnMeshResidualEvaluator {
   /**
    * Add tray component material residuals.
    *
+   * @param column column to inspect
    * @param state column state snapshot
    * @param builder residual builder
    */
-  private static void addMaterialResiduals(ColumnMeshState state, ResidualBuilder builder) {
+  private static void addMaterialResiduals(DistillationColumn column, ColumnMeshState state,
+      ResidualBuilder builder) {
     String[] componentNames = state.getComponentNames();
     for (int tray = 0; tray < state.getTrayCount(); tray++) {
       for (int comp = 0; comp < state.getComponentCount(); comp++) {
@@ -93,12 +97,44 @@ final class ColumnMeshResidualEvaluator {
         double feedIn = state.getFeedComponentFlow(tray, comp);
         double vaporOut = state.getVaporComponentFlow(tray, comp);
         double liquidOut = state.getLiquidComponentFlow(tray, comp);
+        double condenserLiquidProductOut = condenserLiquidProductComponentFlow(column, tray,
+            componentNames[comp]);
         double inlet = vaporIn + liquidIn + feedIn;
-        double outlet = vaporOut + liquidOut;
+        double outlet = vaporOut + liquidOut + condenserLiquidProductOut;
         double scale = Math.max(ColumnMeshState.getMinimumScale(), Math.abs(inlet) + Math.abs(outlet));
         builder.add((outlet - inlet) / scale, ColumnMeshEquationType.MATERIAL, tray, componentNames[comp]);
       }
     }
+  }
+
+  /**
+   * Get the external condenser liquid-product component flow for a terminal material balance.
+   *
+   * <p>
+   * In fixed-liquid-reflux mode the condenser splitter returns stream zero to the column and exposes stream one as an
+   * additional external product. {@link ColumnMeshState} records the returned liquid stream, so the external product
+   * must be added separately to the top-stage outlets.
+   * </p>
+   *
+   * @param column column to inspect
+   * @param trayIndex zero-based tray index
+   * @param componentName component name
+   * @return external liquid-product component flow in mol/hr, or zero when the mode is inactive
+   */
+  private static double condenserLiquidProductComponentFlow(DistillationColumn column, int trayIndex,
+      String componentName) {
+    if (!column.hasCondenser() || trayIndex != column.getTrays().size() - 1) {
+      return 0.0;
+    }
+    Condenser condenser = column.getCondenser();
+    if (!condenser.isSeparation_with_liquid_reflux()) {
+      return 0.0;
+    }
+    StreamInterface liquidProduct = condenser.getLiquidProductStream();
+    if (liquidProduct == null || liquidProduct.getFluid() == null) {
+      return 0.0;
+    }
+    return liquidProduct.getFluid().getComponent(componentName).getTotalFlowRate("mol/hr");
   }
 
   /**
