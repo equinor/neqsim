@@ -388,8 +388,8 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     // throttlingValve.getOutletStream().getFluid().prettyPrint();
     // After throttling, may flash to 2 or 3 phases depending on conditions
     Assertions.assertTrue(throttlingValve.getOutletStream().getFluid().getNumberOfPhases() >= 2);
-    // Updated expected temperature due to thermodynamic model changes
-    Assertions.assertEquals(55.35081, throttlingValve.getOutletStream().getFluid().getTemperature("C"), 1e-3);
+    // The isenthalpic valve uses the recovered two-phase inlet enthalpy.
+    Assertions.assertEquals(55.4102663081153, throttlingValve.getOutletStream().getFluid().getTemperature("C"), 1e-3);
   }
 
   @Test
