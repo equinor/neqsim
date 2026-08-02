@@ -373,13 +373,13 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     double ent = separator.getOilOutStream().getFluid().getEnthalpy();
     separator.getOilOutStream().run();
     // separator.getOilOutStream().getFluid().prettyPrint();
-    // Updated expected value: OMEGAA from file (0.45724) now applied instead of
-    // default
-    // (0.45724333333)
-    Assertions.assertEquals(-4639.239569750378, ent, 1e-3);
+    // The explicit aqueous entrainment now remains as a stable oil/aqueous split
+    // instead of collapsing to a higher-Gibbs oil-only endpoint.
+    Assertions.assertEquals(-4636.211412902174, ent, 1e-3);
 
-    // Oil outlet stream is single-phase oil after separation
-    Assertions.assertEquals(1, separator.getOilOutStream().getFluid().getNumberOfPhases());
+    // The outlet stream's equilibrium rerun retains two phases including oil.
+    Assertions.assertEquals(2, separator.getOilOutStream().getFluid().getNumberOfPhases());
+    Assertions.assertTrue(separator.getOilOutStream().getFluid().hasPhaseType("oil"));
 
     ThrottlingValve throttlingValve = new ThrottlingValve("throttlingValve", separator.getOilOutStream());
     throttlingValve.setOutletPressure(3.0, "bara");
@@ -388,8 +388,8 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     // throttlingValve.getOutletStream().getFluid().prettyPrint();
     // After throttling, may flash to 2 or 3 phases depending on conditions
     Assertions.assertTrue(throttlingValve.getOutletStream().getFluid().getNumberOfPhases() >= 2);
-    // Updated expected temperature due to thermodynamic model changes
-    Assertions.assertEquals(55.35081, throttlingValve.getOutletStream().getFluid().getTemperature("C"), 1e-3);
+    // The isenthalpic valve uses the recovered two-phase inlet enthalpy.
+    Assertions.assertEquals(55.4102663081153, throttlingValve.getOutletStream().getFluid().getTemperature("C"), 1e-3);
   }
 
   @Test

@@ -9,9 +9,15 @@ import java.util.Map;
 /** Publisher-sourced lifecycle and edition catalogue for NeqSim design standards. */
 public final class StandardCatalog {
   private static final String VERIFIED_ON = "2026-07-21";
+  private static final String M506_VERIFIED_ON = "2026-08-02";
+  private static final String ISO_5167_VERIFIED_ON = "2026-08-02";
+  private static final String DNV_C203_VERIFIED_ON = "2026-08-02";
+  private static final String DNV_F105_VERIFIED_ON = "2026-08-02";
   private static final String NORSOK_P = "https://standard.no/en/sectors/petroleum/norsok-standards/p-process";
   private static final String NORSOK_L = "https://standard.no/en/sectors/energi-og-klima/petroleum/norsok-standard-categories/l-piping--layout/";
   private static final String NORSOK_M = "https://standard.no/en/sectors/energi-og-klima/petroleum/norsok-standard-categories/m-material/";
+  private static final String NORSOK_M506_REVIEW = "https://standard.no/en/news/"
+      + "norsok-m-5062017-co2-corrosion-rate-calculation-model-is-on-systematic-review/";
   private static final String NORSOK_S = "https://standard.no/en/sectors/energi-og-klima/petroleum/norsok-standard-categories/s-safety-she/";
   private static final String NORSOK_I = "https://standard.no/en/sectors/petroleum/norsok-standards/i-instrumentation";
   private static final String ASME_BPVC = "https://www.asme.org/codes-standards/bpvc-standards/bpvc-2025";
@@ -21,6 +27,12 @@ public final class StandardCatalog {
   private static final String API_CATALOG = "https://www.api.org/products-and-services/standards/digital-catalog";
   private static final String API_REFINING_2025 = "https://www.api.org/-/media/files/publications/2025-catalog/06_refining_2025.pdf";
   private static final String DNV_F101 = "https://www.dnv.com/energy/standards-guidelines/dnv-st-f101-submarine-pipeline-systems/";
+  private static final String DNV_C203 = "https://www.dnv.com/energy/standards-guidelines/"
+      + "dnv-rp-c203-fatigue-design-of-offshore-steel-structures/";
+  private static final String DNV_F105 = "https://www.dnv.com/energy/standards-guidelines/dnv-rp-f105-free-spanning-pipelines/";
+  private static final String ISO_5167_1_SOURCE = "https://www.iso.org/standard/79179.html";
+  private static final String ISO_5167_2_SOURCE = "https://www.iso.org/standard/79180.html";
+  private static final String DNV_F109 = "https://www.dnv.com/energy/standards-guidelines/dnv-rp-f109-on-bottom-stability-design-of-submarine-pipelines/";
   private static final String IEC_61511_SOURCE = "https://webstore.iec.ch/en/publication/5527";
   private static final Map<StandardType, StandardCatalogEntry> ENTRIES;
 
@@ -37,6 +49,8 @@ public final class StandardCatalog {
         StandardLifecycleStatus.SUPERSEDED, StandardType.NORSOK_P_002, NORSOK_P, VERIFIED_ON));
     current(entries, NORSOK_P, StandardType.NORSOK_P_002);
     current(entries, NORSOK_M, StandardType.NORSOK_M_001, StandardType.NORSOK_M_630);
+    entries.put(StandardType.NORSOK_M_506, new StandardCatalogEntry(StandardType.NORSOK_M_506,
+        StandardLifecycleStatus.CURRENT, null, NORSOK_M506_REVIEW, M506_VERIFIED_ON));
     current(entries, NORSOK_S, StandardType.NORSOK_S_001);
     current(entries, NORSOK_I, StandardType.NORSOK_I_002);
 
@@ -52,7 +66,17 @@ public final class StandardCatalog {
         StandardType.API_5L, StandardType.API_12J);
     current(entries, API_REFINING_2025, StandardType.API_526);
 
+    entries.put(StandardType.DNV_RP_C203, new StandardCatalogEntry(StandardType.DNV_RP_C203,
+        StandardLifecycleStatus.CURRENT, null, DNV_C203, DNV_C203_VERIFIED_ON));
     current(entries, DNV_F101, StandardType.DNV_ST_F101);
+    entries.put(StandardType.DNV_RP_F105, new StandardCatalogEntry(StandardType.DNV_RP_F105,
+        StandardLifecycleStatus.CURRENT, null, DNV_F105, DNV_F105_VERIFIED_ON));
+    entries.put(StandardType.ISO_5167_1, new StandardCatalogEntry(StandardType.ISO_5167_1,
+        StandardLifecycleStatus.CURRENT, null, ISO_5167_1_SOURCE, ISO_5167_VERIFIED_ON));
+    entries.put(StandardType.ISO_5167_2, new StandardCatalogEntry(StandardType.ISO_5167_2,
+        StandardLifecycleStatus.CURRENT, null, ISO_5167_2_SOURCE, ISO_5167_VERIFIED_ON));
+    entries.put(StandardType.DNV_RP_F109, new StandardCatalogEntry(StandardType.DNV_RP_F109,
+        StandardLifecycleStatus.CURRENT, null, DNV_F109, "2026-08-02"));
     current(entries, "https://www.iso.org/standard/75144.html", StandardType.ISO_23251);
     current(entries, "https://www.iso.org/standard/50826.html", StandardType.ISO_4126_1);
     current(entries, "https://www.iso.org/standard/55440.html", StandardType.ISO_10418);

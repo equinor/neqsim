@@ -1,205 +1,88 @@
 ---
-title: "NorsokM506CorrosionRate — NORSOK M-506 CO2 Corrosion Rate Model"
-description: "API reference for NorsokM506CorrosionRate — CO2 corrosion rate prediction for carbon steel pipelines per NORSOK M-506 (2005/2017). Covers fugacity, pH, baseline rate, correction factors, parameter sweeps, and JSON reporting."
+title: "NORSOK M-506 CO2-corrosion screening"
+description: "Edition-aware NeqSim screening adapter for the existing NorsokM506CorrosionRate calculation."
 ---
 
-# NorsokM506CorrosionRate
+# NORSOK M-506 CO2-corrosion screening
 
-**Package:** `neqsim.process.corrosion`
+NeqSim exposes the existing `NorsokM506CorrosionRate` calculation through the common,
+edition-aware engineering kernel API:
 
-**Standard:** NORSOK M-506 (2005/2017) — "CO2 corrosion rate calculation model"
+- `NorsokM506CorrosionDesignKernel` is the preferred entry point for auditable studies.
+- `NorsokM506CorrosionAssessment` is an immutable, unit-explicit result snapshot.
+- `NorsokM506CorrosionRate` remains available for legacy mutable workflows and parameter sweeps.
+- `NorsokM506ElectrolyteBridge` remains the route for obtaining an electrolyte-model pH and optional
+  FeCO3 saturation ratio from a brine.
 
-CO2 corrosion rate prediction for carbon steel pipelines and process piping in CO2-containing environments with free water. Based on the de Waard-Milliams-Lotz equations with NORSOK-specific corrections.
+The kernel implements only the unamended `NORSOK-M-506 2017` basis. Standards Norway identified
+that edition as current and under systematic review in May 2026; the catalog record was checked on
+2026-08-02 against the [publisher notice](https://standard.no/en/news/norsok-m-5062017-co2-corrosion-rate-calculation-model-is-on-systematic-review/).
+Because the review may produce a revision, future editions must be implemented and verified
+explicitly rather than silently relabeling this calculation.
 
-## Calculation Steps
+## Engineering boundary
 
-The `calculate()` method runs the following in sequence:
+This is a `SCREENING` implementation, not a conformity assessment or a material-selection
+decision. It adapts the simplified equations already present in NeqSim and has regression evidence,
+but no independent controlled benchmark against the purchased standard. Project use still requires
+verification of the purchased edition, free-water and wetting basis, water chemistry, localized
+corrosion, sour-service requirements, inhibitor availability, material selection, and project
+acceptance criteria.
 
-1. **CO2 fugacity** — simplified Peng-Robinson correction on CO2 partial pressure
-2. **Equilibrium pH** — in-situ pH of CO2-saturated water considering temperature, fugacity, bicarbonate, and ionic strength
-3. **Baseline corrosion rate** — de Waard-Milliams equation (different regimes for T below/above 20 °C)
-4. **pH correction factor** ($F_{pH,T}$) — asymmetric formula per NORSOK M-506
-5. **Scaling temperature** ($T_{scale}$) — protective FeCO3 film formation threshold
-6. **Scale correction factor** ($F_{scale}$) — reduction when T > $T_{scale}$
-7. **Wall shear stress & flow correction** — from Reynolds number and Moody friction
-8. **Glycol/MEG correction** — reduced water activity
-9. **Inhibitor efficiency** — applied as $(1 - \eta)$ multiplier
-10. **Final corrected rate** — product of all factors
+The readiness gate blocks calculation when:
 
-$$CR_{corrected} = CR_{baseline} \times F_{pH,T} \times F_{scale} \times F_{flow} \times F_{glycol} \times (1 - \eta_{inhibitor})$$
+- the standard edition or equipment type is unsupported;
+- a required value is missing, non-finite, or physically invalid;
+- temperature, pressure, CO2 partial pressure, or effective pH is outside the adapter's documented
+  model envelope; or
+- a fraction, exposure period, or optional FeCO3 saturation ratio is invalid.
 
-## Applicable Range
+Raw builder values are never clamped. A blocked result contains findings and no assessment value.
+The legacy internal CO2-water pH estimate is allowed with a warning; a rigorous in-situ pH should be
+supplied for buffered or saline brines. The FeCO3 saturation-ratio film factor is reported as a
+NeqSim extension whenever enabled.
 
-Per NORSOK M-506:
-
-| Parameter | Valid Range |
-|-----------|-------------|
-| Temperature | 5 – 150 °C |
-| CO2 partial pressure | up to 10 bar |
-| pH | 3.5 – 6.5 |
-| Total pressure | up to 1000 bar |
-| Material | Carbon steel only |
-
-Use `checkApplicableRange()` to verify inputs are within range.
-
-## Constructors
-
-```java
-// Default parameters
-NorsokM506CorrosionRate model = new NorsokM506CorrosionRate();
-
-// With initial conditions
-NorsokM506CorrosionRate model = new NorsokM506CorrosionRate(60.0, 100.0, 0.02);
-//   temperatureC, totalPressureBara, co2MoleFraction
-```
-
-## Input Setters
-
-| Method | Default | Description |
-|--------|---------|-------------|
-| `setTemperatureCelsius(double)` | 60.0 | Operating temperature (°C) |
-| `setTotalPressureBara(double)` | 100.0 | Total system pressure (bara) |
-| `setCO2MoleFraction(double)` | 0.02 | CO2 mole fraction in gas (0–1) |
-| `setH2SMoleFraction(double)` | 0.0 | H2S mole fraction for sour check |
-| `setActualPH(double)` | -1 | Measured pH (-1 = calculate from equilibrium) |
-| `setBicarbonateConcentrationMgL(double)` | 0.0 | HCO3- for pH adjustment (mg/L) |
-| `setIonicStrengthMolL(double)` | 0.0 | Ionic strength for activity coefficient |
-| `setFlowVelocityMs(double)` | 2.0 | Flow velocity (m/s) |
-| `setPipeDiameterM(double)` | 0.254 | Pipe internal diameter (m) |
-| `setLiquidDensityKgM3(double)` | 1000.0 | Liquid density (kg/m3) |
-| `setLiquidViscosityPas(double)` | 0.001 | Liquid viscosity (Pa.s) |
-| `setInhibitorEfficiency(double)` | 0.0 | Inhibitor efficiency (0–1) |
-| `setGlycolWeightFraction(double)` | 0.0 | MEG/DEG weight fraction (0–1) |
-| `setUsePHCorrection(boolean)` | true | Enable pH correction factor |
-| `setUseScaleCorrection(boolean)` | true | Enable scale correction factor |
-| `setUseFlowCorrection(boolean)` | true | Enable flow correction factor |
-
-## Output Getters
-
-Call `calculate()` before accessing results.
-
-### Corrosion Rate Results
-
-| Method | Unit | Description |
-|--------|------|-------------|
-| `getCorrectedCorrosionRate()` | mm/yr | Final corrected corrosion rate |
-| `getBaselineCorrosionRate()` | mm/yr | Uncorrected de Waard-Milliams rate |
-| `getCorrosionSeverity()` | — | Low / Medium / High / Very High |
-
-### Intermediate Results
-
-| Method | Unit | Description |
-|--------|------|-------------|
-| `getCO2FugacityBar()` | bar | CO2 fugacity |
-| `getCO2FugacityCoefficient()` | — | Fugacity coefficient |
-| `getCalculatedPH()` | — | Equilibrium pH of CO2-saturated water |
-| `getEffectivePH()` | — | Actual pH if set, otherwise calculated pH |
-| `getScalingTemperatureC()` | °C | FeCO3 protective film threshold |
-| `getWallShearStressPa()` | Pa | Wall shear stress |
-| `getPHCorrectionFactor()` | — | $F_{pH,T}$ |
-| `getScaleCorrectionFactor()` | — | $F_{scale}$ |
-| `getFlowCorrectionFactor()` | — | $F_{flow}$ |
-| `getGlycolCorrectionFactor()` | — | $F_{glycol}$ |
-
-### H2S / Sour Service
-
-| Method | Unit | Description |
-|--------|------|-------------|
-| `getCO2PartialPressureBar()` | bar | CO2 partial pressure |
-| `getH2SPartialPressureBar()` | bar | H2S partial pressure |
-| `isSourService()` | boolean | True if H2S pp > 0.003 bar (NACE MR0175) |
-| `getSourSeverityClassification()` | — | Non-sour / Mild / Moderate / Severe |
-
-### Corrosion Allowance
-
-| Method | Description |
-|--------|-------------|
-| `calculateCorrosionAllowance(double designLifeYears)` | Returns CA in mm (min 1.0 mm per NORSOK M-001) |
-
-## Severity Classification
-
-| Severity | Rate (mm/yr) |
-|----------|--------------|
-| Low | < 0.1 |
-| Medium | 0.1 – 0.3 |
-| High | 0.3 – 1.0 |
-| Very High | > 1.0 |
-
-## Parameter Sweeps
+## Java example
 
 ```java
-// Temperature sensitivity study
-List<Map<String, Object>> tempSweep =
-    model.runTemperatureSweep(5.0, 150.0, 30);  // min, max, steps
+StandardEdition edition = StandardEdition.defaultEdition(StandardType.NORSOK_M_506);
+NorsokM506CorrosionDesignKernel.Input input = NorsokM506CorrosionDesignKernel.Input
+    .builder(edition, "Pipeline").temperatureC(60.0).totalPressureBara(100.0).co2MoleFraction(0.02)
+    .actualPH(4.2).flowVelocityMPerS(3.0).pipeInternalDiameterM(0.254)
+    .liquidDensityKgPerM3(1000.0).liquidDynamicViscosityPaS(0.001).inhibitorEfficiencyFraction(0.8)
+    .exposureYears(25.0).build();
 
-// Pressure sensitivity study
-List<Map<String, Object>> pSweep =
-    model.runPressureSweep(10.0, 200.0, 20);
+EngineeringCalculationResult<NorsokM506CorrosionAssessment> result =
+    new NorsokM506CorrosionDesignKernel().calculate(input, null);
+NorsokM506CorrosionAssessment assessment = result.getValue();
+Map<String, Object> report = assessment.toMap();
 ```
 
-Each point in the returned list contains: temperature/pressure, CO2 fugacity, pH, scaling temperature, baseline rate, corrected rate, and severity.
+`NorsokM506CorrosionDesignKernelTest.documentedExampleIsRunnable` executes every API call in this
+snippet.
 
-## JSON / Map Output
+The executed
+[NORSOK M-506 kernel notebook](https://github.com/equinor/neqsim/blob/master/examples/notebooks/norsok_m506_corrosion_design_kernel.ipynb)
+shows the typed result, an inhibitor-assumption sensitivity, and a deliberately blocked input.
 
-```java
-String json = model.toJson();       // Full JSON report
-Map<String, Object> map = model.toMap();  // Map for programmatic access
-```
+## Result interpretation
 
-The output includes:
-- Input conditions (temperature, pressure, composition, flow)
-- Intermediate calculations (fugacity, pH, shear stress)
-- Correction factors (pH, scale, flow, glycol)
-- Final results (corrected rate, severity, sour classification)
-- Range check results
+The assessment reports CO2 partial pressure and fugacity, effective pH, baseline and corrected
+rates, correction factors, scaling temperature, wall shear stress, and projected uniform wall loss.
+The projected loss is simply:
 
-## Java Example
+$$\Delta t = CR_{corrected} \times t_{exposure}$$
 
-```java
-NorsokM506CorrosionRate model = new NorsokM506CorrosionRate();
-model.setTemperatureCelsius(80.0);
-model.setTotalPressureBara(50.0);
-model.setCO2MoleFraction(0.03);
-model.setH2SMoleFraction(0.001);
-model.setFlowVelocityMs(5.0);
-model.setPipeDiameterM(0.254);
-model.setLiquidDensityKgM3(1010.0);
-model.setLiquidViscosityPas(0.0008);
-model.setInhibitorEfficiency(0.80);
-model.calculate();
+It is not a specified corrosion allowance, remaining-life verdict, or pass/fail criterion. All
+result maps retain `engineeringApprovalRequired = true`.
 
-System.out.println("Rate: " + model.getCorrectedCorrosionRate() + " mm/yr");
-System.out.println("Severity: " + model.getCorrosionSeverity());
-System.out.println("pH: " + model.getCalculatedPH());
-System.out.println("Sour: " + model.isSourService());
-System.out.println("CA (25yr): " + model.calculateCorrosionAllowance(25.0) + " mm");
-```
+## Choosing the calculation path
 
-## Python Example
+| Need | API |
+| --- | --- |
+| Strict edition, range, applicability, and provenance checks | `NorsokM506CorrosionDesignKernel` |
+| Rigorous brine pH and FeCO3 saturation input | `NorsokM506ElectrolyteBridge`, then pass the derived values to the kernel |
+| Legacy mutable calculation or temperature/pressure sweep | `NorsokM506CorrosionRate` |
 
-```python
-from neqsim import jneqsim
-
-NorsokM506 = jneqsim.process.corrosion.NorsokM506CorrosionRate
-
-model = NorsokM506()
-model.setTemperatureCelsius(80.0)
-model.setTotalPressureBara(50.0)
-model.setCO2MoleFraction(0.03)
-model.setH2SMoleFraction(0.001)
-model.setFlowVelocityMs(5.0)
-model.setPipeDiameterM(0.254)
-model.setInhibitorEfficiency(0.80)
-model.calculate()
-
-print(f"Rate: {model.getCorrectedCorrosionRate():.2f} mm/yr")
-print(f"Severity: {model.getCorrosionSeverity()}")
-print(f"pH: {model.getCalculatedPH():.2f}")
-print(f"Sour: {model.isSourService()}")
-```
-
-## Related
-
-- [NorsokM001MaterialSelection](norsok_m001_material_selection) — Material selection from corrosion results
-- [Pipeline Corrosion Integration](pipeline_corrosion_integration) — Automated analysis from process simulation
-- [Flow Assurance Screening Tools](../../pvtsimulation/flowassurance/flow_assurance_screening_tools) — De Waard-Milliams (simpler screening model)
+See also [Pipeline Corrosion Integration](pipeline_corrosion_integration) and
+[Mechanical Design Standards](../mechanical_design_standards).

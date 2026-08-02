@@ -47,16 +47,26 @@ public final class StandardDesignKernelVerificationSuite {
     Api526OrificeSelectionKernel orificeKernel = new Api526OrificeSelectionKernel();
     Api617CompressorDesignKernel compressorKernel = new Api617CompressorDesignKernel();
     Api12JSeparatorDesignKernel separatorKernel = new Api12JSeparatorDesignKernel();
+    NorsokM506CorrosionDesignKernel corrosionKernel = new NorsokM506CorrosionDesignKernel();
+    Iso5167OrificeMeteringKernel meteringKernel = new Iso5167OrificeMeteringKernel();
+    DnvRpC203FatigueDesignKernel fatigueKernel = new DnvRpC203FatigueDesignKernel();
+    DnvRpF105FreeSpanScreeningKernel freeSpanKernel = new DnvRpF105FreeSpanScreeningKernel();
 
     EngineeringBenchmarkSuite suite = new EngineeringBenchmarkSuite(SUITE_ID, REVISION)
         .requireMethod(methodKey(pumpKernel)).requireMethod(methodKey(reliefKernel))
         .requireMethod(methodKey(orificeKernel)).requireMethod(methodKey(compressorKernel))
-        .requireMethod(methodKey(separatorKernel));
+        .requireMethod(methodKey(separatorKernel)).requireMethod(methodKey(corrosionKernel))
+        .requireMethod(methodKey(meteringKernel)).requireMethod(methodKey(fatigueKernel))
+        .requireMethod(methodKey(freeSpanKernel));
     suite.add(pumpBenchmark(pumpKernel));
     suite.add(reliefBenchmark(reliefKernel));
     suite.add(orificeBenchmark(orificeKernel));
     suite.add(compressorBenchmark(compressorKernel));
     suite.add(separatorBenchmark(separatorKernel));
+    suite.add(corrosionBenchmark(corrosionKernel));
+    suite.add(meteringBenchmark(meteringKernel));
+    suite.add(fatigueBenchmark(fatigueKernel));
+    suite.add(freeSpanBenchmark(freeSpanKernel));
     return suite.evaluate();
   }
 
@@ -148,6 +158,101 @@ public final class StandardDesignKernelVerificationSuite {
         .check("screeningPass", 1.0, micrometre != null && micrometre.areAllScreeningCriteriaPassing() ? 1.0 : 0.0,
             "flag", 0.0, 0.0)
         .build();
+  }
+
+  private static EngineeringValidationBenchmark corrosionBenchmark(NorsokM506CorrosionDesignKernel kernel) {
+    NorsokM506CorrosionDesignKernel.Input uninhibitedInput = corrosionInput(0.0);
+    NorsokM506CorrosionDesignKernel.Input inhibitedInput = corrosionInput(0.8);
+    EngineeringCalculationResult<NorsokM506CorrosionAssessment> uninhibited = kernel.calculate(uninhibitedInput, null);
+    EngineeringCalculationResult<NorsokM506CorrosionAssessment> inhibited = kernel.calculate(inhibitedInput, null);
+    NorsokM506CorrosionAssessment base = uninhibited.getValue();
+    NorsokM506CorrosionAssessment treated = inhibited.getValue();
+    double inhibitorRatio = base == null || treated == null ? FAILURE_SENTINEL
+        : treated.getCorrectedCorrosionRateMmPerYear() / base.getCorrectedCorrosionRateMmPerYear();
+    return baseline("norsok-m-506-rate-and-inhibitor-regression", kernel)
+        .check("calculatedReviewRequired", 1.0, calculated(uninhibited), "flag", 0.0, 0.0)
+        .check("co2PartialPressure", 2.0, base == null ? FAILURE_SENTINEL : base.getCO2PartialPressureBar(), "bar",
+            1.0e-12, 1.0e-12)
+        .check("correctedCorrosionRate", 13.894632683330206,
+            base == null ? FAILURE_SENTINEL : base.getCorrectedCorrosionRateMmPerYear(), "mm/year", 1.0e-12, 1.0e-12)
+        .check("inhibitorRatio", 0.2, inhibitorRatio, "fraction", 1.0e-12, 1.0e-12)
+        .check("projectedLossIdentity", 0.0,
+            base == null ? FAILURE_SENTINEL
+                : Math.abs(base.getProjectedUniformWallLossMm() - 25.0 * base.getCorrectedCorrosionRateMmPerYear()),
+            "mm", 1.0e-12, 0.0)
+        .build();
+  }
+
+  private static EngineeringValidationBenchmark meteringBenchmark(Iso5167OrificeMeteringKernel kernel) {
+    Iso5167OrificeMeteringKernel.Input input = Iso5167OrificeMeteringKernel.Input
+        .builder(StandardEdition.defaultEdition(StandardType.ISO_5167_2), "Orifice")
+        .serviceType(Iso5167OrificeMeteringKernel.ServiceType.LIQUID)
+        .tapType(Iso5167OrificeMeteringKernel.TapType.FLANGE).pipeInternalDiameterM(0.1).orificeBoreDiameterM(0.05)
+        .upstreamPressurePaAbsolute(500000.0).downstreamPressurePaAbsolute(480000.0).upstreamDensityKgPerM3(998.0)
+        .upstreamDynamicViscosityPaS(0.001).singlePhase(true).conduitRunningFull(true).subsonicThroughoutMeter(true)
+        .pulsatingFlow(false).geometryAndInstallationVerified(true).build();
+    EngineeringCalculationResult<Iso5167OrificeMeteringAssessment> result = kernel.calculate(input, null);
+    Iso5167OrificeMeteringAssessment value = result.getValue();
+    return baseline("iso-5167-2-liquid-orifice", kernel)
+        .check("calculatedReviewRequired", 1.0, calculated(result), "flag", 0.0, 0.0)
+        .check("massFlowRate", 7.767376324178196, value == null ? FAILURE_SENTINEL : value.getMassFlowRateKgPerS(),
+            "kg/s", 1.0e-12, 1.0e-12)
+        .check("betaRatio", 0.5, value == null ? FAILURE_SENTINEL : value.getBetaRatio(), "fraction", 1.0e-12, 1.0e-12)
+        .check("liquidExpansibility", 1.0, value == null ? FAILURE_SENTINEL : value.getExpansibilityFactor(),
+            "fraction", 0.0, 0.0)
+        .build();
+  }
+
+  private static EngineeringValidationBenchmark fatigueBenchmark(DnvRpC203FatigueDesignKernel kernel) {
+    DnvRpC203FatigueDesignKernel.Input input = DnvRpC203FatigueDesignKernel.Input
+        .builder(StandardEdition.defaultEdition(StandardType.DNV_RP_C203), "Pipeline")
+        .snCurve(DnvRpC203FatigueDesignKernel.SnCurve.singleSlope("PROJECT-CONTROLLED-DEMO", 12.0, 3.0))
+        .addStressBin("high range", 100.0, 1.0e5).addStressBin("moderate range", 50.0, 2.0e5)
+        .stressConcentrationFactor(1.0).thicknessCorrectionFactor(1.0).otherStressRangeFactor(1.0)
+        .designFatigueFactor(3.0).minerDamageLimit(1.0).assessedExposureYears(20.0).curveDefinitionVerified(true)
+        .stressSpectrumVerified(true).build();
+    EngineeringCalculationResult<DnvRpC203FatigueAssessment> result = kernel.calculate(input, null);
+    DnvRpC203FatigueAssessment value = result.getValue();
+    return baseline("dnv-rp-c203-sn-miner-regression", kernel)
+        .check("calculatedReviewRequired", 1.0, calculated(result), "flag", 0.0, 0.0)
+        .check("rawMinerDamage", 0.125, value == null ? FAILURE_SENTINEL : value.getRawMinerDamage(), "fraction",
+            1.0e-12, 1.0e-12)
+        .check("designMinerDamage", 0.375, value == null ? FAILURE_SENTINEL : value.getDesignMinerDamage(), "fraction",
+            1.0e-12, 1.0e-12)
+        .check("withinDamageLimit", 1.0, value != null && value.isWithinDamageLimit() ? 1.0 : 0.0, "flag", 0.0, 0.0)
+        .build();
+  }
+
+  private static EngineeringValidationBenchmark freeSpanBenchmark(DnvRpF105FreeSpanScreeningKernel kernel) {
+    DnvRpF105FreeSpanScreeningKernel.Input input = DnvRpF105FreeSpanScreeningKernel.Input
+        .builder(StandardEdition.defaultEdition(StandardType.DNV_RP_F105), "Pipeline").spanLengthM(30.0)
+        .steelOuterDiameterM(0.3239).steelWallThicknessM(0.0206).hydrodynamicDiameterM(0.3239).youngsModulusPa(207.0e9)
+        .effectiveMassPerLengthKgPerM(250.0).effectiveAxialForceN(500000.0).currentVelocityMPerS(0.8)
+        .waveOrbitalVelocityAmplitudeMPerS(1.2).wavePeriodS(10.0).strouhalNumber(0.2).lockInFrequencyRatioLower(0.8)
+        .lockInFrequencyRatioUpper(1.2).maxCurrentReducedVelocityForScreening(4.0)
+        .maxWaveReducedVelocityForScreening(3.0).spanGeometryVerified(true).structuralModelVerified(true)
+        .environmentalBasisVerified(true).projectScreeningLimitsVerified(true).build();
+    EngineeringCalculationResult<DnvRpF105FreeSpanAssessment> result = kernel.calculate(input, null);
+    DnvRpF105FreeSpanAssessment value = result.getValue();
+    return baseline("dnv-rp-f105-free-span-regression", kernel)
+        .check("calculatedReviewRequired", 1.0, calculated(result), "flag", 0.0, 0.0)
+        .check("fundamentalNaturalFrequency", 1.0618221449736536,
+            value == null ? FAILURE_SENTINEL : value.getFundamentalNaturalFrequencyHz(), "Hz", 1.0e-12, 1.0e-12)
+        .check("currentReducedVelocity", 2.326093996432868,
+            value == null ? FAILURE_SENTINEL : value.getCurrentReducedVelocity(), "dimensionless", 1.0e-12, 1.0e-12)
+        .check("waveReducedVelocity", 3.489140994649302,
+            value == null ? FAILURE_SENTINEL : value.getWaveReducedVelocity(), "dimensionless", 1.0e-12, 1.0e-12)
+        .check("detailedResponseTriggered", 1.0,
+            value != null && value.isDetailedResponseAssessmentRequired() ? 1.0 : 0.0, "flag", 0.0, 0.0)
+        .build();
+  }
+
+  private static NorsokM506CorrosionDesignKernel.Input corrosionInput(double inhibitorEfficiency) {
+    return NorsokM506CorrosionDesignKernel.Input
+        .builder(StandardEdition.defaultEdition(StandardType.NORSOK_M_506), "Pipeline").temperatureC(60.0)
+        .totalPressureBara(100.0).co2MoleFraction(0.02).actualPH(4.2).flowVelocityMPerS(3.0)
+        .pipeInternalDiameterM(0.254).liquidDensityKgPerM3(1000.0).liquidDynamicViscosityPaS(0.001)
+        .inhibitorEfficiencyFraction(inhibitorEfficiency).exposureYears(25.0).build();
   }
 
   private static EngineeringValidationBenchmark.Builder baseline(String id, EquipmentDesignKernel<?, ?> kernel) {
