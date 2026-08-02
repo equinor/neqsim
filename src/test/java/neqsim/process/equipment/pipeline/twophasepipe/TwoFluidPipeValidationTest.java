@@ -1,5 +1,6 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,16 +14,13 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Validation tests for TwoFluidPipe against published correlations and data.
+ * Correlation comparisons and physical-trend regression tests for TwoFluidPipe.
  *
  * <p>
- * This test class validates the TwoFluidPipe model against:
+ * The cases include a Beggs-Brill comparison and NeqSim scenario checks inspired by public
+ * multiphase-flow literature. Scenario smoke tests are not experimental validation and do not
+ * establish equivalence with a commercial simulator.
  * </p>
- * <ul>
- * <li>Beggs and Brill (1973) correlation - SPE-4007-PA</li>
- * <li>Published OLGA validation cases from literature</li>
- * <li>Terrain-induced slugging field data patterns</li>
- * </ul>
  *
  * <p>
  * References:
@@ -488,11 +486,10 @@ class TwoFluidPipeValidationTest {
   class TerrainSlugTests {
 
     /**
-     * Test severe slugging conditions at riser base.
+     * Smoke-test a low-rate flowline-riser state and the explicit system diagnostic.
      *
-     * <p>
-     * Reference: Pots et al. (1987) - Severe slugging criterion π_ss > 1
-     * </p>
+     * <p>This checks topology extraction and finite solved holdup; it is not a validation of a
+     * dynamic severe-slug cycle or a published transition point.</p>
      */
     @Test
     @DisplayName("Severe slugging: Riser base conditions")
@@ -518,24 +515,31 @@ class TwoFluidPipeValidationTest {
       flowline.setDiameter(0.1016); // 4 inch
       flowline.setNumberOfSections(30);
 
-      // Profile: Horizontal flowline, then 200m riser
+      // Profile: Horizontal flowline, then 240 m rise over the final 600 m
       double[] elevation = new double[31];
       for (int i = 0; i < 25; i++) {
         elevation[i] = 0; // Horizontal section
       }
       for (int i = 25; i <= 30; i++) {
-        elevation[i] = (i - 24) * 40.0; // 200m riser over last 600m
+        elevation[i] = (i - 24) * 40.0;
       }
       flowline.setElevationProfile(elevation);
       flowline.run();
 
-      // Check conditions at riser base (section 24)
+      int riserBaseSection = 24;
+      SevereSluggingSystemDiagnostic.Result stability =
+          flowline.evaluateSevereSluggingSystem(riserBaseSection);
+      assertNotEquals(SevereSluggingSystemDiagnostic.Status.NOT_APPLICABLE_INVALID_TOPOLOGY,
+          stability.getStatus());
+
+      // Check conditions at riser base
       double[] holdupProfile = flowline.getLiquidHoldupProfile();
       double riserBaseHoldup = holdupProfile[24];
       double riserTopHoldup = holdupProfile[holdupProfile.length - 1];
 
       logger.info("\n=== Severe Slugging Test ===");
-      logger.info("Configuration: 2.4km flowline + 200m riser");
+      logger.info("Configuration: 2.4 km flowline + 240 m rise");
+      logger.info("System stability status: {}", stability.getStatus());
       logger.printf(org.apache.logging.log4j.Level.INFO, "Riser base holdup: %.4f (%.2f%%)%n", riserBaseHoldup,
           riserBaseHoldup * 100);
       logger.printf(org.apache.logging.log4j.Level.INFO, "Riser top holdup: %.4f (%.2f%%)%n", riserTopHoldup,
