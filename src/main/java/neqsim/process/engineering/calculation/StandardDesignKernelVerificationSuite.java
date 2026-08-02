@@ -52,6 +52,7 @@ public final class StandardDesignKernelVerificationSuite {
     DnvRpC203FatigueDesignKernel fatigueKernel = new DnvRpC203FatigueDesignKernel();
     DnvRpF105FreeSpanScreeningKernel freeSpanKernel = new DnvRpF105FreeSpanScreeningKernel();
     DnvRpF101CorrodedPipelineScreeningKernel metalLossKernel = new DnvRpF101CorrodedPipelineScreeningKernel();
+    DnvRpF104Co2PipelineEnvelopeScreeningKernel co2PipelineKernel = new DnvRpF104Co2PipelineEnvelopeScreeningKernel();
     Api2000TankVentingScreeningKernel tankVentingKernel = new Api2000TankVentingScreeningKernel();
 
     EngineeringBenchmarkSuite suite = new EngineeringBenchmarkSuite(SUITE_ID, REVISION)
@@ -60,7 +61,7 @@ public final class StandardDesignKernelVerificationSuite {
         .requireMethod(methodKey(separatorKernel)).requireMethod(methodKey(corrosionKernel))
         .requireMethod(methodKey(meteringKernel)).requireMethod(methodKey(fatigueKernel))
         .requireMethod(methodKey(freeSpanKernel)).requireMethod(methodKey(metalLossKernel))
-        .requireMethod(methodKey(tankVentingKernel));
+        .requireMethod(methodKey(tankVentingKernel)).requireMethod(methodKey(co2PipelineKernel));
     suite.add(pumpBenchmark(pumpKernel));
     suite.add(reliefBenchmark(reliefKernel));
     suite.add(orificeBenchmark(orificeKernel));
@@ -72,6 +73,7 @@ public final class StandardDesignKernelVerificationSuite {
     suite.add(freeSpanBenchmark(freeSpanKernel));
     suite.add(metalLossBenchmark(metalLossKernel));
     suite.add(tankVentingBenchmark(tankVentingKernel));
+    suite.add(co2PipelineBenchmark(co2PipelineKernel));
     return suite.evaluate();
   }
 
@@ -301,6 +303,37 @@ public final class StandardDesignKernelVerificationSuite {
         .check("emergencyUtilization", 0.8333333333333334,
             value == null ? FAILURE_SENTINEL : value.getEmergencyOutbreathingUtilization(), "fraction", 1.0e-15,
             1.0e-12)
+        .check("allCallerControlledConstraintsSatisfied", 1.0,
+            value != null && value.allConstraintsSatisfied() ? 1.0 : 0.0, "flag", 0.0, 0.0)
+        .build();
+  }
+
+  private static EngineeringValidationBenchmark co2PipelineBenchmark(
+      DnvRpF104Co2PipelineEnvelopeScreeningKernel kernel) {
+    DnvRpF104Co2PipelineEnvelopeScreeningKernel.Input input = DnvRpF104Co2PipelineEnvelopeScreeningKernel.Input
+        .builder(StandardEdition.defaultEdition(StandardType.DNV_RP_F104), "Pipeline").co2MoleFraction(0.98)
+        .minimumCo2MoleFraction(0.97).waterMoleFraction(0.0001).maximumWaterMoleFraction(0.0002)
+        .otherImpuritiesWithinProjectSpecification(true).designMinimumTemperatureK(273.15)
+        .designMaximumTemperatureK(323.15).maximumAllowableOperatingPressurePaAbsolute(15.0e6)
+        .addOperatingPoint(
+            new DnvRpF104Co2PipelineEnvelopeScreeningKernel.OperatingPoint("inlet", 0.0, 14.0e6, 293.15, 10.0e6))
+        .addOperatingPoint(
+            new DnvRpF104Co2PipelineEnvelopeScreeningKernel.OperatingPoint("outlet", 100000.0, 10.5e6, 283.0, 9.5e6))
+        .co2PipelineApplicabilityVerified(true).compositionAndSpecificationVerified(true)
+        .thermodynamicModelVerified(true).singlePhaseBoundaryInterpretationVerified(true).operatingProfileVerified(true)
+        .pressureTemperatureLimitsVerified(true).materialsCorrosionAndFractureBasisVerified(true)
+        .safetyConstructionOperationsAndRequalificationReviewed(true).build();
+    EngineeringCalculationResult<DnvRpF104Co2PipelineEnvelopeAssessment> result = kernel.calculate(input, null);
+    DnvRpF104Co2PipelineEnvelopeAssessment value = result.getValue();
+    return baseline("dnv-rp-f104-co2-pipeline-envelope-regression", kernel)
+        .check("calculatedReviewRequired", 1.0, calculated(result), "flag", 0.0, 0.0)
+        .check("co2MoleFractionMargin", 0.01, value == null ? FAILURE_SENTINEL : value.getCo2MoleFractionMargin(),
+            "fraction", 1.0e-15, 1.0e-12)
+        .check("minimumSinglePhasePressureMargin", 1.0e6,
+            value == null ? FAILURE_SENTINEL : value.getMinimumSinglePhasePressureMarginPa(), "Pa", 0.0, 0.0)
+        .check("minimumMaopMargin", 1.0e6,
+            value == null ? FAILURE_SENTINEL : value.getMinimumMaximumAllowableOperatingPressureMarginPa(), "Pa", 0.0,
+            0.0)
         .check("allCallerControlledConstraintsSatisfied", 1.0,
             value != null && value.allConstraintsSatisfied() ? 1.0 : 0.0, "flag", 0.0, 0.0)
         .build();

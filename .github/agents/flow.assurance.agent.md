@@ -27,7 +27,7 @@ Identify and apply relevant standards for every flow assurance study. Common sta
 
 | Domain | Standards | Key Requirements |
 |--------|-----------|-----------------|
-| Pipeline design | DNV-ST-F101, NORSOK L-001, ASME B31.4/B31.8 | Wall thickness, design factors, corrosion allowance |
+| Pipeline design | DNV-ST-F101, DNV-RP-F104 for CO2, NORSOK L-001, ASME B31.4/B31.8 | Structural design plus composition-specific CO2 phase/hydraulic and lifecycle basis |
 | Corrosion | NORSOK M-506, NORSOK M-001, DNV-RP-F112, ISO 21457 | CO2-corrosion screening, material selection, and CO2/H2S corrosion basis |
 | Subsea pipelines | DNV-RP-F109, DNV-RP-F105, NORSOK U-001 | On-bottom stability and free-span assessment |
 | GRP piping | ISO 14692 | Non-metallic pipe design |
@@ -101,6 +101,15 @@ M-506 rate or projected uniform loss. Require verified geometry, inspection allo
 strength, pressure basis, caller-controlled pressure factor, and applicability. Keep defect
 interaction/complex profiles, combined compression, probabilistic and growth assessment,
 crack-like damage, repair, fitness-for-service approval, and all DNV-ST-F101 design checks external.
+
+When a CO2 phase-envelope and hydraulic/thermal study feeds an explicit current
+`DNV-RP-F104 2021-02+AMD:2021-09` screen, use
+`DnvRpF104Co2PipelineEnvelopeScreeningKernel`. Supply the bounded project composition,
+project-controlled CO2/water limits, ordered profile, MAOP, design temperatures, and a separately
+verified composition-specific minimum single-phase pressure boundary at each point. Do not infer
+that boundary from the pure-CO2 critical point or a universal cricondenbar rule. Treat margins as
+screening findings and keep EOS qualification, transients, decompression/fracture, materials,
+corrosion, safety, construction, operation, requalification, and DNV-ST-F101 design external.
 
 ## Pipe Flow Networks
 ```java

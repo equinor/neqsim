@@ -248,7 +248,7 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **ccs.hydrogen** | `@ccs.hydrogen <description>` | CO2 capture/transport/storage and hydrogen systems — phase behavior with impurities, dense phase pipeline design, injection well analysis, H2 blending |
+| **ccs.hydrogen** | `@ccs.hydrogen <description>` | CO2 capture/transport/storage and hydrogen systems — composition-specific phase behavior, DNV-RP-F104 envelope screening, injection well analysis, H2 blending |
 
 **Examples:**
 ```
@@ -430,7 +430,7 @@ They contain verified patterns, rules, and domain knowledge.
 | `neqsim-capability-map` | Checking what NeqSim can do, planning implementations | Structured inventory of all NeqSim capabilities by discipline |
 | `neqsim-technical-document-reading` | Reading technical documents (PDF, Word, Excel) | Extraction patterns, unit normalization, component mapping, quality scoring |
 | `neqsim-trapped-liquid-fire-rupture` | Blocked-in liquid fire rupture studies | Evidence retrieval, trapped inventory, fire exposure, material/flange derating, PFP demand, source-term handoff |
-| `neqsim-ccs-hydrogen` | CCS or hydrogen system tasks | CO2 phase behavior, impurity management, injection wells, H2 blending |
+| `neqsim-ccs-hydrogen` | CCS or hydrogen system tasks | CO2 phase behavior, DNV-RP-F104 caller-controlled envelope routing, impurity management, injection wells, H2 blending |
 | `neqsim-distillation-design` | Distillation column setup or troubleshooting | Solver selection, feed tray rules, convergence, internals sizing |
 | `neqsim-dynamic-simulation` | Transient simulations, controller tuning | runTransient, PID controllers, transmitters, depressurization |
 | `neqsim-electrolyte-systems` | Brine, MEG, ions, or scale prediction | SystemElectrolyteCPAstatoil, ion components, scale risk |

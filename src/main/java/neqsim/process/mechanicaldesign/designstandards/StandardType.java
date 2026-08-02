@@ -111,6 +111,8 @@ public enum StandardType {
       new String[] { "Pipeline", "AdiabaticPipe" }, "pipeline design codes"),
   DNV_RP_F101("DNV-RP-F101", "Corroded pipelines", "2019-09+AMD:2025-09",
       new String[] { "Pipeline", "AdiabaticPipe", "MultiphasePipe", "Riser" }, "pipeline integrity codes"),
+  DNV_RP_F104("DNV-RP-F104", "Design and operation of carbon dioxide pipelines", "2021-02+AMD:2021-09",
+      new String[] { "Pipeline", "AdiabaticPipe", "MultiphasePipe", "Riser" }, "pipeline design codes"),
   DNV_RP_F105("DNV-RP-F105", "Free spanning pipelines", "2025-12", new String[] { "Pipeline", "AdiabaticPipe" },
       "pipeline design codes"),
 

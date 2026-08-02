@@ -109,6 +109,23 @@ public final class StandardRequirementPackRegistry {
     register(packs, pack(StandardType.DNV_ST_F101, capability("pipeline-mechanical-design", Kind.CALCULATION_SCREENING,
         "neqsim.process.mechanicaldesign.pipeline.PipeMechanicalDesignCalculator",
         "Pressure-containment screening; load cases, safety classes, fabrication, and installation checks are incomplete.")));
+    register(packs, pack(StandardType.DNV_RP_F104, capability("co2-phase-behaviour", Kind.CALCULATION_SCREENING,
+        "neqsim.thermodynamicoperations.ThermodynamicOperations",
+        "Property and phase calculations only; project composition, EOS validation, phase margins, and acceptance remain external."),
+        capability("co2-pipeline-hydraulics", Kind.CALCULATION_SCREENING,
+            "neqsim.process.equipment.pipeline.PipeBeggsAndBrills",
+            "Hydraulic and thermal simulation only; CO2-specific validation, transients, and F104 acceptance remain external."),
+        capability("dense-co2-corrosion", Kind.CALCULATION_SCREENING, "neqsim.process.corrosion.DensePhaseCO2Corrosion",
+            "Legacy heuristic impurity/free-water screen only; embedded typical limits are not F104 criteria or conformity evidence."),
+        capability("pipeline-mechanical-design", Kind.CALCULATION_SCREENING,
+            "neqsim.process.mechanicaldesign.pipeline.PipeMechanicalDesignCalculator",
+            "Preliminary pressure-containment screening only; DNV-ST-F101 load cases and F104 integrity requirements remain external."),
+        capability("impurity-monitoring", Kind.CALCULATION_SCREENING,
+            "neqsim.process.measurementdevice.ImpurityMonitor",
+            "Modelled composition monitoring only; sampling, analyser performance, specifications, and operating response remain external."),
+        capability("release-consequence", Kind.CALCULATION_SCREENING,
+            "neqsim.process.safety.dispersion.GasDispersionAnalyzer",
+            "Generic dispersion analysis only; CO2 release thermodynamics, terrain, exposure, emergency response, and QRA remain external.")));
     PACKS = Collections.unmodifiableMap(packs);
   }
 

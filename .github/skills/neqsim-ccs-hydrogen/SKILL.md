@@ -1,7 +1,7 @@
 ---
 name: neqsim-ccs-hydrogen
 description: "CO2 capture, transport, storage (CCS) and hydrogen systems patterns for NeqSim. USE WHEN: modeling CO2 pipelines, injection wells, impurity effects on phase behavior, CO2 dense phase transport, hydrogen blending, electrolysis, or any CCS/H2 value chain analysis. Covers CO2 phase behavior, impurity management, well integrity, and hydrogen systems."
-last_verified: "2026-07-04"
+last_verified: "2026-08-02"
 ---
 
 # CCS and Hydrogen Systems with NeqSim
@@ -25,7 +25,7 @@ systems, including CO2 transport, injection wells, impurity effects, and H2 blen
 
 | Domain | Standards | Key Requirements |
 |--------|-----------|-----------------|
-| CO2 pipeline | DNV-RP-F104, ISO 27913 | CO2 pipeline design, impurity limits |
+| CO2 pipeline | DNV-RP-F104, ISO 27913, DNV-ST-F101 | Project composition/phase envelope, transport hydraulics, structural design, fracture/materials/corrosion and lifecycle evidence |
 | CO2 storage | ISO 27914, EU CCS Directive | Storage site characterization |
 | CO2 transport | ISO 27913 | Composition specs, phase management |
 | CO2 quality | ISO 27916 | CO2 stream specification |
@@ -36,8 +36,9 @@ systems, including CO2 transport, injection wells, impurity effects, and H2 blen
 
 ### CO2 Critical Point and Phase Envelope
 
-CO2 critical point: 31.1°C, 73.8 bara. Most CO2 pipelines operate in dense phase
-(above critical pressure) to avoid two-phase flow.
+The pure-CO2 critical point is useful for model verification, but it is not a transport acceptance
+boundary for an impure project stream. Calculate and validate the phase envelope for the actual
+bounded composition and operating path.
 
 ```java
 // Pure CO2 phase behavior
@@ -47,7 +48,7 @@ co2.setMixingRule("classic");
 
 ThermodynamicOperations ops = new ThermodynamicOperations(co2);
 ops.calcPTphaseEnvelope();
-// CO2 is in dense/supercritical phase at typical pipeline conditions (>80 bara, 4-40°C)
+// Inspect the calculated phase state; do not infer F104 acceptance from pure-CO2 P/T alone.
 ```
 
 ### Impurity Effects on CO2 Phase Envelope
@@ -89,10 +90,52 @@ ops.calcPTphaseEnvelope();
 
 ## 2. CO2 Pipeline Design
 
-### Dense Phase Transport
+### Caller-controlled F104 transport-envelope screening
+
+For the current `DNV-RP-F104 2021-02+AMD:2021-09` catalog basis, use
+`DnvRpF104Co2PipelineEnvelopeScreeningKernel`. Supply project-controlled composition limits, MAOP,
+design temperatures, and a verified minimum single-phase pressure boundary at each ordered
+pressure-temperature profile point. The minimum-pressure interpretation must be validated for the
+specific composition, EOS, temperature, path, and uncertainty basis.
+
+The kernel reports composition and operating margins only. Negative margins are calculated
+findings, not DNV decisions. Missing composition/EOS/profile/limits/integrity/lifecycle evidence
+blocks execution. Use `StandardRequirementPackRegistry.lookup(StandardType.DNV_RP_F104)` to discover
+bounded related capabilities; the pack is not a requirements-coverage claim.
 
 ```java
-// Typical CO2 pipeline: 110 bara inlet, 80 bara min, 4-40°C
+StandardEdition edition = StandardEdition.defaultEdition(StandardType.DNV_RP_F104);
+DnvRpF104Co2PipelineEnvelopeScreeningKernel.Input input =
+    DnvRpF104Co2PipelineEnvelopeScreeningKernel.Input
+        .builder(edition, "Pipeline")
+        .co2MoleFraction(projectCo2MoleFraction)
+        .minimumCo2MoleFraction(projectMinimumCo2MoleFraction)
+        .waterMoleFraction(projectWaterMoleFraction)
+        .maximumWaterMoleFraction(projectMaximumWaterMoleFraction)
+        .otherImpuritiesWithinProjectSpecification(otherImpuritiesWithinSpecification)
+        .designMinimumTemperatureK(projectMinimumTemperatureK)
+        .designMaximumTemperatureK(projectMaximumTemperatureK)
+        .maximumAllowableOperatingPressurePaAbsolute(projectMaopPaAbsolute)
+        .addOperatingPoint(new DnvRpF104Co2PipelineEnvelopeScreeningKernel.OperatingPoint(
+            "inlet", 0.0, inletPressurePaAbsolute, inletTemperatureK,
+            inletMinimumSinglePhasePressurePaAbsolute))
+        .co2PipelineApplicabilityVerified(true)
+        .compositionAndSpecificationVerified(true)
+        .thermodynamicModelVerified(true)
+        .singlePhaseBoundaryInterpretationVerified(true)
+        .operatingProfileVerified(true)
+        .pressureTemperatureLimitsVerified(true)
+        .materialsCorrosionAndFractureBasisVerified(true)
+        .safetyConstructionOperationsAndRequalificationReviewed(true)
+        .build();
+EngineeringCalculationResult<DnvRpF104Co2PipelineEnvelopeAssessment> result =
+    new DnvRpF104Co2PipelineEnvelopeScreeningKernel().calculate(input, null);
+```
+
+### Hydraulic and thermal profile
+
+```java
+// Demonstration conditions only; use the controlled project operating envelope.
 Stream co2Feed = new Stream("CO2 Feed", co2Mix);
 co2Feed.setFlowRate(1000000.0, "kg/hr");  // ~1 Mt/yr
 co2Feed.setTemperature(25.0, "C");
@@ -107,13 +150,13 @@ pipeline.run();
 
 double outP = pipeline.getOutletStream().getPressure();
 double outT = pipeline.getOutletStream().getTemperature() - 273.15;
-// Verify: outlet P > cricondenbar to stay in dense phase
+// Compare the complete profile with composition-specific, externally verified phase boundaries.
 ```
 
 ### CO2 Dehydration Requirement
 
 ```java
-// Water content must be below ~50 ppmv to prevent hydrate and corrosion
+// Use the controlled project water specification; do not embed a universal ppm limit.
 // Use CPA for accurate water in CO2 modeling
 SystemInterface wetCO2 = new SystemSrkCPAstatoil(273.15 + 25, 110.0);
 wetCO2.addComponent("CO2", 0.99);
@@ -127,7 +170,7 @@ wetCO2.initProperties();
 
 // Check water content in CO2-rich phase
 double waterInCO2 = wetCO2.getPhase("gas").getComponent("water").getx();
-// Convert to ppmv and compare with spec (typically <50 ppmv)
+// Convert to the project specification basis and retain the sampling/model uncertainty.
 ```
 
 ## 3. CO2 Injection Well Analysis
@@ -196,7 +239,7 @@ wellbore.runShutdownSimulation(48.0, 1.0);  // 48 hours, 1 hr timestep
 // Static utility for CO2-specific flow adjustments
 boolean dense = CO2FlowCorrections.isDensePhase(system);
 double holdupCorr = CO2FlowCorrections.getLiquidHoldupCorrectionFactor(system);
-// Dense phase CO2 requires modified correlations for pressure drop
+// Legacy heuristic only; this pure-CO2 critical-point check is not F104 evidence.
 ```
 
 ## 4. Hydrogen Systems
@@ -328,7 +371,7 @@ double totalPower = comp1.getPower("kW") + comp2.getPower("kW")
 
 | Pitfall | Solution |
 |---------|----------|
-| CO2 two-phase in pipeline | Ensure P > cricondenbar (account for impurities) |
+| Unintended CO2 phase split | Validate the actual-composition phase envelope and keep the full operating path inside the project-controlled single-phase region with uncertainty margin |
 | Using SRK for CO2+water | Use CPA (`SystemSrkCPAstatoil`) for accurate water solubility |
 | Ignoring impurity effect on phase envelope | Always calculate phase envelope with impurities included |
 | H2 density too high | Verify EOS handles low-density H2 correctly at high P |

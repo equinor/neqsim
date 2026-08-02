@@ -690,6 +690,14 @@ wall loss. For an inspected isolated longitudinal metal-loss defect under intern
 material strength, pressure basis, and caller-controlled factor. See the
 [DNV-RP-F101 isolated metal-loss guide](mechanical_design/dnv_rp_f101_corroded_pipeline).
 
+For CO2 pipeline transport work on the current `DNV-RP-F104 2021-02+AMD:2021-09` basis, use
+`DnvRpF104Co2PipelineEnvelopeScreeningKernel` to compare a verified composition and ordered
+pressure-temperature profile with project-controlled composition limits, composition-specific
+single-phase pressure boundaries, MAOP, and design temperatures. The typed screen and its
+cross-lifecycle requirement pack do not replace DNV-ST-F101 structural design, fracture control,
+materials/corrosion qualification, construction, operation, safety, or requalification. See the
+[DNV-RP-F104 CO2 pipeline guide](mechanical_design/dnv_rp_f104_co2_pipeline).
+
 Do not infer inspected defect dimensions from the M-506 rate output. The RP-F101 screen does not
 handle interacting or complex defects, combined longitudinal compression, cracking, probabilistic
 assessment, repair, or fitness-for-service approval. It also does not replace DNV-ST-F101 pressure

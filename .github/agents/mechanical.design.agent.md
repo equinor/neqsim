@@ -188,6 +188,23 @@ does not replace DNV-ST-F101 pressure containment, collapse, propagation/local b
 interaction, fatigue, incidental/test pressure, de-rating, safety class, ovality, fabrication
 route, or installation-strain work.
 
+### DNV-RP-F104 CO2 pipeline work
+
+For an explicit current-edition F104 basis, use
+`DnvRpF104Co2PipelineEnvelopeScreeningKernel`. Supply verified project CO2/water composition limits,
+other-impurity status, design temperatures, absolute MAOP, and an ordered hydraulic/thermal profile
+with a composition-specific externally derived minimum single-phase pressure boundary at every
+point. Report composition, phase-boundary, MAOP, and temperature margins as `SCREENING`, not DNV
+acceptance.
+
+Require evidence for applicability, composition/specification, EOS and phase-boundary
+interpretation, profile cases, pressure/temperature limits, materials/corrosion/fracture, and
+safety/construction/operation/requalification. The F104 requirement pack only discovers bounded
+adjacent capabilities. Do not treat the pure-CO2 critical point, `CO2FlowCorrections.isDensePhase`,
+or `DensePhaseCO2Corrosion` embedded typical limits as F104 evidence. Keep DNV-ST-F101 structural
+design, running-ductile-fracture/decompression/crack arrest, construction, operation, and accountable
+approval external.
+
 ### API 2000 tank-venting work
 
 For a current-edition fixed-roof tank venting basis, use `Api2000TankVentingScreeningKernel`.

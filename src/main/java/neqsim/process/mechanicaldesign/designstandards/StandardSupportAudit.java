@@ -127,6 +127,15 @@ public final class StandardSupportAudit {
               + "caller-controlled depth allowance and pressure factor; inspection uncertainty derivation, "
               + "interacting/complex defects, combined loading, cracking, growth, probabilistic calibration, "
               + "fitness-for-service acceptance, and DNV-ST-F101 design checks remain external.");
+    case DNV_RP_F104:
+      EquipmentDesignKernelRegistry.Lookup co2PipelineImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING,
+          co2PipelineImplementation.isImplemented(), registryImplementation,
+          co2PipelineImplementation.getImplementationClassName(),
+          "Caller-controlled CO2/water specification margins and ordered pressure-temperature profile margins "
+              + "against externally verified single-phase boundaries, MAOP, and temperature limits only; phase-model "
+              + "qualification, DNV-ST-F101 design, fracture/decompression and crack arrest, materials, corrosion, "
+              + "construction, safety, operation, requalification, and conformity remain external.");
     default:
       return getCategorySupport(standardType, registryImplementation);
     }

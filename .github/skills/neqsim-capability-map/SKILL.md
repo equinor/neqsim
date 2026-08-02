@@ -1,7 +1,7 @@
 ---
 name: neqsim-capability-map
 description: "Structured inventory of NeqSim's capabilities by engineering discipline. USE WHEN: checking what NeqSim can do, planning implementations, assessing gaps for engineering tasks, or routing work to the right agent. Covers thermodynamics, process equipment, PVT, standards, mechanical design, flow assurance, safety, and economics."
-last_verified: "2026-07-18"
+last_verified: "2026-08-02"
 ---
 
 # NeqSim Capability Map
@@ -529,6 +529,7 @@ transport properties (viscosity, thermal conductivity, density).
 | **NACE MR0175 material selection** | No systematic material logic | Manual standard lookup |
 | **Site-specific flare consequences** | Point-source radiation, neutral Gaussian centerline dispersion, spherical noise, tip-Mach screening and API 537 flame geometry are available | Use validated specialist models for complex terrain/weather, toxic/combustion detail and final siting |
 | **API 2000 detailed vent sizing** | `Api2000TankVentingScreeningKernel` aggregates caller-controlled normal/emergency demand and screens rated capacity/pressure; API demand tables/equations, vent area, device selection, and line losses are not implemented | Use the typed kernel for current-edition screening; retain licensed demand derivation and detailed device/network design externally |
+| **Full DNV-RP-F104 CO2 pipeline lifecycle assessment** | `DnvRpF104Co2PipelineEnvelopeScreeningKernel` screens caller-controlled composition and pressure-temperature margins; a six-capability requirement pack exposes bounded adjacent tools | Retain EOS qualification, DNV-ST-F101 structural design, fracture/decompression/crack arrest, materials/corrosion, construction, operation, safety, requalification, and clause coverage externally |
 | **Full pipeline network** | LoopedPipeNetwork: NR-GGA solver, 120+ wells, IPR (PI/Vogel/Fetkovich), chokes, tubing VLP, Beggs-Brill multiphase, compressors, regulators, artificial lift (gas lift/ESP/jet/rod pump), water handling, sand erosion (DNV RP O501), corrosion (de Waard-Milliams/NORSOK M-506), GHG emissions tracking | Full-featured production network |
 
 ### EOS Limitations
@@ -592,6 +593,7 @@ transport properties (viscosity, thermal conductivity, density).
 | PSV sizing (gas / liquid, fire case)? | ✅ | `ReliefValveSizing` (`neqsim.process.util.fire`) |
 | Two-phase PSV (API 520 omega / HEM)? | ✅ | `ReliefValveSizing.calculateTwoPhaseReliefArea(...)` (Leung omega method) |
 | Tank venting (API 2000)? | 🔧 | `Api2000TankVentingScreeningKernel` — caller-controlled normal/emergency demand aggregation and rated-capacity/pressure screen; no API table lookup or vent sizing |
+| CO2 pipeline envelope (DNV-RP-F104)? | 🔧 | `DnvRpF104Co2PipelineEnvelopeScreeningKernel` — current-edition caller-controlled composition and operating-envelope margins; requirement pack maps adjacent capabilities but does not establish conformity |
 | Monte Carlo? | ✅ | `MonteCarloSimulator` |
 | Heat integration? | ✅ | `PinchAnalyzer` |
 | Amine sweetening? | ⚠️ Basic | Kent-Eisenberg model |

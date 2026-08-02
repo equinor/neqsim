@@ -28,7 +28,7 @@ NeqSim code patterns.
 
 | Domain | Standards | Key Requirements |
 |--------|-----------|-----------------|
-| Pipeline design | DNV-ST-F101, NORSOK L-001, ASME B31.4/B31.8 | Wall thickness, design factors, corrosion allowance |
+| Pipeline design | DNV-ST-F101, DNV-RP-F104 for CO2, NORSOK L-001, ASME B31.4/B31.8 | Structural design plus composition-specific CO2 phase/hydraulic and lifecycle basis |
 | Corrosion | NORSOK M-001, DNV-RP-F112, ISO 21457 | Material selection, CO2/H2S corrosion rates |
 | Subsea pipelines | DNV-RP-F109, DNV-RP-F105, NORSOK U-001 | On-bottom stability and free-span assessment |
 | Hydrate management | DNV-RP-F116 | Hydrate prevention and remediation |
@@ -247,6 +247,20 @@ Do not infer defect geometry from hydraulic corrosion-rate calculations or proje
 loss. The typed kernel does not handle defect interaction or complex profiles, longitudinal
 compression, probabilistic assessment, crack-like damage, repair, or fitness-for-service approval.
 It also does not replace DNV-ST-F101 original-design checks.
+
+### DNV-RP-F104 CO2 pipeline routing
+
+When an actual-composition phase-envelope and hydraulic/thermal study feeds a current
+`DNV-RP-F104 2021-02+AMD:2021-09` screen, route the bounded project composition, CO2/water limits,
+ordered profile, absolute MAOP, design temperatures, and a separately verified minimum single-phase
+pressure boundary at each point through `DnvRpF104Co2PipelineEnvelopeScreeningKernel`.
+
+The external thermodynamic basis must establish that pressure above each boundary represents the
+intended single-phase region for the specific composition, temperature, path, EOS, and uncertainty.
+Do not substitute pure-CO2 critical conditions or `CO2FlowCorrections.isDensePhase(...)`. Treat
+composition, phase-boundary, MAOP, and temperature margins as screening findings. Keep transient
+cases, F104 decompression/fracture and crack arrest, materials/corrosion, release consequences,
+construction, operation, requalification, and all DNV-ST-F101 structural checks external.
 
 ### Beggs and Brill Multiphase Correlation
 

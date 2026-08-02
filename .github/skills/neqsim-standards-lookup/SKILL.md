@@ -42,6 +42,7 @@ The index file `standards_index.csv` maps equipment types to applicable standard
 | Offshore steel fatigue | DNV-RP-C203 | Use `DnvRpC203FatigueDesignKernel` with a verified project-controlled S-N curve and stress spectrum; do not report legacy pipeline/riser shortcuts as exact-edition C203 evidence |
 | Submarine-pipeline free spans | DNV-RP-F105 | Use `DnvRpF105FreeSpanScreeningKernel` for the current 2025-12 first-mode/dimensionless screen; project response triggers are not DNV acceptance criteria and the legacy allowable-span calculator is not F105 evidence |
 | Inspected pipeline metal loss | DNV-RP-F101 | Use `DnvRpF101CorrodedPipelineScreeningKernel` for the current isolated longitudinal defect/internal-pressure screen; measured geometry and caller-controlled factors are evidence, not values inferred from M-506, and ST-F101 design checks remain separate |
+| CO2 pipeline design and operation | DNV-RP-F104 | Use `DnvRpF104Co2PipelineEnvelopeScreeningKernel` for the current caller-controlled composition and operating-envelope margin screen; use its requirement pack only for bounded capability discovery and keep ST-F101, fracture, materials/corrosion, construction, operation, safety, and requalification separate |
 | Fixed-roof tank venting | API 2000 | Use `Api2000TankVentingScreeningKernel` for the current 7th-edition caller-controlled demand/capacity screen; do not infer licensed demand factors or report it as device sizing/conformity |
 | Mineral scale / produced water | (industry practice; Davies + Ksp(T)) | `ElectrolyteScaleCalculator` / `ScaleKinetics` / `BrineMixingScaleEvaluator` (`process.chemistry.scale`) |
 
@@ -130,6 +131,23 @@ RP-F101 remaining-strength screening is not DNV-ST-F101 original design. It does
 pressure containment, collapse, propagation buckling, local buckling, load interaction, fatigue,
 incidental/test pressure, de-rating, safety class, ovality, fabrication route, or installation
 strain checks.
+
+### DNV-RP-F104 execution rule
+
+For an explicit current `DNV-RP-F104 2021-02+AMD:2021-09` basis, use
+`DnvRpF104Co2PipelineEnvelopeScreeningKernel`. Require verified project CO2/water limits,
+other-impurity status, composition/EOS basis, the minimum-pressure interpretation and uncertainty of
+each supplied single-phase boundary, an ordered operating profile, MAOP, design temperatures, and
+external integrity/lifecycle review evidence. Negative margins remain calculated findings; missing
+evidence blocks execution.
+
+Use `StandardRegistry.requireRequirementPack(StandardSelection.strictRequirements(
+StandardType.DNV_RP_F104))` to discover related thermodynamic, hydraulic, corrosion, mechanical,
+monitoring, and consequence capabilities. The pack does not prove clause coverage. Do not substitute
+the pure-CO2 critical point, `CO2FlowCorrections.isDensePhase(...)`, or embedded
+`DensePhaseCO2Corrosion` values for the project basis. F104 does not replace DNV-ST-F101 structural
+design or the external fracture, materials, corrosion, construction, safety, operation, and
+requalification assessments.
 
 ### API 2000 execution rule
 

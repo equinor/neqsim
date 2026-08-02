@@ -1,4 +1,19 @@
 {
+  "dnv rp f104": [
+    "neqsim-ccs-hydrogen",
+    "neqsim-standards-lookup",
+    "neqsim-flow-assurance"
+  ],
+  "co2 pipeline envelope screening": [
+    "neqsim-ccs-hydrogen",
+    "neqsim-flow-assurance",
+    "neqsim-standards-lookup"
+  ],
+  "co2 pipeline design and operation": [
+    "neqsim-ccs-hydrogen",
+    "neqsim-standards-lookup",
+    "neqsim-flow-assurance"
+  ],
   "dnv rp f101": [
     "neqsim-standards-lookup",
     "neqsim-subsea-and-wells",
