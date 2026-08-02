@@ -90,6 +90,7 @@ public final class EquipmentDesignKernelRegistry {
     register(kernels, new Api521ReliefDesignKernel());
     register(kernels, new Api526OrificeSelectionKernel());
     register(kernels, new Api12JSeparatorDesignKernel());
+    register(kernels, new DnvRpF109OnBottomStabilityKernel());
     register(kernels, new DnvStF101PipelineDesignKernel());
     KERNELS = Collections.unmodifiableMap(kernels);
   }

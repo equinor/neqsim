@@ -64,6 +64,7 @@ the source catalog diverge.
 | DNV-ST-F101 | 2021 | CURRENT | [publisher](https://www.dnv.com/energy/standards-guidelines/dnv-st-f101-submarine-pipeline-systems/) (checked 2026-07-21) | pipeline design codes | PipelineDesignStandard | DnvStF101PipelineDesignKernel | SCREENING | yes | Typed 2021 screening for containment, collapse, propagation buckling, load interaction, fatigue, pressure cases, de-rating, safety class, ovality, fabrication route, and installation strain; clause-complete conformity and engineering approval remain external. |
 | DNV-OS-F101 | 2013 | UNVERIFIED | unverified | pipeline design codes | PipelineDesignStandard | None | CATALOGUED | no | Catalogued pipeline selections fail closed because no edition-specific wall-thickness calculation is connected. |
 | DNV-RP-F105 | 2021 | UNVERIFIED | unverified | pipeline design codes | PipelineDesignStandard | None | CATALOGUED | no | Catalogued pipeline selections fail closed because no edition-specific wall-thickness calculation is connected. |
+| DNV-RP-F109 | 2021-05+AMD 2025-09 | CURRENT | [publisher](https://www.dnv.com/energy/standards-guidelines/dnv-rp-f109-on-bottom-stability-design-of-submarine-pipelines/) (checked 2026-08-02) | pipeline design codes | PipelineDesignStandard | DnvRpF109OnBottomStabilityKernel | SCREENING | yes | Vertical equilibrium, transparent absolute-static lateral stability, and externally supplied response displacement checks only; generalized design tables, dynamic response generation, environmental statistics, soil-model qualification, and conformity assessment remain external. |
 | ISO-13623 | 2017 | UNVERIFIED | unverified | pipeline design codes | PipelineDesignStandard | None | CATALOGUED | no | Catalogued pipeline selections fail closed because no edition-specific wall-thickness calculation is connected. |
 | ISO-15649 | 2001 | UNVERIFIED | unverified | pipeline design codes | PipelineDesignStandard | None | CATALOGUED | no | Catalogued pipeline selections fail closed because no edition-specific wall-thickness calculation is connected. |
 | ISO-16812 | 2019 | UNVERIFIED | unverified | heat exchanger design codes | DesignStandard | None | CATALOGUED | no | No standard-specific heat-exchanger mechanical calculation is connected. |
@@ -163,7 +164,7 @@ StandardRequirementPack requirements = StandardRegistry.requireRequirementPack(s
 
 Each capability declares whether it is a calculation screen or a review workflow, its implementation
 class, and its engineering boundary. Packs currently map NORSOK P-002, NORSOK S-001, NORSOK M-001,
-API 520 Part 1, API 650, API 660, DNV-ST-F101, ISO 10418, IEC 61511, and IEC 60534. Strict lookup
+API 520 Part 1, API 650, API 660, DNV-ST-F101, DNV-RP-F109, ISO 10418, IEC 61511, and IEC 60534. Strict lookup
 still fails when the lifecycle is unverified; IEC 60534 therefore remains discoverable in the audit
 but cannot be selected as a verified current requirements basis.
 

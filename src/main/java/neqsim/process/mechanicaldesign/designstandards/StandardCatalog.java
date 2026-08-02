@@ -21,6 +21,7 @@ public final class StandardCatalog {
   private static final String API_CATALOG = "https://www.api.org/products-and-services/standards/digital-catalog";
   private static final String API_REFINING_2025 = "https://www.api.org/-/media/files/publications/2025-catalog/06_refining_2025.pdf";
   private static final String DNV_F101 = "https://www.dnv.com/energy/standards-guidelines/dnv-st-f101-submarine-pipeline-systems/";
+  private static final String DNV_F109 = "https://www.dnv.com/energy/standards-guidelines/dnv-rp-f109-on-bottom-stability-design-of-submarine-pipelines/";
   private static final String IEC_61511_SOURCE = "https://webstore.iec.ch/en/publication/5527";
   private static final Map<StandardType, StandardCatalogEntry> ENTRIES;
 
@@ -53,6 +54,8 @@ public final class StandardCatalog {
     current(entries, API_REFINING_2025, StandardType.API_526);
 
     current(entries, DNV_F101, StandardType.DNV_ST_F101);
+    entries.put(StandardType.DNV_RP_F109, new StandardCatalogEntry(StandardType.DNV_RP_F109,
+        StandardLifecycleStatus.CURRENT, null, DNV_F109, "2026-08-02"));
     current(entries, "https://www.iso.org/standard/75144.html", StandardType.ISO_23251);
     current(entries, "https://www.iso.org/standard/50826.html", StandardType.ISO_4126_1);
     current(entries, "https://www.iso.org/standard/55440.html", StandardType.ISO_10418);

@@ -31,6 +31,7 @@ The index file `standards_index.csv` maps equipment types to applicable standard
 | Compressor | API 617, NORSOK P-002 | `api_standards.csv`, `norsok_standards.csv` |
 | Pump | API 610 | `api_standards.csv` |
 | Pipeline, AdiabaticPipe, MultiphasePipe | NORSOK L-001, ASME B31.3/B31.4/B31.8, DNV-ST-F101 | `norsok_standards.csv`, `asme_standards.csv`, `dnv_iso_en_standards.csv` |
+| Pipeline, FlexiblePipe, Cable, Umbilical on seabed | DNV-RP-F109 | Typed kernel `DnvRpF109OnBottomStabilityKernel`; project values remain explicit inputs |
 | HeatExchanger, Heater, Cooler | API 660/661, TEMA | `api_standards.csv` |
 | Tank | API 650/620 | `api_standards.csv` |
 | Valve | ASME B31.3 | `asme_standards.csv` |
@@ -39,6 +40,18 @@ The index file `standards_index.csv` maps equipment types to applicable standard
 | Flange | ASME B16.5 | `asme_standards.csv` |
 | CO2 corrosion / materials selection | NORSOK M-506, ISO 15156 / NACE MR0175, NORSOK M-001 | `norsok_standards.csv` — see `NorsokM506CorrosionRate` / `NorsokM506ElectrolyteBridge` (`process.corrosion`) |
 | Mineral scale / produced water | (industry practice; Davies + Ksp(T)) | `ElectrolyteScaleCalculator` / `ScaleKinetics` / `BrineMixingScaleEvaluator` (`process.chemistry.scale`) |
+
+### DNV-RP-F109 implementation status
+
+`EquipmentDesignKernelRegistry.lookup(StandardType.DNV_RP_F109)` exposes a
+`SCREENING` kernel for the exact catalogued edition `2021-05+AMD 2025-09`.
+It calculates vertical equilibrium and a transparent absolute-static lateral
+screen, or checks displacement supplied by an externally validated generalized or
+dynamic response model. It intentionally excludes licensed generalized-design
+tables, response generation, environmental-statistics derivation, soil-model
+qualification, and conformity assessment. Do not report a passing kernel result as
+DNV certification or clause-complete compliance; report the implemented check scope
+and retain `engineeringApprovalRequired=true`.
 
 ### DNV-ST-F101 pipeline screening
 

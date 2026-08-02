@@ -107,6 +107,12 @@ public final class StandardRequirementPackRegistry {
                 "neqsim.process.mechanicaldesign.heatexchanger.ShellAndTubeDesignCalculator",
                 "Thermal and mechanical screening; full datasheet and vendor conformity are excluded.")));
     register(packs,
+        pack(StandardType.DNV_RP_F109,
+            capability("on-bottom-stability", Kind.CALCULATION_SCREENING,
+                "neqsim.process.engineering.calculation.DnvRpF109OnBottomStabilityKernel",
+                "Typed vertical, absolute-static lateral, and external-response displacement screening; "
+                    + "environmental statistics, soil-model qualification, and conformity approval remain external.")));
+    register(packs,
         pack(StandardType.DNV_ST_F101,
             capability("pipeline-mechanical-design", Kind.CALCULATION_SCREENING,
                 "neqsim.process.engineering.calculation.DnvStF101PipelineDesignKernel",

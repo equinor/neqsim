@@ -23,7 +23,7 @@ loaded with `read_file` at the start of an agent invocation.
 | `engineering.deliverables.agent.md` | generate engineering deliverables | `neqsim-process-modeling`, `neqsim-api-patterns`, `neqsim-capability-map`, `neqsim-professional-reporting`, `neqsim-standards-lookup` |
 | `extract.process.agent.md` | extract process to neqsim json | `neqsim-process-extraction`, `neqsim-pid-process-operations`, `neqsim-water-hammer` |
 | `field.development.agent.md` | develop oil and gas field | `neqsim-field-development`, `neqsim-field-economics`, `neqsim-subsea-and-wells`, `neqsim-production-optimization`, `neqsim-flow-assurance`, `neqsim-professional-reporting` |
-| `flow.assurance.agent.md` | run neqsim flow assurance analysis | `neqsim-phase-envelope`, `neqsim-flow-assurance`, `neqsim-wax-calculations`, `neqsim-water-hammer` |
+| `flow.assurance.agent.md` | run neqsim flow assurance analysis | `neqsim-phase-envelope`, `neqsim-flow-assurance`, `neqsim-wax-calculations`, `neqsim-water-hammer`, `neqsim-subsea-and-wells`, `neqsim-standards-lookup` |
 | `gas.quality.agent.md` | calculate gas quality and standards | `neqsim-api-patterns`, `neqsim-standards-lookup`, `neqsim-input-validation`, `neqsim-professional-reporting` |
 | `literature.scout.agent.md` | scout literature and databases | `neqsim-literature-search`, `neqsim-stid-retriever`, `neqsim-technical-document-reading`, `neqsim-pdf-ocr`, `neqsim-standards-lookup`, `neqsim-trapped-liquid-fire-rupture` |
 | `mechanical.design.agent.md` | run neqsim mechanical design | `neqsim-api-patterns`, `neqsim-standards-lookup`, `neqsim-capability-map`, `neqsim-subsea-and-wells`, `neqsim-equipment-cost-estimation`, `neqsim-process-modeling`, `neqsim-java8-rules` |

@@ -1,7 +1,7 @@
 ---
 name: neqsim-subsea-and-wells
-description: "Subsea production systems, well design, SURF cost estimation, and tieback analysis with NeqSim. USE WHEN: designing subsea fields, sizing flowlines and umbilicals, estimating well costs, performing casing design, running tieback comparisons, or configuring subsea equipment (trees, manifolds, boosters, risers)."
-last_verified: "2026-06-28"
+description: "Subsea production systems, DNV-RP-F109 on-bottom stability screening, well design, SURF cost estimation, and tieback analysis with NeqSim. USE WHEN: designing subsea fields, screening pipeline/cable/umbilical seabed stability, sizing flowlines and umbilicals, estimating well costs, performing casing design, running tieback comparisons, or configuring subsea equipment (trees, manifolds, boosters, risers)."
+last_verified: "2026-08-02"
 ---
 
 # NeqSim Subsea & Wells Skill
@@ -320,6 +320,28 @@ double wallThickness = mechDesign.getWallThickness();  // mm
 String report = mechDesign.toJson();
 ```
 
+### DNV-RP-F109 On-Bottom Stability Screening
+
+Use `DnvRpF109OnBottomStabilityKernel` for typed, fail-closed vertical and lateral
+screening of a pipeline, cable, or umbilical. The exact supported edition is
+`2021-05+AMD 2025-09`. Supply every project coefficient, factor, soil resistance,
+environmental load case, and submerged weight explicitly; there are no numerical
+project defaults.
+
+Build `DnvRpF109OnBottomStabilityInput` with the exact edition, matching asset and
+equipment types, geometry, engineering-basis reference, and one or more explicit
+`LoadCase` values. Call `DnvRpF109OnBottomStabilityKernel.calculate(input,
+context)` and retain its readiness findings and full input provenance. See
+`docs/process/dnv_rp_f109_on_bottom_stability.md` for the complete Java pattern.
+
+The absolute-static route calculates normal Morison drag/inertia and lift, then
+checks vertical equilibrium and horizontal demand against friction plus explicit
+passive soil resistance. External-response routes check supplied displacement at
+0.5D, 10D, or a project limit, and require affirmative response-model validity plus
+a traceable basis. NeqSim does not reproduce generalized design tables, generate
+dynamic response, qualify pipe-soil inputs, or claim DNV conformity. Treat every
+result, including a pass, as `CALCULATED_REVIEW_REQUIRED`.
+
 ---
 
 ## Flowline Cooldown and No-Touch Time
@@ -364,9 +386,10 @@ String json = analyzer.toJson();
 - Verdict bands: with a required no-touch time, `OK` ≥ required, `MARGINAL` ≥ 0.75×,
   else `CRITICAL`. Without one, `OK` ≥ 12 h, `MARGINAL` ≥ 6 h, else `CRITICAL`.
 
-**Standards:** DNV-RP-F109 (cooldown / no-touch time basis), API RP 17A
-(subsea system thermal management). Screening-level lumped model — use a
-distributed transient thermal-hydraulic tool for detailed design.
+**Basis:** project thermal-management requirements and API RP 17A subsea-system
+context. DNV-RP-F109 is an on-bottom stability document and is not a cooldown or
+no-touch-time basis. This is a screening-level lumped model — use a distributed
+transient thermal-hydraulic tool for detailed design.
 
 `package`: `neqsim.pvtsimulation.flowassurance` —
 `SurfCooldownAnalyzer`, `PipelineCooldownCalculator`.
@@ -429,12 +452,13 @@ Map<String, Double> allocation = optimizer.optimize();
 | Casing design | API 5CT / ISO 11960 | Casing/tubing grades, SMYS |
 | Casing formulas | API Bull 5C3 / TR 5C3 | Burst, collapse, tension |
 | Well barriers | NORSOK D-010 | Design factors, two-barrier principle |
-| Submarine pipelines | DNV-ST-F101 | Wall thickness, on-bottom stability |
+| Submarine pipelines | DNV-ST-F101 | Pressure containment and structural limit states |
+| On-bottom stability | DNV-RP-F109 | Vertical stability, absolute lateral stability, displacement acceptance |
 | Process piping | ASME B31.3 | Onshore/topsides piping |
 | Pressure vessels | ASME VIII Div.1/2 | Separator, vessel sizing |
 | Subsea production | API 17A-17Q | Subsea equipment specs |
 | Risers | API 2RD / DNV-OS-F201 | Riser design |
-| Flowlines | DNV-RP-F105 | Free-spanning pipelines |
+| Free spans | DNV-RP-F105 | Free-spanning pipelines |
 | Fatigue | DNV-RP-C203 | S-N curves, fatigue life |
 
 ---
