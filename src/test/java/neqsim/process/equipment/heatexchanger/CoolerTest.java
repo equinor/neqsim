@@ -166,6 +166,7 @@ class CoolerTest {
     cooler.setOutTemperature(273.15 + 20.0);
     assertTrue(cooler.needRecalculation());
   }
+
   /**
    * Entropy requires caloric properties but not level-3 composition derivatives. This is also a deterministic
    * performance gate: the diagnostic must preserve its value without derivative initialization.
