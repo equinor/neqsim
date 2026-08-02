@@ -217,6 +217,21 @@ effects, load-displacement model, uncertainty, structural action/acceptance, and
 evidence. NeqSim soil thermal inputs are not geotechnical resistance. Keep F109 on-bottom stability,
 F110 global buckling, F105 free spans, ST-F101 structural checks, and approval external.
 
+### DNV-RP-F110 global-buckling response work
+
+For an explicit current-edition F110 basis, use
+`DnvRpF110GlobalBucklingResponseScreeningKernel` with verified pipe dimensions and named
+route/design-situation cases. Supply externally analysed effective-force, longitudinal-strain,
+global-displacement, and feed-in responses together with caller-controlled allowable or available
+values. Report margins and utilizations as `SCREENING`, not DNV acceptance.
+
+Require the operating envelope/effective-force, pipe/as-laid geometry, pipe-soil interaction,
+imperfection/trigger/strategy, global structural model, design-situation/load-combination, local
+capacity/strain, uncertainty/sensitivity/buckle-sharing, and lifecycle evidence. Do not interpret
+the caller force allowable as a NeqSim-derived buckle-initiation or prevention criterion. Keep
+F109 on-bottom stability, F114 geotechnical design, F105 free spans, every ST-F101 structural check,
+and accountable approval external.
+
 ### API 2000 tank-venting work
 
 For a current-edition fixed-roof tank venting basis, use `Api2000TankVentingScreeningKernel`.

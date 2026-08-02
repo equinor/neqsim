@@ -43,6 +43,7 @@ The index file `standards_index.csv` maps equipment types to applicable standard
 | Submarine-pipeline free spans | DNV-RP-F105 | Use `DnvRpF105FreeSpanScreeningKernel` for the current 2025-12 first-mode/dimensionless screen; project response triggers are not DNV acceptance criteria and the legacy allowable-span calculator is not F105 evidence |
 | Inspected pipeline metal loss | DNV-RP-F101 | Use `DnvRpF101CorrodedPipelineScreeningKernel` for the current isolated longitudinal defect/internal-pressure screen; measured geometry and caller-controlled factors are evidence, not values inferred from M-506, and ST-F101 design checks remain separate |
 | CO2 pipeline design and operation | DNV-RP-F104 | Use `DnvRpF104Co2PipelineEnvelopeScreeningKernel` for the current caller-controlled composition and operating-envelope margin screen; use its requirement pack only for bounded capability discovery and keep ST-F101, fracture, materials/corrosion, construction, operation, safety, and requalification separate |
+| Submarine-pipeline global buckling | DNV-RP-F110 | Use `DnvRpF110GlobalBucklingResponseScreeningKernel` for the current caller-controlled external-analysis force/strain/displacement/feed-in response envelope; keep structural response, soil springs, critical buckling, imperfections/triggers, local capacity, and F109/F114/F105/ST-F101 acceptance separate |
 | Submarine-pipeline pipe-soil interaction | DNV-RP-F114 | Use `DnvRpF114PipeSoilInteractionScreeningKernel` for the current caller-controlled vertical/axial/lateral demand-resistance envelope; keep geotechnical model derivation and F109/F110/F105/ST-F101 acceptance separate |
 | Fixed-roof tank venting | API 2000 | Use `Api2000TankVentingScreeningKernel` for the current 7th-edition caller-controlled demand/capacity screen; do not infer licensed demand factors or report it as device sizing/conformity |
 | Mineral scale / produced water | (industry practice; Davies + Ksp(T)) | `ElectrolyteScaleCalculator` / `ScaleKinetics` / `BrineMixingScaleEvaluator` (`process.chemistry.scale`) |
@@ -164,6 +165,21 @@ acceptance criteria, and lifecycle interfaces. A negative margin remains a calcu
 Never derive F114 resistance from NeqSim soil thermal conductivity, burial heat-transfer inputs, a
 generic friction coefficient, or submerged weight alone. Keep F109 on-bottom stability, F110 global
 buckling, F105 free spans, ST-F101 structural design, and conformity external.
+
+### DNV-RP-F110 execution rule
+
+For an explicit current `DNV-RP-F110 2019-09+AMD:2021-09` basis, use
+`DnvRpF110GlobalBucklingResponseScreeningKernel`. Supply positive pipe diameter and structural wall
+thickness, then named route/design-situation cases containing externally analysed effective force,
+peak longitudinal strain, peak global displacement, and required feed-in length together with
+caller-controlled allowable or available values.
+
+Require external evidence for applicability, operating envelope/effective force, pipe properties
+and as-laid geometry, pipe-soil interaction, imperfections/triggers/design strategy, global
+structural model, design situations/load combinations, local capacity/strain criteria,
+uncertainty/sensitivity/buckle sharing, and lifecycle actions. A negative margin remains calculated.
+Never interpret the force limit as a NeqSim-derived critical-buckling or initiation criterion. Keep
+F109/F114/F105, every DNV-ST-F101 check, conformity, and accountable approval external.
 
 ### API 2000 execution rule
 

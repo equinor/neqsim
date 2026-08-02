@@ -14,6 +14,21 @@
     "neqsim-standards-lookup",
     "neqsim-flow-assurance"
   ],
+  "dnv rp f110": [
+    "neqsim-standards-lookup",
+    "neqsim-flow-assurance",
+    "neqsim-capability-map"
+  ],
+  "global buckling screening": [
+    "neqsim-flow-assurance",
+    "neqsim-standards-lookup",
+    "neqsim-capability-map"
+  ],
+  "pipeline buckling response envelope": [
+    "neqsim-flow-assurance",
+    "neqsim-standards-lookup",
+    "neqsim-capability-map"
+  ],
   "dnv rp f101": [
     "neqsim-standards-lookup",
     "neqsim-subsea-and-wells",

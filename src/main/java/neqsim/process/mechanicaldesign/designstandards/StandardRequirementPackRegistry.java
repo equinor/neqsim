@@ -126,6 +126,18 @@ public final class StandardRequirementPackRegistry {
         capability("release-consequence", Kind.CALCULATION_SCREENING,
             "neqsim.process.safety.dispersion.GasDispersionAnalyzer",
             "Generic dispersion analysis only; CO2 release thermodynamics, terrain, exposure, emergency response, and QRA remain external.")));
+    register(packs, pack(StandardType.DNV_RP_F110, capability("pipeline-operating-profile", Kind.CALCULATION_SCREENING,
+        "neqsim.process.equipment.pipeline.TwoFluidPipe",
+        "Hydraulic and thermal profiles only; effective axial force and global structural response remain external."),
+        capability("pipeline-route-segmentation", Kind.CALCULATION_SCREENING,
+            "neqsim.process.fielddevelopment.network.TiebackRouteNetwork",
+            "Route structure only; as-laid imperfections, triggers, buckle spacing, and structural boundaries remain external."),
+        capability("pipe-soil-resistance-screen", Kind.CALCULATION_SCREENING,
+            "neqsim.process.engineering.calculation.DnvRpF114PipeSoilInteractionScreeningKernel",
+            "Caller-controlled F114 demand/resistance margins only; global model springs and F110 response remain external."),
+        capability("pipeline-mechanical-design", Kind.CALCULATION_SCREENING,
+            "neqsim.process.mechanicaldesign.pipeline.PipeMechanicalDesignCalculator",
+            "Preliminary pressure-containment screening only; ST-F101 local capacity, fatigue, and F110 response remain external.")));
     register(packs, pack(StandardType.DNV_RP_F114, capability("pipeline-route-segmentation", Kind.CALCULATION_SCREENING,
         "neqsim.process.fielddevelopment.network.TiebackRouteNetwork",
         "Route and segment representation only; geotechnical units, survey coverage, and spatial variability remain external."),
