@@ -86,8 +86,8 @@ public final class SevereSluggingSystemDiagnostic {
     }
 
     /**
-     * Creates a builder. Numeric quantities without documented defaults must be supplied;
-     * applicability flags default to false and must be confirmed explicitly.
+     * Creates a builder. Numeric quantities without documented defaults must be supplied; applicability flags default
+     * to false and must be confirmed explicitly.
      */
     public static Builder builder() {
       return new Builder();
