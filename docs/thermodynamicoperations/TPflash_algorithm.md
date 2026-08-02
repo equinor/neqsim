@@ -186,8 +186,8 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 │     → Delegate to TPmultiflash for stability analysis and phase split           │
 │     → If a rejected third-phase trial leaves an invalid two-phase aqueous       │
 │       endpoint, restore the balanced reference                                  │
-│     → If cleanup collapses a strong water/non-water K split to one phase, retry  │
-│       the ordinary flash and retain it only when balanced and lower in Gibbs     │
+│     → If cleanup collapses a strong water/non-water K split to one phase, retry │
+│       the ordinary flash and retain it only when balanced and lower in Gibbs    │
 │  ELSE:                                                                          │
 │     → Final phase type check (gas vs liquid Gibbs energy)                       │
 │                                                                                 │
