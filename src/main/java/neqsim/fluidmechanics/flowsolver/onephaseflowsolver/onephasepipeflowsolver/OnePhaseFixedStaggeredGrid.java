@@ -1011,6 +1011,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   /** {@inheritDoc} */
   @Override
   public void solveTDMA() {
+    lastSpeciesConservationReport = OnePhaseSpeciesConservationReport.notRun();
     double[] d;
     int iter = 0;
     int iterTop = 0;
@@ -1031,7 +1032,6 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         solveCoupledHydraulicEosSpecies(initialFiniteVolumeMass);
       } else {
         solveCoupledHydraulicEos(initialFiniteVolumeMass);
-        lastSpeciesConservationReport = OnePhaseSpeciesConservationReport.notRun();
       }
       initFinalResults();
       return;
