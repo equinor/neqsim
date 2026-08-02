@@ -74,6 +74,32 @@ velocity sensitivity, and the submerged-weight/friction design space.
 
 ---
 
+## 2026-08-02 — Typed DNV-ST-F101 pipeline screening kernel
+
+### New API
+
+- `DnvStF101PipelineDesignInput` keeps the standard edition, safety class, fabrication route,
+  geometry, ovality, material de-rating, operating/incidental/test pressures, combined loads,
+  fatigue spectrum, and installation strain explicit.
+- `DnvStF101PipelineDesignKernel` is registered for `StandardType.DNV_ST_F101` with
+  `SCREENING` maturity and always returns a review-required calculated result.
+- `DnvStF101PipelineAssessment` reports separate utilization checks for pressure containment,
+  collapse, propagation buckling, local-buckling load interaction, fatigue, ovality, and
+  installation strain.
+- `PipelineMechanicalDesign.assessDnvStF101(input, context)` exposes the kernel from the pipeline
+  mechanical-design object without mutating the process model.
+
+### Migration and governance
+
+- Do not use `PipeMechanicalDesignCalculator.DNV_OS_F101` for current DNV-ST-F101 work.
+- `PipelineMechanicalDesign.calcDesign()` now fails closed for the `DNV-ST-F101` string code;
+  it no longer silently selects ASME B31.8.
+- Passing checks are option-screening evidence only. The licensed standard, project amendments,
+  detailed load cases, installation analysis, fabrication records, and independent engineering
+  verification remain required.
+
+---
+
 ## 2026-07-30 — TwoFluidPipe closure diagnostics exposed as profiles
 
 ### Summary

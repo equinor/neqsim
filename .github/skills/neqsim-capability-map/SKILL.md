@@ -370,7 +370,8 @@ transport properties (viscosity, thermal conductivity, density).
 | `InletVane` | Inlet vane device (6000 Pa max momentum, 85% bulk efficiency). | `process.mechanicaldesign.separator.primaryseparation` |
 | `InletVaneWithMeshpad` | Inlet vane + downstream mesh pad (92% + mesh pad capture). | `process.mechanicaldesign.separator.primaryseparation` |
 | `InletCyclones` | Inlet cyclone cluster (8000 Pa max momentum, 95% bulk efficiency). | `process.mechanicaldesign.separator.primaryseparation` |
-| `PipelineMechanicalDesign` | Pipeline wall thickness | `process.mechanicaldesign.pipeline` |
+| `PipelineMechanicalDesign` | ASME and legacy DNV-OS wall thickness plus access to typed DNV-ST-F101 screening | `process.mechanicaldesign.pipeline` |
+| `DnvStF101PipelineDesignKernel` | Fail-closed 2021 screening: containment, collapse, propagation, load interaction, fatigue, pressure cases, derating, safety class, ovality, fabrication route, installation strain. `SCREENING` only; independent approval required. | `process.engineering.calculation` |
 | `DnvRpF109OnBottomStabilityKernel` | Fail-closed DNV-RP-F109 vertical, absolute-static lateral, and external-displacement screening; always review-required | `process.engineering.calculation` |
 | `DnvRpF109OnBottomStabilityCalculator` | Pure on-bottom load, resistance, required submerged-weight, and utilization calculation | `process.mechanicaldesign.subsea` |
 | `CompressorMechanicalDesign` | Compressor design | `process.mechanicaldesign.compressor` |

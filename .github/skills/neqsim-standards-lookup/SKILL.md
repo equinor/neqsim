@@ -53,6 +53,21 @@ qualification, and conformity assessment. Do not report a passing kernel result 
 DNV certification or clause-complete compliance; report the implemented check scope
 and retain `engineeringApprovalRequired=true`.
 
+### DNV-ST-F101 pipeline screening
+
+For current DNV-ST-F101 requests, use
+`neqsim.process.engineering.calculation.DnvStF101PipelineDesignKernel` with a complete
+`DnvStF101PipelineDesignInput`. It preserves operating, incidental, and test pressure; collapse;
+propagation buckling; local-buckling load interaction; fatigue; temperature/material de-rating;
+safety class; ovality; fabrication route; and installation strain as distinct checks.
+
+Do not route DNV-ST-F101 to `PipeMechanicalDesignCalculator.DNV_OS_F101`. That constant is the
+legacy DNV-OS-F101 screen. Missing structural inputs or unsupported editions must remain blocked,
+and a calculated result must retain `CALCULATED_REVIEW_REQUIRED`. Never describe a passing screen
+as certification or code compliance; require a licensed project copy and independent review.
+
+See `docs/process/dnv_st_f101_pipeline_screening.md` and the `neqsim-capability-map` skill.
+
 ## TR/NORSOK Integration Classes
 
 Use these Java classes when a task references Equinor technical requirements,
