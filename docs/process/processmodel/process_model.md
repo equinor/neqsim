@@ -260,10 +260,22 @@ System.out.println(model.getConvergenceSummary());
 
 ### Run Until Converged (Agent-Friendly)
 
-`runUntilConverged(maxIterations, tolerance)` is an explicit wrapper around `run()` that
-guarantees iterating (multi-area) mode and applies the iteration limit and tolerance in one
-call — so you do not need to manually configure `setRunStep(false)`, `setMaxIterations(...)`,
-`setTolerance(...)` and write your own outer loop.
+For a large multi-area model, `runUntilConverged(maxIterations)` enables the
+automatic convergence tuner. It measures total feed-boundary mass flow (not the
+largest internal or recycle stream), derives consistent absolute and low-flow
+thresholds, and requires a full validation sweep after applying them.
+
+```java
+boolean converged = model.runUntilConverged(100);
+System.out.println(model.getAutoTuningSummary());
+```
+
+Caller settings always take precedence. Explicit
+`setBoundaryFlowFloor(...)`, `setAbsoluteFlowTolerance(...)`, and per-equipment
+`setMinimumFlow(...)` values are not overwritten. This ownership also survives
+`ProcessSystem.copy()` and reset operations.
+
+Use the two-argument overload when you also want to set the relative tolerance:
 
 ```java
 boolean converged = model.runUntilConverged(100, 1e-5);
@@ -272,8 +284,11 @@ if (!converged) {
 }
 ```
 
-It throws `IllegalArgumentException` if `maxIterations < 1` or `tolerance` is not a finite
-positive number.
+For physically significant small streams, set an explicit unit threshold or
+disable automatic low-flow bypass with `setAutoLowFlowBypass(false)`. Disable
+all automatic tuning with `setAutoConvergenceTuning(false)`. Invalid iteration
+budgets or non-positive/non-finite relative tolerances throw
+`IllegalArgumentException`.
 
 ### Structured Convergence Report (JSON)
 

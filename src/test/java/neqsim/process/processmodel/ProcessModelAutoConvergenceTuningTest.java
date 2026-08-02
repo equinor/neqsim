@@ -92,6 +92,8 @@ class ProcessModelAutoConvergenceTuningTest {
     assertEquals(1.0, model.getAbsoluteFlowTolerance(), 1e-3,
         "Absolute flow tolerance should be 1e-6 of the detected plant scale");
     assertFalse(model.getAutoTuningSummary().isEmpty(), "Auto-tuning summary should be populated");
+    assertTrue(model.getLastIterationCount() >= 2,
+        "Changing thresholds after the first sweep must force a complete validation sweep");
   }
 
   /**
@@ -139,6 +141,22 @@ class ProcessModelAutoConvergenceTuningTest {
 
     assertEquals(1.0e-2, small.getBoundaryFlowFloor(), 1e-5, "Small plant should get a small noise floor");
     assertEquals(10.0, large.getBoundaryFlowFloor(), 1e-2, "Large plant should get a proportionally larger floor");
+  }
+
+  /** A lower-throughput scenario on the same model must not retain the previous high-flow noise floor. */
+  @Test
+  void testThresholdsRetuneDownwardBetweenScenarios() {
+    ProcessModel model = buildModelWithDeadLeg(1.0e7, 0.05);
+    model.runUntilConverged(25);
+    assertEquals(10.0, model.getBoundaryFlowFloor(), 1e-2);
+
+    Stream feed = (Stream) model.get("main train").getUnit("feed");
+    feed.setFlowRate(1.0e4, "kg/hr");
+    model.runUntilConverged(25);
+
+    assertEquals(1.0e4, model.getDetectedPlantFlowScale(), 1.0);
+    assertEquals(1.0e-2, model.getBoundaryFlowFloor(), 1e-5,
+        "A new scenario must derive its thresholds from the current feed boundary");
   }
 
   /**
@@ -264,6 +282,58 @@ class ProcessModelAutoConvergenceTuningTest {
 
     process.resetAutoLowFlowThreshold();
     assertEquals(ProcessEquipmentBaseClass.DEFAULT_MINIMUM_FLOW, deadLegHeater.getMinimumFlow(), 1e-30);
+  }
+
+  /** A changed automatic threshold must force the affected unit through its low-flow branch. */
+  @Test
+  void testAutoThresholdForcesARealReevaluation() {
+    ProcessModel model = buildModelWithDeadLeg(1.0e6, 0.05);
+    ProcessSystem deadLeg = model.get("dead leg");
+    Heater heater = (Heater) deadLeg.getUnit("dead leg heater");
+
+    deadLeg.run();
+    assertTrue(heater.isActive());
+    deadLeg.applyAutoLowFlowThreshold(1.0);
+    assertTrue(heater.isMinimumFlowRecalculationPending());
+
+    deadLeg.run();
+    assertFalse(heater.isMinimumFlowRecalculationPending());
+    assertFalse(heater.isActive(), "The heater must execute and apply its low-flow bypass");
+  }
+
+  /** A caller override made after tuning must survive both retuning and reset, even at the same numeric value. */
+  @Test
+  void testCallerOverrideAfterAutoTuningIsProtected() {
+    ProcessModel model = buildModelWithDeadLeg(1.0e6, 0.05);
+    ProcessSystem deadLeg = model.get("dead leg");
+    Heater heater = (Heater) deadLeg.getUnit("dead leg heater");
+
+    deadLeg.applyAutoLowFlowThreshold(1.0);
+    heater.setMinimumFlow(1.0);
+    assertTrue(heater.isMinimumFlowExplicitlyConfigured());
+
+    deadLeg.applyAutoLowFlowThreshold(2.0);
+    assertEquals(1.0, heater.getMinimumFlow(), 1e-12);
+    deadLeg.resetAutoLowFlowThreshold();
+    assertEquals(1.0, heater.getMinimumFlow(), 1e-12,
+        "Reset must not clear a threshold that the caller took ownership of");
+  }
+
+  /** Auto-tuning ownership must survive the serialization-based ProcessSystem.copy() lifecycle. */
+  @Test
+  void testAutoThresholdCanBeRetunedAndResetAfterCopy() {
+    ProcessModel model = buildModelWithDeadLeg(1.0e6, 0.05);
+    ProcessSystem deadLeg = model.get("dead leg");
+    deadLeg.applyAutoLowFlowThreshold(1.0);
+
+    ProcessSystem copied = deadLeg.copy();
+    Heater copiedHeater = (Heater) copied.getUnit("dead leg heater");
+    assertTrue(copiedHeater.isMinimumFlowAutoManaged());
+
+    copied.applyAutoLowFlowThreshold(2.0);
+    assertEquals(2.0, copiedHeater.getMinimumFlow(), 1e-12);
+    copied.resetAutoLowFlowThreshold();
+    assertEquals(ProcessEquipmentBaseClass.DEFAULT_MINIMUM_FLOW, copiedHeater.getMinimumFlow(), 1e-30);
   }
 
   /**

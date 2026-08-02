@@ -136,16 +136,10 @@ public class ProcessSystem extends SimulationBaseClass {
   private double massBalanceErrorThreshold = 0.1; // Default 0.1% error threshold
   private double minimumFlowForMassBalanceError = 1e-6; // Default 1e-6 kg/sec
 
-  /** Units whose low-flow bypass threshold is managed by the automatic convergence tuner. */
-  private transient java.util.Set<ProcessEquipmentInterface> autoTunedLowFlowUnits;
-
-  /** Low-flow bypass threshold (kg/hr) the auto-tuner last wrote onto {@link #autoTunedLowFlowUnits}. */
-  private transient double autoAppliedLowFlowThreshold = 0.0;
-
   /** Whether {@link #runUntilConverged(int)} derives its low-flow bypass threshold from the process flow scale. */
   private boolean autoConvergenceTuning = true;
 
-  /** Noise-floor fraction of the largest process mass flow used by {@link #runUntilConverged(int)}. */
+  /** Noise-floor fraction of the total process feed flow used by {@link #runUntilConverged(int)}. */
   private double autoTuningFlowFraction = 1.0e-6;
 
   // Transient simulation settings
@@ -1950,13 +1944,27 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Returns whether a unit is dirty, including a low-flow threshold that has not yet been evaluated.
+   *
+   * @param unit unit to inspect
+   * @return true when the unit must run
+   */
+  private boolean needsRecalculation(ProcessEquipmentInterface unit) {
+    if (unit instanceof neqsim.process.equipment.ProcessEquipmentBaseClass
+        && ((neqsim.process.equipment.ProcessEquipmentBaseClass) unit).isMinimumFlowRecalculationPending()) {
+      return true;
+    }
+    return unit.needRecalculation();
+  }
+
+  /**
    * Checks whether any non-setter unit needs recalculation after setters have been applied.
    *
    * @return true if any regular unit reports dirty state
    */
   private boolean hasUnitsNeedingRecalculation() {
     for (ProcessEquipmentInterface unit : unitOperations) {
-      if (!(unit instanceof Setter) && unit.needRecalculation()) {
+      if (!(unit instanceof Setter) && needsRecalculation(unit)) {
         return true;
       }
     }
@@ -2031,7 +2039,7 @@ public class ProcessSystem extends SimulationBaseClass {
           }
           if (!(unit instanceof Recycle)) {
             try {
-              if (iter == 1 || unit.needRecalculation()) {
+              if (iter == 1 || needsRecalculation(unit)) {
                 runUnitProfiled(unit, id);
               }
             } catch (Exception ex) {
@@ -2403,7 +2411,7 @@ public class ProcessSystem extends SimulationBaseClass {
       if (levelGroups.size() == 1 && levelGroups.get(0).size() == 1) {
         // Single unit at this level - run directly (no thread pool overhead)
         ProcessEquipmentInterface unit = levelGroups.get(0).get(0).getEquipment();
-        if (!(unit instanceof Setter) && unit.needRecalculation()) {
+        if (!(unit instanceof Setter) && needsRecalculation(unit)) {
           try {
             runUnitProfiled(unit, id);
           } catch (Exception ex) {
@@ -2414,7 +2422,7 @@ public class ProcessSystem extends SimulationBaseClass {
         // Single group with multiple units sharing input streams - run sequentially
         for (ProcessNode node : levelGroups.get(0)) {
           ProcessEquipmentInterface unit = node.getEquipment();
-          if (!(unit instanceof Setter) && unit.needRecalculation()) {
+          if (!(unit instanceof Setter) && needsRecalculation(unit)) {
             try {
               runUnitProfiled(unit, id);
             } catch (Exception ex) {
@@ -2428,7 +2436,7 @@ public class ProcessSystem extends SimulationBaseClass {
         for (List<ProcessNode> group : levelGroups) {
           if (group.size() == 1) {
             final ProcessEquipmentInterface unitToRun = group.get(0).getEquipment();
-            if (!(unitToRun instanceof Setter) && unitToRun.needRecalculation()) {
+            if (!(unitToRun instanceof Setter) && needsRecalculation(unitToRun)) {
               final UUID calcId = id;
               futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
                 try {
@@ -2444,7 +2452,7 @@ public class ProcessSystem extends SimulationBaseClass {
             futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
               for (ProcessNode node : groupToRun) {
                 ProcessEquipmentInterface unit = node.getEquipment();
-                if (!(unit instanceof Setter) && unit.needRecalculation()) {
+                if (!(unit instanceof Setter) && needsRecalculation(unit)) {
                   try {
                     runUnitProfiled(unit, calcId);
                   } catch (Exception ex) {
@@ -2534,7 +2542,7 @@ public class ProcessSystem extends SimulationBaseClass {
       Runnable body = () -> {
         for (ProcessNode node : taskNodes) {
           ProcessEquipmentInterface unit = node.getEquipment();
-          if (!(unit instanceof Setter) && unit.needRecalculation()) {
+          if (!(unit instanceof Setter) && needsRecalculation(unit)) {
             try {
               runUnitProfiled(unit, calcId);
             } catch (Exception ex) {
@@ -2952,7 +2960,7 @@ public class ProcessSystem extends SimulationBaseClass {
         }
         if (!(unit instanceof Recycle)) {
           try {
-            if (iter == 1 || unit.needRecalculation()) {
+            if (iter == 1 || needsRecalculation(unit)) {
               runUnitProfiled(unit, id);
             }
           } catch (Exception ex) {
@@ -3264,6 +3272,9 @@ public class ProcessSystem extends SimulationBaseClass {
     } else {
       unit.run(id);
     }
+    if (unit instanceof neqsim.process.equipment.ProcessEquipmentBaseClass) {
+      ((neqsim.process.equipment.ProcessEquipmentBaseClass) unit).clearMinimumFlowRecalculationPending();
+    }
   }
 
   /**
@@ -3327,7 +3338,7 @@ public class ProcessSystem extends SimulationBaseClass {
       if (unit.isLockedInactive()) {
         // Manually locked-off equipment must stay inactive across runs.
         unit.isActive(false);
-      } else if (outermost && unit.needRecalculation()) {
+      } else if (outermost && needsRecalculation(unit)) {
         // Fresh user-invoked solve AND inputs have changed: give the unit a chance to
         // re-evaluate its low-flow status. Its run() will be invoked and any auto-bypass
         // unit (Splitter/Separator/Heater/Compressor) will re-check flow via
@@ -3653,35 +3664,18 @@ public class ProcessSystem extends SimulationBaseClass {
       throw new IllegalArgumentException(
           "Low-flow threshold must be a finite non-negative number, was " + thresholdKgPerHour);
     }
-    if (autoTunedLowFlowUnits == null) {
-      autoTunedLowFlowUnits = java.util.Collections
-          .newSetFromMap(new java.util.IdentityHashMap<ProcessEquipmentInterface, Boolean>());
-    }
+    int managed = 0;
     for (ProcessEquipmentInterface unit : unitOperations) {
-      if (autoTunedLowFlowUnits.contains(unit)) {
+      if (unit instanceof Setter) {
         continue;
       }
-      double configured = unit.getMinimumFlow();
-      boolean userConfigured = configured > neqsim.process.equipment.ProcessEquipmentBaseClass.DEFAULT_MINIMUM_FLOW
-          && configured != autoAppliedLowFlowThreshold;
-      if (!userConfigured) {
-        autoTunedLowFlowUnits.add(unit);
+      if (unit instanceof neqsim.process.equipment.ProcessEquipmentBaseClass
+          && ((neqsim.process.equipment.ProcessEquipmentBaseClass) unit)
+              .applyAutoMinimumFlow(thresholdKgPerHour)) {
+        managed++;
       }
     }
-    for (ProcessEquipmentInterface unit : autoTunedLowFlowUnits) {
-      unit.setMinimumFlow(thresholdKgPerHour);
-      // Apply the verdict immediately: the recalculation cache would otherwise skip a unit
-      // whose inputs have not changed, so a threshold set after a solve would never take
-      // effect. The unit's own run() re-evaluates and reactivates it if flow returns.
-      if (!unit.isLockedInactive()) {
-        double flow = primaryFlowOf(unit);
-        if (!Double.isNaN(flow) && flow < thresholdKgPerHour) {
-          unit.isActive(false);
-        }
-      }
-    }
-    autoAppliedLowFlowThreshold = thresholdKgPerHour;
-    return autoTunedLowFlowUnits.size();
+    return managed;
   }
 
   /**
@@ -3711,6 +3705,22 @@ public class ProcessSystem extends SimulationBaseClass {
       }
     }
     return applied;
+  }
+
+  /**
+   * Clears automatically assigned recycle tolerances before measuring a fresh process scenario.
+   *
+   * @return the number of recycle tolerances cleared
+   */
+  int resetAutoRecycleFlowTolerance() {
+    int cleared = 0;
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof neqsim.process.equipment.util.Recycle
+          && ((neqsim.process.equipment.util.Recycle) unit).resetAutoAbsoluteFlowTolerance()) {
+        cleared++;
+      }
+    }
+    return cleared;
   }
 
   /**
@@ -3761,18 +3771,16 @@ public class ProcessSystem extends SimulationBaseClass {
    * @return the number of units whose automatic threshold was cleared
    */
   public int resetAutoLowFlowThreshold() {
-    if (autoTunedLowFlowUnits == null) {
-      return 0;
-    }
-    int cleared = autoTunedLowFlowUnits.size();
-    for (ProcessEquipmentInterface unit : autoTunedLowFlowUnits) {
-      unit.setMinimumFlow(neqsim.process.equipment.ProcessEquipmentBaseClass.DEFAULT_MINIMUM_FLOW);
-      if (!unit.isLockedInactive()) {
-        unit.isActive(true);
+    int cleared = 0;
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof neqsim.process.equipment.ProcessEquipmentBaseClass
+          && ((neqsim.process.equipment.ProcessEquipmentBaseClass) unit).resetAutoMinimumFlow()) {
+        cleared++;
+        if (!unit.isLockedInactive()) {
+          unit.isActive(true);
+        }
       }
     }
-    autoTunedLowFlowUnits.clear();
-    autoAppliedLowFlowThreshold = 0.0;
     return cleared;
   }
 
@@ -3794,6 +3802,10 @@ public class ProcessSystem extends SimulationBaseClass {
   public boolean runUntilConverged(int maxIterations) {
     if (maxIterations < 1) {
       throw new IllegalArgumentException("maxIterations must be at least 1, was " + maxIterations);
+    }
+    if (autoConvergenceTuning) {
+      resetAutoLowFlowThreshold();
+      resetAutoRecycleFlowTolerance();
     }
     run();
     boolean tuned = false;
@@ -4233,9 +4245,9 @@ public class ProcessSystem extends SimulationBaseClass {
 
         if (!(unit instanceof Recycle)) {
           try {
-            if (iter == 1 || unit.needRecalculation()) {
+            if (iter == 1 || needsRecalculation(unit)) {
               notifyBeforeUnit(unit, i, totalUnits, iter);
-              unit.run(id);
+              runUnitProfiled(unit, id);
             }
             notifyUnitComplete(unit, i, totalUnits, iter);
           } catch (Exception ex) {
@@ -4252,7 +4264,7 @@ public class ProcessSystem extends SimulationBaseClass {
         if (unit instanceof Recycle && recycleController.doSolveRecycle((Recycle) unit)) {
           try {
             notifyBeforeUnit(unit, i, totalUnits, iter);
-            unit.run(id);
+            runUnitProfiled(unit, id);
             notifyUnitComplete(unit, i, totalUnits, iter);
           } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);

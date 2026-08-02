@@ -662,6 +662,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    */
   public void setAdaptiveAcceleration(boolean adaptiveAcceleration) {
     this.adaptiveAcceleration = adaptiveAcceleration;
+    if (!adaptiveAcceleration && accelerationAutoUpgraded) {
+      resetAdaptiveAcceleration();
+    }
   }
 
   /**
@@ -1212,6 +1215,20 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     return true;
   }
 
+  /**
+   * Clears an automatically assigned absolute flow tolerance before a fresh process scenario.
+   *
+   * @return true when an automatic value was cleared, false when the caller owns the tolerance
+   */
+  public boolean resetAutoAbsoluteFlowTolerance() {
+    if (absoluteFlowToleranceExplicit) {
+      return false;
+    }
+    boolean changed = absoluteFlowTolerance != 0.0;
+    absoluteFlowTolerance = 0.0;
+    return changed;
+  }
+
   /** {@inheritDoc} */
   @Override
   public double getMassBalance(String unit) {
@@ -1238,6 +1255,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   @Override
   public void setMinimumFlow(double minimumFlow) {
     this.minimumFlow = minimumFlow;
+    super.setMinimumFlow(minimumFlow);
   }
 
   /** {@inheritDoc} */

@@ -41,6 +41,16 @@ class RecycleAdaptiveAccelerationTest {
    * @return a runnable process containing a recycle named "recycle"
    */
   private static ProcessSystem buildRecycleProcess() {
+    return buildRecycleProcess(0.1);
+  }
+
+  /**
+   * Builds a process with a configurable fraction of separator gas returned through the recycle.
+   *
+   * @param recycleFraction separator gas fraction returned to the mixer
+   * @return a runnable process containing a recycle named "recycle"
+   */
+  private static ProcessSystem buildRecycleProcess(double recycleFraction) {
     ProcessSystem process = new ProcessSystem("recycle process");
 
     Stream feed = new Stream("feed", createGasFluid());
@@ -68,7 +78,7 @@ class RecycleAdaptiveAccelerationTest {
     process.add(separator);
 
     Splitter splitter = new Splitter("splitter", separator.getGasOutStream());
-    splitter.setSplitFactors(new double[] { 0.9, 0.1 });
+    splitter.setSplitFactors(new double[] { 1.0 - recycleFraction, recycleFraction });
     process.add(splitter);
 
     Recycle recycle = new Recycle("recycle");
@@ -119,6 +129,29 @@ class RecycleAdaptiveAccelerationTest {
     process.run();
     Recycle recycle = (Recycle) process.getUnit("recycle");
     assertTrue(recycle.solved(), "recycle should converge with adaptive acceleration enabled");
+  }
+
+  /** A slowly contracting recycle should upgrade itself and beat pinned direct substitution. */
+  @Test
+  void testAdaptiveAccelerationImprovesSlowRecycleConvergence() {
+    ProcessSystem adaptiveProcess = buildRecycleProcess(0.8);
+    Recycle adaptiveRecycle = (Recycle) adaptiveProcess.getUnit("recycle");
+    adaptiveProcess.run();
+
+    ProcessSystem directProcess = buildRecycleProcess(0.8);
+    Recycle directRecycle = (Recycle) directProcess.getUnit("recycle");
+    directRecycle.setAdaptiveAcceleration(false);
+    directProcess.run();
+
+    assertTrue(adaptiveRecycle.isAccelerationAutoUpgraded(),
+        "A recycle contracting by only 20% per pass should trigger adaptive acceleration");
+    assertTrue(adaptiveRecycle.solved(), "The accelerated recycle should converge");
+    assertTrue(adaptiveRecycle.getIterations() < directRecycle.getIterations() || !directRecycle.solved(),
+        "Adaptive acceleration should use fewer iterations or solve a loop that direct substitution leaves open");
+
+    adaptiveRecycle.setAdaptiveAcceleration(false);
+    assertEquals(AccelerationMethod.DIRECT_SUBSTITUTION, adaptiveRecycle.getAccelerationMethod(),
+        "Disabling adaptive acceleration must undo an automatically selected method");
   }
 
   /** Resetting the iteration counter must not destroy the cross-pass stall bookkeeping. */

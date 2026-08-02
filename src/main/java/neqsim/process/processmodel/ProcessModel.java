@@ -305,8 +305,9 @@ public class ProcessModel implements Runnable, Serializable {
   private double absoluteFlowTolerance = 0.0;
 
   /**
-   * Default noise-floor fraction of the detected plant mass-flow scale used by the auto-tuner. A stream carrying less
-   * than one part per million of the largest stream in the plant is numerical plumbing, not process flow.
+   * Default noise-floor fraction of the detected total plant feed flow used by the auto-tuner. The threshold is a
+   * convergence scale, not a declaration that every smaller process stream is physically unimportant; callers can
+   * protect significant small-flow equipment with an explicit minimum-flow setting or disable automatic bypass.
    */
   public static final double DEFAULT_AUTO_TUNING_FLOW_FRACTION = 1.0e-6;
 
@@ -325,7 +326,7 @@ public class ProcessModel implements Runnable, Serializable {
   /** True once {@link #setAbsoluteFlowTolerance(double)} has been called, so the auto-tuner must not override it. */
   private boolean absoluteFlowToleranceExplicit = false;
 
-  /** Largest boundary/stream mass flow (kg/hr) detected by the auto-tuner on the last run. */
+  /** Total feed-boundary mass flow (kg/hr) detected by the auto-tuner on the last run. */
   private double detectedPlantFlowScale = 0.0;
 
   /** Flow scale the auto-tuner last applied its thresholds for; used to detect a ramping plant. */
@@ -1632,7 +1633,7 @@ public class ProcessModel implements Runnable, Serializable {
 
         // Capture current stream states and calculate errors
         Map<Object, double[]> currentBoundaryStreamStates = captureBoundaryStreamStates(boundaryStreams);
-        applyAutoConvergenceTuning(currentBoundaryStreamStates);
+        boolean autoTuningChanged = applyAutoConvergenceTuning();
         double[] errors = calculateConvergenceErrors(previousBoundaryStreamStates, currentBoundaryStreamStates);
         java.util.Set<Object> changedBoundaryStreams = findChangedBoundaryStreams(previousBoundaryStreamStates,
             currentBoundaryStreamStates);
@@ -1658,7 +1659,8 @@ public class ProcessModel implements Runnable, Serializable {
         // Notify iteration complete
         boolean boundaryDrivenModel = !boundaryStreams.isEmpty();
         boolean minimumIterationsMet = boundaryStreams.isEmpty() || iterations > 1;
-        boolean iterConverged = valuesConverged && minimumIterationsMet && (allProcessesSolved || boundaryDrivenModel);
+        boolean iterConverged = valuesConverged && minimumIterationsMet
+            && (allProcessesSolved || boundaryDrivenModel) && !autoTuningChanged;
         notifyIterationComplete(iterations, iterConverged, maxError);
 
         // Converged if all processes solved AND values are not changing
@@ -1670,7 +1672,7 @@ public class ProcessModel implements Runnable, Serializable {
 
         // Update previous states for next iteration
         previousBoundaryStreamStates = currentBoundaryStreamStates;
-        dirtyAreas = getDirtyAreasForNextIteration(areaPlan, changedBoundaryStreams);
+        dirtyAreas = autoTuningChanged ? null : getDirtyAreasForNextIteration(areaPlan, changedBoundaryStreams);
       }
       lastIterationCount = iterations;
 
@@ -3137,8 +3139,17 @@ public class ProcessModel implements Runnable, Serializable {
   /** Clears the per-run auto-tuning bookkeeping so a re-run re-measures the plant flow scale. */
   private void resetAutoTuningRunState() {
     autoTuningAppliedScale = 0.0;
-    if (!autoConvergenceTuning) {
-      autoTuningSummary = "";
+    detectedPlantFlowScale = 0.0;
+    autoTuningSummary = "";
+    if (!boundaryFlowFloorExplicit) {
+      boundaryFlowFloor = DEFAULT_BOUNDARY_FLOW_FLOOR;
+    }
+    if (!absoluteFlowToleranceExplicit) {
+      absoluteFlowTolerance = 0.0;
+    }
+    for (ProcessSystem process : processes.values()) {
+      process.resetAutoLowFlowThreshold();
+      process.resetAutoRecycleFlowTolerance();
     }
   }
 
@@ -3153,21 +3164,21 @@ public class ProcessModel implements Runnable, Serializable {
    * per-iteration cost negligible.
    * </p>
    *
-   * @param boundaryStates current boundary-stream states, {@code [flow kg/hr, temperature K, pressure bara]}
+   * @return true when thresholds changed and every process area must be evaluated once more
    */
-  private void applyAutoConvergenceTuning(Map<Object, double[]> boundaryStates) {
+  private boolean applyAutoConvergenceTuning() {
     if (!autoConvergenceTuning) {
-      return;
+      return false;
     }
     double scale = Math.max(detectedPlantFlowScale, getTotalFeedFlowRate());
     if (!(scale > 0.0) || Double.isInfinite(scale)) {
-      return;
+      return false;
     }
     detectedPlantFlowScale = scale;
 
     // Re-apply only on the first pass or when the plant has grown materially since.
     if (autoTuningAppliedScale > 0.0 && scale < 2.0 * autoTuningAppliedScale) {
-      return;
+      return false;
     }
     autoTuningAppliedScale = scale;
 
@@ -3190,6 +3201,7 @@ public class ProcessModel implements Runnable, Serializable {
         scale, boundaryFlowFloor, absoluteFlowTolerance, autoLowFlowBypass ? noiseFloor : 0.0, bypassCandidates,
         recyclesTuned);
     logger.debug("ProcessModel {}", autoTuningSummary);
+    return true;
   }
 
   /**
