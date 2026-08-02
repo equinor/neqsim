@@ -1183,8 +1183,10 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
 
   private void ensureSupportedCoupledFlowDirection() {
     for (int node = 1; node < numberOfNodes - 1; node++) {
-      if (pipe.getNode(node).getVelocityIn().doubleValue() < 0.0
-          || pipe.getNode(node).getVelocityOut().doubleValue() < 0.0) {
+      if (!Double.isFinite(pipe.getNode(node).getVelocityIn().doubleValue())
+          || !Double.isFinite(pipe.getNode(node).getVelocityOut().doubleValue())
+          || pipe.getNode(node).getVelocityIn().doubleValue() <= 0.0
+          || pipe.getNode(node).getVelocityOut().doubleValue() <= 0.0) {
         throw new IllegalStateException(
             "The coupled one-phase hydraulic/EOS solver currently supports positive flow only; "
                 + "reversed-flow boundary equations are not yet validated.");
@@ -1196,6 +1198,11 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     for (int node = 1; node < numberOfNodes - 1; node++) {
       int pressureVariable = 2 * (node - 1);
       if (!Double.isFinite(candidate[pressureVariable]) || candidate[pressureVariable] <= 0.0) {
+        return Double.POSITIVE_INFINITY;
+      }
+    }
+    for (int velocityVariable = 1; velocityVariable < candidate.length; velocityVariable += 2) {
+      if (!Double.isFinite(candidate[velocityVariable]) || candidate[velocityVariable] <= 0.0) {
         return Double.POSITIVE_INFINITY;
       }
     }
