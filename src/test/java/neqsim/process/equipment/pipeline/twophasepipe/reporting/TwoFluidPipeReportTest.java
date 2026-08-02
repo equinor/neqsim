@@ -38,7 +38,7 @@ class TwoFluidPipeReportTest {
     assertEquals(sectionCount, pipe.getWaterDropoutRiskProfile().length);
     assertEquals(sectionCount, pipe.getEntrainmentFractionProfile().length);
     assertEquals(sectionCount, pipe.getEntrainedDropletDiameterProfile().length);
-    assertEquals(sectionCount, pipe.getSevereSluggingNumberProfile().length);
+    assertEquals(sectionCount, pipe.getInclinedSectionGasCarryoverNumberProfile().length);
     assertEquals(sectionCount, pipe.getSevereSlugPotentialProfile().length);
     assertTrue(Arrays.stream(pipe.getEntrainmentFractionProfile()).allMatch(value -> value >= 0.0 && value <= 1.0));
     assertTrue(Arrays.stream(pipe.getEntrainedDropletDiameterProfile()).allMatch(value -> value >= 0.0));
