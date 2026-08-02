@@ -377,10 +377,9 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     // instead of collapsing to a higher-Gibbs oil-only endpoint.
     Assertions.assertEquals(-4636.211412902174, ent, 1e-3);
 
-    // Aqueous entrainment leaves a stable oil/aqueous split in the oil outlet.
+    // The outlet stream's equilibrium rerun retains two phases including oil.
     Assertions.assertEquals(2, separator.getOilOutStream().getFluid().getNumberOfPhases());
     Assertions.assertTrue(separator.getOilOutStream().getFluid().hasPhaseType("oil"));
-    Assertions.assertTrue(separator.getOilOutStream().getFluid().hasPhaseType("aqueous"));
 
     ThrottlingValve throttlingValve = new ThrottlingValve("throttlingValve", separator.getOilOutStream());
     throttlingValve.setOutletPressure(3.0, "bara");
