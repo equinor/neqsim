@@ -424,13 +424,19 @@ public class TwoFluidConservationEquations implements Serializable {
       sec.setEntrainmentFraction(entrainment.entrainmentFraction);
       sec.setEntrainedDropletDiameter(entrainment.dropletDiameter);
 
-      double severeSluggingNumber = calcSevereSluggingNumber(sec);
-      sec.setSevereSluggingNumber(severeSluggingNumber);
-      sec.setSevereSlugPotential(severeSluggingNumber < 1.0);
+      double gasCarryoverNumber = calcInclinedSectionGasCarryoverNumber(sec);
+      sec.setInclinedSectionGasCarryoverNumber(gasCarryoverNumber);
+      sec.setInclinedSectionLiquidFallbackPotential(gasCarryoverNumber < 1.0);
     }
   }
 
-  private double calcSevereSluggingNumber(TwoFluidSection sec) {
+  /**
+   * Calculate a local inclined-section gas-carryover screen.
+   *
+   * <p>The result contains no upstream gas volume, riser height, top pressure, or choke
+   * response and therefore must not be interpreted as a severe-slugging system criterion.</p>
+   */
+  private double calcInclinedSectionGasCarryoverNumber(TwoFluidSection sec) {
     if (sec.getInclination() <= Math.toRadians(5.0)) {
       return Double.POSITIVE_INFINITY;
     }
