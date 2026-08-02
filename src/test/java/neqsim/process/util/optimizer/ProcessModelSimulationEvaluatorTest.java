@@ -170,8 +170,8 @@ class ProcessModelSimulationEvaluatorTest {
   }
 
   /**
-   * Verifies that minimum-directed capacity limits retain their engineering-unit limit in
-   * model-level bottleneck reporting.
+   * Verifies that minimum-directed capacity limits retain their engineering-unit limit in model-level bottleneck
+   * reporting.
    */
   @Test
   void minimumCapacityConstraintReportsItsFiniteLimit() {
@@ -189,8 +189,7 @@ class ProcessModelSimulationEvaluatorTest {
 
     ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
     evaluator.setIncludeStrategyCapacityConstraints(false);
-    evaluator.addParameter("wells::feed.flowRate", 5000.0, 20000.0, "kg/hr")
-        .addEquipmentCapacityConstraints();
+    evaluator.addParameter("wells::feed.flowRate", 5000.0, 20000.0, "kg/hr").addEquipmentCapacityConstraints();
 
     ProcessModelSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[] { 10000.0 });
     ProcessModelSimulationEvaluator.BottleneckStatus bottleneck = result.getActiveBottleneck();
@@ -198,8 +197,7 @@ class ProcessModelSimulationEvaluatorTest {
     assertTrue(result.isFeasible());
     assertEquals(0.9, bottleneck.getUtilization(), 1.0e-12);
     assertEquals(50.0, bottleneck.getCurrentValue(), 1.0e-12);
-    assertEquals(45.0, bottleneck.getDesignValue(), 1.0e-12,
-        "minimum limit must not be reported as Double.MAX_VALUE");
+    assertEquals(45.0, bottleneck.getDesignValue(), 1.0e-12, "minimum limit must not be reported as Double.MAX_VALUE");
     assertTrue(bottleneck.isMinimumConstraint());
   }
 
