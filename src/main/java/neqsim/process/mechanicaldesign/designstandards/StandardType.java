@@ -86,7 +86,7 @@ public enum StandardType {
       new String[] { "SafetyValve", "SafetyReliefValve" }, "relief valve design codes"),
   API_527("API-527", "Seat Tightness of Pressure Relief Valves", "5th Ed",
       new String[] { "SafetyValve", "SafetyReliefValve" }, "relief valve design codes"),
-  API_2000("API-2000", "Venting Atmospheric and Low-pressure Storage Tanks", "8th Ed",
+  API_2000("API-2000", "Venting Atmospheric and Low-pressure Storage Tanks", "7th Ed",
       new String[] { "Tank", "SimpleTankFiller" }, "tank venting design codes"),
   API_614("API-614", "Lubrication, Shaft-Sealing, and Control-Oil Systems", "6th Ed",
       new String[] { "Compressor", "Pump" }, "rotating equipment design codes"),

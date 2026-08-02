@@ -32,6 +32,7 @@ Use these classes before writing custom checks:
 | DNV-RP-C203 fatigue screening | `DnvRpC203FatigueDesignKernel` with a verified controlled curve, stress bins, factors, exposure, and damage basis |
 | DNV-RP-F105 free-span screening | `DnvRpF105FreeSpanScreeningKernel` with verified span geometry, first-mode structural basis, environment, and project-controlled response triggers |
 | DNV-RP-F101 isolated metal-loss screening | `DnvRpF101CorrodedPipelineScreeningKernel` with verified inspected defect geometry, material/pressure basis, and caller-controlled allowance and pressure factor |
+| API 2000 tank-venting screening | `Api2000TankVentingScreeningKernel` with verified fixed-roof scope, demand/combination basis, rated capacities, pressure/vacuum basis, and common reference conditions |
 
 ## Workflow
 
@@ -81,6 +82,13 @@ finding, not fitness-for-service acceptance. Keep interacting/complex defects, c
 compression, probabilistic methods, crack-like damage, repair, and approval open. Never infer
 defect geometry from M-506 corrosion-rate output, and never treat RP-F101 as replacing DNV-ST-F101
 pipeline-system design checks.
+
+For API 2000, require the typed kernel for the current unamended `7th Ed`. Verify the source of
+movement factors, thermal/other normal demand, total emergency demand, scenario combinations,
+device curves, common gas reference state, rated pressures/vacuum, and tank limits; Boolean
+attestations are not proof. Treat all capacity/pressure verdicts as caller-controlled screening,
+not API compliance. Keep API tables/equations, vent/device sizing, line losses, flame arresters,
+blanketing, floating roofs, refrigerated storage, installation, testing, and certification open.
 
 ## Evidence Rules
 

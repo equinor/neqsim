@@ -188,6 +188,18 @@ does not replace DNV-ST-F101 pressure containment, collapse, propagation/local b
 interaction, fatigue, incidental/test pressure, de-rating, safety class, ovality, fabrication
 route, or installation-strain work.
 
+### API 2000 tank-venting work
+
+For a current-edition fixed-roof tank venting basis, use `Api2000TankVentingScreeningKernel`.
+Supply verified caller-controlled normal movement/thermal/other demands, total emergency demand,
+rated device/system capacities at stated pressure/vacuum conditions, common gas reference
+conditions, and tank positive/vacuum limits. Report demand, utilization, and margins as
+`SCREENING`, not device sizing or API compliance.
+
+Do not use `FireProtectionDesign` or generic PSV sizing as a silent substitute for API 2000 tank
+vent demand. Keep API demand tables/equations, scenarios, vent area/device selection, losses,
+flame arresters, blanketing, refrigerated/floating-roof service, testing, and approval external.
+
 ## Data Sources
 - Material properties: `designdata/MaterialPipeProperties.csv`, `MaterialPlateProperties.csv`
 - Technical requirements: `designdata/TechnicalRequirements_Process.csv`

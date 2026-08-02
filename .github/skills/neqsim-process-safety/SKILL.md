@@ -28,8 +28,15 @@ sizing (`neqsim-relief-flare-network`).
 - Overpressure-protection study for a protected item — enumerate credible relief
   contingencies, select the governing case, size the PSV, and check TR3001 / API
   521 compliance
+- Fixed-roof tank normal/emergency vent-demand and rated-capacity screening using externally
+  verified API 2000 demand and device evidence
 
-Standards: **IEC 61508**, **IEC 61511**, **CCPS LOPA Guidelines**, **API 521 / ISO 23251**, **API 520**, **TR3001**, **ASME VIII Div 1 (UG-125)**, **ASME B31.3/B31.4**, **ASME B16.5**, **API 754**, **NORSOK Z-013**.
+Standards: **IEC 61508**, **IEC 61511**, **CCPS LOPA Guidelines**, **API 521 / ISO 23251**, **API 520**, **API 2000**, **TR3001**, **ASME VIII Div 1 (UG-125)**, **ASME B31.3/B31.4**, **ASME B16.5**, **API 754**, **NORSOK Z-013**.
+
+For API 2000, route to `Api2000TankVentingScreeningKernel`. Require caller-controlled licensed
+demand factors/cases, externally rated capacities, consistent gas reference conditions, tank
+pressure/vacuum limits, and evidence attestations. Do not relabel `FireProtectionDesign`, generic
+PSV sizing, or an adequate screen as API tank-vent sizing or conformity.
 
 ## Method 0b — Trapped-Liquid Fire Rupture Screening
 

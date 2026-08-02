@@ -115,6 +115,18 @@ class StandardCatalogTest {
   }
 
   @Test
+  void currentApi2000EditionHasPublisherEvidenceAndExecutableKernel() {
+    StandardCatalogEntry entry = StandardCatalog.get(StandardType.API_2000);
+
+    assertEquals(StandardLifecycleStatus.CURRENT, entry.getLifecycleStatus());
+    assertEquals("7th Ed", entry.getStandardType().getDefaultVersion());
+    assertTrue(entry.getPublisherSourceUrl().contains("2025-catalog"));
+    assertEquals("2026-08-02", entry.getVerifiedOn());
+    assertTrue(StandardRegistry.getDesignKernel(StandardType.API_2000)
+        .supports(StandardEdition.defaultEdition(StandardType.API_2000)));
+  }
+
+  @Test
   void f105ResourceCatalogDoesNotExposeLegacyPseudoCriteriaAsCurrent() {
     String index = resourceText("/designdata/standards/standards_index.csv");
     String values = resourceText("/designdata/standards/dnv_iso_en_standards.csv");
