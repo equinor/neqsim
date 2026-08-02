@@ -130,8 +130,8 @@ public class HeaterTest {
   }
 
   /**
-   * Entropy requires caloric properties but not level-3 composition derivatives. The diagnostic must preserve its
-   * value and the surrounding stream state while using the minimum thermodynamic initialization level.
+   * Entropy requires caloric properties but not level-3 composition derivatives. The diagnostic must preserve its value
+   * and the surrounding stream state while using the minimum thermodynamic initialization level.
    */
   @Test
   void testEntropyProductionUsesMinimumThermodynamicInitializationLevel() {
