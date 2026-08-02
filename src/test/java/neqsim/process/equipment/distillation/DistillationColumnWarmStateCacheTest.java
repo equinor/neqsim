@@ -56,6 +56,38 @@ public class DistillationColumnWarmStateCacheTest {
   }
 
   /**
+   * Builds a compact binary fractionator with active condenser and reboiler ratio equations.
+   *
+   * @return an unrun column configured for Naphtali-Sandholm
+   */
+  private static DistillationColumn buildCondenserColumn() {
+    SystemSrkEos fluid = new SystemSrkEos(323.15, 10.0);
+    fluid.addComponent("propane", 0.5);
+    fluid.addComponent("n-butane", 0.5);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("binary condenser feed", fluid);
+    feed.setFlowRate(100.0, "kg/hr");
+    feed.setTemperature(323.15);
+    feed.setPressure(10.0, "bara");
+    feed.run();
+
+    DistillationColumn column = new DistillationColumn("condenser cache column", 5, true, true);
+    column.addFeedStream(feed, 3);
+    column.getCondenser().setOutTemperature(298.15);
+    column.getReboiler().setOutTemperature(348.15);
+    column.getCondenser().setRefluxRatio(2.0);
+    column.getReboiler().setRefluxRatio(2.0);
+    column.setTopPressure(10.0);
+    column.setBottomPressure(10.0);
+    column.setMaxNumberOfIterations(80);
+    column.setTemperatureTolerance(1.0e-1);
+    column.setMassBalanceTolerance(1.0e-1);
+    column.setSolverType(DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
+    return column;
+  }
+
+  /**
    * A reboiler temperature change must invalidate the warm state. {@code Reboiler.setOutTemperature} does not mark the
    * column for re-initialization, so the fingerprint is the only thing that can catch it.
    */
@@ -103,6 +135,40 @@ public class DistillationColumnWarmStateCacheTest {
         "activating ratio mode must update the overhead flow");
     assertNotEquals(firstBottomFlow, column.getLiquidOutStream().getFlowRate("kg/hr"), 1.0,
         "activating ratio mode must update the bottoms flow");
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    assertPhysicalAndBalanced(column.getFeedStreams(3).get(0), column);
+  }
+
+  /**
+   * Changing from ratio reflux to a fixed liquid-reflux split must invalidate an otherwise identical warm state.
+   *
+   * <p>
+   * The legacy tray API leaves the reflux ratio and total-condenser flag unchanged while selecting a different
+   * condenser equation path. The active fixed-reflux mode is therefore part of the mathematical problem even when all
+   * previously fingerprinted numbers are unchanged.
+   * </p>
+   */
+  @Test
+  public void condenserLiquidRefluxModeInvalidatesWarmState() {
+    DistillationColumn column = buildCondenserColumn();
+    column.run();
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    double firstGasFlow = column.getGasOutStream().getFlowRate("kg/hr");
+    double firstBottomFlow = column.getLiquidOutStream().getFlowRate("kg/hr");
+    assertFalse(column.getCondenser().isSeparation_with_liquid_reflux(),
+        "the baseline should use ratio-controlled partial-condenser reflux");
+
+    column.getCondenser().setSeparation_with_liquid_reflux(true, 5.0, "kg/hr");
+    column.run();
+
+    assertFalse(column.wasNaphtaliSandholmWarmStateReused(),
+        "fixed liquid-reflux mode must solve the changed condenser equations instead of reusing the ratio solution");
+    assertTrue(column.getCondenser().getLiquidProductStream() != null,
+        "the fixed-reflux solve must create the condenser liquid split");
+    assertNotEquals(firstGasFlow, column.getGasOutStream().getFlowRate("kg/hr"), 1.0e-2,
+        "the changed condenser equations must update the overhead flow");
+    assertNotEquals(firstBottomFlow, column.getLiquidOutStream().getFlowRate("kg/hr"), 1.0e-2,
+        "the changed condenser equations must update the bottoms flow");
     assertTrue(column.solved(), column.getConvergenceDiagnostics());
     assertPhysicalAndBalanced(column.getFeedStreams(3).get(0), column);
   }
