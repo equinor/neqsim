@@ -78,6 +78,13 @@ public final class StandardSupportAudit {
           registryImplementation, separatorImplementation.getImplementationClassName(),
           "Gravity cut-diameter, K-factor, and liquid residence-time screening only; service applicability, vessel "
               + "construction, internals, and performance guarantees require independent review.");
+    case DNV_ST_F101:
+      EquipmentDesignKernelRegistry.Lookup pipelineImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING, pipelineImplementation.isImplemented(),
+          registryImplementation, pipelineImplementation.getImplementationClassName(),
+          "Typed 2021 screening for containment, collapse, propagation buckling, load interaction, fatigue, pressure "
+              + "cases, de-rating, safety class, ovality, fabrication route, and installation strain; clause-complete "
+              + "conformity and engineering approval remain external.");
     default:
       return getCategorySupport(standardType, registryImplementation);
     }

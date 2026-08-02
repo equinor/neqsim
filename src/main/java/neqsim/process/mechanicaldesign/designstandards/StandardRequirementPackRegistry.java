@@ -106,9 +106,14 @@ public final class StandardRequirementPackRegistry {
             capability("shell-and-tube-design", Kind.CALCULATION_SCREENING,
                 "neqsim.process.mechanicaldesign.heatexchanger.ShellAndTubeDesignCalculator",
                 "Thermal and mechanical screening; full datasheet and vendor conformity are excluded.")));
-    register(packs, pack(StandardType.DNV_ST_F101, capability("pipeline-mechanical-design", Kind.CALCULATION_SCREENING,
-        "neqsim.process.mechanicaldesign.pipeline.PipeMechanicalDesignCalculator",
-        "Pressure-containment screening; load cases, safety classes, fabrication, and installation checks are incomplete.")));
+    register(packs,
+        pack(StandardType.DNV_ST_F101,
+            capability("pipeline-mechanical-design", Kind.CALCULATION_SCREENING,
+                "neqsim.process.engineering.calculation.DnvStF101PipelineDesignKernel",
+                "Typed 2021 screening for pressure containment, collapse, propagation buckling, "
+                    + "load interaction, fatigue, pressure cases, derating, safety class, ovality, "
+                    + "fabrication route, and installation strain; clause-complete conformity and "
+                    + "engineering approval remain external.")));
     PACKS = Collections.unmodifiableMap(packs);
   }
 
