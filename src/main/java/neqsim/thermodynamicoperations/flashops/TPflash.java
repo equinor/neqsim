@@ -115,8 +115,7 @@ public class TPflash extends Flash {
         phaseTypes[phaseIndex] = source.getPhase(phaseIndex).getType();
         betas[phaseIndex] = source.getBeta(phaseIndex);
         for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
-          compositions[phaseIndex][componentIndex] =
-              source.getPhase(phaseIndex).getComponent(componentIndex).getx();
+          compositions[phaseIndex][componentIndex] = source.getPhase(phaseIndex).getComponent(componentIndex).getx();
         }
       }
       for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
@@ -760,8 +759,7 @@ public class TPflash extends Flash {
       sucsSubs();
     }
     if (system.doMultiPhaseCheck()) {
-      AqueousTwoPhaseState balancedAqueousReference =
-          balancedAqueousReferenceBeforeMultiphaseCheck();
+      AqueousTwoPhaseState balancedAqueousReference = balancedAqueousReferenceBeforeMultiphaseCheck();
       TPmultiflash operation = new TPmultiflash(system, system.doSolidPhaseCheck());
       operation.run();
       restoreBalancedAqueousReferenceAfterInvalidPhaseRemoval(balancedAqueousReference);
@@ -920,7 +918,7 @@ public class TPflash extends Flash {
    * </p>
    */
   private void rescueWaterRichEndpoint() {
-    if (system.doMultiPhaseCheck() || system.isChemicalSystem() || system.hasIons() || solidCheck
+    if (system.doMultiPhaseCheck() || system.isChemicalSystem() || system.hasIons() || solidCheck || system.doSolidPhaseCheck()
         || system.isMultiphaseWaxCheck() || system.getNumberOfPhases() > 2) {
       return;
     }
@@ -1243,32 +1241,28 @@ public class TPflash extends Flash {
    * endpoint.
    *
    * <p>
-   * A balanced gas/aqueous flash can be temporarily expanded to three phases when tangent-plane stability testing
-   * finds a near-boundary hydrocarbon-liquid trial. If that trial disappears during {@link TPmultiflash} cleanup, the
+   * A balanced gas/aqueous flash can be temporarily expanded to three phases when tangent-plane stability testing finds
+   * a near-boundary hydrocarbon-liquid trial. If that trial disappears during {@link TPmultiflash} cleanup, the
    * remaining phases can retain phase fractions from the rejected three-phase iterate. Composition normalization alone
-   * does not repair the resulting component material-balance or fugacity residuals. The pre-trial state is restored only
-   * when the final endpoint still has exactly two aqueous phases and fails the same strict acceptance checks. Genuine
-   * three-phase results and feasible multiphase refinements are unchanged.
+   * does not repair the resulting component material-balance or fugacity residuals. The pre-trial state is restored
+   * only when the final endpoint still has exactly two phases including an aqueous phase and fails the same strict acceptance checks.
+   * Genuine three-phase results and feasible multiphase refinements are unchanged.
    * </p>
    *
    * @param balancedReference feasible pre-trial state, or {@code null} when recovery is not applicable
    */
-  private void restoreBalancedAqueousReferenceAfterInvalidPhaseRemoval(
-      AqueousTwoPhaseState balancedReference) {
-    if (balancedReference == null || system.getNumberOfPhases() != 2
-        || !system.hasPhaseType(PhaseType.AQUEOUS) || isBalancedEquilibriumCandidate(system)) {
+  private void restoreBalancedAqueousReferenceAfterInvalidPhaseRemoval(AqueousTwoPhaseState balancedReference) {
+    if (balancedReference == null || system.getNumberOfPhases() != 2 || !system.hasPhaseType(PhaseType.AQUEOUS)
+        || isBalancedEquilibriumCandidate(system)) {
       return;
     }
     for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
       system.setPhaseType(phaseIndex, balancedReference.phaseTypes[phaseIndex]);
       system.setBeta(phaseIndex, balancedReference.betas[phaseIndex]);
-      for (int componentIndex = 0;
-          componentIndex < balancedReference.compositions[phaseIndex].length;
-          componentIndex++) {
+      for (int componentIndex = 0; componentIndex < balancedReference.compositions[phaseIndex].length; componentIndex++) {
         system.getPhase(phaseIndex).getComponent(componentIndex)
             .setx(balancedReference.compositions[phaseIndex][componentIndex]);
-        system.getPhase(phaseIndex).getComponent(componentIndex)
-            .setK(balancedReference.kValues[componentIndex]);
+        system.getPhase(phaseIndex).getComponent(componentIndex).setK(balancedReference.kValues[componentIndex]);
       }
     }
     system.normalizeBeta();
