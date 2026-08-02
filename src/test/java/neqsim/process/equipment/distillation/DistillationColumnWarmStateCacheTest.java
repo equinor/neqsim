@@ -460,6 +460,8 @@ public class DistillationColumnWarmStateCacheTest {
           "component balance must close for " + feedComponents[componentIndex]);
     }
 
+    assertBoundedComposition(gas);
+    assertBoundedComposition(liquid);
     if (gasFlow > 0.0) {
       assertPhysicalStream(gas);
     }
@@ -509,6 +511,9 @@ public class DistillationColumnWarmStateCacheTest {
           "component balance must close for " + feedComponents[componentIndex]);
     }
 
+    assertBoundedComposition(gas);
+    assertBoundedComposition(liquid);
+    assertBoundedComposition(condenserLiquid);
     if (gasFlow > 0.0) {
       assertPhysicalStream(gas);
     }
@@ -530,6 +535,15 @@ public class DistillationColumnWarmStateCacheTest {
         && stream.getTemperature("K") < 800.0, "product temperature must be physical");
     assertTrue(Double.isFinite(stream.getPressure("bara")) && stream.getPressure("bara") > 0.0,
         "product pressure must be physical");
+    assertBoundedComposition(stream);
+  }
+
+  /**
+   * Verify finite, normalized, and bounded product composition independently of product flow.
+   *
+   * @param stream product stream
+   */
+  private static void assertBoundedComposition(StreamInterface stream) {
     double compositionSum = 0.0;
     for (double moleFraction : stream.getThermoSystem().getMolarComposition()) {
       assertTrue(Double.isFinite(moleFraction) && moleFraction >= -1.0e-12 && moleFraction <= 1.0 + 1.0e-12,
