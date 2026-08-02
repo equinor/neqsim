@@ -182,8 +182,15 @@ public class TwoFluidSection extends PipeSection {
   /** Characteristic entrained droplet diameter (m). */
   private double entrainedDropletDiameter = 0.0;
 
-  /** Severe slugging stability number. Values below 1 indicate elevated risk. */
+  /**
+   * Legacy storage for the local inclined-section gas-carryover number.
+   *
+   * <p>The field name is retained for serialization compatibility.</p>
+   */
   private double severeSluggingNumber = Double.POSITIVE_INFINITY;
+
+  /** Local indication that gas velocity may be insufficient to carry liquid uphill. */
+  private boolean inclinedSectionLiquidFallbackPotential = false;
 
   /**
    * Default constructor.
@@ -997,9 +1004,10 @@ public class TwoFluidSection extends PipeSection {
   }
 
   /**
-   * Check if this section has severe slugging potential (typically riser base).
+   * Check whether the explicit flowline-riser system diagnostic predicts severe slugging at
+   * this section. The flag is not set by local closure relations.
    *
-   * @return true if severe slugging potential exists
+   * @return true if the system-level diagnostic predicts severe slugging
    */
   public boolean isSevereSlugPotential() {
     return severeSlugPotential;
@@ -1134,12 +1142,54 @@ public class TwoFluidSection extends PipeSection {
     this.entrainedDropletDiameter = Math.max(0.0, entrainedDropletDiameter);
   }
 
-  public double getSevereSluggingNumber() {
+  /**
+   * Get the local inclined-section gas-carryover number.
+   *
+   * <p>This is a local Froude/holdup screen and is not a severe-slugging system stability
+   * criterion.</p>
+   *
+   * @return local gas-carryover number, or positive infinity when not applicable
+   */
+  public double getInclinedSectionGasCarryoverNumber() {
     return severeSluggingNumber;
   }
 
+  /** Set the local inclined-section gas-carryover number. */
+  public void setInclinedSectionGasCarryoverNumber(double number) {
+    severeSluggingNumber =
+        Double.isFinite(number) ? number : Double.POSITIVE_INFINITY;
+  }
+
+  /** Return whether the local carryover screen indicates possible liquid fallback. */
+  public boolean isInclinedSectionLiquidFallbackPotential() {
+    return inclinedSectionLiquidFallbackPotential;
+  }
+
+  /** Set the local inclined-section liquid-fallback flag. */
+  public void setInclinedSectionLiquidFallbackPotential(boolean potential) {
+    inclinedSectionLiquidFallbackPotential = potential;
+  }
+
+  /**
+   * Legacy alias for {@link #getInclinedSectionGasCarryoverNumber()}.
+   *
+   * @return local inclined-section gas-carryover number
+   * @deprecated This value is not a severe-slugging system stability number.
+   */
+  @Deprecated
+  public double getSevereSluggingNumber() {
+    return getInclinedSectionGasCarryoverNumber();
+  }
+
+  /**
+   * Legacy alias for {@link #setInclinedSectionGasCarryoverNumber(double)}.
+   *
+   * @param severeSluggingNumber local inclined-section gas-carryover number
+   * @deprecated This value is not a severe-slugging system stability number.
+   */
+  @Deprecated
   public void setSevereSluggingNumber(double severeSluggingNumber) {
-    this.severeSluggingNumber = Double.isFinite(severeSluggingNumber) ? severeSluggingNumber : Double.POSITIVE_INFINITY;
+    setInclinedSectionGasCarryoverNumber(severeSluggingNumber);
   }
 
   /**
