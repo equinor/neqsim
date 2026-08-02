@@ -469,8 +469,7 @@ public class DistillationColumnWarmStateCacheTest {
    * @param feed column feed
    * @param column solved column
    */
-  private static void assertPhysicalAndBalancedWithCondenserProduct(StreamInterface feed,
-      DistillationColumn column) {
+  private static void assertPhysicalAndBalancedWithCondenserProduct(StreamInterface feed, DistillationColumn column) {
     StreamInterface gas = column.getGasOutStream();
     StreamInterface liquid = column.getLiquidOutStream();
     StreamInterface condenserLiquid = column.getCondenser().getLiquidProductStream();
@@ -501,8 +500,7 @@ public class DistillationColumnWarmStateCacheTest {
       double productComponentFlow = gasFlow * gasComposition[componentIndex]
           + liquidFlow * liquidComposition[componentIndex]
           + condenserLiquidFlow * condenserLiquidComposition[componentIndex];
-      assertEquals(feedComponentFlow, productComponentFlow,
-          Math.max(1.0e-6, 5.0e-3 * Math.abs(feedComponentFlow)),
+      assertEquals(feedComponentFlow, productComponentFlow, Math.max(1.0e-6, 5.0e-3 * Math.abs(feedComponentFlow)),
           "component balance must close for " + feedComponents[componentIndex]);
     }
 
