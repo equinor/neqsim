@@ -132,7 +132,7 @@ public class PumpCapacityStrategy implements EquipmentCapacityStrategy {
       constraints.put("power", powerConstraint);
     }
 
-    // NPSH margin constraint
+    // NPSH headroom minimum constraint
     double npshAvailable = pump.getNPSHAvailable();
     double npshRequired = pump.getNPSHRequired();
     if (npshAvailable > 0 && npshRequired > 0) {
