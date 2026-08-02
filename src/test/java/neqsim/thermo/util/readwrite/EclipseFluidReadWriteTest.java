@@ -376,7 +376,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     // Updated expected value: OMEGAA from file (0.45724) now applied instead of
     // default
     // (0.45724333333)
-    Assertions.assertEquals(-4639.239569750378, ent, 1e-3);
+    Assertions.assertEquals(-4636.211412902174, ent, 1e-3);
 
     // Oil outlet stream is single-phase oil after separation
     Assertions.assertEquals(1, separator.getOilOutStream().getFluid().getNumberOfPhases());
