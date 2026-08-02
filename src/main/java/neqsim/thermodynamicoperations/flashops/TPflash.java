@@ -103,6 +103,8 @@ public class TPflash extends Flash {
    * the start of {@link #runInternal()}. Used as the collapse target when the spurious-multiphase rescue triggers.
    */
   private PhaseType referenceSinglePhaseType = null;
+  /** True after the bounded water-bearing ordinary-flash retry has been attempted in this run. */
+  private boolean waterBearingRescueAttempted = false;
 
   /** Compact pre-multiphase snapshot used only for balanced neutral water-bearing endpoints. */
   private static final class BalancedTwoPhaseState {
@@ -423,6 +425,7 @@ public class TPflash extends Flash {
    */
   private void runInternal() {
     resetStabilityDiagnostics();
+    waterBearingRescueAttempted = false;
     findLowestGibbsPhaseIsChecked = false;
     int minGibbsPhase = 0;
     double minimumGibbsEnergy = 0;
@@ -1349,9 +1352,10 @@ public class TPflash extends Flash {
    * </p>
    */
   private void rescueSinglePhaseWaterBearingEndpoint() {
-    if (!shouldRetryCollapsedWaterBearingEndpoint()) {
+    if (waterBearingRescueAttempted || !shouldRetryCollapsedWaterBearingEndpoint()) {
       return;
     }
+    waterBearingRescueAttempted = true;
     system.init(1);
     double referenceGibbsEnergy = system.getGibbsEnergy();
     SystemInterface candidate = system.clone();
