@@ -5,24 +5,28 @@ import java.io.Serializable;
 /**
  * Stability diagnostic for a stratified flowline feeding a liquid-filled riser.
  *
- * <p>The diagnostic implements the quasi-steady stability condition derived by Taitel for
- * severe slugging at a flowline-riser junction:</p>
+ * <p>
+ * The diagnostic implements the quasi-steady stability condition derived by Taitel for severe slugging at a
+ * flowline-riser junction:
+ * </p>
  *
  * <pre>
  * P_top,critical = phi rho_L g (V_G / (A_r alpha_prime) - H)
  * </pre>
  *
- * <p>Here {@code P_top} is absolute pressure at the riser outlet, {@code phi} is average
- * liquid holdup in the riser, {@code rho_L} is average liquid density, {@code V_G} is the
- * compressible upstream gas volume, {@code A_r} and {@code H} are riser area and vertical
- * height, and {@code alpha_prime} is the void fraction in the gas cap penetrating the riser.
- * The system is stable when the effective top pressure is at least the critical pressure.
- * A non-positive critical pressure is geometrically stable in this reduced model.</p>
+ * <p>
+ * Here {@code P_top} is absolute pressure at the riser outlet, {@code phi} is average liquid holdup in the riser,
+ * {@code rho_L} is average liquid density, {@code V_G} is the compressible upstream gas volume, {@code A_r} and
+ * {@code H} are riser area and vertical height, and {@code alpha_prime} is the void fraction in the gas cap penetrating
+ * the riser. The system is stable when the effective top pressure is at least the critical pressure. A non-positive
+ * critical pressure is geometrically stable in this reduced model.
+ * </p>
  *
- * <p>Validity is limited to a two-phase, low-rate, stratified flowline connected to a
- * liquid-filled, constant-area rising section. The derivation assumes isothermal ideal-gas
- * compression and neglects wall and interfacial shear during the incipient displacement.
- * It is a stability screen, not a dynamic slug-frequency or slug-size model.</p>
+ * <p>
+ * Validity is limited to a two-phase, low-rate, stratified flowline connected to a liquid-filled, constant-area rising
+ * section. The derivation assumes isothermal ideal-gas compression and neglects wall and interfacial shear during the
+ * incipient displacement. It is a stability screen, not a dynamic slug-frequency or slug-size model.
+ * </p>
  *
  * @see <a href="https://doi.org/10.1016/0301-9322(86)90026-1">Taitel (1986)</a>
  */
@@ -30,7 +34,8 @@ public final class SevereSluggingSystemDiagnostic {
   /** Standard gravitational acceleration in m/s2. */
   public static final double STANDARD_GRAVITY = 9.80665;
 
-  private SevereSluggingSystemDiagnostic() {}
+  private SevereSluggingSystemDiagnostic() {
+  }
 
   /** Diagnostic classification. */
   public enum Status {
@@ -69,8 +74,7 @@ public final class SevereSluggingSystemDiagnostic {
       riserAreaM2 = positive(builder.riserAreaM2, "riserAreaM2");
       riserHeightM = positive(builder.riserHeightM, "riserHeightM");
       separatorPressurePa = positive(builder.separatorPressurePa, "separatorPressurePa");
-      staticChokePressureDropPa =
-          nonNegative(builder.staticChokePressureDropPa, "staticChokePressureDropPa");
+      staticChokePressureDropPa = nonNegative(builder.staticChokePressureDropPa, "staticChokePressureDropPa");
       liquidDensityKgPerM3 = positive(builder.liquidDensityKgPerM3, "liquidDensityKgPerM3");
       riserLiquidHoldup = fraction(builder.riserLiquidHoldup, "riserLiquidHoldup", true);
       gasCapVoidFraction = fraction(builder.gasCapVoidFraction, "gasCapVoidFraction", false);
@@ -145,7 +149,8 @@ public final class SevereSluggingSystemDiagnostic {
       private boolean flowlineStratified = true;
       private boolean threePhase;
 
-      private Builder() {}
+      private Builder() {
+      }
 
       public Builder upstreamGasVolumeM3(double value) {
         upstreamGasVolumeM3 = value;
@@ -185,8 +190,8 @@ public final class SevereSluggingSystemDiagnostic {
       }
 
       /**
-       * Sets alpha-prime. The default 0.89 is the air-water value used in Taitel's comparison;
-       * applications outside that basis should provide a justified value.
+       * Sets alpha-prime. The default 0.89 is the air-water value used in Taitel's comparison; applications outside
+       * that basis should provide a justified value.
        */
       public Builder gasCapVoidFraction(double value) {
         gasCapVoidFraction = value;
@@ -225,8 +230,8 @@ public final class SevereSluggingSystemDiagnostic {
     private final double stabilityRatio;
     private final double gasExpansionHeadM;
 
-    private Result(Status status, double criticalTopPressurePa, double effectiveTopPressurePa,
-        double pressureMarginPa, double stabilityRatio, double gasExpansionHeadM) {
+    private Result(Status status, double criticalTopPressurePa, double effectiveTopPressurePa, double pressureMarginPa,
+        double stabilityRatio, double gasExpansionHeadM) {
       this.status = status;
       this.criticalTopPressurePa = criticalTopPressurePa;
       this.effectiveTopPressurePa = effectiveTopPressurePa;
@@ -290,19 +295,18 @@ public final class SevereSluggingSystemDiagnostic {
       return notApplicable(Status.NOT_APPLICABLE_NON_STRATIFIED_FLOWLINE);
     }
 
-    double effectiveTopPressurePa =
-        input.getSeparatorPressurePa() + input.getStaticChokePressureDropPa();
+    double effectiveTopPressurePa = input.getSeparatorPressurePa() + input.getStaticChokePressureDropPa();
     double gasExpansionHeadM = input.getUpstreamGasVolumeM3()
         / (input.getRiserAreaM2() * input.getGasCapVoidFraction());
     double destabilizingHeadM = gasExpansionHeadM - input.getRiserHeightM();
-    double criticalTopPressurePa = Math.max(0.0, input.getRiserLiquidHoldup()
-        * input.getLiquidDensityKgPerM3() * STANDARD_GRAVITY * destabilizingHeadM);
+    double criticalTopPressurePa = Math.max(0.0,
+        input.getRiserLiquidHoldup() * input.getLiquidDensityKgPerM3() * STANDARD_GRAVITY * destabilizingHeadM);
     double pressureMarginPa = effectiveTopPressurePa - criticalTopPressurePa;
     double stabilityRatio = criticalTopPressurePa == 0.0 ? Double.POSITIVE_INFINITY
         : effectiveTopPressurePa / criticalTopPressurePa;
     Status status = pressureMarginPa >= 0.0 ? Status.STABLE : Status.UNSTABLE;
-    return new Result(status, criticalTopPressurePa, effectiveTopPressurePa, pressureMarginPa,
-        stabilityRatio, gasExpansionHeadM);
+    return new Result(status, criticalTopPressurePa, effectiveTopPressurePa, pressureMarginPa, stabilityRatio,
+        gasExpansionHeadM);
   }
 
   private static Result notApplicable(Status status) {
@@ -325,8 +329,7 @@ public final class SevereSluggingSystemDiagnostic {
 
   private static double fraction(double value, String name, boolean allowZero) {
     if (!Double.isFinite(value) || value > 1.0 || (allowZero ? value < 0.0 : value <= 0.0)) {
-      throw new IllegalArgumentException(
-          name + (allowZero ? " must be in [0, 1]" : " must be in (0, 1]"));
+      throw new IllegalArgumentException(name + (allowZero ? " must be in [0, 1]" : " must be in (0, 1]"));
     }
     return value;
   }
