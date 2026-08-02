@@ -127,6 +127,33 @@ public final class StandardSupportAudit {
               + "caller-controlled depth allowance and pressure factor; inspection uncertainty derivation, "
               + "interacting/complex defects, combined loading, cracking, growth, probabilistic calibration, "
               + "fitness-for-service acceptance, and DNV-ST-F101 design checks remain external.");
+    case DNV_RP_F104:
+      EquipmentDesignKernelRegistry.Lookup co2PipelineImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING,
+          co2PipelineImplementation.isImplemented(), registryImplementation,
+          co2PipelineImplementation.getImplementationClassName(),
+          "Caller-controlled CO2/water specification margins and ordered pressure-temperature profile margins "
+              + "against externally verified single-phase boundaries, MAOP, and temperature limits only; phase-model "
+              + "qualification, DNV-ST-F101 design, fracture/decompression and crack arrest, materials, corrosion, "
+              + "construction, safety, operation, requalification, and conformity remain external.");
+    case DNV_RP_F110:
+      EquipmentDesignKernelRegistry.Lookup globalBucklingImplementation = StandardRegistry
+          .getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING,
+          globalBucklingImplementation.isImplemented(), registryImplementation,
+          globalBucklingImplementation.getImplementationClassName(),
+          "Caller-controlled external-analysis compressive-force, longitudinal-strain, global-displacement, and "
+              + "feed-in-length margins/utilizations only; effective-force derivation, critical buckling, Hobbs/FE "
+              + "response, F114 soil models, triggers/sharing, local capacity, fatigue, ST-F101 checks, lifecycle, "
+              + "and conformity remain external.");
+    case DNV_RP_F114:
+      EquipmentDesignKernelRegistry.Lookup pipeSoilImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING, pipeSoilImplementation.isImplemented(),
+          registryImplementation, pipeSoilImplementation.getImplementationClassName(),
+          "Caller-controlled vertical, axial, and lateral demand/resistance margins and utilizations only; site "
+              + "investigation, soil interpretation, penetration/burial response, load-displacement curves, cyclic "
+              + "and time effects, uncertainty, design actions, F109/F110/F105/ST-F101 interfaces, and conformity "
+              + "remain external.");
     case DNV_RP_F109:
       EquipmentDesignKernelRegistry.Lookup stabilityImplementation = StandardRegistry.getDesignKernel(standardType);
       return new StandardSupport(standardType, StandardSupportLevel.SCREENING, stabilityImplementation.isImplemented(),

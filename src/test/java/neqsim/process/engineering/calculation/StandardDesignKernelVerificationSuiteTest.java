@@ -25,11 +25,11 @@ class StandardDesignKernelVerificationSuiteTest {
   void executesEveryRegisteredKernelWithoutClaimingIndependentQualification() throws Exception {
     EngineeringBenchmarkSuite.Report report = StandardDesignKernelVerificationSuite.evaluateRegression();
 
-    assertEquals(11, report.getBenchmarks().size());
+    assertEquals(14, report.getBenchmarks().size());
     assertTrue(report.areAllBenchmarksPassed(), report.toMap().toString());
     assertTrue(report.getFailedBenchmarkIds().isEmpty());
     assertFalse(report.isPassed(), "Regression baselines must not qualify the methods");
-    assertEquals(11, report.getMissingQualifyingMethods().size());
+    assertEquals(14, report.getMissingQualifyingMethods().size());
     assertEquals("engineering_benchmark_suite.v1", report.toMap().get("schemaVersion"));
     EngineeringBenchmarkSuite.Report restored = roundTrip(report);
     assertTrue(restored.areAllBenchmarksPassed());
@@ -40,8 +40,9 @@ class StandardDesignKernelVerificationSuiteTest {
   void registrySnapshotIsDeterministicImmutableAndInternallyConsistent() throws Exception {
     Set<StandardType> expected = EnumSet.of(StandardType.API_12J, StandardType.API_521, StandardType.API_526,
         StandardType.API_610, StandardType.API_617, StandardType.NORSOK_M_506, StandardType.ISO_5167_2,
-        StandardType.DNV_RP_C203, StandardType.DNV_RP_F105, StandardType.DNV_RP_F101, StandardType.API_2000,
-        StandardType.DNV_RP_F109, StandardType.DNV_ST_F101);
+        StandardType.DNV_RP_C203, StandardType.DNV_RP_F105, StandardType.DNV_RP_F101, StandardType.DNV_RP_F104,
+        StandardType.DNV_RP_F110, StandardType.DNV_RP_F114, StandardType.API_2000, StandardType.DNV_RP_F109,
+        StandardType.DNV_ST_F101);
 
     assertEquals(expected, EquipmentDesignKernelRegistry.getRegisteredStandards());
     assertThrows(UnsupportedOperationException.class,
@@ -57,7 +58,9 @@ class StandardDesignKernelVerificationSuiteTest {
       boolean currentEditionImplemented = standard == StandardType.API_521 || standard == StandardType.NORSOK_M_506
           || standard == StandardType.ISO_5167_2 || standard == StandardType.DNV_RP_C203;
       currentEditionImplemented = currentEditionImplemented || standard == StandardType.DNV_RP_F105
-          || standard == StandardType.DNV_RP_F101 || standard == StandardType.API_2000;
+          || standard == StandardType.DNV_RP_F101 || standard == StandardType.DNV_RP_F104
+          || standard == StandardType.DNV_RP_F110 || standard == StandardType.DNV_RP_F114
+          || standard == StandardType.API_2000;
       currentEditionImplemented = currentEditionImplemented || standard == StandardType.DNV_RP_F109
           || standard == StandardType.DNV_ST_F101;
       assertEquals(currentEditionImplemented, kernel.supports(StandardEdition.defaultEdition(standard)));

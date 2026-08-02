@@ -13,8 +13,8 @@ class TPflashCubicRootSelectionTest {
   private static final String[] COMPONENTS = { "methane", "ethane", "propane", "n-heptane", "nC10" };
   private static final double[] FEED = { 0.72, 0.08, 0.05, 0.10, 0.05 };
   private static final String[] NEAR_CRITICAL_COMPONENTS = { "methane", "ethane", "propane", "n-butane" };
-  private static final double[] NEAR_CRITICAL_FEED = { 0.5833884211682981, 0.16475359157041228,
-      0.19866217294783825, 0.053195814313451245 };
+  private static final double[] NEAR_CRITICAL_FEED = { 0.5833884211682981, 0.16475359157041228, 0.19866217294783825,
+      0.053195814313451245 };
 
   @Test
   void ordinaryAndMultiphaseFlashSelectSameLowestGibbsCubicRoots() {

@@ -1,4 +1,34 @@
 {
+  "dnv rp f104": [
+    "neqsim-ccs-hydrogen",
+    "neqsim-standards-lookup",
+    "neqsim-flow-assurance"
+  ],
+  "co2 pipeline envelope screening": [
+    "neqsim-ccs-hydrogen",
+    "neqsim-flow-assurance",
+    "neqsim-standards-lookup"
+  ],
+  "co2 pipeline design and operation": [
+    "neqsim-ccs-hydrogen",
+    "neqsim-standards-lookup",
+    "neqsim-flow-assurance"
+  ],
+  "dnv rp f110": [
+    "neqsim-standards-lookup",
+    "neqsim-flow-assurance",
+    "neqsim-capability-map"
+  ],
+  "global buckling screening": [
+    "neqsim-flow-assurance",
+    "neqsim-standards-lookup",
+    "neqsim-capability-map"
+  ],
+  "pipeline buckling response envelope": [
+    "neqsim-flow-assurance",
+    "neqsim-standards-lookup",
+    "neqsim-capability-map"
+  ],
   "dnv rp f101": [
     "neqsim-standards-lookup",
     "neqsim-subsea-and-wells",
@@ -1117,5 +1147,8 @@
   "vision extraction": ["neqsim-document-intelligence-extraction"],
   "evidence package": ["neqsim-document-intelligence-extraction"],
   "source traceability extraction": ["neqsim-document-intelligence-extraction"],
-  "conflicting sources": ["neqsim-document-intelligence-extraction"]
+  "conflicting sources": ["neqsim-document-intelligence-extraction"],
+  "dnv rp f114": ["neqsim-standards-lookup", "neqsim-flow-assurance"],
+  "pipe soil interaction": ["neqsim-standards-lookup", "neqsim-flow-assurance"],
+  "submarine pipeline geotechnics": ["neqsim-standards-lookup", "neqsim-flow-assurance"]
 }

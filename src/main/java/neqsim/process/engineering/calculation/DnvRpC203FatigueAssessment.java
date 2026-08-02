@@ -151,7 +151,7 @@ public final class DnvRpC203FatigueAssessment implements Serializable {
 
   /** @return immutable per-bin results */
   public List<BinResult> getBins() {
-    return bins;
+    return Collections.unmodifiableList(new ArrayList<BinResult>(bins));
   }
 
   /** @return un-factored cumulative Palmgren-Miner damage */

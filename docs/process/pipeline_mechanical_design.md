@@ -697,6 +697,30 @@ wall loss. For an inspected isolated longitudinal metal-loss defect under intern
 material strength, pressure basis, and caller-controlled factor. See the
 [DNV-RP-F101 isolated metal-loss guide](mechanical_design/dnv_rp_f101_corroded_pipeline).
 
+For CO2 pipeline transport work on the current `DNV-RP-F104 2021-02+AMD:2021-09` basis, use
+`DnvRpF104Co2PipelineEnvelopeScreeningKernel` to compare a verified composition and ordered
+pressure-temperature profile with project-controlled composition limits, composition-specific
+single-phase pressure boundaries, MAOP, and design temperatures. The typed screen and its
+cross-lifecycle requirement pack do not replace DNV-ST-F101 structural design, fracture control,
+materials/corrosion qualification, construction, operation, safety, or requalification. See the
+[DNV-RP-F104 CO2 pipeline guide](mechanical_design/dnv_rp_f104_co2_pipeline).
+
+For exposed or buried submarine-pipeline pipe-soil interaction on the current
+`DNV-RP-F114 2021-05` basis, use `DnvRpF114PipeSoilInteractionScreeningKernel` to compare verified,
+externally established vertical, axial, and lateral design actions with caller-controlled
+resistances. NeqSim burial depth and soil thermal resistance are not geotechnical resistance
+models. Site investigation, soil interpretation, load-displacement response, cyclic/time effects,
+uncertainty, structural actions, and the F109/F110/F105/ST-F101 interfaces remain external. See the
+[DNV-RP-F114 pipe-soil interaction guide](mechanical_design/dnv_rp_f114_pipe_soil_interaction).
+
+For global-buckling response-envelope screening on the current
+`DNV-RP-F110 2019-09+AMD:2021-09` basis, use
+`DnvRpF110GlobalBucklingResponseScreeningKernel` with responses from a verified external global
+structural model and caller-controlled force, strain, displacement, and feed-in limits. The kernel
+does not calculate buckling initiation or prevention, pipe-soil response, imperfections, triggers,
+buckle sharing, or local capacity. All F109/F114/F105 interfaces and complete DNV-ST-F101 checks
+remain external. See the
+[DNV-RP-F110 global-buckling guide](mechanical_design/dnv_rp_f110_global_buckling).
 Do not infer inspected defect dimensions from the M-506 rate output. The RP-F101 screen does not
 handle interacting or complex defects, combined longitudinal compression, cracking, probabilistic
 assessment, repair, or fitness-for-service approval. It also does not replace DNV-ST-F101 pressure

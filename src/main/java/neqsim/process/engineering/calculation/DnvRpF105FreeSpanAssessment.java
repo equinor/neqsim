@@ -130,7 +130,7 @@ public final class DnvRpF105FreeSpanAssessment implements Serializable {
 
   /** @return immutable project-controlled detailed-response trigger identifiers */
   public List<String> getDetailedResponseTriggers() {
-    return detailedResponseTriggers;
+    return Collections.unmodifiableList(new ArrayList<String>(detailedResponseTriggers));
   }
 
   /** @return whether any caller-controlled response trigger was reached */
@@ -154,7 +154,7 @@ public final class DnvRpF105FreeSpanAssessment implements Serializable {
     result.put("waveFrequencyRatio", Double.valueOf(waveFrequencyRatio));
     result.put("waveReducedVelocity", Double.valueOf(waveReducedVelocity));
     result.put("keuleganCarpenterNumber", Double.valueOf(keuleganCarpenterNumber));
-    result.put("detailedResponseTriggers", detailedResponseTriggers);
+    result.put("detailedResponseTriggers", getDetailedResponseTriggers());
     result.put("detailedResponseAssessmentRequired", Boolean.valueOf(detailedResponseAssessmentRequired));
     result.put("engineeringApprovalRequired", Boolean.TRUE);
     return result;

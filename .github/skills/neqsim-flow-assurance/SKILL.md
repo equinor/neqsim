@@ -1,6 +1,6 @@
 ---
 name: neqsim-flow-assurance
-description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion (NORSOK M-506, de Waard-Milliams, FeCO3 film), mineral scale (saturation index, scale kinetics, brine mixing / seawater incompatibility), scale/solids valve plugging & Cv/opening drift (ValveScaleDrift), scale/deposit remediation & dissolver/solvent/wash selection for cleaning fouled equipment (ScaleRemediationAdvisor), elemental sulfur (S8) deposition from oxygen ingress / H2S oxidation at pressure or temperature letdown (compressor inlets, valves, dry-gas seals, letdown stations), per-segment pipeline corrosion+scale profiles, inspected metal-loss screening, pipeline hydraulics, DNV-RP-F109 on-bottom stability screening, DNV-RP-F105 free-span screening, water/liquid hammer screening, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
+description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion (NORSOK M-506, de Waard-Milliams, FeCO3 film), mineral scale (saturation index, scale kinetics, brine mixing / seawater incompatibility), scale/solids valve plugging & Cv/opening drift (ValveScaleDrift), scale/deposit remediation & dissolver/solvent/wash selection for cleaning fouled equipment (ScaleRemediationAdvisor), elemental sulfur (S8) deposition from oxygen ingress / H2S oxidation at pressure or temperature letdown (compressor inlets, valves, dry-gas seals, letdown stations), per-segment pipeline corrosion+scale profiles, inspected metal-loss screening, pipeline hydraulics, DNV-RP-F109 on-bottom stability screening, DNV-RP-F105 free-span screening, DNV-RP-F104 CO2-envelope screening, DNV-RP-F110 global-buckling response screening, DNV-RP-F114 pipe-soil screening, water/liquid hammer screening, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
 last_verified: "2026-08-02"
 ---
 
@@ -29,10 +29,11 @@ NeqSim code patterns.
 
 | Domain | Standards | Key Requirements |
 |--------|-----------|-----------------|
-| Pipeline design | DNV-ST-F101, NORSOK L-001, ASME B31.4/B31.8 | Wall thickness, design factors, corrosion allowance |
+| Pipeline design | DNV-ST-F101, DNV-RP-F104 for CO2, NORSOK L-001, ASME B31.4/B31.8 | Structural design plus composition-specific CO2 phase/hydraulic and lifecycle basis |
 | Corrosion | NORSOK M-001, DNV-RP-F112, ISO 21457 | Material selection, CO2/H2S corrosion rates |
 | On-bottom stability | DNV-RP-F109 | Vertical stability, absolute lateral stability, displacement acceptance |
 | Free spans | DNV-RP-F105 | Free-span response and fatigue assessment |
+| Global buckling and pipe-soil interaction | DNV-RP-F110, DNV-RP-F114 | Caller-controlled external response and demand-resistance screening |
 | Subsea systems | NORSOK U-001 | Subsea production-system requirements |
 | Hydrate management | DNV-RP-F116 | Hydrate prevention and remediation |
 | GRP piping | ISO 14692 | Non-metallic pipe design |
@@ -257,6 +258,45 @@ loss. The typed kernel does not handle defect interaction or complex profiles, l
 compression, probabilistic assessment, crack-like damage, repair, or fitness-for-service approval.
 It also does not replace DNV-ST-F101 original-design checks.
 
+### DNV-RP-F104 CO2 pipeline routing
+
+When an actual-composition phase-envelope and hydraulic/thermal study feeds a current
+`DNV-RP-F104 2021-02+AMD:2021-09` screen, route the bounded project composition, CO2/water limits,
+ordered profile, absolute MAOP, design temperatures, and a separately verified minimum single-phase
+pressure boundary at each point through `DnvRpF104Co2PipelineEnvelopeScreeningKernel`.
+
+The external thermodynamic basis must establish that pressure above each boundary represents the
+intended single-phase region for the specific composition, temperature, path, EOS, and uncertainty.
+Do not substitute pure-CO2 critical conditions or `CO2FlowCorrections.isDensePhase(...)`. Treat
+composition, phase-boundary, MAOP, and temperature margins as screening findings. Keep transient
+cases, F104 decompression/fracture and crack arrest, materials/corrosion, release consequences,
+construction, operation, requalification, and all DNV-ST-F101 structural checks external.
+
+### DNV-RP-F114 pipe-soil interaction routing
+
+When route, hydraulic/thermal, or installation work feeds a current `DNV-RP-F114 2021-05` screen,
+route named design situations with externally verified vertical, axial, and lateral action and
+resistance magnitudes through `DnvRpF114PipeSoilInteractionScreeningKernel`. Treat margin and
+utilization outputs as caller-controlled screening findings.
+
+Do not convert burial depth, soil thermal resistance, or a generic friction factor into
+geotechnical resistance. Keep site investigation, soil interpretation, penetration/burial and
+load-displacement response, time/cyclic effects, characteristic values, uncertainty, structural
+actions, and F109/F110/F105/ST-F101 acceptance external.
+
+### DNV-RP-F110 global-buckling response routing
+
+When hydraulic/thermal, route, or installation work feeds a current
+`DNV-RP-F110 2019-09+AMD:2021-09` screen, route named external structural-analysis cases through
+`DnvRpF110GlobalBucklingResponseScreeningKernel`. Supply effective force, peak longitudinal strain,
+peak global displacement, and required feed-in length with caller-controlled allowable or available
+values. Treat margins and utilizations as screening findings.
+
+Require external evidence for the effective-force derivation, pipe/as-laid geometry, pipe-soil
+response, imperfections/triggers/strategy, global structural model, load combinations, local
+capacity and strain criteria, uncertainty/sensitivity/buckle sharing, and lifecycle actions. Never
+derive critical buckling, initiation/prevention criteria, structural response, or soil springs from
+NeqSim hydraulic or thermal output. Keep F109/F114/F105 and all ST-F101 acceptance external.
 ### Beggs and Brill Multiphase Correlation
 
 ```java
