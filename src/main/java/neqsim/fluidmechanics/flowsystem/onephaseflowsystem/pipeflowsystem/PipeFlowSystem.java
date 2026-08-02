@@ -58,8 +58,8 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
    * Enable conservative n-1 species transport for transient solver type 1.
    *
    * <p>
-   * The path is currently isothermal and requires strictly positive flow. Unsupported zero or reversed flow is reported
-   * explicitly; use {@link #setFailOnNonConvergence(boolean)} for strict exception behavior.
+   * The path is currently isothermal and requires strictly positive flow. Unsupported flow and any failed
+   * hydraulic/species criterion throw so that a failed conservative state cannot advance to the next timestep.
    * </p>
    *
    * @param enabled true to couple conservative component inventories to hydraulics and EOS

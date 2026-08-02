@@ -1170,6 +1170,9 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     while (couplingIteration < MAXIMUM_SPECIES_COUPLING_ITERATIONS
         && (maximumCompositionChange > SPECIES_COUPLING_TOLERANCE || densityResidual > DENSITY_RELATIVE_TOLERANCE)) {
       solveCoupledHydraulicEos(initialFiniteVolumeMass);
+      if (!lastConvergenceReport.isConverged()) {
+        throw new IllegalStateException(lastConvergenceReport.getMessage());
+      }
       OnePhaseSpeciesConservationReport candidate = solveConservativeSpeciesStep();
       if (!candidate.isConverged()) {
         lastSpeciesConservationReport = candidate;
@@ -1213,7 +1216,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       handleSpeciesFailure(lastSpeciesConservationReport);
     }
     if (!lastConvergenceReport.isConverged()) {
-      handleHydraulicFailure(lastConvergenceReport);
+      throw new IllegalStateException(lastConvergenceReport.getMessage());
     }
   }
 
@@ -1329,10 +1332,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   }
 
   private void handleSpeciesFailure(OnePhaseSpeciesConservationReport report) {
-    if (failOnNonConvergence) {
-      throw new IllegalStateException(report.getMessage());
-    }
-    logger.warn("{}", report.getMessage());
+    throw new IllegalStateException(report.getMessage());
   }
 
   private void handleHydraulicFailure(OnePhaseFlowConvergenceReport report) {

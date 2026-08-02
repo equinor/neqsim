@@ -3,6 +3,7 @@ package neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseSpeciesConservationReport;
@@ -66,6 +67,19 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     assertTrue(thirtySecondFront > fifteenSecondFront,
         "A longer first-order implicit step must advance more inlet tracer mass.");
     assertTrue(fifteenSecond.getSpeciesConservationReport().isConverged());
+  }
+
+  @Test
+  void optInSpeciesTransportFailsLoudlyForReversedFlowWithoutLegacyStrictFlag() {
+    PipeFlowSystem pipe = createInitializedPipe(3);
+    pipe.setConservativeSpeciesTransport(true);
+    pipe.getTimeSeries().setTimes(new double[] { 0.0, 30.0 });
+    pipe.getTimeSeries().setInletThermoSystems(new SystemInterface[] { createGas(0.80, 0.20) });
+    pipe.getTimeSeries().setNumberOfTimeStepsInInterval(1);
+    pipe.getNode(2).setVelocityIn(-Math.abs(pipe.getNode(2).getVelocityIn().doubleValue()));
+
+    IllegalStateException exception = assertThrows(IllegalStateException.class, () -> pipe.solveTransient(1));
+    assertTrue(exception.getMessage().contains("supports positive flow only"));
   }
 
   static PipeFlowSystem runCompositionStep(int nodes, double timeStep) {

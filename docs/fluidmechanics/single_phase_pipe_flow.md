@@ -298,10 +298,12 @@ defensive copies and `toJson()` is suitable for Python-side result capture.
 
 This path has currently been regression-tested for a single isothermal composition-change step
 with positive flow. Zero or reversed face flow fails explicitly because an external upwind
-composition is not yet defined. Thirty-minute pulse breakthrough/recovery, repeated-event
-propagation, analytical front speed and residence time, grid/time convergence, thermal coupling,
-and phase appearance remain validation gates. The spreading of the present first-order upwind
-scheme is numerical; there is no physical axial-dispersion model.
+composition is not yet defined. Once enabled, every failed hydraulic/species criterion throws so
+that a failed conservative state cannot advance to another timestep. Thirty-minute pulse
+breakthrough/recovery, repeated-event propagation, analytical front speed and residence time,
+grid/time convergence, thermal coupling, and phase appearance remain validation gates. The
+spreading of the present first-order upwind scheme is numerical; there is no physical
+axial-dispersion model.
 
 ## Compositional Tracking
 
