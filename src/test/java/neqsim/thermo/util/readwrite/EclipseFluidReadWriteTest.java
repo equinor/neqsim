@@ -373,9 +373,8 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     double ent = separator.getOilOutStream().getFluid().getEnthalpy();
     separator.getOilOutStream().run();
     // separator.getOilOutStream().getFluid().prettyPrint();
-    // Updated expected value: OMEGAA from file (0.45724) now applied instead of
-    // default
-    // (0.45724333333)
+    // The explicit aqueous entrainment now remains as a stable oil/aqueous split
+    // instead of collapsing to a higher-Gibbs oil-only endpoint.
     Assertions.assertEquals(-4636.211412902174, ent, 1e-3);
 
     // Aqueous entrainment leaves a stable oil/aqueous split in the oil outlet.
