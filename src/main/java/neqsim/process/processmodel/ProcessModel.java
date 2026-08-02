@@ -289,6 +289,40 @@ public class ProcessModel implements Runnable, Serializable {
   private double temperatureTolerance = 1e-4;
   private double pressureTolerance = 1e-4;
 
+  /**
+   * Relative tolerance the auto-tuner applies when no tolerance was set explicitly. 1e-3 (0.1 %) is an
+   * engineering-grade accuracy for process calculations: it is well below plant instrument and EOS uncertainty, yet
+   * loose enough that recycle-rich plants converge in a fraction of the passes a 1e-4 gate needs.
+   */
+  public static final double DEFAULT_ENGINEERING_TOLERANCE = 1.0e-3;
+
+  /**
+   * Loosest relative tolerance the auto-tuner will ever accept (1 %). A residual that stalls above this is a real
+   * convergence failure, not a tight gate, and is never accepted.
+   */
+  public static final double DEFAULT_AUTO_TOLERANCE_CEILING = 1.0e-2;
+
+  /** Outer iterations the residual must stop improving over before the auto-tuner accepts it. */
+  public static final int AUTO_TOLERANCE_STALL_WINDOW = 5;
+
+  /** Relative improvement across the stall window that still counts as progress. */
+  private static final double AUTO_TOLERANCE_STALL_IMPROVEMENT = 0.10;
+
+  /** True once a tolerance was set explicitly, so the auto-tuner must not touch it. */
+  private boolean toleranceExplicit = false;
+
+  /** Whether the model may pick (and, on a stall, relax) its own convergence tolerance. */
+  private boolean autoTolerance = true;
+
+  /** Loosest relative tolerance the auto-tuner may relax to on a stalled residual. */
+  private double autoToleranceCeiling = DEFAULT_AUTO_TOLERANCE_CEILING;
+
+  /** Human-readable description of the tolerance the auto-tuner chose on the last run. */
+  private String autoToleranceSummary = "";
+
+  /** Worst relative error per outer iteration, used to detect a stalled residual. */
+  private transient java.util.List<Double> autoToleranceErrorHistory = new java.util.ArrayList<>();
+
   /** Default boundary-stream flow floor in kg/hr (streams below this are ignored entirely). */
   public static final double DEFAULT_BOUNDARY_FLOW_FLOOR = 1e-9;
 
@@ -774,6 +808,7 @@ public class ProcessModel implements Runnable, Serializable {
    */
   public void setFlowTolerance(double flowTolerance) {
     this.flowTolerance = flowTolerance;
+    this.toleranceExplicit = true;
   }
 
   /**
@@ -792,6 +827,7 @@ public class ProcessModel implements Runnable, Serializable {
    */
   public void setTemperatureTolerance(double temperatureTolerance) {
     this.temperatureTolerance = temperatureTolerance;
+    this.toleranceExplicit = true;
   }
 
   /**
@@ -810,10 +846,16 @@ public class ProcessModel implements Runnable, Serializable {
    */
   public void setPressureTolerance(double pressureTolerance) {
     this.pressureTolerance = pressureTolerance;
+    this.toleranceExplicit = true;
   }
 
   /**
    * Set all tolerances at once.
+   *
+   * <p>
+   * Calling this switches the automatic tolerance selection off for this model: the value given here is used exactly as
+   * specified.
+   * </p>
    *
    * @param tolerance relative tolerance for all variables (flow, temperature, pressure)
    */
@@ -821,6 +863,73 @@ public class ProcessModel implements Runnable, Serializable {
     this.flowTolerance = tolerance;
     this.temperatureTolerance = tolerance;
     this.pressureTolerance = tolerance;
+    this.toleranceExplicit = true;
+  }
+
+  /**
+   * Whether a convergence tolerance has been set explicitly on this model.
+   *
+   * @return true when {@link #setTolerance(double)} or one of the per-variable setters was called
+   */
+  public boolean isToleranceExplicit() {
+    return toleranceExplicit;
+  }
+
+  /**
+   * Whether the model picks its own convergence tolerance when none was given.
+   *
+   * @return true when automatic tolerance selection is enabled (default)
+   */
+  public boolean isAutoTolerance() {
+    return autoTolerance;
+  }
+
+  /**
+   * Enables or disables automatic tolerance selection.
+   *
+   * <p>
+   * When enabled (default) and no tolerance was set explicitly, {@code run()} starts from
+   * {@value #DEFAULT_ENGINEERING_TOLERANCE} instead of the historical 1e-4, and accepts a residual that has stopped
+   * improving as long as it is below {@link #getAutoToleranceCeiling()}. An explicit {@link #setTolerance(double)}
+   * always wins.
+   * </p>
+   *
+   * @param autoTolerance true to let the model choose its own accuracy
+   */
+  public void setAutoTolerance(boolean autoTolerance) {
+    this.autoTolerance = autoTolerance;
+  }
+
+  /**
+   * Loosest relative tolerance the auto-tuner may relax to when the residual stalls.
+   *
+   * @return the ceiling (default {@value #DEFAULT_AUTO_TOLERANCE_CEILING})
+   */
+  public double getAutoToleranceCeiling() {
+    return autoToleranceCeiling;
+  }
+
+  /**
+   * Sets the loosest relative tolerance the auto-tuner may relax to on a stalled residual.
+   *
+   * @param autoToleranceCeiling relative tolerance; must be finite and greater than zero
+   * @throws IllegalArgumentException if the value is not a finite positive number
+   */
+  public void setAutoToleranceCeiling(double autoToleranceCeiling) {
+    if (Double.isNaN(autoToleranceCeiling) || Double.isInfinite(autoToleranceCeiling) || autoToleranceCeiling <= 0.0) {
+      throw new IllegalArgumentException(
+          "autoToleranceCeiling must be a finite positive number, was " + autoToleranceCeiling);
+    }
+    this.autoToleranceCeiling = autoToleranceCeiling;
+  }
+
+  /**
+   * Description of the accuracy the auto-tuner selected on the last run.
+   *
+   * @return a one-line summary, or an empty string when no tolerance was auto-selected
+   */
+  public String getAutoToleranceSummary() {
+    return autoToleranceSummary;
   }
 
   /**
@@ -1621,6 +1730,7 @@ public class ProcessModel implements Runnable, Serializable {
       Map<Object, double[]> previousBoundaryStreamStates = captureBoundaryStreamStates(boundaryStreams);
       java.util.Set<ProcessSystem> dirtyAreas = null;
       resetAutoTuningRunState();
+      applyAutoDefaultTolerance();
 
       int iterations = 0;
       while (!Thread.currentThread().isInterrupted() && iterations < maxIterations) {
@@ -1645,6 +1755,10 @@ public class ProcessModel implements Runnable, Serializable {
         boolean allProcessesSolved = isFinished();
         boolean valuesConverged = lastMaxFlowError < flowTolerance && lastMaxTemperatureError < temperatureTolerance
             && lastMaxPressureError < pressureTolerance;
+        if (!valuesConverged && relaxToleranceIfStalled()) {
+          valuesConverged = lastMaxFlowError < flowTolerance && lastMaxTemperatureError < temperatureTolerance
+              && lastMaxPressureError < pressureTolerance;
+        }
         lastAllProcessesSolved = allProcessesSolved;
         lastBoundaryValuesConverged = valuesConverged;
 
@@ -2805,6 +2919,9 @@ public class ProcessModel implements Runnable, Serializable {
     if (!autoTuningSummary.isEmpty()) {
       sb.append("  Auto-tuning:  ").append(autoTuningSummary).append("\n");
     }
+    if (!autoToleranceSummary.isEmpty()) {
+      sb.append("  Auto-accuracy: ").append(autoToleranceSummary).append("\n");
+    }
 
     List<BoundaryStreamError> offenders = getNonConvergedBoundaryStreamErrors();
     if (!offenders.isEmpty()) {
@@ -3142,6 +3259,11 @@ public class ProcessModel implements Runnable, Serializable {
     autoTuningAppliedScale = 0.0;
     detectedPlantFlowScale = 0.0;
     autoTuningSummary = "";
+    autoToleranceSummary = "";
+    if (autoToleranceErrorHistory == null) {
+      autoToleranceErrorHistory = new java.util.ArrayList<>();
+    }
+    autoToleranceErrorHistory.clear();
     if (!boundaryFlowFloorExplicit) {
       boundaryFlowFloor = DEFAULT_BOUNDARY_FLOW_FLOOR;
     }
@@ -3153,6 +3275,79 @@ public class ProcessModel implements Runnable, Serializable {
       process.resetAutoRecycleFlowTolerance();
       process.resetAutoRecycleAdaptiveAcceleration();
     }
+  }
+
+  /**
+   * Applies the engineering-grade default accuracy when the caller did not ask for one.
+   *
+   * <p>
+   * The historical default (1e-4 relative on flow, temperature and pressure) is tighter than any process-engineering
+   * result needs, and it is what makes recycle-rich plants grind through many extra outer passes. When no tolerance was
+   * set explicitly, a plain {@code run()} therefore starts from {@value #DEFAULT_ENGINEERING_TOLERANCE}.
+   * </p>
+   */
+  private void applyAutoDefaultTolerance() {
+    if (!autoConvergenceTuning || !autoTolerance || toleranceExplicit) {
+      return;
+    }
+    flowTolerance = DEFAULT_ENGINEERING_TOLERANCE;
+    temperatureTolerance = DEFAULT_ENGINEERING_TOLERANCE;
+    pressureTolerance = DEFAULT_ENGINEERING_TOLERANCE;
+    autoToleranceSummary = String.format(Locale.US,
+        "no tolerance given - using the engineering default %.1e relative " + "on flow, temperature and pressure",
+        DEFAULT_ENGINEERING_TOLERANCE);
+  }
+
+  /**
+   * Accepts a residual that has stopped improving but is already accurate enough for process work.
+   *
+   * <p>
+   * A recycle-rich plant can approach its solution asymptotically: the last decade of the residual costs more outer
+   * passes than the whole approach did, and buys an accuracy far below the uncertainty of the fluid model itself. When
+   * the worst relative error has not improved materially over {@value #AUTO_TOLERANCE_STALL_WINDOW} outer passes and is
+   * still below {@link #getAutoToleranceCeiling()}, the tolerance is widened to just above that residual and the
+   * accepted accuracy is reported through {@link #getAutoToleranceSummary()}. An explicit tolerance, a residual above
+   * the ceiling, or a still-improving residual all suppress this.
+   * </p>
+   *
+   * @return true when the tolerance was widened and convergence must be re-evaluated
+   */
+  private boolean relaxToleranceIfStalled() {
+    if (!autoConvergenceTuning || !autoTolerance || toleranceExplicit) {
+      return false;
+    }
+    double worstError = Math.max(lastMaxFlowError, Math.max(lastMaxTemperatureError, lastMaxPressureError));
+    if (Double.isNaN(worstError) || Double.isInfinite(worstError) || !(worstError > 0.0)) {
+      return false;
+    }
+    if (autoToleranceErrorHistory == null) {
+      autoToleranceErrorHistory = new java.util.ArrayList<>();
+    }
+    autoToleranceErrorHistory.add(Double.valueOf(worstError));
+    if (autoToleranceErrorHistory.size() <= AUTO_TOLERANCE_STALL_WINDOW) {
+      return false;
+    }
+    double reference = autoToleranceErrorHistory.get(autoToleranceErrorHistory.size() - 1 - AUTO_TOLERANCE_STALL_WINDOW)
+        .doubleValue();
+    if (reference > 0.0 && (reference - worstError) / reference >= AUTO_TOLERANCE_STALL_IMPROVEMENT) {
+      return false; // still making real progress - keep iterating
+    }
+    if (worstError > autoToleranceCeiling) {
+      return false; // genuinely not converged, not merely a too-tight gate
+    }
+    double accepted = Math.min(autoToleranceCeiling, worstError * 1.05);
+    if (accepted <= flowTolerance) {
+      return false;
+    }
+    flowTolerance = accepted;
+    temperatureTolerance = accepted;
+    pressureTolerance = accepted;
+    autoToleranceSummary = String.format(Locale.US,
+        "residual stalled at %.2e after %d passes - accepted %.2e relative "
+            + "(engineering accuracy, ceiling %.1e); set a tolerance explicitly to override",
+        worstError, autoToleranceErrorHistory.size(), accepted, autoToleranceCeiling);
+    logger.debug("ProcessModel auto-tolerance: {}", autoToleranceSummary);
+    return true;
   }
 
   /**
@@ -3312,6 +3507,14 @@ public class ProcessModel implements Runnable, Serializable {
     autoTuning.addProperty("absoluteFlowToleranceKgPerHr", absoluteFlowTolerance);
     autoTuning.addProperty("summary", autoTuningSummary);
     root.add("autoTuning", autoTuning);
+
+    JsonObject autoToleranceInfo = new JsonObject();
+    autoToleranceInfo.addProperty("enabled", autoTolerance);
+    autoToleranceInfo.addProperty("toleranceExplicit", toleranceExplicit);
+    autoToleranceInfo.addProperty("appliedTolerance", flowTolerance);
+    autoToleranceInfo.addProperty("ceiling", autoToleranceCeiling);
+    autoToleranceInfo.addProperty("summary", autoToleranceSummary);
+    root.add("autoTolerance", autoToleranceInfo);
 
     JsonArray boundaryStreamErrors = new JsonArray();
     for (BoundaryStreamError streamError : getNonConvergedBoundaryStreamErrors()) {
