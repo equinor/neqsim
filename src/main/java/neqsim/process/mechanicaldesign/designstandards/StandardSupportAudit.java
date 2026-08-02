@@ -72,6 +72,15 @@ public final class StandardSupportAudit {
           registryImplementation, orificeImplementation.getImplementationClassName(),
           "Standard-orifice area selection only; valve pressure class, dimensions, materials, installation, and vendor "
               + "certification are not evaluated.");
+    case API_2000:
+      EquipmentDesignKernelRegistry.Lookup tankVentingImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING,
+          tankVentingImplementation.isImplemented(), registryImplementation,
+          tankVentingImplementation.getImplementationClassName(),
+          "Caller-controlled normal movement/thermal demand aggregation, total emergency demand, rated-capacity "
+              + "utilization, and tank pressure/vacuum limit screening only; API demand tables/equations, device "
+              + "sizing, scenario derivation, roofs/refrigerated storage, installation, testing, and conformity "
+              + "remain external.");
     case API_12J:
       EquipmentDesignKernelRegistry.Lookup separatorImplementation = StandardRegistry.getDesignKernel(standardType);
       return new StandardSupport(standardType, StandardSupportLevel.SCREENING, separatorImplementation.isImplemented(),

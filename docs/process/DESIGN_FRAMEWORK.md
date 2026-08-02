@@ -49,8 +49,9 @@ evaluation, API 526 standard-orifice selection, API 12J separator-performance ch
 M-506 CO2-corrosion screening, ISO 5167-2 concentric orifice-plate metering, DNV-RP-C203
 S-N/Palmgren-Miner fatigue screening with caller-controlled curve data, DNV-RP-F105 simply
 supported first-mode/dimensionless free-span screening with caller-controlled response triggers,
-and DNV-RP-F101 isolated metal-loss/internal-pressure screening with caller-controlled defect
-allowance and pressure factor.
+DNV-RP-F101 isolated metal-loss/internal-pressure screening with caller-controlled defect
+allowance and pressure factor, and API 2000 fixed-roof tank vent-demand/rated-capacity screening
+with caller-controlled demand and device evidence.
 Unsupported editions, inapplicable equipment types, and incomplete inputs return blocked results.
 All remain preliminary engineering screens and do not claim certification or construction
 readiness.
@@ -66,6 +67,9 @@ behavior without treating project trigger values as DNV acceptance criteria.
 The F101 case pins isolated-defect failure pressure, caller-controlled pressure limit, utilization,
 and within-limit status without treating project factors as DNV acceptance criteria or replacing
 DNV-ST-F101 design checks.
+The API 2000 case pins normal movement/thermal aggregation, total emergency utilization, and tank
+pressure/vacuum constraint status without treating caller inputs as API demand tables or device
+certification.
 Inspect
 `report.areAllBenchmarksPassed()` for regression health and `report.getFailedBenchmarkIds()` for
 diagnosis. The records are deliberately classified as `REGRESSION_BASELINE`; therefore

@@ -53,7 +53,7 @@ the source catalog diverge.
 | API-520-Part-1 | 10th Ed | CURRENT | [publisher](https://www.api.org/products-and-services/standards/digital-catalog) (checked 2026-07-21) | relief valve design codes | DesignStandard | StandardRequirementPackRegistry (2 capabilities) | SCREENING | no | Mapped calculations and review workflows are discoverable as a versioned requirement pack; this is not a complete conformity assessment and is intentionally separate from the legacy factory. |
 | API-520-Part-2 | 7th Ed | CURRENT | [publisher](https://www.api.org/products-and-services/standards/digital-catalog) (checked 2026-07-21) | relief valve design codes | DesignStandard | None | CATALOGUED | no | No category-specific calculation is connected. |
 | API-527 | 5th Ed | CURRENT | [publisher](https://www.api.org/products-and-services/standards/digital-catalog) (checked 2026-07-21) | relief valve design codes | DesignStandard | None | CATALOGUED | no | No category-specific calculation is connected. |
-| API-2000 | 8th Ed | CURRENT | [publisher](https://www.api.org/products-and-services/standards/digital-catalog) (checked 2026-07-21) | tank venting design codes | DesignStandard | None | CATALOGUED | no | No category-specific calculation is connected. |
+| API-2000 | 7th Ed | CURRENT | [publisher](https://www.api.org/-/media/files/publications/2025-catalog/06_refining_2025.pdf) (checked 2026-08-02) | tank venting design codes | DesignStandard | Api2000TankVentingScreeningKernel | SCREENING | yes | Caller-controlled normal movement/thermal demand aggregation, total emergency demand, rated-capacity utilization, and tank pressure/vacuum limit screening only; API demand tables/equations, device sizing, scenario derivation, roofs/refrigerated storage, installation, testing, and conformity remain external. |
 | API-614 | 6th Ed | CURRENT | [publisher](https://www.api.org/products-and-services/standards/digital-catalog) (checked 2026-07-21) | rotating equipment design codes | DesignStandard | None | CATALOGUED | no | No category-specific calculation is connected. |
 | API-618 | 6th Ed | CURRENT | [publisher](https://www.api.org/products-and-services/standards/digital-catalog) (checked 2026-07-21) | compressor design codes | CompressorDesignStandard | CompressorDesignStandard | SCREENING | no | Preliminary compressor-factor screening only; package and vendor requirements are not implemented. |
 | API-625 | 3rd Ed | CURRENT | [publisher](https://www.api.org/products-and-services/standards/digital-catalog) (checked 2026-07-21) | pressure vessel design code | PressureVesselDesignStandard | None | CATALOGUED | no | The registry maps this tank standard to a separator-oriented pressure-vessel class; no edition-specific common calculation is implemented. |
@@ -131,15 +131,15 @@ implemented standard, audited maturity, and structured applicability. Kernels mu
 input or a `ProcessSystem`. Compatibility adapters defensively copy legacy mutable calculators.
 
 `StandardRegistry.getDesignKernel(...)` returns an explicit lookup status. API 617, API 610, API
-521, API 526, API 12J, NORSOK M-506, ISO 5167-2, DNV-RP-C203, DNV-RP-F105, and
-DNV-RP-F101 have connected adapters and return
+521, API 526, API 12J, API 2000, NORSOK M-506, ISO 5167-2, DNV-RP-C203,
+DNV-RP-F105, and DNV-RP-F101 have connected adapters and return
 `IMPLEMENTED`; standards that have not been adapted return `NOT_IMPLEMENTED`, never an empty or
 implied success. Each kernel returns an
 immutable assessment snapshot and always requires engineering review because its maturity remains
 `SCREENING`. Unsupported editions fail closed as `EDITION_NOT_IMPLEMENTED` until separately
 implemented and validated.
 
-API 521, NORSOK M-506, ISO 5167-2, DNV-RP-C203, DNV-RP-F105, and DNV-RP-F101
+API 521, API 2000, NORSOK M-506, ISO 5167-2, DNV-RP-C203, DNV-RP-F105, and DNV-RP-F101
 currently have both a publisher-verified current
 lifecycle and a matching exact kernel.
 API 526, API 617, API 610, and API 12J adapters implement legacy edition labels that do not match
@@ -152,6 +152,12 @@ pressure checks. The API 526 adapter accepts an explicitly unit-tagged required 
 inadequate result when a single standard orifice cannot cover it. These adapters do not establish
 scenario completeness or qualify valve construction, installation, reaction loads, flare-network
 effects, or vendor certification.
+
+The API 2000 adapter aggregates caller-controlled normal movement, thermal, and other demands,
+compares them and an externally established total emergency demand with rated capacities, and
+screens corresponding rated pressures/vacuum against tank limits. It does not embed licensed API
+demand equations or tables, size a vent, derive scenarios, or qualify installation. See the
+[API 2000 tank-venting guide](mechanical_design/api_2000_tank_venting.md).
 
 The API 617 adapter defensively copies a compressor-casing configuration before evaluating pressure
 containment, hydrotest, flange-rating, nozzle-load allowance, and thermal-growth screens. The API

@@ -14,6 +14,7 @@ public final class StandardCatalog {
   private static final String DNV_C203_VERIFIED_ON = "2026-08-02";
   private static final String DNV_F105_VERIFIED_ON = "2026-08-02";
   private static final String DNV_RP_F101_VERIFIED_ON = "2026-08-02";
+  private static final String API_2000_VERIFIED_ON = "2026-08-02";
   private static final String NORSOK_P = "https://standard.no/en/sectors/petroleum/norsok-standards/p-process";
   private static final String NORSOK_L = "https://standard.no/en/sectors/energi-og-klima/petroleum/norsok-standard-categories/l-piping--layout/";
   private static final String NORSOK_M = "https://standard.no/en/sectors/energi-og-klima/petroleum/norsok-standard-categories/m-material/";
@@ -62,10 +63,12 @@ public final class StandardCatalog {
 
     current(entries, API_CATALOG, StandardType.API_617, StandardType.API_610, StandardType.API_650,
         StandardType.API_620, StandardType.API_660, StandardType.API_661, StandardType.API_521,
-        StandardType.API_520_PART_1, StandardType.API_520_PART_2, StandardType.API_527, StandardType.API_2000,
-        StandardType.API_614, StandardType.API_618, StandardType.API_625, StandardType.API_676, StandardType.API_685,
-        StandardType.API_5L, StandardType.API_12J);
+        StandardType.API_520_PART_1, StandardType.API_520_PART_2, StandardType.API_527, StandardType.API_614,
+        StandardType.API_618, StandardType.API_625, StandardType.API_676, StandardType.API_685, StandardType.API_5L,
+        StandardType.API_12J);
     current(entries, API_REFINING_2025, StandardType.API_526);
+    entries.put(StandardType.API_2000, new StandardCatalogEntry(StandardType.API_2000, StandardLifecycleStatus.CURRENT,
+        null, API_REFINING_2025, API_2000_VERIFIED_ON));
 
     entries.put(StandardType.DNV_RP_C203, new StandardCatalogEntry(StandardType.DNV_RP_C203,
         StandardLifecycleStatus.CURRENT, null, DNV_C203, DNV_C203_VERIFIED_ON));

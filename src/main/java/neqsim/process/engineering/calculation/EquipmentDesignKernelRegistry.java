@@ -95,6 +95,7 @@ public final class EquipmentDesignKernelRegistry {
     register(kernels, new DnvRpC203FatigueDesignKernel());
     register(kernels, new DnvRpF105FreeSpanScreeningKernel());
     register(kernels, new DnvRpF101CorrodedPipelineScreeningKernel());
+    register(kernels, new Api2000TankVentingScreeningKernel());
     KERNELS = Collections.unmodifiableMap(kernels);
   }
 

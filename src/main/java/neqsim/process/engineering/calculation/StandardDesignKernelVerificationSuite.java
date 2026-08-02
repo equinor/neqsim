@@ -52,13 +52,15 @@ public final class StandardDesignKernelVerificationSuite {
     DnvRpC203FatigueDesignKernel fatigueKernel = new DnvRpC203FatigueDesignKernel();
     DnvRpF105FreeSpanScreeningKernel freeSpanKernel = new DnvRpF105FreeSpanScreeningKernel();
     DnvRpF101CorrodedPipelineScreeningKernel metalLossKernel = new DnvRpF101CorrodedPipelineScreeningKernel();
+    Api2000TankVentingScreeningKernel tankVentingKernel = new Api2000TankVentingScreeningKernel();
 
     EngineeringBenchmarkSuite suite = new EngineeringBenchmarkSuite(SUITE_ID, REVISION)
         .requireMethod(methodKey(pumpKernel)).requireMethod(methodKey(reliefKernel))
         .requireMethod(methodKey(orificeKernel)).requireMethod(methodKey(compressorKernel))
         .requireMethod(methodKey(separatorKernel)).requireMethod(methodKey(corrosionKernel))
         .requireMethod(methodKey(meteringKernel)).requireMethod(methodKey(fatigueKernel))
-        .requireMethod(methodKey(freeSpanKernel)).requireMethod(methodKey(metalLossKernel));
+        .requireMethod(methodKey(freeSpanKernel)).requireMethod(methodKey(metalLossKernel))
+        .requireMethod(methodKey(tankVentingKernel));
     suite.add(pumpBenchmark(pumpKernel));
     suite.add(reliefBenchmark(reliefKernel));
     suite.add(orificeBenchmark(orificeKernel));
@@ -69,6 +71,7 @@ public final class StandardDesignKernelVerificationSuite {
     suite.add(fatigueBenchmark(fatigueKernel));
     suite.add(freeSpanBenchmark(freeSpanKernel));
     suite.add(metalLossBenchmark(metalLossKernel));
+    suite.add(tankVentingBenchmark(tankVentingKernel));
     return suite.evaluate();
   }
 
@@ -269,6 +272,37 @@ public final class StandardDesignKernelVerificationSuite {
             value == null ? FAILURE_SENTINEL : value.getPressureUtilization(), "fraction", 1.0e-15, 1.0e-12)
         .check("withinCallerControlledLimit", 1.0,
             value != null && value.isWithinCallerControlledPressureLimit() ? 1.0 : 0.0, "flag", 0.0, 0.0)
+        .build();
+  }
+
+  private static EngineeringValidationBenchmark tankVentingBenchmark(Api2000TankVentingScreeningKernel kernel) {
+    Api2000TankVentingScreeningKernel.Input input = Api2000TankVentingScreeningKernel.Input
+        .builder(StandardEdition.defaultEdition(StandardType.API_2000), "Tank").liquidFillingRateM3PerS(0.1)
+        .fillingOutbreathingVolumeRatio(1.05).liquidWithdrawalRateM3PerS(0.08).withdrawalInbreathingVolumeRatio(1.0)
+        .thermalOutbreathingRateM3PerS(0.02).thermalInbreathingRateM3PerS(0.03).otherNormalOutbreathingRateM3PerS(0.005)
+        .otherNormalInbreathingRateM3PerS(0.005).totalEmergencyOutbreathingRateM3PerS(0.5)
+        .normalOutbreathingRatedCapacityM3PerS(0.2).normalInbreathingRatedCapacityM3PerS(0.15)
+        .emergencyOutbreathingRatedCapacityM3PerS(0.6).tankMaximumPositiveGaugePressurePa(5000.0)
+        .tankMaximumVacuumPressurePa(2000.0).normalOutbreathingRatedGaugePressurePa(3000.0)
+        .normalInbreathingRatedVacuumPressurePa(1500.0).emergencyOutbreathingRatedGaugePressurePa(4500.0)
+        .flowReferenceTemperatureK(288.15).flowReferencePressurePaAbsolute(101325.0)
+        .fixedRoofNonRefrigeratedApplicabilityVerified(true).ventDemandBasisVerified(true)
+        .ratedCapacityBasisVerified(true).pressureVacuumBasisVerified(true).normalCombinationBasisVerified(true)
+        .emergencyCombinationBasisVerified(true).build();
+    EngineeringCalculationResult<Api2000TankVentingAssessment> result = kernel.calculate(input, null);
+    Api2000TankVentingAssessment value = result.getValue();
+    return baseline("api-2000-tank-vent-demand-capacity-regression", kernel)
+        .check("calculatedReviewRequired", 1.0, calculated(result), "flag", 0.0, 0.0)
+        .check("normalOutbreathingDemand", 0.13,
+            value == null ? FAILURE_SENTINEL : value.getRequiredNormalOutbreathingRateM3PerS(), "m3/s", 1.0e-15,
+            1.0e-12)
+        .check("normalInbreathingDemand", 0.115,
+            value == null ? FAILURE_SENTINEL : value.getRequiredNormalInbreathingRateM3PerS(), "m3/s", 1.0e-15, 1.0e-12)
+        .check("emergencyUtilization", 0.8333333333333334,
+            value == null ? FAILURE_SENTINEL : value.getEmergencyOutbreathingUtilization(), "fraction", 1.0e-15,
+            1.0e-12)
+        .check("allCallerControlledConstraintsSatisfied", 1.0,
+            value != null && value.allConstraintsSatisfied() ? 1.0 : 0.0, "flag", 0.0, 0.0)
         .build();
   }
 
