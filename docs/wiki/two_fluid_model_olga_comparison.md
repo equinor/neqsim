@@ -433,6 +433,7 @@ not a claim of equivalence to a commercial simulator.
 
 ```java
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
+import neqsim.process.equipment.pipeline.twophasepipe.SevereSluggingSystemDiagnostic;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
 
