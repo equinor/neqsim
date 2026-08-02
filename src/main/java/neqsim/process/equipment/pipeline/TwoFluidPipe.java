@@ -4984,8 +4984,8 @@ public class TwoFluidPipe extends Pipeline {
         .separatorPressurePa(sections[sections.length - 1].getPressure())
         .staticChokePressureDropPa(staticChokePressureDropPa).liquidDensityKgPerM3(liquidDensity)
         .riserLiquidHoldup(riserLiquidHoldup).gasCapVoidFraction(gasCapVoidFraction)
-        .validFlowlineRiserTopology(topologyValid).flowlineStratified(flowlineStratified).threePhase(threePhase)
-        .build();
+        .validFlowlineRiserTopology(topologyValid).flowlineStratified(flowlineStratified)
+        .flowlineContainsGasAndLiquid(flowlineContainsGasAndLiquid).threePhase(threePhase).build();
     SevereSluggingSystemDiagnostic.Result result = SevereSluggingSystemDiagnostic.evaluate(input);
 
     for (TwoFluidSection section : sections) {
