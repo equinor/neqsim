@@ -201,23 +201,30 @@ class CoolerTest {
   }
 
   private static void assertMinimumEntropyInitialization(InitTrackingSystemSrkEos fluid, Cooler cooler) {
-    double expectedEntropy = referenceEntropyProduction(cooler, "J/K");
     double inletEnthalpy = cooler.getInletStream().getFluid().getEnthalpy();
     double outletEnthalpy = cooler.getOutletStream().getFluid().getEnthalpy();
+    double inletFlow = cooler.getInletStream().getFlowRate("kg/hr");
+    double outletFlow = cooler.getOutletStream().getFlowRate("kg/hr");
     int inletPhases = cooler.getInletStream().getFluid().getNumberOfPhases();
     int outletPhases = cooler.getOutletStream().getFluid().getNumberOfPhases();
 
     fluid.resetInitCounts();
     double actualEntropy = cooler.getEntropyProduction("J/K");
+    int actualLevelTwoCalls = fluid.getLevelTwoCalls();
+    int actualLevelThreeCalls = fluid.getLevelThreeCalls();
+    int actualInletPhases = cooler.getInletStream().getFluid().getNumberOfPhases();
+    int actualOutletPhases = cooler.getOutletStream().getFluid().getNumberOfPhases();
+
+    double expectedEntropy = referenceEntropyProduction(cooler, "J/K");
 
     assertEquals(expectedEntropy, actualEntropy, Math.max(1.0e-10, Math.abs(expectedEntropy) * 1.0e-12));
-    assertTrue(fluid.getLevelTwoCalls() >= 2, "Both inlet and outlet still require caloric initialization");
-    assertEquals(0, fluid.getLevelThreeCalls(), "Entropy diagnostics must not calculate composition derivatives");
+    assertTrue(actualLevelTwoCalls >= 2, "Both inlet and outlet still require caloric initialization");
+    assertEquals(0, actualLevelThreeCalls, "Entropy diagnostics must not calculate composition derivatives");
     assertEquals(outletEnthalpy - inletEnthalpy, cooler.getDuty(),
         Math.max(1.0e-6, Math.abs(cooler.getDuty()) * 1.0e-8));
-    assertEquals(cooler.getInletStream().getFlowRate("kg/hr"), cooler.getOutletStream().getFlowRate("kg/hr"), 1.0e-8);
-    assertEquals(inletPhases, cooler.getInletStream().getFluid().getNumberOfPhases());
-    assertEquals(outletPhases, cooler.getOutletStream().getFluid().getNumberOfPhases());
+    assertEquals(inletFlow, outletFlow, 1.0e-8);
+    assertEquals(inletPhases, actualInletPhases);
+    assertEquals(outletPhases, actualOutletPhases);
   }
 
   private static double referenceEntropyProduction(Cooler cooler, String unit) {
