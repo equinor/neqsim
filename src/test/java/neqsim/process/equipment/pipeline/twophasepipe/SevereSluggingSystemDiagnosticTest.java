@@ -15,9 +15,8 @@ import neqsim.process.equipment.pipeline.twophasepipe.SevereSluggingSystemDiagno
 
 class SevereSluggingSystemDiagnosticTest {
   private static Input.Builder baseInput() {
-    return Input.builder().upstreamGasVolumeM3(20.0).riserAreaM2(0.1)
-        .riserHeightM(100.0).separatorPressurePa(500_000.0).liquidDensityKgPerM3(800.0)
-        .riserLiquidHoldup(0.9).gasCapVoidFraction(0.8);
+    return Input.builder().upstreamGasVolumeM3(20.0).riserAreaM2(0.1).riserHeightM(100.0).separatorPressurePa(500_000.0)
+        .liquidDensityKgPerM3(800.0).riserLiquidHoldup(0.9).gasCapVoidFraction(0.8);
   }
 
   @Test
@@ -25,9 +24,8 @@ class SevereSluggingSystemDiagnosticTest {
     Result result = SevereSluggingSystemDiagnostic.evaluate(baseInput().build());
 
     double expectedGasExpansionHead = 20.0 / (0.1 * 0.8);
-    double expectedCriticalPressure =
-        0.9 * 800.0 * SevereSluggingSystemDiagnostic.STANDARD_GRAVITY
-            * (expectedGasExpansionHead - 100.0);
+    double expectedCriticalPressure = 0.9 * 800.0 * SevereSluggingSystemDiagnostic.STANDARD_GRAVITY
+        * (expectedGasExpansionHead - 100.0);
     assertEquals(expectedGasExpansionHead, result.getGasExpansionHeadM(), 1.0e-12);
     assertEquals(expectedCriticalPressure, result.getCriticalTopPressurePa(), 1.0e-9);
     assertEquals(500_000.0 - expectedCriticalPressure, result.getPressureMarginPa(), 1.0e-9);
@@ -66,14 +64,11 @@ class SevereSluggingSystemDiagnosticTest {
   @Test
   void rejectsStatesOutsideDocumentedValidityRange() {
     assertEquals(Status.NOT_APPLICABLE_INVALID_TOPOLOGY,
-        SevereSluggingSystemDiagnostic
-            .evaluate(baseInput().validFlowlineRiserTopology(false).build()).getStatus());
+        SevereSluggingSystemDiagnostic.evaluate(baseInput().validFlowlineRiserTopology(false).build()).getStatus());
     assertEquals(Status.NOT_APPLICABLE_NON_STRATIFIED_FLOWLINE,
-        SevereSluggingSystemDiagnostic.evaluate(baseInput().flowlineStratified(false).build())
-            .getStatus());
+        SevereSluggingSystemDiagnostic.evaluate(baseInput().flowlineStratified(false).build()).getStatus());
     assertEquals(Status.NOT_APPLICABLE_SINGLE_PHASE,
-        SevereSluggingSystemDiagnostic.evaluate(baseInput().upstreamGasVolumeM3(0.0).build())
-            .getStatus());
+        SevereSluggingSystemDiagnostic.evaluate(baseInput().upstreamGasVolumeM3(0.0).build()).getStatus());
     assertEquals(Status.NOT_VALIDATED_THREE_PHASE,
         SevereSluggingSystemDiagnostic.evaluate(baseInput().threePhase(true).build()).getStatus());
 
@@ -96,8 +91,7 @@ class SevereSluggingSystemDiagnosticTest {
       output.writeObject(first);
     }
     Result restored;
-    try (ObjectInputStream inputStream =
-        new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+    try (ObjectInputStream inputStream = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
       restored = (Result) inputStream.readObject();
     }
     assertEquals(first.getStatus(), restored.getStatus());
@@ -123,13 +117,9 @@ class SevereSluggingSystemDiagnosticTest {
 
   @Test
   void validatesUnitsAndFractionsAtConstruction() {
-    assertThrows(IllegalArgumentException.class,
-        () -> baseInput().separatorPressurePa(0.0).build());
-    assertThrows(IllegalArgumentException.class,
-        () -> baseInput().riserAreaM2(Double.NaN).build());
-    assertThrows(IllegalArgumentException.class,
-        () -> baseInput().gasCapVoidFraction(0.0).build());
-    assertThrows(IllegalArgumentException.class,
-        () -> baseInput().riserLiquidHoldup(1.01).build());
+    assertThrows(IllegalArgumentException.class, () -> baseInput().separatorPressurePa(0.0).build());
+    assertThrows(IllegalArgumentException.class, () -> baseInput().riserAreaM2(Double.NaN).build());
+    assertThrows(IllegalArgumentException.class, () -> baseInput().gasCapVoidFraction(0.0).build());
+    assertThrows(IllegalArgumentException.class, () -> baseInput().riserLiquidHoldup(1.01).build());
   }
 }
