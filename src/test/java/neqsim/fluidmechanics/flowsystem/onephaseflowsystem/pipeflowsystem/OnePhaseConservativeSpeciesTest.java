@@ -102,9 +102,11 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     int pulseSteps = 30;
     int recoverySteps = 60;
     PipeFlowSystem pipe = createInitializedPipe(12, 3000.0);
+    SystemInterface baselineGas = createGas(0.95, 0.05);
+    SystemInterface pulseGas = createGas(0.80, 0.20);
 
     OnePhaseSpeciesConservationReport baseline = runTransientStep(pipe,
-        createGas(0.95, 0.05), timeStepSeconds);
+        baselineGas.clone(), timeStepSeconds);
     assertTrue(baseline.isConverged(), baseline.getMessage());
     double baselineOutlet = last(baseline.getMassFractionProfile()[nitrogen]);
     double initialInventoryKg = baseline.getFinalInventoryKg()[nitrogen];
@@ -117,7 +119,7 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
 
     for (int step = 0; step < pulseSteps + recoverySteps; step++) {
       boolean pulseActive = step < pulseSteps;
-      SystemInterface inlet = pulseActive ? createGas(0.80, 0.20) : createGas(0.95, 0.05);
+      SystemInterface inlet = pulseActive ? pulseGas.clone() : baselineGas.clone();
       report = runTransientStep(pipe, inlet, timeStepSeconds);
 
       assertTrue(report.isConverged(), report.getMessage());
