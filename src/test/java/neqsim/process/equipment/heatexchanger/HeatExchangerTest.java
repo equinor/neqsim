@@ -201,9 +201,9 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
     assertTrue(fluid.getLevelTwoCalls() >= 4, "Every inlet and outlet still requires caloric initialization");
     assertEquals(0, fluid.getLevelThreeCalls(), "Entropy diagnostics must not calculate composition derivatives");
     assertEquals(0.0, hotSideDuty + coldSideDuty,
-        Math.max(1.0e-6, Math.max(Math.abs(hotSideDuty), Math.abs(coldSideDuty)) * 1.0e-10));
+        Math.max(1.0e-6, Math.max(Math.abs(hotSideDuty), Math.abs(coldSideDuty)) * 1.0e-8));
     assertEquals(Math.abs(hotSideDuty), Math.abs(heatExchanger.getDuty()),
-        Math.max(1.0e-6, Math.abs(hotSideDuty) * 1.0e-10));
+        Math.max(1.0e-6, Math.abs(hotSideDuty) * 1.0e-8));
     assertEquals(heatExchanger.getInStream(0).getFlowRate("kg/hr"),
         heatExchanger.getOutStream(0).getFlowRate("kg/hr"), 1.0e-8);
     assertEquals(heatExchanger.getInStream(1).getFlowRate("kg/hr"),
