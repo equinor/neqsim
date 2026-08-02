@@ -3,6 +3,7 @@ package neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem;
 import java.util.UUID;
 import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFixedStaggeredGrid;
 import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFlowConvergenceReport;
+import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseSpeciesConservationReport;
 import neqsim.fluidmechanics.util.fluidmechanicsvisualization.flowsystemvisualization.onephaseflowvisualization.pipeflowvisualization.PipeFlowVisualization;
 import neqsim.thermo.system.SystemInterface;
 
@@ -16,6 +17,7 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   private boolean failOnNonConvergence;
+  private boolean conservativeSpeciesTransportEnabled;
 
   /**
    * Constructor for PipeFlowSystem.
@@ -38,6 +40,42 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
       return ((OnePhaseFixedStaggeredGrid) flowSolver).getLastConvergenceReport();
     }
     return OnePhaseFlowConvergenceReport.notRun();
+  }
+
+  /**
+   * Get component inventories, boundary masses, residuals, and boundedness diagnostics.
+   *
+   * @return latest conservative species report, or a not-run report before opt-in transport
+   */
+  public OnePhaseSpeciesConservationReport getSpeciesConservationReport() {
+    if (flowSolver instanceof OnePhaseFixedStaggeredGrid) {
+      return ((OnePhaseFixedStaggeredGrid) flowSolver).getLastSpeciesConservationReport();
+    }
+    return OnePhaseSpeciesConservationReport.notRun();
+  }
+
+  /**
+   * Enable conservative n-1 species transport for transient solver type 1.
+   *
+   * <p>
+   * The path is currently isothermal and requires strictly positive flow. Unsupported flow and any failed
+   * hydraulic/species criterion throw so that a failed conservative state cannot advance to the next timestep.
+   * </p>
+   *
+   * @param enabled true to couple conservative component inventories to hydraulics and EOS
+   */
+  public void setConservativeSpeciesTransport(boolean enabled) {
+    conservativeSpeciesTransportEnabled = enabled;
+    configureConvergencePolicy();
+  }
+
+  /**
+   * Check whether conservative species transport is enabled.
+   *
+   * @return true when the opt-in component path is active
+   */
+  public boolean isConservativeSpeciesTransportEnabled() {
+    return conservativeSpeciesTransportEnabled;
   }
 
   /**
@@ -66,7 +104,9 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
 
   private void configureConvergencePolicy() {
     if (flowSolver instanceof OnePhaseFixedStaggeredGrid) {
-      ((OnePhaseFixedStaggeredGrid) flowSolver).setFailOnNonConvergence(failOnNonConvergence);
+      OnePhaseFixedStaggeredGrid onePhaseSolver = (OnePhaseFixedStaggeredGrid) flowSolver;
+      onePhaseSolver.setFailOnNonConvergence(failOnNonConvergence);
+      onePhaseSolver.setConservativeSpeciesTransportEnabled(conservativeSpeciesTransportEnabled);
     }
   }
 
