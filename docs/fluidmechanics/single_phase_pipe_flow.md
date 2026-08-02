@@ -251,9 +251,11 @@ coupled path; staged legacy solvers retain their relative iterate-change metric 
 For backward-compatible control flow, the default logs a warning and returns the failed report.
 Call `pipe.setFailOnNonConvergence(true)` to make `solveTransient(...)` throw
 `IllegalStateException`; the report is recorded before either behavior and distinguishes
-algebraic, line-search, density-consistency, and mass-balance failures. Node zero is a prescribed
-upstream boundary. The first accumulating control volume is node one, so the inlet density is
-imposed at row zero and only physical control volumes contribute to linepack.
+algebraic, line-search, residual/Jacobian/linear-solve, density-consistency, and mass-balance
+failures. Numerical failures restore the last accepted hydraulic/EOS state and include the
+exception type and detail in the report. Node zero is a prescribed upstream boundary. The first
+accumulating control volume is node one, so the inlet density is imposed at row zero and only
+physical control volumes contribute to linepack.
 
 Solver types `10` and `20` retain the staged energy/component algorithm. They expose the same
 report shape, but coupled hydraulic/EOS convergence under a changing composition is not yet

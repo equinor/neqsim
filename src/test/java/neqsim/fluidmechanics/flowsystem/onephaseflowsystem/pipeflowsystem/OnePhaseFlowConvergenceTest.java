@@ -109,6 +109,7 @@ class OnePhaseFlowConvergenceTest extends neqsim.NeqSimTest {
     assertEquals(ConvergenceReason.CONVERGED, pipe.getConvergenceReport().getReason());
     assertTrue(pipe.getConvergenceReport().isNonlinearMetricEquationResidual());
     assertTrue(!ConvergenceReason.LINE_SEARCH_FAILED.isConverged());
+    assertFalse(ConvergenceReason.NUMERICAL_FAILURE.isConverged());
     assertFalse(OnePhaseFlowConvergenceReport.notRun().isNonlinearMetricEquationResidual());
     assertDoesNotThrow(() -> OnePhaseFlowConvergenceReport.notRun().toJson());
   }

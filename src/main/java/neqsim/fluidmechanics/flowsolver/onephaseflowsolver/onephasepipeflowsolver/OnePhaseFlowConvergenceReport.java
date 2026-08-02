@@ -30,6 +30,8 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
     MAX_ITERATIONS_REACHED(false),
     /** Backtracking could not find a residual-decreasing step. */
     LINE_SEARCH_FAILED(false),
+    /** Residual evaluation, Jacobian construction, or the linear solve failed. */
+    NUMERICAL_FAILURE(false),
     /** At least one diagnostic was not finite. */
     NON_FINITE_RESIDUAL(false),
     /** EOS density remained inconsistent with finite-volume density. */
