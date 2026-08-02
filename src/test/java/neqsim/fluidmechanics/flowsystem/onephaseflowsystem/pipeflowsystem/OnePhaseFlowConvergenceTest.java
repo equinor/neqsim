@@ -3,8 +3,6 @@ package neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFlowConvergenceReport;
@@ -21,19 +19,17 @@ class OnePhaseFlowConvergenceTest extends neqsim.NeqSimTest {
   private static final double MASS_FLOW_KG_PER_SECOND = 50.0;
 
   @Test
-  void compositionStepClosesFiniteVolumeMassAndFailsOnStaleEosDensity() {
+  void compositionStepConvergesWithEosConsistentTotalMass() {
     PipeFlowSystem pipe = createInitializedPipe();
     OnePhaseFlowConvergenceReport report = runCompositionStep(pipe, 30.0);
 
-    assertEquals(ConvergenceReason.DENSITY_INCONSISTENT, report.getReason());
-    assertEquals(100, report.getNonlinearIterations());
-    assertTrue(report.getRelativeFiniteVolumeMassResidual() < 1.0e-12,
+    assertEquals(ConvergenceReason.CONVERGED, report.getReason());
+    assertTrue(report.getNonlinearIterations() <= 12);
+    assertTrue(report.getRelativeFiniteVolumeMassResidual() < report.getMassBalanceRelativeTolerance(),
         "The authoritative finite-volume inventory must close to roundoff: " + report.getFiniteVolumeMassResidualKg()
             + " kg");
-    assertTrue(report.getMaximumRelativeDensityResidual() > report.getDensityRelativeTolerance(),
-        "The unconverged EOS density must remain visible.");
-    assertTrue(report.getRelativeThermodynamicMassResidual() > report.getMassBalanceRelativeTolerance(),
-        "Thermodynamic inventory must not be accepted while EOS density is stale.");
+    assertTrue(report.getMaximumRelativeDensityResidual() <= report.getDensityRelativeTolerance());
+    assertTrue(report.getRelativeThermodynamicMassResidual() < report.getMassBalanceRelativeTolerance());
 
     double impliedInletMassFlow = report.getInletBoundaryMassKg() / 30.0;
     assertTrue(impliedInletMassFlow > 45.0 && impliedInletMassFlow < 60.0,
@@ -42,8 +38,8 @@ class OnePhaseFlowConvergenceTest extends neqsim.NeqSimTest {
 
     double[] nonlinearHistory = report.getNonlinearUpdateHistory();
     double[] densityHistory = report.getDensityResidualHistory();
-    assertEquals(report.getNonlinearIterations(), nonlinearHistory.length);
-    assertEquals(report.getNonlinearIterations(), densityHistory.length);
+    assertEquals(report.getNonlinearIterations() + 1, nonlinearHistory.length);
+    assertEquals(report.getNonlinearIterations() + 1, densityHistory.length);
     assertTrue(nonlinearHistory[0] > nonlinearHistory[nonlinearHistory.length - 1],
         "The update history must show the converged algebraic iterate.");
     assertAllFinite(nonlinearHistory);
@@ -63,24 +59,54 @@ class OnePhaseFlowConvergenceTest extends neqsim.NeqSimTest {
     assertArrayEquals(thirtySecondA.getNonlinearUpdateHistory(), thirtySecondB.getNonlinearUpdateHistory(), 0.0);
     assertArrayEquals(thirtySecondA.getDensityResidualHistory(), thirtySecondB.getDensityResidualHistory(), 0.0);
 
-    assertTrue(fifteenSecond.getMaximumRelativeDensityResidual() < thirtySecondA.getMaximumRelativeDensityResidual(),
-        "The shorter step must expose a smaller EOS/FV density inconsistency.");
-    assertTrue(
-        Math.abs(fifteenSecond.getThermodynamicMassResidualKg()) < Math
-            .abs(thirtySecondA.getThermodynamicMassResidualKg()),
-        "The shorter step must expose a smaller EOS inventory inconsistency.");
-    assertTrue(fifteenSecond.getRelativeFiniteVolumeMassResidual() < 1.0e-12);
+    assertTrue(fifteenSecond.isConverged());
+    assertTrue(thirtySecondA.isConverged());
+    assertEquals(2.0, thirtySecondA.getInletBoundaryMassKg() / fifteenSecond.getInletBoundaryMassKg(), 5.0e-3,
+        "Integrated inlet mass must scale with timestep for the same boundary event.");
+    assertTrue(fifteenSecond.getRelativeFiniteVolumeMassResidual()
+        < fifteenSecond.getMassBalanceRelativeTolerance());
   }
 
   @Test
-  void compatibilityModeReturnsTheFailedReportWithoutThrowing() {
+  void coupledSolveConvergesAcrossGridRefinement() {
+    for (int nodes : new int[] {3, 12, 40}) {
+      OnePhaseFlowConvergenceReport report = runCompositionStep(createInitializedPipe(nodes), 30.0);
+
+      assertEquals(ConvergenceReason.CONVERGED, report.getReason(),
+          "Coupled solve must converge for " + nodes + " nodes: " + report.getMessage());
+      assertTrue(report.getMaximumRelativeDensityResidual()
+          <= report.getDensityRelativeTolerance());
+      assertTrue(report.getRelativeFiniteVolumeMassResidual()
+          < report.getMassBalanceRelativeTolerance());
+      assertTrue(report.getRelativeThermodynamicMassResidual()
+          < report.getMassBalanceRelativeTolerance());
+    }
+  }
+
+  @Test
+  void compatibilityModeReturnsTheConvergedReportWithoutThrowing() {
     PipeFlowSystem pipe = createInitializedPipe();
     configureCompositionStep(pipe, 30.0);
 
-    assertFalse(pipe.isFailOnNonConvergence());
-    assertDoesNotThrow(() -> pipe.solveTransient(20));
-    assertEquals(ConvergenceReason.DENSITY_INCONSISTENT, pipe.getConvergenceReport().getReason());
+    assertDoesNotThrow(() -> pipe.solveTransient(1));
+    assertEquals(ConvergenceReason.CONVERGED, pipe.getConvergenceReport().getReason());
     assertDoesNotThrow(() -> OnePhaseFlowConvergenceReport.notRun().toJson());
+  }
+
+  @Test
+  void unchangedBoundaryIsAHydraulicFixedPoint() {
+    PipeFlowSystem pipe = createInitializedPipe();
+    double[] pressure = pressures(pipe);
+    double[] velocity = velocities(pipe);
+    pipe.getTimeSeries().setTimes(new double[] {0.0, 30.0});
+    pipe.getTimeSeries().setInletThermoSystems(new SystemInterface[] {createGas(0.95, 0.05)});
+    pipe.getTimeSeries().setNumberOfTimeStepsInInterval(1);
+    pipe.setFailOnNonConvergence(true);
+
+    assertDoesNotThrow(() -> pipe.solveTransient(1));
+    assertTrue(pipe.getConvergenceReport().isConverged(), pipe.getConvergenceReport().getMessage());
+    assertArrayEquals(pressure, pressures(pipe), 1.0e-8);
+    assertArrayEquals(velocity, velocities(pipe), 1.0e-8);
   }
 
   private static OnePhaseFlowConvergenceReport runCompositionStep(PipeFlowSystem pipe, double timeStep) {
@@ -88,9 +114,9 @@ class OnePhaseFlowConvergenceTest extends neqsim.NeqSimTest {
     pipe.setFailOnNonConvergence(true);
     assertTrue(pipe.isFailOnNonConvergence());
 
-    IllegalStateException failure = assertThrows(IllegalStateException.class, () -> pipe.solveTransient(20));
+    assertDoesNotThrow(() -> pipe.solveTransient(1));
     OnePhaseFlowConvergenceReport report = pipe.getConvergenceReport();
-    assertEquals(report.getMessage(), failure.getMessage());
+    assertTrue(report.isConverged(), report.getMessage());
     return report;
   }
 
@@ -102,10 +128,14 @@ class OnePhaseFlowConvergenceTest extends neqsim.NeqSimTest {
   }
 
   private static PipeFlowSystem createInitializedPipe() {
+    return createInitializedPipe(40);
+  }
+
+  private static PipeFlowSystem createInitializedPipe(int nodes) {
     PipeFlowSystem pipe = new PipeFlowSystem();
     pipe.setInletThermoSystem(createGas(0.95, 0.05));
     pipe.setNumberOfLegs(1);
-    pipe.setNumberOfNodesInLeg(40);
+    pipe.setNumberOfNodesInLeg(nodes);
 
     GeometryDefinitionInterface[] geometry = { new PipeData(), new PipeData() };
     for (GeometryDefinitionInterface section : geometry) {
@@ -142,5 +172,21 @@ class OnePhaseFlowConvergenceTest extends neqsim.NeqSimTest {
     for (double value : values) {
       assertTrue(Double.isFinite(value), "Residual history must contain only finite values.");
     }
+  }
+
+  private static double[] pressures(PipeFlowSystem pipe) {
+    double[] values = new double[pipe.getTotalNumberOfNodes()];
+    for (int i = 0; i < values.length; i++) {
+      values[i] = pipe.getNode(i).getBulkSystem().getPressure();
+    }
+    return values;
+  }
+
+  private static double[] velocities(PipeFlowSystem pipe) {
+    double[] values = new double[pipe.getTotalNumberOfNodes()];
+    for (int i = 0; i < values.length; i++) {
+      values[i] = pipe.getNode(i).getVelocityIn().doubleValue();
+    }
+    return values;
   }
 }

@@ -11,9 +11,9 @@ import com.google.gson.JsonSerializer;
  * Immutable convergence and total-mass diagnostics from a one-phase pipe-flow solve.
  *
  * <p>
- * Nonlinear iterate changes, EOS-to-finite-volume density consistency, and transient total-mass closure are reported
- * separately. A small update does not establish convergence when the thermodynamic density is inconsistent with the
- * conservative density solution.
+ * Scaled nonlinear equation residuals, EOS-to-finite-volume density consistency, and transient total-mass closure are
+ * reported separately. A small equation residual does not establish convergence when the thermodynamic density is
+ * inconsistent with the conservative density solution.
  * </p>
  */
 public final class OnePhaseFlowConvergenceReport implements Serializable {
@@ -80,10 +80,10 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
    * @param dynamic true for a transient solve
    * @param solverType selected solver type
    * @param nonlinearIterations number of coupled nonlinear iterations
-   * @param nonlinearUpdateTolerance relative nonlinear update tolerance
+   * @param nonlinearUpdateTolerance scaled nonlinear equation-residual tolerance
    * @param densityRelativeTolerance relative EOS-density tolerance
    * @param massBalanceRelativeTolerance relative total-mass tolerance
-   * @param maximumRelativeNonlinearUpdate final nonlinear update residual
+   * @param maximumRelativeNonlinearUpdate final scaled nonlinear equation residual
    * @param maximumRelativeDensityResidual final EOS/FV density residual
    * @param initialFiniteVolumeMassKg previous-time finite-volume mass in kg
    * @param finalFiniteVolumeMassKg final conservative mass in kg
@@ -95,7 +95,7 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
    * @param thermodynamicMassResidualKg thermodynamic inventory residual in kg
    * @param relativeFiniteVolumeMassResidual relative conservative inventory residual
    * @param relativeThermodynamicMassResidual relative thermodynamic inventory residual
-   * @param nonlinearUpdateHistory nonlinear update residual history
+   * @param nonlinearUpdateHistory scaled nonlinear equation-residual history
    * @param densityResidualHistory EOS/FV density residual history
    * @param message diagnostic summary
    */
@@ -167,7 +167,7 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
     return nonlinearIterations;
   }
 
-  /** @return relative nonlinear update tolerance */
+  /** @return scaled nonlinear equation-residual tolerance */
   public double getNonlinearUpdateTolerance() {
     return nonlinearUpdateTolerance;
   }
@@ -182,7 +182,7 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
     return massBalanceRelativeTolerance;
   }
 
-  /** @return final nonlinear update residual */
+  /** @return final scaled nonlinear equation residual */
   public double getMaximumRelativeNonlinearUpdate() {
     return maximumRelativeNonlinearUpdate;
   }
@@ -242,7 +242,7 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
     return relativeThermodynamicMassResidual;
   }
 
-  /** @return defensive copy of nonlinear update history */
+  /** @return defensive copy of scaled nonlinear equation-residual history */
   public double[] getNonlinearUpdateHistory() {
     return copy(nonlinearUpdateHistory);
   }

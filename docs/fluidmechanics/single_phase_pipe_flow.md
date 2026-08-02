@@ -219,14 +219,26 @@ try {
 
 ### Convergence and Total-Mass Diagnostics
 
-`PipeFlowSystem.getConvergenceReport()` returns an immutable report for the latest solve. For
-positive transient solver types that include total mass (including `1`, `10`, and `20`), a
-completed solve requires all of the following:
+`PipeFlowSystem.getConvergenceReport()` returns an immutable report for the latest solve. Solver
+type `1` uses a safeguarded coupled Newton solve for the physical-cell pressures and staggered
+face velocities. The outlet pressure is prescribed; neither boundary node is counted as an
+accumulating control volume. This coupled path currently supports positive flow only and fails
+with an explicit message for reversed flow. A completed transient solve requires all of the
+following:
 
-- the nonlinear update residual is at most `1e-10`;
+- the maximum scaled continuity/momentum equation residual is at most `1e-10`; each row uses a
+  fixed dimensional scale formed from the absolute equation terms at the initial iterate;
 - the maximum relative difference between the finite-volume and EOS density is at most `1e-8`;
 - finite-volume and EOS inventory changes each agree with integrated inlet-minus-outlet mass to
   a relative tolerance of `1e-8`.
+
+The pressure and velocity unknowns are interleaved so each equation couples only to its two
+nearest unknowns on either side. The Newton matrix is therefore stored and solved as a compact
+pentadiagonal system rather than expanded to a dense matrix. Continuity pressure derivatives use
+the EOS `dP/drho` response directly. The remaining local derivatives use centered finite
+differences grouped into five non-overlapping graph colors, requiring ten residual evaluations
+per Newton iteration independent of grid size. The compact solve uses linear storage for fixed
+bandwidth and fails with a row diagnostic if it encounters an unusable pivot.
 
 The report contains both residual histories, iteration count, initial/final finite-volume and EOS
 inventories in kg, integrated inlet and outlet masses in kg, and absolute/relative closure errors.
@@ -236,6 +248,12 @@ Call `pipe.setFailOnNonConvergence(true)` to make `solveTransient(...)` throw
 algebraic, density-consistency, and mass-balance failures. Node zero is a prescribed upstream
 boundary. The first accumulating control volume is node one, so the inlet density is imposed at
 row zero and only physical control volumes contribute to linepack.
+
+Solver types `10` and `20` retain the staged energy/component algorithm. They expose the same
+report shape, but coupled hydraulic/EOS convergence under a changing composition is not yet
+validated for those paths. Conservative component transport, front/breakthrough accuracy,
+bounded fractions, numerical diffusion, and physical axial dispersion remain outside the
+validated capability; do not interpret type `20` as satisfying those transport guarantees.
 
 ## Compositional Tracking
 
