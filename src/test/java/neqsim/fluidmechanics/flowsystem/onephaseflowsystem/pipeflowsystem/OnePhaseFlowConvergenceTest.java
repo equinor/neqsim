@@ -49,6 +49,25 @@ class OnePhaseFlowConvergenceTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void outletDiagnosticUsesTheAuthoritativeFiniteVolumeFace() {
+    PipeFlowSystem pipe = createInitializedPipe(12);
+    int boundaryNode = pipe.getTotalNumberOfNodes() - 1;
+    int outletCell = boundaryNode - 1;
+
+    // The boundary node prescribes pressure and is not an accumulating control volume. Give it a
+    // deliberately different area to prove the diagnostic uses the face owned by the last FV row.
+    pipe.getNode(boundaryNode).getGeometry().setDiameter(0.35);
+    pipe.getNode(boundaryNode).init();
+    OnePhaseFlowConvergenceReport report = runCompositionStep(pipe, 30.0);
+
+    double expectedOutletMass = 30.0 * pipe.getNode(outletCell).getVelocityOut().doubleValue()
+        * pipe.getNode(outletCell).getGeometry().getArea()
+        * pipe.getNode(outletCell).getBulkSystem().getPhase(0).getDensity();
+    assertEquals(expectedOutletMass, report.getOutletBoundaryMassKg(), Math.abs(expectedOutletMass) * 1.0e-12);
+    assertTrue(report.getRelativeFiniteVolumeMassResidual() < report.getMassBalanceRelativeTolerance());
+  }
+
+  @Test
   void diagnosticsAreDeterministicAndExposeTimestepSensitivity() {
     OnePhaseFlowConvergenceReport thirtySecondA = runCompositionStep(createInitializedPipe(), 30.0);
     OnePhaseFlowConvergenceReport thirtySecondB = runCompositionStep(createInitializedPipe(), 30.0);

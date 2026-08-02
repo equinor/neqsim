@@ -1421,6 +1421,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       return Double.NaN;
     }
 
+    // For solver type 1, node N - 2 owns the east-face area and density in the last
+    // authoritative finite-volume mass row. The boundary node only prescribes pressure.
     int densityNode = solverType == 1 ? numberOfNodes - 2 : numberOfNodes - 1;
     double outletMassFlow = outletVelocity * pipe.getNode(densityNode).getGeometry().getArea()
         * sol2Matrix.get(densityNode, 0);
@@ -1464,10 +1466,10 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     String nonlinearMetricLabel = nonlinearMetricEquationResidual ? "scaled equation residual="
         : "relative nonlinear update=";
     String message = "One-phase pipe solve " + reason + " after " + nonlinearIterations + " nonlinear iterations: "
-        + nonlinearMetricLabel + Math.abs(nonlinearUpdate) + " (tolerance "
-        + NONLINEAR_RESIDUAL_TOLERANCE + "), EOS/FV density=" + densityResidual + " (tolerance "
-        + DENSITY_RELATIVE_TOLERANCE + "), FV mass residual=" + finiteVolumeMassResidual + " kg, EOS mass residual="
-        + thermodynamicMassResidual + " kg (relative tolerance " + MASS_BALANCE_RELATIVE_TOLERANCE + ").";
+        + nonlinearMetricLabel + Math.abs(nonlinearUpdate) + " (tolerance " + NONLINEAR_RESIDUAL_TOLERANCE
+        + "), EOS/FV density=" + densityResidual + " (tolerance " + DENSITY_RELATIVE_TOLERANCE + "), FV mass residual="
+        + finiteVolumeMassResidual + " kg, EOS mass residual=" + thermodynamicMassResidual + " kg (relative tolerance "
+        + MASS_BALANCE_RELATIVE_TOLERANCE + ").";
 
     return new OnePhaseFlowConvergenceReport(reason, dynamic, solverType, nonlinearIterations,
         NONLINEAR_RESIDUAL_TOLERANCE, DENSITY_RELATIVE_TOLERANCE, MASS_BALANCE_RELATIVE_TOLERANCE,
