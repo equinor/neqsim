@@ -3,6 +3,7 @@ package neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFlowConvergenceReport;
@@ -24,6 +25,7 @@ class OnePhaseFlowConvergenceTest extends neqsim.NeqSimTest {
     OnePhaseFlowConvergenceReport report = runCompositionStep(pipe, 30.0);
 
     assertEquals(ConvergenceReason.CONVERGED, report.getReason());
+    assertTrue(report.isNonlinearMetricEquationResidual());
     assertTrue(report.getNonlinearIterations() <= 12);
     assertTrue(report.getRelativeFiniteVolumeMassResidual() < report.getMassBalanceRelativeTolerance(),
         "The authoritative finite-volume inventory must close to roundoff: " + report.getFiniteVolumeMassResidualKg()
@@ -86,8 +88,20 @@ class OnePhaseFlowConvergenceTest extends neqsim.NeqSimTest {
 
     assertDoesNotThrow(() -> pipe.solveTransient(1));
     assertEquals(ConvergenceReason.CONVERGED, pipe.getConvergenceReport().getReason());
+    assertTrue(pipe.getConvergenceReport().isNonlinearMetricEquationResidual());
     assertTrue(!ConvergenceReason.LINE_SEARCH_FAILED.isConverged());
+    assertFalse(OnePhaseFlowConvergenceReport.notRun().isNonlinearMetricEquationResidual());
     assertDoesNotThrow(() -> OnePhaseFlowConvergenceReport.notRun().toJson());
+  }
+
+  @Test
+  void legacyStagedSolverLabelsItsIterateChangeMetric() {
+    PipeFlowSystem pipe = createInitializedPipe(3);
+    configureCompositionStep(pipe, 30.0);
+
+    assertDoesNotThrow(() -> pipe.solveTransient(20));
+    assertFalse(pipe.getConvergenceReport().isNonlinearMetricEquationResidual());
+    assertTrue(pipe.getConvergenceReport().getMessage().contains("relative nonlinear update="));
   }
 
   @Test

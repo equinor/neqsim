@@ -240,8 +240,10 @@ differences grouped into five non-overlapping graph colors, requiring ten residu
 per Newton iteration independent of grid size. The compact solve uses linear storage for fixed
 bandwidth and fails with a row diagnostic if it encounters an unusable pivot.
 
-The report contains both residual histories, iteration count, initial/final finite-volume and EOS
-inventories in kg, integrated inlet and outlet masses in kg, and absolute/relative closure errors.
+The report contains the nonlinear-metric and density-residual histories, iteration count,
+initial/final finite-volume and EOS inventories in kg, integrated inlet and outlet masses in kg,
+and absolute/relative closure errors. `isNonlinearMetricEquationResidual()` is true for the
+coupled path; staged legacy solvers retain their relative iterate-change metric and return false.
 For backward-compatible control flow, the default logs a warning and returns the failed report.
 Call `pipe.setFailOnNonConvergence(true)` to make `solveTransient(...)` throw
 `IllegalStateException`; the report is recorded before either behavior and distinguishes
