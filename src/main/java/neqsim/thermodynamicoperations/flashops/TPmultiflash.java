@@ -42,8 +42,6 @@ public class TPmultiflash extends TPflash {
   boolean aqueousPhaseSeedAttempted = false;
   boolean postFlashStabilityChecked = false;
   boolean enhancedStabilityChecked = false;
-  /** True when the beta loop exited above its own tolerance, i.e. the three-phase solve really stalled. */
-  private boolean betaSolveStalled = false;
   private int rerunDepth = 0;
 
   double[] multTerm;
@@ -2347,8 +2345,6 @@ public class TPmultiflash extends TPflash {
       } while ((Math.abs(chemdev) > 1e-10 && iterOut < 100)
           || (iterOut < 3 && system.isChemicalSystem() && system.hasPhaseType(PhaseType.AQUEOUS)));
 
-      betaSolveStalled = diff > maxerr;
-
       // After flash converges, check for additional phases (three-phase detection)
       // This is particularly important for systems like CO2/H2S/hydrocarbon mixtures
       // that may exhibit vapor-liquid-liquid equilibrium
@@ -2626,8 +2622,8 @@ public class TPmultiflash extends TPflash {
    * </p>
    */
   private void rescueStalledThreePhaseEndpoint() {
-    if (!betaSolveStalled || system.getNumberOfPhases() != 3 || system.isChemicalSystem() || system.hasIons()
-        || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck() || isFeasiblePhaseEquilibrium(system)) {
+    if (system.getNumberOfPhases() != 3 || system.isChemicalSystem() || system.hasIons() || system.doSolidPhaseCheck()
+        || system.isMultiphaseWaxCheck() || isFeasiblePhaseEquilibrium(system)) {
       return;
     }
 

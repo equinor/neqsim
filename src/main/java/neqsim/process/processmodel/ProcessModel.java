@@ -323,6 +323,30 @@ public class ProcessModel implements Runnable, Serializable {
   /** Worst relative error per outer iteration, used to detect a stalled residual. */
   private transient java.util.List<Double> autoToleranceErrorHistory = new java.util.ArrayList<>();
 
+  /**
+   * Plant mass-closure error the auto-tuner accepts, as a fraction of plant feed (0.1 %).
+   *
+   * <p>
+   * The boundary residual only measures how much stream values still move between outer passes. It is blind to an
+   * unconverged {@link neqsim.process.equipment.util.Recycle}, whose open tear is a standing mass source or sink: the
+   * plant can sit perfectly still on the boundary metric while destroying several percent of the feed. This gate adds
+   * the missing physical criterion.
+   * </p>
+   */
+  public static final double DEFAULT_MASS_CLOSURE_TOLERANCE = 1.0e-3;
+
+  /** Whether the auto-tuner refuses to call the model converged while recycle tears are still open. */
+  private boolean autoMassClosureGate = true;
+
+  /** Accepted plant mass-closure error, as a fraction of plant feed. */
+  private double massClosureTolerance = DEFAULT_MASS_CLOSURE_TOLERANCE;
+
+  /** Plant mass-closure error at the last convergence check, as a fraction of plant feed. */
+  private double lastMassClosureError = Double.NaN;
+
+  /** Human-readable description of the last mass-closure check. */
+  private String massClosureSummary = "";
+
   /** Default boundary-stream flow floor in kg/hr (streams below this are ignored entirely). */
   public static final double DEFAULT_BOUNDARY_FLOW_FLOOR = 1e-9;
 
@@ -1775,6 +1799,9 @@ public class ProcessModel implements Runnable, Serializable {
         boolean minimumIterationsMet = boundaryStreams.isEmpty() || iterations > 1;
         boolean iterConverged = valuesConverged && minimumIterationsMet && (allProcessesSolved || boundaryDrivenModel)
             && !autoTuningChanged;
+        if (iterConverged && !massClosureAccepted()) {
+          iterConverged = false;
+        }
         notifyIterationComplete(iterations, iterConverged, maxError);
 
         // Converged if all processes solved AND values are not changing
@@ -2922,6 +2949,9 @@ public class ProcessModel implements Runnable, Serializable {
     if (!autoToleranceSummary.isEmpty()) {
       sb.append("  Auto-accuracy: ").append(autoToleranceSummary).append("\n");
     }
+    if (!massClosureSummary.isEmpty()) {
+      sb.append("  Mass closure:  ").append(massClosureSummary).append("\n");
+    }
 
     List<BoundaryStreamError> offenders = getNonConvergedBoundaryStreamErrors();
     if (!offenders.isEmpty()) {
@@ -3260,6 +3290,8 @@ public class ProcessModel implements Runnable, Serializable {
     detectedPlantFlowScale = 0.0;
     autoTuningSummary = "";
     autoToleranceSummary = "";
+    massClosureSummary = "";
+    lastMassClosureError = Double.NaN;
     if (autoToleranceErrorHistory == null) {
       autoToleranceErrorHistory = new java.util.ArrayList<>();
     }
@@ -3351,15 +3383,133 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
-   * Derives the flow-noise convergence filters from the plant's own throughput.
+   * Whether the auto-tuner refuses a converged verdict while recycle tears still create or destroy mass.
+   *
+   * @return true when the mass-closure gate is active
+   */
+  public boolean isAutoMassClosureGate() {
+    return autoMassClosureGate;
+  }
+
+  /**
+   * Enables or disables the automatic mass-closure acceptance gate.
+   *
+   * @param autoMassClosureGate true to require plant mass closure before accepting convergence
+   */
+  public void setAutoMassClosureGate(boolean autoMassClosureGate) {
+    this.autoMassClosureGate = autoMassClosureGate;
+  }
+
+  /**
+   * Accepted plant mass-closure error, as a fraction of plant feed.
+   *
+   * @return relative mass-closure tolerance
+   */
+  public double getMassClosureTolerance() {
+    return massClosureTolerance;
+  }
+
+  /**
+   * Sets the accepted plant mass-closure error.
+   *
+   * @param massClosureTolerance relative tolerance; must be a finite number greater than zero
+   * @throws IllegalArgumentException if the tolerance is not a finite positive number
+   */
+  public void setMassClosureTolerance(double massClosureTolerance) {
+    if (Double.isNaN(massClosureTolerance) || Double.isInfinite(massClosureTolerance) || massClosureTolerance <= 0.0) {
+      throw new IllegalArgumentException(
+          "massClosureTolerance must be a finite positive number, was " + massClosureTolerance);
+    }
+    this.massClosureTolerance = massClosureTolerance;
+  }
+
+  /**
+   * Plant mass-closure error at the last convergence check, as a fraction of plant feed.
+   *
+   * @return relative mass-closure error, or NaN when it was never evaluated
+   */
+  public double getLastMassClosureError() {
+    return lastMassClosureError;
+  }
+
+  /**
+   * Human-readable description of the last mass-closure check.
+   *
+   * @return summary text, empty when the gate never ran
+   */
+  public String getMassClosureSummary() {
+    return massClosureSummary;
+  }
+
+  /**
+   * Total mass created or destroyed by open recycle tears, as a fraction of plant feed.
    *
    * <p>
-   * Called once per outer iteration. The scale is the total mass flow entering the plant across its feed boundary
-   * (recycles and internal streams excluded), so it is the physical throughput rather than the largest number found
-   * anywhere in the flowsheet - a not-yet-solved internal stream can carry an arbitrary flow and would otherwise set a
-   * meaningless scale. Thresholds are only re-applied when the throughput has grown materially, which keeps the
-   * per-iteration cost negligible.
+   * A recycle whose outlet no longer matches the sum of its inlets is a standing mass source or sink of exactly that
+   * difference, so summing the absolute tear imbalances is the mass the flowsheet is failing to conserve. Loops
+   * carrying less than the auto-derived boundary floor are skipped as noise.
    * </p>
+   *
+   * @return relative mass-closure error, or NaN when no usable flow scale exists
+   */
+  private double computeMassClosureError() {
+    double scale = Math.max(detectedPlantFlowScale, getTotalFeedFlowRate());
+    if (!(scale > 0.0) || Double.isInfinite(scale)) {
+      return Double.NaN;
+    }
+    double openTear = 0.0;
+    for (ProcessSystem process : processes.values()) {
+      for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+        if (!(unit instanceof neqsim.process.equipment.util.Recycle)) {
+          continue;
+        }
+        neqsim.process.equipment.util.Recycle recycle = (neqsim.process.equipment.util.Recycle) unit;
+        if (recycle.getOutletStream() == null) {
+          continue;
+        }
+        double loopFlow = recycle.getOutletStream().getFlowRate("kg/hr");
+        if (!Double.isFinite(loopFlow) || loopFlow < boundaryFlowFloor) {
+          continue;
+        }
+        double imbalance = recycle.getMassBalance("kg/hr");
+        if (Double.isFinite(imbalance)) {
+          openTear += Math.abs(imbalance);
+        }
+      }
+    }
+    return openTear / scale;
+  }
+
+  /**
+   * Whether the plant conserves mass well enough for the auto-tuner to accept convergence.
+   *
+   * @return true when the gate is inactive or the closure error is within tolerance
+   */
+  private boolean massClosureAccepted() {
+    if (!autoConvergenceTuning || !autoMassClosureGate) {
+      return true;
+    }
+    double closure = computeMassClosureError();
+    lastMassClosureError = closure;
+    if (Double.isNaN(closure)) {
+      return true;
+    }
+    if (closure <= massClosureTolerance) {
+      massClosureSummary = String.format(Locale.US,
+          "plant mass closure %.3g of feed (tolerance %.3g) - open recycle tears are negligible", closure,
+          massClosureTolerance);
+      return true;
+    }
+    massClosureSummary = String.format(Locale.US,
+        "plant mass closure %.3g of feed exceeds %.3g - recycle tears are still creating or destroying mass, "
+            + "so the boundary residual alone does not mean the model is solved",
+        closure, massClosureTolerance);
+    logger.debug("ProcessModel {}", massClosureSummary);
+    return false;
+  }
+
+  /**
+   * Derives the plant flow scale and re-applies the automatic noise thresholds when the throughput has grown.
    *
    * @return true when thresholds changed and every process area must be evaluated once more
    */
@@ -3515,6 +3665,13 @@ public class ProcessModel implements Runnable, Serializable {
     autoToleranceInfo.addProperty("ceiling", autoToleranceCeiling);
     autoToleranceInfo.addProperty("summary", autoToleranceSummary);
     root.add("autoTolerance", autoToleranceInfo);
+
+    JsonObject massClosure = new JsonObject();
+    massClosure.addProperty("enabled", autoMassClosureGate);
+    massClosure.addProperty("tolerance", massClosureTolerance);
+    massClosure.addProperty("relativeError", lastMassClosureError);
+    massClosure.addProperty("summary", massClosureSummary);
+    root.add("massClosure", massClosure);
 
     JsonArray boundaryStreamErrors = new JsonArray();
     for (BoundaryStreamError streamError : getNonConvergedBoundaryStreamErrors()) {
