@@ -1,6 +1,9 @@
 package neqsim.process.equipment.heatexchanger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.separator.Separator;
@@ -17,6 +20,47 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @since 2.2.3
  */
 public class HeatExchangerTest extends neqsim.NeqSimTest {
+  private static class InitTrackingSystemSrkEos extends neqsim.thermo.system.SystemSrkEos {
+    private static final long serialVersionUID = 1000L;
+    private AtomicInteger levelTwoCalls = new AtomicInteger();
+    private AtomicInteger levelThreeCalls = new AtomicInteger();
+
+    InitTrackingSystemSrkEos(double temperature, double pressure) {
+      super(temperature, pressure);
+    }
+
+    @Override
+    public InitTrackingSystemSrkEos clone() {
+      InitTrackingSystemSrkEos cloned = (InitTrackingSystemSrkEos) super.clone();
+      cloned.levelTwoCalls = levelTwoCalls;
+      cloned.levelThreeCalls = levelThreeCalls;
+      return cloned;
+    }
+
+    @Override
+    public void init(int initType) {
+      super.init(initType);
+      if (levelTwoCalls != null && initType == 2) {
+        levelTwoCalls.incrementAndGet();
+      } else if (levelThreeCalls != null && initType == 3) {
+        levelThreeCalls.incrementAndGet();
+      }
+    }
+
+    void resetInitCounts() {
+      levelTwoCalls.set(0);
+      levelThreeCalls.set(0);
+    }
+
+    int getLevelTwoCalls() {
+      return levelTwoCalls.get();
+    }
+
+    int getLevelThreeCalls() {
+      return levelThreeCalls.get();
+    }
+  }
+
   static neqsim.thermo.system.SystemInterface testSystem;
   Stream gasStream;
 
@@ -106,6 +150,87 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
     heatExchanger1.run();
 
     assertEquals(15780.77130, heatExchanger1.getUAvalue(), 1e-3);
+  }
+
+  /**
+   * Entropy requires caloric properties but not level-3 composition derivatives. This is also a deterministic
+   * performance gate: the diagnostic must preserve its value while avoiding four unused derivative initializations.
+   */
+  @Test
+  void testEntropyProductionUsesMinimumThermodynamicInitializationLevel() {
+    InitTrackingSystemSrkEos fluid = new InitTrackingSystemSrkEos(333.15, 20.0);
+    fluid.addComponent("nitrogen", 0.02);
+    fluid.addComponent("CO2", 0.03);
+    fluid.addComponent("methane", 0.80);
+    fluid.addComponent("ethane", 0.07);
+    fluid.addComponent("propane", 0.04);
+    fluid.addComponent("n-heptane", 0.04);
+    fluid.setMixingRule("classic");
+
+    Stream hot = new Stream("tracked hot", fluid);
+    hot.setTemperature(100.0, "C");
+    hot.setFlowRate(10000.0, "kg/hr");
+    Stream cold = new Stream("tracked cold", fluid.clone());
+    cold.setTemperature(20.0, "C");
+    cold.setFlowRate(8000.0, "kg/hr");
+
+    HeatExchanger heatExchanger = new HeatExchanger("tracked exchanger", hot, cold);
+    heatExchanger.setGuessOutTemperature(70.0, "C");
+    heatExchanger.setUAvalue(5000.0);
+    heatExchanger.run(UUID.randomUUID());
+
+    assertMinimumEntropyInitialization(fluid, heatExchanger);
+
+    hot.setTemperature(105.0, "C");
+    heatExchanger.run(UUID.randomUUID());
+    assertMinimumEntropyInitialization(fluid, heatExchanger);
+  }
+
+  private static void assertMinimumEntropyInitialization(InitTrackingSystemSrkEos fluid,
+      HeatExchanger heatExchanger) {
+    double expectedEntropy = referenceEntropyProduction(heatExchanger, "J/K");
+    double hotSideDuty = heatExchanger.getOutStream(0).getFluid().getEnthalpy()
+        - heatExchanger.getInStream(0).getFluid().getEnthalpy();
+    double coldSideDuty = heatExchanger.getOutStream(1).getFluid().getEnthalpy()
+        - heatExchanger.getInStream(1).getFluid().getEnthalpy();
+
+    fluid.resetInitCounts();
+    double actualEntropy = heatExchanger.getEntropyProduction("J/K");
+
+    assertEquals(expectedEntropy, actualEntropy, Math.max(1.0e-10, Math.abs(expectedEntropy) * 1.0e-12));
+    assertTrue(fluid.getLevelTwoCalls() >= 4, "Every inlet and outlet still requires caloric initialization");
+    assertEquals(0, fluid.getLevelThreeCalls(), "Entropy diagnostics must not calculate composition derivatives");
+    assertEquals(0.0, hotSideDuty + coldSideDuty,
+        Math.max(1.0e-6, Math.max(Math.abs(hotSideDuty), Math.abs(coldSideDuty)) * 1.0e-10));
+    assertEquals(Math.abs(hotSideDuty), Math.abs(heatExchanger.getDuty()),
+        Math.max(1.0e-6, Math.abs(hotSideDuty) * 1.0e-10));
+    assertEquals(heatExchanger.getInStream(0).getFlowRate("kg/hr"),
+        heatExchanger.getOutStream(0).getFlowRate("kg/hr"), 1.0e-8);
+    assertEquals(heatExchanger.getInStream(1).getFlowRate("kg/hr"),
+        heatExchanger.getOutStream(1).getFlowRate("kg/hr"), 1.0e-8);
+  }
+
+  private static double referenceEntropyProduction(HeatExchanger heatExchanger, String unit) {
+    double entropy = 0.0;
+    for (int index = 0; index < 2; index++) {
+      UUID id = UUID.randomUUID();
+      heatExchanger.getInStream(index).run(id);
+      heatExchanger.getInStream(index).getFluid().init(3);
+      heatExchanger.getOutStream(index).run(id);
+      heatExchanger.getOutStream(index).getFluid().init(3);
+      entropy += heatExchanger.getOutStream(index).getThermoSystem().getEntropy(unit)
+          - heatExchanger.getInStream(index).getThermoSystem().getEntropy(unit);
+    }
+
+    int hotStream = 0;
+    int coldStream = 1;
+    if (heatExchanger.getInStream(0).getTemperature() < heatExchanger.getInStream(1).getTemperature()) {
+      hotStream = 1;
+      coldStream = 0;
+    }
+    return entropy + Math.abs(heatExchanger.getDuty())
+        * (1.0 / heatExchanger.getInStream(coldStream).getTemperature()
+            - 1.0 / heatExchanger.getInStream(hotStream).getTemperature());
   }
 
   /**
