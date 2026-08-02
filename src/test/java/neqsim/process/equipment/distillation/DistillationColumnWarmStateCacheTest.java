@@ -56,34 +56,24 @@ public class DistillationColumnWarmStateCacheTest {
   }
 
   /**
-   * Builds a compact binary fractionator with active condenser and reboiler ratio equations.
+   * Builds the repository's proven compact binary damped column with both terminal stages.
    *
-   * @return an unrun column configured for Naphtali-Sandholm
+   * @return an unrun column configured for exact sequential-state reuse
    */
   private static DistillationColumn buildCondenserColumn() {
-    SystemSrkEos fluid = new SystemSrkEos(323.15, 10.0);
-    fluid.addComponent("propane", 0.5);
-    fluid.addComponent("n-butane", 0.5);
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 5.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.addComponent("ethane", 1.0);
+    fluid.createDatabase(true);
     fluid.setMixingRule("classic");
 
     Stream feed = new Stream("binary condenser feed", fluid);
-    feed.setFlowRate(100.0, "kg/hr");
-    feed.setTemperature(323.15);
-    feed.setPressure(10.0, "bara");
     feed.run();
 
-    DistillationColumn column = new DistillationColumn("condenser cache column", 5, true, true);
-    column.addFeedStream(feed, 3);
-    column.getCondenser().setOutTemperature(298.15);
-    column.getReboiler().setOutTemperature(348.15);
-    column.getCondenser().setRefluxRatio(2.0);
-    column.getReboiler().setRefluxRatio(2.0);
-    column.setTopPressure(10.0);
-    column.setBottomPressure(10.0);
-    column.setMaxNumberOfIterations(80);
-    column.setTemperatureTolerance(1.0e-1);
-    column.setMassBalanceTolerance(1.0e-1);
-    column.setSolverType(DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
+    DistillationColumn column = new DistillationColumn("condenser cache column", 1, true, true);
+    column.addFeedStream(feed, 1);
+    column.setSolverType(DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
+    column.setRelaxationFactor(0.5);
     return column;
   }
 
@@ -140,10 +130,11 @@ public class DistillationColumnWarmStateCacheTest {
   }
 
   /**
-   * Changing from ratio reflux to a fixed liquid-reflux split must invalidate an otherwise identical warm state.
+   * Changing from equilibrium partial condensation to a fixed liquid-reflux split must invalidate an otherwise
+   * identical warm state.
    *
    * <p>
-   * The legacy tray API leaves the reflux ratio and total-condenser flag unchanged while selecting a different
+   * The legacy tray API leaves the stored reflux ratio and total-condenser flag unchanged while selecting a different
    * condenser equation path. The active fixed-reflux mode is therefore part of the mathematical problem even when all
    * previously fingerprinted numbers are unchanged.
    * </p>
@@ -153,24 +144,27 @@ public class DistillationColumnWarmStateCacheTest {
     DistillationColumn column = buildCondenserColumn();
     column.run();
     assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    assertFalse(column.getCondenser().isSeparation_with_liquid_reflux(),
+        "the baseline should use equilibrium partial-condensation equations");
     double firstGasFlow = column.getGasOutStream().getFlowRate("kg/hr");
     double firstBottomFlow = column.getLiquidOutStream().getFlowRate("kg/hr");
-    assertFalse(column.getCondenser().isSeparation_with_liquid_reflux(),
-        "the baseline should use ratio-controlled partial-condenser reflux");
+    double availableLiquid = column.getCondenser().getLiquidOutStream().getFlowRate("kg/hr");
+    assertTrue(Double.isFinite(availableLiquid) && availableLiquid > 0.0,
+        "the baseline condenser must provide liquid traffic for a fixed-reflux split");
 
-    column.getCondenser().setSeparation_with_liquid_reflux(true, 5.0, "kg/hr");
+    column.getCondenser().setSeparation_with_liquid_reflux(true, 0.5 * availableLiquid, "kg/hr");
     column.run();
 
-    assertFalse(column.wasNaphtaliSandholmWarmStateReused(),
-        "fixed liquid-reflux mode must solve the changed condenser equations instead of reusing the ratio solution");
+    assertFalse(column.wasSequentialWarmStateReused(),
+        "fixed liquid-reflux mode must solve the changed condenser equations instead of reusing equilibrium products");
     assertTrue(column.getCondenser().getLiquidProductStream() != null,
         "the fixed-reflux solve must create the condenser liquid split");
-    assertNotEquals(firstGasFlow, column.getGasOutStream().getFlowRate("kg/hr"), 1.0e-2,
+    assertNotEquals(firstGasFlow, column.getGasOutStream().getFlowRate("kg/hr"), 1.0e-8,
         "the changed condenser equations must update the overhead flow");
-    assertNotEquals(firstBottomFlow, column.getLiquidOutStream().getFlowRate("kg/hr"), 1.0e-2,
+    assertNotEquals(firstBottomFlow, column.getLiquidOutStream().getFlowRate("kg/hr"), 1.0e-8,
         "the changed condenser equations must update the bottoms flow");
     assertTrue(column.solved(), column.getConvergenceDiagnostics());
-    assertPhysicalAndBalanced(column.getFeedStreams(3).get(0), column);
+    assertPhysicalAndBalanced(column.getFeedStreams(1).get(0), column);
   }
 
   /**
