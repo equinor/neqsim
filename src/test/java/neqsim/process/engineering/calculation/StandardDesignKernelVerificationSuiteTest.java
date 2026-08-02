@@ -39,7 +39,7 @@ class StandardDesignKernelVerificationSuiteTest {
   @Test
   void registrySnapshotIsDeterministicImmutableAndInternallyConsistent() throws Exception {
     Set<StandardType> expected = EnumSet.of(StandardType.API_12J, StandardType.API_521, StandardType.API_526,
-        StandardType.API_610, StandardType.API_617);
+        StandardType.API_610, StandardType.API_617, StandardType.DNV_ST_F101);
 
     assertEquals(expected, EquipmentDesignKernelRegistry.getRegisteredStandards());
     assertThrows(UnsupportedOperationException.class,
@@ -52,7 +52,7 @@ class StandardDesignKernelVerificationSuiteTest {
       assertTrue(lookup.isImplemented());
       assertEquals(standard, kernel.standard());
       assertTrue(kernel.maturity() != StandardSupportLevel.CATALOGUED);
-      boolean currentEditionImplemented = standard == StandardType.API_521;
+      boolean currentEditionImplemented = standard == StandardType.API_521 || standard == StandardType.DNV_ST_F101;
       assertEquals(currentEditionImplemented, kernel.supports(StandardEdition.defaultEdition(standard)));
       assertTrue(methodKeys.add(kernel.getMethod() + "@" + kernel.getMethodVersion()), "Duplicate method key");
       assertNotNull(roundTrip(kernel));

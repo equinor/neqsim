@@ -1,7 +1,7 @@
 ---
 name: neqsim-capability-map
 description: "Structured inventory of NeqSim's capabilities by engineering discipline. USE WHEN: checking what NeqSim can do, planning implementations, assessing gaps for engineering tasks, or routing work to the right agent. Covers thermodynamics, process equipment, PVT, standards, mechanical design, flow assurance, safety, and economics."
-last_verified: "2026-07-18"
+last_verified: "2026-08-02"
 ---
 
 # NeqSim Capability Map
@@ -9,7 +9,7 @@ last_verified: "2026-07-18"
 Structured reference of what NeqSim can do, organized by engineering discipline.
 Use this to quickly check if a capability exists before searching the source code.
 
-**Last updated:** 2026-07-18
+**Last updated:** 2026-08-02
 
 ---
 
@@ -370,7 +370,8 @@ transport properties (viscosity, thermal conductivity, density).
 | `InletVane` | Inlet vane device (6000 Pa max momentum, 85% bulk efficiency). | `process.mechanicaldesign.separator.primaryseparation` |
 | `InletVaneWithMeshpad` | Inlet vane + downstream mesh pad (92% + mesh pad capture). | `process.mechanicaldesign.separator.primaryseparation` |
 | `InletCyclones` | Inlet cyclone cluster (8000 Pa max momentum, 95% bulk efficiency). | `process.mechanicaldesign.separator.primaryseparation` |
-| `PipelineMechanicalDesign` | Pipeline wall thickness | `process.mechanicaldesign.pipeline` |
+| `PipelineMechanicalDesign` | ASME and legacy DNV-OS wall thickness plus access to typed DNV-ST-F101 screening | `process.mechanicaldesign.pipeline` |
+| `DnvStF101PipelineDesignKernel` | Fail-closed 2021 screening: containment, collapse, propagation, load interaction, fatigue, pressure cases, derating, safety class, ovality, fabrication route, installation strain. `SCREENING` only; independent approval required. | `process.engineering.calculation` |
 | `CompressorMechanicalDesign` | Compressor design | `process.mechanicaldesign.compressor` |
 | `ValveMechanicalDesign` | Valve mechanical design | `process.mechanicaldesign.valve` |
 | `HeatExchangerMechanicalDesign` | HX mechanical design with auto-selection (min area/weight/dP) | `process.mechanicaldesign.heatexchanger` |

@@ -1,7 +1,7 @@
 ---
 name: neqsim-standards-lookup
 description: "Industry standards lookup and compliance tracking for NeqSim engineering tasks. USE WHEN: any engineering task requires standards compliance (API, ISO, NORSOK, DNV, ASME, EN, ASTM), risk assessment, or safety analysis. Provides equipment-to-standards mapping, database query patterns, results.json schema for standards_applied, and risk standards quick-reference."
-last_verified: "2026-07-04"
+last_verified: "2026-08-02"
 ---
 
 # NeqSim Standards Lookup
@@ -39,6 +39,21 @@ The index file `standards_index.csv` maps equipment types to applicable standard
 | Flange | ASME B16.5 | `asme_standards.csv` |
 | CO2 corrosion / materials selection | NORSOK M-506, ISO 15156 / NACE MR0175, NORSOK M-001 | `norsok_standards.csv` — see `NorsokM506CorrosionRate` / `NorsokM506ElectrolyteBridge` (`process.corrosion`) |
 | Mineral scale / produced water | (industry practice; Davies + Ksp(T)) | `ElectrolyteScaleCalculator` / `ScaleKinetics` / `BrineMixingScaleEvaluator` (`process.chemistry.scale`) |
+
+### DNV-ST-F101 pipeline screening
+
+For current DNV-ST-F101 requests, use
+`neqsim.process.engineering.calculation.DnvStF101PipelineDesignKernel` with a complete
+`DnvStF101PipelineDesignInput`. It preserves operating, incidental, and test pressure; collapse;
+propagation buckling; local-buckling load interaction; fatigue; temperature/material de-rating;
+safety class; ovality; fabrication route; and installation strain as distinct checks.
+
+Do not route DNV-ST-F101 to `PipeMechanicalDesignCalculator.DNV_OS_F101`. That constant is the
+legacy DNV-OS-F101 screen. Missing structural inputs or unsupported editions must remain blocked,
+and a calculated result must retain `CALCULATED_REVIEW_REQUIRED`. Never describe a passing screen
+as certification or code compliance; require a licensed project copy and independent review.
+
+See `docs/process/dnv_st_f101_pipeline_screening.md` and the `neqsim-capability-map` skill.
 
 ## TR/NORSOK Integration Classes
 
