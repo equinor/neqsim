@@ -225,14 +225,48 @@ if (Fr_liquid < 0.5) {
 }
 ```
 
-#### 2. Riser Base Severe Slugging
-Detects severe slugging potential using Pots criterion:
+#### 2. Flowline–Riser Severe-Slugging Stability
+
+Severe slugging is a system instability, not a local pipe-section threshold. After solving a
+flowline–riser case, call the explicit diagnostic with the index of the first continuously
+rising section:
+
 ```java
-double pi_ss = (inletPressure - outletPressure) / (rhoL * g * riserHeight);
-if (pi_ss > 1.0) {
-    // Severe slugging potential flagged
+SevereSluggingSystemDiagnostic.Result stability =
+    pipe.evaluateSevereSluggingSystem(riserBaseSection);
+
+if (stability.isApplicable() && stability.isSevereSluggingPossible()) {
+    System.out.printf("Pressure margin: %.0f Pa%n", stability.getPressureMarginPa());
 }
 ```
+
+The implementation uses the quasi-steady Taitel (1986) condition:
+
+$$
+P_{top,crit} = \phi\,\rho_L\,g\left(\frac{V_G}{A_r\,\alpha'} - H\right)
+$$
+
+where $P_{top}$ is **absolute** riser-outlet pressure [Pa], $\phi$ is average riser liquid
+holdup [-], $\rho_L$ is average riser liquid density [kg/m³], $V_G$ is upstream compressible
+gas volume [m³], $A_r$ is riser area [m²], $H$ is vertical riser height [m], and $\alpha'$ is
+the gas-cap void fraction [-]. The system is classified stable when
+$P_{top} + \Delta P_{choke} \ge P_{top,crit}$. A static choke pressure drop can be provided
+to represent one operating point; dynamic choke response is not modelled.
+
+The diagnostic is applicable only to a two-phase, low-rate, stratified flowline followed by
+a continuously rising, constant-area riser. It assumes isothermal ideal-gas compression and
+neglects wall and interfacial shear during incipient gas penetration. It deliberately returns
+a not-applicable status for invalid topology, non-stratified feeders, single-phase states, and
+unvalidated oil–water–gas cases. It predicts a stability boundary, not slug frequency, slug
+length, or transient cycle amplitude.
+
+The old `getSevereSluggingNumberProfile()` method is retained as a deprecated serialization/API
+alias. Its values are the local inclined-section gas-carryover screen now exposed accurately as
+`getInclinedSectionGasCarryoverNumberProfile()`; they must not be used as a flowline–riser
+stability criterion.
+
+Reference: Taitel, Y. (1986), *Stability of Severe Slugging*, International Journal of
+Multiphase Flow 12(2), 203–217, [doi:10.1016/0301-9322(86)90026-1](https://doi.org/10.1016/0301-9322(86)90026-1).
 
 #### 3. Uphill Liquid Fallback
 Uses Turner droplet model for critical gas velocity:
