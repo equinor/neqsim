@@ -217,6 +217,39 @@ offender list stops being dominated by noise. `getConvergenceSummary()` prints
 the absolute Δflow next to each relative error and a `Flow filters:` line when a
 filter is active.
 
+> **Prefer the self-configuring form.** `plant.runUntilConverged(maxIterations)`
+> derives all three filters from the plant's own feed rate, so the hand-picked
+> `1.0` / `1.0` / `50 kg/hr` numbers above are only needed when you must override
+> it. See "Model grinds toward the last decade of the residual" below.
+
+### Model grinds toward the last decade of the residual
+
+**Symptom:** `converged=False` after the iteration cap, but the residual is
+*small* — e.g. `Flow rate: 3.19e-03` against a `1e-3` gate, which is 434 kg/hr on
+a 136 t/hr stream. That is **slow convergence, not a limit cycle**, and it is
+usually the gate being tighter than the model is worth.
+
+| Step | Action | Why It Helps |
+|------|--------|-------------|
+| 1 | Re-run with a larger `maxIterations` before touching damping | Confirms slow-but-real convergence. A limit cycle plateaus; slow convergence keeps creeping down |
+| 2 | Do **not** call `setTolerance()` at all | With no explicit tolerance the model uses `DEFAULT_ENGINEERING_TOLERANCE` (1e-3 relative on flow, T and P) instead of the historical 1e-4. 1e-4 is far tighter than plant instrument or EOS uncertainty |
+| 3 | Read `model.getAutoToleranceSummary()` | States the accuracy actually used. If the residual stalls (<10 % improvement over 5 outer passes) while below `getAutoToleranceCeiling()` (1e-2), the model accepts it and says so instead of grinding |
+| 4 | `model.setAutoToleranceCeiling(5e-3)` | Tightens the loosest accuracy the model may settle for |
+| 5 | `model.setAutoTolerance(false)` | Opts out entirely and restores the historical 1e-4 default |
+
+```java
+// Self-configuring: no tolerance, no noise filters, no per-plant numbers.
+boolean ok = plant.runUntilConverged(60);
+System.out.println(plant.getAutoTuningSummary());     // flow-noise filters chosen
+System.out.println(plant.getAutoToleranceSummary());  // accuracy chosen/accepted
+```
+
+> **Gotcha:** any explicit `setTolerance()` / `setFlowTolerance()` /
+> `runUntilConverged(n, tol)` marks the tolerance as user-owned and disables
+> **both** the engineering default and the stall acceptance. If you set `1e-3`
+> "to be helpful" you also switch off the feature that would have accepted a
+> stalled `1.4e-3`.
+
 > **Gotcha:** `setSectionLowFlowThreshold()` deactivates units for the remainder
 > of the solve pass. Do not set it on a section that is legitimately dry only on
 > the first recycle iteration (e.g. a JT valve on a separator liquid outlet) —
