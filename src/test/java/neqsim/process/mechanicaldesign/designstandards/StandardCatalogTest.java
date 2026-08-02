@@ -47,6 +47,18 @@ class StandardCatalogTest {
   }
 
   @Test
+  void currentNorsokM506EditionHasPublisherReviewEvidenceAndExecutableKernel() {
+    StandardCatalogEntry entry = StandardCatalog.get(StandardType.NORSOK_M_506);
+
+    assertEquals(StandardLifecycleStatus.CURRENT, entry.getLifecycleStatus());
+    assertEquals("2017", entry.getStandardType().getDefaultVersion());
+    assertTrue(entry.getPublisherSourceUrl().contains("systematic-review"));
+    assertEquals("2026-08-02", entry.getVerifiedOn());
+    assertTrue(StandardRegistry.getDesignKernel(StandardType.NORSOK_M_506)
+        .supports(StandardEdition.defaultEdition(StandardType.NORSOK_M_506)));
+  }
+
+  @Test
   void requirementPacksReferenceLoadableCapabilitiesAndCurrentEditions() throws Exception {
     StandardType[] packedStandards = { StandardType.NORSOK_P_002, StandardType.NORSOK_S_001, StandardType.ISO_10418,
         StandardType.IEC_61511, StandardType.API_520_PART_1, StandardType.NORSOK_M_001, StandardType.API_650,

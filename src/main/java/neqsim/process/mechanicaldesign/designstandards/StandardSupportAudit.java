@@ -78,6 +78,13 @@ public final class StandardSupportAudit {
           registryImplementation, separatorImplementation.getImplementationClassName(),
           "Gravity cut-diameter, K-factor, and liquid residence-time screening only; service applicability, vessel "
               + "construction, internals, and performance guarantees require independent review.");
+    case NORSOK_M_506:
+      EquipmentDesignKernelRegistry.Lookup corrosionImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING, corrosionImplementation.isImplemented(),
+          registryImplementation, corrosionImplementation.getImplementationClassName(),
+          "Edition-aware adapter around the existing simplified CO2-corrosion model; wetting, water chemistry, "
+              + "materials selection, localized corrosion, sour-service qualification, inhibitor availability, and "
+              + "conformity assessment remain outside the calculation.");
     default:
       return getCategorySupport(standardType, registryImplementation);
     }

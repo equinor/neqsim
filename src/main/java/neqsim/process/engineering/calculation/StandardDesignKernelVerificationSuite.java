@@ -47,16 +47,18 @@ public final class StandardDesignKernelVerificationSuite {
     Api526OrificeSelectionKernel orificeKernel = new Api526OrificeSelectionKernel();
     Api617CompressorDesignKernel compressorKernel = new Api617CompressorDesignKernel();
     Api12JSeparatorDesignKernel separatorKernel = new Api12JSeparatorDesignKernel();
+    NorsokM506CorrosionDesignKernel corrosionKernel = new NorsokM506CorrosionDesignKernel();
 
     EngineeringBenchmarkSuite suite = new EngineeringBenchmarkSuite(SUITE_ID, REVISION)
         .requireMethod(methodKey(pumpKernel)).requireMethod(methodKey(reliefKernel))
         .requireMethod(methodKey(orificeKernel)).requireMethod(methodKey(compressorKernel))
-        .requireMethod(methodKey(separatorKernel));
+        .requireMethod(methodKey(separatorKernel)).requireMethod(methodKey(corrosionKernel));
     suite.add(pumpBenchmark(pumpKernel));
     suite.add(reliefBenchmark(reliefKernel));
     suite.add(orificeBenchmark(orificeKernel));
     suite.add(compressorBenchmark(compressorKernel));
     suite.add(separatorBenchmark(separatorKernel));
+    suite.add(corrosionBenchmark(corrosionKernel));
     return suite.evaluate();
   }
 
@@ -148,6 +150,37 @@ public final class StandardDesignKernelVerificationSuite {
         .check("screeningPass", 1.0, micrometre != null && micrometre.areAllScreeningCriteriaPassing() ? 1.0 : 0.0,
             "flag", 0.0, 0.0)
         .build();
+  }
+
+  private static EngineeringValidationBenchmark corrosionBenchmark(NorsokM506CorrosionDesignKernel kernel) {
+    NorsokM506CorrosionDesignKernel.Input uninhibitedInput = corrosionInput(0.0);
+    NorsokM506CorrosionDesignKernel.Input inhibitedInput = corrosionInput(0.8);
+    EngineeringCalculationResult<NorsokM506CorrosionAssessment> uninhibited = kernel.calculate(uninhibitedInput, null);
+    EngineeringCalculationResult<NorsokM506CorrosionAssessment> inhibited = kernel.calculate(inhibitedInput, null);
+    NorsokM506CorrosionAssessment base = uninhibited.getValue();
+    NorsokM506CorrosionAssessment treated = inhibited.getValue();
+    double inhibitorRatio = base == null || treated == null ? FAILURE_SENTINEL
+        : treated.getCorrectedCorrosionRateMmPerYear() / base.getCorrectedCorrosionRateMmPerYear();
+    return baseline("norsok-m-506-rate-and-inhibitor-regression", kernel)
+        .check("calculatedReviewRequired", 1.0, calculated(uninhibited), "flag", 0.0, 0.0)
+        .check("co2PartialPressure", 2.0, base == null ? FAILURE_SENTINEL : base.getCO2PartialPressureBar(), "bar",
+            1.0e-12, 1.0e-12)
+        .check("correctedCorrosionRate", 13.894632683330206,
+            base == null ? FAILURE_SENTINEL : base.getCorrectedCorrosionRateMmPerYear(), "mm/year", 1.0e-12, 1.0e-12)
+        .check("inhibitorRatio", 0.2, inhibitorRatio, "fraction", 1.0e-12, 1.0e-12)
+        .check("projectedLossIdentity", 0.0,
+            base == null ? FAILURE_SENTINEL
+                : Math.abs(base.getProjectedUniformWallLossMm() - 25.0 * base.getCorrectedCorrosionRateMmPerYear()),
+            "mm", 1.0e-12, 0.0)
+        .build();
+  }
+
+  private static NorsokM506CorrosionDesignKernel.Input corrosionInput(double inhibitorEfficiency) {
+    return NorsokM506CorrosionDesignKernel.Input
+        .builder(StandardEdition.defaultEdition(StandardType.NORSOK_M_506), "Pipeline").temperatureC(60.0)
+        .totalPressureBara(100.0).co2MoleFraction(0.02).actualPH(4.2).flowVelocityMPerS(3.0)
+        .pipeInternalDiameterM(0.254).liquidDensityKgPerM3(1000.0).liquidDynamicViscosityPaS(0.001)
+        .inhibitorEfficiencyFraction(inhibitorEfficiency).exposureYears(25.0).build();
   }
 
   private static EngineeringValidationBenchmark.Builder baseline(String id, EquipmentDesignKernel<?, ?> kernel) {

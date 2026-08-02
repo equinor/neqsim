@@ -45,14 +45,16 @@ The design framework consists of several integrated components:
 
 Standard-specific equipment calculations are registered explicitly. The current registry exposes
 screening kernels for API 617 compressor-casing checks, API 610 pump checks, API 521 relief-scenario
-evaluation, API 526 standard-orifice selection, and API 12J separator-performance checks.
+evaluation, API 526 standard-orifice selection, API 12J separator-performance checks, and NORSOK
+M-506 CO2-corrosion screening.
 Unsupported editions, inapplicable equipment types, and incomplete inputs return blocked results.
 All remain preliminary engineering screens and do not claim certification or construction
 readiness.
 
 The executable `StandardDesignKernelVerificationSuite.evaluateRegression()` runs every registered
 kernel against deterministic numeric baselines. It includes SI/customary equivalence at the API 526
-orifice boundary and metre/micrometre equivalence for API 12J. Inspect
+orifice boundary, metre/micrometre equivalence for API 12J, and M-506 rate/inhibitor regression.
+Inspect
 `report.areAllBenchmarksPassed()` for regression health and `report.getFailedBenchmarkIds()` for
 diagnosis. The records are deliberately classified as `REGRESSION_BASELINE`; therefore
 `report.isPassed()` remains false until separately controlled, independently reviewed evidence is

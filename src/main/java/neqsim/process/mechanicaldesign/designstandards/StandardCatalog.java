@@ -9,9 +9,12 @@ import java.util.Map;
 /** Publisher-sourced lifecycle and edition catalogue for NeqSim design standards. */
 public final class StandardCatalog {
   private static final String VERIFIED_ON = "2026-07-21";
+  private static final String M506_VERIFIED_ON = "2026-08-02";
   private static final String NORSOK_P = "https://standard.no/en/sectors/petroleum/norsok-standards/p-process";
   private static final String NORSOK_L = "https://standard.no/en/sectors/energi-og-klima/petroleum/norsok-standard-categories/l-piping--layout/";
   private static final String NORSOK_M = "https://standard.no/en/sectors/energi-og-klima/petroleum/norsok-standard-categories/m-material/";
+  private static final String NORSOK_M506_REVIEW = "https://standard.no/en/news/"
+      + "norsok-m-5062017-co2-corrosion-rate-calculation-model-is-on-systematic-review/";
   private static final String NORSOK_S = "https://standard.no/en/sectors/energi-og-klima/petroleum/norsok-standard-categories/s-safety-she/";
   private static final String NORSOK_I = "https://standard.no/en/sectors/petroleum/norsok-standards/i-instrumentation";
   private static final String ASME_BPVC = "https://www.asme.org/codes-standards/bpvc-standards/bpvc-2025";
@@ -37,6 +40,8 @@ public final class StandardCatalog {
         StandardLifecycleStatus.SUPERSEDED, StandardType.NORSOK_P_002, NORSOK_P, VERIFIED_ON));
     current(entries, NORSOK_P, StandardType.NORSOK_P_002);
     current(entries, NORSOK_M, StandardType.NORSOK_M_001, StandardType.NORSOK_M_630);
+    entries.put(StandardType.NORSOK_M_506, new StandardCatalogEntry(StandardType.NORSOK_M_506,
+        StandardLifecycleStatus.CURRENT, null, NORSOK_M506_REVIEW, M506_VERIFIED_ON));
     current(entries, NORSOK_S, StandardType.NORSOK_S_001);
     current(entries, NORSOK_I, StandardType.NORSOK_I_002);
 

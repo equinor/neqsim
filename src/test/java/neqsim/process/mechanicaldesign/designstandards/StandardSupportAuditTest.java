@@ -56,6 +56,9 @@ class StandardSupportAuditTest {
     assertEquals("Api12JSeparatorDesignKernel",
         StandardSupportAudit.getSupport(StandardType.API_12J).getCalculationImplementation());
     assertTrue(StandardSupportAudit.getSupport(StandardType.API_12J).isRegistryConnected());
+    assertEquals("NorsokM506CorrosionDesignKernel",
+        StandardSupportAudit.getSupport(StandardType.NORSOK_M_506).getCalculationImplementation());
+    assertTrue(StandardSupportAudit.getSupport(StandardType.NORSOK_M_506).isRegistryConnected());
     assertFalse(StandardSupportAudit.getSupport(StandardType.API_660).isRegistryConnected());
     assertTrue(StandardSupportAudit.getSupport(StandardType.API_660).getCalculationImplementation()
         .startsWith("StandardRequirementPackRegistry"));

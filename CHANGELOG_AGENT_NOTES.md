@@ -9,6 +9,36 @@
 
 ---
 
+## 2026-08-02 — NORSOK M-506 added to the edition-aware standards kernel registry
+
+### Summary
+
+The existing mutable `NorsokM506CorrosionRate` calculation now has a strict common-kernel adapter.
+`NORSOK-M-506 2017` is catalogued with publisher lifecycle evidence, exact-edition support, equipment
+applicability, readiness blockers, immutable inputs and outputs, and regression coverage.
+
+### New API
+
+| API | What it does |
+|---|---|
+| `NorsokM506CorrosionDesignKernel` | Runs the existing simplified calculation only after edition, applicability, range, and input-quality checks pass |
+| `NorsokM506CorrosionDesignKernel.Input.builder(...)` | Retains unit-explicit raw inputs without the legacy setters' silent clamping |
+| `NorsokM506CorrosionAssessment` | Reports rate, pH, fugacity, correction factors, wall shear, and projected uniform wall loss as an immutable review-gated snapshot |
+
+### Migration
+
+Use the kernel for new auditable studies. Keep `NorsokM506CorrosionRate` for legacy mutable workflows
+and sweeps, and use `NorsokM506ElectrolyteBridge` when an electrolyte-model pH or FeCO3 saturation
+ratio is required. The projected wall loss is not a code corrosion allowance or acceptance decision.
+
+### Agent and skill behavior
+
+Standards and flow-assurance guidance now route explicit M-506 compliance work through the common
+kernel and require the screening boundary, purchased-standard review, and NeqSim FeCO3 extension to
+remain visible.
+
+---
+
 ## 2026-08-02 — Pump NPSH capacity constraint direction corrected
 
 ### Summary

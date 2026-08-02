@@ -1,7 +1,7 @@
 ---
 name: neqsim-flow-assurance
 description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion (NORSOK M-506, de Waard-Milliams, FeCO3 film), mineral scale (saturation index, scale kinetics, brine mixing / seawater incompatibility), scale/solids valve plugging & Cv/opening drift (ValveScaleDrift), scale/deposit remediation & dissolver/solvent/wash selection for cleaning fouled equipment (ScaleRemediationAdvisor), elemental sulfur (S8) deposition from oxygen ingress / H2S oxidation at pressure or temperature letdown (compressor inlets, valves, dry-gas seals, letdown stations), per-segment pipeline corrosion+scale profiles, pipeline hydraulics, water/liquid hammer screening, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
-last_verified: "2026-07-11"
+last_verified: "2026-08-02"
 ---
 
 # Flow Assurance Analysis with NeqSim
@@ -440,6 +440,14 @@ bridge compute it from aqueous Fe++/CO3-- molalities (Sun & Nesic 2009 Ksp):
 model.setFeCO3SaturationRatio(sr);   // >1 = protective; -1 = disabled (default)
 double film = model.calculateFeCO3FilmFactor();  // 1.0 = no credit, <1 = protective
 ```
+
+For an auditable standards calculation, pass the resulting in-situ pH and optional saturation ratio
+to `NorsokM506CorrosionDesignKernel.Input`. The kernel is the preferred public path when the task
+names NORSOK M-506: it enforces the unamended 2017 edition and model envelope, preserves raw inputs
+without setter clamping, and returns `CALCULATED_REVIEW_REQUIRED`. Continue to use the bridge to
+derive chemistry and the legacy model for sweeps, but do not present either route as a conformity
+assessment. The optional saturation-ratio film factor and projected wall loss are NeqSim screening
+extensions, not code acceptance criteria.
 
 **Gotchas (verified):** `SystemInterface.clone()` drops the chemical-reaction setup
 — re-run `chemicalReactionInit()` on the clone before flashing or the CO2-brine pH

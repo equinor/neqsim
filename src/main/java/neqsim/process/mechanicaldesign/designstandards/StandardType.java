@@ -40,6 +40,8 @@ public enum StandardType {
       new String[] { "Separator", "ThreePhaseSeparator", "Compressor", "Pump" }, "separator process design"),
   NORSOK_M_001("NORSOK-M-001", "Materials selection", "2025",
       new String[] { "Pipeline", "Separator", "ThreePhaseSeparator" }, "material plate design codes"),
+  NORSOK_M_506("NORSOK-M-506", "CO2 corrosion rate calculation model", "2017",
+      new String[] { "Pipeline", "AdiabaticPipe", "Pipe" }, "corrosion design codes"),
   NORSOK_M_630("NORSOK-M-630", "Material data sheets for piping", "2020",
       new String[] { "AdiabaticPipe", "Pipe", "Valve" }, "material pipe design codes"),
   NORSOK_S_001("NORSOK-S-001", "Technical safety", "2020+AC:2021",

@@ -1,7 +1,7 @@
 ---
 name: neqsim-standards-lookup
 description: "Industry standards lookup and compliance tracking for NeqSim engineering tasks. USE WHEN: any engineering task requires standards compliance (API, ISO, NORSOK, DNV, ASME, EN, ASTM), risk assessment, or safety analysis. Provides equipment-to-standards mapping, database query patterns, results.json schema for standards_applied, and risk standards quick-reference."
-last_verified: "2026-07-04"
+last_verified: "2026-08-02"
 ---
 
 # NeqSim Standards Lookup
@@ -37,10 +37,26 @@ The index file `standards_index.csv` maps equipment types to applicable standard
 | Subsea equipment | NORSOK U-001, DNV-ST-F101 | `norsok_standards.csv`, `subsea_standards.csv` |
 | Well casing/tubing | API 5CT, API TR 5C3, NORSOK D-010 | `api_standards.csv`, `norsok_standards.csv` |
 | Flange | ASME B16.5 | `asme_standards.csv` |
-| CO2 corrosion / materials selection | NORSOK M-506, ISO 15156 / NACE MR0175, NORSOK M-001 | `norsok_standards.csv` — see `NorsokM506CorrosionRate` / `NorsokM506ElectrolyteBridge` (`process.corrosion`) |
+| CO2 corrosion / materials selection | NORSOK M-506, ISO 15156 / NACE MR0175, NORSOK M-001 | Use `NorsokM506CorrosionDesignKernel` for strict M-506 screening; use `NorsokM506ElectrolyteBridge` for a rigorous brine pH/FeCO3 basis and keep `NorsokM506CorrosionRate` for legacy sweeps |
 | Mineral scale / produced water | (industry practice; Davies + Ksp(T)) | `ElectrolyteScaleCalculator` / `ScaleKinetics` / `BrineMixingScaleEvaluator` (`process.chemistry.scale`) |
 
 ## TR/NORSOK Integration Classes
+
+### NORSOK M-506 execution rule
+
+For an explicit NORSOK M-506 calculation, prefer
+`neqsim.process.engineering.calculation.NorsokM506CorrosionDesignKernel`. It implements only the
+unamended 2017 edition, checks `Pipeline` / `AdiabaticPipe` / `Pipe` applicability, retains raw
+unit-explicit input values, and blocks unsupported or out-of-range cases before the mutable legacy
+calculator runs. Treat `NorsokM506CorrosionAssessment.getProjectedUniformWallLossMm()` as rate
+multiplied by exposure time, not as a specified corrosion allowance or acceptance decision.
+
+The kernel is `SCREENING`: verify the purchased standard, wetting and water-chemistry basis,
+localized corrosion, sour service, inhibitor availability, materials selection, and project
+criteria independently. When `feCO3SaturationRatio` is enabled, report it as a NeqSim film-factor
+extension and retain the source chemistry evidence. Standards Norway's May 2026 systematic-review
+notice is the lifecycle source for the catalogued 2017 edition; do not silently apply this kernel to
+a later revision.
 
 Use these Java classes when a task references Equinor technical requirements,
 STS0131, TR1965, TR2237, or NORSOK P-002:

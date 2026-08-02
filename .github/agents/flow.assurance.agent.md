@@ -28,7 +28,7 @@ Identify and apply relevant standards for every flow assurance study. Common sta
 | Domain | Standards | Key Requirements |
 |--------|-----------|-----------------|
 | Pipeline design | DNV-ST-F101, NORSOK L-001, ASME B31.4/B31.8 | Wall thickness, design factors, corrosion allowance |
-| Corrosion | NORSOK M-001, DNV-RP-F112, ISO 21457 | Material selection, CO2/H2S corrosion rates |
+| Corrosion | NORSOK M-506, NORSOK M-001, DNV-RP-F112, ISO 21457 | CO2-corrosion screening, material selection, and CO2/H2S corrosion basis |
 | Subsea pipelines | DNV-RP-F109, NORSOK U-001 | On-bottom stability, span assessment |
 | GRP piping | ISO 14692 | Non-metallic pipe design |
 | Hydrate management | DNV-RP-F116 | Hydrate prevention/remediation in subsea systems |
@@ -116,6 +116,12 @@ chelant for sulfate scale, proprietary dissolver + pH-control restore for
 dithiazine scavenger solids); `RootCauseAnalyser` appends this cleaning hint to
 every deposit candidate automatically. See the `neqsim-flow-assurance` skill
 (sections 5 and 5-scale) for patterns and gotchas.
+
+When the task explicitly requests NORSOK M-506, route the final calculation through
+`NorsokM506CorrosionDesignKernel` after deriving the pH/FeCO3 basis. Do not bypass its edition,
+applicability, or range blockers, and state that its projected wall loss is not a corrosion
+allowance. Mark the result as screening and keep purchased-standard, wetting, chemistry, localized
+corrosion, sour-service, inhibitor-availability, materials, and project-criteria review open.
 
 ## Phase Envelope with Safety Curves
 Calculate phase envelope with hydrate, wax, and cricondenbar/cricondentherm:

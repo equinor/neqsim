@@ -27,6 +27,7 @@ Use these classes before writing custom checks:
 | STS0131 LEL endpoint policy | `GasDispersionAnalyzer.builder().sts0131IntegralEndpoint()` or `.sts0131CfdEndpoint()` |
 | TR2237 performance standards | `TR2237Templates.createOnshoreTemplate()` |
 | Combined review | `new StandardsDesignReview().review(process)` |
+| NORSOK M-506 CO2-corrosion screening | `NorsokM506CorrosionDesignKernel` with an explicit `StandardEdition` and immutable `Input` |
 
 ## Workflow
 
@@ -40,6 +41,13 @@ Use these classes before writing custom checks:
 5. For every FAIL or missing-evidence item, provide a concrete remediation step:
    missing document, missing geometry input, failed design margin, or required
    NeqSim implementation gap.
+
+For NORSOK M-506, require the common kernel rather than treating the legacy mutable calculator as
+compliance evidence. The registered method supports only the unamended 2017 edition and remains
+`SCREENING`. Keep wetting, water chemistry, localized corrosion, sour service, inhibitor
+availability, material selection, purchased-standard review, and project acceptance criteria as
+explicit open evidence. The FeCO3 saturation-ratio film factor and projected uniform wall loss are
+NeqSim extensions and must not be reported as standard acceptance decisions.
 
 ## Evidence Rules
 
