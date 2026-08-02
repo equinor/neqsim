@@ -139,7 +139,7 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **flow.assurance** | `@flow.assurance <description>` | Hydrate, wax, asphaltene, corrosion, pipeline pressure drop, and F114 pipe-soil input routing |
+| **flow.assurance** | `@flow.assurance <description>` | Hydrate, wax, asphaltene, corrosion, pipeline pressure drop, and bounded F110/F114 input routing |
 
 **Examples:**
 ```
@@ -170,7 +170,7 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **mechanical.design** | `@mechanical.design <description>` | ASME/API/DNV mechanical design including F114 pipe-soil screening plus reconciled equipment, process, topsides, SURF, subsea, and well CAPEX estimates |
+| **mechanical.design** | `@mechanical.design <description>` | ASME/API/DNV mechanical design including F110 global-buckling and F114 pipe-soil screening plus reconciled equipment, process, topsides, SURF, subsea, and well CAPEX estimates |
 
 **Examples:**
 ```
@@ -437,7 +437,7 @@ They contain verified patterns, rules, and domain knowledge.
 | `neqsim-eos-regression` | Fitting EOS to experimental data | kij tuning, PVT matching (CME, CVD), C7+ characterization |
 | `neqsim-field-development` | Field development studies | Concept selection, tieback analysis, production forecasting, lifecycle |
 | `neqsim-field-economics` | NPV, IRR, cash flow, tax regimes | Norwegian NCS, UK fiscal, cost estimation, Monte Carlo |
-| `neqsim-flow-assurance` | Hydrate, wax, corrosion, pipeline hydraulics, F114 inputs | Flow assurance threats and bounded pipe-soil routing with NeqSim code patterns |
+| `neqsim-flow-assurance` | Hydrate, wax, corrosion, pipeline hydraulics, F110/F114 inputs | Flow assurance threats and bounded global-buckling/pipe-soil routing with NeqSim code patterns |
 | `neqsim-plant-data` | Connecting to plant historian data | Tagreader API, tag mapping, digital twin loops, data quality |
 | `neqsim-power-generation` | Gas/steam turbines, HRSG, combined cycle | Equipment patterns, efficiency calculations, heat integration |
 | `neqsim-process-extraction` | Extracting process data from text or tables | Equipment mapping, stream wiring, unit conversion, JSON builder |

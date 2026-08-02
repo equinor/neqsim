@@ -30,7 +30,7 @@ NeqSim code patterns.
 |--------|-----------|-----------------|
 | Pipeline design | DNV-ST-F101, DNV-RP-F104 for CO2, NORSOK L-001, ASME B31.4/B31.8 | Structural design plus composition-specific CO2 phase/hydraulic and lifecycle basis |
 | Corrosion | NORSOK M-001, DNV-RP-F112, ISO 21457 | Material selection, CO2/H2S corrosion rates |
-| Subsea pipelines | DNV-RP-F109, DNV-RP-F105, DNV-RP-F114, NORSOK U-001 | On-bottom stability, free-span, and caller-controlled pipe-soil interaction screening |
+| Subsea pipelines | DNV-RP-F109, DNV-RP-F105, DNV-RP-F110, DNV-RP-F114, NORSOK U-001 | On-bottom stability, free-span, caller-controlled global-buckling response, and pipe-soil interaction screening |
 | Hydrate management | DNV-RP-F116 | Hydrate prevention and remediation |
 | GRP piping | ISO 14692 | Non-metallic pipe design |
 | Pipeline integrity | DNV-RP-F101, DNV-RP-F116, API 1160 | Inspected metal-loss remaining strength and integrity management |
@@ -273,6 +273,20 @@ Do not convert burial depth, soil thermal resistance, or a generic friction fact
 geotechnical resistance. Keep site investigation, soil interpretation, penetration/burial and
 load-displacement response, time/cyclic effects, characteristic values, uncertainty, structural
 actions, and F109/F110/F105/ST-F101 acceptance external.
+
+### DNV-RP-F110 global-buckling response routing
+
+When hydraulic/thermal, route, or installation work feeds a current
+`DNV-RP-F110 2019-09+AMD:2021-09` screen, route named external structural-analysis cases through
+`DnvRpF110GlobalBucklingResponseScreeningKernel`. Supply effective force, peak longitudinal strain,
+peak global displacement, and required feed-in length with caller-controlled allowable or available
+values. Treat margins and utilizations as screening findings.
+
+Require external evidence for the effective-force derivation, pipe/as-laid geometry, pipe-soil
+response, imperfections/triggers/strategy, global structural model, load combinations, local
+capacity and strain criteria, uncertainty/sensitivity/buckle sharing, and lifecycle actions. Never
+derive critical buckling, initiation/prevention criteria, structural response, or soil springs from
+NeqSim hydraulic or thermal output. Keep F109/F114/F105 and all ST-F101 acceptance external.
 
 ### Beggs and Brill Multiphase Correlation
 
