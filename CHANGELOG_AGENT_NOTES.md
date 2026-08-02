@@ -9,6 +9,41 @@
 
 ---
 
+## 2026-08-02 — ISO 5167-1/-2 added to the edition-aware standards pipeline
+
+### Added
+
+`ISO-5167-1 2022` and `ISO-5167-2 2022` are catalogued separately with ISO publisher lifecycle
+sources. Part 1 records the companion general-principles basis; Part 2 registers the new
+`Iso5167OrificeMeteringKernel` for `Orifice` equipment.
+
+The kernel reuses the existing `Orifice` Reader-Harris/Gallagher and pressure-loss equations through
+an immutable, unit-explicit contract. Liquid service uses an explicit expansibility factor of one,
+while gas/vapour service requires kappa and applies the existing compressible correction. The typed
+result records beta ratio, differential and pressure ratios, discharge and expansibility factors,
+mass and actual-volume flow, pipe Reynolds number, permanent pressure loss, and iteration count.
+
+### Applicability and boundary
+
+The adapter fails closed for unsupported editions or amendments, non-`Orifice` equipment,
+multiphase/part-full/pulsating/non-subsonic flow, pipe diameter outside 50 mm to 1,000 mm, beta ratio
+outside the implemented 0.10 to 0.75 screen, Reynolds number below 5,000, invalid absolute
+pressures/properties, and missing external geometry/installation verification. That verification is
+a caller attestation; NeqSim does not inspect the installed meter.
+
+The method remains `SCREENING`. It does not replace purchased ISO 5167-1/-2 documents, uncertainty
+analysis, calibration, plate and tapping inspection, straight-length verification, pulsation or
+two-phase analysis, custody-transfer acceptance, or accountable engineering approval. Existing
+`Orifice`, `Standard_AGA3`, and `GpsaOrificeCalculator` entry points remain available under their
+respective process-simulation and AGA/API/GPSA bases.
+
+### Documentation and example
+
+Added `docs/process/measurement/iso_5167_orifice_metering.md` and an executed
+`examples/notebooks/iso_5167_orifice_metering_kernel.ipynb`. The common regression suite, support
+matrix, migration/program/design-framework guides, standards lookup skill, standards reviewer, and
+gas-quality agent now cover the exact ISO path and its exclusions.
+
 ## 2026-08-02 — NORSOK M-506 added to the edition-aware standards kernel registry
 
 ### Summary

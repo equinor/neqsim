@@ -28,6 +28,7 @@ Use these classes before writing custom checks:
 | TR2237 performance standards | `TR2237Templates.createOnshoreTemplate()` |
 | Combined review | `new StandardsDesignReview().review(process)` |
 | NORSOK M-506 CO2-corrosion screening | `NorsokM506CorrosionDesignKernel` with an explicit `StandardEdition` and immutable `Input` |
+| ISO 5167-2 orifice-plate metering | `Iso5167OrificeMeteringKernel` with explicit service, tapping, geometry, properties, and applicability attestations |
 
 ## Workflow
 
@@ -48,6 +49,13 @@ compliance evidence. The registered method supports only the unamended 2017 edit
 availability, material selection, purchased-standard review, and project acceptance criteria as
 explicit open evidence. The FeCO3 saturation-ratio film factor and projected uniform wall loss are
 NeqSim extensions and must not be reported as standard acceptance decisions.
+
+For ISO 5167, require the common Part 2 kernel for an ISO basis and keep Part 1 as the companion
+general-requirements record. Verify the caller's single-phase, full-pipe, subsonic, non-pulsating,
+geometry, tapping, and installation evidence; the Boolean attestations are not proof. Keep plate
+inspection, straight lengths, uncertainty, calibration, pulsation, custody-transfer acceptance, and
+project metering procedure open. Do not substitute `Standard_AGA3` unless AGA 3/API MPMS 14.3 is
+the governing basis.
 
 ## Evidence Rules
 

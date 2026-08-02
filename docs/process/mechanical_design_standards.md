@@ -65,6 +65,8 @@ the source catalog diverge.
 | DNV-ST-F101 | 2021 | CURRENT | [publisher](https://www.dnv.com/energy/standards-guidelines/dnv-st-f101-submarine-pipeline-systems/) (checked 2026-07-21) | pipeline design codes | PipelineDesignStandard | StandardRequirementPackRegistry (1 capability) | SCREENING | no | Mapped calculations and review workflows are discoverable as a versioned requirement pack; this is not a complete conformity assessment and is intentionally separate from the legacy factory. |
 | DNV-OS-F101 | 2013 | UNVERIFIED | unverified | pipeline design codes | PipelineDesignStandard | None | CATALOGUED | no | Catalogued pipeline selections fail closed because no edition-specific wall-thickness calculation is connected. |
 | DNV-RP-F105 | 2021 | UNVERIFIED | unverified | pipeline design codes | PipelineDesignStandard | None | CATALOGUED | no | Catalogued pipeline selections fail closed because no edition-specific wall-thickness calculation is connected. |
+| ISO-5167-1 | 2022 | CURRENT | [publisher](https://www.iso.org/standard/79179.html) (checked 2026-08-02) | flow measurement standards | DesignStandard | None | CATALOGUED | no | The general principles and requirements are catalogued as the companion basis for orifice-plate metering; no standalone Part 1 calculation is exposed. |
+| ISO-5167-2 | 2022 | CURRENT | [publisher](https://www.iso.org/standard/79180.html) (checked 2026-08-02) | flow measurement standards | DesignStandard | Iso5167OrificeMeteringKernel | SCREENING | yes | Single-phase, full-pipe, subsonic, non-pulsating concentric orifice-plate flow calculation only; plate inspection, installation, tapping geometry evidence, uncertainty, calibration, and custody-transfer acceptance remain outside the calculation. |
 | ISO-13623 | 2017 | UNVERIFIED | unverified | pipeline design codes | PipelineDesignStandard | None | CATALOGUED | no | Catalogued pipeline selections fail closed because no edition-specific wall-thickness calculation is connected. |
 | ISO-15649 | 2001 | UNVERIFIED | unverified | pipeline design codes | PipelineDesignStandard | None | CATALOGUED | no | Catalogued pipeline selections fail closed because no edition-specific wall-thickness calculation is connected. |
 | ISO-16812 | 2019 | UNVERIFIED | unverified | heat exchanger design codes | DesignStandard | None | CATALOGUED | no | No standard-specific heat-exchanger mechanical calculation is connected. |
@@ -127,13 +129,15 @@ implemented standard, audited maturity, and structured applicability. Kernels mu
 input or a `ProcessSystem`. Compatibility adapters defensively copy legacy mutable calculators.
 
 `StandardRegistry.getDesignKernel(...)` returns an explicit lookup status. API 617, API 610, API
-521, API 526, and API 12J have connected adapters and return `IMPLEMENTED`; standards that have not
-been adapted return `NOT_IMPLEMENTED`, never an empty or implied success. Each kernel returns an
+521, API 526, API 12J, NORSOK M-506, and ISO 5167-2 have connected adapters and return
+`IMPLEMENTED`; standards that have not been adapted return `NOT_IMPLEMENTED`, never an empty or
+implied success. Each kernel returns an
 immutable assessment snapshot and always requires engineering review because its maturity remains
 `SCREENING`. Unsupported editions fail closed as `EDITION_NOT_IMPLEMENTED` until separately
 implemented and validated.
 
-Only API 521 currently has both a publisher-verified current lifecycle and a matching exact kernel.
+API 521, NORSOK M-506, and ISO 5167-2 currently have both a publisher-verified current lifecycle and
+a matching exact kernel.
 API 526, API 617, API 610, and API 12J adapters implement legacy edition labels that do not match
 the current catalog editions; they are available only through an explicit historical selection
 until current-edition kernels and independent benchmark evidence are added.
@@ -149,6 +153,12 @@ The API 617 adapter defensively copies a compressor-casing configuration before 
 containment, hydrotest, flange-rating, nozzle-load allowance, and thermal-growth screens. The API
 12J adapter uses explicitly unit-tagged cut diameter together with K-factor and liquid residence
 time. Passing either result is not a package, vessel, or performance certification.
+
+The ISO 5167-2 adapter makes liquid versus gas/vapour service explicit, iterates the existing
+`Orifice` discharge-coefficient correlation, and blocks conditions outside its single-phase,
+full-pipe, subsonic, non-pulsating numerical envelope. ISO 5167-1 remains the separately catalogued
+companion requirements basis. Installation attestations are caller evidence, not checks performed
+by NeqSim; uncertainty, calibration, inspection, and custody-transfer acceptance remain external.
 
 ## Cross-equipment requirement packs
 

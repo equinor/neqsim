@@ -37,6 +37,7 @@ The index file `standards_index.csv` maps equipment types to applicable standard
 | Subsea equipment | NORSOK U-001, DNV-ST-F101 | `norsok_standards.csv`, `subsea_standards.csv` |
 | Well casing/tubing | API 5CT, API TR 5C3, NORSOK D-010 | `api_standards.csv`, `norsok_standards.csv` |
 | Flange | ASME B16.5 | `asme_standards.csv` |
+| Orifice plate / differential-pressure metering | ISO 5167-1/-2, AGA 3 / API MPMS 14.3 | Use `Iso5167OrificeMeteringKernel` for strict ISO 5167-2:2022 screening; keep `Standard_AGA3` for an AGA/API basis and `Orifice` for process simulation |
 | CO2 corrosion / materials selection | NORSOK M-506, ISO 15156 / NACE MR0175, NORSOK M-001 | Use `NorsokM506CorrosionDesignKernel` for strict M-506 screening; use `NorsokM506ElectrolyteBridge` for a rigorous brine pH/FeCO3 basis and keep `NorsokM506CorrosionRate` for legacy sweeps |
 | Mineral scale / produced water | (industry practice; Davies + Ksp(T)) | `ElectrolyteScaleCalculator` / `ScaleKinetics` / `BrineMixingScaleEvaluator` (`process.chemistry.scale`) |
 
@@ -57,6 +58,19 @@ criteria independently. When `feCO3SaturationRatio` is enabled, report it as a N
 extension and retain the source chemistry evidence. Standards Norway's May 2026 systematic-review
 notice is the lifecycle source for the catalogued 2017 edition; do not silently apply this kernel to
 a later revision.
+
+### ISO 5167 execution rule
+
+For an explicit ISO orifice-metering calculation, use
+`neqsim.process.engineering.calculation.Iso5167OrificeMeteringKernel`. The registered method supports
+only unamended ISO 5167-2:2022, paired with ISO 5167-1:2022. It requires an `Orifice` equipment
+basis, explicit liquid or gas/vapour service, a supported tapping arrangement, and affirmative
+single-phase/full-pipe/subsonic/non-pulsating and installation evidence before calculation.
+
+Do not treat `geometryAndInstallationVerified(true)` as evidence created by NeqSim; retain the
+inspection and installation record. Keep uncertainty, calibration, straight lengths, plate
+condition, custody-transfer acceptance, and project metering procedure outside the kernel. Use
+`Standard_AGA3` under an AGA 3/API MPMS 14.3 basis and do not relabel that result as ISO 5167.
 
 Use these Java classes when a task references Equinor technical requirements,
 STS0131, TR1965, TR2237, or NORSOK P-002:

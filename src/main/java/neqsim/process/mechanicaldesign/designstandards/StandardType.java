@@ -111,6 +111,10 @@ public enum StandardType {
       "pipeline design codes"),
 
   // ISO Standards
+  ISO_5167_1("ISO-5167-1", "Differential-pressure flow measurement - General principles", "2022",
+      new String[] { "Orifice" }, "flow measurement standards"),
+  ISO_5167_2("ISO-5167-2", "Differential-pressure flow measurement - Orifice plates", "2022",
+      new String[] { "Orifice" }, "flow measurement standards"),
   ISO_13623("ISO-13623", "Pipeline Transportation Systems", "2017", new String[] { "Pipeline", "AdiabaticPipe" },
       "pipeline design codes"),
   ISO_15649("ISO-15649", "Petroleum and Natural Gas Process Piping", "2001", new String[] { "AdiabaticPipe", "Pipe" },

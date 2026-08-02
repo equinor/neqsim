@@ -59,6 +59,24 @@ class StandardCatalogTest {
   }
 
   @Test
+  void currentIso5167PartsHavePublisherEvidenceAndPart2Kernel() {
+    StandardCatalogEntry general = StandardCatalog.get(StandardType.ISO_5167_1);
+    StandardCatalogEntry orifice = StandardCatalog.get(StandardType.ISO_5167_2);
+
+    assertEquals(StandardLifecycleStatus.CURRENT, general.getLifecycleStatus());
+    assertEquals(StandardLifecycleStatus.CURRENT, orifice.getLifecycleStatus());
+    assertEquals("2022", general.getStandardType().getDefaultVersion());
+    assertEquals("2022", orifice.getStandardType().getDefaultVersion());
+    assertTrue(general.getPublisherSourceUrl().contains("79179"));
+    assertTrue(orifice.getPublisherSourceUrl().contains("79180"));
+    assertEquals("2026-08-02", general.getVerifiedOn());
+    assertEquals("2026-08-02", orifice.getVerifiedOn());
+    assertFalse(StandardRegistry.getDesignKernel(StandardType.ISO_5167_1).isImplemented());
+    assertTrue(StandardRegistry.getDesignKernel(StandardType.ISO_5167_2)
+        .supports(StandardEdition.defaultEdition(StandardType.ISO_5167_2)));
+  }
+
+  @Test
   void requirementPacksReferenceLoadableCapabilitiesAndCurrentEditions() throws Exception {
     StandardType[] packedStandards = { StandardType.NORSOK_P_002, StandardType.NORSOK_S_001, StandardType.ISO_10418,
         StandardType.IEC_61511, StandardType.API_520_PART_1, StandardType.NORSOK_M_001, StandardType.API_650,
