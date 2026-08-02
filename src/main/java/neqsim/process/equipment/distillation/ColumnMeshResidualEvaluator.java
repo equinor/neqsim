@@ -87,8 +87,7 @@ final class ColumnMeshResidualEvaluator {
    * @param state column state snapshot
    * @param builder residual builder
    */
-  private static void addMaterialResiduals(DistillationColumn column, ColumnMeshState state,
-      ResidualBuilder builder) {
+  private static void addMaterialResiduals(DistillationColumn column, ColumnMeshState state, ResidualBuilder builder) {
     String[] componentNames = state.getComponentNames();
     for (int tray = 0; tray < state.getTrayCount(); tray++) {
       for (int comp = 0; comp < state.getComponentCount(); comp++) {
@@ -97,8 +96,7 @@ final class ColumnMeshResidualEvaluator {
         double feedIn = state.getFeedComponentFlow(tray, comp);
         double vaporOut = state.getVaporComponentFlow(tray, comp);
         double liquidOut = state.getLiquidComponentFlow(tray, comp);
-        double condenserLiquidProductOut = condenserLiquidProductComponentFlow(column, tray,
-            componentNames[comp]);
+        double condenserLiquidProductOut = condenserLiquidProductComponentFlow(column, tray, componentNames[comp]);
         double inlet = vaporIn + liquidIn + feedIn;
         double outlet = vaporOut + liquidOut + condenserLiquidProductOut;
         double scale = Math.max(ColumnMeshState.getMinimumScale(), Math.abs(inlet) + Math.abs(outlet));
