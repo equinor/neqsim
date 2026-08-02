@@ -49,12 +49,15 @@ public final class StandardDesignKernelVerificationSuite {
     Api12JSeparatorDesignKernel separatorKernel = new Api12JSeparatorDesignKernel();
     NorsokM506CorrosionDesignKernel corrosionKernel = new NorsokM506CorrosionDesignKernel();
     Iso5167OrificeMeteringKernel meteringKernel = new Iso5167OrificeMeteringKernel();
+    DnvRpC203FatigueDesignKernel fatigueKernel = new DnvRpC203FatigueDesignKernel();
+    DnvRpF105FreeSpanScreeningKernel freeSpanKernel = new DnvRpF105FreeSpanScreeningKernel();
 
     EngineeringBenchmarkSuite suite = new EngineeringBenchmarkSuite(SUITE_ID, REVISION)
         .requireMethod(methodKey(pumpKernel)).requireMethod(methodKey(reliefKernel))
         .requireMethod(methodKey(orificeKernel)).requireMethod(methodKey(compressorKernel))
         .requireMethod(methodKey(separatorKernel)).requireMethod(methodKey(corrosionKernel))
-        .requireMethod(methodKey(meteringKernel));
+        .requireMethod(methodKey(meteringKernel)).requireMethod(methodKey(fatigueKernel))
+        .requireMethod(methodKey(freeSpanKernel));
     suite.add(pumpBenchmark(pumpKernel));
     suite.add(reliefBenchmark(reliefKernel));
     suite.add(orificeBenchmark(orificeKernel));
@@ -62,6 +65,8 @@ public final class StandardDesignKernelVerificationSuite {
     suite.add(separatorBenchmark(separatorKernel));
     suite.add(corrosionBenchmark(corrosionKernel));
     suite.add(meteringBenchmark(meteringKernel));
+    suite.add(fatigueBenchmark(fatigueKernel));
+    suite.add(freeSpanBenchmark(freeSpanKernel));
     return suite.evaluate();
   }
 
@@ -195,6 +200,50 @@ public final class StandardDesignKernelVerificationSuite {
         .check("betaRatio", 0.5, value == null ? FAILURE_SENTINEL : value.getBetaRatio(), "fraction", 1.0e-12, 1.0e-12)
         .check("liquidExpansibility", 1.0, value == null ? FAILURE_SENTINEL : value.getExpansibilityFactor(),
             "fraction", 0.0, 0.0)
+        .build();
+  }
+
+  private static EngineeringValidationBenchmark fatigueBenchmark(DnvRpC203FatigueDesignKernel kernel) {
+    DnvRpC203FatigueDesignKernel.Input input = DnvRpC203FatigueDesignKernel.Input
+        .builder(StandardEdition.defaultEdition(StandardType.DNV_RP_C203), "Pipeline")
+        .snCurve(DnvRpC203FatigueDesignKernel.SnCurve.singleSlope("PROJECT-CONTROLLED-DEMO", 12.0, 3.0))
+        .addStressBin("high range", 100.0, 1.0e5).addStressBin("moderate range", 50.0, 2.0e5)
+        .stressConcentrationFactor(1.0).thicknessCorrectionFactor(1.0).otherStressRangeFactor(1.0)
+        .designFatigueFactor(3.0).minerDamageLimit(1.0).assessedExposureYears(20.0).curveDefinitionVerified(true)
+        .stressSpectrumVerified(true).build();
+    EngineeringCalculationResult<DnvRpC203FatigueAssessment> result = kernel.calculate(input, null);
+    DnvRpC203FatigueAssessment value = result.getValue();
+    return baseline("dnv-rp-c203-sn-miner-regression", kernel)
+        .check("calculatedReviewRequired", 1.0, calculated(result), "flag", 0.0, 0.0)
+        .check("rawMinerDamage", 0.125, value == null ? FAILURE_SENTINEL : value.getRawMinerDamage(), "fraction",
+            1.0e-12, 1.0e-12)
+        .check("designMinerDamage", 0.375, value == null ? FAILURE_SENTINEL : value.getDesignMinerDamage(), "fraction",
+            1.0e-12, 1.0e-12)
+        .check("withinDamageLimit", 1.0, value != null && value.isWithinDamageLimit() ? 1.0 : 0.0, "flag", 0.0, 0.0)
+        .build();
+  }
+
+  private static EngineeringValidationBenchmark freeSpanBenchmark(DnvRpF105FreeSpanScreeningKernel kernel) {
+    DnvRpF105FreeSpanScreeningKernel.Input input = DnvRpF105FreeSpanScreeningKernel.Input
+        .builder(StandardEdition.defaultEdition(StandardType.DNV_RP_F105), "Pipeline").spanLengthM(30.0)
+        .steelOuterDiameterM(0.3239).steelWallThicknessM(0.0206).hydrodynamicDiameterM(0.3239).youngsModulusPa(207.0e9)
+        .effectiveMassPerLengthKgPerM(250.0).effectiveAxialForceN(500000.0).currentVelocityMPerS(0.8)
+        .waveOrbitalVelocityAmplitudeMPerS(1.2).wavePeriodS(10.0).strouhalNumber(0.2).lockInFrequencyRatioLower(0.8)
+        .lockInFrequencyRatioUpper(1.2).maxCurrentReducedVelocityForScreening(4.0)
+        .maxWaveReducedVelocityForScreening(3.0).spanGeometryVerified(true).structuralModelVerified(true)
+        .environmentalBasisVerified(true).projectScreeningLimitsVerified(true).build();
+    EngineeringCalculationResult<DnvRpF105FreeSpanAssessment> result = kernel.calculate(input, null);
+    DnvRpF105FreeSpanAssessment value = result.getValue();
+    return baseline("dnv-rp-f105-free-span-regression", kernel)
+        .check("calculatedReviewRequired", 1.0, calculated(result), "flag", 0.0, 0.0)
+        .check("fundamentalNaturalFrequency", 1.0618221449736536,
+            value == null ? FAILURE_SENTINEL : value.getFundamentalNaturalFrequencyHz(), "Hz", 1.0e-12, 1.0e-12)
+        .check("currentReducedVelocity", 2.326093996432868,
+            value == null ? FAILURE_SENTINEL : value.getCurrentReducedVelocity(), "dimensionless", 1.0e-12, 1.0e-12)
+        .check("waveReducedVelocity", 3.489140994649302,
+            value == null ? FAILURE_SENTINEL : value.getWaveReducedVelocity(), "dimensionless", 1.0e-12, 1.0e-12)
+        .check("detailedResponseTriggered", 1.0,
+            value != null && value.isDetailedResponseAssessmentRequired() ? 1.0 : 0.0, "flag", 0.0, 0.0)
         .build();
   }
 

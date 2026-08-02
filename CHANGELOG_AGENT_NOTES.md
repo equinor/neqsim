@@ -9,6 +9,57 @@
 
 ---
 
+## 2026-08-02 — DNV-RP-F105 added as a first-mode free-span screening kernel
+
+### Added
+
+`DnvRpF105FreeSpanScreeningKernel` implements an edition-aware, fail-closed screen for
+`DNV-RP-F105 2025-12`. It calculates a simply supported Euler-Bernoulli first-mode frequency with
+externally derived effective mass and axial force, then reports current/wave frequency ratios,
+reduced velocities, and Keulegan-Carpenter number. Steel and hydrodynamic diameters are distinct.
+
+### Required evidence and migration
+
+Geometry, structural-model, environmental, and project-trigger verification are mandatory caller
+attestations. Strouhal number, frequency-ratio band, and reduced-velocity triggers are
+project-controlled evidence; they are not embedded DNV criteria or acceptance decisions. Soil and
+span-shoulder stiffness, interacting spans, response amplitudes, direct wave loading, ULS/FLS,
+fatigue, monitoring, intervention, and conformity remain external.
+
+`PipeMechanicalDesignCalculator.calculateAllowableSpanLength(...)` remains compatible but is a
+legacy fixed-assumption estimate with fallback/cap behavior. Agents must not relabel it as F105 and
+must route an explicit current-edition basis through the typed kernel.
+
+The standards resource index now records the current F105 edition/applicability. Unverified legacy
+CSV values labelled as F105 safety factors, fatigue factors, allowable stress, and maximum span were
+removed rather than relabelled as current. The generic transient-pipe surge allowance is now
+identified as project basis, not F105.
+
+---
+
+## 2026-08-02 — DNV-RP-C203 added as a controlled-curve fatigue kernel
+
+### Added
+
+`DnvRpC203FatigueDesignKernel` implements the S-N and Palmgren-Miner arithmetic for the current
+`2024-10+AMD:2025-10` basis. It accepts immutable spectrum bins, stress-range factors, a design
+fatigue factor, damage limit, and a caller-supplied single-slope or continuous bi-linear curve.
+`DnvRpC203FatigueAssessment` reports per-bin cycles to failure and damage, cumulative raw and design
+damage, utilization, governing bin, and linear-extrapolated life.
+
+### Required evidence and migration
+
+NeqSim deliberately does not embed or select licensed DNV S-N tables. Curve and spectrum
+verification flags are attestations and both are required before calculation. Curve/detail
+selection, structural stress derivation, environment/thickness factors, SCFs, rainflow counting,
+load combination, inspection planning, and conformity remain external.
+
+Existing pipeline and riser fatigue methods remain compatible but use inconsistent embedded
+parameters. Agents must call them legacy estimates and must route an explicit current-edition C203
+basis through the typed kernel with a controlled project curve.
+
+---
+
 ## 2026-08-02 — ISO 5167-1/-2 added to the edition-aware standards pipeline
 
 ### Added

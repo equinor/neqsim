@@ -103,11 +103,13 @@ public enum StandardType {
       new String[] { "Separator", "ThreePhaseSeparator", "GasScrubber" }, "separator process design"),
 
   // DNV Standards (Det Norske Veritas)
+  DNV_RP_C203("DNV-RP-C203", "Fatigue design of offshore steel structures", "2024-10+AMD:2025-10",
+      new String[] { "Pipeline", "AdiabaticPipe", "Pipe", "Riser", "OffshoreStructure" }, "fatigue design standards"),
   DNV_ST_F101("DNV-ST-F101", "Submarine Pipeline Systems", "2021", new String[] { "Pipeline", "AdiabaticPipe" },
       "pipeline design codes"),
   DNV_OS_F101("DNV-OS-F101", "Submarine Pipeline Systems (Legacy)", "2013",
       new String[] { "Pipeline", "AdiabaticPipe" }, "pipeline design codes"),
-  DNV_RP_F105("DNV-RP-F105", "Free Spanning Pipelines", "2021", new String[] { "Pipeline", "AdiabaticPipe" },
+  DNV_RP_F105("DNV-RP-F105", "Free spanning pipelines", "2025-12", new String[] { "Pipeline", "AdiabaticPipe" },
       "pipeline design codes"),
 
   // ISO Standards

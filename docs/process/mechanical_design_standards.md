@@ -62,9 +62,10 @@ the source catalog diverge.
 | API-685 | 3rd Ed | CURRENT | [publisher](https://www.api.org/products-and-services/standards/digital-catalog) (checked 2026-07-21) | pump design codes | DesignStandard | None | CATALOGUED | no | No category-specific calculation is connected. |
 | API-5L | 47th Ed | CURRENT | [publisher](https://www.api.org/products-and-services/standards/digital-catalog) (checked 2026-07-21) | material pipe design codes | MaterialPipeDesignStandard | MaterialPipeDesignStandard | SCREENING | no | Material-property lookup only; material selection, qualification, and code acceptance are not implemented. |
 | API-12J | 9th Ed | CURRENT | [publisher](https://www.api.org/products-and-services/standards/digital-catalog) (checked 2026-07-21) | separator process design | SeparatorDesignStandard | Api12JSeparatorDesignKernel | SCREENING | no | Gravity cut-diameter, K-factor, and liquid residence-time screening only; service applicability, vessel construction, internals, and performance guarantees require independent review. |
+| DNV-RP-C203 | 2024-10+AMD:2025-10 | CURRENT | [publisher](https://www.dnv.com/energy/standards-guidelines/dnv-rp-c203-fatigue-design-of-offshore-steel-structures/) (checked 2026-08-02) | fatigue design standards | DesignStandard | DnvRpC203FatigueDesignKernel | SCREENING | yes | User-supplied controlled S-N curve, stress-range factors, spectrum bins, and Palmgren-Miner damage only; stress derivation, curve/detail selection, thickness and environmental basis, SCFs, rainflow counting, load combination, inspection planning, and conformity remain external. |
 | DNV-ST-F101 | 2021 | CURRENT | [publisher](https://www.dnv.com/energy/standards-guidelines/dnv-st-f101-submarine-pipeline-systems/) (checked 2026-07-21) | pipeline design codes | PipelineDesignStandard | StandardRequirementPackRegistry (1 capability) | SCREENING | no | Mapped calculations and review workflows are discoverable as a versioned requirement pack; this is not a complete conformity assessment and is intentionally separate from the legacy factory. |
 | DNV-OS-F101 | 2013 | UNVERIFIED | unverified | pipeline design codes | PipelineDesignStandard | None | CATALOGUED | no | Catalogued pipeline selections fail closed because no edition-specific wall-thickness calculation is connected. |
-| DNV-RP-F105 | 2021 | UNVERIFIED | unverified | pipeline design codes | PipelineDesignStandard | None | CATALOGUED | no | Catalogued pipeline selections fail closed because no edition-specific wall-thickness calculation is connected. |
+| DNV-RP-F105 | 2025-12 | CURRENT | [publisher](https://www.dnv.com/energy/standards-guidelines/dnv-rp-f105-free-spanning-pipelines/) (checked 2026-08-02) | pipeline design codes | PipelineDesignStandard | DnvRpF105FreeSpanScreeningKernel | SCREENING | yes | Simply supported first-mode beam frequency and current/wave dimensionless screening with caller-controlled response triggers only; soil/shoulder stiffness, multi-span interaction, response models, direct-wave loading, ULS/FLS, fatigue, sensors, intervention, and conformity remain external. |
 | ISO-5167-1 | 2022 | CURRENT | [publisher](https://www.iso.org/standard/79179.html) (checked 2026-08-02) | flow measurement standards | DesignStandard | None | CATALOGUED | no | The general principles and requirements are catalogued as the companion basis for orifice-plate metering; no standalone Part 1 calculation is exposed. |
 | ISO-5167-2 | 2022 | CURRENT | [publisher](https://www.iso.org/standard/79180.html) (checked 2026-08-02) | flow measurement standards | DesignStandard | Iso5167OrificeMeteringKernel | SCREENING | yes | Single-phase, full-pipe, subsonic, non-pulsating concentric orifice-plate flow calculation only; plate inspection, installation, tapping geometry evidence, uncertainty, calibration, and custody-transfer acceptance remain outside the calculation. |
 | ISO-13623 | 2017 | UNVERIFIED | unverified | pipeline design codes | PipelineDesignStandard | None | CATALOGUED | no | Catalogued pipeline selections fail closed because no edition-specific wall-thickness calculation is connected. |
@@ -129,15 +130,15 @@ implemented standard, audited maturity, and structured applicability. Kernels mu
 input or a `ProcessSystem`. Compatibility adapters defensively copy legacy mutable calculators.
 
 `StandardRegistry.getDesignKernel(...)` returns an explicit lookup status. API 617, API 610, API
-521, API 526, API 12J, NORSOK M-506, and ISO 5167-2 have connected adapters and return
+521, API 526, API 12J, NORSOK M-506, ISO 5167-2, DNV-RP-C203, and DNV-RP-F105 have connected adapters and return
 `IMPLEMENTED`; standards that have not been adapted return `NOT_IMPLEMENTED`, never an empty or
 implied success. Each kernel returns an
 immutable assessment snapshot and always requires engineering review because its maturity remains
 `SCREENING`. Unsupported editions fail closed as `EDITION_NOT_IMPLEMENTED` until separately
 implemented and validated.
 
-API 521, NORSOK M-506, and ISO 5167-2 currently have both a publisher-verified current lifecycle and
-a matching exact kernel.
+API 521, NORSOK M-506, ISO 5167-2, DNV-RP-C203, and DNV-RP-F105 currently have both a publisher-verified current
+lifecycle and a matching exact kernel.
 API 526, API 617, API 610, and API 12J adapters implement legacy edition labels that do not match
 the current catalog editions; they are available only through an explicit historical selection
 until current-edition kernels and independent benchmark evidence are added.
@@ -159,6 +160,21 @@ The ISO 5167-2 adapter makes liquid versus gas/vapour service explicit, iterates
 full-pipe, subsonic, non-pulsating numerical envelope. ISO 5167-1 remains the separately catalogued
 companion requirements basis. Installation attestations are caller evidence, not checks performed
 by NeqSim; uncertainty, calibration, inspection, and custody-transfer acceptance remain external.
+
+The DNV-RP-C203 adapter evaluates a caller-controlled single-slope or continuous bi-linear S-N curve,
+explicit stress-range factors, spectrum bins, design fatigue factor, and Palmgren-Miner utilization.
+NeqSim does not select or embed DNV curve tables. Curve/detail selection, structural stress,
+environment and thickness basis, SCFs, load combinations, rainflow counting, inspection, and
+conformity remain controlled external work. See the
+[DNV-RP-C203 fatigue guide](mechanical_design/dnv_rp_c203_fatigue.md).
+
+The DNV-RP-F105 adapter evaluates a simply supported Euler-Bernoulli first mode with externally
+derived effective mass and axial force, then reports current/wave frequency ratios, reduced
+velocities, and Keulegan-Carpenter number. Caller-controlled response triggers only indicate when
+the project workflow requires detailed analysis; they are not DNV limits or acceptance decisions.
+Soil and span-shoulder stiffness, interacting spans, response amplitudes, direct wave loading,
+ULS/FLS, fatigue, monitoring, and intervention remain external. See the
+[DNV-RP-F105 free-span guide](mechanical_design/dnv_rp_f105_free_span.md).
 
 ## Cross-equipment requirement packs
 

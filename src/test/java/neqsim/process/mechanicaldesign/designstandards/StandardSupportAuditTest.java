@@ -64,6 +64,12 @@ class StandardSupportAuditTest {
     assertEquals("Iso5167OrificeMeteringKernel",
         StandardSupportAudit.getSupport(StandardType.ISO_5167_2).getCalculationImplementation());
     assertTrue(StandardSupportAudit.getSupport(StandardType.ISO_5167_2).isRegistryConnected());
+    assertEquals("DnvRpC203FatigueDesignKernel",
+        StandardSupportAudit.getSupport(StandardType.DNV_RP_C203).getCalculationImplementation());
+    assertTrue(StandardSupportAudit.getSupport(StandardType.DNV_RP_C203).isRegistryConnected());
+    assertEquals("DnvRpF105FreeSpanScreeningKernel",
+        StandardSupportAudit.getSupport(StandardType.DNV_RP_F105).getCalculationImplementation());
+    assertTrue(StandardSupportAudit.getSupport(StandardType.DNV_RP_F105).isRegistryConnected());
     assertFalse(StandardSupportAudit.getSupport(StandardType.API_660).isRegistryConnected());
     assertTrue(StandardSupportAudit.getSupport(StandardType.API_660).getCalculationImplementation()
         .startsWith("StandardRequirementPackRegistry"));

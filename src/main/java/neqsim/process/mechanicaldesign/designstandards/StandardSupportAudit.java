@@ -96,6 +96,20 @@ public final class StandardSupportAudit {
           "Single-phase, full-pipe, subsonic, non-pulsating concentric orifice-plate flow calculation only; "
               + "plate inspection, installation, tapping geometry evidence, uncertainty, calibration, and "
               + "custody-transfer acceptance remain outside the calculation.");
+    case DNV_RP_C203:
+      EquipmentDesignKernelRegistry.Lookup fatigueImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING, fatigueImplementation.isImplemented(),
+          registryImplementation, fatigueImplementation.getImplementationClassName(),
+          "User-supplied controlled S-N curve, stress-range factors, spectrum bins, and Palmgren-Miner damage only; "
+              + "stress derivation, curve/detail selection, thickness and environmental basis, SCFs, rainflow "
+              + "counting, load combination, inspection planning, and conformity remain external.");
+    case DNV_RP_F105:
+      EquipmentDesignKernelRegistry.Lookup freeSpanImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING, freeSpanImplementation.isImplemented(),
+          registryImplementation, freeSpanImplementation.getImplementationClassName(),
+          "Simply supported first-mode beam frequency and current/wave dimensionless screening with "
+              + "caller-controlled response triggers only; soil/shoulder stiffness, multi-span interaction, response "
+              + "models, direct-wave loading, ULS/FLS, fatigue, sensors, intervention, and conformity remain external.");
     default:
       return getCategorySupport(standardType, registryImplementation);
     }

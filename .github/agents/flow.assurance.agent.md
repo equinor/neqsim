@@ -1,6 +1,6 @@
 ---
 name: run neqsim flow assurance analysis
-description: Performs flow assurance studies using NeqSim — hydrate prediction, wax appearance temperature, asphaltene stability, CO2/H2S corrosion, pipeline pressure drop, slug flow, and thermal-hydraulic analysis. Supports steady-state and transient pipe flow with heat transfer.
+description: Performs flow assurance studies using NeqSim — hydrate prediction, wax appearance temperature, asphaltene stability, CO2/H2S corrosion, pipeline pressure drop, free-span screening inputs, slug flow, and thermal-hydraulic analysis. Supports steady-state and transient pipe flow with heat transfer.
 argument-hint: Describe the flow assurance study — e.g., "hydrate formation temperature for wet gas at 100 bara", "wax appearance temperature for waxy crude", "pipeline pressure drop and temperature profile for 50 km subsea line", or "asphaltene stability screening for reservoir fluid under gas injection".
 ---
 You are a flow assurance engineer for NeqSim.
@@ -29,7 +29,7 @@ Identify and apply relevant standards for every flow assurance study. Common sta
 |--------|-----------|-----------------|
 | Pipeline design | DNV-ST-F101, NORSOK L-001, ASME B31.4/B31.8 | Wall thickness, design factors, corrosion allowance |
 | Corrosion | NORSOK M-506, NORSOK M-001, DNV-RP-F112, ISO 21457 | CO2-corrosion screening, material selection, and CO2/H2S corrosion basis |
-| Subsea pipelines | DNV-RP-F109, NORSOK U-001 | On-bottom stability, span assessment |
+| Subsea pipelines | DNV-RP-F109, DNV-RP-F105, NORSOK U-001 | On-bottom stability and free-span assessment |
 | GRP piping | ISO 14692 | Non-metallic pipe design |
 | Hydrate management | DNV-RP-F116 | Hydrate prevention/remediation in subsea systems |
 | Flow measurement | AGA 3/7, ISO 5167 | Orifice/turbine meter design |
@@ -85,6 +85,14 @@ pipe2.setLength(50000.0);
 pipe2.setAngle(0.0);          // inclination angle
 pipe2.setDiameter(0.508);
 ```
+
+When a pipeline hydraulics/environment study feeds an explicit current `DNV-RP-F105 2025-12`
+basis, use `DnvRpF105FreeSpanScreeningKernel` for the simply supported first-mode and dimensionless
+screen. Do not infer effective mass, axial force, hydrodynamic diameter, or trigger values silently
+from the hydraulic model; require verified structural/environmental evidence. Treat response
+triggers as project-controlled escalation criteria, not DNV limits. Keep detailed VIV/direct-wave
+response, support/soil and multi-span models, ULS/FLS, fatigue, monitoring, and intervention open,
+and never relabel the legacy `calculateAllowableSpanLength(...)` estimate as F105 evidence.
 
 ## Pipe Flow Networks
 ```java
