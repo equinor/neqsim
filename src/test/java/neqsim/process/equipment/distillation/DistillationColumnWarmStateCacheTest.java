@@ -130,39 +130,27 @@ public class DistillationColumnWarmStateCacheTest {
   }
 
   /**
-   * Changing from equilibrium partial condensation to a fixed liquid-reflux split must invalidate an otherwise
-   * identical warm state.
+   * Activating the condenser's stored reflux ratio must invalidate an otherwise identical warm state.
    *
    * <p>
-   * The legacy tray API leaves the stored reflux ratio and total-condenser flag unchanged while selecting a different
-   * condenser equation path. The active fixed-reflux mode is therefore part of the mathematical problem even when all
-   * previously fingerprinted numbers are unchanged.
+   * The legacy tray API stores a default reflux ratio even while ratio control is inactive. Activating that same
+   * numeric value changes the condenser from equilibrium operation to a PV reflux flash while leaving the reflux ratio
+   * and total-condenser flag unchanged.
    * </p>
    */
   @Test
-  public void condenserLiquidRefluxModeInvalidatesWarmState() {
+  public void condenserRatioModeWithUnchangedStoredRatioInvalidatesWarmState() {
     DistillationColumn column = buildCondenserColumn();
     column.run();
     assertTrue(column.solved(), column.getConvergenceDiagnostics());
-    assertFalse(column.getCondenser().isSeparation_with_liquid_reflux(),
-        "the baseline should use equilibrium partial-condensation equations");
-    double firstGasFlow = column.getGasOutStream().getFlowRate("kg/hr");
-    double firstBottomFlow = column.getLiquidOutStream().getFlowRate("kg/hr");
-    double availableLiquid = column.getCondenser().getLiquidOutStream().getFlowRate("kg/hr");
-    assertTrue(Double.isFinite(availableLiquid) && availableLiquid > 0.0,
-        "the baseline condenser must provide liquid traffic for a fixed-reflux split");
+    double storedRatio = column.getCondenser().getRefluxRatio();
 
-    column.getCondenser().setSeparation_with_liquid_reflux(true, 0.5 * availableLiquid, "kg/hr");
+    column.getCondenser().setRefluxRatio(storedRatio);
     column.run();
 
     assertFalse(column.wasSequentialWarmStateReused(),
-        "fixed liquid-reflux mode must solve the changed condenser equations instead of reusing equilibrium products");
-    assertTrue(column.getCondenser().getLiquidProductStream() != null,
-        "the fixed-reflux solve must create the condenser liquid split");
-    assertNotEquals(firstGasFlow, column.getGasOutStream().getFlowRate("kg/hr"), 1.0e-8,
-        "the changed condenser equations must update the overhead flow");
-    assertNotEquals(firstBottomFlow, column.getLiquidOutStream().getFlowRate("kg/hr"), 1.0e-8,
-        "the changed condenser equations must update the bottoms flow");
+        "activating ratio mode must solve the changed condenser equations instead of reusing equilibrium products");
+    assertTrue(column.getLastIterationCount() > 0, "the changed condenser equations must execute tray iterations");
     assertTrue(column.solved(), column.getConvergenceDiagnostics());
     assertPhysicalAndBalanced(column.getFeedStreams(1).get(0), column);
   }
