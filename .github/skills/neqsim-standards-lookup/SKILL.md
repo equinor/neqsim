@@ -31,6 +31,7 @@ The index file `standards_index.csv` maps equipment types to applicable standard
 | Compressor | API 617, NORSOK P-002 | `api_standards.csv`, `norsok_standards.csv` |
 | Pump | API 610 | `api_standards.csv` |
 | Pipeline, AdiabaticPipe, MultiphasePipe | NORSOK L-001, ASME B31.3/B31.4/B31.8, DNV-ST-F101 | `norsok_standards.csv`, `asme_standards.csv`, `dnv_iso_en_standards.csv` |
+| Pipeline, FlexiblePipe, Cable, Umbilical on seabed | DNV-RP-F109 | Typed kernel `DnvRpF109OnBottomStabilityKernel`; project values remain explicit inputs |
 | HeatExchanger, Heater, Cooler | API 660/661, TEMA | `api_standards.csv` |
 | Tank | API 650/620, API 2000 | Use `Api2000TankVentingScreeningKernel` for current 7th-edition caller-controlled normal/emergency demand and rated-capacity screening; `api_standards.csv` covers catalog data |
 | Valve | ASME B31.3 | `asme_standards.csv` |
@@ -47,6 +48,33 @@ The index file `standards_index.csv` maps equipment types to applicable standard
 | Submarine-pipeline pipe-soil interaction | DNV-RP-F114 | Use `DnvRpF114PipeSoilInteractionScreeningKernel` for the current caller-controlled vertical/axial/lateral demand-resistance envelope; keep geotechnical model derivation and F109/F110/F105/ST-F101 acceptance separate |
 | Fixed-roof tank venting | API 2000 | Use `Api2000TankVentingScreeningKernel` for the current 7th-edition caller-controlled demand/capacity screen; do not infer licensed demand factors or report it as device sizing/conformity |
 | Mineral scale / produced water | (industry practice; Davies + Ksp(T)) | `ElectrolyteScaleCalculator` / `ScaleKinetics` / `BrineMixingScaleEvaluator` (`process.chemistry.scale`) |
+
+### DNV-RP-F109 implementation status
+
+`EquipmentDesignKernelRegistry.lookup(StandardType.DNV_RP_F109)` exposes a
+`SCREENING` kernel for the exact catalogued edition `2021-05+AMD 2025-09`.
+It calculates vertical equilibrium and a transparent absolute-static lateral
+screen, or checks displacement supplied by an externally validated generalized or
+dynamic response model. It intentionally excludes licensed generalized-design
+tables, response generation, environmental-statistics derivation, soil-model
+qualification, and conformity assessment. Do not report a passing kernel result as
+DNV certification or clause-complete compliance; report the implemented check scope
+and retain `engineeringApprovalRequired=true`.
+
+### DNV-ST-F101 pipeline screening
+
+For current DNV-ST-F101 requests, use
+`neqsim.process.engineering.calculation.DnvStF101PipelineDesignKernel` with a complete
+`DnvStF101PipelineDesignInput`. It preserves operating, incidental, and test pressure; collapse;
+propagation buckling; local-buckling load interaction; fatigue; temperature/material de-rating;
+safety class; ovality; fabrication route; and installation strain as distinct checks.
+
+Do not route DNV-ST-F101 to `PipeMechanicalDesignCalculator.DNV_OS_F101`. That constant is the
+legacy DNV-OS-F101 screen. Missing structural inputs or unsupported editions must remain blocked,
+and a calculated result must retain `CALCULATED_REVIEW_REQUIRED`. Never describe a passing screen
+as certification or code compliance; require a licensed project copy and independent review.
+
+See `docs/process/dnv_st_f101_pipeline_screening.md` and the `neqsim-capability-map` skill.
 
 ## TR/NORSOK Integration Classes
 
@@ -180,7 +208,6 @@ structural model, design situations/load combinations, local capacity/strain cri
 uncertainty/sensitivity/buckle sharing, and lifecycle actions. A negative margin remains calculated.
 Never interpret the force limit as a NeqSim-derived critical-buckling or initiation criterion. Keep
 F109/F114/F105, every DNV-ST-F101 check, conformity, and accountable approval external.
-
 ### API 2000 execution rule
 
 For an explicit API 2000 basis, use

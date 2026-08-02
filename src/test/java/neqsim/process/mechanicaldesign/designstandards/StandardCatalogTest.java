@@ -180,6 +180,18 @@ class StandardCatalogTest {
   }
 
   @Test
+  void c203ResourceCatalogUsesTheCurrentEnumEdition() {
+    String edition = StandardType.DNV_RP_C203.getDefaultVersion();
+    String index = resourceText("/designdata/standards/standards_index.csv");
+    String values = resourceText("/designdata/standards/dnv_iso_en_standards.csv");
+
+    assertTrue(index.contains("\"DNV-RP-C203\",\"" + edition + "\""));
+    assertTrue(values.contains("\"DNV-RP-C203\",\"" + edition + "\""));
+    assertFalse(index.contains("\"DNV-RP-C203\",\"2021\""));
+    assertFalse(values.contains("\"DNV-RP-C203\",\"2021\""));
+  }
+
+  @Test
   void requirementPacksReferenceLoadableCapabilitiesAndCurrentEditions() throws Exception {
     StandardType[] packedStandards = { StandardType.NORSOK_P_002, StandardType.NORSOK_S_001, StandardType.ISO_10418,
         StandardType.IEC_61511, StandardType.API_520_PART_1, StandardType.NORSOK_M_001, StandardType.API_650,

@@ -99,6 +99,8 @@ public final class EquipmentDesignKernelRegistry {
     register(kernels, new DnvRpF110GlobalBucklingResponseScreeningKernel());
     register(kernels, new DnvRpF114PipeSoilInteractionScreeningKernel());
     register(kernels, new Api2000TankVentingScreeningKernel());
+    register(kernels, new DnvRpF109OnBottomStabilityKernel());
+    register(kernels, new DnvStF101PipelineDesignKernel());
     KERNELS = Collections.unmodifiableMap(kernels);
   }
 

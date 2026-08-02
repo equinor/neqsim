@@ -11,9 +11,10 @@ import com.google.gson.JsonSerializer;
  * Immutable convergence and total-mass diagnostics from a one-phase pipe-flow solve.
  *
  * <p>
- * Nonlinear iterate changes, EOS-to-finite-volume density consistency, and transient total-mass closure are reported
- * separately. A small update does not establish convergence when the thermodynamic density is inconsistent with the
- * conservative density solution.
+ * The nonlinear convergence metric, EOS-to-finite-volume density consistency, and transient total-mass closure are
+ * reported separately. Coupled solves report a scaled equation residual; staged legacy solves retain their relative
+ * iterate-change metric. A small nonlinear metric does not establish convergence when the thermodynamic density is
+ * inconsistent with the conservative density solution.
  * </p>
  */
 public final class OnePhaseFlowConvergenceReport implements Serializable {
@@ -27,6 +28,10 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
     CONVERGED(true),
     /** The maximum nonlinear iteration count was reached. */
     MAX_ITERATIONS_REACHED(false),
+    /** Backtracking could not find a residual-decreasing step. */
+    LINE_SEARCH_FAILED(false),
+    /** Residual evaluation, Jacobian construction, or the linear solve failed. */
+    NUMERICAL_FAILURE(false),
     /** At least one diagnostic was not finite. */
     NON_FINITE_RESIDUAL(false),
     /** EOS density remained inconsistent with finite-volume density. */
@@ -54,6 +59,7 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
   private final boolean dynamic;
   private final int solverType;
   private final int nonlinearIterations;
+  private final boolean nonlinearMetricEquationResidual;
   private final double nonlinearUpdateTolerance;
   private final double densityRelativeTolerance;
   private final double massBalanceRelativeTolerance;
@@ -79,11 +85,11 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
    * @param reason reason why the solve stopped
    * @param dynamic true for a transient solve
    * @param solverType selected solver type
-   * @param nonlinearIterations number of coupled nonlinear iterations
-   * @param nonlinearUpdateTolerance relative nonlinear update tolerance
+   * @param nonlinearIterations number of nonlinear iterations
+   * @param nonlinearUpdateTolerance nonlinear convergence-metric tolerance
    * @param densityRelativeTolerance relative EOS-density tolerance
    * @param massBalanceRelativeTolerance relative total-mass tolerance
-   * @param maximumRelativeNonlinearUpdate final nonlinear update residual
+   * @param maximumRelativeNonlinearUpdate final nonlinear convergence metric
    * @param maximumRelativeDensityResidual final EOS/FV density residual
    * @param initialFiniteVolumeMassKg previous-time finite-volume mass in kg
    * @param finalFiniteVolumeMassKg final conservative mass in kg
@@ -95,7 +101,7 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
    * @param thermodynamicMassResidualKg thermodynamic inventory residual in kg
    * @param relativeFiniteVolumeMassResidual relative conservative inventory residual
    * @param relativeThermodynamicMassResidual relative thermodynamic inventory residual
-   * @param nonlinearUpdateHistory nonlinear update residual history
+   * @param nonlinearUpdateHistory nonlinear convergence-metric history
    * @param densityResidualHistory EOS/FV density residual history
    * @param message diagnostic summary
    */
@@ -107,10 +113,27 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
       double finiteVolumeMassResidualKg, double thermodynamicMassResidualKg, double relativeFiniteVolumeMassResidual,
       double relativeThermodynamicMassResidual, double[] nonlinearUpdateHistory, double[] densityResidualHistory,
       String message) {
+    this(reason, dynamic, solverType, nonlinearIterations, nonlinearUpdateTolerance, densityRelativeTolerance,
+        massBalanceRelativeTolerance, maximumRelativeNonlinearUpdate, maximumRelativeDensityResidual,
+        initialFiniteVolumeMassKg, finalFiniteVolumeMassKg, finalThermodynamicMassKg, inletBoundaryMassKg,
+        outletBoundaryMassKg, netBoundaryMassKg, finiteVolumeMassResidualKg, thermodynamicMassResidualKg,
+        relativeFiniteVolumeMassResidual, relativeThermodynamicMassResidual, nonlinearUpdateHistory,
+        densityResidualHistory, message, false);
+  }
+
+  OnePhaseFlowConvergenceReport(ConvergenceReason reason, boolean dynamic, int solverType, int nonlinearIterations,
+      double nonlinearUpdateTolerance, double densityRelativeTolerance, double massBalanceRelativeTolerance,
+      double maximumRelativeNonlinearUpdate, double maximumRelativeDensityResidual, double initialFiniteVolumeMassKg,
+      double finalFiniteVolumeMassKg, double finalThermodynamicMassKg, double inletBoundaryMassKg,
+      double outletBoundaryMassKg, double netBoundaryMassKg, double finiteVolumeMassResidualKg,
+      double thermodynamicMassResidualKg, double relativeFiniteVolumeMassResidual,
+      double relativeThermodynamicMassResidual, double[] nonlinearUpdateHistory, double[] densityResidualHistory,
+      String message, boolean nonlinearMetricEquationResidual) {
     this.reason = reason;
     this.dynamic = dynamic;
     this.solverType = solverType;
     this.nonlinearIterations = nonlinearIterations;
+    this.nonlinearMetricEquationResidual = nonlinearMetricEquationResidual;
     this.nonlinearUpdateTolerance = nonlinearUpdateTolerance;
     this.densityRelativeTolerance = densityRelativeTolerance;
     this.massBalanceRelativeTolerance = massBalanceRelativeTolerance;
@@ -162,14 +185,19 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
     return solverType;
   }
 
-  /** @return number of coupled nonlinear iterations */
+  /** @return number of nonlinear iterations */
   public int getNonlinearIterations() {
     return nonlinearIterations;
   }
 
-  /** @return relative nonlinear update tolerance */
+  /** @return nonlinear convergence-metric tolerance */
   public double getNonlinearUpdateTolerance() {
     return nonlinearUpdateTolerance;
+  }
+
+  /** @return true when the nonlinear metric is a scaled equation residual, false for an iterate change */
+  public boolean isNonlinearMetricEquationResidual() {
+    return nonlinearMetricEquationResidual;
   }
 
   /** @return relative EOS-density consistency tolerance */
@@ -182,7 +210,7 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
     return massBalanceRelativeTolerance;
   }
 
-  /** @return final nonlinear update residual */
+  /** @return final nonlinear convergence metric */
   public double getMaximumRelativeNonlinearUpdate() {
     return maximumRelativeNonlinearUpdate;
   }
@@ -242,12 +270,19 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
     return relativeThermodynamicMassResidual;
   }
 
-  /** @return defensive copy of nonlinear update history */
+  /**
+   * @return defensive copy of nonlinear convergence-metric history; the coupled path includes the initial residual at
+   * index zero followed by one entry per completed Newton iteration, while staged legacy paths retain one entry per
+   * iteration
+   */
   public double[] getNonlinearUpdateHistory() {
     return copy(nonlinearUpdateHistory);
   }
 
-  /** @return defensive copy of EOS/FV density residual history */
+  /**
+   * @return defensive copy of EOS/FV density residual history using the same indexing convention as
+   * {@link #getNonlinearUpdateHistory()}
+   */
   public double[] getDensityResidualHistory() {
     return copy(densityResidualHistory);
   }

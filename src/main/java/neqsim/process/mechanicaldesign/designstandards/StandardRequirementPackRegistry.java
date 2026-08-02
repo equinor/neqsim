@@ -106,9 +106,6 @@ public final class StandardRequirementPackRegistry {
             capability("shell-and-tube-design", Kind.CALCULATION_SCREENING,
                 "neqsim.process.mechanicaldesign.heatexchanger.ShellAndTubeDesignCalculator",
                 "Thermal and mechanical screening; full datasheet and vendor conformity are excluded.")));
-    register(packs, pack(StandardType.DNV_ST_F101, capability("pipeline-mechanical-design", Kind.CALCULATION_SCREENING,
-        "neqsim.process.mechanicaldesign.pipeline.PipeMechanicalDesignCalculator",
-        "Pressure-containment screening; load cases, safety classes, fabrication, and installation checks are incomplete.")));
     register(packs, pack(StandardType.DNV_RP_F104, capability("co2-phase-behaviour", Kind.CALCULATION_SCREENING,
         "neqsim.thermodynamicoperations.ThermodynamicOperations",
         "Property and phase calculations only; project composition, EOS validation, phase margins, and acceptance remain external."),
@@ -150,6 +147,20 @@ public final class StandardRequirementPackRegistry {
         capability("pipeline-mechanical-design", Kind.CALCULATION_SCREENING,
             "neqsim.process.mechanicaldesign.pipeline.PipeMechanicalDesignCalculator",
             "Preliminary pressure-containment screening only; F114 interaction actions and ST-F101 checks remain external.")));
+    register(packs,
+        pack(StandardType.DNV_RP_F109,
+            capability("on-bottom-stability", Kind.CALCULATION_SCREENING,
+                "neqsim.process.engineering.calculation.DnvRpF109OnBottomStabilityKernel",
+                "Typed vertical, absolute-static lateral, and external-response displacement screening; "
+                    + "environmental statistics, soil-model qualification, and conformity approval remain external.")));
+    register(packs,
+        pack(StandardType.DNV_ST_F101,
+            capability("pipeline-mechanical-design", Kind.CALCULATION_SCREENING,
+                "neqsim.process.engineering.calculation.DnvStF101PipelineDesignKernel",
+                "Typed 2021 screening for pressure containment, collapse, propagation buckling, "
+                    + "load interaction, fatigue, pressure cases, derating, safety class, ovality, "
+                    + "fabrication route, and installation strain; clause-complete conformity and "
+                    + "engineering approval remain external.")));
     PACKS = Collections.unmodifiableMap(packs);
   }
 

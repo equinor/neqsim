@@ -175,7 +175,7 @@ public final class DnvRpF114PipeSoilInteractionScreeningKernel implements
 
     /** @return immutable ordered design cases */
     public List<InteractionCase> getInteractionCases() {
-      return interactionCases;
+      return Collections.unmodifiableList(new ArrayList<InteractionCase>(interactionCases));
     }
 
     /** @return whether applicability was externally verified */

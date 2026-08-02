@@ -169,7 +169,7 @@ public final class DnvRpF104Co2PipelineEnvelopeScreeningKernel implements
     }
 
     public List<OperatingPoint> getOperatingPoints() {
-      return operatingPoints;
+      return Collections.unmodifiableList(new ArrayList<OperatingPoint>(operatingPoints));
     }
 
     public boolean isCo2PipelineApplicabilityVerified() {

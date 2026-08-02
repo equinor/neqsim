@@ -1,11 +1,18 @@
 ---
 title: Pipeline Mechanical Design
-description: Comprehensive documentation for pipeline mechanical design in NeqSim, including wall thickness calculations, stress analysis, cost estimation, and detailed design per industry standards.
+description: Legacy pipeline mechanical-design calculator documentation plus links to current typed standard kernels.
 ---
 
 # Pipeline Mechanical Design
 
-Comprehensive documentation for pipeline mechanical design in NeqSim, including wall thickness calculations, stress analysis, cost estimation, and detailed design per industry standards.
+Documentation for the legacy pipeline mechanical-design calculator, including wall thickness,
+stress, weight, and cost screening.
+
+> **Current DNV-ST-F101 work:** use the typed
+> [DNV-ST-F101 pipeline screening](dnv_st_f101_pipeline_screening) kernel. The
+> `PipeMechanicalDesignCalculator.DNV_OS_F101` path documented below is a legacy
+> DNV-OS-F101 screen. It is not a DNV-ST-F101 implementation, conformity assessment, or
+> certification.
 
 > **📘 See Also: Related Design Documentation**
 >
@@ -34,7 +41,7 @@ Comprehensive documentation for pipeline mechanical design in NeqSim, including 
 
 The pipeline mechanical design system provides:
 
-- **Wall thickness sizing** per ASME B31.3/B31.4/B31.8 and DNV-OS-F101
+- **Wall thickness sizing** per ASME B31.3/B31.4/B31.8 and legacy DNV-OS-F101
 - **Stress analysis** including hoop, longitudinal, and von Mises stress
 - **External pressure design** for subsea pipelines
 - **Weight and buoyancy** calculations
@@ -89,7 +96,7 @@ PipelineMechanicalDesign extends MechanicalDesign
 | **ASME B31.3** | Process Piping | Allowable stress = SMYS/3 |
 | **ASME B31.4** | Liquid Pipelines | Design factor 0.72 |
 | **ASME B31.8** | Gas Transmission | Location classes 1-4 |
-| **DNV-OS-F101** | Submarine Pipelines | Safety classes, resistance factors |
+| **DNV-OS-F101 (legacy screen)** | Submarine Pipelines | Preliminary resistance calculations; use the typed kernel for current DNV-ST-F101 work |
 | **API 5L** | Line Pipe Specs | Material grades A-X120 |
 | **ISO 13623** | Petroleum Pipelines | International standard |
 | **NORSOK L-002** | Piping System Design | Norwegian standard |
@@ -714,7 +721,6 @@ does not calculate buckling initiation or prevention, pipe-soil response, imperf
 buckle sharing, or local capacity. All F109/F114/F105 interfaces and complete DNV-ST-F101 checks
 remain external. See the
 [DNV-RP-F110 global-buckling guide](mechanical_design/dnv_rp_f110_global_buckling).
-
 Do not infer inspected defect dimensions from the M-506 rate output. The RP-F101 screen does not
 handle interacting or complex defects, combined longitudinal compression, cracking, probabilistic
 assessment, repair, or fitness-for-service approval. It also does not replace DNV-ST-F101 pressure

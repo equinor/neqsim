@@ -1256,6 +1256,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
   @Override
   public void setMinimumFlow(double minimumFlow) {
     this.minimumFlow = minimumFlow;
+    super.setMinimumFlow(minimumFlow);
   }
 
   /**

@@ -128,4 +128,80 @@ public class HeaterTest {
     assertEquals(0, fluid.getLevelThreeCalls(), "Nearby operating points must retain minimal initialization");
     assertEquals(325.0, heater.getOutletStream().getTemperature("K"), 1.0e-10);
   }
+
+  /**
+   * Entropy requires caloric properties but not level-3 composition derivatives. The diagnostic must preserve its value
+   * and the surrounding stream state while using the minimum thermodynamic initialization level.
+   */
+  @Test
+  void testEntropyProductionUsesMinimumThermodynamicInitializationLevel() {
+    InitTrackingSystemSrkEos fluid = new InitTrackingSystemSrkEos(363.15, 40.0);
+    fluid.addComponent("nitrogen", 0.02);
+    fluid.addComponent("CO2", 0.03);
+    fluid.addComponent("methane", 0.80);
+    fluid.addComponent("ethane", 0.07);
+    fluid.addComponent("propane", 0.04);
+    fluid.addComponent("n-heptane", 0.04);
+    fluid.setMixingRule("classic");
+
+    Stream inlet = new Stream("tracked entropy inlet", fluid);
+    inlet.setTemperature(90.0, "C");
+    inlet.setFlowRate(10000.0, "kg/hr");
+
+    Heater heater = new Heater("tracked entropy heater", inlet);
+    heater.setOutTemperature(130.0, "C");
+    ProcessSystem process = new ProcessSystem();
+    process.add(inlet);
+    process.add(heater);
+    process.run();
+
+    assertMinimumEntropyInitialization(fluid, heater);
+
+    inlet.setTemperature(95.0, "C");
+    process.run();
+    assertMinimumEntropyInitialization(fluid, heater);
+  }
+
+  private static void assertMinimumEntropyInitialization(InitTrackingSystemSrkEos fluid, Heater heater) {
+    double inletEnthalpy = heater.getInletStream().getFluid().getEnthalpy();
+    double outletEnthalpy = heater.getOutletStream().getFluid().getEnthalpy();
+    double inletFlow = heater.getInletStream().getFlowRate("kg/hr");
+    double outletFlow = heater.getOutletStream().getFlowRate("kg/hr");
+    int inletPhases = heater.getInletStream().getFluid().getNumberOfPhases();
+    int outletPhases = heater.getOutletStream().getFluid().getNumberOfPhases();
+
+    fluid.resetInitCounts();
+    double actualEntropy = heater.getEntropyProduction("J/K");
+    int actualLevelTwoCalls = fluid.getLevelTwoCalls();
+    int actualLevelThreeCalls = fluid.getLevelThreeCalls();
+    double actualInletEnthalpy = heater.getInletStream().getFluid().getEnthalpy();
+    double actualOutletEnthalpy = heater.getOutletStream().getFluid().getEnthalpy();
+    double actualInletFlow = heater.getInletStream().getFlowRate("kg/hr");
+    double actualOutletFlow = heater.getOutletStream().getFlowRate("kg/hr");
+    int actualInletPhases = heater.getInletStream().getFluid().getNumberOfPhases();
+    int actualOutletPhases = heater.getOutletStream().getFluid().getNumberOfPhases();
+
+    double expectedEntropy = referenceEntropyProduction(heater, "J/K");
+
+    assertEquals(expectedEntropy, actualEntropy, Math.max(1.0e-10, Math.abs(expectedEntropy) * 1.0e-12));
+    assertTrue(actualLevelTwoCalls >= 2, "Both inlet and outlet still require caloric initialization");
+    assertEquals(0, actualLevelThreeCalls, "Entropy diagnostics must not calculate composition derivatives");
+    assertEquals(inletEnthalpy, actualInletEnthalpy, Math.max(1.0e-6, Math.abs(inletEnthalpy) * 1.0e-12));
+    assertEquals(outletEnthalpy, actualOutletEnthalpy, Math.max(1.0e-6, Math.abs(outletEnthalpy) * 1.0e-12));
+    assertEquals(inletFlow, actualInletFlow, 1.0e-8);
+    assertEquals(outletFlow, actualOutletFlow, 1.0e-8);
+    assertEquals(actualInletFlow, actualOutletFlow, 1.0e-8);
+    assertEquals(inletPhases, actualInletPhases);
+    assertEquals(outletPhases, actualOutletPhases);
+  }
+
+  private static double referenceEntropyProduction(Heater heater, String unit) {
+    UUID id = UUID.randomUUID();
+    heater.getInletStream().run(id);
+    heater.getInletStream().getFluid().init(3);
+    heater.getOutletStream().run(id);
+    heater.getOutletStream().getFluid().init(3);
+    return heater.getOutletStream().getThermoSystem().getEntropy(unit)
+        - heater.getInletStream().getThermoSystem().getEntropy(unit);
+  }
 }

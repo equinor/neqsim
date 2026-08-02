@@ -219,7 +219,7 @@ public final class DnvRpF110GlobalBucklingResponseScreeningKernel implements
 
     /** @return immutable ordered buckling response cases */
     public List<BucklingCase> getBucklingCases() {
-      return bucklingCases;
+      return Collections.unmodifiableList(new ArrayList<BucklingCase>(bucklingCases));
     }
 
     /** @return whether F110 applicability was externally verified */

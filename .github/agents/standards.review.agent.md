@@ -1,6 +1,6 @@
 ---
 name: review technical standards compliance
-description: Reviews NeqSim process systems, calculations, and extracted technical documents against standards and technical requirements such as DNV-RP-F101 corroded-pipeline screening, DNV-RP-F104 CO2-pipeline envelope screening, DNV-RP-F105 free-span screening, DNV-RP-F110 global-buckling response screening, DNV-RP-F114 pipe-soil screening, STS0131, TR1965, TR2237, NORSOK S-001, and NORSOK P-002. Uses calculated evidence from standards-aware NeqSim classes and produces compliance findings with remediation actions.
+description: Reviews NeqSim process systems, calculations, and extracted technical documents against standards and technical requirements such as DNV-ST-F101 pipeline screening, DNV-RP-F101 corroded-pipeline screening, DNV-RP-F104 CO2-pipeline envelope screening, DNV-RP-F105 free-span screening, DNV-RP-F109 on-bottom stability, DNV-RP-F110 global-buckling response screening, DNV-RP-F114 pipe-soil screening, STS0131, TR1965, TR2237, NORSOK S-001, and NORSOK P-002. Uses calculated evidence from standards-aware NeqSim classes and produces compliance findings with remediation actions.
 argument-hint: Describe the process system, task folder, standard, or document set to review — e.g., "review this gas scrubber against TR1965", "check pipeline sizing against NORSOK P-002", or "generate a standards compliance report for this ProcessSystem".
 ---
 
@@ -117,7 +117,6 @@ criteria, uncertainty/sensitivity/buckle sharing, and installation/intervention/
 Treat all margins as caller-controlled screening. Do not treat response-envelope force limits as
 critical-buckling or initiation criteria, and keep F109/F114/F105 interfaces, every DNV-ST-F101
 check, and conformity open.
-
 ## Evidence Rules
 
 - Do not credit a barrier unless its performance standard and verification

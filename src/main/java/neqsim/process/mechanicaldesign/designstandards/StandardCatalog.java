@@ -44,6 +44,7 @@ public final class StandardCatalog {
       + "dnv-rp-f114-pipe-soil-interaction-for-submarine-pipelines/";
   private static final String ISO_5167_1_SOURCE = "https://www.iso.org/standard/79179.html";
   private static final String ISO_5167_2_SOURCE = "https://www.iso.org/standard/79180.html";
+  private static final String DNV_F109 = "https://www.dnv.com/energy/standards-guidelines/dnv-rp-f109-on-bottom-stability-design-of-submarine-pipelines/";
   private static final String IEC_61511_SOURCE = "https://webstore.iec.ch/en/publication/5527";
   private static final Map<StandardType, StandardCatalogEntry> ENTRIES;
 
@@ -96,6 +97,8 @@ public final class StandardCatalog {
         StandardLifecycleStatus.CURRENT, null, ISO_5167_1_SOURCE, ISO_5167_VERIFIED_ON));
     entries.put(StandardType.ISO_5167_2, new StandardCatalogEntry(StandardType.ISO_5167_2,
         StandardLifecycleStatus.CURRENT, null, ISO_5167_2_SOURCE, ISO_5167_VERIFIED_ON));
+    entries.put(StandardType.DNV_RP_F109, new StandardCatalogEntry(StandardType.DNV_RP_F109,
+        StandardLifecycleStatus.CURRENT, null, DNV_F109, "2026-08-02"));
     current(entries, "https://www.iso.org/standard/75144.html", StandardType.ISO_23251);
     current(entries, "https://www.iso.org/standard/50826.html", StandardType.ISO_4126_1);
     current(entries, "https://www.iso.org/standard/55440.html", StandardType.ISO_10418);

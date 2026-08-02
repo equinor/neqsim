@@ -41,7 +41,8 @@ class StandardDesignKernelVerificationSuiteTest {
     Set<StandardType> expected = EnumSet.of(StandardType.API_12J, StandardType.API_521, StandardType.API_526,
         StandardType.API_610, StandardType.API_617, StandardType.NORSOK_M_506, StandardType.ISO_5167_2,
         StandardType.DNV_RP_C203, StandardType.DNV_RP_F105, StandardType.DNV_RP_F101, StandardType.DNV_RP_F104,
-        StandardType.DNV_RP_F110, StandardType.DNV_RP_F114, StandardType.API_2000);
+        StandardType.DNV_RP_F110, StandardType.DNV_RP_F114, StandardType.API_2000, StandardType.DNV_RP_F109,
+        StandardType.DNV_ST_F101);
 
     assertEquals(expected, EquipmentDesignKernelRegistry.getRegisteredStandards());
     assertThrows(UnsupportedOperationException.class,
@@ -60,6 +61,8 @@ class StandardDesignKernelVerificationSuiteTest {
           || standard == StandardType.DNV_RP_F101 || standard == StandardType.DNV_RP_F104
           || standard == StandardType.DNV_RP_F110 || standard == StandardType.DNV_RP_F114
           || standard == StandardType.API_2000;
+      currentEditionImplemented = currentEditionImplemented || standard == StandardType.DNV_RP_F109
+          || standard == StandardType.DNV_ST_F101;
       assertEquals(currentEditionImplemented, kernel.supports(StandardEdition.defaultEdition(standard)));
       assertTrue(methodKeys.add(kernel.getMethod() + "@" + kernel.getMethodVersion()), "Duplicate method key");
       assertNotNull(roundTrip(kernel));

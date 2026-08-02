@@ -783,9 +783,9 @@ public class Heater extends TwoPortEquipment
   public double getEntropyProduction(String unit) {
     UUID id = UUID.randomUUID();
     inStream.run(id);
-    inStream.getFluid().init(3);
+    inStream.getFluid().init(2);
     outStream.run(id);
-    outStream.getFluid().init(3);
+    outStream.getFluid().init(2);
 
     double entrop = outStream.getThermoSystem().getEntropy(unit) - inStream.getThermoSystem().getEntropy(unit);
 

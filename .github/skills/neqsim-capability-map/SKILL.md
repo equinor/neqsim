@@ -9,7 +9,7 @@ last_verified: "2026-08-02"
 Structured reference of what NeqSim can do, organized by engineering discipline.
 Use this to quickly check if a capability exists before searching the source code.
 
-**Last updated:** 2026-07-18
+**Last updated:** 2026-08-02
 
 ---
 
@@ -370,7 +370,10 @@ transport properties (viscosity, thermal conductivity, density).
 | `InletVane` | Inlet vane device (6000 Pa max momentum, 85% bulk efficiency). | `process.mechanicaldesign.separator.primaryseparation` |
 | `InletVaneWithMeshpad` | Inlet vane + downstream mesh pad (92% + mesh pad capture). | `process.mechanicaldesign.separator.primaryseparation` |
 | `InletCyclones` | Inlet cyclone cluster (8000 Pa max momentum, 95% bulk efficiency). | `process.mechanicaldesign.separator.primaryseparation` |
-| `PipelineMechanicalDesign` | Pipeline wall thickness | `process.mechanicaldesign.pipeline` |
+| `PipelineMechanicalDesign` | ASME and legacy DNV-OS wall thickness plus access to typed DNV-ST-F101 screening | `process.mechanicaldesign.pipeline` |
+| `DnvStF101PipelineDesignKernel` | Fail-closed 2021 screening: containment, collapse, propagation, load interaction, fatigue, pressure cases, derating, safety class, ovality, fabrication route, installation strain. `SCREENING` only; independent approval required. | `process.engineering.calculation` |
+| `DnvRpF109OnBottomStabilityKernel` | Fail-closed DNV-RP-F109 vertical, absolute-static lateral, and external-displacement screening; always review-required | `process.engineering.calculation` |
+| `DnvRpF109OnBottomStabilityCalculator` | Pure on-bottom load, resistance, required submerged-weight, and utilization calculation | `process.mechanicaldesign.subsea` |
 | `CompressorMechanicalDesign` | Compressor design | `process.mechanicaldesign.compressor` |
 | `ValveMechanicalDesign` | Valve mechanical design | `process.mechanicaldesign.valve` |
 | `HeatExchangerMechanicalDesign` | HX mechanical design with auto-selection (min area/weight/dP) | `process.mechanicaldesign.heatexchanger` |
@@ -533,6 +536,7 @@ transport properties (viscosity, thermal conductivity, density).
 | **Full DNV-RP-F110 global-buckling assessment** | `DnvRpF110GlobalBucklingResponseScreeningKernel` compares external-analysis force/strain/displacement/feed-in responses with caller-controlled limits; a four-capability pack exposes bounded operating, route, F114, and mechanical tools | Retain global structural and pipe-soil models, critical buckling, imperfections/triggers, buckle sharing, local capacity, adjacent standards, and conformity externally |
 | **Full DNV-RP-F114 geotechnical pipe-soil assessment** | `DnvRpF114PipeSoilInteractionScreeningKernel` compares caller-controlled vertical/axial/lateral demands and resistances; a four-capability pack exposes bounded route, operating, thermal-burial, and mechanical tools | Retain site investigation, soil interpretation, load-displacement/penetration/burial models, time/cyclic effects, uncertainty, structural actions, adjacent standards, and conformity externally |
 | **Full pipeline network** | LoopedPipeNetwork: NR-GGA solver, 120+ wells, IPR (PI/Vogel/Fetkovich), chokes, tubing VLP, Beggs-Brill multiphase, compressors, regulators, artificial lift (gas lift/ESP/jet/rod pump), water handling, sand erosion (DNV RP O501), corrosion (de Waard-Milliams/NORSOK M-506), GHG emissions tracking | Full-featured production network |
+| **DNV-RP-F109 generalized/dynamic response** | Transparent absolute-static screen and external-displacement acceptance check only | Supply a validated external response; NeqSim does not reproduce generalized tables, generate dynamic response, or establish conformity |
 
 ### EOS Limitations
 
