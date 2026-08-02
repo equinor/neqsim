@@ -53,6 +53,7 @@ public final class StandardDesignKernelVerificationSuite {
     DnvRpF105FreeSpanScreeningKernel freeSpanKernel = new DnvRpF105FreeSpanScreeningKernel();
     DnvRpF101CorrodedPipelineScreeningKernel metalLossKernel = new DnvRpF101CorrodedPipelineScreeningKernel();
     DnvRpF104Co2PipelineEnvelopeScreeningKernel co2PipelineKernel = new DnvRpF104Co2PipelineEnvelopeScreeningKernel();
+    DnvRpF114PipeSoilInteractionScreeningKernel pipeSoilKernel = new DnvRpF114PipeSoilInteractionScreeningKernel();
     Api2000TankVentingScreeningKernel tankVentingKernel = new Api2000TankVentingScreeningKernel();
 
     EngineeringBenchmarkSuite suite = new EngineeringBenchmarkSuite(SUITE_ID, REVISION)
@@ -61,7 +62,8 @@ public final class StandardDesignKernelVerificationSuite {
         .requireMethod(methodKey(separatorKernel)).requireMethod(methodKey(corrosionKernel))
         .requireMethod(methodKey(meteringKernel)).requireMethod(methodKey(fatigueKernel))
         .requireMethod(methodKey(freeSpanKernel)).requireMethod(methodKey(metalLossKernel))
-        .requireMethod(methodKey(tankVentingKernel)).requireMethod(methodKey(co2PipelineKernel));
+        .requireMethod(methodKey(tankVentingKernel)).requireMethod(methodKey(co2PipelineKernel))
+        .requireMethod(methodKey(pipeSoilKernel));
     suite.add(pumpBenchmark(pumpKernel));
     suite.add(reliefBenchmark(reliefKernel));
     suite.add(orificeBenchmark(orificeKernel));
@@ -74,6 +76,7 @@ public final class StandardDesignKernelVerificationSuite {
     suite.add(metalLossBenchmark(metalLossKernel));
     suite.add(tankVentingBenchmark(tankVentingKernel));
     suite.add(co2PipelineBenchmark(co2PipelineKernel));
+    suite.add(pipeSoilBenchmark(pipeSoilKernel));
     return suite.evaluate();
   }
 
@@ -334,6 +337,33 @@ public final class StandardDesignKernelVerificationSuite {
         .check("minimumMaopMargin", 1.0e6,
             value == null ? FAILURE_SENTINEL : value.getMinimumMaximumAllowableOperatingPressureMarginPa(), "Pa", 0.0,
             0.0)
+        .check("allCallerControlledConstraintsSatisfied", 1.0,
+            value != null && value.allConstraintsSatisfied() ? 1.0 : 0.0, "flag", 0.0, 0.0)
+        .build();
+  }
+
+  private static EngineeringValidationBenchmark pipeSoilBenchmark(DnvRpF114PipeSoilInteractionScreeningKernel kernel) {
+    DnvRpF114PipeSoilInteractionScreeningKernel.Input input = DnvRpF114PipeSoilInteractionScreeningKernel.Input
+        .builder(StandardEdition.defaultEdition(StandardType.DNV_RP_F114), "Pipeline").pipelineOuterDiameterM(0.3239)
+        .submergedWeightNPerM(1200.0)
+        .addInteractionCase(new DnvRpF114PipeSoilInteractionScreeningKernel.InteractionCase("route section 1", 0.0,
+            "installation", 200.0, 500.0, 80.0, 160.0, 120.0, 240.0))
+        .addInteractionCase(new DnvRpF114PipeSoilInteractionScreeningKernel.InteractionCase("route section 2", 25000.0,
+            "operation", 300.0, 600.0, 100.0, 250.0, 220.0, 275.0))
+        .applicabilityVerified(true).siteInvestigationVerified(true).soilModelVerified(true)
+        .pipelineConfigurationVerified(true).installationHistoryVerified(true).cyclicDrainageRateEffectsVerified(true)
+        .loadDisplacementAndResistanceVerified(true).uncertaintyAndVariabilityVerified(true)
+        .designActionsAndAcceptanceCriteriaVerified(true).interfacesAndLifecycleReviewed(true).build();
+    EngineeringCalculationResult<DnvRpF114PipeSoilInteractionAssessment> result = kernel.calculate(input, null);
+    DnvRpF114PipeSoilInteractionAssessment value = result.getValue();
+    return baseline("dnv-rp-f114-pipe-soil-resistance-envelope-regression", kernel)
+        .check("calculatedReviewRequired", 1.0, calculated(result), "flag", 0.0, 0.0)
+        .check("minimumVerticalMargin", 300.0, value == null ? FAILURE_SENTINEL : value.getMinimumVerticalMarginNPerM(),
+            "N/m", 0.0, 0.0)
+        .check("maximumAxialUtilization", 0.5, value == null ? FAILURE_SENTINEL : value.getMaximumAxialUtilization(),
+            "fraction", 0.0, 0.0)
+        .check("maximumLateralUtilization", 0.8,
+            value == null ? FAILURE_SENTINEL : value.getMaximumLateralUtilization(), "fraction", 1.0e-15, 1.0e-12)
         .check("allCallerControlledConstraintsSatisfied", 1.0,
             value != null && value.allConstraintsSatisfied() ? 1.0 : 0.0, "flag", 0.0, 0.0)
         .build();

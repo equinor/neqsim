@@ -43,6 +43,7 @@ The index file `standards_index.csv` maps equipment types to applicable standard
 | Submarine-pipeline free spans | DNV-RP-F105 | Use `DnvRpF105FreeSpanScreeningKernel` for the current 2025-12 first-mode/dimensionless screen; project response triggers are not DNV acceptance criteria and the legacy allowable-span calculator is not F105 evidence |
 | Inspected pipeline metal loss | DNV-RP-F101 | Use `DnvRpF101CorrodedPipelineScreeningKernel` for the current isolated longitudinal defect/internal-pressure screen; measured geometry and caller-controlled factors are evidence, not values inferred from M-506, and ST-F101 design checks remain separate |
 | CO2 pipeline design and operation | DNV-RP-F104 | Use `DnvRpF104Co2PipelineEnvelopeScreeningKernel` for the current caller-controlled composition and operating-envelope margin screen; use its requirement pack only for bounded capability discovery and keep ST-F101, fracture, materials/corrosion, construction, operation, safety, and requalification separate |
+| Submarine-pipeline pipe-soil interaction | DNV-RP-F114 | Use `DnvRpF114PipeSoilInteractionScreeningKernel` for the current caller-controlled vertical/axial/lateral demand-resistance envelope; keep geotechnical model derivation and F109/F110/F105/ST-F101 acceptance separate |
 | Fixed-roof tank venting | API 2000 | Use `Api2000TankVentingScreeningKernel` for the current 7th-edition caller-controlled demand/capacity screen; do not infer licensed demand factors or report it as device sizing/conformity |
 | Mineral scale / produced water | (industry practice; Davies + Ksp(T)) | `ElectrolyteScaleCalculator` / `ScaleKinetics` / `BrineMixingScaleEvaluator` (`process.chemistry.scale`) |
 
@@ -148,6 +149,21 @@ the pure-CO2 critical point, `CO2FlowCorrections.isDensePhase(...)`, or embedded
 `DensePhaseCO2Corrosion` values for the project basis. F104 does not replace DNV-ST-F101 structural
 design or the external fracture, materials, corrosion, construction, safety, operation, and
 requalification assessments.
+
+### DNV-RP-F114 execution rule
+
+For an explicit current `DNV-RP-F114 2021-05` basis, use
+`DnvRpF114PipeSoilInteractionScreeningKernel`. Supply positive pipe diameter and submerged weight,
+then named route/design-situation cases with externally established non-negative vertical, axial,
+and lateral demand magnitudes and positive resistance magnitudes on a consistent N/m basis.
+
+Require external evidence for applicability, site investigation, soil interpretation,
+pipe/interface configuration, installation history, cyclic/drainage/rate/consolidation effects,
+load-displacement and resistance models, uncertainty/spatial variability, design actions and
+acceptance criteria, and lifecycle interfaces. A negative margin remains a calculated finding.
+Never derive F114 resistance from NeqSim soil thermal conductivity, burial heat-transfer inputs, a
+generic friction coefficient, or submerged weight alone. Keep F109 on-bottom stability, F110 global
+buckling, F105 free spans, ST-F101 structural design, and conformity external.
 
 ### API 2000 execution rule
 

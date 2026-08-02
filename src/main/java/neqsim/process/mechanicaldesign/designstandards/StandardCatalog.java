@@ -15,6 +15,7 @@ public final class StandardCatalog {
   private static final String DNV_F105_VERIFIED_ON = "2026-08-02";
   private static final String DNV_RP_F101_VERIFIED_ON = "2026-08-02";
   private static final String DNV_RP_F104_VERIFIED_ON = "2026-08-02";
+  private static final String DNV_RP_F114_VERIFIED_ON = "2026-08-02";
   private static final String API_2000_VERIFIED_ON = "2026-08-02";
   private static final String NORSOK_P = "https://standard.no/en/sectors/petroleum/norsok-standards/p-process";
   private static final String NORSOK_L = "https://standard.no/en/sectors/energi-og-klima/petroleum/norsok-standard-categories/l-piping--layout/";
@@ -36,6 +37,8 @@ public final class StandardCatalog {
   private static final String DNV_RP_F101 = "https://www.dnv.com/energy/standards-guidelines/dnv-rp-f101-corroded-pipelines/";
   private static final String DNV_RP_F104 = "https://www.dnv.com/energy/standards-guidelines/"
       + "dnv-rp-f104-design-and-operation-of-carbon-dioxide-pipelines/";
+  private static final String DNV_RP_F114 = "https://www.dnv.com/energy/standards-guidelines/"
+      + "dnv-rp-f114-pipe-soil-interaction-for-submarine-pipelines/";
   private static final String ISO_5167_1_SOURCE = "https://www.iso.org/standard/79179.html";
   private static final String ISO_5167_2_SOURCE = "https://www.iso.org/standard/79180.html";
   private static final String IEC_61511_SOURCE = "https://webstore.iec.ch/en/publication/5527";
@@ -82,6 +85,8 @@ public final class StandardCatalog {
         StandardLifecycleStatus.CURRENT, null, DNV_RP_F104, DNV_RP_F104_VERIFIED_ON));
     entries.put(StandardType.DNV_RP_F105, new StandardCatalogEntry(StandardType.DNV_RP_F105,
         StandardLifecycleStatus.CURRENT, null, DNV_F105, DNV_F105_VERIFIED_ON));
+    entries.put(StandardType.DNV_RP_F114, new StandardCatalogEntry(StandardType.DNV_RP_F114,
+        StandardLifecycleStatus.CURRENT, null, DNV_RP_F114, DNV_RP_F114_VERIFIED_ON));
     entries.put(StandardType.ISO_5167_1, new StandardCatalogEntry(StandardType.ISO_5167_1,
         StandardLifecycleStatus.CURRENT, null, ISO_5167_1_SOURCE, ISO_5167_VERIFIED_ON));
     entries.put(StandardType.ISO_5167_2, new StandardCatalogEntry(StandardType.ISO_5167_2,

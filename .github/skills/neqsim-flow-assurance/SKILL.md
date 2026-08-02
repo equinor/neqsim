@@ -30,7 +30,7 @@ NeqSim code patterns.
 |--------|-----------|-----------------|
 | Pipeline design | DNV-ST-F101, DNV-RP-F104 for CO2, NORSOK L-001, ASME B31.4/B31.8 | Structural design plus composition-specific CO2 phase/hydraulic and lifecycle basis |
 | Corrosion | NORSOK M-001, DNV-RP-F112, ISO 21457 | Material selection, CO2/H2S corrosion rates |
-| Subsea pipelines | DNV-RP-F109, DNV-RP-F105, NORSOK U-001 | On-bottom stability and free-span assessment |
+| Subsea pipelines | DNV-RP-F109, DNV-RP-F105, DNV-RP-F114, NORSOK U-001 | On-bottom stability, free-span, and caller-controlled pipe-soil interaction screening |
 | Hydrate management | DNV-RP-F116 | Hydrate prevention and remediation |
 | GRP piping | ISO 14692 | Non-metallic pipe design |
 | Pipeline integrity | DNV-RP-F101, DNV-RP-F116, API 1160 | Inspected metal-loss remaining strength and integrity management |
@@ -261,6 +261,18 @@ Do not substitute pure-CO2 critical conditions or `CO2FlowCorrections.isDensePha
 composition, phase-boundary, MAOP, and temperature margins as screening findings. Keep transient
 cases, F104 decompression/fracture and crack arrest, materials/corrosion, release consequences,
 construction, operation, requalification, and all DNV-ST-F101 structural checks external.
+
+### DNV-RP-F114 pipe-soil interaction routing
+
+When route, hydraulic/thermal, or installation work feeds a current `DNV-RP-F114 2021-05` screen,
+route named design situations with externally verified vertical, axial, and lateral action and
+resistance magnitudes through `DnvRpF114PipeSoilInteractionScreeningKernel`. Treat margin and
+utilization outputs as caller-controlled screening findings.
+
+Do not convert burial depth, soil thermal resistance, or a generic friction factor into
+geotechnical resistance. Keep site investigation, soil interpretation, penetration/burial and
+load-displacement response, time/cyclic effects, characteristic values, uncertainty, structural
+actions, and F109/F110/F105/ST-F101 acceptance external.
 
 ### Beggs and Brill Multiphase Correlation
 

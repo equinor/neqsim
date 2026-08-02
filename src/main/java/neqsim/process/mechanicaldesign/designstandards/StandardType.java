@@ -115,6 +115,8 @@ public enum StandardType {
       new String[] { "Pipeline", "AdiabaticPipe", "MultiphasePipe", "Riser" }, "pipeline design codes"),
   DNV_RP_F105("DNV-RP-F105", "Free spanning pipelines", "2025-12", new String[] { "Pipeline", "AdiabaticPipe" },
       "pipeline design codes"),
+  DNV_RP_F114("DNV-RP-F114", "Pipe-soil interaction for submarine pipelines", "2021-05",
+      new String[] { "Pipeline", "AdiabaticPipe", "MultiphasePipe" }, "pipeline design codes"),
 
   // ISO Standards
   ISO_5167_1("ISO-5167-1", "Differential-pressure flow measurement - General principles", "2022",

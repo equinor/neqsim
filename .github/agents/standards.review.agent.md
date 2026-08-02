@@ -1,6 +1,6 @@
 ---
 name: review technical standards compliance
-description: Reviews NeqSim process systems, calculations, and extracted technical documents against standards and technical requirements such as DNV-RP-F101 corroded-pipeline screening, DNV-RP-F104 CO2-pipeline envelope screening, DNV-RP-F105 free-span screening, STS0131, TR1965, TR2237, NORSOK S-001, and NORSOK P-002. Uses calculated evidence from standards-aware NeqSim classes and produces compliance findings with remediation actions.
+description: Reviews NeqSim process systems, calculations, and extracted technical documents against standards and technical requirements such as DNV-RP-F101 corroded-pipeline screening, DNV-RP-F104 CO2-pipeline envelope screening, DNV-RP-F105 free-span screening, DNV-RP-F114 pipe-soil screening, STS0131, TR1965, TR2237, NORSOK S-001, and NORSOK P-002. Uses calculated evidence from standards-aware NeqSim classes and produces compliance findings with remediation actions.
 argument-hint: Describe the process system, task folder, standard, or document set to review — e.g., "review this gas scrubber against TR1965", "check pipeline sizing against NORSOK P-002", or "generate a standards compliance report for this ProcessSystem".
 ---
 
@@ -33,6 +33,7 @@ Use these classes before writing custom checks:
 | DNV-RP-F105 free-span screening | `DnvRpF105FreeSpanScreeningKernel` with verified span geometry, first-mode structural basis, environment, and project-controlled response triggers |
 | DNV-RP-F101 isolated metal-loss screening | `DnvRpF101CorrodedPipelineScreeningKernel` with verified inspected defect geometry, material/pressure basis, and caller-controlled allowance and pressure factor |
 | DNV-RP-F104 CO2 pipeline envelope screening | `DnvRpF104Co2PipelineEnvelopeScreeningKernel` with verified project composition/specification, EOS/phase boundaries, ordered operating profile, limits, and lifecycle evidence |
+| DNV-RP-F114 pipe-soil interaction screening | `DnvRpF114PipeSoilInteractionScreeningKernel` with verified site/soil/interface evidence and caller-controlled vertical/axial/lateral actions and resistances |
 | API 2000 tank-venting screening | `Api2000TankVentingScreeningKernel` with verified fixed-roof scope, demand/combination basis, rated capacities, pressure/vacuum basis, and common reference conditions |
 
 ## Workflow
@@ -100,6 +101,13 @@ decompression and crack arrest, materials, corrosion, construction, commissionin
 operation, requalification, and DNV-ST-F101 structural checks open. The requirement pack is a
 capability map, not clause coverage. Never use `DensePhaseCO2Corrosion` embedded values or
 `CO2FlowCorrections.isDensePhase(...)` as current-edition F104 acceptance evidence.
+
+For DNV-RP-F114, require the typed kernel for the current `2021-05` basis. Verify site investigation,
+soil interpretation, pipe/interface configuration, installation history, cyclic/drainage/rate/time
+effects, load-displacement/resistance models, uncertainty, structural actions and acceptance basis,
+and adjacent-standard interfaces. Treat all margins as caller-controlled screening. Do not credit
+burial heat-transfer data or a generic friction coefficient as geotechnical evidence, and keep
+F109/F110/F105/ST-F101 assessment and conformity open.
 
 ## Evidence Rules
 

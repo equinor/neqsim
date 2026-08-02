@@ -1132,5 +1132,8 @@
   "vision extraction": ["neqsim-document-intelligence-extraction"],
   "evidence package": ["neqsim-document-intelligence-extraction"],
   "source traceability extraction": ["neqsim-document-intelligence-extraction"],
-  "conflicting sources": ["neqsim-document-intelligence-extraction"]
+  "conflicting sources": ["neqsim-document-intelligence-extraction"],
+  "dnv rp f114": ["neqsim-standards-lookup", "neqsim-flow-assurance"],
+  "pipe soil interaction": ["neqsim-standards-lookup", "neqsim-flow-assurance"],
+  "submarine pipeline geotechnics": ["neqsim-standards-lookup", "neqsim-flow-assurance"]
 }

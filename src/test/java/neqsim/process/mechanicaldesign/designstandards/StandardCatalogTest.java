@@ -141,6 +141,20 @@ class StandardCatalogTest {
   }
 
   @Test
+  void currentDnvRpF114EditionHasPublisherEvidenceExecutableKernelAndRequirementPack() {
+    StandardCatalogEntry entry = StandardCatalog.get(StandardType.DNV_RP_F114);
+
+    assertEquals(StandardLifecycleStatus.CURRENT, entry.getLifecycleStatus());
+    assertEquals("2021-05", entry.getStandardType().getDefaultVersion());
+    assertTrue(entry.getPublisherSourceUrl().contains("dnv-rp-f114"));
+    assertEquals("2026-08-02", entry.getVerifiedOn());
+    assertTrue(StandardRegistry.getDesignKernel(StandardType.DNV_RP_F114)
+        .supports(StandardEdition.defaultEdition(StandardType.DNV_RP_F114)));
+    assertEquals(4,
+        StandardRequirementPackRegistry.lookup(StandardType.DNV_RP_F114).requirePack().getCapabilities().size());
+  }
+
+  @Test
   void f105ResourceCatalogDoesNotExposeLegacyPseudoCriteriaAsCurrent() {
     String index = resourceText("/designdata/standards/standards_index.csv");
     String values = resourceText("/designdata/standards/dnv_iso_en_standards.csv");
@@ -155,7 +169,7 @@ class StandardCatalogTest {
   void requirementPacksReferenceLoadableCapabilitiesAndCurrentEditions() throws Exception {
     StandardType[] packedStandards = { StandardType.NORSOK_P_002, StandardType.NORSOK_S_001, StandardType.ISO_10418,
         StandardType.IEC_61511, StandardType.API_520_PART_1, StandardType.NORSOK_M_001, StandardType.API_650,
-        StandardType.API_660, StandardType.DNV_ST_F101, StandardType.DNV_RP_F104 };
+        StandardType.API_660, StandardType.DNV_ST_F101, StandardType.DNV_RP_F104, StandardType.DNV_RP_F114 };
 
     for (StandardType standardType : packedStandards) {
       StandardRequirementPack pack = StandardRequirementPackRegistry.lookup(standardType).requirePack();

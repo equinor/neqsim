@@ -76,6 +76,9 @@ class StandardSupportAuditTest {
     assertEquals("DnvRpF104Co2PipelineEnvelopeScreeningKernel",
         StandardSupportAudit.getSupport(StandardType.DNV_RP_F104).getCalculationImplementation());
     assertTrue(StandardSupportAudit.getSupport(StandardType.DNV_RP_F104).isRegistryConnected());
+    assertEquals("DnvRpF114PipeSoilInteractionScreeningKernel",
+        StandardSupportAudit.getSupport(StandardType.DNV_RP_F114).getCalculationImplementation());
+    assertTrue(StandardSupportAudit.getSupport(StandardType.DNV_RP_F114).isRegistryConnected());
     assertEquals("Api2000TankVentingScreeningKernel",
         StandardSupportAudit.getSupport(StandardType.API_2000).getCalculationImplementation());
     assertTrue(StandardSupportAudit.getSupport(StandardType.API_2000).isRegistryConnected());

@@ -136,6 +136,14 @@ public final class StandardSupportAudit {
               + "against externally verified single-phase boundaries, MAOP, and temperature limits only; phase-model "
               + "qualification, DNV-ST-F101 design, fracture/decompression and crack arrest, materials, corrosion, "
               + "construction, safety, operation, requalification, and conformity remain external.");
+    case DNV_RP_F114:
+      EquipmentDesignKernelRegistry.Lookup pipeSoilImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING, pipeSoilImplementation.isImplemented(),
+          registryImplementation, pipeSoilImplementation.getImplementationClassName(),
+          "Caller-controlled vertical, axial, and lateral demand/resistance margins and utilizations only; site "
+              + "investigation, soil interpretation, penetration/burial response, load-displacement curves, cyclic "
+              + "and time effects, uncertainty, design actions, F109/F110/F105/ST-F101 interfaces, and conformity "
+              + "remain external.");
     default:
       return getCategorySupport(standardType, registryImplementation);
     }
