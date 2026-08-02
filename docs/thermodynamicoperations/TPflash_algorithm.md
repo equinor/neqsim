@@ -182,10 +182,12 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 │ STEP 7: POST-PROCESSING                                                         │
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │  IF multiPhaseCheck enabled:                                                    │
-│     → Preserve an already balanced neutral two-phase aqueous reference          │
+│     → Preserve an already balanced neutral two-phase water-bearing reference    │
 │     → Delegate to TPmultiflash for stability analysis and phase split           │
 │     → If a rejected third-phase trial leaves an invalid two-phase aqueous       │
 │       endpoint, restore the balanced reference                                  │
+│     → If cleanup collapses a strong water/non-water K split to one phase, retry  │
+│       the ordinary flash and retain it only when balanced and lower in Gibbs     │
 │  ELSE:                                                                          │
 │     → Final phase type check (gas vs liquid Gibbs energy)                       │
 │                                                                                 │
@@ -236,6 +238,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 | Aqueous cubic-root equilibrium tolerance | 1e-8 in `max abs(Delta ln(f_i))` | Accept an alternate root only when it lowers Gibbs energy and already satisfies component fugacity equality |
 | Stable-single-phase aqueous-seed gate | `1e-8` in phase-composition normalization | Reject only a structurally invalid aqueous trial whose composition is non-finite, out of `[0, 1]`, or unnormalized; leave normalized endpoints to model-specific convergence and refinement paths |
 | Post-removal aqueous recovery | `1e-8` in `max abs(Delta z_i)` and `max abs(Delta ln(f_i))` | Restore a balanced neutral two-phase aqueous reference only when a rejected third-phase trial leaves the final two-phase endpoint infeasible; genuine three-phase and already feasible endpoints are retained |
+| Water-bearing single-phase-collapse screen | water feed `>= 0.01`, stored water `K < 1e-2`, and a non-water `K > 10` | Run one bounded ordinary-flash retry only after multiphase cleanup returns one phase with strong retained phase-preference evidence; accept only a balanced, distinct two-phase state that lowers extensive Gibbs energy beyond `max(1e-6 J, 1e-8 abs(G))` |
 
 ### 1.1 Problem Formulation
 
@@ -1684,6 +1687,12 @@ Commercial process simulators do not publish all implementation details, but pub
   phase is subsequently removed but its phase fractions leave the surviving two-phase state outside `1e-8` component
   material-balance or fugacity tolerances, the pre-trial state is restored. The recovery does not run another flash and
   is not considered for chemical, ionic, solid, wax, genuine three-phase, or already feasible endpoints.
+- Neutral water-bearing multiphase endpoints retain a compact feasible two-phase reference when one is available. If
+  cleanup instead reaches one phase, a bounded ordinary retry is considered only when the retained K-values show both
+  strong water affinity (`K_water < 1e-2`) and strong non-water volatility (`K > 10`) with at least one mole percent
+  water. The retry replaces the collapsed endpoint only after independent phase-fraction, composition, component
+  balance, fugacity, distinct-phase, and lower-Gibbs checks. Chemical, ionic, solid, wax, and dry systems remain outside
+  this path.
 - Ordinary neutral aqueous splits now compare both cubic roots of the non-aqueous phase at the converged composition. An alternate root is retained only when it lowers Gibbs energy and already satisfies `max abs(Delta ln(f_i)) < 1e-8`; no extra TPflash or multiphase stability calculation is run.
 - Enhanced stability checks are gated to polar, associating, electrolyte, sour, or explicitly requested multiphase systems, limiting unnecessary hydrocarbon phase-map artifacts.
 
@@ -1711,6 +1720,7 @@ Recommended regression coverage should include both numerical convergence and ph
 | Critical-region robustness | Rich gas near cricondenbar and cricondentherm | No false single-phase result when TPD finds instability |
 | Polar/VLLE systems | Water, CO2, H2S, methanol, glycols, and CPA/electrolyte examples | Correct aqueous/oil/gas phase count and stable final split |
 | Multiphase cleanup | Cases with small beta phases and duplicate aqueous candidates | Removed phases preserve total composition and final mass balance |
+| Water-bearing phase collapse | High-pressure CO2/water with SRK/PR and hot low-pressure oil/water with CPA | Ordinary and multiphase paths return the same feasible lower-Gibbs split after cleanup |
 | Documentation drift | Algorithm doc parameter table versus source constants | Stale thresholds are detected during review |
 
 ---
