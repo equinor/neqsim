@@ -407,20 +407,23 @@ A terrain-induced slug is released when:
 2. **Sufficient volume accumulated:** $V_{acc} > V_{min}$
 3. **Gas velocity increases** (pressure buildup behind liquid plug)
 
-### Bøe Criterion for Severe Slugging
+### Explicit Flowline–Riser Stability Diagnostic
 
-Severe slugging occurs in riser systems when:
+The former local “Bøe criterion” description did not match an implemented system model and
+has been removed. Severe slugging depends on the compressible upstream gas volume, the riser
+geometry, and the downstream pressure response. NeqSim now exposes the Taitel (1986)
+quasi-steady system screen:
 
 $$
-\Pi_G = \frac{P_{riser,base} - P_{separator}}{(\rho_L - \rho_G) g H_{riser}} < 1
+P_{top,crit} = \phi\rho_L g\left(\frac{V_G}{A_r\alpha'} - H\right)
 $$
 
-Where $\Pi_G$ is the gas penetration number.
+Use `evaluateSevereSluggingSystem(riserBaseSection)` after solving the pipe. The result reports
+applicability, stable/unstable status, critical top pressure, pressure margin, stability ratio,
+and gas-expansion head. It rejects non-stratified, single-phase, three-phase, variable-area,
+and invalid flowline–riser topologies. This screen does not predict dynamic slug cycles and is
+not a claim of equivalence to a commercial simulator.
 
-**Stability criterion:**
-$$
-\text{Severe slugging if } \Pi_G < 1 \text{ AND } \frac{v_{SL}}{v_{SG}} > 0.1
-$$
 
 ---
 
@@ -526,10 +529,13 @@ pipe.setLiquidFallbackCoefficient(0.3);
 // Run transient simulation
 pipe.runTransient(7200.0);  // 2 hours
 
-// Check for severe slugging
-if (pipe.isSevereSluggingDetected()) {
-    System.out.println("WARNING: Severe slugging detected!");
-    System.out.println("Bøe criterion: " + pipe.getBoeNumber());
+// Evaluate the explicit system after selecting the first rising section
+int riserBaseSection = 40;
+SevereSluggingSystemDiagnostic.Result stability =
+    pipe.evaluateSevereSluggingSystem(riserBaseSection);
+if (stability.isSevereSluggingPossible()) {
+    System.out.println("WARNING: Taitel system screen is unstable");
+    System.out.println("Pressure margin [Pa]: " + stability.getPressureMarginPa());
 }
 
 // Get holdup profile
