@@ -66,7 +66,7 @@ public final class TwoFluidPipeReport {
       this.waterDropoutRisk = pipe.getWaterDropoutRiskProfile();
       this.entrainmentFraction = pipe.getEntrainmentFractionProfile();
       this.entrainedDropletDiameter = pipe.getEntrainedDropletDiameterProfile();
-      this.severeSluggingNumber = pipe.getSevereSluggingNumberProfile();
+      this.severeSluggingNumber = pipe.getInclinedSectionGasCarryoverNumberProfile();
       this.severeSlugPotential = pipe.getSevereSlugPotentialProfile();
     }
 
