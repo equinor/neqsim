@@ -507,9 +507,11 @@ public abstract class Flash extends BaseOperation {
         }
       }
 
-      // Only accept instability if SS converged and tm is clearly negative.
-      // Non-converged results are unreliable and may give spurious instability.
-      double tmThreshold = -1e-4;
+      // Only accept instability if SS converged and tm is below the same tangent-plane
+      // threshold as the standard stability analysis. The non-trivial composition gate below
+      // rejects convergence back to the feed, while using a looser -1e-4 cutoff here can miss
+      // real incipient phases close to a bubble or dew boundary.
+      double tmThreshold = tmLimit;
       if (converged && tmVal < tmThreshold) {
         // Verify non-trivial: trial composition different from feed
         double dot = 0.0;
