@@ -1663,8 +1663,8 @@ public class TPflash extends Flash {
       system.setPhase(heavyPhase, heavyStorageIndex);
       system.setPhaseType(liquidPhaseIndex, PhaseType.GAS);
       system.setPhaseType(gasPhaseIndex, PhaseType.OIL);
-      system.init(1);
-      system.orderByDensity();
+      system.setPhaseIndex(0, lightStorageIndex);
+      system.setPhaseIndex(1, heavyStorageIndex);
     } catch (Exception ex) {
       logger.debug("Hydrocarbon phase-root comparison failed: {}", ex.getMessage());
     }
