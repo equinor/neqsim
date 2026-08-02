@@ -188,6 +188,8 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 │       endpoint, restore the balanced reference                                  │
 │     → If cleanup collapses a strong water/non-water K split to one phase, retry │
 │       the ordinary flash and retain it only when balanced and lower in Gibbs    │
+│     → If a neutral three-phase beta solve stalls, test the three two-phase      │
+│       active sets and retain only a balanced, equilibrated lower-Gibbs endpoint │
 │  ELSE:                                                                          │
 │     → Final phase type check (gas vs liquid Gibbs energy)                       │
 │                                                                                 │
@@ -238,6 +240,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 | Aqueous cubic-root equilibrium tolerance | 1e-8 in `max abs(Delta ln(f_i))` | Accept an alternate root only when it lowers Gibbs energy and already satisfies component fugacity equality |
 | Stable-single-phase aqueous-seed gate | `1e-8` in phase-composition normalization | Reject only a structurally invalid aqueous trial whose composition is non-finite, out of `[0, 1]`, or unnormalized; leave normalized endpoints to model-specific convergence and refinement paths |
 | Post-removal aqueous recovery | `1e-8` in `max abs(Delta z_i)` and `max abs(Delta ln(f_i))` | Restore a balanced neutral two-phase aqueous reference only when a rejected third-phase trial leaves the final two-phase endpoint infeasible; genuine three-phase and already feasible endpoints are retained |
+| Stalled three-phase active-set fallback | `1e-8` in phase normalization, material balance, and `max abs(Delta ln(f_i))` | For neutral non-reactive systems only, evaluate each two-phase active set after a non-converged three-phase endpoint and accept the lowest-Gibbs feasible equilibrium only when it also lowers Gibbs energy relative to the stalled state |
 | Water-bearing single-phase-collapse screen | water feed `>= 0.01`, stored water `K < 1e-2`, and a non-water `K > 10` | Run one bounded ordinary-flash retry only after multiphase cleanup returns one phase with strong retained phase-preference evidence; accept only a balanced, distinct two-phase state that lowers extensive Gibbs energy beyond `max(1e-6 J, 1e-8 abs(G))` |
 
 ### 1.1 Problem Formulation
