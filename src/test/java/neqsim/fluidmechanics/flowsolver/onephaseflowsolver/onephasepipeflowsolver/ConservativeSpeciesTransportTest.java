@@ -77,8 +77,8 @@ class ConservativeSpeciesTransportTest {
       assertEquals(0.0, report.getMaximumMassFractionSumError(), 0.0);
       profile = report.getMassFractionProfile();
       for (int cell = 0; cell < cells; cell++) {
-        assertEquals(analyticalTracer(step, cell, cellMassKg, massFlowKgPerSecond, timeStepSeconds),
-            profile[1][cell], 5.0e-14);
+        assertEquals(analyticalTracer(step, cell, cellMassKg, massFlowKgPerSecond, timeStepSeconds), profile[1][cell],
+            5.0e-14);
       }
     }
     return profile[1];
