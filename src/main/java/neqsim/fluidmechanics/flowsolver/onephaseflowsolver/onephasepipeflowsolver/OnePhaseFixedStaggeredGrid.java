@@ -6,6 +6,7 @@
 
 package neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver;
 
+import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
@@ -24,6 +25,11 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(OnePhaseFixedStaggeredGrid.class);
 
+  private static final int MAXIMUM_NONLINEAR_ITERATIONS = 100;
+  private static final double NONLINEAR_UPDATE_TOLERANCE = 1.0e-10;
+  private static final double DENSITY_RELATIVE_TOLERANCE = 1.0e-8;
+  private static final double MASS_BALANCE_RELATIVE_TOLERANCE = 1.0e-8;
+
   Matrix diffMatrix;
   int iter = 0;
   Matrix[] diff4Matrix;
@@ -36,6 +42,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   protected double[] oldInternalEnergy;
   protected double[] oldImpuls;
   protected double[] oldEnergy;
+  private OnePhaseFlowConvergenceReport lastConvergenceReport = OnePhaseFlowConvergenceReport.notRun();
+  private boolean failOnNonConvergence;
 
   /**
    * Constructor for OnePhaseFixedStaggeredGrid.
@@ -79,6 +87,33 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     }
 
     return clonedSystem;
+  }
+
+  /**
+   * Get diagnostics from the most recent solve.
+   *
+   * @return immutable convergence and total-mass report
+   */
+  public OnePhaseFlowConvergenceReport getLastConvergenceReport() {
+    return lastConvergenceReport == null ? OnePhaseFlowConvergenceReport.notRun() : lastConvergenceReport;
+  }
+
+  /**
+   * Configure whether a transient solve throws when the convergence report fails.
+   *
+   * @param failOnNonConvergence true to throw after recording a failed report; false to log a warning and return
+   */
+  public void setFailOnNonConvergence(boolean failOnNonConvergence) {
+    this.failOnNonConvergence = failOnNonConvergence;
+  }
+
+  /**
+   * Check whether failed transient convergence throws.
+   *
+   * @return true when strict fail-loud mode is enabled
+   */
+  public boolean isFailOnNonConvergence() {
+    return failOnNonConvergence;
   }
 
   /**
@@ -281,23 +316,12 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       SU = pipe.getNode(0).getBulkSystem().getPhases()[0].getDensity();
       r[0] = SU;
     } else {
-      double Ae = pipe.getNode(1).getGeometry().getArea();
-      double Aw = pipe.getNode(0).getGeometry().getArea();
-      double Fw = pipe.getNode(0).getVelocityIn().doubleValue() * Aw;
-      double Fe = oldVelocity[1] * Ae;
-      // System.out.println("new- old : " +
-      // (pipe.getNode(0).getVelocityIn().doubleValue() - oldVelocity[0]));
-      oldMass[0] = 1.0 / timeStep * pipe.getNode(0).getGeometry().getArea()
-          * pipe.getNode(0).getGeometry().getNodeLength();
-
-      a[0] = Math.max(Fw, 0);
-      c[0] = Math.max(-Fe, 0);
-      b[0] = a[0] + c[0] + (Fe - Fw) + oldMass[0];
-      r[0] = oldMass[0] * oldDensity[0];
-
-      // setter ligningen paa rett form
-      // a[0] = - a[0];
-      // c[0] = -c[0];
+      // Node zero is the prescribed upstream boundary, not an accumulating control volume. The
+      // first physical control volume is node one and uses this density in its west-face flux.
+      a[0] = 0.0;
+      b[0] = 1.0;
+      c[0] = 0.0;
+      r[0] = pipe.getNode(0).getBulkSystem().getPhases()[0].getDensity();
     }
 
     for (int i = 1; i < numberOfNodes - 1; i++) {
@@ -951,7 +975,11 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     int iter = 0;
     int iterTop = 0;
     double maxDiff = 1.0;
+    double densityResidual = Double.NaN;
     double diff = 0;
+    double[] nonlinearUpdateHistory = new double[MAXIMUM_NONLINEAR_ITERATIONS];
+    double[] densityResidualHistory = new double[MAXIMUM_NONLINEAR_ITERATIONS];
+    double initialFiniteVolumeMass = calculateInitialFiniteVolumeMass();
     xNew = new double[pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents()][numberOfNodes];
     if (!dynamic) {
       initProfiles();
@@ -1050,9 +1078,162 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         } while (diff > 1e-15 && iter < 10);
       }
 
+      densityResidual = calculateMaximumRelativeDensityResidual();
+      nonlinearUpdateHistory[iterTop - 1] = Math.abs(maxDiff);
+      densityResidualHistory[iterTop - 1] = densityResidual;
       // System.out.println("maxDiff " + maxDiff);
-    } while (Math.abs(maxDiff) > 1e-10 && iterTop < 100); // diffMatrix.norm2()/sol2Matrix.norm2())>0.1);
+    } while (!hasConverged(maxDiff, densityResidual) && iterTop < MAXIMUM_NONLINEAR_ITERATIONS); // diffMatrix.norm2()/sol2Matrix.norm2())>0.1);
+
+    lastConvergenceReport = createConvergenceReport(iterTop, maxDiff, densityResidual, initialFiniteVolumeMass,
+        Arrays.copyOf(nonlinearUpdateHistory, iterTop), Arrays.copyOf(densityResidualHistory, iterTop));
+
+    if (dynamic && solverType > 0 && !lastConvergenceReport.isConverged()) {
+      if (failOnNonConvergence) {
+        throw new IllegalStateException(lastConvergenceReport.getMessage());
+      }
+      logger.warn("{}", lastConvergenceReport.getMessage());
+    }
 
     initFinalResults();
+  }
+
+  private boolean hasConverged(double nonlinearUpdate, double densityResidual) {
+    if (!Double.isFinite(nonlinearUpdate) || !Double.isFinite(densityResidual)) {
+      return false;
+    }
+    if (Math.abs(nonlinearUpdate) > NONLINEAR_UPDATE_TOLERANCE) {
+      return false;
+    }
+    return !dynamic || solverType <= 0 || densityResidual <= DENSITY_RELATIVE_TOLERANCE;
+  }
+
+  private double calculateInitialFiniteVolumeMass() {
+    if (!dynamic || oldDensity == null) {
+      return Double.NaN;
+    }
+    double mass = 0.0;
+    for (int i = 1; i < numberOfNodes; i++) {
+      mass += oldDensity[i] * getControlVolume(i);
+    }
+    return mass;
+  }
+
+  private double calculateFiniteVolumeMass() {
+    double mass = 0.0;
+    for (int i = 1; i < numberOfNodes; i++) {
+      mass += sol2Matrix.get(i, 0) * getControlVolume(i);
+    }
+    return mass;
+  }
+
+  private double calculateThermodynamicMass() {
+    double mass = 0.0;
+    for (int i = 1; i < numberOfNodes; i++) {
+      mass += pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity() * getControlVolume(i);
+    }
+    return mass;
+  }
+
+  private double getControlVolume(int node) {
+    return pipe.getNode(node).getGeometry().getArea() * pipe.getNode(node).getGeometry().getNodeLength();
+  }
+
+  private double calculateMaximumRelativeDensityResidual() {
+    if (solverType <= 0) {
+      return 0.0;
+    }
+    double maximum = 0.0;
+    for (int i = 1; i < numberOfNodes; i++) {
+      double finiteVolumeDensity = sol2Matrix.get(i, 0);
+      double thermodynamicDensity = pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity();
+      double scale = Math.max(Math.max(Math.abs(finiteVolumeDensity), Math.abs(thermodynamicDensity)), 1.0e-30);
+      maximum = Math.max(maximum, Math.abs(finiteVolumeDensity - thermodynamicDensity) / scale);
+    }
+    return maximum;
+  }
+
+  private double calculateInletBoundaryMass() {
+    if (!dynamic) {
+      return Double.NaN;
+    }
+
+    double inletVelocity = pipe.getNode(1).getVelocityIn().doubleValue();
+    if (inletVelocity < 0.0) {
+      return Double.NaN;
+    }
+
+    double inletMassFlow = inletVelocity * pipe.getNode(0).getGeometry().getArea() * sol2Matrix.get(0, 0);
+    return timeStep * inletMassFlow;
+  }
+
+  private double calculateOutletBoundaryMass() {
+    if (!dynamic) {
+      return Double.NaN;
+    }
+
+    double outletVelocity = pipe.getNode(numberOfNodes - 1).getVelocity();
+    if (outletVelocity < 0.0) {
+      return Double.NaN;
+    }
+
+    double outletMassFlow = outletVelocity * pipe.getNode(numberOfNodes - 1).getGeometry().getArea()
+        * sol2Matrix.get(numberOfNodes - 1, 0);
+    return timeStep * outletMassFlow;
+  }
+
+  private OnePhaseFlowConvergenceReport createConvergenceReport(int nonlinearIterations, double nonlinearUpdate,
+      double densityResidual, double initialFiniteVolumeMass, double[] nonlinearHistory, double[] densityHistory) {
+    double finalFiniteVolumeMass = dynamic ? calculateFiniteVolumeMass() : Double.NaN;
+    double finalThermodynamicMass = dynamic ? calculateThermodynamicMass() : Double.NaN;
+    double inletBoundaryMass = calculateInletBoundaryMass();
+    double outletBoundaryMass = calculateOutletBoundaryMass();
+    double netBoundaryMass = inletBoundaryMass - outletBoundaryMass;
+    double finiteVolumeMassResidual = dynamic ? finalFiniteVolumeMass - initialFiniteVolumeMass - netBoundaryMass
+        : Double.NaN;
+    double thermodynamicMassResidual = dynamic ? finalThermodynamicMass - initialFiniteVolumeMass - netBoundaryMass
+        : Double.NaN;
+    double massScale = dynamic ? Math.max(Math.max(Math.abs(initialFiniteVolumeMass), Math.abs(netBoundaryMass)), 1.0)
+        : Double.NaN;
+    double relativeFiniteVolumeMassResidual = dynamic ? Math.abs(finiteVolumeMassResidual) / massScale : Double.NaN;
+    double relativeThermodynamicMassResidual = dynamic ? Math.abs(thermodynamicMassResidual) / massScale : Double.NaN;
+
+    OnePhaseFlowConvergenceReport.ConvergenceReason reason;
+    if (!diagnosticsAreFinite(nonlinearUpdate, densityResidual, relativeFiniteVolumeMassResidual,
+        relativeThermodynamicMassResidual)) {
+      reason = OnePhaseFlowConvergenceReport.ConvergenceReason.NON_FINITE_RESIDUAL;
+    } else if (dynamic && solverType > 0 && densityResidual > DENSITY_RELATIVE_TOLERANCE) {
+      reason = OnePhaseFlowConvergenceReport.ConvergenceReason.DENSITY_INCONSISTENT;
+    } else if (dynamic && solverType > 0 && (relativeFiniteVolumeMassResidual > MASS_BALANCE_RELATIVE_TOLERANCE
+        || relativeThermodynamicMassResidual > MASS_BALANCE_RELATIVE_TOLERANCE)) {
+      reason = OnePhaseFlowConvergenceReport.ConvergenceReason.MASS_BALANCE_FAILED;
+    } else if (!hasConverged(nonlinearUpdate, densityResidual) && nonlinearIterations >= MAXIMUM_NONLINEAR_ITERATIONS) {
+      reason = OnePhaseFlowConvergenceReport.ConvergenceReason.MAX_ITERATIONS_REACHED;
+    } else {
+      reason = OnePhaseFlowConvergenceReport.ConvergenceReason.CONVERGED;
+    }
+
+    String message = "One-phase pipe solve " + reason + " after " + nonlinearIterations
+        + " nonlinear iterations: update=" + Math.abs(nonlinearUpdate) + " (tolerance " + NONLINEAR_UPDATE_TOLERANCE
+        + "), EOS/FV density=" + densityResidual + " (tolerance " + DENSITY_RELATIVE_TOLERANCE + "), FV mass residual="
+        + finiteVolumeMassResidual + " kg, EOS mass residual=" + thermodynamicMassResidual + " kg (relative tolerance "
+        + MASS_BALANCE_RELATIVE_TOLERANCE + ").";
+
+    return new OnePhaseFlowConvergenceReport(reason, dynamic, solverType, nonlinearIterations,
+        NONLINEAR_UPDATE_TOLERANCE, DENSITY_RELATIVE_TOLERANCE, MASS_BALANCE_RELATIVE_TOLERANCE,
+        Math.abs(nonlinearUpdate), densityResidual, initialFiniteVolumeMass, finalFiniteVolumeMass,
+        finalThermodynamicMass, inletBoundaryMass, outletBoundaryMass, netBoundaryMass, finiteVolumeMassResidual,
+        thermodynamicMassResidual, relativeFiniteVolumeMassResidual, relativeThermodynamicMassResidual,
+        nonlinearHistory, densityHistory, message);
+  }
+
+  private boolean diagnosticsAreFinite(double nonlinearUpdate, double densityResidual,
+      double relativeFiniteVolumeMassResidual, double relativeThermodynamicMassResidual) {
+    if (!Double.isFinite(nonlinearUpdate) || !Double.isFinite(densityResidual)) {
+      return false;
+    }
+    if (!dynamic) {
+      return true;
+    }
+    return Double.isFinite(relativeFiniteVolumeMassResidual) && Double.isFinite(relativeThermodynamicMassResidual);
   }
 }

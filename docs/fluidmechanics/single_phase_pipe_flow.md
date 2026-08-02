@@ -121,7 +121,7 @@ gas.initPhysicalProperties();
 gas.setTotalFlowRate(10.0, "MSm3/day");
 
 // Configure pipeline
-FlowSystemInterface pipe = new PipeFlowSystem();
+PipeFlowSystem pipe = new PipeFlowSystem();
 pipe.setInletThermoSystem(gas);
 pipe.setNumberOfLegs(10);
 pipe.setNumberOfNodesInLeg(20);
@@ -205,9 +205,37 @@ SystemInterface[] systems = {coldGas, hotGas};
 pipe.getTimeSeries().setInletThermoSystems(systems);
 pipe.getTimeSeries().setNumberOfTimeStepsInInterval(5);
 
-// Run transient simulation with full physics (type 20 = momentum + mass + energy + composition)
-pipe.solveTransient(20);
+// Run transient simulation with full physics (type 20 = momentum + mass + energy + composition).
+// Strict mode throws when the finite-volume, EOS-density, and total-mass criteria fail.
+pipe.setFailOnNonConvergence(true);
+try {
+    pipe.solveTransient(20);
+} catch (IllegalStateException nonConvergence) {
+    neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFlowConvergenceReport
+        report = pipe.getConvergenceReport();
+    throw new IllegalStateException(report.toJson(), nonConvergence);
+}
 ```
+
+### Convergence and Total-Mass Diagnostics
+
+`PipeFlowSystem.getConvergenceReport()` returns an immutable report for the latest solve. For
+positive transient solver types that include total mass (including `1`, `10`, and `20`), a
+completed solve requires all of the following:
+
+- the nonlinear update residual is at most `1e-10`;
+- the maximum relative difference between the finite-volume and EOS density is at most `1e-8`;
+- finite-volume and EOS inventory changes each agree with integrated inlet-minus-outlet mass to
+  a relative tolerance of `1e-8`.
+
+The report contains both residual histories, iteration count, initial/final finite-volume and EOS
+inventories in kg, integrated inlet and outlet masses in kg, and absolute/relative closure errors.
+For backward-compatible control flow, the default logs a warning and returns the failed report.
+Call `pipe.setFailOnNonConvergence(true)` to make `solveTransient(...)` throw
+`IllegalStateException`; the report is recorded before either behavior and distinguishes
+algebraic, density-consistency, and mass-balance failures. Node zero is a prescribed upstream
+boundary. The first accumulating control volume is node one, so the inlet density is imposed at
+row zero and only physical control volumes contribute to linepack.
 
 ## Compositional Tracking
 
@@ -221,7 +249,7 @@ In steady-state single-phase flow, composition is uniform throughout the pipelin
 
 ### Dynamic Composition Tracking
 
-Dynamic compositional tracking enables simulating slug flow, batch processing, and compositional transitions:
+The component equations provide an experimental basis for dynamic compositional transitions:
 
 1. `oldComposition[component][node]` stores previous time step values
 2. `setComponentConservationMatrix()` builds the discretized equations
@@ -289,17 +317,25 @@ The steady-state solver has been validated for:
 ## Known Limitations
 
 1. **Single-phase only**: No phase transition handling
-2. **Composition drift**: Small numerical drift (~1%) in composition over long pipelines
-3. **TimeSeries API**: Inlet systems array must have N-1 elements for N time points (one system per interval)
+2. **Component-transport validation is incomplete**: Conservative per-component inventories,
+   boundedness without normalization, analytical front speed, pulse breakthrough, and grid/time
+   convergence are not yet established. Do not use the current component result as a validated
+   compositional-tracking prediction.
+3. **No physical axial dispersion model**: Existing advection-scheme spreading is numerical and
+   must not be interpreted as molecular or turbulent dispersion.
+4. **Positive-flow diagnostic boundary**: Current transient mass diagnostics reject reverse
+   boundary flow because an external upwind thermodynamic state is not yet defined.
+5. **TimeSeries API**: Inlet systems array must have N-1 elements for N time points (one system per interval)
 
 ## Recommendations
 
 ### For Improved Mass Conservation
 
-Consider implementing:
+Planned dependency order is:
 - Pressure-velocity coupling (SIMPLE algorithm)
-- Higher-order convection schemes
-- Adaptive time stepping for transient simulations
+- Conservative per-component transport after total-mass/EOS convergence is demonstrated
+- Dimensionally valid higher-order convection only after first-order analytical validation
+- Explicit physical dispersion as a separate, documented model
 
 ### TimeSeries Best Practices
 
@@ -317,4 +353,3 @@ pipe.getTimeSeries().setInletThermoSystems(systems);
 
 1. Patankar, S.V. (1980). *Numerical Heat Transfer and Fluid Flow*. Hemisphere Publishing.
 2. Solbraa, E. (2002). *Equilibrium and Non-Equilibrium Thermodynamics of Natural Gas Processing*. PhD Thesis, NTNU.
-
