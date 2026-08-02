@@ -4851,8 +4851,10 @@ public class TwoFluidPipe extends Pipeline {
   /**
    * Get the local inclined-section gas-carryover number at each section.
    *
-   * <p>Values below 1 indicate possible liquid fallback. The number is a local closure screen;
-   * it does not diagnose severe slugging in a flowline-riser system.</p>
+   * <p>
+   * Values below 1 indicate possible liquid fallback. The number is a local closure screen; it does not diagnose severe
+   * slugging in a flowline-riser system.
+   * </p>
    *
    * @return local gas-carryover-number profile
    */
@@ -4897,38 +4899,40 @@ public class TwoFluidPipe extends Pipeline {
   /**
    * Evaluate severe-slugging stability for a flowline feeding a constant-area riser.
    *
-   * <p>The solved section states provide upstream gas volume, average riser holdup and
-   * density, riser height, and absolute outlet pressure. The default gas-cap void fraction
-   * is 0.89, following the air-water basis used in Taitel's published comparison.</p>
+   * <p>
+   * The solved section states provide upstream gas volume, average riser holdup and density, riser height, and absolute
+   * outlet pressure. The default gas-cap void fraction is 0.89, following the air-water basis used in Taitel's
+   * published comparison.
+   * </p>
    *
    * @param riserBaseSection index of the first continuously rising section
    * @return explicit system-level stability result
    */
-  public SevereSluggingSystemDiagnostic.Result evaluateSevereSluggingSystem(
-      int riserBaseSection) {
+  public SevereSluggingSystemDiagnostic.Result evaluateSevereSluggingSystem(int riserBaseSection) {
     return evaluateSevereSluggingSystem(riserBaseSection, 0.89, 0.0);
   }
 
   /**
    * Evaluate severe-slugging stability with explicit gas-cap and static-choke inputs.
    *
-   * <p>The static choke pressure drop is added to absolute outlet pressure. It represents
-   * one operating point only; dynamic choke response is outside this quasi-steady diagnostic.
-   * Three-phase systems and non-stratified feeders return a not-applicable status.</p>
+   * <p>
+   * The static choke pressure drop is added to absolute outlet pressure. It represents one operating point only;
+   * dynamic choke response is outside this quasi-steady diagnostic. Three-phase systems and non-stratified feeders
+   * return a not-applicable status.
+   * </p>
    *
    * @param riserBaseSection index of the first continuously rising section
    * @param gasCapVoidFraction void fraction alpha-prime in the penetrating gas cap
    * @param staticChokePressureDropPa fixed choke pressure drop in Pa
    * @return explicit system-level stability result
    */
-  public SevereSluggingSystemDiagnostic.Result evaluateSevereSluggingSystem(
-      int riserBaseSection, double gasCapVoidFraction, double staticChokePressureDropPa) {
+  public SevereSluggingSystemDiagnostic.Result evaluateSevereSluggingSystem(int riserBaseSection,
+      double gasCapVoidFraction, double staticChokePressureDropPa) {
     if (sections == null || sections.length != numberOfSections) {
       throw new IllegalStateException("Run the pipe before evaluating flowline-riser stability");
     }
     if (riserBaseSection <= 0 || riserBaseSection >= sections.length) {
-      throw new IllegalArgumentException(
-          "riserBaseSection must be between 1 and numberOfSections - 1");
+      throw new IllegalArgumentException("riserBaseSection must be between 1 and numberOfSections - 1");
     }
 
     double referenceArea = sections[riserBaseSection].getArea();
@@ -4958,8 +4962,7 @@ public class TwoFluidPipe extends Pipeline {
         if (section.getGasHoldup() > 1.0e-10 && section.getLiquidHoldup() > 1.0e-10) {
           flowlineContainsGasAndLiquid = true;
           FlowRegime regime = section.getFlowRegime();
-          flowlineStratified &= regime == FlowRegime.STRATIFIED_SMOOTH
-              || regime == FlowRegime.STRATIFIED_WAVY;
+          flowlineStratified &= regime == FlowRegime.STRATIFIED_SMOOTH || regime == FlowRegime.STRATIFIED_WAVY;
         }
       } else {
         topologyValid &= section.getInclination() > Math.toRadians(1.0);
@@ -4977,15 +4980,13 @@ public class TwoFluidPipe extends Pipeline {
     topologyValid &= riserHeight > 0.0;
 
     SevereSluggingSystemDiagnostic.Input input = SevereSluggingSystemDiagnostic.Input.builder()
-        .upstreamGasVolumeM3(upstreamGasVolume).riserAreaM2(referenceArea)
-        .riserHeightM(Math.max(riserHeight, 1.0e-12))
+        .upstreamGasVolumeM3(upstreamGasVolume).riserAreaM2(referenceArea).riserHeightM(Math.max(riserHeight, 1.0e-12))
         .separatorPressurePa(sections[sections.length - 1].getPressure())
-        .staticChokePressureDropPa(staticChokePressureDropPa)
-        .liquidDensityKgPerM3(liquidDensity).riserLiquidHoldup(riserLiquidHoldup)
-        .gasCapVoidFraction(gasCapVoidFraction).validFlowlineRiserTopology(topologyValid)
-        .flowlineStratified(flowlineStratified).threePhase(threePhase).build();
-    SevereSluggingSystemDiagnostic.Result result =
-        SevereSluggingSystemDiagnostic.evaluate(input);
+        .staticChokePressureDropPa(staticChokePressureDropPa).liquidDensityKgPerM3(liquidDensity)
+        .riserLiquidHoldup(riserLiquidHoldup).gasCapVoidFraction(gasCapVoidFraction)
+        .validFlowlineRiserTopology(topologyValid).flowlineStratified(flowlineStratified).threePhase(threePhase)
+        .build();
+    SevereSluggingSystemDiagnostic.Result result = SevereSluggingSystemDiagnostic.evaluate(input);
 
     for (TwoFluidSection section : sections) {
       section.setSevereSlugPotential(false);
