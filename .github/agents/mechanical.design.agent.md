@@ -1,6 +1,6 @@
 ---
 name: run neqsim mechanical design
-description: Performs mechanical design and CAPEX calculations for process equipment and process systems — wall thickness, material selection, weight estimation, CostEstimateResult reconciliation, and cost analysis per ASME, API, DNV, ISO, NORSOK, and AACE-style estimate classes. Supports separators, pipelines, heat exchangers, compressors, valves, vessels, topsides, SURF, subsea, and well rollups with company-specific TR document requirements.
+description: Performs mechanical design and CAPEX calculations for process equipment and process systems — wall thickness, pipeline free-span/VIV screening, material selection, weight estimation, CostEstimateResult reconciliation, and cost analysis per ASME, API, DNV, ISO, NORSOK, and AACE-style estimate classes. Supports separators, pipelines, heat exchangers, compressors, valves, vessels, topsides, SURF, subsea, and well rollups with company-specific TR document requirements.
 argument-hint: Describe the equipment or process for mechanical design and cost estimation — e.g., "design a 20-inch export pipeline for 150 bara per DNV-OS-F101", "size an HP separator vessel per ASME VIII Div.1", "estimate topsides CAPEX for this process", or "mechanical design for a subsea manifold with operator TR requirements".
 ---
 
@@ -158,6 +158,19 @@ and approval as external evidence.
 Do not treat `PipeMechanicalDesignCalculator.estimateFatigueLife(...)` or the riser fatigue defaults
 as exact-edition C203 calculations. They remain compatibility estimates and contain inconsistent
 embedded intercepts.
+
+### DNV-RP-F105 free-span work
+
+For an explicit current-edition F105 basis, use `DnvRpF105FreeSpanScreeningKernel`. Supply verified
+surveyed geometry, separate steel and hydrodynamic diameters, Young's modulus, effective modal mass,
+effective axial force, normal current/wave environment, and project-controlled response triggers.
+Report modal frequency and dimensionless groups as `SCREENING`; trigger activation only escalates to
+detailed assessment.
+
+Do not treat `PipeMechanicalDesignCalculator.calculateAllowableSpanLength(...)` as exact-edition
+F105. It is a legacy fixed-assumption estimate with arbitrary fallback/cap behavior. Keep support and
+soil stiffness, interacting spans, detailed VIV/direct-wave response, ULS/FLS, fatigue, monitoring,
+intervention, and accountable approval external.
 
 ## Data Sources
 - Material properties: `designdata/MaterialPipeProperties.csv`, `MaterialPlateProperties.csv`

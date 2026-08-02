@@ -1,6 +1,6 @@
 ---
 name: review technical standards compliance
-description: Reviews NeqSim process systems, calculations, and extracted technical documents against standards and technical requirements such as STS0131, TR1965, TR2237, NORSOK S-001, and NORSOK P-002. Uses calculated evidence from standards-aware NeqSim classes and produces compliance findings with remediation actions.
+description: Reviews NeqSim process systems, calculations, and extracted technical documents against standards and technical requirements such as DNV-RP-F105 free-span screening, STS0131, TR1965, TR2237, NORSOK S-001, and NORSOK P-002. Uses calculated evidence from standards-aware NeqSim classes and produces compliance findings with remediation actions.
 argument-hint: Describe the process system, task folder, standard, or document set to review — e.g., "review this gas scrubber against TR1965", "check pipeline sizing against NORSOK P-002", or "generate a standards compliance report for this ProcessSystem".
 ---
 
@@ -30,6 +30,7 @@ Use these classes before writing custom checks:
 | NORSOK M-506 CO2-corrosion screening | `NorsokM506CorrosionDesignKernel` with an explicit `StandardEdition` and immutable `Input` |
 | ISO 5167-2 orifice-plate metering | `Iso5167OrificeMeteringKernel` with explicit service, tapping, geometry, properties, and applicability attestations |
 | DNV-RP-C203 fatigue screening | `DnvRpC203FatigueDesignKernel` with a verified controlled curve, stress bins, factors, exposure, and damage basis |
+| DNV-RP-F105 free-span screening | `DnvRpF105FreeSpanScreeningKernel` with verified span geometry, first-mode structural basis, environment, and project-controlled response triggers |
 
 ## Workflow
 
@@ -63,6 +64,13 @@ actual controlled curve source and stress-spectrum derivation; the input attesta
 Keep curve/detail selection, structural stress, SCFs, thickness/environment, fabrication, rainflow
 counting, simultaneous loads, inspection, and conformity open. Treat the older pipeline and riser
 fatigue methods as legacy estimates because their embedded intercepts are inconsistent.
+
+For DNV-RP-F105, require the typed kernel for the current unamended `2025-12` basis. Verify the
+surveyed span geometry, hydrodynamic diameter, effective modal mass, axial force, support-model
+applicability, environment, and actual project trigger source; Boolean attestations are not proof.
+Treat trigger results as escalation findings, not DNV PASS/FAIL. Keep soil/shoulder and interacting-
+span stiffness, detailed VIV/direct-wave response, ULS/FLS, fatigue, monitoring, intervention, and
+conformity open. Never report `calculateAllowableSpanLength(...)` as F105 evidence.
 
 ## Evidence Rules
 

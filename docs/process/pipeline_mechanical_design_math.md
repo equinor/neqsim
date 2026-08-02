@@ -388,6 +388,17 @@ Strouhal number $St \approx 0.2$ for cylinders.
 
 $$f_n > 1.3 \cdot f_s$$
 
+This criterion documents the legacy `PipeMechanicalDesignCalculator` estimate. Its fixed Strouhal
+and frequency-margin assumptions, arbitrary fallback, and cap are not a current-edition DNV method.
+Do not report it as DNV-RP-F105 evidence.
+
+For an explicit `DNV-RP-F105 2025-12` basis, use `DnvRpF105FreeSpanScreeningKernel`. Its simply
+supported first mode includes externally derived effective axial force and mass, and it reports
+current/wave frequency ratios, reduced velocities, and Keulegan-Carpenter number. Response triggers
+are caller-controlled escalation criteria, not DNV limits. Soil/shoulder stiffness, multi-spans,
+detailed VIV/direct-wave response, ULS/FLS, and fatigue remain external. See the
+[DNV-RP-F105 free-span guide](mechanical_design/dnv_rp_f105_free_span).
+
 ---
 
 ## Fatigue Analysis
@@ -505,7 +516,8 @@ where $h_{weld}$ = hours per weld (typically 4-8 hours depending on diameter).
 3. **ASME B31.8** - Gas Transmission and Distribution Piping Systems (2022)
 4. **DNV-OS-F101** - Submarine Pipeline Systems (2021)
 5. **DNV-RP-C203** - Fatigue Design of Offshore Steel Structures (edition 2024-10, amended 2025-10; licensed project source required)
-6. **API 5L** - Specification for Line Pipe (2018)
-7. **ISO 13623** - Petroleum and Natural Gas Industries — Pipeline Transportation Systems (2017)
-8. **Timoshenko, S.P.** - Theory of Elastic Stability (1961)
-9. **Palmer, A.C. & King, R.A.** - Subsea Pipeline Engineering (2008)
+6. **DNV-RP-F105** - Free Spanning Pipelines (edition 2025-12; licensed project source required)
+7. **API 5L** - Specification for Line Pipe (2018)
+8. **ISO 13623** - Petroleum and Natural Gas Industries — Pipeline Transportation Systems (2017)
+9. **Timoshenko, S.P.** - Theory of Elastic Stability (1961)
+10. **Palmer, A.C. & King, R.A.** - Subsea Pipeline Engineering (2008)

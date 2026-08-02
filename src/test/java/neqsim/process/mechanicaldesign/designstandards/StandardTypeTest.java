@@ -32,6 +32,7 @@ class StandardTypeTest {
     assertEquals("2017", StandardType.NORSOK_L_001.getDefaultVersion());
     assertEquals("2025", StandardType.ASME_VIII_DIV1.getDefaultVersion());
     assertEquals("9th Ed", StandardType.API_617.getDefaultVersion());
+    assertEquals("2025-12", StandardType.DNV_RP_F105.getDefaultVersion());
   }
 
   @Test
@@ -41,6 +42,7 @@ class StandardTypeTest {
     assertEquals("separator process design", StandardType.API_12J.getDesignStandardCategory());
     assertEquals("compressor design codes", StandardType.API_617.getDesignStandardCategory());
     assertEquals("fatigue design standards", StandardType.DNV_RP_C203.getDesignStandardCategory());
+    assertEquals("pipeline design codes", StandardType.DNV_RP_F105.getDesignStandardCategory());
   }
 
   @Test
@@ -78,6 +80,7 @@ class StandardTypeTest {
     assertTrue(pipelineStandards.contains(StandardType.NORSOK_L_001));
     assertTrue(pipelineStandards.contains(StandardType.DNV_ST_F101));
     assertTrue(pipelineStandards.contains(StandardType.DNV_RP_C203));
+    assertTrue(pipelineStandards.contains(StandardType.DNV_RP_F105));
     assertTrue(pipelineStandards.contains(StandardType.ASME_B31_8));
 
     List<StandardType> separatorStandards = StandardType.getApplicableStandards("Separator");
@@ -123,6 +126,7 @@ class StandardTypeTest {
     List<StandardType> dnvStandards = StandardType.getDnvStandards();
     assertFalse(dnvStandards.isEmpty());
     assertTrue(dnvStandards.contains(StandardType.DNV_RP_C203));
+    assertTrue(dnvStandards.contains(StandardType.DNV_RP_F105));
     assertTrue(dnvStandards.contains(StandardType.DNV_ST_F101));
     assertFalse(dnvStandards.contains(StandardType.API_617));
   }
