@@ -48,7 +48,7 @@ public class FixedLiquidRefluxMeshBalanceTest {
 
     assertTrue(column.getLastTrayMaterialBalanceError() <= column.getTrayMaterialBalanceTolerance(),
         column.getConvergenceDiagnostics());
-    assertTrue(column.getLastMeshMaterialResidualNorm() <= column.getTrayMaterialBalanceTolerance(),
+    assertTrue(column.getLastMeshMaterialResidualNorm() <= column.getMeshResidualTolerance(),
         column.getConvergenceDiagnostics());
     assertTrue(column.getLastEnergyResidual() <= column.getEnthalpyBalanceTolerance(),
         column.getConvergenceDiagnostics());
@@ -110,7 +110,7 @@ public class FixedLiquidRefluxMeshBalanceTest {
     column.setBottomPressure(10.5);
     column.getCondenser().setOutTemperature(293.15);
     column.getReboiler().setOutTemperature(353.15);
-    column.getCondenser().setSeparation_with_liquid_reflux(true, refluxFlowKgPerHour, "kg/hr");
+    column.setCondenserLiquidReflux(refluxFlowKgPerHour, "kg/hr");
     column.setSolverType(DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
     column.setRelaxationFactor(0.2);
     column.setMaxNumberOfIterations(120, true);
