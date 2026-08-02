@@ -23,7 +23,8 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * This legacy heuristic embeds illustrative impurity thresholds and a pure-CO2 phase-state approximation. It is not an
  * exact-edition implementation of any publication in the table and must not be used as DNV-RP-F104 conformity evidence.
- * Project criteria, composition-specific thermodynamics, materials/corrosion qualification, and approval remain external.
+ * Project criteria, composition-specific thermodynamics, materials/corrosion qualification, and approval remain
+ * external.
  * </p>
  *
  * <table>

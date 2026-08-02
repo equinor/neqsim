@@ -53,6 +53,8 @@ public final class StandardDesignKernelVerificationSuite {
     DnvRpF105FreeSpanScreeningKernel freeSpanKernel = new DnvRpF105FreeSpanScreeningKernel();
     DnvRpF101CorrodedPipelineScreeningKernel metalLossKernel = new DnvRpF101CorrodedPipelineScreeningKernel();
     DnvRpF104Co2PipelineEnvelopeScreeningKernel co2PipelineKernel = new DnvRpF104Co2PipelineEnvelopeScreeningKernel();
+    DnvRpF110GlobalBucklingResponseScreeningKernel globalBucklingKernel = new DnvRpF110GlobalBucklingResponseScreeningKernel();
+    DnvRpF114PipeSoilInteractionScreeningKernel pipeSoilKernel = new DnvRpF114PipeSoilInteractionScreeningKernel();
     Api2000TankVentingScreeningKernel tankVentingKernel = new Api2000TankVentingScreeningKernel();
 
     EngineeringBenchmarkSuite suite = new EngineeringBenchmarkSuite(SUITE_ID, REVISION)
@@ -61,7 +63,8 @@ public final class StandardDesignKernelVerificationSuite {
         .requireMethod(methodKey(separatorKernel)).requireMethod(methodKey(corrosionKernel))
         .requireMethod(methodKey(meteringKernel)).requireMethod(methodKey(fatigueKernel))
         .requireMethod(methodKey(freeSpanKernel)).requireMethod(methodKey(metalLossKernel))
-        .requireMethod(methodKey(tankVentingKernel)).requireMethod(methodKey(co2PipelineKernel));
+        .requireMethod(methodKey(tankVentingKernel)).requireMethod(methodKey(co2PipelineKernel))
+        .requireMethod(methodKey(pipeSoilKernel)).requireMethod(methodKey(globalBucklingKernel));
     suite.add(pumpBenchmark(pumpKernel));
     suite.add(reliefBenchmark(reliefKernel));
     suite.add(orificeBenchmark(orificeKernel));
@@ -74,6 +77,8 @@ public final class StandardDesignKernelVerificationSuite {
     suite.add(metalLossBenchmark(metalLossKernel));
     suite.add(tankVentingBenchmark(tankVentingKernel));
     suite.add(co2PipelineBenchmark(co2PipelineKernel));
+    suite.add(pipeSoilBenchmark(pipeSoilKernel));
+    suite.add(globalBucklingBenchmark(globalBucklingKernel));
     return suite.evaluate();
   }
 
@@ -334,6 +339,70 @@ public final class StandardDesignKernelVerificationSuite {
         .check("minimumMaopMargin", 1.0e6,
             value == null ? FAILURE_SENTINEL : value.getMinimumMaximumAllowableOperatingPressureMarginPa(), "Pa", 0.0,
             0.0)
+        .check("allCallerControlledConstraintsSatisfied", 1.0,
+            value != null && value.allConstraintsSatisfied() ? 1.0 : 0.0, "flag", 0.0, 0.0)
+        .build();
+  }
+
+  private static EngineeringValidationBenchmark pipeSoilBenchmark(DnvRpF114PipeSoilInteractionScreeningKernel kernel) {
+    DnvRpF114PipeSoilInteractionScreeningKernel.Input input = DnvRpF114PipeSoilInteractionScreeningKernel.Input
+        .builder(StandardEdition.defaultEdition(StandardType.DNV_RP_F114), "Pipeline").pipelineOuterDiameterM(0.3239)
+        .submergedWeightNPerM(1200.0)
+        .addInteractionCase(new DnvRpF114PipeSoilInteractionScreeningKernel.InteractionCase("route section 1", 0.0,
+            "installation", 200.0, 500.0, 80.0, 160.0, 120.0, 240.0))
+        .addInteractionCase(new DnvRpF114PipeSoilInteractionScreeningKernel.InteractionCase("route section 2", 25000.0,
+            "operation", 300.0, 600.0, 100.0, 250.0, 220.0, 275.0))
+        .applicabilityVerified(true).siteInvestigationVerified(true).soilModelVerified(true)
+        .pipelineConfigurationVerified(true).installationHistoryVerified(true).cyclicDrainageRateEffectsVerified(true)
+        .loadDisplacementAndResistanceVerified(true).uncertaintyAndVariabilityVerified(true)
+        .designActionsAndAcceptanceCriteriaVerified(true).interfacesAndLifecycleReviewed(true).build();
+    EngineeringCalculationResult<DnvRpF114PipeSoilInteractionAssessment> result = kernel.calculate(input, null);
+    DnvRpF114PipeSoilInteractionAssessment value = result.getValue();
+    return baseline("dnv-rp-f114-pipe-soil-resistance-envelope-regression", kernel)
+        .check("calculatedReviewRequired", 1.0, calculated(result), "flag", 0.0, 0.0)
+        .check("minimumVerticalMargin", 300.0, value == null ? FAILURE_SENTINEL : value.getMinimumVerticalMarginNPerM(),
+            "N/m", 0.0, 0.0)
+        .check("maximumAxialUtilization", 0.5, value == null ? FAILURE_SENTINEL : value.getMaximumAxialUtilization(),
+            "fraction", 0.0, 0.0)
+        .check("maximumLateralUtilization", 0.8,
+            value == null ? FAILURE_SENTINEL : value.getMaximumLateralUtilization(), "fraction", 1.0e-15, 1.0e-12)
+        .check("allCallerControlledConstraintsSatisfied", 1.0,
+            value != null && value.allConstraintsSatisfied() ? 1.0 : 0.0, "flag", 0.0, 0.0)
+        .build();
+  }
+
+  private static EngineeringValidationBenchmark globalBucklingBenchmark(
+      DnvRpF110GlobalBucklingResponseScreeningKernel kernel) {
+    DnvRpF110GlobalBucklingResponseScreeningKernel.Input input = DnvRpF110GlobalBucklingResponseScreeningKernel.Input
+        .builder(StandardEdition.defaultEdition(StandardType.DNV_RP_F110), "Pipeline").pipelineOuterDiameterM(0.3239)
+        .steelWallThicknessM(0.0206)
+        .addBucklingCase(new DnvRpF110GlobalBucklingResponseScreeningKernel.BucklingCase("controlled buckle 1", 0.0,
+            "operation", DnvRpF110GlobalBucklingResponseScreeningKernel.PipelineConfiguration.EXPOSED,
+            DnvRpF110GlobalBucklingResponseScreeningKernel.DesignStrategy.CONTROLLED_BUCKLING, 8.0e6, 10.0e6, 0.006,
+            0.010, 4.0, 5.0, 300.0, 400.0))
+        .addBucklingCase(new DnvRpF110GlobalBucklingResponseScreeningKernel.BucklingCase("buried section 1", 25000.0,
+            "shutdown", DnvRpF110GlobalBucklingResponseScreeningKernel.PipelineConfiguration.BURIED,
+            DnvRpF110GlobalBucklingResponseScreeningKernel.DesignStrategy.BUCKLING_PREVENTION, 6.0e6, 10.0e6, 0.004,
+            0.008, 0.3, 0.5, 100.0, 200.0))
+        .applicabilityVerified(true).operatingEnvelopeAndEffectiveForceVerified(true)
+        .pipePropertiesAndAsLaidGeometryVerified(true).pipeSoilInteractionVerified(true)
+        .imperfectionTriggerAndStrategyVerified(true).globalStructuralModelVerified(true)
+        .designSituationsAndLoadCombinationsVerified(true).localCapacityAndStrainCriteriaVerified(true)
+        .uncertaintySensitivityAndBuckleSharingVerified(true)
+        .installationInterventionMonitoringAndLifecycleReviewed(true).build();
+    EngineeringCalculationResult<DnvRpF110GlobalBucklingResponseAssessment> result = kernel.calculate(input, null);
+    DnvRpF110GlobalBucklingResponseAssessment value = result.getValue();
+    return baseline("dnv-rp-f110-global-buckling-response-envelope-regression", kernel)
+        .check("calculatedReviewRequired", 1.0, calculated(result), "flag", 0.0, 0.0)
+        .check("maximumCompressiveForceUtilization", 0.8,
+            value == null ? FAILURE_SENTINEL : value.getMaximumCompressiveForceUtilization(), "fraction", 0.0, 0.0)
+        .check("maximumLongitudinalStrainUtilization", 0.6,
+            value == null ? FAILURE_SENTINEL : value.getMaximumLongitudinalStrainUtilization(), "fraction", 1.0e-15,
+            1.0e-12)
+        .check("maximumGlobalDisplacementUtilization", 0.8,
+            value == null ? FAILURE_SENTINEL : value.getMaximumGlobalDisplacementUtilization(), "fraction", 0.0, 0.0)
+        .check("maximumFeedInLengthUtilization", 0.75,
+            value == null ? FAILURE_SENTINEL : value.getMaximumFeedInLengthUtilization(), "fraction", 0.0, 0.0)
         .check("allCallerControlledConstraintsSatisfied", 1.0,
             value != null && value.allConstraintsSatisfied() ? 1.0 : 0.0, "flag", 0.0, 0.0)
         .build();

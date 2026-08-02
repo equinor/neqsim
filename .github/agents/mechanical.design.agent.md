@@ -1,6 +1,6 @@
 ---
 name: run neqsim mechanical design
-description: Performs mechanical design and CAPEX calculations for process equipment and process systems — wall thickness, pipeline free-span/VIV and corroded-pipeline metal-loss screening, material selection, weight estimation, CostEstimateResult reconciliation, and cost analysis per ASME, API, DNV, ISO, NORSOK, and AACE-style estimate classes. Supports separators, pipelines, heat exchangers, compressors, valves, vessels, topsides, SURF, subsea, and well rollups with company-specific TR document requirements.
+description: Performs mechanical design and CAPEX calculations for process equipment and process systems — wall thickness, pipeline free-span/VIV, pipe-soil interaction and corroded-pipeline metal-loss screening, material selection, weight estimation, CostEstimateResult reconciliation, and cost analysis per ASME, API, DNV, ISO, NORSOK, and AACE-style estimate classes. Supports separators, pipelines, heat exchangers, compressors, valves, vessels, topsides, SURF, subsea, and well rollups with company-specific TR document requirements.
 argument-hint: Describe the equipment or process for mechanical design and cost estimation — e.g., "design a 20-inch export pipeline for 150 bara per DNV-OS-F101", "size an HP separator vessel per ASME VIII Div.1", "estimate topsides CAPEX for this process", or "mechanical design for a subsea manifold with operator TR requirements".
 ---
 
@@ -204,6 +204,33 @@ adjacent capabilities. Do not treat the pure-CO2 critical point, `CO2FlowCorrect
 or `DensePhaseCO2Corrosion` embedded typical limits as F104 evidence. Keep DNV-ST-F101 structural
 design, running-ductile-fracture/decompression/crack arrest, construction, operation, and accountable
 approval external.
+
+### DNV-RP-F114 pipe-soil interaction work
+
+For an explicit current-edition F114 basis, use `DnvRpF114PipeSoilInteractionScreeningKernel` with
+verified pipeline dimensions/weight and named route/design-situation cases. Supply externally
+established vertical, axial, and lateral demand and resistance magnitudes. Report margins and
+utilizations as `SCREENING`, not DNV acceptance.
+
+Require site investigation, soil model, interface geometry, installation history, cyclic/time
+effects, load-displacement model, uncertainty, structural action/acceptance, and adjacent-standard
+evidence. NeqSim soil thermal inputs are not geotechnical resistance. Keep F109 on-bottom stability,
+F110 global buckling, F105 free spans, ST-F101 structural checks, and approval external.
+
+### DNV-RP-F110 global-buckling response work
+
+For an explicit current-edition F110 basis, use
+`DnvRpF110GlobalBucklingResponseScreeningKernel` with verified pipe dimensions and named
+route/design-situation cases. Supply externally analysed effective-force, longitudinal-strain,
+global-displacement, and feed-in responses together with caller-controlled allowable or available
+values. Report margins and utilizations as `SCREENING`, not DNV acceptance.
+
+Require the operating envelope/effective-force, pipe/as-laid geometry, pipe-soil interaction,
+imperfection/trigger/strategy, global structural model, design-situation/load-combination, local
+capacity/strain, uncertainty/sensitivity/buckle-sharing, and lifecycle evidence. Do not interpret
+the caller force allowable as a NeqSim-derived buckle-initiation or prevention criterion. Keep
+F109 on-bottom stability, F114 geotechnical design, F105 free spans, every ST-F101 structural check,
+and accountable approval external.
 
 ### API 2000 tank-venting work
 
