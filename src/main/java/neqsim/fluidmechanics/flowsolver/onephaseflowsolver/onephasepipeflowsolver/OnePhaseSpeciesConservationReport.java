@@ -25,6 +25,8 @@ public final class OnePhaseSpeciesConservationReport implements Serializable {
     COMPONENT_BALANCE_FAILED(false),
     /** Calculated mass fractions were negative, exceeded one, or did not close to unity. */
     COMPOSITION_BOUNDS_FAILED(false),
+    /** Hydraulic/species fixed-point residuals did not converge within the iteration limit. */
+    COUPLING_NOT_CONVERGED(false),
     /** The synchronized thermodynamic composition was inconsistent with conservative state. */
     THERMODYNAMIC_SYNC_FAILED(false);
 

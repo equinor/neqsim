@@ -51,6 +51,7 @@ class ConservativeSpeciesTransportTest {
 
   @Test
   void rejectsInvalidClosureAndReversedFlowWithoutRepairingInputs() {
+    assertFalse(OnePhaseSpeciesConservationReport.ConservationReason.COUPLING_NOT_CONVERGED.isConverged());
     String[] names = { "carrier", "tracer" };
     double[][] invalidOld = { { 0.8 }, { 0.3 } };
     OnePhaseSpeciesConservationReport invalid = ConservativeSpeciesTransport.solve(names, invalidOld,

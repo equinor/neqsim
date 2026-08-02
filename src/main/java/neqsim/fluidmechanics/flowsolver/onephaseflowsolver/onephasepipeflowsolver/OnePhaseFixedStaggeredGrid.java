@@ -1205,7 +1205,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
 
     if (maximumCompositionChange > SPECIES_COUPLING_TOLERANCE || densityResidual > DENSITY_RELATIVE_TOLERANCE) {
       lastSpeciesConservationReport = lastSpeciesConservationReport.withReason(
-          OnePhaseSpeciesConservationReport.ConservationReason.THERMODYNAMIC_SYNC_FAILED,
+          OnePhaseSpeciesConservationReport.ConservationReason.COUPLING_NOT_CONVERGED,
           "Hydraulic/species fixed point did not converge after " + couplingIteration
               + " iterations: maximum mass-fraction change=" + maximumCompositionChange + " (tolerance "
               + SPECIES_COUPLING_TOLERANCE + "), EOS/FV density=" + densityResidual + " (tolerance "
