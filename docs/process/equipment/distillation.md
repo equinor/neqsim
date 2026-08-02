@@ -171,8 +171,9 @@ DistillationColumn.ReboilerMode reboilerMode = column.getReboilerMode();
 `setCondenserLiquidReflux(value, unit)` configures the `LIQUID_REFLUX_SPLIT` mode. Use it instead
 of calling `setCondenserMode(LIQUID_REFLUX_SPLIT)` directly because the fixed reflux flow is
 required.
-The condenser exposes the non-refluxed condensate through `getLiquidProductStream()`; MESH material
-and per-tray balance diagnostics count that stream as a third top-stage outlet.
+The condenser exposes the non-refluxed condensate through
+`column.getCondenser().getLiquidProductStream()`; MESH material and per-tray balance diagnostics
+count that stream as a third top-stage outlet.
 
 ## Solver Options
 
