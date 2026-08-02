@@ -232,6 +232,10 @@ following:
 - finite-volume and EOS inventory changes each agree with integrated inlet-minus-outlet mass to
   a relative tolerance of `1e-8`.
 
+Use `solveSteadyState(1)` before `solveTransient(1)` when selecting this validated hydraulic/EOS
+path. The coupled steady refinement is intentionally limited to type `1`; it does not overwrite
+the temperature or composition results produced by staged solver types `10` and `20`.
+
 The pressure and velocity unknowns are interleaved so each equation couples only to its two
 nearest unknowns on either side. The Newton matrix is therefore stored and solved as a compact
 pentadiagonal system rather than expanded to a dense matrix. Continuity pressure derivatives use

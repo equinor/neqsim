@@ -1097,7 +1097,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       // System.out.println("maxDiff " + maxDiff);
     } while (!hasConverged(maxDiff, densityResidual) && iterTop < MAXIMUM_NONLINEAR_ITERATIONS); // diffMatrix.norm2()/sol2Matrix.norm2())>0.1);
 
-    if (!dynamic && solverType > 0) {
+    if (!dynamic && solverType == 1) {
       OnePhaseFixedStaggeredGrid refinement = new OnePhaseFixedStaggeredGrid(pipe, pipe.getSystemLength(),
           numberOfNodes, false);
       refinement.setSolverType(solverType);
@@ -1261,9 +1261,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     setMassConservationMatrixTDMA();
     for (int node = 1; node < numberOfNodes - 1; node++) {
       double value = a[node] * sol2Matrix.get(node - 1, 0) + b[node] * sol2Matrix.get(node, 0) - r[node];
-      if (node < numberOfNodes - 1) {
-        value += c[node] * sol2Matrix.get(node + 1, 0);
-      }
+      value += c[node] * sol2Matrix.get(node + 1, 0);
       values[2 * (node - 1)] = value / coupledMassEquationScale[node];
     }
     setImpulsMatrixTDMA();
@@ -1295,9 +1293,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     for (int node = 1; node < numberOfNodes - 1; node++) {
       double termScale = Math.abs(r[node]) + Math.abs(a[node] * sol2Matrix.get(node - 1, 0))
           + Math.abs(b[node] * sol2Matrix.get(node, 0));
-      if (node < numberOfNodes - 1) {
-        termScale += Math.abs(c[node] * sol2Matrix.get(node + 1, 0));
-      }
+      termScale += Math.abs(c[node] * sol2Matrix.get(node + 1, 0));
       coupledMassEquationScale[node] = Math.max(termScale, 1.0);
     }
     setImpulsMatrixTDMA();

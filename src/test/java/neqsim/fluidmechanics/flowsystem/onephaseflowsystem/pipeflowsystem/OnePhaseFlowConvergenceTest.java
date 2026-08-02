@@ -124,6 +124,14 @@ class OnePhaseFlowConvergenceTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void legacySteadySolverIsNotOverwrittenByHydraulicsOnlyRefinement() {
+    PipeFlowSystem pipe = createInitializedPipe(3);
+
+    assertDoesNotThrow(() -> pipe.solveSteadyState(20));
+    assertFalse(pipe.getConvergenceReport().isNonlinearMetricEquationResidual());
+  }
+
+  @Test
   void unchangedBoundaryIsAHydraulicFixedPoint() {
     PipeFlowSystem pipe = createInitializedPipe();
     double[] pressure = pressures(pipe);
@@ -180,7 +188,7 @@ class OnePhaseFlowConvergenceTest extends neqsim.NeqSimTest {
     pipe.setLegOuterHeatTransferCoefficients(new double[] { 0.0, 0.0 });
     pipe.createSystem();
     pipe.init();
-    pipe.solveSteadyState(20);
+    pipe.solveSteadyState(1);
     assertTrue(pipe.getConvergenceReport().isConverged());
     return pipe;
   }
