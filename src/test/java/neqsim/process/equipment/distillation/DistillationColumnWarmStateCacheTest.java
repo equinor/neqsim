@@ -84,26 +84,28 @@ public class DistillationColumnWarmStateCacheTest {
    * @return an unrun column configured for exact sequential-state reuse
    */
   private static DistillationColumn buildFixedLiquidRefluxColumn() {
-    SystemSrkEos fluid = new SystemSrkEos(298.15, 5.0);
-    fluid.addComponent("propane", 1.0);
-    fluid.addComponent("n-butane", 1.0);
-    fluid.addComponent("n-pentane", 1.0);
-    fluid.createDatabase(true);
+    SystemSrkEos fluid = new SystemSrkEos(293.15, 10.0);
+    fluid.addComponent("propane", 40.0);
+    fluid.addComponent("n-butane", 30.0);
+    fluid.addComponent("n-pentane", 30.0);
     fluid.setMixingRule("classic");
 
     Stream feed = new Stream("fixed liquid reflux feed", fluid);
-    feed.setFlowRate(2.0, "mol/sec");
+    feed.setFlowRate(5000.0, "kg/hr");
+    feed.setTemperature(20.0, "C");
+    feed.setPressure(10.0, "bara");
     feed.run();
 
-    DistillationColumn column = new DistillationColumn("fixed liquid reflux cache column", 1, true, true);
-    column.addFeedStream(feed, 1);
-    column.setTopPressure(5.0);
-    column.setBottomPressure(5.2);
-    column.getCondenser().setOutTemperature(288.15);
-    column.getReboiler().setOutTemperature(333.15);
-    column.getCondenser().setSeparation_with_liquid_reflux(true, 1.0, "kg/hr");
+    DistillationColumn column = new DistillationColumn("fixed liquid reflux cache column", 6, true, true);
+    column.addFeedStream(feed, 3);
+    column.setTopPressure(10.0);
+    column.setBottomPressure(10.5);
+    column.getCondenser().setOutTemperature(293.15);
+    column.getReboiler().setOutTemperature(353.15);
+    column.getCondenser().setSeparation_with_liquid_reflux(true, 100.0, "kg/hr");
     column.setSolverType(DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
-    column.setRelaxationFactor(0.5);
+    column.setRelaxationFactor(0.2);
+    column.setMaxNumberOfIterations(120, true);
     return column;
   }
 
@@ -187,7 +189,7 @@ public class DistillationColumnWarmStateCacheTest {
         "activating ratio mode must solve the changed condenser equations instead of reusing equilibrium products");
     assertTrue(column.getLastIterationCount() > 0, "the changed condenser equations must execute tray iterations");
     assertTrue(column.solved(), column.getConvergenceDiagnostics());
-    assertPhysicalAndBalancedAllowingZeroProduct(column.getFeedStreams(1).get(0), column);
+    assertPhysicalAndBalancedAllowingZeroProduct(column.getFeedStreams(3).get(0), column);
   }
 
   /**
@@ -218,7 +220,7 @@ public class DistillationColumnWarmStateCacheTest {
         "fixed liquid separation must solve its own equations instead of reusing ratio-controlled products");
     assertTrue(column.getLastIterationCount() > 0, "the changed condenser equations must execute tray iterations");
     assertTrue(column.solved(), column.getConvergenceDiagnostics());
-    assertPhysicalAndBalancedWithCondenserProduct(column.getFeedStreams(1).get(0), column);
+    assertPhysicalAndBalancedWithCondenserProduct(column.getFeedStreams(3).get(0), column);
   }
 
   /**
@@ -234,36 +236,36 @@ public class DistillationColumnWarmStateCacheTest {
     DistillationColumn column = buildFixedLiquidRefluxColumn();
     column.run();
     assertTrue(column.solved(), column.getConvergenceDiagnostics());
-    assertEquals(1.0, column.getCondenser().getLiquidOutStream().getFlowRate("kg/hr"), 1.0e-6,
+    assertEquals(100.0, column.getCondenser().getLiquidOutStream().getFlowRate("kg/hr"), 1.0e-6,
         "the initial fixed liquid return must satisfy its flow specification");
-    assertPhysicalAndBalancedWithCondenserProduct(column.getFeedStreams(1).get(0), column);
+    assertPhysicalAndBalancedWithCondenserProduct(column.getFeedStreams(3).get(0), column);
 
     column.run();
     assertTrue(column.wasSequentialWarmStateReused(),
         "an unchanged fixed liquid-reflux case must retain exact zero-iteration reuse");
     assertEquals(0, column.getLastIterationCount(), "unchanged exact reuse must execute zero tray iterations");
 
-    column.getCondenser().setSeparation_with_liquid_reflux(true, 2.0, "kg/hr");
+    column.getCondenser().setSeparation_with_liquid_reflux(true, 120.0, "kg/hr");
     column.run();
 
     assertFalse(column.wasSequentialWarmStateReused(),
         "a changed fixed liquid-reflux value must solve instead of returning the old splitter state");
     assertTrue(column.getLastIterationCount() > 0, "the changed liquid return must execute tray iterations");
     assertTrue(column.solved(), column.getConvergenceDiagnostics());
-    assertEquals(2.0, column.getCondenser().getLiquidOutStream().getFlowRate("kg/hr"), 1.0e-6,
+    assertEquals(120.0, column.getCondenser().getLiquidOutStream().getFlowRate("kg/hr"), 1.0e-6,
         "the changed fixed liquid return must satisfy its flow specification");
-    assertPhysicalAndBalancedWithCondenserProduct(column.getFeedStreams(1).get(0), column);
+    assertPhysicalAndBalancedWithCondenserProduct(column.getFeedStreams(3).get(0), column);
 
-    column.getCondenser().setSeparation_with_liquid_reflux(true, 2.0, "kg/day");
+    column.getCondenser().setSeparation_with_liquid_reflux(true, 120.0, "kg/day");
     column.run();
 
     assertFalse(column.wasSequentialWarmStateReused(),
         "a changed fixed liquid-reflux unit must solve instead of interpreting the old cached value");
     assertTrue(column.getLastIterationCount() > 0, "the changed liquid-return unit must execute tray iterations");
     assertTrue(column.solved(), column.getConvergenceDiagnostics());
-    assertEquals(2.0, column.getCondenser().getLiquidOutStream().getFlowRate("kg/day"), 1.0e-6,
+    assertEquals(120.0, column.getCondenser().getLiquidOutStream().getFlowRate("kg/day"), 1.0e-6,
         "the changed liquid-return unit must be applied");
-    assertPhysicalAndBalancedWithCondenserProduct(column.getFeedStreams(1).get(0), column);
+    assertPhysicalAndBalancedWithCondenserProduct(column.getFeedStreams(3).get(0), column);
 
     column.run();
     assertTrue(column.wasSequentialWarmStateReused(),
