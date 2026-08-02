@@ -50,6 +50,9 @@ public class ThroughputCaseRow implements Serializable {
   /** Bottleneck design value. */
   private final double designValue;
 
+  /** Whether the active bottleneck is a minimum-directed constraint. */
+  private final boolean minimumConstraint;
+
   /** Remaining capacity in engineering units. */
   private final double capacityMargin;
 
@@ -90,6 +93,37 @@ public class ThroughputCaseRow implements Serializable {
       double objectiveValue, boolean feasible, boolean simulationConverged, String activeArea, String activeEquipment,
       String activeConstraint, double utilization, double currentValue, double designValue, double capacityMargin,
       double utilizationMargin, String unit, String errorMessage, long evaluationTimeMs) {
+    this(caseNumber, throughputMultiplier, producerMultipliers, objectiveValue, feasible, simulationConverged,
+        activeArea, activeEquipment, activeConstraint, utilization, currentValue, designValue, false, capacityMargin,
+        utilizationMargin, unit, errorMessage, evaluationTimeMs);
+  }
+
+  /**
+   * Creates a throughput case row with explicit capacity-limit direction.
+   *
+   * @param caseNumber case sequence number
+   * @param throughputMultiplier scalar throughput multiplier
+   * @param producerMultipliers producer multipliers used in the case
+   * @param objectiveValue raw objective value
+   * @param feasible true when all hard constraints are satisfied
+   * @param simulationConverged true when the model converged
+   * @param activeArea active bottleneck area name
+   * @param activeEquipment active bottleneck equipment name
+   * @param activeConstraint active bottleneck constraint name
+   * @param utilization active bottleneck utilization
+   * @param currentValue current bottleneck load
+   * @param designValue bottleneck design or minimum limit
+   * @param minimumConstraint true when values below the limit are worse
+   * @param capacityMargin signed remaining capacity in engineering units
+   * @param utilizationMargin remaining utilization margin
+   * @param unit bottleneck unit
+   * @param errorMessage error message if the case failed
+   * @param evaluationTimeMs evaluation wall-clock time in milliseconds
+   */
+  public ThroughputCaseRow(int caseNumber, double throughputMultiplier, Map<String, Double> producerMultipliers,
+      double objectiveValue, boolean feasible, boolean simulationConverged, String activeArea, String activeEquipment,
+      String activeConstraint, double utilization, double currentValue, double designValue, boolean minimumConstraint,
+      double capacityMargin, double utilizationMargin, String unit, String errorMessage, long evaluationTimeMs) {
     this.caseNumber = caseNumber;
     this.throughputMultiplier = throughputMultiplier;
     this.producerMultipliers = new LinkedHashMap<String, Double>(producerMultipliers);
@@ -102,6 +136,7 @@ public class ThroughputCaseRow implements Serializable {
     this.utilization = utilization;
     this.currentValue = currentValue;
     this.designValue = designValue;
+    this.minimumConstraint = minimumConstraint;
     this.capacityMargin = capacityMargin;
     this.utilizationMargin = utilizationMargin;
     this.unit = unit;
@@ -127,12 +162,13 @@ public class ThroughputCaseRow implements Serializable {
     }
     double currentValue = bottleneck.getCurrentValue();
     double designValue = bottleneck.getDesignValue();
-    double capacityMargin = designValue - currentValue;
+    boolean minimumConstraint = bottleneck.isMinimumConstraint();
+    double capacityMargin = minimumConstraint ? currentValue - designValue : designValue - currentValue;
     double utilization = bottleneck.getUtilization();
     return new ThroughputCaseRow(caseNumber, throughputMultiplier, producerMultipliers, objectiveValue,
         evaluation.isFeasible(), evaluation.isSimulationConverged(), bottleneck.getAreaName(),
         bottleneck.getEquipmentName(), bottleneck.getConstraintName(), utilization, currentValue, designValue,
-        capacityMargin, 1.0 - utilization, bottleneck.getUnit(), evaluation.getErrorMessage(),
+        minimumConstraint, capacityMargin, 1.0 - utilization, bottleneck.getUnit(), evaluation.getErrorMessage(),
         evaluation.getEvaluationTimeMs());
   }
 
@@ -245,6 +281,15 @@ public class ThroughputCaseRow implements Serializable {
   }
 
   /**
+   * Checks whether the active bottleneck is a minimum-directed constraint.
+   *
+   * @return true when values below the design value are worse
+   */
+  public boolean isMinimumConstraint() {
+    return minimumConstraint;
+  }
+
+  /**
    * Gets remaining capacity.
    *
    * @return remaining capacity in engineering units
@@ -308,6 +353,7 @@ public class ThroughputCaseRow implements Serializable {
     map.put("utilization", utilization);
     map.put("currentValue", currentValue);
     map.put("designValue", designValue);
+    map.put("minimumConstraint", minimumConstraint);
     map.put("capacityMargin", capacityMargin);
     map.put("utilizationMargin", utilizationMargin);
     map.put("unit", unit);

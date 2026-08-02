@@ -531,3 +531,4 @@ Map<String, Double> breakdown = decom.getBreakdown();
 | Over-producing from best wells | Premature water/gas coning | Balanced withdrawal per reservoir zone |
 | Ignoring backpressure coupling | Wrong wellhead pressures | Network solver captures well-to-well interactions |
 | Encoding minimum limits as design/max constraints | Safe NPSH, minimum-flow, or residence-time margins appear overloaded | Use `setMinValue(...)` without `setDesignValue(...)`; use a HARD constraint type for trip/infeasibility limits |
+| Recomputing every engineering margin as `design - current` | Minimum limits show infinite or incorrectly signed spare capacity | Use the evaluator/throughput result's `minimumConstraint` direction; feasible margins are `current - minimum` for lower limits and `maximum - current` for upper limits |

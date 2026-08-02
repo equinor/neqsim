@@ -85,6 +85,13 @@ separation,separator,installedGasCapacity,wells::feed.flowRate,15000,16500,kg/hr
 
 By default, the helper uses explicit installed capacity limits attached directly to equipment. Enable strategy-generated constraints with `setIncludeStrategyCapacityConstraints(true)` when you want generic screening limits to participate in addition to installed design data.
 
+Each throughput row records `minimumConstraint` so engineering-unit margins remain unambiguous.
+For a maximum-directed limit, `capacityMargin = limit - current`; for a minimum-directed limit,
+`capacityMargin = current - limit`. A non-negative margin is therefore feasible in both cases, and
+the reported `designValue` is the applicable finite limit even when the equipment constraint was
+constructed with `setMinValue(...)` only. `utilizationMargin` remains `1 - utilization` for both
+directions.
+
 ## Key Concepts
 
 ### Decision Variables (Parameters)

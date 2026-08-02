@@ -271,7 +271,7 @@ public class ProcessModelThroughputResult implements Serializable {
     try {
       writer.write("caseNumber,throughputMultiplier,objectiveValue,feasible,"
           + "simulationConverged,activeArea,activeEquipment,activeConstraint,"
-          + "utilization,currentValue,designValue,capacityMargin,utilizationMargin,unit,"
+          + "utilization,currentValue,designValue,minimumConstraint,capacityMargin,utilizationMargin,unit,"
           + "errorMessage,evaluationTimeMs");
       writer.newLine();
       for (ThroughputCaseRow row : caseRows) {
@@ -296,6 +296,8 @@ public class ProcessModelThroughputResult implements Serializable {
         writer.write(Double.toString(row.getCurrentValue()));
         writer.write(",");
         writer.write(Double.toString(row.getDesignValue()));
+        writer.write(",");
+        writer.write(Boolean.toString(row.isMinimumConstraint()));
         writer.write(",");
         writer.write(Double.toString(row.getCapacityMargin()));
         writer.write(",");

@@ -873,6 +873,9 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     /** Design constraint value. */
     private double designValue;
 
+    /** Whether the active constraint is a minimum-directed limit. */
+    private boolean minimumConstraint;
+
     /** Constraint unit. */
     private String unit;
 
@@ -897,12 +900,31 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      */
     public BottleneckStatus(String areaName, String equipmentName, String constraintName, double utilization,
         double currentValue, double designValue, String unit, boolean feasible) {
+      this(areaName, equipmentName, constraintName, utilization, currentValue, designValue, false, unit, feasible);
+    }
+
+    /**
+     * Creates a bottleneck status with explicit limit direction.
+     *
+     * @param areaName process area name
+     * @param equipmentName equipment name
+     * @param constraintName constraint name
+     * @param utilization utilization fraction
+     * @param currentValue current constraint value
+     * @param designValue reported design or minimum limit
+     * @param minimumConstraint true when values below the limit are worse
+     * @param unit constraint unit
+     * @param feasible true when utilization is less than or equal to one
+     */
+    public BottleneckStatus(String areaName, String equipmentName, String constraintName, double utilization,
+        double currentValue, double designValue, boolean minimumConstraint, String unit, boolean feasible) {
       this.areaName = areaName;
       this.equipmentName = equipmentName;
       this.constraintName = constraintName;
       this.utilization = utilization;
       this.currentValue = currentValue;
       this.designValue = designValue;
+      this.minimumConstraint = minimumConstraint;
       this.unit = unit;
       this.feasible = feasible;
     }
@@ -980,6 +1002,15 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      */
     public double getDesignValue() {
       return designValue;
+    }
+
+    /**
+     * Checks whether the bottleneck is a minimum-directed constraint.
+     *
+     * @return true when values below the reported design value are worse
+     */
+    public boolean isMinimumConstraint() {
+      return minimumConstraint;
     }
 
     /**
@@ -1857,8 +1888,8 @@ public class ProcessModelSimulationEvaluator implements Serializable {
           if (!Double.isNaN(utilization) && utilization > highestUtilization) {
             highestUtilization = utilization;
             active = new BottleneckStatus(areaName, equipment.getName(), entry.getKey(), utilization,
-                capacityConstraint.getCurrentValue(), capacityConstraint.getDesignValue(), capacityConstraint.getUnit(),
-                utilization <= 1.0);
+                capacityConstraint.getCurrentValue(), capacityConstraint.getDisplayDesignValue(),
+                capacityConstraint.isMinimumConstraint(), capacityConstraint.getUnit(), utilization <= 1.0);
           }
         }
       }
