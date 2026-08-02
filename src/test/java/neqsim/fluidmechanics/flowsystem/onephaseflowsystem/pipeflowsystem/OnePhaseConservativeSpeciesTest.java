@@ -102,6 +102,8 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     int pulseSteps = 30;
     int recoverySteps = 60;
     PipeFlowSystem pipe = createInitializedPipe(12, 3000.0);
+    pipe.setConservativeSpeciesTransport(true);
+    pipe.setFailOnNonConvergence(true);
     SystemInterface baselineGas = createGas(0.95, 0.05);
     SystemInterface pulseGas = createGas(0.80, 0.20);
 
