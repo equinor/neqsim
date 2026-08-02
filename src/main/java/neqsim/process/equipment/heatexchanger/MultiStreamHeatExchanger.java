@@ -285,9 +285,9 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     for (int i = 0; i < inStreams.size(); i++) {
       UUID id = UUID.randomUUID();
       inStreams.get(i).run(id);
-      inStreams.get(i).getFluid().init(3);
+      inStreams.get(i).getFluid().init(2);
       outStreams.get(i).run(id);
-      outStreams.get(i).getFluid().init(3);
+      outStreams.get(i).getFluid().init(2);
       entropyProduction += outStreams.get(i).getThermoSystem().getEntropy(unit)
           - inStreams.get(i).getThermoSystem().getEntropy(unit);
     }
