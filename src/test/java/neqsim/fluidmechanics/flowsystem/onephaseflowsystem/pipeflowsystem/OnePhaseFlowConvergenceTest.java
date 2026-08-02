@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFlowConvergenceReport;
@@ -140,13 +141,9 @@ class OnePhaseFlowConvergenceTest extends neqsim.NeqSimTest {
     pipe.getNode(2).setVelocityIn(-Math.abs(pipe.getNode(2).getVelocityIn().doubleValue()));
     pipe.setFailOnNonConvergence(true);
 
-    boolean rejected = false;
-    try {
-      pipe.solveTransient(1);
-    } catch (IllegalStateException exception) {
-      rejected = exception.getMessage().contains("supports positive flow only");
-    }
-    assertTrue(rejected, "Unvalidated reversed flow must fail with an actionable limit message.");
+    IllegalStateException exception = assertThrows(IllegalStateException.class, () -> pipe.solveTransient(1));
+    assertTrue(exception.getMessage().contains("supports positive flow only"),
+        "Unvalidated reversed flow must fail with an actionable limit message.");
   }
 
   @Test
