@@ -1109,7 +1109,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     }
 
     lastConvergenceReport = createConvergenceReport(iterTop, maxDiff, densityResidual, initialFiniteVolumeMass,
-        Arrays.copyOf(nonlinearUpdateHistory, iterTop), Arrays.copyOf(densityResidualHistory, iterTop));
+        Arrays.copyOf(nonlinearUpdateHistory, iterTop), Arrays.copyOf(densityResidualHistory, iterTop), false);
 
     if (dynamic && solverType > 0 && !lastConvergenceReport.isConverged()) {
       if (failOnNonConvergence) {
@@ -1129,6 +1129,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     double[] nonlinearHistory = new double[MAXIMUM_COUPLED_ITERATIONS + 1];
     double[] densityHistory = new double[MAXIMUM_COUPLED_ITERATIONS + 1];
     int iteration = 0;
+    boolean lineSearchFailed = false;
 
     nonlinearHistory[0] = residual;
     densityHistory[0] = calculateMaximumRelativeDensityResidual();
@@ -1162,6 +1163,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       applyCoupledState(state);
       densityHistory[iteration] = calculateMaximumRelativeDensityResidual();
       if (!accepted) {
+        lineSearchFailed = true;
         break;
       }
     }
@@ -1169,7 +1171,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     applyCoupledState(state);
     double densityResidual = calculateMaximumRelativeDensityResidual();
     lastConvergenceReport = createConvergenceReport(iteration, residual, densityResidual, initialFiniteVolumeMass,
-        Arrays.copyOf(nonlinearHistory, iteration + 1), Arrays.copyOf(densityHistory, iteration + 1));
+        Arrays.copyOf(nonlinearHistory, iteration + 1), Arrays.copyOf(densityHistory, iteration + 1),
+        lineSearchFailed);
     if (dynamic && !lastConvergenceReport.isConverged()) {
       if (failOnNonConvergence) {
         throw new IllegalStateException(lastConvergenceReport.getMessage());
@@ -1192,7 +1195,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   private double safeCoupledResidual(double[] candidate, double[] rollbackState) {
     for (int node = 1; node < numberOfNodes - 1; node++) {
       int pressureVariable = 2 * (node - 1);
-      if (!Double.isFinite(candidate[pressureVariable]) || candidate[pressureVariable] <= 1.0) {
+      if (!Double.isFinite(candidate[pressureVariable]) || candidate[pressureVariable] <= 0.0) {
         return Double.POSITIVE_INFINITY;
       }
     }
@@ -1425,7 +1428,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   }
 
   private OnePhaseFlowConvergenceReport createConvergenceReport(int nonlinearIterations, double nonlinearUpdate,
-      double densityResidual, double initialFiniteVolumeMass, double[] nonlinearHistory, double[] densityHistory) {
+      double densityResidual, double initialFiniteVolumeMass, double[] nonlinearHistory, double[] densityHistory,
+      boolean lineSearchFailed) {
     double finalFiniteVolumeMass = dynamic ? calculateFiniteVolumeMass() : Double.NaN;
     double finalThermodynamicMass = dynamic ? calculateThermodynamicMass() : Double.NaN;
     double inletBoundaryMass = calculateInletBoundaryMass();
@@ -1444,6 +1448,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     if (!diagnosticsAreFinite(nonlinearUpdate, densityResidual, relativeFiniteVolumeMassResidual,
         relativeThermodynamicMassResidual)) {
       reason = OnePhaseFlowConvergenceReport.ConvergenceReason.NON_FINITE_RESIDUAL;
+    } else if (lineSearchFailed) {
+      reason = OnePhaseFlowConvergenceReport.ConvergenceReason.LINE_SEARCH_FAILED;
     } else if (dynamic && solverType > 0 && densityResidual > DENSITY_RELATIVE_TOLERANCE) {
       reason = OnePhaseFlowConvergenceReport.ConvergenceReason.DENSITY_INCONSISTENT;
     } else if (dynamic && solverType > 0 && (relativeFiniteVolumeMassResidual > MASS_BALANCE_RELATIVE_TOLERANCE

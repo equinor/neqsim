@@ -27,6 +27,13 @@ class BandedLinearSystemSolverTest {
   }
 
   @Test
+  void rejectsNonFiniteMatrixEntry() {
+    double[][] bands = { { 0.0, 2.0, Double.NaN }, { 0.0, 2.0, 0.0 } };
+    assertThrows(IllegalArgumentException.class,
+        () -> BandedLinearSystemSolver.solve(bands, 1, 1, new double[] { 1.0, 2.0 }));
+  }
+
+  @Test
   void solvesLargeCompactSystemWithoutDenseStorage() {
     int size = 10000;
     double[][] bands = new double[size][5];

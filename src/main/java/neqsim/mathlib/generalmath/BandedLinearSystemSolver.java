@@ -123,7 +123,7 @@ public final class BandedLinearSystemSolver {
   private static void set(double[][] bands, int row, int column, int lowerBandwidth, int upperBandwidth, double value) {
     int offset = column - row + lowerBandwidth;
     if (offset < 0 || offset > lowerBandwidth + upperBandwidth) {
-      if (Math.abs(value) > 0.0) {
+      if (value != 0.0) {
         throw new IllegalStateException("Banded elimination attempted fill outside the declared bandwidth.");
       }
       return;

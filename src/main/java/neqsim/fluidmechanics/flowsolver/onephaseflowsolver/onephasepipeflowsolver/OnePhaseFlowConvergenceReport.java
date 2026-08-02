@@ -27,6 +27,8 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
     CONVERGED(true),
     /** The maximum nonlinear iteration count was reached. */
     MAX_ITERATIONS_REACHED(false),
+    /** Backtracking could not find a residual-decreasing step. */
+    LINE_SEARCH_FAILED(false),
     /** At least one diagnostic was not finite. */
     NON_FINITE_RESIDUAL(false),
     /** EOS density remained inconsistent with finite-volume density. */

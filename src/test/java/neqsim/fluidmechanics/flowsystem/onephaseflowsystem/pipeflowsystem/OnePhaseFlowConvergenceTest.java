@@ -86,6 +86,7 @@ class OnePhaseFlowConvergenceTest extends neqsim.NeqSimTest {
 
     assertDoesNotThrow(() -> pipe.solveTransient(1));
     assertEquals(ConvergenceReason.CONVERGED, pipe.getConvergenceReport().getReason());
+    assertTrue(!ConvergenceReason.LINE_SEARCH_FAILED.isConverged());
     assertDoesNotThrow(() -> OnePhaseFlowConvergenceReport.notRun().toJson());
   }
 
