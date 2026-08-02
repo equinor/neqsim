@@ -78,6 +78,52 @@ public final class StandardSupportAudit {
           registryImplementation, separatorImplementation.getImplementationClassName(),
           "Gravity cut-diameter, K-factor, and liquid residence-time screening only; service applicability, vessel "
               + "construction, internals, and performance guarantees require independent review.");
+    case NORSOK_M_506:
+      EquipmentDesignKernelRegistry.Lookup corrosionImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING, corrosionImplementation.isImplemented(),
+          registryImplementation, corrosionImplementation.getImplementationClassName(),
+          "Edition-aware adapter around the existing simplified CO2-corrosion model; wetting, water chemistry, "
+              + "materials selection, localized corrosion, sour-service qualification, inhibitor availability, and "
+              + "conformity assessment remain outside the calculation.");
+    case ISO_5167_1:
+      return new StandardSupport(standardType, StandardSupportLevel.CATALOGUED, false, registryImplementation,
+          NO_CALCULATION, "The general principles and requirements are catalogued as the companion basis for "
+              + "orifice-plate metering; no standalone Part 1 calculation is exposed.");
+    case ISO_5167_2:
+      EquipmentDesignKernelRegistry.Lookup meteringImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING, meteringImplementation.isImplemented(),
+          registryImplementation, meteringImplementation.getImplementationClassName(),
+          "Single-phase, full-pipe, subsonic, non-pulsating concentric orifice-plate flow calculation only; "
+              + "plate inspection, installation, tapping geometry evidence, uncertainty, calibration, and "
+              + "custody-transfer acceptance remain outside the calculation.");
+    case DNV_RP_C203:
+      EquipmentDesignKernelRegistry.Lookup fatigueImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING, fatigueImplementation.isImplemented(),
+          registryImplementation, fatigueImplementation.getImplementationClassName(),
+          "User-supplied controlled S-N curve, stress-range factors, spectrum bins, and Palmgren-Miner damage only; "
+              + "stress derivation, curve/detail selection, thickness and environmental basis, SCFs, rainflow "
+              + "counting, load combination, inspection planning, and conformity remain external.");
+    case DNV_RP_F105:
+      EquipmentDesignKernelRegistry.Lookup freeSpanImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING, freeSpanImplementation.isImplemented(),
+          registryImplementation, freeSpanImplementation.getImplementationClassName(),
+          "Simply supported first-mode beam frequency and current/wave dimensionless screening with "
+              + "caller-controlled response triggers only; soil/shoulder stiffness, multi-span interaction, response "
+              + "models, direct-wave loading, ULS/FLS, fatigue, sensors, intervention, and conformity remain external.");
+    case DNV_RP_F109:
+      EquipmentDesignKernelRegistry.Lookup stabilityImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING, stabilityImplementation.isImplemented(),
+          registryImplementation, stabilityImplementation.getImplementationClassName(),
+          "Vertical equilibrium, transparent absolute-static lateral stability, and externally supplied response "
+              + "displacement checks only; generalized design tables, dynamic response generation, environmental "
+              + "statistics, soil-model qualification, and conformity assessment remain external.");
+    case DNV_ST_F101:
+      EquipmentDesignKernelRegistry.Lookup pipelineImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING, pipelineImplementation.isImplemented(),
+          registryImplementation, pipelineImplementation.getImplementationClassName(),
+          "Typed 2021 screening for containment, collapse, propagation buckling, load interaction, fatigue, pressure "
+              + "cases, de-rating, safety class, ovality, fabrication route, and installation strain; clause-complete "
+              + "conformity and engineering approval remain external.");
     default:
       return getCategorySupport(standardType, registryImplementation);
     }

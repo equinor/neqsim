@@ -367,7 +367,7 @@ The slugs merge:
 ### Slug Tracking Modes
 
 ```java
-// Full OLGA-style Lagrangian tracking (default)
+// Detailed NeqSim Lagrangian tracking (default)
 pipe.setSlugTrackingMode(TwoFluidPipe.SlugTrackingMode.LAGRANGIAN);
 
 // Simplified slug unit model
@@ -407,20 +407,24 @@ A terrain-induced slug is released when:
 2. **Sufficient volume accumulated:** $V_{acc} > V_{min}$
 3. **Gas velocity increases** (pressure buildup behind liquid plug)
 
-### Bøe Criterion for Severe Slugging
+### Explicit Flowline–Riser Stability Diagnostic
 
-Severe slugging occurs in riser systems when:
+The former local “Bøe criterion” description did not match an implemented system model and
+has been removed. Severe slugging depends on the compressible upstream gas volume, the riser
+geometry, and the downstream pressure response. NeqSim now exposes the Taitel (1986)
+quasi-steady system screen:
 
 $$
-\Pi_G = \frac{P_{riser,base} - P_{separator}}{(\rho_L - \rho_G) g H_{riser}} < 1
+P_{top,crit} = \phi\rho_L g\left(\frac{V_G}{A_r\alpha'} - H\right)
 $$
 
-Where $\Pi_G$ is the gas penetration number.
+Use `evaluateSevereSluggingSystem(riserBaseSection)` after solving the pipe. The result reports
+applicability, stable/unstable status, critical top pressure, pressure margin, stability ratio,
+and gas-expansion head. A flowline-to-riser diameter change is permitted, while the continuously
+rising riser itself must have constant area. The diagnostic rejects non-stratified, single-phase,
+three-phase, variable-area-riser, and invalid flowline–riser topologies. This screen does not
+predict dynamic slug cycles and is not a claim of equivalence to a commercial simulator.
 
-**Stability criterion:**
-$$
-\text{Severe slugging if } \Pi_G < 1 \text{ AND } \frac{v_{SL}}{v_{SG}} > 0.1
-$$
 
 ---
 
@@ -430,6 +434,7 @@ $$
 
 ```java
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
+import neqsim.process.equipment.pipeline.twophasepipe.SevereSluggingSystemDiagnostic;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -517,7 +522,7 @@ double[] elevations = {0, -50, -100, -50, -150, 0};      // m (relative)
 // Set terrain profile
 pipe.setTerrainProfile(distances, elevations);
 pipe.setEnableTerrainTracking(true);
-pipe.setEnableSevereSlugModel(true);
+pipe.setEnableTerrainSlugClosures(true);
 
 // Configure terrain parameters
 pipe.setTerrainSlugCriticalHoldup(0.6);
@@ -526,11 +531,13 @@ pipe.setLiquidFallbackCoefficient(0.3);
 // Run transient simulation
 pipe.runTransient(7200.0);  // 2 hours
 
-// Check for severe slugging
-if (pipe.isSevereSluggingDetected()) {
-    System.out.println("WARNING: Severe slugging detected!");
-    System.out.println("Bøe criterion: " + pipe.getBoeNumber());
-}
+// Evaluate the explicit system after selecting the first rising section
+int riserBaseSection = 40;
+SevereSluggingSystemDiagnostic.Result stability =
+    pipe.evaluateSevereSluggingSystem(riserBaseSection);
+boolean severeSluggingPossible = stability.isSevereSluggingPossible();
+double pressureMarginPa = stability.getPressureMarginPa();
+// Pass the status and margin to the application's logger or monitoring system.
 
 // Get holdup profile
 double[] positions = pipe.getPositionProfile();
@@ -731,7 +738,7 @@ Where $c$ is the mixture sound speed. Typical CFL = 0.5-0.8 for stability.
 
 ---
 
-## Recommendations for OLGA-Equivalent Results
+## Recommendations for Reproducible NeqSim Results
 
 1. **Use FULL model type** for best accuracy:
    ```java
@@ -747,7 +754,7 @@ Where $c$ is the mixture sound speed. Typical CFL = 0.5-0.8 for stability.
 3. **Enable terrain tracking** for undulating pipelines:
    ```java
    pipe.setEnableTerrainTracking(true);
-   pipe.setEnableSevereSlugModel(true);
+   pipe.setEnableTerrainSlugClosures(true);
    ```
 
 4. **Configure minimum holdup** based on system:

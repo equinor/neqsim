@@ -1,6 +1,7 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
@@ -289,8 +290,9 @@ public class TwoFluidSectionTest {
     riserBase2.setPosition(riserBase.getLength());
     equations.calcRHS(new TwoFluidSection[] { riserBase, riserBase2 }, riserBase.getLength());
 
-    assertTrue(riserBase.getSevereSluggingNumber() < 1.0);
-    assertTrue(riserBase.isSevereSlugPotential());
+    assertTrue(riserBase.getInclinedSectionGasCarryoverNumber() < 1.0);
+    assertTrue(riserBase.isInclinedSectionLiquidFallbackPotential());
+    assertFalse(riserBase.isSevereSlugPotential());
   }
 
   @Test

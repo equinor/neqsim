@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.InputStream;
+import java.util.Scanner;
 import org.junit.jupiter.api.Test;
 
 /** Tests publisher provenance and cross-equipment requirement-pack integrity. */
@@ -47,6 +49,71 @@ class StandardCatalogTest {
   }
 
   @Test
+  void currentNorsokM506EditionHasPublisherReviewEvidenceAndExecutableKernel() {
+    StandardCatalogEntry entry = StandardCatalog.get(StandardType.NORSOK_M_506);
+
+    assertEquals(StandardLifecycleStatus.CURRENT, entry.getLifecycleStatus());
+    assertEquals("2017", entry.getStandardType().getDefaultVersion());
+    assertTrue(entry.getPublisherSourceUrl().contains("systematic-review"));
+    assertEquals("2026-08-02", entry.getVerifiedOn());
+    assertTrue(StandardRegistry.getDesignKernel(StandardType.NORSOK_M_506)
+        .supports(StandardEdition.defaultEdition(StandardType.NORSOK_M_506)));
+  }
+
+  @Test
+  void currentIso5167PartsHavePublisherEvidenceAndPart2Kernel() {
+    StandardCatalogEntry general = StandardCatalog.get(StandardType.ISO_5167_1);
+    StandardCatalogEntry orifice = StandardCatalog.get(StandardType.ISO_5167_2);
+
+    assertEquals(StandardLifecycleStatus.CURRENT, general.getLifecycleStatus());
+    assertEquals(StandardLifecycleStatus.CURRENT, orifice.getLifecycleStatus());
+    assertEquals("2022", general.getStandardType().getDefaultVersion());
+    assertEquals("2022", orifice.getStandardType().getDefaultVersion());
+    assertTrue(general.getPublisherSourceUrl().contains("79179"));
+    assertTrue(orifice.getPublisherSourceUrl().contains("79180"));
+    assertEquals("2026-08-02", general.getVerifiedOn());
+    assertEquals("2026-08-02", orifice.getVerifiedOn());
+    assertFalse(StandardRegistry.getDesignKernel(StandardType.ISO_5167_1).isImplemented());
+    assertTrue(StandardRegistry.getDesignKernel(StandardType.ISO_5167_2)
+        .supports(StandardEdition.defaultEdition(StandardType.ISO_5167_2)));
+  }
+
+  @Test
+  void currentDnvRpC203EditionHasPublisherEvidenceAndExecutableKernel() {
+    StandardCatalogEntry entry = StandardCatalog.get(StandardType.DNV_RP_C203);
+
+    assertEquals(StandardLifecycleStatus.CURRENT, entry.getLifecycleStatus());
+    assertEquals("2024-10+AMD:2025-10", entry.getStandardType().getDefaultVersion());
+    assertTrue(entry.getPublisherSourceUrl().contains("dnv-rp-c203"));
+    assertEquals("2026-08-02", entry.getVerifiedOn());
+    assertTrue(StandardRegistry.getDesignKernel(StandardType.DNV_RP_C203)
+        .supports(StandardEdition.defaultEdition(StandardType.DNV_RP_C203)));
+  }
+
+  @Test
+  void currentDnvRpF105EditionHasPublisherEvidenceAndExecutableKernel() {
+    StandardCatalogEntry entry = StandardCatalog.get(StandardType.DNV_RP_F105);
+
+    assertEquals(StandardLifecycleStatus.CURRENT, entry.getLifecycleStatus());
+    assertEquals("2025-12", entry.getStandardType().getDefaultVersion());
+    assertTrue(entry.getPublisherSourceUrl().contains("dnv-rp-f105"));
+    assertEquals("2026-08-02", entry.getVerifiedOn());
+    assertTrue(StandardRegistry.getDesignKernel(StandardType.DNV_RP_F105)
+        .supports(StandardEdition.defaultEdition(StandardType.DNV_RP_F105)));
+  }
+
+  @Test
+  void f105ResourceCatalogDoesNotExposeLegacyPseudoCriteriaAsCurrent() {
+    String index = resourceText("/designdata/standards/standards_index.csv");
+    String values = resourceText("/designdata/standards/dnv_iso_en_standards.csv");
+    String processRequirements = resourceText("/designdata/TechnicalRequirements_Process.csv");
+
+    assertTrue(index.contains("\"DNV-RP-F105\",\"2025-12\",\"Free Spanning Pipelines\""));
+    assertFalse(values.contains("\"DNV-RP-F105\""));
+    assertFalse(processRequirements.contains("\"DNV-RP-F105\",\"Surge pressure allowance\""));
+  }
+
+  @Test
   void requirementPacksReferenceLoadableCapabilitiesAndCurrentEditions() throws Exception {
     StandardType[] packedStandards = { StandardType.NORSOK_P_002, StandardType.NORSOK_S_001, StandardType.ISO_10418,
         StandardType.IEC_61511, StandardType.API_520_PART_1, StandardType.NORSOK_M_001, StandardType.API_650,
@@ -70,5 +137,14 @@ class StandardCatalogTest {
     assertFalse(lookup.isImplemented());
     assertThrows(IllegalStateException.class, lookup::requirePack);
     assertThrows(IllegalArgumentException.class, () -> StandardRequirementPackRegistry.lookup(null));
+  }
+
+  private static String resourceText(String resourcePath) {
+    InputStream stream = StandardCatalogTest.class.getResourceAsStream(resourcePath);
+    assertNotNull(stream);
+    try (Scanner scanner = new Scanner(stream, "UTF-8")) {
+      scanner.useDelimiter("\\A");
+      return scanner.hasNext() ? scanner.next() : "";
+    }
   }
 }

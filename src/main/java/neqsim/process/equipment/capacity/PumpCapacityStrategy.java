@@ -14,7 +14,7 @@ import neqsim.process.equipment.pump.PumpInterface;
  * <p>
  * This strategy evaluates pump capacity based on multiple constraints including:
  * <ul>
- * <li>NPSH margin (Net Positive Suction Head)</li>
+ * <li>NPSH headroom (Net Positive Suction Head available minus required), enforced as a minimum</li>
  * <li>Power consumption</li>
  * <li>Speed limits</li>
  * <li>Flow rate limits</li>
@@ -132,13 +132,13 @@ public class PumpCapacityStrategy implements EquipmentCapacityStrategy {
       constraints.put("power", powerConstraint);
     }
 
-    // NPSH margin constraint
+    // NPSH headroom minimum constraint
     double npshAvailable = pump.getNPSHAvailable();
     double npshRequired = pump.getNPSHRequired();
-    double npshMargin = npshAvailable - npshRequired;
     if (npshAvailable > 0 && npshRequired > 0) {
-      CapacityConstraint npshConstraint = new CapacityConstraint("npshMargin").setDesignValue(minNpshMargin)
-          .setMinValue(minNpshMargin).setUnit("m").setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
+      CapacityConstraint npshConstraint = new CapacityConstraint("npshMargin", "m",
+          CapacityConstraint.ConstraintType.HARD).setMinValue(minNpshMargin)
+          .setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
           .setValueSupplier(() -> pump.getNPSHAvailable() - pump.getNPSHRequired());
       constraints.put("npshMargin", npshConstraint);
     }

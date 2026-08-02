@@ -1,11 +1,18 @@
 ---
 title: Pipeline Mechanical Design
-description: Comprehensive documentation for pipeline mechanical design in NeqSim, including wall thickness calculations, stress analysis, cost estimation, and detailed design per industry standards.
+description: Legacy pipeline mechanical-design calculator documentation plus links to current typed standard kernels.
 ---
 
 # Pipeline Mechanical Design
 
-Comprehensive documentation for pipeline mechanical design in NeqSim, including wall thickness calculations, stress analysis, cost estimation, and detailed design per industry standards.
+Documentation for the legacy pipeline mechanical-design calculator, including wall thickness,
+stress, weight, and cost screening.
+
+> **Current DNV-ST-F101 work:** use the typed
+> [DNV-ST-F101 pipeline screening](dnv_st_f101_pipeline_screening) kernel. The
+> `PipeMechanicalDesignCalculator.DNV_OS_F101` path documented below is a legacy
+> DNV-OS-F101 screen. It is not a DNV-ST-F101 implementation, conformity assessment, or
+> certification.
 
 > **📘 See Also: Related Design Documentation**
 >
@@ -34,7 +41,7 @@ Comprehensive documentation for pipeline mechanical design in NeqSim, including 
 
 The pipeline mechanical design system provides:
 
-- **Wall thickness sizing** per ASME B31.3/B31.4/B31.8 and DNV-OS-F101
+- **Wall thickness sizing** per ASME B31.3/B31.4/B31.8 and legacy DNV-OS-F101
 - **Stress analysis** including hoop, longitudinal, and von Mises stress
 - **External pressure design** for subsea pipelines
 - **Weight and buoyancy** calculations
@@ -89,7 +96,7 @@ PipelineMechanicalDesign extends MechanicalDesign
 | **ASME B31.3** | Process Piping | Allowable stress = SMYS/3 |
 | **ASME B31.4** | Liquid Pipelines | Design factor 0.72 |
 | **ASME B31.8** | Gas Transmission | Location classes 1-4 |
-| **DNV-OS-F101** | Submarine Pipelines | Safety classes, resistance factors |
+| **DNV-OS-F101 (legacy screen)** | Submarine Pipelines | Preliminary resistance calculations; use the typed kernel for current DNV-ST-F101 work |
 | **API 5L** | Line Pipe Specs | Material grades A-X120 |
 | **ISO 13623** | Petroleum Pipelines | International standard |
 | **NORSOK L-002** | Piping System Design | Norwegian standard |
@@ -295,7 +302,7 @@ double Ppr = calc.calculatePropagationBucklingPressure();
 // Buckle arrestors required if Ppr < Pe
 ```
 
-### Allowable Free Span Length
+### Legacy Allowable Free Span Estimate
 
 Based on vortex-induced vibration (VIV) avoidance:
 
@@ -311,6 +318,13 @@ Where:
 double currentVelocity = 0.5;  // m/s
 double spanLength = calc.calculateAllowableSpanLength(currentVelocity);
 ```
+
+This method is a compatibility estimate with fixed assumptions and fallback/cap behavior. It is not
+edition-aware and must not be presented as DNV-RP-F105 evidence. For an explicit current
+`DNV-RP-F105 2025-12` basis, use `DnvRpF105FreeSpanScreeningKernel`. It exposes the effective mass,
+axial force, hydrodynamic diameter, current/wave environment, and project-controlled response
+triggers without claiming a safe span or DNV acceptance. See the
+[DNV-RP-F105 first-mode free-span guide](mechanical_design/dnv_rp_f105_free_span).
 
 ---
 
@@ -412,9 +426,9 @@ Per ASME B16.5:
 int flangeClass = calc.selectFlangeClass();  // Based on design pressure
 ```
 
-### Fatigue Life Estimation
+### Legacy Fatigue Life Estimation
 
-Per DNV-RP-C203 (D-curve):
+The compatibility calculator uses one embedded single-slope estimate:
 
 $$N = \frac{10^{11.764}}{S^3}$$
 
@@ -424,6 +438,12 @@ double stressRange = 50.0;  // MPa
 double cyclesPerYear = 1e6;
 double fatigueLife = calc.estimateFatigueLife(stressRange, cyclesPerYear);
 ```
+
+This shortcut does not select an edition, environment, detail category, thickness basis, or
+verified stress spectrum, and its embedded parameter differs from the riser data-source default.
+Do not report it as current-edition DNV-RP-C203 evidence. For an explicit C203 basis, use
+`DnvRpC203FatigueDesignKernel` with a project-controlled curve and verified stress bins; see
+[DNV-RP-C203 S-N and Miner fatigue screening](mechanical_design/dnv_rp_c203_fatigue).
 
 ### Insulation Thickness
 

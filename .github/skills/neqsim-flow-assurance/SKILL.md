@@ -1,7 +1,7 @@
 ---
 name: neqsim-flow-assurance
-description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion (NORSOK M-506, de Waard-Milliams, FeCO3 film), mineral scale (saturation index, scale kinetics, brine mixing / seawater incompatibility), scale/solids valve plugging & Cv/opening drift (ValveScaleDrift), scale/deposit remediation & dissolver/solvent/wash selection for cleaning fouled equipment (ScaleRemediationAdvisor), elemental sulfur (S8) deposition from oxygen ingress / H2S oxidation at pressure or temperature letdown (compressor inlets, valves, dry-gas seals, letdown stations), per-segment pipeline corrosion+scale profiles, pipeline hydraulics, water/liquid hammer screening, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
-last_verified: "2026-07-11"
+description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion (NORSOK M-506, de Waard-Milliams, FeCO3 film), mineral scale (saturation index, scale kinetics, brine mixing / seawater incompatibility), scale/solids valve plugging & Cv/opening drift (ValveScaleDrift), scale/deposit remediation & dissolver/solvent/wash selection for cleaning fouled equipment (ScaleRemediationAdvisor), elemental sulfur (S8) deposition from oxygen ingress / H2S oxidation at pressure or temperature letdown (compressor inlets, valves, dry-gas seals, letdown stations), per-segment pipeline corrosion+scale profiles, pipeline hydraulics, DNV-RP-F109 on-bottom stability screening, DNV-RP-F105 free-span screening, water/liquid hammer screening, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
+last_verified: "2026-08-02"
 ---
 
 # Flow Assurance Analysis with NeqSim
@@ -19,6 +19,7 @@ NeqSim code patterns.
 - CO2 and H2S corrosion rate estimation
 - Elemental sulfur (S8) deposition risk at pressure/temperature letdown (compressor inlets, control/letdown valves, dry-gas seals, filters)
 - Pipeline pressure drop and temperature profile
+- DNV-RP-F109 vertical and lateral on-bottom stability screening
 - Water hammer/liquid hammer screening for fast valve closure, pump trip, or check-valve slam
 - Multiphase flow pattern prediction (slug, annular, stratified)
 - Thermal insulation sizing for subsea pipelines
@@ -30,7 +31,9 @@ NeqSim code patterns.
 |--------|-----------|-----------------|
 | Pipeline design | DNV-ST-F101, NORSOK L-001, ASME B31.4/B31.8 | Wall thickness, design factors, corrosion allowance |
 | Corrosion | NORSOK M-001, DNV-RP-F112, ISO 21457 | Material selection, CO2/H2S corrosion rates |
-| Subsea pipelines | DNV-RP-F109, NORSOK U-001 | On-bottom stability, span assessment |
+| On-bottom stability | DNV-RP-F109 | Vertical stability, absolute lateral stability, displacement acceptance |
+| Free spans | DNV-RP-F105 | Free-span response and fatigue assessment |
+| Subsea systems | NORSOK U-001 | Subsea production-system requirements |
 | Hydrate management | DNV-RP-F116 | Hydrate prevention and remediation |
 | GRP piping | ISO 14692 | Non-metallic pipe design |
 | Pipeline integrity | DNV-RP-F116, API 1160 | Integrity management |
@@ -39,6 +42,12 @@ For fast acoustic transients, also load `neqsim-water-hammer`. Use
 `WaterHammerStudy` or MCP `runWaterHammer` with STID route geometry, tagreader
 event windows, and valve/pump event schedules; use this flow-assurance skill for
 the broader operating-envelope and mitigation context.
+
+For on-bottom stability, load `neqsim-subsea-and-wells` and use the typed
+`DnvRpF109OnBottomStabilityKernel`. It provides a transparent absolute-static
+screen and checks externally calculated response displacements. It does not
+contain generalized design tables, produce dynamic response, qualify environmental
+or soil models, or claim DNV conformity. A pass still requires independent review.
 
 ## 1. Hydrate Analysis
 
@@ -220,6 +229,20 @@ double outletP = pipe.getOutletStream().getPressure();  // bara
 double outletT = pipe.getOutletStream().getTemperature() - 273.15;  // C
 double dP = feedStream.getPressure() - outletP;  // pressure drop
 ```
+
+### DNV-RP-F105 free-span routing
+
+When a hydraulics or environment study feeds an explicit current `DNV-RP-F105 2025-12` free-span
+screen, route verified structural and environmental inputs through
+`DnvRpF105FreeSpanScreeningKernel`. Keep steel and hydrodynamic diameters distinct and use velocities
+normal to the span. Effective modal mass, axial force, span geometry, and response-trigger basis are
+external structural inputs, not quantities inferred silently from a hydraulic pipe object.
+
+The kernel is a simply supported first-mode/dimensionless escalation screen. Its Strouhal number,
+frequency-ratio band, and reduced-velocity triggers are project-controlled and cannot be called DNV
+limits. Keep soil/shoulder and multi-span response, VIV amplitudes, direct wave loading, ULS/FLS,
+fatigue, monitoring, and intervention external. Never relabel
+`PipeMechanicalDesignCalculator.calculateAllowableSpanLength(...)` as F105 evidence.
 
 ### Beggs and Brill Multiphase Correlation
 
@@ -440,6 +463,14 @@ bridge compute it from aqueous Fe++/CO3-- molalities (Sun & Nesic 2009 Ksp):
 model.setFeCO3SaturationRatio(sr);   // >1 = protective; -1 = disabled (default)
 double film = model.calculateFeCO3FilmFactor();  // 1.0 = no credit, <1 = protective
 ```
+
+For an auditable standards calculation, pass the resulting in-situ pH and optional saturation ratio
+to `NorsokM506CorrosionDesignKernel.Input`. The kernel is the preferred public path when the task
+names NORSOK M-506: it enforces the unamended 2017 edition and model envelope, preserves raw inputs
+without setter clamping, and returns `CALCULATED_REVIEW_REQUIRED`. Continue to use the bridge to
+derive chemistry and the legacy model for sweeps, but do not present either route as a conformity
+assessment. The optional saturation-ratio film factor and projected wall loss are NeqSim screening
+extensions, not code acceptance criteria.
 
 **Gotchas (verified):** `SystemInterface.clone()` drops the chemical-reaction setup
 — re-run `chemicalReactionInit()` on the clone before flashing or the CO2-brine pH

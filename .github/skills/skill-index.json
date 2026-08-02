@@ -1,4 +1,19 @@
 {
+  "dnv rp f105": [
+    "neqsim-standards-lookup",
+    "neqsim-subsea-and-wells",
+    "neqsim-flow-assurance"
+  ],
+  "free span screening": [
+    "neqsim-subsea-and-wells",
+    "neqsim-standards-lookup",
+    "neqsim-flow-assurance"
+  ],
+  "pipeline viv screening": [
+    "neqsim-subsea-and-wells",
+    "neqsim-flow-assurance",
+    "neqsim-standards-lookup"
+  ],
   "literature search": [
     "neqsim-literature-search",
     "neqsim-stid-retriever",

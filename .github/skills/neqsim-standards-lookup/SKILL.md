@@ -1,7 +1,7 @@
 ---
 name: neqsim-standards-lookup
 description: "Industry standards lookup and compliance tracking for NeqSim engineering tasks. USE WHEN: any engineering task requires standards compliance (API, ISO, NORSOK, DNV, ASME, EN, ASTM), risk assessment, or safety analysis. Provides equipment-to-standards mapping, database query patterns, results.json schema for standards_applied, and risk standards quick-reference."
-last_verified: "2026-07-04"
+last_verified: "2026-08-02"
 ---
 
 # NeqSim Standards Lookup
@@ -31,16 +31,110 @@ The index file `standards_index.csv` maps equipment types to applicable standard
 | Compressor | API 617, NORSOK P-002 | `api_standards.csv`, `norsok_standards.csv` |
 | Pump | API 610 | `api_standards.csv` |
 | Pipeline, AdiabaticPipe, MultiphasePipe | NORSOK L-001, ASME B31.3/B31.4/B31.8, DNV-ST-F101 | `norsok_standards.csv`, `asme_standards.csv`, `dnv_iso_en_standards.csv` |
+| Pipeline, FlexiblePipe, Cable, Umbilical on seabed | DNV-RP-F109 | Typed kernel `DnvRpF109OnBottomStabilityKernel`; project values remain explicit inputs |
 | HeatExchanger, Heater, Cooler | API 660/661, TEMA | `api_standards.csv` |
 | Tank | API 650/620 | `api_standards.csv` |
 | Valve | ASME B31.3 | `asme_standards.csv` |
 | Subsea equipment | NORSOK U-001, DNV-ST-F101 | `norsok_standards.csv`, `subsea_standards.csv` |
 | Well casing/tubing | API 5CT, API TR 5C3, NORSOK D-010 | `api_standards.csv`, `norsok_standards.csv` |
 | Flange | ASME B16.5 | `asme_standards.csv` |
-| CO2 corrosion / materials selection | NORSOK M-506, ISO 15156 / NACE MR0175, NORSOK M-001 | `norsok_standards.csv` — see `NorsokM506CorrosionRate` / `NorsokM506ElectrolyteBridge` (`process.corrosion`) |
+| Orifice plate / differential-pressure metering | ISO 5167-1/-2, AGA 3 / API MPMS 14.3 | Use `Iso5167OrificeMeteringKernel` for strict ISO 5167-2:2022 screening; keep `Standard_AGA3` for an AGA/API basis and `Orifice` for process simulation |
+| CO2 corrosion / materials selection | NORSOK M-506, ISO 15156 / NACE MR0175, NORSOK M-001 | Use `NorsokM506CorrosionDesignKernel` for strict M-506 screening; use `NorsokM506ElectrolyteBridge` for a rigorous brine pH/FeCO3 basis and keep `NorsokM506CorrosionRate` for legacy sweeps |
+| Offshore steel fatigue | DNV-RP-C203 | Use `DnvRpC203FatigueDesignKernel` with a verified project-controlled S-N curve and stress spectrum; do not report legacy pipeline/riser shortcuts as exact-edition C203 evidence |
+| Submarine-pipeline free spans | DNV-RP-F105 | Use `DnvRpF105FreeSpanScreeningKernel` for the current 2025-12 first-mode/dimensionless screen; project response triggers are not DNV acceptance criteria and the legacy allowable-span calculator is not F105 evidence |
 | Mineral scale / produced water | (industry practice; Davies + Ksp(T)) | `ElectrolyteScaleCalculator` / `ScaleKinetics` / `BrineMixingScaleEvaluator` (`process.chemistry.scale`) |
 
+### DNV-RP-F109 implementation status
+
+`EquipmentDesignKernelRegistry.lookup(StandardType.DNV_RP_F109)` exposes a
+`SCREENING` kernel for the exact catalogued edition `2021-05+AMD 2025-09`.
+It calculates vertical equilibrium and a transparent absolute-static lateral
+screen, or checks displacement supplied by an externally validated generalized or
+dynamic response model. It intentionally excludes licensed generalized-design
+tables, response generation, environmental-statistics derivation, soil-model
+qualification, and conformity assessment. Do not report a passing kernel result as
+DNV certification or clause-complete compliance; report the implemented check scope
+and retain `engineeringApprovalRequired=true`.
+
+### DNV-ST-F101 pipeline screening
+
+For current DNV-ST-F101 requests, use
+`neqsim.process.engineering.calculation.DnvStF101PipelineDesignKernel` with a complete
+`DnvStF101PipelineDesignInput`. It preserves operating, incidental, and test pressure; collapse;
+propagation buckling; local-buckling load interaction; fatigue; temperature/material de-rating;
+safety class; ovality; fabrication route; and installation strain as distinct checks.
+
+Do not route DNV-ST-F101 to `PipeMechanicalDesignCalculator.DNV_OS_F101`. That constant is the
+legacy DNV-OS-F101 screen. Missing structural inputs or unsupported editions must remain blocked,
+and a calculated result must retain `CALCULATED_REVIEW_REQUIRED`. Never describe a passing screen
+as certification or code compliance; require a licensed project copy and independent review.
+
+See `docs/process/dnv_st_f101_pipeline_screening.md` and the `neqsim-capability-map` skill.
+
 ## TR/NORSOK Integration Classes
+
+### NORSOK M-506 execution rule
+
+For an explicit NORSOK M-506 calculation, prefer
+`neqsim.process.engineering.calculation.NorsokM506CorrosionDesignKernel`. It implements only the
+unamended 2017 edition, checks `Pipeline` / `AdiabaticPipe` / `Pipe` applicability, retains raw
+unit-explicit input values, and blocks unsupported or out-of-range cases before the mutable legacy
+calculator runs. Treat `NorsokM506CorrosionAssessment.getProjectedUniformWallLossMm()` as rate
+multiplied by exposure time, not as a specified corrosion allowance or acceptance decision.
+
+The kernel is `SCREENING`: verify the purchased standard, wetting and water-chemistry basis,
+localized corrosion, sour service, inhibitor availability, materials selection, and project
+criteria independently. When `feCO3SaturationRatio` is enabled, report it as a NeqSim film-factor
+extension and retain the source chemistry evidence. Standards Norway's May 2026 systematic-review
+notice is the lifecycle source for the catalogued 2017 edition; do not silently apply this kernel to
+a later revision.
+
+### ISO 5167 execution rule
+
+For an explicit ISO orifice-metering calculation, use
+`neqsim.process.engineering.calculation.Iso5167OrificeMeteringKernel`. The registered method supports
+only unamended ISO 5167-2:2022, paired with ISO 5167-1:2022. It requires an `Orifice` equipment
+basis, explicit liquid or gas/vapour service, a supported tapping arrangement, and affirmative
+single-phase/full-pipe/subsonic/non-pulsating and installation evidence before calculation.
+
+Do not treat `geometryAndInstallationVerified(true)` as evidence created by NeqSim; retain the
+inspection and installation record. Keep uncertainty, calibration, straight lengths, plate
+condition, custody-transfer acceptance, and project metering procedure outside the kernel. Use
+`Standard_AGA3` under an AGA 3/API MPMS 14.3 basis and do not relabel that result as ISO 5167.
+
+### DNV-RP-C203 execution rule
+
+For an explicit DNV-RP-C203 basis, use
+`neqsim.process.engineering.calculation.DnvRpC203FatigueDesignKernel`. It supports the catalogued
+`2024-10` edition including amendment `2025-10`, rejects additional project amendments, and is a
+`SCREENING` S-N/Palmgren-Miner calculation.
+The caller must supply and verify a controlled single-slope or continuous bi-linear curve, stress
+spectrum, SCF, thickness factor, other stress-range factor, design fatigue factor, damage limit, and
+exposure.
+
+Do not copy licensed curve tables into NeqSim and do not infer that a verification Boolean is the
+evidence itself. Retain curve/detail selection, environment, fabrication, thickness, weld and SCF
+basis, structural stress derivation, load combinations, rainflow counting, inspection plan, and
+accountable approval externally. The older pipeline/riser fatigue methods have inconsistent embedded
+intercepts and remain legacy estimates, not exact-edition C203 calculations.
+
+### DNV-RP-F105 execution rule
+
+For an explicit DNV-RP-F105 basis, use
+`neqsim.process.engineering.calculation.DnvRpF105FreeSpanScreeningKernel`. It supports only the
+catalogued unamended `2025-12` edition for `Pipeline` and `AdiabaticPipe`. The kernel evaluates a
+simply supported Euler-Bernoulli first mode with caller-supplied effective modal mass and axial
+force, then reports current/wave frequency ratios, reduced velocities, and Keulegan-Carpenter
+number. Steel outside diameter and hydrodynamic diameter are separate inputs.
+
+Treat the geometry, structural-model, environmental, and project-trigger verification Booleans as
+attestations whose evidence must be retained externally. Strouhal number, frequency-ratio band, and
+reduced-velocity limits are caller-controlled escalation triggers, not embedded DNV requirements or
+acceptance decisions. Keep soil/shoulder stiffness, interacting spans, detailed in-line/cross-flow
+VIV and direct-wave response, ULS/FLS, fatigue, monitoring, intervention, and conformity open.
+
+`PipeMechanicalDesignCalculator.calculateAllowableSpanLength(...)` is a legacy fixed-assumption
+estimate with fallback and cap behavior. Never report that output as current-edition F105 evidence.
 
 Use these Java classes when a task references Equinor technical requirements,
 STS0131, TR1965, TR2237, or NORSOK P-002:

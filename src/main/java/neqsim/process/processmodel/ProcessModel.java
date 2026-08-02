@@ -289,6 +289,40 @@ public class ProcessModel implements Runnable, Serializable {
   private double temperatureTolerance = 1e-4;
   private double pressureTolerance = 1e-4;
 
+  /**
+   * Relative tolerance the auto-tuner applies when no tolerance was set explicitly. 1e-3 (0.1 %) is an
+   * engineering-grade accuracy for process calculations: it is well below plant instrument and EOS uncertainty, yet
+   * loose enough that recycle-rich plants converge in a fraction of the passes a 1e-4 gate needs.
+   */
+  public static final double DEFAULT_ENGINEERING_TOLERANCE = 1.0e-3;
+
+  /**
+   * Loosest relative tolerance the auto-tuner will ever accept (1 %). A residual that stalls above this is a real
+   * convergence failure, not a tight gate, and is never accepted.
+   */
+  public static final double DEFAULT_AUTO_TOLERANCE_CEILING = 1.0e-2;
+
+  /** Outer iterations the residual must stop improving over before the auto-tuner accepts it. */
+  public static final int AUTO_TOLERANCE_STALL_WINDOW = 5;
+
+  /** Relative improvement across the stall window that still counts as progress. */
+  private static final double AUTO_TOLERANCE_STALL_IMPROVEMENT = 0.10;
+
+  /** True once a tolerance was set explicitly, so the auto-tuner must not touch it. */
+  private boolean toleranceExplicit = false;
+
+  /** Whether the model may pick (and, on a stall, relax) its own convergence tolerance. */
+  private boolean autoTolerance = true;
+
+  /** Loosest relative tolerance the auto-tuner may relax to on a stalled residual. */
+  private double autoToleranceCeiling = DEFAULT_AUTO_TOLERANCE_CEILING;
+
+  /** Human-readable description of the tolerance the auto-tuner chose on the last run. */
+  private String autoToleranceSummary = "";
+
+  /** Worst relative error per outer iteration, used to detect a stalled residual. */
+  private transient java.util.List<Double> autoToleranceErrorHistory = new java.util.ArrayList<>();
+
   /** Default boundary-stream flow floor in kg/hr (streams below this are ignored entirely). */
   public static final double DEFAULT_BOUNDARY_FLOW_FLOOR = 1e-9;
 
@@ -303,6 +337,37 @@ public class ProcessModel implements Runnable, Serializable {
    * relative-only behaviour.
    */
   private double absoluteFlowTolerance = 0.0;
+
+  /**
+   * Default noise-floor fraction of the detected total plant feed flow used by the auto-tuner. The threshold is a
+   * convergence scale, not a declaration that every smaller process stream is physically unimportant; callers can
+   * protect significant small-flow equipment with an explicit minimum-flow setting or disable automatic bypass.
+   */
+  public static final double DEFAULT_AUTO_TUNING_FLOW_FRACTION = 1.0e-6;
+
+  /** Whether {@link #runUntilConverged(int)} auto-derives the flow noise filters from the plant flow scale. */
+  private boolean autoConvergenceTuning = true;
+
+  /** Whether the auto-tuner may also auto-bypass units whose inlet flow is below the noise floor. */
+  private boolean autoLowFlowBypass = true;
+
+  /** Noise-floor fraction of the detected plant mass-flow scale (see {@link #DEFAULT_AUTO_TUNING_FLOW_FRACTION}). */
+  private double autoTuningFlowFraction = DEFAULT_AUTO_TUNING_FLOW_FRACTION;
+
+  /** True once {@link #setBoundaryFlowFloor(double)} has been called, so the auto-tuner must not override it. */
+  private boolean boundaryFlowFloorExplicit = false;
+
+  /** True once {@link #setAbsoluteFlowTolerance(double)} has been called, so the auto-tuner must not override it. */
+  private boolean absoluteFlowToleranceExplicit = false;
+
+  /** Total feed-boundary mass flow (kg/hr) detected by the auto-tuner on the last run. */
+  private double detectedPlantFlowScale = 0.0;
+
+  /** Flow scale the auto-tuner last applied its thresholds for; used to detect a ramping plant. */
+  private transient double autoTuningAppliedScale = 0.0;
+
+  /** Human-readable description of what the auto-tuner did on the last run. */
+  private String autoTuningSummary = "";
 
   // Convergence tracking
   private int lastIterationCount = 0;
@@ -743,6 +808,7 @@ public class ProcessModel implements Runnable, Serializable {
    */
   public void setFlowTolerance(double flowTolerance) {
     this.flowTolerance = flowTolerance;
+    this.toleranceExplicit = true;
   }
 
   /**
@@ -761,6 +827,7 @@ public class ProcessModel implements Runnable, Serializable {
    */
   public void setTemperatureTolerance(double temperatureTolerance) {
     this.temperatureTolerance = temperatureTolerance;
+    this.toleranceExplicit = true;
   }
 
   /**
@@ -779,10 +846,16 @@ public class ProcessModel implements Runnable, Serializable {
    */
   public void setPressureTolerance(double pressureTolerance) {
     this.pressureTolerance = pressureTolerance;
+    this.toleranceExplicit = true;
   }
 
   /**
    * Set all tolerances at once.
+   *
+   * <p>
+   * Calling this switches the automatic tolerance selection off for this model: the value given here is used exactly as
+   * specified.
+   * </p>
    *
    * @param tolerance relative tolerance for all variables (flow, temperature, pressure)
    */
@@ -790,6 +863,73 @@ public class ProcessModel implements Runnable, Serializable {
     this.flowTolerance = tolerance;
     this.temperatureTolerance = tolerance;
     this.pressureTolerance = tolerance;
+    this.toleranceExplicit = true;
+  }
+
+  /**
+   * Whether a convergence tolerance has been set explicitly on this model.
+   *
+   * @return true when {@link #setTolerance(double)} or one of the per-variable setters was called
+   */
+  public boolean isToleranceExplicit() {
+    return toleranceExplicit;
+  }
+
+  /**
+   * Whether the model picks its own convergence tolerance when none was given.
+   *
+   * @return true when automatic tolerance selection is enabled (default)
+   */
+  public boolean isAutoTolerance() {
+    return autoTolerance;
+  }
+
+  /**
+   * Enables or disables automatic tolerance selection.
+   *
+   * <p>
+   * When enabled (default) and no tolerance was set explicitly, {@code run()} starts from
+   * {@value #DEFAULT_ENGINEERING_TOLERANCE} instead of the historical 1e-4, and accepts a residual that has stopped
+   * improving as long as it is below {@link #getAutoToleranceCeiling()}. An explicit {@link #setTolerance(double)}
+   * always wins.
+   * </p>
+   *
+   * @param autoTolerance true to let the model choose its own accuracy
+   */
+  public void setAutoTolerance(boolean autoTolerance) {
+    this.autoTolerance = autoTolerance;
+  }
+
+  /**
+   * Loosest relative tolerance the auto-tuner may relax to when the residual stalls.
+   *
+   * @return the ceiling (default {@value #DEFAULT_AUTO_TOLERANCE_CEILING})
+   */
+  public double getAutoToleranceCeiling() {
+    return autoToleranceCeiling;
+  }
+
+  /**
+   * Sets the loosest relative tolerance the auto-tuner may relax to on a stalled residual.
+   *
+   * @param autoToleranceCeiling relative tolerance; must be finite and greater than zero
+   * @throws IllegalArgumentException if the value is not a finite positive number
+   */
+  public void setAutoToleranceCeiling(double autoToleranceCeiling) {
+    if (Double.isNaN(autoToleranceCeiling) || Double.isInfinite(autoToleranceCeiling) || autoToleranceCeiling <= 0.0) {
+      throw new IllegalArgumentException(
+          "autoToleranceCeiling must be a finite positive number, was " + autoToleranceCeiling);
+    }
+    this.autoToleranceCeiling = autoToleranceCeiling;
+  }
+
+  /**
+   * Description of the accuracy the auto-tuner selected on the last run.
+   *
+   * @return a one-line summary, or an empty string when no tolerance was auto-selected
+   */
+  public String getAutoToleranceSummary() {
+    return autoToleranceSummary;
   }
 
   /**
@@ -1589,6 +1729,8 @@ public class ProcessModel implements Runnable, Serializable {
       lastBoundaryStreamCount = boundaryStreams.size();
       Map<Object, double[]> previousBoundaryStreamStates = captureBoundaryStreamStates(boundaryStreams);
       java.util.Set<ProcessSystem> dirtyAreas = null;
+      resetAutoTuningRunState();
+      applyAutoDefaultTolerance();
 
       int iterations = 0;
       while (!Thread.currentThread().isInterrupted() && iterations < maxIterations) {
@@ -1601,6 +1743,7 @@ public class ProcessModel implements Runnable, Serializable {
 
         // Capture current stream states and calculate errors
         Map<Object, double[]> currentBoundaryStreamStates = captureBoundaryStreamStates(boundaryStreams);
+        boolean autoTuningChanged = applyAutoConvergenceTuning();
         double[] errors = calculateConvergenceErrors(previousBoundaryStreamStates, currentBoundaryStreamStates);
         java.util.Set<Object> changedBoundaryStreams = findChangedBoundaryStreams(previousBoundaryStreamStates,
             currentBoundaryStreamStates);
@@ -1612,6 +1755,10 @@ public class ProcessModel implements Runnable, Serializable {
         boolean allProcessesSolved = isFinished();
         boolean valuesConverged = lastMaxFlowError < flowTolerance && lastMaxTemperatureError < temperatureTolerance
             && lastMaxPressureError < pressureTolerance;
+        if (!valuesConverged && relaxToleranceIfStalled()) {
+          valuesConverged = lastMaxFlowError < flowTolerance && lastMaxTemperatureError < temperatureTolerance
+              && lastMaxPressureError < pressureTolerance;
+        }
         lastAllProcessesSolved = allProcessesSolved;
         lastBoundaryValuesConverged = valuesConverged;
 
@@ -1626,7 +1773,8 @@ public class ProcessModel implements Runnable, Serializable {
         // Notify iteration complete
         boolean boundaryDrivenModel = !boundaryStreams.isEmpty();
         boolean minimumIterationsMet = boundaryStreams.isEmpty() || iterations > 1;
-        boolean iterConverged = valuesConverged && minimumIterationsMet && (allProcessesSolved || boundaryDrivenModel);
+        boolean iterConverged = valuesConverged && minimumIterationsMet && (allProcessesSolved || boundaryDrivenModel)
+            && !autoTuningChanged;
         notifyIterationComplete(iterations, iterConverged, maxError);
 
         // Converged if all processes solved AND values are not changing
@@ -1638,7 +1786,7 @@ public class ProcessModel implements Runnable, Serializable {
 
         // Update previous states for next iteration
         previousBoundaryStreamStates = currentBoundaryStreamStates;
-        dirtyAreas = getDirtyAreasForNextIteration(areaPlan, changedBoundaryStreams);
+        dirtyAreas = autoTuningChanged ? null : getDirtyAreasForNextIteration(areaPlan, changedBoundaryStreams);
       }
       lastIterationCount = iterations;
 
@@ -2768,6 +2916,12 @@ public class ProcessModel implements Runnable, Serializable {
       sb.append(String.format(Locale.US, "  Flow filters: absolute tolerance %.3g kg/hr, boundary floor %.3g kg/hr\n",
           absoluteFlowTolerance, boundaryFlowFloor));
     }
+    if (!autoTuningSummary.isEmpty()) {
+      sb.append("  Auto-tuning:  ").append(autoTuningSummary).append("\n");
+    }
+    if (!autoToleranceSummary.isEmpty()) {
+      sb.append("  Auto-accuracy: ").append(autoToleranceSummary).append("\n");
+    }
 
     List<BoundaryStreamError> offenders = getNonConvergedBoundaryStreamErrors();
     if (!offenders.isEmpty()) {
@@ -2800,6 +2954,57 @@ public class ProcessModel implements Runnable, Serializable {
       }
     }
     return sb.toString();
+  }
+
+  /**
+   * Runs the model until convergence with automatic convergence tuning, using the currently configured iteration limit
+   * and tolerances.
+   *
+   * @return true if the model converged within the iteration limit, false otherwise
+   */
+  public boolean runUntilConverged() {
+    return runUntilConverged(maxIterations);
+  }
+
+  /**
+   * Runs the model until convergence, letting NeqSim work out the flow noise filters by itself.
+   *
+   * <p>
+   * This is the recommended entry point for large multi-area plants. It behaves like
+   * {@link #runUntilConverged(int, double)} with the currently configured relative tolerance (default {@code 1e-4}, or
+   * whatever {@link #setTolerance(double)} was last given), but with {@linkplain #isAutoConvergenceTuning() automatic
+   * convergence tuning} the model no longer needs hand-picked, plant-specific numbers for the boundary flow floor, the
+   * absolute flow tolerance, per-section low-flow bypass threshold, or stalled-recycle acceleration.
+   * </p>
+   *
+   * <p>
+   * After the first outer sweep the total mass flow entering the plant across its feed boundary is measured and every
+   * flow-noise threshold is derived from it as a fraction ({@link #getAutoTuningFlowFraction()}, default
+   * {@value #DEFAULT_AUTO_TUNING_FLOW_FRACTION}) of that scale. The same model therefore self-configures across
+   * scenarios and production years without editing any convergence parameter, and a dead leg carrying a seed flow is
+   * recognised as noise rather than dominating the plant-wide relative error. Anything set explicitly by the caller
+   * (via {@link #setBoundaryFlowFloor(double)}, {@link #setAbsoluteFlowTolerance(double)} or a per-unit
+   * {@code setMinimumFlow}) always wins over the automatic value. A caller choice made with
+   * {@code Recycle.setAdaptiveAcceleration(...)} likewise takes precedence.
+   * </p>
+   *
+   * <p>
+   * Call {@link #getAutoTuningSummary()} afterwards to see the detected flow scale and the thresholds that were
+   * applied, or {@link #setAutoConvergenceTuning(boolean) setAutoConvergenceTuning(false)} to opt out entirely.
+   * </p>
+   *
+   * @param maxIterations maximum number of outer iterations to attempt; must be at least 1
+   * @return true if the model converged within the iteration limit, false otherwise
+   * @throws IllegalArgumentException if maxIterations is less than 1
+   */
+  public boolean runUntilConverged(int maxIterations) {
+    if (maxIterations < 1) {
+      throw new IllegalArgumentException("maxIterations must be at least 1, was " + maxIterations);
+    }
+    setRunStep(false);
+    setMaxIterations(maxIterations);
+    run();
+    return modelConverged;
   }
 
   /**
@@ -2889,6 +3094,7 @@ public class ProcessModel implements Runnable, Serializable {
           "absoluteFlowTolerance must be a finite non-negative number, was " + absoluteFlowTolerance);
     }
     this.absoluteFlowTolerance = absoluteFlowTolerance;
+    this.absoluteFlowToleranceExplicit = true;
   }
 
   /**
@@ -2919,6 +3125,333 @@ public class ProcessModel implements Runnable, Serializable {
           "boundaryFlowFloor must be a finite non-negative number, was " + boundaryFlowFloor);
     }
     this.boundaryFlowFloor = boundaryFlowFloor;
+    this.boundaryFlowFloorExplicit = true;
+  }
+
+  /**
+   * Whether the model derives its flow-noise convergence filters automatically from the plant flow scale.
+   *
+   * @return true if automatic convergence tuning is enabled (default)
+   */
+  public boolean isAutoConvergenceTuning() {
+    return autoConvergenceTuning;
+  }
+
+  /**
+   * Enables or disables automatic convergence tuning.
+   *
+   * <p>
+   * When enabled (the default) the first outer sweep measures the plant's total feed throughput and derives the
+   * boundary flow floor, the absolute flow tolerance and - when {@link #isAutoLowFlowBypass()} is also on - the
+   * per-unit low-flow bypass threshold from it. Disabling restores the historical behaviour where every one of those
+   * numbers has to be supplied per plant. Values the caller set explicitly are never overridden either way.
+   * </p>
+   *
+   * @param autoConvergenceTuning true to let the model tune its own flow-noise filters
+   */
+  public void setAutoConvergenceTuning(boolean autoConvergenceTuning) {
+    this.autoConvergenceTuning = autoConvergenceTuning;
+  }
+
+  /**
+   * Whether the auto-tuner may bypass units whose inlet flow is below the detected noise floor.
+   *
+   * @return true if automatic low-flow bypass is enabled (default)
+   */
+  public boolean isAutoLowFlowBypass() {
+    return autoLowFlowBypass;
+  }
+
+  /**
+   * Enables or disables automatic low-flow bypass of stagnant sections.
+   *
+   * <p>
+   * A dead leg (a shut-in injection train, a recompression stage switched off by a split factor) drains towards zero
+   * one unit per outer pass and keeps perturbing the convergence gate for tens of iterations. When enabled, units whose
+   * inlet flow falls below the detected noise floor are marked inactive for the rest of the run and stop being solved;
+   * they reactivate automatically if flow returns. Units with a caller-supplied {@code setMinimumFlow} are never
+   * touched.
+   * </p>
+   *
+   * @param autoLowFlowBypass true to auto-bypass negligible-flow units
+   */
+  public void setAutoLowFlowBypass(boolean autoLowFlowBypass) {
+    this.autoLowFlowBypass = autoLowFlowBypass;
+  }
+
+  /**
+   * Noise-floor fraction of the detected plant flow scale used by the auto-tuner.
+   *
+   * @return the fraction (default {@value #DEFAULT_AUTO_TUNING_FLOW_FRACTION})
+   */
+  public double getAutoTuningFlowFraction() {
+    return autoTuningFlowFraction;
+  }
+
+  /**
+   * Sets the noise-floor fraction of the detected plant flow scale used by the auto-tuner.
+   *
+   * <p>
+   * Raise it to be more aggressive about ignoring small streams (faster, more forgiving convergence), lower it to keep
+   * smaller streams inside the convergence metric. A plant fed 1000 t/hr with the default {@code 1e-6} gets a 1 kg/hr
+   * noise floor.
+   * </p>
+   *
+   * @param autoTuningFlowFraction fraction of the total plant feed flow; must be finite and in [0, 1)
+   * @throws IllegalArgumentException if the value is not finite or outside [0, 1)
+   */
+  public void setAutoTuningFlowFraction(double autoTuningFlowFraction) {
+    if (Double.isNaN(autoTuningFlowFraction) || Double.isInfinite(autoTuningFlowFraction)
+        || autoTuningFlowFraction < 0.0 || autoTuningFlowFraction >= 1.0) {
+      throw new IllegalArgumentException(
+          "autoTuningFlowFraction must be a finite value in [0, 1), was " + autoTuningFlowFraction);
+    }
+    this.autoTuningFlowFraction = autoTuningFlowFraction;
+  }
+
+  /**
+   * Total feed mass flow (kg/hr) detected across the plant boundary on the last run.
+   *
+   * @return the detected plant flow scale in kg/hr, or 0.0 if the model has not run with auto-tuning enabled
+   */
+  public double getDetectedPlantFlowScale() {
+    return detectedPlantFlowScale;
+  }
+
+  /**
+   * Human-readable description of what the auto-tuner detected and applied on the last run.
+   *
+   * @return a one-line summary, or an empty string when auto-tuning did not run
+   */
+  public String getAutoTuningSummary() {
+    return autoTuningSummary;
+  }
+
+  /**
+   * Restores every threshold the auto-tuner applied, returning the model to its unconfigured state.
+   *
+   * <p>
+   * Units whose low-flow threshold was written by the auto-tuner get it reset and are reactivated. Explicitly
+   * configured values are left untouched.
+   * </p>
+   *
+   * @return the number of units whose auto-assigned low-flow threshold was cleared
+   */
+  public int resetAutoTuning() {
+    int cleared = 0;
+    for (ProcessSystem process : processes.values()) {
+      cleared += process.resetAutoLowFlowThreshold();
+    }
+    if (!boundaryFlowFloorExplicit) {
+      boundaryFlowFloor = DEFAULT_BOUNDARY_FLOW_FLOOR;
+    }
+    if (!absoluteFlowToleranceExplicit) {
+      absoluteFlowTolerance = 0.0;
+    }
+    autoTuningAppliedScale = 0.0;
+    detectedPlantFlowScale = 0.0;
+    autoTuningSummary = "";
+    return cleared;
+  }
+
+  /** Clears the per-run auto-tuning bookkeeping so a re-run re-measures the plant flow scale. */
+  private void resetAutoTuningRunState() {
+    autoTuningAppliedScale = 0.0;
+    detectedPlantFlowScale = 0.0;
+    autoTuningSummary = "";
+    autoToleranceSummary = "";
+    if (autoToleranceErrorHistory == null) {
+      autoToleranceErrorHistory = new java.util.ArrayList<>();
+    }
+    autoToleranceErrorHistory.clear();
+    if (!boundaryFlowFloorExplicit) {
+      boundaryFlowFloor = DEFAULT_BOUNDARY_FLOW_FLOOR;
+    }
+    if (!absoluteFlowToleranceExplicit) {
+      absoluteFlowTolerance = 0.0;
+    }
+    for (ProcessSystem process : processes.values()) {
+      process.resetAutoLowFlowThreshold();
+      process.resetAutoRecycleFlowTolerance();
+      process.resetAutoRecycleAdaptiveAcceleration();
+    }
+  }
+
+  /**
+   * Applies the engineering-grade default accuracy when the caller did not ask for one.
+   *
+   * <p>
+   * The historical default (1e-4 relative on flow, temperature and pressure) is tighter than any process-engineering
+   * result needs, and it is what makes recycle-rich plants grind through many extra outer passes. When no tolerance was
+   * set explicitly, a plain {@code run()} therefore starts from {@value #DEFAULT_ENGINEERING_TOLERANCE}.
+   * </p>
+   */
+  private void applyAutoDefaultTolerance() {
+    if (!autoConvergenceTuning || !autoTolerance || toleranceExplicit) {
+      return;
+    }
+    flowTolerance = DEFAULT_ENGINEERING_TOLERANCE;
+    temperatureTolerance = DEFAULT_ENGINEERING_TOLERANCE;
+    pressureTolerance = DEFAULT_ENGINEERING_TOLERANCE;
+    autoToleranceSummary = String.format(Locale.US,
+        "no tolerance given - using the engineering default %.1e relative " + "on flow, temperature and pressure",
+        DEFAULT_ENGINEERING_TOLERANCE);
+  }
+
+  /**
+   * Accepts a residual that has stopped improving but is already accurate enough for process work.
+   *
+   * <p>
+   * A recycle-rich plant can approach its solution asymptotically: the last decade of the residual costs more outer
+   * passes than the whole approach did, and buys an accuracy far below the uncertainty of the fluid model itself. When
+   * the worst relative error has not improved materially over {@value #AUTO_TOLERANCE_STALL_WINDOW} outer passes and is
+   * still below {@link #getAutoToleranceCeiling()}, the tolerance is widened to just above that residual and the
+   * accepted accuracy is reported through {@link #getAutoToleranceSummary()}. An explicit tolerance, a residual above
+   * the ceiling, or a still-improving residual all suppress this.
+   * </p>
+   *
+   * @return true when the tolerance was widened and convergence must be re-evaluated
+   */
+  private boolean relaxToleranceIfStalled() {
+    if (!autoConvergenceTuning || !autoTolerance || toleranceExplicit) {
+      return false;
+    }
+    double worstError = Math.max(lastMaxFlowError, Math.max(lastMaxTemperatureError, lastMaxPressureError));
+    if (Double.isNaN(worstError) || Double.isInfinite(worstError) || !(worstError > 0.0)) {
+      return false;
+    }
+    if (autoToleranceErrorHistory == null) {
+      autoToleranceErrorHistory = new java.util.ArrayList<>();
+    }
+    autoToleranceErrorHistory.add(Double.valueOf(worstError));
+    if (autoToleranceErrorHistory.size() <= AUTO_TOLERANCE_STALL_WINDOW) {
+      return false;
+    }
+    double reference = autoToleranceErrorHistory.get(autoToleranceErrorHistory.size() - 1 - AUTO_TOLERANCE_STALL_WINDOW)
+        .doubleValue();
+    if (reference > 0.0 && (reference - worstError) / reference >= AUTO_TOLERANCE_STALL_IMPROVEMENT) {
+      return false; // still making real progress - keep iterating
+    }
+    if (worstError > autoToleranceCeiling) {
+      return false; // genuinely not converged, not merely a too-tight gate
+    }
+    double accepted = Math.min(autoToleranceCeiling, worstError * 1.05);
+    if (accepted <= flowTolerance) {
+      return false;
+    }
+    flowTolerance = accepted;
+    temperatureTolerance = accepted;
+    pressureTolerance = accepted;
+    autoToleranceSummary = String.format(Locale.US,
+        "residual stalled at %.2e after %d passes - accepted %.2e relative "
+            + "(engineering accuracy, ceiling %.1e); set a tolerance explicitly to override",
+        worstError, autoToleranceErrorHistory.size(), accepted, autoToleranceCeiling);
+    logger.debug("ProcessModel auto-tolerance: {}", autoToleranceSummary);
+    return true;
+  }
+
+  /**
+   * Derives the flow-noise convergence filters from the plant's own throughput.
+   *
+   * <p>
+   * Called once per outer iteration. The scale is the total mass flow entering the plant across its feed boundary
+   * (recycles and internal streams excluded), so it is the physical throughput rather than the largest number found
+   * anywhere in the flowsheet - a not-yet-solved internal stream can carry an arbitrary flow and would otherwise set a
+   * meaningless scale. Thresholds are only re-applied when the throughput has grown materially, which keeps the
+   * per-iteration cost negligible.
+   * </p>
+   *
+   * @return true when thresholds changed and every process area must be evaluated once more
+   */
+  private boolean applyAutoConvergenceTuning() {
+    if (!autoConvergenceTuning) {
+      return false;
+    }
+    double scale = Math.max(detectedPlantFlowScale, getTotalFeedFlowRate());
+    if (!(scale > 0.0) || Double.isInfinite(scale)) {
+      return false;
+    }
+    detectedPlantFlowScale = scale;
+
+    // Re-apply only on the first pass or when the plant has grown materially since.
+    if (autoTuningAppliedScale > 0.0 && scale < 2.0 * autoTuningAppliedScale) {
+      return false;
+    }
+    autoTuningAppliedScale = scale;
+
+    double noiseFloor = scale * autoTuningFlowFraction;
+    if (!boundaryFlowFloorExplicit) {
+      boundaryFlowFloor = Math.max(DEFAULT_BOUNDARY_FLOW_FLOOR, noiseFloor);
+    }
+    if (!absoluteFlowToleranceExplicit) {
+      absoluteFlowTolerance = noiseFloor;
+    }
+    int bypassCandidates = autoLowFlowBypass ? applyAutoLowFlowThreshold(noiseFloor) : 0;
+    int recyclesTuned = 0;
+    int adaptiveRecycles = 0;
+    for (ProcessSystem process : processes.values()) {
+      recyclesTuned += process.applyAutoRecycleFlowTolerance(noiseFloor);
+      adaptiveRecycles += process.applyAutoRecycleAdaptiveAcceleration();
+    }
+
+    autoTuningSummary = String.format(Locale.US,
+        "auto-tuned to a plant feed rate of %.4g kg/hr: boundary floor %.3g kg/hr, absolute flow tolerance "
+            + "%.3g kg/hr, low-flow bypass %.3g kg/hr on %d unit(s), recycle flow tolerance on %d loop(s), "
+            + "adaptive acceleration on %d loop(s)",
+        scale, boundaryFlowFloor, absoluteFlowTolerance, autoLowFlowBypass ? noiseFloor : 0.0, bypassCandidates,
+        recyclesTuned, adaptiveRecycles);
+    logger.debug("ProcessModel {}", autoTuningSummary);
+    return true;
+  }
+
+  /**
+   * Writes the auto-derived low-flow bypass threshold onto every unit that has no caller-supplied threshold.
+   *
+   * @param thresholdKgPerHour low-flow bypass threshold in kg/hr
+   * @return the number of units the auto-tuner manages
+   */
+  private int applyAutoLowFlowThreshold(double thresholdKgPerHour) {
+    int managed = 0;
+    for (ProcessSystem process : processes.values()) {
+      managed += process.applyAutoLowFlowThreshold(thresholdKgPerHour);
+    }
+    return managed;
+  }
+
+  /**
+   * Total mass flow entering the whole model across its feed boundary.
+   *
+   * <p>
+   * A stream produced by any area - including a cross-area link or a recycle target - is not a feed, so this is the
+   * plant throughput rather than a sum of internal traffic.
+   * </p>
+   *
+   * @return total feed mass flow in kg/hr, or 0.0 when no feed stream could be read
+   */
+  public double getTotalFeedFlowRate() {
+    java.util.Set<StreamInterface> produced = java.util.Collections
+        .newSetFromMap(new java.util.IdentityHashMap<StreamInterface, Boolean>());
+    java.util.Set<StreamInterface> inlets = java.util.Collections
+        .newSetFromMap(new java.util.IdentityHashMap<StreamInterface, Boolean>());
+    for (ProcessSystem process : processes.values()) {
+      process.collectProducedStreams(produced);
+      process.collectInletStreams(inlets);
+    }
+    double total = 0.0;
+    for (StreamInterface stream : inlets) {
+      if (produced.contains(stream)) {
+        continue;
+      }
+      try {
+        double flow = stream.getFlowRate("kg/hr");
+        if (!Double.isNaN(flow) && !Double.isInfinite(flow) && flow > 0.0) {
+          total += flow;
+        }
+      } catch (RuntimeException ex) {
+        logger.debug("Could not read feed flow rate while detecting the plant flow scale", ex);
+      }
+    }
+    return total;
   }
 
   /**
@@ -2964,6 +3497,24 @@ public class ProcessModel implements Runnable, Serializable {
     errors.add("temperature", buildErrorEntry(lastMaxTemperatureError, temperatureTolerance, "temperature"));
     errors.add("pressure", buildErrorEntry(lastMaxPressureError, pressureTolerance, "pressure"));
     root.add("errors", errors);
+
+    JsonObject autoTuning = new JsonObject();
+    autoTuning.addProperty("enabled", autoConvergenceTuning);
+    autoTuning.addProperty("lowFlowBypassEnabled", autoLowFlowBypass);
+    autoTuning.addProperty("flowFraction", autoTuningFlowFraction);
+    autoTuning.addProperty("detectedPlantFlowScaleKgPerHr", detectedPlantFlowScale);
+    autoTuning.addProperty("boundaryFlowFloorKgPerHr", boundaryFlowFloor);
+    autoTuning.addProperty("absoluteFlowToleranceKgPerHr", absoluteFlowTolerance);
+    autoTuning.addProperty("summary", autoTuningSummary);
+    root.add("autoTuning", autoTuning);
+
+    JsonObject autoToleranceInfo = new JsonObject();
+    autoToleranceInfo.addProperty("enabled", autoTolerance);
+    autoToleranceInfo.addProperty("toleranceExplicit", toleranceExplicit);
+    autoToleranceInfo.addProperty("appliedTolerance", flowTolerance);
+    autoToleranceInfo.addProperty("ceiling", autoToleranceCeiling);
+    autoToleranceInfo.addProperty("summary", autoToleranceSummary);
+    root.add("autoTolerance", autoToleranceInfo);
 
     JsonArray boundaryStreamErrors = new JsonArray();
     for (BoundaryStreamError streamError : getNonConvergedBoundaryStreamErrors()) {

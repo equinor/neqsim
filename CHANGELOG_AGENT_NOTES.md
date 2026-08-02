@@ -9,6 +9,213 @@
 
 ---
 
+## 2026-08-02 — DNV-RP-F105 added as a first-mode free-span screening kernel
+
+### Added
+
+`DnvRpF105FreeSpanScreeningKernel` implements an edition-aware, fail-closed screen for
+`DNV-RP-F105 2025-12`. It calculates a simply supported Euler-Bernoulli first-mode frequency with
+externally derived effective mass and axial force, then reports current/wave frequency ratios,
+reduced velocities, and Keulegan-Carpenter number. Steel and hydrodynamic diameters are distinct.
+
+### Required evidence and migration
+
+Geometry, structural-model, environmental, and project-trigger verification are mandatory caller
+attestations. Strouhal number, frequency-ratio band, and reduced-velocity triggers are
+project-controlled evidence; they are not embedded DNV criteria or acceptance decisions. Soil and
+span-shoulder stiffness, interacting spans, response amplitudes, direct wave loading, ULS/FLS,
+fatigue, monitoring, intervention, and conformity remain external.
+
+`PipeMechanicalDesignCalculator.calculateAllowableSpanLength(...)` remains compatible but is a
+legacy fixed-assumption estimate with fallback/cap behavior. Agents must not relabel it as F105 and
+must route an explicit current-edition basis through the typed kernel.
+
+The standards resource index now records the current F105 edition/applicability. Unverified legacy
+CSV values labelled as F105 safety factors, fatigue factors, allowable stress, and maximum span were
+removed rather than relabelled as current. The generic transient-pipe surge allowance is now
+identified as project basis, not F105.
+
+---
+
+## 2026-08-02 — DNV-RP-C203 added as a controlled-curve fatigue kernel
+
+### Added
+
+`DnvRpC203FatigueDesignKernel` implements the S-N and Palmgren-Miner arithmetic for the current
+`2024-10+AMD:2025-10` basis. It accepts immutable spectrum bins, stress-range factors, a design
+fatigue factor, damage limit, and a caller-supplied single-slope or continuous bi-linear curve.
+`DnvRpC203FatigueAssessment` reports per-bin cycles to failure and damage, cumulative raw and design
+damage, utilization, governing bin, and linear-extrapolated life.
+
+### Required evidence and migration
+
+NeqSim deliberately does not embed or select licensed DNV S-N tables. Curve and spectrum
+verification flags are attestations and both are required before calculation. Curve/detail
+selection, structural stress derivation, environment/thickness factors, SCFs, rainflow counting,
+load combination, inspection planning, and conformity remain external.
+
+Existing pipeline and riser fatigue methods remain compatible but use inconsistent embedded
+parameters. Agents must call them legacy estimates and must route an explicit current-edition C203
+basis through the typed kernel with a controlled project curve.
+
+---
+
+## 2026-08-02 — ISO 5167-1/-2 added to the edition-aware standards pipeline
+
+### Added
+
+`ISO-5167-1 2022` and `ISO-5167-2 2022` are catalogued separately with ISO publisher lifecycle
+sources. Part 1 records the companion general-principles basis; Part 2 registers the new
+`Iso5167OrificeMeteringKernel` for `Orifice` equipment.
+
+The kernel reuses the existing `Orifice` Reader-Harris/Gallagher and pressure-loss equations through
+an immutable, unit-explicit contract. Liquid service uses an explicit expansibility factor of one,
+while gas/vapour service requires kappa and applies the existing compressible correction. The typed
+result records beta ratio, differential and pressure ratios, discharge and expansibility factors,
+mass and actual-volume flow, pipe Reynolds number, permanent pressure loss, and iteration count.
+
+### Applicability and boundary
+
+The adapter fails closed for unsupported editions or amendments, non-`Orifice` equipment,
+multiphase/part-full/pulsating/non-subsonic flow, pipe diameter outside 50 mm to 1,000 mm, beta ratio
+outside the implemented 0.10 to 0.75 screen, Reynolds number below 5,000, invalid absolute
+pressures/properties, and missing external geometry/installation verification. That verification is
+a caller attestation; NeqSim does not inspect the installed meter.
+
+The method remains `SCREENING`. It does not replace purchased ISO 5167-1/-2 documents, uncertainty
+analysis, calibration, plate and tapping inspection, straight-length verification, pulsation or
+two-phase analysis, custody-transfer acceptance, or accountable engineering approval. Existing
+`Orifice`, `Standard_AGA3`, and `GpsaOrificeCalculator` entry points remain available under their
+respective process-simulation and AGA/API/GPSA bases.
+
+### Documentation and example
+
+Added `docs/process/measurement/iso_5167_orifice_metering.md` and an executed
+`examples/notebooks/iso_5167_orifice_metering_kernel.ipynb`. The common regression suite, support
+matrix, migration/program/design-framework guides, standards lookup skill, standards reviewer, and
+gas-quality agent now cover the exact ISO path and its exclusions.
+
+## 2026-08-02 — NORSOK M-506 added to the edition-aware standards kernel registry
+
+### Summary
+
+The existing mutable `NorsokM506CorrosionRate` calculation now has a strict common-kernel adapter.
+`NORSOK-M-506 2017` is catalogued with publisher lifecycle evidence, exact-edition support, equipment
+applicability, readiness blockers, immutable inputs and outputs, and regression coverage.
+
+### New API
+
+| API | What it does |
+|---|---|
+| `NorsokM506CorrosionDesignKernel` | Runs the existing simplified calculation only after edition, applicability, range, and input-quality checks pass |
+| `NorsokM506CorrosionDesignKernel.Input.builder(...)` | Retains unit-explicit raw inputs without the legacy setters' silent clamping |
+| `NorsokM506CorrosionAssessment` | Reports rate, pH, fugacity, correction factors, wall shear, and projected uniform wall loss as an immutable review-gated snapshot |
+
+### Migration
+
+Use the kernel for new auditable studies. Keep `NorsokM506CorrosionRate` for legacy mutable workflows
+and sweeps, and use `NorsokM506ElectrolyteBridge` when an electrolyte-model pH or FeCO3 saturation
+ratio is required. The projected wall loss is not a code corrosion allowance or acceptance decision.
+
+### Agent and skill behavior
+
+Standards and flow-assurance guidance now route explicit M-506 compliance work through the common
+kernel and require the screening boundary, purchased-standard review, and NeqSim FeCO3 extension to
+remain visible.
+
+---
+
+## 2026-08-02 — Pump NPSH capacity constraint direction corrected
+
+### Summary
+
+`PumpCapacityStrategy` now represents NPSH headroom (`NPSHA - NPSHR`, metres) as a true minimum
+HARD constraint. The previous strategy set the minimum headroom as both a design value and a
+minimum, which selected `current/design` utilization and therefore classified a pump with abundant
+NPSH headroom as overloaded. Utilization is now `minimumHeadroom/currentHeadroom`: values below
+1.0 are feasible, exactly 1.0 is at the limit, and values above 1.0 violate the minimum.
+
+### Compatibility and engineering basis
+
+No public API or pump thermodynamic calculation changed. The strategy default remains a screening
+value; installed studies should use service- and vendor-specific NPSH margin requirements. This
+follows the Hydraulic Institute convention that adequate NPSH is a minimum-availability condition.
+
+### Tests
+
+`PumpCapacityStrategyTest` covers safe, exact-limit, and violated operating points using an executed
+water-pump process case and checks normalized utilization plus HARD-limit behavior.
+
+---
+
+## 2026-08-02 — Typed DNV-RP-F109 on-bottom stability screening
+
+### Summary
+
+NeqSim now exposes a fail-closed `SCREENING` kernel for DNV-RP-F109 edition
+`2021-05+AMD 2025-09`. It covers vertical equilibrium, a transparent
+absolute-static lateral screen, and acceptance checks for displacement supplied by
+an externally validated generalized or dynamic response model. Every calculated
+result remains `CALCULATED_REVIEW_REQUIRED`.
+
+### New API
+
+| API | What it does |
+|---|---|
+| `DnvRpF109OnBottomStabilityInput` | Carries explicit asset, geometry, environmental, hydrodynamic, soil, factor, and response-model inputs without numerical project defaults |
+| `DnvRpF109OnBottomStabilityCalculator` | Calculates normal Morison loads, lift, vertical equilibrium, friction/passive lateral resistance, required submerged weight, and specific gravity |
+| `DnvRpF109OnBottomStabilityAssessment` | Returns immutable load-case intermediates, limit-state checks, governing utilization, and approval-required state |
+| `DnvRpF109OnBottomStabilityKernel` | Enforces edition, equipment applicability, complete inputs, unique cases, and external-response evidence before calculation |
+| `StandardType.DNV_RP_F109` | Adds current publisher-sourced standard discovery for pipelines, flexible pipes, cables, and umbilicals |
+
+### Boundary and migration
+
+No existing API changes. The kernel does not reproduce generalized design tables,
+generate dynamic response, derive environmental statistics, qualify pipe-soil
+models, or claim DNV conformity. Use the licensed current RP and independent
+engineering review for design approval. The `neqsim-subsea-and-wells`,
+`neqsim-flow-assurance`, and `neqsim-standards-lookup` skills now route on-bottom
+stability work to the typed kernel; the previous incorrect association of
+DNV-RP-F109 with cooldown/no-touch time has been removed. Two unreferenced legacy
+CSV rows that presented 1.1 lateral and vertical factors as generic standard
+defaults were also removed; factors must now be traceable project inputs.
+
+### Tests and example
+
+`DnvRpF109OnBottomStabilityKernelTest` checks fail-closed readiness, static and
+external-response routes, directional loading, hydrodynamic and soil monotonicity,
+displacement limits, registry discovery, and the audit boundary. The executed
+`dnv_rp_f109_on_bottom_stability.ipynb` notebook demonstrates load-case results,
+velocity sensitivity, and the submerged-weight/friction design space.
+
+---
+
+## 2026-08-02 — Typed DNV-ST-F101 pipeline screening kernel
+
+### New API
+
+- `DnvStF101PipelineDesignInput` keeps the standard edition, safety class, fabrication route,
+  geometry, ovality, material de-rating, operating/incidental/test pressures, combined loads,
+  fatigue spectrum, and installation strain explicit.
+- `DnvStF101PipelineDesignKernel` is registered for `StandardType.DNV_ST_F101` with
+  `SCREENING` maturity and always returns a review-required calculated result.
+- `DnvStF101PipelineAssessment` reports separate utilization checks for pressure containment,
+  collapse, propagation buckling, local-buckling load interaction, fatigue, ovality, and
+  installation strain.
+- `PipelineMechanicalDesign.assessDnvStF101(input, context)` exposes the kernel from the pipeline
+  mechanical-design object without mutating the process model.
+
+### Migration and governance
+
+- Do not use `PipeMechanicalDesignCalculator.DNV_OS_F101` for current DNV-ST-F101 work.
+- `PipelineMechanicalDesign.calcDesign()` now fails closed for the `DNV-ST-F101` string code;
+  it no longer silently selects ASME B31.8.
+- Passing checks are option-screening evidence only. The licensed standard, project amendments,
+  detailed load cases, installation analysis, fabrication records, and independent engineering
+  verification remain required.
+
+---
+
 ## 2026-07-30 — TwoFluidPipe closure diagnostics exposed as profiles
 
 ### Summary
