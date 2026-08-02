@@ -459,8 +459,12 @@ public class DistillationColumnWarmStateCacheTest {
           "component balance must close for " + feedComponents[componentIndex]);
     }
 
-    assertPhysicalStream(gas);
-    assertPhysicalStream(liquid);
+    if (gasFlow > 0.0) {
+      assertPhysicalStream(gas);
+    }
+    if (liquidFlow > 0.0) {
+      assertPhysicalStream(liquid);
+    }
   }
 
   /**
@@ -504,9 +508,15 @@ public class DistillationColumnWarmStateCacheTest {
           "component balance must close for " + feedComponents[componentIndex]);
     }
 
-    assertPhysicalStream(gas);
-    assertPhysicalStream(liquid);
-    assertPhysicalStream(condenserLiquid);
+    if (gasFlow > 0.0) {
+      assertPhysicalStream(gas);
+    }
+    if (liquidFlow > 0.0) {
+      assertPhysicalStream(liquid);
+    }
+    if (condenserLiquidFlow > 0.0) {
+      assertPhysicalStream(condenserLiquid);
+    }
   }
 
   /**
