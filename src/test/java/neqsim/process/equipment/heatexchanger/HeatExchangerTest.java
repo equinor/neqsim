@@ -186,8 +186,7 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
     assertMinimumEntropyInitialization(fluid, heatExchanger);
   }
 
-  private static void assertMinimumEntropyInitialization(InitTrackingSystemSrkEos fluid,
-      HeatExchanger heatExchanger) {
+  private static void assertMinimumEntropyInitialization(InitTrackingSystemSrkEos fluid, HeatExchanger heatExchanger) {
     double expectedEntropy = referenceEntropyProduction(heatExchanger, "J/K");
     double hotSideDuty = heatExchanger.getOutStream(0).getFluid().getEnthalpy()
         - heatExchanger.getInStream(0).getFluid().getEnthalpy();
@@ -204,10 +203,10 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
         Math.max(1.0e-6, Math.max(Math.abs(hotSideDuty), Math.abs(coldSideDuty)) * 1.0e-8));
     assertEquals(Math.abs(hotSideDuty), Math.abs(heatExchanger.getDuty()),
         Math.max(1.0e-6, Math.abs(hotSideDuty) * 1.0e-8));
-    assertEquals(heatExchanger.getInStream(0).getFlowRate("kg/hr"),
-        heatExchanger.getOutStream(0).getFlowRate("kg/hr"), 1.0e-8);
-    assertEquals(heatExchanger.getInStream(1).getFlowRate("kg/hr"),
-        heatExchanger.getOutStream(1).getFlowRate("kg/hr"), 1.0e-8);
+    assertEquals(heatExchanger.getInStream(0).getFlowRate("kg/hr"), heatExchanger.getOutStream(0).getFlowRate("kg/hr"),
+        1.0e-8);
+    assertEquals(heatExchanger.getInStream(1).getFlowRate("kg/hr"), heatExchanger.getOutStream(1).getFlowRate("kg/hr"),
+        1.0e-8);
   }
 
   private static double referenceEntropyProduction(HeatExchanger heatExchanger, String unit) {
@@ -228,9 +227,8 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
       hotStream = 1;
       coldStream = 0;
     }
-    return entropy + Math.abs(heatExchanger.getDuty())
-        * (1.0 / heatExchanger.getInStream(coldStream).getTemperature()
-            - 1.0 / heatExchanger.getInStream(hotStream).getTemperature());
+    return entropy + Math.abs(heatExchanger.getDuty()) * (1.0 / heatExchanger.getInStream(coldStream).getTemperature()
+        - 1.0 / heatExchanger.getInStream(hotStream).getTemperature());
   }
 
   /**
