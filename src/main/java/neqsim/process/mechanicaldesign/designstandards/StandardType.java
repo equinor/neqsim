@@ -107,6 +107,10 @@ public enum StandardType {
       new String[] { "Pipeline", "AdiabaticPipe" }, "pipeline design codes"),
   DNV_RP_F105("DNV-RP-F105", "Free Spanning Pipelines", "2021", new String[] { "Pipeline", "AdiabaticPipe" },
       "pipeline design codes"),
+  DNV_RP_F109("DNV-RP-F109", "On-bottom Stability Design of Submarine Pipelines, Cables and Umbilicals",
+      "2021-05+AMD 2025-09",
+      new String[] { "Pipeline", "AdiabaticPipe", "PipeBeggsAndBrills", "FlexiblePipe", "Umbilical", "Cable" },
+      "pipeline design codes"),
 
   // ISO Standards
   ISO_13623("ISO-13623", "Pipeline Transportation Systems", "2017", new String[] { "Pipeline", "AdiabaticPipe" },

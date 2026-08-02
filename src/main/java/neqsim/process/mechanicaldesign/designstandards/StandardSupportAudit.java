@@ -78,6 +78,13 @@ public final class StandardSupportAudit {
           registryImplementation, separatorImplementation.getImplementationClassName(),
           "Gravity cut-diameter, K-factor, and liquid residence-time screening only; service applicability, vessel "
               + "construction, internals, and performance guarantees require independent review.");
+    case DNV_RP_F109:
+      EquipmentDesignKernelRegistry.Lookup stabilityImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING, stabilityImplementation.isImplemented(),
+          registryImplementation, stabilityImplementation.getImplementationClassName(),
+          "Vertical equilibrium, transparent absolute-static lateral stability, and externally supplied response "
+              + "displacement checks only; generalized design tables, dynamic response generation, environmental "
+              + "statistics, soil-model qualification, and conformity assessment remain external.");
     default:
       return getCategorySupport(standardType, registryImplementation);
     }

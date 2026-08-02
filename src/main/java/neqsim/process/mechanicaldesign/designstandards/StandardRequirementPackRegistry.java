@@ -109,6 +109,12 @@ public final class StandardRequirementPackRegistry {
     register(packs, pack(StandardType.DNV_ST_F101, capability("pipeline-mechanical-design", Kind.CALCULATION_SCREENING,
         "neqsim.process.mechanicaldesign.pipeline.PipeMechanicalDesignCalculator",
         "Pressure-containment screening; load cases, safety classes, fabrication, and installation checks are incomplete.")));
+    register(packs,
+        pack(StandardType.DNV_RP_F109,
+            capability("on-bottom-stability", Kind.CALCULATION_SCREENING,
+                "neqsim.process.engineering.calculation.DnvRpF109OnBottomStabilityKernel",
+                "Typed vertical, absolute-static lateral, and external-response displacement screening; "
+                    + "environmental statistics, soil-model qualification, and conformity approval remain external.")));
     PACKS = Collections.unmodifiableMap(packs);
   }
 
