@@ -185,7 +185,9 @@ public class TwoFluidSection extends PipeSection {
   /**
    * Legacy storage for the local inclined-section gas-carryover number.
    *
-   * <p>The field name is retained for serialization compatibility.</p>
+   * <p>
+   * The field name is retained for serialization compatibility.
+   * </p>
    */
   private double severeSluggingNumber = Double.POSITIVE_INFINITY;
 
@@ -1004,8 +1006,8 @@ public class TwoFluidSection extends PipeSection {
   }
 
   /**
-   * Check whether the explicit flowline-riser system diagnostic predicts severe slugging at
-   * this section. The flag is not set by local closure relations.
+   * Check whether the explicit flowline-riser system diagnostic predicts severe slugging at this section. The flag is
+   * not set by local closure relations.
    *
    * @return true if the system-level diagnostic predicts severe slugging
    */
@@ -1145,8 +1147,9 @@ public class TwoFluidSection extends PipeSection {
   /**
    * Get the local inclined-section gas-carryover number.
    *
-   * <p>This is a local Froude/holdup screen and is not a severe-slugging system stability
-   * criterion.</p>
+   * <p>
+   * This is a local Froude/holdup screen and is not a severe-slugging system stability criterion.
+   * </p>
    *
    * @return local gas-carryover number, or positive infinity when not applicable
    */
@@ -1156,8 +1159,7 @@ public class TwoFluidSection extends PipeSection {
 
   /** Set the local inclined-section gas-carryover number. */
   public void setInclinedSectionGasCarryoverNumber(double number) {
-    severeSluggingNumber =
-        Double.isFinite(number) ? number : Double.POSITIVE_INFINITY;
+    severeSluggingNumber = Double.isFinite(number) ? number : Double.POSITIVE_INFINITY;
   }
 
   /** Return whether the local carryover screen indicates possible liquid fallback. */
