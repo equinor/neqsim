@@ -113,7 +113,9 @@ public class CondenserFixedLiquidRefluxTest {
     List<StreamInterface> externalProducts = new ArrayList<>();
     externalProducts.add(column.getGasOutStream());
     externalProducts.add(column.getLiquidOutStream());
-    externalProducts.add(column.getCondenser().getLiquidProductStream());
+    StreamInterface liquidProduct = column.getCondenser().getLiquidProductStream();
+    assertNotNull(liquidProduct, "fixed reflux mode must expose the separate condenser liquid product");
+    externalProducts.add(liquidProduct);
     assertMassAndComponentBalance(feed, externalProducts);
     assertPhysical(externalProducts);
   }
@@ -147,7 +149,9 @@ public class CondenserFixedLiquidRefluxTest {
     List<StreamInterface> products = new ArrayList<>();
     products.add(condenser.getGasOutStream());
     products.add(condenser.getLiquidOutStream());
-    products.add(condenser.getLiquidProductStream());
+    StreamInterface liquidProduct = condenser.getLiquidProductStream();
+    assertNotNull(liquidProduct, "fixed reflux mode must expose the separate condenser liquid product");
+    products.add(liquidProduct);
     return products;
   }
 
