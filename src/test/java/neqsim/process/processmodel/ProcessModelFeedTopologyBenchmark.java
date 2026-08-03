@@ -34,9 +34,9 @@ public class ProcessModelFeedTopologyBenchmark {
   private static final Logger logger = LogManager.getLogger(ProcessModelFeedTopologyBenchmark.class);
   private static final int AREA_COUNT = 10;
   private static final int STREAMS_PER_AREA = 50;
-  private static final int WARMUP_RUNS = 5;
-  private static final int BATCH_COUNT = 5;
-  private static final int RUNS_PER_BATCH = 3;
+  private static final int WARMUP_RUNS = 10;
+  private static final int BATCH_COUNT = 9;
+  private static final int RUNS_PER_BATCH = 20;
 
   /** Creates the small single-phase SRK gas used by every synthetic feed stream. */
   private static SystemInterface createGasFluid() {
