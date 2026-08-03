@@ -35,7 +35,7 @@ jobs:
         run: ./mvnw -q -DskipTests test-compile
       - name: Run benchmark fork ${{ matrix.fork }}
         run: >-
-          ./mvnw -q
+          ./mvnw
           -Dtest=ProcessModelFeedTopologyBenchmark
           -Dneqsim.benchmark.feedTopology=true
           test
