@@ -97,7 +97,7 @@ public class ProcessModelFeedTopologyBenchmark {
 
       if (areaIndex < AREA_COUNT - 1) {
         Heater transfer = new Heater("area " + areaIndex + " transfer", crossAreaStream);
-        transfer.setOutTemperature(298.15);
+        transfer.setOutletTemperature(298.15);
         area.add(transfer);
         crossAreaStream = transfer.getOutletStream();
       } else {
