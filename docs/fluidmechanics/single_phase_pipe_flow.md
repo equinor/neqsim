@@ -260,10 +260,50 @@ accumulating control volume is node one, so the inlet density is imposed at row 
 physical control volumes contribute to linepack.
 
 Solver types `10` and `20` retain the staged energy/component algorithm. They expose the same
-report shape, but coupled hydraulic/EOS convergence under a changing composition is not yet
-validated for those paths. Conservative component transport, front/breakthrough accuracy,
-bounded fractions, numerical diffusion, and physical axial dispersion remain outside the
-validated capability; do not interpret type `20` as satisfying those transport guarantees.
+hydraulic report shape, but coupled hydraulic/EOS convergence under a changing composition is not
+yet validated for those paths. Do not interpret type `20` as satisfying the conservative transport
+guarantees described below.
+
+### Opt-in Conservative Species Step
+
+Transient solver type `1` has an opt-in first-order finite-volume species path. For positive face
+mass flow, each independent component mass fraction is solved from
+
+$$
+(M_P^{n+1} + \Delta t\,\dot m_e)\,\omega_{i,P}^{n+1}
+= M_P^n\,\omega_{i,P}^n + \Delta t\,\dot m_w\,\omega_{i,W}^{n+1}.
+$$
+
+Here, $M_P$ is the authoritative total mass in a physical control volume and $\dot m_w$ and
+$\dot m_e$ are west/east face mass flows. The final component is set algebraically to one minus
+the sum of the other mass fractions. The implementation does not clip fractions or renormalize
+the result. A hydraulic/species fixed-point iteration then synchronizes the EOS composition and
+requires both composition and EOS-density residuals to converge.
+
+```java
+pipe.setConservativeSpeciesTransport(true);
+pipe.setFailOnNonConvergence(true);
+pipe.solveTransient(1);
+
+OnePhaseSpeciesConservationReport species = pipe.getSpeciesConservationReport();
+double[] componentResidualKg = species.getInventoryResidualKg();
+double[][] componentMassFractionByCell = species.getMassFractionProfile();
+```
+
+`OnePhaseSpeciesConservationReport` exposes component names, physical-cell mass-fraction profiles,
+initial/final component inventories, integrated inlet/outlet component masses, absolute and
+relative inventory residuals, boundedness and sum-to-one diagnostics, thermodynamic
+synchronization error, and hydraulic/species residual histories. Its array getters return
+defensive copies and `toJson()` is suitable for Python-side result capture.
+
+This path has currently been regression-tested for a single isothermal composition-change step
+with positive flow. Zero or reversed face flow fails explicitly because an external upwind
+composition is not yet defined. Once enabled, every failed hydraulic/species criterion throws so
+that a failed conservative state cannot advance to another timestep. Thirty-minute pulse
+breakthrough/recovery, repeated-event propagation, analytical front speed and residence time,
+grid/time convergence, thermal coupling, and phase appearance remain validation gates. The
+spreading of the present first-order upwind scheme is numerical; there is no physical
+axial-dispersion model.
 
 ## Compositional Tracking
 
@@ -345,10 +385,10 @@ The steady-state solver has been validated for:
 ## Known Limitations
 
 1. **Single-phase only**: No phase transition handling
-2. **Component-transport validation is incomplete**: Conservative per-component inventories,
-   boundedness without normalization, analytical front speed, pulse breakthrough, and grid/time
-   convergence are not yet established. Do not use the current component result as a validated
-   compositional-tracking prediction.
+2. **Component-transport validation is incomplete**: The opt-in solver-type-1 path demonstrates
+   conservative, bounded one-step transport without normalization. Analytical front speed,
+   repeated-step and pulse breakthrough, and grid/time convergence are not yet established. Do
+   not use it yet as a validated long-duration compositional-tracking prediction.
 3. **No physical axial dispersion model**: Existing advection-scheme spreading is numerical and
    must not be interpreted as molecular or turbulent dispersion.
 4. **Positive-flow diagnostic boundary**: Current transient mass diagnostics reject reverse
@@ -360,8 +400,8 @@ The steady-state solver has been validated for:
 ### For Improved Mass Conservation
 
 Planned dependency order is:
-- Pressure-velocity coupling (SIMPLE algorithm)
-- Conservative per-component transport after total-mass/EOS convergence is demonstrated
+- Coupled hydraulic/EOS and total-mass convergence for solver type `1`
+- Conservative repeated-step and pulse validation after the one-step component balance
 - Dimensionally valid higher-order convection only after first-order analytical validation
 - Explicit physical dispersion as a separate, documented model
 
@@ -381,3 +421,12 @@ pipe.getTimeSeries().setInletThermoSystems(systems);
 
 1. Patankar, S.V. (1980). *Numerical Heat Transfer and Fluid Flow*. Hemisphere Publishing.
 2. Solbraa, E. (2002). *Equilibrium and Non-Equilibrium Thermodynamics of Natural Gas Processing*. PhD Thesis, NTNU.
+3. Chaczykowski, M., Sund, F., Zarodkiewicz, P. and Hope, S.M. (2018). “Gas composition
+   tracking in transient pipeline flow.” *Journal of Natural Gas Science and Engineering*, 55,
+   321–330. <https://doi.org/10.1016/j.jngse.2018.03.014>.
+4. Urh, B. et al. (2024). “Gas composition tracking feasibility using transient finite difference
+   theta-scheme model for binary gas mixtures.” *International Journal of Hydrogen Energy*, 49,
+   1319–1331. <https://doi.org/10.1016/j.ijhydene.2023.11.031>.
+5. Chen, Q. et al. (2024). “A transient gas pipeline network simulation model for decoupling the
+   hydraulic-thermal process and the component tracking process.” *Energy*, 301, 131613.
+   <https://doi.org/10.1016/j.energy.2024.131613>.

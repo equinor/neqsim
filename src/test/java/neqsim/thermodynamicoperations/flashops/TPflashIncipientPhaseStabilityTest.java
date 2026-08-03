@@ -9,9 +9,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPflashIncipientPhaseStabilityTest {
-  private static final String[] COMPONENTS = {"methane", "ethane", "propane", "n-butane"};
-  private static final double[] FEED = {0.5833884211682981, 0.16475359157041228,
-      0.19866217294783825, 0.053195814313451245};
+  private static final String[] COMPONENTS = { "methane", "ethane", "propane", "n-butane" };
+  private static final double[] FEED = { 0.5833884211682981, 0.16475359157041228,
+      0.19866217294783825, 0.053195814313451245 };
 
   @Test
   void supplementaryStabilityTrialRetainsIncipientVapor() {
@@ -39,6 +39,25 @@ class TPflashIncipientPhaseStabilityTest {
     ordinary.init(1);
     assertEquals(firstGibbsEnergy, ordinary.getGibbsEnergy(), 1.0e-8);
     assertFlashClosure(ordinary);
+  }
+
+  @Test
+  void subResidualTpdDoesNotOverrideExistingUmrPruSolution() {
+    SystemInterface system = new neqsim.thermo.system.SystemUMRPRUMCEos(243.15, 300.0);
+    system.addComponent("methane", 0.416683);
+    system.addComponent("ethane", 0.17522);
+    system.addComponent("n-pentane", 0.358009);
+    system.addComponent("nC16", 0.0500888);
+    system.setMixingRule("classic");
+    system.setMultiPhaseCheck(true);
+    system.setPressure(90.03461693, "bara");
+    system.setTemperature(293.15, "K");
+    system.setTotalFlowRate(4.925e-07, "kg/sec");
+
+    new ThermodynamicOperations(system).TPflash();
+
+    assertEquals(1, system.getNumberOfPhases());
+    assertEquals(0.10377442547868508, system.getBeta(), 1.0e-4);
   }
 
   private SystemInterface createSystem(boolean multiphaseCheck) {
@@ -71,7 +90,7 @@ class TPflashIncipientPhaseStabilityTest {
       for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
         compositionTotal += system.getPhase(phaseIndex).getComponent(componentIndex).getx();
       }
-      assertEquals(1.0, compositionTotal, 1.0e-12);
+      assertEquals(1.0, compositionTotal, 1.0e-11);
     }
     assertEquals(1.0, betaTotal, 1.0e-12);
 

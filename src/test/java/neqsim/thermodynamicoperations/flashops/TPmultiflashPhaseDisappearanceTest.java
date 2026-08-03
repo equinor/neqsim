@@ -8,9 +8,9 @@ import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPmultiflashPhaseDisappearanceTest {
-  private static final String[] COMPONENTS = {"CO2", "methane", "ethane", "water"};
-  private static final double[] FEED = {0.543865141103918, 0.2937712952303271, 0.07010605470616459,
-      0.09225750895959021};
+  private static final String[] COMPONENTS = { "CO2", "methane", "ethane", "water" };
+  private static final double[] FEED = { 0.543865141103918, 0.2937712952303271,
+      0.07010605470616459, 0.09225750895959021 };
 
   @Test
   void stalledThreePhaseTrialReturnsStableTwoPhaseEndpoint() {

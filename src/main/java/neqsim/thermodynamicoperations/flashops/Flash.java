@@ -55,6 +55,7 @@ public abstract class Flash extends BaseOperation {
   double tmLimit = -1e-8;
   private static final double LOG_MIN_EXP = Math.log(Double.MIN_NORMAL);
   private static final double LOG_MAX_EXP = Math.log(Double.MAX_VALUE);
+  private static final double SUPPLEMENTARY_TPD_NUMERICAL_FLOOR = -1.0e-6;
   private static final String STABILITY_OUTCOME_NOT_EVALUATED = "not evaluated";
   private String lastStabilityOutcome = STABILITY_OUTCOME_NOT_EVALUATED;
   private boolean lastStabilityAnalysisFailed = false;
@@ -507,11 +508,10 @@ public abstract class Flash extends BaseOperation {
         }
       }
 
-      // Only accept instability if SS converged and tm is below the same tangent-plane
-      // threshold as the standard stability analysis. The non-trivial composition gate below
-      // rejects convergence back to the feed, while using a looser -1e-4 cutoff here can miss
-      // real incipient phases close to a bubble or dew boundary.
-      double tmThreshold = tmLimit;
+      // Only accept instability if its reduced TPD also exceeds the numerical resolution of
+      // this supplementary SSI solve. Its residual and step convergence limits are both 1e-6,
+      // so smaller negative values cannot be distinguished reliably from solver noise.
+      double tmThreshold = Math.min(tmLimit, SUPPLEMENTARY_TPD_NUMERICAL_FLOOR);
       if (converged && tmVal < tmThreshold) {
         // Verify non-trivial: trial composition different from feed
         double dot = 0.0;

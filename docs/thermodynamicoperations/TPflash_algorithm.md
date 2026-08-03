@@ -1706,9 +1706,10 @@ Commercial process simulators do not publish all implementation details, but pub
   together only when the resulting state lowers extensive Gibbs energy beyond `max(1e-6 J, 1e-8 * abs(G))` and already
   satisfies `max abs(Delta ln(f_i)) < 1e-8`. This is a post-convergence root selection, consistent with the minimum-Gibbs
   acceptance principle in Michelsen's phase-split formulation; it is not an additional stability or TPflash solve.
-- Converged supplementary near-critical stability trials use the same reduced-TPD instability limit (`-1e-8`) as the
-  standard Michelsen stability decision. The separate non-trivial-composition gate remains required, so lowering the
-  former supplementary-only `-1e-4` cutoff recovers incipient phases without accepting convergence back to the feed.
+- Converged supplementary near-critical stability trials accept reduced TPD below `-1e-6`, matching the residual and
+  step convergence resolution of that SSI solve. This replaces the former `-1e-4` cutoff while rejecting negative
+  values below the solver's numerical resolution. The standard stability decision retains its `-1e-8` limit, and the
+  supplementary path still requires a non-trivial trial composition.
 - Enhanced stability checks are gated to polar, associating, electrolyte, sour, or explicitly requested multiphase systems, limiting unnecessary hydrocarbon phase-map artifacts.
 
 ### 6.3 Recommended Improvements
