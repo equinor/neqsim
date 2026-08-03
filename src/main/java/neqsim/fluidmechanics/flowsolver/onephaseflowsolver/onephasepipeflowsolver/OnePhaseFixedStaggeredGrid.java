@@ -1479,11 +1479,11 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       for (int node = 1; node < numberOfNodes - 1; node++) {
         int massRow = 2 * (node - 1);
         if (node > 1) {
-          setCoupledJacobianEntry(jacobian, massRow, massRow - 2, a[node]
+          setCoupledJacobianEntry(jacobian, massRow, massRow - 2, a[node] * 1.0e5
               / pipe.getNode(node - 1).getBulkSystem().getPhase(0).getdPdrho() / coupledMassEquationScale[node]);
         }
-        setCoupledJacobianEntry(jacobian, massRow, massRow,
-            b[node] / pipe.getNode(node).getBulkSystem().getPhase(0).getdPdrho() / coupledMassEquationScale[node]);
+        setCoupledJacobianEntry(jacobian, massRow, massRow, b[node] * 1.0e5
+            / pipe.getNode(node).getBulkSystem().getPhase(0).getdPdrho() / coupledMassEquationScale[node]);
       }
       return jacobian;
     } finally {
