@@ -100,21 +100,23 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     IntegratedPulseResult pulse = runIntegratedPulse();
     IntegratedPulseResult repeatedPulse = runIntegratedPulse();
 
-    assertArrayEquals(pulse.outletNitrogenHistory, repeatedPulse.outletNitrogenHistory, 0.0,
+    assertRawBitsEqual(pulse.outletNitrogenHistory, repeatedPulse.outletNitrogenHistory,
         "Independent coupled pulse runs must have bit-identical outlet histories.");
-    assertArrayEquals(pulse.densityResidualHistory, repeatedPulse.densityResidualHistory, 0.0,
+    assertRawBitsEqual(pulse.densityResidualHistory, repeatedPulse.densityResidualHistory,
         "Independent coupled pulse runs must have bit-identical EOS/FV density residuals.");
     assertArrayEquals(pulse.couplingIterationHistory, repeatedPulse.couplingIterationHistory,
         "Independent coupled pulse runs must perform identical fixed-point work.");
-    assertArrayEquals(pulse.finalInventoryKg, repeatedPulse.finalInventoryKg, 0.0,
+    assertRawBitsEqual(pulse.finalInventoryKg, repeatedPulse.finalInventoryKg,
         "Independent coupled pulse runs must have bit-identical final inventories.");
     assertEquals(pulse.finalMassFractionProfile.length, repeatedPulse.finalMassFractionProfile.length);
     for (int component = 0; component < pulse.finalMassFractionProfile.length; component++) {
-      assertArrayEquals(pulse.finalMassFractionProfile[component], repeatedPulse.finalMassFractionProfile[component],
-          0.0, "Independent coupled pulse runs must have bit-identical final profiles.");
+      assertRawBitsEqual(pulse.finalMassFractionProfile[component], repeatedPulse.finalMassFractionProfile[component],
+          "Independent coupled pulse runs must have bit-identical final profiles.");
     }
-    assertEquals(pulse.cumulativeInletKg, repeatedPulse.cumulativeInletKg, 0.0);
-    assertEquals(pulse.cumulativeOutletKg, repeatedPulse.cumulativeOutletKg, 0.0);
+    assertRawBitsEqual(pulse.cumulativeInletKg, repeatedPulse.cumulativeInletKg,
+        "Independent coupled pulse runs must have bit-identical cumulative inlet mass.");
+    assertRawBitsEqual(pulse.cumulativeOutletKg, repeatedPulse.cumulativeOutletKg,
+        "Independent coupled pulse runs must have bit-identical cumulative outlet mass.");
 
     double eventAmplitude = pulse.pulseInletMassFraction - pulse.baselineOutlet;
     double cumulativeScaleKg = Math.max(Math.max(pulse.initialInventoryKg, pulse.cumulativeInletKg), 1.0);
@@ -247,6 +249,17 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
       result += value;
     }
     return result;
+  }
+
+  private static void assertRawBitsEqual(double expected, double actual, String message) {
+    assertEquals(Double.doubleToRawLongBits(expected), Double.doubleToRawLongBits(actual), message);
+  }
+
+  private static void assertRawBitsEqual(double[] expected, double[] actual, String message) {
+    assertEquals(expected.length, actual.length, message);
+    for (int index = 0; index < expected.length; index++) {
+      assertRawBitsEqual(expected[index], actual[index], message + " index=" + index);
+    }
   }
 
   private static final class IntegratedPulseResult {
