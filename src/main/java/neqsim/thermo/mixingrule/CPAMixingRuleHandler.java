@@ -101,6 +101,37 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
         if (k == l || phase.getComponent(l).getNumberOfAssociationSites() == 0
             || phase.getComponent(k).getNumberOfAssociationSites() == 0) {
         } else {
+
+          neqsim.util.database.INTER objINTER = new neqsim.util.database.INTER();
+          String inter = component_name + "|" + phase.getComponents()[l].getComponentName();
+          if (objINTER.objDictionary.get(inter) == null) {
+            inter = phase.getComponents()[l].getComponentName() + "|" + component_name;
+          }
+
+          if (objINTER.objDictionary.get(inter) != null) {
+
+            assosSchemeType[k][l] = (int)Math.round(objINTER.objDictionary.get(inter).get("cpaAssosiationType"));
+            assosSchemeType[l][k] = assosSchemeType[k][l];
+
+            cpaBetaCross[k][l] = objINTER.objDictionary.get(inter).get("cpaBetaCross");
+            cpaBetaCross[l][k] = cpaBetaCross[k][l];
+
+            cpaEpsCross[k][l] = objINTER.objDictionary.get(inter).get("cpaEpsCross");
+            cpaEpsCross[l][k] = cpaEpsCross[k][l];
+
+            /*
+              assosSchemeType[k][l] = Integer.parseInt(dataSet.getString("cpaAssosiationType").trim());
+              assosSchemeType[l][k] = assosSchemeType[k][l];
+
+              cpaBetaCross[k][l] = Double.parseDouble(dataSet.getString("cpaBetaCross").trim());
+              cpaBetaCross[l][k] = cpaBetaCross[k][l];
+
+              cpaEpsCross[k][l] = Double.parseDouble(dataSet.getString("cpaEpsCross").trim());
+              cpaEpsCross[l][k] = cpaEpsCross[k][l];
+              */
+          }
+          
+          /*
           try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
             // database = new util.database.NeqSimDataBase();
             if (NeqSimDataBase.createTemporaryTables()) {
@@ -127,6 +158,9 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
           } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
           }
+
+          */
+
         }
       }
     }

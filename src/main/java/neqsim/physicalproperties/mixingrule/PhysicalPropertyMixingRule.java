@@ -86,6 +86,24 @@ public class PhysicalPropertyMixingRule
         if (k == l || phase.getComponent(k).getIonicCharge() != 0 || phase.getComponent(k).isIsTBPfraction()) {
           break;
         } else {
+
+          neqsim.util.database.INTER objINTER = new neqsim.util.database.INTER();
+          String inter = component_name + "|" + phase.getComponents()[l].getComponentName();
+          if (objINTER.objDictionary.get(inter) == null)
+          {
+            inter = phase.getComponents()[l].getComponentName() + "|" + component_name;
+          }
+
+          if (objINTER.objDictionary.get(inter) != null)
+          {
+            Gij[l][k] = objINTER.objDictionary.get(inter).get("GIJVISC");
+          }
+          else
+          {
+            Gij[l][k] = 0.0;
+          }
+          Gij[k][l] = Gij[l][k];
+          /*
           try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
               java.sql.ResultSet dataSet = database.getResultSet("SELECT gijvisc FROM inter WHERE (COMP1='"
                   + component_name + "' AND COMP2='" + phase.getComponent(k).getComponentName() + "') OR (COMP1='"
@@ -99,8 +117,13 @@ public class PhysicalPropertyMixingRule
           } catch (Exception ex) {
             logger.error("err in phys prop.....", ex);
           }
+          */
         }
       }
+
+
+
+
     }
   }
 }
