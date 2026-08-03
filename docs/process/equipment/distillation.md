@@ -240,6 +240,13 @@ double drawResidual = spec.getLastRelativeResidual();
 boolean tearConverged = column.isLastColumnTearConverged();
 ```
 
+Each tray-phase pair has one manipulated split fraction and therefore accepts at most one flow
+specification. Adding a second target for the same tray and phase fails immediately with an
+`IllegalArgumentException`; opposite phases on the same tray and the same phase on different trays
+remain independent specifications. This degrees-of-freedom check prevents contradictory targets
+from alternately overwriting one tear variable. Older serialized columns retaining duplicates also
+fail before solver iteration and report the affected tray and phase.
+
 If the requested side-draw flow is physically impossible, the split is bounded by available tray
 traffic and the latest tear-variable diagnostics report non-convergence.
 
