@@ -134,7 +134,8 @@ class ProcessModelThroughputOptimizerTest {
    */
   private void addMinimumHeadroomCapacity(final ModelFixture fixture, double minimumHeadroom) {
     CapacityConstraint availableHeadroom = new CapacityConstraint("availableHeadroom", "kg/hr", ConstraintType.HARD)
-        .setMinValue(minimumHeadroom).setSeverity(ConstraintSeverity.HARD).setValueSupplier(new DoubleSupplier() {
+        .setMinValue(minimumHeadroom).setSeverity(ConstraintSeverity.HARD).setDataSource("operatingEnvelope")
+        .setValueSupplier(new DoubleSupplier() {
           /** {@inheritDoc} */
           @Override
           public double getAsDouble() {
@@ -229,6 +230,8 @@ class ProcessModelThroughputOptimizerTest {
     assertEquals(1.5, result.getOptimalMultiplier(), 0.02);
     assertTrue(best.isMinimumConstraint());
     assertTrue(firstLimit.isMinimumConstraint());
+    assertEquals("operatingEnvelope", best.getDataSource());
+    assertEquals("operatingEnvelope", firstLimit.getDataSource());
     assertEquals(35000.0, best.getDesignValue(), 1.0e-12);
     assertTrue(best.getCapacityMargin() >= 0.0, "safe minimum constraint must have non-negative margin");
     assertTrue(firstLimit.getCapacityMargin() < 0.0, "violated minimum constraint must have negative margin");
@@ -238,8 +241,10 @@ class ProcessModelThroughputOptimizerTest {
     Path caseTable = temporaryDirectory.resolve("minimum_constraint_trace.csv");
     result.exportToCSV(caseTable);
     String csv = new String(Files.readAllBytes(caseTable), StandardCharsets.UTF_8);
-    assertTrue(csv.contains("minimumConstraint"));
+    assertTrue(csv.contains("minimumConstraint,dataSource"));
+    assertTrue(csv.contains("operatingEnvelope"));
     assertTrue(result.toJson().contains("\"minimumConstraint\": true"));
+    assertTrue(result.toJson().contains("\"dataSource\": \"operatingEnvelope\""));
   }
 
   /**

@@ -1249,27 +1249,11 @@ public class TPflash extends Flash {
    */
   private BalancedTwoPhaseState balancedWaterBearingReferenceBeforeMultiphaseCheck() {
     if (system.getNumberOfPhases() != 2 || system.isChemicalSystem() || system.hasIons() || solidCheck
-        || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck()
-        || (!system.hasPhaseType(PhaseType.AQUEOUS) && !hasSubstantialWaterFeed())
+        || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck() || !system.hasPhaseType(PhaseType.AQUEOUS)
         || !isBalancedEquilibriumCandidate(system)) {
       return null;
     }
     return new BalancedTwoPhaseState(system);
-  }
-
-  /**
-   * Checks whether water is a substantial feed component in the current flash.
-   *
-   * @return true when the water feed mole fraction is at least the water-rich refinement limit
-   */
-  private boolean hasSubstantialWaterFeed() {
-    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
-      neqsim.thermo.component.ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
-      if ("water".equalsIgnoreCase(component.getComponentName())) {
-        return component.getz() >= WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT;
-      }
-    }
-    return false;
   }
 
   /**
