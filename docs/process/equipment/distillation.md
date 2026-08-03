@@ -170,7 +170,10 @@ DistillationColumn.ReboilerMode reboilerMode = column.getReboilerMode();
 
 `setCondenserLiquidReflux(value, unit)` configures the `LIQUID_REFLUX_SPLIT` mode. Use it instead
 of calling `setCondenserMode(LIQUID_REFLUX_SPLIT)` directly because the fixed reflux flow is
-required.
+required. The split never creates condensate to satisfy an oversized request: it returns at most the
+available liquid, preserves material and energy, and leaves the column unsolved when the normalized
+fixed-reflux shortfall is non-zero. The requested, available, delivered, and residual values appear in
+`getConvergenceDiagnostics()`.
 
 ## Solver Options
 
