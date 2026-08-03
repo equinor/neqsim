@@ -136,7 +136,7 @@ class ProcessModelSimulationEvaluatorTest {
     final ModelFixture fixture = createModelFixture();
     CapacityConstraint installedCapacity = new CapacityConstraint("installedGasCapacity", "kg/hr", ConstraintType.HARD)
         .setDesignValue(5000.0).setMaxValue(12000.0).setSeverity(ConstraintSeverity.HARD)
-        .setValueSupplier(new DoubleSupplier() {
+        .setDataSource("mechanicalDesign").setValueSupplier(new DoubleSupplier() {
           /** {@inheritDoc} */
           @Override
           public double getAsDouble() {
@@ -166,6 +166,7 @@ class ProcessModelSimulationEvaluatorTest {
     assertEquals("separator", bottleneck.getEquipmentName());
     assertEquals("installedGasCapacity", bottleneck.getConstraintName());
     assertTrue(bottleneck.getUtilization() > 1.0, "bottleneck should be over capacity");
+    assertEquals("mechanicalDesign", bottleneck.getDataSource());
     assertEquals("separation::separator", bottleneck.getQualifiedEquipmentName());
   }
 
