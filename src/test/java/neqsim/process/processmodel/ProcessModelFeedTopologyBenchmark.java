@@ -21,8 +21,9 @@ import neqsim.thermo.system.SystemSrkEos;
  * <p>
  * Run explicitly with
  * {@code ./mvnw test -Dtest=ProcessModelFeedTopologyBenchmark -Dneqsim.benchmark.feedTopology=true}. The model has ten
- * process areas, 500 registered stream units, nine cross-area links, and a real tail recycle. Timing starts only after
- * the process, recycle, and topology plan are warm. Normal test runs skip the timing work.
+ * process areas, 500 registered stream units, nine cross-area links, and a real tail recycle. Dormant streams model
+ * sections excluded by the optimized low-flow/bypass path and remain registered for topology discovery. Timing starts
+ * only after the active process, recycle, and topology plan are warm. Normal test runs skip the timing work.
  * </p>
  */
 public class ProcessModelFeedTopologyBenchmark {
@@ -48,6 +49,13 @@ public class ProcessModelFeedTopologyBenchmark {
     stream.setFlowRate(flowKgPerHour, "kg/hr");
     stream.setTemperature(25.0, "C");
     stream.setPressure(50.0, "bara");
+    return stream;
+  }
+
+  /** Creates a registered stream that the optimized runner can skip as a dormant section. */
+  private static Stream createDormantStream(String name, double flowKgPerHour) {
+    Stream stream = createStream(name, flowKgPerHour);
+    stream.setLockedInactive(true);
     return stream;
   }
 
@@ -79,7 +87,7 @@ public class ProcessModelFeedTopologyBenchmark {
         dormantCount--;
       }
       for (int streamIndex = 0; streamIndex < dormantCount; streamIndex++) {
-        area.add(createStream("area " + areaIndex + " dormant " + streamIndex, 1.0 + streamIndex));
+        area.add(createDormantStream("area " + areaIndex + " dormant " + streamIndex, 1.0 + streamIndex));
       }
 
       if (areaIndex < AREA_COUNT - 1) {
