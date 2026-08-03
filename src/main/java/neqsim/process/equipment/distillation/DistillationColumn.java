@@ -9009,8 +9009,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (hasCondenser && getCondenser() != null && getCondenser().isSeparation_with_liquid_reflux()) {
       diagnostics.append("    fixed liquid reflux: requested ").append(getCondenser().getFixedLiquidRefluxValue())
           .append(" ").append(getCondenser().getFixedLiquidRefluxUnit()).append(", available ")
-          .append(getCondenser().getLastAvailableFixedLiquidReflux()).append(", delivered ")
-          .append(getCondenser().getLastFixedLiquidReflux()).append(", relative shortfall ")
+          .append(getCondenser().getLastAvailableFixedLiquidReflux()).append(" ")
+          .append(getCondenser().getFixedLiquidRefluxUnit()).append(", delivered ")
+          .append(getCondenser().getLastFixedLiquidReflux()).append(" ")
+          .append(getCondenser().getFixedLiquidRefluxUnit()).append(", relative shortfall ")
           .append(getCondenser().getFixedLiquidRefluxSpecificationResidual()).append("\n");
     }
 
