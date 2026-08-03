@@ -167,8 +167,8 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     SystemInterface baselineGas = createGas(0.95, 0.05);
     SystemInterface pulseGas = createGas(0.80, 0.20);
 
-    OnePhaseSpeciesConservationReport baseline =
-        runTransientStepWithContext(pipe, baselineGas.clone(), timeStepSeconds, nodes, -1, false);
+    OnePhaseSpeciesConservationReport baseline = runTransientStepWithContext(pipe, baselineGas.clone(), timeStepSeconds,
+        nodes, -1, false);
     assertTrue(baseline.isConverged(), baseline.getMessage());
     double baselineOutlet = last(baseline.getMassFractionProfile()[nitrogen]);
     double initialInventoryKg = baseline.getFinalInventoryKg()[nitrogen];
