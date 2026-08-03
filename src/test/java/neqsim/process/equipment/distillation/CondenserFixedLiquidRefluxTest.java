@@ -1,6 +1,7 @@
 package neqsim.process.equipment.distillation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -28,6 +29,12 @@ public class CondenserFixedLiquidRefluxTest {
     assertEnergyBalance(feed, condenser, products);
     assertTrue(condenser.getLiquidOutStream().getFlowRate("kg/hr") <= feed.getFlowRate("kg/hr"),
         "an infeasible reflux request must not exceed the complete feed inventory");
+    assertFalse(condenser.isFixedLiquidRefluxSpecificationSatisfied(),
+        "the conservative split must report that the requested reflux was infeasible");
+    assertTrue(condenser.getFixedLiquidRefluxSpecificationResidual() > 0.0,
+        "an infeasible reflux request must expose a positive normalized shortfall");
+    assertEquals(condenser.getLastAvailableFixedLiquidReflux(), condenser.getLastFixedLiquidReflux(),
+        feed.getFlowRate("kg/hr") * 1.0e-8, "all available condensate must be returned as reflux");
     assertPhysical(products);
   }
 
@@ -50,10 +57,65 @@ public class CondenserFixedLiquidRefluxTest {
 
     assertEquals(availableLiquidKgPerHour / 2.0, condenser.getLiquidOutStream().getFlowRate("kg/hr"),
         availableLiquidKgPerHour * 1.0e-8, "the feasible reflux stream must satisfy the requested unit and value");
+    assertTrue(condenser.isFixedLiquidRefluxSpecificationSatisfied(),
+        "a feasible fixed reflux must satisfy its specification");
+    assertEquals(0.0, condenser.getFixedLiquidRefluxSpecificationResidual(), 1.0e-12,
+        "a feasible fixed reflux must have zero shortfall");
     List<StreamInterface> products = getProducts(condenser);
     assertMassAndComponentBalance(feed, products);
     assertEnergyBalance(feed, condenser, products);
     assertPhysical(products);
+  }
+
+  /**
+   * A changed fixed reflux value must invalidate exact column reuse and an infeasible request must fail its
+   * specification gate without breaking the external balance.
+   */
+  @Test
+  public void changedInfeasibleColumnRefluxInvalidatesReuseAndFailsLoudly() {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 5.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.addComponent("ethane", 1.0);
+    fluid.createDatabase(true);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("binary fixed reflux feed", fluid);
+    feed.setFlowRate(2.0, "mol/sec");
+    feed.run();
+
+    DistillationColumn column = new DistillationColumn("fixed reflux column", 1, true, true);
+    column.addFeedStream(feed, 1);
+    column.setSolverType(DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
+    column.setRelaxationFactor(0.5);
+    column.setMaxNumberOfIterations(60);
+    column.getCondenser().setSeparation_with_liquid_reflux(true, 0.0, "kg/hr");
+    column.run();
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+
+    column.run();
+    assertTrue(column.wasSequentialWarmStateReused(), "an unchanged accepted state must be reused exactly");
+    assertEquals(0, column.getLastIterationCount(), "exact reuse must execute zero tray iterations");
+
+    column.getCondenser().setSeparation_with_liquid_reflux(true, 1.0e-3, "kg/hr");
+    column.run();
+
+    assertFalse(column.wasSequentialWarmStateReused(),
+        "a changed fixed reflux value must invalidate the exact warm state");
+    assertTrue(column.getLastIterationCount() > 0, "the changed fixed reflux equations must execute tray iterations");
+    assertFalse(column.solved(), "an infeasible fixed reflux specification must not report a solved column");
+    assertEquals(DistillationColumn.SolveStatus.FAILED, column.getLastSolveStatus(),
+        column.getConvergenceDiagnostics());
+    assertTrue(column.getCondenser().getFixedLiquidRefluxSpecificationResidual() > 0.0,
+        "the column condenser must retain the infeasible specification residual");
+    assertTrue(column.getConvergenceDiagnostics().contains("fixed liquid reflux"),
+        "column diagnostics must expose the requested, available, delivered, and residual reflux values");
+
+    List<StreamInterface> externalProducts = new ArrayList<>();
+    externalProducts.add(column.getGasOutStream());
+    externalProducts.add(column.getLiquidOutStream());
+    externalProducts.add(column.getCondenser().getLiquidProductStream());
+    assertMassAndComponentBalance(feed, externalProducts);
+    assertPhysical(externalProducts);
   }
 
   private static Stream createHydrocarbonFeed() {
