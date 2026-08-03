@@ -248,8 +248,14 @@ The report contains the nonlinear-metric and density-residual histories, iterati
 initial/final finite-volume and EOS inventories in kg, integrated inlet and outlet masses in kg,
 and absolute/relative closure errors. `isNonlinearMetricEquationResidual()` is true for the
 coupled path; staged legacy solvers retain their relative iterate-change metric and return false.
-Coupled histories contain the initial residual at index zero followed by one entry for each
-completed Newton iteration; staged legacy histories retain one entry per iteration.
+For the coupled path, `getScaledMassEquationResidualHistory()` and
+`getScaledMomentumEquationResidualHistory()` separate the maximum absolute scaled continuity and
+momentum residuals. Their pointwise maximum reconstructs `getNonlinearUpdateHistory()` exactly,
+making a stalled equation family explicit without changing the convergence criterion. The final
+family values are also available through `getMaximumScaledMassEquationResidual()` and
+`getMaximumScaledMomentumEquationResidual()`. Coupled histories contain the initial residual at
+index zero followed by one entry for each completed Newton iteration; staged legacy histories
+retain one entry per iteration and return empty equation-family histories.
 For backward-compatible control flow, the default logs a warning and returns the failed report.
 Call `pipe.setFailOnNonConvergence(true)` to make `solveTransient(...)` throw
 `IllegalStateException`; the report is recorded before either behavior and distinguishes
