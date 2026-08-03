@@ -17,8 +17,13 @@ concurrency:
 
 jobs:
   benchmark:
+    name: benchmark fork ${{ matrix.fork }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        fork: [1, 2, 3, 4, 5]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -28,12 +33,9 @@ jobs:
           cache: maven
       - name: Compile benchmark
         run: ./mvnw -q -DskipTests test-compile
-      - name: Run five fresh JVM forks
-        run: |
-          for fork in 1 2 3 4 5; do
-            echo "Benchmark fork ${fork}"
-            ./mvnw -q \
-              -Dtest=ProcessModelFeedTopologyBenchmark \
-              -Dneqsim.benchmark.feedTopology=true \
-              test
-          done
+      - name: Run benchmark fork ${{ matrix.fork }}
+        run: >-
+          ./mvnw -q
+          -Dtest=ProcessModelFeedTopologyBenchmark
+          -Dneqsim.benchmark.feedTopology=true
+          test
