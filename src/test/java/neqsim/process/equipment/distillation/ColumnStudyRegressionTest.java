@@ -2,7 +2,9 @@ package neqsim.process.equipment.distillation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.Locale;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -353,6 +355,42 @@ public class ColumnStudyRegressionTest {
     assertPhysicalProduct(sideDraw, "gas side draw");
     assertTrue(column.getLastIterationCount() <= 300,
         "gas side-draw simultaneous solve should remain inside the configured iteration budget");
+  }
+
+  /**
+   * Verify that one tray cannot feed two liquid pumparound circuits.
+   *
+   * <p>
+   * A zero-fraction circuit represents a realistic standby configuration. It still owns the tray's single liquid
+   * pumparound draw stream and must prevent a second circuit from claiming the same manipulated fraction.
+   * </p>
+   */
+  @Test
+  public void duplicatePumparoundDrawTraysAreRejectedAtRegistration() {
+    SystemInterface baseFluid = createBaseFluid();
+    StreamInterface feedStream = createStream("standby_pumparound_main_feed", baseFluid, MAIN_FEED_COMPOSITION,
+        MAIN_FEED_TEMPERATURE_C, MAIN_FEED_PRESSURE_BARA, MAIN_FEED_MASS_FLOW_KG_HR);
+    StreamInterface topFeedStream = createStream("standby_pumparound_top_feed", baseFluid, TOP_FEED_COMPOSITION,
+        TOP_FEED_TEMPERATURE_C, TOP_FEED_PRESSURE_BARA, TOP_FEED_MASS_FLOW_KG_HR);
+    DistillationColumn column = createColumn(feedStream, topFeedStream);
+    int drawTray = answerTrayToNeqSimStage(7);
+
+    DistillationColumn.ColumnPumparound standby = column.addLiquidPumparound("standby column-study pumparound",
+        drawTray, answerTrayToNeqSimStage(5), 0.0, 5.0);
+
+    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        () -> column.addLiquidPumparound("active duplicate column-study pumparound", drawTray,
+            answerTrayToNeqSimStage(4), 0.03, 7.0));
+    String message = String.valueOf(exception.getMessage()).toLowerCase(Locale.ROOT);
+    assertTrue(message.contains("tray " + drawTray));
+    assertTrue(message.contains("pumparound"));
+    assertEquals(1, column.getPumparounds().size());
+    assertEquals(standby, column.getPumparounds().get(0));
+    assertEquals(0.0, column.getTray(drawTray).getLiquidPumparoundDrawFraction(), 0.0);
+
+    column.addLiquidPumparound("independent column-study pumparound", drawTray + 1, answerTrayToNeqSimStage(4), 0.03,
+        7.0);
+    assertEquals(2, column.getPumparounds().size());
   }
 
   /**
