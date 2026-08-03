@@ -2,6 +2,10 @@ package neqsim.process.processmodel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -146,7 +150,7 @@ public class ProcessModelFeedTopologyBenchmark {
 
   /** Runs a stable fork-local median benchmark when explicitly enabled. */
   @Test
-  void benchmarkWarmedProcessModelRuns() {
+  void benchmarkWarmedProcessModelRuns() throws IOException {
     if (!Boolean.getBoolean("neqsim.benchmark.feedTopology")) {
       return;
     }
@@ -180,7 +184,9 @@ public class ProcessModelFeedTopologyBenchmark {
     assertTrue(Double.isFinite(checksum) && checksum > 0.0, "benchmark checksum should remain finite");
     assertTrue(model.isModelConverged(), "measured benchmark run should converge");
     assertEquals(100000.0, model.getDetectedPlantFlowScale(), 1.0e-8);
-    logger.info("FEED_TOPOLOGY_BENCHMARK median_ns_per_model_run={} min_ns_per_model_run={} checksum={}",
-        medianNanos, batchNanosPerRun[0], checksum);
+    String result = "FEED_TOPOLOGY_BENCHMARK median_ns_per_model_run=" + medianNanos + " min_ns_per_model_run="
+        + batchNanosPerRun[0] + " checksum=" + checksum;
+    logger.info(result);
+    Files.write(Paths.get("target", "feed-topology-benchmark.txt"), Arrays.asList(result), StandardCharsets.UTF_8);
   }
 }
