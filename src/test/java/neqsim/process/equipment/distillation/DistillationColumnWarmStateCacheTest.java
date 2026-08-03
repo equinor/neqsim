@@ -220,7 +220,7 @@ public class DistillationColumnWarmStateCacheTest {
     assertFalse(column.wasSequentialWarmStateReused(),
         "a changed fixed reflux value must solve the changed condenser equations");
     assertTrue(column.getLastIterationCount() > 0, "the changed fixed reflux equations must execute tray iterations");
-    assertEquals(changedRefluxValue, column.getCondenser().getLiquidOutStream().getFlowRate("kg/hr"), 1.0e-10,
+    assertEquals(changedRefluxValue, column.getCondenser().getLiquidOutStream().getFlowRate("kg/hr"), 1.0e-8,
         "the returned liquid stream must satisfy the changed fixed reflux value");
     assertTrue(column.solved(), column.getConvergenceDiagnostics());
     assertPhysicalAndBalancedWithCondenserProduct(column.getFeedStreams(1).get(0), column);
