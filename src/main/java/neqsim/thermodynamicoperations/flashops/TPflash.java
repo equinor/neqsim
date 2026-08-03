@@ -105,6 +105,12 @@ public class TPflash extends Flash {
   private PhaseType referenceSinglePhaseType = null;
   /** True after the bounded water-bearing ordinary-flash retry has been attempted in this run. */
   private boolean waterBearingRescueAttempted = false;
+  /** Reusable rollback state for GDEM acceleration; transient because it contains no thermodynamic state. */
+  private transient double[] accelerationSavedLnK;
+  /** Reusable accelerated log K-values; transient because it contains no thermodynamic state. */
+  private transient double[] accelerationLnK;
+  /** Reusable accelerated K-values; transient because it contains no thermodynamic state. */
+  private transient double[] accelerationK;
 
   /** Compact pre-multiphase snapshot used only for balanced neutral water-bearing endpoints. */
   private static final class BalancedTwoPhaseState {
@@ -224,10 +230,10 @@ public class TPflash extends Flash {
    */
   public void accselerateSucsSubs() {
     int nc = system.getPhase(0).getNumberOfComponents();
+    ensureAccelerationWorkspace(nc);
 
     // Save pre-acceleration lnK state for rollback on failure
-    double[] savedLnK = new double[nc];
-    System.arraycopy(lnK, 0, savedLnK, 0, nc);
+    System.arraycopy(lnK, 0, accelerationSavedLnK, 0, nc);
 
     // Compute dot products for both standard DEM and GDEM-2
     double b11 = 0.0;
@@ -258,7 +264,6 @@ public class TPflash extends Flash {
       useGDEM = mu1 > 0 && mu2 > 0 && mu1 < 1.5 && mu2 < 1.5;
     }
 
-    double[] acceleratedLnK = new double[nc];
     boolean safeAcceleration = true;
     if (!useGDEM) {
       if (!Double.isFinite(lambda) || Math.abs(1.0 - lambda) < 1.0e-12) {
@@ -269,25 +274,24 @@ public class TPflash extends Flash {
           safeAcceleration = false;
         }
         for (i = 0; i < nc; i++) {
-          acceleratedLnK[i] = lnK[i] + lambdaFactor * deltalnK[i];
+          accelerationLnK[i] = lnK[i] + lambdaFactor * deltalnK[i];
         }
       }
     } else {
       for (i = 0; i < nc; i++) {
-        acceleratedLnK[i] = lnK[i] + mu1 * deltalnK[i] + mu2 * oldDeltalnK[i];
+        accelerationLnK[i] = lnK[i] + mu1 * deltalnK[i] + mu2 * oldDeltalnK[i];
       }
     }
 
-    double[] acceleratedK = new double[nc];
     if (safeAcceleration) {
       for (i = 0; i < nc; i++) {
-        double logKStep = acceleratedLnK[i] - savedLnK[i];
-        if (!Double.isFinite(acceleratedLnK[i]) || Math.abs(logKStep) > MAX_ACCELERATION_LOG_K_STEP) {
+        double logKStep = accelerationLnK[i] - accelerationSavedLnK[i];
+        if (!Double.isFinite(accelerationLnK[i]) || Math.abs(logKStep) > MAX_ACCELERATION_LOG_K_STEP) {
           safeAcceleration = false;
           break;
         }
-        acceleratedK[i] = Math.exp(acceleratedLnK[i]);
-        if (!Double.isFinite(acceleratedK[i]) || acceleratedK[i] <= 0.0) {
+        accelerationK[i] = Math.exp(accelerationLnK[i]);
+        if (!Double.isFinite(accelerationK[i]) || accelerationK[i] <= 0.0) {
           safeAcceleration = false;
           break;
         }
@@ -302,9 +306,9 @@ public class TPflash extends Flash {
     neqsim.thermo.phase.PhaseInterface ph0 = system.getPhase(0);
     neqsim.thermo.phase.PhaseInterface ph1 = system.getPhase(1);
     for (i = 0; i < nc; i++) {
-      lnK[i] = acceleratedLnK[i];
-      ph0.getComponent(i).setK(acceleratedK[i]);
-      ph1.getComponent(i).setK(acceleratedK[i]);
+      lnK[i] = accelerationLnK[i];
+      ph0.getComponent(i).setK(accelerationK[i]);
+      ph1.getComponent(i).setK(accelerationK[i]);
     }
     double oldBeta = system.getBeta();
     try {
@@ -322,15 +326,33 @@ public class TPflash extends Flash {
     } catch (Exception initEx) {
       // GDEM extrapolation produced bad compositions - restore pre-acceleration state
       logger.debug("accselerateSucsSubs init failed, reverting: {}", initEx.getMessage());
-      System.arraycopy(savedLnK, 0, lnK, 0, nc);
+      System.arraycopy(accelerationSavedLnK, 0, lnK, 0, nc);
       for (i = 0; i < nc; i++) {
-        double expK = Math.exp(savedLnK[i]);
+        double expK = Math.exp(accelerationSavedLnK[i]);
         ph0.getComponent(i).setK(expK);
         ph1.getComponent(i).setK(expK);
       }
       system.setBeta(oldBeta);
       system.calc_x_y();
       system.init(1);
+    }
+  }
+
+  /**
+   * Ensures that GDEM acceleration has component-sized reusable work arrays.
+   *
+   * <p>
+   * The arrays are allocated lazily so deserialized and default-constructed flash operations remain supported. They
+   * are resized defensively if a caller replaces the underlying system before reusing the operation.
+   * </p>
+   *
+   * @param numberOfComponents active component count
+   */
+  private void ensureAccelerationWorkspace(int numberOfComponents) {
+    if (accelerationSavedLnK == null || accelerationSavedLnK.length != numberOfComponents) {
+      accelerationSavedLnK = new double[numberOfComponents];
+      accelerationLnK = new double[numberOfComponents];
+      accelerationK = new double[numberOfComponents];
     }
   }
 
