@@ -9,6 +9,21 @@
 
 ---
 
+## 2026-08-03 — Capacity provenance in process-model throughput results
+
+### Added
+
+`ProcessModelSimulationEvaluator.BottleneckStatus` and `ThroughputCaseRow` now preserve the
+underlying `CapacityConstraint.dataSource`. Java getters, JSON case rows, and CSV throughput traces
+therefore retain whether a limiting value came from sources such as mechanical design, an installed
+data sheet, or an operating envelope. Untagged and legacy constructor paths use `not_set`.
+
+### Compatibility and reporting
+
+Existing constructors remain available and retain their previous behavior. JSON adds `dataSource`;
+the CSV column is inserted after `minimumConstraint`. No thermodynamic, hydraulic, utilization,
+feasibility, equipment-design, or throughput-search calculation changed.
+
 ## 2026-08-02 — Directed capacity margins in process-model throughput results
 
 ### Corrected
