@@ -1273,6 +1273,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastFullFractionatorFastPathReason = "";
     resetMatrixInsideOutDiagnostics();
     ensureIndependentSideDrawSpecifications();
+    ensureIndependentPumparounds();
     assignUnassignedFeeds();
     convergenceHistory = new ArrayList<>();
     applyDirectSpecifications();
@@ -9895,8 +9896,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (!Double.isFinite(temperatureDrop)) {
       throw new IllegalArgumentException("Pumparound temperature drop must be finite");
     }
-    if (getTray(drawTrayNumber).getLiquidPumparoundDrawFraction() > 0.0 && drawFraction > 0.0) {
-      throw new IllegalArgumentException("Only one liquid pumparound draw is supported per tray");
+    if (findPumparoundByDrawTray(drawTrayNumber) != null) {
+      throw new IllegalArgumentException(createDuplicatePumparoundMessage(drawTrayNumber));
     }
 
     ColumnPumparound pumparound = new ColumnPumparound(name, drawTrayNumber, returnTrayNumber, drawFraction,
@@ -9905,6 +9906,46 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     getTray(drawTrayNumber).setLiquidPumparoundDrawFraction(drawFraction);
     setDoInitializion(true);
     return pumparound;
+  }
+
+  /**
+   * Find the pumparound that owns one tray's liquid draw stream.
+   *
+   * @param drawTrayNumber bottom-up draw tray index
+   * @return matching pumparound, or {@code null} when the tray has no pumparound
+   */
+  private ColumnPumparound findPumparoundByDrawTray(int drawTrayNumber) {
+    for (ColumnPumparound pumparound : pumparounds) {
+      if (pumparound.getDrawTrayNumber() == drawTrayNumber) {
+        return pumparound;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Create an actionable message for duplicate pumparound ownership.
+   *
+   * @param drawTrayNumber bottom-up draw tray index
+   * @return duplicate-ownership error message
+   */
+  private String createDuplicatePumparoundMessage(int drawTrayNumber) {
+    return "Column " + getName() + " already has a liquid pumparound drawing from tray " + drawTrayNumber
+        + "; configure at most one pumparound for each draw tray";
+  }
+
+  /**
+   * Reject duplicate draw ownership retained in a column serialized by an older NeqSim version.
+   *
+   * @throws IllegalStateException if two pumparounds use the same liquid draw tray
+   */
+  private void ensureIndependentPumparounds() {
+    Set<Integer> controlledDrawTrays = new HashSet<>();
+    for (ColumnPumparound pumparound : pumparounds) {
+      if (!controlledDrawTrays.add(pumparound.getDrawTrayNumber())) {
+        throw new IllegalStateException(createDuplicatePumparoundMessage(pumparound.getDrawTrayNumber()));
+      }
+    }
   }
 
   /**
@@ -12756,6 +12797,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param result validation result receiving issues
    */
   private void validatePumparounds(ValidationResult result) {
+    Set<Integer> controlledDrawTrays = new HashSet<>();
     if (!isPositiveFiniteValue(pumparoundTolerance)) {
       result.addError("pumparound.tolerance", "Pumparound tolerance is not positive finite",
           "Set a positive finite tolerance with column.setPumparoundTolerance(tolerance)");
@@ -12765,6 +12807,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           "Set max pumparound iterations to a positive value");
     }
     for (ColumnPumparound pumparound : pumparounds) {
+      if (!controlledDrawTrays.add(pumparound.getDrawTrayNumber())) {
+        result.addError("pumparound.degreesOfFreedom",
+            createDuplicatePumparoundMessage(pumparound.getDrawTrayNumber()),
+            "Keep one liquid pumparound for each draw tray");
+      }
       if (pumparound.getDrawTrayNumber() < 0 || pumparound.getDrawTrayNumber() >= numberOfTrays
           || pumparound.getReturnTrayNumber() < 0 || pumparound.getReturnTrayNumber() >= numberOfTrays) {
         result.addError("pumparound.tray", "Pumparound tray is outside the column",
