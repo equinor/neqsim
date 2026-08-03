@@ -49,6 +49,25 @@ public class Condenser extends SimpleTray {
   }
 
   /**
+   * Get the configured fixed liquid reflux value.
+   *
+   * @return fixed reflux value in {@link #getLiquidRefluxUnit()}, or the last configured value when fixed-split mode is
+   * inactive
+   */
+  double getLiquidRefluxValue() {
+    return reflux_value;
+  }
+
+  /**
+   * Get the configured fixed liquid reflux unit.
+   *
+   * @return flow-rate unit, or {@code null} before fixed liquid reflux has been configured
+   */
+  String getLiquidRefluxUnit() {
+    return reflux_unit;
+  }
+
+  /**
    * Sets the separation with liquid reflux parameters.
    *
    * @param separation_with_liquid_reflux a boolean indicating if separation with liquid reflux is set
