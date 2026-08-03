@@ -193,6 +193,40 @@ public class DistillationColumnWarmStateCacheTest {
   }
 
   /**
+   * Changing the fixed liquid reflux flow must invalidate an otherwise identical warm state.
+   *
+   * <p>
+   * The fixed-split mode flag alone does not identify the condenser equations: the specified flow and unit determine the
+   * returned liquid traffic. Reusing a state accepted for zero reflux after changing the target to a non-zero nearby
+   * operating point leaves the previous splitter products in place without executing a tray iteration.
+   * </p>
+   */
+  @Test
+  public void fixedLiquidRefluxValueInvalidatesWarmState() {
+    DistillationColumn column = buildCondenserColumn();
+    column.getCondenser().setSeparation_with_liquid_reflux(true, 0.0, "kg/hr");
+    column.run();
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+
+    column.run();
+    assertTrue(column.wasSequentialWarmStateReused(),
+        "an unchanged fixed liquid reflux case must reuse its accepted state");
+    assertEquals(0, column.getLastIterationCount(), "unchanged exact reuse must execute zero tray iterations");
+
+    double changedRefluxKgPerHour = 0.1;
+    column.getCondenser().setSeparation_with_liquid_reflux(true, changedRefluxKgPerHour, "kg/hr");
+    column.run();
+
+    assertFalse(column.wasSequentialWarmStateReused(),
+        "a changed fixed reflux flow must solve the changed condenser equations");
+    assertTrue(column.getLastIterationCount() > 0, "the changed fixed reflux equations must execute tray iterations");
+    assertEquals(changedRefluxKgPerHour, column.getCondenser().getLiquidOutStream().getFlowRate("kg/hr"), 1.0e-8,
+        "the returned liquid stream must satisfy the changed fixed reflux flow");
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    assertPhysicalAndBalancedWithCondenserProduct(column.getFeedStreams(1).get(0), column);
+  }
+
+  /**
    * A column pressure change must invalidate the warm state. {@code setTopPressure} and {@code setBottomPressure} do
    * not mark the column for re-initialization either.
    */
