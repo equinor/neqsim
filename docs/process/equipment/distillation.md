@@ -170,7 +170,9 @@ DistillationColumn.ReboilerMode reboilerMode = column.getReboilerMode();
 
 `setCondenserLiquidReflux(value, unit)` configures the `LIQUID_REFLUX_SPLIT` mode. Use it instead
 of calling `setCondenserMode(LIQUID_REFLUX_SPLIT)` directly because the fixed reflux flow is
-required.
+required. Fixed-split warm-state identity includes both the configured value and unit, so changing
+either input forces the condenser equations to be solved again while an unchanged specification
+remains eligible for exact reuse.
 
 ## Solver Options
 
