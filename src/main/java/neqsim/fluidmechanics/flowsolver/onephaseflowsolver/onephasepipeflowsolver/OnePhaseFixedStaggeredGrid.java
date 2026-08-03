@@ -1744,8 +1744,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         + finiteVolumeMassResidual + " kg, EOS mass residual=" + thermodynamicMassResidual + " kg (relative tolerance "
         + MASS_BALANCE_RELATIVE_TOLERANCE + ").";
     if (nonlinearMetricEquationResidual) {
-      message += " Final scaled continuity residual=" + maximumScaledMassEquationResidual
-          + ", momentum residual=" + maximumScaledMomentumEquationResidual + ".";
+      message += " Final scaled continuity residual=" + maximumScaledMassEquationResidual + ", momentum residual="
+          + maximumScaledMomentumEquationResidual + ".";
     }
     if (numericalFailureDetail != null) {
       message += " Numerical failure: " + numericalFailureDetail + ".";
@@ -1756,9 +1756,9 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         Math.abs(nonlinearUpdate), densityResidual, initialFiniteVolumeMass, finalFiniteVolumeMass,
         finalThermodynamicMass, inletBoundaryMass, outletBoundaryMass, netBoundaryMass, finiteVolumeMassResidual,
         thermodynamicMassResidual, relativeFiniteVolumeMassResidual, relativeThermodynamicMassResidual,
-        nonlinearHistory, densityHistory, maximumScaledMassEquationResidual,
-        maximumScaledMomentumEquationResidual, scaledMassEquationResidualHistory,
-        scaledMomentumEquationResidualHistory, message, nonlinearMetricEquationResidual);
+        nonlinearHistory, densityHistory, maximumScaledMassEquationResidual, maximumScaledMomentumEquationResidual,
+        scaledMassEquationResidualHistory, scaledMomentumEquationResidualHistory, message,
+        nonlinearMetricEquationResidual);
   }
 
   private boolean diagnosticsAreFinite(double nonlinearUpdate, double densityResidual,
