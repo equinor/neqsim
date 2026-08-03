@@ -242,7 +242,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 | `maxNumberOfIterations` | 50 | Maximum iterations per convergence loop |
 | Convergence tolerance | 1e-10 | Deviation threshold for K-value convergence |
 | Gibbs increase tolerance | 1e-8 | Relative increase that triggers K-reset |
-| Supplementary stability TPD limit | -1e-8 | Accept a converged amplified-K or composition-perturbation trial as unstable only when its reduced TPD is below the standard stability limit and the trial composition is non-trivial |
+| Supplementary stability TPD limit | -1e-6 | Accept a converged amplified-K or composition-perturbation trial only when its reduced TPD exceeds that SSI solve's residual/step resolution and the trial composition is non-trivial |
 | Ordinary water-rich refinement feed threshold | 0.01 mole fraction water | Avoid multiphase overhead for trace-water flashes; existing two-phase aqueous endpoints additionally require `max abs(Delta ln(f_i)) >= 1e-8` or `max abs(Delta z_i) >= 1e-8` before refinement |
 | Water-rich material-balance tolerance | 1e-8 in `max abs(Delta z_i)` | Reject a non-conservative reference before comparing feasible Gibbs minima |
 | Cubic-root equilibrium tolerance | 1e-8 in `max abs(Delta ln(f_i))` | Accept an alternate root assignment only when the existing composition split is already at equilibrium |
