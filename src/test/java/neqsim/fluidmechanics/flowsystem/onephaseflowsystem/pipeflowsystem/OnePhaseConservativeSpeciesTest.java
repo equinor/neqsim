@@ -147,8 +147,7 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     double mediumToFine = commonTimeMeanAbsoluteDifference(medium.outletNitrogenHistory, 60.0,
         fine.outletNitrogenHistory, 30.0, 120.0);
 
-    assertTrue(coarseToMedium > 0.0,
-        "The refinement study must resolve a non-zero discretization difference.");
+    assertTrue(coarseToMedium > 0.0, "The refinement study must resolve a non-zero discretization difference.");
     assertTrue(mediumToFine < coarseToMedium,
         "Joint grid/timestep refinement must reduce the common-time outlet difference: coarse-to-medium="
             + coarseToMedium + ", medium-to-fine=" + mediumToFine);
@@ -286,8 +285,8 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     return steps;
   }
 
-  private static double commonTimeMeanAbsoluteDifference(double[] first, double firstTimeStepSeconds,
-      double[] second, double secondTimeStepSeconds, double sampleIntervalSeconds) {
+  private static double commonTimeMeanAbsoluteDifference(double[] first, double firstTimeStepSeconds, double[] second,
+      double secondTimeStepSeconds, double sampleIntervalSeconds) {
     int samples = (int) Math.round(first.length * firstTimeStepSeconds / sampleIntervalSeconds);
     assertEquals(samples, (int) Math.round(second.length * secondTimeStepSeconds / sampleIntervalSeconds));
     double difference = 0.0;
