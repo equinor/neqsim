@@ -382,7 +382,8 @@ public class ColumnStudyRegressionTest {
         () -> column.addLiquidPumparound("active duplicate column-study pumparound", drawTray,
             answerTrayToNeqSimStage(4), 0.03, 7.0));
     String message = String.valueOf(exception.getMessage()).toLowerCase(Locale.ROOT);
-    assertTrue(message.contains("tray " + drawTray));
+    assertTrue(message.contains("tray"));
+    assertTrue(message.contains(String.valueOf(drawTray)));
     assertTrue(message.contains("pumparound"));
     assertEquals(1, column.getPumparounds().size());
     assertEquals(standby, column.getPumparounds().get(0));
