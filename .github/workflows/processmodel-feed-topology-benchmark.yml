@@ -16,6 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Keep five independent runners so paired deltas can be repeated without shared JVM state.
   benchmark:
     name: benchmark fork ${{ matrix.fork }}
     runs-on: ubuntu-latest
