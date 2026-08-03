@@ -612,15 +612,15 @@ public class TwoFluidConservationEquations implements Serializable {
       }
 
       // Mass transfer source (if enabled)
-      double Gamma_G = 0;
-      double Gamma_L = 0;
+      PhaseMassTransfer phaseMassTransfer = PhaseMassTransfer.zero(true, true, null);
       if (includeMassTransfer) {
-        // Simplified equilibrium departure model
-        // Positive Gamma = evaporation (liquid to gas)
-        double[] massTransfer = calcMassTransfer(sec);
-        Gamma_G = massTransfer[0];
-        Gamma_L = massTransfer[1];
+        phaseMassTransfer = calcPhaseMassTransfer(sec);
       }
+      double Gamma_G = phaseMassTransfer.getGasSourceKgPerMetreSecond();
+      double Gamma_O = phaseMassTransfer.getOilSourceKgPerMetreSecond();
+      double Gamma_W = phaseMassTransfer.getWaterSourceKgPerMetreSecond();
+      double Gamma_L = Gamma_O + Gamma_W;
+      double[] transferMomentum = calcTransferMomentumSources(sec, phaseMassTransfer);
 
       // Assemble source terms - now with separate oil and water mass equations
       sources[i][IDX_GAS_MASS] = Gamma_G;
@@ -629,8 +629,8 @@ public class TwoFluidConservationEquations implements Serializable {
       // transported through phase fluxes. A local mass relaxation would convert oil
       // into water (or vice versa) and, because their densities differ, would also
       // change total inventory without a conservative face flux.
-      sources[i][IDX_OIL_MASS] = Gamma_L * (1.0 - waterCut);
-      sources[i][IDX_WATER_MASS] = Gamma_L * waterCut;
+      sources[i][IDX_OIL_MASS] = Gamma_O;
+      sources[i][IDX_WATER_MASS] = Gamma_W;
 
       // Virtual mass force calculation (Drew & Lahey, 1987)
       // F_vm = C_vm * alpha_dispersed * rho_continuous * (dv_dispersed/dt - dv_continuous/dt)
@@ -666,7 +666,7 @@ public class TwoFluidConservationEquations implements Serializable {
         F_vmL = -F_vmG; // Newton's third law: equal and opposite on liquid
       }
 
-      sources[i][IDX_GAS_MOMENTUM] = F_wG + F_iG + F_gG + F_vmG + Gamma_G * sec.getGasVelocity();
+      sources[i][IDX_GAS_MOMENTUM] = F_wG + F_iG + F_gG + F_vmG + transferMomentum[0];
 
       if (enableWaterOilSlip && NUM_EQUATIONS == 7) {
         // Separate oil and water momentum equations
@@ -724,15 +724,13 @@ public class TwoFluidConservationEquations implements Serializable {
         double F_vmW = F_vmL * waterHoldupFrac;
 
         // Assemble oil momentum source
-        sources[i][IDX_OIL_MOMENTUM] = F_wO + F_iO + F_gO + F_ow_oil + F_vmO
-            + Gamma_L * (1.0 - waterCut) * sec.getOilVelocity();
+        sources[i][IDX_OIL_MOMENTUM] = F_wO + F_iO + F_gO + F_ow_oil + F_vmO + transferMomentum[1];
 
         // Assemble water momentum source
-        sources[i][IDX_WATER_MOMENTUM] = F_wW + F_iW + F_gW + F_ow_water + F_vmW
-            + Gamma_L * waterCut * sec.getWaterVelocity();
+        sources[i][IDX_WATER_MOMENTUM] = F_wW + F_iW + F_gW + F_ow_water + F_vmW + transferMomentum[2];
       } else {
         // Combined liquid momentum (original 6-equation model)
-        sources[i][IDX_OIL_MOMENTUM] = F_wL + F_iL + F_gL + F_vmL + Gamma_L * sec.getLiquidVelocity();
+        sources[i][IDX_OIL_MOMENTUM] = F_wL + F_iL + F_gL + F_vmL + transferMomentum[1] + transferMomentum[2];
         sources[i][IDX_WATER_MOMENTUM] = 0; // Not used in 6-equation mode
       }
 
@@ -880,25 +878,108 @@ public class TwoFluidConservationEquations implements Serializable {
    */
   double[] calcMassTransfer(TwoFluidSection sec) {
     if (thermodynamicCoupling != null) {
-      double gamma = thermodynamicCoupling.calcMassTransferRatePerLength(sec, massTransferRelaxationTime);
-      return conservedMassTransferPair(gamma);
+      PhaseMassTransfer transfer = calcPhaseMassTransfer(sec);
+      return new double[] { transfer.getGasSourceKgPerMetreSecond(),
+          transfer.getOilSourceKgPerMetreSecond() + transfer.getWaterSourceKgPerMetreSecond() };
     }
 
+    return conservedMassTransferPair(getPrescribedGasSourcePerLength(sec));
+  }
+
+  /**
+   * Calculate phase-resolved mass-transfer sources for a section.
+   *
+   * <p>
+   * Flash-driven transfer delegates to {@link ThermodynamicCoupling}. A prescribed evaporation source is distributed
+   * over the actual oil and water donor inventories. A prescribed condensation source has no equilibrium phase
+   * identity, so the explicitly configured hydrodynamic water cut is retained for backward compatibility.
+   * </p>
+   *
+   * @param sec pipe section
+   * @return immutable phase-resolved transfer result in kg/(m s)
+   */
+  PhaseMassTransfer calcPhaseMassTransfer(TwoFluidSection sec) {
+    if (thermodynamicCoupling != null) {
+      return thermodynamicCoupling.calcPhaseMassTransferRatePerLength(sec, massTransferRelaxationTime);
+    }
+
+    double gasSource = getPrescribedGasSourcePerLength(sec);
+    if (gasSource > 0.0) {
+      double oilInventory = Math.max(0.0, sec.getOilMassPerLength());
+      double waterInventory = Math.max(0.0, sec.getWaterMassPerLength());
+      double liquidInventory = oilInventory + waterInventory;
+      if (liquidInventory <= 0.0) {
+        return PhaseMassTransfer.zero(true, false, "No liquid donor inventory for prescribed evaporation");
+      }
+      double oilSource = -gasSource * oilInventory / liquidInventory;
+      double waterSource = -gasSource - oilSource;
+      return new PhaseMassTransfer(gasSource, oilSource, waterSource, true, true, null);
+    }
+    if (gasSource < 0.0) {
+      double waterFraction = Math.max(0.0, Math.min(1.0, sec.getWaterCut()));
+      double oilSource = -gasSource * (1.0 - waterFraction);
+      double waterSource = -gasSource - oilSource;
+      return new PhaseMassTransfer(gasSource, oilSource, waterSource, true, true, null);
+    }
+    return PhaseMassTransfer.zero(true, true, null);
+  }
+
+  /**
+   * Convert a prescribed section transfer rate to a gas source per unit pipe length.
+   *
+   * @param sec pipe section
+   * @return gas source in kg/(m s)
+   */
+  private double getPrescribedGasSourcePerLength(TwoFluidSection sec) {
     double prescribedRate = sec.getMassTransferRate();
     if (!Double.isFinite(prescribedRate)) {
       throw new IllegalStateException("Mass transfer rate must be finite");
     }
-
-    double gamma = 0.0;
-    if (Math.abs(prescribedRate) > 0.0) {
-      double sectionLength = sec.getLength();
-      if (!Double.isFinite(sectionLength) || sectionLength <= 0.0) {
-        throw new IllegalStateException("Section length must be positive for mass transfer");
-      }
-      gamma = prescribedRate / sectionLength;
+    if (Math.abs(prescribedRate) == 0.0) {
+      return 0.0;
     }
+    double sectionLength = sec.getLength();
+    if (!Double.isFinite(sectionLength) || sectionLength <= 0.0) {
+      throw new IllegalStateException("Section length must be positive for mass transfer");
+    }
+    return prescribedRate / sectionLength;
+  }
 
-    return conservedMassTransferPair(gamma);
+  /**
+   * Calculate transfer-only phase momentum sources using donor velocity.
+   *
+   * <p>
+   * During evaporation the gas receives the momentum removed from each liquid donor. During condensation the gas loses
+   * momentum at gas velocity and each receiving liquid gains momentum at that same donor velocity. The three returned
+   * sources therefore sum to zero apart from round-off.
+   * </p>
+   *
+   * @param sec pipe section containing phase velocities
+   * @param transfer phase-resolved mass-transfer sources
+   * @return gas, oil, and water momentum sources in N/m
+   */
+  double[] calcTransferMomentumSources(TwoFluidSection sec, PhaseMassTransfer transfer) {
+    double gasMassSource = transfer.getGasSourceKgPerMetreSecond();
+    double oilMassSource = transfer.getOilSourceKgPerMetreSecond();
+    double waterMassSource = transfer.getWaterSourceKgPerMetreSecond();
+    double gasMomentumSource;
+    double oilMomentumSource;
+    double waterMomentumSource;
+
+    if (gasMassSource > 0.0) {
+      oilMomentumSource = oilMassSource * sec.getOilVelocity();
+      waterMomentumSource = waterMassSource * sec.getWaterVelocity();
+      gasMomentumSource = -oilMomentumSource - waterMomentumSource;
+    } else if (gasMassSource < 0.0) {
+      gasMomentumSource = gasMassSource * sec.getGasVelocity();
+      oilMomentumSource = oilMassSource * sec.getGasVelocity();
+      waterMomentumSource = -gasMomentumSource - oilMomentumSource;
+    } else {
+      gasMomentumSource = 0.0;
+      oilMomentumSource = 0.0;
+      waterMomentumSource = 0.0;
+    }
+    return new double[] { gasMomentumSource, oilMomentumSource, waterMomentumSource };
   }
 
   private double[] conservedMassTransferPair(double gasSource) {

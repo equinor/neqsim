@@ -9,6 +9,27 @@
 
 ---
 
+## 2026-08-03 — TwoFluidPipe phase-resolved flash transfer
+
+### Corrected
+
+`ThermodynamicCoupling` now identifies phases by `PhaseType`, aggregates all hydrocarbon and
+aqueous liquid contributions, and returns immutable `PhaseMassTransfer` gas/oil/water sources.
+Condensation follows equilibrium liquid mass contributions. Evaporation follows and is limited by
+the actual conservative oil and water inventories. Transfer momentum uses donor velocity and is
+conservative across all three phases.
+
+`FlashTable` now stores the aggregate liquid fraction, oil/aqueous mass split, and gas/liquid molar
+masses. Existing serialized tables without these arrays return a rebuild diagnostic instead of
+silently reconstructing ambiguous liquid identity.
+
+### Compatibility and validation
+
+`calcMassTransferRatePerLength(...)` and the internal two-element gas/liquid adapter remain
+available. Code needing phase identity should call `calcPhaseMassTransferRatePerLength(...)` and
+read the SI-unit gas, oil, and water sources. Validate each phase with `TwoFluidMassBalanceReport`;
+total-mass closure alone does not prove correct liquid identity.
+
 ## 2026-08-03 — Capacity provenance in process-model throughput results
 
 ### Added
