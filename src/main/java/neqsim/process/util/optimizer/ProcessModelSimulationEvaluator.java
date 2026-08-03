@@ -1045,7 +1045,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      * @return source tag from the underlying capacity constraint
      */
     public String getDataSource() {
-      return dataSource;
+      return dataSource == null ? "not_set" : dataSource;
     }
 
     /**
