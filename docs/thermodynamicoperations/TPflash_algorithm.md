@@ -242,6 +242,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 | `maxNumberOfIterations` | 50 | Maximum iterations per convergence loop |
 | Convergence tolerance | 1e-10 | Deviation threshold for K-value convergence |
 | Gibbs increase tolerance | 1e-8 | Relative increase that triggers K-reset |
+| Supplementary stability TPD limit | -1e-6 | Accept a converged amplified-K or composition-perturbation trial only when its reduced TPD exceeds that SSI solve's residual/step resolution and the trial composition is non-trivial |
 | Ordinary water-rich refinement feed threshold | 0.01 mole fraction water | Avoid multiphase overhead for trace-water flashes; existing two-phase aqueous endpoints additionally require `max abs(Delta ln(f_i)) >= 1e-8` or `max abs(Delta z_i) >= 1e-8` before refinement |
 | Water-rich material-balance tolerance | 1e-8 in `max abs(Delta z_i)` | Reject a non-conservative reference before comparing feasible Gibbs minima |
 | Cubic-root equilibrium tolerance | 1e-8 in `max abs(Delta ln(f_i))` | Accept an alternate root assignment only when the existing composition split is already at equilibrium |
@@ -1705,6 +1706,10 @@ Commercial process simulators do not publish all implementation details, but pub
   together only when the resulting state lowers extensive Gibbs energy beyond `max(1e-6 J, 1e-8 * abs(G))` and already
   satisfies `max abs(Delta ln(f_i)) < 1e-8`. This is a post-convergence root selection, consistent with the minimum-Gibbs
   acceptance principle in Michelsen's phase-split formulation; it is not an additional stability or TPflash solve.
+- Converged supplementary near-critical stability trials accept reduced TPD below `-1e-6`, matching the residual and
+  step convergence resolution of that SSI solve. This replaces the former `-1e-4` cutoff while rejecting negative
+  values below the solver's numerical resolution. The standard stability decision retains its `-1e-8` limit, and the
+  supplementary path still requires a non-trivial trial composition.
 - Enhanced stability checks are gated to polar, associating, electrolyte, sour, or explicitly requested multiphase systems, limiting unnecessary hydrocarbon phase-map artifacts.
 
 ### 6.3 Recommended Improvements
