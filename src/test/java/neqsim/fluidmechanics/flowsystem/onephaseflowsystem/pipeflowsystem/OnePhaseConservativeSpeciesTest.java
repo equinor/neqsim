@@ -97,6 +97,41 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
   @Test
   @Tag("slow")
   void thirtyMinutePulseBreaksThroughRecoversAndClosesCumulativeInventory() {
+    IntegratedPulseResult pulse = runIntegratedPulse();
+    IntegratedPulseResult repeatedPulse = runIntegratedPulse();
+
+    assertRawBitsEqual(pulse.outletNitrogenHistory, repeatedPulse.outletNitrogenHistory,
+        "Independent coupled pulse runs must have bit-identical outlet histories.");
+    assertRawBitsEqual(pulse.densityResidualHistory, repeatedPulse.densityResidualHistory,
+        "Independent coupled pulse runs must have bit-identical EOS/FV density residuals.");
+    assertArrayEquals(pulse.couplingIterationHistory, repeatedPulse.couplingIterationHistory,
+        "Independent coupled pulse runs must perform identical fixed-point work.");
+    assertRawBitsEqual(pulse.finalInventoryKg, repeatedPulse.finalInventoryKg,
+        "Independent coupled pulse runs must have bit-identical final inventories.");
+    assertEquals(pulse.finalMassFractionProfile.length, repeatedPulse.finalMassFractionProfile.length);
+    for (int component = 0; component < pulse.finalMassFractionProfile.length; component++) {
+      assertRawBitsEqual(pulse.finalMassFractionProfile[component], repeatedPulse.finalMassFractionProfile[component],
+          "Independent coupled pulse runs must have bit-identical final profiles.");
+    }
+    assertRawBitsEqual(pulse.cumulativeInletKg, repeatedPulse.cumulativeInletKg,
+        "Independent coupled pulse runs must have bit-identical cumulative inlet mass.");
+    assertRawBitsEqual(pulse.cumulativeOutletKg, repeatedPulse.cumulativeOutletKg,
+        "Independent coupled pulse runs must have bit-identical cumulative outlet mass.");
+
+    double eventAmplitude = pulse.pulseInletMassFraction - pulse.baselineOutlet;
+    double cumulativeScaleKg = Math.max(Math.max(pulse.initialInventoryKg, pulse.cumulativeInletKg), 1.0);
+
+    assertTrue(eventAmplitude > 0.0);
+    assertTrue(pulse.pulseEndOutlet > pulse.baselineOutlet + 0.70 * eventAmplitude,
+        "The 30-minute event must break through before the inlet returns to baseline.");
+    assertTrue(pulse.peakOutlet > pulse.baselineOutlet + 0.70 * eventAmplitude);
+    assertEquals(pulse.baselineOutlet, pulse.recoveredOutlet, 2.0e-3 * eventAmplitude,
+        "The outlet composition must recover after purging the pulse.");
+    assertEquals(0.0, pulse.cumulativeResidualKg, cumulativeScaleKg * 1.0e-7,
+        "Cumulative nitrogen inventory must equal integrated inlet minus outlet mass.");
+  }
+
+  private static IntegratedPulseResult runIntegratedPulse() {
     int nitrogen = 1;
     double timeStepSeconds = 60.0;
     int pulseSteps = 30;
@@ -116,6 +151,9 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     double pulseInletMassFraction = Double.NaN;
     double pulseEndOutlet = Double.NaN;
     double peakOutlet = baselineOutlet;
+    double[] outletNitrogenHistory = new double[pulseSteps + recoverySteps];
+    double[] densityResidualHistory = new double[pulseSteps + recoverySteps];
+    int[] couplingIterationHistory = new int[pulseSteps + recoverySteps];
     OnePhaseSpeciesConservationReport report = baseline;
 
     for (int step = 0; step < pulseSteps + recoverySteps; step++) {
@@ -130,6 +168,9 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
       cumulativeInletKg += report.getInletBoundaryMassKg()[nitrogen];
       cumulativeOutletKg += report.getOutletBoundaryMassKg()[nitrogen];
       double outlet = last(report.getMassFractionProfile()[nitrogen]);
+      outletNitrogenHistory[step] = outlet;
+      densityResidualHistory[step] = pipe.getConvergenceReport().getMaximumRelativeDensityResidual();
+      couplingIterationHistory[step] = report.getCouplingIterations();
       peakOutlet = Math.max(peakOutlet, outlet);
       if (step == 0) {
         assertEquals(initialInventoryKg, report.getInitialInventoryKg()[nitrogen],
@@ -143,18 +184,11 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
 
     double finalInventoryKg = report.getFinalInventoryKg()[nitrogen];
     double cumulativeResidualKg = finalInventoryKg - initialInventoryKg - cumulativeInletKg + cumulativeOutletKg;
-    double cumulativeScaleKg = Math.max(Math.max(initialInventoryKg, cumulativeInletKg), 1.0);
-    double eventAmplitude = pulseInletMassFraction - baselineOutlet;
     double recoveredOutlet = last(report.getMassFractionProfile()[nitrogen]);
-
-    assertTrue(eventAmplitude > 0.0);
-    assertTrue(pulseEndOutlet > baselineOutlet + 0.70 * eventAmplitude,
-        "The 30-minute event must break through before the inlet returns to baseline.");
-    assertTrue(peakOutlet > baselineOutlet + 0.70 * eventAmplitude);
-    assertEquals(baselineOutlet, recoveredOutlet, 2.0e-3 * eventAmplitude,
-        "The outlet composition must recover after purging the pulse.");
-    assertEquals(0.0, cumulativeResidualKg, cumulativeScaleKg * 1.0e-7,
-        "Cumulative nitrogen inventory must equal integrated inlet minus outlet mass.");
+    return new IntegratedPulseResult(baselineOutlet, initialInventoryKg, cumulativeInletKg, cumulativeOutletKg,
+        pulseInletMassFraction, pulseEndOutlet, peakOutlet, recoveredOutlet, cumulativeResidualKg,
+        outletNitrogenHistory, densityResidualHistory, couplingIterationHistory, report.getFinalInventoryKg(),
+        report.getMassFractionProfile());
   }
 
   static PipeFlowSystem runCompositionStep(int nodes, double timeStep) {
@@ -215,6 +249,55 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
       result += value;
     }
     return result;
+  }
+
+  private static void assertRawBitsEqual(double expected, double actual, String message) {
+    assertEquals(Double.doubleToRawLongBits(expected), Double.doubleToRawLongBits(actual), message);
+  }
+
+  private static void assertRawBitsEqual(double[] expected, double[] actual, String message) {
+    assertEquals(expected.length, actual.length, message);
+    for (int index = 0; index < expected.length; index++) {
+      assertRawBitsEqual(expected[index], actual[index], message + " index=" + index);
+    }
+  }
+
+  private static final class IntegratedPulseResult {
+    private final double baselineOutlet;
+    private final double initialInventoryKg;
+    private final double cumulativeInletKg;
+    private final double cumulativeOutletKg;
+    private final double pulseInletMassFraction;
+    private final double pulseEndOutlet;
+    private final double peakOutlet;
+    private final double recoveredOutlet;
+    private final double cumulativeResidualKg;
+    private final double[] outletNitrogenHistory;
+    private final double[] densityResidualHistory;
+    private final int[] couplingIterationHistory;
+    private final double[] finalInventoryKg;
+    private final double[][] finalMassFractionProfile;
+
+    private IntegratedPulseResult(double baselineOutlet, double initialInventoryKg, double cumulativeInletKg,
+        double cumulativeOutletKg, double pulseInletMassFraction, double pulseEndOutlet, double peakOutlet,
+        double recoveredOutlet, double cumulativeResidualKg, double[] outletNitrogenHistory,
+        double[] densityResidualHistory, int[] couplingIterationHistory, double[] finalInventoryKg,
+        double[][] finalMassFractionProfile) {
+      this.baselineOutlet = baselineOutlet;
+      this.initialInventoryKg = initialInventoryKg;
+      this.cumulativeInletKg = cumulativeInletKg;
+      this.cumulativeOutletKg = cumulativeOutletKg;
+      this.pulseInletMassFraction = pulseInletMassFraction;
+      this.pulseEndOutlet = pulseEndOutlet;
+      this.peakOutlet = peakOutlet;
+      this.recoveredOutlet = recoveredOutlet;
+      this.cumulativeResidualKg = cumulativeResidualKg;
+      this.outletNitrogenHistory = outletNitrogenHistory;
+      this.densityResidualHistory = densityResidualHistory;
+      this.couplingIterationHistory = couplingIterationHistory;
+      this.finalInventoryKg = finalInventoryKg;
+      this.finalMassFractionProfile = finalMassFractionProfile;
+    }
   }
 
   private static SystemInterface createGas(double methane, double nitrogen) {
