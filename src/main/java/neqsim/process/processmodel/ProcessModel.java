@@ -2364,15 +2364,15 @@ public class ProcessModel implements Runnable, Serializable {
     Map<Object, String> streamProducers = new IdentityHashMap<>();
     java.util.Set<StreamInterface> producedStreams = java.util.Collections
         .newSetFromMap(new java.util.IdentityHashMap<StreamInterface, Boolean>());
-    java.util.Set<StreamInterface> inletStreams = java.util.Collections
+    java.util.Set<StreamInterface> allInletStreams = java.util.Collections
         .newSetFromMap(new java.util.IdentityHashMap<StreamInterface, Boolean>());
     for (ProcessSystem process : allProcesses) {
       successorMap.put(process, java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>()));
       process.collectProducedStreams(producedStreams);
-      process.collectInletStreams(inletStreams);
+      process.collectInletStreams(allInletStreams);
     }
     List<StreamInterface> externalFeedStreams = new ArrayList<>();
-    for (StreamInterface stream : inletStreams) {
+    for (StreamInterface stream : allInletStreams) {
       if (!producedStreams.contains(stream)) {
         externalFeedStreams.add(stream);
       }
