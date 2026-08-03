@@ -7,6 +7,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
@@ -25,15 +28,15 @@ import neqsim.thermo.system.SystemSrkEos;
  * <p>
  * Run explicitly with
  * {@code ./mvnw test -Dtest=ProcessModelFeedTopologyBenchmark -Dneqsim.benchmark.feedTopology=true}. The model has ten
- * process areas, 500 registered stream units, nine cross-area links, and a real tail recycle. Dormant streams model
- * sections excluded by the optimized low-flow/bypass path and remain registered for topology discovery. Timing starts
- * only after the active process, recycle, and topology plan are warm. Normal test runs skip the timing work.
+ * process areas, at least 500 unit-produced streams, nine cross-area links, and a real tail recycle. Dormant heaters
+ * model sections excluded by the optimized low-flow/bypass path and remain registered for topology discovery. Timing
+ * starts only after the active process, recycle, and topology plan are warm. Normal test runs skip the timing work.
  * </p>
  */
 public class ProcessModelFeedTopologyBenchmark {
   private static final Logger logger = LogManager.getLogger(ProcessModelFeedTopologyBenchmark.class);
   private static final int AREA_COUNT = 10;
-  private static final int STREAMS_PER_AREA = 50;
+  private static final int DORMANT_PRODUCERS_PER_AREA = 50;
   private static final int WARMUP_RUNS = 10;
   private static final int BATCH_COUNT = 9;
   private static final int RUNS_PER_BATCH = 20;
@@ -56,11 +59,12 @@ public class ProcessModelFeedTopologyBenchmark {
     return stream;
   }
 
-  /** Creates a registered stream that the optimized runner can skip as a dormant section. */
-  private static Stream createDormantStream(String name, SystemInterface dormantFluid) {
-    Stream stream = new Stream(name, dormantFluid);
-    stream.setLockedInactive(true);
-    return stream;
+  /** Creates a stream-producing unit that the optimized runner can skip as a dormant section. */
+  private static Heater createDormantProducer(String name, StreamInterface dormantSource) {
+    Heater heater = new Heater(name, dormantSource);
+    heater.setOutletTemperature(298.15);
+    heater.setLockedInactive(true);
+    return heater;
   }
 
   /**
@@ -70,29 +74,25 @@ public class ProcessModelFeedTopologyBenchmark {
    */
   private static ProcessModel buildModel() {
     ProcessModel model = new ProcessModel();
-    SystemInterface dormantFluid = createGasFluid();
+    Stream dormantSource = createStream("dormant zero-flow source", 0.0);
     StreamInterface crossAreaStream = null;
     for (int areaIndex = 0; areaIndex < AREA_COUNT; areaIndex++) {
       ProcessSystem area = new ProcessSystem("area " + areaIndex);
-      int dormantCount;
       if (areaIndex == 0) {
         Stream plantFeed = createStream("plant feed", 100000.0);
         area.add(plantFeed);
         crossAreaStream = plantFeed;
-        dormantCount = STREAMS_PER_AREA - 1;
       } else {
         area.add(crossAreaStream);
-        dormantCount = STREAMS_PER_AREA - 1;
       }
 
       Stream recycleSeed = null;
       if (areaIndex == AREA_COUNT - 1) {
         recycleSeed = createStream("recycle seed", 100.0);
         area.add(recycleSeed);
-        dormantCount--;
       }
-      for (int streamIndex = 0; streamIndex < dormantCount; streamIndex++) {
-        area.add(createDormantStream("area " + areaIndex + " dormant " + streamIndex, dormantFluid));
+      for (int producerIndex = 0; producerIndex < DORMANT_PRODUCERS_PER_AREA; producerIndex++) {
+        area.add(createDormantProducer("area " + areaIndex + " dormant producer " + producerIndex, dormantSource));
       }
 
       if (areaIndex < AREA_COUNT - 1) {
@@ -124,17 +124,13 @@ public class ProcessModelFeedTopologyBenchmark {
     return model;
   }
 
-  /** Counts registered stream memberships in all child process areas. */
-  private static int countRegisteredStreams(ProcessModel model) {
-    int count = 0;
+  /** Counts identity-distinct streams produced by units in all child process areas. */
+  private static int countProducedStreams(ProcessModel model) {
+    Set<StreamInterface> produced = Collections.newSetFromMap(new IdentityHashMap<StreamInterface, Boolean>());
     for (ProcessSystem area : model.getAllProcesses()) {
-      for (Object unit : area.getUnitOperations()) {
-        if (unit instanceof StreamInterface) {
-          count++;
-        }
-      }
+      area.collectProducedStreams(produced);
     }
-    return count;
+    return produced.size();
   }
 
   /** Locks already-solved transfer heaters to model an optimized steady-state rerun. */
@@ -156,7 +152,8 @@ public class ProcessModelFeedTopologyBenchmark {
     }
     ProcessModel model = buildModel();
     assertEquals(AREA_COUNT, model.getAllProcesses().size());
-    assertEquals(AREA_COUNT * STREAMS_PER_AREA, countRegisteredStreams(model));
+    assertTrue(countProducedStreams(model) >= AREA_COUNT * DORMANT_PRODUCERS_PER_AREA,
+        "benchmark must discover at least 500 produced stream identities");
     assertTrue(model.runUntilConverged(25, 1.0e-6), "benchmark model should converge");
     assertEquals(100000.0, model.getTotalFeedFlowRate(), 1.0e-8);
     lockConvergedTransfers(model);
