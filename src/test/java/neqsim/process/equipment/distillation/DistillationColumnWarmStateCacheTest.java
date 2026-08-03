@@ -196,13 +196,13 @@ public class DistillationColumnWarmStateCacheTest {
    * Changing the fixed liquid reflux flow must invalidate an otherwise identical warm state.
    *
    * <p>
-   * The fixed-split mode flag alone does not identify the condenser equations: the specified flow and unit determine the
-   * returned liquid traffic. Reusing a state accepted for zero reflux after changing the target to a non-zero nearby
-   * operating point leaves the previous splitter products in place without executing a tray iteration.
+   * The fixed-split mode flag alone does not identify the condenser equations: the specified flow and unit determine
+   * the returned liquid traffic. Reusing a state accepted for zero reflux after changing the target to a non-zero
+   * nearby operating point leaves the previous splitter products in place without executing a tray iteration.
    * </p>
    */
   @Test
-  public void fixedLiquidRefluxValueInvalidatesWarmState() {
+  public void fixedLiquidRefluxValueAndUnitInvalidateWarmState() {
     DistillationColumn column = buildCondenserColumn();
     column.getCondenser().setSeparation_with_liquid_reflux(true, 0.0, "kg/hr");
     column.run();
@@ -213,15 +213,30 @@ public class DistillationColumnWarmStateCacheTest {
         "an unchanged fixed liquid reflux case must reuse its accepted state");
     assertEquals(0, column.getLastIterationCount(), "unchanged exact reuse must execute zero tray iterations");
 
-    double changedRefluxKgPerHour = 0.1;
-    column.getCondenser().setSeparation_with_liquid_reflux(true, changedRefluxKgPerHour, "kg/hr");
+    double changedRefluxValue = 1.0e-3;
+    column.getCondenser().setSeparation_with_liquid_reflux(true, changedRefluxValue, "kg/hr");
     column.run();
 
     assertFalse(column.wasSequentialWarmStateReused(),
-        "a changed fixed reflux flow must solve the changed condenser equations");
+        "a changed fixed reflux value must solve the changed condenser equations");
     assertTrue(column.getLastIterationCount() > 0, "the changed fixed reflux equations must execute tray iterations");
-    assertEquals(changedRefluxKgPerHour, column.getCondenser().getLiquidOutStream().getFlowRate("kg/hr"), 1.0e-8,
-        "the returned liquid stream must satisfy the changed fixed reflux flow");
+    assertEquals(changedRefluxValue, column.getCondenser().getLiquidOutStream().getFlowRate("kg/hr"), 1.0e-10,
+        "the returned liquid stream must satisfy the changed fixed reflux value");
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    assertPhysicalAndBalancedWithCondenserProduct(column.getFeedStreams(1).get(0), column);
+
+    column.run();
+    assertTrue(column.wasSequentialWarmStateReused(),
+        "the accepted nearby fixed reflux value must remain exactly reusable when unchanged");
+
+    column.getCondenser().setSeparation_with_liquid_reflux(true, changedRefluxValue, "kg/sec");
+    column.run();
+
+    assertFalse(column.wasSequentialWarmStateReused(),
+        "the same numeric reflux value in a different unit must solve the changed condenser equations");
+    assertTrue(column.getLastIterationCount() > 0, "the changed fixed reflux unit must execute tray iterations");
+    assertEquals(3.6, column.getCondenser().getLiquidOutStream().getFlowRate("kg/hr"), 1.0e-8,
+        "the returned liquid stream must apply the changed fixed reflux unit");
     assertTrue(column.solved(), column.getConvergenceDiagnostics());
     assertPhysicalAndBalancedWithCondenserProduct(column.getFeedStreams(1).get(0), column);
   }
