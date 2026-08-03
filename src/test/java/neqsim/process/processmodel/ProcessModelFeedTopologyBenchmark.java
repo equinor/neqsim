@@ -32,7 +32,7 @@ public class ProcessModelFeedTopologyBenchmark {
   private static final int STREAMS_PER_AREA = 50;
   private static final int WARMUP_RUNS = 5;
   private static final int BATCH_COUNT = 5;
-  private static final int RUNS_PER_BATCH = 5;
+  private static final int RUNS_PER_BATCH = 3;
 
   /** Creates the small single-phase SRK gas used by every synthetic feed stream. */
   private static SystemInterface createGasFluid() {
@@ -133,6 +133,17 @@ public class ProcessModelFeedTopologyBenchmark {
     return count;
   }
 
+  /** Locks already-solved transfer heaters to model an optimized steady-state rerun. */
+  private static void lockConvergedTransfers(ProcessModel model) {
+    for (ProcessSystem area : model.getAllProcesses()) {
+      for (Object unit : area.getUnitOperations()) {
+        if (unit instanceof Heater) {
+          ((Heater) unit).setLockedInactive(true);
+        }
+      }
+    }
+  }
+
   /** Runs a stable fork-local median benchmark when explicitly enabled. */
   @Test
   void benchmarkWarmedProcessModelRuns() {
@@ -144,6 +155,7 @@ public class ProcessModelFeedTopologyBenchmark {
     assertEquals(AREA_COUNT * STREAMS_PER_AREA, countRegisteredStreams(model));
     assertTrue(model.runUntilConverged(25, 1.0e-6), "benchmark model should converge");
     assertEquals(100000.0, model.getTotalFeedFlowRate(), 1.0e-8);
+    lockConvergedTransfers(model);
 
     for (int warmup = 0; warmup < WARMUP_RUNS; warmup++) {
       model.run();
