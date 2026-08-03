@@ -130,7 +130,7 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
               cpaEpsCross[l][k] = cpaEpsCross[k][l];
               */
           }
-          
+
           /*
           try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
             // database = new util.database.NeqSimDataBase();
