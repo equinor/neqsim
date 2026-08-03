@@ -9,8 +9,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPmultiflashPhaseDisappearanceTest {
   private static final String[] COMPONENTS = { "CO2", "methane", "ethane", "water" };
-  private static final double[] FEED = { 0.543865141103918, 0.2937712952303271,
-      0.07010605470616459, 0.09225750895959021 };
+  private static final double[] FEED = { 0.543865141103918, 0.2937712952303271, 0.07010605470616459,
+      0.09225750895959021 };
 
   @Test
   void stalledThreePhaseTrialReturnsStableTwoPhaseEndpoint() {
@@ -66,23 +66,20 @@ class TPmultiflashPhaseDisappearanceTest {
     for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
       double recoveredFeed = 0.0;
       for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
-        recoveredFeed += system.getBeta(phaseIndex)
-            * system.getPhase(phaseIndex).getComponent(componentIndex).getx();
+        recoveredFeed += system.getBeta(phaseIndex) * system.getPhase(phaseIndex).getComponent(componentIndex).getx();
       }
       assertEquals(FEED[componentIndex], recoveredFeed, 1.0e-10);
 
       double firstLogFugacity = logFugacity(system, 0, componentIndex);
       double secondLogFugacity = logFugacity(system, 1, componentIndex);
-      maximumLogFugacityResidual = Math.max(maximumLogFugacityResidual,
-          Math.abs(firstLogFugacity - secondLogFugacity));
+      maximumLogFugacityResidual = Math.max(maximumLogFugacityResidual, Math.abs(firstLogFugacity - secondLogFugacity));
     }
     assertTrue(maximumLogFugacityResidual < 1.0e-8);
   }
 
   private double logFugacity(SystemInterface system, int phaseIndex, int componentIndex) {
     double composition = system.getPhase(phaseIndex).getComponent(componentIndex).getx();
-    double fugacityCoefficient = system.getPhase(phaseIndex).getComponent(componentIndex)
-        .getFugacityCoefficient();
+    double fugacityCoefficient = system.getPhase(phaseIndex).getComponent(componentIndex).getFugacityCoefficient();
     return Math.log(Math.max(composition, Double.MIN_NORMAL)) + Math.log(fugacityCoefficient);
   }
 }
