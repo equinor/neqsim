@@ -64,7 +64,7 @@ class ProcessModelFeedTopologyCacheTest {
   private static Heater addHeatedFeed(ProcessSystem area, String prefix, double flowKgPerHour) {
     Stream feed = createFeed(prefix + " feed", flowKgPerHour);
     Heater heater = new Heater(prefix + " heater", feed);
-    heater.setOutTemperature(303.15);
+    heater.setOutletTemperature(303.15);
     area.add(feed);
     area.add(heater);
     return heater;
@@ -189,7 +189,7 @@ class ProcessModelFeedTopologyCacheTest {
     ProcessSystem downstream = new ProcessSystem("downstream");
     downstream.add(firstHeater.getOutletStream());
     Heater secondHeater = new Heater("downstream heater", firstHeater.getOutletStream());
-    secondHeater.setOutTemperature(308.15);
+    secondHeater.setOutletTemperature(308.15);
     downstream.add(secondHeater);
 
     ProcessModel model = new ProcessModel();
