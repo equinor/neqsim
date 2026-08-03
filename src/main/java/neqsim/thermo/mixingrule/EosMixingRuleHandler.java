@@ -166,8 +166,17 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
             classicOrHV[l][k] = classicOrHV[k][l];
             classicOrWS[l][k] = classicOrWS[k][l];
           } else {
-            java.sql.ResultSet dataSet = null;
-            try {
+            //java.sql.ResultSet dataSet = null;
+
+            neqsim.util.database.INTER objINTER = new neqsim.util.database.INTER();
+            String inter = component_name + "|" + phase.getComponents()[l].getComponentName();
+            if (objINTER.objDictionary.get(inter) == null)
+            {
+              inter = phase.getComponents()[l].getComponentName() + "|" + component_name;
+            }
+
+            if (objINTER.objDictionary.get(inter) != null){
+            //try {
               int underscoreIndex = component_name.indexOf("__"); // double
                                                                   // underscore
               if (underscoreIndex != -1) {
@@ -182,7 +191,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
               }
               int templ = l;
               int tempk = k;
-
+/*
               if (NeqSimDataBase.createTemporaryTables()) {
                 dataSet = database.getResultSet(
                     "SELECT * FROM intertemp WHERE (comp1='" + component_name + "' AND comp2='" + component_name2
@@ -196,8 +205,8 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                 templ = k;
                 tempk = l;
               }
-
-              classicOrHV[k][l] = dataSet.getString("HVTYPE").trim();
+*/
+              classicOrHV[k][l] = objINTER.objStrDictionary.get(inter).get("HVTYPE").trim();
               classicOrHV[l][k] = classicOrHV[k][l];
 
               if (isCalcEOSInteractionParameters()) {
@@ -208,39 +217,39 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
               } else {
                 if (phase.getClass().getName().equals("neqsim.thermo.phase.PhasePrEos")) {
                   // System.out.println("using PR intparams");
-                  intparam[k][l] = Double.parseDouble(dataSet.getString("kijpr"));
-                  intparamT[k][l] = Double.parseDouble(dataSet.getString("KIJTpr"));
+                  intparam[k][l] = objINTER.objDictionary.get(inter).get("kijpr");
+                  intparamT[k][l] = objINTER.objDictionary.get(inter).get("KIJTpr");
                 } else {
-                  intparam[k][l] = Double.parseDouble(dataSet.getString("kijsrk"));
-                  intparamT[k][l] = Double.parseDouble(dataSet.getString("KIJTSRK"));
+                  intparam[k][l] = objINTER.objDictionary.get(inter).get("kijsrk");
+                  intparamT[k][l] = objINTER.objDictionary.get(inter).get("KIJTSRK");
                 }
                 // Use instanceof to check for CPA phases - covers all
                 // subclasses automatically
                 if (phase instanceof PhasePrCPA) {
-                  intparam[k][l] = Double.parseDouble(dataSet.getString("cpakij_PR"));
+                  intparam[k][l] = objINTER.objDictionary.get(inter).get("cpakij_PR");
                   intparamT[k][l] = 0.0;
                 } else if (phase instanceof PhaseSrkCPA) {
                   // Covers PhaseSrkCPA, PhaseSrkCPAs,
                   // PhaseElectrolyteCPAMM, and any future
                   // subclasses
-                  intparam[k][l] = Double.parseDouble(dataSet.getString("cpakij_SRK"));
-                  intparamT[k][l] = Double.parseDouble(dataSet.getString("cpakijT_SRK"));
+                  intparam[k][l] = objINTER.objDictionary.get(inter).get("cpakij_SRK");
+                  intparamT[k][l] = objINTER.objDictionary.get(inter).get("cpakijT_SRK");
 
-                  intparamij[tempk][templ] = Double.parseDouble(dataSet.getString("cpakijx_SRK"));
+                  intparamij[tempk][templ] = objINTER.objDictionary.get(inter).get("cpakijx_SRK");
                   intparamji[templ][tempk] = intparamij[tempk][templ];
 
-                  intparamji[tempk][templ] = Double.parseDouble(dataSet.getString("cpakjix_SRK"));
+                  intparamji[tempk][templ] = objINTER.objDictionary.get(inter).get("cpakjix_SRK");
                   intparamij[templ][tempk] = intparamji[tempk][templ];
                 } else if (phase instanceof PhaseCPAInterface) {
                   // Fallback for other CPA implementations (e.g.,
                   // PhaseElectrolyteCPA)
-                  intparam[k][l] = Double.parseDouble(dataSet.getString("cpakij_SRK"));
-                  intparamT[k][l] = Double.parseDouble(dataSet.getString("cpakijT_SRK"));
+                  intparam[k][l] = objINTER.objDictionary.get(inter).get("cpakij_SRK");
+                  intparamT[k][l] = objINTER.objDictionary.get(inter).get("cpakijT_SRK");
                 } else if (phase instanceof PhaseSoreideWhitson) {
-                  intparam[k][l] = Double.parseDouble(dataSet.getString("KIJWhitsonSoriede"));
+                  intparam[k][l] = objINTER.objDictionary.get(inter).get("KIJWhitsonSoriede");
                   intparam[l][k] = intparam[k][l];
 
-                  intparamij[k][l] = Double.parseDouble(dataSet.getString("KIJWhitsonSoriede"));
+                  intparamij[k][l] = objINTER.objDictionary.get(inter).get("KIJWhitsonSoriede");
                   intparamij[l][k] = intparamij[k][l];
 
                   String componenti = component_name;
@@ -290,11 +299,11 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                 if (phase.getClass().getName().equals("neqsim.thermo.phase.PhasePCSAFTRahmat")
                     || phase.getClass().getName().equals("neqsim.thermo.phase.PhasePCSAFT")
                     || phase.getClass().getName().equals("neqsim.thermo.phase.PhasePCSAFTa")) {
-                  intparam[k][l] = Double.parseDouble(dataSet.getString("KIJPCSAFT"));
+                  intparam[k][l] = objINTER.objDictionary.get(inter).get("KIJPCSAFT");
                   intparamT[k][l] = 0.0;
                 }
               }
-
+/*
               java.sql.ResultSetMetaData dataSetMD = dataSet.getMetaData();
               int cols = dataSetMD.getColumnCount();
               boolean hasKIJTTypeCPAcol = false;
@@ -304,7 +313,14 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                   hasKIJTTypeCPAcol = true;
                 }
               }
+*/
+              boolean hasKIJTTypeCPAcol = false;
 
+              if (objINTER.objDictionary.get(inter).get("KIJTTypeCPA") != null)
+              {
+                hasKIJTTypeCPAcol = true;
+              }
+  /*
               // System.out.println("class name " +
               // phase.getClass().getName());
               if ((!phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs") || !hasKIJTTypeCPAcol)
@@ -314,43 +330,57 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                 intparamTType[k][l] = Integer.parseInt(dataSet.getString("KIJTTypeCPA"));
                 // TODO: implement in all dbs
               }
+*/
+              // System.out.println("class name " + phase.getClass().getName());
+              if (!phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")|| !hasKIJTTypeCPAcol) {
+                intparamTType[k][l] = (int)Math.round(objINTER.objDictionary.get(inter).get("KIJTType"));
+              } else {
+                intparamTType[k][l] = (int)Math.round(objINTER.objDictionary.get(inter).get("KIJTTypeCPA")); // TODO:
+                // implement
+                // in all
+                // dbs
+              }
+
               intparamTType[l][k] = intparamTType[k][l];
 
-              HValpha[k][l] = Double.parseDouble(dataSet.getString("HValpha"));
+              HValpha[k][l] = objINTER.objDictionary.get(inter).get("HValpha");
               HValpha[l][k] = HValpha[k][l];
 
-              HVDij[tempk][templ] = Double.parseDouble(dataSet.getString("HVgij"));
-              HVDij[templ][tempk] = Double.parseDouble(dataSet.getString("HVgji"));
+              HVDij[tempk][templ] = objINTER.objDictionary.get(inter).get("HVgij");
+              HVDij[templ][tempk] = objINTER.objDictionary.get(inter).get("HVgji");
 
-              wijCalcOrFitted[k][l] = Integer.parseInt(dataSet.getString("CalcWij"));
+              wijCalcOrFitted[k][l] = Integer.parseInt(objINTER.objStrDictionary.get(inter).get("CalcWij"));
               wijCalcOrFitted[l][k] = wijCalcOrFitted[k][l];
 
-              wij[0][k][l] = Double.parseDouble(dataSet.getString("w1"));
+              wij[0][k][l] = objINTER.objDictionary.get(inter).get("w1");
               wij[0][l][k] = wij[0][k][l];
-              wij[1][k][l] = Double.parseDouble(dataSet.getString("w2"));
+              wij[1][k][l] = objINTER.objDictionary.get(inter).get("w2");
               wij[1][l][k] = wij[1][k][l];
-              wij[2][k][l] = Double.parseDouble(dataSet.getString("w3"));
+              wij[2][k][l] = objINTER.objDictionary.get(inter).get("w3");
               wij[2][l][k] = wij[2][k][l];
 
-              classicOrWS[k][l] = dataSet.getString("WSTYPE").trim();
+              classicOrWS[k][l] = objINTER.objStrDictionary.get(inter).get("WSTYPE").trim();
               classicOrWS[l][k] = classicOrWS[k][l];
 
-              WSintparam[k][l] = Double.parseDouble(dataSet.getString("kijWS"));
-              WSintparam[k][l] = Double.parseDouble(dataSet.getString("KIJWSunifac"));
+              WSintparam[k][l] = objINTER.objDictionary.get(inter).get("kijWS");
+              WSintparam[k][l] = objINTER.objDictionary.get(inter).get("KIJWSunifac");
               WSintparam[l][k] = WSintparam[k][l];
 
-              NRTLalpha[k][l] = Double.parseDouble(dataSet.getString("NRTLalpha"));
+              NRTLalpha[k][l] = objINTER.objDictionary.get(inter).get("NRTLalpha");
               NRTLalpha[l][k] = NRTLalpha[k][l];
 
-              NRTLDij[tempk][templ] = Double.parseDouble(dataSet.getString("NRTLgij"));
-              NRTLDij[templ][tempk] = Double.parseDouble(dataSet.getString("NRTLgji"));
+              NRTLDij[tempk][templ] = objINTER.objDictionary.get(inter).get("NRTLgij");
+              NRTLDij[templ][tempk] = objINTER.objDictionary.get(inter).get("NRTLgji");
 
-              HVDijT[tempk][templ] = Double.parseDouble(dataSet.getString("HVgijT"));
-              HVDijT[templ][tempk] = Double.parseDouble(dataSet.getString("HVgjiT"));
+              HVDijT[tempk][templ] = objINTER.objDictionary.get(inter).get("HVgijT");
+              HVDijT[templ][tempk] = objINTER.objDictionary.get(inter).get("HVgjiT");
 
-              NRTLDijT[tempk][templ] = Double.parseDouble(dataSet.getString("WSgijT"));
-              NRTLDijT[templ][tempk] = Double.parseDouble(dataSet.getString("WSgjiT"));
-            } catch (Exception ex) {
+              NRTLDijT[tempk][templ] = objINTER.objDictionary.get(inter).get("WSgijT");
+              NRTLDijT[templ][tempk] = objINTER.objDictionary.get(inter).get("WSgjiT");
+            }
+            //catch (Exception ex)
+            else
+            {
               // System.out.println("err in thermo mix.....");
               // System.out.println(ex.toString());
               if (isCalcEOSInteractionParameters()) {
@@ -495,9 +525,13 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
 
               classicOrWS[k][l] = "Classic";
               classicOrWS[l][k] = classicOrWS[k][l];
-            } finally {
+            }
+
+            //finally {
+            {
               intparam[l][k] = intparam[k][l];
               intparamT[l][k] = intparamT[k][l];
+              /*
               try {
                 if (dataSet != null) {
                   dataSet.close();
@@ -505,6 +539,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
               } catch (Exception ex) {
                 logger.error("err closing dataSet IN MIX...", ex);
               }
+              */
             }
           }
         }
