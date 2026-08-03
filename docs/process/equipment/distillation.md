@@ -172,7 +172,8 @@ DistillationColumn.ReboilerMode reboilerMode = column.getReboilerMode();
 of calling `setCondenserMode(LIQUID_REFLUX_SPLIT)` directly because the fixed reflux flow is
 required. The split never creates condensate to satisfy an oversized request: it returns at most the
 available liquid, preserves material and energy, and leaves the column unsolved when the normalized
-fixed-reflux shortfall is non-zero. The requested, available, delivered, and residual values appear in
+fixed-reflux shortfall exceeds its acceptance tolerance. The requested, available, delivered, and residual values appear
+in
 `getConvergenceDiagnostics()`.
 
 ## Solver Options
