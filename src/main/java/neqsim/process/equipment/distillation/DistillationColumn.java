@@ -2862,8 +2862,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       if (fixedLiquidReflux) {
         updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature,
             getCondenser().getLiquidRefluxValue());
-        updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature,
-            getCondenser().getLiquidRefluxUnit());
+        updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, getCondenser().getLiquidRefluxUnit());
       }
       updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, getCondenser().getRefluxRatio());
       updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature,
