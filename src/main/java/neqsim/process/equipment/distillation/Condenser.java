@@ -87,7 +87,8 @@ public class Condenser extends SimpleTray {
   /**
    * Get the actual reflux returned by the latest fixed liquid reflux split.
    *
-   * @return actual reflux in {@link #getFixedLiquidRefluxUnit()}, or {@link Double#NaN} when no fixed split has been run
+   * @return actual reflux in {@link #getFixedLiquidRefluxUnit()}, or {@link Double#NaN} when no fixed split has been
+   * run
    */
   public double getLastFixedLiquidReflux() {
     return lastFixedLiquidReflux;
@@ -113,9 +114,8 @@ public class Condenser extends SimpleTray {
    * @return {@code true} for an inactive mode or an active split within the fixed reflux tolerance
    */
   public boolean isFixedLiquidRefluxSpecificationSatisfied() {
-    return !separation_with_liquid_reflux
-        || (Double.isFinite(lastFixedLiquidRefluxResidual)
-            && lastFixedLiquidRefluxResidual <= FIXED_LIQUID_REFLUX_RELATIVE_TOLERANCE);
+    return !separation_with_liquid_reflux || (Double.isFinite(lastFixedLiquidRefluxResidual)
+        && lastFixedLiquidRefluxResidual <= FIXED_LIQUID_REFLUX_RELATIVE_TOLERANCE);
   }
 
   /**
@@ -124,6 +124,7 @@ public class Condenser extends SimpleTray {
    * @param separation_with_liquid_reflux a boolean indicating if separation with liquid reflux is set
    * @param value the value of the reflux
    * @param unit the unit of the reflux value
+   * @throws IllegalArgumentException if an active reflux value is negative or non-finite, or its unit is blank
    */
   public void setSeparation_with_liquid_reflux(boolean separation_with_liquid_reflux, double value, String unit) {
     if (separation_with_liquid_reflux && (!Double.isFinite(value) || value < 0.0)) {
@@ -277,6 +278,10 @@ public class Condenser extends SimpleTray {
       super.run(id);
       setCalculationIdentifier(oldID);
     } else if (separation_with_liquid_reflux) {
+      if (!Double.isFinite(reflux_value) || reflux_value < 0.0 || reflux_unit == null
+          || reflux_unit.trim().isEmpty()) {
+        throw new IllegalStateException("Fixed liquid reflux configuration is invalid");
+      }
       super.run(id);
       StreamInterface liquidstream = super.getLiquidOutStream().clone();
       liquidstream.setName("temp liq stream");
