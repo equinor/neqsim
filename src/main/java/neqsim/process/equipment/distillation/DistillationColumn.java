@@ -1736,7 +1736,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return {@code true} if all specifications are satisfied
    */
   private boolean specificationsSatisfied() {
-    return specificationSatisfied(topSpecification) && specificationSatisfied(bottomSpecification);
+    boolean fixedLiquidRefluxSatisfied = !hasCondenser || getCondenser() == null
+        || getCondenser().isFixedLiquidRefluxSpecificationSatisfied();
+    return specificationSatisfied(topSpecification) && specificationSatisfied(bottomSpecification)
+        && fixedLiquidRefluxSatisfied;
   }
 
   /**
@@ -2857,8 +2860,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
     if (hasCondenser && getCondenser() != null) {
       updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, getCondenser().isRefluxSet() ? 1L : 0L);
-      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature,
-          getCondenser().isSeparation_with_liquid_reflux() ? 1L : 0L);
+      boolean fixedLiquidReflux = getCondenser().isSeparation_with_liquid_reflux();
+      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, fixedLiquidReflux ? 1L : 0L);
+      if (fixedLiquidReflux) {
+        updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature,
+            getCondenser().getFixedLiquidRefluxValue());
+        updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature,
+            getCondenser().getFixedLiquidRefluxUnit());
+      }
       updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, getCondenser().getRefluxRatio());
       updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature,
           getCondenser().isTotalCondenser() ? 1L : 0L);
@@ -2987,13 +2996,20 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (accepted && hasActiveSideDraw && residualConvergenceSatisfied()) {
       lastSolveStatus = SolveStatus.RIGOROUS_CONVERGED;
       lastSolveStatusReason = "Naphtali-Sandholm side-draw products satisfy the active rigorous convergence gates";
-    } else if (accepted && !hasActiveSideDraw) {
+    } else if (accepted && !hasActiveSideDraw
+        && (!hasCondenser || getCondenser() == null || getCondenser().isFixedLiquidRefluxSpecificationSatisfied())) {
       lastSolveStatus = SolveStatus.RECONCILED_PRODUCTS;
       lastSolveStatusReason = "Naphtali-Sandholm direct products were applied";
     } else {
       lastSolveStatus = SolveStatus.FAILED;
-      lastSolveStatusReason = accepted ? "Applied Naphtali-Sandholm side-draw state failed the active convergence gates"
-          : "Naphtali-Sandholm solver did not accept its result";
+      if (accepted && hasCondenser && getCondenser() != null
+          && !getCondenser().isFixedLiquidRefluxSpecificationSatisfied()) {
+        lastSolveStatusReason = "Available condenser liquid was insufficient for the fixed liquid reflux specification";
+      } else {
+        lastSolveStatusReason = accepted
+            ? "Applied Naphtali-Sandholm side-draw state failed the active convergence gates"
+            : "Naphtali-Sandholm solver did not accept its result";
+      }
     }
     setCalculationIdentifier(id);
   }
@@ -8990,6 +9006,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         .append(getLastMeshSpecificationResidualNorm()).append("\n");
     diagnostics.append("      per-tray material imbalance: ").append(lastTrayMaterialBalanceError)
         .append(" (tolerance ").append(trayMaterialBalanceTolerance).append(")\n");
+    if (hasCondenser && getCondenser() != null && getCondenser().isSeparation_with_liquid_reflux()) {
+      diagnostics.append("    fixed liquid reflux: requested ").append(getCondenser().getFixedLiquidRefluxValue())
+          .append(" ").append(getCondenser().getFixedLiquidRefluxUnit()).append(", available ")
+          .append(getCondenser().getLastAvailableFixedLiquidReflux()).append(" ")
+          .append(getCondenser().getFixedLiquidRefluxUnit()).append(", delivered ")
+          .append(getCondenser().getLastFixedLiquidReflux()).append(" ")
+          .append(getCondenser().getFixedLiquidRefluxUnit()).append(", relative shortfall ")
+          .append(getCondenser().getFixedLiquidRefluxSpecificationResidual()).append("\n");
+    }
 
     diagnostics.append("  Feed trays:\n");
     if (feedStreams.isEmpty()) {
@@ -11245,6 +11270,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
     if (lastInternalTrafficGuardReached) {
       setLastSolveStatus(SolveStatus.FAILED, "Internal tray traffic exceeded the rigorous solved-state guard");
+      return;
+    }
+    if (hasCondenser && getCondenser() != null && getCondenser().isSeparation_with_liquid_reflux()
+        && !getCondenser().isFixedLiquidRefluxSpecificationSatisfied()) {
+      setLastSolveStatus(SolveStatus.FAILED,
+          "Available condenser liquid was insufficient for the fixed liquid reflux specification");
       return;
     }
     if (!residualConvergenceSatisfied()) {
