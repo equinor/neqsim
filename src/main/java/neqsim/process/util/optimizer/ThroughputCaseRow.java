@@ -332,7 +332,7 @@ public class ThroughputCaseRow implements Serializable {
    * @return source tag from the underlying capacity constraint
    */
   public String getDataSource() {
-    return dataSource;
+    return dataSource == null ? "not_set" : dataSource;
   }
 
   /**
@@ -400,7 +400,7 @@ public class ThroughputCaseRow implements Serializable {
     map.put("currentValue", currentValue);
     map.put("designValue", designValue);
     map.put("minimumConstraint", minimumConstraint);
-    map.put("dataSource", dataSource);
+    map.put("dataSource", getDataSource());
     map.put("capacityMargin", capacityMargin);
     map.put("utilizationMargin", utilizationMargin);
     map.put("unit", unit);
