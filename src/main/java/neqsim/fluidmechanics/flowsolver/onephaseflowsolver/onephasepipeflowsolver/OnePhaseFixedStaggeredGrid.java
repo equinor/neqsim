@@ -1367,7 +1367,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     while (residual > NONLINEAR_RESIDUAL_TOLERANCE && iteration < MAXIMUM_COUPLED_ITERATIONS) {
       double[] update;
       try {
-        double[] values = residualValues;
+        double[] values = calculateCoupledResidual(state);
         double[][] jacobian = calculateCoupledBandedJacobian(state);
         double[] rightHandSide = new double[values.length];
         for (int row = 0; row < values.length; row++) {
