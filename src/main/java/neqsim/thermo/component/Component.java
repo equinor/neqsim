@@ -308,16 +308,16 @@ public abstract class Component implements ComponentInterface {
           }
         }
 */
-        setComponentType(objCOMP.objStrDictionary.get(name).get("comptype"));
+        setComponentType(objCOMP.objStrDictionary.get(name).get("COMPTYPE"));
         setCASnumber(objCOMP.objStrDictionary.get(name).get("CASnumber"));
-        index = Integer.parseInt(objCOMP.objStrDictionary.get(name).get("compindex"));
+        index = objCOMP.objDictionary.get(name).get("COMPINDEX").intValue();
         setFormulae(objCOMP.objStrDictionary.get(name).get("FORMULA").trim()); // C
-        molarMass = objCOMP.objDictionary.get(name).get("molarmass") / 1000.0; // D
-        normalLiquidDensity = objCOMP.objDictionary.get(name).get("liqdens"); // E
+        molarMass = objCOMP.objDictionary.get(name).get("MOLARMASS") / 1000.0; // D
+        normalLiquidDensity = objCOMP.objDictionary.get(name).get("LIQDENS"); // E
         criticalTemperature = (objCOMP.objDictionary.get(name).get("TC") + 273.15); // F
         criticalPressure = objCOMP.objDictionary.get(name).get("PC"); // G
-        acentricFactor = objCOMP.objDictionary.get(name).get("acsfact"); // J
-        criticalVolume = objCOMP.objDictionary.get(name).get("critvol");
+        acentricFactor = objCOMP.objDictionary.get(name).get("ACSFACT"); // J
+        criticalVolume = objCOMP.objDictionary.get(name).get("CRITVOL");
         criticalCompressibilityFactor = criticalPressure * criticalVolume / ThermodynamicConstantsInterface.R
             / criticalTemperature / 10.0;
         referenceEnthalpy = objCOMP.objDictionary.get(name).get("Href");
@@ -345,7 +345,7 @@ public abstract class Component implements ComponentInterface {
         AntoineC = objCOMP.objDictionary.get(name).get("ANTOINEC"); // AX
         AntoineD = objCOMP.objDictionary.get(name).get("ANTOINED");
         AntoineE = objCOMP.objDictionary.get(name).get("ANTOINEE");
-        normalBoilingPoint = objCOMP.objDictionary.get(name).get("normboil") + 273.15;
+        normalBoilingPoint = objCOMP.objDictionary.get(name).get("NORMBOIL") + 273.15;
         if (AntoineA == 0) {
           AntoineA = 1.0;
           AntoineB = getNormalBoilingPoint() - 273.15;
@@ -355,38 +355,38 @@ public abstract class Component implements ComponentInterface {
         AntoineBSolid = objCOMP.objDictionary.get(name).get("ANTOINESolidB");
         AntoineCSolid = objCOMP.objDictionary.get(name).get("ANTOINESolidC");
 
-        debyeDipoleMoment = objCOMP.objDictionary.get(name).get("dipolemoment");
+        debyeDipoleMoment = objCOMP.objDictionary.get(name).get("DIPOLEMOMENT");
 
-        standardDensity = objCOMP.objDictionary.get(name).get("stddens");
-        viscosityCorrectionFactor = objCOMP.objDictionary.get(name).get("viscfact"); // BC
-        racketZ = objCOMP.objDictionary.get(name).get("racketZ"); // BE
-        lennardJonesMolecularDiameter = objCOMP.objDictionary.get(name).get("LJdiameter"); // BF
-        lennardJonesEnergyParameter = objCOMP.objDictionary.get(name).get("LJeps");
+        standardDensity = objCOMP.objDictionary.get(name).get("STDDENS");
+        viscosityCorrectionFactor = objCOMP.objDictionary.get(name).get("VISCFACT"); // BC
+        racketZ = objCOMP.objDictionary.get(name).get("RACKETZ"); // BE
+        lennardJonesMolecularDiameter = objCOMP.objDictionary.get(name).get("LJDIAMETER"); // BF
+        lennardJonesEnergyParameter = objCOMP.objDictionary.get(name).get("LJEPS");
         sphericalCoreRadius = objCOMP.objDictionary.get(name).get("SphericalCoreRadius");
-        liquidViscosityModel = Integer.parseInt(objCOMP.objStrDictionary.get(name).get("liqviscmodel"));
-        liquidViscosityParameter[0] = objCOMP.objDictionary.get(name).get("liqvisc1");
-        liquidViscosityParameter[1] = objCOMP.objDictionary.get(name).get("liqvisc2");
-        liquidViscosityParameter[2] = objCOMP.objDictionary.get(name).get("liqvisc3");
-        liquidViscosityParameter[3] = objCOMP.objDictionary.get(name).get("liqvisc4");
+        liquidViscosityModel = objCOMP.objDictionary.get(name).get("LIQVISCMODEL").intValue();
+        liquidViscosityParameter[0] = objCOMP.objDictionary.get(name).get("LIQVISC1");
+        liquidViscosityParameter[1] = objCOMP.objDictionary.get(name).get("LIQVISC2");
+        liquidViscosityParameter[2] = objCOMP.objDictionary.get(name).get("LIQVISC3");
+        liquidViscosityParameter[3] = objCOMP.objDictionary.get(name).get("LIQVISC4");
 
-        gibbsEnergyOfFormation = objCOMP.objDictionary.get(name).get("gibbsEnergyOfFormation");
-        dielectricParameter[0] = objCOMP.objDictionary.get(name).get("dielectricParameter1");
-        dielectricParameter[1] = objCOMP.objDictionary.get(name).get("dielectricParameter2");
-        dielectricParameter[2] = objCOMP.objDictionary.get(name).get("dielectricParameter3");
-        dielectricParameter[3] = objCOMP.objDictionary.get(name).get("dielectricParameter4");
-        dielectricParameter[4] = objCOMP.objDictionary.get(name).get("dielectricParameter5");
+        gibbsEnergyOfFormation = objCOMP.objDictionary.get(name).get("GIBBSENERGYOFFORMATION");
+        dielectricParameter[0] = objCOMP.objDictionary.get(name).get("DIELECTRICPARAMETER1");
+        dielectricParameter[1] = objCOMP.objDictionary.get(name).get("DIELECTRICPARAMETER2");
+        dielectricParameter[2] = objCOMP.objDictionary.get(name).get("DIELECTRICPARAMETER3");
+        dielectricParameter[3] = objCOMP.objDictionary.get(name).get("DIELECTRICPARAMETER4");
+        dielectricParameter[4] = objCOMP.objDictionary.get(name).get("DIELECTRICPARAMETER5");
 
-        ionicCharge = Integer.parseInt(objCOMP.objStrDictionary.get(name).get("ionicCharge"));
+        ionicCharge = objCOMP.objDictionary.get(name).get("IONICCHARGE").intValue();
 
-        referenceStateType = objCOMP.objStrDictionary.get(name).get("referenceStateType").trim();
+        referenceStateType = objCOMP.objStrDictionary.get(name).get("REFERENCESTATETYPE").trim();
         henryCoefParameter[0] = objCOMP.objDictionary.get(name).get("HenryCoef1");
         henryCoefParameter[1] = objCOMP.objDictionary.get(name).get("HenryCoef2");
         henryCoefParameter[2] = objCOMP.objDictionary.get(name).get("HenryCoef3");
         henryCoefParameter[3] = objCOMP.objDictionary.get(name).get("HenryCoef4");
 
-        schwartzentruberParams[0] = objCOMP.objDictionary.get(name).get("schwartzentruber1");
-        schwartzentruberParams[1] = objCOMP.objDictionary.get(name).get("schwartzentruber2");
-        schwartzentruberParams[2] = objCOMP.objDictionary.get(name).get("schwartzentruber3");
+        schwartzentruberParams[0] = objCOMP.objDictionary.get(name).get("SCHWARTZENTRUBER1");
+        schwartzentruberParams[1] = objCOMP.objDictionary.get(name).get("SCHWARTZENTRUBER2");
+        schwartzentruberParams[2] = objCOMP.objDictionary.get(name).get("SCHWARTZENTRUBER3");
 
         matiascopemanParams[0] = objCOMP.objDictionary.get(name).get("MC1");
         matiascopemanParams[1] = objCOMP.objDictionary.get(name).get("MC2");
@@ -432,7 +432,7 @@ public abstract class Component implements ComponentInterface {
           umrCpaB = objCOMP.objDictionary.get(name).get("UMRCPA_b");
           umrCpaAssociationEnergy = objCOMP.objDictionary.get(name).get("UMRCPA_assocEnergy");
           umrCpaAssociationVolume = objCOMP.objDictionary.get(name).get("UMRCPA_assocVolume");
-          umrCpaAssociating = Integer.parseInt(objCOMP.objStrDictionary.get(name).get("UMRCPA_associating").trim());
+          umrCpaAssociating = objCOMP.objDictionary.get(name).get("UMRCPA_associating").intValue();
         } catch (Exception umrcpaParamEx) {
           umrCpaA0 = 0.0;
           umrCpaB = 0.0;
@@ -465,46 +465,46 @@ public abstract class Component implements ComponentInterface {
         TwuCoonParams[1] = objCOMP.objDictionary.get(name).get("TwuCoon2");
         TwuCoonParams[2] = objCOMP.objDictionary.get(name).get("TwuCoon3");
 
-        liquidConductivityParameter[0] = objCOMP.objDictionary.get(name).get("liquidConductivity1");
-        liquidConductivityParameter[1] = objCOMP.objDictionary.get(name).get("liquidConductivity2");
-        liquidConductivityParameter[2] = objCOMP.objDictionary.get(name).get("liquidConductivity3");
+        liquidConductivityParameter[0] = objCOMP.objDictionary.get(name).get("LIQUIDCONDUCTIVITY1");
+        liquidConductivityParameter[1] = objCOMP.objDictionary.get(name).get("LIQUIDCONDUCTIVITY2");
+        liquidConductivityParameter[2] = objCOMP.objDictionary.get(name).get("LIQUIDCONDUCTIVITY3");
 
         if (this.getClass().getName().equals("neqsim.thermo.component.ComponentSrkCPA")
             || this.getClass().getName().equals("neqsim.thermo.component.ComponentSrkCPAs")) {
           parachorParameter = objCOMP.objDictionary.get(name).get("PARACHOR_CPA");
         } else {
-          parachorParameter = objCOMP.objDictionary.get(name).get("parachor");
+          parachorParameter = objCOMP.objDictionary.get(name).get("PARACHOR");
         }
 
-        setHeatOfFusion(objCOMP.objDictionary.get(name).get("heatOfFusion"));
+        setHeatOfFusion(objCOMP.objDictionary.get(name).get("HEATOFFUSION"));
 
-        triplePointDensity = objCOMP.objDictionary.get(name).get("triplePointDensity");
-        triplePointPressure = objCOMP.objDictionary.get(name).get("triplePointPressure");
-        setTriplePointTemperature(objCOMP.objDictionary.get(name).get("triplePointTemperature"));
-        meltingPointTemperature = objCOMP.objDictionary.get(name).get("meltingPointTemperature");
+        triplePointDensity = objCOMP.objDictionary.get(name).get("TRIPLEPOINTDENSITY");
+        triplePointPressure = objCOMP.objDictionary.get(name).get("TRIPLEPOINTPRESSURE");
+        setTriplePointTemperature(objCOMP.objDictionary.get(name).get("TRIPLEPOINTTEMPERATURE"));
+        meltingPointTemperature = objCOMP.objDictionary.get(name).get("MELTINGPOINTTEMPERATURE");
 
         Hsub = objCOMP.objDictionary.get(name).get("Hsub");
 
-        setIdealGasEnthalpyOfFormation(objCOMP.objDictionary.get(name).get("EnthalpyOfFormation"));
+        setIdealGasEnthalpyOfFormation(objCOMP.objDictionary.get(name).get("ENTHALPYOFFORMATION"));
         idealGasGibbsEnergyOfFormation = gibbsEnergyOfFormation;
-        idealGasAbsoluteEntropy = objCOMP.objDictionary.get(name).get("AbsoluteEntropy");
+        idealGasAbsoluteEntropy = objCOMP.objDictionary.get(name).get("ABSOLUTEENTROPY");
 
         for (int i = 0; i < 5; i++) {
-          solidDensityCoefs[i] = Double.parseDouble((objCOMP.objStrDictionary.get(name).get("solidDensityCoefs" + (i + 1))));
+          solidDensityCoefs[i] = objCOMP.objDictionary.get(name).get("SOLIDDENSITYCOEFS" + (i + 1));
         }
         for (int i = 0; i < 5; i++) {
-          liquidDensityCoefs[i] = Double.parseDouble((objCOMP.objStrDictionary.get(name).get("liquidDensityCoefs" + (i + 1))));
+          liquidDensityCoefs[i] = objCOMP.objDictionary.get(name).get("LIQUIDDENSITYCOEFS" + (i + 1));
         }
         for (int i = 0; i < 5; i++) {
-          heatOfVaporizationCoefs[i] = Double.parseDouble((objCOMP.objStrDictionary.get(name).get("heatOfVaporizationCoefs" + (i + 1))));
+          heatOfVaporizationCoefs[i] = objCOMP.objDictionary.get(name).get("HEATOFVAPORIZATIONCOEFS" + (i + 1));
         }
         // disse maa settes inn fra database ssociationsites
-        numberOfAssociationSites = Integer.parseInt(objCOMP.objStrDictionary.get(name).get("associationsites"));
+        numberOfAssociationSites = objCOMP.objDictionary.get(name).get("associationsites").intValue();
         orginalNumberOfAssociationSites = numberOfAssociationSites;
         associationScheme = objCOMP.objStrDictionary.get(name).get("associationscheme");
         associationEnergy = objCOMP.objDictionary.get(name).get("associationenergy");
 
-        calcActivity = Integer.parseInt(objCOMP.objStrDictionary.get(name).get("calcActivity"));
+        calcActivity = objCOMP.objDictionary.get(name).get("calcActivity").intValue();
         setRacketZCPA(objCOMP.objDictionary.get(name).get("racketZCPA"));
 
         setVolumeCorrectionT_CPA(objCOMP.objDictionary.get(name).get("volcorrCPA_T"));
@@ -603,7 +603,7 @@ public abstract class Component implements ComponentInterface {
           setIsHydrateFormer(false);
         }
 
-        waxFormer = Integer.parseInt(objCOMP.objStrDictionary.get(name).get("waxformer")) == 1;
+        waxFormer = objCOMP.objDictionary.get(name).get("waxformer").intValue() == 1;
         // System.out.println(componentName + " pure component parameters: ok...");
       }
       componentNumber = compIndex;
