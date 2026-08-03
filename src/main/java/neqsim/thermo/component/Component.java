@@ -246,6 +246,11 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public void createComponent(String name, double moles, double molesInPhase, int compIndex) {
+
+    neqsim.util.database.COMP objCOMP = new neqsim.util.database.COMP();
+    double res = objCOMP.objDictionary.get(name).get("LIQDENS");
+
+
     if (name == null) {
       throw new RuntimeException(
           new neqsim.util.exception.InvalidInputException(this, "createComponent", "name", "can not be null"));
