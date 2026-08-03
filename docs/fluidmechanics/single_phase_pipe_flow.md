@@ -298,10 +298,7 @@ defensive copies and `toJson()` is suitable for Python-side result capture.
 
 This path has been regression-tested for a single coupled isothermal composition-change step and
 an 1800 s methane/nitrogen pulse through the coupled hydraulic/EOS/species path at positive flow.
-The coupled Newton Jacobian differentiates the complete scaled residual with respect to the
-solver's bara pressure and velocity state. Retaining the numerical mass-pressure entries includes
-EOS density and coefficient coupling in the same linearization. The isolated conservative kernel
-is also checked over repeated uniform-cell steps. For constant
+The isolated conservative kernel is also checked over repeated uniform-cell steps. For constant
 cell mass $M$, face mass flow $\dot m$, and timestep $\Delta t$, define the cell
 Courant number $\lambda=\dot m\Delta t/M$, $p=\lambda/(1+\lambda)$, and
 $q=1/(1+\lambda)$. The closed-form response in cell $j$ after $n$ repeated steps from an initially
