@@ -3003,8 +3003,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       lastSolveStatusReason = "Naphtali-Sandholm direct products were applied";
     } else {
       lastSolveStatus = SolveStatus.FAILED;
-      lastSolveStatusReason = accepted ? "Applied Naphtali-Sandholm side-draw state failed the active convergence gates"
-          : "Naphtali-Sandholm solver did not accept its result";
+      if (accepted && hasCondenser && getCondenser() != null
+          && !getCondenser().isFixedLiquidRefluxSpecificationSatisfied()) {
+        lastSolveStatusReason = "Available condenser liquid was insufficient for the fixed liquid reflux specification";
+      } else {
+        lastSolveStatusReason = accepted
+            ? "Applied Naphtali-Sandholm side-draw state failed the active convergence gates"
+            : "Naphtali-Sandholm solver did not accept its result";
+      }
     }
     setCalculationIdentifier(id);
   }
