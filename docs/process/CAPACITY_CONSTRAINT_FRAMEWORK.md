@@ -267,6 +267,7 @@ basis applies:
 ```java
 CapacityConstraint gasCapacity = new CapacityConstraint("gasFlow", "kg/h", ConstraintType.HARD)
     .setDesignValue(12000.0)
+    .setCurrentValue(10000.0)
     .setDataSource("installedDataSheet")
     .setConfidence(0.95)
     .setValidityRange(8000.0, 12000.0);
@@ -2099,4 +2100,3 @@ double util = expander.getMaxUtilization(); // |getPower| / 5000 kW, no spurious
 - [Mechanical Design](mechanical_design)
 - [Optimizer Plugin Architecture](optimization/OPTIMIZER_PLUGIN_ARCHITECTURE)
 - [Optimization Examples](../examples/index)
-
