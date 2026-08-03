@@ -254,6 +254,57 @@ public class TwoFluidSectionTest {
   }
 
   @Test
+  void testPhaseResolvedTransferMomentumUsesDonorVelocityAndConservesMomentum() {
+    section.setGasVelocity(5.0);
+    section.setOilVelocity(2.0);
+    section.setWaterVelocity(1.0);
+    TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
+
+    PhaseMassTransfer condensation = new PhaseMassTransfer(-0.2, 0.0, 0.2, true, true, null);
+    double[] condensationMomentum = equations.calcTransferMomentumSources(section, condensation);
+    assertEquals(-1.0, condensationMomentum[0], 1.0e-12);
+    assertEquals(0.0, condensationMomentum[1], 1.0e-12);
+    assertEquals(1.0, condensationMomentum[2], 1.0e-12);
+    assertEquals(0.0, condensationMomentum[0] + condensationMomentum[1] + condensationMomentum[2], 1.0e-12);
+
+    PhaseMassTransfer evaporation = new PhaseMassTransfer(0.2, -0.05, -0.15, true, true, null);
+    double[] evaporationMomentum = equations.calcTransferMomentumSources(section, evaporation);
+    assertEquals(0.25, evaporationMomentum[0], 1.0e-12);
+    assertEquals(-0.1, evaporationMomentum[1], 1.0e-12);
+    assertEquals(-0.15, evaporationMomentum[2], 1.0e-12);
+    assertEquals(0.0, evaporationMomentum[0] + evaporationMomentum[1] + evaporationMomentum[2], 1.0e-12);
+  }
+
+  @Test
+  void testDisabledMassTransferProducesNoPhaseSources() {
+    TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
+    TwoFluidSection[] transferSections = createUniformTransferSections(0.01, -0.1);
+
+    equations.calcRHS(transferSections, 10.0);
+
+    double[] sourceRates = equations.getLastMassBalanceRate().getSourceMassFlowKgPerSecond();
+    assertEquals(0.0, sourceRates[0], 0.0);
+    assertEquals(0.0, sourceRates[1], 0.0);
+    assertEquals(0.0, sourceRates[2], 0.0);
+  }
+
+  @Test
+  void testPhaseResolvedPrescribedTransferIsDeterministic() {
+    TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
+    section.setOilMassPerLength(3.0);
+    section.setWaterMassPerLength(1.0);
+    section.setLiquidMassPerLength(4.0);
+    section.setMassTransferRate(2.0);
+
+    PhaseMassTransfer first = equations.calcPhaseMassTransfer(section);
+    PhaseMassTransfer second = equations.calcPhaseMassTransfer(section);
+
+    assertEquals(first.getGasSourceKgPerMetreSecond(), second.getGasSourceKgPerMetreSecond(), 0.0);
+    assertEquals(first.getOilSourceKgPerMetreSecond(), second.getOilSourceKgPerMetreSecond(), 0.0);
+    assertEquals(first.getWaterSourceKgPerMetreSecond(), second.getWaterSourceKgPerMetreSecond(), 0.0);
+  }
+
+  @Test
   void testClosurePassUpdatesEntrainmentAndSevereSlugDiagnostics() {
     section.setGasDensity(25.0);
     section.setLiquidDensity(750.0);
