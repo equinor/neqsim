@@ -278,8 +278,7 @@ public class Condenser extends SimpleTray {
       super.run(id);
       setCalculationIdentifier(oldID);
     } else if (separation_with_liquid_reflux) {
-      if (!Double.isFinite(reflux_value) || reflux_value < 0.0 || reflux_unit == null
-          || reflux_unit.trim().isEmpty()) {
+      if (!Double.isFinite(reflux_value) || reflux_value < 0.0 || reflux_unit == null || reflux_unit.trim().isEmpty()) {
         throw new IllegalStateException("Fixed liquid reflux configuration is invalid");
       }
       super.run(id);
