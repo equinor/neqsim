@@ -9007,9 +9007,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     diagnostics.append("      per-tray material imbalance: ").append(lastTrayMaterialBalanceError)
         .append(" (tolerance ").append(trayMaterialBalanceTolerance).append(")\n");
     if (hasCondenser && getCondenser() != null && getCondenser().isSeparation_with_liquid_reflux()) {
-      diagnostics.append("    fixed liquid reflux: requested ")
-          .append(getCondenser().getFixedLiquidRefluxValue()).append(" ")
-          .append(getCondenser().getFixedLiquidRefluxUnit()).append(", available ")
+      diagnostics.append("    fixed liquid reflux: requested ").append(getCondenser().getFixedLiquidRefluxValue())
+          .append(" ").append(getCondenser().getFixedLiquidRefluxUnit()).append(", available ")
           .append(getCondenser().getLastAvailableFixedLiquidReflux()).append(", delivered ")
           .append(getCondenser().getLastFixedLiquidReflux()).append(", relative shortfall ")
           .append(getCondenser().getFixedLiquidRefluxSpecificationResidual()).append("\n");
