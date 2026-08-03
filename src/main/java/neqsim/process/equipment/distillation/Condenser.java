@@ -136,7 +136,7 @@ public class Condenser extends SimpleTray {
     this.refluxIsSet = separation_with_liquid_reflux;
     this.separation_with_liquid_reflux = separation_with_liquid_reflux;
     this.reflux_value = value;
-    this.reflux_unit = unit;
+    this.reflux_unit = separation_with_liquid_reflux ? unit.trim() : unit;
     lastAvailableLiquidReflux = Double.NaN;
     lastFixedLiquidReflux = Double.NaN;
     lastFixedLiquidRefluxResidual = Double.NaN;
@@ -279,7 +279,8 @@ public class Condenser extends SimpleTray {
       setCalculationIdentifier(oldID);
     } else if (separation_with_liquid_reflux) {
       if (!Double.isFinite(reflux_value) || reflux_value < 0.0 || reflux_unit == null || reflux_unit.trim().isEmpty()) {
-        throw new IllegalStateException("Fixed liquid reflux configuration is invalid");
+        throw new IllegalStateException("Condenser " + getName() + " has invalid fixed liquid reflux value "
+            + reflux_value + " " + reflux_unit);
       }
       super.run(id);
       StreamInterface liquidstream = super.getLiquidOutStream().clone();
