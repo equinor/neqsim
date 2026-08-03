@@ -51,10 +51,12 @@ public class CondenserFixedLiquidRefluxTest {
     Stream feed = createHydrocarbonFeed();
     Condenser condenser = createCondenser(feed);
     double requestedRefluxKgPerSecond = availableLiquidKgPerHour / 7200.0;
-    condenser.setSeparation_with_liquid_reflux(true, requestedRefluxKgPerSecond, "kg/sec");
+    condenser.setSeparation_with_liquid_reflux(true, requestedRefluxKgPerSecond, " kg/sec ");
 
     condenser.run();
 
+    assertEquals("kg/sec", condenser.getFixedLiquidRefluxUnit(),
+        "fixed reflux units must be normalized before conversion and cache fingerprinting");
     assertEquals(availableLiquidKgPerHour / 2.0, condenser.getLiquidOutStream().getFlowRate("kg/hr"),
         availableLiquidKgPerHour * 1.0e-8, "the feasible reflux stream must satisfy the requested unit and value");
     assertTrue(condenser.isFixedLiquidRefluxSpecificationSatisfied(),
