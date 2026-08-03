@@ -89,7 +89,11 @@ Each throughput row records `minimumConstraint` so engineering-unit margins rema
 For a maximum-directed limit, `capacityMargin = limit - current`; for a minimum-directed limit,
 `capacityMargin = current - limit`. A non-negative margin is therefore feasible in both cases, and
 the reported `designValue` is the applicable finite limit even when the equipment constraint was
-constructed with `setMinValue(...)` only. `utilizationMargin` remains `1 - utilization` for both
+constructed with `setMinValue(...)` only. Each row also carries `dataSource`, copied from the
+underlying `CapacityConstraint`, so Python and external optimizers can distinguish an installed
+data-sheet limit from mechanical-design output, an operating envelope, or an untagged `not_set`
+limit. Preserve this provenance in ranked recommendations and result archives.
+`utilizationMargin` remains `1 - utilization` for both
 directions.
 
 ## Key Concepts
