@@ -1272,6 +1272,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastFullFractionatorFastPathApplied = false;
     lastFullFractionatorFastPathReason = "";
     resetMatrixInsideOutDiagnostics();
+    ensureIndependentSideDrawSpecifications();
     assignUnassignedFeeds();
     convergenceHistory = new ArrayList<>();
     applyDirectSpecifications();
@@ -9662,18 +9663,66 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param flowRate target flow rate
    * @param unit flow-rate unit
    * @return configured side-draw specification
-   * @throws IllegalArgumentException if the tray number, phase, flow rate, or unit is invalid
+   * @throws IllegalArgumentException if the tray number, phase, flow rate, or unit is invalid, or another flow
+   * specification already controls the same tray and phase
    */
   public ColumnSideDrawSpecification addSideDrawFlowSpecification(int trayNumber, SideDrawPhase phase, double flowRate,
       String unit) {
     validateTrayIndex(trayNumber, "side draw specification tray");
     ColumnSideDrawSpecification specification = new ColumnSideDrawSpecification(trayNumber, phase, flowRate, unit);
+    if (findSideDrawFlowSpecification(trayNumber, phase) != null) {
+      throw new IllegalArgumentException(createDuplicateSideDrawSpecificationMessage(trayNumber, phase));
+    }
     sideDrawSpecifications.add(specification);
     if (flowRate > 0.0 && getSideDrawFraction(trayNumber, phase) <= 0.0) {
       setSideDrawFractionWithinLimit(trayNumber, phase, 0.05);
     }
     setDoInitializion(true);
     return specification;
+  }
+
+  /**
+   * Find the flow specification controlling one tray-phase draw fraction.
+   *
+   * @param trayNumber bottom-up tray index
+   * @param phase side-draw phase
+   * @return matching specification, or {@code null} when the fraction is not flow-controlled
+   */
+  private ColumnSideDrawSpecification findSideDrawFlowSpecification(int trayNumber, SideDrawPhase phase) {
+    for (ColumnSideDrawSpecification specification : sideDrawSpecifications) {
+      if (specification.getTrayNumber() == trayNumber && specification.getPhase() == phase) {
+        return specification;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Create an actionable message for an over-specified side-draw fraction.
+   *
+   * @param trayNumber bottom-up tray index
+   * @param phase side-draw phase
+   * @return duplicate-control error message
+   */
+  private String createDuplicateSideDrawSpecificationMessage(int trayNumber, SideDrawPhase phase) {
+    return "Column " + getName() + " already has a " + phase + " side-draw flow specification on tray " + trayNumber
+        + "; configure at most one target for each tray and phase";
+  }
+
+  /**
+   * Reject duplicate controls retained in a column serialized by an older NeqSim version.
+   *
+   * @throws IllegalStateException if two specifications manipulate the same tray-phase draw fraction
+   */
+  private void ensureIndependentSideDrawSpecifications() {
+    Set<String> controlledFractions = new HashSet<>();
+    for (ColumnSideDrawSpecification specification : sideDrawSpecifications) {
+      String controlKey = specification.getTrayNumber() + ":" + specification.getPhase();
+      if (!controlledFractions.add(controlKey)) {
+        throw new IllegalStateException(
+            createDuplicateSideDrawSpecificationMessage(specification.getTrayNumber(), specification.getPhase()));
+      }
+    }
   }
 
   /**
@@ -12674,7 +12723,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param result validation result receiving issues
    */
   private void validateSideDrawSpecifications(ValidationResult result) {
+    Set<String> controlledFractions = new HashSet<>();
     for (ColumnSideDrawSpecification specification : sideDrawSpecifications) {
+      String controlKey = specification.getTrayNumber() + ":" + specification.getPhase();
+      if (!controlledFractions.add(controlKey)) {
+        result.addError("sidedraw.degreesOfFreedom",
+            createDuplicateSideDrawSpecificationMessage(specification.getTrayNumber(), specification.getPhase()),
+            "Keep one flow target for each tray and phase");
+      }
       if (specification.getTrayNumber() < 0 || specification.getTrayNumber() >= numberOfTrays) {
         result.addError("sidedraw.tray", "Side-draw specification tray is outside the column",
             "Use a tray number between 0 and column.getNumberOfTrays() - 1");
