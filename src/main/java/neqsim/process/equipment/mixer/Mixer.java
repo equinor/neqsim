@@ -377,7 +377,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
     double enthalpy = 0;
     for (int k = 0; k < streams.size(); k++) {
       if (streams.get(k).getFlowRate("kg/hr") > getMinimumFlow()) {
-        streams.get(k).getThermoSystem().init(3);
+        streams.get(k).getThermoSystem().init(2);
         enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
       }
     }
