@@ -10,8 +10,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPflashIncipientPhaseStabilityTest {
   private static final String[] COMPONENTS = { "methane", "ethane", "propane", "n-butane" };
-  private static final double[] FEED = { 0.5833884211682981, 0.16475359157041228,
-      0.19866217294783825, 0.053195814313451245 };
+  private static final double[] FEED = { 0.5833884211682981, 0.16475359157041228, 0.19866217294783825,
+      0.053195814313451245 };
 
   @Test
   void supplementaryStabilityTrialRetainsIncipientVapor() {
@@ -98,8 +98,7 @@ class TPflashIncipientPhaseStabilityTest {
     for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
       double recoveredFeed = 0.0;
       for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
-        recoveredFeed += system.getBeta(phaseIndex)
-            * system.getPhase(phaseIndex).getComponent(componentIndex).getx();
+        recoveredFeed += system.getBeta(phaseIndex) * system.getPhase(phaseIndex).getComponent(componentIndex).getx();
       }
       assertEquals(FEED[componentIndex], recoveredFeed, 1.0e-10);
       maximumLogFugacityResidual = Math.max(maximumLogFugacityResidual,
@@ -110,8 +109,7 @@ class TPflashIncipientPhaseStabilityTest {
 
   private double logFugacity(SystemInterface system, int phaseIndex, int componentIndex) {
     double composition = system.getPhase(phaseIndex).getComponent(componentIndex).getx();
-    double fugacityCoefficient = system.getPhase(phaseIndex).getComponent(componentIndex)
-        .getFugacityCoefficient();
+    double fugacityCoefficient = system.getPhase(phaseIndex).getComponent(componentIndex).getFugacityCoefficient();
     return Math.log(Math.max(composition, Double.MIN_NORMAL)) + Math.log(fugacityCoefficient);
   }
 }
