@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.Arrays;
 import org.junit.jupiter.api.Test;
 
 /** Tests conservative n-1 implicit finite-volume species transport. */
@@ -47,6 +48,96 @@ class ConservativeSpeciesTransportTest {
     double[] expectedTracer = { 1.0 / 3.0, 1.0 / 9.0, 1.0 / 27.0, 1.0 / 81.0 };
     assertArrayEquals(expectedTracer, report.getMassFractionProfile()[1], 1.0e-15);
     assertTrue(report.getMaximumRelativeInventoryResidual() < 1.0e-14);
+  }
+
+  @Test
+  void repeatedStepMatchesAnalyticalProfileAndMassResidenceTime() {
+    double[] firstProfile = runRepeatedStep(2.5, 36);
+    double[] repeatedProfile = runRepeatedStep(2.5, 36);
+    assertArrayEquals(firstProfile, repeatedProfile, 0.0, "Repeated runs must be deterministic");
+
+    assertEquals(120.0, calculateResidenceTime(2.5), 2.0e-10);
+    assertEquals(120.0, calculateResidenceTime(5.0), 2.0e-10);
+  }
+
+  private static double[] runRepeatedStep(double timeStepSeconds, int steps) {
+    int cells = 12;
+    double cellMassKg = 10.0;
+    double massFlowKgPerSecond = 1.0;
+    double[][] profile = uniformInitialProfile(cells);
+    double[] cellMass = constantArray(cells, cellMassKg);
+    double[] faceFlow = constantArray(cells + 1, massFlowKgPerSecond);
+
+    for (int step = 1; step <= steps; step++) {
+      OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(
+          new String[] { "carrier", "tracer" }, profile, new double[] { 0.0, 1.0 }, cellMass, cellMass, faceFlow,
+          timeStepSeconds);
+      assertTrue(report.isConverged(), report.getMessage());
+      assertTrue(report.getMaximumRelativeInventoryResidual() < 1.0e-13, report.getMessage());
+      assertEquals(0.0, report.getMaximumMassFractionSumError(), 0.0);
+      profile = report.getMassFractionProfile();
+      for (int cell = 0; cell < cells; cell++) {
+        assertEquals(analyticalTracer(step, cell, cellMassKg, massFlowKgPerSecond, timeStepSeconds), profile[1][cell],
+            5.0e-14);
+      }
+    }
+    return profile[1];
+  }
+
+  private static double calculateResidenceTime(double timeStepSeconds) {
+    int cells = 12;
+    double cellMassKg = 10.0;
+    double massFlowKgPerSecond = 1.0;
+    double[][] profile = uniformInitialProfile(cells);
+    double[] cellMass = constantArray(cells, cellMassKg);
+    double[] faceFlow = constantArray(cells + 1, massFlowKgPerSecond);
+    double previousOutlet = 0.0;
+    double responseMass = 0.0;
+    double responseFirstMoment = 0.0;
+
+    for (int step = 0; step < 500; step++) {
+      OnePhaseSpeciesConservationReport report = ConservativeSpeciesTransport.solve(
+          new String[] { "carrier", "tracer" }, profile, new double[] { 0.0, 1.0 }, cellMass, cellMass, faceFlow,
+          timeStepSeconds);
+      assertTrue(report.isConverged(), report.getMessage());
+      assertTrue(report.getMaximumRelativeInventoryResidual() < 1.0e-13, report.getMessage());
+      assertEquals(0.0, report.getMaximumMassFractionSumError(), 0.0);
+      profile = report.getMassFractionProfile();
+      double outlet = profile[1][cells - 1];
+      double responseIncrement = outlet - previousOutlet;
+      responseMass += responseIncrement;
+      responseFirstMoment += (step + 1.0) * timeStepSeconds * responseIncrement;
+      previousOutlet = outlet;
+    }
+    assertEquals(1.0, responseMass, 1.0e-14, "Step-response increments must integrate to one");
+    double inletEventFirstMoment = timeStepSeconds;
+    return responseFirstMoment / responseMass - inletEventFirstMoment;
+  }
+
+  private static double analyticalTracer(int steps, int cell, double cellMassKg, double massFlowKgPerSecond,
+      double timeStepSeconds) {
+    double denominator = cellMassKg + timeStepSeconds * massFlowKgPerSecond;
+    double spatialFactor = timeStepSeconds * massFlowKgPerSecond / denominator;
+    double temporalFactor = cellMassKg / denominator;
+    double term = Math.pow(temporalFactor, steps);
+    double carrier = term;
+    for (int offset = 1; offset <= cell; offset++) {
+      term *= spatialFactor * (steps + offset - 1.0) / offset;
+      carrier += term;
+    }
+    return 1.0 - carrier;
+  }
+
+  private static double[][] uniformInitialProfile(int cells) {
+    double[][] profile = new double[][] { new double[cells], new double[cells] };
+    Arrays.fill(profile[0], 1.0);
+    return profile;
+  }
+
+  private static double[] constantArray(int length, double value) {
+    double[] values = new double[length];
+    Arrays.fill(values, value);
+    return values;
   }
 
   @Test

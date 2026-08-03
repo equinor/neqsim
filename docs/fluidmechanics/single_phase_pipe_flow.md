@@ -296,14 +296,21 @@ relative inventory residuals, boundedness and sum-to-one diagnostics, thermodyna
 synchronization error, and hydraulic/species residual histories. Its array getters return
 defensive copies and `toJson()` is suitable for Python-side result capture.
 
-This path has currently been regression-tested for a single isothermal composition-change step
-with positive flow. Zero or reversed face flow fails explicitly because an external upwind
-composition is not yet defined. Once enabled, every failed hydraulic/species criterion throws so
-that a failed conservative state cannot advance to another timestep. Thirty-minute pulse
-breakthrough/recovery, repeated-event propagation, analytical front speed and residence time,
-grid/time convergence, thermal coupling, and phase appearance remain validation gates. The
-spreading of the present first-order upwind scheme is numerical; there is no physical
-axial-dispersion model.
+This path has been regression-tested for a single coupled isothermal composition-change step with
+positive flow. The isolated conservative kernel is also checked over repeated uniform-cell steps.
+For constant cell mass $M$, face mass flow $F$, and timestep $\Delta t$, the regression
+compares every cell with the closed-form repeated solution of the implicit upwind recurrence. It
+also subtracts the inlet-event first moment from the outlet-response first moment at two timesteps
+and recovers the mass-coordinate residence time $\sum_P M_P/F$. These checks establish the
+algebraic transport speed for the
+isolated kernel; they do not establish a coupled compressible-pipeline breakthrough prediction.
+
+Zero or reversed face flow fails explicitly because an external upwind composition is not yet
+defined. Once enabled, every failed hydraulic/species criterion throws so that a failed
+conservative state cannot advance to another timestep. Thirty-minute pulse breakthrough/recovery,
+coupled repeated-event propagation, spatial-grid convergence, thermal coupling, and phase
+appearance remain validation gates. The spreading of the present first-order upwind scheme is
+numerical; there is no physical axial-dispersion model.
 
 ## Compositional Tracking
 
@@ -386,9 +393,10 @@ The steady-state solver has been validated for:
 
 1. **Single-phase only**: No phase transition handling
 2. **Component-transport validation is incomplete**: The opt-in solver-type-1 path demonstrates
-   conservative, bounded one-step transport without normalization. Analytical front speed,
-   repeated-step and pulse breakthrough, and grid/time convergence are not yet established. Do
-   not use it yet as a validated long-duration compositional-tracking prediction.
+   conservative, bounded one-step coupled transport without normalization, while its isolated
+   transport kernel matches repeated-step and mass-coordinate residence-time solutions. Coupled
+   front propagation, pulse breakthrough/recovery, and grid/time convergence are not yet
+   established. Do not use it yet as a validated long-duration compositional-tracking prediction.
 3. **No physical axial dispersion model**: Existing advection-scheme spreading is numerical and
    must not be interpreted as molecular or turbulent dispersion.
 4. **Positive-flow diagnostic boundary**: Current transient mass diagnostics reject reverse
