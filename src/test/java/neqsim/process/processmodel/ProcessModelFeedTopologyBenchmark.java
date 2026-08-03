@@ -53,8 +53,8 @@ public class ProcessModelFeedTopologyBenchmark {
   }
 
   /** Creates a registered stream that the optimized runner can skip as a dormant section. */
-  private static Stream createDormantStream(String name, double flowKgPerHour) {
-    Stream stream = createStream(name, flowKgPerHour);
+  private static Stream createDormantStream(String name, SystemInterface dormantFluid) {
+    Stream stream = new Stream(name, dormantFluid);
     stream.setLockedInactive(true);
     return stream;
   }
@@ -66,6 +66,7 @@ public class ProcessModelFeedTopologyBenchmark {
    */
   private static ProcessModel buildModel() {
     ProcessModel model = new ProcessModel();
+    SystemInterface dormantFluid = createGasFluid();
     StreamInterface crossAreaStream = null;
     for (int areaIndex = 0; areaIndex < AREA_COUNT; areaIndex++) {
       ProcessSystem area = new ProcessSystem("area " + areaIndex);
@@ -87,7 +88,7 @@ public class ProcessModelFeedTopologyBenchmark {
         dormantCount--;
       }
       for (int streamIndex = 0; streamIndex < dormantCount; streamIndex++) {
-        area.add(createDormantStream("area " + areaIndex + " dormant " + streamIndex, 1.0 + streamIndex));
+        area.add(createDormantStream("area " + areaIndex + " dormant " + streamIndex, dormantFluid));
       }
 
       if (areaIndex < AREA_COUNT - 1) {
