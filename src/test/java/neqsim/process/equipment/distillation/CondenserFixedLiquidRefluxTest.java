@@ -9,7 +9,6 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
-import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /** Regression tests for the condenser's fixed liquid reflux split. */
@@ -97,15 +96,13 @@ public class CondenserFixedLiquidRefluxTest {
 
     double feedMolarFlow = feed.getFlowRate("mol/hr");
     for (int component = 0; component < feed.getThermoSystem().getNumberOfComponents(); component++) {
-      double feedComponentFlow =
-          feedMolarFlow * feed.getThermoSystem().getComponent(component).getz();
+      double feedComponentFlow = feedMolarFlow * feed.getThermoSystem().getComponent(component).getz();
       double productComponentFlow = 0.0;
       for (StreamInterface product : products) {
         productComponentFlow += product.getFlowRate("mol/hr")
             * product.getThermoSystem().getComponent(component).getz();
       }
-      assertEquals(feedComponentFlow, productComponentFlow,
-          Math.max(1.0e-10, Math.abs(feedComponentFlow) * 1.0e-8),
+      assertEquals(feedComponentFlow, productComponentFlow, Math.max(1.0e-10, Math.abs(feedComponentFlow) * 1.0e-8),
           "condenser products must conserve component " + component);
     }
   }
@@ -119,8 +116,7 @@ public class CondenserFixedLiquidRefluxTest {
       productEnthalpy += product.getThermoSystem().getEnthalpy();
     }
     double expectedProductEnthalpy = feedEnthalpy + condenser.getDuty();
-    assertEquals(expectedProductEnthalpy, productEnthalpy,
-        Math.max(1.0e-6, Math.abs(expectedProductEnthalpy) * 1.0e-8),
+    assertEquals(expectedProductEnthalpy, productEnthalpy, Math.max(1.0e-6, Math.abs(expectedProductEnthalpy) * 1.0e-8),
         "condenser duty and product enthalpies must close the energy balance");
   }
 
