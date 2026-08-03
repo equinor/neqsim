@@ -296,21 +296,34 @@ relative inventory residuals, boundedness and sum-to-one diagnostics, thermodyna
 synchronization error, and hydraulic/species residual histories. Its array getters return
 defensive copies and `toJson()` is suitable for Python-side result capture.
 
-This path has been regression-tested for a single coupled isothermal composition-change step with
-positive flow. The isolated conservative kernel is also checked over repeated uniform-cell steps.
-For constant cell mass $M$, face mass flow $F$, and timestep $\Delta t$, the regression
-compares every cell with the closed-form repeated solution of the implicit upwind recurrence. It
-also subtracts the inlet-event first moment from the outlet-response first moment at two timesteps
-and recovers the mass-coordinate residence time $\sum_P M_P/F$. These checks establish the
-algebraic transport speed for the
-isolated kernel; they do not establish a coupled compressible-pipeline breakthrough prediction.
+This path has been regression-tested for a single coupled isothermal composition-change step and
+an 1800 s methane/nitrogen pulse through the coupled hydraulic/EOS/species path at positive flow.
+The isolated conservative kernel is also checked over repeated uniform-cell steps. For constant
+cell mass $M$, face mass flow $\dot m$, and timestep $\Delta t$, define the cell
+Courant number $\lambda=\dot m\Delta t/M$, $p=\lambda/(1+\lambda)$, and
+$q=1/(1+\lambda)$. The closed-form response in cell $j$ after $n$ repeated steps from an initially
+tracer-free pipe is
 
-Zero or reversed face flow fails explicitly because an external upwind composition is not yet
-defined. Once enabled, every failed hydraulic/species criterion throws so that a failed
-conservative state cannot advance to another timestep. Thirty-minute pulse breakthrough/recovery,
-coupled repeated-event propagation, spatial-grid convergence, thermal coupling, and phase
-appearance remain validation gates. The spreading of the present first-order upwind scheme is
-numerical; there is no physical axial-dispersion model.
+$$\omega_j^n=\sum_{k=0}^{n-1}\binom{k+j}{j}p^{j+1}q^k.$$
+
+This negative-binomial response is used as an independent regression target. Its outlet impulse
+first moment also recovers the inventory-over-flow residence time
+
+$$\tau=\frac{\sum_P M_P}{\dot m}.$$
+
+The validated first-order kernel matches analytical repeated-step profiles at two timesteps,
+recovers the inventory-over-flow residence time, conserves a synthetic 1800 s pulse over six
+residence times, and reduces pulse error when the grid and timestep are jointly refined from
+12 cells/60 s to 24 cells/30 s. The end-to-end SRK/classic regression propagates the same 1800 s
+event through a 3000 m isothermal pipe, verifies breakthrough and recovery, and telescopes every
+immutable step report into a cumulative nitrogen balance.
+
+Zero or reversed face flow still fails explicitly because an external upwind composition is not
+yet defined. Once enabled, every failed hydraulic/species criterion throws so that a failed
+conservative state cannot advance to another timestep. Full hydraulic/EOS grid-and-timestep
+convergence, thermal coupling, phase appearance, higher-order convection, and physical dispersion
+remain validation gates. The spreading of the present first-order upwind scheme is numerical;
+there is no physical axial-dispersion model.
 
 ## Compositional Tracking
 
@@ -392,11 +405,11 @@ The steady-state solver has been validated for:
 ## Known Limitations
 
 1. **Single-phase only**: No phase transition handling
-2. **Component-transport validation is incomplete**: The opt-in solver-type-1 path demonstrates
-   conservative, bounded one-step coupled transport without normalization, while its isolated
-   transport kernel matches repeated-step and mass-coordinate residence-time solutions. Coupled
-   front propagation, pulse breakthrough/recovery, and grid/time convergence are not yet
-   established. Do not use it yet as a validated long-duration compositional-tracking prediction.
+2. **Component-transport validation remains bounded**: Repeated-step analytical advection,
+   inventory-over-flow residence time, an 1800 s pulse, cumulative component closure, and
+   first-order kernel grid/time refinement are established for positive isothermal flow. Full
+   hydraulic/EOS grid/time convergence, thermal coupling, phase appearance, and network junctions
+   are not yet established.
 3. **No physical axial dispersion model**: Existing advection-scheme spreading is numerical and
    must not be interpreted as molecular or turbulent dispersion.
 4. **Positive-flow diagnostic boundary**: Current transient mass diagnostics reject reverse
@@ -410,7 +423,7 @@ The steady-state solver has been validated for:
 Planned dependency order is:
 - Coupled hydraulic/EOS and total-mass convergence for solver type `1`
 - Conservative repeated-step and pulse validation after the one-step component balance
-- Dimensionally valid higher-order convection only after first-order analytical validation
+- Dimensionally valid higher-order convection after the established first-order analytical gate
 - Explicit physical dispersion as a separate, documented model
 
 ### TimeSeries Best Practices
