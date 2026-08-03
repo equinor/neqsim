@@ -876,6 +876,9 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     /** Whether the active constraint is a minimum-directed limit. */
     private boolean minimumConstraint;
 
+    /** Provenance of the active constraint limit. */
+    private String dataSource = "not_set";
+
     /** Constraint unit. */
     private String unit;
 
@@ -900,7 +903,8 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      */
     public BottleneckStatus(String areaName, String equipmentName, String constraintName, double utilization,
         double currentValue, double designValue, String unit, boolean feasible) {
-      this(areaName, equipmentName, constraintName, utilization, currentValue, designValue, false, unit, feasible);
+      this(areaName, equipmentName, constraintName, utilization, currentValue, designValue, false, "not_set", unit,
+          feasible);
     }
 
     /**
@@ -918,6 +922,27 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      */
     public BottleneckStatus(String areaName, String equipmentName, String constraintName, double utilization,
         double currentValue, double designValue, boolean minimumConstraint, String unit, boolean feasible) {
+      this(areaName, equipmentName, constraintName, utilization, currentValue, designValue, minimumConstraint,
+          "not_set", unit, feasible);
+    }
+
+    /**
+     * Creates a bottleneck status with explicit limit direction and provenance.
+     *
+     * @param areaName process area name
+     * @param equipmentName equipment name
+     * @param constraintName constraint name
+     * @param utilization utilization fraction
+     * @param currentValue current constraint value
+     * @param designValue reported design or minimum limit
+     * @param minimumConstraint true when values below the limit are worse
+     * @param dataSource provenance of the reported limit
+     * @param unit constraint unit
+     * @param feasible true when utilization is less than or equal to one
+     */
+    public BottleneckStatus(String areaName, String equipmentName, String constraintName, double utilization,
+        double currentValue, double designValue, boolean minimumConstraint, String dataSource, String unit,
+        boolean feasible) {
       this.areaName = areaName;
       this.equipmentName = equipmentName;
       this.constraintName = constraintName;
@@ -925,6 +950,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       this.currentValue = currentValue;
       this.designValue = designValue;
       this.minimumConstraint = minimumConstraint;
+      this.dataSource = dataSource == null ? "not_set" : dataSource;
       this.unit = unit;
       this.feasible = feasible;
     }
@@ -1011,6 +1037,15 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      */
     public boolean isMinimumConstraint() {
       return minimumConstraint;
+    }
+
+    /**
+     * Gets the provenance of the active constraint limit.
+     *
+     * @return source tag from the underlying capacity constraint
+     */
+    public String getDataSource() {
+      return dataSource;
     }
 
     /**
@@ -1889,7 +1924,8 @@ public class ProcessModelSimulationEvaluator implements Serializable {
             highestUtilization = utilization;
             active = new BottleneckStatus(areaName, equipment.getName(), entry.getKey(), utilization,
                 capacityConstraint.getCurrentValue(), capacityConstraint.getDisplayDesignValue(),
-                capacityConstraint.isMinimumConstraint(), capacityConstraint.getUnit(), utilization <= 1.0);
+                capacityConstraint.isMinimumConstraint(), capacityConstraint.getDataSource(),
+                capacityConstraint.getUnit(), utilization <= 1.0);
           }
         }
       }
