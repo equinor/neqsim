@@ -317,7 +317,13 @@ residence times, and reduces pulse error when the grid and timestep are jointly 
 12 cells/60 s to 24 cells/30 s. The end-to-end SRK/classic regression repeats the same 1800 s
 event independently through a 3000 m isothermal pipe, requires bit-identical outlet histories,
 final profiles, and component inventories, verifies breakthrough and recovery, and telescopes
-every immutable step report into a cumulative nitrogen balance.
+every immutable step report into a cumulative nitrogen balance. A coupled refinement regression
+then advances the same physical pulse and recovery at 6 nodes/120 s, 12 nodes/60 s, and
+24 nodes/30 s. At common 120 s sample times, it requires the mean absolute outlet-composition
+difference between the two finer solutions to be smaller than the difference between the two
+coarser solutions while every resolution retains the same EOS, boundedness, and conservation
+gates. This is a Cauchy-convergence check; it does not define an exact analytical solution for the
+coupled compressible case.
 
 Zero or reversed face flow still fails explicitly because an external upwind composition is not
 yet defined. Once enabled, every failed hydraulic/species criterion throws so that a failed
