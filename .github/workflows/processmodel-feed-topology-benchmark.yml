@@ -26,18 +26,44 @@ jobs:
         fork: [1, 2, 3, 4, 5]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
           cache: maven
-      - name: Compile benchmark
+      - name: Prepare fixed master baseline
+        run: |
+          git worktree add ../neqsim-baseline 5c010191b00c2ec3cc7a09533f7f9010f4be4c82
+          cp src/test/java/neqsim/process/processmodel/ProcessModelFeedTopologyBenchmark.java \
+            ../neqsim-baseline/src/test/java/neqsim/process/processmodel/
+      - name: Compile candidate
         run: ./mvnw -q -DskipTests test-compile
-      - name: Run benchmark fork ${{ matrix.fork }}
-        run: >-
-          ./mvnw
-          -Dtest=ProcessModelFeedTopologyBenchmark
-          -Dneqsim.benchmark.feedTopology=true
-          test
-      - name: Report benchmark fork ${{ matrix.fork }}
-        run: cat target/feed-topology-benchmark.txt
+      - name: Compile baseline
+        working-directory: ../neqsim-baseline
+        run: ./mvnw -q -DskipTests test-compile
+      - name: Run paired benchmark fork ${{ matrix.fork }}
+        env:
+          FORK: ${{ matrix.fork }}
+        run: |
+          run_case() {
+            local label="$1"
+            local directory="$2"
+            rm -f "${directory}/target/feed-topology-benchmark.txt"
+            (
+              cd "${directory}"
+              ./mvnw -q \
+                -Dtest=ProcessModelFeedTopologyBenchmark \
+                -Dneqsim.benchmark.feedTopology=true \
+                test
+            )
+            sed "s/^/${label} /" "${directory}/target/feed-topology-benchmark.txt"
+          }
+          if (( FORK % 2 == 1 )); then
+            run_case BASELINE ../neqsim-baseline
+            run_case CANDIDATE .
+          else
+            run_case CANDIDATE .
+            run_case BASELINE ../neqsim-baseline
+          fi
