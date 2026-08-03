@@ -2863,10 +2863,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       boolean fixedLiquidReflux = getCondenser().isSeparation_with_liquid_reflux();
       updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, fixedLiquidReflux ? 1L : 0L);
       if (fixedLiquidReflux) {
-        updatedSignature =
-            updateNaphtaliSandholmInputSignature(updatedSignature, getCondenser().getFixedLiquidRefluxValue());
-        updatedSignature =
-            updateNaphtaliSandholmInputSignature(updatedSignature, getCondenser().getFixedLiquidRefluxUnit());
+        updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature,
+            getCondenser().getFixedLiquidRefluxValue());
+        updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature,
+            getCondenser().getFixedLiquidRefluxUnit());
       }
       updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, getCondenser().getRefluxRatio());
       updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature,
@@ -2997,8 +2997,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       lastSolveStatus = SolveStatus.RIGOROUS_CONVERGED;
       lastSolveStatusReason = "Naphtali-Sandholm side-draw products satisfy the active rigorous convergence gates";
     } else if (accepted && !hasActiveSideDraw
-        && (!hasCondenser || getCondenser() == null
-            || getCondenser().isFixedLiquidRefluxSpecificationSatisfied())) {
+        && (!hasCondenser || getCondenser() == null || getCondenser().isFixedLiquidRefluxSpecificationSatisfied())) {
       lastSolveStatus = SolveStatus.RECONCILED_PRODUCTS;
       lastSolveStatusReason = "Naphtali-Sandholm direct products were applied";
     } else {
