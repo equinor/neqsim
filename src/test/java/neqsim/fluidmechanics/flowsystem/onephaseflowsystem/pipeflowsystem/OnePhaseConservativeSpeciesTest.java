@@ -272,7 +272,7 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     pipe.createSystem();
     pipe.init();
     pipe.solveSteadyState(1);
-    assertTrue(pipe.getConvergenceReport().isConverged());
+    assertTrue(pipe.getConvergenceReport().isConverged(), pipe.getConvergenceReport().getMessage());
     return pipe;
   }
 
