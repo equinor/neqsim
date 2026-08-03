@@ -31,8 +31,9 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   private static final double DENSITY_RELATIVE_TOLERANCE = 1.0e-8;
   private static final double MASS_BALANCE_RELATIVE_TOLERANCE = 1.0e-8;
   private static final int MAXIMUM_COUPLED_ITERATIONS = 12;
-  // Balance EOS evaluation noise against central-difference truncation on refined grids.
   private static final double FINITE_DIFFERENCE_RELATIVE_STEP = 1.0e-6;
+  private static final double NEAR_ROOT_FINITE_DIFFERENCE_RELATIVE_STEP = 1.0e-7;
+  private static final double NEAR_ROOT_RESIDUAL_THRESHOLD = 1.0e-8;
   private static final int COUPLED_HALF_BANDWIDTH = 2;
   private static final int COUPLED_JACOBIAN_COLORS = 2 * COUPLED_HALF_BANDWIDTH + 1;
   private static final int MAXIMUM_SPECIES_COUPLING_ITERATIONS = 100;
@@ -1360,7 +1361,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       double[] update;
       try {
         double[] values = calculateCoupledResidual(state);
-        double[][] jacobian = calculateCoupledBandedJacobian(state);
+        double[][] jacobian = calculateCoupledBandedJacobian(state, maximumAbsolute(values));
         double[] rightHandSide = new double[values.length];
         for (int row = 0; row < values.length; row++) {
           rightHandSide[row] = -values[row];
@@ -1445,13 +1446,18 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     }
   }
 
-  private double[][] calculateCoupledBandedJacobian(double[] state) {
+  private double[][] calculateCoupledBandedJacobian(double[] state, double residual) {
     try {
       int size = state.length;
       double[][] jacobian = new double[size][2 * COUPLED_HALF_BANDWIDTH + 1];
       double[] steps = new double[size];
+      // Use a robust perturbation away from the root, then recover the original near-root
+      // resolution so finite-difference truncation does not set the convergence floor.
+      double relativeStep = residual <= NEAR_ROOT_RESIDUAL_THRESHOLD
+          ? NEAR_ROOT_FINITE_DIFFERENCE_RELATIVE_STEP
+          : FINITE_DIFFERENCE_RELATIVE_STEP;
       for (int variable = 0; variable < size; variable++) {
-        steps[variable] = FINITE_DIFFERENCE_RELATIVE_STEP * Math.max(Math.abs(state[variable]), 1.0);
+        steps[variable] = relativeStep * Math.max(Math.abs(state[variable]), 1.0);
       }
 
       for (int color = 0; color < COUPLED_JACOBIAN_COLORS; color++) {
