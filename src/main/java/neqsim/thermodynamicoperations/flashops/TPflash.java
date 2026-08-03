@@ -342,8 +342,8 @@ public class TPflash extends Flash {
    * Ensures that GDEM acceleration has component-sized reusable work arrays.
    *
    * <p>
-   * The arrays are allocated lazily so deserialized and default-constructed flash operations remain supported. They
-   * are resized defensively if a caller replaces the underlying system before reusing the operation.
+   * The arrays are allocated lazily so deserialized and default-constructed flash operations remain supported. They are
+   * resized defensively if a caller replaces the underlying system before reusing the operation.
    * </p>
    *
    * @param numberOfComponents active component count
