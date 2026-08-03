@@ -31,7 +31,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   private static final double DENSITY_RELATIVE_TOLERANCE = 1.0e-8;
   private static final double MASS_BALANCE_RELATIVE_TOLERANCE = 1.0e-8;
   private static final int MAXIMUM_COUPLED_ITERATIONS = 12;
-  private static final double FINITE_DIFFERENCE_RELATIVE_STEP = 1.0e-7;
+  // EOS property updates make smaller central differences cancellation-prone on refined grids.
+  private static final double FINITE_DIFFERENCE_RELATIVE_STEP = 1.0e-5;
   private static final int COUPLED_HALF_BANDWIDTH = 2;
   private static final int COUPLED_JACOBIAN_COLORS = 2 * COUPLED_HALF_BANDWIDTH + 1;
   private static final int MAXIMUM_SPECIES_COUPLING_ITERATIONS = 100;
