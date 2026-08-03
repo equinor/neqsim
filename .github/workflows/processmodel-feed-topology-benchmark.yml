@@ -39,3 +39,5 @@ jobs:
           -Dtest=ProcessModelFeedTopologyBenchmark
           -Dneqsim.benchmark.feedTopology=true
           test
+      - name: Report benchmark fork ${{ matrix.fork }}
+        run: cat target/feed-topology-benchmark.txt
