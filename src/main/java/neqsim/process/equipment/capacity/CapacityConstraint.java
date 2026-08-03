@@ -683,8 +683,7 @@ public class CapacityConstraint implements Serializable {
    * @throws IllegalArgumentException if either bound is non-finite or minimum exceeds maximum
    */
   public CapacityConstraint setValidityRange(double minimum, double maximum) {
-    if (Double.isNaN(minimum) || Double.isInfinite(minimum) || Double.isNaN(maximum)
-        || Double.isInfinite(maximum)) {
+    if (Double.isNaN(minimum) || Double.isInfinite(minimum) || Double.isNaN(maximum) || Double.isInfinite(maximum)) {
       throw new IllegalArgumentException("validity range bounds must be finite");
     }
     if (minimum > maximum) {
@@ -727,7 +726,7 @@ public class CapacityConstraint implements Serializable {
    * Checks whether the current constraint value lies inside the assigned validity range.
    *
    * @return true when a range is assigned and the current value lies within both inclusive bounds; false when no range
-   *         is assigned
+   * is assigned
    */
   public boolean isCurrentValueWithinValidityRange() {
     if (!validityRangeSet) {
