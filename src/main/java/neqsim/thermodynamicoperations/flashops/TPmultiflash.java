@@ -2622,8 +2622,8 @@ public class TPmultiflash extends TPflash {
    * </p>
    */
   private void rescueStalledThreePhaseEndpoint() {
-    if (system.getNumberOfPhases() != 3 || system.isChemicalSystem() || system.hasIons()
-        || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck() || isFeasiblePhaseEquilibrium(system)) {
+    if (system.getNumberOfPhases() != 3 || system.isChemicalSystem() || system.hasIons() || system.doSolidPhaseCheck()
+        || system.isMultiphaseWaxCheck() || isFeasiblePhaseEquilibrium(system)) {
       return;
     }
 
@@ -2708,8 +2708,7 @@ public class TPmultiflash extends TPflash {
         recoveredComposition += candidate.getBeta(phaseIndex) * composition;
         double fugacityCoefficient = candidate.getPhase(phaseIndex).getComponent(componentIndex)
             .getFugacityCoefficient();
-        double logFugacity = Math.log(Math.max(composition, Double.MIN_NORMAL))
-            + Math.log(fugacityCoefficient);
+        double logFugacity = Math.log(Math.max(composition, Double.MIN_NORMAL)) + Math.log(fugacityCoefficient);
         if (!Double.isFinite(logFugacity)) {
           return false;
         }
