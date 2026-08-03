@@ -296,7 +296,10 @@ relative inventory residuals, boundedness and sum-to-one diagnostics, thermodyna
 synchronization error, and hydraulic/species residual histories. Its array getters return
 defensive copies and `toJson()` is suitable for Python-side result capture.
 
-For constant cell mass $M$, face mass flow $\dot m$, and timestep $\Delta t$, define the cell
+This path has been regression-tested for a single coupled isothermal composition-change step and
+an 1800 s methane/nitrogen pulse through the coupled hydraulic/EOS/species path at positive flow.
+The isolated conservative kernel is also checked over repeated uniform-cell steps. For constant
+cell mass $M$, face mass flow $\dot m$, and timestep $\Delta t$, define the cell
 Courant number $\lambda=\dot m\Delta t/M$, $p=\lambda/(1+\lambda)$, and
 $q=1/(1+\lambda)$. The closed-form response in cell $j$ after $n$ repeated steps from an initially
 tracer-free pipe is
@@ -308,12 +311,12 @@ first moment also recovers the inventory-over-flow residence time
 
 $$\tau=\frac{\sum_P M_P}{\dot m}.$$
 
-The validated first-order kernel matches the closed form through 20 repeated steps at
-$\lambda=0.5$, recovers a 3600 s residence time, conserves a synthetic 1800 s pulse over six
+The validated first-order kernel matches analytical repeated-step profiles at two timesteps,
+recovers the inventory-over-flow residence time, conserves a synthetic 1800 s pulse over six
 residence times, and reduces pulse error when the grid and timestep are jointly refined from
-12 cells/60 s to 24 cells/30 s. An end-to-end SRK/classic regression also propagates an 1800 s
-methane/nitrogen inlet event through a 3000 m isothermal pipe, verifies breakthrough and recovery,
-and telescopes every immutable step report into a cumulative nitrogen balance.
+12 cells/60 s to 24 cells/30 s. The end-to-end SRK/classic regression propagates the same 1800 s
+event through a 3000 m isothermal pipe, verifies breakthrough and recovery, and telescopes every
+immutable step report into a cumulative nitrogen balance.
 
 Zero or reversed face flow still fails explicitly because an external upwind composition is not
 yet defined. Once enabled, every failed hydraulic/species criterion throws so that a failed

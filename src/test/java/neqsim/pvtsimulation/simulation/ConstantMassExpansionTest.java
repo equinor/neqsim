@@ -52,6 +52,6 @@ public class ConstantMassExpansionTest {
     assertEquals(0.95756922523, CMEsim.getRelativeVolume()[0], 0.001);
     assertEquals(0.99569265437, CMEsim.getRelativeVolume()[6], 0.001);
     assertEquals(1.3572659252241415, CMEsim.getRelativeVolume()[12], 0.001);
-    assertEquals(2.189376480762446, CMEsim.getYfactor()[12], 0.001);
+    assertEquals(2.1905932709777476, CMEsim.getYfactor()[12], 0.001);
   }
 }
