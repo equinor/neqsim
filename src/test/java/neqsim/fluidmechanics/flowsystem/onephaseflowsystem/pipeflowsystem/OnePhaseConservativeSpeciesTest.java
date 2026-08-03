@@ -299,12 +299,18 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
 
   private static double commonTimeMeanAbsoluteDifference(double[] first, double firstTimeStepSeconds, double[] second,
       double secondTimeStepSeconds, double sampleIntervalSeconds) {
-    int samples = (int) Math.round(first.length * firstTimeStepSeconds / sampleIntervalSeconds);
-    assertEquals(samples, (int) Math.round(second.length * secondTimeStepSeconds / sampleIntervalSeconds));
+    int firstStride = exactStepCount(sampleIntervalSeconds, firstTimeStepSeconds);
+    int secondStride = exactStepCount(sampleIntervalSeconds, secondTimeStepSeconds);
+    assertEquals(first.length * firstTimeStepSeconds, second.length * secondTimeStepSeconds, 1.0e-12,
+        "Histories must span the same physical duration.");
+    assertEquals(0, first.length % firstStride, "First history must end on a common sample time.");
+    assertEquals(0, second.length % secondStride, "Second history must end on a common sample time.");
+    int samples = first.length / firstStride;
+    assertEquals(samples, second.length / secondStride);
     double difference = 0.0;
     for (int sample = 1; sample <= samples; sample++) {
-      int firstIndex = (int) Math.round(sample * sampleIntervalSeconds / firstTimeStepSeconds) - 1;
-      int secondIndex = (int) Math.round(sample * sampleIntervalSeconds / secondTimeStepSeconds) - 1;
+      int firstIndex = sample * firstStride - 1;
+      int secondIndex = sample * secondStride - 1;
       difference += Math.abs(first[firstIndex] - second[secondIndex]);
     }
     return difference / samples;
