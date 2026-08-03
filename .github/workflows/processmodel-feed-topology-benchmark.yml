@@ -1,0 +1,35 @@
+name: ProcessModel feed topology benchmark
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/processmodel-feed-topology-benchmark.yml"
+      - "src/main/java/neqsim/process/processmodel/ProcessModel.java"
+      - "src/test/java/neqsim/process/processmodel/ProcessModelFeedTopologyBenchmark.java"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+      - name: Compile benchmark
+        run: ./mvnw -q -DskipTests test-compile
+      - name: Run five fresh JVM forks
+        run: |
+          for fork in 1 2 3 4 5; do
+            echo "Benchmark fork ${fork}"
+            ./mvnw -q \
+              -Dtest=ProcessModelFeedTopologyBenchmark \
+              -Dneqsim.benchmark.feedTopology=true \
+              test
+          done
