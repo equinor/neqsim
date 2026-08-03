@@ -250,6 +250,12 @@ engineering-unit capacity margin is positive on the feasible side: `limit - curr
 constraints and `current - limit` for minimum constraints. This convention prevents a minimum-only
 constraint's internal unset design sentinel from appearing in JSON or CSV throughput results.
 
+The same throughput rows preserve `CapacityConstraint.getDataSource()` as `dataSource` in Java,
+JSON, and CSV. Set a concise provenance tag such as `mechanicalDesign`, `installedDataSheet`, or
+`operatingEnvelope` when defining the limit. Untagged and legacy rows report `not_set`; downstream
+optimizers should retain this tag with recommendations rather than treating all limits as equally
+authoritative.
+
 ### 2. CapacityConstrainedEquipment (Interface)
 
 Interface that equipment classes implement to participate in capacity tracking.
