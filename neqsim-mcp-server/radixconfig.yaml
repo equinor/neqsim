@@ -59,6 +59,18 @@ spec:
         QUARKUS_OIDC_RESOURCE_METADATA_SCOPES: "api://35fda377-148b-4b6b-a5be-d52203160690/mcp.access"
         # OTel has no collector yet -> keep the SDK off even under enterprise
         QUARKUS_OTEL_SDK_DISABLED: "true"
+        # ── Observability (added 2026-08-03): the image ships quarkus.log.level=WARN,
+        # which made the pod silent even on 401s — undebuggable during the Copilot
+        # Studio rollout. One access-log line per request with the authenticated
+        # principal (%u = upn claim), status and duration; health probes excluded.
+        QUARKUS_HTTP_ACCESS_LOG_ENABLED: "true"
+        QUARKUS_HTTP_ACCESS_LOG_PATTERN: '%h %u %t "%r" %s %b %Dms'
+        QUARKUS_HTTP_ACCESS_LOG_EXCLUDE_PATTERN: "/q/.*"
+        # MCP JSON-RPC traffic log (quarkiverse 1.13 built-in): logs each
+        # tools/call with tool name and truncated args. If this does not emit
+        # (build-time-fixed in the prebuilt image), fall back to a code change.
+        QUARKUS_MCP_SERVER_TRAFFIC_LOGGING_ENABLED: "true"
+        QUARKUS_MCP_SERVER_TRAFFIC_LOGGING_TEXT_LIMIT: "300"
       environmentConfig:
         - environment: poc
           replicas: 1                                # MANDATORY: in-JVM session state
