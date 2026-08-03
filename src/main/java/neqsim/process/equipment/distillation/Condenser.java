@@ -136,6 +136,9 @@ public class Condenser extends SimpleTray {
     this.separation_with_liquid_reflux = separation_with_liquid_reflux;
     this.reflux_value = value;
     this.reflux_unit = unit;
+    lastAvailableLiquidReflux = Double.NaN;
+    lastFixedLiquidReflux = Double.NaN;
+    lastFixedLiquidRefluxResidual = Double.NaN;
   }
 
   /**
