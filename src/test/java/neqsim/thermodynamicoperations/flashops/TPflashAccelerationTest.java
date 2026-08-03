@@ -61,4 +61,38 @@ class TPflashAccelerationTest {
     double expectedLogKStep = 1.04 / (1.0 - 1.04) * 0.01;
     assertEquals(Math.exp(expectedLogKStep), system.getPhase(0).getComponent(0).getK() / methaneKBefore, 1.0e-10);
   }
+
+  @Test
+  void testAccelerationWorkspaceDoesNotRetainPreviousResult() {
+    SystemInterface initialSystem = new SystemPrEos(300.0, 50.0);
+    initialSystem.addComponent("methane", 0.8);
+    initialSystem.addComponent("n-heptane", 0.2);
+    initialSystem.setMixingRule("classic");
+    initialSystem.setMultiPhaseCheck(false);
+    new ThermodynamicOperations(initialSystem).TPflash();
+
+    TPflash flash = new TPflash(initialSystem.clone());
+    prepareBoundedAcceleration(flash);
+    flash.accselerateSucsSubs();
+    double expectedBeta = flash.system.getBeta();
+    double expectedMethaneK = flash.system.getPhase(0).getComponent(0).getK();
+    double expectedHeptaneK = flash.system.getPhase(0).getComponent(1).getK();
+
+    flash.system = initialSystem.clone();
+    prepareBoundedAcceleration(flash);
+    flash.accselerateSucsSubs();
+
+    assertEquals(expectedBeta, flash.system.getBeta(), 0.0);
+    assertEquals(expectedMethaneK, flash.system.getPhase(0).getComponent(0).getK(), 0.0);
+    assertEquals(expectedHeptaneK, flash.system.getPhase(0).getComponent(1).getK(), 0.0);
+  }
+
+  private void prepareBoundedAcceleration(TPflash flash) {
+    for (int componentIndex = 0; componentIndex < flash.system.getPhase(0).getNumberOfComponents(); componentIndex++) {
+      flash.lnK[componentIndex] = Math.log(flash.system.getPhase(0).getComponent(componentIndex).getK());
+      flash.oldDeltalnK[componentIndex] = 0.8;
+      flash.oldoldDeltalnK[componentIndex] = 1.0;
+      flash.deltalnK[componentIndex] = 1.0e-4 * (componentIndex + 1.0);
+    }
+  }
 }

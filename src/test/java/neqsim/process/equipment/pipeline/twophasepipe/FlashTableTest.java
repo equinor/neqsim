@@ -7,10 +7,15 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.twophasepipe.ThermodynamicCoupling.ThermoProperties;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
@@ -145,8 +150,8 @@ class FlashTableTest {
 
     long memory = table.estimateMemoryUsage();
 
-    // 14 property tables * nP * nT * 8 bytes
-    long expected = 14L * nP * nT * 8;
+    // 19 property tables * nP * nT * 8 bytes
+    long expected = 19L * nP * nT * 8;
     assertEquals(expected, memory, "Memory estimate should match formula");
   }
 
@@ -194,5 +199,81 @@ class FlashTableTest {
     // Density should be similar (within 5%)
     double densityRatio = props2.gasDensity / props1.gasDensity;
     assertTrue(densityRatio > 0.95 && densityRatio < 1.05, "Properties at nearby points should be similar");
+  }
+
+  @Test
+  void testGasOilTableKeepsAbsentAqueousIdentityAtAndBetweenGridPoints() {
+    SystemInterface gasOil = new SystemSrkEos(313.15, 10.0);
+    gasOil.addComponent("methane", 0.70);
+    gasOil.addComponent("n-heptane", 0.30);
+    gasOil.setMixingRule("classic");
+    gasOil.setMultiPhaseCheck(true);
+    table.build(gasOil, 9.0e5, 11.0e5, 3, 308.15, 318.15, 3);
+
+    ThermoProperties exact = table.interpolate(10.0e5, 313.15);
+    ThermoProperties between = table.interpolate(10.5e5, 315.65);
+
+    assertTrue(exact.liquidFraction > 0.0);
+    assertEquals(1.0, exact.oilMassFractionOfLiquid, 1.0e-12);
+    assertEquals(0.0, exact.aqueousMassFractionOfLiquid, 1.0e-12);
+    assertEquals(0.0, between.aqueousMassFractionOfLiquid, 1.0e-12);
+  }
+
+  @Test
+  void testGasWaterTableKeepsAbsentOilIdentityAtAndBetweenGridPoints() {
+    SystemInterface gasWater = new SystemSrkCPAstatoil(313.15, 10.0);
+    gasWater.addComponent("methane", 0.70);
+    gasWater.addComponent("water", 0.30);
+    gasWater.setMixingRule(10);
+    gasWater.setMultiPhaseCheck(true);
+    table.build(gasWater, 9.0e5, 11.0e5, 3, 308.15, 318.15, 3);
+
+    ThermoProperties exact = table.interpolate(10.0e5, 313.15);
+    ThermoProperties between = table.interpolate(10.5e5, 315.65);
+
+    assertTrue(exact.liquidFraction > 0.0);
+    assertEquals(0.0, exact.oilMassFractionOfLiquid, 1.0e-12);
+    assertEquals(1.0, exact.aqueousMassFractionOfLiquid, 1.0e-12);
+    assertEquals(0.0, between.oilMassFractionOfLiquid, 1.0e-12);
+  }
+
+  @Test
+  void testThreePhaseTableNormalizesBothLiquidMassContributions() {
+    SystemInterface threePhase = new SystemSrkEos(300.0, 50.0);
+    threePhase.addComponent("methane", 0.40);
+    threePhase.addComponent("propane", 0.10);
+    threePhase.addComponent("n-heptane", 0.15);
+    threePhase.addComponent("n-octane", 0.15);
+    threePhase.addComponent("water", 0.20);
+    threePhase.setMixingRule("classic");
+    threePhase.setMultiPhaseCheck(true);
+    table.build(threePhase, 45.0e5, 55.0e5, 3, 295.0, 305.0, 3);
+
+    ThermoProperties exact = table.interpolate(50.0e5, 300.0);
+    ThermoProperties between = table.interpolate(52.5e5, 302.5);
+
+    assertTrue(exact.oilMassFractionOfLiquid > 0.0);
+    assertTrue(exact.aqueousMassFractionOfLiquid > 0.0);
+    assertEquals(1.0, exact.oilMassFractionOfLiquid + exact.aqueousMassFractionOfLiquid, 1.0e-12);
+    assertEquals(1.0, between.oilMassFractionOfLiquid + between.aqueousMassFractionOfLiquid, 1.0e-12);
+  }
+
+  @Test
+  void testSerializationPreservesPhaseResolvedInterpolation() throws Exception {
+    table.build(testFluid, 10e5, 50e5, 3, 280.0, 340.0, 3);
+    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    ObjectOutputStream output = new ObjectOutputStream(bytes);
+    output.writeObject(table);
+    output.close();
+    ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()));
+    FlashTable restored = (FlashTable) input.readObject();
+    input.close();
+
+    ThermoProperties expected = table.interpolate(30e5, 310.0);
+    ThermoProperties actual = restored.interpolate(30e5, 310.0);
+    assertEquals(expected.gasVaporFraction, actual.gasVaporFraction, 1.0e-12);
+    assertEquals(expected.liquidFraction, actual.liquidFraction, 1.0e-12);
+    assertEquals(expected.oilMassFractionOfLiquid, actual.oilMassFractionOfLiquid, 1.0e-12);
+    assertEquals(expected.aqueousMassFractionOfLiquid, actual.aqueousMassFractionOfLiquid, 1.0e-12);
   }
 }

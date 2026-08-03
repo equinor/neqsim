@@ -125,6 +125,35 @@ inclined_section_gas_carryover_number,inclined_section_liquid_fallback_potential
 severe_slugging_number,severe_slug_potential
 ```
 
+### Phase-transfer validation
+
+When `setIncludeMassTransfer(true)` is enabled, validate gas, oil, and water separately rather than
+checking total mass alone. Condensation is assigned from the equilibrium oil/aqueous mass split,
+whereas evaporation is withdrawn from the actual donor inventories. The transfer-only requirements
+are:
+
+$$\Gamma_G+\Gamma_O+\Gamma_W=0$$
+
+and, using donor velocity for transferred momentum,
+
+$$S_{p,G}+S_{p,O}+S_{p,W}=0$$
+
+Use `TwoFluidMassBalanceReport` to check `GAS`, `OIL`, `WATER`, `LIQUID`, and `TOTAL`. A useful
+phase-transition test starts from a cell with no liquid seed, crosses the SRK/CPA dew point in both
+directions, and sweeps at least three nearby temperatures on each side. Report the EOS, mixing rule,
+composition, absolute pressure, temperature, relaxation time, time step, mesh, and phase inventories.
+Repeat the run to verify deterministic behavior and compare a refined time step and mesh.
+
+For an aqueous-first transition, the first condensation source must be water even though the
+gas-only hydrodynamic water cut defaults to zero. For an oil-first transition, the water source must
+remain zero. In a gas + oil + aqueous flash, the reported equilibrium liquid mass fractions must both
+be included and sum to one. `FlashTable` and rigorous-flash runs should give the same phase identity;
+use sufficiently fine tables near phase boundaries.
+
+The phase-resolved closure conserves bulk phase inventories, but it does not yet transport a full
+component-composition vector in every hydrodynamic cell. Do not interpret it as commercial-simulator
+equivalence or use total-mass closure alone as validation of liquid identity.
+
 The `severe_slugging_number` header is retained as a deprecated duplicate for CSV compatibility.
 It contains the local inclined-section gas-carryover number, not the explicit system stability
 result. New consumers should use `inclined_section_gas_carryover_number`. Call

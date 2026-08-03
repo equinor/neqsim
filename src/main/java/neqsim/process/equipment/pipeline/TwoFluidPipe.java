@@ -5877,6 +5877,13 @@ public class TwoFluidPipe extends Pipeline {
   /**
    * Enable/disable mass transfer (flashing/condensation).
    *
+   * <p>
+   * When enabled, PT-flash equilibrium generates conservative gas, hydrocarbon-liquid, and aqueous-liquid sources.
+   * Condensation follows the equilibrium liquid mass split, while evaporation is limited by the actual oil and water
+   * inventories. Transferred momentum uses donor velocity. The hydrodynamic state tracks bulk phase inventories, not a
+   * complete component-composition vector in every cell.
+   * </p>
+   *
    * @param include true to include mass transfer
    */
   public void setIncludeMassTransfer(boolean include) {

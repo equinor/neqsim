@@ -1,13 +1,13 @@
 ---
 title: TwoFluidPipe Model Documentation
-description: The NeqSim `TwoFluidPipe` model implements a transient two-fluid multiphase flow solver for pipeline and riser simulations. It solves separate conservation equations for gas and liquid phases, enablin...
+description: The NeqSim `TwoFluidPipe` model implements a transient multiphase-flow solver with phase-resolved gas, hydrocarbon-liquid, and aqueous-liquid conservation equations.
 ---
 
 # TwoFluidPipe Model Documentation
 
 ## Overview
 
-The NeqSim `TwoFluidPipe` model implements a transient two-fluid multiphase flow solver for pipeline and riser simulations. It solves separate conservation equations for gas and liquid phases, enabling accurate prediction of:
+The NeqSim `TwoFluidPipe` model implements a transient two-fluid multiphase flow solver for pipeline and riser simulations. It solves phase-resolved gas, hydrocarbon-liquid, and aqueous-liquid conservation equations, enabling prediction of:
 
 - Liquid holdup and accumulation
 - Pressure drop along the pipeline
@@ -22,19 +22,46 @@ The selectable closure sets are literature-inspired NeqSim implementations. Hist
 ## Conservation Equations
 
 ### Mass Conservation
-Separate mass conservation equations for gas and liquid phases:
+Separate mass conservation equations are solved for gas, hydrocarbon liquid, and aqueous liquid:
 
 | Equation | Mathematical Form | Description |
 |----------|-------------------|-------------|
-| Gas mass | ∂(αG ρG)/∂t + ∂(αG ρG vG)/∂x = ΓG | Gas phase continuity with mass transfer |
-| Liquid mass | ∂(αL ρL)/∂t + ∂(αL ρL vL)/∂x = -ΓG | Liquid phase continuity with mass transfer |
-| Mass transfer ΓG | Flash-based calculation | Evaporation/condensation with optional kinetic limits |
+| Gas mass | ∂(A αG ρG)/∂t + ∂(A αG ρG vG)/∂x = ΓG | Gas phase continuity with mass transfer |
+| Oil mass | ∂(A αO ρO)/∂t + ∂(A αO ρO vO)/∂x = ΓO | Hydrocarbon-liquid continuity |
+| Water mass | ∂(A αW ρW)/∂t + ∂(A αW ρW vW)/∂x = ΓW | Aqueous-liquid continuity |
+| Phase transfer | ΓG + ΓO + ΓW = 0 | Flash-based transfer with inventory limits |
 
 Where:
-- αG, αL = Gas and liquid volume fractions (holdup)
-- ρG, ρL = Phase densities [kg/m³]
-- vG, vL = Phase velocities [m/s]
-- ΓG = Mass transfer rate [kg/(m³·s)]
+- αG, αO, αW = gas, oil, and water volume fractions (holdup)
+- A = pipe cross-sectional area [m²]
+- ρG, ρO, ρW = phase densities [kg/m³]
+- vG, vO, vW = phase velocities [m/s]
+- ΓG, ΓO, ΓW = phase mass sources [kg/(m·s)] in the finite-volume implementation
+
+#### Flash-driven phase identity
+
+`ThermodynamicCoupling` identifies phases by `PhaseType`; it does not assume gas, oil, or aqueous
+phases occupy fixed array positions. A gas + oil + aqueous PT flash aggregates both liquid phases
+in the equilibrium-liquid target. For condensation, the new liquid is split using equilibrium oil
+and aqueous **mass** contributions. The current hydrodynamic water cut is intentionally not used at
+phase appearance because a gas-only cell contains no information about the identity of its first
+liquid.
+
+For evaporation, oil and water withdrawals are distributed from the actual conservative phase
+inventories. Each withdrawal is bounded by `phase mass / relaxation time`, so an absent phase cannot
+evaporate and no phase can be removed faster than the relaxation step permits. The immutable
+`PhaseMassTransfer` result reports gas, oil, and water sources in kg/(m s), together with flash
+convergence and applicability metadata.
+
+Transferred momentum uses donor velocity: condensing gas gives each receiving liquid gas momentum,
+while evaporating oil and water give the gas their respective liquid momenta. Transfer-only gas,
+oil, and water momentum sources therefore sum to zero. This closure preserves phase and total mass
+and mixture momentum, but the current hydrodynamic state still does not transport full component
+compositions independently in every cell.
+
+`FlashTable` stores the same aggregate liquid fraction, oil/aqueous liquid mass split, and gas/liquid
+molar masses as the rigorous flash path. Interpolated liquid identity fractions are clamped and
+renormalized; an identity that is absent at all surrounding grid points remains exactly zero.
 
 ### Momentum Conservation
 Separate momentum equations for each phase:
@@ -343,8 +370,9 @@ System.out.println(pipe.getThermalSummary());
 | Category | Feature | Method/Correlation |
 |----------|---------|--------------------|
 | **Conservation Equations** |
-| Gas mass | Full continuity equation | Flash-based mass transfer |
-| Liquid mass | Full continuity equation | Flash-based mass transfer |
+| Gas mass | Full continuity equation | Phase-resolved flash transfer |
+| Oil mass | Full continuity equation | Equilibrium mass split / donor inventory |
+| Water mass | Full continuity equation | Equilibrium mass split / donor inventory |
 | Gas momentum | 1D momentum balance | Wall and interfacial shear |
 | Liquid momentum | 1D momentum balance | Wall and interfacial shear |
 | Mixture energy | Full energy balance | Optional J-T effect |
@@ -490,11 +518,12 @@ larger engineering tolerance for long simulations after demonstrating time-step 
 sensitivity. Positivity limiting or any future non-conservative correction appears explicitly as a
 non-zero residual rather than being hidden.
 
-Gas-liquid phase transfer is added to one phase and removed from the other, so it cancels from the
-total source. Oil-water segregation is represented by separate phase momentum and face fluxes; it
-does not use a local oil-to-water mass relaxation. The IMEX pressure correction likewise changes
-phase momenta, not phase masses. Closed boundaries therefore have zero integrated boundary flux,
-while open boundaries close against the actual phase-resolved inlet and outlet fluxes.
+Flash-driven phase transfer is added to gas, oil, and water with
+$\Gamma_G+\Gamma_O+\Gamma_W=0$, so it cancels from the total source without losing liquid identity.
+Oil-water segregation is represented by separate phase momentum and face fluxes; it does not use a
+local oil-to-water mass relaxation. The IMEX pressure correction likewise changes phase momenta,
+not phase masses. Closed boundaries therefore have zero integrated boundary flux, while open
+boundaries close against the actual phase-resolved inlet and outlet fluxes.
 
 A steady-state solution remains a useful long-time comparison, but agreement must result from the
 transient balances and closure forces rather than overwriting the conserved state.
