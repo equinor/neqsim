@@ -98,7 +98,8 @@ public class CondenserFixedLiquidRefluxTest {
     assertTrue(column.wasSequentialWarmStateReused(), "an unchanged accepted state must be reused exactly");
     assertEquals(0, column.getLastIterationCount(), "exact reuse must execute zero tray iterations");
 
-    column.getCondenser().setSeparation_with_liquid_reflux(true, 1.0e-3, "kg/hr");
+    double impossibleRefluxKgPerHour = 2.0 * feed.getFlowRate("kg/hr");
+    column.getCondenser().setSeparation_with_liquid_reflux(true, impossibleRefluxKgPerHour, "kg/hr");
     column.run();
 
     assertFalse(column.wasSequentialWarmStateReused(),
