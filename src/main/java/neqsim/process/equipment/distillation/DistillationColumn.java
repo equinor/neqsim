@@ -12808,8 +12808,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
     for (ColumnPumparound pumparound : pumparounds) {
       if (!controlledDrawTrays.add(pumparound.getDrawTrayNumber())) {
-        result.addError("pumparound.degreesOfFreedom",
-            createDuplicatePumparoundMessage(pumparound.getDrawTrayNumber()),
+        result.addError("pumparound.degreesOfFreedom", createDuplicatePumparoundMessage(pumparound.getDrawTrayNumber()),
             "Keep one liquid pumparound for each draw tray");
       }
       if (pumparound.getDrawTrayNumber() < 0 || pumparound.getDrawTrayNumber() >= numberOfTrays
