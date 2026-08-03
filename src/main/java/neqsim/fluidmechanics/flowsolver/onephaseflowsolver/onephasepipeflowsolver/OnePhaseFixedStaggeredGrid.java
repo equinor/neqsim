@@ -27,6 +27,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   static Logger logger = LogManager.getLogger(OnePhaseFixedStaggeredGrid.class);
 
   private static final int MAXIMUM_NONLINEAR_ITERATIONS = 100;
+  private static final double PASCAL_PER_BAR = 1.0e5;
   private static final double NONLINEAR_RESIDUAL_TOLERANCE = 1.0e-10;
   private static final double DENSITY_RELATIVE_TOLERANCE = 1.0e-8;
   private static final double MASS_BALANCE_RELATIVE_TOLERANCE = 1.0e-8;
@@ -1476,13 +1477,15 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
 
       applyCoupledState(state);
       setMassConservationMatrixTDMA();
+      // The coupled pressure unknowns are in bara, while getdPdrho() is in SI pressure units.
+      // Apply d(rho)/d(p_bara) = 1e5 / (dP/d(rho)) when replacing the numerical entries.
       for (int node = 1; node < numberOfNodes - 1; node++) {
         int massRow = 2 * (node - 1);
         if (node > 1) {
-          setCoupledJacobianEntry(jacobian, massRow, massRow - 2, a[node] * 1.0e5
+          setCoupledJacobianEntry(jacobian, massRow, massRow - 2, a[node] * PASCAL_PER_BAR
               / pipe.getNode(node - 1).getBulkSystem().getPhase(0).getdPdrho() / coupledMassEquationScale[node]);
         }
-        setCoupledJacobianEntry(jacobian, massRow, massRow, b[node] * 1.0e5
+        setCoupledJacobianEntry(jacobian, massRow, massRow, b[node] * PASCAL_PER_BAR
             / pipe.getNode(node).getBulkSystem().getPhase(0).getdPdrho() / coupledMassEquationScale[node]);
       }
       return jacobian;
