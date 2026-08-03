@@ -64,9 +64,12 @@ spec:
         # Studio rollout. One access-log line per request with the authenticated
         # principal (%u = upn claim), status and duration; health probes excluded.
         QUARKUS_HTTP_ACCESS_LOG_ENABLED: "true"
-        # The image pins quarkus.log.level=WARN; the access log emits at INFO
-        # under this category, so it must be raised explicitly or nothing prints.
-        QUARKUS_LOG_CATEGORY__IO_QUARKUS_HTTP_ACCESS_LOG__LEVEL: "INFO"
+        # The image pins quarkus.log.level=WARN, which swallows the access log's
+        # INFO lines. Raising the specific category via env is impossible — its
+        # name (io.quarkus.http.access-log) contains a dash, and env-var mapping
+        # only converts underscores back to dots — so raise the root level.
+        # Noisy categories (neqsim=WARN) stay pinned by application.properties.
+        QUARKUS_LOG_LEVEL: "INFO"
         QUARKUS_HTTP_ACCESS_LOG_PATTERN: '%h %u %t "%r" %s %b %Dms'
         QUARKUS_HTTP_ACCESS_LOG_EXCLUDE_PATTERN: "/q/.*"
         # MCP JSON-RPC traffic log (quarkiverse 1.13 built-in): logs each
