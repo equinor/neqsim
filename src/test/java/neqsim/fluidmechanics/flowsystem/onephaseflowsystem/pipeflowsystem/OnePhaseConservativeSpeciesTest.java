@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFlowConvergenceReport;
 import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseSpeciesConservationReport;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
@@ -23,12 +24,29 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
   void compositionStepClosesEveryComponentAndSynchronizesThermodynamics() {
     PipeFlowSystem pipe = runCompositionStep(40, 30.0);
     OnePhaseSpeciesConservationReport report = pipe.getSpeciesConservationReport();
+    OnePhaseFlowConvergenceReport flowReport = pipe.getConvergenceReport();
 
     assertEquals(OnePhaseSpeciesConservationReport.ConservationReason.CONVERGED, report.getReason(),
         report.getMessage());
-    assertTrue(pipe.getConvergenceReport().isConverged(), pipe.getConvergenceReport().getMessage());
-    assertTrue(pipe.getConvergenceReport().getMaximumRelativeDensityResidual() <= pipe.getConvergenceReport()
-        .getDensityRelativeTolerance());
+    assertTrue(flowReport.isConverged(), flowReport.getMessage());
+    assertTrue(flowReport.getMaximumRelativeDensityResidual() <= flowReport.getDensityRelativeTolerance());
+    assertTrue(flowReport.isNonlinearMetricEquationResidual());
+    double[] aggregateHistory = flowReport.getNonlinearUpdateHistory();
+    double[] massEquationHistory = flowReport.getScaledMassEquationResidualHistory();
+    double[] momentumEquationHistory = flowReport.getScaledMomentumEquationResidualHistory();
+    assertEquals(flowReport.getNonlinearIterations() + 1, aggregateHistory.length);
+    assertEquals(aggregateHistory.length, massEquationHistory.length);
+    assertEquals(aggregateHistory.length, momentumEquationHistory.length);
+    for (int iteration = 0; iteration < aggregateHistory.length; iteration++) {
+      assertEquals(aggregateHistory[iteration],
+          Math.max(massEquationHistory[iteration], momentumEquationHistory[iteration]), 0.0);
+    }
+    assertEquals(massEquationHistory[massEquationHistory.length - 1],
+        flowReport.getMaximumScaledMassEquationResidual(), 0.0);
+    assertEquals(momentumEquationHistory[momentumEquationHistory.length - 1],
+        flowReport.getMaximumScaledMomentumEquationResidual(), 0.0);
+    massEquationHistory[0] = Double.NaN;
+    assertTrue(Double.isFinite(flowReport.getScaledMassEquationResidualHistory()[0]));
     assertTrue(report.getMaximumRelativeInventoryResidual() < 1.0e-8, report.getMessage());
     assertTrue(report.getMinimumMassFraction() >= 0.0, report.getMessage());
     assertTrue(report.getMaximumMassFraction() <= 1.0, report.getMessage());
