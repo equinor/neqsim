@@ -404,14 +404,27 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public void addComponent(String componentName, double value, String unitName) {
     componentName = ComponentInterface.getComponentNameFromAlias(componentName);
-
+/*
     if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
       throw new RuntimeException("No component with name: " + componentName + " in database");
     }
+    */
+
+    neqsim.util.database.COMP objCOMP = new neqsim.util.database.COMP();
 
     double molarmass = 0.0;
     double stddens = 0.0;
     double boilp = 0.0;
+
+    if (objCOMP.objDictionary.get(componentName) != null)
+    {
+      molarmass = objCOMP.objDictionary.get(componentName).get("MOLARMASS") / 1000.0;
+      stddens = objCOMP.objDictionary.get(componentName).get("STDDENS") / 1000.0;
+      boilp = objCOMP.objDictionary.get(componentName).get("NORMBOIL") / 1000.0;
+
+
+    }
+    /*
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + componentName + "'"))) {
       dataSet.next();
@@ -422,6 +435,8 @@ public abstract class SystemThermo implements SystemInterface {
       // todo: mole amount may be not set. should not be caught?
       logger.error("failed ", ex);
     }
+*/
+
     neqsim.util.unit.Unit unit = new neqsim.util.unit.RateUnit(value, unitName, molarmass, stddens, boilp);
     double SIval = unit.getSIvalue();
     // System.out.println("number of moles " + SIval);
@@ -434,6 +449,21 @@ public abstract class SystemThermo implements SystemInterface {
   public void addComponent(String componentName, double value, String name, int phaseNum) {
     componentName = ComponentInterface.getComponentNameFromAlias(componentName);
 
+    neqsim.util.database.COMP objCOMP = new neqsim.util.database.COMP();
+
+    double molarmass = 0.0;
+    double stddens = 0.0;
+    double boilp = 0.0;
+
+    if (objCOMP.objDictionary.get(componentName) != null)
+    {
+      molarmass = objCOMP.objDictionary.get(componentName).get("MOLARMASS") / 1000.0;
+      stddens = objCOMP.objDictionary.get(componentName).get("STDDENS") / 1000.0;
+      boilp = objCOMP.objDictionary.get(componentName).get("NORMBOIL") / 1000.0;
+
+
+    }
+    /*
     if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
       throw new RuntimeException("No component with name: " + componentName + " in database");
     }
@@ -451,6 +481,8 @@ public abstract class SystemThermo implements SystemInterface {
       logger.error("failed ", ex);
       throw new RuntimeException(ex);
     }
+    */
+
     neqsim.util.unit.Unit unit = new neqsim.util.unit.RateUnit(value, name, molarmass, stddens, boilp);
     double SIval = unit.getSIvalue();
     // System.out.println("number of moles " + SIval);

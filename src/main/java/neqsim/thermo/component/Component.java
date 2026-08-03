@@ -263,9 +263,11 @@ public abstract class Component implements ComponentInterface {
     componentName = name;
     numberOfMoles = moles;
     numberOfMolesInPhase = molesInPhase;
-    java.sql.ResultSet dataSet = null;
-    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
+    //java.sql.ResultSet dataSet = null;
+    //try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
+    try{
       if (!name.equals("default")) {
+        /*
         try {
           if (NeqSimDataBase.createTemporaryTables()) {
             dataSet = database.getResultSet(("SELECT * FROM comptemp WHERE name='" + name + "'"));
@@ -305,98 +307,98 @@ public abstract class Component implements ComponentInterface {
             }
           }
         }
-
-        setComponentType(dataSet.getString("comptype"));
-        setCASnumber(dataSet.getString("CASnumber"));
-        index = Integer.parseInt(dataSet.getString("compindex"));
-        setFormulae(dataSet.getString("FORMULA").trim()); // C
-        molarMass = Double.parseDouble(dataSet.getString("molarmass")) / 1000.0; // D
-        normalLiquidDensity = Double.parseDouble(dataSet.getString("liqdens")); // E
-        criticalTemperature = (Double.parseDouble(dataSet.getString("TC")) + 273.15); // F
-        criticalPressure = Double.parseDouble(dataSet.getString("PC")); // G
-        acentricFactor = Double.parseDouble(dataSet.getString("acsfact")); // J
-        criticalVolume = Double.parseDouble(dataSet.getString("critvol"));
+*/
+        setComponentType(objCOMP.objStrDictionary.get(name).get("comptype"));
+        setCASnumber(objCOMP.objStrDictionary.get(name).get("CASnumber"));
+        index = Integer.parseInt(objCOMP.objStrDictionary.get(name).get("compindex"));
+        setFormulae(objCOMP.objStrDictionary.get(name).get("FORMULA").trim()); // C
+        molarMass = objCOMP.objDictionary.get(name).get("molarmass") / 1000.0; // D
+        normalLiquidDensity = objCOMP.objDictionary.get(name).get("liqdens"); // E
+        criticalTemperature = (objCOMP.objDictionary.get(name).get("TC") + 273.15); // F
+        criticalPressure = objCOMP.objDictionary.get(name).get("PC"); // G
+        acentricFactor = objCOMP.objDictionary.get(name).get("acsfact"); // J
+        criticalVolume = objCOMP.objDictionary.get(name).get("critvol");
         criticalCompressibilityFactor = criticalPressure * criticalVolume / ThermodynamicConstantsInterface.R
             / criticalTemperature / 10.0;
-        referenceEnthalpy = Double.parseDouble(dataSet.getString("Href"));
-        setCpA(dataSet.getDouble("CPA")); // R //S
-        setCpB(dataSet.getDouble("CPB")); // S
-        setCpC(dataSet.getDouble("CPC")); // T
-        setCpD(dataSet.getDouble("CPD"));
-        setCpE(dataSet.getDouble("CPE"));
+        referenceEnthalpy = objCOMP.objDictionary.get(name).get("Href");
+        setCpA(objCOMP.objDictionary.get(name).get("CPA")); // R //S
+        setCpB(objCOMP.objDictionary.get(name).get("CPB")); // S
+        setCpC(objCOMP.objDictionary.get(name).get("CPC")); // T
+        setCpD(objCOMP.objDictionary.get(name).get("CPD"));
+        setCpE(objCOMP.objDictionary.get(name).get("CPE"));
 
-        CpSolid[0] = Double.parseDouble(dataSet.getString("CPsolid1"));
-        CpSolid[1] = Double.parseDouble(dataSet.getString("CPsolid2"));
-        CpSolid[2] = Double.parseDouble(dataSet.getString("CPsolid3"));
-        CpSolid[3] = Double.parseDouble(dataSet.getString("CPsolid4"));
-        CpSolid[4] = Double.parseDouble(dataSet.getString("CPsolid5"));
+        CpSolid[0] = objCOMP.objDictionary.get(name).get("CPsolid1");
+        CpSolid[1] = objCOMP.objDictionary.get(name).get("CPsolid2");
+        CpSolid[2] = objCOMP.objDictionary.get(name).get("CPsolid3");
+        CpSolid[3] = objCOMP.objDictionary.get(name).get("CPsolid4");
+        CpSolid[4] = objCOMP.objDictionary.get(name).get("CPsolid5");
 
-        CpLiquid[0] = Double.parseDouble(dataSet.getString("CPliquid1"));
-        CpLiquid[1] = Double.parseDouble(dataSet.getString("CPliquid2"));
-        CpLiquid[2] = Double.parseDouble(dataSet.getString("CPliquid3"));
-        CpLiquid[3] = Double.parseDouble(dataSet.getString("CPliquid4"));
-        CpLiquid[4] = Double.parseDouble(dataSet.getString("CPliquid5"));
+        CpLiquid[0] = objCOMP.objDictionary.get(name).get("CPliquid1");
+        CpLiquid[1] = objCOMP.objDictionary.get(name).get("CPliquid2");
+        CpLiquid[2] = objCOMP.objDictionary.get(name).get("CPliquid3");
+        CpLiquid[3] = objCOMP.objDictionary.get(name).get("CPliquid4");
+        CpLiquid[4] = objCOMP.objDictionary.get(name).get("CPliquid5");
 
-        antoineLiqVapPresType = dataSet.getString("AntoineVapPresLiqType");
-        AntoineA = Double.parseDouble(dataSet.getString("ANTOINEA")); // AY
-        AntoineB = Double.parseDouble(dataSet.getString("ANTOINEB")); // AZ
-        AntoineC = Double.parseDouble(dataSet.getString("ANTOINEC")); // AX
-        AntoineD = Double.parseDouble(dataSet.getString("ANTOINED"));
-        AntoineE = Double.parseDouble(dataSet.getString("ANTOINEE"));
-        normalBoilingPoint = Double.parseDouble(dataSet.getString("normboil")) + 273.15;
+        antoineLiqVapPresType = objCOMP.objStrDictionary.get(name).get("AntoineVapPresLiqType");
+        AntoineA = objCOMP.objDictionary.get(name).get("ANTOINEA"); // AY
+        AntoineB = objCOMP.objDictionary.get(name).get("ANTOINEB"); // AZ
+        AntoineC = objCOMP.objDictionary.get(name).get("ANTOINEC"); // AX
+        AntoineD = objCOMP.objDictionary.get(name).get("ANTOINED");
+        AntoineE = objCOMP.objDictionary.get(name).get("ANTOINEE");
+        normalBoilingPoint = objCOMP.objDictionary.get(name).get("normboil") + 273.15;
         if (AntoineA == 0) {
           AntoineA = 1.0;
           AntoineB = getNormalBoilingPoint() - 273.15;
         }
 
-        AntoineASolid = Double.parseDouble(dataSet.getString("ANTOINESolidA"));
-        AntoineBSolid = Double.parseDouble(dataSet.getString("ANTOINESolidB"));
-        AntoineCSolid = Double.parseDouble(dataSet.getString("ANTOINESolidC"));
+        AntoineASolid = objCOMP.objDictionary.get(name).get("ANTOINESolidA");
+        AntoineBSolid = objCOMP.objDictionary.get(name).get("ANTOINESolidB");
+        AntoineCSolid = objCOMP.objDictionary.get(name).get("ANTOINESolidC");
 
-        debyeDipoleMoment = Double.parseDouble(dataSet.getString("dipolemoment"));
+        debyeDipoleMoment = objCOMP.objDictionary.get(name).get("dipolemoment");
 
-        standardDensity = Double.parseDouble(dataSet.getString("stddens"));
-        viscosityCorrectionFactor = Double.parseDouble(dataSet.getString("viscfact")); // BC
-        racketZ = Double.parseDouble(dataSet.getString("racketZ")); // BE
-        lennardJonesMolecularDiameter = Double.parseDouble(dataSet.getString("LJdiameter")); // BF
-        lennardJonesEnergyParameter = Double.parseDouble(dataSet.getString("LJeps"));
-        sphericalCoreRadius = Double.parseDouble(dataSet.getString("SphericalCoreRadius"));
-        liquidViscosityModel = Integer.parseInt(dataSet.getString("liqviscmodel"));
-        liquidViscosityParameter[0] = Double.parseDouble(dataSet.getString("liqvisc1"));
-        liquidViscosityParameter[1] = Double.parseDouble(dataSet.getString("liqvisc2"));
-        liquidViscosityParameter[2] = Double.parseDouble(dataSet.getString("liqvisc3"));
-        liquidViscosityParameter[3] = Double.parseDouble(dataSet.getString("liqvisc4"));
+        standardDensity = objCOMP.objDictionary.get(name).get("stddens");
+        viscosityCorrectionFactor = objCOMP.objDictionary.get(name).get("viscfact"); // BC
+        racketZ = objCOMP.objDictionary.get(name).get("racketZ"); // BE
+        lennardJonesMolecularDiameter = objCOMP.objDictionary.get(name).get("LJdiameter"); // BF
+        lennardJonesEnergyParameter = objCOMP.objDictionary.get(name).get("LJeps");
+        sphericalCoreRadius = objCOMP.objDictionary.get(name).get("SphericalCoreRadius");
+        liquidViscosityModel = Integer.parseInt(objCOMP.objStrDictionary.get(name).get("liqviscmodel"));
+        liquidViscosityParameter[0] = objCOMP.objDictionary.get(name).get("liqvisc1");
+        liquidViscosityParameter[1] = objCOMP.objDictionary.get(name).get("liqvisc2");
+        liquidViscosityParameter[2] = objCOMP.objDictionary.get(name).get("liqvisc3");
+        liquidViscosityParameter[3] = objCOMP.objDictionary.get(name).get("liqvisc4");
 
-        gibbsEnergyOfFormation = Double.parseDouble(dataSet.getString("gibbsEnergyOfFormation"));
-        dielectricParameter[0] = Double.parseDouble(dataSet.getString("dielectricParameter1"));
-        dielectricParameter[1] = Double.parseDouble(dataSet.getString("dielectricParameter2"));
-        dielectricParameter[2] = Double.parseDouble(dataSet.getString("dielectricParameter3"));
-        dielectricParameter[3] = Double.parseDouble(dataSet.getString("dielectricParameter4"));
-        dielectricParameter[4] = Double.parseDouble(dataSet.getString("dielectricParameter5"));
+        gibbsEnergyOfFormation = objCOMP.objDictionary.get(name).get("gibbsEnergyOfFormation");
+        dielectricParameter[0] = objCOMP.objDictionary.get(name).get("dielectricParameter1");
+        dielectricParameter[1] = objCOMP.objDictionary.get(name).get("dielectricParameter2");
+        dielectricParameter[2] = objCOMP.objDictionary.get(name).get("dielectricParameter3");
+        dielectricParameter[3] = objCOMP.objDictionary.get(name).get("dielectricParameter4");
+        dielectricParameter[4] = objCOMP.objDictionary.get(name).get("dielectricParameter5");
 
-        ionicCharge = Integer.parseInt(dataSet.getString("ionicCharge"));
+        ionicCharge = Integer.parseInt(objCOMP.objStrDictionary.get(name).get("ionicCharge"));
 
-        referenceStateType = dataSet.getString("referenceStateType").trim();
-        henryCoefParameter[0] = Double.parseDouble(dataSet.getString("HenryCoef1"));
-        henryCoefParameter[1] = Double.parseDouble(dataSet.getString("HenryCoef2"));
-        henryCoefParameter[2] = Double.parseDouble(dataSet.getString("HenryCoef3"));
-        henryCoefParameter[3] = Double.parseDouble(dataSet.getString("HenryCoef4"));
+        referenceStateType = objCOMP.objStrDictionary.get(name).get("referenceStateType").trim();
+        henryCoefParameter[0] = objCOMP.objDictionary.get(name).get("HenryCoef1");
+        henryCoefParameter[1] = objCOMP.objDictionary.get(name).get("HenryCoef2");
+        henryCoefParameter[2] = objCOMP.objDictionary.get(name).get("HenryCoef3");
+        henryCoefParameter[3] = objCOMP.objDictionary.get(name).get("HenryCoef4");
 
-        schwartzentruberParams[0] = Double.parseDouble(dataSet.getString("schwartzentruber1"));
-        schwartzentruberParams[1] = Double.parseDouble(dataSet.getString("schwartzentruber2"));
-        schwartzentruberParams[2] = Double.parseDouble(dataSet.getString("schwartzentruber3"));
+        schwartzentruberParams[0] = objCOMP.objDictionary.get(name).get("schwartzentruber1");
+        schwartzentruberParams[1] = objCOMP.objDictionary.get(name).get("schwartzentruber2");
+        schwartzentruberParams[2] = objCOMP.objDictionary.get(name).get("schwartzentruber3");
 
-        matiascopemanParams[0] = Double.parseDouble(dataSet.getString("MC1"));
-        matiascopemanParams[1] = Double.parseDouble(dataSet.getString("MC2"));
-        matiascopemanParams[2] = Double.parseDouble(dataSet.getString("MC3"));
+        matiascopemanParams[0] = objCOMP.objDictionary.get(name).get("MC1");
+        matiascopemanParams[1] = objCOMP.objDictionary.get(name).get("MC2");
+        matiascopemanParams[2] = objCOMP.objDictionary.get(name).get("MC3");
 
-        matiascopemanParamsPR[0] = Double.parseDouble(dataSet.getString("MCPR1"));
-        matiascopemanParamsPR[1] = Double.parseDouble(dataSet.getString("MCPR2"));
-        matiascopemanParamsPR[2] = Double.parseDouble(dataSet.getString("MCPR3"));
+        matiascopemanParamsPR[0] = objCOMP.objDictionary.get(name).get("MCPR1");
+        matiascopemanParamsPR[1] = objCOMP.objDictionary.get(name).get("MCPR2");
+        matiascopemanParamsPR[2] = objCOMP.objDictionary.get(name).get("MCPR3");
 
-        matiascopemanParamsUMRPRU[0] = Double.parseDouble(dataSet.getString("MCPR1"));
-        matiascopemanParamsUMRPRU[1] = Double.parseDouble(dataSet.getString("MCPR2"));
-        matiascopemanParamsUMRPRU[2] = Double.parseDouble(dataSet.getString("MCPR3"));
+        matiascopemanParamsUMRPRU[0] = objCOMP.objDictionary.get(name).get("MCPR1");
+        matiascopemanParamsUMRPRU[1] = objCOMP.objDictionary.get(name).get("MCPR2");
+        matiascopemanParamsUMRPRU[2] = objCOMP.objDictionary.get(name).get("MCPR3");
         matiascopemanParamsUMRPRU[3] = 0.0;
         matiascopemanParamsUMRPRU[4] = 0.0;
 
@@ -406,11 +408,11 @@ public abstract class Component implements ComponentInterface {
         // the UMR-PRU MCPR1..MCPR3 columns. Wrapped in a guard because not every component
         // database CSV provides these columns.
         try {
-          matiascopemanParamsUMRCPA[0] = Double.parseDouble(dataSet.getString("UMRCPA_MC1"));
-          matiascopemanParamsUMRCPA[1] = Double.parseDouble(dataSet.getString("UMRCPA_MC2"));
-          matiascopemanParamsUMRCPA[2] = Double.parseDouble(dataSet.getString("UMRCPA_MC3"));
-          matiascopemanParamsUMRCPA[3] = Double.parseDouble(dataSet.getString("UMRCPA_MC4"));
-          matiascopemanParamsUMRCPA[4] = Double.parseDouble(dataSet.getString("UMRCPA_MC5"));
+          matiascopemanParamsUMRCPA[0] = objCOMP.objDictionary.get(name).get("UMRCPA_MC1");
+          matiascopemanParamsUMRCPA[1] = objCOMP.objDictionary.get(name).get("UMRCPA_MC2");
+          matiascopemanParamsUMRCPA[2] = objCOMP.objDictionary.get(name).get("UMRCPA_MC3");
+          matiascopemanParamsUMRCPA[3] = objCOMP.objDictionary.get(name).get("UMRCPA_MC4");
+          matiascopemanParamsUMRCPA[4] = objCOMP.objDictionary.get(name).get("UMRCPA_MC5");
         } catch (Exception umrcpaMcEx) {
           matiascopemanParamsUMRCPA[0] = 0.0;
           matiascopemanParamsUMRCPA[1] = 0.0;
@@ -426,11 +428,11 @@ public abstract class Component implements ComponentInterface {
         // water/glycol sub-model is not mixed with the generic PR-CPA aCPA_PR/bCPA_PR columns.
         // Wrapped in a guard because not every component database CSV provides these columns.
         try {
-          umrCpaA0 = Double.parseDouble(dataSet.getString("UMRCPA_a0"));
-          umrCpaB = Double.parseDouble(dataSet.getString("UMRCPA_b"));
-          umrCpaAssociationEnergy = Double.parseDouble(dataSet.getString("UMRCPA_assocEnergy"));
-          umrCpaAssociationVolume = Double.parseDouble(dataSet.getString("UMRCPA_assocVolume"));
-          umrCpaAssociating = Integer.parseInt(dataSet.getString("UMRCPA_associating").trim());
+          umrCpaA0 = objCOMP.objDictionary.get(name).get("UMRCPA_a0");
+          umrCpaB = objCOMP.objDictionary.get(name).get("UMRCPA_b");
+          umrCpaAssociationEnergy = objCOMP.objDictionary.get(name).get("UMRCPA_assocEnergy");
+          umrCpaAssociationVolume = objCOMP.objDictionary.get(name).get("UMRCPA_assocVolume");
+          umrCpaAssociating = Integer.parseInt(objCOMP.objStrDictionary.get(name).get("UMRCPA_associating").trim());
         } catch (Exception umrcpaParamEx) {
           umrCpaA0 = 0.0;
           umrCpaB = 0.0;
@@ -448,79 +450,79 @@ public abstract class Component implements ComponentInterface {
         // without
         // these columns (e.g. COMP_EXT.csv) simply falls back to the SRK-CPA racketZCPA.
         try {
-          umrCpaRacketZ = Double.parseDouble(dataSet.getString("UMRCPA_racketZ"));
-          umrCpaVolumeCorrectionT = Double.parseDouble(dataSet.getString("UMRCPA_volcorr_T"));
+          umrCpaRacketZ = objCOMP.objDictionary.get(name).get("UMRCPA_racketZ");
+          umrCpaVolumeCorrectionT = objCOMP.objDictionary.get(name).get("UMRCPA_volcorr_T");
         } catch (Exception umrcpaVolEx) {
           umrCpaRacketZ = 0.0;
           umrCpaVolumeCorrectionT = 0.0;
         }
 
-        matiascopemanSolidParams[0] = Double.parseDouble(dataSet.getString("MC1Solid"));
-        matiascopemanSolidParams[1] = Double.parseDouble(dataSet.getString("MC2Solid"));
-        matiascopemanSolidParams[2] = Double.parseDouble(dataSet.getString("MC3Solid"));
+        matiascopemanSolidParams[0] = objCOMP.objDictionary.get(name).get("MC1Solid");
+        matiascopemanSolidParams[1] = objCOMP.objDictionary.get(name).get("MC2Solid");
+        matiascopemanSolidParams[2] = objCOMP.objDictionary.get(name).get("MC3Solid");
 
-        TwuCoonParams[0] = Double.parseDouble(dataSet.getString("TwuCoon1"));
-        TwuCoonParams[1] = Double.parseDouble(dataSet.getString("TwuCoon2"));
-        TwuCoonParams[2] = Double.parseDouble(dataSet.getString("TwuCoon3"));
+        TwuCoonParams[0] = objCOMP.objDictionary.get(name).get("TwuCoon1");
+        TwuCoonParams[1] = objCOMP.objDictionary.get(name).get("TwuCoon2");
+        TwuCoonParams[2] = objCOMP.objDictionary.get(name).get("TwuCoon3");
 
-        liquidConductivityParameter[0] = Double.parseDouble(dataSet.getString("liquidConductivity1"));
-        liquidConductivityParameter[1] = Double.parseDouble(dataSet.getString("liquidConductivity2"));
-        liquidConductivityParameter[2] = Double.parseDouble(dataSet.getString("liquidConductivity3"));
+        liquidConductivityParameter[0] = objCOMP.objDictionary.get(name).get("liquidConductivity1");
+        liquidConductivityParameter[1] = objCOMP.objDictionary.get(name).get("liquidConductivity2");
+        liquidConductivityParameter[2] = objCOMP.objDictionary.get(name).get("liquidConductivity3");
 
         if (this.getClass().getName().equals("neqsim.thermo.component.ComponentSrkCPA")
             || this.getClass().getName().equals("neqsim.thermo.component.ComponentSrkCPAs")) {
-          parachorParameter = Double.parseDouble(dataSet.getString("PARACHOR_CPA"));
+          parachorParameter = objCOMP.objDictionary.get(name).get("PARACHOR_CPA");
         } else {
-          parachorParameter = Double.parseDouble(dataSet.getString("parachor"));
+          parachorParameter = objCOMP.objDictionary.get(name).get("parachor");
         }
 
-        setHeatOfFusion(Double.parseDouble(dataSet.getString("heatOfFusion")));
+        setHeatOfFusion(objCOMP.objDictionary.get(name).get("heatOfFusion"));
 
-        triplePointDensity = Double.parseDouble(dataSet.getString("triplePointDensity"));
-        triplePointPressure = Double.parseDouble(dataSet.getString("triplePointPressure"));
-        setTriplePointTemperature(Double.parseDouble(dataSet.getString("triplePointTemperature")));
-        meltingPointTemperature = Double.parseDouble(dataSet.getString("meltingPointTemperature"));
+        triplePointDensity = objCOMP.objDictionary.get(name).get("triplePointDensity");
+        triplePointPressure = objCOMP.objDictionary.get(name).get("triplePointPressure");
+        setTriplePointTemperature(objCOMP.objDictionary.get(name).get("triplePointTemperature"));
+        meltingPointTemperature = objCOMP.objDictionary.get(name).get("meltingPointTemperature");
 
-        Hsub = Double.parseDouble(dataSet.getString("Hsub"));
+        Hsub = objCOMP.objDictionary.get(name).get("Hsub");
 
-        setIdealGasEnthalpyOfFormation(Double.parseDouble(dataSet.getString("EnthalpyOfFormation")));
+        setIdealGasEnthalpyOfFormation(objCOMP.objDictionary.get(name).get("EnthalpyOfFormation"));
         idealGasGibbsEnergyOfFormation = gibbsEnergyOfFormation;
-        idealGasAbsoluteEntropy = Double.parseDouble(dataSet.getString("AbsoluteEntropy"));
+        idealGasAbsoluteEntropy = objCOMP.objDictionary.get(name).get("AbsoluteEntropy");
 
         for (int i = 0; i < 5; i++) {
-          solidDensityCoefs[i] = Double.parseDouble((dataSet.getString("solidDensityCoefs" + (i + 1))));
+          solidDensityCoefs[i] = Double.parseDouble((objCOMP.objStrDictionary.get(name).get("solidDensityCoefs" + (i + 1))));
         }
         for (int i = 0; i < 5; i++) {
-          liquidDensityCoefs[i] = Double.parseDouble((dataSet.getString("liquidDensityCoefs" + (i + 1))));
+          liquidDensityCoefs[i] = Double.parseDouble((objCOMP.objStrDictionary.get(name).get("liquidDensityCoefs" + (i + 1))));
         }
         for (int i = 0; i < 5; i++) {
-          heatOfVaporizationCoefs[i] = Double.parseDouble((dataSet.getString("heatOfVaporizationCoefs" + (i + 1))));
+          heatOfVaporizationCoefs[i] = Double.parseDouble((objCOMP.objStrDictionary.get(name).get("heatOfVaporizationCoefs" + (i + 1))));
         }
         // disse maa settes inn fra database ssociationsites
-        numberOfAssociationSites = Integer.parseInt(dataSet.getString("associationsites"));
+        numberOfAssociationSites = Integer.parseInt(objCOMP.objStrDictionary.get(name).get("associationsites"));
         orginalNumberOfAssociationSites = numberOfAssociationSites;
-        associationScheme = dataSet.getString("associationscheme");
-        associationEnergy = Double.parseDouble(dataSet.getString("associationenergy"));
+        associationScheme = objCOMP.objStrDictionary.get(name).get("associationscheme");
+        associationEnergy = objCOMP.objDictionary.get(name).get("associationenergy");
 
-        calcActivity = Integer.parseInt(dataSet.getString("calcActivity"));
-        setRacketZCPA(Double.parseDouble(dataSet.getString("racketZCPA")));
+        calcActivity = Integer.parseInt(objCOMP.objStrDictionary.get(name).get("calcActivity"));
+        setRacketZCPA(objCOMP.objDictionary.get(name).get("racketZCPA"));
 
-        setVolumeCorrectionT_CPA(Double.parseDouble(dataSet.getString("volcorrCPA_T")));
-        volumeCorrectionT = Double.parseDouble(dataSet.getString("volcorrSRK_T"));
+        setVolumeCorrectionT_CPA(objCOMP.objDictionary.get(name).get("volcorrCPA_T"));
+        volumeCorrectionT = objCOMP.objDictionary.get(name).get("volcorrSRK_T");
 
         if (this.getClass().getName().equals("neqsim.thermo.component.ComponentPrCPA")
             || this.getClass().getName().equals("neqsim.thermo.component.ComponentUMRCPA")) {
           // System.out.println("pr-cpa");
-          associationVolume = Double.parseDouble(dataSet.getString("associationboundingvolume_PR"));
-          aCPA = Double.parseDouble(dataSet.getString("aCPA_PR"));
-          bCPA = Double.parseDouble(dataSet.getString("bCPA_PR"));
-          mCPA = Double.parseDouble(dataSet.getString("mCPA_PR"));
+          associationVolume = objCOMP.objDictionary.get(name).get("associationboundingvolume_PR");
+          aCPA = objCOMP.objDictionary.get(name).get("aCPA_PR");
+          bCPA = objCOMP.objDictionary.get(name).get("bCPA_PR");
+          mCPA = objCOMP.objDictionary.get(name).get("mCPA_PR");
         } else {
           // System.out.println("srk-cpa");
-          associationVolume = Double.parseDouble(dataSet.getString("associationboundingvolume_SRK"));
-          aCPA = Double.parseDouble(dataSet.getString("aCPA_SRK"));
-          bCPA = Double.parseDouble(dataSet.getString("bCPA_SRK"));
-          mCPA = Double.parseDouble(dataSet.getString("mCPA_SRK"));
+          associationVolume = objCOMP.objDictionary.get(name).get("associationboundingvolume_SRK");
+          aCPA = objCOMP.objDictionary.get(name).get("aCPA_SRK");
+          bCPA = objCOMP.objDictionary.get(name).get("bCPA_SRK");
+          mCPA = objCOMP.objDictionary.get(name).get("mCPA_SRK");
         }
 
         // For the UMR-CPA model, associating compounds (water, glycols, ...) use the dedicated
@@ -544,34 +546,34 @@ public abstract class Component implements ComponentInterface {
           associationEnergy = umrCpaAssociationEnergy * 1.0e2;
         }
 
-        criticalViscosity = Double.parseDouble(dataSet.getString("criticalViscosity"));
+        criticalViscosity = objCOMP.objDictionary.get(name).get("criticalViscosity");
         if (criticalViscosity < 1e-20) {
           criticalViscosity = 7.94830 * Math.sqrt(1e3 * molarMass) * Math.pow(criticalPressure, 2.0 / 3.0)
               / Math.pow(criticalTemperature, 1.0 / 6.0) * 1e-7;
         }
-        mSAFTi = Double.parseDouble(dataSet.getString("mSAFT"));
-        sigmaSAFTi = Double.parseDouble(dataSet.getString("sigmaSAFT")) / 1.0e10;
-        epsikSAFT = Double.parseDouble(dataSet.getString("epsikSAFT"));
+        mSAFTi = objCOMP.objDictionary.get(name).get("mSAFT");
+        sigmaSAFTi = objCOMP.objDictionary.get(name).get("sigmaSAFT") / 1.0e10;
+        epsikSAFT = objCOMP.objDictionary.get(name).get("epsikSAFT");
         try {
-          lambdaRSAFTVRMie = Double.parseDouble(dataSet.getString("lambdaRSAFTVRMie"));
-          lambdaASAFTVRMie = Double.parseDouble(dataSet.getString("lambdaASAFTVRMie"));
+          lambdaRSAFTVRMie = objCOMP.objDictionary.get(name).get("lambdaRSAFTVRMie");
+          lambdaASAFTVRMie = objCOMP.objDictionary.get(name).get("lambdaASAFTVRMie");
         } catch (Exception ex) {
           lambdaRSAFTVRMie = 12.0;
           lambdaASAFTVRMie = 6.0;
         }
         try {
-          mSAFTVRMie = Double.parseDouble(dataSet.getString("mSAFTVRMie"));
-          sigmaSAFTVRMie = Double.parseDouble(dataSet.getString("sigmaSAFTVRMie")) / 1.0e10;
-          epsikSAFTVRMie = Double.parseDouble(dataSet.getString("epsikSAFTVRMie"));
+          mSAFTVRMie = objCOMP.objDictionary.get(name).get("mSAFTVRMie");
+          sigmaSAFTVRMie = objCOMP.objDictionary.get(name).get("sigmaSAFTVRMie") / 1.0e10;
+          epsikSAFTVRMie = objCOMP.objDictionary.get(name).get("epsikSAFTVRMie");
         } catch (Exception ex) {
           mSAFTVRMie = mSAFTi;
           sigmaSAFTVRMie = sigmaSAFTi;
           epsikSAFTVRMie = epsikSAFT;
         }
-        setAssociationVolumeSAFT(Double.parseDouble(dataSet.getString("associationboundingvolume_PCSAFT")));
-        setAssociationEnergySAFT(Double.parseDouble(dataSet.getString("associationenergy_PCSAFT")));
+        setAssociationVolumeSAFT(objCOMP.objDictionary.get(name).get("associationboundingvolume_PCSAFT"));
+        setAssociationEnergySAFT(objCOMP.objDictionary.get(name).get("associationenergy_PCSAFT"));
         try {
-          double epsVRMie = Double.parseDouble(dataSet.getString("associationenergy_SAFTVRMie"));
+          double epsVRMie = objCOMP.objDictionary.get(name).get("associationenergy_SAFTVRMie");
           if (epsVRMie > 0) {
             associationEnergySAFTVRMie = epsVRMie;
           }
@@ -579,7 +581,7 @@ public abstract class Component implements ComponentInterface {
           // Column not available or zero - will use PCSAFT value as fallback
         }
         try {
-          double kHB = Double.parseDouble(dataSet.getString("associationvolume_SAFTVRMie"));
+          double kHB = objCOMP.objDictionary.get(name).get("associationvolume_SAFTVRMie");
           if (kHB > 0) {
             associationVolumeSAFTVRMie = kHB;
           }
@@ -595,13 +597,13 @@ public abstract class Component implements ComponentInterface {
         if (normalLiquidDensity == 0) {
           normalLiquidDensity = molarMass / (0.285 * Math.pow(criticalVolume, 1.048)) * 1000.0;
         }
-        if (dataSet.getString("HydrateFormer").equals("yes")) {
+        if (objCOMP.objStrDictionary.get(name).get("HydrateFormer").equals("yes")) {
           setIsHydrateFormer(true);
         } else {
           setIsHydrateFormer(false);
         }
 
-        waxFormer = Integer.parseInt(dataSet.getString("waxformer")) == 1;
+        waxFormer = Integer.parseInt(objCOMP.objStrDictionary.get(name).get("waxformer")) == 1;
         // System.out.println(componentName + " pure component parameters: ok...");
       }
       componentNumber = compIndex;
