@@ -14,6 +14,7 @@ The Capacity Constraint Framework extends NeqSim's existing bottleneck analysis 
 - **18 built-in capacity strategies**: Pre-configured constraints for compressors, separators, pipes, valves, heat exchangers, pumps, expanders, reactors, power generation, subsea equipment, filters, electrolyzers, wells, and more
 - **Constraint types**: HARD (trip/damage), SOFT (efficiency loss), DESIGN (normal envelope)
 - **Warning thresholds**: Early warning when approaching limits
+- **Evidence metadata**: Record provenance, confidence, and the scalar operating range where a limit is applicable
 - **Integration with ProductionOptimizer**: Works seamlessly with existing optimization tools
 - **ProcessSystem-wide analysis**: `findBottleneck()`, `getCapacityUtilizationSummary()`, and related methods iterate over ALL equipment
 
@@ -236,6 +237,8 @@ CapacityConstraint speedConstraint = new CapacityConstraint("speed", "RPM", Cons
 | `isHardLimitExceeded()` | `boolean` | True if a HARD maximum is exceeded or a HARD minimum is undershot |
 | `isNearLimit()` | `boolean` | True if above warning threshold (default 90%) |
 | `getMargin()` | `double` | Remaining normalized headroom (1.0 - utilization) |
+| `getConfidence()` | `double` | Evidence-quality score in [0, 1], or `NaN` when unset |
+| `isCurrentValueWithinValidityRange()` | `boolean` | Whether the current value is inside the explicitly assigned range |
 
 > **Minimum constraints:** Set `minValue` and leave `designValue` unset. This makes utilization
 > `minimum/current`, so safe values above the minimum remain below 100%. Setting the same value as
@@ -255,6 +258,36 @@ JSON, and CSV. Set a concise provenance tag such as `mechanicalDesign`, `install
 `operatingEnvelope` when defining the limit. Untagged and legacy rows report `not_set`; downstream
 optimizers should retain this tag with recommendations rather than treating all limits as equally
 authoritative.
+
+#### Confidence and validity metadata
+
+Use confidence and validity metadata to state how strongly the limit is supported and where its
+basis applies:
+
+```java
+CapacityConstraint gasCapacity = new CapacityConstraint("gasFlow", "kg/h", ConstraintType.HARD)
+    .setDesignValue(12000.0)
+    .setCurrentValue(10000.0)
+    .setDataSource("installedDataSheet")
+    .setConfidence(0.95)
+    .setValidityRange(8000.0, 12000.0);
+
+if (!gasCapacity.hasValidityRange()
+    || !gasCapacity.isCurrentValueWithinValidityRange()) {
+  // Require engineering review before relying on this limit outside its evidence range.
+}
+```
+
+`confidence` is an evidence-quality score from zero to one. It is not a probability of safe
+operation, constraint satisfaction, or model accuracy. The validity bounds are inclusive, finite,
+and use the constraint's own unit. An unset confidence or range remains explicitly distinguishable
+through `hasConfidence()` and `hasValidityRange()`; the numeric getters return `NaN` when unset.
+Invalid scores, non-finite bounds, and reversed ranges fail fast.
+
+This first validity contract is deliberately scalar. Compressor maps and other models whose
+applicability depends on several variables still require a separate multidimensional operating
+envelope. Confidence and validity metadata do not change utilization, feasibility, or optimizer
+behavior by themselves; downstream ranking must preserve and assess them explicitly.
 
 ### 2. CapacityConstrainedEquipment (Interface)
 
@@ -2067,4 +2100,3 @@ double util = expander.getMaxUtilization(); // |getPower| / 5000 kW, no spurious
 - [Mechanical Design](mechanical_design)
 - [Optimizer Plugin Architecture](optimization/OPTIMIZER_PLUGIN_ARCHITECTURE)
 - [Optimization Examples](../examples/index)
-
