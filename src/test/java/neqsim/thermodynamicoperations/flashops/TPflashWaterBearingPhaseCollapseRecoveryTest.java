@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
-import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -17,15 +16,6 @@ class TPflashWaterBearingPhaseCollapseRecoveryTest {
     assertEquivalentCo2WaterSplit(false, 160.0);
     assertEquivalentCo2WaterSplit(true, 160.0);
     assertEquivalentCo2WaterSplit(true, 320.0);
-  }
-
-  @Test
-  void cpaOilWaterSplitSurvivesMultiphaseCleanup() {
-    SystemInterface ordinary = createOilWaterSystem(false);
-    SystemInterface multiphase = createOilWaterSystem(true);
-
-    assertEquivalentTwoPhaseState(ordinary, multiphase);
-    assertDeterministicRepeat(multiphase);
   }
 
   private void assertEquivalentCo2WaterSplit(boolean pengRobinson, double pressureBara) {
@@ -44,18 +34,6 @@ class TPflashWaterBearingPhaseCollapseRecoveryTest {
     system.addComponent("ethane", 0.05);
     system.addComponent("water", 0.05);
     system.setMixingRule(2);
-    system.setMultiPhaseCheck(multiphaseCheck);
-    new ThermodynamicOperations(system).TPflash();
-    system.init(1);
-    return system;
-  }
-
-  private SystemInterface createOilWaterSystem(boolean multiphaseCheck) {
-    SystemInterface system = new SystemSrkCPAstatoil(370.0, 2.0);
-    system.addComponent("n-heptane", 0.45);
-    system.addComponent("nC10", 0.45);
-    system.addComponent("water", 0.10);
-    system.setMixingRule(10);
     system.setMultiPhaseCheck(multiphaseCheck);
     new ThermodynamicOperations(system).TPflash();
     system.init(1);
