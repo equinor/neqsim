@@ -4,8 +4,11 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -346,6 +349,9 @@ public class ProcessModel implements Runnable, Serializable {
 
   /** Human-readable description of the last mass-closure check. */
   private String massClosureSummary = "";
+
+  /** Units creating or destroying the most mass at the last check, worst first. */
+  private String massClosureOffenders = "";
 
   /** Default boundary-stream flow floor in kg/hr (streams below this are ignored entirely). */
   public static final double DEFAULT_BOUNDARY_FLOW_FLOOR = 1e-9;
@@ -3291,6 +3297,7 @@ public class ProcessModel implements Runnable, Serializable {
     autoTuningSummary = "";
     autoToleranceSummary = "";
     massClosureSummary = "";
+    massClosureOffenders = "";
     lastMassClosureError = Double.NaN;
     if (autoToleranceErrorHistory == null) {
       autoToleranceErrorHistory = new java.util.ArrayList<>();
@@ -3455,29 +3462,38 @@ public class ProcessModel implements Runnable, Serializable {
   private double computeMassClosureError() {
     double scale = Math.max(detectedPlantFlowScale, getTotalFeedFlowRate());
     if (!(scale > 0.0) || Double.isInfinite(scale)) {
+      massClosureOffenders = "";
       return Double.NaN;
     }
-    double openTear = 0.0;
-    for (ProcessSystem process : processes.values()) {
-      for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
-        if (!(unit instanceof neqsim.process.equipment.util.Recycle)) {
+    double created = 0.0;
+    List<Map.Entry<String, Double>> offenders = new ArrayList<>();
+    for (Map.Entry<String, ProcessSystem> area : processes.entrySet()) {
+      Map<String, ProcessSystem.MassBalanceResult> failures = area.getValue().getFailedMassBalance("kg/hr", 0.0);
+      for (Map.Entry<String, ProcessSystem.MassBalanceResult> entry : failures.entrySet()) {
+        double error = entry.getValue().getAbsoluteError();
+        if (!Double.isFinite(error) || Math.abs(error) < boundaryFlowFloor) {
           continue;
         }
-        neqsim.process.equipment.util.Recycle recycle = (neqsim.process.equipment.util.Recycle) unit;
-        if (recycle.getOutletStream() == null) {
-          continue;
-        }
-        double loopFlow = recycle.getOutletStream().getFlowRate("kg/hr");
-        if (!Double.isFinite(loopFlow) || loopFlow < boundaryFlowFloor) {
-          continue;
-        }
-        double imbalance = recycle.getMassBalance("kg/hr");
-        if (Double.isFinite(imbalance)) {
-          openTear += Math.abs(imbalance);
-        }
+        created += Math.abs(error);
+        offenders
+            .add(new AbstractMap.SimpleEntry<String, Double>(area.getKey() + "::" + entry.getKey(), Math.abs(error)));
       }
     }
-    return openTear / scale;
+    Collections.sort(offenders, new Comparator<Map.Entry<String, Double>>() {
+      @Override
+      public int compare(Map.Entry<String, Double> first, Map.Entry<String, Double> second) {
+        return Double.compare(second.getValue(), first.getValue());
+      }
+    });
+    StringBuilder worst = new StringBuilder();
+    for (int i = 0; i < offenders.size() && i < 3; i++) {
+      if (i > 0) {
+        worst.append(", ");
+      }
+      worst.append(String.format(Locale.US, "%s %.4g kg/hr", offenders.get(i).getKey(), offenders.get(i).getValue()));
+    }
+    massClosureOffenders = worst.toString();
+    return created / scale;
   }
 
   /**
@@ -3496,14 +3512,15 @@ public class ProcessModel implements Runnable, Serializable {
     }
     if (closure <= massClosureTolerance) {
       massClosureSummary = String.format(Locale.US,
-          "plant mass closure %.3g of feed (tolerance %.3g) - open recycle tears are negligible", closure,
+          "plant mass closure %.3g of feed (tolerance %.3g) - every unit conserves mass", closure,
           massClosureTolerance);
       return true;
     }
     massClosureSummary = String.format(Locale.US,
-        "plant mass closure %.3g of feed exceeds %.3g - recycle tears are still creating or destroying mass, "
-            + "so the boundary residual alone does not mean the model is solved",
-        closure, massClosureTolerance);
+        "plant mass closure %.3g of feed exceeds %.3g - mass is still being created or destroyed inside the "
+            + "flowsheet, so the boundary residual alone does not mean the model is solved. Worst: %s",
+        closure, massClosureTolerance,
+        massClosureOffenders.isEmpty() ? "none above the flow floor" : massClosureOffenders);
     logger.debug("ProcessModel {}", massClosureSummary);
     return false;
   }
@@ -3671,6 +3688,7 @@ public class ProcessModel implements Runnable, Serializable {
     massClosure.addProperty("tolerance", massClosureTolerance);
     massClosure.addProperty("relativeError", lastMassClosureError);
     massClosure.addProperty("summary", massClosureSummary);
+    massClosure.addProperty("worstUnits", massClosureOffenders);
     root.add("massClosure", massClosure);
 
     JsonArray boundaryStreamErrors = new JsonArray();
