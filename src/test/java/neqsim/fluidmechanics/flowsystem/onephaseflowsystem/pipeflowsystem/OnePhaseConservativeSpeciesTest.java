@@ -131,12 +131,38 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
         "Cumulative nitrogen inventory must equal integrated inlet minus outlet mass.");
   }
 
+  @Test
+  @Tag("slow")
+  void coupledPulseGridAndTimestepRefinementReducesOutletDifference() {
+    IntegratedPulseResult coarse = runIntegratedPulse(6, 120.0);
+    IntegratedPulseResult medium = runIntegratedPulse(12, 60.0);
+    IntegratedPulseResult fine = runIntegratedPulse(24, 30.0);
+
+    assertPulseEngineeringGates(coarse);
+    assertPulseEngineeringGates(medium);
+    assertPulseEngineeringGates(fine);
+
+    double coarseToMedium = commonTimeMeanAbsoluteDifference(coarse.outletNitrogenHistory, 120.0,
+        medium.outletNitrogenHistory, 60.0, 120.0);
+    double mediumToFine = commonTimeMeanAbsoluteDifference(medium.outletNitrogenHistory, 60.0,
+        fine.outletNitrogenHistory, 30.0, 120.0);
+
+    assertTrue(coarseToMedium > 0.0,
+        "The refinement study must resolve a non-zero discretization difference.");
+    assertTrue(mediumToFine < coarseToMedium,
+        "Joint grid/timestep refinement must reduce the common-time outlet difference: coarse-to-medium="
+            + coarseToMedium + ", medium-to-fine=" + mediumToFine);
+  }
+
   private static IntegratedPulseResult runIntegratedPulse() {
+    return runIntegratedPulse(12, 60.0);
+  }
+
+  private static IntegratedPulseResult runIntegratedPulse(int nodes, double timeStepSeconds) {
     int nitrogen = 1;
-    double timeStepSeconds = 60.0;
-    int pulseSteps = 30;
-    int recoverySteps = 60;
-    PipeFlowSystem pipe = createInitializedPipe(12, 3000.0);
+    int pulseSteps = exactStepCount(1800.0, timeStepSeconds);
+    int recoverySteps = exactStepCount(3600.0, timeStepSeconds);
+    PipeFlowSystem pipe = createInitializedPipe(nodes, 3000.0);
     pipe.setConservativeSpeciesTransport(true);
     pipe.setFailOnNonConvergence(true);
     SystemInterface baselineGas = createGas(0.95, 0.05);
@@ -237,6 +263,40 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     pipe.solveSteadyState(1);
     assertTrue(pipe.getConvergenceReport().isConverged());
     return pipe;
+  }
+
+  private static void assertPulseEngineeringGates(IntegratedPulseResult pulse) {
+    double eventAmplitude = pulse.pulseInletMassFraction - pulse.baselineOutlet;
+    double cumulativeScaleKg = Math.max(Math.max(pulse.initialInventoryKg, pulse.cumulativeInletKg), 1.0);
+
+    assertTrue(eventAmplitude > 0.0);
+    assertTrue(pulse.pulseEndOutlet > pulse.baselineOutlet + 0.70 * eventAmplitude,
+        "The 30-minute event must break through before the inlet returns to baseline.");
+    assertTrue(pulse.peakOutlet > pulse.baselineOutlet + 0.70 * eventAmplitude);
+    assertEquals(pulse.baselineOutlet, pulse.recoveredOutlet, 2.0e-3 * eventAmplitude,
+        "The outlet composition must recover after purging the pulse.");
+    assertEquals(0.0, pulse.cumulativeResidualKg, cumulativeScaleKg * 1.0e-7,
+        "Cumulative nitrogen inventory must equal integrated inlet minus outlet mass.");
+  }
+
+  private static int exactStepCount(double durationSeconds, double timeStepSeconds) {
+    int steps = (int) Math.round(durationSeconds / timeStepSeconds);
+    assertEquals(durationSeconds, steps * timeStepSeconds, 1.0e-12,
+        "Event durations must contain an integer number of timesteps.");
+    return steps;
+  }
+
+  private static double commonTimeMeanAbsoluteDifference(double[] first, double firstTimeStepSeconds,
+      double[] second, double secondTimeStepSeconds, double sampleIntervalSeconds) {
+    int samples = (int) Math.round(first.length * firstTimeStepSeconds / sampleIntervalSeconds);
+    assertEquals(samples, (int) Math.round(second.length * secondTimeStepSeconds / sampleIntervalSeconds));
+    double difference = 0.0;
+    for (int sample = 1; sample <= samples; sample++) {
+      int firstIndex = (int) Math.round(sample * sampleIntervalSeconds / firstTimeStepSeconds) - 1;
+      int secondIndex = (int) Math.round(sample * sampleIntervalSeconds / secondTimeStepSeconds) - 1;
+      difference += Math.abs(first[firstIndex] - second[secondIndex]);
+    }
+    return difference / samples;
   }
 
   private static double last(double[] values) {
