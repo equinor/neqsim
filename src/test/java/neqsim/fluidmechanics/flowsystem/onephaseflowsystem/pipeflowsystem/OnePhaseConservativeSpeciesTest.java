@@ -236,8 +236,8 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     } catch (AssertionError exception) {
       String phase = step < 0 ? "baseline" : (pulseActive ? "pulse" : "recovery");
       throw new AssertionError("Coupled pulse failed for nodes=" + nodes + ", timestep=" + timeStepSeconds
-          + " s, phase=" + phase + ", event step=" + step + ": " + exception.getMessage()
-          + System.lineSeparator() + pipe.getConvergenceReport().toJson(), exception);
+          + " s, phase=" + phase + ", event step=" + step + ": " + exception.getMessage() + System.lineSeparator()
+          + pipe.getConvergenceReport().toJson(), exception);
     }
   }
 
