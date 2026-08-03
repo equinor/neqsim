@@ -41,8 +41,8 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
       assertEquals(aggregateHistory[iteration],
           Math.max(massEquationHistory[iteration], momentumEquationHistory[iteration]), 0.0);
     }
-    assertEquals(massEquationHistory[massEquationHistory.length - 1],
-        flowReport.getMaximumScaledMassEquationResidual(), 0.0);
+    assertEquals(massEquationHistory[massEquationHistory.length - 1], flowReport.getMaximumScaledMassEquationResidual(),
+        0.0);
     assertEquals(momentumEquationHistory[momentumEquationHistory.length - 1],
         flowReport.getMaximumScaledMomentumEquationResidual(), 0.0);
     massEquationHistory[0] = Double.NaN;
