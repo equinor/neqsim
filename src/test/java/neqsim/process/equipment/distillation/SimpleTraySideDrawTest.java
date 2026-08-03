@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
@@ -129,6 +130,34 @@ public class SimpleTraySideDrawTest {
   }
 
   /**
+   * Test that duplicate flow targets for one tray-phase side draw are rejected at registration.
+   */
+  @Test
+  public void duplicateSideDrawFlowSpecificationsAreRejectedAtRegistration() {
+    Stream feed = createFractionatorFeed("duplicate side draw feed");
+    DistillationColumn column = new DistillationColumn("DuplicateSideDrawColumn", 5, true, true);
+    column.addFeedStream(feed, 3);
+    column.setTopPressure(8.0);
+    column.setBottomPressure(8.3);
+    column.setCondenserTemperature(303.15);
+    column.setReboilerTemperature(383.15);
+    column.setCondenserRefluxRatio(1.5);
+
+    column.addSideDrawFlowSpecification(3, DistillationColumn.SideDrawPhase.LIQUID, 25.0, "kg/hr");
+    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        () -> column.addSideDrawFlowSpecification(3, DistillationColumn.SideDrawPhase.LIQUID, 30.0, "kg/hr"));
+
+    String message = String.valueOf(exception.getMessage()).toLowerCase(Locale.ROOT);
+    assertTrue(message.contains("tray 3"));
+    assertTrue(message.contains("liquid"));
+    assertEquals(1, column.getSideDrawSpecifications().size());
+
+    column.addSideDrawFlowSpecification(3, DistillationColumn.SideDrawPhase.GAS, 5.0, "kg/hr");
+    column.addSideDrawFlowSpecification(4, DistillationColumn.SideDrawPhase.LIQUID, 5.0, "kg/hr");
+    assertEquals(3, column.getSideDrawSpecifications().size());
+  }
+
+  /**
    * Test that invalid side-draw fractions are rejected.
    */
   @Test
@@ -146,6 +175,25 @@ public class SimpleTraySideDrawTest {
     SimpleTray tray = new SimpleTray("liquid split validation tray");
     tray.setLiquidSideDrawFraction(0.60);
     assertThrows(IllegalArgumentException.class, () -> tray.setLiquidPumparoundDrawFraction(0.50));
+  }
+
+  /**
+   * Create a multicomponent hydrocarbon feed for fractionator configuration tests.
+   *
+   * @param name stream name
+   * @return initialized fractionator feed
+   */
+  private Stream createFractionatorFeed(String name) {
+    SystemSrkEos fluid = new SystemSrkEos(333.15, 8.0);
+    fluid.addComponent("propane", 0.20);
+    fluid.addComponent("n-butane", 0.35);
+    fluid.addComponent("n-pentane", 0.30);
+    fluid.addComponent("n-hexane", 0.15);
+    fluid.setMixingRule("classic");
+    Stream feed = new Stream(name, fluid);
+    feed.setFlowRate(250.0, "kg/hr");
+    feed.run();
+    return feed;
   }
 
   /**
