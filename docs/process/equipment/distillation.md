@@ -168,6 +168,13 @@ column.setReboilerVaporBoilupRatio(1.8);
 DistillationColumn.ReboilerMode reboilerMode = column.getReboilerMode();
 ```
 
+`setReboilerVaporBoilupRatio(ratio)` configures the direct reboiler mode.
+`setReboilerBoilupRatio(ratio)` also records the target as the bottom `REFLUX_RATIO`
+specification. After either route, `setReboilerMode(DistillationColumn.ReboilerMode.EQUILIBRIUM)`
+clears the active reboiler ratio and any stored bottom reflux-ratio specification, so a later run
+cannot silently restore the old ratio. Bottom purity, recovery, product-flow, and duty
+specifications are preserved.
+
 `setCondenserLiquidReflux(value, unit)` configures the `LIQUID_REFLUX_SPLIT` mode. Use it instead
 of calling `setCondenserMode(LIQUID_REFLUX_SPLIT)` directly because the fixed reflux flow is
 required. The split never creates condensate to satisfy an oversized request: it returns at most the
