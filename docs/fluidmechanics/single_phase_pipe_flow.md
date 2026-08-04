@@ -262,9 +262,11 @@ at normalized perturbations of $10^{-5}$, $10^{-6}$, and $10^{-7}$. It reports s
 relative infinity-norm errors for continuity and momentum, including sensitivity to differencing
 scale. A second failure-only check builds an uncolored dense finite-difference Jacobian, measures
 repeated residual evaluation at identical state, compares the colored and dense entries inside the
-declared band, and reports the largest dense derivative outside that band. These diagnostics are
-evaluated only after failure, restore the accepted state, and do not weaken the frozen acceptance
-criteria.
+declared band, and reports the largest dense derivative outside that band. It also reports the
+largest per-node relative drift between the repeated evaluations for phase and component moles,
+density, inlet and mean velocity, mass and volumetric flow, Reynolds number, and wall-friction
+factor. These diagnostics are evaluated only after failure, restore the accepted state, and do not
+weaken the frozen acceptance criteria.
 For backward-compatible control flow, the default logs a warning and returns the failed report.
 Call `pipe.setFailOnNonConvergence(true)` to make `solveTransient(...)` throw
 `IllegalStateException`; the report is recorded before either behavior and distinguishes
