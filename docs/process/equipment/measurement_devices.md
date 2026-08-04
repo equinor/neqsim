@@ -32,7 +32,7 @@ fuelGas.setFlowRate(1000.0, "kg/hr");
 fuelGas.run();
 
 // Create emissions calculator
-CombustionEmissionsCalculator emissionsCalc = 
+CombustionEmissionsCalculator emissionsCalc =
     new CombustionEmissionsCalculator("CO2 Calculator", fuelGas);
 
 // Get CO2 emissions rate
@@ -83,7 +83,7 @@ Calculates the hydrocarbon dew point temperature at a specified pressure.
 ```java
 import neqsim.process.measurementdevice.HydrocarbonDewPointAnalyser;
 
-HydrocarbonDewPointAnalyser hcdp = 
+HydrocarbonDewPointAnalyser hcdp =
     new HydrocarbonDewPointAnalyser("HC Dew Point", gasStream);
 hcdp.setReferencePressure(50.0, "bara");
 
@@ -98,7 +98,7 @@ Calculates the water dew point temperature.
 ```java
 import neqsim.process.measurementdevice.WaterDewPointAnalyser;
 
-WaterDewPointAnalyser wdp = 
+WaterDewPointAnalyser wdp =
     new WaterDewPointAnalyser("Water Dew Point", gasStream);
 wdp.setReferencePressure(50.0, "bara");
 
@@ -125,7 +125,7 @@ Calculates the hydrate equilibrium temperature at the stream pressure.
 ```java
 import neqsim.process.measurementdevice.HydrateEquilibriumTemperatureAnalyser;
 
-HydrateEquilibriumTemperatureAnalyser hydrateAnalyser = 
+HydrateEquilibriumTemperatureAnalyser hydrateAnalyser =
     new HydrateEquilibriumTemperatureAnalyser(gasStream);
 double hydrateTemp = hydrateAnalyser.getMeasuredValue("C");
 System.out.println("Hydrate formation temp: " + hydrateTemp + " °C");
@@ -148,7 +148,7 @@ pipeline.setThickness(0.0127); // 0.5 inch
 pipeline.run();
 
 // Create FIV analyser
-FlowInducedVibrationAnalyser fivAnalyser = 
+FlowInducedVibrationAnalyser fivAnalyser =
     new FlowInducedVibrationAnalyser("FIV Monitor", pipeline);
 fivAnalyser.setSupportArrangement("Stiff");
 fivAnalyser.setSupportDistance(3.0);  // meters
@@ -221,6 +221,219 @@ import neqsim.process.measurementdevice.VolumeFlowTransmitter;
 VolumeFlowTransmitter vft = new VolumeFlowTransmitter(stream);
 vft.setUnit("m3/hr");
 double volumeFlow = vft.getMeasuredValue();
+```
+
+### VenturiFlowMeter
+
+All five differential-pressure flow meters below share a common base,
+`DifferentialPressureFlowMeter` (ISO 5167-1 general principles), which supplies the geometry
+(`setGeometry`/`setPipeDiameter`/`setThroatDiameter`/`getBetaRatio`), the differential pressure
+(explicit or via a linked `DifferentialPressureTransmitter`), the gas density/isentropic
+exponent/dynamic viscosity readers (each overridable), the Reynolds-number iteration, and the
+mass/actual-volume/standard-volume accessors. They differ only in the discharge coefficient and
+the expansibility factor, `ExpansibilityModel` (`ORIFICE`, `ISENTROPIC` or `CONE`).
+
+Derives mass, actual volume and standard volume flow from a measured differential pressure across a
+classical Venturi tube, using the ISO 5167-1 general equation with the ISO 5167-4 Venturi expansibility
+factor. The differential pressure is either set explicitly or read from a linked
+`DifferentialPressureTransmitter`, which takes precedence when present.
+
+```java
+import neqsim.process.measurementdevice.VenturiFlowMeter;
+
+VenturiFlowMeter meter = new VenturiFlowMeter("FT-001", stream);
+meter.setGeometry(205.1, 138.1, "mm");   // pipe diameter D, throat diameter d
+meter.setDischargeCoefficient(0.985);    // ISO 5167-4: 0.995 machined, 0.984 as-cast, 0.985 welded
+meter.setDifferentialPressure(300.0, "mbar");
+
+double massFlow = meter.getMassFlowRate("kg/hr");
+double actualFlow = meter.getVolumeFlowRate("m3/hr");
+double standardFlow = meter.getStandardVolumeFlowRate("Sm3/hr");
+boolean withinIso = meter.isWithinIso5167ValidityRange();  // p2/p1 >= 0.75
+```
+
+#### Wet-gas correction (ISO/TR 11583)
+
+A Venturi over-reads when liquid is present. Selecting the ISO/TR 11583 correlation solves
+the wet-gas equations iteratively and returns the *gas* mass flow:
+
+$$q_{m,gas} = \frac{C}{\sqrt{1-\beta^4}}\,\varepsilon\,\frac{\pi d^2}{4}\,\frac{\sqrt{2\,\Delta p\,\rho_{1,gas}}}{\Phi}$$
+
+$$\Phi=\sqrt{1+C_{Ch}X+X^2},\qquad X = \frac{q_{m,liquid}}{q_{m,gas}}\sqrt{\frac{\rho_{1,gas}}{\rho_{liquid}}}$$
+
+```java
+meter.setWetGasCorrelation(VenturiFlowMeter.WetGasCorrelation.ISO_TR_11583);
+meter.setSurfaceTensionFactor(VenturiFlowMeter.H_HYDROCARBON);  // 1.0 HC, 1.35 water, 0.79 wet steam
+
+// Supply the liquid load in one of three ways:
+meter.setLiquidFromStream(true);              // from the stream's own phase split
+// meter.setLiquidToGasMassRatio(0.5);        // from a recent separator test
+// meter.setLiquidMassFlowRate(2.5, "kg/sec");// absolute rate
+// meter.setPressureLoss(0.125, "bar");       // ISO/TR 11583 6.4.5, needs a third tapping
+
+double gasFlow = meter.getMassFlowRate("kg/sec");
+double x = meter.getLockhartMartinelliParameter();
+double phi = meter.getOverReadingFactor();
+double uncertainty = meter.getRelativeUncertaintyOfCOverPhi();   // 6.5 Table 2
+List<String> issues = meter.getValidityViolations();             // empty when in range
+```
+
+> **ISO/TR 11583 replaces the discharge coefficient.** In wet-gas mode the value passed to
+> `setDischargeCoefficient` is ignored; the wet-gas $C$ of Equation (4) is used instead, and it
+> tends to 1 rather than 0.985.
+
+Limits of use (reported, not enforced): $0.4\le\beta\le0.75$, $0<X\le0.3$, $Fr_{gas,th}>3$,
+$\rho_{gas}/\rho_{liquid}>0.02$, $D\ge50$ mm. The Technical Report covers a single liquid at
+roughly 95 % gas volume fraction or more and states it "is not intended for the oil and gas
+industry"; combining an aqueous and a hydrocarbon phase into one effective liquid is an
+extension beyond it. Gas and liquid density can be supplied from sampling with
+`setGasDensity` / `setLiquidDensity` instead of being read from the stream, as the Technical
+Report advises against in-line densitometers in wet-gas service.
+
+#### Wet-gas correction (de Leeuw, 1997)
+
+The de Leeuw (1997) correlation, reported by R.N. Steven, "Wet gas metering with a horizontally
+mounted Venturi meter", *Flow Measurement and Instrumentation* 12 (2002) 361-372, uses the same
+Chisholm-form over-reading equation as ISO/TR 11583 but with a purely Froude-number-based
+exponent that has no diameter-ratio term, and it never replaces the discharge coefficient:
+
+$$n = 0.41 \ \ (Fr_{gas}\le 1.5), \qquad n = 0.606\left(1-e^{-0.746\,Fr_{gas}}\right) \ \ (Fr_{gas}\ge 1.5)$$
+
+```java
+meter.setWetGasCorrelation(VenturiFlowMeter.WetGasCorrelation.DE_LEEUW);
+meter.setLiquidFromStream(true);   // or setLiquidToGasMassRatio / setLiquidMassFlowRate
+
+double gasFlow = meter.getMassFlowRate("kg/sec");
+double phi = meter.getOverReadingFactor();
+boolean inRange = meter.isWithinDeLeeuwValidityRange();
+```
+
+Because `C` is never replaced, `setUseWetGasDischargeCoefficient` has no effect on this
+correlation; an in-service-calibrated discharge coefficient is safe by construction. Steven (2002)
+independently benchmarked de Leeuw against five general two-phase Orifice Plate correlations and
+one other Venturi correlation on NEL wet-gas-loop data and found it the best performer (RMS
+fractional deviation 0.0211). However, de Leeuw's own data was taken on a 4 in Venturi with
+$\beta=0.401$ and $n$ has no $\beta$ term, so a different diameter ratio is an extrapolation, and
+there is no published $X$ range or permanent-pressure-loss route (unlike ISO/TR 11583 6.4.5).
+`getValidityViolations()` reports the $Fr_{gas}\ge 0.5$ lower bound and a $\beta$-departure note.
+
+### OrificeFlowMeter
+
+Orifice plate following ISO 5167-2. The discharge coefficient is the Reader-Harris/Gallagher (1998)
+equation, which depends on the pipe Reynolds number and on the pressure-tapping arrangement
+(`OrificeFlowMeter.TappingArrangement`: `CORNER`, `D_AND_D_HALF` or `FLANGE`); the expansibility
+factor is `ExpansibilityModel.ORIFICE`.
+
+```java
+import neqsim.process.measurementdevice.OrificeFlowMeter;
+
+OrificeFlowMeter meter = new OrificeFlowMeter("FT-200", stream);
+meter.setGeometry(200.0, 100.0, "mm");
+meter.setTappingArrangement(OrificeFlowMeter.TappingArrangement.FLANGE);
+meter.setDifferentialPressure(300.0, "mbar");
+
+double massFlow = meter.getMassFlowRate("kg/hr");
+List<String> issues = meter.getValidityViolations();  // 12.5 mm <= d, 50-1000 mm D, 0.1-0.75 beta, Re,D limits
+```
+
+#### Wet-gas correction (ISO/TR 11583 Clause 7)
+
+Selecting the ISO/TR 11583 Clause 7 orifice method returns the *gas* mass flow using the same
+Chisholm-form over-reading equation as the Venturi tube (Clause 6), but **the discharge
+coefficient is never replaced** — Clause 7.5.2 keeps the plain Reader-Harris/Gallagher $C$,
+evaluated at the Reynolds number that would occur if only the gas were flowing:
+
+$$q_{m,gas} = \frac{C}{\sqrt{1-\beta^4}}\,\varepsilon\,\frac{\pi d^2}{4}\,\frac{\sqrt{2\,\Delta p\,\rho_{1,gas}}}{\Phi}$$
+
+$$\Phi=\sqrt{1+C_{Ch}X+X^2},\qquad C_{Ch} = \left(\frac{\rho_{liquid}}{\rho_{1,gas}}\right)^{n} + \left(\frac{\rho_{1,gas}}{\rho_{liquid}}\right)^{n}$$
+
+The exponent $n$ depends only on the gas densiometric Froude number and has no diameter-ratio
+term (unlike Venturi's beta-reduced exponent):
+
+$$n = 0.214 \ \ (0.2\le Fr_{gas} < 1.5), \qquad n = \left(\frac{1}{\sqrt{2}} - \frac{0.3}{\sqrt{Fr_{gas}}}\right)^2 \ \ (Fr_{gas} > 1.5)$$
+
+```java
+meter.setWetGasCorrelation(OrificeFlowMeter.WetGasCorrelation.ISO_TR_11583);
+
+// Supply the liquid load in one of three ways:
+meter.setLiquidFromStream(true);               // from the stream's own phase split
+// meter.setLiquidToGasMassRatio(0.5);         // from a recent separator test
+// meter.setLiquidMassFlowRate(2.5, "kg/sec"); // absolute rate
+// meter.setPressureLoss(0.45, "bar");         // ISO/TR 11583 7.5.5, needs 0.5 <= beta <= 0.68
+
+double gasFlow = meter.getMassFlowRate("kg/sec");
+double x = meter.getLockhartMartinelliParameter();
+double froude = meter.getGasDensiometricFroudeNumber();
+double phi = meter.getOverReadingFactor();
+List<String> issues = meter.getValidityViolations();   // Clause 7 limits when wet-gas mode is active
+```
+
+> **The discharge coefficient is never replaced.** Unlike `VenturiFlowMeter`'s ISO/TR 11583
+> Clause 6 method, orifice Clause 7 always uses the plain dry-gas $C$, so there is no
+> `useWetGasDischargeCoefficient`-style guard and an in-service-calibrated $C$ is not disturbed
+> beyond the $\Phi$ over-reading division.
+
+Limits of use (reported, not enforced): $0.24\le\beta\le0.73$, $0<X\le0.3$, $Fr_{gas}\ge0.2$,
+$\rho_{gas}/\rho_{liquid}>0.014$, $D\ge50$ mm. When the 7.5.5 pressure-loss route is used (no
+explicit liquid rate or ratio given, $0.5\le\beta\le0.68$), two additional bounds on $X$ and the
+density ratio are also checked. As with the Venturi tube, an aqueous and a hydrocarbon liquid
+phase are combined into one effective liquid when `setLiquidFromStream(true)` is used, which is
+an extension beyond the Technical Report.
+
+### NozzleFlowMeter
+
+The four nozzle sub-types of ISO 5167-3, selected with `NozzleFlowMeter.NozzleType`: `ISA_1932`
+(Reynolds-dependent), `LONG_RADIUS` (Reynolds-dependent), `THROAT_TAPPED` (Reynolds-dependent,
+piecewise in Re,d) and `VENTURI_NOZZLE` (constant C). All four share the isentropic expansibility
+factor, `ExpansibilityModel.ISENTROPIC`.
+
+```java
+import neqsim.process.measurementdevice.NozzleFlowMeter;
+
+NozzleFlowMeter meter = new NozzleFlowMeter("FT-300", stream);
+meter.setNozzleType(NozzleFlowMeter.NozzleType.ISA_1932);
+meter.setGeometry(200.0, 100.0, "mm");
+meter.setDifferentialPressure(300.0, "mbar");
+
+double massFlow = meter.getMassFlowRate("kg/hr");
+```
+
+### ConeFlowMeter
+
+Cone meter following ISO 5167-5. The cone has no physical throat bore: set the pipe diameter and
+the cone diameter with `setGeometry`, and the diameter ratio $\beta=\sqrt{1-d_c^2/D^2}$ is derived.
+The discharge coefficient is the constant 0.82 of an uncalibrated meter; the expansibility factor is
+`ExpansibilityModel.CONE`.
+
+```java
+import neqsim.process.measurementdevice.ConeFlowMeter;
+
+ConeFlowMeter meter = new ConeFlowMeter("FT-400", stream);
+meter.setGeometry(200.0, 160.0, "mm");  // pipe diameter D, cone diameter dc
+meter.setDifferentialPressure(300.0, "mbar");
+
+double massFlow = meter.getMassFlowRate("kg/hr");
+double coneDiameter = meter.getConeDiameter("mm");
+```
+
+### WedgeFlowMeter
+
+Wedge meter following ISO 5167-6. The wedge has no physical throat bore either: set the pipe
+diameter and the wedge gap height with `setGeometry`, or the wedge ratio $h/D$ directly with
+`setWedgeRatio`, and the diameter ratio is derived per ISO 5167-6 Formula (3). The discharge
+coefficient is $C=0.77-0.09\beta$ of an uncalibrated meter; since no wedge-specific expansibility
+data has been published, ISO 5167-6 applies the same isentropic factor as the nozzles and the
+classical Venturi tube, `ExpansibilityModel.ISENTROPIC`.
+
+```java
+import neqsim.process.measurementdevice.WedgeFlowMeter;
+
+WedgeFlowMeter meter = new WedgeFlowMeter("FT-500", stream);
+meter.setGeometry(200.0, 80.0, "mm");  // pipe diameter D, wedge gap height h
+meter.setDifferentialPressure(300.0, "mbar");
+
+double massFlow = meter.getMassFlowRate("kg/hr");
+double wedgeRatio = meter.getWedgeRatio();  // h / D
 ```
 
 ## Safety Devices

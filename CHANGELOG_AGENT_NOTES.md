@@ -9,6 +9,74 @@
 
 ---
 
+## 2026-08-04 — ISO/TR 11583 Clause 7 wet-gas correction added to OrificeFlowMeter
+
+### Added
+
+`OrificeFlowMeter.setWetGasCorrelation(WetGasCorrelation.ISO_TR_11583)` switches the meter to the
+ISO/TR 11583 Clause 7 wet-gas orifice method. The liquid load is supplied via
+`setLiquidFromStream(true)` (reads the connected stream's own phase split), `setLiquidToGasMassRatio(x)`,
+`setLiquidMassFlowRate(v, unit)`, or (when 0.5 <= beta <= 0.68 and no explicit liquid rate/ratio is
+given) the 7.5.5 permanent pressure-loss route via `setPressureLoss(v, unit)`. New getters:
+`getLockhartMartinelliParameter()`, `getGasDensiometricFroudeNumber()`, `getOverReadingFactor()`,
+`getChisholmCoefficient()`, `getChisholmExponent()`. `getValidityViolations()` now reports the Clause 7
+limits of use (0.24 <= beta <= 0.73, 0 < X <= 0.3, Fr,gas >= 0.2, rho,gas/rho,liquid > 0.014, D >= 50 mm,
+plus the additional 7.5.5 bounds when the pressure-loss route is used) instead of the dry-gas ISO 5167-2
+limits when the correlation is active.
+
+**Key difference from `VenturiFlowMeter`'s Clause 6 wet-gas method**: the orifice discharge coefficient
+is **never replaced** (Clause 7.5.2) — it stays the plain Reader-Harris/Gallagher equation evaluated at
+the gas-only Reynolds number, so there is no `useWetGasDischargeCoefficient`-style guard. The Chisholm
+exponent also has no diameter-ratio term (unlike Venturi's beta-reduced exponent):
+`n = 0.214` for `Fr,gas < 1.5`, `n = (1/sqrt(2) - 0.3/sqrt(Fr,gas))^2` for `Fr,gas > 1.5`.
+
+`DifferentialPressureFlowMeter` gained a protected `setReynoldsNumberPipe(double)` so a wet-gas subclass
+can record its own converged Reynolds number on the base class; without it, `getReynoldsNumberPipe()`
+stayed pinned at the dry-gas seed value from the initial solve.
+
+### Compatibility
+
+All 8 pre-existing `OrificeFlowMeterTest` cases pass unchanged (default correlation is `NONE`). 9 new
+wet-gas tests added (17 total). No other DP flow meter class is affected.
+
+## 2026-08-04 — ISO 5167 differential-pressure flow meters: shared base class + orifice/nozzle/cone/wedge
+
+### Added
+
+`DifferentialPressureFlowMeter` (abstract, `neqsim.process.measurementdevice`) is the new shared base
+for ISO 5167-1 general-principles physics: geometry (`setGeometry`/`setPipeDiameter`/`setThroatDiameter`,
+diameter ratio always `beta = d/D` recomputed on demand), differential pressure (explicit or via
+`DifferentialPressureTransmitter`), gas density/isentropic exponent/dynamic viscosity readers (each
+overridable), a Reynolds-number fixed-point iteration for devices whose discharge coefficient depends on
+`Re,D`, and the mass/actual-volume/standard-volume/`getMeasuredValue` accessors. `ExpansibilityModel`
+(enum: `ORIFICE`, `ISENTROPIC`, `CONE`) holds the three expansibility-factor families shared across ISO
+5167-2/-3/-4/-5/-6.
+
+Four new concrete devices, each implementing only its own discharge coefficient and expansibility model:
+
+- `OrificeFlowMeter` (ISO 5167-2) — Reader-Harris/Gallagher (1998) discharge coefficient,
+  `TappingArrangement` (`CORNER`, `D_AND_D_HALF`, `FLANGE`).
+- `NozzleFlowMeter` (ISO 5167-3) — `NozzleType` (`ISA_1932`, `LONG_RADIUS`, `THROAT_TAPPED`,
+  `VENTURI_NOZZLE`); the first three depend on the Reynolds number, the Venturi nozzle does not.
+- `ConeFlowMeter` (ISO 5167-5) — constant C = 0.82; no physical throat, `beta = sqrt(1 - dc^2/D^2)`
+  derived from the cone diameter via `setGeometry(D, dc, unit)`.
+- `WedgeFlowMeter` (ISO 5167-6) — C = 0.77 - 0.09 beta; no physical throat, beta derived from the wedge
+  gap height (`setGeometry(D, h, unit)`) or wedge ratio (`setWedgeRatio(h/D)`) via ISO 5167-6 Formula (3).
+
+### Compatibility and migration
+
+`VenturiFlowMeter` (ISO 5167-4) is re-parented onto `DifferentialPressureFlowMeter` with **no public API
+change** — same constructors, same method signatures, same wet-gas (ISO/TR 11583, de Leeuw) behavior. All
+20 pre-existing `VenturiFlowMeterTest` cases pass unchanged. Wet-gas over-reading correction (liquid load,
+Lockhart-Martinelli, Froude number, Chisholm form) remains Venturi-specific; it has not been generalized to
+the other four devices in this change.
+
+### Not in scope (raise separately if needed)
+
+`neqsim.standards.gasquality.Standard_AGA3`'s own Reader-Harris/Gallagher implementation has known
+transcription bugs (missing terms, wrong Reynolds-number basis) found while verifying `OrificeFlowMeter`
+against the same ISO 5167-2:2022 Formula (4); it was deliberately left untouched pending maintainer review.
+
 ## 2026-08-02 — Directed capacity margins in process-model throughput results
 
 ### Corrected
