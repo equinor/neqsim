@@ -3446,8 +3446,8 @@ public class TwoFluidPipe extends Pipeline {
       final boolean captureThermalStageFluxes = enableHeatTransfer && heatTransferCoefficient > 0.0;
       final List<TwoFluidConservationEquations.MassBalanceRate> stageMassBalanceRates = new ArrayList<>();
       final double[] thermalStageWeights = captureThermalStageFluxes ? getTimeIntegrationStageWeights() : new double[0];
-      final double[][] weightedPhaseMassFaceFluxes =
-          captureThermalStageFluxes ? new double[numberOfSections + 1][3] : new double[0][0];
+      final double[][] weightedPhaseMassFaceFluxes = captureThermalStageFluxes ? new double[numberOfSections + 1][3]
+          : new double[0][0];
       final int[] thermalStageIndex = { 0 };
 
       TimeIntegrator.RHSFunction rhs = (state, t) -> {
@@ -3462,8 +3462,8 @@ public class TwoFluidPipe extends Pipeline {
         if (captureThermalStageFluxes) {
           int stage = thermalStageIndex[0]++;
           if (stage >= thermalStageWeights.length) {
-            throw new IllegalStateException("Received more thermal flux stages than expected for "
-                + timeIntegrator.getMethod());
+            throw new IllegalStateException(
+                "Received more thermal flux stages than expected for " + timeIntegrator.getMethod());
           }
           equations.accumulateLastPhaseMassFaceFluxes(weightedPhaseMassFaceFluxes, thermalStageWeights[stage]);
         }
