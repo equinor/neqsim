@@ -357,8 +357,8 @@ public class SystemVanLaarActivitySRK extends SystemEosGE {
 
   /**
    * Calculates the tuned SRK fugacity coefficient for an activity-model component in the trace-component CO2 carrier
-   * reference. The direct gamma-phi flash uses this same reference for water, nitric acid and sulfuric acid whenever the
-   * actual vapour phase is predominantly CO2.
+   * reference. The direct gamma-phi flash uses this same reference for water, nitric acid and sulfuric acid whenever
+   * the actual vapour phase is predominantly CO2.
    *
    * @param componentName component whose carrier fugacity coefficient is needed
    * @return SRK fugacity coefficient in a trace-component CO2 carrier phase
@@ -407,8 +407,7 @@ public class SystemVanLaarActivitySRK extends SystemEosGE {
   @Override
   public double getGammaPhiVapourFugacityCoefficient(ComponentInterface component, PhaseInterface vapourPhase) {
     component.fugcoef(vapourPhase);
-    if (isPredominantlyCarbonDioxidePhase(vapourPhase)
-        && isVanLaarActivityComponent(component.getComponentName())) {
+    if (isPredominantlyCarbonDioxidePhase(vapourPhase) && isVanLaarActivityComponent(component.getComponentName())) {
       return carbonDioxideCarrierFugacityCoefficient(component.getComponentName());
     }
     return component.getFugacityCoefficient();
