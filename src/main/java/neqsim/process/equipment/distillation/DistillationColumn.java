@@ -1272,6 +1272,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastFullFractionatorFastPathApplied = false;
     lastFullFractionatorFastPathReason = "";
     resetMatrixInsideOutDiagnostics();
+    ensureIndependentSideDrawSpecifications();
+    ensureIndependentPumparounds();
     assignUnassignedFeeds();
     convergenceHistory = new ArrayList<>();
     applyDirectSpecifications();
@@ -1736,7 +1738,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return {@code true} if all specifications are satisfied
    */
   private boolean specificationsSatisfied() {
-    return specificationSatisfied(topSpecification) && specificationSatisfied(bottomSpecification);
+    boolean fixedLiquidRefluxSatisfied = !hasCondenser || getCondenser() == null
+        || getCondenser().isFixedLiquidRefluxSpecificationSatisfied();
+    return specificationSatisfied(topSpecification) && specificationSatisfied(bottomSpecification)
+        && fixedLiquidRefluxSatisfied;
   }
 
   /**
@@ -2857,8 +2862,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
     if (hasCondenser && getCondenser() != null) {
       updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, getCondenser().isRefluxSet() ? 1L : 0L);
-      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature,
-          getCondenser().isSeparation_with_liquid_reflux() ? 1L : 0L);
+      boolean fixedLiquidReflux = getCondenser().isSeparation_with_liquid_reflux();
+      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, fixedLiquidReflux ? 1L : 0L);
+      if (fixedLiquidReflux) {
+        updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature,
+            getCondenser().getFixedLiquidRefluxValue());
+        updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature,
+            getCondenser().getFixedLiquidRefluxUnit());
+      }
       updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, getCondenser().getRefluxRatio());
       updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature,
           getCondenser().isTotalCondenser() ? 1L : 0L);
@@ -2987,13 +2998,20 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (accepted && hasActiveSideDraw && residualConvergenceSatisfied()) {
       lastSolveStatus = SolveStatus.RIGOROUS_CONVERGED;
       lastSolveStatusReason = "Naphtali-Sandholm side-draw products satisfy the active rigorous convergence gates";
-    } else if (accepted && !hasActiveSideDraw) {
+    } else if (accepted && !hasActiveSideDraw
+        && (!hasCondenser || getCondenser() == null || getCondenser().isFixedLiquidRefluxSpecificationSatisfied())) {
       lastSolveStatus = SolveStatus.RECONCILED_PRODUCTS;
       lastSolveStatusReason = "Naphtali-Sandholm direct products were applied";
     } else {
       lastSolveStatus = SolveStatus.FAILED;
-      lastSolveStatusReason = accepted ? "Applied Naphtali-Sandholm side-draw state failed the active convergence gates"
-          : "Naphtali-Sandholm solver did not accept its result";
+      if (accepted && hasCondenser && getCondenser() != null
+          && !getCondenser().isFixedLiquidRefluxSpecificationSatisfied()) {
+        lastSolveStatusReason = "Available condenser liquid was insufficient for the fixed liquid reflux specification";
+      } else {
+        lastSolveStatusReason = accepted
+            ? "Applied Naphtali-Sandholm side-draw state failed the active convergence gates"
+            : "Naphtali-Sandholm solver did not accept its result";
+      }
     }
     setCalculationIdentifier(id);
   }
@@ -8990,6 +9008,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         .append(getLastMeshSpecificationResidualNorm()).append("\n");
     diagnostics.append("      per-tray material imbalance: ").append(lastTrayMaterialBalanceError)
         .append(" (tolerance ").append(trayMaterialBalanceTolerance).append(")\n");
+    if (hasCondenser && getCondenser() != null && getCondenser().isSeparation_with_liquid_reflux()) {
+      diagnostics.append("    fixed liquid reflux: requested ").append(getCondenser().getFixedLiquidRefluxValue())
+          .append(" ").append(getCondenser().getFixedLiquidRefluxUnit()).append(", available ")
+          .append(getCondenser().getLastAvailableFixedLiquidReflux()).append(" ")
+          .append(getCondenser().getFixedLiquidRefluxUnit()).append(", delivered ")
+          .append(getCondenser().getLastFixedLiquidReflux()).append(" ")
+          .append(getCondenser().getFixedLiquidRefluxUnit()).append(", relative shortfall ")
+          .append(getCondenser().getFixedLiquidRefluxSpecificationResidual()).append("\n");
+    }
 
     diagnostics.append("  Feed trays:\n");
     if (feedStreams.isEmpty()) {
@@ -9637,18 +9664,66 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param flowRate target flow rate
    * @param unit flow-rate unit
    * @return configured side-draw specification
-   * @throws IllegalArgumentException if the tray number, phase, flow rate, or unit is invalid
+   * @throws IllegalArgumentException if the tray number, phase, flow rate, or unit is invalid, or another flow
+   * specification already controls the same tray and phase
    */
   public ColumnSideDrawSpecification addSideDrawFlowSpecification(int trayNumber, SideDrawPhase phase, double flowRate,
       String unit) {
     validateTrayIndex(trayNumber, "side draw specification tray");
     ColumnSideDrawSpecification specification = new ColumnSideDrawSpecification(trayNumber, phase, flowRate, unit);
+    if (findSideDrawFlowSpecification(trayNumber, phase) != null) {
+      throw new IllegalArgumentException(createDuplicateSideDrawSpecificationMessage(trayNumber, phase));
+    }
     sideDrawSpecifications.add(specification);
     if (flowRate > 0.0 && getSideDrawFraction(trayNumber, phase) <= 0.0) {
       setSideDrawFractionWithinLimit(trayNumber, phase, 0.05);
     }
     setDoInitializion(true);
     return specification;
+  }
+
+  /**
+   * Find the flow specification controlling one tray-phase draw fraction.
+   *
+   * @param trayNumber bottom-up tray index
+   * @param phase side-draw phase
+   * @return matching specification, or {@code null} when the fraction is not flow-controlled
+   */
+  private ColumnSideDrawSpecification findSideDrawFlowSpecification(int trayNumber, SideDrawPhase phase) {
+    for (ColumnSideDrawSpecification specification : sideDrawSpecifications) {
+      if (specification.getTrayNumber() == trayNumber && specification.getPhase() == phase) {
+        return specification;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Create an actionable message for an over-specified side-draw fraction.
+   *
+   * @param trayNumber bottom-up tray index
+   * @param phase side-draw phase
+   * @return duplicate-control error message
+   */
+  private String createDuplicateSideDrawSpecificationMessage(int trayNumber, SideDrawPhase phase) {
+    return "Column " + getName() + " already has a " + phase + " side-draw flow specification on tray " + trayNumber
+        + "; configure at most one target for each tray and phase";
+  }
+
+  /**
+   * Reject duplicate controls retained in a column serialized by an older NeqSim version.
+   *
+   * @throws IllegalStateException if two specifications manipulate the same tray-phase draw fraction
+   */
+  private void ensureIndependentSideDrawSpecifications() {
+    Set<String> controlledFractions = new HashSet<>();
+    for (ColumnSideDrawSpecification specification : sideDrawSpecifications) {
+      String controlKey = specification.getTrayNumber() + ":" + specification.getPhase();
+      if (!controlledFractions.add(controlKey)) {
+        throw new IllegalStateException(
+            createDuplicateSideDrawSpecificationMessage(specification.getTrayNumber(), specification.getPhase()));
+      }
+    }
   }
 
   /**
@@ -9821,8 +9896,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (!Double.isFinite(temperatureDrop)) {
       throw new IllegalArgumentException("Pumparound temperature drop must be finite");
     }
-    if (getTray(drawTrayNumber).getLiquidPumparoundDrawFraction() > 0.0 && drawFraction > 0.0) {
-      throw new IllegalArgumentException("Only one liquid pumparound draw is supported per tray");
+    if (findPumparoundByDrawTray(drawTrayNumber) != null) {
+      throw new IllegalArgumentException(createDuplicatePumparoundMessage(drawTrayNumber));
     }
 
     ColumnPumparound pumparound = new ColumnPumparound(name, drawTrayNumber, returnTrayNumber, drawFraction,
@@ -9831,6 +9906,46 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     getTray(drawTrayNumber).setLiquidPumparoundDrawFraction(drawFraction);
     setDoInitializion(true);
     return pumparound;
+  }
+
+  /**
+   * Find the pumparound that owns one tray's liquid draw stream.
+   *
+   * @param drawTrayNumber bottom-up draw tray index
+   * @return matching pumparound, or {@code null} when the tray has no pumparound
+   */
+  private ColumnPumparound findPumparoundByDrawTray(int drawTrayNumber) {
+    for (ColumnPumparound pumparound : pumparounds) {
+      if (pumparound.getDrawTrayNumber() == drawTrayNumber) {
+        return pumparound;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Create an actionable message for duplicate pumparound ownership.
+   *
+   * @param drawTrayNumber bottom-up draw tray index
+   * @return duplicate-ownership error message
+   */
+  private String createDuplicatePumparoundMessage(int drawTrayNumber) {
+    return "Column " + getName() + " already has a liquid pumparound drawing from tray " + drawTrayNumber
+        + "; configure at most one pumparound for each draw tray";
+  }
+
+  /**
+   * Reject duplicate draw ownership retained in a column serialized by an older NeqSim version.
+   *
+   * @throws IllegalStateException if two pumparounds use the same liquid draw tray
+   */
+  private void ensureIndependentPumparounds() {
+    Set<Integer> controlledDrawTrays = new HashSet<>();
+    for (ColumnPumparound pumparound : pumparounds) {
+      if (!controlledDrawTrays.add(pumparound.getDrawTrayNumber())) {
+        throw new IllegalStateException(createDuplicatePumparoundMessage(pumparound.getDrawTrayNumber()));
+      }
+    }
   }
 
   /**
@@ -11247,6 +11362,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       setLastSolveStatus(SolveStatus.FAILED, "Internal tray traffic exceeded the rigorous solved-state guard");
       return;
     }
+    if (hasCondenser && getCondenser() != null && getCondenser().isSeparation_with_liquid_reflux()
+        && !getCondenser().isFixedLiquidRefluxSpecificationSatisfied()) {
+      setLastSolveStatus(SolveStatus.FAILED,
+          "Available condenser liquid was insufficient for the fixed liquid reflux specification");
+      return;
+    }
     if (!residualConvergenceSatisfied()) {
       setLastSolveStatus(SolveStatus.FAILED, "Residual convergence gates were not satisfied");
       return;
@@ -12643,7 +12764,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param result validation result receiving issues
    */
   private void validateSideDrawSpecifications(ValidationResult result) {
+    Set<String> controlledFractions = new HashSet<>();
     for (ColumnSideDrawSpecification specification : sideDrawSpecifications) {
+      String controlKey = specification.getTrayNumber() + ":" + specification.getPhase();
+      if (!controlledFractions.add(controlKey)) {
+        result.addError("sidedraw.degreesOfFreedom",
+            createDuplicateSideDrawSpecificationMessage(specification.getTrayNumber(), specification.getPhase()),
+            "Keep one flow target for each tray and phase");
+      }
       if (specification.getTrayNumber() < 0 || specification.getTrayNumber() >= numberOfTrays) {
         result.addError("sidedraw.tray", "Side-draw specification tray is outside the column",
             "Use a tray number between 0 and column.getNumberOfTrays() - 1");
@@ -12669,6 +12797,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param result validation result receiving issues
    */
   private void validatePumparounds(ValidationResult result) {
+    Set<Integer> controlledDrawTrays = new HashSet<>();
     if (!isPositiveFiniteValue(pumparoundTolerance)) {
       result.addError("pumparound.tolerance", "Pumparound tolerance is not positive finite",
           "Set a positive finite tolerance with column.setPumparoundTolerance(tolerance)");
@@ -12678,6 +12807,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           "Set max pumparound iterations to a positive value");
     }
     for (ColumnPumparound pumparound : pumparounds) {
+      if (!controlledDrawTrays.add(pumparound.getDrawTrayNumber())) {
+        result.addError("pumparound.degreesOfFreedom", createDuplicatePumparoundMessage(pumparound.getDrawTrayNumber()),
+            "Keep one liquid pumparound for each draw tray");
+      }
       if (pumparound.getDrawTrayNumber() < 0 || pumparound.getDrawTrayNumber() >= numberOfTrays
           || pumparound.getReturnTrayNumber() < 0 || pumparound.getReturnTrayNumber() >= numberOfTrays) {
         result.addError("pumparound.tray", "Pumparound tray is outside the column",

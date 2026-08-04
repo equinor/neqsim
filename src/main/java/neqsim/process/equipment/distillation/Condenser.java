@@ -28,6 +28,14 @@ public class Condenser extends SimpleTray {
   private boolean separation_with_liquid_reflux = false;
   private double reflux_value;
   private String reflux_unit;
+  /** Relative shortfall of the latest fixed liquid reflux split. */
+  private double lastFixedLiquidRefluxResidual = Double.NaN;
+  /** Available condensate before the latest fixed liquid reflux split, in the configured unit. */
+  private double lastAvailableLiquidReflux = Double.NaN;
+  /** Actual returned reflux after the latest fixed liquid reflux split, in the configured unit. */
+  private double lastFixedLiquidReflux = Double.NaN;
+  /** Relative tolerance used to accept a fixed liquid reflux specification. */
+  private static final double FIXED_LIQUID_REFLUX_RELATIVE_TOLERANCE = 1.0e-9;
 
   /**
    * Constructor for the Condenser class.
@@ -49,17 +57,89 @@ public class Condenser extends SimpleTray {
   }
 
   /**
+   * Get the configured fixed liquid reflux value.
+   *
+   * @return fixed liquid reflux in {@link #getFixedLiquidRefluxUnit()}
+   */
+  public double getFixedLiquidRefluxValue() {
+    return reflux_value;
+  }
+
+  /**
+   * Get the configured fixed liquid reflux unit.
+   *
+   * @return configured flow-rate unit, or {@code null} before the mode has been configured
+   */
+  public String getFixedLiquidRefluxUnit() {
+    return reflux_unit;
+  }
+
+  /**
+   * Get the available condensate before the latest fixed liquid reflux split.
+   *
+   * @return available condensate in {@link #getFixedLiquidRefluxUnit()}, or {@link Double#NaN} when no fixed split has
+   * been run
+   */
+  public double getLastAvailableFixedLiquidReflux() {
+    return lastAvailableLiquidReflux;
+  }
+
+  /**
+   * Get the actual reflux returned by the latest fixed liquid reflux split.
+   *
+   * @return actual reflux in {@link #getFixedLiquidRefluxUnit()}, or {@link Double#NaN} when no fixed split has been
+   * run
+   */
+  public double getLastFixedLiquidReflux() {
+    return lastFixedLiquidReflux;
+  }
+
+  /**
+   * Get the normalized shortfall of the latest fixed liquid reflux split.
+   *
+   * <p>
+   * The residual is zero when the requested reflux is delivered and approaches one as the delivered reflux approaches
+   * zero. An inactive or not-yet-run fixed split reports {@link Double#NaN}.
+   * </p>
+   *
+   * @return dimensionless non-negative reflux shortfall
+   */
+  public double getFixedLiquidRefluxSpecificationResidual() {
+    return lastFixedLiquidRefluxResidual;
+  }
+
+  /**
+   * Check whether the latest fixed liquid reflux split satisfied its requested flow.
+   *
+   * @return {@code true} for an inactive mode or an active split within the fixed reflux tolerance
+   */
+  public boolean isFixedLiquidRefluxSpecificationSatisfied() {
+    return !separation_with_liquid_reflux || (Double.isFinite(lastFixedLiquidRefluxResidual)
+        && lastFixedLiquidRefluxResidual <= FIXED_LIQUID_REFLUX_RELATIVE_TOLERANCE);
+  }
+
+  /**
    * Sets the separation with liquid reflux parameters.
    *
    * @param separation_with_liquid_reflux a boolean indicating if separation with liquid reflux is set
    * @param value the value of the reflux
    * @param unit the unit of the reflux value
+   * @throws IllegalArgumentException if an active reflux value is negative or non-finite, or its unit is blank
    */
   public void setSeparation_with_liquid_reflux(boolean separation_with_liquid_reflux, double value, String unit) {
+    if (separation_with_liquid_reflux && (!Double.isFinite(value) || value < 0.0)) {
+      throw new IllegalArgumentException("Fixed liquid reflux must be finite and non-negative");
+    }
+    if (separation_with_liquid_reflux && (unit == null || unit.trim().isEmpty())) {
+      throw new IllegalArgumentException("Fixed liquid reflux requires a flow-rate unit");
+    }
     this.refluxIsSet = separation_with_liquid_reflux;
     this.separation_with_liquid_reflux = separation_with_liquid_reflux;
     this.reflux_value = value;
-    this.reflux_unit = unit;
+    this.reflux_unit = separation_with_liquid_reflux ? unit.trim() : unit;
+    lastAvailableLiquidReflux = Double.NaN;
+    lastFixedLiquidReflux = Double.NaN;
+    lastFixedLiquidRefluxResidual = Double.NaN;
   }
 
   /**
@@ -174,6 +254,9 @@ public class Condenser extends SimpleTray {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    lastAvailableLiquidReflux = Double.NaN;
+    lastFixedLiquidReflux = Double.NaN;
+    lastFixedLiquidRefluxResidual = Double.NaN;
     // System.out.println("guess temperature " + getTemperature());
     if (refluxIsSet && totalCondenser) {
       prepareMixedStreamForRefluxFlash();
@@ -195,17 +278,21 @@ public class Condenser extends SimpleTray {
       super.run(id);
       setCalculationIdentifier(oldID);
     } else if (separation_with_liquid_reflux) {
+      if (!Double.isFinite(reflux_value) || reflux_value < 0.0 || reflux_unit == null || reflux_unit.trim().isEmpty()) {
+        throw new IllegalStateException(
+            "Condenser " + getName() + " has invalid fixed liquid reflux value " + reflux_value + " " + reflux_unit);
+      }
       super.run(id);
       StreamInterface liquidstream = super.getLiquidOutStream().clone();
       liquidstream.setName("temp liq stream");
       liquidstream.run();
-      if (liquidstream.getFlowRate("kg/hr") < this.reflux_value) {
-        liquidstream.setFlowRate(this.reflux_value + 1, this.reflux_unit);
-        liquidstream.run();
-      }
+      lastAvailableLiquidReflux = liquidstream.getFlowRate(this.reflux_unit);
       mixedStreamSplitter = new Splitter("splitter", liquidstream, 2);
-      mixedStreamSplitter.setFlowRates(new double[] { this.reflux_value, -1 }, this.reflux_unit);
+      mixedStreamSplitter.setFlowRates(new double[] { this.reflux_value, Splitter.REMAINDER }, this.reflux_unit);
       mixedStreamSplitter.run();
+      lastFixedLiquidReflux = mixedStreamSplitter.getSplitStream(0).getFlowRate(this.reflux_unit);
+      lastFixedLiquidRefluxResidual = reflux_value == 0.0 ? 0.0
+          : Math.max(0.0, reflux_value - lastFixedLiquidReflux) / reflux_value;
     } else {
       prepareMixedStreamForRefluxFlash();
       ThermodynamicOperations testOps = new ThermodynamicOperations(mixedStream.getThermoSystem());

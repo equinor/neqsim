@@ -2385,8 +2385,10 @@ public class ProcessSystem extends SimulationBaseClass {
     resetActiveStates();
     applyFlowsheetWideSettings();
     // Publish simulation start event
-    publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.INFO, getName(),
-        "Parallel simulation started with " + unitOperations.size() + " units", ProcessEvent.Severity.INFO));
+    if (publishEvents) {
+      publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.INFO, getName(),
+          "Parallel simulation started with " + unitOperations.size() + " units", ProcessEvent.Severity.INFO));
+    }
 
     // Auto-validate equipment setup before first run
     if (autoValidate) {
@@ -2401,8 +2403,10 @@ public class ProcessSystem extends SimulationBaseClass {
     }
     if (!hasUnitsNeedingRecalculation()) {
       updateCalculationIdentifiers(id);
-      publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.SIMULATION_COMPLETE, getName(),
-          "Parallel simulation completed with no dirty units", ProcessEvent.Severity.INFO));
+      if (publishEvents) {
+        publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.SIMULATION_COMPLETE, getName(),
+            "Parallel simulation completed with no dirty units", ProcessEvent.Severity.INFO));
+      }
       return;
     }
 
@@ -2481,8 +2485,10 @@ public class ProcessSystem extends SimulationBaseClass {
     setCalculationIdentifier(id);
 
     // Publish simulation complete event
-    publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.SIMULATION_COMPLETE, getName(),
-        "Parallel simulation completed", ProcessEvent.Severity.INFO));
+    if (publishEvents) {
+      publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.SIMULATION_COMPLETE, getName(),
+          "Parallel simulation completed", ProcessEvent.Severity.INFO));
+    }
   }
 
   /**

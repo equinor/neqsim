@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-07-31"
+last_verified: "2026-08-03"
 ---
 
 # Dynamic Simulation Guidance
@@ -375,6 +375,32 @@ vendor acceptance without certifying the protection system. For piping, pass ord
 line-pack balance before pressure, slug, velocity and stress limits, and deliberately does
 not treat a quasi-steady time series as distributed-transient evidence. Production mode
 requires the controlled context attribute `distributedTransientModel=approved`.
+
+## TwoFluidPipe Phase Appearance and Disappearance
+
+When `TwoFluidPipe.setIncludeMassTransfer(true)` is enabled, flash-driven transfer is phase
+resolved. Condensation must use equilibrium hydrocarbon-liquid and aqueous-liquid **mass**
+contributions; never use the current cell water cut to identify a phase that is not yet present.
+For evaporation, withdraw from the actual oil and water conservative inventories and bound each
+withdrawal by `phase mass / relaxation time`. An absent phase must have exactly zero evaporation
+source.
+
+Transferred momentum follows donor velocity. During condensation, gas loses mass and momentum at
+gas velocity and the receiving oil/water phases gain that momentum. During evaporation, each liquid
+loses momentum at its own velocity and gas receives their sum. Validate both invariants:
+
+```text
+gas mass source + oil mass source + water mass source = 0
+gas momentum source + oil momentum source + water momentum source = 0
+```
+
+For a phase-transition regression, cross a real SRK/CPA dew point in both directions without finite
+oil or water seeding. Check gas, oil, water, liquid, and total closure with
+`TwoFluidMassBalanceReport`; sweep nearby temperatures, refine time step and mesh, repeat the run,
+and compare rigorous flash with `FlashTable`. The flash table must retain the oil/aqueous liquid mass
+split. Record EOS, mixing rule, composition, absolute pressure, temperature, mass-transfer
+relaxation time, and units. The current hydrodynamic state transports bulk phase inventories, not a
+full component-composition vector per cell, and does not establish OLGA or LedaFlow equivalence.
 
 ## Running Dynamic Simulation
 

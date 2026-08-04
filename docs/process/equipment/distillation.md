@@ -170,7 +170,11 @@ DistillationColumn.ReboilerMode reboilerMode = column.getReboilerMode();
 
 `setCondenserLiquidReflux(value, unit)` configures the `LIQUID_REFLUX_SPLIT` mode. Use it instead
 of calling `setCondenserMode(LIQUID_REFLUX_SPLIT)` directly because the fixed reflux flow is
-required.
+required. The split never creates condensate to satisfy an oversized request: it returns at most the
+available liquid, preserves material and energy, and leaves the column unsolved when the normalized
+fixed-reflux shortfall exceeds its acceptance tolerance. The requested, available, delivered, and residual values appear
+in
+`getConvergenceDiagnostics()`.
 
 ## Solver Options
 
@@ -236,6 +240,13 @@ double drawResidual = spec.getLastRelativeResidual();
 boolean tearConverged = column.isLastColumnTearConverged();
 ```
 
+Each tray-phase pair has one manipulated split fraction and therefore accepts at most one flow
+specification. Adding a second target for the same tray and phase fails immediately with an
+`IllegalArgumentException`; opposite phases on the same tray and the same phase on different trays
+remain independent specifications. This degrees-of-freedom check prevents contradictory targets
+from alternately overwriting one tear variable. Older serialized columns retaining duplicates also
+fail before solver iteration and report the affected tray and phase.
+
 If the requested side-draw flow is physically impossible, the split is bounded by available tray
 traffic and the latest tear-variable diagnostics report non-convergence.
 
@@ -254,6 +265,13 @@ column.run();
 StreamInterface returnStream = pumparound.getReturnStream();
 double latestChange = column.getLastPumparoundRelativeChange();
 ```
+
+Each draw tray exposes one liquid pumparound fraction and one draw stream, so it can feed at most
+one pumparound circuit. A zero-fraction standby circuit still owns that draw tray. Registering
+another circuit for the same draw tray throws `IllegalArgumentException` without replacing the
+first circuit; different draw trays remain independent. Legacy serialized columns containing
+duplicate draw ownership fail before solver iteration, and `validateSetup()` reports
+`pumparound.degreesOfFreedom`.
 
 The `temperatureDrop` argument is in Kelvin. Positive values cool the returned liquid; negative
 values heat it. A non-finite or below-zero-K return temperature fails explicitly.

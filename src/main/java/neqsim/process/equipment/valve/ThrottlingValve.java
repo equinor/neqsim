@@ -1116,8 +1116,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   /** {@inheritDoc} */
   @Override
   public double getEntropyProduction(String unit) {
-    outStream.getThermoSystem().init(3);
-    inStream.getThermoSystem().init(3);
+    outStream.getThermoSystem().init(2);
+    inStream.getThermoSystem().init(2);
     return outStream.getThermoSystem().getEntropy(unit) - inStream.getThermoSystem().getEntropy(unit);
   }
 
