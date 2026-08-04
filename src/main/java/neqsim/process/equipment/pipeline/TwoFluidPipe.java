@@ -1820,11 +1820,25 @@ public class TwoFluidPipe extends Pipeline {
     }
   }
 
+  /**
+   * Select the conservative local phase inventory used as fluid thermal inertia.
+   *
+   * @param section finite-volume cell
+   * @param fallbackMassPerLength fallback inventory in kg/m
+   * @return finite positive fluid inventory in kg/m
+   */
   private double getLocalFluidMassPerLength(TwoFluidSection section, double fallbackMassPerLength) {
     double localMass = section.getGasMassPerLength() + section.getOilMassPerLength() + section.getWaterMassPerLength();
     return selectFinitePositiveFluidMassPerLength(localMass, fallbackMassPerLength);
   }
 
+  /**
+   * Select a finite positive thermal-inertia value, preferring local conservative inventory.
+   *
+   * @param localMassPerLength local phase inventory in kg/m
+   * @param fallbackMassPerLength fallback inventory in kg/m
+   * @return local value, fallback value, or the positive numerical floor
+   */
   static double selectFinitePositiveFluidMassPerLength(double localMassPerLength, double fallbackMassPerLength) {
     if (Double.isFinite(localMassPerLength) && localMassPerLength > 0.0) {
       return localMassPerLength;
@@ -1835,12 +1849,37 @@ public class TwoFluidPipe extends Pipeline {
     return 1.0e-12;
   }
 
+  /**
+   * Calculate the explicit sensible-energy advection source for one cell.
+   *
+   * @param cell zero-based cell index
+   * @param phaseMassFaceFluxes face-by-phase mass flows in kg/s
+   * @param previousFluidTemperatures immutable pre-update cell temperatures in kelvin
+   * @param Cp fluid heat capacity in J/(kg K)
+   * @return sensible-energy source in W/m
+   */
   private double calcSensibleAdvectionSource(int cell, double[][] phaseMassFaceFluxes,
       double[] previousFluidTemperatures, double Cp) {
     return calculateExplicitSensibleAdvectionSource(cell, phaseMassFaceFluxes, previousFluidTemperatures,
         getInletStream().getFluid().getTemperature("K"), Cp, sections[cell].getLength());
   }
 
+  /**
+   * Apply first-order upwinding to phase-resolved face mass flows using one pre-update temperature snapshot.
+   *
+   * <p>
+   * Positive face flow is oriented from inlet to outlet. The external inlet uses {@code inletTemperature}; internal
+   * reverse flow uses the downstream cell. The external outlet is outflow-only.
+   * </p>
+   *
+   * @param cell zero-based cell index
+   * @param phaseMassFaceFluxes face-by-phase mass flows in kg/s, with one more face than cells
+   * @param previousFluidTemperatures cell temperatures in kelvin before the explicit update
+   * @param inletTemperature external inlet temperature in kelvin
+   * @param Cp fluid heat capacity in J/(kg K)
+   * @param cellLength cell length in metres
+   * @return sensible-energy source in W/m
+   */
   static double calculateExplicitSensibleAdvectionSource(int cell, double[][] phaseMassFaceFluxes,
       double[] previousFluidTemperatures, double inletTemperature, double Cp, double cellLength) {
     double cellTemperature = previousFluidTemperatures[cell];
