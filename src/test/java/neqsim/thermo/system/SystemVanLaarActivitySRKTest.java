@@ -381,6 +381,30 @@ public class SystemVanLaarActivitySRKTest extends neqsim.NeqSimTest {
   }
 
   /**
+   * Verifies that a CO2-rich direct gamma-phi flash uses one internally consistent tuned carrier reference for every
+   * Van Laar activity component.
+   */
+  @Test
+  public void testCo2RichGammaPhiUsesCarrierReferenceForAllActivityComponents() {
+    SystemVanLaarActivitySRK system = new SystemVanLaarActivitySRK(313.15, 100.0);
+    system.addComponent("CO2", 1.0e6);
+    system.addComponent("water", 1000.0);
+    system.addComponent("nitric acid", 3.0);
+    system.addComponent("sulfuric acid", 1.0);
+    system.createDatabase(true);
+    system.setMixingRule("classic");
+    system.init(0);
+
+    PhaseInterface vapour = system.getPhase(0);
+    assertTrue(SystemVanLaarActivitySRK.isPredominantlyCarbonDioxidePhase(vapour));
+    for (String componentName : new String[] { "water", "nitric acid", "sulfuric acid" }) {
+      assertEquals(system.carbonDioxideCarrierFugacityCoefficient(componentName),
+          system.getGammaPhiVapourFugacityCoefficient(vapour.getComponent(componentName), vapour), 0.0,
+          componentName + " should use the tuned trace-CO2 carrier reference");
+    }
+  }
+
+  /**
    * Verifies that a normal TPflash accepts the raw Van Laar acid split for a sulfuric-acid CO2 feed without applying a
    * post-flash solubility filter.
    */
