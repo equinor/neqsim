@@ -328,19 +328,22 @@ first moment also recovers the inventory-over-flow residence time
 
 $$\tau=\frac{\sum_P M_P}{\dot m}.$$
 
-The validated first-order kernel matches analytical repeated-step profiles at two timesteps,
-recovers the inventory-over-flow residence time, conserves a synthetic 1800 s pulse over six
-residence times, and reduces pulse error when the grid and timestep are jointly refined from
-12 nodes/60 s to 24 nodes/30 s. The end-to-end SRK/classic regression repeats the same 1800 s
-event independently through a 3000 m isothermal pipe, requires bit-identical outlet histories,
-final profiles, and component inventories, verifies breakthrough and recovery, and telescopes
-every immutable step report into a cumulative nitrogen balance. A coupled refinement regression
-then advances the same physical pulse and recovery at 6 nodes/120 s, 12 nodes/60 s, and
-24 nodes/30 s. At common 120 s sample times, it requires the mean absolute outlet-composition
-difference between the two finer solutions to be smaller than the difference between the two
-coarser solutions while every resolution retains the same EOS, boundedness, and conservation
-gates. This is a Cauchy-convergence check; it does not define an exact analytical solution for the
-coupled compressible case.
+The validated stand-alone, constant-mass transport kernel matches analytical repeated-step
+profiles at two timesteps, recovers the inventory-over-flow residence time, conserves a synthetic
+1800 s pulse over six residence times, and reduces pulse error when its grid and timestep are
+jointly refined from 12 nodes/60 s to 24 nodes/30 s. Separately, the end-to-end SRK/classic
+baseline regression repeats the same 1800 s event through a 3000 m isothermal pipe, requires
+bit-identical outlet histories, final profiles, and component inventories, verifies breakthrough
+and recovery, and telescopes every immutable step report into a cumulative nitrogen balance.
+
+A pending coupled refinement regression advances the same physical pulse and recovery at
+6 nodes/120 s, 12 nodes/60 s, and 24 nodes/30 s. At common 120 s sample times, it requires the
+mean absolute outlet-composition difference between the two finer solutions to be smaller than
+the difference between the two coarser solutions while every resolution retains the same EOS,
+boundedness, and conservation gates. The finest coupled case currently remains a fail-loud
+nonlinear-convergence gate; no coupled Cauchy trend is claimed until it passes. The comparison is
+a Cauchy-convergence check and does not define an exact analytical solution for the coupled
+compressible case.
 
 Zero or reversed face flow still fails explicitly because an external upwind composition is not
 yet defined. Once enabled, every failed hydraulic/species criterion throws so that a failed
