@@ -651,13 +651,11 @@ public class SystemVanLaarActivitySRK extends SystemEosGE {
    *
    * @param phaseIndex phase whose model and type should be retained
    */
-  private void collapseToSinglePhase(int phaseIndex) {
+  void collapseToSinglePhase(int phaseIndex) {
+    int selectedCreationOrderIndex = getPhaseIndex(phaseIndex);
     PhaseType phaseType = getPhase(phaseIndex).getType();
-    if (phaseIndex != 0) {
-      setPhase(getPhase(phaseIndex).clone(), 0);
-    }
     setNumberOfPhases(1);
-    setPhaseIndex(0, 0);
+    setPhaseIndex(0, selectedCreationOrderIndex);
     setBeta(0, 1.0);
     setPhaseType(0, phaseType);
     reset_x_y();
