@@ -1366,9 +1366,10 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     momentumEquationHistory[0] = maximumAbsoluteByEquationFamily(residualValues, 1);
     while (residual > NONLINEAR_RESIDUAL_TOLERANCE && iteration < MAXIMUM_COUPLED_ITERATIONS) {
       double[] update;
+      double[][] jacobian;
       try {
         double[] values = calculateCoupledResidual(state);
-        double[][] jacobian = calculateCoupledBandedJacobian(state);
+        jacobian = calculateCoupledBandedJacobian(state);
         double[] rightHandSide = new double[values.length];
         for (int row = 0; row < values.length; row++) {
           rightHandSide[row] = -values[row];
@@ -1408,6 +1409,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       densityHistory[iteration] = calculateMaximumRelativeDensityResidual();
       if (!accepted) {
         lineSearchFailed = true;
+        numericalFailureDetail = calculateJacobianDirectionalDerivativeDetail(state, update, jacobian);
         break;
       }
     }
@@ -1509,6 +1511,70 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
 
   private void setCoupledJacobianEntry(double[][] jacobian, int row, int column, double value) {
     jacobian[row][column - row + COUPLED_HALF_BANDWIDTH] = value;
+  }
+
+  private String calculateJacobianDirectionalDerivativeDetail(double[] state, double[] direction,
+      double[][] jacobian) {
+    double maximumRelativeDirection = 0.0;
+    for (int variable = 0; variable < state.length; variable++) {
+      double scale = Math.max(Math.abs(state[variable]), 1.0);
+      maximumRelativeDirection = Math.max(maximumRelativeDirection, Math.abs(direction[variable]) / scale);
+    }
+    if (!Double.isFinite(maximumRelativeDirection) || maximumRelativeDirection == 0.0) {
+      return "Independent Jacobian directional-derivative check unavailable because the Newton direction is "
+          + "zero or non-finite";
+    }
+
+    double perturbationScale = 1.0e-6 / maximumRelativeDirection;
+    double[] lower = state.clone();
+    double[] upper = state.clone();
+    for (int variable = 0; variable < state.length; variable++) {
+      lower[variable] -= perturbationScale * direction[variable];
+      upper[variable] += perturbationScale * direction[variable];
+    }
+
+    try {
+      double[] lowerResidual = safeCoupledResidualValues(lower, state);
+      double[] upperResidual = safeCoupledResidualValues(upper, state);
+      if (lowerResidual == null || upperResidual == null) {
+        return "Independent Jacobian directional-derivative check unavailable because the central perturbation "
+            + "left the supported positive-pressure/positive-flow state";
+      }
+
+      double[] jacobianDirection = multiplyCoupledBandedJacobian(jacobian, direction);
+      double[] maximumDifference = new double[2];
+      double[] maximumReference = new double[2];
+      for (int row = 0; row < state.length; row++) {
+        int family = row % 2;
+        double finiteDifference = (upperResidual[row] - lowerResidual[row]) / (2.0 * perturbationScale);
+        maximumDifference[family] =
+            Math.max(maximumDifference[family], Math.abs(jacobianDirection[row] - finiteDifference));
+        maximumReference[family] = Math.max(maximumReference[family],
+            Math.max(Math.abs(jacobianDirection[row]), Math.abs(finiteDifference)));
+      }
+      double massRelativeError = maximumDifference[0] / Math.max(maximumReference[0], 1.0e-14);
+      double momentumRelativeError = maximumDifference[1] / Math.max(maximumReference[1], 1.0e-14);
+      return "Independent Newton-direction Jacobian relative infinity-norm error: continuity="
+          + massRelativeError + ", momentum=" + momentumRelativeError + ", normalized perturbation=1.0E-6";
+    } catch (RuntimeException exception) {
+      return "Independent Jacobian directional-derivative check failed with "
+          + exception.getClass().getSimpleName()
+          + (exception.getMessage() == null ? "" : ": " + exception.getMessage());
+    } finally {
+      applyCoupledState(state);
+    }
+  }
+
+  private double[] multiplyCoupledBandedJacobian(double[][] jacobian, double[] vector) {
+    double[] product = new double[vector.length];
+    for (int row = 0; row < vector.length; row++) {
+      int firstColumn = Math.max(0, row - COUPLED_HALF_BANDWIDTH);
+      int lastColumn = Math.min(vector.length - 1, row + COUPLED_HALF_BANDWIDTH);
+      for (int column = firstColumn; column <= lastColumn; column++) {
+        product[row] += jacobian[row][column - row + COUPLED_HALF_BANDWIDTH] * vector[column];
+      }
+    }
+    return product;
   }
 
   private double[] calculateCoupledResidual(double[] state) {
