@@ -1948,10 +1948,6 @@ public class TwoFluidPipe extends Pipeline {
     double[][] layerTemperatures = getOrInitializeMultilayerLayerTemperatures();
 
     for (int i = 0; i < numberOfSections; i++) {
-      List<RadialThermalLayer> layers = thermalCalculator.getLayers();
-      for (int layerIndex = 0; layerIndex < layers.size(); layerIndex++) {
-        layers.get(layerIndex).initializeTemperature(layerTemperatures[i][layerIndex]);
-      }
       TwoFluidSection sec = sections[i];
       double oldFluidTemperature = previousFluidTemperatures[i];
       double ambientTemperature = surfaceTemperature;
@@ -1961,13 +1957,8 @@ public class TwoFluidPipe extends Pipeline {
 
       double localMassFlow = getCellFaceThroughput(i, phaseMassFaceFluxes);
       double hInner = calculateInnerHTC(localMassFlow, sec.getArea());
-      thermalCalculator.setFluidTemperature(oldFluidTemperature);
-      thermalCalculator.setAmbientTemperature(ambientTemperature);
-      thermalCalculator.setInnerHTC(hInner);
-      thermalCalculator.updateTransient(dt);
-      for (int layerIndex = 0; layerIndex < layers.size(); layerIndex++) {
-        layerTemperatures[i][layerIndex] = layers.get(layerIndex).getTemperature();
-      }
+      double wallTemperature = advanceMultilayerCellThermalState(thermalCalculator, layerTemperatures[i],
+          oldFluidTemperature, ambientTemperature, hInner, dt);
 
       double heatLoss = thermalCalculator.calculateHeatLossPerLength();
       double sensibleAdvection = calcSensibleAdvectionSource(i, phaseMassFaceFluxes, previousFluidTemperatures, Cp);
@@ -1980,10 +1971,49 @@ public class TwoFluidPipe extends Pipeline {
       sec.setTemperature(newFluidTemperature);
 
       if (thermalCalculator.getNumberOfLayers() > 0) {
-        wallTemperatureProfile[i] = thermalCalculator.calculateInterfaceTemperature(0, false);
+        wallTemperatureProfile[i] = wallTemperature;
       }
       updateThermalRiskFlags(i, newFluidTemperature);
     }
+  }
+
+  /**
+   * Advance one cell's radial thermal state using a shared calculator configuration.
+   *
+   * <p>
+   * The stored layer temperatures are restored before every advance so sequential cells cannot inherit another cell's
+   * state. The updated temperatures are copied back into the caller-owned array.
+   * </p>
+   *
+   * @param calculator configured radial thermal calculator
+   * @param layerTemperatures persistent layer temperatures for one cell, in kelvin
+   * @param fluidTemperature cell fluid temperature in kelvin
+   * @param ambientTemperature local ambient temperature in kelvin
+   * @param innerHeatTransferCoefficient fluid-side heat-transfer coefficient in W/(m2 K)
+   * @param dt accepted thermal time step in seconds
+   * @return inner-wall interface temperature in kelvin, or {@link Double#NaN} when no layers are configured
+   * @throws IllegalArgumentException if the stored profile does not match the configured layer count
+   */
+  static double advanceMultilayerCellThermalState(MultilayerThermalCalculator calculator,
+      double[] layerTemperatures, double fluidTemperature, double ambientTemperature,
+      double innerHeatTransferCoefficient, double dt) {
+    List<RadialThermalLayer> layers = calculator.getLayers();
+    if (layerTemperatures == null || layerTemperatures.length != layers.size()) {
+      throw new IllegalArgumentException("Stored radial-layer profile must match the configured layer count");
+    }
+    for (int layerIndex = 0; layerIndex < layers.size(); layerIndex++) {
+      layers.get(layerIndex).initializeTemperature(layerTemperatures[layerIndex]);
+    }
+
+    calculator.setFluidTemperature(fluidTemperature);
+    calculator.setAmbientTemperature(ambientTemperature);
+    calculator.setInnerHTC(innerHeatTransferCoefficient);
+    calculator.updateTransient(dt);
+
+    for (int layerIndex = 0; layerIndex < layers.size(); layerIndex++) {
+      layerTemperatures[layerIndex] = layers.get(layerIndex).getTemperature();
+    }
+    return layers.isEmpty() ? Double.NaN : calculator.calculateInterfaceTemperature(0, false);
   }
 
   /**
