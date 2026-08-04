@@ -278,6 +278,50 @@ public class TwoFluidConservationEquations implements Serializable {
   }
 
   /**
+   * Calculate phase-resolved mass flow at every finite-volume face from the same boundary and AUSM+ fluxes used by the
+   * conservative equations.
+   *
+   * <p>
+   * Rows are faces from inlet through outlet; columns are gas, oil, and water in kg/s. A positive value points in the
+   * increasing section-index direction. CLOSED boundaries are represented by the zero boundary velocities imposed by
+   * {@link neqsim.process.equipment.pipeline.TwoFluidPipe}, so their external face flow is exactly zero while internal
+   * convection remains available.
+   * </p>
+   *
+   * @param sections current finite-volume sections
+   * @param dx minimum mesh spacing in metres, retained for consistency with the spatial flux API
+   * @return face mass flows with shape {@code [sections.length + 1][3]}
+   * @throws IllegalArgumentException if {@code sections} is null or empty
+   */
+  public double[][] calcPhaseMassFaceFluxes(TwoFluidSection[] sections, double dx) {
+    if (sections == null || sections.length == 0) {
+      throw new IllegalArgumentException("At least one section is required to calculate face fluxes");
+    }
+
+    double[][] interfaceFluxes = sections.length > 1 ? calcInterfaceFluxes(sections, dx) : new double[0][NUM_EQUATIONS];
+    double[][] phaseMassFaceFluxes = new double[sections.length + 1][3];
+
+    double[] inletFlux = calcInletFlux(sections[0]);
+    phaseMassFaceFluxes[0][0] = inletFlux[IDX_GAS_MASS];
+    phaseMassFaceFluxes[0][1] = inletFlux[IDX_OIL_MASS];
+    phaseMassFaceFluxes[0][2] = inletFlux[IDX_WATER_MASS];
+
+    for (int face = 1; face < sections.length; face++) {
+      double[] interfaceFlux = interfaceFluxes[face - 1];
+      phaseMassFaceFluxes[face][0] = interfaceFlux[IDX_GAS_MASS];
+      phaseMassFaceFluxes[face][1] = interfaceFlux[IDX_OIL_MASS];
+      phaseMassFaceFluxes[face][2] = interfaceFlux[IDX_WATER_MASS];
+    }
+
+    double[] outletFlux = calcOutletFlux(sections[sections.length - 1]);
+    int outletFace = sections.length;
+    phaseMassFaceFluxes[outletFace][0] = outletFlux[IDX_GAS_MASS];
+    phaseMassFaceFluxes[outletFace][1] = outletFlux[IDX_OIL_MASS];
+    phaseMassFaceFluxes[outletFace][2] = outletFlux[IDX_WATER_MASS];
+    return phaseMassFaceFluxes;
+  }
+
+  /**
    * Calculate inlet flux using the inlet cell state. This represents mass entering the domain from the inlet stream.
    * Uses holdups directly (set by steady state or BC) rather than computing from mass per length to avoid feedback from
    * cell depletion.
