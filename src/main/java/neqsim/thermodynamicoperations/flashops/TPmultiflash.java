@@ -2595,8 +2595,8 @@ public class TPmultiflash extends TPflash {
               maxCompDiff = Math.max(maxCompDiff,
                   Math.abs(system.getPhase(i).getComponent(k).getx() - system.getPhase(j).getComponent(k).getx()));
             }
-            boolean traceDuplicatePair = Math.min(system.getBeta(i), system.getBeta(j))
-                < 10.0 * phaseFractionMinimumLimit;
+            boolean traceDuplicatePair = Math.min(system.getBeta(i), system.getBeta(j)) < 10.0
+                * phaseFractionMinimumLimit;
             if (maxCompDiff < 1.0e-6 && (isCpaModel || traceDuplicatePair)) {
               mergeAndRemoveDuplicatePhase(i, j);
               doStabilityAnalysis = false;
