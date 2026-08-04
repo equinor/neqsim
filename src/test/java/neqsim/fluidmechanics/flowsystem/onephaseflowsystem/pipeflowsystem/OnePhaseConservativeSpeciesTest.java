@@ -123,7 +123,6 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     assertTrue(message.contains("componentMoles="), message);
     assertTrue(message.contains("density="), message);
     assertTrue(message.contains("frictionFactor="), message);
-    System.out.println("Frozen 24-node/30-second coupled-pulse diagnostic: " + message);
   }
 
   @Test
