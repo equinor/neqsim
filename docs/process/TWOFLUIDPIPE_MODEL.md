@@ -367,7 +367,9 @@ System.out.println(pipe.getThermalSummary());
 - **Transient advection**: Uses the gas, oil, and water mass flow retained from each conservative AUSM+ integration
   stage, combined with the time integrator's own stage weights. Temperature transport therefore uses the same face
   fluxes that advanced the accepted hydrodynamic state without a second flux sweep. A CLOSED inlet or outlet has
-  exactly zero advective sensible-energy transport, while internal convection can continue.
+  exactly zero advective sensible-energy transport, while internal convection can continue. Every cell reads from
+  one pre-update temperature snapshot, so explicit advection is independent of the cell loop order. The outlet boundary
+  is transmissive and therefore extrapolates the last cell's state if its flux reverses.
 - **Closed cooldown**: Radial wall/ambient heat exchange is evaluated for every physical cell, including section zero.
   The local conservative phase inventory supplies fluid thermal inertia, so a disconnected inlet stream's stored
   nominal rate cannot change a closed-domain temperature history.
