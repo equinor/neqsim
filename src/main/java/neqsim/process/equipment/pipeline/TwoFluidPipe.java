@@ -1733,11 +1733,11 @@ public class TwoFluidPipe extends Pipeline {
    * Update temperature after an accepted transient hydrodynamic step.
    *
    * <p>
-   * Sensible-energy advection uses the phase-resolved finite-volume face mass fluxes retained by
-   * {@link TwoFluidConservationEquations#getLastPhaseMassFaceFluxes()} for each hydrodynamic integration stage. CLOSED
-   * external faces are therefore exactly adiabatic to mass transport while internal convection remains active. Radial
-   * heat transfer is applied to every physical cell, including section zero. This post-step update is the sole owner of
-   * ambient heat exchange; the equation object's duplicate wall source is disabled by the heat-transfer setters.
+   * Sensible-energy advection uses the integration-weighted phase-resolved finite-volume face mass fluxes retained for
+   * each hydrodynamic stage. CLOSED external faces are therefore exactly adiabatic to mass transport while internal
+   * convection remains active. Radial heat transfer is applied to every physical cell, including section zero. This
+   * post-step update is the sole owner of ambient heat exchange; the equation object's duplicate wall source is
+   * disabled by the heat-transfer setters.
    * </p>
    *
    * @param dt time step in seconds
@@ -3445,8 +3445,10 @@ public class TwoFluidPipe extends Pipeline {
       final double dtFinal = dtActual;
       final boolean captureThermalStageFluxes = enableHeatTransfer && heatTransferCoefficient > 0.0;
       final List<TwoFluidConservationEquations.MassBalanceRate> stageMassBalanceRates = new ArrayList<>();
-      final List<double[][]> stagePhaseMassFaceFluxes = captureThermalStageFluxes ? new ArrayList<>()
-          : java.util.Collections.emptyList();
+      final double[] thermalStageWeights = captureThermalStageFluxes ? getTimeIntegrationStageWeights() : new double[0];
+      final double[][] weightedPhaseMassFaceFluxes =
+          captureThermalStageFluxes ? new double[numberOfSections + 1][3] : new double[0][0];
+      final int[] thermalStageIndex = { 0 };
 
       TimeIntegrator.RHSFunction rhs = (state, t) -> {
         equations.applyState(sections, state);
@@ -3458,7 +3460,12 @@ public class TwoFluidPipe extends Pipeline {
         double[][] derivative = equations.calcRHS(sections, dx);
         stageMassBalanceRates.add(equations.getLastMassBalanceRate());
         if (captureThermalStageFluxes) {
-          stagePhaseMassFaceFluxes.add(equations.getLastPhaseMassFaceFluxes());
+          int stage = thermalStageIndex[0]++;
+          if (stage >= thermalStageWeights.length) {
+            throw new IllegalStateException("Received more thermal flux stages than expected for "
+                + timeIntegrator.getMethod());
+          }
+          equations.accumulateLastPhaseMassFaceFluxes(weightedPhaseMassFaceFluxes, thermalStageWeights[stage]);
         }
         return derivative;
       };
@@ -3639,7 +3646,11 @@ public class TwoFluidPipe extends Pipeline {
 
       // 9. Update temperature profile if heat transfer is enabled
       if (captureThermalStageFluxes) {
-        updateTransientTemperature(dtActual, averagePhaseMassFaceFluxes(stagePhaseMassFaceFluxes));
+        if (thermalStageIndex[0] != thermalStageWeights.length) {
+          throw new IllegalStateException("Expected " + thermalStageWeights.length + " thermal flux stages for "
+              + timeIntegrator.getMethod() + " but received " + thermalStageIndex[0]);
+        }
+        updateTransientTemperature(dtActual, weightedPhaseMassFaceFluxes);
       }
 
       // 10. Advance time
@@ -3675,27 +3686,16 @@ public class TwoFluidPipe extends Pipeline {
     }
   }
 
-  private double[][] averagePhaseMassFaceFluxes(List<double[][]> stageFluxes) {
-    double[] weights = getTimeIntegrationStageWeights(stageFluxes.size());
-    double[][] average = new double[numberOfSections + 1][3];
-    for (int stage = 0; stage < stageFluxes.size(); stage++) {
-      double[][] stageFlux = stageFluxes.get(stage);
-      if (stageFlux.length != average.length) {
-        throw new IllegalStateException("Unexpected thermal face count for integration stage " + stage);
-      }
-      for (int face = 0; face < average.length; face++) {
-        if (stageFlux[face].length != 3) {
-          throw new IllegalStateException("Expected gas, oil, and water fluxes at face " + face);
-        }
-        for (int phase = 0; phase < 3; phase++) {
-          average[face][phase] += weights[stage] * stageFlux[face][phase];
-        }
-      }
+  private double[] getTimeIntegrationStageWeights(int stageCount) {
+    double[] weights = getTimeIntegrationStageWeights();
+    if (stageCount != weights.length) {
+      throw new IllegalStateException("Expected " + weights.length + " integration stages for "
+          + timeIntegrator.getMethod() + " but received " + stageCount);
     }
-    return average;
+    return weights;
   }
 
-  private double[] getTimeIntegrationStageWeights(int stageCount) {
+  private double[] getTimeIntegrationStageWeights() {
     TimeIntegrator.Method method = timeIntegrator.getMethod();
     double[] weights;
     switch (method) {
@@ -3714,10 +3714,6 @@ public class TwoFluidPipe extends Pipeline {
       break;
     default:
       throw new IllegalStateException("Unsupported time integration method: " + method);
-    }
-    if (stageCount != weights.length) {
-      throw new IllegalStateException(
-          "Expected " + weights.length + " integration stages for " + method + " but received " + stageCount);
     }
     return weights;
   }
