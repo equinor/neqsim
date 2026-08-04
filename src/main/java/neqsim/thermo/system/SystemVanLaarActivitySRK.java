@@ -403,7 +403,8 @@ public class SystemVanLaarActivitySRK extends SystemEosGE {
   @Override
   public double getGammaPhiVapourFugacityCoefficient(ComponentInterface component, PhaseInterface vapourPhase) {
     component.fugcoef(vapourPhase);
-    if (isMaterialNitricAcidComponent(component)) {
+    if (isPredominantlyCarbonDioxidePhase(vapourPhase)
+        && isVanLaarActivityComponent(component.getComponentName())) {
       return carbonDioxideCarrierFugacityCoefficient(component.getComponentName());
     }
     return component.getFugacityCoefficient();
