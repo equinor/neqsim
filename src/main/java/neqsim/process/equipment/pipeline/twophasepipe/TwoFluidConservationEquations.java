@@ -222,8 +222,8 @@ public class TwoFluidConservationEquations implements Serializable {
     // retained for a stage-consistent domain mass-balance diagnostic.
     double[] inletFlux = calcInletFlux(sections[0]);
     double[] outletFlux = calcOutletFlux(sections[nCells - 1]);
-    lastPhaseMassFaceFluxes =
-        populatePhaseMassFaceFluxes(lastPhaseMassFaceFluxes, nCells, fluxes, inletFlux, outletFlux);
+    lastPhaseMassFaceFluxes = populatePhaseMassFaceFluxes(lastPhaseMassFaceFluxes, nCells, fluxes, inletFlux,
+        outletFlux);
 
     // Assemble RHS: dU/dt = -1/dx_i * (F_{i+1/2} - F_{i-1/2}) + S_i
     //
