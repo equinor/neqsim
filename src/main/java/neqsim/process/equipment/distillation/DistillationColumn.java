@@ -1716,6 +1716,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Check whether a specification controls the reboiler boilup ratio.
+   *
+   * @param specification specification to inspect
+   * @return {@code true} for a bottom reflux-ratio specification
+   */
+  private boolean isBottomRefluxRatioSpecification(ColumnSpecification specification) {
+    return specification != null && specification.getLocation() == ColumnSpecification.ProductLocation.BOTTOM
+        && specification.getType() == ColumnSpecification.SpecificationType.REFLUX_RATIO;
+  }
+
+  /**
    * Create an actionable message for contradictory condenser reflux controls.
    *
    * @return degrees-of-freedom error message
@@ -10481,7 +10492,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Configure the reboiler operating mode.
+   * Configure the reboiler operating mode. Selecting equilibrium mode clears the active reboiler ratio and its stored
+   * bottom reflux-ratio specification while preserving unrelated bottom specifications.
    *
    * @param mode reboiler operating mode
    * @throws IllegalStateException if the column has no reboiler
@@ -10491,6 +10503,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     requireReboiler();
     if (mode == ReboilerMode.EQUILIBRIUM) {
       getReboiler().clearRefluxRatio();
+      if (isBottomRefluxRatioSpecification(bottomSpecification)) {
+        bottomSpecification = null;
+      }
       setDoInitializion(true);
     } else if (mode == ReboilerMode.VAPOR_BOILUP_RATIO) {
       throw new IllegalArgumentException("Use setReboilerVaporBoilupRatio(ratio) to configure vapor boilup ratio mode");
