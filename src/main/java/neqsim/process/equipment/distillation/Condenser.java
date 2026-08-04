@@ -252,13 +252,14 @@ public class Condenser extends SimpleTray {
   }
 
   /**
-   * Discard the separate liquid product after the owning column replaces rejected tray products
-   * with a full-feed fallback.
+   * Discard the separate liquid product after the owning column replaces rejected tray products with a full-feed
+   * fallback.
    *
-   * <p>The fallback already exposes the complete feed inventory through the column's gas and
-   * bottom product streams. Retaining this rejected condenser product beside those streams would
-   * double-count material. Fixed-reflux availability and delivery diagnostics are invalidated
-   * because they describe the rejected tray state, not the fallback products.
+   * <p>
+   * The fallback already exposes the complete feed inventory through the column's gas and bottom product streams.
+   * Retaining this rejected condenser product beside those streams would double-count material. Fixed-reflux
+   * availability and delivery diagnostics are invalidated because they describe the rejected tray state, not the
+   * fallback products.
    *
    * @param id calculation identifier assigned to the cleared product stream
    */
