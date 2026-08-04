@@ -26,6 +26,17 @@ public interface EosGeFlashModel {
   }
 
   /**
+   * Prepare model phase roles before direct gamma-phi initialization and iteration.
+   *
+   * <p>
+   * Implementations can restore creation-order phase slots after an earlier operation reordered active phases.
+   * </p>
+   */
+  default void prepareGammaPhiFlash() {
+    // Ordinary systems require no phase-role preparation.
+  }
+
+  /**
    * Return the vapour-side fugacity coefficient used in the gamma-phi K-value ratio.
    *
    * @param component vapour-phase component
