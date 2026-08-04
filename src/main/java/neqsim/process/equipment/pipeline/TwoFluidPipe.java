@@ -1978,8 +1978,8 @@ public class TwoFluidPipe extends Pipeline {
     for (int cell = 0; cell < numberOfSections; cell++) {
       for (int layerIndex = 0; layerIndex < layerCount; layerIndex++) {
         double initialTemperature = layers.get(layerIndex).getTemperature();
-        multilayerLayerTemperatureProfiles[cell][layerIndex] =
-            Double.isFinite(initialTemperature) ? initialTemperature : sections[cell].getTemperature();
+        multilayerLayerTemperatureProfiles[cell][layerIndex] = Double.isFinite(initialTemperature) ? initialTemperature
+            : sections[cell].getTemperature();
       }
     }
     return multilayerLayerTemperatureProfiles;
@@ -3377,8 +3377,8 @@ public class TwoFluidPipe extends Pipeline {
       final double dtFinal = dtActual;
       final boolean captureThermalStageFluxes = enableHeatTransfer && heatTransferCoefficient > 0.0;
       final List<TwoFluidConservationEquations.MassBalanceRate> stageMassBalanceRates = new ArrayList<>();
-      final List<double[][]> stagePhaseMassFaceFluxes =
-          captureThermalStageFluxes ? new ArrayList<>() : java.util.Collections.emptyList();
+      final List<double[][]> stagePhaseMassFaceFluxes = captureThermalStageFluxes ? new ArrayList<>()
+          : java.util.Collections.emptyList();
 
       TimeIntegrator.RHSFunction rhs = (state, t) -> {
         equations.applyState(sections, state);
