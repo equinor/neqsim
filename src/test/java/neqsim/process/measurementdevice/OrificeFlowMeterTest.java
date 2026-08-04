@@ -174,8 +174,9 @@ public class OrificeFlowMeterTest {
 
   /**
    * Builds a fixed reference meter for the ISO/TR 11583 Clause 7 wet-gas tests: D = 200 mm, d = 100 mm (beta = 0.5), dP
-   * = 0.5 bar, p1 = 60 bara, kappa = 1.3, rho,gas = 50 kg/m3. Gas density and isentropic exponent are imposed so the
-   * case does not depend on the fluid package.
+   * = 0.5 bar, kappa = 1.3, rho,gas = 50 kg/m3. Upstream pressure comes from the shared {@code stream} fixture (20
+   * bara, set up in {@link #setUp()}). Gas density and isentropic exponent are imposed so the case does not depend on
+   * the fluid package.
    *
    * @param liquidDensity liquid density in kg/m3
    * @return the configured meter

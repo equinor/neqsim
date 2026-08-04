@@ -1750,7 +1750,8 @@ public class DocExamplesCompilationTest {
     stream.setFlowRate(50000.0, "kg/hr");
     stream.run();
     // Guarantees the two-phase condition the wet-gas doc examples rely on, instead of assuming it silently.
-    assertEquals(2, stream.getThermoSystem().getNumberOfPhases());
+    assertTrue(stream.getThermoSystem().hasPhaseType("gas"));
+    assertTrue(stream.getThermoSystem().hasPhaseType("oil"));
     return stream;
   }
 

@@ -9,6 +9,20 @@
 
 ---
 
+## 2026-08-04 — Test doc/privacy wording fixes (Copilot review round 9)
+
+### Fixed
+
+- `OrificeFlowMeterTest.buildWetGasMeter(double)` JavaDoc claimed `p1 = 60 bara`, but the meter uses the shared
+  `stream` fixture from `setUp()`, which is 20 bara. Reworded to describe the actual upstream pressure source.
+- Redacted equipment tag identifiers (`27A-KA01A` / `27A-KA60`) from a `VenturiFlowMeterTest` JavaDoc comment, per the
+  repository's privacy rule against including equipment tag numbers in public/reusable content.
+- `DocExamplesCompilationTest.buildDocExampleWetGasStream()` no longer hard-asserts an exact phase count of 2 (brittle
+  if NeqSim ever adds another phase type); it now asserts the intended `gas` and `oil` phases are both present via
+  `hasPhaseType(...)`.
+
+---
+
 ## 2026-08-04 — Volume-unit conversion gaps fixed (Copilot review round 8)
 
 ### Fixed

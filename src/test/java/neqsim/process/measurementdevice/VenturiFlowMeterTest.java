@@ -356,7 +356,7 @@ public class VenturiFlowMeterTest {
   /**
    * Unlike ISO/TR 11583 Equation (4), de Leeuw (1997) never replaces the discharge coefficient, regardless of
    * {@link VenturiFlowMeter#setUseWetGasDischargeCoefficient(boolean)}. This guards the calibration trap found for
-   * ISO/TR 11583 (see the 27A-KA01A / 27A-KA60 in-service discharge coefficients) from ever affecting de Leeuw.
+   * ISO/TR 11583 (see the field-reported in-service discharge coefficients) from ever affecting de Leeuw.
    */
   @Test
   void testDeLeeuwNeverReplacesDischargeCoefficient() {
