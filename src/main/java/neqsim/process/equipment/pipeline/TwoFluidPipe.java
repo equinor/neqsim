@@ -1835,6 +1835,12 @@ public class TwoFluidPipe extends Pipeline {
 
   private double calcSensibleAdvectionSource(int cell, double[][] phaseMassFaceFluxes,
       double[] previousFluidTemperatures, double Cp) {
+    return calculateExplicitSensibleAdvectionSource(cell, phaseMassFaceFluxes, previousFluidTemperatures,
+        getInletStream().getFluid().getTemperature("K"), Cp, sections[cell].getLength());
+  }
+
+  static double calculateExplicitSensibleAdvectionSource(int cell, double[][] phaseMassFaceFluxes,
+      double[] previousFluidTemperatures, double inletTemperature, double Cp, double cellLength) {
     double cellTemperature = previousFluidTemperatures[cell];
     double source = 0.0;
     for (int phase = 0; phase < 3; phase++) {
@@ -1843,19 +1849,18 @@ public class TwoFluidPipe extends Pipeline {
 
       double leftUpwindTemperature = cellTemperature;
       if (leftMassFlow > 0.0) {
-        leftUpwindTemperature =
-            cell == 0 ? getInletStream().getFluid().getTemperature("K") : previousFluidTemperatures[cell - 1];
+        leftUpwindTemperature = cell == 0 ? inletTemperature : previousFluidTemperatures[cell - 1];
       }
 
       double rightUpwindTemperature = cellTemperature;
-      if (rightMassFlow < 0.0 && cell + 1 < numberOfSections) {
+      if (rightMassFlow < 0.0 && cell + 1 < previousFluidTemperatures.length) {
         rightUpwindTemperature = previousFluidTemperatures[cell + 1];
       }
       // The outlet flux uses a transmissive extrapolation of the last cell state. If it reverses,
       // the corresponding upstream temperature is therefore the last cell temperature already selected above.
 
       source += Cp * (leftMassFlow * (leftUpwindTemperature - cellTemperature)
-          - rightMassFlow * (rightUpwindTemperature - cellTemperature)) / sections[cell].getLength();
+          - rightMassFlow * (rightUpwindTemperature - cellTemperature)) / cellLength;
     }
     return source;
   }
