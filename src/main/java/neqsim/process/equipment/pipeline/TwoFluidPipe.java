@@ -281,8 +281,11 @@ public class TwoFluidPipe extends Pipeline {
   /** Soil/burial thermal resistance (m²·K/W). */
   private double soilThermalResistance = 0.0;
 
-  /** Multi-layer radial heat-transfer calculator. */
+  /** Multi-layer radial heat-transfer calculator and public configuration template. */
   private MultilayerThermalCalculator thermalCalculator = null;
+
+  /** Per-cell temperatures for every stateful radial layer in the multi-layer model. */
+  private double[][] multilayerLayerTemperatureProfiles = null;
 
   /** Enable multi-layer thermal model (vs simple U-value). */
   private boolean useMultilayerThermalModel = false;
@@ -1855,8 +1858,8 @@ public class TwoFluidPipe extends Pipeline {
       if (rightMassFlow < 0.0 && cell + 1 < previousFluidTemperatures.length) {
         rightUpwindTemperature = previousFluidTemperatures[cell + 1];
       }
-      // The outlet flux uses a transmissive extrapolation of the last cell state. If it reverses,
-      // the corresponding upstream temperature is therefore the last cell temperature already selected above.
+      // The external outlet mass flux is outflow-only. The negative right-flow branch above therefore applies only
+      // to internal faces, where the downstream cell supplies the upwind temperature.
 
       source += Cp * (leftMassFlow * (leftUpwindTemperature - cellTemperature)
           - rightMassFlow * (rightUpwindTemperature - cellTemperature)) / cellLength;
@@ -1903,8 +1906,13 @@ public class TwoFluidPipe extends Pipeline {
   private void updateTransientTemperatureMultilayer(double[][] phaseMassFaceFluxes, double[] previousFluidTemperatures,
       double dt, double Cp, double muJT) {
     double fallbackFluidMassPerLength = sections[0].getArea() * getInletStream().getFluid().getDensity("kg/m3");
+    double[][] layerTemperatures = getOrInitializeMultilayerLayerTemperatures();
 
     for (int i = 0; i < numberOfSections; i++) {
+      List<RadialThermalLayer> layers = thermalCalculator.getLayers();
+      for (int layerIndex = 0; layerIndex < layers.size(); layerIndex++) {
+        layers.get(layerIndex).initializeTemperature(layerTemperatures[i][layerIndex]);
+      }
       TwoFluidSection sec = sections[i];
       double oldFluidTemperature = previousFluidTemperatures[i];
       double ambientTemperature = surfaceTemperature;
@@ -1918,6 +1926,9 @@ public class TwoFluidPipe extends Pipeline {
       thermalCalculator.setAmbientTemperature(ambientTemperature);
       thermalCalculator.setInnerHTC(hInner);
       thermalCalculator.updateTransient(dt);
+      for (int layerIndex = 0; layerIndex < layers.size(); layerIndex++) {
+        layerTemperatures[i][layerIndex] = layers.get(layerIndex).getTemperature();
+      }
 
       double heatLoss = thermalCalculator.calculateHeatLossPerLength();
       double sensibleAdvection = calcSensibleAdvectionSource(i, phaseMassFaceFluxes, previousFluidTemperatures, Cp);
@@ -1934,6 +1945,44 @@ public class TwoFluidPipe extends Pipeline {
       }
       updateThermalRiskFlags(i, newFluidTemperature);
     }
+  }
+
+  /**
+   * Return the persistent radial-layer temperature state for every finite-volume cell.
+   *
+   * <p>
+   * {@link MultilayerThermalCalculator} is stateful. Each cell therefore stores its own layer temperatures and restores
+   * them before advancing the shared configuration template exactly once per accepted thermal time step.
+   * </p>
+   *
+   * @return cell-by-layer temperature array in kelvin
+   */
+  private double[][] getOrInitializeMultilayerLayerTemperatures() {
+    int layerCount = thermalCalculator.getNumberOfLayers();
+    boolean dimensionsMatch = multilayerLayerTemperatureProfiles != null
+        && multilayerLayerTemperatureProfiles.length == numberOfSections;
+    if (dimensionsMatch) {
+      for (double[] cellTemperatures : multilayerLayerTemperatureProfiles) {
+        if (cellTemperatures.length != layerCount) {
+          dimensionsMatch = false;
+          break;
+        }
+      }
+    }
+    if (dimensionsMatch) {
+      return multilayerLayerTemperatureProfiles;
+    }
+
+    multilayerLayerTemperatureProfiles = new double[numberOfSections][layerCount];
+    List<RadialThermalLayer> layers = thermalCalculator.getLayers();
+    for (int cell = 0; cell < numberOfSections; cell++) {
+      for (int layerIndex = 0; layerIndex < layerCount; layerIndex++) {
+        double initialTemperature = layers.get(layerIndex).getTemperature();
+        multilayerLayerTemperatureProfiles[cell][layerIndex] =
+            Double.isFinite(initialTemperature) ? initialTemperature : sections[cell].getTemperature();
+      }
+    }
+    return multilayerLayerTemperatureProfiles;
   }
 
   /**
@@ -3326,8 +3375,10 @@ public class TwoFluidPipe extends Pipeline {
 
       // 3. Calculate RHS and advance solution
       final double dtFinal = dtActual;
+      final boolean captureThermalStageFluxes = enableHeatTransfer && heatTransferCoefficient > 0.0;
       final List<TwoFluidConservationEquations.MassBalanceRate> stageMassBalanceRates = new ArrayList<>();
-      final List<double[][]> stagePhaseMassFaceFluxes = new ArrayList<>();
+      final List<double[][]> stagePhaseMassFaceFluxes =
+          captureThermalStageFluxes ? new ArrayList<>() : java.util.Collections.emptyList();
 
       TimeIntegrator.RHSFunction rhs = (state, t) -> {
         equations.applyState(sections, state);
@@ -3338,7 +3389,7 @@ public class TwoFluidPipe extends Pipeline {
         applyBoundaryConditions();
         double[][] derivative = equations.calcRHS(sections, dx);
         stageMassBalanceRates.add(equations.getLastMassBalanceRate());
-        if (enableHeatTransfer && heatTransferCoefficient > 0.0) {
+        if (captureThermalStageFluxes) {
           stagePhaseMassFaceFluxes.add(equations.getLastPhaseMassFaceFluxes());
         }
         return derivative;
@@ -3519,7 +3570,7 @@ public class TwoFluidPipe extends Pipeline {
       }
 
       // 9. Update temperature profile if heat transfer is enabled
-      if (enableHeatTransfer && heatTransferCoefficient > 0) {
+      if (captureThermalStageFluxes) {
         updateTransientTemperature(dtActual, averagePhaseMassFaceFluxes(stagePhaseMassFaceFluxes));
       }
 
@@ -6619,6 +6670,7 @@ public class TwoFluidPipe extends Pipeline {
    */
   public void setThermalCalculator(MultilayerThermalCalculator calculator) {
     this.thermalCalculator = calculator;
+    this.multilayerLayerTemperatureProfiles = null;
     this.useMultilayerThermalModel = (calculator != null);
     if (calculator != null) {
       enableHeatTransfer = true;
@@ -6643,6 +6695,7 @@ public class TwoFluidPipe extends Pipeline {
    */
   public void setUseMultilayerThermalModel(boolean enable) {
     this.useMultilayerThermalModel = enable;
+    this.multilayerLayerTemperatureProfiles = null;
     if (enable) {
       enableHeatTransfer = true;
       getThermalCalculator(); // Ensure created
@@ -6680,6 +6733,7 @@ public class TwoFluidPipe extends Pipeline {
     MultilayerThermalCalculator calc = getThermalCalculator();
     calc.createSubseaPipeConfig(diameter, wallThickness, insulationThickness, concreteThickness, insulationMaterial);
     calc.setAmbientTemperature(surfaceTemperature);
+    multilayerLayerTemperatureProfiles = null;
     useMultilayerThermalModel = true;
     enableHeatTransfer = true;
 
@@ -6699,6 +6753,7 @@ public class TwoFluidPipe extends Pipeline {
         : RadialThermalLayer.MaterialType.SOIL_DRY;
     calc.createBuriedOnshorePipe(diameter, wallThickness, burialDepth, soilType);
     calc.setAmbientTemperature(surfaceTemperature);
+    multilayerLayerTemperatureProfiles = null;
     useMultilayerThermalModel = true;
     enableHeatTransfer = true;
 
