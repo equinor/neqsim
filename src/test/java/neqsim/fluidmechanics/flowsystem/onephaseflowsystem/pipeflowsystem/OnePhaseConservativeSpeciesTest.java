@@ -113,7 +113,6 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
   }
 
   @Test
-  @Tag("slow")
   void finePulseFailureReportsRepeatedNodeStateMutation() {
     AssertionError failure = assertThrows(AssertionError.class, () -> runIntegratedPulse(24, 30.0));
     String message = failure.getMessage();
@@ -124,6 +123,7 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     assertTrue(message.contains("componentMoles="), message);
     assertTrue(message.contains("density="), message);
     assertTrue(message.contains("frictionFactor="), message);
+    throw new AssertionError("TEMPORARY HOSTED DIAGNOSTIC — MUST BE REVERTED: " + message);
   }
 
   @Test
