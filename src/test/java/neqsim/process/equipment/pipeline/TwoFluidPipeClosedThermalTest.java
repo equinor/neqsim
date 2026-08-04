@@ -1,6 +1,7 @@
 package neqsim.process.equipment.pipeline;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -78,6 +79,20 @@ class TwoFluidPipeClosedThermalTest {
 
     assertArrayEquals(initial, fixture.pipe.getTemperatureProfile(), 1.0e-12,
         "A uniform closed adiabatic state must retain its temperature within numerical precision");
+  }
+
+  @Test
+  void explicitAdvectionUsesThePreUpdateTemperatureSnapshot() {
+    double[][] faceMassFlows = new double[4][3];
+    faceMassFlows[1][0] = 1.0;
+    faceMassFlows[2][0] = 1.0;
+    double[] previousTemperatures = { 300.0, 320.0, 340.0 };
+
+    double source = TwoFluidPipe.calculateExplicitSensibleAdvectionSource(1, faceMassFlows, previousTemperatures,
+        280.0, 2000.0, 10.0);
+
+    assertEquals(-4000.0, source, 0.0,
+        "Cell one must use the previous cell-zero temperature, not a value written earlier in the update loop");
   }
 
   @Test
