@@ -89,6 +89,39 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void repeatedNodeInitializationDoesNotAccumulateMolarFlowDrift() {
+    PipeFlowSystem pipe = createInitializedPipe(24, 3000.0);
+    neqsim.fluidmechanics.flownode.FlowNodeInterface node = pipe.getNode(22);
+    node.init();
+
+    double[] componentMoles = new double[node.getBulkSystem().getPhase(0).getNumberOfComponents()];
+    for (int component = 0; component < componentMoles.length; component++) {
+      componentMoles[component] =
+          node.getBulkSystem().getPhase(0).getComponent(component).getNumberOfMolesInPhase();
+    }
+    double phaseMoles = node.getBulkSystem().getPhase(0).getNumberOfMolesInPhase();
+    double density = node.getBulkSystem().getPhase(0).getDensity();
+    double massFlow = node.getMassFlowRate(0);
+    double reynoldsNumber = node.getReynoldsNumber();
+    double frictionFactor = node.getWallFrictionFactor();
+
+    node.init();
+
+    for (int component = 0; component < componentMoles.length; component++) {
+      assertRelativeEquals(componentMoles[component],
+          node.getBulkSystem().getPhase(0).getComponent(component).getNumberOfMolesInPhase(),
+          "component molar flow must be idempotent for component " + component);
+    }
+    assertRelativeEquals(phaseMoles, node.getBulkSystem().getPhase(0).getNumberOfMolesInPhase(),
+        "phase molar flow must be idempotent");
+    assertRelativeEquals(density, node.getBulkSystem().getPhase(0).getDensity(),
+        "EOS density must be idempotent");
+    assertRelativeEquals(massFlow, node.getMassFlowRate(0), "mass flow must be idempotent");
+    assertRelativeEquals(reynoldsNumber, node.getReynoldsNumber(), "Reynolds number must be idempotent");
+    assertRelativeEquals(frictionFactor, node.getWallFrictionFactor(), "friction factor must be idempotent");
+  }
+
+  @Test
   void optInSpeciesTransportFailsLoudlyForReversedFlowWithoutLegacyStrictFlag() {
     PipeFlowSystem pipe = createInitializedPipe(3);
     pipe.setConservativeSpeciesTransport(true);
@@ -110,20 +143,6 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
 
     assertEquals(OnePhaseSpeciesConservationReport.ConservationReason.NOT_RUN,
         pipe.getSpeciesConservationReport().getReason());
-  }
-
-  @Test
-  @Tag("slow")
-  void finePulseFailureReportsRepeatedNodeStateMutation() {
-    AssertionError failure = assertThrows(AssertionError.class, () -> runIntegratedPulse(24, 30.0));
-    String message = failure.getMessage();
-
-    assertTrue(message.contains("LINE_SEARCH_FAILED"), message);
-    assertTrue(message.contains("repeated node-state relative drifts"), message);
-    assertTrue(message.contains("phaseMoles="), message);
-    assertTrue(message.contains("componentMoles="), message);
-    assertTrue(message.contains("density="), message);
-    assertTrue(message.contains("frictionFactor="), message);
   }
 
   @Test
@@ -359,6 +378,11 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
       result += value;
     }
     return result;
+  }
+
+  private static void assertRelativeEquals(double expected, double actual, String message) {
+    double scale = Math.max(Math.max(Math.abs(expected), Math.abs(actual)), 1.0e-30);
+    assertEquals(expected, actual, 1.0e-12 * scale, message);
   }
 
   private static void assertRawBitsEqual(double expected, double actual, String message) {

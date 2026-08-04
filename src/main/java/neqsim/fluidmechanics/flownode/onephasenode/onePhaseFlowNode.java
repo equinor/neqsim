@@ -82,11 +82,15 @@ public abstract class onePhaseFlowNode extends FlowNode {
   /** {@inheritDoc} */
   @Override
   public void updateMolarFlow() {
-    for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
-      double diff = (getBulkSystem().getPhases()[0].getComponent(i).getx()
-          * (molarFlowRate[0] - getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()));
-      getBulkSystem().addComponent(getBulkSystem().getPhase(0).getComponent(i).getComponentName(), diff);
+    double[] componentMolarFlow =
+        new double[getBulkSystem().getPhases()[0].getNumberOfComponents()];
+    for (int i = 0; i < componentMolarFlow.length; i++) {
+      componentMolarFlow[i] =
+          getBulkSystem().getPhases()[0].getComponent(i).getx() * molarFlowRate[0];
     }
+    // Replace the complete vector atomically. Incremental additions make later components depend
+    // on the loop order because every addition changes the phase total used by the next one.
+    getBulkSystem().setMolarFlowRates(componentMolarFlow);
     getBulkSystem().init_x_y();
     getBulkSystem().init(3);
   }

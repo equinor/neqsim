@@ -266,7 +266,11 @@ declared band, and reports the largest dense derivative outside that band. It al
 largest per-node relative drift between the repeated evaluations for phase and component moles,
 density, inlet and mean velocity, mass and volumetric flow, Reynolds number, and wall-friction
 factor. These diagnostics are evaluated only after failure, restore the accepted state, and do not
-weaken the frozen acceptance criteria.
+weaken the frozen acceptance criteria. One-phase node initialization replaces the complete
+component molar-flow vector in one operation, so repeated trial-state evaluations do not
+accumulate loop-order-dependent mole changes. The accepted conservative finite-volume
+inventories remain authoritative; this update only synchronizes the thermodynamic flow
+representation used for EOS and hydraulic properties.
 For backward-compatible control flow, the default logs a warning and returns the failed report.
 Call `pipe.setFailOnNonConvergence(true)` to make `solveTransient(...)` throw
 `IllegalStateException`; the report is recorded before either behavior and distinguishes
