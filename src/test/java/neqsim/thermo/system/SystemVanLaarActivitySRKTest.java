@@ -441,6 +441,28 @@ public class SystemVanLaarActivitySRKTest extends neqsim.NeqSimTest {
     assertTrue(system.getPhase(1) instanceof PhaseGEVanLaarAcid);
   }
 
+  /** Verifies that a liquid-only collapse keeps the reusable EOS/GE creation-order topology intact. */
+  @Test
+  public void testLiquidCollapsePreservesCreationOrderPhaseObjects() {
+    SystemVanLaarActivitySRK system = new SystemVanLaarActivitySRK(293.15, 20.0);
+    system.addComponent("CO2", 1.0);
+    system.addComponent("water", 10.0);
+    system.addComponent("nitric acid", 1.0);
+    system.createDatabase(true);
+    system.setMixingRule("classic");
+
+    system.collapseToSinglePhase(1);
+
+    assertEquals(1, system.getNumberOfPhases());
+    assertTrue(system.getPhase(0) instanceof PhaseGEVanLaarAcid);
+    assertTrue(system.getEquationOfStatePhase() instanceof PhaseEos,
+        "Selecting the GE liquid must not overwrite the creation-order EOS phase");
+
+    system.prepareGammaPhiFlash();
+    assertTrue(system.getPhase(0) instanceof PhaseEos);
+    assertTrue(system.getPhase(1) instanceof PhaseGEVanLaarAcid);
+  }
+
   /**
    * Verifies that a normal TPflash accepts the raw Van Laar acid split for a sulfuric-acid CO2 feed without applying a
    * post-flash solubility filter.
