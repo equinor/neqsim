@@ -266,6 +266,13 @@ StreamInterface returnStream = pumparound.getReturnStream();
 double latestChange = column.getLastPumparoundRelativeChange();
 ```
 
+Each draw tray exposes one liquid pumparound fraction and one draw stream, so it can feed at most
+one pumparound circuit. A zero-fraction standby circuit still owns that draw tray. Registering
+another circuit for the same draw tray throws `IllegalArgumentException` without replacing the
+first circuit; different draw trays remain independent. Legacy serialized columns containing
+duplicate draw ownership fail before solver iteration, and `validateSetup()` reports
+`pumparound.degreesOfFreedom`.
+
 The `temperatureDrop` argument is in Kelvin. Positive values cool the returned liquid; negative
 values heat it. A non-finite or below-zero-K return temperature fails explicitly.
 
