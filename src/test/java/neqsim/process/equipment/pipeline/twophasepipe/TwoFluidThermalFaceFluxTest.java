@@ -12,7 +12,8 @@ class TwoFluidThermalFaceFluxTest {
         createGasSection(20.0, 0.0) };
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
 
-    double[][] faceFluxes = equations.calcPhaseMassFaceFluxes(sections, 10.0);
+    equations.calcRHS(sections, 10.0);
+    double[][] faceFluxes = equations.getLastPhaseMassFaceFluxes();
 
     for (int phase = 0; phase < 3; phase++) {
       assertEquals(0.0, faceFluxes[0][phase], 0.0);
@@ -25,6 +26,10 @@ class TwoFluidThermalFaceFluxTest {
       }
     }
     assertTrue(internalThroughput > 0.0, "Closing the external faces must not disable internal convection");
+
+    faceFluxes[0][0] = 1.0;
+    assertEquals(0.0, equations.getLastPhaseMassFaceFluxes()[0][0], 0.0,
+        "Callers must not be able to mutate the retained integration-stage fluxes");
   }
 
   @Test
