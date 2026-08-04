@@ -223,9 +223,10 @@ class TPmultiflashTest {
     // may not predict it for all parameter combinations, but we verify no crashes
     assertTrue(threePhaseCount >= 0, "Scan completed without errors");
   }
+
   /**
-   * A reused multiflash operation must not carry a previous beta-solver stall into a pass that does not execute the beta
-   * solver. Otherwise the later active-set rescue can act on stale convergence state.
+   * A reused multiflash operation must not carry a previous beta-solver stall into a pass that does not execute the
+   * beta solver. Otherwise the later active-set rescue can act on stale convergence state.
    *
    * @throws Exception if the private lifecycle field cannot be inspected
    */
