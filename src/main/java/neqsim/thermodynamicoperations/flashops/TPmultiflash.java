@@ -2570,16 +2570,21 @@ public class TPmultiflash extends TPflash {
       // non-converged numerical duplicates. Restricting to same PhaseType
       // avoids removing legitimate near-critical V/L pairs (issue #1980).
       //
-      // Restricted to CPA-family models only (issue #2117): for non-CPA EOS
-      // (PR, SRK, UMR-PR-UMC, ...) near-critical V/L and multi-liquid systems
-      // can transiently look like duplicates during stability iteration but
-      // later separate physically (e.g. SimpleReservoirTest.testRun2 with
-      // SystemPrEos, TPFlashTest.testRun5 with SystemUMRPRUMCEos). The
-      // duplicate-phase symptom is specific to CPA association in TEG/MEG
-      // /water-rich flowsheets.
+      // CPA-family models may produce duplicate phases at material phase fractions
+      // (issue #2117). Cubic EOS can also retain an already-disappeared phase just
+      // above the generic beta-removal threshold. Extend the composition test to
+      // every model only for such trace phases; this cannot collapse a material
+      // near-critical V/L pair and still requires the same PhaseType and composition.
       String modelName = system.getModelName();
       boolean isCpaModel = modelName != null && modelName.contains("CPA");
-      if (isCpaModel) {
+      boolean hasTracePhase = false;
+      for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+        if (system.getBeta(phaseIndex) < 10.0 * phaseFractionMinimumLimit) {
+          hasTracePhase = true;
+          break;
+        }
+      }
+      if (isCpaModel || hasTracePhase) {
         for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
           for (int j = i + 1; j < system.getNumberOfPhases(); j++) {
             if (system.getPhase(i).getType() != system.getPhase(j).getType()) {
@@ -2590,7 +2595,9 @@ public class TPmultiflash extends TPflash {
               maxCompDiff = Math.max(maxCompDiff,
                   Math.abs(system.getPhase(i).getComponent(k).getx() - system.getPhase(j).getComponent(k).getx()));
             }
-            if (maxCompDiff < 1.0e-6) {
+            boolean traceDuplicatePair = Math.min(system.getBeta(i), system.getBeta(j))
+                < 10.0 * phaseFractionMinimumLimit;
+            if (maxCompDiff < 1.0e-6 && (isCpaModel || traceDuplicatePair)) {
               mergeAndRemoveDuplicatePhase(i, j);
               doStabilityAnalysis = false;
               hasRemovedPhase = true;
