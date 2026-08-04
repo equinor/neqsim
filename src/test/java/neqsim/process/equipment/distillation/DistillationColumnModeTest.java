@@ -2,6 +2,7 @@ package neqsim.process.equipment.distillation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
@@ -32,6 +33,59 @@ public class DistillationColumnModeTest {
     assertEquals(DistillationColumn.CondenserMode.LIQUID_REFLUX_SPLIT, column.getCondenserMode());
     column.setCondenserMode(DistillationColumn.CondenserMode.PARTIAL);
     assertEquals(DistillationColumn.CondenserMode.PARTIAL, column.getCondenserMode());
+  }
+
+  /**
+   * Reject fixed liquid-reflux flow and reflux-ratio specifications that claim the same condenser split.
+   */
+  @Test
+  public void fixedLiquidRefluxAndRatioSpecificationAreMutuallyExclusive() {
+    ColumnSpecification refluxRatio = new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
+        ColumnSpecification.ProductLocation.TOP, 0.8);
+
+    DistillationColumn fixedFirst = new DistillationColumn("fixed-first column", 2, true, true);
+    fixedFirst.setCondenserLiquidReflux(100.0, "kg/hr");
+    IllegalArgumentException ratioException = assertThrows(IllegalArgumentException.class,
+        () -> fixedFirst.setTopSpecification(refluxRatio));
+    String ratioMessage = ratioException.getMessage();
+    assertNotNull(ratioMessage);
+    assertTrue(ratioMessage.contains("fixed liquid-reflux"));
+    assertTrue(ratioMessage.contains("reflux-ratio"));
+    assertNull(fixedFirst.getTopSpecification());
+    assertEquals(DistillationColumn.CondenserMode.LIQUID_REFLUX_SPLIT, fixedFirst.getCondenserMode());
+
+    fixedFirst.setCondenserMode(DistillationColumn.CondenserMode.PARTIAL);
+    fixedFirst.setTopSpecification(refluxRatio);
+    assertEquals(refluxRatio, fixedFirst.getTopSpecification());
+
+    DistillationColumn ratioFirst = new DistillationColumn("ratio-first column", 2, true, true);
+    ratioFirst.setCondenserRefluxRatio(0.8);
+    IllegalArgumentException fixedException = assertThrows(IllegalArgumentException.class,
+        () -> ratioFirst.setCondenserLiquidReflux(100.0, "kg/hr"));
+    String fixedMessage = fixedException.getMessage();
+    assertNotNull(fixedMessage);
+    assertTrue(fixedMessage.contains("select one condenser reflux control"));
+    assertEquals(DistillationColumn.CondenserMode.PARTIAL, ratioFirst.getCondenserMode());
+    assertNotNull(ratioFirst.getTopSpecification());
+    assertEquals(0.8, ratioFirst.getTopSpecification().getTargetValue(), 0.0);
+
+    double retainedCondenserRatio = ratioFirst.getCondenser().getRefluxRatio();
+    ColumnSpecification retainedSpecification = ratioFirst.getTopSpecification();
+    assertThrows(IllegalArgumentException.class, () -> ratioFirst.setCondenserRefluxRatio(Double.NaN));
+    assertEquals(retainedCondenserRatio, ratioFirst.getCondenser().getRefluxRatio(), 0.0);
+    assertEquals(retainedSpecification, ratioFirst.getTopSpecification());
+
+    DistillationColumn legacyConflict = new DistillationColumn("legacy conflict column", 2, true, true);
+    legacyConflict.setTopSpecification(refluxRatio);
+    legacyConflict.getCondenser().setSeparation_with_liquid_reflux(true, 100.0, "kg/hr");
+    ValidationResult validation = legacyConflict.validateSpecifications();
+    assertTrue(!validation.isValid());
+    assertTrue(validation.getErrors().stream()
+        .anyMatch(error -> error.getCategory().equals("specification.degreesOfFreedom")));
+    IllegalStateException runException = assertThrows(IllegalStateException.class,
+        () -> legacyConflict.run(UUID.randomUUID()));
+    assertNotNull(runException.getMessage());
+    assertTrue(runException.getMessage().contains("select one condenser reflux control"));
   }
 
   /**
