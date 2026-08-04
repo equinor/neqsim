@@ -253,11 +253,8 @@ public class TPflash extends Flash {
             comp0.setK(Knew);
           }
           comp1.setK(Knew);
-          if (!Double.isFinite(targetK) || targetK <= 0.0) {
-            targetK = Knew;
-          }
           if (Double.isFinite(Kold) && Kold > 0.0) {
-            deviation += Math.abs(Math.log(targetK / Kold));
+            deviation += Math.abs(Math.log(Knew / Kold));
           } else {
             deviation = Double.POSITIVE_INFINITY;
           }
@@ -516,6 +513,9 @@ public class TPflash extends Flash {
     if (gammaPhiModel != null && (solidCheck || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck())) {
       throw new UnsupportedOperationException(
           "Direct EOS-GE TPflash does not support solid or wax phase calculations; disable solid and wax checks.");
+    }
+    if (gammaPhiModel != null) {
+      gammaPhiModel.prepareGammaPhiFlash();
     }
     findLowestGibbsPhaseIsChecked = false;
     int minGibbsPhase = 0;
