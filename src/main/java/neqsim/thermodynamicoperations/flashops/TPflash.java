@@ -513,14 +513,14 @@ public class TPflash extends Flash {
       throw new UnsupportedOperationException(
           "Direct EOS-GE TPflash does not support solid or wax phase calculations; disable solid and wax checks.");
     }
-    if (gammaPhiModel != null) {
-      gammaPhiModel.prepareGammaPhiFlash();
-    }
     findLowestGibbsPhaseIsChecked = false;
     int minGibbsPhase = 0;
     double minimumGibbsEnergy = 0;
 
     system.init(0);
+    if (gammaPhiModel != null) {
+      gammaPhiModel.prepareGammaPhiFlash();
+    }
     system.init(1);
 
     if ((system.getPhase(0).getGibbsEnergy() * (1.0 - Math.signum(system.getPhase(0).getGibbsEnergy()) * 1e-8)) < system
