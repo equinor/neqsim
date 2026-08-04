@@ -176,6 +176,14 @@ fixed-reflux shortfall exceeds its acceptance tolerance. The requested, availabl
 in
 `getConvergenceDiagnostics()`.
 
+A fixed liquid-reflux flow and a top `REFLUX_RATIO` specification are mutually exclusive because
+both control the condenser reflux split. Configuration rejects either setter order, and
+`validateSpecifications()` plus the run preflight detect contradictory state retained by an older
+serialized model or introduced through direct `Condenser` mutation. To recover, call
+`setCondenserMode(DistillationColumn.CondenserMode.PARTIAL)` or
+`setCondenserMode(DistillationColumn.CondenserMode.TOTAL)` to clear fixed-flow mode, or remove the
+top reflux-ratio specification.
+
 ## Solver Options
 
 | Solver type | Strategy | Typical use |

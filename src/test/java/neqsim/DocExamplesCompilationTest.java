@@ -720,14 +720,15 @@ public class DocExamplesCompilationTest {
     assertNotNull(builderColumn.getTopSpecification());
     assertNotNull(builderColumn.getBottomSpecification());
 
-    apiColumn.setCondenserMode(DistillationColumn.CondenserMode.PARTIAL);
-    apiColumn.setCondenserMode(DistillationColumn.CondenserMode.TOTAL);
-    assertEquals(DistillationColumn.CondenserMode.TOTAL, apiColumn.getCondenserMode());
-    apiColumn.setCondenserLiquidReflux(500.0, "kg/hr");
-    assertEquals(DistillationColumn.CondenserMode.LIQUID_REFLUX_SPLIT, apiColumn.getCondenserMode());
-    apiColumn.setReboilerMode(DistillationColumn.ReboilerMode.EQUILIBRIUM);
-    apiColumn.setReboilerVaporBoilupRatio(1.8);
-    assertEquals(DistillationColumn.ReboilerMode.VAPOR_BOILUP_RATIO, apiColumn.getReboilerMode());
+    DistillationColumn modeColumn = new DistillationColumn("Doc Mode Column", 10, true, true);
+    modeColumn.setCondenserMode(DistillationColumn.CondenserMode.PARTIAL);
+    modeColumn.setCondenserMode(DistillationColumn.CondenserMode.TOTAL);
+    assertEquals(DistillationColumn.CondenserMode.TOTAL, modeColumn.getCondenserMode());
+    modeColumn.setCondenserLiquidReflux(500.0, "kg/hr");
+    assertEquals(DistillationColumn.CondenserMode.LIQUID_REFLUX_SPLIT, modeColumn.getCondenserMode());
+    modeColumn.setReboilerMode(DistillationColumn.ReboilerMode.EQUILIBRIUM);
+    modeColumn.setReboilerVaporBoilupRatio(1.8);
+    assertEquals(DistillationColumn.ReboilerMode.VAPOR_BOILUP_RATIO, modeColumn.getReboilerMode());
 
     apiColumn.setMurphreeEfficiency(0.70);
     apiColumn.setMurphreeEfficiency(3, 0.65);
