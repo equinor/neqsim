@@ -364,9 +364,10 @@ System.out.println(pipe.getThermalSummary());
 - **Overall U-value**: Based on series thermal resistance through all layers
 - **Transient response**: Explicit finite-difference with thermal mass in each layer
 - **Cooldown time**: Lumped capacitance approximation for shutdown scenarios
-- **Transient advection**: Uses the gas, oil, and water mass flow at each finite-volume face from the conservative AUSM+
-  flux calculation. A CLOSED inlet or outlet therefore has exactly zero advective sensible-energy transport, while
-  internal convection can continue.
+- **Transient advection**: Uses the gas, oil, and water mass flow retained from each conservative AUSM+ integration
+  stage, combined with the time integrator's own stage weights. Temperature transport therefore uses the same face
+  fluxes that advanced the accepted hydrodynamic state without a second flux sweep. A CLOSED inlet or outlet has
+  exactly zero advective sensible-energy transport, while internal convection can continue.
 - **Closed cooldown**: Radial wall/ambient heat exchange is evaluated for every physical cell, including section zero.
   The local conservative phase inventory supplies fluid thermal inertia, so a disconnected inlet stream's stored
   nominal rate cannot change a closed-domain temperature history.
