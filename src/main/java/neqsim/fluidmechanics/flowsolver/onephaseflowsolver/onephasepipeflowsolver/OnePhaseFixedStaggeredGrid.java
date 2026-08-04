@@ -34,6 +34,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   private static final double FINITE_DIFFERENCE_RELATIVE_STEP = 1.0e-7;
   private static final int COUPLED_HALF_BANDWIDTH = 2;
   private static final int COUPLED_JACOBIAN_COLORS = 2 * COUPLED_HALF_BANDWIDTH + 1;
+  /** Maximum state dimension for the failure-only dense Jacobian diagnostic. */
+  private static final int MAXIMUM_DENSE_JACOBIAN_DIAGNOSTIC_SIZE = 256;
   private static final int MAXIMUM_SPECIES_COUPLING_ITERATIONS = 100;
   private static final double SPECIES_COUPLING_TOLERANCE = 1.0e-10;
   private static final double THERMODYNAMIC_COMPOSITION_TOLERANCE = 1.0e-10;
@@ -1588,6 +1590,10 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   }
 
   private String calculateDenseJacobianStructureDetail(double[] state, double[][] bandedJacobian) {
+    if (state.length > MAXIMUM_DENSE_JACOBIAN_DIAGNOSTIC_SIZE) {
+      return "dense/uncolored Jacobian check skipped because state dimension " + state.length + " exceeds "
+          + MAXIMUM_DENSE_JACOBIAN_DIAGNOSTIC_SIZE;
+    }
     try {
       double[] firstResidual = calculateCoupledResidual(state);
       double[] repeatedResidual = calculateCoupledResidual(state);
