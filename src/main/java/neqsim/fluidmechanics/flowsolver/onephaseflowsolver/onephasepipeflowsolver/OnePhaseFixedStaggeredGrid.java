@@ -1513,8 +1513,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     jacobian[row][column - row + COUPLED_HALF_BANDWIDTH] = value;
   }
 
-  private String calculateJacobianDirectionalDerivativeDetail(double[] state, double[] direction,
-      double[][] jacobian) {
+  private String calculateJacobianDirectionalDerivativeDetail(double[] state, double[] direction, double[][] jacobian) {
     double maximumRelativeDirection = 0.0;
     for (int variable = 0; variable < state.length; variable++) {
       double scale = Math.max(Math.abs(state[variable]), 1.0);
@@ -1525,7 +1524,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
           + "zero or non-finite";
     }
 
-    double[] normalizedPerturbations = {1.0e-5, 1.0e-6, 1.0e-7};
+    double[] normalizedPerturbations = { 1.0e-5, 1.0e-6, 1.0e-7 };
     double[] massRelativeErrors = new double[normalizedPerturbations.length];
     double[] momentumRelativeErrors = new double[normalizedPerturbations.length];
     double[] jacobianDirection = multiplyCoupledBandedJacobian(jacobian, direction);
@@ -1543,8 +1542,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         double[] upperResidual = safeCoupledResidualValues(upper, state);
         if (lowerResidual == null || upperResidual == null) {
           return "Independent Jacobian directional-derivative check unavailable because central perturbation "
-              + normalizedPerturbations[perturbation]
-              + " left the supported positive-pressure/positive-flow state";
+              + normalizedPerturbations[perturbation] + " left the supported positive-pressure/positive-flow state";
         }
 
         double[] maximumDifference = new double[2];
@@ -1557,18 +1555,15 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
           maximumReference[family] = Math.max(maximumReference[family],
               Math.max(Math.abs(jacobianDirection[row]), Math.abs(finiteDifference)));
         }
-        massRelativeErrors[perturbation] =
-            maximumDifference[0] / Math.max(maximumReference[0], 1.0e-14);
-        momentumRelativeErrors[perturbation] =
-            maximumDifference[1] / Math.max(maximumReference[1], 1.0e-14);
+        massRelativeErrors[perturbation] = maximumDifference[0] / Math.max(maximumReference[0], 1.0e-14);
+        momentumRelativeErrors[perturbation] = maximumDifference[1] / Math.max(maximumReference[1], 1.0e-14);
       }
       return "Independent Newton-direction Jacobian relative infinity-norm errors: continuity[1.0E-5="
-          + massRelativeErrors[0] + ", 1.0E-6=" + massRelativeErrors[1] + ", 1.0E-7="
-          + massRelativeErrors[2] + "], momentum[1.0E-5=" + momentumRelativeErrors[0] + ", 1.0E-6="
-          + momentumRelativeErrors[1] + ", 1.0E-7=" + momentumRelativeErrors[2] + "]";
+          + massRelativeErrors[0] + ", 1.0E-6=" + massRelativeErrors[1] + ", 1.0E-7=" + massRelativeErrors[2]
+          + "], momentum[1.0E-5=" + momentumRelativeErrors[0] + ", 1.0E-6=" + momentumRelativeErrors[1] + ", 1.0E-7="
+          + momentumRelativeErrors[2] + "]";
     } catch (RuntimeException exception) {
-      return "Independent Jacobian directional-derivative check failed with "
-          + exception.getClass().getSimpleName()
+      return "Independent Jacobian directional-derivative check failed with " + exception.getClass().getSimpleName()
           + (exception.getMessage() == null ? "" : ": " + exception.getMessage());
     } finally {
       applyCoupledState(state);
