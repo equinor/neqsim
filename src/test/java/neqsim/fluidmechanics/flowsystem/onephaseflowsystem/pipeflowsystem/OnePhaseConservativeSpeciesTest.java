@@ -113,6 +113,7 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  @Tag("slow")
   void finePulseFailureReportsRepeatedNodeStateMutation() {
     AssertionError failure = assertThrows(AssertionError.class, () -> runIntegratedPulse(24, 30.0));
     String message = failure.getMessage();
