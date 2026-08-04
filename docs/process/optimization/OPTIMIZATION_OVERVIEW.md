@@ -267,6 +267,12 @@ ThroughputCaseRow firstLimit = result.getFirstInfeasibleCase();
 result.exportToCSV("throughput_trace.csv");
 ```
 
+Active bottleneck rows preserve limit provenance, evidence-quality confidence, the inclusive
+scalar validity range, and whether the snapshotted current load is inside that range. Check
+`hasConfidence()` and `hasValidityRange()` before reading numeric metadata. JSON uses `null`
+for unset values; CSV retains explicit presence flags and blank unset-value cells. These fields are
+diagnostics only and do not change feasibility or throughput search.
+
 The installed-capacity table uses one row per equipment limit:
 
 ```text
