@@ -879,6 +879,24 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     /** Provenance of the active constraint limit. */
     private String dataSource = "not_set";
 
+    /** Whether confidence was explicitly assigned to the active constraint. */
+    private boolean confidenceSet;
+
+    /** Evidence-quality confidence of the active constraint. */
+    private double confidence = Double.NaN;
+
+    /** Whether a scalar validity range was assigned to the active constraint. */
+    private boolean validityRangeSet;
+
+    /** Lower inclusive validity bound in the constraint unit. */
+    private double validityMinimum = Double.NaN;
+
+    /** Upper inclusive validity bound in the constraint unit. */
+    private double validityMaximum = Double.NaN;
+
+    /** Whether the snapshotted current value lies inside the assigned validity range. */
+    private boolean currentValueWithinValidityRange;
+
     /** Constraint unit. */
     private String unit;
 
@@ -943,6 +961,35 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     public BottleneckStatus(String areaName, String equipmentName, String constraintName, double utilization,
         double currentValue, double designValue, boolean minimumConstraint, String dataSource, String unit,
         boolean feasible) {
+      this(areaName, equipmentName, constraintName, utilization, currentValue, designValue, minimumConstraint,
+          dataSource, false, Double.NaN, false, Double.NaN, Double.NaN, unit, feasible);
+    }
+
+    /**
+     * Creates a bottleneck status with evidence-quality and scalar-validity metadata. Enabled metadata that is
+     * non-finite, outside the confidence range, or has reversed bounds is normalized to the explicit unset state.
+     * Applicability is derived from the snapshotted current value and retained bounds.
+     *
+     * @param areaName process area name
+     * @param equipmentName equipment name
+     * @param constraintName constraint name
+     * @param utilization utilization fraction
+     * @param currentValue current constraint value
+     * @param designValue reported design or minimum limit
+     * @param minimumConstraint true when values below the limit are worse
+     * @param dataSource provenance of the reported limit
+     * @param confidenceSet true to retain a finite confidence in the range [0, 1]
+     * @param confidence evidence-quality confidence, or NaN when unset
+     * @param validityRangeSet true to retain finite, ordered scalar validity bounds
+     * @param validityMinimum lower inclusive validity bound, or NaN when unset
+     * @param validityMaximum upper inclusive validity bound, or NaN when unset
+     * @param unit constraint unit
+     * @param feasible true when utilization is less than or equal to one
+     */
+    public BottleneckStatus(String areaName, String equipmentName, String constraintName, double utilization,
+        double currentValue, double designValue, boolean minimumConstraint, String dataSource, boolean confidenceSet,
+        double confidence, boolean validityRangeSet, double validityMinimum, double validityMaximum, String unit,
+        boolean feasible) {
       this.areaName = areaName;
       this.equipmentName = equipmentName;
       this.constraintName = constraintName;
@@ -951,6 +998,16 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       this.designValue = designValue;
       this.minimumConstraint = minimumConstraint;
       this.dataSource = dataSource == null ? "not_set" : dataSource;
+      this.confidenceSet = confidenceSet && !Double.isNaN(confidence) && !Double.isInfinite(confidence)
+          && confidence >= 0.0 && confidence <= 1.0;
+      this.confidence = this.confidenceSet ? confidence : Double.NaN;
+      this.validityRangeSet = validityRangeSet && !Double.isNaN(validityMinimum) && !Double.isInfinite(validityMinimum)
+          && !Double.isNaN(validityMaximum) && !Double.isInfinite(validityMaximum)
+          && validityMinimum <= validityMaximum;
+      this.validityMinimum = this.validityRangeSet ? validityMinimum : Double.NaN;
+      this.validityMaximum = this.validityRangeSet ? validityMaximum : Double.NaN;
+      this.currentValueWithinValidityRange = this.validityRangeSet && currentValue >= this.validityMinimum
+          && currentValue <= this.validityMaximum;
       this.unit = unit;
       this.feasible = feasible;
     }
@@ -1046,6 +1103,60 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      */
     public String getDataSource() {
       return dataSource == null ? "not_set" : dataSource;
+    }
+
+    /**
+     * Checks whether confidence was explicitly assigned to the active constraint.
+     *
+     * @return true when confidence is available
+     */
+    public boolean hasConfidence() {
+      return confidenceSet;
+    }
+
+    /**
+     * Gets the active constraint's evidence-quality confidence.
+     *
+     * @return confidence from zero to one, or NaN when unset
+     */
+    public double getConfidence() {
+      return confidenceSet ? confidence : Double.NaN;
+    }
+
+    /**
+     * Checks whether a scalar validity range was assigned to the active constraint.
+     *
+     * @return true when validity bounds are available
+     */
+    public boolean hasValidityRange() {
+      return validityRangeSet;
+    }
+
+    /**
+     * Gets the lower inclusive validity bound.
+     *
+     * @return lower bound in the constraint unit, or NaN when unset
+     */
+    public double getValidityMinimum() {
+      return validityRangeSet ? validityMinimum : Double.NaN;
+    }
+
+    /**
+     * Gets the upper inclusive validity bound.
+     *
+     * @return upper bound in the constraint unit, or NaN when unset
+     */
+    public double getValidityMaximum() {
+      return validityRangeSet ? validityMaximum : Double.NaN;
+    }
+
+    /**
+     * Checks whether the snapshotted current value is inside the assigned validity range.
+     *
+     * @return true when a range is assigned and the current value is inside its inclusive bounds
+     */
+    public boolean isCurrentValueWithinValidityRange() {
+      return validityRangeSet && currentValueWithinValidityRange;
     }
 
     /**
@@ -1919,13 +2030,16 @@ public class ProcessModelSimulationEvaluator implements Serializable {
           if (capacityConstraint == null || !capacityConstraint.isEnabled()) {
             continue;
           }
-          double utilization = capacityConstraint.getUtilization();
+          double currentValue = capacityConstraint.getCurrentValue();
+          double utilization = capacityConstraint.getUtilization(currentValue);
           if (!Double.isNaN(utilization) && utilization > highestUtilization) {
             highestUtilization = utilization;
-            active = new BottleneckStatus(areaName, equipment.getName(), entry.getKey(), utilization,
-                capacityConstraint.getCurrentValue(), capacityConstraint.getDisplayDesignValue(),
-                capacityConstraint.isMinimumConstraint(), capacityConstraint.getDataSource(),
-                capacityConstraint.getUnit(), utilization <= 1.0);
+            boolean validityRangeSet = capacityConstraint.hasValidityRange();
+            active = new BottleneckStatus(areaName, equipment.getName(), entry.getKey(), utilization, currentValue,
+                capacityConstraint.getDisplayDesignValue(), capacityConstraint.isMinimumConstraint(),
+                capacityConstraint.getDataSource(), capacityConstraint.hasConfidence(),
+                capacityConstraint.getConfidence(), validityRangeSet, capacityConstraint.getValidityMinimum(),
+                capacityConstraint.getValidityMaximum(), capacityConstraint.getUnit(), utilization <= 1.0);
           }
         }
       }

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.DoubleSupplier;
 import java.util.function.ToDoubleFunction;
 import org.junit.jupiter.api.Test;
@@ -135,8 +136,9 @@ class ProcessModelSimulationEvaluatorTest {
   void capacityConstraintsIdentifyActiveModelBottleneck() {
     final ModelFixture fixture = createModelFixture();
     CapacityConstraint installedCapacity = new CapacityConstraint("installedGasCapacity", "kg/hr", ConstraintType.HARD)
-        .setDesignValue(5000.0).setMaxValue(12000.0).setSeverity(ConstraintSeverity.HARD)
-        .setDataSource("mechanicalDesign").setValueSupplier(new DoubleSupplier() {
+        .setDesignValue(12000.0).setMaxValue(13200.0).setSeverity(ConstraintSeverity.HARD)
+        .setDataSource("mechanicalDesign").setConfidence(0.95).setValidityRange(8000.0, 12000.0)
+        .setValueSupplier(new DoubleSupplier() {
           /** {@inheritDoc} */
           @Override
           public double getAsDouble() {
@@ -147,6 +149,7 @@ class ProcessModelSimulationEvaluatorTest {
     fixture.separator.addCapacityConstraint(installedCapacity);
 
     ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
+    evaluator.setIncludeStrategyCapacityConstraints(false);
     evaluator.addParameter("wells::feed.flowRate", 5000.0, 20000.0, "kg/hr")
         .addObjective("gas", new ToDoubleFunction<ProcessModel>() {
           /** {@inheritDoc} */
@@ -165,9 +168,41 @@ class ProcessModelSimulationEvaluatorTest {
     assertEquals("separation", bottleneck.getAreaName());
     assertEquals("separator", bottleneck.getEquipmentName());
     assertEquals("installedGasCapacity", bottleneck.getConstraintName());
-    assertTrue(bottleneck.getUtilization() > 1.0, "bottleneck should be over capacity");
+    assertEquals(13.0 / 12.0, bottleneck.getUtilization(), 1.0e-12, "metadata must not alter utilization");
     assertEquals("mechanicalDesign", bottleneck.getDataSource());
+    assertTrue(bottleneck.hasConfidence());
+    assertEquals(0.95, bottleneck.getConfidence(), 0.0);
+    assertTrue(bottleneck.hasValidityRange());
+    assertEquals(8000.0, bottleneck.getValidityMinimum(), 0.0);
+    assertEquals(12000.0, bottleneck.getValidityMaximum(), 0.0);
+    assertFalse(bottleneck.isCurrentValueWithinValidityRange());
     assertEquals("separation::separator", bottleneck.getQualifiedEquipmentName());
+  }
+
+  /** Verifies bottleneck utilization and evidence share one supplier snapshot. */
+  @Test
+  void bottleneckSnapshotInvokesValueSupplierOnce() {
+    final ModelFixture fixture = createModelFixture();
+    final AtomicInteger supplierCalls = new AtomicInteger();
+    CapacityConstraint dynamicCapacity = new CapacityConstraint("dynamicGasCapacity", "kg/hr", ConstraintType.HARD)
+        .setDesignValue(12000.0).setValidityRange(8000.0, 12000.0).setValueSupplier(new DoubleSupplier() {
+          /** {@inheritDoc} */
+          @Override
+          public double getAsDouble() {
+            return supplierCalls.incrementAndGet() == 1 ? 13000.0 : 9000.0;
+          }
+        });
+    fixture.separator.clearCapacityConstraints();
+    fixture.separator.addCapacityConstraint(dynamicCapacity);
+
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
+    evaluator.setIncludeStrategyCapacityConstraints(false);
+    ProcessModelSimulationEvaluator.BottleneckStatus bottleneck = evaluator.findActiveBottleneck(fixture.model);
+
+    assertEquals(1, supplierCalls.get());
+    assertEquals(13000.0, bottleneck.getCurrentValue(), 0.0);
+    assertEquals(13.0 / 12.0, bottleneck.getUtilization(), 1.0e-12);
+    assertFalse(bottleneck.isCurrentValueWithinValidityRange());
   }
 
   /**
@@ -200,6 +235,34 @@ class ProcessModelSimulationEvaluatorTest {
     assertEquals(50.0, bottleneck.getCurrentValue(), 1.0e-12);
     assertEquals(45.0, bottleneck.getDesignValue(), 1.0e-12, "minimum limit must not be reported as Double.MAX_VALUE");
     assertTrue(bottleneck.isMinimumConstraint());
+  }
+
+  /**
+   * Verifies malformed manually constructed bottleneck evidence cannot leak non-finite output.
+   */
+  @Test
+  void bottleneckStatusNormalizesMalformedEvidenceToUnset() {
+    ProcessModelSimulationEvaluator.BottleneckStatus bottleneck = new ProcessModelSimulationEvaluator.BottleneckStatus(
+        "separation", "separator", "installedGasCapacity", 1.0, 12000.0, 12000.0, false, "manual", true,
+        Double.POSITIVE_INFINITY, true, 12000.0, 8000.0, "kg/hr", true);
+
+    assertFalse(bottleneck.hasConfidence());
+    assertTrue(Double.isNaN(bottleneck.getConfidence()));
+    assertFalse(bottleneck.hasValidityRange());
+    assertTrue(Double.isNaN(bottleneck.getValidityMinimum()));
+    assertTrue(Double.isNaN(bottleneck.getValidityMaximum()));
+    assertFalse(bottleneck.isCurrentValueWithinValidityRange());
+  }
+
+  /** Verifies applicability is derived rather than accepted as contradictory external input. */
+  @Test
+  void bottleneckStatusDerivesValidityApplicabilityFromSnapshot() {
+    ProcessModelSimulationEvaluator.BottleneckStatus bottleneck = new ProcessModelSimulationEvaluator.BottleneckStatus(
+        "separation", "separator", "installedGasCapacity", 13.0 / 12.0, 13000.0, 12000.0, false, "manual", true, 0.95,
+        true, 8000.0, 12000.0, "kg/hr", false);
+
+    assertTrue(bottleneck.hasValidityRange());
+    assertFalse(bottleneck.isCurrentValueWithinValidityRange());
   }
 
   /**
