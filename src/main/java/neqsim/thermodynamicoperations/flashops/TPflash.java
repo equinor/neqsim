@@ -666,6 +666,7 @@ public class TPflash extends Flash {
         rescueLowerGibbsHydrocarbonPhaseRoots();
         rescueLiquidLiquidEndpoint();
         rescueWaterRichEndpoint();
+        refineInvalidAqueousTwoPhaseEndpoint();
         return;
       }
     }
@@ -862,6 +863,7 @@ public class TPflash extends Flash {
     rescueLiquidLiquidEndpoint();
     rescueWaterRichEndpoint();
     rescueLowerGibbsPhaseRoot();
+    refineInvalidAqueousTwoPhaseEndpoint();
 
     // Final chemical equilibrium call after all phase reordering
     // This ensures chemical equilibrium is solved on the final phase configuration
@@ -999,6 +1001,105 @@ public class TPflash extends Flash {
     } catch (Exception ex) {
       logger.debug("Water-rich endpoint refinement failed: {}", ex.getMessage());
     }
+  }
+
+  /**
+   * Performs a bounded final active-set refinement of an invalid neutral aqueous two-phase endpoint.
+   *
+   * <p>
+   * Phase-appearance cleanup and post-convergence cubic-root selection can leave the correct two active phases with
+   * stale phase fractions or compositions. The phase set is retained, but component material balance or fugacity
+   * equality can then remain outside the ordinary flash tolerance. A {@link TPmultiflash} beta update is phase-order
+   * independent and restores the constrained phase split without rerunning stability analysis. The refinement is
+   * attempted only for substantial-water endpoints that already contain exactly one other phase. The pre-refinement
+   * state is retained as a compact snapshot and restored unless the active-set update passes the existing strict
+   * equilibrium and Gibbs checks.
+   * </p>
+   */
+  private void refineInvalidAqueousTwoPhaseEndpoint() {
+    if (system.getNumberOfPhases() != 2 || !system.hasPhaseType(PhaseType.AQUEOUS) || system.isChemicalSystem()
+        || system.hasIons() || solidCheck || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck()) {
+      return;
+    }
+
+    double waterFeedFraction = 0.0;
+    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
+      neqsim.thermo.component.ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
+      if ("water".equalsIgnoreCase(component.getComponentName())) {
+        waterFeedFraction = component.getz();
+        break;
+      }
+    }
+    if (waterFeedFraction < WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT) {
+      return;
+    }
+
+    system.init(1);
+    double referenceMaterialResidual = maximumComponentMaterialBalanceResidual(system);
+    double referenceFugacityResidual = maximumLogFugacityResidual(system.getPhase(0), system.getPhase(1));
+    if (Double.isFinite(referenceMaterialResidual) && Double.isFinite(referenceFugacityResidual)
+        && referenceMaterialResidual <= WATER_RICH_MATERIAL_BALANCE_TOLERANCE
+        && referenceFugacityResidual < PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
+      return;
+    }
+
+    double referenceGibbsEnergy = system.getGibbsEnergy();
+    BalancedTwoPhaseState referenceState = new BalancedTwoPhaseState(system);
+    try {
+      TPmultiflash endpointSolver = new TPmultiflash(system, false);
+      endpointSolver.setDoubleArrays();
+      for (int refinement = 0; refinement < 3 && !isBalancedEquilibriumCandidate(system); refinement++) {
+        endpointSolver.solveBeta();
+      }
+      if (!isBalancedEquilibriumCandidate(system)
+          || !preservesTwoPhaseActiveSet(system, referenceState.phaseTypes)) {
+        restoreTwoPhaseIterationState(referenceState);
+        return;
+      }
+
+      boolean referenceMaterialBalanceInvalid = !Double.isFinite(referenceMaterialResidual)
+          || referenceMaterialResidual > WATER_RICH_MATERIAL_BALANCE_TOLERANCE;
+      double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceGibbsEnergy) * 1.0e-8);
+      if (!referenceMaterialBalanceInvalid && system.getGibbsEnergy() > referenceGibbsEnergy + gibbsTolerance) {
+        restoreTwoPhaseIterationState(referenceState);
+      }
+    } catch (Exception ex) {
+      restoreTwoPhaseIterationState(referenceState);
+      logger.debug("Final aqueous endpoint refinement failed: {}", ex.getMessage());
+    }
+  }
+
+
+  /**
+   * Checks that a bounded beta refinement has not changed either selected phase identity.
+   *
+   * @param candidate refined thermodynamic system
+   * @param referencePhaseTypes phase types captured before refinement
+   * @return true when the same two phase types remain at the same phase indices
+   */
+  static boolean preservesTwoPhaseActiveSet(SystemInterface candidate, PhaseType[] referencePhaseTypes) {
+    return candidate.getNumberOfPhases() == 2 && referencePhaseTypes != null && referencePhaseTypes.length == 2
+        && candidate.getPhase(0).getType() == referencePhaseTypes[0]
+        && candidate.getPhase(1).getType() == referencePhaseTypes[1];
+  }
+
+  /**
+   * Restores beta, compositions, and K-values changed by a rejected two-phase endpoint refinement.
+   *
+   * @param referenceState pre-refinement state
+   */
+  private void restoreTwoPhaseIterationState(BalancedTwoPhaseState referenceState) {
+    for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
+      system.setPhaseType(phaseIndex, referenceState.phaseTypes[phaseIndex]);
+      system.setBeta(phaseIndex, referenceState.betas[phaseIndex]);
+      for (int componentIndex = 0; componentIndex < referenceState.compositions[phaseIndex].length; componentIndex++) {
+        system.getPhase(phaseIndex).getComponent(componentIndex)
+            .setx(referenceState.compositions[phaseIndex][componentIndex]);
+        system.getPhase(phaseIndex).getComponent(componentIndex).setK(referenceState.kValues[componentIndex]);
+      }
+    }
+    system.normalizeBeta();
+    system.init(1);
   }
 
   /**
