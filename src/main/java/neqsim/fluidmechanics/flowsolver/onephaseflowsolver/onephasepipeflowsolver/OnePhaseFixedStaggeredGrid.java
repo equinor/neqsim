@@ -1789,13 +1789,13 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     double relativeThermodynamicMassResidual = dynamic ? Math.abs(thermodynamicMassResidual) / massScale : Double.NaN;
 
     OnePhaseFlowConvergenceReport.ConvergenceReason reason;
-    if (numericalFailureDetail != null) {
+    if (lineSearchFailed) {
+      reason = OnePhaseFlowConvergenceReport.ConvergenceReason.LINE_SEARCH_FAILED;
+    } else if (numericalFailureDetail != null) {
       reason = OnePhaseFlowConvergenceReport.ConvergenceReason.NUMERICAL_FAILURE;
     } else if (!diagnosticsAreFinite(nonlinearUpdate, densityResidual, relativeFiniteVolumeMassResidual,
         relativeThermodynamicMassResidual)) {
       reason = OnePhaseFlowConvergenceReport.ConvergenceReason.NON_FINITE_RESIDUAL;
-    } else if (lineSearchFailed) {
-      reason = OnePhaseFlowConvergenceReport.ConvergenceReason.LINE_SEARCH_FAILED;
     } else if (dynamic && solverType > 0 && densityResidual > DENSITY_RELATIVE_TOLERANCE) {
       reason = OnePhaseFlowConvergenceReport.ConvergenceReason.DENSITY_INCONSISTENT;
     } else if (dynamic && solverType > 0 && (relativeFiniteVolumeMassResidual > MASS_BALANCE_RELATIVE_TOLERANCE
@@ -1819,7 +1819,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
           + maximumScaledMomentumEquationResidual + ".";
     }
     if (numericalFailureDetail != null) {
-      message += " Numerical failure: " + numericalFailureDetail + ".";
+      String detailLabel = lineSearchFailed ? " Line-search diagnostic: " : " Numerical failure: ";
+      message += detailLabel + numericalFailureDetail + ".";
     }
 
     return new OnePhaseFlowConvergenceReport(reason, dynamic, solverType, nonlinearIterations,
