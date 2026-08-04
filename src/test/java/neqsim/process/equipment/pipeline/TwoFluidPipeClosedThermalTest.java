@@ -126,6 +126,19 @@ class TwoFluidPipeClosedThermalTest {
   }
 
   @Test
+  void injectedMultilayerCalculatorActivatesItsOverallHeatTransferCoefficient() {
+    PipeFixture fixture = createInitializedPipe("injected-multilayer-calculator");
+    fixture.pipe.setHeatTransferCoefficient(0.0);
+    MultilayerThermalCalculator calculator = new MultilayerThermalCalculator(0.10);
+    calculator.createSubseaPipeConfig(0.20, 0.01, 0.02, 0.0, RadialThermalLayer.MaterialType.PU_FOAM);
+
+    fixture.pipe.setThermalCalculator(calculator);
+
+    assertTrue(fixture.pipe.isHeatTransferEnabled());
+    assertEquals(calculator.calculateOverallUValue(), fixture.pipe.getHeatTransferCoefficient(), 0.0);
+  }
+
+  @Test
   void closedMultilayerCooldownIncludesEveryCell() {
     PipeFixture fixture = createInitializedPipe("closed-multilayer-cooldown");
     double[] initial = fixture.pipe.getTemperatureProfile();
