@@ -446,12 +446,17 @@ public abstract class DifferentialPressureFlowMeter extends StreamMeasurementDev
 
     double reynoldsD = 1.0e6;
     double flow = baseTerm * calcDischargeCoefficient(beta, reynoldsD);
+    if (!Double.isFinite(flow) || flow <= 0.0) {
+      logger.warn("{}: non-physical discharge coefficient at the initial Re,D = {} guess", getName(), reynoldsD);
+      lastReynoldsNumberPipe = Double.NaN;
+      return Double.NaN;
+    }
     for (int iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
       double updatedReynoldsD = 4.0 * flow / (Math.PI * mu * pipeDiameterMeters);
       double updatedFlow = baseTerm * calcDischargeCoefficient(beta, updatedReynoldsD);
-      if (!Double.isFinite(updatedFlow)) {
-        logger.warn("{}: Reynolds-number iteration produced a non-finite discharge coefficient at Re,D = {}", getName(),
-            updatedReynoldsD);
+      if (!Double.isFinite(updatedFlow) || updatedFlow <= 0.0) {
+        logger.warn("{}: Reynolds-number iteration produced a non-finite or non-physical discharge coefficient at "
+            + "Re,D = {}", getName(), updatedReynoldsD);
         lastReynoldsNumberPipe = Double.NaN;
         return Double.NaN;
       }

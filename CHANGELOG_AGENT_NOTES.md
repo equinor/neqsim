@@ -9,6 +9,18 @@
 
 ---
 
+## 2026-08-04 — Reject non-physical discharge coefficients in the Reynolds iteration (Copilot review round 10)
+
+### Fixed
+
+- `DifferentialPressureFlowMeter.getMassFlowRatePerSecond()`'s Reynolds-number iteration only checked
+  `Double.isFinite(updatedFlow)`, so a Reynolds-independent device whose `calcDischargeCoefficient(...)` returns a
+  non-physical value (`C &lt;= 0`) could silently converge to a negative (but finite) mass flow and Reynolds number on
+  the very first pass. The initial guess and every iteration now also reject `flow &lt;= 0.0`, returning `NaN` (with a
+  warning identifying the offending Re,D) instead of a silently wrong negative flow.
+
+---
+
 ## 2026-08-04 — Test doc/privacy wording fixes (Copilot review round 9)
 
 ### Fixed
