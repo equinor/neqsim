@@ -244,6 +244,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 | Parameter | Value | Description |
 |-----------|-------|-------------|
 | `phaseFractionMinimumLimit` | ~1e-12 | Minimum allowed phase fraction |
+| Trace duplicate phase cleanup | `min(beta_i, beta_j) < 10 beta_min`, same `PhaseType`, and `max abs(x_i - x_j) < 1e-6` | Merge and remove an already-disappeared numerical duplicate for any EOS while conserving phase fraction. Material-fraction duplicate cleanup remains limited to CPA models to protect near-critical cubic-EOS splits. |
 | Initial SSI iterations | 3 | Preliminary iterations before stability check |
 | `accelerateInterval` | 5 | Apply DEM every 5th iteration in the ordinary TPflash loop |
 | `newtonLimit` | 12 | Switch to Newton-Raphson after 12 SSI iterations when derivatives are available |
@@ -668,6 +669,10 @@ When `system.setMultiPhaseCheck(true)` is called, NeqSim uses the `TPmultiflash`
 │        IF β < 1.1 × βmin:                                                      │
 │           → removePhaseKeepTotalComposition()                                   │
 │           → hasRemovedPhase = true                                              │
+│                                                                                 │
+│  Merge trace composition duplicates for any EOS:                                │
+│     IF same PhaseType, min(βi, βj) < 10 βmin, and max |xi - xj| < 1e-6:         │
+│        → Merge βi + βj, remove the duplicate, and re-check stability             │
 │                                                                                 │
 │  Detect trivial solutions (phases with same density):                           │
 │     FOR each pair of phases (i, j):                                             │
