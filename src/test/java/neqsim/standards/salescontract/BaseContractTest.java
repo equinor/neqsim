@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.OnePhaseConservativeSpeciesTest;
 import neqsim.thermo.system.SystemGERGwaterEos;
 import neqsim.thermo.system.SystemInterface;
 
@@ -38,23 +37,6 @@ class BaseContractTest extends neqsim.NeqSimTest {
   /**
    * Test method
    */
-  @Test
-  void hostedFinePulseStateDriftDiagnostic() {
-    AssertionError failure = org.junit.jupiter.api.Assertions.assertThrows(AssertionError.class,
-        OnePhaseConservativeSpeciesTest::runFinePulseForHostedDiagnostic);
-    Thread delayedHarnessStop = new Thread(() -> {
-      try {
-        Thread.sleep(10000L);
-      } catch (InterruptedException interrupted) {
-        Thread.currentThread().interrupt();
-      }
-      Runtime.getRuntime().halt(73);
-    });
-    delayedHarnessStop.setDaemon(true);
-    delayedHarnessStop.start();
-    throw new AssertionError("TEMPORARY HOSTED DIAGNOSTIC — MUST BE REVERTED: " + failure.getMessage(), failure);
-  }
-
   @Test
   void testUKGSMR1996() {
     standard.runCheck();
