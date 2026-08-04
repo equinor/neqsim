@@ -11,7 +11,8 @@
 
 ## 2026-08-04 — TwoFluidPipe closed thermal boundary consistency
 
-- Transient temperature advection now consumes the conservative solver's phase-resolved face mass fluxes.
+- Transient temperature advection now consumes the conservative solver's retained phase-resolved face mass fluxes,
+  combined with the configured integrator's stage weights; it no longer recomputes AUSM+ fluxes after acceptance.
 - CLOSED external faces contribute exactly zero advective transport while internal phase convection remains active.
 - Simple and multilayer radial heat transfer now visit section zero and use local conservative fluid inventory for
   thermal inertia.
