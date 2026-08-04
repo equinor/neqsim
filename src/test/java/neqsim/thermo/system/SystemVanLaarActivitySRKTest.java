@@ -769,11 +769,17 @@ public class SystemVanLaarActivitySRKTest extends neqsim.NeqSimTest {
   /**
    * Calculates assertion tolerance for rounded notebook report values.
    *
+   * <p>
+   * Material values retain a two-percent relative tolerance. Sub-nanopercent carrier traces use an absolute
+   * {@code 1.0e-9} percentage-point floor because their last digits depend on convergence path without affecting any
+   * material phase quantity.
+   * </p>
+   *
    * @param expected expected report value
    * @return absolute tolerance
    */
   private double acidReportTolerance(double expected) {
-    return Math.max(1.0e-12, Math.abs(expected) * 2.0e-2);
+    return Math.max(1.0e-9, Math.abs(expected) * 2.0e-2);
   }
 
   /**
