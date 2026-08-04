@@ -1748,6 +1748,8 @@ public class DocExamplesCompilationTest {
     Stream stream = new Stream("wet gas feed", fluid);
     stream.setFlowRate(50000.0, "kg/hr");
     stream.run();
+    // Guarantees the two-phase condition the wet-gas doc examples rely on, instead of assuming it silently.
+    assertEquals(2, stream.getThermoSystem().getNumberOfPhases());
     return stream;
   }
 

@@ -9,6 +9,25 @@
 
 ---
 
+## 2026-08-04 — Wet-gas getter caching for OrificeFlowMeter and VenturiFlowMeter
+
+### Changed
+
+- `OrificeFlowMeter` and `VenturiFlowMeter` no longer re-run the full iterative wet-gas solve on every getter call
+  (`getLockhartMartinelliParameter()`, `getGasDensiometricFroudeNumber()`, `getOverReadingFactor()`, etc., plus
+  `getMassFlowRatePerSecond()`). Each now caches the last `WetGasResult` behind a cheap input fingerprint
+  (`buildWetGasSignature()`: differential pressure, upstream pressure, beta, gas density, viscosity/discharge
+  coefficient, liquid load configuration, and wet-gas correlation settings). Reading multiple derived quantities within
+  the same timestep now reuses one solve instead of re-solving per getter, and all getters are guaranteed to reflect
+  the same solved state. The cache is not manually invalidated by setters; it is recomputed automatically whenever the
+  fingerprint changes (e.g. after `process.run()` advances the stream, or after any wet-gas setter call).
+- Documentation code snippets no longer use `System.out.println` (project convention: avoid it in examples that may be
+  copied into production code).
+- `DocExamplesCompilationTest.buildDocExampleWetGasStream()` now asserts the built stream is two-phase, instead of
+  assuming it silently.
+
+---
+
 ## 2026-08-04 — DP flow-meter Copilot review fixes (Reynolds cache, volume-unit dispatch, near-zero-dP expansibility)
 
 ### Fixed

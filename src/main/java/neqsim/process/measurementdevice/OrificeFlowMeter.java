@@ -1,5 +1,6 @@
 package neqsim.process.measurementdevice;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -173,6 +174,15 @@ public class OrificeFlowMeter extends DifferentialPressureFlowMeter {
 
   /** Permanent pressure loss across the orifice plate [Pa], NaN when not set. */
   private double pressureLoss = Double.NaN;
+
+  /**
+   * Wet-gas result of the last {@link #computeWetGas()} call, reused while {@link #buildWetGasSignature()} is
+   * unchanged.
+   */
+  private transient WetGasResult cachedWetGasResult;
+
+  /** Input fingerprint {@link #cachedWetGasResult} was computed for; null before the first solve. */
+  private transient double[] cachedWetGasSignature;
 
   /**
    * Constructor for OrificeFlowMeter with the default name "orifice flow meter".
@@ -477,13 +487,45 @@ public class OrificeFlowMeter extends DifferentialPressureFlowMeter {
   }
 
   /**
+   * Returns the wet-gas evaluation for the current operating point, reusing the last solve when nothing that
+   * {@link #buildWetGasSignature()} tracks has changed. Every wet-gas getter and {@link #getMassFlowRatePerSecond()} go
+   * through this method, so multiple reads within the same timestep see one consistent, cheaply-repeated result instead
+   * of re-running the iterative solve on every call.
+   *
+   * @return the wet-gas evaluation outcome
+   */
+  private WetGasResult solveWetGas() {
+    double[] signature = buildWetGasSignature();
+    if (cachedWetGasResult != null && Arrays.equals(signature, cachedWetGasSignature)) {
+      return cachedWetGasResult;
+    }
+    WetGasResult result = computeWetGas();
+    cachedWetGasResult = result;
+    cachedWetGasSignature = signature;
+    return result;
+  }
+
+  /**
+   * Builds a cheap fingerprint of every input {@link #computeWetGas()} depends on (stream properties and wet-gas
+   * configuration), used by {@link #solveWetGas()} to detect whether a fresh solve is required.
+   *
+   * @return fingerprint array, compared with {@link Arrays#equals(double[], double[])}
+   */
+  private double[] buildWetGasSignature() {
+    return new double[] { getDifferentialPressurePa(), getUpstreamPressurePa(), getBetaRatio(), getGasDensity(),
+        getDynamicViscosity(), getIsentropicExponent(), liquidMassFlowRate, resolveLiquidToGasMassRatio(),
+        getLiquidDensity(), pressureLoss, gravitationalAcceleration, wetGasCorrelation.ordinal(),
+        tappingArrangement.ordinal() };
+  }
+
+  /**
    * Solves the ISO/TR 11583 Clause 7 wet-gas equations for the current operating point. Returns the dry-gas result
    * (from the base class's Reynolds-number iteration) when no wet-gas correlation is selected or when no liquid load is
    * available. Never throws.
    *
    * @return the wet-gas evaluation outcome
    */
-  private WetGasResult solveWetGas() {
+  private WetGasResult computeWetGas() {
     WetGasResult result = new WetGasResult();
     double dryFlow = super.getMassFlowRatePerSecond();
     result.gasMassFlowRate = dryFlow;

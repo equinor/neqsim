@@ -127,8 +127,7 @@ import neqsim.process.measurementdevice.HydrateEquilibriumTemperatureAnalyser;
 
 HydrateEquilibriumTemperatureAnalyser hydrateAnalyser =
     new HydrateEquilibriumTemperatureAnalyser(gasStream);
-double hydrateTemp = hydrateAnalyser.getMeasuredValue("C");
-System.out.println("Hydrate formation temp: " + hydrateTemp + " °C");
+double hydrateTemp = hydrateAnalyser.getMeasuredValue("C");  // hydrate formation temperature, degC
 ```
 
 ## Vibration Analysis
