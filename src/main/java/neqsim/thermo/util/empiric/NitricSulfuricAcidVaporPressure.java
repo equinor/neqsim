@@ -168,7 +168,7 @@ public class NitricSulfuricAcidVaporPressure {
    *
    * @param temperature temperature in kelvin (valid roughly 190-298 K)
    * @return pure water vapour pressure in pascal (Pa)
-   * @throws IllegalArgumentException if temperature is not finite and greater than zero kelvin
+   * @throws IllegalArgumentException if temperature is non-finite or not greater than zero kelvin
    */
   public static double pureVaporPressureWater(double temperature) {
     if (!Double.isFinite(temperature) || temperature <= 0.0) {
@@ -244,7 +244,7 @@ public class NitricSulfuricAcidVaporPressure {
    *
    * @param temperature temperature in kelvin (valid roughly 190-298 K)
    * @return pure sulfuric acid vapour pressure in pascal (Pa)
-   * @throws IllegalArgumentException if temperature is not finite and greater than zero kelvin
+   * @throws IllegalArgumentException if temperature is non-finite or not greater than zero kelvin
    */
   public static double pureVaporPressureSulfuricAcid(double temperature) {
     if (!Double.isFinite(temperature) || temperature <= 0.0) {
@@ -323,6 +323,26 @@ public class NitricSulfuricAcidVaporPressure {
   }
 
   /**
+   * Validate public activity-coefficient inputs before evaluating the homogeneous Van Laar expressions.
+   *
+   * @param x1 water proportion
+   * @param x2 nitric-acid proportion
+   * @param x3 sulfuric-acid proportion
+   * @param temperature temperature in kelvin
+   */
+  private static void validateActivityCoefficientInputs(double x1, double x2, double x3, double temperature) {
+    if (!Double.isFinite(temperature) || temperature <= 0.0) {
+      throw new IllegalArgumentException("temperature must be finite and greater than zero kelvin, was " + temperature);
+    }
+    if (!Double.isFinite(x1) || !Double.isFinite(x2) || !Double.isFinite(x3) || x1 < 0.0 || x2 < 0.0 || x3 < 0.0) {
+      throw new IllegalArgumentException("mole fractions must be finite and non-negative");
+    }
+    if (!(x1 + x2 + x3 > 0.0)) {
+      throw new IllegalArgumentException("at least one mole fraction must be positive");
+    }
+  }
+
+  /**
    * <p>
    * Activity coefficient of water in the ternary (or binary, by setting one acid mole fraction to zero) mixture, from
    * equation (10a).
@@ -333,8 +353,10 @@ public class NitricSulfuricAcidVaporPressure {
    * @param x3 mole fraction of sulfuric acid (H2SO4)
    * @param temperature temperature in kelvin
    * @return the water activity coefficient (dimensionless)
+   * @throws IllegalArgumentException if temperature or composition is outside its finite, positive domain
    */
   public static double activityCoefficientWater(double x1, double x2, double x3, double temperature) {
+    validateActivityCoefficientInputs(x1, x2, x3, temperature);
     return Math.pow(10.0, tLog10GammaWater(x1, x2, x3, temperature) / temperature);
   }
 
@@ -348,8 +370,10 @@ public class NitricSulfuricAcidVaporPressure {
    * @param x3 mole fraction of sulfuric acid (H2SO4)
    * @param temperature temperature in kelvin
    * @return the nitric acid activity coefficient (dimensionless)
+   * @throws IllegalArgumentException if temperature or composition is outside its finite, positive domain
    */
   public static double activityCoefficientNitricAcid(double x1, double x2, double x3, double temperature) {
+    validateActivityCoefficientInputs(x1, x2, x3, temperature);
     return Math.pow(10.0, tLog10GammaNitric(x1, x2, x3, temperature) / temperature);
   }
 
@@ -363,8 +387,10 @@ public class NitricSulfuricAcidVaporPressure {
    * @param x3 mole fraction of sulfuric acid (H2SO4)
    * @param temperature temperature in kelvin
    * @return the sulfuric acid activity coefficient (dimensionless)
+   * @throws IllegalArgumentException if temperature or composition is outside its finite, positive domain
    */
   public static double activityCoefficientSulfuricAcid(double x1, double x2, double x3, double temperature) {
+    validateActivityCoefficientInputs(x1, x2, x3, temperature);
     return Math.pow(10.0, tLog10GammaSulfuric(x1, x2, x3, temperature) / temperature);
   }
 
