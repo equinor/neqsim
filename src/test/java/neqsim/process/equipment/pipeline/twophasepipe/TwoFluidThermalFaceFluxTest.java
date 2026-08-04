@@ -29,6 +29,15 @@ class TwoFluidThermalFaceFluxTest {
     assertTrue(internalThroughput > 0.0, "Closing the external faces must not disable internal convection");
 
     double retainedInternalGasFlow = faceFluxes[1][0];
+    double[][] weightedFluxes = new double[faceFluxes.length][3];
+    equations.accumulateLastPhaseMassFaceFluxes(weightedFluxes, 0.25);
+    equations.accumulateLastPhaseMassFaceFluxes(weightedFluxes, 0.75);
+    for (int face = 0; face < faceFluxes.length; face++) {
+      for (int phase = 0; phase < 3; phase++) {
+        assertEquals(faceFluxes[face][phase], weightedFluxes[face][phase], 1.0e-12,
+            "Stage accumulation must preserve the weighted conservative face flow");
+      }
+    }
     faceFluxes[0][0] = 1.0;
     assertEquals(0.0, equations.getLastPhaseMassFaceFluxes()[0][0], 0.0,
         "Callers must not be able to mutate the retained integration-stage fluxes");
