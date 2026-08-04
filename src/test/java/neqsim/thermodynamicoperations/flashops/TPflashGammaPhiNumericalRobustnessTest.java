@@ -54,6 +54,7 @@ class TPflashGammaPhiNumericalRobustnessTest {
     system.init(1);
 
     InspectableTPflash flash = new InspectableTPflash(system);
+    system.prepareGammaPhiFlash();
     flash.sucsSubs();
 
     assertTrue(Double.isFinite(flash.getDeviationForTest()));
