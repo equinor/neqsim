@@ -158,6 +158,26 @@ class TwoFluidPipeClosedThermalTest {
   }
 
   @Test
+  void multilayerConfigurationPathsActivateTheirOverallHeatTransferCoefficient() {
+    TwoFluidPipe pipe = new TwoFluidPipe("multilayer-configuration-paths");
+    pipe.setHeatTransferCoefficient(0.0);
+
+    pipe.setUseMultilayerThermalModel(true);
+    assertTrue(pipe.isHeatTransferEnabled());
+    assertEquals(pipe.getThermalCalculator().calculateOverallUValue(), pipe.getHeatTransferCoefficient(), 1.0e-12);
+
+    pipe.setHeatTransferCoefficient(0.0);
+    pipe.configureSubseaThermalModel(0.02, 0.0, RadialThermalLayer.MaterialType.PU_FOAM);
+    assertTrue(pipe.isHeatTransferEnabled());
+    assertEquals(pipe.getThermalCalculator().calculateOverallUValue(), pipe.getHeatTransferCoefficient(), 1.0e-12);
+
+    pipe.setHeatTransferCoefficient(0.0);
+    pipe.configureBuriedThermalModel(1.0, false);
+    assertTrue(pipe.isHeatTransferEnabled());
+    assertEquals(pipe.getThermalCalculator().calculateOverallUValue(), pipe.getHeatTransferCoefficient(), 1.0e-12);
+  }
+
+  @Test
   void closedMultilayerCooldownIncludesEveryCell() {
     PipeFixture fixture = createInitializedPipe("closed-multilayer-cooldown");
     double[] initial = fixture.pipe.getTemperatureProfile();
