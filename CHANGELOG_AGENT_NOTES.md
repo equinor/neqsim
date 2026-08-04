@@ -9,6 +9,18 @@
 
 ---
 
+## 2026-08-04 — Closed TwoFluidPipe inlet cell participates in cooldown
+
+### Fixed
+
+- A `CLOSED` inlet cell now participates in simple and multilayer radial heat transfer during
+  `runTransient(...)`. Its upstream advective and Joule-Thomson boundary contributions are zero,
+  while wall/ambient heat exchange remains active.
+- Stream-connected inlet behavior is unchanged. The broader replacement of the global thermal
+  advection rate with stage-consistent local energy fluxes remains tracked in issue #2792.
+
+---
+
 ## 2026-08-04 — ConeFlowMeter rejects non-physical geometry (Copilot review round 11)
 
 ### Fixed
