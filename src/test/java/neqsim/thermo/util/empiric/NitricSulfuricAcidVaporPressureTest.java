@@ -66,6 +66,19 @@ public class NitricSulfuricAcidVaporPressureTest {
         () -> NitricSulfuricAcidVaporPressure.pureVaporPressureSulfuricAcid(Double.POSITIVE_INFINITY));
   }
 
+  /** Public activity-coefficient methods reject undefined temperature and composition domains. */
+  @Test
+  public void testActivityCoefficientsRejectInvalidDomains() {
+    assertThrows(IllegalArgumentException.class,
+        () -> NitricSulfuricAcidVaporPressure.activityCoefficientWater(0.7, 0.3, 0.0, 0.0));
+    assertThrows(IllegalArgumentException.class,
+        () -> NitricSulfuricAcidVaporPressure.activityCoefficientNitricAcid(0.7, -0.1, 0.4, 273.15));
+    assertThrows(IllegalArgumentException.class,
+        () -> NitricSulfuricAcidVaporPressure.activityCoefficientSulfuricAcid(Double.NaN, 0.3, 0.7, 273.15));
+    assertThrows(IllegalArgumentException.class,
+        () -> NitricSulfuricAcidVaporPressure.activityCoefficientWater(0.0, 0.0, 0.0, 273.15));
+  }
+
   /**
    * In the binary water-sulfuric acid limit (x_HNO3 = 0) the ternary equation (10a) must reduce to the System II Van
    * Laar form. The hand-computed water activity coefficient at x_H2SO4 = 0.5 and 298 K is 0.005122.
