@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
-import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.phase.PhaseEos;
 import neqsim.thermo.phase.PhaseGEVanLaarAcid;
@@ -381,9 +380,12 @@ public class SystemVanLaarActivitySRKTest extends neqsim.NeqSimTest {
         "65 wt% HNO3 source should carry more water to CO2 than 98 wt% H2SO4 source");
   }
 
-  /** Verifies that only material nitric acid uses the empirical trace-CO2 carrier reference. */
+  /**
+   * Verifies that a CO2-rich direct gamma-phi flash uses one internally consistent tuned carrier reference for every
+   * Van Laar activity component.
+   */
   @Test
-  public void testCo2RichGammaPhiUsesCarrierReferenceOnlyForMaterialNitricAcid() {
+  public void testCo2RichGammaPhiUsesCarrierReferenceForAllActivityComponents() {
     SystemVanLaarActivitySRK system = new SystemVanLaarActivitySRK(313.15, 100.0);
     system.addComponent("CO2", 1.0e6);
     system.addComponent("water", 1000.0);
@@ -395,16 +397,11 @@ public class SystemVanLaarActivitySRKTest extends neqsim.NeqSimTest {
 
     PhaseInterface vapour = system.getPhase(0);
     assertTrue(SystemVanLaarActivitySRK.isPredominantlyCarbonDioxidePhase(vapour));
-    for (String componentName : new String[] { "water", "sulfuric acid" }) {
-      ComponentInterface component = vapour.getComponent(componentName);
-      component.fugcoef(vapour);
-      double eosFugacityCoefficient = component.getFugacityCoefficient();
-      assertEquals(eosFugacityCoefficient, system.getGammaPhiVapourFugacityCoefficient(component, vapour), 0.0,
-          componentName + " should retain its actual EOS vapour-phase reference");
+    for (String componentName : new String[] { "water", "nitric acid", "sulfuric acid" }) {
+      assertEquals(system.carbonDioxideCarrierFugacityCoefficient(componentName),
+          system.getGammaPhiVapourFugacityCoefficient(vapour.getComponent(componentName), vapour), 0.0,
+          componentName + " should use the tuned trace-CO2 carrier reference");
     }
-    assertEquals(system.carbonDioxideCarrierFugacityCoefficient("nitric acid"),
-        system.getGammaPhiVapourFugacityCoefficient(vapour.getComponent("nitric acid"), vapour), 0.0,
-        "Material nitric acid should use the empirical trace-CO2 carrier reference");
   }
 
   /**
