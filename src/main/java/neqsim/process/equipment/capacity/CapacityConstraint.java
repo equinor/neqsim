@@ -382,18 +382,31 @@ public class CapacityConstraint implements Serializable {
    * @return utilization as fraction (1.0 = 100% of design)
    */
   public double getUtilization() {
-    double current = getCurrentValue();
+    return getUtilization(getCurrentValue());
+  }
+
+  /**
+   * Gets utilization for an explicitly snapshotted current value without invoking the configured value supplier.
+   *
+   * <p>
+   * This overload is useful when a caller must report the same scalar value used to calculate utilization.
+   * </p>
+   *
+   * @param currentValue snapshotted current constraint value
+   * @return utilization as fraction (1.0 = 100% of design)
+   */
+  public double getUtilization(double currentValue) {
     if (minValue > 0 && designValue == Double.MAX_VALUE) {
       // This is a minimum constraint (e.g., residence time)
-      if (current <= 0) {
+      if (currentValue <= 0) {
         return MAX_UTILIZATION;
       }
-      return Math.min(minValue / current, MAX_UTILIZATION);
+      return Math.min(minValue / currentValue, MAX_UTILIZATION);
     }
     if (designValue <= 0 || designValue == Double.MAX_VALUE) {
       return 0.0;
     }
-    return Math.min(current / designValue, MAX_UTILIZATION);
+    return Math.min(currentValue / designValue, MAX_UTILIZATION);
   }
 
   /**

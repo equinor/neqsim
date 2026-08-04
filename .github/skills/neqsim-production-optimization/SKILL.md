@@ -1,7 +1,7 @@
 ---
 name: neqsim-production-optimization
 description: "Production optimization, bottleneck analysis, decline modeling, decline-curve history matching (Arps + Duong), reservoir material balance surveillance (OGIP/OOIP, drive indices, aquifer influx), and IOR/EOR screening with NeqSim. USE WHEN: optimizing production rates, identifying facility bottlenecks, forecasting production profiles, fitting decline curves to production history, estimating reserves from pressure/production data, analyzing gas lift allocation, evaluating IOR/EOR options, or running multi-scenario production comparisons."
-last_verified: "2026-07-11"
+last_verified: "2026-08-04"
 ---
 
 # NeqSim Production Optimization Skill
@@ -533,4 +533,4 @@ Map<String, Double> breakdown = decom.getBreakdown();
 | Encoding minimum limits as design/max constraints | Safe NPSH, minimum-flow, or residence-time margins appear overloaded | Use `setMinValue(...)` without `setDesignValue(...)`; use a HARD constraint type for trip/infeasibility limits |
 | Recomputing every engineering margin as `design - current` | Minimum limits show infinite or incorrectly signed spare capacity | Use the evaluator/throughput result's `minimumConstraint` direction; feasible margins are `current - minimum` for lower limits and `maximum - current` for upper limits |
 | Dropping `dataSource` when exporting bottlenecks | Installed, calculated, and default limits become indistinguishable to Python or AI workflows | Set provenance on each `CapacityConstraint` and preserve the throughput row's `dataSource` in ranking, recommendations, and archives |
-| Treating every constraint as equally credible and universally applicable | AI or optimization recommendations can rely on a screening/default limit outside its evidence range | Set `confidence` and a validity range on `CapacityConstraint`; treat them as evidence metadata, require review when absent/out of range, and never interpret confidence as a safety probability |
+| Treating every constraint as equally credible and universally applicable | AI or optimization recommendations can rely on a screening/default limit outside its evidence range | Set `confidence` and a validity range on `CapacityConstraint`; consume the propagated `ThroughputCaseRow` presence flags, bounds, and in-range state in Java/JSON/CSV; require review when absent/out of range, and never interpret confidence as a safety probability |
