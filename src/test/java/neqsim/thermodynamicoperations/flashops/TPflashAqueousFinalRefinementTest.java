@@ -103,10 +103,14 @@ class TPflashAqueousFinalRefinementTest {
     double ordinaryCompositionTotal = 0.0;
     double multiphaseCompositionTotal = 0.0;
     for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
-      ordinaryCompositionTotal += ordinary.getPhase(ordinaryPhaseIndex).getComponent(componentIndex).getx();
-      multiphaseCompositionTotal += multiphase.getPhase(multiphasePhaseIndex).getComponent(componentIndex).getx();
-      assertEquals(multiphase.getPhase(multiphasePhaseIndex).getComponent(componentIndex).getx(),
-          ordinary.getPhase(ordinaryPhaseIndex).getComponent(componentIndex).getx(), 1.0e-12);
+      double ordinaryMoleFraction = ordinary.getPhase(ordinaryPhaseIndex).getComponent(componentIndex).getx();
+      double multiphaseMoleFraction = multiphase.getPhase(multiphasePhaseIndex).getComponent(componentIndex).getx();
+      assertTrue(Double.isFinite(ordinaryMoleFraction) && ordinaryMoleFraction >= 0.0 && ordinaryMoleFraction <= 1.0);
+      assertTrue(
+          Double.isFinite(multiphaseMoleFraction) && multiphaseMoleFraction >= 0.0 && multiphaseMoleFraction <= 1.0);
+      ordinaryCompositionTotal += ordinaryMoleFraction;
+      multiphaseCompositionTotal += multiphaseMoleFraction;
+      assertEquals(multiphaseMoleFraction, ordinaryMoleFraction, 1.0e-12);
     }
     assertEquals(1.0, ordinaryCompositionTotal, 1.0e-12);
     assertEquals(1.0, multiphaseCompositionTotal, 1.0e-12);
