@@ -1720,7 +1720,6 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   private void applyCoupledState(double[] state) {
     for (int node = 1; node < numberOfNodes - 1; node++) {
       pipe.getNode(node).getBulkSystem().setPressure(state[2 * (node - 1)]);
-      pipe.getNode(node).init();
     }
     for (int node = 2; node < numberOfNodes; node++) {
       pipe.getNode(node).setVelocityIn(state[2 * (node - 2) + 1]);
@@ -1728,6 +1727,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     for (int node = 0; node < numberOfNodes; node++) {
       solMatrix.set(node, 0, pipe.getNode(node).getVelocityIn().doubleValue());
     }
+    // Initialize each node once after both pressure and velocity are applied so every residual
+    // evaluation is a function of one complete trial state.
     initVelocity(1);
     for (int node = 0; node < numberOfNodes; node++) {
       solMatrix.set(node, 0, pipe.getNode(node).getVelocityIn().doubleValue());
