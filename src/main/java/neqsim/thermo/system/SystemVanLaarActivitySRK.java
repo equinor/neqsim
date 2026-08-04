@@ -122,6 +122,12 @@ public class SystemVanLaarActivitySRK extends SystemEosGE {
   /** Logarithmic damping factor used by direct gamma-phi successive substitution. */
   private static final double GAMMA_PHI_K_VALUE_DAMPING_FACTOR = 0.25;
 
+  /** Stronger damping used when either direct gamma-phi phase is close to disappearing. */
+  private static final double PHASE_BOUNDARY_GAMMA_PHI_K_VALUE_DAMPING_FACTOR = 0.05;
+
+  /** Minority phase fraction below which direct gamma-phi updates use stronger damping. */
+  private static final double GAMMA_PHI_PHASE_BOUNDARY_FRACTION = 1.0e-4;
+
   /** Maximum phase fraction treated as a numerical trace. */
   private static final double TRACE_PHASE_BETA_LIMIT = 1.0e-5;
 
@@ -428,7 +434,12 @@ public class SystemVanLaarActivitySRK extends SystemEosGE {
     if (previousK <= 0.0 || targetK <= 0.0 || !Double.isFinite(previousK) || !Double.isFinite(targetK)) {
       return targetK;
     }
-    return Math.exp(Math.log(previousK) + GAMMA_PHI_K_VALUE_DAMPING_FACTOR * Math.log(targetK / previousK));
+    double beta = getBeta();
+    double minorityPhaseFraction = Double.isFinite(beta) ? Math.min(beta, 1.0 - beta) : 0.5;
+    double dampingFactor = minorityPhaseFraction < GAMMA_PHI_PHASE_BOUNDARY_FRACTION
+        ? PHASE_BOUNDARY_GAMMA_PHI_K_VALUE_DAMPING_FACTOR
+        : GAMMA_PHI_K_VALUE_DAMPING_FACTOR;
+    return Math.exp(Math.log(previousK) + dampingFactor * Math.log(targetK / previousK));
   }
 
   /**
