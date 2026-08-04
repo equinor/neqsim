@@ -405,6 +405,29 @@ public class SystemVanLaarActivitySRKTest extends neqsim.NeqSimTest {
   }
 
   /**
+   * Verifies that direct gamma-phi flashing restores the EOS/GE phase roles after active-phase reordering.
+   */
+  @Test
+  public void testDirectGammaPhiRestoresCreationOrderAfterPhaseReordering() {
+    SystemVanLaarActivitySRK system = new SystemVanLaarActivitySRK(313.15, 100.0);
+    system.addComponent("CO2", 1.0e6);
+    system.addComponent("water", 1000.0);
+    system.addComponent("nitric acid", 3.0);
+    system.addComponent("sulfuric acid", 1.0);
+    system.createDatabase(true);
+    system.setMixingRule("classic");
+
+    system.setPhaseIndex(0, 1);
+    system.setPhaseIndex(1, 0);
+    new ThermodynamicOperations(system).TPflash();
+
+    assertEquals(0, system.getPhaseIndex(0));
+    assertEquals(1, system.getPhaseIndex(1));
+    assertTrue(system.getPhase(0) instanceof PhaseEos);
+    assertTrue(system.getPhase(1) instanceof PhaseGEVanLaarAcid);
+  }
+
+  /**
    * Verifies that a normal TPflash accepts the raw Van Laar acid split for a sulfuric-acid CO2 feed without applying a
    * post-flash solubility filter.
    */
