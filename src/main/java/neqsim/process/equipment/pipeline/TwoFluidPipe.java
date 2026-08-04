@@ -1733,9 +1733,8 @@ public class TwoFluidPipe extends Pipeline {
    * Sensible-energy advection uses the phase-resolved finite-volume face mass fluxes retained by
    * {@link TwoFluidConservationEquations#getLastPhaseMassFaceFluxes()} for each hydrodynamic integration stage. CLOSED
    * external faces are therefore exactly adiabatic to mass transport while internal convection remains active. Radial
-   * heat transfer is
-   * applied to every physical cell, including section zero. This post-step update is the sole owner of ambient heat
-   * exchange; the equation object's duplicate wall source is disabled by the heat-transfer setters.
+   * heat transfer is applied to every physical cell, including section zero. This post-step update is the sole owner of
+   * ambient heat exchange; the equation object's duplicate wall source is disabled by the heat-transfer setters.
    * </p>
    *
    * @param dt time step in seconds
