@@ -105,6 +105,27 @@ class TwoFluidPipeClosedThermalTest {
   }
 
   @Test
+  void multilayerCellAdvanceRestoresIndependentRadialState() {
+    MultilayerThermalCalculator calculator = new MultilayerThermalCalculator(0.10);
+    calculator.createSubseaPipeConfig(0.20, 0.01, 0.02, 0.0, RadialThermalLayer.MaterialType.PU_FOAM);
+    double[] firstCellState = new double[calculator.getNumberOfLayers()];
+    for (int layer = 0; layer < firstCellState.length; layer++) {
+      firstCellState[layer] = calculator.getLayers().get(layer).getTemperature();
+    }
+    double[] secondCellState = firstCellState.clone();
+
+    double firstWallTemperature = TwoFluidPipe.advanceMultilayerCellThermalState(calculator, firstCellState, 300.0,
+        280.0, 50.0, 1.0e-3);
+    double secondWallTemperature = TwoFluidPipe.advanceMultilayerCellThermalState(calculator, secondCellState, 300.0,
+        280.0, 50.0, 1.0e-3);
+
+    assertArrayEquals(firstCellState, secondCellState, 0.0,
+        "Sequential cells with identical stored states must not inherit the preceding cell's radial advance");
+    assertEquals(firstWallTemperature, secondWallTemperature, 0.0,
+        "Restoring identical radial states must produce the same inner-wall temperature");
+  }
+
+  @Test
   void closedMultilayerCooldownIncludesEveryCell() {
     PipeFixture fixture = createInitializedPipe("closed-multilayer-cooldown");
     double[] initial = fixture.pipe.getTemperatureProfile();
@@ -123,13 +144,6 @@ class TwoFluidPipeClosedThermalTest {
         assertTrue(current[cell] <= previous[cell] + 1.0e-10,
             "Multilayer cell " + cell + " warmed during a uniform closed cooldown");
         assertTrue(current[cell] >= 280.0 - 1.0e-10, "Multilayer cell " + cell + " undershot the ambient temperature");
-      }
-      if (step == 0) {
-        double[] wallTemperatures = fixture.pipe.getWallTemperatureProfile();
-        for (int cell = 1; cell < wallTemperatures.length; cell++) {
-          assertEquals(wallTemperatures[0], wallTemperatures[cell], 1.0e-12,
-              "Identical cells must not share and repeatedly advance one radial-layer state");
-        }
       }
       previous = current;
     }
