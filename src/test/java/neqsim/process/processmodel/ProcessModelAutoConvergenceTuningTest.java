@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -11,6 +12,8 @@ import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.util.Recycle;
+import neqsim.process.processmodel.processmodules.WellFluidModule;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -22,6 +25,81 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 class ProcessModelAutoConvergenceTuningTest {
+
+  /** Non-recycle unit with a deliberate diagnostic mass imbalance. */
+  private static final class MassImbalanceHeater extends Heater {
+    private static final long serialVersionUID = 1000L;
+
+    MassImbalanceHeater(String name, Stream inlet) {
+      super(name, inlet);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public double getMassBalance(String unit) {
+      return 100.0;
+    }
+  }
+
+  /** Module probe whose internal operations were deliberately bypassed for the current pass. */
+  private static final class InactiveRecycleModule extends WellFluidModule {
+    private static final long serialVersionUID = 1000L;
+
+    InactiveRecycleModule(String name) {
+      super(name);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void initializeModule() {
+      // This probe already owns its intentionally stale internal operations.
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void initializeStreams() {
+      // No public streams are needed for an inactive-module traversal test.
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean isActive() {
+      return false;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean isLockedInactive() {
+      return true;
+    }
+  }
+
+  /** Recycle probe that remains solved while exposing a standing tear imbalance. */
+  private static final class RecycleMassImbalanceProbe extends Recycle {
+    private static final long serialVersionUID = 1000L;
+
+    RecycleMassImbalanceProbe(String name) {
+      super(name);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void run(UUID id) {
+      setCalculationIdentifier(id);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean solved() {
+      return true;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public double getMassBalance(String unit) {
+      return 100.0;
+    }
+  }
 
   /**
    * Creates a small two-component gas fluid.
@@ -345,4 +423,102 @@ class ProcessModelAutoConvergenceTuningTest {
     assertThrows(IllegalArgumentException.class, () -> model.runUntilConverged(0));
     assertThrows(IllegalArgumentException.class, () -> new ProcessSystem("p").runUntilConverged(0));
   }
+
+  /**
+   * The model-level closure gate owns recycle tears only. A unit-level diagnostic imbalance must remain visible through
+   * ProcessSystem mass-balance reporting without being reclassified as an open recycle tear.
+   */
+  @Test
+  void testMassClosureGateIgnoresNonRecycleUnitDiagnostics() {
+    Stream feed = new Stream("probe feed", createGasFluid());
+    feed.setFlowRate(1000.0, "kg/hr");
+    MassImbalanceHeater heater = new MassImbalanceHeater("imbalanced diagnostic heater", feed);
+
+    ProcessSystem area = new ProcessSystem("probe area");
+    area.add(feed);
+    area.add(heater);
+
+    ProcessModel model = new ProcessModel();
+    model.add("probe area", area);
+
+    assertTrue(model.runUntilConverged(5),
+        "A non-recycle unit diagnostic must not be treated as a standing recycle tear");
+    assertTrue(area.getFailedMassBalance("kg/hr", 0.0).containsKey("imbalanced diagnostic heater"),
+        "The unit-level ProcessSystem diagnostic must remain visible");
+
+    JsonObject massClosure = JsonParser.parseString(model.getConvergenceReportJson()).getAsJsonObject()
+        .getAsJsonObject("massClosure");
+    assertTrue(massClosure.get("enabled").getAsBoolean());
+    assertEquals(0.0, massClosure.get("relativeError").getAsDouble(), 0.0);
+    assertFalse(massClosure.get("worstUnits").getAsString().contains("imbalanced diagnostic heater"));
+  }
+
+  /** A standing recycle tear must still block model convergence and identify the offending recycle. */
+  @Test
+  void testMassClosureGateRejectsOpenRecycleTear() {
+    Stream feed = new Stream("recycle probe feed", createGasFluid());
+    feed.setFlowRate(1000.0, "kg/hr");
+
+    RecycleMassImbalanceProbe recycle = new RecycleMassImbalanceProbe("open recycle tear");
+    recycle.addStream(feed);
+
+    ProcessSystem area = new ProcessSystem("recycle area");
+    area.add(feed);
+    area.add(recycle);
+
+    ProcessModel model = new ProcessModel();
+    model.add("recycle area", area);
+
+    assertFalse(model.runUntilConverged(5), "A 100 kg/hr standing recycle tear must block convergence");
+
+    JsonObject massClosure = JsonParser.parseString(model.getConvergenceReportJson()).getAsJsonObject()
+        .getAsJsonObject("massClosure");
+    assertEquals(0.1, massClosure.get("relativeError").getAsDouble(), 1.0e-12);
+    assertTrue(massClosure.get("worstUnits").getAsString().contains("open recycle tear"));
+  }
+
+  /** A bypassed module must not contribute stale internal recycle state to the current closure gate. */
+  @Test
+  void testMassClosureGateSkipsRecycleInsideInactiveModule() {
+    Stream feed = new Stream("inactive module feed", createGasFluid());
+    feed.setFlowRate(1000.0, "kg/hr");
+
+    RecycleMassImbalanceProbe recycle = new RecycleMassImbalanceProbe("stale inactive recycle");
+    recycle.addStream(feed);
+    InactiveRecycleModule module = new InactiveRecycleModule("bypassed module");
+    module.getOperations().add(recycle);
+
+    Separator feedBoundary = new Separator("active feed boundary", feed);
+    ProcessSystem area = new ProcessSystem("inactive module area");
+    area.add(feed);
+    area.add(feedBoundary);
+    area.add(module);
+
+    ProcessModel model = new ProcessModel();
+    model.add("inactive module area", area);
+
+    assertTrue(model.runUntilConverged(5),
+        "A recycle inside a module that did not execute this pass must not block convergence");
+
+    JsonObject massClosure = JsonParser.parseString(model.getConvergenceReportJson()).getAsJsonObject()
+        .getAsJsonObject("massClosure");
+    assertEquals(0.0, massClosure.get("relativeError").getAsDouble(), 0.0,
+        "The active feed boundary must make closure evaluable while the inactive recycle remains excluded");
+    assertFalse(massClosure.get("worstUnits").getAsString().contains("stale inactive recycle"));
+  }
+
+  /** Disabled closure evaluation must be reported as disabled and serialize the unevaluated error as JSON null. */
+  @Test
+  void testDisabledMassClosureReportIsStandardJson() {
+    ProcessModel model = buildModelWithDeadLeg(1.0e6, 0.05);
+    model.setAutoConvergenceTuning(false);
+    model.runUntilConverged(25);
+
+    JsonObject massClosure = JsonParser.parseString(model.getConvergenceReportJson()).getAsJsonObject()
+        .getAsJsonObject("massClosure");
+    assertFalse(massClosure.get("enabled").getAsBoolean());
+    assertTrue(massClosure.get("relativeError").isJsonNull(),
+        "An unevaluated error must be JSON null, never the non-standard NaN literal");
+  }
+
 }
