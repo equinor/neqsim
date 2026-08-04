@@ -1369,6 +1369,11 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       double[][] jacobian;
       try {
         double[] values = calculateCoupledResidual(state);
+        residualValues = values;
+        residual = maximumAbsolute(values);
+        nonlinearHistory[iteration] = residual;
+        massEquationHistory[iteration] = maximumAbsoluteByEquationFamily(values, 0);
+        momentumEquationHistory[iteration] = maximumAbsoluteByEquationFamily(values, 1);
         jacobian = calculateCoupledBandedJacobian(state);
         double[] rightHandSide = new double[values.length];
         for (int row = 0; row < values.length; row++) {
@@ -1561,7 +1566,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       return "Independent Newton-direction Jacobian relative infinity-norm errors: continuity[1.0E-5="
           + massRelativeErrors[0] + ", 1.0E-6=" + massRelativeErrors[1] + ", 1.0E-7=" + massRelativeErrors[2]
           + "], momentum[1.0E-5=" + momentumRelativeErrors[0] + ", 1.0E-6=" + momentumRelativeErrors[1] + ", 1.0E-7="
-          + momentumRelativeErrors[2] + "]";
+          + momentumRelativeErrors[2] + "]; " + calculateDenseJacobianStructureDetail(state, jacobian);
     } catch (RuntimeException exception) {
       return "Independent Jacobian directional-derivative check failed with " + exception.getClass().getSimpleName()
           + (exception.getMessage() == null ? "" : ": " + exception.getMessage());
@@ -1580,6 +1585,77 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       }
     }
     return product;
+  }
+
+  private String calculateDenseJacobianStructureDetail(double[] state, double[][] bandedJacobian) {
+    try {
+      double[] firstResidual = calculateCoupledResidual(state);
+      double[] repeatedResidual = calculateCoupledResidual(state);
+      double[] repeatedDifference = new double[2];
+      double[] repeatedReference = new double[2];
+      for (int row = 0; row < state.length; row++) {
+        int family = row % 2;
+        repeatedDifference[family] = Math.max(repeatedDifference[family],
+            Math.abs(repeatedResidual[row] - firstResidual[row]));
+        repeatedReference[family] = Math.max(repeatedReference[family],
+            Math.max(Math.abs(repeatedResidual[row]), Math.abs(firstResidual[row])));
+      }
+
+      double[][] denseJacobian = calculateCoupledDenseFiniteDifferenceJacobian(state);
+      double[] inBandDifference = new double[2];
+      double[] denseReference = new double[2];
+      double[] offBandMaximum = new double[2];
+      for (int row = 0; row < state.length; row++) {
+        int family = row % 2;
+        for (int column = 0; column < state.length; column++) {
+          double denseValue = denseJacobian[row][column];
+          denseReference[family] = Math.max(denseReference[family], Math.abs(denseValue));
+          if (Math.abs(column - row) <= COUPLED_HALF_BANDWIDTH) {
+            double bandedValue = bandedJacobian[row][column - row + COUPLED_HALF_BANDWIDTH];
+            inBandDifference[family] = Math.max(inBandDifference[family], Math.abs(bandedValue - denseValue));
+          } else {
+            offBandMaximum[family] = Math.max(offBandMaximum[family], Math.abs(denseValue));
+          }
+        }
+      }
+
+      return "dense/uncolored check at relative step " + FINITE_DIFFERENCE_RELATIVE_STEP
+          + ": repeated-residual relative errors continuity="
+          + repeatedDifference[0] / Math.max(repeatedReference[0], 1.0e-14) + ", momentum="
+          + repeatedDifference[1] / Math.max(repeatedReference[1], 1.0e-14)
+          + "; colored-versus-dense in-band relative errors continuity="
+          + inBandDifference[0] / Math.max(denseReference[0], 1.0e-14) + ", momentum="
+          + inBandDifference[1] / Math.max(denseReference[1], 1.0e-14)
+          + "; maximum off-band relative magnitudes continuity="
+          + offBandMaximum[0] / Math.max(denseReference[0], 1.0e-14) + ", momentum="
+          + offBandMaximum[1] / Math.max(denseReference[1], 1.0e-14);
+    } catch (RuntimeException exception) {
+      return "dense/uncolored Jacobian check failed with " + exception.getClass().getSimpleName()
+          + (exception.getMessage() == null ? "" : ": " + exception.getMessage());
+    } finally {
+      applyCoupledState(state);
+    }
+  }
+
+  private double[][] calculateCoupledDenseFiniteDifferenceJacobian(double[] state) {
+    double[][] denseJacobian = new double[state.length][state.length];
+    try {
+      for (int column = 0; column < state.length; column++) {
+        double step = FINITE_DIFFERENCE_RELATIVE_STEP * Math.max(Math.abs(state[column]), 1.0);
+        double[] lower = state.clone();
+        double[] upper = state.clone();
+        lower[column] -= step;
+        upper[column] += step;
+        double[] lowerResidual = calculateCoupledResidual(lower);
+        double[] upperResidual = calculateCoupledResidual(upper);
+        for (int row = 0; row < state.length; row++) {
+          denseJacobian[row][column] = (upperResidual[row] - lowerResidual[row]) / (2.0 * step);
+        }
+      }
+      return denseJacobian;
+    } finally {
+      applyCoupledState(state);
+    }
   }
 
   private double[] calculateCoupledResidual(double[] state) {
