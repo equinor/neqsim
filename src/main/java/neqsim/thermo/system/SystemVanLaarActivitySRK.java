@@ -30,8 +30,10 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * <p>
  * The Taleb activity correlation is recommended from 190 K through 298 K. The high-pressure CO2 carrier tuning in this
- * class is an empirical engineering fit. Results above 298 K are therefore extrapolations of the activity model and are
- * not validation against the low-temperature source paper.
+ * class is an empirical engineering fit. In a predominantly CO2 vapour phase, the direct gamma-phi flash uses the same
+ * tuned trace-carrier SRK fugacity reference for water, nitric acid and sulfuric acid so that iteration and final
+ * fugacity auditing use one internally consistent model. Results above 298 K are therefore extrapolations of the
+ * activity model and are not validation against the low-temperature source paper.
  * </p>
  *
  * <p>
@@ -354,7 +356,9 @@ public class SystemVanLaarActivitySRK extends SystemEosGE {
   }
 
   /**
-   * Calculates the SRK fugacity coefficient for a trace acid-model component in the CO2-rich carrier phase.
+   * Calculates the tuned SRK fugacity coefficient for an activity-model component in the trace-component CO2 carrier
+   * reference. The direct gamma-phi flash uses this same reference for water, nitric acid and sulfuric acid whenever the
+   * actual vapour phase is predominantly CO2.
    *
    * @param componentName component whose carrier fugacity coefficient is needed
    * @return SRK fugacity coefficient in a trace-component CO2 carrier phase
