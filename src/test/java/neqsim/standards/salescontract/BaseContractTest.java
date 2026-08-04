@@ -42,7 +42,10 @@ class BaseContractTest extends neqsim.NeqSimTest {
   void hostedFinePulseStateDriftDiagnostic() {
     AssertionError failure = org.junit.jupiter.api.Assertions.assertThrows(AssertionError.class,
         OnePhaseConservativeSpeciesTest::runFinePulseForHostedDiagnostic);
-    throw new AssertionError("TEMPORARY HOSTED DIAGNOSTIC — MUST BE REVERTED: " + failure.getMessage(), failure);
+    System.err.println("TEMPORARY HOSTED DIAGNOSTIC — MUST BE REVERTED: " + failure.getMessage());
+    System.err.flush();
+    Runtime.getRuntime().halt(73);
+    throw new AssertionError("Runtime.halt unexpectedly returned.");
   }
 
   @Test
