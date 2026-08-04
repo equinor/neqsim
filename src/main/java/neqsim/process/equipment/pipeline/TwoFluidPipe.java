@@ -1760,9 +1760,13 @@ public class TwoFluidPipe extends Pipeline {
     }
 
     double muJT = enableJouleThomson ? 0.4 / 1.0e5 : 0.0;
+    double[] previousFluidTemperatures = new double[numberOfSections];
+    for (int section = 0; section < numberOfSections; section++) {
+      previousFluidTemperatures[section] = sections[section].getTemperature();
+    }
 
     if (useMultilayerThermalModel && thermalCalculator != null) {
-      updateTransientTemperatureMultilayer(phaseMassFaceFluxes, dt, Cp, muJT);
+      updateTransientTemperatureMultilayer(phaseMassFaceFluxes, previousFluidTemperatures, dt, Cp, muJT);
       return;
     }
 
@@ -1775,7 +1779,7 @@ public class TwoFluidPipe extends Pipeline {
 
     for (int i = 0; i < numberOfSections; i++) {
       TwoFluidSection sec = sections[i];
-      double oldFluidTemperature = sec.getTemperature();
+      double oldFluidTemperature = previousFluidTemperatures[i];
       double wallTemperature = wallTemperatureProfile[i];
 
       double hInner = heatTransferCoefficient;
@@ -1795,7 +1799,8 @@ public class TwoFluidPipe extends Pipeline {
 
       double fluidToWallHeat = hInner * pipePerimeter * (oldFluidTemperature - wallTemperature);
       double wallToAmbientHeat = hOuter * outerPerimeter * (wallTemperature - ambientTemperature);
-      double sensibleAdvection = calcSensibleAdvectionSource(i, phaseMassFaceFluxes, Cp);
+      double sensibleAdvection =
+          calcSensibleAdvectionSource(i, phaseMassFaceFluxes, previousFluidTemperatures, Cp);
       double jouleThomsonSource = calcLocalJouleThomsonSource(i, phaseMassFaceFluxes, Cp, muJT);
 
       double wallThermalMass = wallMassPerLength * wallHeatCapacity;
@@ -1828,8 +1833,9 @@ public class TwoFluidPipe extends Pipeline {
     return 1.0e-12;
   }
 
-  private double calcSensibleAdvectionSource(int cell, double[][] phaseMassFaceFluxes, double Cp) {
-    double cellTemperature = sections[cell].getTemperature();
+  private double calcSensibleAdvectionSource(int cell, double[][] phaseMassFaceFluxes,
+      double[] previousFluidTemperatures, double Cp) {
+    double cellTemperature = previousFluidTemperatures[cell];
     double source = 0.0;
     for (int phase = 0; phase < 3; phase++) {
       double leftMassFlow = phaseMassFaceFluxes[cell][phase];
@@ -1837,14 +1843,16 @@ public class TwoFluidPipe extends Pipeline {
 
       double leftUpwindTemperature = cellTemperature;
       if (leftMassFlow > 0.0) {
-        leftUpwindTemperature = cell == 0 ? getInletStream().getFluid().getTemperature("K")
-            : sections[cell - 1].getTemperature();
+        leftUpwindTemperature =
+            cell == 0 ? getInletStream().getFluid().getTemperature("K") : previousFluidTemperatures[cell - 1];
       }
 
       double rightUpwindTemperature = cellTemperature;
       if (rightMassFlow < 0.0 && cell + 1 < numberOfSections) {
-        rightUpwindTemperature = sections[cell + 1].getTemperature();
+        rightUpwindTemperature = previousFluidTemperatures[cell + 1];
       }
+      // The outlet flux uses a transmissive extrapolation of the last cell state. If it reverses,
+      // the corresponding upstream temperature is therefore the last cell temperature already selected above.
 
       source += Cp * (leftMassFlow * (leftUpwindTemperature - cellTemperature)
           - rightMassFlow * (rightUpwindTemperature - cellTemperature)) / sections[cell].getLength();
@@ -1883,16 +1891,18 @@ public class TwoFluidPipe extends Pipeline {
    * Update temperature using the multi-layer radial thermal model.
    *
    * @param phaseMassFaceFluxes gas, oil, and water mass flow at every finite-volume face in kg/s
+   * @param previousFluidTemperatures pre-update cell temperatures in kelvin
    * @param dt time step in seconds
    * @param Cp fluid heat capacity in J/(kg K)
    * @param muJT Joule-Thomson coefficient in K/Pa
    */
-  private void updateTransientTemperatureMultilayer(double[][] phaseMassFaceFluxes, double dt, double Cp, double muJT) {
+  private void updateTransientTemperatureMultilayer(double[][] phaseMassFaceFluxes,
+      double[] previousFluidTemperatures, double dt, double Cp, double muJT) {
     double fallbackFluidMassPerLength = sections[0].getArea() * getInletStream().getFluid().getDensity("kg/m3");
 
     for (int i = 0; i < numberOfSections; i++) {
       TwoFluidSection sec = sections[i];
-      double oldFluidTemperature = sec.getTemperature();
+      double oldFluidTemperature = previousFluidTemperatures[i];
       double ambientTemperature = surfaceTemperature;
       if (surfaceTemperatureProfile != null && i < surfaceTemperatureProfile.length) {
         ambientTemperature = surfaceTemperatureProfile[i];
@@ -1906,7 +1916,8 @@ public class TwoFluidPipe extends Pipeline {
       thermalCalculator.updateTransient(dt);
 
       double heatLoss = thermalCalculator.calculateHeatLossPerLength();
-      double sensibleAdvection = calcSensibleAdvectionSource(i, phaseMassFaceFluxes, Cp);
+      double sensibleAdvection =
+          calcSensibleAdvectionSource(i, phaseMassFaceFluxes, previousFluidTemperatures, Cp);
       double jouleThomsonSource = calcLocalJouleThomsonSource(i, phaseMassFaceFluxes, Cp, muJT);
       double fluidMassPerLength = getLocalFluidMassPerLength(sec, fallbackFluidMassPerLength);
       double newFluidTemperature = oldFluidTemperature
