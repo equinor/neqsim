@@ -9,6 +9,24 @@
 
 ---
 
+## 2026-08-04 — ProcessModel recycle mass-closure reporting
+
+### Corrected
+
+The automatic model-level mass-closure convergence gate now evaluates active `Recycle` tear
+imbalances only. Unit-level mass-balance diagnostics remain available through `ProcessSystem` but
+no longer masquerade as open recycle tears or block an otherwise converged multi-area model.
+
+The `massClosure` JSON block reports `enabled: true` only when automatic convergence tuning and
+the closure gate are both active. An unevaluated `relativeError` is emitted as JSON `null` rather
+than the non-standard numeric literal `NaN`.
+
+### Compatibility and validation
+
+No public method or default is removed. Existing callers should treat `relativeError: null` as
+"not evaluated" and inspect unit-level mass-balance reports separately from the recycle-tear
+convergence gate.
+
 ## 2026-08-03 — Capacity constraint confidence and validity metadata
 
 ### Added
