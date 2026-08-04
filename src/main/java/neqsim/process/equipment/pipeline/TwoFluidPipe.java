@@ -5926,7 +5926,8 @@ public class TwoFluidPipe extends Pipeline {
    * Set surface temperature for heat transfer calculations.
    *
    * <p>
-   * Enables heat transfer modeling. The pipe loses/gains heat to reach this temperature.
+   * Defines the thermal boundary temperature and enables the energy equation. A positive heat-transfer coefficient,
+   * coefficient profile, or configured multi-layer calculator is also required before a transient heat flux is applied.
    * </p>
    *
    * @param temperature Surface temperature in the specified unit
