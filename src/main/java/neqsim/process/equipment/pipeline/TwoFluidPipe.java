@@ -1792,9 +1792,10 @@ public class TwoFluidPipe extends Pipeline {
     double fluidDensity = inletFluid.getDensity("kg/m3");
     double fluidMassPerLength = area * fluidDensity;
 
-    for (int i = 1; i < numberOfSections; i++) {
+    int firstThermalSection = inletBCType == BoundaryCondition.CLOSED ? 0 : 1;
+    for (int i = firstThermalSection; i < numberOfSections; i++) {
       TwoFluidSection sec = sections[i];
-      TwoFluidSection prev = sections[i - 1];
+      TwoFluidSection prev = i > 0 ? sections[i - 1] : null;
 
       double T_fluid = sec.getTemperature();
       double T_wall = wallTemperatureProfile[i];
@@ -1821,14 +1822,17 @@ public class TwoFluidPipe extends Pipeline {
       double Q_fluid_to_wall = h_inner * pipePerimeter * (T_fluid - T_wall); // W/m
       double Q_wall_to_ambient = h_outer * outerPerimeter * (T_wall - T_ambient); // W/m
 
-      // Advection term: m_dot * Cp * (T_in - T_out) / dx_i
-      double T_upstream = prev.getTemperature();
-      double secDx = sec.getLength();
-      double Q_advection = massFlow * Cp * (T_upstream - T_fluid) / secDx; // W/m
-
-      // Joule-Thomson cooling
-      double dP = sec.getPressure() - prev.getPressure();
-      double Q_JT = massFlow * Cp * muJT * dP / secDx; // W/m (equivalent heat)
+      // A CLOSED inlet has no upstream advective or Joule-Thomson boundary flux,
+      // but its physical cell must still exchange heat with the wall and ambient.
+      double Q_advection = 0.0;
+      double Q_JT = 0.0;
+      if (prev != null) {
+        double T_upstream = prev.getTemperature();
+        double secDx = sec.getLength();
+        Q_advection = massFlow * Cp * (T_upstream - T_fluid) / secDx; // W/m
+        double dP = sec.getPressure() - prev.getPressure();
+        Q_JT = massFlow * Cp * muJT * dP / secDx; // W/m (equivalent heat)
+      }
 
       // Update wall temperature (explicit Euler)
       double dTwall_dt = (Q_fluid_to_wall - Q_wall_to_ambient) / (wallMassPerLength * wallHeatCapacity);
@@ -1880,9 +1884,10 @@ public class TwoFluidPipe extends Pipeline {
     // Calculate effective inner heat transfer coefficient based on flow regime
     double h_inner = calculateInnerHTC(massFlow, area);
 
-    for (int i = 1; i < numberOfSections; i++) {
+    int firstThermalSection = inletBCType == BoundaryCondition.CLOSED ? 0 : 1;
+    for (int i = firstThermalSection; i < numberOfSections; i++) {
       TwoFluidSection sec = sections[i];
-      TwoFluidSection prev = sections[i - 1];
+      TwoFluidSection prev = i > 0 ? sections[i - 1] : null;
 
       double T_fluid = sec.getTemperature();
 
@@ -1903,14 +1908,17 @@ public class TwoFluidPipe extends Pipeline {
       // Get heat loss rate using overall thermal resistance
       double Q_loss = thermalCalculator.calculateHeatLossPerLength(); // W/m
 
-      // Advection term: m_dot * Cp * (T_in - T_out) / dx_i
-      double T_upstream = prev.getTemperature();
-      double secDx = sec.getLength();
-      double Q_advection = massFlow * Cp * (T_upstream - T_fluid) / secDx; // W/m
-
-      // Joule-Thomson cooling
-      double dP = sec.getPressure() - prev.getPressure();
-      double Q_JT = massFlow * Cp * muJT * dP / secDx; // W/m
+      // A CLOSED inlet has no upstream advective or Joule-Thomson boundary flux,
+      // but its physical cell must still exchange heat with the radial layers.
+      double Q_advection = 0.0;
+      double Q_JT = 0.0;
+      if (prev != null) {
+        double T_upstream = prev.getTemperature();
+        double secDx = sec.getLength();
+        Q_advection = massFlow * Cp * (T_upstream - T_fluid) / secDx; // W/m
+        double dP = sec.getPressure() - prev.getPressure();
+        Q_JT = massFlow * Cp * muJT * dP / secDx; // W/m
+      }
 
       // Update fluid temperature
       double dTfluid_dt = (Q_advection - Q_loss + Q_JT) / (fluidMassPerLength * Cp);
