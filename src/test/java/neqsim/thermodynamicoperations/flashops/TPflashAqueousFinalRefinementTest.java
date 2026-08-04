@@ -42,13 +42,14 @@ class TPflashAqueousFinalRefinementTest {
     candidate.addComponent("CO2", 0.8);
     candidate.addComponent("water", 0.2);
     candidate.setNumberOfPhases(2);
-    candidate.setPhaseType(0, PhaseType.GAS);
-    candidate.setPhaseType(1, PhaseType.AQUEOUS);
+    candidate.getPhase(0).setType(PhaseType.GAS);
+    candidate.getPhase(1).setType(PhaseType.AQUEOUS);
 
-    PhaseType[] referenceTypes = new PhaseType[] { PhaseType.GAS, PhaseType.AQUEOUS };
+    PhaseType[] referenceTypes = new PhaseType[] { candidate.getPhase(0).getType(),
+        candidate.getPhase(1).getType() };
     assertTrue(TPflash.preservesTwoPhaseActiveSet(candidate, referenceTypes));
 
-    candidate.setPhaseType(0, PhaseType.LIQUID);
+    candidate.getPhase(0).setType(PhaseType.LIQUID);
 
     assertFalse(TPflash.preservesTwoPhaseActiveSet(candidate, referenceTypes),
         "A GAS-to-LIQUID mutation must not satisfy the selected active-set contract");
