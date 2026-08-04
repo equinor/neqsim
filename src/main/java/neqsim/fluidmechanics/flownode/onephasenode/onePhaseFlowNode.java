@@ -82,15 +82,45 @@ public abstract class onePhaseFlowNode extends FlowNode {
   /** {@inheritDoc} */
   @Override
   public void updateMolarFlow() {
-    double[] componentMolarFlow =
-        new double[getBulkSystem().getPhases()[0].getNumberOfComponents()];
-    for (int i = 0; i < componentMolarFlow.length; i++) {
-      componentMolarFlow[i] =
-          getBulkSystem().getPhases()[0].getComponent(i).getx() * molarFlowRate[0];
+    double targetMolarFlow = Math.abs(molarFlowRate[0]);
+    if (!Double.isFinite(targetMolarFlow)) {
+      throw new IllegalStateException("Cannot synchronize a non-finite one-phase molar flow with the EOS state.");
     }
-    // Replace the complete vector atomically. Incremental additions make later components depend
-    // on the loop order because every addition changes the phase total used by the next one.
-    getBulkSystem().setMolarFlowRates(componentMolarFlow);
+
+    double currentMolesInPhase = getBulkSystem().getPhase(0).getNumberOfMolesInPhase();
+    if (!Double.isFinite(currentMolesInPhase) || currentMolesInPhase <= 0.0) {
+      throw new IllegalStateException(
+          "Cannot synchronize one-phase molar flow because the EOS reference phase is empty or non-finite.");
+    }
+
+    // A zero-flow node still needs a positive reference amount for intensive EOS properties. The
+    // signed hydraulic flow remains authoritative in molarFlowRate and massFlowRate.
+    if (targetMolarFlow > 1.0e-100) {
+      double scale = targetMolarFlow / currentMolesInPhase;
+      if (!Double.isFinite(scale)) {
+        throw new IllegalStateException("Cannot synchronize one-phase molar flow because its scale is non-finite.");
+      }
+
+      // Compute every component delta from the same pre-update phase total. Incremental system
+      // additions make later components depend on the loop order because each addition changes
+      // the total used by the next component.
+      for (int i = 0; i < getBulkSystem().getPhase(0).getNumberOfComponents(); i++) {
+        double currentMoles = getBulkSystem().getPhase(0).getComponent(i).getNumberOfMolesInPhase();
+        if (!Double.isFinite(currentMoles) || currentMoles < 0.0) {
+          throw new IllegalStateException(
+              "Cannot synchronize one-phase molar flow because component " + i + " has invalid moles.");
+        }
+        double delta = currentMoles * (scale - 1.0);
+        if (!Double.isFinite(delta)) {
+          throw new IllegalStateException(
+              "Cannot synchronize one-phase molar flow because component " + i + " has a non-finite update.");
+        }
+        if (delta != 0.0) {
+          getBulkSystem().getPhase(0).addMoles(i, delta);
+        }
+      }
+    }
+    getBulkSystem().initBeta();
     getBulkSystem().init_x_y();
     getBulkSystem().init(3);
   }

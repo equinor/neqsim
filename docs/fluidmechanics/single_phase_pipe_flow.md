@@ -42,7 +42,7 @@ $$\frac{\partial (\rho v)}{\partial t} + \frac{\partial (\rho v^2)}{\partial x} 
 
 where:
 - $\rho$ = density
-- $v$ = velocity  
+- $v$ = velocity
 - $P$ = pressure
 - $g$ = gravitational acceleration
 - $\theta$ = pipe inclination angle
@@ -128,7 +128,7 @@ pipe.setNumberOfNodesInLeg(20);
 
 // Set geometry (10 segments)
 double[] heights = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-double[] positions = {0, 10000, 20000, 30000, 40000, 50000, 
+double[] positions = {0, 10000, 20000, 30000, 40000, 50000,
                       60000, 70000, 80000, 90000, 100000}; // meters
 
 GeometryDefinitionInterface[] geometry = new PipeData[11];
@@ -141,7 +141,7 @@ for (int i = 0; i <= 10; i++) {
 pipe.setEquipmentGeometry(geometry);
 pipe.setLegHeights(heights);
 pipe.setLegPositions(positions);
-pipe.setLegOuterTemperatures(new double[]{278, 278, 278, 278, 278, 278, 
+pipe.setLegOuterTemperatures(new double[]{278, 278, 278, 278, 278, 278,
                                            278, 278, 278, 278, 278});
 pipe.setLegWallHeatTransferCoefficients(new double[]{15, 15, 15, 15, 15, 15,
                                                       15, 15, 15, 15, 15});
@@ -266,11 +266,12 @@ declared band, and reports the largest dense derivative outside that band. It al
 largest per-node relative drift between the repeated evaluations for phase and component moles,
 density, inlet and mean velocity, mass and volumetric flow, Reynolds number, and wall-friction
 factor. These diagnostics are evaluated only after failure, restore the accepted state, and do not
-weaken the frozen acceptance criteria. One-phase node initialization replaces the complete
-component molar-flow vector in one operation, so repeated trial-state evaluations do not
-accumulate loop-order-dependent mole changes. The accepted conservative finite-volume
-inventories remain authoritative; this update only synchronizes the thermodynamic flow
-representation used for EOS and hydraulic properties.
+weaken the frozen acceptance criteria. One-phase node initialization rescales every existing phase
+component from one fixed pre-update total, so repeated trial-state evaluations do not accumulate
+loop-order-dependent mole changes. A zero-velocity node retains its last finite positive
+thermodynamic reference amount while its hydraulic flow variables remain zero; an EOS phase cannot
+be made empty merely to represent zero flow. The conservative finite-volume cell inventories
+remain authoritative, and every synchronization reinitializes EOS density and physical properties.
 For backward-compatible control flow, the default logs a warning and returns the failed report.
 Call `pipe.setFailOnNonConvergence(true)` to make `solveTransient(...)` throw
 `IllegalStateException`; the report is recorded before either behavior and distinguishes
@@ -340,14 +341,14 @@ baseline regression repeats the same 1800 s event through a 3000 m isothermal pi
 bit-identical outlet histories, final profiles, and component inventories, verifies breakthrough
 and recovery, and telescopes every immutable step report into a cumulative nitrogen balance.
 
-A pending coupled refinement regression advances the same physical pulse and recovery at
+The active coupled refinement regression advances the same physical pulse and recovery at
 6 nodes/120 s, 12 nodes/60 s, and 24 nodes/30 s. At common 120 s sample times, it requires the
 mean absolute outlet-composition difference between the two finer solutions to be smaller than
 the difference between the two coarser solutions while every resolution retains the same EOS,
-boundedness, and conservation gates. The finest coupled case currently remains a fail-loud
-nonlinear-convergence gate; no coupled Cauchy trend is claimed until it passes. The comparison is
-a Cauchy-convergence check and does not define an exact analytical solution for the coupled
-compressible case.
+boundedness, and conservation gates. Exact-head Java 21 CI executes all three resolutions and
+the independent 30-minute pulse repeatability test together. The comparison is a Cauchy-
+convergence check and does not define an exact analytical solution for the coupled compressible
+case.
 
 Zero or reversed face flow still fails explicitly because an external upwind composition is not
 yet defined. Once enabled, every failed hydraulic/species criterion throws so that a failed

@@ -96,8 +96,7 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
 
     double[] componentMoles = new double[node.getBulkSystem().getPhase(0).getNumberOfComponents()];
     for (int component = 0; component < componentMoles.length; component++) {
-      componentMoles[component] =
-          node.getBulkSystem().getPhase(0).getComponent(component).getNumberOfMolesInPhase();
+      componentMoles[component] = node.getBulkSystem().getPhase(0).getComponent(component).getNumberOfMolesInPhase();
     }
     double phaseMoles = node.getBulkSystem().getPhase(0).getNumberOfMolesInPhase();
     double density = node.getBulkSystem().getPhase(0).getDensity();
@@ -114,11 +113,32 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     }
     assertRelativeEquals(phaseMoles, node.getBulkSystem().getPhase(0).getNumberOfMolesInPhase(),
         "phase molar flow must be idempotent");
-    assertRelativeEquals(density, node.getBulkSystem().getPhase(0).getDensity(),
-        "EOS density must be idempotent");
+    assertRelativeEquals(density, node.getBulkSystem().getPhase(0).getDensity(), "EOS density must be idempotent");
     assertRelativeEquals(massFlow, node.getMassFlowRate(0), "mass flow must be idempotent");
     assertRelativeEquals(reynoldsNumber, node.getReynoldsNumber(), "Reynolds number must be idempotent");
     assertRelativeEquals(frictionFactor, node.getWallFrictionFactor(), "friction factor must be idempotent");
+  }
+
+  @Test
+  void zeroVelocityPreservesFiniteThermodynamicReferenceState() {
+    PipeFlowSystem pipe = createInitializedPipe(12, 3000.0);
+    neqsim.fluidmechanics.flownode.FlowNodeInterface node = pipe.getNode(10);
+    node.init();
+
+    double phaseMoles = node.getBulkSystem().getPhase(0).getNumberOfMolesInPhase();
+    double methaneFraction = node.getBulkSystem().getPhase(0).getComponent(0).getx();
+
+    node.setVelocity(0.0);
+    assertDoesNotThrow(node::init);
+
+    assertEquals(0.0, node.getMassFlowRate(0), 0.0);
+    assertEquals(0.0, node.getMolarFlowRate(0), 0.0);
+    assertRelativeEquals(phaseMoles, node.getBulkSystem().getPhase(0).getNumberOfMolesInPhase(),
+        "zero hydraulic flow must retain a positive EOS reference amount");
+    assertRelativeEquals(methaneFraction, node.getBulkSystem().getPhase(0).getComponent(0).getx(),
+        "zero hydraulic flow must preserve thermodynamic composition");
+    assertTrue(Double.isFinite(node.getBulkSystem().getPhase(0).getDensity()));
+    assertTrue(node.getBulkSystem().getPhase(0).getDensity() > 0.0);
   }
 
   @Test
