@@ -1911,8 +1911,7 @@ public class TwoFluidPipe extends Pipeline {
     for (int section = 0; section < numberOfSections; section++) {
       pressures[section] = sections[section].getPressure();
     }
-    return calculateLocalJouleThomsonSource(cell, phaseMassFaceFluxes, pressures, Cp, muJT,
-        sections[cell].getLength());
+    return calculateLocalJouleThomsonSource(cell, phaseMassFaceFluxes, pressures, Cp, muJT, sections[cell].getLength());
   }
 
   /**
