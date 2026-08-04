@@ -93,8 +93,16 @@ constructed with `setMinValue(...)` only. Each row also carries `dataSource`, co
 underlying `CapacityConstraint`, so Python and external optimizers can distinguish an installed
 data-sheet limit from mechanical-design output, an operating envelope, or an untagged `not_set`
 limit. Preserve this provenance in ranked recommendations and result archives.
-`utilizationMargin` remains `1 - utilization` for both
-directions.
+
+Evidence metadata is also snapshotted from the active `CapacityConstraint`. Java rows expose
+`hasConfidence()`, `getConfidence()`, `hasValidityRange()`, `getValidityMinimum()`,
+`getValidityMaximum()`, and `isCurrentValueWithinValidityRange()`. JSON represents unset
+numeric and applicability values as `null`; CSV includes the presence flags and leaves unset
+value cells blank. External and AI optimizers should preserve these diagnostics, require
+engineering review for missing or out-of-range evidence, and must not treat confidence as a
+probability of safety. The fields do not change feasibility or ranking automatically.
+
+`utilizationMargin` remains `1 - utilization` for both directions.
 
 ## Key Concepts
 

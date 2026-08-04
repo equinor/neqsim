@@ -248,8 +248,25 @@ The report contains the nonlinear-metric and density-residual histories, iterati
 initial/final finite-volume and EOS inventories in kg, integrated inlet and outlet masses in kg,
 and absolute/relative closure errors. `isNonlinearMetricEquationResidual()` is true for the
 coupled path; staged legacy solvers retain their relative iterate-change metric and return false.
-Coupled histories contain the initial residual at index zero followed by one entry for each
-completed Newton iteration; staged legacy histories retain one entry per iteration.
+For the coupled path, `getScaledMassEquationResidualHistory()` and
+`getScaledMomentumEquationResidualHistory()` separate the maximum absolute scaled continuity and
+momentum residuals. Their pointwise maximum reconstructs `getNonlinearUpdateHistory()` exactly,
+making a stalled equation family explicit without changing the convergence criterion. The final
+family values are also available through `getMaximumScaledMassEquationResidual()` and
+`getMaximumScaledMomentumEquationResidual()`. Coupled histories contain the initial residual at
+index zero followed by one entry for each completed Newton iteration; staged legacy histories
+retain one entry per iteration and return empty equation-family histories. When coupled
+backtracking cannot reduce the residual, the failure message also compares the banded Newton
+Jacobian along the rejected Newton direction with independent central directional derivatives
+at normalized perturbations of $10^{-5}$, $10^{-6}$, and $10^{-7}$. It reports separate
+relative infinity-norm errors for continuity and momentum, including sensitivity to differencing
+scale. A second failure-only check builds an uncolored dense finite-difference Jacobian, measures
+repeated residual evaluation at identical state, compares the colored and dense entries inside the
+declared band, and reports the largest dense derivative outside that band. It also reports the
+largest per-node relative drift between the repeated evaluations for phase and component moles,
+density, inlet and mean velocity, mass and volumetric flow, Reynolds number, and wall-friction
+factor. These diagnostics are evaluated only after failure, restore the accepted state, and do not
+weaken the frozen acceptance criteria.
 For backward-compatible control flow, the default logs a warning and returns the failed report.
 Call `pipe.setFailOnNonConvergence(true)` to make `solveTransient(...)` throw
 `IllegalStateException`; the report is recorded before either behavior and distinguishes
@@ -311,13 +328,22 @@ first moment also recovers the inventory-over-flow residence time
 
 $$\tau=\frac{\sum_P M_P}{\dot m}.$$
 
-The validated first-order kernel matches analytical repeated-step profiles at two timesteps,
-recovers the inventory-over-flow residence time, conserves a synthetic 1800 s pulse over six
-residence times, and reduces pulse error when the grid and timestep are jointly refined from
-12 cells/60 s to 24 cells/30 s. The end-to-end SRK/classic regression repeats the same 1800 s
-event independently through a 3000 m isothermal pipe, requires bit-identical outlet histories,
-final profiles, and component inventories, verifies breakthrough and recovery, and telescopes
-every immutable step report into a cumulative nitrogen balance.
+The validated stand-alone, constant-mass transport kernel matches analytical repeated-step
+profiles at two timesteps, recovers the inventory-over-flow residence time, conserves a synthetic
+1800 s pulse over six residence times, and reduces pulse error when its grid and timestep are
+jointly refined from 12 nodes/60 s to 24 nodes/30 s. Separately, the end-to-end SRK/classic
+baseline regression repeats the same 1800 s event through a 3000 m isothermal pipe, requires
+bit-identical outlet histories, final profiles, and component inventories, verifies breakthrough
+and recovery, and telescopes every immutable step report into a cumulative nitrogen balance.
+
+A pending coupled refinement regression advances the same physical pulse and recovery at
+6 nodes/120 s, 12 nodes/60 s, and 24 nodes/30 s. At common 120 s sample times, it requires the
+mean absolute outlet-composition difference between the two finer solutions to be smaller than
+the difference between the two coarser solutions while every resolution retains the same EOS,
+boundedness, and conservation gates. The finest coupled case currently remains a fail-loud
+nonlinear-convergence gate; no coupled Cauchy trend is claimed until it passes. The comparison is
+a Cauchy-convergence check and does not define an exact analytical solution for the coupled
+compressible case.
 
 Zero or reversed face flow still fails explicitly because an external upwind composition is not
 yet defined. Once enabled, every failed hydraulic/species criterion throws so that a failed

@@ -34,6 +34,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   private static final double FINITE_DIFFERENCE_RELATIVE_STEP = 1.0e-7;
   private static final int COUPLED_HALF_BANDWIDTH = 2;
   private static final int COUPLED_JACOBIAN_COLORS = 2 * COUPLED_HALF_BANDWIDTH + 1;
+  /** Maximum state dimension for the failure-only dense Jacobian diagnostic. */
+  private static final int MAXIMUM_DENSE_JACOBIAN_DIAGNOSTIC_SIZE = 256;
   private static final int MAXIMUM_SPECIES_COUPLING_ITERATIONS = 100;
   private static final double SPECIES_COUPLING_TOLERANCE = 1.0e-10;
   private static final double THERMODYNAMIC_COMPOSITION_TOLERANCE = 1.0e-10;
@@ -1201,7 +1203,11 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     }
     lastConvergenceReport = createConvergenceReport(hydraulicReport.getNonlinearIterations(),
         hydraulicReport.getMaximumRelativeNonlinearUpdate(), densityResidual, initialFiniteVolumeMass,
-        hydraulicReport.getNonlinearUpdateHistory(), densityHistory, false, null, true);
+        hydraulicReport.getNonlinearUpdateHistory(), densityHistory,
+        hydraulicReport.getMaximumScaledMassEquationResidual(),
+        hydraulicReport.getMaximumScaledMomentumEquationResidual(),
+        hydraulicReport.getScaledMassEquationResidualHistory(),
+        hydraulicReport.getScaledMomentumEquationResidualHistory(), false, null, true);
 
     if (maximumCompositionChange > SPECIES_COUPLING_TOLERANCE || densityResidual > DENSITY_RELATIVE_TOLERANCE) {
       lastSpeciesConservationReport = lastSpeciesConservationReport.withReason(
@@ -1346,20 +1352,31 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     ensureSupportedCoupledFlowDirection();
     double[] state = getCoupledState();
     initializeCoupledEquationScales(state);
-    double residual = maximumAbsolute(calculateCoupledResidual(state));
+    double[] residualValues = calculateCoupledResidual(state);
+    double residual = maximumAbsolute(residualValues);
     double[] nonlinearHistory = new double[MAXIMUM_COUPLED_ITERATIONS + 1];
     double[] densityHistory = new double[MAXIMUM_COUPLED_ITERATIONS + 1];
+    double[] massEquationHistory = new double[MAXIMUM_COUPLED_ITERATIONS + 1];
+    double[] momentumEquationHistory = new double[MAXIMUM_COUPLED_ITERATIONS + 1];
     int iteration = 0;
     boolean lineSearchFailed = false;
     String numericalFailureDetail = null;
 
     nonlinearHistory[0] = residual;
     densityHistory[0] = calculateMaximumRelativeDensityResidual();
+    massEquationHistory[0] = maximumAbsoluteByEquationFamily(residualValues, 0);
+    momentumEquationHistory[0] = maximumAbsoluteByEquationFamily(residualValues, 1);
     while (residual > NONLINEAR_RESIDUAL_TOLERANCE && iteration < MAXIMUM_COUPLED_ITERATIONS) {
       double[] update;
+      double[][] jacobian;
       try {
-        double[] values = calculateCoupledResidual(state);
-        double[][] jacobian = calculateCoupledBandedJacobian(state);
+        double[] values = iteration == 0 ? residualValues : calculateCoupledResidual(state);
+        residualValues = values;
+        residual = maximumAbsolute(values);
+        nonlinearHistory[iteration] = residual;
+        massEquationHistory[iteration] = maximumAbsoluteByEquationFamily(values, 0);
+        momentumEquationHistory[iteration] = maximumAbsoluteByEquationFamily(values, 1);
+        jacobian = calculateCoupledBandedJacobian(state);
         double[] rightHandSide = new double[values.length];
         for (int row = 0; row < values.length; row++) {
           rightHandSide[row] = -values[row];
@@ -1379,9 +1396,12 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         for (int variable = 0; variable < candidate.length; variable++) {
           candidate[variable] += step * update[variable];
         }
-        double candidateResidual = safeCoupledResidual(candidate, state);
+        double[] candidateValues = safeCoupledResidualValues(candidate, state);
+        double candidateResidual = candidateValues == null ? Double.POSITIVE_INFINITY
+            : maximumAbsolute(candidateValues);
         if (Double.isFinite(candidateResidual) && candidateResidual < residual) {
           state = candidate;
+          residualValues = candidateValues;
           residual = candidateResidual;
           accepted = true;
           break;
@@ -1390,10 +1410,13 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       }
       iteration++;
       nonlinearHistory[iteration] = residual;
+      massEquationHistory[iteration] = maximumAbsoluteByEquationFamily(residualValues, 0);
+      momentumEquationHistory[iteration] = maximumAbsoluteByEquationFamily(residualValues, 1);
       applyCoupledState(state);
       densityHistory[iteration] = calculateMaximumRelativeDensityResidual();
       if (!accepted) {
         lineSearchFailed = true;
+        numericalFailureDetail = calculateJacobianDirectionalDerivativeDetail(state, update, jacobian);
         break;
       }
     }
@@ -1401,8 +1424,10 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     applyCoupledState(state);
     double densityResidual = calculateMaximumRelativeDensityResidual();
     lastConvergenceReport = createConvergenceReport(iteration, residual, densityResidual, initialFiniteVolumeMass,
-        Arrays.copyOf(nonlinearHistory, iteration + 1), Arrays.copyOf(densityHistory, iteration + 1), lineSearchFailed,
-        numericalFailureDetail, true);
+        Arrays.copyOf(nonlinearHistory, iteration + 1), Arrays.copyOf(densityHistory, iteration + 1),
+        massEquationHistory[iteration], momentumEquationHistory[iteration],
+        Arrays.copyOf(massEquationHistory, iteration + 1), Arrays.copyOf(momentumEquationHistory, iteration + 1),
+        lineSearchFailed, numericalFailureDetail, true);
     if (dynamic && !lastConvergenceReport.isConverged()) {
       if (failOnNonConvergence) {
         throw new IllegalStateException(lastConvergenceReport.getMessage());
@@ -1424,23 +1449,23 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     }
   }
 
-  private double safeCoupledResidual(double[] candidate, double[] rollbackState) {
+  private double[] safeCoupledResidualValues(double[] candidate, double[] rollbackState) {
     for (int node = 1; node < numberOfNodes - 1; node++) {
       int pressureVariable = 2 * (node - 1);
       if (!Double.isFinite(candidate[pressureVariable]) || candidate[pressureVariable] <= 0.0) {
-        return Double.POSITIVE_INFINITY;
+        return null;
       }
     }
     for (int velocityVariable = 1; velocityVariable < candidate.length; velocityVariable += 2) {
       if (!Double.isFinite(candidate[velocityVariable]) || candidate[velocityVariable] <= 0.0) {
-        return Double.POSITIVE_INFINITY;
+        return null;
       }
     }
     try {
-      return maximumAbsolute(calculateCoupledResidual(candidate));
+      return calculateCoupledResidual(candidate);
     } catch (RuntimeException exception) {
       applyCoupledState(rollbackState);
-      return Double.POSITIVE_INFINITY;
+      return null;
     }
   }
 
@@ -1493,6 +1518,204 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
 
   private void setCoupledJacobianEntry(double[][] jacobian, int row, int column, double value) {
     jacobian[row][column - row + COUPLED_HALF_BANDWIDTH] = value;
+  }
+
+  private String calculateJacobianDirectionalDerivativeDetail(double[] state, double[] direction, double[][] jacobian) {
+    double maximumRelativeDirection = 0.0;
+    for (int variable = 0; variable < state.length; variable++) {
+      double scale = Math.max(Math.abs(state[variable]), 1.0);
+      maximumRelativeDirection = Math.max(maximumRelativeDirection, Math.abs(direction[variable]) / scale);
+    }
+    if (!Double.isFinite(maximumRelativeDirection) || maximumRelativeDirection == 0.0) {
+      return "Independent Jacobian directional-derivative check unavailable because the Newton direction is "
+          + "zero or non-finite";
+    }
+
+    double[] normalizedPerturbations = { 1.0e-5, 1.0e-6, 1.0e-7 };
+    double[] massRelativeErrors = new double[normalizedPerturbations.length];
+    double[] momentumRelativeErrors = new double[normalizedPerturbations.length];
+    double[] jacobianDirection = multiplyCoupledBandedJacobian(jacobian, direction);
+    try {
+      for (int perturbation = 0; perturbation < normalizedPerturbations.length; perturbation++) {
+        double perturbationScale = normalizedPerturbations[perturbation] / maximumRelativeDirection;
+        double[] lower = state.clone();
+        double[] upper = state.clone();
+        for (int variable = 0; variable < state.length; variable++) {
+          lower[variable] -= perturbationScale * direction[variable];
+          upper[variable] += perturbationScale * direction[variable];
+        }
+
+        double[] lowerResidual = safeCoupledResidualValues(lower, state);
+        double[] upperResidual = safeCoupledResidualValues(upper, state);
+        if (lowerResidual == null || upperResidual == null) {
+          return "Independent Jacobian directional-derivative check unavailable because central perturbation "
+              + normalizedPerturbations[perturbation] + " left the supported positive-pressure/positive-flow state";
+        }
+
+        double[] maximumDifference = new double[2];
+        double[] maximumReference = new double[2];
+        for (int row = 0; row < state.length; row++) {
+          int family = row % 2;
+          double finiteDifference = (upperResidual[row] - lowerResidual[row]) / (2.0 * perturbationScale);
+          maximumDifference[family] = Math.max(maximumDifference[family],
+              Math.abs(jacobianDirection[row] - finiteDifference));
+          maximumReference[family] = Math.max(maximumReference[family],
+              Math.max(Math.abs(jacobianDirection[row]), Math.abs(finiteDifference)));
+        }
+        massRelativeErrors[perturbation] = maximumDifference[0] / Math.max(maximumReference[0], 1.0e-14);
+        momentumRelativeErrors[perturbation] = maximumDifference[1] / Math.max(maximumReference[1], 1.0e-14);
+      }
+      return "Independent Newton-direction Jacobian relative infinity-norm errors: continuity[1.0E-5="
+          + massRelativeErrors[0] + ", 1.0E-6=" + massRelativeErrors[1] + ", 1.0E-7=" + massRelativeErrors[2]
+          + "], momentum[1.0E-5=" + momentumRelativeErrors[0] + ", 1.0E-6=" + momentumRelativeErrors[1] + ", 1.0E-7="
+          + momentumRelativeErrors[2] + "]; " + calculateDenseJacobianStructureDetail(state, jacobian);
+    } catch (RuntimeException exception) {
+      return "Independent Jacobian directional-derivative check failed with " + exception.getClass().getSimpleName()
+          + (exception.getMessage() == null ? "" : ": " + exception.getMessage());
+    } finally {
+      applyCoupledState(state);
+    }
+  }
+
+  private double[] multiplyCoupledBandedJacobian(double[][] jacobian, double[] vector) {
+    double[] product = new double[vector.length];
+    for (int row = 0; row < vector.length; row++) {
+      int firstColumn = Math.max(0, row - COUPLED_HALF_BANDWIDTH);
+      int lastColumn = Math.min(vector.length - 1, row + COUPLED_HALF_BANDWIDTH);
+      for (int column = firstColumn; column <= lastColumn; column++) {
+        product[row] += jacobian[row][column - row + COUPLED_HALF_BANDWIDTH] * vector[column];
+      }
+    }
+    return product;
+  }
+
+  private String calculateDenseJacobianStructureDetail(double[] state, double[][] bandedJacobian) {
+    if (state.length > MAXIMUM_DENSE_JACOBIAN_DIAGNOSTIC_SIZE) {
+      return "dense/uncolored Jacobian check skipped because state dimension " + state.length + " exceeds "
+          + MAXIMUM_DENSE_JACOBIAN_DIAGNOSTIC_SIZE;
+    }
+    try {
+      double[] firstResidual = calculateCoupledResidual(state);
+      double[][] firstNodeState = captureCoupledNodeDiagnosticState();
+      double[] repeatedResidual = calculateCoupledResidual(state);
+      double[][] repeatedNodeState = captureCoupledNodeDiagnosticState();
+      double[] repeatedDifference = new double[2];
+      double[] repeatedReference = new double[2];
+      for (int row = 0; row < state.length; row++) {
+        int family = row % 2;
+        repeatedDifference[family] = Math.max(repeatedDifference[family],
+            Math.abs(repeatedResidual[row] - firstResidual[row]));
+        repeatedReference[family] = Math.max(repeatedReference[family],
+            Math.max(Math.abs(repeatedResidual[row]), Math.abs(firstResidual[row])));
+      }
+
+      double[][] denseJacobian = calculateCoupledDenseFiniteDifferenceJacobian(state);
+      double[] inBandDifference = new double[2];
+      double[] denseReference = new double[2];
+      double[] offBandMaximum = new double[2];
+      for (int row = 0; row < state.length; row++) {
+        int family = row % 2;
+        for (int column = 0; column < state.length; column++) {
+          double denseValue = denseJacobian[row][column];
+          denseReference[family] = Math.max(denseReference[family], Math.abs(denseValue));
+          if (Math.abs(column - row) <= COUPLED_HALF_BANDWIDTH) {
+            double bandedValue = bandedJacobian[row][column - row + COUPLED_HALF_BANDWIDTH];
+            inBandDifference[family] = Math.max(inBandDifference[family], Math.abs(bandedValue - denseValue));
+          } else {
+            offBandMaximum[family] = Math.max(offBandMaximum[family], Math.abs(denseValue));
+          }
+        }
+      }
+
+      return "dense/uncolored check at relative step " + FINITE_DIFFERENCE_RELATIVE_STEP
+          + ": repeated-residual relative errors continuity="
+          + repeatedDifference[0] / Math.max(repeatedReference[0], 1.0e-14) + ", momentum="
+          + repeatedDifference[1] / Math.max(repeatedReference[1], 1.0e-14)
+          + "; colored-versus-dense in-band relative errors continuity="
+          + inBandDifference[0] / Math.max(denseReference[0], 1.0e-14) + ", momentum="
+          + inBandDifference[1] / Math.max(denseReference[1], 1.0e-14)
+          + "; maximum off-band relative magnitudes continuity="
+          + offBandMaximum[0] / Math.max(denseReference[0], 1.0e-14) + ", momentum="
+          + offBandMaximum[1] / Math.max(denseReference[1], 1.0e-14) + "; repeated node-state relative drifts "
+          + calculateRepeatedNodeStateDetail(firstNodeState, repeatedNodeState);
+    } catch (RuntimeException exception) {
+      return "dense/uncolored Jacobian check failed with " + exception.getClass().getSimpleName()
+          + (exception.getMessage() == null ? "" : ": " + exception.getMessage());
+    } finally {
+      applyCoupledState(state);
+    }
+  }
+
+  private double[][] captureCoupledNodeDiagnosticState() {
+    int numberOfComponents = pipe.getNode(0).getBulkSystem().getPhase(0).getNumberOfComponents();
+    double[][] nodeState = new double[numberOfNodes][8 + numberOfComponents];
+    for (int node = 0; node < numberOfNodes; node++) {
+      nodeState[node][0] = pipe.getNode(node).getBulkSystem().getPhase(0).getNumberOfMolesInPhase();
+      nodeState[node][1] = pipe.getNode(node).getBulkSystem().getPhase(0).getDensity();
+      nodeState[node][2] = pipe.getNode(node).getVelocityIn().doubleValue();
+      nodeState[node][3] = pipe.getNode(node).getVelocity();
+      nodeState[node][4] = pipe.getNode(node).getMassFlowRate(0);
+      nodeState[node][5] = pipe.getNode(node).getVolumetricFlow();
+      nodeState[node][6] = pipe.getNode(node).getReynoldsNumber();
+      nodeState[node][7] = pipe.getNode(node).getWallFrictionFactor();
+      for (int component = 0; component < numberOfComponents; component++) {
+        nodeState[node][8 + component] = pipe.getNode(node).getBulkSystem().getPhase(0).getComponent(component)
+            .getNumberOfMolesInPhase();
+      }
+    }
+    return nodeState;
+  }
+
+  private String calculateRepeatedNodeStateDetail(double[][] first, double[][] repeated) {
+    String[] labels = { "phaseMoles", "density", "velocityIn", "meanVelocity", "massFlow", "volumetricFlow", "Reynolds",
+        "frictionFactor", "componentMoles" };
+    double[] maximumRelativeDrift = new double[labels.length];
+    int[] maximumDriftNode = new int[labels.length];
+    for (int node = 0; node < first.length; node++) {
+      for (int field = 0; field < first[node].length; field++) {
+        int category = Math.min(field, labels.length - 1);
+        double reference = Math.max(Math.max(Math.abs(first[node][field]), Math.abs(repeated[node][field])), 1.0e-14);
+        double relativeDrift = Math.abs(repeated[node][field] - first[node][field]) / reference;
+        if (!Double.isFinite(relativeDrift)) {
+          relativeDrift = Double.POSITIVE_INFINITY;
+        }
+        if (relativeDrift > maximumRelativeDrift[category]) {
+          maximumRelativeDrift[category] = relativeDrift;
+          maximumDriftNode[category] = node;
+        }
+      }
+    }
+
+    StringBuilder detail = new StringBuilder();
+    for (int category = 0; category < labels.length; category++) {
+      if (category > 0) {
+        detail.append(", ");
+      }
+      detail.append(labels[category]).append('=').append(maximumRelativeDrift[category]).append("@node")
+          .append(maximumDriftNode[category]);
+    }
+    return detail.toString();
+  }
+
+  private double[][] calculateCoupledDenseFiniteDifferenceJacobian(double[] state) {
+    double[][] denseJacobian = new double[state.length][state.length];
+    try {
+      for (int column = 0; column < state.length; column++) {
+        double step = FINITE_DIFFERENCE_RELATIVE_STEP * Math.max(Math.abs(state[column]), 1.0);
+        double[] lower = state.clone();
+        double[] upper = state.clone();
+        lower[column] -= step;
+        upper[column] += step;
+        double[] lowerResidual = calculateCoupledResidual(lower);
+        double[] upperResidual = calculateCoupledResidual(upper);
+        for (int row = 0; row < state.length; row++) {
+          denseJacobian[row][column] = (upperResidual[row] - lowerResidual[row]) / (2.0 * step);
+        }
+      }
+      return denseJacobian;
+    } finally {
+      applyCoupledState(state);
+    }
   }
 
   private double[] calculateCoupledResidual(double[] state) {
@@ -1570,6 +1793,14 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     double maximum = 0.0;
     for (double value : values) {
       maximum = Math.max(maximum, Math.abs(value));
+    }
+    return maximum;
+  }
+
+  private double maximumAbsoluteByEquationFamily(double[] values, int parity) {
+    double maximum = 0.0;
+    for (int row = parity; row < values.length; row += 2) {
+      maximum = Math.max(maximum, Math.abs(values[row]));
     }
     return maximum;
   }
@@ -1669,6 +1900,16 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   private OnePhaseFlowConvergenceReport createConvergenceReport(int nonlinearIterations, double nonlinearUpdate,
       double densityResidual, double initialFiniteVolumeMass, double[] nonlinearHistory, double[] densityHistory,
       boolean lineSearchFailed, String numericalFailureDetail, boolean nonlinearMetricEquationResidual) {
+    return createConvergenceReport(nonlinearIterations, nonlinearUpdate, densityResidual, initialFiniteVolumeMass,
+        nonlinearHistory, densityHistory, Double.NaN, Double.NaN, new double[0], new double[0], lineSearchFailed,
+        numericalFailureDetail, nonlinearMetricEquationResidual);
+  }
+
+  private OnePhaseFlowConvergenceReport createConvergenceReport(int nonlinearIterations, double nonlinearUpdate,
+      double densityResidual, double initialFiniteVolumeMass, double[] nonlinearHistory, double[] densityHistory,
+      double maximumScaledMassEquationResidual, double maximumScaledMomentumEquationResidual,
+      double[] scaledMassEquationResidualHistory, double[] scaledMomentumEquationResidualHistory,
+      boolean lineSearchFailed, String numericalFailureDetail, boolean nonlinearMetricEquationResidual) {
     double finalFiniteVolumeMass = dynamic ? calculateFiniteVolumeMass() : Double.NaN;
     double finalThermodynamicMass = dynamic ? calculateThermodynamicMass() : Double.NaN;
     double inletBoundaryMass = calculateInletBoundaryMass();
@@ -1684,13 +1925,13 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     double relativeThermodynamicMassResidual = dynamic ? Math.abs(thermodynamicMassResidual) / massScale : Double.NaN;
 
     OnePhaseFlowConvergenceReport.ConvergenceReason reason;
-    if (numericalFailureDetail != null) {
+    if (lineSearchFailed) {
+      reason = OnePhaseFlowConvergenceReport.ConvergenceReason.LINE_SEARCH_FAILED;
+    } else if (numericalFailureDetail != null) {
       reason = OnePhaseFlowConvergenceReport.ConvergenceReason.NUMERICAL_FAILURE;
     } else if (!diagnosticsAreFinite(nonlinearUpdate, densityResidual, relativeFiniteVolumeMassResidual,
         relativeThermodynamicMassResidual)) {
       reason = OnePhaseFlowConvergenceReport.ConvergenceReason.NON_FINITE_RESIDUAL;
-    } else if (lineSearchFailed) {
-      reason = OnePhaseFlowConvergenceReport.ConvergenceReason.LINE_SEARCH_FAILED;
     } else if (dynamic && solverType > 0 && densityResidual > DENSITY_RELATIVE_TOLERANCE) {
       reason = OnePhaseFlowConvergenceReport.ConvergenceReason.DENSITY_INCONSISTENT;
     } else if (dynamic && solverType > 0 && (relativeFiniteVolumeMassResidual > MASS_BALANCE_RELATIVE_TOLERANCE
@@ -1709,8 +1950,13 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         + "), EOS/FV density=" + densityResidual + " (tolerance " + DENSITY_RELATIVE_TOLERANCE + "), FV mass residual="
         + finiteVolumeMassResidual + " kg, EOS mass residual=" + thermodynamicMassResidual + " kg (relative tolerance "
         + MASS_BALANCE_RELATIVE_TOLERANCE + ").";
+    if (nonlinearMetricEquationResidual) {
+      message += " Final scaled continuity residual=" + maximumScaledMassEquationResidual + ", momentum residual="
+          + maximumScaledMomentumEquationResidual + ".";
+    }
     if (numericalFailureDetail != null) {
-      message += " Numerical failure: " + numericalFailureDetail + ".";
+      String detailLabel = lineSearchFailed ? " Line-search diagnostic: " : " Numerical failure: ";
+      message += detailLabel + numericalFailureDetail + ".";
     }
 
     return new OnePhaseFlowConvergenceReport(reason, dynamic, solverType, nonlinearIterations,
@@ -1718,7 +1964,9 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         Math.abs(nonlinearUpdate), densityResidual, initialFiniteVolumeMass, finalFiniteVolumeMass,
         finalThermodynamicMass, inletBoundaryMass, outletBoundaryMass, netBoundaryMass, finiteVolumeMassResidual,
         thermodynamicMassResidual, relativeFiniteVolumeMassResidual, relativeThermodynamicMassResidual,
-        nonlinearHistory, densityHistory, message, nonlinearMetricEquationResidual);
+        nonlinearHistory, densityHistory, maximumScaledMassEquationResidual, maximumScaledMomentumEquationResidual,
+        scaledMassEquationResidualHistory, scaledMomentumEquationResidualHistory, message,
+        nonlinearMetricEquationResidual);
   }
 
   private boolean diagnosticsAreFinite(double nonlinearUpdate, double densityResidual,

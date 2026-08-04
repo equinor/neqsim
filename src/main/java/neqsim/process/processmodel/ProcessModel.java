@@ -14,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -21,6 +22,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import neqsim.process.dynamics.EventScheduler;
 import neqsim.process.dynamics.IntegratorStrategy;
@@ -28,6 +30,7 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.AccelerationMethod;
+import neqsim.process.equipment.util.Recycle;
 import neqsim.process.util.event.ProcessEvent;
 import neqsim.process.util.event.ProcessEventBus;
 import neqsim.process.util.report.Report;
@@ -3449,6 +3452,43 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
+   * Collect recycle units once for a process area, including units inside nested modules.
+   *
+   * @param process process area or nested module operations
+   * @return recycle paths and unit instances in the process hierarchy
+   */
+  private List<Map.Entry<String, Recycle>> getRecycleUnits(ProcessSystem process) {
+    List<Map.Entry<String, Recycle>> recycles = new ArrayList<>();
+    Set<ProcessSystem> visited = Collections.newSetFromMap(new IdentityHashMap<ProcessSystem, Boolean>());
+    collectRecycleUnits(process, "", recycles, visited);
+    return recycles;
+  }
+
+  /**
+   * Add recycle units from one process hierarchy without revisiting cyclic module references.
+   *
+   * @param process process area or nested module operations
+   * @param pathPrefix module path prefix
+   * @param recycles destination list
+   * @param visited process systems already traversed by identity
+   */
+  private void collectRecycleUnits(ProcessSystem process, String pathPrefix, List<Map.Entry<String, Recycle>> recycles,
+      Set<ProcessSystem> visited) {
+    if (process == null || !visited.add(process)) {
+      return;
+    }
+    for (ProcessEquipmentInterface equipment : process.getUnitOperations()) {
+      String equipmentPath = pathPrefix.isEmpty() ? equipment.getName() : pathPrefix + "::" + equipment.getName();
+      if (equipment instanceof Recycle) {
+        recycles.add(new AbstractMap.SimpleEntry<String, Recycle>(equipmentPath, (Recycle) equipment));
+      }
+      if (equipment instanceof ModuleInterface && equipment.isActive() && !equipment.isLockedInactive()) {
+        collectRecycleUnits(((ModuleInterface) equipment).getOperations(), equipmentPath, recycles, visited);
+      }
+    }
+  }
+
+  /**
    * Total mass created or destroyed by open recycle tears, as a fraction of plant feed.
    *
    * <p>
@@ -3468,15 +3508,25 @@ public class ProcessModel implements Runnable, Serializable {
     double created = 0.0;
     List<Map.Entry<String, Double>> offenders = new ArrayList<>();
     for (Map.Entry<String, ProcessSystem> area : processes.entrySet()) {
-      Map<String, ProcessSystem.MassBalanceResult> failures = area.getValue().getFailedMassBalance("kg/hr", 0.0);
-      for (Map.Entry<String, ProcessSystem.MassBalanceResult> entry : failures.entrySet()) {
-        double error = entry.getValue().getAbsoluteError();
+      for (Map.Entry<String, Recycle> recycleEntry : getRecycleUnits(area.getValue())) {
+        Recycle recycle = recycleEntry.getValue();
+        if (recycle.isLockedInactive() || !recycle.isActive()) {
+          continue;
+        }
+        double error;
+        try {
+          error = recycle.getMassBalance("kg/hr");
+        } catch (RuntimeException exception) {
+          logger.warn("Failed to calculate recycle mass balance for area {} unit {}", area.getKey(),
+              recycleEntry.getKey(), exception);
+          continue;
+        }
         if (!Double.isFinite(error) || Math.abs(error) < boundaryFlowFloor) {
           continue;
         }
         created += Math.abs(error);
-        offenders
-            .add(new AbstractMap.SimpleEntry<String, Double>(area.getKey() + "::" + entry.getKey(), Math.abs(error)));
+        offenders.add(
+            new AbstractMap.SimpleEntry<String, Double>(area.getKey() + "::" + recycleEntry.getKey(), Math.abs(error)));
       }
     }
     Collections.sort(offenders, new Comparator<Map.Entry<String, Double>>() {
@@ -3512,12 +3562,12 @@ public class ProcessModel implements Runnable, Serializable {
     }
     if (closure <= massClosureTolerance) {
       massClosureSummary = String.format(Locale.US,
-          "plant mass closure %.3g of feed (tolerance %.3g) - every unit conserves mass", closure,
+          "recycle tear mass closure %.3g of feed (tolerance %.3g) - every active recycle tear closes", closure,
           massClosureTolerance);
       return true;
     }
     massClosureSummary = String.format(Locale.US,
-        "plant mass closure %.3g of feed exceeds %.3g - mass is still being created or destroyed inside the "
+        "recycle tear mass closure %.3g of feed exceeds %.3g - open recycle tears are still creating or destroying mass inside the "
             + "flowsheet, so the boundary residual alone does not mean the model is solved. Worst: %s",
         closure, massClosureTolerance,
         massClosureOffenders.isEmpty() ? "none above the flow floor" : massClosureOffenders);
@@ -3684,9 +3734,13 @@ public class ProcessModel implements Runnable, Serializable {
     root.add("autoTolerance", autoToleranceInfo);
 
     JsonObject massClosure = new JsonObject();
-    massClosure.addProperty("enabled", autoMassClosureGate);
+    massClosure.addProperty("enabled", autoConvergenceTuning && autoMassClosureGate);
     massClosure.addProperty("tolerance", massClosureTolerance);
-    massClosure.addProperty("relativeError", lastMassClosureError);
+    if (Double.isFinite(lastMassClosureError)) {
+      massClosure.addProperty("relativeError", lastMassClosureError);
+    } else {
+      massClosure.add("relativeError", JsonNull.INSTANCE);
+    }
     massClosure.addProperty("summary", massClosureSummary);
     massClosure.addProperty("worstUnits", massClosureOffenders);
     root.add("massClosure", massClosure);

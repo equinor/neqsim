@@ -1,6 +1,7 @@
 package neqsim.process.util.optimizer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.charset.StandardCharsets;
@@ -115,6 +116,7 @@ class ProcessModelThroughputOptimizerTest {
   private void addSeparatorCapacity(final ModelFixture fixture, double designValue) {
     CapacityConstraint installedCapacity = new CapacityConstraint("installedGasCapacity", "kg/hr", ConstraintType.HARD)
         .setDesignValue(designValue).setMaxValue(designValue * 1.1).setSeverity(ConstraintSeverity.HARD)
+        .setDataSource("installedDataSheet").setConfidence(0.95).setValidityRange(8000.0, designValue)
         .setValueSupplier(new DoubleSupplier() {
           /** {@inheritDoc} */
           @Override
@@ -181,7 +183,18 @@ class ProcessModelThroughputOptimizerTest {
     assertEquals("separation", result.getFirstInfeasibleCase().getActiveArea());
     assertEquals("separator", result.getFirstInfeasibleCase().getActiveEquipment());
     assertEquals("installedGasCapacity", result.getFirstInfeasibleCase().getActiveConstraint());
-    assertTrue(result.toJson().contains("caseRows"));
+    ThroughputCaseRow best = result.getBestFeasibleCase();
+    ThroughputCaseRow firstInfeasible = result.getFirstInfeasibleCase();
+    assertEquals("installedDataSheet", best.getDataSource());
+    assertTrue(best.hasConfidence());
+    assertEquals(0.95, best.getConfidence(), 0.0);
+    assertTrue(best.hasValidityRange());
+    assertEquals(8000.0, best.getValidityMinimum(), 0.0);
+    assertEquals(15000.0, best.getValidityMaximum(), 0.0);
+    assertTrue(best.isCurrentValueWithinValidityRange());
+    assertFalse(firstInfeasible.isCurrentValueWithinValidityRange());
+    assertTrue(result.toJson().contains("\"confidence\": 0.95"));
+    assertTrue(result.toJson().contains("\"currentValueWithinValidityRange\": false"));
   }
 
   /**
@@ -208,7 +221,13 @@ class ProcessModelThroughputOptimizerTest {
     assertEquals(1, records.size());
     assertTrue(fixture.separator.getCapacityConstraints().containsKey("installedGasCapacity"));
     assertEquals(1.5, result.getOptimalMultiplier(), 0.02);
-    assertTrue(new String(Files.readAllBytes(caseTable), StandardCharsets.UTF_8).contains("activeConstraint"));
+    String csv = new String(Files.readAllBytes(caseTable), StandardCharsets.UTF_8);
+    assertTrue(csv.contains("hasConfidence,confidence,hasValidityRange,validityMinimum,validityMaximum,"
+        + "currentValueWithinValidityRange"));
+    assertTrue(result.toJson().contains("\"hasConfidence\": false"));
+    assertTrue(result.toJson().contains("\"confidence\": null"));
+    assertFalse(result.getBestFeasibleCase().hasConfidence());
+    assertTrue(Double.isNaN(result.getBestFeasibleCase().getConfidence()));
   }
 
   /**
@@ -245,6 +264,39 @@ class ProcessModelThroughputOptimizerTest {
     assertTrue(csv.contains("operatingEnvelope"));
     assertTrue(result.toJson().contains("\"minimumConstraint\": true"));
     assertTrue(result.toJson().contains("\"dataSource\": \"operatingEnvelope\""));
+  }
+
+  /**
+   * Verifies malformed manually constructed row evidence cannot leak non-finite JSON or CSV output.
+   */
+  @Test
+  void throughputRowNormalizesMalformedEvidenceToUnset() {
+    ThroughputCaseRow row = new ThroughputCaseRow(1, 1.0, new java.util.LinkedHashMap<String, Double>(), 10000.0, true,
+        true, "separation", "separator", "installedGasCapacity", 1.0, 12000.0, 12000.0, false, "manual", true,
+        Double.NaN, true, 8000.0, Double.POSITIVE_INFINITY, 0.0, 0.0, "kg/hr", null, 0L);
+
+    assertFalse(row.hasConfidence());
+    assertTrue(Double.isNaN(row.getConfidence()));
+    assertFalse(row.hasValidityRange());
+    assertTrue(Double.isNaN(row.getValidityMinimum()));
+    assertTrue(Double.isNaN(row.getValidityMaximum()));
+    assertFalse(row.isCurrentValueWithinValidityRange());
+    assertTrue(row.toMap().get("confidence") == null);
+    assertTrue(row.toMap().get("validityMinimum") == null);
+    assertTrue(row.toMap().get("validityMaximum") == null);
+    assertTrue(row.toMap().get("currentValueWithinValidityRange") == null);
+  }
+
+  /** Verifies row applicability is derived from the row's current value and retained bounds. */
+  @Test
+  void throughputRowDerivesValidityApplicabilityFromSnapshot() {
+    ThroughputCaseRow row = new ThroughputCaseRow(1, 1.0, new java.util.LinkedHashMap<String, Double>(), 10000.0, true,
+        true, "separation", "separator", "installedGasCapacity", 10.0 / 12.0, 10000.0, 12000.0, false, "manual", true,
+        0.95, true, 8000.0, 12000.0, 2000.0, 2.0 / 12.0, "kg/hr", null, 0L);
+
+    assertTrue(row.hasValidityRange());
+    assertTrue(row.isCurrentValueWithinValidityRange());
+    assertEquals(Boolean.TRUE, row.toMap().get("currentValueWithinValidityRange"));
   }
 
   /**

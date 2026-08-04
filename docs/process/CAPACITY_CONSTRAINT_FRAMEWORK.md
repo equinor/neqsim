@@ -284,6 +284,20 @@ and use the constraint's own unit. An unset confidence or range remains explicit
 through `hasConfidence()` and `hasValidityRange()`; the numeric getters return `NaN` when unset.
 Invalid scores, non-finite bounds, and reversed ranges fail fast.
 
+When the constraint becomes the active full-model bottleneck,
+`ProcessModelSimulationEvaluator.BottleneckStatus` and `ThroughputCaseRow` preserve the same
+confidence, validity bounds, and snapshotted in-range result. Java callers can use
+`hasConfidence()`, `getConfidence()`, `hasValidityRange()`, `getValidityMinimum()`,
+`getValidityMaximum()`, and `isCurrentValueWithinValidityRange()`. JSON rows include the
+`hasConfidence` and `hasValidityRange` flags; unset numeric or applicability values are
+`null`. CSV traces include the same flags and leave unset confidence, bounds, and applicability
+cells blank. Public snapshot constructors also normalize inconsistent enabled metadata (non-finite
+confidence or bounds, confidence outside [0, 1], or reversed bounds) to this unset state.
+Applicability is derived from each snapshot's current value and retained bounds rather than accepted
+as caller-provided state. Dynamic value suppliers are read once per bottleneck candidate, and that
+same scalar is used for utilization and applicability. This prevents legacy, malformed, or unqualified limits from being mistaken
+for zero-confidence or out-of-range evidence.
+
 This first validity contract is deliberately scalar. Compressor maps and other models whose
 applicability depends on several variables still require a separate multidimensional operating
 envelope. Confidence and validity metadata do not change utilization, feasibility, or optimizer

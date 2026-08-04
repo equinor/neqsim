@@ -22,6 +22,44 @@
   wall source from applying the same loss twice.
 - Added deterministic regressions for disconnected inlet-rate invariance, uniform closed adiabatic behavior, all-cell
   cooldown without ambient undershoot, independent multilayer cell state, and zero closed external face flux.
+## 2026-08-04 — ProcessModel recycle mass-closure reporting
+
+### Corrected
+
+The automatic model-level mass-closure convergence gate now evaluates active `Recycle` tear
+imbalances only. Unit-level mass-balance diagnostics remain available through `ProcessSystem` but
+no longer masquerade as open recycle tears or block an otherwise converged multi-area model.
+
+The `massClosure` JSON block reports `enabled: true` only when automatic convergence tuning and
+the closure gate are both active. An unevaluated `relativeError` is emitted as JSON `null` rather
+than the non-standard numeric literal `NaN`.
+
+### Compatibility and validation
+
+No public method or default is removed. Existing callers should treat `relativeError: null` as
+"not evaluated" and inspect unit-level mass-balance reports separately from the recycle-tear
+convergence gate.
+## 2026-08-04 — Capacity evidence in bottleneck and throughput results
+
+### Added
+
+`ProcessModelSimulationEvaluator.BottleneckStatus` and `ThroughputCaseRow` now snapshot the
+active constraint's confidence presence/value, scalar validity-range presence/bounds, and whether
+the evaluated current value lies inside the inclusive range. The metadata is available through
+Java getters and is retained by throughput JSON and CSV exports.
+
+### Compatibility and reporting
+
+Existing constructors remain available and represent evidence metadata as unset. Manually constructed
+snapshots normalize inconsistent enabled metadata (non-finite/out-of-range confidence or
+non-finite/reversed bounds) to the same unset state, and derive applicability from the current value
+and retained bounds. Bottleneck scans read dynamic constraint suppliers once per candidate and use
+that scalar for both utilization and applicability. JSON includes presence flags and uses `null` for
+unset confidence, bounds, and applicability. CSV includes the same flags and uses blank cells for
+unset values. Utilization, constraint direction, margins, feasibility, thermodynamics, hydraulics,
+and throughput search are unchanged.
+
+---
 
 ## 2026-08-04 — ConeFlowMeter rejects non-physical geometry (Copilot review round 11)
 
@@ -243,8 +281,8 @@ Existing constructors and serialized constraints remain compatible. Unset and le
 reported as absent and numeric getters return `NaN`. The metadata does not alter utilization,
 constraint direction, margins, violation status, feasibility, or optimizer search. Confidence is
 an evidence-quality score, not a probability of safety or constraint satisfaction. This release
-does not yet propagate confidence or validity into throughput case rows or implement a
-multidimensional operating envelope.
+propagates confidence and validity into throughput case rows as of 2026-08-04, but does not
+implement a multidimensional operating envelope.
 ## 2026-08-03 — TwoFluidPipe phase-resolved flash transfer
 
 ### Corrected

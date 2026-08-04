@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFlowConvergenceReport;
 import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseSpeciesConservationReport;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
@@ -23,12 +24,29 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
   void compositionStepClosesEveryComponentAndSynchronizesThermodynamics() {
     PipeFlowSystem pipe = runCompositionStep(40, 30.0);
     OnePhaseSpeciesConservationReport report = pipe.getSpeciesConservationReport();
+    OnePhaseFlowConvergenceReport flowReport = pipe.getConvergenceReport();
 
     assertEquals(OnePhaseSpeciesConservationReport.ConservationReason.CONVERGED, report.getReason(),
         report.getMessage());
-    assertTrue(pipe.getConvergenceReport().isConverged(), pipe.getConvergenceReport().getMessage());
-    assertTrue(pipe.getConvergenceReport().getMaximumRelativeDensityResidual() <= pipe.getConvergenceReport()
-        .getDensityRelativeTolerance());
+    assertTrue(flowReport.isConverged(), flowReport.getMessage());
+    assertTrue(flowReport.getMaximumRelativeDensityResidual() <= flowReport.getDensityRelativeTolerance());
+    assertTrue(flowReport.isNonlinearMetricEquationResidual());
+    double[] aggregateHistory = flowReport.getNonlinearUpdateHistory();
+    double[] massEquationHistory = flowReport.getScaledMassEquationResidualHistory();
+    double[] momentumEquationHistory = flowReport.getScaledMomentumEquationResidualHistory();
+    assertEquals(flowReport.getNonlinearIterations() + 1, aggregateHistory.length);
+    assertEquals(aggregateHistory.length, massEquationHistory.length);
+    assertEquals(aggregateHistory.length, momentumEquationHistory.length);
+    for (int iteration = 0; iteration < aggregateHistory.length; iteration++) {
+      assertEquals(aggregateHistory[iteration],
+          Math.max(massEquationHistory[iteration], momentumEquationHistory[iteration]), 0.0);
+    }
+    assertEquals(massEquationHistory[massEquationHistory.length - 1], flowReport.getMaximumScaledMassEquationResidual(),
+        0.0);
+    assertEquals(momentumEquationHistory[momentumEquationHistory.length - 1],
+        flowReport.getMaximumScaledMomentumEquationResidual(), 0.0);
+    massEquationHistory[0] = Double.NaN;
+    assertTrue(Double.isFinite(flowReport.getScaledMassEquationResidualHistory()[0]));
     assertTrue(report.getMaximumRelativeInventoryResidual() < 1.0e-8, report.getMessage());
     assertTrue(report.getMinimumMassFraction() >= 0.0, report.getMessage());
     assertTrue(report.getMaximumMassFraction() <= 1.0, report.getMessage());
@@ -96,6 +114,20 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
 
   @Test
   @Tag("slow")
+  void finePulseFailureReportsRepeatedNodeStateMutation() {
+    AssertionError failure = assertThrows(AssertionError.class, () -> runIntegratedPulse(24, 30.0));
+    String message = failure.getMessage();
+
+    assertTrue(message.contains("LINE_SEARCH_FAILED"), message);
+    assertTrue(message.contains("repeated node-state relative drifts"), message);
+    assertTrue(message.contains("phaseMoles="), message);
+    assertTrue(message.contains("componentMoles="), message);
+    assertTrue(message.contains("density="), message);
+    assertTrue(message.contains("frictionFactor="), message);
+  }
+
+  @Test
+  @Tag("slow")
   void thirtyMinutePulseBreaksThroughRecoversAndClosesCumulativeInventory() {
     IntegratedPulseResult pulse = runIntegratedPulse();
     IntegratedPulseResult repeatedPulse = runIntegratedPulse();
@@ -131,18 +163,44 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
         "Cumulative nitrogen inventory must equal integrated inlet minus outlet mass.");
   }
 
+  @Test
+  @Tag("slow")
+  void coupledPulseGridAndTimestepRefinementReducesOutletDifference() {
+    IntegratedPulseResult coarse = runIntegratedPulse(6, 120.0);
+    IntegratedPulseResult medium = runIntegratedPulse(12, 60.0);
+    IntegratedPulseResult fine = runIntegratedPulse(24, 30.0);
+
+    assertPulseEngineeringGates(coarse);
+    assertPulseEngineeringGates(medium);
+    assertPulseEngineeringGates(fine);
+
+    double coarseToMedium = commonTimeMeanAbsoluteDifference(coarse.outletNitrogenHistory, 120.0,
+        medium.outletNitrogenHistory, 60.0, 120.0);
+    double mediumToFine = commonTimeMeanAbsoluteDifference(medium.outletNitrogenHistory, 60.0,
+        fine.outletNitrogenHistory, 30.0, 120.0);
+
+    assertTrue(coarseToMedium > 0.0, "The refinement study must resolve a non-zero discretization difference.");
+    assertTrue(mediumToFine < coarseToMedium,
+        "Joint grid/timestep refinement must reduce the common-time outlet difference: coarse-to-medium="
+            + coarseToMedium + ", medium-to-fine=" + mediumToFine);
+  }
+
   private static IntegratedPulseResult runIntegratedPulse() {
+    return runIntegratedPulse(12, 60.0);
+  }
+
+  private static IntegratedPulseResult runIntegratedPulse(int nodes, double timeStepSeconds) {
     int nitrogen = 1;
-    double timeStepSeconds = 60.0;
-    int pulseSteps = 30;
-    int recoverySteps = 60;
-    PipeFlowSystem pipe = createInitializedPipe(12, 3000.0);
+    int pulseSteps = exactStepCount(1800.0, timeStepSeconds);
+    int recoverySteps = exactStepCount(3600.0, timeStepSeconds);
+    PipeFlowSystem pipe = createInitializedPipe(nodes, 3000.0);
     pipe.setConservativeSpeciesTransport(true);
     pipe.setFailOnNonConvergence(true);
     SystemInterface baselineGas = createGas(0.95, 0.05);
     SystemInterface pulseGas = createGas(0.80, 0.20);
 
-    OnePhaseSpeciesConservationReport baseline = runTransientStep(pipe, baselineGas.clone(), timeStepSeconds);
+    OnePhaseSpeciesConservationReport baseline = runTransientStepWithContext(pipe, baselineGas.clone(), timeStepSeconds,
+        nodes, -1, false);
     assertTrue(baseline.isConverged(), baseline.getMessage());
     double baselineOutlet = last(baseline.getMassFractionProfile()[nitrogen]);
     double initialInventoryKg = baseline.getFinalInventoryKg()[nitrogen];
@@ -159,7 +217,7 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     for (int step = 0; step < pulseSteps + recoverySteps; step++) {
       boolean pulseActive = step < pulseSteps;
       SystemInterface inlet = pulseActive ? pulseGas.clone() : baselineGas.clone();
-      report = runTransientStep(pipe, inlet, timeStepSeconds);
+      report = runTransientStepWithContext(pipe, inlet, timeStepSeconds, nodes, step, pulseActive);
 
       assertTrue(report.isConverged(), report.getMessage());
       assertTrue(pipe.getConvergenceReport().isConverged(), pipe.getConvergenceReport().getMessage());
@@ -203,6 +261,18 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     return pipe;
   }
 
+  private static OnePhaseSpeciesConservationReport runTransientStepWithContext(PipeFlowSystem pipe,
+      SystemInterface inlet, double timeStepSeconds, int nodes, int step, boolean pulseActive) {
+    try {
+      return runTransientStep(pipe, inlet, timeStepSeconds);
+    } catch (AssertionError exception) {
+      String phase = step < 0 ? "baseline" : (pulseActive ? "pulse" : "recovery");
+      throw new AssertionError("Coupled pulse failed for nodes=" + nodes + ", timestep=" + timeStepSeconds
+          + " s, phase=" + phase + ", event step=" + step + ": " + exception.getMessage() + System.lineSeparator()
+          + pipe.getConvergenceReport().toJson(), exception);
+    }
+  }
+
   private static OnePhaseSpeciesConservationReport runTransientStep(PipeFlowSystem pipe, SystemInterface inlet,
       double timeStepSeconds) {
     pipe.getTimeSeries().setTimes(new double[] { 0.0, timeStepSeconds });
@@ -235,8 +305,48 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     pipe.createSystem();
     pipe.init();
     pipe.solveSteadyState(1);
-    assertTrue(pipe.getConvergenceReport().isConverged());
+    assertTrue(pipe.getConvergenceReport().isConverged(), pipe.getConvergenceReport().getMessage());
     return pipe;
+  }
+
+  private static void assertPulseEngineeringGates(IntegratedPulseResult pulse) {
+    double eventAmplitude = pulse.pulseInletMassFraction - pulse.baselineOutlet;
+    double cumulativeScaleKg = Math.max(Math.max(pulse.initialInventoryKg, pulse.cumulativeInletKg), 1.0);
+
+    assertTrue(eventAmplitude > 0.0);
+    assertTrue(pulse.pulseEndOutlet > pulse.baselineOutlet + 0.70 * eventAmplitude,
+        "The 30-minute event must break through before the inlet returns to baseline.");
+    assertTrue(pulse.peakOutlet > pulse.baselineOutlet + 0.70 * eventAmplitude);
+    assertEquals(pulse.baselineOutlet, pulse.recoveredOutlet, 2.0e-3 * eventAmplitude,
+        "The outlet composition must recover after purging the pulse.");
+    assertEquals(0.0, pulse.cumulativeResidualKg, cumulativeScaleKg * 1.0e-7,
+        "Cumulative nitrogen inventory must equal integrated inlet minus outlet mass.");
+  }
+
+  private static int exactStepCount(double durationSeconds, double timeStepSeconds) {
+    int steps = (int) Math.round(durationSeconds / timeStepSeconds);
+    assertEquals(durationSeconds, steps * timeStepSeconds, 1.0e-12,
+        "Event durations must contain an integer number of timesteps.");
+    return steps;
+  }
+
+  private static double commonTimeMeanAbsoluteDifference(double[] first, double firstTimeStepSeconds, double[] second,
+      double secondTimeStepSeconds, double sampleIntervalSeconds) {
+    int firstStride = exactStepCount(sampleIntervalSeconds, firstTimeStepSeconds);
+    int secondStride = exactStepCount(sampleIntervalSeconds, secondTimeStepSeconds);
+    assertEquals(first.length * firstTimeStepSeconds, second.length * secondTimeStepSeconds, 1.0e-12,
+        "Histories must span the same physical duration.");
+    assertEquals(0, first.length % firstStride, "First history must end on a common sample time.");
+    assertEquals(0, second.length % secondStride, "Second history must end on a common sample time.");
+    int samples = first.length / firstStride;
+    assertEquals(samples, second.length / secondStride);
+    double difference = 0.0;
+    for (int sample = 1; sample <= samples; sample++) {
+      int firstIndex = sample * firstStride - 1;
+      int secondIndex = sample * secondStride - 1;
+      difference += Math.abs(first[firstIndex] - second[secondIndex]);
+    }
+    return difference / samples;
   }
 
   private static double last(double[] values) {
