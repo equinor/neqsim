@@ -58,6 +58,16 @@ public abstract class SystemEosGE extends SystemEos implements EosGeFlashModel {
   }
 
   /**
+   * Restore the direct gamma-phi active-phase contract after density ordering or a prior single-phase collapse.
+   */
+  @Override
+  public final void prepareGammaPhiFlash() {
+    setNumberOfPhases(2);
+    setPhaseIndex(0, 0);
+    setPhaseIndex(1, 1);
+  }
+
+  /**
    * Get the equation-of-state phase from its creation-order slot.
    *
    * <p>
