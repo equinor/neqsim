@@ -1596,7 +1596,9 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     }
     try {
       double[] firstResidual = calculateCoupledResidual(state);
+      double[][] firstNodeState = captureCoupledNodeDiagnosticState();
       double[] repeatedResidual = calculateCoupledResidual(state);
+      double[][] repeatedNodeState = captureCoupledNodeDiagnosticState();
       double[] repeatedDifference = new double[2];
       double[] repeatedReference = new double[2];
       for (int row = 0; row < state.length; row++) {
@@ -1634,13 +1636,66 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
           + inBandDifference[1] / Math.max(denseReference[1], 1.0e-14)
           + "; maximum off-band relative magnitudes continuity="
           + offBandMaximum[0] / Math.max(denseReference[0], 1.0e-14) + ", momentum="
-          + offBandMaximum[1] / Math.max(denseReference[1], 1.0e-14);
+          + offBandMaximum[1] / Math.max(denseReference[1], 1.0e-14)
+          + "; repeated node-state relative drifts "
+          + calculateRepeatedNodeStateDetail(firstNodeState, repeatedNodeState);
     } catch (RuntimeException exception) {
       return "dense/uncolored Jacobian check failed with " + exception.getClass().getSimpleName()
           + (exception.getMessage() == null ? "" : ": " + exception.getMessage());
     } finally {
       applyCoupledState(state);
     }
+  }
+
+  private double[][] captureCoupledNodeDiagnosticState() {
+    int numberOfComponents = pipe.getNode(0).getBulkSystem().getPhase(0).getNumberOfComponents();
+    double[][] nodeState = new double[numberOfNodes][8 + numberOfComponents];
+    for (int node = 0; node < numberOfNodes; node++) {
+      nodeState[node][0] = pipe.getNode(node).getBulkSystem().getPhase(0).getNumberOfMolesInPhase();
+      nodeState[node][1] = pipe.getNode(node).getBulkSystem().getPhase(0).getDensity();
+      nodeState[node][2] = pipe.getNode(node).getVelocityIn().doubleValue();
+      nodeState[node][3] = pipe.getNode(node).getVelocity();
+      nodeState[node][4] = pipe.getNode(node).getMassFlowRate(0);
+      nodeState[node][5] = pipe.getNode(node).getVolumetricFlow();
+      nodeState[node][6] = pipe.getNode(node).getReynoldsNumber();
+      nodeState[node][7] = pipe.getNode(node).getWallFrictionFactor();
+      for (int component = 0; component < numberOfComponents; component++) {
+        nodeState[node][8 + component] =
+            pipe.getNode(node).getBulkSystem().getPhase(0).getComponent(component).getNumberOfMolesInPhase();
+      }
+    }
+    return nodeState;
+  }
+
+  private String calculateRepeatedNodeStateDetail(double[][] first, double[][] repeated) {
+    String[] labels = { "phaseMoles", "density", "velocityIn", "meanVelocity", "massFlow",
+        "volumetricFlow", "Reynolds", "frictionFactor", "componentMoles" };
+    double[] maximumRelativeDrift = new double[labels.length];
+    int[] maximumDriftNode = new int[labels.length];
+    for (int node = 0; node < first.length; node++) {
+      for (int field = 0; field < first[node].length; field++) {
+        int category = Math.min(field, labels.length - 1);
+        double reference = Math.max(Math.max(Math.abs(first[node][field]), Math.abs(repeated[node][field])), 1.0e-14);
+        double relativeDrift = Math.abs(repeated[node][field] - first[node][field]) / reference;
+        if (!Double.isFinite(relativeDrift)) {
+          relativeDrift = Double.POSITIVE_INFINITY;
+        }
+        if (relativeDrift > maximumRelativeDrift[category]) {
+          maximumRelativeDrift[category] = relativeDrift;
+          maximumDriftNode[category] = node;
+        }
+      }
+    }
+
+    StringBuilder detail = new StringBuilder();
+    for (int category = 0; category < labels.length; category++) {
+      if (category > 0) {
+        detail.append(", ");
+      }
+      detail.append(labels[category]).append('=').append(maximumRelativeDrift[category]).append("@node")
+          .append(maximumDriftNode[category]);
+    }
+    return detail.toString();
   }
 
   private double[][] calculateCoupledDenseFiniteDifferenceJacobian(double[] state) {
