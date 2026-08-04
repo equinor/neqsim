@@ -3,6 +3,7 @@ package neqsim.process.equipment.distillation;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
@@ -96,10 +97,20 @@ public class DistillationColumnModeTest {
     DistillationColumn column = new DistillationColumn("reboiler mode column", 2, true, true);
 
     assertEquals(DistillationColumn.ReboilerMode.EQUILIBRIUM, column.getReboilerMode());
-    column.setReboilerVaporBoilupRatio(0.8);
+    column.setReboilerBoilupRatio(0.8);
     assertEquals(DistillationColumn.ReboilerMode.VAPOR_BOILUP_RATIO, column.getReboilerMode());
+    assertNotNull(column.getBottomSpecification());
+    assertEquals(ColumnSpecification.SpecificationType.REFLUX_RATIO, column.getBottomSpecification().getType());
+
     column.setReboilerMode(DistillationColumn.ReboilerMode.EQUILIBRIUM);
     assertEquals(DistillationColumn.ReboilerMode.EQUILIBRIUM, column.getReboilerMode());
+    assertNull(column.getBottomSpecification());
+
+    column.setBottomProductPurity("n-pentane", 0.95);
+    ColumnSpecification bottomPurity = column.getBottomSpecification();
+    column.setReboilerVaporBoilupRatio(1.0);
+    column.setReboilerMode(DistillationColumn.ReboilerMode.EQUILIBRIUM);
+    assertSame(bottomPurity, column.getBottomSpecification());
   }
 
   /**
