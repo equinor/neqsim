@@ -66,4 +66,30 @@ class TPflashGammaPhiNumericalRobustnessTest {
       }
     }
   }
+
+  @Test
+  void nonFinitePreviousKIsRepairedWithoutPoisoningDeviation() {
+    SystemVanLaarActivitySRK system = new SystemVanLaarActivitySRK(273.15, 1.0);
+    system.addComponent("CO2", 10.0);
+    system.addComponent("water", 0.70);
+    system.addComponent("nitric acid", 0.15);
+    system.addComponent("sulfuric acid", 0.15);
+    system.createDatabase(true);
+    system.setMixingRule("classic");
+    system.init(0);
+    system.init(1);
+    system.prepareGammaPhiFlash();
+    for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
+      system.getPhase(phaseIndex).getComponent("water").setK(Double.NaN);
+    }
+
+    InspectableTPflash flash = new InspectableTPflash(system);
+    flash.sucsSubs();
+
+    assertTrue(Double.isFinite(flash.getDeviationForTest()));
+    for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
+      double repairedK = system.getPhase(phaseIndex).getComponent("water").getK();
+      assertTrue(Double.isFinite(repairedK) && repairedK > 0.0);
+    }
+  }
 }
