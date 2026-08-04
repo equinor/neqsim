@@ -802,7 +802,9 @@ public class TPflash extends Flash {
           }
         }
 
-        if (iterations < activeNewtonLimit || system.isChemicalSystem()
+        // A direct gamma-phi model owns its K-value update, damping and vapour reference. The
+        // generic cubic-EOS Newton solver does not implement that contract and must not replace it.
+        if (iterations < activeNewtonLimit || gammaPhiModel != null || system.isChemicalSystem()
             || !system.isImplementedCompositionDeriativesofFugacity()) {
           if (timeFromLastGibbsFail > 6 && (iterations % activeAccelerateInterval) == 0
               && !(system.isChemicalSystem() || system.doSolidPhaseCheck()) && gammaPhiModel == null) {
