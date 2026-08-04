@@ -1636,8 +1636,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
           + inBandDifference[1] / Math.max(denseReference[1], 1.0e-14)
           + "; maximum off-band relative magnitudes continuity="
           + offBandMaximum[0] / Math.max(denseReference[0], 1.0e-14) + ", momentum="
-          + offBandMaximum[1] / Math.max(denseReference[1], 1.0e-14)
-          + "; repeated node-state relative drifts "
+          + offBandMaximum[1] / Math.max(denseReference[1], 1.0e-14) + "; repeated node-state relative drifts "
           + calculateRepeatedNodeStateDetail(firstNodeState, repeatedNodeState);
     } catch (RuntimeException exception) {
       return "dense/uncolored Jacobian check failed with " + exception.getClass().getSimpleName()
@@ -1660,16 +1659,16 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       nodeState[node][6] = pipe.getNode(node).getReynoldsNumber();
       nodeState[node][7] = pipe.getNode(node).getWallFrictionFactor();
       for (int component = 0; component < numberOfComponents; component++) {
-        nodeState[node][8 + component] =
-            pipe.getNode(node).getBulkSystem().getPhase(0).getComponent(component).getNumberOfMolesInPhase();
+        nodeState[node][8 + component] = pipe.getNode(node).getBulkSystem().getPhase(0).getComponent(component)
+            .getNumberOfMolesInPhase();
       }
     }
     return nodeState;
   }
 
   private String calculateRepeatedNodeStateDetail(double[][] first, double[][] repeated) {
-    String[] labels = { "phaseMoles", "density", "velocityIn", "meanVelocity", "massFlow",
-        "volumetricFlow", "Reynolds", "frictionFactor", "componentMoles" };
+    String[] labels = { "phaseMoles", "density", "velocityIn", "meanVelocity", "massFlow", "volumetricFlow", "Reynolds",
+        "frictionFactor", "componentMoles" };
     double[] maximumRelativeDrift = new double[labels.length];
     int[] maximumDriftNode = new int[labels.length];
     for (int node = 0; node < first.length; node++) {
