@@ -104,10 +104,10 @@ class TwoFluidPipeClosedThermalTest {
     double Cp = 2000.0;
     double muJT = 4.0e-6;
 
-    double forwardSource = TwoFluidPipe.calculateLocalJouleThomsonSource(1, forwardFaceMassFlows, 100.0, 95.0, 90.0,
-        Cp, muJT, 10.0);
-    double reverseSource = TwoFluidPipe.calculateLocalJouleThomsonSource(1, reverseFaceMassFlows, 90.0, 95.0, 100.0,
-        Cp, muJT, 10.0);
+    double forwardSource = TwoFluidPipe.calculateLocalJouleThomsonSource(1, forwardFaceMassFlows, 100.0, 95.0, 90.0, Cp,
+        muJT, 10.0);
+    double reverseSource = TwoFluidPipe.calculateLocalJouleThomsonSource(1, reverseFaceMassFlows, 90.0, 95.0, 100.0, Cp,
+        muJT, 10.0);
 
     assertEquals(-0.008, forwardSource, 1.0e-15);
     assertEquals(forwardSource, reverseSource, 1.0e-15,
