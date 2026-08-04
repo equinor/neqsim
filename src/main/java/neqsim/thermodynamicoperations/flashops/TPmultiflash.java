@@ -2125,6 +2125,7 @@ public class TPmultiflash extends TPflash {
   public void run() {
     int aqueousPhaseNumber = 0;
     enhancedStabilityChecked = false;
+    betaSolveStalled = false;
     // logger.info("Starting multiphase-flash....");
 
     // For systems with ions, temporarily remove ions before stability analysis
