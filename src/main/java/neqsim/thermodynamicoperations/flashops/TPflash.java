@@ -1051,8 +1051,7 @@ public class TPflash extends Flash {
       for (int refinement = 0; refinement < 3 && !isBalancedEquilibriumCandidate(system); refinement++) {
         endpointSolver.solveBeta();
       }
-      if (!isBalancedEquilibriumCandidate(system)
-          || !preservesTwoPhaseActiveSet(system, referenceState.phaseTypes)) {
+      if (!isBalancedEquilibriumCandidate(system) || !preservesTwoPhaseActiveSet(system, referenceState.phaseTypes)) {
         restoreTwoPhaseIterationState(referenceState);
         return;
       }
@@ -1068,7 +1067,6 @@ public class TPflash extends Flash {
       logger.debug("Final aqueous endpoint refinement failed: {}", ex.getMessage());
     }
   }
-
 
   /**
    * Checks that a bounded beta refinement has not changed either selected phase identity.
