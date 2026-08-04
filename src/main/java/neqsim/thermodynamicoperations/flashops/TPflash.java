@@ -1043,8 +1043,8 @@ public class TPflash extends Flash {
       return;
     }
 
-    double referenceGibbsEnergy = system.getGibbsEnergy();
     BalancedTwoPhaseState referenceState = new BalancedTwoPhaseState(system);
+    double referenceGibbsEnergy = referenceState.gibbsEnergy;
     try {
       TPmultiflash endpointSolver = new TPmultiflash(system, false);
       endpointSolver.setDoubleArrays();
