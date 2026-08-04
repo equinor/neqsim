@@ -222,7 +222,8 @@ public class TwoFluidConservationEquations implements Serializable {
     // retained for a stage-consistent domain mass-balance diagnostic.
     double[] inletFlux = calcInletFlux(sections[0]);
     double[] outletFlux = calcOutletFlux(sections[nCells - 1]);
-    lastPhaseMassFaceFluxes = buildPhaseMassFaceFluxes(nCells, fluxes, inletFlux, outletFlux);
+    lastPhaseMassFaceFluxes =
+        populatePhaseMassFaceFluxes(lastPhaseMassFaceFluxes, nCells, fluxes, inletFlux, outletFlux);
 
     // Assemble RHS: dU/dt = -1/dx_i * (F_{i+1/2} - F_{i-1/2}) + S_i
     //
@@ -319,12 +320,14 @@ public class TwoFluidConservationEquations implements Serializable {
     double[][] interfaceFluxes = sections.length > 1 ? calcInterfaceFluxes(sections, dx) : new double[0][NUM_EQUATIONS];
     double[] inletFlux = calcInletFlux(sections[0]);
     double[] outletFlux = calcOutletFlux(sections[sections.length - 1]);
-    return buildPhaseMassFaceFluxes(sections.length, interfaceFluxes, inletFlux, outletFlux);
+    return populatePhaseMassFaceFluxes(null, sections.length, interfaceFluxes, inletFlux, outletFlux);
   }
 
-  private double[][] buildPhaseMassFaceFluxes(int sectionCount, double[][] interfaceFluxes, double[] inletFlux,
-      double[] outletFlux) {
-    double[][] phaseMassFaceFluxes = new double[sectionCount + 1][3];
+  private double[][] populatePhaseMassFaceFluxes(double[][] phaseMassFaceFluxes, int sectionCount,
+      double[][] interfaceFluxes, double[] inletFlux, double[] outletFlux) {
+    if (phaseMassFaceFluxes == null || phaseMassFaceFluxes.length != sectionCount + 1) {
+      phaseMassFaceFluxes = new double[sectionCount + 1][3];
+    }
     phaseMassFaceFluxes[0][0] = inletFlux[IDX_GAS_MASS];
     phaseMassFaceFluxes[0][1] = inletFlux[IDX_OIL_MASS];
     phaseMassFaceFluxes[0][2] = inletFlux[IDX_WATER_MASS];
