@@ -9,6 +9,22 @@
 
 ---
 
+## 2026-08-04 — Reynolds-cache staleness and nozzle math-domain fixes (Copilot review round 7)
+
+### Fixed
+
+- `DifferentialPressureFlowMeter.getMassFlowRatePerSecond()` now resets `lastReynoldsNumberPipe` to `NaN` on every
+  invalid-input/invalid-expansibility early return, not just when `dp &lt;= 0`, so `getReynoldsNumberPipe()` never
+  reports a stale value from a previous successful solve after a failed one.
+- The Reynolds-number iteration now checks `Double.isFinite(updatedFlow)` each pass and fails fast (NaN + a logged
+  warning identifying the offending Re,D) instead of running all `MAX_ITERATIONS` passes and logging a misleading
+  "did not converge" warning when a device-specific discharge-coefficient correlation produces NaN/Infinity.
+- `NozzleFlowMeter.calcThroatTappedDischargeCoefficient(double)` now explicitly returns `NaN` for
+  `reynoldsThroat &lt; 400000`, instead of relying on `Math.pow(negative, 0.8)` (a non-integer power of a negative
+  base) to produce `NaN` indirectly once `1 - 400000 / Re,d` goes negative.
+
+---
+
 ## 2026-08-04 — Doc/test wording fixes and CONE beta validation (Copilot review round 6)
 
 ### Fixed

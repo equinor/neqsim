@@ -121,9 +121,13 @@ public class NozzleFlowMeter extends DifferentialPressureFlowMeter {
    * Calculates the throat-tapped flow nozzle discharge coefficient, ISO 5167-3 Formulae (13) and (14).
    *
    * @param reynoldsThroat throat Reynolds number Re,d [-]
-   * @return discharge coefficient C [-]
+   * @return discharge coefficient C [-], or NaN when Re,d &lt; 400000 (the {@code 1 - 400000 / Re,d} term of Formula
+   * (13)/(14) would otherwise go negative, outside the domain of a non-integer power)
    */
   private double calcThroatTappedDischargeCoefficient(double reynoldsThroat) {
+    if (reynoldsThroat < 400000.0) {
+      return Double.NaN;
+    }
     double common = 0.255 / Math.pow(reynoldsThroat, 0.2) * Math.pow(1.0 - 400000.0 / reynoldsThroat, 0.8);
     if (reynoldsThroat < 3.0e6) {
       return 1.0090 - common;

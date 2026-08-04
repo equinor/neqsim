@@ -433,10 +433,12 @@ public abstract class DifferentialPressureFlowMeter extends StreamMeasurementDev
     double mu = getDynamicViscosity();
     if (p1 <= 0.0 || density <= 0.0 || Double.isNaN(beta) || beta <= 0.0 || beta >= 1.0 || mu <= 0.0
         || pipeDiameterMeters <= 0.0) {
+      lastReynoldsNumberPipe = Double.NaN;
       return Double.NaN;
     }
     double epsilon = getExpansibilityModel().calculate(dp, p1, beta, getIsentropicExponent());
     if (Double.isNaN(epsilon)) {
+      lastReynoldsNumberPipe = Double.NaN;
       return Double.NaN;
     }
     double baseTerm = 1.0 / Math.sqrt(1.0 - Math.pow(beta, 4.0)) * epsilon * Math.PI / 4.0 * throatDiameterMeters
@@ -447,6 +449,12 @@ public abstract class DifferentialPressureFlowMeter extends StreamMeasurementDev
     for (int iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
       double updatedReynoldsD = 4.0 * flow / (Math.PI * mu * pipeDiameterMeters);
       double updatedFlow = baseTerm * calcDischargeCoefficient(beta, updatedReynoldsD);
+      if (!Double.isFinite(updatedFlow)) {
+        logger.warn("{}: Reynolds-number iteration produced a non-finite discharge coefficient at Re,D = {}", getName(),
+            updatedReynoldsD);
+        lastReynoldsNumberPipe = Double.NaN;
+        return Double.NaN;
+      }
       if (Math.abs(updatedFlow - flow) <= TOLERANCE * Math.abs(updatedFlow)) {
         lastReynoldsNumberPipe = updatedReynoldsD;
         return updatedFlow;
