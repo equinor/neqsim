@@ -9,6 +9,19 @@
 
 ---
 
+## 2026-08-04 — ConeFlowMeter rejects non-physical geometry (Copilot review round 11)
+
+### Fixed
+
+- `ConeFlowMeter.setGeometry(double, double, String)` now validates `coneDiameter &lt; pipeDiameter` (both positive)
+  instead of silently clamping the beta formula's `sqrt` argument to 0 with `Math.max(0.0, ...)`. Invalid geometry
+  (cone diameter &gt;= pipe diameter, or either non-positive) now logs a warning and stores a `NaN` throat diameter,
+  consistent with `WedgeFlowMeter`'s invalid-geometry handling, instead of silently producing beta = 0.
+- `ConeFlowMeter.getConeDiameter(String)` now returns `NaN` for a non-physical beta (NaN, &lt;= 0, or &gt; 1) instead
+  of clamping to a misleading 0 diameter.
+
+---
+
 ## 2026-08-04 — Reject non-physical discharge coefficients in the Reynolds iteration (Copilot review round 10)
 
 ### Fixed

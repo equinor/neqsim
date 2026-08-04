@@ -2,6 +2,9 @@ package neqsim.process.measurementdevice;
 
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.process.equipment.stream.StreamInterface;
 
 /**
@@ -39,6 +42,9 @@ import neqsim.process.equipment.stream.StreamInterface;
 public class ConeFlowMeter extends DifferentialPressureFlowMeter {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000L;
+
+  /** Logger object for class. */
+  private static final Logger logger = LogManager.getLogger(ConeFlowMeter.class);
 
   /** Discharge coefficient of an uncalibrated cone meter (ISO 5167-5). */
   public static final double DISCHARGE_COEFFICIENT = 0.82;
@@ -93,8 +99,13 @@ public class ConeFlowMeter extends DifferentialPressureFlowMeter {
     setPipeDiameter(pipeDiameter, unit);
     double pipeDiameterMeters = getPipeDiameter("m");
     double coneDiameterMeters = coneDiameter * lengthConversionToMeter(unit);
-    double beta = Math
-        .sqrt(Math.max(0.0, 1.0 - coneDiameterMeters * coneDiameterMeters / (pipeDiameterMeters * pipeDiameterMeters)));
+    if (!(pipeDiameterMeters > 0.0) || !(coneDiameterMeters > 0.0) || coneDiameterMeters >= pipeDiameterMeters) {
+      logger.warn("{}: cone diameter {} m is not smaller than the pipe diameter {} m; storing NaN throat diameter",
+          getName(), coneDiameterMeters, pipeDiameterMeters);
+      setThroatDiameter(Double.NaN, "m");
+      return;
+    }
+    double beta = Math.sqrt(1.0 - coneDiameterMeters * coneDiameterMeters / (pipeDiameterMeters * pipeDiameterMeters));
     setThroatDiameter(beta * pipeDiameterMeters, "m");
   }
 
@@ -102,12 +113,15 @@ public class ConeFlowMeter extends DifferentialPressureFlowMeter {
    * Returns the cone diameter dc, back-derived from the current pipe diameter and diameter ratio.
    *
    * @param unit length unit, one of "m", "cm", "mm" or "in"
-   * @return cone diameter in the requested unit
+   * @return cone diameter in the requested unit, or NaN when beta is not physical (outside (0, 1])
    */
   public double getConeDiameter(String unit) {
     double beta = getBetaRatio();
+    if (Double.isNaN(beta) || beta <= 0.0 || beta > 1.0) {
+      return Double.NaN;
+    }
     double pipeDiameterMeters = getPipeDiameter("m");
-    double coneDiameterMeters = pipeDiameterMeters * Math.sqrt(Math.max(0.0, 1.0 - beta * beta));
+    double coneDiameterMeters = pipeDiameterMeters * Math.sqrt(1.0 - beta * beta);
     return coneDiameterMeters / lengthConversionToMeter(unit);
   }
 
