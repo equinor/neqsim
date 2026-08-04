@@ -1907,15 +1907,48 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   private double calcLocalJouleThomsonSource(int cell, double[][] phaseMassFaceFluxes, double Cp, double muJT) {
-    if (cell == 0 || muJT == 0.0) {
+    double[] pressures = new double[numberOfSections];
+    for (int section = 0; section < numberOfSections; section++) {
+      pressures[section] = sections[section].getPressure();
+    }
+    return calculateLocalJouleThomsonSource(cell, phaseMassFaceFluxes, pressures, Cp, muJT,
+        sections[cell].getLength());
+  }
+
+  /**
+   * Calculate the Joule-Thomson source from mass entering a cell at either internal face.
+   *
+   * <p>
+   * Positive face flow is oriented from inlet to outlet. Forward flow therefore uses the left-face pressure increase,
+   * while reverse flow uses the right-face pressure increase with the same spatial orientation. External faces are
+   * excluded because no external boundary pressure is available to define their local gradient.
+   * </p>
+   *
+   * @param cell zero-based cell index
+   * @param phaseMassFaceFluxes face-by-phase mass flows in kg/s
+   * @param pressures cell pressures in pascals
+   * @param Cp fluid heat capacity in J/(kg K)
+   * @param muJT Joule-Thomson coefficient in K/Pa
+   * @param cellLength cell length in metres
+   * @return Joule-Thomson energy source in W/m
+   */
+  static double calculateLocalJouleThomsonSource(int cell, double[][] phaseMassFaceFluxes, double[] pressures,
+      double Cp, double muJT, double cellLength) {
+    if (muJT == 0.0 || cellLength <= 0.0) {
       return 0.0;
     }
-    double totalMassFlow = 0.0;
+    double source = 0.0;
     for (int phase = 0; phase < 3; phase++) {
-      totalMassFlow += phaseMassFaceFluxes[cell][phase];
+      double leftMassFlow = phaseMassFaceFluxes[cell][phase];
+      if (leftMassFlow > 0.0 && cell > 0) {
+        source += leftMassFlow * Cp * muJT * (pressures[cell] - pressures[cell - 1]) / cellLength;
+      }
+      double rightMassFlow = phaseMassFaceFluxes[cell + 1][phase];
+      if (rightMassFlow < 0.0 && cell + 1 < pressures.length) {
+        source += rightMassFlow * Cp * muJT * (pressures[cell + 1] - pressures[cell]) / cellLength;
+      }
     }
-    double pressureChange = sections[cell].getPressure() - sections[cell - 1].getPressure();
-    return totalMassFlow * Cp * muJT * pressureChange / sections[cell].getLength();
+    return source;
   }
 
   private double getCellFaceThroughput(int cell, double[][] phaseMassFaceFluxes) {
