@@ -1825,7 +1825,7 @@ public class DocExamplesCompilationTest {
 
     assertTrue(gasFlow > 0.0);
     assertTrue(phi >= 1.0);
-    assertNotNull(Boolean.valueOf(inRange));
+    assertEquals(meter.getValidityViolations().isEmpty(), inRange);
   }
 
   /**

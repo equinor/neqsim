@@ -552,20 +552,26 @@ public abstract class DifferentialPressureFlowMeter extends StreamMeasurementDev
   /**
    * Returns whether the unit string denotes a standard-condition volume flow.
    *
-   * @param unit unit string to classify, must be non-null
-   * @return true for standard volume flow units
+   * @param unit unit string to classify, or null
+   * @return true for standard volume flow units, false when unit is null
    */
   protected static boolean isStandardVolumeUnit(String unit) {
+    if (unit == null) {
+      return false;
+    }
     return unit.startsWith("Sm3") || unit.startsWith("kSm3") || unit.startsWith("MSm3") || unit.startsWith("Sm^3");
   }
 
   /**
    * Returns whether the unit string denotes an actual (flowing-condition) volume flow.
    *
-   * @param unit unit string to classify, must be non-null
-   * @return true for actual volume flow units
+   * @param unit unit string to classify, or null
+   * @return true for actual volume flow units, false when unit is null
    */
   protected static boolean isActualVolumeUnit(String unit) {
+    if (unit == null) {
+      return false;
+    }
     return unit.startsWith("m3") || unit.startsWith("m^3");
   }
 

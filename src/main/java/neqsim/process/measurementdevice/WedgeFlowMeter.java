@@ -2,6 +2,9 @@ package neqsim.process.measurementdevice;
 
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.process.equipment.stream.StreamInterface;
 
 /**
@@ -43,6 +46,9 @@ import neqsim.process.equipment.stream.StreamInterface;
 public class WedgeFlowMeter extends DifferentialPressureFlowMeter {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000L;
+
+  /** Logger object for class. */
+  private static final Logger logger = LogManager.getLogger(WedgeFlowMeter.class);
 
   /** Minimum upstream pipe diameter D for which ISO 5167-6 applies. */
   public static final double MIN_PIPE_DIAMETER_MM = 50.0;
@@ -110,6 +116,13 @@ public class WedgeFlowMeter extends DifferentialPressureFlowMeter {
    * @param wedgeRatio wedge ratio h / D, must satisfy 0 &lt; h/D &lt; 1
    */
   public void setWedgeRatio(double wedgeRatio) {
+    if (!(wedgeRatio > 0.0) || !(wedgeRatio < 1.0)) {
+      logger.warn("{}: wedge ratio h/D = {} is outside the valid (0, 1) range; storing NaN throat diameter",
+          getName(), wedgeRatio);
+      this.wedgeRatio = Double.NaN;
+      setThroatDiameter(Double.NaN, "m");
+      return;
+    }
     this.wedgeRatio = wedgeRatio;
     double oneMinus2hOverD = 1.0 - 2.0 * wedgeRatio;
     double sqrtTerm = Math.sqrt(Math.max(0.0, wedgeRatio - wedgeRatio * wedgeRatio));

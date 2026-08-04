@@ -265,7 +265,7 @@ $$\Phi=\sqrt{1+C_{Ch}X+X^2},\qquad X = \frac{q_{m,liquid}}{q_{m,gas}}\sqrt{\frac
 meter.setWetGasCorrelation(VenturiFlowMeter.WetGasCorrelation.ISO_TR_11583);
 meter.setSurfaceTensionFactor(VenturiFlowMeter.H_HYDROCARBON);  // 1.0 HC, 1.35 water, 0.79 wet steam
 
-// Supply the liquid load in one of three ways:
+// Supply the liquid load in one of four ways:
 meter.setLiquidFromStream(true);              // from the stream's own phase split
 // meter.setLiquidToGasMassRatio(0.5);        // from a recent separator test
 // meter.setLiquidMassFlowRate(2.5, "kg/sec");// absolute rate
@@ -356,7 +356,7 @@ $$n = 0.214 \ \ (0.2\le Fr_{gas} < 1.5), \qquad n = \left(\frac{1}{\sqrt{2}} - \
 ```java
 meter.setWetGasCorrelation(OrificeFlowMeter.WetGasCorrelation.ISO_TR_11583);
 
-// Supply the liquid load in one of three ways:
+// Supply the liquid load in one of four ways:
 meter.setLiquidFromStream(true);               // from the stream's own phase split
 // meter.setLiquidToGasMassRatio(0.5);         // from a recent separator test
 // meter.setLiquidMassFlowRate(2.5, "kg/sec"); // absolute rate
