@@ -9,6 +9,19 @@
 
 ---
 
+## 2026-08-04 — TwoFluidPipe closed thermal boundary consistency
+
+- Transient temperature advection now consumes the conservative solver's retained phase-resolved face mass fluxes,
+  combined with the configured integrator's stage weights and one pre-update temperature snapshot; it no longer
+  recomputes AUSM+ fluxes after acceptance or reads already-updated upstream cells.
+- CLOSED external faces contribute exactly zero advective transport while internal phase convection remains active.
+- Simple and multilayer radial heat transfer now visit section zero and use local conservative fluid inventory for
+  thermal inertia. Stateful multilayer wall temperatures are retained independently for every cell and advanced once
+  per accepted thermal time step.
+- The post-step temperature model is the single owner of ambient heat exchange, preventing the duplicate equation-level
+  wall source from applying the same loss twice.
+- Added deterministic regressions for disconnected inlet-rate invariance, uniform closed adiabatic behavior, all-cell
+  cooldown without ambient undershoot, independent multilayer cell state, and zero closed external face flux.
 ## 2026-08-04 — ProcessModel recycle mass-closure reporting
 
 ### Corrected

@@ -281,8 +281,11 @@ public class TwoFluidPipe extends Pipeline {
   /** Soil/burial thermal resistance (m²·K/W). */
   private double soilThermalResistance = 0.0;
 
-  /** Multi-layer radial heat-transfer calculator. */
+  /** Multi-layer radial heat-transfer calculator and public configuration template. */
   private MultilayerThermalCalculator thermalCalculator = null;
+
+  /** Per-cell temperatures for every stateful radial layer in the multi-layer model. */
+  private double[][] multilayerLayerTemperatureProfiles = null;
 
   /** Enable multi-layer thermal model (vs simple U-value). */
   private boolean useMultilayerThermalModel = false;
@@ -1727,33 +1730,26 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Update temperature profile for transient simulation including pipe wall thermal mass.
+   * Update temperature after an accepted transient hydrodynamic step.
    *
    * <p>
-   * Solves coupled fluid-wall energy equations:
-   * <ul>
-   * <li>Fluid: ρ_f * Cp_f * A * dT_f/dt = -m_dot * Cp_f * dT_f/dx - h_i * π * D * (T_f - T_w)</li>
-   * <li>Wall: ρ_w * Cp_w * A_w * dT_w/dt = h_i * π * D * (T_f - T_w) - h_o * π * D_o * (T_w - T_amb)</li>
-   * </ul>
-   *
-   * <p>
-   * If multi-layer thermal model is enabled, uses MultilayerThermalCalculator for accurate radial heat transfer through
-   * multiple layers (steel, insulation, coatings, etc.).
+   * Sensible-energy advection uses the integration-weighted phase-resolved finite-volume face mass fluxes retained for
+   * each hydrodynamic stage. CLOSED external faces are therefore exactly adiabatic to mass transport while internal
+   * convection remains active. Radial heat transfer is applied to every physical cell, including section zero. This
+   * post-step update is the sole owner of ambient heat exchange; the equation object's duplicate wall source is
+   * disabled by the heat-transfer setters.
    * </p>
    *
-   * @param massFlow Total mass flow rate [kg/s]
-   * @param area Pipe cross-sectional area [m²]
-   * @param dt Time step [s]
+   * @param dt time step in seconds
+   * @param phaseMassFaceFluxes integration-weighted gas, oil, and water face mass flows in kg/s
    */
-  private void updateTransientTemperature(double massFlow, double area, double dt) {
-    // Get mixture heat capacity from inlet fluid
+  private void updateTransientTemperature(double dt, double[][] phaseMassFaceFluxes) {
     SystemInterface inletFluid = getInletStream().getFluid();
     double Cp = inletFluid.getCp("J/kgK");
-    if (Cp <= 0 || Double.isNaN(Cp)) {
-      Cp = 2000.0; // Default if not available
+    if (Cp <= 0.0 || !Double.isFinite(Cp)) {
+      Cp = 2000.0;
     }
 
-    // Initialize wall temperature profile if needed
     if (wallTemperatureProfile == null || wallTemperatureProfile.length != numberOfSections) {
       wallTemperatureProfile = new double[numberOfSections];
       for (int i = 0; i < numberOfSections; i++) {
@@ -1761,175 +1757,333 @@ public class TwoFluidPipe extends Pipeline {
       }
     }
 
-    // Initialize hydrate/wax risk arrays
     if (hydrateRiskSections == null || hydrateRiskSections.length != numberOfSections) {
       hydrateRiskSections = new boolean[numberOfSections];
       waxRiskSections = new boolean[numberOfSections];
     }
 
-    // Get Joule-Thomson coefficient if enabled
-    double muJT = 0.0;
-    if (enableJouleThomson) {
-      muJT = 0.4 / 1e5; // K/Pa (typical for natural gas)
+    double muJT = enableJouleThomson ? 0.4 / 1.0e5 : 0.0;
+    double[] previousFluidTemperatures = new double[numberOfSections];
+    for (int section = 0; section < numberOfSections; section++) {
+      previousFluidTemperatures[section] = sections[section].getTemperature();
     }
 
-    // Use multi-layer thermal model if enabled
     if (useMultilayerThermalModel && thermalCalculator != null) {
-      updateTransientTemperatureMultilayer(massFlow, area, dt, Cp, muJT);
+      updateTransientTemperatureMultilayer(phaseMassFaceFluxes, previousFluidTemperatures, dt, Cp, muJT);
       return;
     }
 
-    // Simple two-layer model (fluid + wall)
     double pipePerimeter = Math.PI * diameter;
-    double outerDiameter = diameter + 2 * wallThickness;
+    double outerDiameter = diameter + 2.0 * wallThickness;
     double outerPerimeter = Math.PI * outerDiameter;
-
-    // Wall cross-sectional area
     double wallArea = Math.PI * (outerDiameter * outerDiameter - diameter * diameter) / 4.0;
-    double wallMassPerLength = wallArea * wallDensity; // kg/m
+    double wallMassPerLength = wallArea * wallDensity;
+    double fallbackFluidMassPerLength = sections[0].getArea() * inletFluid.getDensity("kg/m3");
 
-    // Fluid properties per unit length
-    double fluidDensity = inletFluid.getDensity("kg/m3");
-    double fluidMassPerLength = area * fluidDensity;
-
-    for (int i = 1; i < numberOfSections; i++) {
+    for (int i = 0; i < numberOfSections; i++) {
       TwoFluidSection sec = sections[i];
-      TwoFluidSection prev = sections[i - 1];
+      double oldFluidTemperature = previousFluidTemperatures[i];
+      double wallTemperature = wallTemperatureProfile[i];
 
-      double T_fluid = sec.getTemperature();
-      double T_wall = wallTemperatureProfile[i];
-
-      // Get local heat transfer coefficient (profile or constant)
-      double h_inner = heatTransferCoefficient;
+      double hInner = heatTransferCoefficient;
       if (heatTransferProfile != null && i < heatTransferProfile.length) {
-        h_inner = heatTransferProfile[i];
+        hInner = heatTransferProfile[i];
       }
 
-      // Get local surface temperature (profile or constant)
-      double T_ambient = surfaceTemperature;
+      double ambientTemperature = surfaceTemperature;
       if (surfaceTemperatureProfile != null && i < surfaceTemperatureProfile.length) {
-        T_ambient = surfaceTemperatureProfile[i];
+        ambientTemperature = surfaceTemperatureProfile[i];
       }
 
-      // Outer heat transfer coefficient (including soil resistance if applicable)
-      double h_outer = h_inner;
-      if (soilThermalResistance > 0 && h_inner > 0) {
-        h_outer = 1.0 / (1.0 / h_inner + soilThermalResistance);
+      double hOuter = hInner;
+      if (soilThermalResistance > 0.0 && hInner > 0.0) {
+        hOuter = 1.0 / (1.0 / hInner + soilThermalResistance);
       }
 
-      // Heat transfer rates per unit length
-      double Q_fluid_to_wall = h_inner * pipePerimeter * (T_fluid - T_wall); // W/m
-      double Q_wall_to_ambient = h_outer * outerPerimeter * (T_wall - T_ambient); // W/m
+      double fluidToWallHeat = hInner * pipePerimeter * (oldFluidTemperature - wallTemperature);
+      double wallToAmbientHeat = hOuter * outerPerimeter * (wallTemperature - ambientTemperature);
+      double sensibleAdvection = calcSensibleAdvectionSource(i, phaseMassFaceFluxes, previousFluidTemperatures, Cp);
+      double jouleThomsonSource = calcLocalJouleThomsonSource(i, phaseMassFaceFluxes, Cp, muJT);
 
-      // Advection term: m_dot * Cp * (T_in - T_out) / dx_i
-      double T_upstream = prev.getTemperature();
-      double secDx = sec.getLength();
-      double Q_advection = massFlow * Cp * (T_upstream - T_fluid) / secDx; // W/m
+      double wallThermalMass = wallMassPerLength * wallHeatCapacity;
+      if (wallThermalMass > 0.0) {
+        wallTemperature += (fluidToWallHeat - wallToAmbientHeat) / wallThermalMass * dt;
+      }
+      wallTemperatureProfile[i] = wallTemperature;
 
-      // Joule-Thomson cooling
-      double dP = sec.getPressure() - prev.getPressure();
-      double Q_JT = massFlow * Cp * muJT * dP / secDx; // W/m (equivalent heat)
-
-      // Update wall temperature (explicit Euler)
-      double dTwall_dt = (Q_fluid_to_wall - Q_wall_to_ambient) / (wallMassPerLength * wallHeatCapacity);
-      T_wall += dTwall_dt * dt;
-      wallTemperatureProfile[i] = T_wall;
-
-      // Update fluid temperature (explicit Euler with advection)
-      double dTfluid_dt = (Q_advection - Q_fluid_to_wall + Q_JT) / (fluidMassPerLength * Cp);
-      T_fluid += dTfluid_dt * dt;
-
-      // Ensure physical bounds
-      T_fluid = Math.max(T_fluid, T_ambient);
-      T_fluid = Math.max(T_fluid, 100.0); // Absolute minimum: 100K
-      sec.setTemperature(T_fluid);
-
-      // Check hydrate/wax risk
-      hydrateRiskSections[i] = (hydrateFormationTemperature > 0 && T_fluid < hydrateFormationTemperature);
-      waxRiskSections[i] = (waxAppearanceTemperature > 0 && T_fluid < waxAppearanceTemperature);
+      double fluidMassPerLength = getLocalFluidMassPerLength(sec, fallbackFluidMassPerLength);
+      double newFluidTemperature = oldFluidTemperature
+          + (sensibleAdvection - fluidToWallHeat + jouleThomsonSource) / (fluidMassPerLength * Cp) * dt;
+      newFluidTemperature = Math.max(newFluidTemperature, 100.0);
+      sec.setTemperature(newFluidTemperature);
+      updateThermalRiskFlags(i, newFluidTemperature);
     }
   }
 
   /**
-   * Update temperature using multi-layer thermal model.
+   * Select the conservative local phase inventory used as fluid thermal inertia.
+   *
+   * @param section finite-volume cell
+   * @param fallbackMassPerLength fallback inventory in kg/m
+   * @return finite positive fluid inventory in kg/m
+   */
+  private double getLocalFluidMassPerLength(TwoFluidSection section, double fallbackMassPerLength) {
+    double localMass = section.getGasMassPerLength() + section.getOilMassPerLength() + section.getWaterMassPerLength();
+    return selectFinitePositiveFluidMassPerLength(localMass, fallbackMassPerLength);
+  }
+
+  /**
+   * Select a finite positive thermal-inertia value, preferring local conservative inventory.
+   *
+   * @param localMassPerLength local phase inventory in kg/m
+   * @param fallbackMassPerLength fallback inventory in kg/m
+   * @return local value, fallback value, or the positive numerical floor
+   */
+  static double selectFinitePositiveFluidMassPerLength(double localMassPerLength, double fallbackMassPerLength) {
+    if (Double.isFinite(localMassPerLength) && localMassPerLength > 0.0) {
+      return localMassPerLength;
+    }
+    if (Double.isFinite(fallbackMassPerLength) && fallbackMassPerLength > 0.0) {
+      return fallbackMassPerLength;
+    }
+    return 1.0e-12;
+  }
+
+  /**
+   * Calculate the explicit sensible-energy advection source for one cell.
+   *
+   * @param cell zero-based cell index
+   * @param phaseMassFaceFluxes face-by-phase mass flows in kg/s
+   * @param previousFluidTemperatures immutable pre-update cell temperatures in kelvin
+   * @param Cp fluid heat capacity in J/(kg K)
+   * @return sensible-energy source in W/m
+   */
+  private double calcSensibleAdvectionSource(int cell, double[][] phaseMassFaceFluxes,
+      double[] previousFluidTemperatures, double Cp) {
+    return calculateExplicitSensibleAdvectionSource(cell, phaseMassFaceFluxes, previousFluidTemperatures,
+        getInletStream().getFluid().getTemperature("K"), Cp, sections[cell].getLength());
+  }
+
+  /**
+   * Apply first-order upwinding to phase-resolved face mass flows using one pre-update temperature snapshot.
    *
    * <p>
-   * This method implements radial heat transfer through multiple concentric layers. The heat transfer calculation uses:
+   * Positive face flow is oriented from inlet to outlet. The external inlet uses {@code inletTemperature}; internal
+   * reverse flow uses the downstream cell. The external outlet is outflow-only.
    * </p>
-   * <ul>
-   * <li>Inner convective resistance from fluid to pipe wall</li>
-   * <li>Conductive resistance through each layer</li>
-   * <li>Thermal mass storage in each layer for transient response</li>
-   * <li>Outer convective/conductive resistance to ambient</li>
-   * </ul>
    *
-   * @param massFlow Total mass flow rate [kg/s]
-   * @param area Pipe cross-sectional area [m²]
-   * @param dt Time step [s]
-   * @param Cp Fluid heat capacity [J/(kg·K)]
-   * @param muJT Joule-Thomson coefficient [K/Pa]
+   * @param cell zero-based cell index
+   * @param phaseMassFaceFluxes face-by-phase mass flows in kg/s, with one more face than cells
+   * @param previousFluidTemperatures cell temperatures in kelvin before the explicit update
+   * @param inletTemperature external inlet temperature in kelvin
+   * @param Cp fluid heat capacity in J/(kg K)
+   * @param cellLength cell length in metres
+   * @return sensible-energy source in W/m
    */
-  private void updateTransientTemperatureMultilayer(double massFlow, double area, double dt, double Cp, double muJT) {
-    double pipePerimeter = Math.PI * diameter;
+  static double calculateExplicitSensibleAdvectionSource(int cell, double[][] phaseMassFaceFluxes,
+      double[] previousFluidTemperatures, double inletTemperature, double Cp, double cellLength) {
+    double cellTemperature = previousFluidTemperatures[cell];
+    double source = 0.0;
+    for (int phase = 0; phase < 3; phase++) {
+      double leftMassFlow = phaseMassFaceFluxes[cell][phase];
+      double rightMassFlow = phaseMassFaceFluxes[cell + 1][phase];
 
-    // Fluid properties per unit length
-    SystemInterface inletFluid = getInletStream().getFluid();
-    double fluidDensity = inletFluid.getDensity("kg/m3");
-    double fluidMassPerLength = area * fluidDensity;
-
-    // Calculate effective inner heat transfer coefficient based on flow regime
-    double h_inner = calculateInnerHTC(massFlow, area);
-
-    for (int i = 1; i < numberOfSections; i++) {
-      TwoFluidSection sec = sections[i];
-      TwoFluidSection prev = sections[i - 1];
-
-      double T_fluid = sec.getTemperature();
-
-      // Get local surface temperature (profile or constant)
-      double T_ambient = surfaceTemperature;
-      if (surfaceTemperatureProfile != null && i < surfaceTemperatureProfile.length) {
-        T_ambient = surfaceTemperatureProfile[i];
+      double leftUpwindTemperature = cellTemperature;
+      if (leftMassFlow > 0.0) {
+        leftUpwindTemperature = cell == 0 ? inletTemperature : previousFluidTemperatures[cell - 1];
       }
 
-      // Configure thermal calculator for this section
-      thermalCalculator.setFluidTemperature(T_fluid);
-      thermalCalculator.setAmbientTemperature(T_ambient);
-      thermalCalculator.setInnerHTC(h_inner);
-
-      // Update thermal layers for this time step
-      thermalCalculator.updateTransient(dt);
-
-      // Get heat loss rate using overall thermal resistance
-      double Q_loss = thermalCalculator.calculateHeatLossPerLength(); // W/m
-
-      // Advection term: m_dot * Cp * (T_in - T_out) / dx_i
-      double T_upstream = prev.getTemperature();
-      double secDx = sec.getLength();
-      double Q_advection = massFlow * Cp * (T_upstream - T_fluid) / secDx; // W/m
-
-      // Joule-Thomson cooling
-      double dP = sec.getPressure() - prev.getPressure();
-      double Q_JT = massFlow * Cp * muJT * dP / secDx; // W/m
-
-      // Update fluid temperature
-      double dTfluid_dt = (Q_advection - Q_loss + Q_JT) / (fluidMassPerLength * Cp);
-      T_fluid += dTfluid_dt * dt;
-
-      // Ensure physical bounds
-      T_fluid = Math.max(T_fluid, T_ambient);
-      T_fluid = Math.max(T_fluid, 100.0);
-      sec.setTemperature(T_fluid);
-
-      // Store wall temperature (inner surface of first layer)
-      if (thermalCalculator.getNumberOfLayers() > 0) {
-        wallTemperatureProfile[i] = thermalCalculator.calculateInterfaceTemperature(0, false);
+      double rightUpwindTemperature = cellTemperature;
+      if (rightMassFlow < 0.0 && cell + 1 < previousFluidTemperatures.length) {
+        rightUpwindTemperature = previousFluidTemperatures[cell + 1];
       }
+      // The external outlet mass flux is outflow-only. The negative right-flow branch above therefore applies only
+      // to internal faces, where the downstream cell supplies the upwind temperature.
 
-      // Check hydrate/wax risk
-      hydrateRiskSections[i] = (hydrateFormationTemperature > 0 && T_fluid < hydrateFormationTemperature);
-      waxRiskSections[i] = (waxAppearanceTemperature > 0 && T_fluid < waxAppearanceTemperature);
+      source += Cp * (leftMassFlow * (leftUpwindTemperature - cellTemperature)
+          - rightMassFlow * (rightUpwindTemperature - cellTemperature)) / cellLength;
     }
+    return source;
+  }
+
+  private double calcLocalJouleThomsonSource(int cell, double[][] phaseMassFaceFluxes, double Cp, double muJT) {
+    double leftPressure = cell > 0 ? sections[cell - 1].getPressure() : Double.NaN;
+    double rightPressure = cell + 1 < numberOfSections ? sections[cell + 1].getPressure() : Double.NaN;
+    return calculateLocalJouleThomsonSource(cell, phaseMassFaceFluxes, leftPressure, sections[cell].getPressure(),
+        rightPressure, Cp, muJT, sections[cell].getLength());
+  }
+
+  /**
+   * Calculate the Joule-Thomson source from mass entering a cell at either internal face.
+   *
+   * <p>
+   * Positive face flow is oriented from inlet to outlet. Forward flow therefore uses the left-face pressure increase,
+   * while reverse flow uses the right-face pressure increase with the same spatial orientation. External faces are
+   * excluded because no external boundary pressure is available to define their local gradient.
+   * </p>
+   *
+   * @param cell zero-based cell index
+   * @param phaseMassFaceFluxes face-by-phase mass flows in kg/s
+   * @param leftPressure left-neighbour pressure in pascals, or NaN at the inlet boundary
+   * @param cellPressure cell pressure in pascals
+   * @param rightPressure right-neighbour pressure in pascals, or NaN at the outlet boundary
+   * @param Cp fluid heat capacity in J/(kg K)
+   * @param muJT Joule-Thomson coefficient in K/Pa
+   * @param cellLength cell length in metres
+   * @return Joule-Thomson energy source in W/m
+   */
+  static double calculateLocalJouleThomsonSource(int cell, double[][] phaseMassFaceFluxes, double leftPressure,
+      double cellPressure, double rightPressure, double Cp, double muJT, double cellLength) {
+    if (muJT == 0.0 || cellLength <= 0.0) {
+      return 0.0;
+    }
+    double source = 0.0;
+    for (int phase = 0; phase < 3; phase++) {
+      double leftMassFlow = phaseMassFaceFluxes[cell][phase];
+      if (leftMassFlow > 0.0 && Double.isFinite(leftPressure)) {
+        source += leftMassFlow * Cp * muJT * (cellPressure - leftPressure) / cellLength;
+      }
+      double rightMassFlow = phaseMassFaceFluxes[cell + 1][phase];
+      if (rightMassFlow < 0.0 && Double.isFinite(rightPressure)) {
+        source += rightMassFlow * Cp * muJT * (rightPressure - cellPressure) / cellLength;
+      }
+    }
+    return source;
+  }
+
+  private double getCellFaceThroughput(int cell, double[][] phaseMassFaceFluxes) {
+    double leftThroughput = 0.0;
+    double rightThroughput = 0.0;
+    for (int phase = 0; phase < 3; phase++) {
+      leftThroughput += Math.abs(phaseMassFaceFluxes[cell][phase]);
+      rightThroughput += Math.abs(phaseMassFaceFluxes[cell + 1][phase]);
+    }
+    return Math.max(leftThroughput, rightThroughput);
+  }
+
+  private void updateThermalRiskFlags(int section, double temperature) {
+    hydrateRiskSections[section] = hydrateFormationTemperature > 0.0 && temperature < hydrateFormationTemperature;
+    waxRiskSections[section] = waxAppearanceTemperature > 0.0 && temperature < waxAppearanceTemperature;
+  }
+
+  /**
+   * Update temperature using the multi-layer radial thermal model.
+   *
+   * @param phaseMassFaceFluxes gas, oil, and water mass flow at every finite-volume face in kg/s
+   * @param previousFluidTemperatures pre-update cell temperatures in kelvin
+   * @param dt time step in seconds
+   * @param Cp fluid heat capacity in J/(kg K)
+   * @param muJT Joule-Thomson coefficient in K/Pa
+   */
+  private void updateTransientTemperatureMultilayer(double[][] phaseMassFaceFluxes, double[] previousFluidTemperatures,
+      double dt, double Cp, double muJT) {
+    double fallbackFluidMassPerLength = sections[0].getArea() * getInletStream().getFluid().getDensity("kg/m3");
+    double[][] layerTemperatures = getOrInitializeMultilayerLayerTemperatures();
+
+    for (int i = 0; i < numberOfSections; i++) {
+      TwoFluidSection sec = sections[i];
+      double oldFluidTemperature = previousFluidTemperatures[i];
+      double ambientTemperature = surfaceTemperature;
+      if (surfaceTemperatureProfile != null && i < surfaceTemperatureProfile.length) {
+        ambientTemperature = surfaceTemperatureProfile[i];
+      }
+
+      double localMassFlow = getCellFaceThroughput(i, phaseMassFaceFluxes);
+      double hInner = calculateInnerHTC(localMassFlow, sec.getArea());
+      double wallTemperature = advanceMultilayerCellThermalState(thermalCalculator, layerTemperatures[i],
+          oldFluidTemperature, ambientTemperature, hInner, dt);
+
+      double heatLoss = thermalCalculator.calculateHeatLossPerLength();
+      double sensibleAdvection = calcSensibleAdvectionSource(i, phaseMassFaceFluxes, previousFluidTemperatures, Cp);
+      double jouleThomsonSource = calcLocalJouleThomsonSource(i, phaseMassFaceFluxes, Cp, muJT);
+      double fluidMassPerLength = getLocalFluidMassPerLength(sec, fallbackFluidMassPerLength);
+      double newFluidTemperature = oldFluidTemperature
+          + (sensibleAdvection - heatLoss + jouleThomsonSource) / (fluidMassPerLength * Cp) * dt;
+
+      newFluidTemperature = Math.max(newFluidTemperature, 100.0);
+      sec.setTemperature(newFluidTemperature);
+
+      if (thermalCalculator.getNumberOfLayers() > 0) {
+        wallTemperatureProfile[i] = wallTemperature;
+      }
+      updateThermalRiskFlags(i, newFluidTemperature);
+    }
+  }
+
+  /**
+   * Advance one cell's radial thermal state using a shared calculator configuration.
+   *
+   * <p>
+   * The stored layer temperatures are restored before every advance so sequential cells cannot inherit another cell's
+   * state. The updated temperatures are copied back into the caller-owned array.
+   * </p>
+   *
+   * @param calculator configured radial thermal calculator
+   * @param layerTemperatures persistent layer temperatures for one cell, in kelvin
+   * @param fluidTemperature cell fluid temperature in kelvin
+   * @param ambientTemperature local ambient temperature in kelvin
+   * @param innerHeatTransferCoefficient fluid-side heat-transfer coefficient in W/(m2 K)
+   * @param dt accepted thermal time step in seconds
+   * @return inner-wall interface temperature in kelvin, or {@link Double#NaN} when no layers are configured
+   * @throws IllegalArgumentException if the stored profile does not match the configured layer count
+   */
+  static double advanceMultilayerCellThermalState(MultilayerThermalCalculator calculator, double[] layerTemperatures,
+      double fluidTemperature, double ambientTemperature, double innerHeatTransferCoefficient, double dt) {
+    List<RadialThermalLayer> layers = calculator.getLayers();
+    if (layerTemperatures == null || layerTemperatures.length != layers.size()) {
+      throw new IllegalArgumentException("Stored radial-layer profile must match the configured layer count");
+    }
+    for (int layerIndex = 0; layerIndex < layers.size(); layerIndex++) {
+      layers.get(layerIndex).initializeTemperature(layerTemperatures[layerIndex]);
+    }
+
+    calculator.setFluidTemperature(fluidTemperature);
+    calculator.setAmbientTemperature(ambientTemperature);
+    calculator.setInnerHTC(innerHeatTransferCoefficient);
+    calculator.updateTransient(dt);
+
+    for (int layerIndex = 0; layerIndex < layers.size(); layerIndex++) {
+      layerTemperatures[layerIndex] = layers.get(layerIndex).getTemperature();
+    }
+    return layers.isEmpty() ? Double.NaN : calculator.calculateInterfaceTemperature(0, false);
+  }
+
+  /**
+   * Return the persistent radial-layer temperature state for every finite-volume cell.
+   *
+   * <p>
+   * {@link MultilayerThermalCalculator} is stateful. Each cell therefore stores its own layer temperatures and restores
+   * them before advancing the shared configuration template exactly once per accepted thermal time step.
+   * </p>
+   *
+   * @return cell-by-layer temperature array in kelvin
+   */
+  private double[][] getOrInitializeMultilayerLayerTemperatures() {
+    int layerCount = thermalCalculator.getNumberOfLayers();
+    boolean dimensionsMatch = multilayerLayerTemperatureProfiles != null
+        && multilayerLayerTemperatureProfiles.length == numberOfSections;
+    if (dimensionsMatch) {
+      for (double[] cellTemperatures : multilayerLayerTemperatureProfiles) {
+        if (cellTemperatures.length != layerCount) {
+          dimensionsMatch = false;
+          break;
+        }
+      }
+    }
+    if (dimensionsMatch) {
+      return multilayerLayerTemperatureProfiles;
+    }
+
+    multilayerLayerTemperatureProfiles = new double[numberOfSections][layerCount];
+    List<RadialThermalLayer> layers = thermalCalculator.getLayers();
+    for (int cell = 0; cell < numberOfSections; cell++) {
+      for (int layerIndex = 0; layerIndex < layerCount; layerIndex++) {
+        double initialTemperature = layers.get(layerIndex).getTemperature();
+        multilayerLayerTemperatureProfiles[cell][layerIndex] = Double.isFinite(initialTemperature) ? initialTemperature
+            : sections[cell].getTemperature();
+      }
+    }
+    return multilayerLayerTemperatureProfiles;
   }
 
   /**
@@ -3322,7 +3476,12 @@ public class TwoFluidPipe extends Pipeline {
 
       // 3. Calculate RHS and advance solution
       final double dtFinal = dtActual;
+      final boolean captureThermalStageFluxes = enableHeatTransfer && heatTransferCoefficient > 0.0;
       final List<TwoFluidConservationEquations.MassBalanceRate> stageMassBalanceRates = new ArrayList<>();
+      final double[] thermalStageWeights = captureThermalStageFluxes ? getTimeIntegrationStageWeights() : new double[0];
+      final double[][] weightedPhaseMassFaceFluxes = captureThermalStageFluxes ? new double[numberOfSections + 1][3]
+          : new double[0][0];
+      final int[] thermalStageIndex = { 0 };
 
       TimeIntegrator.RHSFunction rhs = (state, t) -> {
         equations.applyState(sections, state);
@@ -3333,6 +3492,14 @@ public class TwoFluidPipe extends Pipeline {
         applyBoundaryConditions();
         double[][] derivative = equations.calcRHS(sections, dx);
         stageMassBalanceRates.add(equations.getLastMassBalanceRate());
+        if (captureThermalStageFluxes) {
+          int stage = thermalStageIndex[0]++;
+          if (stage >= thermalStageWeights.length) {
+            throw new IllegalStateException(
+                "Received more thermal flux stages than expected for " + timeIntegrator.getMethod());
+          }
+          equations.accumulateLastPhaseMassFaceFluxes(weightedPhaseMassFaceFluxes, thermalStageWeights[stage]);
+        }
         return derivative;
       };
 
@@ -3511,10 +3678,12 @@ public class TwoFluidPipe extends Pipeline {
       }
 
       // 9. Update temperature profile if heat transfer is enabled
-      if (enableHeatTransfer && heatTransferCoefficient > 0) {
-        double massFlow = getInletStream().getFlowRate("kg/sec");
-        double area = Math.PI * diameter * diameter / 4.0;
-        updateTransientTemperature(massFlow, area, dtActual);
+      if (captureThermalStageFluxes) {
+        if (thermalStageIndex[0] != thermalStageWeights.length) {
+          throw new IllegalStateException("Expected " + thermalStageWeights.length + " thermal flux stages for "
+              + timeIntegrator.getMethod() + " but received " + thermalStageIndex[0]);
+        }
+        updateTransientTemperature(dtActual, weightedPhaseMassFaceFluxes);
       }
 
       // 10. Advance time
@@ -3535,7 +3704,7 @@ public class TwoFluidPipe extends Pipeline {
 
   private void accumulateAcceptedMassBalance(List<TwoFluidConservationEquations.MassBalanceRate> stageRates,
       double timeStepSeconds, double[] inletMassKg, double[] outletMassKg, double[] sourceMassKg) {
-    double[] weights = getMassBalanceStageWeights(stageRates.size());
+    double[] weights = getTimeIntegrationStageWeights(stageRates.size());
     for (int stage = 0; stage < stageRates.size(); stage++) {
       TwoFluidConservationEquations.MassBalanceRate rate = stageRates.get(stage);
       double[] inletRate = rate.getInletMassFlowKgPerSecond();
@@ -3550,7 +3719,16 @@ public class TwoFluidPipe extends Pipeline {
     }
   }
 
-  private double[] getMassBalanceStageWeights(int stageCount) {
+  private double[] getTimeIntegrationStageWeights(int stageCount) {
+    double[] weights = getTimeIntegrationStageWeights();
+    if (stageCount != weights.length) {
+      throw new IllegalStateException("Expected " + weights.length + " integration stages for "
+          + timeIntegrator.getMethod() + " but received " + stageCount);
+    }
+    return weights;
+  }
+
+  private double[] getTimeIntegrationStageWeights() {
     TimeIntegrator.Method method = timeIntegrator.getMethod();
     double[] weights;
     switch (method) {
@@ -3569,10 +3747,6 @@ public class TwoFluidPipe extends Pipeline {
       break;
     default:
       throw new IllegalStateException("Unsupported time integration method: " + method);
-    }
-    if (stageCount != weights.length) {
-      throw new IllegalStateException(
-          "Expected " + weights.length + " mass-balance stages for " + method + " but received " + stageCount);
     }
     return weights;
   }
@@ -5785,7 +5959,8 @@ public class TwoFluidPipe extends Pipeline {
    * Set surface temperature for heat transfer calculations.
    *
    * <p>
-   * Enables heat transfer modeling. The pipe loses/gains heat to reach this temperature.
+   * Defines the thermal boundary temperature and enables the energy equation. A positive heat-transfer coefficient,
+   * coefficient profile, or configured multi-layer calculator is also required before a transient heat flux is applied.
    * </p>
    *
    * @param temperature Surface temperature in the specified unit
@@ -5804,7 +5979,8 @@ public class TwoFluidPipe extends Pipeline {
     if (equations != null) {
       equations.setIncludeEnergyEquation(true);
       equations.setSurfaceTemperature(this.surfaceTemperature);
-      equations.setEnableHeatTransfer(true);
+      // The post-step temperature model owns ambient heat exchange.
+      equations.setEnableHeatTransfer(false);
     }
   }
 
@@ -5841,7 +6017,8 @@ public class TwoFluidPipe extends Pipeline {
       if (equations != null) {
         equations.setIncludeEnergyEquation(true);
         equations.setHeatTransferCoefficient(heatTransferCoefficient);
-        equations.setEnableHeatTransfer(true);
+        // The post-step temperature model owns ambient heat exchange.
+        equations.setEnableHeatTransfer(false);
       }
     }
   }
@@ -6591,9 +6768,10 @@ public class TwoFluidPipe extends Pipeline {
    */
   public void setThermalCalculator(MultilayerThermalCalculator calculator) {
     this.thermalCalculator = calculator;
+    this.multilayerLayerTemperatureProfiles = null;
     this.useMultilayerThermalModel = (calculator != null);
     if (calculator != null) {
-      enableHeatTransfer = true;
+      setHeatTransferCoefficient(calculator.calculateOverallUValue());
     }
   }
 
@@ -6615,9 +6793,9 @@ public class TwoFluidPipe extends Pipeline {
    */
   public void setUseMultilayerThermalModel(boolean enable) {
     this.useMultilayerThermalModel = enable;
+    this.multilayerLayerTemperatureProfiles = null;
     if (enable) {
-      enableHeatTransfer = true;
-      getThermalCalculator(); // Ensure created
+      setHeatTransferCoefficient(getThermalCalculator().calculateOverallUValue());
     }
   }
 
@@ -6652,11 +6830,10 @@ public class TwoFluidPipe extends Pipeline {
     MultilayerThermalCalculator calc = getThermalCalculator();
     calc.createSubseaPipeConfig(diameter, wallThickness, insulationThickness, concreteThickness, insulationMaterial);
     calc.setAmbientTemperature(surfaceTemperature);
+    multilayerLayerTemperatureProfiles = null;
     useMultilayerThermalModel = true;
-    enableHeatTransfer = true;
-
-    // Update the simple U-value to match for backwards compatibility
-    heatTransferCoefficient = calc.calculateOverallUValue();
+    // Update the simple U-value and all thermal ownership flags consistently.
+    setHeatTransferCoefficient(calc.calculateOverallUValue());
   }
 
   /**
@@ -6671,10 +6848,9 @@ public class TwoFluidPipe extends Pipeline {
         : RadialThermalLayer.MaterialType.SOIL_DRY;
     calc.createBuriedOnshorePipe(diameter, wallThickness, burialDepth, soilType);
     calc.setAmbientTemperature(surfaceTemperature);
+    multilayerLayerTemperatureProfiles = null;
     useMultilayerThermalModel = true;
-    enableHeatTransfer = true;
-
-    heatTransferCoefficient = calc.calculateOverallUValue();
+    setHeatTransferCoefficient(calc.calculateOverallUValue());
   }
 
   /**

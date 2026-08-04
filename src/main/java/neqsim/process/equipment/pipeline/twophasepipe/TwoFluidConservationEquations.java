@@ -132,6 +132,9 @@ public class TwoFluidConservationEquations implements Serializable {
   /** Most recent phase-resolved boundary and source rates calculated by {@link #calcRHS}. */
   private MassBalanceRate lastMassBalanceRate = new MassBalanceRate(new double[3], new double[3], new double[3]);
 
+  /** Phase-resolved face mass flows from the most recent {@link #calcRHS} evaluation. */
+  private double[][] lastPhaseMassFaceFluxes = new double[0][3];
+
   /**
    * Instantaneous phase-resolved terms in the finite-volume domain mass balance.
    */
@@ -219,6 +222,8 @@ public class TwoFluidConservationEquations implements Serializable {
     // retained for a stage-consistent domain mass-balance diagnostic.
     double[] inletFlux = calcInletFlux(sections[0]);
     double[] outletFlux = calcOutletFlux(sections[nCells - 1]);
+    lastPhaseMassFaceFluxes = populatePhaseMassFaceFluxes(lastPhaseMassFaceFluxes, nCells, fluxes, inletFlux,
+        outletFlux);
 
     // Assemble RHS: dU/dt = -1/dx_i * (F_{i+1/2} - F_{i-1/2}) + S_i
     //
@@ -275,6 +280,109 @@ public class TwoFluidConservationEquations implements Serializable {
    */
   public MassBalanceRate getLastMassBalanceRate() {
     return lastMassBalanceRate;
+  }
+
+  /**
+   * Get a defensive copy of the phase-resolved face mass flows from the most recent
+   * {@link #calcRHS(TwoFluidSection[], double)} evaluation.
+   *
+   * @return face mass flows with shape {@code [sections.length + 1][3]}, or an empty array before the first evaluation
+   */
+  public double[][] getLastPhaseMassFaceFluxes() {
+    double[][] snapshot = new double[lastPhaseMassFaceFluxes.length][];
+    for (int face = 0; face < lastPhaseMassFaceFluxes.length; face++) {
+      snapshot[face] = lastPhaseMassFaceFluxes[face].clone();
+    }
+    return snapshot;
+  }
+
+  /**
+   * Add the most recently evaluated phase-resolved face mass flows to a caller-owned accumulator.
+   *
+   * <p>
+   * This avoids allocating a defensive snapshot for every Runge-Kutta stage while keeping the retained internal buffer
+   * encapsulated. The accumulator must have shape {@code [sections.length + 1][3]} for the most recent
+   * {@link #calcRHS(TwoFluidSection[], double)} evaluation.
+   * </p>
+   *
+   * @param accumulator destination receiving {@code weight * faceMassFlow}
+   * @param weight integration-stage weight
+   * @throws IllegalArgumentException if the accumulator shape is incompatible or the weight is not finite
+   */
+  public void accumulateLastPhaseMassFaceFluxes(double[][] accumulator, double weight) {
+    if (accumulator == null || accumulator.length != lastPhaseMassFaceFluxes.length) {
+      throw new IllegalArgumentException("Accumulator must match the most recent face-flux shape");
+    }
+    if (!Double.isFinite(weight)) {
+      throw new IllegalArgumentException("Integration-stage weight must be finite");
+    }
+    for (int face = 0; face < lastPhaseMassFaceFluxes.length; face++) {
+      if (accumulator[face] == null || accumulator[face].length != 3) {
+        throw new IllegalArgumentException("Accumulator must contain three phase columns at every face");
+      }
+      for (int phase = 0; phase < 3; phase++) {
+        accumulator[face][phase] += weight * lastPhaseMassFaceFluxes[face][phase];
+      }
+    }
+  }
+
+  /**
+   * Calculate phase-resolved mass flow at every finite-volume face from the same boundary and AUSM+ fluxes used by the
+   * conservative equations.
+   *
+   * <p>
+   * Rows are faces from inlet through outlet; columns are gas, oil, and water in kg/s. A positive value points in the
+   * increasing section-index direction. CLOSED boundaries are represented by the zero boundary velocities imposed by
+   * {@link neqsim.process.equipment.pipeline.TwoFluidPipe}, so their external face flow is exactly zero while internal
+   * convection remains available.
+   * </p>
+   *
+   * @param sections current finite-volume sections
+   * @param dx minimum mesh spacing in metres, retained for consistency with the spatial flux API
+   * @return face mass flows with shape {@code [sections.length + 1][3]}
+   * @throws IllegalArgumentException if {@code sections} is null or empty
+   */
+  public double[][] calcPhaseMassFaceFluxes(TwoFluidSection[] sections, double dx) {
+    if (sections == null || sections.length == 0) {
+      throw new IllegalArgumentException("At least one section is required to calculate face fluxes");
+    }
+
+    double[][] interfaceFluxes = sections.length > 1 ? calcInterfaceFluxes(sections, dx) : new double[0][NUM_EQUATIONS];
+    double[] inletFlux = calcInletFlux(sections[0]);
+    double[] outletFlux = calcOutletFlux(sections[sections.length - 1]);
+    return populatePhaseMassFaceFluxes(null, sections.length, interfaceFluxes, inletFlux, outletFlux);
+  }
+
+  /**
+   * Populate a caller-provided face-flux buffer, allocating only when its face count is incompatible.
+   *
+   * @param phaseMassFaceFluxes reusable destination, or {@code null}
+   * @param sectionCount number of finite-volume sections
+   * @param interfaceFluxes conservative fluxes at internal faces
+   * @param inletFlux conservative inlet-face flux
+   * @param outletFlux conservative outlet-face flux
+   * @return populated face mass flows with gas, oil, and water columns
+   */
+  private double[][] populatePhaseMassFaceFluxes(double[][] phaseMassFaceFluxes, int sectionCount,
+      double[][] interfaceFluxes, double[] inletFlux, double[] outletFlux) {
+    if (phaseMassFaceFluxes == null || phaseMassFaceFluxes.length != sectionCount + 1) {
+      phaseMassFaceFluxes = new double[sectionCount + 1][3];
+    }
+    phaseMassFaceFluxes[0][0] = inletFlux[IDX_GAS_MASS];
+    phaseMassFaceFluxes[0][1] = inletFlux[IDX_OIL_MASS];
+    phaseMassFaceFluxes[0][2] = inletFlux[IDX_WATER_MASS];
+
+    for (int face = 1; face < sectionCount; face++) {
+      double[] interfaceFlux = interfaceFluxes[face - 1];
+      phaseMassFaceFluxes[face][0] = interfaceFlux[IDX_GAS_MASS];
+      phaseMassFaceFluxes[face][1] = interfaceFlux[IDX_OIL_MASS];
+      phaseMassFaceFluxes[face][2] = interfaceFlux[IDX_WATER_MASS];
+    }
+
+    phaseMassFaceFluxes[sectionCount][0] = outletFlux[IDX_GAS_MASS];
+    phaseMassFaceFluxes[sectionCount][1] = outletFlux[IDX_OIL_MASS];
+    phaseMassFaceFluxes[sectionCount][2] = outletFlux[IDX_WATER_MASS];
+    return phaseMassFaceFluxes;
   }
 
   /**
