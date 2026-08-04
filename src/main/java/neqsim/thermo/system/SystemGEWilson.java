@@ -1,7 +1,6 @@
 package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseGEWilson;
-import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
@@ -10,7 +9,7 @@ import neqsim.thermo.phase.PhaseSrkEos;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class SystemGEWilson extends SystemEos {
+public class SystemGEWilson extends SystemEosGE {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -40,25 +39,10 @@ public class SystemGEWilson extends SystemEos {
    */
   public SystemGEWilson(double T, double P, boolean checkForSolids) {
     super(T, P, checkForSolids);
-    modelName = "UNIFAC-GE-model";
+    modelName = "Wilson-GE-model";
     attractiveTermNumber = 0;
 
-    phaseArray[0] = new PhaseSrkEos();
-    phaseArray[0].setTemperature(T);
-    phaseArray[0].setPressure(P);
-    for (int i = 1; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseGEWilson();
-      phaseArray[i].setTemperature(T);
-      phaseArray[i].setPressure(P);
-    }
-
-    if (solidPhaseCheck) {
-      setNumberOfPhases(4);
-      phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
-      phaseArray[numberOfPhases - 1].setTemperature(T);
-      phaseArray[numberOfPhases - 1].setPressure(P);
-      phaseArray[numberOfPhases - 1].setRefPhase(phaseArray[1].getRefPhase());
-    }
+    configureEosGePhases(T, P, new PhaseSrkEos(), new PhaseGEWilson());
   }
 
   /** {@inheritDoc} */
