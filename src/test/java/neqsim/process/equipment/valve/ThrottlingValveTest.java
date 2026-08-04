@@ -616,8 +616,8 @@ public class ThrottlingValveTest {
   }
 
   /**
-   * Valve entropy requires caloric properties but not level-3 composition derivatives. The diagnostic must preserve
-   * the level-3 reference result and surrounding stream state at the base condition and a nearby operating point.
+   * Valve entropy requires caloric properties but not level-3 composition derivatives. The diagnostic must preserve the
+   * level-3 reference result and surrounding stream state at the base condition and a nearby operating point.
    */
   @Test
   void testEntropyProductionUsesMinimumThermodynamicInitializationLevel() {
@@ -646,8 +646,7 @@ public class ThrottlingValveTest {
     assertMinimumEntropyInitialization(fluid, valve);
   }
 
-  private static void assertMinimumEntropyInitialization(InitTrackingSystemSrkEos fluid,
-      ThrottlingValve valve) {
+  private static void assertMinimumEntropyInitialization(InitTrackingSystemSrkEos fluid, ThrottlingValve valve) {
     valve.getInletStream().getFluid().init(3);
     valve.getOutletStream().getFluid().init(3);
     double expectedEntropy = valve.getOutletStream().getFluid().getEntropy("J/K")
