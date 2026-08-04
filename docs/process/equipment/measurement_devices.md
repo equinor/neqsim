@@ -278,9 +278,10 @@ double uncertainty = meter.getRelativeUncertaintyOfCOverPhi();   // 6.5 Table 2
 List<String> issues = meter.getValidityViolations();             // empty when in range
 ```
 
-> **ISO/TR 11583 replaces the discharge coefficient.** In wet-gas mode the value passed to
-> `setDischargeCoefficient` is ignored; the wet-gas $C$ of Equation (4) is used instead, and it
-> tends to 1 rather than 0.985.
+> **ISO/TR 11583 replaces the discharge coefficient by default.** In wet-gas mode the value passed
+> to `setDischargeCoefficient` is overridden by the wet-gas $C$ of Equation (4) (which tends to 1
+> rather than 0.985), unless `setUseWetGasDischargeCoefficient(false)` is called, in which case the
+> configured (e.g. in-service-calibrated) $C$ is kept and only the $\Phi$ over-reading is applied.
 
 Limits of use (reported, not enforced): $0.4\le\beta\le0.75$, $0<X\le0.3$, $Fr_{gas,th}>3$,
 $\rho_{gas}/\rho_{liquid}>0.02$, $D\ge50$ mm. The Technical Report covers a single liquid at

@@ -88,6 +88,7 @@ public class ConeFlowMeter extends DifferentialPressureFlowMeter {
    * @param coneDiameter cone diameter dc, must be positive
    * @param unit length unit, one of "m", "cm", "mm" or "in"
    */
+  @Override
   public void setGeometry(double pipeDiameter, double coneDiameter, String unit) {
     setPipeDiameter(pipeDiameter, unit);
     double pipeDiameterMeters = getPipeDiameter("m");

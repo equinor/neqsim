@@ -95,6 +95,7 @@ public class WedgeFlowMeter extends DifferentialPressureFlowMeter {
    * @param wedgeHeight wedge gap height h, must satisfy 0 &lt; h &lt; D
    * @param unit length unit, one of "m", "cm", "mm" or "in"
    */
+  @Override
   public void setGeometry(double pipeDiameter, double wedgeHeight, String unit) {
     setPipeDiameter(pipeDiameter, unit);
     double pipeDiameterMeters = getPipeDiameter("m");

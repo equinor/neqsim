@@ -460,7 +460,7 @@ public abstract class DifferentialPressureFlowMeter extends StreamMeasurementDev
   /**
    * Returns the mass flow rate derived from the differential pressure.
    *
-   * @param unit mass flow unit, one of "kg/sec", "kg/min", "kg/hr", "kg/day", "tonnes/year" or "MSm3/day"
+   * @param unit mass flow unit, one of "kg/sec", "kg/min", "kg/hr", "kg/day" or "tonnes/year"
    * @return mass flow rate in the requested unit, 0.0 when the differential pressure is not positive
    */
   public double getMassFlowRate(String unit) {
@@ -483,16 +483,39 @@ public abstract class DifferentialPressureFlowMeter extends StreamMeasurementDev
 
   /**
    * Returns the standard-condition volume flow rate, using the standard density (15 degC, 1 atm) of the stream fluid.
+   * The gas-phase molar mass is used when a gas phase is present (falling back to the mixture molar mass otherwise), so
+   * a wet-gas stream's liquid content does not bias the reported gas standard volume flow.
    *
    * @param unit standard volume flow unit, one of "Sm3/sec", "Sm3/hr", "Sm3/day", "kSm3/hr" or "MSm3/day"
    * @return standard volume flow rate in the requested unit
    */
   public double getStandardVolumeFlowRate(String unit) {
-    double standardDensity = stream.getThermoSystem().getDensity("kg/Sm3");
+    double standardDensity = getGasStandardDensity();
     if (standardDensity <= 0.0) {
       return Double.NaN;
     }
     return getMassFlowRatePerSecond() / standardDensity / volumeFlowConversionToM3PerSecond(unit);
+  }
+
+  /**
+   * Returns the standard density (15 degC, 1 atm) used by {@link #getStandardVolumeFlowRate(String)}, preferring the
+   * gas-phase molar mass over the overall mixture molar mass when a gas phase is present.
+   *
+   * @return standard density [kg/Sm3]
+   */
+  private double getGasStandardDensity() {
+    SystemInterface fluid = stream.getThermoSystem();
+    try {
+      if (fluid.hasPhaseType("gas")) {
+        double molarMass = fluid.getPhase("gas").getMolarMass();
+        return molarMass * neqsim.thermo.ThermodynamicConstantsInterface.atm
+            / neqsim.thermo.ThermodynamicConstantsInterface.R
+            / neqsim.thermo.ThermodynamicConstantsInterface.standardStateTemperature;
+      }
+    } catch (Exception ex) {
+      logger.debug("could not read gas phase molar mass for {}, using mixture standard density", getName(), ex);
+    }
+    return fluid.getDensity("kg/Sm3");
   }
 
   /** {@inheritDoc} */

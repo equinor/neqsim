@@ -4,12 +4,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+
 import org.junit.jupiter.api.Test;
+
 import neqsim.integration.EOSComparison;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
@@ -17,13 +20,13 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.distillation.ColumnSpecification;
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.distillation.RateBasedPackedColumn;
-import neqsim.process.equipment.energy.EnergyNetworkSolver;
 import neqsim.process.equipment.distillation.internals.ColumnInternalsDesigner;
+import neqsim.process.equipment.energy.EnergyNetworkSolver;
 import neqsim.process.equipment.heatexchanger.CoolingWaterSystem;
 import neqsim.process.equipment.heatexchanger.FiredHeater;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
-import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction.InterfacialFrictionResult;
+import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.EnergyBus;
 import neqsim.process.equipment.stream.EnergyNetworkReport;
@@ -1728,6 +1731,204 @@ public class DocExamplesCompilationTest {
     assertEquals(inletInternalEnergy, vuFluid.getInternalEnergy(), 1.0e-2);
     assertTrue(Double.isFinite(vuFluid.getTemperature("K")));
     assertTrue(vuFluid.getPressure("bara") > 0.0);
+  }
+
+  /**
+   * Builds a wet-gas stream (methane-rich gas with a small heptane liquid load) for the differential-pressure
+   * flow-meter documentation examples in docs/process/equipment/measurement_devices.md.
+   *
+   * @return a run Stream with both a gas and a liquid phase
+   */
+  private StreamInterface buildDocExampleWetGasStream() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 20.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.05);
+    fluid.addComponent("n-heptane", 0.05);
+    fluid.setMixingRule("classic");
+    Stream stream = new Stream("wet gas feed", fluid);
+    stream.setFlowRate(50000.0, "kg/hr");
+    stream.run();
+    return stream;
+  }
+
+  /**
+   * VenturiFlowMeter dry-gas example from docs/process/equipment/measurement_devices.md.
+   */
+  @Test
+  public void testVenturiFlowMeterDoc() {
+    StreamInterface stream = buildDocExampleWetGasStream();
+
+    neqsim.process.measurementdevice.VenturiFlowMeter meter =
+        new neqsim.process.measurementdevice.VenturiFlowMeter("FT-001", stream);
+    meter.setGeometry(205.1, 138.1, "mm");
+    meter.setDischargeCoefficient(0.985);
+    meter.setDifferentialPressure(300.0, "mbar");
+
+    double massFlow = meter.getMassFlowRate("kg/hr");
+    double actualFlow = meter.getVolumeFlowRate("m3/hr");
+    double standardFlow = meter.getStandardVolumeFlowRate("Sm3/hr");
+    boolean withinIso = meter.isWithinIso5167ValidityRange();
+
+    assertTrue(massFlow > 0.0);
+    assertTrue(actualFlow > 0.0);
+    assertTrue(standardFlow > 0.0);
+    assertTrue(withinIso);
+  }
+
+  /**
+   * VenturiFlowMeter ISO/TR 11583 wet-gas example from docs/process/equipment/measurement_devices.md.
+   */
+  @Test
+  public void testVenturiFlowMeterWetGasIsoTr11583Doc() {
+    StreamInterface stream = buildDocExampleWetGasStream();
+
+    neqsim.process.measurementdevice.VenturiFlowMeter meter =
+        new neqsim.process.measurementdevice.VenturiFlowMeter("FT-001", stream);
+    meter.setGeometry(205.1, 138.1, "mm");
+    meter.setDischargeCoefficient(0.985);
+    meter.setDifferentialPressure(300.0, "mbar");
+    meter.setWetGasCorrelation(neqsim.process.measurementdevice.VenturiFlowMeter.WetGasCorrelation.ISO_TR_11583);
+    meter.setSurfaceTensionFactor(neqsim.process.measurementdevice.VenturiFlowMeter.H_HYDROCARBON);
+    meter.setLiquidFromStream(true);
+
+    double gasFlow = meter.getMassFlowRate("kg/sec");
+    double x = meter.getLockhartMartinelliParameter();
+    double phi = meter.getOverReadingFactor();
+    double uncertainty = meter.getRelativeUncertaintyOfCOverPhi();
+    List<String> issues = meter.getValidityViolations();
+
+    assertTrue(gasFlow > 0.0);
+    assertTrue(x > 0.0);
+    assertTrue(phi >= 1.0);
+    assertTrue(Double.isFinite(uncertainty));
+    assertNotNull(issues);
+  }
+
+  /**
+   * VenturiFlowMeter de Leeuw (1997) wet-gas example from docs/process/equipment/measurement_devices.md.
+   */
+  @Test
+  public void testVenturiFlowMeterWetGasDeLeeuwDoc() {
+    StreamInterface stream = buildDocExampleWetGasStream();
+
+    neqsim.process.measurementdevice.VenturiFlowMeter meter =
+        new neqsim.process.measurementdevice.VenturiFlowMeter("FT-001", stream);
+    meter.setGeometry(205.1, 138.1, "mm");
+    meter.setDischargeCoefficient(0.985);
+    meter.setDifferentialPressure(300.0, "mbar");
+    meter.setWetGasCorrelation(neqsim.process.measurementdevice.VenturiFlowMeter.WetGasCorrelation.DE_LEEUW);
+    meter.setLiquidFromStream(true);
+
+    double gasFlow = meter.getMassFlowRate("kg/sec");
+    double phi = meter.getOverReadingFactor();
+    boolean inRange = meter.isWithinDeLeeuwValidityRange();
+
+    assertTrue(gasFlow > 0.0);
+    assertTrue(phi >= 1.0);
+    assertNotNull(Boolean.valueOf(inRange));
+  }
+
+  /**
+   * OrificeFlowMeter dry-gas example from docs/process/equipment/measurement_devices.md.
+   */
+  @Test
+  public void testOrificeFlowMeterDoc() {
+    StreamInterface stream = buildDocExampleWetGasStream();
+
+    neqsim.process.measurementdevice.OrificeFlowMeter meter =
+        new neqsim.process.measurementdevice.OrificeFlowMeter("FT-200", stream);
+    meter.setGeometry(200.0, 100.0, "mm");
+    meter.setTappingArrangement(neqsim.process.measurementdevice.OrificeFlowMeter.TappingArrangement.FLANGE);
+    meter.setDifferentialPressure(300.0, "mbar");
+
+    double massFlow = meter.getMassFlowRate("kg/hr");
+    List<String> issues = meter.getValidityViolations();
+
+    assertTrue(massFlow > 0.0);
+    assertNotNull(issues);
+  }
+
+  /**
+   * OrificeFlowMeter ISO/TR 11583 Clause 7 wet-gas example from docs/process/equipment/measurement_devices.md.
+   */
+  @Test
+  public void testOrificeFlowMeterWetGasIsoTr11583Doc() {
+    StreamInterface stream = buildDocExampleWetGasStream();
+
+    neqsim.process.measurementdevice.OrificeFlowMeter meter =
+        new neqsim.process.measurementdevice.OrificeFlowMeter("FT-200", stream);
+    meter.setGeometry(200.0, 100.0, "mm");
+    meter.setDifferentialPressure(300.0, "mbar");
+    meter.setWetGasCorrelation(neqsim.process.measurementdevice.OrificeFlowMeter.WetGasCorrelation.ISO_TR_11583);
+    meter.setLiquidFromStream(true);
+
+    double gasFlow = meter.getMassFlowRate("kg/sec");
+    double x = meter.getLockhartMartinelliParameter();
+    double froude = meter.getGasDensiometricFroudeNumber();
+    double phi = meter.getOverReadingFactor();
+    List<String> issues = meter.getValidityViolations();
+
+    assertTrue(gasFlow > 0.0);
+    assertTrue(x > 0.0);
+    assertTrue(Double.isFinite(froude));
+    assertTrue(phi >= 1.0);
+    assertNotNull(issues);
+  }
+
+  /**
+   * NozzleFlowMeter example from docs/process/equipment/measurement_devices.md.
+   */
+  @Test
+  public void testNozzleFlowMeterDoc() {
+    StreamInterface stream = buildDocExampleWetGasStream();
+
+    neqsim.process.measurementdevice.NozzleFlowMeter meter =
+        new neqsim.process.measurementdevice.NozzleFlowMeter("FT-300", stream);
+    meter.setNozzleType(neqsim.process.measurementdevice.NozzleFlowMeter.NozzleType.ISA_1932);
+    meter.setGeometry(200.0, 100.0, "mm");
+    meter.setDifferentialPressure(300.0, "mbar");
+
+    double massFlow = meter.getMassFlowRate("kg/hr");
+
+    assertTrue(massFlow > 0.0);
+  }
+
+  /**
+   * ConeFlowMeter example from docs/process/equipment/measurement_devices.md.
+   */
+  @Test
+  public void testConeFlowMeterDoc() {
+    StreamInterface stream = buildDocExampleWetGasStream();
+
+    neqsim.process.measurementdevice.ConeFlowMeter meter =
+        new neqsim.process.measurementdevice.ConeFlowMeter("FT-400", stream);
+    meter.setGeometry(200.0, 160.0, "mm");
+    meter.setDifferentialPressure(300.0, "mbar");
+
+    double massFlow = meter.getMassFlowRate("kg/hr");
+    double coneDiameter = meter.getConeDiameter("mm");
+
+    assertTrue(massFlow > 0.0);
+    assertEquals(160.0, coneDiameter, 1.0e-9);
+  }
+
+  /**
+   * WedgeFlowMeter example from docs/process/equipment/measurement_devices.md.
+   */
+  @Test
+  public void testWedgeFlowMeterDoc() {
+    StreamInterface stream = buildDocExampleWetGasStream();
+
+    neqsim.process.measurementdevice.WedgeFlowMeter meter =
+        new neqsim.process.measurementdevice.WedgeFlowMeter("FT-500", stream);
+    meter.setGeometry(200.0, 80.0, "mm");
+    meter.setDifferentialPressure(300.0, "mbar");
+
+    double massFlow = meter.getMassFlowRate("kg/hr");
+    double wedgeRatio = meter.getWedgeRatio();
+
+    assertTrue(massFlow > 0.0);
+    assertEquals(0.4, wedgeRatio, 1.0e-9);
   }
 
 }
