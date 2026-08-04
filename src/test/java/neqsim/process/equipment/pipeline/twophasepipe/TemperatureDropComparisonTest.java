@@ -803,8 +803,7 @@ class TemperatureDropComparisonTest {
         "The closed inlet cell must not heat during cooldown");
     assertTrue(secondCooldownTemperature < firstCooldownTemperature - 1.0e-6,
         "The closed inlet cell must cool through radial heat transfer");
-    assertTrue(secondCooldownTemperature >= 273.15,
-        "The explicit cooldown step must not undershoot ambient");
+    assertTrue(secondCooldownTemperature >= 273.15, "The explicit cooldown step must not undershoot ambient");
   }
 
 }
