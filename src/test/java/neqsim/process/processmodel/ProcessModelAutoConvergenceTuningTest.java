@@ -488,8 +488,10 @@ class ProcessModelAutoConvergenceTuningTest {
     InactiveRecycleModule module = new InactiveRecycleModule("bypassed module");
     module.getOperations().add(recycle);
 
+    Separator feedBoundary = new Separator("active feed boundary", feed);
     ProcessSystem area = new ProcessSystem("inactive module area");
     area.add(feed);
+    area.add(feedBoundary);
     area.add(module);
 
     ProcessModel model = new ProcessModel();
@@ -500,8 +502,8 @@ class ProcessModelAutoConvergenceTuningTest {
 
     JsonObject massClosure = JsonParser.parseString(model.getConvergenceReportJson()).getAsJsonObject()
         .getAsJsonObject("massClosure");
-    assertTrue(massClosure.get("relativeError").isJsonNull(),
-        "No active recycle means the closure error is not evaluated");
+    assertEquals(0.0, massClosure.get("relativeError").getAsDouble(), 0.0,
+        "The active feed boundary must make closure evaluable while the inactive recycle remains excluded");
     assertFalse(massClosure.get("worstUnits").getAsString().contains("stale inactive recycle"));
   }
 
