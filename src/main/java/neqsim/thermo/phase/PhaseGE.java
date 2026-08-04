@@ -25,6 +25,10 @@ import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 public abstract class PhaseGE extends Phase implements PhaseGEInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Finite bulk modulus used for the constant-density liquid approximation, in bar. */
+  private static final double INCOMPRESSIBLE_BULK_MODULUS_BAR = 1.0e12;
+  /** Lower bound for internal phase volume when calculating the pressure-volume derivative. */
+  private static final double MINIMUM_INTERNAL_VOLUME = 1.0e-30;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PhaseGE.class);
 
@@ -209,7 +213,8 @@ public abstract class PhaseGE extends Phase implements PhaseGEInterface {
   /** {@inheritDoc} */
   @Override
   public double getEntropy() {
-    return getCp() * Math.log(temperature / ThermodynamicConstantsInterface.referenceTemperature);
+    return getCp() * Math.log(temperature / ThermodynamicConstantsInterface.referenceTemperature)
+        * numberOfMolesInPhase;
   }
 
   /** {@inheritDoc} */
@@ -227,6 +232,33 @@ public abstract class PhaseGE extends Phase implements PhaseGEInterface {
   public double getCv() {
     // Cv is assumed equal to Cp
     return getCp();
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * The current GE liquid-volume model assumes constant density and therefore zero thermal expansion.
+   * </p>
+   */
+  @Override
+  public double getdPdTVn() {
+    return 0.0;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * The current GE liquid-volume model is effectively incompressible. A large finite bulk modulus keeps its
+   * {@code dV/dP} contribution negligible in multiphase volume flashes without propagating infinities into aggregated
+   * system derivatives.
+   * </p>
+   */
+  @Override
+  public double getdPdVTn() {
+    double internalVolume = Math.max(getTotalVolume(), MINIMUM_INTERNAL_VOLUME);
+    return -INCOMPRESSIBLE_BULK_MODULUS_BAR / internalVolume;
   }
 
   /** {@inheritDoc} */
