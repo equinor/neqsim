@@ -500,7 +500,8 @@ class ProcessModelAutoConvergenceTuningTest {
 
     JsonObject massClosure = JsonParser.parseString(model.getConvergenceReportJson()).getAsJsonObject()
         .getAsJsonObject("massClosure");
-    assertEquals(0.0, massClosure.get("relativeError").getAsDouble(), 0.0);
+    assertTrue(massClosure.get("relativeError").isJsonNull(),
+        "No active recycle means the closure error is not evaluated");
     assertFalse(massClosure.get("worstUnits").getAsString().contains("stale inactive recycle"));
   }
 
