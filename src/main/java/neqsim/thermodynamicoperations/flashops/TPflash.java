@@ -83,6 +83,8 @@ public class TPflash extends Flash {
   private static final double MAX_FINAL_EQUILIBRIUM_REFINEMENT_RESIDUAL = 1.0e-5;
   /** Cubic phase roots evaluated by the post-convergence root checks. */
   private static final PhaseType[] CUBIC_ROOT_PHASE_TYPES = { PhaseType.GAS, PhaseType.LIQUID };
+  /** Iteration limit for damped direct gamma-phi flashes near a phase-fraction boundary. */
+  private static final int DIRECT_GAMMA_PHI_MAXIMUM_ITERATIONS = 500;
   /**
    * Minimum extensive Gibbs-energy reduction (J) required for the spurious-multiphase rescue to collapse a two-phase
    * result to a single phase. Avoids false triggers from numerical noise.
@@ -777,6 +779,8 @@ public class TPflash extends Flash {
     int accelerateInterval = 5;
     int newtonLimit = 12;
     int timeFromLastGibbsFail = 0;
+    int iterationLimit = gammaPhiModel == null ? maxNumberOfIterations
+        : Math.max(maxNumberOfIterations, DIRECT_GAMMA_PHI_MAXIMUM_ITERATIONS);
 
     double chemdev = 0;
     double oldChemDiff = 1.0;
@@ -846,7 +850,7 @@ public class TPflash extends Flash {
           timeFromLastGibbsFail++;
           setNewK();
         }
-      } while ((deviation > 1e-10) && (iterations < maxNumberOfIterations));
+      } while ((deviation > 1e-10) && (iterations < iterationLimit));
 
       if (system.isChemicalSystem()) {
         oldChemDiff = chemdev;
