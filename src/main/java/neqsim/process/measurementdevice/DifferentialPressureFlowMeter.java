@@ -139,9 +139,10 @@ public abstract class DifferentialPressureFlowMeter extends StreamMeasurementDev
   /**
    * Sets the throat diameter d directly. Devices with a physical throat bore (orifice, nozzle, classical Venturi)
    * normally use {@link #setGeometry(double, double, String)} instead; devices with no physical throat (cone, wedge)
-   * derive this value from their own geometry.
+   * derive this value from their own geometry, passing {@link Double#NaN} to mark the geometry as unset/invalid (see
+   * e.g. {@code WedgeFlowMeter.setWedgeRatio(double)}) rather than a positive throat diameter.
    *
-   * @param throatDiameter throat diameter, must be positive
+   * @param throatDiameter throat diameter, normally positive; {@link Double#NaN} marks unset/invalid geometry
    * @param unit length unit, one of "m", "cm", "mm" or "in"
    */
   public void setThroatDiameter(double throatDiameter, String unit) {

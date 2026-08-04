@@ -17,7 +17,12 @@ package neqsim.process.measurementdevice;
  * </ul>
  *
  * <p>
- * All three formulas are only applicable for a pressure-drop ratio <i>p2 / p1 &gt;= 0.75</i>.
+ * All three formulas are only applicable for a pressure-drop ratio <i>p2 / p1 &gt;= 0.75</i>. This is a validity range,
+ * not a hard limit: {@link #calculate(double, double, double, double)} does not enforce or reject it, since the ISO
+ * standards themselves only require it to be checked and reported, not used to block a measurement. Each concrete meter
+ * reports whether the current operating point is inside this window via {@code isWithinExpansibilityPressureRatio()}
+ * (included in its {@code getValidityViolations()} list) &mdash; it is the caller's responsibility to check that before
+ * trusting an out-of-range result.
  * </p>
  *
  * @author Even Solbraa
@@ -111,7 +116,8 @@ public enum ExpansibilityModel {
    * @param p1 upstream static pressure [Pa], must be positive
    * @param beta diameter ratio d/D [-]
    * @param kappa isentropic exponent, must be greater than 1
-   * @return expansibility factor epsilon [-], or NaN when the inputs are not physically valid
+   * @return expansibility factor epsilon [-], or NaN when the inputs are not physically valid. Does not check the p2 /
+   * p1 &gt;= 0.75 validity range described in the class JavaDoc &mdash; callers must check that separately.
    */
   public abstract double calculate(double dp, double p1, double beta, double kappa);
 }
