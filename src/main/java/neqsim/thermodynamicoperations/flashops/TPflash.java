@@ -255,11 +255,8 @@ public class TPflash extends Flash {
             comp0.setK(Knew);
           }
           comp1.setK(Knew);
-          if (Double.isFinite(Kold) && Kold > 0.0) {
-            deviation += Math.abs(Math.log(Knew / Kold));
-          } else {
-            deviation = Double.POSITIVE_INFINITY;
-          }
+          double deviationReferenceK = Double.isFinite(Kold) && Kold > 0.0 ? Kold : 1.0;
+          deviation += Math.abs(Math.log(Knew / deviationReferenceK));
         }
       }
     }
