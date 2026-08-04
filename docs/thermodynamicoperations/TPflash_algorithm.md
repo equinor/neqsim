@@ -218,6 +218,15 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 │     → Replace only with a lower-Gibbs root that already satisfies                │
 │       max |Δ ln(fᵢ)| < 1e-8; phase fractions and compositions stay unchanged     │
 │                                                                                 │
+│  IF a final neutral two-phase aqueous endpoint with water feed ≥ 0.01 fails:     │
+│     → Audit max |Δzᵢ| and max |Δ ln(fᵢ)| against 1e-8                            │
+│     → Retain the selected two-phase active set and run at most three              │
+│       TPmultiflash Q-function/beta refinements                                   │
+│     → Keep only a normalized, material-balanced, fugacity-equal endpoint;         │
+│       otherwise restore the pre-refinement state                                 │
+│     → Reject a Gibbs increase unless the reference was non-conservative,          │
+│       because Gibbs energies of an unbalanced reference are not comparable       │
+│                                                                                 │
 │  IF ordinary, neutral, dry two-phase hydrocarbon roots are inverted:             │
 │     → Detect the vapor-labelled phase having the larger mean molar mass          │
 │     → Evaluate the vapor root on the light composition and liquid root on the    │
@@ -249,6 +258,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 | Aqueous cubic-root equilibrium tolerance | 1e-8 in `max abs(Delta ln(f_i))` | Accept an alternate root only when it lowers Gibbs energy and already satisfies component fugacity equality |
 | Stable-single-phase aqueous-seed gate | `1e-8` in phase-composition normalization | Reject only a structurally invalid aqueous trial whose composition is non-finite, out of `[0, 1]`, or unnormalized; leave normalized endpoints to model-specific convergence and refinement paths |
 | Post-removal aqueous recovery | `1e-8` in `max abs(Delta z_i)` and `max abs(Delta ln(f_i))` | Restore a balanced neutral two-phase aqueous reference only when a rejected third-phase trial leaves the final two-phase endpoint infeasible; genuine three-phase and already feasible endpoints are retained |
+| Final aqueous active-set refinement | water feed `>= 0.01`; at most 3 beta refinements; `1e-8` in phase normalization, `max abs(Delta z_i)`, and `max abs(Delta ln(f_i))` | Preserve the selected neutral two-phase active set while correcting stale beta/compositions after phase cleanup or root selection. Roll back unless the result is feasible; also require no Gibbs increase when the reference material balance was valid. |
 | Stalled three-phase active-set fallback | `1e-8` in phase normalization, material balance, and `max abs(Delta ln(f_i))` | For neutral non-reactive systems only, evaluate each two-phase active set after a non-converged three-phase endpoint and accept the lowest-Gibbs feasible equilibrium only when it also lowers Gibbs energy relative to the stalled state |
 | Water-bearing single-phase-collapse screen | water feed `>= 0.01`, stored water `K < 1e-2`, and a non-water `K > 10` | Run one bounded ordinary-flash retry only after multiphase cleanup returns one phase with strong retained phase-preference evidence; accept only a balanced, distinct two-phase state that lowers extensive Gibbs energy beyond `max(1e-6 J, 1e-8 abs(G))` |
 
