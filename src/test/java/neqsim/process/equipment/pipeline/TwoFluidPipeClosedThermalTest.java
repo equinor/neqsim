@@ -124,6 +124,13 @@ class TwoFluidPipeClosedThermalTest {
             "Multilayer cell " + cell + " warmed during a uniform closed cooldown");
         assertTrue(current[cell] >= 280.0 - 1.0e-10, "Multilayer cell " + cell + " undershot the ambient temperature");
       }
+      if (step == 0) {
+        double[] wallTemperatures = fixture.pipe.getWallTemperatureProfile();
+        for (int cell = 1; cell < wallTemperatures.length; cell++) {
+          assertEquals(wallTemperatures[0], wallTemperatures[cell], 1.0e-12,
+              "Identical cells must not share and repeatedly advance one radial-layer state");
+        }
+      }
       previous = current;
     }
 
