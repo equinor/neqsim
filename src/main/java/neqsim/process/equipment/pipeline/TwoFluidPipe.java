@@ -1907,11 +1907,10 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   private double calcLocalJouleThomsonSource(int cell, double[][] phaseMassFaceFluxes, double Cp, double muJT) {
-    double[] pressures = new double[numberOfSections];
-    for (int section = 0; section < numberOfSections; section++) {
-      pressures[section] = sections[section].getPressure();
-    }
-    return calculateLocalJouleThomsonSource(cell, phaseMassFaceFluxes, pressures, Cp, muJT, sections[cell].getLength());
+    double leftPressure = cell > 0 ? sections[cell - 1].getPressure() : Double.NaN;
+    double rightPressure = cell + 1 < numberOfSections ? sections[cell + 1].getPressure() : Double.NaN;
+    return calculateLocalJouleThomsonSource(cell, phaseMassFaceFluxes, leftPressure, sections[cell].getPressure(),
+        rightPressure, Cp, muJT, sections[cell].getLength());
   }
 
   /**
@@ -1925,26 +1924,28 @@ public class TwoFluidPipe extends Pipeline {
    *
    * @param cell zero-based cell index
    * @param phaseMassFaceFluxes face-by-phase mass flows in kg/s
-   * @param pressures cell pressures in pascals
+   * @param leftPressure left-neighbour pressure in pascals, or NaN at the inlet boundary
+   * @param cellPressure cell pressure in pascals
+   * @param rightPressure right-neighbour pressure in pascals, or NaN at the outlet boundary
    * @param Cp fluid heat capacity in J/(kg K)
    * @param muJT Joule-Thomson coefficient in K/Pa
    * @param cellLength cell length in metres
    * @return Joule-Thomson energy source in W/m
    */
-  static double calculateLocalJouleThomsonSource(int cell, double[][] phaseMassFaceFluxes, double[] pressures,
-      double Cp, double muJT, double cellLength) {
+  static double calculateLocalJouleThomsonSource(int cell, double[][] phaseMassFaceFluxes, double leftPressure,
+      double cellPressure, double rightPressure, double Cp, double muJT, double cellLength) {
     if (muJT == 0.0 || cellLength <= 0.0) {
       return 0.0;
     }
     double source = 0.0;
     for (int phase = 0; phase < 3; phase++) {
       double leftMassFlow = phaseMassFaceFluxes[cell][phase];
-      if (leftMassFlow > 0.0 && cell > 0) {
-        source += leftMassFlow * Cp * muJT * (pressures[cell] - pressures[cell - 1]) / cellLength;
+      if (leftMassFlow > 0.0 && Double.isFinite(leftPressure)) {
+        source += leftMassFlow * Cp * muJT * (cellPressure - leftPressure) / cellLength;
       }
       double rightMassFlow = phaseMassFaceFluxes[cell + 1][phase];
-      if (rightMassFlow < 0.0 && cell + 1 < pressures.length) {
-        source += rightMassFlow * Cp * muJT * (pressures[cell + 1] - pressures[cell]) / cellLength;
+      if (rightMassFlow < 0.0 && Double.isFinite(rightPressure)) {
+        source += rightMassFlow * Cp * muJT * (rightPressure - cellPressure) / cellLength;
       }
     }
     return source;
