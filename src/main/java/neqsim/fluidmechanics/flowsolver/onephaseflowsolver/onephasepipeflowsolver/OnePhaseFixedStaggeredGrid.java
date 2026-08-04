@@ -1370,7 +1370,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       double[] update;
       double[][] jacobian;
       try {
-        double[] values = calculateCoupledResidual(state);
+        double[] values = iteration == 0 ? residualValues : calculateCoupledResidual(state);
         residualValues = values;
         residual = maximumAbsolute(values);
         nonlinearHistory[iteration] = residual;
