@@ -46,6 +46,18 @@ public class ConeFlowMeterTest {
     assertEquals(120.0, meter.getConeDiameter("mm"), 1e-9);
   }
 
+  /** A cone diameter at or above the pipe diameter is not physical: beta would be zero or imaginary. */
+  @Test
+  void testInvalidGeometryYieldsNaN() {
+    ConeFlowMeter meter = new ConeFlowMeter(stream);
+    meter.setGeometry(200.0, 200.0, "mm");
+    assertTrue(Double.isNaN(meter.getThroatDiameter("mm")));
+
+    ConeFlowMeter oversizedCone = new ConeFlowMeter(stream);
+    oversizedCone.setGeometry(200.0, 250.0, "mm");
+    assertTrue(Double.isNaN(oversizedCone.getThroatDiameter("mm")));
+  }
+
   /**
    * ISO 5167-5 Annex A tabulates epsilon = 0.9431 for beta = 0.6000, kappa = 1.3 and p2/p1 = 0.9 (dP/p1 = 0.1);
    * verified against the ISO 5167-5:2022 Annex A table image.
