@@ -123,6 +123,71 @@ public class CondenserFixedLiquidRefluxTest {
     assertPhysical(externalProducts);
   }
 
+  /** A rejected fixed-reflux tray state must not survive beside full-feed fallback products. */
+  @Test
+  public void fixedRefluxFallbackDiscardsRejectedLiquidProductInventory() {
+    assertFixedRefluxFallbackClosesExternalBalance(100.0);
+    assertFixedRefluxFallbackClosesExternalBalance(120.0);
+  }
+
+  /**
+   * Run one fixed-reflux fallback case and verify that only one feed inventory remains exposed.
+   *
+   * @param refluxFlowKgPerHour requested fixed reflux in kg/hr
+   */
+  private static void assertFixedRefluxFallbackClosesExternalBalance(double refluxFlowKgPerHour) {
+    SystemSrkEos fluid = new SystemSrkEos(293.15, 10.0);
+    fluid.addComponent("propane", 40.0);
+    fluid.addComponent("n-butane", 30.0);
+    fluid.addComponent("n-pentane", 30.0);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("fixed reflux fallback feed", fluid);
+    feed.setFlowRate(5000.0, "kg/hr");
+    feed.setTemperature(20.0, "C");
+    feed.setPressure(10.0, "bara");
+    feed.run();
+
+    DistillationColumn column = new DistillationColumn("fixed reflux fallback column", 6, true, true);
+    column.addFeedStream(feed, 3);
+    column.setTopPressure(10.0);
+    column.setBottomPressure(10.5);
+    column.getCondenser().setOutTemperature(293.15);
+    column.getReboiler().setOutTemperature(353.15);
+    column.setCondenserLiquidReflux(refluxFlowKgPerHour, "kg/hr");
+    column.setSolverType(DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
+    column.setRelaxationFactor(0.2);
+    column.setMaxNumberOfIterations(120, true);
+    column.run();
+
+    assertTrue(column.wasFeedFlashFallbackApplied(), "the regression must exercise guarded fallback handling");
+    assertEquals(DistillationColumn.SolveStatus.FALLBACK_PRODUCTS, column.getLastSolveStatus());
+    assertFalse(column.solved(), "balanced fallback products must not be reported as a rigorous column solution");
+    assertFalse(column.getCondenser().isFixedLiquidRefluxSpecificationSatisfied(),
+        "the rejected condenser split must not retain a satisfied specification diagnostic");
+
+    StreamInterface liquidProduct = column.getCondenser().getLiquidProductStream();
+    assertNotNull(liquidProduct);
+    assertEquals(0.0, liquidProduct.getFlowRate("kg/hr"), 1.0e-12,
+        "fallback products already contain the full feed inventory");
+    List<StreamInterface> products = new ArrayList<>();
+    products.add(column.getGasOutStream());
+    products.add(column.getLiquidOutStream());
+    products.add(liquidProduct);
+    assertMassAndComponentBalance(feed, products);
+    assertPhysical(products);
+
+    column.run();
+    assertTrue(column.wasFeedFlashFallbackApplied());
+    assertEquals(0.0, column.getCondenser().getLiquidProductStream().getFlowRate("kg/hr"), 1.0e-12);
+    products.set(0, column.getGasOutStream());
+    products.set(1, column.getLiquidOutStream());
+    products.set(2, column.getCondenser().getLiquidProductStream());
+    assertMassAndComponentBalance(feed, products);
+    assertEquals(20.0, feed.getTemperature("C"), 1.0e-12,
+        "column fallback handling must preserve the caller-owned feed state");
+  }
+
   private static Stream createHydrocarbonFeed() {
     SystemSrkEos fluid = new SystemSrkEos(298.15, 8.0);
     fluid.addComponent("methane", 0.05);
