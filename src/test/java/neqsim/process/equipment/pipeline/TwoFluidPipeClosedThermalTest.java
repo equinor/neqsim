@@ -88,8 +88,8 @@ class TwoFluidPipeClosedThermalTest {
     faceMassFlows[2][0] = 1.0;
     double[] previousTemperatures = { 300.0, 320.0, 340.0 };
 
-    double source = TwoFluidPipe.calculateExplicitSensibleAdvectionSource(1, faceMassFlows, previousTemperatures,
-        280.0, 2000.0, 10.0);
+    double source = TwoFluidPipe.calculateExplicitSensibleAdvectionSource(1, faceMassFlows, previousTemperatures, 280.0,
+        2000.0, 10.0);
 
     assertEquals(-4000.0, source, 0.0,
         "Cell one must use the previous cell-zero temperature, not a value written earlier in the update loop");
