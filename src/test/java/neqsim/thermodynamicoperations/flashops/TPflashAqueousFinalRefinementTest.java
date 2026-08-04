@@ -45,8 +45,7 @@ class TPflashAqueousFinalRefinementTest {
     candidate.getPhase(0).setType(PhaseType.GAS);
     candidate.getPhase(1).setType(PhaseType.AQUEOUS);
 
-    PhaseType[] referenceTypes = new PhaseType[] { candidate.getPhase(0).getType(),
-        candidate.getPhase(1).getType() };
+    PhaseType[] referenceTypes = new PhaseType[] { candidate.getPhase(0).getType(), candidate.getPhase(1).getType() };
     assertTrue(TPflash.preservesTwoPhaseActiveSet(candidate, referenceTypes));
 
     candidate.getPhase(0).setType(PhaseType.LIQUID);
