@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
@@ -763,4 +764,47 @@ class TemperatureDropComparisonTest {
 
     assertNotNull(pipe.getTemperatureProfile());
   }
+
+  /**
+   * Verify that a blocked-in pipe cools its first physical cell.
+   *
+   * <p>
+   * A closed inlet has zero advective and Joule-Thomson boundary flux, but the inlet cell remains part of the
+   * fluid-wall-ambient thermal domain. The regression starts from a steady adiabatic state, closes both ends, then
+   * enables wall heat transfer. Before the correction, section zero remained exactly at its initial temperature because
+   * the transient thermal loops started at section one.
+   * </p>
+   */
+  @Test
+  void testClosedInletCellParticipatesInTransientCooldown() {
+    TwoFluidPipe pipe = new TwoFluidPipe("closed-cooldown", inletStream);
+    pipe.setLength(40.0);
+    pipe.setDiameter(0.30);
+    pipe.setNumberOfSections(4);
+    pipe.setEnableAdaptiveTimestepping(false);
+    pipe.setEnableSlugTracking(false);
+    pipe.setThermodynamicUpdateInterval(Integer.MAX_VALUE);
+    pipe.setSteadyStateMaxWallClockTime(1.0);
+    pipe.run();
+
+    double[] initialTemperature = pipe.getTemperatureProfile();
+    pipe.closeInlet();
+    pipe.closeOutlet();
+    pipe.setSurfaceTemperature(0.0, "C");
+    pipe.setHeatTransferCoefficient(2000.0);
+    pipe.setWallProperties(0.001, 1000.0, 100.0);
+
+    pipe.runTransient(0.2, UUID.fromString("00000000-0000-0000-0000-000000002792"));
+
+    double[] cooledTemperature = pipe.getTemperatureProfile();
+    assertTrue(cooledTemperature[0] < initialTemperature[0] - 1.0e-6,
+        "The closed inlet cell must cool through radial heat transfer");
+    for (int section = 0; section < cooledTemperature.length; section++) {
+      assertTrue(cooledTemperature[section] <= initialTemperature[section] + 1.0e-12,
+          "Cooldown must not heat section " + section);
+      assertTrue(cooledTemperature[section] >= 273.15,
+          "The explicit cooldown step must not undershoot ambient in section " + section);
+    }
+  }
+
 }
