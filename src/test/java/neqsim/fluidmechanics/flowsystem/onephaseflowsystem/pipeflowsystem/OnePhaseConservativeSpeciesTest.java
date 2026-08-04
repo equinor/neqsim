@@ -15,7 +15,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /** Tests conservative one-phase species transport coupled to hydraulic/EOS state. */
-class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
+public class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
   private static final double TEMPERATURE_K = 288.15;
   private static final double PRESSURE_BARA = 70.0;
   private static final double MASS_FLOW_KG_PER_SECOND = 50.0;
@@ -113,6 +113,7 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  @Tag("slow")
   void finePulseFailureReportsRepeatedNodeStateMutation() {
     AssertionError failure = assertThrows(AssertionError.class, () -> runIntegratedPulse(24, 30.0));
     String message = failure.getMessage();
@@ -123,7 +124,11 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     assertTrue(message.contains("componentMoles="), message);
     assertTrue(message.contains("density="), message);
     assertTrue(message.contains("frictionFactor="), message);
-    throw new AssertionError("TEMPORARY HOSTED DIAGNOSTIC — MUST BE REVERTED: " + message);
+  }
+
+  /** Runs the frozen fine-pulse case for the temporary hosted diagnostic bridge. */
+  public static void runFinePulseForHostedDiagnostic() {
+    runIntegratedPulse(24, 30.0);
   }
 
   @Test
