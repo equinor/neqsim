@@ -257,9 +257,10 @@ family values are also available through `getMaximumScaledMassEquationResidual()
 index zero followed by one entry for each completed Newton iteration; staged legacy histories
 retain one entry per iteration and return empty equation-family histories. When coupled
 backtracking cannot reduce the residual, the failure message also compares the banded Newton
-Jacobian along the rejected Newton direction with an independent central directional derivative.
-It reports separate relative infinity-norm errors for continuity and momentum. This diagnostic is
-evaluated only after failure and does not change accepted solver states.
+Jacobian along the rejected Newton direction with independent central directional derivatives
+at normalized perturbations of (10^{-5}), (10^{-6}), and (10^{-7}). It reports separate
+relative infinity-norm errors for continuity and momentum, including sensitivity to differencing
+scale. This diagnostic is evaluated only after failure and does not change accepted solver states.
 For backward-compatible control flow, the default logs a warning and returns the failed report.
 Call `pipe.setFailOnNonConvergence(true)` to make `solveTransient(...)` throw
 `IllegalStateException`; the report is recorded before either behavior and distinguishes
