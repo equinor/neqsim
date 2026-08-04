@@ -113,6 +113,20 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void finePulseFailureReportsRepeatedNodeStateMutation() {
+    AssertionError failure = assertThrows(AssertionError.class, () -> runIntegratedPulse(24, 30.0));
+    String message = failure.getMessage();
+
+    assertTrue(message.contains("LINE_SEARCH_FAILED"), message);
+    assertTrue(message.contains("repeated node-state relative drifts"), message);
+    assertTrue(message.contains("phaseMoles="), message);
+    assertTrue(message.contains("componentMoles="), message);
+    assertTrue(message.contains("density="), message);
+    assertTrue(message.contains("frictionFactor="), message);
+    System.out.println("Frozen 24-node/30-second coupled-pulse diagnostic: " + message);
+  }
+
+  @Test
   @Tag("slow")
   void thirtyMinutePulseBreaksThroughRecoversAndClosesCumulativeInventory() {
     IntegratedPulseResult pulse = runIntegratedPulse();
