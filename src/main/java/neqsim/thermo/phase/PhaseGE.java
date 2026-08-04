@@ -260,6 +260,43 @@ public abstract class PhaseGE extends Phase implements PhaseGEInterface {
     return -INCOMPRESSIBLE_BULK_MODULUS_BAR / internalVolume;
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * A constant-density GE phase has no pressure response to temperature at fixed volume. Returning the limiting value
+   * explicitly also avoids the indeterminate zero-times-infinity form when a trace phase has zero volume.
+   * </p>
+   */
+  @Override
+  public double getCompressibilityX() {
+    return 0.0;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns the finite constant-density limit {@code -P/K}, including when the phase volume is zero.
+   * </p>
+   */
+  @Override
+  public double getCompressibilityY() {
+    return -getPressure() / INCOMPRESSIBLE_BULK_MODULUS_BAR;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns the finite constant-density limit {@code 1/K}, including when the phase volume is zero.
+   * </p>
+   */
+  @Override
+  public double getIsothermalCompressibility() {
+    return 1.0 / INCOMPRESSIBLE_BULK_MODULUS_BAR;
+  }
+
   /** {@inheritDoc} */
   @Override
   public double getZ() {

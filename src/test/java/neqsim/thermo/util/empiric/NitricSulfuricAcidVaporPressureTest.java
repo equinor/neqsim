@@ -77,6 +77,10 @@ public class NitricSulfuricAcidVaporPressureTest {
         () -> NitricSulfuricAcidVaporPressure.activityCoefficientSulfuricAcid(Double.NaN, 0.3, 0.7, 273.15));
     assertThrows(IllegalArgumentException.class,
         () -> NitricSulfuricAcidVaporPressure.activityCoefficientWater(0.0, 0.0, 0.0, 273.15));
+    assertThrows(IllegalArgumentException.class,
+        () -> NitricSulfuricAcidVaporPressure.activityCoefficientWater(1.01, 0.0, 0.0, 273.15));
+    assertThrows(IllegalArgumentException.class,
+        () -> NitricSulfuricAcidVaporPressure.activityCoefficientNitricAcid(0.4, 0.4, 0.1, 273.15));
   }
 
   /**

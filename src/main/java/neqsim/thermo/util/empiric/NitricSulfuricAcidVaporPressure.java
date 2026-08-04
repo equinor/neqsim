@@ -44,6 +44,9 @@ public class NitricSulfuricAcidVaporPressure {
   /** Conversion factor from standard atmosphere to pascal. */
   private static final double ATM_TO_PA = 101325.0;
 
+  /** Absolute tolerance for a normalized mole-fraction sum. */
+  private static final double MOLE_FRACTION_SUM_TOLERANCE = 1.0e-10;
+
   /** Molar mass of water (H2O) in g/mol. */
   public static final double MOLAR_MASS_WATER = 18.015;
 
@@ -325,9 +328,9 @@ public class NitricSulfuricAcidVaporPressure {
   /**
    * Validate public activity-coefficient inputs before evaluating the homogeneous Van Laar expressions.
    *
-   * @param x1 water proportion
-   * @param x2 nitric-acid proportion
-   * @param x3 sulfuric-acid proportion
+   * @param x1 water mole fraction
+   * @param x2 nitric-acid mole fraction
+   * @param x3 sulfuric-acid mole fraction
    * @param temperature temperature in kelvin
    */
   private static void validateActivityCoefficientInputs(double x1, double x2, double x3, double temperature) {
@@ -337,8 +340,12 @@ public class NitricSulfuricAcidVaporPressure {
     if (!Double.isFinite(x1) || !Double.isFinite(x2) || !Double.isFinite(x3) || x1 < 0.0 || x2 < 0.0 || x3 < 0.0) {
       throw new IllegalArgumentException("mole fractions must be finite and non-negative");
     }
-    if (!(x1 + x2 + x3 > 0.0)) {
-      throw new IllegalArgumentException("at least one mole fraction must be positive");
+    if (x1 > 1.0 || x2 > 1.0 || x3 > 1.0) {
+      throw new IllegalArgumentException("each mole fraction must be less than or equal to one");
+    }
+    double moleFractionSum = x1 + x2 + x3;
+    if (Math.abs(moleFractionSum - 1.0) > MOLE_FRACTION_SUM_TOLERANCE) {
+      throw new IllegalArgumentException("mole fractions must sum to one, was " + moleFractionSum);
     }
   }
 
@@ -353,7 +360,7 @@ public class NitricSulfuricAcidVaporPressure {
    * @param x3 mole fraction of sulfuric acid (H2SO4)
    * @param temperature temperature in kelvin
    * @return the water activity coefficient (dimensionless)
-   * @throws IllegalArgumentException if temperature or composition is outside its finite, positive domain
+   * @throws IllegalArgumentException if temperature is invalid or composition is not a normalized mole-fraction vector
    */
   public static double activityCoefficientWater(double x1, double x2, double x3, double temperature) {
     validateActivityCoefficientInputs(x1, x2, x3, temperature);
@@ -370,7 +377,7 @@ public class NitricSulfuricAcidVaporPressure {
    * @param x3 mole fraction of sulfuric acid (H2SO4)
    * @param temperature temperature in kelvin
    * @return the nitric acid activity coefficient (dimensionless)
-   * @throws IllegalArgumentException if temperature or composition is outside its finite, positive domain
+   * @throws IllegalArgumentException if temperature is invalid or composition is not a normalized mole-fraction vector
    */
   public static double activityCoefficientNitricAcid(double x1, double x2, double x3, double temperature) {
     validateActivityCoefficientInputs(x1, x2, x3, temperature);
@@ -387,7 +394,7 @@ public class NitricSulfuricAcidVaporPressure {
    * @param x3 mole fraction of sulfuric acid (H2SO4)
    * @param temperature temperature in kelvin
    * @return the sulfuric acid activity coefficient (dimensionless)
-   * @throws IllegalArgumentException if temperature or composition is outside its finite, positive domain
+   * @throws IllegalArgumentException if temperature is invalid or composition is not a normalized mole-fraction vector
    */
   public static double activityCoefficientSulfuricAcid(double x1, double x2, double x3, double temperature) {
     validateActivityCoefficientInputs(x1, x2, x3, temperature);

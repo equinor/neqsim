@@ -155,6 +155,21 @@ public class SystemEosGEOperationsTest extends neqsim.NeqSimTest {
     assertTrue(dewSystem.getPhase(1) instanceof PhaseGEVanLaarAcid);
   }
 
+  /** A disappearing GE phase retains finite limiting compressibilities at exactly zero volume. */
+  @Test
+  public void testGePhaseCompressibilitiesAtZeroVolume() {
+    PhaseGEVanLaarAcid tracePhase = new PhaseGEVanLaarAcid();
+    tracePhase.setPressure(50.0);
+
+    assertEquals(0.0, tracePhase.getTotalVolume(), 0.0);
+    assertEquals(0.0, tracePhase.getCompressibilityX(), 0.0);
+    assertEquals(-5.0e-11, tracePhase.getCompressibilityY(), 1.0e-24);
+    assertEquals(1.0e-12, tracePhase.getIsothermalCompressibility(), 0.0);
+    assertTrue(Double.isFinite(tracePhase.getCompressibilityX()));
+    assertTrue(Double.isFinite(tracePhase.getCompressibilityY()));
+    assertTrue(Double.isFinite(tracePhase.getIsothermalCompressibility()));
+  }
+
   /** GE phase properties honour the extensive heat-capacity contract and the constant-density volume API. */
   @Test
   public void testGePhaseExtensiveHeatCapacityAndMolarVolume() throws Exception {
