@@ -42,7 +42,7 @@ $$\frac{\partial (\rho v)}{\partial t} + \frac{\partial (\rho v^2)}{\partial x} 
 
 where:
 - $\rho$ = density
-- $v$ = velocity  
+- $v$ = velocity
 - $P$ = pressure
 - $g$ = gravitational acceleration
 - $\theta$ = pipe inclination angle
@@ -128,7 +128,7 @@ pipe.setNumberOfNodesInLeg(20);
 
 // Set geometry (10 segments)
 double[] heights = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-double[] positions = {0, 10000, 20000, 30000, 40000, 50000, 
+double[] positions = {0, 10000, 20000, 30000, 40000, 50000,
                       60000, 70000, 80000, 90000, 100000}; // meters
 
 GeometryDefinitionInterface[] geometry = new PipeData[11];
@@ -141,7 +141,7 @@ for (int i = 0; i <= 10; i++) {
 pipe.setEquipmentGeometry(geometry);
 pipe.setLegHeights(heights);
 pipe.setLegPositions(positions);
-pipe.setLegOuterTemperatures(new double[]{278, 278, 278, 278, 278, 278, 
+pipe.setLegOuterTemperatures(new double[]{278, 278, 278, 278, 278, 278,
                                            278, 278, 278, 278, 278});
 pipe.setLegWallHeatTransferCoefficients(new double[]{15, 15, 15, 15, 15, 15,
                                                       15, 15, 15, 15, 15});
@@ -341,9 +341,11 @@ A pending coupled refinement regression advances the same physical pulse and rec
 mean absolute outlet-composition difference between the two finer solutions to be smaller than
 the difference between the two coarser solutions while every resolution retains the same EOS,
 boundedness, and conservation gates. The finest coupled case currently remains a fail-loud
-nonlinear-convergence gate; no coupled Cauchy trend is claimed until it passes. The comparison is
-a Cauchy-convergence check and does not define an exact analytical solution for the coupled
-compressible case.
+nonlinear-convergence gate, so that refinement regression is kept disabled and the active
+regression instead asserts the `LINE_SEARCH_FAILED` blocker together with its repeated
+node-state drift diagnostics; no coupled Cauchy trend is claimed until the blocker is resolved
+and the refinement gate is re-enabled. The comparison is a Cauchy-convergence check and does not
+define an exact analytical solution for the coupled compressible case.
 
 Zero or reversed face flow still fails explicitly because an external upwind composition is not
 yet defined. Once enabled, every failed hydraulic/species criterion throws so that a failed
