@@ -96,6 +96,25 @@ class TwoFluidPipeClosedThermalTest {
   }
 
   @Test
+  void jouleThomsonSourceUsesTheUpstreamPressureForEitherFlowDirection() {
+    double[][] forwardFaceMassFlows = new double[4][3];
+    forwardFaceMassFlows[1][0] = 2.0;
+    double[][] reverseFaceMassFlows = new double[4][3];
+    reverseFaceMassFlows[2][0] = -2.0;
+    double Cp = 2000.0;
+    double muJT = 4.0e-6;
+
+    double forwardSource = TwoFluidPipe.calculateLocalJouleThomsonSource(1, forwardFaceMassFlows,
+        new double[] { 100.0, 95.0, 90.0 }, Cp, muJT, 10.0);
+    double reverseSource = TwoFluidPipe.calculateLocalJouleThomsonSource(1, reverseFaceMassFlows,
+        new double[] { 90.0, 95.0, 100.0 }, Cp, muJT, 10.0);
+
+    assertEquals(-0.008, forwardSource, 1.0e-15);
+    assertEquals(forwardSource, reverseSource, 1.0e-15,
+        "Equivalent forward and reverse pressure drops must produce the same Joule-Thomson cooling source");
+  }
+
+  @Test
   void invalidThermalMassFallbackUsesFinitePositiveFloor() {
     assertArrayEquals(new double[] { 2.0, 3.0, 1.0e-12 },
         new double[] { TwoFluidPipe.selectFinitePositiveFluidMassPerLength(2.0, Double.NaN),
