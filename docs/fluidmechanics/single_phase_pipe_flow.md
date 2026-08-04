@@ -331,7 +331,7 @@ $$\tau=\frac{\sum_P M_P}{\dot m}.$$
 The validated first-order kernel matches analytical repeated-step profiles at two timesteps,
 recovers the inventory-over-flow residence time, conserves a synthetic 1800 s pulse over six
 residence times, and reduces pulse error when the grid and timestep are jointly refined from
-12 cells/60 s to 24 cells/30 s. The end-to-end SRK/classic regression repeats the same 1800 s
+12 nodes/60 s to 24 nodes/30 s. The end-to-end SRK/classic regression repeats the same 1800 s
 event independently through a 3000 m isothermal pipe, requires bit-identical outlet histories,
 final profiles, and component inventories, verifies breakthrough and recovery, and telescopes
 every immutable step report into a cumulative nitrogen balance. A coupled refinement regression
