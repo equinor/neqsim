@@ -117,8 +117,8 @@ public class WedgeFlowMeter extends DifferentialPressureFlowMeter {
    */
   public void setWedgeRatio(double wedgeRatio) {
     if (!(wedgeRatio > 0.0) || !(wedgeRatio < 1.0)) {
-      logger.warn("{}: wedge ratio h/D = {} is outside the valid (0, 1) range; storing NaN throat diameter",
-          getName(), wedgeRatio);
+      logger.warn("{}: wedge ratio h/D = {} is outside the valid (0, 1) range; storing NaN throat diameter", getName(),
+          wedgeRatio);
       this.wedgeRatio = Double.NaN;
       setThroatDiameter(Double.NaN, "m");
       return;

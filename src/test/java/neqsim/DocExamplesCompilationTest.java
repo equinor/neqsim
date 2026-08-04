@@ -1758,8 +1758,8 @@ public class DocExamplesCompilationTest {
   public void testVenturiFlowMeterDoc() {
     StreamInterface stream = buildDocExampleWetGasStream();
 
-    neqsim.process.measurementdevice.VenturiFlowMeter meter =
-        new neqsim.process.measurementdevice.VenturiFlowMeter("FT-001", stream);
+    neqsim.process.measurementdevice.VenturiFlowMeter meter = new neqsim.process.measurementdevice.VenturiFlowMeter(
+        "FT-001", stream);
     meter.setGeometry(205.1, 138.1, "mm");
     meter.setDischargeCoefficient(0.985);
     meter.setDifferentialPressure(300.0, "mbar");
@@ -1782,8 +1782,8 @@ public class DocExamplesCompilationTest {
   public void testVenturiFlowMeterWetGasIsoTr11583Doc() {
     StreamInterface stream = buildDocExampleWetGasStream();
 
-    neqsim.process.measurementdevice.VenturiFlowMeter meter =
-        new neqsim.process.measurementdevice.VenturiFlowMeter("FT-001", stream);
+    neqsim.process.measurementdevice.VenturiFlowMeter meter = new neqsim.process.measurementdevice.VenturiFlowMeter(
+        "FT-001", stream);
     meter.setGeometry(205.1, 138.1, "mm");
     meter.setDischargeCoefficient(0.985);
     meter.setDifferentialPressure(300.0, "mbar");
@@ -1811,8 +1811,8 @@ public class DocExamplesCompilationTest {
   public void testVenturiFlowMeterWetGasDeLeeuwDoc() {
     StreamInterface stream = buildDocExampleWetGasStream();
 
-    neqsim.process.measurementdevice.VenturiFlowMeter meter =
-        new neqsim.process.measurementdevice.VenturiFlowMeter("FT-001", stream);
+    neqsim.process.measurementdevice.VenturiFlowMeter meter = new neqsim.process.measurementdevice.VenturiFlowMeter(
+        "FT-001", stream);
     meter.setGeometry(205.1, 138.1, "mm");
     meter.setDischargeCoefficient(0.985);
     meter.setDifferentialPressure(300.0, "mbar");
@@ -1835,8 +1835,8 @@ public class DocExamplesCompilationTest {
   public void testOrificeFlowMeterDoc() {
     StreamInterface stream = buildDocExampleWetGasStream();
 
-    neqsim.process.measurementdevice.OrificeFlowMeter meter =
-        new neqsim.process.measurementdevice.OrificeFlowMeter("FT-200", stream);
+    neqsim.process.measurementdevice.OrificeFlowMeter meter = new neqsim.process.measurementdevice.OrificeFlowMeter(
+        "FT-200", stream);
     meter.setGeometry(200.0, 100.0, "mm");
     meter.setTappingArrangement(neqsim.process.measurementdevice.OrificeFlowMeter.TappingArrangement.FLANGE);
     meter.setDifferentialPressure(300.0, "mbar");
@@ -1855,8 +1855,8 @@ public class DocExamplesCompilationTest {
   public void testOrificeFlowMeterWetGasIsoTr11583Doc() {
     StreamInterface stream = buildDocExampleWetGasStream();
 
-    neqsim.process.measurementdevice.OrificeFlowMeter meter =
-        new neqsim.process.measurementdevice.OrificeFlowMeter("FT-200", stream);
+    neqsim.process.measurementdevice.OrificeFlowMeter meter = new neqsim.process.measurementdevice.OrificeFlowMeter(
+        "FT-200", stream);
     meter.setGeometry(200.0, 100.0, "mm");
     meter.setDifferentialPressure(300.0, "mbar");
     meter.setWetGasCorrelation(neqsim.process.measurementdevice.OrificeFlowMeter.WetGasCorrelation.ISO_TR_11583);
@@ -1882,8 +1882,8 @@ public class DocExamplesCompilationTest {
   public void testNozzleFlowMeterDoc() {
     StreamInterface stream = buildDocExampleWetGasStream();
 
-    neqsim.process.measurementdevice.NozzleFlowMeter meter =
-        new neqsim.process.measurementdevice.NozzleFlowMeter("FT-300", stream);
+    neqsim.process.measurementdevice.NozzleFlowMeter meter = new neqsim.process.measurementdevice.NozzleFlowMeter(
+        "FT-300", stream);
     meter.setNozzleType(neqsim.process.measurementdevice.NozzleFlowMeter.NozzleType.ISA_1932);
     meter.setGeometry(200.0, 100.0, "mm");
     meter.setDifferentialPressure(300.0, "mbar");
@@ -1900,8 +1900,8 @@ public class DocExamplesCompilationTest {
   public void testConeFlowMeterDoc() {
     StreamInterface stream = buildDocExampleWetGasStream();
 
-    neqsim.process.measurementdevice.ConeFlowMeter meter =
-        new neqsim.process.measurementdevice.ConeFlowMeter("FT-400", stream);
+    neqsim.process.measurementdevice.ConeFlowMeter meter = new neqsim.process.measurementdevice.ConeFlowMeter("FT-400",
+        stream);
     meter.setGeometry(200.0, 160.0, "mm");
     meter.setDifferentialPressure(300.0, "mbar");
 
@@ -1919,8 +1919,8 @@ public class DocExamplesCompilationTest {
   public void testWedgeFlowMeterDoc() {
     StreamInterface stream = buildDocExampleWetGasStream();
 
-    neqsim.process.measurementdevice.WedgeFlowMeter meter =
-        new neqsim.process.measurementdevice.WedgeFlowMeter("FT-500", stream);
+    neqsim.process.measurementdevice.WedgeFlowMeter meter = new neqsim.process.measurementdevice.WedgeFlowMeter(
+        "FT-500", stream);
     meter.setGeometry(200.0, 80.0, "mm");
     meter.setDifferentialPressure(300.0, "mbar");
 
