@@ -364,6 +364,20 @@ System.out.println(pipe.getThermalSummary());
 - **Overall U-value**: Based on series thermal resistance through all layers
 - **Transient response**: Explicit finite-difference with thermal mass in each layer
 - **Cooldown time**: Lumped capacitance approximation for shutdown scenarios
+- **Transient advection**: Uses the gas, oil, and water mass flow at each finite-volume face from the conservative AUSM+
+  flux calculation. A CLOSED inlet or outlet therefore has exactly zero advective sensible-energy transport, while
+  internal convection can continue.
+- **Closed cooldown**: Radial wall/ambient heat exchange is evaluated for every physical cell, including section zero.
+  The local conservative phase inventory supplies fluid thermal inertia, so a disconnected inlet stream's stored
+  nominal rate cannot change a closed-domain temperature history.
+- **Energy ownership**: The post-step fluid/wall temperature model owns ambient heat exchange. The duplicate wall source
+  in `TwoFluidConservationEquations` is disabled when this model is configured, avoiding two applications of the same
+  heat loss.
+
+For validation, start from `run()`, close both boundaries, disable Joule–Thomson effects for an adiabatic invariant, and
+check that a uniform state remains uniform. For cooldown, report absolute pressure, composition and mixing rule,
+temperatures, heat-transfer coefficients, wall properties, mesh, time step, and units; verify that every cell approaches
+ambient monotonically without undershoot. This implementation does not claim OLGA or LedaFlow equivalence.
 
 ## Model Capabilities Summary
 
