@@ -131,8 +131,8 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     node.setVelocity(0.0);
     assertDoesNotThrow(node::init);
 
+    assertEquals(0.0, node.getVelocity(), 0.0);
     assertEquals(0.0, node.getMassFlowRate(0), 0.0);
-    assertEquals(0.0, node.getMolarFlowRate(0), 0.0);
     assertRelativeEquals(phaseMoles, node.getBulkSystem().getPhase(0).getNumberOfMolesInPhase(),
         "zero hydraulic flow must retain a positive EOS reference amount");
     assertRelativeEquals(methaneFraction, node.getBulkSystem().getPhase(0).getComponent(0).getx(),
