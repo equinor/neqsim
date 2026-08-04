@@ -1994,9 +1994,8 @@ public class TwoFluidPipe extends Pipeline {
    * @return inner-wall interface temperature in kelvin, or {@link Double#NaN} when no layers are configured
    * @throws IllegalArgumentException if the stored profile does not match the configured layer count
    */
-  static double advanceMultilayerCellThermalState(MultilayerThermalCalculator calculator,
-      double[] layerTemperatures, double fluidTemperature, double ambientTemperature,
-      double innerHeatTransferCoefficient, double dt) {
+  static double advanceMultilayerCellThermalState(MultilayerThermalCalculator calculator, double[] layerTemperatures,
+      double fluidTemperature, double ambientTemperature, double innerHeatTransferCoefficient, double dt) {
     List<RadialThermalLayer> layers = calculator.getLayers();
     if (layerTemperatures == null || layerTemperatures.length != layers.size()) {
       throw new IllegalArgumentException("Stored radial-layer profile must match the configured layer count");
