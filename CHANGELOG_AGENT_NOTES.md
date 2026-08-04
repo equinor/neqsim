@@ -9,6 +9,25 @@
 
 ---
 
+## 2026-08-04 — Volume-unit conversion gaps fixed (Copilot review round 8)
+
+### Fixed
+
+- `DifferentialPressureFlowMeter.volumeFlowConversionToM3PerSecond(String)` now supports every unit string that
+  `isActualVolumeUnit(String)`/`isStandardVolumeUnit(String)` classify as valid: `Sm^3/sec`, `kSm3/sec`, `MSm3/sec`,
+  `m^3/min`, `Sm^3/min`, `kSm3/min`, `MSm3/min`, and `m^3/day` were previously missing, so `getVolumeFlowRate(unit)` /
+  `getStandardVolumeFlowRate(unit)` threw `RuntimeException` for those (previously "valid-looking") unit strings.
+
+### Verified as a false positive (no change made)
+
+- A review also claimed `OrificeFlowMeter`/`VenturiFlowMeter`'s `buildWetGasSignature()` cache never hits because
+  `Arrays.equals(double[], double[])` treats `NaN != NaN`. This is incorrect: per the method's own Javadoc contract
+  (and confirmed with a standalone JVM check), `Arrays.equals(double[], double[])` compares `Double.doubleToLongBits`
+  values and explicitly treats two `NaN`s as equal. Added a one-line note to `buildWetGasSignature()` in both classes
+  documenting this so future reviews don't re-flag it.
+
+---
+
 ## 2026-08-04 — Reynolds-cache staleness and nozzle math-domain fixes (Copilot review round 7)
 
 ### Fixed

@@ -697,13 +697,21 @@ public abstract class DifferentialPressureFlowMeter extends StreamMeasurementDev
    * @throws java.lang.RuntimeException if the unit is not supported
    */
   protected static double volumeFlowConversionToM3PerSecond(String unit) {
-    if ("m3/sec".equals(unit) || "Sm3/sec".equals(unit) || "m^3/sec".equals(unit)) {
+    if ("m3/sec".equals(unit) || "Sm3/sec".equals(unit) || "m^3/sec".equals(unit) || "Sm^3/sec".equals(unit)) {
       return 1.0;
-    } else if ("m3/min".equals(unit) || "Sm3/min".equals(unit)) {
+    } else if ("kSm3/sec".equals(unit)) {
+      return 1000.0;
+    } else if ("MSm3/sec".equals(unit)) {
+      return 1.0e6;
+    } else if ("m3/min".equals(unit) || "Sm3/min".equals(unit) || "m^3/min".equals(unit) || "Sm^3/min".equals(unit)) {
       return 1.0 / 60.0;
+    } else if ("kSm3/min".equals(unit)) {
+      return 1000.0 / 60.0;
+    } else if ("MSm3/min".equals(unit)) {
+      return 1.0e6 / 60.0;
     } else if ("m3/hr".equals(unit) || "Sm3/hr".equals(unit) || "m^3/hr".equals(unit) || "Sm^3/hr".equals(unit)) {
       return 1.0 / 3600.0;
-    } else if ("m3/day".equals(unit) || "Sm3/day".equals(unit) || "Sm^3/day".equals(unit)) {
+    } else if ("m3/day".equals(unit) || "Sm3/day".equals(unit) || "m^3/day".equals(unit) || "Sm^3/day".equals(unit)) {
       return 1.0 / (3600.0 * 24.0);
     } else if ("kSm3/hr".equals(unit)) {
       return 1000.0 / 3600.0;

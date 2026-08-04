@@ -507,7 +507,9 @@ public class OrificeFlowMeter extends DifferentialPressureFlowMeter {
 
   /**
    * Builds a cheap fingerprint of every input {@link #computeWetGas()} depends on (stream properties and wet-gas
-   * configuration), used by {@link #solveWetGas()} to detect whether a fresh solve is required.
+   * configuration), used by {@link #solveWetGas()} to detect whether a fresh solve is required. Unset optional inputs
+   * (e.g. {@link #pressureLoss}) are NaN; {@link Arrays#equals(double[], double[])} treats NaN as equal to NaN (per its
+   * Javadoc contract), so that does not defeat the cache.
    *
    * @return fingerprint array, compared with {@link Arrays#equals(double[], double[])}
    */
