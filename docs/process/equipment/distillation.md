@@ -183,6 +183,13 @@ fixed-reflux shortfall exceeds its acceptance tolerance. The requested, availabl
 in
 `getConvergenceDiagnostics()`.
 
+If the column rejects the tray state and installs guarded full-feed fallback products, the
+condenser's separate liquid product from that rejected state is cleared. The fallback gas and
+bottom streams already contain the complete feed inventory, so exposing the old liquid product
+would double-count material. Fixed-reflux delivery diagnostics are invalidated in this state;
+callers must check for `SolveStatus.FALLBACK_PRODUCTS` and must not treat it as a rigorous
+fixed-reflux solution.
+
 A fixed liquid-reflux flow and a top `REFLUX_RATIO` specification are mutually exclusive because
 both control the condenser reflux split. Configuration rejects either setter order, and
 `validateSpecifications()` plus the run preflight detect contradictory state retained by an older
