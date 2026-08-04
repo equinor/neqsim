@@ -1274,6 +1274,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     resetMatrixInsideOutDiagnostics();
     ensureIndependentSideDrawSpecifications();
     ensureIndependentPumparounds();
+    ensureIndependentTerminalSpecifications();
     assignUnassignedFeeds();
     convergenceHistory = new ArrayList<>();
     applyDirectSpecifications();
@@ -1690,6 +1691,49 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       return Math.abs(topTrayPressure - previousTopPressure) / Math.max(1.0e-12, Math.abs(previousTopPressure));
     }
     return 0.0;
+  }
+
+  /**
+   * Check whether the fixed liquid-reflux flow and top reflux-ratio specification claim the same condenser split.
+   *
+   * @return {@code true} when both mutually exclusive controls are active
+   */
+  private boolean hasConflictingCondenserRefluxSpecifications() {
+    Condenser condenser = hasCondenser ? getCondenser() : null;
+    return condenser != null && condenser.isSeparation_with_liquid_reflux()
+        && isTopRefluxRatioSpecification(topSpecification);
+  }
+
+  /**
+   * Check whether a specification controls the condenser reflux ratio.
+   *
+   * @param specification specification to inspect
+   * @return {@code true} for a top reflux-ratio specification
+   */
+  private boolean isTopRefluxRatioSpecification(ColumnSpecification specification) {
+    return specification != null && specification.getLocation() == ColumnSpecification.ProductLocation.TOP
+        && specification.getType() == ColumnSpecification.SpecificationType.REFLUX_RATIO;
+  }
+
+  /**
+   * Create an actionable message for contradictory condenser reflux controls.
+   *
+   * @return degrees-of-freedom error message
+   */
+  private String createConflictingCondenserRefluxSpecificationsMessage() {
+    return "Column " + getName() + " cannot combine a fixed liquid-reflux flow with a top reflux-ratio specification; "
+        + "select one condenser reflux control";
+  }
+
+  /**
+   * Reject contradictory condenser reflux controls retained through direct condenser mutation or serialization.
+   *
+   * @throws IllegalStateException if fixed liquid reflux and top reflux ratio both control the condenser split
+   */
+  private void ensureIndependentTerminalSpecifications() {
+    if (hasConflictingCondenserRefluxSpecifications()) {
+      throw new IllegalStateException(createConflictingCondenserRefluxSpecificationsMessage());
+    }
   }
 
   /** Apply specifications that map directly to condenser or reboiler controls. */
@@ -10409,10 +10453,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *
    * @param value fixed liquid reflux flow rate
    * @param unit flow-rate unit for the fixed reflux value
+   * @throws IllegalArgumentException if a top reflux-ratio specification is already active
    * @throws IllegalStateException if the column has no condenser
    */
   public void setCondenserLiquidReflux(double value, String unit) {
     Condenser condenser = requireCondenser();
+    if (isTopRefluxRatioSpecification(topSpecification)) {
+      throw new IllegalArgumentException(createConflictingCondenserRefluxSpecificationsMessage());
+    }
     condenser.setTotalCondenser(false);
     condenser.setSeparation_with_liquid_reflux(true, value, unit);
     setDoInitializion(true);
@@ -12673,6 +12721,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     validateColumnSpecification(result, topSpecification, ColumnSpecification.ProductLocation.TOP);
     validateColumnSpecification(result, bottomSpecification, ColumnSpecification.ProductLocation.BOTTOM);
     validateProductFlowSpecificationsAgainstFeed(result);
+    if (hasConflictingCondenserRefluxSpecifications()) {
+      result.addError("specification.degreesOfFreedom", createConflictingCondenserRefluxSpecificationsMessage(),
+          "Call setCondenserMode(DistillationColumn.CondenserMode.PARTIAL) or setCondenserMode(DistillationColumn.CondenserMode.TOTAL) to clear fixed-flow mode, or remove the top reflux-ratio specification");
+    }
   }
 
   /**
@@ -13392,13 +13444,19 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * records the user's intent.
    *
    * @param refluxRatio the desired reflux ratio (L/D)
+   * @throws IllegalArgumentException if fixed liquid-reflux mode is active
    */
   public void setCondenserRefluxRatio(double refluxRatio) {
-    if (hasCondenser) {
-      getCondenser().setRefluxRatio(refluxRatio);
+    Condenser condenser = hasCondenser ? getCondenser() : null;
+    if (condenser != null && condenser.isSeparation_with_liquid_reflux()) {
+      throw new IllegalArgumentException(createConflictingCondenserRefluxSpecificationsMessage());
     }
-    this.topSpecification = new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
+    ColumnSpecification specification = new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
         ColumnSpecification.ProductLocation.TOP, refluxRatio);
+    if (condenser != null) {
+      condenser.setRefluxRatio(refluxRatio);
+    }
+    this.topSpecification = specification;
   }
 
   // ======================== Column specification convenience methods
@@ -13426,11 +13484,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Sets the top column specification with location validation.
    *
    * @param spec the specification (must have location TOP)
-   * @throws IllegalArgumentException if the specification location is not TOP
+   * @throws IllegalArgumentException if the specification location is not TOP or a top reflux-ratio specification
+   * conflicts with fixed liquid-reflux mode
    */
   public void setTopSpecification(ColumnSpecification spec) {
     if (spec != null && spec.getLocation() != ColumnSpecification.ProductLocation.TOP) {
       throw new IllegalArgumentException("Top specification must have location TOP, got: " + spec.getLocation());
+    }
+    Condenser condenser = hasCondenser ? getCondenser() : null;
+    if (isTopRefluxRatioSpecification(spec) && condenser != null && condenser.isSeparation_with_liquid_reflux()) {
+      throw new IllegalArgumentException(createConflictingCondenserRefluxSpecificationsMessage());
     }
     this.topSpecification = spec;
   }
