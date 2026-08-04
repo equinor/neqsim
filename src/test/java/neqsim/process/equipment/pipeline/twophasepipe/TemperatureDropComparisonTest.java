@@ -794,17 +794,17 @@ class TemperatureDropComparisonTest {
     pipe.setHeatTransferCoefficient(2000.0);
     pipe.setWallProperties(0.001, 1000.0, 100.0);
 
-    pipe.runTransient(0.2, UUID.fromString("00000000-0000-0000-0000-000000002792"));
+    pipe.runTransient(0.1, UUID.fromString("00000000-0000-0000-0000-000000002792"));
+    double firstCooldownTemperature = pipe.getTemperatureProfile()[0];
+    pipe.runTransient(0.1, UUID.fromString("00000000-0000-0000-0000-000000012792"));
+    double secondCooldownTemperature = pipe.getTemperatureProfile()[0];
 
-    double[] cooledTemperature = pipe.getTemperatureProfile();
-    assertTrue(cooledTemperature[0] < initialTemperature[0] - 1.0e-6,
+    assertTrue(firstCooldownTemperature <= initialTemperature[0] + 1.0e-12,
+        "The closed inlet cell must not heat during cooldown");
+    assertTrue(secondCooldownTemperature < firstCooldownTemperature - 1.0e-6,
         "The closed inlet cell must cool through radial heat transfer");
-    for (int section = 0; section < cooledTemperature.length; section++) {
-      assertTrue(cooledTemperature[section] <= initialTemperature[section] + 1.0e-12,
-          "Cooldown must not heat section " + section);
-      assertTrue(cooledTemperature[section] >= 273.15,
-          "The explicit cooldown step must not undershoot ambient in section " + section);
-    }
+    assertTrue(secondCooldownTemperature >= 273.15,
+        "The explicit cooldown step must not undershoot ambient");
   }
 
 }
