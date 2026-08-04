@@ -77,6 +77,10 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
   private final double relativeThermodynamicMassResidual;
   private final double[] nonlinearUpdateHistory;
   private final double[] densityResidualHistory;
+  private final Double maximumScaledMassEquationResidual;
+  private final Double maximumScaledMomentumEquationResidual;
+  private final double[] scaledMassEquationResidualHistory;
+  private final double[] scaledMomentumEquationResidualHistory;
   private final String message;
 
   /**
@@ -129,6 +133,25 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
       double thermodynamicMassResidualKg, double relativeFiniteVolumeMassResidual,
       double relativeThermodynamicMassResidual, double[] nonlinearUpdateHistory, double[] densityResidualHistory,
       String message, boolean nonlinearMetricEquationResidual) {
+    this(reason, dynamic, solverType, nonlinearIterations, nonlinearUpdateTolerance, densityRelativeTolerance,
+        massBalanceRelativeTolerance, maximumRelativeNonlinearUpdate, maximumRelativeDensityResidual,
+        initialFiniteVolumeMassKg, finalFiniteVolumeMassKg, finalThermodynamicMassKg, inletBoundaryMassKg,
+        outletBoundaryMassKg, netBoundaryMassKg, finiteVolumeMassResidualKg, thermodynamicMassResidualKg,
+        relativeFiniteVolumeMassResidual, relativeThermodynamicMassResidual, nonlinearUpdateHistory,
+        densityResidualHistory, Double.NaN, Double.NaN, new double[0], new double[0], message,
+        nonlinearMetricEquationResidual);
+  }
+
+  OnePhaseFlowConvergenceReport(ConvergenceReason reason, boolean dynamic, int solverType, int nonlinearIterations,
+      double nonlinearUpdateTolerance, double densityRelativeTolerance, double massBalanceRelativeTolerance,
+      double maximumRelativeNonlinearUpdate, double maximumRelativeDensityResidual, double initialFiniteVolumeMassKg,
+      double finalFiniteVolumeMassKg, double finalThermodynamicMassKg, double inletBoundaryMassKg,
+      double outletBoundaryMassKg, double netBoundaryMassKg, double finiteVolumeMassResidualKg,
+      double thermodynamicMassResidualKg, double relativeFiniteVolumeMassResidual,
+      double relativeThermodynamicMassResidual, double[] nonlinearUpdateHistory, double[] densityResidualHistory,
+      double maximumScaledMassEquationResidual, double maximumScaledMomentumEquationResidual,
+      double[] scaledMassEquationResidualHistory, double[] scaledMomentumEquationResidualHistory, String message,
+      boolean nonlinearMetricEquationResidual) {
     this.reason = reason;
     this.dynamic = dynamic;
     this.solverType = solverType;
@@ -151,6 +174,10 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
     this.relativeThermodynamicMassResidual = relativeThermodynamicMassResidual;
     this.nonlinearUpdateHistory = copy(nonlinearUpdateHistory);
     this.densityResidualHistory = copy(densityResidualHistory);
+    this.maximumScaledMassEquationResidual = maximumScaledMassEquationResidual;
+    this.maximumScaledMomentumEquationResidual = maximumScaledMomentumEquationResidual;
+    this.scaledMassEquationResidualHistory = copy(scaledMassEquationResidualHistory);
+    this.scaledMomentumEquationResidualHistory = copy(scaledMomentumEquationResidualHistory);
     this.message = message;
   }
 
@@ -285,6 +312,38 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
    */
   public double[] getDensityResidualHistory() {
     return copy(densityResidualHistory);
+  }
+
+  /**
+   * @return final maximum absolute scaled continuity-equation residual, or NaN when equation-family diagnostics are
+   * unavailable
+   */
+  public double getMaximumScaledMassEquationResidual() {
+    return maximumScaledMassEquationResidual == null ? Double.NaN : maximumScaledMassEquationResidual;
+  }
+
+  /**
+   * @return final maximum absolute scaled momentum-equation residual, or NaN when equation-family diagnostics are
+   * unavailable
+   */
+  public double getMaximumScaledMomentumEquationResidual() {
+    return maximumScaledMomentumEquationResidual == null ? Double.NaN : maximumScaledMomentumEquationResidual;
+  }
+
+  /**
+   * @return defensive copy of the coupled continuity-equation residual history, indexed like
+   * {@link #getNonlinearUpdateHistory()}; empty for staged legacy paths
+   */
+  public double[] getScaledMassEquationResidualHistory() {
+    return copy(scaledMassEquationResidualHistory);
+  }
+
+  /**
+   * @return defensive copy of the coupled momentum-equation residual history, indexed like
+   * {@link #getNonlinearUpdateHistory()}; empty for staged legacy paths
+   */
+  public double[] getScaledMomentumEquationResidualHistory() {
+    return copy(scaledMomentumEquationResidualHistory);
   }
 
   /** @return diagnostic summary */

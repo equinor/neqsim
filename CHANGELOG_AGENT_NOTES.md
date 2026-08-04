@@ -26,6 +26,232 @@ than the non-standard numeric literal `NaN`.
 No public method or default is removed. Existing callers should treat `relativeError: null` as
 "not evaluated" and inspect unit-level mass-balance reports separately from the recycle-tear
 convergence gate.
+## 2026-08-04 — Capacity evidence in bottleneck and throughput results
+
+### Added
+
+`ProcessModelSimulationEvaluator.BottleneckStatus` and `ThroughputCaseRow` now snapshot the
+active constraint's confidence presence/value, scalar validity-range presence/bounds, and whether
+the evaluated current value lies inside the inclusive range. The metadata is available through
+Java getters and is retained by throughput JSON and CSV exports.
+
+### Compatibility and reporting
+
+Existing constructors remain available and represent evidence metadata as unset. Manually constructed
+snapshots normalize inconsistent enabled metadata (non-finite/out-of-range confidence or
+non-finite/reversed bounds) to the same unset state, and derive applicability from the current value
+and retained bounds. Bottleneck scans read dynamic constraint suppliers once per candidate and use
+that scalar for both utilization and applicability. JSON includes presence flags and uses `null` for
+unset confidence, bounds, and applicability. CSV includes the same flags and uses blank cells for
+unset values. Utilization, constraint direction, margins, feasibility, thermodynamics, hydraulics,
+and throughput search are unchanged.
+
+---
+
+## 2026-08-04 — ConeFlowMeter rejects non-physical geometry (Copilot review round 11)
+
+### Fixed
+
+- `ConeFlowMeter.setGeometry(double, double, String)` now validates `coneDiameter &lt; pipeDiameter` (both positive)
+  instead of silently clamping the beta formula's `sqrt` argument to 0 with `Math.max(0.0, ...)`. Invalid geometry
+  (cone diameter &gt;= pipe diameter, or either non-positive) now logs a warning and stores a `NaN` throat diameter,
+  consistent with `WedgeFlowMeter`'s invalid-geometry handling, instead of silently producing beta = 0.
+- `ConeFlowMeter.getConeDiameter(String)` now returns `NaN` for a non-physical beta (NaN, &lt;= 0, or &gt; 1) instead
+  of clamping to a misleading 0 diameter.
+
+---
+
+## 2026-08-04 — Reject non-physical discharge coefficients in the Reynolds iteration (Copilot review round 10)
+
+### Fixed
+
+- `DifferentialPressureFlowMeter.getMassFlowRatePerSecond()`'s Reynolds-number iteration only checked
+  `Double.isFinite(updatedFlow)`, so a Reynolds-independent device whose `calcDischargeCoefficient(...)` returns a
+  non-physical value (`C &lt;= 0`) could silently converge to a negative (but finite) mass flow and Reynolds number on
+  the very first pass. The initial guess and every iteration now also reject `flow &lt;= 0.0`, returning `NaN` (with a
+  warning identifying the offending Re,D) instead of a silently wrong negative flow.
+
+---
+
+## 2026-08-04 — Test doc/privacy wording fixes (Copilot review round 9)
+
+### Fixed
+
+- `OrificeFlowMeterTest.buildWetGasMeter(double)` JavaDoc claimed `p1 = 60 bara`, but the meter uses the shared
+  `stream` fixture from `setUp()`, which is 20 bara. Reworded to describe the actual upstream pressure source.
+- Redacted equipment tag identifiers (`27A-KA01A` / `27A-KA60`) from a `VenturiFlowMeterTest` JavaDoc comment, per the
+  repository's privacy rule against including equipment tag numbers in public/reusable content.
+- `DocExamplesCompilationTest.buildDocExampleWetGasStream()` no longer hard-asserts an exact phase count of 2 (brittle
+  if NeqSim ever adds another phase type); it now asserts the intended `gas` and `oil` phases are both present via
+  `hasPhaseType(...)`.
+
+---
+
+## 2026-08-04 — Volume-unit conversion gaps fixed (Copilot review round 8)
+
+### Fixed
+
+- `DifferentialPressureFlowMeter.volumeFlowConversionToM3PerSecond(String)` now supports every unit string that
+  `isActualVolumeUnit(String)`/`isStandardVolumeUnit(String)` classify as valid: `Sm^3/sec`, `kSm3/sec`, `MSm3/sec`,
+  `m^3/min`, `Sm^3/min`, `kSm3/min`, `MSm3/min`, and `m^3/day` were previously missing, so `getVolumeFlowRate(unit)` /
+  `getStandardVolumeFlowRate(unit)` threw `RuntimeException` for those (previously "valid-looking") unit strings.
+
+### Verified as a false positive (no change made)
+
+- A review also claimed `OrificeFlowMeter`/`VenturiFlowMeter`'s `buildWetGasSignature()` cache never hits because
+  `Arrays.equals(double[], double[])` treats `NaN != NaN`. This is incorrect: per the method's own Javadoc contract
+  (and confirmed with a standalone JVM check), `Arrays.equals(double[], double[])` compares `Double.doubleToLongBits`
+  values and explicitly treats two `NaN`s as equal. Added a one-line note to `buildWetGasSignature()` in both classes
+  documenting this so future reviews don't re-flag it.
+
+---
+
+## 2026-08-04 — Reynolds-cache staleness and nozzle math-domain fixes (Copilot review round 7)
+
+### Fixed
+
+- `DifferentialPressureFlowMeter.getMassFlowRatePerSecond()` now resets `lastReynoldsNumberPipe` to `NaN` on every
+  invalid-input/invalid-expansibility early return, not just when `dp &lt;= 0`, so `getReynoldsNumberPipe()` never
+  reports a stale value from a previous successful solve after a failed one.
+- The Reynolds-number iteration now checks `Double.isFinite(updatedFlow)` each pass and fails fast (NaN + a logged
+  warning identifying the offending Re,D) instead of running all `MAX_ITERATIONS` passes and logging a misleading
+  "did not converge" warning when a device-specific discharge-coefficient correlation produces NaN/Infinity.
+- `NozzleFlowMeter.calcThroatTappedDischargeCoefficient(double)` now explicitly returns `NaN` for
+  `reynoldsThroat &lt; 400000`, instead of relying on `Math.pow(negative, 0.8)` (a non-integer power of a negative
+  base) to produce `NaN` indirectly once `1 - 400000 / Re,d` goes negative.
+
+---
+
+## 2026-08-04 — Doc/test wording fixes and CONE beta validation (Copilot review round 6)
+
+### Fixed
+
+- `ExpansibilityModel.CONE.calculate(...)` now validates `0 < beta < 1` like `ORIFICE` and `ISENTROPIC`, instead of
+  silently returning a finite value for non-physical geometry.
+- Corrected the low-dP limit comment on `ExpansibilityModel.ISENTROPIC`: the indeterminate
+  `(1 - tau^((kappa-1)/kappa)) / (1 - tau)` term itself tends to `(kappa-1)/kappa`, not `1`; it is the overall
+  expansibility factor that tends to `1.0`.
+- `WedgeFlowMeter.setWedgeRatio(double)` JavaDoc no longer claims the pipe diameter is "required" to already be set
+  (it isn't enforced); it now documents the actual behavior, including the base class's 0.2 m default.
+- Renamed the misleading "dry-gas example" JavaDoc on `testVenturiFlowMeterDoc()`/`testOrificeFlowMeterDoc()` in
+  `DocExamplesCompilationTest`, which actually exercise the two-phase `buildDocExampleWetGasStream()` helper with
+  `WetGasCorrelation.NONE` (the liquid load is simply ignored in that mode, not absent from the stream).
+- Removed the remaining `System.out.println` calls from `docs/process/equipment/measurement_devices.md` code
+  snippets (CO2 emissions, NMVOC, HC/water dew point, cricondenbar, FIV LOF/F-RMS, molar mass, water content, pH).
+
+---
+
+## 2026-08-04 — Wet-gas getter caching for OrificeFlowMeter and VenturiFlowMeter
+
+### Changed
+
+- `OrificeFlowMeter` and `VenturiFlowMeter` no longer re-run the full iterative wet-gas solve on every getter call
+  (`getLockhartMartinelliParameter()`, `getGasDensiometricFroudeNumber()`, `getOverReadingFactor()`, etc., plus
+  `getMassFlowRatePerSecond()`). Each now caches the last `WetGasResult` behind a cheap input fingerprint
+  (`buildWetGasSignature()`: differential pressure, upstream pressure, beta, gas density, viscosity/discharge
+  coefficient, liquid load configuration, and wet-gas correlation settings). Reading multiple derived quantities within
+  the same timestep now reuses one solve instead of re-solving per getter, and all getters are guaranteed to reflect
+  the same solved state. The cache is not manually invalidated by setters; it is recomputed automatically whenever the
+  fingerprint changes (e.g. after `process.run()` advances the stream, or after any wet-gas setter call).
+- Documentation code snippets no longer use `System.out.println` (project convention: avoid it in examples that may be
+  copied into production code).
+- `DocExamplesCompilationTest.buildDocExampleWetGasStream()` now asserts the built stream is two-phase, instead of
+  assuming it silently.
+
+---
+
+## 2026-08-04 — DP flow-meter Copilot review fixes (Reynolds cache, volume-unit dispatch, near-zero-dP expansibility)
+
+### Fixed
+
+- `DifferentialPressureFlowMeter.getMassFlowRatePerSecond()` now resets the cached
+  `lastReynoldsNumberPipe` to `NaN` when the differential pressure is not positive, instead of
+  leaving it at the previous solve's converged value. `getReynoldsNumberPipe()`,
+  `getReynoldsNumberThroat()`, and `getValidityViolations()` no longer report stale Reynolds-number
+  information after `dp` drops to zero (or negative).
+- `DifferentialPressureFlowMeter.getVolumeFlowRate(String unit)` now delegates to
+  `getStandardVolumeFlowRate(unit)` when `unit` is a standard-volume unit (`Sm3/...`, `kSm3/...`,
+  `MSm3/...`). Previously it always divided by the flowing (actual) gas density, so
+  `getVolumeFlowRate("Sm3/hr")` silently returned a dimensionally-wrong value instead of the correct
+  standard-condition flow.
+- `ExpansibilityModel.ISENTROPIC.calculate(...)` now returns `1.0` instead of `NaN` when `tau` is
+  within `1e-12` of `1.0` (the low-differential-pressure limit). The `(1 - tau^((kappa-1)/kappa)) /
+  (1 - tau)` term is a removable 0/0 indeterminate form whose limit is `(kappa-1)/kappa`, which makes
+  the overall expansibility factor tend to `1.0` — i.e. no expansion for a negligible pressure drop,
+  matching physical expectation instead of propagating `NaN` into the flow calculation.
+- Documentation code snippets in `docs/process/equipment/measurement_devices.md` that reference
+  `List<String> issues = meter.getValidityViolations();` now include `import java.util.List;` so
+  they compile standalone if copied into a small program.
+
+---
+
+## 2026-08-04 — ISO/TR 11583 Clause 7 wet-gas correction added to OrificeFlowMeter
+
+### Added
+
+`OrificeFlowMeter.setWetGasCorrelation(WetGasCorrelation.ISO_TR_11583)` switches the meter to the
+ISO/TR 11583 Clause 7 wet-gas orifice method. The liquid load is supplied via
+`setLiquidFromStream(true)` (reads the connected stream's own phase split), `setLiquidToGasMassRatio(x)`,
+`setLiquidMassFlowRate(v, unit)`, or (when 0.5 <= beta <= 0.68 and no explicit liquid rate/ratio is
+given) the 7.5.5 permanent pressure-loss route via `setPressureLoss(v, unit)`. New getters:
+`getLockhartMartinelliParameter()`, `getGasDensiometricFroudeNumber()`, `getOverReadingFactor()`,
+`getChisholmCoefficient()`, `getChisholmExponent()`. `getValidityViolations()` now reports the Clause 7
+limits of use (0.24 <= beta <= 0.73, 0 < X <= 0.3, Fr,gas >= 0.2, rho,gas/rho,liquid > 0.014, D >= 50 mm,
+plus the additional 7.5.5 bounds when the pressure-loss route is used) instead of the dry-gas ISO 5167-2
+limits when the correlation is active.
+
+**Key difference from `VenturiFlowMeter`'s Clause 6 wet-gas method**: the orifice discharge coefficient
+is **never replaced** (Clause 7.5.2) — it stays the plain Reader-Harris/Gallagher equation evaluated at
+the gas-only Reynolds number, so there is no `useWetGasDischargeCoefficient`-style guard. The Chisholm
+exponent also has no diameter-ratio term (unlike Venturi's beta-reduced exponent):
+`n = 0.214` for `Fr,gas < 1.5`, `n = (1/sqrt(2) - 0.3/sqrt(Fr,gas))^2` for `Fr,gas > 1.5`.
+
+`DifferentialPressureFlowMeter` gained a protected `setReynoldsNumberPipe(double)` so a wet-gas subclass
+can record its own converged Reynolds number on the base class; without it, `getReynoldsNumberPipe()`
+stayed pinned at the dry-gas seed value from the initial solve.
+
+### Compatibility
+
+All 8 pre-existing `OrificeFlowMeterTest` cases pass unchanged (default correlation is `NONE`). 9 new
+wet-gas tests added (17 total). No other DP flow meter class is affected.
+
+## 2026-08-04 — ISO 5167 differential-pressure flow meters: shared base class + orifice/nozzle/cone/wedge
+
+### Added
+
+`DifferentialPressureFlowMeter` (abstract, `neqsim.process.measurementdevice`) is the new shared base
+for ISO 5167-1 general-principles physics: geometry (`setGeometry`/`setPipeDiameter`/`setThroatDiameter`,
+diameter ratio always `beta = d/D` recomputed on demand), differential pressure (explicit or via
+`DifferentialPressureTransmitter`), gas density/isentropic exponent/dynamic viscosity readers (each
+overridable), a Reynolds-number fixed-point iteration for devices whose discharge coefficient depends on
+`Re,D`, and the mass/actual-volume/standard-volume/`getMeasuredValue` accessors. `ExpansibilityModel`
+(enum: `ORIFICE`, `ISENTROPIC`, `CONE`) holds the three expansibility-factor families shared across ISO
+5167-2/-3/-4/-5/-6.
+
+Four new concrete devices, each implementing only its own discharge coefficient and expansibility model:
+
+- `OrificeFlowMeter` (ISO 5167-2) — Reader-Harris/Gallagher (1998) discharge coefficient,
+  `TappingArrangement` (`CORNER`, `D_AND_D_HALF`, `FLANGE`).
+- `NozzleFlowMeter` (ISO 5167-3) — `NozzleType` (`ISA_1932`, `LONG_RADIUS`, `THROAT_TAPPED`,
+  `VENTURI_NOZZLE`); the first three depend on the Reynolds number, the Venturi nozzle does not.
+- `ConeFlowMeter` (ISO 5167-5) — constant C = 0.82; no physical throat, `beta = sqrt(1 - dc^2/D^2)`
+  derived from the cone diameter via `setGeometry(D, dc, unit)`.
+- `WedgeFlowMeter` (ISO 5167-6) — C = 0.77 - 0.09 beta; no physical throat, beta derived from the wedge
+  gap height (`setGeometry(D, h, unit)`) or wedge ratio (`setWedgeRatio(h/D)`) via ISO 5167-6 Formula (3).
+
+### Compatibility and migration
+
+`VenturiFlowMeter` (ISO 5167-4) is re-parented onto `DifferentialPressureFlowMeter` with **no public API
+change** — same constructors, same method signatures, same wet-gas (ISO/TR 11583, de Leeuw) behavior. All
+20 pre-existing `VenturiFlowMeterTest` cases pass unchanged. Wet-gas over-reading correction (liquid load,
+Lockhart-Martinelli, Froude number, Chisholm form) remains Venturi-specific; it has not been generalized to
+the other four devices in this change.
+
+### Not in scope (raise separately if needed)
+
+`neqsim.standards.gasquality.Standard_AGA3`'s own Reader-Harris/Gallagher implementation has known
+transcription bugs (missing terms, wrong Reynolds-number basis) found while verifying `OrificeFlowMeter`
+against the same ISO 5167-2:2022 Formula (4); it was deliberately left untouched pending maintainer review.
 
 ## 2026-08-03 — Capacity constraint confidence and validity metadata
 
@@ -42,8 +268,8 @@ Existing constructors and serialized constraints remain compatible. Unset and le
 reported as absent and numeric getters return `NaN`. The metadata does not alter utilization,
 constraint direction, margins, violation status, feasibility, or optimizer search. Confidence is
 an evidence-quality score, not a probability of safety or constraint satisfaction. This release
-does not yet propagate confidence or validity into throughput case rows or implement a
-multidimensional operating envelope.
+propagates confidence and validity into throughput case rows as of 2026-08-04, but does not
+implement a multidimensional operating envelope.
 ## 2026-08-03 — TwoFluidPipe phase-resolved flash transfer
 
 ### Corrected
