@@ -1,7 +1,9 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.lang.reflect.Field;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Tag;
@@ -221,4 +223,29 @@ class TPmultiflashTest {
     // may not predict it for all parameter combinations, but we verify no crashes
     assertTrue(threePhaseCount >= 0, "Scan completed without errors");
   }
+  /**
+   * A reused multiflash operation must not carry a previous beta-solver stall into a pass that does not execute the beta
+   * solver. Otherwise the later active-set rescue can act on stale convergence state.
+   *
+   * @throws Exception if the private lifecycle field cannot be inspected
+   */
+  @Test
+  void testRunClearsStaleBetaSolveStateWhenNoBetaSolveRuns() throws Exception {
+    SystemInterface singlePhase = new neqsim.thermo.system.SystemSrkEos(298.15, 50.0);
+    singlePhase.addComponent("methane", 1.0);
+    singlePhase.setMixingRule("classic");
+    singlePhase.setMultiPhaseCheck(false);
+    singlePhase.init(0);
+
+    TPmultiflash operation = new TPmultiflash(singlePhase, false);
+    Field stalledField = TPmultiflash.class.getDeclaredField("betaSolveStalled");
+    stalledField.setAccessible(true);
+    stalledField.setBoolean(operation, true);
+
+    operation.run();
+
+    assertFalse(stalledField.getBoolean(operation),
+        "A run without a beta solve must clear stall state retained by a reused operation");
+  }
+
 }
