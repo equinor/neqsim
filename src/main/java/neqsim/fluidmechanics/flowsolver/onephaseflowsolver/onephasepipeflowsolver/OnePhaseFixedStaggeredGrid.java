@@ -1513,8 +1513,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     jacobian[row][column - row + COUPLED_HALF_BANDWIDTH] = value;
   }
 
-  private String calculateJacobianDirectionalDerivativeDetail(double[] state, double[] direction,
-      double[][] jacobian) {
+  private String calculateJacobianDirectionalDerivativeDetail(double[] state, double[] direction, double[][] jacobian) {
     double maximumRelativeDirection = 0.0;
     for (int variable = 0; variable < state.length; variable++) {
       double scale = Math.max(Math.abs(state[variable]), 1.0);
@@ -1547,18 +1546,17 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       for (int row = 0; row < state.length; row++) {
         int family = row % 2;
         double finiteDifference = (upperResidual[row] - lowerResidual[row]) / (2.0 * perturbationScale);
-        maximumDifference[family] =
-            Math.max(maximumDifference[family], Math.abs(jacobianDirection[row] - finiteDifference));
+        maximumDifference[family] = Math.max(maximumDifference[family],
+            Math.abs(jacobianDirection[row] - finiteDifference));
         maximumReference[family] = Math.max(maximumReference[family],
             Math.max(Math.abs(jacobianDirection[row]), Math.abs(finiteDifference)));
       }
       double massRelativeError = maximumDifference[0] / Math.max(maximumReference[0], 1.0e-14);
       double momentumRelativeError = maximumDifference[1] / Math.max(maximumReference[1], 1.0e-14);
-      return "Independent Newton-direction Jacobian relative infinity-norm error: continuity="
-          + massRelativeError + ", momentum=" + momentumRelativeError + ", normalized perturbation=1.0E-6";
+      return "Independent Newton-direction Jacobian relative infinity-norm error: continuity=" + massRelativeError
+          + ", momentum=" + momentumRelativeError + ", normalized perturbation=1.0E-6";
     } catch (RuntimeException exception) {
-      return "Independent Jacobian directional-derivative check failed with "
-          + exception.getClass().getSimpleName()
+      return "Independent Jacobian directional-derivative check failed with " + exception.getClass().getSimpleName()
           + (exception.getMessage() == null ? "" : ": " + exception.getMessage());
     } finally {
       applyCoupledState(state);
