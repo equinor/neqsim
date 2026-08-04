@@ -19,7 +19,8 @@ class TwoFluidPipeClosedThermalTest {
   void closedTemperatureHistoryIgnoresDisconnectedInletNominalFlow() {
     PipeFixture reference = createInitializedPipe("closed-thermal-reference");
     PipeFixture changed = createInitializedPipe("closed-thermal-changed");
-    assertArrayEquals(reference.pipe.getTemperatureProfile(), changed.pipe.getTemperatureProfile(), 1.0e-12);
+    assertArrayEquals(reference.pipe.getTemperatureProfile(), changed.pipe.getTemperatureProfile(),
+        CLOSED_HISTORY_TOLERANCE_K);
 
     configureClosedCooldown(reference.pipe);
     configureClosedCooldown(changed.pipe);
