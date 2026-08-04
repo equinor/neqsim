@@ -1730,16 +1730,18 @@ public class TwoFluidPipe extends Pipeline {
    * Update temperature after an accepted transient hydrodynamic step.
    *
    * <p>
-   * Sensible-energy advection uses the phase-resolved finite-volume face mass fluxes from
-   * {@link TwoFluidConservationEquations#calcPhaseMassFaceFluxes(TwoFluidSection[], double)}. CLOSED external faces are
-   * therefore exactly adiabatic to mass transport while internal convection remains active. Radial heat transfer is
+   * Sensible-energy advection uses the phase-resolved finite-volume face mass fluxes retained by
+   * {@link TwoFluidConservationEquations#getLastPhaseMassFaceFluxes()} for each hydrodynamic integration stage. CLOSED
+   * external faces are therefore exactly adiabatic to mass transport while internal convection remains active. Radial
+   * heat transfer is
    * applied to every physical cell, including section zero. This post-step update is the sole owner of ambient heat
    * exchange; the equation object's duplicate wall source is disabled by the heat-transfer setters.
    * </p>
    *
    * @param dt time step in seconds
+   * @param phaseMassFaceFluxes integration-weighted gas, oil, and water face mass flows in kg/s
    */
-  private void updateTransientTemperature(double dt) {
+  private void updateTransientTemperature(double dt, double[][] phaseMassFaceFluxes) {
     SystemInterface inletFluid = getInletStream().getFluid();
     double Cp = inletFluid.getCp("J/kgK");
     if (Cp <= 0.0 || !Double.isFinite(Cp)) {
@@ -1759,7 +1761,6 @@ public class TwoFluidPipe extends Pipeline {
     }
 
     double muJT = enableJouleThomson ? 0.4 / 1.0e5 : 0.0;
-    double[][] phaseMassFaceFluxes = equations.calcPhaseMassFaceFluxes(sections, dx);
 
     if (useMultilayerThermalModel && thermalCalculator != null) {
       updateTransientTemperatureMultilayer(phaseMassFaceFluxes, dt, Cp, muJT);
@@ -3313,6 +3314,7 @@ public class TwoFluidPipe extends Pipeline {
       // 3. Calculate RHS and advance solution
       final double dtFinal = dtActual;
       final List<TwoFluidConservationEquations.MassBalanceRate> stageMassBalanceRates = new ArrayList<>();
+      final List<double[][]> stagePhaseMassFaceFluxes = new ArrayList<>();
 
       TimeIntegrator.RHSFunction rhs = (state, t) -> {
         equations.applyState(sections, state);
@@ -3323,6 +3325,9 @@ public class TwoFluidPipe extends Pipeline {
         applyBoundaryConditions();
         double[][] derivative = equations.calcRHS(sections, dx);
         stageMassBalanceRates.add(equations.getLastMassBalanceRate());
+        if (enableHeatTransfer && heatTransferCoefficient > 0.0) {
+          stagePhaseMassFaceFluxes.add(equations.getLastPhaseMassFaceFluxes());
+        }
         return derivative;
       };
 
@@ -3502,7 +3507,7 @@ public class TwoFluidPipe extends Pipeline {
 
       // 9. Update temperature profile if heat transfer is enabled
       if (enableHeatTransfer && heatTransferCoefficient > 0) {
-        updateTransientTemperature(dtActual);
+        updateTransientTemperature(dtActual, averagePhaseMassFaceFluxes(stagePhaseMassFaceFluxes));
       }
 
       // 10. Advance time
@@ -3523,7 +3528,7 @@ public class TwoFluidPipe extends Pipeline {
 
   private void accumulateAcceptedMassBalance(List<TwoFluidConservationEquations.MassBalanceRate> stageRates,
       double timeStepSeconds, double[] inletMassKg, double[] outletMassKg, double[] sourceMassKg) {
-    double[] weights = getMassBalanceStageWeights(stageRates.size());
+    double[] weights = getTimeIntegrationStageWeights(stageRates.size());
     for (int stage = 0; stage < stageRates.size(); stage++) {
       TwoFluidConservationEquations.MassBalanceRate rate = stageRates.get(stage);
       double[] inletRate = rate.getInletMassFlowKgPerSecond();
@@ -3538,7 +3543,27 @@ public class TwoFluidPipe extends Pipeline {
     }
   }
 
-  private double[] getMassBalanceStageWeights(int stageCount) {
+  private double[][] averagePhaseMassFaceFluxes(List<double[][]> stageFluxes) {
+    double[] weights = getTimeIntegrationStageWeights(stageFluxes.size());
+    double[][] average = new double[numberOfSections + 1][3];
+    for (int stage = 0; stage < stageFluxes.size(); stage++) {
+      double[][] stageFlux = stageFluxes.get(stage);
+      if (stageFlux.length != average.length) {
+        throw new IllegalStateException("Unexpected thermal face count for integration stage " + stage);
+      }
+      for (int face = 0; face < average.length; face++) {
+        if (stageFlux[face].length != 3) {
+          throw new IllegalStateException("Expected gas, oil, and water fluxes at face " + face);
+        }
+        for (int phase = 0; phase < 3; phase++) {
+          average[face][phase] += weights[stage] * stageFlux[face][phase];
+        }
+      }
+    }
+    return average;
+  }
+
+  private double[] getTimeIntegrationStageWeights(int stageCount) {
     TimeIntegrator.Method method = timeIntegrator.getMethod();
     double[] weights;
     switch (method) {
@@ -3560,7 +3585,7 @@ public class TwoFluidPipe extends Pipeline {
     }
     if (stageCount != weights.length) {
       throw new IllegalStateException(
-          "Expected " + weights.length + " mass-balance stages for " + method + " but received " + stageCount);
+          "Expected " + weights.length + " integration stages for " + method + " but received " + stageCount);
     }
     return weights;
   }
