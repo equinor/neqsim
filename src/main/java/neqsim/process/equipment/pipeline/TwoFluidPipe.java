@@ -6737,7 +6737,7 @@ public class TwoFluidPipe extends Pipeline {
     this.multilayerLayerTemperatureProfiles = null;
     this.useMultilayerThermalModel = (calculator != null);
     if (calculator != null) {
-      enableHeatTransfer = true;
+      setHeatTransferCoefficient(calculator.calculateOverallUValue());
     }
   }
 
