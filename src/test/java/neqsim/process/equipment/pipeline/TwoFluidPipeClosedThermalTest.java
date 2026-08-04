@@ -135,7 +135,7 @@ class TwoFluidPipeClosedThermalTest {
     fixture.pipe.setThermalCalculator(calculator);
 
     assertTrue(fixture.pipe.isHeatTransferEnabled());
-    assertEquals(calculator.calculateOverallUValue(), fixture.pipe.getHeatTransferCoefficient(), 0.0);
+    assertEquals(calculator.calculateOverallUValue(), fixture.pipe.getHeatTransferCoefficient(), 1.0e-12);
   }
 
   @Test
