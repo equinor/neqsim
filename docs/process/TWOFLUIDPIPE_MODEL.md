@@ -542,6 +542,13 @@ together.
 | `CLOSED` | Inlet or outlet | None | `pipe.closeInlet()` or `pipe.closeOutlet()` | Shut-in, valve closure, blocked-in pipe |
 | `CHARACTERISTIC` | Inlet or outlet | External pressure/flow state | `pipe.setOutletBoundaryCondition(BoundaryCondition.CHARACTERISTIC)` | Reduced wave reflection in fast transients |
 
+For a `CLOSED` inlet, the first physical cell has zero upstream advective and Joule-Thomson
+boundary contributions, but it remains part of the radial fluid-wall-ambient heat-transfer domain.
+This distinction is required for blocked-in cooldown: closing a valve removes through-boundary
+energy transport; it does not thermally insulate or remove the adjacent finite-volume cell. The
+broader local-flux and integrated-energy closure work remains tracked in
+[issue #2792](https://github.com/equinor/neqsim/issues/2792).
+
 Example with explicit boundary settings:
 
 ```java
