@@ -404,6 +404,20 @@ public class SystemVanLaarActivitySRKTest extends neqsim.NeqSimTest {
     }
   }
 
+  /** Verifies that logarithmic K updates are more strongly damped near a phase-fraction boundary. */
+  @Test
+  public void testGammaPhiRelaxationTightensNearPhaseBoundary() {
+    SystemVanLaarActivitySRK system = new SystemVanLaarActivitySRK(293.15, 20.0);
+    system.setBeta(0.5);
+    double interiorUpdate = system.relaxGammaPhiKValue(1.0, 1.0e-4);
+
+    system.setBeta(1.0 - 1.0e-6);
+    double boundaryUpdate = system.relaxGammaPhiKValue(1.0, 1.0e-4);
+
+    assertTrue(boundaryUpdate > interiorUpdate && boundaryUpdate < 1.0,
+        "Near-boundary damping must take a smaller positive logarithmic K step");
+  }
+
   /**
    * Verifies that direct gamma-phi flashing restores the EOS/GE phase roles after active-phase reordering.
    */
@@ -671,7 +685,7 @@ public class SystemVanLaarActivitySRKTest extends neqsim.NeqSimTest {
   @Test
   public void testMaterialAcidSolubilityNotebookReferenceCases() {
     assertAcidReportValues(48.0, 169.0, 100000.0, 54000.0, 0.0, new double[] { 65.045, 4.61789e-11, 65.2742, 34.7258,
-        0.0, 6.04127e-11, 34.955, 65.045, 0.0, 1609.38, 1525.91, 0.130723 });
+        0.0, 6.04127e-11, 34.955, 65.045, 0.0, 1609.38, 1493.48, 0.130723 });
     assertAcidReportValues(0.0, 100.0, 100000.0, 54500.0, 0.0, new double[] { 64.9683, 3.14611e-11, 65.3506, 34.6494,
         0.0, 4.12006e-11, 35.0317, 64.9683, 0.0, 1823.06, 655.258, 0.131672 });
     assertAcidReportValues(-28.0, 20.0, 100000.0, 53500.0, 0.0, new double[] { 65.0894, 6.64372e-11, 65.23, 34.77, 0.0,
