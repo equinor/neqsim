@@ -6795,8 +6795,7 @@ public class TwoFluidPipe extends Pipeline {
     this.useMultilayerThermalModel = enable;
     this.multilayerLayerTemperatureProfiles = null;
     if (enable) {
-      enableHeatTransfer = true;
-      getThermalCalculator(); // Ensure created
+      setHeatTransferCoefficient(getThermalCalculator().calculateOverallUValue());
     }
   }
 
@@ -6833,10 +6832,8 @@ public class TwoFluidPipe extends Pipeline {
     calc.setAmbientTemperature(surfaceTemperature);
     multilayerLayerTemperatureProfiles = null;
     useMultilayerThermalModel = true;
-    enableHeatTransfer = true;
-
-    // Update the simple U-value to match for backwards compatibility
-    heatTransferCoefficient = calc.calculateOverallUValue();
+    // Update the simple U-value and all thermal ownership flags consistently.
+    setHeatTransferCoefficient(calc.calculateOverallUValue());
   }
 
   /**
@@ -6853,9 +6850,7 @@ public class TwoFluidPipe extends Pipeline {
     calc.setAmbientTemperature(surfaceTemperature);
     multilayerLayerTemperatureProfiles = null;
     useMultilayerThermalModel = true;
-    enableHeatTransfer = true;
-
-    heatTransferCoefficient = calc.calculateOverallUValue();
+    setHeatTransferCoefficient(calc.calculateOverallUValue());
   }
 
   /**
