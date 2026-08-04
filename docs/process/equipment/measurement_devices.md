@@ -262,6 +262,8 @@ $$q_{m,gas} = \frac{C}{\sqrt{1-\beta^4}}\,\varepsilon\,\frac{\pi d^2}{4}\,\frac{
 $$\Phi=\sqrt{1+C_{Ch}X+X^2},\qquad X = \frac{q_{m,liquid}}{q_{m,gas}}\sqrt{\frac{\rho_{1,gas}}{\rho_{liquid}}}$$
 
 ```java
+import java.util.List;
+
 meter.setWetGasCorrelation(VenturiFlowMeter.WetGasCorrelation.ISO_TR_11583);
 meter.setSurfaceTensionFactor(VenturiFlowMeter.H_HYDROCARBON);  // 1.0 HC, 1.35 water, 0.79 wet steam
 
@@ -326,6 +328,7 @@ equation, which depends on the pipe Reynolds number and on the pressure-tapping 
 factor is `ExpansibilityModel.ORIFICE`.
 
 ```java
+import java.util.List;
 import neqsim.process.measurementdevice.OrificeFlowMeter;
 
 OrificeFlowMeter meter = new OrificeFlowMeter("FT-200", stream);
@@ -354,6 +357,8 @@ term (unlike Venturi's beta-reduced exponent):
 $$n = 0.214 \ \ (0.2\le Fr_{gas} < 1.5), \qquad n = \left(\frac{1}{\sqrt{2}} - \frac{0.3}{\sqrt{Fr_{gas}}}\right)^2 \ \ (Fr_{gas} > 1.5)$$
 
 ```java
+import java.util.List;
+
 meter.setWetGasCorrelation(OrificeFlowMeter.WetGasCorrelation.ISO_TR_11583);
 
 // Supply the liquid load in one of four ways:

@@ -423,6 +423,7 @@ public abstract class DifferentialPressureFlowMeter extends StreamMeasurementDev
   protected double getMassFlowRatePerSecond() {
     double dp = getDifferentialPressurePa();
     if (dp <= 0.0) {
+      lastReynoldsNumberPipe = Double.NaN;
       return 0.0;
     }
     double p1 = getUpstreamPressurePa();
@@ -468,12 +469,18 @@ public abstract class DifferentialPressureFlowMeter extends StreamMeasurementDev
   }
 
   /**
-   * Returns the actual (flowing-condition) volume flow rate.
+   * Returns the actual (flowing-condition) volume flow rate. Standard-volume units (e.g. "Sm3/hr") are delegated to
+   * {@link #getStandardVolumeFlowRate(String)} since the flowing gas density used here would otherwise be paired with a
+   * standard-volume unit, which is dimensionally inconsistent.
    *
-   * @param unit volume flow unit, one of "m3/sec", "m3/min" or "m3/hr"
-   * @return actual volume flow rate in the requested unit
+   * @param unit volume flow unit, one of "m3/sec", "m3/min", "m3/hr" or a standard volume unit accepted by
+   * {@link #getStandardVolumeFlowRate(String)}
+   * @return actual (or standard, when a standard-volume unit is requested) volume flow rate in the requested unit
    */
   public double getVolumeFlowRate(String unit) {
+    if (isStandardVolumeUnit(unit)) {
+      return getStandardVolumeFlowRate(unit);
+    }
     double density = getGasDensity();
     if (density <= 0.0) {
       return Double.NaN;

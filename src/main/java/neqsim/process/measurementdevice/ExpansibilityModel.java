@@ -67,8 +67,12 @@ public enum ExpansibilityModel {
         return Double.NaN;
       }
       double tau = (p1 - dp) / p1;
-      if (tau <= 0.0 || Math.abs(1.0 - tau) < 1e-12) {
+      if (tau <= 0.0) {
         return Double.NaN;
+      }
+      if (Math.abs(1.0 - tau) < 1e-12) {
+        // Low-dP limit: the 0/0 indeterminate (1 - tau^((kappa-1)/kappa)) / (1 - tau) term tends to 1.
+        return 1.0;
       }
       double beta4 = Math.pow(beta, 4.0);
       double tauPow = Math.pow(tau, 2.0 / kappa);

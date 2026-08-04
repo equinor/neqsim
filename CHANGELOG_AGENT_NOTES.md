@@ -9,6 +9,31 @@
 
 ---
 
+## 2026-08-04 — DP flow-meter Copilot review fixes (Reynolds cache, volume-unit dispatch, near-zero-dP expansibility)
+
+### Fixed
+
+- `DifferentialPressureFlowMeter.getMassFlowRatePerSecond()` now resets the cached
+  `lastReynoldsNumberPipe` to `NaN` when the differential pressure is not positive, instead of
+  leaving it at the previous solve's converged value. `getReynoldsNumberPipe()`,
+  `getReynoldsNumberThroat()`, and `getValidityViolations()` no longer report stale Reynolds-number
+  information after `dp` drops to zero (or negative).
+- `DifferentialPressureFlowMeter.getVolumeFlowRate(String unit)` now delegates to
+  `getStandardVolumeFlowRate(unit)` when `unit` is a standard-volume unit (`Sm3/...`, `kSm3/...`,
+  `MSm3/...`). Previously it always divided by the flowing (actual) gas density, so
+  `getVolumeFlowRate("Sm3/hr")` silently returned a dimensionally-wrong value instead of the correct
+  standard-condition flow.
+- `ExpansibilityModel.ISENTROPIC.calculate(...)` now returns `1.0` instead of `NaN` when `tau` is
+  within `1e-12` of `1.0` (the low-differential-pressure limit). The `(1 - tau^((kappa-1)/kappa)) /
+  (1 - tau)` term is a removable 0/0 indeterminate form whose limit is `(kappa-1)/kappa`, which makes
+  the overall expansibility factor tend to `1.0` — i.e. no expansion for a negligible pressure drop,
+  matching physical expectation instead of propagating `NaN` into the flow calculation.
+- Documentation code snippets in `docs/process/equipment/measurement_devices.md` that reference
+  `List<String> issues = meter.getValidityViolations();` now include `import java.util.List;` so
+  they compile standalone if copied into a small program.
+
+---
+
 ## 2026-08-04 — ISO/TR 11583 Clause 7 wet-gas correction added to OrificeFlowMeter
 
 ### Added
