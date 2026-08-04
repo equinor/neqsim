@@ -35,7 +35,6 @@ class TPflashAqueousFinalRefinementTest {
     assertTrue(maximumLogFugacityResidual(multiphase) < 1.0e-8);
   }
 
-
   /** A candidate whose beta solve changes a selected phase type must be rejected before it can replace the snapshot. */
   @Test
   void activeSetGuardRejectsPhaseTypeMutation() {
