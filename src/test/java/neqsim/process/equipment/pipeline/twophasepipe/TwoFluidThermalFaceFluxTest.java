@@ -1,6 +1,7 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
@@ -27,9 +28,21 @@ class TwoFluidThermalFaceFluxTest {
     }
     assertTrue(internalThroughput > 0.0, "Closing the external faces must not disable internal convection");
 
+    double retainedInternalGasFlow = faceFluxes[1][0];
     faceFluxes[0][0] = 1.0;
     assertEquals(0.0, equations.getLastPhaseMassFaceFluxes()[0][0], 0.0,
         "Callers must not be able to mutate the retained integration-stage fluxes");
+
+    sections[1].setGasVelocity(4.0);
+    sections[1].updateConservativeVariables();
+    sections[1].updateDerivedQuantities();
+    equations.calcRHS(sections, 10.0);
+    double[][] updatedFaceFluxes = equations.getLastPhaseMassFaceFluxes();
+
+    assertNotEquals(retainedInternalGasFlow, updatedFaceFluxes[1][0],
+        "A reused retained buffer must be overwritten by the next RHS evaluation");
+    assertEquals(retainedInternalGasFlow, faceFluxes[1][0], 0.0,
+        "A previously returned defensive snapshot must not alias the reused internal buffer");
   }
 
   @Test
