@@ -9,6 +9,25 @@
 
 ---
 
+## 2026-08-04 — Doc/test wording fixes and CONE beta validation (Copilot review round 6)
+
+### Fixed
+
+- `ExpansibilityModel.CONE.calculate(...)` now validates `0 < beta < 1` like `ORIFICE` and `ISENTROPIC`, instead of
+  silently returning a finite value for non-physical geometry.
+- Corrected the low-dP limit comment on `ExpansibilityModel.ISENTROPIC`: the indeterminate
+  `(1 - tau^((kappa-1)/kappa)) / (1 - tau)` term itself tends to `(kappa-1)/kappa`, not `1`; it is the overall
+  expansibility factor that tends to `1.0`.
+- `WedgeFlowMeter.setWedgeRatio(double)` JavaDoc no longer claims the pipe diameter is "required" to already be set
+  (it isn't enforced); it now documents the actual behavior, including the base class's 0.2 m default.
+- Renamed the misleading "dry-gas example" JavaDoc on `testVenturiFlowMeterDoc()`/`testOrificeFlowMeterDoc()` in
+  `DocExamplesCompilationTest`, which actually exercise the two-phase `buildDocExampleWetGasStream()` helper with
+  `WetGasCorrelation.NONE` (the liquid load is simply ignored in that mode, not absent from the stream).
+- Removed the remaining `System.out.println` calls from `docs/process/equipment/measurement_devices.md` code
+  snippets (CO2 emissions, NMVOC, HC/water dew point, cricondenbar, FIV LOF/F-RMS, molar mass, water content, pH).
+
+---
+
 ## 2026-08-04 — Wet-gas getter caching for OrificeFlowMeter and VenturiFlowMeter
 
 ### Changed

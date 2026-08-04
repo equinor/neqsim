@@ -36,8 +36,7 @@ CombustionEmissionsCalculator emissionsCalc =
     new CombustionEmissionsCalculator("CO2 Calculator", fuelGas);
 
 // Get CO2 emissions rate
-double co2Emissions = emissionsCalc.getMeasuredValue("kg/hr");
-System.out.println("CO2 emissions: " + co2Emissions + " kg/hr");
+double co2Emissions = emissionsCalc.getMeasuredValue("kg/hr");  // kg CO2/hr
 ```
 
 **CO2 Emission Factors (kg CO2 per kg component):**
@@ -65,8 +64,7 @@ NMVOCAnalyser nmvocAnalyser = new NMVOCAnalyser("NMVOC Monitor", ventStream);
 
 // Get nmVOC flow rate
 double nmvocFlow = nmvocAnalyser.getMeasuredValue("kg/hr");
-double nmvocYearly = nmvocAnalyser.getnmVOCFlowRate("tonnes/year");
-System.out.println("NMVOC emissions: " + nmvocYearly + " tonnes/year");
+double nmvocYearly = nmvocAnalyser.getnmVOCFlowRate("tonnes/year");  // tonnes/year
 ```
 
 **Components included in nmVOC calculation:**
@@ -87,8 +85,7 @@ HydrocarbonDewPointAnalyser hcdp =
     new HydrocarbonDewPointAnalyser("HC Dew Point", gasStream);
 hcdp.setReferencePressure(50.0, "bara");
 
-double dewPointC = hcdp.getMeasuredValue("C");
-System.out.println("HC dew point: " + dewPointC + " °C");
+double dewPointC = hcdp.getMeasuredValue("C");  // hydrocarbon dew point, degC
 ```
 
 ### WaterDewPointAnalyser
@@ -102,8 +99,7 @@ WaterDewPointAnalyser wdp =
     new WaterDewPointAnalyser("Water Dew Point", gasStream);
 wdp.setReferencePressure(50.0, "bara");
 
-double waterDewPoint = wdp.getMeasuredValue("C");
-System.out.println("Water dew point: " + waterDewPoint + " °C");
+double waterDewPoint = wdp.getMeasuredValue("C");  // water dew point, degC
 ```
 
 ### CricondenbarAnalyser
@@ -114,8 +110,7 @@ Calculates the cricondenbar (maximum pressure on phase envelope).
 import neqsim.process.measurementdevice.CricondenbarAnalyser;
 
 CricondenbarAnalyser cricondenbar = new CricondenbarAnalyser(gasStream);
-double maxPressure = cricondenbar.getMeasuredValue("bara");
-System.out.println("Cricondenbar: " + maxPressure + " bara");
+double maxPressure = cricondenbar.getMeasuredValue("bara");  // cricondenbar, bara
 ```
 
 ### HydrateEquilibriumTemperatureAnalyser
@@ -155,11 +150,9 @@ fivAnalyser.setSupportDistance(3.0);  // meters
 // Get FIV metrics
 fivAnalyser.setMethod("LOF");  // Likelihood of Failure
 double lof = fivAnalyser.getMeasuredValue("");
-System.out.println("Likelihood of Failure: " + lof);
 
 fivAnalyser.setMethod("FRMS");  // Fatigue Root Mean Square
 double frms = fivAnalyser.getMeasuredValue("");
-System.out.println("F-RMS: " + frms);
 ```
 
 **Support Arrangements:**
@@ -477,8 +470,7 @@ Calculates the molar mass of a stream.
 import neqsim.process.measurementdevice.MolarMassAnalyser;
 
 MolarMassAnalyser mma = new MolarMassAnalyser(gasStream);
-double molarMass = mma.getMeasuredValue("kg/mol");
-System.out.println("Molar mass: " + molarMass * 1000 + " g/mol");
+double molarMass = mma.getMeasuredValue("kg/mol");  // g/mol = molarMass * 1000
 ```
 
 ### WaterContentAnalyser
@@ -489,8 +481,7 @@ Measures water content in gas streams.
 import neqsim.process.measurementdevice.WaterContentAnalyser;
 
 WaterContentAnalyser wca = new WaterContentAnalyser(gasStream);
-double waterContent = wca.getMeasuredValue("ppm");
-System.out.println("Water content: " + waterContent + " ppm");
+double waterContent = wca.getMeasuredValue("ppm");  // water content, ppm
 ```
 
 ### pHProbe
@@ -501,8 +492,7 @@ Measures pH of aqueous streams.
 import neqsim.process.measurementdevice.pHProbe;
 
 pHProbe ph = new pHProbe(aqueousStream);
-double phValue = ph.getMeasuredValue("");
-System.out.println("pH: " + phValue);
+double phValue = ph.getMeasuredValue("");  // pH
 ```
 
 ## Multi-Phase Measurement

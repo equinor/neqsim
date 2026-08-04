@@ -76,7 +76,8 @@ public enum ExpansibilityModel {
         return Double.NaN;
       }
       if (Math.abs(1.0 - tau) < 1e-12) {
-        // Low-dP limit: the 0/0 indeterminate (1 - tau^((kappa-1)/kappa)) / (1 - tau) term tends to 1.
+        // Low-dP limit: (1 - tau^((kappa-1)/kappa)) / (1 - tau) tends to (kappa-1)/kappa, which makes the
+        // overall epsilon tend to 1.0 (not the indeterminate term itself).
         return 1.0;
       }
       double beta4 = Math.pow(beta, 4.0);
@@ -101,7 +102,7 @@ public enum ExpansibilityModel {
   CONE {
     @Override
     public double calculate(double dp, double p1, double beta, double kappa) {
-      if (dp <= 0.0 || p1 <= 0.0 || kappa <= 1.0) {
+      if (dp <= 0.0 || p1 <= 0.0 || beta <= 0.0 || beta >= 1.0 || kappa <= 1.0) {
         return Double.NaN;
       }
       double beta4 = Math.pow(beta, 4.0);

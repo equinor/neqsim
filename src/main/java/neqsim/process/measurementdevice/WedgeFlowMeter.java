@@ -110,8 +110,10 @@ public class WedgeFlowMeter extends DifferentialPressureFlowMeter {
   }
 
   /**
-   * Sets the wedge ratio h / D directly and derives the diameter ratio beta (ISO 5167-6 Formula (3)). Requires the pipe
-   * diameter to already be set with {@link #setPipeDiameter(double, String)}.
+   * Sets the wedge ratio h / D directly and derives the diameter ratio beta (ISO 5167-6 Formula (3)) from it. Uses
+   * whatever pipe diameter is currently stored (the base class default is 0.2 m until
+   * {@link #setGeometry(double, double, String)} or {@link #setPipeDiameter(double, String)} is called); call one of
+   * those first for the derived throat diameter to be meaningful.
    *
    * @param wedgeRatio wedge ratio h / D, must satisfy 0 &lt; h/D &lt; 1
    */

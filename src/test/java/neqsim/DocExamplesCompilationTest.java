@@ -1754,7 +1754,8 @@ public class DocExamplesCompilationTest {
   }
 
   /**
-   * VenturiFlowMeter dry-gas example from docs/process/equipment/measurement_devices.md.
+   * VenturiFlowMeter example from docs/process/equipment/measurement_devices.md, with the default
+   * {@code WetGasCorrelation.NONE} (the wet-gas-capable stream's liquid load is simply ignored in this mode).
    */
   @Test
   public void testVenturiFlowMeterDoc() {
@@ -1831,7 +1832,8 @@ public class DocExamplesCompilationTest {
   }
 
   /**
-   * OrificeFlowMeter dry-gas example from docs/process/equipment/measurement_devices.md.
+   * OrificeFlowMeter example from docs/process/equipment/measurement_devices.md, with the default
+   * {@code WetGasCorrelation.NONE} (the wet-gas-capable stream's liquid load is simply ignored in this mode).
    */
   @Test
   public void testOrificeFlowMeterDoc() {
