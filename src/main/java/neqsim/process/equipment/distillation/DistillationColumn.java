@@ -2514,6 +2514,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Decide whether the prior Naphtali-Sandholm solution remains valid for this invocation.
    *
+   * <p>
+   * The stored result must also satisfy the convergence gates that are active now. This prevents a caller from
+   * tightening a tolerance and receiving a zero-iteration reuse of a state that no longer meets the requested
+   * convergence contract.
+   * </p>
+   *
    * @param inputSignature fingerprint of current external feeds and active column specifications
    * @return {@code true} when the accepted tray solution can be reused without another solver invocation
    */
@@ -2523,7 +2529,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     boolean signatureMatches = inputSignature == lastNaphtaliSandholmInputSignature;
     boolean reusable = hasNaphtaliSandholmWarmState && naphtaliSandholmStateOwned
         && lastSolverTypeUsed == SolverType.NAPHTALI_SANDHOLM && acceptedStatus && !isDoInitializion()
-        && signatureMatches;
+        && signatureMatches && residualConvergenceSatisfied();
     return reusable;
   }
 
