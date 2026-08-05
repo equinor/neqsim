@@ -42,6 +42,7 @@ class TwoFluidPipeMassBalanceTest {
     assertNotNull(report);
     assertEquals(0.0, report.getInletMassKg(Phase.TOTAL), 1.0e-12);
     assertEquals(0.0, report.getOutletMassKg(Phase.TOTAL), 1.0e-12);
+    assertEquals(0.0, pipe.getOutletStream().getFlowRate("kg/sec"), 1.0e-12);
     assertEquals(report.getInitialMassKg(Phase.TOTAL), report.getFinalMassKg(Phase.TOTAL),
         ABSOLUTE_BALANCE_TOLERANCE_KG);
     assertReportCloses(report);
@@ -87,6 +88,25 @@ class TwoFluidPipeMassBalanceTest {
     assertEquals(0.0, report.getSourceMassKg(Phase.TOTAL), 1.0e-12);
     assertEquals(-report.getSourceMassKg(Phase.GAS), report.getSourceMassKg(Phase.LIQUID), 1.0e-12);
     assertReportCloses(report);
+  }
+
+  @Test
+  void testTransientOutletStreamUsesConservativeIntervalAverageFlux() {
+    TwoFluidPipe pipe = createPipe("outlet-flux", 8);
+    pipe.run();
+
+    pipe.getInletStream().setFlowRate(1.5, "kg/sec");
+    pipe.getInletStream().run();
+    pipe.runTransient(1.0e-3, UUID.fromString("00000000-0000-0000-0000-000000052705"));
+
+    TwoFluidMassBalanceReport report = pipe.getLastMassBalanceReport();
+    double conservativeOutletFlow = report.getOutletMassKg(Phase.TOTAL) / report.getElapsedTimeSeconds();
+    double exposedOutletFlow = pipe.getOutletStream().getFlowRate("kg/sec");
+
+    assertTrue(Math.abs(conservativeOutletFlow - pipe.getInletStream().getFlowRate("kg/sec")) > 0.1,
+        "Short-step outlet flux should retain transport memory after the inlet flow change");
+    assertEquals(conservativeOutletFlow, exposedOutletFlow, 1.0e-9,
+        "Transient outlet stream should expose the accepted interval-average flux");
   }
 
   private TwoFluidMassBalanceReport runOpenBoundaryCase(int sections, double timeStep,
