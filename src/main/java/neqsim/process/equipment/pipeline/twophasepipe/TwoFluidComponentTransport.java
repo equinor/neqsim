@@ -99,6 +99,9 @@ public final class TwoFluidComponentTransport implements Serializable {
       SystemInterface fluidTemplate, double tolerance) {
     validateAdvanceArguments(timeStepSeconds, phaseMassFaceFluxKgS, phaseMassSourceKgPerMetreSecond, sections,
         tolerance);
+    if (fluidTemplate == null) {
+      throw new IllegalArgumentException("Fluid template cannot be null for component transport");
+    }
     SystemInterface preparedInlet = prepareFluid(inletFluid, "component inlet boundary");
     validateComponentSlate(preparedInlet);
     double[][] inletPhaseFractions = phaseMassFractions(preparedInlet);
@@ -207,6 +210,9 @@ public final class TwoFluidComponentTransport implements Serializable {
       double temperatureK) {
     if (cellIndex < 0 || cellIndex >= cellCount) {
       throw new IllegalArgumentException("Cell index is outside the component grid");
+    }
+    if (fluidTemplate == null) {
+      throw new IllegalArgumentException("Fluid template cannot be null for thermodynamic synchronization");
     }
     validateComponentSlate(fluidTemplate);
     double[] componentMassKg = new double[componentNames.length];
