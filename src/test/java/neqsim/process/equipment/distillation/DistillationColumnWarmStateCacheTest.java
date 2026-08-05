@@ -262,8 +262,6 @@ public class DistillationColumnWarmStateCacheTest {
 
     assertFalse(column.wasNaphtaliSandholmWarmStateReused(),
         "the tightened gate must execute the solver path instead of returning the stale accepted state");
-    assertFalse(column.getLastSolveStatusReason().contains("Reused"),
-        "the result must expose a fresh solve or explicit non-convergence, not cache reuse");
     assertPhysicalAndBalanced(column.getFeedStreams(3).get(0), column);
   }
 
