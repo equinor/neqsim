@@ -68,8 +68,8 @@ public class StaticPhaseMixer extends StaticMixer {
         if (inputSystem.getPhase(inputPhaseIndex).getNumberOfMolesInPhase() <= 0.0) {
           continue;
         }
-        int outputPhaseIndex =
-            outputPhaseTypes.indexOf(canonicalPhaseType(inputSystem.getPhase(inputPhaseIndex).getType()));
+        int outputPhaseIndex = outputPhaseTypes
+            .indexOf(canonicalPhaseType(inputSystem.getPhase(inputPhaseIndex).getType()));
         if (Double.isNaN(phaseTemperatures[outputPhaseIndex])) {
           phaseTemperatures[outputPhaseIndex] = inputSystem.getPhase(inputPhaseIndex).getTemperature();
         }
@@ -162,8 +162,7 @@ public class StaticPhaseMixer extends StaticMixer {
         continue;
       }
       SystemInterface inputSystem = streams.get(streamIndex).getThermoSystem();
-      for (int componentIndex = 0; componentIndex < inputSystem.getPhase(0).getNumberOfComponents();
-          componentIndex++) {
+      for (int componentIndex = 0; componentIndex < inputSystem.getPhase(0).getNumberOfComponents(); componentIndex++) {
         ComponentInterface sourceComponent = inputSystem.getPhase(0).getComponent(componentIndex);
         if (outputSystem.getPhase(0).hasComponent(sourceComponent.getName())) {
           continue;
@@ -211,8 +210,8 @@ public class StaticPhaseMixer extends StaticMixer {
    */
   private void transferPhaseInventory(SystemInterface inputSystem, int inputPhaseIndex, SystemInterface outputSystem,
       int outputPhaseIndex) {
-    for (int componentIndex = 0; componentIndex < inputSystem.getPhase(inputPhaseIndex).getNumberOfComponents();
-        componentIndex++) {
+    for (int componentIndex = 0; componentIndex < inputSystem.getPhase(inputPhaseIndex)
+        .getNumberOfComponents(); componentIndex++) {
       ComponentInterface sourceComponent = inputSystem.getPhase(inputPhaseIndex).getComponent(componentIndex);
       double sourceMoles = sourceComponent.getNumberOfMolesInPhase();
       if (sourceMoles == 0.0) {
