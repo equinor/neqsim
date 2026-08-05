@@ -12,6 +12,7 @@ import neqsim.process.equipment.pipeline.twophasepipe.SevereSluggingSystemDiagno
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
 import neqsim.process.equipment.pipeline.twophasepipe.SlugTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.ThermodynamicCoupling;
+import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidComponentTransport;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegimeDetector.OilWaterFlowRegime;
@@ -664,8 +665,29 @@ public class TwoFluidPipe extends Pipeline {
   /** Discrete mass balance from the most recent transient call. */
   private TwoFluidMassBalanceReport lastMassBalanceReport = null;
 
-  /** Discrete sensible-energy balance from the most recent thermal transient call. */
+  /** Discrete sensible/latent thermal balance from the most recent thermal transient call. */
   private TwoFluidThermalEnergyBalanceReport lastThermalEnergyBalanceReport = null;
+
+  /** Enable opt-in component inventories and transport in every hydrodynamic phase and cell. */
+  private boolean componentTransportEnabled = false;
+
+  /** Fail-loud relative tolerance for component balance, boundedness, and phase-mass synchronization. */
+  private double componentConservationTolerance = 1.0e-8;
+
+  /** Retain one immutable component report per accepted outer transient call. */
+  private boolean storeComponentConservationHistory = false;
+
+  /** Distributed component state, initialized after the steady-state hydrodynamic solve. */
+  private TwoFluidComponentTransport componentTransport = null;
+
+  /** Component diagnostics from the most recent transient call. */
+  private TwoFluidComponentConservationReport lastComponentConservationReport = null;
+
+  /** Accepted component reports retained since the latest steady initialization. */
+  private final List<TwoFluidComponentConservationReport> componentConservationReports = new ArrayList<>();
+
+  /** Simulation times aligned with {@link #componentConservationReports}. */
+  private final List<Double> componentConservationTimes = new ArrayList<>();
 
   // ============ Results storage ============
 
@@ -1738,6 +1760,7 @@ public class TwoFluidPipe extends Pipeline {
     private double wallEnergyChangeJ;
     private double sensibleAdvectionEnergyJ;
     private double jouleThomsonEnergyJ;
+    private double latentHeatEnergyJ;
     private double ambientHeatLossJ;
   }
 
@@ -1754,9 +1777,11 @@ public class TwoFluidPipe extends Pipeline {
    *
    * @param dt time step in seconds
    * @param phaseMassFaceFluxes integration-weighted gas, oil, and water face mass flows in kg/s
+   * @param latentHeatEnergyByCellJ compositional/interphase heat added in each cell over the step, in joules
    * @return time-integrated sensible-energy terms for the accepted step
    */
-  private ThermalEnergyStep updateTransientTemperature(double dt, double[][] phaseMassFaceFluxes) {
+  private ThermalEnergyStep updateTransientTemperature(double dt, double[][] phaseMassFaceFluxes,
+      double[] latentHeatEnergyByCellJ) {
     SystemInterface inletFluid = getInletStream().getFluid();
     double Cp = inletFluid.getCp("J/kgK");
     if (Cp <= 0.0 || !Double.isFinite(Cp)) {
@@ -1782,7 +1807,8 @@ public class TwoFluidPipe extends Pipeline {
     }
 
     if (useMultilayerThermalModel && thermalCalculator != null) {
-      return updateTransientTemperatureMultilayer(phaseMassFaceFluxes, previousFluidTemperatures, dt, Cp, muJT);
+      return updateTransientTemperatureMultilayer(phaseMassFaceFluxes, previousFluidTemperatures,
+          latentHeatEnergyByCellJ, dt, Cp, muJT);
     }
 
     double pipePerimeter = Math.PI * diameter;
@@ -1818,6 +1844,7 @@ public class TwoFluidPipe extends Pipeline {
       double wallToAmbientHeat = hOuter * outerPerimeter * (wallTemperature - ambientTemperature);
       double sensibleAdvection = calcSensibleAdvectionSource(i, phaseMassFaceFluxes, previousFluidTemperatures, Cp);
       double jouleThomsonSource = calcLocalJouleThomsonSource(i, phaseMassFaceFluxes, Cp, muJT);
+      double latentHeatSource = latentHeatEnergyByCellJ[i] / (dt * sec.getLength());
 
       double wallThermalMass = wallMassPerLength * wallHeatCapacity;
       if (wallThermalMass > 0.0) {
@@ -1827,7 +1854,8 @@ public class TwoFluidPipe extends Pipeline {
 
       double fluidMassPerLength = getLocalFluidMassPerLength(sec, fallbackFluidMassPerLength);
       double newFluidTemperature = oldFluidTemperature
-          + (sensibleAdvection - fluidToWallHeat + jouleThomsonSource) / (fluidMassPerLength * Cp) * dt;
+          + (sensibleAdvection - fluidToWallHeat + jouleThomsonSource + latentHeatSource) / (fluidMassPerLength * Cp)
+              * dt;
       newFluidTemperature = Math.max(newFluidTemperature, 100.0);
       sec.setTemperature(newFluidTemperature);
       updateThermalRiskFlags(i, newFluidTemperature);
@@ -1838,6 +1866,7 @@ public class TwoFluidPipe extends Pipeline {
       energyStep.wallEnergyChangeJ += (wallTemperature - oldWallTemperature) * wallThermalMass * cellLength;
       energyStep.sensibleAdvectionEnergyJ += sensibleAdvection * dt * cellLength;
       energyStep.jouleThomsonEnergyJ += jouleThomsonSource * dt * cellLength;
+      energyStep.latentHeatEnergyJ += latentHeatEnergyByCellJ[i];
       energyStep.ambientHeatLossJ += wallToAmbientHeat * dt * cellLength;
     }
     return energyStep;
@@ -1994,13 +2023,14 @@ public class TwoFluidPipe extends Pipeline {
    *
    * @param phaseMassFaceFluxes gas, oil, and water mass flow at every finite-volume face in kg/s
    * @param previousFluidTemperatures pre-update cell temperatures in kelvin
+   * @param latentHeatEnergyByCellJ compositional/interphase heat added in each cell over the step, in joules
    * @param dt time step in seconds
    * @param Cp fluid heat capacity in J/(kg K)
    * @param muJT Joule-Thomson coefficient in K/Pa
    * @return time-integrated sensible-energy terms for the accepted step
    */
   private ThermalEnergyStep updateTransientTemperatureMultilayer(double[][] phaseMassFaceFluxes,
-      double[] previousFluidTemperatures, double dt, double Cp, double muJT) {
+      double[] previousFluidTemperatures, double[] latentHeatEnergyByCellJ, double dt, double Cp, double muJT) {
     double fallbackFluidMassPerLength = sections[0].getArea() * getInletStream().getFluid().getDensity("kg/m3");
     double[][] layerTemperatures = getOrInitializeMultilayerLayerTemperatures();
     ThermalEnergyStep energyStep = new ThermalEnergyStep();
@@ -2024,9 +2054,10 @@ public class TwoFluidPipe extends Pipeline {
       double ambientHeatLoss = thermalCalculator.getLastAmbientHeatTransferPerLength();
       double sensibleAdvection = calcSensibleAdvectionSource(i, phaseMassFaceFluxes, previousFluidTemperatures, Cp);
       double jouleThomsonSource = calcLocalJouleThomsonSource(i, phaseMassFaceFluxes, Cp, muJT);
+      double latentHeatSource = latentHeatEnergyByCellJ[i] / (dt * sec.getLength());
       double fluidMassPerLength = getLocalFluidMassPerLength(sec, fallbackFluidMassPerLength);
       double newFluidTemperature = oldFluidTemperature
-          + (sensibleAdvection - heatLoss + jouleThomsonSource) / (fluidMassPerLength * Cp) * dt;
+          + (sensibleAdvection - heatLoss + jouleThomsonSource + latentHeatSource) / (fluidMassPerLength * Cp) * dt;
 
       newFluidTemperature = Math.max(newFluidTemperature, 100.0);
       sec.setTemperature(newFluidTemperature);
@@ -2044,6 +2075,7 @@ public class TwoFluidPipe extends Pipeline {
       energyStep.wallEnergyChangeJ += (newWallEnergyPerLength - oldWallEnergyPerLength) * cellLength;
       energyStep.sensibleAdvectionEnergyJ += sensibleAdvection * dt * cellLength;
       energyStep.jouleThomsonEnergyJ += jouleThomsonSource * dt * cellLength;
+      energyStep.latentHeatEnergyJ += latentHeatEnergyByCellJ[i];
       energyStep.ambientHeatLossJ += ambientHeatLoss * dt * cellLength;
     }
     return energyStep;
@@ -3448,12 +3480,21 @@ public class TwoFluidPipe extends Pipeline {
   public void run(UUID id) {
     lastMassBalanceReport = null;
     lastThermalEnergyBalanceReport = null;
+    lastComponentConservationReport = null;
+    componentConservationReports.clear();
+    componentConservationTimes.clear();
 
     // Initialize sections
     initializeSections();
 
     // Run steady-state
     runSteadyState();
+
+    if (componentTransportEnabled) {
+      componentTransport = new TwoFluidComponentTransport(referenceFluid, sections);
+    } else {
+      componentTransport = null;
+    }
 
     // Set up outlet stream
     updateOutletStream();
@@ -3466,12 +3507,24 @@ public class TwoFluidPipe extends Pipeline {
    *
    * @param dt Requested time step (s)
    * @param id Calculation identifier
+   * @throws IllegalArgumentException if {@code dt} is not positive and finite
    */
   @Override
   public void runTransient(double dt, UUID id) {
+    if (!Double.isFinite(dt) || dt <= 0.0) {
+      throw new IllegalArgumentException("Transient time step must be positive and finite");
+    }
     isTransientMode = true;
     lastMassBalanceReport = null;
     lastThermalEnergyBalanceReport = null;
+    lastComponentConservationReport = null;
+    if (componentTransportEnabled) {
+      if (componentTransport == null) {
+        throw new IllegalStateException(
+            "Component transport is enabled but not initialized; call run() before runTransient()");
+      }
+      componentTransport.beginInterval();
+    }
     clearSevereSluggingSystemClassification();
     double[] initialMassKg = getPhaseMassInventoriesKg();
     double[] integratedInletMassKg = new double[3];
@@ -3481,6 +3534,7 @@ public class TwoFluidPipe extends Pipeline {
     double wallEnergyChangeJ = 0.0;
     double sensibleAdvectionEnergyJ = 0.0;
     double jouleThomsonEnergyJ = 0.0;
+    double latentHeatEnergyJ = 0.0;
     double ambientHeatLossJ = 0.0;
     boolean thermalEnergyTracked = false;
     double acceptedElapsedTime = 0.0;
@@ -3540,12 +3594,17 @@ public class TwoFluidPipe extends Pipeline {
 
       // 3. Calculate RHS and advance solution
       final double dtFinal = dtActual;
-      final boolean captureThermalStageFluxes = enableHeatTransfer && heatTransferCoefficient > 0.0;
+      final boolean captureThermalStageFluxes = enableHeatTransfer && heatTransferCoefficient > 0.0
+          || componentTransportEnabled;
+      final boolean captureComponentStageFluxes = componentTransportEnabled;
+      final boolean capturePhaseStageTerms = captureThermalStageFluxes || captureComponentStageFluxes;
       final List<TwoFluidConservationEquations.MassBalanceRate> stageMassBalanceRates = new ArrayList<>();
-      final double[] thermalStageWeights = captureThermalStageFluxes ? getTimeIntegrationStageWeights() : new double[0];
-      final double[][] weightedPhaseMassFaceFluxes = captureThermalStageFluxes ? new double[numberOfSections + 1][3]
+      final double[] phaseStageWeights = capturePhaseStageTerms ? getTimeIntegrationStageWeights() : new double[0];
+      final double[][] weightedPhaseMassFaceFluxes = capturePhaseStageTerms ? new double[numberOfSections + 1][3]
           : new double[0][0];
-      final int[] thermalStageIndex = { 0 };
+      final double[][] weightedPhaseMassSources = captureComponentStageFluxes ? new double[numberOfSections][3]
+          : new double[0][0];
+      final int[] phaseStageIndex = { 0 };
 
       TimeIntegrator.RHSFunction rhs = (state, t) -> {
         equations.applyState(sections, state);
@@ -3556,13 +3615,16 @@ public class TwoFluidPipe extends Pipeline {
         applyBoundaryConditions();
         double[][] derivative = equations.calcRHS(sections, dx);
         stageMassBalanceRates.add(equations.getLastMassBalanceRate());
-        if (captureThermalStageFluxes) {
-          int stage = thermalStageIndex[0]++;
-          if (stage >= thermalStageWeights.length) {
+        if (capturePhaseStageTerms) {
+          int stage = phaseStageIndex[0]++;
+          if (stage >= phaseStageWeights.length) {
             throw new IllegalStateException(
-                "Received more thermal flux stages than expected for " + timeIntegrator.getMethod());
+                "Received more phase-flux stages than expected for " + timeIntegrator.getMethod());
           }
-          equations.accumulateLastPhaseMassFaceFluxes(weightedPhaseMassFaceFluxes, thermalStageWeights[stage]);
+          equations.accumulateLastPhaseMassFaceFluxes(weightedPhaseMassFaceFluxes, phaseStageWeights[stage]);
+          if (captureComponentStageFluxes) {
+            equations.accumulateLastPhaseMassSourcesPerLength(weightedPhaseMassSources, phaseStageWeights[stage]);
+          }
         }
         return derivative;
       };
@@ -3690,6 +3752,16 @@ public class TwoFluidPipe extends Pipeline {
 
       accumulateAcceptedMassBalance(stageMassBalanceRates, dtActual, integratedInletMassKg, integratedOutletMassKg,
           integratedSourceMassKg);
+      if (capturePhaseStageTerms && phaseStageIndex[0] != phaseStageWeights.length) {
+        throw new IllegalStateException("Expected " + phaseStageWeights.length + " phase-flux stages for "
+            + timeIntegrator.getMethod() + " but received " + phaseStageIndex[0]);
+      }
+      double[] latentHeatEnergyByCellJ = new double[numberOfSections];
+      if (captureComponentStageFluxes) {
+        latentHeatEnergyByCellJ = componentTransport.advance(dtActual, weightedPhaseMassFaceFluxes,
+            weightedPhaseMassSources, sections, getInletStream().getFluid(), referenceFluid,
+            componentConservationTolerance);
+      }
       acceptedElapsedTime += dtActual;
       acceptedSubsteps++;
 
@@ -3741,17 +3813,15 @@ public class TwoFluidPipe extends Pipeline {
 
       }
 
-      // 9. Update temperature profile if heat transfer is enabled
+      // 9. Update temperature profile when thermal or component transport is enabled
       if (captureThermalStageFluxes) {
-        if (thermalStageIndex[0] != thermalStageWeights.length) {
-          throw new IllegalStateException("Expected " + thermalStageWeights.length + " thermal flux stages for "
-              + timeIntegrator.getMethod() + " but received " + thermalStageIndex[0]);
-        }
-        ThermalEnergyStep energyStep = updateTransientTemperature(dtActual, weightedPhaseMassFaceFluxes);
+        ThermalEnergyStep energyStep = updateTransientTemperature(dtActual, weightedPhaseMassFaceFluxes,
+            latentHeatEnergyByCellJ);
         fluidEnergyChangeJ += energyStep.fluidEnergyChangeJ;
         wallEnergyChangeJ += energyStep.wallEnergyChangeJ;
         sensibleAdvectionEnergyJ += energyStep.sensibleAdvectionEnergyJ;
         jouleThomsonEnergyJ += energyStep.jouleThomsonEnergyJ;
+        latentHeatEnergyJ += energyStep.latentHeatEnergyJ;
         ambientHeatLossJ += energyStep.ambientHeatLossJ;
         thermalEnergyTracked = true;
       }
@@ -3766,7 +3836,19 @@ public class TwoFluidPipe extends Pipeline {
         getPhaseMassInventoriesKg(), integratedInletMassKg, integratedOutletMassKg, integratedSourceMassKg);
     if (thermalEnergyTracked) {
       lastThermalEnergyBalanceReport = new TwoFluidThermalEnergyBalanceReport(acceptedElapsedTime, acceptedSubsteps,
-          fluidEnergyChangeJ, wallEnergyChangeJ, sensibleAdvectionEnergyJ, jouleThomsonEnergyJ, ambientHeatLossJ);
+          fluidEnergyChangeJ, wallEnergyChangeJ, sensibleAdvectionEnergyJ, jouleThomsonEnergyJ, latentHeatEnergyJ,
+          ambientHeatLossJ);
+    }
+    if (componentTransportEnabled) {
+      lastComponentConservationReport = componentTransport.createReport(acceptedElapsedTime, acceptedSubsteps,
+          componentConservationTolerance);
+      if (storeComponentConservationHistory) {
+        componentConservationTimes.add(simulationTime);
+        componentConservationReports.add(lastComponentConservationReport);
+      }
+      if (!lastComponentConservationReport.isConverged()) {
+        throw new IllegalStateException(lastComponentConservationReport.getMessage());
+      }
     }
 
     // Publish the accepted interval-average outlet flux after constructing its
@@ -3996,15 +4078,24 @@ public class TwoFluidPipe extends Pipeline {
    * Update thermodynamic properties using flash calculations.
    */
   private void updateThermodynamics() {
-    for (TwoFluidSection sec : sections) {
+    for (int sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
+      TwoFluidSection sec = sections[sectionIndex];
       try {
-        SystemInterface flash = referenceFluid.clone();
-        flash.setPressure(sec.getPressure() / 1e5, "bara"); // Convert Pa to bar
-        flash.setTemperature(sec.getTemperature(), "K");
+        SystemInterface flash;
+        if (componentTransportEnabled && componentTransport != null) {
+          // The flash is reconstructed from the conservative cell inventory. It may
+          // update phase properties and identity, but never overwrites component mass.
+          flash = componentTransport.createThermodynamicState(sectionIndex, referenceFluid, sec.getPressure(),
+              sec.getTemperature());
+        } else {
+          flash = referenceFluid.clone();
+          flash.setPressure(sec.getPressure() / 1e5, "bara"); // Convert Pa to bar
+          flash.setTemperature(sec.getTemperature(), "K");
 
-        ThermodynamicOperations ops = new ThermodynamicOperations(flash);
-        ops.TPflash();
-        flash.initPhysicalProperties();
+          ThermodynamicOperations ops = new ThermodynamicOperations(flash);
+          ops.TPflash();
+          flash.initPhysicalProperties();
+        }
 
         // Update phase properties
         if (flash.hasPhaseType("gas")) {
@@ -4078,6 +4169,10 @@ public class TwoFluidPipe extends Pipeline {
           sec.setOilHoldup(0.0);
         }
       } catch (Exception e) {
+        if (componentTransportEnabled) {
+          throw new IllegalStateException("Component thermodynamic synchronization failed for section at position "
+              + sec.getPosition() + ": " + e.getMessage(), e);
+        }
         logger.warn("Flash calculation failed for section at position {}", sec.getPosition());
       }
     }
@@ -4772,20 +4867,140 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Get the sensible-energy balance from the most recent thermal transient call.
+   * Get the thermal-energy balance from the most recent transient thermal update.
    *
    * <p>
    * The report integrates fluid and wall energy changes, conservative-face sensible advection, the optional
-   * Joule-Thomson source, and ambient heat loss over the accepted internal substeps. It is intended for closed-domain
-   * thermal validation; its stored-energy terms do not make it a complete control-volume energy balance for
-   * open-boundary inventory changes. It is cleared by steady-state {@link #run(UUID)} and remains {@code null} when
-   * heat transfer is disabled.
+   * Joule-Thomson source, component-resolved interphase latent heat, and ambient heat loss over the accepted internal
+   * substeps. It is intended for closed-domain thermal validation; its stored-energy terms do not make it a complete
+   * control-volume energy balance for open-boundary inventory changes. It is cleared by steady-state
+   * {@link #run(UUID)}. Without component transport it remains {@code null} when external heat transfer is disabled;
+   * component transport evaluates the thermal step even with zero external heat transfer so sensible advection and
+   * latent heat remain coupled.
    * </p>
    *
    * @return last thermal-energy balance report, or {@code null} when no thermal transient was evaluated
    */
   public TwoFluidThermalEnergyBalanceReport getLastThermalEnergyBalanceReport() {
     return lastThermalEnergyBalanceReport;
+  }
+
+  /**
+   * Enable conservative, component-resolved transport in every gas, oil, and water cell inventory.
+   *
+   * <p>
+   * This opt-in path uses the accepted hydrodynamic phase face fluxes and interphase source terms. Enable it before
+   * {@link #run(UUID)} so the distributed component state can be initialized from the steady phase inventories.
+   * Positive-flow boundaries and an unchanged named component slate are currently required.
+   * </p>
+   *
+   * @param enabled true to track named components conservatively
+   */
+  public void setComponentTransportEnabled(boolean enabled) {
+    componentTransportEnabled = enabled;
+    if (!enabled) {
+      componentTransport = null;
+      lastComponentConservationReport = null;
+      componentConservationReports.clear();
+      componentConservationTimes.clear();
+    }
+  }
+
+  /** @return true when component-resolved transport is enabled */
+  public boolean isComponentTransportEnabled() {
+    return componentTransportEnabled;
+  }
+
+  /**
+   * Set the fail-loud relative component conservation and synchronization tolerance.
+   *
+   * @param tolerance positive finite relative tolerance
+   */
+  public void setComponentConservationTolerance(double tolerance) {
+    if (!Double.isFinite(tolerance) || tolerance <= 0.0) {
+      throw new IllegalArgumentException("Component conservation tolerance must be positive and finite");
+    }
+    componentConservationTolerance = tolerance;
+  }
+
+  /** @return configured relative component conservation tolerance */
+  public double getComponentConservationTolerance() {
+    return componentConservationTolerance;
+  }
+
+  /**
+   * Configure storage of one immutable component report per accepted outer transient call.
+   *
+   * @param store true to retain report history after the next steady initialization
+   */
+  public void setStoreComponentConservationHistory(boolean store) {
+    storeComponentConservationHistory = store;
+  }
+
+  /** @return true when full outer-step component report history is retained */
+  public boolean isComponentConservationHistoryStorageEnabled() {
+    return storeComponentConservationHistory;
+  }
+
+  /** @return latest immutable component report, or {@code null} before component transport runs */
+  public TwoFluidComponentConservationReport getLastComponentConservationReport() {
+    return lastComponentConservationReport;
+  }
+
+  /**
+   * Get immutable, time-aligned component reports retained since the latest steady initialization.
+   *
+   * @return defensive immutable history
+   */
+  public TwoFluidComponentConservationHistory getComponentConservationHistory() {
+    double[] times = new double[componentConservationTimes.size()];
+    for (int index = 0; index < times.length; index++) {
+      times[index] = componentConservationTimes.get(index);
+    }
+    return new TwoFluidComponentConservationHistory(times, componentConservationReports);
+  }
+
+  /**
+   * Get a physical-cell component mass-fraction profile in one phase.
+   *
+   * @param phase gas, oil, or water phase identity
+   * @param componentName NeqSim component name
+   * @return defensive cell profile; empty-phase cells are reported as zero
+   */
+  public double[] getComponentMassFractionProfile(TwoFluidComponentConservationReport.Phase phase,
+      String componentName) {
+    if (componentTransport == null) {
+      throw new IllegalStateException("Component transport has not been initialized");
+    }
+    return componentTransport.getMassFractionProfile(componentPhaseIndex(phase), componentName);
+  }
+
+  /**
+   * Get the outlet-cell component mass fraction in one phase.
+   *
+   * @param phase gas, oil, or water phase identity
+   * @param componentName NeqSim component name
+   * @return outlet-cell mass fraction, or zero when the phase is absent
+   */
+  public double getOutletComponentMassFraction(TwoFluidComponentConservationReport.Phase phase, String componentName) {
+    double[] profile = getComponentMassFractionProfile(phase, componentName);
+    return profile[profile.length - 1];
+  }
+
+  private int componentPhaseIndex(TwoFluidComponentConservationReport.Phase phase) {
+    if (phase == null) {
+      throw new IllegalArgumentException("Component phase identity cannot be null");
+    }
+    switch (phase) {
+    case GAS:
+      return 0;
+    case OIL:
+      return 1;
+    case WATER:
+      return 2;
+    default:
+      throw new IllegalArgumentException("Unsupported component phase identity: " + phase);
+    }
   }
 
   /**
@@ -6163,8 +6378,9 @@ public class TwoFluidPipe extends Pipeline {
    * <p>
    * When enabled, PT-flash equilibrium generates conservative gas, hydrocarbon-liquid, and aqueous-liquid sources.
    * Condensation follows the equilibrium liquid mass split, while evaporation is limited by the actual oil and water
-   * inventories. Transferred momentum uses donor velocity. The hydrodynamic state tracks bulk phase inventories, not a
-   * complete component-composition vector in every cell.
+   * inventories. Transferred momentum uses donor velocity. The hydrodynamic state tracks bulk phase inventories. When
+   * {@link #setComponentTransportEnabled(boolean)} is enabled before {@link #run()}, the same accepted phase sources
+   * are also mapped by component identity and their composition-dependent latent heat enters the thermal ledger.
    * </p>
    *
    * @param include true to include mass transfer

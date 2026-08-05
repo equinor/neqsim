@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
@@ -26,6 +27,7 @@ import neqsim.process.equipment.heatexchanger.CoolingWaterSystem;
 import neqsim.process.equipment.heatexchanger.FiredHeater;
 import neqsim.process.equipment.network.TransientCompositionalPipeNetwork;
 import neqsim.process.equipment.network.TransientCompositionalPipeNetworkHistory;
+import neqsim.process.equipment.pipeline.TwoFluidComponentConservationReport;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction.InterfacialFrictionResult;
 import neqsim.process.equipment.pump.Pump;
@@ -1376,9 +1378,10 @@ public class DocExamplesCompilationTest {
   @Test
   public void testTwoFluidPipeSteadyAndDynamicBoundaryDocExamples() {
     SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(293.15, 70.0);
-    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("methane", 0.89);
     fluid.addComponent("ethane", 0.06);
     fluid.addComponent("propane", 0.04);
+    fluid.addComponent("CO2", 0.01);
     fluid.setMixingRule("classic");
 
     Stream inlet = new Stream("inlet", fluid);
@@ -1393,8 +1396,21 @@ public class DocExamplesCompilationTest {
     pipe.setDiameter(0.20);
     pipe.setRoughness(1.0e-5);
     pipe.setNumberOfSections(4);
+    pipe.setComponentTransportEnabled(true);
+    pipe.setComponentConservationTolerance(1.0e-8);
+    pipe.setStoreComponentConservationHistory(true);
     pipe.run();
     assertTrue(pipe.getPressureProfile().length > 0);
+
+    pipe.runTransient(0.1, UUID.randomUUID());
+    TwoFluidComponentConservationReport components = pipe.getLastComponentConservationReport();
+    double[] co2Gas = pipe.getComponentMassFractionProfile(TwoFluidComponentConservationReport.Phase.GAS, "CO2");
+    double outletCo2 = pipe.getOutletComponentMassFraction(TwoFluidComponentConservationReport.Phase.GAS, "CO2");
+    String json = components.toJson();
+    assertNotNull(components);
+    assertEquals(4, co2Gas.length);
+    assertTrue(Double.isFinite(outletCo2));
+    assertNotNull(json);
 
     pipe.setOutletPressure(55.0, "bara");
     pipe.run();
