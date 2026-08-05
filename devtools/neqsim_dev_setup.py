@@ -376,6 +376,9 @@ def neqsim_classes(ns):
     ns.TwoFluidThermalEnergyBalanceReport = JClass(
         "neqsim.process.equipment.pipeline.TwoFluidThermalEnergyBalanceReport"
     )
+    ns.TransientCompositionalPipeNetwork = JClass(
+        "neqsim.process.equipment.network.TransientCompositionalPipeNetwork"
+    )
     ns.Pump = JClass("neqsim.process.equipment.pump.Pump")
     ns.Manifold = JClass("neqsim.process.equipment.manifold.Manifold")
     ns.StreamSaturatorUtil = JClass(

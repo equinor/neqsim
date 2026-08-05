@@ -25,6 +25,8 @@ import neqsim.process.equipment.distillation.internals.ColumnInternalsDesigner;
 import neqsim.process.equipment.energy.EnergyNetworkSolver;
 import neqsim.process.equipment.heatexchanger.CoolingWaterSystem;
 import neqsim.process.equipment.heatexchanger.FiredHeater;
+import neqsim.process.equipment.network.TransientCompositionalPipeNetwork;
+import neqsim.process.equipment.network.TransientCompositionalPipeNetworkHistory;
 import neqsim.process.equipment.pipeline.TwoFluidComponentConservationReport;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction.InterfacialFrictionResult;
@@ -86,6 +88,53 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 public class DocExamplesCompilationTest {
+
+  /**
+   * Transient gas-network example from docs/process/gas_network_operations.md.
+   */
+  @Test
+  public void testTransientCompositionalPipeNetworkDocumentationExample() {
+    SystemInterface asgardGas = new SystemSrkEos(300.0, 70.0);
+    asgardGas.addComponent("methane", 0.98);
+    asgardGas.addComponent("CO2", 0.02);
+    asgardGas.setMixingRule("classic");
+
+    SystemInterface kristinGas = new SystemSrkEos(300.0, 70.0);
+    kristinGas.addComponent("methane", 0.95);
+    kristinGas.addComponent("CO2", 0.05);
+    kristinGas.setMixingRule("classic");
+
+    SystemInterface kristinHighCo2 = new SystemSrkEos(300.0, 70.0);
+    kristinHighCo2.addComponent("methane", 0.75);
+    kristinHighCo2.addComponent("CO2", 0.25);
+    kristinHighCo2.setMixingRule("classic");
+
+    SystemInterface mixedGas = new SystemSrkEos(300.0, 70.0);
+    mixedGas.addComponent("methane", 0.965);
+    mixedGas.addComponent("CO2", 0.035);
+    mixedGas.setMixingRule("classic");
+
+    TransientCompositionalPipeNetwork transientNetwork = new TransientCompositionalPipeNetwork(
+        "Norwegian export teaching case");
+    transientNetwork.addNode("asgard");
+    transientNetwork.addNode("kristin");
+    transientNetwork.addNode("junction");
+    transientNetwork.addNode("karsto");
+    transientNetwork.addPipe("asgardBranch", "asgard", "junction", 2000.0, 0.4, 12, asgardGas);
+    transientNetwork.addPipe("kristinBranch", "kristin", "junction", 2000.0, 0.4, 12, kristinGas);
+    transientNetwork.addPipe("export", "junction", "karsto", 4000.0, 0.4, 12, mixedGas);
+    transientNetwork.setSourceSchedule("asgard", new double[] { 0.0 }, new SystemInterface[] { asgardGas },
+        new double[] { 20.0 });
+    transientNetwork.setSourceSchedule("kristin", new double[] { 0.0, 600.0, 1800.0 },
+        new SystemInterface[] { kristinGas, kristinHighCo2, kristinGas }, new double[] { 20.0, 18.0, 20.0 });
+
+    transientNetwork.run(5400.0, 60.0);
+    TransientCompositionalPipeNetworkHistory species = transientNetwork.getSpeciesHistory();
+    assertEquals(90, species.getElapsedTimeSeconds().length);
+    assertEquals(90, species.getNodeMassFractionHistory("karsto", "CO2").length);
+    assertTrue(species.getFinalNetworkReport().getMaximumRelativeInventoryResidual() <= 1.0e-8,
+        species.getFinalNetworkReport().getMessage());
+  }
 
   /**
    * Quick-start example shared by docs/index.md and docs/README.md.
