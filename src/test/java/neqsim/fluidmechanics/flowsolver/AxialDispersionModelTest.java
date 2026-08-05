@@ -5,6 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import org.junit.jupiter.api.Test;
 import neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.PipeFlowSystem;
 
@@ -35,5 +40,20 @@ class AxialDispersionModelTest {
     assertThrows(IllegalArgumentException.class, () -> new ConstantAxialDispersion(-1.0));
     assertThrows(IllegalArgumentException.class, () -> new ConstantAxialDispersion(Double.NaN));
     assertFalse(new ConstantAxialDispersion(0.0).isEnabled());
+  }
+
+  @Test
+  void pureAdvectionDefaultRetainsSingletonIdentityAfterSerialization() throws IOException, ClassNotFoundException {
+    ByteArrayOutputStream serializedBytes = new ByteArrayOutputStream();
+    try (ObjectOutputStream output = new ObjectOutputStream(serializedBytes)) {
+      output.writeObject(NoAxialDispersion.INSTANCE);
+    }
+
+    Object restored;
+    try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(serializedBytes.toByteArray()))) {
+      restored = input.readObject();
+    }
+
+    assertSame(NoAxialDispersion.INSTANCE, restored);
   }
 }

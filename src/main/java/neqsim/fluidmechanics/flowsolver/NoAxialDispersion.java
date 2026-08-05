@@ -1,6 +1,13 @@
 package neqsim.fluidmechanics.flowsolver;
 
-/** Default physical-dispersion model: pure advection with {@code D_ax = 0}. */
+/**
+ * Default physical-dispersion model: pure advection with {@code D_ax = 0}.
+ *
+ * <p>
+ * Deserialization returns {@link #INSTANCE}, preserving the canonical immutable default across serialized process
+ * models. The public constructor remains available for straightforward Java and JPype configuration.
+ * </p>
+ */
 public final class NoAxialDispersion implements AxialDispersionModel {
   private static final long serialVersionUID = 1000L;
 
@@ -9,6 +16,15 @@ public final class NoAxialDispersion implements AxialDispersionModel {
 
   /** Public constructor for straightforward Java and JPype configuration. */
   public NoAxialDispersion() {
+  }
+
+  /**
+   * Preserve the canonical default instance after Java deserialization.
+   *
+   * @return shared immutable default instance
+   */
+  private Object readResolve() {
+    return INSTANCE;
   }
 
   /** {@inheritDoc} */
