@@ -44,10 +44,14 @@ class StaticPhaseMixerTest {
       PrintStream originalError = System.err;
       PrintStream capturedOutput = new PrintStream(standardOutput, true);
       PrintStream capturedError = new PrintStream(standardError, true);
+      double firstRunMass;
+      double[] firstRunComponentMasses;
       try {
         System.setOut(capturedOutput);
         System.setErr(capturedError);
         mixer.run();
+        firstRunMass = mixer.getOutletStream().getFlowRate("kg/hr");
+        firstRunComponentMasses = componentMasses(mixer.getOutletStream().getThermoSystem());
         mixer.run();
       } finally {
         capturedOutput.flush();
@@ -67,10 +71,14 @@ class StaticPhaseMixerTest {
       double outletMass = mixer.getOutletStream().getFlowRate("kg/hr");
       assertEquals(inletMass, outletMass, inletMass * 1.0e-10,
           "total mass must close after separator phase recombination");
+      assertEquals(firstRunMass, outletMass, inletMass * 1.0e-12,
+          "repeated runs must preserve the mixed mass inventory");
 
       assertComponentMassBalance(gas, liquid, mixer.getOutletStream());
+      assertComponentMassesEqual(firstRunComponentMasses, mixer.getOutletStream().getThermoSystem());
       assertTrue(mixer.getOutletStream().getThermoSystem().hasPhaseType("gas"));
-      assertTrue(mixer.getOutletStream().getThermoSystem().hasPhaseType("liquid"));
+      assertTrue(mixer.getOutletStream().getThermoSystem().hasPhaseType("oil"),
+          "the hydrocarbon-liquid phase assignment must be preserved");
       assertTrue(liquid.getThermoSystem().hasPhaseType("aqueous"),
           "the regression fluid must exercise the separator's aqueous phase");
       assertTrue(mixer.getOutletStream().getThermoSystem().hasPhaseType("aqueous"));
@@ -99,6 +107,7 @@ class StaticPhaseMixerTest {
     SystemInterface liquidFluid = new SystemSrkEos(303.15, 30.0);
     liquidFluid.addComponent("methane", 0.2);
     liquidFluid.addComponent("n-heptane", 0.8);
+    liquidFluid.addPlusFraction("C20", 0.1, 0.250, 0.85);
     liquidFluid.setMixingRule("classic");
     liquidFluid.setForceSinglePhase(PhaseType.LIQUID);
     Stream liquid = new Stream("liquid with sparse slate", liquidFluid);
@@ -113,6 +122,8 @@ class StaticPhaseMixerTest {
     double inletMass = gas.getFlowRate("kg/hr") + liquid.getFlowRate("kg/hr");
     assertEquals(inletMass, sparseMixer.getOutletStream().getFlowRate("kg/hr"), inletMass * 1.0e-10);
     assertTrue(sparseMixer.getOutletStream().getThermoSystem().getPhase(0).hasComponent("n-heptane"));
+    assertTrue(sparseMixer.getOutletStream().getThermoSystem().getPhase(0).getComponent("C20_PC").isIsPlusFraction(),
+        "sparse plus-fraction characterization must be preserved");
   }
 
   @Test
@@ -143,7 +154,8 @@ class StaticPhaseMixerTest {
     assertEquals(inletMass, mixer.getOutletStream().getFlowRate("kg/hr"), inletMass * 1.0e-10);
     assertComponentMassBalance(gas, reorderedLiquid, mixer.getOutletStream());
     assertTrue(mixer.getOutletStream().getThermoSystem().hasPhaseType("gas"));
-    assertTrue(mixer.getOutletStream().getThermoSystem().hasPhaseType("liquid"));
+    assertTrue(mixer.getOutletStream().getThermoSystem().hasPhaseType("oil"),
+        "the hydrocarbon-liquid phase assignment must be preserved");
     assertTrue(mixer.getOutletStream().getThermoSystem().hasPhaseType("aqueous"));
   }
 
@@ -163,6 +175,13 @@ class StaticPhaseMixerTest {
     for (int phaseIndex = 0; phaseIndex < mixer.getOutletStream().getThermoSystem().getNumberOfPhases(); phaseIndex++) {
       assertTrue(Double.isFinite(mixer.getOutletStream().getThermoSystem().getBeta(phaseIndex)));
     }
+
+    zeroFlow.setFlowRate(0.5, "kg/hr");
+    mixer.setMinimumFlow(1.0);
+    mixer.run();
+    assertEquals(0.0, mixer.getOutletStream().getFlowRate("kg/hr"), 0.0,
+        "sub-threshold inlet inventory must be cleared");
+    assertTrue(!mixer.isActive(), "a sub-threshold mixer must be marked inactive");
   }
 
   private static SystemInterface createSeparatorFeed(double temperature) {
@@ -206,5 +225,22 @@ class StaticPhaseMixerTest {
       mass += component.getNumberOfMolesInPhase() * component.getMolarMass();
     }
     return mass;
+  }
+
+  private static double[] componentMasses(SystemInterface system) {
+    double[] masses = new double[system.getPhase(0).getNumberOfComponents()];
+    for (int componentIndex = 0; componentIndex < masses.length; componentIndex++) {
+      masses[componentIndex] = componentMass(system, system.getPhase(0).getComponent(componentIndex).getName());
+    }
+    return masses;
+  }
+
+  private static void assertComponentMassesEqual(double[] expectedMasses, SystemInterface system) {
+    for (int componentIndex = 0; componentIndex < expectedMasses.length; componentIndex++) {
+      String componentName = system.getPhase(0).getComponent(componentIndex).getName();
+      double tolerance = Math.max(1.0e-12, expectedMasses[componentIndex] * 1.0e-12);
+      assertEquals(expectedMasses[componentIndex], componentMass(system, componentName), tolerance,
+          "repeated runs must preserve component mass for " + componentName);
+    }
   }
 }
