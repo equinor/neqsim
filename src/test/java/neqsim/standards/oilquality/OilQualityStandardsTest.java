@@ -466,8 +466,11 @@ public class OilQualityStandardsTest {
     new ThermodynamicOperations(flashed).TPflash();
     flashed.initPhysicalProperties("density");
     assertTrue(flashed.hasPhaseType(PhaseType.GAS), "Test fluid should contain a gas phase");
-    assertTrue(flashed.hasPhaseType(PhaseType.OIL), "Test fluid should contain an oil phase");
-    double expectedOilDensity = flashed.getPhase(PhaseType.OIL).getDensity("kg/m3");
+    assertTrue(flashed.hasPhaseType(PhaseType.OIL) || flashed.hasPhaseType(PhaseType.LIQUID),
+        "Test fluid should contain a hydrocarbon liquid phase");
+    PhaseType liquidPhaseType =
+        flashed.hasPhaseType(PhaseType.OIL) ? PhaseType.OIL : PhaseType.LIQUID;
+    double expectedOilDensity = flashed.getPhase(liquidPhaseType).getDensity("kg/m3");
 
     Standard_ASTM_D4052 standard = new Standard_ASTM_D4052(crude);
     standard.calculate();
