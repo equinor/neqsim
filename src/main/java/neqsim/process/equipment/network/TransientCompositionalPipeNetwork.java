@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -514,7 +515,7 @@ public final class TransientCompositionalPipeNetwork implements Serializable {
     } catch (Exception exception) {
       throw new IllegalStateException("Unable to initialize " + context + ": " + exception.getMessage(), exception);
     }
-    if (fluid.getNumberOfPhases() != 1) {
+    if (fluid.getNumberOfPhases() != 1 || fluid.getPhase(0).getType() != PhaseType.GAS) {
       throw new IllegalArgumentException("Unsupported phase appearance in " + context
           + ": conservative transient network transport requires exactly one gas phase");
     }

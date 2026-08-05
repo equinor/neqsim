@@ -134,6 +134,17 @@ class TransientCompositionalPipeNetworkTest extends neqsim.NeqSimTest {
     IllegalArgumentException phaseError = assertThrows(IllegalArgumentException.class,
         () -> phaseAppearance.run(60.0, 60.0));
     assertTrue(phaseError.getMessage().contains("phase appearance"));
+
+    TransientCompositionalPipeNetwork liquidNetwork = new TransientCompositionalPipeNetwork("liquid");
+    liquidNetwork.addNode("source");
+    liquidNetwork.addNode("sink");
+    SystemInterface liquid = singlePhaseLiquid();
+    liquidNetwork.addPipe("pipe", "source", "sink", 1000.0, 0.3, 4, liquid);
+    liquidNetwork.setSourceSchedule("source", new double[] { 0.0 }, new SystemInterface[] { liquid },
+        new double[] { 10.0 });
+    IllegalArgumentException liquidError = assertThrows(IllegalArgumentException.class,
+        () -> liquidNetwork.run(60.0, 60.0));
+    assertTrue(liquidError.getMessage().contains("exactly one gas phase"));
   }
 
   private static double[] runDeliveryHistory(int cells, double timeStepSeconds) {
@@ -178,6 +189,13 @@ class TransientCompositionalPipeNetworkTest extends neqsim.NeqSimTest {
     SystemInterface fluid = new SystemSrkEos(240.0, 20.0);
     fluid.addComponent("methane", 0.5);
     fluid.addComponent("n-heptane", 0.5);
+    fluid.setMixingRule("classic");
+    return fluid;
+  }
+
+  private static SystemInterface singlePhaseLiquid() {
+    SystemInterface fluid = new SystemSrkEos(300.0, 10.0);
+    fluid.addComponent("n-heptane", 1.0);
     fluid.setMixingRule("classic");
     return fluid;
   }
