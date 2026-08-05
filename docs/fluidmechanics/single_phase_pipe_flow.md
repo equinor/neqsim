@@ -329,7 +329,7 @@ pipeline.run();
 pipeline.runConservativeTransient(new double[] {0.0, 1800.0, 5400.0},
     new SystemInterface[] {pulseGas, baselineGas}, 60, UUID.randomUUID());
 
-double[] outletCellMassFraction = pipeline.getConservativeMassFractionProfile("nitrogen");
+double[] nitrogenMassFractionProfile = pipeline.getConservativeMassFractionProfile("nitrogen");
 String pythonReadyHistoryJson = pipeline.getSpeciesConservationHistory().toJson();
 ```
 
