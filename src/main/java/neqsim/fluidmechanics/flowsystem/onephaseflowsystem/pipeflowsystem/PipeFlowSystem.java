@@ -18,6 +18,8 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
   private static final long serialVersionUID = 1000;
   private boolean failOnNonConvergence;
   private boolean conservativeSpeciesTransportEnabled;
+  private boolean storeSpeciesConservationHistory;
+  private OnePhaseSpeciesConservationHistory speciesConservationHistory = OnePhaseSpeciesConservationHistory.empty();
 
   /**
    * Constructor for PipeFlowSystem.
@@ -52,6 +54,45 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
       return ((OnePhaseFixedStaggeredGrid) flowSolver).getLastSpeciesConservationReport();
     }
     return OnePhaseSpeciesConservationReport.notRun();
+  }
+
+  /**
+   * Get time-aligned diagnostics for every accepted conservative step in the latest transient solve.
+   *
+   * <p>
+   * The immutable history is reset at the start of each {@link #solveTransient(int, UUID)} call. It contains only steps
+   * that completed successfully, so a fail-loud solve retains diagnostics for any previously accepted steps. Each
+   * report contains component profiles, inventories, boundary masses, residuals, boundedness, and EOS-coupling
+   * diagnostics. {@link OnePhaseSpeciesConservationHistory#toJson()} provides a stable Python capture path.
+   * </p>
+   *
+   * @return immutable accepted-step history, empty before a conservative transient solve
+   */
+  public OnePhaseSpeciesConservationHistory getSpeciesConservationHistory() {
+    return speciesConservationHistory;
+  }
+
+  /**
+   * Configure storage of full per-step conservative species diagnostics.
+   *
+   * <p>
+   * Storage is off by default to avoid retaining every component-by-cell profile in long simulations. Enabling it does
+   * not alter the conservative solve, finite-volume state, or convergence criteria.
+   * </p>
+   *
+   * @param store true to retain one immutable report for every accepted conservative step
+   */
+  public void setStoreSpeciesConservationHistory(boolean store) {
+    storeSpeciesConservationHistory = store;
+  }
+
+  /**
+   * Check whether full accepted-step species diagnostics are retained.
+   *
+   * @return true when per-step report storage is enabled
+   */
+  public boolean isSpeciesConservationHistoryStorageEnabled() {
+    return storeSpeciesConservationHistory;
   }
 
   /**
@@ -172,6 +213,7 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
   public void solveTransient(int type, UUID id) {
     getTimeSeries().init(this);
     display = new PipeFlowVisualization(this.getTotalNumberOfNodes(), getTimeSeries().getTime().length);
+    speciesConservationHistory = OnePhaseSpeciesConservationHistory.empty();
     flowSolver.setDynamic(true);
     configureConvergencePolicy();
     flowSolver.setSolverType(type);
@@ -190,6 +232,10 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
 
       getSolver().setTimeStep(this.getTimeSeries().getTimeStep()[i]);
       flowSolver.solveTDMA();
+      if (conservativeSpeciesTransportEnabled && storeSpeciesConservationHistory) {
+        speciesConservationHistory = speciesConservationHistory.append(getTimeSeries().getTime(i),
+            getSpeciesConservationReport());
+      }
       display.setNextData(this, this.getTimeSeries().getTime(i));
     }
     calcIdentifier = id;
