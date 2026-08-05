@@ -270,34 +270,39 @@ public class DistillationColumnWarmStateCacheTest {
    */
   @Test
   public void inactiveToleranceChangesRetainNaphtaliExactReuse() {
-    DistillationColumn column = buildColumn();
-    column.setEnforceMeshResidualTolerance(false);
-    column.setEnforceEnergyBalanceTolerance(false);
-    column.run();
-    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    for (double feedTemperatureC : new double[] {20.0, 25.0}) {
+      DistillationColumn column = buildColumn();
+      StreamInterface feed = column.getFeedStreams(3).get(0);
+      feed.setTemperature(feedTemperatureC, "C");
+      feed.run();
+      column.setEnforceMeshResidualTolerance(false);
+      column.setEnforceEnergyBalanceTolerance(false);
+      column.run();
+      assertTrue(column.solved(), column.getConvergenceDiagnostics());
 
-    column.run();
-    assertTrue(column.wasNaphtaliSandholmWarmStateReused());
-    assertEquals(0, column.getLastIterationCount());
-    double gasFlow = column.getGasOutStream().getFlowRate("kg/hr");
-    double liquidFlow = column.getLiquidOutStream().getFlowRate("kg/hr");
+      column.run();
+      assertTrue(column.wasNaphtaliSandholmWarmStateReused());
+      assertEquals(0, column.getLastIterationCount());
+      double gasFlow = column.getGasOutStream().getFlowRate("kg/hr");
+      double liquidFlow = column.getLiquidOutStream().getFlowRate("kg/hr");
 
-    column.setMeshResidualTolerance(column.getMeshResidualTolerance() * 0.5);
-    column.setTrayMaterialBalanceTolerance(column.getTrayMaterialBalanceTolerance() * 0.5);
-    column.setMeshProductDrawResidualTolerance(column.getMeshProductDrawResidualTolerance() * 0.5);
-    column.setEnthalpyBalanceTolerance(column.getEnthalpyBalanceTolerance() * 0.5);
-    column.setColumnTearTolerance(5.0e-5);
-    column.setPumparoundTolerance(5.0e-5);
+      column.setMeshResidualTolerance(column.getMeshResidualTolerance() * 0.5);
+      column.setTrayMaterialBalanceTolerance(column.getTrayMaterialBalanceTolerance() * 0.5);
+      column.setMeshProductDrawResidualTolerance(column.getMeshProductDrawResidualTolerance() * 0.5);
+      column.setEnthalpyBalanceTolerance(column.getEnthalpyBalanceTolerance() * 0.5);
+      column.setColumnTearTolerance(5.0e-5);
+      column.setPumparoundTolerance(5.0e-5);
 
-    assertTrue(column.willReuseNaphtaliSandholmWarmState(),
-        "inactive tolerances are not part of the active convergence contract");
-    column.run();
+      assertTrue(column.willReuseNaphtaliSandholmWarmState(),
+          "inactive tolerances are not part of the active convergence contract");
+      column.run();
 
-    assertTrue(column.wasNaphtaliSandholmWarmStateReused());
-    assertEquals(0, column.getLastIterationCount());
-    assertEquals(gasFlow, column.getGasOutStream().getFlowRate("kg/hr"), 1.0e-9);
-    assertEquals(liquidFlow, column.getLiquidOutStream().getFlowRate("kg/hr"), 1.0e-9);
-    assertPhysicalAndBalanced(column.getFeedStreams(3).get(0), column);
+      assertTrue(column.wasNaphtaliSandholmWarmStateReused());
+      assertEquals(0, column.getLastIterationCount());
+      assertEquals(gasFlow, column.getGasOutStream().getFlowRate("kg/hr"), 1.0e-9);
+      assertEquals(liquidFlow, column.getLiquidOutStream().getFlowRate("kg/hr"), 1.0e-9);
+      assertPhysicalAndBalanced(feed, column);
+    }
   }
 
   /** Molar feed rate used to make identity-only input changes collide with the legacy fingerprint. */
