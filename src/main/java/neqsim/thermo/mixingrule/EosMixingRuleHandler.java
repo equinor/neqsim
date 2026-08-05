@@ -1834,8 +1834,9 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     /**
      * Calculate the aqueous binary-interaction parameter using the legacy correlation.
      *
-     * <p>This overload preserves the historical public behavior. Phase calculations use the
-     * overload with an explicit parameterization.
+     * <p>
+     * This overload preserves the historical public behavior. Phase calculations use the overload with an explicit
+     * parameterization.
      *
      * @param compArray phase component array
      * @param salinityConcentration equivalent NaCl molality in mol/kg water
@@ -1869,8 +1870,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       double reducedTemperaturei = ((ComponentEos) compArray[i]).reducedTemperature(temperature);
       double kij = intparam[i][j];
 
-      if (parameterization == SoreideWhitsonParameterization.CHABAB_2019
-          && isCO2WaterPair(componenti, componentj)) {
+      if (parameterization == SoreideWhitsonParameterization.CHABAB_2019 && isCO2WaterPair(componenti, componentj)) {
         return calculateChabab2019AqueousCO2Kij(temperature, salinityConcentration);
       }
 
@@ -1922,8 +1922,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       double d = 1.29539193e-3;
       double e = -1.6698848e-3;
       double f = -0.47866096;
-      return reducedCO2Temperature
-          * (a + b * reducedCO2Temperature + c * reducedCO2Temperature * salinityConcentration)
+      return reducedCO2Temperature * (a + b * reducedCO2Temperature + c * reducedCO2Temperature * salinityConcentration)
           + salinityConcentration * salinityConcentration * (d + e * reducedCO2Temperature) + f;
     }
 
@@ -1940,14 +1939,12 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       double b = -5.766906744e-2;
       double c = 8.26464849e-3;
       double e = -1.6698848e-3;
-      return (a + 2.0 * b * reducedCO2Temperature
-          + 2.0 * c * reducedCO2Temperature * salinityConcentration
+      return (a + 2.0 * b * reducedCO2Temperature + 2.0 * c * reducedCO2Temperature * salinityConcentration
           + e * salinityConcentration * salinityConcentration) / CHABAB_CO2_CRITICAL_TEMPERATURE;
     }
 
     /**
-     * Calculate the second temperature derivative of the Chabab et al. (2019) aqueous CO2-water interaction
-     * parameter.
+     * Calculate the second temperature derivative of the Chabab et al. (2019) aqueous CO2-water interaction parameter.
      *
      * @param salinityConcentration NaCl molality in mol/kg water
      * @return second derivative of the binary-interaction parameter with respect to temperature, in 1/K2
@@ -2064,9 +2061,8 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
 
       for (int j = 0; j < numbcomp; j++) {
         double sqrtAij = Math.sqrt(compArray[compNumb].getaT() * compArray[j].getaT());
-        aij = 0.5 / sqrtAij
-            * (compArray[compNumb].getaT() * compArray[j].getaDiffT()
-                + compArray[j].getaT() * compArray[compNumb].getaDiffT());
+        aij = 0.5 / sqrtAij * (compArray[compNumb].getaT() * compArray[j].getaDiffT()
+            + compArray[j].getaT() * compArray[compNumb].getaDiffT());
         if (isAqueous) {
           SoreideWhitsonParameterization parameterization = getAqueousCO2Parameterization(phase);
           double kij = getkijWhitsonSoreideAqueous(compArray, salinityConcentration, temperature, compNumb, j,

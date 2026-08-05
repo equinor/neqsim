@@ -3,8 +3,7 @@ package neqsim.thermo.mixingrule;
 import java.util.Locale;
 
 /**
- * Selects the aqueous CO2-water binary-interaction parameterization used by the Soreide-Whitson
- * mixing rule.
+ * Selects the aqueous CO2-water binary-interaction parameterization used by the Soreide-Whitson mixing rule.
  */
 public enum SoreideWhitsonParameterization {
   /** Original Soreide-Whitson correlation retained for backward compatibility. */
@@ -31,8 +30,9 @@ public enum SoreideWhitsonParameterization {
     try {
       return valueOf(normalized);
     } catch (IllegalArgumentException ex) {
-      throw new IllegalArgumentException("Unsupported Soreide-Whitson parameterization: " + name
-          + ". Supported values are LEGACY and CHABAB_2019.", ex);
+      throw new IllegalArgumentException(
+          "Unsupported Soreide-Whitson parameterization: " + name + ". Supported values are LEGACY and CHABAB_2019.",
+          ex);
     }
   }
 }

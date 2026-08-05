@@ -158,9 +158,10 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
   /**
    * Select the aqueous CO2-water binary-interaction parameterization.
    *
-   * <p>The default is {@link SoreideWhitsonParameterization#LEGACY}, which preserves historical
-   * NeqSim results. Select {@link SoreideWhitsonParameterization#CHABAB_2019} explicitly for the
-   * modified correlation published by Chabab et al. (2019).
+   * <p>
+   * The default is {@link SoreideWhitsonParameterization#LEGACY}, which preserves historical NeqSim results. Select
+   * {@link SoreideWhitsonParameterization#CHABAB_2019} explicitly for the modified correlation published by Chabab et
+   * al. (2019).
    *
    * @param parameterization parameterization to use
    * @throws IllegalArgumentException if {@code parameterization} is null
@@ -180,7 +181,8 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
   /**
    * Select the aqueous CO2-water binary-interaction parameterization by name.
    *
-   * <p>This overload is convenient for Python/JPype callers.
+   * <p>
+   * This overload is convenient for Python/JPype callers.
    *
    * @param parameterizationName {@code LEGACY}, {@code CHABAB_2019}, or {@code M_SW}
    * @throws IllegalArgumentException if the name is null or unsupported
