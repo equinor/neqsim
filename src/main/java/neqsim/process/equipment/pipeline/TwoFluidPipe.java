@@ -3507,9 +3507,13 @@ public class TwoFluidPipe extends Pipeline {
    *
    * @param dt Requested time step (s)
    * @param id Calculation identifier
+   * @throws IllegalArgumentException if {@code dt} is not positive and finite
    */
   @Override
   public void runTransient(double dt, UUID id) {
+    if (!Double.isFinite(dt) || dt <= 0.0) {
+      throw new IllegalArgumentException("Transient time step must be positive and finite");
+    }
     isTransientMode = true;
     lastMassBalanceReport = null;
     lastThermalEnergyBalanceReport = null;
@@ -3809,7 +3813,7 @@ public class TwoFluidPipe extends Pipeline {
 
       }
 
-      // 9. Update temperature profile if heat transfer is enabled
+      // 9. Update temperature profile when thermal or component transport is enabled
       if (captureThermalStageFluxes) {
         ThermalEnergyStep energyStep = updateTransientTemperature(dtActual, weightedPhaseMassFaceFluxes,
             latentHeatEnergyByCellJ);
