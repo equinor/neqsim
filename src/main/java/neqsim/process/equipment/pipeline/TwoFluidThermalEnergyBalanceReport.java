@@ -9,7 +9,7 @@ import java.io.Serializable;
  * <p>
  * The report covers the post-step thermal model: fluid sensible energy, simple-wall or radial-layer thermal energy,
  * conservative-face sensible advection, the optional Joule-Thomson source, and ambient heat loss. Its signed residual
- * is
+ * is defined as:
  * </p>
  *
  * <pre>

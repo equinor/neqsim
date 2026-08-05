@@ -139,6 +139,7 @@ the multilayer model, the fluid and first wall layer use the same instantaneous 
 reported ambient loss is the last-layer flux from the same explicit update.
 
 ```java
+pipe.setHeatTransferCoefficient(25.0); // W/(m2 K); the report is null when heat transfer is disabled
 pipe.runTransient(0.001, UUID.randomUUID());
 TwoFluidThermalEnergyBalanceReport thermal = pipe.getLastThermalEnergyBalanceReport();
 boolean closes = thermal.isWithinTolerance(1.0e-5, 1.0e-10);
