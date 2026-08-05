@@ -227,6 +227,44 @@ public class DistillationColumnWarmStateCacheTest {
         "an unchanged column should reuse the accepted warm state, reason was " + column.getLastSolveStatusReason());
   }
 
+  /**
+   * Tightening an active convergence gate must invalidate an otherwise exact Naphtali-Sandholm cache hit.
+   *
+   * <p>
+   * Solver inputs are unchanged, but the previously accepted MESH residual no longer satisfies the caller's current
+   * contract. Returning that state with zero iterations would make the invocation non-converged without giving the
+   * solver an opportunity to improve or fail explicitly.
+   * </p>
+   */
+  @Test
+  public void tightenedConvergenceGateInvalidatesNaphtaliExactReuse() {
+    DistillationColumn column = buildColumn();
+    column.run();
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+
+    double acceptedMeshResidual = column.getLastMeshResidualNorm();
+    assertTrue(Double.isFinite(acceptedMeshResidual) && acceptedMeshResidual > 0.0,
+        "the regression needs a positive finite accepted MESH residual");
+    assertTrue(acceptedMeshResidual < column.getMeshResidualTolerance(),
+        "the baseline result must satisfy the original MESH gate");
+
+    column.run();
+    assertTrue(column.wasNaphtaliSandholmWarmStateReused(),
+        "an unchanged accepted case must retain exact zero-iteration reuse");
+    assertEquals(0, column.getLastIterationCount());
+
+    column.setMeshResidualTolerance(Math.nextDown(acceptedMeshResidual));
+    assertFalse(column.solved(), "the stored state must reflect the newly tightened convergence contract");
+    assertFalse(column.willReuseNaphtaliSandholmWarmState(),
+        "a state outside the current convergence gates must not be predicted as an exact cache hit");
+
+    column.run();
+
+    assertFalse(column.wasNaphtaliSandholmWarmStateReused(),
+        "the tightened gate must execute the solver path instead of returning the stale accepted state");
+    assertPhysicalAndBalanced(column.getFeedStreams(3).get(0), column);
+  }
+
   /** Molar feed rate used to make identity-only input changes collide with the legacy fingerprint. */
   private static final double IDENTITY_TEST_FLOW_MOL_PER_HOUR = 100000.0;
 
