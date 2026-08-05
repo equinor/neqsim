@@ -549,6 +549,12 @@ double[] constraintMargins =
     evaluator.getConstraintMarginVector(process);
 ```
 
+One completed `evaluate(...)` call samples every registered objective and constraint callback
+exactly once after the process run. The evaluator derives the minimizer sign, constraint margin,
+feasibility, and penalty from that sampled scalar. This keeps one `EvaluationResult` internally
+consistent and avoids repeating expensive result extraction. Callbacks should still be free of
+side effects because optimizers evaluate many distinct simulation points.
+
 ### Constraint Conversion Between Layers
 
 Constraints can be converted between the internal and external optimizer representations:

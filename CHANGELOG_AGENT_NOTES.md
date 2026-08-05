@@ -9,6 +9,19 @@
 
 ---
 
+## 2026-08-05 — External process evaluators sample result callbacks once
+
+- `ProcessSimulationEvaluator.evaluate(...)` and `ProcessModelSimulationEvaluator.evaluate(...)`
+  now invoke each registered objective and constraint callback exactly once per completed
+  simulation point.
+- Raw and minimizer-sign objectives reuse one scalar. Constraint value, margin, feasibility, and
+  penalty likewise reuse one scalar, avoiding repeated report or serialization work and preventing
+  internally inconsistent results from mutable diagnostics.
+- Direct calls to objective and constraint definition methods retain their existing behavior and
+  public signatures.
+
+---
+
 ## 2026-08-05 — TwoFluidPipe transient thermal-energy closure
 
 - The multilayer cooldown path now removes fluid energy with the same instantaneous fluid-to-first-layer flux that

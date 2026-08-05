@@ -130,6 +130,30 @@ class ProcessModelSimulationEvaluatorTest {
   }
 
   /**
+   * Verifies that one completed model point samples each user result callback once.
+   */
+  @Test
+  void evaluateSamplesEachResultCallbackOnce() {
+    ModelFixture fixture = createModelFixture();
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
+    AtomicInteger objectiveCalls = new AtomicInteger();
+    AtomicInteger constraintCalls = new AtomicInteger();
+    evaluator.addObjective("statefulObjective", model -> 42.0 + objectiveCalls.getAndIncrement(),
+        ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
+    evaluator.addConstraintUpperBound("statefulConstraint", model -> 11.0 + constraintCalls.getAndIncrement(), 10.0);
+
+    ProcessModelSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[0]);
+
+    assertEquals(1, objectiveCalls.get(), "one simulated point must sample each objective once");
+    assertEquals(1, constraintCalls.get(), "one simulated point must sample each constraint once");
+    assertEquals(42.0, result.getObjectivesRaw()[0], 0.0);
+    assertEquals(-42.0, result.getObjectives()[0], 0.0);
+    assertEquals(11.0, result.getConstraintValues()[0], 0.0);
+    assertEquals(-1.0, result.getConstraintMargins()[0], 0.0);
+    assertEquals(1000.0, result.getPenaltySum(), 0.0);
+  }
+
+  /**
    * Verifies installed capacity discovery and active bottleneck reporting across model areas.
    */
   @Test

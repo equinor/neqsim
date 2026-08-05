@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.separator.Separator;
@@ -498,5 +499,24 @@ class ProcessSimulationEvaluatorTest {
     // For MAXIMIZE, the returned objective should be negated
     assertTrue(result.getObjective() < 0); // Negated for minimization form
     assertTrue(result.getObjectivesRaw()[0] > 0); // Raw value is positive
+  }
+
+  @Test
+  void evaluateSamplesEachResultCallbackOnce() {
+    AtomicInteger objectiveCalls = new AtomicInteger();
+    AtomicInteger constraintCalls = new AtomicInteger();
+    evaluator.addObjective("statefulObjective", process -> 42.0 + objectiveCalls.getAndIncrement(),
+        ProcessSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
+    evaluator.addConstraintUpperBound("statefulConstraint", process -> 11.0 + constraintCalls.getAndIncrement(), 10.0);
+
+    ProcessSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[0]);
+
+    assertEquals(1, objectiveCalls.get(), "one simulated point must sample each objective once");
+    assertEquals(1, constraintCalls.get(), "one simulated point must sample each constraint once");
+    assertEquals(42.0, result.getObjectivesRaw()[0], 0.0);
+    assertEquals(-42.0, result.getObjectives()[0], 0.0);
+    assertEquals(11.0, result.getConstraintValues()[0], 0.0);
+    assertEquals(-1.0, result.getConstraintMargins()[0], 0.0);
+    assertEquals(1000.0, result.getPenaltySum(), 0.0);
   }
 }
