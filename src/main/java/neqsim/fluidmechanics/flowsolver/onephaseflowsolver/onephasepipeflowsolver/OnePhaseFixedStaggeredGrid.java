@@ -13,6 +13,8 @@ import Jama.Matrix;
 import neqsim.mathlib.generalmath.BandedLinearSystemSolver;
 import neqsim.mathlib.generalmath.TDMAsolve;
 import neqsim.fluidmechanics.flowsolver.SpeciesAdvectionScheme;
+import neqsim.fluidmechanics.flowsolver.AxialDispersionModel;
+import neqsim.fluidmechanics.flowsolver.NoAxialDispersion;
 
 /**
  * OnePhaseFixedStaggeredGrid class.
@@ -58,6 +60,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   private boolean failOnNonConvergence;
   private boolean conservativeSpeciesTransportEnabled;
   private SpeciesAdvectionScheme speciesAdvectionScheme = SpeciesAdvectionScheme.FIRST_ORDER_IMPLICIT;
+  private AxialDispersionModel axialDispersionModel = NoAxialDispersion.INSTANCE;
   private double[] coupledMassEquationScale;
   private double[] coupledMomentumEquationScale;
 
@@ -158,6 +161,25 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   /** @return selected conservative component-inventory advection scheme */
   public SpeciesAdvectionScheme getSpeciesAdvectionScheme() {
     return speciesAdvectionScheme;
+  }
+
+  /**
+   * Select the physical axial-dispersion model used by conservative component transport.
+   *
+   * @param model non-null model; use {@link NoAxialDispersion} for pure advection
+   * @throws IllegalArgumentException if {@code model} is null
+   */
+  public void setAxialDispersionModel(AxialDispersionModel model) {
+    if (model == null) {
+      throw new IllegalArgumentException(
+          "Physical axial-dispersion model cannot be null; use NoAxialDispersion for pure advection.");
+    }
+    axialDispersionModel = model;
+  }
+
+  /** @return selected non-null physical axial-dispersion model */
+  public AxialDispersionModel getAxialDispersionModel() {
+    return axialDispersionModel;
   }
 
   /**
@@ -1283,7 +1305,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         * pipe.getNode(outletCellNode).getGeometry().getArea() * sol2Matrix.get(outletCellNode, 0);
 
     return ConservativeSpeciesTransport.solve(componentNames, previousMassFraction, inletMassFraction,
-        previousCellMassKg, finalCellMassKg, faceMassFlowKgPerSecond, timeStep, speciesAdvectionScheme, cellLengthM);
+        previousCellMassKg, finalCellMassKg, faceMassFlowKgPerSecond, timeStep, speciesAdvectionScheme, cellLengthM,
+        axialDispersionModel);
   }
 
   private double maximumConservativeCompositionChange(OnePhaseSpeciesConservationReport report) {

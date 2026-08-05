@@ -305,6 +305,7 @@ requires both composition and EOS-density residuals to converge.
 
 ```java
 pipe.setSpeciesAdvectionScheme(SpeciesAdvectionScheme.TVD_VAN_LEER_SSP_RK2);
+pipe.setAxialDispersionModel(new ConstantAxialDispersion(1.0)); // physical D_ax [m2/s]
 pipe.setConservativeSpeciesTransport(true);
 pipe.setStoreSpeciesConservationHistory(true);
 pipe.setFailOnNonConvergence(true);
@@ -317,6 +318,9 @@ SpeciesTransportDiagnostics resolution = species.getTransportDiagnostics();
 double maximumFullStepCfl = resolution.getMaximumCellCourantNumber();
 double firstOrderReferenceM2PerSecond =
     resolution.getMaximumFirstOrderImplicitNumericalDispersionM2PerSecond();
+double physicalDispersionM2PerSecond =
+    resolution.getMaximumPhysicalAxialDispersionM2PerSecond();
+double[] physicalCellPeclet = resolution.getCellPecletNumbers();
 
 OnePhaseSpeciesConservationHistory history = pipe.getSpeciesConservationHistory();
 double[] acceptedStepTimesSeconds = history.getElapsedTimeSeconds();
@@ -327,8 +331,10 @@ String pythonReadyHistoryJson = history.toJson();
 `TVD_VAN_LEER_SSP_RK2` method uses MUSCL face reconstruction with a Van Leer limiter and a
 two-stage strong-stability-preserving Runge-Kutta update. It automatically divides an accepted
 hydraulic step into conservative transport substeps until every local mass Courant number is at
-most 0.45. The limited positive-flow update is bounded without clipping and remains second order
-in smooth constant-coefficient regions. `SpeciesAdvectionScheme` is separate from the legacy
+most 0.45. When explicit physical dispersion is enabled, the substep criterion includes both
+advective CFL and the physical face-conductance dispersion number. The limited positive-flow
+update is bounded without clipping and remains second order in smooth constant-coefficient
+regions. `SpeciesAdvectionScheme` is separate from the legacy
 `AdvectionScheme`; setting the latter does not silently change the validated component-inventory
 path.
 
@@ -365,7 +371,9 @@ relative inventory residuals, boundedness and sum-to-one diagnostics, thermodyna
 synchronization error, hydraulic/species residual histories, and a per-step
 `SpeciesTransportDiagnostics` object. The diagnostic records the selected method, full-step local
 and effective CFL values, the number of bounded substeps, and the first-order implicit numerical-
-dispersion reference. Its array getters return defensive copies and `toJson()` is suitable for
+dispersion reference. It separately records the selected physical model, physical coefficient
+profile/range, cell Peclet numbers, full-step physical dispersion numbers, and boundary
+conditions. Its array getters return defensive copies and `toJson()` is suitable for
 Python-side result capture.
 
 For constant velocity and cell length, modified-equation analysis of the compatibility method
@@ -378,10 +386,45 @@ $$
 The diagnostic reports this quantity in m²/s when cell lengths are available, including when the
 TVD method is selected so the avoided first-order spreading remains visible. A flux limiter does
 not have one constant equivalent diffusion coefficient, so the value is explicitly a first-order
-reference rather than a TVD calibration. Physical axial dispersion is still disabled: cell
-Peclet entries are therefore unavailable (`NaN` in Java and `null` in JSON). Physical dispersion
-must be added as a separate flux model and must not be inferred from a grid-dependent numerical
-coefficient.
+reference rather than a TVD calibration.
+
+Physical axial dispersion is a separate opt-in flux model. `NoAxialDispersion` is the default and
+reproduces pure-advection behavior exactly. `ConstantAxialDispersion(D_ax)` supplies a finite
+non-negative physical coefficient in m²/s for analytical tests, calibration, and uncertainty
+studies. For every internal face the solver constructs one conservative conductance by adding the
+two adjacent half-cell resistances from cell line density, length, and coefficient. This remains
+consistent on a nonuniform grid. The same component flux leaves the west cell and enters the east
+cell. The independent $n-1$ component fluxes are advanced and the final component flux is their
+negative sum, preserving sum-to-one without clipping or normalization.
+
+The physical boundary conditions are explicit:
+
+- `DIRICHLET_INLET`: the inlet thermodynamic-system mass fraction is the external composition for
+  both advection and physical dispersion;
+- `ZERO_GRADIENT_OUTLET`: physical dispersive flux is zero, while advective component mass leaves
+  with the outlet composition.
+
+First-order advection and physical dispersion use one coupled implicit tridiagonal solve. The TVD
+path applies the physical face flux in both SSP-RK2 stages and automatically substeps the combined
+explicit operator. Diagnostics report
+
+$$
+Pe_P=\frac{u_P\,\Delta x_P}{D_{ax,P}}
+$$
+
+only when $D_{ax,P}>0$. A constant coefficient is a user hypothesis, not a turbulent-pipe
+correlation. Molecular diffusion, Taylor/shear dispersion, network mixing, and grid-dependent
+numerical spreading must be evaluated separately. Calibrate $D_{ax}$ only after a grid/time study
+with the physical model held fixed; never tune it to cancel numerical diffusion.
+
+Published validation should follow the operational comparison in Chaczykowski et al. (2018):
+align measured inlet composition, flow/pressure history, geometry, and outlet gas-chromatograph
+timestamps; report transport-time error separately from profile-shape error; and repeat the study
+under grid/time refinement with one fixed physical coefficient. If the Norwegian and Polish
+machine-readable operational series cannot be redistributed, use permissioned data in a private
+validation job and publish only aggregate error metrics. The repository's Gaussian-variance and
+finite-pulse tests remain the non-proprietary analytical regression and must not be presented as
+operational calibration.
 
 After `setStoreSpeciesConservationHistory(true)`,
 `PipeFlowSystem.getSpeciesConservationHistory()` retains the immutable report from every accepted
@@ -523,8 +566,9 @@ The steady-state solver has been validated for:
    first-order kernel grid/time refinement are established for positive isothermal flow. Full
    hydraulic/EOS grid/time convergence, thermal coupling, phase appearance, and network junctions
    are not yet established.
-3. **No physical axial dispersion model**: Existing advection-scheme spreading is numerical and
-   must not be interpreted as molecular or turbulent dispersion.
+3. **Physical-dispersion scope is deliberately narrow**: `NoAxialDispersion` and a user-specified
+   constant coefficient are available. No compressible turbulent-pipe correlation is asserted;
+   project use requires tracer/gas-quality calibration and a documented validity range.
 4. **Positive-flow diagnostic boundary**: Current transient mass diagnostics reject reverse
    boundary flow because an external upwind thermodynamic state is not yet defined.
 5. **TimeSeries API**: Inlet systems array must have N-1 elements for N time points (one system per interval)
@@ -537,7 +581,8 @@ Planned dependency order is:
 - Coupled hydraulic/EOS and total-mass convergence for solver type `1`
 - Conservative repeated-step and pulse validation after the one-step component balance
 - Dimensionally valid higher-order convection after the established first-order analytical gate
-- Explicit physical dispersion as a separate, documented model
+- Published and permissioned operational validation of constant physical dispersion, followed by
+  review of any turbulent/shear correlation before it becomes a selectable model
 
 ### TimeSeries Best Practices
 
@@ -564,3 +609,5 @@ pipe.getTimeSeries().setInletThermoSystems(systems);
 5. Chen, Q. et al. (2024). “A transient gas pipeline network simulation model for decoupling the
    hydraulic-thermal process and the component tracking process.” *Energy*, 301, 131613.
    <https://doi.org/10.1016/j.energy.2024.131613>.
+6. Taylor, G. I. (1954). “The dispersion of matter in turbulent flow through a pipe.”
+   *Proceedings of the Royal Society A*, 223, 446–468. <https://doi.org/10.1098/rspa.1954.0130>.

@@ -6,6 +6,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializer;
+import neqsim.fluidmechanics.flowsolver.AxialDispersionBoundaryCondition;
 import neqsim.fluidmechanics.flowsolver.SpeciesAdvectionScheme;
 
 /** Immutable resolution and numerical-spreading diagnostics for one conservative species step. */
@@ -28,14 +29,31 @@ public final class SpeciesTransportDiagnostics implements Serializable {
   private final double maximumFirstOrderImplicitNumericalDispersionM2PerSecond;
   /** Physical cell Peclet numbers, unavailable until a dispersion model is enabled. */
   private final double[] cellPecletNumbers;
+  /** Selected physical axial-dispersion model name. */
+  private final String physicalDispersionModelName;
+  /** Physical axial-dispersion coefficient by cell in m2/s. */
+  private final double[] physicalAxialDispersionM2PerSecond;
+  /** Minimum finite physical axial-dispersion coefficient in m2/s. */
+  private final double minimumPhysicalAxialDispersionM2PerSecond;
+  /** Maximum finite physical axial-dispersion coefficient in m2/s. */
+  private final double maximumPhysicalAxialDispersionM2PerSecond;
+  /** Full-step explicit physical-dispersion number by cell. */
+  private final double[] cellPhysicalDispersionNumbers;
+  /** Maximum full-step explicit physical-dispersion number. */
+  private final double maximumCellPhysicalDispersionNumber;
   /** Whether physical axial dispersion contributed to the accepted step. */
   private final boolean physicalDispersionIncluded;
+  /** Physical inlet boundary condition. */
+  private final AxialDispersionBoundaryCondition inletDispersionBoundaryCondition;
+  /** Physical outlet boundary condition. */
+  private final AxialDispersionBoundaryCondition outletDispersionBoundaryCondition;
   /** Human-readable interpretation and limitations. */
   private final String message;
 
   SpeciesTransportDiagnostics(SpeciesAdvectionScheme scheme, double[] cellCourantNumbers,
       double effectiveCellCourantNumber, int substeps, double[] numericalDispersionM2PerSecond,
-      double[] cellPecletNumbers, boolean physicalDispersionIncluded, String message) {
+      double[] cellPecletNumbers, String physicalDispersionModelName, double[] physicalAxialDispersionM2PerSecond,
+      double[] cellPhysicalDispersionNumbers, boolean physicalDispersionIncluded, String message) {
     this.scheme = scheme;
     this.cellCourantNumbers = copy(cellCourantNumbers);
     this.maximumCellCourantNumber = maximumFinite(this.cellCourantNumbers);
@@ -45,7 +63,15 @@ public final class SpeciesTransportDiagnostics implements Serializable {
     this.maximumFirstOrderImplicitNumericalDispersionM2PerSecond = maximumFinite(
         this.firstOrderImplicitNumericalDispersionM2PerSecond);
     this.cellPecletNumbers = copy(cellPecletNumbers);
+    this.physicalDispersionModelName = physicalDispersionModelName;
+    this.physicalAxialDispersionM2PerSecond = copy(physicalAxialDispersionM2PerSecond);
+    this.minimumPhysicalAxialDispersionM2PerSecond = minimumFinite(this.physicalAxialDispersionM2PerSecond);
+    this.maximumPhysicalAxialDispersionM2PerSecond = maximumFinite(this.physicalAxialDispersionM2PerSecond);
+    this.cellPhysicalDispersionNumbers = copy(cellPhysicalDispersionNumbers);
+    this.maximumCellPhysicalDispersionNumber = maximumFinite(this.cellPhysicalDispersionNumbers);
     this.physicalDispersionIncluded = physicalDispersionIncluded;
+    this.inletDispersionBoundaryCondition = AxialDispersionBoundaryCondition.DIRICHLET_INLET;
+    this.outletDispersionBoundaryCondition = AxialDispersionBoundaryCondition.ZERO_GRADIENT_OUTLET;
     this.message = message;
   }
 
@@ -56,7 +82,8 @@ public final class SpeciesTransportDiagnostics implements Serializable {
    */
   public static SpeciesTransportDiagnostics notRun() {
     return new SpeciesTransportDiagnostics(SpeciesAdvectionScheme.FIRST_ORDER_IMPLICIT, new double[0], Double.NaN, 0,
-        new double[0], new double[0], false, "Conservative species transport has not run.");
+        new double[0], new double[0], "none", new double[0], new double[0], false,
+        "Conservative species transport has not run.");
   }
 
   /** @return selected conservative species scheme */
@@ -112,9 +139,58 @@ public final class SpeciesTransportDiagnostics implements Serializable {
     return copy(cellPecletNumbers);
   }
 
+  /** @return stable selected physical axial-dispersion model name */
+  public String getPhysicalDispersionModelName() {
+    return physicalDispersionModelName;
+  }
+
+  /** @return defensive copy of physical axial-dispersion coefficients by cell in m2/s */
+  public double[] getPhysicalAxialDispersionM2PerSecond() {
+    return copy(physicalAxialDispersionM2PerSecond);
+  }
+
+  /** @return minimum finite physical axial-dispersion coefficient in m2/s */
+  public double getMinimumPhysicalAxialDispersionM2PerSecond() {
+    return minimumPhysicalAxialDispersionM2PerSecond;
+  }
+
+  /** @return maximum finite physical axial-dispersion coefficient in m2/s */
+  public double getMaximumPhysicalAxialDispersionM2PerSecond() {
+    return maximumPhysicalAxialDispersionM2PerSecond;
+  }
+
+  /**
+   * Get full-step explicit physical-dispersion numbers.
+   *
+   * <p>
+   * Each cell value is {@code dt * (G_w + G_e) / M}, where {@code G} is the conservative physical-dispersion face
+   * conductance. It controls explicit TVD substepping; first-order implicit transport remains unconditionally stable.
+   * </p>
+   *
+   * @return defensive copy of cell physical-dispersion numbers
+   */
+  public double[] getCellPhysicalDispersionNumbers() {
+    return copy(cellPhysicalDispersionNumbers);
+  }
+
+  /** @return maximum full-step explicit physical-dispersion number */
+  public double getMaximumCellPhysicalDispersionNumber() {
+    return maximumCellPhysicalDispersionNumber;
+  }
+
   /** @return true when physical axial dispersion contributed to this step */
   public boolean isPhysicalDispersionIncluded() {
     return physicalDispersionIncluded;
+  }
+
+  /** @return fixed physical inlet boundary condition used for this step */
+  public AxialDispersionBoundaryCondition getInletDispersionBoundaryCondition() {
+    return inletDispersionBoundaryCondition;
+  }
+
+  /** @return fixed physical outlet boundary condition used for this step */
+  public AxialDispersionBoundaryCondition getOutletDispersionBoundaryCondition() {
+    return outletDispersionBoundaryCondition;
   }
 
   /** @return diagnostic interpretation and limitations */
@@ -147,5 +223,15 @@ public final class SpeciesTransportDiagnostics implements Serializable {
       }
     }
     return maximum;
+  }
+
+  private static double minimumFinite(double[] values) {
+    double minimum = Double.NaN;
+    for (double value : values) {
+      if (Double.isFinite(value) && (!Double.isFinite(minimum) || value < minimum)) {
+        minimum = value;
+      }
+    }
+    return minimum;
   }
 }
