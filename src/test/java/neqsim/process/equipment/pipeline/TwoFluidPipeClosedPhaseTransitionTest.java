@@ -20,6 +20,11 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 class TwoFluidPipeClosedPhaseTransitionTest {
   private static final double ABSOLUTE_MASS_TOLERANCE_KG = 1.0e-7;
   private static final double RELATIVE_MASS_TOLERANCE = 1.0e-10;
+  private static final double INITIAL_SUPERHEAT_K = 0.02;
+  private static final double COOLDOWN_SURFACE_OFFSET_K = -10.0;
+  private static final double REHEAT_SURFACE_OFFSET_K = 10.0;
+  private static final double COOLDOWN_DURATION_SECONDS = 0.30;
+  private static final double REHEAT_DURATION_SECONDS = 0.60;
   private static final UUID TRANSIENT_ID = UUID.fromString("00000000-0000-0000-0000-000000012792");
 
   /**
@@ -30,7 +35,9 @@ class TwoFluidPipeClosedPhaseTransitionTest {
    * nitrogen 0.01, methane {@code 0.9 - 22e-6}, ethane 0.05, propane 0.01, i-butane 0.005, n-butane 0.005, and water
    * {@code 22e-6}. The pipe is 20 m long and 0.20 m in diameter. A 5000 W/(m2 K) test heat-transfer coefficient and a 5
    * mm wall with density 1000 kg/m3 and heat capacity 100 J/(kg K) create a short, stable regression transient; they
-   * are numerical test values, not a design recommendation. The mass-transfer relaxation time is 30 s.
+   * are numerical test values, not a design recommendation. The fluid starts 0.02 K above the calculated water dew
+   * point, cools for 0.30 s against a surface 10 K below it, then reheats for 0.60 s against a surface 10 K above it.
+   * The mass-transfer relaxation time is 30 s.
    * </p>
    *
    * @throws Exception if the water-dew-point flash fails
@@ -90,18 +97,18 @@ class TwoFluidPipeClosedPhaseTransitionTest {
       int sections, double macroTimeStepSeconds, boolean validateSerializedCopy) {
     TwoFluidPipe pipe = createClosedTransitionPipe(name, fluidTemplate, dewPointTemperatureK, sections, true);
 
-    int cooldownSteps = (int) Math.round(0.30 / macroTimeStepSeconds);
+    int cooldownSteps = (int) Math.round(COOLDOWN_DURATION_SECONDS / macroTimeStepSeconds);
     TransitionAccumulator cooldown = advanceAndAccumulate(pipe, cooldownSteps, macroTimeStepSeconds);
     double cooledTemperatureK = mean(pipe.getTemperatureProfile());
     TwoFluidPipe copied = validateSerializedCopy ? (TwoFluidPipe) pipe.copy() : null;
 
-    pipe.setSurfaceTemperature(dewPointTemperatureK + 10.0, "K");
-    int reheatSteps = (int) Math.round(0.60 / macroTimeStepSeconds);
+    pipe.setSurfaceTemperature(dewPointTemperatureK + REHEAT_SURFACE_OFFSET_K, "K");
+    int reheatSteps = (int) Math.round(REHEAT_DURATION_SECONDS / macroTimeStepSeconds);
     TransitionAccumulator reheat = advanceAndAccumulate(pipe, reheatSteps, macroTimeStepSeconds);
     double reheatedTemperatureK = mean(pipe.getTemperatureProfile());
 
     if (copied != null) {
-      copied.setSurfaceTemperature(dewPointTemperatureK + 10.0, "K");
+      copied.setSurfaceTemperature(dewPointTemperatureK + REHEAT_SURFACE_OFFSET_K, "K");
       TransitionAccumulator copiedReheat = advanceAndAccumulate(copied, reheatSteps, macroTimeStepSeconds);
       assertArrayEquals(pipe.getTemperatureProfile(), copied.getTemperatureProfile(), 1.0e-9);
       assertArrayEquals(pipe.getOilHoldupProfile(), copied.getOilHoldupProfile(), 1.0e-12);
@@ -122,11 +129,11 @@ class TwoFluidPipeClosedPhaseTransitionTest {
   private TwoFluidPipe createClosedTransitionPipe(String name, SystemInterface fluidTemplate,
       double dewPointTemperatureK, int sections, boolean includeMassTransfer) {
     SystemInterface fluid = fluidTemplate.clone();
-    fluid.setTemperature(dewPointTemperatureK + 0.5, "K");
+    fluid.setTemperature(dewPointTemperatureK + INITIAL_SUPERHEAT_K, "K");
 
     Stream inlet = new Stream(name + "-closed-transition-inlet", fluid);
     inlet.setFlowRate(6.0, "kg/sec");
-    inlet.setTemperature(dewPointTemperatureK + 0.5, "K");
+    inlet.setTemperature(dewPointTemperatureK + INITIAL_SUPERHEAT_K, "K");
     inlet.setPressure(70.0, "bara");
     inlet.run();
 
@@ -149,7 +156,7 @@ class TwoFluidPipeClosedPhaseTransitionTest {
     pipe.setEnableJouleThomson(false);
     pipe.setWallProperties(0.005, 1000.0, 100.0);
     pipe.setHeatTransferCoefficient(5000.0);
-    pipe.setSurfaceTemperature(dewPointTemperatureK - 10.0, "K");
+    pipe.setSurfaceTemperature(dewPointTemperatureK + COOLDOWN_SURFACE_OFFSET_K, "K");
     return pipe;
   }
 
