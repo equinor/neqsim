@@ -47,6 +47,8 @@ public class TPflash extends Flash {
   private static final double LIQUID_LIQUID_CRITICAL_TEMPERATURE_SPAN = 150.0;
   /** Minimum water feed fraction for ordinary water-rich endpoint refinement. */
   private static final double WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT = 0.01;
+  /** Largest incipient secondary-phase fraction eligible for trace-water phase-selection retry. */
+  private static final double TRACE_WATER_PHASE_SELECTION_BETA_LIMIT = 1.0e-4;
   /** Maximum stored water K-value that justifies checking a collapsed water-bearing endpoint. */
   private static final double WATER_PHASE_COLLAPSE_WATER_K_UPPER_LIMIT = 1.0e-2;
   /** Minimum stored non-water K-value that justifies checking a collapsed water-bearing endpoint. */
@@ -959,11 +961,12 @@ public class TPflash extends Flash {
    * label is not by itself proof of equilibrium: phase typing can identify a water-rich phase after the ordinary
    * gas/oil iteration has stopped. Such an endpoint is refined when its component fugacity residual exceeds
    * {@link #PHASE_ROOT_EQUILIBRIUM_TOLERANCE} or its component material balance exceeds
-   * {@link #WATER_RICH_MATERIAL_BALANCE_TOLERANCE}. The one-mol-percent feed guard keeps trace-water process flashes on
-   * the existing fast path. A cloned multiphase candidate normally replaces the ordinary state only when it lowers
-   * Gibbs energy. If the reference state is non-conservative, Gibbs energies are not comparable; a candidate may then
-   * replace it only after passing strict phase-fraction, composition-normalization, material-balance, fugacity, and
-   * distinct-composition checks.
+   * {@link #WATER_RICH_MATERIAL_BALANCE_TOLERANCE}. The one-mol-percent feed guard keeps valid trace-water process
+   * flashes on the existing fast path. A trace-water gas/oil endpoint whose fugacity residual is already outside the
+   * equilibrium tolerance may still use the cloned stability calculation because it is not an acceptable result. A
+   * cloned multiphase candidate normally replaces the ordinary state only when it lowers Gibbs energy. If the reference
+   * state is non-conservative, Gibbs energies are not comparable; a candidate may then replace it only after passing
+   * strict phase-fraction, composition-normalization, material-balance, fugacity, and distinct-composition checks.
    * </p>
    */
   private void rescueWaterRichEndpoint() {
@@ -984,7 +987,8 @@ public class TPflash extends Flash {
         break;
       }
     }
-    if (waterFeedFraction < WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT) {
+    if (waterFeedFraction < WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT
+        && (waterFeedFraction <= 0.0 || !isInvalidTraceWaterGasOilEndpoint())) {
       return;
     }
     double materialBalanceResidual = maximumComponentMaterialBalanceResidual(system);
@@ -1007,6 +1011,46 @@ public class TPflash extends Flash {
     } catch (Exception ex) {
       logger.debug("Water-rich endpoint refinement failed: {}", ex.getMessage());
     }
+  }
+
+  /**
+   * Checks whether an ordinary trace-water gas/oil endpoint already fails fugacity equality.
+   *
+   * <p>
+   * Valid trace-water flashes with established phase fractions return before a component residual scan. For an
+   * incipient secondary phase, a valid residual returns without another initialization or stability calculation. Only
+   * an invalid neutral gas/oil endpoint is reinitialized to confirm the residual before the guarded lower-Gibbs aqueous
+   * candidate is evaluated.
+   * </p>
+   *
+   * @return true when the endpoint is a neutral gas/oil split whose confirmed fugacity residual is non-finite or not
+   * below the equilibrium tolerance
+   */
+  private boolean isInvalidTraceWaterGasOilEndpoint() {
+    if (system.getNumberOfPhases() != 2 || system.hasPhaseType(PhaseType.AQUEOUS)) {
+      return false;
+    }
+    boolean hasGasPhase = false;
+    boolean hasLiquidPhase = false;
+    for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
+      PhaseType phaseType = system.getPhase(phaseIndex).getType();
+      hasGasPhase |= phaseType == PhaseType.GAS;
+      hasLiquidPhase |= phaseType == PhaseType.OIL || phaseType == PhaseType.LIQUID;
+    }
+    if (!hasGasPhase || !hasLiquidPhase) {
+      return false;
+    }
+    if (Math.min(system.getBeta(0), system.getBeta(1)) > TRACE_WATER_PHASE_SELECTION_BETA_LIMIT) {
+      return false;
+    }
+
+    double residual = maximumLogFugacityResidual(system.getPhase(0), system.getPhase(1));
+    if (Double.isFinite(residual) && residual < PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
+      return false;
+    }
+    system.init(1);
+    residual = maximumLogFugacityResidual(system.getPhase(0), system.getPhase(1));
+    return !Double.isFinite(residual) || residual >= PHASE_ROOT_EQUILIBRIUM_TOLERANCE;
   }
 
   /**
