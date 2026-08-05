@@ -1,6 +1,7 @@
 package neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem;
 
 import java.util.UUID;
+import neqsim.fluidmechanics.flowsolver.SpeciesAdvectionScheme;
 import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFixedStaggeredGrid;
 import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFlowConvergenceReport;
 import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseSpeciesConservationReport;
@@ -18,6 +19,8 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
   private static final long serialVersionUID = 1000;
   private boolean failOnNonConvergence;
   private boolean conservativeSpeciesTransportEnabled;
+  /** Selected finite-volume method for conservative component transport. */
+  private SpeciesAdvectionScheme speciesAdvectionScheme = SpeciesAdvectionScheme.FIRST_ORDER_IMPLICIT;
   private boolean storeSpeciesConservationHistory;
   private OnePhaseSpeciesConservationHistory speciesConservationHistory = OnePhaseSpeciesConservationHistory.empty();
   private OnePhaseSpeciesConservationHistory.Builder speciesConservationHistoryBuilder;
@@ -122,6 +125,34 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
   }
 
   /**
+   * Select the finite-volume advection method used by conservative species transport.
+   *
+   * <p>
+   * The default remains {@link SpeciesAdvectionScheme#FIRST_ORDER_IMPLICIT}. The selected method has no effect unless
+   * {@link #setConservativeSpeciesTransport(boolean)} is enabled.
+   * </p>
+   *
+   * @param scheme non-null conservative species advection scheme
+   * @throws IllegalArgumentException if {@code scheme} is null
+   */
+  public void setSpeciesAdvectionScheme(SpeciesAdvectionScheme scheme) {
+    if (scheme == null) {
+      throw new IllegalArgumentException("Conservative species advection scheme cannot be null.");
+    }
+    speciesAdvectionScheme = scheme;
+    configureConvergencePolicy();
+  }
+
+  /**
+   * Get the selected conservative species advection method.
+   *
+   * @return non-null typed scheme; first-order implicit by default
+   */
+  public SpeciesAdvectionScheme getSpeciesAdvectionScheme() {
+    return speciesAdvectionScheme;
+  }
+
+  /**
    * Configure whether a transient solve throws when its convergence report fails.
    *
    * <p>
@@ -150,6 +181,7 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
       OnePhaseFixedStaggeredGrid onePhaseSolver = (OnePhaseFixedStaggeredGrid) flowSolver;
       onePhaseSolver.setFailOnNonConvergence(failOnNonConvergence);
       onePhaseSolver.setConservativeSpeciesTransportEnabled(conservativeSpeciesTransportEnabled);
+      onePhaseSolver.setSpeciesAdvectionScheme(speciesAdvectionScheme);
     }
   }
 

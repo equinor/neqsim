@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import neqsim.fluidmechanics.flowsolver.SpeciesAdvectionScheme;
 import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFlowConvergenceReport;
 import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseSpeciesConservationReport;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
@@ -68,6 +69,30 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     double firstCellNitrogen = pipe.getNode(1).getBulkSystem().getPhase(0).getComponent(nitrogen).getx();
     assertTrue(firstCellNitrogen > 0.05 && firstCellNitrogen < 0.20,
         "The bounded inlet front must enter the first physical cell: " + firstCellNitrogen);
+  }
+
+  @Test
+  void highResolutionSpeciesStepRetainsHydraulicEosSynchronization() {
+    PipeFlowSystem pipe = createInitializedPipe(12, 3000.0);
+    pipe.setConservativeSpeciesTransport(true);
+    pipe.setSpeciesAdvectionScheme(SpeciesAdvectionScheme.TVD_VAN_LEER_SSP_RK2);
+    pipe.setFailOnNonConvergence(true);
+    pipe.getTimeSeries().setTimes(new double[] { 0.0, 30.0 });
+    pipe.getTimeSeries().setInletThermoSystems(new SystemInterface[] { createGas(0.80, 0.20) });
+    pipe.getTimeSeries().setNumberOfTimeStepsInInterval(1);
+
+    assertDoesNotThrow(() -> pipe.solveTransient(1));
+    OnePhaseSpeciesConservationReport report = pipe.getSpeciesConservationReport();
+
+    assertTrue(report.isConverged(), report.getMessage());
+    assertTrue(pipe.getConvergenceReport().isConverged(), pipe.getConvergenceReport().getMessage());
+    assertEquals(SpeciesAdvectionScheme.TVD_VAN_LEER_SSP_RK2, report.getTransportDiagnostics().getScheme());
+    assertTrue(report.getMaximumRelativeInventoryResidual() <= 1.0e-8, report.getMessage());
+    assertTrue(report.getMaximumThermodynamicMassFractionError() <= 1.0e-10, report.getMessage());
+    assertTrue(report.getMinimumMassFraction() >= 0.0, report.getMessage());
+    assertTrue(report.getMaximumMassFraction() <= 1.0, report.getMessage());
+    assertTrue(report.getTransportDiagnostics().getMaximumCellCourantNumber() > 0.0);
+    assertTrue(report.getTransportDiagnostics().getMaximumFirstOrderImplicitNumericalDispersionM2PerSecond() > 0.0);
   }
 
   @Test
