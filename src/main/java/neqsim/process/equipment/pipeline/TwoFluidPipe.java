@@ -4612,7 +4612,8 @@ public class TwoFluidPipe extends Pipeline {
     }
 
     if (!Double.isFinite(massFlowOut)) {
-      throw new IllegalStateException("Outlet mass flow must be finite");
+      throw new IllegalStateException(
+          "Outlet mass flow must be finite: outlet=" + massFlowOut + " kg/s, inlet=" + massFlowIn + " kg/s");
     }
     outFluid.setTotalFlowRate(Math.max(0.0, massFlowOut), "kg/sec");
 
