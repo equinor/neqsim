@@ -125,6 +125,31 @@ inclined_section_gas_carryover_number,inclined_section_liquid_fallback_potential
 severe_slugging_number,severe_slug_potential
 ```
 
+### Thermal-energy validation
+
+After a thermal `runTransient(...)`, call `getLastThermalEnergyBalanceReport()` to validate the
+same post-step sensible-energy model that changed the fluid and wall temperatures. Its discrete
+balance is
+
+$$\Delta E_f+\Delta E_w=E_{adv}+E_{JT}-E_{amb}$$
+
+where positive $E_{adv}$ and $E_{JT}$ add energy and positive $E_{amb}$ removes energy. CLOSED
+external faces contribute zero sensible advection, but internal face transport remains active. In
+the multilayer model, the fluid and first wall layer use the same instantaneous heat rate; the
+reported ambient loss is the last-layer flux from the same explicit update.
+
+```java
+pipe.runTransient(0.001, UUID.randomUUID());
+TwoFluidThermalEnergyBalanceReport thermal = pipe.getLastThermalEnergyBalanceReport();
+boolean closes = thermal.isWithinTolerance(1.0e-5, 1.0e-10);
+```
+
+The report is `null` when heat transfer is disabled. It covers fluid sensible energy and simple-wall
+or radial-layer storage. It is not a full compositional enthalpy audit through flash-driven phase
+transfer. For a closed cooldown, also verify zero boundary mass/enthalpy transport, monotonic
+all-cell cooling without ambient undershoot, repeatability, serialization/copy behavior, both
+explicit and IMEX paths, and mesh/time-step refinement.
+
 ### Phase-transfer validation
 
 When `setIncludeMassTransfer(true)` is enabled, validate gas, oil, and water separately rather than

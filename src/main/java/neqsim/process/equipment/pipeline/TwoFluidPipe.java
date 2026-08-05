@@ -664,6 +664,9 @@ public class TwoFluidPipe extends Pipeline {
   /** Discrete mass balance from the most recent transient call. */
   private TwoFluidMassBalanceReport lastMassBalanceReport = null;
 
+  /** Discrete sensible-energy balance from the most recent thermal transient call. */
+  private TwoFluidThermalEnergyBalanceReport lastThermalEnergyBalanceReport = null;
+
   // ============ Results storage ============
 
   /** Pressure profile (Pa). */
@@ -1729,6 +1732,15 @@ public class TwoFluidPipe extends Pipeline {
     }
   }
 
+  /** Time-integrated thermal-model terms for one accepted internal step. */
+  private static final class ThermalEnergyStep {
+    private double fluidEnergyChangeJ;
+    private double wallEnergyChangeJ;
+    private double sensibleAdvectionEnergyJ;
+    private double jouleThomsonEnergyJ;
+    private double ambientHeatLossJ;
+  }
+
   /**
    * Update temperature after an accepted transient hydrodynamic step.
    *
@@ -1742,8 +1754,9 @@ public class TwoFluidPipe extends Pipeline {
    *
    * @param dt time step in seconds
    * @param phaseMassFaceFluxes integration-weighted gas, oil, and water face mass flows in kg/s
+   * @return time-integrated sensible-energy terms for the accepted step
    */
-  private void updateTransientTemperature(double dt, double[][] phaseMassFaceFluxes) {
+  private ThermalEnergyStep updateTransientTemperature(double dt, double[][] phaseMassFaceFluxes) {
     SystemInterface inletFluid = getInletStream().getFluid();
     double Cp = inletFluid.getCp("J/kgK");
     if (Cp <= 0.0 || !Double.isFinite(Cp)) {
@@ -1769,8 +1782,7 @@ public class TwoFluidPipe extends Pipeline {
     }
 
     if (useMultilayerThermalModel && thermalCalculator != null) {
-      updateTransientTemperatureMultilayer(phaseMassFaceFluxes, previousFluidTemperatures, dt, Cp, muJT);
-      return;
+      return updateTransientTemperatureMultilayer(phaseMassFaceFluxes, previousFluidTemperatures, dt, Cp, muJT);
     }
 
     double pipePerimeter = Math.PI * diameter;
@@ -1779,11 +1791,13 @@ public class TwoFluidPipe extends Pipeline {
     double wallArea = Math.PI * (outerDiameter * outerDiameter - diameter * diameter) / 4.0;
     double wallMassPerLength = wallArea * wallDensity;
     double fallbackFluidMassPerLength = sections[0].getArea() * inletFluid.getDensity("kg/m3");
+    ThermalEnergyStep energyStep = new ThermalEnergyStep();
 
     for (int i = 0; i < numberOfSections; i++) {
       TwoFluidSection sec = sections[i];
       double oldFluidTemperature = previousFluidTemperatures[i];
       double wallTemperature = wallTemperatureProfile[i];
+      double oldWallTemperature = wallTemperature;
 
       double hInner = heatTransferCoefficient;
       if (heatTransferProfile != null && i < heatTransferProfile.length) {
@@ -1817,7 +1831,17 @@ public class TwoFluidPipe extends Pipeline {
       newFluidTemperature = Math.max(newFluidTemperature, 100.0);
       sec.setTemperature(newFluidTemperature);
       updateThermalRiskFlags(i, newFluidTemperature);
+
+      double cellLength = sec.getLength();
+      energyStep.fluidEnergyChangeJ +=
+          (newFluidTemperature - oldFluidTemperature) * fluidMassPerLength * Cp * cellLength;
+      energyStep.wallEnergyChangeJ +=
+          (wallTemperature - oldWallTemperature) * wallThermalMass * cellLength;
+      energyStep.sensibleAdvectionEnergyJ += sensibleAdvection * dt * cellLength;
+      energyStep.jouleThomsonEnergyJ += jouleThomsonSource * dt * cellLength;
+      energyStep.ambientHeatLossJ += wallToAmbientHeat * dt * cellLength;
     }
+    return energyStep;
   }
 
   /**
@@ -1974,15 +1998,19 @@ public class TwoFluidPipe extends Pipeline {
    * @param dt time step in seconds
    * @param Cp fluid heat capacity in J/(kg K)
    * @param muJT Joule-Thomson coefficient in K/Pa
+   * @return time-integrated sensible-energy terms for the accepted step
    */
-  private void updateTransientTemperatureMultilayer(double[][] phaseMassFaceFluxes, double[] previousFluidTemperatures,
-      double dt, double Cp, double muJT) {
+  private ThermalEnergyStep updateTransientTemperatureMultilayer(double[][] phaseMassFaceFluxes,
+      double[] previousFluidTemperatures, double dt, double Cp, double muJT) {
     double fallbackFluidMassPerLength = sections[0].getArea() * getInletStream().getFluid().getDensity("kg/m3");
     double[][] layerTemperatures = getOrInitializeMultilayerLayerTemperatures();
+    ThermalEnergyStep energyStep = new ThermalEnergyStep();
 
     for (int i = 0; i < numberOfSections; i++) {
       TwoFluidSection sec = sections[i];
       double oldFluidTemperature = previousFluidTemperatures[i];
+      double oldWallEnergyPerLength = calculateMultilayerThermalEnergyPerLength(thermalCalculator,
+          layerTemperatures[i]);
       double ambientTemperature = surfaceTemperature;
       if (surfaceTemperatureProfile != null && i < surfaceTemperatureProfile.length) {
         ambientTemperature = surfaceTemperatureProfile[i];
@@ -1993,7 +2021,8 @@ public class TwoFluidPipe extends Pipeline {
       double wallTemperature = advanceMultilayerCellThermalState(thermalCalculator, layerTemperatures[i],
           oldFluidTemperature, ambientTemperature, hInner, dt);
 
-      double heatLoss = thermalCalculator.calculateHeatLossPerLength();
+      double heatLoss = thermalCalculator.getLastFluidHeatTransferPerLength();
+      double ambientHeatLoss = thermalCalculator.getLastAmbientHeatTransferPerLength();
       double sensibleAdvection = calcSensibleAdvectionSource(i, phaseMassFaceFluxes, previousFluidTemperatures, Cp);
       double jouleThomsonSource = calcLocalJouleThomsonSource(i, phaseMassFaceFluxes, Cp, muJT);
       double fluidMassPerLength = getLocalFluidMassPerLength(sec, fallbackFluidMassPerLength);
@@ -2007,7 +2036,35 @@ public class TwoFluidPipe extends Pipeline {
         wallTemperatureProfile[i] = wallTemperature;
       }
       updateThermalRiskFlags(i, newFluidTemperature);
+
+      double cellLength = sec.getLength();
+      double newWallEnergyPerLength = calculateMultilayerThermalEnergyPerLength(thermalCalculator,
+          layerTemperatures[i]);
+      energyStep.fluidEnergyChangeJ +=
+          (newFluidTemperature - oldFluidTemperature) * fluidMassPerLength * Cp * cellLength;
+      energyStep.wallEnergyChangeJ += (newWallEnergyPerLength - oldWallEnergyPerLength) * cellLength;
+      energyStep.sensibleAdvectionEnergyJ += sensibleAdvection * dt * cellLength;
+      energyStep.jouleThomsonEnergyJ += jouleThomsonSource * dt * cellLength;
+      energyStep.ambientHeatLossJ += ambientHeatLoss * dt * cellLength;
     }
+    return energyStep;
+  }
+
+  /**
+   * Calculate stored sensible energy in one cell's radial layers per unit pipe length.
+   *
+   * @param calculator configured radial-layer properties
+   * @param layerTemperatures cell-owned radial-layer temperatures in kelvin
+   * @return stored radial-layer energy in J/m relative to zero kelvin
+   */
+  private static double calculateMultilayerThermalEnergyPerLength(MultilayerThermalCalculator calculator,
+      double[] layerTemperatures) {
+    double energyPerLength = 0.0;
+    List<RadialThermalLayer> layers = calculator.getLayers();
+    for (int layer = 0; layer < layers.size(); layer++) {
+      energyPerLength += layers.get(layer).getThermalMassPerLength() * layerTemperatures[layer];
+    }
+    return energyPerLength;
   }
 
   /**
@@ -3391,6 +3448,7 @@ public class TwoFluidPipe extends Pipeline {
   @Override
   public void run(UUID id) {
     lastMassBalanceReport = null;
+    lastThermalEnergyBalanceReport = null;
 
     // Initialize sections
     initializeSections();
@@ -3414,11 +3472,18 @@ public class TwoFluidPipe extends Pipeline {
   public void runTransient(double dt, UUID id) {
     isTransientMode = true;
     lastMassBalanceReport = null;
+    lastThermalEnergyBalanceReport = null;
     clearSevereSluggingSystemClassification();
     double[] initialMassKg = getPhaseMassInventoriesKg();
     double[] integratedInletMassKg = new double[3];
     double[] integratedOutletMassKg = new double[3];
     double[] integratedSourceMassKg = new double[3];
+    double fluidEnergyChangeJ = 0.0;
+    double wallEnergyChangeJ = 0.0;
+    double sensibleAdvectionEnergyJ = 0.0;
+    double jouleThomsonEnergyJ = 0.0;
+    double ambientHeatLossJ = 0.0;
+    boolean thermalEnergyTracked = false;
     double acceptedElapsedTime = 0.0;
     int acceptedSubsteps = 0;
 
@@ -3683,7 +3748,13 @@ public class TwoFluidPipe extends Pipeline {
           throw new IllegalStateException("Expected " + thermalStageWeights.length + " thermal flux stages for "
               + timeIntegrator.getMethod() + " but received " + thermalStageIndex[0]);
         }
-        updateTransientTemperature(dtActual, weightedPhaseMassFaceFluxes);
+        ThermalEnergyStep energyStep = updateTransientTemperature(dtActual, weightedPhaseMassFaceFluxes);
+        fluidEnergyChangeJ += energyStep.fluidEnergyChangeJ;
+        wallEnergyChangeJ += energyStep.wallEnergyChangeJ;
+        sensibleAdvectionEnergyJ += energyStep.sensibleAdvectionEnergyJ;
+        jouleThomsonEnergyJ += energyStep.jouleThomsonEnergyJ;
+        ambientHeatLossJ += energyStep.ambientHeatLossJ;
+        thermalEnergyTracked = true;
       }
 
       // 10. Advance time
@@ -3698,6 +3769,10 @@ public class TwoFluidPipe extends Pipeline {
 
     lastMassBalanceReport = new TwoFluidMassBalanceReport(acceptedElapsedTime, acceptedSubsteps, initialMassKg,
         getPhaseMassInventoriesKg(), integratedInletMassKg, integratedOutletMassKg, integratedSourceMassKg);
+    if (thermalEnergyTracked) {
+      lastThermalEnergyBalanceReport = new TwoFluidThermalEnergyBalanceReport(acceptedElapsedTime, acceptedSubsteps,
+          fluidEnergyChangeJ, wallEnergyChangeJ, sensibleAdvectionEnergyJ, jouleThomsonEnergyJ, ambientHeatLossJ);
+    }
 
     setCalculationIdentifier(id);
   }
@@ -4680,6 +4755,21 @@ public class TwoFluidPipe extends Pipeline {
    */
   public TwoFluidMassBalanceReport getLastMassBalanceReport() {
     return lastMassBalanceReport;
+  }
+
+  /**
+   * Get the sensible-energy balance from the most recent thermal transient call.
+   *
+   * <p>
+   * The report integrates fluid and wall energy changes, conservative-face sensible advection, the optional
+   * Joule-Thomson source, and ambient heat loss over the accepted internal substeps. It is cleared by steady-state
+   * {@link #run(UUID)} and remains {@code null} when heat transfer is disabled.
+   * </p>
+   *
+   * @return last thermal-energy balance report, or {@code null} when no thermal transient was evaluated
+   */
+  public TwoFluidThermalEnergyBalanceReport getLastThermalEnergyBalanceReport() {
+    return lastThermalEnergyBalanceReport;
   }
 
   /**
