@@ -128,8 +128,8 @@ severe_slugging_number,severe_slug_potential
 ### Thermal-energy validation
 
 After a thermal `runTransient(...)`, call `getLastThermalEnergyBalanceReport()` to validate the
-same post-step sensible-energy model that changed the fluid and wall temperatures. Its discrete
-balance is
+same post-step sensible-energy model that changed the fluid and wall temperatures in a closed
+domain. Its discrete balance is
 
 $$\Delta E_f+\Delta E_w=E_{adv}+E_{JT}-E_{amb}$$
 
@@ -145,7 +145,9 @@ boolean closes = thermal.isWithinTolerance(1.0e-5, 1.0e-10);
 ```
 
 The report is `null` when heat transfer is disabled. It covers fluid sensible energy and simple-wall
-or radial-layer storage. It is not a full compositional enthalpy audit through flash-driven phase
+or radial-layer storage. Do not interpret it as a complete control-volume energy audit for an
+open-boundary transient: the stored-energy terms omit energy changes caused solely by net mass
+inventory changes. It is also not a full compositional enthalpy audit through flash-driven phase
 transfer. For a closed cooldown, also verify zero boundary mass/enthalpy transport, monotonic
 all-cell cooling without ambient undershoot, repeatability, serialization/copy behavior, both
 explicit and IMEX paths, and mesh/time-step refinement.

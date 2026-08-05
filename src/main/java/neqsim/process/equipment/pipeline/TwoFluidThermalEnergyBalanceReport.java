@@ -16,9 +16,11 @@ import java.io.Serializable;
  * </pre>
  *
  * <p>
- * Positive advection and Joule-Thomson terms add energy to the domain; positive ambient loss removes energy. The report
- * is intentionally limited to the sensible-energy closure represented by the current temperature model and is not a
- * full compositional enthalpy audit across flash-driven phase transfer.
+ * Positive advection and Joule-Thomson terms add energy to the domain; positive ambient loss removes energy. This
+ * report is intended for closed-domain validation of the sensible-energy closure represented by the current temperature
+ * model. For open-boundary transients, the stored-energy terms do not include energy changes caused solely by net mass
+ * inventory changes, so the residual is not a complete control-volume energy balance. The report is also not a full
+ * compositional enthalpy audit across flash-driven phase transfer.
  * </p>
  */
 public final class TwoFluidThermalEnergyBalanceReport implements Serializable {

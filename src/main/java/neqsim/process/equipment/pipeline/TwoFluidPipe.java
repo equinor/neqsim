@@ -4761,8 +4761,10 @@ public class TwoFluidPipe extends Pipeline {
    *
    * <p>
    * The report integrates fluid and wall energy changes, conservative-face sensible advection, the optional
-   * Joule-Thomson source, and ambient heat loss over the accepted internal substeps. It is cleared by steady-state
-   * {@link #run(UUID)} and remains {@code null} when heat transfer is disabled.
+   * Joule-Thomson source, and ambient heat loss over the accepted internal substeps. It is intended for closed-domain
+   * thermal validation; its stored-energy terms do not make it a complete control-volume energy balance for
+   * open-boundary inventory changes. It is cleared by steady-state {@link #run(UUID)} and remains {@code null} when
+   * heat transfer is disabled.
    * </p>
    *
    * @return last thermal-energy balance report, or {@code null} when no thermal transient was evaluated
