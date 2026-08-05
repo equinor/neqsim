@@ -259,7 +259,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 | Convergence tolerance | 1e-10 | Deviation threshold for K-value convergence |
 | Gibbs increase tolerance | 1e-8 | Relative increase that triggers K-reset |
 | Supplementary stability TPD limit | -1e-6 | Accept a converged amplified-K or composition-perturbation trial only when its reduced TPD exceeds that SSI solve's residual/step resolution and the trial composition is non-trivial |
-| Ordinary water-rich refinement feed threshold | 0.01 mole fraction water | Avoid phase-search overhead for trace-water flashes. An already-active neutral aqueous split bypasses only this feed threshold when `max abs(Delta z_i) > 1e-8`, allowing the bounded beta correction below without another stability calculation. |
+| Ordinary water-rich refinement feed threshold | 0.01 mole fraction water | Avoid phase-search overhead for valid trace-water flashes. An already-active neutral aqueous split bypasses only this feed threshold when `max abs(Delta z_i)` is non-finite or above `1e-8`, allowing the bounded beta correction below without another stability calculation. An incipient trace-water GAS+OIL endpoint with `min(beta) <= 1e-4` also bypasses the threshold when its confirmed log-fugacity residual is non-finite or at least `1e-8`; the existing guarded multiphase candidate must then pass the strict feasibility and lower-Gibbs gates. |
 | Water-rich material-balance tolerance | 1e-8 in `max abs(Delta z_i)` | Reject a non-conservative reference before comparing feasible Gibbs minima |
 | Cubic-root equilibrium tolerance | 1e-8 in `max abs(Delta ln(f_i))` | Accept an alternate root assignment only when the existing composition split is already at equilibrium |
 | Aqueous cubic-root equilibrium tolerance | 1e-8 in `max abs(Delta ln(f_i))` | Accept an alternate root only when it lowers Gibbs energy and already satisfies component fugacity equality |
@@ -1712,9 +1712,12 @@ Commercial process simulators do not publish all implementation details, but pub
   balance has `max abs(Delta z_i) >= 1e-8`. A feasible candidate normally must lower Gibbs energy; when the reference
   is non-conservative and its Gibbs energy is therefore not comparable, the candidate must instead independently pass
   phase-fraction, composition-normalization, material-balance, fugacity, and distinct-composition checks. The 0.01
-  water-feed gate still protects phase-search cost, but an already-active neutral aqueous split with a material residual
-  above `1e-8` may use the existing three-step beta correction below that threshold; this does not search for or create
-  a phase.
+  water-feed gate still protects phase-search cost for valid endpoints. An already-active neutral aqueous split with a
+  non-finite material residual or one above `1e-8` may use the existing three-step beta correction below that threshold;
+  this does not search for or create a phase. A trace-water GAS+OIL endpoint with a confirmed non-finite or at-least
+  `1e-8` log-fugacity residual may run the existing guarded multiphase candidate and is replaced only by a strictly
+  feasible lower-Gibbs result. This phase-selection retry is restricted to an incipient secondary phase with
+  `min(beta) <= 1e-4`, so established valid gas/oil splits avoid even the component residual scan.
 - When the tangent-plane stability path has already accepted a homogeneous state, an unnormalized aqueous trial seed
   cannot replace it. The guard is deliberately structural: each active phase composition must be finite, bounded in
   `[0, 1]`, and normalized within `1e-8`. It does not impose a universal material-balance or fugacity threshold on
