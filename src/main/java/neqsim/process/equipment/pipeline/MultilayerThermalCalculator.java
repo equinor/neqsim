@@ -499,8 +499,9 @@ public class MultilayerThermalCalculator implements Serializable {
    * Get the fluid-to-first-layer heat transfer used by the most recent transient update.
    *
    * <p>
-   * The sign is positive when energy leaves the fluid. This is the instantaneous explicit flux evaluated from the
-   * pre-update temperatures, not the steady overall-U heat loss.
+   * The sign is positive when energy leaves the fluid. With thermal mass and radial layers enabled, this is the
+   * instantaneous explicit flux evaluated from the pre-update temperatures. When thermal mass is disabled or no layers
+   * are configured, it is the steady overall-U heat loss.
    * </p>
    *
    * @return fluid-to-wall heat transfer in W/m
@@ -513,7 +514,9 @@ public class MultilayerThermalCalculator implements Serializable {
    * Get the last-layer-to-ambient heat transfer used by the most recent transient update.
    *
    * <p>
-   * The sign is positive when energy leaves the radial layers for the ambient.
+   * The sign is positive when energy leaves the radial layers for the ambient. With thermal mass and radial layers
+   * enabled, this is the instantaneous explicit outer-layer flux. When thermal mass is disabled or no layers are
+   * configured, it is the steady overall-U heat loss.
    * </p>
    *
    * @return wall-to-ambient heat transfer in W/m
