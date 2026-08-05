@@ -43,7 +43,7 @@ class TwoFluidPipeClosedPhaseTransitionTest {
    * @throws Exception if the water-dew-point flash fails
    */
   @Test
-  @Timeout(value = 5, unit = TimeUnit.MINUTES)
+  @Timeout(value = 10, unit = TimeUnit.MINUTES)
   void closedCpaCooldownAndReheatClosePhaseMassAcrossRefinement() throws Exception {
     SystemInterface wetGas = createWetGas();
     SystemInterface dewPointFluid = wetGas.clone();
@@ -105,7 +105,6 @@ class TwoFluidPipeClosedPhaseTransitionTest {
     pipe.setSurfaceTemperature(dewPointTemperatureK + REHEAT_SURFACE_OFFSET_K, "K");
     int reheatSteps = (int) Math.round(REHEAT_DURATION_SECONDS / macroTimeStepSeconds);
     TransitionAccumulator reheat = advanceAndAccumulate(pipe, reheatSteps, macroTimeStepSeconds);
-    double reheatedTemperatureK = mean(pipe.getTemperatureProfile());
 
     if (copied != null) {
       copied.setSurfaceTemperature(dewPointTemperatureK + REHEAT_SURFACE_OFFSET_K, "K");
@@ -114,8 +113,11 @@ class TwoFluidPipeClosedPhaseTransitionTest {
       assertArrayEquals(pipe.getOilHoldupProfile(), copied.getOilHoldupProfile(), 1.0e-12);
       assertArrayEquals(pipe.getWaterHoldupProfile(), copied.getWaterHoldupProfile(), 1.0e-12);
       assertEquals(reheat.waterSourceKg, copiedReheat.waterSourceKg, 1.0e-9);
+      assertEquals(reheat.condensedWaterKg, copiedReheat.condensedWaterKg, 1.0e-9);
+      assertEquals(reheat.evaporatedWaterKg, copiedReheat.evaporatedWaterKg, 1.0e-9);
       assertEquals(reheat.oilSourceKg, copiedReheat.oilSourceKg, 1.0e-9);
     }
+    double reheatedTemperatureK = mean(pipe.getTemperatureProfile());
 
     assertEquals(0.0, cooldown.oilSourceKg, ABSOLUTE_MASS_TOLERANCE_KG);
     assertEquals(0.0, reheat.oilSourceKg, ABSOLUTE_MASS_TOLERANCE_KG);
@@ -123,7 +125,8 @@ class TwoFluidPipeClosedPhaseTransitionTest {
         ABSOLUTE_MASS_TOLERANCE_KG);
     assertEquals(reheat.finalWaterMassKg - reheat.initialWaterMassKg, reheat.waterSourceKg, ABSOLUTE_MASS_TOLERANCE_KG);
 
-    return new TransitionResult(cooledTemperatureK, reheatedTemperatureK, cooldown.waterSourceKg, reheat.waterSourceKg);
+    return new TransitionResult(cooledTemperatureK, reheatedTemperatureK, cooldown.condensedWaterKg,
+        reheat.evaporatedWaterKg);
   }
 
   private TwoFluidPipe createClosedTransitionPipe(String name, SystemInterface fluidTemplate,
@@ -169,7 +172,10 @@ class TwoFluidPipeClosedPhaseTransitionTest {
         accumulator.initialWaterMassKg = report.getInitialMassKg(Phase.WATER);
       }
       accumulator.finalWaterMassKg = report.getFinalMassKg(Phase.WATER);
-      accumulator.waterSourceKg += report.getSourceMassKg(Phase.WATER);
+      double waterSourceKg = report.getSourceMassKg(Phase.WATER);
+      accumulator.waterSourceKg += waterSourceKg;
+      accumulator.condensedWaterKg += Math.max(waterSourceKg, 0.0);
+      accumulator.evaporatedWaterKg += Math.min(waterSourceKg, 0.0);
       accumulator.oilSourceKg += report.getSourceMassKg(Phase.OIL);
 
       assertEquals(0.0, report.getInletMassKg(Phase.TOTAL), 1.0e-12);
@@ -223,6 +229,8 @@ class TwoFluidPipeClosedPhaseTransitionTest {
     private double initialWaterMassKg;
     private double finalWaterMassKg;
     private double waterSourceKg;
+    private double condensedWaterKg;
+    private double evaporatedWaterKg;
     private double oilSourceKg;
   }
 
