@@ -363,6 +363,9 @@ def neqsim_classes(ns):
     ns.PipeBeggsAndBrills = JClass(
         "neqsim.process.equipment.pipeline.PipeBeggsAndBrills"
     )
+    ns.OnePhasePipeLine = JClass(
+        "neqsim.process.equipment.pipeline.OnePhasePipeLine"
+    )
     ns.Pump = JClass("neqsim.process.equipment.pump.Pump")
     ns.Manifold = JClass("neqsim.process.equipment.manifold.Manifold")
     ns.StreamSaturatorUtil = JClass(
