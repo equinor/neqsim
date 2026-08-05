@@ -9,6 +9,35 @@
 
 ---
 
+## 2026-08-05 — ProcessModel unit-level mass closure is reported again
+
+### Added
+
+`ProcessModel` now reports a second mass-closure figure covering the units the recycle-tear gate
+does not own. `getLastUnitMassClosureError()` and `getUnitMassClosureOffenders()` expose the mass
+created or destroyed by non-recycle unit operations as a fraction of plant feed, the
+`getMassClosureSummary()` text states it alongside the recycle-tear result, and the `massClosure`
+JSON block gained `unitRelativeError`, `unitWorstUnits`, and `unitGateEnabled`. Bypassed and
+low-flow units are excluded (`ProcessSystem.getFailedMassBalance`), and recycles are skipped so
+they are not counted twice.
+
+The figure is **report-only by default**: a non-recycle unit that does not conserve mass is an
+equipment defect rather than something the outer solver can close, so gating on it would iterate
+to the cap and bury the real diagnosis. Opt in with `setUnitMassClosureGate(true)` to make it
+block a converged verdict as well.
+
+The closure is now also evaluated once after a run that never reached the acceptance test, so a
+model that stops on the iteration cap still reports what it is failing to conserve instead of
+leaving `relativeError` null behind a max-iterations warning.
+
+### Compatibility and validation
+
+No default, gate outcome, or existing JSON field changed; the recycle-tear gate and its
+`relativeError`/`worstUnits` fields behave exactly as before. Callers that only read the recycle
+figures are unaffected.
+
+---
+
 ## 2026-08-04 — Fixed-reflux fallback product inventory
 
 ### Corrected
