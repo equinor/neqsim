@@ -9,6 +9,15 @@
 
 ---
 
+## 2026-08-05 — Column pumparound returns remain internal recycles
+
+- `DistillationColumn` no longer captures a named pumparound return stream as a legacy direct
+  external tray feed during iterative solves.
+- `getInletStreams()`, feed fingerprints, and feed/product balance diagnostics therefore retain
+  only caller-supplied feeds; configured pumparound returns remain internal recycles.
+
+---
+
 ## 2026-08-05 — External process evaluators sample result callbacks once
 
 - `ProcessSimulationEvaluator.evaluate(...)` and `ProcessModelSimulationEvaluator.evaluate(...)`

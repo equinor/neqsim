@@ -282,8 +282,9 @@ traffic and the latest tear-variable diagnostics report non-convergence.
 
 ## Pumparounds
 
-Liquid pumparounds are internal draw/return circuits. They are not external products and do not
-appear in `getOutletStreams()`.
+Liquid pumparounds are internal draw/return circuits. They are neither external feeds nor external
+products, so their return and draw streams do not appear in `getInletStreams()` or
+`getOutletStreams()`.
 
 ```java
 DistillationColumn.ColumnPumparound pumparound = column.addLiquidPumparound("PA-1", 4, 6,

@@ -305,6 +305,38 @@ public class DistillationColumnWarmStateCacheTest {
     }
   }
 
+  /** Internal pumparound returns must never be captured as legacy external tray feeds. */
+  @Test
+  public void pumparoundReturnIsNotCapturedAsExternalFeed() {
+    for (double feedTemperatureC : new double[] { 20.0, 25.0 }) {
+      DistillationColumn column = buildColumn();
+      StreamInterface feed = column.getFeedStreams(3).get(0);
+      feed.setTemperature(feedTemperatureC, "C");
+      feed.run();
+      column.addLiquidPumparound("PA-1", 2, 4, 0.01, 2.0);
+      column.setPumparoundTolerance(1.0e-3);
+      column.run();
+
+      assertTrue(column.solved(), column.getConvergenceDiagnostics());
+      assertEquals(1, column.getInletStreams().size(),
+          "an internal pumparound return must not be exposed or balanced as a second external feed");
+      assertSame(feed, column.getInletStreams().get(0));
+      assertPhysicalAndBalanced(feed, column);
+
+      double gasFlow = column.getGasOutStream().getFlowRate("kg/hr");
+      double liquidFlow = column.getLiquidOutStream().getFlowRate("kg/hr");
+      column.run();
+
+      assertTrue(column.solved(), column.getConvergenceDiagnostics());
+      assertEquals(1, column.getInletStreams().size(),
+          "repeated runs must not accumulate the internal return in the external-feed registry");
+      assertSame(feed, column.getInletStreams().get(0));
+      assertEquals(gasFlow, column.getGasOutStream().getFlowRate("kg/hr"), Math.max(1.0e-6, gasFlow * 5.0e-3));
+      assertEquals(liquidFlow, column.getLiquidOutStream().getFlowRate("kg/hr"), Math.max(1.0e-6, liquidFlow * 5.0e-3));
+      assertPhysicalAndBalanced(feed, column);
+    }
+  }
+
   /** Molar feed rate used to make identity-only input changes collide with the legacy fingerprint. */
   private static final double IDENTITY_TEST_FLOW_MOL_PER_HOUR = 100000.0;
 
