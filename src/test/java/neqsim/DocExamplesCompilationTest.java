@@ -14,6 +14,9 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 import neqsim.integration.EOSComparison;
+import neqsim.fluidmechanics.flowsolver.SpeciesAdvectionScheme;
+import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.SpeciesTransportDiagnostics;
+import neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.PipeFlowSystem;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
 import neqsim.process.equipment.compressor.Compressor;
@@ -1361,6 +1364,21 @@ public class DocExamplesCompilationTest {
     pipe.openOutlet(52.0, "bara");
     pipe.runTransient(2.0, java.util.UUID.randomUUID());
     assertEquals(52.0, pipe.getPressureProfile()[pipe.getPressureProfile().length - 1] / 1.0e5, 0.05);
+  }
+
+  /**
+   * Bounded species-advection API from docs/fluidmechanics/single_phase_pipe_flow.md.
+   */
+  @Test
+  public void testSinglePhaseSpeciesAdvectionDocExampleCompiles() {
+    PipeFlowSystem pipe = new PipeFlowSystem();
+    pipe.setSpeciesAdvectionScheme(SpeciesAdvectionScheme.TVD_VAN_LEER_SSP_RK2);
+
+    SpeciesTransportDiagnostics diagnostics = SpeciesTransportDiagnostics.notRun();
+
+    assertEquals(SpeciesAdvectionScheme.TVD_VAN_LEER_SSP_RK2, pipe.getSpeciesAdvectionScheme());
+    assertEquals(SpeciesAdvectionScheme.FIRST_ORDER_IMPLICIT, diagnostics.getScheme());
+    assertEquals(0, diagnostics.getCellCourantNumbers().length);
   }
 
   /**
