@@ -130,7 +130,9 @@ public class OnePhasePipeLineCompositionalTest {
     assertTrue(latest.isConverged(), latest.getMessage());
     assertTrue(pipe.getConvergenceReport().isConverged(), pipe.getConvergenceReport().getMessage());
     assertArrayEquals(latest.getFinalInventoryKg(), history.getReport(2).getFinalInventoryKg(), 0.0);
-    assertArrayEquals(latest.getMassFractionProfile()[1], pipe.getConservativeMassFractionProfile("nitrogen"), 0.0);
+    int nitrogen = componentIndex(latest, "nitrogen");
+    assertArrayEquals(latest.getMassFractionProfile()[nitrogen], pipe.getConservativeMassFractionProfile("nitrogen"),
+        0.0);
     assertTrue(history.toJson().contains("\"elapsedTimeSeconds\""));
   }
 
