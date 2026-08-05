@@ -1309,8 +1309,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     hasNaphtaliSandholmWarmState = acceptedNaphtaliSolve;
     if (acceptedNaphtaliSolve) {
       lastNaphtaliSandholmInputSignature = calculateNaphtaliSandholmInputSignature();
-      lastNaphtaliSandholmConvergenceGateSignature =
-          calculateNaphtaliSandholmConvergenceGateSignature();
+      lastNaphtaliSandholmConvergenceGateSignature = calculateNaphtaliSandholmConvergenceGateSignature();
     }
   }
 
@@ -2532,8 +2531,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     boolean acceptedStatus = lastSolveStatus == SolveStatus.RIGOROUS_CONVERGED
         || lastSolveStatus == SolveStatus.RECONCILED_PRODUCTS;
     boolean signatureMatches = inputSignature == lastNaphtaliSandholmInputSignature;
-    boolean convergenceGateSignatureMatches = calculateNaphtaliSandholmConvergenceGateSignature()
-        == lastNaphtaliSandholmConvergenceGateSignature;
+    boolean convergenceGateSignatureMatches = calculateNaphtaliSandholmConvergenceGateSignature() == lastNaphtaliSandholmConvergenceGateSignature;
     boolean reusable = hasNaphtaliSandholmWarmState && naphtaliSandholmStateOwned
         && lastSolverTypeUsed == SolverType.NAPHTALI_SANDHOLM && acceptedStatus && !isDoInitializion()
         && signatureMatches && convergenceGateSignatureMatches;
@@ -2799,8 +2797,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *
    * <p>
    * This fingerprint is recorded only after the complete public column solve, including coordinated fallback and
-   * product reconciliation. Exact reuse therefore depends on the caller retaining the same convergence contract, not
-   * on mutable residual telemetry from an intermediate solver stage.
+   * product reconciliation. Exact reuse therefore depends on the caller retaining the same convergence contract, not on
+   * mutable residual telemetry from an intermediate solver stage.
    * </p>
    *
    * @return convergence-gate configuration fingerprint
@@ -2809,15 +2807,24 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     long signature = 1125899906842597L;
     signature = updateNaphtaliSandholmInputSignature(signature, getEffectiveTemperatureTolerance());
     signature = updateNaphtaliSandholmInputSignature(signature, getEffectiveMassBalanceTolerance());
-    signature = updateNaphtaliSandholmInputSignature(signature, getEffectiveEnthalpyBalanceTolerance());
     signature = updateNaphtaliSandholmInputSignature(signature, enforceEnergyBalanceTolerance ? 1L : 0L);
-    signature = updateNaphtaliSandholmInputSignature(signature,
-        isEffectiveMeshResidualToleranceEnforced() ? 1L : 0L);
-    signature = updateNaphtaliSandholmInputSignature(signature, meshResidualTolerance);
-    signature = updateNaphtaliSandholmInputSignature(signature, trayMaterialBalanceTolerance);
-    signature = updateNaphtaliSandholmInputSignature(signature, meshProductDrawResidualTolerance);
-    signature = updateNaphtaliSandholmInputSignature(signature, columnTearTolerance);
-    return updateNaphtaliSandholmInputSignature(signature, pumparoundTolerance);
+    if (enforceEnergyBalanceTolerance) {
+      signature = updateNaphtaliSandholmInputSignature(signature, getEffectiveEnthalpyBalanceTolerance());
+    }
+    boolean meshResidualGateEnforced = isEffectiveMeshResidualToleranceEnforced();
+    signature = updateNaphtaliSandholmInputSignature(signature, meshResidualGateEnforced ? 1L : 0L);
+    if (meshResidualGateEnforced) {
+      signature = updateNaphtaliSandholmInputSignature(signature, meshResidualTolerance);
+      signature = updateNaphtaliSandholmInputSignature(signature, trayMaterialBalanceTolerance);
+      signature = updateNaphtaliSandholmInputSignature(signature, meshProductDrawResidualTolerance);
+    }
+    boolean columnTearGateActive = hasActiveColumnTearVariables();
+    signature = updateNaphtaliSandholmInputSignature(signature, columnTearGateActive ? 1L : 0L);
+    if (columnTearGateActive) {
+      signature = updateNaphtaliSandholmInputSignature(signature, columnTearTolerance);
+      signature = updateNaphtaliSandholmInputSignature(signature, pumparoundTolerance);
+    }
+    return signature;
   }
 
   /**
