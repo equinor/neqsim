@@ -205,8 +205,8 @@ public final class TransientCompositionalPipeNetwork implements Serializable {
 
     double[] elapsedTimes = new double[stepCount];
     Map<String, double[][]> nodeHistory = new LinkedHashMap<String, double[][]>();
-    Map<String, List<TransientSpeciesConservationReport>> edgeHistory = new LinkedHashMap<String, List<TransientSpeciesConservationReport>>();
-    Map<String, List<TransientSpeciesConservationReport>> junctionHistory = new LinkedHashMap<String, List<TransientSpeciesConservationReport>>();
+    Map<String, List<TransientSpeciesConservationReport>> edgeHistory = new LinkedHashMap<>();
+    Map<String, List<TransientSpeciesConservationReport>> junctionHistory = new LinkedHashMap<>();
     Map<String, double[]> cumulativeJunctionInlet = new LinkedHashMap<String, double[]>();
     Map<String, double[]> cumulativeJunctionOutlet = new LinkedHashMap<String, double[]>();
     List<TransientSpeciesConservationReport> networkHistory = new ArrayList<TransientSpeciesConservationReport>();

@@ -45,8 +45,9 @@ class TransientCompositionalPipeNetworkTest extends neqsim.NeqSimTest {
     for (String edgeName : new String[] { "asgardBranch", "kristinBranch", "export" }) {
       TransientSpeciesConservationReport[] reports = history.getEdgeReports(edgeName);
       assertEquals(times.length, reports.length);
-      assertTrue(sum(reports[reports.length - 1].getInletBoundaryMassKg()) > sum(reports[0].getInletBoundaryMassKg()),
-          "Edge boundary masses must be cumulative in time.");
+      double cumulativeInletMass = sum(reports[reports.length - 1].getInletBoundaryMassKg());
+      double firstStepInletMass = sum(reports[0].getInletBoundaryMassKg());
+      assertTrue(cumulativeInletMass > firstStepInletMass, "Edge boundary masses must be cumulative in time.");
       for (TransientSpeciesConservationReport report : reports) {
         assertTrue(report.isConverged(), report.getMessage());
         assertTrue(report.getMaximumRelativeInventoryResidual() <= 1.0e-8, report.getMessage());

@@ -156,9 +156,12 @@ public final class TransientSpeciesConservationReport implements Serializable {
   public String toJson() {
     JsonSerializer<Double> finiteDoubleSerializer = (value, type,
         context) -> value != null && Double.isFinite(value) ? new JsonPrimitive(value) : JsonNull.INSTANCE;
-    return new GsonBuilder().registerTypeAdapter(Double.class, finiteDoubleSerializer)
-        .registerTypeAdapter(Double.TYPE, finiteDoubleSerializer).serializeNulls().setPrettyPrinting().create()
-        .toJson(this);
+    GsonBuilder gsonBuilder = new GsonBuilder();
+    gsonBuilder.registerTypeAdapter(Double.class, finiteDoubleSerializer);
+    gsonBuilder.registerTypeAdapter(Double.TYPE, finiteDoubleSerializer);
+    gsonBuilder.serializeNulls();
+    gsonBuilder.setPrettyPrinting();
+    return gsonBuilder.create().toJson(this);
   }
 
   private static double[] copy(double[] values) {

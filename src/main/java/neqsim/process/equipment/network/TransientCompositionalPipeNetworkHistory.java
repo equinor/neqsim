@@ -137,9 +137,12 @@ public final class TransientCompositionalPipeNetworkHistory implements Serializa
   public String toJson() {
     JsonSerializer<Double> finiteDoubleSerializer = (value, type,
         context) -> value != null && Double.isFinite(value) ? new JsonPrimitive(value) : JsonNull.INSTANCE;
-    return new GsonBuilder().registerTypeAdapter(Double.class, finiteDoubleSerializer)
-        .registerTypeAdapter(Double.TYPE, finiteDoubleSerializer).serializeNulls().setPrettyPrinting().create()
-        .toJson(this);
+    GsonBuilder gsonBuilder = new GsonBuilder();
+    gsonBuilder.registerTypeAdapter(Double.class, finiteDoubleSerializer);
+    gsonBuilder.registerTypeAdapter(Double.TYPE, finiteDoubleSerializer);
+    gsonBuilder.serializeNulls();
+    gsonBuilder.setPrettyPrinting();
+    return gsonBuilder.create().toJson(this);
   }
 
   private int componentIndex(String componentName) {
@@ -170,7 +173,7 @@ public final class TransientCompositionalPipeNetworkHistory implements Serializa
 
   private static Map<String, List<TransientSpeciesConservationReport>> copyReports(
       Map<String, List<TransientSpeciesConservationReport>> reports) {
-    Map<String, List<TransientSpeciesConservationReport>> result = new LinkedHashMap<String, List<TransientSpeciesConservationReport>>();
+    Map<String, List<TransientSpeciesConservationReport>> result = new LinkedHashMap<>();
     for (Map.Entry<String, List<TransientSpeciesConservationReport>> entry : reports.entrySet()) {
       result.put(entry.getKey(),
           Collections.unmodifiableList(new ArrayList<TransientSpeciesConservationReport>(entry.getValue())));
