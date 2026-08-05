@@ -13,10 +13,10 @@
 
 ### Corrected
 
-Naphtali-Sandholm exact unchanged-input reuse now requires the stored result to satisfy the
-convergence gates that are active for the current invocation. Tightening an enforced tolerance no
-longer returns the previously accepted state with zero iterations when that state is outside the
-new contract. Unchanged or loosened gates retain the existing reuse performance.
+Naphtali-Sandholm exact unchanged-input reuse now requires the active convergence-gate
+configuration to match the snapshot recorded after the accepted public solve. Changing an enforced
+tolerance no longer returns the previous state with zero iterations under a different convergence
+contract. Unchanged gates retain the existing reuse performance.
 
 ## 2026-08-04 — TwoFluidPipe closed thermal boundary consistency
 
