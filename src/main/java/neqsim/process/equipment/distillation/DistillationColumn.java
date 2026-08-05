@@ -2531,8 +2531,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     boolean acceptedStatus = lastSolveStatus == SolveStatus.RIGOROUS_CONVERGED
         || lastSolveStatus == SolveStatus.RECONCILED_PRODUCTS;
     boolean signatureMatches = inputSignature == lastNaphtaliSandholmInputSignature;
-    long currentConvergenceGateSignature = calculateNaphtaliSandholmConvergenceGateSignature();
-    boolean convergenceGateSignatureMatches = currentConvergenceGateSignature == lastNaphtaliSandholmConvergenceGateSignature;
+    long currentGateSignature = calculateNaphtaliSandholmConvergenceGateSignature();
+    boolean convergenceGateSignatureMatches = currentGateSignature == lastNaphtaliSandholmConvergenceGateSignature;
     boolean reusable = hasNaphtaliSandholmWarmState && naphtaliSandholmStateOwned
         && lastSolverTypeUsed == SolverType.NAPHTALI_SANDHOLM && acceptedStatus && !isDoInitializion()
         && signatureMatches && convergenceGateSignatureMatches;
