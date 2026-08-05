@@ -139,6 +139,37 @@ class TwoFluidPipeComponentTransportTest {
   }
 
   @Test
+  void invalidTransientDurationFailsBeforeHistoryMutation() {
+    TwoFluidPipe pipe = createGasPipe("invalid-duration", 4);
+
+    assertThrows(IllegalArgumentException.class, () -> pipe.runTransient(0.0, TRANSIENT_ID));
+    assertThrows(IllegalArgumentException.class, () -> pipe.runTransient(-0.1, TRANSIENT_ID));
+    assertThrows(IllegalArgumentException.class, () -> pipe.runTransient(Double.NaN, TRANSIENT_ID));
+    assertEquals(0, pipe.getComponentConservationHistory().size());
+  }
+
+  @Test
+  void nullFluidTemplatesFailLoudly() {
+    SystemInterface fluid = createGas(0.95, 0.05);
+    TwoFluidSection section = new TwoFluidSection(0.0, 1.0, 0.20, 0.0);
+    section.setPressure(70.0e5);
+    section.setTemperature(288.15);
+    section.setGasMassPerLength(1.0);
+    TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, new TwoFluidSection[] { section });
+
+    double[][] faceFluxesKgS = new double[2][3];
+    double[][] phaseSourcesKgPerMetreSecond = new double[1][3];
+    IllegalArgumentException advanceException = assertThrows(IllegalArgumentException.class,
+        () -> transport.advance(1.0, faceFluxesKgS, phaseSourcesKgPerMetreSecond, new TwoFluidSection[] { section },
+            fluid, null, 1.0e-8));
+    assertTrue(advanceException.getMessage().contains("Fluid template"));
+
+    IllegalArgumentException stateException = assertThrows(IllegalArgumentException.class,
+        () -> transport.createThermodynamicState(0, null, 70.0e5, 288.15));
+    assertTrue(stateException.getMessage().contains("Fluid template"));
+  }
+
+  @Test
   @Tag("slow")
   @Timeout(value = 5, unit = TimeUnit.MINUTES)
   void closedWetGasTransitionClosesEveryComponentPhaseAndThermalLedger() throws Exception {
