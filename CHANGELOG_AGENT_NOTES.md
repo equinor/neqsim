@@ -15,6 +15,24 @@
   external tray feed during iterative solves.
 - `getInletStreams()`, feed fingerprints, and feed/product balance diagnostics therefore retain
   only caller-supplied feeds; configured pumparound returns remain internal recycles.
+## 2026-08-05 — Conservative transient gas-network species transport
+
+- Added `TransientCompositionalPipeNetwork` for prescribed positive-flow,
+  one-phase, isothermal gathering networks. Source composition and mass-flow
+  schedules propagate through finite-volume edge inventories and conservative
+  component-name junction mixing without an instantaneous manual handoff.
+- `TransientCompositionalPipeNetworkHistory` exposes defensive, time-aligned
+  node mass fractions plus immutable edge, junction, and cumulative network
+  conservation reports. The history and reports provide JSON capture for
+  Python/JPype.
+- The first validated scope is a directed acyclic network with at most one
+  outgoing edge per node. Reverse flow, branching splits, recirculation,
+  hydraulic/thermal coupling, dispersion, and phase appearance fail explicitly
+  or remain outside this API.
+- Added a two-source finite-CO2-pulse regression with deterministic repeat,
+  component-order independence, balance/boundedness gates, linepack delay and
+  broadening, unsupported-state diagnostics, and joint grid/timestep
+  refinement.
 
 ---
 
