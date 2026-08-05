@@ -632,6 +632,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private transient boolean hasNaphtaliSandholmWarmState = false;
   /** Fingerprint of the external inputs and column specifications for the accepted Naphtali-Sandholm solution. */
   private transient long lastNaphtaliSandholmInputSignature = Long.MIN_VALUE;
+  /** Fingerprint of the convergence-gate configuration used when the warm state was accepted. */
+  private transient long lastNaphtaliSandholmConvergenceGateSignature = Long.MIN_VALUE;
   /**
    * Thermodynamic identity fingerprint of the feeds the current tray network was built for.
    *
@@ -1307,6 +1309,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     hasNaphtaliSandholmWarmState = acceptedNaphtaliSolve;
     if (acceptedNaphtaliSolve) {
       lastNaphtaliSandholmInputSignature = calculateNaphtaliSandholmInputSignature();
+      lastNaphtaliSandholmConvergenceGateSignature =
+          calculateNaphtaliSandholmConvergenceGateSignature();
     }
   }
 
@@ -2514,6 +2518,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Decide whether the prior Naphtali-Sandholm solution remains valid for this invocation.
    *
+   * <p>
+   * The active convergence-gate configuration must also match the snapshot recorded after the complete public solve.
+   * This prevents a caller from changing a tolerance and receiving a zero-iteration reuse under a different convergence
+   * contract, while avoiding dependence on diagnostics that a coordinated wrapper or reconciliation step may update
+   * after the simultaneous solver returns.
+   * </p>
+   *
    * @param inputSignature fingerprint of current external feeds and active column specifications
    * @return {@code true} when the accepted tray solution can be reused without another solver invocation
    */
@@ -2521,9 +2532,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     boolean acceptedStatus = lastSolveStatus == SolveStatus.RIGOROUS_CONVERGED
         || lastSolveStatus == SolveStatus.RECONCILED_PRODUCTS;
     boolean signatureMatches = inputSignature == lastNaphtaliSandholmInputSignature;
+    boolean convergenceGateSignatureMatches = calculateNaphtaliSandholmConvergenceGateSignature()
+        == lastNaphtaliSandholmConvergenceGateSignature;
     boolean reusable = hasNaphtaliSandholmWarmState && naphtaliSandholmStateOwned
         && lastSolverTypeUsed == SolverType.NAPHTALI_SANDHOLM && acceptedStatus && !isDoInitializion()
-        && signatureMatches;
+        && signatureMatches && convergenceGateSignatureMatches;
     return reusable;
   }
 
@@ -2779,6 +2792,32 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     signature = updateColumnConfigurationSignature(signature);
 
     return signature;
+  }
+
+  /**
+   * Calculate a deterministic fingerprint of the active convergence-gate configuration.
+   *
+   * <p>
+   * This fingerprint is recorded only after the complete public column solve, including coordinated fallback and
+   * product reconciliation. Exact reuse therefore depends on the caller retaining the same convergence contract, not
+   * on mutable residual telemetry from an intermediate solver stage.
+   * </p>
+   *
+   * @return convergence-gate configuration fingerprint
+   */
+  private long calculateNaphtaliSandholmConvergenceGateSignature() {
+    long signature = 1125899906842597L;
+    signature = updateNaphtaliSandholmInputSignature(signature, getEffectiveTemperatureTolerance());
+    signature = updateNaphtaliSandholmInputSignature(signature, getEffectiveMassBalanceTolerance());
+    signature = updateNaphtaliSandholmInputSignature(signature, getEffectiveEnthalpyBalanceTolerance());
+    signature = updateNaphtaliSandholmInputSignature(signature, enforceEnergyBalanceTolerance ? 1L : 0L);
+    signature = updateNaphtaliSandholmInputSignature(signature,
+        isEffectiveMeshResidualToleranceEnforced() ? 1L : 0L);
+    signature = updateNaphtaliSandholmInputSignature(signature, meshResidualTolerance);
+    signature = updateNaphtaliSandholmInputSignature(signature, trayMaterialBalanceTolerance);
+    signature = updateNaphtaliSandholmInputSignature(signature, meshProductDrawResidualTolerance);
+    signature = updateNaphtaliSandholmInputSignature(signature, columnTearTolerance);
+    return updateNaphtaliSandholmInputSignature(signature, pumparoundTolerance);
   }
 
   /**
@@ -3324,6 +3363,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.naphtaliSandholmStateOwned = false;
     this.hasNaphtaliSandholmWarmState = false;
     this.lastNaphtaliSandholmInputSignature = Long.MIN_VALUE;
+    this.lastNaphtaliSandholmConvergenceGateSignature = Long.MIN_VALUE;
     this.lastNaphtaliSandholmWarmStateReused = false;
     this.solverTypeExplicitlySet = candidate.solverTypeExplicitlySet;
     this.fullFractionatorFastPathEnabled = candidate.fullFractionatorFastPathEnabled;
@@ -12390,6 +12430,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     hasNaphtaliSandholmWarmState = false;
     naphtaliSandholmStateOwned = false;
     lastNaphtaliSandholmInputSignature = Long.MIN_VALUE;
+    lastNaphtaliSandholmConvergenceGateSignature = Long.MIN_VALUE;
     lastNaphtaliSandholmWarmStateReused = false;
     lastSequentialInitializationSignature = Long.MIN_VALUE;
     hasSequentialExactReuseState = false;

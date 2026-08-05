@@ -225,6 +225,13 @@ concrete solver that completed the run. Inspect `getLastAutoSolverSummary()` or
 iteration counts, solve times, and fallback notes. For product-specification cases, also inspect
 `getLastSpecificationHomotopyStepCount()` to confirm whether staged continuation was used.
 
+Exact unchanged-input reuse is conditional on both an identical problem fingerprint and the same
+convergence-gate configuration that was recorded after the accepted public solve. Changing mass,
+energy, MESH, product-draw, specification, or other enforced tolerances disqualifies the
+zero-iteration cache hit. The next invocation executes the solver path and either meets the new
+contract or reports non-convergence explicitly. Rerunning with unchanged gates preserves eligible
+exact reuse.
+
 ## Side Draws
 
 Side draws withdraw a fraction of tray vapor or liquid traffic. They are true external product
