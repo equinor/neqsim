@@ -345,7 +345,14 @@ fluid.addComponent("H2S", 0.05);
 fluid.addComponent("water", 0.1);
 fluid.addSalinity(2.0, "mole/sec");  // Salt-equivalent molar flow, not concentration
 fluid.setMixingRule(11);  // Soreide-Whitson mixing rule
+
+// Optional for CO2-NaCl brine; LEGACY remains the default
+fluid.setAqueousCO2Parameterization("CHABAB_2019");
 ```
+
+The Chabab option is validated against NaCl-brine data at approximately 1-3 mol/kg water, 323-373 K,
+and pressures up to 230 bar. See [Søreide-Whitson Model](SoreideWhitsonModel.md) for the
+correlation, units, comparison example, and extrapolation limits.
 
 ### 7.3 Pitzer Model
 
