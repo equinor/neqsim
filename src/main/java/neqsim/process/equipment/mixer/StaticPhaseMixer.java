@@ -41,9 +41,11 @@ public class StaticPhaseMixer extends StaticMixer {
     SystemInterface outputSystem = mixedStream.getThermoSystem();
     List<PhaseType> outputPhaseTypes = collectOutputPhaseTypes();
     if (outputPhaseTypes.isEmpty()) {
-      outputSystem.init_x_y();
-      outputSystem.initBeta();
-      outputSystem.init(2);
+      if (outputSystem.getTotalNumberOfMoles() > 0.0) {
+        outputSystem.init_x_y();
+        outputSystem.initBeta();
+        outputSystem.init(2);
+      }
       return;
     }
 
