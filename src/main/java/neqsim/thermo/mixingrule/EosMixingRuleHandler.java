@@ -1828,13 +1828,51 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
+    /** Critical temperature of CO2 used by the Chabab et al. (2019) correlation, in K. */
+    private static final double CHABAB_CO2_CRITICAL_TEMPERATURE = 304.13;
+
+    /**
+     * Calculate the aqueous binary-interaction parameter using the legacy correlation.
+     *
+     * <p>
+     * This overload preserves the historical public behavior. Phase calculations use the overload with an explicit
+     * parameterization.
+     *
+     * @param compArray phase component array
+     * @param salinityConcentration equivalent NaCl molality in mol/kg water
+     * @param temperature temperature in K
+     * @param i first component index
+     * @param j second component index
+     * @return aqueous binary-interaction parameter
+     */
     public double getkijWhitsonSoreideAqueous(ComponentEosInterface[] compArray, double salinityConcentration,
         double temperature, int i, int j) {
+      return getkijWhitsonSoreideAqueous(compArray, salinityConcentration, temperature, i, j,
+          SoreideWhitsonParameterization.LEGACY);
+    }
+
+    /**
+     * Calculate an aqueous binary-interaction parameter for the selected parameterization.
+     *
+     * @param compArray phase component array
+     * @param salinityConcentration equivalent NaCl molality in mol/kg water
+     * @param temperature temperature in K
+     * @param i first component index
+     * @param j second component index
+     * @param parameterization aqueous CO2-water parameterization
+     * @return aqueous binary-interaction parameter
+     */
+    public double getkijWhitsonSoreideAqueous(ComponentEosInterface[] compArray, double salinityConcentration,
+        double temperature, int i, int j, SoreideWhitsonParameterization parameterization) {
       String componenti = (compArray[i]).getComponentName();
       String componentj = compArray[j].getComponentName();
       double acentricFactori = compArray[i].getAcentricFactor();
       double reducedTemperaturei = ((ComponentEos) compArray[i]).reducedTemperature(temperature);
       double kij = intparam[i][j];
+
+      if (parameterization == SoreideWhitsonParameterization.CHABAB_2019 && isCO2WaterPair(componenti, componentj)) {
+        return calculateChabab2019AqueousCO2Kij(temperature, salinityConcentration);
+      }
 
       if (componentj.equalsIgnoreCase("water") || componentj.equalsIgnoreCase("H2O")) {
         if (componenti.equalsIgnoreCase("N2") || componenti.equalsIgnoreCase("nitrogen")) {
@@ -1869,6 +1907,87 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       return kij;
     }
 
+    /**
+     * Calculate the modified aqueous CO2-water interaction parameter from Chabab et al. (2019), Eq. (6).
+     *
+     * @param temperature temperature in K
+     * @param salinityConcentration NaCl molality in mol/kg water
+     * @return aqueous CO2-water binary-interaction parameter
+     */
+    public double calculateChabab2019AqueousCO2Kij(double temperature, double salinityConcentration) {
+      double reducedCO2Temperature = temperature / CHABAB_CO2_CRITICAL_TEMPERATURE;
+      double a = 0.43575155;
+      double b = -5.766906744e-2;
+      double c = 8.26464849e-3;
+      double d = 1.29539193e-3;
+      double e = -1.6698848e-3;
+      double f = -0.47866096;
+      return reducedCO2Temperature * (a + b * reducedCO2Temperature + c * reducedCO2Temperature * salinityConcentration)
+          + salinityConcentration * salinityConcentration * (d + e * reducedCO2Temperature) + f;
+    }
+
+    /**
+     * Calculate the temperature derivative of the Chabab et al. (2019) aqueous CO2-water interaction parameter.
+     *
+     * @param temperature temperature in K
+     * @param salinityConcentration NaCl molality in mol/kg water
+     * @return derivative of the binary-interaction parameter with respect to temperature, in 1/K
+     */
+    public double calculateChabab2019AqueousCO2KijdT(double temperature, double salinityConcentration) {
+      double reducedCO2Temperature = temperature / CHABAB_CO2_CRITICAL_TEMPERATURE;
+      double a = 0.43575155;
+      double b = -5.766906744e-2;
+      double c = 8.26464849e-3;
+      double e = -1.6698848e-3;
+      return (a + 2.0 * b * reducedCO2Temperature + 2.0 * c * reducedCO2Temperature * salinityConcentration
+          + e * salinityConcentration * salinityConcentration) / CHABAB_CO2_CRITICAL_TEMPERATURE;
+    }
+
+    /**
+     * Calculate the second temperature derivative of the Chabab et al. (2019) aqueous CO2-water interaction parameter.
+     *
+     * @param salinityConcentration NaCl molality in mol/kg water
+     * @return second derivative of the binary-interaction parameter with respect to temperature, in 1/K2
+     */
+    public double calculateChabab2019AqueousCO2KijdTdT(double salinityConcentration) {
+      double b = -5.766906744e-2;
+      double c = 8.26464849e-3;
+      return 2.0 * (b + c * salinityConcentration)
+          / (CHABAB_CO2_CRITICAL_TEMPERATURE * CHABAB_CO2_CRITICAL_TEMPERATURE);
+    }
+
+    /**
+     * Check whether two component names identify the CO2-water pair in either order.
+     *
+     * @param firstComponent first component name
+     * @param secondComponent second component name
+     * @return {@code true} for a CO2-water pair
+     */
+    private boolean isCO2WaterPair(String firstComponent, String secondComponent) {
+      return (firstComponent.equalsIgnoreCase("CO2") && isWater(secondComponent))
+          || (secondComponent.equalsIgnoreCase("CO2") && isWater(firstComponent));
+    }
+
+    /**
+     * Check whether a component name identifies water.
+     *
+     * @param componentName component name
+     * @return {@code true} for water or H2O
+     */
+    private boolean isWater(String componentName) {
+      return componentName.equalsIgnoreCase("water") || componentName.equalsIgnoreCase("H2O");
+    }
+
+    /**
+     * Get the aqueous CO2-water parameterization stored on a Soreide-Whitson phase.
+     *
+     * @param phase Soreide-Whitson phase
+     * @return selected aqueous CO2-water parameterization
+     */
+    private SoreideWhitsonParameterization getAqueousCO2Parameterization(PhaseInterface phase) {
+      return ((PhaseSoreideWhitson) phase).getAqueousCO2Parameterization();
+    }
+
     /** {@inheritDoc} */
     @Override
     public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
@@ -1887,7 +2006,8 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
         for (int j = 0; j < numbcomp; j++) {
           aij = Math.sqrt(compArray[i].getaT() * compArray[j].getaT());
           if (isAqueous) {
-            aij *= (1.0 - getkijWhitsonSoreideAqueous(compArray, salinityConcentration, temperature, i, j));
+            aij *= (1.0 - getkijWhitsonSoreideAqueous(compArray, salinityConcentration, temperature, i, j,
+                getAqueousCO2Parameterization(phase)));
           } else {
             aij *= (1.0 - getkij(temperature, i, j));
           }
@@ -1915,7 +2035,8 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       for (int j = 0; j < numbcomp; j++) {
         aij = Math.sqrt(compArray[compNumb].getaT() * compArray[j].getaT());
         if (isAqueous) {
-          aij *= (1.0 - getkijWhitsonSoreideAqueous(compArray, salinityConcentration, temperature, compNumb, j));
+          aij *= (1.0 - getkijWhitsonSoreideAqueous(compArray, salinityConcentration, temperature, compNumb, j,
+              getAqueousCO2Parameterization(phase)));
         } else {
           aij *= (1.0 - getkij(temperature, compNumb, j));
         }
@@ -1939,11 +2060,18 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
       for (int j = 0; j < numbcomp; j++) {
-        aij = 0.5 / Math.sqrt(compArray[compNumb].getaT() * compArray[j].getaT())
-            * (compArray[compNumb].getaT() * compArray[j].getaDiffT()
-                + compArray[j].getaT() * compArray[compNumb].getaDiffT());
+        double sqrtAij = Math.sqrt(compArray[compNumb].getaT() * compArray[j].getaT());
+        aij = 0.5 / sqrtAij * (compArray[compNumb].getaT() * compArray[j].getaDiffT()
+            + compArray[j].getaT() * compArray[compNumb].getaDiffT());
         if (isAqueous) {
-          aij *= (1.0 - getkijWhitsonSoreideAqueous(compArray, salinityConcentration, temperature, compNumb, j));
+          SoreideWhitsonParameterization parameterization = getAqueousCO2Parameterization(phase);
+          double kij = getkijWhitsonSoreideAqueous(compArray, salinityConcentration, temperature, compNumb, j,
+              parameterization);
+          aij *= (1.0 - kij);
+          if (parameterization == SoreideWhitsonParameterization.CHABAB_2019
+              && isCO2WaterPair(compArray[compNumb].getComponentName(), compArray[j].getComponentName())) {
+            aij -= sqrtAij * calculateChabab2019AqueousCO2KijdT(temperature, salinityConcentration);
+          }
         } else {
           aij *= (1.0 - getkij(temperature, compNumb, j));
         }
@@ -1969,7 +2097,8 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
       aij = Math.sqrt(compArray[compNumb].getaT() * compArray[compNumbj].getaT());
       if (isAqueous) {
-        aij *= (1.0 - getkijWhitsonSoreideAqueous(compArray, salinityConcentration, temperature, compNumb, compNumbj));
+        aij *= (1.0 - getkijWhitsonSoreideAqueous(compArray, salinityConcentration, temperature, compNumb, compNumbj,
+            getAqueousCO2Parameterization(phase)));
       } else {
         aij *= (1.0 - getkij(temperature, compNumb, compNumbj));
       }
@@ -2026,7 +2155,17 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
               + compArray[j].getaT() * compArray[i].getaDiffDiffT()) / sqrtai[i] / sqrtai[j]
               - temp1 * temp1 / (2.0 * sqrtai[i] * sqrtai[j] * compArray[i].getaT() * compArray[j].getaT()));
           if (isAqueous) {
-            aij *= (1.0 - getkijWhitsonSoreideAqueous(compArray, salinityConcentration, temperature, i, j));
+            SoreideWhitsonParameterization parameterization = getAqueousCO2Parameterization(phase);
+            double kij = getkijWhitsonSoreideAqueous(compArray, salinityConcentration, temperature, i, j,
+                parameterization);
+            aij *= (1.0 - kij);
+            if (parameterization == SoreideWhitsonParameterization.CHABAB_2019
+                && isCO2WaterPair(compArray[i].getComponentName(), compArray[j].getComponentName())) {
+              double sqrtAijFirstDerivative = 0.5 * temp1 / (sqrtai[i] * sqrtai[j]);
+              aij -= 2.0 * sqrtAijFirstDerivative
+                  * calculateChabab2019AqueousCO2KijdT(temperature, salinityConcentration);
+              aij -= sqrtai[i] * sqrtai[j] * calculateChabab2019AqueousCO2KijdTdT(salinityConcentration);
+            }
           } else {
             aij *= (1.0 - getkij(temperature, i, j));
           }
