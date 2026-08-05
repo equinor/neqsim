@@ -98,8 +98,7 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     double[] overallComponentMoles = new double[componentMoles.length];
     for (int component = 0; component < componentMoles.length; component++) {
       componentMoles[component] = node.getBulkSystem().getPhase(0).getComponent(component).getNumberOfMolesInPhase();
-      overallComponentMoles[component] =
-          node.getBulkSystem().getPhase(0).getComponent(component).getNumberOfmoles();
+      overallComponentMoles[component] = node.getBulkSystem().getPhase(0).getComponent(component).getNumberOfmoles();
     }
     double phaseMoles = node.getBulkSystem().getPhase(0).getNumberOfMolesInPhase();
     double systemMoles = node.getBulkSystem().getTotalNumberOfMoles();
