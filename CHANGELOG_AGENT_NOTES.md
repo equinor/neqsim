@@ -9,6 +9,15 @@
 
 ---
 
+## 2026-08-05 — Column exact reuse honors active convergence gates
+
+### Corrected
+
+Naphtali-Sandholm exact unchanged-input reuse now requires the stored result to satisfy the
+convergence gates that are active for the current invocation. Tightening an enforced tolerance no
+longer returns the previously accepted state with zero iterations when that state is outside the
+new contract. Unchanged or loosened gates retain the existing reuse performance.
+
 ## 2026-08-04 — TwoFluidPipe closed thermal boundary consistency
 
 - Transient temperature advection now consumes the conservative solver's retained phase-resolved face mass fluxes,
