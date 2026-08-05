@@ -541,6 +541,19 @@ double totalRelativeResidual = balance.getRelativeResidual(TwoFluidMassBalanceRe
 boolean closes = balance.isWithinTolerance(TwoFluidMassBalanceReport.Phase.TOTAL, 1.0e-7, 1.0e-10);
 ```
 
+After `runTransient(...)`, `getOutletStream()` publishes the accepted
+interval-average total outlet mass flux:
+
+```java
+double outletMassFlow = balance.getOutletMassKg(TwoFluidMassBalanceReport.Phase.TOTAL)
+    / balance.getElapsedTimeSeconds();
+```
+
+This preserves finite transport delay and inventory release when the pipe is
+coupled directly to downstream process equipment. Steady-state `run()` retains
+the inlet-balanced outlet-flow convention. Use the report itself for signed,
+phase-resolved flux integrals and conservation evidence.
+
 The boundary and source integrals use the accepted internal substeps and the same Euler,
 Runge-Kutta, or IMEX stage weights as the conservative update. For deterministic regression cases,
 an absolute tolerance of $10^{-7}$ kg or a relative tolerance of $10^{-10}$ is appropriate; choose a
