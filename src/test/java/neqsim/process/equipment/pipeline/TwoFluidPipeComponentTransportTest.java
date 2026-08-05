@@ -122,6 +122,23 @@ class TwoFluidPipeComponentTransportTest {
   }
 
   @Test
+  void reverseFlowThroughInletFailsBeforeComponentAdvection() {
+    SystemInterface fluid = createGas(0.95, 0.05);
+    TwoFluidSection section = new TwoFluidSection(0.0, 1.0, 0.20, 0.0);
+    section.setPressure(70.0e5);
+    section.setTemperature(288.15);
+    section.setGasMassPerLength(1.0);
+    TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, new TwoFluidSection[] { section });
+
+    double[][] faceFluxesKgS = new double[2][3];
+    faceFluxesKgS[0][0] = -1.0;
+    double[][] phaseSourcesKgPerMetreSecond = new double[1][3];
+    IllegalStateException exception = assertThrows(IllegalStateException.class, () -> transport.advance(1.0,
+        faceFluxesKgS, phaseSourcesKgPerMetreSecond, new TwoFluidSection[] { section }, fluid, fluid, 1.0e-8));
+    assertTrue(exception.getMessage().contains("inlet boundary"));
+  }
+
+  @Test
   @Tag("slow")
   @Timeout(value = 5, unit = TimeUnit.MINUTES)
   void closedWetGasTransitionClosesEveryComponentPhaseAndThermalLedger() throws Exception {
