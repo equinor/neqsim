@@ -377,11 +377,23 @@ System.out.println(pipe.getThermalSummary());
 - **Energy ownership**: The post-step fluid/wall temperature model owns ambient heat exchange. The duplicate wall source
   in `TwoFluidConservationEquations` is disabled when this model is configured, avoiding two applications of the same
   heat loss.
+- **Multilayer flux consistency**: The fluid and first radial layer use the same instantaneous pre-update
+  fluid-to-wall heat rate. The outer-layer-to-ambient rate is retained from that same explicit step, so transient
+  fluid-plus-layer energy closes against ambient heat loss rather than mixing transient wall storage with a steady
+  overall-U estimate.
+- **Thermal balance reporting**: After a thermal `runTransient(...)`,
+  `getLastThermalEnergyBalanceReport()` returns fluid and wall energy changes, sensible advection, Joule-Thomson energy,
+  ambient loss, and a signed residual in joules. The report is `null` when heat transfer is disabled. Strict
+  domain-level closure applies to CLOSED external mass boundaries without phase-transfer inventory changes. For open
+  boundaries or phase-changing cases it is an internal consistency diagnostic for the post-step temperature model, not
+  a full audit of boundary enthalpy, compositional energy, or latent heat.
 
 For validation, start from `run()`, close both boundaries, disable Joule–Thomson effects for an adiabatic invariant, and
 check that a uniform state remains uniform. For cooldown, report absolute pressure, composition and mixing rule,
 temperatures, heat-transfer coefficients, wall properties, mesh, time step, and units; verify that every cell approaches
-ambient monotonically without undershoot. This implementation does not claim OLGA or LedaFlow equivalence.
+ambient monotonically without undershoot. For deterministic compact regressions, require the thermal report to meet an
+absolute residual of 1e-5 J or a relative residual of 1e-10, then demonstrate mesh and time-step refinement at nearby
+conditions. This implementation does not claim OLGA or LedaFlow equivalence.
 
 ## Model Capabilities Summary
 

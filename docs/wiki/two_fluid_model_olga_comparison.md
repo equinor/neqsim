@@ -512,6 +512,13 @@ System.out.printf("  Max volume: %.4f m³%n", tracker.getMaxSlugVolumeAtOutlet()
 System.out.printf("  Outlet frequency: %.4f Hz%n", tracker.getOutletSlugFrequency());
 ```
 
+The tracker-level liquid-mass audit is
+`borrowed - returned to Eulerian - exited at outlet - active slug mass`. Use
+`getMassConservationError()` for the residual and
+`getTotalMassExitedAtOutlet()` for the cumulative interval-accounted outlet
+mass. This diagnostic audit is distinct from the conservative phase-resolved
+`TwoFluidMassBalanceReport` produced by `TwoFluidPipe`.
+
 ### Terrain Profile with Slugging
 
 ```java

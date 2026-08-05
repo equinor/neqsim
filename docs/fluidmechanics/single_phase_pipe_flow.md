@@ -304,12 +304,17 @@ requires both composition and EOS-density residuals to converge.
 
 ```java
 pipe.setConservativeSpeciesTransport(true);
+pipe.setStoreSpeciesConservationHistory(true);
 pipe.setFailOnNonConvergence(true);
 pipe.solveTransient(1);
 
 OnePhaseSpeciesConservationReport species = pipe.getSpeciesConservationReport();
 double[] componentResidualKg = species.getInventoryResidualKg();
 double[][] componentMassFractionByCell = species.getMassFractionProfile();
+
+OnePhaseSpeciesConservationHistory history = pipe.getSpeciesConservationHistory();
+double[] acceptedStepTimesSeconds = history.getElapsedTimeSeconds();
+String pythonReadyHistoryJson = history.toJson();
 ```
 
 `OnePhaseSpeciesConservationReport` exposes component names, physical-cell mass-fraction profiles,
@@ -317,6 +322,17 @@ initial/final component inventories, integrated inlet/outlet component masses, a
 relative inventory residuals, boundedness and sum-to-one diagnostics, thermodynamic
 synchronization error, and hydraulic/species residual histories. Its array getters return
 defensive copies and `toJson()` is suitable for Python-side result capture.
+
+After `setStoreSpeciesConservationHistory(true)`,
+`PipeFlowSystem.getSpeciesConservationHistory()` retains the immutable report from every accepted
+step in the latest multi-step transient solve, aligned with elapsed step-end times in seconds.
+Storage is off by default so long simulations do not retain every component-by-cell profile. The
+history is reset when a new transient solve starts and contains only successfully accepted steps;
+if a later step fails loudly, earlier accepted diagnostics remain available. Its defensive array
+getters and `toJson()` expose distance profiles, outlet breakthrough, component linepack, boundary
+integrals, and cumulative pulse-balance inputs without requiring Python to call one step at a time.
+The history records existing solver evidence and does not change transport equations, tolerances,
+or finite-volume state ownership.
 
 This path has been regression-tested for a single coupled isothermal composition-change step and
 an 1800 s methane/nitrogen pulse through the coupled hydraulic/EOS/species path at positive flow.

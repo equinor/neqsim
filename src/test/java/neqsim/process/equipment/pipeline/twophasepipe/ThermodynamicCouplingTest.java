@@ -190,8 +190,9 @@ class ThermodynamicCouplingTest {
 
     double[] temperatureOffsets = { -1.0, -0.5, -0.2 };
     double previousWaterSource = Double.POSITIVE_INFINITY;
-    double condensedWaterInventory = 0.0;
-    for (double offset : temperatureOffsets) {
+    double[] condensedWaterInventories = new double[temperatureOffsets.length];
+    for (int index = 0; index < temperatureOffsets.length; index++) {
+      double offset = temperatureOffsets[index];
       section.setTemperature(dewPointTemperature + offset);
       PhaseMassTransfer transfer = cpaCoupling.calcPhaseMassTransferRatePerLength(section, 30.0);
       assertTrue(transfer.isFlashConverged());
@@ -203,23 +204,31 @@ class ThermodynamicCouplingTest {
       assertTrue(transfer.getWaterSourceKgPerMetreSecond() <= previousWaterSource,
           "Condensation should vanish continuously as the water dew point is approached");
       previousWaterSource = transfer.getWaterSourceKgPerMetreSecond();
-      if (condensedWaterInventory == 0.0) {
-        condensedWaterInventory = transfer.getWaterSourceKgPerMetreSecond() * 30.0;
-      }
+      condensedWaterInventories[index] = transfer.getWaterSourceKgPerMetreSecond() * 30.0;
     }
 
-    section.setLiquidMassPerLength(condensedWaterInventory);
-    section.setOilMassPerLength(0.0);
-    section.setWaterMassPerLength(section.getLiquidMassPerLength());
-    section.setTemperature(dewPointTemperature + 1.0);
-    PhaseMassTransfer warmTransfer = cpaCoupling.calcPhaseMassTransferRatePerLength(section, 30.0);
+    double[] warmTemperatureOffsets = { 1.0, 0.5, 0.2 };
+    double previousEvaporationMagnitude = Double.POSITIVE_INFINITY;
+    for (int index = 0; index < warmTemperatureOffsets.length; index++) {
+      double condensedWaterInventory = condensedWaterInventories[index];
+      section.setLiquidMassPerLength(condensedWaterInventory);
+      section.setOilMassPerLength(0.0);
+      section.setWaterMassPerLength(condensedWaterInventory);
+      section.setTemperature(dewPointTemperature + warmTemperatureOffsets[index]);
+      PhaseMassTransfer warmTransfer = cpaCoupling.calcPhaseMassTransferRatePerLength(section, 30.0);
 
-    assertTrue(warmTransfer.isFlashConverged());
-    assertTrue(warmTransfer.getGasSourceKgPerMetreSecond() > 0.0);
-    assertEquals(0.0, warmTransfer.getOilSourceKgPerMetreSecond(), 1.0e-12);
-    assertTrue(warmTransfer.getWaterSourceKgPerMetreSecond() < 0.0);
-    assertTrue(-warmTransfer.getWaterSourceKgPerMetreSecond() <= section.getWaterMassPerLength() / 30.0 + 1.0e-15);
-    assertEquals(0.0, warmTransfer.getTotalSourceKgPerMetreSecond(), 1.0e-15);
+      assertTrue(warmTransfer.isFlashConverged());
+      assertTrue(warmTransfer.isApplicable());
+      assertTrue(warmTransfer.getGasSourceKgPerMetreSecond() > 0.0);
+      assertEquals(0.0, warmTransfer.getOilSourceKgPerMetreSecond(), 1.0e-12);
+      assertTrue(warmTransfer.getWaterSourceKgPerMetreSecond() < 0.0);
+      double evaporationMagnitude = -warmTransfer.getWaterSourceKgPerMetreSecond();
+      assertTrue(evaporationMagnitude <= section.getWaterMassPerLength() / 30.0 + 1.0e-15);
+      assertTrue(evaporationMagnitude <= previousEvaporationMagnitude,
+          "Evaporation should vanish continuously as the water dew point is approached");
+      previousEvaporationMagnitude = evaporationMagnitude;
+      assertEquals(0.0, warmTransfer.getTotalSourceKgPerMetreSecond(), 1.0e-15);
+    }
   }
 
   @Test
