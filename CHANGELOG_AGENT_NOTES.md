@@ -9,6 +9,21 @@
 
 ---
 
+## 2026-08-05 — Conservative TwoFluidPipe component transport
+
+### Added
+- Opt-in per-cell, per-phase named-component inventories in `TwoFluidPipe`, advected with the accepted gas/oil/water face fluxes.
+- Equal-and-opposite component mapping for gas/oil/water flash transfer, fail-loud thermodynamic synchronization, bounded profiles, immutable reports, JSON diagnostics, and report history.
+- Composition-dependent interphase latent heat in the transient temperature equation and thermal-energy ledger.
+- Java and JPype/Python access to gas, oil, and water component profiles and outlet mass fractions.
+
+### Compatibility and scope
+- Backward compatible: component transport is disabled by default and must be enabled before `run()`.
+- The initial validated scope requires a fixed named component slate, known inlet composition, gas/oil/aqueous phase identities, and no reverse inflow through the outlet boundary.
+- Internal signed phase-flow reversals are handled with phase-consistent upwinding; unsupported phase transitions and non-closing component/phase ledgers throw.
+
+---
+
 ## 2026-08-05 — External process evaluators sample result callbacks once
 
 - `ProcessSimulationEvaluator.evaluate(...)` and `ProcessModelSimulationEvaluator.evaluate(...)`

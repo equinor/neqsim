@@ -56,12 +56,106 @@ convergence and applicability metadata.
 Transferred momentum uses donor velocity: condensing gas gives each receiving liquid gas momentum,
 while evaporating oil and water give the gas their respective liquid momenta. Transfer-only gas,
 oil, and water momentum sources therefore sum to zero. This closure preserves phase and total mass
-and mixture momentum, but the current hydrodynamic state still does not transport full component
-compositions independently in every cell.
+and mixture momentum. Full named-component transport is available through the opt-in conservative
+component mode described below.
 
 `FlashTable` stores the same aggregate liquid fraction, oil/aqueous liquid mass split, and gas/liquid
 molar masses as the rigorous flash path. Interpolated liquid identity fractions are clamped and
 renormalized; an identity that is absent at all surrounding grid points remains exactly zero.
+
+### Conservative named-component transport
+
+Call `setComponentTransportEnabled(true)` before `run()` to initialize independent component
+inventories in every physical cell and each gas, oil, and aqueous phase. The default remains `false`
+for backward compatibility.
+
+For cell $i$, phase $k$, and named component $c$, the conserved inventory is
+$M_{i,k,c}$ [kg]. For an accepted hydrodynamic substep, the component face flux is
+
+$$
+F_{f,k,c} = \dot m_{f,k}Y_{upwind(f,k),k,c},
+$$
+
+where $\dot m_{f,k}$ is the integration-weighted phase mass flux already used by the phase
+continuity equation. The upwind state follows the sign of the internal face flux. The inlet stream
+supplies positive-flow inlet composition. Integrated boundary component masses use the same Euler,
+Runge-Kutta, or IMEX stage weights as the accepted phase update.
+
+Flash-driven phase transfer is mapped by component name. Evaporation withdraws the donor oil or
+water composition. Condensation uses the receiving equilibrium phase composition. In every cell,
+
+$$
+\sum_{k\in\{G,O,W\}} \Delta M_{i,k,c}^{transfer}=0
+$$
+
+for every component. After transport, the component sums must match the accepted hydrodynamic phase
+inventories within `componentConservationTolerance`; the implementation only removes floating-point
+round-off and throws if a material mismatch would require a projection. Cell PT flashes are then
+built from total conservative named-component inventories. These flashes update density, viscosity,
+sound speed, phase identity, and phase enthalpy but never overwrite the conserved inventories.
+
+The interphase energy closure evaluates phase-specific partial component enthalpies at the cell
+pressure and temperature. For one accepted transfer,
+
+$$
+Q_{latent,i}=-\sum_k\sum_c \Delta M_{i,k,c}^{transfer}\bar h_{i,k,c}.
+$$
+
+Positive $Q_{latent}$ is heat released into the fluid sensible-energy equation; negative values
+consume sensible energy. This term is exposed in both
+`TwoFluidComponentConservationReport.getInterphaseLatentHeatEnergyJ()` and
+`TwoFluidThermalEnergyBalanceReport.getLatentHeatEnergyJ()`. It is included exactly once in the
+thermal residual.
+
+```java
+pipe.setComponentTransportEnabled(true);
+pipe.setComponentConservationTolerance(1.0e-8);
+pipe.setStoreComponentConservationHistory(true);
+pipe.run();
+
+pipe.runTransient(0.1, UUID.randomUUID());
+TwoFluidComponentConservationReport components =
+    pipe.getLastComponentConservationReport();
+double[] co2Gas = pipe.getComponentMassFractionProfile(
+    TwoFluidComponentConservationReport.Phase.GAS, "CO2");
+double outletCo2 = pipe.getOutletComponentMassFraction(
+    TwoFluidComponentConservationReport.Phase.GAS, "CO2");
+String json = components.toJson();
+```
+
+`TwoFluidComponentConservationHistory` retains time-aligned immutable reports when history storage
+is enabled. All array getters return defensive copies. The same APIs are directly accessible from
+Python through JPype; `devtools/neqsim_dev_setup.py` imports the pipe, reports, history, and phase
+enum into the standard notebook namespace. The public report constructor rejects missing or
+duplicate component names, inconsistent phase/component/cell dimensions, and non-finite diagnostic
+values before an invalid report can cross the Java or JPype boundary.
+
+#### Validated scope and fail-loud boundaries
+
+- At least two named components and an unchanged component slate are required after `run()`.
+  Component order may differ because identity is canonicalized by name.
+- Gas, hydrocarbon liquid, and aqueous phases are supported. A non-negligible unsupported flash
+  phase or a phase transfer whose receiving equilibrium phase is absent throws.
+- Positive inlet flow, positive outlet outflow, closed boundaries, and signed internal-face
+  reversals are supported. Reverse inflow through the outlet is rejected because no validated
+  outlet-boundary composition has been supplied.
+- Direct oil-water component transfer is not inferred. Oil/water transfer must be represented
+  through the validated gas-mediated flash closure.
+- First-order upwind component advection is bounded under the hydrodynamic CFL step. Any negative
+  component inventory, phase/component synchronization error, or non-closing component ledger
+  above tolerance throws instead of being hidden by renormalization.
+- The energy report covers the implemented sensible, Joule-Thomson, ambient, and
+  composition-dependent interphase latent terms. Pressure-work and kinetic-energy storage remain
+  outside that post-step thermal diagnostic.
+
+The one-phase gas limit is regression-tested against the validated `PipeFlowSystem` conservative
+species pulse. On a compact 2 m case, coarse and jointly refined grids/timesteps must keep the outlet
+nitrogen mass fraction within 0.08 absolute mass fraction of the reference; refinement may not move
+away by more than 0.01. This stated margin accounts for different hydraulic grids and explicit
+versus implicit first-order transport. A closed SRK-CPA water-dew-point transition separately checks
+every component, cell-wise equal/opposite phase transfer, phase mass, boundedness, deterministic
+history, and the latent-inclusive thermal residual. Engineering applications should repeat mesh and
+time-step refinement at their own length, velocity, phase split, and event duration.
 
 ### Momentum Conservation
 Separate momentum equations for each phase:
@@ -383,10 +477,11 @@ System.out.println(pipe.getThermalSummary());
   overall-U estimate.
 - **Thermal balance reporting**: After a thermal `runTransient(...)`,
   `getLastThermalEnergyBalanceReport()` returns fluid and wall energy changes, sensible advection, Joule-Thomson energy,
-  ambient loss, and a signed residual in joules. The report is `null` when heat transfer is disabled. Strict
-  domain-level closure applies to CLOSED external mass boundaries without phase-transfer inventory changes. For open
-  boundaries or phase-changing cases it is an internal consistency diagnostic for the post-step temperature model, not
-  a full audit of boundary enthalpy, compositional energy, or latent heat.
+  composition-dependent interphase latent heat, ambient loss, and a signed residual in joules. With component transport
+  enabled, the thermal step also runs for an adiabatic pipe so conservative sensible advection and latent effects remain
+  coupled even when the external heat-transfer coefficient is zero. The report is `null` only when neither external
+  heat transfer nor component transport is active. Pressure work and kinetic-energy storage are outside this post-step
+  thermal diagnostic.
 
 For validation, start from `run()`, close both boundaries, disable Joule–Thomson effects for an adiabatic invariant, and
 check that a uniform state remains uniform. For cooldown, report absolute pressure, composition and mixing rule,

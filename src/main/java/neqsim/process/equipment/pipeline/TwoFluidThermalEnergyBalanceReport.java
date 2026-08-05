@@ -3,8 +3,8 @@ package neqsim.process.equipment.pipeline;
 import java.io.Serializable;
 
 /**
- * Discrete sensible-energy accounting for the post-step temperature update in one accepted {@link TwoFluidPipe}
- * transient call.
+ * Discrete sensible- and latent-energy accounting for the post-step temperature update in one accepted
+ * {@link TwoFluidPipe} transient call.
  *
  * <p>
  * The report covers the post-step thermal model: fluid sensible energy, simple-wall or radial-layer thermal energy,
@@ -13,17 +13,15 @@ import java.io.Serializable;
  * </p>
  *
  * <pre>
- * residual = deltaFluid + deltaWall - advection - jouleThomson + ambientLoss
+ * residual = deltaFluid + deltaWall - advection - jouleThomson - latentHeat + ambientLoss
  * </pre>
  *
  * <p>
  * Positive advection and Joule-Thomson terms add energy to the domain; positive ambient loss removes energy. The report
- * is intentionally limited to the sensible-energy closure represented by the current temperature model and is not a
- * full domain enthalpy audit. In particular, it does not include the enthalpy carried by net boundary mass flow or the
- * inventory and latent-energy changes caused by flash-driven phase transfer. The residual is therefore a complete
- * closed-domain sensible-energy check only when both external mass boundaries are closed and phase transfer does not
- * change the material inventory. For open or phase-changing cases it is an internal consistency diagnostic for the
- * post-step temperature model and must be combined with separate boundary-enthalpy and compositional-energy terms.
+ * is intentionally limited to the thermal closure represented by the current temperature model and is not a full domain
+ * enthalpy audit. Conservative sensible advection represents the model's open-boundary energy flux. When component
+ * transport is enabled, the latent term is evaluated from composition-dependent phase enthalpies and equal-and-opposite
+ * interphase component transfer. Pressure work and kinetic-energy storage remain outside this report.
  * </p>
  */
 public final class TwoFluidThermalEnergyBalanceReport implements Serializable {
@@ -36,6 +34,7 @@ public final class TwoFluidThermalEnergyBalanceReport implements Serializable {
   private final double wallEnergyChangeJ;
   private final double sensibleAdvectionEnergyJ;
   private final double jouleThomsonEnergyJ;
+  private final double latentHeatEnergyJ;
   private final double ambientHeatLossJ;
 
   /**
@@ -47,10 +46,12 @@ public final class TwoFluidThermalEnergyBalanceReport implements Serializable {
    * @param wallEnergyChangeJ simple-wall or radial-layer energy change in joules
    * @param sensibleAdvectionEnergyJ net sensible energy added by conservative face advection in joules
    * @param jouleThomsonEnergyJ net Joule-Thomson energy added in joules
+   * @param latentHeatEnergyJ net composition-dependent interphase latent heat added in joules
    * @param ambientHeatLossJ energy transferred from the wall or outer layer to ambient in joules
    */
   TwoFluidThermalEnergyBalanceReport(double elapsedTimeSeconds, int acceptedSubsteps, double fluidEnergyChangeJ,
-      double wallEnergyChangeJ, double sensibleAdvectionEnergyJ, double jouleThomsonEnergyJ, double ambientHeatLossJ) {
+      double wallEnergyChangeJ, double sensibleAdvectionEnergyJ, double jouleThomsonEnergyJ, double latentHeatEnergyJ,
+      double ambientHeatLossJ) {
     if (!Double.isFinite(elapsedTimeSeconds) || elapsedTimeSeconds < 0.0) {
       throw new IllegalArgumentException("elapsedTimeSeconds must be finite and non-negative");
     }
@@ -61,6 +62,7 @@ public final class TwoFluidThermalEnergyBalanceReport implements Serializable {
     requireFinite(wallEnergyChangeJ, "wallEnergyChangeJ");
     requireFinite(sensibleAdvectionEnergyJ, "sensibleAdvectionEnergyJ");
     requireFinite(jouleThomsonEnergyJ, "jouleThomsonEnergyJ");
+    requireFinite(latentHeatEnergyJ, "latentHeatEnergyJ");
     requireFinite(ambientHeatLossJ, "ambientHeatLossJ");
     this.elapsedTimeSeconds = elapsedTimeSeconds;
     this.acceptedSubsteps = acceptedSubsteps;
@@ -68,6 +70,7 @@ public final class TwoFluidThermalEnergyBalanceReport implements Serializable {
     this.wallEnergyChangeJ = wallEnergyChangeJ;
     this.sensibleAdvectionEnergyJ = sensibleAdvectionEnergyJ;
     this.jouleThomsonEnergyJ = jouleThomsonEnergyJ;
+    this.latentHeatEnergyJ = latentHeatEnergyJ;
     this.ambientHeatLossJ = ambientHeatLossJ;
   }
 
@@ -132,6 +135,15 @@ public final class TwoFluidThermalEnergyBalanceReport implements Serializable {
   }
 
   /**
+   * Get the composition-dependent interphase latent heat added to fluid sensible energy.
+   *
+   * @return latent heat in joules, positive when phase formation releases heat
+   */
+  public double getLatentHeatEnergyJ() {
+    return latentHeatEnergyJ;
+  }
+
+  /**
    * Get energy transferred from the wall or outer layer to ambient.
    *
    * @return ambient heat loss in joules, positive when energy leaves the domain
@@ -155,7 +167,8 @@ public final class TwoFluidThermalEnergyBalanceReport implements Serializable {
    * @return residual in joules
    */
   public double getResidualJ() {
-    return getStoredEnergyChangeJ() - sensibleAdvectionEnergyJ - jouleThomsonEnergyJ + ambientHeatLossJ;
+    return getStoredEnergyChangeJ() - sensibleAdvectionEnergyJ - jouleThomsonEnergyJ - latentHeatEnergyJ
+        + ambientHeatLossJ;
   }
 
   /**
@@ -168,6 +181,7 @@ public final class TwoFluidThermalEnergyBalanceReport implements Serializable {
     scale = Math.max(scale, Math.abs(getStoredEnergyChangeJ()));
     scale = Math.max(scale, Math.abs(sensibleAdvectionEnergyJ));
     scale = Math.max(scale, Math.abs(jouleThomsonEnergyJ));
+    scale = Math.max(scale, Math.abs(latentHeatEnergyJ));
     scale = Math.max(scale, Math.abs(ambientHeatLossJ));
     scale = Math.max(scale, RELATIVE_SCALE_FLOOR_J);
     return Math.abs(getResidualJ()) / scale;

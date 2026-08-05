@@ -135,6 +135,9 @@ public class TwoFluidConservationEquations implements Serializable {
   /** Phase-resolved face mass flows from the most recent {@link #calcRHS} evaluation. */
   private double[][] lastPhaseMassFaceFluxes = new double[0][3];
 
+  /** Phase-resolved cell source rates from the most recent {@link #calcRHS} evaluation. */
+  private double[][] lastPhaseMassSourcesPerLength = new double[0][3];
+
   /**
    * Instantaneous phase-resolved terms in the finite-volume domain mass balance.
    */
@@ -322,6 +325,35 @@ public class TwoFluidConservationEquations implements Serializable {
       }
       for (int phase = 0; phase < 3; phase++) {
         accumulator[face][phase] += weight * lastPhaseMassFaceFluxes[face][phase];
+      }
+    }
+  }
+
+  /**
+   * Add the most recently evaluated cell phase-mass sources to a caller-owned accumulator.
+   *
+   * <p>
+   * Rows are finite-volume cells and columns are gas, oil, and water in kg/(m s). This is the source counterpart to
+   * {@link #accumulateLastPhaseMassFaceFluxes(double[][], double)} and lets component transport use the same
+   * Runge-Kutta stage weights as the accepted hydrodynamic phase masses.
+   * </p>
+   *
+   * @param accumulator destination receiving {@code weight * sourceRate}
+   * @param weight integration-stage weight
+   */
+  public void accumulateLastPhaseMassSourcesPerLength(double[][] accumulator, double weight) {
+    if (accumulator == null || accumulator.length != lastPhaseMassSourcesPerLength.length) {
+      throw new IllegalArgumentException("Accumulator must match the most recent phase-source shape");
+    }
+    if (!Double.isFinite(weight)) {
+      throw new IllegalArgumentException("Accumulator weight must be finite");
+    }
+    for (int cell = 0; cell < lastPhaseMassSourcesPerLength.length; cell++) {
+      if (accumulator[cell] == null || accumulator[cell].length != 3) {
+        throw new IllegalArgumentException("Accumulator must contain three phase columns at every cell");
+      }
+      for (int phase = 0; phase < 3; phase++) {
+        accumulator[cell][phase] += weight * lastPhaseMassSourcesPerLength[cell][phase];
       }
     }
   }
@@ -665,6 +697,9 @@ public class TwoFluidConservationEquations implements Serializable {
   private double[][] calcSourceTerms(TwoFluidSection[] sections) {
     int nCells = sections.length;
     double[][] sources = new double[nCells][NUM_EQUATIONS];
+    if (lastPhaseMassSourcesPerLength.length != nCells) {
+      lastPhaseMassSourcesPerLength = new double[nCells][3];
+    }
 
     for (int i = 0; i < nCells; i++) {
       TwoFluidSection sec = sections[i];
@@ -739,6 +774,9 @@ public class TwoFluidConservationEquations implements Serializable {
       // change total inventory without a conservative face flux.
       sources[i][IDX_OIL_MASS] = Gamma_O;
       sources[i][IDX_WATER_MASS] = Gamma_W;
+      lastPhaseMassSourcesPerLength[i][0] = Gamma_G;
+      lastPhaseMassSourcesPerLength[i][1] = Gamma_O;
+      lastPhaseMassSourcesPerLength[i][2] = Gamma_W;
 
       // Virtual mass force calculation (Drew & Lahey, 1987)
       // F_vm = C_vm * alpha_dispersed * rho_continuous * (dv_dispersed/dt - dv_continuous/dt)
