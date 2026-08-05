@@ -338,9 +338,10 @@ single-gas-phase inlet system per interval, and a positive number of equal solve
 interval. The authoritative component profiles and outlet accessor are mass fractions; the
 existing `getOutletMoleFraction(...)` remains explicitly molar. Python/JPype callers can pass
 `JArray(JDouble)` and `JArray(SystemInterface)` and read the same report/history objects directly.
-`runTransient(dt, id)` also selects type `1` when conservative mode is enabled and retains every
-internal accepted step from that call. Legacy `setCompositionalTracking(true)` still selects type
-`20` for compatibility and must not be interpreted as the validated conservative path.
+`runTransient(dt, id)` also selects type `1` when conservative mode is enabled. When
+`setStoreSpeciesConservationHistory(true)` is enabled, it retains every internal accepted step from
+that call. Legacy `setCompositionalTracking(true)` still selects type `20` for compatibility and
+must not be interpreted as the validated conservative path.
 
 `OnePhaseSpeciesConservationReport` exposes component names, physical-cell mass-fraction profiles,
 initial/final component inventories, integrated inlet/outlet component masses, absolute and
