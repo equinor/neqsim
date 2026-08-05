@@ -3,7 +3,8 @@ package neqsim.process.equipment.pipeline;
 import java.io.Serializable;
 
 /**
- * Discrete sensible-energy balance for one accepted {@link TwoFluidPipe} transient call.
+ * Discrete sensible-energy accounting for the post-step temperature update in one accepted {@link TwoFluidPipe}
+ * transient call.
  *
  * <p>
  * The report covers the post-step thermal model: fluid sensible energy, simple-wall or radial-layer thermal energy,
@@ -16,11 +17,13 @@ import java.io.Serializable;
  * </pre>
  *
  * <p>
- * Positive advection and Joule-Thomson terms add energy to the domain; positive ambient loss removes energy. This
- * report is intended for closed-domain validation of the sensible-energy closure represented by the current temperature
- * model. For open-boundary transients, the stored-energy terms do not include energy changes caused solely by net mass
- * inventory changes, so the residual is not a complete control-volume energy balance. The report is also not a full
- * compositional enthalpy audit across flash-driven phase transfer.
+ * Positive advection and Joule-Thomson terms add energy to the domain; positive ambient loss removes energy. The report
+ * is intentionally limited to the sensible-energy closure represented by the current temperature model and is not a
+ * full domain enthalpy audit. In particular, it does not include the enthalpy carried by net boundary mass flow or the
+ * inventory and latent-energy changes caused by flash-driven phase transfer. The residual is therefore a complete
+ * closed-domain sensible-energy check only when both external mass boundaries are closed and phase transfer does not
+ * change the material inventory. For open or phase-changing cases it is an internal consistency diagnostic for the
+ * post-step temperature model and must be combined with separate boundary-enthalpy and compositional-energy terms.
  * </p>
  */
 public final class TwoFluidThermalEnergyBalanceReport implements Serializable {

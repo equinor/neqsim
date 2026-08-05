@@ -383,10 +383,10 @@ System.out.println(pipe.getThermalSummary());
   overall-U estimate.
 - **Thermal balance reporting**: After a thermal `runTransient(...)`,
   `getLastThermalEnergyBalanceReport()` returns fluid and wall energy changes, sensible advection, Joule-Thomson energy,
-  ambient loss, and a signed residual in joules. The report is `null` when heat transfer is disabled. It is intended for
-  closed-domain validation of the current sensible-energy temperature model. It is not a complete open-boundary
-  control-volume energy balance because its stored-energy terms omit changes caused solely by net mass inventory, nor
-  is it a full compositional enthalpy audit through flash-driven phase transfer.
+  ambient loss, and a signed residual in joules. The report is `null` when heat transfer is disabled. Strict
+  domain-level closure applies to CLOSED external mass boundaries without phase-transfer inventory changes. For open
+  boundaries or phase-changing cases it is an internal consistency diagnostic for the post-step temperature model, not
+  a full audit of boundary enthalpy, compositional energy, or latent heat.
 
 For validation, start from `run()`, close both boundaries, disable Joule–Thomson effects for an adiabatic invariant, and
 check that a uniform state remains uniform. For cooldown, report absolute pressure, composition and mixing rule,

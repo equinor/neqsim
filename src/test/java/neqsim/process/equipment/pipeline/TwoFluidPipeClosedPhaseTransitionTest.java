@@ -1,5 +1,6 @@
 package neqsim.process.equipment.pipeline;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
@@ -42,9 +43,9 @@ class TwoFluidPipeClosedPhaseTransitionTest {
     new ThermodynamicOperations(dewPointFluid).waterDewPointTemperatureMultiphaseFlash();
     double dewPointTemperatureK = dewPointFluid.getTemperature("K");
 
-    TransitionResult coarse = runTransition("coarse", wetGas, dewPointTemperatureK, 2, 0.10);
-    TransitionResult repeated = runTransition("repeat", wetGas, dewPointTemperatureK, 2, 0.10);
-    TransitionResult refined = runTransition("refined", wetGas, dewPointTemperatureK, 4, 0.05);
+    TransitionResult coarse = runTransition("coarse", wetGas, dewPointTemperatureK, 2, 0.10, true);
+    TransitionResult repeated = runTransition("repeat", wetGas, dewPointTemperatureK, 2, 0.10, false);
+    TransitionResult refined = runTransition("refined", wetGas, dewPointTemperatureK, 4, 0.05, false);
 
     assertTransitionCrossed(coarse, dewPointTemperatureK);
     assertTransitionCrossed(refined, dewPointTemperatureK);
@@ -60,8 +61,66 @@ class TwoFluidPipeClosedPhaseTransitionTest {
         "Time-step and mesh refinement changed condensed water by " + condensationRefinementError);
   }
 
+  @Test
+  @Timeout(value = 5, unit = TimeUnit.MINUTES)
+  void closedCpaCooldownWithMassTransferDisabledKeepsPhaseInventories() throws Exception {
+    SystemInterface wetGas = createWetGas();
+    SystemInterface dewPointFluid = wetGas.clone();
+    new ThermodynamicOperations(dewPointFluid).waterDewPointTemperatureMultiphaseFlash();
+    double dewPointTemperatureK = dewPointFluid.getTemperature("K");
+    TwoFluidPipe pipe = createClosedTransitionPipe("disabled-transfer", wetGas, dewPointTemperatureK, 2, false);
+
+    for (int step = 0; step < 3; step++) {
+      pipe.runTransient(0.10, TRANSIENT_ID);
+      TwoFluidMassBalanceReport report = pipe.getLastMassBalanceReport();
+      for (Phase phase : Phase.values()) {
+        assertEquals(0.0, report.getSourceMassKg(phase), ABSOLUTE_MASS_TOLERANCE_KG);
+        assertEquals(0.0, report.getInletMassKg(phase), 1.0e-12);
+        assertEquals(0.0, report.getOutletMassKg(phase), 1.0e-12);
+        assertEquals(report.getInitialMassKg(phase), report.getFinalMassKg(phase), ABSOLUTE_MASS_TOLERANCE_KG);
+        assertTrue(report.isWithinTolerance(phase, ABSOLUTE_MASS_TOLERANCE_KG, RELATIVE_MASS_TOLERANCE));
+      }
+    }
+
+    assertTrue(mean(pipe.getTemperatureProfile()) < dewPointTemperatureK,
+        "The disabled-transfer control must still cross below the SRK-CPA water dew point");
+  }
+
   private TransitionResult runTransition(String name, SystemInterface fluidTemplate, double dewPointTemperatureK,
-      int sections, double macroTimeStepSeconds) {
+      int sections, double macroTimeStepSeconds, boolean validateSerializedCopy) {
+    TwoFluidPipe pipe = createClosedTransitionPipe(name, fluidTemplate, dewPointTemperatureK, sections, true);
+
+    int cooldownSteps = (int) Math.round(0.30 / macroTimeStepSeconds);
+    TransitionAccumulator cooldown = advanceAndAccumulate(pipe, cooldownSteps, macroTimeStepSeconds);
+    double cooledTemperatureK = mean(pipe.getTemperatureProfile());
+    TwoFluidPipe copied = validateSerializedCopy ? (TwoFluidPipe) pipe.copy() : null;
+
+    pipe.setSurfaceTemperature(dewPointTemperatureK + 10.0, "K");
+    int reheatSteps = (int) Math.round(0.60 / macroTimeStepSeconds);
+    TransitionAccumulator reheat = advanceAndAccumulate(pipe, reheatSteps, macroTimeStepSeconds);
+    double reheatedTemperatureK = mean(pipe.getTemperatureProfile());
+
+    if (copied != null) {
+      copied.setSurfaceTemperature(dewPointTemperatureK + 10.0, "K");
+      TransitionAccumulator copiedReheat = advanceAndAccumulate(copied, reheatSteps, macroTimeStepSeconds);
+      assertArrayEquals(pipe.getTemperatureProfile(), copied.getTemperatureProfile(), 1.0e-9);
+      assertArrayEquals(pipe.getOilHoldupProfile(), copied.getOilHoldupProfile(), 1.0e-12);
+      assertArrayEquals(pipe.getWaterHoldupProfile(), copied.getWaterHoldupProfile(), 1.0e-12);
+      assertEquals(reheat.waterSourceKg, copiedReheat.waterSourceKg, 1.0e-9);
+      assertEquals(reheat.oilSourceKg, copiedReheat.oilSourceKg, 1.0e-9);
+    }
+
+    assertEquals(0.0, cooldown.oilSourceKg, ABSOLUTE_MASS_TOLERANCE_KG);
+    assertEquals(0.0, reheat.oilSourceKg, ABSOLUTE_MASS_TOLERANCE_KG);
+    assertEquals(cooldown.finalWaterMassKg - cooldown.initialWaterMassKg, cooldown.waterSourceKg,
+        ABSOLUTE_MASS_TOLERANCE_KG);
+    assertEquals(reheat.finalWaterMassKg - reheat.initialWaterMassKg, reheat.waterSourceKg, ABSOLUTE_MASS_TOLERANCE_KG);
+
+    return new TransitionResult(cooledTemperatureK, reheatedTemperatureK, cooldown.waterSourceKg, reheat.waterSourceKg);
+  }
+
+  private TwoFluidPipe createClosedTransitionPipe(String name, SystemInterface fluidTemplate,
+      double dewPointTemperatureK, int sections, boolean includeMassTransfer) {
     SystemInterface fluid = fluidTemplate.clone();
     fluid.setTemperature(dewPointTemperatureK + 0.5, "K");
 
@@ -79,7 +138,7 @@ class TwoFluidPipeClosedPhaseTransitionTest {
     pipe.setTimeIntegrationMethod(TimeIntegrator.Method.EULER);
     pipe.setEnableAdaptiveTimestepping(false);
     pipe.setEnableSlugTracking(false);
-    pipe.setIncludeMassTransfer(true);
+    pipe.setIncludeMassTransfer(includeMassTransfer);
     pipe.setMassTransferRelaxationTime(30.0);
     pipe.setThermodynamicUpdateInterval(1);
     pipe.setSteadyStateMaxWallClockTime(Double.POSITIVE_INFINITY);
@@ -91,23 +150,7 @@ class TwoFluidPipeClosedPhaseTransitionTest {
     pipe.setWallProperties(0.005, 1000.0, 100.0);
     pipe.setHeatTransferCoefficient(5000.0);
     pipe.setSurfaceTemperature(dewPointTemperatureK - 10.0, "K");
-
-    int cooldownSteps = (int) Math.round(0.30 / macroTimeStepSeconds);
-    TransitionAccumulator cooldown = advanceAndAccumulate(pipe, cooldownSteps, macroTimeStepSeconds);
-    double cooledTemperatureK = mean(pipe.getTemperatureProfile());
-
-    pipe.setSurfaceTemperature(dewPointTemperatureK + 10.0, "K");
-    int reheatSteps = (int) Math.round(0.60 / macroTimeStepSeconds);
-    TransitionAccumulator reheat = advanceAndAccumulate(pipe, reheatSteps, macroTimeStepSeconds);
-    double reheatedTemperatureK = mean(pipe.getTemperatureProfile());
-
-    assertEquals(0.0, cooldown.oilSourceKg, ABSOLUTE_MASS_TOLERANCE_KG);
-    assertEquals(0.0, reheat.oilSourceKg, ABSOLUTE_MASS_TOLERANCE_KG);
-    assertEquals(cooldown.finalWaterMassKg - cooldown.initialWaterMassKg, cooldown.waterSourceKg,
-        ABSOLUTE_MASS_TOLERANCE_KG);
-    assertEquals(reheat.finalWaterMassKg - reheat.initialWaterMassKg, reheat.waterSourceKg, ABSOLUTE_MASS_TOLERANCE_KG);
-
-    return new TransitionResult(cooledTemperatureK, reheatedTemperatureK, cooldown.waterSourceKg, reheat.waterSourceKg);
+    return pipe;
   }
 
   private TransitionAccumulator advanceAndAccumulate(TwoFluidPipe pipe, int steps, double timeStepSeconds) {
@@ -124,6 +167,9 @@ class TwoFluidPipeClosedPhaseTransitionTest {
 
       assertEquals(0.0, report.getInletMassKg(Phase.TOTAL), 1.0e-12);
       assertEquals(0.0, report.getOutletMassKg(Phase.TOTAL), 1.0e-12);
+      assertEquals(0.0, report.getSourceMassKg(Phase.TOTAL), 1.0e-12);
+      assertEquals(report.getInitialMassKg(Phase.TOTAL), report.getFinalMassKg(Phase.TOTAL),
+          ABSOLUTE_MASS_TOLERANCE_KG);
       for (Phase phase : Phase.values()) {
         assertTrue(report.isWithinTolerance(phase, ABSOLUTE_MASS_TOLERANCE_KG, RELATIVE_MASS_TOLERANCE),
             phase + " residual was " + report.getResidualKg(phase) + " kg");
