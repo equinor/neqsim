@@ -22,9 +22,9 @@ class TwoFluidPipeClosedPhaseTransitionTest {
   private static final double RELATIVE_MASS_TOLERANCE = 1.0e-10;
   private static final double INITIAL_SUPERHEAT_K = 0.02;
   private static final double COOLDOWN_SURFACE_OFFSET_K = -10.0;
-  private static final double REHEAT_SURFACE_OFFSET_K = 10.0;
+  private static final double REHEAT_SURFACE_OFFSET_K = 30.0;
   private static final double COOLDOWN_DURATION_SECONDS = 0.30;
-  private static final double REHEAT_DURATION_SECONDS = 0.60;
+  private static final double REHEAT_DURATION_SECONDS = 0.80;
   private static final UUID TRANSIENT_ID = UUID.fromString("00000000-0000-0000-0000-000000012792");
 
   /**
@@ -36,7 +36,7 @@ class TwoFluidPipeClosedPhaseTransitionTest {
    * {@code 22e-6}. The pipe is 20 m long and 0.20 m in diameter. A 5000 W/(m2 K) test heat-transfer coefficient and a 5
    * mm wall with density 1000 kg/m3 and heat capacity 100 J/(kg K) create a short, stable regression transient; they
    * are numerical test values, not a design recommendation. The fluid starts 0.02 K above the calculated water dew
-   * point, cools for 0.30 s against a surface 10 K below it, then reheats for 0.60 s against a surface 10 K above it.
+   * point, cools for 0.30 s against a surface 10 K below it, then reheats for 0.80 s against a surface 30 K above it.
    * The mass-transfer relaxation time is 30 s.
    * </p>
    *
