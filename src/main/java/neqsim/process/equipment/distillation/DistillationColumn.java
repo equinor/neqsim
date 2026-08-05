@@ -11296,6 +11296,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         && updateProductsFromOverallFeedFlash(id)) {
       fallbackProductsApplied = true;
     }
+    if (fallbackProductsApplied && hasCondenser && getCondenser().isSeparation_with_liquid_reflux()) {
+      getCondenser().discardLiquidProductAfterColumnFallback(id);
+    }
     synchronizeColumnEndProductStreams(id);
     synchronizeTerminalProductDrawStreams(id);
     lastUsedFeedFlashFallback = fallbackProductsApplied;
