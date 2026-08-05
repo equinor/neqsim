@@ -2,9 +2,12 @@ package neqsim.process.equipment.pipeline;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.pipeline.twophasepipe.numerics.TimeIntegrator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -13,6 +16,9 @@ import neqsim.thermo.system.SystemSrkEos;
 class TwoFluidPipeClosedThermalTest {
   /** Cross-platform tolerance for independently initialised closed-domain temperature histories, in kelvin. */
   private static final double CLOSED_HISTORY_TOLERANCE_K = 1.0e-9;
+
+  /** Absolute tolerance for closed-domain energy balance, in joules. */
+  private static final double CLOSED_ENERGY_TOLERANCE_J = 1.0e-5;
 
   private static final UUID TRANSIENT_ID = UUID.fromString("00000000-0000-0000-0000-000000002792");
 
@@ -206,6 +212,129 @@ class TwoFluidPipeClosedThermalTest {
     }
   }
 
+  @Test
+  void simpleAndMultilayerCooldownCloseFluidWallAmbientEnergyBalance() {
+    PipeFixture simple = createInitializedPipe("simple-energy-balance");
+    configureClosedCooldown(simple.pipe);
+    simple.pipe.runTransient(1.0e-3, TRANSIENT_ID);
+    assertThermalReportCloses(simple.pipe.getLastThermalEnergyBalanceReport());
+
+    PipeFixture multilayer = createInitializedPipe("multilayer-energy-balance");
+    multilayer.pipe.closeInlet();
+    multilayer.pipe.closeOutlet();
+    multilayer.pipe.setEnableJouleThomson(false);
+    multilayer.pipe.setSurfaceTemperature(280.0, "K");
+    multilayer.pipe.configureSubseaThermalModel(0.02, 0.0, RadialThermalLayer.MaterialType.PU_FOAM);
+    multilayer.pipe.runTransient(1.0e-3, TRANSIENT_ID);
+    assertThermalReportCloses(multilayer.pipe.getLastThermalEnergyBalanceReport());
+  }
+
+  @Test
+  void explicitAndImexPathsCloseForSimpleAndMultilayerModels() {
+    TimeIntegrator.Method[] methods = { TimeIntegrator.Method.EULER, TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION };
+    for (TimeIntegrator.Method method : methods) {
+      for (boolean multilayer : new boolean[] { false, true }) {
+        PipeFixture fixture = createInitializedPipe("thermal-path-" + method + "-" + multilayer);
+        double[] initial = fixture.pipe.getTemperatureProfile();
+        fixture.pipe.setTimeIntegrationMethod(method);
+        configureClosedCooldown(fixture.pipe);
+        if (multilayer) {
+          fixture.pipe.configureSubseaThermalModel(0.02, 0.0, RadialThermalLayer.MaterialType.PU_FOAM);
+        }
+
+        fixture.pipe.runTransient(1.0e-3, TRANSIENT_ID);
+
+        double[] cooled = fixture.pipe.getTemperatureProfile();
+        boolean anyCellCooled = false;
+        for (int cell = 0; cell < cooled.length; cell++) {
+          assertTrue(Double.isFinite(cooled[cell]));
+          assertTrue(cooled[cell] <= initial[cell] + 1.0e-10);
+          anyCellCooled |= cooled[cell] < initial[cell] - 1.0e-12;
+        }
+        assertTrue(anyCellCooled,
+            method + " must advance the " + (multilayer ? "multilayer" : "simple") + " cooldown path");
+        assertThermalReportCloses(fixture.pipe.getLastThermalEnergyBalanceReport());
+      }
+    }
+  }
+
+  @Test
+  void closedCooldownIsStableUnderTimeStepAndMeshRefinement() {
+    double coarseCooldown = runRefinementCooldown(4, 1.0e-3, 10);
+    double refinedCooldown = runRefinementCooldown(8, 5.0e-4, 20);
+
+    assertTrue(coarseCooldown > 0.0);
+    assertTrue(refinedCooldown > 0.0);
+    double relativeDifference = Math.abs(coarseCooldown - refinedCooldown) / refinedCooldown;
+    assertTrue(relativeDifference < 0.05,
+        "Halving both cell length and time step changed the uniform cooldown by " + relativeDifference);
+  }
+
+  @Test
+  void serializedCopyPreservesIndependentMultilayerCooldownState() {
+    PipeFixture fixture = createInitializedPipe("serialized-multilayer-source");
+    configureClosedCooldown(fixture.pipe);
+    fixture.pipe.configureSubseaThermalModel(0.02, 0.0, RadialThermalLayer.MaterialType.PU_FOAM);
+    fixture.pipe.runTransient(1.0e-3, TRANSIENT_ID);
+
+    TwoFluidPipe copied = (TwoFluidPipe) fixture.pipe.copy();
+    fixture.pipe.runTransient(1.0e-3, TRANSIENT_ID);
+    copied.runTransient(1.0e-3, TRANSIENT_ID);
+
+    assertArrayEquals(fixture.pipe.getTemperatureProfile(), copied.getTemperatureProfile(), 0.0);
+    assertArrayEquals(fixture.pipe.getWallTemperatureProfile(), copied.getWallTemperatureProfile(), 0.0);
+    assertThermalReportCloses(fixture.pipe.getLastThermalEnergyBalanceReport());
+    assertThermalReportCloses(copied.getLastThermalEnergyBalanceReport());
+  }
+
+  @Test
+  void disabledHeatTransferLeavesTemperatureUnchangedAndDoesNotCreateReport() {
+    PipeFixture fixture = createInitializedPipe("disabled-heat-transfer");
+    double[] initial = fixture.pipe.getTemperatureProfile();
+    fixture.pipe.closeInlet();
+    fixture.pipe.closeOutlet();
+    fixture.pipe.setEnableJouleThomson(false);
+    fixture.pipe.setSurfaceTemperature(280.0, "K");
+    fixture.pipe.setHeatTransferCoefficient(0.0);
+
+    fixture.pipe.runTransient(1.0e-3, TRANSIENT_ID);
+
+    assertArrayEquals(initial, fixture.pipe.getTemperatureProfile(), 1.0e-12);
+    assertNull(fixture.pipe.getLastThermalEnergyBalanceReport());
+  }
+
+  private double runRefinementCooldown(int sections, double timeStep, int steps) {
+    PipeFixture fixture = createInitializedPipe("closed-refinement-" + sections + "-" + timeStep, sections);
+    double initialMean = mean(fixture.pipe.getTemperatureProfile());
+    configureClosedCooldown(fixture.pipe);
+    fixture.pipe.setHeatTransferCoefficient(500.0);
+    fixture.pipe.setWallProperties(1.0e-4, 100.0, 100.0);
+
+    for (int step = 0; step < steps; step++) {
+      fixture.pipe.runTransient(timeStep, TRANSIENT_ID);
+      assertThermalReportCloses(fixture.pipe.getLastThermalEnergyBalanceReport());
+    }
+    return initialMean - mean(fixture.pipe.getTemperatureProfile());
+  }
+
+  private double mean(double[] values) {
+    double sum = 0.0;
+    for (double value : values) {
+      sum += value;
+    }
+    return sum / values.length;
+  }
+
+  private void assertThermalReportCloses(TwoFluidThermalEnergyBalanceReport report) {
+    assertNotNull(report);
+    assertTrue(report.getAcceptedSubsteps() > 0);
+    assertEquals(0.0, report.getJouleThomsonEnergyJ(), 1.0e-12);
+    assertTrue(report.getAmbientHeatLossJ() > 0.0);
+    assertTrue(report.getStoredEnergyChangeJ() < 0.0);
+    assertTrue(report.isWithinTolerance(CLOSED_ENERGY_TOLERANCE_J, 1.0e-10),
+        "Thermal residual was " + report.getResidualJ() + " J (relative " + report.getRelativeResidual() + ")");
+  }
+
   private void configureClosedCooldown(TwoFluidPipe pipe) {
     pipe.closeInlet();
     pipe.closeOutlet();
@@ -215,6 +344,10 @@ class TwoFluidPipeClosedThermalTest {
   }
 
   private PipeFixture createInitializedPipe(String name) {
+    return createInitializedPipe(name, 4);
+  }
+
+  private PipeFixture createInitializedPipe(String name, int sections) {
     SystemInterface fluid = new SystemSrkEos(300.0, 60.0);
     fluid.addComponent("methane", 0.90);
     fluid.addComponent("ethane", 0.10);
@@ -230,7 +363,7 @@ class TwoFluidPipeClosedThermalTest {
     pipe.setLength(40.0);
     pipe.setDiameter(0.20);
     pipe.setRoughness(1.0e-5);
-    pipe.setNumberOfSections(4);
+    pipe.setNumberOfSections(sections);
     pipe.setEnableAdaptiveTimestepping(false);
     pipe.setEnableSlugTracking(false);
     pipe.setThermodynamicUpdateInterval(Integer.MAX_VALUE);
