@@ -214,6 +214,128 @@ The planning layer is a steady-period screening model. It does not replace a
 high-frequency transient pipeline simulation for rapid valve actions, thermal
 fronts, surge, or control-system verification.
 
+## Conservative transient species transport
+
+`TransientCompositionalPipeNetwork` propagates a finite composition event
+through source branches, conservative junction mixing, edge linepack, and a
+delivery point. It is a separate high-frequency species model for prescribed
+flows; it does not alter the steady hydraulics or planning APIs above.
+
+For physical cell $j$, fixed gas mass $M_j$, component mass fraction
+$Y_{i,j}$, positive edge mass rate $q$, and timestep $\Delta t$, the
+implicit upwind balance is
+
+$$
+M_j\left(Y_{i,j}^{n+1}-Y_{i,j}^{n}\right)
+=\Delta t\,q\left(Y_{i,j-1}^{n+1}-Y_{i,j}^{n+1}\right).
+$$
+
+The inlet of cell zero is the accepted upstream node state. At a junction,
+incoming integrated component masses are combined by canonical NeqSim
+component name:
+
+$$
+Y_{i,\mathrm{mix}}=
+\frac{\sum_e m_{i,e}^{out}}{\sum_k\sum_e m_{k,e}^{out}}.
+$$
+
+The mixed mass rate and composition become the downstream edge boundary in the
+same timestep. Consequently internal edge boundaries cancel from the
+whole-network balance, while every edge retains its own distributed inventory
+and residence-time delay.
+
+The synthetic Åsgard/Kristin-to-Kårstø teaching topology is:
+
+```java
+TransientCompositionalPipeNetwork transientNetwork =
+    new TransientCompositionalPipeNetwork("Norwegian export teaching case");
+transientNetwork.addNode("asgard");
+transientNetwork.addNode("kristin");
+transientNetwork.addNode("junction");
+transientNetwork.addNode("karsto");
+
+// All fluids in this example are one-phase gases at 300 K and 70 bara.
+transientNetwork.addPipe(
+    "asgardBranch", "asgard", "junction", 2000.0, 0.4, 12, asgardGas);
+transientNetwork.addPipe(
+    "kristinBranch", "kristin", "junction", 2000.0, 0.4, 12, kristinGas);
+transientNetwork.addPipe(
+    "export", "junction", "karsto", 4000.0, 0.4, 12, mixedGas);
+
+transientNetwork.setSourceSchedule(
+    "asgard",
+    new double[] {0.0},
+    new SystemInterface[] {asgardGas},
+    new double[] {20.0}); // kg/s
+transientNetwork.setSourceSchedule(
+    "kristin",
+    new double[] {0.0, 600.0, 1800.0},
+    new SystemInterface[] {kristinGas, kristinHighCo2, kristinGas},
+    new double[] {20.0, 18.0, 20.0});
+
+transientNetwork.run(5400.0, 60.0);
+TransientCompositionalPipeNetworkHistory species =
+    transientNetwork.getSpeciesHistory();
+double[] junctionCo2 =
+    species.getNodeMassFractionHistory("junction", "CO2");
+double[] karstoCo2 =
+    species.getNodeMassFractionHistory("karsto", "CO2");
+
+if (species.getFinalNetworkReport()
+    .getMaximumRelativeInventoryResidual() > 1.0e-8) {
+  throw new IllegalStateException(
+      species.getFinalNetworkReport().getMessage());
+}
+```
+
+`getNodeMassFractionHistory` returns **mass fraction**, not mole fraction.
+`getEdgeReports`, `getJunctionReports`, and `getNetworkReports` expose immutable,
+time-aligned inventory, cumulative boundary-mass, cumulative residual,
+boundedness, and profile data.
+All array getters return defensive copies. `toJson()` on the history or an
+individual report is the stable Python/JPype capture path.
+
+With `neqsim_dev_setup.py`, Python can use the same API:
+
+```python
+import jpype
+
+SystemInterface = jpype.JClass("neqsim.thermo.system.SystemInterface")
+DoubleArray = jpype.JArray(jpype.JDouble)
+FluidArray = jpype.JArray(SystemInterface)
+
+network = ns.TransientCompositionalPipeNetwork("transient export")
+# Add the four nodes and three pipes as in the Java example.
+network.setSourceSchedule(
+    "kristin",
+    DoubleArray([0.0, 600.0, 1800.0]),
+    FluidArray([kristin_gas, kristin_high_co2, kristin_gas]),
+    DoubleArray([20.0, 18.0, 20.0]),
+)
+network.run(5400.0, 60.0)
+history = network.getSpeciesHistory()
+karsto_co2_mass_fraction = list(
+    history.getNodeMassFractionHistory("karsto", "CO2")
+)
+history_json = str(history.toJson())
+```
+
+Validated scope and required diagnostics:
+
+- directed acyclic gathering topology with at most one outgoing edge per node;
+- strictly positive prescribed source flows and conservative mixing flow
+  continuity;
+- one gas phase and one common temperature across initial and scheduled states;
+- no hydraulic coupling, flow splitting, reverse flow, recirculation, thermal
+  transport, dispersion, or phase appearance;
+- edge mass initialized from EOS density and geometric volume, then held fixed;
+- default fail-loud relative component-balance tolerance $10^{-8}$.
+
+Use a joint grid/timestep refinement study for each engineering case. Flow
+reversal, a two-phase flash, a temperature mismatch, an unsupported topology,
+or a failed conservation/boundedness criterion raises an explicit exception
+before the state is accepted.
+
 ## JSON and reproducibility
 
 Quality profiles, compliance reports, candidate evaluations, and planning
