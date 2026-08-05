@@ -27,8 +27,8 @@ class TwoFluidPipeClosedPhaseTransitionTest {
    * <p>
    * The synthetic wet gas uses SRK-CPA with mixing rule 10 at 70 bara absolute. Its mole fractions are CO2 0.02,
    * nitrogen 0.01, methane {@code 0.9 - 22e-6}, ethane 0.05, propane 0.01, i-butane 0.005, n-butane 0.005, and water
-   * {@code 22e-6}. The pipe is 20 m long and 0.20 m in diameter. A 5000 W/(m2 K) test heat-transfer coefficient and a
-   * 5 mm wall with density 1000 kg/m3 and heat capacity 100 J/(kg K) create a short, stable regression transient; they
+   * {@code 22e-6}. The pipe is 20 m long and 0.20 m in diameter. A 5000 W/(m2 K) test heat-transfer coefficient and a 5
+   * mm wall with density 1000 kg/m3 and heat capacity 100 J/(kg K) create a short, stable regression transient; they
    * are numerical test values, not a design recommendation. The mass-transfer relaxation time is 30 s.
    * </p>
    *
@@ -54,8 +54,8 @@ class TwoFluidPipeClosedPhaseTransitionTest {
     assertEquals(coarse.evaporatedWaterKg, repeated.evaporatedWaterKg, 1.0e-9);
 
     double condensationScale = Math.max(Math.abs(refined.condensedWaterKg), 1.0e-12);
-    double condensationRefinementError =
-        Math.abs(coarse.condensedWaterKg - refined.condensedWaterKg) / condensationScale;
+    double condensationRefinementError = Math.abs(coarse.condensedWaterKg - refined.condensedWaterKg)
+        / condensationScale;
     assertTrue(condensationRefinementError < 0.15,
         "Time-step and mesh refinement changed condensed water by " + condensationRefinementError);
   }
@@ -105,11 +105,9 @@ class TwoFluidPipeClosedPhaseTransitionTest {
     assertEquals(0.0, reheat.oilSourceKg, ABSOLUTE_MASS_TOLERANCE_KG);
     assertEquals(cooldown.finalWaterMassKg - cooldown.initialWaterMassKg, cooldown.waterSourceKg,
         ABSOLUTE_MASS_TOLERANCE_KG);
-    assertEquals(reheat.finalWaterMassKg - reheat.initialWaterMassKg, reheat.waterSourceKg,
-        ABSOLUTE_MASS_TOLERANCE_KG);
+    assertEquals(reheat.finalWaterMassKg - reheat.initialWaterMassKg, reheat.waterSourceKg, ABSOLUTE_MASS_TOLERANCE_KG);
 
-    return new TransitionResult(cooledTemperatureK, reheatedTemperatureK, cooldown.waterSourceKg,
-        reheat.waterSourceKg);
+    return new TransitionResult(cooledTemperatureK, reheatedTemperatureK, cooldown.waterSourceKg, reheat.waterSourceKg);
   }
 
   private TransitionAccumulator advanceAndAccumulate(TwoFluidPipe pipe, int steps, double timeStepSeconds) {

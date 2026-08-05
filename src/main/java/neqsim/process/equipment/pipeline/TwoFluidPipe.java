@@ -1833,10 +1833,9 @@ public class TwoFluidPipe extends Pipeline {
       updateThermalRiskFlags(i, newFluidTemperature);
 
       double cellLength = sec.getLength();
-      energyStep.fluidEnergyChangeJ +=
-          (newFluidTemperature - oldFluidTemperature) * fluidMassPerLength * Cp * cellLength;
-      energyStep.wallEnergyChangeJ +=
-          (wallTemperature - oldWallTemperature) * wallThermalMass * cellLength;
+      energyStep.fluidEnergyChangeJ += (newFluidTemperature - oldFluidTemperature) * fluidMassPerLength * Cp
+          * cellLength;
+      energyStep.wallEnergyChangeJ += (wallTemperature - oldWallTemperature) * wallThermalMass * cellLength;
       energyStep.sensibleAdvectionEnergyJ += sensibleAdvection * dt * cellLength;
       energyStep.jouleThomsonEnergyJ += jouleThomsonSource * dt * cellLength;
       energyStep.ambientHeatLossJ += wallToAmbientHeat * dt * cellLength;
@@ -2040,8 +2039,8 @@ public class TwoFluidPipe extends Pipeline {
       double cellLength = sec.getLength();
       double newWallEnergyPerLength = calculateMultilayerThermalEnergyPerLength(thermalCalculator,
           layerTemperatures[i]);
-      energyStep.fluidEnergyChangeJ +=
-          (newFluidTemperature - oldFluidTemperature) * fluidMassPerLength * Cp * cellLength;
+      energyStep.fluidEnergyChangeJ += (newFluidTemperature - oldFluidTemperature) * fluidMassPerLength * Cp
+          * cellLength;
       energyStep.wallEnergyChangeJ += (newWallEnergyPerLength - oldWallEnergyPerLength) * cellLength;
       energyStep.sensibleAdvectionEnergyJ += sensibleAdvection * dt * cellLength;
       energyStep.jouleThomsonEnergyJ += jouleThomsonSource * dt * cellLength;

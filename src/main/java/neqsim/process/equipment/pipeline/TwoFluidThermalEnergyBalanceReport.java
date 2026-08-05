@@ -16,9 +16,9 @@ import java.io.Serializable;
  * </pre>
  *
  * <p>
- * Positive advection and Joule-Thomson terms add energy to the domain; positive ambient loss removes energy. The
- * report is intentionally limited to the sensible-energy closure represented by the current temperature model and is
- * not a full compositional enthalpy audit across flash-driven phase transfer.
+ * Positive advection and Joule-Thomson terms add energy to the domain; positive ambient loss removes energy. The report
+ * is intentionally limited to the sensible-energy closure represented by the current temperature model and is not a
+ * full compositional enthalpy audit across flash-driven phase transfer.
  * </p>
  */
 public final class TwoFluidThermalEnergyBalanceReport implements Serializable {
@@ -45,8 +45,7 @@ public final class TwoFluidThermalEnergyBalanceReport implements Serializable {
    * @param ambientHeatLossJ energy transferred from the wall or outer layer to ambient in joules
    */
   TwoFluidThermalEnergyBalanceReport(double elapsedTimeSeconds, int acceptedSubsteps, double fluidEnergyChangeJ,
-      double wallEnergyChangeJ, double sensibleAdvectionEnergyJ, double jouleThomsonEnergyJ,
-      double ambientHeatLossJ) {
+      double wallEnergyChangeJ, double sensibleAdvectionEnergyJ, double jouleThomsonEnergyJ, double ambientHeatLossJ) {
     if (!Double.isFinite(elapsedTimeSeconds) || elapsedTimeSeconds < 0.0) {
       throw new IllegalArgumentException("elapsedTimeSeconds must be finite and non-negative");
     }

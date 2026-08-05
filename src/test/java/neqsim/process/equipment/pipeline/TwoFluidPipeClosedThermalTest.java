@@ -228,8 +228,7 @@ class TwoFluidPipeClosedThermalTest {
 
   @Test
   void explicitAndImexPathsCloseForSimpleAndMultilayerModels() {
-    TimeIntegrator.Method[] methods = { TimeIntegrator.Method.EULER,
-        TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION };
+    TimeIntegrator.Method[] methods = { TimeIntegrator.Method.EULER, TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION };
     for (TimeIntegrator.Method method : methods) {
       for (boolean multilayer : new boolean[] { false, true }) {
         PipeFixture fixture = createInitializedPipe("thermal-path-" + method + "-" + multilayer);
@@ -249,8 +248,8 @@ class TwoFluidPipeClosedThermalTest {
           assertTrue(cooled[cell] <= initial[cell] + 1.0e-10);
           anyCellCooled |= cooled[cell] < initial[cell] - 1.0e-12;
         }
-        assertTrue(anyCellCooled, method + " must advance the " + (multilayer ? "multilayer" : "simple")
-            + " cooldown path");
+        assertTrue(anyCellCooled,
+            method + " must advance the " + (multilayer ? "multilayer" : "simple") + " cooldown path");
         assertThermalReportCloses(fixture.pipe.getLastThermalEnergyBalanceReport());
       }
     }
