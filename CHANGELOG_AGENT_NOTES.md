@@ -32,7 +32,10 @@
 Naphtali-Sandholm exact unchanged-input reuse now requires the active convergence-gate
 configuration to match the snapshot recorded after the accepted public solve. Changing an enforced
 tolerance no longer returns the previous state with zero iterations under a different convergence
-contract. Unchanged gates retain the existing reuse performance.
+contract. Disabled energy and MESH tolerances, plus outer tear tolerances when no tear variable is
+configured, are excluded from the cache key so irrelevant setting changes retain zero-iteration
+reuse.
+
 ## 2026-08-05 — ProcessModel unit-level mass closure is reported again
 
 ### Added
