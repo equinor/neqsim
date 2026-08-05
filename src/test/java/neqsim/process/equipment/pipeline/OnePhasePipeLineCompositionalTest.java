@@ -1,19 +1,26 @@
 package neqsim.process.equipment.pipeline;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.fluidmechanics.flowsolver.AdvectionScheme;
+import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseSpeciesConservationReport;
+import neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.OnePhaseSpeciesConservationHistory;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Tests for OnePhasePipeLine transient compositional tracking.
@@ -87,6 +94,124 @@ public class OnePhasePipeLineCompositionalTest {
     // Should be able to enable
     pipe.setCompositionalTracking(true);
     assertTrue(pipe.isCompositionalTracking());
+  }
+
+  @Test
+  @DisplayName("OnePhasePipeLine should expose conservative diagnostics and time-aligned outlet history")
+  void testConservativeCompositionalTrackingApi() {
+    Stream inlet = new Stream("inlet", naturalGas);
+    inlet.setFlowRate(1.0, "kg/sec");
+    inlet.run();
+
+    OnePhasePipeLine pipe = createPipe("ConservativePipe", inlet, 10, 100.0, 0.1);
+    pipe.setConservativeCompositionalTracking(true);
+    pipe.setStoreSpeciesConservationHistory(true);
+    pipe.setFailOnNonConvergence(true);
+    pipe.setInternalTimeStep(1.0);
+
+    assertTrue(pipe.isConservativeCompositionalTracking());
+    assertTrue(pipe.isSpeciesConservationHistoryStorageEnabled());
+    assertTrue(pipe.isFailOnNonConvergence());
+    assertFalse(pipe.isCompositionalTracking());
+
+    UUID id = UUID.randomUUID();
+    pipe.run(id);
+    SystemInterface changedGas = nitrogen.clone();
+    changedGas.setTotalFlowRate(1.0, "kg/sec");
+    inlet.setThermoSystem(changedGas);
+    inlet.run(id);
+    pipe.runTransient(2.0, id);
+
+    OnePhaseSpeciesConservationReport report = pipe.getSpeciesConservationReport();
+    OnePhaseSpeciesConservationHistory history = pipe.getSpeciesConservationHistory();
+    assertTrue(report.isConverged(), report.getMessage());
+    assertTrue(pipe.getConvergenceReport().isConverged(), pipe.getConvergenceReport().getMessage());
+    assertTrue(report.getMaximumRelativeInventoryResidual() <= 1.0e-8, report.getMessage());
+    assertEquals(2, history.size());
+    assertArrayEquals(new double[] { 1.0, 2.0 }, history.getElapsedTimeSeconds(), 0.0);
+
+    double[] nitrogenProfile = pipe.getConservativeMassFractionProfile("nitrogen");
+    double[] nitrogenOutletHistory = pipe.getConservativeOutletMassFractionHistory("nitrogen");
+    assertEquals(2, nitrogenOutletHistory.length);
+    assertEquals(nitrogenProfile[nitrogenProfile.length - 1], pipe.getConservativeOutletMassFraction("nitrogen"), 0.0);
+    assertEquals(nitrogenOutletHistory[nitrogenOutletHistory.length - 1],
+        pipe.getConservativeOutletMassFraction("nitrogen"), 0.0);
+  }
+
+  @Test
+  @DisplayName("Conservative OnePhasePipeLine should reject phase appearance explicitly")
+  void testConservativeModeRejectsPhaseAppearance() {
+    Stream inlet = new Stream("inlet", naturalGas);
+    inlet.setFlowRate(1.0, "kg/sec");
+    inlet.run();
+
+    OnePhasePipeLine pipe = createPipe("ConservativePipe", inlet, 10, 100.0, 0.1);
+    pipe.setConservativeCompositionalTracking(true);
+    pipe.setFailOnNonConvergence(true);
+    UUID id = UUID.randomUUID();
+    pipe.run(id);
+
+    SystemInterface twoPhaseFluid = new SystemSrkEos(260.0, 20.0);
+    twoPhaseFluid.addComponent("methane", 0.50);
+    twoPhaseFluid.addComponent("n-heptane", 0.50);
+    twoPhaseFluid.createDatabase(true);
+    twoPhaseFluid.setMixingRule("classic");
+    twoPhaseFluid.setTotalFlowRate(1.0, "kg/sec");
+    new ThermodynamicOperations(twoPhaseFluid).TPflash();
+    assertTrue(twoPhaseFluid.getNumberOfPhases() > 1, "The rejection test requires a two-phase inlet state.");
+    inlet.setThermoSystem(twoPhaseFluid);
+    inlet.run(id);
+
+    IllegalStateException exception = assertThrows(IllegalStateException.class, () -> pipe.runTransient(1.0, id));
+    assertTrue(exception.getMessage().contains("does not support phase appearance"));
+  }
+
+  @Test
+  @Tag("slow")
+  @DisplayName("OnePhasePipeLine should reproduce the validated 3 km finite species pulse")
+  void testThreeKilometreConservativePulse() {
+    SystemInterface baselineGas = createPulseGas(0.95, 0.05);
+    SystemInterface pulseGas = createPulseGas(0.80, 0.20);
+    Stream inlet = new Stream("Kristin inlet", baselineGas);
+    inlet.setFlowRate(50.0, "kg/sec");
+    inlet.run();
+
+    OnePhasePipeLine pipe = createPipe("Export pipe to Karsto", inlet, 12, 3000.0, 0.5);
+    pipe.setConservativeCompositionalTracking(true);
+    pipe.setStoreSpeciesConservationHistory(true);
+    pipe.setFailOnNonConvergence(true);
+    pipe.setInternalTimeStep(60.0);
+
+    UUID id = UUID.randomUUID();
+    pipe.run(id);
+    double baselineOutlet = pipe.getOutletMassFraction("nitrogen");
+
+    inlet.setThermoSystem(pulseGas);
+    inlet.run(id);
+    pipe.runTransient(1800.0, id);
+    OnePhaseSpeciesConservationHistory pulseHistory = pipe.getSpeciesConservationHistory();
+    double[] pulseOutlet = pipe.getConservativeOutletMassFractionHistory("nitrogen");
+    assertEquals(30, pulseHistory.size());
+    assertEquals(1800.0, pulseHistory.getElapsedTimeSeconds()[pulseHistory.size() - 1], 0.0);
+
+    inlet.setThermoSystem(baselineGas.clone());
+    inlet.run(id);
+    pipe.runTransient(3600.0, id);
+    OnePhaseSpeciesConservationHistory recoveryHistory = pipe.getSpeciesConservationHistory();
+    double recoveredOutlet = pipe.getConservativeOutletMassFraction("nitrogen");
+    assertEquals(60, recoveryHistory.size());
+    assertEquals(3600.0, recoveryHistory.getElapsedTimeSeconds()[recoveryHistory.size() - 1], 0.0);
+
+    double pulseInlet = pulseHistory.getReport(0).getInletBoundaryMassKg()[1]
+        / sum(pulseHistory.getReport(0).getInletBoundaryMassKg());
+    double eventAmplitude = pulseInlet - baselineOutlet;
+    assertTrue(maximum(pulseOutlet) > baselineOutlet + 0.70 * eventAmplitude,
+        "The finite inlet event should break through at the high-level pipeline outlet.");
+    assertEquals(baselineOutlet, recoveredOutlet, 2.0e-3 * eventAmplitude,
+        "The outlet should recover after the pulse is purged.");
+
+    assertConservativeHistory(pulseHistory);
+    assertConservativeHistory(recoveryHistory);
   }
 
   @Test
@@ -269,5 +394,58 @@ public class OnePhasePipeLineCompositionalTest {
     logger.info("  - TVD_VAN_LEER: Best balance of accuracy and stability");
     logger.info("  - TVD_SUPERBEE: Sharpest fronts, use for critical tracking");
     logger.info("  - FIRST_ORDER_UPWIND: Use only for coarse/quick estimates");
+  }
+
+  private static OnePhasePipeLine createPipe(String name, Stream inlet, int nodes, double lengthMetres,
+      double diameterMetres) {
+    OnePhasePipeLine pipe = new OnePhasePipeLine(name, inlet);
+    pipe.setNumberOfLegs(1);
+    pipe.setNumberOfNodesInLeg(nodes);
+    pipe.setPipeDiameters(new double[] { diameterMetres, diameterMetres });
+    pipe.setLegPositions(new double[] { 0.0, lengthMetres });
+    pipe.setHeightProfile(new double[] { 0.0, 0.0 });
+    pipe.setPipeWallRoughness(new double[] { 1.0e-5, 1.0e-5 });
+    pipe.setOuterTemperatures(new double[] { 288.15, 288.15 });
+    pipe.setWallHeatTransferCoefficients(new double[] { 0.0, 0.0 });
+    pipe.setOuterHeatTransferCoefficients(new double[] { 0.0, 0.0 });
+    return pipe;
+  }
+
+  private static SystemInterface createPulseGas(double methane, double nitrogenFraction) {
+    SystemInterface gas = new SystemSrkEos(288.15, 70.0);
+    gas.addComponent("methane", methane);
+    gas.addComponent("nitrogen", nitrogenFraction);
+    gas.createDatabase(true);
+    gas.setMixingRule("classic");
+    gas.init(0);
+    gas.init(3);
+    gas.initPhysicalProperties();
+    gas.setTotalFlowRate(50.0, "kg/sec");
+    return gas;
+  }
+
+  private static void assertConservativeHistory(OnePhaseSpeciesConservationHistory history) {
+    for (OnePhaseSpeciesConservationReport report : history.getReports()) {
+      assertTrue(report.isConverged(), report.getMessage());
+      assertTrue(report.getMaximumRelativeInventoryResidual() <= 1.0e-8, report.getMessage());
+      assertTrue(report.getMinimumMassFraction() >= 0.0, report.getMessage());
+      assertTrue(report.getMaximumMassFraction() <= 1.0, report.getMessage());
+    }
+  }
+
+  private static double maximum(double[] values) {
+    double maximum = Double.NEGATIVE_INFINITY;
+    for (double value : values) {
+      maximum = Math.max(maximum, value);
+    }
+    return maximum;
+  }
+
+  private static double sum(double[] values) {
+    double sum = 0.0;
+    for (double value : values) {
+      sum += value;
+    }
+    return sum;
   }
 }
