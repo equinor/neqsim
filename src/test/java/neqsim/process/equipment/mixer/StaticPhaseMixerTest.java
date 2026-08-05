@@ -42,12 +42,16 @@ class StaticPhaseMixerTest {
       ByteArrayOutputStream standardError = new ByteArrayOutputStream();
       PrintStream originalOutput = System.out;
       PrintStream originalError = System.err;
+      PrintStream capturedOutput = new PrintStream(standardOutput, true);
+      PrintStream capturedError = new PrintStream(standardError, true);
       try {
-        System.setOut(new PrintStream(standardOutput));
-        System.setErr(new PrintStream(standardError));
+        System.setOut(capturedOutput);
+        System.setErr(capturedError);
         mixer.run();
         mixer.run();
       } finally {
+        capturedOutput.flush();
+        capturedError.flush();
         System.setOut(originalOutput);
         System.setErr(originalError);
       }
@@ -141,6 +145,25 @@ class StaticPhaseMixerTest {
     assertTrue(mixer.getOutletStream().getThermoSystem().hasPhaseType("gas"));
     assertTrue(mixer.getOutletStream().getThermoSystem().hasPhaseType("liquid"));
     assertTrue(mixer.getOutletStream().getThermoSystem().hasPhaseType("aqueous"));
+  }
+
+  @Test
+  void testZeroFlowBypassKeepsFinitePhaseFractions() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 10.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+    Stream zeroFlow = new Stream("zero flow", fluid);
+    zeroFlow.setFlowRate(0.0, "kg/hr");
+
+    StaticPhaseMixer mixer = new StaticPhaseMixer("zero-flow phase mixer");
+    mixer.addStream(zeroFlow);
+    mixer.run();
+
+    assertEquals(0.0, mixer.getOutletStream().getFlowRate("kg/hr"), 0.0);
+    for (int phaseIndex = 0; phaseIndex < mixer.getOutletStream().getThermoSystem().getNumberOfPhases();
+        phaseIndex++) {
+      assertTrue(Double.isFinite(mixer.getOutletStream().getThermoSystem().getBeta(phaseIndex)));
+    }
   }
 
   private static SystemInterface createSeparatorFeed(double temperature) {
