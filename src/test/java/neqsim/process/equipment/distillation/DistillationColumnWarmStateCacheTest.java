@@ -270,7 +270,7 @@ public class DistillationColumnWarmStateCacheTest {
    */
   @Test
   public void inactiveToleranceChangesRetainNaphtaliExactReuse() {
-    for (double feedTemperatureC : new double[] {20.0, 25.0}) {
+    for (double feedTemperatureC : new double[] { 20.0, 25.0 }) {
       DistillationColumn column = buildColumn();
       StreamInterface feed = column.getFeedStreams(3).get(0);
       feed.setTemperature(feedTemperatureC, "C");
