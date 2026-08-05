@@ -133,6 +133,31 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void historyBuilderScalesToManyAcceptedStepsAndPreservesValidation() {
+    OnePhaseSpeciesConservationHistory.Builder builder = OnePhaseSpeciesConservationHistory.builder();
+    OnePhaseSpeciesConservationReport report = OnePhaseSpeciesConservationReport.notRun();
+    builder.append(0.5, report);
+    OnePhaseSpeciesConservationHistory partialHistory = builder.build();
+    int acceptedSteps = 10000;
+    for (int step = 1; step <= acceptedSteps; step++) {
+      builder.append(step, report);
+    }
+
+    OnePhaseSpeciesConservationHistory history = builder.build();
+    assertEquals(1, partialHistory.size());
+    assertEquals(0.5, partialHistory.getElapsedTimeSeconds()[0], 0.0);
+    assertEquals(acceptedSteps + 1, history.size());
+    assertEquals(0.5, history.getElapsedTimeSeconds()[0], 0.0);
+    assertEquals(acceptedSteps, history.getElapsedTimeSeconds()[acceptedSteps], 0.0);
+    assertEquals(report, history.getReport(acceptedSteps));
+
+    assertThrows(IllegalArgumentException.class, () -> builder.append(acceptedSteps, report));
+    assertThrows(IllegalArgumentException.class,
+        () -> OnePhaseSpeciesConservationHistory.builder().append(Double.NaN, report));
+    assertThrows(IllegalArgumentException.class, () -> OnePhaseSpeciesConservationHistory.builder().append(1.0, null));
+  }
+
+  @Test
   void repeatedNodeInitializationDoesNotAccumulateMolarFlowDrift() {
     PipeFlowSystem pipe = createInitializedPipe(24, 3000.0);
     neqsim.fluidmechanics.flownode.FlowNodeInterface node = pipe.getNode(22);
