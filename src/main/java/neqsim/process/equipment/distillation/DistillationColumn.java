@@ -1,11932 +1,1409 @@
-package neqsim.process.equipment.distillation;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import com.google.gson.GsonBuilder;
-import neqsim.process.costestimation.column.ColumnCostEstimate;
-import neqsim.process.equipment.ProcessEquipmentBaseClass;
-import neqsim.process.equipment.distillation.internals.ColumnInternalsDesigner;
-import neqsim.process.equipment.heatexchanger.Heater;
-import neqsim.process.equipment.mixer.Mixer;
-import neqsim.process.equipment.separator.Separator;
-import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.stream.StreamInterface;
-import neqsim.process.mechanicaldesign.MechanicalDesign;
-import neqsim.process.mechanicaldesign.distillation.DistillationColumnMechanicalDesign;
-import neqsim.process.util.monitor.DistillationColumnResponse;
-import neqsim.process.util.report.ReportConfig;
-import neqsim.process.util.report.ReportConfig.DetailLevel;
-import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import neqsim.util.ExcludeFromJacocoGeneratedReport;
-import neqsim.util.unit.TemperatureUnit;
-import neqsim.util.validation.ValidationResult;
-
-/**
- * Models a tray based distillation column with optional condenser and reboiler.
- *
- * <p>
- * The column is solved using a sequential substitution approach. The {@link #init()} method sets initial tray
- * temperatures by running the feed tray and linearly distributing temperatures towards the top and bottom. During
- * {@link #run(UUID)} the trays are iteratively solved in upward and downward sweeps until the summed temperature change
- * between iterations is below the configured {@link #temperatureTolerance} or the iteration limit is reached.
- * </p>
- *
- * @author esol
- */
-public class DistillationColumn extends ProcessEquipmentBaseClass implements DistillationInterface {
-  /** Serialization version UID. */
-  private static final long serialVersionUID = 1000;
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(DistillationColumn.class);
-
-  private boolean doInitializion = true;
-  boolean hasReboiler = false;
-  boolean hasCondenser = false;
-  protected ArrayList<SimpleTray> trays = new ArrayList<SimpleTray>(0);
-  /** Scaling factor used to derive a tray-proportional iteration budget. */
-  private static final double TRAY_ITERATION_FACTOR = 5.0;
-  /** Target relative mass imbalance for the post-processing polish stage. */
-  private static final double MASS_POLISH_TARGET = 2.0e-2;
-  /** Target relative energy imbalance for the post-processing polish stage. */
-  private static final double ENERGY_POLISH_TARGET = 2.0e-2;
-  /** Target average temperature drift for the polishing stage in Kelvin. */
-  private static final double TEMPERATURE_POLISH_TARGET = 5.0e-3;
-  /** Extra iterations granted when a polish stage is triggered. */
-  private static final int POLISH_ITERATION_MARGIN = 6;
-  /**
-   * Multiplier governing how much the solver can extend beyond the nominal iteration budget.
-   */
-  private static final int ITERATION_OVERFLOW_MULTIPLIER = 12;
-  /** Recommended base temperature tolerance for adaptive defaults. */
-  private static final double DEFAULT_TEMPERATURE_TOLERANCE = 2.0e-2;
-  /** Recommended base mass balance tolerance for adaptive defaults. */
-  private static final double DEFAULT_MASS_BALANCE_TOLERANCE = 1.6e-2;
-  /** Recommended base enthalpy balance tolerance for adaptive defaults. */
-  private static final double DEFAULT_ENTHALPY_BALANCE_TOLERANCE = 1.6e-2;
-  /** Default scaled MESH residual tolerance when residual gating is enabled. */
-  private static final double DEFAULT_MESH_RESIDUAL_TOLERANCE = 1.0;
-  /**
-   * Default tolerance for the per-tray component material imbalance relative to tray throughput.
-   *
-   * <p>
-   * The MESH {@code MATERIAL} entries scale each component by its own throughput, so they are dominated by trace
-   * components and cannot be gated. The throughput-weighted per-tray imbalance is the usable measure, and it is bounded
-   * by 1 so it needs a tolerance below the 1.0 infinity-norm tolerance to take part in the gate at all.
-   * </p>
-   */
-  private static final double DEFAULT_TRAY_MATERIAL_BALANCE_TOLERANCE = 2.0e-2;
-  /**
-   * Default product draw residual tolerance when MESH residual gating is enabled.
-   */
-  private static final double DEFAULT_MESH_PRODUCT_DRAW_RESIDUAL_TOLERANCE = 2.0e-2;
-  /** Fractional distance from 0 or 1 treated as an active commercial specification bound. */
-  private static final double ACTIVE_BOUND_FRACTION_TOLERANCE = 1.0e-5;
-  /** Maximum product-flow drift allowed when accepting a MESH Newton polish candidate. */
-  private static final double MESH_POLISH_PRODUCT_FLOW_TOLERANCE = 2.0e-2;
-  /** Product reconciliation drift above this level is reported as a non-rigorous solve status. */
-  private static final double PRODUCT_RECONCILIATION_STATUS_TOLERANCE = 2.0e-2;
-  /**
-   * Maximum minority phase fraction canonicalized out of a separated terminal product.
-   *
-   * <p>
-   * Sequential column solvers can approach the same dew-point boundary from opposite sides and expose a numerical trace
-   * phase in only one product. A phase smaller than this limit contributes less than one part in one hundred million to
-   * the product inventory. Merging it into the dominant, intended outlet phase gives the separated product a
-   * solver-independent phase identity without discarding component moles.
-   * </p>
-   */
-  private static final double TERMINAL_PRODUCT_TRACE_PHASE_FRACTION = 1.0e-8;
-  /** Tighter internal SUM_RATES target for solver-independent reboiler-only product temperatures. */
-  private static final double REBOILER_ONLY_PHASE_STABLE_TEMPERATURE_TOLERANCE_FACTOR = 5.0e-2;
-  /**
-   * Maximum internal tray traffic accepted after divergence recovery relative to external feed.
-   */
-  private static final double MAX_SOLVED_INTERNAL_TRAFFIC_TO_FEED_RATIO = 100.0;
-  /**
-   * Maximum tear-stream flow allowed during relaxed updates relative to external feed.
-   */
-  private static final double MAX_RELAXED_INTERNAL_TRAFFIC_TO_FEED_RATIO = 1.0e5;
-  /**
-   * Minimum temperature span required before a tray temperature profile is considered useful.
-   */
-  private static final double MINIMUM_FEED_PROFILE_SPAN = 1.0;
-  /**
-   * Temperature offset used when only one column-end temperature is specified.
-   */
-  private static final double FEED_PROFILE_END_TEMPERATURE_OFFSET = 20.0;
-  /** Tolerance used when comparing equivalent feed tray candidates. */
-  private static final double FEED_TRAY_TIE_TOLERANCE = 1.0e-9;
-  /** Default maximum number of candidate cases in tray optimization searches. */
-  private static final int DEFAULT_MAX_TRAY_OPTIMIZATION_CANDIDATES = 2000;
-  /** Default maximum elapsed time for tray optimization searches in seconds. */
-  private static final double DEFAULT_MAX_TRAY_OPTIMIZATION_TIME_SECONDS = 120.0;
-  /** Minimum tray count where matrix warm-start overhead is expected to pay off. */
-  private static final int MIN_MATRIX_INSIDE_OUT_WARM_START_TRAYS = 12;
-  /** Default specification continuation stages used by automatic solver mode. */
-  private static final int AUTO_SPECIFICATION_HOMOTOPY_STEPS = 3;
-  double condenserCoolingDuty = 10.0;
-  private double reboilerTemperature = 273.15;
-  private double condenserTemperature = 270.15;
-  double topTrayPressure = -1.0;
-
-  /** Temperature convergence tolerance. */
-  private double temperatureTolerance = DEFAULT_TEMPERATURE_TOLERANCE;
-  /** Mass balance convergence tolerance. */
-  private double massBalanceTolerance = DEFAULT_MASS_BALANCE_TOLERANCE;
-  /** Enthalpy balance convergence tolerance. */
-  private double enthalpyBalanceTolerance = DEFAULT_ENTHALPY_BALANCE_TOLERANCE;
-  /** Scaled MESH residual convergence tolerance. */
-  private double meshResidualTolerance = DEFAULT_MESH_RESIDUAL_TOLERANCE;
-
-  /** Tolerance for the throughput-weighted per-tray component material imbalance. */
-  private double trayMaterialBalanceTolerance = DEFAULT_TRAY_MATERIAL_BALANCE_TOLERANCE;
-  /** Scaled terminal product-draw residual convergence tolerance. */
-  private double meshProductDrawResidualTolerance = DEFAULT_MESH_PRODUCT_DRAW_RESIDUAL_TOLERANCE;
-  /** Maximum number of candidate cases allowed in tray optimization searches. */
-  private int maxTrayOptimizationCandidates = DEFAULT_MAX_TRAY_OPTIMIZATION_CANDIDATES;
-  /** Maximum elapsed time allowed in tray optimization searches in seconds. */
-  private double maxTrayOptimizationTimeSeconds = DEFAULT_MAX_TRAY_OPTIMIZATION_TIME_SECONDS;
-  /** Latest shortcut-initialization result, or {@code null} if none has been applied. */
-  private transient ShortcutInitializationResult lastShortcutInitializationResult = null;
-  /** Track whether temperature tolerance has been manually overridden. */
-  private boolean temperatureToleranceCustomized = false;
-  /** Track whether mass balance tolerance has been manually overridden. */
-  private boolean massBalanceToleranceCustomized = false;
-  /** Track whether enthalpy balance tolerance has been manually overridden. */
-  private boolean enthalpyBalanceToleranceCustomized = false;
-
-  /** Available solving strategies for the column. */
-  public enum SolverType {
-    /** Classic sequential substitution without damping. */
-    DIRECT_SUBSTITUTION,
-    /** Sequential substitution with temperature damping. */
-    DAMPED_SUBSTITUTION,
-    /** Inside-out style simultaneous correction of upward/downward flows. */
-    INSIDE_OUT,
-    /** Adaptive matrix inside-out component-balance warm start with rigorous polishing. */
-    MATRIX_INSIDE_OUT,
-    /** Wegstein acceleration of successive substitution. */
-    WEGSTEIN,
-    /** Sum-rates tearing method with flow correction. */
-    SUM_RATES,
-    /**
-     * Newton-Raphson tray-temperature correction accelerator, not a full MESH Newton solver.
-     */
-    NEWTON,
-    /** Naphtali-Sandholm simultaneous correction of full MESH equation blocks. */
-    NAPHTALI_SANDHOLM,
-    /** MESH residual-monitored solve with inside-out initialization. */
-    MESH_RESIDUAL,
-    /** Automatically select a robust solver from the built-in strategy set. */
-    AUTO
-  }
-
-  /** Status of the latest column solve. */
-  public enum SolveStatus {
-    /** No solve has been run since the diagnostics were reset. */
-    NOT_RUN,
-    /** The tray solution satisfies the active rigorous convergence gates. */
-    RIGOROUS_CONVERGED,
-    /** Public products were materially reconciled after the tray solve. */
-    RECONCILED_PRODUCTS,
-    /** Public products came from a guarded fallback estimate, not a rigorous tray solve. */
-    FALLBACK_PRODUCTS,
-    /** The latest solve did not satisfy the active rigorous convergence gates. */
-    FAILED
-  }
-
-  /** Phase withdrawn by a column side draw. */
-  public enum SideDrawPhase {
-    /** Withdraw vapor traffic from the selected tray. */
-    GAS,
-    /** Withdraw liquid traffic from the selected tray. */
-    LIQUID
-  }
-
-  /** Operating mode for the condenser tray. */
-  public enum CondenserMode {
-    /** Equilibrium partial condenser with vapor product and liquid reflux. */
-    PARTIAL,
-    /** Bubble-point total condenser with split liquid reflux and distillate product. */
-    TOTAL,
-    /** Partial condenser with an explicit fixed liquid reflux stream split. */
-    LIQUID_REFLUX_SPLIT
-  }
-
-  /** Operating mode for the reboiler tray. */
-  public enum ReboilerMode {
-    /** Equilibrium reboiler without an explicit boilup/reflux ratio. */
-    EQUILIBRIUM,
-    /** Reboiler solved with an explicit vapor boilup/reflux ratio. */
-    VAPOR_BOILUP_RATIO
-  }
-
-  /** Dynamic column model formulation. */
-  public enum DynamicColumnModel {
-    /** Experimental explicit-Euler holdup model retained for screening studies. */
-    EXPERIMENTAL_EULER
-  }
-
-  /**
-   * Flow specification for a side-product draw.
-   *
-   * <p>
-   * The column uses this specification as a tear variable by adjusting the corresponding tray side-draw fraction until
-   * the withdrawn stream flow matches the target flow.
-   * </p>
-   *
-   * @author esol
-   * @version 1.0
-   */
-  public static class ColumnSideDrawSpecification implements java.io.Serializable {
-    /** Serialization version UID. */
-    private static final long serialVersionUID = 1000L;
-
-    private final int trayNumber;
-    private final SideDrawPhase phase;
-    private final double targetFlowRate;
-    private final String flowUnit;
-    private double tolerance = 1.0e-4;
-    private int maxIterations = 12;
-    private transient double lastActualFlowRate = Double.NaN;
-    private transient double lastRelativeResidual = Double.POSITIVE_INFINITY;
-
-    /**
-     * Create a side-draw flow specification.
-     *
-     * @param trayNumber bottom-up tray index where the draw is located
-     * @param phase side-draw phase
-     * @param targetFlowRate target side-draw flow rate
-     * @param flowUnit flow-rate unit for the target and actual flow
-     * @throws IllegalArgumentException if phase is null, target flow is negative or non-finite, or the flow unit is
-     * empty
-     */
-    public ColumnSideDrawSpecification(int trayNumber, SideDrawPhase phase, double targetFlowRate, String flowUnit) {
-      if (phase == null) {
-        throw new IllegalArgumentException("Side draw phase cannot be null");
-      }
-      if (!Double.isFinite(targetFlowRate) || targetFlowRate < 0.0) {
-        throw new IllegalArgumentException("Side draw target flow must be finite and >= 0");
-      }
-      if (flowUnit == null || flowUnit.trim().isEmpty()) {
-        throw new IllegalArgumentException("Side draw flow unit cannot be empty");
-      }
-      this.trayNumber = trayNumber;
-      this.phase = phase;
-      this.targetFlowRate = targetFlowRate;
-      this.flowUnit = flowUnit;
-    }
-
-    /**
-     * Get the draw tray number.
-     *
-     * @return bottom-up tray index
-     */
-    public int getTrayNumber() {
-      return trayNumber;
-    }
-
-    /**
-     * Get the side-draw phase.
-     *
-     * @return side-draw phase
-     */
-    public SideDrawPhase getPhase() {
-      return phase;
-    }
-
-    /**
-     * Get the target side-draw flow rate.
-     *
-     * @return target flow rate in {@link #getFlowUnit()}
-     */
-    public double getTargetFlowRate() {
-      return targetFlowRate;
-    }
-
-    /**
-     * Get the flow unit used by this specification.
-     *
-     * @return flow unit string
-     */
-    public String getFlowUnit() {
-      return flowUnit;
-    }
-
-    /**
-     * Get the relative convergence tolerance.
-     *
-     * @return relative tolerance
-     */
-    public double getTolerance() {
-      return tolerance;
-    }
-
-    /**
-     * Set the relative convergence tolerance.
-     *
-     * @param tolerance positive finite relative tolerance
-     */
-    public void setTolerance(double tolerance) {
-      if (!Double.isFinite(tolerance) || tolerance <= 0.0) {
-        throw new IllegalArgumentException("Side draw tolerance must be finite and positive");
-      }
-      this.tolerance = tolerance;
-    }
-
-    /**
-     * Get the maximum number of tear iterations requested by this specification.
-     *
-     * @return maximum iterations
-     */
-    public int getMaxIterations() {
-      return maxIterations;
-    }
-
-    /**
-     * Set the maximum number of tear iterations requested by this specification.
-     *
-     * @param maxIterations positive maximum iteration count
-     */
-    public void setMaxIterations(int maxIterations) {
-      if (maxIterations <= 0) {
-        throw new IllegalArgumentException("Side draw maxIterations must be positive");
-      }
-      this.maxIterations = maxIterations;
-    }
-
-    /**
-     * Get the latest actual flow rate.
-     *
-     * @return latest actual flow rate in {@link #getFlowUnit()}, or {@link Double#NaN}
-     */
-    public double getLastActualFlowRate() {
-      return lastActualFlowRate;
-    }
-
-    /**
-     * Get the latest relative residual.
-     *
-     * @return relative residual from the latest side-draw update
-     */
-    public double getLastRelativeResidual() {
-      return lastRelativeResidual;
-    }
-
-    /**
-     * Store latest actual flow and return its relative residual.
-     *
-     * @param actualFlowRate actual draw flow rate in {@link #getFlowUnit()}
-     * @return relative residual
-     */
-    private double updateActualFlowRate(double actualFlowRate) {
-      lastActualFlowRate = actualFlowRate;
-      double scale = Math.max(1.0e-12, Math.abs(targetFlowRate));
-      lastRelativeResidual = Math.abs(actualFlowRate - targetFlowRate) / scale;
-      return lastRelativeResidual;
-    }
-  }
-
-  /**
-   * Liquid pumparound circuit that withdraws liquid from one tray, changes temperature, and returns it to another tray.
-   *
-   * @author esol
-   * @version 1.0
-   */
-  public static class ColumnPumparound implements java.io.Serializable {
-    /** Serialization version UID. */
-    private static final long serialVersionUID = 1000;
-
-    private final String name;
-    private final int drawTrayNumber;
-    private final int returnTrayNumber;
-    private final double drawFraction;
-    private final double temperatureDrop;
-    private transient StreamInterface drawStream;
-    private transient StreamInterface returnStream;
-    private transient double lastReturnFlowKgPerHour = 0.0;
-
-    /**
-     * Create a liquid pumparound definition.
-     *
-     * @param name pumparound name
-     * @param drawTrayNumber tray index where liquid is withdrawn
-     * @param returnTrayNumber tray index where cooled/heated liquid is returned
-     * @param drawFraction fraction of tray liquid traffic withdrawn
-     * @param temperatureDrop temperature drop from draw to return in Kelvin
-     */
-    public ColumnPumparound(String name, int drawTrayNumber, int returnTrayNumber, double drawFraction,
-        double temperatureDrop) {
-      this.name = name;
-      this.drawTrayNumber = drawTrayNumber;
-      this.returnTrayNumber = returnTrayNumber;
-      this.drawFraction = drawFraction;
-      this.temperatureDrop = temperatureDrop;
-    }
-
-    /**
-     * Get the pumparound name.
-     *
-     * @return pumparound name
-     */
-    public String getName() {
-      return name;
-    }
-
-    /**
-     * Get the draw tray number.
-     *
-     * @return draw tray index
-     */
-    public int getDrawTrayNumber() {
-      return drawTrayNumber;
-    }
-
-    /**
-     * Get the return tray number.
-     *
-     * @return return tray index
-     */
-    public int getReturnTrayNumber() {
-      return returnTrayNumber;
-    }
-
-    /**
-     * Get the liquid draw fraction.
-     *
-     * @return draw fraction
-     */
-    public double getDrawFraction() {
-      return drawFraction;
-    }
-
-    /**
-     * Get the temperature drop from draw to return.
-     *
-     * @return temperature drop in Kelvin
-     */
-    public double getTemperatureDrop() {
-      return temperatureDrop;
-    }
-
-    /**
-     * Get the latest liquid draw stream.
-     *
-     * @return latest draw stream, or {@code null} before the column has been run
-     */
-    public StreamInterface getDrawStream() {
-      return drawStream;
-    }
-
-    /**
-     * Get the latest liquid return stream.
-     *
-     * @return latest return stream, or {@code null} before the first draw update
-     */
-    public StreamInterface getReturnStream() {
-      return returnStream;
-    }
-
-    /**
-     * Update the return stream from a tray liquid draw.
-     *
-     * @param newDrawStream latest liquid draw stream
-     * @param id calculation identifier
-     * @return relative change in return flow rate
-     */
-    private double updateReturnStream(StreamInterface newDrawStream, UUID id) {
-      drawStream = newDrawStream;
-      double previousFlow = lastReturnFlowKgPerHour;
-      SystemInterface returnSystem = newDrawStream.getThermoSystem().clone();
-      double returnTemperature = returnSystem.getTemperature() - temperatureDrop;
-      if (!Double.isFinite(returnTemperature) || returnTemperature <= 0.0) {
-        throw new IllegalStateException("Pumparound return temperature must be finite and above 0 K");
-      }
-      returnSystem.setTemperature(returnTemperature);
-      if (returnStream == null) {
-        returnStream = new Stream(name + " return", returnSystem);
-      } else {
-        returnStream.setThermoSystem(returnSystem);
-      }
-      returnStream.run(id);
-      lastReturnFlowKgPerHour = Math.abs(returnStream.getFlowRate("kg/hr"));
-      double scale = Math.max(1.0e-12, Math.max(previousFlow, lastReturnFlowKgPerHour));
-      return Math.abs(lastReturnFlowKgPerHour - previousFlow) / scale;
-    }
-  }
-
-  /** Selected solver algorithm. Defaults to direct substitution. */
-  private SolverType solverType = SolverType.DIRECT_SUBSTITUTION;
-  /** Whether the caller explicitly selected a solver strategy. */
-  private boolean solverTypeExplicitlySet = false;
-  /**
-   * Whether opt-in fast defaults may be applied for full fractionators using the default solver.
-   */
-  private boolean fullFractionatorFastPathEnabled = false;
-  /** Solver strategy that actually completed the latest solve. */
-  private transient SolverType lastSolverTypeUsed = SolverType.DIRECT_SUBSTITUTION;
-  /**
-   * Concrete solver chosen by the AUTO selector on the previous solve. When the column is solved again from a warm
-   * state (e.g. inside a recycle loop), AUTO reuses this solver directly instead of re-running the expensive
-   * feasibility pre-screen, candidate cloning, and multi-solver scoring on every call. Reset whenever the column
-   * reverts to a cold start.
-   */
-  private transient SolverType autoWarmStartSolver = null;
-  /** Whether the latest run applied the opt-in full-fractionator fast path. */
-  private transient boolean lastFullFractionatorFastPathApplied = false;
-  /** Description of the latest opt-in full-fractionator fast-path action. */
-  private transient String lastFullFractionatorFastPathReason = "";
-  /** Strict status of the latest solve. */
-  private transient SolveStatus lastSolveStatus = SolveStatus.NOT_RUN;
-  /** Optional reason explaining why the latest solve fell back or was rejected. */
-  private transient String lastSolveStatusReason = "";
-  /** Trace of solver candidates attempted by automatic solver mode. */
-  private transient String lastAutoSolverSummary = "";
-  /** Feasibility report from the latest automatic solver pre-screen. */
-  private transient String lastAutoFeasibilityReport = "";
-  /** Initialization report from the latest automatic solver seed attempt. */
-  private transient String lastInitializationReport = "";
-  /** Chronological event log from the latest automatic solver pipeline. */
-  private transient List<String> lastAutoSolverHistory = new ArrayList<String>();
-
-  /**
-   * Relaxation factor used when {@link SolverType#DAMPED_SUBSTITUTION} is active.
-   */
-  private double relaxationFactor = 0.5;
-  /**
-   * Minimum relaxation factor used when adaptive damping scales down the sequential step.
-   */
-  private double minSequentialRelaxation = 0.5;
-  /** Minimum relaxation factor allowed for the inside-out tear streams. */
-  private double minInsideOutRelaxation = 0.5;
-  /** Maximum relaxation factor allowed by the adaptive controller. */
-  private double maxAdaptiveRelaxation = 1.2;
-  /** Factor used to expand the relaxation factor when residuals shrink. */
-  private double relaxationIncreaseFactor = 1.2;
-  /** Factor used to shrink the relaxation factor when residuals grow. */
-  private double relaxationDecreaseFactor = 0.5;
-  /** Minimum relaxation applied when blending tray temperatures. */
-  private double minTemperatureRelaxation = 0.2;
-  /** Cap applied to energy residual when adjusting relaxation. */
-  private double maxEnergyRelaxationWeight = 10.0;
-  /**
-   * Control whether energy residual must satisfy tolerance before convergence.
-   */
-  private boolean enforceEnergyBalanceTolerance = false;
-  /**
-   * Explicit control of whether the MESH residual vector must satisfy tolerance before convergence. When not explicitly
-   * set, the gate is active for residual-based solver modes and inactive for substitution and temperature/flow
-   * accelerator modes.
-   */
-  private boolean enforceMeshResidualTolerance = false;
-  /**
-   * Track whether MESH residual convergence gating has been explicitly configured.
-   */
-  private boolean enforceMeshResidualToleranceCustomized = false;
-  private boolean doMultiPhaseCheck = true;
-
-  /**
-   * When {@code true}, trays in the reactive section use {@link ReactiveTray} (simultaneous chemical + phase
-   * equilibrium via the Modified RAND method) instead of standard VLE {@link SimpleTray}. Set this before the first
-   * {@link #run()} call.
-   */
-  private boolean reactive = false;
-
-  /**
-   * First tray index (0-based, inclusive) of the reactive section. A value of {@code -1} means all middle trays (i.e.
-   * excluding reboiler/condenser) are reactive.
-   */
-  private int reactiveStartTray = -1;
-
-  /**
-   * Last tray index (0-based, inclusive) of the reactive section. A value of {@code -1} means all middle trays are
-   * reactive.
-   */
-  private int reactiveEndTray = -1;
-
-  /**
-   * Flag tracking whether the column has been solved at least once. Used to seed the sequential solver with the
-   * previous tray state on re-runs, preventing divergence from an unrelaxed start.
-   */
-  private transient boolean hasBeenSolvedBefore = false;
-
-  /**
-   * Total feed flow (kg/hr) recorded at the end of the previous solve. Used to detect whether the column needs to
-   * re-solve or can reuse the previous result.
-   */
-  private transient double lastTotalFeedFlow = -1.0;
-
-  /** Whether this column retains an accepted Naphtali-Sandholm solution eligible for exact input reuse. */
-  private transient boolean hasNaphtaliSandholmWarmState = false;
-  /** Fingerprint of the external inputs and column specifications for the accepted Naphtali-Sandholm solution. */
-  private transient long lastNaphtaliSandholmInputSignature = Long.MIN_VALUE;
-  /** Fingerprint of the convergence-gate configuration used when the warm state was accepted. */
-  private transient long lastNaphtaliSandholmConvergenceGateSignature = Long.MIN_VALUE;
-  /**
-   * Thermodynamic identity fingerprint of the feeds the current tray network was built for.
-   *
-   * <p>
-   * Written by {@link #init()}, which is the only place that rebuilds the tray fluids. A mismatch against the current
-   * feeds means the tray network describes a different component set, equation of state, or mixing rule and must be
-   * rebuilt before it can seed any solver.
-   * </p>
-   */
-  private transient long trayStateThermodynamicIdentitySignature = Long.MIN_VALUE;
-  /**
-   * Fingerprint of fixed column inputs used to build the current sequential tray initialization.
-   *
-   * <p>
-   * Feed operating conditions are intentionally excluded so nearby feed cases retain their warm start.
-   * </p>
-   */
-  private transient long lastSequentialInitializationSignature = Long.MIN_VALUE;
-  /** Whether an accepted sequential solution is eligible for exact unchanged-input reuse. */
-  private transient boolean hasSequentialExactReuseState = false;
-  /** Full input fingerprint associated with the accepted sequential solution. */
-  private transient long lastSequentialInputSignature = Long.MIN_VALUE;
-  /** Whether the latest sequential invocation reused an exact accepted state. */
-  private transient boolean lastSequentialWarmStateReused = false;
-  /**
-   * Whether the current tray state was produced by {@link NaphtaliSandholmSolver} on this column instance.
-   *
-   * <p>
-   * A damped or MESH fallback candidate adopted through {@link #acceptSolvedStateCandidate(DistillationColumn)}
-   * replaces the tray network, so its state must never be committed to the Naphtali-Sandholm warm-state cache even when
-   * the reported solver type stays {@link SolverType#NAPHTALI_SANDHOLM} for telemetry continuity.
-   * </p>
-   */
-  private transient boolean naphtaliSandholmStateOwned = false;
-  /** Whether the latest Naphtali-Sandholm result was an exact reuse of an accepted warm state. */
-  private transient boolean lastNaphtaliSandholmWarmStateReused = false;
-
-  /** Mechanical design for the distillation column. */
-  private DistillationColumnMechanicalDesign mechanicalDesign;
-
-  /** Column specification for the top (condenser) end. */
-  private ColumnSpecification topSpecification;
-  /** Column specification for the bottom (reboiler) end. */
-  private ColumnSpecification bottomSpecification;
-  /** Number of continuation stages used for adjustable product specifications. */
-  private int specificationHomotopySteps = 1;
-  /** Number of specification continuation stages completed by the latest solve. */
-  private transient int lastSpecificationHomotopyStepCount = 0;
-
-  Mixer feedmixer = new Mixer("temp mixer");
-  double bottomTrayPressure = -1.0;
-  int numberOfTrays = 1;
-  int maxNumberOfIterations = 50;
-  /**
-   * Whether {@link #maxNumberOfIterations} must be honored as a HARD iteration cap. When {@code true} the adaptive
-   * tray-based iteration floor, the iteration-overflow expansion, and the polish extension are all disabled, so the
-   * solver never runs more than {@link #maxNumberOfIterations} iterations. When {@code false} (default)
-   * {@link #maxNumberOfIterations} is only a lower bound and the solver uses its adaptive iteration budget. This is
-   * opt-in via {@link #setHardIterationCap(boolean)} or {@link #setMaxNumberOfIterations(int, boolean)} so that
-   * existing callers of {@link #setMaxNumberOfIterations(int)} keep the historical soft-floor behavior.
-   */
-  private boolean hardIterationCap = false;
-  /**
-   * Optional per-stage initial temperature guesses for simultaneous residual solvers.
-   */
-  private double[] seedTemperatures = null;
-  StreamInterface stream_3 = new Stream("stream_3");
-  StreamInterface gasOutStream = new Stream("gasOutStream");
-  StreamInterface liquidOutStream = new Stream("liquidOutStream");
-  boolean stream_3isset = false;
-  private double internalDiameter = 1.0;
-
-  /**
-   * Maximum allowable Fs factor (gas load factor) for the column internals [m/s*sqrt(kg/m3)]. Used as the design basis
-   * for the Fs-factor capacity constraint. Typical Souders-Brown design values are 2.0-2.5 for trayed columns and up to
-   * 3.0 for structured packing.
-   */
-  private double maxAllowableFsFactor = 2.5;
-
-  neqsim.process.processmodel.ProcessSystem distoperations;
-  Heater heater;
-  Separator separator2;
-
-  /**
-   * Error measure used in solver to check convergence in run().
-   */
-  private double err = 1.0e10;
-
-  /** Last number of iterations executed by the active solver. */
-  private int lastIterationCount = 0;
-  /** Last recorded average temperature residual in Kelvin. */
-  private double lastTemperatureResidual = 0.0;
-  /** Last average tray-temperature step applied by the sequential solver in Kelvin. */
-  private double lastAppliedTemperatureStepResidual = Double.NaN;
-  /** Last recorded relative mass balance residual. */
-  private double lastMassResidual = 0.0;
-  /** Last recorded relative enthalpy residual. */
-  private double lastEnergyResidual = 0.0;
-  /** Last maximum raw internal tray traffic divided by external feed flow. */
-  private double lastInternalTrafficRatio = 0.0;
-
-  /** Largest per-tray relative component material imbalance from the latest solve. */
-  private double lastTrayMaterialBalanceError = Double.NaN;
-  /** Last reported top specification residual. */
-  private double lastTopSpecificationResidual = 0.0;
-  /** Last reported bottom specification residual. */
-  private double lastBottomSpecificationResidual = 0.0;
-  /** Latest MESH residual diagnostics. */
-  private transient ColumnMeshResidual lastMeshResidual = null;
-  /**
-   * Whether the latest public products came from the guarded overall-feed flash fallback.
-   */
-  private transient boolean lastUsedFeedFlashFallback = false;
-  /**
-   * Whether the latest solve reached the internal-traffic guard after divergence recovery.
-   */
-  private transient boolean lastInternalTrafficGuardReached = false;
-  /**
-   * Whether emergency capping of relaxed internal traffic is active for the current solve.
-   */
-  private transient boolean internalTrafficCapActive = false;
-  /** Reconciled top product draw used by product-draw residual diagnostics. */
-  private transient StreamInterface terminalGasProductDrawStream = null;
-  /** Reconciled bottom product draw used by product-draw residual diagnostics. */
-  private transient StreamInterface terminalLiquidProductDrawStream = null;
-  /** Duration of the latest solve step in seconds. */
-  private double lastSolveTimeSeconds = 0.0;
-  /** Rigorous inside-out outer flash sweeps performed by the latest inside-out solve. */
-  private transient int lastInsideOutOuterFlashSweeps = 0;
-  /** Simplified inside-out inner-loop iterations performed by the latest inside-out solve. */
-  private transient int lastInsideOutInnerLoopIterations = 0;
-  /** Latest inside-out K-value residual. */
-  private transient double lastInsideOutKValueResidual = Double.NaN;
-  /** Latest simplified inside-out surrogate temperature residual. */
-  private transient double lastInsideOutSurrogateResidual = Double.NaN;
-  /** Number of simplified inside-out surrogate resets in the latest solve. */
-  private transient int lastInsideOutSurrogateResetCount = 0;
-  /** Whether matrix inside-out used a matrix warm-start on the latest solve. */
-  private transient boolean lastMatrixInsideOutWarmStartUsed = false;
-  /** Whether matrix inside-out bypassed the matrix warm-start on the latest solve. */
-  private transient boolean lastMatrixInsideOutWarmStartBypassed = false;
-  /** Matrix warm-start iterations from the latest matrix inside-out solve. */
-  private transient int lastMatrixInsideOutIterationCount = 0;
-  /** Matrix warm-start average temperature residual from the latest solve. */
-  private transient double lastMatrixInsideOutTemperatureResidual = Double.NaN;
-  /** Matrix warm-start wall time from the latest solve in seconds. */
-  private transient double lastMatrixInsideOutSolveTimeSeconds = 0.0;
-  /** Latest Naphtali-Sandholm semi-analytic Jacobian column count. */
-  private transient int lastNaphtaliAnalyticJacobianColumns = 0;
-  /** Latest Naphtali-Sandholm finite-difference Jacobian column count. */
-  private transient int lastNaphtaliFiniteDifferenceJacobianColumns = 0;
-  /** Latest Naphtali-Sandholm tray thermodynamic evaluation count. */
-  private transient int lastNaphtaliThermoEvaluationCount = 0;
-  /** Latest Naphtali-Sandholm thermodynamic cache hit count. */
-  private transient int lastNaphtaliThermoCacheHitCount = 0;
-  /** Latest Naphtali-Sandholm Jacobian build wall time in seconds. */
-  private transient double lastNaphtaliJacobianBuildTimeSeconds = 0.0;
-  /** Latest Naphtali-Sandholm block-tridiagonal linear solve count. */
-  private transient int lastNaphtaliBlockLinearSolveCount = 0;
-  /** Latest Naphtali-Sandholm dense fallback linear solve count. */
-  private transient int lastNaphtaliDenseLinearSolveCount = 0;
-  /** Latest Naphtali-Sandholm linear solve wall time in seconds. */
-  private transient double lastNaphtaliLinearSolveTimeSeconds = 0.0;
-
-  /**
-   * Instead of Map&lt;Integer,StreamInterface&gt;, we store a list of feed streams per tray number. This allows
-   * multiple feeds to the same tray.
-   */
-  private Map<Integer, List<StreamInterface>> feedStreams = new HashMap<>();
-  /**
-   * Legacy direct tray feeds captured before internal vapor/liquid traffic is connected.
-   */
-  private Map<Integer, List<StreamInterface>> directExternalFeedStreams = new HashMap<>();
-  private List<StreamInterface> unassignedFeedStreams = new ArrayList<>();
-  /** Flow specifications for side-product draws. */
-  private List<ColumnSideDrawSpecification> sideDrawSpecifications = new ArrayList<>();
-  /** Liquid pumparound circuits configured on the column. */
-  private List<ColumnPumparound> pumparounds = new ArrayList<>();
-  /** Maximum outer iterations used to converge pumparound return streams. */
-  private int maxPumparoundIterations = 8;
-  /** Relative return-flow tolerance for pumparound outer iterations. */
-  private double pumparoundTolerance = 1.0e-4;
-  /** Maximum outer iterations used to converge column tear variables. */
-  private int maxColumnTearIterations = 12;
-  /** Relative tolerance used for side-draw and hydraulic tear variables. */
-  private double columnTearTolerance = 1.0e-4;
-  /** Whether tray/packing hydraulic pressure drop should update the pressure profile. */
-  private boolean hydraulicPressureDropCouplingEnabled = false;
-  /** Internals type used when hydraulic pressure-drop coupling is active. */
-  private String hydraulicPressureDropInternalsType = "sieve";
-  /** Latest coupled hydraulic pressure drop in Pa. */
-  private double lastHydraulicPressureDropPa = 0.0;
-  /** Latest relative pressure-profile change from hydraulic coupling. */
-  private double lastHydraulicPressureDropResidual = 0.0;
-  /** Number of outer tear-variable iterations used in the latest run. */
-  private int lastColumnTearIterationCount = 0;
-  /** Maximum relative residual from the latest outer tear-variable solve. */
-  private double lastColumnTearResidual = 0.0;
-  /** Whether the latest outer tear-variable solve satisfied tolerance. */
-  private boolean lastColumnTearConverged = true;
-  /** Latest maximum relative pumparound return-stream change. */
-  private double lastPumparoundRelativeChange = 0.0;
-  /** Whether the latest outer tear update changed any manipulated variable. */
-  private transient boolean columnTearVariablesChanged = false;
-
-  /**
-   * Setter for the field <code>doMultiPhaseCheck</code>.
-   *
-   * @param doMultiPhaseCheck a boolean
-   */
-  public void setMultiPhaseCheck(boolean doMultiPhaseCheck) {
-    this.doMultiPhaseCheck = doMultiPhaseCheck;
-    feedmixer.setMultiPhaseCheck(doMultiPhaseCheck);
-    for (SimpleTray tray : trays) {
-      tray.setMultiPhaseCheck(doMultiPhaseCheck);
-    }
-  }
-
-  /**
-   * Getter for the field <code>doMultiPhaseCheck</code>.
-   *
-   * @return a boolean
-   */
-  public boolean isDoMultiPhaseCheck() {
-    return doMultiPhaseCheck;
-  }
-
-  /**
-   * Murphree tray efficiency applied to each equilibrium stage (0..1). Default 1.0 = ideal.
-   */
-  private double murphreeEfficiency = 1.0;
-
-  /**
-   * Per-stage Murphree efficiency overrides. Index 0 is the reboiler and the last stage is the condenser if present. A
-   * {@link Double#NaN} value means that the column-wide Murphree efficiency is used for that stage.
-   */
-  private double[] perStageMurphreeEfficiency = null;
-
-  /**
-   * Per-iteration convergence history: [iteration][0=tempErr, 1=massErr, 2=energyErr].
-   */
-  private transient List<double[]> convergenceHistory = new ArrayList<>();
-
-  /**
-   * Number of simplified inner-loop iterations between rigorous flash updates in the IO solver. Higher values reduce
-   * flash count but may reduce accuracy. Default 3.
-   */
-  private int innerLoopSteps = 3;
-
-  // ============ Dynamic Simulation Fields ============
-  /** Whether the dynamic tray model is enabled for transient simulation. */
-  private boolean dynamicColumnEnabled = false;
-  /** Dynamic model formulation currently used by {@link #runTransient(double, UUID)}. */
-  private DynamicColumnModel dynamicColumnModel = DynamicColumnModel.EXPERIMENTAL_EULER;
-  /** Liquid holdup per tray in moles. Indexed by tray number. */
-  private transient double[] trayLiquidHoldup = null;
-  /** Weir height on each tray in metres. */
-  private double trayWeirHeight = 0.05;
-  /** Weir length (crest length) on each tray in metres. */
-  private double trayWeirLength = 1.0;
-  /** Per-tray enthalpy in J. Indexed by tray number. Null until initialized. */
-  private transient double[] trayEnthalpy = null;
-  /** Dry tray pressure drop in Pa per tray â€” for vapor hydraulic model. */
-  private double trayDryPressureDrop = 0.0;
-  /** Whether per-tray energy balance is active (uses PH flash instead of TP). */
-  private boolean dynamicEnergyEnabled = false;
-
-  /**
-   * Constructor for DistillationColumn.
-   *
-   * @param name Name of distillation column
-   * @param numberOfTraysLocal Number of SimpleTrays to add (excluding reboiler/condenser)
-   * @param hasReboiler Set true to add reboiler
-   * @param hasCondenser Set true to add Condenser
-   */
-  public DistillationColumn(String name, int numberOfTraysLocal, boolean hasReboiler, boolean hasCondenser) {
-    super(name);
-    this.hasReboiler = hasReboiler;
-    this.hasCondenser = hasCondenser;
-    distoperations = new neqsim.process.processmodel.ProcessSystem();
-    this.numberOfTrays = numberOfTraysLocal;
-    initMechanicalDesign();
-
-    // If user sets hasReboiler, put that in as the first tray in 'trays' list
-    if (hasReboiler) {
-      trays.add(new Reboiler("Reboiler"));
-      this.numberOfTrays++;
-    }
-
-    // Then the middle "simple" trays
-    for (int i = 0; i < numberOfTraysLocal; i++) {
-      trays.add(createMiddleTray("SimpleTray" + (i + 1), i));
-    }
-
-    // If user sets hasCondenser, add it at the top
-    if (hasCondenser) {
-      trays.add(new Condenser("Condenser"));
-      this.numberOfTrays++;
-    }
-
-    // Add them all to the process system
-    for (int i = 0; i < this.numberOfTrays; i++) {
-      distoperations.add(trays.get(i));
-    }
-  }
-
-  /**
-   * Add a feed stream to the specified tray. (Now allows multiple streams on the same trayNumber, using a list.)
-   *
-   * @param inputStream the feed stream
-   * @param feedTrayNumber the tray number (0-based in the code) to which this feed goes
-   * @throws IllegalArgumentException if the stream is null or the tray index is outside the column tray range
-   */
-  public void addFeedStream(StreamInterface inputStream, int feedTrayNumber) {
-    if (inputStream == null) {
-      throw new IllegalArgumentException("inputStream can not be null");
-    }
-    if (feedTrayNumber < 0 || feedTrayNumber >= numberOfTrays) {
-      throw new IllegalArgumentException("Feed tray index must be between 0 and " + (numberOfTrays - 1));
-    }
-    // Put this feed into our feedStreams list for that trayNumber
-    feedStreams.computeIfAbsent(feedTrayNumber, k -> new ArrayList<>()).add(inputStream);
-
-    // Also attach it to the tray itself
-    getTray(feedTrayNumber).addStream(inputStream);
-
-    // If your design is that *all* feed streams get combined in feedmixer:
-    feedmixer.addStream(inputStream);
-    feedmixer.run();
-
-    // Then you optionally split the feedmixer output into dummy streams_3,
-    // gasOutStream, liquidOutStream (the existing pattern).
-    double moles = feedmixer.getOutletStream().getThermoSystem().getTotalNumberOfMoles();
-    stream_3 = feedmixer.getOutletStream(); // combined
-    gasOutStream.setThermoSystem(stream_3.getThermoSystem().clone());
-    gasOutStream.getThermoSystem().setTotalNumberOfMoles(moles / 2.0);
-
-    liquidOutStream.setThermoSystem(stream_3.getThermoSystem().clone());
-    liquidOutStream.getThermoSystem().setTotalNumberOfMoles(moles / 2.0);
-
-    // Mark that we need to re-initialize if new feeds are added
-    setDoInitializion(true);
-  }
-
-  /**
-   * Add a feed stream to the column without specifying the tray.
-   *
-   * <p>
-   * The feed tray is estimated automatically when the column is run. The estimate uses an existing tray temperature
-   * profile when available, otherwise it builds a simple temperature profile from configured condenser/reboiler
-   * temperatures and the feed temperature. This is a robust initial placement heuristic, not a guarantee of global
-   * optimum or convergence for every specification.
-   * </p>
-   *
-   * @param inputStream the feed stream
-   */
-  public void addFeedStream(StreamInterface inputStream) {
-    unassignedFeedStreams.add(inputStream);
-    setDoInitializion(true);
-  }
-
-  /**
-   * Return the feed streams connected to a given tray.
-   *
-   * @param feedTrayNumber tray index where feeds are connected
-   * @return immutable view of feed streams connected to the tray
-   */
-  public List<StreamInterface> getFeedStreams(int feedTrayNumber) {
-    List<StreamInterface> feeds = feedStreams.get(feedTrayNumber);
-    if (feeds == null) {
-      return Collections.emptyList();
-    }
-    return Collections.unmodifiableList(feeds);
-  }
-
-  /**
-   * Return all feed streams connected to the column, keyed by bottom-up tray index.
-   *
-   * @return immutable view of the feed stream map
-   */
-  public Map<Integer, List<StreamInterface>> getFeedStreams() {
-    return Collections.unmodifiableMap(feedStreams);
-  }
-
-  /**
-   * Check whether this column includes a reboiler stage.
-   *
-   * @return {@code true} if a reboiler is present
-   */
-  public boolean hasReboiler() {
-    return hasReboiler;
-  }
-
-  /**
-   * Check whether this column includes a condenser stage.
-   *
-   * @return {@code true} if a condenser is present
-   */
-  public boolean hasCondenser() {
-    return hasCondenser;
-  }
-
-  /**
-   * Estimate which tray an unassigned feed stream would be placed on.
-   *
-   * <p>
-   * This method does not connect the feed stream to the column. It is intended for diagnostics and for checking
-   * automatic feed placement before calling {@link #run()}.
-   * </p>
-   *
-   * @param inputStream feed stream to evaluate
-   * @return 0-based tray number, or {@code -1} if the stream is null or no trays exist
-   */
-  public int estimateFeedTrayNumber(StreamInterface inputStream) {
-    if (inputStream == null || numberOfTrays == 0) {
-      return -1;
-    }
-    inputStream.run();
-    return estimateFeedTrayNumber(inputStream.getTemperature());
-  }
-
-  /**
-   * Return the tray number for a feed stream currently assigned to the column.
-   *
-   * <p>
-   * The lookup first compares stream object identity and then falls back to the stream name. Feed streams added with
-   * {@link #addFeedStream(StreamInterface)} are assigned when the column is run.
-   * </p>
-   *
-   * @param inputStream feed stream to locate
-   * @return 0-based tray number, or {@code -1} if the stream is null or not assigned
-   */
-  public int getFeedTrayNumber(StreamInterface inputStream) {
-    if (inputStream == null) {
-      return -1;
-    }
-    int feedTrayNumber = getFeedTrayNumberByReference(inputStream);
-    if (feedTrayNumber >= 0) {
-      return feedTrayNumber;
-    }
-    return getFeedTrayNumber(inputStream.getName());
-  }
-
-  /**
-   * Return the tray number for a feed stream with the given name.
-   *
-   * @param streamName feed stream name to locate
-   * @return 0-based tray number, or {@code -1} if the name is null or not assigned
-   */
-  public int getFeedTrayNumber(String streamName) {
-    if (streamName == null) {
-      return -1;
-    }
-    for (int trayNumber = 0; trayNumber < numberOfTrays; trayNumber++) {
-      List<StreamInterface> feeds = feedStreams.get(trayNumber);
-      if (feeds == null) {
-        continue;
-      }
-      for (StreamInterface feed : feeds) {
-        if (streamName.equals(feed.getName())) {
-          return trayNumber;
-        }
-      }
-    }
-    return -1;
-  }
-
-  /**
-   * Return the tray number for the exact feed stream object.
-   *
-   * @param inputStream feed stream object to locate
-   * @return 0-based tray number, or {@code -1} if the stream object is not assigned
-   */
-  private int getFeedTrayNumberByReference(StreamInterface inputStream) {
-    for (int trayNumber = 0; trayNumber < numberOfTrays; trayNumber++) {
-      List<StreamInterface> feeds = feedStreams.get(trayNumber);
-      if (feeds == null) {
-        continue;
-      }
-      for (StreamInterface feed : feeds) {
-        if (feed == inputStream) {
-          return trayNumber;
-        }
-      }
-    }
-    return -1;
-  }
-
-  /**
-   * Prepare the column for calculation by estimating tray temperatures and linking streams between trays.
-   *
-   * <p>
-   * The feed tray is solved first to obtain a temperature estimate. This temperature is then used to linearly guess
-   * temperatures upwards to the condenser and downwards to the reboiler. Gas and liquid outlet streams are connected to
-   * neighbouring trays so that a subsequent call to {@link #run(UUID)} can iterate to convergence.
-   * </p>
-   */
-  public void init() {
-    if (!isDoInitializion()) {
-      return;
-    }
-    setDoInitializion(false);
-
-    // Capture legacy direct feeds before recording the identity of the tray network. Otherwise the
-    // first initialized state omits those feeds from the fingerprint and appears incompatible on
-    // the next unchanged solve.
-    captureDirectExternalTrayFeeds();
-
-    // The tray fluids are about to be rebuilt from the current feeds, so record which thermodynamic
-    // identity they describe. Any later solve that sees a different identity must initialize again
-    // instead of reusing or warm-starting from a tray network built for other components.
-    trayStateThermodynamicIdentitySignature = calculateThermodynamicIdentitySignature();
-    lastSequentialInitializationSignature = calculateSequentialInitializationSignature();
-    naphtaliSandholmStateOwned = false;
-    hasNaphtaliSandholmWarmState = false;
-    hasSequentialExactReuseState = false;
-
-    resetTrayInputsToExternalFeeds();
-    cloneExternalTrayInputsForInitialization();
-
-    // If feed streams are empty, nothing to do
-    if (feedStreams.isEmpty() && directExternalFeedStreams.isEmpty()) {
-      resetLastSolveMetrics();
-      return;
-    }
-
-    // Grab the tray with the lowest index among the feed trays
-    int firstFeedTrayNumber = getFirstExternalFeedTrayNumber();
-
-    // We run the first feed tray to see its temperature:
-    getTray(firstFeedTrayNumber).run();
-
-    // If that tray ended up single-phase, see if adding some other feed helps
-    if (getTray(firstFeedTrayNumber).getFluid().getNumberOfPhases() == 1) {
-      for (int i = 0; i < numberOfTrays; i++) {
-        if (getTray(i).getNumberOfInputStreams() > 0 && i != firstFeedTrayNumber) {
-          getTray(firstFeedTrayNumber).addStream(trays.get(i).getStream(0));
-          getTray(firstFeedTrayNumber).run();
-          // remove it again
-          getTray(firstFeedTrayNumber).removeInputStream(getTray(firstFeedTrayNumber).getNumberOfInputStreams() - 1);
-          if (getTray(firstFeedTrayNumber).getThermoSystem().getNumberOfPhases() > 1) {
-            break;
-          }
-        } else if (i == firstFeedTrayNumber && getTray(i).getNumberOfInputStreams() > 1) {
-          getTray(firstFeedTrayNumber).addStream(trays.get(i).getStream(1));
-          trays.get(firstFeedTrayNumber).run();
-          getTray(firstFeedTrayNumber).removeInputStream(getTray(firstFeedTrayNumber).getNumberOfInputStreams() - 1);
-          if (getTray(firstFeedTrayNumber).getThermoSystem().getNumberOfPhases() > 1) {
-            break;
-          }
-        }
-      }
-    }
-
-    // Just in case itâ€™s still single-phase, do an init(0), init(3).
-    if (getTray(firstFeedTrayNumber).getFluid().getNumberOfPhases() == 1) {
-      getTray(firstFeedTrayNumber).getThermoSystem().init(0);
-      getTray(firstFeedTrayNumber).getThermoSystem().init(3);
-    }
-
-    // Set up reboiler trayâ€™s temperature
-    trays.get(0).addStream(trays.get(firstFeedTrayNumber).getLiquidOutStream().clone());
-    trays.get(0).run();
-
-    double feedTrayTemperature = getTray(firstFeedTrayNumber).getTemperature();
-
-    if (trays.get(numberOfTrays - 1).getNumberOfInputStreams() > 0) {
-      condenserTemperature = trays.get(numberOfTrays - 1).getThermoSystem().getTemperature();
-    } else {
-      condenserTemperature = feedTrayTemperature - 1.0;
-    }
-    reboilerTemperature = trays.get(0).getThermoSystem().getTemperature();
-
-    // Rough guess for temperature steps
-    double deltaTempCondenser = (feedTrayTemperature - condenserTemperature)
-        / (numberOfTrays * 1.0 - firstFeedTrayNumber - 1);
-    double deltaTempReboiler = (reboilerTemperature - feedTrayTemperature) / (firstFeedTrayNumber * 1.0);
-
-    // set temperature from feed tray up
-    double delta = 0;
-    for (int i = firstFeedTrayNumber + 1; i < numberOfTrays; i++) {
-      delta += deltaTempCondenser;
-      trays.get(i).setTemperature(getTray(firstFeedTrayNumber).getThermoSystem().getTemperature() - delta);
-    }
-
-    // set temperature from feed tray down
-    delta = 0;
-    for (int i = firstFeedTrayNumber - 1; i >= 0; i--) {
-      delta += deltaTempReboiler;
-      trays.get(i).setTemperature(getTray(firstFeedTrayNumber).getThermoSystem().getTemperature() + delta);
-    }
-
-    // Link upward
-    for (int i = 1; i < numberOfTrays; i++) {
-      trays.get(i).addStream(trays.get(i - 1).getGasOutStream());
-      trays.get(i).init();
-      trays.get(i).run();
-    }
-
-    // Link downward
-    for (int i = numberOfTrays - 2; i >= 1; i--) {
-      trays.get(i).addStream(trays.get(i + 1).getLiquidOutStream());
-      trays.get(i).init();
-      trays.get(i).run();
-    }
-
-    int streamNumb = (trays.get(0)).getNumberOfInputStreams() - 1;
-    trays.get(0).replaceStream(streamNumb, trays.get(1).getLiquidOutStream());
-    trays.get(0).init();
-    trays.get(0).run();
-
-    // Tray profile construction intentionally seeds internal feed clones at local tray
-    // temperatures. Restore the caller-owned feed thermodynamic states before the actual
-    // column solver starts so the solved mass and energy balances use the requested feeds.
-    refreshInternalExternalFeedSystems();
-  }
-
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * Solve the column until tray temperatures converge.
-   *
-   * The method applies sequential substitution with an adaptive relaxation controller. Pressures are set linearly
-   * between bottom and top. Each iteration performs an upward sweep where liquid flows downward followed by a downward
-   * sweep where vapour flows upward. Tray temperatures and inter-tray stream flow rates are relaxed if the combined
-   * temperature, mass and energy residuals grow, providing basic line-search behaviour.
-   * </p>
-   */
-  @Override
-  public void run(UUID id) {
-    long runStartTime = System.nanoTime();
-    lastAppliedTemperatureStepResidual = Double.NaN;
-    lastInternalTrafficGuardReached = false;
-    internalTrafficCapActive = false;
-    lastSpecificationHomotopyStepCount = 0;
-    lastAutoSolverSummary = "";
-    lastFullFractionatorFastPathApplied = false;
-    lastFullFractionatorFastPathReason = "";
-    resetMatrixInsideOutDiagnostics();
-    ensureIndependentSideDrawSpecifications();
-    ensureIndependentPumparounds();
-    ensureIndependentTerminalSpecifications();
-    assignUnassignedFeeds();
-    convergenceHistory = new ArrayList<>();
-    applyDirectSpecifications();
-    applyFullFractionatorFastPath();
-    if (hasActiveColumnTearVariables()) {
-      solveWithColumnTearVariables(id);
-      commitNaphtaliSandholmWarmState();
-      ensureSolveTimeIncludesElapsedWallTime(runStartTime);
-      return;
-    }
-    solveConfiguredColumn(id);
-    commitNaphtaliSandholmWarmState();
-    ensureSolveTimeIncludesElapsedWallTime(runStartTime);
-  }
-
-  /**
-   * Commit the current finalized column inputs as a reusable Naphtali-Sandholm warm state.
-   *
-   * <p>
-   * {@link #naphtaliSandholmStateOwned} is part of the gate because
-   * {@link #acceptNaphtaliWarmStartCandidate(DistillationColumn, String)} keeps reporting
-   * {@link SolverType#NAPHTALI_SANDHOLM} after adopting a state produced by the residual-monitored solver. Committing
-   * that state would cache a MESH result under the Naphtali-Sandholm key.
-   * </p>
-   */
-  private void commitNaphtaliSandholmWarmState() {
-    boolean acceptedNaphtaliSolve = naphtaliSandholmStateOwned && lastSolverTypeUsed == SolverType.NAPHTALI_SANDHOLM
-        && (lastSolveStatus == SolveStatus.RIGOROUS_CONVERGED || lastSolveStatus == SolveStatus.RECONCILED_PRODUCTS)
-        && !isDoInitializion();
-    hasNaphtaliSandholmWarmState = acceptedNaphtaliSolve;
-    if (acceptedNaphtaliSolve) {
-      lastNaphtaliSandholmInputSignature = calculateNaphtaliSandholmInputSignature();
-      lastNaphtaliSandholmConvergenceGateSignature =
-          calculateNaphtaliSandholmConvergenceGateSignature();
-    }
-  }
-
-  /**
-   * Ensures the reported solve time covers the complete public run call.
-   *
-   * @param startTime nano time recorded at the start of {@link #run(UUID)}
-   */
-  private void ensureSolveTimeIncludesElapsedWallTime(long startTime) {
-    double elapsedSeconds = (System.nanoTime() - startTime) / 1.0e9;
-    if (Double.isFinite(elapsedSeconds) && elapsedSeconds > lastSolveTimeSeconds) {
-      lastSolveTimeSeconds = elapsedSeconds;
-    }
-  }
-
-  /**
-   * Check whether side draws, pumparounds, or hydraulics add outer tear variables.
-   *
-   * @return {@code true} when an outer tear-variable solve is required
-   */
-  private boolean hasActiveColumnTearVariables() {
-    return !sideDrawSpecifications.isEmpty() || !pumparounds.isEmpty() || hydraulicPressureDropCouplingEnabled;
-  }
-
-  /**
-   * Solve the configured column once and update diagnostics.
-   *
-   * @param id calculation identifier
-   */
-  private void solveConfiguredColumn(UUID id) {
-    if (hasAdjustableSpecifications()) {
-      solveWithSpecifications(id);
-      updateSpecificationResiduals();
-      updateMeshResiduals();
-      return;
-    }
-    solveInner(id);
-    updateSpecificationResiduals();
-    updateMeshResiduals();
-  }
-
-  /**
-   * Solve the column with outer iterations for side draws, pumparounds, and hydraulics.
-   *
-   * @param id calculation identifier
-   */
-  private void solveWithColumnTearVariables(UUID id) {
-    int iterationLimit = getColumnTearIterationLimit();
-    double tolerance = getColumnTearTolerance();
-    lastColumnTearIterationCount = 0;
-    lastColumnTearResidual = Double.POSITIVE_INFINITY;
-    lastColumnTearConverged = false;
-    for (int iteration = 0; iteration < iterationLimit; iteration++) {
-      solveConfiguredColumn(id);
-      double relativeChange = updateColumnTearVariables(id);
-      lastColumnTearIterationCount = iteration + 1;
-      lastColumnTearResidual = relativeChange;
-      if (relativeChange <= tolerance) {
-        if (columnTearVariablesChanged) {
-          setDoInitializion(true);
-          solveConfiguredColumn(id);
-        }
-        updateSideDrawSpecificationResidualsOnly();
-        lastColumnTearResidual = Math.max(relativeChange, getMaxSideDrawSpecificationResidual());
-        lastColumnTearConverged = lastColumnTearResidual <= tolerance;
-        finalizeColumnTearConvergenceStatus(tolerance);
-        return;
-      }
-      if (!columnTearVariablesChanged) {
-        updateSideDrawSpecificationResidualsOnly();
-        lastColumnTearResidual = Math.max(relativeChange, getMaxSideDrawSpecificationResidual());
-        lastColumnTearConverged = false;
-        finalizeColumnTearConvergenceStatus(tolerance);
-        return;
-      }
-      if (iteration < iterationLimit - 1) {
-        setDoInitializion(true);
-      }
-    }
-    setDoInitializion(true);
-    solveConfiguredColumn(id);
-    updateSideDrawSpecificationResidualsOnly();
-    lastColumnTearResidual = Math.max(lastColumnTearResidual, getMaxSideDrawSpecificationResidual());
-    lastColumnTearConverged = lastColumnTearResidual <= tolerance;
-    finalizeColumnTearConvergenceStatus(tolerance);
-  }
-
-  /**
-   * Make an exhausted outer tear authoritative for the public column solve status.
-   *
-   * <p>
-   * Inner tray solvers call {@link #solved()} while the outer tear loop is still active, so the outer gate cannot be
-   * added directly to the generic residual predicate without triggering premature accelerator fallbacks. This method is
-   * called only after an outer convergence decision has been made. It preserves an existing inner failure reason and
-   * converts only an otherwise accepted inner result to a failed coordinated solve.
-   * </p>
-   *
-   * @param tolerance active outer tear-variable tolerance
-   */
-  private void finalizeColumnTearConvergenceStatus(double tolerance) {
-    if (lastColumnTearConverged) {
-      return;
-    }
-    boolean innerSolveAccepted = lastSolveStatus == SolveStatus.RIGOROUS_CONVERGED
-        || lastSolveStatus == SolveStatus.RECONCILED_PRODUCTS;
-    if (!innerSolveAccepted) {
-      return;
-    }
-    lastSolveStatus = SolveStatus.FAILED;
-    lastSolveStatusReason = "Column tear-variable solve did not converge after " + lastColumnTearIterationCount
-        + " iteration(s): residual " + lastColumnTearResidual + " exceeds tolerance " + tolerance;
-  }
-
-  /**
-   * Get the maximum iteration count for all active column tear variables.
-   *
-   * @return maximum outer tear-variable iterations
-   */
-  private int getColumnTearIterationLimit() {
-    int iterationLimit = Math.max(maxColumnTearIterations, maxPumparoundIterations);
-    for (ColumnSideDrawSpecification specification : sideDrawSpecifications) {
-      iterationLimit = Math.max(iterationLimit, specification.getMaxIterations());
-    }
-    return Math.max(1, iterationLimit);
-  }
-
-  /**
-   * Get the active tolerance for all column tear variables.
-   *
-   * @return active relative tolerance
-   */
-  private double getColumnTearTolerance() {
-    double tolerance = Math.min(columnTearTolerance, pumparoundTolerance);
-    for (ColumnSideDrawSpecification specification : sideDrawSpecifications) {
-      tolerance = Math.min(tolerance, specification.getTolerance());
-    }
-    return Math.max(1.0e-12, tolerance);
-  }
-
-  /**
-   * Update all outer tear variables from the latest column solution.
-   *
-   * @param id calculation identifier
-   * @return maximum relative change or residual across tear variables
-   */
-  private double updateColumnTearVariables(UUID id) {
-    columnTearVariablesChanged = false;
-    double maxRelativeChange = 0.0;
-    maxRelativeChange = Math.max(maxRelativeChange, updateSideDrawSpecificationFractions());
-    maxRelativeChange = Math.max(maxRelativeChange, enforceSideDrawFeedInventoryLimit());
-    maxRelativeChange = Math.max(maxRelativeChange, updatePumparoundReturnStreams(id));
-    maxRelativeChange = Math.max(maxRelativeChange, updatePressureProfileFromHydraulics());
-    return maxRelativeChange;
-  }
-
-  /**
-   * Update all pumparound return streams from the latest tray liquid draws.
-   *
-   * @param id calculation identifier
-   * @return maximum relative return-flow change across pumparounds
-   */
-  private double updatePumparoundReturnStreams(UUID id) {
-    double maxRelativeChange = 0.0;
-    for (ColumnPumparound pumparound : pumparounds) {
-      StreamInterface drawStream = getTray(pumparound.getDrawTrayNumber()).getLiquidPumparoundDrawStream();
-      maxRelativeChange = Math.max(maxRelativeChange, pumparound.updateReturnStream(drawStream, id));
-    }
-    lastPumparoundRelativeChange = maxRelativeChange;
-    if (maxRelativeChange > 1.0e-12) {
-      columnTearVariablesChanged = true;
-    }
-    return maxRelativeChange;
-  }
-
-  /**
-   * Update configured side-draw fractions to meet flow specifications.
-   *
-   * @return maximum relative side-draw flow residual
-   */
-  private double updateSideDrawSpecificationFractions() {
-    double maxRelativeResidual = 0.0;
-    for (ColumnSideDrawSpecification specification : sideDrawSpecifications) {
-      StreamInterface sideDrawStream = getSideDrawStream(specification.getTrayNumber(), specification.getPhase());
-      double actualFlowRate = sideDrawStream.getFlowRate(specification.getFlowUnit());
-      double residual = specification.updateActualFlowRate(actualFlowRate);
-      maxRelativeResidual = Math.max(maxRelativeResidual, residual);
-      if (residual <= specification.getTolerance()) {
-        continue;
-      }
-      double newFraction = calculateNextSideDrawFraction(specification, actualFlowRate);
-      columnTearVariablesChanged = setSideDrawFractionWithinLimit(specification.getTrayNumber(),
-          specification.getPhase(), newFraction) || columnTearVariablesChanged;
-    }
-    return maxRelativeResidual;
-  }
-
-  /** Update side-draw flow residuals without changing side-draw fractions. */
-  private void updateSideDrawSpecificationResidualsOnly() {
-    for (ColumnSideDrawSpecification specification : sideDrawSpecifications) {
-      StreamInterface sideDrawStream = getSideDrawStream(specification.getTrayNumber(), specification.getPhase());
-      specification.updateActualFlowRate(sideDrawStream.getFlowRate(specification.getFlowUnit()));
-    }
-  }
-
-  /**
-   * Get the maximum residual across side-draw flow specifications.
-   *
-   * @return maximum relative residual, or zero when no side-draw specs are configured
-   */
-  private double getMaxSideDrawSpecificationResidual() {
-    double maxResidual = 0.0;
-    for (ColumnSideDrawSpecification specification : sideDrawSpecifications) {
-      maxResidual = Math.max(maxResidual, specification.getLastRelativeResidual());
-    }
-    return maxResidual;
-  }
-
-  /**
-   * Calculate the next side-draw fraction for a flow specification.
-   *
-   * @param specification side-draw flow specification
-   * @param actualFlowRate latest actual flow rate
-   * @return next candidate side-draw fraction
-   */
-  private double calculateNextSideDrawFraction(ColumnSideDrawSpecification specification, double actualFlowRate) {
-    double currentFraction = getSideDrawFraction(specification.getTrayNumber(), specification.getPhase());
-    if (specification.getTargetFlowRate() <= 1.0e-12) {
-      return 0.0;
-    }
-    if (Math.abs(actualFlowRate) <= 1.0e-12) {
-      return currentFraction > 0.0 ? currentFraction + 0.05 : 0.05;
-    }
-    return currentFraction * specification.getTargetFlowRate() / actualFlowRate;
-  }
-
-  /**
-   * Get the configured side-draw fraction on a tray.
-   *
-   * @param trayNumber bottom-up tray index
-   * @param phase side-draw phase
-   * @return current side-draw fraction
-   */
-  private double getSideDrawFraction(int trayNumber, SideDrawPhase phase) {
-    SimpleTray tray = getTray(trayNumber);
-    if (phase == SideDrawPhase.GAS) {
-      return tray.getGasSideDrawFraction();
-    }
-    if (phase == SideDrawPhase.LIQUID) {
-      return tray.getLiquidSideDrawFraction();
-    }
-    throw new IllegalArgumentException("Side draw phase cannot be null");
-  }
-
-  /**
-   * Set a side-draw fraction after clamping it to the available tray phase traffic.
-   *
-   * @param trayNumber bottom-up tray index
-   * @param phase side-draw phase
-   * @param fraction requested side-draw fraction
-   * @return true if the tray fraction changed, false if the requested value was already set
-   */
-  private boolean setSideDrawFractionWithinLimit(int trayNumber, SideDrawPhase phase, double fraction) {
-    double limitedFraction = Math.max(0.0, Math.min(getMaximumSideDrawFraction(trayNumber, phase), fraction));
-    double currentFraction = getSideDrawFraction(trayNumber, phase);
-    if (Math.abs(limitedFraction - currentFraction) <= 1.0e-12) {
-      return false;
-    }
-    setSideDrawFraction(trayNumber, phase, limitedFraction);
-    return true;
-  }
-
-  /**
-   * Get the maximum side-draw fraction available for the selected tray phase.
-   *
-   * @param trayNumber bottom-up tray index
-   * @param phase side-draw phase
-   * @return maximum allowed side-draw fraction
-   */
-  private double getMaximumSideDrawFraction(int trayNumber, SideDrawPhase phase) {
-    if (phase == SideDrawPhase.GAS) {
-      return 1.0;
-    }
-    if (phase == SideDrawPhase.LIQUID) {
-      return Math.max(0.0, 1.0 - getTray(trayNumber).getLiquidPumparoundDrawFraction());
-    }
-    throw new IllegalArgumentException("Side draw phase cannot be null");
-  }
-
-  /**
-   * Limit side-product fractions so side draws cannot remove more component inventory than feeds.
-   *
-   * @return relative reduction applied to side-draw fractions, or zero if no reduction was needed
-   */
-  private double enforceSideDrawFeedInventoryLimit() {
-    if (getSideDrawStreams().isEmpty()) {
-      return 0.0;
-    }
-    double[] feedComponentMoles = getFeedComponentMoles();
-    double[] sideDrawComponentMoles = getSideDrawComponentMoles(feedComponentMoles.length);
-    double scaleFactor = 1.0;
-    for (int componentIndex = 0; componentIndex < sideDrawComponentMoles.length; componentIndex++) {
-      double sideDrawMoles = sideDrawComponentMoles[componentIndex];
-      if (sideDrawMoles > feedComponentMoles[componentIndex] + 1.0e-12) {
-        scaleFactor = Math.min(scaleFactor, feedComponentMoles[componentIndex] / sideDrawMoles);
-      }
-    }
-    if (scaleFactor >= 1.0 - 1.0e-10) {
-      return 0.0;
-    }
-    scaleSideDrawFractions(scaleFactor);
-    columnTearVariablesChanged = true;
-    return 1.0 - scaleFactor;
-  }
-
-  /**
-   * Scale all side-draw fractions by a common factor.
-   *
-   * @param scaleFactor common scale factor from zero to one
-   */
-  private void scaleSideDrawFractions(double scaleFactor) {
-    for (int trayNumber = 0; trayNumber < numberOfTrays; trayNumber++) {
-      SimpleTray tray = getTray(trayNumber);
-      if (tray.getGasSideDrawFraction() > 0.0) {
-        tray.setGasSideDrawFraction(tray.getGasSideDrawFraction() * scaleFactor);
-      }
-      if (tray.getLiquidSideDrawFraction() > 0.0) {
-        tray.setLiquidSideDrawFraction(tray.getLiquidSideDrawFraction() * scaleFactor);
-      }
-    }
-  }
-
-  /**
-   * Update the column pressure profile from tray or packing hydraulic pressure drop.
-   *
-   * @return relative pressure-profile change
-   */
-  private double updatePressureProfileFromHydraulics() {
-    if (!hydraulicPressureDropCouplingEnabled) {
-      return 0.0;
-    }
-    try {
-      ColumnInternalsDesigner designer = calcColumnInternals(hydraulicPressureDropInternalsType);
-      double pressureDropPa = Math.max(0.0, designer.getTotalPressureDrop());
-      lastHydraulicPressureDropPa = pressureDropPa;
-      lastHydraulicPressureDropResidual = applyHydraulicPressureDrop(pressureDropPa);
-      if (lastHydraulicPressureDropResidual > 1.0e-12) {
-        columnTearVariablesChanged = true;
-      }
-      return lastHydraulicPressureDropResidual;
-    } catch (Exception exception) {
-      logger.warn("Could not update hydraulic pressure drop for column {}", getName(), exception);
-      lastHydraulicPressureDropResidual = Double.POSITIVE_INFINITY;
-      return lastHydraulicPressureDropResidual;
-    }
-  }
-
-  /**
-   * Apply a hydraulic pressure drop to the configured pressure profile.
-   *
-   * @param pressureDropPa total hydraulic pressure drop in Pa
-   * @return relative pressure-profile endpoint change
-   */
-  private double applyHydraulicPressureDrop(double pressureDropPa) {
-    double pressureDropBar = pressureDropPa / 1.0e5;
-    if (isPositiveFinite(topTrayPressure)) {
-      double previousBottomPressure = bottomTrayPressure;
-      bottomTrayPressure = topTrayPressure + pressureDropBar;
-      applyOptimizationPressureProfile();
-      if (!isPositiveFinite(previousBottomPressure)) {
-        return 1.0;
-      }
-      return Math.abs(bottomTrayPressure - previousBottomPressure)
-          / Math.max(1.0e-12, Math.abs(previousBottomPressure));
-    }
-    if (isPositiveFinite(bottomTrayPressure)) {
-      double previousTopPressure = topTrayPressure;
-      topTrayPressure = Math.max(1.0e-6, bottomTrayPressure - pressureDropBar);
-      applyOptimizationPressureProfile();
-      if (!isPositiveFinite(previousTopPressure)) {
-        return 1.0;
-      }
-      return Math.abs(topTrayPressure - previousTopPressure) / Math.max(1.0e-12, Math.abs(previousTopPressure));
-    }
-    return 0.0;
-  }
-
-  /**
-   * Check whether the fixed liquid-reflux flow and top reflux-ratio specification claim the same condenser split.
-   *
-   * @return {@code true} when both mutually exclusive controls are active
-   */
-  private boolean hasConflictingCondenserRefluxSpecifications() {
-    Condenser condenser = hasCondenser ? getCondenser() : null;
-    return condenser != null && condenser.isSeparation_with_liquid_reflux()
-        && isTopRefluxRatioSpecification(topSpecification);
-  }
-
-  /**
-   * Check whether a specification controls the condenser reflux ratio.
-   *
-   * @param specification specification to inspect
-   * @return {@code true} for a top reflux-ratio specification
-   */
-  private boolean isTopRefluxRatioSpecification(ColumnSpecification specification) {
-    return specification != null && specification.getLocation() == ColumnSpecification.ProductLocation.TOP
-        && specification.getType() == ColumnSpecification.SpecificationType.REFLUX_RATIO;
-  }
-
-  /**
-   * Check whether a specification controls the reboiler boilup ratio.
-   *
-   * @param specification specification to inspect
-   * @return {@code true} for a bottom reflux-ratio specification
-   */
-  private boolean isBottomRefluxRatioSpecification(ColumnSpecification specification) {
-    return specification != null && specification.getLocation() == ColumnSpecification.ProductLocation.BOTTOM
-        && specification.getType() == ColumnSpecification.SpecificationType.REFLUX_RATIO;
-  }
-
-  /**
-   * Create an actionable message for contradictory condenser reflux controls.
-   *
-   * @return degrees-of-freedom error message
-   */
-  private String createConflictingCondenserRefluxSpecificationsMessage() {
-    return "Column " + getName() + " cannot combine a fixed liquid-reflux flow with a top reflux-ratio specification; "
-        + "select one condenser reflux control";
-  }
-
-  /**
-   * Reject contradictory condenser reflux controls retained through direct condenser mutation or serialization.
-   *
-   * @throws IllegalStateException if fixed liquid reflux and top reflux ratio both control the condenser split
-   */
-  private void ensureIndependentTerminalSpecifications() {
-    if (hasConflictingCondenserRefluxSpecifications()) {
-      throw new IllegalStateException(createConflictingCondenserRefluxSpecificationsMessage());
-    }
-  }
-
-  /** Apply specifications that map directly to condenser or reboiler controls. */
-  private void applyDirectSpecifications() {
-    applyDirectSpecification(topSpecification);
-    applyDirectSpecification(bottomSpecification);
-  }
-
-  /**
-   * Apply a specification that does not require an outer iteration.
-   *
-   * @param spec the specification to apply
-   */
-  private void applyDirectSpecification(ColumnSpecification spec) {
-    if (spec == null) {
-      return;
-    }
-
-    if (spec.getType() == ColumnSpecification.SpecificationType.REFLUX_RATIO) {
-      if (spec.getLocation() == ColumnSpecification.ProductLocation.TOP && hasCondenser) {
-        getCondenser().setRefluxRatio(spec.getTargetValue());
-      } else if (spec.getLocation() == ColumnSpecification.ProductLocation.BOTTOM && hasReboiler) {
-        getReboiler().setRefluxRatio(spec.getTargetValue());
-      }
-    } else if (spec.getType() == ColumnSpecification.SpecificationType.DUTY) {
-      if (spec.getLocation() == ColumnSpecification.ProductLocation.TOP && hasCondenser) {
-        getCondenser().setHeatInput(spec.getTargetValue());
-      } else if (spec.getLocation() == ColumnSpecification.ProductLocation.BOTTOM && hasReboiler) {
-        getReboiler().setHeatInput(spec.getTargetValue());
-      }
-    }
-  }
-
-  /**
-   * Check whether any configured column specification requires iterative adjustment.
-   *
-   * @return {@code true} when an active product/recovery/flow specification is present
-   */
-  private boolean hasAdjustableSpecifications() {
-    return needsAdjustment(topSpecification) || needsAdjustment(bottomSpecification);
-  }
-
-  /**
-   * Check whether all active column specifications are within their configured tolerance.
-   *
-   * @return {@code true} if all specifications are satisfied
-   */
-  private boolean specificationsSatisfied() {
-    boolean fixedLiquidRefluxSatisfied = !hasCondenser || getCondenser() == null
-        || getCondenser().isFixedLiquidRefluxSpecificationSatisfied();
-    return specificationSatisfied(topSpecification) && specificationSatisfied(bottomSpecification)
-        && fixedLiquidRefluxSatisfied;
-  }
-
-  /**
-   * Update the stored residuals for the currently configured column specifications.
-   */
-  private void updateSpecificationResiduals() {
-    lastTopSpecificationResidual = evaluateSpecErrorSafely(topSpecification);
-    lastBottomSpecificationResidual = evaluateSpecErrorSafely(bottomSpecification);
-  }
-
-  /** Update the stored specification residuals for package-level diagnostics. */
-  void updateSpecificationResidualDiagnostics() {
-    updateSpecificationResiduals();
-  }
-
-  /** Update the stored MESH residual diagnostics for the current column state. */
-  private void updateMeshResiduals() {
-    lastMeshResidual = ColumnMeshResidualEvaluator.evaluate(this);
-    lastTrayMaterialBalanceError = ColumnMeshResidualEvaluator.evaluateMaxTrayMaterialImbalance(this);
-  }
-
-  /**
-   * Evaluate a specification residual for diagnostics without interrupting a solve.
-   *
-   * @param spec the specification to evaluate
-   * @return current residual, zero for no specification, or {@code Double.NaN} if unavailable
-   */
-  private double evaluateSpecErrorSafely(ColumnSpecification spec) {
-    if (spec == null) {
-      return 0.0;
-    }
-    try {
-      return evaluateSpecError(spec);
-    } catch (Exception ex) {
-      logger.debug("Could not evaluate column specification residual", ex);
-      return Double.NaN;
-    }
-  }
-
-  /**
-   * Evaluate the current value represented by a specification without subtracting its target.
-   *
-   * @param spec the specification to evaluate
-   * @return current value for the specification, or {@code Double.NaN} if unavailable
-   */
-  private double evaluateSpecValueSafely(ColumnSpecification spec) {
-    if (spec == null) {
-      return Double.NaN;
-    }
-    try {
-      return evaluateSpecError(spec) + spec.getTargetValue();
-    } catch (Exception ex) {
-      logger.debug("Could not evaluate column specification value", ex);
-      return Double.NaN;
-    }
-  }
-
-  /**
-   * Check whether a single column specification is satisfied.
-   *
-   * @param spec the specification to evaluate
-   * @return {@code true} if no residual check is needed or the residual is within tolerance
-   */
-  private boolean specificationSatisfied(ColumnSpecification spec) {
-    if (spec == null || !needsAdjustment(spec)) {
-      return true;
-    }
-    return Math.abs(evaluateSpecError(spec)) <= spec.getTolerance();
-  }
-
-  /**
-   * Solve the column using the currently selected inner solver.
-   *
-   * @param id calculation identifier
-   * @return result from the selected column solver
-   */
-  private ColumnSolveResult solveSelectedSolver(UUID id) {
-    SolverType effectiveSolverType = getEffectiveSolverTypeForRun();
-    ColumnSolveResult result = ColumnSolverFactory.create(effectiveSolverType).solve(this, id);
-    lastSolverTypeUsed = result.getSolverType();
-    return result;
-  }
-
-  /**
-   * Check whether a liquid side draw removes all liquid traffic from any stage.
-   *
-   * <p>
-   * Naphtali-Sandholm initialization propagates liquid traffic by dividing by the fraction that remains for the tray
-   * below. The exact full-withdrawal boundary has a zero divisor and must use a solver that does not rely on that
-   * initialization. Fractions below one retain positive internal traffic and remain supported by the simultaneous
-   * solver.
-   * </p>
-   *
-   * @return {@code true} when at least one liquid side-draw fraction is exactly one
-   */
-  private boolean hasFullyWithdrawnLiquidStage() {
-    for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
-      if (trays.get(trayIndex).getLiquidSideDrawFraction() >= 1.0) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Select the solver to use for the current run after guarded default heuristics are applied.
-   *
-   * @return solver strategy to execute for this run
-   */
-  private SolverType getEffectiveSolverTypeForRun() {
-    if (lastFullFractionatorFastPathApplied) {
-      return SolverType.MESH_RESIDUAL;
-    }
-    // Warm-start fast path: once the AUTO selector has chosen a concrete solver and the column has
-    // already been solved, reuse that solver directly on subsequent warm re-solves (e.g. inside a
-    // recycle loop). This skips the expensive feasibility pre-screen, candidate cloning and
-    // multi-solver scoring that AUTO performs on every call. Adjustable specifications keep the
-    // full AUTO path because their continuation/homotopy logic depends on it.
-    SolverType effectiveSolverType = solverType;
-    if (solverType == SolverType.AUTO && hasBeenSolvedBefore && autoWarmStartSolver != null
-        && autoWarmStartSolver != SolverType.AUTO && !hasAdjustableSpecifications()) {
-      effectiveSolverType = autoWarmStartSolver;
-    }
-    // Pumparound returns are converged by the outer tear loop and are not yet assembled as
-    // Naphtali-Sandholm feed terms. Keep that coordinated configuration on the established
-    // residual-monitored solver until both withdrawal and return participate in one simultaneous
-    // equation system.
-    if (effectiveSolverType == SolverType.NAPHTALI_SANDHOLM && !pumparounds.isEmpty()) {
-      logger.debug("Using MESH_RESIDUAL for column {} because active pumparounds require outer return-stream coupling",
-          getName());
-      return SolverType.MESH_RESIDUAL;
-    }
-    if (effectiveSolverType == SolverType.NAPHTALI_SANDHOLM && hasFullyWithdrawnLiquidStage()) {
-      logger.debug("Using MESH_RESIDUAL for column {} because a full liquid side draw leaves zero internal downflow",
-          getName());
-      return SolverType.MESH_RESIDUAL;
-    }
-    return effectiveSolverType;
-  }
-
-  /**
-   * Apply opt-in fast defaults for large low-reflux full fractionators using the legacy default solver.
-   */
-  private void applyFullFractionatorFastPath() {
-    if (!shouldApplyFullFractionatorFastPath()) {
-      return;
-    }
-    int feedTrayNumber = getSingleApiFeedTrayNumber();
-    if (feedTrayNumber < 0 || (!isFeedTrayNearTop(feedTrayNumber) && !isFeedTrayNearBottom(feedTrayNumber))) {
-      return;
-    }
-    int recommendedFeedTrayNumber = getFullFractionatorFastPathFeedTrayNumber();
-    if (recommendedFeedTrayNumber == feedTrayNumber) {
-      return;
-    }
-    List<StreamInterface> movedFeeds = feedStreams.remove(Integer.valueOf(feedTrayNumber));
-    if (movedFeeds == null || movedFeeds.isEmpty()) {
-      return;
-    }
-    feedStreams.computeIfAbsent(Integer.valueOf(recommendedFeedTrayNumber), k -> new ArrayList<StreamInterface>())
-        .addAll(movedFeeds);
-    resetTrayInputsToExternalFeeds();
-    setDoInitializion(true);
-    lastFullFractionatorFastPathApplied = true;
-    lastFullFractionatorFastPathReason = "Opt-in full-fractionator fast path moved the " + "single feed from tray "
-        + feedTrayNumber + " to tray " + recommendedFeedTrayNumber + " and selected MESH_RESIDUAL.";
-  }
-
-  /**
-   * Check whether the opt-in full-fractionator fast path is applicable.
-   *
-   * @return {@code true} when opt-in fast defaults should be applied for this run
-   */
-  private boolean shouldApplyFullFractionatorFastPath() {
-    return fullFractionatorFastPathEnabled && !solverTypeExplicitlySet && solverType == SolverType.DIRECT_SUBSTITUTION
-        && hasCondenser && hasReboiler && numberOfTrays >= 10 && isLowRefluxFullFractionator();
-  }
-
-  /**
-   * Check whether the condenser reflux is in the low-reflux range where direct substitution often oscillates.
-   *
-   * @return {@code true} when the reflux ratio is low enough to enable the guarded fast path
-   */
-  private boolean isLowRefluxFullFractionator() {
-    double refluxRatio = getCondenser().getRefluxRatio();
-    return Double.isFinite(refluxRatio) && refluxRatio >= 0.0 && refluxRatio <= 0.25;
-  }
-
-  /**
-   * Get the single feed tray from feeds registered through the column API.
-   *
-   * @return the single feed tray number, or {@code -1} when the feed layout is not a simple case
-   */
-  private int getSingleApiFeedTrayNumber() {
-    if (!directExternalFeedStreams.isEmpty() || feedStreams.size() != 1) {
-      return -1;
-    }
-    Map.Entry<Integer, List<StreamInterface>> entry = feedStreams.entrySet().iterator().next();
-    List<StreamInterface> feeds = entry.getValue();
-    if (feeds == null || feeds.size() != 1) {
-      return -1;
-    }
-    return entry.getKey().intValue();
-  }
-
-  /**
-   * Get the default feed tray used by the guarded fast path.
-   *
-   * @return 0-based feed tray near the middle of the allowed feed section
-   */
-  private int getFullFractionatorFastPathFeedTrayNumber() {
-    int firstFeedTray = getFirstFeedTrayCandidate();
-    int lastFeedTray = getLastFeedTrayCandidate();
-    if (firstFeedTray > lastFeedTray) {
-      firstFeedTray = 0;
-      lastFeedTray = numberOfTrays - 1;
-    }
-    return (firstFeedTray + lastFeedTray) / 2;
-  }
-
-  /**
-   * Solve the column with an outer loop that adjusts condenser/reboiler temperatures to satisfy product specifications.
-   * Uses a secant method for each specification that requires adjustment.
-   *
-   * @param id calculation identifier
-   */
-  private void solveWithSpecifications(UUID id) {
-    lastSpecificationHomotopyStepCount = 0;
-    int effectiveHomotopySteps = getEffectiveSpecificationHomotopySteps();
-    if (effectiveHomotopySteps > 1) {
-      specificationHomotopySteps = effectiveHomotopySteps;
-      solveWithSpecificationHomotopy(id, effectiveHomotopySteps);
-      return;
-    }
-    solveWithSpecificationTargets(id, topSpecification, bottomSpecification);
-  }
-
-  /**
-   * Determine the specification continuation stage count for the current solve.
-   *
-   * @return explicit user homotopy steps, or automatic robust-mode steps when AUTO is active
-   */
-  private int getEffectiveSpecificationHomotopySteps() {
-    if (specificationHomotopySteps > 1) {
-      return specificationHomotopySteps;
-    }
-    if (solverType == SolverType.AUTO && hasAdjustableSpecifications()) {
-      return AUTO_SPECIFICATION_HOMOTOPY_STEPS;
-    }
-    return specificationHomotopySteps;
-  }
-
-  /**
-   * Solve adjustable product specifications through staged continuation targets.
-   *
-   * <p>
-   * The first stage starts from the current product value after a warm baseline solve and then ramps linearly to the
-   * user-specified final target. This avoids an abrupt jump to a difficult purity, recovery, or product-flow target
-   * while leaving the stored public specifications unchanged.
-   * </p>
-   *
-   * @param id calculation identifier
-   * @param steps number of continuation stages to run
-   */
-  private void solveWithSpecificationHomotopy(UUID id, int steps) {
-    boolean adjustTop = needsAdjustment(topSpecification) && hasCondenser;
-    boolean adjustBottom = needsAdjustment(bottomSpecification) && hasReboiler;
-    if (!adjustTop && !adjustBottom) {
-      solveWithSpecificationTargets(id, topSpecification, bottomSpecification);
-      return;
-    }
-
-    double feedTemp = estimateFeedTemperature();
-    double topTemp = hasCondenser && getCondenser().isSetOutTemperature() ? getCondenser().getOutTemperature()
-        : feedTemp - 20.0;
-    double bottomTemp = hasReboiler && getReboiler().isSetOutTemperature() ? getReboiler().getOutTemperature()
-        : feedTemp + 20.0;
-
-    applySpecificationTemperatureGuess(adjustTop, adjustBottom, topTemp, bottomTemp);
-    setDoInitializion(!hasBeenSolvedBefore);
-    solveInner(id);
-
-    double topStart = adjustTop ? evaluateSpecValueSafely(topSpecification) : Double.NaN;
-    double bottomStart = adjustBottom ? evaluateSpecValueSafely(bottomSpecification) : Double.NaN;
-    if (adjustTop && !Double.isFinite(topStart)) {
-      topStart = topSpecification.getTargetValue();
-    }
-    if (adjustBottom && !Double.isFinite(bottomStart)) {
-      bottomStart = bottomSpecification.getTargetValue();
-    }
-
-    int stageCount = Math.max(1, steps);
-    for (int step = 1; step <= stageCount; step++) {
-      double fraction = step / (double) stageCount;
-      ColumnSpecification stagedTop = adjustTop ? createHomotopySpecification(topSpecification, topStart, fraction)
-          : topSpecification;
-      ColumnSpecification stagedBottom = adjustBottom
-          ? createHomotopySpecification(bottomSpecification, bottomStart, fraction)
-          : bottomSpecification;
-      solveWithSpecificationTargets(id, stagedTop, stagedBottom);
-      lastSpecificationHomotopyStepCount = step;
-      setDoInitializion(false);
-    }
-    updateSpecificationResiduals();
-  }
-
-  /**
-   * Solve the column against the provided effective top and bottom specification targets.
-   *
-   * @param id calculation identifier
-   * @param effectiveTopSpecification effective top specification for this solve
-   * @param effectiveBottomSpecification effective bottom specification for this solve
-   */
-  private void solveWithSpecificationTargets(UUID id, ColumnSpecification effectiveTopSpecification,
-      ColumnSpecification effectiveBottomSpecification) {
-    boolean adjustTop = needsAdjustment(effectiveTopSpecification) && hasCondenser;
-    boolean adjustBottom = needsAdjustment(effectiveBottomSpecification) && hasReboiler;
-
-    int maxOuterIter = 20;
-    if (adjustTop && effectiveTopSpecification != null) {
-      maxOuterIter = Math.max(maxOuterIter, effectiveTopSpecification.getMaxIterations());
-    }
-    if (adjustBottom && effectiveBottomSpecification != null) {
-      maxOuterIter = Math.max(maxOuterIter, effectiveBottomSpecification.getMaxIterations());
-    }
-
-    double topTol = adjustTop ? effectiveTopSpecification.getTolerance() : 1.0e-4;
-    double bottomTol = adjustBottom ? effectiveBottomSpecification.getTolerance() : 1.0e-4;
-
-    // Initialize temperature bounds from feed conditions
-    double feedTemp = estimateFeedTemperature();
-
-    // Initial guesses for temperatures to adjust
-    double topTemp = hasCondenser && getCondenser().isSetOutTemperature() ? getCondenser().getOutTemperature()
-        : feedTemp - 20.0;
-    double bottomTemp = hasReboiler && getReboiler().isSetOutTemperature() ? getReboiler().getOutTemperature()
-        : feedTemp + 20.0;
-
-    // Secant method state for top
-    double topTemp0 = topTemp;
-    double topTemp1 = topTemp - 5.0;
-    double topErr0 = Double.NaN;
-    double topErr1 = Double.NaN;
-
-    // Secant method state for bottom
-    double bottomTemp0 = bottomTemp;
-    double bottomTemp1 = bottomTemp + 5.0;
-    double bottomErr0 = Double.NaN;
-    double bottomErr1 = Double.NaN;
-
-    for (int outerIter = 0; outerIter < maxOuterIter; outerIter++) {
-      // Set current guess temperatures
-      if (adjustTop) {
-        double currentTopTemp = (outerIter == 0) ? topTemp0 : topTemp1;
-        getCondenser().setOutTemperature(currentTopTemp);
-      }
-      if (adjustBottom) {
-        double currentBottomTemp = (outerIter == 0) ? bottomTemp0 : bottomTemp1;
-        getReboiler().setOutTemperature(currentBottomTemp);
-      }
-      applySpecificationTemperatureGuess(adjustTop, adjustBottom,
-          adjustTop ? (outerIter == 0 ? topTemp0 : topTemp1) : Double.NaN,
-          adjustBottom ? (outerIter == 0 ? bottomTemp0 : bottomTemp1) : Double.NaN);
-
-      // Keep the previous stage profile after the first full initialization.
-      setDoInitializion(outerIter == 0 && !hasBeenSolvedBefore);
-
-      // Solve the column with current settings
-      solveInner(id);
-
-      if (!solved()) {
-        logger.warn("Inner solver did not converge in outer iteration {}", outerIter);
-        // Try to continue with reduced step
-      }
-
-      // Evaluate specification errors
-      double topError = adjustTop ? evaluateSpecError(effectiveTopSpecification) : 0.0;
-      double bottomError = adjustBottom ? evaluateSpecError(effectiveBottomSpecification) : 0.0;
-      lastTopSpecificationResidual = topError;
-      lastBottomSpecificationResidual = bottomError;
-
-      logger.debug("Spec outer iteration {} topErr={} bottomErr={} topT={} bottomT={}", outerIter, topError,
-          bottomError, adjustTop ? (outerIter == 0 ? topTemp0 : topTemp1) : 0.0,
-          adjustBottom ? (outerIter == 0 ? bottomTemp0 : bottomTemp1) : 0.0);
-
-      // Check convergence
-      boolean topConverged = !adjustTop || Math.abs(topError) < topTol;
-      boolean bottomConverged = !adjustBottom || Math.abs(bottomError) < bottomTol;
-
-      if (topConverged && bottomConverged) {
-        break;
-      }
-
-      // Update secant method for top temperature
-      if (adjustTop && !topConverged) {
-        if (outerIter == 0) {
-          topErr0 = topError;
-        } else {
-          topErr1 = topError;
-          double newTopTemp = secantStep(topTemp0, topTemp1, topErr0, topErr1, feedTemp);
-          topTemp0 = topTemp1;
-          topErr0 = topErr1;
-          topTemp1 = newTopTemp;
-        }
-      }
-
-      // Update secant method for bottom temperature
-      if (adjustBottom && !bottomConverged) {
-        if (outerIter == 0) {
-          bottomErr0 = bottomError;
-        } else {
-          bottomErr1 = bottomError;
-          double newBottomTemp = secantStep(bottomTemp0, bottomTemp1, bottomErr0, bottomErr1, feedTemp);
-          bottomTemp0 = bottomTemp1;
-          bottomErr0 = bottomErr1;
-          bottomTemp1 = newBottomTemp;
-        }
-      }
-    }
-  }
-
-  /**
-   * Build one staged specification by interpolating from a start value to the final target.
-   *
-   * @param specification final user specification
-   * @param startValue initial product value from the warm baseline solve
-   * @param fraction continuation fraction, where one means the final user target
-   * @return staged specification preserving the original tolerance and iteration limit
-   */
-  private ColumnSpecification createHomotopySpecification(ColumnSpecification specification, double startValue,
-      double fraction) {
-    double boundedFraction = Math.max(0.0, Math.min(1.0, fraction));
-    double target = startValue + boundedFraction * (specification.getTargetValue() - startValue);
-    target = boundSpecificationTarget(specification, target);
-    ColumnSpecification staged = new ColumnSpecification(specification.getType(), specification.getLocation(), target,
-        specification.getComponentName());
-    staged.setTolerance(specification.getTolerance());
-    staged.setMaxIterations(specification.getMaxIterations());
-    return staged;
-  }
-
-  /**
-   * Bound a staged target so it remains valid for its specification type.
-   *
-   * @param specification specification defining the valid target range
-   * @param target staged target candidate
-   * @return bounded finite target value
-   */
-  private double boundSpecificationTarget(ColumnSpecification specification, double target) {
-    double finiteTarget = Double.isFinite(target) ? target : specification.getTargetValue();
-    if (specification.getType() == ColumnSpecification.SpecificationType.PRODUCT_PURITY
-        || specification.getType() == ColumnSpecification.SpecificationType.COMPONENT_RECOVERY) {
-      return Math.max(0.0, Math.min(1.0, finiteTarget));
-    }
-    if (specification.getType() == ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE) {
-      return Math.max(1.0e-12, finiteTarget);
-    }
-    return finiteTarget;
-  }
-
-  /**
-   * Apply temperature guesses and seed the internal tray-temperature profile.
-   *
-   * @param adjustTop whether the condenser temperature is being adjusted
-   * @param adjustBottom whether the reboiler temperature is being adjusted
-   * @param topTemperature top temperature guess in kelvin
-   * @param bottomTemperature bottom temperature guess in kelvin
-   */
-  private void applySpecificationTemperatureGuess(boolean adjustTop, boolean adjustBottom, double topTemperature,
-      double bottomTemperature) {
-    double top = adjustTop && Double.isFinite(topTemperature) ? topTemperature : Double.NaN;
-    double bottom = adjustBottom && Double.isFinite(bottomTemperature) ? bottomTemperature : Double.NaN;
-    if (!Double.isFinite(top) && hasCondenser && getCondenser().isSetOutTemperature()) {
-      top = getCondenser().getOutTemperature();
-    }
-    if (!Double.isFinite(bottom) && hasReboiler && getReboiler().isSetOutTemperature()) {
-      bottom = getReboiler().getOutTemperature();
-    }
-    seedTrayTemperatureProfile(top, bottom);
-  }
-
-  /**
-   * Seed tray temperatures linearly between bottom and top endpoints.
-   *
-   * @param topTemperature top-stage seed temperature in kelvin
-   * @param bottomTemperature bottom-stage seed temperature in kelvin
-   */
-  private void seedTrayTemperatureProfile(double topTemperature, double bottomTemperature) {
-    if (!Double.isFinite(topTemperature) && !Double.isFinite(bottomTemperature)) {
-      return;
-    }
-    double feedTemperature = estimateFeedTemperature();
-    double top = Double.isFinite(topTemperature) ? topTemperature : feedTemperature;
-    double bottom = Double.isFinite(bottomTemperature) ? bottomTemperature : feedTemperature;
-    ensureSeedTemperatureArray();
-    for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
-      double fraction = numberOfTrays <= 1 ? 0.0 : trayIndex / (numberOfTrays - 1.0);
-      double temperature = bottom + fraction * (top - bottom);
-      seedTemperatures[trayIndex] = temperature;
-      trays.get(trayIndex).setTemperature(temperature);
-      try {
-        trays.get(trayIndex).getThermoSystem().setTemperature(temperature);
-      } catch (RuntimeException exception) {
-        logger.debug("Could not seed tray temperature for {}", trays.get(trayIndex).getName(), exception);
-      }
-    }
-  }
-
-  /**
-   * Compute the secant method step for temperature adjustment, with safeguards.
-   *
-   * @param t0 previous temperature
-   * @param t1 current temperature
-   * @param f0 spec error at t0
-   * @param f1 spec error at t1
-   * @param feedTemp reference feed temperature for bounding
-   * @return the next temperature guess
-   */
-  private double secantStep(double t0, double t1, double f0, double f1, double feedTemp) {
-    double denom = f1 - f0;
-    double tNew;
-    if (Math.abs(denom) < 1.0e-15) {
-      // Secant denominator too small â€” perturb
-      tNew = t1 + 2.0;
-    } else {
-      tNew = t1 - f1 * (t1 - t0) / denom;
-    }
-    // Limit the step to avoid unreasonable temperature jumps
-    double maxStep = 50.0;
-    if (tNew - t1 > maxStep) {
-      tNew = t1 + maxStep;
-    } else if (tNew - t1 < -maxStep) {
-      tNew = t1 - maxStep;
-    }
-    // Keep temperature physically reasonable (above 100 K, below 1000 K)
-    tNew = Math.max(100.0, Math.min(1000.0, tNew));
-    return tNew;
-  }
-
-  /**
-   * Checks whether a specification requires iterative temperature adjustment.
-   *
-   * @param spec the column specification to check
-   * @return true if the specification is non-null and requires adjustment
-   */
-  private boolean needsAdjustment(ColumnSpecification spec) {
-    if (spec == null) {
-      return false;
-    }
-    // Reflux ratio and duty specs are handled directly; the others need outer-loop
-    // adjustment
-    return spec.getType() != ColumnSpecification.SpecificationType.REFLUX_RATIO
-        && spec.getType() != ColumnSpecification.SpecificationType.DUTY;
-  }
-
-  /**
-   * Run the inner column solver (one full solve with the currently selected solver type) without resetting convergence
-   * history. Used by {@link #solveWithSpecifications(UUID)} in the outer adjustment loop.
-   *
-   * @param id calculation identifier
-   */
-  private void solveInner(UUID id) {
-    solveSelectedSolver(id);
-  }
-
-  /**
-   * Solve using direct substitution.
-   *
-   * @param id calculation identifier
-   */
-  void solveDirectSubstitution(UUID id) {
-    solveSequential(id, 1.0);
-  }
-
-  /**
-   * Solve using damped substitution and the configured relaxation factor.
-   *
-   * @param id calculation identifier
-   */
-  void solveDampedSubstitution(UUID id) {
-    solveSequential(id, relaxationFactor);
-  }
-
-  /**
-   * Solve using inside-out initialization while reporting MESH residual diagnostics.
-   *
-   * @param id calculation identifier
-   */
-  void solveMeshResidual(UUID id) {
-    solveInsideOut(id);
-    updateMeshResiduals();
-    if (meshResidualNeedsPolishing()) {
-      double residualNorm = lastMeshResidual == null ? Double.NaN : lastMeshResidual.getInfinityNorm();
-      if (!tryGuardedMeshNewtonPolish(id, residualNorm)) {
-        logger.debug("MESH residual Newton polish rejected for column {}; residual={}", getName(),
-            Double.valueOf(residualNorm));
-      }
-    }
-  }
-
-  /**
-   * Solve using Naphtali-Sandholm simultaneous MESH equation linearization.
-   *
-   * <p>
-   * The rigorous residual solver is warm-started from the current inside-out path. If the Newton refinement does not
-   * produce a residual-improving state, the accepted inside-out state is kept. In that rejected-state path, the column
-   * products and solve metrics remain the inside-out warm-start values. This preserves the robust legacy behavior while
-   * making the new solver an explicit residual-driven option.
-   * </p>
-   *
-   * @param id calculation identifier
-   * @return {@code true} when the solver accepted its direct result and, for active side draws, the applied state
-   * satisfies the active rigorous convergence gates
-   */
-  boolean solveNaphtaliSandholm(UUID id) {
-    captureDirectExternalTrayFeeds();
-    if (feedStreams.isEmpty() && directExternalFeedStreams.isEmpty()) {
-      resetLastSolveMetrics();
-      return false;
-    }
-
-    if (numberOfTrays == 1) {
-      solveDirectSubstitution(id);
-      return solved();
-    }
-
-    long startTime = System.nanoTime();
-    long thermodynamicIdentitySignature = calculateThermodynamicIdentitySignature();
-    // Compare against the identity the tray network was built for, not against the identity of the
-    // last accepted Naphtali-Sandholm solve. The tray fluids are what a warm start reads, and they
-    // are only rebuilt by init(). Gating this on hasBeenSolvedBefore is not safe either: that flag
-    // is transient and is reset to false by the serialization copy behind every fallback candidate.
-    boolean thermodynamicIdentityMatches = thermodynamicIdentitySignature == trayStateThermodynamicIdentitySignature;
-    lastNaphtaliSandholmWarmStateReused = false;
-    if (!thermodynamicIdentityMatches) {
-      // The tray network describes other components, another equation of state, or another mixing
-      // rule. Nothing carried over from the previous solve is a meaningful starting point, so the
-      // column is treated exactly like one that has never been solved.
-      hasNaphtaliSandholmWarmState = false;
-      naphtaliSandholmStateOwned = false;
-      hasBeenSolvedBefore = false;
-      setDoInitializion(true);
-    }
-    long inputSignature = calculateNaphtaliSandholmInputSignature();
-    if (canReuseNaphtaliSandholmWarmState(inputSignature)) {
-      reuseNaphtaliSandholmWarmState(id, startTime);
-      return true;
-    }
-
-    Map<Integer, List<SystemInterface>> originalFeedSystems = new java.util.HashMap<>();
-    Map<Integer, List<Double>> originalFeedFlowRates = new java.util.HashMap<>();
-    Set<Integer> externalFeedTrayNumberSet = new HashSet<Integer>(feedStreams.keySet());
-    externalFeedTrayNumberSet.addAll(directExternalFeedStreams.keySet());
-    for (Integer trayNumber : externalFeedTrayNumberSet) {
-      List<SystemInterface> clones = new java.util.ArrayList<>();
-      List<Double> flowRates = new java.util.ArrayList<>();
-      for (StreamInterface feed : getExternalFeedStreams(trayNumber.intValue())) {
-        clones.add(feed.getThermoSystem().clone());
-        flowRates.add(feed.getFlowRate("mol/hr"));
-      }
-      originalFeedSystems.put(trayNumber, clones);
-      originalFeedFlowRates.put(trayNumber, flowRates);
-    }
-
-    boolean initialized = isDoInitializion();
-    if (initialized) {
-      this.init();
-    }
-    prepareColumnForSolve();
-
-    NaphtaliSandholmSolver solver = new NaphtaliSandholmSolver(this, originalFeedSystems, originalFeedFlowRates);
-    solver.setMaxIterations(maxNumberOfIterations);
-    solver.setTolerance(1.0e-8);
-    boolean useWarmStart = hasBeenSolvedBefore && !initialized && thermodynamicIdentityMatches;
-    solver.setWarmStartFromColumn(useWarmStart);
-    boolean accepted = solver.solve(id);
-    if (!accepted && useWarmStart) {
-      logger.info("Naphtali-Sandholm warm start rejected for column {}; retrying with cold initialization", getName());
-      solver = new NaphtaliSandholmSolver(this, originalFeedSystems, originalFeedFlowRates);
-      solver.setMaxIterations(maxNumberOfIterations);
-      solver.setTolerance(1.0e-8);
-      solver.setWarmStartFromColumn(false);
-      accepted = solver.solve(id);
-    }
-    storeNaphtaliTelemetry(solver);
-    markSolverTypeUsed(SolverType.NAPHTALI_SANDHOLM);
-
-    double temperatureResidual = accepted ? solver.getLastTemperatureResidual() : 1.0e10;
-    finalizeNaphtaliSolve(id, accepted, solver.getLastIterations(), temperatureResidual,
-        solver.getLastMassBalanceError(), solver.getLastEnergyResidual(), startTime);
-    hasBeenSolvedBefore = true;
-    lastTotalFeedFlow = -1.0;
-    // The solver wrote the tray network of this column instance, so the state is eligible for the
-    // warm-state cache. init() has already recorded the matching thermodynamic identity.
-    naphtaliSandholmStateOwned = true;
-    trayStateThermodynamicIdentitySignature = thermodynamicIdentitySignature;
-    boolean hasActiveSideDraw = hasActiveSideDrawFractions();
-    // This PR makes the applied-state gate authoritative for side-draw columns because
-    // intermediate products expose any species leakage. Preserve the established direct
-    // solver acceptance contract for columns without side draws; broadening that contract
-    // changes their warm-state/fallback behavior and belongs in a separate migration.
-    boolean appliedResultAccepted = accepted && (!hasActiveSideDraw || solved());
-    hasNaphtaliSandholmWarmState = appliedResultAccepted;
-    if (appliedResultAccepted) {
-      lastNaphtaliSandholmInputSignature = inputSignature;
-    }
-
-    if (!appliedResultAccepted) {
-      logger.warn("Naphtali-Sandholm solver did not satisfy the active rigorous convergence gates for column {}",
-          getName());
-    }
-    return appliedResultAccepted;
-  }
-
-  /**
-   * Decide whether the prior Naphtali-Sandholm solution remains valid for this invocation.
-   *
-   * <p>
-   * The active convergence-gate configuration must also match the snapshot recorded after the complete public solve.
-   * This prevents a caller from changing a tolerance and receiving a zero-iteration reuse under a different convergence
-   * contract, while avoiding dependence on diagnostics that a coordinated wrapper or reconciliation step may update
-   * after the simultaneous solver returns.
-   * </p>
-   *
-   * @param inputSignature fingerprint of current external feeds and active column specifications
-   * @return {@code true} when the accepted tray solution can be reused without another solver invocation
-   */
-  private boolean canReuseNaphtaliSandholmWarmState(long inputSignature) {
-    boolean acceptedStatus = lastSolveStatus == SolveStatus.RIGOROUS_CONVERGED
-        || lastSolveStatus == SolveStatus.RECONCILED_PRODUCTS;
-    boolean signatureMatches = inputSignature == lastNaphtaliSandholmInputSignature;
-    boolean convergenceGateSignatureMatches = calculateNaphtaliSandholmConvergenceGateSignature()
-        == lastNaphtaliSandholmConvergenceGateSignature;
-    boolean reusable = hasNaphtaliSandholmWarmState && naphtaliSandholmStateOwned
-        && lastSolverTypeUsed == SolverType.NAPHTALI_SANDHOLM && acceptedStatus && !isDoInitializion()
-        && signatureMatches && convergenceGateSignatureMatches;
-    return reusable;
-  }
-
-  /**
-   * Check whether the latest Naphtali-Sandholm result reused an exact accepted warm state.
-   *
-   * @return {@code true} when no initializer or Newton iterations were required
-   */
-  boolean wasNaphtaliSandholmWarmStateReused() {
-    return lastNaphtaliSandholmWarmStateReused;
-  }
-
-  /**
-   * Decide whether an accepted sequential solution can be reused for identical inputs.
-   *
-   * <p>
-   * Exact reuse is deliberately disabled for adjustable specifications and active outer tear variables. Those
-   * calculations can change targets or internal return streams outside the fixed sequential input fingerprint.
-   * </p>
-   *
-   * @param inputSignature full current input fingerprint
-   * @return {@code true} when no new sequential iterations are required
-   */
-  private boolean canReuseSequentialWarmState(long inputSignature) {
-    boolean acceptedStatus = lastSolveStatus == SolveStatus.RIGOROUS_CONVERGED
-        || lastSolveStatus == SolveStatus.RECONCILED_PRODUCTS;
-    return hasSequentialExactReuseState && hasBeenSolvedBefore && acceptedStatus && !isDoInitializion()
-        && !hasAdjustableSpecifications() && !hasActiveColumnTearVariables()
-        && inputSignature == lastSequentialInputSignature;
-  }
-
-  /**
-   * Record an accepted sequential solution for exact unchanged-input reuse.
-   */
-  private void commitSequentialWarmState() {
-    boolean acceptedStatus = lastSolveStatus == SolveStatus.RIGOROUS_CONVERGED
-        || lastSolveStatus == SolveStatus.RECONCILED_PRODUCTS;
-    hasSequentialExactReuseState = hasBeenSolvedBefore && acceptedStatus && !isDoInitializion()
-        && !hasAdjustableSpecifications() && !hasActiveColumnTearVariables();
-    if (hasSequentialExactReuseState) {
-      lastSequentialInputSignature = calculateSequentialExactReuseSignature();
-    }
-  }
-
-  /**
-   * Reuse the accepted sequential products and tray state for identical inputs.
-   *
-   * @param id calculation identifier for the requested invocation
-   * @param startTime nano time when this invocation started
-   */
-  private void reuseSequentialWarmState(UUID id, long startTime) {
-    lastIterationCount = 0;
-    lastSequentialWarmStateReused = true;
-    lastSolveTimeSeconds = (System.nanoTime() - startTime) / 1.0e9;
-    gasOutStream.setCalculationIdentifier(id);
-    liquidOutStream.setCalculationIdentifier(id);
-    for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
-      trays.get(trayIndex).setCalculationIdentifier(id);
-    }
-    setCalculationIdentifier(id);
-    lastSolveStatusReason = "Reused unchanged sequential solution";
-  }
-
-  /**
-   * Check whether the latest sequential invocation reused an exact accepted state.
-   *
-   * @return {@code true} when no initializer or tray iteration was required
-   */
-  boolean wasSequentialWarmStateReused() {
-    return lastSequentialWarmStateReused;
-  }
-
-  /**
-   * Predict whether the next Naphtali-Sandholm invocation will be answered from the exact warm-state cache.
-   *
-   * <p>
-   * Evaluating the two fingerprints costs one pass over the feeds and column configuration, which is negligible next to
-   * the serialization deep copy a caller would otherwise make to prepare a fallback candidate that the reuse path can
-   * never consume.
-   * </p>
-   *
-   * @return {@code true} when {@link #solveNaphtaliSandholm(UUID)} is expected to reuse the accepted state without
-   * running the solver
-   */
-  boolean willReuseNaphtaliSandholmWarmState() {
-    captureDirectExternalTrayFeeds();
-    if ((feedStreams.isEmpty() && directExternalFeedStreams.isEmpty()) || numberOfTrays == 1 || isDoInitializion()) {
-      return false;
-    }
-    if (calculateThermodynamicIdentitySignature() != trayStateThermodynamicIdentitySignature) {
-      return false;
-    }
-    return canReuseNaphtaliSandholmWarmState(calculateNaphtaliSandholmInputSignature());
-  }
-
-  /**
-   * Reuse an accepted Naphtali-Sandholm solution when all external inputs are unchanged.
-   *
-   * @param id calculation identifier for the requested invocation
-   * @param startTime nano time when this invocation started
-   */
-  private void reuseNaphtaliSandholmWarmState(UUID id, long startTime) {
-    lastIterationCount = 0;
-    lastNaphtaliSandholmWarmStateReused = true;
-    lastSolveTimeSeconds = (System.nanoTime() - startTime) / 1.0e9;
-    gasOutStream.setCalculationIdentifier(id);
-    liquidOutStream.setCalculationIdentifier(id);
-    for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
-      trays.get(trayIndex).setCalculationIdentifier(id);
-    }
-    setCalculationIdentifier(id);
-    lastSolveStatusReason = "Reused unchanged Naphtali-Sandholm solution";
-  }
-
-  /**
-   * Calculate a deterministic fingerprint for exact sequential-state reuse.
-   *
-   * <p>
-   * The external-input fingerprint alone is insufficient because advanced callers and solver tests can deliberately
-   * perturb tray states between invocations. Include the accepted tray and exposed product states so such edits trigger
-   * a real solve instead of being hidden by the exact-reuse path.
-   * </p>
-   *
-   * @return fingerprint of external inputs, tray states, and public products
-   */
-  private long calculateSequentialExactReuseSignature() {
-    long signature = calculateNaphtaliSandholmInputSignature();
-    signature = updateSequentialStreamStateSignature(signature, gasOutStream);
-    signature = updateSequentialStreamStateSignature(signature, liquidOutStream);
-    signature = updateNaphtaliSandholmInputSignature(signature, trays.size());
-    for (SimpleTray tray : trays) {
-      StreamInterface trayOutlet = tray == null ? null : tray.getOutletStream();
-      if (trayOutlet == null || trayOutlet.getThermoSystem() == null) {
-        signature = updateNaphtaliSandholmInputSignature(signature, -1L);
-        continue;
-      }
-      signature = updateNaphtaliSandholmInputSignature(signature, tray.getTemperature());
-      signature = updateSequentialSystemStateSignature(signature, trayOutlet.getThermoSystem());
-    }
-    return signature;
-  }
-
-  /**
-   * Add a stream thermodynamic state to the exact sequential-reuse fingerprint.
-   *
-   * @param signature fingerprint accumulated so far
-   * @param stream stream to fingerprint
-   * @return updated fingerprint
-   */
-  private long updateSequentialStreamStateSignature(long signature, StreamInterface stream) {
-    if (stream == null || stream.getThermoSystem() == null) {
-      return updateNaphtaliSandholmInputSignature(signature, -1L);
-    }
-    return updateSequentialSystemStateSignature(signature, stream.getThermoSystem());
-  }
-
-  /**
-   * Add a complete thermodynamic system state to the exact sequential-reuse fingerprint.
-   *
-   * @param signature fingerprint accumulated so far
-   * @param system thermodynamic system to fingerprint
-   * @return updated fingerprint
-   */
-  private long updateSequentialSystemStateSignature(long signature, SystemInterface system) {
-    long updatedSignature = updateNaphtaliSandholmThermodynamicModelSignature(signature, system);
-    updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, system.getTemperature());
-    updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, system.getPressure());
-    updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, system.getTotalNumberOfMoles());
-    double[] composition = system.getMolarComposition();
-    updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, composition.length);
-    for (double moleFraction : composition) {
-      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, moleFraction);
-    }
-    return updatedSignature;
-  }
-
-  /**
-   * Calculate a deterministic fingerprint of fixed inputs that define a sequential initialization.
-   *
-   * <p>
-   * Feed flow, temperature, pressure, and composition are excluded because ordinary nearby feed changes are the main
-   * benefit of a sequential warm start. Thermodynamic model and component identity are checked separately.
-   * </p>
-   *
-   * @return fixed column-configuration fingerprint
-   */
-  private long calculateSequentialInitializationSignature() {
-    long signature = 1125899906842597L;
-    return updateSequentialInitializationConfigurationSignature(signature);
-  }
-
-  /**
-   * Calculate a deterministic fingerprint of inputs that affect a Naphtali-Sandholm solve.
-   *
-   * @return input and specification fingerprint
-   */
-  private long calculateNaphtaliSandholmInputSignature() {
-    long signature = 1125899906842597L;
-    Set<Integer> externalFeedTrayNumberSet = new HashSet<Integer>(feedStreams.keySet());
-    externalFeedTrayNumberSet.addAll(directExternalFeedStreams.keySet());
-    List<Integer> externalFeedTrayNumbers = new ArrayList<Integer>(externalFeedTrayNumberSet);
-    Collections.sort(externalFeedTrayNumbers);
-    signature = updateNaphtaliSandholmInputSignature(signature, externalFeedTrayNumbers.size());
-    for (Integer trayNumber : externalFeedTrayNumbers) {
-      signature = updateNaphtaliSandholmInputSignature(signature, trayNumber.longValue());
-      List<StreamInterface> trayFeeds = getExternalFeedStreams(trayNumber.intValue());
-      signature = updateNaphtaliSandholmInputSignature(signature, trayFeeds.size());
-      for (StreamInterface feed : trayFeeds) {
-        SystemInterface system = feed.getThermoSystem();
-        signature = updateNaphtaliSandholmThermodynamicModelSignature(signature, system);
-        signature = updateNaphtaliSandholmInputSignature(signature, feed.getFlowRate("mol/hr"));
-        signature = updateNaphtaliSandholmInputSignature(signature, feed.getTemperature("K"));
-        signature = updateNaphtaliSandholmInputSignature(signature, feed.getPressure("bara"));
-
-        String[] componentNames = system.getComponentNames();
-        double[] moleFractions = system.getMolarComposition();
-        signature = updateNaphtaliSandholmInputSignature(signature, componentNames.length);
-        signature = updateNaphtaliSandholmInputSignature(signature, moleFractions.length);
-        int pairedComponentCount = Math.min(componentNames.length, moleFractions.length);
-        for (int componentIndex = 0; componentIndex < pairedComponentCount; componentIndex++) {
-          signature = updateNaphtaliSandholmInputSignature(signature, componentNames[componentIndex]);
-          signature = updateNaphtaliSandholmInputSignature(signature, moleFractions[componentIndex]);
-        }
-        for (int componentIndex = pairedComponentCount; componentIndex < componentNames.length; componentIndex++) {
-          signature = updateNaphtaliSandholmInputSignature(signature, componentNames[componentIndex]);
-        }
-        for (int componentIndex = pairedComponentCount; componentIndex < moleFractions.length; componentIndex++) {
-          signature = updateNaphtaliSandholmInputSignature(signature, moleFractions[componentIndex]);
-        }
-      }
-    }
-
-    signature = updateNaphtaliSandholmInputSignature(signature, topSpecification == null ? 0L : 1L);
-    if (topSpecification != null) {
-      signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getType().ordinal());
-      signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getLocation().ordinal());
-      signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getTargetValue());
-      signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getTolerance());
-      signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getMaxIterations());
-      signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getComponentName());
-    }
-
-    signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification == null ? 0L : 1L);
-    if (bottomSpecification != null) {
-      signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getType().ordinal());
-      signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getLocation().ordinal());
-      signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getTargetValue());
-      signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getTolerance());
-      signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getMaxIterations());
-      signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getComponentName());
-    }
-
-    signature = updateColumnConfigurationSignature(signature);
-
-    return signature;
-  }
-
-  /**
-   * Calculate a deterministic fingerprint of the active convergence-gate configuration.
-   *
-   * <p>
-   * This fingerprint is recorded only after the complete public column solve, including coordinated fallback and
-   * product reconciliation. Exact reuse therefore depends on the caller retaining the same convergence contract, not
-   * on mutable residual telemetry from an intermediate solver stage.
-   * </p>
-   *
-   * @return convergence-gate configuration fingerprint
-   */
-  private long calculateNaphtaliSandholmConvergenceGateSignature() {
-    long signature = 1125899906842597L;
-    signature = updateNaphtaliSandholmInputSignature(signature, getEffectiveTemperatureTolerance());
-    signature = updateNaphtaliSandholmInputSignature(signature, getEffectiveMassBalanceTolerance());
-    signature = updateNaphtaliSandholmInputSignature(signature, getEffectiveEnthalpyBalanceTolerance());
-    signature = updateNaphtaliSandholmInputSignature(signature, enforceEnergyBalanceTolerance ? 1L : 0L);
-    signature = updateNaphtaliSandholmInputSignature(signature,
-        isEffectiveMeshResidualToleranceEnforced() ? 1L : 0L);
-    signature = updateNaphtaliSandholmInputSignature(signature, meshResidualTolerance);
-    signature = updateNaphtaliSandholmInputSignature(signature, trayMaterialBalanceTolerance);
-    signature = updateNaphtaliSandholmInputSignature(signature, meshProductDrawResidualTolerance);
-    signature = updateNaphtaliSandholmInputSignature(signature, columnTearTolerance);
-    return updateNaphtaliSandholmInputSignature(signature, pumparoundTolerance);
-  }
-
-  /**
-   * Calculate the thermodynamic identity the tray network must be built for.
-   *
-   * <p>
-   * Operating conditions and specifications are deliberately excluded. A pressure, temperature, flow, or specification
-   * change should run the solver but may still reuse compatible tray unknowns. Feed layout, component identities,
-   * thermodynamic model, and mixing rule define the structure that must be rebuilt by {@link #init()} when changed.
-   * </p>
-   *
-   * @return thermodynamic identity fingerprint
-   */
-  private long calculateThermodynamicIdentitySignature() {
-    long signature = 1125899906842597L;
-    Set<Integer> externalFeedTrayNumberSet = new HashSet<Integer>(feedStreams.keySet());
-    externalFeedTrayNumberSet.addAll(directExternalFeedStreams.keySet());
-    List<Integer> externalFeedTrayNumbers = new ArrayList<Integer>(externalFeedTrayNumberSet);
-    Collections.sort(externalFeedTrayNumbers);
-    signature = updateNaphtaliSandholmInputSignature(signature, externalFeedTrayNumbers.size());
-    for (Integer trayNumber : externalFeedTrayNumbers) {
-      signature = updateNaphtaliSandholmInputSignature(signature, trayNumber.longValue());
-      List<StreamInterface> trayFeeds = getExternalFeedStreams(trayNumber.intValue());
-      signature = updateNaphtaliSandholmInputSignature(signature, trayFeeds.size());
-      for (StreamInterface feed : trayFeeds) {
-        signature = updateThermodynamicIdentitySignature(signature, feed.getThermoSystem());
-      }
-    }
-    return signature;
-  }
-
-  /**
-   * Add the model-level identity shared by exact-reuse and warm-start fingerprints.
-   *
-   * @param signature fingerprint accumulated so far
-   * @param system feed thermodynamic system
-   * @return updated fingerprint
-   */
-  private long updateNaphtaliSandholmThermodynamicModelSignature(long signature, SystemInterface system) {
-    long updatedSignature = updateNaphtaliSandholmInputSignature(signature, system.getClass().getName());
-    updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, system.getModelName());
-    return updateNaphtaliSandholmInputSignature(updatedSignature, system.getMixingRuleName());
-  }
-
-  /**
-   * Add model and ordered component identities to a thermodynamic warm-start fingerprint.
-   *
-   * @param signature fingerprint accumulated so far
-   * @param system feed thermodynamic system
-   * @return updated fingerprint
-   */
-  private long updateThermodynamicIdentitySignature(long signature, SystemInterface system) {
-    long updatedSignature = updateNaphtaliSandholmThermodynamicModelSignature(signature, system);
-    String[] componentNames = system.getComponentNames();
-    updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, componentNames.length);
-    for (String componentName : componentNames) {
-      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, componentName);
-    }
-    return updatedSignature;
-  }
-
-  /**
-   * Add the column-level configuration to a Naphtali-Sandholm input fingerprint.
-   *
-   * <p>
-   * Feed streams and the optional top/bottom {@link ColumnSpecification}s are not the whole input. Column pressure and
-   * the reboiler/condenser temperature, operating mode, and ratio settings change the solution just as much, and
-   * several of their setters ({@link #setTopPressure(double)}, {@link #setBottomPressure(double)},
-   * {@code getReboiler().setOutTemperature(...)}) deliberately do not mark the column for re-initialization. Without
-   * them in the fingerprint, a parametric sweep or optimizer that varies column pressure or a column-end temperature
-   * against an unchanged feed silently receives the previous solution.
-   * </p>
-   *
-   * @param signature fingerprint accumulated so far
-   * @return updated fingerprint
-   */
-  private long updateColumnConfigurationSignature(long signature) {
-    return updateColumnConfigurationSignature(signature, false);
-  }
-
-  /**
-   * Add configuration inputs that require rebuilding sequential tray initialization.
-   *
-   * <p>
-   * An adjustable top or bottom product specification changes the corresponding condenser or reboiler temperature
-   * inside its outer solve. Those manipulated temperatures are deliberately excluded here so the specification solver
-   * can retain nearby tray states between trial points. Every independent fixed configuration input remains
-   * fingerprinted.
-   * </p>
-   *
-   * @param signature fingerprint accumulated so far
-   * @return updated fingerprint
-   */
-  private long updateSequentialInitializationConfigurationSignature(long signature) {
-    return updateColumnConfigurationSignature(signature, true);
-  }
-
-  /**
-   * Add column configuration inputs to a fingerprint.
-   *
-   * @param signature fingerprint accumulated so far
-   * @param ignoreSpecificationManipulatedTemperatures whether to omit endpoint temperatures adjusted by active product
-   * specifications
-   * @return updated fingerprint
-   */
-  private long updateColumnConfigurationSignature(long signature, boolean ignoreSpecificationManipulatedTemperatures) {
-    long updatedSignature = updateNaphtaliSandholmInputSignature(signature, numberOfTrays);
-    updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, topTrayPressure);
-    updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, bottomTrayPressure);
-    updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, murphreeEfficiency);
-    for (int trayIndex = 0; trayIndex < numberOfTrays && trayIndex < trays.size(); trayIndex++) {
-      SimpleTray tray = trays.get(trayIndex);
-      if (tray == null) {
-        updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, -1L);
-        continue;
-      }
-      boolean specificationManipulatedTemperature = ignoreSpecificationManipulatedTemperatures
-          && isSpecificationManipulatedTemperature(trayIndex);
-      if (specificationManipulatedTemperature) {
-        updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, 2L);
-      } else {
-        boolean temperatureSpecified = tray.isSetOutTemperature();
-        updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, temperatureSpecified ? 1L : 0L);
-        if (temperatureSpecified) {
-          updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, tray.getOutTemperature());
-        }
-      }
-      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature,
-          getEffectiveMurphreeEfficiency(trayIndex));
-      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, tray.getGasSideDrawFraction());
-      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, tray.getLiquidSideDrawFraction());
-    }
-    if (hasReboiler && getReboiler() != null) {
-      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, getReboiler().isRefluxSet() ? 1L : 0L);
-      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, getReboiler().getRefluxRatio());
-    }
-    if (hasCondenser && getCondenser() != null) {
-      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, getCondenser().isRefluxSet() ? 1L : 0L);
-      boolean fixedLiquidReflux = getCondenser().isSeparation_with_liquid_reflux();
-      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, fixedLiquidReflux ? 1L : 0L);
-      if (fixedLiquidReflux) {
-        updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature,
-            getCondenser().getFixedLiquidRefluxValue());
-        updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature,
-            getCondenser().getFixedLiquidRefluxUnit());
-      }
-      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature, getCondenser().getRefluxRatio());
-      updatedSignature = updateNaphtaliSandholmInputSignature(updatedSignature,
-          getCondenser().isTotalCondenser() ? 1L : 0L);
-    }
-    return updatedSignature;
-  }
-
-  /**
-   * Check whether an active outer specification owns a tray endpoint temperature.
-   *
-   * @param trayIndex zero-based tray index
-   * @return {@code true} for a condenser/reboiler temperature manipulated by an active specification
-   */
-  private boolean isSpecificationManipulatedTemperature(int trayIndex) {
-    boolean bottomTemperature = trayIndex == 0 && hasReboiler && needsAdjustment(bottomSpecification);
-    boolean topTemperature = trayIndex == numberOfTrays - 1 && hasCondenser && needsAdjustment(topSpecification);
-    return bottomTemperature || topTemperature;
-  }
-
-  /**
-   * Add one numeric input to a Naphtali-Sandholm input fingerprint.
-   *
-   * @param signature fingerprint accumulated so far
-   * @param value numeric input value
-   * @return updated fingerprint
-   */
-  private long updateNaphtaliSandholmInputSignature(long signature, double value) {
-    return updateNaphtaliSandholmInputSignature(signature, Double.doubleToLongBits(value));
-  }
-
-  /**
-   * Add one integral input to a Naphtali-Sandholm input fingerprint.
-   *
-   * @param signature fingerprint accumulated so far
-   * @param value integral input value
-   * @return updated fingerprint
-   */
-  private long updateNaphtaliSandholmInputSignature(long signature, long value) {
-    return 31L * signature + value;
-  }
-
-  /**
-   * Add complete text content to a Naphtali-Sandholm input fingerprint.
-   *
-   * <p>
-   * The null marker and text length distinguish {@code null}, an empty string, and sequences that otherwise share a
-   * prefix. Each UTF-16 character is folded with an independent 64-bit FNV-style step so the cache gate does not depend
-   * on a 32-bit string hash.
-   * </p>
-   *
-   * @param signature fingerprint accumulated so far
-   * @param value text input, which may be null
-   * @return updated fingerprint
-   */
-  private long updateNaphtaliSandholmInputSignature(long signature, String value) {
-    if (value == null) {
-      return updateNaphtaliSandholmInputSignature(signature, -1L);
-    }
-    long updatedSignature = updateNaphtaliSandholmInputSignature(signature, value.length());
-    for (int index = 0; index < value.length(); index++) {
-      updatedSignature ^= value.charAt(index);
-      updatedSignature *= 0x100000001b3L;
-    }
-    return updatedSignature;
-  }
-
-  /**
-   * Check whether any tray exposes a configured gas or liquid side product.
-   *
-   * @return {@code true} when at least one side-draw fraction is positive
-   */
-  private boolean hasActiveSideDrawFractions() {
-    for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
-      SimpleTray tray = trays.get(trayIndex);
-      if (tray.getGasSideDrawFraction() > 0.0 || tray.getLiquidSideDrawFraction() > 0.0) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Finalize a direct Naphtali-Sandholm solve without invoking generic product reconciliation.
-   *
-   * <p>
-   * The mass, energy and internal-traffic diagnostics are recomputed from the applied tray state rather than trusted
-   * from the solver, so {@link #solved()} is gated on the column that callers actually receive.
-   * </p>
-   *
-   * @param id calculation identifier
-   * @param accepted {@code true} when the solver accepted its own result
-   * @param iterations number of solver iterations
-   * @param temperatureResidual final temperature residual, {@code Double.NaN} when the solver does not produce one
-   * @param massResidual final mass residual
-   * @param energyResidual final energy residual
-   * @param startTime nano time when the solve started
-   */
-  private void finalizeNaphtaliSolve(UUID id, boolean accepted, int iterations, double temperatureResidual,
-      double massResidual, double energyResidual, long startTime) {
-    err = temperatureResidual;
-    lastIterationCount = iterations;
-    lastTemperatureResidual = temperatureResidual;
-    lastEnergyResidual = energyResidual;
-    lastSolveTimeSeconds = (System.nanoTime() - startTime) / 1.0e9;
-    lastUsedFeedFlashFallback = false;
-    lastInternalTrafficGuardReached = false;
-
-    gasOutStream.setThermoSystem(trays.get(numberOfTrays - 1).getGasOutStream().getThermoSystem());
-    gasOutStream.setCalculationIdentifier(id);
-    liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem());
-    liquidOutStream.setCalculationIdentifier(id);
-
-    // Recompute the balance diagnostics from the applied state. The solver reports its own
-    // internal mass balance only, and never touched lastInternalTrafficRatio at all, so a stale
-    // ratio from a previous solver run used to leak into the solved() gate.
-    lastMassResidual = Math.max(massResidual, getExternalMassBalanceError());
-    lastInternalTrafficRatio = getInternalTrafficRatio();
-
-    for (int i = 0; i < numberOfTrays; i++) {
-      trays.get(i).setCalculationIdentifier(id);
-    }
-    if (isEffectiveMeshResidualToleranceEnforced() || lastMeshResidual != null) {
-      updateMeshResiduals();
-    }
-    boolean hasActiveSideDraw = hasActiveSideDrawFractions();
-    if (accepted && hasActiveSideDraw && residualConvergenceSatisfied()) {
-      lastSolveStatus = SolveStatus.RIGOROUS_CONVERGED;
-      lastSolveStatusReason = "Naphtali-Sandholm side-draw products satisfy the active rigorous convergence gates";
-    } else if (accepted && !hasActiveSideDraw
-        && (!hasCondenser || getCondenser() == null || getCondenser().isFixedLiquidRefluxSpecificationSatisfied())) {
-      lastSolveStatus = SolveStatus.RECONCILED_PRODUCTS;
-      lastSolveStatusReason = "Naphtali-Sandholm direct products were applied";
-    } else {
-      lastSolveStatus = SolveStatus.FAILED;
-      if (accepted && hasCondenser && getCondenser() != null
-          && !getCondenser().isFixedLiquidRefluxSpecificationSatisfied()) {
-        lastSolveStatusReason = "Available condenser liquid was insufficient for the fixed liquid reflux specification";
-      } else {
-        lastSolveStatusReason = accepted
-            ? "Applied Naphtali-Sandholm side-draw state failed the active convergence gates"
-            : "Naphtali-Sandholm solver did not accept its result";
-      }
-    }
-    setCalculationIdentifier(id);
-  }
-
-  /**
-   * Store telemetry reported by a Naphtali-Sandholm solver instance.
-   *
-   * @param solver solver instance containing latest linearization and thermodynamic metrics
-   */
-  private void storeNaphtaliTelemetry(NaphtaliSandholmSolver solver) {
-    lastNaphtaliAnalyticJacobianColumns = solver.getLastAnalyticJacobianColumns();
-    lastNaphtaliFiniteDifferenceJacobianColumns = solver.getLastFiniteDifferenceJacobianColumns();
-    lastNaphtaliThermoEvaluationCount = solver.getLastThermoEvaluationCount();
-    lastNaphtaliThermoCacheHitCount = solver.getLastThermoCacheHitCount();
-    lastNaphtaliJacobianBuildTimeSeconds = solver.getLastJacobianBuildTimeSeconds();
-    lastNaphtaliBlockLinearSolveCount = solver.getLastBlockLinearSolveCount();
-    lastNaphtaliDenseLinearSolveCount = solver.getLastDenseLinearSolveCount();
-    lastNaphtaliLinearSolveTimeSeconds = solver.getLastLinearSolveTimeSeconds();
-  }
-
-  /**
-   * Return the smaller of two finite values, or the finite value when only one is finite.
-   *
-   * @param first first candidate value
-   * @param second second candidate value
-   * @return finite minimum, or zero if neither value is finite
-   */
-  private double finiteMinimum(double first, double second) {
-    if (Double.isFinite(first) && Double.isFinite(second)) {
-      return Math.min(first, second);
-    }
-    return finiteOr(first, finiteOr(second, 0.0));
-  }
-
-  /**
-   * Return a fallback for non-finite values.
-   *
-   * @param value value to inspect
-   * @param fallback fallback value
-   * @return value when finite, otherwise fallback
-   */
-  private double finiteOr(double value, double fallback) {
-    return Double.isFinite(value) ? value : fallback;
-  }
-
-  /**
-   * Try one Newton polishing pass on a deep-copied candidate column and accept it only if the MESH residual norm
-   * improves.
-   *
-   * <p>
-   * Running the aggressive Newton accelerator on a candidate protects the accepted inside-out solution from flash
-   * failures, non-finite states, or residual growth. This provides a bounded line-search style guard for the
-   * residual-monitored solver without changing the legacy Newton solver contract.
-   * </p>
-   *
-   * @param id calculation identifier
-   * @param baselineResidualNorm accepted residual norm before the polish attempt
-   * @return {@code true} if the candidate polish was accepted
-   */
-  private boolean tryGuardedMeshNewtonPolish(UUID id, double baselineResidualNorm) {
-    if (!Double.isFinite(baselineResidualNorm)) {
-      return false;
-    }
-    double baselineProductDrawResidual = getLastMeshProductDrawResidualNorm();
-    double baselineGasFlow = getProductFlowKgPerHour(gasOutStream);
-    double baselineLiquidFlow = getProductFlowKgPerHour(liquidOutStream);
-    DistillationColumn candidate;
-    try {
-      candidate = (DistillationColumn) this.copy();
-    } catch (RuntimeException exception) {
-      logger.debug("MESH Newton polish skipped because candidate copy failed.", exception);
-      return false;
-    }
-
-    try {
-      candidate.solveNewton(id);
-      candidate.updateMeshResiduals();
-    } catch (RuntimeException exception) {
-      logger.debug("MESH Newton polish rejected because the candidate solve failed.", exception);
-      return false;
-    }
-
-    double candidateResidualNorm = candidate.lastMeshResidual == null ? Double.NaN
-        : candidate.lastMeshResidual.getInfinityNorm();
-    double candidateProductDrawResidual = candidate.getLastMeshProductDrawResidualNorm();
-    boolean residualImproved = Double.isFinite(candidateResidualNorm)
-        && candidateResidualNorm < baselineResidualNorm * 0.999;
-    boolean productDrawGateRecovered = productDrawGateRecovered(candidateResidualNorm, candidateProductDrawResidual,
-        baselineResidualNorm, baselineProductDrawResidual);
-    if (!residualImproved && !productDrawGateRecovered) {
-      logger.debug("MESH Newton polish rejected: residual {} did not improve baseline {}.",
-          Double.valueOf(candidateResidualNorm), Double.valueOf(baselineResidualNorm));
-      return false;
-    }
-
-    if (!productDrawGateRecovered && !meshPolishProductSplitMatches(candidate, baselineGasFlow, baselineLiquidFlow)) {
-      logger.debug(
-          "MESH Newton polish rejected: product split changed from gas/liquid " + "{}/{} kg/hr to {}/{} kg/hr.",
-          Double.valueOf(baselineGasFlow), Double.valueOf(baselineLiquidFlow),
-          Double.valueOf(getProductFlowKgPerHour(candidate.gasOutStream)),
-          Double.valueOf(getProductFlowKgPerHour(candidate.liquidOutStream)));
-      return false;
-    }
-
-    acceptSolvedStateCandidate(candidate);
-    logger.debug("MESH Newton polish accepted: residual {} improved baseline {}.",
-        Double.valueOf(candidateResidualNorm), Double.valueOf(baselineResidualNorm));
-    return true;
-  }
-
-  /**
-   * Check whether a Newton polish recovered the MESH product-draw convergence gate.
-   *
-   * @param candidateResidualNorm candidate MESH infinity norm
-   * @param candidateProductDrawResidual candidate product-draw residual norm
-   * @param baselineResidualNorm baseline MESH infinity norm
-   * @param baselineProductDrawResidual baseline product-draw residual norm
-   * @return {@code true} when product-draw residuals satisfy their gate without worsening the overall residual norm
-   */
-  private boolean productDrawGateRecovered(double candidateResidualNorm, double candidateProductDrawResidual,
-      double baselineResidualNorm, double baselineProductDrawResidual) {
-    return Double.isFinite(candidateResidualNorm) && Double.isFinite(candidateProductDrawResidual)
-        && Double.isFinite(baselineProductDrawResidual)
-        && candidateResidualNorm <= Math.max(baselineResidualNorm, meshResidualTolerance)
-        && candidateProductDrawResidual <= meshProductDrawResidualTolerance
-        && candidateProductDrawResidual < baselineProductDrawResidual;
-  }
-
-  /**
-   * Check whether a MESH Newton polish preserved the accepted terminal product split.
-   *
-   * @param candidate candidate column after Newton polishing
-   * @param baselineGasFlow gas product flow before polishing in kg/hr
-   * @param baselineLiquidFlow liquid product flow before polishing in kg/hr
-   * @return {@code true} when both product flows remain within tolerance
-   */
-  private boolean meshPolishProductSplitMatches(DistillationColumn candidate, double baselineGasFlow,
-      double baselineLiquidFlow) {
-    if (candidate == null) {
-      return false;
-    }
-    double candidateGasFlow = getProductFlowKgPerHour(candidate.gasOutStream);
-    double candidateLiquidFlow = getProductFlowKgPerHour(candidate.liquidOutStream);
-    return productFlowWithinMeshPolishTolerance(candidateGasFlow, baselineGasFlow)
-        && productFlowWithinMeshPolishTolerance(candidateLiquidFlow, baselineLiquidFlow);
-  }
-
-  /**
-   * Read a product stream flow in kg/hr.
-   *
-   * @param stream product stream to inspect
-   * @return flow in kg/hr, or {@link Double#NaN} when unavailable
-   */
-  private double getProductFlowKgPerHour(StreamInterface stream) {
-    if (stream == null) {
-      return Double.NaN;
-    }
-    try {
-      return stream.getFlowRate("kg/hr");
-    } catch (RuntimeException exception) {
-      return Double.NaN;
-    }
-  }
-
-  /**
-   * Compare a candidate product flow against a baseline flow for MESH polish acceptance.
-   *
-   * @param candidateFlow candidate flow in kg/hr
-   * @param baselineFlow baseline flow in kg/hr
-   * @return {@code true} if the candidate flow is finite and within tolerance
-   */
-  private boolean productFlowWithinMeshPolishTolerance(double candidateFlow, double baselineFlow) {
-    if (!Double.isFinite(candidateFlow) || !Double.isFinite(baselineFlow)) {
-      return false;
-    }
-    double tolerance = Math.max(1.0e-8, Math.abs(baselineFlow) * MESH_POLISH_PRODUCT_FLOW_TOLERANCE);
-    return Math.abs(candidateFlow - baselineFlow) <= tolerance;
-  }
-
-  /**
-   * Copy the solved state from an accepted candidate back to this live column.
-   *
-   * <p>
-   * User-facing feed stream maps are intentionally not replaced: they may contain stream object identities supplied by
-   * callers and are reused on later runs. The candidate tray network already contains equivalent cloned feed streams
-   * for the accepted solved state, and the preserved maps will refresh tray inputs from the caller-owned streams on the
-   * next solve.
-   * </p>
-   *
-   * @param candidate accepted candidate column
-   */
-  private void acceptSolvedStateCandidate(DistillationColumn candidate) {
-    this.trays = candidate.trays;
-    this.numberOfTrays = candidate.numberOfTrays;
-    this.distoperations = candidate.distoperations;
-    this.feedmixer = candidate.feedmixer;
-    this.stream_3 = candidate.stream_3;
-    // Preserve the product-stream object identities so external consumers that captured
-    // getGasOutStream() / getLiquidOutStream() before solving keep observing the accepted solved
-    // product state. Reassigning the field references (the legacy behaviour) orphaned those
-    // caller-held streams at their stale pre-polish flows, removing the stale-to-solved product
-    // flow difference from the surrounding process mass balance.
-    this.gasOutStream = adoptSolvedProductStream(this.gasOutStream, candidate.gasOutStream);
-    this.liquidOutStream = adoptSolvedProductStream(this.liquidOutStream, candidate.liquidOutStream);
-    this.stream_3isset = candidate.stream_3isset;
-    this.heater = candidate.heater;
-    this.separator2 = candidate.separator2;
-    this.err = candidate.err;
-    this.lastIterationCount = candidate.lastIterationCount;
-    this.lastTemperatureResidual = candidate.lastTemperatureResidual;
-    this.lastAppliedTemperatureStepResidual = candidate.lastAppliedTemperatureStepResidual;
-    this.lastMassResidual = candidate.lastMassResidual;
-    this.lastEnergyResidual = candidate.lastEnergyResidual;
-    this.lastTopSpecificationResidual = candidate.lastTopSpecificationResidual;
-    this.lastBottomSpecificationResidual = candidate.lastBottomSpecificationResidual;
-    this.lastMeshResidual = candidate.lastMeshResidual;
-    this.lastUsedFeedFlashFallback = candidate.lastUsedFeedFlashFallback;
-    this.lastInternalTrafficRatio = candidate.lastInternalTrafficRatio;
-    this.lastInternalTrafficGuardReached = candidate.lastInternalTrafficGuardReached;
-    this.internalTrafficCapActive = candidate.internalTrafficCapActive;
-    this.terminalGasProductDrawStream = candidate.terminalGasProductDrawStream;
-    this.terminalLiquidProductDrawStream = candidate.terminalLiquidProductDrawStream;
-    this.lastSolveTimeSeconds = candidate.lastSolveTimeSeconds;
-    this.lastInsideOutOuterFlashSweeps = candidate.lastInsideOutOuterFlashSweeps;
-    this.lastInsideOutInnerLoopIterations = candidate.lastInsideOutInnerLoopIterations;
-    this.lastInsideOutKValueResidual = candidate.lastInsideOutKValueResidual;
-    this.lastInsideOutSurrogateResidual = candidate.lastInsideOutSurrogateResidual;
-    this.lastInsideOutSurrogateResetCount = candidate.lastInsideOutSurrogateResetCount;
-    this.lastMatrixInsideOutWarmStartUsed = candidate.lastMatrixInsideOutWarmStartUsed;
-    this.lastMatrixInsideOutWarmStartBypassed = candidate.lastMatrixInsideOutWarmStartBypassed;
-    this.lastMatrixInsideOutIterationCount = candidate.lastMatrixInsideOutIterationCount;
-    this.lastMatrixInsideOutTemperatureResidual = candidate.lastMatrixInsideOutTemperatureResidual;
-    this.lastMatrixInsideOutSolveTimeSeconds = candidate.lastMatrixInsideOutSolveTimeSeconds;
-    this.lastNaphtaliAnalyticJacobianColumns = candidate.lastNaphtaliAnalyticJacobianColumns;
-    this.lastNaphtaliFiniteDifferenceJacobianColumns = candidate.lastNaphtaliFiniteDifferenceJacobianColumns;
-    this.lastNaphtaliThermoEvaluationCount = candidate.lastNaphtaliThermoEvaluationCount;
-    this.lastNaphtaliThermoCacheHitCount = candidate.lastNaphtaliThermoCacheHitCount;
-    this.lastNaphtaliJacobianBuildTimeSeconds = candidate.lastNaphtaliJacobianBuildTimeSeconds;
-    this.lastNaphtaliBlockLinearSolveCount = candidate.lastNaphtaliBlockLinearSolveCount;
-    this.lastNaphtaliDenseLinearSolveCount = candidate.lastNaphtaliDenseLinearSolveCount;
-    this.lastNaphtaliLinearSolveTimeSeconds = candidate.lastNaphtaliLinearSolveTimeSeconds;
-    this.hasBeenSolvedBefore = candidate.hasBeenSolvedBefore;
-    this.lastTotalFeedFlow = candidate.lastTotalFeedFlow;
-    this.doInitializion = candidate.doInitializion;
-    // The tray network now belongs to the candidate, so cache ownership must follow the adopted
-    // state explicitly. An accepted sequential candidate carries the full input fingerprint needed
-    // for safe unchanged-input reuse; invocation telemetry must describe the next live invocation.
-    // Naphtali-Sandholm ownership is dropped unless the caller explicitly re-arms it through
-    // acceptNaphtaliWarmStartCandidate and commitNaphtaliSandholmWarmState.
-    this.trayStateThermodynamicIdentitySignature = candidate.trayStateThermodynamicIdentitySignature;
-    this.lastSequentialInitializationSignature = candidate.lastSequentialInitializationSignature;
-    this.hasSequentialExactReuseState = candidate.hasSequentialExactReuseState;
-    this.lastSequentialInputSignature = candidate.lastSequentialInputSignature;
-    this.lastSequentialWarmStateReused = false;
-    this.naphtaliSandholmStateOwned = false;
-    this.hasNaphtaliSandholmWarmState = false;
-    this.lastNaphtaliSandholmInputSignature = Long.MIN_VALUE;
-    this.lastNaphtaliSandholmConvergenceGateSignature = Long.MIN_VALUE;
-    this.lastNaphtaliSandholmWarmStateReused = false;
-    this.solverTypeExplicitlySet = candidate.solverTypeExplicitlySet;
-    this.fullFractionatorFastPathEnabled = candidate.fullFractionatorFastPathEnabled;
-    this.lastSolverTypeUsed = candidate.lastSolverTypeUsed;
-    this.lastSolveStatus = candidate.lastSolveStatus;
-    this.lastSolveStatusReason = candidate.lastSolveStatusReason;
-    this.lastFullFractionatorFastPathApplied = candidate.lastFullFractionatorFastPathApplied;
-    this.lastFullFractionatorFastPathReason = candidate.lastFullFractionatorFastPathReason;
-    this.lastAutoSolverSummary = candidate.lastAutoSolverSummary;
-    this.lastAutoFeasibilityReport = candidate.lastAutoFeasibilityReport;
-    this.lastInitializationReport = candidate.lastInitializationReport;
-    this.lastAutoSolverHistory = candidate.lastAutoSolverHistory == null ? new ArrayList<String>()
-        : new ArrayList<String>(candidate.lastAutoSolverHistory);
-    this.specificationHomotopySteps = candidate.specificationHomotopySteps;
-    this.lastSpecificationHomotopyStepCount = candidate.lastSpecificationHomotopyStepCount;
-  }
-
-  /**
-   * Copy an accepted candidate product stream's solved state into the live product stream while preserving the live
-   * stream's object identity.
-   *
-   * <p>
-   * Downstream equipment that captured {@link #getGasOutStream()} or {@link #getLiquidOutStream()} before the column
-   * solved holds those stream objects by reference. Replacing the field with the candidate's freshly copied stream
-   * orphaned the caller-held objects at their stale (pre-polish) flows, which dropped the difference between the stale
-   * and solved product flows from the overall process mass balance. Copying the solved thermodynamic system into the
-   * existing stream keeps the caller-held reference live and mass-consistent.
-   * </p>
-   *
-   * @param live the existing product stream whose identity must be preserved
-   * @param solved the accepted candidate product stream carrying the solved state
-   * @return the product stream reference to retain on this column
-   */
-  private static StreamInterface adoptSolvedProductStream(StreamInterface live, StreamInterface solved) {
-    if (live == null) {
-      return solved;
-    }
-    if (solved == null || solved.getThermoSystem() == null) {
-      return live;
-    }
-    live.setThermoSystem(solved.getThermoSystem().clone());
-    live.setCalculationIdentifier(solved.getCalculationIdentifier());
-    return live;
-  }
-
-  /**
-   * Accept a candidate produced by the automatic solver selector.
-   *
-   * @param candidate solved or best available candidate state
-   * @param selectedSolver solver strategy used for the candidate
-   */
-  void acceptAutoSolverCandidate(DistillationColumn candidate, SolverType selectedSolver) {
-    acceptSolvedStateCandidate(candidate);
-    lastSolverTypeUsed = selectedSolver;
-    // Remember the concrete solver AUTO selected so warm re-solves can reuse it directly.
-    if (selectedSolver != null && selectedSolver != SolverType.AUTO) {
-      autoWarmStartSolver = selectedSolver;
-    }
-  }
-
-  /**
-   * Store the candidate trace from the automatic solver selector.
-   *
-   * @param summary human-readable candidate trace, or {@code null} to clear it
-   */
-  void setLastAutoSolverSummary(String summary) {
-    lastAutoSolverSummary = summary == null ? "" : summary;
-  }
-
-  /**
-   * Store the feasibility report from automatic solver pre-screening.
-   *
-   * @param report feasibility report text, or {@code null} to clear it
-   */
-  void setLastAutoFeasibilityReport(String report) {
-    lastAutoFeasibilityReport = report == null ? "" : report;
-  }
-
-  /**
-   * Store the latest automatic initialization report.
-   *
-   * @param report initialization report text, or {@code null} to clear it
-   */
-  void setLastInitializationReport(String report) {
-    lastInitializationReport = report == null ? "" : report;
-  }
-
-  /**
-   * Record one automatic solver pipeline event.
-   *
-   * @param event concise event text
-   */
-  void recordAutoSolverEvent(String event) {
-    if (lastAutoSolverHistory == null) {
-      lastAutoSolverHistory = new ArrayList<String>();
-    }
-    if (event != null && !event.trim().isEmpty()) {
-      lastAutoSolverHistory.add(event);
-    }
-  }
-
-  /**
-   * Accept a damped fallback candidate after an accelerator result has been rejected.
-   *
-   * @param candidate solved fallback candidate
-   * @param reason reason the accelerator result was rejected
-   */
-  void acceptDampedFallbackCandidate(DistillationColumn candidate, String reason) {
-    logger.warn(
-        "Accelerated solver result rejected for column {}: {}. Using damped " + "substitution fallback candidate.",
-        getName(), reason);
-    acceptSolvedStateCandidate(candidate);
-    lastSolverTypeUsed = SolverType.DAMPED_SUBSTITUTION;
-    lastSolveStatusReason = reason;
-  }
-
-  /**
-   * Accept a residual-monitored warm-start state after rejecting a Naphtali-Sandholm candidate.
-   *
-   * <p>
-   * The accepted state comes from the warm-start solver, but the strategy reported to callers remains
-   * {@link SolverType#NAPHTALI_SANDHOLM}. Naphtali-Sandholm telemetry from the rejected candidate is preserved so
-   * diagnostics still show the attempted linearization work.
-   * </p>
-   *
-   * <p>
-   * The adopted tray state is a converged answer for the inputs currently in force, so the column re-arms the
-   * warm-state cache. {@link #commitNaphtaliSandholmWarmState()} then recomputes the input fingerprint from those
-   * inputs rather than reusing the fingerprint of the rejected candidate.
-   * </p>
-   *
-   * @param candidate solved warm-start candidate to keep
-   * @param reason reason the direct Naphtali-Sandholm candidate was rejected
-   */
-  void acceptNaphtaliWarmStartCandidate(DistillationColumn candidate, String reason) {
-    int analyticJacobianColumns = lastNaphtaliAnalyticJacobianColumns;
-    int finiteDifferenceJacobianColumns = lastNaphtaliFiniteDifferenceJacobianColumns;
-    int thermoEvaluationCount = lastNaphtaliThermoEvaluationCount;
-    int thermoCacheHitCount = lastNaphtaliThermoCacheHitCount;
-    double jacobianBuildTimeSeconds = lastNaphtaliJacobianBuildTimeSeconds;
-    int blockLinearSolveCount = lastNaphtaliBlockLinearSolveCount;
-    int denseLinearSolveCount = lastNaphtaliDenseLinearSolveCount;
-    double linearSolveTimeSeconds = lastNaphtaliLinearSolveTimeSeconds;
-
-    logger.warn(
-        "Naphtali-Sandholm candidate rejected for column {}: {}. Keeping " + "residual-monitored warm-start state.",
-        getName(), reason);
-    acceptSolvedStateCandidate(candidate);
-    lastSolverTypeUsed = SolverType.NAPHTALI_SANDHOLM;
-    lastSolveStatusReason = reason;
-    naphtaliSandholmStateOwned = true;
-    lastNaphtaliAnalyticJacobianColumns = analyticJacobianColumns;
-    lastNaphtaliFiniteDifferenceJacobianColumns = finiteDifferenceJacobianColumns;
-    lastNaphtaliThermoEvaluationCount = thermoEvaluationCount;
-    lastNaphtaliThermoCacheHitCount = thermoCacheHitCount;
-    lastNaphtaliJacobianBuildTimeSeconds = jacobianBuildTimeSeconds;
-    lastNaphtaliBlockLinearSolveCount = blockLinearSolveCount;
-    lastNaphtaliDenseLinearSolveCount = denseLinearSolveCount;
-    lastNaphtaliLinearSolveTimeSeconds = linearSolveTimeSeconds;
-  }
-
-  /**
-   * Check whether the latest MESH residual still needs Newton polishing.
-   *
-   * @return {@code true} when no finite residual is available or the norm is above tolerance
-   */
-  private boolean meshResidualNeedsPolishing() {
-    return lastMeshResidual == null || !lastMeshResidual.isFinite()
-        || lastMeshResidual.getInfinityNorm() > meshResidualTolerance || !productDrawResidualsSatisfied();
-  }
-
-  /**
-   * Evaluate how far the current column solution is from satisfying a specification.
-   *
-   * @param spec the column specification to evaluate
-   * @return the error (current value minus target value); zero when satisfied
-   */
-  private double evaluateSpecError(ColumnSpecification spec) {
-    if (spec == null) {
-      return 0.0;
-    }
-
-    StreamInterface productStream;
-    if (spec.getLocation() == ColumnSpecification.ProductLocation.TOP) {
-      productStream = gasOutStream;
-    } else {
-      productStream = liquidOutStream;
-    }
-
-    switch (spec.getType()) {
-    case PRODUCT_PURITY: {
-      double currentPurity = productStream.getFluid().getComponent(spec.getComponentName()).getz();
-      return currentPurity - spec.getTargetValue();
-    }
-    case COMPONENT_RECOVERY: {
-      double productCompFlow = productStream.getFluid().getComponent(spec.getComponentName())
-          .getTotalFlowRate("mol/hr");
-      double totalFeedCompFlow = getTotalFeedComponentFlow(spec.getComponentName());
-      double recovery = (totalFeedCompFlow > 1.0e-12) ? productCompFlow / totalFeedCompFlow : 0.0;
-      return recovery - spec.getTargetValue();
-    }
-    case PRODUCT_FLOW_RATE: {
-      double currentFlow = productStream.getFluid().getFlowRate("mol/hr");
-      return currentFlow - spec.getTargetValue();
-    }
-    default:
-      return 0.0;
-    }
-  }
-
-  /**
-   * Calculate the total feed flow of a named component across all feed streams.
-   *
-   * @param componentName the component name
-   * @return total molar flow in mol/hr
-   */
-  private double getTotalFeedComponentFlow(String componentName) {
-    double total = 0.0;
-    for (StreamInterface feed : getAllExternalFeedStreams()) {
-      total += feed.getFluid().getComponent(componentName).getTotalFlowRate("mol/hr");
-    }
-    return total;
-  }
-
-  /**
-   * Estimate a representative feed temperature from the assigned feed streams.
-   *
-   * @return average feed temperature in Kelvin
-   */
-  private double estimateFeedTemperature() {
-    double sumTemp = 0.0;
-    int count = 0;
-    for (List<StreamInterface> feeds : feedStreams.values()) {
-      for (StreamInterface feed : feeds) {
-        sumTemp += feed.getTemperature("K");
-        count++;
-      }
-    }
-    return count > 0 ? sumTemp / count : 300.0;
-  }
-
-  /**
-   * Assign queued feed streams to estimated tray locations.
-   */
-  private void assignUnassignedFeeds() {
-    if (unassignedFeedStreams.isEmpty()) {
-      return;
-    }
-
-    if (numberOfTrays == 0) {
-      return;
-    }
-
-    Iterator<StreamInterface> iter = unassignedFeedStreams.iterator();
-    while (iter.hasNext()) {
-      StreamInterface feed = iter.next();
-      int bestTray = estimateFeedTrayNumber(feed);
-
-      addFeedStream(feed, bestTray);
-      iter.remove();
-    }
-  }
-
-  /**
-   * Estimate the feed tray number from a feed temperature.
-   *
-   * @param feedTemperature feed stream temperature in Kelvin
-   * @return 0-based estimated feed tray number
-   */
-  private int estimateFeedTrayNumber(double feedTemperature) {
-    int firstFeedTray = getFirstFeedTrayCandidate();
-    int lastFeedTray = getLastFeedTrayCandidate();
-    if (firstFeedTray > lastFeedTray) {
-      firstFeedTray = 0;
-      lastFeedTray = numberOfTrays - 1;
-    }
-
-    if (!isUsableTemperature(feedTemperature)) {
-      return (firstFeedTray + lastFeedTray) / 2;
-    }
-
-    boolean useTrayProfile = hasUsableTrayTemperatureProfile(firstFeedTray, lastFeedTray);
-    int bestTray = (firstFeedTray + lastFeedTray) / 2;
-    double minimumTemperatureDifference = Double.MAX_VALUE;
-
-    for (int trayNumber = firstFeedTray; trayNumber <= lastFeedTray; trayNumber++) {
-      double trayTemperature = useTrayProfile ? trays.get(trayNumber).getTemperature()
-          : estimateTrayTemperatureFromColumnEnds(trayNumber, feedTemperature);
-      if (!isUsableTemperature(trayTemperature)) {
-        continue;
-      }
-
-      double temperatureDifference = Math.abs(trayTemperature - feedTemperature);
-      if (temperatureDifference < minimumTemperatureDifference
-          || Math.abs(temperatureDifference - minimumTemperatureDifference) <= FEED_TRAY_TIE_TOLERANCE) {
-        minimumTemperatureDifference = temperatureDifference;
-        bestTray = trayNumber;
-      }
-    }
-    return bestTray;
-  }
-
-  /**
-   * Return the first tray to consider for automatic feed placement.
-   *
-   * @return first 0-based feed tray candidate
-   */
-  private int getFirstFeedTrayCandidate() {
-    return hasReboiler && numberOfTrays > 1 ? 1 : 0;
-  }
-
-  /**
-   * Return the last tray to consider for automatic feed placement.
-   *
-   * @return last 0-based feed tray candidate
-   */
-  private int getLastFeedTrayCandidate() {
-    int lastFeedTray = numberOfTrays - 1;
-    if (hasCondenser && lastFeedTray > 0) {
-      lastFeedTray--;
-    }
-    return lastFeedTray;
-  }
-
-  /**
-   * Check whether the column already has a useful tray temperature profile.
-   *
-   * @param firstFeedTray first tray index included in the check
-   * @param lastFeedTray last tray index included in the check
-   * @return {@code true} when at least two tray temperatures span a useful range
-   */
-  private boolean hasUsableTrayTemperatureProfile(int firstFeedTray, int lastFeedTray) {
-    double minimumTemperature = Double.MAX_VALUE;
-    double maximumTemperature = -Double.MAX_VALUE;
-    int temperatureCount = 0;
-    for (int trayNumber = firstFeedTray; trayNumber <= lastFeedTray; trayNumber++) {
-      double trayTemperature = trays.get(trayNumber).getTemperature();
-      if (!isUsableTemperature(trayTemperature)) {
-        continue;
-      }
-      minimumTemperature = Math.min(minimumTemperature, trayTemperature);
-      maximumTemperature = Math.max(maximumTemperature, trayTemperature);
-      temperatureCount++;
-    }
-    return temperatureCount >= 2 && Math.abs(maximumTemperature - minimumTemperature) > MINIMUM_FEED_PROFILE_SPAN;
-  }
-
-  /**
-   * Estimate a tray temperature from configured column-end temperatures.
-   *
-   * @param trayNumber tray index to estimate
-   * @param feedTemperature feed stream temperature in Kelvin
-   * @return estimated tray temperature in Kelvin, or {@link Double#NaN} if no useful profile exists
-   */
-  private double estimateTrayTemperatureFromColumnEnds(int trayNumber, double feedTemperature) {
-    if (numberOfTrays <= 1) {
-      return feedTemperature;
-    }
-
-    double bottomTemperature = estimateBottomFeedProfileTemperature(feedTemperature);
-    double topTemperature = estimateTopFeedProfileTemperature(feedTemperature, bottomTemperature);
-    if (!isUsableTemperature(bottomTemperature) || !isUsableTemperature(topTemperature)
-        || bottomTemperature - topTemperature <= MINIMUM_FEED_PROFILE_SPAN) {
-      return Double.NaN;
-    }
-
-    double trayFraction = trayNumber / (numberOfTrays - 1.0);
-    return bottomTemperature + trayFraction * (topTemperature - bottomTemperature);
-  }
-
-  /**
-   * Estimate the bottom temperature used for initial feed placement.
-   *
-   * @param feedTemperature feed stream temperature in Kelvin
-   * @return bottom temperature estimate in Kelvin
-   */
-  private double estimateBottomFeedProfileTemperature(double feedTemperature) {
-    if (hasReboiler && getReboiler().isSetOutTemperature() && isUsableTemperature(getReboiler().getOutTemperature())) {
-      return getReboiler().getOutTemperature();
-    }
-    double trayTemperature = trays.get(0).getTemperature();
-    if (isUsableTemperature(trayTemperature)) {
-      return trayTemperature;
-    }
-    return feedTemperature + FEED_PROFILE_END_TEMPERATURE_OFFSET;
-  }
-
-  /**
-   * Estimate the top temperature used for initial feed placement.
-   *
-   * @param feedTemperature feed stream temperature in Kelvin
-   * @param bottomTemperature bottom temperature estimate in Kelvin
-   * @return top temperature estimate in Kelvin
-   */
-  private double estimateTopFeedProfileTemperature(double feedTemperature, double bottomTemperature) {
-    int topTrayNumber = numberOfTrays - 1;
-    if (hasCondenser && getCondenser().isSetOutTemperature()
-        && isUsableTemperature(getCondenser().getOutTemperature())) {
-      return getCondenser().getOutTemperature();
-    }
-    double trayTemperature = trays.get(topTrayNumber).getTemperature();
-    if (isUsableTemperature(trayTemperature)) {
-      return trayTemperature;
-    }
-    double topTemperature = feedTemperature - FEED_PROFILE_END_TEMPERATURE_OFFSET;
-    if (isUsableTemperature(bottomTemperature) && topTemperature >= bottomTemperature - MINIMUM_FEED_PROFILE_SPAN) {
-      topTemperature = bottomTemperature - FEED_PROFILE_END_TEMPERATURE_OFFSET;
-    }
-    return topTemperature;
-  }
-
-  /**
-   * Check whether a temperature is finite and physically usable for feed placement.
-   *
-   * @param temperature temperature in Kelvin
-   * @return {@code true} when the temperature can be used in the feed-placement heuristic
-   */
-  private boolean isUsableTemperature(double temperature) {
-    return !Double.isNaN(temperature) && !Double.isInfinite(temperature) && temperature > 0.0;
-  }
-
-  /**
-   * Result from a rigorous tray-count and feed-tray search.
-   *
-   * <p>
-   * The result is immutable and records the selected tray count, selected feed tray, product purity, duty estimates and
-   * convergence diagnostics from the final candidate run.
-   * </p>
-   *
-   * @author esol
-   * @version 1.0
-   */
-  public static class TrayOptimizationResult implements java.io.Serializable {
-    /** Serialization version UID. */
-    private static final long serialVersionUID = 1000;
-    private final boolean feasible;
-    private final int numberOfTrays;
-    private final int feedTrayNumber;
-    private final String componentName;
-    private final boolean topProduct;
-    private final double targetPurity;
-    private final double productPurity;
-    private final double reboilerDuty;
-    private final double condenserDuty;
-    private final double totalAbsoluteDuty;
-    private final int iterationCount;
-    private final double temperatureResidual;
-    private final double massResidual;
-    private final double energyResidual;
-    private final int evaluatedCases;
-    private final int convergedCases;
-    private final String message;
-
-    /**
-     * Create a tray optimization result.
-     *
-     * @param feasible {@code true} if a candidate met the product specification
-     * @param numberOfTrays total tray count including reboiler and condenser if present
-     * @param feedTrayNumber 0-based feed tray number selected for all optimization feeds
-     * @param componentName product component used in the purity specification
-     * @param topProduct {@code true} when the purity target applies to the top product
-     * @param targetPurity target product mole fraction
-     * @param productPurity achieved product mole fraction
-     * @param reboilerDuty reboiler duty in W
-     * @param condenserDuty condenser duty in W
-     * @param totalAbsoluteDuty sum of absolute condenser and reboiler duties in W
-     * @param iterationCount solver iteration count for the final candidate
-     * @param temperatureResidual final temperature residual in K
-     * @param massResidual final relative mass residual
-     * @param energyResidual final relative energy residual
-     * @param evaluatedCases number of tray-count/feed-tray cases evaluated
-     * @param convergedCases number of evaluated cases that converged
-     * @param message diagnostic message describing the outcome
-     */
-    public TrayOptimizationResult(boolean feasible, int numberOfTrays, int feedTrayNumber, String componentName,
-        boolean topProduct, double targetPurity, double productPurity, double reboilerDuty, double condenserDuty,
-        double totalAbsoluteDuty, int iterationCount, double temperatureResidual, double massResidual,
-        double energyResidual, int evaluatedCases, int convergedCases, String message) {
-      this.feasible = feasible;
-      this.numberOfTrays = numberOfTrays;
-      this.feedTrayNumber = feedTrayNumber;
-      this.componentName = componentName;
-      this.topProduct = topProduct;
-      this.targetPurity = targetPurity;
-      this.productPurity = productPurity;
-      this.reboilerDuty = reboilerDuty;
-      this.condenserDuty = condenserDuty;
-      this.totalAbsoluteDuty = totalAbsoluteDuty;
-      this.iterationCount = iterationCount;
-      this.temperatureResidual = temperatureResidual;
-      this.massResidual = massResidual;
-      this.energyResidual = energyResidual;
-      this.evaluatedCases = evaluatedCases;
-      this.convergedCases = convergedCases;
-      this.message = message;
-    }
-
-    /**
-     * Check whether the optimization found a feasible candidate.
-     *
-     * @return {@code true} if the product specification was met by a converged candidate
-     */
-    public boolean isFeasible() {
-      return feasible;
-    }
-
-    /**
-     * Get the selected total number of trays.
-     *
-     * @return total tray count including reboiler and condenser if present, or {@code -1}
-     */
-    public int getNumberOfTrays() {
-      return numberOfTrays;
-    }
-
-    /**
-     * Get the selected feed tray number.
-     *
-     * @return 0-based feed tray number, or {@code -1} if no feasible candidate was found
-     */
-    public int getFeedTrayNumber() {
-      return feedTrayNumber;
-    }
-
-    /**
-     * Get the component used for the product-purity specification.
-     *
-     * @return component name
-     */
-    public String getComponentName() {
-      return componentName;
-    }
-
-    /**
-     * Check whether the optimized specification applies to the top product.
-     *
-     * @return {@code true} for top product, {@code false} for bottom product
-     */
-    public boolean isTopProduct() {
-      return topProduct;
-    }
-
-    /**
-     * Get the target product mole fraction.
-     *
-     * @return target purity as mole fraction
-     */
-    public double getTargetPurity() {
-      return targetPurity;
-    }
-
-    /**
-     * Get the achieved product mole fraction.
-     *
-     * @return achieved product purity as mole fraction, or {@link Double#NaN}
-     */
-    public double getProductPurity() {
-      return productPurity;
-    }
-
-    /**
-     * Get the final reboiler duty.
-     *
-     * @return reboiler duty in W, or {@code 0.0} when no reboiler is present
-     */
-    public double getReboilerDuty() {
-      return reboilerDuty;
-    }
-
-    /**
-     * Get the final condenser duty.
-     *
-     * @return condenser duty in W, or {@code 0.0} when no condenser is present
-     */
-    public double getCondenserDuty() {
-      return condenserDuty;
-    }
-
-    /**
-     * Get the objective duty used to compare candidates with the same tray count.
-     *
-     * @return sum of absolute condenser and reboiler duties in W
-     */
-    public double getTotalAbsoluteDuty() {
-      return totalAbsoluteDuty;
-    }
-
-    /**
-     * Get the final solver iteration count.
-     *
-     * @return iteration count for the final candidate
-     */
-    public int getIterationCount() {
-      return iterationCount;
-    }
-
-    /**
-     * Get the final temperature residual.
-     *
-     * @return temperature residual in K
-     */
-    public double getTemperatureResidual() {
-      return temperatureResidual;
-    }
-
-    /**
-     * Get the final mass residual.
-     *
-     * @return relative mass residual
-     */
-    public double getMassResidual() {
-      return massResidual;
-    }
-
-    /**
-     * Get the final energy residual.
-     *
-     * @return relative energy residual
-     */
-    public double getEnergyResidual() {
-      return energyResidual;
-    }
-
-    /**
-     * Get the number of evaluated candidate cases.
-     *
-     * @return evaluated tray-count/feed-tray combinations
-     */
-    public int getEvaluatedCases() {
-      return evaluatedCases;
-    }
-
-    /**
-     * Get the number of converged candidate cases.
-     *
-     * @return converged tray-count/feed-tray combinations
-     */
-    public int getConvergedCases() {
-      return convergedCases;
-    }
-
-    /**
-     * Get the optimization diagnostic message.
-     *
-     * @return diagnostic message
-     */
-    public String getMessage() {
-      return message;
-    }
-  }
-
-  /**
-   * Result from initializing a rigorous column with shortcut FUG design estimates.
-   *
-   * <p>
-   * The result records the Fenske-Underwood-Gilliland estimates and the translated rigorous-column settings applied to
-   * {@link DistillationColumn}: total stage count, bottom-up feed tray and condenser reflux ratio.
-   * </p>
-   *
-   * @author esol
-   * @version 1.0
-   */
-  public static class ShortcutInitializationResult implements java.io.Serializable {
-    /** Serialization version UID. */
-    private static final long serialVersionUID = 1000;
-
-    private final boolean initialized;
-    private final int totalStageCount;
-    private final int feedTrayNumber;
-    private final int feedTrayNumberFromTop;
-    private final double minimumStages;
-    private final double minimumRefluxRatio;
-    private final double actualStages;
-    private final double actualRefluxRatio;
-    private final double condenserDuty;
-    private final double reboilerDuty;
-    private final String lightKey;
-    private final String heavyKey;
-    private final String message;
-
-    /**
-     * Create a shortcut initialization result.
-     *
-     * @param initialized whether the rigorous column was configured
-     * @param totalStageCount total rigorous stage count including condenser/reboiler if present
-     * @param feedTrayNumber bottom-up rigorous feed tray index
-     * @param feedTrayNumberFromTop shortcut feed tray count from the top product end
-     * @param minimumStages Fenske minimum theoretical stages
-     * @param minimumRefluxRatio Underwood minimum reflux ratio
-     * @param actualStages Gilliland actual theoretical stages
-     * @param actualRefluxRatio selected actual reflux ratio
-     * @param condenserDuty estimated condenser duty in W
-     * @param reboilerDuty estimated reboiler duty in W
-     * @param lightKey light-key component name
-     * @param heavyKey heavy-key component name
-     * @param message diagnostic message
-     */
-    public ShortcutInitializationResult(boolean initialized, int totalStageCount, int feedTrayNumber,
-        int feedTrayNumberFromTop, double minimumStages, double minimumRefluxRatio, double actualStages,
-        double actualRefluxRatio, double condenserDuty, double reboilerDuty, String lightKey, String heavyKey,
-        String message) {
-      this.initialized = initialized;
-      this.totalStageCount = totalStageCount;
-      this.feedTrayNumber = feedTrayNumber;
-      this.feedTrayNumberFromTop = feedTrayNumberFromTop;
-      this.minimumStages = minimumStages;
-      this.minimumRefluxRatio = minimumRefluxRatio;
-      this.actualStages = actualStages;
-      this.actualRefluxRatio = actualRefluxRatio;
-      this.condenserDuty = condenserDuty;
-      this.reboilerDuty = reboilerDuty;
-      this.lightKey = lightKey;
-      this.heavyKey = heavyKey;
-      this.message = message;
-    }
-
-    /**
-     * Check whether initialization succeeded.
-     *
-     * @return {@code true} when shortcut estimates were applied to the rigorous column
-     */
-    public boolean isInitialized() {
-      return initialized;
-    }
-
-    /**
-     * Get the applied total stage count.
-     *
-     * @return total stage count including condenser/reboiler if present, or {@code -1}
-     */
-    public int getTotalStageCount() {
-      return totalStageCount;
-    }
-
-    /**
-     * Get the applied bottom-up feed tray number.
-     *
-     * @return bottom-up feed tray number, or {@code -1}
-     */
-    public int getFeedTrayNumber() {
-      return feedTrayNumber;
-    }
-
-    /**
-     * Get the shortcut feed tray count from the top.
-     *
-     * @return feed tray from top, or {@code -1}
-     */
-    public int getFeedTrayNumberFromTop() {
-      return feedTrayNumberFromTop;
-    }
-
-    /**
-     * Get the Fenske minimum stage count.
-     *
-     * @return minimum theoretical stages
-     */
-    public double getMinimumStages() {
-      return minimumStages;
-    }
-
-    /**
-     * Get the Underwood minimum reflux ratio.
-     *
-     * @return minimum reflux ratio
-     */
-    public double getMinimumRefluxRatio() {
-      return minimumRefluxRatio;
-    }
-
-    /**
-     * Get the Gilliland actual stage estimate.
-     *
-     * @return actual theoretical stages
-     */
-    public double getActualStages() {
-      return actualStages;
-    }
-
-    /**
-     * Get the applied actual reflux ratio.
-     *
-     * @return actual reflux ratio
-     */
-    public double getActualRefluxRatio() {
-      return actualRefluxRatio;
-    }
-
-    /**
-     * Get the shortcut condenser duty estimate.
-     *
-     * @return condenser duty in W
-     */
-    public double getCondenserDuty() {
-      return condenserDuty;
-    }
-
-    /**
-     * Get the shortcut reboiler duty estimate.
-     *
-     * @return reboiler duty in W
-     */
-    public double getReboilerDuty() {
-      return reboilerDuty;
-    }
-
-    /**
-     * Get the light-key component name.
-     *
-     * @return light-key component name
-     */
-    public String getLightKey() {
-      return lightKey;
-    }
-
-    /**
-     * Get the heavy-key component name.
-     *
-     * @return heavy-key component name
-     */
-    public String getHeavyKey() {
-      return heavyKey;
-    }
-
-    /**
-     * Get the diagnostic message.
-     *
-     * @return initialization diagnostic message
-     */
-    public String getMessage() {
-      return message;
-    }
-  }
-
-  /**
-   * Result from an economic tray-count, feed-tray, and optional reflux/boilup search.
-   *
-   * <p>
-   * The result extends the rigorous tray optimization result with mechanical design, installed capital cost, annual
-   * utility cost, and annualized total-cost metrics. Costs are screening-level estimates using the column mechanical
-   * design and column cost-estimation correlations.
-   * </p>
-   *
-   * @author esol
-   * @version 1.0
-   */
-  public static class EconomicTrayOptimizationResult extends TrayOptimizationResult {
-    /** Serialization version UID. */
-    private static final long serialVersionUID = 1000;
-
-    private final double capitalCost;
-    private final double annualUtilityCost;
-    private final double annualizedCapitalCost;
-    private final double totalAnnualizedCost;
-    private final double capitalChargeFactor;
-    private final double operatingHoursPerYear;
-    private final double steamCostPerTonne;
-    private final double coolingWaterCostPerM3;
-    private final double trayEfficiency;
-    private final int actualTrays;
-    private final double columnDiameter;
-    private final double columnHeight;
-    private final double condenserRefluxRatio;
-    private final double reboilerRatio;
-
-    /**
-     * Create an economic tray optimization result from a rigorous tray result.
-     *
-     * @param baseResult rigorous tray optimization result used as the process-design basis
-     * @param capitalCost installed capital cost estimate in USD
-     * @param annualUtilityCost annual utility cost estimate in USD/year
-     * @param annualizedCapitalCost annualized capital cost in USD/year
-     * @param totalAnnualizedCost total annualized cost in USD/year
-     * @param capitalChargeFactor capital annualization factor in 1/year
-     * @param operatingHoursPerYear operating hours used for utility costing in hr/year
-     * @param steamCostPerTonne steam cost used for reboiler duty in USD/tonne
-     * @param coolingWaterCostPerM3 cooling-water cost used for condenser duty in USD/m3
-     * @param trayEfficiency overall tray efficiency used to convert theoretical to actual trays
-     * @param actualTrays actual tray count after tray-efficiency correction
-     * @param columnDiameter mechanically designed column diameter in m
-     * @param columnHeight mechanically designed tangent-to-tangent column height in m
-     * @param condenserRefluxRatio selected condenser reflux ratio, or {@link Double#NaN}
-     * @param reboilerRatio selected reboiler boilup/reflux ratio, or {@link Double#NaN}
-     */
-    public EconomicTrayOptimizationResult(TrayOptimizationResult baseResult, double capitalCost,
-        double annualUtilityCost, double annualizedCapitalCost, double totalAnnualizedCost, double capitalChargeFactor,
-        double operatingHoursPerYear, double steamCostPerTonne, double coolingWaterCostPerM3, double trayEfficiency,
-        int actualTrays, double columnDiameter, double columnHeight, double condenserRefluxRatio,
-        double reboilerRatio) {
-      super(baseResult.isFeasible(), baseResult.getNumberOfTrays(), baseResult.getFeedTrayNumber(),
-          baseResult.getComponentName(), baseResult.isTopProduct(), baseResult.getTargetPurity(),
-          baseResult.getProductPurity(), baseResult.getReboilerDuty(), baseResult.getCondenserDuty(),
-          baseResult.getTotalAbsoluteDuty(), baseResult.getIterationCount(), baseResult.getTemperatureResidual(),
-          baseResult.getMassResidual(), baseResult.getEnergyResidual(), baseResult.getEvaluatedCases(),
-          baseResult.getConvergedCases(), baseResult.getMessage());
-      this.capitalCost = capitalCost;
-      this.annualUtilityCost = annualUtilityCost;
-      this.annualizedCapitalCost = annualizedCapitalCost;
-      this.totalAnnualizedCost = totalAnnualizedCost;
-      this.capitalChargeFactor = capitalChargeFactor;
-      this.operatingHoursPerYear = operatingHoursPerYear;
-      this.steamCostPerTonne = steamCostPerTonne;
-      this.coolingWaterCostPerM3 = coolingWaterCostPerM3;
-      this.trayEfficiency = trayEfficiency;
-      this.actualTrays = actualTrays;
-      this.columnDiameter = columnDiameter;
-      this.columnHeight = columnHeight;
-      this.condenserRefluxRatio = condenserRefluxRatio;
-      this.reboilerRatio = reboilerRatio;
-    }
-
-    /**
-     * Get the installed capital cost estimate.
-     *
-     * @return installed capital cost in USD
-     */
-    public double getCapitalCost() {
-      return capitalCost;
-    }
-
-    /**
-     * Get annual utility cost.
-     *
-     * @return annual utility cost in USD/year
-     */
-    public double getAnnualUtilityCost() {
-      return annualUtilityCost;
-    }
-
-    /**
-     * Get annualized capital cost.
-     *
-     * @return annualized capital cost in USD/year
-     */
-    public double getAnnualizedCapitalCost() {
-      return annualizedCapitalCost;
-    }
-
-    /**
-     * Get total annualized cost.
-     *
-     * @return annualized capital plus annual utility cost in USD/year
-     */
-    public double getTotalAnnualizedCost() {
-      return totalAnnualizedCost;
-    }
-
-    /**
-     * Get the capital charge factor.
-     *
-     * @return capital annualization factor in 1/year
-     */
-    public double getCapitalChargeFactor() {
-      return capitalChargeFactor;
-    }
-
-    /**
-     * Get the operating hours used for utility costing.
-     *
-     * @return operating hours per year
-     */
-    public double getOperatingHoursPerYear() {
-      return operatingHoursPerYear;
-    }
-
-    /**
-     * Get the steam cost assumption.
-     *
-     * @return steam cost in USD/tonne
-     */
-    public double getSteamCostPerTonne() {
-      return steamCostPerTonne;
-    }
-
-    /**
-     * Get the cooling-water cost assumption.
-     *
-     * @return cooling-water cost in USD/m3
-     */
-    public double getCoolingWaterCostPerM3() {
-      return coolingWaterCostPerM3;
-    }
-
-    /**
-     * Get the tray efficiency used for the mechanical design.
-     *
-     * @return overall tray efficiency
-     */
-    public double getTrayEfficiency() {
-      return trayEfficiency;
-    }
-
-    /**
-     * Get the actual tray count after applying tray efficiency.
-     *
-     * @return actual tray count
-     */
-    public int getActualTrays() {
-      return actualTrays;
-    }
-
-    /**
-     * Get the mechanically designed column diameter.
-     *
-     * @return column diameter in m
-     */
-    public double getColumnDiameter() {
-      return columnDiameter;
-    }
-
-    /**
-     * Get the mechanically designed column height.
-     *
-     * @return column height in m
-     */
-    public double getColumnHeight() {
-      return columnHeight;
-    }
-
-    /**
-     * Get the selected condenser reflux ratio.
-     *
-     * @return selected reflux ratio, or {@link Double#NaN} if not set by the optimization
-     */
-    public double getCondenserRefluxRatio() {
-      return condenserRefluxRatio;
-    }
-
-    /**
-     * Get the selected reboiler boilup/reflux ratio.
-     *
-     * @return selected reboiler ratio, or {@link Double#NaN} if not set by the optimization
-     */
-    public double getReboilerRatio() {
-      return reboilerRatio;
-    }
-  }
-
-  /**
-   * Economic metrics calculated for one distillation-column candidate.
-   *
-   * @author esol
-   * @version 1.0
-   */
-  private static class EconomicTrayOptimizationMetrics implements java.io.Serializable {
-    /** Serialization version UID. */
-    private static final long serialVersionUID = 1000;
-
-    private double capitalCost;
-    private double annualUtilityCost;
-    private double annualizedCapitalCost;
-    private double totalAnnualizedCost;
-    private int actualTrays;
-    private double columnDiameter;
-    private double columnHeight;
-  }
-
-  /**
-   * Snapshot of column settings reused when rebuilding candidates during tray optimization.
-   *
-   * @author esol
-   * @version 1.0
-   */
-  private static class ColumnOptimizationState {
-    private boolean reboilerRefluxSet;
-    private double reboilerRefluxRatio = 0.1;
-    private boolean reboilerHasSetTemperature;
-    private double reboilerTemperature = Double.NaN;
-    private double reboilerHeatInput;
-    private boolean condenserRefluxSet;
-    private double condenserRefluxRatio = 0.1;
-    private boolean condenserHasSetTemperature;
-    private double condenserTemperature = Double.NaN;
-    private double condenserHeatInput;
-    private boolean totalCondenser;
-
-    /**
-     * Create a copy of the optimization state.
-     *
-     * @return independent copy with the same settings
-     */
-    private ColumnOptimizationState copy() {
-      ColumnOptimizationState copy = new ColumnOptimizationState();
-      copy.reboilerRefluxSet = reboilerRefluxSet;
-      copy.reboilerRefluxRatio = reboilerRefluxRatio;
-      copy.reboilerHasSetTemperature = reboilerHasSetTemperature;
-      copy.reboilerTemperature = reboilerTemperature;
-      copy.reboilerHeatInput = reboilerHeatInput;
-      copy.condenserRefluxSet = condenserRefluxSet;
-      copy.condenserRefluxRatio = condenserRefluxRatio;
-      copy.condenserHasSetTemperature = condenserHasSetTemperature;
-      copy.condenserTemperature = condenserTemperature;
-      copy.condenserHeatInput = condenserHeatInput;
-      copy.totalCondenser = totalCondenser;
-      return copy;
-    }
-  }
-
-  /**
-   * Find the minimum tray count and best feed tray that meet a product specification.
-   *
-   * <p>
-   * The search evaluates total tray count and feed tray together. It returns the first total tray count that has a
-   * converged case meeting the requested purity, then selects the feed tray with the lowest absolute
-   * condenser-plus-reboiler duty for that tray count. The selected candidate is applied back to this column and the
-   * final solved state is left in the object.
-   * </p>
-   *
-   * @param productSpec the target purity (mole fraction) of the key component
-   * @param componentName the name of the key component
-   * @param isTopProduct true if the spec is for the top product, false for the bottom product
-   * @param maxTrays the maximum total tray count to try including reboiler/condenser if present
-   * @return structured optimization result with selected tray count, feed tray, duties and residuals
-   */
-  public TrayOptimizationResult findOptimalTrayConfiguration(double productSpec, String componentName,
-      boolean isTopProduct, int maxTrays) {
-    long optimizationStartNanos = System.nanoTime();
-    ColumnOptimizationState state = captureColumnOptimizationState();
-    List<StreamInterface> optimizationFeeds = collectOptimizationFeeds();
-    if (optimizationFeeds.isEmpty()) {
-      return createInfeasibleTrayOptimizationResult(productSpec, componentName, isTopProduct, 0, 0,
-          "No feed streams are connected to the column.");
-    }
-
-    int minimumTrayCount = getMinimumOptimizationTrayCount();
-    if (maxTrays < minimumTrayCount) {
-      return createInfeasibleTrayOptimizationResult(productSpec, componentName, isTopProduct, 0, 0,
-          "Maximum tray count is below the minimum searchable column size.");
-    }
-
-    int evaluatedCases = 0;
-    int convergedCases = 0;
-    for (int totalTrayCount = minimumTrayCount; totalTrayCount <= maxTrays; totalTrayCount++) {
-      TrayOptimizationResult bestForTrayCount = null;
-      rebuildColumnForOptimization(totalTrayCount, state);
-      int firstFeedTray = getFirstFeedTrayCandidate();
-      int lastFeedTray = getLastFeedTrayCandidate();
-
-      for (int feedTray = firstFeedTray; feedTray <= lastFeedTray; feedTray++) {
-        if (isTrayOptimizationSearchBudgetExceeded(evaluatedCases, optimizationStartNanos)) {
-          String budgetMessage = createTrayOptimizationBudgetMessage(evaluatedCases, optimizationStartNanos);
-          if (bestForTrayCount != null) {
-            return applyTrayOptimizationResult(bestForTrayCount, optimizationFeeds, state, productSpec, componentName,
-                isTopProduct, evaluatedCases, convergedCases, "Selected best candidate found before " + budgetMessage);
-          }
-          return createInfeasibleTrayOptimizationResult(productSpec, componentName, isTopProduct, evaluatedCases,
-              convergedCases, budgetMessage);
-        }
-        evaluatedCases++;
-        TrayOptimizationResult candidate = evaluateTrayOptimizationCandidate(totalTrayCount, feedTray, productSpec,
-            componentName, isTopProduct, optimizationFeeds, state);
-        if (solved()) {
-          convergedCases++;
-        }
-        if (candidate.isFeasible() && isBetterTrayOptimizationCandidate(candidate, bestForTrayCount)) {
-          bestForTrayCount = candidate;
-        }
-        if (isTrayOptimizationSearchBudgetExceeded(evaluatedCases, optimizationStartNanos)) {
-          String budgetMessage = createTrayOptimizationBudgetMessage(evaluatedCases, optimizationStartNanos);
-          if (bestForTrayCount != null) {
-            return applyTrayOptimizationResult(bestForTrayCount, optimizationFeeds, state, productSpec, componentName,
-                isTopProduct, evaluatedCases, convergedCases, "Selected best candidate found before " + budgetMessage);
-          }
-          return createInfeasibleTrayOptimizationResult(productSpec, componentName, isTopProduct, evaluatedCases,
-              convergedCases, budgetMessage);
-        }
-      }
-
-      if (bestForTrayCount != null) {
-        return applyTrayOptimizationResult(bestForTrayCount, optimizationFeeds, state, productSpec, componentName,
-            isTopProduct, evaluatedCases, convergedCases,
-            "Selected minimum-tray candidate with lowest duty for that tray count.");
-      }
-    }
-
-    return createInfeasibleTrayOptimizationResult(productSpec, componentName, isTopProduct, evaluatedCases,
-        convergedCases, "No converged tray/feed-tray candidate met the product spec.");
-  }
-
-  /**
-   * Find the optimal number of trays to meet a product specification.
-   *
-   * @param productSpec the target purity (mole fraction) of the key component
-   * @param componentName the name of the key component
-   * @param isTopProduct true if the spec is for the top product (distillate), false for bottom
-   * @param maxTrays the maximum total tray count to try including reboiler/condenser if present
-   * @return the optimal number of trays, or -1 if the spec could not be met
-   */
-  public int findOptimalNumberOfTrays(double productSpec, String componentName, boolean isTopProduct, int maxTrays) {
-    TrayOptimizationResult result = findOptimalTrayConfiguration(productSpec, componentName, isTopProduct, maxTrays);
-    return result.isFeasible() ? result.getNumberOfTrays() : -1;
-  }
-
-  /**
-   * Find the tray count and feed tray that minimize annualized column cost.
-   *
-   * <p>
-   * This method searches tray count and feed tray for all converged candidates that meet the product specification,
-   * then selects the candidate with the lowest annualized cost. The cost is calculated as annualized installed capital
-   * plus reboiler/condenser utility cost using the column mechanical design and cost-estimation correlations. Default
-   * assumptions are 15%/year capital charge factor, 8000 operating hours/year, 25 USD/tonne steam, and 0.03 USD/m3
-   * cooling water.
-   * </p>
-   *
-   * @param productSpec the target purity (mole fraction) of the key component
-   * @param componentName the name of the key component
-   * @param isTopProduct true if the spec is for the top product, false for the bottom product
-   * @param maxTrays the maximum total tray count to try including reboiler/condenser if present
-   * @return economic optimization result with process, mechanical design, and cost metrics
-   */
-  public EconomicTrayOptimizationResult findEconomicOptimalTrayConfiguration(double productSpec, String componentName,
-      boolean isTopProduct, int maxTrays) {
-    return findEconomicOptimalTrayConfiguration(productSpec, componentName, isTopProduct, maxTrays, 0.15, 8000.0, 25.0,
-        0.03, getCurrentMechanicalDesignTrayEfficiency());
-  }
-
-  /**
-   * Find the annualized-cost optimum for tray count and feed tray using supplied economics.
-   *
-   * @param productSpec the target purity (mole fraction) of the key component
-   * @param componentName the name of the key component
-   * @param isTopProduct true if the spec is for the top product, false for the bottom product
-   * @param maxTrays the maximum total tray count to try including reboiler/condenser if present
-   * @param capitalChargeFactor annual capital charge factor in 1/year
-   * @param operatingHoursPerYear operating hours per year for utility costing
-   * @param steamCostPerTonne steam cost in USD/tonne for reboiler duty
-   * @param coolingWaterCostPerM3 cooling-water cost in USD/m3 for condenser duty
-   * @param trayEfficiency overall tray efficiency used for actual tray count and column height
-   * @return economic optimization result with process, mechanical design, and cost metrics
-   */
-  public EconomicTrayOptimizationResult findEconomicOptimalTrayConfiguration(double productSpec, String componentName,
-      boolean isTopProduct, int maxTrays, double capitalChargeFactor, double operatingHoursPerYear,
-      double steamCostPerTonne, double coolingWaterCostPerM3, double trayEfficiency) {
-    return findEconomicOptimalTrayConfiguration(productSpec, componentName, isTopProduct, maxTrays, null, null,
-        capitalChargeFactor, operatingHoursPerYear, steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency);
-  }
-
-  /**
-   * Find the annualized-cost optimum for tray count, feed tray, and optional ratio candidates.
-   *
-   * <p>
-   * If reflux or reboiler ratio candidate arrays are supplied, each positive finite ratio is tried for every
-   * tray-count/feed-tray case. If an array is {@code null} or empty, the current column specification is preserved for
-   * that end of the column.
-   * </p>
-   *
-   * @param productSpec the target purity (mole fraction) of the key component
-   * @param componentName the name of the key component
-   * @param isTopProduct true if the spec is for the top product, false for the bottom product
-   * @param maxTrays the maximum total tray count to try including reboiler/condenser if present
-   * @param condenserRefluxRatios optional condenser reflux-ratio candidates to evaluate
-   * @param reboilerRatios optional reboiler boilup/reflux-ratio candidates to evaluate
-   * @param capitalChargeFactor annual capital charge factor in 1/year
-   * @param operatingHoursPerYear operating hours per year for utility costing
-   * @param steamCostPerTonne steam cost in USD/tonne for reboiler duty
-   * @param coolingWaterCostPerM3 cooling-water cost in USD/m3 for condenser duty
-   * @param trayEfficiency overall tray efficiency used for actual tray count and column height
-   * @return economic optimization result with process, mechanical design, and cost metrics
-   */
-  public EconomicTrayOptimizationResult findEconomicOptimalTrayConfiguration(double productSpec, String componentName,
-      boolean isTopProduct, int maxTrays, double[] condenserRefluxRatios, double[] reboilerRatios,
-      double capitalChargeFactor, double operatingHoursPerYear, double steamCostPerTonne, double coolingWaterCostPerM3,
-      double trayEfficiency) {
-    long optimizationStartNanos = System.nanoTime();
-    ColumnOptimizationState state = captureColumnOptimizationState();
-    List<StreamInterface> optimizationFeeds = collectOptimizationFeeds();
-    if (optimizationFeeds.isEmpty()) {
-      return createInfeasibleEconomicTrayOptimizationResult(productSpec, componentName, isTopProduct, 0, 0,
-          capitalChargeFactor, operatingHoursPerYear, steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency,
-          "No feed streams are connected to the column.");
-    }
-
-    int minimumTrayCount = getMinimumOptimizationTrayCount();
-    if (maxTrays < minimumTrayCount) {
-      return createInfeasibleEconomicTrayOptimizationResult(productSpec, componentName, isTopProduct, 0, 0,
-          capitalChargeFactor, operatingHoursPerYear, steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency,
-          "Maximum tray count is below the minimum searchable column size.");
-    }
-
-    double[] refluxCandidates = getEconomicRatioCandidates(condenserRefluxRatios);
-    double[] reboilerCandidates = getEconomicRatioCandidates(reboilerRatios);
-    int evaluatedCases = 0;
-    int convergedCases = 0;
-    EconomicTrayOptimizationResult bestCandidate = null;
-
-    for (int totalTrayCount = minimumTrayCount; totalTrayCount <= maxTrays; totalTrayCount++) {
-      rebuildColumnForOptimization(totalTrayCount, state);
-      int firstFeedTray = getFirstFeedTrayCandidate();
-      int lastFeedTray = getLastFeedTrayCandidate();
-
-      for (int feedTray = firstFeedTray; feedTray <= lastFeedTray; feedTray++) {
-        for (int refluxIndex = 0; refluxIndex < refluxCandidates.length; refluxIndex++) {
-          for (int reboilerIndex = 0; reboilerIndex < reboilerCandidates.length; reboilerIndex++) {
-            if (isTrayOptimizationSearchBudgetExceeded(evaluatedCases, optimizationStartNanos)) {
-              String budgetMessage = createTrayOptimizationBudgetMessage(evaluatedCases, optimizationStartNanos);
-              if (bestCandidate != null) {
-                return applyEconomicTrayOptimizationResult(bestCandidate, optimizationFeeds, state, productSpec,
-                    componentName, isTopProduct, evaluatedCases, convergedCases, capitalChargeFactor,
-                    operatingHoursPerYear, steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency,
-                    "Selected best economic candidate found before " + budgetMessage);
-              }
-              return createInfeasibleEconomicTrayOptimizationResult(productSpec, componentName, isTopProduct,
-                  evaluatedCases, convergedCases, capitalChargeFactor, operatingHoursPerYear, steamCostPerTonne,
-                  coolingWaterCostPerM3, trayEfficiency, budgetMessage);
-            }
-            evaluatedCases++;
-            EconomicTrayOptimizationResult candidate = evaluateEconomicTrayOptimizationCandidate(totalTrayCount,
-                feedTray, productSpec, componentName, isTopProduct, optimizationFeeds, state,
-                refluxCandidates[refluxIndex], reboilerCandidates[reboilerIndex], capitalChargeFactor,
-                operatingHoursPerYear, steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency);
-            if (solved()) {
-              convergedCases++;
-            }
-            if (candidate.isFeasible() && isBetterEconomicTrayOptimizationCandidate(candidate, bestCandidate)) {
-              bestCandidate = candidate;
-            }
-            if (isTrayOptimizationSearchBudgetExceeded(evaluatedCases, optimizationStartNanos)) {
-              String budgetMessage = createTrayOptimizationBudgetMessage(evaluatedCases, optimizationStartNanos);
-              if (bestCandidate != null) {
-                return applyEconomicTrayOptimizationResult(bestCandidate, optimizationFeeds, state, productSpec,
-                    componentName, isTopProduct, evaluatedCases, convergedCases, capitalChargeFactor,
-                    operatingHoursPerYear, steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency,
-                    "Selected best economic candidate found before " + budgetMessage);
-              }
-              return createInfeasibleEconomicTrayOptimizationResult(productSpec, componentName, isTopProduct,
-                  evaluatedCases, convergedCases, capitalChargeFactor, operatingHoursPerYear, steamCostPerTonne,
-                  coolingWaterCostPerM3, trayEfficiency, budgetMessage);
-            }
-          }
-        }
-      }
-    }
-
-    if (bestCandidate != null) {
-      return applyEconomicTrayOptimizationResult(bestCandidate, optimizationFeeds, state, productSpec, componentName,
-          isTopProduct, evaluatedCases, convergedCases, capitalChargeFactor, operatingHoursPerYear, steamCostPerTonne,
-          coolingWaterCostPerM3, trayEfficiency, "Selected annualized-cost optimum candidate.");
-    }
-
-    return createInfeasibleEconomicTrayOptimizationResult(productSpec, componentName, isTopProduct, evaluatedCases,
-        convergedCases, capitalChargeFactor, operatingHoursPerYear, steamCostPerTonne, coolingWaterCostPerM3,
-        trayEfficiency, "No converged economic tray/feed-tray candidate met the product spec.");
-  }
-
-  /**
-   * Initialize the rigorous column from Fenske-Underwood-Gilliland shortcut estimates.
-   *
-   * <p>
-   * The method runs {@link ShortcutDistillationColumn}, converts its stage and feed-tray estimates into this column's
-   * bottom-up tray indexing, rebuilds the tray stack, adds the feed at the shortcut-estimated feed tray, applies
-   * condenser reflux/duty and reboiler duty estimates, and stores light-key/heavy-key recovery specifications for later
-   * rigorous solving.
-   * </p>
-   *
-   * @param feedStream feed stream used for the shortcut calculation and rigorous column
-   * @param lightKey light-key component name
-   * @param heavyKey heavy-key component name
-   * @param lightKeyRecoveryDistillate light-key recovery to top product, 0 to 1
-   * @param heavyKeyRecoveryBottoms heavy-key recovery to bottom product, 0 to 1
-   * @param refluxRatioMultiplier actual reflux divided by minimum reflux, normally greater than 1
-   * @return shortcut initialization result with applied rigorous-column settings
-   */
-  public ShortcutInitializationResult initializeFromShortcut(StreamInterface feedStream, String lightKey,
-      String heavyKey, double lightKeyRecoveryDistillate, double heavyKeyRecoveryBottoms,
-      double refluxRatioMultiplier) {
-    if (feedStream == null) {
-      lastShortcutInitializationResult = createFailedShortcutInitialization(lightKey, heavyKey,
-          "No feed stream was supplied for shortcut initialization.");
-      return lastShortcutInitializationResult;
-    }
-    ShortcutDistillationColumn shortcut = new ShortcutDistillationColumn(getName() + " shortcut", feedStream);
-    shortcut.setLightKey(lightKey);
-    shortcut.setHeavyKey(heavyKey);
-    shortcut.setLightKeyRecoveryDistillate(lightKeyRecoveryDistillate);
-    shortcut.setHeavyKeyRecoveryBottoms(heavyKeyRecoveryBottoms);
-    shortcut.setRefluxRatioMultiplier(refluxRatioMultiplier);
-    applyShortcutPressureBasis(shortcut, feedStream);
-
-    try {
-      shortcut.run(UUID.randomUUID());
-    } catch (Exception exception) {
-      logger.warn("Shortcut initialization failed for column {}", getName(), exception);
-      lastShortcutInitializationResult = createFailedShortcutInitialization(lightKey, heavyKey,
-          "Shortcut calculation failed: " + exception.getMessage());
-      return lastShortcutInitializationResult;
-    }
-
-    if (!shortcut.isSolved()) {
-      lastShortcutInitializationResult = createFailedShortcutInitialization(lightKey, heavyKey,
-          "Shortcut calculation did not solve. Check key-component order and recoveries.");
-      return lastShortcutInitializationResult;
-    }
-
-    int totalStageCount = getShortcutTotalStageCount(shortcut);
-    int feedTrayNumber = convertShortcutFeedTrayFromTop(shortcut.getFeedTrayNumber(), totalStageCount);
-    ColumnOptimizationState state = captureColumnOptimizationState();
-    applyShortcutEndpointDuties(state, shortcut);
-    rebuildColumnForOptimization(totalStageCount, state);
-    addFeedStream(feedStream, feedTrayNumber);
-    setTopComponentRecovery(lightKey, lightKeyRecoveryDistillate);
-    setBottomComponentRecovery(heavyKey, heavyKeyRecoveryBottoms);
-
-    lastShortcutInitializationResult = new ShortcutInitializationResult(true, totalStageCount, feedTrayNumber,
-        shortcut.getFeedTrayNumber(), shortcut.getMinimumNumberOfStages(), shortcut.getMinimumRefluxRatio(),
-        shortcut.getActualNumberOfStages(), shortcut.getActualRefluxRatio(), shortcut.getCondenserDuty(),
-        shortcut.getReboilerDuty(), lightKey, heavyKey, "Shortcut estimates applied to rigorous column.");
-    return lastShortcutInitializationResult;
-  }
-
-  /**
-   * Get the latest shortcut initialization result.
-   *
-   * @return latest shortcut initialization result, or {@code null} if none has been applied
-   */
-  public ShortcutInitializationResult getLastShortcutInitializationResult() {
-    return lastShortcutInitializationResult;
-  }
-
-  /**
-   * Screen the current column setup before automatic solver candidate probing.
-   *
-   * <p>
-   * This method reuses the normal setup validator and adds commercial-style active-bound warnings for specifications
-   * that are mathematically valid but likely to make solver continuation or outer tear-variable convergence difficult.
-   * </p>
-   *
-   * @return validation result with errors and active-bound warnings for the automatic solver
-   */
-  public ValidationResult screenSpecificationFeasibility() {
-    ValidationResult result = validateSetup();
-    validateCommercialActiveBounds(result);
-    return result;
-  }
-
-  /**
-   * Attempt an automatic shortcut-column seed for the AUTO solver pipeline.
-   *
-   * @param summary automatic solver summary receiving initialization diagnostics
-   * @return {@code true} if a shortcut seed was successfully applied
-   */
-  boolean tryAutomaticShortcutInitialization(StringBuilder summary) {
-    StreamInterface feedStream = getPrimaryExternalFeedStream();
-    if (feedStream == null || feedStream.getThermoSystem() == null) {
-      return recordInitializationAttempt(summary, "shortcut initialization", false,
-          "skipped because the column has no external feed stream");
-    }
-
-    String[] keys = selectAutomaticShortcutKeys(feedStream.getThermoSystem());
-    if (keys == null) {
-      return recordInitializationAttempt(summary, "shortcut initialization", false,
-          "skipped because fewer than two non-water feed components were available");
-    }
-
-    ColumnSpecification originalTopSpecification = topSpecification;
-    ColumnSpecification originalBottomSpecification = bottomSpecification;
-    ShortcutInitializationResult result = initializeFromShortcut(feedStream, keys[0], keys[1], 0.95, 0.95, 1.4);
-    topSpecification = originalTopSpecification;
-    bottomSpecification = originalBottomSpecification;
-    String message = result.getMessage() + " lightKey=" + keys[0] + " heavyKey=" + keys[1];
-    return recordInitializationAttempt(summary, "shortcut initialization", result.isInitialized(), message);
-  }
-
-  /**
-   * Attempt a thermodynamic temperature-profile seed for the AUTO solver pipeline.
-   *
-   * @param summary automatic solver summary receiving initialization diagnostics
-   * @return {@code true} if a tray temperature profile was successfully seeded
-   */
-  boolean tryThermodynamicProfileInitialization(StringBuilder summary) {
-    StreamInterface feedStream = getPrimaryExternalFeedStream();
-    if (feedStream == null || feedStream.getThermoSystem() == null) {
-      return recordInitializationAttempt(summary, "thermodynamic profile initialization", false,
-          "skipped because the column has no external feed stream");
-    }
-    double feedTemperature = feedStream.getThermoSystem().getTemperature();
-    if (!Double.isFinite(feedTemperature) || feedTemperature <= 0.0) {
-      return recordInitializationAttempt(summary, "thermodynamic profile initialization", false,
-          "skipped because the feed temperature is not finite and positive");
-    }
-
-    double topTemperature = Math.max(150.0, feedTemperature - 20.0);
-    double bottomTemperature = Math.max(topTemperature + 1.0, feedTemperature + 20.0);
-    seedTrayTemperatureProfile(topTemperature, bottomTemperature);
-    setDoInitializion(true);
-    return recordInitializationAttempt(summary, "thermodynamic profile initialization", true,
-        "seeded tray temperatures from " + topTemperature + " K to " + bottomTemperature + " K");
-  }
-
-  /**
-   * Select the first and last non-water feed components as shortcut light and heavy keys.
-   *
-   * @param system feed thermodynamic system
-   * @return two-element array containing light key and heavy key, or {@code null} if unavailable
-   */
-  private String[] selectAutomaticShortcutKeys(SystemInterface system) {
-    String lightKey = null;
-    String heavyKey = null;
-    for (int componentIndex = 0; componentIndex < system.getNumberOfComponents(); componentIndex++) {
-      String componentName = system.getPhase(0).getComponent(componentIndex).getComponentName();
-      if ("water".equalsIgnoreCase(componentName)) {
-        continue;
-      }
-      if (lightKey == null) {
-        lightKey = componentName;
-      }
-      heavyKey = componentName;
-    }
-    if (lightKey == null || heavyKey == null || lightKey.equalsIgnoreCase(heavyKey)) {
-      return null;
-    }
-    return new String[] { lightKey, heavyKey };
-  }
-
-  /**
-   * Get the first configured external feed stream.
-   *
-   * @return primary feed stream, or {@code null} when the column has no external feed
-   */
-  private StreamInterface getPrimaryExternalFeedStream() {
-    List<StreamInterface> externalFeeds = getAllExternalFeedStreams();
-    return externalFeeds.isEmpty() ? null : externalFeeds.get(0);
-  }
-
-  /**
-   * Record an AUTO initialization attempt in both report fields and the solver summary.
-   *
-   * @param summary automatic solver summary, possibly {@code null}
-   * @param label human-readable initialization label
-   * @param applied {@code true} if the initialization changed the candidate column state
-   * @param message detailed diagnostic message
-   * @return {@code applied}
-   */
-  private boolean recordInitializationAttempt(StringBuilder summary, String label, boolean applied, String message) {
-    String token = getInitializationReportToken(label);
-    String displayLabel = getInitializationReportLabel(label);
-    String report = token + " " + displayLabel + " " + (applied ? "applied" : "skipped") + ": " + message;
-    setLastInitializationReport(report);
-    recordAutoSolverEvent(report);
-    if (summary != null) {
-      summary.append("AUTO ").append(report).append('\n');
-    }
-    return applied;
-  }
-
-  /**
-   * Return the stable diagnostic token for an AUTO initialization label.
-   *
-   * @param label human-readable initialization label
-   * @return stable uppercase diagnostic token
-   */
-  private String getInitializationReportToken(String label) {
-    if ("shortcut initialization".equals(label)) {
-      return "SHORTCUT_INITIALIZATION";
-    }
-    if ("thermodynamic profile initialization".equals(label)) {
-      return "THERMODYNAMIC_PROFILE";
-    }
-    return "INITIALIZATION";
-  }
-
-  /**
-   * Return the display label for an AUTO initialization report.
-   *
-   * @param label internal initialization label
-   * @return human-readable report label
-   */
-  private String getInitializationReportLabel(String label) {
-    if ("shortcut initialization".equals(label)) {
-      return "Shortcut initialization";
-    }
-    if ("thermodynamic profile initialization".equals(label)) {
-      return "Thermodynamic profile seed";
-    }
-    return label == null ? "Initialization" : label;
-  }
-
-  /**
-   * Create an unsuccessful shortcut initialization result.
-   *
-   * @param lightKey light-key component name
-   * @param heavyKey heavy-key component name
-   * @param message diagnostic message
-   * @return failed initialization result
-   */
-  private ShortcutInitializationResult createFailedShortcutInitialization(String lightKey, String heavyKey,
-      String message) {
-    return new ShortcutInitializationResult(false, -1, -1, -1, Double.NaN, Double.NaN, Double.NaN, Double.NaN,
-        Double.NaN, Double.NaN, lightKey, heavyKey, message);
-  }
-
-  /**
-   * Apply pressure defaults to a shortcut calculation and this rigorous column.
-   *
-   * @param shortcut shortcut column to configure
-   * @param feedStream feed stream providing pressure if no endpoint pressure is already set
-   */
-  private void applyShortcutPressureBasis(ShortcutDistillationColumn shortcut, StreamInterface feedStream) {
-    double feedPressure = feedStream.getFluid() == null ? Double.NaN : feedStream.getPressure("bara");
-    double condenserPressure = isPositiveFinite(topTrayPressure) ? topTrayPressure : feedPressure;
-    double reboilerPressure = isPositiveFinite(bottomTrayPressure) ? bottomTrayPressure : condenserPressure;
-    if (isPositiveFinite(condenserPressure)) {
-      shortcut.setCondenserPressure(condenserPressure);
-      if (!isPositiveFinite(topTrayPressure)) {
-        setTopPressure(condenserPressure);
-      }
-    }
-    if (isPositiveFinite(reboilerPressure)) {
-      shortcut.setReboilerPressure(reboilerPressure);
-      if (!isPositiveFinite(bottomTrayPressure)) {
-        setBottomPressure(reboilerPressure);
-      }
-    }
-  }
-
-  /**
-   * Calculate a rigorous total stage count from shortcut stage estimates.
-   *
-   * @param shortcut solved shortcut column
-   * @return rigorous total stage count including condenser/reboiler if present
-   */
-  private int getShortcutTotalStageCount(ShortcutDistillationColumn shortcut) {
-    int totalStageCount = (int) Math.ceil(shortcut.getActualNumberOfStages());
-    totalStageCount = Math.max(totalStageCount, getMinimumOptimizationTrayCount());
-    return totalStageCount;
-  }
-
-  /**
-   * Convert a shortcut feed tray counted from the top to this column's bottom-up tray index.
-   *
-   * @param feedTrayFromTop shortcut feed tray count from the top product end
-   * @param totalStageCount total rigorous stage count
-   * @return bottom-up tray index clamped to feasible feed trays
-   */
-  private int convertShortcutFeedTrayFromTop(int feedTrayFromTop, int totalStageCount) {
-    int bottomUpTrayNumber = totalStageCount - Math.max(1, feedTrayFromTop);
-    int firstFeedTray = hasReboiler ? 1 : 0;
-    int lastFeedTray = totalStageCount - (hasCondenser ? 2 : 1);
-    if (lastFeedTray < firstFeedTray) {
-      lastFeedTray = firstFeedTray;
-    }
-    return Math.max(firstFeedTray, Math.min(lastFeedTray, bottomUpTrayNumber));
-  }
-
-  /**
-   * Apply shortcut endpoint duties and reflux to a rebuild state.
-   *
-   * @param state column optimization state to update before rebuilding trays
-   * @param shortcut solved shortcut column
-   */
-  private void applyShortcutEndpointDuties(ColumnOptimizationState state, ShortcutDistillationColumn shortcut) {
-    if (hasCondenser) {
-      state.condenserRefluxSet = true;
-      state.condenserRefluxRatio = Math.max(0.0, shortcut.getActualRefluxRatio());
-      state.condenserHeatInput = shortcut.getCondenserDuty();
-    }
-    if (hasReboiler) {
-      state.reboilerHeatInput = shortcut.getReboilerDuty();
-    }
-  }
-
-  /**
-   * Capture the current column settings needed to rebuild optimization candidates.
-   *
-   * @return column settings snapshot
-   */
-  private ColumnOptimizationState captureColumnOptimizationState() {
-    ColumnOptimizationState state = new ColumnOptimizationState();
-    if (hasReboiler && getReboiler() != null) {
-      Reboiler reboiler = getReboiler();
-      state.reboilerRefluxSet = reboiler.refluxIsSet;
-      state.reboilerRefluxRatio = reboiler.getRefluxRatio();
-      state.reboilerHasSetTemperature = reboiler.isSetOutTemperature();
-      if (state.reboilerHasSetTemperature) {
-        state.reboilerTemperature = reboiler.getOutTemperature();
-      }
-      state.reboilerHeatInput = reboiler.heatInput;
-    }
-    if (hasCondenser && getCondenser() != null) {
-      Condenser condenser = getCondenser();
-      state.condenserRefluxSet = condenser.refluxIsSet;
-      state.condenserRefluxRatio = condenser.getRefluxRatio();
-      state.condenserHasSetTemperature = condenser.isSetOutTemperature();
-      if (state.condenserHasSetTemperature) {
-        state.condenserTemperature = condenser.getOutTemperature();
-      }
-      state.condenserHeatInput = condenser.heatInput;
-      state.totalCondenser = condenser.totalCondenser;
-    }
-    return state;
-  }
-
-  /**
-   * Collect all feeds already assigned or queued for automatic placement.
-   *
-   * @return list of feed streams used in the optimization search
-   */
-  private List<StreamInterface> collectOptimizationFeeds() {
-    List<StreamInterface> optimizationFeeds = new ArrayList<>(unassignedFeedStreams);
-    for (List<StreamInterface> feeds : feedStreams.values()) {
-      optimizationFeeds.addAll(feeds);
-    }
-    return optimizationFeeds;
-  }
-
-  /**
-   * Get the minimum total tray count used by the rigorous tray search.
-   *
-   * @return minimum total tray count including reboiler/condenser if present
-   */
-  private int getMinimumOptimizationTrayCount() {
-    int minimumTrayCount = 2;
-    if (hasReboiler) {
-      minimumTrayCount++;
-    }
-    if (hasCondenser) {
-      minimumTrayCount++;
-    }
-    return minimumTrayCount;
-  }
-
-  /**
-   * Check whether tray optimization should stop because a configured search budget is exhausted.
-   *
-   * @param evaluatedCases number of candidate cases already evaluated
-   * @param optimizationStartNanos value from {@link System#nanoTime()} at search start
-   * @return {@code true} when candidate-count or elapsed-time budget has been reached
-   */
-  private boolean isTrayOptimizationSearchBudgetExceeded(int evaluatedCases, long optimizationStartNanos) {
-    return evaluatedCases >= maxTrayOptimizationCandidates
-        || getTrayOptimizationElapsedSeconds(optimizationStartNanos) >= maxTrayOptimizationTimeSeconds;
-  }
-
-  /**
-   * Calculate tray optimization elapsed time in seconds.
-   *
-   * @param optimizationStartNanos value from {@link System#nanoTime()} at search start
-   * @return elapsed time in seconds
-   */
-  private double getTrayOptimizationElapsedSeconds(long optimizationStartNanos) {
-    return (System.nanoTime() - optimizationStartNanos) * 1.0e-9;
-  }
-
-  /**
-   * Create a diagnostic message for a budget-limited optimization search.
-   *
-   * @param evaluatedCases number of candidate cases already evaluated
-   * @param optimizationStartNanos value from {@link System#nanoTime()} at search start
-   * @return diagnostic message explaining the active budget limits
-   */
-  private String createTrayOptimizationBudgetMessage(int evaluatedCases, long optimizationStartNanos) {
-    double elapsedSeconds = Math.round(getTrayOptimizationElapsedSeconds(optimizationStartNanos) * 10.0) / 10.0;
-    return "Tray optimization stopped after evaluating " + evaluatedCases + " candidate cases in " + elapsedSeconds
-        + " s due to the configured search budget. Increase "
-        + "max tray optimization candidates or time for larger studies.";
-  }
-
-  /**
-   * Run the current tray optimization candidate, retrying with damped substitution when the configured solver leaves
-   * the candidate unconverged.
-   *
-   * <p>
-   * Tray optimization is a configuration search. A candidate should not be discarded solely because the default
-   * direct-substitution path stalls from a cold start when the more robust damped substitution solver can solve the
-   * same thermodynamic and hydraulic setup. The retry is scoped to the current candidate and restores the caller's
-   * configured solver type before returning.
-   * </p>
-   *
-   * @return {@code true} if the candidate is solved after the configured solver or damped fallback
-   */
-  private boolean runTrayOptimizationCandidateWithFallback() {
-    try {
-      run();
-    } catch (Exception exception) {
-      logger.debug("Tray optimization candidate failed with configured solver {}.", solverType, exception);
-      return false;
-    }
-
-    if (solved() || solverType == SolverType.DAMPED_SUBSTITUTION) {
-      return solved();
-    }
-
-    SolverType configuredSolverType = solverType;
-    try {
-      solverType = SolverType.DAMPED_SUBSTITUTION;
-      setDoInitializion(true);
-      run(UUID.randomUUID());
-      return solved();
-    } catch (Exception exception) {
-      logger.debug("Tray optimization damped fallback failed for solver {}.", configuredSolverType, exception);
-      return false;
-    } finally {
-      solverType = configuredSolverType;
-    }
-  }
-
-  /**
-   * Evaluate one tray-count/feed-tray candidate.
-   *
-   * @param totalTrayCount total tray count for the candidate
-   * @param feedTray 0-based feed tray used for all optimization feeds
-   * @param productSpec target product mole fraction
-   * @param componentName component used in the purity specification
-   * @param isTopProduct {@code true} for top product, {@code false} for bottom product
-   * @param optimizationFeeds feed streams to connect to the candidate
-   * @param state captured column settings to apply during rebuild
-   * @return candidate result, feasible only when the column converged and met the purity spec
-   */
-  private TrayOptimizationResult evaluateTrayOptimizationCandidate(int totalTrayCount, int feedTray, double productSpec,
-      String componentName, boolean isTopProduct, List<StreamInterface> optimizationFeeds,
-      ColumnOptimizationState state) {
-    rebuildColumnForOptimization(totalTrayCount, state);
-    addOptimizationFeedsToTray(optimizationFeeds, feedTray);
-    if (!runTrayOptimizationCandidateWithFallback()) {
-      return createTrayOptimizationResult(false, totalTrayCount, feedTray, productSpec, componentName, isTopProduct,
-          Double.NaN, 0, 0, "Candidate did not converge.");
-    }
-
-    double productPurity = getProductComponentMoleFraction(componentName, isTopProduct);
-    boolean feasible = productPurity >= productSpec;
-    return createTrayOptimizationResult(feasible, totalTrayCount, feedTray, productSpec, componentName, isTopProduct,
-        productPurity, 0, 0, feasible ? "Candidate met product specification." : "Candidate purity below target.");
-  }
-
-  /**
-   * Evaluate one annualized-cost optimization candidate.
-   *
-   * @param totalTrayCount total tray count for the candidate
-   * @param feedTray 0-based feed tray used for all optimization feeds
-   * @param productSpec target product mole fraction
-   * @param componentName component used in the purity specification
-   * @param isTopProduct {@code true} for top product, {@code false} for bottom product
-   * @param optimizationFeeds feed streams to connect to the candidate
-   * @param baseState captured column settings to apply during rebuild
-   * @param condenserRefluxRatio condenser reflux-ratio candidate, or {@link Double#NaN}
-   * @param reboilerRatio reboiler boilup/reflux-ratio candidate, or {@link Double#NaN}
-   * @param capitalChargeFactor annual capital charge factor in 1/year
-   * @param operatingHoursPerYear operating hours per year for utility costing
-   * @param steamCostPerTonne steam cost in USD/tonne for reboiler duty
-   * @param coolingWaterCostPerM3 cooling-water cost in USD/m3 for condenser duty
-   * @param trayEfficiency overall tray efficiency used for actual tray count and column height
-   * @return economic candidate result, feasible only when converged and meeting the purity spec
-   */
-  private EconomicTrayOptimizationResult evaluateEconomicTrayOptimizationCandidate(int totalTrayCount, int feedTray,
-      double productSpec, String componentName, boolean isTopProduct, List<StreamInterface> optimizationFeeds,
-      ColumnOptimizationState baseState, double condenserRefluxRatio, double reboilerRatio, double capitalChargeFactor,
-      double operatingHoursPerYear, double steamCostPerTonne, double coolingWaterCostPerM3, double trayEfficiency) {
-    ColumnOptimizationState candidateState = baseState.copy();
-    applyEconomicRatioOverrides(candidateState, condenserRefluxRatio, reboilerRatio);
-    TrayOptimizationResult trayResult = evaluateTrayOptimizationCandidate(totalTrayCount, feedTray, productSpec,
-        componentName, isTopProduct, optimizationFeeds, candidateState);
-    if (!trayResult.isFeasible()) {
-      return createEconomicTrayOptimizationResult(trayResult, createEmptyEconomicTrayOptimizationMetrics(),
-          capitalChargeFactor, operatingHoursPerYear, steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency,
-          getSelectedCondenserRatio(candidateState), getSelectedReboilerRatio(candidateState));
-    }
-    EconomicTrayOptimizationMetrics metrics = calculateEconomicTrayOptimizationMetrics(capitalChargeFactor,
-        operatingHoursPerYear, steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency);
-    return createEconomicTrayOptimizationResult(trayResult, metrics, capitalChargeFactor, operatingHoursPerYear,
-        steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency, getSelectedCondenserRatio(candidateState),
-        getSelectedReboilerRatio(candidateState));
-  }
-
-  /**
-   * Apply selected annualized-cost result to the live column and return final diagnostics.
-   *
-   * @param selectedResult selected economic candidate from the search
-   * @param optimizationFeeds feed streams to connect to the selected tray
-   * @param state captured column settings to apply during rebuild
-   * @param productSpec target product mole fraction
-   * @param componentName component used in the purity specification
-   * @param isTopProduct {@code true} for top product, {@code false} for bottom product
-   * @param evaluatedCases number of evaluated candidate cases
-   * @param convergedCases number of converged candidate cases
-   * @param capitalChargeFactor annual capital charge factor in 1/year
-   * @param operatingHoursPerYear operating hours per year for utility costing
-   * @param steamCostPerTonne steam cost in USD/tonne for reboiler duty
-   * @param coolingWaterCostPerM3 cooling-water cost in USD/m3 for condenser duty
-   * @param trayEfficiency overall tray efficiency used for actual tray count and column height
-   * @param message diagnostic message to store in the returned result
-   * @return final economic optimization result from the applied selected candidate
-   */
-  private EconomicTrayOptimizationResult applyEconomicTrayOptimizationResult(
-      EconomicTrayOptimizationResult selectedResult, List<StreamInterface> optimizationFeeds,
-      ColumnOptimizationState state, double productSpec, String componentName, boolean isTopProduct, int evaluatedCases,
-      int convergedCases, double capitalChargeFactor, double operatingHoursPerYear, double steamCostPerTonne,
-      double coolingWaterCostPerM3, double trayEfficiency, String message) {
-    ColumnOptimizationState selectedState = state.copy();
-    applyEconomicRatioOverrides(selectedState, selectedResult.getCondenserRefluxRatio(),
-        selectedResult.getReboilerRatio());
-    rebuildColumnForOptimization(selectedResult.getNumberOfTrays(), selectedState);
-    addOptimizationFeedsToTray(optimizationFeeds, selectedResult.getFeedTrayNumber());
-    if (!runTrayOptimizationCandidateWithFallback()) {
-      return createInfeasibleEconomicTrayOptimizationResult(productSpec, componentName, isTopProduct, evaluatedCases,
-          convergedCases, capitalChargeFactor, operatingHoursPerYear, steamCostPerTonne, coolingWaterCostPerM3,
-          trayEfficiency, "Selected economic candidate did not converge when reapplied.");
-    }
-
-    double productPurity = getProductComponentMoleFraction(componentName, isTopProduct);
-    TrayOptimizationResult trayResult = createTrayOptimizationResult(productPurity >= productSpec,
-        selectedResult.getNumberOfTrays(), selectedResult.getFeedTrayNumber(), productSpec, componentName, isTopProduct,
-        productPurity, evaluatedCases, convergedCases, message);
-    EconomicTrayOptimizationMetrics metrics = calculateEconomicTrayOptimizationMetrics(capitalChargeFactor,
-        operatingHoursPerYear, steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency);
-    return createEconomicTrayOptimizationResult(trayResult, metrics, capitalChargeFactor, operatingHoursPerYear,
-        steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency, selectedResult.getCondenserRefluxRatio(),
-        selectedResult.getReboilerRatio());
-  }
-
-  /**
-   * Apply optional reflux/boilup ratio overrides to an optimization state.
-   *
-   * @param state state to modify
-   * @param condenserRefluxRatio condenser reflux-ratio candidate, or {@link Double#NaN}
-   * @param reboilerRatio reboiler boilup/reflux-ratio candidate, or {@link Double#NaN}
-   */
-  private void applyEconomicRatioOverrides(ColumnOptimizationState state, double condenserRefluxRatio,
-      double reboilerRatio) {
-    if (hasCondenser && isPositiveFinite(condenserRefluxRatio)) {
-      state.condenserRefluxSet = true;
-      state.condenserRefluxRatio = condenserRefluxRatio;
-    }
-    if (hasReboiler && isPositiveFinite(reboilerRatio)) {
-      state.reboilerRefluxSet = true;
-      state.reboilerRefluxRatio = reboilerRatio;
-    }
-  }
-
-  /**
-   * Get sanitized economic ratio candidates.
-   *
-   * @param ratios candidate ratios supplied by the caller
-   * @return positive finite ratios, or one {@link Double#NaN} entry to preserve current settings
-   */
-  private double[] getEconomicRatioCandidates(double[] ratios) {
-    if (ratios == null || ratios.length == 0) {
-      return new double[] { Double.NaN };
-    }
-    double[] sanitized = new double[ratios.length];
-    int count = 0;
-    for (int ratioIndex = 0; ratioIndex < ratios.length; ratioIndex++) {
-      if (isPositiveFinite(ratios[ratioIndex])) {
-        sanitized[count] = ratios[ratioIndex];
-        count++;
-      }
-    }
-    if (count == 0) {
-      return new double[] { Double.NaN };
-    }
-    double[] result = new double[count];
-    System.arraycopy(sanitized, 0, result, 0, count);
-    return result;
-  }
-
-  /**
-   * Check whether a value is finite and positive.
-   *
-   * @param value value to check
-   * @return {@code true} when the value is finite and greater than zero
-   */
-  private boolean isPositiveFinite(double value) {
-    return !Double.isNaN(value) && !Double.isInfinite(value) && value > 0.0;
-  }
-
-  /**
-   * Calculate mechanical design and cost metrics for the current solved candidate.
-   *
-   * @param capitalChargeFactor annual capital charge factor in 1/year
-   * @param operatingHoursPerYear operating hours per year for utility costing
-   * @param steamCostPerTonne steam cost in USD/tonne for reboiler duty
-   * @param coolingWaterCostPerM3 cooling-water cost in USD/m3 for condenser duty
-   * @param trayEfficiency overall tray efficiency used for actual tray count and column height
-   * @return populated economic metrics for the current column state
-   */
-  private EconomicTrayOptimizationMetrics calculateEconomicTrayOptimizationMetrics(double capitalChargeFactor,
-      double operatingHoursPerYear, double steamCostPerTonne, double coolingWaterCostPerM3, double trayEfficiency) {
-    EconomicTrayOptimizationMetrics metrics = new EconomicTrayOptimizationMetrics();
-    DistillationColumnMechanicalDesign design = new DistillationColumnMechanicalDesign(this);
-    design.setTrayEfficiency(trayEfficiency);
-    double designPressure = getEconomicDesignPressure();
-    if (isPositiveFinite(designPressure)) {
-      design.setMaxOperationPressure(designPressure);
-    }
-    design.calcDesign();
-    design.calculateWeights();
-
-    ColumnCostEstimate costEstimate = new ColumnCostEstimate(design);
-    costEstimate.setColumnType("trayed");
-    costEstimate.setTrayType(design.getTrayType());
-    costEstimate.setColumnDiameter(design.getColumnDiameter());
-    costEstimate.setColumnHeight(design.getColumnHeight());
-    costEstimate.setNumberOfTrays(design.getActualTrays());
-    costEstimate.setDesignPressure(design.getMaxDesignPressure());
-    costEstimate.setIncludeReboiler(hasReboiler);
-    costEstimate.setIncludeCondenser(hasCondenser);
-    costEstimate.setReboilerDuty(Math.abs(design.getReboilerDuty()));
-    costEstimate.setCondenserDuty(Math.abs(design.getCondenserDuty()));
-    costEstimate.calculateCostEstimate();
-
-    metrics.capitalCost = costEstimate.getTotalModuleCost();
-    if (!isPositiveFinite(metrics.capitalCost)) {
-      metrics.capitalCost = design.calculateTotalSystemCost();
-    }
-    metrics.annualUtilityCost = costEstimate.calcAnnualUtilityCost(operatingHoursPerYear, steamCostPerTonne,
-        coolingWaterCostPerM3);
-    metrics.annualizedCapitalCost = metrics.capitalCost * capitalChargeFactor;
-    metrics.totalAnnualizedCost = metrics.annualizedCapitalCost + metrics.annualUtilityCost;
-    metrics.actualTrays = design.getActualTrays();
-    metrics.columnDiameter = design.getColumnDiameter();
-    metrics.columnHeight = design.getColumnHeight();
-    return metrics;
-  }
-
-  /**
-   * Create empty economic metrics for infeasible candidates.
-   *
-   * @return economic metrics with not-a-number cost and design fields
-   */
-  private EconomicTrayOptimizationMetrics createEmptyEconomicTrayOptimizationMetrics() {
-    EconomicTrayOptimizationMetrics metrics = new EconomicTrayOptimizationMetrics();
-    metrics.capitalCost = Double.NaN;
-    metrics.annualUtilityCost = Double.NaN;
-    metrics.annualizedCapitalCost = Double.NaN;
-    metrics.totalAnnualizedCost = Double.NaN;
-    metrics.actualTrays = -1;
-    metrics.columnDiameter = Double.NaN;
-    metrics.columnHeight = Double.NaN;
-    return metrics;
-  }
-
-  /**
-   * Create an economic optimization result.
-   *
-   * @param trayResult rigorous tray optimization result
-   * @param metrics economic metrics from the current candidate
-   * @param capitalChargeFactor annual capital charge factor in 1/year
-   * @param operatingHoursPerYear operating hours per year for utility costing
-   * @param steamCostPerTonne steam cost in USD/tonne for reboiler duty
-   * @param coolingWaterCostPerM3 cooling-water cost in USD/m3 for condenser duty
-   * @param trayEfficiency overall tray efficiency used for actual tray count and column height
-   * @param condenserRefluxRatio selected condenser reflux ratio, or {@link Double#NaN}
-   * @param reboilerRatio selected reboiler boilup/reflux ratio, or {@link Double#NaN}
-   * @return economic optimization result
-   */
-  private EconomicTrayOptimizationResult createEconomicTrayOptimizationResult(TrayOptimizationResult trayResult,
-      EconomicTrayOptimizationMetrics metrics, double capitalChargeFactor, double operatingHoursPerYear,
-      double steamCostPerTonne, double coolingWaterCostPerM3, double trayEfficiency, double condenserRefluxRatio,
-      double reboilerRatio) {
-    return new EconomicTrayOptimizationResult(trayResult, metrics.capitalCost, metrics.annualUtilityCost,
-        metrics.annualizedCapitalCost, metrics.totalAnnualizedCost, capitalChargeFactor, operatingHoursPerYear,
-        steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency, metrics.actualTrays, metrics.columnDiameter,
-        metrics.columnHeight, condenserRefluxRatio, reboilerRatio);
-  }
-
-  /**
-   * Create an infeasible economic optimization result.
-   *
-   * @param productSpec target product mole fraction
-   * @param componentName component used in the purity specification
-   * @param isTopProduct {@code true} for top product, {@code false} for bottom product
-   * @param evaluatedCases number of evaluated candidate cases
-   * @param convergedCases number of converged candidate cases
-   * @param capitalChargeFactor annual capital charge factor in 1/year
-   * @param operatingHoursPerYear operating hours per year for utility costing
-   * @param steamCostPerTonne steam cost in USD/tonne for reboiler duty
-   * @param coolingWaterCostPerM3 cooling-water cost in USD/m3 for condenser duty
-   * @param trayEfficiency overall tray efficiency used for actual tray count and column height
-   * @param message diagnostic message
-   * @return infeasible economic optimization result
-   */
-  private EconomicTrayOptimizationResult createInfeasibleEconomicTrayOptimizationResult(double productSpec,
-      String componentName, boolean isTopProduct, int evaluatedCases, int convergedCases, double capitalChargeFactor,
-      double operatingHoursPerYear, double steamCostPerTonne, double coolingWaterCostPerM3, double trayEfficiency,
-      String message) {
-    TrayOptimizationResult trayResult = createInfeasibleTrayOptimizationResult(productSpec, componentName, isTopProduct,
-        evaluatedCases, convergedCases, message);
-    return createEconomicTrayOptimizationResult(trayResult, createEmptyEconomicTrayOptimizationMetrics(),
-        capitalChargeFactor, operatingHoursPerYear, steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency,
-        Double.NaN, Double.NaN);
-  }
-
-  /**
-   * Compare two economic candidates.
-   *
-   * @param candidate candidate result to evaluate
-   * @param currentBest current best result, or {@code null}
-   * @return {@code true} if the candidate has a lower annualized cost or better tie-breaker
-   */
-  private boolean isBetterEconomicTrayOptimizationCandidate(EconomicTrayOptimizationResult candidate,
-      EconomicTrayOptimizationResult currentBest) {
-    if (currentBest == null) {
-      return true;
-    }
-    double costDifference = candidate.getTotalAnnualizedCost() - currentBest.getTotalAnnualizedCost();
-    if (Math.abs(costDifference) > 1.0e-6) {
-      return costDifference < 0.0;
-    }
-    if (candidate.getNumberOfTrays() != currentBest.getNumberOfTrays()) {
-      return candidate.getNumberOfTrays() < currentBest.getNumberOfTrays();
-    }
-    return isBetterTrayOptimizationCandidate(candidate, currentBest);
-  }
-
-  /**
-   * Get the tray efficiency currently configured on the mechanical design.
-   *
-   * @return tray efficiency from the column mechanical design, or the default value
-   */
-  private double getCurrentMechanicalDesignTrayEfficiency() {
-    if (mechanicalDesign instanceof DistillationColumnMechanicalDesign) {
-      return ((DistillationColumnMechanicalDesign) mechanicalDesign).getTrayEfficiency();
-    }
-    return 0.65;
-  }
-
-  /**
-   * Estimate the pressure basis for economic mechanical design.
-   *
-   * @return maximum configured tray endpoint pressure in bara, or {@link Double#NaN}
-   */
-  private double getEconomicDesignPressure() {
-    if (isPositiveFinite(topTrayPressure) && isPositiveFinite(bottomTrayPressure)) {
-      return Math.max(topTrayPressure, bottomTrayPressure);
-    }
-    if (isPositiveFinite(bottomTrayPressure)) {
-      return bottomTrayPressure;
-    }
-    if (isPositiveFinite(topTrayPressure)) {
-      return topTrayPressure;
-    }
-    return Double.NaN;
-  }
-
-  /**
-   * Get the reflux ratio recorded as selected by an economic candidate.
-   *
-   * @param state optimization state to inspect
-   * @return selected condenser reflux ratio, or {@link Double#NaN} if no ratio is set
-   */
-  private double getSelectedCondenserRatio(ColumnOptimizationState state) {
-    return state.condenserRefluxSet ? state.condenserRefluxRatio : Double.NaN;
-  }
-
-  /**
-   * Get the reboiler ratio recorded as selected by an economic candidate.
-   *
-   * @param state optimization state to inspect
-   * @return selected reboiler boilup/reflux ratio, or {@link Double#NaN} if no ratio is set
-   */
-  private double getSelectedReboilerRatio(ColumnOptimizationState state) {
-    return state.reboilerRefluxSet ? state.reboilerRefluxRatio : Double.NaN;
-  }
-
-  /**
-   * Apply the selected candidate to the live column and return final diagnostics.
-   *
-   * @param selectedResult selected candidate from the search
-   * @param optimizationFeeds feed streams to connect to the selected tray
-   * @param state captured column settings to apply during rebuild
-   * @param productSpec target product mole fraction
-   * @param componentName component used in the purity specification
-   * @param isTopProduct {@code true} for top product, {@code false} for bottom product
-   * @param evaluatedCases number of evaluated candidate cases
-   * @param convergedCases number of converged candidate cases
-   * @param message diagnostic message to store in the returned result
-   * @return final optimization result from the applied selected candidate
-   */
-  private TrayOptimizationResult applyTrayOptimizationResult(TrayOptimizationResult selectedResult,
-      List<StreamInterface> optimizationFeeds, ColumnOptimizationState state, double productSpec, String componentName,
-      boolean isTopProduct, int evaluatedCases, int convergedCases, String message) {
-    rebuildColumnForOptimization(selectedResult.getNumberOfTrays(), state);
-    addOptimizationFeedsToTray(optimizationFeeds, selectedResult.getFeedTrayNumber());
-    if (!runTrayOptimizationCandidateWithFallback()) {
-      return createInfeasibleTrayOptimizationResult(productSpec, componentName, isTopProduct, evaluatedCases,
-          convergedCases, "Selected candidate did not converge when reapplied.");
-    }
-
-    double productPurity = getProductComponentMoleFraction(componentName, isTopProduct);
-    return createTrayOptimizationResult(productPurity >= productSpec, selectedResult.getNumberOfTrays(),
-        selectedResult.getFeedTrayNumber(), productSpec, componentName, isTopProduct, productPurity, evaluatedCases,
-        convergedCases, message);
-  }
-
-  /**
-   * Rebuild the column internals for an optimization candidate.
-   *
-   * @param totalTrayCount total tray count including reboiler/condenser if present
-   * @param state captured column settings to apply to the rebuilt trays
-   */
-  private void rebuildColumnForOptimization(int totalTrayCount, ColumnOptimizationState state) {
-    trays.clear();
-    distoperations = new neqsim.process.processmodel.ProcessSystem();
-    feedStreams.clear();
-    unassignedFeedStreams.clear();
-    feedmixer = new Mixer("temp mixer");
-    feedmixer.setMultiPhaseCheck(doMultiPhaseCheck);
-    hasBeenSolvedBefore = false;
-    autoWarmStartSolver = null;
-    lastTotalFeedFlow = -1.0;
-    lastMeshResidual = null;
-    terminalGasProductDrawStream = null;
-    terminalLiquidProductDrawStream = null;
-    trayStateThermodynamicIdentitySignature = Long.MIN_VALUE;
-    lastSequentialInitializationSignature = Long.MIN_VALUE;
-    err = 1.0e10;
-    resetLastSolveMetrics();
-
-    if (hasReboiler) {
-      Reboiler reboiler = new Reboiler("Reboiler");
-      reboiler.setMultiPhaseCheck(doMultiPhaseCheck);
-      reboiler.setHeatInput(state.reboilerHeatInput);
-      if (state.reboilerRefluxSet) {
-        reboiler.setRefluxRatio(state.reboilerRefluxRatio);
-      }
-      if (state.reboilerHasSetTemperature) {
-        reboiler.setOutTemperature(state.reboilerTemperature);
-      }
-      trays.add(reboiler);
-    }
-
-    int middleTrayCount = totalTrayCount - (hasReboiler ? 1 : 0) - (hasCondenser ? 1 : 0);
-    for (int trayIndex = 0; trayIndex < middleTrayCount; trayIndex++) {
-      SimpleTray tray = createMiddleTray("SimpleTray" + (trayIndex + 1), trayIndex);
-      tray.setMultiPhaseCheck(doMultiPhaseCheck);
-      trays.add(tray);
-    }
-
-    if (hasCondenser) {
-      Condenser condenser = new Condenser("Condenser");
-      condenser.setMultiPhaseCheck(doMultiPhaseCheck);
-      condenser.setHeatInput(state.condenserHeatInput);
-      condenser.setTotalCondenser(state.totalCondenser);
-      if (state.condenserRefluxSet) {
-        condenser.setRefluxRatio(state.condenserRefluxRatio);
-      }
-      if (state.condenserHasSetTemperature) {
-        condenser.setOutTemperature(state.condenserTemperature);
-      }
-      trays.add(condenser);
-    }
-
-    numberOfTrays = trays.size();
-    for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
-      distoperations.add(trays.get(trayIndex));
-    }
-    applyOptimizationPressureProfile();
-    applyOptimizationTemperatureProfile(state);
-    setDoInitializion(true);
-  }
-
-  /**
-   * Add all optimization feeds to a candidate feed tray.
-   *
-   * @param optimizationFeeds feed streams to connect
-   * @param feedTray 0-based feed tray number
-   */
-  private void addOptimizationFeedsToTray(List<StreamInterface> optimizationFeeds, int feedTray) {
-    for (StreamInterface feed : optimizationFeeds) {
-      addFeedStream(feed, feedTray);
-    }
-  }
-
-  /**
-   * Apply the configured pressure profile to a rebuilt candidate column.
-   */
-  private void applyOptimizationPressureProfile() {
-    if (topTrayPressure <= 0 || bottomTrayPressure <= 0 || numberOfTrays == 0) {
-      return;
-    }
-    if (numberOfTrays == 1) {
-      trays.get(0).setPressure(bottomTrayPressure);
-      return;
-    }
-    double pressureStep = (bottomTrayPressure - topTrayPressure) / (numberOfTrays - 1.0);
-    for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
-      trays.get(trayIndex).setPressure(bottomTrayPressure - trayIndex * pressureStep);
-    }
-  }
-
-  /**
-   * Apply a linear endpoint temperature profile when both endpoint temperatures are specified.
-   *
-   * @param state captured column settings to use for endpoint temperatures
-   */
-  private void applyOptimizationTemperatureProfile(ColumnOptimizationState state) {
-    if (!state.reboilerHasSetTemperature || !state.condenserHasSetTemperature || numberOfTrays <= 1) {
-      return;
-    }
-    double temperatureStep = (state.condenserTemperature - state.reboilerTemperature) / (numberOfTrays - 1.0);
-    for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
-      trays.get(trayIndex).setTemperature(state.reboilerTemperature + trayIndex * temperatureStep);
-    }
-  }
-
-  /**
-   * Read product mole fraction for the component used in the optimization specification.
-   *
-   * @param componentName component name
-   * @param isTopProduct {@code true} to read top product, {@code false} to read bottom product
-   * @return component mole fraction in the requested product
-   */
-  private double getProductComponentMoleFraction(String componentName, boolean isTopProduct) {
-    if (isTopProduct) {
-      return gasOutStream.getFluid().getComponent(componentName).getz();
-    }
-    return liquidOutStream.getFluid().getComponent(componentName).getz();
-  }
-
-  /**
-   * Create an optimization result from the current column state.
-   *
-   * @param feasible {@code true} if the current candidate meets the target purity
-   * @param totalTrayCount total tray count for the candidate
-   * @param feedTray 0-based feed tray number used by the candidate
-   * @param productSpec target product mole fraction
-   * @param componentName component used in the purity specification
-   * @param isTopProduct {@code true} for top product, {@code false} for bottom product
-   * @param productPurity achieved product mole fraction
-   * @param evaluatedCases number of evaluated candidate cases
-   * @param convergedCases number of converged candidate cases
-   * @param message diagnostic message
-   * @return optimization result populated from current duties and residuals
-   */
-  private TrayOptimizationResult createTrayOptimizationResult(boolean feasible, int totalTrayCount, int feedTray,
-      double productSpec, String componentName, boolean isTopProduct, double productPurity, int evaluatedCases,
-      int convergedCases, String message) {
-    double reboilerDuty = hasReboiler ? getReboiler().getDuty() : 0.0;
-    double condenserDuty = hasCondenser ? getCondenser().getDuty() : 0.0;
-    double totalAbsoluteDuty = Math.abs(reboilerDuty) + Math.abs(condenserDuty);
-    return new TrayOptimizationResult(feasible, feasible ? totalTrayCount : -1, feasible ? feedTray : -1, componentName,
-        isTopProduct, productSpec, productPurity, reboilerDuty, condenserDuty, totalAbsoluteDuty, lastIterationCount,
-        lastTemperatureResidual, lastMassResidual, lastEnergyResidual, evaluatedCases, convergedCases, message);
-  }
-
-  /**
-   * Create an infeasible tray optimization result.
-   *
-   * @param productSpec target product mole fraction
-   * @param componentName component used in the purity specification
-   * @param isTopProduct {@code true} for top product, {@code false} for bottom product
-   * @param evaluatedCases number of evaluated candidate cases
-   * @param convergedCases number of converged candidate cases
-   * @param message diagnostic message
-   * @return infeasible optimization result
-   */
-  private TrayOptimizationResult createInfeasibleTrayOptimizationResult(double productSpec, String componentName,
-      boolean isTopProduct, int evaluatedCases, int convergedCases, String message) {
-    return new TrayOptimizationResult(false, -1, -1, componentName, isTopProduct, productSpec, Double.NaN, 0.0, 0.0,
-        0.0, lastIterationCount, lastTemperatureResidual, lastMassResidual, lastEnergyResidual, evaluatedCases,
-        convergedCases, message);
-  }
-
-  /**
-   * Compare two feasible tray optimization candidates for the same tray count.
-   *
-   * @param candidate candidate result to evaluate
-   * @param currentBest current best result, or {@code null}
-   * @return {@code true} if the candidate is preferred
-   */
-  private boolean isBetterTrayOptimizationCandidate(TrayOptimizationResult candidate,
-      TrayOptimizationResult currentBest) {
-    if (currentBest == null) {
-      return true;
-    }
-    double dutyDifference = candidate.getTotalAbsoluteDuty() - currentBest.getTotalAbsoluteDuty();
-    if (Math.abs(dutyDifference) > 1.0e-6) {
-      return dutyDifference < 0.0;
-    }
-    if (Math.abs(candidate.getMassResidual() - currentBest.getMassResidual()) > 1.0e-9) {
-      return candidate.getMassResidual() < currentBest.getMassResidual();
-    }
-    if (Math.abs(candidate.getEnergyResidual() - currentBest.getEnergyResidual()) > 1.0e-9) {
-      return candidate.getEnergyResidual() < currentBest.getEnergyResidual();
-    }
-    return candidate.getProductPurity() > currentBest.getProductPurity();
-  }
-
-  /**
-   * Execute the sequential substitution solver with an adaptive relaxation controller.
-   *
-   * @param id calculation identifier
-   * @param initialRelaxation relaxation factor applied to the first iteration
-   */
-  private void solveSequential(UUID id, double initialRelaxation) {
-    long invocationStartTime = System.nanoTime();
-    lastSequentialWarmStateReused = false;
-    captureDirectExternalTrayFeeds();
-    if (feedStreams.isEmpty() && directExternalFeedStreams.isEmpty()) {
-      resetLastSolveMetrics();
-      return;
-    }
-
-    if (hasSequentialExactReuseState) {
-      long currentSequentialInputSignature = calculateSequentialExactReuseSignature();
-      if (canReuseSequentialWarmState(currentSequentialInputSignature)) {
-        reuseSequentialWarmState(id, invocationStartTime);
-        return;
-      }
-      hasSequentialExactReuseState = false;
-    }
-
-    int firstFeedTrayNumber = prepareColumnForSolve();
-
-    if (numberOfTrays == 1) {
-      solveSingleTray(id);
-      return;
-    }
-
-    long currentThermodynamicIdentitySignature = calculateThermodynamicIdentitySignature();
-    long currentSequentialInitializationSignature = calculateSequentialInitializationSignature();
-    boolean thermodynamicIdentityChanged = currentThermodynamicIdentitySignature != trayStateThermodynamicIdentitySignature;
-    boolean columnConfigurationChanged = currentSequentialInitializationSignature != lastSequentialInitializationSignature;
-    if (hasBeenSolvedBefore && !isDoInitializion() && (thermodynamicIdentityChanged || columnConfigurationChanged)) {
-      logger.info("Sequential warm start is incompatible with current inputs for column {}; "
-          + "rebuilding tray initialization.", getName());
-      hasBeenSolvedBefore = false;
-      setDoInitializion(true);
-    }
-
-    if (isDoInitializion()) {
-      this.init();
-    }
-
-    err = 1.0e10;
-    int iter = 0;
-    double massErr = 1.0e10;
-    double energyErr = 1.0e10;
-    double previousCombinedResidual = Double.POSITIVE_INFINITY;
-
-    long startTime = System.nanoTime();
-
-    double[] oldtemps = new double[numberOfTrays];
-    StreamInterface[] previousGasStreams = new StreamInterface[numberOfTrays];
-    StreamInterface[] previousLiquidStreams = new StreamInterface[numberOfTrays];
-    StreamInterface[] currentGasStreams = new StreamInterface[numberOfTrays];
-    StreamInterface[] currentLiquidStreams = new StreamInterface[numberOfTrays];
-
-    double relaxation = Math.max(minSequentialRelaxation, Math.min(maxAdaptiveRelaxation, initialRelaxation));
-
-    // Skip expensive physical/transport property initialization on every tray flash
-    // during the iterative solve. The sequential loop only needs thermodynamic
-    // properties (enthalpy, K-values); viscosity/thermal-conductivity/surface-tension
-    // are computed once on the converged state via finalizeTrayProperties() below.
-    for (int i = 0; i < numberOfTrays; i++) {
-      trays.get(i).setSkipPhysicalPropertiesDuringSolve(true);
-    }
-
-    // Run the feed tray to establish initial conditions.
-    // On re-runs this is skipped because the tray already holds a valid state
-    // from the previous solve; running it unrelaxed would perturb the state
-    // and can trigger divergence.
-    if (!hasBeenSolvedBefore) {
-      trays.get(firstFeedTrayNumber).run(id);
-    }
-
-    // Compute total feed flow for divergence detection.
-    double totalFeedFlow = 0.0;
-    for (List<StreamInterface> feeds : feedStreams.values()) {
-      for (StreamInterface f : feeds) {
-        totalFeedFlow += Math.abs(f.getFlowRate("kg/hr"));
-      }
-    }
-    double divergenceThreshold = Math.max(totalFeedFlow * MAX_RELAXED_INTERNAL_TRAFFIC_TO_FEED_RATIO, 1.0e3);
-    boolean divergenceRecoveryApplied = false;
-
-    // Snapshot tray state before iterations as a safe recovery point.
-    StreamInterface[] snapshotGasStreams = new StreamInterface[numberOfTrays];
-    StreamInterface[] snapshotLiquidStreams = new StreamInterface[numberOfTrays];
-    for (int i = 0; i < numberOfTrays; i++) {
-      snapshotGasStreams[i] = trays.get(i).getGasOutStream().clone();
-      snapshotLiquidStreams[i] = trays.get(i).getLiquidOutStream().clone();
-    }
-
-    // On re-runs, seed previous-stream arrays from the snapshot so that
-    // relaxation-based damping is active from the very first iteration.
-    if (hasBeenSolvedBefore) {
-      for (int i = 0; i < numberOfTrays; i++) {
-        previousGasStreams[i] = snapshotGasStreams[i].clone();
-        previousLiquidStreams[i] = snapshotLiquidStreams[i].clone();
-      }
-    }
-
-    int baseIterationLimit = computeIterationLimit();
-    int iterationLimit = baseIterationLimit;
-    int polishIterationLimit = baseIterationLimit
-        + Math.max(POLISH_ITERATION_MARGIN, (int) Math.ceil(0.5 * numberOfTrays));
-    int overflowIncrement = Math.max(3, (int) Math.ceil(0.5 * numberOfTrays));
-    int overflowBand = Math.max(overflowIncrement, numberOfTrays);
-    int maxIterationLimit = Math.max(iterationLimit, maxNumberOfIterations)
-        + overflowBand * ITERATION_OVERFLOW_MULTIPLIER;
-    // Honor an explicitly user-set maximum as a HARD cap: no overflow expansion and
-    // no polish extension beyond the requested iteration count.
-    if (hardIterationCap) {
-      iterationLimit = maxNumberOfIterations;
-      polishIterationLimit = maxNumberOfIterations;
-      maxIterationLimit = maxNumberOfIterations;
-    }
-    double baseTempTolerance = getEffectiveTemperatureTolerance();
-    double baseMassTolerance = getEffectiveMassBalanceTolerance();
-    double baseEnergyTolerance = getEffectiveEnthalpyBalanceTolerance();
-    double polishTempTolerance = Math.min(baseTempTolerance, TEMPERATURE_POLISH_TARGET);
-    double polishMassTolerance = Math.min(baseMassTolerance, MASS_POLISH_TARGET);
-    double polishEnergyTolerance = Math.min(baseEnergyTolerance, ENERGY_POLISH_TARGET);
-    boolean polishing = false;
-    boolean massEnergyEvaluated = false;
-    int balanceCheckStride = Math.max(3, numberOfTrays / 2);
-
-    while (iter < iterationLimit) {
-      iter++;
-
-      for (int i = 0; i < numberOfTrays; i++) {
-        oldtemps[i] = trays.get(i).getThermoSystem().getTemperature();
-      }
-
-      for (int i = firstFeedTrayNumber; i > 1; i--) {
-        int replaceStream = trays.get(i - 1).getNumberOfInputStreams() - 1;
-        StreamInterface relaxedLiquid = applyRelaxationFast(previousLiquidStreams[i], trays.get(i).getLiquidOutStream(),
-            relaxation);
-        trays.get(i - 1).replaceStream(replaceStream, relaxedLiquid);
-        currentLiquidStreams[i] = relaxedLiquid;
-        trays.get(i - 1).run(id);
-        applyMurphreeCorrection(i - 1);
-      }
-
-      int streamNumb = trays.get(0).getNumberOfInputStreams() - 1;
-      StreamInterface reboilerFeed = applyRelaxationFast(previousLiquidStreams[1], trays.get(1).getLiquidOutStream(),
-          relaxation);
-      trays.get(0).replaceStream(streamNumb, reboilerFeed);
-      currentLiquidStreams[1] = reboilerFeed;
-      trays.get(0).run(id);
-      applyMurphreeCorrection(0);
-
-      for (int i = 1; i <= numberOfTrays - 1; i++) {
-        int replaceStream = trays.get(i).getNumberOfInputStreams() - 2;
-        if (i == (numberOfTrays - 1)) {
-          replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
-        }
-        StreamInterface relaxedGas = applyRelaxationFast(previousGasStreams[i - 1], trays.get(i - 1).getGasOutStream(),
-            relaxation);
-        trays.get(i).replaceStream(replaceStream, relaxedGas);
-        currentGasStreams[i - 1] = relaxedGas;
-        trays.get(i).run(id);
-        applyMurphreeCorrection(i);
-      }
-
-      for (int i = numberOfTrays - 2; i >= firstFeedTrayNumber; i--) {
-        int replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
-        StreamInterface relaxedLiquid = applyRelaxationFast(previousLiquidStreams[i + 1],
-            trays.get(i + 1).getLiquidOutStream(), relaxation);
-        trays.get(i).replaceStream(replaceStream, relaxedLiquid);
-        currentLiquidStreams[i + 1] = relaxedLiquid;
-        trays.get(i).run(id);
-        applyMurphreeCorrection(i);
-      }
-
-      double temperatureResidual = 0.0;
-      double appliedTemperatureStepResidual = 0.0;
-      double effectiveRelaxation = Math.max(minTemperatureRelaxation, Math.min(1.0, relaxation));
-      for (int i = 0; i < numberOfTrays; i++) {
-        double updated = trays.get(i).getThermoSystem().getTemperature();
-        if (Double.isNaN(updated) || Double.isInfinite(updated)) {
-          updated = oldtemps[i];
-        }
-        double newTemp = oldtemps[i] + effectiveRelaxation * (updated - oldtemps[i]);
-        trays.get(i).setTemperature(newTemp);
-        appliedTemperatureStepResidual += Math.abs(newTemp - oldtemps[i]);
-        temperatureResidual += Math.abs(updated - oldtemps[i]);
-      }
-      temperatureResidual /= Math.max(1, numberOfTrays);
-      appliedTemperatureStepResidual /= Math.max(1, numberOfTrays);
-      lastAppliedTemperatureStepResidual = appliedTemperatureStepResidual;
-      err = temperatureResidual;
-
-      boolean evaluateBalances = shouldEvaluateBalances(iter, iterationLimit, polishing, err, baseTempTolerance,
-          balanceCheckStride);
-      if (evaluateBalances || !massEnergyEvaluated) {
-        massErr = getMassBalanceError();
-        energyErr = getEnergyBalanceError();
-        massEnergyEvaluated = true;
-      }
-
-      // Keep adaptive damping calibrated to the step actually applied; convergence uses the
-      // undamped fixed-point residual in err.
-      double tempScaled = appliedTemperatureStepResidual / baseTempTolerance;
-      double massScaled = massErr / baseMassTolerance;
-      double energyScaled = energyErr / baseEnergyTolerance;
-      double combinedResidual = Math.max(tempScaled, massScaled);
-      if (Double.isFinite(energyScaled)) {
-        combinedResidual = Math.max(combinedResidual, Math.min(energyScaled, maxEnergyRelaxationWeight));
-      }
-
-      if (combinedResidual > previousCombinedResidual * 1.05) {
-        relaxation = Math.max(minSequentialRelaxation, relaxation * relaxationDecreaseFactor);
-      } else if (combinedResidual < previousCombinedResidual * 0.98) {
-        relaxation = Math.min(maxAdaptiveRelaxation, relaxation * relaxationIncreaseFactor);
-      }
-
-      previousCombinedResidual = combinedResidual;
-
-      // Divergence recovery: if flows have grown far beyond the total feed,
-      // the sequential iteration is unstable. Restore previous-stream arrays
-      // from the pre-iteration snapshot and drop to minimum relaxation
-      // so that subsequent iterations are heavily damped. This is a one-shot
-      // recovery that does not fire when the column is already converging.
-      if (!divergenceRecoveryApplied && iter <= 10) {
-        double maxTrayFlow = 0.0;
-        for (int i = 0; i < numberOfTrays; i++) {
-          maxTrayFlow = Math.max(maxTrayFlow, Math.abs(trays.get(i).getGasOutStream().getFlowRate("kg/hr")));
-          maxTrayFlow = Math.max(maxTrayFlow, Math.abs(trays.get(i).getLiquidOutStream().getFlowRate("kg/hr")));
-        }
-        if (maxTrayFlow > divergenceThreshold) {
-          relaxation = minSequentialRelaxation;
-          for (int i = 0; i < numberOfTrays; i++) {
-            previousGasStreams[i] = snapshotGasStreams[i].clone();
-            previousLiquidStreams[i] = snapshotLiquidStreams[i].clone();
-          }
-          divergenceRecoveryApplied = true;
-          internalTrafficCapActive = true;
-          previousCombinedResidual = Double.POSITIVE_INFINITY;
-          logger.info(
-              "Divergence detected at iter {}, maxTrayFlow={} > threshold={}. "
-                  + "Restoring from snapshot and reducing relaxation to {}.",
-              iter, maxTrayFlow, divergenceThreshold, relaxation);
-        }
-      }
-
-      for (int i = 0; i < numberOfTrays; i++) {
-        if (currentGasStreams[i] != null) {
-          previousGasStreams[i] = currentGasStreams[i];
-        }
-        if (currentLiquidStreams[i] != null) {
-          previousLiquidStreams[i] = currentLiquidStreams[i];
-        }
-      }
-
-      // Absolute flow magnitude check: if tray flows are vastly larger than
-      // the total feed, the solver has diverged beyond recovery. Break early
-      // and report a large mass residual so callers can detect the failure.
-      if (divergenceRecoveryApplied && iter > 15) {
-        double maxFlow = 0.0;
-        for (int i = 0; i < numberOfTrays; i++) {
-          maxFlow = Math.max(maxFlow, Math.abs(trays.get(i).getGasOutStream().getFlowRate("kg/hr")));
-          maxFlow = Math.max(maxFlow, Math.abs(trays.get(i).getLiquidOutStream().getFlowRate("kg/hr")));
-        }
-        if (maxFlow > 1000.0 * totalFeedFlow) {
-          logger.warn(
-              "Column solver diverged: maxTrayFlow={} exceeds 1000x totalFeed={}. " + "Terminating at iteration {}.",
-              maxFlow, totalFeedFlow, iter);
-          massErr = maxFlow / Math.max(1.0, totalFeedFlow);
-          break;
-        }
-      }
-
-      double guardedFlow = getMaximumTrayOutletFlowKgPerHour();
-      if (divergenceRecoveryApplied && iter > 15 && guardedFlow >= 0.99 * getMaximumRelaxedInternalFlowKgPerHour()) {
-        logger.warn("Column solver reached internal traffic guard: maxTrayFlow={} at iteration {}.", guardedFlow, iter);
-        massErr = Math.max(massErr, guardedFlow / Math.max(1.0, totalFeedFlow));
-        lastInternalTrafficGuardReached = true;
-        break;
-      }
-
-      logger.debug("iteration {} relaxation={} tempErr={} massErr={} energyErr={}", iter, relaxation, err, massErr,
-          energyErr);
-
-      if (convergenceHistory != null) {
-        recordConvergence(new double[] { err, massErr, energyErr });
-      }
-
-      boolean energyWithinBase = !enforceEnergyBalanceTolerance || energyErr <= baseEnergyTolerance;
-      boolean withinBaseTolerance = err <= baseTempTolerance && massErr <= baseMassTolerance && energyWithinBase;
-
-      if (withinBaseTolerance) {
-        boolean energyPolishingAvailable = enforceEnergyBalanceTolerance && polishEnergyTolerance < baseEnergyTolerance;
-        boolean polishingAvailable = polishMassTolerance < baseMassTolerance || energyPolishingAvailable
-            || polishTempTolerance < baseTempTolerance;
-
-        if (!polishing && polishingAvailable
-            && (massErr > polishMassTolerance || (energyPolishingAvailable && energyErr > polishEnergyTolerance))) {
-          polishing = true;
-          iterationLimit = Math.max(iterationLimit, polishIterationLimit);
-          previousCombinedResidual = Double.POSITIVE_INFINITY;
-          continue;
-        }
-
-        double tempTarget = polishing ? polishTempTolerance : baseTempTolerance;
-        double massTarget = polishing ? polishMassTolerance : baseMassTolerance;
-        double energyTarget = polishing ? polishEnergyTolerance : baseEnergyTolerance;
-        boolean energyWithinTarget = !enforceEnergyBalanceTolerance || energyErr <= energyTarget;
-
-        if (err <= tempTarget && massErr <= massTarget && energyWithinTarget) {
-          break;
-        }
-      }
-
-      if (iter >= iterationLimit && err > baseTempTolerance && iterationLimit < maxIterationLimit) {
-        iterationLimit = Math.min(maxIterationLimit, iterationLimit + overflowIncrement);
-        continue;
-      }
-    }
-
-    lastIterationCount = iter;
-    lastTemperatureResidual = err;
-    lastMassResidual = massErr;
-    lastEnergyResidual = energyErr;
-    lastSolveTimeSeconds = (System.nanoTime() - startTime) / 1.0e9;
-    hasBeenSolvedBefore = true;
-    lastTotalFeedFlow = totalFeedFlow;
-
-    // Compute full physical/transport properties once on the converged tray states
-    // (skipped during iteration for speed) so that product streams cloned in
-    // finalizeSolve carry complete properties.
-    for (int i = 0; i < numberOfTrays; i++) {
-      trays.get(i).finalizeTrayProperties();
-    }
-
-    finalizeSolve(id, iter, err, massErr, energyErr, startTime);
-    commitSequentialWarmState();
-  }
-
-  /**
-   * Solve and finalize a column that contains only one active tray.
-   *
-   * @param id calculation identifier
-   */
-  private void solveSingleTray(UUID id) {
-    long startTime = System.nanoTime();
-    trays.get(0).run(id);
-    err = 0.0;
-    finalizeSolve(id, 1, 0.0, 0.0, 0.0, startTime);
-    hasBeenSolvedBefore = true;
-    lastTotalFeedFlow = getTotalExternalFeedFlowKgPerHour();
-  }
-
-  /**
-   * Determine the iteration limit based on configuration and column size.
-   *
-   * @return maximum number of solver iterations allowed
-   */
-  private int computeIterationLimit() {
-    // An explicitly user-set maximum is a HARD cap: skip the adaptive tray-based floor.
-    if (hardIterationCap) {
-      return Math.max(1, maxNumberOfIterations);
-    }
-    return Math.max(Math.max(1, maxNumberOfIterations), computeTrayBasedIterationLimit());
-  }
-
-  /**
-   * Adaptive iteration floor derived from the number of theoretical stages.
-   *
-   * @return tray-based iteration budget
-   */
-  private int computeTrayBasedIterationLimit() {
-    return (int) Math.ceil(Math.max(5.0, numberOfTrays * TRAY_ITERATION_FACTOR));
-  }
-
-  /**
-   * Derive the effective temperature tolerance based on column complexity unless overridden.
-   *
-   * @return adaptive temperature tolerance in Kelvin
-   */
-  private double getEffectiveTemperatureTolerance() {
-    if (temperatureToleranceCustomized) {
-      return temperatureTolerance;
-    }
-    return DEFAULT_TEMPERATURE_TOLERANCE * computeToleranceComplexityMultiplier();
-  }
-
-  /**
-   * Derive the internal sum-rates temperature target used for terminal phase stability.
-   *
-   * <p>
-   * Reboiler-only columns can end immediately beside a top-product dew-point boundary. Native sum-rates needs a small
-   * internal margin so its exposed product temperature agrees with the established damped solution within the
-   * configured public tolerance. Other sequential solvers retain their existing convergence target.
-   * </p>
-   *
-   * @return internal sum-rates temperature target in Kelvin
-   */
-  private double getSumRatesTerminalTemperatureTolerance() {
-    double effectiveTolerance = getEffectiveTemperatureTolerance();
-    if (hasReboiler && !hasCondenser) {
-      return effectiveTolerance * REBOILER_ONLY_PHASE_STABLE_TEMPERATURE_TOLERANCE_FACTOR;
-    }
-    return effectiveTolerance;
-  }
-
-  /**
-   * Derive the effective mass balance tolerance based on column complexity unless overridden.
-   *
-   * @return adaptive mass balance tolerance (relative)
-   */
-  private double getEffectiveMassBalanceTolerance() {
-    if (massBalanceToleranceCustomized) {
-      return massBalanceTolerance;
-    }
-    return DEFAULT_MASS_BALANCE_TOLERANCE * computeToleranceComplexityMultiplier();
-  }
-
-  /**
-   * Derive the effective enthalpy balance tolerance based on column complexity unless overridden.
-   *
-   * @return adaptive energy balance tolerance (relative)
-   */
-  private double getEffectiveEnthalpyBalanceTolerance() {
-    if (enthalpyBalanceToleranceCustomized) {
-      return enthalpyBalanceTolerance;
-    }
-    return DEFAULT_ENTHALPY_BALANCE_TOLERANCE * computeToleranceComplexityMultiplier();
-  }
-
-  /**
-   * Estimate a scaling factor that reflects the degree of distillation complexity.
-   *
-   * <p>
-   * The factor increases with the number of theoretical stages and independent feed streams and is bounded to avoid
-   * overly loose convergence criteria.
-   * </p>
-   *
-   * @return scaling multiplier for recommended tolerances
-   */
-  private double computeToleranceComplexityMultiplier() {
-    int stageCount = Math.max(1, getEffectiveStageCount());
-    double stageMultiplier = 1.0 + Math.max(0, stageCount - 3) * 0.06;
-
-    int feedCount = Math.max(0, getTotalFeedCount());
-    double feedMultiplier = 1.0 + Math.max(0, feedCount - 1) * 0.25;
-
-    double combined = Math.max(stageMultiplier, feedMultiplier);
-    return Math.min(2.5, combined);
-  }
-
-  /**
-   * Count the number of simple trays, excluding optional reboiler and condenser sections.
-   *
-   * @return effective number of equilibrium stages
-   */
-  private int getEffectiveStageCount() {
-    int stageCount = numberOfTrays;
-    if (hasReboiler && stageCount > 0) {
-      stageCount--;
-    }
-    if (hasCondenser && stageCount > 0) {
-      stageCount--;
-    }
-    return Math.max(0, stageCount);
-  }
-
-  /**
-   * Count connected feed streams across all trays.
-   *
-   * @return total number of feeds currently attached to the column
-   */
-  private int getTotalFeedCount() {
-    int total = 0;
-    for (List<StreamInterface> feeds : feedStreams.values()) {
-      total += feeds.size();
-    }
-    return total;
-  }
-
-  /**
-   * Decide whether mass and energy balance residuals should be recomputed this iteration.
-   *
-   * @param iteration current iteration index (1-based)
-   * @param iterationLimit current iteration ceiling
-   * @param polishing whether the solver is in the polish stage
-   * @param tempResidual average temperature residual this iteration
-   * @param baseTempTolerance nominal temperature tolerance
-   * @param balanceCheckStride cadence for periodic balance checks
-   * @return {@code true} if balances should be evaluated
-   */
-  private boolean shouldEvaluateBalances(int iteration, int iterationLimit, boolean polishing, double tempResidual,
-      double baseTempTolerance, int balanceCheckStride) {
-    if (polishing || iteration <= 2 || iteration >= iterationLimit - 1) {
-      return true;
-    }
-    if (tempResidual <= baseTempTolerance * 4.0) {
-      return true;
-    }
-    return balanceCheckStride <= 1 || iteration % balanceCheckStride == 0;
-  }
-
-  /**
-   * Prepare the column for a solving sequence by updating pressures and cloning feed systems.
-   *
-   * @return index of the lowest feed tray in the column
-   */
-  private int prepareColumnForSolve() {
-    int firstFeedTrayNumber = getFirstExternalFeedTrayNumber();
-
-    if (bottomTrayPressure < 0) {
-      bottomTrayPressure = getTray(firstFeedTrayNumber).getStream(0).getPressure();
-    }
-    if (topTrayPressure < 0) {
-      topTrayPressure = getTray(firstFeedTrayNumber).getStream(0).getPressure();
-    }
-
-    double dp = 0.0;
-    if (numberOfTrays > 1) {
-      dp = (bottomTrayPressure - topTrayPressure) / (numberOfTrays - 1.0);
-    }
-    for (int i = 0; i < numberOfTrays; i++) {
-      trays.get(i).setPressure(bottomTrayPressure - i * dp);
-    }
-
-    // Before initialization, tray inputs can still be caller-owned feeds in attachment order.
-    // init() establishes a deterministic external-feed order, creates internal clones, and
-    // refreshes those clones after profile seeding. Refresh only an existing initialized network.
-    if (!isDoInitializion()) {
-      refreshInternalExternalFeedSystems();
-    }
-
-    return firstFeedTrayNumber;
-  }
-
-  /**
-   * Solve the column using an improved inside-out strategy inspired by Boston and Sullivan (1974).
-   *
-   * <p>
-   * Key improvements over basic sequential substitution:
-   * <ul>
-   * <li>K-value caching: previous iteration K-values are stored to track composition convergence and detect stagnation
-   * early.</li>
-   * <li>Composition-based convergence: monitors maximum relative K-value change alongside temperature and balance
-   * residuals.</li>
-   * <li>Stripping factor correction: applies a bulk flow correction between outer iterations based on the ratio of
-   * computed-to-assumed vapor/liquid split on each tray.</li>
-   * <li>Accelerated relaxation ramp: increases relaxation faster (1.3Ã— vs 1.2Ã—) when residuals decrease, enabling the
-   * IO method to reach full step sooner.</li>
-   * <li>Lazy balance evaluation: mass/energy balances are only recomputed when temperatures are close to tolerance,
-   * reducing expensive per-tray flow rate queries.</li>
-   * </ul>
-   *
-   * @param id calculation identifier
-   */
-  void solveInsideOut(UUID id) {
-    resetInsideOutTelemetry();
-    if (feedStreams.isEmpty()) {
-      resetLastSolveMetrics();
-      return;
-    }
-
-    int firstFeedTrayNumber = prepareColumnForSolve();
-
-    if (numberOfTrays == 1) {
-      solveSingleTray(id);
-      return;
-    }
-
-    if (isDoInitializion()) {
-      this.init();
-    }
-
-    err = 1.0e10;
-    int iter = 0;
-    double massErr = 1.0e10;
-    double energyErr = 1.0e10;
-    double previousCombinedResidual = Double.POSITIVE_INFINITY;
-
-    long startTime = System.nanoTime();
-
-    double[] oldtemps = new double[numberOfTrays];
-    StreamInterface[] previousGasStreams = new StreamInterface[numberOfTrays];
-    StreamInterface[] previousLiquidStreams = new StreamInterface[numberOfTrays];
-    StreamInterface[] currentGasStreams = new StreamInterface[numberOfTrays];
-    StreamInterface[] currentLiquidStreams = new StreamInterface[numberOfTrays];
-
-    // K-value cache for composition convergence tracking
-    double[][] previousKvalues = null;
-    double kValueResidual = Double.POSITIVE_INFINITY;
-
-    // IO method: start with moderate relaxation, ramp up aggressively
-    double relaxation = Math.max(minInsideOutRelaxation, Math.min(maxAdaptiveRelaxation, 0.8));
-    double ioRelaxationIncreaseFactor = 1.3; // faster ramp than sequential (1.2)
-
-    // Skip expensive physical/transport property initialization on every tray flash
-    // during the iterative solve (same optimization as solveSequential). The
-    // inside-out sweeps and mass/energy balances only need thermodynamic
-    // properties (enthalpy, K-values, densities); viscosity/thermal-conductivity/
-    // surface-tension are computed once on the converged state via
-    // finalizeTrayProperties() below (and before any handoff to the Newton solver).
-    for (int i = 0; i < numberOfTrays; i++) {
-      trays.get(i).setSkipPhysicalPropertiesDuringSolve(true);
-    }
-
-    if (!hasBeenSolvedBefore) {
-      trays.get(firstFeedTrayNumber).run(id);
-    }
-
-    // Compute total feed flow for divergence detection.
-    double totalFeedFlowIO = 0.0;
-    for (List<StreamInterface> feeds : feedStreams.values()) {
-      for (StreamInterface f : feeds) {
-        totalFeedFlowIO += Math.abs(f.getFlowRate("kg/hr"));
-      }
-    }
-    double divergenceThresholdIO = Math.max(totalFeedFlowIO * MAX_RELAXED_INTERNAL_TRAFFIC_TO_FEED_RATIO, 1.0e3);
-    boolean divergenceRecoveryAppliedIO = false;
-
-    // Snapshot tray state before iterations as a safe recovery point.
-    StreamInterface[] snapshotGasStreamsIO = new StreamInterface[numberOfTrays];
-    StreamInterface[] snapshotLiquidStreamsIO = new StreamInterface[numberOfTrays];
-    for (int i = 0; i < numberOfTrays; i++) {
-      snapshotGasStreamsIO[i] = trays.get(i).getGasOutStream().clone();
-      snapshotLiquidStreamsIO[i] = trays.get(i).getLiquidOutStream().clone();
-    }
-
-    // On re-runs, seed previous-stream arrays from the snapshot.
-    if (hasBeenSolvedBefore) {
-      for (int i = 0; i < numberOfTrays; i++) {
-        previousGasStreams[i] = snapshotGasStreamsIO[i].clone();
-        previousLiquidStreams[i] = snapshotLiquidStreamsIO[i].clone();
-      }
-    }
-
-    // Simplified inner-loop K-value model setup
-    int nc = trays.get(firstFeedTrayNumber).getThermoSystem().getNumberOfComponents();
-    SimplifiedKvalueModel kModel = new SimplifiedKvalueModel(numberOfTrays, nc);
-    double[][] prevOuterKvalues = null;
-    double[] prevOuterTemps = new double[numberOfTrays];
-    int outerIterCount = 0; // counts rigorous (outer) iterations
-    int totalFlashSweeps = 0; // tracks flash count for diagnostics
-    int totalInnerLoopIterations = 0;
-    double latestSurrogateResidual = Double.NaN;
-
-    int baseIterationLimit = computeIterationLimit();
-    int iterationLimit = baseIterationLimit;
-    int polishIterationLimit = baseIterationLimit
-        + Math.max(POLISH_ITERATION_MARGIN, (int) Math.ceil(0.5 * numberOfTrays));
-    int overflowIncrement = Math.max(3, (int) Math.ceil(0.5 * numberOfTrays));
-    int overflowBand = Math.max(overflowIncrement, numberOfTrays);
-    int maxIterationLimit = Math.max(iterationLimit, maxNumberOfIterations)
-        + overflowBand * ITERATION_OVERFLOW_MULTIPLIER;
-    // Honor an explicitly user-set maximum as a HARD cap: no overflow expansion and
-    // no polish extension beyond the requested iteration count.
-    if (hardIterationCap) {
-      iterationLimit = maxNumberOfIterations;
-      polishIterationLimit = maxNumberOfIterations;
-      maxIterationLimit = maxNumberOfIterations;
-    }
-    double baseTempTolerance = getEffectiveTemperatureTolerance();
-    double baseMassTolerance = getEffectiveMassBalanceTolerance();
-    double baseEnergyTolerance = getEffectiveEnthalpyBalanceTolerance();
-    double polishTempTolerance = Math.min(baseTempTolerance, TEMPERATURE_POLISH_TARGET);
-    double polishMassTolerance = Math.min(baseMassTolerance, MASS_POLISH_TARGET);
-    double polishEnergyTolerance = Math.min(baseEnergyTolerance, ENERGY_POLISH_TARGET);
-    boolean polishing = false;
-    boolean massEnergyEvaluated = false;
-    int balanceCheckStride = Math.max(3, numberOfTrays / 2);
-
-    while (iter < iterationLimit) {
-      iter++;
-
-      Arrays.fill(currentGasStreams, null);
-      Arrays.fill(currentLiquidStreams, null);
-
-      for (int i = 0; i < numberOfTrays; i++) {
-        oldtemps[i] = trays.get(i).getThermoSystem().getTemperature();
-      }
-
-      // Phase 1: Liquid sweep (feed â†’ reboiler) with relaxed tear streams
-      for (int stage = firstFeedTrayNumber; stage >= 1; stage--) {
-        int target = stage - 1;
-        int replaceStream = trays.get(target).getNumberOfInputStreams() - 1;
-        StreamInterface relaxedLiquid = applyRelaxationFast(previousLiquidStreams[stage],
-            trays.get(stage).getLiquidOutStream(), relaxation);
-        trays.get(target).replaceStream(replaceStream, relaxedLiquid);
-        currentLiquidStreams[stage] = relaxedLiquid;
-        trays.get(target).run(id);
-        applyMurphreeCorrection(target);
-      }
-
-      // Phase 2: Vapor sweep (reboiler â†’ condenser) with relaxed tear streams
-      for (int stage = 1; stage <= numberOfTrays - 1; stage++) {
-        int replaceStream = trays.get(stage).getNumberOfInputStreams() - 2;
-        if (stage == (numberOfTrays - 1)) {
-          replaceStream = trays.get(stage).getNumberOfInputStreams() - 1;
-        }
-        StreamInterface relaxedGas = applyRelaxationFast(previousGasStreams[stage - 1],
-            trays.get(stage - 1).getGasOutStream(), relaxation);
-        trays.get(stage).replaceStream(replaceStream, relaxedGas);
-        currentGasStreams[stage - 1] = relaxedGas;
-        trays.get(stage).run(id);
-        applyMurphreeCorrection(stage);
-      }
-
-      // Phase 3: Polish liquid sweep (condenser â†’ feed) for better coupling
-      for (int stage = numberOfTrays - 2; stage >= firstFeedTrayNumber; stage--) {
-        int replaceStream = trays.get(stage).getNumberOfInputStreams() - 1;
-        StreamInterface relaxedLiquid = applyRelaxationFast(previousLiquidStreams[stage + 1],
-            trays.get(stage + 1).getLiquidOutStream(), relaxation);
-        trays.get(stage).replaceStream(replaceStream, relaxedLiquid);
-        currentLiquidStreams[stage + 1] = relaxedLiquid;
-        trays.get(stage).run(id);
-        applyMurphreeCorrection(stage);
-      }
-
-      // Phase 4: Stripping factor correction â€” adjust temperatures using V/L flow
-      // balance
-      double temperatureResidual = 0.0;
-      double effectiveRelaxation = Math.max(minTemperatureRelaxation, Math.min(1.0, relaxation));
-
-      for (int i = 0; i < numberOfTrays; i++) {
-        double updated = trays.get(i).getThermoSystem().getTemperature();
-
-        // Stripping factor correction: if V/L ratio on a tray is far from unity,
-        // bias temperature update toward the flow-corrected value
-        double vaporFlow = trays.get(i).getGasOutStream().getFlowRate("kg/hr");
-        double liquidFlow = trays.get(i).getLiquidOutStream().getFlowRate("kg/hr");
-        double strippingCorrection = 1.0;
-        if (liquidFlow > 1e-12 && vaporFlow > 1e-12) {
-          double vOverL = vaporFlow / liquidFlow;
-          // Mild correction: push temperature up if too much liquid, down if too much
-          // vapor
-          strippingCorrection = 1.0 + 0.05 * Math.max(-1.0, Math.min(1.0, Math.log(vOverL)));
-        }
-
-        double newTemp = oldtemps[i] + effectiveRelaxation * strippingCorrection * (updated - oldtemps[i]);
-        trays.get(i).setTemperature(newTemp);
-        temperatureResidual += Math.abs(newTemp - oldtemps[i]);
-      }
-      temperatureResidual /= Math.max(1, numberOfTrays);
-      err = temperatureResidual;
-
-      // K-value convergence tracking
-      kValueResidual = computeKvalueResidual(previousKvalues);
-      previousKvalues = cacheCurrentKvalues();
-      outerIterCount++;
-      totalFlashSweeps++;
-
-      // Fit simplified K-value model after 2nd rigorous outer iteration
-      if (outerIterCount >= 2 && prevOuterKvalues != null && innerLoopSteps > 0) {
-        double[] currentTemps = new double[numberOfTrays];
-        for (int i = 0; i < numberOfTrays; i++) {
-          currentTemps[i] = trays.get(i).getThermoSystem().getTemperature();
-        }
-        kModel.fit(prevOuterKvalues, prevOuterTemps, previousKvalues, currentTemps);
-      }
-
-      // Save outer-loop state for next model fitting
-      prevOuterKvalues = previousKvalues.clone();
-      for (int i = 0; i < numberOfTrays; i++) {
-        prevOuterTemps[i] = trays.get(i).getThermoSystem().getTemperature();
-        if (prevOuterKvalues[i] != null) {
-          prevOuterKvalues[i] = prevOuterKvalues[i].clone();
-        }
-      }
-
-      // Run simplified inner-loop iterations (no PH-flash) if model is fitted
-      if (kModel.fitted && innerLoopSteps > 0 && !polishing) {
-        double latestInnerTempResidual = err;
-        for (int inner = 0; inner < innerLoopSteps; inner++) {
-          double innerTempResidual = innerLoopIteration(kModel, relaxation);
-          latestInnerTempResidual = innerTempResidual;
-          latestSurrogateResidual = innerTempResidual;
-          totalInnerLoopIterations++;
-          // Log inner iteration (inner iters don't count in outer iteration budget)
-          logger.debug("inside-out INNER step {}/{} tempErr={}", inner + 1, innerLoopSteps, innerTempResidual);
-          if (convergenceHistory != null) {
-            convergenceHistory.add(new double[] { innerTempResidual, massErr, energyErr, kValueResidual });
-          }
-          // If inner loop has converged, no need for more inner steps
-          if (innerTempResidual < baseTempTolerance * 0.5) {
-            break;
-          }
-        }
-        // Do not let the simplified inner loop hide the rigorous outer-loop residual.
-        err = Math.max(err, latestInnerTempResidual);
-      }
-
-      boolean evaluateBalances = shouldEvaluateBalances(iter, iterationLimit, polishing, err, baseTempTolerance,
-          balanceCheckStride);
-      if (evaluateBalances || !massEnergyEvaluated) {
-        massErr = getMassBalanceError();
-        energyErr = getEnergyBalanceError();
-        massEnergyEvaluated = true;
-      }
-
-      double tempScaled = err / baseTempTolerance;
-      double massScaled = massErr / baseMassTolerance;
-      double energyScaled = energyErr / baseEnergyTolerance;
-      double combinedResidual = Math.max(tempScaled, massScaled);
-      if (Double.isFinite(energyScaled)) {
-        combinedResidual = Math.max(combinedResidual, Math.min(energyScaled, maxEnergyRelaxationWeight));
-      }
-
-      // Accelerated adaptive relaxation for IO method
-      if (combinedResidual > previousCombinedResidual * 1.05) {
-        relaxation = Math.max(minInsideOutRelaxation, relaxation * relaxationDecreaseFactor);
-      } else if (combinedResidual < previousCombinedResidual * 0.95) {
-        // More aggressive increase than sequential â€” IO can tolerate faster ramp
-        relaxation = Math.min(maxAdaptiveRelaxation, relaxation * ioRelaxationIncreaseFactor);
-      }
-
-      previousCombinedResidual = combinedResidual;
-
-      // Divergence recovery (same logic as solveSequential).
-      if (!divergenceRecoveryAppliedIO && iter <= 10) {
-        double maxTrayFlow = 0.0;
-        for (int i = 0; i < numberOfTrays; i++) {
-          maxTrayFlow = Math.max(maxTrayFlow, Math.abs(trays.get(i).getGasOutStream().getFlowRate("kg/hr")));
-          maxTrayFlow = Math.max(maxTrayFlow, Math.abs(trays.get(i).getLiquidOutStream().getFlowRate("kg/hr")));
-        }
-        if (maxTrayFlow > divergenceThresholdIO) {
-          relaxation = minInsideOutRelaxation;
-          for (int i = 0; i < numberOfTrays; i++) {
-            previousGasStreams[i] = snapshotGasStreamsIO[i].clone();
-            previousLiquidStreams[i] = snapshotLiquidStreamsIO[i].clone();
-          }
-          divergenceRecoveryAppliedIO = true;
-          internalTrafficCapActive = true;
-          previousCombinedResidual = Double.POSITIVE_INFINITY;
-          logger.info(
-              "inside-out divergence detected at iter {}, maxTrayFlow={} > threshold={}. "
-                  + "Restoring from snapshot and reducing relaxation to {}.",
-              iter, maxTrayFlow, divergenceThresholdIO, relaxation);
-        }
-      }
-
-      for (int i = 0; i < numberOfTrays; i++) {
-        if (currentGasStreams[i] != null) {
-          previousGasStreams[i] = currentGasStreams[i];
-        }
-        if (currentLiquidStreams[i] != null) {
-          previousLiquidStreams[i] = currentLiquidStreams[i];
-        }
-      }
-
-      double guardedFlow = getMaximumTrayOutletFlowKgPerHour();
-      if (divergenceRecoveryAppliedIO && iter > 15 && guardedFlow >= 0.99 * getMaximumRelaxedInternalFlowKgPerHour()) {
-        logger.warn("Inside-out solver reached internal traffic guard: maxTrayFlow={} at iteration {}.", guardedFlow,
-            iter);
-        massErr = Math.max(massErr, guardedFlow / Math.max(1.0, totalFeedFlowIO));
-        lastInternalTrafficGuardReached = true;
-        break;
-      }
-
-      logger.debug("inside-out iteration {} relaxation={} tempErr={} massErr={} energyErr={} kErr={} outerFlashes={}",
-          iter, relaxation, err, massErr, energyErr, kValueResidual, totalFlashSweeps);
-
-      if (convergenceHistory != null) {
-        recordConvergence(new double[] { err, massErr, energyErr, kValueResidual });
-      }
-
-      boolean energyWithinBase = !enforceEnergyBalanceTolerance || energyErr <= baseEnergyTolerance;
-      boolean withinBaseTolerance = err <= baseTempTolerance && massErr <= baseMassTolerance && energyWithinBase;
-
-      if (withinBaseTolerance) {
-        boolean energyPolishingAvailable = enforceEnergyBalanceTolerance && polishEnergyTolerance < baseEnergyTolerance;
-        boolean polishingAvailable = polishMassTolerance < baseMassTolerance || energyPolishingAvailable
-            || polishTempTolerance < baseTempTolerance;
-
-        if (!polishing && polishingAvailable
-            && (massErr > polishMassTolerance || (energyPolishingAvailable && energyErr > polishEnergyTolerance))) {
-          polishing = true;
-          iterationLimit = Math.max(iterationLimit, polishIterationLimit);
-          previousCombinedResidual = Double.POSITIVE_INFINITY;
-          continue;
-        }
-
-        double tempTarget = polishing ? polishTempTolerance : baseTempTolerance;
-        double massTarget = polishing ? polishMassTolerance : baseMassTolerance;
-        double energyTarget = polishing ? polishEnergyTolerance : baseEnergyTolerance;
-        boolean energyWithinTarget = !enforceEnergyBalanceTolerance || energyErr <= energyTarget;
-
-        if (err <= tempTarget && massErr <= massTarget && energyWithinTarget) {
-          break;
-        }
-      }
-
-      // Early termination: if K-values have converged but mass/energy haven't,
-      // the problem may be ill-conditioned â€” avoid wasting iterations
-      if (kValueResidual < 1.0e-6 && iter > 5 && err > baseTempTolerance * 10) {
-        logger.warn("Inside-out: K-values converged but temperatures stagnated at iter {}", iter);
-      }
-
-      if (shouldSwitchInsideOutToNewton(iter, err, baseTempTolerance, kValueResidual)) {
-        storeInsideOutTelemetry(totalFlashSweeps, totalInnerLoopIterations, kValueResidual, latestSurrogateResidual);
-        // Restore full tray properties and clear the skip flag before handing off to
-        // the Newton solver, so it runs and finalizes products with complete
-        // physical/transport properties.
-        for (int i = 0; i < numberOfTrays; i++) {
-          trays.get(i).finalizeTrayProperties();
-        }
-        hasBeenSolvedBefore = false;
-        setDoInitializion(true);
-        solveNewton(id);
-        return;
-      }
-
-      if (iter >= iterationLimit && err > baseTempTolerance && iterationLimit < maxIterationLimit) {
-        iterationLimit = Math.min(maxIterationLimit, iterationLimit + overflowIncrement);
-        continue;
-      }
-    }
-
-    storeInsideOutTelemetry(totalFlashSweeps, totalInnerLoopIterations, kValueResidual, latestSurrogateResidual);
-    // Compute full physical/transport properties once on the converged tray states
-    // (skipped during iteration for speed) so product streams cloned in
-    // finalizeSolve carry complete properties.
-    for (int i = 0; i < numberOfTrays; i++) {
-      trays.get(i).finalizeTrayProperties();
-    }
-    finalizeSolve(id, iter, err, massErr, energyErr, startTime);
-  }
-
-  /**
-   * Decide when the inside-out fixed-point stage should hand off to simultaneous Newton.
-   *
-   * <p>
-   * Large columns spend most of their wall time in repeated tray flashes once the K-value profile is already well
-   * shaped. The hybrid handoff follows the common inside-out/simultaneous-correction pattern: use cheap fixed-point
-   * sweeps for initialization, then solve the coupled temperature correction when additional sweeps mostly polish the
-   * same profile.
-   * </p>
-   *
-   * @param iteration current inside-out outer iteration
-   * @param temperatureResidual current average temperature residual
-   * @param temperatureTolerance active temperature tolerance
-   * @param kValueResidual current K-value residual
-   * @return {@code true} when a Newton handoff is expected to be cheaper than more sweeps
-   */
-  private boolean shouldSwitchInsideOutToNewton(int iteration, double temperatureResidual, double temperatureTolerance,
-      double kValueResidual) {
-    if (numberOfTrays < 8 || iteration < Math.max(6, numberOfTrays / 2)) {
-      return false;
-    }
-    if (!Double.isFinite(temperatureResidual) || temperatureResidual <= temperatureTolerance) {
-      return false;
-    }
-    return !Double.isFinite(kValueResidual) || kValueResidual < 5.0e-2
-        || temperatureResidual < temperatureTolerance * 100.0;
-  }
-
-  /**
-   * Store telemetry from the inside-out initializer before finalizing or handing off.
-   *
-   * @param outerFlashSweeps rigorous outside-loop sweeps
-   * @param innerLoopIterations surrogate inner-loop iterations
-   * @param kValueResidual latest K-value residual
-   * @param surrogateResidual latest surrogate-model residual
-   */
-  private void storeInsideOutTelemetry(int outerFlashSweeps, int innerLoopIterations, double kValueResidual,
-      double surrogateResidual) {
-    lastInsideOutOuterFlashSweeps = outerFlashSweeps;
-    lastInsideOutInnerLoopIterations = innerLoopIterations;
-    lastInsideOutKValueResidual = kValueResidual;
-    lastInsideOutSurrogateResidual = surrogateResidual;
-    lastInsideOutSurrogateResetCount = 0;
-  }
-
-  /**
-   * Solve the column with matrix inside-out component balances before rigorous polishing.
-   *
-   * <p>
-   * The matrix stage solves component material-balance tridiagonal systems using cached K-values and cached
-   * K-temperature derivatives. It is accepted only as a warm start; the final products and convergence metrics still
-   * come from the rigorous inside-out solver.
-   * </p>
-   *
-   * @param id calculation identifier
-   */
-  void solveMatrixInsideOut(UUID id) {
-    resetMatrixInsideOutDiagnostics();
-    if (feedStreams.isEmpty()) {
-      resetLastSolveMetrics();
-      return;
-    }
-
-    if (shouldBypassMatrixInsideOutWarmStart()) {
-      lastMatrixInsideOutWarmStartBypassed = true;
-      solveInsideOut(id);
-      return;
-    }
-
-    prepareColumnForSolve();
-    if (numberOfTrays == 1) {
-      solveSingleTray(id);
-      return;
-    }
-
-    if (isDoInitializion()) {
-      this.init();
-    }
-
-    boolean wasSolvedBefore = hasBeenSolvedBefore;
-    DistillationColumnMatrixSolver matrixSolver = new DistillationColumnMatrixSolver(this);
-    int matrixIterationLimit = Math.max(2,
-        Math.min(Math.max(4, numberOfTrays), Math.max(2, maxNumberOfIterations / 4)));
-    matrixSolver.setMaxIterations(matrixIterationLimit);
-    matrixSolver.setTolerance(Math.max(getEffectiveTemperatureTolerance(), 5.0e-2));
-    matrixSolver.setDampingFactor(Math.max(0.2, Math.min(0.6, minInsideOutRelaxation)));
-
-    boolean matrixWarmStartAccepted = false;
-    try {
-      matrixWarmStartAccepted = matrixSolver.solve(id);
-    } catch (RuntimeException exception) {
-      logger.debug("Matrix inside-out warm start failed; continuing with rigorous inside-out.", exception);
-    }
-
-    int matrixIterations = matrixSolver.getLastIterationCount();
-    double matrixSolveTime = matrixSolver.getLastSolveTimeSeconds();
-    double matrixTemperatureResidual = matrixSolver.getLastTemperatureResidual();
-    lastMatrixInsideOutWarmStartUsed = matrixWarmStartAccepted;
-    lastMatrixInsideOutWarmStartBypassed = false;
-    lastMatrixInsideOutIterationCount = matrixIterations;
-    lastMatrixInsideOutTemperatureResidual = matrixTemperatureResidual;
-    lastMatrixInsideOutSolveTimeSeconds = matrixSolveTime;
-    if (matrixWarmStartAccepted) {
-      hasBeenSolvedBefore = true;
-      setDoInitializion(false);
-    } else {
-      hasBeenSolvedBefore = wasSolvedBefore;
-      setDoInitializion(true);
-    }
-
-    solveInsideOut(id);
-    lastIterationCount += matrixIterations;
-    lastSolveTimeSeconds += matrixSolveTime;
-    logger.debug("Matrix inside-out stage iterations={} residual={} accepted={}", matrixIterations,
-        matrixTemperatureResidual, matrixWarmStartAccepted);
-  }
-
-  /**
-   * Decide whether the matrix warm-start stage should be skipped for the current column size.
-   *
-   * <p>
-   * The matrix component-balance stage has fixed setup cost and is only expected to pay off on larger columns. Small
-   * benchmark columns are faster with the rigorous inside-out path directly.
-   * </p>
-   *
-   * @return {@code true} when the adaptive matrix solver should use rigorous inside-out directly
-   */
-  private boolean shouldBypassMatrixInsideOutWarmStart() {
-    return numberOfTrays < MIN_MATRIX_INSIDE_OUT_WARM_START_TRAYS;
-  }
-
-  /**
-   * Compute the maximum relative K-value change compared to the previous iteration.
-   *
-   * <p>
-   * K-values are computed as the ratio of vapor to liquid mole fractions for each component on each tray. This provides
-   * a composition-based convergence metric that complements the temperature-based metric, similar to what commercial
-   * inside-out implementations track.
-   * </p>
-   *
-   * @param previousKvalues K-values from the previous iteration (null if first iteration)
-   * @return maximum relative K-value change; {@code Double.POSITIVE_INFINITY} if no previous data
-   */
-  private double computeKvalueResidual(double[][] previousKvalues) {
-    if (previousKvalues == null) {
-      return Double.POSITIVE_INFINITY;
-    }
-
-    double maxRelChange = 0.0;
-    for (int i = 0; i < numberOfTrays; i++) {
-      SystemInterface fluid = trays.get(i).getThermoSystem();
-      if (fluid.getNumberOfPhases() < 2) {
-        continue;
-      }
-      int nc = fluid.getNumberOfComponents();
-      for (int j = 0; j < nc; j++) {
-        double xj = fluid.getPhase(1).getComponent(j).getx();
-        double yj = fluid.getPhase(0).getComponent(j).getx();
-        if (xj > 1e-15) {
-          double kCurrent = yj / xj;
-          double kPrevious = previousKvalues[i][j];
-          if (kPrevious > 1e-15) {
-            double relChange = Math.abs(kCurrent - kPrevious) / kPrevious;
-            maxRelChange = Math.max(maxRelChange, relChange);
-          }
-        }
-      }
-    }
-    return maxRelChange;
-  }
-
-  /**
-   * Cache K-values (y/x) for all components on all trays for use in the next iteration comparison.
-   *
-   * @return 2D array [tray][component] of K-values
-   */
-  private double[][] cacheCurrentKvalues() {
-    double[][] kvalues = new double[numberOfTrays][];
-    for (int i = 0; i < numberOfTrays; i++) {
-      SystemInterface fluid = trays.get(i).getThermoSystem();
-      int nc = fluid.getNumberOfComponents();
-      kvalues[i] = new double[nc];
-      if (fluid.getNumberOfPhases() >= 2) {
-        for (int j = 0; j < nc; j++) {
-          double xj = fluid.getPhase(1).getComponent(j).getx();
-          if (xj > 1e-15) {
-            kvalues[i][j] = fluid.getPhase(0).getComponent(j).getx() / xj;
-          }
-        }
-      }
-    }
-    return kvalues;
-  }
-
-  /**
-   * Simplified K-value model for the inside-out inner loop.
-   *
-   * <p>
-   * For each component on each tray, the model stores coefficients for the correlation:
-   *
-   * <pre>
-   *   ln K_i = a_i + b_i / T
-   * </pre>
-   *
-   * <p>
-   * where T is in Kelvin. The coefficients are fitted from rigorous flash results at two temperature points (the
-   * current and previous outer-loop temperatures). Between outer-loop updates, compositions are estimated using this
-   * simplified model instead of full PH-flash calculations, reducing computational cost by a factor of approximately
-   * {@code innerLoopSteps}.
-   */
-  static class SimplifiedKvalueModel {
-    /** Intercept coefficient: lnK = a + b/T. Indexed [tray][component]. */
-    final double[][] coeffA;
-    /** Slope coefficient: lnK = a + b/T. Indexed [tray][component]. */
-    final double[][] coeffB;
-    /** Number of trays. */
-    final int nTrays;
-    /** Number of components. */
-    final int nComponents;
-    /** Whether the model has been fitted (needs at least 2 temperature points). */
-    boolean fitted = false;
-
-    SimplifiedKvalueModel(int nTrays, int nComponents) {
-      this.nTrays = nTrays;
-      this.nComponents = nComponents;
-      this.coeffA = new double[nTrays][nComponents];
-      this.coeffB = new double[nTrays][nComponents];
-    }
-
-    /**
-     * Fit the model from two sets of K-values at two temperatures.
-     *
-     * <p>
-     * Given K-values at T1 and T2, we solve:
-     *
-     * <pre>
-     *   ln(K1) = a + b/T1
-     *   ln(K2) = a + b/T2
-     * </pre>
-     *
-     * <p>
-     * yielding b = (ln(K2) - ln(K1)) / (1/T2 - 1/T1) and a = ln(K1) - b/T1.
-     *
-     * @param kvalues1 K-values at temperature T1 [tray][component]
-     * @param temps1 tray temperatures at point 1
-     * @param kvalues2 K-values at temperature T2 [tray][component]
-     * @param temps2 tray temperatures at point 2
-     */
-    void fit(double[][] kvalues1, double[] temps1, double[][] kvalues2, double[] temps2) {
-      for (int i = 0; i < nTrays; i++) {
-        double t1 = temps1[i];
-        double t2 = temps2[i];
-        if (t1 < 1.0 || t2 < 1.0 || Math.abs(t1 - t2) < 0.01) {
-          // Temperatures too close or invalid â€” use single-point model (b=0)
-          for (int j = 0; j < nComponents && j < kvalues2[i].length; j++) {
-            if (kvalues2[i][j] > 1e-30) {
-              coeffA[i][j] = Math.log(kvalues2[i][j]);
-              coeffB[i][j] = 0.0;
-            }
-          }
-          continue;
-        }
-        double invT1 = 1.0 / t1;
-        double invT2 = 1.0 / t2;
-        double dInvT = invT2 - invT1;
-        for (int j = 0; j < nComponents && j < kvalues1[i].length && j < kvalues2[i].length; j++) {
-          double k1 = kvalues1[i][j];
-          double k2 = kvalues2[i][j];
-          if (k1 > 1e-30 && k2 > 1e-30) {
-            double lnK1 = Math.log(k1);
-            double lnK2 = Math.log(k2);
-            coeffB[i][j] = (lnK2 - lnK1) / dInvT;
-            coeffA[i][j] = lnK1 - coeffB[i][j] * invT1;
-          } else if (k2 > 1e-30) {
-            coeffA[i][j] = Math.log(k2);
-            coeffB[i][j] = 0.0;
-          }
-        }
-      }
-      fitted = true;
-    }
-
-    /**
-     * Predict K-value for component j on tray i at temperature T.
-     *
-     * @param tray tray index
-     * @param component component index
-     * @param temperature temperature in Kelvin
-     * @return estimated K-value
-     */
-    double predict(int tray, int component, double temperature) {
-      if (temperature < 1.0) {
-        return 1.0;
-      }
-      double lnK = coeffA[tray][component] + coeffB[tray][component] / temperature;
-      // Bound to prevent extreme values
-      lnK = Math.max(-30.0, Math.min(30.0, lnK));
-      return Math.exp(lnK);
-    }
-  }
-
-  /**
-   * Perform a simplified inner-loop iteration using the K-value model instead of rigorous flash.
-   *
-   * <p>
-   * This method updates tray compositions using the simplified K-value correlation and adjusts temperatures via a
-   * bubble-point calculation (sum of K*x = 1 condition). No PH-flash is called, making each inner iteration much
-   * cheaper than a rigorous outer iteration.
-   * </p>
-   *
-   * @param model the fitted simplified K-value model
-   * @param relaxation current relaxation factor
-   * @return average absolute temperature change across all trays
-   */
-  private double innerLoopIteration(SimplifiedKvalueModel model, double relaxation) {
-    double tempResidual = 0.0;
-    double effectiveRelaxation = Math.max(minTemperatureRelaxation, Math.min(1.0, relaxation));
-
-    for (int i = 0; i < numberOfTrays; i++) {
-      SystemInterface fluid = trays.get(i).getThermoSystem();
-      if (fluid.getNumberOfPhases() < 2) {
-        continue;
-      }
-
-      double trayTemp = fluid.getTemperature();
-      int nc = fluid.getNumberOfComponents();
-
-      // Estimate new compositions using simplified K-values at current temperature
-      double sumKx = 0.0;
-      double[] kPredicted = new double[nc];
-      for (int j = 0; j < nc; j++) {
-        kPredicted[j] = model.predict(i, j, trayTemp);
-        double xj = fluid.getPhase(1).getComponent(j).getx();
-        sumKx += kPredicted[j] * xj;
-      }
-
-      // Bubble-point temperature correction: if sum(K*x) != 1, adjust T
-      // Using Newton-like step: dT = -f(T)/f'(T) where f(T) = sum(K*x) - 1
-      // f'(T) â‰ˆ -sum(b_j/T^2 * K_j * x_j) (derivative of K model w.r.t. T)
-      if (sumKx > 1e-10) {
-        double dfdt = 0.0;
-        for (int j = 0; j < nc; j++) {
-          double xj = fluid.getPhase(1).getComponent(j).getx();
-          dfdt += -model.coeffB[i][j] / (trayTemp * trayTemp) * kPredicted[j] * xj;
-        }
-
-        double correction = 0.0;
-        if (Math.abs(dfdt) > 1e-15) {
-          correction = -(sumKx - 1.0) / dfdt;
-          // Safeguard: limit step size
-          correction = Math.max(-15.0, Math.min(15.0, correction));
-        }
-
-        double newTemp = trayTemp + effectiveRelaxation * correction;
-        // Ensure temperature stays positive
-        newTemp = Math.max(50.0, newTemp);
-        tempResidual += Math.abs(newTemp - trayTemp);
-        trays.get(i).setTemperature(newTemp);
-
-        // Update vapor compositions: y_j = K_j * x_j / sum(K*x)
-        // (normalized to ensure summation)
-        if (sumKx > 1e-10) {
-          for (int j = 0; j < nc; j++) {
-            double xj = fluid.getPhase(1).getComponent(j).getx();
-            double newYj = Math.max(0.0, kPredicted[j] * xj / sumKx);
-            // Only update if we have vapor phase access
-            try {
-              fluid.getPhase(0).getComponent(j).setx(newYj);
-            } catch (Exception ex) {
-              // If composition update fails, skip this component
-              logger.debug("Inner loop: could not update y[{}] on tray {}", j, i);
-            }
-          }
-        }
-      }
-    }
-
-    return tempResidual / Math.max(1, numberOfTrays);
-  }
-
-  /**
-   * Solve the column using a simple Broyden mixing of tray temperatures.
-   *
-   * @param id calculation identifier
-   */
-  public void runBroyden(UUID id) {
-    if (feedStreams.isEmpty()) {
-      resetLastSolveMetrics();
-      return;
-    }
-
-    int firstFeedTrayNumber = feedStreams.keySet().stream().min(Integer::compareTo).get();
-
-    if (bottomTrayPressure < 0) {
-      bottomTrayPressure = getTray(firstFeedTrayNumber).getStream(0).getPressure();
-    }
-    if (topTrayPressure < 0) {
-      topTrayPressure = getTray(firstFeedTrayNumber).getStream(0).getPressure();
-    }
-
-    double dp = 0.0;
-    if (numberOfTrays > 1) {
-      dp = (bottomTrayPressure - topTrayPressure) / (numberOfTrays - 1.0);
-    }
-    for (int i = 0; i < numberOfTrays; i++) {
-      trays.get(i).setPressure(bottomTrayPressure - i * dp);
-    }
-
-    if (isDoInitializion()) {
-      this.init();
-    }
-
-    err = 1.0e10;
-    int iter = 0;
-    double massErr = 1.0e10;
-    double energyErr = 1.0e10;
-
-    double[] oldtemps = new double[numberOfTrays];
-    double[] oldDelta = new double[numberOfTrays];
-    double[] delta = new double[numberOfTrays];
-
-    trays.get(firstFeedTrayNumber).run(id);
-
-    long startTime = System.nanoTime();
-
-    int baseIterationLimit = computeIterationLimit();
-    int iterationLimit = baseIterationLimit;
-    int polishIterationLimit = baseIterationLimit
-        + Math.max(POLISH_ITERATION_MARGIN, (int) Math.ceil(0.5 * numberOfTrays));
-    double baseTempTolerance = getEffectiveTemperatureTolerance();
-    double baseMassTolerance = getEffectiveMassBalanceTolerance();
-    double baseEnergyTolerance = getEffectiveEnthalpyBalanceTolerance();
-    double polishTempTolerance = Math.min(baseTempTolerance, TEMPERATURE_POLISH_TARGET);
-    double polishMassTolerance = Math.min(baseMassTolerance, MASS_POLISH_TARGET);
-    double polishEnergyTolerance = Math.min(baseEnergyTolerance, ENERGY_POLISH_TARGET);
-    boolean polishing = false;
-    double monotonicBaseline = Double.POSITIVE_INFINITY;
-    boolean massEnergyEvaluated = false;
-    int balanceCheckStride = Math.max(3, numberOfTrays / 2);
-
-    while (iter < iterationLimit) {
-      iter++;
-      err = 0.0;
-      for (int i = 0; i < numberOfTrays; i++) {
-        oldtemps[i] = trays.get(i).getThermoSystem().getTemperature();
-      }
-
-      for (int i = firstFeedTrayNumber; i > 1; i--) {
-        int replaceStream1 = trays.get(i - 1).getNumberOfInputStreams() - 1;
-        trays.get(i - 1).replaceStream(replaceStream1, trays.get(i).getLiquidOutStream());
-        trays.get(i - 1).run(id);
-      }
-
-      int streamNumb = trays.get(0).getNumberOfInputStreams() - 1;
-      trays.get(0).replaceStream(streamNumb, trays.get(1).getLiquidOutStream());
-      trays.get(0).run(id);
-
-      for (int i = 1; i <= numberOfTrays - 1; i++) {
-        int replaceStream = trays.get(i).getNumberOfInputStreams() - 2;
-        if (i == (numberOfTrays - 1)) {
-          replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
-        }
-        trays.get(i).replaceStream(replaceStream, trays.get(i - 1).getGasOutStream());
-        trays.get(i).run(id);
-      }
-
-      for (int i = numberOfTrays - 2; i >= firstFeedTrayNumber; i--) {
-        int replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
-        trays.get(i).replaceStream(replaceStream, trays.get(i + 1).getLiquidOutStream());
-        trays.get(i).run(id);
-      }
-
-      for (int i = 0; i < numberOfTrays; i++) {
-        delta[i] = trays.get(i).getThermoSystem().getTemperature() - oldtemps[i];
-        double newTemp = oldtemps[i] + delta[i] + 0.3 * (delta[i] - oldDelta[i]);
-        trays.get(i).setTemperature(newTemp);
-        oldDelta[i] = delta[i];
-        err += Math.abs(newTemp - oldtemps[i]);
-      }
-
-      boolean evaluateBalances = shouldEvaluateBalances(iter, iterationLimit, polishing, err, baseTempTolerance,
-          balanceCheckStride);
-      if (evaluateBalances || !massEnergyEvaluated) {
-        massErr = getMassBalanceError();
-        energyErr = getEnergyBalanceError();
-        massEnergyEvaluated = true;
-      }
-
-      logger
-          .debug("error iteration = " + iter + "   err = " + err + " massErr= " + massErr + " energyErr= " + energyErr);
-
-      boolean improved = err < monotonicBaseline;
-      monotonicBaseline = err;
-      if (!improved) {
-        break;
-      }
-
-      boolean energyWithinBase = !enforceEnergyBalanceTolerance || energyErr <= baseEnergyTolerance;
-      boolean withinBaseTolerance = err <= baseTempTolerance && massErr <= baseMassTolerance && energyWithinBase;
-
-      if (withinBaseTolerance) {
-        boolean energyPolishingAvailable = enforceEnergyBalanceTolerance && polishEnergyTolerance < baseEnergyTolerance;
-        boolean polishingAvailable = polishMassTolerance < baseMassTolerance || energyPolishingAvailable
-            || polishTempTolerance < baseTempTolerance;
-
-        if (!polishing && polishingAvailable
-            && (massErr > polishMassTolerance || (energyPolishingAvailable && energyErr > polishEnergyTolerance))) {
-          polishing = true;
-          iterationLimit = Math.max(iterationLimit, polishIterationLimit);
-          monotonicBaseline = Double.POSITIVE_INFINITY;
-          continue;
-        }
-
-        double tempTarget = polishing ? polishTempTolerance : baseTempTolerance;
-        double massTarget = polishing ? polishMassTolerance : baseMassTolerance;
-        double energyTarget = polishing ? polishEnergyTolerance : baseEnergyTolerance;
-        boolean energyWithinTarget = !enforceEnergyBalanceTolerance || energyErr <= energyTarget;
-
-        if (err <= tempTarget && massErr <= massTarget && energyWithinTarget) {
-          break;
-        }
-      }
-    }
-
-    double totalFeedFlowBroyden = 0.0;
-    for (List<StreamInterface> feeds : feedStreams.values()) {
-      for (StreamInterface f : feeds) {
-        totalFeedFlowBroyden += Math.abs(f.getFlowRate("kg/hr"));
-      }
-    }
-
-    finalizeSolve(id, iter, err, massErr, energyErr, startTime);
-    hasBeenSolvedBefore = true;
-    lastTotalFeedFlow = totalFeedFlowBroyden;
-  }
-
-  /**
-   * Solve the column using Wegstein acceleration of successive substitution.
-   *
-   * <p>
-   * Wegstein's method uses two consecutive fixed-point iterates to extrapolate a better estimate. For temperatures on
-   * each tray the acceleration factor q is computed from the slope of the fixed-point map: q = s / (s - 1) where s =
-   * (x_{k} - x_{k-1}) / (g(x_{k}) - g(x_{k-1})). The factor is bounded to [-5, 0] to prevent divergence.
-   * </p>
-   *
-   * @param id calculation identifier
-   */
-  void solveWegstein(UUID id) {
-    if (feedStreams.isEmpty()) {
-      resetLastSolveMetrics();
-      return;
-    }
-
-    if (useGuardedWegsteinFallback()) {
-      markSolverTypeUsed(SolverType.DIRECT_SUBSTITUTION);
-      solveDirectSubstitution(id);
-      return;
-    }
-
-    int firstFeedTrayNumber = prepareColumnForSolve();
-
-    if (numberOfTrays == 1) {
-      solveSingleTray(id);
-      return;
-    }
-
-    if (isDoInitializion()) {
-      this.init();
-    }
-
-    err = 1.0e10;
-    int iter = 0;
-    double massErr = 1.0e10;
-    double energyErr = 1.0e10;
-
-    long startTime = System.nanoTime();
-
-    // Wegstein requires two consecutive iterates to estimate the slope.
-    // prevInput[i] = x_{k-1}, prevOutput[i] = g(x_{k-1})
-    double[] prevInput = new double[numberOfTrays];
-    double[] prevOutput = new double[numberOfTrays];
-    boolean wegsteinReady = false;
-
-    for (int i = 0; i < numberOfTrays; i++) {
-      prevInput[i] = trays.get(i).getThermoSystem().getTemperature();
-    }
-
-    trays.get(firstFeedTrayNumber).run(id);
-
-    int baseIterationLimit = computeIterationLimit();
-    int iterationLimit = baseIterationLimit;
-    int overflowIncrement = Math.max(3, (int) Math.ceil(0.5 * numberOfTrays));
-    int overflowBand = Math.max(overflowIncrement, numberOfTrays);
-    int maxIterationLimit = Math.max(iterationLimit, maxNumberOfIterations)
-        + overflowBand * ITERATION_OVERFLOW_MULTIPLIER;
-    // Honor an explicitly user-set maximum as a HARD cap: no overflow expansion.
-    if (hardIterationCap) {
-      iterationLimit = maxNumberOfIterations;
-      maxIterationLimit = maxNumberOfIterations;
-    }
-    double baseTempTolerance = getEffectiveTemperatureTolerance();
-    double baseMassTolerance = getEffectiveMassBalanceTolerance();
-    double baseEnergyTolerance = getEffectiveEnthalpyBalanceTolerance();
-    boolean massEnergyEvaluated = false;
-    int balanceCheckStride = Math.max(3, numberOfTrays / 2);
-    // Warm-up: use direct substitution for first few iterations
-    int warmUpIterations = Math.max(2, numberOfTrays / 3);
-
-    while (iter < iterationLimit) {
-      iter++;
-
-      double[] xk = new double[numberOfTrays];
-      for (int i = 0; i < numberOfTrays; i++) {
-        xk[i] = trays.get(i).getThermoSystem().getTemperature();
-      }
-
-      // Standard tray sweep (same as direct substitution)
-      for (int i = firstFeedTrayNumber; i > 1; i--) {
-        int replaceStream = trays.get(i - 1).getNumberOfInputStreams() - 1;
-        trays.get(i - 1).replaceStream(replaceStream, trays.get(i).getLiquidOutStream());
-        trays.get(i - 1).run(id);
-        applyMurphreeCorrection(i - 1);
-      }
-
-      int streamNumb = trays.get(0).getNumberOfInputStreams() - 1;
-      trays.get(0).replaceStream(streamNumb, trays.get(1).getLiquidOutStream());
-      trays.get(0).run(id);
-      applyMurphreeCorrection(0);
-
-      for (int i = 1; i <= numberOfTrays - 1; i++) {
-        int replaceStream = trays.get(i).getNumberOfInputStreams() - 2;
-        if (i == (numberOfTrays - 1)) {
-          replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
-        }
-        trays.get(i).replaceStream(replaceStream, trays.get(i - 1).getGasOutStream());
-        trays.get(i).run(id);
-        applyMurphreeCorrection(i);
-      }
-
-      for (int i = numberOfTrays - 2; i >= firstFeedTrayNumber; i--) {
-        int replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
-        trays.get(i).replaceStream(replaceStream, trays.get(i + 1).getLiquidOutStream());
-        trays.get(i).run(id);
-        applyMurphreeCorrection(i);
-      }
-
-      // Compute g(x_k) = direct substitution output
-      double[] gxk = new double[numberOfTrays];
-      for (int i = 0; i < numberOfTrays; i++) {
-        gxk[i] = trays.get(i).getThermoSystem().getTemperature();
-      }
-
-      // Apply Wegstein acceleration after warm-up period
-      double temperatureResidual = 0.0;
-      for (int i = 0; i < numberOfTrays; i++) {
-        double newTemp;
-        if (wegsteinReady && iter > warmUpIterations) {
-          double denominator = (xk[i] - prevInput[i]);
-          if (Math.abs(denominator) > 1.0e-10) {
-            double s = (gxk[i] - prevOutput[i]) / denominator;
-            double q = s / (s - 1.0);
-            // Bound q conservatively: [-2, 0] to avoid oscillation
-            q = Math.max(-2.0, Math.min(0.0, q));
-            double candidate = (1.0 - q) * gxk[i] + q * xk[i];
-            // Safeguard: limit step size to avoid overshooting
-            double maxStep = 30.0;
-            if (Math.abs(candidate - xk[i]) > maxStep) {
-              candidate = xk[i] + Math.signum(candidate - xk[i]) * maxStep;
-            }
-            newTemp = candidate;
-          } else {
-            newTemp = gxk[i];
-          }
-        } else {
-          newTemp = gxk[i]; // Direct substitution during warm-up
-        }
-
-        // Store for next iteration
-        prevOutput[i] = gxk[i];
-        prevInput[i] = xk[i];
-
-        trays.get(i).setTemperature(newTemp);
-        temperatureResidual += Math.abs(newTemp - xk[i]);
-      }
-      wegsteinReady = true;
-      temperatureResidual /= Math.max(1, numberOfTrays);
-      err = temperatureResidual;
-
-      boolean evaluateBalances = shouldEvaluateBalances(iter, iterationLimit, false, err, baseTempTolerance,
-          balanceCheckStride);
-      if (evaluateBalances || !massEnergyEvaluated) {
-        massErr = getMassBalanceError();
-        energyErr = getEnergyBalanceError();
-        massEnergyEvaluated = true;
-      }
-
-      if (convergenceHistory != null) {
-        recordConvergence(new double[] { err, massErr, energyErr });
-      }
-
-      logger.debug("Wegstein iteration {} tempErr={} massErr={} energyErr={}", iter, err, massErr, energyErr);
-
-      boolean energyWithinBase = !enforceEnergyBalanceTolerance || energyErr <= baseEnergyTolerance;
-      if (err <= baseTempTolerance && massErr <= baseMassTolerance && energyWithinBase) {
-        break;
-      }
-
-      if (iter >= iterationLimit && err > baseTempTolerance && iterationLimit < maxIterationLimit) {
-        iterationLimit = Math.min(maxIterationLimit, iterationLimit + overflowIncrement);
-        continue;
-      }
-    }
-
-    synchronizeTrayStreamsAfterAcceleratedTemperatureUpdate(id, firstFeedTrayNumber);
-    massErr = getMassBalanceError();
-    energyErr = getEnergyBalanceError();
-
-    if (!Double.isFinite(err) || !Double.isFinite(energyErr) || err > baseTempTolerance
-        || massErr > baseMassTolerance) {
-      logger.warn("Wegstein did not converge cleanly for column {}. Falling back to direct " + "substitution.",
-          getName());
-      solveDirectFallbackFromFreshInitialization(id);
-      return;
-    }
-
-    finalizeSolve(id, iter, err, massErr, energyErr, startTime);
-  }
-
-  /**
-   * Recompute tray outlet streams after an accelerated temperature update.
-   *
-   * @param id calculation identifier
-   * @param firstFeedTrayNumber index of the lowest feed tray
-   */
-  private void synchronizeTrayStreamsAfterAcceleratedTemperatureUpdate(UUID id, int firstFeedTrayNumber) {
-    StreamInterface[] previousGasStreams = new StreamInterface[numberOfTrays];
-    StreamInterface[] previousLiquidStreams = new StreamInterface[numberOfTrays];
-    for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
-      previousGasStreams[trayIndex] = trays.get(trayIndex).getGasOutStream().clone();
-      previousLiquidStreams[trayIndex] = trays.get(trayIndex).getLiquidOutStream().clone();
-    }
-    performFullTraySweep(id, firstFeedTrayNumber, previousGasStreams, previousLiquidStreams, 1.0);
-  }
-
-  /**
-   * Rerun damped substitution from a fresh tray initialization after an accelerator fails.
-   *
-   * @param id calculation identifier
-   */
-  private void solveDampedFallbackFromFreshInitialization(UUID id) {
-    boolean originalInitializationFlag = doInitializion;
-    doInitializion = true;
-    lastSolverTypeUsed = SolverType.DAMPED_SUBSTITUTION;
-    solveDampedSubstitution(id);
-    doInitializion = originalInitializationFlag;
-  }
-
-  /**
-   * Rerun direct substitution from a fresh tray initialization after a guarded accelerator is slower or less stable
-   * than the base fixed-point method.
-   *
-   * @param id calculation identifier
-   */
-  private void solveDirectFallbackFromFreshInitialization(UUID id) {
-    boolean originalInitializationFlag = doInitializion;
-    doInitializion = true;
-    lastSolverTypeUsed = SolverType.DIRECT_SUBSTITUTION;
-    solveDirectSubstitution(id);
-    doInitializion = originalInitializationFlag;
-  }
-
-  /**
-   * Rerun damped substitution after an accelerator throws during a solver adapter call.
-   *
-   * @param id calculation identifier
-   * @param exception exception that caused the accelerator to be rejected
-   */
-  void solveDampedFallbackAfterAcceleratorFailure(UUID id, RuntimeException exception) {
-    logger.warn("Accelerated solver failed for column {}. Falling back to damped substitution.", getName(), exception);
-    solveDampedFallbackFromFreshInitialization(id);
-  }
-
-  /**
-   * Rerun damped substitution after an accelerator returns a rejected state.
-   *
-   * @param id calculation identifier
-   * @param reason reason the accelerator result was rejected
-   */
-  void solveDampedFallbackAfterRejectedAccelerator(UUID id, String reason) {
-    logger.warn("Accelerated solver result rejected for column {}: {}. Falling back to damped " + "substitution.",
-        getName(), reason);
-    solveDampedFallbackFromFreshInitialization(id);
-  }
-
-  /**
-   * Decide whether Wegstein acceleration should be routed to a guarded base solver.
-   *
-   * @return {@code true} while the Wegstein accelerator is guarded by damped substitution
-   */
-  private boolean useGuardedWegsteinFallback() {
-    return true;
-  }
-
-  /**
-   * Decide whether sum-rates acceleration should be routed to the guarded damped solver.
-   *
-   * @return {@code true} when a condenser requires the sum-rates accelerator to use damped substitution
-   */
-  private boolean useGuardedSumRatesFallback() {
-    return hasCondenser;
-  }
-
-  /**
-   * Decide whether temperature-Newton acceleration should be routed to the guarded damped solver.
-   *
-   * @return {@code true} while the Newton accelerator is guarded by damped substitution
-   */
-  private boolean useGuardedNewtonFallback() {
-    return false;
-  }
-
-  /**
-   * Solve the column using a sum-rates tearing method.
-   *
-   * <p>
-   * The sum-rates method adjusts tray liquid flow rates based on the ratio of computed to assumed total flow leaving
-   * each tray. This is effective for absorber and stripper columns where the temperature profile is relatively flat.
-   * The method alternates between: (1) bubble-point temperature calculations on each tray, and (2) flow rate
-   * corrections using the sum-rates formula of Burningham and Otto (1967). Once an accepted result is available, an
-   * invocation with an identical sequential-input fingerprint reuses that tray and product state without another flash
-   * sweep. Changed feed, tray, product, or configuration state invalidates the fingerprint and executes the solver
-   * normally.
-   * </p>
-   *
-   * @param id calculation identifier
-   */
-  void solveSumRates(UUID id) {
-    long invocationStartTime = System.nanoTime();
-    lastSequentialWarmStateReused = false;
-    captureDirectExternalTrayFeeds();
-    if (feedStreams.isEmpty() && directExternalFeedStreams.isEmpty()) {
-      resetLastSolveMetrics();
-      return;
-    }
-
-    if (useGuardedSumRatesFallback()) {
-      markSolverTypeUsed(SolverType.DAMPED_SUBSTITUTION);
-      solveDampedSubstitution(id);
-      if (lastSolveStatus == SolveStatus.RIGOROUS_CONVERGED || lastSolveStatus == SolveStatus.RECONCILED_PRODUCTS) {
-        setLastSolveStatus(lastSolveStatus, "Sum-rates is guarded to damped substitution for columns with a condenser");
-      }
-      return;
-    }
-
-    if (hasSequentialExactReuseState) {
-      long currentSequentialInputSignature = calculateSequentialExactReuseSignature();
-      if (canReuseSequentialWarmState(currentSequentialInputSignature)) {
-        reuseSequentialWarmState(id, invocationStartTime);
-        return;
-      }
-      hasSequentialExactReuseState = false;
-    }
-
-    int firstFeedTrayNumber = prepareColumnForSolve();
-
-    if (numberOfTrays == 1) {
-      solveSingleTray(id);
-      return;
-    }
-
-    if (isDoInitializion()) {
-      this.init();
-    }
-
-    err = 1.0e10;
-    int iter = 0;
-    double massErr = 1.0e10;
-    double energyErr = 1.0e10;
-
-    long startTime = System.nanoTime();
-    double[] oldtemps = new double[numberOfTrays];
-
-    trays.get(firstFeedTrayNumber).run(id);
-
-    int baseIterationLimit = computeIterationLimit();
-    int iterationLimit = baseIterationLimit;
-    double baseTempTolerance = getSumRatesTerminalTemperatureTolerance();
-    double baseMassTolerance = getEffectiveMassBalanceTolerance();
-    double baseEnergyTolerance = getEffectiveEnthalpyBalanceTolerance();
-    boolean massEnergyEvaluated = false;
-    int balanceCheckStride = Math.max(3, numberOfTrays / 2);
-
-    double relaxation = Math.max(minSequentialRelaxation, Math.min(maxAdaptiveRelaxation, 0.7));
-
-    while (iter < iterationLimit) {
-      iter++;
-
-      for (int i = 0; i < numberOfTrays; i++) {
-        oldtemps[i] = trays.get(i).getThermoSystem().getTemperature();
-      }
-
-      // Standard tray-by-tray sweep
-      for (int i = firstFeedTrayNumber; i > 1; i--) {
-        int replaceStream = trays.get(i - 1).getNumberOfInputStreams() - 1;
-        trays.get(i - 1).replaceStream(replaceStream, trays.get(i).getLiquidOutStream());
-        trays.get(i - 1).run(id);
-        applyMurphreeCorrection(i - 1);
-      }
-
-      int streamNumb = trays.get(0).getNumberOfInputStreams() - 1;
-      trays.get(0).replaceStream(streamNumb, trays.get(1).getLiquidOutStream());
-      trays.get(0).run(id);
-      applyMurphreeCorrection(0);
-
-      for (int i = 1; i <= numberOfTrays - 1; i++) {
-        int replaceStream = trays.get(i).getNumberOfInputStreams() - 2;
-        if (i == (numberOfTrays - 1)) {
-          replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
-        }
-        trays.get(i).replaceStream(replaceStream, trays.get(i - 1).getGasOutStream());
-        trays.get(i).run(id);
-        applyMurphreeCorrection(i);
-      }
-
-      for (int i = numberOfTrays - 2; i >= firstFeedTrayNumber; i--) {
-        int replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
-        trays.get(i).replaceStream(replaceStream, trays.get(i + 1).getLiquidOutStream());
-        trays.get(i).run(id);
-        applyMurphreeCorrection(i);
-      }
-
-      // Sum-rates flow correction: adjust tray temperatures with flow-weighted
-      // damping
-      double totalFlowRatio = 0.0;
-      int countTrays = 0;
-      for (int i = 0; i < numberOfTrays; i++) {
-        double vaporOut = trays.get(i).getGasOutStream().getFlowRate("kg/hr");
-        double liquidOut = trays.get(i).getLiquidOutStream().getFlowRate("kg/hr");
-        double totalOut = vaporOut + liquidOut;
-        double totalIn = 0.0;
-        for (int j = 0; j < trays.get(i).getNumberOfInputStreams(); j++) {
-          totalIn += trays.get(i).getStream(j).getFluid().getFlowRate("kg/hr");
-        }
-        if (totalIn > 1e-12) {
-          totalFlowRatio += totalOut / totalIn;
-          countTrays++;
-        }
-      }
-      double avgFlowRatio = countTrays > 0 ? totalFlowRatio / countTrays : 1.0;
-      double flowCorrection = Math.max(0.5, Math.min(1.5, 1.0 / avgFlowRatio));
-
-      double temperatureResidual = 0.0;
-      double effectiveRelaxation = relaxation * flowCorrection;
-      effectiveRelaxation = Math.max(minTemperatureRelaxation, Math.min(1.0, effectiveRelaxation));
-      for (int i = 0; i < numberOfTrays; i++) {
-        double updated = trays.get(i).getThermoSystem().getTemperature();
-        double newTemp = oldtemps[i] + effectiveRelaxation * (updated - oldtemps[i]);
-        trays.get(i).setTemperature(newTemp);
-        temperatureResidual += Math.abs(newTemp - oldtemps[i]);
-      }
-      temperatureResidual /= Math.max(1, numberOfTrays);
-      err = temperatureResidual;
-
-      boolean evaluateBalances = shouldEvaluateBalances(iter, iterationLimit, false, err, baseTempTolerance,
-          balanceCheckStride);
-      if (evaluateBalances || !massEnergyEvaluated) {
-        massErr = getMassBalanceError();
-        energyErr = getEnergyBalanceError();
-        massEnergyEvaluated = true;
-      }
-
-      if (convergenceHistory != null) {
-        recordConvergence(new double[] { err, massErr, energyErr });
-      }
-
-      logger.debug("sum-rates iteration {} tempErr={} massErr={} energyErr={}", iter, err, massErr, energyErr);
-
-      boolean energyWithinBase = !enforceEnergyBalanceTolerance || energyErr <= baseEnergyTolerance;
-      if (err <= baseTempTolerance && massErr <= baseMassTolerance && energyWithinBase) {
-        break;
-      }
-    }
-
-    finalizeSolve(id, iter, err, massErr, energyErr, startTime);
-    hasBeenSolvedBefore = true;
-    lastTotalFeedFlow = getTotalExternalFeedFlowKgPerHour();
-    commitSequentialWarmState();
-  }
-
-  /**
-   * Solve the column using a Newton-Raphson simultaneous temperature correction method.
-   *
-   * <p>
-   * This is inspired by the Naphtali-Sandholm (1971) approach of solving MESH equations simultaneously, adapted to
-   * NeqSim's tray-by-tray flash infrastructure. The method treats the N tray temperatures as the independent variables.
-   * A residual vector is formed by running full tray sweeps and measuring the temperature discrepancy each tray
-   * exhibits after equilibrium. The Jacobian is computed by finite-difference perturbation of each tray temperature.
-   * </p>
-   *
-   * <p>
-   * Key features:
-   * <ul>
-   * <li>Simultaneous correction: all tray temperatures are updated together using a dense NÃ—N Jacobian solved by
-   * Gaussian elimination with partial pivoting.</li>
-   * <li>Line search: the full Newton step is scaled back if it increases residuals.</li>
-   * <li>Warm-up: a few direct-substitution iterations are performed first to get close to the solution basin where
-   * Newton convergence is quadratic.</li>
-   * </ul>
-   *
-   * @param id calculation identifier
-   */
-  void solveNewton(UUID id) {
-    if (feedStreams.isEmpty()) {
-      resetLastSolveMetrics();
-      return;
-    }
-
-    if (useGuardedNewtonFallback()) {
-      solveDampedSubstitution(id);
-      return;
-    }
-
-    int firstFeedTrayNumber = prepareColumnForSolve();
-
-    if (numberOfTrays == 1) {
-      solveSingleTray(id);
-      return;
-    }
-
-    if (isDoInitializion()) {
-      this.init();
-    }
-
-    long startTime = System.nanoTime();
-    err = 1.0e10;
-    int iter = 0;
-    double massErr = 1.0e10;
-    double energyErr = 1.0e10;
-
-    double baseTempTolerance = getEffectiveTemperatureTolerance();
-    double baseMassTolerance = getEffectiveMassBalanceTolerance();
-    double baseEnergyTolerance = getEffectiveEnthalpyBalanceTolerance();
-    int baseIterationLimit = computeIterationLimit();
-    int iterationLimit = Math.max(baseIterationLimit, maxNumberOfIterations);
-    int maxIterationLimit = iterationLimit + Math.max(numberOfTrays, 3) * ITERATION_OVERFLOW_MULTIPLIER;
-
-    // Warm-up: run a few direct substitution iterations to establish a reasonable
-    // profile
-    int warmUpIterations = Math.min(3, iterationLimit / 3);
-    trays.get(firstFeedTrayNumber).run(id);
-    StreamInterface[] previousGasStreams = new StreamInterface[numberOfTrays];
-    StreamInterface[] previousLiquidStreams = new StreamInterface[numberOfTrays];
-
-    for (int w = 0; w < warmUpIterations; w++) {
-      iter++;
-      double[] warmUpTemperatures = captureTrayTemperatures();
-      performFullTraySweep(id, firstFeedTrayNumber, previousGasStreams, previousLiquidStreams, 1.0);
-      double tempRes = computeTemperatureResidual(warmUpTemperatures);
-      err = tempRes;
-
-      if (convergenceHistory != null) {
-        massErr = getMassBalanceError();
-        energyErr = getEnergyBalanceError();
-        recordConvergence(new double[] { err, massErr, energyErr });
-      }
-
-      logger.debug("newton warm-up iteration {} tempErr={}", iter, err);
-      if (err < baseTempTolerance) {
-        break;
-      }
-    }
-
-    // Newton iterations
-    double perturbation = 0.1; // temperature perturbation for Jacobian (K)
-    double[] temperatures = new double[numberOfTrays];
-    double[] residuals = new double[numberOfTrays];
-    double[][] jacobian = new double[numberOfTrays][numberOfTrays];
-
-    // Line-search damping memo: cache the last successful step length so the
-    // next iteration can start probing at min(1.0, 2.0 * lastSuccessful) rather
-    // than always at 1.0. Each skipped probe saves one full tray sweep â€” the
-    // dominant cost of the line search. A periodic reset every LINESEARCH_RESET_PERIOD
-    // iterations re-tries the full step so the algorithm can recover quickly
-    // when nonlinearity eases.
-    double lastSuccessfulStepLength = 1.0;
-    final int LINESEARCH_RESET_PERIOD = 4;
-
-    while (iter < iterationLimit) {
-      iter++;
-
-      // Save current temperatures
-      for (int i = 0; i < numberOfTrays; i++) {
-        temperatures[i] = trays.get(i).getThermoSystem().getTemperature();
-      }
-
-      // Compute base residuals: run a full sweep at current temperatures,
-      // residual = (post-sweep temperature) - (pre-sweep temperature)
-      performFullTraySweep(id, firstFeedTrayNumber, previousGasStreams, previousLiquidStreams, 1.0);
-      for (int i = 0; i < numberOfTrays; i++) {
-        residuals[i] = trays.get(i).getThermoSystem().getTemperature() - temperatures[i];
-      }
-
-      // Check if already converged
-      double normRes = 0.0;
-      for (int i = 0; i < numberOfTrays; i++) {
-        normRes += Math.abs(residuals[i]);
-      }
-      normRes /= Math.max(1, numberOfTrays);
-      err = normRes;
-
-      massErr = getMassBalanceError();
-      energyErr = getEnergyBalanceError();
-
-      if (convergenceHistory != null) {
-        recordConvergence(new double[] { err, massErr, energyErr });
-      }
-
-      logger.debug("newton iteration {} tempErr={} massErr={} energyErr={}", iter, err, massErr, energyErr);
-
-      boolean energyOk = !enforceEnergyBalanceTolerance || energyErr <= baseEnergyTolerance;
-      if (err <= baseTempTolerance && massErr <= baseMassTolerance && energyOk) {
-        break;
-      }
-
-      // Compute Jacobian by finite differences with banded structure
-      // J[i][j] = d(residual_i) / d(T_j)
-      // Distillation Jacobians are near-tridiagonal: tray i is primarily affected by
-      // trays i-1, i, i+1. For columns with > 6 trays, exploit this sparsity by only
-      // perturbing trays within a half-bandwidth of each row.
-      int halfBand = numberOfTrays <= 6 ? numberOfTrays : Math.max(2, numberOfTrays / 4);
-
-      // Zero the Jacobian â€” entries outside the band stay zero
-      for (int i = 0; i < numberOfTrays; i++) {
-        for (int jj = 0; jj < numberOfTrays; jj++) {
-          jacobian[i][jj] = 0.0;
-        }
-      }
-
-      // Determine which columns actually need perturbation.
-      // A Jacobian column J[:,j] only contributes to the Newton step through rows i
-      // whose residual is non-negligible. If every row in the band around column j is
-      // already at or below the temperature tolerance, the corresponding column has
-      // no useful information and we can skip its perturbation sweep entirely. Each
-      // skipped column saves one full tray sweep â€” the dominant cost of Newton.
-      boolean[] needsPerturb = new boolean[numberOfTrays];
-      double residualSkipThreshold = 0.5 * baseTempTolerance;
-      for (int j = 0; j < numberOfTrays; j++) {
-        if (numberOfTrays <= 6) {
-          needsPerturb[j] = true;
-        } else {
-          int rowStart = Math.max(0, j - halfBand);
-          int rowEnd = Math.min(numberOfTrays - 1, j + halfBand);
-          double bandResidualMax = 0.0;
-          for (int i = rowStart; i <= rowEnd; i++) {
-            double r = Math.abs(residuals[i]);
-            if (r > bandResidualMax) {
-              bandResidualMax = r;
-            }
-          }
-          // Always perturb the diagonal column itself, even if its own residual is
-          // tight â€” the rest of the band may still couple through off-diagonal entries
-          // on the next iteration. The skip only fires when the entire band is tight.
-          needsPerturb[j] = bandResidualMax > residualSkipThreshold;
-        }
-      }
-
-      for (int j = 0; j < numberOfTrays; j++) {
-        if (!needsPerturb[j]) {
-          continue;
-        }
-
-        // Reset temperatures to base state
-        for (int i = 0; i < numberOfTrays; i++) {
-          trays.get(i).setTemperature(temperatures[i]);
-          trays.get(i).getThermoSystem().setTemperature(temperatures[i]);
-        }
-
-        // Perturb tray j
-        double pertT = temperatures[j] + perturbation;
-        trays.get(j).setTemperature(pertT);
-        trays.get(j).getThermoSystem().setTemperature(pertT);
-
-        // Run sweep with perturbed temperature
-        performFullTraySweep(id, firstFeedTrayNumber, previousGasStreams, previousLiquidStreams, 1.0);
-
-        // Compute perturbed residuals â€” only for rows within band of column j
-        int rowStart = numberOfTrays <= 6 ? 0 : Math.max(0, j - halfBand);
-        int rowEnd = numberOfTrays <= 6 ? numberOfTrays - 1 : Math.min(numberOfTrays - 1, j + halfBand);
-        for (int i = rowStart; i <= rowEnd; i++) {
-          double pertResidual = trays.get(i).getThermoSystem().getTemperature() - temperatures[i];
-          if (j == i) {
-            pertResidual = trays.get(i).getThermoSystem().getTemperature() - pertT;
-          }
-          jacobian[i][j] = (pertResidual - residuals[i]) / perturbation;
-        }
-      }
-
-      // For the Newton correction, we want to solve: J * deltaT = -residuals
-      // where residuals = f(T) = T_sweep - T_current (the function maps T_k ->
-      // T_{k+1})
-      // The fixed-point is T* such that f(T*) = 0
-      // Newton step: deltaT = -J^{-1} * residuals, but since we want T such that
-      // f(T)=0
-      // and our Jacobian approximates df/dT, we solve: (J - I) * deltaT = -residuals
-      // Because the true Jacobian of g(T) = T + f(T) is I + J_f, and Newton on g(T) =
-      // T
-      // means (I + J_f - I) * deltaT = -(T + f(T) - T) => J_f * deltaT = -f(T)
-
-      // Actually, residuals[i] = T_new[i] - T_old[i] is already f(T) = g(T) - T
-      // The Jacobian J[i][j] = df_i/dT_j â‰ˆ (f_perturbed - f_base) / dT_j
-      // Newton seeks f(T) = 0, so: deltaT = -J^{-1} * f(T)
-
-      // Solve J * deltaT = -residuals using Gaussian elimination with partial
-      // pivoting
-      double[] rhs = new double[numberOfTrays];
-      for (int i = 0; i < numberOfTrays; i++) {
-        rhs[i] = -residuals[i];
-      }
-
-      double[] deltaT = solveLinearSystem(jacobian, rhs);
-
-      if (deltaT == null || !isFiniteVector(deltaT)) {
-        // Singular Jacobian â€” fall back to direct substitution step
-        logger.warn("Newton: singular Jacobian at iter {}, using direct substitution step", iter);
-        for (int i = 0; i < numberOfTrays; i++) {
-          trays.get(i).setTemperature(temperatures[i] + 0.5 * residuals[i]);
-          trays.get(i).getThermoSystem().setTemperature(temperatures[i] + 0.5 * residuals[i]);
-        }
-        // Reset damping memo: the Jacobian was bad, so prior step length is not a reliable
-        // hint.
-        lastSuccessfulStepLength = 1.0;
-        continue;
-      }
-
-      // Line search: try full Newton step, halve if residual increases.
-      // Damping memo: start at min(1.0, 2.0 * lastSuccessful) to skip probes that
-      // would predictably fail given prior nonlinearity. Periodically reset to 1.0
-      // so the algorithm can recover the full step when conditions improve.
-      double trialStart = (iter % LINESEARCH_RESET_PERIOD == 0) ? 1.0 : Math.min(1.0, 2.0 * lastSuccessfulStepLength);
-      double bestStepLength = trialStart;
-      double bestNormRes = normRes;
-      for (double stepLength = trialStart; stepLength >= 0.125; stepLength *= 0.5) {
-        // Apply trial step
-        for (int i = 0; i < numberOfTrays; i++) {
-          double newTemp = temperatures[i] + stepLength * deltaT[i];
-          // Safeguard: keep temperatures reasonable
-          newTemp = Math.max(50.0, Math.min(1000.0, newTemp));
-          trays.get(i).setTemperature(newTemp);
-          trays.get(i).getThermoSystem().setTemperature(newTemp);
-        }
-
-        // Check trial step quality with a sweep
-        performFullTraySweep(id, firstFeedTrayNumber, previousGasStreams, previousLiquidStreams, 1.0);
-
-        double trialNormRes = 0.0;
-        for (int i = 0; i < numberOfTrays; i++) {
-          double trialRes = trays.get(i).getThermoSystem().getTemperature() - temperatures[i] - stepLength * deltaT[i];
-          trialNormRes += Math.abs(trialRes);
-        }
-        trialNormRes /= Math.max(1, numberOfTrays);
-
-        if (trialNormRes < bestNormRes) {
-          bestStepLength = stepLength;
-          bestNormRes = trialNormRes;
-          break; // Accept first improving step
-        }
-      }
-
-      // Apply the best step
-      if (bestStepLength < 1.0) {
-        // Need to re-apply since the loop may have tried smaller steps
-        for (int i = 0; i < numberOfTrays; i++) {
-          double newTemp = temperatures[i] + bestStepLength * deltaT[i];
-          newTemp = Math.max(50.0, Math.min(1000.0, newTemp));
-          trays.get(i).setTemperature(newTemp);
-          trays.get(i).getThermoSystem().setTemperature(newTemp);
-        }
-      }
-
-      // Update damping memo for next iteration's line-search start point.
-      lastSuccessfulStepLength = bestStepLength;
-
-      logger.debug("newton iteration {} step={} normRes={}->{}", iter, bestStepLength, normRes, bestNormRes);
-
-      // Overflow: extend limit if not converged
-      if (iter >= iterationLimit && err > baseTempTolerance && iterationLimit < maxIterationLimit) {
-        iterationLimit = Math.min(maxIterationLimit, iterationLimit + 3);
-      }
-    }
-
-    // Final sweep to ensure consistent tray state
-    double[] finalTemperatures = captureTrayTemperatures();
-    performFullTraySweep(id, firstFeedTrayNumber, previousGasStreams, previousLiquidStreams, 1.0);
-    err = computeTemperatureResidual(finalTemperatures);
-    massErr = getMassBalanceError();
-    energyErr = getEnergyBalanceError();
-
-    finalizeSolve(id, iter, err, massErr, energyErr, startTime);
-  }
-
-  /**
-   * Perform a full upward+downward tray sweep, running PH-flash on each tray.
-   *
-   * @param id calculation identifier
-   * @param firstFeedTrayNumber index of the lowest feed tray
-   * @param previousGasStreams cached gas streams from previous iteration (updated in-place)
-   * @param previousLiquidStreams cached liquid streams from previous iteration (updated in-place)
-   * @param relaxation relaxation factor for stream blending
-   */
-  private void performFullTraySweep(UUID id, int firstFeedTrayNumber, StreamInterface[] previousGasStreams,
-      StreamInterface[] previousLiquidStreams, double relaxation) {
-    // Downward liquid sweep: feed â†’ reboiler
-    for (int stage = firstFeedTrayNumber; stage >= 1; stage--) {
-      int target = stage - 1;
-      int replaceStream = trays.get(target).getNumberOfInputStreams() - 1;
-      StreamInterface relaxedLiquid = applyRelaxation(previousLiquidStreams[stage],
-          trays.get(stage).getLiquidOutStream(), relaxation);
-      trays.get(target).replaceStream(replaceStream, relaxedLiquid);
-      previousLiquidStreams[stage] = relaxedLiquid.clone();
-      trays.get(target).run(id);
-      applyMurphreeCorrection(target);
-    }
-
-    // Upward vapor sweep: reboiler â†’ condenser
-    for (int stage = 1; stage <= numberOfTrays - 1; stage++) {
-      int replaceStream = trays.get(stage).getNumberOfInputStreams() - 2;
-      if (stage == (numberOfTrays - 1)) {
-        replaceStream = trays.get(stage).getNumberOfInputStreams() - 1;
-      }
-      StreamInterface relaxedGas = applyRelaxation(previousGasStreams[stage - 1],
-          trays.get(stage - 1).getGasOutStream(), relaxation);
-      trays.get(stage).replaceStream(replaceStream, relaxedGas);
-      previousGasStreams[stage - 1] = relaxedGas.clone();
-      trays.get(stage).run(id);
-      applyMurphreeCorrection(stage);
-    }
-  }
-
-  /**
-   * Compute the average absolute temperature residual across all trays. The residual is the difference between the
-   * tray's stored temperature and its thermo system temperature after a flash.
-   *
-   * @return average absolute temperature change per tray (K)
-   */
-  private double computeTemperatureResidual() {
-    return computeTemperatureResidual(captureStoredTrayTemperatures());
-  }
-
-  /**
-   * Capture current tray thermodynamic temperatures.
-   *
-   * @return current tray thermodynamic temperatures in Kelvin
-   */
-  private double[] captureTrayTemperatures() {
-    double[] temperatures = new double[numberOfTrays];
-    for (int i = 0; i < numberOfTrays; i++) {
-      temperatures[i] = trays.get(i).getThermoSystem().getTemperature();
-    }
-    return temperatures;
-  }
-
-  /**
-   * Capture tray stored temperatures.
-   *
-   * @return tray stored temperatures in Kelvin
-   */
-  private double[] captureStoredTrayTemperatures() {
-    double[] temperatures = new double[numberOfTrays];
-    for (int i = 0; i < numberOfTrays; i++) {
-      temperatures[i] = trays.get(i).getTemperature();
-    }
-    return temperatures;
-  }
-
-  /**
-   * Compute average temperature change relative to a reference profile.
-   *
-   * @param referenceTemperatures reference tray temperatures in Kelvin
-   * @return average absolute temperature change in Kelvin
-   */
-  private double computeTemperatureResidual(double[] referenceTemperatures) {
-    double residual = 0.0;
-    for (int i = 0; i < numberOfTrays; i++) {
-      residual += Math.abs(trays.get(i).getThermoSystem().getTemperature() - referenceTemperatures[i]);
-    }
-    return residual / Math.max(1, numberOfTrays);
-  }
-
-  /**
-   * Solve a dense linear system Ax = b using Gaussian elimination with partial pivoting.
-   *
-   * @param matrixA coefficient matrix (will be modified in-place)
-   * @param vectorB right-hand side vector (will be modified in-place)
-   * @return solution vector x, or null if the matrix is singular
-   */
-  private double[] solveLinearSystem(double[][] matrixA, double[] vectorB) {
-    int n = vectorB.length;
-    // Create copies to avoid modifying the originals from the caller's perspective
-    double[][] a = new double[n][n];
-    double[] b = new double[n];
-    for (int i = 0; i < n; i++) {
-      b[i] = vectorB[i];
-      if (!Double.isFinite(b[i])) {
-        return null;
-      }
-      for (int j = 0; j < n; j++) {
-        a[i][j] = matrixA[i][j];
-        if (!Double.isFinite(a[i][j])) {
-          return null;
-        }
-      }
-    }
-
-    // Forward elimination with partial pivoting
-    for (int k = 0; k < n; k++) {
-      // Find pivot
-      int maxRow = k;
-      double maxVal = Math.abs(a[k][k]);
-      for (int i = k + 1; i < n; i++) {
-        if (Math.abs(a[i][k]) > maxVal) {
-          maxVal = Math.abs(a[i][k]);
-          maxRow = i;
-        }
-      }
-
-      if (!Double.isFinite(maxVal) || maxVal < 1e-30) {
-        return null; // Singular matrix
-      }
-
-      // Swap rows
-      if (maxRow != k) {
-        double[] tempRow = a[k];
-        a[k] = a[maxRow];
-        a[maxRow] = tempRow;
-        double tempB = b[k];
-        b[k] = b[maxRow];
-        b[maxRow] = tempB;
-      }
-
-      // Eliminate
-      for (int i = k + 1; i < n; i++) {
-        double factor = a[i][k] / a[k][k];
-        for (int j = k + 1; j < n; j++) {
-          a[i][j] -= factor * a[k][j];
-        }
-        b[i] -= factor * b[k];
-        a[i][k] = 0.0;
-      }
-    }
-
-    // Back substitution
-    double[] x = new double[n];
-    for (int i = n - 1; i >= 0; i--) {
-      double sum = b[i];
-      for (int j = i + 1; j < n; j++) {
-        sum -= a[i][j] * x[j];
-      }
-      x[i] = sum / a[i][i];
-      if (!Double.isFinite(x[i])) {
-        return null;
-      }
-    }
-    return x;
-  }
-
-  /**
-   * Check whether all values in an array are finite.
-   *
-   * @param values values to inspect
-   * @return {@code true} when every entry is finite
-   */
-  private boolean isFiniteVector(double[] values) {
-    for (int i = 0; i < values.length; i++) {
-      if (!Double.isFinite(values[i])) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  @ExcludeFromJacocoGeneratedReport
-  public void displayResult() {
-    distoperations.displayResult();
-  }
-
-  /**
-   * getTray.
-   *
-   * @param trayNumber a int
-   * @return a {@link neqsim.process.equipment.distillation.SimpleTray} object
-   */
-  public SimpleTray getTray(int trayNumber) {
-    return trays.get(trayNumber);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setNumberOfTrays(int number) {
-    int oldNumberOfTrays = numberOfTrays;
-    int tempNumberOfTrays = number;
-    if (hasReboiler) {
-      tempNumberOfTrays++;
-    }
-    if (hasCondenser) {
-      tempNumberOfTrays++;
-    }
-    int change = tempNumberOfTrays - oldNumberOfTrays;
-    if (change > 0) {
-      for (int i = 0; i < change; i++) {
-        trays.add(1, createMiddleTray("SimpleTray" + (oldNumberOfTrays + i + 1), oldNumberOfTrays + i));
-      }
-    } else if (change < 0) {
-      for (int i = 0; i > change; i--) {
-        trays.remove(1);
-      }
-    }
-    numberOfTrays = tempNumberOfTrays;
-    setDoInitializion(true);
-    init();
-  }
-
-  /**
-   * Create a middle tray (between reboiler and condenser). Sets the reactive flash flag when the column is in reactive
-   * mode and the tray index falls inside the reactive section.
-   *
-   * @param name the tray name
-   * @param middleTrayIndex 0-based index among the middle trays (excluding reboiler/condenser)
-   * @return a new SimpleTray with reactive flash configured
-   */
-  private SimpleTray createMiddleTray(String name, int middleTrayIndex) {
-    SimpleTray tray = new SimpleTray(name);
-    if (reactive && isInReactiveSection(middleTrayIndex)) {
-      tray.setUseReactiveFlash(true);
-    }
-    return tray;
-  }
-
-  /**
-   * Check whether a middle-tray index falls inside the reactive section.
-   *
-   * @param middleTrayIndex 0-based index among middle trays
-   * @return {@code true} when the tray should use reactive flash
-   */
-  private boolean isInReactiveSection(int middleTrayIndex) {
-    if (reactiveStartTray < 0 || reactiveEndTray < 0) {
-      return true; // all middle trays are reactive
-    }
-    return middleTrayIndex >= reactiveStartTray && middleTrayIndex <= reactiveEndTray;
-  }
-
-  /**
-   * Enable or disable reactive distillation for all middle trays. When enabled, middle trays use {@link ReactiveTray}
-   * (simultaneous chemical + phase equilibrium via the Modified RAND method). Can be called after construction;
-   * existing trays will be replaced.
-   *
-   * @param reactive {@code true} to enable reactive distillation
-   */
-  public void setReactive(boolean reactive) {
-    this.reactive = reactive;
-    this.reactiveStartTray = -1;
-    this.reactiveEndTray = -1;
-    replaceMiddleTrays();
-  }
-
-  /**
-   * Enable reactive distillation on a specific section of middle trays. Tray indices are 0-based among the middle trays
-   * (excluding reboiler/condenser). For example, in a column with reboiler + 10 middle trays + condenser,
-   * {@code setReactive(true, 3, 7)} makes trays 4â€“8 (1-based) of the middle section reactive.
-   *
-   * @param reactive {@code true} to enable reactive distillation
-   * @param startTray first reactive middle-tray index (0-based, inclusive)
-   * @param endTray last reactive middle-tray index (0-based, inclusive)
-   */
-  public void setReactive(boolean reactive, int startTray, int endTray) {
-    this.reactive = reactive;
-    this.reactiveStartTray = startTray;
-    this.reactiveEndTray = endTray;
-    replaceMiddleTrays();
-  }
-
-  /**
-   * Update the reactive flash flag on middle trays to match the current reactive mode configuration. Called
-   * automatically by {@link #setReactive}.
-   */
-  private void replaceMiddleTrays() {
-    int start = hasReboiler ? 1 : 0;
-    int end = hasCondenser ? trays.size() - 1 : trays.size();
-    for (int i = start; i < end; i++) {
-      int middleIndex = i - start;
-      boolean shouldBeReactive = reactive && isInReactiveSection(middleIndex);
-      trays.get(i).setUseReactiveFlash(shouldBeReactive);
-    }
-  }
-
-  /**
-   * Check whether reactive distillation mode is enabled.
-   *
-   * @return {@code true} when the column has reactive trays
-   */
-  public boolean isReactive() {
-    return reactive;
-  }
-
-  /**
-   * Select the algorithm used when solving the column.
-   *
-   * @param solverType choice of solver, or {@code null} to restore direct substitution
-   */
-  public void setSolverType(SolverType solverType) {
-    this.solverType = solverType == null ? SolverType.DIRECT_SUBSTITUTION : solverType;
-    this.solverTypeExplicitlySet = true;
-    this.lastSolverTypeUsed = this.solverType == SolverType.AUTO ? SolverType.DIRECT_SUBSTITUTION : this.solverType;
-  }
-
-  /**
-   * Enable or disable the opt-in fast path for large full fractionators that still use the legacy default
-   * direct-substitution solver.
-   *
-   * @param enabled {@code true} to allow automatic feed re-centering and MESH residual selection
-   */
-  public void setFullFractionatorFastPathEnabled(boolean enabled) {
-    this.fullFractionatorFastPathEnabled = enabled;
-  }
-
-  /**
-   * Check whether the opt-in fast path is enabled for legacy-default full fractionators.
-   *
-   * @return {@code true} when automatic feed re-centering and MESH residual selection is enabled
-   */
-  public boolean isFullFractionatorFastPathEnabled() {
-    return fullFractionatorFastPathEnabled;
-  }
-
-  /**
-   * Check whether the latest run applied the opt-in full-fractionator fast path.
-   *
-   * @return {@code true} when the latest run adjusted the full-fractionator setup
-   */
-  public boolean wasFullFractionatorFastPathApplied() {
-    return lastFullFractionatorFastPathApplied;
-  }
-
-  /**
-   * Get the action taken by the opt-in full-fractionator fast path during the latest run.
-   *
-   * @return diagnostic text for the latest fast-path action, or an empty string if none was applied
-   */
-  public String getLastFullFractionatorFastPathReason() {
-    return lastFullFractionatorFastPathReason;
-  }
-
-  /**
-   * Enable or disable the post-success damped-substitution verification run for accelerated solvers (Wegstein,
-   * Sum-Rates, Naphtali-Sandholm, MESH residual). Off by default. When enabled every successful accelerated solve is
-   * double-checked against a fresh damped-substitution solve on a column clone; if product flows differ by more than
-   * 2&nbsp;% the damped result is accepted. The verification roughly doubles wallclock time, so it is recommended only
-   * for regression auditing.
-   *
-   * @param enabled {@code true} to verify accelerated results against damped substitution
-   */
-  public static void setVerifyAcceleratedResults(boolean enabled) {
-    ColumnSolverFactory.setVerifyAcceleratedResults(enabled);
-  }
-
-  /**
-   * Check whether accelerated solver verification is currently enabled.
-   *
-   * @return {@code true} when accelerated solves are verified against damped substitution
-   */
-  public static boolean isVerifyAcceleratedResults() {
-    return ColumnSolverFactory.isVerifyAcceleratedResults();
-  }
-
-  /**
-   * Set relaxation factor for the damped solver.
-   *
-   * <p>
-   * The adaptive damping controller clamps the sequential step from below at {@link #getMinSequentialRelaxation()}
-   * (default 0.5). To make a request below that floor effective, this setter also lowers the sequential and inside-out
-   * relaxation floors to the requested value; otherwise a caller asking for heavy damping (for example 0.2 to break a
-   * limit cycle) would be silently ignored. Use {@link #setMinSequentialRelaxation(double)} afterwards if a different
-   * floor is wanted.
-   * </p>
-   *
-   * @param relaxationFactor damping factor, must be finite and greater than zero (values at or below 1 damp the step)
-   * @throws IllegalArgumentException if {@code relaxationFactor} is not finite and positive
-   */
-  public void setRelaxationFactor(double relaxationFactor) {
-    if (!isPositiveFinite(relaxationFactor)) {
-      throw new IllegalArgumentException("Relaxation factor must be finite and positive, was " + relaxationFactor);
-    }
-    this.relaxationFactor = relaxationFactor;
-    if (relaxationFactor < minSequentialRelaxation) {
-      this.minSequentialRelaxation = relaxationFactor;
-    }
-    if (relaxationFactor < minInsideOutRelaxation) {
-      this.minInsideOutRelaxation = relaxationFactor;
-    }
-  }
-
-  /**
-   * Get the configured relaxation factor for the damped solver.
-   *
-   * @return relaxation factor applied to the first damped iteration
-   */
-  public double getRelaxationFactor() {
-    return relaxationFactor;
-  }
-
-  /**
-   * Set the lowest relaxation factor the adaptive damping controller may fall back to in the sequential (direct and
-   * damped substitution) solvers.
-   *
-   * <p>
-   * Lower this below the 0.5 default when a column oscillates in a limit cycle instead of converging; the adaptive
-   * controller can then damp the tray sweep further after a residual increase.
-   * </p>
-   *
-   * @param minRelaxation minimum relaxation factor, must be finite, greater than zero and at most 1
-   * @throws IllegalArgumentException if {@code minRelaxation} is not finite, not positive or greater than 1
-   */
-  public void setMinSequentialRelaxation(double minRelaxation) {
-    if (!isPositiveFinite(minRelaxation) || minRelaxation > 1.0) {
-      throw new IllegalArgumentException(
-          "Minimum sequential relaxation must be finite and in the range (0, 1], was " + minRelaxation);
-    }
-    this.minSequentialRelaxation = minRelaxation;
-  }
-
-  /**
-   * Get the lowest relaxation factor used by the sequential solvers.
-   *
-   * @return minimum sequential relaxation factor
-   */
-  public double getMinSequentialRelaxation() {
-    return minSequentialRelaxation;
-  }
-
-  /**
-   * Set the lowest relaxation factor used for the inside-out tear streams.
-   *
-   * @param minRelaxation minimum relaxation factor, must be finite, greater than zero and at most 1
-   * @throws IllegalArgumentException if {@code minRelaxation} is not finite, not positive or greater than 1
-   */
-  public void setMinInsideOutRelaxation(double minRelaxation) {
-    if (!isPositiveFinite(minRelaxation) || minRelaxation > 1.0) {
-      throw new IllegalArgumentException(
-          "Minimum inside-out relaxation must be finite and in the range (0, 1], was " + minRelaxation);
-    }
-    this.minInsideOutRelaxation = minRelaxation;
-  }
-
-  /**
-   * Get the lowest relaxation factor used for the inside-out tear streams.
-   *
-   * @return minimum inside-out relaxation factor
-   */
-  public double getMinInsideOutRelaxation() {
-    return minInsideOutRelaxation;
-  }
-
-  /**
-   * setTopCondenserDuty.
-   *
-   * @param duty a double
-   */
-  public void setTopCondenserDuty(double duty) {
-    condenserCoolingDuty = duty;
-  }
-
-  /**
-   * setTopPressure.
-   *
-   * @param topPressure a double
-   */
-  public void setTopPressure(double topPressure) {
-    topTrayPressure = topPressure;
-  }
-
-  /**
-   * Get the configured top tray pressure.
-   *
-   * @return top tray pressure in bara
-   */
-  public double getTopPressure() {
-    return topTrayPressure;
-  }
-
-  /**
-   * setBottomPressure.
-   *
-   * @param bottomPressure a double
-   */
-  public void setBottomPressure(double bottomPressure) {
-    bottomTrayPressure = bottomPressure;
-  }
-
-  /**
-   * Get the configured bottom tray pressure.
-   *
-   * @return bottom tray pressure in bara
-   */
-  public double getBottomPressure() {
-    return bottomTrayPressure;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean solved() {
-    boolean acceptableStatus = lastSolveStatus == SolveStatus.RIGOROUS_CONVERGED
-        || lastSolveStatus == SolveStatus.RECONCILED_PRODUCTS;
-    return acceptableStatus && residualConvergenceSatisfied();
-  }
-
-  /**
-   * Check whether the current residual diagnostics satisfy all active rigorous convergence gates.
-   *
-   * @return {@code true} when temperature, mass, energy, internal traffic, MESH, and specification gates are all
-   * satisfied
-   */
-  private boolean residualConvergenceSatisfied() {
-    // Gate on lastTemperatureResidual, not on the working field err. err is the live iteration
-    // variable of every inner solver loop: it is reset to 1e10 or 0.0 on solver entry and
-    // accumulated tray by tray, so any solver pass that exits before finalizeSolve() leaves it
-    // holding a partial value. That made solved() report false while getLastSolveStatus() said
-    // RIGOROUS_CONVERGED and every residual printed by getConvergenceDiagnostics() was inside
-    // tolerance, which kept enclosing Recycle/ProcessSystem loops iterating to their timeout.
-    // lastTemperatureResidual and lastSolveStatus are both written by finalizeSolve() and both
-    // cleared by resetLastSolveMetrics(), so they stay consistent with each other.
-    boolean temperatureSolved;
-    if (Double.isNaN(lastTemperatureResidual)) {
-      // A simultaneous-correction solver has no successive-substitution sweep and therefore no
-      // tray-temperature change between iterations. Its convergence measure is the MESH residual
-      // vector, so substitute that gate instead of treating a missing residual as a pass.
-      // Accepting a fabricated zero here previously let a Naphtali-Sandholm solution with a 79 %
-      // component material imbalance report solved() == true.
-      //
-      // When a caller has explicitly switched the MESH gate off, falling back to it would make
-      // such a column report solved() == false forever, which is the opposite of what turning a
-      // gate off means. In that case the remaining mass, energy, traffic and specification gates
-      // carry the contract on their own.
-      temperatureSolved = isEffectiveMeshResidualToleranceEnforced() || isMeshResidualToleranceExplicitlyDisabled();
-    } else {
-      temperatureSolved = lastTemperatureResidual < getEffectiveTemperatureTolerance();
-    }
-    boolean massSolved = lastMassResidual <= getEffectiveMassBalanceTolerance();
-    boolean energySolved = !enforceEnergyBalanceTolerance
-        || lastEnergyResidual <= getEffectiveEnthalpyBalanceTolerance();
-    return temperatureSolved && massSolved && energySolved && internalTrafficSatisfied() && meshResidualsSatisfied()
-        && specificationsSatisfied();
-  }
-
-  /**
-   * Check whether raw internal tray traffic stayed within the solved-state guard.
-   *
-   * @return {@code true} if the latest maximum internal traffic ratio is acceptable
-   */
-  private boolean internalTrafficSatisfied() {
-    // The solved-state guard must use the solved-state limit. Comparing against the relaxed
-    // update limit (1e5) let a column that circulates orders of magnitude more internal traffic
-    // than it is fed still report solved().
-    return Double.isFinite(lastInternalTrafficRatio) && !lastInternalTrafficGuardReached
-        && lastInternalTrafficRatio <= MAX_SOLVED_INTERNAL_TRAFFIC_TO_FEED_RATIO;
-  }
-
-  /**
-   * Check whether the latest MESH residual satisfies the optional convergence gate.
-   *
-   * @return {@code true} if MESH residual gating is disabled or the latest residual is acceptable
-   */
-  private boolean meshResidualsSatisfied() {
-    if (!isEffectiveMeshResidualToleranceEnforced()) {
-      return true;
-    }
-    if (lastMeshResidual == null) {
-      return false;
-    }
-    return lastMeshResidual.isFinite() && lastMeshResidual.getInfinityNorm() <= meshResidualTolerance
-        && summationResidualSatisfied() && productDrawResidualsSatisfied();
-  }
-
-  /**
-   * Check whether the phase summation residual satisfies its dedicated tolerance.
-   *
-   * <p>
-   * The summation residual is scaled to the interval [0, 1] by construction, so the 1.0 infinity-norm tolerance can
-   * never reject it and it needs its own tolerance to take part in the gate.
-   * </p>
-   *
-   * @return {@code true} when the summation residual norm is within tolerance
-   */
-  private boolean summationResidualSatisfied() {
-    double summationResidual = getLastMeshResidualNorm(ColumnMeshEquationType.SUMMATION);
-    return Double.isFinite(summationResidual) && summationResidual <= trayMaterialBalanceTolerance;
-  }
-
-  /**
-   * Check whether the product draw residual satisfies its convergence gate.
-   *
-   * @return {@code true} when product draws are consistent with terminal tray traffic
-   */
-  private boolean productDrawResidualsSatisfied() {
-    double productDrawResidual = getLastMeshProductDrawResidualNorm();
-    return Double.isFinite(productDrawResidual) && productDrawResidual <= meshProductDrawResidualTolerance;
-  }
-
-  /**
-   * Determine whether MESH residuals are currently part of the convergence contract.
-   *
-   * @return {@code true} if the active convergence gate includes the MESH residual vector
-   */
-  private boolean isEffectiveMeshResidualToleranceEnforced() {
-    if (enforceMeshResidualToleranceCustomized) {
-      return enforceMeshResidualTolerance;
-    }
-    return isResidualGatedSolverType(solverType) || isResidualGatedSolverType(lastSolverTypeUsed);
-  }
-
-  /**
-   * Check whether a caller has explicitly turned the MESH residual gate off.
-   *
-   * @return {@code true} when {@code setEnforceMeshResidualTolerance(false)} was called
-   */
-  private boolean isMeshResidualToleranceExplicitlyDisabled() {
-    return enforceMeshResidualToleranceCustomized && !enforceMeshResidualTolerance;
-  }
-
-  /**
-   * Check whether a solver uses a residual-based formulation that should satisfy the MESH residual gate by default.
-   *
-   * @param type solver type to inspect
-   * @return {@code true} when the solver should enforce full MESH residual diagnostics by default
-   */
-  private boolean isResidualGatedSolverType(SolverType type) {
-    return type == SolverType.NAPHTALI_SANDHOLM || type == SolverType.MESH_RESIDUAL;
-  }
-
-  /**
-   * Mark the solver strategy currently responsible for the accepted state.
-   *
-   * @param solverTypeUsed solver strategy that produced the accepted state
-   */
-  void markSolverTypeUsed(SolverType solverTypeUsed) {
-    if (solverTypeUsed != null) {
-      lastSolverTypeUsed = solverTypeUsed;
-    }
-  }
-
-  void setError(double err) {
-    this.err = err;
-  }
-
-  /**
-   * Retrieve the iteration count of the most recent solve.
-   *
-   * @return iteration count
-   */
-  public int getLastIterationCount() {
-    return lastIterationCount;
-  }
-
-  /**
-   * Retrieve the latest average temperature residual in Kelvin.
-   *
-   * @return average temperature residual
-   */
-  public double getLastTemperatureResidual() {
-    return lastTemperatureResidual;
-  }
-
-  /**
-   * Retrieve the average tray-temperature step applied by the latest sequential-solver iteration.
-   *
-   * @return average applied temperature step in Kelvin, or {@link Double#NaN} when the latest run did not execute the
-   * sequential solver
-   */
-  public double getLastAppliedTemperatureStepResidual() {
-    return lastAppliedTemperatureStepResidual;
-  }
-
-  /**
-   * Retrieve the latest relative mass residual.
-   *
-   * @return relative mass balance residual
-   */
-  public double getLastMassResidual() {
-    return lastMassResidual;
-  }
-
-  /**
-   * Retrieve the latest relative enthalpy residual.
-   *
-   * @return relative enthalpy residual
-   */
-  public double getLastEnergyResidual() {
-    return lastEnergyResidual;
-  }
-
-  /**
-   * Retrieve the latest maximum raw internal tray traffic divided by total external feed flow.
-   *
-   * @return internal traffic ratio from the latest solve
-   */
-  public double getLastInternalTrafficRatio() {
-    return lastInternalTrafficRatio;
-  }
-
-  /**
-   * Check whether the latest public product streams came from the guarded feed-flash fallback.
-   *
-   * @return {@code true} if fallback product estimation was applied in the latest run
-   */
-  public boolean wasFeedFlashFallbackApplied() {
-    return lastUsedFeedFlashFallback;
-  }
-
-  /**
-   * Check whether matrix inside-out used its matrix warm-start stage in the latest run.
-   *
-   * @return {@code true} if a matrix warm-start state was accepted before rigorous polishing
-   */
-  public boolean wasMatrixInsideOutWarmStartUsed() {
-    return lastMatrixInsideOutWarmStartUsed;
-  }
-
-  /**
-   * Check whether matrix inside-out bypassed the matrix stage in the latest run.
-   *
-   * @return {@code true} if the adaptive solver used rigorous inside-out directly
-   */
-  public boolean wasMatrixInsideOutWarmStartBypassed() {
-    return lastMatrixInsideOutWarmStartBypassed;
-  }
-
-  /**
-   * Retrieve matrix warm-start iterations from the latest matrix inside-out run.
-   *
-   * @return number of matrix warm-start iterations, or zero if no matrix stage ran
-   */
-  public int getLastMatrixInsideOutIterationCount() {
-    return lastMatrixInsideOutIterationCount;
-  }
-
-  /**
-   * Retrieve matrix warm-start average temperature residual from the latest run.
-   *
-   * @return average temperature residual in Kelvin, or {@code Double.NaN} if no matrix stage ran
-   */
-  public double getLastMatrixInsideOutTemperatureResidual() {
-    return lastMatrixInsideOutTemperatureResidual;
-  }
-
-  /**
-   * Retrieve matrix warm-start wall time from the latest matrix inside-out run.
-   *
-   * @return matrix warm-start solve time in seconds, or zero if no matrix stage ran
-   */
-  public double getLastMatrixInsideOutSolveTimeSeconds() {
-    return lastMatrixInsideOutSolveTimeSeconds;
-  }
-
-  /**
-   * Retrieve rigorous inside-out outer flash sweeps from the latest solve.
-   *
-   * @return number of rigorous outside flash sweeps
-   */
-  public int getLastInsideOutOuterFlashSweeps() {
-    return lastInsideOutOuterFlashSweeps;
-  }
-
-  /**
-   * Retrieve simplified inside-out inner-loop iterations from the latest solve.
-   *
-   * @return number of surrogate inner-loop iterations
-   */
-  public int getLastInsideOutInnerLoopIterations() {
-    return lastInsideOutInnerLoopIterations;
-  }
-
-  /**
-   * Retrieve the latest inside-out K-value residual.
-   *
-   * @return K-value residual, or {@code Double.NaN} if inside-out was not run
-   */
-  public double getLastInsideOutKValueResidual() {
-    return lastInsideOutKValueResidual;
-  }
-
-  /**
-   * Retrieve the latest simplified inside-out surrogate residual.
-   *
-   * @return surrogate temperature residual, or {@code Double.NaN} if no surrogate loop ran
-   */
-  public double getLastInsideOutSurrogateResidual() {
-    return lastInsideOutSurrogateResidual;
-  }
-
-  /**
-   * Retrieve the latest simplified inside-out surrogate reset count.
-   *
-   * @return number of surrogate resets in the latest solve
-   */
-  public int getLastInsideOutSurrogateResetCount() {
-    return lastInsideOutSurrogateResetCount;
-  }
-
-  /**
-   * Retrieve latest Naphtali-Sandholm semi-analytic Jacobian columns.
-   *
-   * @return semi-analytic Jacobian column count
-   */
-  public int getLastNaphtaliAnalyticJacobianColumns() {
-    return lastNaphtaliAnalyticJacobianColumns;
-  }
-
-  /**
-   * Retrieve latest Naphtali-Sandholm finite-difference Jacobian columns.
-   *
-   * @return finite-difference Jacobian column count
-   */
-  public int getLastNaphtaliFiniteDifferenceJacobianColumns() {
-    return lastNaphtaliFiniteDifferenceJacobianColumns;
-  }
-
-  /**
-   * Retrieve latest Naphtali-Sandholm thermodynamic evaluation count.
-   *
-   * @return tray thermodynamic evaluations performed by the latest Naphtali solve
-   */
-  public int getLastNaphtaliThermoEvaluationCount() {
-    return lastNaphtaliThermoEvaluationCount;
-  }
-
-  /**
-   * Retrieve latest Naphtali-Sandholm thermodynamic cache hit count.
-   *
-   * @return tray thermodynamic evaluations avoided by cache reuse
-   */
-  public int getLastNaphtaliThermoCacheHitCount() {
-    return lastNaphtaliThermoCacheHitCount;
-  }
-
-  /**
-   * Retrieve latest Naphtali-Sandholm Jacobian build wall time.
-   *
-   * @return Jacobian build time in seconds
-   */
-  public double getLastNaphtaliJacobianBuildTimeSeconds() {
-    return lastNaphtaliJacobianBuildTimeSeconds;
-  }
-
-  /**
-   * Retrieve latest Naphtali-Sandholm block-tridiagonal linear solve count.
-   *
-   * @return block-tridiagonal solve count
-   */
-  public int getLastNaphtaliBlockLinearSolveCount() {
-    return lastNaphtaliBlockLinearSolveCount;
-  }
-
-  /**
-   * Retrieve latest Naphtali-Sandholm dense fallback linear solve count.
-   *
-   * @return dense linear solve count
-   */
-  public int getLastNaphtaliDenseLinearSolveCount() {
-    return lastNaphtaliDenseLinearSolveCount;
-  }
-
-  /**
-   * Retrieve latest Naphtali-Sandholm linear solve wall time.
-   *
-   * @return linear solve time in seconds
-   */
-  public double getLastNaphtaliLinearSolveTimeSeconds() {
-    return lastNaphtaliLinearSolveTimeSeconds;
-  }
-
-  /**
-   * Retrieve the latest top specification residual.
-   *
-   * @return top specification residual as current value minus target value
-   */
-  public double getLastTopSpecificationResidual() {
-    return lastTopSpecificationResidual;
-  }
-
-  /**
-   * Retrieve the latest bottom specification residual.
-   *
-   * @return bottom specification residual as current value minus target value
-   */
-  public double getLastBottomSpecificationResidual() {
-    return lastBottomSpecificationResidual;
-  }
-
-  /**
-   * Retrieve the largest absolute active specification residual.
-   *
-   * @return maximum absolute top or bottom specification residual
-   */
-  public double getLastSpecificationResidual() {
-    return Math.max(Math.abs(lastTopSpecificationResidual), Math.abs(lastBottomSpecificationResidual));
-  }
-
-  /**
-   * Set the number of continuation stages used for adjustable product specifications.
-   *
-   * <p>
-   * A value of one preserves the legacy direct outer-loop solve. Values above one ramp purity, recovery, and
-   * product-flow targets from the current product value to the final target over the requested number of stages.
-   * </p>
-   *
-   * @param steps number of homotopy stages, must be positive
-   * @throws IllegalArgumentException if {@code steps} is less than one
-   */
-  public void setSpecificationHomotopySteps(int steps) {
-    if (steps < 1) {
-      throw new IllegalArgumentException("Specification homotopy steps must be positive");
-    }
-    specificationHomotopySteps = steps;
-  }
-
-  /**
-   * Get the configured number of specification continuation stages.
-   *
-   * @return configured homotopy stage count
-   */
-  public int getSpecificationHomotopySteps() {
-    return specificationHomotopySteps;
-  }
-
-  /**
-   * Get the number of specification continuation stages completed by the latest solve.
-   *
-   * @return latest completed homotopy stage count, or zero when homotopy was not used
-   */
-  public int getLastSpecificationHomotopyStepCount() {
-    return lastSpecificationHomotopyStepCount;
-  }
-
-  /**
-   * Retrieve the latest MESH residual vector infinity norm.
-   *
-   * @return maximum absolute MESH residual, or {@code Double.NaN} if no solve has been run
-   */
-  public double getLastMeshResidualNorm() {
-    return lastMeshResidual == null ? Double.NaN : lastMeshResidual.getInfinityNorm();
-  }
-
-  /**
-   * Retrieve the latest MESH material residual infinity norm.
-   *
-   * @return maximum absolute component material residual, or {@code Double.NaN} if unavailable
-   */
-  public double getLastMeshMaterialResidualNorm() {
-    return getLastMeshResidualNorm(ColumnMeshEquationType.MATERIAL);
-  }
-
-  /**
-   * Retrieve the latest MESH equilibrium residual infinity norm.
-   *
-   * @return maximum absolute equilibrium residual, or {@code Double.NaN} if unavailable
-   */
-  public double getLastMeshEquilibriumResidualNorm() {
-    return getLastMeshResidualNorm(ColumnMeshEquationType.EQUILIBRIUM);
-  }
-
-  /**
-   * Retrieve the latest MESH summation residual infinity norm.
-   *
-   * @return maximum absolute summation residual, or {@code Double.NaN} if unavailable
-   */
-  public double getLastMeshSummationResidualNorm() {
-    return getLastMeshResidualNorm(ColumnMeshEquationType.SUMMATION);
-  }
-
-  /**
-   * Retrieve the latest MESH energy residual infinity norm.
-   *
-   * @return maximum absolute energy residual, or {@code Double.NaN} if unavailable
-   */
-  public double getLastMeshEnergyResidualNorm() {
-    return getLastMeshResidualNorm(ColumnMeshEquationType.ENERGY);
-  }
-
-  /**
-   * Retrieve the latest MESH product draw residual infinity norm.
-   *
-   * @return maximum absolute product draw residual, or {@code Double.NaN} if unavailable
-   */
-  public double getLastMeshProductDrawResidualNorm() {
-    return getLastMeshResidualNorm(ColumnMeshEquationType.PRODUCT_DRAW);
-  }
-
-  /**
-   * Retrieve the latest MESH specification residual infinity norm.
-   *
-   * @return maximum absolute specification residual, or {@code Double.NaN} if unavailable
-   */
-  public double getLastMeshSpecificationResidualNorm() {
-    return getLastMeshResidualNorm(ColumnMeshEquationType.SPECIFICATION);
-  }
-
-  /**
-   * Retrieve a copy of the latest MESH residual vector.
-   *
-   * @return residual vector copy, or an empty array if no solve has been run
-   */
-  public double[] getLastMeshResidualVector() {
-    return lastMeshResidual == null ? new double[0] : lastMeshResidual.getValues();
-  }
-
-  /**
-   * Retrieve the latest internal MESH residual diagnostics.
-   *
-   * @return latest residual diagnostics, or null if no solve has been run
-   */
-  ColumnMeshResidual getLastMeshResidual() {
-    return lastMeshResidual;
-  }
-
-  /**
-   * Get a MESH residual norm by equation type.
-   *
-   * @param equationType equation type to inspect
-   * @return infinity norm for that equation type, or {@code Double.NaN} if unavailable
-   */
-  private double getLastMeshResidualNorm(ColumnMeshEquationType equationType) {
-    return lastMeshResidual == null ? Double.NaN : lastMeshResidual.getInfinityNorm(equationType);
-  }
-
-  /**
-   * Retrieve the duration of the most recent solve in seconds.
-   *
-   * @return solve time in seconds
-   */
-  public double getLastSolveTimeSeconds() {
-    return lastSolveTimeSeconds;
-  }
-
-  /**
-   * Build a human-readable convergence diagnostic report for the latest column solve.
-   *
-   * <p>
-   * The report is intended for notebooks, agents, and troubleshooting scripts that need to know which convergence gate
-   * failed and which common modelling choices should be checked first. It does not change the column state.
-   * </p>
-   *
-   * @return multi-line diagnostic report with residuals, feed-tray placement, and recommendations
-   */
-  public String getConvergenceDiagnostics() {
-    StringBuilder diagnostics = new StringBuilder();
-    boolean solved = solved();
-    diagnostics.append("DistillationColumn Diagnostics:\n");
-    diagnostics.append("  Name: ").append(getName()).append("\n");
-    diagnostics.append("  Solved: ").append(solved).append("\n");
-    diagnostics.append("  Solver: ").append(solverType).append("\n");
-    diagnostics.append("  Last solver used: ").append(lastSolverTypeUsed).append("\n");
-    diagnostics.append("  Solve status: ").append(lastSolveStatus).append("\n");
-    if (lastSolveStatusReason != null && !lastSolveStatusReason.trim().isEmpty()) {
-      diagnostics.append("  Solve status reason: ").append(lastSolveStatusReason).append("\n");
-    }
-    if (lastFullFractionatorFastPathReason != null && !lastFullFractionatorFastPathReason.trim().isEmpty()) {
-      diagnostics.append("  Opt-in full-fractionator fast path: ").append(lastFullFractionatorFastPathReason)
-          .append("\n");
-    }
-    diagnostics.append("  Trays: ").append(numberOfTrays).append(" total, ").append(getEffectiveStageCount())
-        .append(" equilibrium stages").append("\n");
-    diagnostics.append("  Iterations: ").append(lastIterationCount).append("\n");
-    diagnostics.append("  Solve time: ").append(lastSolveTimeSeconds).append(" s\n");
-    if (lastAutoSolverSummary != null && !lastAutoSolverSummary.trim().isEmpty()) {
-      diagnostics.append("  Automatic solver candidates:\n");
-      diagnostics.append(lastAutoSolverSummary);
-      if (!lastAutoSolverSummary.endsWith("\n")) {
-        diagnostics.append("\n");
-      }
-    }
-    if (specificationHomotopySteps > 1 || lastSpecificationHomotopyStepCount > 0) {
-      diagnostics.append("  Specification homotopy: ").append(lastSpecificationHomotopyStepCount).append("/")
-          .append(specificationHomotopySteps).append(" stages\n");
-    }
-    if (lastInsideOutOuterFlashSweeps > 0 || lastInsideOutInnerLoopIterations > 0) {
-      diagnostics.append("  Inside-out model:\n");
-      diagnostics.append("    outer flash sweeps: ").append(lastInsideOutOuterFlashSweeps).append("\n");
-      diagnostics.append("    inner loop iterations: ").append(lastInsideOutInnerLoopIterations).append("\n");
-      diagnostics.append("    k-value residual: ").append(lastInsideOutKValueResidual).append("\n");
-      diagnostics.append("    surrogate residual: ").append(lastInsideOutSurrogateResidual).append("\n");
-      diagnostics.append("    surrogate resets: ").append(lastInsideOutSurrogateResetCount).append("\n");
-    }
-    if (solverType == SolverType.MATRIX_INSIDE_OUT || lastMatrixInsideOutWarmStartUsed
-        || lastMatrixInsideOutWarmStartBypassed) {
-      diagnostics.append("  Matrix inside-out:\n");
-      diagnostics.append("    warm start used: ").append(lastMatrixInsideOutWarmStartUsed).append("\n");
-      diagnostics.append("    warm start bypassed: ").append(lastMatrixInsideOutWarmStartBypassed).append("\n");
-      diagnostics.append("    matrix iterations: ").append(lastMatrixInsideOutIterationCount).append("\n");
-      diagnostics.append("    matrix temperature residual: ").append(lastMatrixInsideOutTemperatureResidual)
-          .append(" K\n");
-      diagnostics.append("    matrix time: ").append(lastMatrixInsideOutSolveTimeSeconds).append(" s\n");
-    }
-    if (lastNaphtaliAnalyticJacobianColumns > 0 || lastNaphtaliFiniteDifferenceJacobianColumns > 0
-        || lastNaphtaliThermoEvaluationCount > 0) {
-      diagnostics.append("  Naphtali-Sandholm Jacobian:\n");
-      diagnostics.append("    semi-analytic columns: ").append(lastNaphtaliAnalyticJacobianColumns).append("\n");
-      diagnostics.append("    finite-difference columns: ").append(lastNaphtaliFiniteDifferenceJacobianColumns)
-          .append("\n");
-      diagnostics.append("    thermodynamic evaluations: ").append(lastNaphtaliThermoEvaluationCount).append("\n");
-      diagnostics.append("    thermodynamic cache hits: ").append(lastNaphtaliThermoCacheHitCount).append("\n");
-      diagnostics.append("    jacobian build time: ").append(lastNaphtaliJacobianBuildTimeSeconds).append(" s\n");
-      diagnostics.append("    block linear solves: ").append(lastNaphtaliBlockLinearSolveCount).append("\n");
-      diagnostics.append("    dense linear solves: ").append(lastNaphtaliDenseLinearSolveCount).append("\n");
-      diagnostics.append("    linear solve time: ").append(lastNaphtaliLinearSolveTimeSeconds).append(" s\n");
-    }
-    diagnostics.append("  Residuals:\n");
-    diagnostics.append("    temperature: ").append(lastTemperatureResidual).append(" K (tolerance ")
-        .append(getEffectiveTemperatureTolerance()).append(")\n");
-    diagnostics.append("    applied temperature step: ").append(lastAppliedTemperatureStepResidual).append(" K\n");
-    diagnostics.append("    mass: ").append(lastMassResidual).append(" (tolerance ")
-        .append(getEffectiveMassBalanceTolerance()).append(")\n");
-    diagnostics.append("    energy: ").append(lastEnergyResidual).append(" (tolerance ")
-        .append(getEffectiveEnthalpyBalanceTolerance()).append(", enforced=").append(enforceEnergyBalanceTolerance)
-        .append(")\n");
-    diagnostics.append("    mesh infinity norm: ").append(getLastMeshResidualNorm()).append(" (tolerance ")
-        .append(meshResidualTolerance).append(", enforced=").append(isEffectiveMeshResidualToleranceEnforced())
-        .append(")\n");
-    diagnostics.append("      material: ").append(getLastMeshMaterialResidualNorm()).append(", equilibrium: ")
-        .append(getLastMeshEquilibriumResidualNorm()).append(", summation: ").append(getLastMeshSummationResidualNorm())
-        .append(", energy: ").append(getLastMeshEnergyResidualNorm()).append(", product draw: ")
-        .append(getLastMeshProductDrawResidualNorm()).append(", specification: ")
-        .append(getLastMeshSpecificationResidualNorm()).append("\n");
-    diagnostics.append("      per-tray material imbalance: ").append(lastTrayMaterialBalanceError)
-        .append(" (tolerance ").append(trayMaterialBalanceTolerance).append(")\n");
-    if (hasCondenser && getCondenser() != null && getCondenser().isSeparation_with_liquid_reflux()) {
-      diagnostics.append("    fixed liquid reflux: requested ").append(getCondenser().getFixedLiquidRefluxValue())
-          .append(" ").append(getCondenser().getFixedLiquidRefluxUnit()).append(", available ")
-          .append(getCondenser().getLastAvailableFixedLiquidReflux()).append(" ")
-          .append(getCondenser().getFixedLiquidRefluxUnit()).append(", delivered ")
-          .append(getCondenser().getLastFixedLiquidReflux()).append(" ")
-          .append(getCondenser().getFixedLiquidRefluxUnit()).append(", relative shortfall ")
-          .append(getCondenser().getFixedLiquidRefluxSpecificationResidual()).append("\n");
-    }
-
-    diagnostics.append("  Feed trays:\n");
-    if (feedStreams.isEmpty()) {
-      diagnostics.append("    none\n");
-    } else {
-      List<Integer> feedTrayNumbers = new ArrayList<Integer>(feedStreams.keySet());
-      Collections.sort(feedTrayNumbers);
-      for (Integer feedTrayNumber : feedTrayNumbers) {
-        int stagesBelow = Math.max(0, feedTrayNumber.intValue());
-        int stagesAbove = Math.max(0, numberOfTrays - feedTrayNumber.intValue() - 1);
-        diagnostics.append("    tray ").append(feedTrayNumber).append(" with ")
-            .append(feedStreams.get(feedTrayNumber).size()).append(" feed(s), ").append(stagesAbove)
-            .append(" stages above, ").append(stagesBelow).append(" stages below");
-        if (isFeedTrayNearTop(feedTrayNumber.intValue())) {
-          diagnostics.append(" (near top/condenser)");
-        } else if (isFeedTrayNearBottom(feedTrayNumber.intValue())) {
-          diagnostics.append(" (near bottom/reboiler)");
-        }
-        diagnostics.append("\n");
-      }
-    }
-
-    diagnostics.append("  Recommendations:\n");
-    int recommendationCount = appendConvergenceRecommendations(diagnostics, solved);
-    if (recommendationCount == 0) {
-      diagnostics.append("    - No immediate convergence issue detected.\n");
-    }
-    return diagnostics.toString();
-  }
-
-  /**
-   * Append modelling and solver recommendations to a convergence diagnostic report.
-   *
-   * @param diagnostics report builder receiving recommendation lines
-   * @param solved whether the column currently satisfies its convergence gates
-   * @return number of recommendation lines appended
-   */
-  private int appendConvergenceRecommendations(StringBuilder diagnostics, boolean solved) {
-    int count = 0;
-    for (Integer feedTrayNumber : feedStreams.keySet()) {
-      if (isFeedTrayNearTop(feedTrayNumber.intValue())) {
-        diagnostics.append("    - Feed tray ").append(feedTrayNumber)
-            .append(" is close to the condenser. For debutanizer/depropanizer-style ")
-            .append("hydrocarbon splits, start near the middle of the column and move the feed ")
-            .append("only after the base case converges.\n");
-        count++;
-      } else if (isFeedTrayNearBottom(feedTrayNumber.intValue())) {
-        diagnostics.append("    - Feed tray ").append(feedTrayNumber)
-            .append(" is close to the reboiler. Check whether the feed should enter higher in ")
-            .append("the column or whether a side draw/flash should be represented explicitly.\n");
-        count++;
-      }
-    }
-    if (hasCondenser && getCondenser().getRefluxRatio() > 0.0 && getCondenser().getRefluxRatio() <= 0.2) {
-      diagnostics.append("    - Condenser reflux ratio is low (").append(getCondenser().getRefluxRatio())
-          .append("). Low reflux can make tray-temperature substitution oscillatory; ")
-          .append("try a higher reflux during initialization before tightening the spec.\n");
-      count++;
-    }
-    if ((!solved || lastIterationCount > Math.max(20, getEffectiveStageCount() * 3)) && hasCondenser && hasReboiler
-        && solverType != SolverType.MESH_RESIDUAL && solverType != SolverType.NAPHTALI_SANDHOLM) {
-      diagnostics.append("    - For full hydrocarbon fractionators, benchmark ").append(SolverType.NAPHTALI_SANDHOLM)
-          .append(", ").append(SolverType.MESH_RESIDUAL).append(", or ").append(SolverType.NEWTON)
-          .append(" after checking feed-tray placement. They can be faster than direct ")
-          .append("substitution for well-conditioned columns.\n");
-      count++;
-    }
-    double productDrawResidual = getLastMeshProductDrawResidualNorm();
-    if (Double.isFinite(productDrawResidual) && productDrawResidual > meshProductDrawResidualTolerance) {
-      diagnostics.append("    - Product draw residual is above the product-draw tolerance. This means ")
-          .append("the exposed overhead/bottom streams do not match the terminal tray traffic; ").append("use ")
-          .append(SolverType.NAPHTALI_SANDHOLM).append(" or ").append(SolverType.MESH_RESIDUAL)
-          .append(" or inspect reflux, boilup, and product specifications before trusting the ")
-          .append("product split.\n");
-      count++;
-    }
-    if (Double.isFinite(lastTrayMaterialBalanceError) && lastTrayMaterialBalanceError > trayMaterialBalanceTolerance) {
-      diagnostics.append("    - Per-tray component material imbalance is ").append(lastTrayMaterialBalanceError)
-          .append(", above the tolerance of ").append(trayMaterialBalanceTolerance)
-          .append(". At least one tray does not close its own component balance, so the tray profile ")
-          .append("is not a solution even if the overall feed/product balance looks closed. ")
-          .append("Do not trust tray temperatures, duties or internal traffic from this run.\n");
-      count++;
-    }
-    if (!solved) {
-      diagnostics.append("    - Inspect the residual above the tolerance: temperature usually ")
-          .append("points to tray/specification oscillation, while mass residual points to ")
-          .append("stream wiring or divergent internal L/V traffic.\n");
-      count++;
-    }
-    return count;
-  }
-
-  /**
-   * Check whether a feed tray is close to the condenser/top of the column.
-   *
-   * @param feedTrayNumber tray index to inspect
-   * @return {@code true} when the feed has few stages above it in a column with a condenser
-   */
-  private boolean isFeedTrayNearTop(int feedTrayNumber) {
-    if (!hasCondenser || numberOfTrays < 5) {
-      return false;
-    }
-    int stagesAbove = Math.max(0, numberOfTrays - feedTrayNumber - 1);
-    int topLimit = Math.max(1, (int) Math.ceil(getEffectiveStageCount() * 0.25));
-    return stagesAbove <= topLimit;
-  }
-
-  /**
-   * Check whether a feed tray is close to the reboiler/bottom of the column.
-   *
-   * @param feedTrayNumber tray index to inspect
-   * @return {@code true} when the feed has few stages below it in a column with a reboiler
-   */
-  private boolean isFeedTrayNearBottom(int feedTrayNumber) {
-    if (!hasReboiler || numberOfTrays < 5) {
-      return false;
-    }
-    int stagesBelow = Math.max(0, feedTrayNumber);
-    int bottomLimit = Math.max(1, (int) Math.ceil(getEffectiveStageCount() * 0.25));
-    return stagesBelow <= bottomLimit;
-  }
-
-  /**
-   * Access the configured relative mass balance tolerance.
-   *
-   * @return mass balance tolerance
-   */
-  public double getMassBalanceTolerance() {
-    return getEffectiveMassBalanceTolerance();
-  }
-
-  /**
-   * Control whether the solver enforces the energy balance tolerance when determining convergence.
-   *
-   * @param enforce {@code true} to require the energy residual to satisfy the configured tolerance
-   */
-  public void setEnforceEnergyBalanceTolerance(boolean enforce) {
-    this.enforceEnergyBalanceTolerance = enforce;
-  }
-
-  /**
-   * Check if the solver currently enforces the energy balance tolerance during convergence checks.
-   *
-   * @return {@code true} if the energy residual must satisfy its tolerance before convergence
-   */
-  public boolean isEnforceEnergyBalanceTolerance() {
-    return enforceEnergyBalanceTolerance;
-  }
-
-  /**
-   * Control whether the latest MESH residual vector must satisfy tolerance during convergence checks. Calling this
-   * method explicitly overrides the default behavior where residual-based solvers enforce the gate and substitution or
-   * temperature/flow accelerator solvers do not.
-   *
-   * @param enforce {@code true} to require MESH residuals to satisfy the configured tolerance
-   */
-  public void setEnforceMeshResidualTolerance(boolean enforce) {
-    this.enforceMeshResidualTolerance = enforce;
-    this.enforceMeshResidualToleranceCustomized = true;
-  }
-
-  /**
-   * Check if convergence currently requires the latest MESH residual vector to satisfy tolerance.
-   *
-   * @return {@code true} if MESH residuals are part of the convergence check
-   */
-  public boolean isEnforceMeshResidualTolerance() {
-    return isEffectiveMeshResidualToleranceEnforced();
-  }
-
-  /**
-   * Access the configured relative enthalpy balance tolerance.
-   *
-   * @return enthalpy balance tolerance
-   */
-  public double getEnthalpyBalanceTolerance() {
-    return getEffectiveEnthalpyBalanceTolerance();
-  }
-
-  /**
-   * Access the configured scaled MESH residual tolerance.
-   *
-   * @return MESH residual tolerance
-   */
-  public double getMeshResidualTolerance() {
-    return meshResidualTolerance;
-  }
-
-  /**
-   * Access the tolerance applied to the throughput-weighted per-tray component material imbalance.
-   *
-   * @return per-tray material balance tolerance
-   */
-  public double getTrayMaterialBalanceTolerance() {
-    return trayMaterialBalanceTolerance;
-  }
-
-  /**
-   * Set the tolerance applied to the throughput-weighted per-tray component material imbalance.
-   *
-   * @param tolerance relative imbalance tolerance, must be finite, greater than zero and at most 1
-   * @throws IllegalArgumentException if {@code tolerance} is not finite, not positive or greater than 1
-   */
-  public void setTrayMaterialBalanceTolerance(double tolerance) {
-    if (!isPositiveFinite(tolerance) || tolerance > 1.0) {
-      throw new IllegalArgumentException(
-          "Tray material balance tolerance must be finite and in the range (0, 1], was " + tolerance);
-    }
-    this.trayMaterialBalanceTolerance = tolerance;
-  }
-
-  /**
-   * Largest per-tray component material imbalance relative to that tray's molar throughput.
-   *
-   * <p>
-   * Unlike the MESH {@code MATERIAL} infinity norm, this measure is not dominated by trace components. A value well
-   * above {@link #getTrayMaterialBalanceTolerance()} means at least one tray does not close its own component balance,
-   * so the tray profile is not a solution even when the overall feed/product balance is closed.
-   * </p>
-   *
-   * @return worst relative per-tray material imbalance, or {@code Double.NaN} when not evaluated
-   */
-  public double getLastTrayMaterialBalanceError() {
-    return lastTrayMaterialBalanceError;
-  }
-
-  /**
-   * Access the configured scaled product-draw residual tolerance.
-   *
-   * @return product-draw residual tolerance
-   */
-  public double getMeshProductDrawResidualTolerance() {
-    return meshProductDrawResidualTolerance;
-  }
-
-  /**
-   * Access the maximum number of tray optimization candidate cases allowed per search.
-   *
-   * @return maximum candidate count
-   */
-  public int getMaxTrayOptimizationCandidates() {
-    return maxTrayOptimizationCandidates;
-  }
-
-  /**
-   * Set the maximum number of tray optimization candidate cases allowed per search.
-   *
-   * @param maxCandidates maximum candidate count, must be at least one
-   * @throws IllegalArgumentException if {@code maxCandidates} is less than one
-   */
-  public void setMaxTrayOptimizationCandidates(int maxCandidates) {
-    if (maxCandidates < 1) {
-      throw new IllegalArgumentException("Maximum tray optimization candidates must be positive.");
-    }
-    this.maxTrayOptimizationCandidates = maxCandidates;
-  }
-
-  /**
-   * Access the maximum elapsed time allowed for a tray optimization search.
-   *
-   * @return maximum search time in seconds
-   */
-  public double getMaxTrayOptimizationTimeSeconds() {
-    return maxTrayOptimizationTimeSeconds;
-  }
-
-  /**
-   * Set the maximum elapsed time allowed for a tray optimization search.
-   *
-   * @param maxTimeSeconds maximum search time in seconds, must be finite and greater than zero
-   * @throws IllegalArgumentException if {@code maxTimeSeconds} is not finite or positive
-   */
-  public void setMaxTrayOptimizationTimeSeconds(double maxTimeSeconds) {
-    if (!isPositiveFinite(maxTimeSeconds)) {
-      throw new IllegalArgumentException("Maximum tray optimization time must be finite and positive.");
-    }
-    this.maxTrayOptimizationTimeSeconds = maxTimeSeconds;
-  }
-
-  /**
-   * Access the configured average temperature tolerance.
-   *
-   * @return temperature tolerance in Kelvin
-   */
-  public double getTemperatureTolerance() {
-    return getEffectiveTemperatureTolerance();
-  }
-
-  /**
-   * Setter for the field <code>maxNumberOfIterations</code>.
-   *
-   * <p>
-   * This sets a lower bound on the solver iteration budget only; the solver may still expand beyond it via the adaptive
-   * tray-based floor and the iteration-overflow expansion. To treat the value as a HARD maximum, use
-   * {@link #setMaxNumberOfIterations(int, boolean)} with {@code hardCap = true} or call
-   * {@link #setHardIterationCap(boolean)}. A warning is logged when the requested value is below the adaptive
-   * tray-based budget, because the request then has no effect on runtime.
-   * </p>
-   *
-   * @param maxIter a int
-   */
-  public void setMaxNumberOfIterations(int maxIter) {
-    this.maxNumberOfIterations = Math.max(1, maxIter);
-    int trayBasedLimit = computeTrayBasedIterationLimit();
-    if (!hardIterationCap && this.maxNumberOfIterations < trayBasedLimit) {
-      logger.warn("DistillationColumn '{}': setMaxNumberOfIterations({}) is a soft floor only. The adaptive tray-based "
-          + "budget of {} iterations ({} trays) still applies and may be expanded further, so the request "
-          + "does not limit runtime. Use setMaxNumberOfIterations({}, true) or setHardIterationCap(true) to "
-          + "enforce a hard cap.", getName(), maxIter, trayBasedLimit, numberOfTrays, maxIter);
-    }
-  }
-
-  /**
-   * Getter for the field <code>maxNumberOfIterations</code>.
-   *
-   * <p>
-   * This is the configured value, which is only a lower bound unless {@link #isHardIterationCap()} is {@code true}. Use
-   * {@link #getEffectiveMaxNumberOfIterations()} to see the iteration budget the solver will actually use.
-   * </p>
-   *
-   * @return the configured maximum number of iterations
-   */
-  public int getMaxNumberOfIterations() {
-    return maxNumberOfIterations;
-  }
-
-  /**
-   * Get the base iteration budget the solver will actually use for this column.
-   *
-   * <p>
-   * When {@link #isHardIterationCap()} is {@code false} this is {@code max(maxNumberOfIterations, 5 * numberOfTrays)}
-   * and may still be expanded by the iteration-overflow and polish extensions. When the hard cap is enabled it equals
-   * {@link #getMaxNumberOfIterations()}.
-   * </p>
-   *
-   * @return the effective base iteration limit
-   */
-  public int getEffectiveMaxNumberOfIterations() {
-    return computeIterationLimit();
-  }
-
-  /**
-   * Set the maximum number of solver iterations and optionally treat it as a hard cap.
-   *
-   * @param maxIter the maximum number of iterations (clamped to at least 1)
-   * @param hardCap when {@code true} the value is honored as a HARD cap (adaptive floor, overflow expansion, and polish
-   * extension disabled); when {@code false} it is only a lower bound (historical behavior)
-   */
-  public void setMaxNumberOfIterations(int maxIter, boolean hardCap) {
-    this.maxNumberOfIterations = Math.max(1, maxIter);
-    this.hardIterationCap = hardCap;
-  }
-
-  /**
-   * Enable or disable treating {@link #maxNumberOfIterations} as a hard iteration cap. When enabled, the adaptive
-   * tray-based iteration floor, the iteration-overflow expansion, and the polish extension are all disabled.
-   *
-   * @param hardCap {@code true} to honor {@link #maxNumberOfIterations} as a hard maximum
-   */
-  public void setHardIterationCap(boolean hardCap) {
-    this.hardIterationCap = hardCap;
-  }
-
-  /**
-   * Whether {@link #maxNumberOfIterations} is currently honored as a hard iteration cap.
-   *
-   * @return {@code true} if the hard iteration cap is enabled
-   */
-  public boolean isHardIterationCap() {
-    return hardIterationCap;
-  }
-
-  /**
-   * Setter for the field <code>internalDiameter</code>.
-   *
-   * @param internalDiameter a double
-   */
-  public void setInternalDiameter(double internalDiameter) {
-    this.internalDiameter = internalDiameter;
-  }
-
-  /**
-   * Getter for the field <code>internalDiameter</code>.
-   *
-   * @return a double
-   */
-  public double getInternalDiameter() {
-    return internalDiameter;
-  }
-
-  /**
-   * Calculates the Fs factor for the distillation column. The Fs factor is a measure of the gas flow rate through the
-   * column relative to the cross-sectional area and the density of the gas.
-   *
-   * <p>
-   * The Fs factor (gas load factor) is defined as {@code Fs = Vs * sqrt(rho_gas)} where {@code Vs} is the superficial
-   * gas velocity (m/s) and {@code rho_gas} is the gas density (kg/m3). It is proportional to the aerodynamic lift
-   * exerted by the gas on the liquid and is the primary hydraulic capacity indicator for the column.
-   * </p>
-   *
-   * @return the Fs factor in m/s*sqrt(kg/m3), or 0 if streams are not initialized or the internal diameter is not set
-   */
-  public double getFsFactor() {
-    if (getGasOutStream() == null || getGasOutStream().getThermoSystem() == null) {
-      return 0.0;
-    }
-    double intArea = Math.PI * getInternalDiameter() * getInternalDiameter() / 4.0;
-    if (intArea <= 0.0) {
-      return 0.0;
-    }
-    return getGasOutStream().getThermoSystem().getFlowRate("m3/sec") / intArea
-        * Math.sqrt(getGasOutStream().getThermoSystem().getDensity("kg/m3"));
-  }
-
-  /**
-   * Gets the maximum allowable Fs factor (gas load factor) used as the design basis for the Fs-factor capacity
-   * constraint.
-   *
-   * @return maximum allowable Fs factor in m/s*sqrt(kg/m3)
-   */
-  public double getMaxAllowableFsFactor() {
-    return maxAllowableFsFactor;
-  }
-
-  /**
-   * Sets the maximum allowable Fs factor (gas load factor) used as the design basis for the Fs-factor capacity
-   * constraint.
-   *
-   * <p>
-   * Re-initializes the capacity constraints so the new design value takes effect immediately.
-   * </p>
-   *
-   * @param maxAllowableFsFactor maximum allowable Fs factor in m/s*sqrt(kg/m3); must be positive
-   * @throws IllegalArgumentException if the value is not positive and finite
-   */
-  public void setMaxAllowableFsFactor(double maxAllowableFsFactor) {
-    if (!Double.isFinite(maxAllowableFsFactor) || maxAllowableFsFactor <= 0.0) {
-      throw new IllegalArgumentException("maxAllowableFsFactor must be positive and finite");
-    }
-    this.maxAllowableFsFactor = maxAllowableFsFactor;
-    reinitializeCapacityConstraints();
-  }
-
-  /**
-   * Calculates the Fs factor utilization as a fraction of the maximum allowable Fs factor.
-   *
-   * @return utilization ratio (0.0-1.0+); values above 1.0 indicate the design limit is exceeded
-   */
-  public double getFsFactorUtilization() {
-    double maxFs = getMaxAllowableFsFactor();
-    if (maxFs <= 0.0) {
-      return 0.0;
-    }
-    return getFsFactor() / maxFs;
-  }
-
-  /**
-   * Checks whether the current Fs factor is within the design limit.
-   *
-   * @return true if the Fs factor is within the maximum allowable limit
-   */
-  public boolean isFsFactorWithinDesignLimit() {
-    return getFsFactor() <= getMaxAllowableFsFactor();
-  }
-
-  /**
-   * Calculates the minimum vessel internal diameter required to keep the Fs factor at or below the maximum allowable
-   * value for the current gas flow rate.
-   *
-   * <p>
-   * From {@code Fs = Vs * sqrt(rho_gas)} and {@code Vs = Q / A}, the minimum diameter is
-   * {@code D_min = sqrt(4 * Q * sqrt(rho_gas) / (pi * Fs_max))}.
-   * </p>
-   *
-   * @return minimum internal diameter in metres, or 0 if streams are not initialized
-   */
-  public double getMinimumDiameterForFsLimit() {
-    if (getGasOutStream() == null || getGasOutStream().getThermoSystem() == null) {
-      return 0.0;
-    }
-    double maxFs = getMaxAllowableFsFactor();
-    if (maxFs <= 0.0) {
-      return 0.0;
-    }
-    double gasFlowM3s = getGasOutStream().getThermoSystem().getFlowRate("m3/sec");
-    double rhoGas = getGasOutStream().getThermoSystem().getDensity("kg/m3");
-    return Math.sqrt(4.0 * gasFlowM3s * Math.sqrt(rhoGas) / (Math.PI * maxFs));
-  }
-
-  /**
-   * Sets up the default capacity constraints for the distillation column.
-   *
-   * <p>
-   * Registers an Fs-factor (gas load factor) constraint that uses the live {@link #getFsFactor()} value against the
-   * {@link #getMaxAllowableFsFactor()} design basis. This makes the column participate in process-wide bottleneck
-   * analysis, capacity utilization summaries, and optimization constraint checking in the same way as other
-   * capacity-constrained equipment.
-   * </p>
-   */
-  @Override
-  protected void initializeDefaultConstraints() {
-    neqsim.process.equipment.capacity.CapacityConstraint fsConstraint = new neqsim.process.equipment.capacity.CapacityConstraint(
-        "fsFactor", "m/s*sqrt(kg/m3)", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
-    fsConstraint.setDesignValue(maxAllowableFsFactor);
-    fsConstraint.setMaxValue(maxAllowableFsFactor);
-    fsConstraint.setSeverity(neqsim.process.equipment.capacity.CapacityConstraint.ConstraintSeverity.SOFT);
-    fsConstraint.setDescription("Column Fs factor (gas load factor) vs maximum allowable");
-    fsConstraint.setDataSource("equipment");
-    fsConstraint.setValueSupplier(this::getFsFactor);
-    addCapacityConstraint(fsConstraint);
-  }
-
-  /**
-   * Rebuilds the capacity constraints so updated design values (e.g. max allowable Fs factor) take effect.
-   */
-  private void reinitializeCapacityConstraints() {
-    neqsim.process.equipment.capacity.CapacityConstraint existing = getCapacityConstraints().get("fsFactor");
-    if (existing != null) {
-      existing.setDesignValue(maxAllowableFsFactor);
-      existing.setMaxValue(maxAllowableFsFactor);
-    } else {
-      initializeDefaultConstraints();
-    }
-  }
-
-  /**
-   * Create and run a column internals designer for this column.
-   *
-   * <p>
-   * Evaluates hydraulics on every tray (flooding, weeping, entrainment, downcomer backup, pressure drop, efficiency)
-   * and sizes the column diameter from the controlling tray.
-   * </p>
-   *
-   * @param internalsType tray type ("sieve", "valve", "bubble-cap") or "packed"
-   * @return a fully evaluated {@link ColumnInternalsDesigner} with per-tray results
-   */
-  public ColumnInternalsDesigner calcColumnInternals(String internalsType) {
-    ColumnInternalsDesigner designer = new ColumnInternalsDesigner(this);
-    designer.setInternalsType(internalsType);
-    designer.calculate();
-    return designer;
-  }
-
-  /**
-   * Create and run a column internals designer for this column with default sieve trays.
-   *
-   * @return a fully evaluated {@link ColumnInternalsDesigner} with per-tray results
-   */
-  public ColumnInternalsDesigner calcColumnInternals() {
-    return calcColumnInternals("sieve");
-  }
-
-  /**
-   * Set a gas or liquid side-draw fraction on a tray.
-   *
-   * <p>
-   * Side draws are implemented on the tray outlet itself, so all column solver paths use the residual gas/liquid
-   * traffic for inter-tray flow and expose the withdrawn stream separately.
-   * </p>
-   *
-   * @param trayNumber bottom-up tray index
-   * @param phase phase to withdraw
-   * @param fraction fraction of the selected phase outlet to withdraw, from zero to one
-   */
-  public void setSideDrawFraction(int trayNumber, SideDrawPhase phase, double fraction) {
-    SimpleTray tray = getTray(trayNumber);
-    if (phase == SideDrawPhase.GAS) {
-      tray.setGasSideDrawFraction(fraction);
-    } else if (phase == SideDrawPhase.LIQUID) {
-      tray.setLiquidSideDrawFraction(fraction);
-    } else {
-      throw new IllegalArgumentException("Side draw phase cannot be null");
-    }
-    setDoInitializion(true);
-  }
-
-  /**
-   * Set a vapor side-draw fraction on a tray.
-   *
-   * @param trayNumber bottom-up tray index
-   * @param fraction fraction of vapor outlet to withdraw, from zero to one
-   */
-  public void setGasSideDrawFraction(int trayNumber, double fraction) {
-    setSideDrawFraction(trayNumber, SideDrawPhase.GAS, fraction);
-  }
-
-  /**
-   * Set a liquid side-draw fraction on a tray.
-   *
-   * @param trayNumber bottom-up tray index
-   * @param fraction fraction of liquid outlet to withdraw, from zero to one
-   */
-  public void setLiquidSideDrawFraction(int trayNumber, double fraction) {
-    setSideDrawFraction(trayNumber, SideDrawPhase.LIQUID, fraction);
-  }
-
-  /**
-   * Get a side-draw stream from a tray.
-   *
-   * @param trayNumber bottom-up tray index
-   * @param phase phase to retrieve
-   * @return side-draw stream, or a zero-flow stream when no side draw is configured
-   */
-  public StreamInterface getSideDrawStream(int trayNumber, SideDrawPhase phase) {
-    SimpleTray tray = getTray(trayNumber);
-    if (phase == SideDrawPhase.GAS) {
-      return tray.getGasSideDrawStream();
-    } else if (phase == SideDrawPhase.LIQUID) {
-      return tray.getLiquidSideDrawStream();
-    }
-    throw new IllegalArgumentException("Side draw phase cannot be null");
-  }
-
-  /**
-   * Get all non-zero side-draw streams from the column.
-   *
-   * @return unmodifiable list of side-draw streams currently withdrawn from trays
-   */
-  public List<StreamInterface> getSideDrawStreams() {
-    List<StreamInterface> sideDrawStreams = new ArrayList<>();
-    for (int trayNumber = 0; trayNumber < numberOfTrays; trayNumber++) {
-      SimpleTray tray = getTray(trayNumber);
-      if (tray.getGasSideDrawFraction() > 0.0) {
-        sideDrawStreams.add(tray.getGasSideDrawStream());
-      }
-      if (tray.getLiquidSideDrawFraction() > 0.0) {
-        sideDrawStreams.add(tray.getLiquidSideDrawStream());
-      }
-    }
-    return Collections.unmodifiableList(sideDrawStreams);
-  }
-
-  /**
-   * Add a side-draw flow specification solved as a column tear variable.
-   *
-   * <p>
-   * The solver adjusts the side-draw fraction on the requested tray until the side-product stream flow matches the
-   * target. This turns side draws into formal product specifications while preserving the existing tray split
-   * implementation.
-   * </p>
-   *
-   * @param trayNumber bottom-up tray index
-   * @param phase side-draw phase
-   * @param flowRate target flow rate
-   * @param unit flow-rate unit
-   * @return configured side-draw specification
-   * @throws IllegalArgumentException if the tray number, phase, flow rate, or unit is invalid, or another flow
-   * specification already controls the same tray and phase
-   */
-  public ColumnSideDrawSpecification addSideDrawFlowSpecification(int trayNumber, SideDrawPhase phase, double flowRate,
-      String unit) {
-    validateTrayIndex(trayNumber, "side draw specification tray");
-    ColumnSideDrawSpecification specification = new ColumnSideDrawSpecification(trayNumber, phase, flowRate, unit);
-    if (findSideDrawFlowSpecification(trayNumber, phase) != null) {
-      throw new IllegalArgumentException(createDuplicateSideDrawSpecificationMessage(trayNumber, phase));
-    }
-    sideDrawSpecifications.add(specification);
-    if (flowRate > 0.0 && getSideDrawFraction(trayNumber, phase) <= 0.0) {
-      setSideDrawFractionWithinLimit(trayNumber, phase, 0.05);
-    }
-    setDoInitializion(true);
-    return specification;
-  }
-
-  /**
-   * Find the flow specification controlling one tray-phase draw fraction.
-   *
-   * @param trayNumber bottom-up tray index
-   * @param phase side-draw phase
-   * @return matching specification, or {@code null} when the fraction is not flow-controlled
-   */
-  private ColumnSideDrawSpecification findSideDrawFlowSpecification(int trayNumber, SideDrawPhase phase) {
-    for (ColumnSideDrawSpecification specification : sideDrawSpecifications) {
-      if (specification.getTrayNumber() == trayNumber && specification.getPhase() == phase) {
-        return specification;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Create an actionable message for an over-specified side-draw fraction.
-   *
-   * @param trayNumber bottom-up tray index
-   * @param phase side-draw phase
-   * @return duplicate-control error message
-   */
-  private String createDuplicateSideDrawSpecificationMessage(int trayNumber, SideDrawPhase phase) {
-    return "Column " + getName() + " already has a " + phase + " side-draw flow specification on tray " + trayNumber
-        + "; configure at most one target for each tray and phase";
-  }
-
-  /**
-   * Reject duplicate controls retained in a column serialized by an older NeqSim version.
-   *
-   * @throws IllegalStateException if two specifications manipulate the same tray-phase draw fraction
-   */
-  private void ensureIndependentSideDrawSpecifications() {
-    Set<String> controlledFractions = new HashSet<>();
-    for (ColumnSideDrawSpecification specification : sideDrawSpecifications) {
-      String controlKey = specification.getTrayNumber() + ":" + specification.getPhase();
-      if (!controlledFractions.add(controlKey)) {
-        throw new IllegalStateException(
-            createDuplicateSideDrawSpecificationMessage(specification.getTrayNumber(), specification.getPhase()));
-      }
-    }
-  }
-
-  /**
-   * Get configured side-draw flow specifications.
-   *
-   * @return unmodifiable list of side-draw specifications
-   */
-  public List<ColumnSideDrawSpecification> getSideDrawSpecifications() {
-    return Collections.unmodifiableList(sideDrawSpecifications);
-  }
-
-  /**
-   * Set the maximum number of outer tear iterations for side draws and hydraulics.
-   *
-   * @param maxIterations maximum number of tear iterations, minimum one
-   */
-  public void setMaxColumnTearIterations(int maxIterations) {
-    maxColumnTearIterations = Math.max(1, maxIterations);
-  }
-
-  /**
-   * Set the relative tolerance for side-draw and hydraulic tear variables.
-   *
-   * @param tolerance relative tolerance, must be finite and positive
-   */
-  public void setColumnTearTolerance(double tolerance) {
-    if (!Double.isFinite(tolerance) || tolerance <= 0.0) {
-      throw new IllegalArgumentException("Column tear tolerance must be finite and positive");
-    }
-    columnTearTolerance = tolerance;
-  }
-
-  /**
-   * Enable or disable hydraulic pressure-drop coupling.
-   *
-   * @param enabled {@code true} to update the column pressure profile from internals hydraulics
-   */
-  public void setHydraulicPressureDropCouplingEnabled(boolean enabled) {
-    hydraulicPressureDropCouplingEnabled = enabled;
-    setDoInitializion(true);
-  }
-
-  /**
-   * Check whether hydraulic pressure-drop coupling is enabled.
-   *
-   * @return {@code true} when hydraulic pressure drop is coupled into the pressure profile
-   */
-  public boolean isHydraulicPressureDropCouplingEnabled() {
-    return hydraulicPressureDropCouplingEnabled;
-  }
-
-  /**
-   * Set the internals type used for hydraulic pressure-drop coupling.
-   *
-   * @param internalsType tray type (for example "sieve") or "packed"
-   */
-  public void setHydraulicPressureDropInternalsType(String internalsType) {
-    if (internalsType == null || internalsType.trim().isEmpty()) {
-      throw new IllegalArgumentException("Hydraulic internals type cannot be empty");
-    }
-    hydraulicPressureDropInternalsType = internalsType;
-  }
-
-  /**
-   * Convenience method for enabling hydraulic pressure-drop coupling with an internals type.
-   *
-   * @param internalsType tray type or packing mode passed to {@link #calcColumnInternals(String)}
-   */
-  public void enableHydraulicPressureDropCoupling(String internalsType) {
-    setHydraulicPressureDropInternalsType(internalsType);
-    setHydraulicPressureDropCouplingEnabled(true);
-  }
-
-  /**
-   * Get the latest hydraulic pressure drop used for coupling.
-   *
-   * @return latest total pressure drop in Pa
-   */
-  public double getLastHydraulicPressureDropPa() {
-    return lastHydraulicPressureDropPa;
-  }
-
-  /**
-   * Get the latest hydraulic pressure-drop coupling residual.
-   *
-   * @return relative endpoint-pressure change from the latest coupling update
-   */
-  public double getLastHydraulicPressureDropResidual() {
-    return lastHydraulicPressureDropResidual;
-  }
-
-  /**
-   * Get the number of outer tear iterations used in the latest run.
-   *
-   * @return latest side-draw/pumparound/hydraulic tear iteration count
-   */
-  public int getLastColumnTearIterationCount() {
-    return lastColumnTearIterationCount;
-  }
-
-  /**
-   * Get the maximum relative residual from the latest outer tear-variable solve.
-   *
-   * @return latest outer tear residual
-   */
-  public double getLastColumnTearResidual() {
-    return lastColumnTearResidual;
-  }
-
-  /**
-   * Check whether the latest outer tear-variable solve converged.
-   *
-   * @return {@code true} when the latest side-draw/pumparound/hydraulic solve met tolerance
-   */
-  public boolean isLastColumnTearConverged() {
-    return lastColumnTearConverged;
-  }
-
-  /**
-   * Get the latest relative pumparound return-stream change.
-   *
-   * @return maximum relative return-stream flow change from the latest pumparound update
-   */
-  public double getLastPumparoundRelativeChange() {
-    return lastPumparoundRelativeChange;
-  }
-
-  /**
-   * Get the dynamic column model formulation.
-   *
-   * @return dynamic model formulation used for transient calculations
-   */
-  public DynamicColumnModel getDynamicColumnModel() {
-    return dynamicColumnModel;
-  }
-
-  /**
-   * Check whether the active dynamic column model is experimental.
-   *
-   * @return {@code true} because the current dynamic model is an explicit-Euler screening model
-   */
-  public boolean isDynamicColumnModelExperimental() {
-    return dynamicColumnModel == DynamicColumnModel.EXPERIMENTAL_EULER;
-  }
-
-  /**
-   * Add a liquid pumparound circuit.
-   *
-   * <p>
-   * The draw is treated as an internal liquid withdrawal, not as a side-product stream. The return stream is updated
-   * between column solves and added to the configured return tray as an internal recycle, so external mass-balance
-   * reporting continues to use only true feeds and products.
-   * </p>
-   *
-   * @param name pumparound name
-   * @param drawTrayNumber bottom-up tray index where liquid is withdrawn
-   * @param returnTrayNumber bottom-up tray index where liquid is returned
-   * @param drawFraction fraction of tray liquid traffic withdrawn
-   * @param temperatureDrop temperature drop from draw to return in Kelvin
-   * @return configured pumparound definition
-   * @throws IllegalArgumentException if tray numbers, draw fraction, or temperature drop are invalid
-   */
-  public ColumnPumparound addLiquidPumparound(String name, int drawTrayNumber, int returnTrayNumber,
-      double drawFraction, double temperatureDrop) {
-    validateTrayIndex(drawTrayNumber, "pumparound draw tray");
-    validateTrayIndex(returnTrayNumber, "pumparound return tray");
-    if (!Double.isFinite(drawFraction) || drawFraction < 0.0 || drawFraction > 1.0) {
-      throw new IllegalArgumentException("Pumparound draw fraction must be between 0 and 1");
-    }
-    if (!Double.isFinite(temperatureDrop)) {
-      throw new IllegalArgumentException("Pumparound temperature drop must be finite");
-    }
-    if (findPumparoundByDrawTray(drawTrayNumber) != null) {
-      throw new IllegalArgumentException(createDuplicatePumparoundMessage(drawTrayNumber));
-    }
-
-    ColumnPumparound pumparound = new ColumnPumparound(name, drawTrayNumber, returnTrayNumber, drawFraction,
-        temperatureDrop);
-    pumparounds.add(pumparound);
-    getTray(drawTrayNumber).setLiquidPumparoundDrawFraction(drawFraction);
-    setDoInitializion(true);
-    return pumparound;
-  }
-
-  /**
-   * Find the pumparound that owns one tray's liquid draw stream.
-   *
-   * @param drawTrayNumber bottom-up draw tray index
-   * @return matching pumparound, or {@code null} when the tray has no pumparound
-   */
-  private ColumnPumparound findPumparoundByDrawTray(int drawTrayNumber) {
-    for (ColumnPumparound pumparound : pumparounds) {
-      if (pumparound.getDrawTrayNumber() == drawTrayNumber) {
-        return pumparound;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Create an actionable message for duplicate pumparound ownership.
-   *
-   * @param drawTrayNumber bottom-up draw tray index
-   * @return duplicate-ownership error message
-   */
-  private String createDuplicatePumparoundMessage(int drawTrayNumber) {
-    return "Column " + getName() + " already has a liquid pumparound drawing from tray " + drawTrayNumber
-        + "; configure at most one pumparound for each draw tray";
-  }
-
-  /**
-   * Reject duplicate draw ownership retained in a column serialized by an older NeqSim version.
-   *
-   * @throws IllegalStateException if two pumparounds use the same liquid draw tray
-   */
-  private void ensureIndependentPumparounds() {
-    Set<Integer> controlledDrawTrays = new HashSet<>();
-    for (ColumnPumparound pumparound : pumparounds) {
-      if (!controlledDrawTrays.add(pumparound.getDrawTrayNumber())) {
-        throw new IllegalStateException(createDuplicatePumparoundMessage(pumparound.getDrawTrayNumber()));
-      }
-    }
-  }
-
-  /**
-   * Get configured liquid pumparound circuits.
-   *
-   * @return unmodifiable list of configured pumparounds
-   */
-  public List<ColumnPumparound> getPumparounds() {
-    return Collections.unmodifiableList(pumparounds);
-  }
-
-  /**
-   * Set the maximum outer iterations used to converge pumparound return streams.
-   *
-   * @param maxIterations maximum number of pumparound iterations, minimum one
-   */
-  public void setMaxPumparoundIterations(int maxIterations) {
-    maxPumparoundIterations = Math.max(1, maxIterations);
-  }
-
-  /**
-   * Set the relative return-flow tolerance used for pumparound iterations.
-   *
-   * @param tolerance relative flow tolerance, must be finite and positive
-   */
-  public void setPumparoundTolerance(double tolerance) {
-    if (!Double.isFinite(tolerance) || tolerance <= 0.0) {
-      throw new IllegalArgumentException("Pumparound tolerance must be finite and positive");
-    }
-    pumparoundTolerance = tolerance;
-  }
-
-  /**
-   * Validate that a tray index is inside the column.
-   *
-   * @param trayNumber tray index to validate
-   * @param label diagnostic label for the tray role
-   */
-  private void validateTrayIndex(int trayNumber, String label) {
-    if (trayNumber < 0 || trayNumber >= numberOfTrays) {
-      throw new IllegalArgumentException(label + " must be between 0 and " + (numberOfTrays - 1));
-    }
-  }
-
-  /**
-   * Getter for the field <code>gasOutStream</code>.
-   *
-   * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
-   */
-  public StreamInterface getGasOutStream() {
-    return gasOutStream;
-  }
-
-  /**
-   * Getter for the field <code>liquidOutStream</code>.
-   *
-   * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
-   */
-  public StreamInterface getLiquidOutStream() {
-    return liquidOutStream;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public List<StreamInterface> getInletStreams() {
-    List<StreamInterface> inletStreams = new ArrayList<>();
-    for (StreamInterface feedStream : getAllExternalFeedStreams()) {
-      addStreamIfMissingByIdentity(inletStreams, feedStream);
-    }
-    for (StreamInterface feedStream : unassignedFeedStreams) {
-      addStreamIfMissingByIdentity(inletStreams, feedStream);
-    }
-    return Collections.unmodifiableList(inletStreams);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public List<StreamInterface> getOutletStreams() {
-    List<StreamInterface> outletStreams = new ArrayList<>();
-    addStreamIfMissingByIdentity(outletStreams, getGasOutStream());
-    addStreamIfMissingByIdentity(outletStreams, getLiquidOutStream());
-    for (StreamInterface sideDrawStream : getSideDrawStreams()) {
-      addStreamIfMissingByIdentity(outletStreams, sideDrawStream);
-    }
-    return Collections.unmodifiableList(outletStreams);
-  }
-
-  /**
-   * Get all external feed streams connected to a tray.
-   *
-   * <p>
-   * Feeds registered through {@link #addFeedStream(StreamInterface, int)} are always included. The method also includes
-   * named streams added directly to the tray to preserve legacy workflows that use
-   * {@code getTray(index).addStream(stream)} for side feeds or stripping gas.
-   * </p>
-   *
-   * @param trayIndex tray index to inspect
-   * @return external feed streams connected to the tray
-   */
-  List<StreamInterface> getExternalFeedStreams(int trayIndex) {
-    List<StreamInterface> externalFeeds = new ArrayList<>();
-    List<StreamInterface> registeredFeeds = feedStreams.get(trayIndex);
-    if (registeredFeeds != null) {
-      externalFeeds.addAll(registeredFeeds);
-    }
-    List<StreamInterface> directFeeds = directExternalFeedStreams.get(trayIndex);
-    if (directFeeds != null) {
-      for (StreamInterface directFeed : directFeeds) {
-        addStreamIfMissingByIdentity(externalFeeds, directFeed);
-      }
-    }
-    return externalFeeds;
-  }
-
-  /**
-   * Get all external feed streams connected to the column.
-   *
-   * @return external feed streams connected through the column API or named direct tray inputs
-   */
-  private List<StreamInterface> getAllExternalFeedStreams() {
-    List<StreamInterface> externalFeeds = new ArrayList<>();
-    for (List<StreamInterface> feedList : feedStreams.values()) {
-      for (StreamInterface feed : feedList) {
-        addStreamIfMissingByIdentity(externalFeeds, feed);
-      }
-    }
-    for (List<StreamInterface> directFeedList : directExternalFeedStreams.values()) {
-      for (StreamInterface directFeed : directFeedList) {
-        addStreamIfMissingByIdentity(externalFeeds, directFeed);
-      }
-    }
-    return externalFeeds;
-  }
-
-  /**
-   * Capture named streams added directly to trays before the column connects internal traffic.
-   */
-  private void captureDirectExternalTrayFeeds() {
-    Set<String> registeredFeedNames = collectRegisteredFeedNames();
-    for (int trayIndex = 0; trayIndex < trays.size(); trayIndex++) {
-      pruneClonedDirectExternalFeeds(trayIndex, registeredFeedNames);
-      List<StreamInterface> externalFeeds = getExternalFeedStreams(trayIndex);
-      SimpleTray tray = trays.get(trayIndex);
-      for (int streamIndex = 0; streamIndex < tray.getNumberOfInputStreams(); streamIndex++) {
-        StreamInterface stream = tray.getStream(streamIndex);
-        if (isUnregisteredExternalTrayFeed(stream, externalFeeds, registeredFeedNames)) {
-          List<StreamInterface> directFeeds = directExternalFeedStreams.get(trayIndex);
-          if (directFeeds == null) {
-            directFeeds = new ArrayList<>();
-            directExternalFeedStreams.put(trayIndex, directFeeds);
-          }
-          directFeeds.add(stream);
-          externalFeeds.add(stream);
-        }
-      }
-    }
-  }
-
-  /**
-   * Collect the names of all feeds registered through {@link #addFeedStream(StreamInterface, int)}.
-   *
-   * <p>
-   * Iterative process solving (for example a recycle loop, or the solver's own candidate-copy accept path) can leave
-   * cloned copies of a registered feed on its feed tray. Such clones share the registered feed name but have a
-   * different object identity, so they must never be mistaken for genuine legacy direct side feeds.
-   * </p>
-   *
-   * @return set of registered feed stream names (non-null, non-empty names only)
-   */
-  private Set<String> collectRegisteredFeedNames() {
-    Set<String> names = new HashSet<>();
-    for (List<StreamInterface> feedList : feedStreams.values()) {
-      if (feedList == null) {
-        continue;
-      }
-      for (StreamInterface feed : feedList) {
-        if (feed == null) {
-          continue;
-        }
-        String name = feed.getName();
-        if (name != null && !name.trim().isEmpty()) {
-          names.add(name);
-        }
-      }
-    }
-    return names;
-  }
-
-  /**
-   * Drop previously captured direct external feeds that are actually clones of registered feeds.
-   *
-   * <p>
-   * A cloned registered feed shares the registered feed name but has a different identity. Keeping such clones in
-   * {@link #directExternalFeedStreams} would inflate {@link #getExternalFeedStreams(int)} on every solve and make the
-   * tray feed inventory grow without bound across repeated runs.
-   * </p>
-   *
-   * @param trayIndex tray whose captured direct feeds should be pruned
-   * @param registeredFeedNames names of feeds registered through the column API
-   */
-  private void pruneClonedDirectExternalFeeds(int trayIndex, Set<String> registeredFeedNames) {
-    List<StreamInterface> directFeeds = directExternalFeedStreams.get(trayIndex);
-    if (directFeeds == null || directFeeds.isEmpty()) {
-      return;
-    }
-    Iterator<StreamInterface> iterator = directFeeds.iterator();
-    while (iterator.hasNext()) {
-      StreamInterface directFeed = iterator.next();
-      if (directFeed == null || (directFeed.getName() != null && registeredFeedNames.contains(directFeed.getName()))) {
-        iterator.remove();
-      }
-    }
-    if (directFeeds.isEmpty()) {
-      directExternalFeedStreams.remove(trayIndex);
-    }
-  }
-
-  /**
-   * Reset tray inputs to caller-supplied feeds before generated internal traffic is relinked.
-   */
-  private void resetTrayInputsToExternalFeeds() {
-    for (int trayIndex = 0; trayIndex < trays.size(); trayIndex++) {
-      List<StreamInterface> trayInputs = new ArrayList<>(getExternalFeedStreams(trayIndex));
-      for (ColumnPumparound pumparound : pumparounds) {
-        StreamInterface returnStream = pumparound.getReturnStream();
-        if (pumparound.getReturnTrayNumber() == trayIndex && returnStream != null) {
-          trayInputs.add(returnStream);
-        }
-      }
-      trays.get(trayIndex).resetInputStreams(trayInputs);
-    }
-  }
-
-  /**
-   * Replace caller-owned external tray feeds with internal stream clones before profile seeding.
-   *
-   * <p>
-   * {@link SimpleTray#init()} intentionally seeds all tray inlets at the tray temperature. Keeping an internal clone
-   * preserves that established numerical initialization while preventing the column from changing the temperature or
-   * enthalpy state of streams owned by its caller.
-   * </p>
-   */
-  private void cloneExternalTrayInputsForInitialization() {
-    for (int trayIndex = 0; trayIndex < trays.size(); trayIndex++) {
-      List<StreamInterface> externalFeeds = getExternalFeedStreams(trayIndex);
-      for (int streamIndex = 0; streamIndex < externalFeeds.size(); streamIndex++) {
-        trays.get(trayIndex).replaceStream(streamIndex, externalFeeds.get(streamIndex).clone());
-      }
-    }
-  }
-
-  /**
-   * Refresh internal feed clones from their caller-owned source streams.
-   *
-   * <p>
-   * The external feeds occupy the leading tray-input positions after initialization. Replacing only their thermodynamic
-   * systems preserves the internal stream objects and inter-tray wiring while applying current flow, temperature,
-   * pressure, composition, EOS, and mixing-rule state.
-   * </p>
-   */
-  private void refreshInternalExternalFeedSystems() {
-    for (int trayIndex = 0; trayIndex < trays.size(); trayIndex++) {
-      List<StreamInterface> externalFeeds = getExternalFeedStreams(trayIndex);
-      for (int streamIndex = 0; streamIndex < externalFeeds.size(); streamIndex++) {
-        SystemInterface cloned = externalFeeds.get(streamIndex).getThermoSystem().clone();
-        trays.get(trayIndex).getStream(streamIndex).setThermoSystem(cloned);
-      }
-    }
-  }
-
-  /**
-   * Get the lowest tray index containing an external feed stream.
-   *
-   * @return first external feed tray index
-   */
-  private int getFirstExternalFeedTrayNumber() {
-    int firstFeedTrayNumber = numberOfTrays;
-    for (Integer trayIndex : feedStreams.keySet()) {
-      firstFeedTrayNumber = Math.min(firstFeedTrayNumber, trayIndex.intValue());
-    }
-    for (Integer trayIndex : directExternalFeedStreams.keySet()) {
-      firstFeedTrayNumber = Math.min(firstFeedTrayNumber, trayIndex.intValue());
-    }
-    return firstFeedTrayNumber;
-  }
-
-  /**
-   * Add a stream to a list if the exact object is not already present.
-   *
-   * @param streams stream list to update
-   * @param candidate stream to add
-   */
-  private void addStreamIfMissingByIdentity(List<StreamInterface> streams, StreamInterface candidate) {
-    if (!containsStreamByIdentity(streams, candidate)) {
-      streams.add(candidate);
-    }
-  }
-
-  /**
-   * Check whether a list already contains a stream object by identity.
-   *
-   * @param streams stream list to inspect
-   * @param candidate stream to find
-   * @return {@code true} if the exact stream object is present
-   */
-  private boolean containsStreamByIdentity(List<StreamInterface> streams, StreamInterface candidate) {
-    for (StreamInterface stream : streams) {
-      if (stream == candidate) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Check whether a tray input should be treated as a legacy direct external feed.
-   *
-   * @param stream tray input stream to inspect
-   * @param knownExternalFeeds external streams already identified
-   * @param registeredFeedNames names of feeds registered through the column API
-   * @return {@code true} if the stream looks like a named direct external feed
-   */
-  private boolean isUnregisteredExternalTrayFeed(StreamInterface stream, List<StreamInterface> knownExternalFeeds,
-      Set<String> registeredFeedNames) {
-    if (stream == null || containsStreamByIdentity(knownExternalFeeds, stream)) {
-      return false;
-    }
-    String streamName = stream.getName();
-    if (streamName == null || streamName.trim().isEmpty()) {
-      return false;
-    }
-    for (StreamInterface knownExternalFeed : knownExternalFeeds) {
-      if (knownExternalFeed != null && streamName.equals(knownExternalFeed.getName())) {
-        // Initialization uses internal clones so caller-owned feeds are not mutated. A same-name
-        // tray input is that clone, not a newly connected legacy side feed.
-        return false;
-      }
-    }
-    if (registeredFeedNames.contains(streamName)) {
-      // A tray input that shares a registered feed name but a different identity is a clone left by
-      // iterative solving, not a genuine legacy direct side feed. Capturing it would make the tray
-      // feed inventory grow without bound across repeated solves.
-      return false;
-    }
-    return !isInternalTrayTrafficStreamName(streamName);
-  }
-
-  /**
-   * Check whether a stream name belongs to generated internal column traffic.
-   *
-   * @param streamName stream name to inspect
-   * @return {@code true} when the name is reserved for generated internal traffic
-   */
-  private boolean isInternalTrayTrafficStreamName(String streamName) {
-    return streamName.startsWith("Split Stream_") || streamName.startsWith("naphtali gas ")
-        || streamName.startsWith("naphtali liquid ");
-  }
-
-  /**
-   * Get the terminal top product draw used by product-draw residual diagnostics.
-   *
-   * @return synchronized top product draw stream, or the top tray vapor outlet before a solve has synchronized product
-   * draws
-   */
-  StreamInterface getTerminalGasProductDrawStream() {
-    if (terminalGasProductDrawStream != null) {
-      return terminalGasProductDrawStream;
-    }
-    if (numberOfTrays <= 0) {
-      return gasOutStream;
-    }
-    return trays.get(numberOfTrays - 1).getGasOutStream();
-  }
-
-  /**
-   * Get the terminal bottom product draw used by product-draw residual diagnostics.
-   *
-   * @return synchronized bottom product draw stream, or the bottom tray liquid outlet before a solve has synchronized
-   * product draws
-   */
-  StreamInterface getTerminalLiquidProductDrawStream() {
-    if (terminalLiquidProductDrawStream != null) {
-      return terminalLiquidProductDrawStream;
-    }
-    if (numberOfTrays <= 0) {
-      return liquidOutStream;
-    }
-    return trays.get(0).getLiquidOutStream();
-  }
-
-  /**
-   * Override terminal product draw streams for package-level residual diagnostics.
-   *
-   * @param topProductDraw top product draw stream to use in diagnostics
-   * @param bottomProductDraw bottom product draw stream to use in diagnostics
-   */
-  void setTerminalProductDrawStreamsForDiagnostics(StreamInterface topProductDraw, StreamInterface bottomProductDraw) {
-    terminalGasProductDrawStream = topProductDraw;
-    terminalLiquidProductDrawStream = bottomProductDraw;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getMassBalance(String unit) {
-    double inletFlow = 0.0;
-    for (StreamInterface feed : getAllExternalFeedStreams()) {
-      inletFlow += feed.getThermoSystem().getFlowRate(unit);
-    }
-    double outletFlow = getGasOutStream().getThermoSystem().getFlowRate(unit)
-        + getLiquidOutStream().getThermoSystem().getFlowRate(unit);
-    for (StreamInterface sideDrawStream : getSideDrawStreams()) {
-      outletFlow += sideDrawStream.getThermoSystem().getFlowRate(unit);
-    }
-    return outletFlow - inletFlow;
-  }
-
-  /**
-   * getReboiler.
-   *
-   * @return a {@link neqsim.process.equipment.distillation.Reboiler} object
-   */
-  public Reboiler getReboiler() {
-    return (Reboiler) trays.get(0);
-  }
-
-  /**
-   * getCondenser.
-   *
-   * @return a {@link neqsim.process.equipment.distillation.Condenser} object
-   */
-  public Condenser getCondenser() {
-    return (Condenser) trays.get(trays.size() - 1);
-  }
-
-  /**
-   * Configure the condenser operating mode.
-   *
-   * @param mode condenser operating mode
-   * @throws IllegalStateException if the column has no condenser
-   * @throws IllegalArgumentException if mode is {@code null} or requires more data
-   */
-  public void setCondenserMode(CondenserMode mode) {
-    Condenser condenser = requireCondenser();
-    if (mode == CondenserMode.PARTIAL) {
-      condenser.setSeparation_with_liquid_reflux(false, 0.0, "kg/hr");
-      condenser.setTotalCondenser(false);
-    } else if (mode == CondenserMode.TOTAL) {
-      condenser.setSeparation_with_liquid_reflux(false, 0.0, "kg/hr");
-      condenser.setTotalCondenser(true);
-    } else if (mode == CondenserMode.LIQUID_REFLUX_SPLIT) {
-      throw new IllegalArgumentException(
-          "Use setCondenserLiquidReflux(value, unit) to configure liquid reflux split mode");
-    } else {
-      throw new IllegalArgumentException("Condenser mode cannot be null");
-    }
-    setDoInitializion(true);
-  }
-
-  /**
-   * Configure a partial condenser with a fixed liquid reflux split.
-   *
-   * @param value fixed liquid reflux flow rate
-   * @param unit flow-rate unit for the fixed reflux value
-   * @throws IllegalArgumentException if a top reflux-ratio specification is already active
-   * @throws IllegalStateException if the column has no condenser
-   */
-  public void setCondenserLiquidReflux(double value, String unit) {
-    Condenser condenser = requireCondenser();
-    if (isTopRefluxRatioSpecification(topSpecification)) {
-      throw new IllegalArgumentException(createConflictingCondenserRefluxSpecificationsMessage());
-    }
-    condenser.setTotalCondenser(false);
-    condenser.setSeparation_with_liquid_reflux(true, value, unit);
-    setDoInitializion(true);
-  }
-
-  /**
-   * Get the configured condenser operating mode.
-   *
-   * @return condenser operating mode
-   * @throws IllegalStateException if the column has no condenser
-   */
-  public CondenserMode getCondenserMode() {
-    Condenser condenser = requireCondenser();
-    if (condenser.isSeparation_with_liquid_reflux()) {
-      return CondenserMode.LIQUID_REFLUX_SPLIT;
-    }
-    return condenser.isTotalCondenser() ? CondenserMode.TOTAL : CondenserMode.PARTIAL;
-  }
-
-  /**
-   * Configure the reboiler operating mode. Selecting equilibrium mode clears the active reboiler ratio and its stored
-   * bottom reflux-ratio specification while preserving unrelated bottom specifications.
-   *
-   * @param mode reboiler operating mode
-   * @throws IllegalStateException if the column has no reboiler
-   * @throws IllegalArgumentException if mode is {@code null} or requires more data
-   */
-  public void setReboilerMode(ReboilerMode mode) {
-    requireReboiler();
-    if (mode == ReboilerMode.EQUILIBRIUM) {
-      getReboiler().clearRefluxRatio();
-      if (isBottomRefluxRatioSpecification(bottomSpecification)) {
-        bottomSpecification = null;
-      }
-      setDoInitializion(true);
-    } else if (mode == ReboilerMode.VAPOR_BOILUP_RATIO) {
-      throw new IllegalArgumentException("Use setReboilerVaporBoilupRatio(ratio) to configure vapor boilup ratio mode");
-    } else {
-      throw new IllegalArgumentException("Reboiler mode cannot be null");
-    }
-  }
-
-  /**
-   * Configure the reboiler with an explicit vapor boilup/reflux ratio.
-   *
-   * @param ratio finite non-negative boilup/reflux ratio
-   * @throws IllegalArgumentException if ratio is negative or not finite
-   * @throws IllegalStateException if the column has no reboiler
-   */
-  public void setReboilerVaporBoilupRatio(double ratio) {
-    if (!Double.isFinite(ratio) || ratio < 0.0) {
-      throw new IllegalArgumentException("Reboiler vapor boilup ratio must be finite and >= 0");
-    }
-    requireReboiler().setRefluxRatio(ratio);
-    setDoInitializion(true);
-  }
-
-  /**
-   * Get the configured reboiler operating mode.
-   *
-   * @return reboiler operating mode
-   * @throws IllegalStateException if the column has no reboiler
-   */
-  public ReboilerMode getReboilerMode() {
-    return requireReboiler().isRefluxSet() ? ReboilerMode.VAPOR_BOILUP_RATIO : ReboilerMode.EQUILIBRIUM;
-  }
-
-  /**
-   * Get the condenser or fail with a setup-oriented error.
-   *
-   * @return condenser tray
-   * @throws IllegalStateException if the column has no condenser
-   */
-  private Condenser requireCondenser() {
-    if (!hasCondenser) {
-      throw new IllegalStateException("Column has no condenser");
-    }
-    return getCondenser();
-  }
-
-  /**
-   * Get the reboiler or fail with a setup-oriented error.
-   *
-   * @return reboiler tray
-   * @throws IllegalStateException if the column has no reboiler
-   */
-  private Reboiler requireReboiler() {
-    if (!hasReboiler) {
-      throw new IllegalStateException("Column has no reboiler");
-    }
-    return getReboiler();
-  }
-
-  /**
-   * Getter for the field <code>reboilerTemperature</code>.
-   *
-   * @return a double
-   */
-  public double getReboilerTemperature() {
-    return reboilerTemperature;
-  }
-
-  /**
-   * Setter for the field <code>reboilerTemperature</code>.
-   *
-   * @param reboilerTemperature a double
-   */
-  public void setReboilerTemperature(double reboilerTemperature) {
-    this.reboilerTemperature = reboilerTemperature;
-    if (hasReboiler) {
-      getReboiler().setOutTemperature(reboilerTemperature);
-    }
-  }
-
-  /**
-   * Set the reboiler outlet temperature with unit conversion.
-   *
-   * @param reboilerTemperature reboiler outlet temperature
-   * @param unit temperature unit, for example {@code "K"} or {@code "C"}
-   * @throws IllegalArgumentException if the temperature unit is unsupported
-   */
-  public void setReboilerTemperature(double reboilerTemperature, String unit) {
-    setReboilerTemperature(new TemperatureUnit(reboilerTemperature, unit).getValue("K"));
-  }
-
-  /**
-   * Getter for the field <code>condenserTemperature</code>.
-   *
-   * @return a double
-   */
-  public double getCondenserTemperature() {
-    return condenserTemperature;
-  }
-
-  /**
-   * Setter for the field <code>condenserTemperature</code>.
-   *
-   * @param condenserTemperature a double
-   */
-  public void setCondenserTemperature(double condenserTemperature) {
-    this.condenserTemperature = condenserTemperature;
-    if (hasCondenser) {
-      getCondenser().setOutTemperature(condenserTemperature);
-    }
-  }
-
-  /**
-   * Set the condenser outlet temperature with unit conversion.
-   *
-   * @param condenserTemperature condenser outlet temperature
-   * @param unit temperature unit, for example {@code "K"} or {@code "C"}
-   * @throws IllegalArgumentException if the temperature unit is unsupported
-   */
-  public void setCondenserTemperature(double condenserTemperature, String unit) {
-    setCondenserTemperature(new TemperatureUnit(condenserTemperature, unit).getValue("K"));
-  }
-
-  /**
-   * isDoInitializion.
-   *
-   * @return a boolean
-   */
-  public boolean isDoInitializion() {
-    return doInitializion;
-  }
-
-  /**
-   * Setter for the field <code>doInitializion</code>.
-   *
-   * @param doInitializion a boolean
-   */
-  public void setDoInitializion(boolean doInitializion) {
-    this.doInitializion = doInitializion;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public MechanicalDesign getMechanicalDesign() {
-    return mechanicalDesign;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void initMechanicalDesign() {
-    mechanicalDesign = new DistillationColumnMechanicalDesign(this);
-  }
-
-  /**
-   * Set temperature convergence tolerance.
-   *
-   * @param tol the tolerance
-   */
-  public void setTemperatureTolerance(double tol) {
-    this.temperatureTolerance = tol;
-    this.temperatureToleranceCustomized = true;
-  }
-
-  /**
-   * Set the temperature convergence tolerance from a relative tolerance.
-   *
-   * <p>
-   * The absolute tolerance in Kelvin is {@code relativeTolerance * referenceTemperature}, where the reference
-   * temperature is taken from {@link #getReferenceTemperature()} (average tray temperature after a solve, otherwise the
-   * average external feed temperature, otherwise 300&nbsp;K). Use this to align a column inside a
-   * {@link neqsim.process.processmodel.ProcessModel} with the plant-level boundary tolerance: the default absolute
-   * tolerance can be an order of magnitude tighter than the model gate, which makes the column iterate long after the
-   * plant would accept the result.
-   * </p>
-   *
-   * @param relativeTolerance relative temperature tolerance, must be finite and greater than zero (for example 1.0e-3
-   * to match a ProcessModel boundary tolerance of 1e-3)
-   * @return the resulting absolute temperature tolerance in Kelvin
-   * @throws IllegalArgumentException if {@code relativeTolerance} is not finite and positive
-   */
-  public double setTemperatureToleranceRelative(double relativeTolerance) {
-    if (!isPositiveFinite(relativeTolerance)) {
-      throw new IllegalArgumentException(
-          "Relative temperature tolerance must be finite and positive, was " + relativeTolerance);
-    }
-    setTemperatureTolerance(relativeTolerance * getReferenceTemperature());
-    return temperatureTolerance;
-  }
-
-  /**
-   * Reference temperature used to convert relative tolerances to absolute Kelvin values.
-   *
-   * @return average tray temperature when the column holds a solved state, otherwise the average external feed
-   * temperature, otherwise 300&nbsp;K
-   */
-  public double getReferenceTemperature() {
-    double sum = 0.0;
-    int count = 0;
-    for (int i = 0; i < numberOfTrays && i < trays.size(); i++) {
-      SimpleTray tray = trays.get(i);
-      if (tray == null || tray.getOutletStream() == null || tray.getOutletStream().getFluid() == null) {
-        continue;
-      }
-      double temperature = tray.getOutletStream().getTemperature("K");
-      if (Double.isFinite(temperature) && temperature > 0.0) {
-        sum += temperature;
-        count++;
-      }
-    }
-    if (count > 0) {
-      return sum / count;
-    }
-    for (StreamInterface feed : getAllExternalFeedStreams()) {
-      if (feed == null || feed.getFluid() == null) {
-        continue;
-      }
-      double temperature = feed.getTemperature("K");
-      if (Double.isFinite(temperature) && temperature > 0.0) {
-        sum += temperature;
-        count++;
-      }
-    }
-    return count > 0 ? sum / count : 300.0;
-  }
-
-  /**
-   * Set mass balance convergence tolerance.
-   *
-   * @param tol the tolerance
-   */
-  public void setMassBalanceTolerance(double tol) {
-    this.massBalanceTolerance = tol;
-    this.massBalanceToleranceCustomized = true;
-  }
-
-  /**
-   * Set enthalpy balance convergence tolerance.
-   *
-   * @param tol the tolerance
-   */
-  public void setEnthalpyBalanceTolerance(double tol) {
-    this.enthalpyBalanceTolerance = tol;
-    this.enthalpyBalanceToleranceCustomized = true;
-  }
-
-  /**
-   * Set the scaled MESH residual tolerance used when MESH residual gating is enabled.
-   *
-   * @param tol positive finite tolerance
-   * @throws IllegalArgumentException if the tolerance is not positive and finite
-   */
-  public void setMeshResidualTolerance(double tol) {
-    if (!Double.isFinite(tol) || tol <= 0.0) {
-      throw new IllegalArgumentException("MESH residual tolerance must be positive and finite");
-    }
-    this.meshResidualTolerance = tol;
-  }
-
-  /**
-   * Set the product-draw residual tolerance used when MESH residual gating is enabled.
-   *
-   * @param tol positive finite product-draw residual tolerance
-   * @throws IllegalArgumentException if the tolerance is not positive and finite
-   */
-  public void setMeshProductDrawResidualTolerance(double tol) {
-    if (!Double.isFinite(tol) || tol <= 0.0) {
-      throw new IllegalArgumentException("MESH product draw residual tolerance must be positive and finite");
-    }
-    this.meshProductDrawResidualTolerance = tol;
-  }
-
-  /**
-   * Restore adaptive default tolerances, discarding manual overrides.
-   */
-  public void resetToleranceOverrides() {
-    temperatureToleranceCustomized = false;
-    massBalanceToleranceCustomized = false;
-    enthalpyBalanceToleranceCustomized = false;
-    temperatureTolerance = DEFAULT_TEMPERATURE_TOLERANCE;
-    massBalanceTolerance = DEFAULT_MASS_BALANCE_TOLERANCE;
-    enthalpyBalanceTolerance = DEFAULT_ENTHALPY_BALANCE_TOLERANCE;
-    meshResidualTolerance = DEFAULT_MESH_RESIDUAL_TOLERANCE;
-    meshProductDrawResidualTolerance = DEFAULT_MESH_PRODUCT_DRAW_RESIDUAL_TOLERANCE;
-    enforceMeshResidualTolerance = false;
-    enforceMeshResidualToleranceCustomized = false;
-  }
-
-  /**
-   * Check mass balance for all components.
-   *
-   * @return true if mass balance is within 1e-6
-   */
-  public boolean massBalanceCheck() {
-    double[] massInput = new double[numberOfTrays];
-    double[] massOutput = new double[numberOfTrays];
-    double[] massBalance = new double[numberOfTrays];
-
-    for (int i = 0; i < numberOfTrays; i++) {
-      int numberOfInputStreams = trays.get(i).getNumberOfInputStreams();
-      for (int j = 0; j < numberOfInputStreams; j++) {
-        massInput[i] += trays.get(i).getStream(j).getFluid().getFlowRate("kg/hr");
-      }
-      massOutput[i] = trays.get(i).getThermoSystem().getFlowRate("kg/hr");
-      massBalance[i] = massInput[i] - massOutput[i];
-
-      logger.debug("Tray {}: #in={}, massIn={}, massOut={}, balance={}", Integer.valueOf(i),
-          Integer.valueOf(numberOfInputStreams), Double.valueOf(massInput[i]), Double.valueOf(massOutput[i]),
-          Double.valueOf(massBalance[i]));
-    }
-    double massError = 0.0;
-    for (int i = 0; i < numberOfTrays; i++) {
-      massError += Math.abs(massBalance[i]);
-    }
-    return (massError <= 1e-6);
-  }
-
-  /**
-   * Check mass balance for a specific component.
-   *
-   * @param componentName the component name
-   * @return true if mass balance is within 1e-6
-   */
-  public boolean componentMassBalanceCheck(String componentName) {
-    double[] massInput = new double[numberOfTrays];
-    double[] massOutput = new double[numberOfTrays];
-    double[] massBalance = new double[numberOfTrays];
-
-    for (int i = 0; i < numberOfTrays; i++) {
-      int numberOfInputStreams = trays.get(i).getNumberOfInputStreams();
-      for (int j = 0; j < numberOfInputStreams; j++) {
-        for (int k = 0; k < trays.get(i).getStream(j).getFluid().getNumberOfPhases(); k++) {
-          massInput[i] += trays.get(i).getStream(j).getFluid().getPhase(k).getComponent(componentName)
-              .getFlowRate("kg/hr");
-        }
-      }
-      // outputs
-      for (int k = 0; k < trays.get(i).getGasOutStream().getFluid().getNumberOfPhases(); k++) {
-        massOutput[i] += trays.get(i).getGasOutStream().getFluid().getPhase(k).getComponent(componentName)
-            .getFlowRate("kg/hr");
-      }
-      for (int k = 0; k < trays.get(i).getLiquidOutStream().getFluid().getNumberOfPhases(); k++) {
-        massOutput[i] += trays.get(i).getLiquidOutStream().getFluid().getPhase(k).getComponent(componentName)
-            .getFlowRate("kg/hr");
-      }
-
-      massBalance[i] = massInput[i] - massOutput[i];
-      logger.debug("Tray {}, comp={}, #in={}, massIn={}, massOut={}, balance={}", Integer.valueOf(i), componentName,
-          Integer.valueOf(numberOfInputStreams), Double.valueOf(massInput[i]), Double.valueOf(massOutput[i]),
-          Double.valueOf(massBalance[i]));
-    }
-
-    double massError = 0.0;
-    for (int i = 0; i < numberOfTrays; i++) {
-      massError += Math.abs(massBalance[i]);
-    }
-    return (massError < 1e-6);
-  }
-
-  /**
-   * Calculate the relative mass balance error across the column.
-   *
-   * @return maximum of tray-wise and overall relative mass imbalance
-   */
-  public double getMassBalanceError() {
-    double trayRelativeError = 0.0;
-    double totalInlet = 0.0;
-    double totalResidual = 0.0;
-
-    for (int i = 0; i < numberOfTrays; i++) {
-      double inlet = 0.0;
-      int numberOfInputStreams = trays.get(i).getNumberOfInputStreams();
-      for (int j = 0; j < numberOfInputStreams; j++) {
-        inlet += trays.get(i).getStream(j).getFluid().getFlowRate("kg/hr");
-      }
-
-      double outlet = trays.get(i).getThermoSystem().getFlowRate("kg/hr");
-
-      double absInlet = Math.abs(inlet);
-      double imbalance = Math.abs(inlet - outlet);
-      if (absInlet > 1e-12) {
-        trayRelativeError = Math.max(trayRelativeError, imbalance / absInlet);
-      }
-      totalInlet += absInlet;
-      totalResidual += imbalance;
-    }
-
-    double columnRelative = totalInlet > 1e-12 ? totalResidual / totalInlet : totalResidual;
-    return Math.max(trayRelativeError, columnRelative);
-  }
-
-  /**
-   * Calculates the relative mass imbalance between external feed streams and public product streams.
-   *
-   * @return relative external mass imbalance based on kg/hr flow rates
-   */
-  private double getExternalMassBalanceError() {
-    double totalFeedMass = 0.0;
-    for (StreamInterface feed : getAllExternalFeedStreams()) {
-      totalFeedMass += Math.abs(feed.getThermoSystem().getFlowRate("kg/hr"));
-    }
-    double externalMassBalance = Math.abs(getMassBalance("kg/hr"));
-    return totalFeedMass > 1.0e-12 ? externalMassBalance / totalFeedMass : externalMassBalance;
-  }
-
-  /**
-   * Calculates the relative enthalpy imbalance across all trays.
-   *
-   * @return maximum of tray-wise and overall relative enthalpy imbalance
-   */
-  public double getEnergyBalanceError() {
-    double trayRelativeError = 0.0;
-    double totalInlet = 0.0;
-    double totalResidual = 0.0;
-
-    for (int i = 0; i < numberOfTrays; i++) {
-      double inlet = 0.0;
-      int numberOfInputStreams = trays.get(i).getNumberOfInputStreams();
-      for (int j = 0; j < numberOfInputStreams; j++) {
-        inlet += getFiniteStreamEnthalpy(trays.get(i).getStream(j));
-      }
-
-      double outlet = getFiniteStreamEnthalpy(trays.get(i).getGasOutStream());
-      outlet += getFiniteStreamEnthalpy(trays.get(i).getLiquidOutStream());
-
-      if (trays.get(i) instanceof Reboiler) {
-        inlet += getFiniteDiagnosticValue(((Reboiler) trays.get(i)).getDuty());
-      } else if (trays.get(i) instanceof Condenser) {
-        inlet += getFiniteDiagnosticValue(((Condenser) trays.get(i)).getDuty());
-      }
-
-      double absInlet = Math.abs(inlet);
-      double imbalance = Math.abs(inlet - outlet);
-      if (absInlet > 1e-12) {
-        trayRelativeError = Math.max(trayRelativeError, imbalance / absInlet);
-      }
-      totalInlet += absInlet;
-      totalResidual += imbalance;
-    }
-
-    double columnRelative = totalInlet > 1e-12 ? totalResidual / totalInlet : totalResidual;
-    return Math.max(trayRelativeError, columnRelative);
-  }
-
-  /**
-   * Read stream enthalpy for diagnostics, treating non-finite values as no contribution.
-   *
-   * @param stream stream to inspect
-   * @return finite stream enthalpy contribution
-   */
-  private double getFiniteStreamEnthalpy(StreamInterface stream) {
-    if (stream == null || stream.getThermoSystem() == null) {
-      return 0.0;
-    }
-    double enthalpy = stream.getFluid().getEnthalpy();
-    if (Double.isFinite(enthalpy)) {
-      return enthalpy;
-    }
-    double flowRate = Math.abs(stream.getThermoSystem().getFlowRate("kg/hr"));
-    if (flowRate <= 1.0e-12) {
-      return 0.0;
-    }
-    return 0.0;
-  }
-
-  /**
-   * Sanitize a scalar diagnostic contribution.
-   *
-   * @param value value to sanitize
-   * @return value when finite, otherwise zero
-   */
-  private double getFiniteDiagnosticValue(double value) {
-    return Double.isFinite(value) ? value : 0.0;
-  }
-
-  /** Maximum number of entries stored in the convergence history list. */
-  private static final int MAX_CONVERGENCE_HISTORY = 500;
-
-  /**
-   * Append a residual snapshot to the convergence history, capping at {@link #MAX_CONVERGENCE_HISTORY} entries.
-   *
-   * @param entry residual array to record
-   */
-  private void recordConvergence(double[] entry) {
-    if (convergenceHistory != null && convergenceHistory.size() < MAX_CONVERGENCE_HISTORY) {
-      convergenceHistory.add(entry);
-    }
-  }
-
-  /**
-   * Apply Murphree tray efficiency correction to the vapor leaving a tray. The correction blends the equilibrium vapor
-   * composition with the inlet vapor composition:
-   *
-   * <pre>
-   * y_i^out = y_i^in + E_MV * (y_i^eq - y_i^in)
-   * </pre>
-   *
-   * <p>
-   * where {@code E_MV} is the Murphree efficiency, {@code y_i^eq} is the equilibrium composition from the flash, and
-   * {@code y_i^in} is the inlet vapor composition. When efficiency is 1.0, the tray is ideal and no correction is
-   * applied. The correction is skipped for reboilers and condensers (first and last trays).
-   *
-   * @param trayIndex index of the tray in the {@code trays} list
-   */
-  private void applyMurphreeCorrection(int trayIndex) {
-    double emv = getEffectiveMurphreeEfficiency(trayIndex);
-    if (emv >= 1.0 - 1e-10) {
-      return; // ideal tray, no correction needed
-    }
-    // Skip reboiler (index 0) â€” always an equilibrium stage
-    if (trayIndex <= 0) {
-      return;
-    }
-    // Skip condenser (last index) if present
-    if (hasCondenser && trayIndex >= numberOfTrays - 1) {
-      return;
-    }
-
-    SystemInterface fluid = trays.get(trayIndex).getThermoSystem();
-    if (fluid.getNumberOfPhases() < 2) {
-      return;
-    }
-
-    // The inlet vapor to this tray comes from the tray below (index - 1)
-    SystemInterface belowFluid = trays.get(trayIndex - 1).getThermoSystem();
-    if (belowFluid.getNumberOfPhases() < 2) {
-      return;
-    }
-
-    int nc = fluid.getPhase(0).getNumberOfComponents();
-    // Equilibrium compositions from flash
-    double[] yEq = new double[nc];
-    double[] yIn = new double[nc];
-    for (int j = 0; j < nc; j++) {
-      yEq[j] = fluid.getPhase(0).getComponent(j).getx();
-      yIn[j] = belowFluid.getPhase(0).getComponent(j).getx();
-    }
-
-    // Apply Murphree to vapor: y_actual = y_in + E*(y_eq - y_in)
-    double[] yActual = new double[nc];
-    double sumY = 0.0;
-    for (int j = 0; j < nc; j++) {
-      yActual[j] = yIn[j] + emv * (yEq[j] - yIn[j]);
-      yActual[j] = Math.max(0.0, yActual[j]);
-      sumY += yActual[j];
-    }
-    if (sumY > 1e-15) {
-      for (int j = 0; j < nc; j++) {
-        yActual[j] /= sumY;
-      }
-    }
-
-    // Build corrected gas stream from phase clone â€” total moles unchanged.
-    // The liquid stream is NOT corrected: it uses the equilibrium result from the
-    // flash.
-    // This is the standard post-correction approach for Murphree efficiency in
-    // bubble-point sequential methods.
-    double vaporMoles = fluid.getPhase(0).getNumberOfMolesInPhase();
-    SystemInterface gasSystem = fluid.phaseToSystem(0);
-    for (int j = 0; j < nc; j++) {
-      gasSystem.getPhase(0).getComponent(j).setx(yActual[j]);
-      gasSystem.getPhase(0).getComponent(j).setNumberOfMolesInPhase(yActual[j] * vaporMoles);
-      gasSystem.getPhase(0).getComponent(j).setNumberOfmoles(yActual[j] * vaporMoles);
-    }
-    gasSystem.setTotalNumberOfMoles(vaporMoles);
-    gasSystem.init(0);
-    gasSystem.init(1);
-
-    if (trays.get(trayIndex) instanceof SimpleTray) {
-      trays.get(trayIndex).setCachedGasOutStream(new Stream("", gasSystem));
-    }
-  }
-
-  /**
-   * Blend the current stream update with the previous iterate using the provided relaxation factor.
-   *
-   * @param previous stream from the previous iteration (may be {@code null})
-   * @param current current iteration stream
-   * @param relaxation relaxation factor applied to the update
-   * @return relaxed stream instance to be used in the next tear
-   */
-  private StreamInterface applyRelaxation(StreamInterface previous, StreamInterface current, double relaxation) {
-    return applyRelaxationInternal(previous, current, relaxation, false);
-  }
-
-  /**
-   * Blend streams using the fast unchanged-clone path for fixed-point sweeps.
-   *
-   * @param previous stream from the previous iteration (may be {@code null})
-   * @param current current iteration stream
-   * @param relaxation relaxation factor applied to the update
-   * @return relaxed stream instance to be used in the next tear
-   */
-  private StreamInterface applyRelaxationFast(StreamInterface previous, StreamInterface current, double relaxation) {
-    return applyRelaxationInternal(previous, current, relaxation, true);
-  }
-
-  /**
-   * Blend the current stream update with the previous iterate.
-   *
-   * @param previous stream from the previous iteration (may be {@code null})
-   * @param current current iteration stream
-   * @param relaxation relaxation factor applied to the update
-   * @param skipUnchangedReflash whether an unchanged clone can reuse the current stream flash state
-   * @return relaxed stream instance to be used in the next tear
-   */
-  private StreamInterface applyRelaxationInternal(StreamInterface previous, StreamInterface current, double relaxation,
-      boolean skipUnchangedReflash) {
-    double maximumInternalFlow = getMaximumRelaxedInternalFlowKgPerHour();
-    // Fast path: no damping needed; clone the already-flashed tray outlet.
-    if (previous == null || relaxation >= 1.0) {
-      StreamInterface relaxed = current.clone();
-      boolean requiresReflash = internalTrafficCapActive || !Double.isFinite(relaxed.getFlowRate("kg/hr"));
-      if (requiresReflash) {
-        capStreamFlow(relaxed, maximumInternalFlow);
-      }
-      if (requiresReflash || !skipUnchangedReflash) {
-        relaxed.run();
-      }
-      return relaxed;
-    }
-
-    StreamInterface relaxed = current.clone();
-    double step = Math.max(0.0, Math.min(1.0, relaxation));
-    double previousFlow = getRelaxedInternalFlow(previous.getFlowRate("kg/hr"), maximumInternalFlow);
-    double currentFlow = getRelaxedInternalFlow(current.getFlowRate("kg/hr"), maximumInternalFlow);
-    double mixedFlow = previousFlow + step * (currentFlow - previousFlow);
-    mixedFlow = getRelaxedInternalFlow(mixedFlow, maximumInternalFlow);
-    relaxed.setFlowRate(mixedFlow, "kg/hr");
-
-    double mixedTemperature = previous.getTemperature("K")
-        + step * (current.getTemperature("K") - previous.getTemperature("K"));
-    relaxed.setTemperature(mixedTemperature, "K");
-
-    double mixedPressure = previous.getPressure("bara")
-        + step * (current.getPressure("bara") - previous.getPressure("bara"));
-    relaxed.setPressure(mixedPressure, "bara");
-
-    double[] zPrev = previous.getThermoSystem().getMolarComposition();
-    double totalMolesPrev = previous.getThermoSystem().getTotalNumberOfMoles();
-    double[] zCurr = current.getThermoSystem().getMolarComposition();
-    double totalMolesCurr = current.getThermoSystem().getTotalNumberOfMoles();
-
-    if (!canRelaxMolarComposition(previous, current, relaxed, zPrev, zCurr)) {
-      relaxed.run();
-      return relaxed;
-    }
-
-    double[] zMixed = new double[zPrev.length];
-    double totalMolesMixed = 0.0;
-
-    for (int i = 0; i < zPrev.length; i++) {
-      double molesPrev_i = zPrev[i] * totalMolesPrev;
-      double molesCurr_i = zCurr[i] * totalMolesCurr;
-      double mixedMoles_i = molesPrev_i + step * (molesCurr_i - molesPrev_i);
-      if (Double.isFinite(mixedMoles_i) && mixedMoles_i > 0.0) {
-        zMixed[i] = mixedMoles_i;
-        totalMolesMixed += mixedMoles_i;
-      } else {
-        zMixed[i] = 0.0;
-      }
-    }
-
-    if (totalMolesMixed > 1e-12 && relaxed.getThermoSystem().getTotalNumberOfMoles() > 1e-100) {
-      for (int i = 0; i < zMixed.length; i++) {
-        zMixed[i] /= totalMolesMixed;
-      }
-      relaxed.getThermoSystem().setMolarComposition(zMixed);
-    }
-
-    relaxed.run();
-
-    return relaxed;
-  }
-
-  /**
-   * Check whether two stream compositions can be relaxed component-by-component.
-   *
-   * @param previous previous internal stream state
-   * @param current current internal stream state
-   * @param relaxed relaxed stream receiving the mixed composition
-   * @param previousComposition previous molar composition vector
-   * @param currentComposition current molar composition vector
-   * @return {@code true} when all streams expose the same component count and composition length
-   */
-  private boolean canRelaxMolarComposition(StreamInterface previous, StreamInterface current, StreamInterface relaxed,
-      double[] previousComposition, double[] currentComposition) {
-    if (previous == null || current == null || relaxed == null || previousComposition == null
-        || currentComposition == null) {
-      return false;
-    }
-    int previousComponents = previous.getThermoSystem().getNumberOfComponents();
-    int currentComponents = current.getThermoSystem().getNumberOfComponents();
-    int relaxedComponents = relaxed.getThermoSystem().getNumberOfComponents();
-    return previousComponents == currentComponents && currentComponents == relaxedComponents
-        && previousComposition.length == previousComponents && currentComposition.length == currentComponents;
-  }
-
-  /**
-   * Return a relaxed internal flow, applying emergency capping only when active or required.
-   *
-   * @param flow internal flow in kg/hr
-   * @param maximumInternalFlow maximum emergency flow magnitude in kg/hr
-   * @return uncapped finite flow during normal solves, otherwise capped flow
-   */
-  private double getRelaxedInternalFlow(double flow, double maximumInternalFlow) {
-    if (!internalTrafficCapActive && Double.isFinite(flow)) {
-      return flow;
-    }
-    return limitInternalFlow(flow, maximumInternalFlow);
-  }
-
-  /**
-   * Calculate the relaxed-update flow cap from the current external feed flow.
-   *
-   * @return maximum allowed internal tear-stream flow in kg/hr
-   */
-  private double getMaximumRelaxedInternalFlowKgPerHour() {
-    return Math.max(1.0e3, getTotalExternalFeedFlowKgPerHour() * MAX_RELAXED_INTERNAL_TRAFFIC_TO_FEED_RATIO);
-  }
-
-  /**
-   * Limit a flow to the configured internal traffic cap.
-   *
-   * @param flow flow rate to limit
-   * @param maximumFlow maximum absolute flow rate
-   * @return finite capped flow rate
-   */
-  private double limitInternalFlow(double flow, double maximumFlow) {
-    if (!Double.isFinite(flow)) {
-      return 0.0;
-    }
-    double cappedMagnitude = Math.min(Math.abs(flow), Math.max(0.0, maximumFlow));
-    return Math.signum(flow) * cappedMagnitude;
-  }
-
-  /**
-   * Cap a stream flow rate if it exceeds the internal traffic guard.
-   *
-   * @param stream stream to cap
-   * @param maximumFlow maximum absolute flow rate in kg/hr
-   */
-  private void capStreamFlow(StreamInterface stream, double maximumFlow) {
-    double flow = stream.getFlowRate("kg/hr");
-    double cappedFlow = limitInternalFlow(flow, maximumFlow);
-    if (Double.isFinite(cappedFlow) && Math.abs(cappedFlow - flow) > 1.0e-12) {
-      stream.setFlowRate(cappedFlow, "kg/hr");
-    }
-  }
-
-  /**
-   * Finalise a successful solver run by updating iteration metrics and product streams.
-   *
-   * @param id calculation identifier
-   * @param iterations number of iterations performed
-   * @param temperatureResidual final average temperature residual
-   * @param massResidual final relative mass residual
-   * @param energyResidual final relative energy residual
-   * @param startTime nano time when the solve started
-   */
-  private void finalizeSolve(UUID id, int iterations, double temperatureResidual, double massResidual,
-      double energyResidual, long startTime) {
-    err = temperatureResidual;
-    lastIterationCount = iterations;
-    lastTemperatureResidual = temperatureResidual;
-    lastMassResidual = massResidual;
-    lastEnergyResidual = energyResidual;
-    lastSolveTimeSeconds = (System.nanoTime() - startTime) / 1.0e9;
-    lastUsedFeedFlashFallback = false;
-
-    gasOutStream.setThermoSystem(trays.get(numberOfTrays - 1).getGasOutStream().getThermoSystem().clone());
-    gasOutStream.setCalculationIdentifier(id);
-    liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
-    liquidOutStream.setCalculationIdentifier(id);
-
-    captureTerminalProductDrawStreams(id);
-    boolean productReconciled = updateProductsFromExternalComponentBalance(id);
-    canonicalizeTerminalTracePhase(gasOutStream, true, id);
-    canonicalizeTerminalTracePhase(liquidOutStream, false, id);
-    lastInternalTrafficRatio = getInternalTrafficRatio();
-    if (!internalTrafficSatisfied()) {
-      capInternalTrayTraffic();
-      lastInternalTrafficGuardReached = true;
-      lastInternalTrafficRatio = Math.min(getInternalTrafficRatio(), MAX_RELAXED_INTERNAL_TRAFFIC_TO_FEED_RATIO);
-    }
-    boolean fallbackProductsApplied = false;
-    if ((!internalTrafficSatisfied() || lastMassResidual > getEffectiveMassBalanceTolerance()
-        || getExternalMassBalanceError() > getEffectiveMassBalanceTolerance() || bottomProductPhaseInvalid())
-        && updateProductsFromOverallFeedFlash(id)) {
-      fallbackProductsApplied = true;
-    }
-    if (fallbackProductsApplied && hasCondenser && getCondenser().isSeparation_with_liquid_reflux()) {
-      getCondenser().discardLiquidProductAfterColumnFallback(id);
-    }
-    synchronizeColumnEndProductStreams(id);
-    synchronizeTerminalProductDrawStreams(id);
-    lastUsedFeedFlashFallback = fallbackProductsApplied;
-    lastMassResidual = Math.max(lastMassResidual, getExternalMassBalanceError());
-    if (lastInternalTrafficGuardReached) {
-      lastMassResidual = Math.max(lastMassResidual,
-          lastInternalTrafficRatio / MAX_SOLVED_INTERNAL_TRAFFIC_TO_FEED_RATIO);
-    }
-
-    boolean anyFeedMultiPhase = false;
-    for (List<StreamInterface> feeds : feedStreams.values()) {
-      for (StreamInterface feed : feeds) {
-        if (feed.getThermoSystem().doMultiPhaseCheck()) {
-          anyFeedMultiPhase = true;
-          break;
-        }
-      }
-      if (anyFeedMultiPhase) {
-        break;
-      }
-    }
-    if (anyFeedMultiPhase) {
-      gasOutStream.getThermoSystem().setMultiPhaseCheck(true);
-      liquidOutStream.getThermoSystem().setMultiPhaseCheck(true);
-    }
-
-    for (int i = 0; i < numberOfTrays; i++) {
-      trays.get(i).setCalculationIdentifier(id);
-    }
-    if (isEffectiveMeshResidualToleranceEnforced() || lastMeshResidual != null) {
-      updateMeshResiduals();
-    }
-    updateLastSolveStatus(productReconciled, fallbackProductsApplied);
-    warnOnNonFiniteColumnEndDuty();
-    setCalculationIdentifier(id);
-  }
-
-  /**
-   * Warn when the reboiler or condenser duty is not a finite number after a solve.
-   *
-   * <p>
-   * A non-finite duty means the column-end energy balance could not be evaluated. It is silently propagated to callers
-   * through {@code getDuty()}, so it must at least be reported.
-   * </p>
-   */
-  private void warnOnNonFiniteColumnEndDuty() {
-    if (hasReboiler && getReboiler() != null && !Double.isFinite(getReboiler().getDuty())) {
-      logger.warn("Column {} finished with a non-finite reboiler duty ({}); the column-end energy balance "
-          + "could not be evaluated", getName(), Double.valueOf(getReboiler().getDuty()));
-    }
-    if (hasCondenser && getCondenser() != null && !Double.isFinite(getCondenser().getDuty())) {
-      logger.warn("Column {} finished with a non-finite condenser duty ({}); the column-end energy balance "
-          + "could not be evaluated", getName(), Double.valueOf(getCondenser().getDuty()));
-    }
-  }
-
-  /**
-   * Synchronize condenser and reboiler product streams with the exposed column products.
-   *
-   * <p>
-   * Product reconciliation updates {@link #gasOutStream} and {@link #liquidOutStream}. Legacy callers may also read the
-   * condenser product or reboiler liquid stream directly, so those equipment-level product streams must be kept on the
-   * same balanced basis.
-   * </p>
-   *
-   * @param id calculation identifier to assign to synchronized product streams
-   */
-  private void synchronizeColumnEndProductStreams(UUID id) {
-    if (hasCondenser && gasOutStream != null && getCondenser() != null) {
-      synchronizeProductStream(getCondenser().getProductOutStream(), gasOutStream, id);
-    }
-    if (hasReboiler && liquidOutStream != null && getReboiler() != null) {
-      synchronizeProductStream(getReboiler().getLiquidOutStream(), liquidOutStream, id);
-    }
-  }
-
-  /**
-   * Copy a source product basis into a target product stream.
-   *
-   * @param target target product stream to synchronize
-   * @param source source product stream containing the balanced thermodynamic system
-   * @param id calculation identifier to assign to the target
-   */
-  private void synchronizeProductStream(StreamInterface target, StreamInterface source, UUID id) {
-    if (target == null || source == null || source.getThermoSystem() == null) {
-      return;
-    }
-    target.setThermoSystem(source.getThermoSystem().clone());
-    target.setCalculationIdentifier(id);
-  }
-
-  /**
-   * Synchronize product-draw residual diagnostics with the final exposed column products.
-   *
-   * @param id calculation identifier to assign to synchronized diagnostic streams
-   */
-  private void synchronizeTerminalProductDrawStreams(UUID id) {
-    if (gasOutStream != null && gasOutStream.getThermoSystem() != null) {
-      terminalGasProductDrawStream = gasOutStream.clone();
-      terminalGasProductDrawStream.setCalculationIdentifier(id);
-    }
-    if (liquidOutStream != null && liquidOutStream.getThermoSystem() != null) {
-      terminalLiquidProductDrawStream = liquidOutStream.clone();
-      terminalLiquidProductDrawStream.setCalculationIdentifier(id);
-    }
-  }
-
-  /**
-   * Update the strict solve status after product handling and residual diagnostics are current.
-   *
-   * @param productReconciled {@code true} if public products were materially reconciled
-   * @param fallbackProductsApplied {@code true} if fallback products were generated
-   */
-  private void updateLastSolveStatus(boolean productReconciled, boolean fallbackProductsApplied) {
-    if (fallbackProductsApplied) {
-      setLastSolveStatus(SolveStatus.FALLBACK_PRODUCTS,
-          "Public products were generated from guarded fallback flash products");
-      // The public products are now a single equilibrium flash of the mixed feeds, not the tray
-      // solution. The residual getters are computed against those fallback products and therefore
-      // look converged, so this warning is the only signal a caller gets. Callers must check
-      // getLastSolveStatus() and not the residuals alone.
-      logger.warn("Column {} returned guarded fallback products from an overall feed flash; "
-          + "tray solution was rejected and product flows/duties are not a rigorous column result", getName());
-      return;
-    }
-    if (lastInternalTrafficGuardReached) {
-      setLastSolveStatus(SolveStatus.FAILED, "Internal tray traffic exceeded the rigorous solved-state guard");
-      return;
-    }
-    if (hasCondenser && getCondenser() != null && getCondenser().isSeparation_with_liquid_reflux()
-        && !getCondenser().isFixedLiquidRefluxSpecificationSatisfied()) {
-      setLastSolveStatus(SolveStatus.FAILED,
-          "Available condenser liquid was insufficient for the fixed liquid reflux specification");
-      return;
-    }
-    if (!residualConvergenceSatisfied()) {
-      setLastSolveStatus(SolveStatus.FAILED, "Residual convergence gates were not satisfied");
-      return;
-    }
-    if (productReconciled) {
-      if (!isEffectiveMeshResidualToleranceEnforced()) {
-        setLastSolveStatus(SolveStatus.RECONCILED_PRODUCTS,
-            "Public products were materially reconciled after the tray solve");
-        return;
-      }
-    }
-    setLastSolveStatus(SolveStatus.RIGOROUS_CONVERGED, "Tray solution satisfies active rigorous convergence gates");
-  }
-
-  /**
-   * Store the latest solve status and explanatory reason.
-   *
-   * @param status solve status to store
-   * @param reason concise status reason
-   */
-  private void setLastSolveStatus(SolveStatus status, String reason) {
-    lastSolveStatus = status == null ? SolveStatus.FAILED : status;
-    lastSolveStatusReason = reason == null ? "" : reason;
-  }
-
-  /**
-   * Check whether the bottom product is phase-inconsistent for a reboiled column.
-   *
-   * @return {@code true} when a reboiled column does not expose a liquid-like bottom product
-   */
-  private boolean bottomProductPhaseInvalid() {
-    return hasReboiler && !isLiquidLikeProduct(liquidOutStream);
-  }
-
-  /**
-   * Check whether a product stream has a liquid-like thermodynamic phase.
-   *
-   * @param productStream stream to inspect
-   * @return {@code true} when the stream contains an oil, liquid, or aqueous phase
-   */
-  private boolean isLiquidLikeProduct(StreamInterface productStream) {
-    if (productStream == null || productStream.getThermoSystem() == null) {
-      return false;
-    }
-    SystemInterface system = productStream.getThermoSystem();
-    return system.hasPhaseType("oil") || system.hasPhaseType("liquid") || system.hasPhaseType("aqueous");
-  }
-
-  /**
-   * Canonicalize an immaterial minority phase in a separated terminal product.
-   *
-   * <p>
-   * The public gas and liquid products are phase-separated outlets, but the final product TP flash can retain a phase
-   * with a beta of only a few parts per billion when the result lies on a dew- or bubble-point boundary. Different
-   * sequential solvers can approach that boundary from opposite sides even after satisfying the same numerical
-   * tolerances. When the intended outlet phase owns all but {@link #TERMINAL_PRODUCT_TRACE_PHASE_FRACTION} of the
-   * product inventory, rebuild the stream as that single phase using the complete component-mole vector. This changes
-   * neither total nor per-component flow and avoids treating a numerical trace as a distinct process product.
-   * </p>
-   *
-   * @param productStream public terminal product to inspect
-   * @param gasProduct {@code true} for the top gas product, {@code false} for the bottom liquid product
-   * @param id calculation identifier to retain on a rebuilt stream
-   */
-  private void canonicalizeTerminalTracePhase(StreamInterface productStream, boolean gasProduct, UUID id) {
-    if (productStream == null || productStream.getThermoSystem() == null) {
-      return;
-    }
-    SystemInterface system = productStream.getThermoSystem();
-    if (system.getNumberOfPhases() != 2) {
-      return;
-    }
-
-    int intendedPhaseIndex = -1;
-    double intendedPhaseFraction = -1.0;
-    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
-      String phaseTypeName = system.getPhase(phaseIndex).getPhaseTypeName();
-      boolean intendedPhase = gasProduct ? "gas".equalsIgnoreCase(phaseTypeName)
-          : "oil".equalsIgnoreCase(phaseTypeName) || "liquid".equalsIgnoreCase(phaseTypeName)
-              || "aqueous".equalsIgnoreCase(phaseTypeName);
-      double phaseFraction = system.getBeta(phaseIndex);
-      if (intendedPhase && Double.isFinite(phaseFraction) && phaseFraction > intendedPhaseFraction) {
-        intendedPhaseIndex = phaseIndex;
-        intendedPhaseFraction = phaseFraction;
-      }
-    }
-    if (intendedPhaseIndex < 0) {
-      return;
-    }
-
-    int unintendedPhaseIndex = intendedPhaseIndex == 0 ? 1 : 0;
-    double unintendedPhaseFraction = system.getBeta(unintendedPhaseIndex);
-    double[] componentMoles = getComponentMoles(system);
-    if (!isTerminalTracePhaseCanonicalizationCandidate(system.getNumberOfPhases(), intendedPhaseFraction,
-        unintendedPhaseFraction, componentMoles)) {
-      return;
-    }
-
-    String rawPhaseTypeName = system.getPhase(intendedPhaseIndex).getPhaseTypeName();
-    String intendedPhaseTypeName = gasProduct ? "gas"
-        : "oil".equalsIgnoreCase(rawPhaseTypeName) ? "oil"
-            : "aqueous".equalsIgnoreCase(rawPhaseTypeName) ? "aqueous" : "liquid";
-    updateProductStreamWithForcedPhase(productStream, componentMoles, intendedPhaseTypeName, id);
-  }
-
-  /**
-   * Check the numerical prerequisites for conservative terminal trace-phase canonicalization.
-   *
-   * @param numberOfPhases number of product phases
-   * @param intendedPhaseFraction beta of the intended outlet phase
-   * @param unintendedPhaseFraction beta of the single unintended phase
-   * @param componentMoles complete product component-mole vector
-   * @return {@code true} when the state is finite, normalized, non-negative, and within the trace limit
-   */
-  static boolean isTerminalTracePhaseCanonicalizationCandidate(int numberOfPhases, double intendedPhaseFraction,
-      double unintendedPhaseFraction, double[] componentMoles) {
-    double phaseFractionSum = intendedPhaseFraction + unintendedPhaseFraction;
-    if (numberOfPhases != 2 || !Double.isFinite(intendedPhaseFraction) || !Double.isFinite(unintendedPhaseFraction)
-        || unintendedPhaseFraction <= 0.0 || unintendedPhaseFraction > TERMINAL_PRODUCT_TRACE_PHASE_FRACTION
-        || intendedPhaseFraction < 1.0 - TERMINAL_PRODUCT_TRACE_PHASE_FRACTION
-        || intendedPhaseFraction > 1.0 + TERMINAL_PRODUCT_TRACE_PHASE_FRACTION || !Double.isFinite(phaseFractionSum)
-        || Math.abs(phaseFractionSum - 1.0) > TERMINAL_PRODUCT_TRACE_PHASE_FRACTION || componentMoles == null) {
-      return false;
-    }
-
-    double totalComponentMoles = 0.0;
-    for (double componentMole : componentMoles) {
-      if (!Double.isFinite(componentMole) || componentMole < 0.0) {
-        return false;
-      }
-      totalComponentMoles += componentMole;
-    }
-    return Double.isFinite(totalComponentMoles) && totalComponentMoles > 0.0;
-  }
-
-  /** Cap cached internal tray outlet streams to the emergency traffic limit. */
-  private void capInternalTrayTraffic() {
-    double maximumInternalFlow = getMaximumRelaxedInternalFlowKgPerHour();
-    for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
-      capStreamFlow(trays.get(trayIndex).getGasOutStream(), maximumInternalFlow);
-      capStreamFlow(trays.get(trayIndex).getLiquidOutStream(), maximumInternalFlow);
-    }
-  }
-
-  /**
-   * Updates products so the exposed streams close the external component balance.
-   *
-   * @param id calculation identifier to assign to the updated stream
-   * @return {@code true} if product component amounts were materially changed
-   */
-  private boolean updateProductsFromExternalComponentBalance(UUID id) {
-    if (getAllExternalFeedStreams().isEmpty() || gasOutStream == null || liquidOutStream == null) {
-      return false;
-    }
-
-    double[] feedComponentMoles = getFeedComponentMoles();
-    double[] sideDrawComponentMoles = getSideDrawComponentMoles(feedComponentMoles.length);
-    // Sum only gas-phase moles for the top product and only liquid-like phase moles for the bottom
-    // product. Tray terminal thermo systems can carry both phases (e.g. a reboiler holding a 2-
-    // phase oil/gas system), and summing across all phases incorrectly attributes ascending vapor
-    // moles to the bottom product (and descending reflux moles to the top product). The
-    // accelerator solvers (Inside-Out, Newton, SUM_RATES) are more sensitive to this than DAMPED
-    // because their tray-0 gas fraction is proportionally larger, which drove a degenerate per-
-    // component scaling and a fallback to overall feed flash on small heavy-rich columns.
-    //
-    // Source the moles directly from the tray terminal systems rather than from the public
-    // streams. The public streams are clones of these tray systems at this point, but reading the
-    // tray systems makes the data flow explicit and defends against any pre-call mutation of the
-    // public stream's thermo system that may collapse a two-phase tray system into a single
-    // phase.
-    SystemInterface topTraySystem = trays.get(numberOfTrays - 1).getGasOutStream().getThermoSystem();
-    SystemInterface bottomTraySystem = trays.get(0).getLiquidOutStream().getThermoSystem();
-    double[] topProductComponentMoles = getPhaseFilteredComponentMoles(topTraySystem, true);
-    double[] bottomProductComponentMoles = getPhaseFilteredComponentMoles(bottomTraySystem, false);
-    if (feedComponentMoles.length != topProductComponentMoles.length
-        || feedComponentMoles.length != bottomProductComponentMoles.length) {
-      return false;
-    }
-
-    double feedTotalMoles = 0.0;
-    double currentProductTotalMoles = 0.0;
-    for (int componentIndex = 0; componentIndex < feedComponentMoles.length; componentIndex++) {
-      feedTotalMoles += Math.max(0.0, feedComponentMoles[componentIndex]);
-      currentProductTotalMoles += Math.max(0.0, topProductComponentMoles[componentIndex])
-          + Math.max(0.0, bottomProductComponentMoles[componentIndex]);
-    }
-    if (feedTotalMoles <= 1.0e-20 || currentProductTotalMoles <= 1.0e-20) {
-      return false;
-    }
-
-    double[] balancedTopProductComponentMoles = new double[feedComponentMoles.length];
-    double[] balancedBottomProductComponentMoles = new double[feedComponentMoles.length];
-    double topTotalMoles = 0.0;
-    double bottomTotalMoles = 0.0;
-    for (int componentIndex = 0; componentIndex < feedComponentMoles.length; componentIndex++) {
-      double currentTopMoles = Math.max(0.0, topProductComponentMoles[componentIndex]);
-      double currentBottomMoles = Math.max(0.0, bottomProductComponentMoles[componentIndex]);
-      double currentComponentMoles = currentTopMoles + currentBottomMoles;
-      if (currentComponentMoles > 1.0e-20) {
-        double terminalProductMoles = Math.max(0.0,
-            feedComponentMoles[componentIndex] - sideDrawComponentMoles[componentIndex]);
-        double componentScale = terminalProductMoles / currentComponentMoles;
-        balancedTopProductComponentMoles[componentIndex] = currentTopMoles * componentScale;
-        balancedBottomProductComponentMoles[componentIndex] = currentBottomMoles * componentScale;
-      }
-      topTotalMoles += balancedTopProductComponentMoles[componentIndex];
-      bottomTotalMoles += balancedBottomProductComponentMoles[componentIndex];
-    }
-
-    if (topTotalMoles <= 1.0e-20 || bottomTotalMoles <= 1.0e-20) {
-      return false;
-    }
-
-    boolean materialChange = componentMolesMateriallyDiffer(topProductComponentMoles, balancedTopProductComponentMoles)
-        || componentMolesMateriallyDiffer(bottomProductComponentMoles, balancedBottomProductComponentMoles);
-    updateProductStreamFromComponentMoles(gasOutStream, balancedTopProductComponentMoles, id);
-    updateProductStreamFromComponentMoles(liquidOutStream, balancedBottomProductComponentMoles, id);
-
-    // Per-component scaling can shift a borderline bottom composition across the dew-point
-    // boundary at the reboiler T/P, leaving the bottom stream single-phase gas. When that
-    // happens, retry with a uniform scalar scale that preserves the oil-phase composition
-    // shape from tray 0 (which is liquid by construction). This recovers Inside-Out / Newton
-    // results on small heavy-rich columns without resorting to the overall feed-flash fallback.
-    if (hasReboiler && !isLiquidLikeProduct(liquidOutStream)) {
-      double terminalProductTotalMoles = 0.0;
-      for (int componentIndex = 0; componentIndex < feedComponentMoles.length; componentIndex++) {
-        terminalProductTotalMoles += Math.max(0.0,
-            feedComponentMoles[componentIndex] - sideDrawComponentMoles[componentIndex]);
-      }
-      if (terminalProductTotalMoles > 1.0e-20 && currentProductTotalMoles > 1.0e-20) {
-        double overallScale = terminalProductTotalMoles / currentProductTotalMoles;
-        for (int componentIndex = 0; componentIndex < feedComponentMoles.length; componentIndex++) {
-          balancedTopProductComponentMoles[componentIndex] = Math.max(0.0, topProductComponentMoles[componentIndex])
-              * overallScale;
-          balancedBottomProductComponentMoles[componentIndex] = Math.max(0.0,
-              bottomProductComponentMoles[componentIndex]) * overallScale;
-        }
-        updateProductStreamFromComponentMoles(gasOutStream, balancedTopProductComponentMoles, id);
-        updateProductStreamFromComponentMoles(liquidOutStream, balancedBottomProductComponentMoles, id);
-        materialChange = true;
-      }
-    }
-
-    // Phase-preserving rescue. If the bottom product still flashes single-phase gas at the
-    // reboiler T/P after both per-component and scalar retries, force the public bottom stream
-    // to a single liquid phase using the converged tray-0 oil-phase moles. The tray system was
-    // two-phase by construction, so the moles are valid; only the in-isolation re-flash at the
-    // reboiler T/P is producing a spurious vapor product. This avoids the overall-feed-flash
-    // fallback for Inside-Out, Matrix-IO, and Newton solvers on small heavy-rich columns.
-    if (hasReboiler && !isLiquidLikeProduct(liquidOutStream)) {
-      updateProductStreamWithForcedPhase(liquidOutStream, balancedBottomProductComponentMoles, "liquid", id);
-      materialChange = true;
-    }
-    return materialChange;
-  }
-
-  /**
-   * Check whether two component-flow vectors differ materially for solve-status classification.
-   *
-   * @param before component mole amounts before reconciliation
-   * @param after component mole amounts after reconciliation
-   * @return {@code true} when relative component drift exceeds the status tolerance
-   */
-  private boolean componentMolesMateriallyDiffer(double[] before, double[] after) {
-    if (before == null || after == null || before.length != after.length) {
-      return true;
-    }
-    double difference = 0.0;
-    double scale = 0.0;
-    for (int componentIndex = 0; componentIndex < before.length; componentIndex++) {
-      double beforeValue = Math.max(0.0, before[componentIndex]);
-      double afterValue = Math.max(0.0, after[componentIndex]);
-      difference += Math.abs(afterValue - beforeValue);
-      scale += Math.abs(beforeValue) + Math.abs(afterValue);
-    }
-    if (scale <= 1.0e-20) {
-      return difference > 1.0e-20;
-    }
-    return difference / scale > PRODUCT_RECONCILIATION_STATUS_TOLERANCE;
-  }
-
-  /**
-   * Captures the raw terminal tray draw streams used by product-draw residual diagnostics.
-   *
-   * <p>
-   * Product reconciliation and guarded fallback updates can change the public column products after the tray solver has
-   * produced terminal draws. MESH diagnostics must compare public products to these raw terminal draws rather than to
-   * synchronized clones of the public products.
-   * </p>
-   *
-   * @param id calculation identifier to assign to the captured draw streams
-   */
-  private void captureTerminalProductDrawStreams(UUID id) {
-    terminalGasProductDrawStream = new Stream("",
-        trays.get(numberOfTrays - 1).getGasOutStream().getThermoSystem().clone());
-    terminalGasProductDrawStream.setCalculationIdentifier(id);
-    terminalLiquidProductDrawStream = new Stream("", trays.get(0).getLiquidOutStream().getThermoSystem().clone());
-    terminalLiquidProductDrawStream.setCalculationIdentifier(id);
-  }
-
-  /**
-   * Replaces a product stream fluid with the same thermodynamic model at the current stream temperature and pressure
-   * but with specified component mole amounts.
-   *
-   * @param productStream stream to update
-   * @param componentMoles component mole amounts on the stream-flow basis
-   * @param id calculation identifier to assign after the update
-   */
-  private void updateProductStreamFromComponentMoles(StreamInterface productStream, double[] componentMoles, UUID id) {
-    SystemInterface balancedSystem = productStream.getThermoSystem().clone();
-    double productTemperature = productStream.getTemperature("K");
-    double productPressure = productStream.getPressure("bara");
-    balancedSystem.setMolarFlowRates(componentMoles);
-    balancedSystem.setTemperature(productTemperature);
-    balancedSystem.setPressure(productPressure, "bara");
-    balancedSystem.init(0);
-    ThermodynamicOperations operations = new ThermodynamicOperations(balancedSystem);
-    operations.TPflash();
-    balancedSystem.init(3);
-    balancedSystem.initProperties();
-    productStream.setThermoSystem(balancedSystem);
-    productStream.setCalculationIdentifier(id);
-  }
-
-  /**
-   * Replace a product stream fluid with the same thermodynamic model at the product stream's own temperature and
-   * pressure, forcing a single phase identity instead of running a TP flash.
-   *
-   * <p>
-   * Used as a phase-preserving rescue when an accelerator solver (Inside-Out, Matrix-IO, Newton) converges to a tray-0
-   * oil-phase composition that, when re-flashed in isolation at the reboiler T/P, collapses to single-phase gas. The
-   * tray system itself was two-phase by construction, so the moles drawn from it are valid; forcing the phase preserves
-   * the rigorous solver result and avoids the spurious overall-feed-flash fallback that otherwise triggers via
-   * {@code bottomProductPhaseInvalid()}.
-   * </p>
-   *
-   * @param productStream stream to update
-   * @param componentMoles component mole amounts on the stream-flow basis
-   * @param phaseTypeName phase type description ("gas" or "liquid")
-   * @param id calculation identifier to assign after the update
-   */
-  private void updateProductStreamWithForcedPhase(StreamInterface productStream, double[] componentMoles,
-      String phaseTypeName, UUID id) {
-    SystemInterface productSystem = productStream.getThermoSystem().clone();
-    double productTemperature = productStream.getTemperature("K");
-    double productPressure = productStream.getPressure("bara");
-    productSystem.setMolarFlowRates(componentMoles);
-    productSystem.setTemperature(productTemperature);
-    productSystem.setPressure(productPressure, "bara");
-    productSystem.init(0);
-    setSingleProductPhaseType(productSystem, phaseTypeName);
-    productSystem.init(1);
-    productSystem.initProperties();
-    setSingleProductPhaseType(productSystem, phaseTypeName);
-    productStream.setThermoSystem(productSystem);
-    productStream.setCalculationIdentifier(id);
-  }
-
-  /**
-   * Update public products from an overall equilibrium flash of all external feeds.
-   *
-   * <p>
-   * This fallback is used only after the tray solver has produced non-physical internal traffic. It gives bounded,
-   * mass-conserving products for diagnostics without claiming that the rigorous tray MESH problem has converged.
-   * </p>
-   *
-   * @param id calculation identifier to assign to fallback products
-   * @return {@code true} if fallback products were created
-   */
-  private boolean updateProductsFromOverallFeedFlash(UUID id) {
-    List<StreamInterface> externalFeeds = getAllExternalFeedStreams();
-    if (externalFeeds.isEmpty()) {
-      return false;
-    }
-
-    Mixer fallbackMixer = new Mixer("distillation product fallback mixer");
-    for (StreamInterface feed : externalFeeds) {
-      fallbackMixer.addStream(feed);
-    }
-    fallbackMixer.run(id);
-    SystemInterface fallbackSystem = fallbackMixer.getOutletStream().getThermoSystem().clone();
-    fallbackSystem.setTemperature(getFallbackProductTemperature());
-    fallbackSystem.setPressure(getFallbackProductPressure(), "bara");
-    fallbackSystem.setMultiPhaseCheck(true);
-
-    try {
-      ThermodynamicOperations operations = new ThermodynamicOperations(fallbackSystem);
-      operations.TPflash();
-      fallbackSystem.initProperties();
-    } catch (Exception ex) {
-      logger.warn("Overall-feed flash fallback failed for column {}", getName(), ex);
-      return false;
-    }
-
-    int gasPhaseIndex = findPhaseIndex(fallbackSystem, "gas", 0);
-    int liquidPhaseIndex = findLiquidPhaseIndex(fallbackSystem);
-    if (gasPhaseIndex < 0 || liquidPhaseIndex < 0 || gasPhaseIndex == liquidPhaseIndex) {
-      return updateProductsFromShortcutEquilibriumSplit(fallbackSystem, id);
-    }
-
-    gasOutStream.setThermoSystem(createNormalizedPhaseSystem(fallbackSystem, gasPhaseIndex));
-    gasOutStream.setCalculationIdentifier(id);
-    liquidOutStream.setThermoSystem(createNormalizedPhaseSystem(fallbackSystem, liquidPhaseIndex));
-    liquidOutStream.setCalculationIdentifier(id);
-    return true;
-  }
-
-  /**
-   * Create fallback products from a bounded shortcut equilibrium split.
-   *
-   * <p>
-   * The split uses bottom terminal K-values and a Rachford-Rice vapor-fraction estimate to place volatile components
-   * preferentially in the vapor and heavy components preferentially in the liquid. It is only used when an overall TP
-   * flash does not expose both gas and liquid phases.
-   * </p>
-   *
-   * @param feedSystem combined external feed system
-   * @param id calculation identifier to assign to fallback products
-   * @return {@code true} if shortcut fallback products were created
-   */
-  private boolean updateProductsFromShortcutEquilibriumSplit(SystemInterface feedSystem, UUID id) {
-    double[] feedComponentMoles = getComponentMoles(feedSystem);
-    double totalMoles = 0.0;
-    for (int componentIndex = 0; componentIndex < feedComponentMoles.length; componentIndex++) {
-      totalMoles += Math.max(0.0, feedComponentMoles[componentIndex]);
-    }
-    if (totalMoles <= 1.0e-20) {
-      return false;
-    }
-
-    SystemInterface kSystem = feedSystem.clone();
-    kSystem.setTemperature(getFallbackProductTemperature());
-    kSystem.setPressure(getFallbackProductPressure(), "bara");
-    kSystem.setNumberOfPhases(2);
-    kSystem.init(0);
-    kSystem.init(1);
-
-    double vaporFraction = estimateShortcutVaporFraction(feedComponentMoles, kSystem, getCurrentProductVaporFraction());
-    double vaporToLiquidRatio = vaporFraction / Math.max(1.0e-12, 1.0 - vaporFraction);
-    double[] topComponentMoles = new double[feedComponentMoles.length];
-    double[] bottomComponentMoles = new double[feedComponentMoles.length];
-    for (int componentIndex = 0; componentIndex < feedComponentMoles.length; componentIndex++) {
-      double feedMoles = Math.max(0.0, feedComponentMoles[componentIndex]);
-      double kValue = Math.max(1.0e-8, kSystem.getComponent(componentIndex).getK());
-      double denominator = 1.0 + vaporToLiquidRatio * kValue;
-      if (!Double.isFinite(denominator) || denominator <= 1.0e-12) {
-        denominator = 1.0e-12;
-      }
-      bottomComponentMoles[componentIndex] = feedMoles / denominator;
-      topComponentMoles[componentIndex] = feedMoles - bottomComponentMoles[componentIndex];
-    }
-
-    updateProductStreamFromComponentMolesAsPhase(gasOutStream, topComponentMoles, "gas", id);
+YªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éí×Þö×”èµ©hºÚn¶X§zÍ\XÚØYÙH™\\Ú[Kœ›ØÙ\ÜË™\]Z\Y[™\Ý[][ÛŽÂ‚š[\Ü˜]˜K][\œ˜^S\ÝÂš[\Ü˜]˜K][\œ˜^\ÎÂš[\Ü˜]˜K][ÛÛXÝ[ÛœÎÂš[\Ü˜]˜K][’\ÚX\Âš[\Ü˜]˜K][’\ÚÙ]Âš[\Ü˜]˜K][’]\˜]ÜŽÂš[\Ü˜]˜K][“\ÝÂš[\Ü˜]˜K][“X\Âš[\Ü˜]˜K][“X\‘[žNÂš[\Ü˜]˜K][”Ù]Âš[\Ü˜]˜K][•URQÂš[\ÜÜ™Ë˜\XÚK›ÙÙÚ[™Ë›ÙÍ‹“ÙÓX[˜YÙ\ŽÂš[\ÜÜ™Ë˜\XÚK›ÙÙÚ[™Ë›ÙÍ‹“ÙÙÙ\ŽÂš[\ÜÛÛK™ÛÛÙÛK™ÜÛÛ‹‘ÜÛÛZ[\ŽÂš[\Ü™\\Ú[Kœ›ØÙ\ÜË˜ÛÜÝ\Ý[X][Û‹˜ÛÛ[[‹ÛÛ[[ÛÜÝ\Ý[X]NÂš[\Ü™\\Ú[Kœ›ØÙ\ÜË™\]Z\Y[”›ØÙ\ÜÑ\]Z\Y[˜\ÙPÛ\ÜÎÂš[\Ü™\\Ú[Kœ›ØÙ\ÜË™\]Z\Y[™\Ý[][Û‹š[\›˜[ËÛÛ[[’[\›˜[Ñ\ÚYÛ™\ŽÂš[\Ü™\\Ú[Kœ›ØÙ\ÜË™\]Z\Y[šX]^Ú[™Ù\‹’X]\ŽÂš[\Ü™\\Ú[Kœ›ØÙ\ÜË™\]Z\Y[›Z^\‹“Z^\ŽÂš[\Ü™\\Ú[Kœ›ØÙ\ÜË™\]Z\Y[œÙ\\˜]Ü‹”Ù\\˜]ÜŽÂš[\Ü™\\Ú[Kœ›ØÙ\ÜË™\]Z\Y[œÝ™X[K”Ý™X[NÂš[\Ü™\\Ú[Kœ›ØÙ\ÜË™\]Z\Y[œÝ™X[K”Ý™X[R[\™˜XÙNÂš[\Ü™\\Ú[Kœ›ØÙ\ÜË›YXÚ[šXØ[\ÚYÛ‹“YXÚ[šXØ[\ÚYÛŽÂš[\Ü™\\Ú[Kœ›ØÙ\ÜË›YXÚ[šXØ[\ÚYÛ‹™\Ý[][Û‹‘\Ý[][ÛÛÛ[[“YXÚ[šXØ[\ÚYÛŽÂš[\Ü™\\Ú[Kœ›ØÙ\ÜË][›[Ûš]Ü‹‘\Ý[][ÛÛÛ[[”™\ÜÛœÙNÂš[\Ü™\\Ú[Kœ›ØÙ\ÜË][œ™\Ü”™\ÜÛÛ™šYÎÂš[\Ü™\\Ú[Kœ›ØÙ\ÜË][œ™\Ü”™\ÜÛÛ™šYË‘]Z[]™[Âš[\Ü™\\Ú[K\›[ËœÞ\Ý[K”Þ\Ý[R[\™˜XÙNÂš[\Ü™\\Ú[K\›[Ù[˜[ZXÛÜ\˜][ÛœË•\›[Ù[˜[ZXÓÜ\˜][ÛœÎÂš[\Ü™\\Ú[K][‘^ÛYQœ›ÛR˜XÛØÛÑÙ[™\˜]Y™\ÜÂš[\Ü™\\Ú[K][[š]•[\\˜]\™U[š]Âš[\Ü™\\Ú[K][˜[Y][Û‹•˜[Y][Û”™\Ý[Â‚‹ÊŠ‚ˆ
+ˆ[Ù[ÈH˜^H˜\ÙY\Ý[][ÛˆÛÛ[[ˆÚ]Ü[Û˜[ÛÛ™[œÙ\ˆ[™™X›Ú[\‹‚ˆ
+‚ˆ
+ˆ‚ˆ
+ˆHÛÛ[[ˆ\ÈÛÛ™Y\Ú[™ÈHÙ\]Y[X[ÝXœÝ]][Ûˆ\›ØXÚˆHÐ[šÈÚ[š]
+
+_HY]ÙÙ]È[š]X[˜^Bˆ
+ˆ[\\˜]\™\ÈžH[›š[™ÈH™YY˜^H[™[™X\›H\ÝšX][™È[\\˜]\™\ÈÝØ\™ÈHÜ[™›ÝÛKˆ\š[™Âˆ
+ˆÐ[šÈÜ[ŠURQ
+_HH˜^\È\™H]\˜]]™[HÛÛ™Y[ˆ\Ø\™[™ÝÛØ\™ÝÙY\È[[HÝ[[YY[\\˜]\™HÚ[™ÙBˆ
+ˆ™]ÙY[ˆ]\˜][ÛœÈ\È™[ÝÈHÛÛ™šYÝ\™YÐ[šÈÝ[\\˜]\™UÛ\˜[˜Ù_HÜˆH]\˜][Ûˆ[Z]\È™XXÚY‚ˆ
+ˆÜ‚ˆ
+‚ˆ
+ˆ]]Üˆ\ÛÛˆ
+‹ÂœX›XÈÛ\ÜÈ\Ý[][ÛÛÛ[[ˆ^[™È›ØÙ\ÜÑ\]Z\Y[˜\ÙPÛ\ÜÈ[\[Y[È\Ý[][Û’[\™˜XÙHÂˆÊŠˆÙ\šX[^˜][Ûˆ™\œÚ[ÛˆRQˆ
+‹Âˆš]˜]HÝ]XÈš[˜[Û™ÈÙ\šX[™\œÚ[Û•RQHLÂˆÊŠˆÙÙÙ\ˆØš™XÝ›ÜˆÛ\ÜËˆ
+‹ÂˆÝ]XÈÙÙÙ\ˆÙÙÙ\ˆHÙÓX[˜YÙ\‹™Ù]ÙÙÙ\Š\Ý[][ÛÛÛ[[‹˜Û\ÜÊNÂ‚ˆš]˜]H›ÛÛX[ˆÒ[š]X[^š[ÛˆHYNÂˆ›ÛÛX[ˆ\Ô™X›Ú[\ˆH˜[ÙNÂˆ›ÛÛX[ˆ\ÐÛÛ™[œÙ\ˆH˜[ÙNÂˆ›ÝXÝY\œ˜^S\ÝÚ[\U˜^Oˆ˜^\ÈH™]È\œ˜^S\ÝÚ[\U˜^OŠ
+NÂˆÊŠˆØØ[[™È˜XÝÜˆ\ÙYÈ\š]™HH˜^K\›ÜÜ[Û˜[]\˜][ÛˆYÙ]ˆ
+‹Âˆš]˜]HÝ]XÈš[˜[ÝX›HVWÒUTUSÓ—ÑPÕÔˆHKŒÂˆÊŠˆ\™Ù]™[]]™HX\ÜÈ[X˜[[˜ÙH›ÜˆHÜÝ\›ØÙ\ÜÚ[™ÈÛ\ÚÝYÙKˆ
+‹Âˆš]˜]HÝ]XÈš[˜[ÝX›HPTÔ×ÔÓTÒÕT‘ÑUH‹ŒKLŽÂˆÊŠˆ\™Ù]™[]]™H[™\™ÞH[X˜[[˜ÙH›ÜˆHÜÝ\›ØÙ\ÜÚ[™ÈÛ\ÚÝYÙKˆ
+‹Âˆš]˜]HÝ]XÈš[˜[ÝX›HS‘T‘ÖWÔÓTÒÕT‘ÑUH‹ŒKLŽÂˆÊŠˆ\™Ù]]™\˜YÙH[\\˜]\™HšY›ÜˆHÛ\Ú[™ÈÝYÙH[ˆÙ[š[‹ˆ
+‹Âˆš]˜]HÝ]XÈš[˜[ÝX›HSTTUT‘WÔÓTÒÕT‘ÑUHKŒKLÎÂˆÊŠˆ^˜H]\˜][ÛœÈÜ˜[YÚ[ˆHÛ\ÚÝYÙH\ÈšYÙÙ\™Yˆ
+‹Âˆš]˜]HÝ]XÈš[˜[[ÓTÒÒUTUSÓ—ÓPT‘ÒSˆHŽÂˆÊŠ‚ˆ
+ˆ][\Y\ˆÛÝ™\›š[™ÈÝÈ]XÚHÛÛ™\ˆØ[ˆ^[™™^[Û™H›ÛZ[˜[]\˜][ÛˆYÙ]‚ˆ
+‹Âˆš]˜]HÝ]XÈš[˜[[UTUSÓ—ÓÕ‘T‘“Õ×ÓUSTQTˆHLŽÂˆÊŠˆ™XÛÛ[Y[™Y˜\ÙH[\\˜]\™HÛ\˜[˜ÙH›ÜˆY\]™HY˜][Ëˆ
+‹Âˆš]˜]HÝ]XÈš[˜[ÝX›HQUSÕSTTUT‘WÕÓTSÑHH‹ŒKLŽÂˆÊŠˆ™XÛÛ[Y[™Y˜\ÙHX\ÜÈ˜[[˜ÙHÛ\˜[˜ÙH›ÜˆY\]™HY˜][Ëˆ
+‹Âˆš]˜]HÝ]XÈš[˜[ÝX›HQUSÓPTÔ×ÐSSÑWÕÓTSÑHHK™KLŽÂˆÊŠˆ™XÛÛ[Y[™Y˜\ÙH[[H˜[[˜ÙHÛ\˜[˜ÙH›ÜˆY\]™HY˜][Ëˆ
+‹Âˆš]˜]HÝ]XÈš[˜[ÝX›HQUSÑS•SWÐSSÑWÕÓTSÑHHK™KLŽÂˆÊŠˆY˜][ØØ[YQTÒ™\ÚYX[Û\˜[˜ÙHÚ[ˆ™\ÚYX[Ø][™È\È[˜X›Yˆ
+‹Âˆš]˜]HÝ]XÈš[˜[ÝX›HQUSÓQTÒÔ‘TÒQPSÕÓTSÑHHKŒÂˆÊŠ‚ˆ
+ˆY˜][Û\˜[˜ÙH›ÜˆH\‹]˜^HÛÛ\Û™[X]\šX[[X˜[[˜ÙH™[]]™HÈ˜^H›ÝYÚ]‚ˆ
+‚ˆ
+ˆ‚ˆ
+ˆHQTÒÐÛÙHPUT’PSH[šY\ÈØØ[HXXÚÛÛ\Û™[žH]ÈÝÛˆ›ÝYÚ]ÛÈ^H\™HÛZ[˜]YžH˜XÙBˆ
+ˆÛÛ\Û™[È[™Ø[››Ý™HØ]YˆH›ÝYÚ]]ÙZYÚY\‹]˜^H[X˜[[˜ÙH\ÈH\ØX›HYX\Ý\™K[™]\È›Ý[™Yˆ
+ˆžHHÛÈ]™YYÈHÛ\˜[˜ÙH™[ÝÈHKŒ[™š[š]K[›Ü›HÛ\˜[˜ÙHÈZÙH\[ˆHØ]H][‚ˆ
+ˆÜ‚ˆ
+‹Âˆš]˜]HÝ]XÈš[˜[ÝX›HQUSÕVWÓPUT’PSÐSSÑWÕÓTSÑHH‹ŒKLŽÂˆÊŠ‚ˆ
+ˆY˜][›ÙXÝ˜]È™\ÚYX[Û\˜[˜ÙHÚ[ˆQTÒ™\ÚYX[Ø][™È\È[˜X›Y‚ˆ
+‹Âˆš]˜]HÝ]XÈš[˜[ÝX›HQUSÓQTÒÔ“ÑPÕÑU×Ô‘TÒQPSÕÓTSÑHH‹ŒKLŽÂˆÊŠˆœ˜XÝ[Û˜[\Ý[˜ÙHœ›ÛHÜˆH™X]Y\È[ˆXÝ]™HÛÛ[Y\˜ÚX[ÜXÚYšXØ][Ûˆ›Ý[™ˆ
+‹Âˆš]˜]HÝ]XÈš[˜[ÝX›HPÕU‘WÐ“ÕS‘Ñ”PÕSÓ—ÕÓTSÑHHKŒKMNÂˆÊŠˆX^[][H›ÙXÝY›ÝÈšY[ÝÙYÚ[ˆXØÙ\[™ÈHQTÒ™]ÝÛˆÛ\ÚØ[™Y]Kˆ
+‹Âˆš]˜]HÝ]XÈš[˜[ÝX›HQTÒÔÓTÒÔ“ÑPÕÑ“Õ×ÕÓTSÑHH‹ŒKLŽÂˆÊŠˆ›ÙXÝ™XÛÛ˜Ú[X][ÛˆšYX›Ý™H\È]™[\È™\ÜY\ÈH›Û‹\šYÛÜ›Ý\ÈÛÛ™HÝ]\Ëˆ
+‹Âˆš]˜]HÝ]XÈš[˜[ÝX›H“ÑPÕÔ‘PÓÓÒSPUSÓ—ÔÕUT×ÕÓTSÑHH‹ŒKLŽÂˆÊŠ‚ˆ
+ˆX^[][HZ[›Üš]H\ÙHœ˜XÝ[ÛˆØ[›ÛšXØ[^™YÝ]ÙˆHÙ\\˜]Y\›Z[˜[›ÙXÝ‚ˆ
+‚ˆ
+ˆ‚ˆ
+ˆÙ\]Y[X[ÛÛ[[ˆÛÛ™\œÈØ[ˆ\›ØXÚHØ[YH]Ë\Ú[›Ý[™\žHœ›ÛHÜÜÚ]HÚY\È[™^ÜÙHH[Y\šXØ[˜XÙBˆ
+ˆ\ÙH[ˆÛ›HÛ™H›ÙXÝˆH\ÙHÛX[\ˆ[ˆ\È[Z]ÛÛšX]\È\ÜÈ[ˆÛ™H\[ˆÛ™H[™™YZ[[ÛˆÂˆ
+ˆH›ÙXÝ[™[ÜžKˆY\™Ú[™È][ÈHÛZ[˜[[[™YÝ]]\ÙHÚ]™\ÈHÙ\\˜]Y›ÙXÝBˆ
+ˆÛÛ™\‹Z[™\[™[\ÙHY[]HÚ]Ý]\ØØ\™[™ÈÛÛ\Û™[[Û\Ë‚ˆ
+ˆÜ‚ˆ
+‹Âˆš]˜]HÝ]XÈš[˜[ÝX›HT“RSSÔ“ÑPÕÕPÑWÔTÑWÑ”PÕSÓˆHKŒKNÂˆÊŠˆYÚ\ˆ[\›˜[ÕSWÔUTÈ\™Ù]›ÜˆÛÛ™\‹Z[™\[™[™X›Ú[\‹[Û›H›ÙXÝ[\\˜]\™\Ëˆ
+‹Âˆš]˜]HÝ]XÈš[˜[ÝX›H‘P“ÒST—ÓÓ“WÔTÑWÔÕP“WÕSTTUT‘WÕÓTSÑWÑPÕÔˆHKŒKLŽÂˆÊŠ‚ˆ
+ˆX^[][H[\›˜[˜^H˜Y™šXÈXØÙ\YY\ˆ]™\™Ù[˜ÙH™XÛÝ™\žH™[]]™HÈ^\›˜[™YY‚ˆ
+‹Âˆš]˜]HÝ]XÈš[˜[ÝX›HPVÔÓÓ‘QÒS•T“SÕQ‘’P×Õ×Ñ‘QQÔUSÈHLŒÂˆÊŠ‚ˆ
+ˆX^[][HX\‹\Ý™X[H›ÝÈ[ÝÙY\š[™È™[^Y\]\È™[]]™HÈ^\›˜[™YY‚ˆ
+‹Âˆš]˜]HÝ]XÈš[˜[ÝX›HPVÔ‘SVQÒS•T“SÕQ‘’P×Õ×Ñ‘QQÔUSÈHKŒMNÂˆÊŠ‚ˆ
+ˆZ[š[][H[\\˜]\™HÜ[ˆ™\]Z\™Y™Y›Ü™HH˜^H[\\˜]\™H›Ùš[H\ÈÛÛœÚY\™Y\ÙY[‚ˆ
+‹Âˆš]˜]HÝ]XÈš[˜[ÝX›HRS’SUSWÑ‘QQÔ“Ñ’SWÔÔSˆHKŒÂˆÊŠ‚ˆ
+ˆ[\\˜]\™HÙ™œÙ]\ÙYÚ[ˆÛ›HÛ™HÛÛ[[‹Y[™[\\˜]\™H\ÈÜXÚYšYY‚ˆ
+‹Âˆš]˜]HÝ]XÈš[˜[ÝX›H‘QQÔ“Ñ’SWÑS‘ÕSTTUT‘WÓÑ‘”ÑUHŒŒÂˆÊŠˆÛ\˜[˜ÙH\ÙYÚ[ˆÛÛ\\š[™È\]Z]˜[[™YY˜^HØ[™Y]\Ëˆ
+‹Âˆš]˜]HÝ]XÈš[˜[ÝX›H‘QQÕVWÕQWÕÓTSÑHHKŒKNNÂˆÊŠˆY˜][X^[][H[X™\ˆÙˆØ[™Y]HØ\Ù\È[ˆ˜^HÜ[Z^˜][ÛˆÙX\˜Ú\Ëˆ
+‹Âˆš]˜]HÝ]XÈš[˜[[QUSÓPVÕVWÓÔSRVUSÓ—ÐÐS‘QUTÈHŒÂˆÊŠˆY˜][X^[][H[\ÙY[YH›Üˆ˜^HÜ[Z^˜][ÛˆÙX\˜Ú\È[ˆÙXÛÛ™Ëˆ
+‹Âˆš]˜]HÝ]XÈš[˜[ÝX›HQUSÓPVÕVWÓÔSRVUSÓ—ÕSQWÔÑPÓÓ‘ÈHLŒŒÂˆÊŠˆZ[š[][H˜^HÛÝ[Ú\™HX]š^Ø\›K\Ý\Ý™\šXY\È^XÝYÈ^HÙ™‹ˆ
+‹Âˆš]˜]HÝ]XÈš[˜[[RS—ÓPU’VÒS”ÒQWÓÕUÕÐT“WÔÕT•ÕVTÈHLŽÂˆÊŠˆY˜][ÜXÚYšXØ][ÛˆÛÛ[X][ÛˆÝYÙ\È\ÙYžH]]ÛX]XÈÛÛ™\ˆ[ÙKˆ
+‹Âˆš]˜]HÝ]XÈš[˜[[UU×ÔÔPÒQ’PÐUSÓ—ÒÓSÕÔWÔÕTÈHÎÂˆÝX›HÛÛ™[œÙ\ÛÛÛ[™Ñ]HHLŒÂˆš]˜]HÝX›H™X›Ú[\•[\\˜]\™HHÌËŒMNÂˆš]˜]HÝX›HÛÛ™[œÙ\•[\\˜]\™HHÌŒMNÂˆÝX›HÜ˜^T™\ÜÝ\™HHLKŒÂ‚ˆÊŠˆ[\\˜]\™HÛÛ™\™Ù[˜ÙHÛ\˜[˜ÙKˆ
+‹Âˆš]˜]HÝX›H[\\˜]\™UÛ\˜[˜ÙHHQUSÕSTTUT‘WÕÓTSÑNÂˆÊŠˆX\ÜÈ˜[[˜ÙHÛÛ™\™Ù[˜ÙHÛ\˜[˜ÙKˆ
+‹Âˆš]˜]HÝX›HX\ÜÐ˜[[˜ÙUÛ\˜[˜ÙHHQUSÓPTÔ×ÐSSÑWÕÓTSÑNÂˆÊŠˆ[[H˜[[˜ÙHÛÛ™\™Ù[˜ÙHÛ\˜[˜ÙKˆ
+‹Âˆš]˜]HÝX›H[[P˜[[˜ÙUÛ\˜[˜ÙHHQUSÑS•SWÐSSÑWÕÓTSÑNÂˆÊŠˆØØ[YQTÒ™\ÚYX[ÛÛ™\™Ù[˜ÙHÛ\˜[˜ÙKˆ
+‹Âˆš]˜]HÝX›HY\Ú™\ÚYX[Û\˜[˜ÙHHQUSÓQTÒÔ‘TÒQPSÕÓTSÑNÂ‚ˆÊŠˆÛ\˜[˜ÙH›ÜˆH›ÝYÚ]]ÙZYÚY\‹]˜^HÛÛ\Û™[X]\šX[[X˜[[˜ÙKˆ
+‹Âˆš]˜]HÝX›H˜^SX]\šX[˜[[˜ÙUÛ\˜[˜ÙHHQUSÕVWÓPUT’PSÐSSÑWÕÓTSÑNÂˆÊŠˆØØ[Y\›Z[˜[›ÙXÝY˜]È™\ÚYX[ÛÛ™\™Ù[˜ÙHÛ\˜[˜ÙKˆ
+‹Âˆš]˜]HÝX›HY\Ú›ÙXÝ˜]Ô™\ÚYX[Û\˜[˜ÙHHQUSÓQTÒÔ“ÑPÕÑU×Ô‘TÒQPSÕÓTSÑNÂˆÊŠˆX^[][H[X™\ˆÙˆØ[™Y]HØ\Ù\È[ÝÙY[ˆ˜^HÜ[Z^˜][ÛˆÙX\˜Ú\Ëˆ
+‹Âˆš]˜]H[X^˜^SÜ[Z^˜][ÛØ[™Y]\ÈHQUSÓPVÕVWÓÔSRVUSÓ—ÐÐS‘QUTÎÂˆÊŠˆX^[][H[\ÙY[YH[ÝÙY[ˆ˜^HÜ[Z^˜][ÛˆÙX\˜Ú\È[ˆÙXÛÛ™Ëˆ
+‹Âˆš]˜]HÝX›HX^˜^SÜ[Z^˜][Û•[YTÙXÛÛ™ÈHQUSÓPVÕVWÓÔSRVUSÓ—ÕSQWÔÑPÓÓ‘ÎÂˆÊŠˆ]\ÝÚÜÝ]Z[š]X[^˜][Ûˆ™\Ý[ÜˆÐÛÙH[HYˆ›Û™H\È™Y[ˆ\YYˆ
+‹Âˆš]˜]H˜[œÚY[ÚÜÝ][š]X[^˜][Û”™\Ý[\ÝÚÜÝ][š]X[^˜][Û”™\Ý[H[ÂˆÊŠˆ˜XÚÈÚ]\ˆ[\\˜]\™HÛ\˜[˜ÙH\È™Y[ˆX[X[HÝ™\œšY[‹ˆ
+‹Âˆš]˜]H›ÛÛX[ˆ[\\˜]\™UÛ\˜[˜ÙPÝ\ÝÛZ^™YH˜[ÙNÂˆÊŠˆ˜XÚÈÚ]\ˆX\ÜÈ˜[[˜ÙHÛ\˜[˜ÙH\È™Y[ˆX[X[HÝ™\œšY[‹ˆ
+‹Âˆš]˜]H›ÛÛX[ˆX\ÜÐ˜[[˜ÙUÛ\˜[˜ÙPÝ\ÝÛZ^™YH˜[ÙNÂˆÊŠˆ˜XÚÈÚ]\ˆ[[H˜[[˜ÙHÛ\˜[˜ÙH\È™Y[ˆX[X[HÝ™\œšY[‹ˆ
+‹Âˆš]˜]H›ÛÛX[ˆ[[P˜[[˜ÙUÛ\˜[˜ÙPÝ\ÝÛZ^™YH˜[ÙNÂ‚ˆÊŠˆ]˜Z[X›HÛÛš[™ÈÝ˜]YÚY\È›ÜˆHÛÛ[[‹ˆ
+‹ÂˆX›XÈ[[HÛÛ™\•\HÂˆÊŠˆÛ\ÜÚXÈÙ\]Y[X[ÝXœÝ]][ÛˆÚ]Ý][\[™Ëˆ
+‹ÂˆT‘PÕÔÕP”ÕUUSÓ‹ˆÊŠˆÙ\]Y[X[ÝXœÝ]][ÛˆÚ][\\˜]\™H[\[™Ëˆ
+‹ÂˆSTQÔÕP”ÕUUSÓ‹ˆÊŠˆ[œÚYK[Ý]Ý[HÚ[][[™[Ý\ÈÛÜœ™XÝ[ÛˆÙˆ\Ø\™ÙÝÛØ\™›ÝÜËˆ
+‹ÂˆS”ÒQWÓÕUˆÊŠˆY\]™HX]š^[œÚYK[Ý]ÛÛ\Û™[X˜[[˜ÙHØ\›HÝ\Ú]šYÛÜ›Ý\ÈÛ\Ú[™Ëˆ
+‹ÂˆPU’VÒS”ÒQWÓÕUˆÊŠˆÙYÜÝZ[ˆXØÙ[\˜][ÛˆÙˆÝXØÙ\ÜÚ]™HÝXœÝ]][Û‹ˆ
+‹ÂˆÑQÔÕRS‹ˆÊŠˆÝ[K\˜]\ÈX\š[™ÈY]ÙÚ]›ÝÈÛÜœ™XÝ[Û‹ˆ
+‹ÂˆÕSWÔUTËˆÊŠ‚ˆ
+ˆ™]ÝÛ‹T˜\ÛÛˆ˜^K][\\˜]\™HÛÜœ™XÝ[ÛˆXØÙ[\˜]Ü‹›ÝH[QTÒ™]ÝÛˆÛÛ™\‹‚ˆ
+‹Âˆ‘UÕÓ‹ˆÊŠˆ˜\[KTØ[™ÛHÚ[][[™[Ý\ÈÛÜœ™XÝ[ÛˆÙˆ[QTÒ\]X][Ûˆ›ØÚÜËˆ
+‹ÂˆTSWÔÐS‘ÓKˆÊŠˆQTÒ™\ÚYX[[[Ûš]Ü™YÛÛ™HÚ][œÚYK[Ý][š]X[^˜][Û‹ˆ
+‹ÂˆQTÒÔ‘TÒQPSˆÊŠˆ]]ÛX]XØ[HÙ[XÝH›Ø\ÝÛÛ™\ˆœ›ÛHHZ[Z[ˆÝ˜]YÞHÙ]ˆ
+‹ÂˆUUÂˆB‚ˆÊŠˆÝ]\ÈÙˆH]\ÝÛÛ[[ˆÛÛ™Kˆ
+‹ÂˆX›XÈ[[HÛÛ™TÝ]\ÈÂˆÊŠˆ›ÈÛÛ™H\È™Y[ˆ[ˆÚ[˜ÙHHXYÛ›ÜÝXÜÈÙ\™H™\Ù]ˆ
+‹Âˆ“ÕÔ•S‹ˆÊŠˆH˜^HÛÛ][ÛˆØ]\ÙšY\ÈHXÝ]™HšYÛÜ›Ý\ÈÛÛ™\™Ù[˜ÙHØ]\Ëˆ
+‹Âˆ’QÓÔ“ÕT×ÐÓÓ•‘T‘ÑQˆÊŠˆX›XÈ›ÙXÝÈÙ\™HX]\šX[H™XÛÛ˜Ú[YY\ˆH˜^HÛÛ™Kˆ
+‹Âˆ‘PÓÓÒSQÔ“ÑPÕËˆÊŠˆX›XÈ›ÙXÝÈØ[YHœ›ÛHHÝX\™Y˜[˜XÚÈ\Ý[X]K›ÝHšYÛÜ›Ý\È˜^HÛÛ™Kˆ
+‹ÂˆSPÒ×Ô“ÑPÕËˆÊŠˆH]\ÝÛÛ™HY›ÝØ]\ÙžHHXÝ]™HšYÛÜ›Ý\ÈÛÛ™\™Ù[˜ÙHØ]\Ëˆ
+‹ÂˆRSQˆB‚ˆÊŠˆ\ÙHÚ]˜]ÛˆžHHÛÛ[[ˆÚYH˜]Ëˆ
+‹ÂˆX›XÈ[[HÚYQ˜]Ô\ÙHÂˆÊŠˆÚ]˜]È˜\Üˆ˜Y™šXÈœ›ÛHHÙ[XÝY˜^Kˆ
+‹ÂˆÐTËˆÊŠˆÚ]˜]È\]ZY˜Y™šXÈœ›ÛHHÙ[XÝY˜^Kˆ
+‹ÂˆTURQˆB‚ˆÊŠˆÜ\˜][™È[ÙH›ÜˆHÛÛ™[œÙ\ˆ˜^Kˆ
+‹ÂˆX›XÈ[[HÛÛ™[œÙ\“[ÙHÂˆÊŠˆ\]Z[Xœš][H\X[ÛÛ™[œÙ\ˆÚ]˜\Üˆ›ÙXÝ[™\]ZY™Y›^ˆ
+‹ÂˆT•PSˆÊŠˆX˜›K\Ú[Ý[ÛÛ™[œÙ\ˆÚ]Ü]\]ZY™Y›^[™\Ý[]H›ÙXÝˆ
+‹ÂˆÕSˆÊŠˆ\X[ÛÛ™[œÙ\ˆÚ][ˆ^XÚ]š^Y\]ZY™Y›^Ý™X[HÜ]ˆ
+‹ÂˆTURQÔ‘Q“VÔÔUˆB‚ˆÊŠˆÜ\˜][™È[ÙH›ÜˆH™X›Ú[\ˆ˜^Kˆ
+‹ÂˆX›XÈ[[H™X›Ú[\“[ÙHÂˆÊŠˆ\]Z[Xœš][H™X›Ú[\ˆÚ]Ý][ˆ^XÚ]›Ú[\Ü™Y›^˜][Ëˆ
+‹ÂˆTURSP”’USKˆÊŠˆ™X›Ú[\ˆÛÛ™YÚ][ˆ^XÚ]˜\Üˆ›Ú[\Ü™Y›^˜][Ëˆ
+‹ÂˆTÔ—Ð“ÒSTÔUSÂˆB‚ˆÊŠˆ[˜[ZXÈÛÛ[[ˆ[Ù[›Ü›][][Û‹ˆ
+‹ÂˆX›XÈ[[H[˜[ZXÐÛÛ[[“[Ù[ÂˆÊŠˆ^\š[Y[[^XÚ]Q][\ˆÛ\[Ù[™]Z[™Y›ÜˆØÜ™Y[š[™ÈÝYY\Ëˆ
+‹ÂˆVT’SQS•SÑUST‚ˆB‚ˆÊŠ‚ˆ
+ˆ›ÝÈÜXÚYšXØ][Ûˆ›ÜˆHÚYK\›ÙXÝ˜]Ë‚ˆ
+‚ˆ
+ˆ‚ˆ
+ˆHÛÛ[[ˆ\Ù\È\ÈÜXÚYšXØ][Ûˆ\ÈHX\ˆ˜\šXX›HžHY\Ý[™ÈHÛÜœ™\ÜÛ™[™È˜^HÚYKY˜]Èœ˜XÝ[Ûˆ[[ˆ
+ˆHÚ]˜]ÛˆÝ™X[H›ÝÈX]Ú\ÈH\™Ù]›ÝË‚ˆ
+ˆÜ‚ˆ
+‚ˆ
+ˆ]]Üˆ\ÛÛˆ
+ˆ™\œÚ[ÛˆKŒˆ
+‹ÂˆX›XÈÝ]XÈÛ\ÜÈÛÛ[[”ÚYQ˜]ÔÜXÚYšXØ][Ûˆ[\[Y[È˜]˜Kš[Ë”Ù\šX[^˜X›HÂˆÊŠˆÙ\šX[^˜][Ûˆ™\œÚ[ÛˆRQˆ
+‹Âˆš]˜]HÝ]XÈš[˜[Û™ÈÙ\šX[™\œÚ[Û•RQHLÂ‚ˆš]˜]Hš[˜[[˜^S[X™\ŽÂˆš]˜]Hš[˜[ÚYQ˜]Ô\ÙH\ÙNÂˆš]˜]Hš[˜[ÝX›H\™Ù]›ÝÔ˜]NÂˆš]˜]Hš[˜[Ýš[™È›ÝÕ[š]Âˆš]˜]HÝX›HÛ\˜[˜ÙHHKŒKMÂˆš]˜]H[X^]\˜][ÛœÈHLŽÂˆš]˜]H˜[œÚY[ÝX›H\ÝXÝX[›ÝÔ˜]HHÝX›K“˜SŽÂˆš]˜]H˜[œÚY[ÝX›H\Ý™[]]™T™\ÚYX[HÝX›K”ÔÒUU‘WÒS‘’S’UNÂ‚ˆÊŠ‚ˆ
+ˆÜ™X]HHÚYKY˜]È›ÝÈÜXÚYšXØ][Û‹‚ˆ
+‚ˆ
+ˆ\˜[H˜^S[X™\ˆ›ÝÛK]\˜^H[™^Ú\™HH˜]È\ÈØØ]Yˆ
+ˆ\˜[H\ÙHÚYKY˜]È\ÙBˆ
+ˆ\˜[H\™Ù]›ÝÔ˜]H\™Ù]ÚYKY˜]È›ÝÈ˜]Bˆ
+ˆ\˜[H›ÝÕ[š]›ÝË\˜]H[š]›ÜˆH\™Ù][™XÝX[›ÝÂˆ
+ˆ›ÝÜÈ[YØ[\™Ý[Y[^Ù\[ÛˆYˆ\ÙH\È[\™Ù]›ÝÈ\È™YØ]]™HÜˆ›Û‹Yš[š]KÜˆH›ÝÈ[š]\Âˆ
+ˆ[\Bˆ
+‹ÂˆX›XÈÛÛ[[”ÚYQ˜]ÔÜXÚYšXØ][ÛŠ[˜^S[X™\‹ÚYQ˜]Ô\ÙH\ÙKÝX›H\™Ù]›ÝÔ˜]KÝš[™È›ÝÕ[š]
+HÂˆYˆ
+\ÙHOH[
+HÂˆ›ÝÈ™]È[YØ[\™Ý[Y[^Ù\[ÛŠ”ÚYH˜]È\ÙHØ[››Ý™H[ŠNÂˆBˆYˆ
+QÝX›Kš\Ñš[š]J\™Ù]›ÝÔ˜]JH\™Ù]›ÝÔ˜]HŒ
+HÂˆ›ÝÈ™]È[YØ[\™Ý[Y[^Ù\[ÛŠ”ÚYH˜]È\™Ù]›ÝÈ]\Ý™Hš[š]H[™HŠNÂˆBˆYˆ
+›ÝÕ[š]OH[›ÝÕ[š]š[J
+Kš\Ñ[\J
+JHÂˆ›ÝÈ™]È[YØ[\™Ý[Y[^Ù\[ÛŠ”ÚYH˜]È›ÝÈ[š]Ø[››Ý™H[\HŠNÂˆBˆ\Ë˜^S[X™\ˆH˜^S[X™\ŽÂˆ\Ëœ\ÙHH\ÙNÂˆ\Ë\™Ù]›ÝÔ˜]HH\™Ù]›ÝÔ˜]NÂˆ\Ë™›ÝÕ[š]H›ÝÕ[š]ÂˆB‚ˆÊŠ‚ˆ
+ˆÙ]H˜]È˜^H[X™\‹‚ˆ
+‚ˆ
+ˆ™]\›ˆ›ÝÛK]\˜^H[™^ˆ
+‹ÂˆX›XÈ[Ù]˜^S[X™\Š
+HÂˆ™]\›ˆ˜^S[X™\ŽÂˆB‚ˆÊŠ‚ˆ
+ˆÙ]HÚYKY˜]È\ÙK‚ˆ
+‚ˆ
+ˆ™]\›ˆÚYKY˜]È\ÙBˆ
+‹ÂˆX›XÈÚYQ˜]Ô\ÙHÙ]\ÙJ
+HÂˆ™]\›ˆ\ÙNÂˆB‚ˆÊŠ‚ˆ
+ˆÙ]H\™Ù]ÚYKY˜]È›ÝÈ˜]K‚ˆ
+‚ˆ
+ˆ™]\›ˆ\™Ù]›ÝÈ˜]H[ˆÐ[šÈÙÙ]›ÝÕ[š]
+
+_Bˆ
+‹ÂˆX›XÈÝX›HÙ]\™Ù]›ÝÔ˜]J
+HÂˆ™]\›ˆ\™Ù]›ÝÔ˜]NÂˆB‚ˆÊŠ‚ˆ
+ˆÙ]H›ÝÈ[š]\ÙYžH\ÈÜXÚYšXØ][Û‹‚ˆ
+‚ˆ
+ˆ™]\›ˆ›ÝÈ[š]Ýš[™Âˆ
+‹ÂˆX›XÈÝš[™ÈÙ]›ÝÕ[š]
+
+HÂˆ™]\›ˆ›ÝÕ[š]ÂˆB‚ˆÊŠ‚ˆ
+ˆÙ]H™[]]™HÛÛ™\™Ù[˜ÙHÛ\˜[˜ÙK‚ˆ
+‚ˆ
+ˆ™]\›ˆ™[]]™HÛ\˜[˜ÙBˆ
+‹ÂˆX›XÈÝX›HÙ]Û\˜[˜ÙJ
+HÂˆ™]\›ˆÛ\˜[˜ÙNÂˆB‚ˆÊŠ‚ˆ
+ˆÙ]H™[]]™HÛÛ™\™Ù[˜ÙHÛ\˜[˜ÙK‚ˆ
+‚ˆ
+ˆ\˜[HÛ\˜[˜ÙHÜÚ]]™Hš[š]H™[]]™HÛ\˜[˜ÙBˆ
+‹ÂˆX›XÈ›ÚYÙ]Û\˜[˜ÙJÝX›HÛ\˜[˜ÙJHÂˆYˆ
+QÝX›Kš\Ñš[š]JÛ\˜[˜ÙJHÛ\˜[˜ÙHHŒ
+HÂˆ›ÝÈ™]È[YØ[\™Ý[Y[^Ù\[ÛŠ”ÚYH˜]ÈÛ\˜[˜ÙH]\Ý™Hš[š]H[™ÜÚ]]™HŠNÂˆBˆ\ËÛ\˜[˜ÙHHÛ\˜[˜ÙNÂˆB‚ˆÊŠ‚ˆ
+ˆÙ]HX^[][H[X™\ˆÙˆX\ˆ]\˜][ÛœÈ™\]Y\ÝYžH\ÈÜXÚYšXØ][Û‹‚ˆ
+‚ˆ
+ˆ™]\›ˆX^[][H]\˜][ÛœÂˆ
+‹ÂˆX›XÈ[Ù]X^]\˜][ÛœÊ
+HÂˆ™]\›ˆX^]\˜][ÛœÎÂˆB‚ˆÊŠ‚ˆ
+ˆÙ]HX^[][H[X™\ˆÙˆX\ˆ]\˜][ÛœÈ™\]Y\ÝYžH\ÈÜXÚYšXØ][Û‹‚ˆ
+‚ˆ
+ˆ\˜[HX^]\˜][ÛœÈÜÚ]]™HX^[][H]\˜][ÛˆÛÝ[ˆ
+‹ÂˆX›XÈ›ÚYÙ]X^]\˜][ÛœÊ[X^]\˜][ÛœÊHÂˆYˆ
+X^]\˜][ÛœÈH
+HÂˆ›ÝÈ™]È[YØ[\™Ý[Y[^Ù\[ÛŠ”ÚYH˜]ÈX^]\˜][ÛœÈ]\Ý™HÜÚ]]™HŠNÂˆBˆ\Ë›X^]\˜][ÛœÈHX^]\˜][ÛœÎÂˆB‚ˆÊŠ‚ˆ
+ˆÙ]H]\ÝXÝX[›ÝÈ˜]K‚ˆ
+‚ˆ
+ˆ™]\›ˆ]\ÝXÝX[›ÝÈ˜]H[ˆÐ[šÈÙÙ]›ÝÕ[š]
+
+_KÜˆÐ[šÈÝX›HÓ˜SŸBˆ
+‹ÂˆX›XÈÝX›HÙ]\ÝXÝX[›ÝÔ˜]J
+HÂˆ™]\›ˆ\ÝXÝX[›ÝÔ˜]NÂˆB‚ˆÊŠ‚ˆ
+ˆÙ]H]\Ý™[]]™H™\ÚYX[‚ˆ
+‚ˆ
+ˆ™]\›ˆ™[]]™H™\ÚYX[œ›ÛHH]\ÝÚYKY˜]È\]Bˆ
+‹ÂˆX›XÈÝX›HÙ]\Ý™[]]™T™\ÚYX[
+
+HÂˆ™]\›ˆ\Ý™[]]™T™\ÚYX[ÂˆB‚ˆÊŠ‚ˆ
+ˆÝÜ™H]\ÝXÝX[›ÝÈ[™™]\›ˆ]È™[]]™H™\ÚYX[‚ˆ
+‚ˆ
+ˆ\˜[HXÝX[›ÝÔ˜]HXÝX[˜]È›ÝÈ˜]H[ˆÐ[šÈÙÙ]›ÝÕ[š]
+
+_Bˆ
+ˆ™]\›ˆ™[]]™H™\ÚYX[ˆ
+‹Âˆš]˜]HÝX›H\]PXÝX[›ÝÔ˜]JÝX›HXÝX[›ÝÔ˜]JHÂˆ\ÝXÝX[›ÝÔ˜]HHXÝX[›ÝÔ˜]NÂˆÝX›HØØ[HHX]›X^
+KŒKLL‹X]˜XœÊ\™Ù]›ÝÔ˜]JJNÂˆ\Ý™[]]™T™\ÚYX[HX]˜XœÊXÝX[›ÝÔ˜]HH\™Ù]›ÝÔ˜]JHÈØØ[NÂˆ™]\›ˆ\Ý™[]]™T™\ÚYX[ÂˆBˆB‚ˆÊŠ‚ˆ
+ˆ\]ZY[\\›Ý[™Ú\˜ÝZ]]Ú]˜]ÜÈ\]ZYœ›ÛHÛ™H˜^KÚ[™Ù\È[\\˜]\™K[™™]\›œÈ]È[›Ý\ˆ˜^K‚ˆ
+‚ˆ
+ˆ]]Üˆ\ÛÛˆ
+ˆ™\œÚ[ÛˆKŒˆ
+‹ÂˆX›XÈÝ]XÈÛ\ÜÈÛÛ[[”[\\›Ý[™[\[Y[È˜]˜Kš[Ë”Ù\šX[^˜X›HÂˆÊŠˆÙ\šX[^˜][Ûˆ™\œÚ[ÛˆRQˆ
+‹Âˆš]˜]HÝ]XÈš[˜[Û™ÈÙ\šX[™\œÚ[Û•RQHLÂ‚ˆš]˜]Hš[˜[Ýš[™È˜[YNÂˆš]˜]Hš[˜[[˜]Õ˜^S[X™\ŽÂˆš]˜]Hš[˜[[™]\›•˜^S[X™\ŽÂˆš]˜]Hš[˜[ÝX›H˜]Ñœ˜XÝ[ÛŽÂˆš]˜]Hš[˜[ÝX›H[\\˜]\™Q›ÜÂˆš]˜]H˜[œÚY[Ý™X[R[\™˜XÙH˜]ÔÝ™X[NÂˆš]˜]H˜[œÚY[Ý™X[R[\™˜XÙH™]\›”Ý™X[NÂˆš]˜]H˜[œÚY[ÝX›H\Ý™]\›‘›ÝÒÙÔ\’Ý\ˆHŒÂ‚ˆÊŠ‚ˆ
+ˆÜ™X]HH\]ZY[\\›Ý[™Yš[š][Û‹‚ˆ
+‚ˆ
+ˆ\˜[H˜[YH[\\›Ý[™˜[YBˆ
+ˆ\˜[H˜]Õ˜^S[X™\ˆ˜^H[™^Ú\™H\]ZY\ÈÚ]˜]Û‚ˆ
+ˆ\˜[H™]\›•˜^S[X™\ˆ˜^H[™^Ú\™HÛÛÛYÚX]Y\]ZY\È™]\›™Yˆ
+ˆ\˜[H˜]Ñœ˜XÝ[Ûˆœ˜XÝ[ÛˆÙˆ˜^H\]ZY˜Y™šXÈÚ]˜]Û‚ˆ
+ˆ\˜[H[\\˜]\™Q›Ü[\\˜]\™H›Üœ›ÛH˜]ÈÈ™]\›ˆ[ˆÙ[š[‚ˆ
+‹ÂˆX›XÈÛÛ[[”[\\›Ý[™
+Ýš[™È˜[YK[˜]Õ˜^S[X™\‹[™]\›•˜^S[X™\‹ÝX›H˜]Ñœ˜XÝ[Û‹ˆÝX›H[\\˜]\™Q›Ü
+HÂˆ\Ë›˜[YHH˜[YNÂˆ\Ë™˜]Õ˜^S[X™\ˆH˜]Õ˜^S[X™\ŽÂˆ\Ëœ™]\›•˜^S[X™\ˆH™]\›•˜^S[X™\ŽÂˆ\Ë™˜]Ñœ˜XÝ[ÛˆH˜]Ñœ˜XÝ[ÛŽÂˆ\Ë[\\˜]\™Q›ÜH[\\˜]\™Q›ÜÂˆB‚ˆÊŠ‚ˆ
+ˆÙ]H[\\›Ý[™˜[YK‚ˆ
+‚ˆ
+ˆ™]\›ˆ[\\›Ý[™˜[YBˆ
+‹ÂˆX›XÈÝš[™ÈÙ]˜[YJ
+HÂˆ™]\›ˆ˜[YNÂˆB‚ˆÊŠ‚ˆ
+ˆÙ]H˜]È˜^H[X™\‹‚ˆ
+‚ˆ
+ˆ™]\›ˆ˜]È˜^H[™^ˆ
+‹ÂˆX›XÈ[Ù]˜]Õ˜^S[X™\Š
+HÂˆ™]\›ˆ˜]Õ˜^S[X™\ŽÂˆB‚ˆÊŠ‚ˆ
+ˆÙ]H™]\›ˆ˜^H[X™\‹‚ˆ
+‚ˆ
+ˆ™]\›ˆ™]\›ˆ˜^H[™^ˆ
+‹ÂˆX›XÈ[Ù]™]\›•˜^S[X™\Š
+HÂˆ™]\›ˆ™]\›•˜^S[X™\ŽÂˆB‚ˆÊŠ‚ˆ
+ˆÙ]H\]ZY˜]Èœ˜XÝ[Û‹‚ˆ
+‚ˆ
+ˆ™]\›ˆ˜]Èœ˜XÝ[Û‚ˆ
+‹ÂˆX›XÈÝX›HÙ]˜]Ñœ˜XÝ[ÛŠ
+HÂˆ™]\›ˆ˜]Ñœ˜XÝ[ÛŽÂˆB‚ˆÊŠ‚ˆ
+ˆÙ]H[\\˜]\™H›Üœ›ÛH˜]ÈÈ™]\›‹‚ˆ
+‚ˆ
+ˆ™]\›ˆ[\\˜]\™H›Ü[ˆÙ[š[‚ˆ
+‹ÂˆX›XÈÝX›HÙ][\\˜]\™Q›Ü
+
+HÂˆ™]\›ˆ[\\˜]\™Q›ÜÂˆB‚ˆÊŠ‚ˆ
+ˆÙ]H]\Ý\]ZY˜]ÈÝ™X[K‚ˆ
+‚ˆ
+ˆ™]\›ˆ]\Ý˜]ÈÝ™X[KÜˆÐÛÙH[H™Y›Ü™HHÛÛ[[ˆ\È™Y[ˆ[‚ˆ
+‹ÂˆX›XÈÝ™X[R[\™˜XÙHÙ]˜]ÔÝ™X[J
+HÂˆ™]\›ˆ˜]ÔÝ™X[NÂˆB‚ˆÊŠ‚ˆ
+ˆÙ]H]\Ý\]ZY™]\›ˆÝ™X[K‚ˆ
+‚ˆ
+ˆ™]\›ˆ]\Ý™]\›ˆÝ™X[KÜˆÐÛÙH[H™Y›Ü™HHš\œÝ˜]È\]Bˆ
+‹ÂˆX›XÈÝ™X[R[\™˜XÙHÙ]™]\›”Ý™X[J
+HÂˆ™]\›ˆ™]\›”Ý™X[NÂˆB‚ˆÊŠ‚ˆ
+ˆ\]HH™]\›ˆÝ™X[Hœ›ÛHH˜^H\]ZY˜]Ë‚ˆ
+‚ˆ
+ˆ\˜[H™]Ñ˜]ÔÝ™X[H]\Ý\]ZY˜]ÈÝ™X[Bˆ
+ˆ\˜[HYØ[Ý[][ÛˆY[YšY\‚ˆ
+ˆ™]\›ˆ™[]]™HÚ[™ÙH[ˆ™]\›ˆ›ÝÈ˜]Bˆ
+‹Âˆš]˜]HÝX›H\]T™]\›”Ý™X[JÝ™X[R[\™˜XÙH™]Ñ˜]ÔÝ™X[KURQY
+HÂˆ˜]ÔÝ™X[HH™]Ñ˜]ÔÝ™X[NÂˆÝX›H™]š[Ý\Ñ›ÝÈH\Ý™]\›‘›ÝÒÙÔ\’Ý\ŽÂˆÞ\Ý[R[\™˜XÙH™]\›”Þ\Ý[HH™]Ñ˜]ÔÝ™X[K™Ù]\›[ÔÞ\Ý[J
+K˜ÛÛ™J
+NÂˆÝX›H™]\›•[\\˜]\™HH™]\›”Þ\Ý[K™Ù][\\˜]\™J
+HH[\\˜]\™Q›ÜÂˆYˆ
+QÝX›Kš\Ñš[š]J™]\›•[\\˜]\™JH™]\›•[\\˜]\™HHŒ
+HÂˆ›ÝÈ™]È[YØ[Ý]Q^Ù\[ÛŠ”[\\›Ý[™™]\›ˆ[\\˜]\™H]\Ý™Hš[š]H[™X›Ý™HÈŠNÂˆBˆ™]\›”Þ\Ý[KœÙ][\\˜]\™J™]\›•[\\˜]\™JNÂˆYˆ
+™]\›”Ý™X[HOH[
+HÂˆ™]\›”Ý™X[HH™]ÈÝ™X[J˜[YH
+Èˆ™]\›ˆ‹™]\›”Þ\Ý[JNÂˆH[ÙHÂˆ™]\›”Ý™X[KœÙ]\›[ÔÞ\Ý[J™]\›”Þ\Ý[JNÂˆBˆ™]\›”Ý™X[Kœ[ŠY
+NÂˆ\Ý™]\›‘›ÝÒÙÔ\’Ý\ˆHX]˜XœÊ™]\›”Ý™X[K™Ù]›ÝÔ˜]JšÙËÚˆŠJNÂˆÝX›HØØ[HHX]›X^
+KŒKLL‹X]›X^
+™]š[Ý\Ñ›ÝË\Ý™]\›‘›ÝÒÙÔ\’Ý\ŠJNÂˆ™]\›ˆX]˜XœÊ\Ý™]\›‘›ÝÒÙÔ\’Ý\ˆH™]š[Ý\Ñ›ÝÊHÈØØ[NÂˆBˆB‚ˆÊŠˆÙ[XÝYÛÛ™\ˆ[ÛÜš]KˆY˜][ÈÈ\™XÝÝXœÝ]][Û‹ˆ
+‹Âˆš]˜]HÛÛ™\•\HÛÛ™\•\HHÛÛ™\•\K‘T‘PÕÔÕP”ÕUUSÓŽÂˆÊŠˆÚ]\ˆHØ[\ˆ^XÚ]HÙ[XÝYHÛÛ™\ˆÝ˜]YÞKˆ
+‹Âˆš]˜]H›ÛÛX[ˆÛÛ™\•\Q^XÚ]TÙ]H˜[ÙNÂˆÊŠ‚ˆ
+ˆÚ]\ˆÜZ[ˆ˜\ÝY˜][ÈX^H™H\YY›Üˆ[œ˜XÝ[Û˜]ÜœÈ\Ú[™ÈHY˜][ÛÛ™\‹‚ˆ
+‹Âˆš]˜]H›ÛÛX[ˆ[œ˜XÝ[Û˜]Ü‘˜\Ý][˜X›YH˜[ÙNÂˆÊŠˆÛÛ™\ˆÝ˜]YÞH]XÝX[HÛÛ\]YH]\ÝÛÛ™Kˆ
+‹Âˆš]˜]H˜[œÚY[ÛÛ™\•\H\ÝÛÛ™\•\U\ÙYHÛÛ™\•\K‘T‘PÕÔÕP”ÕUUSÓŽÂˆÊŠ‚ˆ
+ˆÛÛ˜Ü™]HÛÛ™\ˆÚÜÙ[ˆžHHUUÈÙ[XÝÜˆÛˆH™]š[Ý\ÈÛÛ™KˆÚ[ˆHÛÛ[[ˆ\ÈÛÛ™YYØZ[ˆœ›ÛHHØ\›Bˆ
+ˆÝ]H
+K™Ëˆ[œÚYHH™XÞXÛHÛÜ
+KUUÈ™]\Ù\È\ÈÛÛ™\ˆ\™XÝH[œÝXYÙˆ™K\[›š[™ÈH^[œÚ]™Bˆ
+ˆ™X\ÚXš[]H™K\ØÜ™Y[‹Ø[™Y]HÛÛš[™Ë[™][K\ÛÛ™\ˆØÛÜš[™ÈÛˆ]™\žHØ[ˆ™\Ù]Ú[™]™\ˆHÛÛ[[‚ˆ
+ˆ™]™\ÈÈHÛÛÝ\‚ˆ
+‹Âˆš]˜]H˜[œÚY[ÛÛ™\•\H]]ÕØ\›TÝ\ÛÛ™\ˆH[ÂˆÊŠˆÚ]\ˆH]\Ý[ˆ\YYHÜZ[ˆ[Yœ˜XÝ[Û˜]Üˆ˜\Ý]ˆ
+‹Âˆš]˜]H˜[œÚY[›ÛÛX[ˆ\Ý[œ˜XÝ[Û˜]Ü‘˜\Ý]\YYH˜[ÙNÂˆÊŠˆ\ØÜš\[ÛˆÙˆH]\ÝÜZ[ˆ[Yœ˜XÝ[Û˜]Üˆ˜\Ý\]XÝ[Û‹ˆ
+‹Âˆš]˜]H˜[œÚY[Ýš[™È\Ý[œ˜XÝ[Û˜]Ü‘˜\Ý]™X\ÛÛˆHˆŽÂˆÊŠˆÝšXÝÝ]\ÈÙˆH]\ÝÛÛ™Kˆ
+‹Âˆš]˜]H˜[œÚY[ÛÛ™TÝ]\È\ÝÛÛ™TÝ]\ÈHÛÛ™TÝ]\Ë““ÕÔ•SŽÂˆÊŠˆÜ[Û˜[™X\ÛÛˆ^Z[š[™ÈÚHH]\ÝÛÛ™H™[˜XÚÈÜˆØ\È™Z™XÝYˆ
+‹Âˆš]˜]H˜[œÚY[Ýš[™È\ÝÛÛ™TÝ]\Ô™X\ÛÛˆHˆŽÂˆÊŠˆ˜XÙHÙˆÛÛ™\ˆØ[™Y]\È][\YžH]]ÛX]XÈÛÛ™\ˆ[ÙKˆ
+‹Âˆš]˜]H˜[œÚY[Ýš[™È\Ý]]ÔÛÛ™\”Ý[[X\žHHˆŽÂˆÊŠˆ™X\ÚXš[]H™\Üœ›ÛHH]\Ý]]ÛX]XÈÛÛ™\ˆ™K\ØÜ™Y[‹ˆ
+‹Âˆš]˜]H˜[œÚY[Ýš[™È\Ý]]Ñ™X\ÚXš[]T™\ÜHˆŽÂˆÊŠˆ[š]X[^˜][Ûˆ™\Üœ›ÛHH]\Ý]]ÛX]XÈÛÛ™\ˆÙYY][\ˆ
+‹Âˆš]˜]H˜[œÚY[Ýš[™È\Ý[š]X[^˜][Û”™\ÜHˆŽÂˆÊŠˆÚ›Û›ÛÙÚXØ[]™[ÙÈœ›ÛHH]\Ý]]ÛX]XÈÛÛ™\ˆ\[[™Kˆ
+‹Âˆš]˜]H˜[œÚY[\ÝÝš[™Ïˆ\Ý]]ÔÛÛ™\’\ÝÜžHH™]È\œ˜^S\ÝÝš[™ÏŠ
+NÂ‚ˆÊŠ‚ˆ
+ˆ™[^][Ûˆ˜XÝÜˆ\ÙYÚ[ˆÐ[šÈÛÛ™\•\HÑSTQÔÕP”ÕUUSÓŸH\ÈXÝ]™K‚ˆ
+‹Âˆš]˜]HÝX›H™[^][Û‘˜XÝÜˆHNÂˆÊŠ‚ˆ
+ˆZ[š[][H™[^][Ûˆ˜XÝÜˆ\ÙYÚ[ˆY\]™H[\[™ÈØØ[\ÈÝÛˆHÙ\]Y[X[Ý\‚ˆ
+‹Âˆš]˜]HÝX›HZ[”Ù\]Y[X[™[^][ÛˆHNÂˆÊŠˆZ[š[][H™[^][Ûˆ˜XÝÜˆ[ÝÙY›ÜˆH[œÚYK[Ý]X\ˆÝ™X[\Ëˆ
+‹Âˆš]˜]HÝX›HZ[’[œÚYSÝ]™[^][ÛˆHNÂˆÊŠˆX^[][H™[^][Ûˆ˜XÝÜˆ[ÝÙYžHHY\]™HÛÛ›Û\‹ˆ
+‹Âˆš]˜]HÝX›HX^Y\]™T™[^][ÛˆHKŒŽÂˆÊŠˆ˜XÝÜˆ\ÙYÈ^[™H™[^][Ûˆ˜XÝÜˆÚ[ˆ™\ÚYX[ÈÚš[šËˆ
+‹Âˆš]˜]HÝX›H™[^][Û’[˜Ü™X\ÙQ˜XÝÜˆHKŒŽÂˆÊŠˆ˜XÝÜˆ\ÙYÈÚš[šÈH™[^][Ûˆ˜XÝÜˆÚ[ˆ™\ÚYX[ÈÜ›ÝËˆ
+‹Âˆš]˜]HÝX›H™[^][Û‘XÜ™X\ÙQ˜XÝÜˆHNÂˆÊŠˆZ[š[][H™[^][Ûˆ\YYÚ[ˆ›[™[™È˜^H[\\˜]\™\Ëˆ
+‹Âˆš]˜]HÝX›HZ[•[\\˜]\™T™[^][ÛˆHŒŽÂˆÊŠˆØ\\YYÈ[™\™ÞH™\ÚYX[Ú[ˆY\Ý[™È™[^][Û‹ˆ
+‹Âˆš]˜]HÝX›HX^[™\™ÞT™[^][Û•ÙZYÚHLŒÂˆÊŠ‚ˆ
+ˆÛÛ›ÛÚ]\ˆ[™\™ÞH™\ÚYX[]\ÝØ]\ÙžHÛ\˜[˜ÙH™Y›Ü™HÛÛ™\™Ù[˜ÙK‚ˆ
+‹Âˆš]˜]H›ÛÛX[ˆ[™›Ü˜ÙQ[™\™ÞP˜[[˜ÙUÛ\˜[˜ÙHH˜[ÙNÂˆÊŠ‚ˆ
+ˆ^XÚ]ÛÛ›ÛÙˆÚ]\ˆHQTÒ™\ÚYX[™XÝÜˆ]\ÝØ]\ÙžHÛ\˜[˜ÙH™Y›Ü™HÛÛ™\™Ù[˜ÙKˆÚ[ˆ›Ý^XÚ]Bˆ
+ˆÙ]HØ]H\ÈXÝ]™H›Üˆ™\ÚYX[X˜\ÙYÛÛ™\ˆ[Ù\È[™[˜XÝ]™H›ÜˆÝXœÝ]][Ûˆ[™[\\˜]\™KÙ›ÝÂˆ
+ˆXØÙ[\˜]Üˆ[Ù\Ë‚ˆ
+‹Âˆš]˜]H›ÛÛX[ˆ[™›Ü˜ÙSY\Ú™\ÚYX[Û\˜[˜ÙHH˜[ÙNÂˆÊŠ‚ˆ
+ˆ˜XÚÈÚ]\ˆQTÒ™\ÚYX[ÛÛ™\™Ù[˜ÙHØ][™È\È™Y[ˆ^XÚ]HÛÛ™šYÝ\™Y‚ˆ
+‹Âˆš]˜]H›ÛÛX[ˆ[™›Ü˜ÙSY\Ú™\ÚYX[Û\˜[˜ÙPÝ\ÝÛZ^™YH˜[ÙNÂˆš]˜]H›ÛÛX[ˆÓ][T\ÙPÚXÚÈHYNÂ‚ˆÊŠ‚ˆ
+ˆÚ[ˆÐÛÙHY_K˜^\È[ˆH™XXÝ]™HÙXÝ[Ûˆ\ÙHÐ[šÈ™XXÝ]™U˜^_H
+Ú[][[™[Ý\ÈÚ[ZXØ[
+È\ÙBˆ
+ˆ\]Z[Xœš][HšXHH[ÙYšYYS‘Y]Ù
+H[œÝXYÙˆÝ[™\™“HÐ[šÈÚ[\U˜^_KˆÙ]\È™Y›Ü™HHš\œÝˆ
+ˆÐ[šÈÜ[Š
+_HØ[‚ˆ
+‹Âˆš]˜]H›ÛÛX[ˆ™XXÝ]™HH˜[ÙNÂ‚ˆÊŠ‚ˆ
+ˆš\œÝ˜^H[™^
+X˜\ÙY[˜Û\Ú]™JHÙˆH™XXÝ]™HÙXÝ[Û‹ˆH˜[YHÙˆÐÛÙHL_HYX[œÈ[ZYH˜^\È
+K™K‚ˆ
+ˆ^ÛY[™È™X›Ú[\‹ØÛÛ™[œÙ\ŠH\™H™XXÝ]™K‚ˆ
+‹Âˆš]˜]H[™XXÝ]™TÝ\˜^HHLNÂ‚ˆÊŠ‚ˆ
+ˆ\Ý˜^H[™^
+X˜\ÙY[˜Û\Ú]™JHÙˆH™XXÝ]™HÙXÝ[Û‹ˆH˜[YHÙˆÐÛÙHL_HYX[œÈ[ZYH˜^\È\™Bˆ
+ˆ™XXÝ]™K‚ˆ
+‹Âˆš]˜]H[™XXÝ]™Q[™˜^HHLNÂ‚ˆÊŠ‚ˆ
+ˆ›YÈ˜XÚÚ[™ÈÚ]\ˆHÛÛ[[ˆ\È™Y[ˆÛÛ™Y]X\ÝÛ˜ÙKˆ\ÙYÈÙYYHÙ\]Y[X[ÛÛ™\ˆÚ]Bˆ
+ˆ™]š[Ý\È˜^HÝ]HÛˆ™K\[œË™]™[[™È]™\™Ù[˜ÙHœ›ÛH[ˆ[œ™[^YÝ\‚ˆ
+‹Âˆš]˜]H˜[œÚY[›ÛÛX[ˆ\Ð™Y[”ÛÛ™Y™Y›Ü™HH˜[ÙNÂ‚ˆÊŠ‚ˆ
+ˆÝ[™YY›ÝÈ
+ÙËÚŠH™XÛÜ™Y]H[™ÙˆH™]š[Ý\ÈÛÛ™Kˆ\ÙYÈ]XÝÚ]\ˆHÛÛ[[ˆ™YYÈÂˆ
+ˆ™K\ÛÛ™HÜˆØ[ˆ™]\ÙHH™]š[Ý\È™\Ý[‚ˆ
+‹Âˆš]˜]H˜[œÚY[ÝX›H\ÝÝ[™YY›ÝÈHLKŒÂ‚ˆÊŠˆÚ]\ˆ\ÈÛÛ[[ˆ™]Z[œÈ[ˆXØÙ\Y˜\[KTØ[™ÛHÛÛ][Ûˆ[YÚX›H›Üˆ^XÝ[œ]™]\ÙKˆ
+‹Âˆš]˜]H˜[œÚY[›ÛÛX[ˆ\Ó˜\[TØ[™ÛUØ\›TÝ]HH˜[ÙNÂˆÊŠˆš[™Ù\œš[ÙˆH^\›˜[[œ]È[™ÛÛ[[ˆÜXÚYšXØ][ÛœÈ›ÜˆHXØÙ\Y˜\[KTØ[™ÛHÛÛ][Û‹ˆ
+‹Âˆš]˜]H˜[œÚY[Û™È\Ý˜\[TØ[™ÛR[œ]ÚYÛ˜]\™HHÛ™Ë“RS—ÕSQNÂˆÊŠˆš[™Ù\œš[ÙˆHÛÛ™\™Ù[˜ÙKYØ]HÛÛ™šYÝ\˜][Ûˆ\ÙYÚ[ˆHØ\›HÝ]HØ\ÈXØÙ\Yˆ
+‹Âˆš]˜]H˜[œÚY[Û™È\Ý˜\[TØ[™ÛPÛÛ™\™Ù[˜ÙQØ]TÚYÛ˜]\™HHÛ™Ë“RS—ÕSQNÂˆÊŠ‚ˆ
+ˆ\›[Ù[˜[ZXÈY[]Hš[™Ù\œš[ÙˆH™YYÈHÝ\œ™[˜^H™]ÛÜšÈØ\ÈZ[›Ü‹‚ˆ
+‚ˆ
+ˆ‚ˆ
+ˆÜš][ˆžHÐ[šÈÚ[š]
+
+_KÚXÚ\ÈHÛ›HXÙH]™XZ[ÈH˜^H›ZYËˆHZ\ÛX]ÚYØZ[œÝHÝ\œ™[ˆ
+ˆ™YYÈYX[œÈH˜^H™]ÛÜšÈ\ØÜšX™\ÈHY™™\™[ÛÛ\Û™[Ù]\]X][ÛˆÙˆÝ]KÜˆZ^[™È[H[™]\Ý™Bˆ
+ˆ™XZ[™Y›Ü™H]Ø[ˆÙYY[žHÛÛ™\‹‚ˆ
+ˆÜ‚ˆ
+‹Âˆš]˜]H˜[œÚY[Û™È˜^TÝ]U\›[Ù[˜[ZXÒY[]TÚYÛ˜]\™HHÛ™Ë“RS—ÕSQNÂˆÊŠ‚ˆ
+ˆš[™Ù\œš[Ùˆš^YÛÛ[[ˆ[œ]È\ÙYÈZ[HÝ\œ™[Ù\]Y[X[˜^H[š]X[^˜][Û‹‚ˆ
+‚ˆ
+ˆ‚ˆ
+ˆ™YYÜ\˜][™ÈÛÛ™][ÛœÈ\™H[[[Û˜[H^ÛYYÛÈ™X\˜žH™YYØ\Ù\È™]Z[ˆZ\ˆØ\›HÝ\‚ˆ
+ˆÜ‚ˆ
+‹Âˆš]˜]H˜[œÚY[Û™È\ÝÙ\]Y[X[[š]X[^˜][Û”ÚYÛ˜]\™HHÛ™Ë“RS—ÕSQNÂˆÊŠˆÚ]\ˆ[ˆXØÙ\YÙ\]Y[X[ÛÛ][Ûˆ\È[YÚX›H›Üˆ^XÝ[˜Ú[™ÙYZ[œ]™]\ÙKˆ
+‹Âˆš]˜]H˜[œÚY[›ÛÛX[ˆ\ÔÙ\]Y[X[^XÝ™]\ÙTÝ]HH˜[ÙNÂˆÊŠˆ[[œ]š[™Ù\œš[\ÜÛØÚX]YÚ]HXØÙ\YÙ\]Y[X[ÛÛ][Û‹ˆ
+‹Âˆš]˜]H˜[œÚY[Û™È\ÝÙ\]Y[X[[œ]ÚYÛ˜]\™HHÛ™Ë“RS—ÕSQNÂˆÊŠˆÚ]\ˆH]\ÝÙ\]Y[X[[›ØØ][Ûˆ™]\ÙY[ˆ^XÝXØÙ\YÝ]Kˆ
+‹Âˆš]˜]H˜[œÚY[›ÛÛX[ˆ\ÝÙ\]Y[X[Ø\›TÝ]T™]\ÙYH˜[ÙNÂˆÊŠ‚ˆ
+ˆÚ]\ˆHÝ\œ™[˜^HÝ]HØ\È›ÙXÙYžHÐ[šÈ˜\[TØ[™ÛTÛÛ™\ŸHÛˆ\ÈÛÛ[[ˆ[œÝ[˜ÙK‚ˆ
+‚ˆ
+ˆ‚ˆ
+ˆH[\YÜˆQTÒ˜[˜XÚÈØ[™Y]HYÜY›ÝYÚÐ[šÈØXØÙ\ÛÛ™YÝ]PØ[™Y]J\Ý[][ÛÛÛ[[Š_Bˆ
+ˆ™\XÙ\ÈH˜^H™]ÛÜšËÛÈ]ÈÝ]H]\Ý™]™\ˆ™HÛÛ[Z]YÈH˜\[KTØ[™ÛHØ\›K\Ý]HØXÚH]™[ˆÚ[‚ˆ
+ˆH™\ÜYÛÛ™\ˆ\HÝ^\ÈÐ[šÈÛÛ™\•\HÓTSWÔÐS‘Ó_H›Üˆ[[Y]žHÛÛ[Z]K‚ˆ
+ˆÜ‚ˆ
+‹Âˆš]˜]H˜[œÚY[›ÛÛX[ˆ˜\[TØ[™ÛTÝ]SÝÛ™YH˜[ÙNÂˆÊŠˆÚ]\ˆH]\Ý˜\[KTØ[™ÛH™\Ý[Ø\È[ˆ^XÝ™]\ÙHÙˆ[ˆXØÙ\YØ\›HÝ]Kˆ
+‹Âˆš]˜]H˜[œÚY[›ÛÛX[ˆ\Ý˜\[TØ[™ÛUØ\›TÝ]T™]\ÙYH˜[ÙNÂ‚ˆÊŠˆYXÚ[šXØ[\ÚYÛˆ›ÜˆH\Ý[][ÛˆÛÛ[[‹ˆ
+‹Âˆš]˜]H\Ý[][ÛÛÛ[[“YXÚ[šXØ[\ÚYÛˆYXÚ[šXØ[\ÚYÛŽÂ‚ˆÊŠˆÛÛ[[ˆÜXÚYšXØ][Ûˆ›ÜˆHÜ
+ÛÛ™[œÙ\ŠH[™ˆ
+‹Âˆš]˜]HÛÛ[[”ÜXÚYšXØ][ÛˆÜÜXÚYšXØ][ÛŽÂˆÊŠˆÛÛ[[ˆÜXÚYšXØ][Ûˆ›ÜˆH›ÝÛH
+™X›Ú[\ŠH[™ˆ
+‹Âˆš]˜]HÛÛ[[”ÜXÚYšXØ][Ûˆ›ÝÛTÜXÚYšXØ][ÛŽÂˆÊŠˆ[X™\ˆÙˆÛÛ[X][ÛˆÝYÙ\È\ÙY›ÜˆY\ÝX›H›ÙXÝÜXÚYšXØ][ÛœËˆ
+‹Âˆš]˜]H[ÜXÚYšXØ][Û’Û[ÝÜTÝ\ÈHNÂˆÊŠˆ[X™\ˆÙˆÜXÚYšXØ][ÛˆÛÛ[X][ÛˆÝYÙ\ÈÛÛ\]YžHH]\ÝÛÛ™Kˆ
+‹Âˆš]˜]H˜[œÚY[[\ÝÜXÚYšXØ][Û’Û[ÝÜTÝ\ÛÝ[HÂ‚ˆZ^\ˆ™YYZ^\ˆH™]ÈZ^\Š[\Z^\ˆŠNÂˆÝX›H›ÝÛU˜^T™\ÜÝ\™HHLKŒÂˆ[[X™\“Ù•˜^\ÈHNÂˆ[X^[X™\“Ù’]\˜][ÛœÈHLÂˆÊŠ‚ˆ
+ˆÚ]\ˆÐ[šÈÛX^[X™\“Ù’]\˜][ÛœßH]\Ý™HÛ›Ü™Y\ÈHT‘]\˜][ÛˆØ\ˆÚ[ˆÐÛÙHY_HHY\]™Bˆ
+ˆ˜^KX˜\ÙY]\˜][Ûˆ›ÛÜ‹H]\˜][Û‹[Ý™\™›ÝÈ^[œÚ[Û‹[™HÛ\Ú^[œÚ[Ûˆ\™H[\ØX›YÛÈBˆ
+ˆÛÛ™\ˆ™]™\ˆ[œÈ[Ü™H[ˆÐ[šÈÛX^[X™\“Ù’]\˜][ÛœßH]\˜][ÛœËˆÚ[ˆÐÛÙH˜[Ù_H
+Y˜][
+Bˆ
+ˆÐ[šÈÛX^[X™\“Ù’]\˜][ÛœßH\ÈÛ›HHÝÙ\ˆ›Ý[™[™HÛÛ™\ˆ\Ù\È]ÈY\]™H]\˜][ÛˆYÙ]ˆ\È\Âˆ
+ˆÜZ[ˆšXHÐ[šÈÜÙ]\™]\˜][ÛØ\
+›ÛÛX[Š_HÜˆÐ[šÈÜÙ]X^[X™\“Ù’]\˜][ÛœÊ[›ÛÛX[Š_HÛÈ]ˆ
+ˆ^\Ý[™ÈØ[\œÈÙˆÐ[šÈÜÙ]X^[X™\“Ù’]\˜][ÛœÊ[
+_HÙY\H\ÝÜšXØ[ÛÙY›ÛÜˆ™Z]š[Ü‹‚ˆ
+‹Âˆš]˜]H›ÛÛX[ˆ\™]\˜][ÛØ\H˜[ÙNÂˆÊŠ‚ˆ
+ˆÜ[Û˜[\‹\ÝYÙH[š]X[[\\˜]\™HÝY\ÜÙ\È›ÜˆÚ[][[™[Ý\È™\ÚYX[ÛÛ™\œË‚ˆ
+‹Âˆš]˜]HÝX›V×HÙYY[\\˜]\™\ÈH[ÂˆÝ™X[R[\™˜XÙHÝ™X[WÌÈH™]ÈÝ™X[JœÝ™X[WÌÈŠNÂˆÝ™X[R[\™˜XÙHØ\ÓÝ]Ý™X[HH™]ÈÝ™X[J™Ø\ÓÝ]Ý™X[HŠNÂˆÝ™X[R[\™˜XÙH\]ZYÝ]Ý™X[HH™]ÈÝ™X[J›\]ZYÝ]Ý™X[HŠNÂˆ›ÛÛX[ˆÝ™X[WÌÚ\ÜÙ]H˜[ÙNÂˆš]˜]HÝX›H[\›˜[X[Y]\ˆHKŒÂ‚ˆÊŠ‚ˆ
+ˆX^[][H[ÝØX›HœÈ˜XÝÜˆ
+Ø\ÈØY˜XÝÜŠH›ÜˆHÛÛ[[ˆ[\›˜[ÈÛKÜÊœÜ\
+ÙËÛLÊWKˆ\ÙY\ÈH\ÚYÛˆ˜\Ú\Âˆ
+ˆ›ÜˆHœËY˜XÝÜˆØ\XÚ]HÛÛœÝ˜Z[ˆ\XØ[ÛÝY\œËPœ›ÝÛˆ\ÚYÛˆ˜[Y\È\™H‹ŒL‹H›Üˆ˜^YYÛÛ[[œÈ[™\Âˆ
+ˆËŒ›ÜˆÝXÝ\™YXÚÚ[™Ë‚ˆ
+‹Âˆš]˜]HÝX›HX^[ÝØX›QœÑ˜XÝÜˆH‹NÂ‚ˆ™\\Ú[Kœ›ØÙ\ÜËœ›ØÙ\ÜÛ[Ù[”›ØÙ\ÜÔÞ\Ý[H\ÝÜ\˜][ÛœÎÂˆX]\ˆX]\ŽÂˆÙ\\˜]ÜˆÙ\\˜]ÜŒŽÂ‚ˆÊŠ‚ˆ
+ˆ\œ›ÜˆYX\Ý\™H\ÙY[ˆÛÛ™\ˆÈÚXÚÈÛÛ™\™Ù[˜ÙH[ˆ[Š
+K‚ˆ
+‹Âˆš]˜]HÝX›H\œˆHKŒLLÂ‚ˆÊŠˆ\Ý[X™\ˆÙˆ]\˜][ÛœÈ^XÝ]YžHHXÝ]™HÛÛ™\‹ˆ
+‹Âˆš]˜]H[\Ý]\˜][ÛÛÝ[HÂˆÊŠˆ\Ý™XÛÜ™Y]™\˜YÙH[\\˜]\™H™\ÚYX[[ˆÙ[š[‹ˆ
+‹Âˆš]˜]HÝX›H\Ý[\\˜]\™T™\ÚYX[HŒÂˆÊŠˆ\Ý]™\˜YÙH˜^K][\\˜]\™HÝ\\YYžHHÙ\]Y[X[ÛÛ™\ˆ[ˆÙ[š[‹ˆ
+‹Âˆš]˜]HÝX›H\Ý\YY[\\˜]\™TÝ\™\ÚYX[HÝX›K“˜SŽÂˆÊŠˆ\Ý™XÛÜ™Y™[]]™HX\ÜÈ˜[[˜ÙH™\ÚYX[ˆ
+‹Âˆš]˜]HÝX›H\ÝX\ÜÔ™\ÚYX[HŒÂˆÊŠˆ\Ý™XÛÜ™Y™[]]™H[[H™\ÚYX[ˆ
+‹Âˆš]˜]HÝX›H\Ý[™\™ÞT™\ÚYX[HŒÂˆÊŠˆ\ÝX^[][H˜]È[\›˜[˜^H˜Y™šXÈ]šYYžH^\›˜[™YY›ÝËˆ
+‹Âˆš]˜]HÝX›H\Ý[\›˜[˜Y™šXÔ˜][ÈHŒÂ‚ˆÊŠˆ\™Ù\Ý\‹]˜^H™[]]™HÛÛ\Û™[X]\šX[[X˜[[˜ÙHœ›ÛHH]\ÝÛÛ™Kˆ
+‹Âˆš]˜]HÝX›H\Ý˜^SX]\šX[˜[[˜ÙQ\œ›ÜˆHÝX›K“˜SŽÂˆÊŠˆ\Ý™\ÜYÜÜXÚYšXØ][Ûˆ™\ÚYX[ˆ
+‹Âˆš]˜]HÝX›H\ÝÜÜXÚYšXØ][Û”™\ÚYX[HŒÂˆÊŠˆ\Ý™\ÜY›ÝÛHÜXÚYšXØ][Ûˆ™\ÚYX[ˆ
+‹Âˆš]˜]HÝX›H\Ý›ÝÛTÜXÚYšXØ][Û”™\ÚYX[HŒÂˆÊŠˆ]\ÝQTÒ™\ÚYX[XYÛ›ÜÝXÜËˆ
+‹Âˆš]˜]H˜[œÚY[ÛÛ[[“Y\Ú™\ÚYX[\ÝY\Ú™\ÚYX[H[ÂˆÊŠ‚ˆ
+ˆÚ]\ˆH]\ÝX›XÈ›ÙXÝÈØ[YHœ›ÛHHÝX\™YÝ™\˜[Y™YY›\Ú˜[˜XÚË‚ˆ
+‹Âˆš]˜]H˜[œÚY[›ÛÛX[ˆ\Ý\ÙY™YY›\Ú˜[˜XÚÈH˜[ÙNÂˆÊŠ‚ˆ
+ˆÚ]\ˆH]\ÝÛÛ™H™XXÚYH[\›˜[]˜Y™šXÈÝX\™Y\ˆ]™\™Ù[˜ÙH™XÛÝ™\žK‚ˆ
+‹Âˆš]˜]H˜[œÚY[›ÛÛX[ˆ\Ý[\›˜[˜Y™šXÑÝX\™™XXÚYH˜[ÙNÂˆÊŠ‚ˆ
+ˆÚ]\ˆ[Y\™Ù[˜ÞHØ\[™ÈÙˆ™[^Y[\›˜[˜Y™šXÈ\ÈXÝ]™H›ÜˆHÝ\œ™[ÛÛ™K‚ˆ
+‹Âˆš]˜]H˜[œÚY[›ÛÛX[ˆ[\›˜[˜Y™šXÐØ\XÝ]™HH˜[ÙNÂˆÊŠˆ™XÛÛ˜Ú[YÜ›ÙXÝ˜]È\ÙYžH›ÙXÝY˜]È™\ÚYX[XYÛ›ÜÝXÜËˆ
+‹Âˆš]˜]H˜[œÚY[Ý™X[R[\™˜XÙH\›Z[˜[Ø\Ô›ÙXÝ˜]ÔÝ™X[HH[ÂˆÊŠˆ™XÛÛ˜Ú[Y›ÝÛH›ÙXÝ˜]È\ÙYžH›ÙXÝY˜]È™\ÚYX[XYÛ›ÜÝXÜËˆ
+‹Âˆš]˜]H˜[œÚY[Ý™X[R[\™˜XÙH\›Z[˜[\]ZY›ÙXÝ˜]ÔÝ™X[HH[ÂˆÊŠˆ\˜][ÛˆÙˆH]\ÝÛÛ™HÝ\[ˆÙXÛÛ™Ëˆ
+‹Âˆš]˜]HÝX›H\ÝÛÛ™U[YTÙXÛÛ™ÈHŒÂˆÊŠˆšYÛÜ›Ý\È[œÚYK[Ý]Ý]\ˆ›\ÚÝÙY\È\™›Ü›YYžHH]\Ý[œÚYK[Ý]ÛÛ™Kˆ
+‹Âˆš]˜]H˜[œÚY[[\Ý[œÚYSÝ]Ý]\‘›\ÚÝÙY\ÈHÂˆÊŠˆÚ[\YšYY[œÚYK[Ý][›™\‹[ÛÜ]\˜][ÛœÈ\™›Ü›YYžHH]\Ý[œÚYK[Ý]ÛÛ™Kˆ
+‹Âˆš]˜]H˜[œÚY[[\Ý[œÚYSÝ][›™\“ÛÜ]\˜][ÛœÈHÂˆÊŠˆ]\Ý[œÚYK[Ý]Ë]˜[YH™\ÚYX[ˆ
+‹Âˆš]˜]H˜[œÚY[ÝX›H\Ý[œÚYSÝ]Õ˜[YT™\ÚYX[HÝX›K“˜SŽÂˆÊŠˆ]\ÝÚ[\YšYY[œÚYK[Ý]Ý\œ›ÙØ]H[\\˜]\™H™\ÚYX[ˆ
+‹Âˆš]˜]H˜[œÚY[ÝX›H\Ý[œÚYSÝ]Ý\œ›ÙØ]T™\ÚYX[HÝX›K“˜SŽÂˆÊŠˆ[X™\ˆÙˆÚ[\YšYY[œÚYK[Ý]Ý\œ›ÙØ]H™\Ù]È[ˆH]\ÝÛÛ™Kˆ
+‹Âˆš]˜]H˜[œÚY[[\Ý[œÚYSÝ]Ý\œ›ÙØ]T™\Ù]ÛÝ[HÂˆÊŠˆÚ]\ˆX]š^[œÚYK[Ý]\ÙYHX]š^Ø\›K\Ý\ÛˆH]\ÝÛÛ™Kˆ
+‹Âˆš]˜]H˜[œÚY[›ÛÛX[ˆ\ÝX]š^[œÚYSÝ]Ø\›TÝ\\ÙYH˜[ÙNÂˆÊŠˆÚ]\ˆX]š^[œÚYK[Ý]ž\\ÜÙYHX]š^Ø\›K\Ý\ÛˆH]\ÝÛÛ™Kˆ
+‹Âˆš]˜]H˜[œÚY[›ÛÛX[ˆ\ÝX]š^[œÚYSÝ]Ø\›TÝ\ž\\ÜÙYH˜[ÙNÂˆÊŠˆX]š^Ø\›K\Ý\]\˜][ÛœÈœ›ÛHH]\ÝX]š^[œÚYK[Ý]ÛÛ™Kˆ
+‹Âˆš]˜]H˜[œÚY[[\ÝX]š^[œÚYSÝ]]\˜][ÛÛÝ[HÂˆÊŠˆX]š^Ø\›K\Ý\]™\˜YÙH[\\˜]\™H™\ÚYX[œ›ÛHH]\ÝÛÛ™Kˆ
+‹Âˆš]˜]H˜[œÚY[ÝX›H\ÝX]š^[œÚYSÝ][\\˜]\™T™\ÚYX[HÝX›K“˜SŽÂˆÊŠˆX]š^Ø\›K\Ý\Ø[[YHœ›ÛHH]\ÝÛÛ™H[ˆÙXÛÛ™Ëˆ
+‹Âˆš]˜]H˜[œÚY[ÝX›H\ÝX]š^[œÚYSÝ]ÛÛ™U[YTÙXÛÛ™ÈHŒÂˆÊŠˆ]\Ý˜\[KTØ[™ÛHÙ[ZKX[˜[]XÈ˜XÛØšX[ˆÛÛ[[ˆÛÝ[ˆ
+‹Âˆš]˜]H˜[œÚY[[\Ý˜\[P[˜[]XÒ˜XÛØšX[ÛÛ[[œÈHÂˆÊŠˆ]\Ý˜\[KTØ[™ÛHš[š]KYY™™\™[˜ÙH˜XÛØšX[ˆÛÛ[[ˆÛÝ[ˆ
+‹Âˆš]˜]H˜[œÚY[[\Ý˜\[Qš[š]QY™™\™[˜ÙR˜XÛØšX[ÛÛ[[œÈHÂˆÊŠˆ]\Ý˜\[KTØ[™ÛH˜^H\›[Ù[˜[ZXÈ]˜[X][ÛˆÛÝ[ˆ
+‹Âˆš]˜]H˜[œÚY[[\Ý˜\[U\›[Ñ]˜[X][ÛÛÝ[HÂˆÊŠˆ]\Ý˜\[KTØ[™ÛH\›[Ù[˜[ZXÈØXÚH]ÛÝ[ˆ
+‹Âˆš]˜]H˜[œÚY[[\Ý˜\[U\›[ÐØXÚR]ÛÝ[HÂˆÊŠˆ]\Ý˜\[KTØ[™ÛH˜XÛØšX[ˆZ[Ø[[YH[ˆÙXÛÛ™Ëˆ
+‹Âˆš]˜]H˜[œÚY[ÝX›H\Ý˜\[R˜XÛØšX[Z[[YTÙXÛÛ™ÈHŒÂˆÊŠˆ]\Ý˜\[KTØ[™ÛH›ØÚË]šYXYÛÛ˜[[™X\ˆÛÛ™HÛÝ[ˆ
+‹Âˆš]˜]H˜[œÚY[[\Ý˜\[P›ØÚÓ[™X\”ÛÛ™PÛÝ[HÂˆÊŠˆ]\Ý˜\[KTØ[™ÛH[œÙH˜[˜XÚÈ[™X\ˆÛÛ™HÛÝ[ˆ
+‹Âˆš]˜]H˜[œÚY[[\Ý˜\[Q[œÙS[™X\”ÛÛ™PÛÝ[HÂˆÊŠˆ]\Ý˜\[KTØ[™ÛH[™X\ˆÛÛ™HØ[[YH[ˆÙXÛÛ™Ëˆ
+‹Âˆš]˜]H˜[œÚY[ÝX›H\Ý˜\[S[™X\”ÛÛ™U[YTÙXÛÛ™ÈHŒÂ‚ˆÊŠ‚ˆ
+ˆ[œÝXYÙˆX\	›Ò[YÙ\‹Ý™X[R[\™˜XÙI™ÝËÙHÝÜ™HH\ÝÙˆ™YYÝ™X[\È\ˆ˜^H[X™\‹ˆ\È[ÝÜÂˆ
+ˆ][\H™YYÈÈHØ[YH˜^K‚ˆ
+‹Âˆš]˜]HX\[YÙ\‹\ÝÝ™X[R[\™˜XÙOˆ™YYÝ™X[\ÈH™]È\ÚX\Š
+NÂˆÊŠ‚ˆ
+ˆYØXÞH\™XÝ˜^H™YYÈØ\\™Y™Y›Ü™H[\›˜[˜\Ü‹Û\]ZY˜Y™šXÈ\ÈÛÛ›™XÝY‚ˆ
+‹Âˆš]˜]HX\[YÙ\‹\ÝÝ™X[R[\™˜XÙOˆ\™XÝ^\›˜[™YYÝ™X[\ÈH™]È\ÚX\Š
+NÂˆš]˜]H\ÝÝ™X[R[\™˜XÙOˆ[˜\ÜÚYÛ™Y™YYÝ™X[\ÈH™]È\œ˜^S\ÝŠ
+NÂˆÊŠˆ›ÝÈÜXÚYšXØ][ÛœÈ›ÜˆÚYK\›ÙXÝ˜]ÜËˆ
+‹Âˆš]˜]H\ÝÛÛ[[”ÚYQ˜]ÔÜXÚYšXØ][ÛˆÚYQ˜]ÔÜXÚYšXØ][ÛœÈH™]È\œ˜^S\ÝŠ
+NÂˆÊŠˆ\]ZY[\\›Ý[™Ú\˜ÝZ]ÈÛÛ™šYÝ\™YÛˆHÛÛ[[‹ˆ
+‹Âˆš]˜]H\ÝÛÛ[[”[\\›Ý[™ˆ[\\›Ý[™ÈH™]È\œ˜^S\ÝŠ
+NÂˆÊŠˆX^[][HÝ]\ˆ]\˜][ÛœÈ\ÙYÈÛÛ™\™ÙH[\\›Ý[™™]\›ˆÝ™X[\Ëˆ
+‹Âˆš]˜]H[X^[\\›Ý[™]\˜][ÛœÈHÂˆÊŠˆ™[]]™H™]\›‹Y›ÝÈÛ\˜[˜ÙH›Üˆ[\\›Ý[™Ý]\ˆ]\˜][ÛœËˆ
+‹Âˆš]˜]HÝX›H[\\›Ý[™Û\˜[˜ÙHHKŒKMÂˆÊŠˆX^[][HÝ]\ˆ]\˜][ÛœÈ\ÙYÈÛÛ™\™ÙHÛÛ[[ˆX\ˆ˜\šXX›\Ëˆ
+‹Âˆš]˜]H[X^ÛÛ[[•X\’]\˜][ÛœÈHLŽÂˆÊŠˆ™[]]™HÛ\˜[˜ÙH\ÙY›ÜˆÚYKY˜]È[™Y˜][XÈX\ˆ˜\šXX›\Ëˆ
+‹Âˆš]˜]HÝX›HÛÛ[[•X\•Û\˜[˜ÙHHKŒKMÂˆÊŠˆÚ]\ˆ˜^KÜXÚÚ[™ÈY˜][XÈ™\ÜÝ\™H›ÜÚÝ[\]HH™\ÜÝ\™H›Ùš[Kˆ
+‹Âˆš]˜]H›ÛÛX[ˆY˜][XÔ™\ÜÝ\™Q›ÜÛÝ\[™Ñ[˜X›YH˜[ÙNÂˆÊŠˆ[\›˜[È\H\ÙYÚ[ˆY˜][XÈ™\ÜÝ\™KY›ÜÛÝ\[™È\ÈXÝ]™Kˆ
+‹Âˆš]˜]HÝš[™ÈY˜][XÔ™\ÜÝ\™Q›Ü[\›˜[Õ\HHœÚY]™HŽÂˆÊŠˆ]\ÝÛÝ\YY˜][XÈ™\ÜÝ\™H›Ü[ˆKˆ
+‹Âˆš]˜]HÝX›H\ÝY˜][XÔ™\ÜÝ\™Q›ÜHHŒÂˆÊŠˆ]\Ý™[]]™H™\ÜÝ\™K\›Ùš[HÚ[™ÙHœ›ÛHY˜][XÈÛÝ\[™Ëˆ
+‹Âˆš]˜]HÝX›H\ÝY˜][XÔ™\ÜÝ\™Q›Ü™\ÚYX[HŒÂˆÊŠˆ[X™\ˆÙˆÝ]\ˆX\‹]˜\šXX›H]\˜][ÛœÈ\ÙY[ˆH]\Ý[‹ˆ
+‹Âˆš]˜]H[\ÝÛÛ[[•X\’]\˜][ÛÛÝ[HÂˆÊŠˆX^[][H™[]]™H™\ÚYX[œ›ÛHH]\ÝÝ]\ˆX\‹]˜\šXX›HÛÛ™Kˆ
+‹Âˆš]˜]HÝX›H\ÝÛÛ[[•X\”™\ÚYX[HŒÂˆÊŠˆÚ]\ˆH]\ÝÝ]\ˆX\‹]˜\šXX›HÛÛ™HØ]\ÙšYYÛ\˜[˜ÙKˆ
+‹Âˆš]˜]H›ÛÛX[ˆ\ÝÛÛ[[•X\ÛÛ™\™ÙYHYNÂˆÊŠˆ]\ÝX^[][H™[]]™H[\\›Ý[™™]\›‹\Ý™X[HÚ[™ÙKˆ
+‹Âˆš]˜]HÝX›H\Ý[\\›Ý[™™[]]™PÚ[™ÙHHŒÂˆÊŠˆÚ]\ˆH]\ÝÝ]\ˆX\ˆ\]HÚ[™ÙY[žHX[š\[]Y˜\šXX›Kˆ
+‹Âˆš]˜]H˜[œÚY[›ÛÛX[ˆÛÛ[[•X\•˜\šXX›\ÐÚ[™ÙYH˜[ÙNÂ‚ˆÊŠ‚ˆ
+ˆÙ]\ˆ›ÜˆHšY[ÛÙO™Ó][T\ÙPÚXÚÏØÛÙO‹‚ˆ
+‚ˆ
+ˆ\˜[HÓ][T\ÙPÚXÚÈH›ÛÛX[‚ˆ
+‹ÂˆX›XÈ›ÚYÙ]][T\ÙPÚXÚÊ›ÛÛX[ˆÓ][T\ÙPÚXÚÊHÂˆ\Ë™Ó][T\ÙPÚXÚÈHÓ][T\ÙPÚXÚÎÂˆ™YYZ^\‹œÙ]][T\ÙPÚXÚÊÓ][T\ÙPÚXÚÊNÂˆ›Üˆ
+Ú[\U˜^H˜^Hˆ˜^\ÊHÂˆ˜^KœÙ]][T\ÙPÚXÚÊÓ][T\ÙPÚXÚÊNÂˆBˆB‚ˆÊŠ‚ˆ
+ˆÙ]\ˆ›ÜˆHšY[ÛÙO™Ó][T\ÙPÚXÚÏØÛÙO‹‚ˆ
+‚ˆ
+ˆ™]\›ˆH›ÛÛX[‚ˆ
+‹ÂˆX›XÈ›ÛÛX[ˆ\ÑÓ][T\ÙPÚXÚÊ
+HÂˆ™]\›ˆÓ][T\ÙPÚXÚÎÂˆB‚ˆÊŠ‚ˆ
+ˆ]\œ™YH˜^HY™šXÚY[˜ÞH\YYÈXXÚ\]Z[Xœš][HÝYÙH
+‹ŒJKˆY˜][KŒHYX[‚ˆ
+‹Âˆš]˜]HÝX›H]\œ™YQY™šXÚY[˜ÞHHKŒÂ‚ˆÊŠ‚ˆ
+ˆ\‹\ÝYÙH]\œ™YHY™šXÚY[˜ÞHÝ™\œšY\Ëˆ[™^\ÈH™X›Ú[\ˆ[™H\ÝÝYÙH\ÈHÛÛ™[œÙ\ˆYˆ™\Ù[ˆBˆ
+ˆÐ[šÈÝX›HÓ˜SŸH˜[YHYX[œÈ]HÛÛ[[‹]ÚYH]\œ™YHY™šXÚY[˜ÞH\È\ÙY›Üˆ]ÝYÙK‚ˆ
+‹Âˆš]˜]HÝX›V×H\”ÝYÙS]\œ™YQY™šXÚY[˜ÞHH[Â‚ˆÊŠ‚ˆ
+ˆ\‹Z]\˜][ÛˆÛÛ™\™Ù[˜ÙH\ÝÜžNˆÚ]\˜][Û—VÌ][\\œ‹O[X\ÜÑ\œ‹Y[™\™ÞQ\œ—K‚ˆ
+‹Âˆš]˜]H˜[œÚY[\ÝÝX›V×OˆÛÛ™\™Ù[˜ÙR\ÝÜžHH™]È\œ˜^S\ÝŠ
+NÂ‚ˆÊŠ‚ˆ
+ˆ[X™\ˆÙˆÚ[\YšYY[›™\‹[ÛÜ]\˜][ÛœÈ™]ÙY[ˆšYÛÜ›Ý\È›\Ú\]\È[ˆHSÈÛÛ™\‹ˆYÚ\ˆ˜[Y\È™YXÙBˆ
+ˆ›\ÚÛÝ[]X^H™YXÙHXØÝ\˜XÞKˆY˜][Ë‚ˆ
+‹Âˆš]˜]H[[›™\“ÛÜÝ\ÈHÎÂ‚ˆËÈOOOOOOOOOOOH[˜[ZXÈÚ[][][ÛˆšY[ÈOOOOOOOOOOOBˆÊŠˆÚ]\ˆH[˜[ZXÈ˜^H[Ù[\È[˜X›Y›Üˆ˜[œÚY[Ú[][][Û‹ˆ
+‹Âˆš]˜]H›ÛÛX[ˆ[˜[ZXÐÛÛ[[‘[˜X›YH˜[ÙNÂˆÊŠˆ[˜[ZXÈ[Ù[›Ü›][][ÛˆÝ\œ™[H\ÙYžHÐ[šÈÜ[•˜[œÚY[
+ÝX›KURQ
+_Kˆ
+‹Âˆš]˜]H[˜[ZXÐÛÛ[[“[Ù[[˜[ZXÐÛÛ[[“[Ù[H[˜[ZXÐÛÛ[[“[Ù[‘VT’SQS•SÑUSTŽÂˆÊŠˆ\]ZYÛ\\ˆ˜^H[ˆ[Û\Ëˆ[™^YžH˜^H[X™\‹ˆ
+‹Âˆš]˜]H˜[œÚY[ÝX›V×H˜^S\]ZYÛ\H[ÂˆÊŠˆÙZ\ˆZYÚÛˆXXÚ˜^H[ˆY]™\Ëˆ
+‹Âˆš]˜]HÝX›H˜^UÙZ\’ZYÚHŒNÂˆÊŠˆÙZ\ˆ[™Ý
+Ü™\Ý[™Ý
+HÛˆXXÚ˜^H[ˆY]™\Ëˆ
+‹Âˆš]˜]HÝX›H˜^UÙZ\“[™ÝHKŒÂˆÊŠˆ\‹]˜^H[[H[ˆ‹ˆ[™^YžH˜^H[X™\‹ˆ[[[[š]X[^™Yˆ
+‹Âˆš]˜]H˜[œÚY[ÝX›V×H˜^Q[[HH[ÂˆÊŠˆžH˜^H™\ÜÝ\™H›Ü[ˆH\ˆ˜^H8 %›Üˆ˜\ÜˆY˜][XÈ[Ù[ˆ
+‹Âˆš]˜]HÝX›H˜^QžT™\ÜÝ\™Q›ÜHŒÂˆÊŠˆÚ]\ˆ\‹]˜^H[™\™ÞH˜[[˜ÙH\ÈXÝ]™H
+\Ù\È›\Ú[œÝXYÙˆ
+Kˆ
+‹Âˆš]˜]H›ÛÛX[ˆ[˜[ZXÑ[™\™ÞQ[˜X›YH˜[ÙNÂ‚ˆÊŠ‚ˆ
+ˆÛÛœÝXÝÜˆ›Üˆ\Ý[][ÛÛÛ[[‹‚ˆ
+‚ˆ
+ˆ\˜[H˜[YH˜[YHÙˆ\Ý[][ÛˆÛÛ[[‚ˆ
+ˆ\˜[H[X™\“Ù•˜^\ÓØØ[[X™\ˆÙˆÚ[\U˜^\ÈÈY
+^ÛY[™È™X›Ú[\‹ØÛÛ™[œÙ\ŠBˆ
+ˆ\˜[H\Ô™X›Ú[\ˆÙ]YHÈY™X›Ú[\‚ˆ
+ˆ\˜[H\ÐÛÛ™[œÙ\ˆÙ]YHÈYÛÛ™[œÙ\‚ˆ
+‹ÂˆX›XÈ\Ý[][ÛÛÛ[[ŠÝš[™È˜[YK[[X™\“Ù•˜^\ÓØØ[›ÛÛX[ˆ\Ô™X›Ú[\‹›ÛÛX[ˆ\ÐÛÛ™[œÙ\ŠHÂˆÝ\\Š˜[YJNÂˆ\Ëš\Ô™X›Ú[\ˆH\Ô™X›Ú[\ŽÂˆ\Ëš\ÐÛÛ™[œÙ\ˆH\ÐÛÛ™[œÙ\ŽÂˆ\ÝÜ\˜][ÛœÈH™]È™\\Ú[Kœ›ØÙ\ÜËœ›ØÙ\ÜÛ[Ù[”›ØÙ\ÜÔÞ\Ý[J
+NÂˆ\Ë›[X™\“Ù•˜^\ÈH[X™\“Ù•˜^\ÓØØ[Âˆ[š]YXÚ[šXØ[\ÚYÛŠ
+NÂ‚ˆËÈYˆ\Ù\ˆÙ]È\Ô™X›Ú[\‹]][ˆ\ÈHš\œÝ˜^H[ˆ	Ý˜^\ÉÈ\ÝˆYˆ
+\Ô™X›Ú[\ŠHÂˆ˜^\Ë˜Y
+™]È™X›Ú[\Š”™X›Ú[\ˆŠJNÂˆ\Ë›[X™\“Ù•˜^\ÊÊÎÂˆB‚ˆËÈ[ˆHZYHœÚ[\Hˆ˜^\Âˆ›Üˆ
+[HHÈH[X™\“Ù•˜^\ÓØØ[ÈJÊÊHÂˆ˜^\Ë˜Y
+Ü™X]SZYU˜^J”Ú[\U˜^Hˆ
+È
+H
+ÈJKJJNÂˆB‚ˆËÈYˆ\Ù\ˆÙ]È\ÐÛÛ™[œÙ\‹Y]]HÜˆYˆ
+\ÐÛÛ™[œÙ\ŠHÂˆ˜^\Ë˜Y
+™]ÈÛÛ™[œÙ\ŠÛÛ™[œÙ\ˆŠJNÂˆ\Ë›[X™\“Ù•˜^\ÊÊÎÂˆB‚ˆËÈY[H[ÈH›ØÙ\ÜÈÞ\Ý[Bˆ›Üˆ
+[HHÈH\Ë›[X™\“Ù•˜^\ÎÈJÊÊHÂˆ\ÝÜ\˜][ÛœË˜Y
+˜^\Ë™Ù]
+JJNÂˆBˆB‚ˆÊŠ‚ˆ
+ˆYH™YYÝ™X[HÈHÜXÚYšYY˜^Kˆ
+›ÝÈ[ÝÜÈ][\HÝ™X[\ÈÛˆHØ[YH˜^S[X™\‹\Ú[™ÈH\ÝŠBˆ
+‚ˆ
+ˆ\˜[H[œ]Ý™X[HH™YYÝ™X[Bˆ
+ˆ\˜[H™YY˜^S[X™\ˆH˜^H[X™\ˆ
+X˜\ÙY[ˆHÛÙJHÈÚXÚ\È™YYÛÙ\Âˆ
+ˆ›ÝÜÈ[YØ[\™Ý[Y[^Ù\[ÛˆYˆHÝ™X[H\È[ÜˆH˜^H[™^\ÈÝ]ÚYHHÛÛ[[ˆ˜^H˜[™ÙBˆ
+‹ÂˆX›XÈ›ÚYY™YYÝ™X[JÝ™X[R[\™˜XÙH[œ]Ý™X[K[™YY˜^S[X™\ŠHÂˆYˆ
+[œ]Ý™X[HOH[
+HÂˆ›ÝÈ™]È[YØ[\™Ý[Y[^Ù\[ÛŠš[œ]Ý™X[HØ[ˆ›Ý™H[ŠNÂˆBˆYˆ
+™YY˜^S[X™\ˆ™YY˜^S[X™\ˆH[X™\“Ù•˜^\ÊHÂˆ›ÝÈ™]È[YØ[\™Ý[Y[^Ù\[ÛŠ‘™YY˜^H[™^]\Ý™H™]ÙY[ˆ[™ˆ
+È
+[X™\“Ù•˜^\ÈHJJNÂˆBˆËÈ]\È™YY[ÈÝ\ˆ™YYÝ™X[\È\Ý›Üˆ]˜^S[X™\‚ˆ™YYÝ™X[\Ë˜ÛÛ\]RYXœÙ[
+™YY˜^S[X™\‹ÈOˆ™]È\œ˜^S\ÝŠ
+JK˜Y
+[œ]Ý™X[JNÂ‚ˆËÈ[ÛÈ]XÚ]ÈH˜^H]Ù[‚ˆÙ]˜^J™YY˜^S[X™\ŠK˜YÝ™X[J[œ]Ý™X[JNÂ‚ˆËÈYˆ[Ý\ˆ\ÚYÛˆ\È]
+˜[
+ˆ™YYÝ™X[\ÈÙ]ÛÛXš[™Y[ˆ™YYZ^\Ž‚ˆ™YYZ^\‹˜YÝ™X[J[œ]Ý™X[JNÂˆ™YYZ^\‹œ[Š
+NÂ‚ˆËÈ[ˆ[ÝHÜ[Û˜[HÜ]H™YYZ^\ˆÝ]][È[[^HÝ™X[\×ÌËˆËÈØ\ÓÝ]Ý™X[K\]ZYÝ]Ý™X[H
+H^\Ý[™È]\›ŠK‚ˆÝX›H[Û\ÈH™YYZ^\‹™Ù]Ý]]Ý™X[J
+K™Ù]\›[ÔÞ\Ý[J
+K™Ù]Ý[[X™\“Ù“[Û\Ê
+NÂˆÝ™X[WÌÈH™YYZ^\‹™Ù]Ý]]Ý™X[J
+NÈËÈÛÛXš[™YˆØ\ÓÝ]Ý™X[KœÙ]\›[ÔÞ\Ý[JÝ™X[WÌË™Ù]\›[ÔÞ\Ý[J
+K˜ÛÛ™J
+JNÂˆØ\ÓÝ]Ý™X[K™Ù]\›[ÔÞ\Ý[J
+KœÙ]Ý[[X™\“Ù“[Û\Ê[Û\ÈÈ‹Œ
+NÂ‚ˆ\]ZYÝ]Ý™X[KœÙ]\›[ÔÞ\Ý[JÝ™X[WÌË™Ù]\›[ÔÞ\Ý[J
+K˜ÛÛ™J
+JNÂˆ\]ZYÝ]Ý™X[K™Ù]\›[ÔÞ\Ý[J
+KœÙ]Ý[[X™\“Ù“[Û\Ê[Û\ÈÈ‹Œ
+NÂ‚ˆËÈX\šÈ]ÙH™YYÈ™KZ[š]X[^™HYˆ™]È™YYÈ\™HYYˆÙ]Ò[š]X[^š[ÛŠYJNÂˆB‚ˆÊŠ‚ˆ
+ˆYH™YYÝ™X[HÈHÛÛ[[ˆÚ]Ý]ÜXÚYžZ[™ÈH˜^K‚ˆ
+‚ˆ
+ˆ‚ˆ
+ˆH™YY˜^H\È\Ý[X]Y]]ÛX]XØ[HÚ[ˆHÛÛ[[ˆ\È[‹ˆH\Ý[X]H\Ù\È[ˆ^\Ý[™È˜^H[\\˜]\™Bˆ
+ˆ›Ùš[HÚ[ˆ]˜Z[X›KÝ\Ú\ÙH]Z[ÈHÚ[\H[\\˜]\™H›Ùš[Hœ›ÛHÛÛ™šYÝ\™YÛÛ™[œÙ\‹Ü™X›Ú[\‚ˆ
+ˆ[\\˜]\™\È[™H™YY[\\˜]\™Kˆ\È\ÈH›Ø\Ý[š]X[XÙ[Y[]\š\ÝXË›ÝHÝX\˜[YHÙˆÛØ˜[ˆ
+ˆÜ[][HÜˆÛÛ™\™Ù[˜ÙH›Üˆ]™\žHÜXÚYšXØ][Û‹‚ˆ
+ˆÜ‚ˆ
+‚ˆ
+ˆ\˜[H[œ]Ý™X[HH™YYÝ™X[Bˆ
+‹ÂˆX›XÈ›ÚYY™YYÝ™X[JÝ™X[R[\™˜XÙH[œ]Ý™X[JHÂˆ[˜\ÜÚYÛ™Y™YYÝ™X[\Ë˜Y
+[œ]Ý™X[JNÂˆÙ]Ò[š]X[^š[ÛŠYJNÂˆB‚ˆÊŠ‚ˆ
+ˆ™]\›ˆH™YYÝ™X[\ÈÛÛ›™XÝYÈHÚ]™[ˆ˜^K‚ˆ
+‚ˆ
+ˆ\˜[H™YY˜^S[X™\ˆ˜^H[™^Ú\™H™YYÈ\™HÛÛ›™XÝYˆ
+ˆ™]\›ˆ[[]]X›HšY]ÈÙˆ™YYÝ™X[\ÈÛÛ›™XÝYÈH˜^Bˆ
+‹ÂˆX›XÈ\ÝÝ™X[R[\™˜XÙOˆÙ]™YYÝ™X[\Ê[™YY˜^S[X™\ŠHÂˆ\ÝÝ™X[R[\™˜XÙOˆ™YYÈH™YYÝ™X[\Ë™Ù]
+™YY˜^S[X™\ŠNÂˆYˆ
+™YYÈOH[
+HÂˆ™]\›ˆÛÛXÝ[ÛœË™[\S\Ý
+
+NÂˆBˆ™]\›ˆÛÛXÝ[ÛœË[›[ÙYšXX›S\Ý
+™YYÊNÂˆB‚ˆÊŠ‚ˆ
+ˆ™]\›ˆ[™YYÝ™X[\ÈÛÛ›™XÝYÈHÛÛ[[‹Ù^YYžH›ÝÛK]\˜^H[™^‚ˆ
+‚ˆ
+ˆ™]\›ˆ[[]]X›HšY]ÈÙˆH™YYÝ™X[HX\ˆ
+‹ÂˆX›XÈX\[YÙ\‹\ÝÝ™X[R[\™˜XÙOˆÙ]™YYÝ™X[\Ê
+HÂˆ™]\›ˆÛÛXÝ[ÛœË[›[ÙYšXX›SX\
+™YYÝ™X[\ÊNÂˆB‚ˆÊŠ‚ˆ
+ˆÚXÚÈÚ]\ˆ\ÈÛÛ[[ˆ[˜ÛY\ÈH™X›Ú[\ˆÝYÙK‚ˆ
+‚ˆ
+ˆ™]\›ˆÐÛÙHY_HYˆH™X›Ú[\ˆ\È™\Ù[ˆ
+‹ÂˆX›XÈ›ÛÛX[ˆ\Ô™X›Ú[\Š
+HÂˆ™]\›ˆ\Ô™X›Ú[\ŽÂˆB‚ˆÊŠ‚ˆ
+ˆÚXÚÈÚ]\ˆ\ÈÛÛ[[ˆ[˜ÛY\ÈHÛÛ™[œÙ\ˆÝYÙK‚ˆ
+‚ˆ
+ˆ™]\›ˆÐÛÙHY_HYˆHÛÛ™[œÙ\ˆ\È™\Ù[ˆ
+‹ÂˆX›XÈ›ÛÛX[ˆ\ÐÛÛ™[œÙ\Š
+HÂˆ™]\›ˆ\ÐÛÛ™[œÙ\ŽÂˆB‚ˆÊŠ‚ˆ
+ˆ\Ý[X]HÚXÚ˜^H[ˆ[˜\ÜÚYÛ™Y™YYÝ™X[HÛÝ[™HXÙYÛ‹‚ˆ
+‚ˆ
+ˆ‚ˆ
+ˆ\ÈY]ÙÙ\È›ÝÛÛ›™XÝH™YYÝ™X[HÈHÛÛ[[‹ˆ]\È[[™Y›ÜˆXYÛ›ÜÝXÜÈ[™›ÜˆÚXÚÚ[™Âˆ
+ˆ]]ÛX]XÈ™YYXÙ[Y[™Y›Ü™HØ[[™ÈÐ[šÈÜ[Š
+_K‚ˆ
+ˆÜ‚ˆ
+‚ˆ
+ˆ\˜[H[œ]Ý™X[H™YYÝ™X[HÈ]˜[X]Bˆ
+ˆ™]\›ˆX˜\ÙY˜^H[X™\‹ÜˆÐÛÙHL_HYˆHÝ™X[H\È[Üˆ›È˜^\È^\Ýˆ
+‹ÂˆX›XÈ[\Ý[X]Q™YY˜^S[X™\ŠÝ™X[R[\™˜XÙH[œ]Ý™X[JHÂˆYˆ
+[œ]Ý™X[HOH[[X™\“Ù•˜^\ÈOH
+HÂˆ™]\›ˆLNÂˆBˆ[œ]Ý™X[Kœ[Š
+NÂˆ™]\›ˆ\Ý[X]Q™YY˜^S[X™\Š[œ]Ý™X[K™Ù][\\˜]\™J
+JNÂˆB‚ˆÊŠ‚ˆ
+ˆ™]\›ˆH˜^H[X™\ˆ›ÜˆH™YYÝ™X[HÝ\œ™[H\ÜÚYÛ™YÈHÛÛ[[‹‚ˆ
+‚ˆ
+ˆ‚ˆ
+ˆHÛÚÝ\š\œÝÛÛ\\™\ÈÝ™X[HØš™XÝY[]H[™[ˆ˜[È˜XÚÈÈHÝ™X[H˜[YKˆ™YYÝ™X[\ÈYYÚ]ˆ
+ˆÐ[šÈØY™YYÝ™X[JÝ™X[R[\™˜XÙJ_H\™H\ÜÚYÛ™YÚ[ˆHÛÛ[[ˆ\È[‹‚ˆ
+ˆÜ‚ˆ
+‚ˆ
+ˆ\˜[H[œ]Ý™X[H™YYÝ™X[HÈØØ]Bˆ
+ˆ™]\›ˆX˜\ÙY˜^H[X™\‹ÜˆÐÛÙHL_HYˆHÝ™X[H\È[Üˆ›Ý\ÜÚYÛ™Yˆ
+‹ÂˆX›XÈ[Ù]™YY˜^S[X™\ŠÝ™X[R[\™˜XÙH[œ]Ý™X[JHÂˆYˆ
+[œ]Ý™X[HOH[
+HÂˆ™]\›ˆLNÂˆBˆ[™YY˜^S[X™\ˆHÙ]™YY˜^S[X™\žT™Y™\™[˜ÙJ[œ]Ý™X[JNÂˆYˆ
+™YY˜^S[X™\ˆH
+HÂˆ™]\›ˆ™YY˜^S[X™\ŽÂˆBˆ™]\›ˆÙ]™YY˜^S[X™\Š[œ]Ý™X[K™Ù]˜[YJ
+JNÂˆB‚ˆÊŠ‚ˆ
+ˆ™]\›ˆH˜^H[X™\ˆ›ÜˆH™YYÝ™X[HÚ]HÚ]™[ˆ˜[YK‚ˆ
+‚ˆ
+ˆ\˜[HÝ™X[S˜[YH™YYÝ™X[H˜[YHÈØØ]Bˆ
+ˆ™]\›ˆX˜\ÙY˜^H[X™\‹ÜˆÐÛÙHL_HYˆH˜[YH\È[Üˆ›Ý\ÜÚYÛ™Yˆ
+‹ÂˆX›XÈ[Ù]™YY˜^S[X™\ŠÝš[™ÈÝ™X[S˜[YJHÂˆYˆ
+Ý™X[S˜[YHOH[
+HÂˆ™]\›ˆLNÂˆBˆ›Üˆ
+[˜^S[X™\ˆHÈ˜^S[X™\ˆ[X™\“Ù•˜^\ÎÈ˜^S[X™\ŠÊÊHÂˆ\ÝÝ™X[R[\™˜XÙOˆ™YYÈH™YYÝ™X[\Ë™Ù]
+˜^S[X™\ŠNÂˆYˆ
+™YYÈOH[
+HÂˆÛÛ[YNÂˆBˆ›Üˆ
+Ý™X[R[\™˜XÙH™YYˆ™YYÊHÂˆYˆ
+Ý™X[S˜[YK™\]X[Ê™YY™Ù]˜[YJ
+JJHÂˆ™]\›ˆ˜^S[X™\ŽÂˆBˆBˆBˆ™]\›ˆLNÂˆB‚ˆÊŠ‚ˆ
+ˆ™]\›ˆH˜^H[X™\ˆ›ÜˆH^XÝ™YYÝ™X[HØš™XÝ‚ˆ
+‚ˆ
+ˆ\˜[H[œ]Ý™X[H™YYÝ™X[HØš™XÝÈØØ]Bˆ
+ˆ™]\›ˆX˜\ÙY˜^H[X™\‹ÜˆÐÛÙHL_HYˆHÝ™X[HØš™XÝ\È›Ý\ÜÚYÛ™Yˆ
+‹Âˆš]˜]H[Ù]™YY˜^S[X™\žT™Y™\™[˜ÙJÝ™X[R[\™˜XÙH[œ]Ý™X[JHÂˆ›Üˆ
+[˜^S[X™\ˆHÈ˜^S[X™\ˆ[X™\“Ù•˜^\ÎÈ˜^S[X™\ŠÊÊHÂˆ\ÝÝ™X[R[\™˜XÙOˆ™YYÈH™YYÝ™X[\Ë™Ù]
+˜^S[X™\ŠNÂˆYˆ
+™YYÈOH[
+HÂˆÛÛ[YNÂˆBˆ›Üˆ
+Ý™X[R[\™˜XÙH™YYˆ™YYÊHÂˆYˆ
+™YYOH[œ]Ý™X[JHÂˆ™]\›ˆ˜^S[X™\ŽÂˆBˆBˆBˆ™]\›ˆLNÂˆB‚ˆÊŠ‚ˆ
+ˆ™\\™HHÛÛ[[ˆ›ÜˆØ[Ý[][ÛˆžH\Ý[X][™È˜^H[\\˜]\™\È[™[šÚ[™ÈÝ™X[\È™]ÙY[ˆ˜^\Ë‚ˆ
+‚ˆ
+ˆ‚ˆ
+ˆH™YY˜^H\ÈÛÛ™Yš\œÝÈØZ[ˆH[\\˜]\™H\Ý[X]Kˆ\È[\\˜]\™H\È[ˆ\ÙYÈ[™X\›HÝY\ÜÂˆ
+ˆ[\\˜]\™\È\Ø\™ÈÈHÛÛ™[œÙ\ˆ[™ÝÛØ\™ÈÈH™X›Ú[\‹ˆØ\È[™\]ZYÝ]]Ý™X[\È\™HÛÛ›™XÝYÂˆ
+ˆ™ZYÚ›Ý\š[™È˜^\ÈÛÈ]HÝXœÙ\]Y[Ø[ÈÐ[šÈÜ[ŠURQ
+_HØ[ˆ]\˜]HÈÛÛ™\™Ù[˜ÙK‚ˆ
+ˆÜ‚ˆ
+‹ÂˆX›XÈ›ÚY[š]
+
+HÂˆYˆ
+Z\ÑÒ[š]X[^š[ÛŠ
+JHÂˆ™]\›ŽÂˆBˆÙ]Ò[š]X[^š[ÛŠ˜[ÙJNÂ‚ˆËÈØ\\™HYØXÞH\™XÝ™YYÈ™Y›Ü™H™XÛÜ™[™ÈHY[]HÙˆH˜^H™]ÛÜšËˆÝ\Ú\ÙHBˆËÈš\œÝ[š]X[^™YÝ]HÛZ]ÈÜÙH™YYÈœ›ÛHHš[™Ù\œš[[™\X\œÈ[˜ÛÛ\]X›HÛ‚ˆËÈH™^[˜Ú[™ÙYÛÛ™K‚ˆØ\\™Q\™XÝ^\›˜[˜^Q™YYÊ
+NÂ‚ˆËÈH˜^H›ZYÈ\™HX›Ý]È™H™XZ[œ›ÛHHÝ\œ™[™YYËÛÈ™XÛÜ™ÚXÚ\›[Ù[˜[ZXÂˆËÈY[]H^H\ØÜšX™Kˆ[žH]\ˆÛÛ™H]ÙY\ÈHY™™\™[Y[]H]\Ý[š]X[^™HYØZ[‚ˆËÈ[œÝXYÙˆ™]\Ú[™ÈÜˆØ\›K\Ý\[™Èœ›ÛHH˜^H™]ÛÜšÈZ[›ÜˆÝ\ˆÛÛ\Û™[Ë‚ˆ˜^TÝ]U\›[Ù[˜[ZXÒY[]TÚYÛ˜]\™HHØ[Ý[]U\›[Ù[˜[ZXÒY[]TÚYÛ˜]\™J
+NÂˆ\ÝÙ\]Y[X[[š]X[^˜][Û”ÚYÛ˜]\™HHØ[Ý[]TÙ\]Y[X[[š]X[^˜][Û”ÚYÛ˜]\™J
+NÂˆ˜\[TØ[™ÛTÝ]SÝÛ™YH˜[ÙNÂˆ\Ó˜\[TØ[™ÛUØ\›TÝ]HH˜[ÙNÂˆ\ÔÙ\]Y[X[^XÝ™]\ÙTÝ]HH˜[ÙNÂ‚ˆ™\Ù]˜^R[œ]ÕÑ^\›˜[™YYÊ
+NÂˆÛÛ™Q^\›˜[˜^R[œ]Ñ›Ü’[š]X[^˜][ÛŠ
+NÂ‚ˆËÈYˆ™YYÝ™X[\È\™H[\K›Ý[™ÈÈÂˆYˆ
+™YYÝ™X[\Ëš\Ñ[\J
+H	‰ˆ\™XÝ^\›˜[™YYÝ™X[\Ëš\Ñ[\J
+JHÂˆ™\Ù]\ÝÛÛ™SY]šXÜÊ
+NÂˆ™]\›ŽÂˆB‚ˆËÈÜ˜XˆH˜^HÚ]HÝÙ\Ý[™^[[Û™ÈH™YY˜^\Âˆ[š\œÝ™YY˜^S[X™\ˆHÙ]š\œÝ^\›˜[™YY˜^S[X™\Š
+NÂ‚ˆËÈÙH[ˆHš\œÝ™YY˜^HÈÙYH]È[\\˜]\™N‚ˆÙ]˜^Jš\œÝ™YY˜^S[X™\ŠKœ[Š
+NÂ‚ˆËÈYˆ]˜^H[™Y\Ú[™ÛK\\ÙKÙYHYˆY[™ÈÛÛYHÝ\ˆ™YY[ÂˆYˆ
+Ù]˜^Jš\œÝ™YY˜^S[X™\ŠK™Ù]›ZY
+
+K™Ù][X™\“Ù”\Ù\Ê
+HOHJHÂˆ›Üˆ
+[HHÈH[X™\“Ù•˜^\ÎÈJÊÊHÂˆYˆ
+Ù]˜^JJK™Ù][X™\“Ù’[œ]Ý™X[\Ê
+Hˆ	‰ˆHOHš\œÝ™YY˜^S[X™\ŠHÂˆÙ]˜^Jš\œÝ™YY˜^S[X™\ŠK˜YÝ™X[J˜^\Ë™Ù]
+JK™Ù]Ý™X[J
+JNÂˆÙ]˜^Jš\œÝ™YY˜^S[X™\ŠKœ[Š
+NÂˆËÈ™[[Ý™H]YØZ[‚ˆÙ]˜^Jš\œÝ™YY˜^S[X™\ŠKœ™[[Ý™R[œ]Ý™X[JÙ]˜^Jš\œÝ™YY˜^S[X™\ŠK™Ù][X™\“Ù’[œ]Ý™X[\Ê
+HHJNÂˆYˆ
+Ù]˜^Jš\œÝ™YY˜^S[X™\ŠK™Ù]\›[ÔÞ\Ý[J
+K™Ù][X™\“Ù”\Ù\Ê
+HˆJHÂˆœ™XZÎÂˆBˆH[ÙHYˆ
+HOHš\œÝ™YY˜^S[X™\ˆ	‰ˆÙ]˜^JJK™Ù][X™\“Ù’[œ]Ý™X[\Ê
+HˆJHÂˆÙ]˜^Jš\œÝ™YY˜^S[X™\ŠK˜YÝ™X[J˜^\Ë™Ù]
+JK™Ù]Ý™X[JJJNÂˆ˜^\Ë™Ù]
+š\œÝ™YY˜^S[X™\ŠKœ[Š
+NÂˆÙ]˜^Jš\œÝ™YY˜^S[X™\ŠKœ™[[Ý™R[œ]Ý™X[JÙ]˜^Jš\œÝ™YY˜^S[X™\ŠK™Ù][X™\“Ù’[œ]Ý™X[\Ê
+HHJNÂˆYˆ
+Ù]˜^Jš\œÝ™YY˜^S[X™\ŠK™Ù]\›[ÔÞ\Ý[J
+K™Ù][X™\“Ù”\Ù\Ê
+HˆJHÂˆœ™XZÎÂˆBˆBˆBˆB‚ˆËÈ\Ý[ˆØ\ÙH]8 &\ÈÝ[Ú[™ÛK\\ÙKÈ[ˆ[š]
+
+K[š]
+ÊK‚ˆYˆ
+Ù]˜^Jš\œÝ™YY˜^S[X™\ŠK™Ù]›ZY
+
+K™Ù][X™\“Ù”\Ù\Ê
+HOHJHÂˆÙ]˜^Jš\œÝ™YY˜^S[X™\ŠK™Ù]\›[ÔÞ\Ý[J
+Kš[š]
+
+NÂˆÙ]˜^Jš\œÝ™YY˜^S[X™\ŠK™Ù]\›[ÔÞ\Ý[J
+Kš[š]
+ÊNÂˆB‚ˆËÈÙ]\™X›Ú[\ˆ˜^x &\È[\\˜]\™Bˆ˜^\Ë™Ù]
+
+K˜YÝ™X[J˜^\Ë™Ù]
+š\œÝ™YY˜^S[X™\ŠK™Ù]\]ZYÝ]Ý™X[J
+K˜ÛÛ™J
+JNÂˆ˜^\Ë™Ù]
+
+Kœ[Š
+NÂ‚ˆÝX›H™YY˜^U[\\˜]\™HHÙ]˜^Jš\œÝ™YY˜^S[X™\ŠK™Ù][\\˜]\™J
+NÂ‚ˆYˆ
+˜^\Ë™Ù]
+[X™\“Ù•˜^\ÈHJK™Ù][X™\“Ù’[œ]Ý™X[\Ê
+Hˆ
+HÂˆÛÛ™[œÙ\•[\\˜]\™HH˜^\Ë™Ù]
+[X™\“Ù•˜^\ÈHJK™Ù]\›[ÔÞ\Ý[J
+K™Ù][\\˜]\™J
+NÂˆH[ÙHÂˆÛÛ™[œÙ\•[\\˜]\™HH™YY˜^U[\\˜]\™HHKŒÂˆBˆ™X›Ú[\•[\\˜]\™HH˜^\Ë™Ù]
+
+K™Ù]\›[ÔÞ\Ý[J
+K™Ù][\\˜]\™J
+NÂ‚ˆËÈ›ÝYÚÝY\ÜÈ›Üˆ[\\˜]\™HÝ\ÂˆÝX›H[U[\ÛÛ™[œÙ\ˆH
+™YY˜^U[\\˜]\™HHÛÛ™[œÙ\•[\\˜]\™JBˆÈ
+[X™\“Ù•˜^\È
+ˆKŒHš\œÝ™YY˜^S[X™\ˆHJNÂˆÝX›H[U[\™X›Ú[\ˆH
+™X›Ú[\•[\\˜]\™HH™YY˜^U[\\˜]\™JHÈ
+š\œÝ™YY˜^S[X™\ˆ
+ˆKŒ
+NÂ‚ˆËÈÙ][\\˜]\™Hœ›ÛH™YY˜^H\ˆÝX›H[HHÂˆ›Üˆ
+[HHš\œÝ™YY˜^S[X™\ˆ
+ÈNÈH[X™\“Ù•˜^\ÎÈJÊÊHÂˆ[H
+ÏH[U[\ÛÛ™[œÙ\ŽÂˆ˜^\Ë™Ù]
+JKœÙ][\\˜]\™JÙ]˜^Jš\œÝ™YY˜^S[X™\ŠK™Ù]\›[ÔÞ\Ý[J
+K™Ù][\\˜]\™J
+HH[JNÂˆB‚ˆËÈÙ][\\˜]\™Hœ›ÛH™YY˜^HÝÛ‚ˆ[HHÂˆ›Üˆ
+[HHš\œÝ™YY˜^S[X™\ˆHNÈHHÈKKJHÂˆ[H
+ÏH[U[\™X›Ú[\ŽÂˆ˜^\Ë™Ù]
+JKœÙ][\\˜]\™JÙ]˜^Jš\œÝ™YY˜^S[X™\ŠK™Ù]\›[ÔÞ\Ý[J
+K™Ù][\\˜]\™J
+H
+È[JNÂˆB‚ˆËÈ[šÈ\Ø\™ˆ›Üˆ
+[HHNÈH[X™\“Ù•˜^\ÎÈJÊÊHÂˆ˜^\Ë™Ù]
+JK˜YÝ™X[J˜^\Ë™Ù]
+HHJK™Ù]Ø\ÓÝ]Ý™X[J
+JNÂˆ˜^\Ë™Ù]
+JKš[š]
+
+NÂˆ˜^\Ë™Ù]
+JKœ[Š
+NÂˆB‚ˆËÈ[šÈÝÛØ\™ˆ›Üˆ
+[HH[X™\“Ù•˜^\ÈHŽÈHHNÈKKJHÂˆ˜^\Ë™Ù]
+JK˜YÝ™X[J˜^\Ë™Ù]
+H
+ÈJK™Ù]\]ZYÝ]Ý™X[J
+JNÂˆ˜^\Ë™Ù]
+JKš[š]
+
+NÂˆ˜^\Ë™Ù]
+JKœ[Š
+NÂˆB‚ˆ[Ý™X[S[XˆH
+˜^\Ë™Ù]
+
+JK™Ù][X™\“Ù’[œ]Ý™X[\Ê
+HHNÂˆ˜^\Ë™Ù]
+
+Kœ™\XÙTÝ™X[JÝ™X[S[X‹˜^\Ë™Ù]
+JK™Ù]\]ZYÝ]Ý™X[J
+JNÂˆ˜^\Ë™Ù]
+
+Kš[š]
+
+NÂˆ˜^\Ë™Ù]
+
+Kœ[Š
+NÂ‚ˆËÈ˜^H›Ùš[HÛÛœÝXÝ[Ûˆ[[[Û˜[HÙYYÈ[\›˜[™YYÛÛ™\È]ØØ[˜^BˆËÈ[\\˜]\™\Ëˆ™\ÝÜ™HHØ[\‹[ÝÛ™Y™YY\›[Ù[˜[ZXÈÝ]\È™Y›Ü™HHXÝX[ˆËÈÛÛ[[ˆÛÛ™\ˆÝ\ÈÛÈHÛÛ™YX\ÜÈ[™[™\™ÞH˜[[˜Ù\È\ÙHH™\]Y\ÝY™YYË‚ˆ™Yœ™\Ú[\›˜[^\›˜[™YYÞ\Ý[\Ê
+NÂˆB‚ˆÊŠ‚ˆ
+ˆÐ[š\š]ØßBˆ
+‚ˆ
+ˆ‚ˆ
+ˆÛÛ™HHÛÛ[[ˆ[[˜^H[\\˜]\™\ÈÛÛ™\™ÙK‚ˆ
+‚ˆ
+ˆHY]Ù\Y\ÈÙ\]Y[X[ÝXœÝ]][ÛˆÚ][ˆY\]™H™[^][ÛˆÛÛ›Û\‹ˆ™\ÜÝ\™\È\™HÙ][™X\›Bˆ
+ˆ™]ÙY[ˆ›ÝÛH[™ÜˆXXÚ]\˜][Ûˆ\™›Ü›\È[ˆ\Ø\™ÝÙY\Ú\™H\]ZY›ÝÜÈÝÛØ\™›ÛÝÙYžHHÝÛØ\™ˆ
+ˆÝÙY\Ú\™H˜\Ý\ˆ›ÝÜÈ\Ø\™ˆ˜^H[\\˜]\™\È[™[\‹]˜^HÝ™X[H›ÝÈ˜]\È\™H™[^YYˆHÛÛXš[™Yˆ
+ˆ[\\˜]\™KX\ÜÈ[™[™\™ÞH™\ÚYX[ÈÜ›ÝË›ÝšY[™È˜\ÚXÈ[™K\ÙX\˜Ú™Z]š[Ý\‹‚ˆ
+ˆÜ‚ˆ
+‹ÂˆÝ™\œšYBˆX›XÈ›ÚY[ŠURQY
+HÂˆÛ™È[”Ý\[YHHÞ\Ý[K›˜[›Õ[YJ
+NÂˆ\Ý\YY[\\˜]\™TÝ\™\ÚYX[HÝX›K“˜SŽÂˆ\Ý[\›˜[˜Y™šXÑÝX\™™XXÚYH˜[ÙNÂˆ[\›˜[˜Y™šXÐØ\XÝ]™HH˜[ÙNÂˆ\ÝÜXÚYšXØ][Û’Û[ÝÜTÝ\ÛÝ[HÂˆ\Ý]]ÔÛÛ™\”Ý[[X\žHHˆŽÂˆ\Ý[œ˜XÝ[Û˜]Ü‘˜\Ý]\YYH˜[ÙNÂˆ\Ý[œ˜XÝ[Û˜]Ü‘˜\Ý]™X\ÛÛˆHˆŽÂˆ™\Ù]X]š^[œÚYSÝ]XYÛ›ÜÝXÜÊ
+NÂˆ[œÝ\™R[™\[™[ÚYQ˜]ÔÜXÚYšXØ][ÛœÊ
+NÂˆ[œÝ\™R[™\[™[[\\›Ý[™Ê
+NÂˆ[œÝ\™R[™\[™[\›Z[˜[ÜXÚYšXØ][ÛœÊ
+NÂˆ\ÜÚYÛ•[˜\ÜÚYÛ™Y™YYÊ
+NÂˆÛÛ™\™Ù[˜ÙR\ÝÜžHH™]È\œ˜^S\ÝŠ
+NÂˆ\Q\™XÝÜXÚYšXØ][ÛœÊ
+NÂˆ\Q[œ˜XÝ[Û˜]Ü‘˜\Ý]
+
+NÂˆYˆ
+\ÐXÝ]™PÛÛ[[•X\•˜\šXX›\Ê
+JHÂˆÛÛ™UÚ]ÛÛ[[•X\•˜\šXX›\ÊY
+NÂˆÛÛ[Z]˜\[TØ[™ÛUØ\›TÝ]J
+NÂˆ[œÝ\™TÛÛ™U[YR[˜ÛY\Ñ[\ÙYØ[[YJ[”Ý\[YJNÂˆ™]\›ŽÂˆBˆÛÛ™PÛÛ™šYÝ\™YÛÛ[[ŠY
+NÂˆÛÛ[Z]˜\[TØ[™ÛUØ\›TÝ]J
+NÂˆ[œÝ\™TÛÛ™U[YR[˜ÛY\Ñ[\ÙYØ[[YJ[”Ý\[YJNÂˆB‚ˆÊŠ‚ˆ
+ˆÛÛ[Z]HÝ\œ™[š[˜[^™YÛÛ[[ˆ[œ]È\ÈH™]\ØX›H˜\[KTØ[™ÛHØ\›HÝ]K‚ˆ
+‚ˆ
+ˆ‚ˆ
+ˆÐ[šÈÛ˜\[TØ[™ÛTÝ]SÝÛ™YH\È\ÙˆHØ]H™XØ]\ÙBˆ
+ˆÐ[šÈØXØÙ\˜\[UØ\›TÝ\Ø[™Y]J\Ý[][ÛÛÛ[[‹Ýš[™Ê_HÙY\È™\Ü[™Âˆ
+ˆÐ[šÈÛÛ™\•\HÓTSWÔÐS‘Ó_HY\ˆYÜ[™ÈHÝ]H›ÙXÙYžHH™\ÚYX[[[Ûš]Ü™YÛÛ™\‹ˆÛÛ[Z][™Âˆ
+ˆ]Ý]HÛÝ[ØXÚHHQTÒ™\Ý[[™\ˆH˜\[KTØ[™ÛHÙ^K‚ˆ
+ˆÜ‚ˆ
+‹Âˆš]˜]H›ÚYÛÛ[Z]˜\[TØ[™ÛUØ\›TÝ]J
+HÂˆ›ÛÛX[ˆXØÙ\Y˜\[TÛÛ™HH˜\[TØ[™ÛTÝ]SÝÛ™Y	‰ˆ\ÝÛÛ™\•\U\ÙYOHÛÛ™\•\K“TSWÔÐS‘ÓBˆ	‰ˆ
+\ÝÛÛ™TÝ]\ÈOHÛÛ™TÝ]\Ë”’QÓÔ“ÕT×ÐÓÓ•‘T‘ÑQ\ÝÛÛ™TÝ]\ÈOHÛÛ™TÝ]\Ë”‘PÓÓÒSQÔ“ÑPÕÊBˆ	‰ˆZ\ÑÒ[š]X[^š[ÛŠ
+NÂˆ\Ó˜\[TØ[™ÛUØ\›TÝ]HHXØÙ\Y˜\[TÛÛ™NÂˆYˆ
+XØÙ\Y˜\[TÛÛ™JHÂˆ\Ý˜\[TØ[™ÛR[œ]ÚYÛ˜]\™HHØ[Ý[]S˜\[TØ[™ÛR[œ]ÚYÛ˜]\™J
+NÂˆ\Ý˜\[TØ[™ÛPÛÛ™\™Ù[˜ÙQØ]TÚYÛ˜]\™HHØ[Ý[]S˜\[TØ[™ÛPÛÛ™\™Ù[˜ÙQØ]TÚYÛ˜]\™J
+NÂˆBˆB‚ˆÊŠ‚ˆ
+ˆ[œÝ\™\ÈH™\ÜYÛÛ™H[YHÛÝ™\œÈHÛÛ\]HX›XÈ[ˆØ[‚ˆ
+‚ˆ
+ˆ\˜[HÝ\[YH˜[›È[YH™XÛÜ™Y]HÝ\ÙˆÐ[šÈÜ[ŠURQ
+_Bˆ
+‹Âˆš]˜]H›ÚY[œÝ\™TÛÛ™U[YR[˜ÛY\Ñ[\ÙYØ[[YJÛ™ÈÝ\[YJHÂˆÝX›H[\ÙYÙXÛÛ™ÈH
+Þ\Ý[K›˜[›Õ[YJ
+HHÝ\[YJHÈKŒNNÂˆYˆ
+ÝX›Kš\Ñš[š]J[\ÙYÙXÛÛ™ÊH	‰ˆ[\ÙYÙXÛÛ™Èˆ\ÝÛÛ™U[YTÙXÛÛ™ÊHÂˆ\ÝÛÛ™U[YTÙXÛÛ™ÈH[\ÙYÙXÛÛ™ÎÂˆBˆB‚ˆÊŠ‚ˆ
+ˆÚXÚÈÚ]\ˆÚYH˜]ÜË[\\›Ý[™ËÜˆY˜][XÜÈYÝ]\ˆX\ˆ˜\šXX›\Ë‚ˆ
+‚ˆ
+ˆ™]\›ˆÐÛÙHY_HÚ[ˆ[ˆÝ]\ˆX\‹]˜\šXX›HÛÛ™H\È™\]Z\™Yˆ
+‹Âˆš]˜]H›ÛÛX[ˆ\ÐXÝ]™PÛÛ[[•X\•˜\šXX›\Ê
+HÂˆ™]\›ˆ\ÚYQ˜]ÔÜXÚYšXØ][ÛœËš\Ñ[\J
+H\[\\›Ý[™Ëš\Ñ[\J
+HY˜][XÔ™\ÜÝ\™Q›ÜÛÝ\[™Ñ[˜X›YÂˆB‚ˆÊŠ‚ˆ
+ˆÛÛ™HHÛÛ™šYÝ\™YÛÛ[[ˆÛ˜ÙH[™\]HXYÛ›ÜÝXÜË‚ˆ
+‚ˆ
+ˆ\˜[HYØ[Ý[][ÛˆY[YšY\‚ˆ
+‹Âˆš]˜]H›ÚYÛÛ™PÛÛ™šYÝ\™YÛÛ[[ŠURQY
+HÂˆYˆ
+\ÐY\ÝX›TÜXÚYšXØ][ÛœÊ
+JHÂˆÛÛ™UÚ]ÜXÚYšXØ][ÛœÊY
+NÂˆ\]TÜXÚYšXØ][Û”™\ÚYX[Ê
+NÂˆ\]SY\Ú™\ÚYX[Ê
+NÂˆ™]\›ŽÂˆBˆÛÛ™R[›™\ŠY
+NÂˆ\]TÜXÚYšXØ][Û”™\ÚYX[Ê
+NÂˆ\]SY\Ú™\ÚYX[Ê
+NÂˆB‚ˆÊŠ‚ˆ
+ˆÛÛ™HHÛÛ[[ˆÚ]Ý]\ˆ]\˜][ÛœÈ›ÜˆÚYH˜]ÜË[\\›Ý[™Ë[™Y˜][XÜË‚ˆ
+‚ˆ
+ˆ\˜[HYØ[Ý[][ÛˆY[YšY\‚ˆ
+‹Âˆš]˜]H›ÚYÛÛ™UÚ]ÛÛ[[•X\•˜\šXX›\ÊURQY
+HÂˆ[]\˜][Û“[Z]HÙ]ÛÛ[[•X\’]\˜][Û“[Z]
+
+NÂˆÝX›HÛ\˜[˜ÙHHÙ]ÛÛ[[•X\•Û\˜[˜ÙJ
+NÂˆ\ÝÛÛ[[•X\’]\˜][ÛÛÝ[HÂˆ\ÝÛÛ[[•X\”™\ÚYX[HÝX›K”ÔÒUU‘WÒS‘’S’UNÂˆ\ÝÛÛ[[•X\ÛÛ™\™ÙYH˜[ÙNÂˆ›Üˆ
+[]\˜][ÛˆHÈ]\˜][Ûˆ]\˜][Û“[Z]È]\˜][ÛŠÊÊHÂˆÛÛ™PÛÛ™šYÝ\™YÛÛ[[ŠY
+NÂˆÝX›H™[]]™PÚ[™ÙHH\]PÛÛ[[•X\•˜\šXX›\ÊY
+NÂˆ\ÝÛÛ[[•X\’]\˜][ÛÛÝ[H]\˜][Ûˆ
+ÈNÂˆ\ÝÛÛ[[•X\”™\ÚYX[H™[]]™PÚ[™ÙNÂˆYˆ
+™[]]™PÚ[™ÙHHÛ\˜[˜ÙJHÂˆYˆ
+ÛÛ[[•X\•˜\šXX›\ÐÚ[™ÙY
+HÂˆÙ]Ò[š]X[^š[ÛŠYJNÂˆÛÛ™PÛÛ™šYÝ\™YÛÛ[[ŠY
+NÂˆBˆ\]TÚYQ˜]ÔÜXÚYšXØ][Û”™\ÚYX[ÓÛ›J
+NÂˆ\ÝÛÛ[[•X\”™\ÚYX[HX]›X^
+™[]]™PÚ[™ÙKÙ]X^ÚYQ˜]ÔÜXÚYšXØ][Û”™\ÚYX[
+
+JNÂˆ\ÝÛÛ[[•X\ÛÛ™\™ÙYH\ÝÛÛ[[•X\”™\ÚYX[HÛ\˜[˜ÙNÂˆš[˜[^™PÛÛ[[•X\ÛÛ™\™Ù[˜ÙTÝ]\ÊÛ\˜[˜ÙJNÂˆ™]\›ŽÂˆBˆYˆ
+XÛÛ[[•X\•˜\šXX›\ÐÚ[™ÙY
+HÂˆ\]TÚYQ˜]ÔÜXÚYšXØ][Û”™\ÚYX[ÓÛ›J
+NÂˆ\ÝÛÛ[[•X\”™\ÚYX[HX]›X^
+™[]]™PÚ[™ÙKÙ]X^ÚYQ˜]ÔÜXÚYšXØ][Û”™\ÚYX[
+
+JNÂˆ\ÝÛÛ[[•X\ÛÛ™\™ÙYH˜[ÙNÂˆš[˜[^™PÛÛ[[•X\ÛÛ™\™Ù[˜ÙTÝ]\ÊÛ\˜[˜ÙJNÂˆ™]\›ŽÂˆBˆYˆ
+]\˜][Ûˆ]\˜][Û“[Z]HJHÂˆÙ]Ò[š]X[^š[ÛŠYJNÂˆBˆBˆÙ]Ò[š]X[^š[ÛŠYJNÂˆÛÛ™PÛÛ™šYÝ\™YÛÛ[[ŠY
+NÂˆ\]TÚYQ˜]ÔÜXÚYšXØ][Û”™\ÚYX[ÓÛ›J
+NÂˆ\ÝÛÛ[[•X\”™\ÚYX[HX]›X^
+\ÝÛÛ[[•X\”™\ÚYX[Ù]X^ÚYQ˜]ÔÜXÚYšXØ][Û”™\ÚYX[
+
+JNÂˆ\ÝÛÛ[[•X\ÛÛ™\™ÙYH\ÝÛÛ[[•X\”™\ÚYX[HÛ\˜[˜ÙNÂˆš[˜[^™PÛÛ[[•X\ÛÛ™\™Ù[˜ÙTÝ]\ÊÛ\˜[˜ÙJNÂˆB‚ˆÊŠ‚ˆ
+ˆXZÙH[ˆ^]\ÝYÝ]\ˆX\ˆ]]Üš]]]™H›ÜˆHX›XÈÛÛ[[ˆÛÛ™HÝ]\Ë‚ˆ
+‚ˆ
+ˆ‚ˆ
+ˆ[›™\ˆ˜^HÛÛ™\œÈØ[Ð[šÈÜÛÛ™Y
+
+_HÚ[HHÝ]\ˆX\ˆÛÜ\ÈÝ[XÝ]™KÛÈHÝ]\ˆØ]HØ[››Ý™Bˆ
+ˆYY\™XÝHÈHÙ[™\šXÈ™\ÚYX[™YXØ]HÚ]Ý]šYÙÙ\š[™È™[X]\™HXØÙ[\˜]Üˆ˜[˜XÚÜËˆ\ÈY]Ù\Âˆ
+ˆØ[YÛ›HY\ˆ[ˆÝ]\ˆÛÛ™\™Ù[˜ÙHXÚ\Ú[Ûˆ\È™Y[ˆXYKˆ]™\Ù\™\È[ˆ^\Ý[™È[›™\ˆ˜Z[\™H™X\ÛÛˆ[™ˆ
+ˆÛÛ™\ÈÛ›H[ˆÝ\Ú\ÙHXØÙ\Y[›™\ˆ™\Ý[ÈH˜Z[YÛÛÜ™[˜]YÛÛ™K‚ˆ
+ˆÜ‚ˆ
+‚ˆ
+ˆ\˜[HÛ\˜[˜ÙHXÝ]™HÝ]\ˆX\‹]˜\šXX›HÛ\˜[˜ÙBˆ
+‹Âˆš]˜]H›ÚYš[˜[^™PÛÛ[[•X\ÛÛ™\™Ù[˜ÙTÝ]\ÊÝX›HÛ\˜[˜ÙJHÂˆYˆ
+\ÝÛÛ[[•X\ÛÛ™\™ÙY
+HÂˆ™]\›ŽÂˆBˆ›ÛÛX[ˆ[›™\”ÛÛ™PXØÙ\YH\ÝÛÛ™TÝ]\ÈOHÛÛ™TÝ]\Ë”’QÓÔ“ÕT×ÐÓÓ•‘T‘ÑQˆ\ÝÛÛ™TÝ]\ÈOHÛÛ™TÝ]\Ë”‘PÓÓÒSQÔ“ÑPÕÎÂˆYˆ
+Z[›™\”ÛÛ™PXØÙ\Y
+HÂˆ™]\›ŽÂˆBˆ\ÝÛÛ™TÝ]\ÈHÛÛ™TÝ]\Ë‘RSQÂˆ\ÝÛÛ™TÝ]\Ô™X\ÛÛˆHÛÛ[[ˆX\‹]˜\šXX›HÛÛ™HY›ÝÛÛ™\™ÙHY\ˆˆ
+È\ÝÛÛ[[•X\’]\˜][ÛÛÝ[ˆ
+Èˆ]\˜][ÛŠÊNˆ™\ÚYX[ˆ
+È\ÝÛÛ[[•X\”™\ÚYX[
+Èˆ^ÙYYÈÛ\˜[˜ÙHˆ
+ÈÛ\˜[˜ÙNÂˆB‚ˆÊŠ‚ˆ
+ˆÙ]HX^[][H]\˜][ÛˆÛÝ[›Üˆ[XÝ]™HÛÛ[[ˆX\ˆ˜\šXX›\Ë‚ˆ
+‚ˆ
+ˆ™]\›ˆX^[][HÝ]\ˆX\‹]˜\šXX›H]\˜][ÛœÂˆ
+‹Âˆš]˜]H[Ù]ÛÛ[[•X\’]\˜][Û“[Z]
+
+HÂˆ[]\˜][Û“[Z]HX]›X^
+X^ÛÛ[[•X\’]\˜][ÛœËX^[\\›Ý[™]\˜][ÛœÊNÂˆ›Üˆ
+ÛÛ[[”ÚYQ˜]ÔÜXÚYšXØ][ÛˆÜXÚYšXØ][ÛˆˆÚYQ˜]ÔÜXÚYšXØ][ÛœÊHÂˆ]\˜][Û“[Z]HX]›X^
+]\˜][Û“[Z]ÜXÚYšXØ][Û‹™Ù]X^]\˜][ÛœÊ
+JNÂˆBˆ™]\›ˆX]›X^
+K]\˜][Û“[Z]
+NÂˆB‚ˆÊŠ‚ˆ
+ˆÙ]HXÝ]™HÛ\˜[˜ÙH›Üˆ[ÛÛ[[ˆX\ˆ˜\šXX›\Ë‚ˆ
+‚ˆ
+ˆ™]\›ˆXÝ]™H™[]]™HÛ\˜[˜ÙBˆ
+‹Âˆš]˜]HÝX›HÙ]ÛÛ[[•X\•Û\˜[˜ÙJ
+HÂˆÝX›HÛ\˜[˜ÙHHX]›Z[ŠÛÛ[[•X\•Û\˜[˜ÙK[\\›Ý[™Û\˜[˜ÙJNÂˆ›Üˆ
+ÛÛ[[”ÚYQ˜]ÔÜXÚYšXØ][ÛˆÜXÚYšXØ][ÛˆˆÚYQ˜]ÔÜXÚYšXØ][ÛœÊHÂˆÛ\˜[˜ÙHHX]›Z[ŠÛ\˜[˜ÙKÜXÚYšXØ][Û‹™Ù]Û\˜[˜ÙJ
+JNÂˆBˆ™]\›ˆX]›X^
+KŒKLL‹Û\˜[˜ÙJNÂˆB‚ˆÊŠ‚ˆ
+ˆ\]H[Ý]\ˆX\ˆ˜\šXX›\Èœ›ÛHH]\ÝÛÛ[[ˆÛÛ][Û‹‚ˆ
+‚ˆ
+ˆ\˜[HYØ[Ý[][ÛˆY[YšY\‚ˆ
+ˆ™]\›ˆX^[][H™[]]™HÚ[™ÙHÜˆ™\ÚYX[XÜ›ÜÜÈX\ˆ˜\šXX›\Âˆ
+‹Âˆš]˜]HÝX›H\]PÛÛ[[•X\•˜\šXX›\ÊURQY
+HÂˆÛÛ[[•X\•˜\šXX›\ÐÚ[™ÙYH˜[ÙNÂˆÝX›HX^™[]]™PÚ[™ÙHHŒÂˆX^™[]]™PÚ[™ÙHHX]›X^
+X^™[]]™PÚ[™ÙK\]TÚYQ˜]ÔÜXÚYšXØ][Û‘œ˜XÝ[ÛœÊ
+JNÂˆX^™[]]™PÚ[™ÙHHX]›X^
+X^™[]]™PÚ[™ÙK[™›Ü˜ÙTÚYQ˜]Ñ™YY[™[ÜžS[Z]
+
+JNÂˆX^™[]]™PÚ[™ÙHHX]›X^
+X^™[]]™PÚ[™ÙK\]T[\\›Ý[™™]\›”Ý™X[\ÊY
+JNÂˆX^™[]]™PÚ[™ÙHHX]›X^
+X^™[]]™PÚ[™ÙK\]T™\ÜÝ\™T›Ùš[Qœ›ÛRY˜][XÜÊ
+JNÂˆ™]\›ˆX^™[]]™PÚ[™ÙNÂˆB‚ˆÊŠ‚ˆ
+ˆ\]H[[\\›Ý[™™]\›ˆÝ™X[\Èœ›ÛHH]\Ý˜^H\]ZY˜]ÜË‚ˆ
+‚ˆ
+ˆ\˜[HYØ[Ý[][ÛˆY[YšY\‚ˆ
+ˆ™]\›ˆX^[][H™[]]™H™]\›‹Y›ÝÈÚ[™ÙHXÜ›ÜÜÈ[\\›Ý[™Âˆ
+‹Âˆš]˜]HÝX›H\]T[\\›Ý[™™]\›”Ý™X[\ÊURQY
+HÂˆÝX›HX^™[]]™PÚ[™ÙHHŒÂˆ›Üˆ
+ÛÛ[[”[\\›Ý[™[\\›Ý[™ˆ[\\›Ý[™ÊHÂˆÝ™X[R[\™˜XÙH˜]ÔÝ™X[HHÙ]˜^J[\\›Ý[™™Ù]˜]Õ˜^S[X™\Š
+JK™Ù]\]ZY[\\›Ý[™˜]ÔÝ™X[J
+NÂˆX^™[]]™PÚ[™ÙHHX]›X^
+X^™[]]™PÚ[™ÙK[\\›Ý[™\]T™]\›”Ý™X[J˜]ÔÝ™X[KY
+JNÂˆBˆ\Ý[\\›Ý[™™[]]™PÚ[™ÙHHX^™[]]™PÚ[™ÙNÂˆYˆ
+X^™[]]™PÚ[™ÙHˆKŒKLLŠHÂˆÛÛ[[•X\•˜\šXX›\ÐÚ[™ÙYHYNÂˆBˆ™]\›ˆX^™[]]™PÚ[™ÙNÂˆB‚ˆÊŠ‚ˆ
+ˆ\]HÛÛ™šYÝ\™YÚYKY˜]Èœ˜XÝ[ÛœÈÈYY]›ÝÈÜXÚYšXØ][ÛœË‚ˆ
+‚ˆ
+ˆ™]\›ˆX^[][H™[]]™HÚYKY˜]È›ÝÈ™\ÚYX[ˆ
+‹Âˆš]˜]HÝX›H\]TÚYQ˜]ÔÜXÚYšXØ][Û‘œ˜XÝ[ÛœÊ
+HÂˆÝX›HX^™[]]™T™\ÚYX[HŒÂˆ›Üˆ
+ÛÛ[[”ÚYQ˜]ÔÜXÚYšXØ][ÛˆÜXÚYšXØ][ÛˆˆÚYQ˜]ÔÜXÚYšXØ][ÛœÊHÂˆÝ™X[R[\™˜XÙHÚYQ˜]ÔÝ™X[HHÙ]ÚYQ˜]ÔÝ™X[JÜXÚYšXØ][Û‹™Ù]˜^S[X™\Š
+KÜXÚYšXØ][Û‹™Ù]\ÙJ
+JNÂˆÝX›HXÝX[›ÝÔ˜]HHÚYQ˜]ÔÝ™X[K™Ù]›ÝÔ˜]JÜXÚYšXØ][Û‹™Ù]›ÝÕ[š]
+
+JNÂˆÝX›H™\ÚYX[HÜXÚYšXØ][Û‹\]PXÝX[›ÝÔ˜]JXÝX[›ÝÔ˜]JNÂˆX^™[]]™T™\ÚYX[HX]›X^
+X^™[]]™T™\ÚYX[™\ÚYX[
+NÂˆYˆ
+™\ÚYX[HÜXÚYšXØ][Û‹™Ù]Û\˜[˜ÙJ
+JHÂˆÛÛ[YNÂˆBˆÝX›H™]Ñœ˜XÝ[ÛˆHØ[Ý[]S™^ÚYQ˜]Ñœ˜XÝ[ÛŠÜXÚYšXØ][Û‹XÝX[›ÝÔ˜]JNÂˆÛÛ[[•X\•˜\šXX›\ÐÚ[™ÙYHÙ]ÚYQ˜]Ñœ˜XÝ[Û•Ú][“[Z]
+ÜXÚYšXØ][Û‹™Ù]˜^S[X™\Š
+KˆÜXÚYšXØ][Û‹™Ù]\ÙJ
+K™]Ñœ˜XÝ[ÛŠHÛÛ[[•X\•˜\šXX›\ÐÚ[™ÙYÂˆBˆ™]\›ˆX^™[]]™T™\ÚYX[ÂˆB‚ˆÊŠˆ\]HÚYKY˜]È›ÝÈ™\ÚYX[ÈÚ]Ý]Ú[™Ú[™ÈÚYKY˜]Èœ˜XÝ[ÛœËˆ
+‹Âˆš]˜]H›ÚY\]TÚYQ˜]ÔÜXÚYšXØ][Û”™\ÚYX[ÓÛ›J
+HÂˆ›Üˆ
+ÛÛ[[”ÚYQ˜]ÔÜXÚYšXØ][ÛˆÜXÚYšXØ][ÛˆˆÚYQ˜]ÔÜXÚYšXØ][ÛœÊHÂˆÝ™X[R[\™˜XÙHÚYQ˜]ÔÝ™X[HHÙ]ÚYQ˜]ÔÝ™X[JÜXÚYšXØ][Û‹™Ù]˜^S[X™\Š
+KÜXÚYšXØ][Û‹™Ù]\ÙJ
+JNÂˆÜXÚYšXØ][Û‹\]PXÝX[›ÝÔ˜]JÚYQ˜]ÔÝ™X[K™Ù]›ÝÔ˜]JÜXÚYšXØ][Û‹™Ù]›ÝÕ[š]
+
+JJNÂˆBˆB‚ˆÊŠ‚ˆ
+ˆÙ]HX^[][H™\ÚYX[XÜ›ÜÜÈÚYKY˜]È›ÝÈÜXÚYšXØ][ÛœË‚ˆ
+‚ˆ
+ˆ™]\›ˆX^[][H™[]]™H™\ÚYX[Üˆ™\›ÈÚ[ˆ›ÈÚYKY˜]ÈÜXÜÈ\™HÛÛ™šYÝ\™Yˆ
+‹Âˆš]˜]HÝX›HÙ]X^ÚYQ˜]ÔÜXÚYšXØ][Û”™\ÚYX[
+
+HÂˆÝX›HX^™\ÚYX[HŒÂˆ›Üˆ
+ÛÛ[[”ÚYQ˜]ÔÜXÚYšXØ][ÛˆÜXÚYšXØ][ÛˆˆÚYQ˜]ÔÜXÚYšXØ][ÛœÊHÂˆX^™\ÚYX[HX]›X^
+X^™\ÚYX[ÜXÚYšXØ][Û‹™Ù]\Ý™[]]™T™\ÚYX[
+
+JNÂˆBˆ™]\›ˆX^™\ÚYX[ÂˆB‚ˆÊŠ‚ˆ
+ˆØ[Ý[]HH™^ÚYKY˜]Èœ˜XÝ[Ûˆ›ÜˆH›ÝÈÜXÚYšXØ][Û‹‚ˆ
+‚ˆ
+ˆ\˜[HÜXÚYšXØ][ÛˆÚYKY˜]È›ÝÈÜXÚYšXØ][Û‚ˆ
+ˆ\˜[HXÝX[›ÝÔ˜]H]\ÝXÝX[›ÝÈ˜]Bˆ
+ˆ™]\›ˆ™^Ø[™Y]HÚYKY˜]Èœ˜XÝ[Û‚ˆ
+‹Âˆš]˜]HÝX›HØ[Ý[]S™^ÚYQ˜]Ñœ˜XÝ[ÛŠÛÛ[[”ÚYQ˜]ÔÜXÚYšXØ][ÛˆÜXÚYšXØ][Û‹ÝX›HXÝX[›ÝÔ˜]JHÂˆÝX›HÝ\œ™[œ˜XÝ[ÛˆHÙ]ÚYQ˜]Ñœ˜XÝ[ÛŠÜXÚYšXØ][Û‹™Ù]˜^S[X™\Š
+KÜXÚYšXØ][Û‹™Ù]\ÙJ
+JNÂˆYˆ
+ÜXÚYšXØ][Û‹™Ù]\™Ù]›ÝÔ˜]J
+HHKŒKLLŠHÂˆ™]\›ˆŒÂˆBˆYˆ
+X]˜XœÊXÝX[›ÝÔ˜]JHHKŒKLLŠHÂˆ™]\›ˆÝ\œ™[œ˜XÝ[ÛˆˆŒÈÝ\œ™[œ˜XÝ[Ûˆ
+ÈŒHˆŒNÂˆBˆ™]\›ˆÝ\œ™[œ˜XÝ[Ûˆ
+ˆÜXÚYšXØ][Û‹™Ù]\™Ù]›ÝÔ˜]J
+HÈXÝX[›ÝÔ˜]NÂˆB‚ˆÊŠ‚ˆ
+ˆÙ]HÛÛ™šYÝ\™YÚYKY˜]Èœ˜XÝ[ÛˆÛˆH˜^K‚ˆ
+‚ˆ
+ˆ\˜[H˜^S[X™\ˆ›ÝÛK]\˜^H[™^ˆ
+ˆ\˜[H\ÙHÚYKY˜]È\ÙBˆ
+ˆ™]\›ˆÝ\œ™[ÚYKY˜]Èœ˜XÝ[Û‚ˆ
+‹Âˆš]˜]HÝX›HÙ]ÚYQ˜]Ñœ˜XÝ[ÛŠ[˜^S[X™\‹ÚYQ˜]Ô\ÙH\ÙJHÂˆÚ[\U˜^H˜^HHÙ]˜^J˜^S[X™\ŠNÂˆYˆ
+\ÙHOHÚYQ˜]Ô\ÙK‘ÐTÊHÂˆ™]\›ˆ˜^K™Ù]Ø\ÔÚYQ˜]Ñœ˜XÝ[ÛŠ
+NÂˆBˆYˆ
+\ÙHOHÚYQ˜]Ô\ÙK“TURQ
+HÂˆ™]\›ˆ˜^K™Ù]\]ZYÚYQ˜]Ñœ˜XÝ[ÛŠ
+NÂˆBˆ›ÝÈ™]È[YØ[\™Ý[Y[^Ù\[ÛŠ”ÚYH˜]È\ÙHØ[››Ý™H[ŠNÂˆB‚ˆÊŠ‚ˆ
+ˆÙ]HÚYKY˜]Èœ˜XÝ[ÛˆY\ˆÛ[\[™È]ÈH]˜Z[X›H˜^H\ÙH˜Y™šXË‚ˆ
+‚ˆ
+ˆ\˜[H˜^S[X™\ˆ›ÝÛK]\˜^H[™^ˆ
+ˆ\˜[H\ÙHÚYKY˜]È\ÙBˆ
+ˆ\˜[Hœ˜XÝ[Ûˆ™\]Y\ÝYÚYKY˜]Èœ˜XÝ[Û‚ˆ
+ˆ™]\›ˆYHYˆH˜^Hœ˜XÝ[ÛˆÚ[™ÙY˜[ÙHYˆH™\]Y\ÝY˜[YHØ\È[™XYHÙ]ˆ
+‹Âˆš]˜]H›ÛÛX[ˆÙ]ÚYQ˜]Ñœ˜XÝ[Û•Ú][“[Z]
+[˜^S[X™\‹ÚYQ˜]Ô\ÙH\ÙKÝX›Hœ˜XÝ[ÛŠHÂˆÝX›H[Z]Yœ˜XÝ[ÛˆHX]›X^
+ŒX]›Z[ŠÙ]X^[][TÚYQ˜]Ñœ˜XÝ[ÛŠ˜^S[X™\‹\ÙJKœ˜XÝ[ÛŠJNÂˆÝX›HÝ\œ™[œ˜XÝ[ÛˆHÙ]ÚYQ˜]Ñœ˜XÝ[ÛŠ˜^S[X™\‹\ÙJNÂˆYˆ
+X]˜XœÊ[Z]Yœ˜XÝ[ÛˆHÝ\œ™[œ˜XÝ[ÛŠHHKŒKLLŠHÂˆ™]\›ˆ˜[ÙNÂˆBˆÙ]ÚYQ˜]Ñœ˜XÝ[ÛŠ˜^S[X™\‹\ÙK[Z]Yœ˜XÝ[ÛŠNÂˆ™]\›ˆYNÂˆB‚ˆÊŠ‚ˆ
+ˆÙ]HX^[][HÚYKY˜]Èœ˜XÝ[Ûˆ]˜Z[X›H›ÜˆHÙ[XÝY˜^H\ÙK‚ˆ
+‚ˆ
+ˆ\˜[H˜^S[X™\ˆ›ÝÛK]\˜^H[™^ˆ
+ˆ\˜[H\ÙHÚYKY˜]È\ÙBˆ
+ˆ™]\›ˆX^[][H[ÝÙYÚYKY˜]Èœ˜XÝ[Û‚ˆ
+‹Âˆš]˜]HÝX›HÙ]X^[][TÚYQ˜]Ñœ˜XÝ[ÛŠ[˜^S[X™\‹ÚYQ˜]Ô\ÙH\ÙJHÂˆYˆ
+\ÙHOHÚYQ˜]Ô\ÙK‘ÐTÊHÂˆ™]\›ˆKŒÂˆBˆYˆ
+\ÙHOHÚYQ˜]Ô\ÙK“TURQ
+HÂˆ™]\›ˆX]›X^
+ŒKŒHÙ]˜^J˜^S[X™\ŠK™Ù]\]ZY[\\›Ý[™˜]Ñœ˜XÝ[ÛŠ
+JNÂˆBˆ›ÝÈ™]È[YØ[\™Ý[Y[^Ù\[ÛŠ”ÚYH˜]È\ÙHØ[››Ý™H[ŠNÂˆB‚ˆÊŠ‚ˆ
+ˆ[Z]ÚYK\›ÙXÝœ˜XÝ[ÛœÈÛÈÚYH˜]ÜÈØ[››Ý™[[Ý™H[Ü™HÛÛ\Û™[[™[ÜžH[ˆ™YYË‚ˆ
+‚ˆ
+ˆ™]\›ˆ™[]]™H™YXÝ[Ûˆ\YYÈÚYKY˜]Èœ˜XÝ[ÛœËÜˆ™\›ÈYˆ›È™YXÝ[ÛˆØ\È™YYYˆ
+‹Âˆš]˜]HÝX›H[™›Ü˜ÙTÚYQ˜]Ñ™YY[™[ÜžS[Z]
+
+HÂˆYˆ
+Ù]ÚYQ˜]ÔÝ™X[\Ê
+Kš\Ñ[\J
+JHÂˆ™]\›ˆŒÂˆBˆÝX›V×H™YYÛÛ\Û™[[Û\ÈHÙ]™YYÛÛ\Û™[[Û\Ê
+NÂˆÝX›V×HÚYQ˜]ÐÛÛ\Û™[[Û\ÈHÙ]ÚYQ˜]ÐÛÛ\Û™[[Û\Ê™YYÛÛ\Û™[[Û\Ë›[™Ý
+NÂˆÝX›HØØ[Q˜XÝÜˆHKŒÂˆ›Üˆ
+[ÛÛ\Û™[[™^HÈÛÛ\Û™[[™^ÚYQ˜]ÐÛÛ\Û™[[Û\Ë›[™ÝÈÛÛ\Û™[[™^
+ÊÊHÂˆÝX›HÚYQ˜]Ó[Û\ÈHÚYQ˜]ÐÛÛ\Û™[[Û\ÖØÛÛ\Û™[[™^NÂˆYˆ
+ÚYQ˜]Ó[Û\Èˆ™YYÛÛ\Û™[[Û\ÖØÛÛ\Û™[[™^H
+ÈKŒKLLŠHÂˆØØ[Q˜XÝÜˆHX]›Z[ŠØØ[Q˜XÝÜ‹™YYÛÛ\Û™[[Û\ÖØÛÛ\Û™[[™^HÈÚYQ˜]Ó[Û\ÊNÂˆBˆBˆYˆ
+ØØ[Q˜XÝÜˆHKŒHKŒKLL
+HÂˆ™]\›ˆŒÂˆBˆØØ[TÚYQ˜]Ñœ˜XÝ[ÛœÊØØ[Q˜XÝÜŠNÂˆÛÛ[[•X\•˜\šXX›\ÐÚ[™ÙYHYNÂˆ™]\›ˆKŒHØØ[Q˜XÝÜŽÂˆB‚ˆÊŠ‚ˆ
+ˆØØ[H[ÚYKY˜]Èœ˜XÝ[ÛœÈžHHÛÛ[[Ûˆ˜XÝÜ‹‚ˆ
+‚ˆ
+ˆ\˜[HØØ[Q˜XÝÜˆÛÛ[[ÛˆØØ[H˜XÝÜˆœ›ÛH™\›ÈÈÛ™Bˆ
+‹Âˆš]˜]H›ÚYØØ[TÚYQ˜]Ñœ˜XÝ[ÛœÊÝX›HØØ[Q˜XÝÜŠHÂˆ›Üˆ
+[˜^S[X™\ˆHÈ˜^S[X™\ˆ[X™\“Ù•˜^\ÎÈ˜^S[X™\ŠÊÊHÂˆÚ[\U˜^H˜^HHÙ]˜^J˜^S[X™\ŠNÂˆYˆ
+˜^K™Ù]Ø\ÔÚYQ˜]Ñœ˜XÝ[ÛŠ
+HˆŒ
+HÂˆ˜^KœÙ]Ø\ÔÚYQ˜]Ñœ˜XÝ[ÛŠ˜^K™Ù]Ø\ÔÚYQ˜]Ñœ˜XÝ[ÛŠ
+H
+ˆØØ[Q˜XÝÜŠNÂˆBˆYˆ
+˜^K™Ù]\]ZYÚYQ˜]Ñœ˜XÝ[ÛŠ
+HˆŒ
+HÂˆ˜^KœÙ]\]ZYÚYQ˜]Ñœ˜XÝ[ÛŠ˜^K™Ù]\]ZYÚYQ˜]Ñœ˜XÝ[ÛŠ
+H
+ˆØØ[Q˜XÝÜŠNÂˆBˆBˆB‚ˆÊŠ‚ˆ
+ˆ\]HHÛÛ[[ˆ™\ÜÝ\™H›Ùš[Hœ›ÛH˜^HÜˆXÚÚ[™ÈY˜][XÈ™\ÜÝ\™H›Ü‚ˆ
+‚ˆ
+ˆ™]\›ˆ™[]]™H™\ÜÝ\™K\›Ùš[HÚ[™ÙBˆ
+‹Âˆš]˜]HÝX›H\]T™\ÜÝ\™T›Ùš[Qœ›ÛRY˜][XÜÊ
+HÂˆYˆ
+ZY˜][XÔ™\ÜÝ\™Q›ÜÛÝ\[™Ñ[˜X›Y
+HÂˆ™]\›ˆŒÂˆBˆžHÂˆÛÛ[[’[\›˜[Ñ\ÚYÛ™\ˆ\ÚYÛ™\ˆHØ[ÐÛÛ[[’[\›˜[ÊY˜][XÔ™\ÜÝ\™Q›Ü[\›˜[Õ\JNÂˆÝX›H™\ÜÝ\™Q›ÜHHX]›X^
+Œ\ÚYÛ™\‹™Ù]Ý[™\ÜÝ\™Q›Ü
+
+JNÂˆ\ÝY˜][XÔ™\ÜÝ\™Q›ÜHH™\ÜÝ\™Q›ÜNÂˆ\ÝY˜][XÔ™\ÜÝ\™Q›Ü™\ÚYX[H\RY˜][XÔ™\ÜÝ\™Q›Ü
+™\ÜÝ\™Q›ÜJNÂˆYˆ
+\ÝY˜][XÔ™\ÜÝ\™Q›Ü™\ÚYX[ˆKŒKLLŠHÂˆÛÛ[[•X\•˜\šXX›\ÐÚ[™ÙYHYNÂˆBˆ™]\›ˆ\ÝY˜][XÔ™\ÜÝ\™Q›Ü™\ÚYX[ÂˆHØ]Ú
+^Ù\[Ûˆ^Ù\[ÛŠHÂˆÙÙÙ\‹Ø\›ŠÛÝ[›Ý\]HY˜][XÈ™\ÜÝ\™H›Ü›ÜˆÛÛ[[ˆßH‹Ù]˜[YJ
+K^Ù\[ÛŠNÂˆ\ÝY˜][XÔ™\ÜÝ\™Q›Ü™\ÚYX[HÝX›K”ÔÒUU‘WÒS‘’S’UNÂˆ™]\›ˆ\ÝY˜][XÔ™\ÜÝ\™Q›Ü™\ÚYX[ÂˆBˆB‚ˆÊŠ‚ˆ
+ˆ\HHY˜][XÈ™\ÜÝ\™H›ÜÈHÛÛ™šYÝ\™Y™\ÜÝ\™H›Ùš[K‚ˆ
+‚ˆ
+ˆ\˜[H™\ÜÝ\™Q›ÜHÝ[Y˜][XÈ™\ÜÝ\™H›Ü[ˆBˆ
+ˆ™]\›ˆ™[]]™H™\ÜÝ\™K\›Ùš[H[™Ú[Ú[™ÙBˆ
+‹Âˆš]˜]HÝX›H\RY˜][XÔ™\ÜÝ\™Q›Ü
+ÝX›H™\ÜÝ\™Q›ÜJHÂˆÝX›H™\ÜÝ\™Q›Ü˜\ˆH™\ÜÝ\™Q›ÜHÈKŒMNÂˆYˆ
+\ÔÜÚ]]™Qš[š]JÜ˜^T™\ÜÝ\™JJHÂˆÝX›H™]š[Ý\Ð›ÝÛT™\ÜÝ\™HH›ÝÛU˜^T™\ÜÝ\™NÂˆ›ÝÛU˜^T™\ÜÝ\™HHÜ˜^T™\ÜÝ\™H
+È™\ÜÝ\™Q›Ü˜\ŽÂˆ\SÜ[Z^˜][Û”™\ÜÝ\™T›Ùš[J
+NÂˆYˆ
+Z\ÔÜÚ]]™Qš[š]J™]š[Ý\Ð›ÝÛT™\ÜÝ\™JJHÂˆ™]\›ˆKŒÂˆBˆ™]\›ˆX]˜XœÊ›ÝÛU˜^T™\ÜÝ\™HH™]š[Ý\Ð›ÝÛT™\ÜÝ\™JBˆÈX]›X^
+KŒKLL‹X]˜XœÊ™]š[Ý\Ð›ÝÛT™\ÜÝ\™JJNÂˆBˆYˆ
+\ÔÜÚ]]™Qš[š]J›ÝÛU˜^T™\ÜÝ\™JJHÂˆÝX›H™]š[Ý\ÕÜ™\ÜÝ\™HHÜ˜^T™\ÜÝ\™NÂˆÜ˜^T™\ÜÝ\™HHX]›X^
+KŒKM‹›ÝÛU˜^T™\ÜÝ\™HH™\ÜÝ\™Q›Ü˜\ŠNÂˆ\SÜ[Z^˜][Û”™\ÜÝ\™T›Ùš[J
+NÂˆYˆ
+Z\ÔÜÚ]]™Qš[š]J™]š[Ý\ÕÜ™\ÜÝ\™JJHÂˆ™]\›ˆKŒÂˆBˆ™]\›ˆX]˜XœÊÜ˜^T™\ÜÝ\™HH™]š[Ý\ÕÜ™\ÜÝ\™JHÈX]›X^
+KŒKLL‹X]˜XœÊ™]š[Ý\ÕÜ™\ÜÝ\™JJNÂˆBˆ™]\›ˆŒÂˆB‚ˆÊŠ‚ˆ
+ˆÚXÚÈÚ]\ˆHš^Y\]ZY\™Y›^›ÝÈ[™Ü™Y›^\˜][ÈÜXÚYšXØ][ÛˆÛZ[HHØ[YHÛÛ™[œÙ\ˆÜ]‚ˆ
+‚ˆ
+ˆ™]\›ˆÐÛÙHY_HÚ[ˆ›Ý]]X[H^Û\Ú]™HÛÛ›ÛÈ\™HXÝ]™Bˆ
+‹Âˆš]˜]H›ÛÛX[ˆ\ÐÛÛ™›XÝ[™ÐÛÛ™[œÙ\”™Y›^ÜXÚYšXØ][ÛœÊ
+HÂˆÛÛ™[œÙ\ˆÛÛ™[œÙ\ˆH\ÐÛÛ™[œÙ\ˆÈÙ]ÛÛ™[œÙ\Š
+Hˆ[Âˆ™]\›ˆÛÛ™[œÙ\ˆOH[	‰ˆÛÛ™[œÙ\‹š\ÔÙ\\˜][Û—ÝÚ]Û\]ZYÜ™Y›^
+
+Bˆ	‰ˆ\ÕÜ™Y›^˜][ÔÜXÚYšXØ][ÛŠÜÜXÚYšXØ][ÛŠNÂˆB‚ˆÊŠ‚ˆ
+ˆÚXÚÈÚ]\ˆHÜXÚYšXØ][ÛˆÛÛ›ÛÈHÛÛ™[œÙ\ˆ™Y›^˜][Ë‚ˆ
+‚ˆ
+ˆ\˜[HÜXÚYšXØ][ÛˆÜXÚYšXØ][ÛˆÈ[œÜXÝˆ
+ˆ™]\›ˆÐÛÙHY_H›ÜˆHÜ™Y›^\˜][ÈÜXÚYšXØ][Û‚ˆ
+‹Âˆš]˜]H›ÛÛX[ˆ\ÕÜ™Y›^˜][ÔÜXÚYšXØ][ÛŠÛÛ[[”ÜXÚYšXØ][ÛˆÜXÚYšXØ][ÛŠHÂˆ™]\›ˆÜXÚYšXØ][ÛˆOH[	‰ˆÜXÚYšXØ][Û‹™Ù]ØØ][ÛŠ
+HOHÛÛ[[”ÜXÚYšXØ][Û‹”›ÙXÝØØ][Û‹•Ôˆ	‰ˆÜXÚYšXØ][Û‹™Ù]\J
+HOHÛÛ[[”ÜXÚYšXØ][Û‹”ÜXÚYšXØ][Û•\K”‘Q“VÔUSÎÂˆB‚ˆÊŠ‚ˆ
+ˆÚXÚÈÚ]\ˆHÜXÚYšXØ][ÛˆÛÛ›ÛÈH™X›Ú[\ˆ›Ú[\˜][Ë‚ˆ
+‚ˆ
+ˆ\˜[HÜXÚYšXØ][ÛˆÜXÚYšXØ][ÛˆÈ[œÜXÝˆ
+ˆ™]\›ˆÐÛÙHY_H›ÜˆH›ÝÛH™Y›^\˜][ÈÜXÚYšXØ][Û‚ˆ
+‹Âˆš]˜]H›ÛÛX[ˆ\Ð›ÝÛT™Y›^˜][ÔÜXÚYšXØ][ÛŠÛÛ[[”ÜXÚYšXØ][ÛˆÜXÚYšXØ][ÛŠHÂˆ™]\›ˆÜXÚYšXØ][ÛˆOH[	‰ˆÜXÚYšXØ][Û‹™Ù]ØØ][ÛŠ
+HOHÛÛ[[”ÜXÚYšXØ][Û‹”›ÙXÝØØ][Û‹“ÕÓBˆ	‰ˆÜXÚYšXØ][Û‹™Ù]\J
+HOHÛÛ[[”ÜXÚYšXØ][Û‹”ÜXÚYšXØ][Û•\K”‘Q“VÔUSÎÂˆB‚ˆÊŠ‚ˆ
+ˆÜ™X]H[ˆXÝ[Û˜X›HY\ÜØYÙH›ÜˆÛÛ˜YXÝÜžHÛÛ™[œÙ\ˆ™Y›^ÛÛ›ÛË‚ˆ
+‚ˆ
+ˆ™]\›ˆYÜ™Y\Ë[Ù‹Yœ™YYÛH\œ›ÜˆY\ÜØYÙBˆ
+‹Âˆš]˜]HÝš[™ÈÜ™X]PÛÛ™›XÝ[™ÐÛÛ™[œÙ\”™Y›^ÜXÚYšXØ][ÛœÓY\ÜØYÙJ
+HÂˆ™]\›ˆÛÛ[[ˆˆ
+ÈÙ]˜[YJ
+H
+ÈˆØ[››ÝÛÛXš[™HHš^Y\]ZY\™Y›^›ÝÈÚ]HÜ™Y›^\˜][ÈÜXÚYšXØ][ÛŽÈ‚ˆ
+ÈœÙ[XÝÛ™HÛÛ™[œÙ\ˆ™Y›^ÛÛ›ÛŽÂˆB‚ˆÊŠ‚ˆ
+ˆ™Z™XÝÛÛ˜YXÝÜžHÛÛ™[œÙ\ˆ™Y›^ÛÛ›ÛÈ™]Z[™Y›ÝYÚ\™XÝÛÛ™[œÙ\ˆ]]][ÛˆÜˆÙ\šX[^˜][Û‹‚ˆ
+‚ˆ
+ˆ›ÝÜÈ[YØ[Ý]Q^Ù\[ÛˆYˆš^Y\]ZY™Y›^[™Ü™Y›^˜][È›ÝÛÛ›ÛHÛÛ™[œÙ\ˆÜ]ˆ
+‹Âˆš]˜]H›ÚY[œÝ\™R[™\[™[\›Z[˜[ÜXÚYšXØ][ÛœÊ
+HÂˆYˆ
+\ÐÛÛ™›XÝ[™ÐÛÛ™[œÙ\”™Y›^ÜXÚYšXØ][ÛœÊ
+JHÂˆ›ÝÈ™]È[YØ[Ý]Q^Ù\[ÛŠÜ™X]PÛÛ™›XÝ[™ÐÛÛ™[œÙ\”™Y›^ÜXÚYšXØ][ÛœÓY\ÜØYÙJ
+JNÂˆBˆB‚ˆÊŠˆ\HÜXÚYšXØ][ÛœÈ]X\\™XÝHÈÛÛ™[œÙ\ˆÜˆ™X›Ú[\ˆÛÛ›ÛËˆ
+‹Âˆš]˜]H›ÚY\Q\™XÝÜXÚYšXØ][ÛœÊ
+HÂˆ\Q\™XÝÜXÚYšXØ][ÛŠÜÜXÚYšXØ][ÛŠNÂˆ\Q\™XÝÜXÚYšXØ][ÛŠ›ÝÛTÜXÚYšXØ][ÛŠNÂˆB‚ˆÊŠ‚ˆ
+ˆ\HHÜXÚYšXØ][Ûˆ]Ù\È›Ý™\]Z\™H[ˆÝ]\ˆ]\˜][Û‹‚ˆ
+‚ˆ
+ˆ\˜[HÜXÈHÜXÚYšXØ][ÛˆÈ\Bˆ
+‹Âˆš]˜]H›ÚY\Q\™XÝÜXÚYšXØ][ÛŠÛÛ[[”ÜXÚYšXØ][ÛˆÜXÊHÂˆYˆ
+ÜXÈOH[
+HÂˆ™]\›ŽÂˆB‚ˆYˆ
+ÜXË™Ù]\J
+HOHÛÛ[[”ÜXÚYšXØ][Û‹”ÜXÚYšXØ][Û•\K”‘Q“VÔUSÊHÂˆYˆ
+ÜXË™Ù]ØØ][ÛŠ
+HOHÛÛ[[”ÜXÚYšXØ][Û‹”›ÙXÝØØ][Û‹•Ô	‰ˆ\ÐÛÛ™[œÙ\ŠHÂˆÙ]ÛÛ™[œÙ\Š
+KœÙ]™Y›^˜][ÊÜXË™Ù]\™Ù]˜[YJ
+JNÂˆH[ÙHYˆ
+ÜXË™Ù]ØØ][ÛŠ
+HOHÛÛ[[”ÜXÚYšXØ][Û‹”›ÙXÝØØ][Û‹“ÕÓH	‰ˆ\Ô™X›Ú[\ŠHÂˆÙ]™X›Ú[\Š
+KœÙ]™Y›^˜][ÊÜXË™Ù]\™Ù]˜[YJ
+JNÂˆBˆH[ÙHYˆ
+ÜXË™Ù]\J
+HOHÛÛ[[”ÜXÚYšXØ][Û‹”ÜXÚYšXØ][Û•\K‘UJHÂˆYˆ
+ÜXË™Ù]ØØ][ÛŠ
+HOHÛÛ[[”ÜXÚYšXØ][Û‹”›ÙXÝØØ][Û‹•Ô	‰ˆ\ÐÛÛ™[œÙ\ŠHÂˆÙ]ÛÛ™[œÙ\Š
+KœÙ]X][œ]
+ÜXË™Ù]\™Ù]˜[YJ
+JNÂˆH[ÙHYˆ
+ÜXË™Ù]ØØ][ÛŠ
+HOHÛÛ[[”ÜXÚYšXØ][Û‹”›ÙXÝØØ][Û‹“ÕÓH	‰ˆ\Ô™X›Ú[\ŠHÂˆÙ]™X›Ú[\Š
+KœÙ]X][œ]
+ÜXË™Ù]\™Ù]˜[YJ
+JNÂˆBˆBˆB‚ˆÊŠ‚ˆ
+ˆÚXÚÈÚ]\ˆ[žHÛÛ™šYÝ\™YÛÛ[[ˆÜXÚYšXØ][Ûˆ™\]Z\™\È]\˜]]™HY\ÝY[‚ˆ
+‚ˆ
+ˆ™]\›ˆÐÛÙHY_HÚ[ˆ[ˆXÝ]™H›ÙXÝÜ™XÛÝ™\žKÙ›ÝÈÜXÚYšXØ][Ûˆ\È™\Ù[ˆ
+‹Âˆš]˜]H›ÛÛX[ˆ\ÐY\ÝX›TÜXÚYšXØ][ÛœÊ
+HÂˆ™]\›ˆ™YYÐY\ÝY[
+ÜÜXÚYšXØ][ÛŠH™YYÐY\ÝY[
+›ÝÛTÜXÚYšXØ][ÛŠNÂˆB‚ˆÊŠ‚ˆ
+ˆÚXÚÈÚ]\ˆ[XÝ]™HÛÛ[[ˆÜXÚYšXØ][ÛœÈ\™HÚ][ˆZ\ˆÛÛ™šYÝ\™YÛ\˜[˜ÙK‚ˆ
+‚ˆ
+ˆ™]\›ˆÐÛÙHY_HYˆ[ÜXÚYšXØ][ÛœÈ\™HØ]\ÙšYYˆ
+‹Âˆš]˜]H›ÛÛX[ˆÜXÚYšXØ][ÛœÔØ]\ÙšYY
+
+HÂˆ›ÛÛX[ˆš^Y\]ZY™Y›^Ø]\ÙšYYHZ\ÐÛÛ™[œÙ\ˆÙ]ÛÛ™[œÙ\Š
+HOH[ˆÙ]ÛÛ™[œÙ\Š
+Kš\Ñš^Y\]ZY™Y›^ÜXÚYšXØ][Û”Ø]\ÙšYY
+
+NÂˆ™]\›ˆÜXÚYšXØ][Û”Ø]\ÙšYY
+ÜÜXÚYšXØ][ÛŠH	‰ˆÜXÚYšXØ][Û”Ø]\ÙšYY
+›ÝÛTÜXÚYšXØ][ÛŠBˆ	‰ˆš^Y\]ZY™Y›^Ø]\ÙšYYÂˆB‚ˆÊŠ‚ˆ
+ˆ\]HHÝÜ™Y™\ÚYX[È›ÜˆHÝ\œ™[HÛÛ™šYÝ\™YÛÛ[[ˆÜXÚYšXØ][ÛœË‚ˆ
+‹Âˆš]˜]H›ÚY\]TÜXÚYšXØ][Û”™\ÚYX[Ê
+HÂˆ\ÝÜÜXÚYšXØ][Û”™\ÚYX[H]˜[X]TÜXÑ\œ›Ü”ØY™[JÜÜXÚYšXØ][ÛŠNÂˆ\Ý›ÝÛTÜXÚYšXØ][Û”™\ÚYX[H]˜[X]TÜXÑ\œ›Ü”ØY™[J›ÝÛTÜXÚYšXØ][ÛŠNÂˆB‚ˆÊŠˆ\]HHÝÜ™YÜXÚYšXØ][Ûˆ™\ÚYX[È›ÜˆXÚØYÙK[]™[XYÛ›ÜÝXÜËˆ
+‹Âˆ›ÚY\]TÜXÚYšXØ][Û”™\ÚYX[XYÛ›ÜÝXÜÊ
+HÂˆ\]TÜXÚYšXØ][Û”™\ÚYX[Ê
+NÂˆB‚ˆÊŠˆ\]HHÝÜ™YQTÒ™\ÚYX[XYÛ›ÜÝXÜÈ›ÜˆHÝ\œ™[ÛÛ[[ˆÝ]Kˆ
+‹Âˆš]˜]H›ÚY\]SY\Ú™\ÚYX[Ê
+HÂˆ\ÝY\Ú™\ÚYX[HÛÛ[[“Y\Ú™\ÚYX[]˜[X]Ü‹™]˜[X]J\ÊNÂˆ\Ý˜^SX]\šX[˜[[˜ÙQ\œ›ÜˆHÛÛ[[“Y\Ú™\ÚYX[]˜[X]Ü‹™]˜[X]SX^˜^SX]\šX[[X˜[[˜ÙJ\ÊNÂˆB‚ˆÊŠ‚ˆ
+ˆ]˜[X]HHÜXÚYšXØ][Ûˆ™\ÚYX[›ÜˆXYÛ›ÜÝXÜÈÚ]Ý][\œ\[™ÈHÛÛ™K‚ˆ
+‚ˆ
+ˆ\˜[HÜXÈHÜXÚYšXØ][ÛˆÈ]˜[X]Bˆ
+ˆ™]\›ˆÝ\œ™[™\ÚYX[™\›È›Üˆ›ÈÜXÚYšXØ][Û‹ÜˆÐÛÙHÝX›K“˜SŸHYˆ[˜]˜Z[X›Bˆ
+‹Âˆš]˜]HÝX›H]˜[X]TÜXÑ\œ›Ü”ØY™[JÛÛ[[”ÜXÚYšXØ][ÛˆÜXÊHÂˆYˆ
+ÜXÈOH[
+HÂˆ™]\›ˆŒÂˆBˆžHÂˆ™]\›ˆ]˜[X]TÜXÑ\œ›ÜŠÜXÊNÂˆHØ]Ú
+^Ù\[Ûˆ^
+HÂˆÙÙÙ\‹™XYÊÛÝ[›Ý]˜[X]HÛÛ[[ˆÜXÚYšXØ][Ûˆ™\ÚYX[‹^
+NÂˆ™]\›ˆÝX›K“˜SŽÂˆBˆB‚ˆÊŠ‚ˆ
+ˆ]˜[X]HHÝ\œ™[˜[YH™\™\Ù[YžHHÜXÚYšXØ][ÛˆÚ]Ý]ÝX˜XÝ[™È]È\™Ù]‚ˆ
+‚ˆ
+ˆ\˜[HÜXÈHÜXÚYšXØ][ÛˆÈ]˜[X]Bˆ
+ˆ™]\›ˆÝ\œ™[˜[YH›ÜˆHÜXÚYšXØ][Û‹ÜˆÐÛÙHÝX›K“˜SŸHYˆ[˜]˜Z[X›Bˆ
+‹Âˆš]˜]HÝX›H]˜[X]TÜXÕ˜[YTØY™[JÛÛ[[”ÜXÚYšXØ][ÛˆÜXÊHÂˆYˆ
+ÜXÈOH[
+HÂˆ™]\›ˆÝX›K“˜SŽÂˆBˆžHÂˆ™]\›ˆ]˜[X]TÜXÑ\œ›ÜŠÜXÊH
+ÈÜXË™Ù]\™Ù]˜[YJ
+NÂˆHØ]Ú
+^Ù\[Ûˆ^
+HÂˆÙÙÙ\‹™XYÊÛÝ[›Ý]˜[X]HÛÛ[[ˆÜXÚYšXØ][Ûˆ˜[YH‹^
+NÂˆ™]\›ˆÝX›K“˜SŽÂˆBˆB‚ˆÊŠ‚ˆ
+ˆÚXÚÈÚ]\ˆHÚ[™ÛHÛÛ[[ˆÜXÚYšXØ][Ûˆ\ÈØ]\ÙšYY‚ˆ
+‚ˆ
+ˆ\˜[HÜXÈHÜXÚYšXØ][ÛˆÈ]˜[X]Bˆ
+ˆ™]\›ˆÐÛÙHY_HYˆ›È™\ÚYX[ÚXÚÈ\È™YYYÜˆH™\ÚYX[\ÈÚ][ˆÛ\˜[˜ÙBˆ
+‹Âˆš]˜]H›ÛÛX[ˆÜXÚYšXØ][Û”Ø]\ÙšYY
+ÛÛ[[”ÜXÚYšXØ][ÛˆÜXÊHÂˆYˆ
+ÜXÈOH[[™YYÐY\ÝY[
+ÜXÊJHÂˆ™]\›ˆYNÂˆBˆ™]\›ˆX]˜XœÊ]˜[X]TÜXÑ\œ›ÜŠÜXÊJHHÜXË™Ù]Û\˜[˜ÙJ
+NÂˆB‚ˆÊŠ‚ˆ
+ˆÛÛ™HHÛÛ[[ˆ\Ú[™ÈHÝ\œ™[HÙ[XÝY[›™\ˆÛÛ™\‹‚ˆ
+‚ˆ
+ˆ\˜[HYØ[Ý[][ÛˆY[YšY\‚ˆ
+ˆ™]\›ˆ™\Ý[œ›ÛHHÙ[XÝYÛÛ[[ˆÛÛ™\‚ˆ
+‹Âˆš]˜]HÛÛ[[”ÛÛ™T™\Ý[ÛÛ™TÙ[XÝYÛÛ™\ŠURQY
+HÂˆÛÛ™\•\HY™™XÝ]™TÛÛ™\•\HHÙ]Y™™XÝ]™TÛÛ™\•\Q›Ü”[Š
+NÂˆÛÛ[[”ÛÛ™T™\Ý[™\Ý[HÛÛ[[”ÛÛ™\‘˜XÝÜžK˜Ü™X]JY™™XÝ]™TÛÛ™\•\JKœÛÛ™J\ËY
+NÂˆ\ÝÛÛ™\•\U\ÙYH™\Ý[™Ù]ÛÛ™\•\J
+NÂˆ™]\›ˆ™\Ý[ÂˆB‚ˆÊŠ‚ˆ
+ˆÚXÚÈÚ]\ˆH\]ZYÚYH˜]È™[[Ý™\È[\]ZY˜Y™šXÈœ›ÛH[žHÝYÙK‚ˆ
+‚ˆ
+ˆ‚ˆ
+ˆ˜\[KTØ[™ÛH[š]X[^˜][Ûˆ›ÜYØ]\È\]ZY˜Y™šXÈžH]šY[™ÈžHHœ˜XÝ[Ûˆ]™[XZ[œÈ›ÜˆH˜^Bˆ
+ˆ™[ÝËˆH^XÝ[]Ú]˜]Ø[›Ý[™\žH\ÈH™\›È]š\ÛÜˆ[™]\Ý\ÙHHÛÛ™\ˆ]Ù\È›Ý™[HÛˆ]ˆ
+ˆ[š]X[^˜][Û‹ˆœ˜XÝ[ÛœÈ™[ÝÈÛ™H™]Z[ˆÜÚ]]™H[\›˜[˜Y™šXÈ[™™[XZ[ˆÝ\ÜYžHHÚ[][[™[Ý\Âˆ
+ˆÛÛ™\‹‚ˆ
+ˆÜ‚ˆ
+‚ˆ
+ˆ™]\›ˆÐÛÙHY_HÚ[ˆ]X\ÝÛ™H\]ZYÚYKY˜]Èœ˜XÝ[Ûˆ\È^XÝHÛ™Bˆ
+‹Âˆš]˜]H›ÛÛX[ˆ\Ñ[UÚ]˜]Û“\]ZYÝYÙJ
+HÂˆ›Üˆ
+[˜^R[™^HÈ˜^R[™^[X™\“Ù•˜^\ÎÈ˜^R[™^
+ÊÊHÂˆYˆ
+˜^\Ë™Ù]
+˜^R[™^
+K™Ù]\]ZYÚYQ˜]Ñœ˜XÝ[ÛŠ
+HHKŒ
+HÂˆ™]\›ˆYNÂˆBˆBˆ™]\›ˆ˜[ÙNÂˆB‚ˆÊŠ‚ˆ
+ˆÙ[XÝHÛÛ™\ˆÈ\ÙH›ÜˆHÝ\œ™[[ˆY\ˆÝX\™YY˜][]\š\ÝXÜÈ\™H\YY‚ˆ
+‚ˆ
+ˆ™]\›ˆÛÛ™\ˆÝ˜]YÞHÈ^XÝ]H›Üˆ\È[‚ˆ
+‹Âˆš]˜]HÛÛ™\•\HÙ]Y™™XÝ]™TÛÛ™\•\Q›Ü”[Š
+HÂˆYˆ
+\Ý[œ˜XÝ[Û˜]Ü‘˜\Ý]\YY
+HÂˆ™]\›ˆÛÛ™\•\K“QTÒÔ‘TÒQPSÂˆBˆËÈØ\›K\Ý\˜\Ý]ˆÛ˜ÙHHUUÈÙ[XÝÜˆ\ÈÚÜÙ[ˆHÛÛ˜Ü™]HÛÛ™\ˆ[™HÛÛ[[ˆ\ÂˆËÈ[™XYH™Y[ˆÛÛ™Y™]\ÙH]ÛÛ™\ˆ\™XÝHÛˆÝXœÙ\]Y[Ø\›H™K\ÛÛ™\È
+K™Ëˆ[œÚYHBˆËÈ™XÞXÛHÛÜ
+Kˆ\ÈÚÚ\ÈH^[œÚ]™H™X\ÚXš[]H™K\ØÜ™Y[‹Ø[™Y]HÛÛš[™È[™ˆËÈ][K\ÛÛ™\ˆØÛÜš[™È]UUÈ\™›Ü›\ÈÛˆ]™\žHØ[ˆY\ÝX›HÜXÚYšXØ][ÛœÈÙY\BˆËÈ[UUÈ]™XØ]\ÙHZ\ˆÛÛ[X][Û‹ÚÛ[ÝÜHÙÚXÈ\[™ÈÛˆ]‚ˆÛÛ™\•\HY™™XÝ]™TÛÛ™\•\HHÛÛ™\•\NÂˆYˆ
+ÛÛ™\•\HOHÛÛ™\•\KUUÈ	‰ˆ\Ð™Y[”ÛÛ™Y™Y›Ü™H	‰ˆ]]ÕØ\›TÝ\ÛÛ™\ˆOH[ˆ	‰ˆ]]ÕØ\›TÝ\ÛÛ™\ˆOHÛÛ™\•\KUUÈ	‰ˆZ\ÐY\ÝX›TÜXÚYšXØ][ÛœÊ
+JHÂˆY™™XÝ]™TÛÛ™\•\HH]]ÕØ\›TÝ\ÛÛ™\ŽÂˆBˆËÈ[\\›Ý[™™]\›œÈ\™HÛÛ™\™ÙYžHHÝ]\ˆX\ˆÛÜ[™\™H›ÝY]\ÜÙ[X›Y\ÂˆËÈ˜\[KTØ[™ÛH™YY\›\ËˆÙY\]ÛÛÜ™[˜]YÛÛ™šYÝ\˜][ÛˆÛˆH\ÝX›\ÚYˆËÈ™\ÚYX[[[Ûš]Ü™YÛÛ™\ˆ[[›ÝÚ]˜]Ø[[™™]\›ˆ\XÚ\]H[ˆÛ™HÚ[][[™[Ý\ÂˆËÈ\]X][ÛˆÞ\Ý[K‚ˆYˆ
+Y™™XÝ]™TÛÛ™\•\HOHÛÛ™\•\K“TSWÔÐS‘ÓH	‰ˆ\[\\›Ý[™Ëš\Ñ[\J
+JHÂˆÙÙÙ\‹™XYÊ•\Ú[™ÈQTÒÔ‘TÒQPS›ÜˆÛÛ[[ˆßH™XØ]\ÙHXÝ]™H[\\›Ý[™È™\]Z\™HÝ]\ˆ™]\›‹\Ý™X[HÛÝ\[™È‹ˆÙ]˜[YJ
+JNÂˆ™]\›ˆÛÛ™\•\K“QTÒÔ‘TÒQPSÂˆBˆYˆ
+Y™™XÝ]™TÛÛ™\•\HOHÛÛ™\•\K“TSWÔÐS‘ÓH	‰ˆ\Ñ[UÚ]˜]Û“\]ZYÝYÙJ
+JHÂˆÙÙÙ\‹™XYÊ•\Ú[™ÈQTÒÔ‘TÒQPS›ÜˆÛÛ[[ˆßH™XØ]\ÙHH[\]ZYÚYH˜]ÈX]™\È™\›È[\›˜[ÝÛ™›ÝÈ‹ˆÙ]˜[YJ
+JNÂˆ™]\›ˆÛÛ™\•\K“QTÒÔ‘TÒQPSÂˆBˆ™]\›ˆY™™XÝ]™TÛÛ™\•\NÂˆB‚ˆÊŠ‚ˆ
+ˆ\HÜZ[ˆ˜\ÝY˜][È›Üˆ\™ÙHÝË\™Y›^[œ˜XÝ[Û˜]ÜœÈ\Ú[™ÈHYØXÞHY˜][ÛÛ™\‹‚ˆ
+‹Âˆš]˜]H›ÚY\Q[œ˜XÝ[Û˜]Ü‘˜\Ý]
+
+HÂˆYˆ
+\ÚÝ[\Q[œ˜XÝ[Û˜]Ü‘˜\Ý]
+
+JHÂˆ™]\›ŽÂˆBˆ[™YY˜^S[X™\ˆHÙ]Ú[™ÛP\Q™YY˜^S[X™\Š
+NÂˆYˆ
+™YY˜^S[X™\ˆ
+Z\Ñ™YY˜^S™X\•Ü
+™YY˜^S[X™\ŠH	‰ˆZ\Ñ™YY˜^S™X\›ÝÛJ™YY˜^S[X™\ŠJJHÂˆ™]\›ŽÂˆBˆ[™XÛÛ[Y[™Y™YY˜^S[X™\ˆHÙ][œ˜XÝ[Û˜]Ü‘˜\Ý]™YY˜^S[X™\Š
+NÂˆYˆ
+™XÛÛ[Y[™Y™YY˜^S[X™\ˆOH™YY˜^S[X™\ŠHÂˆ™]\›ŽÂˆBˆ\ÝÝ™X[R[\™˜XÙOˆ[Ý™Y™YYÈH™YYÝ™X[\Ëœ™[[Ý™J[YÙ\‹˜[YSÙŠ™YY˜^S[X™\ŠJNÂˆYˆ
+[Ý™Y™YYÈOH[[Ý™Y™YYËš\Ñ[\J
+JHÂˆ™]\›ŽÂˆBˆ™YYÝ™X[\Ë˜ÛÛ\]RYXœÙ[
+[YÙ\‹˜[YSÙŠ™XÛÛ[Y[™Y™YY˜^S[X™\ŠKÈOˆ™]È\œ˜^S\ÝÝ™X[R[\™˜XÙOŠ
+JBˆ˜Y[
+[Ý™Y™YYÊNÂˆ™\Ù]˜^R[œ]ÕÑ^\›˜[™YYÊ
+NÂˆÙ]Ò[š]X[^š[ÛŠYJNÂˆ\Ý[œ˜XÝ[Û˜]Ü‘˜\Ý]\YYHYNÂˆ\Ý[œ˜XÝ[Û˜]Ü‘˜\Ý]™X\ÛÛˆH“ÜZ[ˆ[Yœ˜XÝ[Û˜]Üˆ˜\Ý][Ý™YHˆ
+ÈœÚ[™ÛH™YYœ›ÛH˜^H‚ˆ
+È™YY˜^S[X™\ˆ
+ÈˆÈ˜^Hˆ
+È™XÛÛ[Y[™Y™YY˜^S[X™\ˆ
+Èˆ[™Ù[XÝYQTÒÔ‘TÒQPSˆŽÂˆB‚ˆÊŠ‚ˆ
+ˆÚXÚÈÚ]\ˆHÜZ[ˆ[Yœ˜XÝ[Û˜]Üˆ˜\Ý]\È\XØX›K‚ˆ
+‚ˆ
+ˆ™]\›ˆÐÛÙHY_HÚ[ˆÜZ[ˆ˜\ÝY˜][ÈÚÝ[™H\YY›Üˆ\È[‚ˆ
+‹Âˆš]˜]H›ÛÛX[ˆÚÝ[\Q[œ˜XÝ[Û˜]Ü‘˜\Ý]
+
+HÂˆ™]\›ˆ[œ˜XÝ[Û˜]Ü‘˜\Ý][˜X›Y	‰ˆ\ÛÛ™\•\Q^XÚ]TÙ]	‰ˆÛÛ™\•\HOHÛÛ™\•\K‘T‘PÕÔÕP”ÕUUSÓ‚ˆ	‰ˆ\ÐÛÛ™[œÙ\ˆ	‰ˆ\Ô™X›Ú[\ˆ	‰ˆ[X™\“Ù•˜^\ÈHL	‰ˆ\ÓÝÔ™Y›^[œ˜XÝ[Û˜]ÜŠ
+NÂˆB‚ˆÊŠ‚ˆ
+ˆÚXÚÈÚ]\ˆHÛÛ™[œÙ\ˆ™Y›^\È[ˆHÝË\™Y›^˜[™ÙHÚ\™H\™XÝÝXœÝ]][ÛˆÙ[ˆÜØÚ[]\Ë‚ˆ
+‚ˆ
+ˆ™]\›ˆÐÛÙHY_HÚ[ˆH™Y›^˜][È\ÈÝÈ[›ÝYÚÈ[˜X›HHÝX\™Y˜\Ý]ˆ
+‹Âˆš]˜]H›ÛÛX[ˆ\ÓÝÔ™Y›^[œ˜XÝ[Û˜]ÜŠ
+HÂˆÝX›H™Y›^˜][ÈHÙ]ÛÛ™[œÙ\Š
+K™Ù]™Y›^˜][Ê
+NÂˆ™]\›ˆÝX›Kš\Ñš[š]J™Y›^˜][ÊH	‰ˆ™Y›^˜][ÈHŒ	‰ˆ™Y›^˜][ÈHŒNÂˆB‚ˆÊŠ‚ˆ
+ˆÙ]HÚ[™ÛH™YY˜^Hœ›ÛH™YYÈ™YÚ\Ý\™Y›ÝYÚHÛÛ[[ˆTK‚ˆ
+‚ˆ
+ˆ™]\›ˆHÚ[™ÛH™YY˜^H[X™\‹ÜˆÐÛÙHL_HÚ[ˆH™YY^[Ý]\È›ÝHÚ[\HØ\ÙBˆ
+‹Âˆš]˜]H[Ù]Ú[™ÛP\Q™YY˜^S[X™\Š
+HÂˆYˆ
+Y\™XÝ^\›˜[™YYÝ™X[\Ëš\Ñ[\J
+H™YYÝ™X[\ËœÚ^™J
+HOHJHÂˆ™]\›ˆLNÂˆBˆX\‘[žO[YÙ\‹\ÝÝ™X[R[\™˜XÙOˆ[žHH™YYÝ™X[\Ë™[žTÙ]
+
+Kš]\˜]ÜŠ
+K›™^
+
+NÂˆ\ÝÝ™X[R[\™˜XÙOˆ™YYÈH[žK™Ù]˜[YJ
+NÂˆYˆ
+™YYÈOH[™YYËœÚ^™J
+HOHJHÂˆ™]\›ˆLNÂˆBˆ™]\›ˆ[žK™Ù]Ù^J
+Kš[˜[YJ
+NÂˆB‚ˆÊŠ‚ˆ
+ˆÙ]HY˜][™YY˜^H\ÙYžHHÝX\™Y˜\Ý]‚ˆ
+‚ˆ
+ˆ™]\›ˆX˜\ÙY™YY˜^H™X\ˆHZYHÙˆH[ÝÙY™YYÙXÝ[Û‚ˆ
+‹Âˆš]˜]H[Ù][œ˜XÝ[Û˜]Ü‘˜\Ý]™YY˜^S[X™\Š
+HÂˆ[š\œÝ™YY˜^HHÙ]š\œÝ™YY˜^PØ[™Y]J
+NÂˆ[\Ý™YY˜^HHÙ]\Ý™YY˜^PØ[™Y]J
+NÂˆYˆ
+š\œÝ™YY˜^Hˆ\Ý™YY˜^JHÂˆš\œÝ™YY˜^HHÂˆ\Ý™YY˜^HH[X™\“Ù•˜^\ÈHNÂˆBˆ™]\›ˆ
+š\œÝ™YY˜^H
+È\Ý™YY˜^JHÈŽÂˆB‚ˆÊŠ‚ˆ
+ˆÛÛ™HHÛÛ[[ˆÚ][ˆÝ]\ˆÛÜ]Y\ÝÈÛÛ™[œÙ\‹Ü™X›Ú[\ˆ[\\˜]\™\ÈÈØ]\ÙžH›ÙXÝÜXÚYšXØ][ÛœË‚ˆ
+ˆ\Ù\ÈHÙXØ[Y]Ù›ÜˆXXÚÜXÚYšXØ][Ûˆ]™\]Z\™\ÈY\ÝY[‚ˆ
+‚ˆ
+ˆ\˜[HYØ[Ý[][ÛˆY[YšY\‚ˆ
+‹Âˆš]˜]H›ÚYÛÛ™UÚ]ÜXÚYšXØ][ÛœÊURQY
+HÂˆ\ÝÜXÚYšXØ][Û’Û[ÝÜTÝ\ÛÝ[HÂˆ[Y™™XÝ]™RÛ[ÝÜTÝ\ÈHÙ]Y™™XÝ]™TÜXÚYšXØ][Û’Û[ÝÜTÝ\Ê
+NÂˆYˆ
+Y™™XÝ]™RÛ[ÝÜTÝ\ÈˆJHÂˆÜXÚYšXØ][Û’Û[ÝÜTÝ\ÈHY™™XÝ]™RÛ[ÝÜTÝ\ÎÂˆÛÛ™UÚ]ÜXÚYšXØ][Û’Û[ÝÜJYY™™XÝ]™RÛ[ÝÜTÝ\ÊNÂˆ™]\›ŽÂˆBˆÛÛ™UÚ]ÜXÚYšXØ][Û•\™Ù]ÊYÜÜXÚYšXØ][Û‹›ÝÛTÜXÚYšXØ][ÛŠNÂˆB‚ˆÊŠ‚ˆ
+ˆ]\›Z[™HHÜXÚYšXØ][ÛˆÛÛ[X][ÛˆÝYÙHÛÝ[›ÜˆHÝ\œ™[ÛÛ™K‚ˆ
+‚ˆ
+ˆ™]\›ˆ^XÚ]\Ù\ˆÛ[ÝÜHÝ\ËÜˆ]]ÛX]XÈ›Ø\Ý[[ÙHÝ\ÈÚ[ˆUUÈ\ÈXÝ]™Bˆ
+‹Âˆš]˜]H[Ù]Y™™XÝ]™TÜXÚYšXØ][Û’Û[ÝÜTÝ\Ê
+HÂˆYˆ
+ÜXÚYšXØ][Û’Û[ÝÜTÝ\ÈˆJHÂˆ™]\›ˆÜXÚYšXØ][Û’Û[ÝÜTÝ\ÎÂˆBˆYˆ
+ÛÛ™\•\HOHÛÛ™\•\KUUÈ	‰ˆ\ÐY\ÝX›TÜXÚYšXØ][ÛœÊ
+JHÂˆ™]\›ˆUU×ÔÔPÒQ’PÐUSÓ—ÒÓSÕÔWÔÕTÎÂˆBˆ™]\›ˆÜXÚYšXØ][Û’Û[ÝÜTÝ\ÎÂˆB‚ˆÊŠ‚ˆ
+ˆÛÛ™HY\ÝX›H›ÙXÝÜXÚYšXØ][ÛœÈ›ÝYÚÝYÙYÛÛ[X][Ûˆ\™Ù]Ë‚ˆ
+‚ˆ
+ˆ‚ˆ
+ˆHš\œÝÝYÙHÝ\Èœ›ÛHHÝ\œ™[›ÙXÝ˜[YHY\ˆHØ\›H˜\Ù[[™HÛÛ™H[™[ˆ˜[\È[™X\›HÈBˆ
+ˆ\Ù\‹\ÜXÚYšYYš[˜[\™Ù]ˆ\È]›ÚYÈ[ˆXœ\[\ÈHY™šXÝ[\š]K™XÛÝ™\žKÜˆ›ÙXÝY›ÝÈ\™Ù]ˆ
+ˆÚ[HX]š[™ÈHÝÜ™YX›XÈÜXÚYšXØ][ÛœÈ[˜Ú[™ÙY‚ˆ
+ˆÜ‚ˆ
+‚ˆ
+ˆ\˜[HYØ[Ý[][ÛˆY[YšY\‚ˆ
+ˆ\˜[HÝ\È[X™\ˆÙˆÛÛ[X][ÛˆÝYÙ\ÈÈ[‚ˆ
+‹Âˆš]˜]H›ÚYÛÛ™UÚ]ÜXÚYšXØ][Û’Û[ÝÜJURQY[Ý\ÊHÂˆ›ÛÛX[ˆY\ÝÜH™YYÐY\ÝY[
+ÜÜXÚYšXØ][ÛŠH	‰ˆ\ÐÛÛ™[œÙ\ŽÂˆ›ÛÛX[ˆY\Ý›ÝÛHH™YYÐY\ÝY[
+›ÝÛTÜXÚYšXØ][ÛŠH	‰ˆ\Ô™X›Ú[\ŽÂˆYˆ
+XY\ÝÜ	‰ˆXY\Ý›ÝÛJHÂˆÛÛ™UÚ]ÜXÚYšXØ][Û•\™Ù]ÊYÜÜXÚYšXØ][Û‹›ÝÛTÜXÚYšXØ][ÛŠNÂˆ™]\›ŽÂˆB‚ˆÝX›H™YY[\H\Ý[X]Q™YY[\\˜]\™J
+NÂˆÝX›HÜ[\H\ÐÛÛ™[œÙ\ˆ	‰ˆÙ]ÛÛ™[œÙ\Š
+Kš\ÔÙ]Ý][\\˜]\™J
+HÈÙ]ÛÛ™[œÙ\Š
+K™Ù]Ý][\\˜]\™J
+Bˆˆ™YY[\HŒŒÂˆÝX›H›ÝÛU[\H\Ô™X›Ú[\ˆ	‰ˆÙ]™X›Ú[\Š
+Kš\ÔÙ]Ý][\\˜]\™J
+HÈÙ]™X›Ú[\Š
+K™Ù]Ý][\\˜]\™J
+Bˆˆ™YY[\
+ÈŒŒÂ‚ˆ\TÜXÚYšXØ][Û•[\\˜]\™QÝY\ÜÊY\ÝÜY\Ý›ÝÛKÜ[\›ÝÛU[\
+NÂˆÙ]Ò[š]X[^š[ÛŠZ\Ð™Y[”ÛÛ™Y™Y›Ü™JNÂˆÛÛ™R[›™\ŠY
+NÂ‚ˆÝX›HÜÝ\HY\ÝÜÈ]˜[X]TÜXÕ˜[YTØY™[JÜÜXÚYšXØ][ÛŠHˆÝX›K“˜SŽÂˆÝX›H›ÝÛTÝ\HY\Ý›ÝÛHÈ]˜[X]TÜXÕ˜[YTØY™[J›ÝÛTÜXÚYšXØ][ÛŠHˆÝX›K“˜SŽÂˆYˆ
+Y\ÝÜ	‰ˆQÝX›Kš\Ñš[š]JÜÝ\
+JHÂˆÜÝ\HÜÜXÚYšXØ][Û‹™Ù]\™Ù]˜[YJ
+NÂˆBˆYˆ
+Y\Ý›ÝÛH	‰ˆQÝX›Kš\Ñš[š]J›ÝÛTÝ\
+JHÂˆ›ÝÛTÝ\H›ÝÛTÜXÚYšXØ][Û‹™Ù]\™Ù]˜[YJ
+NÂˆB‚ˆ[ÝYÙPÛÝ[HX]›X^
+KÝ\ÊNÂˆ›Üˆ
+[Ý\HNÈÝ\HÝYÙPÛÝ[ÈÝ\
+ÊÊHÂˆÝX›Hœ˜XÝ[ÛˆHÝ\È
+ÝX›JHÝYÙPÛÝ[ÂˆÛÛ[[”ÜXÚYšXØ][ÛˆÝYÙYÜHY\ÝÜÈÜ™X]RÛ[ÝÜTÜXÚYšXØ][ÛŠÜÜXÚYšXØ][Û‹ÜÝ\œ˜XÝ[ÛŠBˆˆÜÜXÚYšXØ][ÛŽÂˆÛÛ[[”ÜXÚYšXØ][ÛˆÝYÙY›ÝÛHHY\Ý›ÝÛBˆÈÜ™X]RÛ[ÝÜTÜXÚYšXØ][ÛŠ›ÝÛTÜXÚYšXØ][Û‹›ÝÛTÝ\œ˜XÝ[ÛŠBˆˆ›ÝÛTÜXÚYšXØ][ÛŽÂˆÛÛ™UÚ]ÜXÚYšXØ][Û•\™Ù]ÊYÝYÙYÜÝYÙY›ÝÛJNÂˆ\ÝÜXÚYšXØ][Û’Û[ÝÜTÝ\ÛÝ[HÝ\ÂˆÙ]Ò[š]X[^š[ÛŠ˜[ÙJNÂˆBˆ\]TÜXÚYšXØ][Û”™\ÚYX[Ê
+NÂˆB‚ˆÊŠ‚ˆ
+ˆÛÛ™HHÛÛ[[ˆYØZ[œÝH›ÝšYYY™™XÝ]™HÜ[™›ÝÛHÜXÚYšXØ][Ûˆ\™Ù]Ë‚ˆ
+‚ˆ
+ˆ\˜[HYØ[Ý[][ÛˆY[YšY\‚ˆ
+ˆ\˜[HY™™XÝ]™UÜÜXÚYšXØ][ÛˆY™™XÝ]™HÜÜXÚYšXØ][Ûˆ›Üˆ\ÈÛÛ™Bˆ
+ˆ\˜[HY™™XÝ]™P›ÝÛTÜXÚYšXØ][ÛˆY™™XÝ]™H›ÝÛHÜXÚYšXØ][Ûˆ›Üˆ\ÈÛÛ™Bˆ
+‹Âˆš]˜]H›ÚYÛÛ™UÚ]ÜXÚYšXØ][Û•\™Ù]ÊURQYÛÛ[[”ÜXÚYšXØ][ÛˆY™™XÝ]™UÜÜXÚYšXØ][Û‹ˆÛÛ[[”ÜXÚYšXØ][ÛˆY™™XÝ]™P›ÝÛTÜXÚYšXØ][ÛŠHÂˆ›ÛÛX[ˆY\ÝÜH™YYÐY\ÝY[
+Y™™XÝ]™UÜÜXÚYšXØ][ÛŠH	‰ˆ\ÐÛÛ™[œÙ\ŽÂˆ›ÛÛX[ˆY\Ý›ÝÛHH™YYÐY\ÝY[
+Y™™XÝ]™P›ÝÛTÜXÚYšXØ][ÛŠH	‰ˆ\Ô™X›Ú[\ŽÂ‚ˆ[X^Ý]\’]\ˆHŒÂˆYˆ
+Y\ÝÜ	‰ˆY™™XÝ]™UÜÜXÚYšXØ][ÛˆOH[
+HÂˆX^Ý]\’]\ˆHX]›X^
+X^Ý]\’]\‹Y™™XÝ]™UÜÜXÚYšXØ][Û‹™Ù]X^]\˜][ÛœÊ
+JNÂˆBˆYˆ
+Y\Ý›ÝÛH	‰ˆY™™XÝ]™P›ÝÛTÜXÚYšXØ][ÛˆOH[
+HÂˆX^Ý]\’]\ˆHX]›X^
+X^Ý]\’]\‹Y™™XÝ]™P›ÝÛTÜXÚYšXØ][Û‹™Ù]X^]\˜][ÛœÊ
+JNÂˆB‚ˆÝX›HÜÛHY\ÝÜÈY™™XÝ]™UÜÜXÚYšXØ][Û‹™Ù]Û\˜[˜ÙJ
+HˆKŒKMÂˆÝX›H›ÝÛUÛHY\Ý›ÝÛHÈY™™XÝ]™P›ÝÛTÜXÚYšXØ][Û‹™Ù]Û\˜[˜ÙJ
+HˆKŒKMÂ‚ˆËÈ[š]X[^™H[\\˜]\™H›Ý[™Èœ›ÛH™YYÛÛ™][ÛœÂˆÝX›H™YY[\H\Ý[X]Q™YY[\\˜]\™J
+NÂ‚ˆËÈ[š]X[ÝY\ÜÙ\È›Üˆ[\\˜]\™\ÈÈY\ÝˆÝX›HÜ[\H\ÐÛÛ™[œÙ\ˆ	‰ˆÙ]ÛÛ™[œÙ\Š
+Kš\ÔÙ]Ý][\\˜]\™J
+HÈÙ]ÛÛ™[œÙ\Š
+K™Ù]Ý][\\˜]\™J
+Bˆˆ™YY[\HŒŒÂˆÝX›H›ÝÛU[\H\Ô™X›Ú[\ˆ	‰ˆÙ]™X›Ú[\Š
+Kš\ÔÙ]Ý][\\˜]\™J
+HÈÙ]™X›Ú[\Š
+K™Ù]Ý][\\˜]\™J
+Bˆˆ™YY[\
+ÈŒŒÂ‚ˆËÈÙXØ[Y]ÙÝ]H›ÜˆÜˆÝX›HÜ[\HÜ[\ÂˆÝX›HÜ[\HHÜ[\Huß½µæÚ$z{-®éÜj×asOutStream, topComponentMoles, "gas", id);
     updateProductStreamFromComponentMolesAsPhase(liquidOutStream, bottomComponentMoles, "liquid", id);
     return true;
   }

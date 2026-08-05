@@ -299,6 +299,8 @@ System.out.println("Drawdown: " + drawdown + " bar");
 | `getWellheadPressure(unit)`  | Wellhead pressure (target constraint)   |
 | `getDrawdown(unit)`          | Reservoir pressure - BHP                |
 | `getOutletStream()`          | Output stream for downstream connection |
+| `isOperatingPointConverged()` | Whether the pressure residual met the solver tolerance |
+| `getOperatingPointResidual(unit)` | Signed `BHP_IPR - BHP_VLP` residual at the stored rate |
 
 ---
 
@@ -800,6 +802,14 @@ well.setVLPSolverMode(VLPSolverMode.DUNS_ROS);
 well.setVLPSolverMode(VLPSolverMode.DRIFT_FLUX);  // Drift-flux with slip
 well.setVLPSolverMode(VLPSolverMode.TWO_FLUID);   // Separate momentum equations
 ```
+
+Calling `setPressureDropCorrelation(...)` on `WellSystem` configures the correlation but does not
+change the default `VLPSolverMode.SIMPLIFIED`; that fast hydrostatic-friction approximation does
+not use the correlation setting. Select the matching full mode with `setVLPSolverMode(...)` when
+the correlation should be active. After `run()`, check
+`isOperatingPointConverged()` and `getOperatingPointResidual("bar")` before consuming the rate;
+a narrow rate bracket is not treated as converged unless the IPR/VLP pressure residual meets the
+configured tolerance.
 
 | VLP Solver Mode | Description | Speed | Accuracy |
 | --------------- | ----------- | ----- | -------- |
