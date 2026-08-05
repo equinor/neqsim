@@ -249,7 +249,9 @@ public class StaticPhaseMixer extends StaticMixer {
 
     mixStream();
 
-    mixedStream.getThermoSystem().initProperties();
+    if (mixedStream.getThermoSystem().getTotalNumberOfMoles() > 0.0) {
+      mixedStream.getThermoSystem().initProperties();
+    }
     mixedStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
   }
