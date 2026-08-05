@@ -8,29 +8,29 @@ package neqsim.process.equipment.pipeline;
 
 import java.util.UUID;
 import neqsim.fluidmechanics.flowsolver.AdvectionScheme;
+import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFlowConvergenceReport;
+import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseSpeciesConservationReport;
 import neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.PipeFlowSystem;
+import neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.OnePhaseSpeciesConservationHistory;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * One-phase pipeline with compositional tracking support.
+ * One-phase pipeline with legacy and conservative compositional tracking support.
  *
  * <p>
  * This class wraps {@link PipeFlowSystem} for use in process simulations. It supports both steady-state and transient
- * simulations, including compositional tracking for scenarios like gas switching (e.g., natural gas to nitrogen
- * transitions).
+ * simulations, including validated isothermal conservative species tracking for positive-flow gas-quality events and
+ * the legacy staged compositional solver.
  * </p>
  *
- * <h2>Transient Compositional Tracking</h2>
+ * <h2>Validated Conservative Compositional Tracking</h2>
  * <p>
- * For gas switching scenarios, use {@link #setAdvectionScheme(AdvectionScheme)} to select a higher-order scheme that
- * reduces numerical dispersion:
+ * Use {@link #setConservativeCompositionalTracking(boolean)} for a component-conservative, positive-flow, isothermal
+ * transient. This mode delegates to {@link PipeFlowSystem} solver type 1 and exposes immutable component-conservation
+ * diagnostics and history. The legacy {@link #setCompositionalTracking(boolean)} mode selects the staged type 20 path,
+ * whose changing-composition hydraulic/EOS coupling is not covered by the same validation.
  * </p>
- * <ul>
- * <li>{@link AdvectionScheme#FIRST_ORDER_UPWIND} - Default, most stable but high dispersion</li>
- * <li>{@link AdvectionScheme#TVD_VAN_LEER} - Recommended for compositional tracking</li>
- * <li>{@link AdvectionScheme#TVD_SUPERBEE} - Sharpest fronts, best for gas switching</li>
- * </ul>
  *
  * <h2>Example: Gas Switching Simulation</h2>
  *
@@ -42,9 +42,9 @@ import neqsim.thermo.system.SystemInterface;
  * pipe.setPipeDiameters(new double[] { 0.3, 0.3 });
  * pipe.setLegPositions(new double[] { 0.0, 5000.0 });
  *
- * // Select TVD scheme for sharp composition fronts
- * pipe.setAdvectionScheme(AdvectionScheme.TVD_VAN_LEER);
- * pipe.setCompositionalTracking(true);
+ * pipe.setConservativeCompositionalTracking(true);
+ * pipe.setStoreSpeciesConservationHistory(true);
+ * pipe.setFailOnNonConvergence(true);
  *
  * // Initialize with steady state
  * pipe.run();
@@ -55,9 +55,10 @@ import neqsim.thermo.system.SystemInterface;
  *   // Update inlet stream composition if needed
  *   pipe.runTransient(1.0, id); // 1 second time step
  *
- *   // Access outlet composition
- *   double methane = pipe.getOutletStream().getFluid().getComponent("methane").getx();
+ *   // Access the conservative physical-cell outlet mass fraction
+ *   double methane = pipe.getConservativeOutletMassFraction("methane");
  * }
+ * double[] acceptedTimes = pipe.getSpeciesConservationHistory().getElapsedTimeSeconds();
  * }</pre>
  *
  * @author esol
@@ -69,6 +70,9 @@ public class OnePhasePipeLine extends Pipeline {
 
   /** Whether to track composition during transient simulation. */
   private boolean compositionalTracking = false;
+
+  /** Whether to use the validated conservative species path during transient simulation. */
+  private boolean conservativeCompositionalTracking = false;
 
   /** Whether the pipe system has been initialized. */
   private boolean initialized = false;
@@ -164,6 +168,99 @@ public class OnePhasePipeLine extends Pipeline {
   }
 
   /**
+   * Enable or disable validated conservative compositional tracking.
+   *
+   * <p>
+   * When enabled, transient calls use solver type 1 with conservative component inventories coupled to the hydraulic
+   * and EOS state. The current validated scope is positive, one-phase, isothermal flow with first-order upwind species
+   * transport. This mode takes precedence if the legacy {@link #setCompositionalTracking(boolean)} flag is also true.
+   * </p>
+   *
+   * @param enable true to use the validated conservative species path
+   */
+  public void setConservativeCompositionalTracking(boolean enable) {
+    conservativeCompositionalTracking = enable;
+    getPipeFlowSystem().setConservativeSpeciesTransport(enable);
+  }
+
+  /**
+   * Check whether validated conservative compositional tracking is enabled.
+   *
+   * @return true when transient calls select the conservative type 1 path
+   */
+  public boolean isConservativeCompositionalTracking() {
+    return conservativeCompositionalTracking;
+  }
+
+  /**
+   * Configure storage of immutable diagnostics for every accepted conservative step.
+   *
+   * @param store true to retain per-step reports during the latest high-level transient call
+   */
+  public void setStoreSpeciesConservationHistory(boolean store) {
+    getPipeFlowSystem().setStoreSpeciesConservationHistory(store);
+  }
+
+  /**
+   * Check whether accepted conservative-step history storage is enabled.
+   *
+   * @return true when full species diagnostics are retained
+   */
+  public boolean isSpeciesConservationHistoryStorageEnabled() {
+    return getPipeFlowSystem().isSpeciesConservationHistoryStorageEnabled();
+  }
+
+  /**
+   * Configure fail-loud behavior for hydraulic or conservative-species non-convergence.
+   *
+   * @param fail true to throw after recording a failed convergence report
+   */
+  public void setFailOnNonConvergence(boolean fail) {
+    getPipeFlowSystem().setFailOnNonConvergence(fail);
+  }
+
+  /**
+   * Check whether failed transient convergence throws.
+   *
+   * @return true when strict fail-loud behavior is enabled
+   */
+  public boolean isFailOnNonConvergence() {
+    return getPipeFlowSystem().isFailOnNonConvergence();
+  }
+
+  /**
+   * Get hydraulic, EOS-density, and total-mass diagnostics for the latest solve.
+   *
+   * @return immutable latest convergence report
+   */
+  public OnePhaseFlowConvergenceReport getConvergenceReport() {
+    return getPipeFlowSystem().getConvergenceReport();
+  }
+
+  /**
+   * Get component inventories, boundary masses, and residuals for the latest conservative step.
+   *
+   * @return immutable latest species report, or a not-run report before conservative transport
+   */
+  public OnePhaseSpeciesConservationReport getSpeciesConservationReport() {
+    return getPipeFlowSystem().getSpeciesConservationReport();
+  }
+
+  /**
+   * Get accepted conservative-step diagnostics from the latest high-level transient call.
+   *
+   * <p>
+   * Times are elapsed step-end seconds from the start of that call. The returned history and its reports are immutable,
+   * and array getters return defensive copies suitable for Java or Python/JPype capture.
+   * </p>
+   *
+   * @return immutable accepted-step history
+   */
+  public OnePhaseSpeciesConservationHistory getSpeciesConservationHistory() {
+    return getPipeFlowSystem().getSpeciesConservationHistory();
+  }
+
+  /**
    * Get the current simulation time.
    *
    * @return simulation time in seconds
@@ -185,6 +282,9 @@ public class OnePhasePipeLine extends Pipeline {
    * @param dt time step in seconds
    */
   public void setInternalTimeStep(double dt) {
+    if (!Double.isFinite(dt) || dt <= 0.0) {
+      throw new IllegalArgumentException("Internal time step must be finite and positive: " + dt);
+    }
     this.internalTimeStep = dt;
   }
 
@@ -284,10 +384,16 @@ public class OnePhasePipeLine extends Pipeline {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    if (conservativeCompositionalTracking) {
+      validateSinglePhaseState(inStream.getThermoSystem(), "steady-state inlet");
+    }
     UUID oldid = getCalculationIdentifier();
     super.run(id);
     setCalculationIdentifier(oldid);
-    pipe.solveSteadyState(10, id);
+    pipe.solveSteadyState(conservativeCompositionalTracking ? 1 : 10, id);
+    if (conservativeCompositionalTracking) {
+      validateConservativePipeState("steady-state initialization");
+    }
     initialized = true;
     simulationTime = 0.0;
 
@@ -315,6 +421,9 @@ public class OnePhasePipeLine extends Pipeline {
    */
   @Override
   public void runTransient(double dt, UUID id) {
+    if (!Double.isFinite(dt) || dt <= 0.0) {
+      throw new IllegalArgumentException("Transient time step must be finite and positive: " + dt);
+    }
     // Initialize if not already done
     if (!initialized) {
       run(id);
@@ -323,27 +432,30 @@ public class OnePhasePipeLine extends Pipeline {
     // Update inlet boundary from current inlet stream
     updateInletBoundary();
 
-    // Select solver type: 20 = compositional, 2 = momentum
-    int solverType = compositionalTracking ? 20 : 2;
+    if (conservativeCompositionalTracking) {
+      validateConservativePipeState("transient inlet");
+    }
 
-    // Run transient solver
-    // The pipe uses internal time stepping, we need to advance by dt
-    double timeRemaining = dt;
-    while (timeRemaining > 0) {
-      double stepDt = Math.min(internalTimeStep, timeRemaining);
+    // Select solver type: 1 = validated conservative species, 20 = legacy staged composition, 2 = momentum
+    int solverType = conservativeCompositionalTracking ? 1 : (compositionalTracking ? 20 : 2);
 
-      // Set up time series for single step
-      double[] times = { simulationTime, simulationTime + stepDt };
-      SystemInterface[] systems = { inStream.getThermoSystem().clone(), inStream.getThermoSystem().clone() };
-
-      pipe.getTimeSeries().setTimes(times);
-      pipe.getTimeSeries().setInletThermoSystems(systems);
-      pipe.getTimeSeries().setNumberOfTimeStepsInInterval(1);
-
-      pipe.solveTransient(solverType, id);
-
-      simulationTime += stepDt;
-      timeRemaining -= stepDt;
+    if (conservativeCompositionalTracking) {
+      solveConservativeTransient(dt, solverType, id);
+      validateConservativePipeState("accepted transient state");
+      simulationTime += dt;
+    } else {
+      double timeRemaining = dt;
+      while (timeRemaining > 0.0) {
+        double stepDt = Math.min(internalTimeStep, timeRemaining);
+        double[] times = { simulationTime, simulationTime + stepDt };
+        SystemInterface[] systems = { inStream.getThermoSystem().clone(), inStream.getThermoSystem().clone() };
+        pipe.getTimeSeries().setTimes(times);
+        pipe.getTimeSeries().setInletThermoSystems(systems);
+        pipe.getTimeSeries().setNumberOfTimeStepsInInterval(1);
+        pipe.solveTransient(solverType, id);
+        simulationTime += stepDt;
+        timeRemaining -= stepDt;
+      }
     }
 
     // Update outlet stream with current outlet conditions
@@ -397,5 +509,115 @@ public class OnePhasePipeLine extends Pipeline {
     int outletNode = pipe.getTotalNumberOfNodes() - 1;
     SystemInterface outletSystem = pipe.getNode(outletNode).getBulkSystem();
     return outletSystem.getPhase(0).getComponent(componentName).getx();
+  }
+
+  /**
+   * Get the conservative mass-fraction profile for one component across physical cells.
+   *
+   * <p>
+   * This differs from {@link #getCompositionProfile(String)}, which derives node mass fractions from the current EOS
+   * state and includes boundary nodes. This method reads the authoritative conservative finite-volume report.
+   * </p>
+   *
+   * @param componentName component name, matched case-insensitively
+   * @return defensive copy of component mass fraction by physical cell
+   * @throws IllegalStateException if no converged conservative report is available
+   * @throws IllegalArgumentException if the component is absent from the report
+   */
+  public double[] getConservativeMassFractionProfile(String componentName) {
+    OnePhaseSpeciesConservationReport report = requireConservativeReport();
+    int componentIndex = findComponentIndex(report.getComponentNames(), componentName);
+    return report.getMassFractionProfile()[componentIndex];
+  }
+
+  /**
+   * Get the latest conservative physical-cell outlet mass fraction.
+   *
+   * @param componentName component name
+   * @return mass fraction in the last physical control volume
+   */
+  public double getConservativeOutletMassFraction(String componentName) {
+    double[] profile = getConservativeMassFractionProfile(componentName);
+    return profile[profile.length - 1];
+  }
+
+  /**
+   * Get accepted-step outlet mass fractions from the latest high-level transient call.
+   *
+   * <p>
+   * The values align one-to-one with {@link OnePhaseSpeciesConservationHistory#getElapsedTimeSeconds()} and are read
+   * from the last physical control volume in each immutable conservative report.
+   * </p>
+   *
+   * @param componentName component name
+   * @return outlet mass-fraction history at accepted step-end times
+   * @throws IllegalStateException if the latest transient call stored no conservative history
+   */
+  public double[] getConservativeOutletMassFractionHistory(String componentName) {
+    OnePhaseSpeciesConservationHistory history = getSpeciesConservationHistory();
+    if (history.isEmpty()) {
+      throw new IllegalStateException(
+          "No conservative species history is available. Enable history storage before runTransient(...).");
+    }
+    OnePhaseSpeciesConservationReport[] reports = history.getReports();
+    double[] outletHistory = new double[reports.length];
+    for (int step = 0; step < reports.length; step++) {
+      int componentIndex = findComponentIndex(reports[step].getComponentNames(), componentName);
+      double[] profile = reports[step].getMassFractionProfile()[componentIndex];
+      outletHistory[step] = profile[profile.length - 1];
+    }
+    return outletHistory;
+  }
+
+  private PipeFlowSystem getPipeFlowSystem() {
+    return (PipeFlowSystem) pipe;
+  }
+
+  private void solveConservativeTransient(double dt, int solverType, UUID id) {
+    int numberOfSteps = Math.max(1, (int) Math.ceil(dt / internalTimeStep));
+    double[] elapsedTimes = new double[numberOfSteps + 1];
+    SystemInterface[] inletSystems = new SystemInterface[numberOfSteps];
+    for (int step = 0; step < numberOfSteps; step++) {
+      elapsedTimes[step + 1] = Math.min(dt, elapsedTimes[step] + internalTimeStep);
+      inletSystems[step] = inStream.getThermoSystem().clone();
+    }
+    pipe.getTimeSeries().setTimes(elapsedTimes);
+    pipe.getTimeSeries().setInletThermoSystems(inletSystems);
+    pipe.getTimeSeries().setNumberOfTimeStepsInInterval(1);
+    pipe.solveTransient(solverType, id);
+  }
+
+  private OnePhaseSpeciesConservationReport requireConservativeReport() {
+    OnePhaseSpeciesConservationReport report = getSpeciesConservationReport();
+    if (!report.isConverged()) {
+      throw new IllegalStateException("No converged conservative species report is available: " + report.getMessage());
+    }
+    return report;
+  }
+
+  private static int findComponentIndex(String[] componentNames, String componentName) {
+    if (componentName == null) {
+      throw new IllegalArgumentException("Component name cannot be null.");
+    }
+    for (int index = 0; index < componentNames.length; index++) {
+      if (componentName.equalsIgnoreCase(componentNames[index])) {
+        return index;
+      }
+    }
+    throw new IllegalArgumentException("Component is not present in the conservative report: " + componentName);
+  }
+
+  private void validateConservativePipeState(String context) {
+    validateSinglePhaseState(inStream.getThermoSystem(), context + " stream");
+  }
+
+  private static void validateSinglePhaseState(SystemInterface state, String context) {
+    if (state == null) {
+      throw new IllegalStateException("Conservative one-phase transport requires a non-null " + context + " state.");
+    }
+    if (state.getNumberOfPhases() != 1) {
+      throw new IllegalStateException("Conservative OnePhasePipeLine transport does not support phase appearance at "
+          + context + ": found " + state.getNumberOfPhases() + " phases.");
+    }
   }
 }
