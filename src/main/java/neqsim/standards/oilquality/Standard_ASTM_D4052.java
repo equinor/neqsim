@@ -2,6 +2,7 @@ package neqsim.standards.oilquality;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -104,8 +105,8 @@ public class Standard_ASTM_D4052 extends neqsim.standards.Standard {
       // Find oil/liquid phase
       int liquidPhaseIndex = -1;
       for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-        String phaseType = fluid.getPhase(i).getType().toString();
-        if ("oil".equals(phaseType) || "liquid".equals(phaseType)) {
+        PhaseType phaseType = fluid.getPhase(i).getType();
+        if (phaseType == PhaseType.OIL || phaseType == PhaseType.LIQUID) {
           liquidPhaseIndex = i;
           break;
         }

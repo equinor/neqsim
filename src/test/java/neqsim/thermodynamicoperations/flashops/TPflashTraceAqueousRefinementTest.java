@@ -20,7 +20,7 @@ class TPflashTraceAqueousRefinementTest {
         SystemInterface ordinary = createAndFlash(usePr, waterFeedFraction, false);
         SystemInterface multiphase = createAndFlash(usePr, waterFeedFraction, true);
 
-        assertBalancedEquilibrium(ordinary, waterFeedFraction);
+        assertBalancedEquilibrium(ordinary);
         assertEquivalentEquilibrium(multiphase, ordinary);
 
         SystemInterface repeated = ordinary.clone();
@@ -29,6 +29,15 @@ class TPflashTraceAqueousRefinementTest {
         assertEquivalentEquilibrium(ordinary, repeated);
       }
     }
+  }
+
+  @Test
+  void invalidTraceWaterGasOilEndpointSelectsLowerGibbsAqueousSplit() {
+    SystemInterface ordinary = createAndFlashAtPhaseSelectionBoundary(false);
+    SystemInterface multiphase = createAndFlashAtPhaseSelectionBoundary(true);
+
+    assertBalancedEquilibrium(ordinary);
+    assertEquivalentEquilibrium(multiphase, ordinary);
   }
 
   private SystemInterface createAndFlash(boolean usePr, double waterFeedFraction, boolean multiphaseCheck) {
@@ -44,11 +53,24 @@ class TPflashTraceAqueousRefinementTest {
     return system;
   }
 
-  private void assertBalancedEquilibrium(SystemInterface system, double waterFeedFraction) {
+  private SystemInterface createAndFlashAtPhaseSelectionBoundary(boolean multiphaseCheck) {
+    SystemInterface system = new SystemSrkEos(260.0, 200.0);
+    double[] feed = { 0.02, 0.03, 0.85, 0.06, 0.03, 0.009, 0.001 };
+    for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
+      system.addComponent(COMPONENTS[componentIndex], feed[componentIndex]);
+    }
+    system.setMixingRule(2);
+    system.setMultiPhaseCheck(multiphaseCheck);
+    new ThermodynamicOperations(system).TPflash();
+    system.init(1);
+    return system;
+  }
+
+  private void assertBalancedEquilibrium(SystemInterface system) {
     assertEquals(2, system.getNumberOfPhases());
     assertTrue(system.hasPhaseType(PhaseType.GAS));
     assertTrue(system.hasPhaseType(PhaseType.AQUEOUS));
-    assertTrue(maximumComponentMaterialBalanceResidual(system, waterFeedFraction) < 1.0e-8);
+    assertTrue(maximumComponentMaterialBalanceResidual(system) < 1.0e-8);
     assertTrue(maximumLogFugacityResidual(system) < 1.0e-8);
 
     double betaTotal = 0.0;
@@ -90,15 +112,15 @@ class TPflashTraceAqueousRefinementTest {
     throw new AssertionError("Missing phase " + phaseType);
   }
 
-  private double maximumComponentMaterialBalanceResidual(SystemInterface system, double waterFeedFraction) {
-    double[] feed = { 0.02, 0.03, 0.859 - waterFeedFraction, 0.06, 0.03, 0.001, waterFeedFraction };
+  private double maximumComponentMaterialBalanceResidual(SystemInterface system) {
     double maximumResidual = 0.0;
     for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
       double recoveredFeed = 0.0;
       for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
         recoveredFeed += system.getBeta(phaseIndex) * system.getPhase(phaseIndex).getComponent(componentIndex).getx();
       }
-      maximumResidual = Math.max(maximumResidual, Math.abs(feed[componentIndex] - recoveredFeed));
+      maximumResidual = Math.max(maximumResidual,
+          Math.abs(system.getPhase(0).getComponent(componentIndex).getz() - recoveredFeed));
     }
     return maximumResidual;
   }
