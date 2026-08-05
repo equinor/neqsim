@@ -137,6 +137,24 @@ public class OnePhasePipeLineCompositionalTest {
   }
 
   @Test
+  @DisplayName("Validated conservative tracking should reject null schedule inputs as invalid arguments")
+  void testValidatedConservativeTrackingRejectsNullScheduleInput() {
+    SystemInterface baselineGas = createTransmissionGas(0.95, 0.05);
+    Stream inlet = new Stream("null-schedule inlet", baselineGas);
+    inlet.setFlowRate(50.0, "kg/sec");
+    inlet.run();
+
+    OnePhasePipeLine pipe = createTransmissionPipe(inlet);
+    pipe.setConservativeCompositionalTracking(true);
+
+    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> pipe
+        .runConservativeTransient(new double[] { 0.0, 30.0 }, new SystemInterface[] { null }, 1, UUID.randomUUID()));
+
+    assertTrue(exception.getMessage().contains("non-null inlet system"));
+    assertEquals(0.0, pipe.getSimulationTime(), 0.0, "Rejected input must not advance the pipeline clock.");
+  }
+
+  @Test
   @DisplayName("Validated conservative tracking should reject phase appearance before advancing")
   void testValidatedConservativeTrackingRejectsPhaseAppearance() {
     SystemInterface baselineGas = createTransmissionGas(0.95, 0.05);
