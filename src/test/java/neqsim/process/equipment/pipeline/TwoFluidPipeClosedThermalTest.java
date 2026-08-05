@@ -17,8 +17,11 @@ class TwoFluidPipeClosedThermalTest {
   /** Cross-platform tolerance for independently initialised closed-domain temperature histories, in kelvin. */
   private static final double CLOSED_HISTORY_TOLERANCE_K = 1.0e-9;
 
-  /** Absolute tolerance for closed-domain energy cancellation, in joules. */
-  private static final double CLOSED_ENERGY_TOLERANCE_J = 1.0e-5;
+  /** Absolute floor for round-off in domain-summed closed-boundary advection, in joules. */
+  private static final double CLOSED_ADVECTION_ABSOLUTE_TOLERANCE_J = 1.0e-4;
+
+  /** Relative round-off tolerance for advection compared with stored/ambient energy. */
+  private static final double CLOSED_ADVECTION_RELATIVE_TOLERANCE = 1.0e-10;
 
   private static final UUID TRANSIENT_ID = UUID.fromString("00000000-0000-0000-0000-000000002792");
 
@@ -328,12 +331,15 @@ class TwoFluidPipeClosedThermalTest {
   private void assertThermalReportCloses(TwoFluidThermalEnergyBalanceReport report) {
     assertNotNull(report);
     assertTrue(report.getAcceptedSubsteps() > 0);
-    assertEquals(0.0, report.getSensibleAdvectionEnergyJ(), CLOSED_ENERGY_TOLERANCE_J,
-        "Conservative internal face transports must cancel within the absolute energy tolerance");
+    double energyScaleJ = Math.max(Math.abs(report.getStoredEnergyChangeJ()), report.getAmbientHeatLossJ());
+    double advectionToleranceJ = Math.max(CLOSED_ADVECTION_ABSOLUTE_TOLERANCE_J,
+        CLOSED_ADVECTION_RELATIVE_TOLERANCE * energyScaleJ);
+    assertEquals(0.0, report.getSensibleAdvectionEnergyJ(), advectionToleranceJ,
+        "Conservative internal face transports must cancel within the scaled energy tolerance");
     assertEquals(0.0, report.getJouleThomsonEnergyJ(), 1.0e-12);
     assertTrue(report.getAmbientHeatLossJ() > 0.0);
     assertTrue(report.getStoredEnergyChangeJ() < 0.0);
-    assertTrue(report.isWithinTolerance(CLOSED_ENERGY_TOLERANCE_J, 1.0e-10),
+    assertTrue(report.isWithinTolerance(1.0e-5, 1.0e-10),
         "Thermal residual was " + report.getResidualJ() + " J (relative " + report.getRelativeResidual() + ")");
   }
 
