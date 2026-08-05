@@ -20,6 +20,7 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
   private boolean conservativeSpeciesTransportEnabled;
   private boolean storeSpeciesConservationHistory;
   private OnePhaseSpeciesConservationHistory speciesConservationHistory = OnePhaseSpeciesConservationHistory.empty();
+  private OnePhaseSpeciesConservationHistory.Builder speciesConservationHistoryBuilder;
 
   /**
    * Constructor for PipeFlowSystem.
@@ -69,7 +70,8 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
    * @return immutable accepted-step history, empty before a conservative transient solve
    */
   public OnePhaseSpeciesConservationHistory getSpeciesConservationHistory() {
-    return speciesConservationHistory;
+    return speciesConservationHistoryBuilder == null ? speciesConservationHistory
+        : speciesConservationHistoryBuilder.build();
   }
 
   /**
@@ -214,6 +216,9 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
     getTimeSeries().init(this);
     display = new PipeFlowVisualization(this.getTotalNumberOfNodes(), getTimeSeries().getTime().length);
     speciesConservationHistory = OnePhaseSpeciesConservationHistory.empty();
+    speciesConservationHistoryBuilder = conservativeSpeciesTransportEnabled && storeSpeciesConservationHistory
+        ? OnePhaseSpeciesConservationHistory.builder()
+        : null;
     flowSolver.setDynamic(true);
     configureConvergencePolicy();
     flowSolver.setSolverType(type);
@@ -232,11 +237,14 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
 
       getSolver().setTimeStep(this.getTimeSeries().getTimeStep()[i]);
       flowSolver.solveTDMA();
-      if (conservativeSpeciesTransportEnabled && storeSpeciesConservationHistory) {
-        speciesConservationHistory = speciesConservationHistory.append(getTimeSeries().getTime(i),
-            getSpeciesConservationReport());
+      if (speciesConservationHistoryBuilder != null) {
+        speciesConservationHistoryBuilder.append(getTimeSeries().getTime(i), getSpeciesConservationReport());
       }
       display.setNextData(this, this.getTimeSeries().getTime(i));
+    }
+    if (speciesConservationHistoryBuilder != null) {
+      speciesConservationHistory = speciesConservationHistoryBuilder.build();
+      speciesConservationHistoryBuilder = null;
     }
     calcIdentifier = id;
   }
