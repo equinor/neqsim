@@ -18,6 +18,21 @@ configuration to match the snapshot recorded after the accepted public solve. Ch
 tolerance no longer returns the previous state with zero iterations under a different convergence
 contract. Unchanged gates retain the existing reuse performance.
 
+## 2026-08-04 — Fixed-reflux fallback product inventory
+
+### Corrected
+
+When a fixed-liquid-reflux column rejects its tray state and installs guarded full-feed fallback
+products, the condenser's separate liquid product is now cleared. The fallback gas and bottom
+streams already contain the complete feed inventory; retaining the rejected liquid product beside
+them previously exposed more material than entered the column. Fixed-reflux availability,
+delivery, and residual diagnostics are invalidated because they no longer describe the exposed
+fallback products.
+
+The solve status remains `FALLBACK_PRODUCTS`, `solved()` remains false, and no tray equation,
+tolerance, flash, or iteration rule changed. Callers must continue to inspect the solve status
+before treating column products as a rigorous fixed-reflux solution.
+
 ## 2026-08-04 — TwoFluidPipe closed thermal boundary consistency
 
 - Transient temperature advection now consumes the conservative solver's retained phase-resolved face mass fluxes,
