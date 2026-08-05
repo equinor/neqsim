@@ -583,6 +583,10 @@ public class OnePhasePipeLine extends Pipeline {
     }
     pipe.getTimeSeries().setTimes(elapsedTimes);
     pipe.getTimeSeries().setInletThermoSystems(inletSystems);
+    // solveSteadyState(...) leaves a two-entry legacy outlet-flow array behind. The conservative
+    // pressure-boundary solve does not use it, and retaining it would make TimeSeries.init(...) index
+    // beyond that array whenever a transient call contains more than two internal steps.
+    pipe.getTimeSeries().setOutletMolarFlowRate(null);
     pipe.getTimeSeries().setNumberOfTimeStepsInInterval(1);
     pipe.solveTransient(solverType, id);
   }
