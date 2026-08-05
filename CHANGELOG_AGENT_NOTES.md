@@ -37,6 +37,18 @@ No default, gate outcome, or existing JSON field changed; the recycle-tear gate 
 figures are unaffected.
 
 ---
+## 2026-08-05 — Optional Chabab 2019 Søreide-Whitson CO2-brine parameterization
+
+### Added
+
+`SystemSoreideWhitson` now exposes `setAqueousCO2Parameterization(...)` with enum and string
+overloads. `LEGACY` remains the default and preserves existing results. Select `CHABAB_2019`
+(aliases `M_SW` or `m-sw`) to use the Chabab et al. (2019) aqueous CO2-water binary-interaction
+correlation for NaCl brine. The salt basis used by the correlation is equivalent NaCl molality in
+mol/kg water; the published measured range is approximately 1-3 mol/kg, 323-373 K, and up to 230 bar.
+
+The selector is directly accessible through Java and Python/JPype, survives system cloning, and
+does not change other gas-water or non-aqueous interaction parameters.
 
 ## 2026-08-04 — Fixed-reflux fallback product inventory
 
