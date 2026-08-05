@@ -3,6 +3,7 @@ package neqsim.process.util.optimizer;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -578,11 +579,12 @@ public class ProcessSimulationEvaluator implements Serializable {
      * optimizer.
      *
      * <p>
-     * Only LOWER_BOUND and UPPER_BOUND types can be converted directly. RANGE constraints are converted to an
-     * UPPER_BOUND constraint (using the tightest bound). EQUALITY constraints are approximated as a tight range.
+     * <strong>Compatibility note:</strong> this singular method preserves its historical lossy behavior for two-sided
+     * constraints. RANGE and EQUALITY constraints return only their upper side. Use
+     * {@link #toOptimizationConstraints()} whenever both sides must remain enforced.
      * </p>
      *
-     * @return equivalent OptimizationConstraint
+     * @return equivalent single OptimizationConstraint; lossy for RANGE and EQUALITY
      * @throws IllegalStateException if the evaluator function is null
      */
     public ProductionOptimizer.OptimizationConstraint toOptimizationConstraint() {
@@ -618,6 +620,57 @@ public class ProcessSimulationEvaluator implements Serializable {
       default:
         return ProductionOptimizer.OptimizationConstraint.lessThan(name, evaluator, upperBound, sev, penaltyWeight,
             "Converted from ConstraintDefinition");
+      }
+    }
+
+    /**
+     * Converts this constraint without losing either side of a two-sided bound.
+     *
+     * <p>
+     * LOWER_BOUND and UPPER_BOUND constraints produce one internal constraint. RANGE constraints produce
+     * {@code name_lower} and {@code name_upper}. EQUALITY constraints produce the tolerance band
+     * {@code value >= target - tolerance} and {@code value <= target + tolerance} with the same suffixes. Every
+     * generated constraint retains the evaluator, severity, and penalty weight of this definition.
+     * </p>
+     *
+     * @return immutable list containing one or two equivalent OptimizationConstraint instances
+     * @throws IllegalStateException if the evaluator function is null
+     */
+    public List<ProductionOptimizer.OptimizationConstraint> toOptimizationConstraints() {
+      if (evaluator == null) {
+        throw new IllegalStateException(
+            "Cannot convert to OptimizationConstraint: evaluator is null (was this deserialized?)");
+      }
+      ProductionOptimizer.ConstraintSeverity severity = isHard ? ProductionOptimizer.ConstraintSeverity.HARD
+          : ProductionOptimizer.ConstraintSeverity.SOFT;
+      switch (type) {
+      case UPPER_BOUND:
+        return Collections.singletonList(ProductionOptimizer.OptimizationConstraint.lessThan(name, evaluator,
+            upperBound, severity, penaltyWeight, "Converted from ConstraintDefinition"));
+      case LOWER_BOUND:
+        return Collections.singletonList(ProductionOptimizer.OptimizationConstraint.greaterThan(name, evaluator,
+            lowerBound, severity, penaltyWeight, "Converted from ConstraintDefinition"));
+      case RANGE:
+        List<ProductionOptimizer.OptimizationConstraint> rangeConstraints = new ArrayList<ProductionOptimizer.OptimizationConstraint>(
+            2);
+        rangeConstraints.add(ProductionOptimizer.OptimizationConstraint.greaterThan(name + "_lower", evaluator,
+            lowerBound, severity, penaltyWeight, "Converted from range ConstraintDefinition (lower bound)"));
+        rangeConstraints.add(ProductionOptimizer.OptimizationConstraint.lessThan(name + "_upper", evaluator, upperBound,
+            severity, penaltyWeight, "Converted from range ConstraintDefinition (upper bound)"));
+        return Collections.unmodifiableList(rangeConstraints);
+      case EQUALITY:
+        List<ProductionOptimizer.OptimizationConstraint> equalityConstraints = new ArrayList<ProductionOptimizer.OptimizationConstraint>(
+            2);
+        equalityConstraints.add(ProductionOptimizer.OptimizationConstraint.greaterThan(name + "_lower", evaluator,
+            lowerBound - equalityTolerance, severity, penaltyWeight,
+            "Converted from equality ConstraintDefinition (lower bound)"));
+        equalityConstraints.add(ProductionOptimizer.OptimizationConstraint.lessThan(name + "_upper", evaluator,
+            lowerBound + equalityTolerance, severity, penaltyWeight,
+            "Converted from equality ConstraintDefinition (upper bound)"));
+        return Collections.unmodifiableList(equalityConstraints);
+      default:
+        return Collections.singletonList(ProductionOptimizer.OptimizationConstraint.lessThan(name, evaluator,
+            upperBound, severity, penaltyWeight, "Converted from ConstraintDefinition"));
       }
     }
   }

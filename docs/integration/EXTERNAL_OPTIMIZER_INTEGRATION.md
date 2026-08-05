@@ -130,6 +130,26 @@ penalties, are derived from those same scalar samples. This matters when result 
 costly reporting or serialization and prevents inconsistent fields when a callback reads mutable
 diagnostics. Callbacks should nevertheless remain side-effect free.
 
+## Converting Constraints to the Internal Optimizer
+
+Use the plural conversion when a `ConstraintDefinition` is passed to `ProductionOptimizer`:
+
+```java
+List<ProductionOptimizer.OptimizationConstraint> internalConstraints =
+    externalConstraint.toOptimizationConstraints();
+```
+
+A lower or upper bound produces one immutable-list element. A range produces `name_lower` and
+`name_upper`; an equality target produces the equivalent `target - tolerance` lower side and
+`target + tolerance` upper side. Each generated side keeps the source evaluator, hard/soft
+severity, and penalty weight.
+
+The singular `toOptimizationConstraint()` method remains available for compatibility. It is
+lossless only for one-sided constraints; for range and equality types it retains the historical
+upper-side-only behavior. Do not use that method for operating envelopes, product-quality bands,
+equipment turndown ranges, or market-nomination tolerances. Treat lower- and upper-side
+sensitivities separately because only one side can normally be active at a given operating point.
+
 ## Java Setup
 
 ```java

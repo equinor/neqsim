@@ -567,8 +567,20 @@ ProcessSimulationEvaluator.ConstraintDefinition external =
 
 // External -> Internal
 ProcessSimulationEvaluator.ConstraintDefinition def = ...;
-OptimizationConstraint opt = def.toOptimizationConstraint();
+List<OptimizationConstraint> internalConstraints =
+    def.toOptimizationConstraints();
 ```
+
+Use the plural conversion for all general-purpose bridges. It returns one immutable-list element
+for a lower or upper bound and two elements for a range or equality tolerance band. The generated
+two-sided names end in `_lower` and `_upper`; both sides retain the original evaluator, severity,
+and penalty weight. This prevents a pressure, temperature, quality, or nomination envelope from
+silently losing its lower limit.
+
+The older singular `toOptimizationConstraint()` method remains source- and binary-compatible, but
+its historical range/equality behavior returns only the upper side. Use it only when the source
+constraint is known to be one-sided. Sensitivities or shadow values belong to the generated active
+side, not to one combined two-sided constraint.
 
 ---
 
@@ -673,7 +685,9 @@ boolean ok = calc.isFeasible(process);
 - **`CapacityConstraintAdapter`**: Wraps equipment `CapacityConstraint` as `ProcessConstraint` for direct use in any optimizer
 - **`ConstraintPenaltyCalculator`**: Reusable adaptive penalty calculator with auto-discovery of equipment constraints
 - **`ProcessSimulationEvaluator` bridge**: `addEquipmentCapacityConstraints()`, `getAllProcessConstraints()`, `getConstraintMarginVector()` for NLP solver integration
-- **Constraint conversions**: `OptimizationConstraint.toConstraintDefinition()` and `ConstraintDefinition.toOptimizationConstraint()` for bidirectional conversion
+- **Constraint conversions**: `OptimizationConstraint.toConstraintDefinition()` and lossless
+  `ConstraintDefinition.toOptimizationConstraints()` for bidirectional conversion; the legacy
+  singular method remains lossy for range and equality types
 
 ### Algorithm and Engine Improvements (January 2026)
 - **Configurable PSO seed**: `useFixedSeed(true).randomSeed(42L)` for reproducible results

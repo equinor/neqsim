@@ -9,6 +9,20 @@
 
 ---
 
+## 2026-08-05 — Lossless external-to-internal constraint conversion
+
+- `ProcessSimulationEvaluator.ConstraintDefinition.toOptimizationConstraints()` now converts
+  lower/upper bounds to one immutable-list element and range/equality definitions to explicit
+  `_lower` and `_upper` internal constraints.
+- Both generated sides retain the source evaluator, severity, and penalty weight, preventing
+  operating envelopes and tolerance bands from silently losing their lower bound.
+- The singular `toOptimizationConstraint()` API is unchanged for compatibility and remains lossy
+  for range and equality definitions. New integrations must use the plural method.
+- Interpret sensitivities and shadow values for the generated lower and upper constraints
+  separately.
+
+---
+
 ## 2026-08-05 — Column pumparound returns remain internal recycles
 
 - `DistillationColumn` no longer captures a named pumparound return stream as a legacy direct
