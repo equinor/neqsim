@@ -560,7 +560,7 @@ public class OnePhasePipeLine extends Pipeline {
     for (int interval = 0; interval < inletSystems.length; interval++) {
       SystemInterface inletSystem = inletSystems[interval];
       if (inletSystem == null) {
-        throw new IllegalStateException(
+        throw new IllegalArgumentException(
             "Conservative OnePhasePipeLine requires a non-null inlet system for interval " + interval + ".");
       }
       double inletMassFlowKgPerSecond = inletSystem.getFlowRate("kg/sec");
