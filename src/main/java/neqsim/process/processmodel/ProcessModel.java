@@ -356,6 +356,23 @@ public class ProcessModel implements Runnable, Serializable {
   /** Units creating or destroying the most mass at the last check, worst first. */
   private String massClosureOffenders = "";
 
+  /**
+   * Whether the unit-level closure figure also blocks a converged verdict.
+   *
+   * <p>
+   * Off by default: a non-recycle unit that does not conserve mass is an equipment defect rather than something the
+   * outer solver can close, so gating on it would iterate to the cap and bury the real diagnosis. The figure is always
+   * reported so the defect is never silent.
+   * </p>
+   */
+  private boolean unitMassClosureGate = false;
+
+  /** Unit-level mass-closure error at the last check, as a fraction of plant feed. */
+  private double lastUnitMassClosureError = Double.NaN;
+
+  /** Non-recycle units creating or destroying the most mass at the last check, worst first. */
+  private String unitMassClosureOffenders = "";
+
   /** Default boundary-stream flow floor in kg/hr (streams below this are ignored entirely). */
   public static final double DEFAULT_BOUNDARY_FLOW_FLOOR = 1e-9;
 
@@ -1825,6 +1842,12 @@ public class ProcessModel implements Runnable, Serializable {
         dirtyAreas = autoTuningChanged ? null : getDirtyAreasForNextIteration(areaPlan, changedBoundaryStreams);
       }
       lastIterationCount = iterations;
+
+      // A run that never reached the acceptance test still has to report its mass closure,
+      // otherwise an internal mass source stays invisible behind a max-iterations warning.
+      if (!modelConverged) {
+        massClosureAccepted();
+      }
 
       if (!modelConverged && iterations >= maxIterations) {
         logger.warn("ProcessModel reached max iterations (" + maxIterations + ") without full convergence. Flow error: "
@@ -3302,6 +3325,8 @@ public class ProcessModel implements Runnable, Serializable {
     massClosureSummary = "";
     massClosureOffenders = "";
     lastMassClosureError = Double.NaN;
+    unitMassClosureOffenders = "";
+    lastUnitMassClosureError = Double.NaN;
     if (autoToleranceErrorHistory == null) {
       autoToleranceErrorHistory = new java.util.ArrayList<>();
     }
@@ -3408,6 +3433,42 @@ public class ProcessModel implements Runnable, Serializable {
    */
   public void setAutoMassClosureGate(boolean autoMassClosureGate) {
     this.autoMassClosureGate = autoMassClosureGate;
+  }
+
+  /**
+   * Whether the unit-level mass-closure figure also blocks a converged verdict.
+   *
+   * @return true when non-recycle unit imbalances gate convergence as well as being reported
+   */
+  public boolean isUnitMassClosureGate() {
+    return unitMassClosureGate;
+  }
+
+  /**
+   * Enables or disables gating on the unit-level mass-closure figure.
+   *
+   * @param unitMassClosureGate true to also require non-recycle units to conserve mass before accepting convergence
+   */
+  public void setUnitMassClosureGate(boolean unitMassClosureGate) {
+    this.unitMassClosureGate = unitMassClosureGate;
+  }
+
+  /**
+   * Mass created or destroyed by non-recycle units at the last check, as a fraction of plant feed.
+   *
+   * @return relative unit-level closure error, or NaN when it was never evaluated
+   */
+  public double getLastUnitMassClosureError() {
+    return lastUnitMassClosureError;
+  }
+
+  /**
+   * Non-recycle units creating or destroying the most mass at the last check.
+   *
+   * @return worst offenders text, empty when the check never ran or found nothing
+   */
+  public String getUnitMassClosureOffenders() {
+    return unitMassClosureOffenders;
   }
 
   /**
@@ -3529,6 +3590,17 @@ public class ProcessModel implements Runnable, Serializable {
             new AbstractMap.SimpleEntry<String, Double>(area.getKey() + "::" + recycleEntry.getKey(), Math.abs(error)));
       }
     }
+    massClosureOffenders = formatClosureOffenders(offenders);
+    return created / scale;
+  }
+
+  /**
+   * Formats the worst mass-closure offenders, largest absolute imbalance first.
+   *
+   * @param offenders unit path and absolute imbalance in kg/hr; reordered in place
+   * @return comma-separated text for at most the three worst offenders, empty when there are none
+   */
+  private String formatClosureOffenders(List<Map.Entry<String, Double>> offenders) {
     Collections.sort(offenders, new Comparator<Map.Entry<String, Double>>() {
       @Override
       public int compare(Map.Entry<String, Double> first, Map.Entry<String, Double> second) {
@@ -3542,7 +3614,51 @@ public class ProcessModel implements Runnable, Serializable {
       }
       worst.append(String.format(Locale.US, "%s %.4g kg/hr", offenders.get(i).getKey(), offenders.get(i).getValue()));
     }
-    massClosureOffenders = worst.toString();
+    return worst.toString();
+  }
+
+  /**
+   * Total mass created or destroyed by non-recycle unit operations, as a fraction of plant feed.
+   *
+   * <p>
+   * The recycle-tear figure only covers what the outer solver itself can close. A separator, pipe or mixer whose
+   * outlets no longer match its inlets is an equally real mass source or sink, and the boundary residual is blind to
+   * it. Bypassed and low-flow units are already excluded by {@link ProcessSystem#getFailedMassBalance(String, double)};
+   * recycles are skipped here so they are not counted twice.
+   * </p>
+   *
+   * @return relative unit-level closure error, or NaN when no usable flow scale exists
+   */
+  private double computeUnitMassClosureError() {
+    double scale = Math.max(detectedPlantFlowScale, getTotalFeedFlowRate());
+    if (!(scale > 0.0) || Double.isInfinite(scale)) {
+      unitMassClosureOffenders = "";
+      return Double.NaN;
+    }
+    double created = 0.0;
+    List<Map.Entry<String, Double>> offenders = new ArrayList<>();
+    for (Map.Entry<String, ProcessSystem> area : processes.entrySet()) {
+      Map<String, ProcessSystem.MassBalanceResult> failures;
+      try {
+        failures = area.getValue().getFailedMassBalance("kg/hr", 0.0);
+      } catch (RuntimeException exception) {
+        logger.warn("Failed to calculate unit mass balance for area {}", area.getKey(), exception);
+        continue;
+      }
+      for (Map.Entry<String, ProcessSystem.MassBalanceResult> entry : failures.entrySet()) {
+        if (area.getValue().getUnit(entry.getKey()) instanceof Recycle) {
+          continue;
+        }
+        double error = entry.getValue().getAbsoluteError();
+        if (!Double.isFinite(error) || Math.abs(error) < boundaryFlowFloor) {
+          continue;
+        }
+        created += Math.abs(error);
+        offenders
+            .add(new AbstractMap.SimpleEntry<String, Double>(area.getKey() + "::" + entry.getKey(), Math.abs(error)));
+      }
+    }
+    unitMassClosureOffenders = formatClosureOffenders(offenders);
     return created / scale;
   }
 
@@ -3557,22 +3673,46 @@ public class ProcessModel implements Runnable, Serializable {
     }
     double closure = computeMassClosureError();
     lastMassClosureError = closure;
+    double unitClosure = computeUnitMassClosureError();
+    lastUnitMassClosureError = unitClosure;
+
+    boolean recycleAccepted = Double.isNaN(closure) || closure <= massClosureTolerance;
+    String recyclePart;
     if (Double.isNaN(closure)) {
-      return true;
-    }
-    if (closure <= massClosureTolerance) {
-      massClosureSummary = String.format(Locale.US,
+      recyclePart = "recycle tear mass closure not evaluable - no usable plant flow scale";
+    } else if (recycleAccepted) {
+      recyclePart = String.format(Locale.US,
           "recycle tear mass closure %.3g of feed (tolerance %.3g) - every active recycle tear closes", closure,
           massClosureTolerance);
-      return true;
+    } else {
+      recyclePart = String.format(Locale.US,
+          "recycle tear mass closure %.3g of feed exceeds %.3g - open recycle tears are still creating or destroying mass inside the "
+              + "flowsheet, so the boundary residual alone does not mean the model is solved. Worst: %s",
+          closure, massClosureTolerance,
+          massClosureOffenders.isEmpty() ? "none above the flow floor" : massClosureOffenders);
     }
-    massClosureSummary = String.format(Locale.US,
-        "recycle tear mass closure %.3g of feed exceeds %.3g - open recycle tears are still creating or destroying mass inside the "
-            + "flowsheet, so the boundary residual alone does not mean the model is solved. Worst: %s",
-        closure, massClosureTolerance,
-        massClosureOffenders.isEmpty() ? "none above the flow floor" : massClosureOffenders);
-    logger.debug("ProcessModel {}", massClosureSummary);
-    return false;
+
+    boolean unitWithinTolerance = Double.isNaN(unitClosure) || unitClosure <= massClosureTolerance;
+    String unitPart;
+    if (Double.isNaN(unitClosure)) {
+      unitPart = "";
+    } else if (unitWithinTolerance) {
+      unitPart = String.format(Locale.US, " Unit-level closure %.3g of feed is within the same tolerance.",
+          unitClosure);
+    } else {
+      unitPart = String.format(Locale.US,
+          " Unit-level closure %.3g of feed exceeds %.3g%s - non-recycle units are creating or destroying mass, which "
+              + "the recycle-tear gate does not cover. Worst: %s",
+          unitClosure, massClosureTolerance, unitMassClosureGate ? "" : " (reported, not gating)",
+          unitMassClosureOffenders.isEmpty() ? "none above the flow floor" : unitMassClosureOffenders);
+    }
+
+    massClosureSummary = recyclePart + unitPart;
+    boolean accepted = recycleAccepted && (unitWithinTolerance || !unitMassClosureGate);
+    if (!accepted) {
+      logger.debug("ProcessModel {}", massClosureSummary);
+    }
+    return accepted;
   }
 
   /**
@@ -3743,6 +3883,13 @@ public class ProcessModel implements Runnable, Serializable {
     }
     massClosure.addProperty("summary", massClosureSummary);
     massClosure.addProperty("worstUnits", massClosureOffenders);
+    massClosure.addProperty("unitGateEnabled", autoConvergenceTuning && autoMassClosureGate && unitMassClosureGate);
+    if (Double.isFinite(lastUnitMassClosureError)) {
+      massClosure.addProperty("unitRelativeError", lastUnitMassClosureError);
+    } else {
+      massClosure.add("unitRelativeError", JsonNull.INSTANCE);
+    }
+    massClosure.addProperty("unitWorstUnits", unitMassClosureOffenders);
     root.add("massClosure", massClosure);
 
     JsonArray boundaryStreamErrors = new JsonArray();
