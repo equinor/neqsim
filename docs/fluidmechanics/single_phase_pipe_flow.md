@@ -317,6 +317,31 @@ double[] acceptedStepTimesSeconds = history.getElapsedTimeSeconds();
 String pythonReadyHistoryJson = history.toJson();
 ```
 
+The process-equipment wrapper exposes the same validated path without requiring callers to reach
+into `PipeFlowSystem`:
+
+```java
+OnePhasePipeLine pipeline = new OnePhasePipeLine("export gas", inletStream);
+pipeline.setConservativeCompositionalTracking(true);
+pipeline.setStoreSpeciesConservationHistory(true);
+pipeline.setFailOnNonConvergence(true);
+pipeline.run();
+pipeline.runConservativeTransient(new double[] {0.0, 1800.0, 5400.0},
+    new SystemInterface[] {pulseGas, baselineGas}, 60, UUID.randomUUID());
+
+double[] outletCellMassFraction = pipeline.getConservativeMassFractionProfile("nitrogen");
+String pythonReadyHistoryJson = pipeline.getSpeciesConservationHistory().toJson();
+```
+
+`runConservativeTransient(...)` takes elapsed interval boundaries in seconds, one initialized
+single-gas-phase inlet system per interval, and a positive number of equal solver steps per
+interval. The authoritative component profiles and outlet accessor are mass fractions; the
+existing `getOutletMoleFraction(...)` remains explicitly molar. Python/JPype callers can pass
+`JArray(JDouble)` and `JArray(SystemInterface)` and read the same report/history objects directly.
+`runTransient(dt, id)` also selects type `1` when conservative mode is enabled and retains every
+internal accepted step from that call. Legacy `setCompositionalTracking(true)` still selects type
+`20` for compatibility and must not be interpreted as the validated conservative path.
+
 `OnePhaseSpeciesConservationReport` exposes component names, physical-cell mass-fraction profiles,
 initial/final component inventories, integrated inlet/outlet component masses, absolute and
 relative inventory residuals, boundedness and sum-to-one diagnostics, thermodynamic
@@ -370,11 +395,12 @@ convergence check and does not define an exact analytical solution for the coupl
 case.
 
 Zero or reversed face flow still fails explicitly because an external upwind composition is not
-yet defined. Once enabled, every failed hydraulic/species criterion throws so that a failed
-conservative state cannot advance to another timestep. Full hydraulic/EOS grid-and-timestep
-convergence, thermal coupling, phase appearance, higher-order convection, and physical dispersion
-remain validation gates. The spreading of the present first-order upwind scheme is numerical;
-there is no physical axial-dispersion model.
+yet defined. `OnePhasePipeLine` also performs an independent multiphase TP flash on cloned schedule
+inputs and rejects actual phase appearance before advancing the finite-volume state. Once enabled,
+every failed hydraulic/species criterion throws so that a failed conservative state cannot advance
+to another timestep. Full hydraulic/EOS grid-and-timestep convergence, thermal coupling,
+higher-order convection, and physical dispersion remain validation gates. The spreading of the
+present first-order upwind scheme is numerical; there is no physical axial-dispersion model.
 
 ## Compositional Tracking
 
