@@ -9,8 +9,7 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPflashTerminalEquilibriumRefinementTest {
-  private static final String[] COMPONENTS = { "nitrogen", "CO2", "methane", "ethane", "propane", "nC10",
-      "water" };
+  private static final String[] COMPONENTS = { "nitrogen", "CO2", "methane", "ethane", "propane", "nC10", "water" };
   private static final double[] FEED = { 0.02, 0.05, 0.55, 0.18, 0.12, 0.06, 0.02 };
 
   @Test
@@ -107,8 +106,8 @@ class TPflashTerminalEquilibriumRefinementTest {
     double maximum = 0.0;
     for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
       for (int phaseIndex = 1; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
-        maximum = Math.max(maximum, Math.abs(logFugacity(system, 0, componentIndex)
-            - logFugacity(system, phaseIndex, componentIndex)));
+        maximum = Math.max(maximum,
+            Math.abs(logFugacity(system, 0, componentIndex) - logFugacity(system, phaseIndex, componentIndex)));
       }
     }
     return maximum;
