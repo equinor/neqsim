@@ -1,5 +1,6 @@
 package neqsim.thermo.system;
 
+import neqsim.thermo.mixingrule.SoreideWhitsonParameterization;
 import neqsim.thermo.phase.PhaseSoreideWhitson;
 
 /**
@@ -11,6 +12,7 @@ import neqsim.thermo.phase.PhaseSoreideWhitson;
 public class SystemSoreideWhitson extends SystemPrEos1978 {
   private static final long serialVersionUID = 1000L;
   private double salinity = 0.0; // salinity in mole/sec
+  private SoreideWhitsonParameterization aqueousCO2Parameterization = SoreideWhitsonParameterization.LEGACY;
 
   /**
    * Default constructor: 298.15 K, 1.0 bara, no solid check.
@@ -151,6 +153,58 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
    */
   public double getSalinity() {
     return this.salinity;
+  }
+
+  /**
+   * Select the aqueous CO2-water binary-interaction parameterization.
+   *
+   * <p>
+   * The default is {@link SoreideWhitsonParameterization#LEGACY}, which preserves historical NeqSim results. Select
+   * {@link SoreideWhitsonParameterization#CHABAB_2019} explicitly for the modified correlation published by Chabab et
+   * al. (2019).
+   *
+   * @param parameterization parameterization to use
+   * @throws IllegalArgumentException if {@code parameterization} is null
+   */
+  public void setAqueousCO2Parameterization(SoreideWhitsonParameterization parameterization) {
+    if (parameterization == null) {
+      throw new IllegalArgumentException("Soreide-Whitson parameterization cannot be null");
+    }
+    aqueousCO2Parameterization = parameterization;
+    for (int phaseNumber = 0; phaseNumber < phaseArray.length; phaseNumber++) {
+      if (phaseArray[phaseNumber] instanceof PhaseSoreideWhitson) {
+        ((PhaseSoreideWhitson) phaseArray[phaseNumber]).setAqueousCO2Parameterization(parameterization);
+      }
+    }
+  }
+
+  /**
+   * Select the aqueous CO2-water binary-interaction parameterization by name.
+   *
+   * <p>
+   * This overload is convenient for Python/JPype callers.
+   *
+   * @param parameterizationName {@code LEGACY}, {@code CHABAB_2019}, or {@code M_SW}
+   * @throws IllegalArgumentException if the name is null or unsupported
+   */
+  public void setAqueousCO2Parameterization(String parameterizationName) {
+    setAqueousCO2Parameterization(SoreideWhitsonParameterization.byName(parameterizationName));
+  }
+
+  /**
+   * Get the selected aqueous CO2-water binary-interaction parameterization.
+   *
+   * @return selected parameterization
+   */
+  public SoreideWhitsonParameterization getAqueousCO2Parameterization() {
+    return aqueousCO2Parameterization;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void clearAll() {
+    super.clearAll();
+    setAqueousCO2Parameterization(aqueousCO2Parameterization);
   }
 
   /**

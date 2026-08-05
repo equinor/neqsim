@@ -519,6 +519,66 @@ class ProcessModelAutoConvergenceTuningTest {
     assertFalse(massClosure.get("enabled").getAsBoolean());
     assertTrue(massClosure.get("relativeError").isJsonNull(),
         "An unevaluated error must be JSON null, never the non-standard NaN literal");
+    assertTrue(massClosure.get("unitRelativeError").isJsonNull(),
+        "A disabled gate must not evaluate the unit-level closure either");
+  }
+
+  /**
+   * A non-recycle unit that does not conserve mass must be reported, so an internal mass source cannot hide behind a
+   * recycle-tear gate that only claims every tear closes.
+   */
+  @Test
+  void testUnitMassClosureIsReportedWithoutGating() {
+    Stream feed = new Stream("unit closure feed", createGasFluid());
+    feed.setFlowRate(1000.0, "kg/hr");
+    MassImbalanceHeater heater = new MassImbalanceHeater("imbalanced diagnostic heater", feed);
+
+    ProcessSystem area = new ProcessSystem("unit closure area");
+    area.add(feed);
+    area.add(heater);
+
+    ProcessModel model = new ProcessModel();
+    model.add("unit closure area", area);
+
+    assertFalse(model.isUnitMassClosureGate(), "Unit-level closure must be report-only by default");
+    assertTrue(model.runUntilConverged(5), "Reporting a unit imbalance must not block convergence by default");
+    assertEquals(0.1, model.getLastUnitMassClosureError(), 1.0e-12);
+    assertTrue(model.getUnitMassClosureOffenders().contains("imbalanced diagnostic heater"));
+    assertTrue(model.getMassClosureSummary().contains("Unit-level closure"),
+        "The summary must state the unit-level closure, not only the recycle tears");
+
+    JsonObject massClosure = JsonParser.parseString(model.getConvergenceReportJson()).getAsJsonObject()
+        .getAsJsonObject("massClosure");
+    assertEquals(0.0, massClosure.get("relativeError").getAsDouble(), 0.0);
+    assertEquals(0.1, massClosure.get("unitRelativeError").getAsDouble(), 1.0e-12);
+    assertFalse(massClosure.get("unitGateEnabled").getAsBoolean());
+    assertTrue(massClosure.get("unitWorstUnits").getAsString().contains("imbalanced diagnostic heater"));
+    assertFalse(massClosure.get("worstUnits").getAsString().contains("imbalanced diagnostic heater"),
+        "The recycle-tear list must stay free of unit-level diagnostics");
+  }
+
+  /** Opting in must make the same unit-level imbalance block the converged verdict. */
+  @Test
+  void testUnitMassClosureGateCanBeEnabled() {
+    Stream feed = new Stream("gated closure feed", createGasFluid());
+    feed.setFlowRate(1000.0, "kg/hr");
+    MassImbalanceHeater heater = new MassImbalanceHeater("imbalanced diagnostic heater", feed);
+
+    ProcessSystem area = new ProcessSystem("gated closure area");
+    area.add(feed);
+    area.add(heater);
+
+    ProcessModel model = new ProcessModel();
+    model.add("gated closure area", area);
+    model.setUnitMassClosureGate(true);
+
+    assertFalse(model.runUntilConverged(5), "An opted-in unit-level imbalance must block convergence");
+    assertTrue(model.getMassClosureSummary().contains("imbalanced diagnostic heater"));
+
+    JsonObject massClosure = JsonParser.parseString(model.getConvergenceReportJson()).getAsJsonObject()
+        .getAsJsonObject("massClosure");
+    assertTrue(massClosure.get("unitGateEnabled").getAsBoolean());
+    assertEquals(0.1, massClosure.get("unitRelativeError").getAsDouble(), 1.0e-12);
   }
 
 }

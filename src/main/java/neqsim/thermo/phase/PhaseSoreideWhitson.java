@@ -1,6 +1,7 @@
 package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentSoreideWhitson;
+import neqsim.thermo.mixingrule.SoreideWhitsonParameterization;
 
 /**
  * PhaseSoreideWhitson implements the Søreide-Whitson Peng-Robinson EoS with modified alpha and mixing rule.
@@ -11,6 +12,7 @@ public class PhaseSoreideWhitson extends PhasePrEos {
   private static final long serialVersionUID = 1L;
   private double salinityConcentration = 0.0;
   private double salinity = 0.0;
+  private SoreideWhitsonParameterization aqueousCO2Parameterization = SoreideWhitsonParameterization.LEGACY;
 
   /**
    * Constructs a PhaseSoreideWhitson object and initializes EoS parameters.
@@ -55,6 +57,28 @@ public class PhaseSoreideWhitson extends PhasePrEos {
    */
   public double getSalinityConcentration() {
     return this.salinityConcentration;
+  }
+
+  /**
+   * Set the aqueous CO2-water binary-interaction parameterization.
+   *
+   * @param parameterization parameterization to use
+   * @throws IllegalArgumentException if {@code parameterization} is null
+   */
+  public void setAqueousCO2Parameterization(SoreideWhitsonParameterization parameterization) {
+    if (parameterization == null) {
+      throw new IllegalArgumentException("Soreide-Whitson parameterization cannot be null");
+    }
+    this.aqueousCO2Parameterization = parameterization;
+  }
+
+  /**
+   * Get the aqueous CO2-water binary-interaction parameterization.
+   *
+   * @return selected parameterization
+   */
+  public SoreideWhitsonParameterization getAqueousCO2Parameterization() {
+    return aqueousCO2Parameterization;
   }
 
   /**
