@@ -531,7 +531,8 @@ boolean closes = balance.isWithinTolerance(TwoFluidMassBalanceReport.Phase.TOTAL
 
 After `runTransient(...)`, `getOutletStream()` publishes the accepted
 interval-average total outlet mass flux,
-`balance.getOutletMassKg(Phase.TOTAL) / balance.getElapsedTimeSeconds()`. This
+`balance.getOutletMassKg(TwoFluidMassBalanceReport.Phase.TOTAL) /
+balance.getElapsedTimeSeconds()`. This
 preserves finite transport delay and inventory release when the pipe is coupled
 directly to downstream process equipment. Steady-state `run()` retains the
 inlet-balanced outlet-flow convention. Use the report itself for signed,

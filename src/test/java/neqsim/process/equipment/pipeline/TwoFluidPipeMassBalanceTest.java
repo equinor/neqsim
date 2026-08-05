@@ -100,6 +100,9 @@ class TwoFluidPipeMassBalanceTest {
     pipe.runTransient(1.0e-3, UUID.fromString("00000000-0000-0000-0000-000000052705"));
 
     TwoFluidMassBalanceReport report = pipe.getLastMassBalanceReport();
+    assertNotNull(report, "A completed transient step should publish its mass-balance report");
+    assertTrue(report.getElapsedTimeSeconds() > 0.0,
+        "Accepted transient elapsed time must be positive before calculating an interval-average flux");
     double conservativeOutletFlow = report.getOutletMassKg(Phase.TOTAL) / report.getElapsedTimeSeconds();
     double exposedOutletFlow = pipe.getOutletStream().getFlowRate("kg/sec");
 
