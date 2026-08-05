@@ -1081,8 +1081,8 @@ public class TPflash extends Flash {
    * Post-convergence phase-root selection can leave a gas/oil split with valid material balance but component
    * fugacities just outside the flash tolerance. The refinement is attempted only for a neutral, non-aqueous,
    * exactly-two-phase endpoint whose material balance already closes. It retains the selected active set and accepts
-   * the result only when phase fractions, compositions, material balance, fugacity equality, and Gibbs energy pass
-   * the existing strict checks. Otherwise the complete two-phase iteration state is restored.
+   * the result only when phase fractions, compositions, material balance, fugacity equality, and Gibbs energy pass the
+   * existing strict checks. Otherwise the complete two-phase iteration state is restored.
    * </p>
    */
   private void refineInvalidNeutralGasLiquidTwoPhaseEndpoint() {
@@ -1104,6 +1104,7 @@ public class TPflash extends Flash {
       return;
     }
 
+    system.init(1);
     double referenceMaterialResidual = maximumComponentMaterialBalanceResidual(system);
     double referenceFugacityResidual = maximumLogFugacityResidual(system.getPhase(0), system.getPhase(1));
     if (!Double.isFinite(referenceMaterialResidual) || !Double.isFinite(referenceFugacityResidual)
@@ -1115,14 +1116,12 @@ public class TPflash extends Flash {
 
     BalancedTwoPhaseState referenceState = new BalancedTwoPhaseState(system);
     try {
-      for (int refinement = 0;
-          refinement < MAX_FINAL_EQUILIBRIUM_REFINEMENT_ITERATIONS && !isBalancedEquilibriumCandidate(system);
-          refinement++) {
+      for (int refinement = 0; refinement < MAX_FINAL_EQUILIBRIUM_REFINEMENT_ITERATIONS
+          && !isBalancedEquilibriumCandidate(system); refinement++) {
         sucsSubs();
       }
       double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceState.gibbsEnergy) * 1.0e-8);
-      if (!isBalancedEquilibriumCandidate(system)
-          || !preservesTwoPhaseActiveSet(system, referenceState.phaseTypes)
+      if (!isBalancedEquilibriumCandidate(system) || !preservesTwoPhaseActiveSet(system, referenceState.phaseTypes)
           || system.getGibbsEnergy() > referenceState.gibbsEnergy + gibbsTolerance) {
         restoreTwoPhaseIterationState(referenceState);
       }
