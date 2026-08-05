@@ -337,6 +337,53 @@ snapshot from the steps accepted before failure.
 The history records existing solver evidence and does not change transport equations, tolerances,
 or finite-volume state ownership.
 
+### Process-equipment and Python/JPype API
+
+`OnePhasePipeLine` exposes the same validated path without requiring callers to access its internal
+`PipeFlowSystem`. The wrapper initializes the pipe with steady solver type `1`, uses type `1` for
+the transient, and retains one immutable report for every internal accepted step in the latest
+`runTransient(...)` call:
+
+```java
+OnePhasePipeLine exportPipe = new OnePhasePipeLine("Export pipe", inletStream);
+exportPipe.setNumberOfLegs(1);
+exportPipe.setNumberOfNodesInLeg(24);
+exportPipe.setPipeDiameters(new double[] {0.5, 0.5});
+exportPipe.setLegPositions(new double[] {0.0, 3000.0});
+exportPipe.setHeightProfile(new double[] {0.0, 0.0});
+exportPipe.setPipeWallRoughness(new double[] {1.0e-5, 1.0e-5});
+exportPipe.setOuterTemperatures(new double[] {288.15, 288.15});
+exportPipe.setConservativeCompositionalTracking(true);
+exportPipe.setStoreSpeciesConservationHistory(true);
+exportPipe.setFailOnNonConvergence(true);
+exportPipe.setInternalTimeStep(30.0);
+exportPipe.run();
+
+// Change the public inlet stream composition, run it, then advance the pipe.
+inletStream.setThermoSystem(co2PulseGas);
+inletStream.run();
+exportPipe.runTransient(1800.0);
+
+double[] elapsedSeconds = exportPipe.getSpeciesConservationHistory().getElapsedTimeSeconds();
+double[] outletCo2MassFraction = exportPipe.getConservativeOutletMassFractionHistory("CO2");
+double[] physicalCellCo2MassFraction = exportPipe.getConservativeMassFractionProfile("CO2");
+String diagnosticsJson = exportPipe.getSpeciesConservationHistory().toJson();
+```
+
+The profile and history convenience methods return **mass fractions** from the conservative
+physical-cell inventories. `getOutletMoleFraction(...)` remains the explicit EOS-state mole-fraction
+accessor. History times are elapsed accepted step-end seconds from the start of the latest
+high-level transient call. In Python/JPype the same methods return Java primitive arrays, which can
+be converted directly with `list(...)` or `numpy.asarray(...)`; `toJson()` is the stable capture
+path when the complete component ledger is needed.
+
+The wrapper rejects a multiphase inlet with an explicit phase-appearance limitation before the
+one-phase solver advances. Zero or reversed flow is rejected by the conservative solver. The
+model does not predict condensation inside the pipe; screen the full pressure-temperature path
+against the phase envelope before using this one-phase mode. Calling
+`setCompositionalTracking(true)` without the conservative flag deliberately preserves the legacy
+type `20` behavior for source compatibility and does not imply the conservative validation above.
+
 This path has been regression-tested for a single coupled isothermal composition-change step and
 an 1800 s methane/nitrogen pulse through the coupled hydraulic/EOS/species path at positive flow.
 The isolated conservative kernel is also checked over repeated uniform-cell steps. For constant
@@ -376,7 +423,7 @@ convergence, thermal coupling, phase appearance, higher-order convection, and ph
 remain validation gates. The spreading of the present first-order upwind scheme is numerical;
 there is no physical axial-dispersion model.
 
-## Compositional Tracking
+## Legacy Staged Compositional Tracking
 
 ### Steady-State Composition
 
@@ -386,7 +433,7 @@ In steady-state single-phase flow, composition is uniform throughout the pipelin
 - Mole fractions are solved using the same TDMA scheme
 - Normalization ensures mole fractions sum to unity
 
-### Dynamic Composition Tracking
+### Dynamic Composition Tracking (Experimental Type 20)
 
 The component equations provide an experimental basis for dynamic compositional transitions:
 
