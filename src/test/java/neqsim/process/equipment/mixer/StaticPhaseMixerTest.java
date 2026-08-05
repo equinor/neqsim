@@ -160,8 +160,7 @@ class StaticPhaseMixerTest {
     mixer.run();
 
     assertEquals(0.0, mixer.getOutletStream().getFlowRate("kg/hr"), 0.0);
-    for (int phaseIndex = 0; phaseIndex < mixer.getOutletStream().getThermoSystem().getNumberOfPhases();
-        phaseIndex++) {
+    for (int phaseIndex = 0; phaseIndex < mixer.getOutletStream().getThermoSystem().getNumberOfPhases(); phaseIndex++) {
       assertTrue(Double.isFinite(mixer.getOutletStream().getThermoSystem().getBeta(phaseIndex)));
     }
   }
