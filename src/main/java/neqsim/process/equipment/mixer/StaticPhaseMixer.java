@@ -41,11 +41,7 @@ public class StaticPhaseMixer extends StaticMixer {
     SystemInterface outputSystem = mixedStream.getThermoSystem();
     List<PhaseType> outputPhaseTypes = collectOutputPhaseTypes();
     if (outputPhaseTypes.isEmpty()) {
-      if (outputSystem.getTotalNumberOfMoles() > 0.0) {
-        outputSystem.init_x_y();
-        outputSystem.initBeta();
-        outputSystem.init(2);
-      }
+      clearInventory(outputSystem);
       return;
     }
 
@@ -169,7 +165,11 @@ public class StaticPhaseMixer extends StaticMixer {
         if (outputSystem.getPhase(0).hasComponent(sourceComponent.getName())) {
           continue;
         }
-        if (sourceComponent.isIsTBPfraction() || sourceComponent.isIsPlusFraction()) {
+        if (sourceComponent.isIsPlusFraction()) {
+          String rawName = sourceComponent.getName().replaceFirst("_PC$", "");
+          outputSystem.addPlusFraction(rawName, 0.0, sourceComponent.getMolarMass(),
+              sourceComponent.getNormalLiquidDensity());
+        } else if (sourceComponent.isIsTBPfraction()) {
           String rawName = sourceComponent.getName().replaceFirst("_PC$", "");
           outputSystem.addTBPfraction(rawName, 0.0, sourceComponent.getMolarMass(),
               sourceComponent.getNormalLiquidDensity());
@@ -194,10 +194,7 @@ public class StaticPhaseMixer extends StaticMixer {
       if (phase == null) {
         continue;
       }
-      for (int componentIndex = 0; componentIndex < phase.getNumberOfComponents(); componentIndex++) {
-        phase.getComponent(componentIndex).setNumberOfMolesInPhase(0.0);
-        phase.getComponent(componentIndex).setNumberOfmoles(0.0);
-      }
+      phase.setEmptyFluid();
     }
     outputSystem.setTotalNumberOfMoles(0.0);
   }
@@ -242,9 +239,16 @@ public class StaticPhaseMixer extends StaticMixer {
       }
     }
     if (templateIndex < 0) {
-      templateIndex = 0;
+      SystemInterface outputSystem = streams.get(0).getThermoSystem().clone();
+      clearInventory(outputSystem);
+      mixedStream.setThermoSystem(outputSystem);
+      isActive(false);
+      mixedStream.setCalculationIdentifier(id);
+      setCalculationIdentifier(id);
+      return;
     }
 
+    isActive(true);
     mixedStream.setThermoSystem((streams.get(templateIndex).getThermoSystem().clone()));
 
     mixStream();
