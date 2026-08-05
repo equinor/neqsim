@@ -331,6 +331,9 @@ history is reset when a new transient solve starts and contains only successfull
 if a later step fails loudly, earlier accepted diagnostics remain available. Its defensive array
 getters and `toJson()` expose distance profiles, outlet breakthrough, component linepack, boundary
 integrals, and cumulative pulse-balance inputs without requiring Python to call one step at a time.
+Accepted reports accumulate in amortized linear time and are copied into one immutable snapshot at
+the end of a successful solve. An explicit getter after a failed solve creates the same immutable
+snapshot from the steps accepted before failure.
 The history records existing solver evidence and does not change transport equations, tolerances,
 or finite-volume state ownership.
 
