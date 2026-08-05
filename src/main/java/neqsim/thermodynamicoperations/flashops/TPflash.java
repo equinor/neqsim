@@ -1017,9 +1017,10 @@ public class TPflash extends Flash {
    * stale phase fractions or compositions. The phase set is retained, but component material balance or fugacity
    * equality can then remain outside the ordinary flash tolerance. A {@link TPmultiflash} beta update is phase-order
    * independent and restores the constrained phase split without rerunning stability analysis. The refinement is
-   * attempted only for substantial-water endpoints that already contain exactly one other phase. The pre-refinement
-   * state is retained as a compact snapshot and restored unless the active-set update passes the existing strict
-   * equilibrium and Gibbs checks.
+   * attempted for substantial-water endpoints and for trace-water endpoints whose already-active aqueous split is
+   * non-conservative. The latter bypasses only the water-feed threshold, not phase stability or phase appearance. The
+   * pre-refinement state is retained as a compact snapshot and restored unless the active-set update passes the
+   * existing strict equilibrium and Gibbs checks.
    * </p>
    */
   private void refineInvalidAqueousTwoPhaseEndpoint() {
@@ -1037,7 +1038,11 @@ public class TPflash extends Flash {
       }
     }
     if (waterFeedFraction < WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT) {
-      return;
+      double preRefinementMaterialResidual = maximumComponentMaterialBalanceResidual(system);
+      if (Double.isFinite(preRefinementMaterialResidual)
+          && preRefinementMaterialResidual <= WATER_RICH_MATERIAL_BALANCE_TOLERANCE) {
+        return;
+      }
     }
 
     system.init(1);
