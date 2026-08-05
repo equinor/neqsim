@@ -57,6 +57,10 @@ public class TPflash extends Flash {
   private static final double AQUEOUS_SEED_COMPOSITION_NORMALIZATION_TOLERANCE = 1.0e-8;
   /** Maximum accepted log-fugacity residual when selecting an alternate cubic root. */
   private static final double PHASE_ROOT_EQUILIBRIUM_TOLERANCE = 1.0e-8;
+  /** Maximum final SSI updates used to repair a stale neutral two-phase endpoint. */
+  private static final int MAX_FINAL_EQUILIBRIUM_REFINEMENT_ITERATIONS = 8;
+  /** Largest residual considered near enough to convergence for bounded final SSI refinement. */
+  private static final double MAX_FINAL_EQUILIBRIUM_REFINEMENT_RESIDUAL = 1.0e-5;
   /** Cubic phase roots evaluated by the post-convergence aqueous root check. */
   private static final PhaseType[] CUBIC_ROOT_PHASE_TYPES = { PhaseType.GAS, PhaseType.LIQUID };
   /**
@@ -112,7 +116,7 @@ public class TPflash extends Flash {
   /** Reusable accelerated K-values; transient because it contains no thermodynamic state. */
   private transient double[] accelerationK;
 
-  /** Compact pre-multiphase snapshot used only for balanced neutral water-bearing endpoints. */
+  /** Compact two-phase rollback snapshot used by bounded neutral endpoint refinements. */
   private static final class BalancedTwoPhaseState {
     private final PhaseType[] phaseTypes = new PhaseType[2];
     private final double[] betas = new double[2];
@@ -667,6 +671,7 @@ public class TPflash extends Flash {
         rescueLiquidLiquidEndpoint();
         rescueWaterRichEndpoint();
         refineInvalidAqueousTwoPhaseEndpoint();
+        refineInvalidNeutralGasLiquidTwoPhaseEndpoint();
         return;
       }
     }
@@ -864,6 +869,7 @@ public class TPflash extends Flash {
     rescueWaterRichEndpoint();
     rescueLowerGibbsPhaseRoot();
     refineInvalidAqueousTwoPhaseEndpoint();
+    refineInvalidNeutralGasLiquidTwoPhaseEndpoint();
 
     // Final chemical equilibrium call after all phase reordering
     // This ensures chemical equilibrium is solved on the final phase configuration
@@ -1065,6 +1071,63 @@ public class TPflash extends Flash {
     } catch (Exception ex) {
       restoreTwoPhaseIterationState(referenceState);
       logger.debug("Final aqueous endpoint refinement failed: {}", ex.getMessage());
+    }
+  }
+
+  /**
+   * Performs a bounded final SSI refinement of a stale neutral gas/liquid two-phase endpoint.
+   *
+   * <p>
+   * Post-convergence phase-root selection can leave a gas/oil split with valid material balance but component
+   * fugacities just outside the flash tolerance. The refinement is attempted only for a neutral, non-aqueous,
+   * exactly-two-phase endpoint whose material balance already closes. It retains the selected active set and accepts
+   * the result only when phase fractions, compositions, material balance, fugacity equality, and Gibbs energy pass the
+   * existing strict checks. Otherwise the complete two-phase iteration state is restored.
+   * </p>
+   */
+  private void refineInvalidNeutralGasLiquidTwoPhaseEndpoint() {
+    if (system.getNumberOfPhases() != 2 || system.hasPhaseType(PhaseType.AQUEOUS) || system.isChemicalSystem()
+        || system.hasIons() || solidCheck || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck()) {
+      return;
+    }
+    boolean hasGasPhase = false;
+    boolean hasLiquidPhase = false;
+    for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
+      PhaseType phaseType = system.getPhase(phaseIndex).getType();
+      if (phaseType != PhaseType.GAS && phaseType != PhaseType.OIL && phaseType != PhaseType.LIQUID) {
+        return;
+      }
+      hasGasPhase |= phaseType == PhaseType.GAS;
+      hasLiquidPhase |= phaseType == PhaseType.OIL || phaseType == PhaseType.LIQUID;
+    }
+    if (!hasGasPhase || !hasLiquidPhase) {
+      return;
+    }
+
+    system.init(1);
+    double referenceMaterialResidual = maximumComponentMaterialBalanceResidual(system);
+    double referenceFugacityResidual = maximumLogFugacityResidual(system.getPhase(0), system.getPhase(1));
+    if (!Double.isFinite(referenceMaterialResidual) || !Double.isFinite(referenceFugacityResidual)
+        || referenceMaterialResidual > WATER_RICH_MATERIAL_BALANCE_TOLERANCE
+        || referenceFugacityResidual < PHASE_ROOT_EQUILIBRIUM_TOLERANCE
+        || referenceFugacityResidual > MAX_FINAL_EQUILIBRIUM_REFINEMENT_RESIDUAL) {
+      return;
+    }
+
+    BalancedTwoPhaseState referenceState = new BalancedTwoPhaseState(system);
+    try {
+      for (int refinement = 0; refinement < MAX_FINAL_EQUILIBRIUM_REFINEMENT_ITERATIONS
+          && !isBalancedEquilibriumCandidate(system); refinement++) {
+        sucsSubs();
+      }
+      double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceState.gibbsEnergy) * 1.0e-8);
+      if (!isBalancedEquilibriumCandidate(system) || !preservesTwoPhaseActiveSet(system, referenceState.phaseTypes)
+          || system.getGibbsEnergy() > referenceState.gibbsEnergy + gibbsTolerance) {
+        restoreTwoPhaseIterationState(referenceState);
+      }
+    } catch (Exception ex) {
+      restoreTwoPhaseIterationState(referenceState);
+      logger.debug("Final neutral hydrocarbon endpoint refinement failed: {}", ex.getMessage());
     }
   }
 
@@ -1308,7 +1371,7 @@ public class TPflash extends Flash {
    *
    * @param candidate candidate system to inspect
    * @return true when phase fractions, compositions, material balance, and equilibrium residuals are finite and satisfy
-   * the water-rich endpoint tolerances
+   * the strict two-phase endpoint tolerances
    */
   private boolean isBalancedEquilibriumCandidate(SystemInterface candidate) {
     double betaTotal = 0.0;

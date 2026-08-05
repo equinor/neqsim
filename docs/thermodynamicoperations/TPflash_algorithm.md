@@ -227,6 +227,12 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 │     → Reject a Gibbs increase unless the reference was non-conservative,          │
 │       because Gibbs energies of an unbalanced reference are not comparable       │
 │                                                                                 │
+│  IF a final neutral gas/oil endpoint is balanced but near-converged:             │
+│     → Trigger only for 1e-8 ≤ max |Δ ln(fᵢ)| ≤ 1e-5                              │
+│     → Run at most eight SSI updates without changing the selected phase types     │
+│     → Keep only a normalized, balanced, fugacity-equal result with no Gibbs       │
+│       increase; otherwise restore beta, compositions, K-values, and phase types   │
+│                                                                                 │
 │  IF ordinary, neutral, dry two-phase hydrocarbon roots are inverted:             │
 │     → Detect the vapor-labelled phase having the larger mean molar mass          │
 │     → Evaluate the vapor root on the light composition and liquid root on the    │
@@ -260,6 +266,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 | Stable-single-phase aqueous-seed gate | `1e-8` in phase-composition normalization | Reject only a structurally invalid aqueous trial whose composition is non-finite, out of `[0, 1]`, or unnormalized; leave normalized endpoints to model-specific convergence and refinement paths |
 | Post-removal aqueous recovery | `1e-8` in `max abs(Delta z_i)` and `max abs(Delta ln(f_i))` | Restore a balanced neutral two-phase aqueous reference only when a rejected third-phase trial leaves the final two-phase endpoint infeasible; genuine three-phase and already feasible endpoints are retained |
 | Final aqueous active-set refinement | water feed `>= 0.01`; at most 3 beta refinements; `1e-8` in phase normalization, `max abs(Delta z_i)`, and `max abs(Delta ln(f_i))` | Preserve the selected neutral two-phase active set while correcting stale beta/compositions after phase cleanup or root selection. Roll back unless the result is feasible; also require no Gibbs increase when the reference material balance was valid. |
+| Final neutral gas/oil equilibrium refinement | `1e-8 <= max abs(Delta ln(f_i)) <= 1e-5`; at most 8 SSI updates | Repair only balanced, near-converged vapor-liquid endpoints after post-convergence root handling. Preserve both phase types and roll back unless phase fractions, compositions, material balance, fugacity equality, and Gibbs energy pass the strict acceptance checks. |
 | Stalled three-phase active-set fallback | `1e-8` in phase normalization, material balance, and `max abs(Delta ln(f_i))` | For neutral non-reactive systems only, evaluate each two-phase active set after a non-converged three-phase endpoint and accept the lowest-Gibbs feasible equilibrium only when it also lowers Gibbs energy relative to the stalled state |
 | Water-bearing single-phase-collapse screen | water feed `>= 0.01`, stored water `K < 1e-2`, and a non-water `K > 10` | Run one bounded ordinary-flash retry only after multiphase cleanup returns one phase with strong retained phase-preference evidence; accept only a balanced, distinct two-phase state that lowers extensive Gibbs energy beyond `max(1e-6 J, 1e-8 abs(G))` |
 
@@ -1715,6 +1722,10 @@ Commercial process simulators do not publish all implementation details, but pub
   material-balance or fugacity tolerances, the pre-trial state is restored. The recovery does not run another flash and
   is not considered for chemical, ionic, solid, wax, genuine three-phase, or already feasible endpoints.
 - Ordinary neutral aqueous splits now compare both cubic roots of the non-aqueous phase at the converged composition. An alternate root is retained only when it lowers Gibbs energy and already satisfies `max abs(Delta ln(f_i)) < 1e-8`; no extra TPflash or multiphase stability calculation is run.
+- Balanced neutral gas/oil endpoints whose terminal fugacity residual is between `1e-8` and `1e-5` receive at most
+  eight additional SSI updates. This targets stale, near-converged K-values after root selection without adding work to
+  already converged endpoints or attempting to rescue grossly invalid states. The original endpoint is restored unless
+  phase identity, normalization, material balance, fugacity equality, and Gibbs energy all pass.
 - Near a hydrocarbon critical boundary, the ordinary flash can converge the correct light and heavy compositions but
   retain the liquid cubic root on the light phase and the vapor root on the heavy phase. A molar-mass ordering screen
   detects that inverted labelling without adding trial-root work to normal results. The two roots are reassigned

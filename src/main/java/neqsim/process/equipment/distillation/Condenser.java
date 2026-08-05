@@ -251,6 +251,29 @@ public class Condenser extends SimpleTray {
     }
   }
 
+  /**
+   * Discard the separate liquid product after the owning column replaces rejected tray products with a full-feed
+   * fallback.
+   *
+   * <p>
+   * The fallback already exposes the complete feed inventory through the column's gas and bottom product streams.
+   * Retaining this rejected condenser product beside those streams would double-count material. Fixed-reflux
+   * availability and delivery diagnostics are invalidated because they describe the rejected tray state, not the
+   * fallback products.
+   *
+   * @param id calculation identifier assigned to the cleared product stream
+   */
+  void discardLiquidProductAfterColumnFallback(UUID id) {
+    StreamInterface liquidProduct = getLiquidProductStream();
+    if (liquidProduct != null) {
+      liquidProduct.setFlowRate(0.0, "kg/hr");
+      liquidProduct.setCalculationIdentifier(id);
+    }
+    lastAvailableLiquidReflux = Double.NaN;
+    lastFixedLiquidReflux = Double.NaN;
+    lastFixedLiquidRefluxResidual = Double.NaN;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {

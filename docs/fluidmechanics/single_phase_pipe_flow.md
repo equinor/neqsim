@@ -266,7 +266,12 @@ declared band, and reports the largest dense derivative outside that band. It al
 largest per-node relative drift between the repeated evaluations for phase and component moles,
 density, inlet and mean velocity, mass and volumetric flow, Reynolds number, and wall-friction
 factor. These diagnostics are evaluated only after failure, restore the accepted state, and do not
-weaken the frozen acceptance criteria.
+weaken the frozen acceptance criteria. One-phase node initialization rescales every existing phase
+component from one fixed pre-update total, so repeated trial-state evaluations do not accumulate
+loop-order-dependent mole changes. A zero-velocity node retains its last finite positive
+thermodynamic reference amount while its hydraulic flow variables remain zero; an EOS phase cannot
+be made empty merely to represent zero flow. The conservative finite-volume cell inventories
+remain authoritative, and every synchronization reinitializes the thermodynamic EOS state.
 For backward-compatible control flow, the default logs a warning and returns the failed report.
 Call `pipe.setFailOnNonConvergence(true)` to make `solveTransient(...)` throw
 `IllegalStateException`; the report is recorded before either behavior and distinguishes
@@ -336,16 +341,14 @@ baseline regression repeats the same 1800 s event through a 3000 m isothermal pi
 bit-identical outlet histories, final profiles, and component inventories, verifies breakthrough
 and recovery, and telescopes every immutable step report into a cumulative nitrogen balance.
 
-A pending coupled refinement regression advances the same physical pulse and recovery at
+The active coupled refinement regression advances the same physical pulse and recovery at
 6 nodes/120 s, 12 nodes/60 s, and 24 nodes/30 s. At common 120 s sample times, it requires the
 mean absolute outlet-composition difference between the two finer solutions to be smaller than
 the difference between the two coarser solutions while every resolution retains the same EOS,
-boundedness, and conservation gates. The finest coupled case currently remains a fail-loud
-nonlinear-convergence gate, so that refinement regression is kept disabled and the active
-regression instead asserts the `LINE_SEARCH_FAILED` blocker together with its repeated
-node-state drift diagnostics; no coupled Cauchy trend is claimed until the blocker is resolved
-and the refinement gate is re-enabled. The comparison is a Cauchy-convergence check and does not
-define an exact analytical solution for the coupled compressible case.
+boundedness, and conservation gates. Exact-head Java 21 CI executes all three resolutions and
+the independent 30-minute pulse repeatability test together. The comparison is a Cauchy-
+convergence check and does not define an exact analytical solution for the coupled compressible
+case.
 
 Zero or reversed face flow still fails explicitly because an external upwind composition is not
 yet defined. Once enabled, every failed hydraulic/species criterion throws so that a failed
