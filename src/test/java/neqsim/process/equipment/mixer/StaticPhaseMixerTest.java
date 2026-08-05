@@ -18,7 +18,7 @@ class StaticPhaseMixerTest {
 
   @Test
   void testSeparatorRecombinationConservesMassAtBaseAndNearbyTemperatures() {
-    double[] temperatures = new double[] {288.15, 293.15};
+    double[] temperatures = new double[] { 288.15, 293.15 };
 
     for (double temperature : temperatures) {
       SystemInterface fluid = createSeparatorFeed(temperature);
@@ -163,11 +163,9 @@ class StaticPhaseMixerTest {
     return fluid;
   }
 
-  private static void assertComponentMassBalance(StreamInterface gas, StreamInterface liquid,
-      StreamInterface outlet) {
+  private static void assertComponentMassBalance(StreamInterface gas, StreamInterface liquid, StreamInterface outlet) {
     SystemInterface outletSystem = outlet.getThermoSystem();
-    for (int componentIndex = 0; componentIndex < outletSystem.getPhase(0).getNumberOfComponents();
-        componentIndex++) {
+    for (int componentIndex = 0; componentIndex < outletSystem.getPhase(0).getNumberOfComponents(); componentIndex++) {
       ComponentInterface outletComponent = outletSystem.getPhase(0).getComponent(componentIndex);
       String componentName = outletComponent.getName();
       double inletComponentMass = componentMass(gas.getThermoSystem(), componentName)
