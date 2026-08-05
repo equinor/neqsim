@@ -319,8 +319,7 @@ public class ProcessSimulationEvaluator implements Serializable {
      * @return objective value (sign-adjusted for minimization)
      */
     public double evaluate(ProcessSystem process) {
-      double value = evaluator.applyAsDouble(process);
-      return direction == Direction.MAXIMIZE ? -value : value;
+      return toMinimizerValue(evaluator.applyAsDouble(process));
     }
 
     /**
@@ -331,6 +330,16 @@ public class ProcessSimulationEvaluator implements Serializable {
      */
     public double evaluateRaw(ProcessSystem process) {
       return evaluator.applyAsDouble(process);
+    }
+
+    /**
+     * Applies the minimizer sign convention to an already sampled objective value.
+     *
+     * @param rawValue raw objective value
+     * @return sign-adjusted objective value
+     */
+    private double toMinimizerValue(double rawValue) {
+      return direction == Direction.MAXIMIZE ? -rawValue : rawValue;
     }
   }
 
@@ -499,7 +508,16 @@ public class ProcessSimulationEvaluator implements Serializable {
      */
     @Override
     public double margin(ProcessSystem process) {
-      double value = evaluate(process);
+      return marginFromValue(evaluate(process));
+    }
+
+    /**
+     * Calculates the constraint margin from an already sampled value.
+     *
+     * @param value sampled constraint value
+     * @return constraint margin
+     */
+    private double marginFromValue(double value) {
       switch (type) {
       case LOWER_BOUND:
         return value - lowerBound;
@@ -533,11 +551,20 @@ public class ProcessSimulationEvaluator implements Serializable {
      */
     @Override
     public double penalty(ProcessSystem process) {
-      double m = margin(process);
-      if (m >= 0) {
+      return penaltyFromMargin(margin(process));
+    }
+
+    /**
+     * Calculates the violation penalty from an already derived margin.
+     *
+     * @param margin sampled constraint margin
+     * @return penalty (0 if satisfied, positive if violated)
+     */
+    private double penaltyFromMargin(double margin) {
+      if (margin >= 0) {
         return 0.0;
       }
-      return penaltyWeight * m * m;
+      return penaltyWeight * margin * margin;
     }
 
     /** {@inheritDoc} */
@@ -1151,6 +1178,12 @@ public class ProcessSimulationEvaluator implements Serializable {
    * <li>Returns a complete result object</li>
    * </ol>
    *
+   * <p>
+   * Each registered objective and constraint callback is sampled exactly once after the simulation. Raw and
+   * sign-adjusted objectives, and constraint values, margins, feasibility, and penalties, are derived from those same
+   * samples.
+   * </p>
+   *
    * @param x array of parameter values (length must match parameter count)
    * @return evaluation result with objectives, constraints, and feasibility
    */
@@ -1182,8 +1215,9 @@ public class ProcessSimulationEvaluator implements Serializable {
       double[] objValues = new double[objectives.size()];
       double[] objRaw = new double[objectives.size()];
       for (int i = 0; i < objectives.size(); i++) {
-        objRaw[i] = objectives.get(i).evaluateRaw(process);
-        objValues[i] = objectives.get(i).evaluate(process);
+        ObjectiveDefinition objective = objectives.get(i);
+        objRaw[i] = objective.evaluateRaw(process);
+        objValues[i] = objective.toMinimizerValue(objRaw[i]);
       }
       result.setObjectives(objValues);
       result.setObjectivesRaw(objRaw);
@@ -1194,11 +1228,12 @@ public class ProcessSimulationEvaluator implements Serializable {
       double penaltySum = 0.0;
       boolean feasible = true;
       for (int i = 0; i < constraints.size(); i++) {
-        constraintVals[i] = constraints.get(i).evaluate(process);
-        margins[i] = constraints.get(i).margin(process);
+        ConstraintDefinition constraint = constraints.get(i);
+        constraintVals[i] = constraint.evaluate(process);
+        margins[i] = constraint.marginFromValue(constraintVals[i]);
         if (margins[i] < 0) {
           feasible = false;
-          penaltySum += constraints.get(i).penalty(process);
+          penaltySum += constraint.penaltyFromMargin(margins[i]);
         }
       }
       result.setConstraintValues(constraintVals);

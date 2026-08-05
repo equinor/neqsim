@@ -123,6 +123,13 @@ Process restrictions that must be satisfied:
 - **Range**: lower ≤ g(x) ≤ upper
 - **Equality**: g(x) = target ± tolerance
 
+For both `ProcessSimulationEvaluator` and `ProcessModelSimulationEvaluator`, one completed
+`evaluate(...)` call samples each objective and constraint callback exactly once after the
+simulation. Raw and sign-adjusted objectives, plus constraint values, margins, feasibility, and
+penalties, are derived from those same scalar samples. This matters when result extraction includes
+costly reporting or serialization and prevents inconsistent fields when a callback reads mutable
+diagnostics. Callbacks should nevertheless remain side-effect free.
+
 ## Java Setup
 
 ```java

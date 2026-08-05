@@ -435,8 +435,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      * @return sign-adjusted objective value
      */
     public double evaluate(ProcessModel model) {
-      double value = evaluateRaw(model);
-      return direction == Direction.MAXIMIZE ? -value : value;
+      return toMinimizerValue(evaluateRaw(model));
     }
 
     /**
@@ -450,6 +449,16 @@ public class ProcessModelSimulationEvaluator implements Serializable {
         throw new IllegalStateException("Objective evaluator is not set for " + name);
       }
       return evaluator.applyAsDouble(model);
+    }
+
+    /**
+     * Applies the minimizer sign convention to an already sampled objective value.
+     *
+     * @param rawValue raw objective value
+     * @return sign-adjusted objective value
+     */
+    private double toMinimizerValue(double rawValue) {
+      return direction == Direction.MAXIMIZE ? -rawValue : rawValue;
     }
   }
 
@@ -796,7 +805,16 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      * @return positive margin when satisfied and negative margin when violated
      */
     public double margin(ProcessModel model) {
-      double value = evaluate(model);
+      return marginFromValue(evaluate(model));
+    }
+
+    /**
+     * Computes the constraint margin from an already sampled value.
+     *
+     * @param value sampled constraint value
+     * @return positive margin when satisfied and negative margin when violated
+     */
+    private double marginFromValue(double value) {
       switch (type) {
       case LOWER_BOUND:
         return value - lowerBound;
@@ -828,7 +846,16 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      * @return zero when satisfied, otherwise a positive quadratic penalty
      */
     public double penalty(ProcessModel model) {
-      double margin = margin(model);
+      return penaltyFromMargin(margin(model));
+    }
+
+    /**
+     * Computes the violation penalty from an already derived margin.
+     *
+     * @param margin sampled constraint margin
+     * @return zero when satisfied, otherwise a positive quadratic penalty
+     */
+    private double penaltyFromMargin(double margin) {
       if (margin >= 0.0) {
         return 0.0;
       }
@@ -1907,6 +1934,12 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /**
    * Evaluates the process model at the supplied parameter values.
    *
+   * <p>
+   * Each registered objective and constraint callback is sampled exactly once after the model run. Raw and
+   * sign-adjusted objectives, and constraint values, margins, feasibility, and penalties, are derived from those same
+   * samples.
+   * </p>
+   *
    * @param parameterValues parameter vector with length equal to {@link #getParameterCount()}
    * @return complete evaluation result
    */
@@ -1933,8 +1966,9 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       double[] objectiveValues = new double[objectives.size()];
       double[] rawObjectiveValues = new double[objectives.size()];
       for (int objectiveIndex = 0; objectiveIndex < objectives.size(); objectiveIndex++) {
-        rawObjectiveValues[objectiveIndex] = objectives.get(objectiveIndex).evaluateRaw(processModel);
-        objectiveValues[objectiveIndex] = objectives.get(objectiveIndex).evaluate(processModel);
+        ObjectiveDefinition objective = objectives.get(objectiveIndex);
+        rawObjectiveValues[objectiveIndex] = objective.evaluateRaw(processModel);
+        objectiveValues[objectiveIndex] = objective.toMinimizerValue(rawObjectiveValues[objectiveIndex]);
       }
       result.setObjectives(objectiveValues);
       result.setObjectivesRaw(rawObjectiveValues);
@@ -1946,9 +1980,9 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       for (int constraintIndex = 0; constraintIndex < constraints.size(); constraintIndex++) {
         ConstraintDefinition constraint = constraints.get(constraintIndex);
         constraintValues[constraintIndex] = constraint.evaluate(processModel);
-        margins[constraintIndex] = constraint.margin(processModel);
+        margins[constraintIndex] = constraint.marginFromValue(constraintValues[constraintIndex]);
         if (margins[constraintIndex] < 0.0) {
-          penaltySum += constraint.penalty(processModel);
+          penaltySum += constraint.penaltyFromMargin(margins[constraintIndex]);
           if (constraint.isHard()) {
             feasible = false;
           }
