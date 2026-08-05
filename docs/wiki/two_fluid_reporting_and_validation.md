@@ -125,6 +125,35 @@ inclined_section_gas_carryover_number,inclined_section_liquid_fallback_potential
 severe_slugging_number,severe_slug_potential
 ```
 
+### Thermal-energy validation
+
+For a closed-boundary thermal `runTransient(...)`, call
+`getLastThermalEnergyBalanceReport()` to validate the same post-step sensible-energy model that
+changed the fluid and wall temperatures. Its discrete balance is
+
+$$\Delta E_f+\Delta E_w=E_{adv}+E_{JT}-E_{amb}$$
+
+where positive $E_{adv}$ and $E_{JT}$ add energy and positive $E_{amb}$ removes energy. CLOSED
+external faces contribute zero sensible advection, but internal face transport remains active. In
+the multilayer model, the fluid and first wall layer use the same instantaneous heat rate; the
+reported ambient loss is the last-layer flux from the same explicit update.
+
+```java
+pipe.setHeatTransferCoefficient(25.0); // W/(m2 K); the report is null when heat transfer is disabled
+pipe.runTransient(0.001, UUID.randomUUID());
+TwoFluidThermalEnergyBalanceReport thermal = pipe.getLastThermalEnergyBalanceReport();
+boolean closes = thermal.isWithinTolerance(1.0e-5, 1.0e-10);
+```
+
+The report is `null` when heat transfer is disabled. It covers fluid sensible energy and simple-wall
+or radial-layer storage. Strict domain-level closure applies only when both external mass boundaries
+are CLOSED and phase transfer does not change material inventory. Open boundaries require explicit
+boundary-enthalpy terms; phase-changing cases additionally require compositional and latent-energy
+terms. In those cases this report is an internal post-step temperature-model diagnostic, not a full
+domain energy audit. For a closed cooldown, also verify zero boundary mass/enthalpy transport,
+monotonic all-cell cooling without ambient undershoot, repeatability, serialization/copy behavior,
+both explicit and IMEX paths, and mesh/time-step refinement.
+
 ### Phase-transfer validation
 
 When `setIncludeMassTransfer(true)` is enabled, validate gas, oil, and water separately rather than
@@ -142,7 +171,10 @@ Use `TwoFluidMassBalanceReport` to check `GAS`, `OIL`, `WATER`, `LIQUID`, and `T
 phase-transition test starts from a cell with no liquid seed, crosses the SRK/CPA dew point in both
 directions, and sweeps at least three nearby temperatures on each side. Report the EOS, mixing rule,
 composition, absolute pressure, temperature, relaxation time, time step, mesh, and phase inventories.
-Repeat the run to verify deterministic behavior and compare a refined time step and mesh.
+Repeat the run to verify deterministic behavior and compare a refined time step and mesh. Serialize a
+condensed-state copy and require the original and copy to follow the same reheating trajectory. As a
+negative control, repeat the cooldown with `setIncludeMassTransfer(false)` and require every phase
+source and inventory change to remain zero even though the temperature crosses the dew point.
 
 For an aqueous-first transition, the first condensation source must be water even though the
 gas-only hydrodynamic water cut defaults to zero. For an oil-first transition, the water source must

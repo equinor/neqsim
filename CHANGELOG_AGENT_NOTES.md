@@ -9,6 +9,22 @@
 
 ---
 
+## 2026-08-05 — TwoFluidPipe transient thermal-energy closure
+
+- The multilayer cooldown path now removes fluid energy with the same instantaneous fluid-to-first-layer flux that
+  advances the radial wall state. It no longer mixes that transient flux with a separate steady overall-U heat-loss
+  estimate.
+- `MultilayerThermalCalculator` exposes the fluid-side and ambient-side heat rates used by its most recent transient
+  update through `getLastFluidHeatTransferPerLength()` and `getLastAmbientHeatTransferPerLength()`.
+- `TwoFluidPipe.getLastThermalEnergyBalanceReport()` now reports time-integrated fluid and wall energy changes,
+  conservative-face sensible advection, Joule-Thomson energy, ambient heat loss, and absolute/relative residuals for
+  the most recent thermal transient call.
+- Added simple/multilayer, Euler/IMEX, mesh/time-step refinement, disabled-heat-transfer, serialized-copy, and closed
+  SRK-CPA water-dew-point appearance/disappearance regressions. The phase-transition case checks gas, oil, water, and
+  total mass closure without a seeded liquid phase.
+
+---
+
 ## 2026-08-05 — Column exact reuse honors active convergence gates
 
 ### Corrected

@@ -3,6 +3,7 @@ package neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Tag;
@@ -86,6 +87,49 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     assertTrue(thirtySecondFront > fifteenSecondFront,
         "A longer first-order implicit step must advance more inlet tracer mass.");
     assertTrue(fifteenSecond.getSpeciesConservationReport().isConverged());
+  }
+
+  @Test
+  void multiStepSolvePublishesTimeAlignedPythonAccessibleHistory() {
+    PipeFlowSystem first = runThreeStepCompositionEvent();
+    PipeFlowSystem repeated = runThreeStepCompositionEvent();
+
+    OnePhaseSpeciesConservationHistory history = first.getSpeciesConservationHistory();
+    assertEquals(3, history.size());
+    assertArrayEquals(new double[] { 30.0, 60.0, 90.0 }, history.getElapsedTimeSeconds(), 0.0);
+    assertEquals(history.toJson(), repeated.getSpeciesConservationHistory().toJson());
+    assertTrue(history.toJson().contains("\"elapsedTimeSeconds\""));
+    assertTrue(history.toJson().contains("\"finalInventoryKg\""));
+
+    double[] returnedTimes = history.getElapsedTimeSeconds();
+    returnedTimes[0] = Double.NaN;
+    assertEquals(30.0, history.getElapsedTimeSeconds()[0], 0.0);
+    OnePhaseSpeciesConservationReport[] returnedReports = history.getReports();
+    returnedReports[0] = null;
+    assertTrue(history.getReport(0).isConverged());
+
+    double[] initialInventory = history.getReport(0).getInitialInventoryKg();
+    double[] finalInventory = history.getReport(history.size() - 1).getFinalInventoryKg();
+    double[] cumulativeInlet = new double[initialInventory.length];
+    double[] cumulativeOutlet = new double[initialInventory.length];
+    for (OnePhaseSpeciesConservationReport report : history.getReports()) {
+      assertTrue(report.isConverged(), report.getMessage());
+      for (int component = 0; component < initialInventory.length; component++) {
+        cumulativeInlet[component] += report.getInletBoundaryMassKg()[component];
+        cumulativeOutlet[component] += report.getOutletBoundaryMassKg()[component];
+      }
+    }
+    for (int component = 0; component < initialInventory.length; component++) {
+      double cumulativeResidual = finalInventory[component] - initialInventory[component] - cumulativeInlet[component]
+          + cumulativeOutlet[component];
+      assertEquals(0.0, cumulativeResidual, Math.max(1.0, initialInventory[component]) * 1.0e-8,
+          "history must telescope the component inventory for component " + component);
+    }
+
+    OnePhaseSpeciesConservationReport latest = first.getSpeciesConservationReport();
+    assertArrayEquals(latest.getFinalInventoryKg(), finalInventory, 0.0);
+    assertArrayEquals(latest.getMassFractionProfile()[1],
+        history.getReport(history.size() - 1).getMassFractionProfile()[1], 0.0);
   }
 
   @Test
@@ -303,6 +347,23 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     pipe.getTimeSeries().setTimes(new double[] { 0.0, timeStep });
     pipe.getTimeSeries().setInletThermoSystems(new SystemInterface[] { createGas(0.80, 0.20) });
     pipe.getTimeSeries().setNumberOfTimeStepsInInterval(1);
+
+    assertDoesNotThrow(() -> pipe.solveTransient(1));
+    return pipe;
+  }
+
+  private static PipeFlowSystem runThreeStepCompositionEvent() {
+    PipeFlowSystem pipe = createInitializedPipe(12, 3000.0);
+    pipe.setConservativeSpeciesTransport(true);
+    assertFalse(pipe.isSpeciesConservationHistoryStorageEnabled());
+    pipe.setStoreSpeciesConservationHistory(true);
+    assertTrue(pipe.isSpeciesConservationHistoryStorageEnabled());
+    pipe.setFailOnNonConvergence(true);
+    pipe.getTimeSeries().setTimes(new double[] { 0.0, 30.0, 60.0, 90.0 });
+    pipe.getTimeSeries().setInletThermoSystems(
+        new SystemInterface[] { createGas(0.80, 0.20), createGas(0.80, 0.20), createGas(0.95, 0.05) });
+    pipe.getTimeSeries().setNumberOfTimeStepsInInterval(1);
+    pipe.getTimeSeries().setOutletMolarFlowRate(null);
 
     assertDoesNotThrow(() -> pipe.solveTransient(1));
     return pipe;
