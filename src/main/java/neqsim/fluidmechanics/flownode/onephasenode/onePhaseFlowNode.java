@@ -116,7 +116,7 @@ public abstract class onePhaseFlowNode extends FlowNode {
               "Cannot synchronize one-phase molar flow because component " + i + " has a non-finite update.");
         }
         if (delta != 0.0) {
-          getBulkSystem().getPhase(0).addMoles(i, delta);
+          getBulkSystem().addComponent(i, delta, 0);
         }
       }
     }

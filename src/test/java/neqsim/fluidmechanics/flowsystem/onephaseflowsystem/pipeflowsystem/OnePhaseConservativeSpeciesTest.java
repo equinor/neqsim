@@ -95,10 +95,14 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     node.init();
 
     double[] componentMoles = new double[node.getBulkSystem().getPhase(0).getNumberOfComponents()];
+    double[] overallComponentMoles = new double[componentMoles.length];
     for (int component = 0; component < componentMoles.length; component++) {
       componentMoles[component] = node.getBulkSystem().getPhase(0).getComponent(component).getNumberOfMolesInPhase();
+      overallComponentMoles[component] =
+          node.getBulkSystem().getPhase(0).getComponent(component).getNumberOfmoles();
     }
     double phaseMoles = node.getBulkSystem().getPhase(0).getNumberOfMolesInPhase();
+    double systemMoles = node.getBulkSystem().getTotalNumberOfMoles();
     double density = node.getBulkSystem().getPhase(0).getDensity();
     double massFlow = node.getMassFlowRate(0);
     double reynoldsNumber = node.getReynoldsNumber();
@@ -109,10 +113,15 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     for (int component = 0; component < componentMoles.length; component++) {
       assertRelativeEquals(componentMoles[component],
           node.getBulkSystem().getPhase(0).getComponent(component).getNumberOfMolesInPhase(),
-          "component molar flow must be idempotent for component " + component);
+          "phase component amount must be idempotent for component " + component);
+      assertRelativeEquals(overallComponentMoles[component],
+          node.getBulkSystem().getPhase(0).getComponent(component).getNumberOfmoles(),
+          "overall component amount must be idempotent for component " + component);
     }
     assertRelativeEquals(phaseMoles, node.getBulkSystem().getPhase(0).getNumberOfMolesInPhase(),
-        "phase molar flow must be idempotent");
+        "phase reference amount must be idempotent");
+    assertRelativeEquals(systemMoles, node.getBulkSystem().getTotalNumberOfMoles(),
+        "system reference amount must be idempotent");
     assertRelativeEquals(density, node.getBulkSystem().getPhase(0).getDensity(), "EOS density must be idempotent");
     assertRelativeEquals(massFlow, node.getMassFlowRate(0), "mass flow must be idempotent");
     assertRelativeEquals(reynoldsNumber, node.getReynoldsNumber(), "Reynolds number must be idempotent");

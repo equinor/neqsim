@@ -271,7 +271,7 @@ component from one fixed pre-update total, so repeated trial-state evaluations d
 loop-order-dependent mole changes. A zero-velocity node retains its last finite positive
 thermodynamic reference amount while its hydraulic flow variables remain zero; an EOS phase cannot
 be made empty merely to represent zero flow. The conservative finite-volume cell inventories
-remain authoritative, and every synchronization reinitializes EOS density and physical properties.
+remain authoritative, and every synchronization reinitializes the thermodynamic EOS state.
 For backward-compatible control flow, the default logs a warning and returns the failed report.
 Call `pipe.setFailOnNonConvergence(true)` to make `solveTransient(...)` throw
 `IllegalStateException`; the report is recorded before either behavior and distinguishes
