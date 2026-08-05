@@ -3762,16 +3762,17 @@ public class TwoFluidPipe extends Pipeline {
       timeIntegrator.advanceTime(dtActual);
     }
 
-    // Update outlet stream and result arrays
-    updateOutletStream();
-    updateResultArrays();
-
     lastMassBalanceReport = new TwoFluidMassBalanceReport(acceptedElapsedTime, acceptedSubsteps, initialMassKg,
         getPhaseMassInventoriesKg(), integratedInletMassKg, integratedOutletMassKg, integratedSourceMassKg);
     if (thermalEnergyTracked) {
       lastThermalEnergyBalanceReport = new TwoFluidThermalEnergyBalanceReport(acceptedElapsedTime, acceptedSubsteps,
           fluidEnergyChangeJ, wallEnergyChangeJ, sensibleAdvectionEnergyJ, jouleThomsonEnergyJ, ambientHeatLossJ);
     }
+
+    // Publish the accepted interval-average outlet flux after constructing its
+    // conservative report. Result profiles use the same accepted final state.
+    updateOutletStream();
+    updateResultArrays();
 
     setCalculationIdentifier(id);
   }
@@ -4628,6 +4629,12 @@ public class TwoFluidPipe extends Pipeline {
 
   /**
    * Update outlet stream with current outlet conditions.
+   *
+   * <p>
+   * Steady-state calculations use the inlet mass flow to enforce global steady closure. After a transient call, the
+   * stream exposes the interval-average total outlet flux integrated over the accepted internal stages. Phase-resolved
+   * integrals remain available from {@link #getLastMassBalanceReport()}.
+   * </p>
    */
   private void updateOutletStream() {
     if (sections == null || sections.length == 0) {
@@ -4659,22 +4666,30 @@ public class TwoFluidPipe extends Pipeline {
     // Mass flow from section state (for diagnostics)
     double massFlowFromState = (alphaG * rhoG * vG + alphaL * rhoL * vL) * area;
 
-    // In steady state, mass conservation requires inlet flow = outlet flow.
-    // The section-level velocities come from momentum balance correlations that
-    // may not be perfectly consistent with the total mass flux. Use the inlet
-    // mass flow rate as the definitive value to enforce global mass balance.
+    // In steady state, mass conservation requires inlet flow = outlet flow. The
+    // section-level velocities come from momentum correlations that may not be
+    // perfectly consistent with total mass flux.
     double massFlowIn = getInletStream().getFlowRate("kg/sec");
     double massFlowOut = massFlowIn;
 
-    if (massFlowFromState > 0 && Math.abs(massFlowFromState - massFlowIn) / massFlowIn > 0.1) {
-      logger.debug("Outlet section state mass flow ({:.2f} kg/s) differs from inlet ({:.2f} kg/s) by {:.1f}%",
-          massFlowFromState, massFlowIn, 100.0 * Math.abs(massFlowFromState - massFlowIn) / massFlowIn);
+    // Transient downstream equipment must see transport and inventory effects,
+    // not the current inlet boundary. Use the accepted interval-average outlet
+    // flux assembled with the same stage weights as the conservative update.
+    if (lastMassBalanceReport != null && lastMassBalanceReport.getElapsedTimeSeconds() > 0.0) {
+      massFlowOut = lastMassBalanceReport.getOutletMassKg(TwoFluidMassBalanceReport.Phase.TOTAL)
+          / lastMassBalanceReport.getElapsedTimeSeconds();
     }
 
-    // Ensure positive flow
-    if (massFlowOut > 0) {
-      outFluid.setTotalFlowRate(massFlowOut, "kg/sec");
+    if (massFlowFromState > 0.0 && massFlowOut > 0.0 && Math.abs(massFlowFromState - massFlowOut) / massFlowOut > 0.1) {
+      logger.debug("Outlet section state mass flow ({} kg/s) differs from published outlet ({} kg/s) by {}%",
+          massFlowFromState, massFlowOut, 100.0 * Math.abs(massFlowFromState - massFlowOut) / massFlowOut);
     }
+
+    if (!Double.isFinite(massFlowOut)) {
+      throw new IllegalStateException(
+          "Outlet mass flow must be finite: outlet=" + massFlowOut + " kg/s, inlet=" + massFlowIn + " kg/s");
+    }
+    outFluid.setTotalFlowRate(Math.max(0.0, massFlowOut), "kg/sec");
 
     getOutletStream().setFluid(outFluid);
   }

@@ -283,6 +283,35 @@ class LagrangianSlugTrackerTest {
   }
 
   @Test
+  void testMassConservationClosesAfterTerrainSlugExits() {
+    tracker.setEnableInletSlugGeneration(false);
+    tracker.setEnableStochasticInitiation(false);
+
+    LiquidAccumulationTracker.SlugCharacteristics chars = new LiquidAccumulationTracker.SlugCharacteristics();
+    chars.frontPosition = 98.0;
+    chars.tailPosition = 96.0;
+    chars.length = 2.0;
+    chars.velocity = 2.5;
+    chars.holdup = 0.85;
+    chars.volume = 0.01;
+
+    tracker.initializeTerrainSlug(chars, sections);
+
+    for (int i = 0; i < 100 && tracker.getSlugCount() > 0; i++) {
+      tracker.advanceTimeStep(sections, 0.5);
+    }
+
+    assertEquals(0, tracker.getSlugCount(), "Terrain slug should leave the pipe");
+    assertEquals(1, tracker.getTotalSlugsExited(), "Exactly one terrain slug should exit");
+    assertTrue(tracker.getTotalMassExitedAtOutlet() > 0.0, "Exited slug mass should be recorded separately");
+    assertEquals(0.0, tracker.getMassConservationError(), 1.0e-9,
+        "Tracker mass audit should close after the final slug exits");
+    assertEquals(tracker.getTotalMassBorrowedFromEulerian(),
+        tracker.getTotalMassReturnedToEulerian() + tracker.getTotalMassExitedAtOutlet(), 1.0e-9,
+        "Borrowed mass should equal returned plus exited mass with no active slug");
+  }
+
+  @Test
   void testSlugStatistics() {
     // Disable inlet generation for controlled test
     tracker.setEnableInletSlugGeneration(false);
@@ -367,6 +396,7 @@ class LagrangianSlugTrackerTest {
     assertEquals(0, tracker.getTotalSlugsMerged());
     assertEquals(0, tracker.getTotalSlugsDissipated());
     assertEquals(0, tracker.getTotalSlugsExited());
+    assertEquals(0.0, tracker.getTotalMassExitedAtOutlet());
   }
 
   @Test
