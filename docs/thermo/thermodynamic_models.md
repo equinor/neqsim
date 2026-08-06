@@ -572,7 +572,7 @@ ops.TPflash();
 
 | Class | Description | Use Case |
 |-------|-------------|----------|
-| `SystemPitzer` | Pitzer model | Concentrated brines |
+| `SystemPitzer` | Pitzer aqueous GE + optional SRK gas/oil | Concentrated brines and opt-in VLLE |
 | `SystemDesmukhMather` | Desmukh-Mather | Amine systems |
 | `SystemKentEisenberg` | Kent-Eisenberg | CO2/H2S in amines |
 | `SystemDuanSun` | Duan-Sun | CO2 solubility in brine |

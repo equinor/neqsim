@@ -85,6 +85,7 @@ import neqsim.pvtsimulation.flowassurance.HydrateRiskMapper;
 import neqsim.pvtsimulation.flowassurance.ScaleMassCalculator;
 import neqsim.pvtsimulation.flowassurance.ScalePredictionCalculator;
 import neqsim.pvtsimulation.flowassurance.WaterCompatibilityScreener;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.FluidBuilder;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
@@ -100,6 +101,26 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 public class DocExamplesCompilationTest {
+
+  /** Pitzer hybrid VLLE example from docs/thermo/fluid_creation_guide.md. */
+  @Test
+  public void testPitzerHybridVlleFluidCreationGuide() {
+    SystemPitzer fluid = new SystemPitzer(313.15, 50.0);
+    fluid.addComponent("methane", 5.0);
+    fluid.addComponent("n-heptane", 2.0);
+    fluid.addComponent("water", 55.5);
+    fluid.addComponent("Na+", 1.0);
+    fluid.addComponent("Cl-", 1.0);
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+
+    new ThermodynamicOperations(fluid).TPflash();
+
+    boolean hasAqueousPhase = fluid.hasPhaseType(PhaseType.AQUEOUS);
+    assertTrue(hasAqueousPhase);
+    assertTrue(fluid.hasPhaseType(PhaseType.GAS));
+    assertTrue(fluid.hasPhaseType(PhaseType.OIL));
+  }
 
   /**
    * Transient gas-network example from docs/process/gas_network_operations.md.

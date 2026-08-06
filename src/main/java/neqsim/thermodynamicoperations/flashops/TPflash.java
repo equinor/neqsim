@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.EosGeFlashModel;
+import neqsim.thermo.system.HybridEosGeFlashModel;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.exception.IsNaNException;
@@ -139,6 +140,8 @@ public class TPflash extends Flash {
   private transient double[] accelerationK;
   /** Opt-in direct gamma-phi strategy, resolved once because a flash operation keeps one system. */
   private final EosGeFlashModel directGammaPhiModel;
+  /** Opt-in hybrid multiphase strategy, resolved once because a flash operation keeps one system. */
+  private final HybridEosGeFlashModel hybridEosGeFlashModel;
 
   /** Compact two-phase rollback snapshot used by bounded neutral endpoint refinements. */
   private static final class BalancedTwoPhaseState {
@@ -171,6 +174,7 @@ public class TPflash extends Flash {
    */
   public TPflash() {
     directGammaPhiModel = null;
+    hybridEosGeFlashModel = null;
   }
 
   /**
@@ -180,7 +184,10 @@ public class TPflash extends Flash {
    */
   public TPflash(SystemInterface system) {
     this.system = system;
-    directGammaPhiModel = resolveDirectGammaPhiModel(system);
+    EosGeFlashModel eosGeModel = resolveEosGeFlashModel(system);
+    directGammaPhiModel = eosGeModel != null && eosGeModel.requiresDirectGammaPhiFlash() ? eosGeModel : null;
+    hybridEosGeFlashModel = eosGeModel instanceof HybridEosGeFlashModel
+        && ((HybridEosGeFlashModel) eosGeModel).requiresHybridEosGeFlash() ? (HybridEosGeFlashModel) eosGeModel : null;
     lnOldOldOldK = new double[system.getPhases()[0].getNumberOfComponents()];
     lnOldOldK = new double[system.getPhases()[0].getNumberOfComponents()];
     lnOldK = new double[system.getPhases()[0].getNumberOfComponents()];
@@ -211,13 +218,22 @@ public class TPflash extends Flash {
   }
 
   /**
+   * Get the opt-in hybrid multiphase strategy for the active system.
+   *
+   * @return hybrid EOS-GE strategy, or {@code null} for the ordinary TP-flash path
+   */
+  private HybridEosGeFlashModel getHybridEosGeFlashModel() {
+    return hybridEosGeFlashModel;
+  }
+
+  /**
    * Resolve the opt-in direct gamma-phi strategy once when the flash operation is created.
    *
    * @param flashSystem thermodynamic system owned by the operation
    * @return direct EOS-GE strategy, or {@code null} for an ordinary EOS system
    */
-  private static EosGeFlashModel resolveDirectGammaPhiModel(SystemInterface flashSystem) {
-    if (flashSystem instanceof EosGeFlashModel && ((EosGeFlashModel) flashSystem).requiresDirectGammaPhiFlash()) {
+  private static EosGeFlashModel resolveEosGeFlashModel(SystemInterface flashSystem) {
+    if (flashSystem instanceof EosGeFlashModel) {
       return (EosGeFlashModel) flashSystem;
     }
     return null;
@@ -593,6 +609,12 @@ public class TPflash extends Flash {
   private void runInternal() {
     resetStabilityDiagnostics();
     waterBearingRescueAttempted = false;
+    HybridEosGeFlashModel hybridModel = getHybridEosGeFlashModel();
+    if (hybridModel != null) {
+      system.init(0);
+      new TPHybridEosGeFlash(system, hybridModel).run();
+      return;
+    }
     EosGeFlashModel gammaPhiModel = getDirectGammaPhiModel();
     if (gammaPhiModel != null && (solidCheck || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck())) {
       throw new UnsupportedOperationException(

@@ -356,13 +356,33 @@ correlation, units, comparison example, and extrapolation limits.
 
 ### 7.3 Pitzer Model
 
-For concentrated electrolyte solutions.
+For concentrated electrolyte solutions. `SystemPitzer` can opt into a fixed-role hybrid flash in which gas and
+hydrocarbon liquid use SRK while the aqueous electrolyte liquid uses Pitzer.
 
 ```java
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemPitzer;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-SystemInterface fluid = new SystemPitzer(298.15, 1.0);
+SystemPitzer fluid = new SystemPitzer(313.15, 50.0);
+fluid.addComponent("methane", 5.0);
+fluid.addComponent("n-heptane", 2.0);
+fluid.addComponent("water", 55.5);
+fluid.addComponent("Na+", 1.0);
+fluid.addComponent("Cl-", 1.0);
+fluid.setMixingRule("classic");
+fluid.setMultiPhaseCheck(true);
+
+new ThermodynamicOperations(fluid).TPflash();
+
+// Material roles are selected from gas (SRK), oil (SRK), and aqueous (Pitzer).
+boolean hasAqueousPhase = fluid.hasPhaseType(PhaseType.AQUEOUS);
 ```
+
+The creation-order role objects are stable even when active phases are density-ordered or disappear. A later flash
+reconsiders inactive roles from the current feed and conditions. Neutral non-water species in the Pitzer phase use an
+aqueous Henry reference; water alone uses the Pitzer osmotic/Raoult solvent convention. Reactive Pitzer systems keep
+the established chemical-equilibrium flash path. Solid and wax checks are not yet supported by the hybrid strategy.
 
 ---
 
