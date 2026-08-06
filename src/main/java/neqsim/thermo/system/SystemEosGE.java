@@ -5,14 +5,16 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * Base class for gamma-phi systems combining an equation-of-state vapour phase and an excess-Gibbs-energy liquid phase.
+ * Base class for gamma-phi systems combining equation-of-state and excess-Gibbs-energy phases.
  *
  * <p>
- * The class centralises the phase topology shared by Wilson, NRTL, UNIFAC and specialised activity models: creation-
- * order slot {@code phaseArray[0]} is the EOS phase and subsequent fluid slots are independent clones of the GE phase.
- * Active phases can later be reordered through {@code phaseIndex}, so {@code getPhase(0)} is not guaranteed to return
- * the EOS slot. Concrete systems remain responsible for selecting the EOS, activity model, mixing rules and parameter
- * sources.
+ * The default topology shared by Wilson, NRTL, UNIFAC and specialised activity models has creation-order slot
+ * {@code phaseArray[0]} as the EOS vapour phase and subsequent fluid slots as independent clones of the GE liquid
+ * phase. Active phases can later be reordered through {@code phaseIndex}, so {@code getPhase(0)} is not guaranteed to
+ * return the EOS slot. Concrete systems remain responsible for selecting the EOS, activity model, mixing rules and
+ * parameter sources. A future hybrid gas-oil-aqueous implementation can extend this base with separate EOS gas and oil
+ * slots plus a GE aqueous slot; it must also provide a matching multiphase flash strategy rather than using the default
+ * two-phase direct gamma-phi preparation.
  * </p>
  *
  * @author NeqSim
@@ -58,10 +60,16 @@ public abstract class SystemEosGE extends SystemEos implements EosGeFlashModel {
   }
 
   /**
-   * Restore the direct gamma-phi active-phase contract after density ordering or a prior single-phase collapse.
+   * Restore the default two-phase direct gamma-phi active-phase contract after density ordering or a prior single-phase
+   * collapse.
+   *
+   * <p>
+   * Specialized hybrid systems may override this method to restore a different phase-role topology. Their flash solver
+   * must use the same phase-role contract.
+   * </p>
    */
   @Override
-  public final void prepareGammaPhiFlash() {
+  public void prepareGammaPhiFlash() {
     setNumberOfPhases(2);
     setPhaseIndex(0, 0);
     setPhaseIndex(1, 1);

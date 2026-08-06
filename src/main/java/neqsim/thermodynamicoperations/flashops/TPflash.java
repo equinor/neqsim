@@ -137,6 +137,8 @@ public class TPflash extends Flash {
   private transient double[] accelerationLnK;
   /** Reusable accelerated K-values; transient because it contains no thermodynamic state. */
   private transient double[] accelerationK;
+  /** Opt-in direct gamma-phi strategy, resolved once because a flash operation keeps one system. */
+  private final EosGeFlashModel directGammaPhiModel;
 
   /** Compact two-phase rollback snapshot used by bounded neutral endpoint refinements. */
   private static final class BalancedTwoPhaseState {
@@ -168,6 +170,7 @@ public class TPflash extends Flash {
    * Constructor for TPflash.
    */
   public TPflash() {
+    directGammaPhiModel = null;
   }
 
   /**
@@ -177,6 +180,7 @@ public class TPflash extends Flash {
    */
   public TPflash(SystemInterface system) {
     this.system = system;
+    directGammaPhiModel = resolveDirectGammaPhiModel(system);
     lnOldOldOldK = new double[system.getPhases()[0].getNumberOfComponents()];
     lnOldOldK = new double[system.getPhases()[0].getNumberOfComponents()];
     lnOldK = new double[system.getPhases()[0].getNumberOfComponents()];
@@ -203,8 +207,18 @@ public class TPflash extends Flash {
    * @return direct EOS-GE strategy, or {@code null} for the ordinary TP-flash path
    */
   private EosGeFlashModel getDirectGammaPhiModel() {
-    if (system instanceof EosGeFlashModel && ((EosGeFlashModel) system).requiresDirectGammaPhiFlash()) {
-      return (EosGeFlashModel) system;
+    return directGammaPhiModel;
+  }
+
+  /**
+   * Resolve the opt-in direct gamma-phi strategy once when the flash operation is created.
+   *
+   * @param flashSystem thermodynamic system owned by the operation
+   * @return direct EOS-GE strategy, or {@code null} for an ordinary EOS system
+   */
+  private static EosGeFlashModel resolveDirectGammaPhiModel(SystemInterface flashSystem) {
+    if (flashSystem instanceof EosGeFlashModel && ((EosGeFlashModel) flashSystem).requiresDirectGammaPhiFlash()) {
+      return (EosGeFlashModel) flashSystem;
     }
     return null;
   }
@@ -216,7 +230,6 @@ public class TPflash extends Flash {
     deviation = 0;
     neqsim.thermo.phase.PhaseInterface phase0 = system.getPhase(0);
     neqsim.thermo.phase.PhaseInterface phase1 = system.getPhase(1);
-    EosGeFlashModel gammaPhiModel = getDirectGammaPhiModel();
     int nc = phase0.getNumberOfComponents();
 
     for (i = 0; i < nc; i++) {
@@ -228,36 +241,15 @@ public class TPflash extends Flash {
         comp1.setK(comp0.getK());
       } else {
         Kold = comp0.getK();
-        if (gammaPhiModel == null) {
-          double Knew = comp1.getFugacityCoefficient() / comp0.getFugacityCoefficient() * presdiff;
-          comp0.setK(Knew);
-          if (Double.isNaN(Knew)) {
-            comp0.setK(Kold);
-            system.init(1);
-            Knew = comp0.getK();
-          }
-          comp1.setK(Knew);
-          deviation += Math.abs(Math.log(Knew / Kold));
-        } else {
-          comp1.fugcoef(phase1);
-          double vapourFugacityCoefficient = gammaPhiModel.getGammaPhiVapourFugacityCoefficient(comp0, phase0);
-          double targetK = comp1.getFugacityCoefficient() / vapourFugacityCoefficient * presdiff;
-          targetK = gammaPhiModel.constrainGammaPhiKValue(comp0, targetK);
-          double Knew = gammaPhiModel.relaxGammaPhiKValue(Kold, targetK);
-          comp0.setK(Knew);
-          if (!Double.isFinite(Knew) || Knew <= 0.0) {
-            comp0.setK(Kold);
-            system.init(1);
-            Knew = comp0.getK();
-          }
-          if (!Double.isFinite(Knew) || Knew <= 0.0) {
-            Knew = Double.isFinite(Kold) && Kold > 0.0 ? Kold : 1.0;
-            comp0.setK(Knew);
-          }
-          comp1.setK(Knew);
-          double deviationReferenceK = Double.isFinite(Kold) && Kold > 0.0 ? Kold : 1.0;
-          deviation += Math.abs(Math.log(Knew / deviationReferenceK));
+        double Knew = comp1.getFugacityCoefficient() / comp0.getFugacityCoefficient() * presdiff;
+        comp0.setK(Knew);
+        if (Double.isNaN(Knew)) {
+          comp0.setK(Kold);
+          system.init(1);
+          Knew = comp0.getK();
         }
+        comp1.setK(Knew);
+        deviation += Math.abs(Math.log(Knew / Kold));
       }
     }
 
@@ -265,6 +257,99 @@ public class TPflash extends Flash {
 
     try {
 
+      system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
+    } catch (IsNaNException ex) {
+      logger.warn("Not able to calculate beta. Value is NaN");
+      system.setBeta(oldBeta);
+    } catch (TooManyIterationsException ex) {
+      logger.warn("Not able to calculate beta, calculation is not converging.");
+      system.setBeta(oldBeta);
+    }
+    if (system.getBeta() > 1.0 - phaseFractionMinimumLimit) {
+      system.setBeta(1.0 - phaseFractionMinimumLimit);
+    }
+    if (system.getBeta() < phaseFractionMinimumLimit) {
+      system.setBeta(phaseFractionMinimumLimit);
+    }
+    system.calc_x_y();
+    system.init(1);
+  }
+
+  /**
+   * Run one direct gamma-phi successive-substitution step for package-level numerical tests.
+   *
+   * @throws IllegalStateException if the system did not opt into direct gamma-phi iteration
+   */
+  void sucsSubsDirectGammaPhi() {
+    EosGeFlashModel gammaPhiModel = getDirectGammaPhiModel();
+    if (gammaPhiModel == null) {
+      throw new IllegalStateException("The thermodynamic system did not opt into direct gamma-phi iteration.");
+    }
+    sucsSubsGammaPhi(gammaPhiModel);
+  }
+
+  /**
+   * Dispatch a successive-substitution step without adding EOS-GE logic to the ordinary EOS component loop.
+   *
+   * @param gammaPhiModel direct EOS-GE strategy, or {@code null} for the ordinary EOS algorithm
+   */
+  private void sucsSubsForModel(EosGeFlashModel gammaPhiModel) {
+    if (gammaPhiModel == null) {
+      sucsSubs();
+    } else {
+      sucsSubsGammaPhi(gammaPhiModel);
+    }
+  }
+
+  /**
+   * Successive substitution for opt-in direct gamma-phi models.
+   *
+   * <p>
+   * Keeping this model-specific component loop separate preserves the ordinary EOS hot path and avoids a strategy
+   * branch for every EOS component update.
+   * </p>
+   *
+   * @param gammaPhiModel direct EOS-GE strategy
+   */
+  private void sucsSubsGammaPhi(EosGeFlashModel gammaPhiModel) {
+    deviation = 0;
+    PhaseInterface phase0 = system.getPhase(0);
+    PhaseInterface phase1 = system.getPhase(1);
+    int numberOfComponents = phase0.getNumberOfComponents();
+
+    for (i = 0; i < numberOfComponents; i++) {
+      neqsim.thermo.component.ComponentInterface comp0 = phase0.getComponent(i);
+      neqsim.thermo.component.ComponentInterface comp1 = phase1.getComponent(i);
+      if (comp0.getIonicCharge() != 0 || comp0.isIsIon()) {
+        Kold = comp0.getK();
+        comp0.setK(1.0e-40);
+        comp1.setK(comp0.getK());
+      } else {
+        Kold = comp0.getK();
+        comp1.fugcoef(phase1);
+        double vapourFugacityCoefficient = gammaPhiModel.getGammaPhiVapourFugacityCoefficient(comp0, phase0);
+        double targetK = comp1.getFugacityCoefficient() / vapourFugacityCoefficient * presdiff;
+        targetK = gammaPhiModel.constrainGammaPhiKValue(comp0, targetK);
+        double Knew = gammaPhiModel.relaxGammaPhiKValue(Kold, targetK);
+        comp0.setK(Knew);
+        if (!Double.isFinite(Knew) || Knew <= 0.0) {
+          comp0.setK(Kold);
+          system.init(1);
+          Knew = comp0.getK();
+        }
+        if (!Double.isFinite(Knew) || Knew <= 0.0) {
+          Knew = Double.isFinite(Kold) && Kold > 0.0 ? Kold : 1.0;
+          comp0.setK(Knew);
+        }
+        comp1.setK(Knew);
+        double deviationReferenceK = Double.isFinite(Kold) && Kold > 0.0 ? Kold : 1.0;
+        deviation += Math.abs(Math.log(Knew / deviationReferenceK));
+      }
+    }
+
+    double oldBeta = system.getBeta();
+
+    try {
       system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
     } catch (IsNaNException ex) {
       logger.warn("Not able to calculate beta. Value is NaN");
@@ -597,14 +682,14 @@ public class TPflash extends Flash {
     if (system.getBeta() > (1.0 - 1.1 * phaseFractionMinimumLimit)
         || system.getBeta() < (1.1 * phaseFractionMinimumLimit)) {
       system.setBeta(0.5);
-      sucsSubs();
+      sucsSubsForModel(gammaPhiModel);
     }
 
     // Performs three iterations of successive substitution
     for (int k = 0; k < 3; k++) {
       if (system.getBeta() < (1.0 - 1.1 * phaseFractionMinimumLimit)
           && system.getBeta() > (1.1 * phaseFractionMinimumLimit)) {
-        sucsSubs();
+        sucsSubsForModel(gammaPhiModel);
         if ((system.getGibbsEnergy() - minimumGibbsEnergy) / Math.abs(minimumGibbsEnergy) < -1e-12) {
           break;
         }
@@ -811,7 +896,7 @@ public class TPflash extends Flash {
               && !(system.isChemicalSystem() || system.doSolidPhaseCheck()) && gammaPhiModel == null) {
             accselerateSucsSubs();
           } else {
-            sucsSubs();
+            sucsSubsForModel(gammaPhiModel);
           }
         } else if (iterations >= activeNewtonLimit && (!shouldApplyEnhancedMultiPhaseCheck() || deviation < 0.05)
             && Math.abs(system.getPhase(0).getPressure() - system.getPhase(1).getPressure()) < 1e-5) {
