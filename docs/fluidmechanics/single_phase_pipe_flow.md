@@ -288,8 +288,9 @@ guarantees described below.
 
 ### Opt-in Conservative Species Step
 
-Transient solver type `1` has an opt-in first-order finite-volume species path. For positive face
-mass flow, each independent component mass fraction is solved from
+Transient solver type `1` has an opt-in finite-volume species path. Its compatibility default is
+fully implicit first-order upwind. For positive face mass flow, each independent component mass
+fraction is solved from
 
 $$
 (M_P^{n+1} + \Delta t\,\dot m_e)\,\omega_{i,P}^{n+1}
@@ -303,6 +304,7 @@ the result. A hydraulic/species fixed-point iteration then synchronizes the EOS 
 requires both composition and EOS-density residuals to converge.
 
 ```java
+pipe.setSpeciesAdvectionScheme(SpeciesAdvectionScheme.TVD_VAN_LEER_SSP_RK2);
 pipe.setConservativeSpeciesTransport(true);
 pipe.setStoreSpeciesConservationHistory(true);
 pipe.setFailOnNonConvergence(true);
@@ -311,11 +313,24 @@ pipe.solveTransient(1);
 OnePhaseSpeciesConservationReport species = pipe.getSpeciesConservationReport();
 double[] componentResidualKg = species.getInventoryResidualKg();
 double[][] componentMassFractionByCell = species.getMassFractionProfile();
+SpeciesTransportDiagnostics resolution = species.getTransportDiagnostics();
+double maximumFullStepCfl = resolution.getMaximumCellCourantNumber();
+double firstOrderReferenceM2PerSecond =
+    resolution.getMaximumFirstOrderImplicitNumericalDispersionM2PerSecond();
 
 OnePhaseSpeciesConservationHistory history = pipe.getSpeciesConservationHistory();
 double[] acceptedStepTimesSeconds = history.getElapsedTimeSeconds();
 String pythonReadyHistoryJson = history.toJson();
 ```
+
+`SpeciesAdvectionScheme.FIRST_ORDER_IMPLICIT` remains the default. The opt-in
+`TVD_VAN_LEER_SSP_RK2` method uses MUSCL face reconstruction with a Van Leer limiter and a
+two-stage strong-stability-preserving Runge-Kutta update. It automatically divides an accepted
+hydraulic step into conservative transport substeps until every local mass Courant number is at
+most 0.45. The limited positive-flow update is bounded without clipping and remains second order
+in smooth constant-coefficient regions. `SpeciesAdvectionScheme` is separate from the legacy
+`AdvectionScheme`; setting the latter does not silently change the validated component-inventory
+path.
 
 The process-equipment wrapper exposes the same validated path without requiring callers to reach
 into `PipeFlowSystem`:
@@ -323,6 +338,7 @@ into `PipeFlowSystem`:
 ```java
 OnePhasePipeLine pipeline = new OnePhasePipeLine("export gas", inletStream);
 pipeline.setConservativeCompositionalTracking(true);
+pipeline.setSpeciesAdvectionScheme(SpeciesAdvectionScheme.TVD_VAN_LEER_SSP_RK2);
 pipeline.setStoreSpeciesConservationHistory(true);
 pipeline.setFailOnNonConvergence(true);
 pipeline.run();
@@ -346,8 +362,26 @@ must not be interpreted as the validated conservative path.
 `OnePhaseSpeciesConservationReport` exposes component names, physical-cell mass-fraction profiles,
 initial/final component inventories, integrated inlet/outlet component masses, absolute and
 relative inventory residuals, boundedness and sum-to-one diagnostics, thermodynamic
-synchronization error, and hydraulic/species residual histories. Its array getters return
-defensive copies and `toJson()` is suitable for Python-side result capture.
+synchronization error, hydraulic/species residual histories, and a per-step
+`SpeciesTransportDiagnostics` object. The diagnostic records the selected method, full-step local
+and effective CFL values, the number of bounded substeps, and the first-order implicit numerical-
+dispersion reference. Its array getters return defensive copies and `toJson()` is suitable for
+Python-side result capture.
+
+For constant velocity and cell length, modified-equation analysis of the compatibility method
+gives
+
+$$
+D_{num,implicit}=\frac{1}{2}u\,\Delta x\,(1+CFL).
+$$
+
+The diagnostic reports this quantity in m²/s when cell lengths are available, including when the
+TVD method is selected so the avoided first-order spreading remains visible. A flux limiter does
+not have one constant equivalent diffusion coefficient, so the value is explicitly a first-order
+reference rather than a TVD calibration. Physical axial dispersion is still disabled: cell
+Peclet entries are therefore unavailable (`NaN` in Java and `null` in JSON). Physical dispersion
+must be added as a separate flux model and must not be inferred from a grid-dependent numerical
+coefficient.
 
 After `setStoreSpeciesConservationHistory(true)`,
 `PipeFlowSystem.getSpeciesConservationHistory()` retains the immutable report from every accepted
@@ -400,8 +434,9 @@ yet defined. `OnePhasePipeLine` also performs an independent multiphase TP flash
 inputs and rejects actual phase appearance before advancing the finite-volume state. Once enabled,
 every failed hydraulic/species criterion throws so that a failed conservative state cannot advance
 to another timestep. Full hydraulic/EOS grid-and-timestep convergence, thermal coupling,
-higher-order convection, and physical dispersion remain validation gates. The spreading of the
-present first-order upwind scheme is numerical; there is no physical axial-dispersion model.
+phase-changing transport, and physical dispersion remain validation gates. The default first-order
+spreading is numerical; selecting the TVD scheme reduces it but does not model molecular diffusion,
+turbulent axial dispersion, fittings, or network mixing.
 
 ## Compositional Tracking
 

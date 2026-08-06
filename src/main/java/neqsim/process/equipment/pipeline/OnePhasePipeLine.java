@@ -8,6 +8,7 @@ package neqsim.process.equipment.pipeline;
 
 import java.util.UUID;
 import neqsim.fluidmechanics.flowsolver.AdvectionScheme;
+import neqsim.fluidmechanics.flowsolver.SpeciesAdvectionScheme;
 import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFlowConvergenceReport;
 import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseSpeciesConservationReport;
 import neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.PipeFlowSystem;
@@ -33,9 +34,10 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  * <p>
  * The older {@link #setCompositionalTracking(boolean)} route selects staged solver type 20. It remains available for
- * compatibility, but is not the validated conservative hydraulic/EOS path. Higher-order advection schemes configured
- * through {@link #setAdvectionScheme(AdvectionScheme)} belong to that legacy route and are not applied by the
- * conservative mode.
+ * compatibility, but is not the validated conservative hydraulic/EOS path. Schemes configured through
+ * {@link #setAdvectionScheme(AdvectionScheme)} belong to that legacy route and are not applied by the conservative
+ * mode. Select the conservative transport scheme independently with
+ * {@link #setSpeciesAdvectionScheme(SpeciesAdvectionScheme)}.
  * </p>
  *
  * <h2>Example: Gas Switching Simulation</h2>
@@ -143,6 +145,29 @@ public class OnePhasePipeLine extends Pipeline {
    */
   public AdvectionScheme getAdvectionScheme() {
     return pipe.getAdvectionScheme();
+  }
+
+  /**
+   * Select the finite-volume advection method used by conservative species transport.
+   *
+   * <p>
+   * The default is {@link SpeciesAdvectionScheme#FIRST_ORDER_IMPLICIT}. This setting is independent of the legacy
+   * {@link AdvectionScheme} used by staged solver type 20.
+   * </p>
+   *
+   * @param scheme non-null conservative species advection scheme
+   */
+  public void setSpeciesAdvectionScheme(SpeciesAdvectionScheme scheme) {
+    getPipeFlowSystem().setSpeciesAdvectionScheme(scheme);
+  }
+
+  /**
+   * Get the selected conservative species advection method.
+   *
+   * @return selected conservative species advection scheme
+   */
+  public SpeciesAdvectionScheme getSpeciesAdvectionScheme() {
+    return getPipeFlowSystem().getSpeciesAdvectionScheme();
   }
 
   /**

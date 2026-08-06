@@ -60,6 +60,8 @@ public final class OnePhaseSpeciesConservationReport implements Serializable {
   private final double maximumMassFraction;
   private final double maximumMassFractionSumError;
   private final double maximumThermodynamicMassFractionError;
+  /** Advection resolution and numerical-spreading diagnostics for this accepted step. */
+  private final SpeciesTransportDiagnostics transportDiagnostics;
   private final int couplingIterations;
   private final double[] maximumMassFractionChangeHistory;
   private final double[] densityResidualHistory;
@@ -72,8 +74,20 @@ public final class OnePhaseSpeciesConservationReport implements Serializable {
       double maximumMassFractionSumError, double maximumThermodynamicMassFractionError, String message) {
     this(reason, componentNames, massFractionProfile, initialInventoryKg, finalInventoryKg, inletBoundaryMassKg,
         outletBoundaryMassKg, inventoryResidualKg, relativeInventoryResidual, maximumRelativeInventoryResidual,
+        minimumMassFraction, maximumMassFraction, maximumMassFractionSumError, maximumThermodynamicMassFractionError,
+        SpeciesTransportDiagnostics.notRun(), message);
+  }
+
+  OnePhaseSpeciesConservationReport(ConservationReason reason, String[] componentNames, double[][] massFractionProfile,
+      double[] initialInventoryKg, double[] finalInventoryKg, double[] inletBoundaryMassKg,
+      double[] outletBoundaryMassKg, double[] inventoryResidualKg, double[] relativeInventoryResidual,
+      double maximumRelativeInventoryResidual, double minimumMassFraction, double maximumMassFraction,
+      double maximumMassFractionSumError, double maximumThermodynamicMassFractionError,
+      SpeciesTransportDiagnostics transportDiagnostics, String message) {
+    this(reason, componentNames, massFractionProfile, initialInventoryKg, finalInventoryKg, inletBoundaryMassKg,
+        outletBoundaryMassKg, inventoryResidualKg, relativeInventoryResidual, maximumRelativeInventoryResidual,
         minimumMassFraction, maximumMassFraction, maximumMassFractionSumError, maximumThermodynamicMassFractionError, 0,
-        new double[0], new double[0], message);
+        new double[0], new double[0], transportDiagnostics, message);
   }
 
   private OnePhaseSpeciesConservationReport(ConservationReason reason, String[] componentNames,
@@ -82,7 +96,7 @@ public final class OnePhaseSpeciesConservationReport implements Serializable {
       double[] relativeInventoryResidual, double maximumRelativeInventoryResidual, double minimumMassFraction,
       double maximumMassFraction, double maximumMassFractionSumError, double maximumThermodynamicMassFractionError,
       int couplingIterations, double[] maximumMassFractionChangeHistory, double[] densityResidualHistory,
-      String message) {
+      SpeciesTransportDiagnostics transportDiagnostics, String message) {
     this.reason = reason;
     this.componentNames = copy(componentNames);
     this.massFractionProfile = copy(massFractionProfile);
@@ -97,6 +111,8 @@ public final class OnePhaseSpeciesConservationReport implements Serializable {
     this.maximumMassFraction = maximumMassFraction;
     this.maximumMassFractionSumError = maximumMassFractionSumError;
     this.maximumThermodynamicMassFractionError = maximumThermodynamicMassFractionError;
+    this.transportDiagnostics = transportDiagnostics == null ? SpeciesTransportDiagnostics.notRun()
+        : transportDiagnostics;
     this.couplingIterations = couplingIterations;
     this.maximumMassFractionChangeHistory = copy(maximumMassFractionChangeHistory);
     this.densityResidualHistory = copy(densityResidualHistory);
@@ -189,6 +205,11 @@ public final class OnePhaseSpeciesConservationReport implements Serializable {
     return maximumThermodynamicMassFractionError;
   }
 
+  /** @return immutable advection resolution and numerical-spreading diagnostic */
+  public SpeciesTransportDiagnostics getTransportDiagnostics() {
+    return transportDiagnostics;
+  }
+
   /** @return number of hydraulic/species fixed-point iterations */
   public int getCouplingIterations() {
     return couplingIterations;
@@ -232,7 +253,8 @@ public final class OnePhaseSpeciesConservationReport implements Serializable {
     return new OnePhaseSpeciesConservationReport(updatedReason, componentNames, massFractionProfile, initialInventoryKg,
         finalInventoryKg, inletBoundaryMassKg, outletBoundaryMassKg, inventoryResidualKg, relativeInventoryResidual,
         maximumRelativeInventoryResidual, minimumMassFraction, maximumMassFraction, maximumMassFractionSumError,
-        maximumError, couplingIterations, maximumMassFractionChangeHistory, densityResidualHistory, updatedMessage);
+        maximumError, couplingIterations, maximumMassFractionChangeHistory, densityResidualHistory,
+        transportDiagnostics, updatedMessage);
   }
 
   OnePhaseSpeciesConservationReport withCouplingDiagnostics(int iterations, double[] massFractionChangeHistory,
@@ -242,7 +264,7 @@ public final class OnePhaseSpeciesConservationReport implements Serializable {
         finalInventoryKg, inletBoundaryMassKg, outletBoundaryMassKg, inventoryResidualKg, relativeInventoryResidual,
         maximumRelativeInventoryResidual, minimumMassFraction, maximumMassFraction, maximumMassFractionSumError,
         maximumThermodynamicMassFractionError, iterations, massFractionChangeHistory, eosDensityResidualHistory,
-        updatedMessage);
+        transportDiagnostics, updatedMessage);
   }
 
   OnePhaseSpeciesConservationReport withReason(ConservationReason updatedReason, String updatedMessage) {
@@ -250,7 +272,7 @@ public final class OnePhaseSpeciesConservationReport implements Serializable {
         finalInventoryKg, inletBoundaryMassKg, outletBoundaryMassKg, inventoryResidualKg, relativeInventoryResidual,
         maximumRelativeInventoryResidual, minimumMassFraction, maximumMassFraction, maximumMassFractionSumError,
         maximumThermodynamicMassFractionError, couplingIterations, maximumMassFractionChangeHistory,
-        densityResidualHistory, updatedMessage);
+        densityResidualHistory, transportDiagnostics, updatedMessage);
   }
 
   private static double[] copy(double[] values) {

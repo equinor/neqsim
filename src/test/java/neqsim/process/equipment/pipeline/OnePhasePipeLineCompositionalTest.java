@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.fluidmechanics.flowsolver.AdvectionScheme;
+import neqsim.fluidmechanics.flowsolver.SpeciesAdvectionScheme;
 import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseSpeciesConservationReport;
 import neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.OnePhaseSpeciesConservationHistory;
 import neqsim.process.equipment.stream.Stream;
@@ -77,6 +78,11 @@ public class OnePhasePipeLineCompositionalTest {
     assertEquals(AdvectionScheme.TVD_VAN_LEER, pipe.getAdvectionScheme());
 
     pipe.setAdvectionScheme(AdvectionScheme.TVD_SUPERBEE);
+    assertEquals(AdvectionScheme.TVD_SUPERBEE, pipe.getAdvectionScheme());
+
+    assertEquals(SpeciesAdvectionScheme.FIRST_ORDER_IMPLICIT, pipe.getSpeciesAdvectionScheme());
+    pipe.setSpeciesAdvectionScheme(SpeciesAdvectionScheme.TVD_VAN_LEER_SSP_RK2);
+    assertEquals(SpeciesAdvectionScheme.TVD_VAN_LEER_SSP_RK2, pipe.getSpeciesAdvectionScheme());
     assertEquals(AdvectionScheme.TVD_SUPERBEE, pipe.getAdvectionScheme());
   }
 

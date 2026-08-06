@@ -1,11 +1,14 @@
 package neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver;
 
+import java.util.Arrays;
+import neqsim.fluidmechanics.flowsolver.SpeciesAdvectionScheme;
 import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseSpeciesConservationReport.ConservationReason;
 
-/** Positive-flow, first-order implicit finite-volume transport for n-1 species. */
+/** Positive-flow conservative finite-volume transport for n-1 species. */
 final class ConservativeSpeciesTransport {
   static final double INVENTORY_RELATIVE_TOLERANCE = 1.0e-8;
   static final double MASS_FRACTION_TOLERANCE = 1.0e-12;
+  private static final int MAXIMUM_TRANSPORT_SUBSTEPS = 10000;
 
   private ConservativeSpeciesTransport() {
   }
@@ -13,8 +16,15 @@ final class ConservativeSpeciesTransport {
   static OnePhaseSpeciesConservationReport solve(String[] componentNames, double[][] oldMassFraction,
       double[] inletMassFraction, double[] oldCellMassKg, double[] newCellMassKg, double[] faceMassFlowKgPerSecond,
       double timeStepSeconds) {
+    return solve(componentNames, oldMassFraction, inletMassFraction, oldCellMassKg, newCellMassKg,
+        faceMassFlowKgPerSecond, timeStepSeconds, SpeciesAdvectionScheme.FIRST_ORDER_IMPLICIT, null);
+  }
+
+  static OnePhaseSpeciesConservationReport solve(String[] componentNames, double[][] oldMassFraction,
+      double[] inletMassFraction, double[] oldCellMassKg, double[] newCellMassKg, double[] faceMassFlowKgPerSecond,
+      double timeStepSeconds, SpeciesAdvectionScheme scheme, double[] cellLengthM) {
     String validation = validate(componentNames, oldMassFraction, inletMassFraction, oldCellMassKg, newCellMassKg,
-        faceMassFlowKgPerSecond, timeStepSeconds);
+        faceMassFlowKgPerSecond, timeStepSeconds, scheme, cellLengthM);
     if (validation != null) {
       return failed(ConservationReason.INVALID_STATE, componentNames, validation);
     }
@@ -26,6 +36,25 @@ final class ConservativeSpeciesTransport {
       }
     }
 
+    SpeciesTransportDiagnostics diagnostics = createDiagnostics(scheme, oldCellMassKg, newCellMassKg,
+        faceMassFlowKgPerSecond, timeStepSeconds, cellLengthM);
+    if (diagnostics.getSubsteps() > MAXIMUM_TRANSPORT_SUBSTEPS) {
+      return failed(ConservationReason.INVALID_STATE, componentNames,
+          "High-resolution species transport requires " + diagnostics.getSubsteps()
+              + " substeps; reduce the hydraulic timestep so no more than " + MAXIMUM_TRANSPORT_SUBSTEPS
+              + " bounded transport substeps are required.");
+    }
+    if (scheme == SpeciesAdvectionScheme.TVD_VAN_LEER_SSP_RK2) {
+      return solveTvdVanLeer(componentNames, oldMassFraction, inletMassFraction, oldCellMassKg, newCellMassKg,
+          faceMassFlowKgPerSecond, timeStepSeconds, diagnostics);
+    }
+    return solveFirstOrderImplicit(componentNames, oldMassFraction, inletMassFraction, oldCellMassKg, newCellMassKg,
+        faceMassFlowKgPerSecond, timeStepSeconds, diagnostics);
+  }
+
+  private static OnePhaseSpeciesConservationReport solveFirstOrderImplicit(String[] componentNames,
+      double[][] oldMassFraction, double[] inletMassFraction, double[] oldCellMassKg, double[] newCellMassKg,
+      double[] faceMassFlowKgPerSecond, double timeStepSeconds, SpeciesTransportDiagnostics diagnostics) {
     int components = componentNames.length;
     int cells = oldCellMassKg.length;
     double[][] massFraction = new double[components][cells];
@@ -54,12 +83,79 @@ final class ConservativeSpeciesTransport {
     }
 
     return createReport(componentNames, oldMassFraction, inletMassFraction, oldCellMassKg, newCellMassKg,
-        faceMassFlowKgPerSecond, timeStepSeconds, massFraction);
+        faceMassFlowKgPerSecond, timeStepSeconds, massFraction, null, null, diagnostics);
+  }
+
+  private static OnePhaseSpeciesConservationReport solveTvdVanLeer(String[] componentNames, double[][] oldMassFraction,
+      double[] inletMassFraction, double[] oldCellMassKg, double[] newCellMassKg, double[] faceMassFlowKgPerSecond,
+      double timeStepSeconds, SpeciesTransportDiagnostics diagnostics) {
+    int components = componentNames.length;
+    int independentComponents = components - 1;
+    int cells = oldCellMassKg.length;
+    int substeps = diagnostics.getSubsteps();
+    double substepSeconds = timeStepSeconds / substeps;
+    double[][] componentMassKg = new double[independentComponents][cells];
+    double[] inletBoundaryMassKg = new double[components];
+    double[] outletBoundaryMassKg = new double[components];
+
+    for (int component = 0; component < independentComponents; component++) {
+      for (int cell = 0; cell < cells; cell++) {
+        componentMassKg[component][cell] = oldCellMassKg[cell] * oldMassFraction[component][cell];
+      }
+    }
+
+    for (int substep = 0; substep < substeps; substep++) {
+      double startFraction = (double) substep / substeps;
+      double endFraction = (double) (substep + 1) / substeps;
+      double[] startCellMassKg = interpolate(oldCellMassKg, newCellMassKg, startFraction);
+      double[] endCellMassKg = interpolate(oldCellMassKg, newCellMassKg, endFraction);
+
+      for (int component = 0; component < independentComponents; component++) {
+        double[] startMassFraction = divide(componentMassKg[component], startCellMassKg);
+        double[] startFaceMassFraction = reconstructPositiveFlowFaces(startMassFraction, inletMassFraction[component]);
+        double[] eulerComponentMassKg = conservativeEulerStep(componentMassKg[component], startFaceMassFraction,
+            faceMassFlowKgPerSecond, substepSeconds);
+        double[] endEulerMassFraction = divide(eulerComponentMassKg, endCellMassKg);
+        double[] endFaceMassFraction = reconstructPositiveFlowFaces(endEulerMassFraction, inletMassFraction[component]);
+        double[] secondEulerComponentMassKg = conservativeEulerStep(eulerComponentMassKg, endFaceMassFraction,
+            faceMassFlowKgPerSecond, substepSeconds);
+
+        for (int cell = 0; cell < cells; cell++) {
+          componentMassKg[component][cell] = 0.5
+              * (componentMassKg[component][cell] + secondEulerComponentMassKg[cell]);
+        }
+        inletBoundaryMassKg[component] += substepSeconds * faceMassFlowKgPerSecond[0] * inletMassFraction[component];
+        outletBoundaryMassKg[component] += 0.5 * substepSeconds * faceMassFlowKgPerSecond[cells]
+            * (startFaceMassFraction[cells] + endFaceMassFraction[cells]);
+      }
+    }
+
+    double[][] massFraction = new double[components][cells];
+    for (int component = 0; component < independentComponents; component++) {
+      massFraction[component] = divide(componentMassKg[component], newCellMassKg);
+    }
+    for (int cell = 0; cell < cells; cell++) {
+      double independentSum = 0.0;
+      for (int component = 0; component < independentComponents; component++) {
+        independentSum += massFraction[component][cell];
+      }
+      massFraction[components - 1][cell] = 1.0 - independentSum;
+    }
+    inletBoundaryMassKg[components - 1] = timeStepSeconds * faceMassFlowKgPerSecond[0];
+    outletBoundaryMassKg[components - 1] = timeStepSeconds * faceMassFlowKgPerSecond[cells];
+    for (int component = 0; component < independentComponents; component++) {
+      inletBoundaryMassKg[components - 1] -= inletBoundaryMassKg[component];
+      outletBoundaryMassKg[components - 1] -= outletBoundaryMassKg[component];
+    }
+
+    return createReport(componentNames, oldMassFraction, inletMassFraction, oldCellMassKg, newCellMassKg,
+        faceMassFlowKgPerSecond, timeStepSeconds, massFraction, inletBoundaryMassKg, outletBoundaryMassKg, diagnostics);
   }
 
   private static OnePhaseSpeciesConservationReport createReport(String[] componentNames, double[][] oldMassFraction,
       double[] inletMassFraction, double[] oldCellMassKg, double[] newCellMassKg, double[] faceMassFlowKgPerSecond,
-      double timeStepSeconds, double[][] massFraction) {
+      double timeStepSeconds, double[][] massFraction, double[] integratedInletMassKg, double[] integratedOutletMassKg,
+      SpeciesTransportDiagnostics diagnostics) {
     int components = componentNames.length;
     int cells = oldCellMassKg.length;
     double[] initialInventory = new double[components];
@@ -80,8 +176,12 @@ final class ConservativeSpeciesTransport {
         minimumMassFraction = Math.min(minimumMassFraction, massFraction[component][cell]);
         maximumMassFraction = Math.max(maximumMassFraction, massFraction[component][cell]);
       }
-      inletMass[component] = timeStepSeconds * faceMassFlowKgPerSecond[0] * inletMassFraction[component];
-      outletMass[component] = timeStepSeconds * faceMassFlowKgPerSecond[cells] * massFraction[component][cells - 1];
+      inletMass[component] = integratedInletMassKg == null
+          ? timeStepSeconds * faceMassFlowKgPerSecond[0] * inletMassFraction[component]
+          : integratedInletMassKg[component];
+      outletMass[component] = integratedOutletMassKg == null
+          ? timeStepSeconds * faceMassFlowKgPerSecond[cells] * massFraction[component][cells - 1]
+          : integratedOutletMassKg[component];
       residual[component] = finalInventory[component] - initialInventory[component] - inletMass[component]
           + outletMass[component];
       double scale = Math.max(
@@ -113,11 +213,15 @@ final class ConservativeSpeciesTransport {
         + "], maximum sum error=" + maximumSumError + " (tolerance " + MASS_FRACTION_TOLERANCE + ").";
     return new OnePhaseSpeciesConservationReport(reason, componentNames, massFraction, initialInventory, finalInventory,
         inletMass, outletMass, residual, relativeResidual, maximumRelativeResidual, minimumMassFraction,
-        maximumMassFraction, maximumSumError, Double.NaN, message);
+        maximumMassFraction, maximumSumError, Double.NaN, diagnostics, message);
   }
 
   private static String validate(String[] componentNames, double[][] oldMassFraction, double[] inletMassFraction,
-      double[] oldCellMassKg, double[] newCellMassKg, double[] faceMassFlowKgPerSecond, double timeStepSeconds) {
+      double[] oldCellMassKg, double[] newCellMassKg, double[] faceMassFlowKgPerSecond, double timeStepSeconds,
+      SpeciesAdvectionScheme scheme, double[] cellLengthM) {
+    if (scheme == null) {
+      return "A conservative species advection scheme is required.";
+    }
     if (componentNames == null || componentNames.length < 2) {
       return "At least two named components are required for n-1 transport.";
     }
@@ -165,7 +269,99 @@ final class ConservativeSpeciesTransport {
         return "Face mass flows must be finite.";
       }
     }
+    if (cellLengthM != null) {
+      if (cellLengthM.length != oldCellMassKg.length) {
+        return "Cell-length diagnostics must contain one value per physical cell.";
+      }
+      for (double cellLength : cellLengthM) {
+        if (!Double.isFinite(cellLength) || cellLength <= 0.0) {
+          return "Cell lengths must be finite and positive when supplied.";
+        }
+      }
+    }
     return null;
+  }
+
+  private static SpeciesTransportDiagnostics createDiagnostics(SpeciesAdvectionScheme scheme, double[] oldCellMassKg,
+      double[] newCellMassKg, double[] faceMassFlowKgPerSecond, double timeStepSeconds, double[] cellLengthM) {
+    int cells = oldCellMassKg.length;
+    double[] courantNumber = new double[cells];
+    double[] numericalDispersion = new double[cells];
+    double[] cellPecletNumber = new double[cells];
+    Arrays.fill(numericalDispersion, Double.NaN);
+    Arrays.fill(cellPecletNumber, Double.NaN);
+    double courantSum = 0.0;
+    double maximumCourant = 0.0;
+    for (int cell = 0; cell < cells; cell++) {
+      double referenceCellMassKg = Math.min(oldCellMassKg[cell], newCellMassKg[cell]);
+      double referenceMassFlowKgPerSecond = Math.max(faceMassFlowKgPerSecond[cell], faceMassFlowKgPerSecond[cell + 1]);
+      courantNumber[cell] = timeStepSeconds * referenceMassFlowKgPerSecond / referenceCellMassKg;
+      courantSum += courantNumber[cell];
+      maximumCourant = Math.max(maximumCourant, courantNumber[cell]);
+      if (cellLengthM != null) {
+        double velocityMPerSecond = referenceMassFlowKgPerSecond / referenceCellMassKg * cellLengthM[cell];
+        numericalDispersion[cell] = 0.5 * velocityMPerSecond * cellLengthM[cell] * (1.0 + courantNumber[cell]);
+      }
+    }
+    int substeps = scheme.isHighResolution()
+        ? Math.max(1, (int) Math.ceil(maximumCourant / scheme.getMaximumCourantNumber()))
+        : 1;
+    String message = "Full-step mass CFL is reported before " + substeps + " transport substep(s). "
+        + "The numerical-dispersion array is the modified-equation reference for first-order implicit upwind; "
+        + "physical axial dispersion is disabled, so cell Peclet numbers are unavailable.";
+    return new SpeciesTransportDiagnostics(scheme, courantNumber, courantSum / cells, substeps, numericalDispersion,
+        cellPecletNumber, false, message);
+  }
+
+  private static double[] interpolate(double[] oldValues, double[] newValues, double fraction) {
+    double[] result = new double[oldValues.length];
+    for (int index = 0; index < result.length; index++) {
+      result[index] = oldValues[index] + fraction * (newValues[index] - oldValues[index]);
+    }
+    return result;
+  }
+
+  private static double[] divide(double[] numerator, double[] denominator) {
+    double[] result = new double[numerator.length];
+    for (int index = 0; index < result.length; index++) {
+      result[index] = numerator[index] / denominator[index];
+    }
+    return result;
+  }
+
+  private static double[] conservativeEulerStep(double[] componentMassKg, double[] faceMassFraction,
+      double[] faceMassFlowKgPerSecond, double timeStepSeconds) {
+    double[] result = new double[componentMassKg.length];
+    for (int cell = 0; cell < result.length; cell++) {
+      result[cell] = componentMassKg[cell] + timeStepSeconds * (faceMassFlowKgPerSecond[cell] * faceMassFraction[cell]
+          - faceMassFlowKgPerSecond[cell + 1] * faceMassFraction[cell + 1]);
+    }
+    return result;
+  }
+
+  private static double[] reconstructPositiveFlowFaces(double[] cellMassFraction, double inletMassFraction) {
+    int cells = cellMassFraction.length;
+    double[] faceMassFraction = new double[cells + 1];
+    faceMassFraction[0] = inletMassFraction;
+    for (int face = 1; face <= cells; face++) {
+      int upstreamCell = face - 1;
+      double slope = 0.0;
+      if (upstreamCell < cells - 1) {
+        double westValue = upstreamCell == 0 ? inletMassFraction : cellMassFraction[upstreamCell - 1];
+        double westDifference = cellMassFraction[upstreamCell] - westValue;
+        double eastDifference = cellMassFraction[upstreamCell + 1] - cellMassFraction[upstreamCell];
+        slope = vanLeerLimitedSlope(westDifference, eastDifference);
+      }
+      faceMassFraction[face] = cellMassFraction[upstreamCell] + 0.5 * slope;
+    }
+    return faceMassFraction;
+  }
+
+  private static double vanLeerLimitedSlope(double westDifference, double eastDifference) {
+    if (westDifference * eastDifference <= 0.0) {
+      return 0.0;
+    }
+    return 2.0 * westDifference * eastDifference / (westDifference + eastDifference);
   }
 
   private static boolean isBounded(double value) {

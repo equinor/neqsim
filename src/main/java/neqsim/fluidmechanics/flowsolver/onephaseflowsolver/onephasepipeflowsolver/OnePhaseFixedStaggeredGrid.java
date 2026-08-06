@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
 import neqsim.mathlib.generalmath.BandedLinearSystemSolver;
 import neqsim.mathlib.generalmath.TDMAsolve;
+import neqsim.fluidmechanics.flowsolver.SpeciesAdvectionScheme;
 
 /**
  * OnePhaseFixedStaggeredGrid class.
@@ -56,6 +57,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   private OnePhaseSpeciesConservationReport lastSpeciesConservationReport = OnePhaseSpeciesConservationReport.notRun();
   private boolean failOnNonConvergence;
   private boolean conservativeSpeciesTransportEnabled;
+  private SpeciesAdvectionScheme speciesAdvectionScheme = SpeciesAdvectionScheme.FIRST_ORDER_IMPLICIT;
   private double[] coupledMassEquationScale;
   private double[] coupledMomentumEquationScale;
 
@@ -138,6 +140,24 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
    */
   public boolean isConservativeSpeciesTransportEnabled() {
     return conservativeSpeciesTransportEnabled;
+  }
+
+  /**
+   * Select the conservative component-inventory advection scheme.
+   *
+   * @param scheme non-null typed species scheme
+   * @throws IllegalArgumentException if {@code scheme} is null
+   */
+  public void setSpeciesAdvectionScheme(SpeciesAdvectionScheme scheme) {
+    if (scheme == null) {
+      throw new IllegalArgumentException("Conservative species advection scheme cannot be null.");
+    }
+    speciesAdvectionScheme = scheme;
+  }
+
+  /** @return selected conservative component-inventory advection scheme */
+  public SpeciesAdvectionScheme getSpeciesAdvectionScheme() {
+    return speciesAdvectionScheme;
   }
 
   /**
@@ -1235,6 +1255,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     double[] previousCellMassKg = new double[cells];
     double[] finalCellMassKg = new double[cells];
     double[] faceMassFlowKgPerSecond = new double[cells + 1];
+    double[] cellLengthM = new double[cells];
 
     for (int component = 0; component < components; component++) {
       componentNames[component] = pipe.getNode(0).getBulkSystem().getPhase(0).getComponent(component).getName();
@@ -1248,6 +1269,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       double volume = getControlVolume(node);
       previousCellMassKg[cell] = oldDensity[node] * volume;
       finalCellMassKg[cell] = sol2Matrix.get(node, 0) * volume;
+      cellLengthM[cell] = pipe.getNode(node).getGeometry().getNodeLength();
     }
     faceMassFlowKgPerSecond[0] = pipe.getNode(1).getVelocityIn().doubleValue() * pipe.getNode(0).getGeometry().getArea()
         * sol2Matrix.get(0, 0);
@@ -1261,7 +1283,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         * pipe.getNode(outletCellNode).getGeometry().getArea() * sol2Matrix.get(outletCellNode, 0);
 
     return ConservativeSpeciesTransport.solve(componentNames, previousMassFraction, inletMassFraction,
-        previousCellMassKg, finalCellMassKg, faceMassFlowKgPerSecond, timeStep);
+        previousCellMassKg, finalCellMassKg, faceMassFlowKgPerSecond, timeStep, speciesAdvectionScheme, cellLengthM);
   }
 
   private double maximumConservativeCompositionChange(OnePhaseSpeciesConservationReport report) {
