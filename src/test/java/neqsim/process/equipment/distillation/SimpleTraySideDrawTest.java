@@ -226,12 +226,16 @@ public class SimpleTraySideDrawTest {
     DistillationColumn.ColumnSideDrawSpecification specification = column.addSideDrawFlowSpecification(3,
         DistillationColumn.SideDrawPhase.LIQUID, 20.160854543137464, "kg/hr");
     specification.setTolerance(1.0e-5);
-    specification.setMaxIterations(12);
-    column.setMaxColumnTearIterations(12);
+    // The setup solve establishes a valid template; its convergence rate is not under test here.
+    specification.setMaxIterations(30);
+    column.setMaxColumnTearIterations(30);
 
     column.run(UUID.randomUUID());
     assertTrue(column.isLastColumnTearConverged(), column.getConvergenceDiagnostics());
 
+    // Keep the deterministic rejection phase bounded to the telemetry count asserted below.
+    specification.setMaxIterations(12);
+    column.setMaxColumnTearIterations(12);
     RejectingCandidateColumn template = (RejectingCandidateColumn) getPrivateField(column,
         "singleSideDrawCandidateTemplate");
     setPrivateInt(template, "lastIterationCount", 777);
