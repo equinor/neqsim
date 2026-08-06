@@ -303,6 +303,18 @@ applicability depends on several variables still require a separate multidimensi
 envelope. Confidence and validity metadata do not change utilization, feasibility, or optimizer
 behavior by themselves; downstream ranking must preserve and assess them explicitly.
 
+For full-model diagnostics, `ProcessModelSimulationEvaluator.rankCapacityConstraints(model)`
+returns an immutable list of every enabled capacity constraint in descending utilization order.
+Equal-utilization constraints retain process-model registration order, including the declared order
+of built-in strategy-generated constraints. Each
+`BottleneckStatus.getEvidenceApplicability()` value is one of `WITHIN_VALIDITY_RANGE`,
+`OUTSIDE_VALIDITY_RANGE`, or `NOT_ASSESSED`. This makes unsupported and extrapolated limits
+visible beside the engineering ranking without allowing confidence or applicability to change
+utilization, feasibility, or order. The method snapshots every dynamic value supplier exactly once;
+enabled constraints with undefined (`NaN`) utilization remain visible at the end of the ranking;
+`findActiveBottleneck(model)` remains the lower-allocation API when only the leading constraint is
+needed.
+
 ### 2. CapacityConstrainedEquipment (Interface)
 
 Interface that equipment classes implement to participate in capacity tracking.

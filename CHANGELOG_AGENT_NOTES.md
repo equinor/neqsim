@@ -9,6 +9,19 @@
 
 ---
 
+## 2026-08-06 — Evidence-aware full-model capacity ranking
+
+- `ProcessModelSimulationEvaluator.rankCapacityConstraints(model)` returns every enabled
+  `CapacityConstraint` as an immutable list ordered by descending utilization. Stable ties retain
+  process-model registration order, and each dynamic value supplier is sampled once per call.
+- `BottleneckStatus.getEvidenceApplicability()` reports `WITHIN_VALIDITY_RANGE`,
+  `OUTSIDE_VALIDITY_RANGE`, or `NOT_ASSESSED` for the snapshotted operating point.
+- Evidence confidence and applicability remain diagnostics only. They do not change utilization,
+  feasibility, or ranking and must not be interpreted as probabilities of safe operation.
+- `findActiveBottleneck(model)` remains available when only the leading constraint is required.
+
+---
+
 ## 2026-08-06 — Side-draw flow targets reject invalid inner column states
 
 - A column with one independent side-draw flow specification now evaluates trial split fractions
@@ -16,6 +29,9 @@
 - Failed and fallback-product trials no longer update the side-draw controller or replace the last
   accepted public column state. The safeguarded search uses only accepted flow observations for
   interpolation and bounded exploration.
+- When a cold trial is rejected after an accepted state exists, the same fraction is retried once
+  from the nearest accepted solved profile. This continuation path removes Java-runtime-dependent
+  cold-start failures without reusing a failed or fallback-product state.
 - `DistillationColumn` now reports rejected candidates, state rollbacks, accumulated inner-solver
   work, and the candidate history through its column-tear diagnostics. These values are transient
   and reset on copied or deserialized columns.
