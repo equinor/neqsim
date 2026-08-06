@@ -240,7 +240,10 @@ intentionally limited to type `1`; it does not overwrite the temperature or comp
 produced by staged solver types `10` and `20`. There is no universal minimum-flow cutoff: supported
 low positive flow is determined by convergence of the scaled continuity and momentum equations and
 a finite, positive hydraulic/EOS state. Zero or reversed flow remains outside this coupled path's
-documented validity range and fails loudly.
+documented validity range and fails loudly. A non-converged direct conservative steady solve also
+throws with its residual and iteration diagnostics before that state can initialize a transient;
+the compatibility setting that permits a failed report to return applies only to legacy,
+non-conservative operation.
 
 The pressure and velocity unknowns are interleaved so each equation couples only to its two
 nearest unknowns on either side. The Newton matrix is therefore stored and solved as a compact

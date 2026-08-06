@@ -104,6 +104,23 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void unsupportedLowerFlowSteadyInitializationFailsWithResidualDiagnostics() {
+    PipeFlowSystem pipe = createConfiguredPipe(40, 15000.0, 0.1);
+
+    assertFalse(pipe.isFailOnNonConvergence());
+    IllegalStateException exception = assertThrows(IllegalStateException.class, () -> pipe.solveSteadyState(1));
+    OnePhaseFlowConvergenceReport report = pipe.getConvergenceReport();
+
+    assertFalse(report.isConverged());
+    assertTrue(report.isNonlinearMetricEquationResidual());
+    assertTrue(report.getNonlinearIterations() > 0);
+    assertEquals(report.getMessage(), exception.getMessage());
+    assertTrue(exception.getMessage().contains("scaled equation residual="));
+    assertTrue(exception.getMessage().contains("Final scaled continuity residual="));
+    assertTrue(exception.getMessage().contains("momentum residual="));
+  }
+
+  @Test
   void highResolutionSpeciesStepRetainsHydraulicEosSynchronization() {
     PipeFlowSystem pipe = createInitializedPipe(12, 3000.0);
     pipe.setConservativeSpeciesTransport(true);
@@ -490,6 +507,13 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
   }
 
   private static PipeFlowSystem createInitializedPipe(int nodes, double lengthMeters, double massFlowKgPerSecond) {
+    PipeFlowSystem pipe = createConfiguredPipe(nodes, lengthMeters, massFlowKgPerSecond);
+    pipe.solveSteadyState(1);
+    assertTrue(pipe.getConvergenceReport().isConverged(), pipe.getConvergenceReport().getMessage());
+    return pipe;
+  }
+
+  private static PipeFlowSystem createConfiguredPipe(int nodes, double lengthMeters, double massFlowKgPerSecond) {
     PipeFlowSystem pipe = new PipeFlowSystem();
     pipe.setInletThermoSystem(createGas(0.95, 0.05, massFlowKgPerSecond));
     pipe.setNumberOfLegs(1);
@@ -508,8 +532,6 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     pipe.createSystem();
     pipe.init();
     pipe.setConservativeSpeciesTransport(true);
-    pipe.solveSteadyState(1);
-    assertTrue(pipe.getConvergenceReport().isConverged(), pipe.getConvergenceReport().getMessage());
     return pipe;
   }
 
