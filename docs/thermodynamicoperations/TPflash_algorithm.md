@@ -241,12 +241,13 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 │     → Keep only a normalized, balanced, fugacity-equal result with no Gibbs       │
 │       increase; otherwise restore beta, compositions, K-values, and phase types   │
 │                                                                                 │
-│  IF ordinary, neutral, dry two-phase hydrocarbon roots are inverted:             │
-│     → Detect the vapor-labelled phase having the larger mean molar mass          │
-│     → Evaluate the vapor root on the light composition and liquid root on the    │
-│       heavy composition                                                         │
-│     → Replace both roots only for lower Gibbs energy and                         │
-│       max |Δ ln(fᵢ)| < 1e-8; beta, x, and material balance stay unchanged         │
+│  IF ordinary, neutral, dry two-phase hydrocarbon roots are inconsistent:         │
+│     → Trigger for inverted mean-molar-mass order or max |Δ ln(fᵢ)| ≥ 1e-8        │
+│     → For inverted order, evaluate vapor/light and liquid/heavy roots together   │
+│     → Otherwise evaluate both roots on each phase while leaving the other fixed  │
+│     → Retain the selected root seed and public phase identity only for lower     │
+│       Gibbs energy and max |Δ ln(fᵢ)| < 1e-8                                     │
+│     → In both cases, beta, x, and material balance stay unchanged                │
 │                                                                                 │
 │  IF chemical system:                                                            │
 │     → Final chemical equilibrium solve in aqueous/liquid phases                 │
@@ -270,7 +271,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 | Ordinary water-rich refinement feed threshold | 0.01 mole fraction water | Avoid phase-search overhead for valid trace-water flashes. An already-active neutral aqueous split bypasses only this feed threshold when `max abs(Delta z_i)` is non-finite or above `1e-8`, allowing the bounded beta correction below without another stability calculation. An incipient trace-water GAS+OIL endpoint with `min(beta) <= 1e-4` also bypasses the threshold when its confirmed log-fugacity residual is non-finite or at least `1e-8`; the guarded candidate must then pass the strict feasibility and lower-Gibbs gates. |
 | Trace-water aqueous-stability screen | water feed `< 0.01`, GAS+OIL, `min(beta) <= 0.01`, and `x_water,oil >= 10 z_water` | Use the structural conditions only as a performance gate for an aqueous TPD trial. The TPD result, reduced-active-set convergence below `1e-10`, phase normalization, `1e-8` material/fugacity checks, distinct compositions, and lower Gibbs energy determine acceptance. Full recursive TPmultiflash is not run. |
 | Water-rich material-balance tolerance | 1e-8 in `max abs(Delta z_i)` | Reject a non-conservative reference before comparing feasible Gibbs minima |
-| Cubic-root equilibrium tolerance | 1e-8 in `max abs(Delta ln(f_i))` | Accept an alternate root assignment only when the existing composition split is already at equilibrium |
+| Dry cubic-root screen and acceptance | Screen normally ordered GAS+OIL endpoints when `max abs(Delta ln(f_i)) >= 1e-8`; accept below `1e-8` | Evaluate both roots for one phase at a time and retain a lower-Gibbs root seed only when the resulting unchanged composition split restores fugacity equality. Inverted mean-molar-mass order retains the paired-root comparison. |
 | Aqueous cubic-root equilibrium tolerance | 1e-8 in `max abs(Delta ln(f_i))` | Accept an alternate root only when it lowers Gibbs energy and already satisfies component fugacity equality |
 | Stable-single-phase aqueous-seed gate | `1e-8` in phase-composition normalization | Reject only a structurally invalid aqueous trial whose composition is non-finite, out of `[0, 1]`, or unnormalized; leave normalized endpoints to model-specific convergence and refinement paths |
 | Post-removal aqueous recovery | `1e-8` in `max abs(Delta z_i)` and `max abs(Delta ln(f_i))` | Restore a balanced neutral two-phase aqueous reference only when a rejected third-phase trial leaves the final two-phase endpoint infeasible; genuine three-phase and already feasible endpoints are retained |
@@ -1749,11 +1750,13 @@ Commercial process simulators do not publish all implementation details, but pub
   already converged endpoints or attempting to rescue grossly invalid states. The original endpoint is restored unless
   phase identity, normalization, material balance, fugacity equality, and Gibbs energy all pass.
 - Near a hydrocarbon critical boundary, the ordinary flash can converge the correct light and heavy compositions but
-  retain the liquid cubic root on the light phase and the vapor root on the heavy phase. A molar-mass ordering screen
-  detects that inverted labelling without adding trial-root work to normal results. The two roots are reassigned
-  together only when the resulting state lowers extensive Gibbs energy beyond `max(1e-6 J, 1e-8 * abs(G))` and already
-  satisfies `max abs(Delta ln(f_i)) < 1e-8`. This is a post-convergence root selection, consistent with the minimum-Gibbs
-  acceptance principle in Michelsen's phase-split formulation; it is not an additional stability or TPflash solve.
+  retain an inconsistent cubic volume root. Inverted mean-molar-mass order still triggers the paired vapor/light and
+  liquid/heavy root comparison. A normally ordered endpoint triggers only when its current
+  `max abs(Delta ln(f_i)) >= 1e-8`; both cubic root seeds are then reinitialized on one cloned phase at a time while the
+  other phase remains fixed. The lowest-Gibbs candidate is retained only when it restores
+  `max abs(Delta ln(f_i)) < 1e-8`, and its root seed is stored separately from the unchanged public GAS/OIL phase label
+  so later property initialization does not recreate the stale root. Phase fractions, compositions, and material
+  balance remain unchanged. This is a post-convergence root selection, not an additional stability or TPflash solve.
 - Converged supplementary near-critical stability trials accept reduced TPD below `-1e-6`, matching the residual and
   step convergence resolution of that SSI solve. This replaces the former `-1e-4` cutoff while rejecting negative
   values below the solver's numerical resolution. The standard stability decision retains its `-1e-8` limit, and the
