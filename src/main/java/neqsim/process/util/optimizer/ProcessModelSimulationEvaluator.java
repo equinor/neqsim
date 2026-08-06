@@ -1285,6 +1285,9 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     /** Active bottleneck metadata. */
     private BottleneckStatus activeBottleneck = BottleneckStatus.none();
 
+    /** Immutable ranked capacity-constraint snapshots for this evaluated model state. */
+    private List<BottleneckStatus> rankedCapacityConstraints = Collections.emptyList();
+
     /** Additional scalar outputs. */
     private Map<String, Double> additionalOutputs = new LinkedHashMap<String, Double>();
 
@@ -1461,6 +1464,34 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      */
     public void setActiveBottleneck(BottleneckStatus activeBottleneck) {
       this.activeBottleneck = activeBottleneck == null ? BottleneckStatus.none() : activeBottleneck;
+    }
+
+    /**
+     * Gets all capacity constraints snapshotted after this model evaluation.
+     *
+     * <p>
+     * The list is immutable and ordered by descending utilization. It remains tied to this evaluation even after the
+     * evaluator runs another operating point.
+     * </p>
+     *
+     * @return immutable ranked capacity snapshots
+     */
+    public List<BottleneckStatus> getRankedCapacityConstraints() {
+      return rankedCapacityConstraints == null ? Collections.<BottleneckStatus>emptyList() : rankedCapacityConstraints;
+    }
+
+    /**
+     * Sets ranked capacity snapshots using a defensive immutable copy.
+     *
+     * @param rankedCapacityConstraints ranked capacity snapshots
+     */
+    public void setRankedCapacityConstraints(List<BottleneckStatus> rankedCapacityConstraints) {
+      if (rankedCapacityConstraints == null || rankedCapacityConstraints.isEmpty()) {
+        this.rankedCapacityConstraints = Collections.emptyList();
+        return;
+      }
+      this.rankedCapacityConstraints = Collections
+          .unmodifiableList(new ArrayList<BottleneckStatus>(rankedCapacityConstraints));
     }
 
     /**
@@ -2025,7 +2056,9 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       result.setConstraintValues(constraintValues);
       result.setConstraintMargins(margins);
       result.setPenaltySum(penaltySum);
-      result.setActiveBottleneck(findActiveBottleneck(processModel));
+      List<BottleneckStatus> rankedCapacityConstraints = rankCapacityConstraints(processModel);
+      result.setRankedCapacityConstraints(rankedCapacityConstraints);
+      result.setActiveBottleneck(selectActiveBottleneck(rankedCapacityConstraints));
       result.setFeasible(feasible);
     } catch (Exception exception) {
       logger.warn("ProcessModel evaluation failed: " + exception.getMessage());
@@ -2049,6 +2082,24 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     lastResult = result;
     lastParameters = Arrays.copyOf(parameterValues, parameterValues.length);
     return result;
+  }
+
+  /**
+   * Selects the leading finite-utilization bottleneck from a ranked snapshot.
+   *
+   * @param rankedCapacityConstraints ranked capacity snapshots
+   * @return leading finite bottleneck, or {@link BottleneckStatus#none()} when unavailable
+   */
+  private BottleneckStatus selectActiveBottleneck(List<BottleneckStatus> rankedCapacityConstraints) {
+    if (rankedCapacityConstraints == null) {
+      return BottleneckStatus.none();
+    }
+    for (BottleneckStatus bottleneck : rankedCapacityConstraints) {
+      if (bottleneck != null && !Double.isNaN(bottleneck.getUtilization())) {
+        return bottleneck;
+      }
+    }
+    return BottleneckStatus.none();
   }
 
   /**
