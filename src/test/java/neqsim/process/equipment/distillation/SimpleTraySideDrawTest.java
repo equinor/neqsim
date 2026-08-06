@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -20,6 +21,28 @@ import neqsim.thermo.system.SystemInterface;
  * @version 1.0
  */
 public class SimpleTraySideDrawTest {
+
+  /** Column whose copied candidates can be forced to fail before solver telemetry is reset. */
+  private static final class RejectingCandidateColumn extends DistillationColumn {
+    private static final long serialVersionUID = 1000L;
+    private boolean rejectDuringInitialization = false;
+
+    private RejectingCandidateColumn(String name, int numberOfTrays, boolean hasReboiler, boolean hasCondenser) {
+      super(name, numberOfTrays, hasReboiler, hasCondenser);
+    }
+
+    @Override
+    public void init() {
+      if (rejectDuringInitialization) {
+        throw new IllegalStateException("Deterministic candidate rejection before solver work");
+      }
+      super.init();
+    }
+
+    private void rejectDuringInitialization() {
+      rejectDuringInitialization = true;
+    }
+  }
 
   /**
    * Test that vapor side draws remove flow from internal tray traffic while conserving phase flow.
@@ -164,6 +187,8 @@ public class SimpleTraySideDrawTest {
     assertEquals(0.0, column.getMassBalance("kg/hr"), 1.0e-6, column.getConvergenceDiagnostics());
     assertTrue(column.getLastColumnTearRejectedCandidateCount() > 0,
         "the controller should reject the invalid large multiplicative candidate");
+    assertTrue(column.getLastColumnTearCandidateHistory().contains("continuation fraction="),
+        "the rejected cold candidate should be retried from an accepted state");
     assertComponentMassBalance(feed, column.getSideDrawStream(3, DistillationColumn.SideDrawPhase.LIQUID), column);
   }
 
@@ -189,6 +214,39 @@ public class SimpleTraySideDrawTest {
         column.getConvergenceDiagnostics());
     assertEquals(0.0, column.getMassBalance("kg/hr"), 1.0e-6, column.getConvergenceDiagnostics());
     assertComponentMassBalance(feed, column.getSideDrawStream(3, DistillationColumn.SideDrawPhase.LIQUID), column);
+  }
+
+  /** Test that rejected copied candidates do not report inherited inner iterations. */
+  @Test
+  public void rejectedCandidatesDoNotInheritStaleInnerIterationTelemetry() throws ReflectiveOperationException {
+    Stream feed = createFractionatorFeed("stale candidate telemetry feed");
+    feed.setTemperature(338.15, "K");
+    feed.run();
+    RejectingCandidateColumn column = createRejectingCandidateColumn("StaleCandidateTelemetryColumn", feed);
+    DistillationColumn.ColumnSideDrawSpecification specification = column.addSideDrawFlowSpecification(3,
+        DistillationColumn.SideDrawPhase.LIQUID, 20.160854543137464, "kg/hr");
+    specification.setTolerance(1.0e-5);
+    specification.setMaxIterations(12);
+    column.setMaxColumnTearIterations(12);
+
+    column.run(UUID.randomUUID());
+    assertTrue(column.isLastColumnTearConverged(), column.getConvergenceDiagnostics());
+
+    RejectingCandidateColumn template = (RejectingCandidateColumn) getPrivateField(column,
+        "singleSideDrawCandidateTemplate");
+    setPrivateInt(template, "lastIterationCount", 777);
+    template.rejectDuringInitialization();
+
+    column.run(UUID.randomUUID());
+
+    assertEquals(12, column.getLastColumnTearRejectedCandidateCount());
+    assertEquals(0, column.getLastColumnTearRollbackCount());
+    assertEquals(0, column.getLastColumnTearInnerIterationCount(),
+        "candidates rejected before solver work must not inherit copied iteration telemetry");
+    assertTrue(column.getLastColumnTearCandidateHistory().contains("#1 fraction="));
+    assertTrue(column.getLastColumnTearCandidateHistory().contains("#12 fraction="));
+    assertTrue(column.getLastColumnTearCandidateHistory().contains("status=FAILED, accepted=false"));
+    assertFalse(column.getLastColumnTearCandidateHistory().contains("accepted=true"));
   }
 
   /**
@@ -317,6 +375,33 @@ public class SimpleTraySideDrawTest {
     column.setReboilerTemperature(383.15);
     column.setCondenserRefluxRatio(1.5);
     return column;
+  }
+
+  /** Configure the fractionator variant used to reject copied candidates deterministically. */
+  private RejectingCandidateColumn createRejectingCandidateColumn(String name, Stream feed) {
+    RejectingCandidateColumn column = new RejectingCandidateColumn(name, 5, true, true);
+    column.addFeedStream(feed, 3);
+    column.setTopPressure(8.0);
+    column.setBottomPressure(8.3);
+    column.setCondenserTemperature(303.15);
+    column.setReboilerTemperature(383.15);
+    column.setCondenserRefluxRatio(1.5);
+    return column;
+  }
+
+  /** Read one private column field for deterministic failure-path setup. */
+  private Object getPrivateField(DistillationColumn column, String fieldName) throws ReflectiveOperationException {
+    Field field = DistillationColumn.class.getDeclaredField(fieldName);
+    field.setAccessible(true);
+    return field.get(column);
+  }
+
+  /** Set one private integer telemetry field for deterministic failure-path setup. */
+  private void setPrivateInt(DistillationColumn column, String fieldName, int value)
+      throws ReflectiveOperationException {
+    Field field = DistillationColumn.class.getDeclaredField(fieldName);
+    field.setAccessible(true);
+    field.setInt(column, value);
   }
 
   /**
