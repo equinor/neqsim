@@ -136,6 +136,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private static final int MIN_MATRIX_INSIDE_OUT_WARM_START_TRAYS = 12;
   /** Default specification continuation stages used by automatic solver mode. */
   private static final int AUTO_SPECIFICATION_HOMOTOPY_STEPS = 3;
+  /** Absolute fraction step used to search past rejected single-side-draw candidates. */
+  private static final double SIDE_DRAW_CANDIDATE_SCAN_STEP = 5.0e-3;
   double condenserCoolingDuty = 10.0;
   private double reboilerTemperature = 273.15;
   private double condenserTemperature = 270.15;
@@ -834,6 +836,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double lastColumnTearResidual = 0.0;
   /** Whether the latest outer tear-variable solve satisfied tolerance. */
   private boolean lastColumnTearConverged = true;
+  /** Number of rejected inner candidates in the latest outer tear-variable solve. */
+  private transient int lastColumnTearRejectedCandidateCount = 0;
+  /** Number of times the accepted live state was retained after rejecting a candidate. */
+  private transient int lastColumnTearRollbackCount = 0;
+  /** Sum of inner solver iterations across accepted and rejected tear candidates. */
+  private transient int lastColumnTearInnerIterationCount = 0;
+  /** Candidate acceptance/rejection trace from the latest outer tear-variable solve. */
+  private transient String lastColumnTearCandidateHistory = "";
+  /** Cold configuration snapshot used for independent single-side-draw candidate solves. */
+  private transient DistillationColumn singleSideDrawCandidateTemplate = null;
+  /** Input signature associated with {@link #singleSideDrawCandidateTemplate}. */
+  private transient long singleSideDrawCandidateTemplateSignature = Long.MIN_VALUE;
   /** Latest maximum relative pumparound return-stream change. */
   private double lastPumparoundRelativeChange = 0.0;
   /** Whether the latest outer tear update changed any manipulated variable. */
@@ -1362,8 +1376,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastColumnTearIterationCount = 0;
     lastColumnTearResidual = Double.POSITIVE_INFINITY;
     lastColumnTearConverged = false;
+    lastColumnTearRejectedCandidateCount = 0;
+    lastColumnTearRollbackCount = 0;
+    lastColumnTearInnerIterationCount = 0;
+    lastColumnTearCandidateHistory = "";
+    if (hasSingleSideDrawFlowSpecificationOnly()) {
+      solveSingleSideDrawFlowSpecification(id, iterationLimit, tolerance);
+      return;
+    }
     for (int iteration = 0; iteration < iterationLimit; iteration++) {
       solveConfiguredColumn(id);
+      lastColumnTearInnerIterationCount += Math.max(0, lastIterationCount);
       double relativeChange = updateColumnTearVariables(id);
       lastColumnTearIterationCount = iteration + 1;
       lastColumnTearResidual = relativeChange;
@@ -1371,6 +1394,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         if (columnTearVariablesChanged) {
           setDoInitializion(true);
           solveConfiguredColumn(id);
+          lastColumnTearInnerIterationCount += Math.max(0, lastIterationCount);
         }
         updateSideDrawSpecificationResidualsOnly();
         lastColumnTearResidual = Math.max(relativeChange, getMaxSideDrawSpecificationResidual());
@@ -1391,10 +1415,349 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
     setDoInitializion(true);
     solveConfiguredColumn(id);
+    lastColumnTearInnerIterationCount += Math.max(0, lastIterationCount);
     updateSideDrawSpecificationResidualsOnly();
     lastColumnTearResidual = Math.max(lastColumnTearResidual, getMaxSideDrawSpecificationResidual());
     lastColumnTearConverged = lastColumnTearResidual <= tolerance;
     finalizeColumnTearConvergenceStatus(tolerance);
+  }
+
+  /**
+   * Check whether the coordinated tear problem is a single independent side-draw flow target.
+   *
+   * @return {@code true} when no pumparound or hydraulic tear variable is active
+   */
+  private boolean hasSingleSideDrawFlowSpecificationOnly() {
+    return sideDrawSpecifications.size() == 1 && pumparounds.isEmpty() && !hydraulicPressureDropCouplingEnabled;
+  }
+
+  /**
+   * Solve one side-draw flow target using independent cold candidates and accepted-state rollback.
+   *
+   * <p>
+   * Each proposed fraction is solved on a deep copy of the same cold column configuration. Only candidates whose inner
+   * solve reports an accepted status are copied back to the live column. Rejected fallback products therefore cannot
+   * become the basis for a controller update or leak into public product streams. Accepted probes are used for secant
+   * interpolation when they bracket the target; otherwise a multiplicative proposal is tried. A small deterministic
+   * fraction scan moves past isolated rejected candidates without using their invalid flow values.
+   * </p>
+   *
+   * @param id calculation identifier
+   * @param iterationLimit maximum candidate solves
+   * @param tolerance active relative side-draw tolerance
+   */
+  private void solveSingleSideDrawFlowSpecification(UUID id, int iterationLimit, double tolerance) {
+    ColumnSideDrawSpecification specification = sideDrawSpecifications.get(0);
+    DistillationColumn template = getSingleSideDrawCandidateTemplate();
+    List<Double> attemptedFractions = new ArrayList<Double>();
+    List<Double> acceptedFractions = new ArrayList<Double>();
+    List<Double> acceptedFlows = new ArrayList<Double>();
+    StringBuilder candidateHistory = new StringBuilder();
+    double maximumFraction = getMaximumSideDrawFraction(specification.getTrayNumber(), specification.getPhase());
+    double candidateFraction = getSideDrawFraction(specification.getTrayNumber(), specification.getPhase());
+    double bestResidual = Double.POSITIVE_INFINITY;
+    boolean acceptedAnyCandidate = false;
+
+    for (int iteration = 0; iteration < iterationLimit; iteration++) {
+      if (!Double.isFinite(candidateFraction)) {
+        break;
+      }
+      candidateFraction = Math.max(0.0, Math.min(maximumFraction, candidateFraction));
+      if (wasSideDrawFractionAttempted(attemptedFractions, candidateFraction)) {
+        candidateFraction = selectNextSingleSideDrawCandidate(specification, acceptedFractions, acceptedFlows,
+            attemptedFractions, maximumFraction);
+        if (!Double.isFinite(candidateFraction)) {
+          break;
+        }
+      }
+      attemptedFractions.add(Double.valueOf(candidateFraction));
+
+      DistillationColumn candidate = (DistillationColumn) template.copy();
+      candidate.setSideDrawFractionWithinLimit(specification.getTrayNumber(), specification.getPhase(),
+          candidateFraction);
+      candidate.setDoInitializion(true);
+      double candidateFlow = Double.NaN;
+      try {
+        candidate.solveConfiguredColumn(id);
+        StreamInterface candidateDraw = candidate.getSideDrawStream(specification.getTrayNumber(),
+            specification.getPhase());
+        candidateFlow = candidateDraw.getFlowRate(specification.getFlowUnit());
+      } catch (RuntimeException exception) {
+        candidate.lastSolveStatus = SolveStatus.FAILED;
+        candidate.lastSolveStatusReason = "Side-draw candidate inner solve failed: " + exception.getMessage();
+        logger.debug("Side-draw candidate {} rejected for column {} because the inner solve threw.",
+            Double.valueOf(candidateFraction), getName(), exception);
+      }
+      lastColumnTearIterationCount = iteration + 1;
+      lastColumnTearInnerIterationCount += Math.max(0, candidate.getLastIterationCount());
+
+      boolean candidateAccepted = isAcceptedColumnTearCandidate(candidate) && Double.isFinite(candidateFlow);
+      appendSideDrawCandidateHistory(candidateHistory, iteration + 1, candidateFraction, candidateFlow,
+          candidate.getLastSolveStatus(), candidateAccepted);
+      if (!candidateAccepted) {
+        lastColumnTearRejectedCandidateCount++;
+        if (acceptedAnyCandidate) {
+          lastColumnTearRollbackCount++;
+        }
+        candidateFraction = selectNextSingleSideDrawCandidate(specification, acceptedFractions, acceptedFlows,
+            attemptedFractions, maximumFraction);
+        continue;
+      }
+
+      acceptedAnyCandidate = true;
+      acceptedFractions.add(Double.valueOf(candidateFraction));
+      acceptedFlows.add(Double.valueOf(candidateFlow));
+      double residual = Math.abs(candidateFlow - specification.getTargetFlowRate())
+          / Math.max(1.0e-12, Math.abs(specification.getTargetFlowRate()));
+      if (residual < bestResidual) {
+        bestResidual = residual;
+        acceptSolvedStateCandidate(candidate);
+        specification.updateActualFlowRate(candidateFlow);
+        lastColumnTearResidual = residual;
+      }
+      if (residual <= tolerance) {
+        lastColumnTearConverged = true;
+        lastColumnTearCandidateHistory = candidateHistory.toString();
+        singleSideDrawCandidateTemplateSignature = calculateNaphtaliSandholmInputSignature();
+        return;
+      }
+      candidateFraction = selectNextSingleSideDrawCandidate(specification, acceptedFractions, acceptedFlows,
+          attemptedFractions, maximumFraction);
+    }
+
+    lastColumnTearResidual = bestResidual;
+    lastColumnTearConverged = false;
+    lastColumnTearCandidateHistory = candidateHistory.toString();
+    singleSideDrawCandidateTemplateSignature = calculateNaphtaliSandholmInputSignature();
+    if (!acceptedAnyCandidate) {
+      lastSolveStatus = SolveStatus.FAILED;
+      lastSolveStatusReason = "All single-side-draw flow candidates were rejected by the inner column solver";
+      return;
+    }
+    finalizeColumnTearConvergenceStatus(tolerance);
+  }
+
+  /**
+   * Return a reusable cold snapshot for independent side-draw candidate solves.
+   *
+   * @return deep-copy template whose tray state is not mutated by candidate probes
+   */
+  private DistillationColumn getSingleSideDrawCandidateTemplate() {
+    long currentSignature = calculateNaphtaliSandholmInputSignature();
+    if (singleSideDrawCandidateTemplate == null || (singleSideDrawCandidateTemplateSignature != Long.MIN_VALUE
+        && singleSideDrawCandidateTemplateSignature != currentSignature)) {
+      singleSideDrawCandidateTemplate = (DistillationColumn) this.copy();
+      singleSideDrawCandidateTemplate.singleSideDrawCandidateTemplate = null;
+      singleSideDrawCandidateTemplate.singleSideDrawCandidateTemplateSignature = Long.MIN_VALUE;
+    }
+    return singleSideDrawCandidateTemplate;
+  }
+
+  /**
+   * Check whether a candidate inner solve may be used by the side-draw controller.
+   *
+   * @param candidate solved candidate column
+   * @return {@code true} for rigorous or explicitly reconciled accepted products
+   */
+  private boolean isAcceptedColumnTearCandidate(DistillationColumn candidate) {
+    return candidate.lastSolveStatus == SolveStatus.RIGOROUS_CONVERGED
+        || candidate.lastSolveStatus == SolveStatus.RECONCILED_PRODUCTS;
+  }
+
+  /**
+   * Select the next single-side-draw fraction from accepted probes only.
+   *
+   * @param specification active side-draw flow target
+   * @param acceptedFractions fractions with accepted inner solves
+   * @param acceptedFlows corresponding accepted side-draw flows
+   * @param attemptedFractions all attempted fractions, including rejected candidates
+   * @param maximumFraction largest physically available fraction
+   * @return next untried fraction, or {@link Double#NaN} when the bounded search is exhausted
+   */
+  private double selectNextSingleSideDrawCandidate(ColumnSideDrawSpecification specification,
+      List<Double> acceptedFractions, List<Double> acceptedFlows, List<Double> attemptedFractions,
+      double maximumFraction) {
+    if (acceptedFractions.isEmpty()) {
+      double searchOrigin = attemptedFractions.isEmpty() ? 0.0
+          : attemptedFractions.get(attemptedFractions.size() - 1).doubleValue();
+      return nextUntriedSideDrawGridFractionAround(searchOrigin, attemptedFractions, maximumFraction);
+    }
+
+    double target = specification.getTargetFlowRate();
+    int bestIndex = 0;
+    int lowerIndex = -1;
+    int upperIndex = -1;
+    double bestResidual = Double.POSITIVE_INFINITY;
+    double lowerResidual = Double.POSITIVE_INFINITY;
+    double upperResidual = Double.POSITIVE_INFINITY;
+    for (int index = 0; index < acceptedFractions.size(); index++) {
+      double flow = acceptedFlows.get(index).doubleValue();
+      double residual = Math.abs(flow - target);
+      if (residual < bestResidual) {
+        bestResidual = residual;
+        bestIndex = index;
+      }
+      if (flow <= target && residual < lowerResidual) {
+        lowerResidual = residual;
+        lowerIndex = index;
+      }
+      if (flow >= target && residual < upperResidual) {
+        upperResidual = residual;
+        upperIndex = index;
+      }
+    }
+
+    if (lowerIndex >= 0 && upperIndex >= 0 && lowerIndex != upperIndex) {
+      double lowerFraction = acceptedFractions.get(lowerIndex).doubleValue();
+      double upperFraction = acceptedFractions.get(upperIndex).doubleValue();
+      double lowerFlow = acceptedFlows.get(lowerIndex).doubleValue();
+      double upperFlow = acceptedFlows.get(upperIndex).doubleValue();
+      double denominator = upperFlow - lowerFlow;
+      double interpolatedFraction = Math.abs(denominator) > 1.0e-12
+          ? lowerFraction + (target - lowerFlow) * (upperFraction - lowerFraction) / denominator
+          : 0.5 * (lowerFraction + upperFraction);
+      interpolatedFraction = Math.max(0.0, Math.min(maximumFraction, interpolatedFraction));
+      if (!wasSideDrawFractionAttempted(attemptedFractions, interpolatedFraction)) {
+        return interpolatedFraction;
+      }
+    }
+
+    double bestFraction = acceptedFractions.get(bestIndex).doubleValue();
+    double bestFlow = acceptedFlows.get(bestIndex).doubleValue();
+    double multiplicativeFraction = calculateSideDrawMultiplicativeCandidate(bestFraction, target, bestFlow,
+        maximumFraction);
+    if (!wasSideDrawFractionAttempted(attemptedFractions, multiplicativeFraction)) {
+      return multiplicativeFraction;
+    }
+    double nearestRejectedFraction = findNearestRejectedSideDrawFraction(bestFraction, attemptedFractions,
+        acceptedFractions);
+    if (Double.isFinite(nearestRejectedFraction)
+        && Math.abs(nearestRejectedFraction - bestFraction) < SIDE_DRAW_CANDIDATE_SCAN_STEP) {
+      double oppositeExpansion = bestFraction
+          + Math.copySign(5.0 * SIDE_DRAW_CANDIDATE_SCAN_STEP, bestFraction - nearestRejectedFraction);
+      oppositeExpansion = Math.max(0.0, Math.min(maximumFraction, oppositeExpansion));
+      if (!wasSideDrawFractionAttempted(attemptedFractions, oppositeExpansion)) {
+        return oppositeExpansion;
+      }
+    }
+    return nextUntriedSideDrawGridFractionAround(bestFraction, attemptedFractions, maximumFraction);
+  }
+
+  /**
+   * Find the nearest rejected candidate around an accepted fraction.
+   *
+   * @param origin accepted fraction used as search origin
+   * @param attemptedFractions every attempted fraction
+   * @param acceptedFractions fractions whose inner solves were accepted
+   * @return nearest rejected fraction, or {@link Double#NaN} when none exists
+   */
+  private double findNearestRejectedSideDrawFraction(double origin, List<Double> attemptedFractions,
+      List<Double> acceptedFractions) {
+    double nearestFraction = Double.NaN;
+    double nearestDistance = Double.POSITIVE_INFINITY;
+    for (Double attemptedFraction : attemptedFractions) {
+      double fraction = attemptedFraction.doubleValue();
+      if (wasSideDrawFractionAttempted(acceptedFractions, fraction)) {
+        continue;
+      }
+      double distance = Math.abs(fraction - origin);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestFraction = fraction;
+      }
+    }
+    return nearestFraction;
+  }
+
+  /**
+   * Calculate a bounded multiplicative side-draw controller proposal.
+   *
+   * @param fraction latest accepted fraction
+   * @param target target side-draw flow
+   * @param actual latest accepted side-draw flow
+   * @param maximumFraction largest physically available fraction
+   * @return bounded candidate fraction
+   */
+  private double calculateSideDrawMultiplicativeCandidate(double fraction, double target, double actual,
+      double maximumFraction) {
+    if (target <= 1.0e-12) {
+      return 0.0;
+    }
+    double candidate = Math.abs(actual) <= 1.0e-12 ? fraction + SIDE_DRAW_CANDIDATE_SCAN_STEP
+        : fraction * target / actual;
+    return Math.max(0.0, Math.min(maximumFraction, candidate));
+  }
+
+  /**
+   * Find the next untried deterministic grid point above or below an accepted fraction.
+   *
+   * @param origin accepted fraction from which the scan starts
+   * @param attemptedFractions previously attempted candidates
+   * @param maximumFraction largest physically available fraction
+   * @return next untried grid fraction, or {@link Double#NaN} if none remains
+   */
+  private double nextUntriedSideDrawGridFractionAround(double origin, List<Double> attemptedFractions,
+      double maximumFraction) {
+    double firstUpperFraction = Math.ceil((origin + 1.0e-12) / SIDE_DRAW_CANDIDATE_SCAN_STEP)
+        * SIDE_DRAW_CANDIDATE_SCAN_STEP;
+    double firstLowerFraction = Math.floor((origin - 1.0e-12) / SIDE_DRAW_CANDIDATE_SCAN_STEP)
+        * SIDE_DRAW_CANDIDATE_SCAN_STEP;
+    int maximumSteps = (int) Math.ceil(maximumFraction / SIDE_DRAW_CANDIDATE_SCAN_STEP) + 1;
+    for (int step = 0; step <= maximumSteps; step++) {
+      double upperFraction = firstUpperFraction + step * SIDE_DRAW_CANDIDATE_SCAN_STEP;
+      if (upperFraction <= maximumFraction + 1.0e-12) {
+        double boundedUpperFraction = Math.max(0.0, Math.min(maximumFraction, upperFraction));
+        if (!wasSideDrawFractionAttempted(attemptedFractions, boundedUpperFraction)) {
+          return boundedUpperFraction;
+        }
+      }
+      double lowerFraction = firstLowerFraction - step * SIDE_DRAW_CANDIDATE_SCAN_STEP;
+      if (lowerFraction >= -1.0e-12) {
+        double boundedLowerFraction = Math.max(0.0, Math.min(maximumFraction, lowerFraction));
+        if (!wasSideDrawFractionAttempted(attemptedFractions, boundedLowerFraction)) {
+          return boundedLowerFraction;
+        }
+      }
+    }
+    return Double.NaN;
+  }
+
+  /**
+   * Check whether a fraction has already been evaluated within numerical identity tolerance.
+   *
+   * @param attemptedFractions prior candidate fractions
+   * @param fraction proposed fraction
+   * @return {@code true} if the same fraction was already attempted
+   */
+  private boolean wasSideDrawFractionAttempted(List<Double> attemptedFractions, double fraction) {
+    if (!Double.isFinite(fraction)) {
+      return true;
+    }
+    for (Double attemptedFraction : attemptedFractions) {
+      if (Math.abs(attemptedFraction.doubleValue() - fraction) <= 1.0e-12) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Append one accepted/rejected candidate to the public diagnostic trace.
+   *
+   * @param history diagnostic builder
+   * @param iteration one-based candidate number
+   * @param fraction proposed side-draw fraction
+   * @param flow candidate side-draw flow
+   * @param status inner solve status
+   * @param accepted whether the candidate was accepted
+   */
+  private void appendSideDrawCandidateHistory(StringBuilder history, int iteration, double fraction, double flow,
+      SolveStatus status, boolean accepted) {
+    if (history.length() > 0) {
+      history.append("; ");
+    }
+    history.append("#").append(iteration).append(" fraction=").append(fraction).append(", flow=").append(flow)
+        .append(", status=").append(status).append(", accepted=").append(accepted);
   }
 
   /**
@@ -9050,6 +9413,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         .append(" equilibrium stages").append("\n");
     diagnostics.append("  Iterations: ").append(lastIterationCount).append("\n");
     diagnostics.append("  Solve time: ").append(lastSolveTimeSeconds).append(" s\n");
+    if (hasActiveColumnTearVariables() || lastColumnTearIterationCount > 0) {
+      diagnostics.append("  Column tear candidates:\n");
+      diagnostics.append("    iterations: ").append(lastColumnTearIterationCount).append("\n");
+      diagnostics.append("    inner solver iterations: ").append(lastColumnTearInnerIterationCount).append("\n");
+      diagnostics.append("    residual: ").append(lastColumnTearResidual).append("\n");
+      diagnostics.append("    converged: ").append(lastColumnTearConverged).append("\n");
+      diagnostics.append("    rejected candidates: ").append(lastColumnTearRejectedCandidateCount).append("\n");
+      diagnostics.append("    accepted-state rollbacks: ").append(lastColumnTearRollbackCount).append("\n");
+      if (lastColumnTearCandidateHistory != null && !lastColumnTearCandidateHistory.trim().isEmpty()) {
+        diagnostics.append("    history: ").append(lastColumnTearCandidateHistory).append("\n");
+      }
+    }
     if (lastAutoSolverSummary != null && !lastAutoSolverSummary.trim().isEmpty()) {
       diagnostics.append("  Automatic solver candidates:\n");
       diagnostics.append(lastAutoSolverSummary);
@@ -9943,6 +10318,42 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public boolean isLastColumnTearConverged() {
     return lastColumnTearConverged;
+  }
+
+  /**
+   * Get the number of inner column candidates rejected by the latest tear solve.
+   *
+   * @return rejected candidate count
+   */
+  public int getLastColumnTearRejectedCandidateCount() {
+    return lastColumnTearRejectedCandidateCount;
+  }
+
+  /**
+   * Get the number of accepted-state rollbacks used by the latest tear solve.
+   *
+   * @return rollback count
+   */
+  public int getLastColumnTearRollbackCount() {
+    return lastColumnTearRollbackCount;
+  }
+
+  /**
+   * Get total inner solver work across all candidates from the latest tear solve.
+   *
+   * @return sum of inner column iterations
+   */
+  public int getLastColumnTearInnerIterationCount() {
+    return lastColumnTearInnerIterationCount;
+  }
+
+  /**
+   * Get the accepted/rejected candidate trace from the latest tear solve.
+   *
+   * @return human-readable candidate history
+   */
+  public String getLastColumnTearCandidateHistory() {
+    return lastColumnTearCandidateHistory == null ? "" : lastColumnTearCandidateHistory;
   }
 
   /**

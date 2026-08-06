@@ -9,6 +9,19 @@
 
 ---
 
+## 2026-08-06 — Side-draw flow targets reject invalid inner column states
+
+- A column with one independent side-draw flow specification now evaluates trial split fractions
+  on cold copied column states and accepts only rigorous or reconciled inner solves.
+- Failed and fallback-product trials no longer update the side-draw controller or replace the last
+  accepted public column state. The safeguarded search uses only accepted flow observations for
+  interpolation and bounded exploration.
+- `DistillationColumn` now reports rejected candidates, state rollbacks, accumulated inner-solver
+  work, and the candidate history through its column-tear diagnostics. These values are transient
+  and reset on copied or deserialized columns.
+
+---
+
 ## 2026-08-05 — Lossless external-to-internal constraint conversion
 
 - `ProcessSimulationEvaluator.ConstraintDefinition.toOptimizationConstraints()` now converts
