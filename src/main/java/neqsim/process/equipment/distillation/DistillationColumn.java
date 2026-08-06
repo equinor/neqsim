@@ -1473,6 +1473,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       attemptedFractions.add(Double.valueOf(candidateFraction));
 
       DistillationColumn candidate = (DistillationColumn) template.copy();
+      candidate.resetLastSolveMetrics();
       candidate.setSideDrawFractionWithinLimit(specification.getTrayNumber(), specification.getPhase(),
           candidateFraction);
       candidate.setDoInitializion(true);
