@@ -1014,7 +1014,7 @@ public class TPflash extends Flash {
       candidate.setMultiPhaseCheck(true);
       boolean candidateConverged;
       if (waterFeedFraction < WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT) {
-        candidateConverged = refineWaterRichCandidateActiveSet(candidate);
+        candidateConverged = refineTraceWaterAqueousCandidateActiveSet(candidate);
       } else {
         new TPflash(candidate, candidate.doSolidPhaseCheck()).run();
         candidateConverged = true;
@@ -1077,7 +1077,7 @@ public class TPflash extends Flash {
    * @param candidate cloned gas/oil endpoint
    * @return true when exactly one disappearing or duplicate phase was removed and the two remaining phases converged
    */
-  private boolean refineWaterRichCandidateActiveSet(SystemInterface candidate) {
+  private boolean refineTraceWaterAqueousCandidateActiveSet(SystemInterface candidate) {
     int initialPhaseCount = candidate.getNumberOfPhases();
     TPmultiflash operation = new TPmultiflash(candidate, false);
     operation.stabilityAnalysis();
