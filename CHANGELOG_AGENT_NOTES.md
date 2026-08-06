@@ -9,6 +9,19 @@
 
 ---
 
+## 2026-08-06 — Evidence-aware full-model capacity ranking
+
+- `ProcessModelSimulationEvaluator.rankCapacityConstraints(model)` returns every enabled
+  `CapacityConstraint` as an immutable list ordered by descending utilization. Stable ties retain
+  process-model registration order, and each dynamic value supplier is sampled once per call.
+- `BottleneckStatus.getEvidenceApplicability()` reports `WITHIN_VALIDITY_RANGE`,
+  `OUTSIDE_VALIDITY_RANGE`, or `NOT_ASSESSED` for the snapshotted operating point.
+- Evidence confidence and applicability remain diagnostics only. They do not change utilization,
+  feasibility, or ranking and must not be interpreted as probabilities of safe operation.
+- `findActiveBottleneck(model)` remains available when only the leading constraint is required.
+
+---
+
 ## 2026-08-06 — Side-draw flow targets reject invalid inner column states
 
 - A column with one independent side-draw flow specification now evaluates trial split fractions
