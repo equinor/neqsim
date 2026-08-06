@@ -754,8 +754,8 @@ public class Separator extends ProcessEquipmentBaseClass
     } else {
       finalizePhaseOutlet(gasOutStream, id);
     }
-    if (thermoSystem2.hasPhaseType("aqueous")
-        || thermoSystem2.hasPhaseType("oil") && thermoSystem2.getNumberOfComponents() > 1) {
+    if ((thermoSystem2.hasPhaseType("aqueous") || thermoSystem2.hasPhaseType("oil"))
+        && thermoSystem2.getNumberOfComponents() > 1 && gasInLiquid != 0.0) {
       liquidOutStream.run(id);
     } else {
       finalizePhaseOutlet(liquidOutStream, id);
