@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.ToDoubleFunction;
 
 import org.junit.jupiter.api.Test;
 
@@ -62,6 +63,7 @@ import neqsim.process.mechanicaldesign.heatexchanger.BellDelawareMethod;
 import neqsim.process.mechanicaldesign.heatexchanger.LMTDcorrectionFactor;
 import neqsim.process.mechanicaldesign.heatexchanger.ThermalDesignCalculator;
 import neqsim.process.mechanicaldesign.heatexchanger.VibrationAnalysis;
+import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.SimulationResult;
 import neqsim.process.processmodel.dexpi.DexpiXmlWriter;
@@ -69,6 +71,7 @@ import neqsim.process.util.fielddevelopment.DCFCalculator;
 import neqsim.process.util.heatintegration.PinchAnalyzer;
 import neqsim.process.util.optimizer.DebottleneckAnalyzer;
 import neqsim.process.util.optimizer.MonteCarloSimulator;
+import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator;
 import neqsim.process.util.optimizer.SensitivityAnalysis;
 import neqsim.process.util.report.HeatMaterialBalance;
 import neqsim.process.util.report.ProcessValidator;
@@ -161,6 +164,58 @@ public class DocExamplesCompilationTest {
     assertTrue(gas.getDensity("kg/m3") < 50.0);
     assertTrue(gas.getZ() > 0.8);
     assertTrue(gas.getZ() < 1.0);
+  }
+
+  /**
+   * Process-model evaluator example from docs/process/optimization/OPTIMIZATION_OVERVIEW.md.
+   */
+  @Test
+  public void testProcessModelOptimizationDocumentationExample() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.10);
+    fluid.setMixingRule("classic");
+    fluid.setTotalFlowRate(10000.0, "kg/hr");
+
+    Stream feed = new Stream("feed", fluid);
+    Separator separator = new Separator("separator", feed);
+    ProcessSystem wells = new ProcessSystem("wells");
+    wells.add(feed);
+    ProcessSystem separation = new ProcessSystem("separation");
+    separation.add(separator);
+    ProcessModel model = new ProcessModel();
+    model.add("wells", wells);
+    model.add("separation", separation);
+
+    separator.addCapacityConstraint(new CapacityConstraint("installedGasCapacity", "kg/hr", ConstraintType.HARD)
+        .setDesignValue(15000.0).setValueSupplier(() -> feed.getFlowRate("kg/hr")));
+
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(model);
+    evaluator.setIncludeStrategyCapacityConstraints(false);
+    evaluator.addParameter("wells::feed.flowRate", 5000.0, 20000.0, "kg/hr");
+    evaluator.addObjective("exportGas", new ToDoubleFunction<ProcessModel>() {
+      /** {@inheritDoc} */
+      @Override
+      public double applyAsDouble(ProcessModel processModel) {
+        return processModel.getVariableValue("separation::separator.gasOutStream.flowRate", "kg/hr");
+      }
+    }, ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
+    evaluator.addConstraintUpperBound("feedLimit", new ToDoubleFunction<ProcessModel>() {
+      /** {@inheritDoc} */
+      @Override
+      public double applyAsDouble(ProcessModel processModel) {
+        return processModel.getVariableValue("wells::feed.flowRate", "kg/hr");
+      }
+    }, 15000.0);
+    evaluator.addEquipmentCapacityConstraints();
+
+    ProcessModelSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[] { 12000.0 });
+    ProcessModelSimulationEvaluator.BottleneckStatus bottleneck = result.getActiveBottleneck();
+    List<ProcessModelSimulationEvaluator.BottleneckStatus> ranked = evaluator.rankCapacityConstraints(model);
+
+    assertTrue(result.isSimulationConverged());
+    assertNotNull(bottleneck);
+    assertEquals("installedGasCapacity", ranked.get(0).getConstraintName());
   }
 
   /**
