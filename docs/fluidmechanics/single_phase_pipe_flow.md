@@ -221,10 +221,12 @@ try {
 
 `PipeFlowSystem.getConvergenceReport()` returns an immutable report for the latest solve. Solver
 type `1` uses a safeguarded coupled Newton solve for the physical-cell pressures and staggered
-face velocities. The outlet pressure is prescribed; neither boundary node is counted as an
-accumulating control volume. This coupled path currently supports positive flow only and fails
-with an explicit message for reversed flow. A completed transient solve requires all of the
-following:
+face velocities. When conservative species transport is enabled, the steady solve enters the
+coupled path directly; it does not first accept segregated pressure/velocity iterates that can
+reverse an otherwise supported low positive flow. The outlet pressure is prescribed; neither
+boundary node is counted as an accumulating control volume. This coupled path currently supports
+positive flow only and fails with an explicit message for reversed flow. A completed transient
+solve requires all of the following:
 
 - the maximum scaled continuity/momentum equation residual is at most `1e-10`; each row uses a
   fixed dimensional scale formed from the absolute equation terms at the initial iterate;
@@ -233,8 +235,12 @@ following:
   a relative tolerance of `1e-8`.
 
 Use `solveSteadyState(1)` before `solveTransient(1)` when selecting this validated hydraulic/EOS
-path. The coupled steady refinement is intentionally limited to type `1`; it does not overwrite
-the temperature or composition results produced by staged solver types `10` and `20`.
+path. The direct coupled steady path is selected by `setConservativeSpeciesTransport(true)` and is
+intentionally limited to type `1`; it does not overwrite the temperature or composition results
+produced by staged solver types `10` and `20`. There is no universal minimum-flow cutoff: supported
+low positive flow is determined by convergence of the scaled continuity and momentum equations and
+a finite, positive hydraulic/EOS state. Zero or reversed flow remains outside this coupled path's
+documented validity range and fails loudly.
 
 The pressure and velocity unknowns are interleaved so each equation couples only to its two
 nearest unknowns on either side. The Newton matrix is therefore stored and solved as a compact

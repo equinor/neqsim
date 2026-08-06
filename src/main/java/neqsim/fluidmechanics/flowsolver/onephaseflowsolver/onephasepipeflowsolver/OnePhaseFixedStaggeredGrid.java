@@ -1071,8 +1071,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     }
     initMatrix();
 
-    if (dynamic && solverType == 1) {
-      if (conservativeSpeciesTransportEnabled) {
+    if (solverType == 1 && (dynamic || conservativeSpeciesTransportEnabled)) {
+      if (dynamic && conservativeSpeciesTransportEnabled) {
         solveCoupledHydraulicEosSpecies(initialFiniteVolumeMass);
       } else {
         solveCoupledHydraulicEos(initialFiniteVolumeMass);
