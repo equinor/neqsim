@@ -280,6 +280,18 @@ fail before solver iteration and report the affected tray and phase.
 If the requested side-draw flow is physically impossible, the split is bounded by available tray
 traffic and the latest tear-variable diagnostics report non-convergence.
 
+For one independent side-draw flow specification, every proposed fraction is solved on a cold
+copied column state. Only rigorous or reconciled inner-column results can update the controller or
+become the public result; fallback-product and failed candidates are rejected, and the last
+accepted state is retained. The safeguarded search interpolates or explores from accepted flow
+observations only, avoiding feedback from invalid inner states.
+
+Use `getLastColumnTearRejectedCandidateCount()`, `getLastColumnTearRollbackCount()`,
+`getLastColumnTearInnerIterationCount()`, and `getLastColumnTearCandidateHistory()` to audit that
+search. The history includes the proposed fraction, observed flow, inner status, and acceptance
+decision for each trial. These diagnostics are transient and reset when the column is copied or
+deserialized.
+
 ## Pumparounds
 
 Liquid pumparounds are internal draw/return circuits. They are neither external feeds nor external
