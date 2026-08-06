@@ -95,6 +95,10 @@ import neqsim.mcp.runners.Validator;
 @ApplicationScoped
 public class NeqSimTools {
 
+  /** Resolves the caller identity from the transport for each tool invocation. */
+  @jakarta.inject.Inject
+  McpIdentityResolver identityResolver;
+
   /**
    * Run a thermodynamic flash calculation on a fluid mixture.
    *
@@ -2426,10 +2430,19 @@ public class NeqSimTools {
   /**
    * Enforces shared MCP server policy for a tool invocation.
    *
+   * <p>
+   * This is the single choke point every {@code @Tool} method calls first, so it is also where the
+   * transport-resolved caller identity is bound to {@link neqsim.mcp.runners.McpRequestContext}.
+   * Governance then evaluates a real principal instead of a null credential.
+   * </p>
+   *
    * @param toolName the MCP tool name
    * @return null if execution may continue, otherwise a standardized blocked response
    */
-  private static String enforceToolAccess(String toolName) {
+  private String enforceToolAccess(String toolName) {
+    if (identityResolver != null) {
+      identityResolver.bindCurrentPrincipal();
+    }
     String blocked = IndustrialProfile.enforceAccess(toolName);
     if (blocked == null) {
       return null;
