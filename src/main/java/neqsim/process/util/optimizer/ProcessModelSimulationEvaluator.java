@@ -3,6 +3,8 @@ package neqsim.process.util.optimizer;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -882,6 +884,20 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1L;
 
+    /**
+     * Applicability of the evidence basis for a capacity-constraint snapshot.
+     */
+    public enum EvidenceApplicability {
+      /** No scalar validity range was supplied, so applicability was not assessed. */
+      NOT_ASSESSED,
+
+      /** The snapshotted value is inside the supplied inclusive validity range. */
+      WITHIN_VALIDITY_RANGE,
+
+      /** The snapshotted value is outside the supplied inclusive validity range. */
+      OUTSIDE_VALIDITY_RANGE
+    }
+
     /** Process area name. */
     private String areaName;
 
@@ -1184,6 +1200,24 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      */
     public boolean isCurrentValueWithinValidityRange() {
       return validityRangeSet && currentValueWithinValidityRange;
+    }
+
+    /**
+     * Gets the applicability of the evidence basis at the snapshotted operating point.
+     *
+     * <p>
+     * This diagnostic does not alter utilization, feasibility, or ranking. Confidence remains an evidence-quality
+     * annotation and is not interpreted as a probability of safe operation.
+     * </p>
+     *
+     * @return applicability of the scalar validity range
+     */
+    public EvidenceApplicability getEvidenceApplicability() {
+      if (!validityRangeSet) {
+        return EvidenceApplicability.NOT_ASSESSED;
+      }
+      return currentValueWithinValidityRange ? EvidenceApplicability.WITHIN_VALIDITY_RANGE
+          : EvidenceApplicability.OUTSIDE_VALIDITY_RANGE;
     }
 
     /**
@@ -2079,6 +2113,69 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       }
     }
     return active;
+  }
+
+  /**
+   * Snapshots and ranks all enabled capacity constraints across the process model.
+   *
+   * <p>
+   * Ranking is by descending utilization only. The sort is stable, so equal-utilization constraints preserve process
+   * area, equipment, and constraint registration order. Evidence confidence and applicability are retained as
+   * diagnostics but never change order or feasibility. Undefined ({@code NaN}) utilizations remain visible at the end
+   * of the ranking. Each dynamic value supplier is read exactly once.
+   * </p>
+   *
+   * @param model process model in its current state
+   * @return immutable utilization-ranked constraint snapshots, or an empty list when the model is null or has no
+   * enabled capacity constraint
+   */
+  public List<BottleneckStatus> rankCapacityConstraints(ProcessModel model) {
+    if (model == null) {
+      return Collections.emptyList();
+    }
+    EquipmentCapacityStrategyRegistry registry = EquipmentCapacityStrategyRegistry.getInstance();
+    List<BottleneckStatus> rankedConstraints = new ArrayList<BottleneckStatus>();
+
+    for (String areaName : model.getProcessSystemNames()) {
+      ProcessSystem area = model.get(areaName);
+      if (area == null) {
+        continue;
+      }
+      for (ProcessEquipmentInterface equipment : area.getUnitOperations()) {
+        Map<String, CapacityConstraint> equipmentConstraints = getAllCapacityConstraints(registry, equipment);
+        if (equipmentConstraints.isEmpty()) {
+          continue;
+        }
+        for (Map.Entry<String, CapacityConstraint> entry : equipmentConstraints.entrySet()) {
+          CapacityConstraint capacityConstraint = entry.getValue();
+          if (capacityConstraint == null || !capacityConstraint.isEnabled()) {
+            continue;
+          }
+          double currentValue = capacityConstraint.getCurrentValue();
+          double utilization = capacityConstraint.getUtilization(currentValue);
+          boolean validityRangeSet = capacityConstraint.hasValidityRange();
+          rankedConstraints.add(new BottleneckStatus(areaName, equipment.getName(), entry.getKey(), utilization,
+              currentValue, capacityConstraint.getDisplayDesignValue(), capacityConstraint.isMinimumConstraint(),
+              capacityConstraint.getDataSource(), capacityConstraint.hasConfidence(),
+              capacityConstraint.getConfidence(), validityRangeSet, capacityConstraint.getValidityMinimum(),
+              capacityConstraint.getValidityMaximum(), capacityConstraint.getUnit(), utilization <= 1.0));
+        }
+      }
+    }
+    Collections.sort(rankedConstraints, new Comparator<BottleneckStatus>() {
+      /** {@inheritDoc} */
+      @Override
+      public int compare(BottleneckStatus first, BottleneckStatus second) {
+        if (Double.isNaN(first.getUtilization())) {
+          return Double.isNaN(second.getUtilization()) ? 0 : 1;
+        }
+        if (Double.isNaN(second.getUtilization())) {
+          return -1;
+        }
+        return Double.compare(second.getUtilization(), first.getUtilization());
+      }
+    });
+    return Collections.unmodifiableList(rankedConstraints);
   }
 
   /**

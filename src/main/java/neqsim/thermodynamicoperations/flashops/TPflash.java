@@ -49,6 +49,10 @@ public class TPflash extends Flash {
   private static final double WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT = 0.01;
   /** Largest incipient secondary-phase fraction eligible for trace-water phase-selection retry. */
   private static final double TRACE_WATER_PHASE_SELECTION_BETA_LIMIT = 1.0e-4;
+  /** Largest secondary-phase fraction eligible for the trace-water aqueous-stability trial. */
+  private static final double TRACE_WATER_AQUEOUS_STABILITY_BETA_LIMIT = 1.0e-2;
+  /** Minimum water enrichment in the hydrocarbon liquid for the aqueous-stability trial. */
+  private static final double TRACE_WATER_AQUEOUS_STABILITY_ENRICHMENT_LIMIT = 10.0;
   /** Maximum stored water K-value that justifies checking a collapsed water-bearing endpoint. */
   private static final double WATER_PHASE_COLLAPSE_WATER_K_UPPER_LIMIT = 1.0e-2;
   /** Minimum stored non-water K-value that justifies checking a collapsed water-bearing endpoint. */
@@ -63,7 +67,7 @@ public class TPflash extends Flash {
   private static final int MAX_FINAL_EQUILIBRIUM_REFINEMENT_ITERATIONS = 8;
   /** Largest residual considered near enough to convergence for bounded final SSI refinement. */
   private static final double MAX_FINAL_EQUILIBRIUM_REFINEMENT_RESIDUAL = 1.0e-5;
-  /** Cubic phase roots evaluated by the post-convergence aqueous root check. */
+  /** Cubic phase roots evaluated by the post-convergence root checks. */
   private static final PhaseType[] CUBIC_ROOT_PHASE_TYPES = { PhaseType.GAS, PhaseType.LIQUID };
   /**
    * Minimum extensive Gibbs-energy reduction (J) required for the spurious-multiphase rescue to collapse a two-phase
@@ -962,16 +966,18 @@ public class TPflash extends Flash {
    * gas/oil iteration has stopped. Such an endpoint is refined when its component fugacity residual exceeds
    * {@link #PHASE_ROOT_EQUILIBRIUM_TOLERANCE} or its component material balance exceeds
    * {@link #WATER_RICH_MATERIAL_BALANCE_TOLERANCE}. The one-mol-percent feed guard keeps valid trace-water process
-   * flashes on the existing fast path. A trace-water gas/oil endpoint whose fugacity residual is already outside the
-   * equilibrium tolerance may still use the cloned stability calculation because it is not an acceptable result. A
-   * cloned multiphase candidate normally replaces the ordinary state only when it lowers Gibbs energy. If the reference
-   * state is non-conservative, Gibbs energies are not comparable; a candidate may then replace it only after passing
-   * strict phase-fraction, composition-normalization, material-balance, fugacity, and distinct-composition checks.
+   * flashes outside the minor-phase trace-water screen on the existing fast path. A trace-water gas/oil endpoint whose
+   * fugacity residual is already outside the equilibrium tolerance may still use the cloned stability calculation
+   * because it is not an acceptable result. A cheap aqueous tangent-plane trial and safeguarded multiphase beta solve
+   * are used for trace-water gas/oil endpoints whose small hydrocarbon liquid disproportionately concentrates water.
+   * Full recursive multiphase flashing is avoided. A candidate replaces the original state only after a disappearing
+   * phase is removed, the remaining active set is reconverged, and strict phase-fraction, composition-normalization,
+   * material-balance, fugacity, distinct-composition, and lower-Gibbs checks pass.
    * </p>
    */
   private void rescueWaterRichEndpoint() {
-    if (system.doMultiPhaseCheck() || system.isChemicalSystem() || system.hasIons() || solidCheck
-        || system.isMultiphaseWaxCheck() || system.getNumberOfPhases() > 2) {
+    if (system.isChemicalSystem() || system.hasIons() || solidCheck || system.isMultiphaseWaxCheck()
+        || system.getNumberOfPhases() > 2) {
       return;
     }
 
@@ -987,8 +993,11 @@ public class TPflash extends Flash {
         break;
       }
     }
+    if (system.doMultiPhaseCheck() && waterFeedFraction >= WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT) {
+      return;
+    }
     if (waterFeedFraction < WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT
-        && (waterFeedFraction <= 0.0 || !isInvalidTraceWaterGasOilEndpoint())) {
+        && (waterFeedFraction <= 0.0 || !shouldRefineTraceWaterGasOilEndpoint(waterFeedFraction))) {
       return;
     }
     double materialBalanceResidual = maximumComponentMaterialBalanceResidual(system);
@@ -1003,14 +1012,118 @@ public class TPflash extends Flash {
     SystemInterface candidate = system.clone();
     try {
       candidate.setMultiPhaseCheck(true);
-      new TPflash(candidate, candidate.doSolidPhaseCheck()).run();
-      if (candidate.getNumberOfPhases() == 2
+      boolean candidateConverged;
+      if (waterFeedFraction < WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT) {
+        candidateConverged = refineTraceWaterAqueousCandidateActiveSet(candidate);
+      } else {
+        new TPflash(candidate, candidate.doSolidPhaseCheck()).run();
+        candidateConverged = true;
+      }
+      if (candidateConverged && candidate.getNumberOfPhases() == 2 && isBalancedEquilibriumCandidate(candidate)
           && shouldAcceptWaterRichCandidate(candidate, referenceGibbsEnergy, materialBalanceInvalid)) {
         copyFlashStateFrom(candidate);
       }
     } catch (Exception ex) {
       logger.debug("Water-rich endpoint refinement failed: {}", ex.getMessage());
     }
+  }
+
+  /**
+   * Screens a trace-water gas/oil endpoint for a missed lower-Gibbs aqueous split.
+   *
+   * @param waterFeedFraction overall water mole fraction
+   * @return true when the endpoint is already invalid, or its phase fraction and water enrichment justify an aqueous
+   * stability trial
+   */
+  private boolean shouldRefineTraceWaterGasOilEndpoint(double waterFeedFraction) {
+    if (isInvalidTraceWaterGasOilEndpoint()) {
+      return true;
+    }
+    if (system.getNumberOfPhases() != 2 || system.hasPhaseType(PhaseType.AQUEOUS)
+        || Math.min(system.getBeta(0), system.getBeta(1)) > TRACE_WATER_AQUEOUS_STABILITY_BETA_LIMIT) {
+      return false;
+    }
+    boolean hasGasPhase = false;
+    int hydrocarbonLiquidPhase = -1;
+    for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
+      PhaseType phaseType = system.getPhase(phaseIndex).getType();
+      hasGasPhase |= phaseType == PhaseType.GAS;
+      if (phaseType == PhaseType.OIL || phaseType == PhaseType.LIQUID) {
+        hydrocarbonLiquidPhase = phaseIndex;
+      }
+    }
+    if (!hasGasPhase || hydrocarbonLiquidPhase < 0) {
+      return false;
+    }
+    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
+      if ("water".equalsIgnoreCase(system.getPhase(0).getComponent(componentIndex).getComponentName())) {
+        double liquidWaterFraction = system.getPhase(hydrocarbonLiquidPhase).getComponent(componentIndex).getx();
+        return liquidWaterFraction >= TRACE_WATER_AQUEOUS_STABILITY_ENRICHMENT_LIMIT * waterFeedFraction;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Runs the existing tangent-plane trial and reconverges the reduced active phase set.
+   *
+   * <p>
+   * The first multiphase beta solve identifies a disappearing phase. Removing only a phase at the solver's numerical
+   * phase-fraction floor and rebuilding the beta workspace turns the trial into a well-conditioned two-phase solve. If
+   * the solver returns two duplicate phases instead, exactly one duplicate pair may be merged before the active set is
+   * rebuilt. The caller performs the final thermodynamic acceptance checks.
+   * </p>
+   *
+   * @param candidate cloned gas/oil endpoint
+   * @return true when exactly one disappearing or duplicate phase was removed and the two remaining phases converged
+   */
+  private boolean refineTraceWaterAqueousCandidateActiveSet(SystemInterface candidate) {
+    int initialPhaseCount = candidate.getNumberOfPhases();
+    TPmultiflash operation = new TPmultiflash(candidate, false);
+    operation.stabilityAnalysis();
+    if (candidate.getNumberOfPhases() <= initialPhaseCount) {
+      return false;
+    }
+    operation.setDoubleArrays();
+    operation.solveBeta();
+    int removedPhaseCount = 0;
+    for (int phaseIndex = candidate.getNumberOfPhases() - 1; phaseIndex >= 0; phaseIndex--) {
+      if (candidate.getNumberOfPhases() > 1 && candidate.getBeta(phaseIndex) <= 10.0 * phaseFractionMinimumLimit) {
+        candidate.removePhaseKeepTotalComposition(phaseIndex);
+        removedPhaseCount++;
+      }
+    }
+    if (removedPhaseCount == 0 && candidate.getNumberOfPhases() == 3) {
+      for (int firstPhase = 0; firstPhase < candidate.getNumberOfPhases() - 1; firstPhase++) {
+        for (int secondPhase = firstPhase + 1; secondPhase < candidate.getNumberOfPhases(); secondPhase++) {
+          double maximumCompositionDifference = 0.0;
+          for (int componentIndex = 0; componentIndex < candidate.getPhase(0)
+              .getNumberOfComponents(); componentIndex++) {
+            maximumCompositionDifference = Math.max(maximumCompositionDifference,
+                Math.abs(candidate.getPhase(firstPhase).getComponent(componentIndex).getx()
+                    - candidate.getPhase(secondPhase).getComponent(componentIndex).getx()));
+          }
+          if (maximumCompositionDifference <= TRIVIAL_SPLIT_COMPOSITION_TOLERANCE) {
+            double mergedBeta = candidate.getBeta(firstPhase) + candidate.getBeta(secondPhase);
+            candidate.removePhaseKeepTotalComposition(secondPhase);
+            candidate.setBeta(firstPhase, mergedBeta);
+            removedPhaseCount++;
+            break;
+          }
+        }
+        if (removedPhaseCount > 0) {
+          break;
+        }
+      }
+    }
+    if (removedPhaseCount != 1 || candidate.getNumberOfPhases() != 2) {
+      return false;
+    }
+    candidate.normalizeBeta();
+    operation.setDoubleArrays();
+    double activeSetResidual = operation.solveBeta();
+    candidate.init(1);
+    return Double.isFinite(activeSetResidual) && activeSetResidual < 1.0e-10;
   }
 
   /**
@@ -1798,16 +1911,18 @@ public class TPflash extends Flash {
   }
 
   /**
-   * Corrects an inverted vapor/liquid cubic-root assignment in an ordinary hydrocarbon flash.
+   * Corrects an inconsistent vapor/liquid cubic-root assignment in an ordinary hydrocarbon flash.
    *
    * <p>
    * Near a critical boundary the ordinary two-phase iteration can converge the light and heavy compositions while
-   * retaining the liquid cubic root on the light phase and the vapor root on the heavy phase. This is a stationary
-   * flash-equation solution, but it has a higher Gibbs energy than the same split with the roots assigned consistently.
-   * A cheap molar-mass ordering check avoids trial-root work on normally labelled results. For an inverted result, the
-   * two roots are evaluated together on cloned phases. The replacement is accepted only when it lowers extensive Gibbs
-   * energy beyond numerical noise and satisfies component fugacity equality within
-   * {@link #PHASE_ROOT_EQUILIBRIUM_TOLERANCE}. Compositions, phase fractions, and material balance are unchanged.
+   * retaining the liquid cubic root on the light phase and the vapor root on the heavy phase. A normally ordered split
+   * can likewise retain one stale cubic root and therefore fail component fugacity equality after convergence. Both are
+   * higher-Gibbs states than the same composition split with consistently selected roots. A cheap molar-mass and
+   * current fugacity-residual check avoids trial-root work on already consistent results. An inverted split evaluates
+   * both roots together; a normally ordered split evaluates both roots on one phase at a time while the other remains
+   * fixed. A replacement is accepted only when it lowers extensive Gibbs energy beyond numerical noise and satisfies
+   * component fugacity equality within {@link #PHASE_ROOT_EQUILIBRIUM_TOLERANCE}. Compositions, phase fractions, and
+   * material balance are unchanged.
    * </p>
    *
    * <p>
@@ -1847,8 +1962,19 @@ public class TPflash extends Flash {
       }
       hasHydrocarbon |= component.isHydrocarbon();
     }
-    if (!hasHydrocarbon
-        || system.getPhase(gasPhaseIndex).getMolarMass() <= system.getPhase(liquidPhaseIndex).getMolarMass()) {
+    if (!hasHydrocarbon) {
+      return;
+    }
+
+    boolean invertedCompositionOrder = system.getPhase(gasPhaseIndex).getMolarMass() > system.getPhase(liquidPhaseIndex)
+        .getMolarMass();
+    double currentFugacityResidual = maximumLogFugacityResidual(system.getPhase(gasPhaseIndex),
+        system.getPhase(liquidPhaseIndex));
+    if (!invertedCompositionOrder && currentFugacityResidual < PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
+      return;
+    }
+    if (!invertedCompositionOrder) {
+      rescueLowerGibbsIndividualPhaseRoot();
       return;
     }
 
@@ -1886,6 +2012,62 @@ public class TPflash extends Flash {
     } catch (Exception ex) {
       logger.debug("Hydrocarbon phase-root comparison failed: {}", ex.getMessage());
     }
+  }
+
+  /**
+   * Replaces one stale cubic root in an otherwise normally ordered gas/liquid split.
+   *
+   * <p>
+   * Each available root is initialized on a clone of one phase while the other phase remains unchanged. The best
+   * candidate must lower extensive Gibbs energy and restore component fugacity equality. The phase composition,
+   * fraction, storage order, and public phase label remain unchanged.
+   * </p>
+   */
+  private void rescueLowerGibbsIndividualPhaseRoot() {
+    int selectedPhaseIndex = -1;
+    PhaseType selectedPhaseType = null;
+    PhaseType selectedRoot = null;
+    PhaseInterface selectedPhase = null;
+    double maximumGibbsReduction = 0.0;
+    double currentGibbsEnergy = system.getGibbsEnergy();
+
+    for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
+      PhaseType originalPhaseType = system.getPhase(phaseIndex).getType();
+      double currentPhaseGibbsEnergy = system.getPhase(phaseIndex).getGibbsEnergy();
+      for (PhaseType trialRoot : CUBIC_ROOT_PHASE_TYPES) {
+        try {
+          PhaseInterface trialPhase = system.getPhase(phaseIndex).clone();
+          trialPhase.init(system.getTotalNumberOfMoles(), trialPhase.getNumberOfComponents(), 1, trialRoot,
+              system.getBeta(phaseIndex));
+          for (int componentIndex = 0; componentIndex < trialPhase.getNumberOfComponents(); componentIndex++) {
+            trialPhase.getComponent(componentIndex).fugcoef(trialPhase);
+          }
+          double trialGibbsEnergy = currentGibbsEnergy - currentPhaseGibbsEnergy + trialPhase.getGibbsEnergy();
+          double gibbsReduction = currentGibbsEnergy - trialGibbsEnergy;
+          double fugacityResidual = maximumLogFugacityResidualWithReplacement(phaseIndex, trialPhase);
+          if (Double.isFinite(gibbsReduction) && gibbsReduction > maximumGibbsReduction
+              && fugacityResidual < PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
+            maximumGibbsReduction = gibbsReduction;
+            selectedPhaseIndex = phaseIndex;
+            selectedPhaseType = originalPhaseType;
+            selectedRoot = trialRoot;
+            selectedPhase = trialPhase;
+          }
+        } catch (Exception ex) {
+          logger.debug("Individual phase-root comparison failed for phase {} root {}: {}", phaseIndex, trialRoot,
+              ex.getMessage());
+        }
+      }
+    }
+
+    double gibbsTolerance = Math.max(1.0e-6, Math.abs(currentGibbsEnergy) * 1.0e-8);
+    if (selectedPhaseIndex < 0 || maximumGibbsReduction <= gibbsTolerance) {
+      return;
+    }
+
+    selectedPhase.setType(selectedPhaseType);
+    system.setPhase(selectedPhase, system.getPhaseIndex(selectedPhaseIndex));
+    system.setPhaseType(selectedPhaseIndex, selectedRoot);
   }
 
   /**

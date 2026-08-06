@@ -207,11 +207,14 @@ pressure profile that the tray sweeps depend on:
 target is physically impossible, the draw fraction is bounded by available tray traffic and the
 latest tear diagnostics report non-convergence instead of allowing an impossible product draw.
 
-A single independent side-draw flow specification is evaluated on cold copied candidate states.
-Only rigorous or reconciled inner-column solves can influence the controller or replace the public
-column result. Failed and fallback-product candidates are rejected, the last accepted state is
-retained, and subsequent interpolation or bounded exploration uses accepted flow observations
-only. Audit the search with `getLastColumnTearRejectedCandidateCount()`,
+A single independent side-draw flow specification is first evaluated on cold copied candidate
+states. Only rigorous or reconciled inner-column solves can influence the controller or replace the
+public column result. If a cold candidate is rejected after a rigorous state has been found, the
+same fraction is retried once by continuation from the nearest accepted state. This makes the
+controller robust to runtime-dependent cold-start basins without ever continuing from fallback
+products. Failed and fallback-product candidates are rejected, the last accepted state is retained,
+and subsequent interpolation or bounded exploration uses accepted flow observations only. Audit
+the cold and continuation attempts with `getLastColumnTearRejectedCandidateCount()`,
 `getLastColumnTearRollbackCount()`, `getLastColumnTearInnerIterationCount()`, and
 `getLastColumnTearCandidateHistory()`. These transient diagnostics reset after copying or
 deserialization.

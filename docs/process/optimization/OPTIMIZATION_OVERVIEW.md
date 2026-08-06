@@ -301,7 +301,18 @@ evaluator.addEquipmentCapacityConstraints();
 
 ProcessModelSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[] {12000.0});
 ProcessModelSimulationEvaluator.BottleneckStatus bottleneck = result.getActiveBottleneck();
+List<ProcessModelSimulationEvaluator.BottleneckStatus> ranked =
+    evaluator.rankCapacityConstraints(model);
 ```
+
+`rankCapacityConstraints(...)` returns every enabled model-level limit as an immutable,
+descending-utilization list. Use `getEvidenceApplicability()` to distinguish
+`WITHIN_VALIDITY_RANGE`, `OUTSIDE_VALIDITY_RANGE`, and `NOT_ASSESSED` results. The engineering
+order remains utilization-only: confidence is retained as evidence quality and is never converted
+to a safety probability, feasibility adjustment, or ranking weight. Equal-utilization limits retain
+model registration order, including the declared order of built-in strategy-generated limits, and
+each dynamic limit supplier is sampled once per ranking call.
+Enabled limits with undefined (`NaN`) utilization remain visible at the end for diagnosis.
 
 `ProcessModelSimulationEvaluator` complements rather than replaces the other optimizers. Use `ProcessOptimizationEngine` for compact throughput cases on one process, `ProductionOptimizer` for existing single-system objective workflows, and `ProcessModelSimulationEvaluator` when the optimization boundary is the full plant model.
 

@@ -40,6 +40,30 @@ class TPflashTraceAqueousRefinementTest {
     assertEquivalentEquilibrium(multiphase, ordinary);
   }
 
+  @Test
+  void convergedTraceWaterGasOilEndpointSelectsStableAqueousSplit() {
+    SystemInterface ordinary = createAndFlashMissedAqueousCase(true, 275.7756311717352, 200.0, 0.001, 0.009, false,
+        false);
+    SystemInterface multiphase = createAndFlashMissedAqueousCase(true, 275.7756311717352, 200.0, 0.001, 0.009, true,
+        false);
+    SystemInterface poorGuess = createAndFlashMissedAqueousCase(true, 275.7756311717352, 200.0, 0.001, 0.009, false,
+        true);
+
+    assertBalancedEquilibrium(ordinary);
+    assertEquivalentEquilibrium(multiphase, ordinary);
+    assertEquivalentEquilibrium(ordinary, poorGuess);
+    assertEquals(9.436497907e-4, ordinary.getBeta(findPhase(ordinary, PhaseType.AQUEOUS)), 1.0e-10);
+  }
+
+  @Test
+  void enrichedMinorHydrocarbonLiquidUsesAqueousStabilityTrial() {
+    SystemInterface ordinary = createAndFlashMissedAqueousCase(false, 270.0, 220.0, 0.003, 0.012, false, false);
+    SystemInterface multiphase = createAndFlashMissedAqueousCase(false, 270.0, 220.0, 0.003, 0.012, true, false);
+
+    assertBalancedEquilibrium(ordinary);
+    assertEquivalentEquilibrium(multiphase, ordinary);
+  }
+
   private SystemInterface createAndFlash(boolean usePr, double waterFeedFraction, boolean multiphaseCheck) {
     SystemInterface system = usePr ? new SystemPrEos(230.0, 200.0) : new SystemSrkEos(230.0, 200.0);
     double[] feed = { 0.02, 0.03, 0.859 - waterFeedFraction, 0.06, 0.03, 0.001, waterFeedFraction };
@@ -61,6 +85,25 @@ class TPflashTraceAqueousRefinementTest {
     }
     system.setMixingRule(2);
     system.setMultiPhaseCheck(multiphaseCheck);
+    new ThermodynamicOperations(system).TPflash();
+    system.init(1);
+    return system;
+  }
+
+  private SystemInterface createAndFlashMissedAqueousCase(boolean usePr, double temperature, double pressure,
+      double waterFeedFraction, double nC10FeedFraction, boolean multiphaseCheck, boolean poorGuess) {
+    SystemInterface system = usePr ? new SystemPrEos(temperature, pressure) : new SystemSrkEos(temperature, pressure);
+    double[] feed = { 0.02, 0.03, 0.86 - waterFeedFraction - nC10FeedFraction, 0.06, 0.03, nC10FeedFraction,
+        waterFeedFraction };
+    for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
+      system.addComponent(COMPONENTS[componentIndex], feed[componentIndex]);
+    }
+    system.setMixingRule(2);
+    system.setMultiPhaseCheck(multiphaseCheck);
+    if (poorGuess) {
+      system.setBeta(0, 1.0e-9);
+      system.setBeta(1, 1.0 - 1.0e-9);
+    }
     new ThermodynamicOperations(system).TPflash();
     system.init(1);
     return system;

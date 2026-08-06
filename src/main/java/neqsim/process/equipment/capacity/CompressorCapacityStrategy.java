@@ -1,7 +1,7 @@
 package neqsim.process.equipment.capacity;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -152,7 +152,7 @@ public class CompressorCapacityStrategy implements EquipmentCapacityStrategy {
   /** {@inheritDoc} */
   @Override
   public Map<String, CapacityConstraint> getConstraints(ProcessEquipmentInterface equipment) {
-    Map<String, CapacityConstraint> constraints = new HashMap<>();
+    Map<String, CapacityConstraint> constraints = new LinkedHashMap<>();
 
     if (!(equipment instanceof Compressor)) {
       return constraints;
