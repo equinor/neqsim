@@ -17,6 +17,7 @@ class LengthUnitTest extends neqsim.NeqSimTest {
     assertEquals(1000.0, length.getValue("mm"), 1e-12);
     assertEquals(3.280839895, length.getValue("ft"), 1e-9);
     assertEquals(12.0, length.getValue(1.0, "ft", "in"), 1e-12);
+    assertEquals(12.0, LengthUnit.convert(1.0, "ft", "in"), 1e-12);
   }
 
   @Test
