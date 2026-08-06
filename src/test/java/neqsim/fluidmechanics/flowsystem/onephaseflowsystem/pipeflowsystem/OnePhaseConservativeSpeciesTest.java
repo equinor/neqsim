@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import neqsim.fluidmechanics.flowsolver.ConstantAxialDispersion;
 import neqsim.fluidmechanics.flowsolver.SpeciesAdvectionScheme;
 import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFlowConvergenceReport;
 import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseSpeciesConservationReport;
@@ -76,6 +77,7 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     PipeFlowSystem pipe = createInitializedPipe(12, 3000.0);
     pipe.setConservativeSpeciesTransport(true);
     pipe.setSpeciesAdvectionScheme(SpeciesAdvectionScheme.TVD_VAN_LEER_SSP_RK2);
+    pipe.setAxialDispersionModel(new ConstantAxialDispersion(0.5));
     pipe.setFailOnNonConvergence(true);
     pipe.getTimeSeries().setTimes(new double[] { 0.0, 30.0 });
     pipe.getTimeSeries().setInletThermoSystems(new SystemInterface[] { createGas(0.80, 0.20) });
@@ -93,6 +95,10 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     assertTrue(report.getMaximumMassFraction() <= 1.0, report.getMessage());
     assertTrue(report.getTransportDiagnostics().getMaximumCellCourantNumber() > 0.0);
     assertTrue(report.getTransportDiagnostics().getMaximumFirstOrderImplicitNumericalDispersionM2PerSecond() > 0.0);
+    assertTrue(report.getTransportDiagnostics().isPhysicalDispersionIncluded());
+    assertEquals("constant", report.getTransportDiagnostics().getPhysicalDispersionModelName());
+    assertEquals(0.5, report.getTransportDiagnostics().getMaximumPhysicalAxialDispersionM2PerSecond(), 0.0);
+    assertTrue(report.getTransportDiagnostics().getCellPecletNumbers()[0] > 0.0);
   }
 
   @Test

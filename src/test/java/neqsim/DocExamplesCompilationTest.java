@@ -15,6 +15,8 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 import neqsim.integration.EOSComparison;
+import neqsim.fluidmechanics.flowsolver.AxialDispersionBoundaryCondition;
+import neqsim.fluidmechanics.flowsolver.ConstantAxialDispersion;
 import neqsim.fluidmechanics.flowsolver.SpeciesAdvectionScheme;
 import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.SpeciesTransportDiagnostics;
 import neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.PipeFlowSystem;
@@ -1432,18 +1434,26 @@ public class DocExamplesCompilationTest {
   }
 
   /**
-   * Bounded species-advection API from docs/fluidmechanics/single_phase_pipe_flow.md.
+   * Bounded species-advection and physical-dispersion API from docs/fluidmechanics/single_phase_pipe_flow.md.
    */
   @Test
   public void testSinglePhaseSpeciesAdvectionDocExampleCompiles() {
     PipeFlowSystem pipe = new PipeFlowSystem();
     pipe.setSpeciesAdvectionScheme(SpeciesAdvectionScheme.TVD_VAN_LEER_SSP_RK2);
+    ConstantAxialDispersion physicalDispersion = new ConstantAxialDispersion(250.0);
+    pipe.setAxialDispersionModel(physicalDispersion);
 
     SpeciesTransportDiagnostics diagnostics = SpeciesTransportDiagnostics.notRun();
 
     assertEquals(SpeciesAdvectionScheme.TVD_VAN_LEER_SSP_RK2, pipe.getSpeciesAdvectionScheme());
+    assertEquals("constant", pipe.getAxialDispersionModel().getName());
+    assertEquals(250.0, physicalDispersion.getConstantCoefficientM2PerSecond(), 0.0);
     assertEquals(SpeciesAdvectionScheme.FIRST_ORDER_IMPLICIT, diagnostics.getScheme());
     assertEquals(0, diagnostics.getCellCourantNumbers().length);
+    assertFalse(diagnostics.isPhysicalDispersionIncluded());
+    assertEquals(AxialDispersionBoundaryCondition.DIRICHLET_INLET, diagnostics.getInletDispersionBoundaryCondition());
+    assertEquals(AxialDispersionBoundaryCondition.ZERO_GRADIENT_OUTLET,
+        diagnostics.getOutletDispersionBoundaryCondition());
   }
 
   /**

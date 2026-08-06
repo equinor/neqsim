@@ -1,6 +1,8 @@
 package neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver;
 
 import java.util.Arrays;
+import neqsim.fluidmechanics.flowsolver.AxialDispersionModel;
+import neqsim.fluidmechanics.flowsolver.NoAxialDispersion;
 import neqsim.fluidmechanics.flowsolver.SpeciesAdvectionScheme;
 import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseSpeciesConservationReport.ConservationReason;
 
@@ -17,14 +19,23 @@ final class ConservativeSpeciesTransport {
       double[] inletMassFraction, double[] oldCellMassKg, double[] newCellMassKg, double[] faceMassFlowKgPerSecond,
       double timeStepSeconds) {
     return solve(componentNames, oldMassFraction, inletMassFraction, oldCellMassKg, newCellMassKg,
-        faceMassFlowKgPerSecond, timeStepSeconds, SpeciesAdvectionScheme.FIRST_ORDER_IMPLICIT, null);
+        faceMassFlowKgPerSecond, timeStepSeconds, SpeciesAdvectionScheme.FIRST_ORDER_IMPLICIT, null,
+        NoAxialDispersion.INSTANCE);
   }
 
   static OnePhaseSpeciesConservationReport solve(String[] componentNames, double[][] oldMassFraction,
       double[] inletMassFraction, double[] oldCellMassKg, double[] newCellMassKg, double[] faceMassFlowKgPerSecond,
       double timeStepSeconds, SpeciesAdvectionScheme scheme, double[] cellLengthM) {
+    return solve(componentNames, oldMassFraction, inletMassFraction, oldCellMassKg, newCellMassKg,
+        faceMassFlowKgPerSecond, timeStepSeconds, scheme, cellLengthM, NoAxialDispersion.INSTANCE);
+  }
+
+  static OnePhaseSpeciesConservationReport solve(String[] componentNames, double[][] oldMassFraction,
+      double[] inletMassFraction, double[] oldCellMassKg, double[] newCellMassKg, double[] faceMassFlowKgPerSecond,
+      double timeStepSeconds, SpeciesAdvectionScheme scheme, double[] cellLengthM,
+      AxialDispersionModel axialDispersionModel) {
     String validation = validate(componentNames, oldMassFraction, inletMassFraction, oldCellMassKg, newCellMassKg,
-        faceMassFlowKgPerSecond, timeStepSeconds, scheme, cellLengthM);
+        faceMassFlowKgPerSecond, timeStepSeconds, scheme, cellLengthM, axialDispersionModel);
     if (validation != null) {
       return failed(ConservationReason.INVALID_STATE, componentNames, validation);
     }
@@ -37,7 +48,7 @@ final class ConservativeSpeciesTransport {
     }
 
     SpeciesTransportDiagnostics diagnostics = createDiagnostics(scheme, oldCellMassKg, newCellMassKg,
-        faceMassFlowKgPerSecond, timeStepSeconds, cellLengthM);
+        faceMassFlowKgPerSecond, timeStepSeconds, cellLengthM, axialDispersionModel);
     if (diagnostics.getSubsteps() > MAXIMUM_TRANSPORT_SUBSTEPS) {
       return failed(ConservationReason.INVALID_STATE, componentNames,
           "High-resolution species transport requires " + diagnostics.getSubsteps()
@@ -46,32 +57,54 @@ final class ConservativeSpeciesTransport {
     }
     if (scheme == SpeciesAdvectionScheme.TVD_VAN_LEER_SSP_RK2) {
       return solveTvdVanLeer(componentNames, oldMassFraction, inletMassFraction, oldCellMassKg, newCellMassKg,
-          faceMassFlowKgPerSecond, timeStepSeconds, diagnostics);
+          faceMassFlowKgPerSecond, timeStepSeconds, cellLengthM, diagnostics);
     }
     return solveFirstOrderImplicit(componentNames, oldMassFraction, inletMassFraction, oldCellMassKg, newCellMassKg,
-        faceMassFlowKgPerSecond, timeStepSeconds, diagnostics);
+        faceMassFlowKgPerSecond, timeStepSeconds, cellLengthM, diagnostics);
   }
 
   private static OnePhaseSpeciesConservationReport solveFirstOrderImplicit(String[] componentNames,
       double[][] oldMassFraction, double[] inletMassFraction, double[] oldCellMassKg, double[] newCellMassKg,
-      double[] faceMassFlowKgPerSecond, double timeStepSeconds, SpeciesTransportDiagnostics diagnostics) {
+      double[] faceMassFlowKgPerSecond, double timeStepSeconds, double[] cellLengthM,
+      SpeciesTransportDiagnostics diagnostics) {
     int components = componentNames.length;
     int cells = oldCellMassKg.length;
     double[][] massFraction = new double[components][cells];
+    double[] averagedCellMassKg = interpolate(oldCellMassKg, newCellMassKg, 0.5);
+    double[] dispersionConductanceKgPerSecond = dispersionConductance(averagedCellMassKg, cellLengthM,
+        diagnostics.getPhysicalAxialDispersionM2PerSecond());
+    double[] inletBoundaryMassKg = new double[components];
+    double[] outletBoundaryMassKg = new double[components];
 
     for (int component = 0; component < components - 1; component++) {
+      double[] lower = new double[cells];
+      double[] diagonal = new double[cells];
+      double[] upper = new double[cells];
+      double[] rightHandSide = new double[cells];
       for (int cell = 0; cell < cells; cell++) {
-        double westMassFraction = cell == 0 ? inletMassFraction[component] : massFraction[component][cell - 1];
-        double numerator = oldCellMassKg[cell] * oldMassFraction[component][cell]
-            + timeStepSeconds * faceMassFlowKgPerSecond[cell] * westMassFraction;
-        double denominator = newCellMassKg[cell] + timeStepSeconds * faceMassFlowKgPerSecond[cell + 1];
-        if (!Double.isFinite(numerator) || !Double.isFinite(denominator) || denominator <= 0.0) {
-          return failed(ConservationReason.INVALID_STATE, componentNames,
-              "Component transport produced a non-finite or non-positive implicit coefficient " + "at component "
-                  + component + ", cell " + cell + ".");
+        double westDispersion = dispersionConductanceKgPerSecond[cell];
+        double eastDispersion = dispersionConductanceKgPerSecond[cell + 1];
+        diagonal[cell] = newCellMassKg[cell]
+            + timeStepSeconds * (faceMassFlowKgPerSecond[cell + 1] + westDispersion + eastDispersion);
+        rightHandSide[cell] = oldCellMassKg[cell] * oldMassFraction[component][cell];
+        upper[cell] = -timeStepSeconds * eastDispersion;
+        if (cell == 0) {
+          rightHandSide[cell] += timeStepSeconds * (faceMassFlowKgPerSecond[0] + westDispersion)
+              * inletMassFraction[component];
+        } else {
+          lower[cell] = -timeStepSeconds * (faceMassFlowKgPerSecond[cell] + westDispersion);
         }
-        massFraction[component][cell] = numerator / denominator;
       }
+      massFraction[component] = solveTridiagonal(lower, diagonal, upper, rightHandSide);
+      if (massFraction[component] == null) {
+        return failed(ConservationReason.INVALID_STATE, componentNames,
+            "Component transport produced a non-finite or non-positive implicit tridiagonal coefficient at component "
+                + component + ".");
+      }
+      inletBoundaryMassKg[component] = timeStepSeconds * (faceMassFlowKgPerSecond[0] * inletMassFraction[component]
+          + dispersionConductanceKgPerSecond[0] * (inletMassFraction[component] - massFraction[component][0]));
+      outletBoundaryMassKg[component] = timeStepSeconds * faceMassFlowKgPerSecond[cells]
+          * massFraction[component][cells - 1];
     }
 
     for (int cell = 0; cell < cells; cell++) {
@@ -81,14 +114,20 @@ final class ConservativeSpeciesTransport {
       }
       massFraction[components - 1][cell] = 1.0 - independentSum;
     }
+    inletBoundaryMassKg[components - 1] = timeStepSeconds * faceMassFlowKgPerSecond[0];
+    outletBoundaryMassKg[components - 1] = timeStepSeconds * faceMassFlowKgPerSecond[cells];
+    for (int component = 0; component < components - 1; component++) {
+      inletBoundaryMassKg[components - 1] -= inletBoundaryMassKg[component];
+      outletBoundaryMassKg[components - 1] -= outletBoundaryMassKg[component];
+    }
 
     return createReport(componentNames, oldMassFraction, inletMassFraction, oldCellMassKg, newCellMassKg,
-        faceMassFlowKgPerSecond, timeStepSeconds, massFraction, null, null, diagnostics);
+        faceMassFlowKgPerSecond, timeStepSeconds, massFraction, inletBoundaryMassKg, outletBoundaryMassKg, diagnostics);
   }
 
   private static OnePhaseSpeciesConservationReport solveTvdVanLeer(String[] componentNames, double[][] oldMassFraction,
       double[] inletMassFraction, double[] oldCellMassKg, double[] newCellMassKg, double[] faceMassFlowKgPerSecond,
-      double timeStepSeconds, SpeciesTransportDiagnostics diagnostics) {
+      double timeStepSeconds, double[] cellLengthM, SpeciesTransportDiagnostics diagnostics) {
     int components = componentNames.length;
     int independentComponents = components - 1;
     int cells = oldCellMassKg.length;
@@ -97,6 +136,7 @@ final class ConservativeSpeciesTransport {
     double[][] componentMassKg = new double[independentComponents][cells];
     double[] inletBoundaryMassKg = new double[components];
     double[] outletBoundaryMassKg = new double[components];
+    double[] physicalDispersionM2PerSecond = diagnostics.getPhysicalAxialDispersionM2PerSecond();
 
     for (int component = 0; component < independentComponents; component++) {
       for (int cell = 0; cell < cells; cell++) {
@@ -109,24 +149,34 @@ final class ConservativeSpeciesTransport {
       double endFraction = (double) (substep + 1) / substeps;
       double[] startCellMassKg = interpolate(oldCellMassKg, newCellMassKg, startFraction);
       double[] endCellMassKg = interpolate(oldCellMassKg, newCellMassKg, endFraction);
+      double[] startDispersionConductanceKgPerSecond = dispersionConductance(startCellMassKg, cellLengthM,
+          physicalDispersionM2PerSecond);
+      double[] endDispersionConductanceKgPerSecond = dispersionConductance(endCellMassKg, cellLengthM,
+          physicalDispersionM2PerSecond);
 
       for (int component = 0; component < independentComponents; component++) {
         double[] startMassFraction = divide(componentMassKg[component], startCellMassKg);
         double[] startFaceMassFraction = reconstructPositiveFlowFaces(startMassFraction, inletMassFraction[component]);
+        double[] startDispersiveFluxKgPerSecond = physicalDispersiveFlux(startMassFraction,
+            inletMassFraction[component], startDispersionConductanceKgPerSecond);
         double[] eulerComponentMassKg = conservativeEulerStep(componentMassKg[component], startFaceMassFraction,
-            faceMassFlowKgPerSecond, substepSeconds);
+            faceMassFlowKgPerSecond, startDispersiveFluxKgPerSecond, substepSeconds);
         double[] endEulerMassFraction = divide(eulerComponentMassKg, endCellMassKg);
         double[] endFaceMassFraction = reconstructPositiveFlowFaces(endEulerMassFraction, inletMassFraction[component]);
+        double[] endDispersiveFluxKgPerSecond = physicalDispersiveFlux(endEulerMassFraction,
+            inletMassFraction[component], endDispersionConductanceKgPerSecond);
         double[] secondEulerComponentMassKg = conservativeEulerStep(eulerComponentMassKg, endFaceMassFraction,
-            faceMassFlowKgPerSecond, substepSeconds);
+            faceMassFlowKgPerSecond, endDispersiveFluxKgPerSecond, substepSeconds);
 
         for (int cell = 0; cell < cells; cell++) {
           componentMassKg[component][cell] = 0.5
               * (componentMassKg[component][cell] + secondEulerComponentMassKg[cell]);
         }
-        inletBoundaryMassKg[component] += substepSeconds * faceMassFlowKgPerSecond[0] * inletMassFraction[component];
-        outletBoundaryMassKg[component] += 0.5 * substepSeconds * faceMassFlowKgPerSecond[cells]
-            * (startFaceMassFraction[cells] + endFaceMassFraction[cells]);
+        inletBoundaryMassKg[component] += substepSeconds * (faceMassFlowKgPerSecond[0] * inletMassFraction[component]
+            + 0.5 * (startDispersiveFluxKgPerSecond[0] + endDispersiveFluxKgPerSecond[0]));
+        outletBoundaryMassKg[component] += 0.5 * substepSeconds
+            * (faceMassFlowKgPerSecond[cells] * (startFaceMassFraction[cells] + endFaceMassFraction[cells])
+                + startDispersiveFluxKgPerSecond[cells] + endDispersiveFluxKgPerSecond[cells]);
       }
     }
 
@@ -218,9 +268,15 @@ final class ConservativeSpeciesTransport {
 
   private static String validate(String[] componentNames, double[][] oldMassFraction, double[] inletMassFraction,
       double[] oldCellMassKg, double[] newCellMassKg, double[] faceMassFlowKgPerSecond, double timeStepSeconds,
-      SpeciesAdvectionScheme scheme, double[] cellLengthM) {
+      SpeciesAdvectionScheme scheme, double[] cellLengthM, AxialDispersionModel axialDispersionModel) {
     if (scheme == null) {
       return "A conservative species advection scheme is required.";
+    }
+    if (axialDispersionModel == null) {
+      return "A non-null physical axial-dispersion model is required; use NoAxialDispersion for pure advection.";
+    }
+    if (axialDispersionModel.getName() == null || axialDispersionModel.getName().trim().isEmpty()) {
+      return "A physical axial-dispersion model must expose a non-empty diagnostic name.";
     }
     if (componentNames == null || componentNames.length < 2) {
       return "At least two named components are required for n-1 transport.";
@@ -279,38 +335,86 @@ final class ConservativeSpeciesTransport {
         }
       }
     }
+    if (axialDispersionModel.isEnabled() && cellLengthM == null) {
+      return "Physical axial dispersion requires one positive length for each physical cell.";
+    }
+    if (cellLengthM != null) {
+      for (int cell = 0; cell < oldCellMassKg.length; cell++) {
+        double referenceCellMassKg = Math.min(oldCellMassKg[cell], newCellMassKg[cell]);
+        double referenceMassFlowKgPerSecond = Math.max(faceMassFlowKgPerSecond[cell],
+            faceMassFlowKgPerSecond[cell + 1]);
+        double coefficient = axialDispersionModel.getCoefficientM2PerSecond(cell, cellLengthM[cell],
+            referenceCellMassKg, referenceMassFlowKgPerSecond);
+        if (!Double.isFinite(coefficient) || coefficient < 0.0) {
+          return "Physical axial-dispersion coefficients must be finite and non-negative; cell=" + cell
+              + ", coefficient=" + coefficient + " m2/s.";
+        }
+      }
+    }
     return null;
   }
 
   private static SpeciesTransportDiagnostics createDiagnostics(SpeciesAdvectionScheme scheme, double[] oldCellMassKg,
-      double[] newCellMassKg, double[] faceMassFlowKgPerSecond, double timeStepSeconds, double[] cellLengthM) {
+      double[] newCellMassKg, double[] faceMassFlowKgPerSecond, double timeStepSeconds, double[] cellLengthM,
+      AxialDispersionModel axialDispersionModel) {
     int cells = oldCellMassKg.length;
     double[] courantNumber = new double[cells];
     double[] numericalDispersion = new double[cells];
     double[] cellPecletNumber = new double[cells];
+    double[] physicalDispersion = new double[cells];
+    double[] physicalDispersionNumber = new double[cells];
     Arrays.fill(numericalDispersion, Double.NaN);
     Arrays.fill(cellPecletNumber, Double.NaN);
+    Arrays.fill(physicalDispersionNumber, Double.NaN);
     double courantSum = 0.0;
-    double maximumCourant = 0.0;
     for (int cell = 0; cell < cells; cell++) {
       double referenceCellMassKg = Math.min(oldCellMassKg[cell], newCellMassKg[cell]);
       double referenceMassFlowKgPerSecond = Math.max(faceMassFlowKgPerSecond[cell], faceMassFlowKgPerSecond[cell + 1]);
       courantNumber[cell] = timeStepSeconds * referenceMassFlowKgPerSecond / referenceCellMassKg;
       courantSum += courantNumber[cell];
-      maximumCourant = Math.max(maximumCourant, courantNumber[cell]);
       if (cellLengthM != null) {
         double velocityMPerSecond = referenceMassFlowKgPerSecond / referenceCellMassKg * cellLengthM[cell];
         numericalDispersion[cell] = 0.5 * velocityMPerSecond * cellLengthM[cell] * (1.0 + courantNumber[cell]);
+        physicalDispersion[cell] = axialDispersionModel.getCoefficientM2PerSecond(cell, cellLengthM[cell],
+            referenceCellMassKg, referenceMassFlowKgPerSecond);
+        if (physicalDispersion[cell] > 0.0) {
+          cellPecletNumber[cell] = velocityMPerSecond * cellLengthM[cell] / physicalDispersion[cell];
+        }
       }
     }
+    if (cellLengthM != null) {
+      double[] referenceCellMassKg = new double[cells];
+      for (int cell = 0; cell < cells; cell++) {
+        referenceCellMassKg[cell] = Math.min(oldCellMassKg[cell], newCellMassKg[cell]);
+      }
+      double[] conductance = dispersionConductance(referenceCellMassKg, cellLengthM, physicalDispersion);
+      for (int cell = 0; cell < cells; cell++) {
+        physicalDispersionNumber[cell] = timeStepSeconds * (conductance[cell] + conductance[cell + 1])
+            / referenceCellMassKg[cell];
+      }
+    }
+    double maximumCombinedExplicitNumber = 0.0;
+    for (int cell = 0; cell < cells; cell++) {
+      double combined = courantNumber[cell]
+          + (Double.isFinite(physicalDispersionNumber[cell]) ? physicalDispersionNumber[cell] : 0.0);
+      maximumCombinedExplicitNumber = Math.max(maximumCombinedExplicitNumber, combined);
+    }
     int substeps = scheme.isHighResolution()
-        ? Math.max(1, (int) Math.ceil(maximumCourant / scheme.getMaximumCourantNumber()))
+        ? Math.max(1, (int) Math.ceil(maximumCombinedExplicitNumber / scheme.getMaximumCourantNumber()))
         : 1;
+    boolean physicalDispersionIncluded = false;
+    for (double coefficient : physicalDispersion) {
+      physicalDispersionIncluded |= coefficient > 0.0;
+    }
     String message = "Full-step mass CFL is reported before " + substeps + " transport substep(s). "
-        + "The numerical-dispersion array is the modified-equation reference for first-order implicit upwind; "
-        + "physical axial dispersion is disabled, so cell Peclet numbers are unavailable.";
+        + "The numerical-dispersion array is the modified-equation reference for first-order implicit upwind. "
+        + "Physical axial dispersion model='" + axialDispersionModel.getName() + "' is "
+        + (physicalDispersionIncluded ? "enabled" : "disabled")
+        + " with DIRICHLET_INLET and ZERO_GRADIENT_OUTLET boundary conditions; physical and numerical coefficients "
+        + "are reported separately.";
     return new SpeciesTransportDiagnostics(scheme, courantNumber, courantSum / cells, substeps, numericalDispersion,
-        cellPecletNumber, false, message);
+        cellPecletNumber, axialDispersionModel.getName(), physicalDispersion, physicalDispersionNumber,
+        physicalDispersionIncluded, message);
   }
 
   private static double[] interpolate(double[] oldValues, double[] newValues, double fraction) {
@@ -329,12 +433,78 @@ final class ConservativeSpeciesTransport {
     return result;
   }
 
+  private static double[] dispersionConductance(double[] cellMassKg, double[] cellLengthM,
+      double[] dispersionM2PerSecond) {
+    int cells = cellMassKg.length;
+    double[] conductanceKgPerSecond = new double[cells + 1];
+    if (cellLengthM == null || dispersionM2PerSecond.length == 0) {
+      return conductanceKgPerSecond;
+    }
+    double inletConductivityKgMPerSecond = cellMassKg[0] / cellLengthM[0] * dispersionM2PerSecond[0];
+    conductanceKgPerSecond[0] = inletConductivityKgMPerSecond / (0.5 * cellLengthM[0]);
+    for (int face = 1; face < cells; face++) {
+      double leftConductivity = cellMassKg[face - 1] / cellLengthM[face - 1] * dispersionM2PerSecond[face - 1];
+      double rightConductivity = cellMassKg[face] / cellLengthM[face] * dispersionM2PerSecond[face];
+      if (leftConductivity > 0.0 && rightConductivity > 0.0) {
+        double leftHalfCellResistance = 0.5 * cellLengthM[face - 1] / leftConductivity;
+        double rightHalfCellResistance = 0.5 * cellLengthM[face] / rightConductivity;
+        conductanceKgPerSecond[face] = 1.0 / (leftHalfCellResistance + rightHalfCellResistance);
+      }
+    }
+    conductanceKgPerSecond[cells] = 0.0;
+    return conductanceKgPerSecond;
+  }
+
+  private static double[] physicalDispersiveFlux(double[] massFraction, double inletMassFraction,
+      double[] conductanceKgPerSecond) {
+    int cells = massFraction.length;
+    double[] fluxKgPerSecond = new double[cells + 1];
+    fluxKgPerSecond[0] = conductanceKgPerSecond[0] * (inletMassFraction - massFraction[0]);
+    for (int face = 1; face < cells; face++) {
+      fluxKgPerSecond[face] = conductanceKgPerSecond[face] * (massFraction[face - 1] - massFraction[face]);
+    }
+    fluxKgPerSecond[cells] = 0.0;
+    return fluxKgPerSecond;
+  }
+
   private static double[] conservativeEulerStep(double[] componentMassKg, double[] faceMassFraction,
-      double[] faceMassFlowKgPerSecond, double timeStepSeconds) {
+      double[] faceMassFlowKgPerSecond, double[] dispersiveFluxKgPerSecond, double timeStepSeconds) {
     double[] result = new double[componentMassKg.length];
     for (int cell = 0; cell < result.length; cell++) {
-      result[cell] = componentMassKg[cell] + timeStepSeconds * (faceMassFlowKgPerSecond[cell] * faceMassFraction[cell]
-          - faceMassFlowKgPerSecond[cell + 1] * faceMassFraction[cell + 1]);
+      result[cell] = componentMassKg[cell]
+          + timeStepSeconds * (faceMassFlowKgPerSecond[cell] * faceMassFraction[cell] + dispersiveFluxKgPerSecond[cell]
+              - faceMassFlowKgPerSecond[cell + 1] * faceMassFraction[cell + 1] - dispersiveFluxKgPerSecond[cell + 1]);
+    }
+    return result;
+  }
+
+  private static double[] solveTridiagonal(double[] lower, double[] diagonal, double[] upper, double[] rightHandSide) {
+    int size = diagonal.length;
+    double[] upperPrime = new double[size];
+    double[] rightHandSidePrime = new double[size];
+    double denominator = diagonal[0];
+    if (!Double.isFinite(denominator) || denominator <= 0.0) {
+      return null;
+    }
+    upperPrime[0] = upper[0] / denominator;
+    rightHandSidePrime[0] = rightHandSide[0] / denominator;
+    for (int row = 1; row < size; row++) {
+      denominator = diagonal[row] - lower[row] * upperPrime[row - 1];
+      if (!Double.isFinite(denominator) || denominator <= 0.0) {
+        return null;
+      }
+      upperPrime[row] = row == size - 1 ? 0.0 : upper[row] / denominator;
+      rightHandSidePrime[row] = (rightHandSide[row] - lower[row] * rightHandSidePrime[row - 1]) / denominator;
+    }
+    double[] result = new double[size];
+    result[size - 1] = rightHandSidePrime[size - 1];
+    for (int row = size - 2; row >= 0; row--) {
+      result[row] = rightHandSidePrime[row] - upperPrime[row] * result[row + 1];
+    }
+    for (double value : result) {
+      if (!Double.isFinite(value)) {
+        return null;
+      }
     }
     return result;
   }

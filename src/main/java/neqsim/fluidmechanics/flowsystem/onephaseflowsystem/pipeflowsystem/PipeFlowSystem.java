@@ -1,6 +1,8 @@
 package neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem;
 
 import java.util.UUID;
+import neqsim.fluidmechanics.flowsolver.AxialDispersionModel;
+import neqsim.fluidmechanics.flowsolver.NoAxialDispersion;
 import neqsim.fluidmechanics.flowsolver.SpeciesAdvectionScheme;
 import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFixedStaggeredGrid;
 import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFlowConvergenceReport;
@@ -21,6 +23,8 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
   private boolean conservativeSpeciesTransportEnabled;
   /** Selected finite-volume method for conservative component transport. */
   private SpeciesAdvectionScheme speciesAdvectionScheme = SpeciesAdvectionScheme.FIRST_ORDER_IMPLICIT;
+  /** Optional physical axial dispersion, disabled by default. */
+  private AxialDispersionModel axialDispersionModel = NoAxialDispersion.INSTANCE;
   private boolean storeSpeciesConservationHistory;
   private OnePhaseSpeciesConservationHistory speciesConservationHistory = OnePhaseSpeciesConservationHistory.empty();
   private OnePhaseSpeciesConservationHistory.Builder speciesConservationHistoryBuilder;
@@ -153,6 +157,32 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
   }
 
   /**
+   * Select a physical axial-dispersion model for conservative component transport.
+   *
+   * <p>
+   * Physical dispersion is independent of the selected numerical advection scheme. Use {@link NoAxialDispersion} to
+   * retain pure advection. The validated boundary conditions are a prescribed inlet composition and zero physical
+   * diffusive flux at the outlet.
+   * </p>
+   *
+   * @param model non-null physical axial-dispersion model
+   * @throws IllegalArgumentException if {@code model} is null
+   */
+  public void setAxialDispersionModel(AxialDispersionModel model) {
+    if (model == null) {
+      throw new IllegalArgumentException(
+          "Physical axial-dispersion model cannot be null; use NoAxialDispersion for pure advection.");
+    }
+    axialDispersionModel = model;
+    configureConvergencePolicy();
+  }
+
+  /** @return selected non-null physical axial-dispersion model */
+  public AxialDispersionModel getAxialDispersionModel() {
+    return axialDispersionModel;
+  }
+
+  /**
    * Configure whether a transient solve throws when its convergence report fails.
    *
    * <p>
@@ -182,6 +212,7 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
       onePhaseSolver.setFailOnNonConvergence(failOnNonConvergence);
       onePhaseSolver.setConservativeSpeciesTransportEnabled(conservativeSpeciesTransportEnabled);
       onePhaseSolver.setSpeciesAdvectionScheme(speciesAdvectionScheme);
+      onePhaseSolver.setAxialDispersionModel(axialDispersionModel);
     }
   }
 
