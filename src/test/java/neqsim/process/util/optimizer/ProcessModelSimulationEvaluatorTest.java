@@ -3,7 +3,9 @@ package neqsim.process.util.optimizer;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.DoubleSupplier;
 import java.util.function.ToDoubleFunction;
@@ -227,6 +229,79 @@ class ProcessModelSimulationEvaluatorTest {
     assertEquals(13000.0, bottleneck.getCurrentValue(), 0.0);
     assertEquals(13.0 / 12.0, bottleneck.getUtilization(), 1.0e-12);
     assertFalse(bottleneck.isCurrentValueWithinValidityRange());
+  }
+
+  /**
+   * Verifies all capacity constraints are ranked strictly by utilization while evidence applicability remains a
+   * diagnostic.
+   */
+  @Test
+  void capacityConstraintRankingRetainsEvidenceWithoutChangingOrder() {
+    final ModelFixture fixture = createModelFixture();
+    final AtomicInteger highSupplierCalls = new AtomicInteger();
+    final AtomicInteger mediumSupplierCalls = new AtomicInteger();
+    final AtomicInteger lowSupplierCalls = new AtomicInteger();
+    CapacityConstraint high = new CapacityConstraint("high", "kg/hr", ConstraintType.HARD).setDesignValue(12000.0)
+        .setConfidence(0.20).setValidityRange(8000.0, 12000.0).setValueSupplier(() -> {
+          highSupplierCalls.incrementAndGet();
+          return 13000.0;
+        });
+    CapacityConstraint medium = new CapacityConstraint("medium", "kg/hr", ConstraintType.HARD).setDesignValue(14000.0)
+        .setValidityRange(10000.0, 14000.0).setValueSupplier(() -> {
+          mediumSupplierCalls.incrementAndGet();
+          return 13000.0;
+        });
+    CapacityConstraint low = new CapacityConstraint("low", "kg/hr", ConstraintType.HARD).setDesignValue(15000.0)
+        .setConfidence(0.99).setValueSupplier(() -> {
+          lowSupplierCalls.incrementAndGet();
+          return 13000.0;
+        });
+    fixture.separator.clearCapacityConstraints();
+    fixture.separator.addCapacityConstraint(low);
+    fixture.separator.addCapacityConstraint(high);
+    fixture.separator.addCapacityConstraint(medium);
+
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
+    evaluator.setIncludeStrategyCapacityConstraints(false);
+    List<ProcessModelSimulationEvaluator.BottleneckStatus> ranked = evaluator.rankCapacityConstraints(fixture.model);
+
+    assertEquals(3, ranked.size());
+    assertEquals("high", ranked.get(0).getConstraintName());
+    assertEquals("medium", ranked.get(1).getConstraintName());
+    assertEquals("low", ranked.get(2).getConstraintName());
+    assertEquals(ProcessModelSimulationEvaluator.BottleneckStatus.EvidenceApplicability.OUTSIDE_VALIDITY_RANGE,
+        ranked.get(0).getEvidenceApplicability());
+    assertEquals(ProcessModelSimulationEvaluator.BottleneckStatus.EvidenceApplicability.WITHIN_VALIDITY_RANGE,
+        ranked.get(1).getEvidenceApplicability());
+    assertEquals(ProcessModelSimulationEvaluator.BottleneckStatus.EvidenceApplicability.NOT_ASSESSED,
+        ranked.get(2).getEvidenceApplicability());
+    assertEquals(1, highSupplierCalls.get());
+    assertEquals(1, mediumSupplierCalls.get());
+    assertEquals(1, lowSupplierCalls.get());
+    assertEquals(ranked.get(0).getConstraintName(), evaluator.findActiveBottleneck(fixture.model).getConstraintName());
+    assertThrows(UnsupportedOperationException.class,
+        () -> ranked.add(ProcessModelSimulationEvaluator.BottleneckStatus.none()));
+  }
+
+  /** Verifies stable utilization ties retain capacity-constraint registration order. */
+  @Test
+  void capacityConstraintRankingPreservesRegistrationOrderForTies() {
+    ModelFixture fixture = createModelFixture();
+    CapacityConstraint first = new CapacityConstraint("first", "kg/hr", ConstraintType.HARD).setDesignValue(12000.0)
+        .setCurrentValue(9000.0);
+    CapacityConstraint second = new CapacityConstraint("second", "kg/hr", ConstraintType.HARD).setDesignValue(12000.0)
+        .setCurrentValue(9000.0);
+    fixture.separator.clearCapacityConstraints();
+    fixture.separator.addCapacityConstraint(first);
+    fixture.separator.addCapacityConstraint(second);
+
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
+    evaluator.setIncludeStrategyCapacityConstraints(false);
+    List<ProcessModelSimulationEvaluator.BottleneckStatus> ranked = evaluator.rankCapacityConstraints(fixture.model);
+
+    assertEquals(2, ranked.size());
+    assertEquals("first", ranked.get(0).getConstraintName());
+    assertEquals("second", ranked.get(1).getConstraintName());
   }
 
   /**
