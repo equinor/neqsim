@@ -16,6 +16,9 @@
 - Failed and fallback-product trials no longer update the side-draw controller or replace the last
   accepted public column state. The safeguarded search uses only accepted flow observations for
   interpolation and bounded exploration.
+- When a cold trial is rejected after an accepted state exists, the same fraction is retried once
+  from the nearest accepted solved profile. This continuation path removes Java-runtime-dependent
+  cold-start failures without reusing a failed or fallback-product state.
 - `DistillationColumn` now reports rejected candidates, state rollbacks, accumulated inner-solver
   work, and the candidate history through its column-tear diagnostics. These values are transient
   and reset on copied or deserialized columns.

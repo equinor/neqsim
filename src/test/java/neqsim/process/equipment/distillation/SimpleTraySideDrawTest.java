@@ -187,6 +187,8 @@ public class SimpleTraySideDrawTest {
     assertEquals(0.0, column.getMassBalance("kg/hr"), 1.0e-6, column.getConvergenceDiagnostics());
     assertTrue(column.getLastColumnTearRejectedCandidateCount() > 0,
         "the controller should reject the invalid large multiplicative candidate");
+    assertTrue(column.getLastColumnTearCandidateHistory().contains("continuation fraction="),
+        "the rejected cold candidate should be retried from an accepted state");
     assertComponentMassBalance(feed, column.getSideDrawStream(3, DistillationColumn.SideDrawPhase.LIQUID), column);
   }
 

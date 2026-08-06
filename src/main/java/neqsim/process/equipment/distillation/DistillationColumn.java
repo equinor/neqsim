@@ -1435,11 +1435,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Solve one side-draw flow target using independent cold candidates and accepted-state rollback.
    *
    * <p>
-   * Each proposed fraction is solved on a deep copy of the same cold column configuration. Only candidates whose inner
-   * solve reports an accepted status are copied back to the live column. Rejected fallback products therefore cannot
-   * become the basis for a controller update or leak into public product streams. Accepted probes are used for secant
-   * interpolation when they bracket the target; otherwise a multiplicative proposal is tried. A small deterministic
-   * fraction scan moves past isolated rejected candidates without using their invalid flow values.
+   * Each proposed fraction is first solved on a deep copy of the same cold column configuration. Only candidates whose
+   * inner solve reports an accepted status are copied back to the live column. When a cold candidate is rejected after
+   * at least one rigorous state exists, the same fraction is retried once by continuation from the nearest accepted
+   * state. Rejected fallback products therefore cannot become the basis for a controller update or leak into public
+   * product streams. Accepted probes are used for secant interpolation when they bracket the target; otherwise a
+   * multiplicative proposal is tried. A small deterministic fraction scan moves past isolated rejected candidates
+   * without using their invalid flow values.
    * </p>
    *
    * @param id calculation identifier
@@ -1452,6 +1454,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     List<Double> attemptedFractions = new ArrayList<Double>();
     List<Double> acceptedFractions = new ArrayList<Double>();
     List<Double> acceptedFlows = new ArrayList<Double>();
+    List<DistillationColumn> acceptedCandidates = new ArrayList<DistillationColumn>();
     StringBuilder candidateHistory = new StringBuilder();
     double maximumFraction = getMaximumSideDrawFraction(specification.getTrayNumber(), specification.getPhase());
     double candidateFraction = getSideDrawFraction(specification.getTrayNumber(), specification.getPhase());
@@ -1477,24 +1480,28 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       candidate.setSideDrawFractionWithinLimit(specification.getTrayNumber(), specification.getPhase(),
           candidateFraction);
       candidate.setDoInitializion(true);
-      double candidateFlow = Double.NaN;
-      try {
-        candidate.solveConfiguredColumn(id);
-        StreamInterface candidateDraw = candidate.getSideDrawStream(specification.getTrayNumber(),
-            specification.getPhase());
-        candidateFlow = candidateDraw.getFlowRate(specification.getFlowUnit());
-      } catch (RuntimeException exception) {
-        candidate.lastSolveStatus = SolveStatus.FAILED;
-        candidate.lastSolveStatusReason = "Side-draw candidate inner solve failed: " + exception.getMessage();
-        logger.debug("Side-draw candidate {} rejected for column {} because the inner solve threw.",
-            Double.valueOf(candidateFraction), getName(), exception);
-      }
+      double candidateFlow = solveSingleSideDrawCandidate(candidate, specification, candidateFraction, id);
       lastColumnTearIterationCount = iteration + 1;
-      lastColumnTearInnerIterationCount += Math.max(0, candidate.getLastIterationCount());
-
+      int candidateInnerIterations = Math.max(0, candidate.getLastIterationCount());
       boolean candidateAccepted = isAcceptedColumnTearCandidate(candidate) && Double.isFinite(candidateFlow);
-      appendSideDrawCandidateHistory(candidateHistory, iteration + 1, candidateFraction, candidateFlow,
-          candidate.getLastSolveStatus(), candidateAccepted);
+      boolean continuationRetried = false;
+      if (!candidateAccepted && !acceptedCandidates.isEmpty()) {
+        appendSideDrawCandidateHistory(candidateHistory, iteration + 1, "cold", candidateFraction, candidateFlow,
+            candidate.getLastSolveStatus(), false);
+        lastColumnTearRejectedCandidateCount++;
+        lastColumnTearRollbackCount++;
+
+        candidate = createSingleSideDrawContinuationCandidate(acceptedCandidates, acceptedFractions, candidateFraction,
+            specification);
+        candidateFlow = solveSingleSideDrawCandidate(candidate, specification, candidateFraction, id);
+        candidateInnerIterations += Math.max(0, candidate.getLastIterationCount());
+        candidateAccepted = isAcceptedColumnTearCandidate(candidate) && Double.isFinite(candidateFlow);
+        continuationRetried = true;
+      }
+      lastColumnTearInnerIterationCount += candidateInnerIterations;
+
+      appendSideDrawCandidateHistory(candidateHistory, iteration + 1, continuationRetried ? "continuation" : null,
+          candidateFraction, candidateFlow, candidate.getLastSolveStatus(), candidateAccepted);
       if (!candidateAccepted) {
         lastColumnTearRejectedCandidateCount++;
         if (acceptedAnyCandidate) {
@@ -1508,6 +1515,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       acceptedAnyCandidate = true;
       acceptedFractions.add(Double.valueOf(candidateFraction));
       acceptedFlows.add(Double.valueOf(candidateFlow));
+      acceptedCandidates.add(candidate);
       double residual = Math.abs(candidateFlow - specification.getTargetFlowRate())
           / Math.max(1.0e-12, Math.abs(specification.getTargetFlowRate()));
       if (residual < bestResidual) {
@@ -1563,6 +1571,69 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private boolean isAcceptedColumnTearCandidate(DistillationColumn candidate) {
     return candidate.lastSolveStatus == SolveStatus.RIGOROUS_CONVERGED
         || candidate.lastSolveStatus == SolveStatus.RECONCILED_PRODUCTS;
+  }
+
+  /**
+   * Solve one configured side-draw candidate and convert an inner exception to a rejected state.
+   *
+   * @param candidate isolated candidate column
+   * @param specification active side-draw flow specification
+   * @param candidateFraction proposed side-draw fraction
+   * @param id calculation identifier
+   * @return candidate side-draw flow, or {@link Double#NaN} after an exception
+   */
+  private double solveSingleSideDrawCandidate(DistillationColumn candidate, ColumnSideDrawSpecification specification,
+      double candidateFraction, UUID id) {
+    try {
+      candidate.solveConfiguredColumn(id);
+      StreamInterface candidateDraw = candidate.getSideDrawStream(specification.getTrayNumber(),
+          specification.getPhase());
+      return candidateDraw.getFlowRate(specification.getFlowUnit());
+    } catch (RuntimeException exception) {
+      candidate.lastSolveStatus = SolveStatus.FAILED;
+      candidate.lastSolveStatusReason = "Side-draw candidate inner solve failed: " + exception.getMessage();
+      logger.debug("Side-draw candidate {} rejected for column {} because the inner solve threw.",
+          Double.valueOf(candidateFraction), getName(), exception);
+      return Double.NaN;
+    }
+  }
+
+  /**
+   * Create a one-shot continuation retry from the accepted state nearest the rejected fraction.
+   *
+   * <p>
+   * Deep-copy serialization clears transient warm-state ownership. The retry explicitly marks the copied tray network
+   * as a solved state for the updated fraction so the inner solver starts from that accepted profile instead of
+   * rebuilding the same runtime-sensitive cold initialization. No rejected state is retained or reused.
+   * </p>
+   *
+   * @param acceptedCandidates accepted solved candidate states
+   * @param acceptedFractions fractions corresponding to the accepted states
+   * @param candidateFraction rejected fraction to retry
+   * @param specification active side-draw flow specification
+   * @return isolated continuation candidate configured at the rejected fraction
+   */
+  private DistillationColumn createSingleSideDrawContinuationCandidate(List<DistillationColumn> acceptedCandidates,
+      List<Double> acceptedFractions, double candidateFraction, ColumnSideDrawSpecification specification) {
+    int nearestIndex = 0;
+    double nearestDistance = Double.POSITIVE_INFINITY;
+    for (int index = 0; index < acceptedFractions.size(); index++) {
+      double distance = Math.abs(acceptedFractions.get(index).doubleValue() - candidateFraction);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestIndex = index;
+      }
+    }
+
+    DistillationColumn candidate = (DistillationColumn) acceptedCandidates.get(nearestIndex).copy();
+    candidate.resetLastSolveMetrics();
+    candidate.setSideDrawFractionWithinLimit(specification.getTrayNumber(), specification.getPhase(),
+        candidateFraction);
+    candidate.trayStateThermodynamicIdentitySignature = candidate.calculateThermodynamicIdentitySignature();
+    candidate.lastSequentialInitializationSignature = candidate.calculateSequentialInitializationSignature();
+    candidate.hasBeenSolvedBefore = true;
+    candidate.setDoInitializion(false);
+    return candidate;
   }
 
   /**
@@ -1752,13 +1823,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param status inner solve status
    * @param accepted whether the candidate was accepted
    */
-  private void appendSideDrawCandidateHistory(StringBuilder history, int iteration, double fraction, double flow,
-      SolveStatus status, boolean accepted) {
+  private void appendSideDrawCandidateHistory(StringBuilder history, int iteration, String attemptKind, double fraction,
+      double flow, SolveStatus status, boolean accepted) {
     if (history.length() > 0) {
       history.append("; ");
     }
-    history.append("#").append(iteration).append(" fraction=").append(fraction).append(", flow=").append(flow)
-        .append(", status=").append(status).append(", accepted=").append(accepted);
+    history.append("#").append(iteration);
+    if (attemptKind != null) {
+      history.append(" ").append(attemptKind);
+    }
+    history.append(" fraction=").append(fraction).append(", flow=").append(flow).append(", status=").append(status)
+        .append(", accepted=").append(accepted);
   }
 
   /**

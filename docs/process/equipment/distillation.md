@@ -451,6 +451,7 @@ fraction diagnostics, film/heat-transfer model choices, and equation-oriented re
 | `getLastColumnTearIterationCount()` | Outer side-draw, pumparound, and hydraulic tear iterations. |
 | `getLastColumnTearResidual()` | Maximum outer tear residual. |
 | `isLastColumnTearConverged()` | Whether active side-draw, pumparound, and hydraulic tear variables met tolerance. |
+| `getLastColumnTearCandidateHistory()` | Accepted/rejected single-side-draw attempts, including a guarded continuation retry when a cold solve fails after an accepted state exists. |
 | `getLastPumparoundRelativeChange()` | Maximum latest pumparound return-flow change. |
 | `getLastHydraulicPressureDropPa()` | Latest coupled hydraulic pressure drop in Pa. |
 | `getLastHydraulicPressureDropResidual()` | Relative pressure-profile change from hydraulic coupling. |
