@@ -754,8 +754,12 @@ public class Separator extends ProcessEquipmentBaseClass
     } else {
       finalizePhaseOutlet(gasOutStream, id);
     }
-    if (thermoSystem2.hasPhaseType("aqueous")
-        || thermoSystem2.hasPhaseType("oil") && thermoSystem2.getNumberOfComponents() > 1) {
+    // Water-bearing liquid outlets still need a stream flash to recover the expected
+    // oil/aqueous split after extracting the bulk separator liquid phases. The no-rerun
+    // safeguard only applies to dry hydrocarbon liquid outlets, where an unnecessary
+    // outlet flash can reclassify a heavy reflux stream.
+    if ((thermoSystem2.hasPhaseType("aqueous") || thermoSystem2.hasPhaseType("oil"))
+        && thermoSystem2.getNumberOfComponents() > 1 && (gasInLiquid != 0.0 || thermoSystem2.hasPhaseType("aqueous"))) {
       liquidOutStream.run(id);
     } else {
       finalizePhaseOutlet(liquidOutStream, id);
