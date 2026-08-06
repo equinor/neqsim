@@ -310,6 +310,7 @@ Equal-utilization constraints retain process-model registration order. Each
 `OUTSIDE_VALIDITY_RANGE`, or `NOT_ASSESSED`. This makes unsupported and extrapolated limits
 visible beside the engineering ranking without allowing confidence or applicability to change
 utilization, feasibility, or order. The method snapshots every dynamic value supplier exactly once;
+enabled constraints with undefined (`NaN`) utilization remain visible at the end of the ranking;
 `findActiveBottleneck(model)` remains the lower-allocation API when only the leading constraint is
 needed.
 

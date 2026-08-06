@@ -304,6 +304,34 @@ class ProcessModelSimulationEvaluatorTest {
     assertEquals("second", ranked.get(1).getConstraintName());
   }
 
+  /** Verifies enabled constraints with undefined utilization remain visible at the end. */
+  @Test
+  void capacityConstraintRankingKeepsUndefinedUtilizationLast() {
+    ModelFixture fixture = createModelFixture();
+    AtomicInteger undefinedSupplierCalls = new AtomicInteger();
+    CapacityConstraint undefined = new CapacityConstraint("undefined", "kg/hr", ConstraintType.HARD)
+        .setDesignValue(12000.0).setValueSupplier(() -> {
+          undefinedSupplierCalls.incrementAndGet();
+          return Double.NaN;
+        });
+    CapacityConstraint finite = new CapacityConstraint("finite", "kg/hr", ConstraintType.HARD).setDesignValue(12000.0)
+        .setCurrentValue(9000.0);
+    fixture.separator.clearCapacityConstraints();
+    fixture.separator.addCapacityConstraint(undefined);
+    fixture.separator.addCapacityConstraint(finite);
+
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
+    evaluator.setIncludeStrategyCapacityConstraints(false);
+    List<ProcessModelSimulationEvaluator.BottleneckStatus> ranked = evaluator.rankCapacityConstraints(fixture.model);
+
+    assertEquals(2, ranked.size());
+    assertEquals("finite", ranked.get(0).getConstraintName());
+    assertEquals("undefined", ranked.get(1).getConstraintName());
+    assertTrue(Double.isNaN(ranked.get(1).getUtilization()));
+    assertFalse(ranked.get(1).isFeasible());
+    assertEquals(1, undefinedSupplierCalls.get());
+  }
+
   /**
    * Verifies that minimum-directed capacity limits retain their engineering-unit limit in model-level bottleneck
    * reporting.

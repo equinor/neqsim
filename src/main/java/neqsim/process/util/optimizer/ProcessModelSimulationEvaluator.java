@@ -2121,7 +2121,8 @@ public class ProcessModelSimulationEvaluator implements Serializable {
    * <p>
    * Ranking is by descending utilization only. The sort is stable, so equal-utilization constraints preserve process
    * area, equipment, and constraint registration order. Evidence confidence and applicability are retained as
-   * diagnostics but never change order or feasibility. Each dynamic value supplier is read exactly once.
+   * diagnostics but never change order or feasibility. Undefined ({@code NaN}) utilizations remain visible at the end
+   * of the ranking. Each dynamic value supplier is read exactly once.
    * </p>
    *
    * @param model process model in its current state
@@ -2152,14 +2153,12 @@ public class ProcessModelSimulationEvaluator implements Serializable {
           }
           double currentValue = capacityConstraint.getCurrentValue();
           double utilization = capacityConstraint.getUtilization(currentValue);
-          if (!Double.isNaN(utilization)) {
-            boolean validityRangeSet = capacityConstraint.hasValidityRange();
-            rankedConstraints.add(new BottleneckStatus(areaName, equipment.getName(), entry.getKey(), utilization,
-                currentValue, capacityConstraint.getDisplayDesignValue(), capacityConstraint.isMinimumConstraint(),
-                capacityConstraint.getDataSource(), capacityConstraint.hasConfidence(),
-                capacityConstraint.getConfidence(), validityRangeSet, capacityConstraint.getValidityMinimum(),
-                capacityConstraint.getValidityMaximum(), capacityConstraint.getUnit(), utilization <= 1.0));
-          }
+          boolean validityRangeSet = capacityConstraint.hasValidityRange();
+          rankedConstraints.add(new BottleneckStatus(areaName, equipment.getName(), entry.getKey(), utilization,
+              currentValue, capacityConstraint.getDisplayDesignValue(), capacityConstraint.isMinimumConstraint(),
+              capacityConstraint.getDataSource(), capacityConstraint.hasConfidence(),
+              capacityConstraint.getConfidence(), validityRangeSet, capacityConstraint.getValidityMinimum(),
+              capacityConstraint.getValidityMaximum(), capacityConstraint.getUnit(), utilization <= 1.0));
         }
       }
     }
@@ -2167,6 +2166,12 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       /** {@inheritDoc} */
       @Override
       public int compare(BottleneckStatus first, BottleneckStatus second) {
+        if (Double.isNaN(first.getUtilization())) {
+          return Double.isNaN(second.getUtilization()) ? 0 : 1;
+        }
+        if (Double.isNaN(second.getUtilization())) {
+          return -1;
+        }
         return Double.compare(second.getUtilization(), first.getUtilization());
       }
     });

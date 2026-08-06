@@ -311,6 +311,7 @@ descending-utilization list. Use `getEvidenceApplicability()` to distinguish
 order remains utilization-only: confidence is retained as evidence quality and is never converted
 to a safety probability, feasibility adjustment, or ranking weight. Equal-utilization limits retain
 model registration order, and each dynamic limit supplier is sampled once per ranking call.
+Enabled limits with undefined (`NaN`) utilization remain visible at the end for diagnosis.
 
 `ProcessModelSimulationEvaluator` complements rather than replaces the other optimizers. Use `ProcessOptimizationEngine` for compact throughput cases on one process, `ProductionOptimizer` for existing single-system objective workflows, and `ProcessModelSimulationEvaluator` when the optimization boundary is the full plant model.
 
