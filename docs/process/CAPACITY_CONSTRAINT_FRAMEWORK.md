@@ -305,7 +305,8 @@ behavior by themselves; downstream ranking must preserve and assess them explici
 
 For full-model diagnostics, `ProcessModelSimulationEvaluator.rankCapacityConstraints(model)`
 returns an immutable list of every enabled capacity constraint in descending utilization order.
-Equal-utilization constraints retain process-model registration order. Each
+Equal-utilization constraints retain process-model registration order, including the declared order
+of built-in strategy-generated constraints. Each
 `BottleneckStatus.getEvidenceApplicability()` value is one of `WITHIN_VALIDITY_RANGE`,
 `OUTSIDE_VALIDITY_RANGE`, or `NOT_ASSESSED`. This makes unsupported and extrapolated limits
 visible beside the engineering ranking without allowing confidence or applicability to change

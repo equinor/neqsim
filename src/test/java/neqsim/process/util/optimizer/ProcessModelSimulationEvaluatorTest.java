@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.DoubleSupplier;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintSeverity;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
+import neqsim.process.equipment.capacity.ValveCapacityStrategy;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
@@ -302,6 +304,19 @@ class ProcessModelSimulationEvaluatorTest {
     assertEquals(2, ranked.size());
     assertEquals("first", ranked.get(0).getConstraintName());
     assertEquals("second", ranked.get(1).getConstraintName());
+  }
+
+  /** Verifies built-in capacity strategies expose their declared constraint registration order. */
+  @Test
+  void strategyCapacityConstraintsPreserveRegistrationOrder() {
+    ModelFixture fixture = createModelFixture();
+    ThrottlingValve valve = new ThrottlingValve("strategyValve", fixture.feed);
+
+    List<String> constraintNames = new ArrayList<String>(new ValveCapacityStrategy().getConstraints(valve).keySet());
+
+    assertEquals(2, constraintNames.size());
+    assertEquals("valveOpening", constraintNames.get(0));
+    assertEquals("pressureDropRatio", constraintNames.get(1));
   }
 
   /** Verifies enabled constraints with undefined utilization remain visible at the end. */
