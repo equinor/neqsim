@@ -4625,7 +4625,8 @@ public class Compressor extends TwoPortEquipment
       }
       cleanEfficiency = designPolytropicEfficiency;
     }
-    setPolytropicEfficiency(cleanEfficiency * effMultiplier);
+    // Preserve the clean baseline so repeated run() calls do not compound the degradation.
+    polytropicEfficiency = normalizeEfficiency(cleanEfficiency * effMultiplier, "polytropicEfficiency");
   }
 
   /**
