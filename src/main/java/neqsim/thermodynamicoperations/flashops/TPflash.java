@@ -49,6 +49,10 @@ public class TPflash extends Flash {
   private static final double WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT = 0.01;
   /** Largest incipient secondary-phase fraction eligible for trace-water phase-selection retry. */
   private static final double TRACE_WATER_PHASE_SELECTION_BETA_LIMIT = 1.0e-4;
+  /** Largest secondary-phase fraction eligible for the trace-water aqueous-stability trial. */
+  private static final double TRACE_WATER_AQUEOUS_STABILITY_BETA_LIMIT = 1.0e-2;
+  /** Minimum water enrichment in the hydrocarbon liquid for the aqueous-stability trial. */
+  private static final double TRACE_WATER_AQUEOUS_STABILITY_ENRICHMENT_LIMIT = 10.0;
   /** Maximum stored water K-value that justifies checking a collapsed water-bearing endpoint. */
   private static final double WATER_PHASE_COLLAPSE_WATER_K_UPPER_LIMIT = 1.0e-2;
   /** Minimum stored non-water K-value that justifies checking a collapsed water-bearing endpoint. */
@@ -962,16 +966,18 @@ public class TPflash extends Flash {
    * gas/oil iteration has stopped. Such an endpoint is refined when its component fugacity residual exceeds
    * {@link #PHASE_ROOT_EQUILIBRIUM_TOLERANCE} or its component material balance exceeds
    * {@link #WATER_RICH_MATERIAL_BALANCE_TOLERANCE}. The one-mol-percent feed guard keeps valid trace-water process
-   * flashes on the existing fast path. A trace-water gas/oil endpoint whose fugacity residual is already outside the
-   * equilibrium tolerance may still use the cloned stability calculation because it is not an acceptable result. A
-   * cloned multiphase candidate normally replaces the ordinary state only when it lowers Gibbs energy. If the reference
-   * state is non-conservative, Gibbs energies are not comparable; a candidate may then replace it only after passing
-   * strict phase-fraction, composition-normalization, material-balance, fugacity, and distinct-composition checks.
+   * flashes outside the minor-phase trace-water screen on the existing fast path. A trace-water gas/oil endpoint whose
+   * fugacity residual is already outside the equilibrium tolerance may still use the cloned stability calculation
+   * because it is not an acceptable result. A cheap aqueous tangent-plane trial and safeguarded multiphase beta solve
+   * are used for trace-water gas/oil endpoints whose small hydrocarbon liquid disproportionately concentrates water.
+   * Full recursive multiphase flashing is avoided. A candidate replaces the original state only after a disappearing
+   * phase is removed, the remaining active set is reconverged, and strict phase-fraction, composition-normalization,
+   * material-balance, fugacity, distinct-composition, and lower-Gibbs checks pass.
    * </p>
    */
   private void rescueWaterRichEndpoint() {
-    if (system.doMultiPhaseCheck() || system.isChemicalSystem() || system.hasIons() || solidCheck
-        || system.isMultiphaseWaxCheck() || system.getNumberOfPhases() > 2) {
+    if (system.isChemicalSystem() || system.hasIons() || solidCheck || system.isMultiphaseWaxCheck()
+        || system.getNumberOfPhases() > 2) {
       return;
     }
 
@@ -987,8 +993,11 @@ public class TPflash extends Flash {
         break;
       }
     }
+    if (system.doMultiPhaseCheck() && waterFeedFraction >= WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT) {
+      return;
+    }
     if (waterFeedFraction < WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT
-        && (waterFeedFraction <= 0.0 || !isInvalidTraceWaterGasOilEndpoint())) {
+        && (waterFeedFraction <= 0.0 || !shouldRefineTraceWaterGasOilEndpoint(waterFeedFraction))) {
       return;
     }
     double materialBalanceResidual = maximumComponentMaterialBalanceResidual(system);
@@ -1003,14 +1012,118 @@ public class TPflash extends Flash {
     SystemInterface candidate = system.clone();
     try {
       candidate.setMultiPhaseCheck(true);
-      new TPflash(candidate, candidate.doSolidPhaseCheck()).run();
-      if (candidate.getNumberOfPhases() == 2
+      boolean candidateConverged;
+      if (waterFeedFraction < WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT) {
+        candidateConverged = refineWaterRichCandidateActiveSet(candidate);
+      } else {
+        new TPflash(candidate, candidate.doSolidPhaseCheck()).run();
+        candidateConverged = true;
+      }
+      if (candidateConverged && candidate.getNumberOfPhases() == 2 && isBalancedEquilibriumCandidate(candidate)
           && shouldAcceptWaterRichCandidate(candidate, referenceGibbsEnergy, materialBalanceInvalid)) {
         copyFlashStateFrom(candidate);
       }
     } catch (Exception ex) {
       logger.debug("Water-rich endpoint refinement failed: {}", ex.getMessage());
     }
+  }
+
+  /**
+   * Screens a trace-water gas/oil endpoint for a missed lower-Gibbs aqueous split.
+   *
+   * @param waterFeedFraction overall water mole fraction
+   * @return true when the endpoint is already invalid, or its phase fraction and water enrichment justify an aqueous
+   * stability trial
+   */
+  private boolean shouldRefineTraceWaterGasOilEndpoint(double waterFeedFraction) {
+    if (isInvalidTraceWaterGasOilEndpoint()) {
+      return true;
+    }
+    if (system.getNumberOfPhases() != 2 || system.hasPhaseType(PhaseType.AQUEOUS)
+        || Math.min(system.getBeta(0), system.getBeta(1)) > TRACE_WATER_AQUEOUS_STABILITY_BETA_LIMIT) {
+      return false;
+    }
+    boolean hasGasPhase = false;
+    int hydrocarbonLiquidPhase = -1;
+    for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
+      PhaseType phaseType = system.getPhase(phaseIndex).getType();
+      hasGasPhase |= phaseType == PhaseType.GAS;
+      if (phaseType == PhaseType.OIL || phaseType == PhaseType.LIQUID) {
+        hydrocarbonLiquidPhase = phaseIndex;
+      }
+    }
+    if (!hasGasPhase || hydrocarbonLiquidPhase < 0) {
+      return false;
+    }
+    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
+      if ("water".equalsIgnoreCase(system.getPhase(0).getComponent(componentIndex).getComponentName())) {
+        double liquidWaterFraction = system.getPhase(hydrocarbonLiquidPhase).getComponent(componentIndex).getx();
+        return liquidWaterFraction >= TRACE_WATER_AQUEOUS_STABILITY_ENRICHMENT_LIMIT * waterFeedFraction;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Runs the existing tangent-plane trial and reconverges the reduced active phase set.
+   *
+   * <p>
+   * The first multiphase beta solve identifies a disappearing phase. Removing only a phase at the solver's numerical
+   * phase-fraction floor and rebuilding the beta workspace turns the trial into a well-conditioned two-phase solve. If
+   * the solver returns two duplicate phases instead, exactly one duplicate pair may be merged before the active set is
+   * rebuilt. The caller performs the final thermodynamic acceptance checks.
+   * </p>
+   *
+   * @param candidate cloned gas/oil endpoint
+   * @return true when exactly one disappearing or duplicate phase was removed and the two remaining phases converged
+   */
+  private boolean refineWaterRichCandidateActiveSet(SystemInterface candidate) {
+    int initialPhaseCount = candidate.getNumberOfPhases();
+    TPmultiflash operation = new TPmultiflash(candidate, false);
+    operation.stabilityAnalysis();
+    if (candidate.getNumberOfPhases() <= initialPhaseCount) {
+      return false;
+    }
+    operation.setDoubleArrays();
+    operation.solveBeta();
+    int removedPhaseCount = 0;
+    for (int phaseIndex = candidate.getNumberOfPhases() - 1; phaseIndex >= 0; phaseIndex--) {
+      if (candidate.getNumberOfPhases() > 1 && candidate.getBeta(phaseIndex) <= 10.0 * phaseFractionMinimumLimit) {
+        candidate.removePhaseKeepTotalComposition(phaseIndex);
+        removedPhaseCount++;
+      }
+    }
+    if (removedPhaseCount == 0 && candidate.getNumberOfPhases() == 3) {
+      for (int firstPhase = 0; firstPhase < candidate.getNumberOfPhases() - 1; firstPhase++) {
+        for (int secondPhase = firstPhase + 1; secondPhase < candidate.getNumberOfPhases(); secondPhase++) {
+          double maximumCompositionDifference = 0.0;
+          for (int componentIndex = 0; componentIndex < candidate.getPhase(0)
+              .getNumberOfComponents(); componentIndex++) {
+            maximumCompositionDifference = Math.max(maximumCompositionDifference,
+                Math.abs(candidate.getPhase(firstPhase).getComponent(componentIndex).getx()
+                    - candidate.getPhase(secondPhase).getComponent(componentIndex).getx()));
+          }
+          if (maximumCompositionDifference <= TRIVIAL_SPLIT_COMPOSITION_TOLERANCE) {
+            double mergedBeta = candidate.getBeta(firstPhase) + candidate.getBeta(secondPhase);
+            candidate.removePhaseKeepTotalComposition(secondPhase);
+            candidate.setBeta(firstPhase, mergedBeta);
+            removedPhaseCount++;
+            break;
+          }
+        }
+        if (removedPhaseCount > 0) {
+          break;
+        }
+      }
+    }
+    if (removedPhaseCount != 1 || candidate.getNumberOfPhases() != 2) {
+      return false;
+    }
+    candidate.normalizeBeta();
+    operation.setDoubleArrays();
+    double activeSetResidual = operation.solveBeta();
+    candidate.init(1);
+    return Double.isFinite(activeSetResidual) && activeSetResidual < 1.0e-10;
   }
 
   /**
