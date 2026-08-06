@@ -525,6 +525,14 @@ finite, positive timestep. Zero, negative, NaN, and infinite values throw
 equipment, controllers, clocks, or identifiers can change. Adaptive stepping
 rejects invalid requested values instead of silently clamping them.
 
+A multi-area `ProcessModel` also requires every child `ProcessSystem` to start
+the step on the same finite simulation clock. A material mismatch throws
+`IllegalStateException` before the first area advances or a shared
+`EventScheduler` fires. Reset or explicitly synchronize restored, copied, or
+independently advanced areas before calling `ProcessModel.runTransient(...)`;
+this prevents one scheduled event from affecting only the areas that happen to
+run later in the insertion order.
+
 The adaptive algorithm compares state changes between the full step and two
 half-steps, reducing or increasing $\Delta t$ based on the relative error.
 

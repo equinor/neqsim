@@ -3,7 +3,11 @@ package neqsim.process.processmodel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
@@ -25,6 +29,24 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class RunTransientEventSchedulerTest {
+
+  private static final class RecordingProcessSystem extends ProcessSystem {
+    private static final long serialVersionUID = 1000;
+    private final List<String> executionOrder;
+    private final String marker;
+
+    private RecordingProcessSystem(String name, String marker, List<String> executionOrder) {
+      super(name);
+      this.marker = marker;
+      this.executionOrder = executionOrder;
+    }
+
+    @Override
+    public synchronized void runTransient(double dt, UUID id) {
+      executionOrder.add(marker);
+      super.runTransient(dt, id);
+    }
+  }
 
   /**
    * Builds a minimal ProcessSystem (feed stream + separator).
@@ -146,5 +168,157 @@ public class RunTransientEventSchedulerTest {
     plant.runTransient(0.5, UUID.randomUUID());
     // Both areas advance to t=0.5; the first area fires the event, the second sees an empty queue.
     assertEquals(1, count.get(), "Shared event must fire exactly once across all areas");
+  }
+
+  /**
+   * A shared event scheduler must not be evaluated against misaligned area clocks because the first area could run
+   * before an event that a later area fires during the same model step.
+   */
+  @Test
+  public void testProcessModelRejectsMisalignedAreaClocksBeforeMutation() {
+    ProcessSystem earlyArea = buildMinimalProcess();
+    ProcessSystem lateArea = buildMinimalProcess();
+    lateArea.setTime(10.0);
+
+    UUID earlyEquipmentIdentifier = UUID.randomUUID();
+    UUID lateEquipmentIdentifier = UUID.randomUUID();
+    UUID earlyAreaIdentifier = UUID.randomUUID();
+    UUID lateAreaIdentifier = UUID.randomUUID();
+    earlyArea.setCalculationIdentifier(earlyAreaIdentifier);
+    lateArea.setCalculationIdentifier(lateAreaIdentifier);
+    earlyArea.getUnit("sep").setCalculationIdentifier(earlyEquipmentIdentifier);
+    lateArea.getUnit("sep").setCalculationIdentifier(lateEquipmentIdentifier);
+
+    ProcessModel plant = new ProcessModel();
+    plant.add("early", earlyArea);
+    plant.add("late", lateArea);
+
+    EventScheduler shared = new EventScheduler();
+    plant.setEventScheduler(shared);
+    AtomicInteger count = new AtomicInteger(0);
+    shared.scheduleEvent(5.0, "shared trip", count::incrementAndGet);
+
+    IllegalStateException exception = assertThrows(IllegalStateException.class,
+        () -> plant.runTransient(1.0, UUID.randomUUID()));
+
+    assertTrue(exception.getMessage().contains("early"));
+    assertTrue(exception.getMessage().contains("late"));
+    assertTrue(exception.getMessage().contains("difference 10.0 s"));
+    assertTrue(exception.getMessage().contains("tolerance 1.0E-9 s"));
+    assertTrue(exception.getMessage().contains("reset or synchronize area clocks"));
+    assertEquals(0.0, earlyArea.getTime(), 0.0);
+    assertEquals(10.0, lateArea.getTime(), 0.0);
+    assertEquals(earlyAreaIdentifier, earlyArea.getCalculationIdentifier());
+    assertEquals(lateAreaIdentifier, lateArea.getCalculationIdentifier());
+    assertEquals(earlyEquipmentIdentifier, earlyArea.getUnit("sep").getCalculationIdentifier());
+    assertEquals(lateEquipmentIdentifier, lateArea.getUnit("sep").getCalculationIdentifier());
+    assertEquals(0, count.get());
+    assertEquals(1, shared.getPendingEvents().size());
+    assertEquals(0, shared.getFiredEvents().size());
+  }
+
+  /** Tolerance-close clocks retain insertion-order stepping and shared-event behavior. */
+  @Test
+  public void testProcessModelAcceptsToleranceCloseAreaClocksInInsertionOrder() {
+    List<String> executionOrder = new ArrayList<String>();
+    ProcessSystem firstArea = new RecordingProcessSystem("first area", "first", executionOrder);
+    ProcessSystem secondArea = new RecordingProcessSystem("second area", "second", executionOrder);
+    double referenceTime = 1.0e6;
+    double differenceWithinRelativeTolerance = 5.0e-7;
+    firstArea.setTime(referenceTime);
+    secondArea.setTime(referenceTime + differenceWithinRelativeTolerance);
+
+    ProcessModel plant = new ProcessModel();
+    plant.add("first", firstArea);
+    plant.add("second", secondArea);
+
+    EventScheduler shared = new EventScheduler();
+    plant.setEventScheduler(shared);
+    AtomicInteger count = new AtomicInteger(0);
+    shared.scheduleEvent(referenceTime + 0.5, "shared trip", count::incrementAndGet);
+
+    plant.runTransient(1.0, UUID.randomUUID());
+
+    assertEquals(Arrays.asList("first", "second"), executionOrder);
+    assertEquals(referenceTime + 1.0, firstArea.getTime(), 0.0);
+    assertEquals(referenceTime + differenceWithinRelativeTolerance + 1.0, secondArea.getTime(), 0.0);
+    assertEquals(1, count.get());
+    assertEquals(0, shared.getPendingEvents().size());
+    assertEquals(1, shared.getFiredEvents().size());
+
+    executionOrder.clear();
+    secondArea.setTime(firstArea.getTime() + 1.5e-6);
+    assertThrows(IllegalStateException.class, () -> plant.runTransient(1.0, UUID.randomUUID()));
+    assertTrue(executionOrder.isEmpty());
+  }
+
+  /** Non-finite clocks fail atomically before a shared event or either area can advance. */
+  @Test
+  public void testProcessModelRejectsNonFiniteAreaClocksBeforeMutation() {
+    double[] nonFiniteTimes = new double[] { Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY };
+    for (double nonFiniteTime : nonFiniteTimes) {
+      ProcessSystem finiteArea = new ProcessSystem("finite area");
+      ProcessSystem nonFiniteArea = new ProcessSystem("non-finite area");
+      nonFiniteArea.setTime(nonFiniteTime);
+
+      ProcessModel plant = new ProcessModel();
+      plant.add("finite", finiteArea);
+      plant.add("non-finite", nonFiniteArea);
+
+      EventScheduler shared = new EventScheduler();
+      plant.setEventScheduler(shared);
+      AtomicInteger count = new AtomicInteger(0);
+      shared.scheduleEvent(0.5, "shared trip", count::incrementAndGet);
+
+      IllegalStateException exception = assertThrows(IllegalStateException.class,
+          () -> plant.runTransient(1.0, UUID.randomUUID()));
+
+      assertTrue(exception.getMessage().contains("non-finite"));
+      assertTrue(exception.getMessage().contains(Double.toString(nonFiniteTime)));
+      assertTrue(exception.getMessage().contains("reset or synchronize area clocks"));
+      assertEquals(0.0, finiteArea.getTime(), 0.0);
+      assertEquals(Double.doubleToLongBits(nonFiniteTime), Double.doubleToLongBits(nonFiniteArea.getTime()));
+      assertEquals(0, count.get());
+      assertEquals(1, shared.getPendingEvents().size());
+      assertEquals(0, shared.getFiredEvents().size());
+    }
+  }
+
+  /** Empty and single-area models retain their previous transient behavior. */
+  @Test
+  public void testProcessModelEmptyAndSingleAreaBehaviorIsUnchanged() {
+    ProcessModel emptyModel = new ProcessModel();
+    emptyModel.runTransient(1.0, UUID.randomUUID());
+
+    ProcessSystem onlyArea = new ProcessSystem("only area");
+    onlyArea.setTime(4.0);
+    ProcessModel singleAreaModel = new ProcessModel();
+    singleAreaModel.add("only", onlyArea);
+    EventScheduler scheduler = new EventScheduler();
+    singleAreaModel.setEventScheduler(scheduler);
+    AtomicInteger count = new AtomicInteger(0);
+    scheduler.scheduleEvent(4.5, "single-area event", count::incrementAndGet);
+
+    singleAreaModel.runTransient(0.5, UUID.randomUUID());
+
+    assertEquals(4.5, onlyArea.getTime(), 0.0);
+    assertEquals(1, count.get());
+  }
+
+  /** Repeated valid model steps keep exactly aligned clocks deterministic. */
+  @Test
+  public void testProcessModelRepeatedStepsKeepAreaClocksAligned() {
+    ProcessSystem firstArea = new ProcessSystem("first area");
+    ProcessSystem secondArea = new ProcessSystem("second area");
+    ProcessModel plant = new ProcessModel();
+    plant.add("first", firstArea);
+    plant.add("second", secondArea);
+
+    UUID stepIdentifier = UUID.randomUUID();
+    for (int step = 1; step <= 4; step++) {
+      plant.runTransient(0.25, stepIdentifier);
+      assertEquals(step * 0.25, firstArea.getTime(), 0.0);
+      assertEquals(firstArea.getTime(), secondArea.getTime(), 0.0);
+    }
   }
 }
