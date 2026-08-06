@@ -63,7 +63,7 @@ public class TPflash extends Flash {
   private static final int MAX_FINAL_EQUILIBRIUM_REFINEMENT_ITERATIONS = 8;
   /** Largest residual considered near enough to convergence for bounded final SSI refinement. */
   private static final double MAX_FINAL_EQUILIBRIUM_REFINEMENT_RESIDUAL = 1.0e-5;
-  /** Cubic phase roots evaluated by the post-convergence aqueous root check. */
+  /** Cubic phase roots evaluated by the post-convergence root checks. */
   private static final PhaseType[] CUBIC_ROOT_PHASE_TYPES = { PhaseType.GAS, PhaseType.LIQUID };
   /**
    * Minimum extensive Gibbs-energy reduction (J) required for the spurious-multiphase rescue to collapse a two-phase
@@ -1798,16 +1798,18 @@ public class TPflash extends Flash {
   }
 
   /**
-   * Corrects an inverted vapor/liquid cubic-root assignment in an ordinary hydrocarbon flash.
+   * Corrects an inconsistent vapor/liquid cubic-root assignment in an ordinary hydrocarbon flash.
    *
    * <p>
    * Near a critical boundary the ordinary two-phase iteration can converge the light and heavy compositions while
-   * retaining the liquid cubic root on the light phase and the vapor root on the heavy phase. This is a stationary
-   * flash-equation solution, but it has a higher Gibbs energy than the same split with the roots assigned consistently.
-   * A cheap molar-mass ordering check avoids trial-root work on normally labelled results. For an inverted result, the
-   * two roots are evaluated together on cloned phases. The replacement is accepted only when it lowers extensive Gibbs
-   * energy beyond numerical noise and satisfies component fugacity equality within
-   * {@link #PHASE_ROOT_EQUILIBRIUM_TOLERANCE}. Compositions, phase fractions, and material balance are unchanged.
+   * retaining the liquid cubic root on the light phase and the vapor root on the heavy phase. A normally ordered split
+   * can likewise retain one stale cubic root and therefore fail component fugacity equality after convergence. Both are
+   * higher-Gibbs states than the same composition split with consistently selected roots. A cheap molar-mass and
+   * current fugacity-residual check avoids trial-root work on already consistent results. An inverted split evaluates
+   * both roots together; a normally ordered split evaluates both roots on one phase at a time while the other remains
+   * fixed. A replacement is accepted only when it lowers extensive Gibbs energy beyond numerical noise and satisfies
+   * component fugacity equality within {@link #PHASE_ROOT_EQUILIBRIUM_TOLERANCE}. Compositions, phase fractions, and
+   * material balance are unchanged.
    * </p>
    *
    * <p>
@@ -1847,8 +1849,19 @@ public class TPflash extends Flash {
       }
       hasHydrocarbon |= component.isHydrocarbon();
     }
-    if (!hasHydrocarbon
-        || system.getPhase(gasPhaseIndex).getMolarMass() <= system.getPhase(liquidPhaseIndex).getMolarMass()) {
+    if (!hasHydrocarbon) {
+      return;
+    }
+
+    boolean invertedCompositionOrder = system.getPhase(gasPhaseIndex).getMolarMass() > system.getPhase(liquidPhaseIndex)
+        .getMolarMass();
+    double currentFugacityResidual = maximumLogFugacityResidual(system.getPhase(gasPhaseIndex),
+        system.getPhase(liquidPhaseIndex));
+    if (!invertedCompositionOrder && currentFugacityResidual < PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
+      return;
+    }
+    if (!invertedCompositionOrder) {
+      rescueLowerGibbsIndividualPhaseRoot();
       return;
     }
 
@@ -1886,6 +1899,62 @@ public class TPflash extends Flash {
     } catch (Exception ex) {
       logger.debug("Hydrocarbon phase-root comparison failed: {}", ex.getMessage());
     }
+  }
+
+  /**
+   * Replaces one stale cubic root in an otherwise normally ordered gas/liquid split.
+   *
+   * <p>
+   * Each available root is initialized on a clone of one phase while the other phase remains unchanged. The best
+   * candidate must lower extensive Gibbs energy and restore component fugacity equality. The phase composition,
+   * fraction, storage order, and public phase label remain unchanged.
+   * </p>
+   */
+  private void rescueLowerGibbsIndividualPhaseRoot() {
+    int selectedPhaseIndex = -1;
+    PhaseType selectedPhaseType = null;
+    PhaseType selectedRoot = null;
+    PhaseInterface selectedPhase = null;
+    double maximumGibbsReduction = 0.0;
+    double currentGibbsEnergy = system.getGibbsEnergy();
+
+    for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
+      PhaseType originalPhaseType = system.getPhase(phaseIndex).getType();
+      double currentPhaseGibbsEnergy = system.getPhase(phaseIndex).getGibbsEnergy();
+      for (PhaseType trialRoot : CUBIC_ROOT_PHASE_TYPES) {
+        try {
+          PhaseInterface trialPhase = system.getPhase(phaseIndex).clone();
+          trialPhase.init(system.getTotalNumberOfMoles(), trialPhase.getNumberOfComponents(), 1, trialRoot,
+              system.getBeta(phaseIndex));
+          for (int componentIndex = 0; componentIndex < trialPhase.getNumberOfComponents(); componentIndex++) {
+            trialPhase.getComponent(componentIndex).fugcoef(trialPhase);
+          }
+          double trialGibbsEnergy = currentGibbsEnergy - currentPhaseGibbsEnergy + trialPhase.getGibbsEnergy();
+          double gibbsReduction = currentGibbsEnergy - trialGibbsEnergy;
+          double fugacityResidual = maximumLogFugacityResidualWithReplacement(phaseIndex, trialPhase);
+          if (Double.isFinite(gibbsReduction) && gibbsReduction > maximumGibbsReduction
+              && fugacityResidual < PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
+            maximumGibbsReduction = gibbsReduction;
+            selectedPhaseIndex = phaseIndex;
+            selectedPhaseType = originalPhaseType;
+            selectedRoot = trialRoot;
+            selectedPhase = trialPhase;
+          }
+        } catch (Exception ex) {
+          logger.debug("Individual phase-root comparison failed for phase {} root {}: {}", phaseIndex, trialRoot,
+              ex.getMessage());
+        }
+      }
+    }
+
+    double gibbsTolerance = Math.max(1.0e-6, Math.abs(currentGibbsEnergy) * 1.0e-8);
+    if (selectedPhaseIndex < 0 || maximumGibbsReduction <= gibbsTolerance) {
+      return;
+    }
+
+    selectedPhase.setType(selectedPhaseType);
+    system.setPhase(selectedPhase, system.getPhaseIndex(selectedPhaseIndex));
+    system.setPhaseType(selectedPhaseIndex, selectedRoot);
   }
 
   /**
