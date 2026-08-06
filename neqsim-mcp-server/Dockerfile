@@ -25,5 +25,9 @@ COPY target/neqsim-mcp-server-*-runner.jar /app/server.jar
 # numeric UID to verify it — a root image is refused admission.
 USER 1001:1001
 
-# STDIO transport — stdin/stdout for JSON-RPC, stderr for logs
-ENTRYPOINT ["java", "-jar", "/app/server.jar"]
+# STDIO transport — stdin/stdout for JSON-RPC, stderr for logs.
+# UTF-8 must be forced on the standard streams: JSON-RPC framing is UTF-8, but
+# System.out follows the platform console encoding, so a non-UTF-8 default emits
+# bytes that break a conforming MCP client mid-response.
+ENTRYPOINT ["java", "-Dfile.encoding=UTF-8", "-Dstdout.encoding=UTF-8", "-Dstderr.encoding=UTF-8", \
+            "-jar", "/app/server.jar"]

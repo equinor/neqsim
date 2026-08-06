@@ -181,6 +181,43 @@ The LLM calls `runBatch`:
 }
 ```
 
+### Pattern 6: Reuse One Model Across a Conversation
+
+> "Here's my separation train. What's the gas rate? ... Now raise the separator
+> pressure to 70 bara. ... What are the adjustable parameters?"
+
+Sending the whole flowsheet with every question is slow and lets the model drift
+between answers. Register it once with `manageModel` and use the returned handle:
+
+```json
+{
+  "action": "register",
+  "name": "HP separation train",
+  "processJson": {
+    "fluid": {"model": "SRK", "temperature_C": 25.0, "pressure_bara": 50.0,
+              "components": {"methane": 0.6, "propane": 0.3, "nC10": 0.1}},
+    "process": [
+      {"type": "stream", "name": "feed", "flowRate": {"value": 1000.0, "unit": "kg/hr"}},
+      {"type": "separator", "name": "sep", "inlet": "feed"}
+    ]
+  }
+}
+```
+
+The response contains a `modelId` such as `model_a1b2c3d4e5f6a7b8`. Pass it
+wherever a tool expects `processJson`:
+
+```
+runProcess("model_a1b2c3d4e5f6a7b8")
+listSimulationUnits("model_a1b2c3d4e5f6a7b8")
+getAdjustableParameters("model_a1b2c3d4e5f6a7b8")
+```
+
+Edit the model with `manageModel(action='revise')` — the handle stays the same
+and the `revision` number increments, so a report can cite exactly which version
+produced a result. Inline JSON keeps working; a value is only treated as a
+handle when it starts with `model_`.
+
 ## Understanding Provenance
 
 Every response includes a `provenance` block:

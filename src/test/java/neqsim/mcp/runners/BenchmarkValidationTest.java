@@ -1,11 +1,19 @@
 package neqsim.mcp.runners;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.processmodel.SimulationResult;
 
 /**
  * Validates the accuracy claims made in {@link BenchmarkTrust} by running actual calculations against published
@@ -127,25 +135,42 @@ class BenchmarkValidationTest {
   // ═══════════════════════════════════════════════════════════════════════════
 
   /**
-   * A separator should conserve mass. BenchmarkTrust claims: "Mass balance closure less than 0.01%". Run a separator
-   * and check that inlet = gas out + liquid out.
+   * A separator must conserve mass. BenchmarkTrust claims "Mass balance closure &lt;0.01%", so this test computes the
+   * closure from the simulated stream mass flows instead of asserting field presence.
    */
   @Test
-  @DisplayName("Process: separator mass balance closure < 0.1%")
+  @DisplayName("Process: separator mass balance closure < 0.01%")
   void testSeparatorMassBalance() {
+    double tolerancePct = 0.01;
     String json = "{" + "\"fluid\": {" + "  \"components\": {\"methane\": 0.6, \"propane\": 0.3, \"nC10\": 0.1},"
-        + "  \"model\": \"SRK\"," + "  \"temperature_C\": 25.0," + "  \"pressure_bara\": 50.0" + "}," + "\"process\": {"
-        + "  \"equipment\": ["
+        + "  \"model\": \"SRK\"," + "  \"temperature_C\": 25.0," + "  \"pressure_bara\": 50.0" + "}," + "\"process\": ["
         + "    {\"type\": \"stream\", \"name\": \"feed\", \"flowRate\": {\"value\": 1000.0, \"unit\": \"kg/hr\"}},"
-        + "    {\"type\": \"separator\", \"name\": \"sep\", \"inlet\": \"feed\"}" + "  ]" + "}" + "}";
+        + "    {\"type\": \"separator\", \"name\": \"sep\", \"inlet\": \"feed\"}" + "  ]" + "}";
 
     String result = ProcessRunner.run(json);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
     assertEquals("success", root.get("status").getAsString(), "Process must succeed. Response: " + result);
 
-    // Extract stream flows - verify the simulation converged with reasonable results
-    assertTrue(root.has("streams") || root.has("equipment") || root.has("processSystemName") || root.has("report"),
-        "Process result must contain process data");
+    SimulationResult simulation = ProcessSystem.fromJsonAndRun(json);
+    assertFalse(simulation.isError(), "Process build must succeed for the mass balance check");
+    ProcessEquipmentInterface separator = simulation.getProcessSystem().getUnit("sep");
+    assertNotNull(separator, "Separator 'sep' must exist in the built flowsheet");
+
+    double inletFlow = 0.0;
+    for (StreamInterface inlet : separator.getInletStreams()) {
+      inletFlow += inlet.getFlowRate("kg/hr");
+    }
+    double outletFlow = 0.0;
+    for (StreamInterface outlet : separator.getOutletStreams()) {
+      outletFlow += outlet.getFlowRate("kg/hr");
+    }
+
+    assertTrue(inletFlow > 0.0, "Inlet mass flow must be positive, got " + inletFlow);
+    double closurePct = Math.abs(inletFlow - outletFlow) / inletFlow * 100.0;
+    assertTrue(closurePct < tolerancePct,
+        String.format(
+            "Separator mass balance: in=%.4f kg/hr, out=%.4f kg/hr, closure error=%.6f%% " + "(must be <%.4f%%)",
+            inletFlow, outletFlow, closurePct, tolerancePct));
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -154,7 +179,8 @@ class BenchmarkValidationTest {
 
   /**
    * ISO 6976:2016 Table B.1 reference value for methane GCV (gross calorific value) at standard conditions (15 C,
-   * 1.01325 bar): 37.706 MJ/Sm3. BenchmarkTrust claims: "Within 0.1% of published reference value".
+   * 1.01325 bar): 37.706 MJ/Sm3. This test reads the computed superior calorific value and compares it, rather than
+   * only checking that a results block exists.
    */
   @Test
   @DisplayName("Standards: ISO 6976 GCV for methane within 0.5% of reference")
@@ -169,8 +195,36 @@ class BenchmarkValidationTest {
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
     assertEquals("success", root.get("status").getAsString(), "ISO 6976 calculation must succeed");
 
-    // The result should contain a GCV / heating value field
-    assertTrue(root.has("results") || root.has("properties"), "ISO 6976 result should contain results or properties");
+    Double gcv = findNumber(root, "superiorCalorificValue_MJ_Sm3");
+    assertNotNull(gcv, "ISO 6976 result must report superiorCalorificValue_MJ_Sm3. Response: " + result);
+
+    double errorPct = Math.abs(gcv.doubleValue() - isoReference) / isoReference * 100.0;
+    assertTrue(errorPct < tolerancePct,
+        String.format(
+            "Methane GCV: NeqSim=%.4f MJ/Sm3, ISO 6976 Table B.1=%.4f MJ/Sm3, error=%.3f%% " + "(must be <%.2f%%)",
+            gcv.doubleValue(), isoReference, errorPct, tolerancePct));
+  }
+
+  /**
+   * Recursively finds the first numeric value stored under a property name.
+   *
+   * @param object the JSON object to search
+   * @param property the property name to look for
+   * @return the numeric value, or null when the property is absent
+   */
+  private static Double findNumber(JsonObject object, String property) {
+    if (object.has(property) && object.get(property).isJsonPrimitive()) {
+      return Double.valueOf(object.get(property).getAsDouble());
+    }
+    for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
+      if (entry.getValue().isJsonObject()) {
+        Double nested = findNumber(entry.getValue().getAsJsonObject(), property);
+        if (nested != null) {
+          return nested;
+        }
+      }
+    }
+    return null;
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
