@@ -53,6 +53,19 @@ public class TPflash extends Flash {
   private static final double TRACE_WATER_AQUEOUS_STABILITY_BETA_LIMIT = 1.0e-2;
   /** Minimum water enrichment in the hydrocarbon liquid for the aqueous-stability trial. */
   private static final double TRACE_WATER_AQUEOUS_STABILITY_ENRICHMENT_LIMIT = 10.0;
+  /**
+   * Minimum ratio of water fugacity to pure-water vapor pressure for a CPA single-phase aqueous-stability trial.
+   *
+   * <p>
+   * The value is deliberately below unity so that the cheap screen remains conservative near aqueous phase appearance.
+   * It only decides whether to run the tangent-plane trial; it never accepts a phase split.
+   * </p>
+   */
+  private static final double CPA_WATER_SUPERSATURATION_SCREEN_LIMIT = 0.8;
+  /** Relative Gibbs-energy tolerance for accepting a balanced incipient CPA aqueous phase. */
+  private static final double CPA_AQUEOUS_GIBBS_RELATIVE_TOLERANCE = 1.0e-12;
+  /** Absolute Gibbs-energy tolerance (J) for accepting a balanced incipient CPA aqueous phase. */
+  private static final double CPA_AQUEOUS_GIBBS_ABSOLUTE_TOLERANCE_J = 1.0e-8;
   /** Maximum stored water K-value that justifies checking a collapsed water-bearing endpoint. */
   private static final double WATER_PHASE_COLLAPSE_WATER_K_UPPER_LIMIT = 1.0e-2;
   /** Minimum stored non-water K-value that justifies checking a collapsed water-bearing endpoint. */
@@ -997,7 +1010,7 @@ public class TPflash extends Flash {
       return;
     }
     if (waterFeedFraction < WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT
-        && (waterFeedFraction <= 0.0 || !shouldRefineTraceWaterGasOilEndpoint(waterFeedFraction))) {
+        && (waterFeedFraction <= 0.0 || !shouldRefineTraceWaterAqueousEndpoint(waterFeedFraction))) {
       return;
     }
     double materialBalanceResidual = maximumComponentMaterialBalanceResidual(system);
@@ -1019,8 +1032,11 @@ public class TPflash extends Flash {
         new TPflash(candidate, candidate.doSolidPhaseCheck()).run();
         candidateConverged = true;
       }
+      boolean incipientCpaAqueousTrial = system.getNumberOfPhases() == 1 && !system.doMultiPhaseCheck()
+          && system.getModelName() != null && system.getModelName().contains("CPA");
       if (candidateConverged && candidate.getNumberOfPhases() == 2 && isBalancedEquilibriumCandidate(candidate)
-          && shouldAcceptWaterRichCandidate(candidate, referenceGibbsEnergy, materialBalanceInvalid)) {
+          && shouldAcceptWaterRichCandidate(candidate, referenceGibbsEnergy, materialBalanceInvalid,
+              incipientCpaAqueousTrial)) {
         copyFlashStateFrom(candidate);
       }
     } catch (Exception ex) {
@@ -1032,12 +1048,17 @@ public class TPflash extends Flash {
    * Screens a trace-water gas/oil endpoint for a missed lower-Gibbs aqueous split.
    *
    * @param waterFeedFraction overall water mole fraction
-   * @return true when the endpoint is already invalid, or its phase fraction and water enrichment justify an aqueous
-   * stability trial
+   * @return true when the endpoint is already invalid, its CPA water fugacity is near pure-water saturation, or its
+   * phase fraction and water enrichment justify an aqueous stability trial
    */
-  private boolean shouldRefineTraceWaterGasOilEndpoint(double waterFeedFraction) {
+  private boolean shouldRefineTraceWaterAqueousEndpoint(double waterFeedFraction) {
     if (isInvalidTraceWaterGasOilEndpoint()) {
       return true;
+    }
+    if (!system.doMultiPhaseCheck() && system.getNumberOfPhases() == 1) {
+      String modelName = system.getModelName();
+      return modelName != null && modelName.contains("CPA")
+          && isCpaWaterNearSaturation(CPA_WATER_SUPERSATURATION_SCREEN_LIMIT);
     }
     if (system.getNumberOfPhases() != 2 || system.hasPhaseType(PhaseType.AQUEOUS)
         || Math.min(system.getBeta(0), system.getBeta(1)) > TRACE_WATER_AQUEOUS_STABILITY_BETA_LIMIT) {
@@ -1065,6 +1086,32 @@ public class TPflash extends Flash {
   }
 
   /**
+   * Compares water fugacity in the current CPA phase with pure-water vapor pressure.
+   *
+   * <p>
+   * This is a performance screen, not a stability criterion. The subsequent tangent-plane-distance calculation and
+   * strict candidate acceptance checks decide whether an aqueous phase is stable.
+   * </p>
+   *
+   * @param minimumRatio minimum fugacity-to-vapor-pressure ratio that triggers a stability trial
+   * @return true when a finite water supersaturation ratio reaches the specified limit
+   */
+  private boolean isCpaWaterNearSaturation(double minimumRatio) {
+    PhaseInterface phase = system.getPhase(0);
+    for (int componentIndex = 0; componentIndex < phase.getNumberOfComponents(); componentIndex++) {
+      neqsim.thermo.component.ComponentInterface component = phase.getComponent(componentIndex);
+      if (!"water".equalsIgnoreCase(component.getComponentName())) {
+        continue;
+      }
+      double vaporPressure = component.getAntoineVaporPressure(system.getTemperature());
+      double waterFugacity = component.getx() * component.getFugacityCoefficient() * system.getPressure();
+      double ratio = waterFugacity / vaporPressure;
+      return Double.isFinite(ratio) && ratio >= minimumRatio;
+    }
+    return false;
+  }
+
+  /**
    * Runs the existing tangent-plane trial and reconverges the reduced active phase set.
    *
    * <p>
@@ -1086,6 +1133,13 @@ public class TPflash extends Flash {
     }
     operation.setDoubleArrays();
     operation.solveBeta();
+    if (initialPhaseCount == 1 && candidate.getNumberOfPhases() == 2) {
+      candidate.normalizeBeta();
+      operation.setDoubleArrays();
+      double activeSetResidual = operation.solveBeta();
+      candidate.init(1);
+      return Double.isFinite(activeSetResidual) && activeSetResidual < 1.0e-10;
+    }
     int removedPhaseCount = 0;
     for (int phaseIndex = candidate.getNumberOfPhases() - 1; phaseIndex >= 0; phaseIndex--) {
       if (candidate.getNumberOfPhases() > 1 && candidate.getBeta(phaseIndex) <= 10.0 * phaseFractionMinimumLimit) {
@@ -1500,17 +1554,54 @@ public class TPflash extends Flash {
    *
    * @param candidate candidate system produced by the local seed retry
    * @param referenceGibbsEnergy Gibbs energy of the original one-phase endpoint
+   * @param referenceMaterialBalanceInvalid whether the reference is non-conservative and its Gibbs energy cannot be
+   * compared
    * @return true when the candidate is multiphase and has a lower Gibbs energy
    */
   private boolean shouldAcceptWaterRichCandidate(SystemInterface candidate, double referenceGibbsEnergy,
       boolean referenceMaterialBalanceInvalid) {
+    return shouldAcceptWaterRichCandidate(candidate, referenceGibbsEnergy, referenceMaterialBalanceInvalid, false);
+  }
+
+  /**
+   * Checks whether a water-rich candidate can replace its reference endpoint.
+   *
+   * @param candidate candidate system produced by the local seed retry
+   * @param referenceGibbsEnergy Gibbs energy of the original endpoint
+   * @param referenceMaterialBalanceInvalid whether the reference is non-conservative and its Gibbs energy cannot be
+   * compared
+   * @param incipientCpaAqueousTrial whether a one-phase CPA endpoint produced the candidate aqueous split
+   * @return true when the candidate passes the applicable strict thermodynamic acceptance gate
+   */
+  private boolean shouldAcceptWaterRichCandidate(SystemInterface candidate, double referenceGibbsEnergy,
+      boolean referenceMaterialBalanceInvalid, boolean incipientCpaAqueousTrial) {
     if (referenceMaterialBalanceInvalid) {
       return isBalancedEquilibriumCandidate(candidate);
+    }
+    if (incipientCpaAqueousTrial) {
+      double gibbsTolerance = Math.max(CPA_AQUEOUS_GIBBS_ABSOLUTE_TOLERANCE_J,
+          Math.abs(referenceGibbsEnergy) * CPA_AQUEOUS_GIBBS_RELATIVE_TOLERANCE);
+      return hasAcceptableMultiphaseCandidate(candidate)
+          && candidate.getGibbsEnergy() < referenceGibbsEnergy - gibbsTolerance;
     }
     return isLowerGibbsMultiphaseCandidate(candidate, referenceGibbsEnergy);
   }
 
   private boolean isLowerGibbsMultiphaseCandidate(SystemInterface candidate, double referenceGibbsEnergy) {
+    if (!hasAcceptableMultiphaseCandidate(candidate)) {
+      return false;
+    }
+    double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceGibbsEnergy) * 1.0e-8);
+    return candidate.getGibbsEnergy() < referenceGibbsEnergy - gibbsTolerance;
+  }
+
+  /**
+   * Checks phase fractions and distinct compositions before comparing candidate Gibbs energy.
+   *
+   * @param candidate candidate system produced by a guarded stability trial
+   * @return true when the candidate has a normalized, non-vanishing, distinct multiphase active set
+   */
+  private boolean hasAcceptableMultiphaseCandidate(SystemInterface candidate) {
     if (candidate.getNumberOfPhases() < 2) {
       return false;
     }
@@ -1524,8 +1615,7 @@ public class TPflash extends Flash {
     if (Math.abs(betaTotal - 1.0) > 1.0e-6 || !hasDistinctPhaseCompositions(candidate)) {
       return false;
     }
-    double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceGibbsEnergy) * 1.0e-8);
-    return candidate.getGibbsEnergy() < referenceGibbsEnergy - gibbsTolerance;
+    return true;
   }
 
   /**
