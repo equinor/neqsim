@@ -444,6 +444,7 @@ fraction diagnostics, film/heat-transfer model choices, and equation-oriented re
 | `getLastTemperatureResidual()` | Average tray-temperature residual in Kelvin. |
 | `getLastMassResidual()` | Relative mass-balance residual. |
 | `getLastEnergyResidual()` | Relative enthalpy-balance residual. |
+| `getEnergyBalanceError()` | Maximum tray/column enthalpy imbalance, including external side draws and excluding zero-flow phase templates. |
 | `getLastTopSpecificationResidual()`, `getLastBottomSpecificationResidual()` | Endpoint spec errors. |
 | `getLastSpecificationResidual()` | Maximum absolute endpoint spec error. |
 | `getSpecificationHomotopySteps()` | Configured number of staged continuation targets for adjustable product specifications. |
