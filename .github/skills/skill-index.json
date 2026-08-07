@@ -1,4 +1,54 @@
 {
+  "self heating": [
+    "neqsim-self-heating-ignition",
+    "neqsim-process-safety",
+    "neqsim-reaction-engineering"
+  ],
+  "spontaneous ignition": [
+    "neqsim-self-heating-ignition",
+    "neqsim-process-safety",
+    "neqsim-consequence-analysis"
+  ],
+  "lagging fire": [
+    "neqsim-self-heating-ignition",
+    "neqsim-process-safety",
+    "neqsim-consequence-analysis"
+  ],
+  "oil soaked insulation": [
+    "neqsim-self-heating-ignition",
+    "neqsim-process-safety",
+    "neqsim-standards-lookup"
+  ],
+  "glycol leak onto insulation": [
+    "neqsim-self-heating-ignition",
+    "neqsim-process-safety",
+    "neqsim-flow-assurance"
+  ],
+  "fire with no ignition source": [
+    "neqsim-self-heating-ignition",
+    "neqsim-process-safety",
+    "neqsim-hazid-fmea-eta-fta"
+  ],
+  "critical insulation thickness": [
+    "neqsim-self-heating-ignition",
+    "neqsim-process-safety",
+    "neqsim-utilities-specification"
+  ],
+  "basket test oven test kinetics": [
+    "neqsim-self-heating-ignition",
+    "neqsim-reaction-engineering",
+    "neqsim-eos-regression"
+  ],
+  "frank kamenetskii semenov criticality": [
+    "neqsim-self-heating-ignition",
+    "neqsim-reaction-engineering",
+    "neqsim-process-safety"
+  ],
+  "induction time to ignition": [
+    "neqsim-self-heating-ignition",
+    "neqsim-process-safety",
+    "neqsim-consequence-analysis"
+  ],
   "dnv rp f104": [
     "neqsim-ccs-hydrogen",
     "neqsim-standards-lookup",

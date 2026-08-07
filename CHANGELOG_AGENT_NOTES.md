@@ -9,6 +9,56 @@
 
 ---
 
+## 2026-08-07 — Self-heating / spontaneous-ignition criticality (new package) + glycol formation-property fix
+
+**New package `neqsim.process.safety.selfheating`** — screening for low-temperature
+self-heating leading to spontaneous ignition ("lagging fires", where a combustible
+liquid soaks into porous thermal insulation and ignites with no external ignition
+source).
+
+- `PorousMediaSelfHeatingAnalyzer` — Frank-Kamenetskii steady-state criticality.
+  Returns the dimensionless parameter `delta` against its shape-dependent critical
+  value, plus the two engineering answers: **critical surface temperature** for a
+  given layer thickness and **critical thickness** at a given temperature.
+  `forPipeInsulation(...)` configures the conservative bounding case for lagging on
+  a hot line and records the assumption in `getWarnings()`.
+- `SemenovSelfHeatingAnalyzer` — Semenov `1/e` criterion for the surface-cooling
+  limit (drained pools, thin films, small samples).
+- `SelfHeatingInductionSolver` — transient 1-D conduction with an Arrhenius source,
+  giving the **induction time** to ignition (hours to days, not seconds).
+- `BasketTestRegression` — fits activation energy and volumetric heat-release
+  pre-factor from hot-storage (basket) test data per EN 15188 / ASTM E2021, and
+  `createAnalyzer(...)` carries the fit straight to a plant-scale screening.
+- `SelfHeatingGeometry` carries the published critical values (slab 0.878,
+  infinite cylinder 2.00, sphere 3.32, cube 2.52, equicylinder 2.76).
+
+**Agent guidance — do not substitute the wrong model:**
+
+- `neqsim.process.safety.reaction.RunawayReactionAnalyzer` is **lumped adiabatic**
+  (MTSR / dT_ad / TMR_ad). It has no spatial conduction, therefore no concept of a
+  critical thickness or critical ambient temperature, and **cannot** assess
+  spontaneous ignition in insulation. Use `selfheating` instead.
+- `GibbsReactor` will report complete oxidation of any hydrocarbon at ambient
+  temperature. Equilibrium gives the fuel, not the hazard — ignition is always a
+  kinetic question.
+- Activation energy and pre-factor are **measured**, never derived from
+  thermodynamics. Flag them as assumptions in `results.json` when not from testing.
+
+**Data fix — TEG and DEG formation properties were placeholders.** Both carried
+water's enthalpy of formation (`-242000 J/mol`) and CO2's Gibbs energy of formation
+(`-394370 J/mol`) in `COMP.csv` and `COMP_EXT.csv`. Corrected to literature
+ideal-gas values: TEG `-726500 / -474700 J/mol`, DEG `-571200 / -402900 J/mol`.
+Any previous Gibbs-minimisation, reactive-flash or heat-of-reaction result
+involving a glycol was wrong (TEG heat of combustion was ~25.4 MJ/kg, now
+~22.2 MJ/kg). Normal enthalpy calculations were unaffected, because the formation
+term is multiplied by zero in that path.
+
+**New skill:** `neqsim-self-heating-ignition`. Loaded by `@safety.depressuring` and
+`@reaction.engineering`; routed from `@router` on "self-ignition, spontaneous
+combustion, lagging fire, fire with no ignition source".
+
+---
+
 ## 2026-08-07 — Coupled transient gas-network hydraulics and source schedules
 
 - Added `TransientGasNetwork` for bounded, positive-flow, one-phase isothermal
