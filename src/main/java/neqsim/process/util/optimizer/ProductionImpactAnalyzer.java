@@ -18,6 +18,7 @@ import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.optimizer.ProductionImpactResult.RecommendedAction;
+import neqsim.util.unit.PressureUnit;
 
 /**
  * Analyzer for assessing production impact of equipment failures.
@@ -36,6 +37,12 @@ import neqsim.process.util.optimizer.ProductionImpactResult.RecommendedAction;
  * <li>Identify bottleneck shifts</li>
  * </ul>
  *
+ * <p>
+ * A complete failure that leaves nominal product flow unchanged is reported as unresolved unless a configured product
+ * specification proves whether the product remains saleable. This prevents an inactive unit or bypass-like model state
+ * from being interpreted as a converged zero-loss result.
+ * </p>
+ *
  * <h2>Example Usage</h2>
  *
  * <pre>
@@ -44,11 +51,12 @@ import neqsim.process.util.optimizer.ProductionImpactResult.RecommendedAction;
  * ProductionImpactAnalyzer analyzer = new ProductionImpactAnalyzer(processSystem);
  * analyzer.setFeedStreamName("Well Feed");
  * analyzer.setProductStreamName("Export Gas");
+ * analyzer.setMinimumProductPressure(90.0, "bara");
  *
  * // Analyze compressor failure
  * ProductionImpactResult result = analyzer.analyzeFailureImpact("HP Compressor");
- * System.out.println("Production loss: " + result.getPercentLoss() + "%");
- * System.out.println("Recommendation: " + result.getRecommendedAction());
+ * double productionLossPercent = result.getPercentLoss();
+ * RecommendedAction recommendation = result.getRecommendedAction();
  *
  * // Get criticality ranking
  * List<ProductionImpactResult> ranking = analyzer.rankEquipmentByCriticality();
@@ -82,6 +90,12 @@ public class ProductionImpactAnalyzer implements Serializable {
 
   /** Tolerance for flow rate optimization. */
   private double optimizationTolerance = 0.01;
+
+  /** Relative tolerance used to identify unchanged production after a complete failure. */
+  private static final double UNCHANGED_PRODUCTION_RELATIVE_TOLERANCE = 1.0e-9;
+
+  /** Optional minimum saleable-product pressure in bara. */
+  private Double minimumProductPressureBara = null;
 
   /** Maximum iterations for optimization. */
   private int maxOptimizationIterations = 50;
@@ -155,6 +169,29 @@ public class ProductionImpactAnalyzer implements Serializable {
    */
   public ProductionImpactAnalyzer setProductStreamName(String name) {
     this.productStreamName = name;
+    clearCache();
+    return this;
+  }
+
+  /**
+   * Sets the minimum pressure for product flow to count as saleable production.
+   *
+   * <p>
+   * When a failed case is below this pressure, its saleable production is reported as zero even if the process model
+   * still carries the same nominal mass flow through an inactive or bypassed unit.
+   * </p>
+   *
+   * @param pressure finite positive minimum product pressure
+   * @param unit pressure unit supported by {@link PressureUnit}
+   * @return this analyzer for chaining
+   */
+  public ProductionImpactAnalyzer setMinimumProductPressure(double pressure, String unit) {
+    double pressureBara = new PressureUnit(pressure, unit).getValue("bara");
+    if (!Double.isFinite(pressureBara) || pressureBara <= 0.0) {
+      throw new IllegalArgumentException("Minimum product pressure must be finite and positive");
+    }
+    this.minimumProductPressureBara = pressureBara;
+    clearCache();
     return this;
   }
 
@@ -211,6 +248,8 @@ public class ProductionImpactAnalyzer implements Serializable {
    */
   public ProductionImpactResult analyzeFailureImpact(String equipmentName, EquipmentFailureMode failureMode) {
     long startTime = System.currentTimeMillis();
+    boolean failedProcessConverged = false;
+    boolean consequenceResolved = true;
 
     ProductionImpactResult result = new ProductionImpactResult(equipmentName, failureMode);
     result.setProductPricePerKg(productPricePerKg);
@@ -238,11 +277,26 @@ public class ProductionImpactAnalyzer implements Serializable {
       // Run the failed process
       try {
         failedProcess.run();
+        failedProcessConverged = true;
 
         // Get production with failure
-        double productionWithFailure = getProductionRate(failedProcess);
+        double simulatedProductionWithFailure = getProductionRate(failedProcess);
+        ProductSpecificationStatus productStatus = evaluateProductSpecification(failedProcess, result);
+        double productionWithFailure = productStatus == ProductSpecificationStatus.OFF_SPECIFICATION ? 0.0
+            : simulatedProductionWithFailure;
         result.setProductionWithFailure(productionWithFailure);
         result.setPowerWithFailure(getTotalPower(failedProcess));
+
+        if (productStatus == ProductSpecificationStatus.UNRESOLVED) {
+          consequenceResolved = false;
+        } else if (failureMode != null && failureMode.isCompleteFailure()
+            && productStatus == ProductSpecificationStatus.NOT_CONFIGURED
+            && productionIsUnchanged(result.getBaselineProductionRate(), simulatedProductionWithFailure)) {
+          consequenceResolved = false;
+          appendAnalysisNote(result,
+              "Complete equipment trip left nominal product flow unchanged; saleable-throughput consequence is "
+                  + "unresolved. Configure a product specification or topology-aware isolation/bypass model.");
+        }
 
         // Find new bottleneck
         BottleneckResult newBottleneck = findBottleneck(failedProcess);
@@ -256,10 +310,12 @@ public class ProductionImpactAnalyzer implements Serializable {
         result.setProductionWithFailure(0.0);
         result.setPowerWithFailure(0.0);
         result.setAnalysisNotes("Failed process did not converge: " + e.getMessage());
+        failedProcessConverged = false;
       }
 
       // Optimize degraded operation if requested
-      if (optimizeDegradedOperation && result.getProductionWithFailure() > 0) {
+      if (optimizeDegradedOperation && failedProcessConverged && consequenceResolved
+          && result.getProductionWithFailure() > 0) {
         optimizeDegradedOperation(failedProcess, equipmentName, result);
       }
 
@@ -274,7 +330,12 @@ public class ProductionImpactAnalyzer implements Serializable {
         result.setEstimatedRecoveryTime(failureMode.getMttr());
       }
 
-      result.setConverged(true);
+      result.setConverged(failedProcessConverged && consequenceResolved);
+      if (!consequenceResolved) {
+        result.setRecommendedAction(RecommendedAction.MANUAL_REVIEW);
+        result.setRecommendationReason(
+            "Failure consequence is unresolved; unchanged nominal flow must not be counted as confirmed saleable output");
+      }
 
     } catch (Exception e) {
       logger.error("Error analyzing failure impact for {}: {}", equipmentName, e.getMessage());
@@ -295,6 +356,7 @@ public class ProductionImpactAnalyzer implements Serializable {
     if (cachedBaselineProduction == null) {
       // Run baseline
       processSystem.run();
+      validateBaselineProductSpecification(processSystem);
       cachedBaselineProduction = getProductionRate(processSystem);
       cachedBaselinePower = getTotalPower(processSystem);
 
@@ -463,28 +525,118 @@ public class ProductionImpactAnalyzer implements Serializable {
    * @return the production rate in kg/hr, or 0.0 if unavailable
    */
   private double getProductionRate(ProcessSystem process) {
+    StreamInterface productStream = getProductStream(process);
+    return productStream == null ? 0.0 : productStream.getFlowRate("kg/hr");
+  }
+
+  /** Product-specification state for the simulated product stream. */
+  private enum ProductSpecificationStatus {
+    /** No product specification was configured. */
+    NOT_CONFIGURED,
+    /** Product stream satisfies the configured specification. */
+    ON_SPECIFICATION,
+    /** Product stream violates the configured specification. */
+    OFF_SPECIFICATION,
+    /** Product specification could not be evaluated. */
+    UNRESOLVED
+  }
+
+  /**
+   * Gets the configured product stream or the outlet of configured two-port equipment.
+   *
+   * @param process process containing the configured product
+   * @return product stream, or null if it cannot be resolved
+   */
+  private StreamInterface getProductStream(ProcessSystem process) {
     if (productStreamName == null) {
-      return 0.0;
+      return null;
     }
 
     ProcessEquipmentInterface unit = process.getUnit(productStreamName);
     if (unit instanceof StreamInterface) {
-      return ((StreamInterface) unit).getFlowRate("kg/hr");
+      return (StreamInterface) unit;
+    }
+    if (unit instanceof neqsim.process.equipment.TwoPortInterface) {
+      return ((neqsim.process.equipment.TwoPortInterface) unit).getOutletStream();
+    }
+    return null;
+  }
+
+  /**
+   * Validates that the baseline product satisfies any configured minimum pressure.
+   *
+   * @param process baseline process
+   */
+  private void validateBaselineProductSpecification(ProcessSystem process) {
+    if (minimumProductPressureBara == null) {
+      return;
+    }
+    StreamInterface productStream = getProductStream(process);
+    if (productStream == null) {
+      throw new IllegalStateException("Configured product stream could not be resolved for pressure specification");
+    }
+    double pressureBara = productStream.getPressure("bara");
+    if (!Double.isFinite(pressureBara) || pressureBara < minimumProductPressureBara) {
+      throw new IllegalStateException(
+          String.format("Baseline product pressure %.6g bara is below the configured minimum %.6g bara", pressureBara,
+              minimumProductPressureBara));
+    }
+  }
+
+  /**
+   * Evaluates the failed product against the configured minimum pressure.
+   *
+   * @param process failed process
+   * @param result result receiving diagnostic notes
+   * @return product specification status
+   */
+  private ProductSpecificationStatus evaluateProductSpecification(ProcessSystem process,
+      ProductionImpactResult result) {
+    if (minimumProductPressureBara == null) {
+      return ProductSpecificationStatus.NOT_CONFIGURED;
+    }
+    StreamInterface productStream = getProductStream(process);
+    if (productStream == null) {
+      appendAnalysisNote(result,
+          "Configured product stream could not be resolved; product specification is unresolved.");
+      return ProductSpecificationStatus.UNRESOLVED;
     }
 
-    // Try to get outlet stream via TwoPortInterface
-    try {
-      if (unit instanceof neqsim.process.equipment.TwoPortInterface) {
-        StreamInterface outlet = ((neqsim.process.equipment.TwoPortInterface) unit).getOutletStream();
-        if (outlet != null) {
-          return outlet.getFlowRate("kg/hr");
-        }
-      }
-    } catch (Exception e) {
-      // Equipment doesn't have outlet stream
+    double pressureBara = productStream.getPressure("bara");
+    if (!Double.isFinite(pressureBara)) {
+      appendAnalysisNote(result, "Failed product pressure is non-finite; product specification is unresolved.");
+      return ProductSpecificationStatus.UNRESOLVED;
     }
+    if (pressureBara < minimumProductPressureBara) {
+      appendAnalysisNote(result,
+          String.format("Product pressure %.6g bara is below minimum %.6g bara; saleable production set to zero.",
+              pressureBara, minimumProductPressureBara));
+      return ProductSpecificationStatus.OFF_SPECIFICATION;
+    }
+    return ProductSpecificationStatus.ON_SPECIFICATION;
+  }
 
-    return 0.0;
+  /**
+   * Checks whether failed production is unchanged from the baseline within numerical tolerance.
+   *
+   * @param baselineProduction baseline production rate
+   * @param failedProduction failed-case production rate
+   * @return true when rates are numerically unchanged
+   */
+  private boolean productionIsUnchanged(double baselineProduction, double failedProduction) {
+    double scale = Math.max(1.0, Math.max(Math.abs(baselineProduction), Math.abs(failedProduction)));
+    return Math.abs(baselineProduction - failedProduction) <= UNCHANGED_PRODUCTION_RELATIVE_TOLERANCE * scale;
+  }
+
+  /**
+   * Appends a diagnostic note without discarding an earlier note.
+   *
+   * @param result result to update
+   * @param note note to append
+   */
+  private void appendAnalysisNote(ProductionImpactResult result, String note) {
+    String existing = result.getAnalysisNotes();
+    result.setAnalysisNotes(existing == null || existing.trim().isEmpty() ? note : existing + " " + note);
   }
 
   /**
@@ -545,6 +697,10 @@ public class ProductionImpactAnalyzer implements Serializable {
 
     // Full shutdown produces nothing
     result.setFullShutdownProduction(0.0);
+
+    if (!result.isConverged()) {
+      return result;
+    }
 
     // Recalculate metrics with this in mind
     result.calculateDerivedMetrics();
