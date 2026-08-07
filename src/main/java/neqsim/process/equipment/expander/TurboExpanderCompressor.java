@@ -349,7 +349,11 @@ public class TurboExpanderCompressor extends Expander {
 
     Expander expander = new Expander("tempExpander", expanderFeedStream);
     expander.setOutletPressure(getExpanderOutPressure());
-    expander.setIsentropicEfficiency(eta_s);
+    // The coupled turbo-expander model may require an actual stage efficiency above 1.0 to
+    // reproduce a requested outlet temperature after the map-correction back-calculation.
+    // Replay that internal efficiency directly on the temporary expander instead of using the
+    // compressor-bound setter, which clamps at 1.0 for compressor robustness.
+    expander.isentropicEfficiency = eta_s;
     expander.run();
     expanderOutletStream.setFluid(expander.getOutletStream().getFluid());
 
