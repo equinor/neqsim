@@ -1880,6 +1880,17 @@ public class TPmultiflash extends TPflash {
     // system.display();
   }
 
+  /**
+   * Adds a bounded vapor-like trial when an aqueous/hydrocarbon endpoint contains no gas phase.
+   *
+   * <p>
+   * The trial uses {@code x_i proportional to z_i K_i^Wilson} in log space. Wilson K-values are only an initial guess;
+   * the existing multiphase beta solve, material-balance checks, and fugacity-equality checks determine the accepted
+   * equilibrium. Bounding {@code ln(K_i)} avoids overflow for component sets with large volatility contrasts.
+   * </p>
+   *
+   * @return {@code true} when a gas trial was added and initialized
+   */
   private boolean seedAdditionalPhaseFromFeed() {
     if (!system.doMultiPhaseCheck()) {
       return false;
@@ -1928,9 +1939,27 @@ public class TPmultiflash extends TPflash {
     system.addPhase();
     int phaseIndex = system.getNumberOfPhases() - 1;
     system.setPhaseType(phaseIndex, PhaseType.GAS);
+    double[] logTrialComposition = new double[system.getPhase(0).getNumberOfComponents()];
+    double maximumLogTrialComposition = Double.NEGATIVE_INFINITY;
     for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
-      double z = system.getPhase(0).getComponent(comp).getz();
-      system.getPhase(phaseIndex).getComponent(comp).setx(z > 0 ? z : 1.0e-16);
+      ComponentInterface component = system.getPhase(0).getComponent(comp);
+      double z = component.getz();
+      double logTrial = Math.log(Math.max(z, 1.0e-100));
+      double criticalTemperature = component.getTC();
+      double criticalPressure = component.getPC();
+      if (z > 0.0 && criticalTemperature > 0.0 && criticalPressure > 0.0) {
+        double logWilsonK = Math.log(criticalPressure / system.getPressure())
+            + 5.373 * (1.0 + component.getAcentricFactor()) * (1.0 - criticalTemperature / system.getTemperature());
+        if (Double.isFinite(logWilsonK)) {
+          logTrial += Math.max(-50.0, Math.min(50.0, logWilsonK));
+        }
+      }
+      logTrialComposition[comp] = logTrial;
+      maximumLogTrialComposition = Math.max(maximumLogTrialComposition, logTrial);
+    }
+    for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
+      double x = Math.exp(logTrialComposition[comp] - maximumLogTrialComposition);
+      system.getPhase(phaseIndex).getComponent(comp).setx(Math.max(x, 1.0e-16));
     }
     system.getPhases()[phaseIndex].normalize();
     double initialBeta = Math.max(1.0e-3, 1000.0 * phaseFractionMinimumLimit);
