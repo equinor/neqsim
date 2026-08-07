@@ -1,7 +1,10 @@
 package neqsim.process.util.optimizer;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -40,6 +43,9 @@ public class ThroughputCaseRow implements Serializable {
 
   /** Active bottleneck constraint name. */
   private final String activeConstraint;
+
+  /** Immutable ranked capacity-constraint snapshots for this evaluated case. */
+  private List<ProcessModelSimulationEvaluator.BottleneckStatus> rankedCapacityConstraints = Collections.emptyList();
 
   /** Active bottleneck utilization. */
   private final double utilization;
@@ -271,12 +277,29 @@ public class ThroughputCaseRow implements Serializable {
     boolean minimumConstraint = bottleneck.isMinimumConstraint();
     double capacityMargin = minimumConstraint ? currentValue - designValue : designValue - currentValue;
     double utilization = bottleneck.getUtilization();
-    return new ThroughputCaseRow(caseNumber, throughputMultiplier, producerMultipliers, objectiveValue,
+    ThroughputCaseRow row = new ThroughputCaseRow(caseNumber, throughputMultiplier, producerMultipliers, objectiveValue,
         evaluation.isFeasible(), evaluation.isSimulationConverged(), bottleneck.getAreaName(),
         bottleneck.getEquipmentName(), bottleneck.getConstraintName(), utilization, currentValue, designValue,
         minimumConstraint, bottleneck.getDataSource(), bottleneck.hasConfidence(), bottleneck.getConfidence(),
         bottleneck.hasValidityRange(), bottleneck.getValidityMinimum(), bottleneck.getValidityMaximum(), capacityMargin,
         1.0 - utilization, bottleneck.getUnit(), evaluation.getErrorMessage(), evaluation.getEvaluationTimeMs());
+    row.setRankedCapacityConstraints(evaluation.getRankedCapacityConstraints());
+    return row;
+  }
+
+  /**
+   * Retains a defensive immutable copy of the case-specific capacity ranking.
+   *
+   * @param rankedCapacityConstraints ranked capacity snapshots
+   */
+  private void setRankedCapacityConstraints(
+      List<ProcessModelSimulationEvaluator.BottleneckStatus> rankedCapacityConstraints) {
+    if (rankedCapacityConstraints == null || rankedCapacityConstraints.isEmpty()) {
+      this.rankedCapacityConstraints = Collections.emptyList();
+      return;
+    }
+    this.rankedCapacityConstraints = Collections
+        .unmodifiableList(new ArrayList<ProcessModelSimulationEvaluator.BottleneckStatus>(rankedCapacityConstraints));
   }
 
   /**
@@ -358,6 +381,16 @@ public class ThroughputCaseRow implements Serializable {
    */
   public String getActiveConstraint() {
     return activeConstraint;
+  }
+
+  /**
+   * Gets all capacity constraints snapshotted for this throughput case.
+   *
+   * @return immutable descending-utilization ranking
+   */
+  public List<ProcessModelSimulationEvaluator.BottleneckStatus> getRankedCapacityConstraints() {
+    return rankedCapacityConstraints == null ? Collections.<ProcessModelSimulationEvaluator.BottleneckStatus>emptyList()
+        : rankedCapacityConstraints;
   }
 
   /**
@@ -520,6 +553,11 @@ public class ThroughputCaseRow implements Serializable {
     map.put("activeArea", activeArea);
     map.put("activeEquipment", activeEquipment);
     map.put("activeConstraint", activeConstraint);
+    List<Map<String, Object>> rankedConstraints = new ArrayList<Map<String, Object>>();
+    for (ProcessModelSimulationEvaluator.BottleneckStatus bottleneck : getRankedCapacityConstraints()) {
+      rankedConstraints.add(toBottleneckMap(bottleneck));
+    }
+    map.put("rankedCapacityConstraints", rankedConstraints);
     map.put("utilization", utilization);
     map.put("currentValue", currentValue);
     map.put("designValue", designValue);
@@ -537,6 +575,33 @@ public class ThroughputCaseRow implements Serializable {
     map.put("unit", unit);
     map.put("errorMessage", errorMessage);
     map.put("evaluationTimeMs", evaluationTimeMs);
+    return map;
+  }
+
+  /**
+   * Converts one capacity snapshot to a JSON-friendly map.
+   *
+   * @param bottleneck capacity snapshot
+   * @return map containing engineering values and evidence metadata
+   */
+  private Map<String, Object> toBottleneckMap(ProcessModelSimulationEvaluator.BottleneckStatus bottleneck) {
+    Map<String, Object> map = new LinkedHashMap<String, Object>();
+    map.put("areaName", bottleneck.getAreaName());
+    map.put("equipmentName", bottleneck.getEquipmentName());
+    map.put("constraintName", bottleneck.getConstraintName());
+    map.put("utilization", bottleneck.getUtilization());
+    map.put("currentValue", bottleneck.getCurrentValue());
+    map.put("designValue", bottleneck.getDesignValue());
+    map.put("minimumConstraint", bottleneck.isMinimumConstraint());
+    map.put("dataSource", bottleneck.getDataSource());
+    map.put("hasConfidence", bottleneck.hasConfidence());
+    map.put("confidence", bottleneck.hasConfidence() ? Double.valueOf(bottleneck.getConfidence()) : null);
+    map.put("hasValidityRange", bottleneck.hasValidityRange());
+    map.put("validityMinimum", bottleneck.hasValidityRange() ? Double.valueOf(bottleneck.getValidityMinimum()) : null);
+    map.put("validityMaximum", bottleneck.hasValidityRange() ? Double.valueOf(bottleneck.getValidityMaximum()) : null);
+    map.put("evidenceApplicability", bottleneck.getEvidenceApplicability().name());
+    map.put("unit", bottleneck.getUnit());
+    map.put("feasible", bottleneck.isFeasible());
     return map;
   }
 }

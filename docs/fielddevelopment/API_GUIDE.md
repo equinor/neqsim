@@ -861,36 +861,40 @@ List<String> mitigations = report.getRecommendations();
 ### ArtificialLiftScreener
 
 ```java
+import java.util.List;
 import neqsim.process.fielddevelopment.screening.*;
+import neqsim.process.fielddevelopment.screening.ArtificialLiftScreener.LiftMethod;
+import neqsim.process.fielddevelopment.screening.ArtificialLiftScreener.MethodResult;
+import neqsim.process.fielddevelopment.screening.ArtificialLiftScreener.ScreeningResult;
 
 ArtificialLiftScreener lift = new ArtificialLiftScreener();
 
 // Configure well conditions
-lift.setReservoirPressure(180.0);     // Depleted reservoir
+lift.setReservoirPressure(180.0, "bara"); // Depleted reservoir
 lift.setWaterCut(0.70);
-lift.setGor(100.0);
+lift.setFormationGOR(100.0);
 lift.setProductivityIndex(15.0);
-lift.setWellDepth(2800.0);
-lift.setDeviation(45.0);               // degrees
-lift.setTemperature(95.0);
-lift.setGasAvailable(true);
-lift.setSandProduction(false);
-lift.setH2sPresent(false);
+lift.setWellDepth(2800.0, "m");
+lift.setReservoirTemperature(95.0, "C");
+lift.setGasLiftAvailable(true);
+lift.setElectricityAvailable(true);
 
 // Screen all methods
-List<MethodResult> results = lift.screenAllMethods();
+ScreeningResult screening = lift.screen();
+List<MethodResult> results = screening.getAllMethods();
 
 for (MethodResult method : results) {
-    System.out.printf("%s: %s%n",
-        method.getMethod().name(),
-        method.isFeasible() ?
-            String.format("Feasible (Score: %.0f/100)", method.getScore()) :
-            "Not feasible - " + method.getRationale());
+    if (method.feasible) {
+        // Feasible results always have positive finite rate and non-negative finite power.
+        double productionRateSm3PerDay = method.productionRate;
+        double powerConsumptionKw = method.powerConsumption;
+    } else {
+        String reason = method.infeasibilityReason;
+    }
 }
 
 // Get recommended method
-LiftMethod recommended = lift.getRecommendedMethod();
-System.out.println("Recommended: " + recommended);
+LiftMethod recommended = screening.getRecommendedMethod();
 ```
 
 ### EmissionsTracker

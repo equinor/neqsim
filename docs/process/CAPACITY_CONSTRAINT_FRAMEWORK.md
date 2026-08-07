@@ -315,6 +315,14 @@ enabled constraints with undefined (`NaN`) utilization remain visible at the end
 `findActiveBottleneck(model)` remains the lower-allocation API when only the leading constraint is
 needed.
 
+After `ProcessModelSimulationEvaluator.evaluate(...)`, use
+`EvaluationResult.getRankedCapacityConstraints()` instead of rescanning the live model. The result
+owns an immutable snapshot tied to that exact operating point, and its legacy active bottleneck is
+the first finite-utilization item in the same ranking. `ProcessModelThroughputOptimizer` copies the
+snapshot into each `ThroughputCaseRow`; JSON case tables therefore preserve near-active limits and
+bottleneck switching across the throughput search. The flat CSV remains a one-row-per-case summary
+of the leading limit; use JSON or the Java/JPype list when the complete per-case ranking is needed.
+
 ### 2. CapacityConstrainedEquipment (Interface)
 
 Interface that equipment classes implement to participate in capacity tracking.

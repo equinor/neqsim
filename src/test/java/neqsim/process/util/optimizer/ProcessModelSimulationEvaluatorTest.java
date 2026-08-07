@@ -347,6 +347,66 @@ class ProcessModelSimulationEvaluatorTest {
     assertEquals(1, undefinedSupplierCalls.get());
   }
 
+  /** Verifies snapshot selection preserves the legacy exclusion of invalid negative utilization. */
+  @Test
+  void evaluationPreservesLegacyNoBottleneckForInvalidNegativeUtilization() {
+    ModelFixture fixture = createModelFixture();
+    CapacityConstraint invalid = new CapacityConstraint("invalidNegative", "kg/hr", ConstraintType.HARD)
+        .setDesignValue(10.0).setCurrentValue(-20.0);
+    fixture.separator.clearCapacityConstraints();
+    fixture.separator.addCapacityConstraint(invalid);
+
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
+    evaluator.setIncludeStrategyCapacityConstraints(false);
+    evaluator.addParameter("wells::feed.flowRate", 5000.0, 20000.0, "kg/hr");
+
+    ProcessModelSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[] { 10000.0 });
+
+    assertTrue(result.isSimulationConverged());
+    assertEquals(1, result.getRankedCapacityConstraints().size());
+    assertEquals(-2.0, result.getRankedCapacityConstraints().get(0).getUtilization(), 1.0e-12);
+    assertFalse(result.getActiveBottleneck().isPresent());
+    assertFalse(evaluator.findActiveBottleneck(fixture.model).isPresent());
+  }
+
+  /**
+   * Verifies each model evaluation retains an immutable ranked capacity snapshot after later model runs.
+   */
+  @Test
+  void evaluationRetainsRankedCapacitySnapshotAcrossOperatingPoints() {
+    final ModelFixture fixture = createModelFixture();
+    CapacityConstraint exportCapacity = new CapacityConstraint("exportCapacity", "kg/hr", ConstraintType.HARD)
+        .setDesignValue(15000.0).setDataSource("exportNomination").setConfidence(0.90)
+        .setValueSupplier(() -> fixture.feed.getFlowRate("kg/hr"));
+    CapacityConstraint compressorHeadroom = new CapacityConstraint("compressorHeadroom", "kg/hr", ConstraintType.HARD)
+        .setDesignValue(20000.0).setDataSource("compressorMap").setConfidence(0.95)
+        .setValueSupplier(() -> 24000.0 - fixture.feed.getFlowRate("kg/hr"));
+    fixture.separator.clearCapacityConstraints();
+    fixture.separator.addCapacityConstraint(exportCapacity);
+    fixture.separator.addCapacityConstraint(compressorHeadroom);
+
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
+    evaluator.setIncludeStrategyCapacityConstraints(false);
+    evaluator.addParameter("wells::feed.flowRate", 5000.0, 20000.0, "kg/hr");
+
+    ProcessModelSimulationEvaluator.EvaluationResult lowRate = evaluator.evaluate(new double[] { 10000.0 });
+    ProcessModelSimulationEvaluator.EvaluationResult highRate = evaluator.evaluate(new double[] { 14000.0 });
+
+    List<ProcessModelSimulationEvaluator.BottleneckStatus> lowRanked = lowRate.getRankedCapacityConstraints();
+    List<ProcessModelSimulationEvaluator.BottleneckStatus> highRanked = highRate.getRankedCapacityConstraints();
+    assertEquals(2, lowRanked.size());
+    assertEquals(2, highRanked.size());
+    assertEquals("compressorHeadroom", lowRanked.get(0).getConstraintName());
+    assertEquals("exportCapacity", highRanked.get(0).getConstraintName());
+    assertEquals(2.0 / 3.0, lowRanked.get(1).getUtilization(), 1.0e-12,
+        "the first evaluation must retain its original export snapshot");
+    assertEquals(14.0 / 15.0, highRanked.get(0).getUtilization(), 1.0e-12);
+    assertEquals(lowRanked.get(0).getConstraintName(), lowRate.getActiveBottleneck().getConstraintName());
+    assertEquals(highRanked.get(0).getConstraintName(), highRate.getActiveBottleneck().getConstraintName());
+    assertThrows(UnsupportedOperationException.class,
+        () -> lowRanked.add(ProcessModelSimulationEvaluator.BottleneckStatus.none()));
+  }
+
   /**
    * Verifies that minimum-directed capacity limits retain their engineering-unit limit in model-level bottleneck
    * reporting.

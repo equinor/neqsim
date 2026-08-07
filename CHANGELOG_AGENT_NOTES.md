@@ -9,6 +9,50 @@
 
 ---
 
+## 2026-08-07 — Coupled transient gas-network hydraulics and source schedules
+
+- Added `TransientGasNetwork` for bounded, positive-flow, one-phase isothermal
+  gathering trees. It simultaneously solves source and junction pressures,
+  Darcy edge flow, compressible linepack, and conservative named-component
+  transport for scheduled source rates/compositions and one fixed-pressure
+  sink.
+- `TransientGasNetworkHistory` provides time-aligned node pressure/composition,
+  edge inlet/average/outlet flow, edge linepack, and immutable hydraulic,
+  junction, and component-conservation reports. The history and reports have a
+  stable JSON path for Python/JPype.
+- Source pressure is an emergent feasibility result, not a prescribed boundary
+  or a deliverability controller. Pressure bounds and edge velocity limits fail
+  explicitly; reverse flow, phase appearance, thermal transport, recirculation,
+  and branching splits remain outside the initial API.
+- Added a 700 km synthetic Åsgard/Kristin-to-Kårstø rate-event regression with
+  the sink fixed at 110 bara, comparison to the 200/207 bara quasi-steady
+  anchors, deterministic repeat, linepack response, component/junction/total
+  balance gates, unsupported-state diagnostics, and joint grid/timestep
+  refinement.
+## 2026-08-06 — Per-case ranked capacity snapshots
+
+- `ProcessModelSimulationEvaluator.EvaluationResult.getRankedCapacityConstraints()` retains the
+  immutable full-model capacity ranking produced after that exact simulation point.
+- The legacy active bottleneck is selected from the same ranking, while undefined-utilization
+  constraints remain visible at the end for diagnosis.
+- `ThroughputCaseRow.getRankedCapacityConstraints()` preserves emerging and switching constraints
+  for every scalar-throughput case. JSON exports include the complete ranked list and its evidence
+  applicability; CSV remains the flat leading-limit summary.
+- Use these case-owned snapshots for debottleneck histories and AI/tool output. Do not rescan the
+  live model after a later evaluation and attribute that state to an earlier case.
+
+---
+## 2026-08-06 — Artificial-lift screening rejects non-physical calculated results
+
+- `ArtificialLiftScreener.screen()` now rejects a calculated method result before ranking when its
+  production rate is non-finite or non-positive, or when its power consumption is non-finite or
+  negative.
+- Rejected results have zero reported rate and power, negative-infinite NPV, rank zero, and an
+  explicit infeasibility reason. A method reported as feasible therefore always has a finite,
+  positive rate and finite, non-negative power.
+- The field-development API example now uses the current `ArtificialLiftScreener` method names,
+  units, and `ScreeningResult` return type.
+
 ## 2026-08-06 — Evidence-aware full-model capacity ranking
 
 - `ProcessModelSimulationEvaluator.rankCapacityConstraints(model)` returns every enabled

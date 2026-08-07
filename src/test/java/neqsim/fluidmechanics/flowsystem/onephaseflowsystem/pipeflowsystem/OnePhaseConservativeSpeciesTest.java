@@ -73,6 +73,54 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void lowPositiveFlowSteadyInitializationConvergesBeforeConservativeSpeciesStep() {
+    PipeFlowSystem first = runCompositionStep(40, 30.0, 2.5);
+    PipeFlowSystem repeated = runCompositionStep(40, 30.0, 2.5);
+    PipeFlowSystem nearby = createInitializedPipe(40, 15000.0, 1.25);
+
+    OnePhaseFlowConvergenceReport firstFlow = first.getConvergenceReport();
+    OnePhaseSpeciesConservationReport firstSpecies = first.getSpeciesConservationReport();
+    assertTrue(firstFlow.isConverged(), firstFlow.getMessage());
+    assertTrue(firstFlow.isNonlinearMetricEquationResidual(), firstFlow.getMessage());
+    assertTrue(firstFlow.getMaximumScaledMassEquationResidual() <= 1.0e-10, firstFlow.getMessage());
+    assertTrue(firstFlow.getMaximumScaledMomentumEquationResidual() <= 1.0e-10, firstFlow.getMessage());
+    assertTrue(firstSpecies.isConverged(), firstSpecies.getMessage());
+    assertTrue(firstSpecies.getMaximumRelativeInventoryResidual() < 1.0e-8, firstSpecies.getMessage());
+    assertTrue(firstSpecies.getMaximumThermodynamicMassFractionError() <= 1.0e-10, firstSpecies.getMessage());
+    assertArrayEquals(firstSpecies.getFinalInventoryKg(), repeated.getSpeciesConservationReport().getFinalInventoryKg(),
+        0.0);
+    assertArrayEquals(firstSpecies.getMassFractionProfile()[1],
+        repeated.getSpeciesConservationReport().getMassFractionProfile()[1], 0.0);
+
+    OnePhaseFlowConvergenceReport nearbyFlow = nearby.getConvergenceReport();
+    assertTrue(nearbyFlow.isConverged(), nearbyFlow.getMessage());
+    assertTrue(nearbyFlow.getMaximumScaledMassEquationResidual() <= 1.0e-10, nearbyFlow.getMessage());
+    assertTrue(nearbyFlow.getMaximumScaledMomentumEquationResidual() <= 1.0e-10, nearbyFlow.getMessage());
+    for (int node = 0; node < nearby.getTotalNumberOfNodes(); node++) {
+      assertTrue(Double.isFinite(nearby.getNode(node).getVelocity()));
+      assertTrue(nearby.getNode(node).getVelocity() > 0.0,
+          "Supported positive-flow initialization must remain positive at node " + node);
+    }
+  }
+
+  @Test
+  void unsupportedLowerFlowSteadyInitializationFailsWithResidualDiagnostics() {
+    PipeFlowSystem pipe = createConfiguredPipe(40, 15000.0, 0.1);
+
+    assertFalse(pipe.isFailOnNonConvergence());
+    IllegalStateException exception = assertThrows(IllegalStateException.class, () -> pipe.solveSteadyState(1));
+    OnePhaseFlowConvergenceReport report = pipe.getConvergenceReport();
+
+    assertFalse(report.isConverged());
+    assertTrue(report.isNonlinearMetricEquationResidual());
+    assertTrue(report.getNonlinearIterations() > 0);
+    assertEquals(report.getMessage(), exception.getMessage());
+    assertTrue(exception.getMessage().contains("scaled equation residual="));
+    assertTrue(exception.getMessage().contains("Final scaled continuity residual="));
+    assertTrue(exception.getMessage().contains("momentum residual="));
+  }
+
+  @Test
   void highResolutionSpeciesStepRetainsHydraulicEosSynchronization() {
     PipeFlowSystem pipe = createInitializedPipe(12, 3000.0);
     pipe.setConservativeSpeciesTransport(true);
@@ -397,7 +445,11 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
   }
 
   static PipeFlowSystem runCompositionStep(int nodes, double timeStep) {
-    PipeFlowSystem pipe = createInitializedPipe(nodes);
+    return runCompositionStep(nodes, timeStep, MASS_FLOW_KG_PER_SECOND);
+  }
+
+  private static PipeFlowSystem runCompositionStep(int nodes, double timeStep, double massFlowKgPerSecond) {
+    PipeFlowSystem pipe = createInitializedPipe(nodes, 15000.0, massFlowKgPerSecond);
     pipe.setConservativeSpeciesTransport(true);
     pipe.setFailOnNonConvergence(true);
     pipe.getTimeSeries().setTimes(new double[] { 0.0, timeStep });
@@ -451,8 +503,19 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
   }
 
   private static PipeFlowSystem createInitializedPipe(int nodes, double lengthMeters) {
+    return createInitializedPipe(nodes, lengthMeters, MASS_FLOW_KG_PER_SECOND);
+  }
+
+  private static PipeFlowSystem createInitializedPipe(int nodes, double lengthMeters, double massFlowKgPerSecond) {
+    PipeFlowSystem pipe = createConfiguredPipe(nodes, lengthMeters, massFlowKgPerSecond);
+    pipe.solveSteadyState(1);
+    assertTrue(pipe.getConvergenceReport().isConverged(), pipe.getConvergenceReport().getMessage());
+    return pipe;
+  }
+
+  private static PipeFlowSystem createConfiguredPipe(int nodes, double lengthMeters, double massFlowKgPerSecond) {
     PipeFlowSystem pipe = new PipeFlowSystem();
-    pipe.setInletThermoSystem(createGas(0.95, 0.05));
+    pipe.setInletThermoSystem(createGas(0.95, 0.05, massFlowKgPerSecond));
     pipe.setNumberOfLegs(1);
     pipe.setNumberOfNodesInLeg(nodes);
     GeometryDefinitionInterface[] geometry = { new PipeData(), new PipeData() };
@@ -468,8 +531,7 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     pipe.setLegOuterHeatTransferCoefficients(new double[] { 0.0, 0.0 });
     pipe.createSystem();
     pipe.init();
-    pipe.solveSteadyState(1);
-    assertTrue(pipe.getConvergenceReport().isConverged(), pipe.getConvergenceReport().getMessage());
+    pipe.setConservativeSpeciesTransport(true);
     return pipe;
   }
 
@@ -580,6 +642,10 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
   }
 
   private static SystemInterface createGas(double methane, double nitrogen) {
+    return createGas(methane, nitrogen, MASS_FLOW_KG_PER_SECOND);
+  }
+
+  private static SystemInterface createGas(double methane, double nitrogen, double massFlowKgPerSecond) {
     SystemInterface gas = new SystemSrkEos(TEMPERATURE_K, PRESSURE_BARA);
     gas.addComponent("methane", methane);
     gas.addComponent("nitrogen", nitrogen);
@@ -588,7 +654,7 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     gas.init(0);
     gas.init(3);
     gas.initPhysicalProperties();
-    gas.setTotalFlowRate(MASS_FLOW_KG_PER_SECOND, "kg/sec");
+    gas.setTotalFlowRate(massFlowKgPerSecond, "kg/sec");
     return gas;
   }
 }

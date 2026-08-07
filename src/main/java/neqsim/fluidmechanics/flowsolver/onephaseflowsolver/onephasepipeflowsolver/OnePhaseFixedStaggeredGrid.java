@@ -1071,8 +1071,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     }
     initMatrix();
 
-    if (dynamic && solverType == 1) {
-      if (conservativeSpeciesTransportEnabled) {
+    if (solverType == 1 && (dynamic || conservativeSpeciesTransportEnabled)) {
+      if (dynamic && conservativeSpeciesTransportEnabled) {
         solveCoupledHydraulicEosSpecies(initialFiniteVolumeMass);
       } else {
         solveCoupledHydraulicEos(initialFiniteVolumeMass);
@@ -1473,11 +1473,13 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         massEquationHistory[iteration], momentumEquationHistory[iteration],
         Arrays.copyOf(massEquationHistory, iteration + 1), Arrays.copyOf(momentumEquationHistory, iteration + 1),
         lineSearchFailed, numericalFailureDetail, true);
-    if (dynamic && !lastConvergenceReport.isConverged()) {
-      if (failOnNonConvergence) {
+    if (!lastConvergenceReport.isConverged()) {
+      if (conservativeSpeciesTransportEnabled || (dynamic && failOnNonConvergence)) {
         throw new IllegalStateException(lastConvergenceReport.getMessage());
       }
-      logger.warn("{}", lastConvergenceReport.getMessage());
+      if (dynamic) {
+        logger.warn("{}", lastConvergenceReport.getMessage());
+      }
     }
   }
 
