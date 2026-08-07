@@ -1150,6 +1150,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       return;
     }
     setDoInitializion(false);
+    List<SystemInterface> pumparoundReturnSystems = snapshotPumparoundReturnSystems();
 
     // Capture legacy direct feeds before recording the identity of the tray network. Otherwise the
     // first initialized state omits those feeds from the fingerprint and appears incompatible on
@@ -1170,6 +1171,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     // If feed streams are empty, nothing to do
     if (feedStreams.isEmpty() && directExternalFeedStreams.isEmpty()) {
+      restorePumparoundReturnSystems(pumparoundReturnSystems);
       resetLastSolveMetrics();
       return;
     }
@@ -1263,6 +1265,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     // temperatures. Restore the caller-owned feed thermodynamic states before the actual
     // column solver starts so the solved mass and energy balances use the requested feeds.
     refreshInternalExternalFeedSystems();
+    restorePumparoundReturnSystems(pumparoundReturnSystems);
   }
 
   /**
@@ -1391,7 +1394,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       lastColumnTearIterationCount = iteration + 1;
       lastColumnTearResidual = relativeChange;
       if (relativeChange <= tolerance) {
-        if (columnTearVariablesChanged) {
+        if (columnTearVariablesChanged && !hasPumparoundTearVariablesOnly()) {
           setDoInitializion(true);
           solveConfiguredColumn(id);
           lastColumnTearInnerIterationCount += Math.max(0, lastIterationCount);
@@ -1429,6 +1432,21 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private boolean hasSingleSideDrawFlowSpecificationOnly() {
     return sideDrawSpecifications.size() == 1 && pumparounds.isEmpty() && !hydraulicPressureDropCouplingEnabled;
+  }
+
+  /**
+   * Check whether all active outer tear variables are pumparound returns.
+   *
+   * <p>
+   * A pumparound update is calculated directly from the just-solved tray draw. Running one more unmeasured inner solve
+   * would leave the public return synchronized to the previous draw while exposing products from the new state. The
+   * accepted fixed-point residual already bounds the difference between the applied and updated return streams.
+   * </p>
+   *
+   * @return {@code true} when one or more pumparounds are the only active tear variables
+   */
+  private boolean hasPumparoundTearVariablesOnly() {
+    return !pumparounds.isEmpty() && sideDrawSpecifications.isEmpty() && !hydraulicPressureDropCouplingEnabled;
   }
 
   /**
@@ -10807,6 +10825,41 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       for (int streamIndex = 0; streamIndex < externalFeeds.size(); streamIndex++) {
         SystemInterface cloned = externalFeeds.get(streamIndex).getThermoSystem().clone();
         trays.get(trayIndex).getStream(streamIndex).setThermoSystem(cloned);
+      }
+    }
+  }
+
+  /**
+   * Snapshot configured pumparound returns before tray-profile initialization changes inlet temperatures.
+   *
+   * @return thermodynamic state for each configured return, with {@code null} before its first draw update
+   */
+  private List<SystemInterface> snapshotPumparoundReturnSystems() {
+    List<SystemInterface> returnSystems = new ArrayList<>(pumparounds.size());
+    for (ColumnPumparound pumparound : pumparounds) {
+      StreamInterface returnStream = pumparound.getReturnStream();
+      returnSystems.add(returnStream == null ? null : returnStream.getThermoSystem().clone());
+    }
+    return returnSystems;
+  }
+
+  /**
+   * Restore configured pumparound returns after tray-profile initialization.
+   *
+   * <p>
+   * {@link SimpleTray#init()} seeds tray inputs at the local tray temperature. Restoring the saved thermodynamic
+   * systems preserves the established return-stream identity and tray coupling while preventing initialization from
+   * overwriting the configured draw-to-return temperature change.
+   * </p>
+   *
+   * @param returnSystems thermodynamic states captured before initialization
+   */
+  private void restorePumparoundReturnSystems(List<SystemInterface> returnSystems) {
+    for (int i = 0; i < pumparounds.size(); i++) {
+      StreamInterface returnStream = pumparounds.get(i).getReturnStream();
+      SystemInterface returnSystem = returnSystems.get(i);
+      if (returnStream != null && returnSystem != null) {
+        returnStream.setThermoSystem(returnSystem);
       }
     }
   }
