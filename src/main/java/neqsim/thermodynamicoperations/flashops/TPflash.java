@@ -5,6 +5,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
+import neqsim.thermo.system.EosGeFlashModel;
+import neqsim.thermo.system.HybridEosGeFlashModel;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.exception.IsNaNException;
@@ -82,6 +84,8 @@ public class TPflash extends Flash {
   private static final double MAX_FINAL_EQUILIBRIUM_REFINEMENT_RESIDUAL = 1.0e-5;
   /** Cubic phase roots evaluated by the post-convergence root checks. */
   private static final PhaseType[] CUBIC_ROOT_PHASE_TYPES = { PhaseType.GAS, PhaseType.LIQUID };
+  /** Iteration limit for damped direct gamma-phi flashes near a phase-fraction boundary. */
+  private static final int DIRECT_GAMMA_PHI_MAXIMUM_ITERATIONS = 500;
   /**
    * Minimum extensive Gibbs-energy reduction (J) required for the spurious-multiphase rescue to collapse a two-phase
    * result to a single phase. Avoids false triggers from numerical noise.
@@ -134,6 +138,10 @@ public class TPflash extends Flash {
   private transient double[] accelerationLnK;
   /** Reusable accelerated K-values; transient because it contains no thermodynamic state. */
   private transient double[] accelerationK;
+  /** Opt-in direct gamma-phi strategy, resolved once because a flash operation keeps one system. */
+  private final EosGeFlashModel directGammaPhiModel;
+  /** Opt-in hybrid multiphase strategy, resolved once because a flash operation keeps one system. */
+  private final HybridEosGeFlashModel hybridEosGeFlashModel;
 
   /** Compact two-phase rollback snapshot used by bounded neutral endpoint refinements. */
   private static final class BalancedTwoPhaseState {
@@ -165,6 +173,8 @@ public class TPflash extends Flash {
    * Constructor for TPflash.
    */
   public TPflash() {
+    directGammaPhiModel = null;
+    hybridEosGeFlashModel = null;
   }
 
   /**
@@ -174,6 +184,10 @@ public class TPflash extends Flash {
    */
   public TPflash(SystemInterface system) {
     this.system = system;
+    EosGeFlashModel eosGeModel = resolveEosGeFlashModel(system);
+    directGammaPhiModel = eosGeModel != null && eosGeModel.requiresDirectGammaPhiFlash() ? eosGeModel : null;
+    hybridEosGeFlashModel = eosGeModel instanceof HybridEosGeFlashModel
+        && ((HybridEosGeFlashModel) eosGeModel).requiresHybridEosGeFlash() ? (HybridEosGeFlashModel) eosGeModel : null;
     lnOldOldOldK = new double[system.getPhases()[0].getNumberOfComponents()];
     lnOldOldK = new double[system.getPhases()[0].getNumberOfComponents()];
     lnOldK = new double[system.getPhases()[0].getNumberOfComponents()];
@@ -192,6 +206,37 @@ public class TPflash extends Flash {
   public TPflash(SystemInterface system, boolean checkForSolids) {
     this(system);
     solidCheck = checkForSolids;
+  }
+
+  /**
+   * Get the opt-in direct gamma-phi strategy for the active system.
+   *
+   * @return direct EOS-GE strategy, or {@code null} for the ordinary TP-flash path
+   */
+  private EosGeFlashModel getDirectGammaPhiModel() {
+    return directGammaPhiModel;
+  }
+
+  /**
+   * Get the opt-in hybrid multiphase strategy for the active system.
+   *
+   * @return hybrid EOS-GE strategy, or {@code null} for the ordinary TP-flash path
+   */
+  private HybridEosGeFlashModel getHybridEosGeFlashModel() {
+    return hybridEosGeFlashModel;
+  }
+
+  /**
+   * Resolve the opt-in direct gamma-phi strategy once when the flash operation is created.
+   *
+   * @param flashSystem thermodynamic system owned by the operation
+   * @return direct EOS-GE strategy, or {@code null} for an ordinary EOS system
+   */
+  private static EosGeFlashModel resolveEosGeFlashModel(SystemInterface flashSystem) {
+    if (flashSystem instanceof EosGeFlashModel) {
+      return (EosGeFlashModel) flashSystem;
+    }
+    return null;
   }
 
   /**
@@ -228,6 +273,99 @@ public class TPflash extends Flash {
 
     try {
 
+      system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
+    } catch (IsNaNException ex) {
+      logger.warn("Not able to calculate beta. Value is NaN");
+      system.setBeta(oldBeta);
+    } catch (TooManyIterationsException ex) {
+      logger.warn("Not able to calculate beta, calculation is not converging.");
+      system.setBeta(oldBeta);
+    }
+    if (system.getBeta() > 1.0 - phaseFractionMinimumLimit) {
+      system.setBeta(1.0 - phaseFractionMinimumLimit);
+    }
+    if (system.getBeta() < phaseFractionMinimumLimit) {
+      system.setBeta(phaseFractionMinimumLimit);
+    }
+    system.calc_x_y();
+    system.init(1);
+  }
+
+  /**
+   * Run one direct gamma-phi successive-substitution step for package-level numerical tests.
+   *
+   * @throws IllegalStateException if the system did not opt into direct gamma-phi iteration
+   */
+  void sucsSubsDirectGammaPhi() {
+    EosGeFlashModel gammaPhiModel = getDirectGammaPhiModel();
+    if (gammaPhiModel == null) {
+      throw new IllegalStateException("The thermodynamic system did not opt into direct gamma-phi iteration.");
+    }
+    sucsSubsGammaPhi(gammaPhiModel);
+  }
+
+  /**
+   * Dispatch a successive-substitution step without adding EOS-GE logic to the ordinary EOS component loop.
+   *
+   * @param gammaPhiModel direct EOS-GE strategy, or {@code null} for the ordinary EOS algorithm
+   */
+  private void sucsSubsForModel(EosGeFlashModel gammaPhiModel) {
+    if (gammaPhiModel == null) {
+      sucsSubs();
+    } else {
+      sucsSubsGammaPhi(gammaPhiModel);
+    }
+  }
+
+  /**
+   * Successive substitution for opt-in direct gamma-phi models.
+   *
+   * <p>
+   * Keeping this model-specific component loop separate preserves the ordinary EOS hot path and avoids a strategy
+   * branch for every EOS component update.
+   * </p>
+   *
+   * @param gammaPhiModel direct EOS-GE strategy
+   */
+  private void sucsSubsGammaPhi(EosGeFlashModel gammaPhiModel) {
+    deviation = 0;
+    PhaseInterface phase0 = system.getPhase(0);
+    PhaseInterface phase1 = system.getPhase(1);
+    int numberOfComponents = phase0.getNumberOfComponents();
+
+    for (i = 0; i < numberOfComponents; i++) {
+      neqsim.thermo.component.ComponentInterface comp0 = phase0.getComponent(i);
+      neqsim.thermo.component.ComponentInterface comp1 = phase1.getComponent(i);
+      if (comp0.getIonicCharge() != 0 || comp0.isIsIon()) {
+        Kold = comp0.getK();
+        comp0.setK(1.0e-40);
+        comp1.setK(comp0.getK());
+      } else {
+        Kold = comp0.getK();
+        comp1.fugcoef(phase1);
+        double vapourFugacityCoefficient = gammaPhiModel.getGammaPhiVapourFugacityCoefficient(comp0, phase0);
+        double targetK = comp1.getFugacityCoefficient() / vapourFugacityCoefficient * presdiff;
+        targetK = gammaPhiModel.constrainGammaPhiKValue(comp0, targetK);
+        double Knew = gammaPhiModel.relaxGammaPhiKValue(Kold, targetK);
+        comp0.setK(Knew);
+        if (!Double.isFinite(Knew) || Knew <= 0.0) {
+          comp0.setK(Kold);
+          system.init(1);
+          Knew = comp0.getK();
+        }
+        if (!Double.isFinite(Knew) || Knew <= 0.0) {
+          Knew = Double.isFinite(Kold) && Kold > 0.0 ? Kold : 1.0;
+          comp0.setK(Knew);
+        }
+        comp1.setK(Knew);
+        double deviationReferenceK = Double.isFinite(Kold) && Kold > 0.0 ? Kold : 1.0;
+        deviation += Math.abs(Math.log(Knew / deviationReferenceK));
+      }
+    }
+
+    double oldBeta = system.getBeta();
+
+    try {
       system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
     } catch (IsNaNException ex) {
       logger.warn("Not able to calculate beta. Value is NaN");
@@ -471,11 +609,25 @@ public class TPflash extends Flash {
   private void runInternal() {
     resetStabilityDiagnostics();
     waterBearingRescueAttempted = false;
+    HybridEosGeFlashModel hybridModel = getHybridEosGeFlashModel();
+    if (hybridModel != null) {
+      system.init(0);
+      new TPHybridEosGeFlash(system, hybridModel).run();
+      return;
+    }
+    EosGeFlashModel gammaPhiModel = getDirectGammaPhiModel();
+    if (gammaPhiModel != null && (solidCheck || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck())) {
+      throw new UnsupportedOperationException(
+          "Direct EOS-GE TPflash does not support solid or wax phase calculations; disable solid and wax checks.");
+    }
     findLowestGibbsPhaseIsChecked = false;
     int minGibbsPhase = 0;
     double minimumGibbsEnergy = 0;
 
     system.init(0);
+    if (gammaPhiModel != null) {
+      gammaPhiModel.prepareGammaPhiFlash();
+    }
     system.init(1);
 
     if ((system.getPhase(0).getGibbsEnergy() * (1.0 - Math.signum(system.getPhase(0).getGibbsEnergy()) * 1e-8)) < system
@@ -552,14 +704,14 @@ public class TPflash extends Flash {
     if (system.getBeta() > (1.0 - 1.1 * phaseFractionMinimumLimit)
         || system.getBeta() < (1.1 * phaseFractionMinimumLimit)) {
       system.setBeta(0.5);
-      sucsSubs();
+      sucsSubsForModel(gammaPhiModel);
     }
 
     // Performs three iterations of successive substitution
     for (int k = 0; k < 3; k++) {
       if (system.getBeta() < (1.0 - 1.1 * phaseFractionMinimumLimit)
           && system.getBeta() > (1.1 * phaseFractionMinimumLimit)) {
-        sucsSubs();
+        sucsSubsForModel(gammaPhiModel);
         if ((system.getGibbsEnergy() - minimumGibbsEnergy) / Math.abs(minimumGibbsEnergy) < -1e-12) {
           break;
         }
@@ -627,7 +779,8 @@ public class TPflash extends Flash {
       }
     }
 
-    if (passedTests || (dgonRT > 0 && tpdx > 0 && tpdy > 0) || Double.isNaN(system.getBeta())) {
+    if (gammaPhiModel == null
+        && (passedTests || (dgonRT > 0 && tpdx > 0 && tpdy > 0) || Double.isNaN(system.getBeta()))) {
       boolean isStable;
       try {
         if (system.checkStability()) {
@@ -700,21 +853,29 @@ public class TPflash extends Flash {
     gibbsEnergy = system.getGibbsEnergy();
     gibbsEnergyOld = gibbsEnergy;
 
-    // Checks if gas or oil is the most stable phase
     PhaseType originalPhaseType0 = system.getPhase(0).getType();
-    double gasgib = system.getPhase(0).getGibbsEnergy();
-    system.setPhaseType(0, PhaseType.LIQUID);
-    system.init(1, 0);
-    double liqgib = system.getPhase(0).getGibbsEnergy();
-
-    if (gasgib * (1.0 - Math.signum(gasgib) * 1e-8) < liqgib) {
-      system.setPhaseType(0, PhaseType.GAS);
-    } else {
+    double gasgib = 0.0;
+    double liqgib = 0.0;
+    if (gammaPhiModel == null) {
+      // Checks if gas or oil is the most stable phase for the ordinary EOS flash.
+      gasgib = system.getPhase(0).getGibbsEnergy();
       system.setPhaseType(0, PhaseType.LIQUID);
-    }
+      system.init(1, 0);
+      liqgib = system.getPhase(0).getGibbsEnergy();
 
-    if (system.doMultiPhaseCheck() && originalPhaseType0 == PhaseType.OIL) {
-      system.setPhaseType(0, PhaseType.OIL);
+      if (gasgib * (1.0 - Math.signum(gasgib) * 1e-8) < liqgib) {
+        system.setPhaseType(0, PhaseType.GAS);
+      } else {
+        system.setPhaseType(0, PhaseType.LIQUID);
+      }
+
+      if (system.doMultiPhaseCheck() && originalPhaseType0 == PhaseType.OIL) {
+        system.setPhaseType(0, PhaseType.OIL);
+      }
+    } else {
+      // Direct gamma-phi iteration owns a fixed EOS-vapour/GE-liquid topology. Trying a liquid
+      // cubic root here changes the vapour reference used to form K = phi_liquid / phi_vapour.
+      system.setPhaseType(0, originalPhaseType0);
     }
     system.init(1);
 
@@ -722,6 +883,8 @@ public class TPflash extends Flash {
     int accelerateInterval = 5;
     int newtonLimit = 12;
     int timeFromLastGibbsFail = 0;
+    int iterationLimit = gammaPhiModel == null ? maxNumberOfIterations
+        : Math.max(maxNumberOfIterations, DIRECT_GAMMA_PHI_MAXIMUM_ITERATIONS);
 
     double chemdev = 0;
     double oldChemDiff = 1.0;
@@ -747,13 +910,15 @@ public class TPflash extends Flash {
           }
         }
 
-        if (iterations < activeNewtonLimit || system.isChemicalSystem()
+        // A direct gamma-phi model owns its K-value update, damping and vapour reference. The
+        // generic cubic-EOS Newton solver does not implement that contract and must not replace it.
+        if (iterations < activeNewtonLimit || gammaPhiModel != null || system.isChemicalSystem()
             || !system.isImplementedCompositionDeriativesofFugacity()) {
           if (timeFromLastGibbsFail > 6 && (iterations % activeAccelerateInterval) == 0
-              && !(system.isChemicalSystem() || system.doSolidPhaseCheck())) {
+              && !(system.isChemicalSystem() || system.doSolidPhaseCheck()) && gammaPhiModel == null) {
             accselerateSucsSubs();
           } else {
-            sucsSubs();
+            sucsSubsForModel(gammaPhiModel);
           }
         } else if (iterations >= activeNewtonLimit && (!shouldApplyEnhancedMultiPhaseCheck() || deviation < 0.05)
             && Math.abs(system.getPhase(0).getPressure() - system.getPhase(1).getPressure()) < 1e-5) {
@@ -782,14 +947,14 @@ public class TPflash extends Flash {
         if (((gibbsEnergy - gibbsEnergyOld) / Math.abs(gibbsEnergyOld) > 1e-8
             || system.getBeta() < phaseFractionMinimumLimit * 1.01
             || system.getBeta() > (1 - phaseFractionMinimumLimit * 1.01)) && !system.isChemicalSystem()
-            && timeFromLastGibbsFail > 1) {
+            && gammaPhiModel == null && timeFromLastGibbsFail > 1) {
           resetK();
           timeFromLastGibbsFail = 0;
         } else {
           timeFromLastGibbsFail++;
           setNewK();
         }
-      } while ((deviation > 1e-10) && (iterations < maxNumberOfIterations));
+      } while ((deviation > 1e-10) && (iterations < iterationLimit));
 
       if (system.isChemicalSystem()) {
         oldChemDiff = chemdev;
@@ -816,6 +981,13 @@ public class TPflash extends Flash {
     } while ((diffChem > 1e-6 && chemdev > 1e-6 && totiter < 300) || (system.isChemicalSystem() && totiter < 2));
     if (system.isChemicalSystem()) {
       sucsSubs();
+    }
+    if (gammaPhiModel != null) {
+      if (gammaPhiModel.finishGammaPhiFlash(deviation, phaseFractionMinimumLimit)) {
+        return;
+      }
+      throw new IllegalStateException("Direct EOS-GE TPflash did not produce an acceptable state: "
+          + gammaPhiModel.getGammaPhiFlashDiagnostics(deviation, phaseFractionMinimumLimit));
     }
     if (system.doMultiPhaseCheck()) {
       BalancedTwoPhaseState balancedWaterBearingReference = balancedWaterBearingReferenceBeforeMultiphaseCheck();

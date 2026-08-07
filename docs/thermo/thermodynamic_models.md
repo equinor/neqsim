@@ -572,11 +572,14 @@ ops.TPflash();
 
 | Class | Description | Use Case |
 |-------|-------------|----------|
-| `SystemPitzer` | Pitzer model | Concentrated brines |
-| `SystemDesmukhMather` | Desmukh-Mather | Amine systems |
-| `SystemKentEisenberg` | Kent-Eisenberg | CO2/H2S in amines |
-| `SystemDuanSun` | Duan-Sun | CO2 solubility in brine |
+| `SystemPitzer` | Pitzer aqueous GE + SRK gas/oil | Concentrated brines and reactive VLLE |
+| `SystemDesmukhMather` | Desmukh-Mather aqueous GE + SRK gas/oil | Reactive amine VLLE; parameter-limited scale screening |
+| `SystemKentEisenberg` | Kent-Eisenberg aqueous GE + SRK gas/oil | Reactive CO2/H2S amine VLLE screening |
+| `SystemDuanSun` | Duan-Sun, currently CO2-only | CO2 correlation; not hybrid gas-oil-aqueous |
 | `SystemFurstElectrolyteEos` | Fürst electrolyte EoS | General electrolytes |
+
+All subclasses of `SystemEosGE` can call `enableHybridEosGeFlash()` to use the fixed EOS-gas / EOS-oil / GE-aqueous
+topology. This does not add missing ionic species, reactions or activity parameters to the selected GE model.
 
 ---
 

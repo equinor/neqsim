@@ -240,18 +240,66 @@ The Pitzer parameter database (`PitzerParameters.csv`) currently contains 30 cat
 ### Using the Pitzer Model
 
 ```java
-SystemInterface pitzer = new SystemPitzer(273.15 + 80.0, 100.0);
-pitzer.addComponent("water", 0.90);
-pitzer.addComponent("Na+", 0.03);
-pitzer.addComponent("Cl-", 0.035);
-pitzer.addComponent("Ca++", 0.005);
-pitzer.addComponent("SO4--", 0.002);
+SystemInterface pitzer = new SystemPitzer(313.15, 50.0);
+pitzer.addComponent("methane", 5.0);
+pitzer.addComponent("CO2", 0.05);
+pitzer.addComponent("n-heptane", 2.0);
+pitzer.addComponent("water", 55.5);
+pitzer.addComponent("Ca++", 1.0e-4);
+pitzer.addComponent("Na+", 1.0e-3);
+pitzer.addComponent("Cl-", 2.0e-4);
+pitzer.addComponent("HCO3-", 1.0e-3);
+pitzer.chemicalReactionInit();
+pitzer.createDatabase(true);
 pitzer.setMixingRule("classic");
+pitzer.setMultiPhaseCheck(true);
 
 ThermodynamicOperations ops = new ThermodynamicOperations(pitzer);
 ops.TPflash();
 pitzer.initProperties();
+
+double calciteScalePotential = ops.getRelativeScalePotential("CaCO3");
 ```
+
+The example couples SRK gas and oil phases to Pitzer aqueous chemistry. Remove `n-heptane` for a gas-aqueous case.
+The returned value is the calcite saturation ratio, where values above one indicate thermodynamic supersaturation.
+It does not calculate precipitated mass or deposition kinetics. The fixed-role hybrid flash currently rejects explicit
+solid- and wax-phase checks.
+
+### Other electrolyte GE models
+
+The reactive hybrid solver is selected through the `HybridEosGeFlashModel` contract; it does not contain a Pitzer
+type check. `SystemDesmukhMather` and `SystemKentEisenberg` provide the same SRK-gas / SRK-oil / GE-aqueous roles.
+For example, a Desmukh-Mather amine system can retain an oil phase, solve aqueous speciation and evaluate the same
+activity-based scale-potential API:
+
+```java
+SystemDesmukhMather fluid = new SystemDesmukhMather(313.15, 5.0);
+fluid.addComponent("methane", 5.0);
+fluid.addComponent("CO2", 0.2);
+fluid.addComponent("n-heptane", 2.0);
+fluid.addComponent("MDEA", 1.0);
+fluid.addComponent("water", 9.0);
+fluid.addComponent("Ca++", 1.0e-4);
+fluid.addComponent("Na+", 1.0e-3);
+fluid.addComponent("Cl-", 2.0e-4);
+fluid.addComponent("HCO3-", 1.0e-3);
+fluid.chemicalReactionInit();
+fluid.createDatabase(true);
+fluid.setMixingRule("classic");
+fluid.setMultiPhaseCheck(true);
+
+ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+operations.TPflash();
+double calciteSaturationRatio = operations.getRelativeScalePotential("CaCO3");
+```
+
+Every `SystemEosGE` subclass can explicitly configure the same topology through `enableHybridEosGeFlash()`. This
+includes Wilson, NRTL, UNIFAC and specialised activity models, but it only supplies the phase-equilibrium topology: a
+model must still support water, the requested ions, aqueous reactions and appropriate interaction parameters before its
+scale result is meaningful. Pitzer remains the broadly parameterised choice for concentrated mineral-scale brines;
+Desmukh-Mather and Kent-Eisenberg are primarily amine/electrolyte screening models. `SystemDuanSun` is not included
+because its current system API accepts CO2 only and therefore cannot represent a gas-oil-aqueous electrolyte feed.
 
 ---
 

@@ -138,13 +138,19 @@ public class Validator {
   /**
    * Validates a JSON input (flash or process definition) without running any simulation.
    *
-   * @param json the JSON string to validate
+   * <p>
+   * Accepts the same input forms as {@code runProcess}: inline JSON or a path to a readable {@code .json} file, so a
+   * caller can validate exactly what it intends to run.
+   * </p>
+   *
+   * @param json the JSON string to validate, or a path to a {@code .json} file containing it
    * @return a JSON string with validation results: {@code {"valid": true/false, "issues": [...]}}
    */
   public static String validate(String json) {
+    String resolved = ProcessRunner.resolveJsonInput(json);
     List<Issue> issues = new ArrayList<Issue>();
 
-    if (json == null || json.trim().isEmpty()) {
+    if (resolved == null || resolved.trim().isEmpty()) {
       issues.add(Issue.error("INPUT_ERROR", "JSON input is null or empty",
           "Provide a valid JSON flash or process definition"));
       return buildResponse(issues);
@@ -152,7 +158,7 @@ public class Validator {
 
     JsonObject root;
     try {
-      root = JsonParser.parseString(json).getAsJsonObject();
+      root = JsonParser.parseString(resolved).getAsJsonObject();
     } catch (Exception e) {
       issues.add(
           Issue.error("JSON_PARSE_ERROR", "Failed to parse JSON: " + e.getMessage(), "Ensure the JSON is well-formed"));

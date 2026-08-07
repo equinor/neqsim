@@ -219,6 +219,29 @@ public class SoreideWhitsonSystemTest {
   }
 
   @Test
+  public void testBurgoyneNielsen2026SelectorPropagation() {
+    SystemSoreideWhitson system = new SystemSoreideWhitson(320.0, 100.0);
+    system.addComponent("methane", 1.0);
+    system.addComponent("water", 10.0);
+
+    system.setSoreideWhitsonParameterization("BN_2026");
+    assertEquals(SoreideWhitsonParameterization.BURGOYNE_NIELSEN_2026, system.getSoreideWhitsonParameterization());
+    assertEquals(SoreideWhitsonParameterization.BURGOYNE_NIELSEN_2026, system.getAqueousCO2Parameterization());
+    for (int phaseNumber = 0; phaseNumber < system.getNumberOfPhases(); phaseNumber++) {
+      PhaseSoreideWhitson phase = (PhaseSoreideWhitson) system.getPhase(phaseNumber);
+      assertEquals(SoreideWhitsonParameterization.BURGOYNE_NIELSEN_2026, phase.getSoreideWhitsonParameterization());
+      assertEquals(SoreideWhitsonParameterization.BURGOYNE_NIELSEN_2026, phase.getAqueousCO2Parameterization());
+    }
+
+    SystemSoreideWhitson clonedSystem = system.clone();
+    assertEquals(SoreideWhitsonParameterization.BURGOYNE_NIELSEN_2026,
+        clonedSystem.getSoreideWhitsonParameterization());
+
+    system.clearAll();
+    assertEquals(SoreideWhitsonParameterization.BURGOYNE_NIELSEN_2026, system.getSoreideWhitsonParameterization());
+  }
+
+  @Test
   public void testChabab2019Table2CO2Solubility() {
     double[][] points = { { 1.13, 323.02, 53.450, 0.01030, 0.010872 }, { 1.13, 322.97, 75.550, 0.01290, 0.013990 },
         { 1.13, 323.03, 100.350, 0.01510, 0.016205 }, { 1.13, 323.04, 145.080, 0.01700, 0.018000 },

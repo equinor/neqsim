@@ -1537,6 +1537,20 @@ public class LagrangianSlugTracker implements Serializable {
   }
 
   /**
+   * Set the random seed used by stochastic slug initiation.
+   *
+   * <p>
+   * The default constructor intentionally uses a non-deterministic seed. Set an explicit seed before advancing the
+   * tracker when reproducible validation or regression results are required.
+   * </p>
+   *
+   * @param seed random seed
+   */
+  public void setRandomSeed(long seed) {
+    random.setSeed(seed);
+  }
+
+  /**
    * Set minimum slug length in diameters.
    *
    * @param diameters minimum length (diameters)

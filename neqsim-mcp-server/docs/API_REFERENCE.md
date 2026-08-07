@@ -117,7 +117,7 @@ generic JSON pattern.
 
 | Parameter | Type | Description |
 |---|---|---|
-| `processJson` | JSON string | Complete process definition (see format below) |
+| `processJson` | JSON string | Complete process definition (see format below), **or** a `modelId` returned by [`manageModel`](#managemodel--reusable-process-models), **or** an absolute path to a `.json` file containing the definition |
 
 **Process JSON format:**
 
@@ -343,6 +343,97 @@ models, and returns HAZOP rows with simulation evidence.
 
 Use `getExample` with category `safety` and name `hazop-study` for a complete
 template. Use `getSchema` with tool name `run_hazop` for JSON Schema.
+
+---
+
+## `manageModel` — Reusable Process Models
+
+Registers a process definition once and returns a stable `modelId`. Every tool
+that accepts a process definition also accepts that handle, so a chat session
+can anchor on one model instead of re-sending and re-parsing the flowsheet on
+every question.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|---|---|---|
+| `modelJson` | JSON string | Object with `action` and action-specific fields |
+
+**Actions:**
+
+| Action | Required fields | Optional fields | Returns |
+|---|---|---|---|
+| `register` | `processJson` | `name`, `version` | `modelId`, `revision` |
+| `revise` | `modelId`, `processJson` | `version` | same `modelId`, incremented `revision` |
+| `get` | `modelId` | — | stored `definition` |
+| `inspect` | `modelId` | — | `equipment`, `areas`, `equipmentCount` |
+| `list` | — | — | `models` visible to the caller |
+| `delete` | `modelId` | — | `deleted` |
+
+`processJson` may be a JSON string **or** a nested JSON object — the object form
+avoids escaping a JSON document inside a string.
+
+**Example — register:**
+
+```json
+{
+  "action": "register",
+  "name": "HP separation train",
+  "version": "1.0.0",
+  "processJson": {
+    "fluid": {
+      "model": "SRK",
+      "temperature_C": 25.0,
+      "pressure_bara": 50.0,
+      "components": { "methane": 0.6, "propane": 0.3, "nC10": 0.1 }
+    },
+    "process": [
+      { "type": "stream", "name": "feed", "flowRate": { "value": 1000.0, "unit": "kg/hr" } },
+      { "type": "separator", "name": "sep", "inlet": "feed" }
+    ]
+  }
+}
+```
+
+**Response:**
+
+```json
+{
+  "status": "success",
+  "modelId": "model_a1b2c3d4e5f6a7b8",
+  "name": "HP separation train",
+  "version": "1.0.0",
+  "revision": 1,
+  "tenant": "default",
+  "useCount": 0,
+  "usage": "Pass 'model_a1b2c3d4e5f6a7b8' wherever a tool expects processJson to reuse this model without resending it"
+}
+```
+
+**Then use the handle anywhere a process definition is expected:**
+
+```
+runProcess("model_a1b2c3d4e5f6a7b8")
+listSimulationUnits("model_a1b2c3d4e5f6a7b8")
+getAdjustableParameters("model_a1b2c3d4e5f6a7b8")
+```
+
+**Behaviour notes:**
+
+- Registration is **content-addressed**: identical definitions return the same
+  handle, so re-registering is idempotent.
+- `revise` keeps the handle stable and increments `revision` — cite it in results.
+- A value is treated as a handle only when it starts with `model_`; inline JSON
+  keeps working unchanged.
+- Handles resolve only within the calling principal's tenant, and do not survive
+  a server restart.
+- Invalid definitions are rejected at registration (`INVALID_DEFINITION`) rather
+  than at first run.
+
+Accepting tools: `runProcess`, `validateInput`, `listSimulationUnits`,
+`listUnitVariables`, `getSimulationVariable`, `setSimulationVariable`,
+`saveSimulationState`, `diagnoseAutomation`, `getAutomationLearningReport`,
+`getAdjustableParameters`, `runProcessLoop`.
 
 ---
 

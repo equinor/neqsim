@@ -43,6 +43,30 @@ public class AutomationRunner {
   }
 
   /**
+   * Resolves a process definition to a solved process system.
+   *
+   * <p>
+   * A registered model handle is served from the solved-model cache, so repeated reads against the same model answer
+   * immediately instead of rebuilding and re-solving a flowsheet that can take minutes. Inline JSON is built and run as
+   * before.
+   * </p>
+   *
+   * @param processJsonOrModelId inline process JSON, or a model handle from {@code manageModel}
+   * @return the solved process system
+   * @throws IllegalStateException if the process fails to build or solve
+   */
+  private static ProcessSystem solvedProcess(String processJsonOrModelId) {
+    if (ModelRegistry.isModelHandle(processJsonOrModelId)) {
+      return ModelRegistry.solvedProcess(processJsonOrModelId);
+    }
+    SimulationResult simResult = ProcessSystem.fromJsonAndRun(processJsonOrModelId);
+    if (simResult.isError()) {
+      throw new IllegalStateException("Process failed: " + simResult.getErrors());
+    }
+    return simResult.getProcessSystem();
+  }
+
+  /**
    * Runs a process from JSON and returns the list of equipment unit names.
    *
    * <p>
@@ -58,12 +82,7 @@ public class AutomationRunner {
       return errorJson("listSimulationUnits", "INPUT_ERROR", "JSON input is null or empty");
     }
     try {
-      SimulationResult simResult = ProcessSystem.fromJsonAndRun(processJson);
-      if (simResult.isError()) {
-        return errorJson("listSimulationUnits", "SIMULATION_ERROR",
-            "Process failed: " + simResult.getErrors().toString());
-      }
-      ProcessSystem process = simResult.getProcessSystem();
+      ProcessSystem process = solvedProcess(processJson);
       ProcessAutomation auto = process.getAutomation();
       List<String> units = auto.getUnitList();
 
@@ -180,12 +199,7 @@ public class AutomationRunner {
       return errorJson("getSimulationVariable", "INPUT_ERROR", "Variable address is null or empty");
     }
     try {
-      SimulationResult simResult = ProcessSystem.fromJsonAndRun(processJson);
-      if (simResult.isError()) {
-        return errorJson("getSimulationVariable", "SIMULATION_ERROR",
-            "Process failed: " + simResult.getErrors().toString());
-      }
-      ProcessSystem process = simResult.getProcessSystem();
+      ProcessSystem process = solvedProcess(processJson);
       ProcessAutomation auto = process.getAutomation();
 
       // Use safe accessor with self-healing
@@ -262,12 +276,7 @@ public class AutomationRunner {
       return errorJson("saveSimulationState", "INPUT_ERROR", "JSON input is null or empty");
     }
     try {
-      SimulationResult simResult = ProcessSystem.fromJsonAndRun(processJson);
-      if (simResult.isError()) {
-        return errorJson("saveSimulationState", "SIMULATION_ERROR",
-            "Process failed: " + simResult.getErrors().toString());
-      }
-      ProcessSystem process = simResult.getProcessSystem();
+      ProcessSystem process = solvedProcess(processJson);
       ProcessSystemState state = ProcessSystemState.fromProcessSystem(process);
       if (stateName != null && !stateName.trim().isEmpty()) {
         state.setName(stateName);
@@ -352,12 +361,7 @@ public class AutomationRunner {
       return errorJson("diagnoseAutomation", "INPUT_ERROR", "Failed address is null or empty");
     }
     try {
-      SimulationResult simResult = ProcessSystem.fromJsonAndRun(processJson);
-      if (simResult.isError()) {
-        return errorJson("diagnoseAutomation", "SIMULATION_ERROR",
-            "Process failed: " + simResult.getErrors().toString());
-      }
-      ProcessSystem process = simResult.getProcessSystem();
+      ProcessSystem process = solvedProcess(processJson);
       ProcessAutomation auto = process.getAutomation();
       AutomationDiagnostics diag = auto.getDiagnostics();
 
@@ -438,12 +442,7 @@ public class AutomationRunner {
       return errorJson("getAutomationLearningReport", "INPUT_ERROR", "JSON input is null or empty");
     }
     try {
-      SimulationResult simResult = ProcessSystem.fromJsonAndRun(processJson);
-      if (simResult.isError()) {
-        return errorJson("getAutomationLearningReport", "SIMULATION_ERROR",
-            "Process failed: " + simResult.getErrors().toString());
-      }
-      ProcessSystem process = simResult.getProcessSystem();
+      ProcessSystem process = solvedProcess(processJson);
       ProcessAutomation auto = process.getAutomation();
       return standardResponse(auto.getDiagnostics().getLearningReport(), "getAutomationLearningReport",
           "automation learning report", "Automation learning report generated");
@@ -533,12 +532,7 @@ public class AutomationRunner {
       return errorJson("getAdjustableParameters", "INPUT_ERROR", "JSON input is null or empty");
     }
     try {
-      SimulationResult simResult = ProcessSystem.fromJsonAndRun(processJson);
-      if (simResult.isError()) {
-        return errorJson("getAdjustableParameters", "SIMULATION_ERROR",
-            "Process failed: " + simResult.getErrors().toString());
-      }
-      ProcessSystem process = simResult.getProcessSystem();
+      ProcessSystem process = solvedProcess(processJson);
       ProcessAutomation auto = process.getAutomation();
       return standardResponse(auto.getAdjustableParametersJson(), "getAdjustableParameters",
           "automation decision space", "Adjustable parameters enumerated");
