@@ -317,7 +317,11 @@ duplicate draw ownership fail before solver iteration, and `validateSetup()` rep
 `pumparound.degreesOfFreedom`.
 
 The `temperatureDrop` argument is in Kelvin. Positive values cool the returned liquid; negative
-values heat it. A non-finite or below-zero-K return temperature fails explicitly.
+values heat it. A non-finite or below-zero-K return temperature fails explicitly. The column uses
+a thermodynamic snapshot while seeding tray profiles, so initialization cannot change the public
+return temperature. After a converged solve, the draw-to-return temperature difference therefore
+equals the configured drop; the return flow and composition remain coupled through the outer tear
+iteration.
 
 ## Hydraulics and Pressure-Drop Coupling
 
@@ -444,6 +448,7 @@ fraction diagnostics, film/heat-transfer model choices, and equation-oriented re
 | `getLastTemperatureResidual()` | Average tray-temperature residual in Kelvin. |
 | `getLastMassResidual()` | Relative mass-balance residual. |
 | `getLastEnergyResidual()` | Relative enthalpy-balance residual. |
+| `getEnergyBalanceError()` | Maximum tray/column enthalpy imbalance, including external side draws and excluding zero-flow phase templates. |
 | `getLastTopSpecificationResidual()`, `getLastBottomSpecificationResidual()` | Endpoint spec errors. |
 | `getLastSpecificationResidual()` | Maximum absolute endpoint spec error. |
 | `getSpecificationHomotopySteps()` | Configured number of staged continuation targets for adjustable product specifications. |

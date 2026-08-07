@@ -87,6 +87,37 @@ public class SimpleTraySideDrawTest {
     assertEquals(0.0, column.getMassBalance("kg/hr"), feed.getFlowRate("kg/hr") * 1.0e-6);
   }
 
+  /** Test that energy diagnostics include gas and liquid side draws and ignore empty phase templates. */
+  @Test
+  public void columnEnergyBalanceIncludesSideDrawStreams() {
+    Stream gasFeed = createMethaneFeed("gas energy-balance feed");
+    DistillationColumn gasColumn = new DistillationColumn("GasEnergyBalanceColumn", 1, false, false);
+    gasColumn.addFeedStream(gasFeed, 0);
+    gasColumn.setGasSideDrawFraction(0, 0.25);
+    gasColumn.run(UUID.randomUUID());
+
+    assertEquals(DistillationColumn.SolveStatus.RIGOROUS_CONVERGED, gasColumn.getLastSolveStatus());
+    assertEquals(25.0, gasColumn.getSideDrawStream(0, DistillationColumn.SideDrawPhase.GAS).getFlowRate("kg/hr"),
+        25.0e-8);
+    assertEquals(0.0, gasColumn.getEnergyBalanceError(), 1.0e-12);
+
+    SystemSrkEos liquidFluid = new SystemSrkEos(300.0, 2.0);
+    liquidFluid.addComponent("n-pentane", 1.0);
+    liquidFluid.setMixingRule("classic");
+    Stream liquidFeed = new Stream("liquid energy-balance feed", liquidFluid);
+    liquidFeed.setFlowRate(100.0, "kg/hr");
+    liquidFeed.run();
+    DistillationColumn liquidColumn = new DistillationColumn("LiquidEnergyBalanceColumn", 1, false, false);
+    liquidColumn.addFeedStream(liquidFeed, 0);
+    liquidColumn.setLiquidSideDrawFraction(0, 0.25);
+    liquidColumn.run(UUID.randomUUID());
+
+    assertEquals(DistillationColumn.SolveStatus.RIGOROUS_CONVERGED, liquidColumn.getLastSolveStatus());
+    assertEquals(25.0, liquidColumn.getSideDrawStream(0, DistillationColumn.SideDrawPhase.LIQUID).getFlowRate("kg/hr"),
+        25.0e-8);
+    assertEquals(0.0, liquidColumn.getEnergyBalanceError(), 1.0e-12);
+  }
+
   /**
    * Test that a side-draw flow specification adjusts the draw fraction to meet target flow.
    */
@@ -135,9 +166,11 @@ public class SimpleTraySideDrawTest {
     assertEquals(specification.getTargetFlowRate(), specification.getLastActualFlowRate(),
         specification.getTargetFlowRate() * specification.getTolerance());
     assertEquals(0.0, column.getMassBalance("kg/hr"), 1.0e-6, column.getConvergenceDiagnostics());
+    assertTrue(column.getEnergyBalanceError() < 1.0e-2, column.getConvergenceDiagnostics());
     assertTrue(column.getLastColumnTearRejectedCandidateCount() > 0,
-        "the regression should exercise rejected-candidate rollback");
-    assertEquals(column.getLastColumnTearRejectedCandidateCount(), column.getLastColumnTearRollbackCount());
+        "the regression should exercise rejected-candidate isolation");
+    assertTrue(column.getLastColumnTearRollbackCount() <= column.getLastColumnTearRejectedCandidateCount(),
+        "only rejections after an accepted state exists can require rollback");
     assertTrue(column.getLastColumnTearCandidateHistory().contains("FALLBACK_PRODUCTS"));
     assertComponentMassBalance(feed, column.getSideDrawStream(3, DistillationColumn.SideDrawPhase.LIQUID), column);
 
@@ -187,6 +220,10 @@ public class SimpleTraySideDrawTest {
     assertEquals(0.0, column.getMassBalance("kg/hr"), 1.0e-6, column.getConvergenceDiagnostics());
     assertTrue(column.getLastColumnTearRejectedCandidateCount() > 0,
         "the controller should reject the invalid large multiplicative candidate");
+    assertTrue(column.getLastColumnTearRollbackCount() > 0,
+        "the rejected cold candidate should retain the previously accepted state");
+    assertTrue(column.getLastColumnTearRollbackCount() <= column.getLastColumnTearRejectedCandidateCount(),
+        "rollback count cannot exceed the rejected candidate count");
     assertTrue(column.getLastColumnTearCandidateHistory().contains("continuation fraction="),
         "the rejected cold candidate should be retried from an accepted state");
     assertComponentMassBalance(feed, column.getSideDrawStream(3, DistillationColumn.SideDrawPhase.LIQUID), column);
