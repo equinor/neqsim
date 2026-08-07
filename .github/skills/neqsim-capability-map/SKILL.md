@@ -474,6 +474,11 @@ transport properties (viscosity, thermal conductivity, density).
 | Sulfur reactions | `SulfurDepositionAnalyser` | Claus + corrosion reactions |
 | Ammonia synthesis | `AmmoniaSynthesisReactor` | Haber-Bosch |
 | Chemical equilibrium DB | `GibbsReactDatabase.csv` | Thermodynamic data |
+| Runaway reaction screening | `RunawayReactionAnalyzer` | Lumped **adiabatic**: MTSR, dT_ad, TMR_ad. No spatial conduction |
+| Self-heating criticality | `PorousMediaSelfHeatingAnalyzer` | Frank-Kamenetskii; critical thickness & temperature for lagging fires |
+| Self-heating (surface-cooled) | `SemenovSelfHeatingAnalyzer` | Semenov 1/e criterion for pools and thin films |
+| Time to spontaneous ignition | `SelfHeatingInductionSolver` | Transient 1-D conduction + Arrhenius source |
+| Oxidation kinetics from oven tests | `BasketTestRegression` | Fits E and P from EN 15188 / ASTM E2021 basket data |
 
 ---
 

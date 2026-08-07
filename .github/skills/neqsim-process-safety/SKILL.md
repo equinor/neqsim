@@ -529,5 +529,6 @@ disposal.getGoverningContributor();
 
 - [`neqsim-relief-flare-network`](../neqsim-relief-flare-network/SKILL.md) — when LOPA shows PSV is the IPL of last resort
 - [`neqsim-trapped-liquid-fire-rupture`](../neqsim-trapped-liquid-fire-rupture/SKILL.md) — blocked-in liquid fire rupture, PFP demand, and source-term handoff
+- [`neqsim-self-heating-ignition`](../neqsim-self-heating-ignition/SKILL.md) — spontaneous ignition of combustible liquid absorbed into porous insulation (lagging fires); use for any fire with no identified ignition source
 - [`neqsim-dynamic-simulation`](../neqsim-dynamic-simulation/SKILL.md) — depressurization & blowdown
 - [`neqsim-standards-lookup`](../neqsim-standards-lookup/SKILL.md) — IEC 61508/61511, NORSOK Z-013, API 754
