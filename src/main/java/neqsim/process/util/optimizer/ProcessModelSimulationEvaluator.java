@@ -2085,17 +2085,23 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   }
 
   /**
-   * Selects the leading finite-utilization bottleneck from a ranked snapshot.
+   * Selects the leading legacy-eligible bottleneck from a ranked snapshot.
+   *
+   * <p>
+   * Preserve the historical {@link #findActiveBottleneck(ProcessModel)} threshold: utilizations at
+   * or below {@code -1.0}, including negative infinity, are retained in the diagnostic ranking but
+   * are not exposed as the active bottleneck.
+   * </p>
    *
    * @param rankedCapacityConstraints ranked capacity snapshots
-   * @return leading finite bottleneck, or {@link BottleneckStatus#none()} when unavailable
+   * @return leading eligible bottleneck, or {@link BottleneckStatus#none()} when unavailable
    */
   private BottleneckStatus selectActiveBottleneck(List<BottleneckStatus> rankedCapacityConstraints) {
     if (rankedCapacityConstraints == null) {
       return BottleneckStatus.none();
     }
     for (BottleneckStatus bottleneck : rankedCapacityConstraints) {
-      if (bottleneck != null && !Double.isNaN(bottleneck.getUtilization())) {
+      if (bottleneck != null && bottleneck.getUtilization() > -1.0) {
         return bottleneck;
       }
     }
