@@ -183,9 +183,13 @@ public final class SchemaCatalog {
     schema.put("description",
         "Input for a process simulation (run_process tool). Accepts either a single "
             + "ProcessSystem with 'fluid' and 'process', or a multi-area ProcessModel with " + "top-level 'areas'. "
-            + "The tool argument may also be an absolute path to a readable UTF-8 .json file "
+            + "The tool argument may also be a modelId returned by manage_model (action 'register'), "
+            + "which resolves to a previously registered definition without resending it, "
+            + "or an absolute path to a readable UTF-8 .json file "
             + "(name ending in .json, <= 25 MB) containing this JSON.");
     schema.put("type", "object");
+    schema.put("x-acceptsModelHandle", Boolean.TRUE);
+    schema.put("x-modelHandlePrefix", "model_");
 
     Map<String, Object> properties = new LinkedHashMap<String, Object>();
 
@@ -1884,7 +1888,7 @@ public final class SchemaCatalog {
         "get_progress", "stream_simulation", "compose_multi_server_workflow", "manage_security", "manage_state",
         "manage_validation_profile", "query_data_catalog", "run_relief", "run_lopa", "run_sil", "run_risk_matrix",
         "run_flare_network", "manage_industrial_profile", "get_benchmark_trust", "check_tool_access",
-        "get_adjustable_parameters", "run_process_loop"));
+        "get_adjustable_parameters", "run_process_loop", "design_utilities", "run_hazop_scenario", "manage_model"));
   }
 
   /**

@@ -56,6 +56,7 @@ import neqsim.mcp.runners.HazopScenarioRunner;
 import neqsim.mcp.runners.IndustrialProfile;
 import neqsim.mcp.runners.LOPARunner;
 import neqsim.mcp.runners.MaterialsReviewRunner;
+import neqsim.mcp.runners.ModelRegistry;
 import neqsim.mcp.runners.NorsokS001Clause10ReviewRunner;
 import neqsim.mcp.runners.OpenDrainReviewRunner;
 import neqsim.mcp.runners.ProcessComparisonRunner;
@@ -174,7 +175,9 @@ public class NeqSimTools {
       + "top-level 'areas' for multi-area plants. "
       + "Use getExample with category 'process' for templates.")
   public String runProcess(
-      @ToolArg(description = "Complete process definition as JSON string, OR an absolute path to a "
+      @ToolArg(description = "Complete process definition as JSON string, OR a modelId returned by "
+          + "manageModel(action='register') to reuse a registered model without resending it, "
+          + "OR an absolute path to a "
           + "readable UTF-8 .json file (name ending in .json, <= 25 MB) containing that JSON. "
           + "The JSON must include either 'fluid' with components and model plus a 'process' array, "
           + "or top-level 'areas' containing named process-area JSON objects. "
@@ -185,7 +188,7 @@ public class NeqSimTools {
     }
     try {
       return standardizeResponse("runProcess",
-          withAutoValidation(ProcessRunner.validateAndRun(processJson), "process"), "general");
+          withAutoValidation(ProcessRunner.validateAndRun(resolveModel(processJson)), "process"), "general");
     } catch (Exception e) {
       return errorJson("Process simulation failed: " + e.getMessage());
     }
@@ -208,7 +211,7 @@ public class NeqSimTools {
       return policyBlocked;
     }
     try {
-      return standardizeResponse("validateInput", Validator.validate(inputJson), "general");
+      return standardizeResponse("validateInput", Validator.validate(resolveModel(inputJson)), "general");
     } catch (Exception e) {
       return errorJson("Validation failed: " + e.getMessage());
     }
@@ -313,14 +316,14 @@ public class NeqSimTools {
       + "Returns unit names and types for use with listUnitVariables, "
       + "getSimulationVariable, and setSimulationVariable tools.")
   public String listSimulationUnits(
-      @ToolArg(description = "Complete process definition as JSON string. "
-          + "Same format as runProcess.") String processJson) {
+      @ToolArg(description = "Complete process definition as JSON string, OR a modelId returned by "
+          + "manageModel(action='register'). Same format as runProcess.") String processJson) {
     String policyBlocked = enforceToolAccess("listSimulationUnits");
     if (policyBlocked != null) {
       return policyBlocked;
     }
     try {
-      return standardizeResponse("listSimulationUnits", AutomationRunner.listUnits(processJson),
+      return standardizeResponse("listSimulationUnits", AutomationRunner.listUnits(resolveModel(processJson)),
           "general");
     } catch (Exception e) {
       return errorJson("Failed to list units: " + e.getMessage());
@@ -339,7 +342,7 @@ public class NeqSimTools {
       + "(INPUT = writable, OUTPUT = read-only), default unit, and description. "
       + "Use listSimulationUnits first to discover available unit names.")
   public String listUnitVariables(
-      @ToolArg(description = "Complete process definition as JSON string.") String processJson,
+      @ToolArg(description = "Complete process definition as JSON string, OR a modelId returned by manageModel(action=''register'') to reuse a registered model without resending it.") String processJson,
       @ToolArg(description = "Equipment unit name to list variables for, "
           + "e.g. 'HP Separator', 'Compressor Stage 1'. "
           + "Use listSimulationUnits to find valid names.") String unitName) {
@@ -349,7 +352,7 @@ public class NeqSimTools {
     }
     try {
       return standardizeResponse("listUnitVariables",
-          AutomationRunner.listVariables(processJson, unitName), "general");
+          AutomationRunner.listVariables(resolveModel(processJson), unitName), "general");
     } catch (Exception e) {
       return errorJson("Failed to list variables: " + e.getMessage());
     }
@@ -368,7 +371,7 @@ public class NeqSimTools {
       + "'HP Sep.gasOutStream.temperature', 'Compressor.power', "
       + "'Feed.flowRate'. Use listUnitVariables to discover valid addresses.")
   public String getSimulationVariable(
-      @ToolArg(description = "Complete process definition as JSON string.") String processJson,
+      @ToolArg(description = "Complete process definition as JSON string, OR a modelId returned by manageModel(action=''register'') to reuse a registered model without resending it.") String processJson,
       @ToolArg(description = "Dot-notation variable address, e.g. "
           + "'HP Sep.gasOutStream.temperature' or 'Compressor.power'. "
           + "Use listUnitVariables to find valid addresses.") String address,
@@ -381,7 +384,7 @@ public class NeqSimTools {
     }
     try {
       return standardizeResponse("getSimulationVariable",
-          AutomationRunner.getVariable(processJson, address, unit), "general");
+          AutomationRunner.getVariable(resolveModel(processJson), address, unit), "general");
     } catch (Exception e) {
       return errorJson("Failed to get variable: " + e.getMessage());
     }
@@ -401,7 +404,7 @@ public class NeqSimTools {
       + "Only INPUT-type variables can be modified (use listUnitVariables to check). "
       + "Example: change compressor outlet pressure and see effect on power.")
   public String setSimulationVariable(
-      @ToolArg(description = "Complete process definition as JSON string.") String processJson,
+      @ToolArg(description = "Complete process definition as JSON string, OR a modelId returned by manageModel(action=''register'') to reuse a registered model without resending it.") String processJson,
       @ToolArg(description = "Dot-notation address of the INPUT variable to modify, "
           + "e.g. 'Compressor.outletPressure'.") String address,
       @ToolArg(description = "New value for the variable.") double value,
@@ -413,7 +416,7 @@ public class NeqSimTools {
     }
     try {
       return standardizeResponse("setSimulationVariable",
-          AutomationRunner.setVariableAndRun(processJson, address, value, unit), "general");
+          AutomationRunner.setVariableAndRun(resolveModel(processJson), address, value, unit), "general");
     } catch (Exception e) {
       return errorJson("Failed to set variable: " + e.getMessage());
     }
@@ -432,7 +435,7 @@ public class NeqSimTools {
       + "and comparing design iterations. The returned state can be passed to "
       + "compareSimulationStates to find differences between versions.")
   public String saveSimulationState(
-      @ToolArg(description = "Complete process definition as JSON string.") String processJson,
+      @ToolArg(description = "Complete process definition as JSON string, OR a modelId returned by manageModel(action=''register'') to reuse a registered model without resending it.") String processJson,
       @ToolArg(description = "Name for the state snapshot, "
           + "e.g. 'Gas Processing Base Case'.") String stateName,
       @ToolArg(description = "Version string, e.g. '1.0.0'.") String stateVersion) {
@@ -442,7 +445,7 @@ public class NeqSimTools {
     }
     try {
       return standardizeResponse("saveSimulationState",
-          AutomationRunner.saveState(processJson, stateName, stateVersion), "general");
+          AutomationRunner.saveState(resolveModel(processJson), stateName, stateVersion), "general");
     } catch (Exception e) {
       return errorJson("Failed to save state: " + e.getMessage());
     }
@@ -489,7 +492,7 @@ public class NeqSimTools {
       + "Returns fuzzy name matches, auto-corrections, and actionable remediation hints. "
       + "Use this tool to self-correct and retry with the corrected address.")
   public String diagnoseAutomation(
-      @ToolArg(description = "Process definition as JSON string") String processJson,
+      @ToolArg(description = "Process definition as JSON string, OR a modelId returned by manageModel(action=''register'') to reuse a registered model without resending it") String processJson,
       @ToolArg(
           description = "The address that failed, e.g. 'HP separator.gasOut.temp'") String failedAddress,
       @ToolArg(
@@ -500,7 +503,7 @@ public class NeqSimTools {
     }
     try {
       return standardizeResponse("diagnoseAutomation",
-          AutomationRunner.diagnose(processJson, failedAddress, operation), "general");
+          AutomationRunner.diagnose(resolveModel(processJson), failedAddress, operation), "general");
     } catch (Exception e) {
       return errorJson("Failed to diagnose: " + e.getMessage());
     }
@@ -518,14 +521,14 @@ public class NeqSimTools {
       + "Use this after multiple automation operations to understand what went wrong "
       + "and improve future calls.")
   public String getAutomationLearningReport(
-      @ToolArg(description = "Process definition as JSON string") String processJson) {
+      @ToolArg(description = "Process definition as JSON string, OR a modelId returned by manageModel(action=''register'') to reuse a registered model without resending it") String processJson) {
     String policyBlocked = enforceToolAccess("getAutomationLearningReport");
     if (policyBlocked != null) {
       return policyBlocked;
     }
     try {
       return standardizeResponse("getAutomationLearningReport",
-          AutomationRunner.getLearningReport(processJson), "general");
+          AutomationRunner.getLearningReport(resolveModel(processJson)), "general");
     } catch (Exception e) {
       return errorJson("Failed to get learning report: " + e.getMessage());
     }
@@ -1300,14 +1303,14 @@ public class NeqSimTools {
       + "process once, then returns each parameter's address, lower/upper bounds, unit, and "
       + "source. Use this to discover decision variables before driving a runProcessLoop sweep.")
   public String getAdjustableParameters(@ToolArg(
-      description = "JSON process definition (same schema as runProcess).") String processJson) {
+      description = "JSON process definition (same schema as runProcess), OR a modelId returned by manageModel(action=''register'') to reuse a registered model without resending it.") String processJson) {
     String policyBlocked = enforceToolAccess("getAdjustableParameters");
     if (policyBlocked != null) {
       return policyBlocked;
     }
     try {
       return standardizeResponse("getAdjustableParameters",
-          AutomationRunner.getAdjustableParameters(processJson), "general");
+          AutomationRunner.getAdjustableParameters(resolveModel(processJson)), "general");
     } catch (Exception e) {
       return errorJson("Adjustable-parameter enumeration failed: " + e.getMessage());
     }
@@ -1332,7 +1335,7 @@ public class NeqSimTools {
       + "getAdjustableParameters to discover decision variables.")
   public String runProcessLoop(
       @ToolArg(
-          description = "JSON process definition (same schema as runProcess).") String processJson,
+          description = "JSON process definition (same schema as runProcess), OR a modelId returned by manageModel(action=''register'') to reuse a registered model without resending it.") String processJson,
       @ToolArg(description = "JSON array of setpoint batches; each batch is an object mapping a "
           + "dot-notation address to a numeric value, e.g. "
           + "[{\"Compressor.outletPressure\":150},{\"Compressor.outletPressure\":160}].") String trials,
@@ -1348,7 +1351,7 @@ public class NeqSimTools {
     }
     try {
       return standardizeResponse("runProcessLoop",
-          AutomationRunner.runLoop(processJson, trials, readbacks, setpointUnit, readbackUnit),
+          AutomationRunner.runLoop(resolveModel(processJson), trials, readbacks, setpointUnit, readbackUnit),
           "general");
     } catch (Exception e) {
       return errorJson("Process loop failed: " + e.getMessage());
@@ -2415,6 +2418,36 @@ public class NeqSimTools {
     }
   }
 
+  /**
+   * Register, revise, inspect, list, and delete reusable process-model definitions.
+   *
+   * @param modelJson JSON with the model action and parameters
+   * @return JSON with the model handle or requested model data
+   */
+  @Tool(description = "Register a process model once and address it by a stable modelId instead of "
+      + "resending the full flowsheet JSON on every call. The returned modelId can be passed "
+      + "wherever a tool expects processJson (runProcess, listSimulationUnits, listUnitVariables, "
+      + "getSimulationVariable, setSimulationVariable, saveSimulationState, getAdjustableParameters, "
+      + "runProcessLoop, validateInput, diagnoseAutomation). Use this to keep a conversation anchored "
+      + "to one model, avoid re-parsing large flowsheets, and cite a model revision in results. "
+      + "Actions: register, revise, get, list, inspect, delete.")
+  public String manageModel(
+      @ToolArg(description = "JSON with: 'action' (register|revise|get|list|inspect|delete). "
+          + "For register: 'processJson' (the process definition, as a JSON string or a nested JSON "
+          + "object) plus optional 'name' and 'version'. "
+          + "For revise: 'modelId' and the updated 'processJson'. "
+          + "For get/inspect/delete: 'modelId'.") String modelJson) {
+    String policyBlocked = enforceToolAccess("manageModel");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
+    try {
+      return standardizeResponse("manageModel", ModelRegistry.run(modelJson), "general");
+    } catch (Exception e) {
+      return errorJson("Model registry operation failed: " + e.getMessage());
+    }
+  }
+
   // ═══════════════════════════════════════════════════════════════════════════
   // Helpers
   // ═══════════════════════════════════════════════════════════════════════════
@@ -2451,6 +2484,16 @@ public class NeqSimTools {
   }
 
   /**
+   * Resolves a process-definition argument that may be a registered model handle.
+   *
+   * @param processJsonOrModelId inline process JSON, or a modelId from {@code manageModel}
+   * @return the process definition JSON
+   */
+  private static String resolveModel(String processJsonOrModelId) {
+    return ModelRegistry.resolve(processJsonOrModelId);
+  }
+
+  /**
    * Converts any runner response into the standard MCP response envelope while preserving legacy
    * top-level fields for backwards compatibility.
    *
@@ -2478,6 +2521,7 @@ public class NeqSimTools {
       ensureDataBlock(result);
       ApiEnvelope.applyStandardFields(result, toolName, null, null, null);
       ensureWarningsArray(result);
+      neqsim.mcp.runners.ResponseSizeGuard.enforce(result, toolName);
       return GSON_PRETTY.toJson(result);
     } catch (Exception e) {
       JsonObject error = new JsonObject();

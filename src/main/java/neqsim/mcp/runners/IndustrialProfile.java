@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -139,7 +140,6 @@ public final class IndustrialProfile {
    * Tool-to-category classification for all MCP tools.
    */
   private static final Map<String, ToolCategory> TOOL_CATEGORIES = buildToolCategories();
-
   /**
    * Tier 1 — Trusted core. Validated against NIST/experimental data, documented accuracy bounds, clear error behavior.
    * This is the smallest credible surface for enterprise adoption.
@@ -149,7 +149,7 @@ public final class IndustrialProfile {
           "calculateStandard", "searchComponents", "getCapabilities", "getExample", "getSchema", "getPropertyTable",
           "getPhaseEnvelope", "getBenchmarkTrust", "checkToolAccess", "manageIndustrialProfile", "listSimulationUnits",
           "listUnitVariables", "getSimulationVariable", "compareSimulationStates", "diagnoseAutomation",
-          "getAutomationLearningReport", "getProgress", "getAdjustableParameters")));
+          "getAutomationLearningReport", "getProgress", "getAdjustableParameters", "manageModel")));
 
   /**
    * Tier 2 — Engineering advanced. Tested against literature/industry cases, suitable for screening studies and
@@ -171,6 +171,22 @@ public final class IndustrialProfile {
       .unmodifiableSet(new HashSet<>(Arrays.asList("runReservoir", "runFieldEconomics", "runDynamic", "runBioprocess",
           "solveTask", "composeWorkflow", "manageSession", "streamSimulation", "composeMultiServerWorkflow",
           "manageSecurity", "manageState", "manageValidationProfile", "runPlugin", "bridgeTaskWorkflow")));
+
+  /** Union of all tier sets — the authoritative published tool surface. */
+  private static final Set<String> ALL_TOOLS = buildAllTools();
+
+  /**
+   * Builds the union of the three trust tiers.
+   *
+   * @return unmodifiable set of every classified tool name
+   */
+  private static Set<String> buildAllTools() {
+    Set<String> all = new LinkedHashSet<String>();
+    all.addAll(INDUSTRIAL_CORE);
+    all.addAll(ENGINEERING_ADVANCED);
+    all.addAll(EXPERIMENTAL_TOOLS);
+    return Collections.unmodifiableSet(all);
+  }
 
   /**
    * Builds the tool-to-category mapping.
@@ -243,6 +259,7 @@ public final class IndustrialProfile {
     // Execution tools — modify state, write data
     map.put("setSimulationVariable", ToolCategory.EXECUTION);
     map.put("saveSimulationState", ToolCategory.EXECUTION);
+    map.put("manageModel", ToolCategory.EXECUTION);
     map.put("compareSimulationStates", ToolCategory.EXECUTION);
     map.put("runOperationalStudy", ToolCategory.EXECUTION);
     map.put("manageSession", ToolCategory.EXECUTION);
@@ -532,6 +549,22 @@ public final class IndustrialProfile {
    */
   public static ToolCategory getToolCategory(String toolName) {
     return TOOL_CATEGORIES.get(toolName);
+  }
+
+  /**
+   * Returns every MCP tool name known to the governance layer.
+   *
+   * <p>
+   * This is the single source of truth for the published tool surface: the tier sets below are exhaustive by
+   * construction, and a build-time contract test asserts that this set matches the {@code @Tool}-annotated methods on
+   * the server facade exactly. The capability catalog is derived from it so a newly added tool can no longer be
+   * silently missing from discovery.
+   * </p>
+   *
+   * @return unmodifiable, insertion-ordered set of all classified tool names
+   */
+  public static Set<String> getAllKnownTools() {
+    return ALL_TOOLS;
   }
 
   /**
