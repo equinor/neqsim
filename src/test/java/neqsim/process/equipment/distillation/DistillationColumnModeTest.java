@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.validation.ValidationResult;
 
@@ -178,6 +179,7 @@ public class DistillationColumnModeTest {
       assertTrue(returnFlow > 0.0 && returnFlow < 10000.0);
       assertTrue(duty < 0.0);
       assertTrue(Math.abs(column.getMassBalance("kg/hr")) < 1.0e-8);
+      assertPumparoundProductsPhysicalAndBalanced(column);
 
       column.run(UUID.randomUUID());
       double repeatedDuty = pumparound.getReturnStream().getFluid().getEnthalpy()
@@ -186,6 +188,7 @@ public class DistillationColumnModeTest {
           pumparound.getDrawStream().getTemperature() - pumparound.getReturnStream().getTemperature(), 1.0e-9);
       assertEquals(returnFlow, pumparound.getReturnStream().getFlowRate("kg/hr"), 5.0e-5 * returnFlow);
       assertEquals(duty, repeatedDuty, 5.0e-5 * Math.abs(duty));
+      assertPumparoundProductsPhysicalAndBalanced(column);
     }
   }
 
@@ -230,6 +233,35 @@ public class DistillationColumnModeTest {
     column.addLiquidPumparound("PA-cold", 0, 0, 0.20, 400.0);
 
     assertThrows(IllegalStateException.class, () -> column.run(UUID.randomUUID()));
+  }
+
+  /** Verify physical terminal products and per-component material closure for the pumparound case. */
+  private void assertPumparoundProductsPhysicalAndBalanced(DistillationColumn column) {
+    StreamInterface feed = column.getFeedStreams(3).get(0);
+    StreamInterface gas = column.getGasOutStream();
+    StreamInterface liquid = column.getLiquidOutStream();
+    double feedFlow = feed.getFlowRate("mol/hr");
+    double gasFlow = gas.getFlowRate("mol/hr");
+    double liquidFlow = liquid.getFlowRate("mol/hr");
+
+    assertTrue(Double.isFinite(gasFlow) && gasFlow >= 0.0);
+    assertTrue(Double.isFinite(liquidFlow) && liquidFlow >= 0.0);
+    assertTrue(Double.isFinite(gas.getTemperature()) && gas.getTemperature() > 0.0);
+    assertTrue(Double.isFinite(liquid.getTemperature()) && liquid.getTemperature() > 0.0);
+    assertEquals(feedFlow, gasFlow + liquidFlow, 5.0e-3 * feedFlow);
+
+    double[] feedComposition = feed.getThermoSystem().getMolarComposition();
+    double[] gasComposition = gas.getThermoSystem().getMolarComposition();
+    double[] liquidComposition = liquid.getThermoSystem().getMolarComposition();
+    for (int componentIndex = 0; componentIndex < feedComposition.length; componentIndex++) {
+      assertTrue(gasComposition[componentIndex] >= 0.0 && gasComposition[componentIndex] <= 1.0);
+      assertTrue(liquidComposition[componentIndex] >= 0.0 && liquidComposition[componentIndex] <= 1.0);
+      double feedComponentFlow = feedFlow * feedComposition[componentIndex];
+      double productComponentFlow = gasFlow * gasComposition[componentIndex]
+          + liquidFlow * liquidComposition[componentIndex];
+      assertEquals(feedComponentFlow, productComponentFlow,
+          Math.max(1.0e-6, 5.0e-3 * Math.abs(feedComponentFlow)));
+    }
   }
 
   /**
