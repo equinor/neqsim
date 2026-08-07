@@ -156,55 +156,84 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
   }
 
   /**
-   * Select the aqueous CO2-water binary-interaction parameterization.
+   * Select the Soreide-Whitson binary-interaction parameterization.
    *
    * <p>
    * The default is {@link SoreideWhitsonParameterization#LEGACY}, which preserves historical NeqSim results. Select
-   * {@link SoreideWhitsonParameterization#CHABAB_2019} explicitly for the modified correlation published by Chabab et
-   * al. (2019).
+   * {@link SoreideWhitsonParameterization#CHABAB_2019} explicitly for the modified CO2 correlation published by Chabab
+   * et al. (2019), or {@link SoreideWhitsonParameterization#BURGOYNE_NIELSEN_2026} for the 2026 drop-in water-gas
+   * parameter set.
    *
    * @param parameterization parameterization to use
    * @throws IllegalArgumentException if {@code parameterization} is null
    */
-  public void setAqueousCO2Parameterization(SoreideWhitsonParameterization parameterization) {
+  public void setSoreideWhitsonParameterization(SoreideWhitsonParameterization parameterization) {
     if (parameterization == null) {
       throw new IllegalArgumentException("Soreide-Whitson parameterization cannot be null");
     }
     aqueousCO2Parameterization = parameterization;
     for (int phaseNumber = 0; phaseNumber < phaseArray.length; phaseNumber++) {
       if (phaseArray[phaseNumber] instanceof PhaseSoreideWhitson) {
-        ((PhaseSoreideWhitson) phaseArray[phaseNumber]).setAqueousCO2Parameterization(parameterization);
+        ((PhaseSoreideWhitson) phaseArray[phaseNumber]).setSoreideWhitsonParameterization(parameterization);
       }
     }
   }
 
   /**
-   * Select the aqueous CO2-water binary-interaction parameterization by name.
+   * Select the Soreide-Whitson binary-interaction parameterization by name.
    *
    * <p>
    * This overload is convenient for Python/JPype callers.
    *
-   * @param parameterizationName {@code LEGACY}, {@code CHABAB_2019}, or {@code M_SW}
+   * @param parameterizationName {@code LEGACY}, {@code CHABAB_2019}, {@code BURGOYNE_NIELSEN_2026}, or a supported
+   * alias
    * @throws IllegalArgumentException if the name is null or unsupported
    */
-  public void setAqueousCO2Parameterization(String parameterizationName) {
-    setAqueousCO2Parameterization(SoreideWhitsonParameterization.byName(parameterizationName));
+  public void setSoreideWhitsonParameterization(String parameterizationName) {
+    setSoreideWhitsonParameterization(SoreideWhitsonParameterization.byName(parameterizationName));
   }
 
   /**
-   * Get the selected aqueous CO2-water binary-interaction parameterization.
+   * Get the selected Soreide-Whitson binary-interaction parameterization.
+   *
+   * @return selected parameterization
+   */
+  public SoreideWhitsonParameterization getSoreideWhitsonParameterization() {
+    return aqueousCO2Parameterization;
+  }
+
+  /**
+   * Select the aqueous CO2-water parameterization using the historical API name.
+   *
+   * @param parameterization parameterization to use
+   */
+  public void setAqueousCO2Parameterization(SoreideWhitsonParameterization parameterization) {
+    setSoreideWhitsonParameterization(parameterization);
+  }
+
+  /**
+   * Select the parameterization by name using the historical API name.
+   *
+   * @param parameterizationName parameterization name
+   */
+  public void setAqueousCO2Parameterization(String parameterizationName) {
+    setSoreideWhitsonParameterization(parameterizationName);
+  }
+
+  /**
+   * Get the parameterization using the historical API name.
    *
    * @return selected parameterization
    */
   public SoreideWhitsonParameterization getAqueousCO2Parameterization() {
-    return aqueousCO2Parameterization;
+    return getSoreideWhitsonParameterization();
   }
 
   /** {@inheritDoc} */
   @Override
   public void clearAll() {
     super.clearAll();
-    setAqueousCO2Parameterization(aqueousCO2Parameterization);
+    setSoreideWhitsonParameterization(aqueousCO2Parameterization);
   }
 
   /**
