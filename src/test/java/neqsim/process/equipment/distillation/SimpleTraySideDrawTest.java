@@ -168,8 +168,9 @@ public class SimpleTraySideDrawTest {
     assertEquals(0.0, column.getMassBalance("kg/hr"), 1.0e-6, column.getConvergenceDiagnostics());
     assertTrue(column.getEnergyBalanceError() < 1.0e-2, column.getConvergenceDiagnostics());
     assertTrue(column.getLastColumnTearRejectedCandidateCount() > 0,
-        "the regression should exercise rejected-candidate rollback");
-    assertEquals(column.getLastColumnTearRejectedCandidateCount(), column.getLastColumnTearRollbackCount());
+        "the regression should exercise rejected-candidate isolation");
+    assertTrue(column.getLastColumnTearRollbackCount() <= column.getLastColumnTearRejectedCandidateCount(),
+        "only rejections after an accepted state exists can require rollback");
     assertTrue(column.getLastColumnTearCandidateHistory().contains("FALLBACK_PRODUCTS"));
     assertComponentMassBalance(feed, column.getSideDrawStream(3, DistillationColumn.SideDrawPhase.LIQUID), column);
 
@@ -219,6 +220,10 @@ public class SimpleTraySideDrawTest {
     assertEquals(0.0, column.getMassBalance("kg/hr"), 1.0e-6, column.getConvergenceDiagnostics());
     assertTrue(column.getLastColumnTearRejectedCandidateCount() > 0,
         "the controller should reject the invalid large multiplicative candidate");
+    assertTrue(column.getLastColumnTearRollbackCount() > 0,
+        "the rejected cold candidate should retain the previously accepted state");
+    assertTrue(column.getLastColumnTearRollbackCount() <= column.getLastColumnTearRejectedCandidateCount(),
+        "rollback count cannot exceed the rejected candidate count");
     assertTrue(column.getLastColumnTearCandidateHistory().contains("continuation fraction="),
         "the rejected cold candidate should be retried from an accepted state");
     assertComponentMassBalance(feed, column.getSideDrawStream(3, DistillationColumn.SideDrawPhase.LIQUID), column);
