@@ -85,9 +85,12 @@ import neqsim.pvtsimulation.flowassurance.HydrateRiskMapper;
 import neqsim.pvtsimulation.flowassurance.ScaleMassCalculator;
 import neqsim.pvtsimulation.flowassurance.ScalePredictionCalculator;
 import neqsim.pvtsimulation.flowassurance.WaterCompatibilityScreener;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.FluidBuilder;
+import neqsim.thermo.system.SystemDesmukhMather;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemNRTL;
 import neqsim.thermo.system.SystemPitzer;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -100,6 +103,69 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 public class DocExamplesCompilationTest {
+
+  /** Pitzer hybrid VLLE example from docs/thermo/fluid_creation_guide.md. */
+  @Test
+  public void testPitzerHybridVlleFluidCreationGuide() {
+    SystemPitzer fluid = new SystemPitzer(313.15, 50.0);
+    fluid.addComponent("methane", 5.0);
+    fluid.addComponent("n-heptane", 2.0);
+    fluid.addComponent("water", 55.5);
+    fluid.addComponent("Na+", 1.0);
+    fluid.addComponent("Cl-", 1.0);
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+
+    new ThermodynamicOperations(fluid).TPflash();
+
+    boolean hasAqueousPhase = fluid.hasPhaseType(PhaseType.AQUEOUS);
+    assertTrue(hasAqueousPhase);
+    assertTrue(fluid.hasPhaseType(PhaseType.GAS));
+    assertTrue(fluid.hasPhaseType(PhaseType.OIL));
+  }
+
+  /** Generic SystemEosGE opt-in example from docs/thermo/fluid_creation_guide.md. */
+  @Test
+  public void testGenericEosGeHybridVlleFluidCreationGuide() {
+    SystemNRTL fluid = new SystemNRTL(313.15, 50.0);
+    fluid.addComponent("methane", 5.0);
+    fluid.addComponent("n-heptane", 2.0);
+    fluid.addComponent("water", 55.5);
+    fluid.createDatabase(true);
+    fluid.setMixingRule("classic");
+    fluid.enableHybridEosGeFlash();
+
+    new ThermodynamicOperations(fluid).TPflash();
+
+    assertTrue(fluid.hasPhaseType(PhaseType.GAS));
+    assertTrue(fluid.hasPhaseType(PhaseType.OIL));
+    assertTrue(fluid.hasPhaseType(PhaseType.AQUEOUS));
+  }
+
+  /** Desmukh-Mather reactive hybrid example from docs/pvtsimulation/scale_prediction_api.md. */
+  @Test
+  public void testDesmukhMatherReactiveHybridScalePrediction() throws Exception {
+    SystemDesmukhMather fluid = new SystemDesmukhMather(313.15, 5.0);
+    fluid.addComponent("methane", 5.0);
+    fluid.addComponent("CO2", 0.2);
+    fluid.addComponent("n-heptane", 2.0);
+    fluid.addComponent("MDEA", 1.0);
+    fluid.addComponent("water", 9.0);
+    fluid.addComponent("Ca++", 1.0e-4);
+    fluid.addComponent("Na+", 1.0e-3);
+    fluid.addComponent("Cl-", 2.0e-4);
+    fluid.addComponent("HCO3-", 1.0e-3);
+    fluid.chemicalReactionInit();
+    fluid.createDatabase(true);
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.TPflash();
+    double calciteSaturationRatio = operations.getRelativeScalePotential("CaCO3");
+
+    assertTrue(Double.isFinite(calciteSaturationRatio) && calciteSaturationRatio > 0.0);
+  }
 
   /**
    * Transient gas-network example from docs/process/gas_network_operations.md.
@@ -707,17 +773,27 @@ public class DocExamplesCompilationTest {
     String[][] table = ops.getResultTable();
     assertTrue(table.length > 1);
 
-    SystemInterface pitzer = new SystemPitzer(273.15 + 80.0, 100.0);
-    pitzer.addComponent("water", 0.90);
-    pitzer.addComponent("Na+", 0.03);
-    pitzer.addComponent("Cl-", 0.035);
-    pitzer.addComponent("Ca++", 0.005);
-    pitzer.addComponent("SO4--", 0.002);
+    SystemInterface pitzer = new SystemPitzer(313.15, 50.0);
+    pitzer.addComponent("methane", 5.0);
+    pitzer.addComponent("CO2", 0.05);
+    pitzer.addComponent("n-heptane", 2.0);
+    pitzer.addComponent("water", 55.5);
+    pitzer.addComponent("Ca++", 1.0e-4);
+    pitzer.addComponent("Na+", 1.0e-3);
+    pitzer.addComponent("Cl-", 2.0e-4);
+    pitzer.addComponent("HCO3-", 1.0e-3);
+    pitzer.chemicalReactionInit();
+    pitzer.createDatabase(true);
     pitzer.setMixingRule("classic");
+    pitzer.setMultiPhaseCheck(true);
     ThermodynamicOperations pitzerOps = new ThermodynamicOperations(pitzer);
     pitzerOps.TPflash();
     pitzer.initProperties();
-    assertTrue(pitzer.getNumberOfPhases() >= 1);
+    double calciteScalePotential = pitzerOps.getRelativeScalePotential("CaCO3");
+    assertTrue(pitzer.hasPhaseType("gas"));
+    assertTrue(pitzer.hasPhaseType("oil"));
+    assertTrue(pitzer.hasPhaseType("aqueous"));
+    assertTrue(Double.isFinite(calciteScalePotential) && calciteScalePotential > 0.0);
 
     WaterCompatibilityScreener screener = new WaterCompatibilityScreener();
     screener.setFormationWater(400, 200, 50, 2, 150, 10, 50000, 90, 200, 3.0, 6.2);

@@ -1,20 +1,28 @@
 package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhasePitzer;
-import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
  * Thermodynamic system using the Pitzer GE model for the aqueous phase and SRK EOS for gas and optional oil phases.
  *
  * <p>
- * Supports vapor-liquid-liquid equilibrium (VLLE): gas (SRK), oil (SRK), aqueous (Pitzer). Enable VLLE by calling
- * {@code setMultiPhaseCheck(true)} before running the flash.
+ * Supports vapor-liquid-liquid equilibrium (VLLE) with creation-order roles {@code phaseArray[0]} = SRK gas,
+ * {@code phaseArray[1]} = Pitzer aqueous and {@code phaseArray[2]} = SRK oil. Enable the dedicated hybrid strategy by
+ * calling {@code setMultiPhaseCheck(true)} before running the flash. Phase disappearance only changes the active
+ * mapping; repeated flashes, cloning and serialization retain the role objects. Systems initialized through
+ * {@code chemicalReactionInit()} alternate fixed-role phase equilibrium with chemical equilibrium in the Pitzer aqueous
+ * phase, enabling reactive gas-aqueous and gas-oil-aqueous scale-potential calculations.
+ * </p>
+ *
+ * <p>
+ * The hybrid strategy currently supports fluid phases only. Solid and wax checks are rejected explicitly when the
+ * strategy is active.
  * </p>
  *
  * @author esol
  */
-public class SystemPitzer extends SystemEos {
+public class SystemPitzer extends SystemEosGE {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -47,50 +55,7 @@ public class SystemPitzer extends SystemEos {
     modelName = "Pitzer-GE-model";
     attractiveTermNumber = 0;
 
-    phaseArray[0] = new PhaseSrkEos();
-    phaseArray[0].setTemperature(T);
-    phaseArray[0].setPressure(P);
-    for (int i = 1; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhasePitzer();
-      phaseArray[i].setTemperature(T);
-      phaseArray[i].setPressure(P);
-      phaseArray[i].setType(neqsim.thermo.phase.PhaseType.AQUEOUS);
-      setPhaseType(i, neqsim.thermo.phase.PhaseType.AQUEOUS);
-    }
-
-    if (solidPhaseCheck) {
-      setNumberOfPhases(4);
-      phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
-      phaseArray[numberOfPhases - 1].setTemperature(T);
-      phaseArray[numberOfPhases - 1].setPressure(P);
-      phaseArray[numberOfPhases - 1].setRefPhase(phaseArray[1].getRefPhase());
-    }
-  }
-
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * Overridden to create a SRK EOS oil phase (not a Pitzer clone) when enabling multi-phase (VLLE) checks. Phase
-   * layout: [0]=SRK(gas), [1]=Pitzer(aqueous), [2]=SRK(oil).
-   * </p>
-   */
-  @Override
-  public void setMultiPhaseCheck(boolean multiPhaseCheck) {
-    if (getMaxNumberOfPhases() < 3 && multiPhaseCheck) {
-      setMaxNumberOfPhases(3);
-      // Create oil phase as SRK EOS (not Pitzer) — clones from gas phase
-      if (phaseArray[0] != null) {
-        phaseArray[2] = phaseArray[0].clone();
-        phaseArray[2].setType(neqsim.thermo.phase.PhaseType.LIQUID);
-        phaseArray[2].resetMixingRule(phaseArray[0].getMixingRuleType());
-        phaseArray[2].resetPhysicalProperties();
-        phaseArray[2].initPhysicalProperties();
-      }
-    }
-    // Delegate to parent which sets the multiPhaseCheck flag.
-    // Since maxNumberOfPhases is already >= 3, the parent will NOT re-clone phaseArray[2].
-    super.setMultiPhaseCheck(multiPhaseCheck);
+    configureHybridEosGePhases(T, P, new PhaseSrkEos(), new PhasePitzer(), new PhaseSrkEos());
   }
 
   /** {@inheritDoc} */
