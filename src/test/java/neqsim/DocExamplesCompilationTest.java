@@ -53,6 +53,10 @@ import neqsim.process.fielddevelopment.concept.FieldConcept;
 import neqsim.process.fielddevelopment.concept.GreenfieldConceptFactory;
 import neqsim.process.fielddevelopment.evaluation.ConceptEvaluator;
 import neqsim.process.fielddevelopment.evaluation.ConceptKPIs;
+import neqsim.process.fielddevelopment.screening.ArtificialLiftScreener;
+import neqsim.process.fielddevelopment.screening.ArtificialLiftScreener.LiftMethod;
+import neqsim.process.fielddevelopment.screening.ArtificialLiftScreener.MethodResult;
+import neqsim.process.fielddevelopment.screening.ArtificialLiftScreener.ScreeningResult;
 import neqsim.process.fielddevelopment.tieback.HostFacility;
 import neqsim.process.fielddevelopment.tieback.capacity.CapacityAllocationPolicy;
 import neqsim.process.fielddevelopment.tieback.capacity.HostTieInPoint;
@@ -368,6 +372,36 @@ public class DocExamplesCompilationTest {
     assertNotNull(fpso.getSummary());
     assertTrue(tieback.getFacilityConfig().getBlocks().size() > 0);
     assertTrue(fpso.getTotalCapexMusd() > tieback.getTotalCapexMusd());
+  }
+
+  /**
+   * Artificial-lift screening example from docs/fielddevelopment/API_GUIDE.md.
+   */
+  @Test
+  public void testArtificialLiftScreenerApiGuideExample() {
+    ArtificialLiftScreener lift = new ArtificialLiftScreener();
+    lift.setReservoirPressure(180.0, "bara");
+    lift.setWaterCut(0.70);
+    lift.setFormationGOR(100.0);
+    lift.setProductivityIndex(15.0);
+    lift.setWellDepth(2800.0, "m");
+    lift.setReservoirTemperature(95.0, "C");
+    lift.setGasLiftAvailable(true);
+    lift.setElectricityAvailable(true);
+
+    ScreeningResult screening = lift.screen();
+    List<MethodResult> results = screening.getAllMethods();
+    for (MethodResult method : results) {
+      if (method.feasible) {
+        assertTrue(Double.isFinite(method.productionRate) && method.productionRate > 0.0);
+        assertTrue(Double.isFinite(method.powerConsumption) && method.powerConsumption >= 0.0);
+      } else {
+        assertNotNull(method.infeasibilityReason);
+      }
+    }
+
+    LiftMethod recommended = screening.getRecommendedMethod();
+    assertNotNull(recommended);
   }
 
   /**

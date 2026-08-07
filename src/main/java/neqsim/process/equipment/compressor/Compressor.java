@@ -65,6 +65,12 @@ public class Compressor extends TwoPortEquipment
   /** Maximum number of TP-flash Newton iterations in the compressor entropy fallback. */
   private static final int MAX_ENTROPY_FLASH_ITERATIONS = 30;
 
+  /** Maximum physically meaningful compressor efficiency. */
+  private static final double MAX_EFFICIENCY = 1.0;
+
+  /** Small positive floor used when efficiency is configured as zero/negative/non-finite. */
+  private static final double MIN_EFFICIENCY = 1.0e-6;
+
   public SystemInterface thermoSystem;
   private double outTemperature = 298.15;
   private boolean useOutTemperature = false;
@@ -617,7 +623,7 @@ public class Compressor extends TwoPortEquipment
     double newPoly;
     double dfunkdPoly = 100.0;
     double dPoly = 100.0;
-    double oldPoly = outTemperature;
+    double oldPoly = polytropicEfficiency;
     useOutTemperature = false;
     run();
     useOutTemperature = true;
@@ -628,15 +634,34 @@ public class Compressor extends TwoPortEquipment
     do {
       iter++;
       funk = getThermoSystem().getTemperature() - outTemperature;
-      dfunkdPoly = (funk - funkOld) / dPoly;
-      newPoly = polytropicEfficiency - funk / dfunkdPoly;
+      if (Math.abs(dPoly) > 1.0e-12 && Double.isFinite(dPoly) && Double.isFinite(funk) && Double.isFinite(funkOld)) {
+        dfunkdPoly = (funk - funkOld) / dPoly;
+      } else {
+        dfunkdPoly = Double.NaN;
+      }
+
+      if (!Double.isFinite(dfunkdPoly) || Math.abs(dfunkdPoly) < 1.0e-12) {
+        // Fallback directional step when secant slope is singular after bounded updates.
+        newPoly = polytropicEfficiency + (funk > 0.0 ? 0.01 : -0.01);
+      } else {
+        newPoly = polytropicEfficiency - funk / dfunkdPoly;
+      }
+
       if (iter <= 1) {
         newPoly = polytropicEfficiency + 0.01;
       }
+
+      if (!Double.isFinite(newPoly)) {
+        newPoly = polytropicEfficiency + (funk > 0.0 ? 0.01 : -0.01);
+      }
       oldPoly = polytropicEfficiency;
-      polytropicEfficiency = newPoly;
-      isentropicEfficiency = newPoly;
+      setPolytropicEfficiency(newPoly);
+      setIsentropicEfficiency(newPoly);
       dPoly = polytropicEfficiency - oldPoly;
+      if (Math.abs(dPoly) < 1.0e-12) {
+        // Avoid zero secant denominator on the next iteration while keeping the bounded value.
+        dPoly = funk > 0.0 ? 1.0e-12 : -1.0e-12;
+      }
       funkOld = funk;
       useOutTemperature = false;
       run();
@@ -647,7 +672,7 @@ public class Compressor extends TwoPortEquipment
     } while ((Math.abs((getThermoSystem().getTemperature() - outTemperature)) > efficiencySolveTolerance || iter < 3)
         && (iter < 50));
     usePolytropicCalc = useOld;
-    return newPoly;
+    return polytropicEfficiency;
   }
 
   /**
@@ -813,11 +838,63 @@ public class Compressor extends TwoPortEquipment
       return;
     }
 
-    thermoOps.PSflash(targetEntropy);
-    double entropyError = Math.abs(getThermoSystem().getEntropy() - targetEntropy);
+    try {
+      thermoOps.PSflash(targetEntropy);
+    } catch (RuntimeException ex) {
+      if (!isNaNFlashFailure(ex)) {
+        throw ex;
+      }
+      logger.debug("PSflash produced NaN in compressor {}; retrying with TP-based entropy fallback", getName());
+      solveEntropyAtCurrentPressureWithTpFlash(thermoOps, targetEntropy, initialTemperature);
+      return;
+    }
+
+    double currentEntropy = getThermoSystem().getEntropy();
+    if (!Double.isFinite(currentEntropy)) {
+      logger.debug("PSflash produced non-finite entropy in compressor {}; retrying with TP-based entropy fallback",
+          getName());
+      solveEntropyAtCurrentPressureWithTpFlash(thermoOps, targetEntropy, initialTemperature);
+      return;
+    }
+    double entropyError = Math.abs(currentEntropy - targetEntropy);
     double fallbackTolerance = Math.max(1.0e-3, getEntropyFlashTolerance(targetEntropy) * 10.0);
     if (entropyError > fallbackTolerance) {
       solveEntropyAtCurrentPressureWithTpFlash(thermoOps, targetEntropy, initialTemperature);
+    }
+  }
+
+  /**
+   * Check whether a flash failure is caused by NaN values in the EOS/flash path.
+   *
+   * @param throwable throwable to inspect
+   * @return true if any throwable in the cause chain includes a NaN message
+   */
+  private boolean isNaNFlashFailure(Throwable throwable) {
+    Throwable current = throwable;
+    while (current != null) {
+      String message = current.getMessage();
+      if (message != null && message.contains("NaN")) {
+        return true;
+      }
+      current = current.getCause();
+    }
+    return false;
+  }
+
+  /**
+   * Sanitize restored compressor efficiencies before using them in thermodynamic calculations.
+   *
+   * <p>
+   * XML deserialization may populate fields directly and bypass setter-based clamping. This method enforces physical
+   * bounds at the beginning of {@link #run(UUID)} so legacy artifacts do not seed unstable flash calculations.
+   * </p>
+   */
+  private void sanitizeEfficiencyStateForRun() {
+    isentropicEfficiency = normalizeEfficiency(isentropicEfficiency, "isentropicEfficiency");
+    polytropicEfficiency = normalizeEfficiency(polytropicEfficiency, "polytropicEfficiency");
+    if (!Double.isFinite(designPolytropicEfficiency) || designPolytropicEfficiency <= 0.0
+        || designPolytropicEfficiency > MAX_EFFICIENCY) {
+      designPolytropicEfficiency = polytropicEfficiency;
     }
   }
 
@@ -915,6 +992,7 @@ public class Compressor extends TwoPortEquipment
   @Override
   public void run(UUID id) {
     thermoSystem = inStream.getThermoSystem().clone();
+    sanitizeEfficiencyStateForRun();
 
     isActive(true);
 
@@ -976,7 +1054,7 @@ public class Compressor extends TwoPortEquipment
 
     if (useEnergyEfficiencyChart()) {
       double flow = getThermoSystem().getFlowRate("m3/hr");
-      polytropicEfficiency = getCompressorChart().getPolytropicEfficiency(flow, getSpeed()) / 100.0;
+      setPolytropicEfficiency(getCompressorChart().getPolytropicEfficiency(flow, getSpeed()) / 100.0);
     }
 
     // Apply deposit/fouling degradation (if a deposit model is attached) before the polytropic
@@ -1127,9 +1205,9 @@ public class Compressor extends TwoPortEquipment
             * (Math.pow((getOutletPressure() / presinn), (n - 1.0) / n) - 1.0);
         // System.out.println("polytropic power " +
         // polytropicPower/getThermoSystem().getFlowRate("kg/sec"));
-        polytropicEfficiency = polytropicPower / getThermoSystem().getFlowRate("kg/sec")
-            / (dH / getThermoSystem().getFlowRate("kg/sec"));
-        isentropicEfficiency = (enthalpyOutIsentropic - inletEnthalpy) / dH;
+        setPolytropicEfficiency(
+            polytropicPower / getThermoSystem().getFlowRate("kg/sec") / (dH / getThermoSystem().getFlowRate("kg/sec")));
+        setIsentropicEfficiency((enthalpyOutIsentropic - inletEnthalpy) / dH);
 
         // isentropicEfficiency = (getThermoSystem().getEnthalpy() - hinn) / dH;
         double k = Math.log(getOutletPressure() / presinn) / Math.log(densOutIsentropic / densInn);
@@ -1137,7 +1215,7 @@ public class Compressor extends TwoPortEquipment
         double term2 = n / (n - 1.0) * (k - 1.0) / k;
         double term3 = Math.pow(getOutletPressure() / presinn, (k - 1.0) / k) - 1.0;
         double polyPow = term1 * term2 / term3 * isentropicEfficiency;
-        polytropicEfficiency = polyPow;
+        setPolytropicEfficiency(polyPow);
         polytropicPower = dH * polytropicEfficiency;
         // System.out.println("polytropic eff " + polytropicEfficiency);
         // System.out.println("isentropic eff " + isentropicEfficiency);
@@ -1666,11 +1744,11 @@ public class Compressor extends TwoPortEquipment
         }
       }
       double hout = hinn + dH;
-      isentropicEfficiency = (newEnt - hinn) / dH;
+      setIsentropicEfficiency((newEnt - hinn) / dH);
       // TODO: the polytropic efficiency calculation here need to be corrected, it is
       // always larger
       // than isentropic efficiency
-      polytropicEfficiency = isentropicEfficiency;
+      setPolytropicEfficiency(getIsentropicEfficiency());
       dH = hout - hinn;
       thermoOps = new ThermodynamicOperations(getThermoSystem());
       runPHflashWithNaNRetry(thermoOps, hout);
@@ -1790,10 +1868,7 @@ public class Compressor extends TwoPortEquipment
     thermoSystem = outStream.getThermoSystem().clone();
     thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
-    polytropicEfficiency = compressorChart.getPolytropicEfficiency(inStream.getFlowRate("m3/hr"), speed) / 100.0;
-    if (polytropicEfficiency <= 0.0) {
-      polytropicEfficiency = 0.0001; // Prevent division by zero
-    }
+    setPolytropicEfficiency(compressorChart.getPolytropicEfficiency(inStream.getFlowRate("m3/hr"), speed) / 100.0);
     polytropicFluidHead = head * polytropicEfficiency;
     dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass() / getPolytropicEfficiency()
         * inStream.getThermoSystem().getTotalNumberOfMoles();
@@ -1999,7 +2074,7 @@ public class Compressor extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public void setIsentropicEfficiency(double isentropicEfficiency) {
-    this.isentropicEfficiency = isentropicEfficiency;
+    this.isentropicEfficiency = normalizeEfficiency(isentropicEfficiency, "isentropicEfficiency");
   }
 
   /**
@@ -2029,10 +2104,36 @@ public class Compressor extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public void setPolytropicEfficiency(double polytropicEfficiency) {
-    this.polytropicEfficiency = polytropicEfficiency;
+    this.polytropicEfficiency = normalizeEfficiency(polytropicEfficiency, "polytropicEfficiency");
     // Record the clean (design) baseline so an attached deposit model degrades from a fixed
     // reference each run (non-compounding across repeated run() calls).
-    this.designPolytropicEfficiency = polytropicEfficiency;
+    this.designPolytropicEfficiency = this.polytropicEfficiency;
+  }
+
+  /**
+   * Clamp a compressor efficiency to a physically meaningful range.
+   *
+   * <p>
+   * Values above 1.0 are clamped to 1.0. Non-finite or non-positive values are clamped to a small positive floor to
+   * avoid division-by-zero and sign-flip issues in downstream head/power calculations.
+   * </p>
+   *
+   * @param efficiency candidate efficiency value
+   * @param label name of the efficiency field for diagnostics
+   * @return clamped efficiency in the interval [{@link #MIN_EFFICIENCY}, {@link #MAX_EFFICIENCY}]
+   */
+  private double normalizeEfficiency(double efficiency, String label) {
+    if (!Double.isFinite(efficiency) || efficiency <= 0.0) {
+      logger.warn("Compressor {} received invalid {}={} - clamping to {}", getName(), label, efficiency,
+          MIN_EFFICIENCY);
+      return MIN_EFFICIENCY;
+    }
+    if (efficiency > MAX_EFFICIENCY) {
+      logger.warn("Compressor {} received {}={} above physical maximum - clamping to {}", getName(), label, efficiency,
+          MAX_EFFICIENCY);
+      return MAX_EFFICIENCY;
+    }
+    return efficiency;
   }
 
   /**
@@ -4524,7 +4625,8 @@ public class Compressor extends TwoPortEquipment
       }
       cleanEfficiency = designPolytropicEfficiency;
     }
-    polytropicEfficiency = cleanEfficiency * effMultiplier;
+    // Preserve the clean baseline so repeated run() calls do not compound the degradation.
+    polytropicEfficiency = normalizeEfficiency(cleanEfficiency * effMultiplier, "polytropicEfficiency");
   }
 
   /**

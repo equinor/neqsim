@@ -594,7 +594,7 @@ When `system.setMultiPhaseCheck(true)` is called, NeqSim uses the `TPmultiflash`
 │ STEP 3: HEURISTIC PHASE SEEDING                                                 │
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │  IF NOT multiPhaseTest AND seedAdditionalPhaseFromFeed():                       │
-│     → Add gas phase seeded from feed composition                                │
+│     → Add bounded vapor-like gas seed, xᵢ ∝ zᵢKᵢ(Wilson)                       │
 │     → multiPhaseTest = true                                                     │
 │                                                                                 │
 │  IF seedHydrocarbonLiquidFromFeed():                                           │
@@ -1466,9 +1466,21 @@ The complete workflow in `TPmultiflash.run()` is:
 
 Beyond stability analysis, NeqSim uses heuristic phase seeding to improve convergence:
 
-#### 3.5.1 Gas Phase Seeding from Feed
+#### 3.5.1 Vapor-like Gas Phase Seeding
 
-When an aqueous phase exists without a gas phase, seed a gas phase:
+When an aqueous phase and material hydrocarbon feed exist without a gas phase, the fallback creates a vapor-like trial
+instead of copying the water-dominated feed composition. The initial trial is
+
+$$x_i^{trial}=\frac{z_iK_i^{Wilson}}{\sum_j z_jK_j^{Wilson}}$$
+
+with
+
+$$\ln K_i^{Wilson}=\ln\left(\frac{P_{c,i}}{P}\right)+5.373(1+\omega_i)\left(1-\frac{T_{c,i}}{T}\right)$$
+
+The calculation is performed in log space and bounds $\ln K_i$ to $[-50,50]$ to remain finite for large volatility
+contrasts. This is an initialization strategy only: the multiphase beta solve, component material balance, composition
+normalization, fugacity equality, phase-stability logic, and Gibbs-energy comparisons still determine whether the gas
+phase is retained.
 
 ```java
 private boolean seedAdditionalPhaseFromFeed() {
@@ -1484,12 +1496,14 @@ private boolean seedAdditionalPhaseFromFeed() {
     }
     if (!hasAqueous || hasGas) return false;
 
-    // Seed gas phase with feed composition
+    // Seed a vapor-like trial in bounded log space
     system.addPhase();
     system.setPhaseType(phaseIndex, PhaseType.GAS);
     for (int comp = 0; comp < ncomp; comp++) {
-        system.getPhase(phaseIndex).getComponent(comp).setx(z[comp]);
+        logTrial[comp] = log(z[comp]) + clamp(log(KWilson[comp]), -50, 50);
+        xTrial[comp] = exp(logTrial[comp] - max(logTrial));
     }
+    normalize(xTrial);
     system.setBeta(phaseIndex, 1e-3);
     return true;
 }
