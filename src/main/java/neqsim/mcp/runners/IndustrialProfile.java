@@ -97,7 +97,7 @@ public final class IndustrialProfile {
   /** Environment variable containing the admin token for governed runtime changes. */
   private static final String ADMIN_TOKEN_ENV = "NEQSIM_MCP_ADMIN_TOKEN";
 
-  /** One-shot approvals keyed by MCP tool name. */
+  /** One-shot approvals keyed by principal subject and MCP tool name. */
   private static final Set<String> APPROVED_ONCE = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
   /** Active deployment mode. */
@@ -341,10 +341,11 @@ public final class IndustrialProfile {
    * @return null if allowed, or a JSON error string if blocked
    */
   public static String enforceAccess(String toolName) {
-    String securityBlocked = SecurityRunner.checkAccess(null, toolName);
+    String securityBlocked = SecurityRunner.checkAccess(McpRequestContext.currentCredential(), toolName);
     if (securityBlocked != null) {
       return policyErrorJson("blocked", toolName, "SECURITY", "Security policy denied access",
-          "Inspect manageSecurity/getStatus and provide valid credentials when security is enabled.");
+          "Authenticate at the transport layer (API key header or OAuth bearer token), "
+              + "then retry. Use manageSecurity/getStatus to inspect enforcement state.");
     }
     if (isToolAllowed(toolName)) {
       if (requiresApproval(toolName) && !consumeApproval(toolName)) {
@@ -382,11 +383,12 @@ public final class IndustrialProfile {
       return policyErrorJson("blocked", toolName, "UNKNOWN_TOOL", "Cannot approve unknown MCP tool '" + toolName + "'.",
           "Use checkToolAccess or getCapabilities to choose a valid tool name.");
     }
-    APPROVED_ONCE.add(toolName);
+    APPROVED_ONCE.add(approvalKey(toolName));
     JsonObject response = new JsonObject();
     response.addProperty("status", "success");
     response.addProperty("tool", toolName);
     response.addProperty("approval", "next_invocation");
+    response.addProperty("approvedFor", McpRequestContext.currentSubject());
     response.addProperty("message", "Next invocation of " + toolName + " is approved once.");
     ApiEnvelope.applyStandardFields(response, "manageIndustrialProfile", null,
         ApiEnvelope.validationStatus(true, "policy", "Approval recorded"),
@@ -429,13 +431,23 @@ public final class IndustrialProfile {
   }
 
   /**
-   * Consumes a pending one-shot approval.
+   * Consumes a pending one-shot approval for the calling principal.
    *
    * @param toolName the tool being invoked
    * @return true if an approval was available and consumed
    */
   private static boolean consumeApproval(String toolName) {
-    return APPROVED_ONCE.remove(toolName);
+    return APPROVED_ONCE.remove(approvalKey(toolName));
+  }
+
+  /**
+   * Builds the approval key binding a tool to the principal it was approved for.
+   *
+   * @param toolName the MCP tool name
+   * @return the approval key
+   */
+  private static String approvalKey(String toolName) {
+    return McpRequestContext.currentSubject() + "::" + toolName;
   }
 
   /**
