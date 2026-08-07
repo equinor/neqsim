@@ -347,6 +347,28 @@ class ProcessModelSimulationEvaluatorTest {
     assertEquals(1, undefinedSupplierCalls.get());
   }
 
+  /** Verifies snapshot selection preserves the legacy exclusion of invalid negative utilization. */
+  @Test
+  void evaluationPreservesLegacyNoBottleneckForInvalidNegativeUtilization() {
+    ModelFixture fixture = createModelFixture();
+    CapacityConstraint invalid = new CapacityConstraint("invalidNegative", "kg/hr", ConstraintType.HARD)
+        .setDesignValue(10.0).setCurrentValue(-20.0);
+    fixture.separator.clearCapacityConstraints();
+    fixture.separator.addCapacityConstraint(invalid);
+
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
+    evaluator.setIncludeStrategyCapacityConstraints(false);
+    evaluator.addParameter("wells::feed.flowRate", 5000.0, 20000.0, "kg/hr");
+
+    ProcessModelSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[] { 10000.0 });
+
+    assertTrue(result.isSimulationConverged());
+    assertEquals(1, result.getRankedCapacityConstraints().size());
+    assertEquals(-2.0, result.getRankedCapacityConstraints().get(0).getUtilization(), 1.0e-12);
+    assertFalse(result.getActiveBottleneck().isPresent());
+    assertFalse(evaluator.findActiveBottleneck(fixture.model).isPresent());
+  }
+
   /**
    * Verifies each model evaluation retains an immutable ranked capacity snapshot after later model runs.
    */
