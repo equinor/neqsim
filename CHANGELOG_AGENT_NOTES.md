@@ -9,6 +9,19 @@
 
 ---
 
+## 2026-08-06 — Per-case ranked capacity snapshots
+
+- `ProcessModelSimulationEvaluator.EvaluationResult.getRankedCapacityConstraints()` retains the
+  immutable full-model capacity ranking produced after that exact simulation point.
+- The legacy active bottleneck is selected from the same ranking, while undefined-utilization
+  constraints remain visible at the end for diagnosis.
+- `ThroughputCaseRow.getRankedCapacityConstraints()` preserves emerging and switching constraints
+  for every scalar-throughput case. JSON exports include the complete ranked list and its evidence
+  applicability; CSV remains the flat leading-limit summary.
+- Use these case-owned snapshots for debottleneck histories and AI/tool output. Do not rescan the
+  live model after a later evaluation and attribute that state to an earlier case.
+
+---
 ## 2026-08-06 — Artificial-lift screening rejects non-physical calculated results
 
 - `ArtificialLiftScreener.screen()` now rejects a calculated method result before ranking when its

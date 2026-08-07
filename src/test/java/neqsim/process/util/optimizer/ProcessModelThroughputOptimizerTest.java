@@ -3,6 +3,7 @@ package neqsim.process.util.optimizer;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -148,6 +149,19 @@ class ProcessModelThroughputOptimizerTest {
     fixture.separator.addCapacityConstraint(availableHeadroom);
   }
 
+  /** Adds two capacity limits whose utilization order changes as throughput rises. */
+  private void addSwitchingCapacityConstraints(final ModelFixture fixture) {
+    CapacityConstraint exportCapacity = new CapacityConstraint("exportCapacity", "kg/hr", ConstraintType.HARD)
+        .setDesignValue(15000.0).setDataSource("exportNomination")
+        .setValueSupplier(() -> fixture.feed.getFlowRate("kg/hr"));
+    CapacityConstraint compressorHeadroom = new CapacityConstraint("compressorHeadroom", "kg/hr", ConstraintType.HARD)
+        .setDesignValue(20000.0).setDataSource("compressorMap")
+        .setValueSupplier(() -> 24000.0 - fixture.feed.getFlowRate("kg/hr"));
+    fixture.separator.clearCapacityConstraints();
+    fixture.separator.addCapacityConstraint(exportCapacity);
+    fixture.separator.addCapacityConstraint(compressorHeadroom);
+  }
+
   /**
    * Creates a throughput optimizer with feed scaling and gas export objective.
    *
@@ -195,6 +209,29 @@ class ProcessModelThroughputOptimizerTest {
     assertFalse(firstInfeasible.isCurrentValueWithinValidityRange());
     assertTrue(result.toJson().contains("\"confidence\": 0.95"));
     assertTrue(result.toJson().contains("\"currentValueWithinValidityRange\": false"));
+  }
+
+  /** Verifies the case table preserves emerging and active capacity rankings at each operating point. */
+  @Test
+  void throughputCasesRetainSwitchingCapacityRankings() {
+    ModelFixture fixture = createModelFixture();
+    addSwitchingCapacityConstraints(fixture);
+
+    ProcessModelThroughputResult result = createOptimizer(fixture).findMaximumThroughput(1.0, 2.0, 0.01);
+
+    ThroughputCaseRow lowRate = result.getCaseRows().get(0);
+    ThroughputCaseRow highRate = result.getCaseRows().get(1);
+    assertEquals("compressorHeadroom", lowRate.getRankedCapacityConstraints().get(0).getConstraintName());
+    assertEquals("exportCapacity", highRate.getRankedCapacityConstraints().get(0).getConstraintName());
+    assertEquals(lowRate.getActiveConstraint(), lowRate.getRankedCapacityConstraints().get(0).getConstraintName());
+    assertEquals(highRate.getActiveConstraint(), highRate.getRankedCapacityConstraints().get(0).getConstraintName());
+    assertEquals(2.0 / 3.0, lowRate.getRankedCapacityConstraints().get(1).getUtilization(), 1.0e-12,
+        "later optimizer cases must not mutate the lower-rate snapshot");
+    assertThrows(UnsupportedOperationException.class,
+        () -> lowRate.getRankedCapacityConstraints().add(ProcessModelSimulationEvaluator.BottleneckStatus.none()));
+    String json = result.toJson();
+    assertTrue(json.contains("\"rankedCapacityConstraints\""));
+    assertTrue(json.contains("\"evidenceApplicability\""));
   }
 
   /**
