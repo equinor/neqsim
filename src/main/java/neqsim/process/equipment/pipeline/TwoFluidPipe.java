@@ -28,7 +28,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <p>
  * Implements a full two-fluid model for 1D transient multiphase pipeline flow. Unlike the drift-flux based
  * {@link neqsim.process.equipment.pipeline.twophasepipe.TransientPipe}, this model solves separate momentum equations
- * for each phase, providing more accurate predictions for:
+ * for each phase and supports studies of:
  * </p>
  * <ul>
  * <li>Countercurrent flow</li>
@@ -484,7 +484,7 @@ public class TwoFluidPipe extends Pipeline {
    */
   private boolean enforceMinimumSlip = true;
 
-  // ============ OLGA Annular Film Model Parameters ============
+  // ============ Annular Film Closure Parameters ============
 
   /**
    * Minimum film thickness for annular flow (m).
@@ -517,14 +517,15 @@ public class TwoFluidPipe extends Pipeline {
    */
   private boolean enableAnnularFilmModel = true;
 
-  // ============ OLGA Terrain Tracking Parameters ============
+  // ============ Terrain Tracking Parameters ============
 
   /**
    * Enable empirical NeqSim terrain tracking.
    *
    * <p>
-   * When enabled, uses OLGA's terrain tracking algorithm which: - Identifies all low points and high points - Tracks
-   * liquid accumulation in valleys - Models terrain-induced slugging - Handles severe slugging in risers
+   * When enabled, the empirical NeqSim closure identifies terrain extrema, tracks liquid accumulation in valleys, and
+   * initiates terrain slugs when configured thresholds are exceeded. It is not an implementation of a proprietary
+   * commercial-simulator algorithm.
    * </p>
    */
   private boolean enableTerrainTracking = true;
@@ -559,15 +560,14 @@ public class TwoFluidPipe extends Pipeline {
    */
   private boolean enableSevereSlugModel = true;
 
-  // ============ OLGA Flow Regime Map Parameters ============
+  // ============ Historical Alternate Flow Regime Parameters ============
 
   /**
-   * Use OLGA flow regime map instead of Taitel-Dukler.
+   * Use the historical NeqSim alternate flow-regime closure instead of Taitel-Dukler.
    *
    * <p>
-   * OLGA's flow regime map differs from Taitel-Dukler in several ways: - Different transition criteria for stratified
-   * wavy to slug - Accounts for pipe roughness effects - Better handling of inclined flow - Hysteresis in regime
-   * transitions
+   * The serialized field and public method names are retained for compatibility. The closure is literature-inspired;
+   * the name does not establish equivalence with or reproduce a proprietary commercial flow-regime map.
    * </p>
    */
   private boolean useOLGAFlowRegimeMap = true;
@@ -2296,13 +2296,14 @@ public class TwoFluidPipe extends Pipeline {
 
     double alphaL;
 
-    // Use OLGA model type to determine calculation method
+    // Select the literature-inspired NeqSim closure set. Historical enum and helper
+    // names containing OLGA are retained for source and serialization compatibility.
     if (olgaModelType == OLGAModelType.FULL) {
-      // ========== FULL OLGA MODEL ==========
-      // Use flow-regime-specific OLGA correlations
+      // ========== FULL CLOSURE SET ==========
+      // Use flow-regime-specific literature correlations.
 
       if (regime == FlowRegime.ANNULAR) {
-        // OLGA annular film model
+        // Annular-film closure
         if (enableAnnularFilmModel) {
           double[] annularResult = calculateAnnularHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter,
               inclination);
@@ -2343,11 +2344,11 @@ public class TwoFluidPipe extends Pipeline {
         }
 
       } else if (regime == FlowRegime.SLUG || regime == FlowRegime.CHURN) {
-        // OLGA slug flow model
+        // Slug unit-cell closure
         alphaL = calculateSlugHoldupOLGA(vsG, vsL, rhoG, rhoL, muL, sigma, diameter, inclination);
 
       } else if (regime == FlowRegime.STRATIFIED_SMOOTH || regime == FlowRegime.STRATIFIED_WAVY) {
-        // OLGA stratified flow momentum balance
+        // Stratified-flow momentum balance
         alphaL = calculateStratifiedHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter, inclination);
 
       } else if (regime == FlowRegime.DISPERSED_BUBBLE || regime == FlowRegime.BUBBLE) {
@@ -2394,7 +2395,7 @@ public class TwoFluidPipe extends Pipeline {
       }
 
     } else if (olgaModelType == OLGAModelType.SIMPLIFIED) {
-      // ========== SIMPLIFIED OLGA MODEL ==========
+      // ========== SIMPLIFIED CLOSURE SET ==========
       // Use empirical correlations with minimum slip
 
       // For gas-dominant systems, use stratified momentum balance
@@ -2974,7 +2975,7 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Calculate terrain-induced liquid accumulation enhancement using OLGA methodology.
+   * Calculate terrain-induced liquid accumulation with empirical NeqSim modifiers.
    *
    * <p>
    * This implements empirical NeqSim terrain holdup modifiers which account for:
@@ -3028,7 +3029,7 @@ public class TwoFluidPipe extends Pipeline {
 
     double enhancedHoldup = baseHoldup;
 
-    // ========== LOW POINT ACCUMULATION (OLGA Valley Model) ==========
+    // ========== LOW POINT ACCUMULATION ==========
     if (isLowPoint || sec.isLowPoint()) {
       // At low points, liquid accumulates due to gravity pooling
       // NeqSim uses a modified Froude-number screen for accumulation
@@ -3100,7 +3101,7 @@ public class TwoFluidPipe extends Pipeline {
       }
     }
 
-    // ========== UPHILL LIQUID FALLBACK (OLGA Film Model) ==========
+    // ========== UPHILL LIQUID FALLBACK ==========
     else if (isUphill) {
       double sinTheta = Math.sin(inclination);
       double cosTheta = Math.cos(inclination);
@@ -3135,7 +3136,7 @@ public class TwoFluidPipe extends Pipeline {
       }
     }
 
-    // ========== DOWNHILL DRAINAGE (OLGA Film Model) ==========
+    // ========== DOWNHILL DRAINAGE ==========
     else if (isDownhill) {
       double sinTheta = Math.abs(Math.sin(inclination));
 
@@ -3573,7 +3574,7 @@ public class TwoFluidPipe extends Pipeline {
     while (timeRemaining > 1e-12 && stepCount < maxSubSteps) {
       stepCount++;
 
-      // Adaptive: recompute CFL each step (OLGA/LedaFlow approach)
+      // Adaptive: recompute CFL from the current state at each step.
       if (enableAdaptiveTimestepping) {
         dtCFL = isIMEX ? calcConvectiveTimeStep() : calcStableTimeStep();
         dtCFL *= adaptiveDtFactor;
@@ -5822,7 +5823,7 @@ public class TwoFluidPipe extends Pipeline {
    * <p>
    * Enables variable spatial resolution along the pipe. Use shorter sections at elevation changes, risers, and dips
    * where flow regime transitions occur, and longer sections in uniform horizontal/vertical runs. This follows the same
-   * approach used in OLGA and LedaFlow for optimising accuracy without unnecessary computational cost.
+   * standard finite-volume practice for concentrating resolution where gradients are largest.
    * </p>
    *
    * <p>
@@ -5860,8 +5861,8 @@ public class TwoFluidPipe extends Pipeline {
    * </p>
    *
    * <p>
-   * This follows OLGA/LedaFlow best practice: short sections (units to tens of pipe diameters) at elevation breaks,
-   * longer sections (50-200 m) on uniform runs.
+   * Use short sections at elevation breaks and longer sections on uniform runs. Demonstrate mesh convergence for the
+   * quantities being reported; severe-slug cycle period can be especially sensitive to riser-base cell placement.
    * </p>
    *
    * @param baseSections Base number of sections for uniform regions
@@ -6413,7 +6414,7 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Enable adaptive timestepping (OLGA/LedaFlow-style).
+   * Enable adaptive timestepping.
    *
    * <p>
    * When enabled, the solver automatically adjusts the internal sub-step size to maintain stability. Per sub-step, it:
@@ -6423,9 +6424,9 @@ public class TwoFluidPipe extends Pipeline {
    * </p>
    *
    * <p>
-   * This approach follows the semi-implicit OLGA paradigm: the CFL condition is evaluated from material velocities (not
-   * sound speed) when using IMEX integration, allowing large timesteps for long pipelines. The adaptive controller
-   * ensures stability across flow regime transitions, terrain slugging, valve operations, and riser-base dynamics.
+   * With IMEX integration, the CFL estimate uses material velocities rather than sound speed. Step rejection improves
+   * robustness but does not by itself establish accuracy or stability for a particular transient; benchmark timestep
+   * sensitivity for the scenario being reported.
    * </p>
    *
    * @param enable true to enable adaptive timestepping
@@ -6758,8 +6759,8 @@ public class TwoFluidPipe extends Pipeline {
    * Enable or disable full terrain tracking.
    *
    * <p>
-   * Terrain tracking identifies low points and models liquid accumulation in valleys. Required for accurate liquid
-   * inventory prediction in undulating pipelines.
+   * Terrain tracking identifies low points and applies empirical liquid-accumulation modifiers in valleys. Establish
+   * mesh and timestep convergence against suitable data for the quantity being reported.
    * </p>
    *
    * @param enable true to enable terrain tracking (default true)
@@ -6799,8 +6800,8 @@ public class TwoFluidPipe extends Pipeline {
    * Set the liquid fallback coefficient for uphill sections.
    *
    * <p>
-   * Controls liquid accumulation in uphill sections. Higher values mean more liquid falls back and accumulates. OLGA
-   * default is approximately 0.3.
+   * Controls empirical liquid accumulation in uphill sections. Higher values mean more liquid falls back and
+   * accumulates. The default 0.3 is a NeqSim setting and is not attributed to a commercial simulator.
    * </p>
    *
    * @param coefficient fallback coefficient (0-1), default 0.3
@@ -6859,23 +6860,23 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Enable or disable OLGA flow regime map.
+   * Enable or disable the historical alternate flow-regime closure.
    *
    * <p>
-   * When enabled, uses OLGA's flow regime transition criteria instead of Taitel-Dukler. OLGA's criteria include
-   * roughness effects and better inclined flow handling.
+   * The method name is retained for API compatibility. Enabling it selects a literature-inspired NeqSim closure, not a
+   * proprietary commercial flow-regime map.
    * </p>
    *
-   * @param enable true to use OLGA flow regime map (default true)
+   * @param enable true to use the historical alternate closure (default true)
    */
   public void setUseOLGAFlowRegimeMap(boolean enable) {
     this.useOLGAFlowRegimeMap = enable;
   }
 
   /**
-   * Check if OLGA flow regime map is used.
+   * Check if the historical alternate flow-regime closure is used.
    *
-   * @return true if OLGA flow regime map is enabled
+   * @return true if the historical alternate closure is enabled
    */
   public boolean isUseOLGAFlowRegimeMap() {
     return useOLGAFlowRegimeMap;

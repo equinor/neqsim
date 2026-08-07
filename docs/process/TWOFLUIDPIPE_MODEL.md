@@ -397,6 +397,60 @@ reserved for the explicit system result and is cleared by the next transient ste
 Reference: Taitel, Y. (1986), *Stability of Severe Slugging*, International Journal of
 Multiphase Flow 12(2), 203–217, [doi:10.1016/0301-9322(86)90026-1](https://doi.org/10.1016/0301-9322(86)90026-1).
 
+### Public severe-slugging benchmark
+
+The diagnostic and transient solver are checked against Tengesdal's public 2002 air–mineral-oil
+experiments in a 3-inch, -3-degree flowline and 14.94 m riser. The source data and the assumptions
+needed to reproduce them are recorded with the tests instead of being treated as an undocumented
+commercial-simulator comparison.
+
+The diagnostic benchmark uses all 55 operating points in Figure 4-8 and the superficial
+velocities and uncertainties in Table A-3. Figure symbols were digitized as 26 severe-slug,
+14 transition, and 15 stable observations. Transition points are reported separately and are not
+scored as either binary class. With homogeneous inlet holdup, the published effective upstream
+volume, 856 kg/m³ liquid density, atmospheric separator pressure, and a 0.89 gas-cap void
+fraction, the current Taitel screen gives:
+
+| Experimental class | Predicted severe | Predicted stable |
+|--------------------|------------------|------------------|
+| Severe slug | 22 | 4 |
+| Stable | 8 | 7 |
+| Transition (not scored) | 6 | 8 |
+
+This is 70.7% binary accuracy, 84.6% severe-slug recall, and 46.7% stable recall. It is useful as
+a conservative screen but is not a high-specificity classifier and must not be described as
+quantitative dynamic validation.
+
+The slow dynamic benchmark reproduces large-facility Test 3 ($v_{SL}=0.50$ m/s and standard
+$v_{SG}=1.00$ m/s). The digitized experiment has about 98 ± 5 kPa inlet-pressure amplitude and
+a 38 ± 2 s cycle period. A 12-section RK4 calculation gives approximately 107 kPa and 21.8 s:
+the pressure amplitude is close, but the model cycles too rapidly. The tracked maximum outlet slug
+is approximately 1.9 m, or 0.13 riser heights, so this case does not quantitatively validate slug
+length. Liquid production is strongly cyclic, phase-resolved and total mass closure are below
+$10^{-10}$, and the gas and oil inventories remain finite and positive.
+
+The dynamic reproduction uses the physical 19.81 m flowline plus riser, 0.0762 m diameter,
+atmospheric outlet, nitrogen as an air surrogate, and a single non-volatile TBP fraction fitted to
+the reported Crystex density. The source does not give a case-specific temperature or a full oil
+assay, so 25 °C and the TBP molecular weight are explicit modelling assumptions. The experimental
+upstream tank/plenum is not represented dynamically; this missing compressible volume is a likely
+contributor to the short period. The result is checked on 12- and 16-section meshes and with 0.1 s
+and 0.2 s outer steps. Coarser grids are sensitive to whether the flowline–riser boundary lands on
+a cell. The stochastic slug tracker uses a fixed benchmark seed; ordinary simulations retain its
+non-deterministic default. Only the explicit RK4 path is covered; no IMEX severe-slugging
+validation is claimed.
+
+Run the public checks with:
+
+```bash
+./mvnw -Dtest=SevereSluggingBenchmarkHarnessTest test
+./mvnw -DexcludedTestGroups= -Dtest=SevereSluggingExperimentalBenchmarkTest test
+```
+
+Source: S. Tengesdal, *Investigation of Self-Lifting Concept for Severe Slugging Elimination in
+Deep-Water Pipeline/Riser Systems* (2002),
+[BSEE Technical Assessment Program report](https://www.bsee.gov/sites/bsee.gov/files/tap-technical-assessment-program/397aa.pdf).
+
 #### 3. Uphill Liquid Fallback
 Uses Turner droplet model for critical gas velocity:
 ```java
@@ -804,7 +858,20 @@ pipe.setSteadyStateMaxWallClockTime(60.0); // Allow 60 seconds
 
 ## Validation Status
 
-### Implemented Tests
+### Evidence levels
+
+Passing software tests establish numerical regressions, API behavior, and conservation. They do
+not by themselves establish agreement with experiment. Current external evidence is:
+
+- the public Tengesdal flow-map confusion matrix for the Taitel diagnostic;
+- the public Tengesdal Test 3 pressure, production-cycle, period, and slug-length comparison;
+- Beggs–Brill steady-profile comparisons, which are model-to-model checks rather than experiment.
+
+The public severe-slugging benchmark deliberately retains failed/limited metrics in its assertions
+and documentation. In particular, the present cycle period and slug-length result prevent a claim
+of fully quantitative severe-slugging validation.
+
+### Implemented regression tests
 
 #### Integration Tests (TwoFluidPipeIntegrationTest)
 - `testVelocityDependentLiquidAccumulation` - Verifies holdup increases at low velocity
@@ -830,13 +897,8 @@ pipe.setSteadyStateMaxWallClockTime(60.0); // Allow 60 seconds
 - `testHillyTerrainMultipleLowPoints` - Sinusoidal terrain ±20m, 3 low points
 - `testDownhillDrainage` - 50m downhill slope, liquid drainage validation
 
-### Test Coverage Summary
-
-| Test Category | Tests | Status |
-|--------------|-------|--------|
-| Integration Tests | 24 | ✅ All passing |
-| Validation Tests | 13 | ✅ All passing |
-| **Total** | **37** | **✅ All passing** |
+The exact suite size changes as the model evolves. Use the Maven/JUnit result for the tested commit
+rather than a hard-coded historical count.
 
 ## References
 

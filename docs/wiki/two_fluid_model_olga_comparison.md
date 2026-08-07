@@ -1,13 +1,16 @@
 ---
-title: "TwoFluidPipe Model: Detailed Review and OLGA Comparison"
-description: "The `TwoFluidPipe` class in NeqSim implements a transient two-fluid model for 1D multiphase pipeline flow. This document provides a detailed review of the model, identifies bugs found and fixed, and c..."
+title: "TwoFluidPipe Model: Detailed Review and External Comparison"
+description: "Technical review of the TwoFluidPipe model, its numerical implementation, and traceable external comparisons."
 ---
 
-# TwoFluidPipe Model: Detailed Review and OLGA Comparison
+# TwoFluidPipe Model: Detailed Review and External Comparison
 
 ## Overview
 
-The `TwoFluidPipe` class in NeqSim implements a transient two-fluid model for 1D multiphase pipeline flow. This document provides a detailed review of the model, identifies bugs found and fixed, and compares the implementation to the commercial OLGA simulator.
+The `TwoFluidPipe` class in NeqSim implements a transient two-fluid model for 1D multiphase
+pipeline flow. This document reviews the implementation and records traceable comparisons. API
+names containing `OLGA` are retained for compatibility; they identify literature-inspired NeqSim
+closure selections and do not claim numerical equivalence with that or any commercial simulator.
 
 ## Table of Contents
 
@@ -675,22 +678,34 @@ From the comparison tests (`TwoFluidVsBeggsBrillComparisonTest`):
 Terrain slug detection successfully identifies:
 - Valley liquid accumulation (holdup up to 85% at low Fr)
 - Peak gas accumulation (reduced holdup)
-- Riser base severe slugging potential
+- Riser-base topology and liquid-accumulation conditions for further system screening
 
-### Lagrangian Slug Tracker Validation
+These software scenarios are regression checks, not experimental validation.
 
-The Lagrangian slug tracking model has been validated against:
+### Public severe-slugging benchmark
 
-1. **Analytical benchmarks**: Slug frequency, velocity, and holdup correlations
-2. **Mass conservation**: Total liquid mass tracked within 5% through simulation
-3. **Merging behavior**: Proper coalescence when following slug catches preceding slug
-4. **Wake effects**: Expected acceleration factors observed
+Tengesdal's 2002 public air–mineral-oil experiments provide the current external check. On the
+55-point -3-degree velocity map, the Taitel system diagnostic scores 22/26 severe observations and
+7/15 stable observations correctly; the 14 transition observations remain a separate category.
+For dynamic large-facility Test 3, the model pressure amplitude is approximately 107 kPa versus
+98 ± 5 kPa digitized from the experiment, while the model period is approximately 21.8 s versus
+38 ± 2 s. The current slug tracker also underpredicts the experimental severe-slug length. These
+limits preclude a claim of quantitative severe-slugging validation.
 
-Test results from `LagrangianSlugTrackerTest`:
-- 15 tests all passing
-- Slug velocity within 1% of Bendiksen correlation
-- Holdup within 2% of Gregory correlation
-- Mass conservation error < 1% for typical cases
+Source: [Tengesdal (2002), BSEE Technical Assessment Program](https://www.bsee.gov/sites/bsee.gov/files/tap-technical-assessment-program/397aa.pdf).
+
+### Lagrangian slug-tracker regression evidence
+
+`LagrangianSlugTrackerTest` checks the implementation against its selected correlations and
+internal invariants:
+
+1. **Correlation consistency**: slug frequency, velocity, and holdup calculations
+2. **Bookkeeping**: tracked, returned, and exited liquid mass
+3. **Merging behavior**: coalescence when a following slug catches a preceding slug
+4. **Wake behavior**: the configured acceleration response
+
+These are unit/regression checks, not independent experimental validation of predicted slug
+frequency or length. The public Tengesdal comparison above is the relevant external evidence.
 
 ---
 

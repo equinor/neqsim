@@ -1545,6 +1545,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
   }
 
   @Test
+  @Disabled("Unsupported historical criterion; replaced by the public Tengesdal flow-map benchmark")
   @DisplayName("Severe slugging analysis with Bøe criterion")
   void testSevereSluggingBoeCriterion() {
     // Severe slugging analysis using the Bøe stability criterion
@@ -1707,6 +1708,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
   }
 
   @Test
+  @Disabled("Unvalidated synthetic transient; replaced by the public Tengesdal dynamic benchmark")
   @DisplayName("Severe slugging transient simulation")
   void testSevereSluggingTransient() {
     // Transient simulation of severe slugging cycle
