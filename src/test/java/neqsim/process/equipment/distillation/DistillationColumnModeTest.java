@@ -159,6 +159,36 @@ public class DistillationColumnModeTest {
     assertTrue(column.getLastPumparoundRelativeChange() >= 0.0);
   }
 
+  /** Test that reinitialization preserves the configured multistage pumparound return state. */
+  @Test
+  public void cooledMultistagePumparoundPreservesReturnState() {
+    double[] temperatureDrops = { 4.0, 5.0 };
+    for (double temperatureDrop : temperatureDrops) {
+      DistillationColumn column = createMultistagePumparoundColumn(temperatureDrop);
+      DistillationColumn.ColumnPumparound pumparound = column.getPumparounds().get(0);
+      column.run(UUID.randomUUID());
+
+      double duty = pumparound.getReturnStream().getFluid().getEnthalpy()
+          - pumparound.getDrawStream().getFluid().getEnthalpy();
+      double returnFlow = pumparound.getReturnStream().getFlowRate("kg/hr");
+      assertTrue(column.solved(), column.getConvergenceDiagnostics());
+      assertTrue(column.isLastColumnTearConverged());
+      assertEquals(temperatureDrop,
+          pumparound.getDrawStream().getTemperature() - pumparound.getReturnStream().getTemperature(), 1.0e-9);
+      assertTrue(returnFlow > 0.0 && returnFlow < 10000.0);
+      assertTrue(duty < 0.0);
+      assertTrue(Math.abs(column.getMassBalance("kg/hr")) < 1.0e-8);
+
+      column.run(UUID.randomUUID());
+      double repeatedDuty = pumparound.getReturnStream().getFluid().getEnthalpy()
+          - pumparound.getDrawStream().getFluid().getEnthalpy();
+      assertEquals(temperatureDrop,
+          pumparound.getDrawStream().getTemperature() - pumparound.getReturnStream().getTemperature(), 1.0e-9);
+      assertEquals(returnFlow, pumparound.getReturnStream().getFlowRate("kg/hr"), 5.0e-5 * returnFlow);
+      assertEquals(duty, repeatedDuty, 5.0e-5 * Math.abs(duty));
+    }
+  }
+
   /**
    * Test hydraulic pressure-drop coupling API and diagnostics.
    */
@@ -200,6 +230,34 @@ public class DistillationColumnModeTest {
     column.addLiquidPumparound("PA-cold", 0, 0, 0.20, 400.0);
 
     assertThrows(IllegalStateException.class, () -> column.run(UUID.randomUUID()));
+  }
+
+  /**
+   * Create the convergent multicomponent reboiler column used by pumparound state tests.
+   *
+   * @param temperatureDrop configured pumparound cooling in Kelvin
+   * @return unrun column with one liquid pumparound
+   */
+  private DistillationColumn createMultistagePumparoundColumn(double temperatureDrop) {
+    SystemSrkEos fluid = new SystemSrkEos(293.15, 10.0);
+    fluid.addComponent("propane", 40.0);
+    fluid.addComponent("n-butane", 30.0);
+    fluid.addComponent("n-pentane", 30.0);
+    fluid.setMixingRule("classic");
+    Stream feed = new Stream("fractionator pumparound feed", fluid);
+    feed.setFlowRate(10000.0, "kg/hr");
+    feed.run();
+
+    DistillationColumn column = new DistillationColumn("fractionator pumparound column", 6, true, false);
+    column.addFeedStream(feed, 3);
+    column.getReboiler().setOutTemperature(353.15);
+    column.setTopPressure(10.0);
+    column.setBottomPressure(10.5);
+    column.setSolverType(DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
+    column.addLiquidPumparound("PA-multistage", 3, 5, 0.02, temperatureDrop);
+    column.setMaxPumparoundIterations(12);
+    column.setPumparoundTolerance(1.0e-4);
+    return column;
   }
 
   /**
