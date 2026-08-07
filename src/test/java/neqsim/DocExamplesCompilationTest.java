@@ -728,17 +728,27 @@ public class DocExamplesCompilationTest {
     String[][] table = ops.getResultTable();
     assertTrue(table.length > 1);
 
-    SystemInterface pitzer = new SystemPitzer(273.15 + 80.0, 100.0);
-    pitzer.addComponent("water", 0.90);
-    pitzer.addComponent("Na+", 0.03);
-    pitzer.addComponent("Cl-", 0.035);
-    pitzer.addComponent("Ca++", 0.005);
-    pitzer.addComponent("SO4--", 0.002);
+    SystemInterface pitzer = new SystemPitzer(313.15, 50.0);
+    pitzer.addComponent("methane", 5.0);
+    pitzer.addComponent("CO2", 0.05);
+    pitzer.addComponent("n-heptane", 2.0);
+    pitzer.addComponent("water", 55.5);
+    pitzer.addComponent("Ca++", 1.0e-4);
+    pitzer.addComponent("Na+", 1.0e-3);
+    pitzer.addComponent("Cl-", 2.0e-4);
+    pitzer.addComponent("HCO3-", 1.0e-3);
+    pitzer.chemicalReactionInit();
+    pitzer.createDatabase(true);
     pitzer.setMixingRule("classic");
+    pitzer.setMultiPhaseCheck(true);
     ThermodynamicOperations pitzerOps = new ThermodynamicOperations(pitzer);
     pitzerOps.TPflash();
     pitzer.initProperties();
-    assertTrue(pitzer.getNumberOfPhases() >= 1);
+    double calciteScalePotential = pitzerOps.getRelativeScalePotential("CaCO3");
+    assertTrue(pitzer.hasPhaseType("gas"));
+    assertTrue(pitzer.hasPhaseType("oil"));
+    assertTrue(pitzer.hasPhaseType("aqueous"));
+    assertTrue(Double.isFinite(calciteScalePotential) && calciteScalePotential > 0.0);
 
     WaterCompatibilityScreener screener = new WaterCompatibilityScreener();
     screener.setFormationWater(400, 200, 50, 2, 150, 10, 50000, 90, 200, 3.0, 6.2);

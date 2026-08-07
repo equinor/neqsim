@@ -45,6 +45,22 @@ public interface HybridEosGeFlashModel extends EosGeFlashModel {
   }
 
   /**
+   * Synchronize reaction-adjusted overall species amounts across all model-owned phase roles.
+   *
+   * <p>
+   * Chemical equilibrium changes species amounts while conserving elements. A coupled reactive flash must therefore
+   * replace the feed-species {@code z} values before its next phase-fraction solve; otherwise generated species are
+   * discarded or rescaled to the original total mole count.
+   * </p>
+   *
+   * @param componentMoles reaction-adjusted overall moles by component index
+   * @param totalMoles sum of the reaction-adjusted component amounts
+   */
+  default void synchronizeHybridEosGeOverallComposition(double[] componentMoles, double totalMoles) {
+    // Ordinary systems do not own hybrid phase roles.
+  }
+
+  /**
    * Check whether an active phase number maps to the configured GE aqueous role.
    *
    * <p>

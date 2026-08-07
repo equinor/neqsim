@@ -10,8 +10,9 @@ import neqsim.thermo.phase.PhaseSrkEos;
  * Supports vapor-liquid-liquid equilibrium (VLLE) with creation-order roles {@code phaseArray[0]} = SRK gas,
  * {@code phaseArray[1]} = Pitzer aqueous and {@code phaseArray[2]} = SRK oil. Enable the dedicated hybrid strategy by
  * calling {@code setMultiPhaseCheck(true)} before running the flash. Phase disappearance only changes the active
- * mapping; repeated flashes, cloning and serialization retain the role objects. Reactive systems initialized through
- * {@code chemicalReactionInit()} continue to use the established chemical multiphase path.
+ * mapping; repeated flashes, cloning and serialization retain the role objects. Systems initialized through
+ * {@code chemicalReactionInit()} alternate fixed-role phase equilibrium with chemical equilibrium in the Pitzer aqueous
+ * phase, enabling reactive gas-aqueous and gas-oil-aqueous scale-potential calculations.
  * </p>
  *
  * <p>

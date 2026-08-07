@@ -381,8 +381,11 @@ boolean hasAqueousPhase = fluid.hasPhaseType(PhaseType.AQUEOUS);
 
 The creation-order role objects are stable even when active phases are density-ordered or disappear. A later flash
 reconsiders inactive roles from the current feed and conditions. Neutral non-water species in the Pitzer phase use an
-aqueous Henry reference; water alone uses the Pitzer osmotic/Raoult solvent convention. Reactive Pitzer systems keep
-the established chemical-equilibrium flash path. Solid and wax checks are not yet supported by the hybrid strategy.
+aqueous Henry reference; water alone uses the Pitzer osmotic/Raoult solvent convention. Calling
+`chemicalReactionInit()` couples aqueous reaction equilibrium to the same fixed gas/oil/aqueous roles. This supports
+activity-based scale-potential screening after reactive gas-aqueous or gas-oil-aqueous flashes. The result is a
+saturation ratio; explicit mineral precipitation, solid amounts, solid-phase equilibrium and wax checks are not yet
+supported by the hybrid strategy.
 
 ---
 

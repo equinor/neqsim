@@ -171,7 +171,7 @@ public abstract class SystemEosGE extends SystemEos implements HybridEosGeFlashM
   /** {@inheritDoc} */
   @Override
   public boolean requiresHybridEosGeFlash() {
-    return hybridEosGeTopologyConfigured && doMultiPhaseCheck() && !isChemicalSystem();
+    return hybridEosGeTopologyConfigured && doMultiPhaseCheck();
   }
 
   /** {@inheritDoc} */
@@ -201,6 +201,34 @@ public abstract class SystemEosGE extends SystemEos implements HybridEosGeFlashM
     restoreHybridPhaseObject(eosOilPhaseSlot, PhaseType.OIL);
     restoreHybridPhaseObject(geLiquidPhaseSlot, PhaseType.AQUEOUS);
     restoreHybridEosGeActivePhaseTypes();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void synchronizeHybridEosGeOverallComposition(double[] componentMoles, double totalMoles) {
+    if (!hybridEosGeTopologyConfigured) {
+      throw new IllegalStateException("Hybrid EOS-GE phase roles have not been configured.");
+    }
+    if (componentMoles == null || componentMoles.length != getNumberOfComponents()) {
+      throw new IllegalArgumentException("Reaction-adjusted component amounts must match the system component count.");
+    }
+    if (!(totalMoles > 0.0) || !Double.isFinite(totalMoles)) {
+      throw new IllegalArgumentException("Reaction-adjusted total moles must be finite and positive.");
+    }
+
+    setTotalNumberOfMoles(totalMoles);
+    int[] roleSlots = new int[] { eosGasPhaseSlot, eosOilPhaseSlot, geLiquidPhaseSlot };
+    for (int roleSlot : roleSlots) {
+      if (roleSlot < 0) {
+        continue;
+      }
+      PhaseInterface role = phaseArray[roleSlot];
+      for (int componentIndex = 0; componentIndex < componentMoles.length; componentIndex++) {
+        double moles = componentMoles[componentIndex];
+        role.getComponent(componentIndex).setNumberOfmoles(moles);
+        role.getComponent(componentIndex).setz(moles / totalMoles);
+      }
+    }
   }
 
   /** {@inheritDoc} */

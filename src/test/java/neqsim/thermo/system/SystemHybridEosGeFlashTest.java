@@ -10,6 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import org.junit.jupiter.api.Test;
+import neqsim.chemicalreactions.ChemicalReactionOperations;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseEos;
 import neqsim.thermo.phase.PhaseGEInterface;
@@ -41,6 +42,31 @@ class SystemHybridEosGeFlashTest extends neqsim.NeqSimTest {
     system.addComponent("water", 55.5);
     system.addComponent("Na+", 1.0);
     system.addComponent("Cl-", 1.0);
+    system.setMixingRule("classic");
+    system.setMultiPhaseCheck(true);
+    return system;
+  }
+
+  /**
+   * Build a reactive carbonate-scale system with optional EOS oil.
+   *
+   * @param includeOil whether to add an oil-forming hydrocarbon
+   * @return configured unflashed reactive Pitzer system
+   */
+  private SystemPitzer createReactiveScaleSystem(boolean includeOil) {
+    SystemPitzer system = new SystemPitzer(313.15, 50.0);
+    system.addComponent("methane", 5.0);
+    system.addComponent("CO2", 0.05);
+    if (includeOil) {
+      system.addComponent("n-heptane", 2.0);
+    }
+    system.addComponent("water", 55.5);
+    system.addComponent("Ca++", 1.0e-4);
+    system.addComponent("Na+", 1.0e-3);
+    system.addComponent("Cl-", 2.0e-4);
+    system.addComponent("HCO3-", 1.0e-3);
+    system.chemicalReactionInit();
+    system.createDatabase(true);
     system.setMixingRule("classic");
     system.setMultiPhaseCheck(true);
     return system;
@@ -79,6 +105,48 @@ class SystemHybridEosGeFlashTest extends neqsim.NeqSimTest {
         }
       }
     }
+  }
+
+  /** Reactive gas-aqueous Pitzer flash retains carbonate chemistry and exposes calcite scale potential. */
+  @Test
+  void reactiveGasAqueousFlashSupportsCalciteScalePotential() throws Exception {
+    SystemPitzer system = createReactiveScaleSystem(false);
+    double[] conservedQuantities = getReactiveConservedQuantities(system, true);
+    double initialCarbonateMoles = system.getPhase(0).getComponent("CO3--").getNumberOfmoles();
+    assertTrue(system.requiresHybridEosGeFlash(), "Reactive Pitzer systems must select the fixed-role hybrid strategy");
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(system);
+    operations.TPflash();
+
+    assertEquals(2, system.getNumberOfPhases(), phaseDiagnostics(system));
+    assertTrue(hasPhaseType(system, PhaseType.GAS));
+    assertFalse(hasPhaseType(system, PhaseType.OIL));
+    assertTrue(hasPhaseType(system, PhaseType.AQUEOUS));
+    assertReactiveCarbonateScaleResult(system, operations, conservedQuantities, initialCarbonateMoles);
+  }
+
+  /** Reactive gas-oil-aqueous Pitzer flash retains all roles and exposes calcite scale potential. */
+  @Test
+  void reactiveGasOilAqueousFlashSupportsCalciteScalePotential() throws Exception {
+    SystemPitzer system = createReactiveScaleSystem(true);
+    double[] conservedQuantities = getReactiveConservedQuantities(system, true);
+    double initialCarbonateMoles = system.getPhase(0).getComponent("CO3--").getNumberOfmoles();
+    PhaseInterface gasRole = system.getEquationOfStatePhase();
+    PhaseInterface oilRole = system.getEosOilPhase();
+    PhaseInterface aqueousRole = system.getGeLiquidPhase();
+    assertTrue(system.requiresHybridEosGeFlash(), "Reactive Pitzer systems must select the fixed-role hybrid strategy");
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(system);
+    operations.TPflash();
+
+    assertEquals(3, system.getNumberOfPhases(), phaseDiagnostics(system));
+    assertTrue(hasPhaseType(system, PhaseType.GAS));
+    assertTrue(hasPhaseType(system, PhaseType.OIL));
+    assertTrue(hasPhaseType(system, PhaseType.AQUEOUS));
+    assertSame(gasRole, system.getEquationOfStatePhase());
+    assertSame(oilRole, system.getEosOilPhase());
+    assertSame(aqueousRole, system.getGeLiquidPhase());
+    assertReactiveCarbonateScaleResult(system, operations, conservedQuantities, initialCarbonateMoles);
   }
 
   /** A trace oil role disappears from the active mapping and the same object is restored on a later flash. */
@@ -283,6 +351,113 @@ class SystemHybridEosGeFlashTest extends neqsim.NeqSimTest {
               referenceComponent.getComponentName());
         }
       }
+    }
+  }
+
+  /**
+   * Assert reactive carbonate formation and a finite, repeatable Pitzer calcite saturation ratio.
+   *
+   * @param system flashed reactive Pitzer system
+   * @param operations operations bound to the flashed system
+   * @param conservedQuantities element and charge quantities before the flash
+   * @param initialCarbonateMoles carbonate trace amount before chemical equilibrium
+   * @throws Exception if scale-potential evaluation fails
+   */
+  private void assertReactiveCarbonateScaleResult(SystemPitzer system, ThermodynamicOperations operations,
+      double[] conservedQuantities, double initialCarbonateMoles) throws Exception {
+    PhaseInterface aqueous = findPhase(system, PhaseType.AQUEOUS);
+    assertTrue(aqueous instanceof PhasePitzer);
+    assertTrue(system.isChemicalSystem());
+    assertTrue(aqueous.hasComponent("HCO3-"));
+    assertTrue(aqueous.hasComponent("CO3--"));
+    double bicarbonateMoles = aqueous.getComponent("HCO3-").getNumberOfMolesInPhase();
+    double carbonateMoles = aqueous.getComponent("CO3--").getNumberOfMolesInPhase();
+    assertTrue(bicarbonateMoles > 0.0);
+    assertTrue(carbonateMoles > 0.0, "Aqueous bicarbonate reactions must retain carbonate: " + carbonateMoles);
+    assertTrue(Math.abs(carbonateMoles - initialCarbonateMoles) > initialCarbonateMoles * 1.0e-3,
+        "Aqueous chemical equilibrium must change carbonate from its trace seed");
+    assertReactiveConservedQuantities(system, conservedQuantities);
+
+    double firstScalePotential = operations.getRelativeScalePotential("CaCO3");
+    assertTrue(Double.isFinite(firstScalePotential) && firstScalePotential > 0.0,
+        "Pitzer calcite scale potential must be finite and positive");
+
+    operations.TPflash();
+    double repeatedScalePotential = operations.getRelativeScalePotential("CaCO3");
+    assertReactiveConservedQuantities(system, conservedQuantities);
+    assertEquals(firstScalePotential, repeatedScalePotential, Math.max(1.0e-8, Math.abs(firstScalePotential) * 1.0e-4),
+        "Repeated reactive hybrid flashes must retain the same calcite scale potential");
+  }
+
+  /**
+   * Calculate the chemical subsystem's conserved element and charge quantities.
+   *
+   * @param system reactive system
+   * @param useTotalComponentMoles whether to read the feed totals instead of summing active phases
+   * @return element quantities followed by net ionic charge
+   */
+  private double[] getReactiveConservedQuantities(SystemPitzer system, boolean useTotalComponentMoles) {
+    ChemicalReactionOperations reactions = system.getChemicalReactionOperations();
+    ComponentInterface[] reactiveComponents = reactions.getComponents();
+    double[][] conservationMatrix = reactions.getAmatrix();
+    double[] quantities = new double[conservationMatrix.length];
+
+    for (int reactiveIndex = 0; reactiveIndex < reactiveComponents.length; reactiveIndex++) {
+      int componentIndex = reactiveComponents[reactiveIndex].getComponentNumber();
+      double componentMoles = 0.0;
+      if (useTotalComponentMoles) {
+        componentMoles = system.getPhase(0).getComponent(componentIndex).getNumberOfmoles();
+      } else {
+        for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+          componentMoles += system.getPhase(phaseIndex).getComponent(componentIndex).getNumberOfMolesInPhase();
+        }
+      }
+      for (int quantityIndex = 0; quantityIndex < conservationMatrix.length - 1; quantityIndex++) {
+        quantities[quantityIndex] += conservationMatrix[quantityIndex][reactiveIndex] * componentMoles;
+      }
+    }
+    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
+      double componentMoles = 0.0;
+      if (useTotalComponentMoles) {
+        componentMoles = system.getPhase(0).getComponent(componentIndex).getNumberOfmoles();
+      } else {
+        for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+          componentMoles += system.getPhase(phaseIndex).getComponent(componentIndex).getNumberOfMolesInPhase();
+        }
+      }
+      quantities[quantities.length - 1] += system.getPhase(0).getComponent(componentIndex).getIonicCharge()
+          * componentMoles;
+    }
+    return quantities;
+  }
+
+  /**
+   * Assert conservation of every chemical element and net ionic charge through the coupled flash.
+   *
+   * @param system flashed reactive system
+   * @param expectedQuantities element and charge quantities before the flash
+   */
+  private void assertReactiveConservedQuantities(SystemPitzer system, double[] expectedQuantities) {
+    double[] actualQuantities = getReactiveConservedQuantities(system, false);
+    assertEquals(expectedQuantities.length, actualQuantities.length);
+    for (int quantityIndex = 0; quantityIndex < expectedQuantities.length; quantityIndex++) {
+      double tolerance = quantityIndex == expectedQuantities.length - 1 ? 1.0e-8
+          : Math.max(1.0e-6, Math.abs(expectedQuantities[quantityIndex]) * 1.0e-7);
+      assertEquals(expectedQuantities[quantityIndex], actualQuantities[quantityIndex], tolerance,
+          "Reactive element/charge conservation row " + quantityIndex);
+    }
+    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
+      ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
+      if (component.getIonicCharge() == 0 && !component.isIsIon()) {
+        continue;
+      }
+      double actualMoles = 0.0;
+      for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+        actualMoles += system.getPhase(phaseIndex).getComponent(componentIndex).getNumberOfMolesInPhase();
+      }
+      assertEquals(component.getNumberOfmoles(), actualMoles,
+          Math.max(1.0e-12, Math.abs(component.getNumberOfmoles()) * 1.0e-8),
+          "Reactive ionic component balance for " + component.getComponentName());
     }
   }
 

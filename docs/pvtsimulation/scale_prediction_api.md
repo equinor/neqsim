@@ -240,18 +240,31 @@ The Pitzer parameter database (`PitzerParameters.csv`) currently contains 30 cat
 ### Using the Pitzer Model
 
 ```java
-SystemInterface pitzer = new SystemPitzer(273.15 + 80.0, 100.0);
-pitzer.addComponent("water", 0.90);
-pitzer.addComponent("Na+", 0.03);
-pitzer.addComponent("Cl-", 0.035);
-pitzer.addComponent("Ca++", 0.005);
-pitzer.addComponent("SO4--", 0.002);
+SystemInterface pitzer = new SystemPitzer(313.15, 50.0);
+pitzer.addComponent("methane", 5.0);
+pitzer.addComponent("CO2", 0.05);
+pitzer.addComponent("n-heptane", 2.0);
+pitzer.addComponent("water", 55.5);
+pitzer.addComponent("Ca++", 1.0e-4);
+pitzer.addComponent("Na+", 1.0e-3);
+pitzer.addComponent("Cl-", 2.0e-4);
+pitzer.addComponent("HCO3-", 1.0e-3);
+pitzer.chemicalReactionInit();
+pitzer.createDatabase(true);
 pitzer.setMixingRule("classic");
+pitzer.setMultiPhaseCheck(true);
 
 ThermodynamicOperations ops = new ThermodynamicOperations(pitzer);
 ops.TPflash();
 pitzer.initProperties();
+
+double calciteScalePotential = ops.getRelativeScalePotential("CaCO3");
 ```
+
+The example couples SRK gas and oil phases to Pitzer aqueous chemistry. Remove `n-heptane` for a gas-aqueous case.
+The returned value is the calcite saturation ratio, where values above one indicate thermodynamic supersaturation.
+It does not calculate precipitated mass or deposition kinetics. The fixed-role hybrid flash currently rejects explicit
+solid- and wax-phase checks.
 
 ---
 
