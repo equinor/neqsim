@@ -6,7 +6,7 @@ argument-hint: "Describe the equipment issue — e.g., 'compressor C-100 trippin
 
 ## Skills to Load
 
-Loaded skills: neqsim-root-cause-analysis, neqsim-plant-data, neqsim-process-safety, neqsim-stid-retriever, neqsim-technical-document-reading, neqsim-pid-process-operations, neqsim-troubleshooting
+Loaded skills: neqsim-root-cause-analysis, neqsim-flow-accelerated-corrosion, neqsim-plant-data, neqsim-process-safety, neqsim-stid-retriever, neqsim-technical-document-reading, neqsim-pid-process-operations, neqsim-troubleshooting
 
 ALWAYS read these skills before proceeding:
 - `.github/skills/neqsim-root-cause-analysis/SKILL.md` — RCA framework, symptoms, hypotheses, evidence analysis
