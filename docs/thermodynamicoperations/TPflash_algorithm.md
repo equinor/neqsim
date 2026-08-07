@@ -221,6 +221,15 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 │     → Replace only with a normalized, balanced, fugacity-equal, distinct,        │
 │       lower-Gibbs GAS+AQUEOUS endpoint; otherwise retain the original state       │
 │                                                                                 │
+│  IF ordinary CPA flash ends in one phase with water feed < 0.01:                │
+│     → Screen water fugacity against pure-water vapor pressure                    │
+│     → If f_water / p_water_sat >= 0.8, run the same aqueous TPD trial on a clone │
+│     → Rebuild and solve the two-phase active set when the trial adds a phase     │
+│     → Accept only a normalized, balanced, fugacity-equal, distinct GAS+AQUEOUS   │
+│       state that lowers Gibbs energy beyond max(1e-8 J, 1e-12 abs(G))            │
+│     → The saturation ratio gates cost only; TPD and strict acceptance decide     │
+│       stability                                                                   │
+│                                                                                 │
 │  IF ordinary, neutral, exactly-two-phase result contains an aqueous phase:       │
 │     → Evaluate gas-like and liquid-like roots of the non-aqueous cubic phase     │
 │     → Replace only with a lower-Gibbs root that already satisfies                │
@@ -270,6 +279,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 | Supplementary stability TPD limit | -1e-6 | Accept a converged amplified-K or composition-perturbation trial only when its reduced TPD exceeds that SSI solve's residual/step resolution and the trial composition is non-trivial |
 | Ordinary water-rich refinement feed threshold | 0.01 mole fraction water | Avoid phase-search overhead for valid trace-water flashes. An already-active neutral aqueous split bypasses only this feed threshold when `max abs(Delta z_i)` is non-finite or above `1e-8`, allowing the bounded beta correction below without another stability calculation. An incipient trace-water GAS+OIL endpoint with `min(beta) <= 1e-4` also bypasses the threshold when its confirmed log-fugacity residual is non-finite or at least `1e-8`; the guarded candidate must then pass the strict feasibility and lower-Gibbs gates. |
 | Trace-water aqueous-stability screen | water feed `< 0.01`, GAS+OIL, `min(beta) <= 0.01`, and `x_water,oil >= 10 z_water` | Use the structural conditions only as a performance gate for an aqueous TPD trial. The TPD result, reduced-active-set convergence below `1e-10`, phase normalization, `1e-8` material/fugacity checks, distinct compositions, and lower Gibbs energy determine acceptance. Full recursive TPmultiflash is not run. |
+| CPA one-phase aqueous-stability screen | water feed `< 0.01`, one ordinary phase, CPA model, and `f_water / p_water_sat >= 0.8` | Use the fugacity ratio only as a conservative performance gate for the existing aqueous TPD trial. When the trial adds one phase, rebuild the two-phase active set and require beta-solver residual `< 1e-10`, phase normalization, `1e-8` material/fugacity checks, distinct compositions, and a Gibbs reduction larger than `max(1e-8 J, 1e-12 abs(G))`. The tighter Gibbs tolerance retains independently converged incipient aqueous fractions without treating the saturation screen itself as a stability criterion. |
 | Water-rich material-balance tolerance | 1e-8 in `max abs(Delta z_i)` | Reject a non-conservative reference before comparing feasible Gibbs minima |
 | Dry cubic-root screen and acceptance | Screen normally ordered GAS+OIL endpoints when `max abs(Delta ln(f_i)) >= 1e-8`; accept below `1e-8` | Evaluate both roots for one phase at a time and retain a lower-Gibbs root seed only when the resulting unchanged composition split restores fugacity equality. Inverted mean-molar-mass order retains the paired-root comparison. |
 | Aqueous cubic-root equilibrium tolerance | 1e-8 in `max abs(Delta ln(f_i))` | Accept an alternate root only when it lowers Gibbs energy and already satisfies component fugacity equality |
@@ -1749,6 +1759,13 @@ Commercial process simulators do not publish all implementation details, but pub
   feasible lower-Gibbs result. That invalid-endpoint retry is restricted to an incipient secondary phase with
   `min(beta) <= 1e-4`, so established valid gas/oil splits avoid even the component residual scan unless they satisfy
   the separate aqueous-stability screen.
+- A one-phase ordinary CPA endpoint containing trace water uses a cheap water-fugacity screen before the same aqueous
+  TPD trial. The screen compares water fugacity in the current phase with pure-water vapor pressure and triggers at a
+  ratio of `0.8`, conservatively below nominal saturation. This avoids a TPD calculation for clearly undersaturated
+  states. The ratio is not evidence that a second phase is stable: only the converged TPD candidate may add a phase,
+  and it must independently pass phase-fraction, normalization, material-balance, fugacity, distinct-composition, and
+  lower-Gibbs checks. For an incipient CPA aqueous split, the Gibbs comparison uses
+  `max(1e-8 J, 1e-12 abs(G))` so a valid small phase is not hidden by the broader endpoint-rescue tolerance.
 - When the tangent-plane stability path has already accepted a homogeneous state, an unnormalized aqueous trial seed
   cannot replace it. The guard is deliberately structural: each active phase composition must be finite, bounded in
   `[0, 1]`, and normalized within `1e-8`. It does not impose a universal material-balance or fugacity threshold on
@@ -1800,6 +1817,7 @@ Recommended regression coverage should include both numerical convergence and ph
 | Known phase-map spot cells | Methane/n-heptane PR cells at 78.5/194, 81/194, 186/424, and 191/418 bara/K | Each cold-start flash converges to gas-oil instead of an isolated one-phase island |
 | Critical-region robustness | Rich gas near cricondenbar and cricondentherm | No false single-phase result when TPD finds instability |
 | Polar/VLLE systems | Water, CO2, H2S, methanol, glycols, and CPA/electrolyte examples | Correct aqueous/oil/gas phase count and stable final split |
+| CPA aqueous appearance | Ordinary and explicit-multiphase flashes above and below the water-fugacity screen, including aqueous fractions near `1e-6` | Same stable phase set, beta, phase compositions, properties, material balance, fugacity equality, and deterministic repeatability |
 | Multiphase cleanup | Cases with small beta phases and duplicate aqueous candidates | Removed phases preserve total composition and final mass balance |
 | Documentation drift | Algorithm doc parameter table versus source constants | Stale thresholds are detected during review |
 
