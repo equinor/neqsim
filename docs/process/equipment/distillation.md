@@ -317,7 +317,11 @@ duplicate draw ownership fail before solver iteration, and `validateSetup()` rep
 `pumparound.degreesOfFreedom`.
 
 The `temperatureDrop` argument is in Kelvin. Positive values cool the returned liquid; negative
-values heat it. A non-finite or below-zero-K return temperature fails explicitly.
+values heat it. A non-finite or below-zero-K return temperature fails explicitly. The column uses
+a thermodynamic snapshot while seeding tray profiles, so initialization cannot change the public
+return temperature. After a converged solve, the draw-to-return temperature difference therefore
+equals the configured drop; the return flow and composition remain coupled through the outer tear
+iteration.
 
 ## Hydraulics and Pressure-Drop Coupling
 

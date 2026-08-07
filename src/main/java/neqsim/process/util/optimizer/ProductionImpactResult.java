@@ -63,7 +63,12 @@ public class ProductionImpactResult implements Serializable {
     /**
      * Switch to standby/spare equipment.
      */
-    USE_STANDBY
+    USE_STANDBY,
+
+    /**
+     * Failure consequence is unresolved and requires an explicit product specification or topology review.
+     */
+    MANUAL_REVIEW
   }
 
   // Equipment identification

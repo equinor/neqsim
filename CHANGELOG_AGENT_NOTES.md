@@ -9,6 +9,17 @@
 
 ---
 
+## 2026-08-06 — Artificial-lift screening rejects non-physical calculated results
+
+- `ArtificialLiftScreener.screen()` now rejects a calculated method result before ranking when its
+  production rate is non-finite or non-positive, or when its power consumption is non-finite or
+  negative.
+- Rejected results have zero reported rate and power, negative-infinite NPV, rank zero, and an
+  explicit infeasibility reason. A method reported as feasible therefore always has a finite,
+  positive rate and finite, non-negative power.
+- The field-development API example now uses the current `ArtificialLiftScreener` method names,
+  units, and `ScreeningResult` return type.
+
 ## 2026-08-06 — Evidence-aware full-model capacity ranking
 
 - `ProcessModelSimulationEvaluator.rankCapacityConstraints(model)` returns every enabled
