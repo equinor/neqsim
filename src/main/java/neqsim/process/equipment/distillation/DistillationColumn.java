@@ -11464,6 +11464,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Calculates the relative enthalpy imbalance across all trays.
    *
+   * <p>
+   * External gas and liquid side draws are included with the main inter-tray outlets. Zero-flow streams are ignored
+   * because a phase template can retain a finite molar enthalpy even when it carries no material or energy.
+   * </p>
+   *
    * @return maximum of tray-wise and overall relative enthalpy imbalance
    */
   public double getEnergyBalanceError() {
@@ -11480,6 +11485,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
       double outlet = getFiniteStreamEnthalpy(trays.get(i).getGasOutStream());
       outlet += getFiniteStreamEnthalpy(trays.get(i).getLiquidOutStream());
+      if (trays.get(i).getGasSideDrawFraction() > 0.0) {
+        outlet += getFiniteStreamEnthalpy(trays.get(i).getGasSideDrawStream());
+      }
+      if (trays.get(i).getLiquidSideDrawFraction() > 0.0) {
+        outlet += getFiniteStreamEnthalpy(trays.get(i).getLiquidSideDrawStream());
+      }
 
       if (trays.get(i) instanceof Reboiler) {
         inlet += getFiniteDiagnosticValue(((Reboiler) trays.get(i)).getDuty());
@@ -11510,13 +11521,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (stream == null || stream.getThermoSystem() == null) {
       return 0.0;
     }
+    double flowRate = Math.abs(stream.getThermoSystem().getFlowRate("kg/hr"));
+    if (!Double.isFinite(flowRate) || flowRate <= 1.0e-12) {
+      return 0.0;
+    }
     double enthalpy = stream.getFluid().getEnthalpy();
     if (Double.isFinite(enthalpy)) {
       return enthalpy;
-    }
-    double flowRate = Math.abs(stream.getThermoSystem().getFlowRate("kg/hr"));
-    if (flowRate <= 1.0e-12) {
-      return 0.0;
     }
     return 0.0;
   }
