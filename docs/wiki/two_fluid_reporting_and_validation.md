@@ -1,6 +1,6 @@
 ---
 title: "TwoFluidPipe Reporting and Validation"
-description: "How to report long multiphase flowline results from TwoFluidPipe and compare them with OLGA, LedaFlow, or field data."
+description: "How to report long multiphase flowline results from TwoFluidPipe and compare them with traceable external data."
 ---
 
 # TwoFluidPipe Reporting and Validation
@@ -21,7 +21,8 @@ The recommended production workflow is:
 2. Extract spatial profiles from the pipe, or call `TwoFluidPipeReport` helper methods.
 3. Add summary metrics and flow-assurance indicators.
 4. Export to CSV/JSON for plotting, review, or comparison.
-5. If available, compare against OLGA, LedaFlow, or field data using the benchmark harness.
+5. If available, compare against traceable experimental, field, or external-simulator data using
+   the benchmark harness. Keep model-to-model checks distinct from experimental validation.
 
 ## Steady-state profile reporting
 
@@ -312,7 +313,42 @@ For long oil and gas flowlines, report at least:
 - Slug statistics and terrain low-point liquid accumulation.
 - Hydrate/wax/thermal risk sections if thresholds are configured.
 - Erosional velocity margin and maximum mixture velocity.
-- Benchmark comparison table when OLGA, LedaFlow, or field measurements are available.
+- Benchmark comparison table with source, assumptions, uncertainty, mesh/timestep study, and failed
+  as well as passed metrics when external data are available.
+
+## Public severe-slugging evidence
+
+`SevereSluggingBenchmarkHarness` reads the digitized public Tengesdal (2002) -3-degree velocity
+map and reports a confusion matrix without forcing transition observations into a binary class.
+Across 26 severe and 15 stable observations, the current Taitel system screen has 22 true
+positives, 4 false negatives, 8 false positives, and 7 true negatives (70.7% accuracy). The 14
+transition observations are reported separately as 6 predicted severe and 8 predicted stable.
+
+`SevereSluggingExperimentalBenchmarkTest` reproduces large-facility Test 3 with the physical
+flowline/riser geometry and RK4 integration. Severe slugging here is a deterministically chaotic
+limit cycle: a relative inlet-pressure perturbation of 1e-12, far below any experimental
+significance, changes the peak-to-peak riser-base pressure by more than a factor of two and the
+apparent period by more than a factor of 1.5. The benchmark therefore evaluates a four-member
+ensemble (12 and 16 sections, 0.1 and 0.2 s outer steps, and a perturbed trajectory) and separates
+reproducible from trajectory-sensitive evidence.
+
+Reproducible across the ensemble: phase-resolved and total mass closure below 1e-15, a
+time-averaged riser-base pressure of 171-176 kPa that agrees within 4% across mesh, outer step and
+perturbation, and an outlet liquid rate that blows out above and falls back below the liquid feed
+rate in every realization.
+
+Trajectory-sensitive and reported as a range only: peak-to-peak pressure 42-300 kPa versus
+98 +/- 5 kPa digitized, apparent cycle period 14-35 s versus 38 +/- 2 s measured, and a maximum
+tracked outlet slug of 1.5-4.9 m (0.10-0.33 riser heights), below the experimental severe-slug
+definition. The modelled pressure swing brackets the measured amplitude, but the period is
+systematically short. These residuals must accompany any reported severe-slugging result; they are
+not hidden by a pass/fail summary.
+
+The benchmark disables the steady-state wall-clock guard and asserts it did not fire, so results do
+not depend on how fast the executing machine is.
+
+The source is S. Tengesdal's 2002 BSEE report:
+https://www.bsee.gov/sites/bsee.gov/files/tap-technical-assessment-program/397aa.pdf.
 
 ## Gaps and planned improvements
 

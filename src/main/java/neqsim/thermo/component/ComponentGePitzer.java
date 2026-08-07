@@ -29,7 +29,50 @@ public class ComponentGePitzer extends ComponentGE {
   @Override
   public double fugcoef(PhaseInterface phase) {
     getGamma(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure(), phase.getType());
+    // Pitzer's implemented solvent activity is water-specific. Other database solvents need an aqueous Henry
+    // reference; hydrocarbons have no Pitzer neutral-interaction parameters and are represented as effectively
+    // insoluble instead of being evaluated with the water osmotic coefficient.
+    if (Math.abs(getIonicCharge()) < 0.5 && !"water".equalsIgnoreCase(getComponentName())) {
+      double henryCoefficient = getHenryCoef(phase.getTemperature());
+      if (hasHydrocarbonFormula() || isHydrocarbon() || isIsTBPfraction() || !Double.isFinite(henryCoefficient)
+          || henryCoefficient > 1.0e12) {
+        henryCoefficient = 1.0e12;
+      }
+      fugacityCoefficient = gamma * henryCoefficient / phase.getPressure();
+      gammaRefCor = gamma;
+      return fugacityCoefficient;
+    }
     return super.fugcoef(phase);
+  }
+
+  /**
+   * Check the database molecular formula for a pure hydrocarbon.
+   *
+   * <p>
+   * Some GE initialization paths classify a normal database component as {@code normal} instead of {@code HC}, so
+   * {@link #isHydrocarbon()} alone is not a stable aqueous-reference discriminator.
+   * </p>
+   *
+   * @return {@code true} when the formula contains carbon and hydrogen only
+   */
+  private boolean hasHydrocarbonFormula() {
+    String formula = getFormulae();
+    if (formula == null || formula.isEmpty()) {
+      return false;
+    }
+    boolean carbon = false;
+    boolean hydrogen = false;
+    for (int index = 0; index < formula.length(); index++) {
+      char character = formula.charAt(index);
+      if (character == 'C') {
+        carbon = true;
+      } else if (character == 'H') {
+        hydrogen = true;
+      } else if (!Character.isDigit(character)) {
+        return false;
+      }
+    }
+    return carbon && hydrogen;
   }
 
   /** {@inheritDoc} */
@@ -61,7 +104,8 @@ public class ComponentGePitzer extends ComponentGE {
     double charge = getIonicCharge();
 
     // Solvent (water): compute gamma from Pitzer osmotic coefficient
-    if (Math.abs(charge) < 0.5 && "solvent".equals(referenceStateType)) {
+    if (Math.abs(charge) < 0.5 && "water".equalsIgnoreCase(getComponentName())
+        && "solvent".equals(referenceStateType)) {
       return getWaterGamma(phase, numberOfComponents, temperature);
     }
 

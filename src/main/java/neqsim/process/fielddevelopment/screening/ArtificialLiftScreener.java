@@ -31,6 +31,11 @@ import java.util.List;
  * <li><b>Risk Assessment:</b> Considers reliability and operational complexity</li>
  * </ol>
  *
+ * <p>
+ * A method is only reported as feasible when its calculated production rate is finite and positive and its power
+ * consumption is finite and non-negative. Results outside those physical bounds are rejected before economic ranking.
+ * </p>
+ *
  * <h2>Operating Envelope Limits</h2>
  * <table border="1">
  * <caption>Operating Envelope Limits by Method</caption>
@@ -101,11 +106,8 @@ import java.util.List;
  * screener.setElectricityAvailable(true);
  *
  * ScreeningResult result = screener.screen();
- *
- * System.out.println("Recommended: " + result.getRecommendedMethod());
- * for (MethodResult method : result.getAllMethods()) {
- *   System.out.println(method);
- * }
+ * LiftMethod recommended = result.getRecommendedMethod();
+ * List&lt;MethodResult&gt; evaluatedMethods = result.getAllMethods();
  * }</pre>
  *
  * @author ESOL
@@ -227,7 +229,6 @@ public class ArtificialLiftScreener implements Serializable {
     // Calculate natural flow baseline
     MethodResult naturalFlow = evaluateNaturalFlow();
     result.addMethod(naturalFlow);
-    result.naturalFlowRate = naturalFlow.productionRate;
 
     // Evaluate each artificial lift method
     if (gasLiftAvailable) {
@@ -261,10 +262,41 @@ public class ArtificialLiftScreener implements Serializable {
       }
     }
 
+    rejectNonPhysicalCalculatedResults(result);
+    result.naturalFlowRate = naturalFlow.productionRate;
+
     // Rank methods
     result.rankMethods();
 
     return result;
+  }
+
+  /**
+   * Reject calculated method results that cannot represent a physical operating point.
+   *
+   * @param result screening result containing the evaluated methods
+   */
+  private void rejectNonPhysicalCalculatedResults(ScreeningResult result) {
+    for (MethodResult method : result.methods) {
+      if (!method.feasible) {
+        continue;
+      }
+
+      if (!Double.isFinite(method.productionRate) || method.productionRate <= 0.0) {
+        method.feasible = false;
+        method.infeasibilityReason = String.format("Calculated production rate is not finite and positive: %.6g Sm3/d",
+            method.productionRate);
+        method.productionRate = 0.0;
+        method.powerConsumption = 0.0;
+        method.npv = Double.NEGATIVE_INFINITY;
+      } else if (!Double.isFinite(method.powerConsumption) || method.powerConsumption < 0.0) {
+        method.feasible = false;
+        method.infeasibilityReason = String
+            .format("Calculated power consumption is not finite and non-negative: %.6g kW", method.powerConsumption);
+        method.powerConsumption = 0.0;
+        method.npv = Double.NEGATIVE_INFINITY;
+      }
+    }
   }
 
   /**
@@ -954,7 +986,7 @@ public class ArtificialLiftScreener implements Serializable {
 
     /** Lift method. */
     public LiftMethod method;
-    /** Whether method is feasible. */
+    /** Whether method is feasible with finite positive production and finite non-negative power. */
     public boolean feasible = true;
     /** Reason if infeasible. */
     public String infeasibilityReason = "";

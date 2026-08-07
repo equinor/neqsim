@@ -379,6 +379,9 @@ def neqsim_classes(ns):
     ns.TransientCompositionalPipeNetwork = JClass(
         "neqsim.process.equipment.network.TransientCompositionalPipeNetwork"
     )
+    ns.TransientGasNetwork = JClass(
+        "neqsim.process.equipment.network.TransientGasNetwork"
+    )
     ns.Pump = JClass("neqsim.process.equipment.pump.Pump")
     ns.Manifold = JClass("neqsim.process.equipment.manifold.Manifold")
     ns.StreamSaturatorUtil = JClass(

@@ -56,6 +56,10 @@ Chabab et al. (2019) refitted the aqueous CO₂-water binary-interaction paramet
 CO₂-H₂O-NaCl equilibrium data. NeqSim exposes this modified correlation as an explicit option;
 the original correlation remains the default so existing simulations are reproducible.
 
+Burgoyne and Nielsen (2026) refreshed the framework for eight gases using about 2,000
+pointwise-regressed interaction parameters and extended it to hydrogen. NeqSim exposes their
+Søreide-Whitson-alpha-compatible, embedded-salinity parameter set as another explicit option.
+
 ---
 
 ## Mathematical Formulation
@@ -153,6 +157,27 @@ published coefficients are:
 This option changes only the aqueous CO₂-water interaction. Other gas-water correlations and
 the non-aqueous phase retain the existing NeqSim behavior.
 
+### Burgoyne-Nielsen 2026 drop-in parameterization
+
+`BURGOYNE_NIELSEN_2026` uses the authors' drop-in track: the original Søreide-Whitson water
+alpha is retained, freshwater BIPs are refreshed, and salinity is embedded as
+
+$$
+k_{ij}^{AQ}(T,m)=k_{ij,fw}(T)+(a_0+a_1T_r+a_2T_r^2)m+(b_0+b_1T_r)m^2.
+$$
+
+The quadratic molality term is used only for CO₂. The option applies to water paired with CO₂,
+H₂S, methane, nitrogen, hydrogen, ethane, propane, or n-butane. It also applies the published
+non-aqueous constants for these pairs, including the revised H₂S value of 0.161, the new H₂
+value of 0.468, and the corrected Søreide-Whitson Table 5 values of 0.5525 for propane and
+0.5091 for n-butane. Unsupported pairs continue to use their existing NeqSim BIP.
+
+The reduced temperatures in these BIP correlations use the fixed critical temperatures from
+the regression source. NeqSim's EOS pure-component properties are not mutated. This preserves
+the shared component database, but absolute reproduction of the paper's solubility MARE can be
+affected by property differences, especially the H₂S acentric factor and the n-butane acentric
+factor. Validate those gases against representative project data before production use.
+
 ---
 
 ## Implementation in NeqSim
@@ -183,8 +208,8 @@ fluid.addComponent("methane", 0.03);
 // Add 0.5 mol/s NaCl-equivalent salt to the system
 fluid.addSalinity("NaCl", 0.5, "mole/sec");
 
-// Keep LEGACY (default), or explicitly select the Chabab 2019 aqueous CO2 correlation
-fluid.setAqueousCO2Parameterization("CHABAB_2019");
+// Keep LEGACY (default), or explicitly select a newer parameterization
+fluid.setSoreideWhitsonParameterization("BURGOYNE_NIELSEN_2026");
 ```
 
 ### Salinity Methods
@@ -210,19 +235,20 @@ JPype:
 ```java
 import neqsim.thermo.mixingrule.SoreideWhitsonParameterization;
 
-fluid.setAqueousCO2Parameterization(SoreideWhitsonParameterization.CHABAB_2019);
+fluid.setSoreideWhitsonParameterization(SoreideWhitsonParameterization.BURGOYNE_NIELSEN_2026);
 // Equivalent Python/JPype-friendly form:
-fluid.setAqueousCO2Parameterization("CHABAB_2019");
+fluid.setSoreideWhitsonParameterization("BN_2026");
 ```
 
 ```python
 modified_brine = jneqsim.thermo.system.SystemSoreideWhitson(342.82, 100.910)
-modified_brine.setAqueousCO2Parameterization("CHABAB_2019")
+modified_brine.setSoreideWhitsonParameterization("BURGOYNE_NIELSEN_2026")
 ```
 
-Supported values are `LEGACY` and `CHABAB_2019` (aliases `M_SW` and `m-sw` are also accepted).
-The selector is copied with the thermodynamic system. Selecting Chabab does not alter methane,
-nitrogen, hydrogen sulfide, hydrocarbon, or non-aqueous-phase interaction parameters.
+Supported values are `LEGACY`, `CHABAB_2019`, and `BURGOYNE_NIELSEN_2026`. Aliases `M_SW` and
+`m-sw` select Chabab; `BN_2026` and `bn-2026` select Burgoyne-Nielsen. The selector is copied
+with the thermodynamic system. The historical `setAqueousCO2Parameterization(...)` and
+`getAqueousCO2Parameterization()` methods remain supported for source compatibility.
 
 ### Salt Type Conversions
 
@@ -533,23 +559,40 @@ deviations of 5.39% and 5.79%. The `CHABAB_2019` regression verifies the publish
 coefficients directly, preserves the legacy values when that option is selected, covers every one
 of these low- and high-molality points, and requires improved high-salinity agreement.
 
+For `BURGOYNE_NIELSEN_2026`, focused regression tests reproduce 24 aqueous BIP values generated
+by the authors' drop-in implementation: all eight supported gases at 280 K/freshwater,
+320 K/2 mol/kg NaCl, and 400 K/4 mol/kg NaCl. Analytical first and second temperature derivatives
+are checked against centered finite differences. The published source reports freshwater
+solubility MARE improvements for seven gases and mean deviations below 2% for its embedded
+salinity approximation; those are source claims, not a NeqSim-wide reproduction of the full
+experimental dataset.
+
 ### Validity range
 
-The new measurements reported by Chabab et al. cover approximately 1-3 mol/kg NaCl, 323-373 K, and
+The measurements reported by Chabab et al. cover approximately 1-3 mol/kg NaCl, 323-373 K, and
 pressures up to 230 bar. Use `CHABAB_2019` inside this range when traceable accuracy is required.
 The authors also compared the fitted model with a broader literature database, including higher
 molalities, but calculations outside the measured range are extrapolations and should be checked
 against representative data.
 
+The Burgoyne-Nielsen freshwater correlations were fitted at temperatures up to 200 °C. The
+embedded salinity correlations approximate the authors' recommended gas-specific Sechenov
+models. No runtime clipping is applied, so higher temperatures, extreme molality, mixtures near
+critical conditions, and component-property differences require independent validation.
+
 ### Limitations
 
-1. **High salinity**: Above the validated 3 mol/kg range, validate against representative data
+1. **High salinity**: Validate concentrations outside the selected parameterization's source data
 2. **Mixed salts**: Simplified conversion factors for non-NaCl salts
-3. **Pressure and temperature**: `CHABAB_2019` extrapolates outside approximately 323-373 K and 230 bar
+3. **Pressure and temperature**: `CHABAB_2019` extrapolates outside approximately 323-373 K and 230 bar;
+   `BURGOYNE_NIELSEN_2026` extrapolates above 473.15 K
 4. **Near-critical region**: Phase-specific interaction parameters are not thermodynamically
    consistent near mixture critical points
 5. **Static salinity derivatives**: The current implementation does not include molality
    composition derivatives in the attractive-term derivatives
+6. **Property lineage**: The 2026 BIP fit used a specified Søreide-Whitson property set. NeqSim
+   keeps its shared EOS component properties, so reproduce the full source MARE before claiming
+   dataset-level parity
 
 ### Alternative Models
 
@@ -595,36 +638,43 @@ For systems requiring higher accuracy or outside the Søreide-Whitson validity r
    - DOI: [10.1016/j.ijggc.2019.102825](https://doi.org/10.1016/j.ijggc.2019.102825)
    - Source of the optional `CHABAB_2019` aqueous CO₂-water correlation
 
-5. **Duan, Z. & Sun, R. (2003)**
+5. **Burgoyne, M. & Nielsen, M.H. (2026)**
+   - "Refreshed Søreide-Whitson framework for gas solubility in water and brine with extension to hydrogen"
+   - *Fluid Phase Equilibria*, 114824
+   - DOI: [10.1016/j.fluid.2026.114824](https://doi.org/10.1016/j.fluid.2026.114824)
+   - [Reproducibility repository and errata](https://github.com/mwburgoyne/SW_Framework_Refresh)
+   - Source of the optional `BURGOYNE_NIELSEN_2026` parameter set
+
+6. **Duan, Z. & Sun, R. (2003)**
    - "An improved model calculating CO₂ solubility in pure water and aqueous NaCl solutions"
    - *Chemical Geology*, 193(3-4), 257-271
    - DOI: [10.1016/S0009-2541(02)00263-2](https://doi.org/10.1016/S0009-2541(02)00263-2)
 
-6. **Duan, Z. & Mao, S. (2006)**
+7. **Duan, Z. & Mao, S. (2006)**
    - "A thermodynamic model for calculating methane solubility, density and gas phase composition of methane-bearing aqueous fluids from 273 to 523 K and from 1 to 2000 bar"
    - *Geochimica et Cosmochimica Acta*, 70(13), 3369-3386
    - DOI: [10.1016/j.gca.2006.03.018](https://doi.org/10.1016/j.gca.2006.03.018)
 
-7. **Clever, H.L. & Holland, C.J. (1968)**
+8. **Clever, H.L. & Holland, C.J. (1968)**
    - "Solubility of Argon Gas in Aqueous Alkali Halide Solutions"
    - *Journal of Chemical & Engineering Data*, 13(3), 411-414
    - Classic source for Sechenov coefficients
 
 ### Salting-Out Theory
 
-8. **Sechenov, M. (1889)**
+9. **Sechenov, M. (1889)**
    - "Über die Konstitution der Salzlösungen auf Grund ihres Verhaltens zu Kohlensäure"
    - *Zeitschrift für Physikalische Chemie*, 4, 117-125
    - The original salting-out coefficient concept
 
-9. **Schumpe, A. (1993)**
+10. **Schumpe, A. (1993)**
    - "The estimation of gas solubilities in salt solutions"
    - *Chemical Engineering Science*, 48(1), 153-158
    - DOI: [10.1016/0009-2509(93)80291-W](https://doi.org/10.1016/0009-2509(93)80291-W)
 
 ### Produced Water and Emissions
 
-10. **IOGP Report 521 (2019)**
+11. **IOGP Report 521 (2019)**
    - "Methods for estimating atmospheric emissions from E&P operations"
    - International Association of Oil & Gas Producers
    - Industry standard for emission calculations

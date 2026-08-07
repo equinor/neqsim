@@ -60,12 +60,12 @@ public class PhaseSoreideWhitson extends PhasePrEos {
   }
 
   /**
-   * Set the aqueous CO2-water binary-interaction parameterization.
+   * Set the Soreide-Whitson binary-interaction parameterization.
    *
    * @param parameterization parameterization to use
    * @throws IllegalArgumentException if {@code parameterization} is null
    */
-  public void setAqueousCO2Parameterization(SoreideWhitsonParameterization parameterization) {
+  public void setSoreideWhitsonParameterization(SoreideWhitsonParameterization parameterization) {
     if (parameterization == null) {
       throw new IllegalArgumentException("Soreide-Whitson parameterization cannot be null");
     }
@@ -73,12 +73,30 @@ public class PhaseSoreideWhitson extends PhasePrEos {
   }
 
   /**
-   * Get the aqueous CO2-water binary-interaction parameterization.
+   * Get the Soreide-Whitson binary-interaction parameterization.
+   *
+   * @return selected parameterization
+   */
+  public SoreideWhitsonParameterization getSoreideWhitsonParameterization() {
+    return aqueousCO2Parameterization;
+  }
+
+  /**
+   * Set the parameterization using the historical aqueous-CO2 API name.
+   *
+   * @param parameterization parameterization to use
+   */
+  public void setAqueousCO2Parameterization(SoreideWhitsonParameterization parameterization) {
+    setSoreideWhitsonParameterization(parameterization);
+  }
+
+  /**
+   * Get the parameterization using the historical aqueous-CO2 API name.
    *
    * @return selected parameterization
    */
   public SoreideWhitsonParameterization getAqueousCO2Parameterization() {
-    return aqueousCO2Parameterization;
+    return getSoreideWhitsonParameterization();
   }
 
   /**
