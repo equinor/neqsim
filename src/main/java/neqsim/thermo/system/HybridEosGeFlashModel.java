@@ -15,6 +15,28 @@ package neqsim.thermo.system;
  */
 public interface HybridEosGeFlashModel extends EosGeFlashModel {
   /**
+   * Configure and enable the fixed-role EOS-gas / EOS-oil / GE-aqueous flash.
+   *
+   * <p>
+   * Implementations that expose a reusable GE liquid phase can promote that phase to the aqueous role and clone their
+   * EOS gas phase for the oil role. The default implementation rejects the request so a model cannot silently claim a
+   * topology that it has not configured.
+   * </p>
+   */
+  default void enableHybridEosGeFlash() {
+    throw new UnsupportedOperationException("This model does not expose configurable hybrid EOS-GE phase roles.");
+  }
+
+  /**
+   * Check whether fixed gas, oil and GE-aqueous creation-order roles have been configured.
+   *
+   * @return {@code true} when the model owns all three reusable fluid-role objects
+   */
+  default boolean isHybridEosGeTopologyConfigured() {
+    return false;
+  }
+
+  /**
    * Select the dedicated hybrid multiphase strategy.
    *
    * @return {@code true} when the current system state requires hybrid EOS-GE multiphase solving

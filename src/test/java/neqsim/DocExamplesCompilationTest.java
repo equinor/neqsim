@@ -87,8 +87,10 @@ import neqsim.pvtsimulation.flowassurance.ScalePredictionCalculator;
 import neqsim.pvtsimulation.flowassurance.WaterCompatibilityScreener;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.FluidBuilder;
+import neqsim.thermo.system.SystemDesmukhMather;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemNRTL;
 import neqsim.thermo.system.SystemPitzer;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -120,6 +122,49 @@ public class DocExamplesCompilationTest {
     assertTrue(hasAqueousPhase);
     assertTrue(fluid.hasPhaseType(PhaseType.GAS));
     assertTrue(fluid.hasPhaseType(PhaseType.OIL));
+  }
+
+  /** Generic SystemEosGE opt-in example from docs/thermo/fluid_creation_guide.md. */
+  @Test
+  public void testGenericEosGeHybridVlleFluidCreationGuide() {
+    SystemNRTL fluid = new SystemNRTL(313.15, 50.0);
+    fluid.addComponent("methane", 5.0);
+    fluid.addComponent("n-heptane", 2.0);
+    fluid.addComponent("water", 55.5);
+    fluid.createDatabase(true);
+    fluid.setMixingRule("classic");
+    fluid.enableHybridEosGeFlash();
+
+    new ThermodynamicOperations(fluid).TPflash();
+
+    assertTrue(fluid.hasPhaseType(PhaseType.GAS));
+    assertTrue(fluid.hasPhaseType(PhaseType.OIL));
+    assertTrue(fluid.hasPhaseType(PhaseType.AQUEOUS));
+  }
+
+  /** Desmukh-Mather reactive hybrid example from docs/pvtsimulation/scale_prediction_api.md. */
+  @Test
+  public void testDesmukhMatherReactiveHybridScalePrediction() throws Exception {
+    SystemDesmukhMather fluid = new SystemDesmukhMather(313.15, 5.0);
+    fluid.addComponent("methane", 5.0);
+    fluid.addComponent("CO2", 0.2);
+    fluid.addComponent("n-heptane", 2.0);
+    fluid.addComponent("MDEA", 1.0);
+    fluid.addComponent("water", 9.0);
+    fluid.addComponent("Ca++", 1.0e-4);
+    fluid.addComponent("Na+", 1.0e-3);
+    fluid.addComponent("Cl-", 2.0e-4);
+    fluid.addComponent("HCO3-", 1.0e-3);
+    fluid.chemicalReactionInit();
+    fluid.createDatabase(true);
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.TPflash();
+    double calciteSaturationRatio = operations.getRelativeScalePotential("CaCO3");
+
+    assertTrue(Double.isFinite(calciteSaturationRatio) && calciteSaturationRatio > 0.0);
   }
 
   /**

@@ -354,10 +354,10 @@ The Chabab option is validated against NaCl-brine data at approximately 1-3 mol/
 and pressures up to 230 bar. See [Søreide-Whitson Model](SoreideWhitsonModel.md) for the
 correlation, units, comparison example, and extrapolation limits.
 
-### 7.3 Pitzer Model
+### 7.3 Electrolyte GE Models and Hybrid VLLE
 
-For concentrated electrolyte solutions. `SystemPitzer` can opt into a fixed-role hybrid flash in which gas and
-hydrocarbon liquid use SRK while the aqueous electrolyte liquid uses Pitzer.
+For electrolyte solutions, `SystemPitzer`, `SystemDesmukhMather` and `SystemKentEisenberg` provide a fixed-role hybrid
+flash in which gas and hydrocarbon liquid use SRK while the aqueous liquid uses the selected GE model.
 
 ```java
 import neqsim.thermo.phase.PhaseType;
@@ -386,6 +386,26 @@ aqueous Henry reference; water alone uses the Pitzer osmotic/Raoult solvent conv
 activity-based scale-potential screening after reactive gas-aqueous or gas-oil-aqueous flashes. The result is a
 saturation ratio; explicit mineral precipitation, solid amounts, solid-phase equilibrium and wax checks are not yet
 supported by the hybrid strategy.
+
+The solver is not restricted to Pitzer. Desmukh-Mather and Kent-Eisenberg use the same reactive coupling when
+`chemicalReactionInit()` and `setMultiPhaseCheck(true)` are enabled. Other `SystemEosGE` systems can opt in explicitly:
+
+```java
+SystemNRTL fluid = new SystemNRTL(313.15, 50.0);
+fluid.addComponent("methane", 5.0);
+fluid.addComponent("n-heptane", 2.0);
+fluid.addComponent("water", 55.5);
+fluid.createDatabase(true);
+fluid.setMixingRule("classic");
+fluid.enableHybridEosGeFlash();
+
+new ThermodynamicOperations(fluid).TPflash();
+```
+
+`enableHybridEosGeFlash()` configures topology, not electrolyte parameters. Scale calculations require a GE phase
+with meaningful activities for all requested aqueous species. Pitzer has the broadest concentrated-brine parameter
+coverage; the amine models retain their narrower component and validity ranges. `SystemDuanSun` remains excluded from
+this topology because its current public API accepts only CO2.
 
 ---
 

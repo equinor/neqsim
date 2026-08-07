@@ -12,10 +12,13 @@ import neqsim.thermo.phase.PhaseType;
  * {@code phaseArray[0]} as the EOS vapour phase and subsequent fluid slots as independent clones of the GE liquid
  * phase. Active phases can later be reordered through {@code phaseIndex}, so {@code getPhase(0)} is not guaranteed to
  * return the EOS slot. Concrete systems remain responsible for selecting the EOS, activity model, mixing rules and
- * parameter sources. Hybrid systems can opt into separate EOS gas and oil slots plus a GE aqueous slot through
+ * parameter sources. Any concrete EOS-GE system can opt into separate EOS gas and oil slots plus a GE aqueous slot by
+ * calling {@link #enableHybridEosGeFlash()}. Electrolyte systems may configure those roles directly through
  * {@link #configureHybridEosGePhases(double, double, PhaseInterface, PhaseInterface, PhaseInterface)}. The dedicated
  * multiphase strategy restores these creation-order roles before every flash, activates only feed-supported roles and
- * removes disappearing roles from the active mapping without replacing their phase objects.
+ * removes disappearing roles from the active mapping without replacing their phase objects. Reactive coupling and
+ * scale-potential accuracy remain governed by the selected aqueous model's species, activity formulation and parameter
+ * coverage; the topology does not turn a non-electrolyte GE model into an electrolyte model.
  * </p>
  *
  * @author NeqSim
@@ -150,6 +153,38 @@ public abstract class SystemEosGE extends SystemEos implements HybridEosGeFlashM
       setPhaseIndex(0, eosGasPhaseSlot);
       setPhaseIndex(1, geLiquidPhaseSlot);
     }
+  }
+
+  /**
+   * Enable the reusable hybrid gas-oil-aqueous topology for this EOS-GE system.
+   *
+   * <p>
+   * The existing creation-order EOS vapour and GE liquid objects are retained. A clone of the EOS object becomes the
+   * oil role, the GE object becomes the aqueous role, and multiphase checking is enabled. This makes the topology
+   * available to Wilson, NRTL, UNIFAC and specialised electrolyte-GE subclasses without placing model names in the
+   * flash solver. The selected GE phase must still implement meaningful aqueous fugacity and activity coefficients for
+   * the requested components and reactions.
+   * </p>
+   */
+  @Override
+  public final void enableHybridEosGeFlash() {
+    if (!hybridEosGeTopologyConfigured) {
+      PhaseInterface eosGasPhase = phaseArray[eosGasPhaseSlot];
+      PhaseInterface geAqueousPhase = phaseArray[geLiquidPhaseSlot];
+      if (eosGasPhase == null || geAqueousPhase == null
+          || !(geAqueousPhase instanceof neqsim.thermo.phase.PhaseGEInterface)) {
+        throw new IllegalStateException(
+            "The system must provide EOS gas and GE liquid phases before enabling the hybrid EOS-GE flash.");
+      }
+      configureHybridEosGePhases(getTemperature(), getPressure(), eosGasPhase, geAqueousPhase, eosGasPhase.clone());
+    }
+    setMultiPhaseCheck(true);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public final boolean isHybridEosGeTopologyConfigured() {
+    return hybridEosGeTopologyConfigured;
   }
 
   /**
@@ -501,6 +536,10 @@ public abstract class SystemEosGE extends SystemEos implements HybridEosGeFlashM
       collapseTraceHybridPhases(Math.max(HYBRID_ACTIVE_PHASE_FRACTION, 100.0 * phaseFractionMinimumLimit));
       orderByDensity();
       init(1);
+      // Phase implementations may classify any non-gas EOS root as a generic liquid during init. Reassert the
+      // model-owned semantic roles after the final property initialization so callers consistently observe GAS, OIL
+      // and AQUEOUS rather than implementation-specific temporary labels.
+      restoreHybridEosGeActivePhaseTypes();
     }
     return accepted;
   }
@@ -551,9 +590,11 @@ public abstract class SystemEosGE extends SystemEos implements HybridEosGeFlashM
       } else {
         continue;
       }
+      // Chemical-equilibrium operations can temporarily disable phase shifting while they force an aqueous phase.
+      // Write creation-order metadata directly so the role contract is restored even when setPhaseType would be a
+      // guarded no-op. A later init then receives the same role type as the phase object.
+      phaseType[creationOrderSlot] = roleType;
       restoreHybridPhaseObject(creationOrderSlot, roleType);
-      // setPhaseType accepts an active phase number, not a creation-order slot.
-      setPhaseType(phaseNumber, roleType);
     }
   }
 

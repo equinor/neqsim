@@ -266,6 +266,41 @@ The returned value is the calcite saturation ratio, where values above one indic
 It does not calculate precipitated mass or deposition kinetics. The fixed-role hybrid flash currently rejects explicit
 solid- and wax-phase checks.
 
+### Other electrolyte GE models
+
+The reactive hybrid solver is selected through the `HybridEosGeFlashModel` contract; it does not contain a Pitzer
+type check. `SystemDesmukhMather` and `SystemKentEisenberg` provide the same SRK-gas / SRK-oil / GE-aqueous roles.
+For example, a Desmukh-Mather amine system can retain an oil phase, solve aqueous speciation and evaluate the same
+activity-based scale-potential API:
+
+```java
+SystemDesmukhMather fluid = new SystemDesmukhMather(313.15, 5.0);
+fluid.addComponent("methane", 5.0);
+fluid.addComponent("CO2", 0.2);
+fluid.addComponent("n-heptane", 2.0);
+fluid.addComponent("MDEA", 1.0);
+fluid.addComponent("water", 9.0);
+fluid.addComponent("Ca++", 1.0e-4);
+fluid.addComponent("Na+", 1.0e-3);
+fluid.addComponent("Cl-", 2.0e-4);
+fluid.addComponent("HCO3-", 1.0e-3);
+fluid.chemicalReactionInit();
+fluid.createDatabase(true);
+fluid.setMixingRule("classic");
+fluid.setMultiPhaseCheck(true);
+
+ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+operations.TPflash();
+double calciteSaturationRatio = operations.getRelativeScalePotential("CaCO3");
+```
+
+Every `SystemEosGE` subclass can explicitly configure the same topology through `enableHybridEosGeFlash()`. This
+includes Wilson, NRTL, UNIFAC and specialised activity models, but it only supplies the phase-equilibrium topology: a
+model must still support water, the requested ions, aqueous reactions and appropriate interaction parameters before its
+scale result is meaningful. Pitzer remains the broadly parameterised choice for concentrated mineral-scale brines;
+Desmukh-Mather and Kent-Eisenberg are primarily amine/electrolyte screening models. `SystemDuanSun` is not included
+because its current system API accepts CO2 only and therefore cannot represent a gas-oil-aqueous electrolyte feed.
+
 ---
 
 ## 4. WaterCompatibilityScreener

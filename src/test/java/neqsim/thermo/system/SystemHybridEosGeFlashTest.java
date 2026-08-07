@@ -107,6 +107,82 @@ class SystemHybridEosGeFlashTest extends neqsim.NeqSimTest {
     }
   }
 
+  /** Every SystemEosGE subclass can explicitly promote its GE liquid to the hybrid aqueous role. */
+  @Test
+  void genericNrtlSystemCanEnableHybridGasOilAqueousFlash() {
+    SystemNRTL system = new SystemNRTL(313.15, 50.0);
+    system.addComponent("methane", 5.0);
+    system.addComponent("n-heptane", 2.0);
+    system.addComponent("water", 55.5);
+    system.createDatabase(true);
+    system.setMixingRule("classic");
+
+    assertFalse(system.isHybridEosGeTopologyConfigured());
+    system.enableHybridEosGeFlash();
+    assertTrue(system.isHybridEosGeTopologyConfigured());
+    assertTrue(system.requiresHybridEosGeFlash());
+
+    new ThermodynamicOperations(system).TPflash();
+
+    assertTrue(system.getEquationOfStatePhase() instanceof PhaseEos);
+    assertTrue(system.getEosOilPhase() instanceof PhaseEos);
+    assertTrue(system.getGeLiquidPhase() instanceof PhaseGEInterface);
+    assertTrue(hasPhaseType(system, PhaseType.GAS));
+    assertTrue(hasPhaseType(system, PhaseType.OIL));
+    assertTrue(hasPhaseType(system, PhaseType.AQUEOUS));
+    assertBalancedAndAtEquilibrium(system);
+  }
+
+  /** Desmukh-Mather is registered as a reactive electrolyte-GE hybrid rather than a Pitzer special case. */
+  @Test
+  void reactiveDesmukhMatherSystemUsesSharedHybridCoupling() throws Exception {
+    SystemDesmukhMather system = new SystemDesmukhMather(313.15, 5.0);
+    system.addComponent("methane", 5.0);
+    system.addComponent("CO2", 0.2);
+    system.addComponent("n-heptane", 2.0);
+    system.addComponent("MDEA", 1.0);
+    system.addComponent("water", 9.0);
+    system.addComponent("Ca++", 1.0e-4);
+    system.addComponent("Na+", 1.0e-3);
+    system.addComponent("Cl-", 2.0e-4);
+    system.addComponent("HCO3-", 1.0e-3);
+    system.chemicalReactionInit();
+    system.createDatabase(true);
+    system.setMixingRule("classic");
+    system.setMultiPhaseCheck(true);
+    double[] conservedQuantities = getReactiveConservedQuantities(system, true);
+
+    assertTrue(system.isHybridEosGeTopologyConfigured());
+    assertTrue(system.requiresHybridEosGeFlash());
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(system);
+    operations.TPflash();
+
+    assertTrue(hasPhaseType(system, PhaseType.GAS), phaseDiagnostics(system));
+    assertTrue(hasPhaseType(system, PhaseType.OIL), phaseDiagnostics(system));
+    assertTrue(hasPhaseType(system, PhaseType.AQUEOUS), phaseDiagnostics(system));
+    assertTrue(findPhase(system, PhaseType.AQUEOUS) instanceof neqsim.thermo.phase.PhaseDesmukhMather);
+    assertReactiveConservedQuantities(system, conservedQuantities);
+    double calciteSaturationRatio = operations.getRelativeScalePotential("CaCO3");
+    assertTrue(Double.isFinite(calciteSaturationRatio) && calciteSaturationRatio > 0.0,
+        "Scale potential must use the selected electrolyte-GE model's aqueous activities");
+  }
+
+  /** Built-in electrolyte GE systems expose the same fixed-role contract without Pitzer type checks. */
+  @Test
+  void electrolyteGeSystemsRegisterSharedHybridTopology() {
+    SystemEosGE[] systems = new SystemEosGE[] { new SystemDesmukhMather(313.15, 5.0),
+        new SystemKentEisenberg(313.15, 5.0) };
+    for (SystemEosGE system : systems) {
+      assertTrue(system.isHybridEosGeTopologyConfigured());
+      assertTrue(system.getEquationOfStatePhase() instanceof PhaseEos);
+      assertTrue(system.getEosOilPhase() instanceof PhaseEos);
+      assertTrue(system.getGeLiquidPhase() instanceof PhaseGEInterface);
+      system.setMultiPhaseCheck(true);
+      assertTrue(system.requiresHybridEosGeFlash());
+    }
+  }
+
   /** Reactive gas-aqueous Pitzer flash retains carbonate chemistry and exposes calcite scale potential. */
   @Test
   void reactiveGasAqueousFlashSupportsCalciteScalePotential() throws Exception {
@@ -396,7 +472,7 @@ class SystemHybridEosGeFlashTest extends neqsim.NeqSimTest {
    * @param useTotalComponentMoles whether to read the feed totals instead of summing active phases
    * @return element quantities followed by net ionic charge
    */
-  private double[] getReactiveConservedQuantities(SystemPitzer system, boolean useTotalComponentMoles) {
+  private double[] getReactiveConservedQuantities(SystemInterface system, boolean useTotalComponentMoles) {
     ChemicalReactionOperations reactions = system.getChemicalReactionOperations();
     ComponentInterface[] reactiveComponents = reactions.getComponents();
     double[][] conservationMatrix = reactions.getAmatrix();
@@ -437,7 +513,7 @@ class SystemHybridEosGeFlashTest extends neqsim.NeqSimTest {
    * @param system flashed reactive system
    * @param expectedQuantities element and charge quantities before the flash
    */
-  private void assertReactiveConservedQuantities(SystemPitzer system, double[] expectedQuantities) {
+  private void assertReactiveConservedQuantities(SystemInterface system, double[] expectedQuantities) {
     double[] actualQuantities = getReactiveConservedQuantities(system, false);
     assertEquals(expectedQuantities.length, actualQuantities.length);
     for (int quantityIndex = 0; quantityIndex < expectedQuantities.length; quantityIndex++) {
@@ -505,7 +581,9 @@ class SystemHybridEosGeFlashTest extends neqsim.NeqSimTest {
       if (phaseIndex > 0) {
         diagnostics.append(", ");
       }
-      diagnostics.append(system.getPhase(phaseIndex).getType()).append('=').append(system.getBeta(phaseIndex));
+      diagnostics.append(system.getPhase(phaseIndex).getType()).append('[').append(system.getPhaseIndex(phaseIndex))
+          .append(':').append(system.getPhase(phaseIndex).getClass().getSimpleName()).append("]=")
+          .append(system.getBeta(phaseIndex));
     }
     return diagnostics.toString();
   }
