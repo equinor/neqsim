@@ -422,23 +422,45 @@ a conservative screen but is not a high-specificity classifier and must not be d
 quantitative dynamic validation.
 
 The slow dynamic benchmark reproduces large-facility Test 3 ($v_{SL}=0.50$ m/s and standard
-$v_{SG}=1.00$ m/s). The digitized experiment has about 98 ± 5 kPa inlet-pressure amplitude and
-a 38 ± 2 s cycle period. A 12-section RK4 calculation gives approximately 107 kPa and 21.8 s:
-the pressure amplitude is close, but the model cycles too rapidly. The tracked maximum outlet slug
-is approximately 1.9 m, or 0.13 riser heights, so this case does not quantitatively validate slug
-length. Liquid production is strongly cyclic, phase-resolved and total mass closure are below
-$10^{-10}$, and the gas and oil inventories remain finite and positive.
+$v_{SG}=1.00$ m/s). Severe slugging in this configuration is a **deterministically chaotic** limit
+cycle: a relative inlet-pressure perturbation of $10^{-12}$, twelve orders of magnitude below the
+digitization uncertainty of the source figure, moves the peak-to-peak riser-base pressure by more
+than a factor of two and the apparent cycle period by more than a factor of 1.5. Instantaneous
+extremes taken from a single trajectory are therefore not reproducible across platforms, compilers
+or JIT states, and the benchmark deliberately does not assert numerical agreement on them.
+
+The benchmark instead evaluates a four-member ensemble — 12 sections at 0.1 s, the same case with
+the $10^{-12}$ inlet perturbation, 16 sections at 0.1 s, and 12 sections at 0.2 s — and separates
+trajectory-robust from trajectory-sensitive quantities:
+
+| Quantity | Observed across the ensemble | How it is asserted |
+|----------|------------------------------|--------------------|
+| Phase-resolved and total mass closure | below $10^{-15}$ | below $10^{-10}$ |
+| Time-averaged riser-base pressure | 171–176 kPa, spread below 4% | mesh, outer-step and perturbation agreement within 8% |
+| Outlet-liquid blowout and fallback | present in every realization | above 1.25 and below 0.75 of the liquid feed rate |
+| Peak-to-peak riser-base pressure | 42–300 kPa | inside 0.2–4.0 riser hydrostatic heads, and the ensemble range must bracket the digitized 98 ± 5 kPa |
+| Apparent cycle period | 14–35 s | each realization above the riser filling time, and the ensemble mean asserted to stay below the experimental 38 ± 2 s |
+| Maximum tracked outlet slug | 1.5–4.9 m, or 0.10–0.33 riser heights | positive and below one riser height |
+
+The digitized experiment has about 98 ± 5 kPa inlet-pressure amplitude and a 38 ± 2 s cycle period.
+The modelled pressure swing is of the same order and brackets the measured value, but the cycle
+period is systematically too short and the tracked outlet slug stays well below the experimental
+severe-slug definition. Neither metric supports a claim of quantitative severe-slugging validation;
+only the regime signature, the mass closure and the time-averaged riser-base pressure are treated
+as reproducible evidence.
 
 The dynamic reproduction uses the physical 19.81 m flowline plus riser, 0.0762 m diameter,
 atmospheric outlet, nitrogen as an air surrogate, and a single non-volatile TBP fraction fitted to
 the reported Crystex density. The source does not give a case-specific temperature or a full oil
 assay, so 25 °C and the TBP molecular weight are explicit modelling assumptions. The experimental
 upstream tank/plenum is not represented dynamically; this missing compressible volume is a likely
-contributor to the short period. The result is checked on 12- and 16-section meshes and with 0.1 s
-and 0.2 s outer steps. Coarser grids are sensitive to whether the flowline–riser boundary lands on
-a cell. The stochastic slug tracker uses a fixed benchmark seed; ordinary simulations retain its
-non-deterministic default. Only the explicit RK4 path is covered; no IMEX severe-slugging
-validation is claimed.
+contributor to the short period. Coarse grids are additionally sensitive to whether the
+flowline–riser boundary lands on a cell face, which is one reason the instantaneous amplitude is
+not mesh-converged even though the mean pressure is. The steady-state initialization runs with the
+wall-clock guard disabled and each realization asserts that the guard did not fire, so the reported
+results do not depend on the speed or load of the executing machine. The stochastic slug tracker
+uses a fixed benchmark seed; ordinary simulations retain its non-deterministic default. Only the
+explicit RK4 path is covered; no IMEX severe-slugging validation is claimed.
 
 Run the public checks with:
 

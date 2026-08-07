@@ -325,11 +325,27 @@ positives, 4 false negatives, 8 false positives, and 7 true negatives (70.7% acc
 transition observations are reported separately as 6 predicted severe and 8 predicted stable.
 
 `SevereSluggingExperimentalBenchmarkTest` reproduces large-facility Test 3 with the physical
-flowline/riser geometry and RK4 integration. The model gives approximately 107 kPa pressure
-amplitude versus 98 ± 5 kPa digitized from the experiment, but a roughly 21.8 s cycle versus
-38 ± 2 s measured. The outlet tracker produces a maximum slug of about 1.9 m (0.13 riser
-heights), below the experimental severe-slug definition. These residuals must accompany any
-reported severe-slugging result; they are not hidden by a pass/fail summary.
+flowline/riser geometry and RK4 integration. Severe slugging here is a deterministically chaotic
+limit cycle: a relative inlet-pressure perturbation of 1e-12, far below any experimental
+significance, changes the peak-to-peak riser-base pressure by more than a factor of two and the
+apparent period by more than a factor of 1.5. The benchmark therefore evaluates a four-member
+ensemble (12 and 16 sections, 0.1 and 0.2 s outer steps, and a perturbed trajectory) and separates
+reproducible from trajectory-sensitive evidence.
+
+Reproducible across the ensemble: phase-resolved and total mass closure below 1e-15, a
+time-averaged riser-base pressure of 171-176 kPa that agrees within 4% across mesh, outer step and
+perturbation, and an outlet liquid rate that blows out above and falls back below the liquid feed
+rate in every realization.
+
+Trajectory-sensitive and reported as a range only: peak-to-peak pressure 42-300 kPa versus
+98 +/- 5 kPa digitized, apparent cycle period 14-35 s versus 38 +/- 2 s measured, and a maximum
+tracked outlet slug of 1.5-4.9 m (0.10-0.33 riser heights), below the experimental severe-slug
+definition. The modelled pressure swing brackets the measured amplitude, but the period is
+systematically short. These residuals must accompany any reported severe-slugging result; they are
+not hidden by a pass/fail summary.
+
+The benchmark disables the steady-state wall-clock guard and asserts it did not fire, so results do
+not depend on how fast the executing machine is.
 
 The source is S. Tengesdal's 2002 BSEE report:
 https://www.bsee.gov/sites/bsee.gov/files/tap-technical-assessment-program/397aa.pdf.

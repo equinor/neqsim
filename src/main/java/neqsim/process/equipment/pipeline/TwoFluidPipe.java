@@ -8,8 +8,8 @@ import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.pipeline.twophasepipe.FlowRegimeDetector;
 import neqsim.process.equipment.pipeline.twophasepipe.LagrangianSlugTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.LiquidAccumulationTracker;
-import neqsim.process.equipment.pipeline.twophasepipe.SevereSluggingSystemDiagnostic;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
+import neqsim.process.equipment.pipeline.twophasepipe.SevereSluggingSystemDiagnostic;
 import neqsim.process.equipment.pipeline.twophasepipe.SlugTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.ThermodynamicCoupling;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidComponentTransport;
@@ -618,6 +618,19 @@ public class TwoFluidPipe extends Pipeline {
    */
   private double ssMaxWallClockTime = 30.0;
 
+  /**
+   * Set when the last steady-state initialization was stopped by the wall-clock guard.
+   *
+   * <p>
+   * Wall-clock truncation makes the initial condition depend on machine speed, so reproducible studies should check
+   * this flag instead of silently accepting a machine-dependent starting profile.
+   * </p>
+   */
+  private boolean ssWallClockLimited = false;
+
+  /** Iterations used by the last steady-state refinement loop. */
+  private int ssIterationsUsed = 0;
+
   /** Current step count. */
   private int currentStep = 0;
 
@@ -1144,6 +1157,8 @@ public class TwoFluidPipe extends Pipeline {
     int maxIter = 100;
     double tolerance = 1e-4;
     long startWallClock = System.currentTimeMillis();
+    ssWallClockLimited = false;
+    ssIterationsUsed = 0;
 
     // Get total mass flow rate (conserved)
     double massFlow = getInletStream().getFlowRate("kg/sec");
@@ -1230,9 +1245,11 @@ public class TwoFluidPipe extends Pipeline {
 
     // ===== PHASE 2: Iterative refinement with under-relaxation and sparse flash =====
     for (int iter = 0; iter < maxIter; iter++) {
+      ssIterationsUsed = iter;
       // Wall-clock time guard
       long elapsed = System.currentTimeMillis() - startWallClock;
       if (elapsed > (long) (ssMaxWallClockTime * 1000)) {
+        ssWallClockLimited = true;
         logger.warn("Steady-state solver reached wall-clock limit ({:.1f}s) after {} iterations", ssMaxWallClockTime,
             iter);
         break;
@@ -6540,6 +6557,30 @@ public class TwoFluidPipe extends Pipeline {
    */
   public void setSteadyStateMaxWallClockTime(double seconds) {
     this.ssMaxWallClockTime = Math.max(1.0, seconds);
+  }
+
+  /**
+   * Check whether the last steady-state initialization was stopped by the wall-clock guard.
+   *
+   * <p>
+   * A truncated steady-state solve produces a machine-speed-dependent initial condition, so reproducible or
+   * cross-platform studies should either assert that this is {@code false} or raise the limit with
+   * {@link #setSteadyStateMaxWallClockTime(double)}.
+   * </p>
+   *
+   * @return true when the wall-clock guard stopped the refinement loop before convergence
+   */
+  public boolean isSteadyStateWallClockLimited() {
+    return ssWallClockLimited;
+  }
+
+  /**
+   * Get the number of refinement iterations used by the last steady-state initialization.
+   *
+   * @return iteration count, zero when no steady-state solve has run
+   */
+  public int getSteadyStateIterationsUsed() {
+    return ssIterationsUsed;
   }
 
   // ============ Minimum Slip Methods ============

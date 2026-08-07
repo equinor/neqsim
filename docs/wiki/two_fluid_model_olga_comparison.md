@@ -687,10 +687,12 @@ These software scenarios are regression checks, not experimental validation.
 Tengesdal's 2002 public air–mineral-oil experiments provide the current external check. On the
 55-point -3-degree velocity map, the Taitel system diagnostic scores 22/26 severe observations and
 7/15 stable observations correctly; the 14 transition observations remain a separate category.
-For dynamic large-facility Test 3, the model pressure amplitude is approximately 107 kPa versus
-98 ± 5 kPa digitized from the experiment, while the model period is approximately 21.8 s versus
-38 ± 2 s. The current slug tracker also underpredicts the experimental severe-slug length. These
-limits preclude a claim of quantitative severe-slugging validation.
+Dynamic large-facility Test 3 is a deterministically chaotic limit cycle, so it is evaluated as a
+four-member ensemble. The time-averaged riser-base pressure (171–176 kPa) and the blowout/fallback
+regime signature are reproducible, while the peak-to-peak pressure spans 42–300 kPa against
+98 ± 5 kPa digitized and the apparent period spans 14–35 s against 38 ± 2 s. The current slug
+tracker also underpredicts the experimental severe-slug length. These limits preclude a claim of
+quantitative severe-slugging validation.
 
 Source: [Tengesdal (2002), BSEE Technical Assessment Program](https://www.bsee.gov/sites/bsee.gov/files/tap-technical-assessment-program/397aa.pdf).
 
