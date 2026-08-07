@@ -68,11 +68,14 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
       String[] nameArray;
       dataSet.next();
       do {
+        String reacname = dataSet.getString("NAME").trim();
         useReaction = Integer.parseInt(dataSet.getString("usereaction")) == 1;
+        if (shouldSkipReaction(system, reacname)) {
+          useReaction = false;
+        }
         if (useReaction) {
           names.clear();
           stocCoef.clear();
-          String reacname = dataSet.getString("NAME");
           // System.out.println("name " +reacname );
           K[0] = Double.parseDouble(dataSet.getString("K1"));
           K[1] = Double.parseDouble(dataSet.getString("K2"));
@@ -89,8 +92,11 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
             do {
               // System.out.println("name of cop "
               // +dataSet2.getString("compname").trim());
-              names.add(dataSet2.getString("compname").trim());
-              stocCoef.add((dataSet2.getString("stoccoef")).trim());
+              String coefficient = dataSet2.getString("stoccoef").trim();
+              if (Math.abs(Double.parseDouble(coefficient)) > 1.0e-12) {
+                names.add(dataSet2.getString("compname").trim());
+                stocCoef.add(coefficient);
+              }
             } while (dataSet2.next());
           } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -111,6 +117,17 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
     } catch (Exception ex) {
       logger.error("could not add reaction: ", ex);
     }
+  }
+
+  /**
+   * Determines whether a database reaction should be skipped for the current thermodynamic model.
+   *
+   * @param system the thermodynamic system requesting reactions
+   * @param reactionName the reaction name from the reaction database
+   * @return true if the reaction should not be loaded for this system
+   */
+  private boolean shouldSkipReaction(SystemInterface system, String reactionName) {
+    return "Desmukh-Mather-model".equals(system.getModelName()) && "MDEACO2CH4".equals(reactionName);
   }
 
   /**
