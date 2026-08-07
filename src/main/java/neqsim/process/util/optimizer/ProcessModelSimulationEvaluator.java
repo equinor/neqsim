@@ -2088,9 +2088,9 @@ public class ProcessModelSimulationEvaluator implements Serializable {
    * Selects the leading legacy-eligible bottleneck from a ranked snapshot.
    *
    * <p>
-   * Preserve the historical {@link #findActiveBottleneck(ProcessModel)} threshold: utilizations at
-   * or below {@code -1.0}, including negative infinity, are retained in the diagnostic ranking but
-   * are not exposed as the active bottleneck.
+   * Preserve the historical {@link #findActiveBottleneck(ProcessModel)} threshold: utilizations at or below
+   * {@code -1.0}, including negative infinity, are retained in the diagnostic ranking but are not exposed as the active
+   * bottleneck.
    * </p>
    *
    * @param rankedCapacityConstraints ranked capacity snapshots
