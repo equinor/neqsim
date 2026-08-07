@@ -6237,6 +6237,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     int iter = 0;
     double massErr = 1.0e10;
     double energyErr = 1.0e10;
+    double adaptiveDampingEnergyErr = 1.0e10;
     double previousCombinedResidual = Double.POSITIVE_INFINITY;
 
     long startTime = System.nanoTime();
@@ -6388,6 +6389,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       if (evaluateBalances || !massEnergyEvaluated) {
         massErr = getMassBalanceError();
         energyErr = getEnergyBalanceError();
+        adaptiveDampingEnergyErr = getAdaptiveDampingEnergyBalanceError();
         massEnergyEvaluated = true;
       }
 
@@ -6395,7 +6397,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       // undamped fixed-point residual in err.
       double tempScaled = appliedTemperatureStepResidual / baseTempTolerance;
       double massScaled = massErr / baseMassTolerance;
-      double energyScaled = energyErr / baseEnergyTolerance;
+      double energyScaled = adaptiveDampingEnergyErr / baseEnergyTolerance;
       double combinedResidual = Math.max(tempScaled, massScaled);
       if (Double.isFinite(energyScaled)) {
         combinedResidual = Math.max(combinedResidual, Math.min(energyScaled, maxEnergyRelaxationWeight));
@@ -6767,6 +6769,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     int iter = 0;
     double massErr = 1.0e10;
     double energyErr = 1.0e10;
+    double adaptiveDampingEnergyErr = 1.0e10;
     double previousCombinedResidual = Double.POSITIVE_INFINITY;
 
     long startTime = System.nanoTime();
@@ -6985,12 +6988,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       if (evaluateBalances || !massEnergyEvaluated) {
         massErr = getMassBalanceError();
         energyErr = getEnergyBalanceError();
+        adaptiveDampingEnergyErr = getAdaptiveDampingEnergyBalanceError();
         massEnergyEvaluated = true;
       }
 
       double tempScaled = err / baseTempTolerance;
       double massScaled = massErr / baseMassTolerance;
-      double energyScaled = energyErr / baseEnergyTolerance;
+      double energyScaled = adaptiveDampingEnergyErr / baseEnergyTolerance;
       double combinedResidual = Math.max(tempScaled, massScaled);
       if (Double.isFinite(energyScaled)) {
         combinedResidual = Math.max(combinedResidual, Math.min(energyScaled, maxEnergyRelaxationWeight));
@@ -11464,9 +11468,40 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Calculates the relative enthalpy imbalance across all trays.
    *
+   * <p>
+   * External gas and liquid side draws are included with the main inter-tray outlets. Zero-flow streams are ignored
+   * because a phase template can retain a finite molar enthalpy even when it carries no material or energy.
+   * </p>
+   *
    * @return maximum of tray-wise and overall relative enthalpy imbalance
    */
   public double getEnergyBalanceError() {
+    return calculateEnergyBalanceError(true, true);
+  }
+
+  /**
+   * Calculate the historical energy signal used by the adaptive relaxation controller.
+   *
+   * <p>
+   * The controller was calibrated against main tray outlets and finite phase-template enthalpies. Keep that signal
+   * stable while exposing the physically complete balance through {@link #getEnergyBalanceError()}; changing the
+   * controller requires separate solver-wide convergence validation.
+   * </p>
+   *
+   * @return energy residual compatible with the established adaptive relaxation controller
+   */
+  private double getAdaptiveDampingEnergyBalanceError() {
+    return calculateEnergyBalanceError(false, false);
+  }
+
+  /**
+   * Calculate a relative tray and column energy imbalance.
+   *
+   * @param includeSideDraws whether external gas and liquid side draws are included as outlets
+   * @param ignoreZeroFlowStreams whether streams carrying no material are excluded
+   * @return maximum of tray-wise and overall relative enthalpy imbalance
+   */
+  private double calculateEnergyBalanceError(boolean includeSideDraws, boolean ignoreZeroFlowStreams) {
     double trayRelativeError = 0.0;
     double totalInlet = 0.0;
     double totalResidual = 0.0;
@@ -11475,11 +11510,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       double inlet = 0.0;
       int numberOfInputStreams = trays.get(i).getNumberOfInputStreams();
       for (int j = 0; j < numberOfInputStreams; j++) {
-        inlet += getFiniteStreamEnthalpy(trays.get(i).getStream(j));
+        inlet += getFiniteStreamEnthalpy(trays.get(i).getStream(j), ignoreZeroFlowStreams);
       }
 
-      double outlet = getFiniteStreamEnthalpy(trays.get(i).getGasOutStream());
-      outlet += getFiniteStreamEnthalpy(trays.get(i).getLiquidOutStream());
+      double outlet = getFiniteStreamEnthalpy(trays.get(i).getGasOutStream(), ignoreZeroFlowStreams);
+      outlet += getFiniteStreamEnthalpy(trays.get(i).getLiquidOutStream(), ignoreZeroFlowStreams);
+      if (includeSideDraws && trays.get(i).getGasSideDrawFraction() > 0.0) {
+        outlet += getFiniteStreamEnthalpy(trays.get(i).getGasSideDrawStream(), true);
+      }
+      if (includeSideDraws && trays.get(i).getLiquidSideDrawFraction() > 0.0) {
+        outlet += getFiniteStreamEnthalpy(trays.get(i).getLiquidSideDrawStream(), true);
+      }
 
       if (trays.get(i) instanceof Reboiler) {
         inlet += getFiniteDiagnosticValue(((Reboiler) trays.get(i)).getDuty());
@@ -11504,19 +11545,22 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Read stream enthalpy for diagnostics, treating non-finite values as no contribution.
    *
    * @param stream stream to inspect
+   * @param ignoreZeroFlow whether zero-flow streams are excluded before reading enthalpy
    * @return finite stream enthalpy contribution
    */
-  private double getFiniteStreamEnthalpy(StreamInterface stream) {
+  private double getFiniteStreamEnthalpy(StreamInterface stream, boolean ignoreZeroFlow) {
     if (stream == null || stream.getThermoSystem() == null) {
       return 0.0;
+    }
+    if (ignoreZeroFlow) {
+      double flowRate = Math.abs(stream.getThermoSystem().getFlowRate("kg/hr"));
+      if (!Double.isFinite(flowRate) || flowRate <= 1.0e-12) {
+        return 0.0;
+      }
     }
     double enthalpy = stream.getFluid().getEnthalpy();
     if (Double.isFinite(enthalpy)) {
       return enthalpy;
-    }
-    double flowRate = Math.abs(stream.getThermoSystem().getFlowRate("kg/hr"));
-    if (flowRate <= 1.0e-12) {
-      return 0.0;
     }
     return 0.0;
   }
