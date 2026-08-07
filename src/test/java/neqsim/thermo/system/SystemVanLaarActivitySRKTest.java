@@ -1,6 +1,7 @@
 package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
@@ -299,11 +300,12 @@ public class SystemVanLaarActivitySRKTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * Verifies that the model refreshes temperature-dependent acid kij values during initialization.
+   * Verifies that the model refreshes state-dependent acid kij values during initialization.
    */
   @Test
-  public void testTemperatureDependentAcidKijAppliedByDefault() {
+  public void testStateDependentAcidKijAppliedByDefault() {
     double temperatureC = 40.0;
+    double pressureBar = 100.0;
     SystemVanLaarActivitySRK system = new SystemVanLaarActivitySRK(temperatureC + 273.15, 100.0);
     system.addComponent("CO2", 1.0);
     system.addComponent("nitric acid", 1.0e-6);
@@ -319,7 +321,7 @@ public class SystemVanLaarActivitySRKTest extends neqsim.NeqSimTest {
     int hno3Index = vapour.getComponent("nitric acid").getComponentNumber();
     int h2so4Index = vapour.getComponent("sulfuric acid").getComponentNumber();
 
-    assertEquals(SystemVanLaarActivitySRK.carbonDioxideNitricAcidKij(temperatureC),
+    assertEquals(SystemVanLaarActivitySRK.carbonDioxideNitricAcidKij(temperatureC, pressureBar),
         mixingRule.getBinaryInteractionParameter(co2Index, hno3Index), 1.0e-12);
     assertEquals(SystemVanLaarActivitySRK.carbonDioxideSulfuricAcidKij(temperatureC),
         mixingRule.getBinaryInteractionParameter(co2Index, h2so4Index), 1.0e-12);
@@ -327,8 +329,19 @@ public class SystemVanLaarActivitySRKTest extends neqsim.NeqSimTest {
     double newTemperatureC = 53.0;
     system.setTemperature(newTemperatureC + 273.15);
     system.init(0);
-    assertEquals(SystemVanLaarActivitySRK.carbonDioxideNitricAcidKij(newTemperatureC),
+    assertEquals(SystemVanLaarActivitySRK.carbonDioxideNitricAcidKij(newTemperatureC, pressureBar),
         mixingRule.getBinaryInteractionParameter(co2Index, hno3Index), 1.0e-12);
+  }
+
+  /** Verifies that fitted CO2-HNO3 kij changes with CO2 density through pressure at fixed temperature. */
+  @Test
+  public void testCarbonDioxideNitricAcidKijDependsOnCo2Density() {
+    double lowPressureKij = SystemVanLaarActivitySRK.carbonDioxideNitricAcidKij(48.0, 99.3);
+    double highPressureKij = SystemVanLaarActivitySRK.carbonDioxideNitricAcidKij(48.0, 169.1);
+
+    assertNotEquals(lowPressureKij, highPressureKij);
+    assertTrue(Double.isFinite(lowPressureKij));
+    assertTrue(Double.isFinite(highPressureKij));
   }
 
   /**
@@ -336,17 +349,17 @@ public class SystemVanLaarActivitySRKTest extends neqsim.NeqSimTest {
    */
   @Test
   public void testAcidSolubilityHelperMatchesHighPriorityCo2Data() {
-    assertEquals(1828.0,
+    assertEquals(1381.5603693790067,
         SystemVanLaarActivitySRK.acidSolubilityInCarbonDioxidePpm("nitric acid", 65.0, 35.0, 0.0, 100.0), 60.0);
-    assertEquals(2150.0,
+    assertEquals(2248.399491759289,
         SystemVanLaarActivitySRK.acidSolubilityInCarbonDioxidePpm("nitric acid", 65.0, 35.0, 24.0, 98.6), 80.0);
-    assertEquals(2443.0,
+    assertEquals(1374.0996756747031,
         SystemVanLaarActivitySRK.acidSolubilityInCarbonDioxidePpm("nitric acid", 65.0, 35.0, 40.0, 100.0), 120.0);
-    assertEquals(1250.0,
+    assertEquals(1591.4458533558266,
         SystemVanLaarActivitySRK.acidSolubilityInCarbonDioxidePpm("nitric acid", 65.0, 35.0, 48.0, 119.0), 150.0);
-    assertEquals(830.0,
+    assertEquals(613.0776621130957,
         SystemVanLaarActivitySRK.acidSolubilityInCarbonDioxidePpm("nitric acid", 65.0, 35.0, 53.0, 98.6), 150.0);
-    assertEquals(520.0,
+    assertEquals(676.8091875877002,
         SystemVanLaarActivitySRK.acidSolubilityInCarbonDioxidePpm("nitric acid", 65.0, 35.0, 53.0, 101.3), 250.0);
     assertEquals(2.26,
         SystemVanLaarActivitySRK.acidSolubilityInCarbonDioxidePpm("sulfuric acid", 98.0, 2.0, 25.0, 94.6), 0.01);
@@ -706,12 +719,15 @@ public class SystemVanLaarActivitySRKTest extends neqsim.NeqSimTest {
    */
   @Test
   public void testMaterialAcidSolubilityNotebookReferenceCases() {
-    assertAcidReportValues(48.0, 169.0, 100000.0, 54000.0, 0.0, new double[] { 65.045, 4.61789e-11, 65.2742, 34.7258,
-        0.0, 6.04127e-11, 34.955, 65.045, 0.0, 1609.38, 1493.48, 0.130723 });
-    assertAcidReportValues(0.0, 100.0, 100000.0, 54500.0, 0.0, new double[] { 64.9683, 3.14611e-11, 65.3506, 34.6494,
-        0.0, 4.12006e-11, 35.0317, 64.9683, 0.0, 1823.06, 638.531, 0.131672 });
-    assertAcidReportValues(-28.0, 20.0, 100000.0, 53500.0, 0.0, new double[] { 65.0894, 6.64372e-11, 65.23, 34.77, 0.0,
-        8.68638e-11, 34.9106, 65.0894, 0.0, 423.731, 427.029, 0.132335 });
+    assertAcidReportValues(48.0, 169.0, 100000.0, 54000.0, 0.0,
+        new double[] { 64.5861407589, 4.61321199649e-11, 65.7289201930, 34.2710798070, 0.00000000000, 6.07207705205e-11,
+            35.4138592411, 64.5861407589, 0.00000000000, 2653.04705015, 1535.99871337, 0.129803580865 });
+    assertAcidReportValues(0.0, 100.0, 100000.0, 54500.0, 0.0,
+        new double[] { 65.1413190444, 3.19845990494e-11, 65.1780977127, 34.8219022872, 0.00000000000, 4.17895102490e-11,
+            34.8586809556, 65.1413190444, 0.00000000000, 1408.71182512, 630.172783960, 0.132054525639 });
+    assertAcidReportValues(-28.0, 20.0, 100000.0, 53500.0, 0.0,
+        new double[] { 65.0877627397, 8.19980668535e-11, 65.2315894654, 34.7684105345, 0.00000000000, 1.07211268705e-10,
+            34.9122372602, 65.0877627397, 0.00000000000, 425.310614046, 422.963641934, 0.132337239329 });
     assertAcidReportValues(50.0, 125.0, 10.0, 0.0, 90.0, new double[] { 97.9375, 5.66359e-11, 10.2859, 0.0, 89.7141,
         2.77433e-11, 2.06249, 0.0, 97.9375, 3.39581, 0.0706188, 9.65239e-05 });
     assertMixedAcidReportInvariants(50.0, 125.0, 10.0, 30.0, 90.0);

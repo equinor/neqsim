@@ -57,42 +57,20 @@ public class SystemVanLaarActivitySRK extends SystemEosGE {
   /** HNO3 tuned SRK acentric factor. */
   private static final double HNO3_TUNED_ACENTRIC_FACTOR = 0.849356;
 
-  /** CO2-HNO3 fitted temperature-independent kij base. */
-  private static final double CO2_HNO3_KIJ_BASE = 0.15148833;
+  /** CO2-HNO3 density-fit quadratic coefficient for rho^2, rho in kg/m3. */
+  private static final double CO2_HNO3_KIJ_DENSITY_A = 9.17377e-7;
 
-  /** CO2-HNO3 fitted kij slope versus degrees Celsius. */
-  private static final double CO2_HNO3_KIJ_SLOPE = -0.00028980;
+  /** CO2-HNO3 density-fit quadratic coefficient for rho, rho in kg/m3. */
+  private static final double CO2_HNO3_KIJ_DENSITY_B = -0.00132671;
 
-  /** CO2-HNO3 low-temperature Gaussian kij bump amplitude. */
-  private static final double CO2_HNO3_KIJ_LOW_TEMP_AMPLITUDE = 0.07478942;
+  /** CO2-HNO3 density-fit quadratic intercept. */
+  private static final double CO2_HNO3_KIJ_DENSITY_C = 0.614188;
 
-  /** CO2-HNO3 low-temperature Gaussian centre temperature in degrees Celsius. */
-  private static final double CO2_HNO3_KIJ_LOW_TEMP_CENTER_C = -25.0;
+  /** Lower calibrated pure CO2 density limit in kg/m3. */
+  private static final double CO2_HNO3_KIJ_DENSITY_MIN_KG_M3 = 319.0;
 
-  /** CO2-HNO3 low-temperature Gaussian width in degrees Celsius. */
-  private static final double CO2_HNO3_KIJ_LOW_TEMP_WIDTH_C = 10.0;
-
-  /** CO2-HNO3 mid-temperature Gaussian kij dip amplitude. */
-  private static final double CO2_HNO3_KIJ_MID_TEMP_DIP_AMPLITUDE = 0.08044221;
-
-  /**
-   * CO2-HNO3 mid-temperature Gaussian dip centre temperature in degrees Celsius.
-   */
-  private static final double CO2_HNO3_KIJ_MID_TEMP_DIP_CENTER_C = 40.0;
-
-  /** CO2-HNO3 mid-temperature Gaussian dip width in degrees Celsius. */
-  private static final double CO2_HNO3_KIJ_MID_TEMP_DIP_WIDTH_C = 6.0;
-
-  /** CO2-HNO3 high-temperature Gaussian kij bump amplitude. */
-  private static final double CO2_HNO3_KIJ_HIGH_TEMP_AMPLITUDE = 0.12485075;
-
-  /**
-   * CO2-HNO3 high-temperature Gaussian bump centre temperature in degrees Celsius.
-   */
-  private static final double CO2_HNO3_KIJ_HIGH_TEMP_CENTER_C = 51.0;
-
-  /** CO2-HNO3 high-temperature Gaussian bump width in degrees Celsius. */
-  private static final double CO2_HNO3_KIJ_HIGH_TEMP_WIDTH_C = 5.0;
+  /** Upper calibrated pure CO2 density limit in kg/m3. */
+  private static final double CO2_HNO3_KIJ_DENSITY_MAX_KG_M3 = 1054.0;
 
   /** CO2-H2SO4 fitted kij at 47.5 degrees Celsius. */
   private static final double CO2_H2SO4_KIJ_AT_47_5_C = 0.13751412;
@@ -240,8 +218,8 @@ public class SystemVanLaarActivitySRK extends SystemEosGE {
    * {@inheritDoc}
    *
    * <p>
-   * Refreshes temperature-dependent acid binary interaction parameters before the analytic or numeric initialization
-   * evaluates SRK fugacity coefficients.
+   * Refreshes acid binary interaction parameters before the analytic or numeric initialization evaluates SRK fugacity
+   * coefficients.
    * </p>
    */
   @Override
@@ -257,7 +235,7 @@ public class SystemVanLaarActivitySRK extends SystemEosGE {
    * {@inheritDoc}
    *
    * <p>
-   * Refreshes temperature-dependent acid binary interaction parameters before phase-specific initialization.
+   * Refreshes acid binary interaction parameters before phase-specific initialization.
    * </p>
    */
   @Override
@@ -739,7 +717,8 @@ public class SystemVanLaarActivitySRK extends SystemEosGE {
 
     if (phase.hasComponent("nitric acid")) {
       int hno3Index = phase.getComponent("nitric acid").getComponentNumber();
-      mixingRule.setBinaryInteractionParameter(co2Index, hno3Index, carbonDioxideNitricAcidKij(temperatureC));
+      mixingRule.setBinaryInteractionParameter(co2Index, hno3Index,
+          carbonDioxideNitricAcidKij(temperatureC, phase.getPressure()));
       if (waterIndex >= 0) {
         mixingRule.setBinaryInteractionParameter(hno3Index, waterIndex, 0.0);
       }
@@ -754,20 +733,47 @@ public class SystemVanLaarActivitySRK extends SystemEosGE {
   }
 
   /**
-   * Fitted SRK binary interaction parameter for CO2-HNO3 in the Van Laar acid gamma-phi model.
+   * Fitted SRK binary interaction parameter for CO2-HNO3 as a function of pure CO2 density.
    *
-   * @param temperatureC temperature in degrees Celsius
+   * @param carbonDioxideDensityKgM3 pure CO2 density in kg/m3
    * @return fitted CO2-HNO3 SRK binary interaction parameter
    */
-  public static double carbonDioxideNitricAcidKij(double temperatureC) {
-    double lowTemperatureReduced = (temperatureC - CO2_HNO3_KIJ_LOW_TEMP_CENTER_C) / CO2_HNO3_KIJ_LOW_TEMP_WIDTH_C;
-    double midTemperatureReduced = (temperatureC - CO2_HNO3_KIJ_MID_TEMP_DIP_CENTER_C)
-        / CO2_HNO3_KIJ_MID_TEMP_DIP_WIDTH_C;
-    double highTemperatureReduced = (temperatureC - CO2_HNO3_KIJ_HIGH_TEMP_CENTER_C) / CO2_HNO3_KIJ_HIGH_TEMP_WIDTH_C;
-    return CO2_HNO3_KIJ_BASE + CO2_HNO3_KIJ_SLOPE * temperatureC
-        + CO2_HNO3_KIJ_LOW_TEMP_AMPLITUDE * Math.exp(-0.5 * lowTemperatureReduced * lowTemperatureReduced)
-        - CO2_HNO3_KIJ_MID_TEMP_DIP_AMPLITUDE * Math.exp(-0.5 * midTemperatureReduced * midTemperatureReduced)
-        + CO2_HNO3_KIJ_HIGH_TEMP_AMPLITUDE * Math.exp(-0.5 * highTemperatureReduced * highTemperatureReduced);
+  public static double carbonDioxideNitricAcidKijFromDensity(double carbonDioxideDensityKgM3) {
+    double density = Math.max(CO2_HNO3_KIJ_DENSITY_MIN_KG_M3,
+        Math.min(CO2_HNO3_KIJ_DENSITY_MAX_KG_M3, carbonDioxideDensityKgM3));
+    return CO2_HNO3_KIJ_DENSITY_A * density * density + CO2_HNO3_KIJ_DENSITY_B * density + CO2_HNO3_KIJ_DENSITY_C;
+  }
+
+  /**
+   * Calculates pure CO2 density from SRK at the specified condition.
+   *
+   * @param temperatureC temperature in degrees Celsius
+   * @param pressureBar pressure in bara
+   * @return pure CO2 density in kg/m3
+   */
+  public static double pureCarbonDioxideDensityKgM3(double temperatureC, double pressureBar) {
+    SystemSrkEos carbonDioxide = new SystemSrkEos(temperatureC + 273.15, pressureBar);
+    carbonDioxide.addComponent("CO2", 1.0);
+    carbonDioxide.createDatabase(true);
+    carbonDioxide.setMixingRule("classic");
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(carbonDioxide);
+    operations.TPflash();
+    carbonDioxide.initProperties();
+
+    return carbonDioxide.getDensity("kg/m3");
+  }
+
+  /**
+   * Fitted SRK binary interaction parameter for CO2-HNO3 using pure CO2 density.
+   *
+   * @param temperatureC temperature in degrees Celsius
+   * @param pressureBar pressure in bara
+   * @return fitted CO2-HNO3 SRK binary interaction parameter
+   */
+  public static double carbonDioxideNitricAcidKij(double temperatureC, double pressureBar) {
+    double density = pureCarbonDioxideDensityKgM3(temperatureC, pressureBar);
+    return carbonDioxideNitricAcidKijFromDensity(density);
   }
 
   /**
@@ -886,7 +892,7 @@ public class SystemVanLaarActivitySRK extends SystemEosGE {
     carrier.createDatabase(true);
     applyNitricAcidPureComponentTuning(carrier);
     carrier.setMixingRule("classic");
-    carrier.setBinaryInteractionParameter("CO2", acidName, acidCarbonDioxideKij(acidName, temperatureC));
+    carrier.setBinaryInteractionParameter("CO2", acidName, acidCarbonDioxideKij(acidName, temperatureC, pressureBar));
     carrier.setBinaryInteractionParameter("CO2", "water", carbonDioxideWaterKij(temperatureC));
     carrier.setBinaryInteractionParameter(acidName, "water", 0.0);
 
@@ -964,11 +970,12 @@ public class SystemVanLaarActivitySRK extends SystemEosGE {
    *
    * @param acidName normalized acid name
    * @param temperatureC temperature in degrees Celsius
+   * @param pressureBar pressure in bara
    * @return acid-CO2 binary interaction parameter
    */
-  private static double acidCarbonDioxideKij(String acidName, double temperatureC) {
+  private static double acidCarbonDioxideKij(String acidName, double temperatureC, double pressureBar) {
     if ("nitric acid".equals(acidName)) {
-      return carbonDioxideNitricAcidKij(temperatureC);
+      return carbonDioxideNitricAcidKij(temperatureC, pressureBar);
     }
     return carbonDioxideSulfuricAcidKij(temperatureC);
   }
