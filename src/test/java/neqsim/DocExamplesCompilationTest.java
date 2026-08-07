@@ -211,7 +211,7 @@ public class DocExamplesCompilationTest {
 
     ProcessModelSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[] { 12000.0 });
     ProcessModelSimulationEvaluator.BottleneckStatus bottleneck = result.getActiveBottleneck();
-    List<ProcessModelSimulationEvaluator.BottleneckStatus> ranked = evaluator.rankCapacityConstraints(model);
+    List<ProcessModelSimulationEvaluator.BottleneckStatus> ranked = result.getRankedCapacityConstraints();
 
     assertTrue(result.isSimulationConverged());
     assertNotNull(bottleneck);
