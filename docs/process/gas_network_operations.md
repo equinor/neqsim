@@ -336,6 +336,117 @@ reversal, a two-phase flash, a temperature mismatch, an unsupported topology,
 or a failed conservation/boundedness criterion raises an explicit exception
 before the state is accepted.
 
+## Coupled transient hydraulics with scheduled source rates
+
+Use `TransientGasNetwork` when source mass rates and compositions are scheduled,
+the delivery pressure is fixed, and source pressure must be solved together
+with linepack. This boundary-value problem differs from both APIs above:
+
+- `TransientCompositionalPipeNetwork` prescribes edge flow and holds each cell's
+  gas mass fixed; it transports species without solving pressure.
+- `TransientGasNetwork` prescribes positive source rates, fixes one sink
+  pressure, and solves source/junction pressure plus edge inlet, average, and
+  outlet flow. Source pressure is an output.
+- This is not deliverability control. Source rates do not fall when a pressure
+  limit is reached; an infeasible pressure or edge capacity raises an exception.
+
+For an edge with quasi-steady Darcy flow \(\bar q_e\) and EOS-linearized
+linepack \(M_e\), the implicit storage split is
+
+$$
+\dot M_e = \frac{M_e^{n+1}-M_e^n}{\Delta t},\qquad
+q_e^{in}=\bar q_e+\frac{\dot M_e}{2},\qquad
+q_e^{out}=\bar q_e-\frac{\dot M_e}{2}.
+$$
+
+Each solved node closes its face-flow balance. For a scheduled source \(s\),
+
+$$
+q_s^{schedule}+\sum_e q_e^{out}-\sum_e q_e^{in}=0.
+$$
+
+The conservative finite-volume species update uses those same face flows and
+the new cell masses, so packing, unpacking, and composition residence time share
+one mass ledger.
+
+The synthetic Åsgard/Kristin-to-Kårstø rate event can be configured as follows.
+The gas objects use a common component slate and 288.15 K; `kristinEventGas`
+contains 4 mol% CO2.
+
+```java
+TransientGasNetwork hydraulic =
+    new TransientGasNetwork("Synthetic Asgard and Kristin to Karsto");
+hydraulic.addNode("asgard");
+hydraulic.addNode("kristin");
+hydraulic.addNode("junction");
+hydraulic.addNode("karsto");
+hydraulic.addPipe(
+    "asgardBranch", "asgard", "junction", 1.0, 1.0, 50.0e-6, 1, asgardGas);
+hydraulic.addPipe(
+    "kristinBranch", "kristin", "junction", 1.0, 1.0, 50.0e-6, 1, kristinGas);
+hydraulic.addPipe(
+    "export", "junction", "karsto", 700000.0, 0.987, 50.0e-6, 12, mixedGas);
+
+hydraulic.setSourceSchedule(
+    "asgard", new double[] {0.0}, new SystemInterface[] {asgardGas},
+    new double[] {343.125});
+hydraulic.setSourceSchedule(
+    "kristin", new double[] {0.0, 6.0 * 3600.0, 18.0 * 3600.0},
+    new SystemInterface[] {kristinGas, kristinEventGas, kristinGas},
+    new double[] {114.375, 142.96875, 114.375});
+hydraulic.setFixedPressureBoundary("karsto", 110.0, "bara");
+hydraulic.setSourcePressureLimits("asgard", 110.0, 240.0, "bara");
+hydraulic.setSourcePressureLimits("kristin", 110.0, 240.0, "bara");
+
+hydraulic.run(36.0 * 3600.0, 1800.0);
+TransientGasNetworkHistory history = hydraulic.getHistory();
+double[] sourcePressure =
+    history.getSourcePressureBaraHistory("asgard");
+double[] exportInlet =
+    history.getEdgeInletMassFlowKgSHistory("export");
+double[] exportOutlet =
+    history.getEdgeOutletMassFlowKgSHistory("export");
+double[] exportLinepack =
+    history.getEdgeLinepackKgHistory("export");
+```
+
+The regression uses the approximately 200 bara baseline and 207 bara
+high-rate quasi-steady notebook results as comparison anchors, not exact
+transient targets. During packing, export inlet flow exceeds outlet flow and
+the solved source pressure rises; after the event it relaxes toward baseline.
+
+Python receives the same time-aligned arrays through `neqsim_dev_setup.py`:
+
+```python
+network = ns.TransientGasNetwork("transient export")
+# Configure nodes, pipes, schedules, and the fixed sink as in the Java example.
+network.run(36.0 * 3600.0, 1800.0)
+history = network.getHistory()
+times_s = list(history.getElapsedTimeSeconds())
+source_pressure_bara = list(
+    history.getSourcePressureBaraHistory("asgard")
+)
+karsto_co2_mass_fraction = list(
+    history.getNodeMassFractionHistory("karsto", "CO2")
+)
+capture = str(history.toJson())
+```
+
+Every accepted step exposes hydraulic, total-mass, component, and junction
+residuals through `getStepReports()`. Edge and network species ledgers are
+available through `getEdgeSpeciesReports(...)` and
+`getNetworkSpeciesReports()`. Configure pressure bounds with
+`setSourcePressureLimits(...)` and a fail-loud velocity capacity with
+`setMaximumEdgeVelocity(...)`.
+
+The initial validated scope is a directed acyclic gathering tree with one
+outgoing edge per source or junction, strictly positive flow, one fixed-pressure
+sink, a common component slate and temperature, and exactly one gas phase.
+Momentum is quasi-steady and isothermal with a local EOS linearization for
+compressibility. Flow splits, recirculation, reverse flow, acoustic waves,
+thermal transport, compressor/control logic, and phase appearance are not
+silently approximated.
+
 ## JSON and reproducibility
 
 Quality profiles, compliance reports, candidate evaluations, and planning

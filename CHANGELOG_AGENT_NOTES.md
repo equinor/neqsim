@@ -9,6 +9,27 @@
 
 ---
 
+## 2026-08-07 — Coupled transient gas-network hydraulics and source schedules
+
+- Added `TransientGasNetwork` for bounded, positive-flow, one-phase isothermal
+  gathering trees. It simultaneously solves source and junction pressures,
+  Darcy edge flow, compressible linepack, and conservative named-component
+  transport for scheduled source rates/compositions and one fixed-pressure
+  sink.
+- `TransientGasNetworkHistory` provides time-aligned node pressure/composition,
+  edge inlet/average/outlet flow, edge linepack, and immutable hydraulic,
+  junction, and component-conservation reports. The history and reports have a
+  stable JSON path for Python/JPype.
+- Source pressure is an emergent feasibility result, not a prescribed boundary
+  or a deliverability controller. Pressure bounds and edge velocity limits fail
+  explicitly; reverse flow, phase appearance, thermal transport, recirculation,
+  and branching splits remain outside the initial API.
+- Added a 700 km synthetic Åsgard/Kristin-to-Kårstø rate-event regression with
+  the sink fixed at 110 bara, comparison to the 200/207 bara quasi-steady
+  anchors, deterministic repeat, linepack response, component/junction/total
+  balance gates, unsupported-state diagnostics, and joint grid/timestep
+  refinement.
+
 ## 2026-08-06 — Evidence-aware full-model capacity ranking
 
 - `ProcessModelSimulationEvaluator.rankCapacityConstraints(model)` returns every enabled
