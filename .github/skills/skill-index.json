@@ -1,4 +1,44 @@
 {
+  "flow accelerated corrosion": [
+    "neqsim-flow-accelerated-corrosion",
+    "neqsim-root-cause-analysis",
+    "neqsim-flow-assurance"
+  ],
+  "wall thinning at welds and bends": [
+    "neqsim-flow-accelerated-corrosion",
+    "neqsim-root-cause-analysis",
+    "neqsim-standards-lookup"
+  ],
+  "heating medium loop corrosion": [
+    "neqsim-flow-accelerated-corrosion",
+    "neqsim-flow-assurance",
+    "neqsim-root-cause-analysis"
+  ],
+  "waste heat recovery unit tube leak": [
+    "neqsim-flow-accelerated-corrosion",
+    "neqsim-root-cause-analysis",
+    "neqsim-power-generation"
+  ],
+  "in situ pH at operating temperature": [
+    "neqsim-flow-accelerated-corrosion",
+    "neqsim-electrolyte-systems",
+    "neqsim-flow-assurance"
+  ],
+  "magnetite film stability": [
+    "neqsim-flow-accelerated-corrosion",
+    "neqsim-flow-assurance",
+    "neqsim-standards-lookup"
+  ],
+  "amine buffer alkalinity control": [
+    "neqsim-flow-accelerated-corrosion",
+    "neqsim-electrolyte-systems",
+    "neqsim-reaction-engineering"
+  ],
+  "glycol water closed loop chemistry": [
+    "neqsim-flow-accelerated-corrosion",
+    "neqsim-electrolyte-systems",
+    "neqsim-flow-assurance"
+  ],
   "self heating": [
     "neqsim-self-heating-ignition",
     "neqsim-process-safety",

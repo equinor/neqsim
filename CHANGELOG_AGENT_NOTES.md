@@ -9,6 +9,53 @@
 
 ---
 
+## 2026-08-07 — Flow-accelerated corrosion + in-situ pH at temperature (new classes) + DEA protonation enabled
+
+**New in `neqsim.process.corrosion`** — for closed heating- and cooling-medium loops,
+boiler feedwater and WHRU / economiser tubes, where the damage mechanism is magnetite
+dissolution rather than acid-gas corrosion.
+
+- `AmineBufferedPH` — converts a laboratory pH measured on a **cooled sample** into the
+  **in-situ pH at operating temperature**, and reports the **alkaline margin** above
+  neutrality. Critical point for agents: neutral water is pH 7.00 at 25 °C but about
+  **pH 5.85 at 150 °C**, so a hot-system pH cannot be judged against pH 7. For a buffered
+  fluid the pH shift equals the pKa shift exactly. Supports `BufferAmine.DEA` and
+  `BufferAmine.MDEA`; verdicts `ROBUST` / `ADEQUATE` / `MARGINAL` / `INSUFFICIENT`.
+- `FlowAcceleratedCorrosion` + `FacGeometry` — FAC screening index built from a
+  Berger-Hau mass-transfer coefficient and factors for temperature (bell peaking at
+  150 °C), in-situ pH, local geometry (bend / weld / weld-at-bend / orifice) and chromium
+  content. `getDominantFactor()` names the controlling lever; `ratioTo(other)` quantifies
+  a proposed change.
+
+**Agent guidance — pick the right corrosion model:**
+
+- `NorsokM506CorrosionRate` is **CO2 corrosion**. It does not apply to a CO2-free closed
+  loop; using it there is a misapplication.
+- FAC is **not** erosion-corrosion. FAC is electrochemical dissolution under mass-transfer
+  control; erosion-corrosion needs mechanical particle impingement or cavitation. They
+  occur at the same locations but need different mitigation. `RootCauseAnalyser` now
+  raises `FLOW_ACCELERATED_CORROSION` separately from `EROSION_CORROSION`.
+- Always feed `FlowAcceleratedCorrosion.setInSituPH(...)` a value from `AmineBufferedPH`,
+  never a raw laboratory pH.
+- The FAC index is **comparison-only**. Ratios between cases are meaningful; the absolute
+  value is not a wall-loss rate.
+- Wall shear scales as roughly `v^1.75`, so a 3 % velocity exceedance is a ~13 % shear
+  exceedance. Report shear, not just velocity.
+
+**Data fix — DEA protonation was disabled.** The `DEAprot` reaction
+(`DEA+ + H2O <-> DEA + H3O+`, index 52, Austgen 1989) had complete stoichiometry in
+`STOCCOEFDATA.csv` and complete constants in `REACTIONDATA.csv`, but `USEREACTION = 0`,
+so any DEA-buffered electrolyte system silently returned no acid-base equilibrium. Now
+enabled; a half-neutralised DEA buffer in `SystemFurstElectrolyteEos` returns pH 8.98 at
+25 °C against a literature pKa of 8.88-8.92. The CPA electrolyte path
+(`SystemElectrolyteCPAstatoil`) remains unreliable for amine buffers — pre-existing, and
+affects MDEA equally.
+
+**New skill:** `neqsim-flow-accelerated-corrosion`. Loaded by `@flow.assurance` and
+`@root.cause`.
+
+---
+
 ## 2026-08-07 — Self-heating / spontaneous-ignition criticality (new package) + glycol formation-property fix
 
 **New package `neqsim.process.safety.selfheating`** — screening for low-temperature

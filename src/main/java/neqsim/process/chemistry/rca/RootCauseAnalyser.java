@@ -11,6 +11,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import neqsim.process.chemistry.ChemicalCompatibilityAssessor;
 import neqsim.process.chemistry.ProductionChemical;
+import neqsim.process.corrosion.FlowAcceleratedCorrosion;
 
 /**
  * Root cause analyser for chemical-related incidents in well, flow assurance and process systems.
@@ -615,6 +616,7 @@ public class RootCauseAnalyser implements Serializable {
           "Wall shear = " + wallShearStressPa + " Pa above 150 Pa threshold",
           "Reduce velocity; verify CI persistency under shear; consider CRA"));
     }
+    addFlowAcceleratedCorrosionCandidate(cr, fastCr);
     if (chemicals.size() > 0) {
       // chemical-induced corrosion check
       for (ProductionChemical c : chemicals) {
@@ -625,6 +627,59 @@ public class RootCauseAnalyser implements Serializable {
         }
       }
     }
+  }
+
+  /**
+   * Adds a flow-accelerated corrosion candidate when the conditions match the FAC signature.
+   *
+   * <p>
+   * FAC is dissolution of the protective magnetite film under mass-transfer control, and is distinct from
+   * erosion-corrosion, which needs mechanical damage by particles or cavitation. The two occur at the same locations —
+   * bends, welds and restrictions — so both may be raised, but they call for different mitigation. FAC is addressed by
+   * chemistry, temperature and alloying; erosion-corrosion by removing the particles or the impingement.
+   * </p>
+   *
+   * <p>
+   * The signature is hot single-phase aqueous service on carbon or low-alloy steel, near the magnetite solubility peak
+   * around 150 &deg;C, with the acid gases too dilute to explain the attack and oxygen too low for oxygen pitting.
+   * </p>
+   *
+   * @param corrosionRate measured corrosion rate [mm/yr], NaN when not supplied
+   * @param fastCorrosion true when the measured corrosion rate is elevated
+   */
+  private void addFlowAcceleratedCorrosionCandidate(double corrosionRate, boolean fastCorrosion) {
+    String lowerMaterial = material.toLowerCase();
+    boolean susceptibleMaterial = lowerMaterial.contains("carbon") || lowerMaterial.contains("low_alloy")
+        || lowerMaterial.contains("low alloy") || lowerMaterial.contains("a106") || lowerMaterial.contains("a333");
+    boolean inFacTemperatureWindow = temperatureC >= 90.0 && temperatureC <= 250.0;
+    boolean acidGasesTooDiluteToExplain = co2PartialPressureBar < 0.5 && h2sPartialPressureBar < 0.05;
+    boolean essentiallyDeaerated = oxygenPpb < 50.0;
+
+    if (!susceptibleMaterial || !inFacTemperatureWindow || !acidGasesTooDiluteToExplain || !essentiallyDeaerated) {
+      return;
+    }
+
+    double score = 0.45;
+    // The solubility peak near 150 C is where FAC is most severe.
+    score += 0.20 * FlowAcceleratedCorrosion.temperatureFactor(temperatureC);
+    if (wallShearStressPa > 50.0) {
+      score += 0.10;
+    }
+    if (pH < 9.0) {
+      score += 0.10;
+    }
+    if (fastCorrosion) {
+      score += 0.10;
+    }
+
+    candidates.add(new RootCauseCandidate("FLOW_ACCELERATED_CORROSION",
+        "Flow-accelerated corrosion (magnetite dissolution under mass-transfer control)", Math.min(0.95, score),
+        "Carbon or low-alloy steel at " + temperatureC + " C near the magnetite solubility peak, pH " + pH
+            + ", wall shear " + wallShearStressPa + " Pa, with CO2, H2S and O2 all too low to explain the attack"
+            + (fastCorrosion ? ", measured CR " + corrosionRate + " mm/yr" : ""),
+        "Run FlowAcceleratedCorrosion to rank the controlling factor; convert the laboratory pH to in-situ pH with "
+            + "AmineBufferedPH before judging alkalinity; inspect bends, welds and restrictions preferentially; "
+            + "consider a low-alloy Cr-Mo steel such as ASTM A335 P11"));
   }
 
   /**

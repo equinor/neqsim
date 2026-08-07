@@ -315,6 +315,8 @@ transport properties (viscosity, thermal conductivity, density).
 | `CO2CorrosionAnalyzer` | de Waard-Milliams from an electrolyte fluid | `pvtsimulation.flowassurance` |
 | `PipeSegmentIntegrity` | Per-segment CO2 corrosion + CaCO3 scale profile along a line (`fromPipe`) | `process.corrosion` |
 | `RobustAqueousPH` | Always-finite, source-tagged in-situ pH with explicit pCO2 basis (rigorous else CO2-water correlation) | `process.corrosion` |
+| `FlowAcceleratedCorrosion` | FAC screening index for closed hot-water/glycol loops: Berger-Hau mass transfer, 150 &deg;C solubility peak, pH, bend/weld geometry, Cr content. **Distinct from erosion-corrosion and from NORSOK M-506 CO2 corrosion** | `process.corrosion` |
+| `AmineBufferedPH` | Converts a laboratory pH measured on a cooled sample into in-situ pH at operating temperature, and reports the alkaline margin above neutrality (neutral is pH 5.85 at 150 &deg;C, not 7) | `process.corrosion` |
 | `Phase.getpH()` | Aqueous in-situ pH; built-in acid-gas fallback (`getpH("acidgas")`) gives CO2/H2S pH without `chemicalReactionInit()` | `thermo.phase` |
 | `ElectrolyteScaleCalculator` | Activity-corrected SI for CaCO3/BaSO4/CaSO4/SrSO4 (Davies + Ksp(T)) from ion mg/L | `process.chemistry.scale` |
 | `ThermodynamicOperations.checkScalePotential(phase)` | Rigorous saturation ratio SR=IAP/Ksp per salt from a speciated brine (needs `chemicalReactionInit()`); read `getResultTable()` | `thermodynamicoperations` |
@@ -592,6 +594,8 @@ transport properties (viscosity, thermal conductivity, density).
 | CO2 corrosion rate? | ✅ | `DeWaardMilliamsCorrosion` (screening); `NorsokM506CorrosionRate` / `NorsokM506ElectrolyteBridge` (rigorous, brine-driven) |
 | H2S sour classification? | ✅ | `DeWaardMilliamsCorrosion.isSourService()` |
 | Per-segment corrosion+scale profile? | ✅ | `PipeSegmentIntegrity.fromPipe(...)` |
+| Flow-accelerated corrosion in a closed heating/cooling loop? | ✅ | `FlowAcceleratedCorrosion` (screening index; NORSOK M-506 does **not** apply to a CO2-free loop) |
+| In-situ pH at operating temperature from a laboratory pH? | ✅ | `AmineBufferedPH` (DEA and MDEA buffers) |
 | ISO 6976 calorific value? | ✅ | `Standard_ISO6976` |
 | Pipeline sizing? | ✅ | `PipeBeggsAndBrills` + `PipelineMechanicalDesign` |
 | Compressor power? | ✅ | `Compressor.getPower("kW")` |
