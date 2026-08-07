@@ -53,6 +53,12 @@ public class ProcessModel implements Runnable, Serializable {
   static Logger logger = LogManager.getLogger(ProcessModel.class);
   private Map<String, ProcessSystem> processes = new LinkedHashMap<>();
 
+  /** Absolute tolerance used when checking that transient process-area clocks are aligned. */
+  private static final double TRANSIENT_AREA_TIME_ABSOLUTE_TOLERANCE_SECONDS = 1.0e-9;
+
+  /** Relative tolerance used when checking that transient process-area clocks are aligned. */
+  private static final double TRANSIENT_AREA_TIME_RELATIVE_TOLERANCE = 1.0e-12;
+
   /** Metadata key used for JSON round-trip inter-area stream rewiring. */
   private static final String INTER_AREA_LINKS_KEY = "interAreaLinks";
 
@@ -1662,17 +1668,59 @@ public class ProcessModel implements Runnable, Serializable {
    * <p>
    * Areas are stepped in insertion order. Any {@link EventScheduler} previously installed via
    * {@link #setEventScheduler(EventScheduler)} is propagated to each child {@code ProcessSystem} before stepping, so a
-   * single scheduler can coordinate events across all areas.
+   * single scheduler can coordinate events across all areas. All area clocks must be finite and aligned before the
+   * step; a mismatch fails before any area or shared event state changes.
    * </p>
    *
    * @param dt finite timestep size in seconds (must be {@code > 0})
    * @param id calculation UUID forwarded to each child {@code ProcessSystem.runTransient}
    * @throws IllegalArgumentException if {@code dt} is non-finite or not greater than zero
+   * @throws IllegalStateException if child process-area clocks are non-finite or not aligned
    */
   public void runTransient(double dt, UUID id) {
     ProcessSystem.validateTransientTimestep(dt);
+    validateTransientAreaTimes();
     for (ProcessSystem area : processes.values()) {
       area.runTransient(dt, id);
+    }
+  }
+
+  /**
+   * Verifies that every process area starts a model-level transient step on the same finite simulation clock.
+   *
+   * <p>
+   * The preflight is deliberately completed before the first area advances. Otherwise a shared event scheduler could be
+   * evaluated after an early area has already run but before a later area runs, applying one event to only part of the
+   * model during a nominally common timestep.
+   * </p>
+   *
+   * @throws IllegalStateException if an area clock is non-finite or differs materially from the first area clock
+   */
+  private void validateTransientAreaTimes() {
+    Map.Entry<String, ProcessSystem> referenceEntry = null;
+    for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
+      double currentTime = entry.getValue().getTime();
+      if (!Double.isFinite(currentTime)) {
+        throw new IllegalStateException(
+            "ProcessModel transient area '" + entry.getKey() + "' has non-finite simulation time " + currentTime
+                + " s; reset or synchronize area clocks before runTransient");
+      }
+      if (referenceEntry == null) {
+        referenceEntry = entry;
+        continue;
+      }
+
+      double referenceTime = referenceEntry.getValue().getTime();
+      double difference = Math.abs(currentTime - referenceTime);
+      double scale = Math.max(Math.abs(referenceTime), Math.abs(currentTime));
+      double tolerance = Math.max(TRANSIENT_AREA_TIME_ABSOLUTE_TOLERANCE_SECONDS,
+          TRANSIENT_AREA_TIME_RELATIVE_TOLERANCE * scale);
+      if (difference > tolerance) {
+        throw new IllegalStateException("ProcessModel transient areas must have aligned clocks before stepping: area '"
+            + referenceEntry.getKey() + "' is at " + referenceTime + " s while area '" + entry.getKey() + "' is at "
+            + currentTime + " s (difference " + difference + " s, tolerance " + tolerance
+            + " s); reset or synchronize area clocks before runTransient");
+      }
     }
   }
 
