@@ -259,8 +259,7 @@ public class DistillationColumnModeTest {
       double feedComponentFlow = feedFlow * feedComposition[componentIndex];
       double productComponentFlow = gasFlow * gasComposition[componentIndex]
           + liquidFlow * liquidComposition[componentIndex];
-      assertEquals(feedComponentFlow, productComponentFlow,
-          Math.max(1.0e-6, 5.0e-3 * Math.abs(feedComponentFlow)));
+      assertEquals(feedComponentFlow, productComponentFlow, Math.max(1.0e-6, 5.0e-3 * Math.abs(feedComponentFlow)));
     }
   }
 
