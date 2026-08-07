@@ -346,14 +346,19 @@ fluid.addComponent("water", 0.1);
 fluid.addSalinity(2.0, "mole/sec");  // Salt-equivalent molar flow, not concentration
 fluid.setMixingRule(11);  // Soreide-Whitson mixing rule
 
-// Optional for CO2-NaCl brine; LEGACY remains the default
-fluid.setAqueousCO2Parameterization("CHABAB_2019");
+// Optional refreshed eight-gas drop-in BIPs; LEGACY remains the default
+fluid.setSoreideWhitsonParameterization("BURGOYNE_NIELSEN_2026");
 ```
 
 The Chabab option is validated against NaCl-brine data at approximately 1-3 mol/kg water, 323-373 K,
 and pressures up to 230 bar. See [Søreide-Whitson Model](SoreideWhitsonModel.md) for the
 correlation, units, comparison example, and extrapolation limits.
 
+The Burgoyne-Nielsen option covers CO₂, H₂S, methane, nitrogen, hydrogen, ethane, propane, and
+n-butane water pairs. It is opt-in because the refreshed BIPs change results and the published
+fit used a specified pure-component property set.
+
+### 7.3 Pitzer Model
 ### 7.3 Electrolyte GE Models and Hybrid VLLE
 
 For electrolyte solutions, `SystemPitzer`, `SystemDesmukhMather` and `SystemKentEisenberg` provide a fixed-role hybrid
