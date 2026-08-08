@@ -48,6 +48,30 @@ locations and need *different* mitigation:
 
 `RootCauseAnalyser` now raises both as separate candidates.
 
+**3. Do not read a CFD wall-shear map as a FAC map at a separated feature.**
+
+FAC is mass-transfer controlled. `FlowAcceleratedCorrosion` gets there through
+Berger-Hau, $Sh = 0.0165\,Re^{0.86}Sc^{0.33}$, with a Stokes-Einstein diffusivity —
+for a hot glycol/water loop $Sc$ lands near **280**, so the concentration boundary
+layer is roughly $Sc^{1/3}\approx 6.5$ times thinner than the momentum one.
+
+CFD studies usually deliver wall shear, and the tempting conversion is
+$k_m\propto u^{*}\propto\sqrt{\tau_w}$. **That is only valid where the boundary layer
+stays attached** — a bend, a gentle taper. At a weld root protrusion, an orifice or
+any sudden expansion the flow separates and reattaches, and **at reattachment
+$\tau_w$ passes through zero while $k_m$ peaks**. A shear map there puts its minimum
+close to where the metal loss is worst, so:
+
+- a shear-derived geometry factor is defensible for `ELBOW_BEND`, **not** for
+  `WELD_ROOT_PROTRUSION` or `DOWNSTREAM_ORIFICE`;
+- a low-shear separated wake in a CFD figure must not be described as low-risk.
+
+To compute a weld factor honestly you need a passive scalar at the real $Sc$ on a
+wall-resolved mesh, validated by reproducing the Berger-Hau $Sh$ in a straight run
+first — the mass-transfer analogue of checking the straight-pipe $\tau_w$. The
+`cfd-coupling` skill solves momentum only today, so state the screening factor and
+its basis rather than substituting a shear ratio.
+
 ## Workflow
 
 ### 1. Get fluid properties from the actual fluid
@@ -193,6 +217,28 @@ not discriminate at all, which corroborated a separate fatigue screening.
 
 See `enterprise-plant-data` for the unit-reconciliation, outage-exclusion and
 cycle-aliasing traps that decide whether those percentages mean anything.
+
+### Find out how the bend is actually built before modelling it
+
+Damage reported "at circumferential welds adjacent to bends" is a construction
+question first and a fluid-dynamics question second. Retrieve the bundle
+description and the *Return bends* block of the equipment data sheet before
+assuming anything:
+
+| What to look for | Why it changes the analysis |
+|---|---|
+| **Bend angle** | A 180° return is the norm in serpentine coils, not a 90° elbow. Dean secondary flow needs roughly a quarter to a half turn to develop, so a 90° case releases the flow before the vortex pair is established and **understates** both the extrados enhancement and its downstream persistence. A geometry factor computed on 90° is a lower bound for a 180° return |
+| **Formed bend or separate fitting** | If the data sheet says the return bends are *forged fittings* (e.g. ASTM A234 WPB) rather than formed tube, then a circumferential butt weld exists at each end of every bend **by construction**. `WELD_AT_BEND` stops being a screening assumption and becomes the documented geometry |
+| **Fitting grade vs tube grade** | A106 Gr. B tube welded to an A234 WPB fitting is a dissimilar-heat joint. Neither grade specifies chromium, and FAC rate is controlled by residual Cr at the **hundredths of a percent** level, so the lower-Cr side wastes preferentially and produces sharp thinning at the weld rather than general loss. The material certificates carry the analysis — this is a document retrieval, not a study |
+| **Bend radius** | Frequently absent from the data sheet. If no *R*/*D* is documented, say so; do not let an assumed long-radius default pass as a retrieved value |
+
+**Provenance trap that produced this entry.** A CFD script carried
+`bend_angle_deg = 90.0` and `BEND_RADIUS_RATIO = 1.5` under a block comment
+reading "all from the task (data sheet geometry)". The bore genuinely was from the
+data sheet; the bend was not, and the controlled documents said 180°. A comment
+that covers a block of constants can be true for one line and false for the next —
+**source each geometry constant individually**, and put the document number next to
+it rather than at the top of the block.
 
 ## Material upgrade
 
