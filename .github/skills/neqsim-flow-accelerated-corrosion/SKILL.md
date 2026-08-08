@@ -240,6 +240,22 @@ that covers a block of constants can be true for one line and false for the next
 **source each geometry constant individually**, and put the document number next to
 it rather than at the top of the block.
 
+**And the angle moves where you inspect.** Re-solving that case at the documented
+180° changed more than the number. At *R*/*D* = 1.5, Re ≈ 1.7 × 10⁵:
+
+| | 90° bend | 180° return |
+|---|---|---|
+| Peak wall shear ratio | 2.33 | 2.74 |
+| Geometry factor √R | 1.53 | 1.66 |
+| **Where the peak sits** | intrados, near the entry | **55° off the intrados, past mid-turn** |
+
+Over a half turn the Dean vortex pair becomes fully developed and convects
+high-momentum core fluid outward along the side walls, so the maximum migrates off
+the intrados towards the quarter position and is delayed to beyond the mid-point of
+the arc. Downstream over 15–25 D the pattern inverts — extrados ≈ 1.5, intrados
+≈ 0.9 in the separated wake. **Inspecting the intrados entry, which is the right
+answer for a 90° elbow, is the wrong answer for a 180° return.**
+
 ## Material upgrade
 
 About 1 % Cr gives roughly an order-of-magnitude improvement. NORSOK M-001
