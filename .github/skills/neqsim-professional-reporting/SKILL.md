@@ -176,6 +176,12 @@ Both `TaskResultValidator` (Java) and `devtools/validate_task_results.py` (the C
 gate) now check this structure, so a malformed benchmark block fails the gate
 instead of crashing the report generator.
 
+The community skill `neqsim-benchmark-reference-data` emits this block directly
+(`BenchmarkReport.to_results_json()`), together with the citation, the authority
+tier of the reference, whether the deviation is inside the reference's own
+uncertainty, and the three-graded-point check. Prefer it over hand-writing the
+block with pasted reference literals.
+
 ## Principle 9b — Evidence Matrix for Safety Studies
 
 For safety-critical studies, especially trapped-liquid fire rupture, relief,
