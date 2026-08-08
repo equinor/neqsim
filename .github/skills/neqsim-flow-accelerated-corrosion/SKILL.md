@@ -82,6 +82,62 @@ ph.getMarginAtOperating();    // the number that matters
 ph.getVerdict();              // ROBUST / ADEQUATE / MARGINAL / INSUFFICIENT
 ```
 
+### 2b. Ask how much buffer is left, not just how much margin
+
+A positive margin does not say whether it sits on a fresh buffer or on the remnant of
+a nearly exhausted one, and those call for different actions. `calculateAlkalineReserve`
+locates the titration end point — the laboratory pH at which the margin at the
+operating temperature reaches zero — and reports how much of the usable reserve has
+already been consumed. The amine concentration cancels out, so **no dosing record is
+needed**: a fluid sample is enough.
+
+```java
+AmineBufferedPH calc = new AmineBufferedPH()
+    .setAmine(BufferAmine.DEA)
+    .setMeasuredPH(8.7, 20.0)
+    .setOperatingTemperature(150.0)
+    .setGlycolMassFraction(0.45);
+
+// 310 mg/L total organic acids, formate/acetate average molar mass 52.03 g/mol
+AlkalineReserveResult r = calc.calculateAlkalineReserve(310.0, 52.03);
+
+r.getMeasuredPHAtZeroMargin();          // 8.33 - the real control floor, not pH 7
+r.getFreeBaseFractionAsFound();         // 0.31
+r.getReserveSpentFraction();            // 0.82 - four fifths already gone
+r.getRemainingAcidCapacityMgPerL();     // 68 mg/L of further acid
+r.getRemainingAcidCapacityMmolPerL();   // 1.31 mmol/L - also prices a CO2 ingress
+r.getDerivedAmineInventoryMmolPerL();   // cross-check against the dosing record
+```
+
+Call `calculateAlkalineReserve()` with no arguments when no acid analysis exists; the
+fractions still come out, only the capacity fields are NaN. Use
+`AmineBufferedPH.freeBaseFraction(pH, pKa)` to draw the titration curve.
+
+**Why this changes the recommendation.** A margin of +0.37 reads as a small but
+positive number. Expressed as a reserve it is the span from pH 8.7 down to pH 8.33,
+with 82 % already spent — so total organic acid belongs in the control limits, not in
+a trend plot, and a single sub-9 pH excursion is most of what is left.
+
+### 2c. Price a CO2 or O2 ingress against that reserve
+
+Dissolved CO2 titrates the same buffer mole for mole at these pH values, and O2
+titrates it indirectly by oxidising the glycol to organic acids. Both therefore
+convert into the same mmol/L currency as the remaining capacity. Get the solubility
+from a flash of the actual glycol/water rather than a water table, and ask for the
+concentration unit directly:
+
+```java
+double hCO2 = fluid.calcHenrysConstant("CO2", "mol/m3/bar");   // == mmol/L/bar
+double hO2 = fluid.calcHenrysConstant("oxygen", "mol/m3/bar");
+double dissolvedCO2mmolPerL = hCO2 * partialPressureBar;
+```
+
+Supported units are `bar` (the default, `f_i / x_i` per mole fraction), `mol/m3/bar`,
+`mmol/L/bar`, `mol/L/bar` and `mg/L/bar`. **One mol/m3 is one mmol/L** — dividing by
+1000 between them is the most common error in this calculation, which is why both
+spellings are accepted. The method needs exactly two phases and throws rather than
+returning zero if that is not the case.
+
 ### 3. Rank the FAC contributors
 
 ```java
