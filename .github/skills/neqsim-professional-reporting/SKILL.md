@@ -142,6 +142,13 @@ out-of-order percentile is a hard error in both `TaskResultValidator` and
 `devtools/validate_task_results.py`. Include `method` and `n_simulations`
 (≥ 200 when the Monte Carlo loop runs full NeqSim simulations).
 
+The community skill `neqsim-uncertainty-quantification` emits this block
+directly (`UncertaintyReport.to_results_json()`), in the correct ascending
+convention, with the sampler and seed, the tornado, a convergence check, and a
+`blockers` field. Note the trap it guards: `p10` here is the 10th percentile
+(the *low* estimate), the opposite of the petroleum resource convention where
+P10 is the optimistic volume. State which convention a resource table uses.
+
 ## Principle 8 — Risk Section
 
 Standard / Comprehensive reports include a **risk register** scored on a 5×5 matrix
@@ -175,6 +182,12 @@ array (or an object wrapping `benchmarks`/`cases`). Each entry must carry:
 Both `TaskResultValidator` (Java) and `devtools/validate_task_results.py` (the CI
 gate) now check this structure, so a malformed benchmark block fails the gate
 instead of crashing the report generator.
+
+The community skill `neqsim-benchmark-reference-data` emits this block directly
+(`BenchmarkReport.to_results_json()`), together with the citation, the authority
+tier of the reference, whether the deviation is inside the reference's own
+uncertainty, and the three-graded-point check. Prefer it over hand-writing the
+block with pasted reference literals.
 
 ## Principle 9b — Evidence Matrix for Safety Studies
 
@@ -273,6 +286,51 @@ workflow gaps were found.
 - [ ] `python devtools/consistency_checker.py` passes
 - [ ] Limitations section honest about model assumptions
 - [ ] Next-actions list at end (what would close the gaps)
+
+## Pre-send review (the pass that catches stale numbers)
+
+A report assembled incrementally accumulates contradictions: an early section
+states a first-pass number, a later section supersedes it, and the early one
+survives. `consistency_checker.py` does not catch these — they are internally
+well-formed. Run this pass separately, immediately before sending.
+
+**1. Repeated-quantity sweep.** Extract every quantity that appears more than
+once and confirm the values agree:
+
+```python
+import re, pathlib
+t = pathlib.Path("step3_report/report.md").read_text(encoding="utf-8")
+for q in ["boiling", "design flow", "margin"]:          # quantities to audit
+    for i, line in enumerate(t.splitlines(), 1):
+        if q in line.lower() and re.search(r"\d", line):
+            print(i, line.strip()[:120])
+```
+
+Anything quoted at two different values must be either reconciled or explicitly
+labelled with its basis ("13.1 bar against the design pressure, 10.3 bar against
+the measured pressure").
+
+**2. Numbered-list integrity.** Lead-ins like "Three further findings:" drift out
+of sync when items are added. Count the items.
+
+**3. Section numbering.** List `^## ` headings and check for gaps — an §8 → §10
+jump reads as a missing section to a reviewer.
+
+**4. Stale open/closed statuses.** Every "Open", "not yet retrieved", "would be a
+free test" in the limitations and next-actions sections must be re-read against
+what the study actually ended up doing. Work performed late in a study routinely
+closes gaps that the gap register still lists as open.
+
+**5. Alternative-basis values must be in `results.json` too.** If the report
+quotes a quantity on both a design and a measured basis, both belong in
+`results.json` — otherwise provenance closure passes on the primary value while
+the secondary one is unsourced.
+
+**Recurring physical-quantity trap.** A `T → P_saturation` table row read as if
+that temperature were the boiling point at the *operating* pressure. Invert the
+curve at the operating pressure; do not quote the nearest row. The same trap
+applies to any monotonic property table used backwards (dew point, hydrate
+curve, wax appearance).
 
 ## Related Skills
 

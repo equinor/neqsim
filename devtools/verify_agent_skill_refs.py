@@ -3,7 +3,9 @@
 Verify cross-references between NeqSim Copilot agents and skills.
 
 Checks:
-1. Every skill name referenced in agent files has a matching folder in .github/skills/
+1. Every skill name referenced in agent files has a matching folder in
+   .github/skills/, or is declared in .github/external-skill-refs.txt (or
+   resolvable in a checked-out sibling *-skills repo)
 2. Every skill folder in .github/skills/ contains a SKILL.md file
 3. Every skill name referenced in copilot-instructions.md has a matching folder
 4. Reports orphaned skill folders (exist but not referenced by any agent)
@@ -74,6 +76,44 @@ def extract_skill_refs_from_file(filepath):
     for match in re.finditer(r"[Ll]oad\s+(neqsim-[\w-]+)", text):
         refs.add(match.group(1))
     return refs
+
+
+def load_declared_external_skills(root):
+    """Return the set of skill names declared in .github/external-skill-refs.txt.
+
+    These live in a sibling *-skills repo, so they cannot be resolved in the
+    neqsim-only CI checkout where those repos are absent.
+    """
+    declared = set()
+    path = root / ".github" / "external-skill-refs.txt"
+    if not path.is_file():
+        return declared
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return declared
+    for line in text.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        declared.add(line.split()[0])
+    return declared
+
+
+def resolve_external_skills(root, skill_folders):
+    """Return skill names resolvable outside .github/skills/.
+
+    Combines the declared allowlist with dynamic resolution against the sibling
+    *-skills repos (available in the multi-repo workspace, absent in CI).
+    """
+    external = load_declared_external_skills(root)
+    _, skill_search = _load_discovery_modules()
+    if skill_search is not None:
+        skills_dir = root / ".github" / "skills"
+        for name, _, _ in skill_search._load_skills(skills_dir):
+            if name not in skill_folders:
+                external.add(name)
+    return external
 
 
 def extract_skill_metadata(skill_md_path):
@@ -290,14 +330,22 @@ def main():
         for ref in refs:
             ref_sources.setdefault(ref, []).append(str(md_file.relative_to(root)))
 
-    # 3. Check: every referenced skill has a matching folder
+    # 3. Check: every referenced skill has a matching folder, or is a declared /
+    # resolvable skill in a sibling *-skills repo.
+    external_skills = resolve_external_skills(root, skill_folders)
+    external_refs = set()
     for ref in sorted(all_refs):
-        if ref not in skill_folders:
-            sources = ref_sources.get(ref, ["unknown"])
-            errors.append(
-                "BROKEN REF: Skill '{}' referenced in {} but no folder found "
-                "in .github/skills/".format(ref, ", ".join(sources))
-            )
+        if ref in skill_folders:
+            continue
+        if ref in external_skills:
+            external_refs.add(ref)
+            continue
+        sources = ref_sources.get(ref, ["unknown"])
+        errors.append(
+            "BROKEN REF: Skill '{}' referenced in {} but no folder found "
+            "in .github/skills/ and not declared in "
+            ".github/external-skill-refs.txt".format(ref, ", ".join(sources))
+        )
 
     # Skills mirrored from the neqsim-paperlab subsystem follow their own
     # conventions (narrative descriptions, invoked by the paperlab router or
@@ -375,6 +423,9 @@ def main():
     print("Skill folders found: {}".format(len(skill_folders)))
     print("Skill references found: {}".format(len(all_refs)))
     print("Agent files scanned: {}".format(len(md_files)))
+    if external_refs:
+        print("External skill references (sibling *-skills repos): {}".format(
+            len(external_refs)))
     if cross_repo_count:
         print("Cross-repo skill loads (sibling *-skills repos): {}".format(
             cross_repo_count))

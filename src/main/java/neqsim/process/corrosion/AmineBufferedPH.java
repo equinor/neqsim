@@ -69,6 +69,9 @@ public class AmineBufferedPH {
   /** Glycol mass fraction above which the co-solvent effect on pKa is flagged. */
   private static final double GLYCOL_WARNING_FRACTION = 0.05;
 
+  /** Number of bisection steps used to locate the zero-margin pH; 60 steps resolve a pH range of 14 to below 1e-15. */
+  private static final int BISECTION_STEPS = 60;
+
   private BufferAmine amine = BufferAmine.DEA;
   private double measuredPH = Double.NaN;
   private double measurementTemperatureC = 25.0;
@@ -221,5 +224,144 @@ public class AmineBufferedPH {
     return new AmineBufferedPHResult(amine, measuredPH, measurementTemperatureC, operatingTemperatureC, pKaMeasurement,
         pKaOperating, shift, operatingPH, neutralAtMeasurement, neutralAtOperating, marginAtMeasurement,
         marginAtOperating, verdict, warnings);
+  }
+
+  /**
+   * Fraction of an amine present as free base at a given pH, from the Henderson-Hasselbalch relation
+   * {@code f = 1 / (1 + 10^(pKa - pH))}.
+   *
+   * @param pH the pH at which to evaluate the fraction
+   * @param pKa the amine pKa at the same temperature as the pH
+   * @return the free-base fraction, between 0 and 1
+   */
+  public static double freeBaseFraction(double pH, double pKa) {
+    return 1.0 / (1.0 + Math.pow(10.0, pKa - pH));
+  }
+
+  /**
+   * Find the laboratory pH at which the alkaline margin at the operating temperature reaches zero.
+   *
+   * <p>
+   * This is the end point of the buffer titration and the practical control floor. It is found by bisection on
+   * {@link #calculate()}, which is monotonic in the measured pH.
+   * </p>
+   *
+   * @return the laboratory pH giving zero alkaline margin at the operating temperature
+   * @throws IllegalStateException if the operating temperature has not been set
+   */
+  public double findMeasuredPHAtZeroMargin() {
+    if (Double.isNaN(operatingTemperatureC)) {
+      throw new IllegalStateException("Operating temperature must be set");
+    }
+    double storedPH = measuredPH;
+    try {
+      double low = 0.0;
+      double high = 14.0;
+      for (int i = 0; i < BISECTION_STEPS; i++) {
+        double mid = 0.5 * (low + high);
+        measuredPH = mid;
+        if (calculate().getMarginAtOperating() < 0.0) {
+          low = mid;
+        } else {
+          high = mid;
+        }
+      }
+      return 0.5 * (low + high);
+    } finally {
+      measuredPH = storedPH;
+    }
+  }
+
+  /**
+   * Compute the alkaline reserve without an acid load, giving the free-base fractions and the spent fraction only.
+   *
+   * @return the reserve result, with the capacity fields set to NaN
+   * @throws IllegalStateException if the measured pH or the operating temperature has not been set
+   */
+  public AlkalineReserveResult calculateAlkalineReserve() {
+    return calculateAlkalineReserve(Double.NaN, Double.NaN);
+  }
+
+  /**
+   * Compute the alkaline reserve and scale the remaining capacity with a measured acid load.
+   *
+   * <p>
+   * The acid load is the total of the fully dissociated acids that have titrated the buffer, typically the organic
+   * acids from glycol oxidation. Formic acid (pK<sub>a</sub> 3.75, 46.03 g/mol) and acetic acid (4.76, 60.05 g/mol)
+   * dominate in a glycol loop and are both fully dissociated at the pH values of interest, so each mole converts one
+   * mole of free-base amine. Pass the molar mass of the dominant species, or a composition-weighted average when
+   * several are reported.
+   * </p>
+   *
+   * <p>
+   * The amine concentration cancels out of the result, so no dosing record is required: the acid already absorbed is
+   * proportional to {@code (1 - f)}, and the remaining capacity in the same units follows from the ratio
+   * {@code (f_asFound - f_zeroMargin) / (1 - f_asFound)}.
+   * </p>
+   *
+   * @param measuredAcidMgPerL measured total acid load in mg/L, or NaN to skip the capacity calculation
+   * @param acidMolarMassGPerMol molar mass of the acid in g/mol, or NaN to skip the molar output
+   * @return the reserve result
+   * @throws IllegalStateException if the measured pH or the operating temperature has not been set
+   * @throws IllegalArgumentException if a supplied acid load or molar mass is not positive
+   */
+  public AlkalineReserveResult calculateAlkalineReserve(double measuredAcidMgPerL, double acidMolarMassGPerMol) {
+    if (Double.isNaN(measuredPH)) {
+      throw new IllegalStateException("Measured pH must be set");
+    }
+    if (Double.isNaN(operatingTemperatureC)) {
+      throw new IllegalStateException("Operating temperature must be set");
+    }
+    if (!Double.isNaN(measuredAcidMgPerL) && !(measuredAcidMgPerL > 0.0)) {
+      throw new IllegalArgumentException("Measured acid load must be positive");
+    }
+    if (!Double.isNaN(acidMolarMassGPerMol) && !(acidMolarMassGPerMol > 0.0)) {
+      throw new IllegalArgumentException("Acid molar mass must be positive");
+    }
+
+    List<String> warnings = new ArrayList<String>();
+    AmineBufferedPHResult base = calculate();
+    double pKaMeasurement = base.getPKaAtMeasurement();
+    double phAtZeroMargin = findMeasuredPHAtZeroMargin();
+
+    double fAsFound = freeBaseFraction(measuredPH, pKaMeasurement);
+    double fAtZeroMargin = freeBaseFraction(phAtZeroMargin, pKaMeasurement);
+
+    double spentFraction = Double.NaN;
+    if (1.0 - fAtZeroMargin > 0.0) {
+      spentFraction = (1.0 - fAsFound) / (1.0 - fAtZeroMargin);
+    }
+
+    double remainingMgPerL = Double.NaN;
+    double remainingMmolPerL = Double.NaN;
+    double amineInventoryMmolPerL = Double.NaN;
+    if (!Double.isNaN(measuredAcidMgPerL) && 1.0 - fAsFound > 0.0) {
+      remainingMgPerL = (fAsFound - fAtZeroMargin) / (1.0 - fAsFound) * measuredAcidMgPerL;
+      if (!Double.isNaN(acidMolarMassGPerMol)) {
+        double acidMolPerL = measuredAcidMgPerL / 1000.0 / acidMolarMassGPerMol;
+        amineInventoryMmolPerL = acidMolPerL / (1.0 - fAsFound) * 1000.0;
+        remainingMmolPerL = (fAsFound - fAtZeroMargin) * amineInventoryMmolPerL;
+      }
+    }
+
+    if (base.getMarginAtOperating() < 0.0) {
+      warnings.add("The fluid is already below neutrality at the operating temperature, so the usable reserve is "
+          + "exhausted and the remaining capacity is reported as negative or zero");
+    }
+    warnings.add("The measured acid load is taken as the dominant titrant and the amine as the only buffer; "
+        + "dissolved CO2 and the corrosion reaction also protonate the amine, which would make the true amine "
+        + "inventory larger and the remaining capacity in mg/L larger, so the spent fraction is the more robust "
+        + "of the two numbers");
+    warnings.add("Ideal solution: activity coefficients are not included, and the acids are treated as fully "
+        + "dissociated monoprotic acids");
+    warnings.addAll(base.getWarnings());
+
+    logger.info(
+        "Alkaline reserve: free base {} at pH {}, {} at the zero-margin pH {}, {} % of the reserve spent, {} mg/L left",
+        fAsFound, measuredPH, fAtZeroMargin, phAtZeroMargin, 100.0 * spentFraction, remainingMgPerL);
+
+    return new AlkalineReserveResult(amine, measuredPH, measurementTemperatureC, operatingTemperatureC, pKaMeasurement,
+        phAtZeroMargin, fAsFound, fAtZeroMargin, spentFraction, measuredAcidMgPerL, acidMolarMassGPerMol,
+        remainingMgPerL, remainingMmolPerL, amineInventoryMmolPerL, warnings);
   }
 }
