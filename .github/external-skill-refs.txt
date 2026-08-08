@@ -1,0 +1,12 @@
+# Skills referenced from neqsim agent/instruction markdown that live in a
+# sibling skills repository rather than in .github/skills/.
+#
+# devtools/verify_agent_skill_refs.py uses this list so a legitimate
+# cross-repo reference is not reported as a BROKEN REF in the neqsim-only CI
+# checkout, where the sibling repos are not available for dynamic resolution.
+#
+# Format: one skill name per line, optionally followed by the owning repo.
+# Lines starting with '#' and blank lines are ignored.
+
+neqsim-benchmark-reference-data   equinor/neqsim-community-skills
+neqsim-uncertainty-quantification equinor/neqsim-community-skills
