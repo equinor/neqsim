@@ -167,6 +167,32 @@ absolute value is not a wall-loss rate.
 | **Check the filter micron rating** | Magnetite fines are 1–10 µm. An 80 µm element removes essentially none of them. "Improve filtration" must carry a rating |
 | **Check the boiling margin** | Compute the bubble point; if bulk boiling is impossible, that hypothesis is closed off |
 | **Flow reduction is not free** | Cutting flow to reduce shear reduces recovered duty, and at fixed duty raises metal temperature *towards* the 150 °C peak. Quantify the trade-off rather than asserting it |
+| **Ask what the loop actually ran at** | A design basis says what the flow *should* be in stand-by; only the historian says how long it was there. See below — this is usually the cheapest decisive evidence in the whole study |
+
+### Measure the exposure instead of assuming it
+
+A closed heating-medium loop is usually served by two or more identical units on
+an N+1 duty/stand-by rota, and the stand-by one runs at a small fraction of design
+flow. That makes the loop a natural experiment: same fluid, same pH history, same
+material, different duty. If some units have leaked and others have not, the
+historian settles whether duty is the difference.
+
+Resolve the tag family from the plant's tag database (all three of flow, outlet
+temperature and outlet pressure exist for each unit), then report, per unit:
+
+- the **fraction of live-loop time below each design threshold** — the stand-by
+  flows the data sheet specifies, and the min-flow protection levels;
+- the **median flow as a fraction of design**;
+- the **maximum outlet temperature** against the high-temperature protection
+  setting and the data sheet film limit.
+
+On one WHRU loop this turned "the unit that runs continuously has not leaked" from
+an absence of maintenance records into a measured 4 % versus 40-46 % of time below
+20 % of design flow. It also **removed** a competing hypothesis: cycle count did
+not discriminate at all, which corroborated a separate fatigue screening.
+
+See `enterprise-plant-data` for the unit-reconciliation, outage-exclusion and
+cycle-aliasing traps that decide whether those percentages mean anything.
 
 ## Material upgrade
 
@@ -189,3 +215,5 @@ basis of the pH shift and the comparison-only nature of the FAC index.
 - `neqsim-root-cause-analysis` — ranking FAC against other candidates
 - `neqsim-standards-lookup` — NORSOK M-001, API RP 571 §3.9, API RP 669, API RP 661
 - `neqsim-self-heating-ignition` — the same Arrhenius framework applied to glycol oxidative degradation, which generates the organic acids that consume alkalinity
+- `neqsim-plant-data` / `enterprise-plant-data` — measured stand-by exposure, the duty comparison between units, and the traps in quoting "% of design flow"
+- `enterprise-maintenance-api` — leak distribution per tag and equipment-availability history (filter outages), which pairs with the historian evidence
