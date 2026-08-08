@@ -142,6 +142,13 @@ out-of-order percentile is a hard error in both `TaskResultValidator` and
 `devtools/validate_task_results.py`. Include `method` and `n_simulations`
 (≥ 200 when the Monte Carlo loop runs full NeqSim simulations).
 
+The community skill `neqsim-uncertainty-quantification` emits this block
+directly (`UncertaintyReport.to_results_json()`), in the correct ascending
+convention, with the sampler and seed, the tornado, a convergence check, and a
+`blockers` field. Note the trap it guards: `p10` here is the 10th percentile
+(the *low* estimate), the opposite of the petroleum resource convention where
+P10 is the optimistic volume. State which convention a resource table uses.
+
 ## Principle 8 — Risk Section
 
 Standard / Comprehensive reports include a **risk register** scored on a 5×5 matrix
