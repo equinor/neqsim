@@ -435,6 +435,13 @@ Both optimizers support multiple search algorithms:
 | **Gradient Descent** | Smooth multi-variable (5-20+) | Fast | **New (Jan 2026)** - Finite-difference gradients |
 | **BFGS** | Smooth functions | Fast | Requires gradient approximation |
 
+For full multi-area `ProcessModel` studies, `ProcessModelSimulationEvaluator` keeps forward
+differences as the low-cost default and also exposes `FiniteDifferenceMethod.CENTRAL`. Both methods
+strictly honor parameter bounds and divide by the actual applied perturbation. Central differences
+use a symmetric stencil at interior points and a one-sided fallback at an active bound. Verify
+step-size stability before interpreting a local derivative as debottlenecking sensitivity or
+shadow-value evidence.
+
 ### ProcessOptimizationEngine Algorithms
 
 ```java

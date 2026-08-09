@@ -9,6 +9,21 @@
 
 ---
 
+## 2026-08-09 — Bound-aware ProcessModel finite-difference sensitivities
+
+- `ProcessModelSimulationEvaluator` objective gradients and constraint Jacobians now divide by the
+  actual perturbation available inside each parameter's bounds. Narrow ranges and active bounds no
+  longer silently understate derivatives after parameter clamping.
+- `FiniteDifferenceMethod.CENTRAL` adds a symmetric second-order interior stencil with a one-sided
+  boundary fallback. `FORWARD` remains the default and retains one perturbed simulation per
+  non-fixed parameter.
+- Non-positive or non-finite finite-difference steps and a null method now fail before simulation.
+  Fixed parameters report zero derivative because no feasible perturbation direction exists.
+- Treat the outputs as local sensitivities. Check step-size stability and active-set consistency
+  before using them as debottlenecking or shadow-value evidence.
+
+---
+
 ## 2026-08-09 — ProcessModel bottleneck snapshots retain area identity
 
 `ProcessModel.getUtilizationSnapshotJson()` now adds `area` and `qualifiedName` to a
