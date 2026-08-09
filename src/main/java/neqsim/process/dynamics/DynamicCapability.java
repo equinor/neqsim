@@ -50,8 +50,7 @@ public enum DynamicCapability {
    * @return true for lumped, distributed, boundary, and control-system dynamics
    */
   public boolean hasExplicitDynamicState() {
-    return this == DYNAMIC_LUMPED || this == DYNAMIC_DISTRIBUTED || this == BOUNDARY_DYNAMIC
-        || this == CONTROL_DYNAMIC;
+    return this == DYNAMIC_LUMPED || this == DYNAMIC_DISTRIBUTED || this == BOUNDARY_DYNAMIC || this == CONTROL_DYNAMIC;
   }
 
   /**
