@@ -3,7 +3,9 @@ package neqsim.process.processmodel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
@@ -13,6 +15,54 @@ import neqsim.thermo.system.SystemSrkEos;
  * Verifies that public process dispatchers prepare a flowsheet once before concrete execution.
  */
 class ProcessSystemExecutionPreparationTest {
+  /** Stable unit that counts active-state inspection calls. */
+  private static final class CountingActiveStateUnit extends ProcessEquipmentBaseClass {
+    private static final long serialVersionUID = 1000L;
+    private int lockedInactiveChecks;
+
+    /**
+     * Creates a stable counting unit.
+     *
+     * @param name unit name
+     */
+    CountingActiveStateUnit(String name) {
+      super(name);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean isLockedInactive() {
+      lockedInactiveChecks++;
+      return super.isLockedInactive();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean needRecalculation() {
+      return false;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void run(UUID id) {
+      setCalculationIdentifier(id);
+    }
+
+    /** Resets the inspection count. */
+    void resetLockedInactiveChecks() {
+      lockedInactiveChecks = 0;
+    }
+
+    /**
+     * Returns the active-state inspection count.
+     *
+     * @return number of calls to {@link #isLockedInactive()}
+     */
+    int getLockedInactiveChecks() {
+      return lockedInactiveChecks;
+    }
+  }
+
   /**
    * Stream that records how often a flowsheet-wide property setting is applied.
    */
@@ -104,6 +154,35 @@ class ProcessSystemExecutionPreparationTest {
   @Test
   void sequentialDispatcherPreparesFlowsheetOnce() {
     assertSinglePreparation(false);
+  }
+
+  /** Verifies nested optimized dispatch does not repeat the outer active-state scan. */
+  @Test
+  void optimizedDispatcherChecksActiveStateOnce() {
+    CountingActiveStateUnit unit = new CountingActiveStateUnit("stable unit");
+    ProcessSystem process = new ProcessSystem("active-state preparation");
+    process.add(unit);
+
+    unit.resetLockedInactiveChecks();
+    process.run();
+
+    assertEquals(1, unit.getLockedInactiveChecks(),
+        "run() must not repeat the active-state scan in its nested concrete dispatcher");
+    assertTrue(process.getRunStatus().isSuccess());
+  }
+
+  /** Verifies a direct optimized-dispatch call retains its required active-state scan. */
+  @Test
+  void directOptimizedDispatcherChecksActiveStateOnce() {
+    CountingActiveStateUnit unit = new CountingActiveStateUnit("stable unit");
+    ProcessSystem process = new ProcessSystem("direct active-state preparation");
+    process.add(unit);
+
+    unit.resetLockedInactiveChecks();
+    process.runOptimized(UUID.randomUUID());
+
+    assertEquals(1, unit.getLockedInactiveChecks(),
+        "a direct runOptimized() call must still prepare active state before dispatch");
   }
 
   /**

@@ -3377,11 +3377,14 @@ public class ProcessSystem extends SimulationBaseClass {
     // unchanged feed, the unit would be skipped by needRecalculation() and would not get a
     // chance to re-bypass itself, so we must leave its sticky bypass state alone.
     boolean outermost = getRunDepth().get().intValue() <= 1;
+    if (!outermost) {
+      return;
+    }
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit.isLockedInactive()) {
         // Manually locked-off equipment must stay inactive across runs.
         unit.isActive(false);
-      } else if (outermost && needsRecalculation(unit)) {
+      } else if (needsRecalculation(unit)) {
         // Fresh user-invoked solve AND inputs have changed: give the unit a chance to
         // re-evaluate its low-flow status. Its run() will be invoked and any auto-bypass
         // unit (Splitter/Separator/Heater/Compressor) will re-check flow via

@@ -9,6 +9,8 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPflashIncipientPhaseStabilityTest {
+  private static final double CROSS_ALGORITHM_COMPOSITION_TOLERANCE = 1.0e-11;
+  private static final double CROSS_ALGORITHM_PROPERTY_TOLERANCE = 1.0e-11;
   private static final String[] COMPONENTS = { "methane", "ethane", "propane", "n-butane" };
   private static final double[] FEED = { 0.5833884211682981, 0.16475359157041228, 0.19866217294783825,
       0.053195814313451245 };
@@ -43,21 +45,32 @@ class TPflashIncipientPhaseStabilityTest {
 
   @Test
   void subResidualTpdDoesNotOverrideExistingUmrPruSolution() {
-    SystemInterface system = new neqsim.thermo.system.SystemUMRPRUMCEos(243.15, 300.0);
-    system.addComponent("methane", 0.416683);
-    system.addComponent("ethane", 0.17522);
-    system.addComponent("n-pentane", 0.358009);
-    system.addComponent("nC16", 0.0500888);
-    system.setMixingRule("classic");
-    system.setMultiPhaseCheck(true);
-    system.setPressure(90.03461693, "bara");
-    system.setTemperature(293.15, "K");
-    system.setTotalFlowRate(4.925e-07, "kg/sec");
+    SystemInterface multiphase = new neqsim.thermo.system.SystemUMRPRUMCEos(243.15, 300.0);
+    multiphase.addComponent("methane", 0.416683);
+    multiphase.addComponent("ethane", 0.17522);
+    multiphase.addComponent("n-pentane", 0.358009);
+    multiphase.addComponent("nC16", 0.0500888);
+    multiphase.setMixingRule("classic");
+    multiphase.setPressure(90.03461693, "bara");
+    multiphase.setTemperature(293.15, "K");
+    multiphase.setTotalFlowRate(4.925e-07, "kg/sec");
 
-    new ThermodynamicOperations(system).TPflash();
+    SystemInterface ordinary = multiphase.clone();
+    ordinary.setMultiPhaseCheck(false);
+    multiphase.setMultiPhaseCheck(true);
+    new ThermodynamicOperations(ordinary).TPflash();
+    new ThermodynamicOperations(multiphase).TPflash();
 
-    assertEquals(1, system.getNumberOfPhases());
-    assertEquals(0.10377442547868508, system.getBeta(), 1.0e-4);
+    assertEquals(1, ordinary.getNumberOfPhases());
+    assertEquals(1, multiphase.getNumberOfPhases());
+    assertEquals(1.0, ordinary.getBeta(), 1.0e-12);
+    assertEquals(ordinary.getBeta(), multiphase.getBeta(), 1.0e-12);
+    assertEquals(ordinary.getPhase(0).getType(), multiphase.getPhase(0).getType());
+    assertEquals(ordinary.getPhase(0).getZ(), multiphase.getPhase(0).getZ(), CROSS_ALGORITHM_PROPERTY_TOLERANCE);
+    for (int componentIndex = 0; componentIndex < multiphase.getPhase(0).getNumberOfComponents(); componentIndex++) {
+      assertEquals(ordinary.getPhase(0).getComponent(componentIndex).getx(),
+          multiphase.getPhase(0).getComponent(componentIndex).getx(), CROSS_ALGORITHM_COMPOSITION_TOLERANCE);
+    }
   }
 
   private SystemInterface createSystem(boolean multiphaseCheck) {
