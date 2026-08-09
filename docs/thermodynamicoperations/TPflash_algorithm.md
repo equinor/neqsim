@@ -260,6 +260,11 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 │                                                                                 │
 │  IF chemical system:                                                            │
 │     → Final chemical equilibrium solve in aqueous/liquid phases                 │
+│                                                                                 │
+│  FINALIZE active phase fractions:                                               │
+│     → If multiphase checking returns the unchanged stable one-phase state,       │
+│       normalize its stale beta to one                                            │
+│     → That unchanged one-phase endpoint therefore returns beta = 1              │
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -268,6 +273,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 | Parameter | Value | Description |
 |-----------|-------|-------------|
 | `phaseFractionMinimumLimit` | ~1e-12 | Minimum allowed phase fraction |
+| Unchanged one-phase closure | `abs(beta - 1) < 1e-12`; `abs(delta Z) <= 1e-11`; `max abs(delta x_i) <= 1e-11` | When multiphase checking finds no new stable phase and returns the same phase type, compressibility factor, and composition as the accepted one-phase reference, normalize a stale beta and reinitialize. Different roots, chemical-equilibrium states, and internal multiphase trial states retain their existing finalization paths. |
 | Trace duplicate phase cleanup | `min(beta_i, beta_j) < 10 beta_min`, same `PhaseType`, and `max abs(x_i - x_j) < 1e-6` | Merge and remove an already-disappeared numerical duplicate for any EOS while conserving phase fraction. Material-fraction duplicate cleanup remains limited to CPA models to protect near-critical cubic-EOS splits. |
 | Initial SSI iterations | 3 | Preliminary iterations before stability check |
 | `accelerateInterval` | 5 | Apply DEM every 5th iteration in the ordinary TPflash loop |

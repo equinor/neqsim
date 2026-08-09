@@ -78,6 +78,8 @@ public class TPflash extends Flash {
   private static final double AQUEOUS_SEED_COMPOSITION_NORMALIZATION_TOLERANCE = 1.0e-8;
   /** Maximum accepted log-fugacity residual when selecting an alternate cubic root. */
   private static final double PHASE_ROOT_EQUILIBRIUM_TOLERANCE = 1.0e-8;
+  /** Maximum absolute Z or composition change for recognizing an unchanged stable one-phase state. */
+  private static final double UNCHANGED_SINGLE_PHASE_STATE_TOLERANCE = 1.0e-11;
   /** Maximum final SSI updates used to repair a stale neutral two-phase endpoint. */
   private static final int MAX_FINAL_EQUILIBRIUM_REFINEMENT_ITERATIONS = 8;
   /** Largest residual considered near enough to convergence for bounded final SSI refinement. */
@@ -796,6 +798,17 @@ public class TPflash extends Flash {
         isStable = false;
       }
       if (isStable) {
+        PhaseType stableSinglePhaseType = null;
+        double stableSinglePhaseZ = Double.NaN;
+        double[] stableSinglePhaseComposition = null;
+        if (system.doMultiPhaseCheck() && !system.isChemicalSystem() && system.getNumberOfPhases() == 1) {
+          stableSinglePhaseType = system.getPhase(0).getType();
+          stableSinglePhaseZ = system.getPhase(0).getZ();
+          stableSinglePhaseComposition = new double[system.getPhase(0).getNumberOfComponents()];
+          for (int componentIndex = 0; componentIndex < stableSinglePhaseComposition.length; componentIndex++) {
+            stableSinglePhaseComposition[componentIndex] = system.getPhase(0).getComponent(componentIndex).getx();
+          }
+        }
         if (system.doMultiPhaseCheck()) {
           // logger.info("one phase flash is stable - checking multiphase flash....");
           TPmultiflash operation = new TPmultiflash(system, system.doSolidPhaseCheck());
@@ -844,6 +857,8 @@ public class TPflash extends Flash {
         rescueWaterRichEndpoint();
         refineInvalidAqueousTwoPhaseEndpoint();
         refineInvalidNeutralGasLiquidTwoPhaseEndpoint();
+        normalizeUnchangedStableSinglePhaseEndpoint(stableSinglePhaseType, stableSinglePhaseZ,
+            stableSinglePhaseComposition);
         return;
       }
     }
@@ -1078,6 +1093,39 @@ public class TPflash extends Flash {
         logger.warn("Final chemical eq init failed: " + ex.getMessage());
       }
     }
+  }
+
+  /**
+   * Restores beta closure when a multiphase check returns the unchanged stable one-phase state.
+   *
+   * <p>
+   * {@link TPmultiflash} is also used for internal trial states, so normalizing every multiphase return can perturb
+   * continuation and chemical-equilibrium calculations. This narrowly handles the no-new-phase result: phase type,
+   * compressibility factor, and every phase composition must match the stable state captured before the multiphase
+   * check. Only its stale phase fraction is then normalized.
+   * </p>
+   *
+   * @param stablePhaseType phase type before the multiphase check
+   * @param stableZ compressibility factor before the multiphase check
+   * @param stableComposition phase composition before the multiphase check
+   */
+  private void normalizeUnchangedStableSinglePhaseEndpoint(PhaseType stablePhaseType, double stableZ,
+      double[] stableComposition) {
+    double currentZ = system.getNumberOfPhases() == 1 ? system.getPhase(0).getZ() : Double.NaN;
+    if (stablePhaseType == null || stableComposition == null || system.getNumberOfPhases() != 1
+        || system.getPhase(0).getType() != stablePhaseType || !Double.isFinite(stableZ) || !Double.isFinite(currentZ)
+        || Math.abs(currentZ - stableZ) > UNCHANGED_SINGLE_PHASE_STATE_TOLERANCE
+        || system.getPhase(0).getNumberOfComponents() != stableComposition.length) {
+      return;
+    }
+    for (int componentIndex = 0; componentIndex < stableComposition.length; componentIndex++) {
+      double currentComposition = system.getPhase(0).getComponent(componentIndex).getx();
+      if (!Double.isFinite(stableComposition[componentIndex]) || !Double.isFinite(currentComposition) || Math
+          .abs(currentComposition - stableComposition[componentIndex]) > UNCHANGED_SINGLE_PHASE_STATE_TOLERANCE) {
+        return;
+      }
+    }
+    normalizeActivePhaseFractions();
   }
 
   /**
@@ -2551,8 +2599,8 @@ public class TPflash extends Flash {
    *
    * <p>
    * Late phase-removal and rescue paths can leave the active beta values slightly below or above unity even when the
-   * remaining phase compositions are valid. Normalizing at the final acceptance point restores phase-fraction closure
-   * and reinitializes level 1 properties for the adjusted phase amounts.
+   * remaining phase compositions are valid. Calling this helper at a validated acceptance point restores phase-fraction
+   * closure and reinitializes level 1 properties for the adjusted phase amounts.
    * </p>
    */
   private void normalizeActivePhaseFractions() {

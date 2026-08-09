@@ -123,8 +123,8 @@ class TPFlashTest {
     testSystem5.initProperties();
     // testSystem5.prettyPrint();
     double beta = testSystem5.getBeta();
-    // Updated expected value due to thermodynamic model changes
-    assertEquals(0.10377442547868508, beta, 1e-4);
+    assertEquals(1, testSystem5.getNumberOfPhases());
+    assertEquals(1.0, beta, 1.0e-12);
   }
 
   @Test
