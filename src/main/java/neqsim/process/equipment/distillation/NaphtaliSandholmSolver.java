@@ -232,7 +232,7 @@ public class NaphtaliSandholmSolver {
   /** Solve time in seconds from the last solve. */
   private double lastSolveTimeSeconds;
 
-  /** Number of semi-analytic Jacobian columns assembled in the last solve. */
+  /** Number of analytically differentiated Jacobian columns assembled in the last solve. */
   private int lastAnalyticJacobianColumns;
 
   /** Number of finite-difference Jacobian columns assembled in the last solve. */
@@ -323,9 +323,14 @@ public class NaphtaliSandholmSolver {
   }
 
   /**
-   * Get the number of semi-analytic Jacobian columns used by the latest solve.
+   * Get the number of analytically differentiated Jacobian columns used by the latest solve.
    *
-   * @return number of semi-analytic Jacobian columns
+   * <p>
+   * The current block-tridiagonal implementation evaluates every derivative column by finite difference, so this
+   * counter is zero. The getter is retained for compatibility and for a future mixed analytic/numerical assembly.
+   * </p>
+   *
+   * @return number of analytically differentiated Jacobian columns
    */
   int getLastAnalyticJacobianColumns() {
     return lastAnalyticJacobianColumns;
@@ -3130,7 +3135,6 @@ public class NaphtaliSandholmSolver {
       }
     }
 
-    lastAnalyticJacobianColumns += totalVars;
     lastFiniteDifferenceJacobianColumns += totalVars;
     lastJacobianBuildTimeSeconds += (System.nanoTime() - jacobianStart) / 1.0e9;
     return J;
