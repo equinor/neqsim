@@ -258,7 +258,7 @@ CURATED_NOTEBOOKS = (
             "examples/notebooks/"
             "complete_offshore_process_engineering_study.ipynb"
         ),
-        "guide": "../integration/complete-offshore-process-engineering-study",
+        "guide": "../integration/complete-offshore-process-engineering-study.md",
     },
     {
         "title": "Full DEXPI Engineering ProcessSystem",
@@ -290,6 +290,51 @@ CURATED_NOTEBOOKS = (
             "figure"
         ),
         "path": "examples/notebooks/dexpi_pid_visualization.ipynb",
+    },
+    {
+        "title": "Energy Network Dispatch and Reporting",
+        "description": (
+            "Executed multi-source and multi-load electrical dispatch with "
+            "priorities, shortage and curtailment allocation, cost, emissions, "
+            "and auditable network reports"
+        ),
+        "path": (
+            "examples/notebooks/energy_networks/"
+            "01_energy_dispatch_and_reporting.ipynb"
+        ),
+    },
+    {
+        "title": "Rotating Equipment and Converter Maps",
+        "description": (
+            "Executed motor and VFD part-load performance, shaft coupling, "
+            "and load-dependent generator and prime-mover efficiency maps"
+        ),
+        "path": (
+            "examples/notebooks/energy_networks/"
+            "02_rotating_equipment_and_converter_maps.ipynb"
+        ),
+    },
+    {
+        "title": "Thermal Utilities and Hydraulics",
+        "description": (
+            "Executed utility mass-flow, temperature-quality, exergy, cooling-"
+            "water pressure-drop, and pump-power screening workflow"
+        ),
+        "path": (
+            "examples/notebooks/energy_networks/"
+            "03_thermal_utilities_and_hydraulics.ipynb"
+        ),
+    },
+    {
+        "title": "Chronological Offshore Energy Benchmark",
+        "description": (
+            "Executed time-series energy balance, generator commitment, "
+            "operating-cost and CO2 accounting, and offshore wind-gas benchmark"
+        ),
+        "path": (
+            "examples/notebooks/energy_networks/"
+            "04_time_series_commitment_offshore_benchmark.ipynb"
+        ),
     },
 )
 
