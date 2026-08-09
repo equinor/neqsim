@@ -1,0 +1,92 @@
+---
+title: Dynamic capability contract
+description: Machine-readable classification and audit of algebraic, lumped, distributed, boundary, and control-system transient behaviour in ProcessSystem and ProcessModel.
+---
+
+# Dynamic capability contract
+
+NeqSim distinguishes **participation in a transient flowsheet** from **having audited dynamic state**. This is important
+because an algebraic unit operation can be re-evaluated at every physical timestep without containing inventory, inertia,
+or another state that is integrated through time.
+
+The capability contract is a Phase-0 foundation for professional dynamic simulation on both `ProcessSystem` and
+multi-area `ProcessModel`. It is diagnostic metadata, not a claim of commercial-simulator parity, quantitative model
+validation, standards conformance, or accountable safety approval.
+
+## Capability categories
+
+| Capability | Meaning |
+|---|---|
+| `ALGEBRAIC` | No audited stored physical state. The element may still be solved as an algebraic relation at each timestep. |
+| `DYNAMIC_LUMPED` | Audited lumped state such as vessel inventory, thermal storage, actuator position, or rotating inertia. |
+| `DYNAMIC_DISTRIBUTED` | Spatially distributed transient state, for example finite-volume or method-of-characteristics pipeline state. |
+| `BOUNDARY_DYNAMIC` | Time-varying boundary/source state such as reservoir depletion or another imposed dynamic boundary. |
+| `CONTROL_DYNAMIC` | Controller, transmitter, signal, logic, or sampled control-system transient state. |
+| `UNCLASSIFIED_DYNAMIC` | A custom `runTransient` implementation exists, but its state/equations have not yet been audited. |
+| `UNSUPPORTED_DYNAMIC` | The element explicitly declares that a transient interpretation is unsupported. |
+
+`UNCLASSIFIED_DYNAMIC` is deliberately conservative. The presence of a `runTransient()` override is not sufficient
+evidence that an implementation is a physically complete dynamic model.
+
+## Inspect a ProcessSystem
+
+```java
+import neqsim.process.dynamics.DynamicCapabilityReport;
+
+DynamicCapabilityReport report = DynamicCapabilityReport.from(process);
+
+report.getCapabilityCounts();
+report.getBlockingIssues();
+report.getReviewItems();
+report.getInactiveAuditedDynamicElements();
+String json = report.toJson();
+```
+
+A normal algebraic element is **not** a blocking issue. It becomes a blocking configuration only when the caller sets
+`calculateSteadyState = false` even though the element has no audited difference-equation implementation. This catches a
+common failure mode where a flowsheet appears to be configured for dynamics but the selected unit cannot execute the
+requested dynamic path.
+
+`getInactiveAuditedDynamicElements()` has the opposite purpose: it identifies equipment that has audited dynamic state
+but is currently left in its steady-state/algebraic mode. This is not automatically wrong. Mixed algebraic/dynamic
+flowsheets are normal, but the list makes the modelling choice explicit for engineering review.
+
+## Inspect a ProcessModel
+
+```java
+DynamicCapabilityReport plantReport = DynamicCapabilityReport.from(processModel);
+
+for (DynamicCapabilityReport.Entry entry : plantReport.getEntries()) {
+  String object = entry.getQualifiedName();  // e.g. "compression::K-100"
+  DynamicCapability capability = entry.getCapability();
+}
+```
+
+Multi-area reports preserve the process-area identity so identical equipment or stream names in separate areas do not
+collapse into one audit entry. Controllers attached directly to equipment are included and de-duplicated by object
+identity if they are also registered as standalone controllers.
+
+## Initial audited mapping
+
+The initial contract intentionally classifies only core implementations whose current source contains clear stored-state
+semantics:
+
+- lumped: separators, tanks, two-stream heat exchangers, compressors, pumps, and throttling/control valves;
+- distributed: `TwoFluidPipe`, drift-flux `TransientPipe`, and `WaterHammerPipe`;
+- boundary: `SimpleReservoir`;
+- control: registered controllers and measurement devices.
+
+Other custom transient implementations remain `UNCLASSIFIED_DYNAMIC` until their state variables, conservation equations,
+initialization, timestep constraints, event behaviour, snapshot/restart semantics, and quantitative validation are
+reviewed. The mapping is expected to expand as that audit is completed.
+
+## What this does not solve
+
+This contract does not yet provide the plant-wide vector ODE/DAE solver required for strongly coupled professional
+dynamics. In particular, it does not add global pressure-flow residual assembly, sparse Jacobians, whole-model timestep
+rejection/rollback, event localization, or multi-rate pipeline subcycling. Those capabilities build on this contract so
+the solver can reason explicitly about which objects own dynamic state and which objects are algebraic constraints.
+
+The report also does not certify that a model is suitable for a control, relief, HIPPS/SIS, HAZOP, DEXPI/P&ID, or other
+safety-critical study. Those studies require scenario-specific modelling, validation evidence, engineering limits, and
+appropriate review.
