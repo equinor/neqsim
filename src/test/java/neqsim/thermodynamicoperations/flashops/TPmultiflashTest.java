@@ -249,4 +249,52 @@ class TPmultiflashTest {
         "A run without a beta solve must clear stall state retained by a reused operation");
   }
 
+  /** Verifies a direct beta solve preserves a converged two-phase equilibrium and material balance. */
+  @Test
+  void testDirectBetaSolvePreservesConvergedTwoPhaseState() {
+    SystemInterface system = createMethaneHeptanePrSystem(0.0, false);
+    system.setTemperature(250.0, "K");
+    system.setPressure(30.0, "bara");
+    new ThermodynamicOperations(system).TPflash();
+    system.init(1);
+
+    assertEquals(2, system.getNumberOfPhases());
+    double[] referenceBeta = new double[2];
+    double[] referenceZ = new double[2];
+    double[][] referenceComposition = new double[2][system.getPhase(0).getNumberOfComponents()];
+    for (int phase = 0; phase < 2; phase++) {
+      referenceBeta[phase] = system.getBeta(phase);
+      referenceZ[phase] = system.getPhase(phase).getZ();
+      for (int component = 0; component < referenceComposition[phase].length; component++) {
+        referenceComposition[phase][component] = system.getPhase(phase).getComponent(component).getx();
+      }
+    }
+
+    TPmultiflash operation = new TPmultiflash(system, false);
+    operation.setDoubleArrays();
+    double residual = operation.solveBeta();
+
+    assertTrue(Double.isFinite(residual));
+    assertTrue(residual <= 1.0e-10);
+    for (int phase = 0; phase < 2; phase++) {
+      assertEquals(referenceBeta[phase], system.getBeta(phase), 1.0e-11);
+      assertEquals(referenceZ[phase], system.getPhase(phase).getZ(), 1.0e-11);
+      double compositionSum = 0.0;
+      for (int component = 0; component < referenceComposition[phase].length; component++) {
+        assertEquals(referenceComposition[phase][component], system.getPhase(phase).getComponent(component).getx(),
+            1.0e-11);
+        compositionSum += system.getPhase(phase).getComponent(component).getx();
+      }
+      assertEquals(1.0, compositionSum, 1.0e-12);
+    }
+
+    for (int component = 0; component < system.getPhase(0).getNumberOfComponents(); component++) {
+      double recoveredFeed = 0.0;
+      for (int phase = 0; phase < 2; phase++) {
+        recoveredFeed += system.getBeta(phase) * system.getPhase(phase).getComponent(component).getx();
+      }
+      assertEquals(system.getPhase(0).getComponent(component).getz(), recoveredFeed, 1.0e-11);
+    }
+  }
+
 }

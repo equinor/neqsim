@@ -210,23 +210,18 @@ public class TPmultiflash extends TPflash {
    * @return a double
    */
   public double solveBeta() {
-    SimpleMatrix betaMatrix = new SimpleMatrix(1, system.getNumberOfPhases());
     SimpleMatrix ans = null;
     double err = 1.0;
     double gradResidual = 1.0;
     int iter = 1;
     do {
       iter++;
-      for (int k = 0; k < system.getNumberOfPhases(); k++) {
-        betaMatrix.set(0, k, system.getPhase(k).getBeta());
-      }
-
       calcQ();
       SimpleMatrix dQM = new SimpleMatrix(dQdbeta);
       gradResidual = dQM.normF();
       SimpleMatrix dQdBM = new SimpleMatrix(Qmatrix);
       try {
-        ans = dQdBM.solve(dQM).transpose();
+        ans = dQdBM.solve(dQM);
       } catch (Exception ex) {
         if (shouldApplyEnhancedMultiPhaseCheck()) {
           for (int kk = 0; kk < system.getNumberOfPhases(); kk++) {
@@ -234,7 +229,7 @@ public class TPmultiflash extends TPflash {
           }
           dQdBM = new SimpleMatrix(Qmatrix);
           try {
-            ans = dQdBM.solve(dQM).transpose();
+            ans = dQdBM.solve(dQM);
           } catch (Exception ex2) {
             logger.error(ex2.getMessage());
             break;
@@ -245,10 +240,12 @@ public class TPmultiflash extends TPflash {
         }
       }
 
-      betaMatrix = betaMatrix.minus(ans.scale(iter / (iter + 3.0)));
+      // The linear solve already returns a column vector. Apply it directly to avoid allocating
+      // transposed, scaled, and subtracted temporary matrices in every beta iteration.
+      double betaStepScale = iter / (iter + 3.0);
       removePhase = false;
       for (int k = 0; k < system.getNumberOfPhases(); k++) {
-        double currBeta = betaMatrix.get(0, k);
+        double currBeta = system.getPhase(k).getBeta() - ans.get(k, 0) * betaStepScale;
         if (currBeta < phaseFractionMinimumLimit) {
           system.setBeta(k, phaseFractionMinimumLimit);
           if (checkOneRemove) {
