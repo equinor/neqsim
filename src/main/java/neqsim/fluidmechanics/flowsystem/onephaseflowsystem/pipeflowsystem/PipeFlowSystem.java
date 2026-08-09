@@ -292,7 +292,8 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
       // Apply inlet boundary conditions
       SystemInterface scheduledInletSystem = this.getTimeSeries().getThermoSystem()[i];
       double scheduledInletMassFlowKgPerSecond = conservativeSpeciesTransportEnabled
-          ? scheduledInletSystem.getFlowRate("kg/sec") : Double.NaN;
+          ? scheduledInletSystem.getFlowRate("kg/sec")
+          : Double.NaN;
       getNode(0).setBulkSystem(scheduledInletSystem);
       if (conservativeSpeciesTransportEnabled) {
         getNode(0).getBulkSystem().setTotalFlowRate(scheduledInletMassFlowKgPerSecond, "kg/sec");
@@ -301,8 +302,7 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
       if (conservativeSpeciesTransportEnabled) {
         double inletDensity = getNode(0).getBulkSystem().getPhase(0).getDensity();
         double inletArea = getNode(0).getGeometry().getArea();
-        if (!Double.isFinite(inletDensity) || inletDensity <= 0.0 || !Double.isFinite(inletArea)
-            || inletArea <= 0.0) {
+        if (!Double.isFinite(inletDensity) || inletDensity <= 0.0 || !Double.isFinite(inletArea) || inletArea <= 0.0) {
           throw new IllegalStateException("Cannot impose conservative inlet mass flow with density " + inletDensity
               + " kg/m3 and area " + inletArea + " m2.");
         }
