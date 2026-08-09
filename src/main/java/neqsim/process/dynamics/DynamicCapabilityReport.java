@@ -169,7 +169,8 @@ public final class DynamicCapabilityReport implements Serializable {
      * @return true for known physical dynamic equipment with {@code calculateSteadyState == true}
      */
     public boolean hasInactiveAuditedDynamicState() {
-      return calculateSteadyState != null && calculateSteadyState.booleanValue() && capability.hasExplicitDynamicState();
+      return calculateSteadyState != null && calculateSteadyState.booleanValue()
+          && capability.hasExplicitDynamicState();
     }
   }
 
