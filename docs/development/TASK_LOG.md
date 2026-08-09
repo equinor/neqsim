@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-08-09 — Expose Naphtali-Sandholm tray K-value convergence work
+**Type:** E (Feature)
+**Keywords:** distillation, Naphtali-Sandholm, MESH, fugacity, K-value, convergence, diagnostics, telemetry
+**Solution:** `NaphtaliSandholmSolver.evaluateThermoForTray`, `DistillationColumn` convergence diagnostics, and `ColumnSpecificationTest.naphtaliSandholmTelemetryRecordsJacobianWork`
+**Notes:** The solver retains its established two forced-root fugacity sweeps per tray evaluation but no longer assumes they converged. Additive telemetry records sweep count, evaluations whose final maximum absolute logarithmic K update remains above `1e-8`, and the worst final update. The base and nearby operating points preserve the numerical trajectory and expose the inner convergence debt deterministically.
+
 ### 2026-08-09 — Correct Naphtali-Sandholm Jacobian work telemetry
 **Type:** E (Feature)
 **Keywords:** distillation, Naphtali-Sandholm, MESH, Jacobian, finite difference, diagnostics, telemetry, solver benchmark

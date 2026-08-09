@@ -789,6 +789,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private transient int lastNaphtaliFiniteDifferenceJacobianColumns = 0;
   /** Latest Naphtali-Sandholm tray thermodynamic evaluation count. */
   private transient int lastNaphtaliThermoEvaluationCount = 0;
+  /** Latest Naphtali-Sandholm forced-root K-value iteration count. */
+  private transient int lastNaphtaliThermoKValueIterationCount = 0;
+  /** Latest count of tray evaluations that reached the K-value iteration cap. */
+  private transient int lastNaphtaliThermoKValueNonConvergedCount = 0;
+  /** Latest maximum final absolute logarithmic K-value update. */
+  private transient double lastNaphtaliThermoMaxLogKValueUpdate = 0.0;
   /** Latest Naphtali-Sandholm thermodynamic cache hit count. */
   private transient int lastNaphtaliThermoCacheHitCount = 0;
   /** Latest Naphtali-Sandholm Jacobian build wall time in seconds. */
@@ -3584,6 +3590,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastNaphtaliAnalyticJacobianColumns = solver.getLastAnalyticJacobianColumns();
     lastNaphtaliFiniteDifferenceJacobianColumns = solver.getLastFiniteDifferenceJacobianColumns();
     lastNaphtaliThermoEvaluationCount = solver.getLastThermoEvaluationCount();
+    lastNaphtaliThermoKValueIterationCount = solver.getLastThermoKValueIterationCount();
+    lastNaphtaliThermoKValueNonConvergedCount = solver.getLastThermoKValueNonConvergedCount();
+    lastNaphtaliThermoMaxLogKValueUpdate = solver.getLastThermoMaxLogKValueUpdate();
     lastNaphtaliThermoCacheHitCount = solver.getLastThermoCacheHitCount();
     lastNaphtaliJacobianBuildTimeSeconds = solver.getLastJacobianBuildTimeSeconds();
     lastNaphtaliBlockLinearSolveCount = solver.getLastBlockLinearSolveCount();
@@ -3807,6 +3816,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.lastNaphtaliAnalyticJacobianColumns = candidate.lastNaphtaliAnalyticJacobianColumns;
     this.lastNaphtaliFiniteDifferenceJacobianColumns = candidate.lastNaphtaliFiniteDifferenceJacobianColumns;
     this.lastNaphtaliThermoEvaluationCount = candidate.lastNaphtaliThermoEvaluationCount;
+    this.lastNaphtaliThermoKValueIterationCount = candidate.lastNaphtaliThermoKValueIterationCount;
+    this.lastNaphtaliThermoKValueNonConvergedCount = candidate.lastNaphtaliThermoKValueNonConvergedCount;
+    this.lastNaphtaliThermoMaxLogKValueUpdate = candidate.lastNaphtaliThermoMaxLogKValueUpdate;
     this.lastNaphtaliThermoCacheHitCount = candidate.lastNaphtaliThermoCacheHitCount;
     this.lastNaphtaliJacobianBuildTimeSeconds = candidate.lastNaphtaliJacobianBuildTimeSeconds;
     this.lastNaphtaliBlockLinearSolveCount = candidate.lastNaphtaliBlockLinearSolveCount;
@@ -3967,6 +3979,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     int analyticJacobianColumns = lastNaphtaliAnalyticJacobianColumns;
     int finiteDifferenceJacobianColumns = lastNaphtaliFiniteDifferenceJacobianColumns;
     int thermoEvaluationCount = lastNaphtaliThermoEvaluationCount;
+    int thermoKValueIterationCount = lastNaphtaliThermoKValueIterationCount;
+    int thermoKValueNonConvergedCount = lastNaphtaliThermoKValueNonConvergedCount;
+    double thermoMaxLogKValueUpdate = lastNaphtaliThermoMaxLogKValueUpdate;
     int thermoCacheHitCount = lastNaphtaliThermoCacheHitCount;
     double jacobianBuildTimeSeconds = lastNaphtaliJacobianBuildTimeSeconds;
     int blockLinearSolveCount = lastNaphtaliBlockLinearSolveCount;
@@ -3983,6 +3998,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastNaphtaliAnalyticJacobianColumns = analyticJacobianColumns;
     lastNaphtaliFiniteDifferenceJacobianColumns = finiteDifferenceJacobianColumns;
     lastNaphtaliThermoEvaluationCount = thermoEvaluationCount;
+    lastNaphtaliThermoKValueIterationCount = thermoKValueIterationCount;
+    lastNaphtaliThermoKValueNonConvergedCount = thermoKValueNonConvergedCount;
+    lastNaphtaliThermoMaxLogKValueUpdate = thermoMaxLogKValueUpdate;
     lastNaphtaliThermoCacheHitCount = thermoCacheHitCount;
     lastNaphtaliJacobianBuildTimeSeconds = jacobianBuildTimeSeconds;
     lastNaphtaliBlockLinearSolveCount = blockLinearSolveCount;
@@ -9279,6 +9297,33 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Retrieve latest Naphtali-Sandholm forced-root fugacity fixed-point iteration count.
+   *
+   * @return K-value iterations performed by the latest Naphtali solve
+   */
+  public int getLastNaphtaliThermoKValueIterationCount() {
+    return lastNaphtaliThermoKValueIterationCount;
+  }
+
+  /**
+   * Retrieve how many tray thermodynamic evaluations reached the K-value iteration cap.
+   *
+   * @return non-converged tray thermodynamic evaluation count
+   */
+  public int getLastNaphtaliThermoKValueNonConvergedCount() {
+    return lastNaphtaliThermoKValueNonConvergedCount;
+  }
+
+  /**
+   * Retrieve the largest final logarithmic K-value update from the latest Naphtali solve.
+   *
+   * @return maximum {@code abs(log(Knew / Kold))}
+   */
+  public double getLastNaphtaliThermoMaxLogKValueUpdate() {
+    return lastNaphtaliThermoMaxLogKValueUpdate;
+  }
+
+  /**
    * Retrieve latest Naphtali-Sandholm thermodynamic cache hit count.
    *
    * @return tray thermodynamic evaluations avoided by cache reuse
@@ -9564,6 +9609,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       diagnostics.append("    finite-difference columns: ").append(lastNaphtaliFiniteDifferenceJacobianColumns)
           .append("\n");
       diagnostics.append("    thermodynamic evaluations: ").append(lastNaphtaliThermoEvaluationCount).append("\n");
+      diagnostics.append("    K-value iterations: ").append(lastNaphtaliThermoKValueIterationCount).append("\n");
+      diagnostics.append("    K-value evaluations at iteration cap: ").append(lastNaphtaliThermoKValueNonConvergedCount)
+          .append("\n");
+      diagnostics.append("    maximum final log K-value update: ").append(lastNaphtaliThermoMaxLogKValueUpdate)
+          .append("\n");
       diagnostics.append("    thermodynamic cache hits: ").append(lastNaphtaliThermoCacheHitCount).append("\n");
       diagnostics.append("    jacobian build time: ").append(lastNaphtaliJacobianBuildTimeSeconds).append(" s\n");
       diagnostics.append("    block linear solves: ").append(lastNaphtaliBlockLinearSolveCount).append("\n");
@@ -13070,6 +13120,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastNaphtaliAnalyticJacobianColumns = 0;
     lastNaphtaliFiniteDifferenceJacobianColumns = 0;
     lastNaphtaliThermoEvaluationCount = 0;
+    lastNaphtaliThermoKValueIterationCount = 0;
+    lastNaphtaliThermoKValueNonConvergedCount = 0;
+    lastNaphtaliThermoMaxLogKValueUpdate = 0.0;
     lastNaphtaliThermoCacheHitCount = 0;
     lastNaphtaliJacobianBuildTimeSeconds = 0.0;
     lastNaphtaliBlockLinearSolveCount = 0;

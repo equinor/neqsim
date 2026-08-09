@@ -18,6 +18,14 @@ tie behavior, and schema version remain unchanged. Python and AI consumers shoul
 process areas may legitimately reuse the same unit name.
 
 ---
+## 2026-08-09 — Expose Naphtali-Sandholm tray K-value convergence work
+
+- Naphtali-Sandholm diagnostics now report forced-root K-value sweep count, the number of tray
+  evaluations still above the `1e-8` log-K update criterion after two sweeps, and the maximum final
+  update.
+- The two-sweep numerical path, MESH equations, acceptance gates, and fallback behavior are
+  unchanged. The telemetry establishes the baseline needed for a later bounded convergence method.
+
 ## 2026-08-09 — Correct Naphtali-Sandholm Jacobian work classification
 
 - Naphtali-Sandholm diagnostics now count each numerically perturbed Jacobian column only as
