@@ -2,6 +2,7 @@ package neqsim.process.dynamics;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
 import java.util.UUID;
@@ -21,6 +22,7 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.PressureTransmitter;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.processmodel.processmodules.SeparationTrainModule;
 import neqsim.thermo.system.SystemSrkEos;
 
 /** Tests the Phase-0 machine-readable dynamic capability contract. */
@@ -80,6 +82,10 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
     assertFalse(report.hasBlockingIssues());
     assertEquals(1, report.getReviewItems().size());
     assertTrue(report.getReviewItems().get(0).contains("custom"));
+    assertFalse(report.isStrictPreflightReady());
+    assertEquals(1, report.getStrictPreflightIssues().size());
+    IllegalStateException exception = assertThrows(IllegalStateException.class, report::assertStrictTransientReady);
+    assertTrue(exception.getMessage().contains("custom"));
   }
 
   /**
@@ -98,6 +104,7 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
     DynamicCapabilityReport validReport = DynamicCapabilityReport.from(process);
     assertFalse(validReport.hasBlockingIssues());
     assertTrue(validReport.getInactiveAuditedDynamicElements().isEmpty());
+    assertTrue(validReport.isStrictPreflightReady());
 
     feed.setCalculateSteadyState(false);
     DynamicCapabilityReport invalidReport = DynamicCapabilityReport.from(process);
@@ -105,6 +112,7 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
     assertEquals(1, invalidReport.getBlockingIssues().size());
     assertTrue(invalidReport.getBlockingIssues().get(0).contains("feed"));
     assertTrue(invalidReport.getBlockingIssues().get(0).contains("ALGEBRAIC"));
+    assertFalse(invalidReport.isStrictPreflightReady());
   }
 
   /** Attached controllers are included once even when also registered standalone. */
@@ -151,6 +159,47 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
     assertTrue(report.toJson().contains("ALGEBRAIC"));
   }
 
+  /** Initialized process-module contents are recursively inventoried with stable diagnostic paths. */
+  @Test
+  public void reportRecursesThroughInitializedProcessModules() {
+    Stream feed = createFeed("module feed");
+    SeparationTrainModule module = new SeparationTrainModule("separation train");
+    module.addInputStream("feed stream", feed);
+    module.initializeModule();
+
+    ProcessSystem process = new ProcessSystem("module process");
+    process.add(module);
+
+    DynamicCapabilityReport report = DynamicCapabilityReport.from(process);
+
+    assertTrue(report.getEntries().size() > 10);
+    assertTrue(hasQualifiedEntry(report, "separation train::Inlet separator"));
+    assertTrue(hasQualifiedEntry(report, "separation train::HP gas scrubber"));
+    assertTrue(report.getCapabilityCounts().get(DynamicCapability.DYNAMIC_LUMPED).intValue() > 0);
+    assertTrue(report.getCapabilityCounts().get(DynamicCapability.UNCLASSIFIED_DYNAMIC).intValue() > 0);
+    assertFalse(report.isStrictPreflightReady());
+    assertTrue(report.getStrictPreflightIssues().get(0).contains("separation train"));
+  }
+
+  /** Nested module paths remain area-qualified in multi-area ProcessModel reports. */
+  @Test
+  public void nestedModuleEntriesRetainProcessModelAreaIdentity() {
+    Stream feed = createFeed("module feed");
+    SeparationTrainModule module = new SeparationTrainModule("separation train");
+    module.addInputStream("feed stream", feed);
+    module.initializeModule();
+
+    ProcessSystem process = new ProcessSystem("topside");
+    process.add(module);
+    ProcessModel model = new ProcessModel();
+    model.add("topside", process);
+
+    DynamicCapabilityReport report = DynamicCapabilityReport.from(model);
+
+    assertTrue(hasQualifiedEntry(report, "topside::separation train::Inlet separator"));
+    assertTrue(report.toJson().contains("containerPath"));
+  }
+
   /** Audited dynamic equipment left in steady-state mode is reported as an engineering review aid, not an error. */
   @Test
   public void inactiveAuditedDynamicStateIsVisibleButNotBlocking() {
@@ -166,6 +215,15 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
     assertFalse(report.hasBlockingIssues());
     assertEquals(1, report.getInactiveAuditedDynamicElements().size());
     assertEquals("separator", report.getInactiveAuditedDynamicElements().get(0));
+  }
+
+  private static boolean hasQualifiedEntry(DynamicCapabilityReport report, String qualifiedName) {
+    for (DynamicCapabilityReport.Entry entry : report.getEntries()) {
+      if (qualifiedName.equals(entry.getQualifiedName())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static Stream createFeed(String name) {
