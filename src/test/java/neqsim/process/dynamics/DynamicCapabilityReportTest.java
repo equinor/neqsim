@@ -49,7 +49,8 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
 
     assertEquals(DynamicCapability.DYNAMIC_DISTRIBUTED, new TwoFluidPipe("two fluid", feed).getDynamicCapability());
     assertEquals(DynamicCapability.DYNAMIC_DISTRIBUTED, new TransientPipe("drift flux", feed).getDynamicCapability());
-    assertEquals(DynamicCapability.DYNAMIC_DISTRIBUTED, new WaterHammerPipe("water hammer", feed).getDynamicCapability());
+    assertEquals(DynamicCapability.DYNAMIC_DISTRIBUTED,
+        new WaterHammerPipe("water hammer", feed).getDynamicCapability());
   }
 
   /** Control and instrumentation elements are reported separately from process-equipment physics. */
@@ -79,7 +80,9 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
     assertTrue(report.getReviewItems().get(0).contains("custom"));
   }
 
-  /** Algebraic equipment is valid in transient flowsheets until its unsupported difference-equation mode is requested. */
+  /**
+   * Algebraic equipment is valid in transient flowsheets until its unsupported difference-equation mode is requested.
+   */
   @Test
   public void algebraicElementForcedIntoDynamicModeIsBlocking() {
     Stream feed = createFeed("feed");
