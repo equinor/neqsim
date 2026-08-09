@@ -35,6 +35,7 @@ import java.util.List;
  * @version $Id: $Id
  */
 public class PipeWall extends Wall {
+  private static final long serialVersionUID = 1000L;
 
   /** Inner radius of the pipe in meters. */
   private double innerRadius = 0.0;

@@ -17,6 +17,7 @@ import neqsim.fluidmechanics.flowsolver.AdvectionScheme;
 import neqsim.fluidmechanics.flowsolver.SpeciesAdvectionScheme;
 import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseSpeciesConservationReport;
 import neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.OnePhaseSpeciesConservationHistory;
+import neqsim.process.dynamics.EventScheduler;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
@@ -454,41 +455,62 @@ public class OnePhasePipeLineCompositionalTest {
   }
 
   @Test
-  @DisplayName("OnePhasePipeLine should work with ProcessSystem")
-  void testWithProcessSystem() {
-    Stream inlet = new Stream("inlet", naturalGas);
-    inlet.setFlowRate(1.0, "kg/sec");
+  @DisplayName("Conservative OnePhasePipeLine should follow ProcessSystem events and clock")
+  void testConservativePipelineWithProcessSystemEvents() {
+    SystemInterface baselineGas = createTransmissionGas(0.95, 0.05, 50.0);
+    SystemInterface pulseGas = createTransmissionGas(0.80, 0.20, 60.0);
+    Stream inlet = new Stream("scheduled inlet", baselineGas);
+    inlet.setFlowRate(50.0, "kg/sec");
+    inlet.run();
 
-    OnePhasePipeLine pipe = new OnePhasePipeLine("TestPipe", inlet);
-    pipe.setNumberOfLegs(1);
-    pipe.setNumberOfNodesInLeg(10);
-    pipe.setPipeDiameters(new double[] { 0.1, 0.1 });
-    pipe.setLegPositions(new double[] { 0.0, 100.0 });
-    pipe.setHeightProfile(new double[] { 0.0, 0.0 });
-    pipe.setPipeWallRoughness(new double[] { 1e-5, 1e-5 });
-    pipe.setOuterTemperatures(new double[] { 280.0, 280.0 });
-    pipe.setAdvectionScheme(AdvectionScheme.TVD_VAN_LEER);
-    pipe.setCompositionalTracking(true);
+    OnePhasePipeLine pipe = createTransmissionPipe(inlet);
+    pipe.setConservativeCompositionalTracking(true);
+    pipe.setStoreSpeciesConservationHistory(true);
+    pipe.setFailOnNonConvergence(true);
+    pipe.setInternalTimeStep(60.0);
 
-    ProcessSystem process = new ProcessSystem();
+    ProcessSystem process = new ProcessSystem("conservative pipeline process");
     process.add(inlet);
     process.add(pipe);
 
-    // Run initial steady state
-    process.run();
+    EventScheduler scheduler = new EventScheduler();
+    process.setEventScheduler(scheduler);
+    scheduler.scheduleEvent(60.0, "start composition and rate pulse", () -> inlet.setThermoSystem(pulseGas.clone()));
+    scheduler.scheduleEvent(120.0, "restore baseline composition and rate",
+        () -> inlet.setThermoSystem(baselineGas.clone()));
+
+    UUID initializationId = UUID.randomUUID();
+    process.run(initializationId);
 
     assertNotNull(pipe.getOutletStream());
     assertTrue(pipe.getOutletStream().getPressure() > 0);
+    assertEquals(0.0, process.getTime(), 0.0);
+    assertEquals(0.0, pipe.getSimulationTime(), 0.0);
 
-    // Run transient loop using direct pipe.runTransient (avoiding ProcessSystem serialization)
-    UUID id = UUID.randomUUID();
-    for (int i = 0; i < 3; i++) {
-      inlet.run(id); // Update inlet
-      pipe.runTransient(1.0, id); // Run pipe transient directly
-    }
+    UUID pulseStepId = UUID.randomUUID();
+    process.runTransient(60.0, pulseStepId);
+    OnePhaseSpeciesConservationReport pulseReport = pipe.getSpeciesConservationReport();
+    assertConservativeReport(pulseReport);
+    assertEquals(3600.0, sum(pulseReport.getInletBoundaryMassKg()), 1.0e-8);
+    assertEquals(60.0, process.getTime(), 0.0);
+    assertEquals(process.getTime(), pipe.getSimulationTime(), 0.0);
+    assertEquals(pulseStepId, process.getCalculationIdentifier());
+    assertEquals(pulseStepId, pipe.getCalculationIdentifier());
+    assertEquals(pulseStepId, pipe.getOutletStream().getCalculationIdentifier());
+    assertEquals(1, scheduler.getFiredEvents().size());
 
-    // Should have advanced time
-    assertTrue(pipe.getSimulationTime() > 0);
+    UUID recoveryStepId = UUID.randomUUID();
+    process.runTransient(60.0, recoveryStepId);
+    OnePhaseSpeciesConservationReport recoveryReport = pipe.getSpeciesConservationReport();
+    assertConservativeReport(recoveryReport);
+    assertEquals(3000.0, sum(recoveryReport.getInletBoundaryMassKg()), 1.0e-8);
+    assertEquals(120.0, process.getTime(), 0.0);
+    assertEquals(process.getTime(), pipe.getSimulationTime(), 0.0);
+    assertEquals(recoveryStepId, process.getCalculationIdentifier());
+    assertEquals(recoveryStepId, pipe.getCalculationIdentifier());
+    assertEquals(recoveryStepId, pipe.getOutletStream().getCalculationIdentifier());
+    assertEquals(2, scheduler.getFiredEvents().size());
+    assertEquals(0, scheduler.getPendingEvents().size());
   }
 
   @Test
