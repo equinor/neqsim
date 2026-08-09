@@ -343,6 +343,11 @@ public class ProcessSystem extends SimulationBaseClass {
   private transient RunStatus lastRunStatus = new RunStatus();
 
   /**
+   * Immutable success records reused while the unit structure, names and types remain unchanged.
+   */
+  private transient List<UnitRunStatus> cachedSuccessfulRunStatuses = null;
+
+  /**
    * Interface for monitoring simulation progress during execution. Implementations receive callbacks after each unit
    * operation completes, enabling real-time visualization, progress tracking, and early termination detection.
    *
@@ -2854,22 +2859,53 @@ public class ProcessSystem extends SimulationBaseClass {
       return;
     }
     if (!runThrew) {
-      java.util.Set<String> failedNames = new java.util.HashSet<String>();
-      for (UnitRunStatus u : lastRunStatus.getUnits()) {
-        if (!u.isSuccess()) {
-          failedNames.add(u.getUnitName());
-        }
-      }
-      for (ProcessEquipmentInterface unit : unitOperations) {
-        if (unit == null) {
-          continue;
-        }
-        if (!failedNames.contains(unit.getName())) {
-          lastRunStatus.recordSuccess(unit.getName(), unit.getClass().getSimpleName());
-        }
+      List<UnitRunStatus> successfulStatuses = getSuccessfulRunStatuses();
+      for (UnitRunStatus status : successfulStatuses) {
+        lastRunStatus.recordSuccess(status);
       }
     }
     lastRunStatus.markComplete(!runThrew);
+  }
+
+  /**
+   * Returns cached immutable success records, rebuilding them if a unit was renamed or replaced without changing the
+   * structure version.
+   *
+   * @return success records in process execution order
+   */
+  private List<UnitRunStatus> getSuccessfulRunStatuses() {
+    int nonNullUnitCount = 0;
+    boolean cacheMatches = cachedSuccessfulRunStatuses != null;
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit == null) {
+        continue;
+      }
+      if (cacheMatches) {
+        if (nonNullUnitCount >= cachedSuccessfulRunStatuses.size()) {
+          cacheMatches = false;
+        } else {
+          UnitRunStatus cached = cachedSuccessfulRunStatuses.get(nonNullUnitCount);
+          String unitType = unit.getClass().getSimpleName();
+          if (!java.util.Objects.equals(cached.getUnitName(), unit.getName())
+              || !java.util.Objects.equals(cached.getUnitType(), unitType)) {
+            cacheMatches = false;
+          }
+        }
+      }
+      nonNullUnitCount++;
+    }
+    if (cacheMatches && nonNullUnitCount == cachedSuccessfulRunStatuses.size()) {
+      return cachedSuccessfulRunStatuses;
+    }
+
+    List<UnitRunStatus> rebuilt = new ArrayList<UnitRunStatus>(nonNullUnitCount);
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit != null) {
+        rebuilt.add(new UnitRunStatus(unit.getName(), unit.getClass().getSimpleName(), true, null, null));
+      }
+    }
+    cachedSuccessfulRunStatuses = rebuilt;
+    return rebuilt;
   }
 
   /**
@@ -7116,6 +7152,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * clear it at one of the mutation sites.
    */
   private void invalidateStructureCaches() {
+    cachedSuccessfulRunStatuses = null;
     invalidateGraph();
   }
 
