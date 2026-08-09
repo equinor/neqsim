@@ -26,8 +26,13 @@ List<ProcessDiagramGraphAdapter.Diagnostic> diagnostics = topology.getDiagnostic
 The adapter creates one semantic plant graph with explicit area hierarchy, area-qualified equipment
 and line identities, ports or nozzles, and distinct material, energy, and signal connection segments.
 Shared live streams are represented as cross-area connections, and parallel material streams retain
-separate connection identities. The result owns a deterministic JSON snapshot and returns a defensive
-graph copy. Consumers should review structured diagnostics before treating an adaptation as complete.
+separate connection identities. Parallel energy and signal declarations are likewise retained when
+they use distinct source and target ports. Repeated declarations with the same connection type and
+the same port endpoints cannot be distinguished by the current `ProcessConnection` contract; the
+adapter retains one connection and emits `DIAGRAM_TOPOLOGY_DUPLICATE_CONNECTION_COLLAPSED` instead
+of silently losing the ambiguity. The result owns a deterministic JSON snapshot and returns a
+defensive graph copy. Consumers should review structured diagnostics before treating an adaptation
+as complete.
 
 The existing DOT and DEXPI exporters have not yet been migrated to consume this graph. Until that
 migration is complete, this adapter is a shared topology contract rather than a new rendering or
