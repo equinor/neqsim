@@ -5879,9 +5879,9 @@ public class ProcessModel implements Runnable, Serializable {
    * <p>
    * This is the multi-area counterpart of {@link ProcessSystem#getUtilizationSnapshotJson()} and the recommended
    * observation endpoint for machine-learning / reinforcement-learning optimization loops on a full plant. Each unit
-   * entry carries an {@code "area"} property. A non-null plant-wide {@code bottleneck} carries both {@code "area"}
-   * and the unambiguous {@code "qualifiedName"} ({@code "area::unit"}), in addition to its legacy {@code "name"}.
-   * The {@code anyOverloaded} and {@code anyHardLimitExceeded} flags summarise the whole model. Schema is versioned by
+   * entry carries an {@code "area"} property. A non-null plant-wide {@code bottleneck} carries both {@code "area"} and
+   * the unambiguous {@code "qualifiedName"} ({@code "area::unit"}), in addition to its legacy {@code "name"}. The
+   * {@code anyOverloaded} and {@code anyHardLimitExceeded} flags summarise the whole model. Schema is versioned by
    * {@code schemaVersion} ("1.0").
    * </p>
    *
