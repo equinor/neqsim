@@ -25,9 +25,10 @@ public interface ProcessElementInterface extends NamedInterface, Serializable {
    *
    * <p>
    * The capability is distinct from the current runtime steady-state/dynamic setting. In particular,
-   * {@link DynamicCapability#ALGEBRAIC} means the element may be re-evaluated as an algebraic relation during a transient
-   * study but does not expose audited stored physical state of its own. A custom class can override this method once its
-   * dynamic state, equations, initialization, timestep constraints, and validation evidence have been established.
+   * {@link DynamicCapability#ALGEBRAIC} means the element may be re-evaluated as an algebraic relation during a
+   * transient study but does not expose audited stored physical state of its own. A custom class can override this
+   * method once its dynamic state, equations, initialization, timestep constraints, and validation evidence have been
+   * established.
    * </p>
    *
    * <p>
