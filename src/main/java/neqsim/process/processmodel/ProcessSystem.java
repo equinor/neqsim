@@ -2881,7 +2881,7 @@ public class ProcessSystem extends SimulationBaseClass {
       if (unit == null) {
         continue;
       }
-      if (cacheMatches) {
+      if (cacheMatches && cachedStatuses != null) {
         if (nonNullUnitCount >= cachedStatuses.size()) {
           cacheMatches = false;
         } else {
@@ -2895,7 +2895,7 @@ public class ProcessSystem extends SimulationBaseClass {
       }
       nonNullUnitCount++;
     }
-    if (cacheMatches && nonNullUnitCount == cachedStatuses.size()) {
+    if (cacheMatches && cachedStatuses != null && nonNullUnitCount == cachedStatuses.size()) {
       return cachedStatuses;
     }
 
