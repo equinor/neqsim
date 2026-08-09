@@ -71,6 +71,23 @@ public class RunStatus implements Serializable {
   }
 
   /**
+   * Records a previously created immutable success status.
+   *
+   * <p>
+   * Package-private for {@link ProcessSystem}, which can safely reuse success records while its unit structure and
+   * names are unchanged. Failure records are never reused because their error text belongs to one particular run.
+   * </p>
+   *
+   * @param unitStatus immutable successful unit status
+   */
+  void recordSuccess(UnitRunStatus unitStatus) {
+    if (!unitStatus.isSuccess()) {
+      throw new IllegalArgumentException("Only successful unit statuses can be reused");
+    }
+    units.add(unitStatus);
+  }
+
+  /**
    * Records that a unit failed to run. The first recorded failure is reported as the run's failed unit.
    *
    * @param unitName the unit operation name
