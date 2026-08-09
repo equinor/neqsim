@@ -3,8 +3,6 @@ title: Dynamic capability contract
 description: Machine-readable classification and audit of algebraic, lumped, distributed, boundary, and control-system transient behaviour in ProcessSystem and ProcessModel.
 ---
 
-# Dynamic capability contract
-
 NeqSim distinguishes **participation in a transient flowsheet** from **having audited dynamic state**. This is important
 because an algebraic unit operation can be re-evaluated at every physical timestep without containing inventory, inertia,
 or another state that is integrated through time.
