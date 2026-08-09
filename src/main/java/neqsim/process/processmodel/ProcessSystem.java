@@ -258,10 +258,13 @@ public class ProcessSystem extends SimulationBaseClass {
   private static final class DataflowExecutionPlan {
     private final List<List<ProcessNode>> tasks;
     private final List<java.util.Set<Integer>> taskPredecessors;
+    private final boolean hasParallelTasks;
 
-    private DataflowExecutionPlan(List<List<ProcessNode>> tasks, List<java.util.Set<Integer>> taskPredecessors) {
+    private DataflowExecutionPlan(List<List<ProcessNode>> tasks, List<java.util.Set<Integer>> taskPredecessors,
+        boolean hasParallelTasks) {
       this.tasks = tasks;
       this.taskPredecessors = taskPredecessors;
+      this.hasParallelTasks = hasParallelTasks;
     }
   }
 
@@ -1520,12 +1523,12 @@ public class ProcessSystem extends SimulationBaseClass {
           runSequential(id);
         }
       } else {
-        // Feed-forward process with single-input equipment only. For larger
-        // flowsheets use dataflow scheduling (no level barriers, units fire as
-        // soon as predecessors complete); for small trees the CompletableFuture
-        // overhead outweighs the straggler benefit, so stay on runParallel.
+        // Feed-forward process with single-input equipment only. For larger,
+        // genuinely wide flowsheets use dataflow scheduling (no level barriers,
+        // units fire as soon as predecessors complete). Serial plans cannot
+        // benefit from futures, and small trees do not amortize their overhead.
         try {
-          if (unitOperations.size() >= DATAFLOW_UNIT_THRESHOLD) {
+          if (unitOperations.size() >= DATAFLOW_UNIT_THRESHOLD && getCachedDataflowPlan().hasParallelTasks) {
             runDataflow(id);
           } else {
             runParallel(id);
@@ -1786,7 +1789,11 @@ public class ProcessSystem extends SimulationBaseClass {
     }
 
     List<List<ProcessNode>> tasks = new ArrayList<>();
+    boolean hasParallelTasks = false;
     for (List<List<ProcessNode>> level : getCachedParallelPlan()) {
+      if (level.size() > 1) {
+        hasParallelTasks = true;
+      }
       tasks.addAll(level);
     }
 
@@ -1814,7 +1821,7 @@ public class ProcessSystem extends SimulationBaseClass {
       taskPredecessors.add(predSet);
     }
 
-    cachedDataflowPlan = new DataflowExecutionPlan(tasks, taskPredecessors);
+    cachedDataflowPlan = new DataflowExecutionPlan(tasks, taskPredecessors, hasParallelTasks);
     return cachedDataflowPlan;
   }
 
