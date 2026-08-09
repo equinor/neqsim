@@ -18,6 +18,12 @@ tie behavior, and schema version remain unchanged. Python and AI consumers shoul
 process areas may legitimately reuse the same unit name.
 
 ---
+## 2026-08-09 — Correct Naphtali-Sandholm Jacobian work classification
+
+- Naphtali-Sandholm diagnostics now count each numerically perturbed Jacobian column only as
+  finite-difference work; the analytic-column counter reports zero for the current implementation.
+- Both public telemetry getters remain available. Solver equations, Jacobian values, convergence,
+  and fallback behavior are unchanged.
 
 ## 2026-08-07 — Flow-accelerated corrosion + in-situ pH at temperature (new classes) + DEA protonation enabled
 

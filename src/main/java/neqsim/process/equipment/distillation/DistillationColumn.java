@@ -783,7 +783,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private transient double lastMatrixInsideOutTemperatureResidual = Double.NaN;
   /** Matrix warm-start wall time from the latest solve in seconds. */
   private transient double lastMatrixInsideOutSolveTimeSeconds = 0.0;
-  /** Latest Naphtali-Sandholm semi-analytic Jacobian column count. */
+  /** Latest Naphtali-Sandholm analytically differentiated Jacobian column count. */
   private transient int lastNaphtaliAnalyticJacobianColumns = 0;
   /** Latest Naphtali-Sandholm finite-difference Jacobian column count. */
   private transient int lastNaphtaliFiniteDifferenceJacobianColumns = 0;
@@ -9247,9 +9247,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Retrieve latest Naphtali-Sandholm semi-analytic Jacobian columns.
+   * Retrieve latest Naphtali-Sandholm analytically differentiated Jacobian columns.
    *
-   * @return semi-analytic Jacobian column count
+   * <p>
+   * This is zero for the current finite-difference implementation. The getter is retained for compatibility and for a
+   * future mixed analytic/numerical Jacobian.
+   * </p>
+   *
+   * @return analytically differentiated Jacobian column count
    */
   public int getLastNaphtaliAnalyticJacobianColumns() {
     return lastNaphtaliAnalyticJacobianColumns;
@@ -9555,7 +9560,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (lastNaphtaliAnalyticJacobianColumns > 0 || lastNaphtaliFiniteDifferenceJacobianColumns > 0
         || lastNaphtaliThermoEvaluationCount > 0) {
       diagnostics.append("  Naphtali-Sandholm Jacobian:\n");
-      diagnostics.append("    semi-analytic columns: ").append(lastNaphtaliAnalyticJacobianColumns).append("\n");
+      diagnostics.append("    analytic columns: ").append(lastNaphtaliAnalyticJacobianColumns).append("\n");
       diagnostics.append("    finite-difference columns: ").append(lastNaphtaliFiniteDifferenceJacobianColumns)
           .append("\n");
       diagnostics.append("    thermodynamic evaluations: ").append(lastNaphtaliThermoEvaluationCount).append("\n");
