@@ -5879,8 +5879,10 @@ public class ProcessModel implements Runnable, Serializable {
    * <p>
    * This is the multi-area counterpart of {@link ProcessSystem#getUtilizationSnapshotJson()} and the recommended
    * observation endpoint for machine-learning / reinforcement-learning optimization loops on a full plant. Each unit
-   * entry carries an {@code "area"} property, and the plant-wide {@code bottleneck}, {@code anyOverloaded}, and
-   * {@code anyHardLimitExceeded} flags summarise the whole model. Schema is versioned by {@code schemaVersion} ("1.0").
+   * entry carries an {@code "area"} property. A non-null plant-wide {@code bottleneck} carries both {@code "area"} and
+   * the unambiguous {@code "qualifiedName"} ({@code "area::unit"}), in addition to its legacy {@code "name"}. The
+   * {@code anyOverloaded} and {@code anyHardLimitExceeded} flags summarise the whole model. Schema is versioned by
+   * {@code schemaVersion} ("1.0").
    * </p>
    *
    * <p>
@@ -5906,6 +5908,11 @@ public class ProcessModel implements Runnable, Serializable {
     if (bottleneck != null && bottleneck.getEquipment() != null) {
       com.google.gson.JsonObject bn = new com.google.gson.JsonObject();
       bn.addProperty("name", bottleneck.getEquipment().getName());
+      String areaName = findAreaNameForEquipment(bottleneck.getEquipment());
+      if (areaName != null) {
+        bn.addProperty("area", areaName);
+        bn.addProperty("qualifiedName", areaName + "::" + bottleneck.getEquipment().getName());
+      }
       bn.addProperty("utilization", bottleneck.getUtilization());
       bn.addProperty("utilizationPercent", bottleneck.getUtilization() * 100.0);
       if (bottleneck.getConstraint() != null) {
@@ -5918,6 +5925,23 @@ public class ProcessModel implements Runnable, Serializable {
     root.addProperty("anyOverloaded", isAnyEquipmentOverloaded());
     root.addProperty("anyHardLimitExceeded", isAnyHardLimitExceeded());
     return root.toString();
+  }
+
+  /**
+   * Finds the process-area name that owns the supplied equipment instance.
+   *
+   * @param equipment equipment instance returned by the plant-wide bottleneck ranking
+   * @return owning area name, or {@code null} when the instance is not present in this model
+   */
+  private String findAreaNameForEquipment(ProcessEquipmentInterface equipment) {
+    for (java.util.Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
+      for (ProcessEquipmentInterface areaEquipment : entry.getValue().getUnitOperations()) {
+        if (areaEquipment == equipment) {
+          return entry.getKey();
+        }
+      }
+    }
+    return null;
   }
 
   // ============ PRIVATE HOOK / EVENT HELPER METHODS ============

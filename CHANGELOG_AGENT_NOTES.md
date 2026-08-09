@@ -9,6 +9,15 @@
 
 ---
 
+## 2026-08-09 — ProcessModel bottleneck snapshots retain area identity
+
+`ProcessModel.getUtilizationSnapshotJson()` now adds `area` and `qualifiedName` to a
+non-null plant-wide `bottleneck`. The existing `name`, utilization, constraint, ranking,
+tie behavior, and schema version remain unchanged. Python and AI consumers should use
+`qualifiedName` (`area::unit`) when joining or archiving bottlenecks because different
+process areas may legitimately reuse the same unit name.
+
+---
 ## 2026-08-09 — Correct Naphtali-Sandholm Jacobian work classification
 
 - Naphtali-Sandholm diagnostics now count each numerically perturbed Jacobian column only as

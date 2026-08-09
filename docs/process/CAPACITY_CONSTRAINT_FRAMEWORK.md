@@ -2048,7 +2048,8 @@ The returned JSON (schema `"1.0"`) has the shape:
       ]
     }
   ],
-  "bottleneck": {"name": "30-KA-01", "utilization": 0.83,
+  "bottleneck": {"area": "Export compression", "name": "30-KA-01",
+                 "qualifiedName": "Export compression::30-KA-01", "utilization": 0.83,
                  "utilizationPercent": 83.0, "limitingConstraint": "power"},
   "anyOverloaded": false,
   "anyHardLimitExceeded": false
@@ -2069,8 +2070,11 @@ The returned JSON (schema `"1.0"`) has the shape:
 </table>
 
 The plant-wide `bottleneck`, `anyOverloaded`, and `anyHardLimitExceeded` fields summarise the whole
-flowsheet. Because the snapshot reads constraints rather than re-solving, it is cheap to call on
-every optimization step.
+flowsheet. In a `ProcessModel` snapshot, a non-null `bottleneck` includes both its owning `area` and
+an unambiguous `qualifiedName` using the existing `area::unit` convention. Consumers should join or
+archive on `qualifiedName`, because separate process areas may legitimately reuse the same unit
+name. Because the snapshot reads constraints rather than re-solving, it is cheap to call on every
+optimization step.
 
 **Closed-loop RL pattern:**
 
