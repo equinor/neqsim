@@ -143,6 +143,33 @@ public class OnePhasePipeLineCompositionalTest {
   }
 
   @Test
+  @DisplayName("Conservative schedule should impose each interval's inlet mass rate")
+  void testConservativeSchedulePreservesSpecifiedInletMassRate() {
+    SystemInterface baselineGas = createTransmissionGas(0.95, 0.05);
+    SystemInterface pulseGas = createTransmissionGas(0.80, 0.20);
+    pulseGas.setTotalFlowRate(60.0, "kg/sec");
+    Stream inlet = new Stream("scheduled-rate inlet", baselineGas);
+    inlet.setFlowRate(50.0, "kg/sec");
+    inlet.run();
+
+    OnePhasePipeLine pipe = createTransmissionPipe(inlet);
+    pipe.setConservativeCompositionalTracking(true);
+    pipe.setStoreSpeciesConservationHistory(true);
+    pipe.setFailOnNonConvergence(true);
+
+    UUID id = UUID.randomUUID();
+    pipe.run(id);
+    pipe.runConservativeTransient(new double[] { 0.0, 60.0 }, new SystemInterface[] { pulseGas }, 1, id);
+
+    OnePhaseSpeciesConservationReport report = pipe.getSpeciesConservationHistory().getReport(0);
+    assertTrue(report.isConverged(), report.getMessage());
+    assertEquals(3600.0, sum(report.getInletBoundaryMassKg()), 1.0e-8);
+    assertEquals(60.0, pulseGas.getFlowRate("kg/sec"), 1.0e-12);
+    assertTrue(report.getMaximumRelativeInventoryResidual() <= 1.0e-8, report.getMessage());
+    assertTrue(report.getMaximumThermodynamicMassFractionError() <= 1.0e-10, report.getMessage());
+  }
+
+  @Test
   @DisplayName("Validated conservative tracking should reject null schedule inputs as invalid arguments")
   void testValidatedConservativeTrackingRejectsNullScheduleInput() {
     SystemInterface baselineGas = createTransmissionGas(0.95, 0.05);

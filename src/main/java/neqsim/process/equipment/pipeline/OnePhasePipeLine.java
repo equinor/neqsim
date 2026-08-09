@@ -512,13 +512,15 @@ public class OnePhasePipeLine extends Pipeline {
    *
    * <p>
    * Times are elapsed seconds relative to the start of this call and must begin at zero. Each inlet system applies over
-   * the corresponding interval, so {@code inletSystems.length == elapsedTimesSeconds.length - 1}. Every interval is
-   * divided into {@code stepsPerInterval} equal accepted-step candidates. This shape maps directly to Java arrays from
-   * Python/JPype and retains one report for every accepted step when history storage is enabled.
+   * the corresponding interval, so {@code inletSystems.length == elapsedTimesSeconds.length - 1}. Each inlet system
+   * supplies both composition and a strictly positive mass flow. The conservative solver imposes that mass flow at the
+   * authoritative finite-volume inlet face using the inlet EOS density. Every interval is divided into
+   * {@code stepsPerInterval} equal accepted-step candidates. This shape maps directly to Java arrays from Python/JPype
+   * and retains one report for every accepted step when history storage is enabled.
    * </p>
    *
    * @param elapsedTimesSeconds strictly increasing elapsed interval boundaries beginning at 0 s
-   * @param inletSystems one single-gas-phase inlet system per interval
+   * @param inletSystems one single-gas-phase inlet system with a positive mass flow per interval
    * @param stepsPerInterval positive number of equal solver steps in every interval
    * @param id calculation identifier
    * @throws IllegalStateException if conservative mode is disabled or an inlet is not one gas phase
