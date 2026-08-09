@@ -1,11 +1,37 @@
 ---
 title: Process Flow Diagram (PFD) Export
-description: NeqSim can generate professional oil & gas style process flow diagrams (PFDs) that follow industry conventions, comparable to UniSim, Aspen, and HYSYS.
+description: Export deterministic simulator-style PFD topology and Graphviz diagrams from NeqSim process models.
 ---
 
 # Process Flow Diagram (PFD) Export
 
-NeqSim can generate professional oil & gas style process flow diagrams (PFDs) that follow industry conventions, comparable to UniSim, Aspen, and HYSYS.
+NeqSim can export deterministic simulator-style process flow diagrams (PFDs) as Graphviz DOT and,
+when Graphviz is installed, SVG or PDF. These exports help inspect simulation topology; they are not
+qualified engineering drawings and do not claim ISO 10628 conformance.
+
+## Canonical Topology Foundation
+
+Use `ProcessDiagramGraphAdapter` when a downstream renderer or exchange workflow needs a stable,
+format-neutral topology before layout:
+
+```java
+ProcessDiagramGraphAdapter.Result topology =
+    ProcessDiagramGraphAdapter.fromProcessModel(plant, "PLANT-001", "A");
+
+EngineeringGraph graph = topology.getGraph();
+String fingerprint = topology.getFingerprint();
+List<ProcessDiagramGraphAdapter.Diagnostic> diagnostics = topology.getDiagnostics();
+```
+
+The adapter creates one semantic plant graph with explicit area hierarchy, area-qualified equipment
+and line identities, ports or nozzles, and distinct material, energy, and signal connection segments.
+Shared live streams are represented as cross-area connections, and parallel material streams retain
+separate connection identities. The result owns a deterministic JSON snapshot and returns a defensive
+graph copy. Consumers should review structured diagnostics before treating an adaptation as complete.
+
+The existing DOT and DEXPI exporters have not yet been migrated to consume this graph. Until that
+migration is complete, this adapter is a shared topology contract rather than a new rendering or
+standards-conformance claim.
 
 ## Quick Start
 
@@ -82,7 +108,7 @@ For **three-phase separators** (gas, oil, aqueous), outlets follow gravity:
 
 ### Comprehensive Equipment Support
 
-The diagram system supports all NeqSim equipment types with industry-standard shapes:
+The diagram system maps common NeqSim equipment types to built-in Graphviz shapes:
 
 #### Separators & Vessels
 
@@ -108,8 +134,8 @@ The diagram system supports all NeqSim equipment types with industry-standard sh
 
 | Equipment | Shape | Symbol |
 |-----------|-------|--------|
-| Compressor | Trapezoid | Standard P&ID trapezoid |
-| CompressorModule | Trapezoid | Standard P&ID trapezoid |
+| Compressor | Trapezoid | Simulator-style trapezoid |
+| CompressorModule | Trapezoid | Simulator-style trapezoid |
 | Expander | Inverted Trapezium | Inverted trapezoid |
 | TurbineExpander | Inverted Trapezium | Inverted trapezoid |
 
@@ -231,7 +257,7 @@ exporter.setShowStreamValues(true)
 ```
 Shows: `Stream Name\n25.0°C, 50.0 bar\n1000 kg/hr`
 
-#### HTML Table Labels (Professional)
+#### HTML Table Labels
 ```java
 exporter.setShowStreamValues(true)
         .setUseStreamTables(true);
@@ -381,7 +407,8 @@ process.createDiagramExporter()
     .exportSVG(Path.of("gas_separation.svg"));
 ```
 
-This generates a professional PFD with:
+This generates a configured simulator-style PFD with:
+
 - Compressor and cooler at top (gas section)
 - Separator in center
 - Pump at bottom (liquid section)
@@ -581,16 +608,17 @@ The diagram export system consists of:
 
 ## Design Philosophy
 
-> Professional PFDs are not drawn — they are computed using rules.
+> NeqSim's simulator-style PFD layout is computed from deterministic rules.
 
-The layout intelligence layer applies engineering conventions:
+The layout intelligence layer applies configured visual conventions:
+
 1. Gravity logic (gas up, liquid down)
 2. Functional zoning (separation center, gas upper, liquid lower)
 3. Equipment semantics (separator outlets positioned correctly)
 4. Stable layout (same model → same diagram)
 
 This approach produces diagrams that are:
+
 - Deterministic (same input → same output)
-- Professional appearance
-- Ready for documentation or AI consumption
-- Comparable to commercial simulators
+- Suitable for simulation-topology review and documentation drafts
+- Available for downstream machine processing as DOT
