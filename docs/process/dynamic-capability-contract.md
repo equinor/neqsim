@@ -49,6 +49,32 @@ requested dynamic path.
 but is currently left in its steady-state/algebraic mode. This is not automatically wrong. Mixed algebraic/dynamic
 flowsheets are normal, but the list makes the modelling choice explicit for engineering review.
 
+## Strict transient preflight
+
+The report also provides an explicit, opt-in preflight for workflows that must not continue with unaudited custom
+transient implementations:
+
+```java
+DynamicCapabilityReport report = DynamicCapabilityReport.from(process);
+
+if (!report.isStrictPreflightReady()) {
+  for (String issue : report.getStrictPreflightIssues()) {
+    logger.warn("Dynamic preflight: {}", issue);
+  }
+}
+
+report.assertStrictTransientReady();
+```
+
+Strict preflight combines known unsupported runtime configurations with `UNCLASSIFIED_DYNAMIC` review items. It does
+**not** reject an audited dynamic unit merely because the unit is intentionally left in steady-state mode. The preflight
+is not automatically called by `runTransient(...)`; it is an explicit qualification gate so existing transient APIs and
+mixed algebraic/dynamic models remain backwards compatible.
+
+Passing strict preflight only means that the capability audit found no known unsupported configuration or unaudited
+custom transient method. It does not establish conservation accuracy, timestep independence, pressure-flow correctness,
+control/safety fidelity, OTS real-time performance, or engineering approval.
+
 ## Inspect a ProcessModel
 
 ```java
@@ -64,6 +90,28 @@ Multi-area reports preserve the process-area identity so identical equipment or 
 collapse into one audit entry. Controllers attached directly to equipment are included and de-duplicated by object
 identity if they are also registered as standalone controllers.
 
+## Nested process modules
+
+`DynamicCapabilityReport` recursively inspects initialized `ModuleInterface` contents instead of stopping at the module
+container. Nested entries retain a deterministic container path:
+
+```text
+separation train::Inlet separator
+topside::separation train::HP gas scrubber
+```
+
+The module container itself remains visible in the report. Current `ProcessModuleBaseClass.runTransient(...)` delegates
+to its internal `ProcessSystem`, but the campaign has not yet qualified all module-level initialization, state ownership,
+restart, error propagation, or nested transient semantics; modules therefore remain reviewable according to their own
+capability classification while their instantiated child operations are audited independently.
+
+The report never initializes a module as a side effect. A module whose internal `ProcessSystem` has not yet been built
+can only expose the container at audit time. Initialize/build the module through its normal model lifecycle before using
+the report as a complete nested-unit inventory.
+
+Identity-based de-duplication prevents the same process element or nested `ProcessSystem` object from being counted
+repeatedly and prevents accidental recursive container cycles from causing unbounded traversal.
+
 ## Initial audited mapping
 
 The initial contract intentionally classifies only core implementations whose current source contains clear stored-state
@@ -75,9 +123,9 @@ semantics:
 - control: registered controllers and measurement devices.
 
 `Stream` and stream subclasses that inherit the standard `Stream.runTransient(...)` boundary are classified as
-`ALGEBRAIC`: that method re-evaluates the stream and advances its execution clock, but does not integrate stored
-physical state. A stream subclass that provides its own transient override remains `UNCLASSIFIED_DYNAMIC` until its
-state and equations are audited.
+`ALGEBRAIC`: that method re-evaluates the stream and advances its execution clock, but does not integrate stored physical
+state. A stream subclass that provides its own transient override remains `UNCLASSIFIED_DYNAMIC` until its state and
+equations are audited.
 
 Other custom transient implementations remain `UNCLASSIFIED_DYNAMIC` until their state variables, conservation equations,
 initialization, timestep constraints, event behaviour, snapshot/restart semantics, and quantitative validation are
@@ -90,6 +138,6 @@ dynamics. In particular, it does not add global pressure-flow residual assembly,
 rejection/rollback, event localization, or multi-rate pipeline subcycling. Those capabilities build on this contract so
 the solver can reason explicitly about which objects own dynamic state and which objects are algebraic constraints.
 
-The report also does not certify that a model is suitable for a control, relief, HIPPS/SIS, HAZOP, DEXPI/P&ID, or other
-safety-critical study. Those studies require scenario-specific modelling, validation evidence, engineering limits, and
-appropriate review.
+The report also does not certify that a model is suitable for a control, relief, HIPPS/SIS, HAZOP, DEXPI/P&ID, virtual
+commissioning, OTS, or other safety-critical study. Those studies require scenario-specific modelling, validation
+evidence, engineering limits, deterministic timing/replay evidence where applicable, and appropriate review.
