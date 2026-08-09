@@ -108,23 +108,36 @@ class TPFlashTest {
 
   @Test
   void testRun5() {
-    neqsim.thermo.system.SystemInterface testSystem5 = new neqsim.thermo.system.SystemUMRPRUMCEos(243.15, 300.0);
-    testSystem5.addComponent("methane", 4.16683e-1);
-    testSystem5.addComponent("ethane", 1.7522e-1);
-    testSystem5.addComponent("n-pentane", 3.58009e-1);
-    testSystem5.addComponent("nC16", 5.00888e-2);
-    testSystem5.setMixingRule("classic");
-    testSystem5.setMultiPhaseCheck(true);
-    testSystem5.setPressure(90.03461693, "bara");
-    testSystem5.setTemperature(293.15, "K");
-    testSystem5.setTotalFlowRate(4.925e-07, "kg/sec");
-    testOps = new ThermodynamicOperations(testSystem5);
-    testOps.TPflash();
-    testSystem5.initProperties();
-    // testSystem5.prettyPrint();
-    double beta = testSystem5.getBeta();
-    // Updated expected value due to thermodynamic model changes
-    assertEquals(0.10377442547868508, beta, 1e-4);
+    SystemInterface multiphaseSystem = new neqsim.thermo.system.SystemUMRPRUMCEos(243.15, 300.0);
+    multiphaseSystem.addComponent("methane", 4.16683e-1);
+    multiphaseSystem.addComponent("ethane", 1.7522e-1);
+    multiphaseSystem.addComponent("n-pentane", 3.58009e-1);
+    multiphaseSystem.addComponent("nC16", 5.00888e-2);
+    multiphaseSystem.setMixingRule("classic");
+    multiphaseSystem.setPressure(90.03461693, "bara");
+    multiphaseSystem.setTemperature(293.15, "K");
+    multiphaseSystem.setTotalFlowRate(4.925e-07, "kg/sec");
+
+    SystemInterface ordinarySystem = multiphaseSystem.clone();
+    ordinarySystem.setMultiPhaseCheck(false);
+    new ThermodynamicOperations(ordinarySystem).TPflash();
+    ordinarySystem.initProperties();
+
+    multiphaseSystem.setMultiPhaseCheck(true);
+    new ThermodynamicOperations(multiphaseSystem).TPflash();
+    multiphaseSystem.initProperties();
+
+    assertEquals(1, ordinarySystem.getNumberOfPhases());
+    assertEquals(1, multiphaseSystem.getNumberOfPhases());
+    assertEquals(1.0, ordinarySystem.getBeta(0), 1.0e-12);
+    assertEquals(ordinarySystem.getBeta(0), multiphaseSystem.getBeta(0), 1.0e-12);
+    assertEquals(ordinarySystem.getPhase(0).getType(), multiphaseSystem.getPhase(0).getType());
+    assertEquals(ordinarySystem.getPhase(0).getZ(), multiphaseSystem.getPhase(0).getZ(), 1.0e-11);
+    for (int componentIndex = 0; componentIndex < ordinarySystem.getPhase(0)
+        .getNumberOfComponents(); componentIndex++) {
+      assertEquals(ordinarySystem.getPhase(0).getComponent(componentIndex).getx(),
+          multiphaseSystem.getPhase(0).getComponent(componentIndex).getx(), 1.0e-11);
+    }
   }
 
   @Test

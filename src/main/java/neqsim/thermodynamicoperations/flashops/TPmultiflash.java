@@ -2650,6 +2650,7 @@ public class TPmultiflash extends TPflash {
        * if (!secondTime) { secondTime = true; doStabilityAnalysis = false; run(); }
        */
     }
+    normalizeActivePhaseFractions();
   }
 
   /**

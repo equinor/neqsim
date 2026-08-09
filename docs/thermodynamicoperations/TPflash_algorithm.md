@@ -199,6 +199,9 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 │  Remove phases with β < βmin                                                    │
 │  Order phases by density                                                        │
 │  Final system.init(1)                                                           │
+│  After all rescue/refinement and chemical-equilibrium paths:                    │
+│     → Normalize the final active phase fractions when |Σβₖ - 1| ≥ 1e-12        │
+│     → A one-phase endpoint therefore returns β₀ = 1                             │
 │                                                                                 │
 │  IF aqueous multiphase checking follows an accepted stable single-phase test:    │
 │     → Reject an endpoint only when a phase composition contains non-finite or     │

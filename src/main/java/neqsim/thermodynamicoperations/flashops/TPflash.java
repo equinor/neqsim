@@ -1078,6 +1078,7 @@ public class TPflash extends Flash {
         logger.warn("Final chemical eq init failed: " + ex.getMessage());
       }
     }
+    normalizeActivePhaseFractions();
   }
 
   /**
@@ -2555,7 +2556,7 @@ public class TPflash extends Flash {
    * and reinitializes level 1 properties for the adjusted phase amounts.
    * </p>
    */
-  private void normalizeActivePhaseFractions() {
+  void normalizeActivePhaseFractions() {
     int numberOfPhases = system.getNumberOfPhases();
     if (numberOfPhases == 1) {
       double beta = system.getBeta(0);
