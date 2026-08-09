@@ -528,6 +528,13 @@ public class ColumnSpecificationTest {
     assertEquals(800, column.getLastNaphtaliFiniteDifferenceJacobianColumns(),
         "eight stages times five variables times twenty Jacobian builds must all be finite-difference columns");
     assertTrue(column.getLastNaphtaliThermoEvaluationCount() > 0);
+    assertEquals(2 * column.getLastNaphtaliThermoEvaluationCount(), column.getLastNaphtaliThermoKValueIterationCount(),
+        "the current evaluator performs two forced-root fugacity sweeps per tray evaluation");
+    assertTrue(column.getLastNaphtaliThermoKValueNonConvergedCount() > 0,
+        "this difficult case must expose two-sweep evaluations that remain above the log-K tolerance");
+    assertTrue(column.getLastNaphtaliThermoKValueNonConvergedCount() <= column.getLastNaphtaliThermoEvaluationCount());
+    assertTrue(Double.isFinite(column.getLastNaphtaliThermoMaxLogKValueUpdate()));
+    assertTrue(column.getLastNaphtaliThermoMaxLogKValueUpdate() > 1.0e-8);
     assertTrue(column.getLastNaphtaliThermoCacheHitCount() >= 0);
     assertTrue(column.getLastNaphtaliJacobianBuildTimeSeconds() >= 0.0);
     assertTrue(column.getLastNaphtaliBlockLinearSolveCount() > 0);
@@ -536,8 +543,44 @@ public class ColumnSpecificationTest {
     assertTrue(column.getConvergenceDiagnostics().contains("Naphtali-Sandholm Jacobian"));
     assertTrue(column.getConvergenceDiagnostics().contains("analytic columns: 0"));
     assertTrue(column.getConvergenceDiagnostics().contains("finite-difference columns: 800"));
+    assertTrue(column.getConvergenceDiagnostics().contains("K-value iterations"));
+    assertTrue(column.getConvergenceDiagnostics().contains("K-value evaluations at iteration cap"));
     assertTrue(column.getConvergenceDiagnostics().contains("thermodynamic cache hits"));
     assertTrue(column.getConvergenceDiagnostics().contains("block linear solves"));
+  }
+
+  /**
+   * Test that K-value work diagnostics and physical products repeat at a nearby feed temperature.
+   */
+  @Test
+  public void naphtaliKValueTelemetryIsRepeatableAtNearbyOperatingPoint() {
+    DistillationColumn first = createBinaryFractionator("NaphtaliKNearbyFirst", "propane", "n-butane", "n-pentane",
+        10.0, 273.15 + 47.0, 273.15 + 30.0, 273.15 + 90.0);
+    DistillationColumn second = createBinaryFractionator("NaphtaliKNearbySecond", "propane", "n-butane", "n-pentane",
+        10.0, 273.15 + 47.0, 273.15 + 30.0, 273.15 + 90.0);
+    first.setSolverType(DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
+    second.setSolverType(DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
+    first.setMaxNumberOfIterations(20);
+    second.setMaxNumberOfIterations(20);
+
+    first.run();
+    second.run();
+
+    assertEquals(first.getLastNaphtaliThermoEvaluationCount(), second.getLastNaphtaliThermoEvaluationCount());
+    assertEquals(first.getLastNaphtaliThermoKValueIterationCount(), second.getLastNaphtaliThermoKValueIterationCount());
+    assertEquals(first.getLastNaphtaliThermoKValueNonConvergedCount(),
+        second.getLastNaphtaliThermoKValueNonConvergedCount());
+    assertEquals(first.getLastNaphtaliThermoMaxLogKValueUpdate(), second.getLastNaphtaliThermoMaxLogKValueUpdate());
+    assertEquals(first.getLastMeshResidualNorm(), second.getLastMeshResidualNorm());
+    assertEquals(first.getLastEnergyResidual(), second.getLastEnergyResidual());
+
+    double firstGas = first.getGasOutStream().getFlowRate("kg/hr");
+    double firstLiquid = first.getLiquidOutStream().getFlowRate("kg/hr");
+    assertTrue(firstGas >= 0.0);
+    assertTrue(firstLiquid >= 0.0);
+    assertEquals(250.0, firstGas + firstLiquid, 1.0e-8);
+    assertEquals(firstGas, second.getGasOutStream().getFlowRate("kg/hr"));
+    assertEquals(firstLiquid, second.getLiquidOutStream().getFlowRate("kg/hr"));
   }
 
   /**

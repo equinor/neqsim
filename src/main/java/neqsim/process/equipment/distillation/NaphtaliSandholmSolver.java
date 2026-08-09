@@ -38,6 +38,12 @@ public class NaphtaliSandholmSolver {
   /** Maximum number of non-descent line-search steps allowed before restoring the best state. */
   private static final int MAX_NON_DESCENT_LINE_SEARCH_STEPS = 3;
 
+  /** Forced-root fugacity fixed-point sweeps performed for one tray evaluation. */
+  private static final int THERMO_K_VALUE_ITERATIONS = 2;
+
+  /** Convergence tolerance for the largest absolute logarithmic K-value update. */
+  private static final double THERMO_K_VALUE_TOLERANCE = 1.0e-8;
+
   /** Logger for this class. */
   private static final Logger logger = LogManager.getLogger(NaphtaliSandholmSolver.class);
 
@@ -241,6 +247,15 @@ public class NaphtaliSandholmSolver {
   /** Number of tray thermodynamic evaluations in the last solve. */
   private int lastThermoEvaluationCount;
 
+  /** Number of forced-root fugacity fixed-point iterations in the last solve. */
+  private int lastThermoKValueIterationCount;
+
+  /** Number of tray evaluations that reached the K-value iteration cap. */
+  private int lastThermoKValueNonConvergedCount;
+
+  /** Largest final absolute logarithmic K-value update from the last solve. */
+  private double lastThermoMaxLogKValueUpdate;
+
   /** Number of cached tray thermodynamic evaluations reused in the last solve. */
   private int lastThermoCacheHitCount;
 
@@ -352,6 +367,33 @@ public class NaphtaliSandholmSolver {
    */
   int getLastThermoEvaluationCount() {
     return lastThermoEvaluationCount;
+  }
+
+  /**
+   * Get the number of forced-root fugacity fixed-point iterations in the latest solve.
+   *
+   * @return K-value iteration count
+   */
+  int getLastThermoKValueIterationCount() {
+    return lastThermoKValueIterationCount;
+  }
+
+  /**
+   * Get the number of tray evaluations that reached the K-value iteration cap.
+   *
+   * @return non-converged tray thermodynamic evaluation count
+   */
+  int getLastThermoKValueNonConvergedCount() {
+    return lastThermoKValueNonConvergedCount;
+  }
+
+  /**
+   * Get the largest final absolute logarithmic K-value update in the latest solve.
+   *
+   * @return maximum {@code abs(log(Knew / Kold))}
+   */
+  double getLastThermoMaxLogKValueUpdate() {
+    return lastThermoMaxLogKValueUpdate;
   }
 
   /**
@@ -918,6 +960,9 @@ public class NaphtaliSandholmSolver {
     lastAnalyticJacobianColumns = 0;
     lastFiniteDifferenceJacobianColumns = 0;
     lastThermoEvaluationCount = 0;
+    lastThermoKValueIterationCount = 0;
+    lastThermoKValueNonConvergedCount = 0;
+    lastThermoMaxLogKValueUpdate = 0.0;
     lastThermoCacheHitCount = 0;
     lastJacobianBuildTimeSeconds = 0.0;
     lastBlockLinearSolveCount = 0;
@@ -3288,20 +3333,29 @@ public class NaphtaliSandholmSolver {
     }
 
     // Self-consistency loop: K = phi_L(x) / phi_V(y), then y = K x / sum(K x).
-    // Two inner sweeps are sufficient for HC mixtures at modest pressures since
-    // phi_V for a cubic EOS in the vapor root depends weakly on y.
+    // Preserve the established two-sweep behavior, but measure the remaining
+    // scale-invariant logarithmic K-value update instead of assuming convergence.
     boolean kOk = phiOk;
+    boolean kConverged = false;
+    double finalMaxLogKUpdate = Double.POSITIVE_INFINITY;
     if (kOk) {
-      for (int sweep = 0; sweep < 2; sweep++) {
+      for (int sweep = 0; sweep < THERMO_K_VALUE_ITERATIONS; sweep++) {
         if (!computeSinglePhaseFugacityCoefficients(y, T[j], Pbar, true, phiV)) {
           kOk = false;
           break;
         }
+        lastThermoKValueIterationCount++;
         double sumKxLocal = 0;
+        finalMaxLogKUpdate = 0.0;
         for (int i = 0; i < C; i++) {
+          double previousK = K[j][i];
+          if (!(previousK > 1e-20 && previousK < 1e15)) {
+            previousK = wilsonK(i, T[j], Pbar);
+          }
           double Knew = phiL[i] / Math.max(phiV[i], 1e-30);
           Knew = Math.max(Knew, 1e-15);
           Knew = Math.min(Knew, 1e15);
+          finalMaxLogKUpdate = Math.max(finalMaxLogKUpdate, Math.abs(Math.log(Knew / previousK)));
           K[j][i] = Knew;
           y[i] = Knew * x[i];
           sumKxLocal += y[i];
@@ -3309,6 +3363,18 @@ public class NaphtaliSandholmSolver {
         for (int i = 0; i < C; i++) {
           y[i] = (sumKxLocal > 1e-20) ? y[i] / sumKxLocal : x[i];
         }
+        if (finalMaxLogKUpdate <= THERMO_K_VALUE_TOLERANCE) {
+          kConverged = true;
+        } else {
+          kConverged = false;
+        }
+      }
+    }
+
+    if (kOk) {
+      lastThermoMaxLogKValueUpdate = Math.max(lastThermoMaxLogKValueUpdate, finalMaxLogKUpdate);
+      if (!kConverged) {
+        lastThermoKValueNonConvergedCount++;
       }
     }
 
