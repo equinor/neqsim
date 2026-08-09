@@ -390,6 +390,9 @@ public final class ProcessDiagramGraphAdapter {
           source.areaName + "->" + target.areaName);
       String connectionId = EngineeringIds.nodeId(connectionKind, connectionExternalKey);
       if (graph.getNode(connectionId) != null) {
+        diagnostics.add(new Diagnostic(Severity.WARNING, "DIAGRAM_TOPOLOGY_DUPLICATE_CONNECTION_COLLAPSED",
+            "Multiple connection declarations resolved to the same type and port endpoints; one canonical connection was retained",
+            source.areaName, requestedConnectionExternalKey));
         return;
       }
       EngineeringNode connectionNode = new EngineeringNode(connectionId, connectionKind, connectionExternalKey,
