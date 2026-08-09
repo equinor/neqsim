@@ -120,13 +120,7 @@ public class TwoFluidConservationEquations implements Serializable {
    */
   private double virtualMassCoefficient = 0.5;
 
-  /** Previous velocities for virtual mass force calculation (stored between timesteps). */
-  private double[] prevGasVelocities;
-
-  /** Previous velocities for virtual mass force calculation (stored between timesteps). */
-  private double[] prevLiquidVelocities;
-
-  /** Timestep for virtual mass force calculation. */
+  /** Retained timestep setting for source compatibility with existing callers. */
   private double dt = 0.01;
 
   /** Most recent phase-resolved boundary and source rates calculated by {@link #calcRHS}. */
@@ -261,6 +255,8 @@ public class TwoFluidConservationEquations implements Serializable {
         dUdt[i][j] = -1.0 / secDx * (fluxRight[j] - fluxLeft[j]) + sources[i][j];
       }
     }
+
+    applyVirtualMassCoupling(sections, dUdt);
 
     double[] inletMassFlow = { inletFlux[IDX_GAS_MASS], inletFlux[IDX_OIL_MASS], inletFlux[IDX_WATER_MASS] };
     double[] outletMassFlow = { outletFlux[IDX_GAS_MASS], outletFlux[IDX_OIL_MASS], outletFlux[IDX_WATER_MASS] };
@@ -778,41 +774,7 @@ public class TwoFluidConservationEquations implements Serializable {
       lastPhaseMassSourcesPerLength[i][1] = Gamma_O;
       lastPhaseMassSourcesPerLength[i][2] = Gamma_W;
 
-      // Virtual mass force calculation (Drew & Lahey, 1987)
-      // F_vm = C_vm * alpha_dispersed * rho_continuous * (dv_dispersed/dt - dv_continuous/dt)
-      // For gas-liquid: gas is dispersed, liquid is continuous
-      double F_vmG = 0;
-      double F_vmL = 0;
-
-      if (enableVirtualMassForce) {
-        // Initialize previous velocity arrays if needed
-        if (prevGasVelocities == null || prevGasVelocities.length != sections.length) {
-          prevGasVelocities = new double[sections.length];
-          prevLiquidVelocities = new double[sections.length];
-          for (int j = 0; j < sections.length; j++) {
-            prevGasVelocities[j] = sections[j].getGasVelocity();
-            prevLiquidVelocities[j] = sections[j].getLiquidVelocity();
-          }
-        }
-
-        // Rate of change of velocities
-        double dvG_dt = 0;
-        double dvL_dt = 0;
-        if (dt > 1e-10) {
-          dvG_dt = (sec.getGasVelocity() - prevGasVelocities[i]) / dt;
-          dvL_dt = (sec.getLiquidVelocity() - prevLiquidVelocities[i]) / dt;
-        }
-
-        // Virtual mass force per unit length (N/m)
-        // Convention: positive F_vmG accelerates gas (added to gas momentum)
-        // The force on gas = -C_vm * alpha_G * rho_L * A * (dv_G/dt - dv_L/dt)
-        // (liquid adds inertia to gas motion)
-        double relAccel = dvG_dt - dvL_dt;
-        F_vmG = -virtualMassCoefficient * alphaG * rhoL * A * relAccel;
-        F_vmL = -F_vmG; // Newton's third law: equal and opposite on liquid
-      }
-
-      sources[i][IDX_GAS_MOMENTUM] = F_wG + F_iG + F_gG + F_vmG + transferMomentum[0];
+      sources[i][IDX_GAS_MOMENTUM] = F_wG + F_iG + F_gG + transferMomentum[0];
 
       if (enableWaterOilSlip && NUM_EQUATIONS == 7) {
         // Separate oil and water momentum equations
@@ -865,18 +827,14 @@ public class TwoFluidConservationEquations implements Serializable {
         double F_ow_oil = -tau_ow * S_ow;
         double F_ow_water = tau_ow * S_ow; // Opposite sign
 
-        // Virtual mass force partitioned to oil and water
-        double F_vmO = F_vmL * oilHoldupFrac;
-        double F_vmW = F_vmL * waterHoldupFrac;
-
         // Assemble oil momentum source
-        sources[i][IDX_OIL_MOMENTUM] = F_wO + F_iO + F_gO + F_ow_oil + F_vmO + transferMomentum[1];
+        sources[i][IDX_OIL_MOMENTUM] = F_wO + F_iO + F_gO + F_ow_oil + transferMomentum[1];
 
         // Assemble water momentum source
-        sources[i][IDX_WATER_MOMENTUM] = F_wW + F_iW + F_gW + F_ow_water + F_vmW + transferMomentum[2];
+        sources[i][IDX_WATER_MOMENTUM] = F_wW + F_iW + F_gW + F_ow_water + transferMomentum[2];
       } else {
         // Combined liquid momentum (original 6-equation model)
-        sources[i][IDX_OIL_MOMENTUM] = F_wL + F_iL + F_gL + F_vmL + transferMomentum[1] + transferMomentum[2];
+        sources[i][IDX_OIL_MOMENTUM] = F_wL + F_iL + F_gL + transferMomentum[1] + transferMomentum[2];
         sources[i][IDX_WATER_MOMENTUM] = 0; // Not used in 6-equation mode
       }
 
@@ -896,14 +854,80 @@ public class TwoFluidConservationEquations implements Serializable {
       sec.setLiquidMomentumSource(liquidMomSource);
       sec.setEnergySource(sources[i][IDX_ENERGY]);
 
-      // Update previous velocities for next timestep virtual mass calculation
-      if (enableVirtualMassForce && prevGasVelocities != null) {
-        prevGasVelocities[i] = sec.getGasVelocity();
-        prevLiquidVelocities[i] = sec.getLiquidVelocity();
-      }
     }
 
     return sources;
+  }
+
+  /**
+   * Apply the local, stage-pure virtual-mass momentum coupling.
+   *
+   * <p>
+   * The uncoupled conservative rates already contain flux divergence, pressure, gravity, friction, and transfer
+   * sources. Converting those rates to phase accelerations and solving the two-phase added-inertia relation
+   * algebraically avoids hidden velocity history and makes repeated RHS evaluations deterministic.
+   * </p>
+   *
+   * @param sections current stage state
+   * @param dUdt complete uncoupled conservative-variable rates, modified in place
+   */
+  void applyVirtualMassCoupling(TwoFluidSection[] sections, double[][] dUdt) {
+    if (!enableVirtualMassForce || virtualMassCoefficient <= 0.0) {
+      return;
+    }
+
+    for (int i = 0; i < sections.length; i++) {
+      TwoFluidSection sec = sections[i];
+      double gasMass = sec.getGasMassPerLength();
+      double oilMass = sec.getOilMassPerLength();
+      double waterMass = sec.getWaterMassPerLength();
+      double liquidMass = oilMass + waterMass;
+      double liquidDensity = sec.getLiquidDensity();
+      double area = sec.getArea();
+      double gasHoldup = Math.max(0.0, Math.min(1.0, sec.getGasHoldup()));
+
+      if (!Double.isFinite(gasMass) || !Double.isFinite(liquidMass) || !Double.isFinite(liquidDensity)
+          || !Double.isFinite(area) || gasMass <= 0.0 || liquidMass <= 0.0 || liquidDensity <= 0.0 || area <= 0.0
+          || gasHoldup <= 0.0) {
+        continue;
+      }
+
+      double gasVelocity = sec.getGasVelocity();
+      double gasAcceleration = (dUdt[i][IDX_GAS_MOMENTUM] - gasVelocity * dUdt[i][IDX_GAS_MASS]) / gasMass;
+
+      double liquidMomentumRate;
+      double liquidMassVelocityRate;
+      if (enableWaterOilSlip) {
+        liquidMomentumRate = dUdt[i][IDX_OIL_MOMENTUM] + dUdt[i][IDX_WATER_MOMENTUM];
+        liquidMassVelocityRate = sec.getOilVelocity() * dUdt[i][IDX_OIL_MASS]
+            + sec.getWaterVelocity() * dUdt[i][IDX_WATER_MASS];
+      } else {
+        liquidMomentumRate = dUdt[i][IDX_OIL_MOMENTUM];
+        liquidMassVelocityRate = sec.getLiquidVelocity() * (dUdt[i][IDX_OIL_MASS] + dUdt[i][IDX_WATER_MASS]);
+      }
+      double liquidAcceleration = (liquidMomentumRate - liquidMassVelocityRate) / liquidMass;
+
+      double addedMassPerLength = virtualMassCoefficient * gasHoldup * liquidDensity * area;
+      double denominator = 1.0 + addedMassPerLength * (1.0 / gasMass + 1.0 / liquidMass);
+      double gasVirtualMassForce = -addedMassPerLength * (gasAcceleration - liquidAcceleration) / denominator;
+      if (!Double.isFinite(gasVirtualMassForce)) {
+        continue;
+      }
+
+      dUdt[i][IDX_GAS_MOMENTUM] += gasVirtualMassForce;
+      if (enableWaterOilSlip) {
+        double liquidVirtualMassForce = -gasVirtualMassForce;
+        double oilVirtualMassForce = liquidVirtualMassForce * oilMass / liquidMass;
+        double waterVirtualMassForce = liquidVirtualMassForce - oilVirtualMassForce;
+        dUdt[i][IDX_OIL_MOMENTUM] += oilVirtualMassForce;
+        dUdt[i][IDX_WATER_MOMENTUM] += waterVirtualMassForce;
+      } else {
+        dUdt[i][IDX_OIL_MOMENTUM] -= gasVirtualMassForce;
+      }
+
+      sec.setGasMomentumSource(sec.getGasMomentumSource() + gasVirtualMassForce);
+      sec.setLiquidMomentumSource(sec.getLiquidMomentumSource() - gasVirtualMassForce);
+    }
   }
 
   /**
@@ -1475,10 +1499,11 @@ public class TwoFluidConservationEquations implements Serializable {
   }
 
   /**
-   * Set the timestep used for virtual mass force calculation.
+   * Retain the timestep setting used by earlier virtual-mass implementations.
    *
    * <p>
-   * This should match the simulation timestep for accurate acceleration calculation.
+   * The stage-pure algebraic coupling no longer depends on a stored timestep. This method remains for source and
+   * serialization compatibility.
    * </p>
    *
    * @param timestep Timestep in seconds
@@ -1488,7 +1513,7 @@ public class TwoFluidConservationEquations implements Serializable {
   }
 
   /**
-   * Get the timestep used for virtual mass force calculation.
+   * Get the retained legacy timestep setting.
    *
    * @return Timestep in seconds
    */
@@ -1496,15 +1521,8 @@ public class TwoFluidConservationEquations implements Serializable {
     return dt;
   }
 
-  /**
-   * Reset the stored previous velocities.
-   *
-   * <p>
-   * Call this when restarting a simulation or changing geometry to avoid spurious accelerations.
-   * </p>
-   */
+  /** Reset legacy virtual-mass history (no-op for the stage-pure implementation). */
   public void resetVirtualMassState() {
-    prevGasVelocities = null;
-    prevLiquidVelocities = null;
+    // No hidden history is retained.
   }
 }

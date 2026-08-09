@@ -505,21 +505,28 @@ f_i = 0.01 × (1 + 10 × Fr²)    // capped at 0.1
 
 ## Virtual Mass Force
 
-The virtual mass (added mass) force accounts for the inertia of the displaced phase during rapid accelerations. This is important for slug flow dynamics, pressure surges, and transient simulations with fast-changing velocities.
+The virtual mass (added mass) force accounts for the inertia of displaced liquid during gas-liquid acceleration. It is an optional local momentum coupling for transient simulations.
 
 ### Physical Basis
 
-When a gas bubble accelerates through liquid, it must also accelerate a portion of the surrounding liquid. This "added mass" effect creates an additional force proportional to the relative acceleration:
+When gas accelerates through liquid, it must also accelerate a portion of the surrounding liquid. After the complete uncoupled finite-volume right-hand side is assembled, NeqSim solves the local added-inertia relation algebraically:
 
 $$
-F_{vm} = C_{vm} \cdot \alpha_G \cdot \rho_L \cdot \left(\frac{dv_G}{dt} - \frac{dv_L}{dt}\right)
+K=C_{vm}\alpha_G\rho_LA,
+\qquad
+F_{vm,G}=\frac{-K(a_{G,0}-a_{L,0})}{1+K(1/m_G+1/m_L)},
+\qquad F_{vm,L}=-F_{vm,G}
 $$
 
 Where:
 - `C_vm` = virtual mass coefficient (0.5 for spheres, default)
 - `α_G` = gas holdup
 - `ρ_L` = liquid density
-- `dv_G/dt - dv_L/dt` = relative acceleration between phases
+- `A` = pipe cross-sectional area
+- `m_G`, `m_L` = conservative gas and combined-liquid masses per length
+- `a_k,0 = (d(m_k v_k)/dt - v_k dm_k/dt) / m_k` = uncoupled stage acceleration
+
+The calculation uses only the supplied integration-stage state and its complete uncoupled rate; it does not retain velocities from previous RHS calls. In gas-oil-water flow, the liquid correction is divided between oil and water by their conservative masses. The gas and combined-liquid forces are equal and opposite, and coupling tends continuously to zero when either phase is absent.
 
 ### Enabling Virtual Mass Force
 
@@ -529,8 +536,8 @@ pipe.setLength(5000);
 pipe.setDiameter(0.3);
 pipe.setNumberOfSections(100);
 
-// Note: Virtual mass force is handled internally by the two-fluid solver.
-// The solver uses C_vm = 0.5 (spherical bubble coefficient) by default.
+pipe.getEquations().setEnableVirtualMassForce(true);
+pipe.getEquations().setVirtualMassCoefficient(0.5); // Spherical-bubble value
 
 pipe.run();
 ```
@@ -542,10 +549,7 @@ The virtual mass force appears as source terms in the phase momentum equations:
 - **Gas momentum:** `+F_vm` (accelerates gas when liquid decelerates)
 - **Liquid momentum:** `-F_vm` (decelerates liquid when gas accelerates)
 
-This coupling improves:
-- Pressure surge prediction during slug passage (±10-20% more accurate)
-- Transient response during flow rate changes
-- Wave speed calculation for fast transients
+The spherical-bubble coefficient is not a universal slug, churn, or annular-flow calibration. The implementation does not by itself establish improved field accuracy or parity with a commercial simulator. Validate the coefficient, discretization, and complete opt-in transient against data applicable to the intended operating envelope.
 
 ### Reference
 
