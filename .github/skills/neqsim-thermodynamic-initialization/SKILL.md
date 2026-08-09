@@ -1,6 +1,6 @@
 ---
 name: neqsim-thermodynamic-initialization
-description: Select and audit NeqSim thermodynamic initialization levels for correctness and performance.
+description: "Select and audit NeqSim thermodynamic initialization levels for correctness and performance. USE WHEN: implementing or reviewing flashes, phase stability, EOS root selection, process-equipment thermodynamics, property access, or performance changes involving init(...) or initProperties()."
 ---
 
 # NeqSim thermodynamic initialization

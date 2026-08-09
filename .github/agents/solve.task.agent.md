@@ -1335,6 +1335,14 @@ progress.set_next_action("Create analysis artifact: 01_XXXX.ipynb or run_XXXX.py
   - Separate notebook (`XX_benchmark_validation.ipynb`) for Standard/Comprehensive tasks
   - Section within the main notebook for Quick tasks
 
+    Prefer the community skill `neqsim-benchmark-reference-data`
+    (`equinor/neqsim-community-skills`, `skills/pvt/benchmark-reference-data`)
+    over hand-writing this block: it supplies the reference sources with their
+    citation, authority tier and validated range, grades PASS/WARN/FAIL, refuses
+    a reference that does not outrank the model basis, enforces the three-point
+    minimum, and emits `benchmark_validation` in the shape the gate and the
+    report generator expect.
+
     Use independent reference data when available. If no suitable benchmark
     exists, use cross-validation: hand calculations, limiting-case checks,
     conservation checks, prior NeqSim comparisons, and sensitivity sanity checks.
@@ -1555,6 +1563,16 @@ progress.set_next_action("Create analysis artifact: 01_XXXX.ipynb or run_XXXX.py
      | **Bisection steps** | Use 20 steps instead of 30 for decline-phase rate search | ~30% faster per iter |
      | **Early exit** | Break production loop when rate < threshold (e.g., 0.5 MSm³/d) | Skip tail years |
      | **Seed RNG** | `np.random.seed(42)` for reproducibility | Deterministic reports |
+
+     The community skill `neqsim-uncertainty-quantification`
+     (`equinor/neqsim-community-skills`,
+     `skills/process/uncertainty-quantification`) implements these patterns
+     directly: a `technical`/`economic` model split that caches the expensive
+     stage (this is the "smart tornado" above), Latin-hypercube sampling,
+     percentiles in the ascending `p10 ≤ p50 ≤ p90` convention the gate
+     enforces, a scale-invariant convergence check, and optional SALib/chaospy
+     backends for the interactions a tornado cannot see. Prefer it over
+     re-implementing the loop.
 
     #### Minimum Simulation Count (when Monte Carlo is used)
 
