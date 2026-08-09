@@ -13,6 +13,7 @@ import neqsim.process.equipment.pipeline.twophasepipe.TransientPipe;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reservoir.SimpleReservoir;
 import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.tank.Tank;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
@@ -65,11 +66,38 @@ public final class DynamicCapabilityResolver {
       return DynamicCapability.DYNAMIC_LUMPED;
     }
 
+    if (element instanceof Stream && usesStandardStreamTransientBoundary(element)) {
+      return DynamicCapability.ALGEBRAIC;
+    }
+
     if (hasCustomTransientImplementation(element)) {
       return DynamicCapability.UNCLASSIFIED_DYNAMIC;
     }
 
     return DynamicCapability.ALGEBRAIC;
+  }
+
+  /**
+   * Whether a stream uses NeqSim's established algebraic transient boundary.
+   *
+   * <p>
+   * {@link Stream#runTransient(double, UUID)} re-evaluates the stream and advances its execution clock, but it does not
+   * integrate stored physical state. Stream subclasses that inherit that method remain algebraic; subclasses that
+   * override it continue through the conservative custom-implementation audit below.
+   * </p>
+   *
+   * @param element stream element to inspect
+   * @return true when the effective transient method is declared by {@link Stream}
+   */
+  private static boolean usesStandardStreamTransientBoundary(ProcessElementInterface element) {
+    try {
+      Method method = element.getClass().getMethod("runTransient", Double.TYPE, UUID.class);
+      return method.getDeclaringClass() == Stream.class;
+    } catch (NoSuchMethodException ex) {
+      return false;
+    } catch (SecurityException ex) {
+      return false;
+    }
   }
 
   /**
