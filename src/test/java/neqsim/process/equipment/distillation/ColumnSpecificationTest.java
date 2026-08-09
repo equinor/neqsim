@@ -511,7 +511,7 @@ public class ColumnSpecificationTest {
   }
 
   /**
-   * Test that Naphtali-Sandholm exposes semi-analytic Jacobian speed telemetry.
+   * Test that Naphtali-Sandholm classifies its numerical Jacobian work accurately.
    */
   @Test
   public void naphtaliSandholmTelemetryRecordsJacobianWork() {
@@ -523,8 +523,10 @@ public class ColumnSpecificationTest {
     column.run();
 
     assertTrue(column.getGasOutStream().getFlowRate("kg/hr") >= 0.0);
-    assertTrue(column.getLastNaphtaliAnalyticJacobianColumns() > 0);
-    assertTrue(column.getLastNaphtaliFiniteDifferenceJacobianColumns() >= 0);
+    assertEquals(0, column.getLastNaphtaliAnalyticJacobianColumns(),
+        "the current implementation does not analytically differentiate any Jacobian column");
+    assertEquals(800, column.getLastNaphtaliFiniteDifferenceJacobianColumns(),
+        "eight stages times five variables times twenty Jacobian builds must all be finite-difference columns");
     assertTrue(column.getLastNaphtaliThermoEvaluationCount() > 0);
     assertTrue(column.getLastNaphtaliThermoCacheHitCount() >= 0);
     assertTrue(column.getLastNaphtaliJacobianBuildTimeSeconds() >= 0.0);
@@ -532,6 +534,8 @@ public class ColumnSpecificationTest {
     assertTrue(column.getLastNaphtaliDenseLinearSolveCount() >= 0);
     assertTrue(column.getLastNaphtaliLinearSolveTimeSeconds() >= 0.0);
     assertTrue(column.getConvergenceDiagnostics().contains("Naphtali-Sandholm Jacobian"));
+    assertTrue(column.getConvergenceDiagnostics().contains("analytic columns: 0"));
+    assertTrue(column.getConvergenceDiagnostics().contains("finite-difference columns: 800"));
     assertTrue(column.getConvergenceDiagnostics().contains("thermodynamic cache hits"));
     assertTrue(column.getConvergenceDiagnostics().contains("block linear solves"));
   }
