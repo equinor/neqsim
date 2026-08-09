@@ -79,6 +79,53 @@ class ProcessDiagramGraphAdapterTest {
   }
 
   @Test
+  void preservesParallelEnergyAndSignalConnectionsByExplicitPorts() {
+    Stream feed = createFeed("parallel explicit feed");
+    Heater source = new Heater("parallel explicit source", feed);
+    Heater target = new Heater("parallel explicit target", source.getOutletStream());
+    ProcessSystem process = new ProcessSystem("parallel explicit area");
+    process.add(feed);
+    process.add(source);
+    process.add(target);
+    process.connect(source.getName(), "duty-out-a", target.getName(), "duty-in-a",
+        ProcessConnection.ConnectionType.ENERGY);
+    process.connect(source.getName(), "duty-out-b", target.getName(), "duty-in-b",
+        ProcessConnection.ConnectionType.ENERGY);
+    process.connect(target.getName(), "temperature-signal-a", source.getName(), "temperature-setpoint-a",
+        ProcessConnection.ConnectionType.SIGNAL);
+    process.connect(target.getName(), "temperature-signal-b", source.getName(), "temperature-setpoint-b",
+        ProcessConnection.ConnectionType.SIGNAL);
+
+    EngineeringGraph graph = ProcessDiagramGraphAdapter.fromProcessSystem(process, "PLANT-PARALLEL-EXPLICIT", "A")
+        .getGraph();
+
+    assertEquals(2, countNodeKind(graph, EngineeringNode.Kind.ENERGY_CONNECTION));
+    assertEquals(2, countNodeKind(graph, EngineeringNode.Kind.SIGNAL_CONNECTION));
+    assertEquals(4, countEdgeKind(graph, EngineeringEdge.Kind.ENERGY_FLOW));
+    assertEquals(4, countEdgeKind(graph, EngineeringEdge.Kind.SIGNAL_FLOW));
+    assertTrue(EngineeringPackageValidator.validateGraph(graph).isValid());
+  }
+
+  @Test
+  void reportsAmbiguousDuplicateConnectionDeclarationsInsteadOfSilentlyLosingMultiplicity() {
+    Stream feed = createFeed("duplicate connection feed");
+    Heater heater = new Heater("duplicate connection heater", feed);
+    ProcessSystem process = new ProcessSystem("duplicate connection area");
+    process.add(feed);
+    process.add(heater);
+    process.connect(heater.getName(), "temperature-signal", feed.getName(), "temperature-setpoint",
+        ProcessConnection.ConnectionType.SIGNAL);
+    process.connect(heater.getName(), "temperature-signal", feed.getName(), "temperature-setpoint",
+        ProcessConnection.ConnectionType.SIGNAL);
+
+    ProcessDiagramGraphAdapter.Result result = ProcessDiagramGraphAdapter.fromProcessSystem(process,
+        "PLANT-DUPLICATE-CONNECTION", "A");
+
+    assertEquals(1, countNodeKind(result.getGraph(), EngineeringNode.Kind.SIGNAL_CONNECTION));
+    assertTrue(hasDiagnostic(result, "DIAGRAM_TOPOLOGY_DUPLICATE_CONNECTION_COLLAPSED"));
+  }
+
+  @Test
   void representsMultiAreaPlantAsOneGraphWithCrossAreaConnection() {
     Stream feed = createFeed("plant feed");
     Heater upstreamHeater = new Heater("upstream heater", feed);
