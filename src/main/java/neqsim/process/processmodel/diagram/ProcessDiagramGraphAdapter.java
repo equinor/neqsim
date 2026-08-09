@@ -344,22 +344,29 @@ public final class ProcessDiagramGraphAdapter {
     private void addCrossAreaTopology() {
       Map<StreamInterface, List<ElementReference>> producers = new IdentityHashMap<StreamInterface, List<ElementReference>>();
       Map<StreamInterface, List<ElementReference>> consumers = new IdentityHashMap<StreamInterface, List<ElementReference>>();
-      for (ElementReference element : elements.values()) {
-        collectEndpoints(producers, safeStreams(element.equipment, false), element);
-        collectEndpoints(consumers, safeStreams(element.equipment, true), element);
+      Map<StreamInterface, Boolean> seenStreams = new IdentityHashMap<StreamInterface, Boolean>();
+      List<StreamInterface> orderedStreams = new ArrayList<StreamInterface>();
+      for (AreaReference area : areas) {
+        for (ElementReference element : area.elementsByName.values()) {
+          collectEndpoints(producers, safeStreams(element.equipment, false), element, seenStreams, orderedStreams);
+          collectEndpoints(consumers, safeStreams(element.equipment, true), element, seenStreams, orderedStreams);
+        }
       }
-      for (Map.Entry<StreamInterface, List<ElementReference>> entry : producers.entrySet()) {
-        List<ElementReference> targets = consumers.get(entry.getKey());
+      for (StreamInterface stream : orderedStreams) {
+        List<ElementReference> sourceReferences = producers.get(stream);
+        List<ElementReference> targets = consumers.get(stream);
+        if (sourceReferences == null) {
+          continue;
+        }
         if (targets == null) {
           continue;
         }
-        List<ElementReference> sources = effectiveSources(entry.getValue());
+        List<ElementReference> sources = effectiveSources(sourceReferences);
         for (ElementReference source : sources) {
           for (ElementReference target : targets) {
             if (source == target || source.areaName.equals(target.areaName)) {
               continue;
             }
-            StreamInterface stream = entry.getKey();
             addConnection(source, target, ProcessConnection.ConnectionType.MATERIAL, safeStreamName(stream),
                 portName(source.equipment, stream, false, 0), portName(target.equipment, stream, true, 0),
                 "STREAM_IDENTITY_CROSS_AREA", true, false);
@@ -538,10 +545,15 @@ public final class ProcessDiagramGraphAdapter {
   }
 
   private static void collectEndpoints(Map<StreamInterface, List<ElementReference>> endpoints,
-      List<StreamInterface> streams, ElementReference element) {
+      List<StreamInterface> streams, ElementReference element, Map<StreamInterface, Boolean> seenStreams,
+      List<StreamInterface> orderedStreams) {
     for (StreamInterface stream : streams) {
       if (stream == null) {
         continue;
+      }
+      if (!seenStreams.containsKey(stream)) {
+        seenStreams.put(stream, Boolean.TRUE);
+        orderedStreams.add(stream);
       }
       List<ElementReference> references = endpoints.get(stream);
       if (references == null) {

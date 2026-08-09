@@ -105,6 +105,23 @@ class ProcessDiagramGraphAdapterTest {
   }
 
   @Test
+  void keepsCrossAreaSnapshotDeterministicAcrossEquivalentFreshModels() {
+    String expectedJson = null;
+    String expectedFingerprint = null;
+    for (int attempt = 0; attempt < 32; attempt++) {
+      ProcessDiagramGraphAdapter.Result result = ProcessDiagramGraphAdapter.fromProcessModel(createFourAreaPlant(),
+          "PLANT-DETERMINISTIC", "A");
+      if (expectedJson == null) {
+        expectedJson = result.getGraphJson();
+        expectedFingerprint = result.getFingerprint();
+      } else {
+        assertEquals(expectedJson, result.getGraphJson());
+        assertEquals(expectedFingerprint, result.getFingerprint());
+      }
+    }
+  }
+
+  @Test
   void disambiguatesCanonicalAreaNameCollisionsWithoutBreakingGraphValidation() {
     ProcessSystem firstArea = new ProcessSystem("first");
     firstArea.add(createFeed("first feed"));
@@ -152,6 +169,33 @@ class ProcessDiagramGraphAdapterTest {
     Stream feed = new Stream(name, fluid);
     feed.setFlowRate(1000.0, "kg/hr");
     return feed;
+  }
+
+  private static ProcessModel createFourAreaPlant() {
+    Stream feed = createFeed("deterministic feed");
+    Heater firstHeater = new Heater("first heater", feed);
+    ProcessSystem firstArea = new ProcessSystem("first area");
+    firstArea.add(feed);
+    firstArea.add(firstHeater);
+
+    Heater secondHeater = new Heater("second heater", firstHeater.getOutletStream());
+    ProcessSystem secondArea = new ProcessSystem("second area");
+    secondArea.add(secondHeater);
+
+    Heater thirdHeater = new Heater("third heater", secondHeater.getOutletStream());
+    ProcessSystem thirdArea = new ProcessSystem("third area");
+    thirdArea.add(thirdHeater);
+
+    Heater fourthHeater = new Heater("fourth heater", thirdHeater.getOutletStream());
+    ProcessSystem fourthArea = new ProcessSystem("fourth area");
+    fourthArea.add(fourthHeater);
+
+    ProcessModel plant = new ProcessModel();
+    plant.add("Area 1", firstArea);
+    plant.add("Area 2", secondArea);
+    plant.add("Area 3", thirdArea);
+    plant.add("Area 4", fourthArea);
+    return plant;
   }
 
   private static boolean hasNodeKind(EngineeringGraph graph, EngineeringNode.Kind kind) {
