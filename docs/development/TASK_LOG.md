@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-08-09 — Correct Naphtali-Sandholm Jacobian work telemetry
+**Type:** E (Feature)
+**Keywords:** distillation, Naphtali-Sandholm, MESH, Jacobian, finite difference, diagnostics, telemetry, solver benchmark
+**Solution:** `NaphtaliSandholmSolver.computeJacobian`, `DistillationColumn` convergence diagnostics, and `ColumnSpecificationTest.naphtaliSandholmTelemetryRecordsJacobianWork`
+**Notes:** The block-tridiagonal Jacobian numerically perturbs every variable, but each column was counted as both analytic and finite-difference work. The analytic counter now remains zero while the finite-difference counter retains the complete work count. Base and nearby operating points preserved iterations, thermodynamic evaluations, residuals, energy, mass, products, and deterministic behavior exactly.
+
 ### 2026-07-16 — Historical FeS wall inventory to elemental-sulfur compressor deposition
 **Type:** E (Feature) / B (Process)
 **Keywords:** iron sulfide, FeS, mackinawite, pyrrhotite, siderite, FeCO3, carbon steel, seawater, oxygen ingress, nitrogen purge, elemental sulfur, S8, wall inventory, compressor deposit, entrained condensate, warm shaft
