@@ -897,7 +897,7 @@ public class TwoFluidConservationEquations implements Serializable {
 
       double liquidMomentumRate;
       double liquidMassVelocityRate;
-      if (enableWaterOilSlip && NUM_EQUATIONS == 7) {
+      if (enableWaterOilSlip) {
         liquidMomentumRate = dUdt[i][IDX_OIL_MOMENTUM] + dUdt[i][IDX_WATER_MOMENTUM];
         liquidMassVelocityRate = sec.getOilVelocity() * dUdt[i][IDX_OIL_MASS]
             + sec.getWaterVelocity() * dUdt[i][IDX_WATER_MASS];
@@ -915,7 +915,7 @@ public class TwoFluidConservationEquations implements Serializable {
       }
 
       dUdt[i][IDX_GAS_MOMENTUM] += gasVirtualMassForce;
-      if (enableWaterOilSlip && NUM_EQUATIONS == 7) {
+      if (enableWaterOilSlip) {
         double liquidVirtualMassForce = -gasVirtualMassForce;
         double oilVirtualMassForce = liquidVirtualMassForce * oilMass / liquidMass;
         double waterVirtualMassForce = liquidVirtualMassForce - oilVirtualMassForce;
