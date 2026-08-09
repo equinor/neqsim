@@ -48,6 +48,14 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /** Logger. */
   private static final Logger logger = LogManager.getLogger(ProcessModelSimulationEvaluator.class);
 
+  /** Finite-difference stencil used for objective gradients and constraint Jacobians. */
+  public enum FiniteDifferenceMethod {
+    /** One forward evaluation, or a backward evaluation when the upper bound is active. */
+    FORWARD,
+    /** Two-sided central difference where bounds allow, with a one-sided boundary fallback. */
+    CENTRAL
+  }
+
   /** Process model evaluated by this instance. */
   private ProcessModel processModel;
 
@@ -65,6 +73,9 @@ public class ProcessModelSimulationEvaluator implements Serializable {
 
   /** Whether finite-difference steps are relative to the decision variable magnitude. */
   private boolean useRelativeStep = true;
+
+  /** Finite-difference stencil. Forward difference preserves the historical default cost. */
+  private FiniteDifferenceMethod finiteDifferenceMethod = FiniteDifferenceMethod.FORWARD;
 
   /** Whether strategy-generated equipment capacity constraints are included. */
   private boolean includeStrategyCapacityConstraints = true;
@@ -2299,17 +2310,35 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   public double[] estimateGradient(double[] parameterValues, int objectiveIndex) {
     double[] gradient = new double[parameterValues.length];
     double baseValue = evaluate(parameterValues).getObjectives()[objectiveIndex];
+    double[] boundedValues = getBoundedParameterValues(parameterValues);
     for (int parameterIndex = 0; parameterIndex < parameterValues.length; parameterIndex++) {
-      double step = useRelativeStep ? finiteDifferenceStep * Math.max(Math.abs(parameterValues[parameterIndex]), 1.0)
-          : finiteDifferenceStep;
-      double[] shiftedValues = Arrays.copyOf(parameterValues, parameterValues.length);
-      shiftedValues[parameterIndex] += step;
-      if (shiftedValues[parameterIndex] > parameters.get(parameterIndex).getUpperBound()) {
-        shiftedValues[parameterIndex] = parameterValues[parameterIndex] - step;
-        step = -step;
+      ParameterDefinition parameter = parameters.get(parameterIndex);
+      double requestedStep = getRequestedFiniteDifferenceStep(boundedValues[parameterIndex]);
+      double forwardStep = Math.min(requestedStep, parameter.getUpperBound() - boundedValues[parameterIndex]);
+      double backwardStep = Math.min(requestedStep, boundedValues[parameterIndex] - parameter.getLowerBound());
+
+      if (finiteDifferenceMethod == FiniteDifferenceMethod.CENTRAL && forwardStep > 0.0 && backwardStep > 0.0) {
+        double centralStep = Math.min(forwardStep, backwardStep);
+        double[] upperValues = Arrays.copyOf(boundedValues, boundedValues.length);
+        double[] lowerValues = Arrays.copyOf(boundedValues, boundedValues.length);
+        upperValues[parameterIndex] += centralStep;
+        lowerValues[parameterIndex] -= centralStep;
+        double upperValue = evaluate(upperValues).getObjectives()[objectiveIndex];
+        double lowerValue = evaluate(lowerValues).getObjectives()[objectiveIndex];
+        gradient[parameterIndex] = (upperValue - lowerValue) / (2.0 * centralStep);
+      } else if (forwardStep > 0.0) {
+        double[] shiftedValues = Arrays.copyOf(boundedValues, boundedValues.length);
+        shiftedValues[parameterIndex] += forwardStep;
+        double shiftedValue = evaluate(shiftedValues).getObjectives()[objectiveIndex];
+        gradient[parameterIndex] = (shiftedValue - baseValue) / forwardStep;
+      } else if (backwardStep > 0.0) {
+        double[] shiftedValues = Arrays.copyOf(boundedValues, boundedValues.length);
+        shiftedValues[parameterIndex] -= backwardStep;
+        double shiftedValue = evaluate(shiftedValues).getObjectives()[objectiveIndex];
+        gradient[parameterIndex] = (baseValue - shiftedValue) / backwardStep;
+      } else {
+        gradient[parameterIndex] = 0.0;
       }
-      double shiftedValue = evaluate(shiftedValues).getObjectives()[objectiveIndex];
-      gradient[parameterIndex] = (shiftedValue - baseValue) / step;
     }
     return gradient;
   }
@@ -2323,22 +2352,68 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   public double[][] estimateConstraintJacobian(double[] parameterValues) {
     double[][] jacobian = new double[constraints.size()][parameterValues.length];
     double[] baseMargins = evaluate(parameterValues).getConstraintMargins();
+    double[] boundedValues = getBoundedParameterValues(parameterValues);
     for (int parameterIndex = 0; parameterIndex < parameterValues.length; parameterIndex++) {
-      double step = useRelativeStep ? finiteDifferenceStep * Math.max(Math.abs(parameterValues[parameterIndex]), 1.0)
-          : finiteDifferenceStep;
-      double[] shiftedValues = Arrays.copyOf(parameterValues, parameterValues.length);
-      shiftedValues[parameterIndex] += step;
-      if (shiftedValues[parameterIndex] > parameters.get(parameterIndex).getUpperBound()) {
-        shiftedValues[parameterIndex] = parameterValues[parameterIndex] - step;
-        step = -step;
-      }
-      double[] shiftedMargins = evaluate(shiftedValues).getConstraintMargins();
-      for (int constraintIndex = 0; constraintIndex < constraints.size(); constraintIndex++) {
-        jacobian[constraintIndex][parameterIndex] = (shiftedMargins[constraintIndex] - baseMargins[constraintIndex])
-            / step;
+      ParameterDefinition parameter = parameters.get(parameterIndex);
+      double requestedStep = getRequestedFiniteDifferenceStep(boundedValues[parameterIndex]);
+      double forwardStep = Math.min(requestedStep, parameter.getUpperBound() - boundedValues[parameterIndex]);
+      double backwardStep = Math.min(requestedStep, boundedValues[parameterIndex] - parameter.getLowerBound());
+
+      if (finiteDifferenceMethod == FiniteDifferenceMethod.CENTRAL && forwardStep > 0.0 && backwardStep > 0.0) {
+        double centralStep = Math.min(forwardStep, backwardStep);
+        double[] upperValues = Arrays.copyOf(boundedValues, boundedValues.length);
+        double[] lowerValues = Arrays.copyOf(boundedValues, boundedValues.length);
+        upperValues[parameterIndex] += centralStep;
+        lowerValues[parameterIndex] -= centralStep;
+        double[] upperMargins = evaluate(upperValues).getConstraintMargins();
+        double[] lowerMargins = evaluate(lowerValues).getConstraintMargins();
+        for (int constraintIndex = 0; constraintIndex < constraints.size(); constraintIndex++) {
+          jacobian[constraintIndex][parameterIndex] = (upperMargins[constraintIndex] - lowerMargins[constraintIndex])
+              / (2.0 * centralStep);
+        }
+      } else if (forwardStep > 0.0) {
+        double[] shiftedValues = Arrays.copyOf(boundedValues, boundedValues.length);
+        shiftedValues[parameterIndex] += forwardStep;
+        double[] shiftedMargins = evaluate(shiftedValues).getConstraintMargins();
+        for (int constraintIndex = 0; constraintIndex < constraints.size(); constraintIndex++) {
+          jacobian[constraintIndex][parameterIndex] = (shiftedMargins[constraintIndex] - baseMargins[constraintIndex])
+              / forwardStep;
+        }
+      } else if (backwardStep > 0.0) {
+        double[] shiftedValues = Arrays.copyOf(boundedValues, boundedValues.length);
+        shiftedValues[parameterIndex] -= backwardStep;
+        double[] shiftedMargins = evaluate(shiftedValues).getConstraintMargins();
+        for (int constraintIndex = 0; constraintIndex < constraints.size(); constraintIndex++) {
+          jacobian[constraintIndex][parameterIndex] = (baseMargins[constraintIndex] - shiftedMargins[constraintIndex])
+              / backwardStep;
+        }
       }
     }
     return jacobian;
+  }
+
+  /**
+   * Returns a parameter vector limited to the declared optimization bounds.
+   *
+   * @param parameterValues requested parameter vector
+   * @return defensive bounded parameter vector
+   */
+  private double[] getBoundedParameterValues(double[] parameterValues) {
+    double[] boundedValues = Arrays.copyOf(parameterValues, parameterValues.length);
+    for (int parameterIndex = 0; parameterIndex < boundedValues.length; parameterIndex++) {
+      boundedValues[parameterIndex] = parameters.get(parameterIndex).clamp(boundedValues[parameterIndex]);
+    }
+    return boundedValues;
+  }
+
+  /**
+   * Calculates the requested positive perturbation magnitude.
+   *
+   * @param parameterValue bounded parameter value
+   * @return requested positive step before applying parameter bounds
+   */
+  private double getRequestedFiniteDifferenceStep(double parameterValue) {
+    return useRelativeStep ? finiteDifferenceStep * Math.max(Math.abs(parameterValue), 1.0) : finiteDifferenceStep;
   }
 
   /**
@@ -2356,6 +2431,9 @@ public class ProcessModelSimulationEvaluator implements Serializable {
    * @param finiteDifferenceStep finite-difference step
    */
   public void setFiniteDifferenceStep(double finiteDifferenceStep) {
+    if (!Double.isFinite(finiteDifferenceStep) || finiteDifferenceStep <= 0.0) {
+      throw new IllegalArgumentException("Finite-difference step must be finite and greater than zero");
+    }
     this.finiteDifferenceStep = finiteDifferenceStep;
   }
 
@@ -2375,6 +2453,33 @@ public class ProcessModelSimulationEvaluator implements Serializable {
    */
   public void setUseRelativeStep(boolean useRelativeStep) {
     this.useRelativeStep = useRelativeStep;
+  }
+
+  /**
+   * Gets the finite-difference stencil.
+   *
+   * @return configured finite-difference method
+   */
+  public FiniteDifferenceMethod getFiniteDifferenceMethod() {
+    return finiteDifferenceMethod;
+  }
+
+  /**
+   * Sets the finite-difference stencil.
+   *
+   * <p>
+   * {@link FiniteDifferenceMethod#FORWARD} retains the historical one-perturbation cost per parameter. Central
+   * differences use symmetric in-bounds perturbations at interior points and fall back to a one-sided difference at an
+   * active bound.
+   * </p>
+   *
+   * @param finiteDifferenceMethod finite-difference method, not null
+   */
+  public void setFiniteDifferenceMethod(FiniteDifferenceMethod finiteDifferenceMethod) {
+    if (finiteDifferenceMethod == null) {
+      throw new IllegalArgumentException("Finite-difference method cannot be null");
+    }
+    this.finiteDifferenceMethod = finiteDifferenceMethod;
   }
 
   /**

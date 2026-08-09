@@ -476,7 +476,20 @@ evaluator.setFiniteDifferenceStep(1e-6)
 
 # Use relative step size
 evaluator.setUseRelativeStep(True)  # step = h * |x_i| + h
+
+# Optional second-order stencil for smooth interior operating points
+FiniteDifferenceMethod = jneqsim.process.util.optimizer.ProcessModelSimulationEvaluator.FiniteDifferenceMethod
+evaluator.setFiniteDifferenceMethod(FiniteDifferenceMethod.CENTRAL)
 ```
+
+`ProcessModelSimulationEvaluator` keeps `FORWARD` as the default because it requires only one
+perturbed simulation per parameter. Both objective gradients and constraint Jacobians use the
+actual perturbation remaining inside each parameter's bounds; they no longer divide by a requested
+step that was partly removed by bound clamping. `CENTRAL` uses symmetric in-bounds points when both
+directions are available and falls back to a one-sided difference at an active bound. A fixed
+parameter has zero derivative because it has no feasible perturbation direction. Treat either
+finite-difference result as a local sensitivity, not as an optimizer-independent shadow price, and
+check step-size stability before using it to rank debottlenecking value.
 
 ### Export Problem Definition
 

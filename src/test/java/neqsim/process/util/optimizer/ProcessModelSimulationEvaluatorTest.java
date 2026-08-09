@@ -468,6 +468,59 @@ class ProcessModelSimulationEvaluatorTest {
   }
 
   /**
+   * Verifies finite differences divide by the perturbation that remains after applying parameter bounds.
+   */
+  @Test
+  void finiteDifferencesUseActualAvailableStepAtUpperBound() {
+    ModelFixture fixture = createModelFixture();
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
+    evaluator.addParameter("wells::feed.flowRate", 9999.995, 10000.0, "kg/hr");
+    evaluator.addObjective("feed flow", model -> fixture.feed.getFlowRate("kg/hr"));
+    evaluator.addConstraintUpperBound("feed limit", model -> fixture.feed.getFlowRate("kg/hr"), 11000.0);
+    evaluator.setUseRelativeStep(false);
+    evaluator.setFiniteDifferenceStep(10.0);
+
+    double[] gradient = evaluator.estimateGradient(new double[] { 10000.0 });
+    double[][] jacobian = evaluator.estimateConstraintJacobian(new double[] { 10000.0 });
+
+    assertEquals(ProcessModelSimulationEvaluator.FiniteDifferenceMethod.FORWARD, evaluator.getFiniteDifferenceMethod());
+    assertEquals(1.0, gradient[0], 1.0e-8);
+    assertEquals(-1.0, jacobian[0][0], 1.0e-8);
+  }
+
+  /** Verifies the optional central stencil is second-order accurate at an interior point. */
+  @Test
+  void centralFiniteDifferenceUsesSymmetricInBoundsPoints() {
+    ModelFixture fixture = createModelFixture();
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
+    evaluator.addParameter("wells::feed.flowRate", 9000.0, 11000.0, "kg/hr");
+    evaluator.addObjective("quadratic feed objective", model -> {
+      double offset = fixture.feed.getFlowRate("kg/hr") - 9000.0;
+      return offset * offset;
+    });
+    evaluator.setUseRelativeStep(false);
+    evaluator.setFiniteDifferenceStep(10.0);
+    evaluator.setFiniteDifferenceMethod(ProcessModelSimulationEvaluator.FiniteDifferenceMethod.CENTRAL);
+
+    double[] gradient = evaluator.estimateGradient(new double[] { 10000.0 });
+    double[] nearbyGradient = evaluator.estimateGradient(new double[] { 10010.0 });
+
+    assertEquals(2000.0, gradient[0], 1.0e-8);
+    assertEquals(2020.0, nearbyGradient[0], 1.0e-8);
+    assertEquals(6, evaluator.getEvaluationCount(), "each central gradient should use base, upper, and lower cases");
+  }
+
+  /** Verifies invalid finite-difference configuration fails before a process evaluation. */
+  @Test
+  void finiteDifferenceConfigurationRejectsInvalidValues() {
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator();
+
+    assertThrows(IllegalArgumentException.class, () -> evaluator.setFiniteDifferenceStep(0.0));
+    assertThrows(IllegalArgumentException.class, () -> evaluator.setFiniteDifferenceStep(Double.NaN));
+    assertThrows(IllegalArgumentException.class, () -> evaluator.setFiniteDifferenceMethod(null));
+  }
+
+  /**
    * Verifies exported problem metadata for external optimizer bridges.
    */
   @Test
