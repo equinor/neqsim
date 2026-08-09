@@ -304,9 +304,9 @@ public final class DynamicCapabilityReport implements Serializable {
    * Returns all issues that fail the opt-in strict transient preflight.
    *
    * <p>
-   * Strict preflight combines known unsupported runtime configurations with unaudited custom transient
-   * implementations. It deliberately does not reject audited dynamic equipment that remains in steady-state mode,
-   * because mixed algebraic/dynamic flowsheets are valid when that choice is intentional.
+   * Strict preflight combines known unsupported runtime configurations with unaudited custom transient implementations.
+   * It deliberately does not reject audited dynamic equipment that remains in steady-state mode, because mixed
+   * algebraic/dynamic flowsheets are valid when that choice is intentional.
    * </p>
    *
    * @return immutable list of strict-preflight issues
