@@ -33,6 +33,8 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
     Stream cold = createFeed("cold");
 
     assertEquals(DynamicCapability.ALGEBRAIC, feed.getDynamicCapability());
+    assertEquals(DynamicCapability.ALGEBRAIC,
+        new PassiveDerivedStream("derived feed", createFluid()).getDynamicCapability());
     assertEquals(DynamicCapability.DYNAMIC_LUMPED, new Separator("separator", feed).getDynamicCapability());
     assertEquals(DynamicCapability.DYNAMIC_LUMPED, new Tank("tank", feed).getDynamicCapability());
     assertEquals(DynamicCapability.DYNAMIC_LUMPED, new HeatExchanger("hx", feed, cold).getDynamicCapability());
@@ -194,6 +196,14 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
       run(id);
       increaseTime(dt);
       setCalculationIdentifier(id);
+    }
+  }
+
+  private static final class PassiveDerivedStream extends Stream {
+    private static final long serialVersionUID = 1000L;
+
+    private PassiveDerivedStream(String name, SystemSrkEos fluid) {
+      super(name, fluid);
     }
   }
 }
