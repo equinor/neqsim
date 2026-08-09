@@ -139,6 +139,29 @@ class ConvertNotebooksTest(unittest.TestCase):
                 self.assertIn(entry["path"], generated_content)
             self.assertNotIn("\n# NeqSim Examples\n", generated_content)
 
+    def test_index_preserves_energy_network_collection_and_source_guide(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            index_path = Path(temp_dir) / "index.md"
+
+            create_examples_index(temp_dir)
+
+            generated_content = index_path.read_text(encoding="utf-8")
+            self.assertIn(
+                "../integration/complete-offshore-process-engineering-study.md",
+                generated_content,
+            )
+            self.assertEqual(
+                generated_content.count(
+                    "examples/notebooks/energy_networks/"
+                ),
+                8,
+            )
+            for notebook_number in ("01_", "02_", "03_", "04_"):
+                self.assertIn(
+                    "energy_networks/" + notebook_number,
+                    generated_content,
+                )
+
     def test_index_uses_metadata_and_encodes_space_in_links(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             examples_dir = Path(temp_dir)
