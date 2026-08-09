@@ -23,7 +23,8 @@ import neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator
  * <h2>Sign Convention</h2>
  * <p>
  * Positive interfacial shear acts to accelerate the liquid and decelerate the gas (gas faster than liquid). The shear
- * stress is defined as: τ_i = 0.5 * f_i * ρ_G * (v_G - v_L) * |v_G - v_L|
+ * stress is defined as: τ_i = 0.5 * f_i * ρ_c * (v_G - v_L) * |v_G - v_L|, where ρ_c is the continuous-phase density
+ * selected by the regime closure.
  * </p>
  *
  * @author Even Solbraa
@@ -446,8 +447,11 @@ public class InterfacialFriction implements Serializable {
       C_D = 0.44;
     }
 
-    // Friction factor
-    result.frictionFactor = C_D * d_b / (4.0 * D);
+    // Express the standard dispersed-phase drag force
+    // F_D/V = 3/4 C_D rho_L alpha_G |u_r| u_r / d_b
+    // as tau_i * a_i, with a_i = 6 alpha_G/d_b and
+    // tau_i = 1/8 C_D rho_L |u_r| u_r = 1/2 f_i rho_L |u_r| u_r.
+    result.frictionFactor = C_D / 4.0;
 
     // Interfacial shear (drag force per unit volume * characteristic length)
     result.interfacialShear = 0.5 * result.frictionFactor * rhoL * result.slipVelocity * Math.abs(result.slipVelocity);

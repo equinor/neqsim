@@ -1,0 +1,77 @@
+package neqsim.process.equipment.pipeline.twophasepipe.closure;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
+
+/** Tests for gas-liquid interfacial-friction closures. */
+class InterfacialFrictionTest {
+  private static final double GRAVITY = 9.81;
+  private static final double DEFAULT_BUBBLE_SURFACE_TENSION = 0.02;
+
+  @Test
+  void dispersedBubbleForceMatchesSchillerNaumannDragLaw() {
+    InterfacialFriction friction = new InterfacialFriction();
+    double[] diameters = { 0.05, 0.10, 0.30 };
+    double[] liquidHoldups = { 0.80, 0.95, 1.0 - 1.0e-8 };
+    double[] slipVelocities = { -1.0, -0.10, 0.10, 1.0 };
+
+    for (double diameter : diameters) {
+      for (double liquidHoldup : liquidHoldups) {
+        for (double slipVelocity : slipVelocities) {
+          double gasVelocity = 0.5 + slipVelocity;
+          double liquidVelocity = 0.5;
+          double expected = expectedBubbleDragForcePerLength(gasVelocity, liquidVelocity, 5.0, 1000.0, 1.0e-3,
+              liquidHoldup, diameter);
+
+          double actual = friction.calcInterfacialForce(FlowRegime.DISPERSED_BUBBLE, gasVelocity, liquidVelocity, 5.0,
+              1000.0, 1.5e-5, 1.0e-3, liquidHoldup, diameter, 0.072);
+
+          assertEquals(expected, actual, Math.max(1.0e-12, Math.abs(expected) * 1.0e-12),
+              "Schiller-Naumann force mismatch at D=" + diameter + " m, alphaL=" + liquidHoldup + ", slip="
+                  + slipVelocity + " m/s");
+        }
+      }
+    }
+  }
+
+  @Test
+  void bubbleDragIsOddInSlipAndVanishesAtPhaseLimits() {
+    InterfacialFriction friction = new InterfacialFriction();
+    double forward = friction.calcInterfacialForce(FlowRegime.BUBBLE, 0.7, 0.5, 5.0, 1000.0, 1.5e-5, 1.0e-3, 0.9, 0.1,
+        0.072);
+    double reverse = friction.calcInterfacialForce(FlowRegime.BUBBLE, 0.3, 0.5, 5.0, 1000.0, 1.5e-5, 1.0e-3, 0.9, 0.1,
+        0.072);
+    double zeroSlip = friction.calcInterfacialForce(FlowRegime.BUBBLE, 0.5, 0.5, 5.0, 1000.0, 1.5e-5, 1.0e-3, 0.9, 0.1,
+        0.072);
+    double noGas = friction.calcInterfacialForce(FlowRegime.BUBBLE, 0.7, 0.5, 5.0, 1000.0, 1.5e-5, 1.0e-3, 1.0, 0.1,
+        0.072);
+
+    assertTrue(forward > 0.0);
+    assertEquals(-forward, reverse, Math.abs(forward) * 1.0e-12);
+    assertEquals(0.0, zeroSlip, 0.0);
+    assertEquals(0.0, noGas, 0.0);
+  }
+
+  private double expectedBubbleDragForcePerLength(double gasVelocity, double liquidVelocity, double gasDensity,
+      double liquidDensity, double liquidViscosity, double liquidHoldup, double diameter) {
+    double bubbleDiameter = 2.0
+        * Math.sqrt(0.725 * DEFAULT_BUBBLE_SURFACE_TENSION / ((liquidDensity - gasDensity) * GRAVITY));
+    bubbleDiameter = Math.min(bubbleDiameter, diameter / 5.0);
+    double slipVelocity = gasVelocity - liquidVelocity;
+    double bubbleReynoldsNumber = liquidDensity * Math.abs(slipVelocity) * bubbleDiameter / liquidViscosity;
+    double dragCoefficient;
+    if (bubbleReynoldsNumber < 0.1) {
+      dragCoefficient = 240.0;
+    } else if (bubbleReynoldsNumber < 1000.0) {
+      dragCoefficient = 24.0 / bubbleReynoldsNumber * (1.0 + 0.15 * Math.pow(bubbleReynoldsNumber, 0.687));
+    } else {
+      dragCoefficient = 0.44;
+    }
+    double gasHoldup = 1.0 - liquidHoldup;
+    double area = Math.PI * diameter * diameter / 4.0;
+    return 0.75 * dragCoefficient * liquidDensity * gasHoldup * area / bubbleDiameter * slipVelocity
+        * Math.abs(slipVelocity);
+  }
+}

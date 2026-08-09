@@ -167,6 +167,19 @@ Separate momentum equations for each phase:
 | Wall friction | Pipe roughness-based (Colebrook/Blasius correlations) |
 | Interfacial friction | Flow-regime dependent correlations |
 
+For `BUBBLE` and `DISPERSED_BUBBLE`, the liquid-continuum closure uses the Schiller-Naumann drag
+coefficient and the spherical-bubble interfacial-area concentration $a_i=6\alpha_G/d_b$. The force
+per pipe length is
+
+$$F_i=\frac{3}{4}C_D\rho_L\frac{\alpha_G A}{d_b}(v_G-v_L)|v_G-v_L|.$$
+
+The equivalent internal shear representation uses $S_i=a_iA$, $f_i=C_D/4$, and
+$\tau_i=\tfrac12 f_i\rho_L(v_G-v_L)|v_G-v_L|$. This form is odd in slip velocity, vanishes with
+gas holdup, and preserves equal-and-opposite interphase momentum when assembled in the gas and
+liquid equations. Its current bubble-size estimate assumes a fixed `0.02 N/m` surface tension and
+caps $d_b$ at $D/5$; it is a bounded dispersed-bubble closure, not a population-balance model or a
+commercial-simulator equivalence claim.
+
 #### Optional virtual-mass coupling
 
 `setEnableVirtualMassForce(true)` enables a local added-inertia coupling between gas and combined

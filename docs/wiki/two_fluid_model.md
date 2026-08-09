@@ -318,12 +318,12 @@ The `InterfacialFriction` class calculates the shear stress at the gas-liquid in
 The interfacial shear stress follows the standard form:
 
 ```
-τ_i = 0.5 × f_i × ρ_G × (v_G - v_L) × |v_G - v_L|
+τ_i = 0.5 × f_i × ρ_c × (v_G - v_L) × |v_G - v_L|
 ```
 
 Where:
 - `f_i` = interfacial friction factor (dimensionless)
-- `ρ_G` = gas density (kg/m³)
+- `ρ_c` = continuous-phase density selected by the regime closure (kg/m³)
 - `v_G - v_L` = slip velocity (m/s)
 
 The force per unit length appearing in the momentum equations is:
@@ -421,9 +421,24 @@ else if (Re_b < 1000):
 else:
     C_D = 0.44          // Newton regime
 
-// Friction factor
-f_i = C_D × d_b / (4 × D)
+// Interfacial area concentration and force per pipe length
+a_i = 6 × α_G / d_b
+S_i = a_i × A
+F_i = 3/4 × C_D × ρ_L × α_G × A/d_b × v_slip × |v_slip|
+
+// Equivalent shear representation used by InterfacialFriction
+f_i = C_D / 4
+τ_i = 0.5 × f_i × ρ_L × v_slip × |v_slip|
+F_i = τ_i × S_i
 ```
+
+This dispersed-bubble closure assumes approximately spherical bubbles in a liquid continuum. The
+implemented diameter estimate uses a fixed default surface tension of `0.02 N/m` and caps the
+bubble diameter at `D/5`; applications outside that assumption require a separately validated
+diameter/population closure. The regression range covers pipe diameters `0.05-0.30 m`, liquid
+holdup `0.80` through the vanishing-gas limit, and forward and reverse slip in the laminar-to-Newton
+drag ranges. It verifies the independent Schiller-Naumann force identity and does not claim
+OLGA/LedaFlow equivalence.
 
 #### Hart et al. (1989) Correlation
 
