@@ -893,8 +893,7 @@ public class TwoFluidConservationEquations implements Serializable {
       }
 
       double gasVelocity = sec.getGasVelocity();
-      double gasAcceleration =
-          (dUdt[i][IDX_GAS_MOMENTUM] - gasVelocity * dUdt[i][IDX_GAS_MASS]) / gasMass;
+      double gasAcceleration = (dUdt[i][IDX_GAS_MOMENTUM] - gasVelocity * dUdt[i][IDX_GAS_MASS]) / gasMass;
 
       double liquidMomentumRate;
       double liquidMassVelocityRate;
@@ -904,8 +903,7 @@ public class TwoFluidConservationEquations implements Serializable {
             + sec.getWaterVelocity() * dUdt[i][IDX_WATER_MASS];
       } else {
         liquidMomentumRate = dUdt[i][IDX_OIL_MOMENTUM];
-        liquidMassVelocityRate =
-            sec.getLiquidVelocity() * (dUdt[i][IDX_OIL_MASS] + dUdt[i][IDX_WATER_MASS]);
+        liquidMassVelocityRate = sec.getLiquidVelocity() * (dUdt[i][IDX_OIL_MASS] + dUdt[i][IDX_WATER_MASS]);
       }
       double liquidAcceleration = (liquidMomentumRate - liquidMassVelocityRate) / liquidMass;
 
