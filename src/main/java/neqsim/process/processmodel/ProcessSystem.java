@@ -2875,16 +2875,17 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   private List<UnitRunStatus> getSuccessfulRunStatuses() {
     int nonNullUnitCount = 0;
-    boolean cacheMatches = cachedSuccessfulRunStatuses != null;
+    List<UnitRunStatus> cachedStatuses = cachedSuccessfulRunStatuses;
+    boolean cacheMatches = cachedStatuses != null;
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit == null) {
         continue;
       }
       if (cacheMatches) {
-        if (nonNullUnitCount >= cachedSuccessfulRunStatuses.size()) {
+        if (nonNullUnitCount >= cachedStatuses.size()) {
           cacheMatches = false;
         } else {
-          UnitRunStatus cached = cachedSuccessfulRunStatuses.get(nonNullUnitCount);
+          UnitRunStatus cached = cachedStatuses.get(nonNullUnitCount);
           String unitType = unit.getClass().getSimpleName();
           if (!java.util.Objects.equals(cached.getUnitName(), unit.getName())
               || !java.util.Objects.equals(cached.getUnitType(), unitType)) {
@@ -2894,8 +2895,8 @@ public class ProcessSystem extends SimulationBaseClass {
       }
       nonNullUnitCount++;
     }
-    if (cacheMatches && nonNullUnitCount == cachedSuccessfulRunStatuses.size()) {
-      return cachedSuccessfulRunStatuses;
+    if (cacheMatches && nonNullUnitCount == cachedStatuses.size()) {
+      return cachedStatuses;
     }
 
     List<UnitRunStatus> rebuilt = new ArrayList<UnitRunStatus>(nonNullUnitCount);
