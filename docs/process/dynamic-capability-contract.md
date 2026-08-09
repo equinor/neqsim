@@ -74,6 +74,11 @@ semantics:
 - boundary: `SimpleReservoir`;
 - control: registered controllers and measurement devices.
 
+`Stream` and stream subclasses that inherit the standard `Stream.runTransient(...)` boundary are classified as
+`ALGEBRAIC`: that method re-evaluates the stream and advances its execution clock, but does not integrate stored
+physical state. A stream subclass that provides its own transient override remains `UNCLASSIFIED_DYNAMIC` until its
+state and equations are audited.
+
 Other custom transient implementations remain `UNCLASSIFIED_DYNAMIC` until their state variables, conservation equations,
 initialization, timestep constraints, event behaviour, snapshot/restart semantics, and quantitative validation are
 reviewed. The mapping is expected to expand as that audit is completed.
