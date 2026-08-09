@@ -33,6 +33,24 @@ The existing DOT and DEXPI exporters have not yet been migrated to consume this 
 migration is complete, this adapter is a shared topology contract rather than a new rendering or
 standards-conformance claim.
 
+### Topology-equivalence reference cases
+
+`ProcessDiagramTopologyEquivalenceTest` is the executable baseline for comparing the runnable
+`ProcessGraph`, the canonical `EngineeringGraph`, and the current DOT projections. It fixes the
+expected directed connectivity for three deliberately small cases:
+
+- a simple feed, heater, and cooler train;
+- a branched train with two distinct parallel material streams and a recycle loop; and
+- one semantic plant containing upstream and downstream `ProcessSystem` areas joined by a live
+  cross-area stream.
+
+Equivalence is semantic rather than text-identical. In particular, the legacy Graphviz view may
+retain a named stream as an explicit intermediate node while the canonical graph represents the
+same physical connection directly between equipment ports. The reference tests require the same
+directional path and multiplicity, including both parallel branches, without changing the existing
+DOT serialization. These cases are topology fixtures only; they do not qualify layout, symbols,
+drawing metadata, DEXPI round trips, or ISO 10628 conformance.
+
 ## Quick Start
 
 ```java
