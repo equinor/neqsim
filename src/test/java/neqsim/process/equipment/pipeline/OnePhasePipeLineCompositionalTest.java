@@ -143,6 +143,136 @@ public class OnePhasePipeLineCompositionalTest {
   }
 
   @Test
+  @DisplayName("Conservative schedule should impose each interval's inlet mass rate")
+  void testConservativeSchedulePreservesSpecifiedInletMassRate() {
+    SystemInterface baselineGas = createTransmissionGas(0.95, 0.05);
+    SystemInterface pulseGas = createTransmissionGas(0.80, 0.20);
+    pulseGas.setTotalFlowRate(60.0, "kg/sec");
+    Stream inlet = new Stream("scheduled-rate inlet", baselineGas);
+    inlet.setFlowRate(50.0, "kg/sec");
+    inlet.run();
+
+    OnePhasePipeLine pipe = createTransmissionPipe(inlet);
+    pipe.setConservativeCompositionalTracking(true);
+    pipe.setStoreSpeciesConservationHistory(true);
+    pipe.setFailOnNonConvergence(true);
+
+    UUID id = UUID.randomUUID();
+    pipe.run(id);
+    pipe.runConservativeTransient(new double[] { 0.0, 60.0 }, new SystemInterface[] { pulseGas }, 1, id);
+
+    OnePhaseSpeciesConservationReport report = pipe.getSpeciesConservationHistory().getReport(0);
+    assertTrue(report.isConverged(), report.getMessage());
+    assertEquals(3600.0, sum(report.getInletBoundaryMassKg()), 1.0e-8);
+    assertEquals(60.0, pulseGas.getFlowRate("kg/sec"), 1.0e-12);
+    assertTrue(report.getMaximumRelativeInventoryResidual() <= 1.0e-8, report.getMessage());
+    assertTrue(report.getMaximumThermodynamicMassFractionError() <= 1.0e-10, report.getMessage());
+  }
+
+  @Test
+  @Tag("slow")
+  @DisplayName("Conservative tracking should couple a 30-minute composition and feed-rate event")
+  void testCoupledThirtyMinuteCompositionAndFeedRateEvent() {
+    SystemInterface baselineGas = createTransmissionGas(0.95, 0.05, 50.0);
+    SystemInterface pulseGas = createTransmissionGas(0.80, 0.20, 60.0);
+    Stream inlet = new Stream("coupled event inlet", baselineGas);
+    inlet.setFlowRate(50.0, "kg/sec");
+    inlet.run();
+
+    OnePhasePipeLine pipe = createTransmissionPipe(inlet);
+    pipe.setConservativeCompositionalTracking(true);
+    pipe.setStoreSpeciesConservationHistory(true);
+    pipe.setFailOnNonConvergence(true);
+
+    UUID id = UUID.randomUUID();
+    pipe.run(id);
+    double baselineOutlet = pipe.getOutletMassFraction("nitrogen");
+    double[] baselinePressureBara = pipe.getPressureProfile("bara");
+    double[] baselineTemperatureK = pipe.getTemperatureProfile("K");
+    double[] baselineVelocityMetersPerSecond = pipe.getVelocityProfile();
+
+    pipe.runConservativeTransient(new double[] { 0.0, 1800.0 }, new SystemInterface[] { pulseGas }, 30, id);
+    OnePhaseSpeciesConservationHistory pulseHistory = pipe.getSpeciesConservationHistory();
+    assertEquals(30, pulseHistory.size());
+    assertEquals(60.0, pulseGas.getFlowRate("kg/sec"), 1.0e-12,
+        "The transient solve must not mutate the caller-owned pulse schedule.");
+    double pulseOutlet = pipe.getConservativeOutletMassFraction("nitrogen");
+    double[] pulsePressureBara = pipe.getPressureProfile("bara");
+    double[] pulseTemperatureK = pipe.getTemperatureProfile("K");
+    double[] pulseVelocityMetersPerSecond = pipe.getVelocityProfile();
+
+    pipe.runConservativeTransient(new double[] { 0.0, 3600.0 }, new SystemInterface[] { baselineGas }, 60, id);
+    OnePhaseSpeciesConservationHistory recoveryHistory = pipe.getSpeciesConservationHistory();
+    assertEquals(60, recoveryHistory.size());
+    assertEquals(5400.0, pipe.getSimulationTime(), 0.0);
+    assertEquals(50.0, baselineGas.getFlowRate("kg/sec"), 1.0e-12,
+        "The transient solve must not mutate the caller-owned recovery schedule.");
+
+    OnePhaseSpeciesConservationReport firstPulseReport = pulseHistory.getReport(0);
+    int nitrogen = componentIndex(firstPulseReport, "nitrogen");
+    double[] initialInventoryKg = firstPulseReport.getInitialInventoryKg();
+    double[] cumulativeInletKg = new double[initialInventoryKg.length];
+    double[] cumulativeOutletKg = new double[initialInventoryKg.length];
+    for (OnePhaseSpeciesConservationReport report : pulseHistory.getReports()) {
+      assertConservativeReport(report);
+      assertEquals(3600.0, sum(report.getInletBoundaryMassKg()), 1.0e-8,
+          "A 60 kg/s inlet over 60 s must contribute 3600 kg to the authoritative FV boundary flux.");
+      accumulate(cumulativeInletKg, report.getInletBoundaryMassKg());
+      accumulate(cumulativeOutletKg, report.getOutletBoundaryMassKg());
+    }
+    for (OnePhaseSpeciesConservationReport report : recoveryHistory.getReports()) {
+      assertConservativeReport(report);
+      assertEquals(3000.0, sum(report.getInletBoundaryMassKg()), 1.0e-8,
+          "A 50 kg/s inlet over 60 s must contribute 3000 kg to the authoritative FV boundary flux.");
+      accumulate(cumulativeInletKg, report.getInletBoundaryMassKg());
+      accumulate(cumulativeOutletKg, report.getOutletBoundaryMassKg());
+    }
+
+    OnePhaseSpeciesConservationReport finalReport = recoveryHistory.getReport(recoveryHistory.size() - 1);
+    double[] finalInventoryKg = finalReport.getFinalInventoryKg();
+    for (int component = 0; component < initialInventoryKg.length; component++) {
+      double cumulativeResidualKg = finalInventoryKg[component] - initialInventoryKg[component]
+          - cumulativeInletKg[component] + cumulativeOutletKg[component];
+      double scaleKg = Math.max(Math.max(initialInventoryKg[component], cumulativeInletKg[component]), 1.0);
+      assertEquals(0.0, cumulativeResidualKg, scaleKg * 1.0e-7,
+          "Every component must close over the complete pulse-and-recovery event.");
+    }
+
+    double pulseInletNitrogen = firstPulseReport.getInletBoundaryMassKg()[nitrogen]
+        / sum(firstPulseReport.getInletBoundaryMassKg());
+    double eventAmplitude = pulseInletNitrogen - baselineOutlet;
+    assertTrue(pulseOutlet > baselineOutlet + 0.70 * eventAmplitude,
+        "The simultaneous composition/rate pulse must reach the outlet before the event ends.");
+    assertEquals(baselineOutlet, pipe.getConservativeOutletMassFraction("nitrogen"), 2.0e-3 * eventAmplitude);
+    assertTrue(maximumAbsoluteDifference(baselinePressureBara, pulsePressureBara) > 0.05,
+        "The feed-rate event must produce a measurable hydraulic pressure response.");
+    assertTrue(maximumAbsoluteDifference(baselineVelocityMetersPerSecond, pulseVelocityMetersPerSecond) > 0.25,
+        "The feed-rate event must produce a measurable velocity response.");
+    assertArrayEquals(baselineTemperatureK, pulseTemperatureK, 1.0e-10,
+        "Solver type 1 is isothermal in time and must preserve the initialized temperature profile.");
+    assertPositiveFiniteState(pipe);
+
+    OnePhasePipeLine deterministicPipe = runCoupledEvent(60.0);
+    OnePhaseSpeciesConservationReport deterministicReport = deterministicPipe.getSpeciesConservationReport();
+    assertArrayEquals(finalReport.getFinalInventoryKg(), deterministicReport.getFinalInventoryKg(), 1.0e-12);
+    for (int component = 0; component < finalReport.getComponentNames().length; component++) {
+      assertArrayEquals(finalReport.getMassFractionProfile()[component],
+          deterministicReport.getMassFractionProfile()[component], 1.0e-12);
+    }
+    assertArrayEquals(pipe.getPressureProfile("bara"), deterministicPipe.getPressureProfile("bara"), 1.0e-12);
+    assertArrayEquals(pipe.getVelocityProfile(), deterministicPipe.getVelocityProfile(), 1.0e-12);
+
+    OnePhasePipeLine halfTimeStepPipe = runCoupledEvent(30.0);
+    OnePhaseSpeciesConservationHistory halfTimeStepHistory = halfTimeStepPipe.getSpeciesConservationHistory();
+    double halfTimeStepPulseOutlet = last(halfTimeStepHistory.getReport(59).getMassFractionProfile()[nitrogen]);
+    assertEquals(pulseOutlet, halfTimeStepPulseOutlet, 1.0e-3,
+        "Halving the timestep must not materially change pulse breakthrough.");
+    assertEquals(pipe.getConservativeOutletMassFraction("nitrogen"),
+        halfTimeStepPipe.getConservativeOutletMassFraction("nitrogen"), 1.0e-6,
+        "Halving the timestep must not materially change recovered outlet quality.");
+  }
+
+  @Test
   @DisplayName("Validated conservative tracking should reject null schedule inputs as invalid arguments")
   void testValidatedConservativeTrackingRejectsNullScheduleInput() {
     SystemInterface baselineGas = createTransmissionGas(0.95, 0.05);
@@ -461,15 +591,79 @@ public class OnePhasePipeLineCompositionalTest {
   }
 
   private static SystemInterface createTransmissionGas(double methaneMoleFraction, double nitrogenMoleFraction) {
+    return createTransmissionGas(methaneMoleFraction, nitrogenMoleFraction, 50.0);
+  }
+
+  private static SystemInterface createTransmissionGas(double methaneMoleFraction, double nitrogenMoleFraction,
+      double massFlowKgPerSecond) {
     SystemInterface gas = new SystemSrkEos(288.15, 70.0);
     gas.addComponent("methane", methaneMoleFraction);
     gas.addComponent("nitrogen", nitrogenMoleFraction);
     gas.createDatabase(true);
     gas.setMixingRule("classic");
-    gas.setTotalFlowRate(50.0, "kg/sec");
+    gas.setTotalFlowRate(massFlowKgPerSecond, "kg/sec");
     gas.init(0);
     gas.init(1);
     return gas;
+  }
+
+  private static OnePhasePipeLine runCoupledEvent(double timeStepSeconds) {
+    SystemInterface baselineGas = createTransmissionGas(0.95, 0.05, 50.0);
+    SystemInterface pulseGas = createTransmissionGas(0.80, 0.20, 60.0);
+    Stream inlet = new Stream("repeat coupled event inlet", baselineGas);
+    inlet.setFlowRate(50.0, "kg/sec");
+    inlet.run();
+
+    OnePhasePipeLine pipe = createTransmissionPipe(inlet);
+    pipe.setConservativeCompositionalTracking(true);
+    pipe.setStoreSpeciesConservationHistory(true);
+    pipe.setFailOnNonConvergence(true);
+    UUID id = UUID.randomUUID();
+    pipe.run(id);
+    int stepsPerThirtyMinutes = (int) Math.round(1800.0 / timeStepSeconds);
+    pipe.runConservativeTransient(new double[] { 0.0, 1800.0, 3600.0, 5400.0 },
+        new SystemInterface[] { pulseGas, baselineGas, baselineGas.clone() }, stepsPerThirtyMinutes, id);
+    return pipe;
+  }
+
+  private static void assertConservativeReport(OnePhaseSpeciesConservationReport report) {
+    assertTrue(report.isConverged(), report.getMessage());
+    assertTrue(report.getMaximumRelativeInventoryResidual() <= 1.0e-8, report.getMessage());
+    assertTrue(report.getMaximumThermodynamicMassFractionError() <= 1.0e-10, report.getMessage());
+    assertTrue(report.getMinimumMassFraction() >= 0.0, report.getMessage());
+    assertTrue(report.getMaximumMassFraction() <= 1.0, report.getMessage());
+    assertTrue(report.getMaximumMassFractionSumError() <= 1.0e-12, report.getMessage());
+  }
+
+  private static void assertPositiveFiniteState(OnePhasePipeLine pipe) {
+    for (double pressureBara : pipe.getPressureProfile("bara")) {
+      assertTrue(Double.isFinite(pressureBara) && pressureBara > 0.0);
+    }
+    for (double temperatureK : pipe.getTemperatureProfile("K")) {
+      assertTrue(Double.isFinite(temperatureK) && temperatureK > 0.0);
+    }
+    for (double velocityMetersPerSecond : pipe.getVelocityProfile()) {
+      assertTrue(Double.isFinite(velocityMetersPerSecond) && velocityMetersPerSecond > 0.0);
+    }
+    for (int node = 0; node < pipe.getPipe().getTotalNumberOfNodes(); node++) {
+      double densityKgPerCubicMeter = pipe.getPipe().getNode(node).getBulkSystem().getPhase(0).getDensity();
+      assertTrue(Double.isFinite(densityKgPerCubicMeter) && densityKgPerCubicMeter > 0.0);
+    }
+  }
+
+  private static void accumulate(double[] cumulative, double[] increment) {
+    for (int index = 0; index < cumulative.length; index++) {
+      cumulative[index] += increment[index];
+    }
+  }
+
+  private static double maximumAbsoluteDifference(double[] first, double[] second) {
+    assertEquals(first.length, second.length);
+    double maximum = 0.0;
+    for (int index = 0; index < first.length; index++) {
+      maximum = Math.max(maximum, Math.abs(first[index] - second[index]));
+    }
+    return maximum;
   }
 
   private static SystemInterface createKnownGasOilFluid() {

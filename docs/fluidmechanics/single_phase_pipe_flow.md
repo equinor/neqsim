@@ -366,9 +366,15 @@ String pythonReadyHistoryJson = pipeline.getSpeciesConservationHistory().toJson(
 
 `runConservativeTransient(...)` takes elapsed interval boundaries in seconds, one initialized
 single-gas-phase inlet system per interval, and a positive number of equal solver steps per
-interval. The authoritative component profiles and outlet accessor are mass fractions; the
-existing `getOutletMoleFraction(...)` remains explicitly molar. Python/JPype callers can pass
-`JArray(JDouble)` and `JArray(SystemInterface)` and read the same report/history objects directly.
+interval. Each interval system supplies both its composition and a strictly positive mass flow.
+For the conservative path, that scheduled mass rate is imposed at the authoritative finite-volume
+inlet face as $v_{in}=\dot m/(A\rho_{EOS})$, using the same inlet EOS density as the continuity
+matrix. A simultaneous composition/rate event therefore preserves the requested integrated inlet
+mass in each accepted-step report. Solver type `1` preserves the initialized temperature profile;
+this path does not yet solve a dynamic energy equation. The authoritative component profiles and
+outlet accessor are mass fractions; the existing `getOutletMoleFraction(...)` remains explicitly
+molar. Python/JPype callers can pass `JArray(JDouble)` and `JArray(SystemInterface)` and read the
+same report/history objects directly.
 `runTransient(dt, id)` also selects type `1` when conservative mode is enabled. When
 `setStoreSpeciesConservationHistory(true)` is enabled, it retains every internal accepted step from
 that call. Legacy `setCompositionalTracking(true)` still selects type `20` for compatibility and

@@ -290,16 +290,45 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
 
     for (int i = 0; i < this.getTimeSeries().getTime().length; i++) {
       // Apply inlet boundary conditions
-      getNode(0).setBulkSystem(this.getTimeSeries().getThermoSystem()[i]);
+      SystemInterface scheduledInletSystem = this.getTimeSeries().getThermoSystem()[i];
+      double scheduledInletMassFlowKgPerSecond = conservativeSpeciesTransportEnabled
+          ? scheduledInletSystem.getFlowRate("kg/sec")
+          : Double.NaN;
+      getNode(0).setBulkSystem(scheduledInletSystem);
+      if (conservativeSpeciesTransportEnabled) {
+        getNode(0).getBulkSystem().setTotalFlowRate(scheduledInletMassFlowKgPerSecond, "kg/sec");
+      }
       getNode(0).initFlowCalc();
-      getNode(0).setVelocityIn(getNode(0).getVelocity());
-      flowNode[0].setVelocityOut(this.flowNode[0].getVelocity());
+      if (conservativeSpeciesTransportEnabled) {
+        double inletDensity = getNode(0).getBulkSystem().getPhase(0).getDensity();
+        double inletArea = getNode(0).getGeometry().getArea();
+        if (!Double.isFinite(inletDensity) || inletDensity <= 0.0 || !Double.isFinite(inletArea) || inletArea <= 0.0) {
+          throw new IllegalStateException("Cannot impose conservative inlet mass flow with density " + inletDensity
+              + " kg/m3 and area " + inletArea + " m2.");
+        }
+        double inletVelocity = scheduledInletMassFlowKgPerSecond / (inletArea * inletDensity);
+        getNode(0).setVelocity(inletVelocity);
+        getNode(0).setVelocityIn(inletVelocity);
+        flowNode[0].setVelocityOut(inletVelocity);
+        if (getTotalNumberOfNodes() > 1) {
+          getNode(1).setVelocityIn(inletVelocity);
+        }
+      } else {
+        getNode(0).setVelocityIn(getNode(0).getVelocity());
+        flowNode[0].setVelocityOut(this.flowNode[0].getVelocity());
+      }
 
       // Apply outlet boundary conditions based on type
       applyOutletBoundaryCondition(i, outletNodeIndex);
 
       getSolver().setTimeStep(this.getTimeSeries().getTimeStep()[i]);
-      flowSolver.solveTDMA();
+      try {
+        flowSolver.solveTDMA();
+      } finally {
+        if (conservativeSpeciesTransportEnabled) {
+          scheduledInletSystem.setTotalFlowRate(scheduledInletMassFlowKgPerSecond, "kg/sec");
+        }
+      }
       if (speciesConservationHistoryBuilder != null) {
         speciesConservationHistoryBuilder.append(getTimeSeries().getTime(i), getSpeciesConservationReport());
       }
