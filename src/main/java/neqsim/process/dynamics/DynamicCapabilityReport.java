@@ -15,6 +15,7 @@ import neqsim.process.SimulationInterface;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
+import neqsim.process.processmodel.ModuleInterface;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 
@@ -49,14 +50,16 @@ public final class DynamicCapabilityReport implements Serializable {
     private static final long serialVersionUID = 1000L;
 
     private final String areaName;
+    private final String containerPath;
     private final String category;
     private final String name;
     private final String className;
     private final DynamicCapability capability;
     private final Boolean calculateSteadyState;
 
-    private Entry(String areaName, ProcessElementInterface element) {
+    private Entry(String areaName, String containerPath, ProcessElementInterface element) {
       this.areaName = areaName == null ? "" : areaName;
+      this.containerPath = containerPath == null ? "" : containerPath;
       this.category = categoryOf(element);
       this.name = element.getName() == null ? "" : element.getName();
       this.className = element.getClass().getName();
@@ -76,7 +79,16 @@ public final class DynamicCapabilityReport implements Serializable {
     }
 
     /**
-     * Element category: equipment, measurement, controller, or element.
+     * Nested module/container path, empty for an element registered directly in the audited process area.
+     *
+     * @return module path using {@code ::} separators
+     */
+    public String getContainerPath() {
+      return containerPath;
+    }
+
+    /**
+     * Element category: module, equipment, measurement, controller, or element.
      *
      * @return category string
      */
@@ -121,12 +133,13 @@ public final class DynamicCapabilityReport implements Serializable {
     }
 
     /**
-     * Area-qualified name suitable for diagnostics.
+     * Area- and module-qualified name suitable for diagnostics.
      *
-     * @return {@code area::name} for a model report, otherwise the element name
+     * @return {@code area::module::name} where applicable
      */
     public String getQualifiedName() {
-      return areaName.isEmpty() ? name : areaName + "::" + name;
+      String localName = containerPath.isEmpty() ? name : containerPath + "::" + name;
+      return areaName.isEmpty() ? localName : areaName + "::" + localName;
     }
 
     /**
@@ -144,14 +157,15 @@ public final class DynamicCapabilityReport implements Serializable {
      * <p>
      * An algebraic element is a valid participant in a transient flowsheet while it remains in algebraic mode. It is a
      * blocking configuration error only when its difference-equation mode is explicitly requested even though no
-     * audited dynamic implementation exists.
+     * audited dynamic implementation exists. A module is a composite container and is therefore not rejected merely
+     * because the container itself has no independent state; its nested contents are audited separately.
      * </p>
      *
-     * @return true for an explicitly unsupported capability or algebraic element forced into dynamic mode
+     * @return true for an explicitly unsupported capability or algebraic non-module element forced into dynamic mode
      */
     public boolean hasUnsupportedDynamicConfiguration() {
       return capability == DynamicCapability.UNSUPPORTED_DYNAMIC
-          || (capability == DynamicCapability.ALGEBRAIC && isDynamicModeRequested());
+          || (capability == DynamicCapability.ALGEBRAIC && isDynamicModeRequested() && !"module".equals(category));
     }
 
     /**
@@ -179,7 +193,7 @@ public final class DynamicCapabilityReport implements Serializable {
   }
 
   /**
-   * Builds a capability report for one process system.
+   * Builds a capability report for one process system, recursively including initialized process modules.
    *
    * @param process process system to audit
    * @return capability report
@@ -195,7 +209,7 @@ public final class DynamicCapabilityReport implements Serializable {
   }
 
   /**
-   * Builds a capability report for every process area in a model.
+   * Builds a capability report for every process area in a model, recursively including initialized process modules.
    *
    * @param model multi-area process model to audit
    * @return capability report with area-qualified entries
@@ -225,7 +239,7 @@ public final class DynamicCapabilityReport implements Serializable {
   }
 
   /**
-   * All audited entries in deterministic area/registration order.
+   * All audited entries in deterministic area/registration/module order.
    *
    * @return immutable list of entries
    */
@@ -287,6 +301,56 @@ public final class DynamicCapabilityReport implements Serializable {
   }
 
   /**
+   * Returns all issues that fail the opt-in strict transient preflight.
+   *
+   * <p>
+   * Strict preflight combines known unsupported runtime configurations with unaudited custom transient
+   * implementations. It deliberately does not reject audited dynamic equipment that remains in steady-state mode,
+   * because mixed algebraic/dynamic flowsheets are valid when that choice is intentional.
+   * </p>
+   *
+   * @return immutable list of strict-preflight issues
+   */
+  public List<String> getStrictPreflightIssues() {
+    List<String> issues = new ArrayList<String>();
+    issues.addAll(getBlockingIssues());
+    issues.addAll(getReviewItems());
+    return Collections.unmodifiableList(issues);
+  }
+
+  /**
+   * Whether the process/model passes the opt-in strict transient capability preflight.
+   *
+   * <p>
+   * A true result only means that no currently known unsupported configuration or unaudited custom transient
+   * implementation was found. It is not a quantitative validation, conformance, safety, or professional-readiness
+   * certificate.
+   * </p>
+   *
+   * @return true when {@link #getStrictPreflightIssues()} is empty
+   */
+  public boolean isStrictPreflightReady() {
+    return getStrictPreflightIssues().isEmpty();
+  }
+
+  /**
+   * Fail fast when the opt-in strict transient capability preflight contains issues.
+   *
+   * @throws IllegalStateException with all current strict-preflight diagnostics when the preflight fails
+   */
+  public void assertStrictTransientReady() {
+    List<String> issues = getStrictPreflightIssues();
+    if (issues.isEmpty()) {
+      return;
+    }
+    StringBuilder message = new StringBuilder("Strict transient capability preflight failed");
+    for (String issue : issues) {
+      message.append("; ").append(issue);
+    }
+    throw new IllegalStateException(message.toString());
+  }
+
+  /**
    * Returns audited dynamic elements that are currently configured to use their steady-state/algebraic path.
    *
    * <p>
@@ -335,11 +399,25 @@ public final class DynamicCapabilityReport implements Serializable {
   }
 
   private static void collectArea(String areaName, ProcessSystem process, List<Entry> target) {
-    Set<ProcessElementInterface> seen = Collections
+    Set<ProcessElementInterface> seenElements = Collections
         .newSetFromMap(new IdentityHashMap<ProcessElementInterface, Boolean>());
+    Set<ProcessSystem> seenProcesses = Collections.newSetFromMap(new IdentityHashMap<ProcessSystem, Boolean>());
+    collectProcess(areaName, "", process, target, seenElements, seenProcesses);
+  }
+
+  private static void collectProcess(String areaName, String containerPath, ProcessSystem process, List<Entry> target,
+      Set<ProcessElementInterface> seenElements, Set<ProcessSystem> seenProcesses) {
+    if (process == null || !seenProcesses.add(process)) {
+      return;
+    }
 
     for (ProcessElementInterface element : process.getAllElements()) {
-      addEntry(areaName, element, target, seen);
+      boolean added = addEntry(areaName, containerPath, element, target, seenElements);
+      if (added && element instanceof ModuleInterface) {
+        ModuleInterface module = (ModuleInterface) element;
+        String nestedPath = appendContainerPath(containerPath, element);
+        collectProcess(areaName, nestedPath, module.getOperations(), target, seenElements, seenProcesses);
+      }
     }
 
     for (ProcessEquipmentInterface equipment : process.getUnitOperations()) {
@@ -348,17 +426,26 @@ public final class DynamicCapabilityReport implements Serializable {
         continue;
       }
       for (ControllerDeviceInterface controller : controllers) {
-        addEntry(areaName, controller, target, seen);
+        addEntry(areaName, containerPath, controller, target, seenElements);
       }
     }
   }
 
-  private static void addEntry(String areaName, ProcessElementInterface element, List<Entry> target,
-      Set<ProcessElementInterface> seen) {
-    if (element == null || !seen.add(element)) {
-      return;
+  private static boolean addEntry(String areaName, String containerPath, ProcessElementInterface element,
+      List<Entry> target, Set<ProcessElementInterface> seenElements) {
+    if (element == null || !seenElements.add(element)) {
+      return false;
     }
-    target.add(new Entry(areaName, element));
+    target.add(new Entry(areaName, containerPath, element));
+    return true;
+  }
+
+  private static String appendContainerPath(String containerPath, ProcessElementInterface element) {
+    String name = element.getName();
+    if (name == null || name.trim().isEmpty()) {
+      name = element.getClass().getSimpleName();
+    }
+    return containerPath == null || containerPath.isEmpty() ? name : containerPath + "::" + name;
   }
 
   private static String categoryOf(ProcessElementInterface element) {
@@ -367,6 +454,9 @@ public final class DynamicCapabilityReport implements Serializable {
     }
     if (element instanceof MeasurementDeviceInterface) {
       return "measurement";
+    }
+    if (element instanceof ModuleInterface) {
+      return "module";
     }
     if (element instanceof ProcessEquipmentInterface) {
       return "equipment";
