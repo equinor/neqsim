@@ -387,7 +387,7 @@ double ratio = dpTF / dpBB;
 ### Two-Fluid Pipe with Virtual Mass Force
 
 ```java
-// Enable virtual mass force for improved slug dynamics and pressure surge prediction
+// Enable optional gas-liquid added-inertia coupling
 TwoFluidPipe pipe = new TwoFluidPipe("Pipeline", feedStream);
 pipe.setLength(5000);
 pipe.setDiameter(0.3);
@@ -395,11 +395,14 @@ pipe.setNumberOfSections(100);
 
 // Enable virtual mass force (Drew & Lahey 1987)
 pipe.getEquations().setEnableVirtualMassForce(true);
-pipe.getEquations().setVirtualMassCoefficient(0.5);  // Default for spheres
-pipe.getEquations().setTimestep(0.1);  // Required for dv/dt calculation
+pipe.getEquations().setVirtualMassCoefficient(0.5);  // Spherical-bubble value
 
 pipe.run();
 ```
+
+The coupling is algebraic and stage-pure: it uses the complete current RHS and retains no previous
+velocity or integration-stage history. Treat `0.5` as a closure assumption, not a general accuracy
+claim, and validate it for the intended flow regime and transient.
 
 ### Two-Fluid Pipe with Junction/Bend Losses
 

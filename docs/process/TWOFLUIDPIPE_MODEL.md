@@ -167,6 +167,32 @@ Separate momentum equations for each phase:
 | Wall friction | Pipe roughness-based (Colebrook/Blasius correlations) |
 | Interfacial friction | Flow-regime dependent correlations |
 
+#### Optional virtual-mass coupling
+
+`setEnableVirtualMassForce(true)` enables a local added-inertia coupling between gas and combined
+liquid momentum. After the complete uncoupled finite-volume right-hand side is assembled, the model
+computes
+
+$$
+K=C_{vm}\alpha_G\rho_L A,
+\qquad
+F_{vm,G}=\frac{-K(a_{G,0}-a_{L,0})}
+{1+K(1/m_G+1/m_L)},
+\qquad F_{vm,L}=-F_{vm,G}.
+$$
+
+Here $a_{k,0}=(d(m_kv_k)/dt-v_kdm_k/dt)/m_k$ is obtained from the current integration-stage
+state and its complete uncoupled rate. The operator retains no velocity history, so repeated RHS
+evaluations and rejected integrator stages cannot change a later evaluation. For gas-oil-water
+flow, the combined liquid correction is partitioned between oil and water by conservative liquid
+mass, preserving mixture momentum without creating oil-water transfer. Coupling tends continuously
+to zero when either phase inventory is absent.
+
+The default $C_{vm}=0.5$ is the spherical-bubble value. It is not a universal calibration for slug,
+churn, or annular flow, and enabling it does not establish accuracy parity with a commercial
+multiphase simulator. Validate the coefficient and transient response against applicable public or
+project data before engineering use.
+
 ### Energy Conservation
 
 | Feature | Description |
