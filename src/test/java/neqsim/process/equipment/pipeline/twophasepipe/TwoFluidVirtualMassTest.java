@@ -55,8 +55,7 @@ class TwoFluidVirtualMassTest {
 
     assertEquals(0.5116279069767442, rates[0][TwoFluidConservationEquations.IDX_GAS_MOMENTUM], 1.0e-12);
     assertEquals(5.488372093023256, rates[0][TwoFluidConservationEquations.IDX_OIL_MOMENTUM], 1.0e-12);
-    double gasAcceleration = rates[0][TwoFluidConservationEquations.IDX_GAS_MOMENTUM]
-        / section.getGasMassPerLength();
+    double gasAcceleration = rates[0][TwoFluidConservationEquations.IDX_GAS_MOMENTUM] / section.getGasMassPerLength();
     double liquidAcceleration = rates[0][TwoFluidConservationEquations.IDX_OIL_MOMENTUM]
         / section.getOilMassPerLength();
     assertEquals(4.767245737257357, gasAcceleration - liquidAcceleration, 1.0e-11);
@@ -204,21 +203,16 @@ class TwoFluidVirtualMassTest {
     return section;
   }
 
-  private double[][] accelerationRates(TwoFluidSection section, double gasAcceleration,
-      double liquidAcceleration) {
+  private double[][] accelerationRates(TwoFluidSection section, double gasAcceleration, double liquidAcceleration) {
     double[][] rates = new double[1][TwoFluidConservationEquations.NUM_EQUATIONS];
-    rates[0][TwoFluidConservationEquations.IDX_GAS_MOMENTUM] =
-        gasAcceleration * section.getGasMassPerLength();
-    rates[0][TwoFluidConservationEquations.IDX_OIL_MOMENTUM] =
-        liquidAcceleration * section.getOilMassPerLength();
-    rates[0][TwoFluidConservationEquations.IDX_WATER_MOMENTUM] =
-        liquidAcceleration * section.getWaterMassPerLength();
+    rates[0][TwoFluidConservationEquations.IDX_GAS_MOMENTUM] = gasAcceleration * section.getGasMassPerLength();
+    rates[0][TwoFluidConservationEquations.IDX_OIL_MOMENTUM] = liquidAcceleration * section.getOilMassPerLength();
+    rates[0][TwoFluidConservationEquations.IDX_WATER_MOMENTUM] = liquidAcceleration * section.getWaterMassPerLength();
     return rates;
   }
 
   private double relativeAcceleration(TwoFluidSection section, double[] rates) {
-    double gasAcceleration = rates[TwoFluidConservationEquations.IDX_GAS_MOMENTUM]
-        / section.getGasMassPerLength();
+    double gasAcceleration = rates[TwoFluidConservationEquations.IDX_GAS_MOMENTUM] / section.getGasMassPerLength();
     double liquidMass = section.getOilMassPerLength() + section.getWaterMassPerLength();
     double liquidAcceleration = (rates[TwoFluidConservationEquations.IDX_OIL_MOMENTUM]
         + rates[TwoFluidConservationEquations.IDX_WATER_MOMENTUM]) / liquidMass;
@@ -226,8 +220,7 @@ class TwoFluidVirtualMassTest {
   }
 
   private double totalMomentumRate(double[] rates) {
-    return rates[TwoFluidConservationEquations.IDX_GAS_MOMENTUM]
-        + rates[TwoFluidConservationEquations.IDX_OIL_MOMENTUM]
+    return rates[TwoFluidConservationEquations.IDX_GAS_MOMENTUM] + rates[TwoFluidConservationEquations.IDX_OIL_MOMENTUM]
         + rates[TwoFluidConservationEquations.IDX_WATER_MOMENTUM];
   }
 
