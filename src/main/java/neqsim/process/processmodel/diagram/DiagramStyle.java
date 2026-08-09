@@ -9,13 +9,13 @@ package neqsim.process.processmodel.diagram;
  * </p>
  *
  * <p>
- * Visual conventions are based on:
+ * Visual presets are inspired by:
  * </p>
  * <ul>
- * <li>ISO 10628 - Diagrams for the chemical and petrochemical industry</li>
- * <li>ANSI Y32.11 - Graphical Symbols for Process Flow Diagrams</li>
- * <li>Industry-standard simulator appearances (HYSYS, Aspen Plus, PRO/II)</li>
+ * <li>Common chemical-process diagram conventions</li>
+ * <li>Simulator appearances associated with HYSYS, Aspen Plus, and PRO/II</li>
  * </ul>
+ * These presets do not assert conformance with ISO 10628, ANSI standards, or vendor rendering specifications.
  *
  * <p>
  * Simulator-specific styling:
@@ -49,8 +49,8 @@ public enum DiagramStyle {
    * HYSYS-style clean process flow diagram.
    *
    * <p>
-   * AspenTech HYSYS uses a distinctive cyan/teal color scheme with clean professional appearance. Equipment is rendered
-   * as compact icons with names displayed below.
+   * AspenTech HYSYS uses a distinctive cyan/teal color scheme with a clean appearance. Equipment is rendered as compact
+   * icons with names displayed below.
    * </p>
    *
    * <p>

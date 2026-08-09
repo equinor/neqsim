@@ -31,10 +31,10 @@ import neqsim.process.processmodel.graph.ProcessNode;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Layout intelligence layer for generating professional oil &amp; gas PFDs.
+ * Layout intelligence layer for generating simulator-style oil &amp; gas PFDs.
  *
  * <p>
- * This class applies engineering layout rules to produce diagrams that follow industry conventions:
+ * This class applies deterministic layout rules based on common visualization conventions:
  * </p>
  * <ul>
  * <li><b>Gravity logic</b> - Gas flows upward, liquids flow downward</li>
