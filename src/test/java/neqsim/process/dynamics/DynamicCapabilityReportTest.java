@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
+import neqsim.process.equipment.adsorber.AdsorptionBed;
+import neqsim.process.equipment.battery.BatteryStorage;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.pipeline.OnePhasePipeLine;
@@ -88,6 +90,30 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
     assertEquals(1, report.getStrictPreflightIssues().size());
     IllegalStateException exception = assertThrows(IllegalStateException.class, report::assertStrictTransientReady);
     assertTrue(exception.getMessage().contains("custom"));
+  }
+
+  /** Stateful adsorption/power models stay review items until their #2911 step/conservation contracts are qualified. */
+  @Test
+  public void knownStatefulButUnauditedFamiliesRemainReviewItems() {
+    Stream feed = createFeed("adsorption feed");
+    AdsorptionBed bed = new AdsorptionBed("adsorption bed", feed);
+    BatteryStorage battery = new BatteryStorage("battery", 1000.0);
+
+    assertEquals(DynamicCapability.UNCLASSIFIED_DYNAMIC, bed.getDynamicCapability());
+    assertEquals(DynamicCapability.UNCLASSIFIED_DYNAMIC, battery.getDynamicCapability());
+
+    ProcessSystem process = new ProcessSystem("treatment and power");
+    process.add(feed);
+    process.add(bed);
+    process.add(battery);
+
+    DynamicCapabilityReport report = DynamicCapabilityReport.from(process);
+
+    assertEquals(2, report.getCapabilityCounts().get(DynamicCapability.UNCLASSIFIED_DYNAMIC).intValue());
+    assertEquals(2, report.getReviewItems().size());
+    assertFalse(report.isStrictPreflightReady());
+    assertTrue(containsDiagnostic(report.getReviewItems(), "adsorption bed"));
+    assertTrue(containsDiagnostic(report.getReviewItems(), "battery"));
   }
 
   /**
@@ -220,6 +246,15 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
   private static boolean hasQualifiedEntry(DynamicCapabilityReport report, String qualifiedName) {
     for (DynamicCapabilityReport.Entry entry : report.getEntries()) {
       if (qualifiedName.equals(entry.getQualifiedName())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean containsDiagnostic(java.util.List<String> diagnostics, String text) {
+    for (String diagnostic : diagnostics) {
+      if (diagnostic.contains(text)) {
         return true;
       }
     }
