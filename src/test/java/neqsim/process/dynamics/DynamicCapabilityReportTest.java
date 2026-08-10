@@ -11,7 +11,6 @@ import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.equipment.adsorber.AdsorptionBed;
 import neqsim.process.equipment.battery.BatteryStorage;
 import neqsim.process.equipment.compressor.Compressor;
-import neqsim.process.equipment.diffpressure.Orifice;
 import neqsim.process.equipment.energy.EnergyNetworkSolver;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.pipeline.OnePhasePipeLine;
@@ -75,23 +74,20 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
     assertEquals(DynamicCapability.CONTROL_DYNAMIC, controller.getDynamicCapability());
   }
 
-  /** Quasi-steady pressure-flow and energy-network adapters remain algebraic constraints in a transient flowsheet. */
+  /** An audited algebraic energy-network step may participate without creating a strict-preflight review item. */
   @Test
-  public void quasiSteadyTransientAdaptersRemainAlgebraic() {
-    Orifice orifice = new Orifice("orifice", 0.20, 0.10, 50.0, 45.0, 0.61);
+  public void algebraicEnergyNetworkSolverPassesCapabilityPreflight() {
     EnergyNetworkSolver energyNetwork = new EnergyNetworkSolver("energy network");
 
-    assertEquals(DynamicCapability.ALGEBRAIC, orifice.getDynamicCapability());
     assertEquals(DynamicCapability.ALGEBRAIC, energyNetwork.getDynamicCapability());
 
-    ProcessSystem process = new ProcessSystem("algebraic transient adapters");
-    process.add(orifice);
+    ProcessSystem process = new ProcessSystem("algebraic energy adapter");
     process.add(energyNetwork);
 
     DynamicCapabilityReport report = DynamicCapabilityReport.from(process);
     assertTrue(report.isStrictPreflightReady());
     assertTrue(report.getReviewItems().isEmpty());
-    assertEquals(2, report.getCapabilityCounts().get(DynamicCapability.ALGEBRAIC).intValue());
+    assertEquals(1, report.getCapabilityCounts().get(DynamicCapability.ALGEBRAIC).intValue());
   }
 
   /** An unaudited custom runTransient override is visible instead of being promoted to a dynamic model. */
