@@ -127,8 +127,8 @@ public class BDFIntegrator implements IntegratorStrategy {
    *
    * <p>
    * The default is {@code false}: non-convergence throws {@link IllegalStateException} so a physical-step coordinator
-   * can reject and restore the step. Enabling this switch is an explicit compatibility choice; the returned Euler
-   * state is marked by {@link #lastStepFellBack()} and {@link #lastStepConverged()} remains false.
+   * can reject and restore the step. Enabling this switch is an explicit compatibility choice; the returned Euler state
+   * is marked by {@link #lastStepFellBack()} and {@link #lastStepConverged()} remains false.
    * </p>
    *
    * @param enabled true to return an explicit-Euler compatibility step after BDF failure
@@ -209,8 +209,7 @@ public class BDFIntegrator implements IntegratorStrategy {
 
       double residualAfter = x - state - dt * slope.dxdt(tNext, x);
       lastResidual = Math.abs(residualAfter);
-      if (Math.abs(dx) < tolerance && Double.isFinite(lastResidual)
-          && lastResidual <= tolerance * residualScale) {
+      if (Math.abs(dx) < tolerance && Double.isFinite(lastResidual) && lastResidual <= tolerance * residualScale) {
         lastStepConverged = true;
         return x;
       }
@@ -221,7 +220,8 @@ public class BDFIntegrator implements IntegratorStrategy {
       logger.warn(
           "BDF-1 Newton did not converge at t={} s with dt={} s after {} iterations (|residual|={}); "
               + "using explicitly enabled Euler compatibility fallback",
-          Double.valueOf(time), Double.valueOf(dt), Integer.valueOf(lastNewtonIterations), Double.valueOf(lastResidual));
+          Double.valueOf(time), Double.valueOf(dt), Integer.valueOf(lastNewtonIterations),
+          Double.valueOf(lastResidual));
       return state + dt * slope.dxdt(time, state);
     }
 
