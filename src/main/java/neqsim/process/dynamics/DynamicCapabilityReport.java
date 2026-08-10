@@ -322,8 +322,8 @@ public final class DynamicCapabilityReport implements Serializable {
    * @return enum map containing every activation status, including zero-count categories
    */
   public Map<DynamicActivationStatus, Integer> getActivationCounts() {
-    Map<DynamicActivationStatus, Integer> counts =
-        new EnumMap<DynamicActivationStatus, Integer>(DynamicActivationStatus.class);
+    Map<DynamicActivationStatus, Integer> counts = new EnumMap<DynamicActivationStatus, Integer>(
+        DynamicActivationStatus.class);
     for (DynamicActivationStatus status : DynamicActivationStatus.values()) {
       counts.put(status, Integer.valueOf(0));
     }
@@ -496,8 +496,8 @@ public final class DynamicCapabilityReport implements Serializable {
   }
 
   private static void collectArea(String areaName, ProcessSystem process, List<Entry> target) {
-    Set<ProcessElementInterface> seenElements =
-        Collections.newSetFromMap(new IdentityHashMap<ProcessElementInterface, Boolean>());
+    Set<ProcessElementInterface> seenElements = Collections
+        .newSetFromMap(new IdentityHashMap<ProcessElementInterface, Boolean>());
     Set<ProcessSystem> seenProcesses = Collections.newSetFromMap(new IdentityHashMap<ProcessSystem, Boolean>());
     collectProcess(areaName, "", process, target, seenElements, seenProcesses);
   }
