@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.battery.BatteryStorage;
+import neqsim.process.equipment.expander.Expander;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
@@ -52,6 +54,47 @@ public class DynamicActivationReportTest extends neqsim.NeqSimTest {
     assertTrue(active.getInactiveAuditedDynamicElements().isEmpty());
     assertEquals(1, active.getActivationCounts().get(DynamicActivationStatus.ACTIVE).intValue());
     assertTrue(active.toJson().contains("\"activationStatus\": \"ACTIVE\""));
+  }
+
+  /** Battery state is always transient, while zero storage capacity is a blocking configuration error. */
+  @Test
+  public void batteryActivationDoesNotDependOnGenericSteadyStateFlag() {
+    BatteryStorage battery = new BatteryStorage("battery", 0.0);
+    ProcessSystem process = new ProcessSystem("electrical system");
+    process.add(battery);
+
+    DynamicCapabilityReport incomplete = DynamicCapabilityReport.from(process);
+    assertEquals(DynamicCapability.DYNAMIC_LUMPED, incomplete.getEntries().get(0).getCapability());
+    assertEquals(DynamicActivationStatus.INCOMPLETE_CONFIGURATION,
+        incomplete.getEntries().get(0).getActivationStatus());
+    assertTrue(incomplete.hasBlockingIssues());
+    assertTrue(incomplete.getBlockingIssues().get(0).contains("storage capacity"));
+
+    battery.setCapacity(1000.0);
+    DynamicCapabilityReport active = DynamicCapabilityReport.from(process);
+    assertEquals(DynamicActivationStatus.ACTIVE, active.getEntries().get(0).getActivationStatus());
+    assertFalse(active.hasBlockingIssues());
+    assertTrue(active.getEntries().get(0).getActivationDiagnostic().contains("independently of calculateSteadyState"));
+  }
+
+  /** Expander runtime activation follows the branch that integrates nozzle, power and rotor-speed state. */
+  @Test
+  public void expanderActivationTracksStatefulRuntimeBranch() {
+    Stream feed = createFeed("expander feed", 320.0);
+    Expander expander = new Expander("expander", feed);
+    ProcessSystem process = new ProcessSystem("power recovery");
+    process.add(expander);
+
+    DynamicCapabilityReport inactive = DynamicCapabilityReport.from(process);
+    assertEquals(DynamicCapability.DYNAMIC_LUMPED, inactive.getEntries().get(0).getCapability());
+    assertEquals(DynamicActivationStatus.INACTIVE, inactive.getEntries().get(0).getActivationStatus());
+    assertEquals(1, inactive.getInactiveAuditedDynamicElements().size());
+
+    expander.setCalculateSteadyState(false);
+    DynamicCapabilityReport active = DynamicCapabilityReport.from(process);
+    assertEquals(DynamicActivationStatus.ACTIVE, active.getEntries().get(0).getActivationStatus());
+    assertTrue(active.getInactiveAuditedDynamicElements().isEmpty());
+    assertFalse(active.hasBlockingIssues());
   }
 
   /**
