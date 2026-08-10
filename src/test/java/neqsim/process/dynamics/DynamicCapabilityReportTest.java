@@ -91,7 +91,9 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
     assertEquals(1, report.getCapabilityCounts().get(DynamicCapability.ALGEBRAIC).intValue());
   }
 
-  /** Known process-level execution defects are explicit strict-preflight blockers for ProcessSystem and ProcessModel. */
+  /**
+   * Known process-level execution defects are explicit strict-preflight blockers for ProcessSystem and ProcessModel.
+   */
   @Test
   public void unsafeExecutionModesAreExplicitStrictPreflightBlockers() {
     ProcessSystem parallel = new ProcessSystem("parallel area");
