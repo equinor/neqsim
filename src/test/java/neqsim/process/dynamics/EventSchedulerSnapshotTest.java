@@ -2,6 +2,10 @@ package neqsim.process.dynamics;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
@@ -86,6 +90,36 @@ public class EventSchedulerSnapshotTest extends neqsim.NeqSimTest {
 
     scheduler.fireDueEvents(3.0);
     assertEquals(Double.POSITIVE_INFINITY, scheduler.getNextEventTime(), 0.0);
+  }
+
+  /** Serializable actions make scheduler checkpoints usable across a Java checkpoint/restart boundary. */
+  @Test
+  public void snapshotRoundTripsThroughJavaSerialization() throws Exception {
+    EventScheduler scheduler = new EventScheduler();
+    scheduler.scheduleEvent(1.0, "first", new NoOpAction());
+    scheduler.scheduleEvent(2.0, "second", new NoOpAction());
+    scheduler.fireDueEvents(1.0);
+
+    EventScheduler.Snapshot original = scheduler.snapshot();
+    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    try (ObjectOutputStream out = new ObjectOutputStream(bytes)) {
+      out.writeObject(original);
+    }
+
+    EventScheduler.Snapshot restoredSnapshot;
+    try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+      restoredSnapshot = (EventScheduler.Snapshot) in.readObject();
+    }
+
+    EventScheduler restoredScheduler = new EventScheduler();
+    restoredScheduler.restore(restoredSnapshot);
+
+    assertEquals(1, restoredSnapshot.getPendingEventCount());
+    assertEquals(1, restoredSnapshot.getFiredEventCount());
+    assertEquals(1, restoredScheduler.getPendingEvents().size());
+    assertEquals("second", restoredScheduler.getPendingEvents().get(0).getLabel());
+    assertEquals(1, restoredScheduler.getFiredEvents().size());
+    assertEquals("first", restoredScheduler.getFiredEvents().get(0).getLabel());
   }
 
   /** Null state is rejected before existing scheduler bookkeeping can be changed. */
