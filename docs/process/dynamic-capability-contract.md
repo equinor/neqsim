@@ -75,6 +75,40 @@ Passing strict preflight only means that the capability audit found no known uns
 custom transient method. It does not establish conservation accuracy, timestep independence, pressure-flow correctness,
 control/safety fidelity, OTS real-time performance, or engineering approval.
 
+## Physical-step versus refinement identity
+
+A non-null calculation identifier supplied to `ProcessSystem.runTransient(dt, id)` or `ProcessModel.runTransient(dt, id)`
+identifies **one physical timestep**. Stateful equipment and controllers use that identifier to prevent repeated
+algebraic/nonlinear evaluations inside the same physical timestep from advancing clocks, controller integrals or other
+mutable state more than once. Therefore:
+
+- repeated evaluations/refinements inside physical step A reuse physical-step ID A;
+- the next physical timestep uses a different physical-step ID B;
+- a fixed UUID must not be reused across an outer time-marching loop;
+- `runTransient(dt)` is safe for ordinary loops because it creates a fresh UUID for each call;
+- deterministic safety/OTS/replay workflows can use `TransientStepIdentifier.deterministicPhysicalStep(scope, index)`.
+
+```java
+import neqsim.process.dynamics.TransientStepIdentifier;
+
+for (long step = 0; step < 600; step++) {
+  java.util.UUID physicalStepId =
+      TransientStepIdentifier.deterministicPhysicalStep("startup-case-A", step);
+  process.runTransient(1.0, physicalStepId);
+}
+```
+
+Do **not** create one UUID before the loop and pass it to every timestep. That pattern can suppress later controller
+updates because built-in controller execution is idempotent for one physical-step identifier.
+
+`TransientStepIdentifier.deterministicEvaluation(physicalStepId, evaluationIndex)` provides a separate deterministic
+identity for nonlinear/refinement diagnostics. It is metadata for residual histories and solver bookkeeping; it must not
+replace the parent physical-step ID in equipment/controller `runTransient` calls. This preserves the A/refine-A/B
+contract: refinements share A for state idempotency while their diagnostic evaluations can still be distinguished.
+
+`DynamicSafetyScenarioRunner` uses deterministic physical-step identifiers derived from scenario ID and step index so a
+replayed scenario is reproducible without freezing controllers after its first timestep.
+
 ## Inspect a ProcessModel
 
 ```java
