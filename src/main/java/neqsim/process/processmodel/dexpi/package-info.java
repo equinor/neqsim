@@ -14,6 +14,9 @@
  * <li>{@link neqsim.process.processmodel.dexpi.DexpiStream} - Runnable stream with DEXPI metadata</li>
  * <li>{@link neqsim.process.processmodel.dexpi.DexpiMetadata} - Shared constants for DEXPI exchanges</li>
  * <li>{@link neqsim.process.processmodel.dexpi.DexpiRoundTripProfile} - Validation for round-trip fidelity</li>
+ * <li>{@link neqsim.process.processmodel.dexpi.Dexpi20ProcessModelWriter} - Native DEXPI 2.0 Process exchange</li>
+ * <li>{@link neqsim.process.processmodel.dexpi.Dexpi20ProcessTopologyAssessment} - Canonical material-topology and
+ * structured scope evidence for native Process exchange</li>
  * </ul>
  *
  * <h2>Usage Example</h2>

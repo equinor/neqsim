@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import neqsim.process.engineering.model.EngineeringGraph;
 import neqsim.process.engineering.model.EngineeringNode;
-import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.separator.Separator;
@@ -37,17 +36,20 @@ class ProcessDiagramTopologyEquivalenceTest {
 
   @Test
   void simpleTrainHasEquivalentCanonicalAndDotTopology(@TempDir Path tempDir) throws IOException {
-    Stream feed = createFeed("feed");
-    Heater heater = new Heater("heater", feed);
-    Cooler cooler = new Cooler("cooler", heater.getOutletStream());
-    ProcessSystem process = new ProcessSystem("simple train");
-    process.add(feed);
-    process.add(heater);
-    process.add(cooler);
+    ProcessDiagramGoldenFixtures.Fixture fixture = ProcessDiagramGoldenFixtures.simpleTrain();
+    List<String> expected = withRecycleFlag(fixture.getMaterialConnections(), false);
 
-    List<String> expected = sorted("feed->heater|false", "heater->cooler|false");
+    assertSystemTopology(expected, expected, fixture.getProcessSystem(), "GOLDEN-SIMPLE",
+        tempDir.resolve("simple.dot"));
+  }
 
-    assertSystemTopology(expected, expected, process, "GOLDEN-SIMPLE", tempDir.resolve("simple.dot"));
+  @Test
+  void parallelBranchManifestPreservesConnectionMultiplicity(@TempDir Path tempDir) throws IOException {
+    ProcessDiagramGoldenFixtures.Fixture fixture = ProcessDiagramGoldenFixtures.parallelBranchTrain();
+    List<String> expected = withRecycleFlag(fixture.getMaterialConnections(), false);
+
+    assertSystemTopology(expected, expected, fixture.getProcessSystem(), "GOLDEN-BRANCH",
+        tempDir.resolve("parallel-branch.dot"));
   }
 
   @Test
@@ -203,6 +205,15 @@ class ProcessDiagramTopologyEquivalenceTest {
 
   private static List<String> sorted(String... values) {
     List<String> result = new ArrayList<String>(Arrays.asList(values));
+    Collections.sort(result);
+    return result;
+  }
+
+  private static List<String> withRecycleFlag(List<String> connections, boolean recycle) {
+    List<String> result = new ArrayList<String>();
+    for (String connection : connections) {
+      result.add(connection + "|" + recycle);
+    }
     Collections.sort(result);
     return result;
   }
