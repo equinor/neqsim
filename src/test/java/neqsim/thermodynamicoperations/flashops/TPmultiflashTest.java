@@ -266,9 +266,9 @@ class TPmultiflashTest {
     assertTrue(Double.isFinite(correction.get(1, 0)));
   }
 
-  /** Verifies the beta objective reuses current inverse fugacity coefficients without changing its equations. */
+  /** Verifies the beta objective reuses current fugacity coefficients without changing its equations. */
   @Test
-  void testCalcQRefreshesInverseFugacityCoefficientCache() {
+  void testCalcQRefreshesFugacityCoefficientCache() {
     SystemInterface system = createMethaneHeptanePrSystem(0.0, false);
     system.setTemperature(250.0, "K");
     system.setPressure(30.0, "bara");
@@ -313,7 +313,7 @@ class TPmultiflashTest {
         double fugacityCoefficient = system.getPhase(phase).getComponent(component).getFugacityCoefficient();
         expectedGradient -= feedFraction / denominator[component] / fugacityCoefficient;
       }
-      assertEquals(expectedGradient, operation.dQdbeta[phase][0], 1.0e-14);
+      assertEquals(expectedGradient, operation.dQdbeta[phase][0]);
 
       for (int otherPhase = 0; otherPhase < numberOfPhases; otherPhase++) {
         double expectedHessian = 0.0;
@@ -322,13 +322,13 @@ class TPmultiflashTest {
           double phaseFugacityCoefficient = system.getPhase(phase).getComponent(component).getFugacityCoefficient();
           double otherPhaseFugacityCoefficient = system.getPhase(otherPhase).getComponent(component)
               .getFugacityCoefficient();
-          expectedHessian += feedFraction / (denominator[component] * denominator[component]) / phaseFugacityCoefficient
-              / otherPhaseFugacityCoefficient;
+          double feedOverDenominatorSquared = feedFraction / (denominator[component] * denominator[component]);
+          expectedHessian += feedOverDenominatorSquared / (otherPhaseFugacityCoefficient * phaseFugacityCoefficient);
         }
         if (phase == otherPhase) {
           expectedHessian += 1.0e-3;
         }
-        assertEquals(expectedHessian, operation.Qmatrix[phase][otherPhase], 1.0e-14);
+        assertEquals(expectedHessian, operation.Qmatrix[phase][otherPhase]);
       }
     }
   }
