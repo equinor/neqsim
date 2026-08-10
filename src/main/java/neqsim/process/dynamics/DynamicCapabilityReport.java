@@ -440,8 +440,8 @@ public final class DynamicCapabilityReport implements Serializable {
    *
    * <p>
    * A true result only means that no currently known unsupported configuration, incomplete audited activation,
-   * unqualified process execution mode, or unaudited custom transient implementation was found. It is not a quantitative
-   * validation, conformance, safety, or professional-readiness certificate.
+   * unqualified process execution mode, or unaudited custom transient implementation was found. It is not a
+   * quantitative validation, conformance, safety, or professional-readiness certificate.
    * </p>
    *
    * @return true when {@link #getStrictPreflightIssues()} is empty
