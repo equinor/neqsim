@@ -2807,7 +2807,9 @@ public class ProcessModel implements Runnable, Serializable {
     double maxFlowErr = 0.0;
     double maxTempErr = 0.0;
     double maxPressErr = 0.0;
-    List<BoundaryStreamError> streamErrors = new ArrayList<>();
+    int expectedStreamErrors = lastBoundaryStreamErrors == null ? 0
+        : Math.min(current.size(), lastBoundaryStreamErrors.size());
+    List<BoundaryStreamError> streamErrors = new ArrayList<>(expectedStreamErrors);
 
     for (Object key : current.keySet()) {
       if (previous.containsKey(key)) {
