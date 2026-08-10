@@ -5,6 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -508,6 +512,153 @@ class ProcessModelSimulationEvaluatorTest {
     assertEquals(2000.0, gradient[0], 1.0e-8);
     assertEquals(2020.0, nearbyGradient[0], 1.0e-8);
     assertEquals(6, evaluator.getEvaluationCount(), "each central gradient should use base, upper, and lower cases");
+  }
+
+  /** Verifies step-halving evidence and the improved fine-step derivative on a smooth analytical case. */
+  @Test
+  void sensitivityQualityReportsCentralStepConsistency() throws Exception {
+    ModelFixture fixture = createModelFixture();
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
+    evaluator.addParameter("wells::feed.flowRate", 500.0, 1500.0, "kg/hr");
+    evaluator.addObjective("cubic feed objective", model -> {
+      double flow = fixture.feed.getFlowRate("kg/hr");
+      return flow * flow * flow;
+    });
+    evaluator.setUseRelativeStep(false);
+    evaluator.setFiniteDifferenceStep(100.0);
+    evaluator.setFiniteDifferenceMethod(ProcessModelSimulationEvaluator.FiniteDifferenceMethod.CENTRAL);
+
+    ProcessModelSimulationEvaluator.SensitivityQualityResult result = evaluator
+        .estimateSensitivitiesWithQuality(new double[] { 1000.0 });
+    ProcessModelSimulationEvaluator.ParameterSensitivityQuality quality = result.getParameterQuality().get(0);
+
+    double analyticalDerivative = 3.0 * 1000.0 * 1000.0;
+    assertEquals(3002500.0, result.getObjectiveGradient()[0], 1.0e-8);
+    assertTrue(
+        Math.abs(result.getObjectiveGradient()[0] - analyticalDerivative) < Math.abs(3010000.0 - analyticalDerivative),
+        "halving must improve this smooth analytical case");
+    assertEquals(ProcessModelSimulationEvaluator.AppliedFiniteDifferenceStencil.CENTRAL, quality.getStencil());
+    assertEquals(100.0, quality.getRequestedStep(), 0.0);
+    assertEquals(100.0, quality.getCoarseStep(), 0.0);
+    assertEquals(50.0, quality.getFineStep(), 0.0);
+    assertEquals(0.002491694352160703, quality.getObjectiveRelativeDisagreement(), 1.0e-12);
+    assertEquals(quality.getObjectiveRelativeDisagreement(), quality.getMaximumRelativeDisagreement(), 0.0);
+    assertEquals(4, quality.getPerturbations().size());
+    assertTrue(quality.isAllEvaluationsConverged());
+    assertTrue(quality.isAllEvaluationsFeasible());
+    assertTrue(quality.isNumericallyStable(0.003));
+    assertFalse(quality.isNumericallyStable(0.002));
+    assertThrows(IllegalArgumentException.class, () -> quality.isNumericallyStable(Double.NaN));
+    assertEquals(5, evaluator.getEvaluationCount(), "base plus coarse/fine evaluations on both sides");
+
+    ProcessModelSimulationEvaluator.SensitivityQualityResult nearby = evaluator
+        .estimateSensitivitiesWithQuality(new double[] { 1010.0 });
+    ProcessModelSimulationEvaluator.SensitivityQualityResult nearbyRepeat = evaluator
+        .estimateSensitivitiesWithQuality(new double[] { 1010.0 });
+    assertEquals(3062800.0, nearby.getObjectiveGradient()[0], 1.0e-8);
+    assertEquals(nearby.getObjectiveGradient()[0], nearbyRepeat.getObjectiveGradient()[0], 0.0);
+    assertEquals(nearby.getParameterQuality().get(0).getMaximumRelativeDisagreement(),
+        nearbyRepeat.getParameterQuality().get(0).getMaximumRelativeDisagreement(), 1.0e-12);
+    assertEquals(15, evaluator.getEvaluationCount());
+
+    double[] defensiveGradient = result.getObjectiveGradient();
+    defensiveGradient[0] = 0.0;
+    assertEquals(3002500.0, result.getObjectiveGradient()[0], 1.0e-8);
+    assertThrows(UnsupportedOperationException.class, () -> result.getParameterQuality().clear());
+    assertThrows(UnsupportedOperationException.class, () -> quality.getPerturbations().clear());
+
+    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    ObjectOutputStream output = new ObjectOutputStream(bytes);
+    output.writeObject(result);
+    output.close();
+    ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()));
+    ProcessModelSimulationEvaluator.SensitivityQualityResult restored = (ProcessModelSimulationEvaluator.SensitivityQualityResult) input
+        .readObject();
+    input.close();
+    assertEquals(result.getObjectiveGradient()[0], restored.getObjectiveGradient()[0], 0.0);
+    assertEquals(result.getParameterQuality().get(0).getPerturbations().size(),
+        restored.getParameterQuality().get(0).getPerturbations().size());
+  }
+
+  /** Verifies bound-active quality evidence uses the actual backward steps for all derivatives. */
+  @Test
+  void sensitivityQualityReportsBoundedBackwardStencil() {
+    ModelFixture fixture = createModelFixture();
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
+    evaluator.addParameter("wells::feed.flowRate", 9999.995, 10000.0, "kg/hr");
+    evaluator.addObjective("feed flow", model -> fixture.feed.getFlowRate("kg/hr"));
+    evaluator.addConstraintUpperBound("feed limit", model -> fixture.feed.getFlowRate("kg/hr"), 11000.0);
+    evaluator.setUseRelativeStep(false);
+    evaluator.setFiniteDifferenceStep(10.0);
+
+    ProcessModelSimulationEvaluator.SensitivityQualityResult result = evaluator
+        .estimateSensitivitiesWithQuality(new double[] { 10000.0 });
+    ProcessModelSimulationEvaluator.ParameterSensitivityQuality quality = result.getParameterQuality().get(0);
+
+    assertEquals(1.0, result.getObjectiveGradient()[0], 1.0e-8);
+    assertEquals(-1.0, result.getConstraintJacobian()[0][0], 1.0e-8);
+    assertEquals(ProcessModelSimulationEvaluator.AppliedFiniteDifferenceStencil.BACKWARD, quality.getStencil());
+    assertEquals(0.005, quality.getCoarseStep(), 1.0e-9);
+    assertEquals(0.0025, quality.getFineStep(), 1.0e-9);
+    assertEquals(2, quality.getPerturbations().size());
+    assertTrue(quality.getPerturbations().get(0).getSignedStep() < 0.0);
+    assertTrue(quality.getPerturbations().get(1).getSignedStep() < 0.0);
+    assertTrue(quality.isNumericallyStable(1.0e-8));
+    assertTrue(result.isBaseSimulationConverged());
+    assertTrue(result.isBaseFeasible());
+  }
+
+  /** Verifies a fixed parameter has zero derivatives without unnecessary perturbation runs. */
+  @Test
+  void sensitivityQualityReportsFixedParameter() {
+    ModelFixture fixture = createModelFixture();
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
+    evaluator.addParameter("wells::feed.flowRate", 10000.0, 10000.0, "kg/hr");
+    evaluator.addObjective("feed flow", model -> fixture.feed.getFlowRate("kg/hr"));
+    evaluator.addConstraintUpperBound("feed limit", model -> fixture.feed.getFlowRate("kg/hr"), 11000.0);
+
+    ProcessModelSimulationEvaluator.SensitivityQualityResult result = evaluator
+        .estimateSensitivitiesWithQuality(new double[] { 10000.0 });
+    ProcessModelSimulationEvaluator.ParameterSensitivityQuality quality = result.getParameterQuality().get(0);
+
+    assertEquals(0.0, result.getObjectiveGradient()[0], 0.0);
+    assertEquals(0.0, result.getConstraintJacobian()[0][0], 0.0);
+    assertEquals(ProcessModelSimulationEvaluator.AppliedFiniteDifferenceStencil.FIXED, quality.getStencil());
+    assertEquals(0.0, quality.getCoarseStep(), 0.0);
+    assertEquals(0.0, quality.getFineStep(), 0.0);
+    assertTrue(quality.getPerturbations().isEmpty());
+    assertTrue(quality.isNumericallyStable(0.0));
+    assertEquals(1, evaluator.getEvaluationCount());
+  }
+
+  /** Verifies failed perturbations produce explicit incomplete evidence instead of a trusted derivative. */
+  @Test
+  void sensitivityQualityRetainsPerturbationFailure() {
+    ModelFixture fixture = createModelFixture();
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
+    evaluator.addParameter("wells::feed.flowRate", 500.0, 1500.0, "kg/hr");
+    evaluator.addObjective("limited objective", model -> {
+      double flow = fixture.feed.getFlowRate("kg/hr");
+      if (flow >= 1050.0) {
+        throw new IllegalStateException("synthetic objective validity limit");
+      }
+      return flow;
+    });
+    evaluator.setUseRelativeStep(false);
+    evaluator.setFiniteDifferenceStep(100.0);
+    evaluator.setFiniteDifferenceMethod(ProcessModelSimulationEvaluator.FiniteDifferenceMethod.CENTRAL);
+
+    ProcessModelSimulationEvaluator.SensitivityQualityResult result = evaluator
+        .estimateSensitivitiesWithQuality(new double[] { 1000.0 });
+    ProcessModelSimulationEvaluator.ParameterSensitivityQuality quality = result.getParameterQuality().get(0);
+
+    assertTrue(Double.isNaN(result.getObjectiveGradient()[0]));
+    assertFalse(quality.isAllEvaluationsConverged());
+    assertFalse(quality.isAllEvaluationsFeasible());
+    assertTrue(Double.isNaN(quality.getMaximumRelativeDisagreement()));
+    assertFalse(quality.isNumericallyStable(1.0));
+    assertEquals("synthetic objective validity limit", quality.getPerturbations().get(0).getErrorMessage());
+    assertFalse(quality.getPerturbations().get(0).isSimulationConverged());
   }
 
   /** Verifies invalid finite-difference configuration fails before a process evaluation. */

@@ -56,6 +56,440 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     CENTRAL
   }
 
+  /** Actual bounded stencil used for one decision variable. */
+  public enum AppliedFiniteDifferenceStencil {
+    /** Positive one-sided perturbations. */
+    FORWARD,
+    /** Negative one-sided perturbations. */
+    BACKWARD,
+    /** Symmetric positive and negative perturbations. */
+    CENTRAL,
+    /** No feasible perturbation because the parameter is fixed. */
+    FIXED
+  }
+
+  /** Immutable evidence from one finite-difference perturbation. */
+  public static final class SensitivityPerturbation implements Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1L;
+
+    /** Signed parameter displacement from the bounded base point. */
+    private final double signedStep;
+
+    /** Actual perturbed parameter value. */
+    private final double parameterValue;
+
+    /** Whether the perturbed process simulation converged. */
+    private final boolean simulationConverged;
+
+    /** Whether the perturbed point satisfied the registered hard constraints. */
+    private final boolean feasible;
+
+    /** Evaluation error message, or null when none was reported. */
+    private final String errorMessage;
+
+    /**
+     * Creates immutable perturbation evidence.
+     *
+     * @param signedStep signed displacement from the base point
+     * @param parameterValue actual perturbed parameter value
+     * @param result process evaluation result
+     */
+    private SensitivityPerturbation(double signedStep, double parameterValue, EvaluationResult result) {
+      this.signedStep = signedStep;
+      this.parameterValue = parameterValue;
+      this.simulationConverged = result.isSimulationConverged();
+      this.feasible = result.isFeasible();
+      this.errorMessage = result.getErrorMessage();
+    }
+
+    /**
+     * Gets the signed parameter displacement.
+     *
+     * @return signed step in the parameter unit
+     */
+    public double getSignedStep() {
+      return signedStep;
+    }
+
+    /**
+     * Gets the actual perturbed parameter value.
+     *
+     * @return parameter value in the parameter unit
+     */
+    public double getParameterValue() {
+      return parameterValue;
+    }
+
+    /**
+     * Checks convergence of the perturbed process simulation.
+     *
+     * @return true when the process model converged
+     */
+    public boolean isSimulationConverged() {
+      return simulationConverged;
+    }
+
+    /**
+     * Checks registered hard-constraint feasibility at the perturbation.
+     *
+     * @return true when the perturbed point was feasible
+     */
+    public boolean isFeasible() {
+      return feasible;
+    }
+
+    /**
+     * Gets the evaluation error message.
+     *
+     * @return error message, or null when none was reported
+     */
+    public String getErrorMessage() {
+      return errorMessage;
+    }
+  }
+
+  /** Immutable step-halving quality evidence for one decision variable. */
+  public static final class ParameterSensitivityQuality implements Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1L;
+
+    /** Decision-variable name. */
+    private final String parameterName;
+
+    /** Decision-variable unit. */
+    private final String parameterUnit;
+
+    /** Actual bounded stencil. */
+    private final AppliedFiniteDifferenceStencil stencil;
+
+    /** Requested finite-difference step before applying bounds. */
+    private final double requestedStep;
+
+    /** Actual coarse step magnitude. */
+    private final double coarseStep;
+
+    /** Actual fine step magnitude after halving. */
+    private final double fineStep;
+
+    /** Relative disagreement between coarse and fine objective derivatives. */
+    private final double objectiveRelativeDisagreement;
+
+    /** Relative disagreement for every constraint-margin derivative. */
+    private final double[] constraintRelativeDisagreement;
+
+    /** Largest finite relative disagreement across objective and constraint derivatives. */
+    private final double maximumRelativeDisagreement;
+
+    /** Whether the base and every perturbation converged. */
+    private final boolean allEvaluationsConverged;
+
+    /** Whether the base and every perturbation satisfied registered hard constraints. */
+    private final boolean allEvaluationsFeasible;
+
+    /** Immutable perturbation evidence in evaluation order. */
+    private final List<SensitivityPerturbation> perturbations;
+
+    /**
+     * Creates immutable parameter-level sensitivity evidence.
+     *
+     * @param parameter parameter definition
+     * @param stencil actual bounded stencil
+     * @param requestedStep requested step
+     * @param coarseStep actual coarse step
+     * @param fineStep actual fine step
+     * @param objectiveRelativeDisagreement objective derivative disagreement
+     * @param constraintRelativeDisagreement constraint derivative disagreements
+     * @param baseResult base process evaluation
+     * @param perturbations perturbation evidence
+     */
+    private ParameterSensitivityQuality(ParameterDefinition parameter, AppliedFiniteDifferenceStencil stencil,
+        double requestedStep, double coarseStep, double fineStep, double objectiveRelativeDisagreement,
+        double[] constraintRelativeDisagreement, EvaluationResult baseResult,
+        List<SensitivityPerturbation> perturbations) {
+      this.parameterName = parameter.getName();
+      this.parameterUnit = parameter.getUnit();
+      this.stencil = stencil;
+      this.requestedStep = requestedStep;
+      this.coarseStep = coarseStep;
+      this.fineStep = fineStep;
+      this.objectiveRelativeDisagreement = objectiveRelativeDisagreement;
+      this.constraintRelativeDisagreement = Arrays.copyOf(constraintRelativeDisagreement,
+          constraintRelativeDisagreement.length);
+      this.maximumRelativeDisagreement = maximumFiniteDisagreement(objectiveRelativeDisagreement,
+          constraintRelativeDisagreement);
+      boolean converged = baseResult.isSimulationConverged();
+      boolean feasible = baseResult.isFeasible();
+      for (SensitivityPerturbation perturbation : perturbations) {
+        converged = converged && perturbation.isSimulationConverged();
+        feasible = feasible && perturbation.isFeasible();
+      }
+      this.allEvaluationsConverged = converged;
+      this.allEvaluationsFeasible = feasible;
+      this.perturbations = Collections.unmodifiableList(new ArrayList<SensitivityPerturbation>(perturbations));
+    }
+
+    /**
+     * Gets the decision-variable name.
+     *
+     * @return parameter name
+     */
+    public String getParameterName() {
+      return parameterName;
+    }
+
+    /**
+     * Gets the decision-variable unit.
+     *
+     * @return parameter unit, or null when unspecified
+     */
+    public String getParameterUnit() {
+      return parameterUnit;
+    }
+
+    /**
+     * Gets the actual bounded stencil.
+     *
+     * @return applied stencil
+     */
+    public AppliedFiniteDifferenceStencil getStencil() {
+      return stencil;
+    }
+
+    /**
+     * Gets the requested step before applying decision-variable bounds.
+     *
+     * @return requested step magnitude in the parameter unit
+     */
+    public double getRequestedStep() {
+      return requestedStep;
+    }
+
+    /**
+     * Gets the actual coarse step.
+     *
+     * @return coarse step magnitude in the parameter unit
+     */
+    public double getCoarseStep() {
+      return coarseStep;
+    }
+
+    /**
+     * Gets the actual fine step.
+     *
+     * @return fine step magnitude in the parameter unit
+     */
+    public double getFineStep() {
+      return fineStep;
+    }
+
+    /**
+     * Gets the objective derivative's scale-independent coarse/fine disagreement.
+     *
+     * @return relative disagreement, or NaN when either derivative is non-finite
+     */
+    public double getObjectiveRelativeDisagreement() {
+      return objectiveRelativeDisagreement;
+    }
+
+    /**
+     * Gets coarse/fine disagreements for the constraint-margin derivatives.
+     *
+     * @return defensive array ordered like the registered constraints
+     */
+    public double[] getConstraintRelativeDisagreement() {
+      return Arrays.copyOf(constraintRelativeDisagreement, constraintRelativeDisagreement.length);
+    }
+
+    /**
+     * Gets the largest relative disagreement.
+     *
+     * @return maximum disagreement, or NaN when any derivative comparison is non-finite
+     */
+    public double getMaximumRelativeDisagreement() {
+      return maximumRelativeDisagreement;
+    }
+
+    /**
+     * Checks whether the base and every perturbation converged.
+     *
+     * @return true when all process evaluations converged
+     */
+    public boolean isAllEvaluationsConverged() {
+      return allEvaluationsConverged;
+    }
+
+    /**
+     * Checks whether the base and every perturbation satisfied hard constraints.
+     *
+     * <p>
+     * An infeasible perturbation does not by itself make a finite-difference derivative numerically invalid. It is
+     * retained as explicit engineering evidence for callers that require sensitivities wholly inside the feasible
+     * process region.
+     * </p>
+     *
+     * @return true when all evaluations were feasible
+     */
+    public boolean isAllEvaluationsFeasible() {
+      return allEvaluationsFeasible;
+    }
+
+    /**
+     * Gets immutable perturbation evidence.
+     *
+     * @return perturbations in evaluation order
+     */
+    public List<SensitivityPerturbation> getPerturbations() {
+      return perturbations;
+    }
+
+    /**
+     * Checks step-halving consistency against a caller-selected tolerance.
+     *
+     * <p>
+     * This is a numerical consistency check, not a physical-validity or shadow-price certificate. Feasibility is
+     * reported separately by {@link #isAllEvaluationsFeasible()}.
+     * </p>
+     *
+     * @param relativeTolerance finite non-negative maximum relative disagreement
+     * @return true when all evaluations converged and every derivative comparison is within tolerance
+     */
+    public boolean isNumericallyStable(double relativeTolerance) {
+      if (!Double.isFinite(relativeTolerance) || relativeTolerance < 0.0) {
+        throw new IllegalArgumentException("Relative tolerance must be finite and non-negative");
+      }
+      return allEvaluationsConverged && Double.isFinite(maximumRelativeDisagreement)
+          && maximumRelativeDisagreement <= relativeTolerance;
+    }
+
+    /** Returns the largest disagreement, preserving non-finite comparisons as incomplete evidence. */
+    private static double maximumFiniteDisagreement(double objectiveDisagreement, double[] constraintDisagreements) {
+      if (!Double.isFinite(objectiveDisagreement)) {
+        return Double.NaN;
+      }
+      double maximum = objectiveDisagreement;
+      for (double disagreement : constraintDisagreements) {
+        if (!Double.isFinite(disagreement)) {
+          return Double.NaN;
+        }
+        maximum = Math.max(maximum, disagreement);
+      }
+      return maximum;
+    }
+  }
+
+  /** Immutable primary-objective gradient, constraint Jacobian, and quality evidence. */
+  public static final class SensitivityQualityResult implements Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1L;
+
+    /** Objective index represented by the gradient. */
+    private final int objectiveIndex;
+
+    /** Fine-step objective gradient. */
+    private final double[] objectiveGradient;
+
+    /** Fine-step constraint-margin Jacobian. */
+    private final double[][] constraintJacobian;
+
+    /** Immutable parameter-level quality records. */
+    private final List<ParameterSensitivityQuality> parameterQuality;
+
+    /** Base-point convergence flag. */
+    private final boolean baseSimulationConverged;
+
+    /** Base-point feasibility flag. */
+    private final boolean baseFeasible;
+
+    /** Base-point evaluation error, or null. */
+    private final String baseErrorMessage;
+
+    /** Creates an immutable sensitivity result. */
+    private SensitivityQualityResult(int objectiveIndex, double[] objectiveGradient, double[][] constraintJacobian,
+        List<ParameterSensitivityQuality> parameterQuality, EvaluationResult baseResult) {
+      this.objectiveIndex = objectiveIndex;
+      this.objectiveGradient = Arrays.copyOf(objectiveGradient, objectiveGradient.length);
+      this.constraintJacobian = copyMatrix(constraintJacobian);
+      this.parameterQuality = Collections
+          .unmodifiableList(new ArrayList<ParameterSensitivityQuality>(parameterQuality));
+      this.baseSimulationConverged = baseResult.isSimulationConverged();
+      this.baseFeasible = baseResult.isFeasible();
+      this.baseErrorMessage = baseResult.getErrorMessage();
+    }
+
+    /**
+     * Gets the objective index represented by the gradient.
+     *
+     * @return registered objective index
+     */
+    public int getObjectiveIndex() {
+      return objectiveIndex;
+    }
+
+    /**
+     * Gets the fine-step objective gradient.
+     *
+     * @return defensive gradient array ordered like the decision variables
+     */
+    public double[] getObjectiveGradient() {
+      return Arrays.copyOf(objectiveGradient, objectiveGradient.length);
+    }
+
+    /**
+     * Gets the fine-step constraint-margin Jacobian.
+     *
+     * @return defensive matrix with constraints as rows and parameters as columns
+     */
+    public double[][] getConstraintJacobian() {
+      return copyMatrix(constraintJacobian);
+    }
+
+    /**
+     * Gets immutable parameter-level quality evidence.
+     *
+     * @return quality records ordered like the decision variables
+     */
+    public List<ParameterSensitivityQuality> getParameterQuality() {
+      return parameterQuality;
+    }
+
+    /**
+     * Checks convergence of the base process simulation.
+     *
+     * @return true when the base model converged
+     */
+    public boolean isBaseSimulationConverged() {
+      return baseSimulationConverged;
+    }
+
+    /**
+     * Checks hard-constraint feasibility of the base point.
+     *
+     * @return true when the base point was feasible
+     */
+    public boolean isBaseFeasible() {
+      return baseFeasible;
+    }
+
+    /**
+     * Gets the base evaluation error.
+     *
+     * @return error message, or null when none was reported
+     */
+    public String getBaseErrorMessage() {
+      return baseErrorMessage;
+    }
+
+    /** Returns a defensive rectangular or ragged matrix copy. */
+    private static double[][] copyMatrix(double[][] matrix) {
+      double[][] copy = new double[matrix.length][];
+      for (int row = 0; row < matrix.length; row++) {
+        copy[row] = Arrays.copyOf(matrix[row], matrix[row].length);
+      }
+      return copy;
+    }
+  }
+
   /** Process model evaluated by this instance. */
   private ProcessModel processModel;
 
@@ -2288,6 +2722,227 @@ public class ProcessModelSimulationEvaluator implements Serializable {
    */
   public boolean isFeasible(double[] parameterValues) {
     return evaluate(parameterValues).isFeasible();
+  }
+
+  /** Internal process evaluation at one signed parameter perturbation. */
+  private static final class PerturbedEvaluation {
+    /** Signed step from the bounded base point. */
+    private final double signedStep;
+
+    /** Process evaluation result. */
+    private final EvaluationResult result;
+
+    /** Public immutable evidence. */
+    private final SensitivityPerturbation evidence;
+
+    /** Creates one internal perturbation record. */
+    private PerturbedEvaluation(double signedStep, double parameterValue, EvaluationResult result) {
+      this.signedStep = signedStep;
+      this.result = result;
+      this.evidence = new SensitivityPerturbation(signedStep, parameterValue, result);
+    }
+  }
+
+  /**
+   * Estimates an objective gradient and constraint-margin Jacobian with step-halving quality evidence.
+   *
+   * <p>
+   * The configured finite-difference step is used as the coarse step and is halved once for the returned derivative.
+   * Objective and constraint sensitivities share the same base and perturbed process evaluations. Bounds determine the
+   * actual central, forward, backward, or fixed stencil independently for every parameter. The result records the
+   * actual steps, convergence, hard-constraint feasibility, evaluation errors, and scale-independent disagreement
+   * between the coarse and fine derivatives.
+   * </p>
+   *
+   * <p>
+   * Step-halving agreement only checks local numerical consistency. It does not establish differentiability across
+   * equipment/control regime changes and must not be interpreted as a Lagrange multiplier, shadow price, process-safety
+   * approval, or validity outside the sampled operating points.
+   * </p>
+   *
+   * @param parameterValues parameter vector
+   * @return primary-objective gradient, constraint Jacobian, and immutable quality evidence
+   */
+  public SensitivityQualityResult estimateSensitivitiesWithQuality(double[] parameterValues) {
+    return estimateSensitivitiesWithQuality(parameterValues, 0);
+  }
+
+  /**
+   * Estimates one objective gradient and constraint-margin Jacobian with step-halving quality evidence.
+   *
+   * @param parameterValues parameter vector
+   * @param objectiveIndex registered objective index
+   * @return fine-step derivatives and immutable quality evidence
+   */
+  public SensitivityQualityResult estimateSensitivitiesWithQuality(double[] parameterValues, int objectiveIndex) {
+    ensureProcessModel();
+    if (parameterValues == null || parameterValues.length != parameters.size()) {
+      throw new IllegalArgumentException(
+          "Parameter array length (" + (parameterValues == null ? "null" : Integer.toString(parameterValues.length))
+              + ") must match parameter count (" + parameters.size() + ")");
+    }
+    if (objectiveIndex < 0 || objectiveIndex >= objectives.size()) {
+      throw new IllegalArgumentException("Objective index must be between zero and " + (objectives.size() - 1));
+    }
+
+    double[] boundedValues = getBoundedParameterValues(parameterValues);
+    EvaluationResult baseResult = evaluate(boundedValues);
+    double[] gradient = new double[parameters.size()];
+    double[][] jacobian = new double[constraints.size()][parameters.size()];
+    List<ParameterSensitivityQuality> quality = new ArrayList<ParameterSensitivityQuality>();
+
+    for (int parameterIndex = 0; parameterIndex < parameters.size(); parameterIndex++) {
+      ParameterDefinition parameter = parameters.get(parameterIndex);
+      double baseParameterValue = boundedValues[parameterIndex];
+      double requestedStep = getRequestedFiniteDifferenceStep(baseParameterValue);
+      double forwardAvailable = Math.max(0.0, parameter.getUpperBound() - baseParameterValue);
+      double backwardAvailable = Math.max(0.0, baseParameterValue - parameter.getLowerBound());
+      AppliedFiniteDifferenceStencil stencil;
+      double coarseStep;
+
+      if (finiteDifferenceMethod == FiniteDifferenceMethod.CENTRAL && forwardAvailable > 0.0
+          && backwardAvailable > 0.0) {
+        stencil = AppliedFiniteDifferenceStencil.CENTRAL;
+        coarseStep = Math.min(requestedStep, Math.min(forwardAvailable, backwardAvailable));
+      } else if (forwardAvailable > 0.0) {
+        stencil = AppliedFiniteDifferenceStencil.FORWARD;
+        coarseStep = Math.min(requestedStep, forwardAvailable);
+      } else if (backwardAvailable > 0.0) {
+        stencil = AppliedFiniteDifferenceStencil.BACKWARD;
+        coarseStep = Math.min(requestedStep, backwardAvailable);
+      } else {
+        stencil = AppliedFiniteDifferenceStencil.FIXED;
+        coarseStep = 0.0;
+      }
+
+      double fineStep = coarseStep / 2.0;
+      List<SensitivityPerturbation> perturbations = new ArrayList<SensitivityPerturbation>();
+      PerturbedEvaluation coarsePositive = null;
+      PerturbedEvaluation coarseNegative = null;
+      PerturbedEvaluation finePositive = null;
+      PerturbedEvaluation fineNegative = null;
+
+      if (stencil == AppliedFiniteDifferenceStencil.CENTRAL || stencil == AppliedFiniteDifferenceStencil.FORWARD) {
+        coarsePositive = evaluatePerturbation(boundedValues, parameterIndex, coarseStep);
+        addPerturbationEvidence(perturbations, coarsePositive);
+        finePositive = evaluatePerturbation(boundedValues, parameterIndex, fineStep);
+        addPerturbationEvidence(perturbations, finePositive);
+      }
+      if (stencil == AppliedFiniteDifferenceStencil.CENTRAL || stencil == AppliedFiniteDifferenceStencil.BACKWARD) {
+        coarseNegative = evaluatePerturbation(boundedValues, parameterIndex, -coarseStep);
+        addPerturbationEvidence(perturbations, coarseNegative);
+        fineNegative = evaluatePerturbation(boundedValues, parameterIndex, -fineStep);
+        addPerturbationEvidence(perturbations, fineNegative);
+      }
+
+      double coarseObjectiveDerivative = calculateObjectiveDerivative(baseResult, coarsePositive, coarseNegative,
+          stencil, coarseStep, objectiveIndex);
+      double fineObjectiveDerivative = calculateObjectiveDerivative(baseResult, finePositive, fineNegative, stencil,
+          fineStep, objectiveIndex);
+      gradient[parameterIndex] = fineObjectiveDerivative;
+      double objectiveDisagreement = relativeDerivativeDisagreement(coarseObjectiveDerivative, fineObjectiveDerivative);
+      double[] constraintDisagreement = new double[constraints.size()];
+
+      for (int constraintIndex = 0; constraintIndex < constraints.size(); constraintIndex++) {
+        double coarseConstraintDerivative = calculateConstraintDerivative(baseResult, coarsePositive, coarseNegative,
+            stencil, coarseStep, constraintIndex);
+        double fineConstraintDerivative = calculateConstraintDerivative(baseResult, finePositive, fineNegative, stencil,
+            fineStep, constraintIndex);
+        jacobian[constraintIndex][parameterIndex] = fineConstraintDerivative;
+        constraintDisagreement[constraintIndex] = relativeDerivativeDisagreement(coarseConstraintDerivative,
+            fineConstraintDerivative);
+      }
+
+      quality.add(new ParameterSensitivityQuality(parameter, stencil, requestedStep, coarseStep, fineStep,
+          objectiveDisagreement, constraintDisagreement, baseResult, perturbations));
+    }
+    return new SensitivityQualityResult(objectiveIndex, gradient, jacobian, quality, baseResult);
+  }
+
+  /** Evaluates one signed perturbation, returning null when the step is not representable. */
+  private PerturbedEvaluation evaluatePerturbation(double[] baseValues, int parameterIndex,
+      double requestedSignedStep) {
+    double[] shiftedValues = Arrays.copyOf(baseValues, baseValues.length);
+    shiftedValues[parameterIndex] += requestedSignedStep;
+    double actualSignedStep = shiftedValues[parameterIndex] - baseValues[parameterIndex];
+    if (actualSignedStep == 0.0) {
+      return null;
+    }
+    EvaluationResult result = evaluate(shiftedValues);
+    return new PerturbedEvaluation(actualSignedStep, shiftedValues[parameterIndex], result);
+  }
+
+  /** Adds public perturbation evidence when a representable evaluation was made. */
+  private static void addPerturbationEvidence(List<SensitivityPerturbation> perturbations,
+      PerturbedEvaluation evaluation) {
+    if (evaluation != null) {
+      perturbations.add(evaluation.evidence);
+    }
+  }
+
+  /** Calculates an objective derivative from one bounded stencil. */
+  private static double calculateObjectiveDerivative(EvaluationResult baseResult, PerturbedEvaluation positive,
+      PerturbedEvaluation negative, AppliedFiniteDifferenceStencil stencil, double nominalStep, int objectiveIndex) {
+    if (stencil == AppliedFiniteDifferenceStencil.FIXED) {
+      return 0.0;
+    }
+    if (nominalStep <= 0.0) {
+      return Double.NaN;
+    }
+    if (stencil == AppliedFiniteDifferenceStencil.CENTRAL) {
+      if (positive == null || negative == null) {
+        return Double.NaN;
+      }
+      double denominator = positive.signedStep - negative.signedStep;
+      return denominator == 0.0 ? Double.NaN
+          : (positive.result.getObjectives()[objectiveIndex] - negative.result.getObjectives()[objectiveIndex])
+              / denominator;
+    }
+    if (stencil == AppliedFiniteDifferenceStencil.FORWARD) {
+      return positive == null ? Double.NaN
+          : (positive.result.getObjectives()[objectiveIndex] - baseResult.getObjectives()[objectiveIndex])
+              / positive.signedStep;
+    }
+    return negative == null ? Double.NaN
+        : (negative.result.getObjectives()[objectiveIndex] - baseResult.getObjectives()[objectiveIndex])
+            / negative.signedStep;
+  }
+
+  /** Calculates a constraint-margin derivative from one bounded stencil. */
+  private static double calculateConstraintDerivative(EvaluationResult baseResult, PerturbedEvaluation positive,
+      PerturbedEvaluation negative, AppliedFiniteDifferenceStencil stencil, double nominalStep, int constraintIndex) {
+    if (stencil == AppliedFiniteDifferenceStencil.FIXED) {
+      return 0.0;
+    }
+    if (nominalStep <= 0.0) {
+      return Double.NaN;
+    }
+    if (stencil == AppliedFiniteDifferenceStencil.CENTRAL) {
+      if (positive == null || negative == null) {
+        return Double.NaN;
+      }
+      double denominator = positive.signedStep - negative.signedStep;
+      return denominator == 0.0 ? Double.NaN
+          : (positive.result.getConstraintMargins()[constraintIndex]
+              - negative.result.getConstraintMargins()[constraintIndex]) / denominator;
+    }
+    if (stencil == AppliedFiniteDifferenceStencil.FORWARD) {
+      return positive == null ? Double.NaN
+          : (positive.result.getConstraintMargins()[constraintIndex]
+              - baseResult.getConstraintMargins()[constraintIndex]) / positive.signedStep;
+    }
+    return negative == null ? Double.NaN
+        : (negative.result.getConstraintMargins()[constraintIndex] - baseResult.getConstraintMargins()[constraintIndex])
+            / negative.signedStep;
+  }
+
+  /** Calculates scale-independent disagreement between coarse and fine derivatives. */
+  private static double relativeDerivativeDisagreement(double coarseDerivative, double fineDerivative) {
+    if (!Double.isFinite(coarseDerivative) || !Double.isFinite(fineDerivative)) {
+      return Double.NaN;
+    }
+    double scale = Math.max(Math.abs(coarseDerivative), Math.abs(fineDerivative));
+    return scale == 0.0 ? 0.0 : Math.abs(coarseDerivative - fineDerivative) / scale;
   }
 
   /**
