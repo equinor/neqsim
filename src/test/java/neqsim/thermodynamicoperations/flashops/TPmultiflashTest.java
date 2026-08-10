@@ -297,4 +297,45 @@ class TPmultiflashTest {
     }
   }
 
+  /** Verifies reused beta-solver work matrices converge repeatedly from poor phase fractions. */
+  @Test
+  void testReusedBetaSolverMatricesConvergeFromPoorPhaseFractions() {
+    SystemInterface system = createMethaneHeptanePrSystem(0.0, false);
+    system.setTemperature(250.0, "K");
+    system.setPressure(30.0, "bara");
+    new ThermodynamicOperations(system).TPflash();
+    system.init(1);
+
+    assertEquals(2, system.getNumberOfPhases());
+    double[] referenceBeta = new double[] { system.getBeta(0), system.getBeta(1) };
+    double[][] referenceComposition = new double[2][system.getPhase(0).getNumberOfComponents()];
+    for (int phase = 0; phase < 2; phase++) {
+      for (int component = 0; component < referenceComposition[phase].length; component++) {
+        referenceComposition[phase][component] = system.getPhase(phase).getComponent(component).getx();
+      }
+    }
+
+    system.setBeta(0, 0.9);
+    system.setBeta(1, 0.1);
+    system.init(1);
+    TPmultiflash operation = new TPmultiflash(system, false);
+    operation.setDoubleArrays();
+
+    for (int execution = 0; execution < 2; execution++) {
+      double residual = operation.solveBeta();
+      assertTrue(Double.isFinite(residual));
+      assertTrue(residual <= 1.0e-10);
+      for (int phase = 0; phase < 2; phase++) {
+        assertEquals(referenceBeta[phase], system.getBeta(phase), 1.0e-10);
+        double compositionSum = 0.0;
+        for (int component = 0; component < referenceComposition[phase].length; component++) {
+          assertEquals(referenceComposition[phase][component], system.getPhase(phase).getComponent(component).getx(),
+              1.0e-10);
+          compositionSum += system.getPhase(phase).getComponent(component).getx();
+        }
+        assertEquals(1.0, compositionSum, 1.0e-12);
+      }
+    }
+  }
+
 }
