@@ -13,8 +13,9 @@ import java.util.UUID;
  * </p>
  *
  * <p>
- * Evaluation identifiers are separate diagnostic identities for nonlinear/refinement/substep work. They must not replace
- * the physical-step identifier when invoking equipment or controllers whose idempotency is keyed to the physical step.
+ * Evaluation identifiers are separate diagnostic identities for nonlinear/refinement/substep work. They must not
+ * replace the physical-step identifier when invoking equipment or controllers whose idempotency is keyed to the
+ * physical step.
  * </p>
  *
  * @author Even Solbraa
