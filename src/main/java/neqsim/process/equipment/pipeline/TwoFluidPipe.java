@@ -3682,7 +3682,9 @@ public class TwoFluidPipe extends Pipeline {
             outletPressure, outletFixed);
       }
 
-      double[][] U_new = timeIntegrator.step(U_prev, rhs, dtFinal);
+      double[][] splitState = applyStiffBubbleDragSourceStep(U_prev, 0.5 * dtFinal);
+      double[][] U_new = timeIntegrator.step(splitState, rhs, dtFinal);
+      U_new = applyStiffBubbleDragSourceStep(U_new, 0.5 * dtFinal);
 
       // 4. ADAPTIVE: check RAW state for NaN/Inf/negative mass BEFORE clamping
       // Only hard-reject on unphysical values. Normal transient changes (even large)
@@ -3875,6 +3877,16 @@ public class TwoFluidPipe extends Pipeline {
     updateResultArrays();
 
     setCalculationIdentifier(id);
+  }
+
+  private double[][] applyStiffBubbleDragSourceStep(double[][] state, double timeStep) {
+    if (!equations.isStiffBubbleDragEnabled() || timeStep == 0.0) {
+      return state;
+    }
+    equations.applyState(sections, state);
+    applyBoundaryConditions();
+    double[][] boundaryState = equations.extractState(sections);
+    return equations.applyStiffBubbleDrag(sections, boundaryState, timeStep);
   }
 
   private void accumulateAcceptedMassBalance(List<TwoFluidConservationEquations.MassBalanceRate> stageRates,
@@ -6262,6 +6274,30 @@ public class TwoFluidPipe extends Pipeline {
       return timeIntegrator.getMethod();
     }
     return TimeIntegrator.Method.RK4;
+  }
+
+  /**
+   * Enable or disable conservative local implicit treatment of dispersed-bubble drag.
+   *
+   * <p>
+   * The treatment is opt-in because the corrected closure is not yet quantitatively validated by the public Tengesdal
+   * severe-slugging benchmark. Enabling it selects the dimensionally correct Schiller-Naumann force and the local
+   * implicit source solve together.
+   * </p>
+   *
+   * @param enable true to use the local stiff source solve
+   */
+  public void setEnableStiffBubbleDrag(boolean enable) {
+    equations.setEnableStiffBubbleDrag(enable);
+  }
+
+  /**
+   * Check whether dispersed-bubble drag uses the conservative local implicit source solve.
+   *
+   * @return true when the stiff source treatment is enabled
+   */
+  public boolean isStiffBubbleDragEnabled() {
+    return equations.isStiffBubbleDragEnabled();
   }
 
   /**
