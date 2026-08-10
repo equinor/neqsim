@@ -137,8 +137,7 @@ public final class DynamicActivationResolver {
   }
 
   private static String expanderDiagnostic(Expander expander) {
-    return isDynamicModeRequested(expander)
-        ? "expander nozzle, recovered-power and shaft-speed state is active"
+    return isDynamicModeRequested(expander) ? "expander nozzle, recovered-power and shaft-speed state is active"
         : "calculateSteadyState selects algebraic expander thermodynamics without nozzle/power/speed integration";
   }
 
