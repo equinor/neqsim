@@ -54,7 +54,9 @@ public class DynamicActivationReportTest extends neqsim.NeqSimTest {
     assertTrue(active.toJson().contains("\"activationStatus\": \"ACTIVE\""));
   }
 
-  /** Activation gaps remain explicit review aids without pretending every DYNAMIC_LUMPED classification is qualified. */
+  /**
+   * Activation gaps remain explicit review aids without pretending every DYNAMIC_LUMPED classification is qualified.
+   */
   @Test
   public void unverifiedActivationRemainsVisibleForOtherDynamicFamilies() {
     Stream feed = createFeed("separator feed", 300.0);
