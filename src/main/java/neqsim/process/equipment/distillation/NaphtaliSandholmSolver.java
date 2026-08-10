@@ -38,7 +38,7 @@ public class NaphtaliSandholmSolver {
   /** Maximum number of non-descent line-search steps allowed before restoring the best state. */
   private static final int MAX_NON_DESCENT_LINE_SEARCH_STEPS = 3;
 
-  /** Forced-root fugacity fixed-point sweeps performed for one tray evaluation. */
+  /** Maximum forced-root fugacity fixed-point sweeps for one tray evaluation. */
   private static final int THERMO_K_VALUE_ITERATIONS = 2;
 
   /** Convergence tolerance for the largest absolute logarithmic K-value update. */
@@ -3333,8 +3333,8 @@ public class NaphtaliSandholmSolver {
     }
 
     // Self-consistency loop: K = phi_L(x) / phi_V(y), then y = K x / sum(K x).
-    // Preserve the established two-sweep behavior, but measure the remaining
-    // scale-invariant logarithmic K-value update instead of assuming convergence.
+    // Perform at most two sweeps and stop once the existing convergence criterion
+    // is met so already-converged compositions do not pay for a redundant EOS call.
     boolean kOk = phiOk;
     boolean kConverged = false;
     double finalMaxLogKUpdate = Double.POSITIVE_INFINITY;
@@ -3365,6 +3365,7 @@ public class NaphtaliSandholmSolver {
         }
         if (finalMaxLogKUpdate <= THERMO_K_VALUE_TOLERANCE) {
           kConverged = true;
+          break;
         } else {
           kConverged = false;
         }
