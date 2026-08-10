@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Simple priority-queue-backed event scheduler for dynamic process simulations and safety studies.
@@ -25,9 +27,9 @@ import java.util.List;
  * </ul>
  *
  * <p>
- * Events are {@link Serializable} so a scheduler instance can be carried inside a serialized {@code ProcessSystem}
- * snapshot. The {@link Runnable} payload must therefore also be serializable; agent code typically uses a tiny static
- * class or a lambda over serializable fields.
+ * The scheduler itself is {@link Serializable}. It can therefore be serialized independently when every
+ * {@link Runnable} payload is also serializable. The scheduler attached to {@code ProcessSystem} is intentionally a
+ * transient runtime service and is not included automatically in a serialized process snapshot.
  * </p>
  *
  * @author Even Solbraa
@@ -36,6 +38,7 @@ import java.util.List;
 public class EventScheduler implements Serializable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000L;
+  private static final Logger logger = LogManager.getLogger(EventScheduler.class);
 
   /**
    * A scheduled event: trigger time, label, and payload.
@@ -53,7 +56,7 @@ public class EventScheduler implements Serializable {
      *
      * @param time absolute simulation time in seconds (must be finite and {@code >= 0})
      * @param label short tag for diagnostics
-     * @param action payload (must be non-null and serializable)
+     * @param action payload (must be non-null; must also be serializable when the scheduler itself is serialized)
      */
     public ScheduledEvent(double time, String label, Runnable action) {
       if (Double.isNaN(time) || Double.isInfinite(time) || time < 0.0) {
@@ -101,6 +104,45 @@ public class EventScheduler implements Serializable {
     }
   }
 
+  /**
+   * Immutable scheduler-bookkeeping snapshot used by transient step transactions.
+   *
+   * <p>
+   * Scheduled events are immutable, so the snapshot can retain their identities while copying the pending/fired list
+   * membership. Restoring this snapshot rolls back scheduler bookkeeping only. It cannot undo side effects already
+   * performed by an event {@link Runnable}; rejected trial steps must therefore defer externally visible event actions
+   * or restore every object mutated by those actions separately.
+   * </p>
+   */
+  public static final class Snapshot implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final List<ScheduledEvent> pendingEvents;
+    private final List<ScheduledEvent> firedEvents;
+
+    private Snapshot(List<ScheduledEvent> pendingEvents, List<ScheduledEvent> firedEvents) {
+      this.pendingEvents = new ArrayList<ScheduledEvent>(pendingEvents);
+      this.firedEvents = new ArrayList<ScheduledEvent>(firedEvents);
+    }
+
+    /**
+     * Number of pending events represented by this snapshot.
+     *
+     * @return pending event count
+     */
+    public int getPendingEventCount() {
+      return pendingEvents.size();
+    }
+
+    /**
+     * Number of already-fired events represented by this snapshot.
+     *
+     * @return fired event count
+     */
+    public int getFiredEventCount() {
+      return firedEvents.size();
+    }
+  }
+
   private final List<ScheduledEvent> queue = new ArrayList<ScheduledEvent>();
   private final List<ScheduledEvent> fired = new ArrayList<ScheduledEvent>();
 
@@ -116,7 +158,7 @@ public class EventScheduler implements Serializable {
    *
    * @param time absolute simulation time in seconds
    * @param label short tag (may be null)
-   * @param action serializable payload
+   * @param action payload
    * @return the scheduled event
    */
   public ScheduledEvent scheduleEvent(double time, String label, Runnable action) {
@@ -124,6 +166,42 @@ public class EventScheduler implements Serializable {
     queue.add(e);
     Collections.sort(queue);
     return e;
+  }
+
+  /**
+   * Returns the earliest pending event time without mutating scheduler state.
+   *
+   * <p>
+   * Adaptive/event-aware integrators can use this value to shorten a proposed timestep so an accepted physical step
+   * lands exactly on an event boundary rather than stepping past a trip, setpoint change, or operator action.
+   * </p>
+   *
+   * @return earliest pending absolute event time in seconds, or positive infinity when no event is pending
+   */
+  public double getNextEventTime() {
+    return queue.isEmpty() ? Double.POSITIVE_INFINITY : queue.get(0).time;
+  }
+
+  /**
+   * Returns pending events that are due at or before {@code now} without firing or removing them.
+   *
+   * <p>
+   * The returned list is an immutable copy in scheduler order. This allows a transient transaction/event-localization
+   * layer to inspect an event boundary without changing pending/fired bookkeeping or executing event actions.
+   * </p>
+   *
+   * @param now absolute simulation time in seconds
+   * @return immutable copy of due pending events
+   */
+  public List<ScheduledEvent> getDueEvents(double now) {
+    List<ScheduledEvent> due = new ArrayList<ScheduledEvent>();
+    for (ScheduledEvent event : queue) {
+      if (event.time > now) {
+        break;
+      }
+      due.add(event);
+    }
+    return Collections.unmodifiableList(due);
   }
 
   /**
@@ -140,13 +218,48 @@ public class EventScheduler implements Serializable {
       try {
         e.action.run();
       } catch (RuntimeException ex) {
-        // surface but do not propagate — dynamic loop must keep running
-        System.err.println("EventScheduler: event '" + e.label + "' threw: " + ex.getMessage());
+        logger.error("EventScheduler event '{}' failed: {}", e.label, ex.getMessage(), ex);
       }
       fired.add(e);
       count++;
     }
     return count;
+  }
+
+  /**
+   * Captures the pending/fired scheduler bookkeeping for deterministic transient rollback.
+   *
+   * <p>
+   * This operation does not execute, clone, or serialize event actions. The returned snapshot is independent of later
+   * queue/list changes because it copies both event lists.
+   * </p>
+   *
+   * @return immutable scheduler bookkeeping snapshot
+   */
+  public Snapshot snapshot() {
+    return new Snapshot(queue, fired);
+  }
+
+  /**
+   * Restores pending/fired scheduler bookkeeping from a previous {@link #snapshot()}.
+   *
+   * <p>
+   * Restoring membership does not reverse side effects from actions that have already executed. A rejected transient
+   * trial must not rely on this method alone when an event mutates external state.
+   * </p>
+   *
+   * @param snapshot snapshot to restore
+   * @throws IllegalArgumentException if snapshot is null
+   */
+  public void restore(Snapshot snapshot) {
+    if (snapshot == null) {
+      throw new IllegalArgumentException("snapshot must not be null");
+    }
+    queue.clear();
+    queue.addAll(snapshot.pendingEvents);
+    Collections.sort(queue);
+    fired.clear();
+    fired.addAll(snapshot.firedEvents);
   }
 
   /**
