@@ -283,11 +283,11 @@ public class EnergyConverter extends ProcessEquipmentBaseClass {
    * {@inheritDoc}
    *
    * <p>
-   * A non-null calculation identifier represents one physical transient step. Repeated nonlinear/refinement
-   * evaluations with the same identifier recompute the ramped output from the output power that existed at the start of
-   * that physical step; they do not integrate the ramp or advance the converter clock a second time. A different
-   * identifier starts the next physical step. Null identifiers preserve the legacy behavior where every direct call is
-   * treated as a new physical step.
+   * A non-null calculation identifier represents one physical transient step. Repeated nonlinear/refinement evaluations
+   * with the same identifier recompute the ramped output from the output power that existed at the start of that
+   * physical step; they do not integrate the ramp or advance the converter clock a second time. A different identifier
+   * starts the next physical step. Null identifiers preserve the legacy behavior where every direct call is treated as
+   * a new physical step.
    * </p>
    */
   @Override
@@ -330,7 +330,7 @@ public class EnergyConverter extends ProcessEquipmentBaseClass {
    * output that can be supported by the supplied input.
    * </p>
    *
-   * @param input available input power in W
+   * @param input available input in W
    * @return useful output in W
    */
   protected double calculateTargetOutput(double input) {
@@ -343,8 +343,8 @@ public class EnergyConverter extends ProcessEquipmentBaseClass {
   /**
    * Calculates required input for useful output.
    *
-   * @param output useful output power in W
-   * @return required input power in W
+   * @param output useful output in W
+   * @return required input in W
    */
   protected double calculateRequiredInputForOutput(double output) {
     if (output <= 0.0) {
