@@ -134,10 +134,13 @@ separation train::Inlet separator
 topside::separation train::HP gas scrubber
 ```
 
-The module container itself remains visible in the report. Current `ProcessModuleBaseClass.runTransient(...)` delegates
-to its internal `ProcessSystem`, but the campaign has not yet qualified all module-level initialization, state ownership,
-restart, error propagation, or nested transient semantics; modules therefore remain reviewable according to their own
-capability classification while their instantiated child operations are audited independently.
+The module container itself remains visible in the report but is classified as `ALGEBRAIC`. The established
+`ProcessModuleBaseClass.runTransient(...)` implementation delegates transient execution to its internal `ProcessSystem`;
+the container does not own an additional independent physical inventory merely because that delegating method is an
+override. Its instantiated child operations are audited recursively, and any `UNCLASSIFIED_DYNAMIC` child remains a
+strict-preflight review item. Module initialization, restart and error-propagation semantics still require their own
+engineering qualification, but the composite container must not create a false capability-review blocker on top of its
+children.
 
 The report never initializes a module as a side effect. A module whose internal `ProcessSystem` has not yet been built
 can only expose the container at audit time. Initialize/build the module through its normal model lifecycle before using
