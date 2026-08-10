@@ -12,6 +12,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
+import org.ejml.dense.row.MatrixFeatures_DDRM;
+import org.ejml.dense.row.NormOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseType;
@@ -210,32 +212,39 @@ public class TPmultiflash extends TPflash {
    * @return a double
    */
   public double solveBeta() {
-    SimpleMatrix ans = null;
+    int numberOfPhases = system.getNumberOfPhases();
+    DMatrixRMaj betaGradient = new DMatrixRMaj(numberOfPhases, 1);
+    DMatrixRMaj betaHessian = new DMatrixRMaj(numberOfPhases, numberOfPhases);
+    DMatrixRMaj betaCorrection = new DMatrixRMaj(numberOfPhases, 1);
     double err = 1.0;
     double gradResidual = 1.0;
     int iter = 1;
     do {
       iter++;
       calcQ();
-      SimpleMatrix dQM = new SimpleMatrix(dQdbeta);
-      gradResidual = dQM.normF();
-      SimpleMatrix dQdBM = new SimpleMatrix(Qmatrix);
+      copyBetaSolverInputs(betaGradient, betaHessian);
+      gradResidual = NormOps_DDRM.normF(betaGradient);
+      boolean solved = false;
+      Exception solveException = null;
       try {
-        ans = dQdBM.solve(dQM);
+        solved = solveBetaCorrection(betaHessian, betaGradient, betaCorrection);
       } catch (Exception ex) {
+        solveException = ex;
+      }
+      if (!solved) {
         if (shouldApplyEnhancedMultiPhaseCheck()) {
           for (int kk = 0; kk < system.getNumberOfPhases(); kk++) {
             Qmatrix[kk][kk] += 1.0e-2;
           }
-          dQdBM = new SimpleMatrix(Qmatrix);
+          copyBetaSolverInputs(betaGradient, betaHessian);
           try {
-            ans = dQdBM.solve(dQM);
+            solved = solveBetaCorrection(betaHessian, betaGradient, betaCorrection);
           } catch (Exception ex2) {
-            logger.error(ex2.getMessage());
-            break;
+            solveException = ex2;
           }
-        } else {
-          logger.error(ex.getMessage());
+        }
+        if (!solved) {
+          logger.error(solveException == null ? "Beta Hessian solve failed" : solveException.getMessage());
           break;
         }
       }
@@ -245,7 +254,7 @@ public class TPmultiflash extends TPflash {
       double betaStepScale = iter / (iter + 3.0);
       removePhase = false;
       for (int k = 0; k < system.getNumberOfPhases(); k++) {
-        double currBeta = system.getPhase(k).getBeta() - ans.get(k, 0) * betaStepScale;
+        double currBeta = system.getPhase(k).getBeta() - betaCorrection.get(k, 0) * betaStepScale;
         if (currBeta < phaseFractionMinimumLimit) {
           system.setBeta(k, phaseFractionMinimumLimit);
           if (checkOneRemove) {
@@ -267,10 +276,47 @@ public class TPmultiflash extends TPflash {
       calcE();
       setXY();
       system.init(1);
-      err = ans.normF();
+      err = NormOps_DDRM.normF(betaCorrection);
     } while (((err > 1e-12 || gradResidual > 1e-10) && iter < 50) || iter < 3);
     // logger.info("iterations " + iter);
     return err;
+  }
+
+  /**
+   * Solve one beta Newton system and reject non-finite corrections.
+   *
+   * <p>
+   * EJML's raw common-operations solve can report success for a singular matrix while writing NaN values to the
+   * correction vector. The former {@link SimpleMatrix#solve(SimpleMatrix)} path raised a singular-matrix exception in
+   * that case, allowing enhanced mode to regularize the Hessian and ordinary mode to stop without corrupting phase
+   * fractions.
+   * </p>
+   *
+   * @param betaHessian beta-Hessian matrix
+   * @param betaGradient beta-gradient column vector
+   * @param betaCorrection destination for the Newton correction
+   * @return true only when EJML reports success and every correction entry is finite
+   */
+  static boolean solveBetaCorrection(DMatrixRMaj betaHessian, DMatrixRMaj betaGradient, DMatrixRMaj betaCorrection) {
+    return CommonOps_DDRM.solve(betaHessian, betaGradient, betaCorrection)
+        && !MatrixFeatures_DDRM.hasUncountable(betaCorrection);
+  }
+
+  /**
+   * Copy the current beta gradient and Hessian into reusable EJML work matrices. Every attempt is refreshed so a
+   * regularized retry uses the updated Hessian without allocating new wrappers.
+   *
+   * @param betaGradient reusable beta-gradient column vector
+   * @param betaHessian reusable beta-Hessian matrix
+   */
+  private void copyBetaSolverInputs(DMatrixRMaj betaGradient, DMatrixRMaj betaHessian) {
+    int numberOfPhases = system.getNumberOfPhases();
+    for (int row = 0; row < numberOfPhases; row++) {
+      betaGradient.set(row, 0, dQdbeta[row][0]);
+      for (int column = 0; column < numberOfPhases; column++) {
+        betaHessian.set(row, column, Qmatrix[row][column]);
+      }
+    }
   }
 
   /**
