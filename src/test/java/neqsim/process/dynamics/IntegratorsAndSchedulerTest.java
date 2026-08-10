@@ -182,7 +182,7 @@ class IntegratorsAndSchedulerTest {
   @Test
   void eventSchedulerFailsLoudAndLeavesFailedEventPending() {
     EventScheduler sched = new EventScheduler();
-    final int[] laterEventRuns = new int[] {0};
+    final int[] laterEventRuns = new int[] { 0 };
     sched.scheduleEvent(1.0, "bad", new Runnable() {
       @Override
       public void run() {
