@@ -142,6 +142,7 @@ public final class Dexpi20ProcessTopologyAssessment {
   public static final class Report implements Serializable {
     private static final long serialVersionUID = 1000L;
     private final Dexpi20ConformanceAssessment.Report conformanceReport;
+    private final String exportTopologySource;
     private final String canonicalFingerprint;
     private final List<String> canonicalConnectionIds;
     private final List<String> canonicalMaterialConnections;
@@ -149,11 +150,12 @@ public final class Dexpi20ProcessTopologyAssessment {
     private final List<ExportedConnection> exportedConnections;
     private final List<Diagnostic> diagnostics;
 
-    Report(Dexpi20ConformanceAssessment.Report conformanceReport, String canonicalFingerprint,
-        List<String> canonicalConnectionIds, List<String> canonicalMaterialConnections,
+    Report(Dexpi20ConformanceAssessment.Report conformanceReport, String exportTopologySource,
+        String canonicalFingerprint, List<String> canonicalConnectionIds, List<String> canonicalMaterialConnections,
         List<String> exportedMaterialConnections, List<ExportedConnection> exportedConnections,
         List<Diagnostic> diagnostics) {
       this.conformanceReport = conformanceReport;
+      this.exportTopologySource = exportTopologySource;
       this.canonicalFingerprint = canonicalFingerprint;
       this.canonicalConnectionIds = immutableCopy(canonicalConnectionIds);
       this.canonicalMaterialConnections = immutableCopy(canonicalMaterialConnections);
@@ -164,6 +166,11 @@ public final class Dexpi20ProcessTopologyAssessment {
 
     public Dexpi20ConformanceAssessment.Report getConformanceReport() {
       return conformanceReport;
+    }
+
+    /** @return topology source that drove the assessed export */
+    public String getExportTopologySource() {
+      return exportTopologySource;
     }
 
     public String getCanonicalFingerprint() {
@@ -201,6 +208,7 @@ public final class Dexpi20ProcessTopologyAssessment {
     public Map<String, Object> toMap() {
       Map<String, Object> result = new LinkedHashMap<String, Object>();
       result.put("schemaVersion", "neqsim_dexpi_2_0_process_topology_assessment.v1");
+      result.put("exportTopologySource", exportTopologySource);
       result.put("canonicalFingerprint", canonicalFingerprint);
       result.put("canonicalConnectionIds", new ArrayList<String>(canonicalConnectionIds));
       result.put("sourceProvenance", "SIMULATION_MODEL");
@@ -233,13 +241,14 @@ public final class Dexpi20ProcessTopologyAssessment {
     }
   }
 
-  static Report assess(ProcessSystem processSystem, Path file, String plantId, String revision,
-      Dexpi20ConformanceAssessment.Report conformanceReport) throws IOException {
+  static Report assess(ProcessSystem processSystem, Path file, Dexpi20ConformanceAssessment.Report conformanceReport,
+      ProcessDiagramGraphAdapter.Result canonical, String exportTopologySource) throws IOException {
     if (processSystem == null || file == null || conformanceReport == null) {
       throw new IllegalArgumentException("processSystem, file, and conformanceReport must not be null");
     }
-    ProcessDiagramGraphAdapter.Result canonical = ProcessDiagramGraphAdapter.fromProcessSystem(processSystem, plantId,
-        revision);
+    if (canonical == null || exportTopologySource == null || exportTopologySource.trim().isEmpty()) {
+      throw new IllegalArgumentException("canonical and exportTopologySource must not be null or blank");
+    }
     List<Diagnostic> diagnostics = new ArrayList<Diagnostic>();
     copyAdapterDiagnostics(canonical, diagnostics);
     EngineeringGraph graph = canonical.getGraph();
@@ -257,8 +266,8 @@ public final class Dexpi20ProcessTopologyAssessment {
     diagnostics.add(new Diagnostic(Severity.WARNING, "DEXPI_PROCESS_GRAPHICS_UNSUPPORTED",
         "Native DEXPI 2.0 Process export contains semantic steps and streams but no governed drawing layout",
         processSystem.getName()));
-    return new Report(conformanceReport, canonical.getFingerprint(), connectionIds, expected, actual, exported,
-        diagnostics);
+    return new Report(conformanceReport, exportTopologySource, canonical.getFingerprint(), connectionIds, expected,
+        actual, exported, diagnostics);
   }
 
   private static void copyAdapterDiagnostics(ProcessDiagramGraphAdapter.Result canonical,

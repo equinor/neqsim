@@ -19,6 +19,8 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import neqsim.process.engineering.model.EngineeringGraph;
+import neqsim.process.engineering.model.EngineeringNode;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.distillation.DistillationColumn;
@@ -35,6 +37,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.tank.Tank;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.processmodel.diagram.ProcessDiagramGraphAdapter;
 
 /** Writes the official DEXPI 2.0 Process information model for PFD/BFD data exchange. */
 public final class Dexpi20ProcessModelWriter {
@@ -82,10 +85,13 @@ public final class Dexpi20ProcessModelWriter {
    */
   public static Dexpi20ProcessTopologyAssessment.Report writeAndAssessTopology(ProcessSystem processSystem, File file,
       String plantId, String revision) throws IOException {
-    write(processSystem, file);
+    ProcessDiagramGraphAdapter.Result canonical = ProcessDiagramGraphAdapter.fromProcessSystem(processSystem, plantId,
+        revision);
+    writeCanonical(processSystem, file, canonical);
     Dexpi20ConformanceAssessment.Report conformance = Dexpi20ConformanceAssessment.assess(file.toPath(),
         Dexpi20ConformanceAssessment.Profile.PROCESS_PFD_BFD);
-    return Dexpi20ProcessTopologyAssessment.assess(processSystem, file.toPath(), plantId, revision, conformance);
+    return Dexpi20ProcessTopologyAssessment.assess(processSystem, file.toPath(), conformance, canonical,
+        "CANONICAL_ENGINEERING_GRAPH");
   }
 
   /** Writes a native DEXPI 2.0 Process model to a stream. */
@@ -93,6 +99,11 @@ public final class Dexpi20ProcessModelWriter {
     if (processSystem == null || outputStream == null) {
       throw new IllegalArgumentException("processSystem and outputStream must not be null");
     }
+    write(processSystem, outputStream, topology(processSystem));
+  }
+
+  private static void write(ProcessSystem processSystem, OutputStream outputStream, ModelTopology topology)
+      throws IOException {
     try {
       Document document = createDocument();
       Element model = document.createElement("Model");
@@ -109,7 +120,6 @@ public final class Dexpi20ProcessModelWriter {
       Element processModel = object(document, "ProcessModel1", "Process/ProcessModel");
       conceptualModel.appendChild(processModel);
 
-      ModelTopology topology = topology(processSystem);
       Element processSteps = components(document, processModel, "ProcessSteps");
       Map<ProcessEquipmentInterface, Step> steps = new IdentityHashMap<ProcessEquipmentInterface, Step>();
       int stepNumber = 1;
@@ -166,6 +176,25 @@ public final class Dexpi20ProcessModelWriter {
     }
   }
 
+  private static void writeCanonical(ProcessSystem processSystem, File file,
+      ProcessDiagramGraphAdapter.Result canonical) throws IOException {
+    if (file == null || canonical == null) {
+      throw new IllegalArgumentException("file and canonical must not be null");
+    }
+    FileOutputStream stream = new FileOutputStream(file);
+    try {
+      write(processSystem, stream, topology(processSystem, canonical));
+    } finally {
+      stream.close();
+    }
+    try {
+      Dexpi20XmlValidator.validate(file.toPath());
+      Dexpi20SemanticValidator.validateOrThrow(file.toPath());
+    } catch (org.xml.sax.SAXException ex) {
+      throw new IOException("Generated DEXPI 2.0 Process XML failed schema validation", ex);
+    }
+  }
+
   private static ModelTopology topology(ProcessSystem processSystem) {
     List<ProcessEquipmentInterface> units = new ArrayList<ProcessEquipmentInterface>();
     Map<StreamInterface, ProcessEquipmentInterface> sourceByStream = new IdentityHashMap<StreamInterface, ProcessEquipmentInterface>();
@@ -214,6 +243,55 @@ public final class Dexpi20ProcessModelWriter {
       throw new IllegalArgumentException("DEXPI Process export requires at least one material connection");
     }
     return new ModelTopology(units, links);
+  }
+
+  private static ModelTopology topology(ProcessSystem processSystem, ProcessDiagramGraphAdapter.Result canonical) {
+    ModelTopology direct = topology(processSystem);
+    EngineeringGraph graph = canonical.getGraph();
+    List<Link> projected = new ArrayList<Link>();
+    Map<Link, Boolean> consumed = new IdentityHashMap<Link, Boolean>();
+    for (EngineeringNode node : graph.getNodes().values()) {
+      if (node.getKind() != EngineeringNode.Kind.PIPE_SEGMENT) {
+        continue;
+      }
+      Link match = findDirectLink(direct.links, consumed, node);
+      if (match != null) {
+        projected.add(match);
+        consumed.put(match, Boolean.TRUE);
+      }
+    }
+    for (Link link : direct.links) {
+      if (!consumed.containsKey(link)) {
+        projected.add(link);
+      }
+    }
+    return new ModelTopology(direct.units, projected);
+  }
+
+  private static Link findDirectLink(List<Link> links, Map<Link, Boolean> consumed, EngineeringNode connection) {
+    String sourceName = property(connection, "sourceEquipment");
+    String targetName = property(connection, "targetEquipment");
+    String carriedName = property(connection, "carriedObjectName");
+    for (Link link : links) {
+      if (link.target != null && !consumed.containsKey(link) && sourceName.equals(link.source.getName())
+          && targetName.equals(link.target.getName()) && carriedName.equals(streamName(link.stream))) {
+        return link;
+      }
+    }
+    return null;
+  }
+
+  private static String property(EngineeringNode node, String name) {
+    Object value = node.getProperties().get(name);
+    return value == null ? "" : String.valueOf(value);
+  }
+
+  private static String streamName(StreamInterface stream) {
+    try {
+      return stream == null || stream.getName() == null ? "" : stream.getName();
+    } catch (RuntimeException ex) {
+      return "";
+    }
   }
 
   private static Step appendStep(Document document, Element processSteps, String id, String name, String type) {
