@@ -6,6 +6,7 @@ import neqsim.process.ProcessElementInterface;
 import neqsim.process.SimulationInterface;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.diffpressure.Orifice;
 import neqsim.process.equipment.energy.EnergyConverter;
 import neqsim.process.equipment.energy.EnergyNetworkSolver;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
@@ -15,6 +16,7 @@ import neqsim.process.equipment.pipeline.WaterHammerPipe;
 import neqsim.process.equipment.pipeline.twophasepipe.TransientPipe;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reservoir.SimpleReservoir;
+import neqsim.process.equipment.reservoir.WellFlow;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.tank.Tank;
@@ -61,7 +63,7 @@ public final class DynamicCapabilityResolver {
       return DynamicCapability.ALGEBRAIC;
     }
 
-    if (element instanceof EnergyNetworkSolver) {
+    if (element instanceof EnergyNetworkSolver || element instanceof Orifice || element instanceof WellFlow) {
       return DynamicCapability.ALGEBRAIC;
     }
 
