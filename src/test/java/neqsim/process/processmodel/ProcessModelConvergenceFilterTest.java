@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -25,6 +26,37 @@ import neqsim.process.equipment.stream.StreamInterface;
  * @version $Id: $Id
  */
 public class ProcessModelConvergenceFilterTest extends neqsim.NeqSimTest {
+
+  /** ProcessSystem that counts topology-version reads. */
+  private static final class CountingStructureProcessSystem extends ProcessSystem {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1L;
+
+    /** Number of topology-version reads. */
+    private final AtomicInteger structureVersionReads = new AtomicInteger();
+
+    /** Creates a counting process area. */
+    CountingStructureProcessSystem(String name) {
+      super(name);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public long getStructureVersion() {
+      structureVersionReads.incrementAndGet();
+      return super.getStructureVersion();
+    }
+
+    /** Resets the topology-version read count. */
+    void resetStructureVersionReads() {
+      structureVersionReads.set(0);
+    }
+
+    /** Returns the topology-version read count. */
+    int getStructureVersionReads() {
+      return structureVersionReads.get();
+    }
+  }
 
   /** Flow of the real export stream on the previous outer iteration, kg/hr. */
   private static final double BIG_PREVIOUS_FLOW = 137709.1;
@@ -75,6 +107,31 @@ public class ProcessModelConvergenceFilterTest extends neqsim.NeqSimTest {
     // The stagnant 0.1 kg/hr leg (6.56 %) dominates the real 0.32 % residual.
     assertEquals(0.0656, errors[0], 1e-6);
     assertEquals(2, model.getLastBoundaryStreamErrors().size());
+  }
+
+  @Test
+  public void convergenceDiagnosticsResolveAreaPlanOncePerBatch() {
+    ProcessModel model = new ProcessModel();
+    CountingStructureProcessSystem first = new CountingStructureProcessSystem("first");
+    CountingStructureProcessSystem second = new CountingStructureProcessSystem("second");
+    model.add("first", first);
+    model.add("second", second);
+    first.resetStructureVersionReads();
+    second.resetStructureVersionReads();
+
+    Map<StreamInterface, double[]> previous = new LinkedHashMap<StreamInterface, double[]>();
+    Map<StreamInterface, double[]> current = new LinkedHashMap<StreamInterface, double[]>();
+    for (int streamIndex = 0; streamIndex < 3; streamIndex++) {
+      StreamInterface stream = new Stream("boundary " + streamIndex);
+      previous.put(stream, new double[] { 1000.0 + streamIndex, 300.0, 60.0 });
+      current.put(stream, new double[] { 1000.1 + streamIndex, 300.1, 60.1 });
+    }
+
+    model.calculateConvergenceErrors(previous, current);
+
+    assertEquals(1, first.getStructureVersionReads());
+    assertEquals(1, second.getStructureVersionReads());
+    assertEquals(3, model.getLastBoundaryStreamErrors().size());
   }
 
   @Test
