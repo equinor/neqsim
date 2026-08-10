@@ -172,6 +172,32 @@ Other custom transient implementations remain `UNCLASSIFIED_DYNAMIC` until their
 initialization, timestep constraints, event behaviour, snapshot/restart semantics, and quantitative validation are
 reviewed. The mapping is expected to expand as that audit is completed.
 
+## Event-scheduler rollback boundary
+
+Transactional timestep rejection must restore more than process thermodynamic state. The event scheduler itself owns
+mutable bookkeeping: a due event moves from the pending queue into the fired-event log. `EventScheduler.snapshot()` and
+`restore(snapshot)` provide an explicit checkpoint for that pending/fired membership so a trial step can recover the
+scheduler state that existed before the trial.
+
+```java
+EventScheduler.Snapshot eventState = scheduler.snapshot();
+
+// trial work that may move events from pending -> fired
+
+scheduler.restore(eventState);
+```
+
+This is deliberately **not** presented as complete event rollback. Restoring scheduler membership cannot reverse an
+external side effect already performed by an event `Runnable`: a file write, network call, external DCS command, or
+mutation of an object that is not part of the separately restored process state remains observable. Therefore a qualified
+rejected adaptive trial must either defer externally visible event actions until the physical timestep is accepted, or
+execute only actions whose complete mutated state participates in the same transaction. This boundary is especially
+important for safety replay, virtual commissioning and OTS integration.
+
+The scheduler attached to `ProcessSystem` is a transient runtime service and is not automatically serialized by
+`ProcessSystem.copy()`/Java serialization. Scheduler checkpointing must therefore be coordinated explicitly by the future
+whole-step transaction boundary rather than assumed to come from the process graph copy.
+
 ## What this does not solve
 
 This contract does not yet provide the plant-wide vector ODE/DAE solver required for strongly coupled professional
