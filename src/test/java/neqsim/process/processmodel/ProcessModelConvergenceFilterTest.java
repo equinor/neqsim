@@ -150,6 +150,23 @@ public class ProcessModelConvergenceFilterTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  public void repeatedDiagnosticsFollowCurrentFlowFloor() {
+    ProcessModel model = new ProcessModel();
+
+    model.calculateConvergenceErrors(previousStates(), currentStates());
+    assertEquals(2, model.getLastBoundaryStreamErrors().size());
+
+    model.setBoundaryFlowFloor(1.0);
+    model.calculateConvergenceErrors(previousStates(), currentStates());
+    assertEquals(1, model.getLastBoundaryStreamErrors().size());
+    assertEquals("NGL mixer mixed stream", model.getLastBoundaryStreamErrors().get(0).getStreamName());
+
+    model.setBoundaryFlowFloor(ProcessModel.DEFAULT_BOUNDARY_FLOW_FLOOR);
+    model.calculateConvergenceErrors(previousStates(), currentStates());
+    assertEquals(2, model.getLastBoundaryStreamErrors().size());
+  }
+
+  @Test
   public void absoluteFlowToleranceIgnoresNegligibleAbsoluteChange() {
     ProcessModel model = new ProcessModel();
     model.setAbsoluteFlowTolerance(1.0);
