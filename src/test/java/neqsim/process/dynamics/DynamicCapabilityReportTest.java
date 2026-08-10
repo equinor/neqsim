@@ -165,7 +165,6 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
     Stream feed = createFeed("module feed");
     SeparationTrainModule module = new SeparationTrainModule("separation train");
     module.addInputStream("feed stream", feed);
-    module.initializeModule();
 
     ProcessSystem process = new ProcessSystem("module process");
     process.add(module);
@@ -187,7 +186,6 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
     Stream feed = createFeed("module feed");
     SeparationTrainModule module = new SeparationTrainModule("separation train");
     module.addInputStream("feed stream", feed);
-    module.initializeModule();
 
     ProcessSystem process = new ProcessSystem("topside");
     process.add(module);
