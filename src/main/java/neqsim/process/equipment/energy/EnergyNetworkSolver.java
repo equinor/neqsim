@@ -102,8 +102,8 @@ public class EnergyNetworkSolver extends ProcessEquipmentBaseClass {
    *
    * <p>
    * Repeated nonlinear/refinement evaluations with the same non-null calculation identifier still recalculate the bus
-   * balance, but advance this solver's local clock only once for that physical timestep. A null identifier preserves the
-   * legacy behavior and advances the local clock on every successful evaluation.
+   * balance, but advance this solver's local clock only once for that physical timestep. A null identifier preserves
+   * the legacy behavior and advances the local clock on every successful evaluation.
    * </p>
    *
    * @param dt physical timestep in seconds
