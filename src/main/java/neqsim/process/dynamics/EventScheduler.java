@@ -169,6 +169,42 @@ public class EventScheduler implements Serializable {
   }
 
   /**
+   * Returns the earliest pending event time without mutating scheduler state.
+   *
+   * <p>
+   * Adaptive/event-aware integrators can use this value to shorten a proposed timestep so an accepted physical step
+   * lands exactly on an event boundary rather than stepping past a trip, setpoint change, or operator action.
+   * </p>
+   *
+   * @return earliest pending absolute event time in seconds, or positive infinity when no event is pending
+   */
+  public double getNextEventTime() {
+    return queue.isEmpty() ? Double.POSITIVE_INFINITY : queue.get(0).time;
+  }
+
+  /**
+   * Returns pending events that are due at or before {@code now} without firing or removing them.
+   *
+   * <p>
+   * The returned list is an immutable copy in scheduler order. This allows a transient transaction/event-localization
+   * layer to inspect an event boundary without changing pending/fired bookkeeping or executing event actions.
+   * </p>
+   *
+   * @param now absolute simulation time in seconds
+   * @return immutable copy of due pending events
+   */
+  public List<ScheduledEvent> getDueEvents(double now) {
+    List<ScheduledEvent> due = new ArrayList<ScheduledEvent>();
+    for (ScheduledEvent event : queue) {
+      if (event.time > now) {
+        break;
+      }
+      due.add(event);
+    }
+    return Collections.unmodifiableList(due);
+  }
+
+  /**
    * Fires all events with {@code time <= now} in time order. Each event is removed from the pending queue and appended
    * to the fired log.
    *
