@@ -23,7 +23,8 @@ import neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator
  * <h2>Sign Convention</h2>
  * <p>
  * Positive interfacial shear acts to accelerate the liquid and decelerate the gas (gas faster than liquid). The shear
- * stress is defined as: τ_i = 0.5 * f_i * ρ_G * (v_G - v_L) * |v_G - v_L|
+ * stress is defined as: τ_i = 0.5 * f_i * ρ_c * (v_G - v_L) * |v_G - v_L|, where ρ_c is the continuous-phase density
+ * selected by the regime closure.
  * </p>
  *
  * @author Even Solbraa
@@ -33,6 +34,9 @@ public class InterfacialFriction implements Serializable {
 
   private static final long serialVersionUID = 1L;
   private static final double GRAVITY = 9.81;
+
+  /** Retain validated compatibility scaling unless corrected stiff drag is explicitly selected. */
+  private boolean useCorrectedBubbleDrag = false;
 
   /** Geometry calculator for stratified flow. */
   private GeometryCalculator geometryCalc;
@@ -411,6 +415,11 @@ public class InterfacialFriction implements Serializable {
    */
   private InterfacialFrictionResult calcBubble(double vG, double vL, double rhoG, double rhoL, double muG, double muL,
       double alphaL, double D) {
+    return calcBubble(vG, vL, rhoG, rhoL, muG, muL, alphaL, D, useCorrectedBubbleDrag);
+  }
+
+  private InterfacialFrictionResult calcBubble(double vG, double vL, double rhoG, double rhoL, double muG, double muL,
+      double alphaL, double D, boolean useCorrectedDrag) {
     InterfacialFrictionResult result = new InterfacialFrictionResult();
 
     result.slipVelocity = vG - vL;
@@ -446,8 +455,17 @@ public class InterfacialFriction implements Serializable {
       C_D = 0.44;
     }
 
-    // Friction factor
-    result.frictionFactor = C_D * d_b / (4.0 * D);
+    if (useCorrectedDrag) {
+      // Express the standard dispersed-phase drag force
+      // F_D/V = 3/4 C_D rho_L alpha_G |u_r| u_r / d_b
+      // as tau_i * a_i, with a_i = 6 alpha_G/d_b and
+      // tau_i = 1/8 C_D rho_L |u_r| u_r = 1/2 f_i rho_L |u_r| u_r.
+      result.frictionFactor = C_D / 4.0;
+    } else {
+      // Preserve the existing quantitatively benchmarked response until the corrected
+      // closure is validated for the public severe-slugging case.
+      result.frictionFactor = C_D * d_b / (4.0 * D);
+    }
 
     // Interfacial shear (drag force per unit volume * characteristic length)
     result.interfacialShear = 0.5 * result.frictionFactor * rhoL * result.slipVelocity * Math.abs(result.slipVelocity);
@@ -482,6 +500,56 @@ public class InterfacialFriction implements Serializable {
         gasViscosity, liquidViscosity, liquidHoldup, diameter, surfaceTension);
 
     return result.interfacialShear * result.interfacialAreaPerLength;
+  }
+
+  /**
+   * Calculate the dimensionally correct Schiller-Naumann force independently of compatibility mode.
+   *
+   * @param flowRegime bubble or dispersed-bubble flow regime
+   * @param gasVelocity gas velocity in m/s
+   * @param liquidVelocity liquid velocity in m/s
+   * @param gasDensity gas density in kg/m3
+   * @param liquidDensity liquid density in kg/m3
+   * @param gasViscosity gas viscosity in Pa s
+   * @param liquidViscosity liquid viscosity in Pa s
+   * @param liquidHoldup liquid volume fraction
+   * @param diameter pipe internal diameter in m
+   * @param surfaceTension gas-liquid surface tension in N/m
+   * @return corrected drag force per pipe length in N/m
+   */
+  public double calcCorrectedBubbleDragForce(FlowRegime flowRegime, double gasVelocity, double liquidVelocity,
+      double gasDensity, double liquidDensity, double gasViscosity, double liquidViscosity, double liquidHoldup,
+      double diameter, double surfaceTension) {
+    if (flowRegime != FlowRegime.BUBBLE && flowRegime != FlowRegime.DISPERSED_BUBBLE) {
+      return calcInterfacialForce(flowRegime, gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity,
+          liquidViscosity, liquidHoldup, diameter, surfaceTension);
+    }
+    InterfacialFrictionResult result = calcBubble(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity,
+        liquidViscosity, liquidHoldup, diameter, true);
+    return result.interfacialShear * result.interfacialAreaPerLength;
+  }
+
+  /**
+   * Select the corrected dispersed-bubble force representation.
+   *
+   * <p>
+   * This is configured automatically by {@code TwoFluidPipe.setEnableStiffBubbleDrag(true)}. Direct use without a stiff
+   * source integrator can violate the explicit time-step limit.
+   * </p>
+   *
+   * @param useCorrected true for {@code f_i = C_D/4}; false for compatibility scaling
+   */
+  public void setUseCorrectedBubbleDrag(boolean useCorrected) {
+    this.useCorrectedBubbleDrag = useCorrected;
+  }
+
+  /**
+   * Check whether the corrected dispersed-bubble force representation is selected.
+   *
+   * @return true for the dimensionally correct Schiller-Naumann representation
+   */
+  public boolean isUseCorrectedBubbleDrag() {
+    return useCorrectedBubbleDrag;
   }
 
   // ============ Hart Correlation (1989) for Stratified Wavy Flow ============
