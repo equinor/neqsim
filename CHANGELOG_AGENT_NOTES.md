@@ -9,6 +9,21 @@
 
 ---
 
+## 2026-08-10 — ProcessModel sensitivity-quality evidence
+
+- `ProcessModelSimulationEvaluator.estimateSensitivitiesWithQuality(...)` now evaluates one coarse
+  and one halved finite-difference step, reusing each process run for the selected objective and
+  every constraint-margin derivative.
+- The immutable result returns the fine-step gradient/Jacobian and records each parameter's actual
+  bounded stencil, requested/coarse/fine steps, scale-independent coarse/fine disagreement, and
+  every perturbation's parameter value, convergence, hard-constraint feasibility, and error.
+- `isNumericallyStable(tolerance)` is deliberately a numerical consistency check. Agents must
+  inspect feasibility and active equipment/control regimes separately and must not label the
+  derivative a shadow price without optimizer-specific KKT evidence.
+- Existing gradient/Jacobian methods and their lower evaluation cost remain unchanged.
+
+---
+
 ## 2026-08-09 — Bound-aware ProcessModel finite-difference sensitivities
 
 - `ProcessModelSimulationEvaluator` objective gradients and constraint Jacobians now divide by the

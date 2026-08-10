@@ -440,7 +440,11 @@ differences as the low-cost default and also exposes `FiniteDifferenceMethod.CEN
 strictly honor parameter bounds and divide by the actual applied perturbation. Central differences
 use a symmetric stencil at interior points and a one-sided fallback at an active bound. Verify
 step-size stability before interpreting a local derivative as debottlenecking sensitivity or
-shadow-value evidence.
+shadow-value evidence. `estimateSensitivitiesWithQuality(...)` automates one step-halving check,
+returns the fine-step objective gradient and constraint-margin Jacobian, and records the actual
+stencil, applied steps, convergence, hard-constraint feasibility, and evaluation errors for every
+perturbation. Callers select the acceptable relative-disagreement tolerance and must still check
+nearby points and active equipment/control regimes.
 
 ### ProcessOptimizationEngine Algorithms
 

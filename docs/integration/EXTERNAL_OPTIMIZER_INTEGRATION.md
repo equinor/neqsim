@@ -475,7 +475,7 @@ evaluator.resetEvaluationCount()
 evaluator.setFiniteDifferenceStep(1e-6)
 
 # Use relative step size
-evaluator.setUseRelativeStep(True)  # step = h * |x_i| + h
+evaluator.setUseRelativeStep(True)  # step = h * max(|x_i|, 1)
 
 # Optional second-order stencil for smooth interior operating points
 FiniteDifferenceMethod = jneqsim.process.util.optimizer.ProcessModelSimulationEvaluator.FiniteDifferenceMethod
@@ -490,6 +490,41 @@ directions are available and falls back to a one-sided difference at an active b
 parameter has zero derivative because it has no feasible perturbation direction. Treat either
 finite-difference result as a local sensitivity, not as an optimizer-independent shadow price, and
 check step-size stability before using it to rank debottlenecking value.
+
+For a reusable quality record, run the coarse step and one halved step through the combined
+objective/constraint API:
+
+```python
+quality_result = evaluator.estimateSensitivitiesWithQuality(x)
+gradient = quality_result.getObjectiveGradient()
+jacobian = quality_result.getConstraintJacobian()
+
+for parameter_quality in quality_result.getParameterQuality():
+    print(
+        parameter_quality.getParameterName(),
+        parameter_quality.getStencil(),
+        parameter_quality.getCoarseStep(),
+        parameter_quality.getFineStep(),
+        parameter_quality.getMaximumRelativeDisagreement(),
+        parameter_quality.isAllEvaluationsConverged(),
+        parameter_quality.isAllEvaluationsFeasible(),
+    )
+```
+
+`estimateSensitivitiesWithQuality(...)` returns the fine-step derivatives and preserves an
+immutable record for every perturbation: signed applied step, actual parameter value, process
+convergence, hard-constraint feasibility, and evaluation error. Its relative disagreement is
+`abs(D_h - D_h/2) / max(abs(D_h), abs(D_h/2))`, or zero when both derivatives are zero. Use
+`isNumericallyStable(tolerance)` with a tolerance justified for the engineering decision. The
+method needs four perturbed simulations per interior central parameter and two per one-sided
+parameter, while a fixed parameter needs none; objective and constraint derivatives reuse those
+same simulations. Existing `estimateGradient(...)` and `estimateConstraintJacobian(...)` remain
+the lower-cost APIs.
+
+Convergence and numerical agreement are necessary but not sufficient. Inspect perturbation
+feasibility separately, test nearby operating points, and reject or qualify sensitivities that
+cross equipment/control regimes. An infeasible perturbation is retained as evidence rather than
+silently invalidating a constraint-margin derivative.
 
 ### Export Problem Definition
 
@@ -632,6 +667,7 @@ jpype.shutdownJVM()
 | `getConstraintMargins(double[] x)` | Get constraint slack values |
 | `estimateGradient(double[] x)` | Finite-difference gradient |
 | `estimateConstraintJacobian(double[] x)` | Constraint Jacobian matrix |
+| `estimateSensitivitiesWithQuality(double[] x)` | Fine-step gradient/Jacobian plus immutable step, convergence, feasibility, and step-halving evidence |
 | `getBounds()` | Get parameter bounds array |
 | `getLowerBounds()` | Get lower bounds vector |
 | `getUpperBounds()` | Get upper bounds vector |
