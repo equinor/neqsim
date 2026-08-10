@@ -32,6 +32,24 @@ class Dexpi20ProcessModelWriterTest {
   }
 
   @Test
+  void assessedExportConsumesCanonicalSnapshotWithoutChangingLegacyXml() throws Exception {
+    Path legacyOutput = temporaryDirectory.resolve("legacy-parallel-branch.dexpi.xml");
+    Path canonicalOutput = temporaryDirectory.resolve("canonical-parallel-branch.dexpi.xml");
+    Dexpi20ProcessModelWriter.write(ProcessDiagramGoldenFixtures.parallelBranchTrain().getProcessSystem(),
+        legacyOutput.toFile());
+
+    Dexpi20ProcessTopologyAssessment.Report report = Dexpi20ProcessModelWriter.writeAndAssessTopology(
+        ProcessDiagramGoldenFixtures.parallelBranchTrain().getProcessSystem(), canonicalOutput.toFile(),
+        "DEXPI-CANONICAL-PROJECTION", "A");
+
+    assertEquals(new String(Files.readAllBytes(legacyOutput), StandardCharsets.UTF_8),
+        new String(Files.readAllBytes(canonicalOutput), StandardCharsets.UTF_8));
+    assertEquals("CANONICAL_ENGINEERING_GRAPH", report.getExportTopologySource());
+    assertTrue(report.toJson().contains("\"exportTopologySource\": \"CANONICAL_ENGINEERING_GRAPH\""));
+    assertTrue(report.isSchemaProfileAndSupportedTopologyValid(), report.getDiagnostics().toString());
+  }
+
+  @Test
   void reportsUnsupportedTopologyAndDocumentScopesWithoutHidingMaterialEquivalence() throws Exception {
     ProcessDiagramGoldenFixtures.Fixture fixture = ProcessDiagramGoldenFixtures.simpleTrain();
     ProcessSystem process = fixture.getProcessSystem();
@@ -49,6 +67,21 @@ class Dexpi20ProcessModelWriterTest {
     assertTrue(hasDiagnostic(report, "DEXPI_PROCESS_MULTI_AREA_UNSUPPORTED"));
     assertTrue(hasDiagnostic(report, "DEXPI_PROCESS_DOCUMENT_SEMANTICS_UNSUPPORTED"));
     assertTrue(hasDiagnostic(report, "DEXPI_PROCESS_GRAPHICS_UNSUPPORTED"));
+  }
+
+  @Test
+  void reportsCanonicalMaterialConnectionWithoutSimulationStreamAsLoss() throws Exception {
+    ProcessSystem process = ProcessDiagramGoldenFixtures.simpleTrain().getProcessSystem();
+    process.connect("heater", "manualRecycleOutlet", "feed", "manualRecycleInlet",
+        ProcessConnection.ConnectionType.MATERIAL);
+    Path output = temporaryDirectory.resolve("unresolved-canonical-material.dexpi.xml");
+
+    Dexpi20ProcessTopologyAssessment.Report report = Dexpi20ProcessModelWriter.writeAndAssessTopology(process,
+        output.toFile(), "DEXPI-CANONICAL-LOSS", "A");
+
+    assertFalse(report.isSupportedMaterialTopologyEquivalent());
+    assertTrue(hasDiagnostic(report, "DEXPI_PROCESS_MATERIAL_CONNECTION_MISSING"));
+    assertTrue(report.getConformanceReport().isSchemaAndProfileConformant());
   }
 
   @Test
