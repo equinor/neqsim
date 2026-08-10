@@ -116,11 +116,41 @@ T_jt = float(valve.getOutletStream().getTemperature('C'))  # Correct JT temperat
 | Step | Action | Why It Helps |
 |------|--------|-------------|
 | 1 | Check if `fluid.setMultiPhaseCheck(true)` was called | Without this, solver may miss a phase split |
-| 2 | For CO2-rich systems near critical, check actual density — phase label may be misleading | CO2 near Tc=304K and Pc=74bar has ambiguous phase identity |
-| 3 | Use `fluid.getPhase(0)` / `getPhase(1)` instead of `getPhase("gas")` if labels are unreliable | Phase index is always consistent even if label is wrong |
-| 4 | Run `ops.calcPTphaseEnvelope()` to visualize phase boundaries | Shows whether operating point is in 1-phase or 2-phase region |
-| 5 | For CO2 injection wells, use `CO2FlowCorrections.isDensePhase(system)` to check T/Tc and P/Pc | Distinguishes dense phase from conventional gas/liquid |
-| 6 | For CO2-rich streams, use `CO2FlowCorrections.getReducedTemperature(system)` and `getReducedPressure(system)` | Quantifies proximity to critical point |
+| 2 | **If the fluid uses `addTBPfraction` / `addPlusFraction`, verify molar mass was passed in kg/mol, not g/mol** | See "Silent g/mol TBP unit error" below — the single most common cause of a bogus one-phase result |
+| 3 | For CO2-rich systems near critical, check actual density — phase label may be misleading | CO2 near Tc=304K and Pc=74bar has ambiguous phase identity |
+| 4 | Use `String.valueOf(phase.getType())` (`"GAS"` / `"OIL"` / `"AQUEOUS"`) rather than `getPhaseTypeName()` | `getPhaseTypeName()` can report `"gas"` for a liquid root; `getType()` is the reliable discriminator |
+| 5 | Use `fluid.getPhase(0)` / `getPhase(1)` instead of `getPhase("gas")` if labels are unreliable | Phase index is always consistent even if label is wrong |
+| 6 | Run `ops.calcPTphaseEnvelope()` to visualize phase boundaries | Shows whether operating point is in 1-phase or 2-phase region |
+| 7 | For CO2 injection wells, use `CO2FlowCorrections.isDensePhase(system)` to check T/Tc and P/Pc | Distinguishes dense phase from conventional gas/liquid |
+| 8 | For CO2-rich streams, use `CO2FlowCorrections.getReducedTemperature(system)` and `getReducedPressure(system)` | Quantifies proximity to critical point |
+
+### Silent g/mol TBP unit error
+
+`addTBPfraction(name, moles, molarMass, density)` and `addPlusFraction(...)`
+expect molar mass in **kg/mol**. Passing g/mol throws no exception — the
+characterization silently produces nonsense pseudo-component properties and the
+flash collapses to one phase.
+
+**Diagnostic tell:** `TPflash()` at standard conditions (15 °C, 1.01325 bara)
+returns `getNumberOfPhases() == 1` with `getType() == GAS` but a density of
+700–800 kg/m3. A gas at 1 atm cannot exceed a few kg/m3, so a "gas" phase with
+liquid density means the pseudo-components are broken, not that the fluid is
+single-phase.
+
+**Confirm** by printing the pseudo-component properties — the broken case shows
+`molarMass` ~1000x too large, `Tc` in the thousands of K, and `acentricFactor`
+pinned at -0.99:
+
+```java
+for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+  ComponentInterface c = fluid.getComponent(i);
+  logger.info("{} MW={} g/mol Tc={} K Pc={} bara omega={}", c.getName(),
+      c.getMolarMass() * 1000.0, c.getTC(), c.getPC(), c.getAcentricFactor());
+}
+```
+
+**Fix:** divide by 1000 at the call site —
+`fluid.addTBPfraction("C10-C12", 0.054, 150.0 / 1000.0, 0.790);`
 
 ## CO2 Injection Well Issues
 
