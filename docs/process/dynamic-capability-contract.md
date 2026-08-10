@@ -152,9 +152,16 @@ The initial contract intentionally classifies only core implementations whose cu
 semantics:
 
 - lumped: separators, tanks, two-stream heat exchangers, compressors, pumps, and throttling/control valves;
-- distributed: `TwoFluidPipe`, drift-flux `TransientPipe`, and `WaterHammerPipe`;
+- distributed: `OnePhasePipeLine`, `TwoFluidPipe`, drift-flux `TransientPipe`, and `WaterHammerPipe`;
 - boundary: `SimpleReservoir`;
 - control: registered controllers and measurement devices.
+
+The `OnePhasePipeLine` distributed classification is supported by merged ProcessSystem-level quantitative evidence for
+the conservative one-phase, positive-flow finite-volume path: the pipeline owns spatial hydraulic/species state,
+component inventories and accepted-step diagnostics, and its ProcessSystem snapshot/event path has verified conservation,
+boundedness, synchronized thermodynamic composition, clocks and calculation identifiers. The classification describes
+**distributed state ownership**, not blanket validity of every pipeline mode. Legacy staged compositional transport,
+zero/reversed flow, phase appearance and multiphase operation remain outside that evidence until separately qualified.
 
 `Stream` and stream subclasses that inherit the standard `Stream.runTransient(...)` boundary are classified as
 `ALGEBRAIC`: that method re-evaluates the stream and advances its execution clock, but does not integrate stored physical
