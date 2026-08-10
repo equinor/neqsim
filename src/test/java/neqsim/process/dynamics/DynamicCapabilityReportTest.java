@@ -109,15 +109,15 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
     assertTrue(exception.getMessage().contains("custom"));
   }
 
-  /** Stateful adsorption/power models stay review items until their #2911 step/conservation contracts are qualified. */
+  /** Audited battery state no longer hides the still-unaudited adsorption model in the capability inventory. */
   @Test
-  public void knownStatefulButUnauditedFamiliesRemainReviewItems() {
+  public void auditedBatteryDoesNotMaskUnauditedAdsorption() {
     Stream feed = createFeed("adsorption feed");
     AdsorptionBed bed = new AdsorptionBed("adsorption bed", feed);
     BatteryStorage battery = new BatteryStorage("battery", 1000.0);
 
     assertEquals(DynamicCapability.UNCLASSIFIED_DYNAMIC, bed.getDynamicCapability());
-    assertEquals(DynamicCapability.UNCLASSIFIED_DYNAMIC, battery.getDynamicCapability());
+    assertEquals(DynamicCapability.DYNAMIC_LUMPED, battery.getDynamicCapability());
 
     ProcessSystem process = new ProcessSystem("treatment and power");
     process.add(feed);
@@ -126,11 +126,42 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
 
     DynamicCapabilityReport report = DynamicCapabilityReport.from(process);
 
-    assertEquals(2, report.getCapabilityCounts().get(DynamicCapability.UNCLASSIFIED_DYNAMIC).intValue());
-    assertEquals(2, report.getReviewItems().size());
+    assertEquals(1, report.getCapabilityCounts().get(DynamicCapability.UNCLASSIFIED_DYNAMIC).intValue());
+    assertEquals(1, report.getCapabilityCounts().get(DynamicCapability.DYNAMIC_LUMPED).intValue());
+    assertEquals(1, report.getReviewItems().size());
     assertFalse(report.isStrictPreflightReady());
     assertTrue(containsDiagnostic(report.getReviewItems(), "adsorption bed"));
-    assertTrue(containsDiagnostic(report.getReviewItems(), "battery"));
+    assertFalse(containsDiagnostic(report.getReviewItems(), "battery"));
+  }
+
+  /** Runtime activation is a separate audited dimension from state ownership and requested dynamic mode. */
+  @Test
+  public void heatExchangerActivationRequiresItsActualRuntimePrerequisites() {
+    Stream hot = createFeed("hot feed");
+    Stream cold = createFeed("cold feed");
+    HeatExchanger exchanger = new HeatExchanger("dynamic hx", hot, cold);
+
+    assertEquals(DynamicCapability.DYNAMIC_LUMPED, exchanger.getDynamicCapability());
+    assertEquals(DynamicActivationStatus.INACTIVE, DynamicActivationResolver.resolve(exchanger));
+    assertTrue(DynamicActivationResolver.diagnostic(exchanger).contains("dynamicModelEnabled is false"));
+
+    exchanger.setCalculateSteadyState(false);
+    assertEquals(DynamicActivationStatus.INCOMPLETE_CONFIGURATION, DynamicActivationResolver.resolve(exchanger));
+    assertTrue(DynamicActivationResolver.diagnostic(exchanger).contains("calculateSteadyState"));
+
+    exchanger.setDynamicModelEnabled(true);
+    assertEquals(DynamicActivationStatus.INCOMPLETE_CONFIGURATION, DynamicActivationResolver.resolve(exchanger));
+    assertTrue(DynamicActivationResolver.diagnostic(exchanger).contains("wallMass"));
+    assertTrue(DynamicActivationResolver.diagnostic(exchanger).contains("heatTransferArea"));
+
+    exchanger.setWallMass(1000.0);
+    exchanger.setHeatTransferArea(50.0);
+    assertEquals(DynamicActivationStatus.ACTIVE, DynamicActivationResolver.resolve(exchanger));
+    assertTrue(DynamicActivationResolver.diagnostic(exchanger).contains("wall-energy path is active"));
+
+    assertEquals(DynamicActivationStatus.NOT_APPLICABLE, DynamicActivationResolver.resolve(hot));
+    assertEquals(DynamicActivationStatus.UNVERIFIED,
+        DynamicActivationResolver.resolve(new Separator("unqualified activation", hot)));
   }
 
   /**
