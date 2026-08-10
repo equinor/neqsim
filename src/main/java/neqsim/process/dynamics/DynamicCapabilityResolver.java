@@ -6,6 +6,7 @@ import neqsim.process.ProcessElementInterface;
 import neqsim.process.SimulationInterface;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.energy.EnergyConverter;
 import neqsim.process.equipment.energy.EnergyNetworkSolver;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.pipeline.OnePhasePipeLine;
@@ -74,7 +75,8 @@ public final class DynamicCapabilityResolver {
     }
 
     if (element instanceof Separator || element instanceof Tank || element instanceof HeatExchanger
-        || element instanceof Compressor || element instanceof Pump || element instanceof ThrottlingValve) {
+        || element instanceof Compressor || element instanceof Pump || element instanceof ThrottlingValve
+        || element instanceof EnergyConverter) {
       return DynamicCapability.DYNAMIC_LUMPED;
     }
 
