@@ -75,7 +75,7 @@ public final class TransientStepIdentifier {
   }
 
   private static UUID nameUuid(String kind, String scope, long index) {
-    String value = NAMESPACE + "\u0000" + kind + "\u0000" + scope + "\u0000" + index;
+    String value = NAMESPACE + ":" + kind.length() + ":" + kind + ":" + scope.length() + ":" + scope + ":" + index;
     return UUID.nameUUIDFromBytes(value.getBytes(StandardCharsets.UTF_8));
   }
 
