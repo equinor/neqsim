@@ -1,16 +1,20 @@
 package neqsim.process.processmodel.dexpi;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.processmodel.ProcessConnection;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.processmodel.diagram.ProcessDiagramGoldenFixtures;
 import neqsim.thermo.system.SystemSrkEos;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -19,6 +23,33 @@ import org.junit.jupiter.api.io.TempDir;
 class Dexpi20ProcessModelWriterTest {
   @TempDir
   Path temporaryDirectory;
+
+  @Test
+  void provesSimpleAndParallelBranchTopologyAgainstCanonicalManifest() throws Exception {
+    assertGoldenTopology(ProcessDiagramGoldenFixtures.simpleTrain(), "DEXPI-GOLDEN-SIMPLE", "simple.dexpi.xml");
+    assertGoldenTopology(ProcessDiagramGoldenFixtures.parallelBranchTrain(), "DEXPI-GOLDEN-BRANCH",
+        "parallel-branch.dexpi.xml");
+  }
+
+  @Test
+  void reportsUnsupportedTopologyAndDocumentScopesWithoutHidingMaterialEquivalence() throws Exception {
+    ProcessDiagramGoldenFixtures.Fixture fixture = ProcessDiagramGoldenFixtures.simpleTrain();
+    ProcessSystem process = fixture.getProcessSystem();
+    process.connect("heater", "temperatureSignal", "feed", "temperatureSetpoint",
+        ProcessConnection.ConnectionType.SIGNAL);
+    process.connect("heater", "calculatedDuty", "feed", "availableDuty", ProcessConnection.ConnectionType.ENERGY);
+    Path output = temporaryDirectory.resolve("scoped-losses.dexpi.xml");
+
+    Dexpi20ProcessTopologyAssessment.Report report = Dexpi20ProcessModelWriter.writeAndAssessTopology(process,
+        output.toFile(), "DEXPI-SCOPED-LOSSES", "A");
+
+    assertTrue(report.isSupportedMaterialTopologyEquivalent(), report.getDiagnostics().toString());
+    assertTrue(hasDiagnostic(report, "DEXPI_PROCESS_SIGNAL_CONNECTION_UNSUPPORTED"));
+    assertTrue(hasDiagnostic(report, "DEXPI_PROCESS_ENERGY_CONNECTION_UNSUPPORTED"));
+    assertTrue(hasDiagnostic(report, "DEXPI_PROCESS_MULTI_AREA_UNSUPPORTED"));
+    assertTrue(hasDiagnostic(report, "DEXPI_PROCESS_DOCUMENT_SEMANTICS_UNSUPPORTED"));
+    assertTrue(hasDiagnostic(report, "DEXPI_PROCESS_GRAPHICS_UNSUPPORTED"));
+  }
 
   @Test
   void writesSchemaValidProcessModelWithStepsPortsStreamsAndPhysicalQuantities() throws Exception {
@@ -124,6 +155,42 @@ class Dexpi20ProcessModelWriterTest {
     process.add(separator);
     process.add(compressor);
     return process;
+  }
+
+  private void assertGoldenTopology(ProcessDiagramGoldenFixtures.Fixture fixture, String plantId, String fileName)
+      throws Exception {
+    Path output = temporaryDirectory.resolve(fileName);
+
+    Dexpi20ProcessTopologyAssessment.Report report = Dexpi20ProcessModelWriter
+        .writeAndAssessTopology(fixture.getProcessSystem(), output.toFile(), plantId, "A");
+
+    assertTrue(report.isSchemaProfileAndSupportedTopologyValid(), report.getDiagnostics().toString());
+    assertTrue(report.isSupportedMaterialTopologyEquivalent(), report.getDiagnostics().toString());
+    assertTrue(report.getConformanceReport().isSchemaAndProfileConformant());
+    assertEquals(64, report.getCanonicalFingerprint().length());
+    assertEquals(fixture.getMaterialConnections(), report.getCanonicalMaterialConnections());
+    assertEquals(fixture.getMaterialConnections(), report.getExportedMaterialConnections());
+    assertEquals(fixture.getMaterialConnections().size(),
+        new java.util.LinkedHashSet<String>(report.getCanonicalConnectionIds()).size());
+    assertTrue(hasDistinctPorts(report.getExportedConnections()));
+  }
+
+  private static boolean hasDistinctPorts(List<Dexpi20ProcessTopologyAssessment.ExportedConnection> connections) {
+    java.util.Set<String> ports = new java.util.LinkedHashSet<String>();
+    for (Dexpi20ProcessTopologyAssessment.ExportedConnection connection : connections) {
+      ports.add(connection.getSourcePortId());
+      ports.add(connection.getTargetPortId());
+    }
+    return ports.size() == connections.size() * 2;
+  }
+
+  private static boolean hasDiagnostic(Dexpi20ProcessTopologyAssessment.Report report, String code) {
+    for (Dexpi20ProcessTopologyAssessment.Diagnostic diagnostic : report.getDiagnostics()) {
+      if (code.equals(diagnostic.getCode())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private ProcessSystem process() {
