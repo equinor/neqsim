@@ -33,8 +33,8 @@ API-stability classification.
 | Legacy `ProcessSystem` Graphviz | `ProcessSystem.exportToGraphviz(...)`, `ProcessSystemGraphvizExporter.export(...)` | Equipment stream introspection and export options | Legacy Graphviz file with optional stream values and property table | Retain as a compatibility output; do not silently redirect it through a new model or renderer |
 | Legacy minimal PFD DOT | `ProcessFlowDiagramExporter(ProcessSystem).toDot()` | Shared stream identity plus explicit `ProcessConnection` declarations | Minimal equipment-node/stream-edge DOT | Preserve the constructor and `toDot()` result contract while public callers remain supported |
 | Multi-area Graphviz | `ProcessModel.toDOT()`, `createGraphvizExporter()`, `exportToGraphviz(...)`, `exportAreaDOT(...)`, and `ProcessModelGraphvizExporter` | Ordered areas and shared stream identity | One clustered plant DOT and optional per-area DOT files | Preserve current combined and per-area APIs. Per-area files are compatibility views, not the future controlled multi-sheet document model |
-| Canonical topology adapter | `ProcessDiagramGraphAdapter.fromProcessSystem(...)`, `fromProcessModel(...)` | `ProcessSystem`, explicit connections, and ordered `ProcessModel` areas | Defensive deterministic `EngineeringGraph`, fingerprint, and structured diagnostics | Reuse as the shared topology foundation; DEXPI Process assessment consumes it as an equivalence baseline, while renderers and writers still use their compatibility paths |
-| Native DEXPI 2.0 Process | `Dexpi20ProcessModelWriter.write(...)`, `writeAndAssess(...)`, `writeAndAssessTopology(...)` | Direct `ProcessSystem` equipment and connection traversal, compared with the canonical graph by the topology assessment | Native DEXPI 2.0 Process XML with steps, material ports, streams, quantities, conformance report, and optional structured topology evidence | Preserve the native Process profile and fail-closed assessment; migrate traversal only after the equivalence evidence remains green |
+| Canonical topology adapter | `ProcessDiagramGraphAdapter.fromProcessSystem(...)`, `fromProcessModel(...)` | `ProcessSystem`, explicit connections, and ordered `ProcessModel` areas | Defensive deterministic `EngineeringGraph`, fingerprint, and structured diagnostics | Reuse as the shared topology foundation; the assessed DEXPI Process path consumes one snapshot, while legacy renderers and compatibility writers retain their established paths |
+| Native DEXPI 2.0 Process | `Dexpi20ProcessModelWriter.write(...)`, `writeAndAssess(...)`, `writeAndAssessTopology(...)` | Direct `ProcessSystem` traversal for compatibility APIs; canonical material projection for `writeAndAssessTopology(...)` | Native DEXPI 2.0 Process XML with steps, material ports, streams, quantities, conformance report, and optional structured topology evidence | Preserve the native Process profile and existing sequential serialization; expand canonical consumption only behind equivalence evidence |
 | Native DEXPI 2.0 Plant | `Dexpi20XmlWriter.write(...)`, `writeAndAssess(...)` | Direct `ProcessSystem` engineering/plant mapping | Native DEXPI 2.0 Plant XML and conformance report | Keep separate from Process/PFD exchange and from Proteus compatibility output |
 | Proteus-compatible DEXPI | `DexpiXmlWriter.write(...)`, `writeForPyDexpi(...)`, `write(ProcessModel, ...)`, `writeSheets(...)` | Direct process/engineering mapping plus `DexpiLayoutEngine` | Proteus-compatible P&ID XML, pyDEXPI variant, layouts, and per-area sheets | Preserve import/export compatibility. Combined export flattens areas and logs/skips distinct equipment with duplicate names; per-area sheets expose boundary feeds but do not yet form a controlled, paired-reference document set |
 | Proteus import and simulation reconstruction | `DexpiXmlReader`, `DexpiSimulationBuilder`, `DexpiTopologyResolver`, `DexpiEquipmentFactory` | Imported nozzles, piping segments, equipment, instruments, and mappings | DEXPI/Proteus XML to a runnable `ProcessSystem` with explicit loss and validation boundaries | Keep as the detailed P&ID workflow; do not infer that a simulation-only PFD contains complete piping, valve, nozzle, instrument, or safeguard design |
@@ -49,7 +49,7 @@ API-stability classification.
 | `EngineeringGraph` | Exchange-neutral engineering objects and revision comparison | Mutable and broader than a qualified process-diagram document contract |
 | `ProcessDiagramGraphAdapter.Result` | Deterministic projection of `ProcessSystem` or multi-area `ProcessModel` into `EngineeringGraph` | Stable plant/area/equipment/port/connection IDs exist, but document/sheet IDs, controlled views, operating cases, and persistent layout are absent |
 | `ProcessDiagramExporter` configuration | Simulator-style content and Graphviz layout policy | Layout is renderer-specific and has no document-set, revision-block, approval, or controlled off-page-reference model |
-| DEXPI 2.0 Process model | Tool-neutral BFD/PFD exchange | Currently consumes `ProcessSystem` directly and has no `ProcessModel` overload or canonical-graph equivalence proof |
+| DEXPI 2.0 Process model | Tool-neutral BFD/PFD exchange | The opt-in assessed path consumes canonical `ProcessSystem` material topology; compatibility APIs remain direct, and no multi-area `ProcessModel` overload exists |
 | Proteus/DEXPI P&ID model | Detailed P&ID proposal, import/export, and graphical interchange | Separate profile with richer piping/instrument semantics; must remain an engineering proposal until accountable data are present |
 
 `ProcessConnection` distinguishes material, energy, and signal connections and records explicit
@@ -64,7 +64,7 @@ source contract has no independent connection ID; the adapter reports
 |---|---:|---:|---:|---:|
 | `ProcessSystem` | Present | Missing | Present | Present |
 | Multi-area `ProcessModel` | Present | Missing | Missing | Present |
-| Stable plant/area/equipment/port/connection IDs through canonical adapter | Present as a separate topology baseline | Foundation only | Canonical fingerprint and stable topology baseline recorded by assessment; writer IDs remain compatibility-sequential | Not yet consumed as the shared graph |
+| Stable plant/area/equipment/port/connection IDs through canonical adapter | Present as a separate topology baseline | Foundation only | Assessed material projection consumes the canonical snapshot and records its stable IDs; writer IDs remain compatibility-sequential | Not yet consumed as the shared graph |
 | Material, energy, and signal topology | Present in canonical baseline; renderer coverage varies | Missing | Material-focused | Present where supported by the detailed profile |
 | Parallel connection preservation | Golden topology evidence for distinct material/energy/signal endpoints | Missing | Multiplicity-sensitive evidence for supported simple and parallel-branch material cases | Profile-specific tests only |
 | Units and provenance | Optional stream labels/tables; canonical topology provenance | Missing document model | Selected physical quantities with explicit units | Simulation/design metadata and governed package artifacts |
@@ -126,10 +126,11 @@ Future increments shall follow these rules:
 
 ## Dependency-ordered next work
 
-The canonical topology foundation and the DEXPI Process comparison gate now exist, while exporters
-still traverse their compatibility source models. After this evidence is merged, the next safe
-increment is to migrate one exporter at a time behind the equivalence gate, starting with the
-supported DEXPI Process material subset. Multi-area hierarchy and energy/signal mappings require
+The canonical topology foundation and DEXPI Process comparison gate now drive the opt-in assessed
+material projection. Compatibility APIs still traverse their established source model and retain
+their sequential XML identities. The next dependency-ready increment is to carry selected operating
+values, explicit units, case identity, and provenance in the canonical model before widening the
+exchange to multi-area `ProcessModel`. Multi-area hierarchy and energy/signal mappings require
 separate reviewed extensions rather than silent flattening or loss.
 
 The native professional document model and renderer remain later work because controlled

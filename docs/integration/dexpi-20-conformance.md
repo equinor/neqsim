@@ -51,18 +51,23 @@ Files.write(Paths.get("gas-processing-pfd.topology.json"),
     topology.toJson().getBytes(StandardCharsets.UTF_8));
 ```
 
-The topology report records the canonical graph fingerprint and stable connection IDs,
-calculated/review-required source provenance, the canonical and exported directed
+The topology report records `exportTopologySource=CANONICAL_ENGINEERING_GRAPH`, the canonical graph
+fingerprint and stable connection IDs, calculated/review-required source provenance, the canonical and exported directed
 material-connection manifests, every exported stream and its distinct source/target port IDs, and structured diagnostics. Connection comparison
 is multiplicity-sensitive, so two parallel streams between the same steps must remain two streams.
 Synthetic product sinks are retained in the exported-connection inventory but excluded from the
 in-model topology comparison.
 
-The current writer still traverses `ProcessSystem` directly. The assessment is migration evidence,
-not a claim that the writer already consumes the canonical graph. It reports energy and signal
-connections, multi-area `ProcessModel` hierarchy, controlled document/sheet semantics, and drawing
-graphics as unsupported scopes. These warnings do not hide a supported material-topology error;
-missing, unexpected, unresolved-port, and reused-port findings are errors.
+`writeAndAssessTopology(...)` builds one canonical snapshot, uses its supported material-connection
+projection to drive the native Process exchange, and assesses the same snapshot. Regression coverage
+requires the assessed simple and parallel-branch output to preserve the existing sequential DEXPI
+serialization. The compatibility APIs `write(...)` and `writeAndAssess(...)` still use their direct
+`ProcessSystem` traversal and remain unchanged.
+
+The assessed path reports energy and signal connections, multi-area `ProcessModel` hierarchy,
+controlled document/sheet semantics, and drawing graphics as unsupported scopes. These warnings do
+not hide a supported material-topology error; missing, unexpected, unresolved-port, and reused-port
+findings are errors.
 
 Each process connection has a dedicated source and target `MaterialPort`. The ports and
 `Process.Stream` carry reciprocal references, stable identifiers, nominal directions, and explicit
