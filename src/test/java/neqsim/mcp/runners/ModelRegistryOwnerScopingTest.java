@@ -156,8 +156,8 @@ class ModelRegistryOwnerScopingTest {
   }
 
   /**
-   * The worst case: a foreign revision would make the owner's next run answer from someone else's edits, and the
-   * result would look entirely normal. The stored definition must be untouched.
+   * The worst case: a foreign revision would make the owner's next run answer from someone else's edits, and the result
+   * would look entirely normal. The stored definition must be untouched.
    */
   @Test
   @DisplayName("revise is refused for another principal and leaves the owner's definition intact")
@@ -262,8 +262,8 @@ class ModelRegistryOwnerScopingTest {
   }
 
   /**
-   * An unresolved caller must fail closed rather than fall into a bucket shared with named principals. A token
-   * carrying no tenant claim falls back to the same default scope as an unbound caller, so ownership is the only thing
+   * An unresolved caller must fail closed rather than fall into a bucket shared with named principals. A token carrying
+   * no tenant claim falls back to the same default scope as an unbound caller, so ownership is the only thing
    * separating them.
    */
   @Test
@@ -276,8 +276,9 @@ class ModelRegistryOwnerScopingTest {
     McpRequestContext.clear();
     assertRefusedAsUnknown("get", act("get", modelId));
     assertRefusedAsUnknown("delete", act("delete", modelId));
-    assertEquals(0, JsonParser.parseString(ModelRegistry.run("{\"action\": \"list\"}")).getAsJsonObject().get("count")
-        .getAsInt(), "An anonymous caller must not see a named principal's models");
+    assertEquals(0,
+        JsonParser.parseString(ModelRegistry.run("{\"action\": \"list\"}")).getAsJsonObject().get("count").getAsInt(),
+        "An anonymous caller must not see a named principal's models");
     assertThrows(IllegalArgumentException.class, new Executable() {
       @Override
       public void execute() {
@@ -290,8 +291,8 @@ class ModelRegistryOwnerScopingTest {
   }
 
   /**
-   * A refusal must be indistinguishable from a handle that was never registered, so the registry cannot be used to
-   * test whether a given model exists.
+   * A refusal must be indistinguishable from a handle that was never registered, so the registry cannot be used to test
+   * whether a given model exists.
    */
   @Test
   @DisplayName("a refused handle is indistinguishable from an unknown handle")

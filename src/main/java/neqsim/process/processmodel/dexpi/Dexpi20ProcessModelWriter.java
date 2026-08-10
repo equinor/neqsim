@@ -70,6 +70,24 @@ public final class Dexpi20ProcessModelWriter {
     return Dexpi20ConformanceAssessment.assess(file.toPath(), Dexpi20ConformanceAssessment.Profile.PROCESS_PFD_BFD);
   }
 
+  /**
+   * Writes a Process exchange and compares supported material topology with the canonical diagram graph.
+   *
+   * @param processSystem source simulation topology
+   * @param file destination DEXPI XML file
+   * @param plantId persistent plant or project identifier used by the canonical graph
+   * @param revision controlled source-model revision
+   * @return schema/profile conformance plus structured topology-equivalence and scope evidence
+   * @throws IOException if serialization, validation, or assessment fails
+   */
+  public static Dexpi20ProcessTopologyAssessment.Report writeAndAssessTopology(ProcessSystem processSystem, File file,
+      String plantId, String revision) throws IOException {
+    write(processSystem, file);
+    Dexpi20ConformanceAssessment.Report conformance = Dexpi20ConformanceAssessment.assess(file.toPath(),
+        Dexpi20ConformanceAssessment.Profile.PROCESS_PFD_BFD);
+    return Dexpi20ProcessTopologyAssessment.assess(processSystem, file.toPath(), plantId, revision, conformance);
+  }
+
   /** Writes a native DEXPI 2.0 Process model to a stream. */
   public static void write(ProcessSystem processSystem, OutputStream outputStream) throws IOException {
     if (processSystem == null || outputStream == null) {

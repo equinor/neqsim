@@ -37,6 +37,33 @@ Files.write(Paths.get("gas-processing-pfd.conformance.json"),
     report.toJson().getBytes(StandardCharsets.UTF_8));
 ```
 
+For a migration or regression gate, also compare the supported material topology with the shared
+canonical diagram graph:
+
+```java
+Dexpi20ProcessTopologyAssessment.Report topology =
+    Dexpi20ProcessModelWriter.writeAndAssessTopology(
+        process, exchange, "PLANT-001", "A");
+if (!topology.isSchemaProfileAndSupportedTopologyValid()) {
+  throw new IllegalStateException(topology.getDiagnostics().toString());
+}
+Files.write(Paths.get("gas-processing-pfd.topology.json"),
+    topology.toJson().getBytes(StandardCharsets.UTF_8));
+```
+
+The topology report records the canonical graph fingerprint and stable connection IDs,
+calculated/review-required source provenance, the canonical and exported directed
+material-connection manifests, every exported stream and its distinct source/target port IDs, and structured diagnostics. Connection comparison
+is multiplicity-sensitive, so two parallel streams between the same steps must remain two streams.
+Synthetic product sinks are retained in the exported-connection inventory but excluded from the
+in-model topology comparison.
+
+The current writer still traverses `ProcessSystem` directly. The assessment is migration evidence,
+not a claim that the writer already consumes the canonical graph. It reports energy and signal
+connections, multi-area `ProcessModel` hierarchy, controlled document/sheet semantics, and drawing
+graphics as unsupported scopes. These warnings do not hide a supported material-topology error;
+missing, unexpected, unresolved-port, and reused-port findings are errors.
+
 Each process connection has a dedicated source and target `MaterialPort`. The ports and
 `Process.Stream` carry reciprocal references, stable identifiers, nominal directions, and explicit
 mass-flow, absolute-pressure, and temperature quantities when finite simulation values are
@@ -96,6 +123,8 @@ Record that separate evidence through `DexpiToolQualificationRunner` and
   accountable semantic-difference review together.
 - Compare the committed native golden fixture and semantic inventory when modifying type mappings,
   topology, units, or serialization order.
+- Retain the canonical topology fingerprint, structured topology report, and source model revision
+  beside the XML and conformance report when using `writeAndAssessTopology(...)`.
 - Treat graphics, project standard-library restrictions, vendor extensions, and CAE certification as
   separate qualification scopes.
 
