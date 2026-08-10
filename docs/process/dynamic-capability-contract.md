@@ -154,6 +154,8 @@ repeatedly and prevents accidental recursive container cycles from causing unbou
 The initial contract intentionally classifies only core implementations whose current source contains clear stored-state
 semantics:
 
+- algebraic: standard `Stream` execution, composite module containers, `EnergyNetworkSolver`, ISO-5167 `Orifice`, and
+  `WellFlow` IPR pressure-flow relations;
 - lumped: separators, tanks, two-stream heat exchangers, compressors, pumps, throttling/control valves, and
   `EnergyConverter`-based motors/generators/gearboxes/inverters/transformers;
 - distributed: `OnePhasePipeLine`, `TwoFluidPipe`, drift-flux `TransientPipe`, and `WaterHammerPipe`;
@@ -178,6 +180,12 @@ ownership and runtime activation/maturity are separate dimensions.
 `ALGEBRAIC`: that method re-evaluates the stream and advances its execution clock, but does not integrate stored physical
 state. A stream subclass that provides its own transient override remains `UNCLASSIFIED_DYNAMIC` until its state and
 equations are audited.
+
+`WellFlow` is also algebraic: its IPR/Vogel/Fetkovich/backpressure/table calculations map the current reservoir/well
+pressure-flow boundary without owning an additional transient inventory, and it inherits the standard physical-step
+clock contract. `Orifice` is a custom pressure-driven transient relation, but still owns no accumulation. Its ISO-5167
+relation is re-evaluated for every requested refinement while its local execution clock and calculation ID follow the
+same A/refine-A/B physical-step contract as other algebraic equipment, including the negligible-flow early return.
 
 Other custom transient implementations remain `UNCLASSIFIED_DYNAMIC` until their state variables, conservation equations,
 initialization, timestep constraints, event behaviour, snapshot/restart semantics, and quantitative validation are
