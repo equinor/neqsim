@@ -511,7 +511,7 @@ public class ColumnSpecificationTest {
   }
 
   /**
-   * Test that Naphtali-Sandholm classifies its numerical Jacobian work accurately.
+   * Test that Naphtali-Sandholm classifies its numerical Jacobian and converged K-value work accurately.
    */
   @Test
   public void naphtaliSandholmTelemetryRecordsJacobianWork() {
@@ -528,8 +528,12 @@ public class ColumnSpecificationTest {
     assertEquals(800, column.getLastNaphtaliFiniteDifferenceJacobianColumns(),
         "eight stages times five variables times twenty Jacobian builds must all be finite-difference columns");
     assertTrue(column.getLastNaphtaliThermoEvaluationCount() > 0);
-    assertEquals(2 * column.getLastNaphtaliThermoEvaluationCount(), column.getLastNaphtaliThermoKValueIterationCount(),
-        "the current evaluator performs two forced-root fugacity sweeps per tray evaluation");
+    assertTrue(column.getLastNaphtaliThermoKValueIterationCount() >= column.getLastNaphtaliThermoEvaluationCount(),
+        "each successful tray evaluation must perform at least one forced-root fugacity sweep");
+    assertTrue(column.getLastNaphtaliThermoKValueIterationCount() < 2 * column.getLastNaphtaliThermoEvaluationCount(),
+        () -> "already-converged tray evaluations should avoid a redundant second sweep: evaluations="
+            + column.getLastNaphtaliThermoEvaluationCount() + ", K-value iterations="
+            + column.getLastNaphtaliThermoKValueIterationCount());
     assertTrue(column.getLastNaphtaliThermoKValueNonConvergedCount() > 0,
         "this difficult case must expose two-sweep evaluations that remain above the log-K tolerance");
     assertTrue(column.getLastNaphtaliThermoKValueNonConvergedCount() <= column.getLastNaphtaliThermoEvaluationCount());
@@ -550,7 +554,7 @@ public class ColumnSpecificationTest {
   }
 
   /**
-   * Test that K-value work diagnostics and physical products repeat at a nearby feed temperature.
+   * Test that adaptive K-value work diagnostics and physical products repeat at a nearby feed temperature.
    */
   @Test
   public void naphtaliKValueTelemetryIsRepeatableAtNearbyOperatingPoint() {
@@ -573,6 +577,9 @@ public class ColumnSpecificationTest {
     assertEquals(first.getLastNaphtaliThermoMaxLogKValueUpdate(), second.getLastNaphtaliThermoMaxLogKValueUpdate());
     assertEquals(first.getLastMeshResidualNorm(), second.getLastMeshResidualNorm());
     assertEquals(first.getLastEnergyResidual(), second.getLastEnergyResidual());
+    assertTrue(first.getLastNaphtaliThermoKValueIterationCount() >= first.getLastNaphtaliThermoEvaluationCount());
+    assertTrue(first.getLastNaphtaliThermoKValueIterationCount() < 2 * first.getLastNaphtaliThermoEvaluationCount(),
+        "the nearby operating point should also avoid already-converged second fugacity sweeps");
 
     double firstGas = first.getGasOutStream().getFlowRate("kg/hr");
     double firstLiquid = first.getLiquidOutStream().getFlowRate("kg/hr");

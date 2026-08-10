@@ -259,13 +259,14 @@ targets manipulated through condenser or reboiler temperature.
 - Work diagnostics classify every currently assembled derivative column as finite-difference;
   `getLastNaphtaliAnalyticJacobianColumns()` remains available for compatibility and reports zero
   until a mixed analytic/numerical assembly is implemented.
-- Tray thermodynamics retain the established two forced-root fugacity sweeps. Diagnostics now
-  report their total count, the number of tray evaluations whose final
+- Tray thermodynamics perform up to two forced-root fugacity sweeps and stop after the first when
+  its `max(abs(log(Knew/Kold)))` is already at or below `1e-8`. Diagnostics report the actual sweep
+  count, the number of tray evaluations whose final
   `max(abs(log(Knew/Kold)))` exceeds `1e-8`, and the largest such final update through
   `getLastNaphtaliThermoKValueIterationCount()`,
   `getLastNaphtaliThermoKValueNonConvergedCount()`, and
   `getLastNaphtaliThermoMaxLogKValueUpdate()`. These metrics expose incomplete inner convergence;
-  they do not loosen the MESH acceptance criteria or silently add extra EOS work.
+  they do not loosen the MESH acceptance criteria or add extra EOS work.
 - Allows at most three line-search steps that fail to reduce the MESH residual. After three such
   non-descent steps, the solver restores the best finite tray state and returns the actual iteration
   count so the column can proceed to its coordinated fallback instead of exhausting the Newton
