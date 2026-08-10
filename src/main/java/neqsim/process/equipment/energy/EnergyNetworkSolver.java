@@ -97,14 +97,28 @@ public class EnergyNetworkSolver extends ProcessEquipmentBaseClass {
     setCalculationIdentifier(id);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Re-solves the algebraic energy-bus allocation for a physical timestep.
+   *
+   * <p>
+   * Repeated nonlinear/refinement evaluations with the same non-null calculation identifier still recalculate the bus
+   * balance, but advance this solver's local clock only once for that physical timestep. A null identifier preserves the
+   * legacy behavior and advances the local clock on every successful evaluation.
+   * </p>
+   *
+   * @param dt physical timestep in seconds
+   * @param id physical-step calculation identifier, or null for legacy uncoalesced timing
+   */
   @Override
   public void runTransient(double dt, UUID id) {
+    boolean alreadyEvaluatedForStep = id != null && id.equals(getCalculationIdentifier());
     for (EnergyBus energyBus : energyBuses) {
       energyBus.clearRealizedBalancePowers();
     }
     run(id);
-    increaseTime(dt);
+    if (!alreadyEvaluatedForStep) {
+      increaseTime(dt);
+    }
   }
 
   /** {@inheritDoc} */
