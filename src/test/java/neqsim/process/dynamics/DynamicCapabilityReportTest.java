@@ -87,7 +87,45 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
     DynamicCapabilityReport report = DynamicCapabilityReport.from(process);
     assertTrue(report.isStrictPreflightReady());
     assertTrue(report.getReviewItems().isEmpty());
+    assertTrue(report.getExecutionIssues().isEmpty());
     assertEquals(1, report.getCapabilityCounts().get(DynamicCapability.ALGEBRAIC).intValue());
+  }
+
+  /** Known process-level execution defects are explicit strict-preflight blockers for ProcessSystem and ProcessModel. */
+  @Test
+  public void unsafeExecutionModesAreExplicitStrictPreflightBlockers() {
+    ProcessSystem parallel = new ProcessSystem("parallel area");
+    parallel.add(createFeed("parallel feed"));
+    parallel.setParallelTransientEnabled(true);
+
+    DynamicCapabilityReport parallelReport = DynamicCapabilityReport.from(parallel);
+    assertEquals("1.2", parallelReport.getSchemaVersion());
+    assertEquals(1, parallelReport.getExecutionIssues().size());
+    assertTrue(parallelReport.getExecutionIssues().get(0).contains("parallel transient"));
+    assertTrue(parallelReport.getExecutionIssues().get(0).contains("not yet fail-loud"));
+    assertTrue(parallelReport.hasBlockingIssues());
+    assertFalse(parallelReport.isStrictPreflightReady());
+
+    ProcessSystem adaptive = new ProcessSystem("adaptive area");
+    adaptive.add(createFeed("adaptive feed"));
+    adaptive.setAdaptiveTimestepEnabled(true);
+
+    DynamicCapabilityReport adaptiveReport = DynamicCapabilityReport.from(adaptive);
+    assertEquals(1, adaptiveReport.getExecutionIssues().size());
+    assertTrue(adaptiveReport.getExecutionIssues().get(0).contains("runTransientAdaptive"));
+    assertTrue(adaptiveReport.getExecutionIssues().get(0).contains("rejected-step rollback"));
+    assertTrue(adaptiveReport.hasBlockingIssues());
+    assertFalse(adaptiveReport.isStrictPreflightReady());
+
+    ProcessModel model = new ProcessModel();
+    model.add("subsea", parallel);
+    model.add("topside", adaptive);
+
+    DynamicCapabilityReport modelReport = DynamicCapabilityReport.from(model);
+    assertEquals(2, modelReport.getExecutionIssues().size());
+    assertTrue(containsDiagnostic(modelReport.getExecutionIssues(), "subsea"));
+    assertTrue(containsDiagnostic(modelReport.getExecutionIssues(), "topside"));
+    assertTrue(modelReport.toJson().contains("executionIssues"));
   }
 
   /** An unaudited custom runTransient override is visible instead of being promoted to a dynamic model. */
