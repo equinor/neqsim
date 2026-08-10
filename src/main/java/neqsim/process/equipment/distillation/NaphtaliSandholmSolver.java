@@ -35,6 +35,29 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 public class NaphtaliSandholmSolver {
+  /** Accepted line-search state and its already-evaluated residual. */
+  private static final class LineSearchResult {
+    /** Accepted step length. */
+    private final double alpha;
+    /** Residual vector at the accepted state. */
+    private final double[] residual;
+    /** Residual norm at the accepted state. */
+    private final double norm;
+
+    /**
+     * Create a line-search result.
+     *
+     * @param alpha accepted step length, or zero when no finite trial exists
+     * @param residual residual vector at the accepted state
+     * @param norm residual norm at the accepted state
+     */
+    private LineSearchResult(double alpha, double[] residual, double norm) {
+      this.alpha = alpha;
+      this.residual = residual;
+      this.norm = norm;
+    }
+  }
+
   /** Maximum number of non-descent line-search steps allowed before restoring the best state. */
   private static final int MAX_NON_DESCENT_LINE_SEARCH_STEPS = 3;
 
@@ -829,7 +852,8 @@ public class NaphtaliSandholmSolver {
         }
 
         // Line search: backtrack if step increases residual norm
-        double alpha = lineSearch(dx, norm);
+        LineSearchResult lineSearchResult = lineSearch(dx, norm);
+        double alpha = lineSearchResult.alpha;
         if (alpha <= 0.0) {
           logger.debug("NS: line search found no finite trial step; restoring best state");
           restoreTrayState(bestLiq, bestT, bestV);
@@ -839,14 +863,10 @@ public class NaphtaliSandholmSolver {
           break;
         }
 
-        // Apply update with step size alpha
-        applyUpdate(dx, alpha);
-
-        // Re-evaluate thermodynamics at new state
-        evaluateThermo();
-
-        residual = computeResidual();
-        double newNorm = vectorNorm(residual);
+        // The line search leaves its accepted state applied. Reuse the residual that
+        // selected that state instead of restoring and evaluating the same step again.
+        residual = lineSearchResult.residual;
+        double newNorm = lineSearchResult.norm;
 
         logger.debug("NS iter {}: ||F|| = {} alpha={}", iter, String.format("%.6e", newNorm),
             String.format("%.4f", alpha));
@@ -4341,9 +4361,9 @@ public class NaphtaliSandholmSolver {
    *
    * @param dx Newton direction
    * @param currentNorm current residual norm
-   * @return step size alpha in [0, 1]; zero when no finite trial exists
+   * @return accepted state and its already-evaluated residual; alpha is zero when no finite trial exists
    */
-  private double lineSearch(double[] dx, double currentNorm) {
+  private LineSearchResult lineSearch(double[] dx, double currentNorm) {
     double alpha = 1.0;
     double c = 1e-4; // Armijo constant
     double rho = 0.5; // backtracking factor
@@ -4361,30 +4381,28 @@ public class NaphtaliSandholmSolver {
 
     double bestAlpha = 0.0;
     double bestTrialNorm = Double.POSITIVE_INFINITY;
+    double[] bestResidual = null;
+    double lastEvaluatedAlpha = Double.NaN;
 
     for (int bt = 0; bt < maxBacktrack; bt++) {
       // Trial update
-      for (int j = 0; j < N; j++) {
-        for (int i = 0; i < C; i++) {
-          liq[j][i] = Math.max(saveLiq[j][i] - alpha * dx[j * varsPerTray + i], 1e-20);
-        }
-        if (Double.isNaN(fixedTemperature[j])) {
-          T[j] = Math.max(saveT[j] - alpha * dx[j * varsPerTray + C], 100.0);
-          T[j] = Math.min(T[j], 1000.0);
-        }
-        V[j] = Math.max(saveV[j] - alpha * dx[j * varsPerTray + C + 1], 0.0);
-      }
+      restoreTrayState(saveLiq, saveT, saveV);
+      applyUpdate(dx, alpha);
 
       evaluateThermo();
       double[] Ftrial = computeResidual();
       double trialNorm = vectorNorm(Ftrial);
+      lastEvaluatedAlpha = alpha;
 
       if (Double.isFinite(trialNorm) && trialNorm < bestTrialNorm) {
         bestTrialNorm = trialNorm;
         bestAlpha = alpha;
+        bestResidual = Ftrial;
       }
       if (Double.isFinite(trialNorm) && trialNorm < (1.0 - c * alpha) * currentNorm) {
         bestAlpha = alpha;
+        bestTrialNorm = trialNorm;
+        bestResidual = Ftrial;
         break;
       }
       if (alpha < 0.01) {
@@ -4394,16 +4412,20 @@ public class NaphtaliSandholmSolver {
       alpha *= rho;
     }
 
-    // ALWAYS restore the original state — the main loop's applyUpdate handles the
-    // final step
-    for (int j = 0; j < N; j++) {
-      System.arraycopy(saveLiq[j], 0, liq[j], 0, C);
-      T[j] = saveT[j];
-      V[j] = saveV[j];
+    if (bestAlpha <= 0.0 || bestResidual == null) {
+      restoreTrayState(saveLiq, saveT, saveV);
+      return new LineSearchResult(0.0, null, Double.POSITIVE_INFINITY);
     }
-    evaluateThermo();
 
-    return bestAlpha;
+    if (bestAlpha != lastEvaluatedAlpha) {
+      restoreTrayState(saveLiq, saveT, saveV);
+      applyUpdate(dx, bestAlpha);
+      evaluateThermo();
+      bestResidual = computeResidual();
+      bestTrialNorm = vectorNorm(bestResidual);
+    }
+
+    return new LineSearchResult(bestAlpha, bestResidual, bestTrialNorm);
   }
 
   /**
