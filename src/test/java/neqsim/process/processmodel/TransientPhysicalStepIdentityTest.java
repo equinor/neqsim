@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.dynamics.TransientStepIdentifier;
+import neqsim.process.equipment.energy.EnergyNetworkSolver;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.measurementdevice.PressureTransmitter;
@@ -29,6 +30,21 @@ public class TransientPhysicalStepIdentityTest extends neqsim.NeqSimTest {
     assertEquals(3, recycle.getIterations());
     assertEquals(4.0, recycle.getTime(), 0.0);
     assertEquals(physicalStepB, recycle.getCalculationIdentifier());
+  }
+
+  /** Algebraic energy-network refinement recalculates but advances its local clock once per physical step. */
+  @Test
+  public void energyNetworkRefinementAdvancesClockOncePerPhysicalStep() {
+    EnergyNetworkSolver energyNetwork = new EnergyNetworkSolver("energy network");
+    UUID physicalStepA = TransientStepIdentifier.deterministicPhysicalStep("energy-refinement", 0L);
+    UUID physicalStepB = TransientStepIdentifier.deterministicPhysicalStep("energy-refinement", 1L);
+
+    energyNetwork.runTransient(2.0, physicalStepA);
+    energyNetwork.runTransient(2.0, physicalStepA);
+    energyNetwork.runTransient(2.0, physicalStepB);
+
+    assertEquals(4.0, energyNetwork.getTime(), 0.0);
+    assertEquals(physicalStepB, energyNetwork.getCalculationIdentifier());
   }
 
   /** Consecutive physical steps use distinct IDs so a mutable controller advances exactly once per step. */
