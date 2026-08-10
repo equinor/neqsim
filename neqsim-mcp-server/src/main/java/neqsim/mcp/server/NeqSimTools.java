@@ -56,6 +56,7 @@ import neqsim.mcp.runners.HazopScenarioRunner;
 import neqsim.mcp.runners.IndustrialProfile;
 import neqsim.mcp.runners.LOPARunner;
 import neqsim.mcp.runners.MaterialsReviewRunner;
+import neqsim.mcp.runners.McpRequestContext;
 import neqsim.mcp.runners.ModelRegistry;
 import neqsim.mcp.runners.NorsokS001Clause10ReviewRunner;
 import neqsim.mcp.runners.OpenDrainReviewRunner;
@@ -159,6 +160,8 @@ public class NeqSimTools {
           withAutoValidation(FlashRunner.run(json.toString()), "flash"), "general");
     } catch (Exception e) {
       return errorJson("Flash calculation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -191,6 +194,8 @@ public class NeqSimTools {
           withAutoValidation(ProcessRunner.validateAndRun(resolveModel(processJson)), "process"), "general");
     } catch (Exception e) {
       return errorJson("Process simulation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -214,6 +219,8 @@ public class NeqSimTools {
       return standardizeResponse("validateInput", Validator.validate(resolveModel(inputJson)), "general");
     } catch (Exception e) {
       return errorJson("Validation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -238,6 +245,8 @@ public class NeqSimTools {
       return standardizeResponse("searchComponents", ComponentQuery.search(query), "general");
     } catch (Exception e) {
       return errorJson("Component search failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -267,13 +276,17 @@ public class NeqSimTools {
     if (policyBlocked != null) {
       return policyBlocked;
     }
-    String example = ExampleCatalog.getExample(category, name);
-    if (example != null) {
-      return example;
+    try {
+      String example = ExampleCatalog.getExample(category, name);
+      if (example != null) {
+        return example;
+      }
+      return errorJson("Example not found: " + category + "/" + name
+          + ". Use getExample with a listed category such as flash, process, validation, "
+          + "safety, or tool");
+    } finally {
+      McpRequestContext.clear();
     }
-    return errorJson("Example not found: " + category + "/" + name
-        + ". Use getExample with a listed category such as flash, process, validation, "
-        + "safety, or tool");
   }
 
   /**
@@ -299,11 +312,15 @@ public class NeqSimTools {
     if (policyBlocked != null) {
       return policyBlocked;
     }
-    String schema = SchemaCatalog.getSchema(toolName, schemaType);
-    if (schema != null) {
-      return schema;
+    try {
+      String schema = SchemaCatalog.getSchema(toolName, schemaType);
+      if (schema != null) {
+        return schema;
+      }
+      return errorJson("Schema not found: " + toolName + "/" + schemaType);
+    } finally {
+      McpRequestContext.clear();
     }
-    return errorJson("Schema not found: " + toolName + "/" + schemaType);
   }
 
   /**
@@ -327,6 +344,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Failed to list units: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -355,6 +374,8 @@ public class NeqSimTools {
           AutomationRunner.listVariables(resolveModel(processJson), unitName), "general");
     } catch (Exception e) {
       return errorJson("Failed to list variables: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -387,6 +408,8 @@ public class NeqSimTools {
           AutomationRunner.getVariable(resolveModel(processJson), address, unit), "general");
     } catch (Exception e) {
       return errorJson("Failed to get variable: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -419,6 +442,8 @@ public class NeqSimTools {
           AutomationRunner.setVariableAndRun(resolveModel(processJson), address, value, unit), "general");
     } catch (Exception e) {
       return errorJson("Failed to set variable: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -448,6 +473,8 @@ public class NeqSimTools {
           AutomationRunner.saveState(resolveModel(processJson), stateName, stateVersion), "general");
     } catch (Exception e) {
       return errorJson("Failed to save state: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -474,6 +501,8 @@ public class NeqSimTools {
           AutomationRunner.compareStates(stateJson1, stateJson2), "general");
     } catch (Exception e) {
       return errorJson("Failed to compare states: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -506,6 +535,8 @@ public class NeqSimTools {
           AutomationRunner.diagnose(resolveModel(processJson), failedAddress, operation), "general");
     } catch (Exception e) {
       return errorJson("Failed to diagnose: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -531,6 +562,8 @@ public class NeqSimTools {
           AutomationRunner.getLearningReport(resolveModel(processJson)), "general");
     } catch (Exception e) {
       return errorJson("Failed to get learning report: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -567,6 +600,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Operational study failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
   // ═══════════════════════════════════════════════════════════════════════════
@@ -647,6 +682,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Property table calculation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -678,6 +715,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Phase envelope calculation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -703,6 +742,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Failed to get capabilities: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -750,6 +791,8 @@ public class NeqSimTools {
       return standardizeResponse("runBatch", BatchRunner.run(json.toString()), "general");
     } catch (Exception e) {
       return errorJson("Batch calculation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -797,6 +840,8 @@ public class NeqSimTools {
           CrossValidationRunner.crossValidate(crossValidationJson), "general");
     } catch (Exception e) {
       return errorJson("Cross-validation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -826,6 +871,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Parametric study failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -860,6 +907,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("PVT simulation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -895,6 +944,8 @@ public class NeqSimTools {
           withAutoValidation(FlowAssuranceRunner.run(flowAssuranceJson), "pipeline"), "general");
     } catch (Exception e) {
       return errorJson("Flow assurance analysis failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -921,6 +972,8 @@ public class NeqSimTools {
       return standardizeResponse("runChemistry", ChemistryRunner.run(chemistryJson), "general");
     } catch (Exception e) {
       return errorJson("Chemistry analysis failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -949,6 +1002,8 @@ public class NeqSimTools {
           withAutoValidation(MaterialsReviewRunner.run(materialsReviewJson), "general"), "general");
     } catch (Exception e) {
       return errorJson("Materials review failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -978,6 +1033,8 @@ public class NeqSimTools {
           withAutoValidation(OpenDrainReviewRunner.run(openDrainReviewJson), "general"), "general");
     } catch (Exception e) {
       return errorJson("Open-drain review failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1011,6 +1068,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("NORSOK S-001 Clause 10 review failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1046,6 +1105,8 @@ public class NeqSimTools {
           withAutoValidation(StandardsRunner.run(standardJson), "general"), "general");
     } catch (Exception e) {
       return errorJson("Standard calculation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1077,6 +1138,8 @@ public class NeqSimTools {
           withAutoValidation(PipelineRunner.run(pipelineJson), "pipeline"), "general");
     } catch (Exception e) {
       return errorJson("Pipeline simulation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1107,6 +1170,8 @@ public class NeqSimTools {
           withAutoValidation(WaterHammerRunner.run(waterHammerJson), "pipeline"), "general");
     } catch (Exception e) {
       return errorJson("Water-hammer study failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1139,6 +1204,8 @@ public class NeqSimTools {
       return standardizeResponse("runReservoir", ReservoirRunner.run(reservoirJson), "general");
     } catch (Exception e) {
       return errorJson("Reservoir simulation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1176,6 +1243,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Field economics calculation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1208,6 +1277,8 @@ public class NeqSimTools {
       return standardizeResponse("runDynamic", DynamicRunner.run(dynamicJson), "general");
     } catch (Exception e) {
       return errorJson("Dynamic simulation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1246,6 +1317,8 @@ public class NeqSimTools {
       return standardizeResponse("runBioprocess", BioprocessRunner.run(bioprocessJson), "general");
     } catch (Exception e) {
       return errorJson("Bioprocess simulation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1289,6 +1362,8 @@ public class NeqSimTools {
       return standardizeResponse("manageSession", SessionRunner.run(sessionJson), "general");
     } catch (Exception e) {
       return errorJson("Session operation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1313,6 +1388,8 @@ public class NeqSimTools {
           AutomationRunner.getAdjustableParameters(resolveModel(processJson)), "general");
     } catch (Exception e) {
       return errorJson("Adjustable-parameter enumeration failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1355,6 +1432,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Process loop failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1388,6 +1467,8 @@ public class NeqSimTools {
       return standardizeResponse("solveTask", TaskSolverRunner.solveTask(taskJson), "general");
     } catch (Exception e) {
       return errorJson("Task solving failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1416,6 +1497,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Workflow composition failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1444,6 +1527,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Agentic engineering failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1479,6 +1564,8 @@ public class NeqSimTools {
           EngineeringValidator.validate(resultsJson, context), "general");
     } catch (Exception e) {
       return errorJson("Validation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1510,6 +1597,8 @@ public class NeqSimTools {
       return standardizeResponse("generateReport", ReportRunner.run(reportJson), "general");
     } catch (Exception e) {
       return errorJson("Report generation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1544,6 +1633,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Task workflow bridge failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1584,6 +1675,8 @@ public class NeqSimTools {
       }
     } catch (Exception e) {
       return errorJson("Plugin operation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1621,6 +1714,8 @@ public class NeqSimTools {
       }
     } catch (Exception e) {
       return errorJson("Progress query failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1652,6 +1747,8 @@ public class NeqSimTools {
       return standardizeResponse("streamSimulation", StreamingRunner.run(streamJson), "general");
     } catch (Exception e) {
       return errorJson("Streaming operation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1683,6 +1780,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Visualization failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1717,6 +1816,8 @@ public class NeqSimTools {
           CompositionRunner.run(compositionJson), "general");
     } catch (Exception e) {
       return errorJson("Composition failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1747,6 +1848,8 @@ public class NeqSimTools {
       return standardizeResponse("manageSecurity", SecurityRunner.run(securityJson), "general");
     } catch (Exception e) {
       return errorJson("Security operation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1777,6 +1880,8 @@ public class NeqSimTools {
       return standardizeResponse("manageState", StatePersistenceRunner.run(persistJson), "general");
     } catch (Exception e) {
       return errorJson("State persistence failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1810,6 +1915,8 @@ public class NeqSimTools {
           ValidationProfileRunner.run(profileJson), "general");
     } catch (Exception e) {
       return errorJson("Validation profile operation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1841,6 +1948,8 @@ public class NeqSimTools {
       return standardizeResponse("queryDataCatalog", DataCatalogRunner.run(catalogJson), "general");
     } catch (Exception e) {
       return errorJson("Data catalog query failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1867,6 +1976,8 @@ public class NeqSimTools {
       return standardizeResponse("sizeEquipment", EquipmentSizingRunner.run(sizingJson), "general");
     } catch (Exception e) {
       return errorJson("Equipment sizing failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1896,6 +2007,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Utility design failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1921,6 +2034,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Process comparison failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1959,6 +2074,8 @@ public class NeqSimTools {
       return standardizeResponse("runRelief", ReliefRunner.run(reliefJson), "general");
     } catch (Exception e) {
       return errorJson("Relief sizing failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1988,6 +2105,8 @@ public class NeqSimTools {
       return standardizeResponse("runLOPA", LOPARunner.run(lopaJson), "general");
     } catch (Exception e) {
       return errorJson("LOPA calculation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -2015,6 +2134,8 @@ public class NeqSimTools {
       return standardizeResponse("runSIL", SILRunner.run(silJson), "general");
     } catch (Exception e) {
       return errorJson("SIL verification failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -2041,6 +2162,8 @@ public class NeqSimTools {
       return standardizeResponse("runRiskMatrix", RiskMatrixRunner.run(riskJson), "general");
     } catch (Exception e) {
       return errorJson("Risk matrix scoring failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -2066,6 +2189,8 @@ public class NeqSimTools {
       return standardizeResponse("runFlareNetwork", FlareRadiationRunner.run(flareJson), "general");
     } catch (Exception e) {
       return errorJson("Flare radiation calculation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -2096,6 +2221,8 @@ public class NeqSimTools {
       return standardizeResponse("runHAZOP", HAZOPStudyRunner.run(hazopJson), "general");
     } catch (Exception e) {
       return errorJson("HAZOP study generation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -2127,6 +2254,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("HAZOP scenario evaluation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -2154,6 +2283,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Barrier register analysis failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -2180,6 +2311,8 @@ public class NeqSimTools {
           SafetySystemPerformanceRunner.run(safetySystemJson), "general");
     } catch (Exception e) {
       return errorJson("Safety-system performance analysis failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -2215,6 +2348,8 @@ public class NeqSimTools {
       return standardizeResponse("runRootCauseAnalysis", RootCauseRunner.run(rcaJson), "general");
     } catch (Exception e) {
       return errorJson("Root cause analysis failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -2327,6 +2462,8 @@ public class NeqSimTools {
       }
     } catch (Exception e) {
       return errorJson("Industrial profile operation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -2366,6 +2503,8 @@ public class NeqSimTools {
       }
     } catch (Exception e) {
       return errorJson("Benchmark trust query failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -2415,6 +2554,8 @@ public class NeqSimTools {
       return standardizeResponse("checkToolAccess", GSON_PRETTY.toJson(result), "general");
     } catch (Exception e) {
       return errorJson("Tool access check failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -2445,6 +2586,8 @@ public class NeqSimTools {
       return standardizeResponse("manageModel", ModelRegistry.run(modelJson), "general");
     } catch (Exception e) {
       return errorJson("Model registry operation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -2469,6 +2612,13 @@ public class NeqSimTools {
    * Governance then evaluates a real principal instead of a null credential.
    * </p>
    *
+   * <p>
+   * The binding is thread-local, so every caller must release it again. Tool methods do that in a
+   * {@code finally} block around their body; when access is denied the body never runs, so the
+   * binding is released here instead. Without this a pooled HTTP worker thread would keep the
+   * previous caller's credential and subject resident between requests.
+   * </p>
+   *
    * @param toolName the MCP tool name
    * @return null if execution may continue, otherwise a standardized blocked response
    */
@@ -2480,7 +2630,11 @@ public class NeqSimTools {
     if (blocked == null) {
       return null;
     }
-    return standardizeResponse(toolName, blocked, "policy");
+    try {
+      return standardizeResponse(toolName, blocked, "policy");
+    } finally {
+      McpRequestContext.clear();
+    }
   }
 
   /**

@@ -29,8 +29,12 @@ import neqsim.process.processmodel.SimulationResult;
  * </p>
  *
  * <p>
- * Models are scoped to the tenant of the authenticated principal, so a handle issued in one tenant is not resolvable
- * from another. Storage is in-memory: this is a working set for a running server, not a document archive.
+ * Models are scoped to the owner and the tenant of the authenticated principal: a handle is resolvable only by the
+ * principal that registered it. A directory tenant is shared by every user of one organisation, so tenant alone is not
+ * an isolation boundary — ownership is enforced on every read, revision, deletion, listing and internal resolution. A
+ * handle owned by another principal is reported as unknown rather than as forbidden, so the registry cannot be used to
+ * enumerate other users' models. Storage is in-memory: this is a working set for a running server, not a document
+ * archive.
  * </p>
  *
  * @author Even Solbraa
@@ -46,10 +50,13 @@ public final class ModelRegistry {
   /** Max registered models per tenant, guarding against unbounded memory growth. */
   private static final int MAX_MODELS_PER_TENANT = 100;
 
-  /** Registered models keyed by model id. */
+  /** Separator joining tenant, owner and handle into a storage key; cannot occur in any of the three. */
+  private static final char SCOPE_SEPARATOR = '\0';
+
+  /** Registered models keyed by the scope-qualified model id. */
   private static final ConcurrentHashMap<String, ModelRecord> MODELS = new ConcurrentHashMap<String, ModelRecord>();
 
-  /** Solved process systems keyed by model id, so repeated reads do not re-solve. */
+  /** Solved process systems keyed by the scope-qualified model id, so repeated reads do not re-solve. */
   private static final ConcurrentHashMap<String, SolvedModel> SOLVED = new ConcurrentHashMap<String, SolvedModel>();
 
   /** Max solved models held in memory; a solved flowsheet is far heavier than its definition. */
@@ -127,8 +134,8 @@ public final class ModelRegistry {
       return processJsonOrModelId;
     }
     String modelId = processJsonOrModelId.trim();
-    ModelRecord record = MODELS.get(modelId);
-    if (record == null || !record.tenant.equals(currentTenant())) {
+    ModelRecord record = MODELS.get(scopeKey(modelId));
+    if (!isVisibleTo(record)) {
       throw new IllegalArgumentException("Unknown model handle '" + modelId
           + "'. Register the model first with manageModel(action='register'), or pass the process JSON inline.");
     }
@@ -153,7 +160,8 @@ public final class ModelRegistry {
    */
   public static ProcessSystem solvedProcess(String modelId) {
     String definition = resolve(modelId);
-    String key = modelId.trim();
+    String handle = modelId.trim();
+    String key = scopeKey(handle);
     ModelRecord record = MODELS.get(key);
     int revision = record != null ? record.revision : 0;
 
@@ -166,7 +174,7 @@ public final class ModelRegistry {
 
     SimulationResult result = ProcessSystem.fromJsonAndRun(definition);
     if (result.isError() || result.getProcessSystem() == null) {
-      throw new IllegalStateException("Model '" + key + "' failed to solve: " + result.getErrors());
+      throw new IllegalStateException("Model '" + handle + "' failed to solve: " + result.getErrors());
     }
 
     SolvedModel solved = new SolvedModel();
@@ -185,7 +193,7 @@ public final class ModelRegistry {
    * @return reuse count, or 0 when nothing is cached
    */
   public static int solvedHits(String modelId) {
-    SolvedModel cached = modelId != null ? SOLVED.get(modelId.trim()) : null;
+    SolvedModel cached = modelId != null ? SOLVED.get(scopeKey(modelId.trim())) : null;
     return cached != null ? cached.hits : 0;
   }
 
@@ -196,7 +204,7 @@ public final class ModelRegistry {
    */
   public static void invalidateSolved(String modelId) {
     if (modelId != null) {
-      SOLVED.remove(modelId.trim());
+      SOLVED.remove(scopeKey(modelId.trim()));
     }
   }
 
@@ -250,17 +258,17 @@ public final class ModelRegistry {
     record.version = optionalString(input, "version", "1.0.0");
     record.definition = definition;
     record.tenant = tenant;
-    record.owner = McpRequestContext.currentSubject();
+    record.owner = currentOwner();
     record.revision = 1;
     record.createdAt = Instant.now().toString();
     record.lastAccess = System.currentTimeMillis();
 
-    ModelRecord existing = MODELS.get(record.modelId);
-    if (existing != null && existing.tenant.equals(tenant)) {
-      // Identical content in the same tenant is the same model; return the existing handle.
+    ModelRecord existing = MODELS.get(scopeKey(record.modelId));
+    if (isVisibleTo(existing)) {
+      // Identical content from the same principal is the same model; return the existing handle.
       return modelResponse("register", existing, "Model already registered with identical content");
     }
-    MODELS.put(record.modelId, record);
+    MODELS.put(scopeKey(record.modelId), record);
     return modelResponse("register", record, "Model registered");
   }
 
@@ -318,7 +326,7 @@ public final class ModelRegistry {
     String tenant = currentTenant();
     List<ModelRecord> visible = new ArrayList<ModelRecord>();
     for (ModelRecord record : MODELS.values()) {
-      if (record.tenant.equals(tenant)) {
+      if (isVisibleTo(record)) {
         visible.add(record);
       }
     }
@@ -337,6 +345,7 @@ public final class ModelRegistry {
     response.add("models", models);
     response.addProperty("count", models.size());
     response.addProperty("tenant", tenant);
+    response.addProperty("owner", currentOwner());
     return envelope("list", response, "Registered models listed");
   }
 
@@ -388,7 +397,7 @@ public final class ModelRegistry {
     if (record == null) {
       return unknownModelError(input);
     }
-    MODELS.remove(record.modelId);
+    MODELS.remove(scopeKey(record.modelId));
     invalidateSolved(record.modelId);
     JsonObject response = new JsonObject();
     response.addProperty("modelId", record.modelId);
@@ -490,7 +499,7 @@ public final class ModelRegistry {
   }
 
   /**
-   * Looks up a model referenced by the request, honouring tenant isolation.
+   * Looks up a model referenced by the request, honouring owner and tenant isolation.
    *
    * @param input the request object
    * @return the model record, or null when absent or not visible
@@ -499,11 +508,8 @@ public final class ModelRegistry {
     if (!input.has("modelId")) {
       return null;
     }
-    ModelRecord record = MODELS.get(input.get("modelId").getAsString().trim());
-    if (record == null || !record.tenant.equals(currentTenant())) {
-      return null;
-    }
-    return record;
+    ModelRecord record = MODELS.get(scopeKey(input.get("modelId").getAsString().trim()));
+    return isVisibleTo(record) ? record : null;
   }
 
   /**
@@ -525,6 +531,53 @@ public final class ModelRegistry {
    */
   private static String currentTenant() {
     return McpRequestContext.current().getTenant();
+  }
+
+  /**
+   * Returns the owner scope of the current caller.
+   *
+   * <p>
+   * The subject is taken from the identity the transport already validated, never from a tool argument, so a client
+   * cannot claim another principal. Callers the transport did not authenticate share the anonymous subject, which
+   * keeps single-user desktop use working while still denying them every model registered by a named principal.
+   * </p>
+   *
+   * @return the owner identifier
+   */
+  private static String currentOwner() {
+    return McpRequestContext.currentSubject();
+  }
+
+  /**
+   * Returns whether a record belongs to the current caller.
+   *
+   * <p>
+   * One directory tenant covers every user of an organisation, so a tenant check alone leaves all of them in one
+   * namespace; ownership is the check that keeps one engineer's flowsheet out of another engineer's session.
+   * </p>
+   *
+   * @param record the model record, may be null
+   * @return true when the record exists and is owned by the caller within the caller's tenant
+   */
+  private static boolean isVisibleTo(ModelRecord record) {
+    return record != null && currentTenant().equals(record.tenant) && currentOwner().equals(record.owner);
+  }
+
+  /**
+   * Builds the storage key that scopes a handle to the caller that registered it.
+   *
+   * <p>
+   * Handles are content-derived, so without a scoped key two principals registering the same definition would share
+   * one entry: a revision by one would silently change what the other resolves, and the second registration would hand
+   * back the first caller's record. Qualifying the key with tenant and owner keeps the entries independent while the
+   * handle itself stays stable for its owner.
+   * </p>
+   *
+   * @param modelId the model handle
+   * @return the scope-qualified storage key
+   */
+  private static String scopeKey(String modelId) {
+    return currentTenant() + SCOPE_SEPARATOR + currentOwner() + SCOPE_SEPARATOR + modelId;
   }
 
   /**
