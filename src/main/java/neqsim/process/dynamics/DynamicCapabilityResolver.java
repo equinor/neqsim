@@ -7,6 +7,7 @@ import neqsim.process.SimulationInterface;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
+import neqsim.process.equipment.pipeline.OnePhasePipeLine;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.pipeline.WaterHammerPipe;
 import neqsim.process.equipment.pipeline.twophasepipe.TransientPipe;
@@ -53,7 +54,8 @@ public final class DynamicCapabilityResolver {
       return DynamicCapability.CONTROL_DYNAMIC;
     }
 
-    if (element instanceof TwoFluidPipe || element instanceof TransientPipe || element instanceof WaterHammerPipe) {
+    if (element instanceof OnePhasePipeLine || element instanceof TwoFluidPipe || element instanceof TransientPipe
+        || element instanceof WaterHammerPipe) {
       return DynamicCapability.DYNAMIC_DISTRIBUTED;
     }
 
