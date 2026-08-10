@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
+import org.ejml.dense.row.MatrixFeatures_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.component.ComponentInterface;
@@ -226,7 +227,7 @@ public class TPmultiflash extends TPflash {
       boolean solved = false;
       Exception solveException = null;
       try {
-        solved = CommonOps_DDRM.solve(betaHessian, betaGradient, betaCorrection);
+        solved = solveBetaCorrection(betaHessian, betaGradient, betaCorrection);
       } catch (Exception ex) {
         solveException = ex;
       }
@@ -237,7 +238,7 @@ public class TPmultiflash extends TPflash {
           }
           copyBetaSolverInputs(betaGradient, betaHessian);
           try {
-            solved = CommonOps_DDRM.solve(betaHessian, betaGradient, betaCorrection);
+            solved = solveBetaCorrection(betaHessian, betaGradient, betaCorrection);
           } catch (Exception ex2) {
             solveException = ex2;
           }
@@ -279,6 +280,26 @@ public class TPmultiflash extends TPflash {
     } while (((err > 1e-12 || gradResidual > 1e-10) && iter < 50) || iter < 3);
     // logger.info("iterations " + iter);
     return err;
+  }
+
+  /**
+   * Solve one beta Newton system and reject non-finite corrections.
+   *
+   * <p>
+   * EJML's raw common-operations solve can report success for a singular matrix while writing NaN values to the
+   * correction vector. The former {@link SimpleMatrix#solve(SimpleMatrix)} path raised a singular-matrix exception in
+   * that case, allowing enhanced mode to regularize the Hessian and ordinary mode to stop without corrupting phase
+   * fractions.
+   * </p>
+   *
+   * @param betaHessian beta-Hessian matrix
+   * @param betaGradient beta-gradient column vector
+   * @param betaCorrection destination for the Newton correction
+   * @return true only when EJML reports success and every correction entry is finite
+   */
+  static boolean solveBetaCorrection(DMatrixRMaj betaHessian, DMatrixRMaj betaGradient, DMatrixRMaj betaCorrection) {
+    return CommonOps_DDRM.solve(betaHessian, betaGradient, betaCorrection)
+        && !MatrixFeatures_DDRM.hasUncountable(betaCorrection);
   }
 
   /**
