@@ -99,7 +99,8 @@ public class ExpanderDynamicTest {
     expander.runTransient(1.0, physicalStepB);
     Assertions.assertEquals(0.40, expander.getNozzleOpening(), 1.0e-10);
     Assertions.assertEquals(500.0, expander.getDynamicRecoveredPower("kW"), 1.0e-8);
-    Assertions.assertTrue(expander.getSpeed() > speedAfterA, "The next physical step should continue rotor acceleration");
+    Assertions.assertTrue(expander.getSpeed() > speedAfterA,
+        "The next physical step should continue rotor acceleration");
     Assertions.assertEquals(2.0, expander.getTime(), 0.0);
     Assertions.assertEquals(physicalStepB, expander.getCalculationIdentifier());
   }
