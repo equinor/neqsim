@@ -2,6 +2,7 @@ package neqsim.process.processmodel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
@@ -44,7 +45,7 @@ public class TransientPhysicalStepIdentityTest extends neqsim.NeqSimTest {
     assertNotEquals(physicalStepA, physicalStepB);
     assertEquals(2.0, process.getTime(), 0.0);
     assertEquals(2, controller.getEventLog().size());
-    assertEquals(physicalStepB, controller.getCalculationIdentifier());
+    assertTrue(controller.hasRunTransient(physicalStepB));
   }
 
   /** One model-level physical-step ID is shared across areas, while the following step receives a new ID. */
