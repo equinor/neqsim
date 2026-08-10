@@ -167,6 +167,38 @@ Separate momentum equations for each phase:
 | Wall friction | Pipe roughness-based (Colebrook/Blasius correlations) |
 | Interfacial friction | Flow-regime dependent correlations |
 
+#### Optional stiff dispersed-bubble drag
+
+`setEnableStiffBubbleDrag(true)` opts into the dimensionally correct Schiller-Naumann
+dispersed-bubble force and a conservative local implicit source solve. For a spherical bubble
+population,
+
+$$
+F_i=\frac{3}{4} C_D \rho_L \alpha_G \frac{A}{d_b}
+(v_G-v_L)|v_G-v_L|,
+\qquad a_i=\frac{6\alpha_G}{d_b},
+\qquad f_i=\frac{C_D}{4}.
+$$
+
+The implementation uses the existing Hinze bubble diameter, capped at one fifth of the pipe
+diameter, and the existing fixed 0.02 N/m surface-tension assumption. Schiller-Naumann describes
+rigid spherical particles in a dilute continuous phase; the closure does not model deformation,
+coalescence, breakup, or a bubble-size distribution.
+
+The source operator solves the active gas and combined-liquid momenta by backward Euler and applies
+one half-step on each side of the transport update. It conserves total active-phase momentum to
+roundoff, decreases slip and kinetic energy, removes exactly absent phases instead of applying a
+mass floor, and partitions the liquid impulse by active oil/water mass so existing oil-water slip is
+preserved. The source evaluation is local and retains no stage history.
+
+This mode is opt-in for migration compatibility. The legacy force scaling remains the default
+because the corrected closure, although numerically stable, is not yet quantitatively validated by
+the public Tengesdal severe-slugging benchmark. Without relaxing its acceptance bounds, the opt-in
+model passes 3 of 6 cases: its smallest pressure swing is 167.1 kPa against 98 +/- 5 kPa, its slug
+length ratio is 1.164, and the 16-section, 0.1 s case does not establish a repeated cycle. The
+compatibility default continues to pass all 6 cases. These results indicate a remaining closure or
+regime-transition limitation rather than a stiff-source instability.
+
 #### Optional virtual-mass coupling
 
 `setEnableVirtualMassForce(true)` enables a local added-inertia coupling between gas and combined
