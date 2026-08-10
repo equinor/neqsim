@@ -25,21 +25,23 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * The report is intentionally diagnostic rather than a readiness certificate. It distinguishes audited stored-state
  * dynamics from algebraic timestep evaluation, reports type-specific runtime activation separately from state
- * ownership, identifies explicitly requested configurations that cannot use the default transient boundary, and keeps
- * unaudited custom transient implementations visible as review items.
+ * ownership, identifies explicitly requested configurations that cannot use the default transient boundary, keeps
+ * unaudited custom transient implementations visible as review items, and exposes process-level execution modes whose
+ * current numerical/error semantics are not yet strict-professional ready.
  * </p>
  *
  * @author Even Solbraa
- * @version 1.1
+ * @version 1.2
  */
 public final class DynamicCapabilityReport implements Serializable {
   private static final long serialVersionUID = 1000L;
 
   /** Schema version for serialized/JSON reports. */
-  private static final String SCHEMA_VERSION = "1.1";
+  private static final String SCHEMA_VERSION = "1.2";
 
   private final String schemaVersion = SCHEMA_VERSION;
   private final List<Entry> entries;
+  private final List<String> executionIssues;
 
   /**
    * Immutable record describing one process element in the capability audit.
@@ -240,8 +242,9 @@ public final class DynamicCapabilityReport implements Serializable {
     }
   }
 
-  private DynamicCapabilityReport(List<Entry> entries) {
+  private DynamicCapabilityReport(List<Entry> entries, List<String> executionIssues) {
     this.entries = Collections.unmodifiableList(new ArrayList<Entry>(entries));
+    this.executionIssues = Collections.unmodifiableList(new ArrayList<String>(executionIssues));
   }
 
   /**
@@ -256,8 +259,9 @@ public final class DynamicCapabilityReport implements Serializable {
       throw new IllegalArgumentException("process must not be null");
     }
     List<Entry> collected = new ArrayList<Entry>();
-    collectArea("", process, collected);
-    return new DynamicCapabilityReport(collected);
+    List<String> executionIssues = new ArrayList<String>();
+    collectArea("", process, collected, executionIssues);
+    return new DynamicCapabilityReport(collected, executionIssues);
   }
 
   /**
@@ -272,13 +276,14 @@ public final class DynamicCapabilityReport implements Serializable {
       throw new IllegalArgumentException("model must not be null");
     }
     List<Entry> collected = new ArrayList<Entry>();
+    List<String> executionIssues = new ArrayList<String>();
     for (String areaName : model.getProcessSystemNames()) {
       ProcessSystem process = model.get(areaName);
       if (process != null) {
-        collectArea(areaName, process, collected);
+        collectArea(areaName, process, collected, executionIssues);
       }
     }
-    return new DynamicCapabilityReport(collected);
+    return new DynamicCapabilityReport(collected, executionIssues);
   }
 
   /**
@@ -297,6 +302,21 @@ public final class DynamicCapabilityReport implements Serializable {
    */
   public List<Entry> getEntries() {
     return entries;
+  }
+
+  /**
+   * Process-level execution configurations that are not yet safe for strict-professional transient qualification.
+   *
+   * <p>
+   * These diagnostics are intentionally separate from per-element state ownership and activation. They describe a
+   * process execution mode whose current solver/error contract is known to be incomplete even if every individual
+   * element is otherwise classified.
+   * </p>
+   *
+   * @return immutable area/module-qualified diagnostics
+   */
+  public List<String> getExecutionIssues() {
+    return executionIssues;
   }
 
   /**
@@ -341,6 +361,7 @@ public final class DynamicCapabilityReport implements Serializable {
    */
   public List<String> getBlockingIssues() {
     List<String> issues = new ArrayList<String>();
+    issues.addAll(executionIssues);
     for (Entry entry : entries) {
       if (entry.hasUnsupportedDynamicConfiguration()) {
         if (entry.getCapability() == DynamicCapability.ALGEBRAIC) {
@@ -399,10 +420,10 @@ public final class DynamicCapabilityReport implements Serializable {
    * Returns all issues that fail the opt-in strict transient preflight.
    *
    * <p>
-   * Strict preflight combines known unsupported runtime configurations, incomplete type-specific activation, and
-   * unaudited custom transient implementations. It deliberately does not reject audited dynamic equipment that is
-   * intentionally inactive, nor does it reject families whose activation semantics are still marked UNVERIFIED; those
-   * remain visible through dedicated review diagnostics.
+   * Strict preflight combines known unsupported runtime configurations, process-level execution modes with incomplete
+   * solver/error semantics, incomplete type-specific activation, and unaudited custom transient implementations. It
+   * deliberately does not reject audited dynamic equipment that is intentionally inactive, nor does it reject families
+   * whose activation semantics are still marked UNVERIFIED; those remain visible through dedicated review diagnostics.
    * </p>
    *
    * @return immutable list of strict-preflight issues
@@ -418,9 +439,9 @@ public final class DynamicCapabilityReport implements Serializable {
    * Whether the process/model passes the opt-in strict transient capability preflight.
    *
    * <p>
-   * A true result only means that no currently known unsupported configuration, incomplete audited activation, or
-   * unaudited custom transient implementation was found. It is not a quantitative validation, conformance, safety, or
-   * professional-readiness certificate.
+   * A true result only means that no currently known unsupported configuration, incomplete audited activation,
+   * unqualified process execution mode, or unaudited custom transient implementation was found. It is not a quantitative
+   * validation, conformance, safety, or professional-readiness certificate.
    * </p>
    *
    * @return true when {@link #getStrictPreflightIssues()} is empty
@@ -468,7 +489,7 @@ public final class DynamicCapabilityReport implements Serializable {
   }
 
   /**
-   * Whether the report contains a known unsupported or incomplete runtime configuration.
+   * Whether the report contains a known unsupported, incomplete, or unqualified runtime configuration.
    *
    * <p>
    * A false result is not a professional-readiness or validation certificate; review items, activation audits, and
@@ -478,6 +499,9 @@ public final class DynamicCapabilityReport implements Serializable {
    * @return true if one or more blocking configuration issues exist
    */
   public boolean hasBlockingIssues() {
+    if (!executionIssues.isEmpty()) {
+      return true;
+    }
     for (Entry entry : entries) {
       if (entry.hasUnsupportedDynamicConfiguration() || entry.hasIncompleteDynamicActivation()) {
         return true;
@@ -495,25 +519,29 @@ public final class DynamicCapabilityReport implements Serializable {
     return new GsonBuilder().setPrettyPrinting().create().toJson(this);
   }
 
-  private static void collectArea(String areaName, ProcessSystem process, List<Entry> target) {
+  private static void collectArea(String areaName, ProcessSystem process, List<Entry> target,
+      List<String> executionIssues) {
     Set<ProcessElementInterface> seenElements = Collections
         .newSetFromMap(new IdentityHashMap<ProcessElementInterface, Boolean>());
     Set<ProcessSystem> seenProcesses = Collections.newSetFromMap(new IdentityHashMap<ProcessSystem, Boolean>());
-    collectProcess(areaName, "", process, target, seenElements, seenProcesses);
+    collectProcess(areaName, "", process, target, executionIssues, seenElements, seenProcesses);
   }
 
   private static void collectProcess(String areaName, String containerPath, ProcessSystem process, List<Entry> target,
-      Set<ProcessElementInterface> seenElements, Set<ProcessSystem> seenProcesses) {
+      List<String> executionIssues, Set<ProcessElementInterface> seenElements, Set<ProcessSystem> seenProcesses) {
     if (process == null || !seenProcesses.add(process)) {
       return;
     }
+
+    addExecutionIssues(areaName, containerPath, process, executionIssues);
 
     for (ProcessElementInterface element : process.getAllElements()) {
       boolean added = addEntry(areaName, containerPath, element, target, seenElements);
       if (added && element instanceof ModuleInterface) {
         ModuleInterface module = (ModuleInterface) element;
         String nestedPath = appendContainerPath(containerPath, element);
-        collectProcess(areaName, nestedPath, module.getOperations(), target, seenElements, seenProcesses);
+        collectProcess(areaName, nestedPath, module.getOperations(), target, executionIssues, seenElements,
+            seenProcesses);
       }
     }
 
@@ -526,6 +554,30 @@ public final class DynamicCapabilityReport implements Serializable {
         addEntry(areaName, containerPath, controller, target, seenElements);
       }
     }
+  }
+
+  private static void addExecutionIssues(String areaName, String containerPath, ProcessSystem process,
+      List<String> executionIssues) {
+    String processName = qualifiedProcessName(areaName, containerPath, process);
+    if (process.isParallelTransientEnabled()) {
+      executionIssues.add(processName
+          + " enables parallel transient execution, whose equipment worker failures are not yet fail-loud; disable parallel transient mode for strict qualification until worker failures propagate and whole-step rollback exists");
+    }
+    if (process.isAdaptiveTimestepEnabled()) {
+      executionIssues.add(processName
+          + " enables adaptive transient execution, but runTransientAdaptive currently mutates one full step and adjusts a following timestep without rejected-step rollback or full-step/two-half-step error estimation");
+    }
+  }
+
+  private static String qualifiedProcessName(String areaName, String containerPath, ProcessSystem process) {
+    if (containerPath != null && !containerPath.isEmpty()) {
+      return areaName == null || areaName.isEmpty() ? containerPath : areaName + "::" + containerPath;
+    }
+    if (areaName != null && !areaName.isEmpty()) {
+      return areaName;
+    }
+    String name = process.getName();
+    return name == null || name.trim().isEmpty() ? "process" : name;
   }
 
   private static boolean addEntry(String areaName, String containerPath, ProcessElementInterface element,
