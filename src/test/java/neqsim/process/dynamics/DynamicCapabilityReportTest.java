@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
+import neqsim.process.equipment.pipeline.OnePhasePipeLine;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.pipeline.WaterHammerPipe;
 import neqsim.process.equipment.pipeline.twophasepipe.TransientPipe;
@@ -51,6 +52,8 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
   public void distributedPipeModelsAreClassified() {
     Stream feed = createFeed("pipe feed");
 
+    assertEquals(DynamicCapability.DYNAMIC_DISTRIBUTED,
+        new OnePhasePipeLine("one phase", feed).getDynamicCapability());
     assertEquals(DynamicCapability.DYNAMIC_DISTRIBUTED, new TwoFluidPipe("two fluid", feed).getDynamicCapability());
     assertEquals(DynamicCapability.DYNAMIC_DISTRIBUTED, new TransientPipe("drift flux", feed).getDynamicCapability());
     assertEquals(DynamicCapability.DYNAMIC_DISTRIBUTED,
