@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.lang.reflect.Field;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.ejml.data.DMatrixRMaj;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
@@ -247,6 +248,22 @@ class TPmultiflashTest {
 
     assertFalse(stalledField.getBoolean(operation),
         "A run without a beta solve must clear stall state retained by a reused operation");
+  }
+
+  /** A raw EJML solve must not accept a non-finite correction from a singular beta Hessian. */
+  @Test
+  void testBetaCorrectionRejectsSingularSolveReportedAsSuccessful() {
+    DMatrixRMaj singularHessian = new DMatrixRMaj(new double[][] { { 1.0, 1.0 }, { 1.0, 1.0 } });
+    DMatrixRMaj gradient = new DMatrixRMaj(new double[][] { { 1.0 }, { 1.0 } });
+    DMatrixRMaj correction = new DMatrixRMaj(2, 1);
+
+    assertFalse(TPmultiflash.solveBetaCorrection(singularHessian, gradient, correction));
+
+    singularHessian.set(0, 0, singularHessian.get(0, 0) + 1.0e-2);
+    singularHessian.set(1, 1, singularHessian.get(1, 1) + 1.0e-2);
+    assertTrue(TPmultiflash.solveBetaCorrection(singularHessian, gradient, correction));
+    assertTrue(Double.isFinite(correction.get(0, 0)));
+    assertTrue(Double.isFinite(correction.get(1, 0)));
   }
 
   /** Verifies a direct beta solve preserves a converged two-phase equilibrium and material balance. */
