@@ -35,6 +35,7 @@ DynamicCapabilityReport report = DynamicCapabilityReport.from(process);
 
 report.getCapabilityCounts();
 report.getActivationCounts();
+report.getExecutionIssues();
 report.getBlockingIssues();
 report.getReviewItems();
 report.getUnverifiedActivationElements();
@@ -87,7 +88,7 @@ timestep/mesh, benchmark, safety or OTS qualification.
 ## Strict transient preflight
 
 The report also provides an explicit, opt-in preflight for workflows that must not continue with known unsupported,
-incompletely configured, or unaudited custom transient implementations:
+incompletely configured, unaudited, or execution-contract-incomplete transient configurations:
 
 ```java
 DynamicCapabilityReport report = DynamicCapabilityReport.from(process);
@@ -102,14 +103,33 @@ report.assertStrictTransientReady();
 ```
 
 Strict preflight combines known unsupported runtime configurations, type-specific `INCOMPLETE_CONFIGURATION` activation
-findings, and `UNCLASSIFIED_DYNAMIC` review items. It does **not** reject an audited dynamic unit merely because the unit
-is intentionally inactive, and it does not yet reject a state-owning family solely because activation remains
-`UNVERIFIED`. The preflight is not automatically called by `runTransient(...)`; it is an explicit qualification gate so
-existing transient APIs and mixed algebraic/dynamic models remain backwards compatible.
+findings, `UNCLASSIFIED_DYNAMIC` review items, and known process-level execution modes whose numerical/error semantics are
+not yet safe for strict professional qualification. `getExecutionIssues()` exposes those process-level findings
+separately so they are not confused with equipment state ownership or activation.
+
+Two execution modes are explicitly blocked by the current Phase-0 contract:
+
+- **parallel transient execution** is not strict-ready while equipment worker failures can be logged/swallowed instead of
+  propagating fail-loudly to abort the physical step. Disabling parallel transient execution avoids that specific worker
+  failure path, but it does not create rejected-step rollback or a whole-model transaction;
+- **adaptive transient execution** is not strict-ready while `runTransientAdaptive(...)` mutates one full timestep and
+  derives a following timestep recommendation without a full-step/two-half-step error estimate, rejected-step restore,
+  retry, and one accepted-step commit boundary.
+
+These diagnostics are collected recursively through initialized process modules and preserve `ProcessModel` area paths.
+They make current limitations explicit instead of presenting the modes as qualified transient numerics. Once the
+underlying execution semantics are repaired and quantitatively tested, the corresponding blocker should be removed
+rather than retained as a permanent policy restriction.
+
+Strict preflight does **not** reject an audited dynamic unit merely because the unit is intentionally inactive, and it
+does not yet reject a state-owning family solely because activation remains `UNVERIFIED`. The preflight is not
+automatically called by `runTransient(...)`; it is an explicit qualification gate so existing transient APIs and mixed
+algebraic/dynamic models remain backwards compatible.
 
 Passing strict preflight only means that the capability audit found no currently known unsupported/incomplete
-configuration or unaudited custom transient method. It does not establish conservation accuracy, timestep independence,
-pressure-flow correctness, control/safety fidelity, OTS real-time performance, or engineering approval.
+configuration, unqualified process execution mode, or unaudited custom transient method. It does not establish
+conservation accuracy, timestep independence, pressure-flow correctness, control/safety fidelity, OTS real-time
+performance, or engineering approval.
 
 ## Physical-step versus refinement identity
 
@@ -158,7 +178,8 @@ for (DynamicCapabilityReport.Entry entry : plantReport.getEntries()) {
 
 Multi-area reports preserve the process-area identity so identical equipment or stream names in separate areas do not
 collapse into one audit entry. Controllers attached directly to equipment are included and de-duplicated by object
-identity if they are also registered as standalone controllers.
+identity if they are also registered as standalone controllers. Process-level execution issues are area-qualified by the
+same report so an unsafe execution mode in one area does not become an untraceable plant-wide diagnostic.
 
 ## Nested process modules
 
@@ -267,8 +288,10 @@ whole-step transaction boundary rather than assumed to come from the process gra
 
 This contract does not yet provide the plant-wide vector ODE/DAE solver required for strongly coupled professional
 dynamics. In particular, it does not add global pressure-flow residual assembly, sparse Jacobians, whole-model timestep
-rejection/rollback, event localization, or multi-rate pipeline subcycling. Those capabilities build on this contract so
-the solver can reason explicitly about which objects own dynamic state and which objects are algebraic constraints.
+rejection/rollback, event localization, or multi-rate pipeline subcycling. The strict execution diagnostics make known
+parallel/adaptive limitations explicit; they do not repair those underlying execution paths. Those capabilities build on
+this contract so the solver can reason explicitly about which objects own dynamic state, which objects are algebraic
+constraints, and which execution modes have qualified transaction/error semantics.
 
 The report also does not certify that a model is suitable for a control, relief, HIPPS/SIS, HAZOP, DEXPI/P&ID, virtual
 commissioning, OTS, or other safety-critical study. Those studies require scenario-specific modelling, validation
