@@ -205,21 +205,36 @@ public class EventScheduler implements Serializable {
   }
 
   /**
-   * Fires all events with {@code time <= now} in time order. Each event is removed from the pending queue and appended
-   * to the fired log.
+   * Fires all events with {@code time <= now} in time order.
+   *
+   * <p>
+   * An event is removed from the pending queue and appended to the fired log only after its action completes
+   * successfully. If an action throws a {@link RuntimeException}, the failure is logged and rethrown immediately. The
+   * failing event remains pending, later due events are not executed, and the caller can abort the physical-step
+   * attempt instead of silently continuing after a failed trip, setpoint, or operator action.
+   * </p>
+   *
+   * <p>
+   * This fail-loud bookkeeping contract is not a whole-process transaction: an action that mutates external state and
+   * then throws may already have produced side effects. Qualified rejected-step execution must still restore every
+   * mutated object or defer side effects until step acceptance.
+   * </p>
    *
    * @param now current simulation time in seconds
-   * @return number of events fired in this call
+   * @return number of events fired successfully in this call
+   * @throws RuntimeException if a due event action fails
    */
   public int fireDueEvents(double now) {
     int count = 0;
     while (!queue.isEmpty() && queue.get(0).time <= now) {
-      ScheduledEvent e = queue.remove(0);
+      ScheduledEvent e = queue.get(0);
       try {
         e.action.run();
       } catch (RuntimeException ex) {
         logger.error("EventScheduler event '{}' failed: {}", e.label, ex.getMessage(), ex);
+        throw ex;
       }
+      queue.remove(0);
       fired.add(e);
       count++;
     }
