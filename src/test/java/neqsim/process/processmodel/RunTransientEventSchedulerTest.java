@@ -144,8 +144,8 @@ public class RunTransientEventSchedulerTest {
       }
     });
 
-    IllegalStateException failure =
-        assertThrows(IllegalStateException.class, () -> p.runTransient(0.5, failedPhysicalStep));
+    IllegalStateException failure = assertThrows(IllegalStateException.class,
+        () -> p.runTransient(0.5, failedPhysicalStep));
 
     assertEquals("trip actuator failed", failure.getMessage());
     assertEquals(1, s.getPendingEvents().size(), "failed event must remain retryable");
