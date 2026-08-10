@@ -1842,7 +1842,8 @@ public class ProcessModel implements Runnable, Serializable {
         // Capture current stream states and calculate errors
         Map<Object, double[]> currentBoundaryStreamStates = captureBoundaryStreamStates(boundaryStreams);
         boolean autoTuningChanged = applyAutoConvergenceTuning();
-        double[] errors = calculateConvergenceErrors(previousBoundaryStreamStates, currentBoundaryStreamStates);
+        double[] errors = calculateConvergenceErrors(previousBoundaryStreamStates, currentBoundaryStreamStates,
+            areaPlan);
         java.util.Set<Object> changedBoundaryStreams = findChangedBoundaryStreams(previousBoundaryStreamStates,
             currentBoundaryStreamStates);
         lastMaxFlowError = errors[0];
@@ -2790,6 +2791,19 @@ public class ProcessModel implements Runnable, Serializable {
    * @return array of [maxFlowError, maxTempError, maxPressError]
    */
   double[] calculateConvergenceErrors(Map<?, double[]> previous, Map<?, double[]> current) {
+    return calculateConvergenceErrors(previous, current, getAreaExecutionPlan());
+  }
+
+  /**
+   * Calculates convergence errors using an already resolved area execution plan.
+   *
+   * @param previous previous stream states
+   * @param current current stream states
+   * @param areaPlan area execution plan for the current model topology
+   * @return array of [maxFlowError, maxTempError, maxPressError]
+   */
+  private double[] calculateConvergenceErrors(Map<?, double[]> previous, Map<?, double[]> current,
+      AreaExecutionPlan areaPlan) {
     double maxFlowErr = 0.0;
     double maxTempErr = 0.0;
     double maxPressErr = 0.0;
@@ -2830,8 +2844,8 @@ public class ProcessModel implements Runnable, Serializable {
         double pressErr = Math.abs(curr[2] - prev[2]) / pressBase;
         maxPressErr = Math.max(maxPressErr, pressErr);
 
-        streamErrors.add(new BoundaryStreamError(getStreamName(key), getStreamProducerLabel(key), flowErr, tempErr,
-            pressErr, prev[0], curr[0]));
+        streamErrors.add(new BoundaryStreamError(getStreamName(key), getStreamProducerLabel(key, areaPlan), flowErr,
+            tempErr, pressErr, prev[0], curr[0]));
       }
     }
 
@@ -2859,14 +2873,15 @@ public class ProcessModel implements Runnable, Serializable {
    * Resolve the producing {@code "area::unit"} label for a boundary stream object.
    *
    * @param streamObject boundary stream object
+   * @param areaPlan area execution plan containing producer labels
    * @return the producer label, or an empty string when the producer cannot be resolved
    */
-  private String getStreamProducerLabel(Object streamObject) {
-    if (streamObject == null || processes.isEmpty()) {
+  private String getStreamProducerLabel(Object streamObject, AreaExecutionPlan areaPlan) {
+    if (streamObject == null || areaPlan == null || processes.isEmpty()) {
       return "";
     }
     try {
-      String label = getAreaExecutionPlan().streamProducers.get(streamObject);
+      String label = areaPlan.streamProducers.get(streamObject);
       return label == null ? "" : label;
     } catch (Exception e) {
       return "";
