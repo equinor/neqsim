@@ -124,6 +124,73 @@ public class RunTransientEventSchedulerTest {
   }
 
   /**
+   * A failing safety/operator event must abort the ProcessSystem physical-step attempt before equipment and process
+   * calculation identifiers are committed. The already-advanced process clock documents the remaining whole-step
+   * transaction gap and should be rolled back by the future #2911 transaction layer.
+   */
+  @Test
+  public void testEventFailureAbortsProcessStepBeforeEquipmentCommit() {
+    ProcessSystem p = buildMinimalProcess();
+    EventScheduler s = new EventScheduler();
+    p.setEventScheduler(s);
+    UUID previousProcessIdentifier = p.getCalculationIdentifier();
+    UUID previousSeparatorIdentifier = p.getUnit("sep").getCalculationIdentifier();
+    UUID failedPhysicalStep = TransientStepIdentifier.deterministicPhysicalStep("failed-event", 0L);
+
+    s.scheduleEvent(0.5, "failed trip", new Runnable() {
+      @Override
+      public void run() {
+        throw new IllegalStateException("trip actuator failed");
+      }
+    });
+
+    IllegalStateException failure =
+        assertThrows(IllegalStateException.class, () -> p.runTransient(0.5, failedPhysicalStep));
+
+    assertEquals("trip actuator failed", failure.getMessage());
+    assertEquals(1, s.getPendingEvents().size(), "failed event must remain retryable");
+    assertEquals(0, s.getFiredEvents().size(), "failed event must not be recorded as successfully fired");
+    assertEquals(previousProcessIdentifier, p.getCalculationIdentifier(),
+        "failed physical step must not commit the ProcessSystem calculation identifier");
+    assertEquals(previousSeparatorIdentifier, p.getUnit("sep").getCalculationIdentifier(),
+        "event failure occurs before equipment execution and must not commit the separator identifier");
+    assertEquals(0.5, p.getTime(), 0.0,
+        "current ProcessSystem still advances its clock before event execution; whole-step rollback remains required");
+  }
+
+  /**
+   * A shared failing event must propagate out of multi-area ProcessModel execution instead of allowing later areas to
+   * continue. The first area's already-advanced clock records the remaining model-wide transaction requirement.
+   */
+  @Test
+  public void testEventFailureStopsLaterProcessModelAreas() {
+    ProcessSystem firstArea = new ProcessSystem("first area");
+    ProcessSystem secondArea = new ProcessSystem("second area");
+    ProcessModel plant = new ProcessModel();
+    plant.add("first", firstArea);
+    plant.add("second", secondArea);
+
+    EventScheduler shared = new EventScheduler();
+    plant.setEventScheduler(shared);
+    shared.scheduleEvent(0.5, "failed shared trip", new Runnable() {
+      @Override
+      public void run() {
+        throw new IllegalStateException("shared trip failed");
+      }
+    });
+
+    IllegalStateException failure = assertThrows(IllegalStateException.class,
+        () -> plant.runTransient(0.5, TransientStepIdentifier.deterministicPhysicalStep("failed-model-event", 0L)));
+
+    assertEquals("shared trip failed", failure.getMessage());
+    assertEquals(0.5, firstArea.getTime(), 0.0,
+        "first area currently advances before the shared event failure; model-wide rollback remains required");
+    assertEquals(0.0, secondArea.getTime(), 0.0, "later areas must not continue after a failed shared event");
+    assertEquals(1, shared.getPendingEvents().size());
+    assertEquals(0, shared.getFiredEvents().size());
+  }
+
+  /**
    * IntegratorStrategy default is ExplicitEulerIntegrator; setter+getter roundtrip; null restores default.
    */
   @Test
