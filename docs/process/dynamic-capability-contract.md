@@ -16,7 +16,7 @@ validation, standards conformance, or accountable safety approval.
 | Capability | Meaning |
 |---|---|
 | `ALGEBRAIC` | No audited stored physical state. The element may still be solved as an algebraic relation at each timestep. |
-| `DYNAMIC_LUMPED` | Audited lumped state such as vessel inventory, thermal storage, actuator position, or rotating inertia. |
+| `DYNAMIC_LUMPED` | Audited lumped state such as vessel inventory, thermal storage, actuator position, rotating inertia, or rate-limited converter output. |
 | `DYNAMIC_DISTRIBUTED` | Spatially distributed transient state, for example finite-volume or method-of-characteristics pipeline state. |
 | `BOUNDARY_DYNAMIC` | Time-varying boundary/source state such as reservoir depletion or another imposed dynamic boundary. |
 | `CONTROL_DYNAMIC` | Controller, transmitter, signal, logic, or sampled control-system transient state. |
@@ -154,7 +154,8 @@ repeatedly and prevents accidental recursive container cycles from causing unbou
 The initial contract intentionally classifies only core implementations whose current source contains clear stored-state
 semantics:
 
-- lumped: separators, tanks, two-stream heat exchangers, compressors, pumps, and throttling/control valves;
+- lumped: separators, tanks, two-stream heat exchangers, compressors, pumps, throttling/control valves, and
+  `EnergyConverter`-based motors/generators/gearboxes/inverters/transformers;
 - distributed: `OnePhasePipeLine`, `TwoFluidPipe`, drift-flux `TransientPipe`, and `WaterHammerPipe`;
 - boundary: `SimpleReservoir`;
 - control: registered controllers and measurement devices.
@@ -165,6 +166,13 @@ component inventories and accepted-step diagnostics, and its ProcessSystem snaps
 boundedness, synchronized thermodynamic composition, clocks and calculation identifiers. The classification describes
 **distributed state ownership**, not blanket validity of every pipeline mode. Legacy staged compositional transport,
 zero/reversed flow, phase appearance and multiphase operation remain outside that evidence until separately qualified.
+
+`EnergyConverter` owns the previous useful-output state when a finite ramp rate is configured. Its transient ramp is
+therefore classified as `DYNAMIC_LUMPED`. Repeated nonlinear/refinement evaluations with the same non-null physical-step
+identifier recompute from the output that existed at the start of that step, so refinement cannot consume the ramp a
+second time or advance the converter clock again. A new physical-step identifier captures the previously accepted output
+as the next step's starting state. Infinite ramp rate remains a memoryless runtime configuration, illustrating why state
+ownership and runtime activation/maturity are separate dimensions.
 
 `Stream` and stream subclasses that inherit the standard `Stream.runTransient(...)` boundary are classified as
 `ALGEBRAIC`: that method re-evaluates the stream and advances its execution clock, but does not integrate stored physical
