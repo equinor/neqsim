@@ -18,6 +18,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.tank.Tank;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
+import neqsim.process.processmodel.ModuleInterface;
 
 /**
  * Transitional resolver for the dynamic capability of existing NeqSim process elements.
@@ -52,6 +53,10 @@ public final class DynamicCapabilityResolver {
 
     if (element instanceof ControllerDeviceInterface || element instanceof MeasurementDeviceInterface) {
       return DynamicCapability.CONTROL_DYNAMIC;
+    }
+
+    if (element instanceof ModuleInterface) {
+      return DynamicCapability.ALGEBRAIC;
     }
 
     if (element instanceof OnePhasePipeLine || element instanceof TwoFluidPipe || element instanceof TransientPipe
