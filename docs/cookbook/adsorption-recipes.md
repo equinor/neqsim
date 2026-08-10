@@ -1,498 +1,298 @@
 ---
 title: "Adsorption Recipes"
-description: "Quick-start recipes and practical examples for adsorption simulation in NeqSim. Covers isotherm model setup, PSA/TSA cycle design, material comparison, breakthrough analysis, and integration with process flowsheets."
+description: "Executable Java recipes for equilibrium adsorption, fixed-bed screening, and cycle scheduling, with explicit model boundaries."
 ---
 
-# Adsorption Recipes
+These recipes demonstrate the current NeqSim adsorption APIs with complete Java 8
+programs. They are screening examples, not adsorber or regeneration-system designs.
+Before using a result, confirm that the selected adsorbent/component pair has measured
+parameters over the relevant temperature, pressure, and composition range.
 
-Practical recipes for common adsorption simulation tasks in NeqSim. Each recipe is self-contained with ready-to-use Java code.
+See [Adsorption Isotherm Models](../thermo/adsorption_isotherms.md) for the equations
+and [Adsorption Bed](../process/equipment/adsorption_bed.md) for the equipment model.
 
-**Prerequisites**: See [Adsorption Isotherm Models](../thermo/adsorption_isotherms.md) for thermodynamic theory and [Adsorption Bed](../process/equipment/adsorption_bed.md) for process simulation details.
+## Choose a recipe
 
----
+| Task | Recipe | Main limitation |
+| --- | --- | --- |
+| Compare equilibrium loading | [Competitive equilibrium screen](#competitive-equilibrium-screen) | Database parameters are screening data, not a vendor guarantee |
+| Estimate fixed-bed response | [Steady and transient bed screen](#steady-and-transient-bed-screen) | One-dimensional LDF/Ergun screening model |
+| Define PSA or TSA timing | [Cycle schedule](#cycle-schedule) | One controller/bed; not a cyclic-steady-state or multi-bed solver |
 
-## Quick Reference
+## Parameter and model checks
 
-| Recipe | Use Case |
-|--------|----------|
-| [Evaluate a Single Isotherm](#recipe-1-evaluate-a-single-isotherm) | Get loading for one gas on one solid |
-| [Compare Adsorbent Materials](#recipe-2-compare-adsorbent-materials) | Screen materials for a separation |
-| [Multi-Component Competitive Adsorption](#recipe-3-multi-component-competitive-adsorption) | Extended Langmuir/Sips for mixtures |
-| [Steady-State Bed Sizing](#recipe-4-steady-state-bed-sizing) | Quick bed performance estimate |
-| [Transient Breakthrough Curve](#recipe-5-transient-breakthrough-curve) | Track concentration front propagation |
-| [PSA Cycle Simulation](#recipe-6-psa-cycle-simulation) | Full pressure swing cycle |
-| [TSA Cycle Simulation](#recipe-7-tsa-cycle-simulation) | Full temperature swing cycle |
-| [Effect of Temperature on Adsorption](#recipe-8-effect-of-temperature-on-adsorption) | Isotherm sensitivity study |
-| [Bed in a Process Flowsheet](#recipe-9-bed-in-a-process-flowsheet) | Integrate with compressors, coolers, etc. |
-| [Capillary Condensation in Mesopores](#recipe-10-capillary-condensation-in-mesopores) | Kelvin equation for mesoporous materials |
+`LangmuirAdsorption` loads parameters by exact component and solid-material names.
+When no row matches, the current implementation substitutes generic default
+parameters. That fallback keeps a calculation running, but it is not evidence for the
+named adsorbent. Audit the packaged parameter inventory or set independently validated
+parameters before ranking materials.
 
----
+For the CO2/methane example below, these material names have parameter rows for both
+components:
 
-## Recipe 1: Evaluate a Single Isotherm
+- `AC Calgon F400`
+- `Zeolite 13X`
+- `Zeolite 5A`
+- `Silica Gel`
+- `MOF HKUST-1`
 
-Calculate equilibrium loading of CO$_2$ on Zeolite 13X at various pressures.
+Use `calcExtendedLangmuir(...)` for competitive mixture screening. Calling
+`calcAdsorption(...)` evaluates each component independently and does not apply the
+shared extended-Langmuir denominator.
+
+Total pressures passed to thermodynamic-system constructors are absolute bar (bara).
+Equilibrium loadings are reported in mol/kg of adsorbent and Langmuir constants in
+1/bar.
+
+## Competitive equilibrium screen
+
+This program flashes one gas state, then compares only material/component pairs that
+exist in the packaged parameter inventory.
 
 ```java
 import neqsim.physicalproperties.interfaceproperties.solidadsorption.LangmuirAdsorption;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-// Create gas system at 25°C
-for (double pressure = 1.0; pressure <= 20.0; pressure += 1.0) {
-    SystemSrkEos system = new SystemSrkEos(298.15, pressure);
-    system.addComponent("CO2", 1.0);
-    system.setMixingRule("classic");
-    system.init(0);
+public class CompetitiveAdsorptionScreen {
+    public static void main(String[] args) throws Exception {
+        SystemSrkEos gas = new SystemSrkEos(298.15, 10.0);
+        gas.addComponent("methane", 0.90);
+        gas.addComponent("CO2", 0.10);
+        gas.setMixingRule("classic");
+        new ThermodynamicOperations(gas).TPflash();
 
-    LangmuirAdsorption model = new LangmuirAdsorption(system);
-    model.setSolidMaterial("Zeolite 13X");
-    model.calcAdsorption(0);
+        String[] materials = {
+            "AC Calgon F400",
+            "Zeolite 13X",
+            "Zeolite 5A",
+            "Silica Gel",
+            "MOF HKUST-1"
+        };
 
-    double loading = model.getSurfaceExcess(0); // mol/kg
-    System.out.printf("P=%5.1f bar  q=%.3f mol/kg  coverage=%.3f%n",
-        pressure, loading, model.getCoverage(0));
+        System.out.printf(
+            "%-18s %14s %14s %12s%n",
+            "Material",
+            "CO2 [mol/kg]",
+            "CH4 [mol/kg]",
+            "Selectivity");
+
+        for (String material : materials) {
+            LangmuirAdsorption model = new LangmuirAdsorption(gas);
+            model.setSolidMaterial(material);
+            model.calcExtendedLangmuir(0);
+
+            double co2Loading = model.getSurfaceExcess("CO2");
+            double methaneLoading = model.getSurfaceExcess("methane");
+            double selectivity = model.getSelectivity(1, 0, 0);
+
+            System.out.printf(
+                "%-18s %14.4f %14.4f %12.2f%n",
+                material,
+                co2Loading,
+                methaneLoading,
+                selectivity);
+        }
+    }
 }
 ```
 
----
+The component indexes in `getSelectivity(1, 0, 0)` follow the creation order:
+methane is index 0 and CO2 is index 1. Prefer loading queries by component name where
+an index is not required.
 
-## Recipe 2: Compare Adsorbent Materials
+For a temperature or pressure study, rebuild and flash the state at every condition.
+Working capacity is a difference, not a ratio:
 
-Screen multiple adsorbents for CO$_2$ removal at process conditions.
+$$
+\Delta q_i = q_{i,ads}(T_{ads}, P_{ads}, y_{ads})
+             - q_{i,regen}(T_{regen}, P_{regen}, y_{regen})
+$$
 
-```java
-import neqsim.physicalproperties.interfaceproperties.solidadsorption.LangmuirAdsorption;
-import neqsim.thermo.system.SystemSrkEos;
+Both states and their gas compositions must be specified. A two-temperature curve at
+one pressure does not by itself define TSA working capacity.
 
-String[] materials = {"AC", "Zeolite 13X", "Zeolite 5A", "MOF HKUST-1",
-                      "Silica Gel", "AC Calgon F400", "Alumina"};
+## Steady and transient bed screen
 
-SystemSrkEos system = new SystemSrkEos(298.15, 10.0);
-system.addComponent("CO2", 0.10);
-system.addComponent("methane", 0.90);
-system.setMixingRule("classic");
-system.init(0);
-
-System.out.printf("%-20s  %10s  %10s%n", "Material", "CO2 (mol/kg)", "CH4 (mol/kg)");
-System.out.printf("%-20s  %10s  %10s%n", "--------", "-----------", "-----------");
-
-for (String material : materials) {
-    LangmuirAdsorption model = new LangmuirAdsorption(system);
-    model.setSolidMaterial(material);
-    model.calcAdsorption(0);
-
-    System.out.printf("%-20s  %10.3f  %10.3f%n",
-        material,
-        model.getSurfaceExcess("CO2"),
-        model.getSurfaceExcess("methane"));
-}
-```
-
----
-
-## Recipe 3: Multi-Component Competitive Adsorption
-
-Use the Extended Langmuir model for competitive CO$_2$/CH$_4$/N$_2$ adsorption.
+The next program evaluates the same characterized bed first with the steady screening
+method and then from a clean transient grid. A new calculation identifier is used for
+every physical time step.
 
 ```java
-import neqsim.physicalproperties.interfaceproperties.solidadsorption.LangmuirAdsorption;
-import neqsim.thermo.system.SystemSrkEos;
-
-SystemSrkEos system = new SystemSrkEos(298.15, 10.0);
-system.addComponent("methane", 0.85);
-system.addComponent("CO2", 0.10);
-system.addComponent("nitrogen", 0.05);
-system.setMixingRule("classic");
-system.init(0);
-
-LangmuirAdsorption model = new LangmuirAdsorption(system);
-model.setSolidMaterial("Zeolite 13X");
-model.calcExtendedLangmuir(0);  // multi-component competition
-
-for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-    String name = system.getPhase(0).getComponent(i).getComponentName();
-    double loading = model.getSurfaceExcess(i);
-    double moleFrac = model.getAdsorbedPhaseMoleFraction(i);
-    System.out.printf("%-10s  q=%.4f mol/kg  x_ads=%.4f%n", name, loading, moleFrac);
-}
-
-// CO2/CH4 selectivity
-double selectivity = model.getSelectivity(1, 0, 0); // CO2 over CH4
-System.out.printf("CO2/CH4 selectivity: %.1f%n", selectivity);
-```
-
----
-
-## Recipe 4: Steady-State Bed Sizing
-
-Quick estimate of adsorption bed performance without transient simulation.
-
-```java
-import neqsim.process.equipment.adsorber.AdsorptionBed;
-import neqsim.process.equipment.stream.Stream;
-import neqsim.thermo.system.SystemSrkEos;
-
-SystemSrkEos gas = new SystemSrkEos(298.15, 10.0);
-gas.addComponent("methane", 0.85);
-gas.addComponent("CO2", 0.10);
-gas.addComponent("nitrogen", 0.05);
-gas.setMixingRule("classic");
-
-Stream feed = new Stream("Feed", gas);
-feed.setFlowRate(5000.0, "kg/hr");
-feed.run();
-
-AdsorptionBed bed = new AdsorptionBed("CO2 Adsorber", feed);
-bed.setBedDiameter(1.5);
-bed.setBedLength(4.0);
-bed.setAdsorbentMaterial("Zeolite 13X");
-bed.setIsothermType(IsothermType.LANGMUIR);
-bed.setKLDF(0.05);
-bed.setCalculateSteadyState(true);  // default
-bed.run();
-
-System.out.println("Adsorbent mass: " + bed.getAdsorbentMass() + " kg");
-System.out.println("Bed volume: " + bed.getBedVolume() + " m³");
-System.out.println("Pressure drop: " + bed.getPressureDrop() + " Pa");
-
-// Check outlet CO2 level
-Stream outlet = (Stream) bed.getOutletStream();
-double outletCO2 = outlet.getFluid().getPhase(0).getComponent("CO2").getx();
-System.out.printf("Outlet CO2 mole fraction: %.6f%n", outletCO2);
-```
-
----
-
-## Recipe 5: Transient Breakthrough Curve
-
-Track how the concentration front propagates through the bed and detect breakthrough.
-
-```java
-import neqsim.process.equipment.adsorber.AdsorptionBed;
-import neqsim.process.equipment.stream.Stream;
-import neqsim.thermo.system.SystemSrkEos;
 import java.util.UUID;
+import neqsim.physicalproperties.interfaceproperties.solidadsorption.IsothermType;
+import neqsim.process.equipment.adsorber.AdsorptionBed;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemSrkEos;
 
-// Setup (same as Recipe 4 feed)
-SystemSrkEos gas = new SystemSrkEos(298.15, 10.0);
-gas.addComponent("methane", 0.85);
-gas.addComponent("CO2", 0.10);
-gas.addComponent("nitrogen", 0.05);
-gas.setMixingRule("classic");
+public class AdsorptionBedScreen {
+    private static Stream createFeed() {
+        SystemSrkEos gas = new SystemSrkEos(298.15, 10.0);
+        gas.addComponent("methane", 0.85);
+        gas.addComponent("CO2", 0.10);
+        gas.addComponent("nitrogen", 0.05);
+        gas.setMixingRule("classic");
 
-Stream feed = new Stream("Feed", gas);
-feed.setFlowRate(5000.0, "kg/hr");
-feed.run();
-
-AdsorptionBed bed = new AdsorptionBed("Breakthrough Test", feed);
-bed.setBedDiameter(1.5);
-bed.setBedLength(4.0);
-bed.setAdsorbentMaterial("Zeolite 13X");
-bed.setIsothermType(IsothermType.LANGMUIR);
-bed.setKLDF(0.05);
-bed.setNumberOfCells(100);
-bed.setCalculateSteadyState(false);  // Enable transient mode
-bed.setBreakthroughThreshold(0.05);
-
-// Run transient simulation
-double dt = 1.0;
-UUID id = UUID.randomUUID();
-
-System.out.printf("%8s  %12s  %12s  %10s%n", "Time(s)", "CO2_out/in", "MTZ(m)", "Avg_q");
-for (int step = 0; step < 600; step++) {
-    bed.runTransient(dt, id);
-
-    if (step % 30 == 0) {
-        double[] outConc = bed.getConcentrationProfile(1); // CO2
-        double outletRatio = outConc[outConc.length - 1]
-            / Math.max(outConc[0], 1e-20);
-        double mtz = bed.getMassTransferZoneLength(1);
-        double avgQ = bed.getAverageLoading(1);
-        System.out.printf("%8.0f  %12.6f  %12.3f  %10.4f%n",
-            bed.getElapsedTime(), outletRatio, mtz, avgQ);
+        Stream feed = new Stream("feed", gas);
+        feed.setFlowRate(1000.0, "kg/hr");
+        feed.run();
+        return feed;
     }
 
-    if (bed.hasBreakthrough()) {
-        System.out.printf("BREAKTHROUGH at t=%.1f s%n", bed.getBreakthroughTime());
-        break;
+    private static AdsorptionBed createBed(String name, Stream feed) {
+        AdsorptionBed bed = new AdsorptionBed(name, feed);
+        bed.setBedDiameter(1.0);
+        bed.setBedLength(3.0);
+        bed.setAdsorbentMaterial("AC Calgon F400");
+        bed.setIsothermType(IsothermType.LANGMUIR);
+        bed.setKLDF(0.05); // 1/s; illustrative value only
+        return bed;
+    }
+
+    public static void main(String[] args) {
+        AdsorptionBed steadyBed = createBed("steady screen", createFeed());
+        steadyBed.run();
+        double outletCO2 = steadyBed.getOutletStream()
+            .getFluid()
+            .getPhase(0)
+            .getComponent("CO2")
+            .getx();
+        System.out.printf(
+            "Steady screen: adsorbent %.1f kg, pressure drop %.1f Pa, outlet CO2 %.6f%n",
+            steadyBed.getAdsorbentMass(),
+            steadyBed.getPressureDrop(),
+            outletCO2);
+
+        AdsorptionBed transientBed = createBed("transient screen", createFeed());
+        transientBed.setNumberOfCells(20);
+        transientBed.setCalculateSteadyState(false);
+        transientBed.setBreakthroughThreshold(0.05);
+
+        double dt = 0.25; // s
+        for (int step = 0; step < 20; step++) {
+            transientBed.runTransient(dt, UUID.randomUUID());
+        }
+
+        double co2Loading = transientBed.getAverageLoading(1);
+        System.out.printf(
+            "Transient screen: time %.2f s, average CO2 loading %.6f mol/kg, breakthrough %s%n",
+            transientBed.getElapsedTime(),
+            co2Loading,
+            transientBed.isBreakthroughOccurred());
     }
 }
 ```
 
----
+The bed implementation combines equilibrium isotherms, a linear-driving-force (LDF)
+rate, one-dimensional cells, and the Ergun pressure-drop equation. Its current
+`LANGMUIR` and `EXTENDED_LANGMUIR` bed selections both create a
+`LangmuirAdsorption` model, while the bed calls `calcAdsorption(...)` for its local
+equilibrium. Use the direct competitive calculation above when the shared
+extended-Langmuir denominator is required.
 
-## Recipe 6: PSA Cycle Simulation
+The `0.05 1/s` LDF value and 20-cell grid are executable demonstration inputs, not
+defaults for design. Calibrate component-specific mass-transfer coefficients against
+representative breakthrough data. Repeat the calculation with successively smaller
+time steps and finer grids until decision-relevant outputs change within a declared
+tolerance.
 
-Simulate a complete Pressure Swing Adsorption cycle for CO$_2$ removal.
+Do not use the result alone to select vessel dimensions, cycle time, adsorbent mass,
+guard-bed life, or product specification. Those decisions also require adsorbent
+vendor data, laboratory breakthrough/regeneration evidence, heat effects, distributor
+and support-grid design, pressure-drop limits, attrition, ageing/poisoning, control
+logic, and relief/mechanical review.
+
+## Cycle schedule
+
+`AdsorptionCycleController` schedules operating phases for one bed. The program below
+inspects PSA and TSA schedules without claiming a cyclic-steady-state solution.
 
 ```java
+import neqsim.physicalproperties.interfaceproperties.solidadsorption.IsothermType;
 import neqsim.process.equipment.adsorber.AdsorptionBed;
 import neqsim.process.equipment.adsorber.AdsorptionCycleController;
-import neqsim.process.equipment.adsorber.AdsorptionCycleController.CyclePhase;
+import neqsim.process.equipment.adsorber.AdsorptionCycleController.PhaseStep;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
-import java.util.UUID;
 
-// Feed gas
-SystemSrkEos gas = new SystemSrkEos(298.15, 10.0);
-gas.addComponent("methane", 0.90);
-gas.addComponent("CO2", 0.10);
-gas.setMixingRule("classic");
+public class AdsorptionCycleSchedule {
+    private static AdsorptionBed createBed() {
+        SystemSrkEos gas = new SystemSrkEos(298.15, 10.0);
+        gas.addComponent("methane", 0.90);
+        gas.addComponent("CO2", 0.10);
+        gas.setMixingRule("classic");
 
-Stream feed = new Stream("PSA Feed", gas);
-feed.setFlowRate(2000.0, "kg/hr");
-feed.run();
+        Stream feed = new Stream("cycle feed", gas);
+        feed.setFlowRate(1000.0, "kg/hr");
+        feed.run();
 
-// Adsorption bed
-AdsorptionBed bed = new AdsorptionBed("PSA Bed", feed);
-bed.setBedDiameter(1.2);
-bed.setBedLength(3.5);
-bed.setAdsorbentMaterial("Zeolite 13X");
-bed.setAdsorbentBulkDensity(620.0);
-bed.setIsothermType(IsothermType.LANGMUIR);
-bed.setKLDF(0.05);
-bed.setNumberOfCells(80);
-bed.setCalculateSteadyState(false);
+        AdsorptionBed bed = new AdsorptionBed("cycle bed", feed);
+        bed.setAdsorbentMaterial("Zeolite 13X");
+        bed.setIsothermType(IsothermType.LANGMUIR);
+        bed.setCalculateSteadyState(false);
+        return bed;
+    }
 
-// PSA cycle: 5 min adsorption, 30s blowdown, 1 min purge, 30s repress
-AdsorptionCycleController controller = new AdsorptionCycleController(bed);
-controller.configurePSA(300.0, 30.0, 60.0, 30.0, 1.0);
+    private static void printSchedule(
+            String name,
+            AdsorptionCycleController controller) {
+        System.out.println(name);
+        for (PhaseStep step : controller.getSchedule()) {
+            System.out.printf(
+                "  %-18s duration %.0f s, target %.2f bara, %.2f K%n",
+                step.getPhase(),
+                step.getDuration(),
+                step.getTargetPressure(),
+                step.getTargetTemperature());
+        }
+    }
 
-// Run 3 complete cycles
-double dt = 0.5;
-UUID id = UUID.randomUUID();
-double totalTime = 3 * 420.0; // 3 cycles × 420 s/cycle
+    public static void main(String[] args) {
+        AdsorptionCycleController controller =
+            new AdsorptionCycleController(createBed());
 
-for (double t = 0; t < totalTime; t += dt) {
-    controller.advance(dt, id);
-    bed.runTransient(dt, id);
+        controller.configurePSA(300.0, 30.0, 60.0, 30.0, 1.0);
+        printSchedule("PSA schedule", controller);
 
-    // Log every 30 seconds
-    if (Math.abs(t % 30.0) < dt / 2) {
-        System.out.printf("t=%6.0f s  Phase=%-15s  CO2_avg=%.3f mol/kg  Cycles=%d%n",
-            t, controller.getCurrentPhase(),
-            bed.getAverageLoading(1),
-            controller.getCompletedCycles());
+        controller.configureTSA(1800.0, 600.0, 300.0, 523.15);
+        printSchedule("TSA schedule", controller);
     }
 }
-
-System.out.printf("Completed %d PSA cycles%n", controller.getCompletedCycles());
 ```
 
----
+When the configured schedule loops, the current controller resets and reinitializes
+the bed. Repeating that loop therefore does not establish cyclic steady state. A
+working PSA/TSA system also needs coordinated beds, valves, equalization/purge paths,
+thermal and pressure transients, product/recovery balances, convergence criteria, and
+control sequencing.
 
-## Recipe 7: TSA Cycle Simulation
+## Capillary-condensation boundary
 
-Simulate a Temperature Swing Adsorption cycle for gas dehydration.
+This cookbook does not currently provide a capillary-condensation program. The
+current property estimator documents critical volume in cm3/mol but applies a
+conversion inconsistent with that basis before evaluating the Kelvin equation. In the
+repository's nitrogen-at-77-K example, the resulting Kelvin radius is nonphysical for
+a mesopore calculation. Treat this API as unvalidated until the unit conversion and
+representative reference cases are corrected in production code.
 
-```java
-import neqsim.process.equipment.adsorber.AdsorptionBed;
-import neqsim.process.equipment.adsorber.AdsorptionCycleController;
-import neqsim.process.equipment.stream.Stream;
-import neqsim.thermo.system.SystemSrkEos;
-import java.util.UUID;
+## Common checks before interpretation
 
-// Wet gas feed
-SystemSrkEos gas = new SystemSrkEos(303.15, 50.0); // 30°C, 50 bar
-gas.addComponent("methane", 0.95);
-gas.addComponent("water", 0.005);
-gas.addComponent("CO2", 0.03);
-gas.addComponent("ethane", 0.015);
-gas.setMixingRule("classic");
+1. Confirm every component/material pair has a traceable parameter source. Do not
+   interpret generic fallback values as material data.
+2. Keep pressure basis (`bara`) and adsorption units (`mol/kg`, `1/bar`, `1/s`)
+   explicit.
+3. Flash each thermodynamic state before an equilibrium comparison.
+4. Define adsorption and regeneration temperature, pressure, and gas composition when
+   calculating working capacity.
+5. Perform grid, time-step, and parameter sensitivity studies for transient results.
+6. Close mass, component, and energy balances for a cycle; one printed concentration
+   or loading is not a separation-performance certificate.
+7. Treat chemical, mechanical, control, operability, and safety approval as separate
+   accountable workflows.
 
-Stream feed = new Stream("TSA Feed", gas);
-feed.setFlowRate(10000.0, "kg/hr");
-feed.run();
+## Related documentation
 
-// Molecular sieve bed
-AdsorptionBed bed = new AdsorptionBed("Dehydration Bed", feed);
-bed.setBedDiameter(2.0);
-bed.setBedLength(5.0);
-bed.setAdsorbentMaterial("Zeolite 4A");
-bed.setAdsorbentBulkDensity(700.0);
-bed.setIsothermType(IsothermType.LANGMUIR);
-bed.setKLDF(0.02);
-bed.setNumberOfCells(60);
-bed.setCalculateSteadyState(false);
-
-// TSA: 30 min adsorption, 10 min heating at 250°C, 5 min cooling
-AdsorptionCycleController controller = new AdsorptionCycleController(bed);
-controller.configureTSA(1800.0, 600.0, 300.0, 523.15); // 250°C desorption
-
-// Run 1 full cycle
-double dt = 1.0;
-UUID id = UUID.randomUUID();
-
-for (double t = 0; t < 2700.0; t += dt) {
-    controller.advance(dt, id);
-    bed.runTransient(dt, id);
-}
-
-System.out.printf("Water avg loading after cycle: %.4f mol/kg%n",
-    bed.getAverageLoading(1)); // water component index
-```
-
----
-
-## Recipe 8: Effect of Temperature on Adsorption
-
-Study how temperature affects equilibrium loading (basis for TSA design).
-
-```java
-import neqsim.physicalproperties.interfaceproperties.solidadsorption.LangmuirAdsorption;
-import neqsim.thermo.system.SystemSrkEos;
-
-double pressure = 5.0; // bar
-
-System.out.printf("%8s  %12s  %12s%n", "T (°C)", "CO2 (mol/kg)", "K (1/bar)");
-for (double tempC = 0; tempC <= 200; tempC += 10) {
-    double tempK = 273.15 + tempC;
-    SystemSrkEos system = new SystemSrkEos(tempK, pressure);
-    system.addComponent("CO2", 1.0);
-    system.setMixingRule("classic");
-    system.init(0);
-
-    LangmuirAdsorption model = new LangmuirAdsorption(system);
-    model.setSolidMaterial("Zeolite 13X");
-    model.calcAdsorption(0);
-
-    System.out.printf("%8.0f  %12.4f  %12.6f%n",
-        tempC, model.getSurfaceExcess(0), model.getKLangmuir(0));
-}
-// Expect: loading decreases monotonically with temperature
-// The ratio of loading at 25°C vs 200°C = working capacity for TSA
-```
-
----
-
-## Recipe 9: Bed in a Process Flowsheet
-
-Integrate the adsorption bed with other NeqSim process equipment.
-
-```java
-import neqsim.process.equipment.adsorber.AdsorptionBed;
-import neqsim.process.equipment.compressor.Compressor;
-import neqsim.process.equipment.heatexchanger.Cooler;
-import neqsim.process.equipment.separator.Separator;
-import neqsim.process.equipment.stream.Stream;
-import neqsim.process.processmodel.ProcessSystem;
-import neqsim.thermo.system.SystemSrkEos;
-
-// Create feed
-SystemSrkEos gas = new SystemSrkEos(298.15, 5.0);
-gas.addComponent("methane", 0.85);
-gas.addComponent("CO2", 0.10);
-gas.addComponent("nitrogen", 0.05);
-gas.setMixingRule("classic");
-
-Stream feed = new Stream("Raw Gas", gas);
-feed.setFlowRate(5000.0, "kg/hr");
-
-// Compress feed to adsorption pressure
-Compressor comp = new Compressor("Feed Compressor", feed);
-comp.setOutletPressure(20.0);
-
-// Cool after compression
-Cooler cooler = new Cooler("Aftercooler", comp.getOutletStream());
-cooler.setOutTemperature(298.15);
-
-// Adsorption bed
-AdsorptionBed bed = new AdsorptionBed("CO2 Adsorber", cooler.getOutletStream());
-bed.setBedDiameter(1.5);
-bed.setBedLength(4.0);
-bed.setAdsorbentMaterial("Zeolite 13X");
-bed.setIsothermType(IsothermType.LANGMUIR);
-bed.setKLDF(0.05);
-
-// Build and run process
-ProcessSystem process = new ProcessSystem();
-process.add(feed);
-process.add(comp);
-process.add(cooler);
-process.add(bed);
-process.run();
-
-// Results
-Stream outlet = (Stream) bed.getOutletStream();
-System.out.println("Outlet CO2: "
-    + outlet.getFluid().getPhase(0).getComponent("CO2").getx());
-System.out.println("Compressor power: " + comp.getPower("kW") + " kW");
-System.out.println("Cooler duty: " + cooler.getDuty() + " W");
-```
-
----
-
-## Recipe 10: Capillary Condensation in Mesopores
-
-Calculate condensation onset and condensate amounts in mesoporous silica.
-
-```java
-import neqsim.physicalproperties.interfaceproperties.solidadsorption.CapillaryCondensationModel;
-import neqsim.thermo.system.SystemSrkEos;
-
-SystemSrkEos system = new SystemSrkEos(298.15, 5.0);
-system.addComponent("n-butane", 1.0);
-system.setMixingRule("classic");
-system.init(0);
-system.init(1);
-
-CapillaryCondensationModel ccModel = new CapillaryCondensationModel(system);
-ccModel.setMeanPoreRadius(4.0);     // nm
-ccModel.setPoreRadiusStdDev(1.5);   // nm
-ccModel.setTotalPoreVolume(0.8);    // cm³/g
-ccModel.setPoreType(CapillaryCondensationModel.PoreType.CYLINDRICAL);
-
-ccModel.calcCapillaryCondensation(0);
-
-System.out.println("Kelvin radius: " + ccModel.getKelvinRadius(0) + " nm");
-System.out.println("Condensate amount: " + ccModel.getCondensateAmount(0) + " mol/g");
-System.out.println("Saturation pressure: " + ccModel.getSaturationPressure(0) + " bar");
-```
-
----
-
-## Tips and Common Pitfalls
-
-### 1. Always Set the Mixing Rule
-
-Without a mixing rule, the thermodynamic system will not calculate fugacities correctly, and adsorption models will give wrong results.
-
-```java
-system.setMixingRule("classic"); // Required!
-```
-
-### 2. Temperature in Kelvin
-
-NeqSim uses Kelvin internally. Always add 273.15 when specifying temperatures in Celsius.
-
-```java
-SystemSrkEos system = new SystemSrkEos(273.15 + 25.0, 10.0); // 25°C, 10 bar
-```
-
-### 3. Transient Mode Must Be Enabled
-
-By default, `AdsorptionBed` runs in steady-state mode. For breakthrough curves, MTZ analysis, or PSA/TSA cycles, you must switch to transient:
-
-```java
-bed.setCalculateSteadyState(false);
-```
-
-### 4. Grid Resolution vs Speed
-
-More cells give better accuracy but slower simulation. Start with 50 cells for design studies, increase to 100+ for final analysis.
-
-### 5. kLDF Sensitivity
-
-The LDF coefficient is the most critical tuning parameter. Too low and the front barely moves; too high and the front is sharp but may cause numerical oscillation. Start with 0.01–0.05 and calibrate against experimental breakthrough data.
-
-### 6. Desorption Requires Pressure or Temperature Change
-
-Simply setting `setDesorptionMode(true)` without a pressure or temperature change may not drive sufficient desorption. NeqSim defaults to atmospheric pressure (1.01325 bara) when no explicit desorption pressure is set, but for TSA you **must** specify the desorption temperature.
-
----
-
-## Related Documentation
-
-- [Adsorption Isotherm Models](../thermo/adsorption_isotherms.md) — Full mathematical reference
-- [Adsorption Bed Process Equipment](../process/equipment/adsorption_bed.md) — Detailed engineering reference
-- [Process Recipes](process-recipes.md) — Other process simulation recipes
-- [Thermodynamics Recipes](thermodynamics-recipes.md) — Fluid and property recipes
+- [Adsorption Isotherm Models](../thermo/adsorption_isotherms.md)
+- [Adsorption Bed Process Equipment](../process/equipment/adsorption_bed.md)
+- [Process Recipes](process-recipes.md)
+- [Thermodynamics Recipes](thermodynamics-recipes.md)
