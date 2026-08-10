@@ -34,9 +34,37 @@ of silently losing the ambiguity. The result owns a deterministic JSON snapshot 
 defensive graph copy. Consumers should review structured diagnostics before treating an adaptation
 as complete.
 
-The existing DOT and DEXPI exporters have not yet been migrated to consume this graph. Until that
-migration is complete, this adapter is a shared topology contract rather than a new rendering or
-standards-conformance claim.
+### Operating-case enrichment
+
+After a successful simulation, use the opt-in four-argument overload to capture selected current
+stream results in the same canonical plant snapshot:
+
+```java
+process.run();
+ProcessDiagramGraphAdapter.Result operatingSnapshot =
+    ProcessDiagramGraphAdapter.fromProcessSystem(
+        process, "PLANT-001", "A", "NORMAL-001");
+```
+
+The overload works for both `ProcessSystem` and multi-area `ProcessModel`. It creates one stable
+plant-wide operating-case node and, when each result is finite and available, three calculation
+nodes per registered stream:
+
+- thermodynamic temperature in K;
+- absolute pressure in bara; and
+- mass flow in kg/s.
+
+Every value names its unit and quantity basis, references its stream and operating case, and carries
+`SIMULATION_RESULT` provenance with `CALCULATED` engineering state and
+`REVIEW_REQUIRED` approval status. Values are captured only for areas whose latest run completed
+successfully. An unrun or failed area remains in the topology and emits
+`DIAGRAM_OPERATING_CASE_NOT_SUCCESSFUL` instead of publishing potentially stale values.
+
+The established three-argument overload remains topology-only, so existing fingerprints and
+consumers do not acquire simulation values silently. The assessed DEXPI 2.0 Process path consumes
+the canonical material projection, but it does not yet consume these canonical operating-value
+nodes. Legacy DOT, Graphviz, and DEXPI compatibility APIs remain unchanged. This adapter is still a
+shared semantic contract rather than a rendering or standards-conformance claim.
 
 ### Topology-equivalence reference cases
 

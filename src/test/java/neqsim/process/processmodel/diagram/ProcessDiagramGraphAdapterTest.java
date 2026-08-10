@@ -209,6 +209,94 @@ class ProcessDiagramGraphAdapterTest {
     assertFalse(secondCopy.getNodes().containsKey(temporaryId));
   }
 
+  @Test
+  void capturesCaseScopedUnitExplicitOperatingValuesWithoutChangingTopologyOnlyApi() {
+    Stream feed = createFeed("operating feed");
+    Heater heater = new Heater("operating heater", feed);
+    ProcessSystem process = new ProcessSystem("operating area");
+    process.add(feed);
+    process.add(heater);
+    process.run();
+
+    EngineeringGraph topologyOnly = ProcessDiagramGraphAdapter.fromProcessSystem(process, "PLANT-OPERATING", "A")
+        .getGraph();
+    EngineeringGraph enriched = ProcessDiagramGraphAdapter
+        .fromProcessSystem(process, "PLANT-OPERATING", "A", "NORMAL-001").getGraph();
+
+    assertEquals(0, countNodeKind(topologyOnly, EngineeringNode.Kind.DESIGN_CASE));
+    assertEquals(0, countNodeKind(topologyOnly, EngineeringNode.Kind.CALCULATION));
+    assertEquals(1, countNodeKind(enriched, EngineeringNode.Kind.DESIGN_CASE));
+    assertEquals(3, countNodeKind(enriched, EngineeringNode.Kind.CALCULATION));
+
+    EngineeringNode pressure = findOperatingValue(enriched, "operating feed", "pressure");
+    EngineeringNode temperature = findOperatingValue(enriched, "operating feed", "temperature");
+    EngineeringNode massFlow = findOperatingValue(enriched, "operating feed", "massFlow");
+    assertNotNull(pressure);
+    assertNotNull(temperature);
+    assertNotNull(massFlow);
+    assertEquals(40.0, ((Number) pressure.getProperties().get("resultValue")).doubleValue(), 1.0e-12);
+    assertEquals("bara", pressure.getProperties().get("resultUnit"));
+    assertEquals("ABSOLUTE", pressure.getProperties().get("quantityBasis"));
+    assertEquals(298.15, ((Number) temperature.getProperties().get("resultValue")).doubleValue(), 1.0e-12);
+    assertEquals("K", temperature.getProperties().get("resultUnit"));
+    assertEquals(1000.0 / 3600.0, ((Number) massFlow.getProperties().get("resultValue")).doubleValue(), 1.0e-12);
+    assertEquals("kg/s", massFlow.getProperties().get("resultUnit"));
+    assertEquals("NORMAL-001", pressure.getProperties().get("designCaseId"));
+    assertEquals("SIMULATION_RESULT", pressure.getProvenance().get(0).getSourceType());
+    assertEquals("NORMAL-001", pressure.getProvenance().get(0).getDesignCaseId());
+    assertEquals("REVIEW_REQUIRED", pressure.getProvenance().get(0).getApprovalStatus());
+    assertTrue(EngineeringPackageValidator.validateGraph(enriched).isValid());
+  }
+
+  @Test
+  void capturesOneOperatingCaseAcrossMultiAreaProcessModel() {
+    ProcessModel plant = createFourAreaPlant();
+    plant.run();
+
+    ProcessDiagramGraphAdapter.Result result = ProcessDiagramGraphAdapter.fromProcessModel(plant,
+        "PLANT-MULTI-OPERATING", "A", "NORMAL-001");
+
+    assertEquals(1, countNodeKind(result.getGraph(), EngineeringNode.Kind.DESIGN_CASE));
+    assertEquals(3, countNodeKind(result.getGraph(), EngineeringNode.Kind.CALCULATION));
+    assertNotNull(findOperatingValue(result.getGraph(), "deterministic feed", "pressure"));
+    assertTrue(EngineeringPackageValidator.validateGraph(result.getGraph()).isValid());
+  }
+
+  @Test
+  void reportsMissingSuccessfulRunInsteadOfPublishingStaleOperatingValues() {
+    Stream feed = createFeed("not run feed");
+    ProcessSystem process = new ProcessSystem("not run area");
+    process.add(feed);
+
+    ProcessDiagramGraphAdapter.Result result = ProcessDiagramGraphAdapter.fromProcessSystem(process, "PLANT-NOT-RUN",
+        "A", "NORMAL-001");
+
+    assertEquals(1, countNodeKind(result.getGraph(), EngineeringNode.Kind.DESIGN_CASE));
+    assertEquals(0, countNodeKind(result.getGraph(), EngineeringNode.Kind.CALCULATION));
+    assertTrue(hasDiagnostic(result, "DIAGRAM_OPERATING_CASE_NOT_SUCCESSFUL"));
+    assertTrue(EngineeringPackageValidator.validateGraph(result.getGraph()).isValid());
+  }
+
+  @Test
+  void keepsOperatingCaseSnapshotDeterministicAcrossEquivalentFreshModels() {
+    String expectedJson = null;
+    for (int attempt = 0; attempt < 8; attempt++) {
+      Stream feed = createFeed("deterministic operating feed");
+      Heater heater = new Heater("deterministic operating heater", feed);
+      ProcessSystem process = new ProcessSystem("deterministic operating area");
+      process.add(feed);
+      process.add(heater);
+      process.run();
+      String graphJson = ProcessDiagramGraphAdapter
+          .fromProcessSystem(process, "PLANT-DETERMINISTIC-OPERATING", "A", "NORMAL-001").getGraphJson();
+      if (expectedJson == null) {
+        expectedJson = graphJson;
+      } else {
+        assertEquals(expectedJson, graphJson);
+      }
+    }
+  }
+
   private static Stream createFeed(String name) {
     SystemSrkEos fluid = new SystemSrkEos(298.15, 40.0);
     fluid.addComponent("methane", 1.0);
@@ -251,6 +339,16 @@ class ProcessDiagramGraphAdapterTest {
 
   private static int countNodeKind(EngineeringGraph graph, EngineeringNode.Kind kind) {
     return nodesOfKind(graph, kind).size();
+  }
+
+  private static EngineeringNode findOperatingValue(EngineeringGraph graph, String subjectName, String quantity) {
+    for (EngineeringNode node : nodesOfKind(graph, EngineeringNode.Kind.CALCULATION)) {
+      if (subjectName.equals(node.getProperties().get("subjectName"))
+          && quantity.equals(node.getProperties().get("quantity"))) {
+        return node;
+      }
+    }
+    return null;
   }
 
   private static List<EngineeringNode> nodesOfKind(EngineeringGraph graph, EngineeringNode.Kind kind) {

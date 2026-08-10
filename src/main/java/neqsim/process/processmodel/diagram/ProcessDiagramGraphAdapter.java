@@ -175,6 +175,34 @@ public final class ProcessDiagramGraphAdapter {
   }
 
   /**
+   * Builds one canonical diagram snapshot with selected current stream operating values.
+   *
+   * <p>
+   * This opt-in overload preserves the topology-only output of the established three-argument method. Values are
+   * captured only after a successful process run and are represented as unit-explicit, case-scoped calculation nodes
+   * with simulation-result provenance and review-required status.
+   * </p>
+   *
+   * @param processSystem process system; unsuccessful run state produces a diagnostic rather than values
+   * @param plantId persistent plant or project identifier
+   * @param revision controlled source-model revision
+   * @param operatingCaseId stable operating-case identifier
+   * @return immutable canonical snapshot and diagnostics
+   */
+  public static Result fromProcessSystem(ProcessSystem processSystem, String plantId, String revision,
+      String operatingCaseId) {
+    if (processSystem == null) {
+      throw new IllegalArgumentException("processSystem must not be null");
+    }
+    Builder builder = new Builder(plantId, revision, "PROCESS_SYSTEM");
+    builder.addArea(areaName(processSystem), processSystem);
+    builder.addLocalTopology();
+    builder.addExplicitConnections();
+    builder.addOperatingCase(operatingCaseId);
+    return builder.result();
+  }
+
+  /**
    * Builds one plant-wide canonical diagram-topology snapshot from all areas in a {@link ProcessModel}.
    *
    * @param processModel runnable multi-area process model
@@ -196,6 +224,40 @@ public final class ProcessDiagramGraphAdapter {
     builder.addLocalTopology();
     builder.addExplicitConnections();
     builder.addCrossAreaTopology();
+    return builder.result();
+  }
+
+  /**
+   * Builds one plant-wide canonical diagram snapshot with selected current stream operating values.
+   *
+   * <p>
+   * One operating-case node owns the values captured across every successfully run area. An area that has not completed
+   * successfully is retained topologically and reported through a structured diagnostic; stale values are not published
+   * for that area.
+   * </p>
+   *
+   * @param processModel multi-area process model; each unsuccessful area produces a diagnostic rather than values
+   * @param plantId persistent plant or project identifier
+   * @param revision controlled source-model revision
+   * @param operatingCaseId stable plant-wide operating-case identifier
+   * @return immutable plant-wide canonical snapshot and diagnostics
+   */
+  public static Result fromProcessModel(ProcessModel processModel, String plantId, String revision,
+      String operatingCaseId) {
+    if (processModel == null) {
+      throw new IllegalArgumentException("processModel must not be null");
+    }
+    Builder builder = new Builder(plantId, revision, "PROCESS_MODEL");
+    for (String areaName : processModel.getProcessSystemNames()) {
+      ProcessSystem processSystem = processModel.get(areaName);
+      if (processSystem != null) {
+        builder.addArea(areaName, processSystem);
+      }
+    }
+    builder.addLocalTopology();
+    builder.addExplicitConnections();
+    builder.addCrossAreaTopology();
+    builder.addOperatingCase(operatingCaseId);
     return builder.result();
   }
 
@@ -373,6 +435,91 @@ public final class ProcessDiagramGraphAdapter {
           }
         }
       }
+    }
+
+    private void addOperatingCase(String requestedCaseId) {
+      String caseId = requireText(requestedCaseId, "operatingCaseId");
+      String caseExternalKey = resolveExternalKey(EngineeringNode.Kind.DESIGN_CASE,
+          plantId + "/operating-case/" + caseId, "");
+      String caseNodeId = EngineeringIds.nodeId(EngineeringNode.Kind.DESIGN_CASE, caseExternalKey);
+      EngineeringNode caseNode = new EngineeringNode(caseNodeId, EngineeringNode.Kind.DESIGN_CASE, caseExternalKey,
+          caseId).putProperty("caseId", caseId).putProperty("type", "OPERATING")
+          .putProperty("engineeringState", "CALCULATED").putProperty("approvalStatus", "REVIEW_REQUIRED")
+          .putProperty("simulationStatus", "CALCULATED").addProvenance(
+              new EngineeringProvenance("SIMULATION_CASE", caseId).setMethod("Current process operating-state capture")
+                  .setDesignCaseId(caseId).setApprovalStatus("REVIEW_REQUIRED"));
+      graph.addNode(caseNode);
+      addEdgeIfAbsent(EngineeringEdge.Kind.CONTAINS, projectNodeId, caseNodeId, "operatingCase");
+
+      for (AreaReference area : areas) {
+        if (!area.processSystem.getRunStatus().isSuccess()) {
+          caseNode.putProperty("simulationStatus", "INCOMPLETE");
+          diagnostics.add(new Diagnostic(Severity.WARNING, "DIAGRAM_OPERATING_CASE_NOT_SUCCESSFUL",
+              "Operating values were not captured because the process area has no successful completed run", area.name,
+              caseId));
+          continue;
+        }
+        for (ElementReference element : area.elementsByName.values()) {
+          if (element.equipment instanceof StreamInterface) {
+            addStreamOperatingValues(element, (StreamInterface) element.equipment, caseId, caseNodeId);
+          }
+        }
+      }
+    }
+
+    private void addStreamOperatingValues(ElementReference element, StreamInterface stream, String caseId,
+        String caseNodeId) {
+      try {
+        addOperatingValue(element, caseId, caseNodeId, "temperature", stream.getTemperature("K"), "K",
+            "THERMODYNAMIC_ABSOLUTE");
+      } catch (RuntimeException exception) {
+        operatingValueUnavailable(element, caseId, "temperature", exception);
+      }
+      try {
+        addOperatingValue(element, caseId, caseNodeId, "pressure", stream.getPressure("bara"), "bara", "ABSOLUTE");
+      } catch (RuntimeException exception) {
+        operatingValueUnavailable(element, caseId, "pressure", exception);
+      }
+      try {
+        addOperatingValue(element, caseId, caseNodeId, "massFlow", stream.getFlowRate("kg/sec"), "kg/s", "MASS");
+      } catch (RuntimeException exception) {
+        operatingValueUnavailable(element, caseId, "massFlow", exception);
+      }
+    }
+
+    private void addOperatingValue(ElementReference element, String caseId, String caseNodeId, String quantity,
+        double value, String unit, String quantityBasis) {
+      if (!Double.isFinite(value)) {
+        diagnostics.add(new Diagnostic(Severity.WARNING, "DIAGRAM_OPERATING_VALUE_NONFINITE",
+            "A non-finite simulation result was excluded from the canonical operating case", element.areaName,
+            element.equipment.getName() + "/" + quantity));
+        return;
+      }
+      String requestedExternalKey = element.externalKey + "/operating-case/" + caseId + "/" + quantity;
+      String externalKey = resolveExternalKey(EngineeringNode.Kind.CALCULATION, requestedExternalKey, element.areaName);
+      String nodeId = EngineeringIds.nodeId(EngineeringNode.Kind.CALCULATION, externalKey);
+      graph.addNode(new EngineeringNode(nodeId, EngineeringNode.Kind.CALCULATION, externalKey,
+          element.equipment.getName() + " " + quantity).putProperty("subjectNodeId", element.nodeId)
+          .putProperty("subjectName", element.equipment.getName()).putProperty("areaName", element.areaName)
+          .putProperty("quantity", quantity).putProperty("quantityBasis", quantityBasis)
+          .putProperty("resultValue", Double.valueOf(value)).putProperty("resultUnit", unit)
+          .putProperty("designCaseId", caseId).putProperty("status", "CALCULATED")
+          .putProperty("engineeringState", "CALCULATED").putProperty("approvalStatus", "REVIEW_REQUIRED").addProvenance(
+              new EngineeringProvenance("SIMULATION_RESULT", element.areaName + "/" + element.equipment.getName())
+                  .setMethod("Current ProcessSystem stream operating result snapshot").setDesignCaseId(caseId)
+                  .setApprovalStatus("REVIEW_REQUIRED")));
+      addEdgeIfAbsent(EngineeringEdge.Kind.CONTAINS, projectNodeId, nodeId, "operatingValue");
+      addEdgeIfAbsent(EngineeringEdge.Kind.GOVERNS, nodeId, element.nodeId, quantity);
+      addEdgeIfAbsent(EngineeringEdge.Kind.GENERATED_FROM, nodeId, caseNodeId, "operatingCase");
+    }
+
+    private void operatingValueUnavailable(ElementReference element, String caseId, String quantity,
+        RuntimeException exception) {
+      diagnostics
+          .add(new Diagnostic(Severity.WARNING, "DIAGRAM_OPERATING_VALUE_UNAVAILABLE",
+              "A simulation result could not be captured for operating case " + caseId + ": "
+                  + exception.getClass().getSimpleName(),
+              element.areaName, element.equipment.getName() + "/" + quantity));
     }
 
     private void addConnection(ElementReference source, ElementReference target, ProcessConnection.ConnectionType type,
