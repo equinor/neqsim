@@ -380,6 +380,44 @@ same report/history objects directly.
 that call. Legacy `setCompositionalTracking(true)` still selects type `20` for compatibility and
 must not be interpreted as the validated conservative path.
 
+### ProcessSystem event integration
+
+The conservative wrapper can be advanced by `ProcessSystem` so scheduled composition and mass-flow
+events share the process clock and calculation identifier:
+
+```java
+ProcessSystem process = new ProcessSystem("export gas transient");
+process.add(inletStream);
+process.add(pipeline);
+
+EventScheduler scheduler = new EventScheduler();
+process.setEventScheduler(scheduler);
+scheduler.scheduleEvent(60.0, "start pulse",
+    () -> inletStream.setThermoSystem(pulseGas.clone()));
+scheduler.scheduleEvent(120.0, "restore baseline",
+    () -> inletStream.setThermoSystem(baselineGas.clone()));
+
+process.run(UUID.randomUUID());
+process.runTransient(60.0, UUID.randomUUID());
+process.runTransient(60.0, UUID.randomUUID());
+```
+
+Before the first process-level transient step, `ProcessSystem` captures a deep snapshot for its
+copy/reset lifecycle. NeqSim's built-in one-phase pipe flow nodes, geometry surroundings, wall
+layers, interphase-transport strategies, and node selector are serializable so this snapshot
+cannot be bypassed by calling the pipeline directly. Custom geometry or transport implementations
+stored in the pipeline graph must also keep every non-transient field serializable; otherwise the
+snapshot fails before advancing time and reports the offending class.
+
+The regression uses SRK/classic methane/nitrogen gas in a 3 km, 0.5 m pipe with 12 nodes at
+70 bara absolute and 288.15 K. A 60 kg/s pulse followed by the 50 kg/s baseline in two 60 s process
+steps must contribute 3600 kg and 3000 kg at the authoritative finite-volume inlet boundary,
+respectively. Each step must retain the existing component-inventory, EOS synchronization,
+boundedness, process/pipe clock, event-count, and calculation-identifier gates. This establishes
+process-level event propagation for positive-flow, one-phase, solver-type-1 operation; it does not
+yet establish event replay after `ProcessSystem.reset()`, dynamic energy transport, phase
+appearance, or zero/reversed-flow support.
+
 `OnePhaseSpeciesConservationReport` exposes component names, physical-cell mass-fraction profiles,
 initial/final component inventories, integrated inlet/outlet component masses, absolute and
 relative inventory residuals, boundedness and sum-to-one diagnostics, thermodynamic
