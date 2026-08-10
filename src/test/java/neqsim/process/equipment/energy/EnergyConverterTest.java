@@ -2,7 +2,9 @@ package neqsim.process.equipment.energy;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import neqsim.process.dynamics.DynamicCapability;
 import neqsim.process.equipment.stream.EnergyBus;
 import neqsim.process.equipment.stream.EnergyPort;
 import neqsim.process.equipment.stream.EnergyPortDirection;
@@ -59,6 +61,40 @@ class EnergyConverterTest {
     inverter.runTransient(2.0);
     assertEquals(0.0, inverter.getOutputPower(), 1.0e-12);
     assertTrue(inverter.isTripped());
+  }
+
+  @Test
+  void transientRefinementRecomputesFromPhysicalStepStartWithoutDoubleAdvance() {
+    EnergyBus input = new EnergyBus("input", EnergyType.ELECTRICAL);
+    EnergyBus output = new EnergyBus("output", EnergyType.ELECTRICAL);
+    EnergyPort source = port("source", EnergyType.ELECTRICAL, EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED,
+        input);
+    Inverter inverter = new Inverter("inverter");
+    inverter.connectEnergyStream(EnergyConverter.INPUT_PORT, input, EnergyPortMode.SPECIFICATION);
+    inverter.connectEnergyStream(EnergyConverter.OUTPUT_PORT, output, EnergyPortMode.CALCULATED);
+    inverter.setRequestedInputPower(1000.0);
+    inverter.setRampRate(100.0);
+    source.setDuty(1000.0);
+    input.solveBalance();
+
+    UUID physicalStepA = UUID.randomUUID();
+    UUID physicalStepB = UUID.randomUUID();
+
+    inverter.runTransient(2.0, physicalStepA);
+    assertEquals(200.0, inverter.getOutputPower(), 1.0e-12);
+    assertEquals(2.0, inverter.getTime(), 0.0);
+    assertEquals(physicalStepA, inverter.getCalculationIdentifier());
+
+    inverter.runTransient(2.0, physicalStepA);
+    assertEquals(200.0, inverter.getOutputPower(), 1.0e-12);
+    assertEquals(2.0, inverter.getTime(), 0.0);
+    assertEquals(physicalStepA, inverter.getCalculationIdentifier());
+
+    inverter.runTransient(2.0, physicalStepB);
+    assertEquals(400.0, inverter.getOutputPower(), 1.0e-12);
+    assertEquals(4.0, inverter.getTime(), 0.0);
+    assertEquals(physicalStepB, inverter.getCalculationIdentifier());
+    assertEquals(DynamicCapability.DYNAMIC_LUMPED, inverter.getDynamicCapability());
   }
 
   private static EnergyPort port(String owner, EnergyType type, EnergyPortDirection direction, EnergyPortMode mode,

@@ -15,6 +15,7 @@ import neqsim.process.dynamics.BDFIntegrator;
 import neqsim.process.dynamics.EventScheduler;
 import neqsim.process.dynamics.ExplicitEulerIntegrator;
 import neqsim.process.dynamics.IntegratorStrategy;
+import neqsim.process.dynamics.TransientStepIdentifier;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
@@ -87,15 +88,16 @@ public class RunTransientEventSchedulerTest {
       }
     });
 
-    UUID id = UUID.randomUUID();
-    // Step 1 → t=0.5, Step 2 → t=1.0, Step 3 → t=1.5 (event due), Step 4 → t=2.0
-    p.runTransient(0.5, id);
+    // Step 1 → t=0.5, Step 2 → t=1.0, Step 3 → t=1.5 (event due), Step 4 → t=2.0.
+    // Each physical step has its own identifier; one identifier is only reused for
+    // refinement/evaluation work inside that physical step.
+    p.runTransient(0.5, TransientStepIdentifier.deterministicPhysicalStep("event-fire", 0L));
     assertEquals(0, count.get(), "Event must not fire before its time");
-    p.runTransient(0.5, id);
+    p.runTransient(0.5, TransientStepIdentifier.deterministicPhysicalStep("event-fire", 1L));
     assertEquals(0, count.get(), "Event must not fire before its time");
-    p.runTransient(0.5, id);
+    p.runTransient(0.5, TransientStepIdentifier.deterministicPhysicalStep("event-fire", 2L));
     assertEquals(1, count.get(), "Event must fire when current time reaches 1.5s");
-    p.runTransient(0.5, id);
+    p.runTransient(0.5, TransientStepIdentifier.deterministicPhysicalStep("event-fire", 3L));
     assertEquals(1, count.get(), "Event must fire only once");
 
     assertEquals(1, s.getFiredEvents().size());
@@ -314,9 +316,9 @@ public class RunTransientEventSchedulerTest {
     plant.add("first", firstArea);
     plant.add("second", secondArea);
 
-    UUID stepIdentifier = UUID.randomUUID();
     for (int step = 1; step <= 4; step++) {
-      plant.runTransient(0.25, stepIdentifier);
+      UUID physicalStepId = TransientStepIdentifier.deterministicPhysicalStep("aligned-model", step - 1L);
+      plant.runTransient(0.25, physicalStepId);
       assertEquals(step * 0.25, firstArea.getTime(), 0.0);
       assertEquals(firstArea.getTime(), secondArea.getTime(), 0.0);
     }
