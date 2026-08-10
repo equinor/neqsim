@@ -37,6 +37,12 @@ public class BatteryStorage extends ProcessEquipmentBaseClass {
   private double maximumDischargePower = Double.POSITIVE_INFINITY;
   private double powerRampRate = Double.POSITIVE_INFINITY;
   private boolean tripped = false;
+  /** Power at the start of the current physical transient step. */
+  private double transientStepStartPower = 0.0;
+  /** Stored energy at the start of the current physical transient step, in Wh. */
+  private double transientStepStartStateOfCharge = 0.0;
+  /** Physical transient-step identifier associated with the saved step-start state. */
+  private UUID transientStepIdentifier = null;
 
   /**
    * Constructs a battery.
@@ -79,6 +85,7 @@ public class BatteryStorage extends ProcessEquipmentBaseClass {
     stateOfCharge = Math.min(capacity, stateOfCharge + energyIn);
     currentPower = -actualPower;
     targetPower = currentPower;
+    transientStepIdentifier = null;
   }
 
   /**
@@ -99,6 +106,7 @@ public class BatteryStorage extends ProcessEquipmentBaseClass {
     stateOfCharge = Math.max(0.0, stateOfCharge - energyNeeded);
     currentPower = actualPower;
     targetPower = currentPower;
+    transientStepIdentifier = null;
     return actualPower;
   }
 
@@ -121,6 +129,7 @@ public class BatteryStorage extends ProcessEquipmentBaseClass {
       throw new IllegalArgumentException("State of charge must be finite");
     }
     this.stateOfCharge = Math.max(0.0, Math.min(capacity, stateOfCharge));
+    transientStepIdentifier = null;
   }
 
   /**
@@ -143,6 +152,7 @@ public class BatteryStorage extends ProcessEquipmentBaseClass {
     }
     this.capacity = capacity;
     stateOfCharge = Math.min(stateOfCharge, capacity);
+    transientStepIdentifier = null;
   }
 
   /**
@@ -260,15 +270,37 @@ public class BatteryStorage extends ProcessEquipmentBaseClass {
   @Override
   public void run(UUID id) {
     publishPower(false);
+    transientStepIdentifier = null;
     setCalculationIdentifier(id);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * A non-null calculation identifier represents one physical transient step. Repeated refinement evaluations with the
+   * same identifier recompute the power ramp and state-of-charge update from the state that existed at the start of the
+   * physical step. They therefore do not consume stored energy or advance the battery clock a second time. A different
+   * identifier starts the next physical step from the previously accepted battery state. Null identifiers preserve the
+   * legacy one-call-per-step behavior.
+   * </p>
+   */
   @Override
   public void runTransient(double dt, UUID id) {
     if (!Double.isFinite(dt) || dt < 0.0) {
       throw new IllegalArgumentException("Battery timestep must be non-negative and finite");
     }
+
+    boolean repeatedEvaluation = id != null && id.equals(transientStepIdentifier);
+    if (!repeatedEvaluation) {
+      transientStepStartPower = currentPower;
+      transientStepStartStateOfCharge = stateOfCharge;
+      transientStepIdentifier = id;
+    } else {
+      currentPower = transientStepStartPower;
+      stateOfCharge = transientStepStartStateOfCharge;
+    }
+
     double requestedPower = tripped ? 0.0 : targetPower;
     if (getEnergyPort(ELECTRICAL_PORT).isConnected()
         && getEnergyPort(ELECTRICAL_PORT).getMode() == EnergyPortMode.BALANCE
@@ -310,7 +342,9 @@ public class BatteryStorage extends ProcessEquipmentBaseClass {
     }
 
     publishPower(true);
-    increaseTime(dt);
+    if (!repeatedEvaluation) {
+      increaseTime(dt);
+    }
     setCalculationIdentifier(id);
   }
 
