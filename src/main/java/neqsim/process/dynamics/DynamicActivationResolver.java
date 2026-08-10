@@ -2,6 +2,8 @@ package neqsim.process.dynamics;
 
 import neqsim.process.ProcessElementInterface;
 import neqsim.process.SimulationInterface;
+import neqsim.process.equipment.battery.BatteryStorage;
+import neqsim.process.equipment.expander.Expander;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 
 /**
@@ -41,6 +43,12 @@ public final class DynamicActivationResolver {
     if (element instanceof HeatExchanger) {
       return resolveHeatExchanger((HeatExchanger) element);
     }
+    if (element instanceof BatteryStorage) {
+      return resolveBatteryStorage((BatteryStorage) element);
+    }
+    if (element instanceof Expander) {
+      return resolveExpander((Expander) element);
+    }
 
     return DynamicActivationStatus.UNVERIFIED;
   }
@@ -63,6 +71,12 @@ public final class DynamicActivationResolver {
 
     if (element instanceof HeatExchanger) {
       return heatExchangerDiagnostic((HeatExchanger) element);
+    }
+    if (element instanceof BatteryStorage) {
+      return batteryStorageDiagnostic((BatteryStorage) element);
+    }
+    if (element instanceof Expander) {
+      return expanderDiagnostic((Expander) element);
     }
 
     if (element instanceof SimulationInterface) {
@@ -102,6 +116,30 @@ public final class DynamicActivationResolver {
       return "dynamicModelEnabled is true but heatTransferArea is not positive";
     }
     return "dynamic heat-exchanger wall-energy path is active";
+  }
+
+  private static DynamicActivationStatus resolveBatteryStorage(BatteryStorage battery) {
+    if (battery.getCapacity() <= 0.0) {
+      return DynamicActivationStatus.INCOMPLETE_CONFIGURATION;
+    }
+    return DynamicActivationStatus.ACTIVE;
+  }
+
+  private static String batteryStorageDiagnostic(BatteryStorage battery) {
+    if (battery.getCapacity() <= 0.0) {
+      return "battery transient state is always evaluated by runTransient but storage capacity is not positive";
+    }
+    return "battery stored-energy and ramped-power state is active independently of calculateSteadyState";
+  }
+
+  private static DynamicActivationStatus resolveExpander(Expander expander) {
+    return isDynamicModeRequested(expander) ? DynamicActivationStatus.ACTIVE : DynamicActivationStatus.INACTIVE;
+  }
+
+  private static String expanderDiagnostic(Expander expander) {
+    return isDynamicModeRequested(expander)
+        ? "expander nozzle, recovered-power and shaft-speed state is active"
+        : "calculateSteadyState selects algebraic expander thermodynamics without nozzle/power/speed integration";
   }
 
   private static boolean isDynamicModeRequested(SimulationInterface element) {
