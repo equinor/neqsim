@@ -44,6 +44,10 @@ public class EnergyConverter extends ProcessEquipmentBaseClass {
   private double currentOutputPower = 0.0;
   private double heatLoss = 0.0;
   private boolean tripped = false;
+  /** Output power at the start of the current physical transient step. */
+  private double transientStepStartOutputPower = 0.0;
+  /** Physical transient-step identifier associated with {@link #transientStepStartOutputPower}. */
+  private UUID transientStepIdentifier = null;
 
   /**
    * Creates an energy converter.
@@ -271,22 +275,40 @@ public class EnergyConverter extends ProcessEquipmentBaseClass {
     double availableInput = readAvailableInput();
     double output = calculateTargetOutput(availableInput);
     publish(calculateRealizedInput(availableInput, output), output);
+    transientStepIdentifier = null;
     setCalculationIdentifier(id);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * A non-null calculation identifier represents one physical transient step. Repeated nonlinear/refinement evaluations
+   * with the same identifier recompute the ramped output from the output power that existed at the start of that
+   * physical step; they do not integrate the ramp or advance the converter clock a second time. A different identifier
+   * starts the next physical step. Null identifiers preserve the legacy behavior where every direct call is treated as
+   * a new physical step.
+   * </p>
+   */
   @Override
   public void runTransient(double dt, UUID id) {
     if (!Double.isFinite(dt) || dt < 0.0) {
       throw new IllegalArgumentException("Converter timestep must be non-negative and finite");
     }
 
+    boolean repeatedEvaluation = id != null && id.equals(transientStepIdentifier);
+    if (!repeatedEvaluation) {
+      transientStepStartOutputPower = currentOutputPower;
+      transientStepIdentifier = id;
+    }
+
     double availableInput = readAvailableInput();
     double targetOutput = calculateTargetOutput(availableInput);
     double maximumChange = rampRate * dt;
     double rampedOutput = targetOutput;
-    if (Double.isFinite(maximumChange) && Math.abs(targetOutput - currentOutputPower) > maximumChange) {
-      rampedOutput = currentOutputPower + Math.copySign(maximumChange, targetOutput - currentOutputPower);
+    if (Double.isFinite(maximumChange) && Math.abs(targetOutput - transientStepStartOutputPower) > maximumChange) {
+      rampedOutput = transientStepStartOutputPower
+          + Math.copySign(maximumChange, targetOutput - transientStepStartOutputPower);
     }
 
     // A memoryless converter cannot sustain a ramp-limited output using energy that is no longer available.
@@ -294,7 +316,9 @@ public class EnergyConverter extends ProcessEquipmentBaseClass {
     // thermodynamically available target.
     double output = Math.min(targetOutput, Math.max(0.0, rampedOutput));
     publish(calculateRealizedInput(availableInput, output), output);
-    increaseTime(dt);
+    if (!repeatedEvaluation) {
+      increaseTime(dt);
+    }
     setCalculationIdentifier(id);
   }
 
@@ -306,7 +330,7 @@ public class EnergyConverter extends ProcessEquipmentBaseClass {
    * output that can be supported by the supplied input.
    * </p>
    *
-   * @param input available input power in W
+   * @param input available input in W
    * @return useful output in W
    */
   protected double calculateTargetOutput(double input) {
@@ -319,8 +343,8 @@ public class EnergyConverter extends ProcessEquipmentBaseClass {
   /**
    * Calculates required input for useful output.
    *
-   * @param output useful output power in W
-   * @return required input power in W
+   * @param output useful output in W
+   * @return required input in W
    */
   protected double calculateRequiredInputForOutput(double output) {
     if (output <= 0.0) {
@@ -356,7 +380,7 @@ public class EnergyConverter extends ProcessEquipmentBaseClass {
    * Publishes converter results to connected output and loss ports.
    *
    * @param input realized input power in W
-   * @param output useful output power in W
+   * @param output useful output in W
    */
   private void publish(double input, double output) {
     if (!Double.isFinite(input) || input < 0.0 || !Double.isFinite(output) || output < 0.0 || output > input) {
