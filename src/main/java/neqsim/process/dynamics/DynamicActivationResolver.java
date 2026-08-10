@@ -67,8 +67,7 @@ public final class DynamicActivationResolver {
 
     if (element instanceof SimulationInterface) {
       boolean requested = !((SimulationInterface) element).getCalculateSteadyState();
-      return requested
-          ? "dynamic mode is requested, but type-specific runtime activation has not been audited"
+      return requested ? "dynamic mode is requested, but type-specific runtime activation has not been audited"
           : "dynamic mode is not requested by calculateSteadyState, but type-specific activation has not been audited";
     }
     return "type-specific runtime activation has not been audited";
