@@ -34,8 +34,10 @@ import neqsim.process.dynamics.DynamicCapabilityReport;
 DynamicCapabilityReport report = DynamicCapabilityReport.from(process);
 
 report.getCapabilityCounts();
+report.getActivationCounts();
 report.getBlockingIssues();
 report.getReviewItems();
+report.getUnverifiedActivationElements();
 report.getInactiveAuditedDynamicElements();
 String json = report.toJson();
 ```
@@ -49,10 +51,43 @@ requested dynamic path.
 but is currently left in its steady-state/algebraic mode. This is not automatically wrong. Mixed algebraic/dynamic
 flowsheets are normal, but the list makes the modelling choice explicit for engineering review.
 
+## Runtime activation is separate from state ownership
+
+`DynamicCapability` answers **what kind of state an implementation can own**. `DynamicActivationStatus` answers a
+different question: **is that stateful path actually active for this runtime configuration?** Keeping these dimensions
+separate prevents a `DYNAMIC_LUMPED` or `DYNAMIC_DISTRIBUTED` label from being mistaken for proof that the current case is
+executing the state equations.
+
+| Activation status | Meaning |
+|---|---|
+| `NOT_APPLICABLE` | The audited element is algebraic and has no independent stateful path to activate. |
+| `ACTIVE` | A type-specific audit verifies that the current configuration selects the stateful path. |
+| `INACTIVE` | A type-specific audit verifies that the current configuration selects a non-stateful path. |
+| `INCOMPLETE_CONFIGURATION` | Dynamic execution is requested or inherent, but a required physical/runtime prerequisite is missing. |
+| `UNVERIFIED` | The element owns audited state, but its runtime activation rules have not yet been audited explicitly. |
+
+Activation is intentionally type-specific rather than inferred from `calculateSteadyState` alone. Current audited
+examples illustrate why:
+
+- `HeatExchanger` enters its wall-energy transient path only when `dynamicModelEnabled` is true and both wall mass and
+  heat-transfer area are positive. Requesting dynamic mode while those prerequisites are missing is reported as
+  `INCOMPLETE_CONFIGURATION` and blocks strict preflight.
+- `BatteryStorage.runTransient(...)` always evaluates stored-energy and ramped-power state. A positive storage capacity
+  is therefore an activation prerequisite, while the inherited `calculateSteadyState` flag does not decide whether the
+  battery state is integrated.
+- `Expander` uses `calculateSteadyState` directly: true selects algebraic expansion thermodynamics for the timestep;
+  false activates nozzle-position, recovered-power and shaft-speed/inertia state integration.
+
+Other state-owning families remain `UNVERIFIED` until their actual runtime branch conditions and physical prerequisites
+are audited. `UNVERIFIED` is visible through `getUnverifiedActivationElements()` but is not yet a strict-preflight failure;
+this lets the Phase-0 inventory improve incrementally without silently promoting generic flags to engineering evidence.
+Activation status is also not quantitative maturity: an `ACTIVE` implementation can still lack conservation,
+timestep/mesh, benchmark, safety or OTS qualification.
+
 ## Strict transient preflight
 
-The report also provides an explicit, opt-in preflight for workflows that must not continue with unaudited custom
-transient implementations:
+The report also provides an explicit, opt-in preflight for workflows that must not continue with known unsupported,
+incompletely configured, or unaudited custom transient implementations:
 
 ```java
 DynamicCapabilityReport report = DynamicCapabilityReport.from(process);
@@ -66,14 +101,15 @@ if (!report.isStrictPreflightReady()) {
 report.assertStrictTransientReady();
 ```
 
-Strict preflight combines known unsupported runtime configurations with `UNCLASSIFIED_DYNAMIC` review items. It does
-**not** reject an audited dynamic unit merely because the unit is intentionally left in steady-state mode. The preflight
-is not automatically called by `runTransient(...)`; it is an explicit qualification gate so existing transient APIs and
-mixed algebraic/dynamic models remain backwards compatible.
+Strict preflight combines known unsupported runtime configurations, type-specific `INCOMPLETE_CONFIGURATION` activation
+findings, and `UNCLASSIFIED_DYNAMIC` review items. It does **not** reject an audited dynamic unit merely because the unit
+is intentionally inactive, and it does not yet reject a state-owning family solely because activation remains
+`UNVERIFIED`. The preflight is not automatically called by `runTransient(...)`; it is an explicit qualification gate so
+existing transient APIs and mixed algebraic/dynamic models remain backwards compatible.
 
-Passing strict preflight only means that the capability audit found no known unsupported configuration or unaudited
-custom transient method. It does not establish conservation accuracy, timestep independence, pressure-flow correctness,
-control/safety fidelity, OTS real-time performance, or engineering approval.
+Passing strict preflight only means that the capability audit found no currently known unsupported/incomplete
+configuration or unaudited custom transient method. It does not establish conservation accuracy, timestep independence,
+pressure-flow correctness, control/safety fidelity, OTS real-time performance, or engineering approval.
 
 ## Physical-step versus refinement identity
 
@@ -156,8 +192,8 @@ semantics:
 
 - algebraic: standard `Stream` execution, composite module containers, `EnergyNetworkSolver`, ISO-5167 `Orifice`, and
   `WellFlow` IPR pressure-flow relations;
-- lumped: separators, tanks, two-stream heat exchangers, compressors, pumps, throttling/control valves, and
-  `EnergyConverter`-based motors/generators/gearboxes/inverters/transformers;
+- lumped: separators, tanks, two-stream heat exchangers, compressors/expanders, pumps, throttling/control valves,
+  `EnergyConverter`-based motors/generators/gearboxes/inverters/transformers, and `BatteryStorage`;
 - distributed: `OnePhasePipeLine`, `TwoFluidPipe`, drift-flux `TransientPipe`, and `WaterHammerPipe`;
 - boundary: `SimpleReservoir`;
 - control: registered controllers and measurement devices.
@@ -175,6 +211,16 @@ identifier recompute from the output that existed at the start of that step, so 
 second time or advance the converter clock again. A new physical-step identifier captures the previously accepted output
 as the next step's starting state. Infinite ramp rate remains a memoryless runtime configuration, illustrating why state
 ownership and runtime activation/maturity are separate dimensions.
+
+`BatteryStorage` owns stored electrical energy in Wh plus the ramp-limited converter-power state. Same-ID refinement
+restores both values to physical-step start before recomputation. Runtime activation is independent of the inherited
+generic steady-state flag; a non-positive storage capacity is instead surfaced as incomplete configuration by the
+activation audit. This classification is an execution/state-ownership statement, not an electrochemical-fidelity claim.
+
+`Expander` owns nozzle/guide-vane position, ramped recovered shaft power and rotor speed/inertia when its dynamic branch
+is selected. Same-ID refinement restores those states to physical-step start before re-solving the same timestep. With
+`calculateSteadyState=true`, the expander performs the algebraic thermodynamic calculation without integrating those
+states, so the activation report records the stateful path as inactive.
 
 `Stream` and stream subclasses that inherit the standard `Stream.runTransient(...)` boundary are classified as
 `ALGEBRAIC`: that method re-evaluates the stream and advances its execution clock, but does not integrate stored physical
