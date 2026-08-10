@@ -14,8 +14,10 @@ spec:
   components:
     - name: mcp
       # Prebuilt public image (fixed by #2398, health added by #2403). Public
-      # package -> no imagePullSecret. Re-deploy to pick up a new :latest.
-      image: ghcr.io/equinor/neqsim-mcp-server:latest
+      # package -> no imagePullSecret. Pin an explicit version rather than
+      # :latest — :latest moved silently from 3.15.0 to 3.17.0 on 2026-08-07,
+      # and an immutable tag is what makes rollback a one-line revert.
+      image: ghcr.io/equinor/neqsim-mcp-server:3.17.0
       ports:
         - name: http
           port: 8080
@@ -59,6 +61,27 @@ spec:
         QUARKUS_OIDC_RESOURCE_METADATA_SCOPES: "api://35fda377-148b-4b6b-a5be-d52203160690/mcp.access"
         # OTel has no collector yet -> keep the SDK off even under enterprise
         QUARKUS_OTEL_SDK_DISABLED: "true"
+        # ── 3.17.0 compatibility (verified empirically 2026-08-10) ──
+        # v3.17.0 ships %enterprise.quarkus.http.insecure-requests=redirect.
+        # The image has no TLS keystore, so Quarkus 3.37 aborts at boot with
+        # "Cannot set quarkus.http.insecure-requests without enabling SSL"
+        # -> CrashLoopBackOff. Reproduced locally, and this override fixes it.
+        # TLS terminates at the Radix ingress, so plain HTTP in-pod is correct.
+        QUARKUS_HTTP_INSECURE_REQUESTS: "enabled"
+        # v3.17.0 adds ResponseSizeGuard, default 256 KB, which DROPS bulky data
+        # fields from larger tool responses. A 156-op process report was ~400 KB,
+        # so the default would silently truncate real answers. 0 disables the cap
+        # entirely (verified: ResponseSizeGuard returns false when MAX_BYTES <= 0),
+        # but uncapped multi-MB payloads would just move the failure into Copilot
+        # Studio's own connector/context limits. 1 MiB clears our observed reports
+        # with headroom while keeping a backstop.
+        NEQSIM_MCP_MAX_RESPONSE_BYTES: "1048576"
+        # KNOWN GAP, accepted for the 5-user POC: 3.17.0's manageModel scopes
+        # registered models by Entra tenant only (every Equinor user shares one
+        # tid) — owner is recorded but not enforced, so any assigned user can
+        # list/get/revise/delete another's model. Fix is written and tested on
+        # branch fix/mcp-model-owner-scoping, pending upstream release. Testers
+        # have been told. This MUST be closed before widening beyond the named 5.
         # ── Observability (added 2026-08-03): the image ships quarkus.log.level=WARN,
         # which made the pod silent even on 401s — undebuggable during the Copilot
         # Studio rollout. One access-log line per request with the authenticated
