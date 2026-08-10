@@ -52,8 +52,7 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
   public void distributedPipeModelsAreClassified() {
     Stream feed = createFeed("pipe feed");
 
-    assertEquals(DynamicCapability.DYNAMIC_DISTRIBUTED,
-        new OnePhasePipeLine("one phase", feed).getDynamicCapability());
+    assertEquals(DynamicCapability.DYNAMIC_DISTRIBUTED, new OnePhasePipeLine("one phase", feed).getDynamicCapability());
     assertEquals(DynamicCapability.DYNAMIC_DISTRIBUTED, new TwoFluidPipe("two fluid", feed).getDynamicCapability());
     assertEquals(DynamicCapability.DYNAMIC_DISTRIBUTED, new TransientPipe("drift flux", feed).getDynamicCapability());
     assertEquals(DynamicCapability.DYNAMIC_DISTRIBUTED,
