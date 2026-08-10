@@ -5,6 +5,7 @@ import java.util.UUID;
 import neqsim.process.ProcessElementInterface;
 import neqsim.process.SimulationInterface;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
+import neqsim.process.equipment.battery.BatteryStorage;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.diffpressure.Orifice;
 import neqsim.process.equipment.energy.EnergyConverter;
@@ -78,7 +79,7 @@ public final class DynamicCapabilityResolver {
 
     if (element instanceof Separator || element instanceof Tank || element instanceof HeatExchanger
         || element instanceof Compressor || element instanceof Pump || element instanceof ThrottlingValve
-        || element instanceof EnergyConverter) {
+        || element instanceof EnergyConverter || element instanceof BatteryStorage) {
       return DynamicCapability.DYNAMIC_LUMPED;
     }
 
