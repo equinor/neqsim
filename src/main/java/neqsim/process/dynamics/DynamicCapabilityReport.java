@@ -24,18 +24,19 @@ import neqsim.process.processmodel.ProcessSystem;
  *
  * <p>
  * The report is intentionally diagnostic rather than a readiness certificate. It distinguishes audited stored-state
- * dynamics from algebraic timestep evaluation, identifies explicitly requested configurations that cannot use the
- * default transient boundary, and keeps unaudited custom transient implementations visible as review items.
+ * dynamics from algebraic timestep evaluation, reports type-specific runtime activation separately from state
+ * ownership, identifies explicitly requested configurations that cannot use the default transient boundary, and keeps
+ * unaudited custom transient implementations visible as review items.
  * </p>
  *
  * @author Even Solbraa
- * @version 1.0
+ * @version 1.1
  */
 public final class DynamicCapabilityReport implements Serializable {
   private static final long serialVersionUID = 1000L;
 
   /** Schema version for serialized/JSON reports. */
-  private static final String SCHEMA_VERSION = "1.0";
+  private static final String SCHEMA_VERSION = "1.1";
 
   private final String schemaVersion = SCHEMA_VERSION;
   private final List<Entry> entries;
@@ -44,7 +45,7 @@ public final class DynamicCapabilityReport implements Serializable {
    * Immutable record describing one process element in the capability audit.
    *
    * @author Even Solbraa
-   * @version 1.0
+   * @version 1.1
    */
   public static final class Entry implements Serializable {
     private static final long serialVersionUID = 1000L;
@@ -56,6 +57,8 @@ public final class DynamicCapabilityReport implements Serializable {
     private final String className;
     private final DynamicCapability capability;
     private final Boolean calculateSteadyState;
+    private final DynamicActivationStatus activationStatus;
+    private final String activationDiagnostic;
 
     private Entry(String areaName, String containerPath, ProcessElementInterface element) {
       this.areaName = areaName == null ? "" : areaName;
@@ -67,6 +70,8 @@ public final class DynamicCapabilityReport implements Serializable {
       this.calculateSteadyState = element instanceof SimulationInterface
           ? Boolean.valueOf(((SimulationInterface) element).getCalculateSteadyState())
           : null;
+      this.activationStatus = DynamicActivationResolver.resolve(element);
+      this.activationDiagnostic = DynamicActivationResolver.diagnostic(element);
     }
 
     /**
@@ -133,6 +138,24 @@ public final class DynamicCapabilityReport implements Serializable {
     }
 
     /**
+     * Type-specific runtime activation status, kept separate from state ownership.
+     *
+     * @return activation status
+     */
+    public DynamicActivationStatus getActivationStatus() {
+      return activationStatus;
+    }
+
+    /**
+     * Diagnostic explaining the current runtime activation status.
+     *
+     * @return activation diagnostic
+     */
+    public String getActivationDiagnostic() {
+      return activationDiagnostic;
+    }
+
+    /**
      * Area- and module-qualified name suitable for diagnostics.
      *
      * @return {@code area::module::name} where applicable
@@ -143,7 +166,13 @@ public final class DynamicCapabilityReport implements Serializable {
     }
 
     /**
-     * Whether the runtime configuration requests the element-specific difference-equation path.
+     * Whether the runtime configuration requests the element-specific difference-equation path through the generic
+     * simulation flag.
+     *
+     * <p>
+     * This is a requested-mode indicator only. It does not prove that a subclass enters its stateful path; use
+     * {@link #getActivationStatus()} for type-specific activation evidence where available.
+     * </p>
      *
      * @return true when a {@link SimulationInterface} has {@code calculateSteadyState == false}
      */
@@ -169,6 +198,15 @@ public final class DynamicCapabilityReport implements Serializable {
     }
 
     /**
+     * Whether a type-specific activation audit found a requested/enabled dynamic path with missing prerequisites.
+     *
+     * @return true when runtime activation configuration is incomplete
+     */
+    public boolean hasIncompleteDynamicActivation() {
+      return activationStatus == DynamicActivationStatus.INCOMPLETE_CONFIGURATION;
+    }
+
+    /**
      * Whether a custom transient implementation still needs engineering capability review.
      *
      * @return true for {@link DynamicCapability#UNCLASSIFIED_DYNAMIC}
@@ -178,13 +216,27 @@ public final class DynamicCapabilityReport implements Serializable {
     }
 
     /**
-     * Whether an audited stored-state dynamic implementation exists but is currently evaluated in steady-state mode.
+     * Whether an audited stored-state dynamic implementation is currently known to be inactive.
      *
-     * @return true for known physical dynamic equipment with {@code calculateSteadyState == true}
+     * <p>
+     * Type-specific activation evidence takes precedence over the generic steady-state flag. For equipment families
+     * whose activation semantics are still unverified, the historical {@code calculateSteadyState} flag remains a
+     * conservative engineering review aid rather than a proof of actual runtime activation.
+     * </p>
+     *
+     * @return true when the dynamic state is known or conservatively indicated to be inactive
      */
     public boolean hasInactiveAuditedDynamicState() {
-      return calculateSteadyState != null && calculateSteadyState.booleanValue()
-          && capability.hasExplicitDynamicState();
+      if (!capability.hasExplicitDynamicState()) {
+        return false;
+      }
+      if (activationStatus == DynamicActivationStatus.INACTIVE) {
+        return true;
+      }
+      if (activationStatus != DynamicActivationStatus.UNVERIFIED) {
+        return false;
+      }
+      return calculateSteadyState != null && calculateSteadyState.booleanValue();
     }
   }
 
@@ -265,6 +317,24 @@ public final class DynamicCapabilityReport implements Serializable {
   }
 
   /**
+   * Counts entries by runtime activation status.
+   *
+   * @return enum map containing every activation status, including zero-count categories
+   */
+  public Map<DynamicActivationStatus, Integer> getActivationCounts() {
+    Map<DynamicActivationStatus, Integer> counts =
+        new EnumMap<DynamicActivationStatus, Integer>(DynamicActivationStatus.class);
+    for (DynamicActivationStatus status : DynamicActivationStatus.values()) {
+      counts.put(status, Integer.valueOf(0));
+    }
+    for (Entry entry : entries) {
+      DynamicActivationStatus status = entry.getActivationStatus();
+      counts.put(status, Integer.valueOf(counts.get(status).intValue() + 1));
+    }
+    return Collections.unmodifiableMap(counts);
+  }
+
+  /**
    * Returns configuration errors that should block a transient run configured in strict professional-audit mode.
    *
    * @return immutable diagnostic strings
@@ -279,6 +349,10 @@ public final class DynamicCapabilityReport implements Serializable {
         } else {
           issues.add(entry.getQualifiedName() + " is classified UNSUPPORTED_DYNAMIC (" + entry.getClassName() + ")");
         }
+      }
+      if (entry.hasIncompleteDynamicActivation()) {
+        issues.add(entry.getQualifiedName() + " has incomplete runtime dynamic activation: "
+            + entry.getActivationDiagnostic() + " (" + entry.getClassName() + ")");
       }
     }
     return Collections.unmodifiableList(issues);
@@ -301,12 +375,34 @@ public final class DynamicCapabilityReport implements Serializable {
   }
 
   /**
+   * Returns elements with explicit dynamic capability whose type-specific runtime activation is still unaudited.
+   *
+   * <p>
+   * These are review aids, not strict-preflight failures. The capability campaign can therefore add activation audits
+   * incrementally without making every existing mixed algebraic/dynamic model unusable in the meantime.
+   * </p>
+   *
+   * @return immutable area-qualified element names
+   */
+  public List<String> getUnverifiedActivationElements() {
+    List<String> unverified = new ArrayList<String>();
+    for (Entry entry : entries) {
+      if (entry.getCapability().hasExplicitDynamicState()
+          && entry.getActivationStatus() == DynamicActivationStatus.UNVERIFIED) {
+        unverified.add(entry.getQualifiedName());
+      }
+    }
+    return Collections.unmodifiableList(unverified);
+  }
+
+  /**
    * Returns all issues that fail the opt-in strict transient preflight.
    *
    * <p>
-   * Strict preflight combines known unsupported runtime configurations with unaudited custom transient implementations.
-   * It deliberately does not reject audited dynamic equipment that remains in steady-state mode, because mixed
-   * algebraic/dynamic flowsheets are valid when that choice is intentional.
+   * Strict preflight combines known unsupported runtime configurations, incomplete type-specific activation, and
+   * unaudited custom transient implementations. It deliberately does not reject audited dynamic equipment that is
+   * intentionally inactive, nor does it reject families whose activation semantics are still marked UNVERIFIED; those
+   * remain visible through dedicated review diagnostics.
    * </p>
    *
    * @return immutable list of strict-preflight issues
@@ -322,9 +418,9 @@ public final class DynamicCapabilityReport implements Serializable {
    * Whether the process/model passes the opt-in strict transient capability preflight.
    *
    * <p>
-   * A true result only means that no currently known unsupported configuration or unaudited custom transient
-   * implementation was found. It is not a quantitative validation, conformance, safety, or professional-readiness
-   * certificate.
+   * A true result only means that no currently known unsupported configuration, incomplete audited activation, or
+   * unaudited custom transient implementation was found. It is not a quantitative validation, conformance, safety, or
+   * professional-readiness certificate.
    * </p>
    *
    * @return true when {@link #getStrictPreflightIssues()} is empty
@@ -351,11 +447,12 @@ public final class DynamicCapabilityReport implements Serializable {
   }
 
   /**
-   * Returns audited dynamic elements that are currently configured to use their steady-state/algebraic path.
+   * Returns audited dynamic elements that are currently configured or conservatively indicated to use a non-stateful
+   * path.
    *
    * <p>
-   * These are not errors: mixed algebraic/dynamic flowsheets are legitimate. The list is exposed so an engineer can
-   * verify that a unit expected to carry inventory or inertia was actually switched into its dynamic mode.
+   * These are not errors: mixed algebraic/dynamic flowsheets are legitimate. Type-specific activation status takes
+   * precedence over the generic {@code calculateSteadyState} flag where available.
    * </p>
    *
    * @return immutable list of area-qualified element names
@@ -371,18 +468,18 @@ public final class DynamicCapabilityReport implements Serializable {
   }
 
   /**
-   * Whether the report contains a known unsupported runtime configuration.
+   * Whether the report contains a known unsupported or incomplete runtime configuration.
    *
    * <p>
-   * A false result is not a professional-readiness or validation certificate; review items and quantitative model
-   * qualification remain separate requirements.
+   * A false result is not a professional-readiness or validation certificate; review items, activation audits, and
+   * quantitative model qualification remain separate requirements.
    * </p>
    *
    * @return true if one or more blocking configuration issues exist
    */
   public boolean hasBlockingIssues() {
     for (Entry entry : entries) {
-      if (entry.hasUnsupportedDynamicConfiguration()) {
+      if (entry.hasUnsupportedDynamicConfiguration() || entry.hasIncompleteDynamicActivation()) {
         return true;
       }
     }
@@ -399,8 +496,8 @@ public final class DynamicCapabilityReport implements Serializable {
   }
 
   private static void collectArea(String areaName, ProcessSystem process, List<Entry> target) {
-    Set<ProcessElementInterface> seenElements = Collections
-        .newSetFromMap(new IdentityHashMap<ProcessElementInterface, Boolean>());
+    Set<ProcessElementInterface> seenElements =
+        Collections.newSetFromMap(new IdentityHashMap<ProcessElementInterface, Boolean>());
     Set<ProcessSystem> seenProcesses = Collections.newSetFromMap(new IdentityHashMap<ProcessSystem, Boolean>());
     collectProcess(areaName, "", process, target, seenElements, seenProcesses);
   }
