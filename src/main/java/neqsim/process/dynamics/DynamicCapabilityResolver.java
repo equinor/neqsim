@@ -6,6 +6,8 @@ import neqsim.process.ProcessElementInterface;
 import neqsim.process.SimulationInterface;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.diffpressure.Orifice;
+import neqsim.process.equipment.energy.EnergyNetworkSolver;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.pipeline.OnePhasePipeLine;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
@@ -56,6 +58,10 @@ public final class DynamicCapabilityResolver {
     }
 
     if (element instanceof ModuleInterface) {
+      return DynamicCapability.ALGEBRAIC;
+    }
+
+    if (element instanceof Orifice || element instanceof EnergyNetworkSolver) {
       return DynamicCapability.ALGEBRAIC;
     }
 
