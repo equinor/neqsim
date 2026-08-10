@@ -256,6 +256,9 @@ targets manipulated through condenser or reboiler temperature.
   temperature, and vapor flow as tray variables.
 - Builds a finite-difference block-tridiagonal Jacobian from neighboring tray couplings and uses a
   guarded Newton line search with flow and temperature trust limits.
+- Leaves the accepted line-search trial applied and reuses its evaluated MESH residual. The solver
+  does not restore the old tray state and repeat the same thermodynamic evaluation merely to apply
+  a step that the line search has already accepted.
 - Work diagnostics classify every currently assembled derivative column as finite-difference;
   `getLastNaphtaliAnalyticJacobianColumns()` remains available for compatibility and reports zero
   until a mixed analytic/numerical assembly is implemented.

@@ -522,12 +522,21 @@ public class ColumnSpecificationTest {
 
     column.run();
 
-    assertTrue(column.getGasOutStream().getFlowRate("kg/hr") >= 0.0);
+    double gasFlow = column.getGasOutStream().getFlowRate("kg/hr");
+    double liquidFlow = column.getLiquidOutStream().getFlowRate("kg/hr");
+    assertTrue(gasFlow >= 0.0);
+    assertTrue(liquidFlow >= 0.0);
+    assertEquals(237.6597295390127, gasFlow, 1.0e-8);
+    assertEquals(12.34027046098738, liquidFlow, 1.0e-8);
+    assertEquals(250.0, gasFlow + liquidFlow, 1.0e-8);
     assertEquals(0, column.getLastNaphtaliAnalyticJacobianColumns(),
         "the current implementation does not analytically differentiate any Jacobian column");
     assertEquals(800, column.getLastNaphtaliFiniteDifferenceJacobianColumns(),
         "eight stages times five variables times twenty Jacobian builds must all be finite-difference columns");
     assertTrue(column.getLastNaphtaliThermoEvaluationCount() > 0);
+    assertTrue(column.getLastNaphtaliThermoEvaluationCount() < 16000,
+        () -> "accepted line-search trials should be reused without restoring and reevaluating the same Newton step: "
+            + column.getLastNaphtaliThermoEvaluationCount());
     assertTrue(column.getLastNaphtaliThermoKValueIterationCount() >= column.getLastNaphtaliThermoEvaluationCount(),
         "each successful tray evaluation must perform at least one forced-root fugacity sweep");
     assertTrue(column.getLastNaphtaliThermoKValueIterationCount() < 2 * column.getLastNaphtaliThermoEvaluationCount(),
@@ -571,6 +580,9 @@ public class ColumnSpecificationTest {
     second.run();
 
     assertEquals(first.getLastNaphtaliThermoEvaluationCount(), second.getLastNaphtaliThermoEvaluationCount());
+    assertTrue(first.getLastNaphtaliThermoEvaluationCount() < 16000,
+        () -> "the nearby case should also reuse accepted line-search evaluations: "
+            + first.getLastNaphtaliThermoEvaluationCount());
     assertEquals(first.getLastNaphtaliThermoKValueIterationCount(), second.getLastNaphtaliThermoKValueIterationCount());
     assertEquals(first.getLastNaphtaliThermoKValueNonConvergedCount(),
         second.getLastNaphtaliThermoKValueNonConvergedCount());
