@@ -19,8 +19,7 @@ class ProcessSystemTransientFailureContractTest {
     process.add(downstream);
 
     UUID stepId = UUID.randomUUID();
-    IllegalStateException failure =
-        assertThrows(IllegalStateException.class, () -> process.runTransient(1.0, stepId));
+    IllegalStateException failure = assertThrows(IllegalStateException.class, () -> process.runTransient(1.0, stepId));
 
     assertEquals("intentional transient failure", failure.getMessage());
     assertEquals(1, failing.getTransientCalls());

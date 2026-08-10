@@ -538,8 +538,8 @@ public final class ModelRegistry {
    *
    * <p>
    * The subject is taken from the identity the transport already validated, never from a tool argument, so a client
-   * cannot claim another principal. Callers the transport did not authenticate share the anonymous subject, which
-   * keeps single-user desktop use working while still denying them every model registered by a named principal.
+   * cannot claim another principal. Callers the transport did not authenticate share the anonymous subject, which keeps
+   * single-user desktop use working while still denying them every model registered by a named principal.
    * </p>
    *
    * @return the owner identifier
@@ -567,10 +567,10 @@ public final class ModelRegistry {
    * Builds the storage key that scopes a handle to the caller that registered it.
    *
    * <p>
-   * Handles are content-derived, so without a scoped key two principals registering the same definition would share
-   * one entry: a revision by one would silently change what the other resolves, and the second registration would hand
-   * back the first caller's record. Qualifying the key with tenant and owner keeps the entries independent while the
-   * handle itself stays stable for its owner.
+   * Handles are content-derived, so without a scoped key two principals registering the same definition would share one
+   * entry: a revision by one would silently change what the other resolves, and the second registration would hand back
+   * the first caller's record. Qualifying the key with tenant and owner keeps the entries independent while the handle
+   * itself stays stable for its owner.
    * </p>
    *
    * @param modelId the model handle

@@ -26,7 +26,7 @@ public class DynamicActivationReportTest extends neqsim.NeqSimTest {
     process.add(exchanger);
 
     DynamicCapabilityReport inactive = DynamicCapabilityReport.from(process);
-    assertEquals("1.1", inactive.getSchemaVersion());
+    assertEquals("1.2", inactive.getSchemaVersion());
     assertEquals(DynamicActivationStatus.INACTIVE, inactive.getEntries().get(0).getActivationStatus());
     assertFalse(inactive.hasBlockingIssues());
     assertEquals(1, inactive.getInactiveAuditedDynamicElements().size());
