@@ -421,9 +421,37 @@ else if (Re_b < 1000):
 else:
     C_D = 0.44          // Newton regime
 
-// Friction factor
-f_i = C_D × d_b / (4 × D)
+// Corrected dispersed-bubble friction factor
+f_i = C_D / 4
 ```
+
+With interfacial area concentration `a_i = 6 × α_G / d_b`, the corresponding force per pipe length
+is
+
+$$
+F_i=\frac{3}{4}C_D\rho_L\alpha_G\frac{A}{d_b}
+(v_G-v_L)|v_G-v_L|.
+$$
+
+The corrected force uses liquid-continuum density and is selected together with a local implicit
+source solve by calling `TwoFluidPipe.setEnableStiffBubbleDrag(true)`. The local backward-Euler
+operator is split into half-steps around transport, conserves active gas-oil-water momentum to
+roundoff, cannot increase kinetic energy, and introduces no phase-mass floor. Oil and water receive
+the liquid impulse in proportion to active mass, preserving their relative velocity. Bubble and
+dispersed-bubble classifications use the same source treatment; neighboring regimes retain their
+existing closures.
+
+The bubble diameter is the existing Hinze estimate capped at `D/5`; the current closure assumes a
+fixed surface tension of 0.02 N/m. Schiller-Naumann assumes a dilute population of rigid spherical
+particles and does not represent bubble deformation, coalescence, breakup, or a size distribution.
+
+The stiff corrected mode is opt-in. Existing simulations retain the legacy `C_D × d_b/(4D)` scaling
+unless enabled, because the corrected mode is not yet quantitatively validated by the public
+Tengesdal severe-slugging benchmark. With the published bounds unchanged, the compatibility default
+passes 6 of 6 cases, while the stable corrected mode passes 3 of 6. Its smallest pressure swing is
+167.1 kPa against 98 +/- 5 kPa, its slug-length ratio is 1.164, and the 16-section, 0.1 s case does
+not establish a repeated cycle. This is a documented physical closure/regime-transition limitation,
+not evidence of numerical source instability.
 
 #### Hart et al. (1989) Correlation
 
