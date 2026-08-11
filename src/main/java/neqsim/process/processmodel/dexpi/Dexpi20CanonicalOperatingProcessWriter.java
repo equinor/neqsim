@@ -28,14 +28,16 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
- * Opt-in DEXPI 2.0 Process export that sources selected operating values from the canonical
- * engineering-diagram snapshot.
+ * Opt-in DEXPI 2.0 Process export that sources selected operating values from the canonical engineering-diagram
+ * snapshot.
  *
- * <p>The established {@link Dexpi20ProcessModelWriter} APIs remain unchanged. This writer first
- * creates the canonical operating-case snapshot, emits the established assessed material topology,
- * removes direct simulation-stream quantities from the XML, and then writes only values that are
- * present as calculated canonical nodes. This prevents stale or unsuccessful-run values from being
- * exported while preserving the current DEXPI topology and compatibility path.</p>
+ * <p>
+ * The established {@link Dexpi20ProcessModelWriter} APIs remain unchanged. This writer first creates the canonical
+ * operating-case snapshot, emits the established assessed material topology, removes direct simulation-stream
+ * quantities from the XML, and then writes only values that are present as calculated canonical nodes. This prevents
+ * stale or unsuccessful-run values from being exported while preserving the current DEXPI topology and compatibility
+ * path.
+ * </p>
  */
 public final class Dexpi20CanonicalOperatingProcessWriter {
   private Dexpi20CanonicalOperatingProcessWriter() {
@@ -76,8 +78,8 @@ public final class Dexpi20CanonicalOperatingProcessWriter {
         "CANONICAL_ENGINEERING_GRAPH_OPERATING_CASE");
   }
 
-  private static void replaceStreamQuantitiesWithCanonicalValues(Path file,
-      ProcessDiagramGraphAdapter.Result canonical) throws IOException {
+  private static void replaceStreamQuantitiesWithCanonicalValues(Path file, ProcessDiagramGraphAdapter.Result canonical)
+      throws IOException {
     Document document = parse(file);
     Map<String, String> lineIdByName = canonicalLineIds(canonical.getGraph());
     Map<String, Map<String, CanonicalValue>> valuesBySubject = canonicalValues(canonical.getGraph());
@@ -153,8 +155,7 @@ public final class Dexpi20CanonicalOperatingProcessWriter {
       physicalQuantity(document, stream, property, canonical.value * 3600.0,
           "Core/PhysicalQuantities.MassFlowRateUnit.KilogramPerHour");
     } else if ("Pressure".equals(property) && "bara".equals(canonical.unit)) {
-      physicalQuantity(document, stream, property, canonical.value,
-          "Core/PhysicalQuantities.PressureAbsoluteUnit.Bar");
+      physicalQuantity(document, stream, property, canonical.value, "Core/PhysicalQuantities.PressureAbsoluteUnit.Bar");
     } else if ("Temperature".equals(property) && "K".equals(canonical.unit)) {
       physicalQuantity(document, stream, property, canonical.value - 273.15,
           "Core/PhysicalQuantities.TemperatureUnit.DegreeCelsius");
