@@ -1,5 +1,6 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayInputStream;
@@ -16,6 +17,9 @@ class StiffBubbleDragSerializationTest {
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
     assertFalse(equations.isStiffBubbleDragEnabled());
     equations.setEnableStiffBubbleDrag(true);
+    equations.getBubbleSizeClosure().setSurfaceTension(0.035);
+    equations.getBubbleSizeClosure().setMaximumPipeDiameterFraction(0.15);
+    equations.getBubbleSizeClosure().setUseLocalSurfaceTension(true);
 
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     ObjectOutputStream output = new ObjectOutputStream(bytes);
@@ -28,6 +32,9 @@ class StiffBubbleDragSerializationTest {
 
     assertTrue(copy.isStiffBubbleDragEnabled());
     assertTrue(copy.getInterfacialFriction().isUseCorrectedBubbleDrag());
+    assertEquals(0.035, copy.getBubbleSizeClosure().getSurfaceTension(), 0.0);
+    assertEquals(0.15, copy.getBubbleSizeClosure().getMaximumPipeDiameterFraction(), 0.0);
+    assertTrue(copy.getBubbleSizeClosure().isUseLocalSurfaceTension());
     copy.setEnableStiffBubbleDrag(false);
     assertFalse(copy.isStiffBubbleDragEnabled());
   }
