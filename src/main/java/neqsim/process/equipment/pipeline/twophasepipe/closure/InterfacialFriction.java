@@ -525,9 +525,8 @@ public class InterfacialFriction implements Serializable {
       return calcInterfacialForce(flowRegime, gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity,
           liquidViscosity, liquidHoldup, diameter, surfaceTension);
     }
-    InterfacialFrictionResult result =
-        calcBubble(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
-            liquidHoldup, diameter, surfaceTension, true);
+    InterfacialFrictionResult result = calcBubble(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity,
+        liquidViscosity, liquidHoldup, diameter, surfaceTension, true);
     return result.interfacialShear * result.interfacialAreaPerLength;
   }
 
@@ -535,8 +534,8 @@ public class InterfacialFriction implements Serializable {
    * Get the configurable bubble-size closure used by bubble and dispersed-bubble regimes.
    *
    * <p>
-   * Lazy initialization preserves compatibility when reading serialized objects created before the
-   * closure was attached to this model.
+   * Lazy initialization preserves compatibility when reading serialized objects created before the closure was attached
+   * to this model.
    * </p>
    *
    * @return mutable bubble-size closure configuration
