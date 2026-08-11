@@ -13,10 +13,10 @@ class BubbleSizeClosureTest {
     BubbleSizeClosure closure = new BubbleSizeClosure();
     double diameter = closure.estimateDiameter(0.10, 1000.0, 5.0, 9.81);
 
-    double expected = Math.min(2.0 * Math.sqrt(0.725 * 0.02 / (9.81 * 995.0)), 0.02);
+    double expected = Math.min(2.0 * Math.pow(0.725 * 0.02 / (9.81 * 995.0), 0.5), 0.02);
     assertEquals(0.02, closure.getSurfaceTension(), 0.0);
     assertEquals(0.20, closure.getMaximumPipeDiameterFraction(), 0.0);
-    assertEquals(expected, diameter, 1.0e-15);
+    assertEquals(expected, diameter, 0.0);
   }
 
   @Test
