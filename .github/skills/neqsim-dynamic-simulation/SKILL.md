@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-08-03"
+last_verified: "2026-08-10"
 ---
 
 # Dynamic Simulation Guidance
@@ -43,7 +43,7 @@ Each timestep:
    Steady-state algebraic equipment still evaluates on every requested pass,
    but its local clock advances once per non-null timestep calculation identifier.
    Reusing an identifier may refine a recycle without advancing physical time;
-   use a new identifier for the next timestep.
+   use a new identifier for the next physical timestep.
 4. Standalone controllers run; controllers actually executed inside equipment
    retain their equipment-specific timing for compatibility. Execution is
    coalesced by object identity and the timestep calculation identifier. Merely
@@ -54,6 +54,21 @@ Each timestep:
    integrated by equipment must implement the same identifier contract through
    `hasRunTransient(UUID)`.
 5. Measurement devices are sampled, alarms are evaluated, and history is stored.
+
+A non-null UUID therefore identifies **one physical timestep**, not an entire
+outer time-marching simulation. Refinements of that physical step reuse the
+same physical-step UUID; the next accepted physical step must use a different
+UUID. For ordinary loops `runTransient()` is safe because it creates a fresh
+UUID each call. Deterministic safety/OTS workflows can use
+`TransientStepIdentifier.deterministicPhysicalStep(scope, stepIndex)`.
+
+`ProcessSystem.runTransientAdaptive(...)` is **not yet a transactional adaptive
+integrator**. The current implementation validates the request, advances trial
+state directly, estimates a temperature-change heuristic, and chooses a
+subsequent timestep. It does not yet provide rejected-step process/event/control
+rollback or a full-step versus two-half-step error estimate. Do not use it as
+evidence of qualified stiff/adaptive professional dynamics until the #2911
+transactional-step work is complete.
 
 ## Basic Dynamic Setup
 
@@ -216,10 +231,11 @@ LC100.setReverseActing(false);                 // liquid-outlet level valve = di
 LC100.setControllerParameters(1.0, 300.0, 0.0); // averaging level: loose Kp, long Ti, no Td
 liqValve.addController("LC-100", LC100);
 
-// 5. Advance the transient with a fixed time step.
-java.util.UUID id = java.util.UUID.randomUUID();
-for (int i = 0; i < 600; i++) {
-  process.runTransient(1.0, id);   // dt = 1 s
+// 5. Advance the transient with a fresh physical-step identity each step.
+for (long step = 0; step < 600; step++) {
+  java.util.UUID physicalStepId =
+      neqsim.process.dynamics.TransientStepIdentifier.deterministicPhysicalStep("level-loop", step);
+  process.runTransient(1.0, physicalStepId);   // dt = 1 s
 }
 ```
 
@@ -232,6 +248,9 @@ for (int i = 0; i < 600; i++) {
   reduces the measured value (e.g. a controller manipulating an inlet/feed valve).
 - **Set `setLiquidLevel` after `run()`** — a steady-state solve resets the level,
   so set the starting level and geometry after the first `run()`.
+- **One UUID per physical step** — do not create one UUID before the outer time
+  loop and reuse it. Built-in controllers/equipment intentionally treat repeated
+  calls with one UUID as refinements of the same physical timestep.
 - For an averaging level loop, use a loose `Kp` and long `Ti` (see the tuning
   table) and consider an SP-PV deadband only with care (see the limit-cycle note
   above).
@@ -527,29 +546,31 @@ TransferFunctionBlock leadLag = new TransferFunctionBlock();
 
 1. **Always run steady state first**: Call `process.run()` before `runTransient()`
 2. **Timestep size**: Start with 1.0 s, reduce if oscillating (0.1-0.5 s)
-3. **Reverse acting**: Level controllers are usually reverse-acting (level up = open valve)
+3. **Liquid-outlet level-controller direction**: use `setReverseActing(false)` so level up drives the outlet valve further open. Reverse acting on this configuration drives the loop the wrong way.
 4. **Controller windup**: Large setpoint changes can cause integral windup
 5. **Separator dimensions**: Must set `setInternalDiameter()` and `setSeparatorLength()` for meaningful level dynamics. For dynamic simulation, set directly on the separator; for design purposes, configure via `SeparatorMechanicalDesign` (see neqsim-api-patterns skill)
 6. **Measurement range**: Set min/max on transmitters to match process range
 7. **Enable dynamic (inventory) mode for level loops**: after `process.run()` (steady), call `setCalculateSteadyState(false)` on the separator AND every valve, then `separator.setLiquidLevel(startFraction)`, before `runTransient`. If steady-state mode is left on, the separator liquid level stays pinned at its default (0.5) and the level controller never acts. The valve `Cv` is auto-derived from the steady solve. A **liquid-outlet** level valve is `setReverseActing(false)` (level up -> valve opens); put a pressure controller on the gas-outlet valve so the vessel pressure is held and the level loop is isolated.
-
+8. **Physical-step UUIDs**: never reuse one non-null UUID across multiple outer timesteps. Reuse is reserved for refinement/evaluation of one physical step.
 
 ## Pluggable Integrator Strategies
 
-Beyond the default fixed-step explicit-Euler loop, `ProcessSystem` accepts a
-pluggable `IntegratorStrategy`. Implementations live in `neqsim.process.dynamics`:
+`ProcessSystem` accepts a pluggable `IntegratorStrategy`, but this hook does not
+by itself make the complete flowsheet a stiff vector ODE/DAE system. Implementations
+live in `neqsim.process.dynamics`:
 
 | Strategy | Class | Notes |
 |----------|-------|-------|
 | Explicit Euler | `ExplicitEulerIntegrator` | Default; fast, conditionally stable |
-| BDF-1 (Implicit Euler) | `BDFIntegrator` | Newton + FD Jacobian (tol 1e-8, maxIter 25). Falls back to explicit Euler if Newton diverges; check `lastStepFellBack()` |
+| BDF-1 (Implicit Euler) | `BDFIntegrator` | Experimental local strategy. Newton + FD Jacobian; can fall back to explicit Euler when Newton diverges. Inspect `lastStepFellBack()` and do not treat fallback runs as qualified stiff/DAE evidence. |
 
 ```java
 import neqsim.process.dynamics.BDFIntegrator;
 import neqsim.process.dynamics.ExplicitEulerIntegrator;
 import neqsim.process.dynamics.IntegratorStrategy;
 
-process.setIntegratorStrategy(new BDFIntegrator());   // stiff dynamics
+BDFIntegrator bdf = new BDFIntegrator();
+process.setIntegratorStrategy(bdf);
 // process.setIntegratorStrategy(new ExplicitEulerIntegrator()); // explicit default
 // process.setIntegratorStrategy(null);  // reset to default ExplicitEulerIntegrator
 IntegratorStrategy current = process.getIntegratorStrategy();
@@ -558,12 +579,15 @@ IntegratorStrategy current = process.getIntegratorStrategy();
 For multi-area plants the strategy is propagated to every child area:
 `plant.setIntegratorStrategy(new BDFIntegrator())`.
 
+A professional stiff-solver acceptance path must fail loudly or expose explicit
+fallback diagnostics; silent fallback is not an acceptable qualification result.
+
 ## Event Scheduling (ESD, IOA, setpoint changes)
 
 Time-stamped events (ESD trips, valve closures, setpoint ramps) are managed by
-`EventScheduler` in `neqsim.process.dynamics`. Every call to
-`runTransient(dt, id)` fires events with `time <= currentTime` at the top of
-the step, before equipment runs.
+`EventScheduler` in `neqsim.process.dynamics`. `ProcessSystem.runTransient(dt, id)`
+advances the process clock, then fires events with `time <= currentTime` before
+equipment runs.
 
 ```java
 import neqsim.process.dynamics.EventScheduler;
@@ -578,12 +602,30 @@ events.scheduleEvent(300.0, "Setpoint ramp", new Runnable() {
 process.setEventScheduler(events);
 
 for (int i = 0; i < nSteps; i++) {
-  process.runTransient(dt);   // due events fire automatically
+  process.runTransient(dt);   // fresh physical-step ID; due events fire automatically
 }
 
 int fired = events.getFiredEvents().size();
 int pending = events.getPendingEvents().size();
 ```
+
+For event-aware/adaptive work, inspect event state without mutating it and
+checkpoint scheduler bookkeeping explicitly:
+
+```java
+EventScheduler.Snapshot eventState = events.snapshot();
+double nextEventTime = events.getNextEventTime();
+java.util.List<EventScheduler.ScheduledEvent> due = events.getDueEvents(process.getTime());
+
+// If a trial is rejected, restore pending/fired membership.
+events.restore(eventState);
+```
+
+`restore(...)` restores only scheduler pending/fired membership. It cannot undo
+an already executed `Runnable` side effect. A rejected trial must defer external
+actions until acceptance or restore every object those actions mutate as part of
+the same transaction. This is required before safety/OTS event replay can be
+called transactional.
 
 For multi-area plants install the scheduler once on the `ProcessModel`; it is
 propagated to every child area, and `plant.runTransient(dt, id)` advances all
@@ -597,6 +639,8 @@ plant.runTransient(dt, java.util.UUID.randomUUID());
 **Note**: `EventScheduler` is declared `transient` on `ProcessSystem` because
 event `Runnable` payloads (lambdas, anonymous classes) are usually not
 serializable. Re-install the scheduler after deserialising a saved process.
+`EventScheduler.Snapshot` itself can be serialized when its event actions are
+serializable, which is useful for explicit checkpoint/restart coordination.
 
 ## New Measurement Devices (v3.11)
 

@@ -1,6 +1,5 @@
 package neqsim.process.safety.scenario;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -8,6 +7,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.dynamics.TransientStepIdentifier;
 import neqsim.process.logic.ProcessLogic;
 import neqsim.process.processmodel.ProcessSystem;
 
@@ -46,7 +46,7 @@ public final class DynamicSafetyScenarioRunner {
 
     double time = 0.0;
     boolean triggered = false;
-    UUID simulationId = UUID.nameUUIDFromBytes(scenario.getId().getBytes(StandardCharsets.UTF_8));
+    long physicalStepIndex = 0L;
     while (errors.isEmpty() && time <= scenario.getDurationSeconds() + 1.0e-9) {
       if (!triggered && time + 1.0e-9 >= scenario.getTriggerTimeSeconds()) {
         scenario.getInitiatingEvent().apply(process);
@@ -67,10 +67,12 @@ public final class DynamicSafetyScenarioRunner {
         break;
       }
       try {
-        process.runTransient(scenario.getTimeStepSeconds(), simulationId);
+        UUID physicalStepId = TransientStepIdentifier.deterministicPhysicalStep(scenario.getId(), physicalStepIndex);
+        process.runTransient(scenario.getTimeStepSeconds(), physicalStepId);
       } catch (RuntimeException ex) {
         errors.add("Transient simulation failed at " + time + " s: " + failureMessage(ex));
       }
+      physicalStepIndex++;
       time += scenario.getTimeStepSeconds();
     }
 

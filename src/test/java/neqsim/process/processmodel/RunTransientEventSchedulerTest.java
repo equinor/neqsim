@@ -15,6 +15,7 @@ import neqsim.process.dynamics.BDFIntegrator;
 import neqsim.process.dynamics.EventScheduler;
 import neqsim.process.dynamics.ExplicitEulerIntegrator;
 import neqsim.process.dynamics.IntegratorStrategy;
+import neqsim.process.dynamics.TransientStepIdentifier;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
@@ -87,15 +88,16 @@ public class RunTransientEventSchedulerTest {
       }
     });
 
-    UUID id = UUID.randomUUID();
-    // Step 1 → t=0.5, Step 2 → t=1.0, Step 3 → t=1.5 (event due), Step 4 → t=2.0
-    p.runTransient(0.5, id);
+    // Step 1 → t=0.5, Step 2 → t=1.0, Step 3 → t=1.5 (event due), Step 4 → t=2.0.
+    // Each physical step has its own identifier; one identifier is only reused for
+    // refinement/evaluation work inside that physical step.
+    p.runTransient(0.5, TransientStepIdentifier.deterministicPhysicalStep("event-fire", 0L));
     assertEquals(0, count.get(), "Event must not fire before its time");
-    p.runTransient(0.5, id);
+    p.runTransient(0.5, TransientStepIdentifier.deterministicPhysicalStep("event-fire", 1L));
     assertEquals(0, count.get(), "Event must not fire before its time");
-    p.runTransient(0.5, id);
+    p.runTransient(0.5, TransientStepIdentifier.deterministicPhysicalStep("event-fire", 2L));
     assertEquals(1, count.get(), "Event must fire when current time reaches 1.5s");
-    p.runTransient(0.5, id);
+    p.runTransient(0.5, TransientStepIdentifier.deterministicPhysicalStep("event-fire", 3L));
     assertEquals(1, count.get(), "Event must fire only once");
 
     assertEquals(1, s.getFiredEvents().size());
@@ -119,6 +121,73 @@ public class RunTransientEventSchedulerTest {
     });
     p.runTransient(0.5, UUID.randomUUID());
     assertTrue(fired[0], "Runnable payload must execute inside runTransient");
+  }
+
+  /**
+   * A failing safety/operator event must abort the ProcessSystem physical-step attempt before equipment and process
+   * calculation identifiers are committed. The already-advanced process clock documents the remaining whole-step
+   * transaction gap and should be rolled back by the future #2911 transaction layer.
+   */
+  @Test
+  public void testEventFailureAbortsProcessStepBeforeEquipmentCommit() {
+    ProcessSystem p = buildMinimalProcess();
+    EventScheduler s = new EventScheduler();
+    p.setEventScheduler(s);
+    UUID previousProcessIdentifier = p.getCalculationIdentifier();
+    UUID previousSeparatorIdentifier = p.getUnit("sep").getCalculationIdentifier();
+    UUID failedPhysicalStep = TransientStepIdentifier.deterministicPhysicalStep("failed-event", 0L);
+
+    s.scheduleEvent(0.5, "failed trip", new Runnable() {
+      @Override
+      public void run() {
+        throw new IllegalStateException("trip actuator failed");
+      }
+    });
+
+    IllegalStateException failure = assertThrows(IllegalStateException.class,
+        () -> p.runTransient(0.5, failedPhysicalStep));
+
+    assertEquals("trip actuator failed", failure.getMessage());
+    assertEquals(1, s.getPendingEvents().size(), "failed event must remain retryable");
+    assertEquals(0, s.getFiredEvents().size(), "failed event must not be recorded as successfully fired");
+    assertEquals(previousProcessIdentifier, p.getCalculationIdentifier(),
+        "failed physical step must not commit the ProcessSystem calculation identifier");
+    assertEquals(previousSeparatorIdentifier, p.getUnit("sep").getCalculationIdentifier(),
+        "event failure occurs before equipment execution and must not commit the separator identifier");
+    assertEquals(0.5, p.getTime(), 0.0,
+        "current ProcessSystem still advances its clock before event execution; whole-step rollback remains required");
+  }
+
+  /**
+   * A shared failing event must propagate out of multi-area ProcessModel execution instead of allowing later areas to
+   * continue. The first area's already-advanced clock records the remaining model-wide transaction requirement.
+   */
+  @Test
+  public void testEventFailureStopsLaterProcessModelAreas() {
+    ProcessSystem firstArea = new ProcessSystem("first area");
+    ProcessSystem secondArea = new ProcessSystem("second area");
+    ProcessModel plant = new ProcessModel();
+    plant.add("first", firstArea);
+    plant.add("second", secondArea);
+
+    EventScheduler shared = new EventScheduler();
+    plant.setEventScheduler(shared);
+    shared.scheduleEvent(0.5, "failed shared trip", new Runnable() {
+      @Override
+      public void run() {
+        throw new IllegalStateException("shared trip failed");
+      }
+    });
+
+    IllegalStateException failure = assertThrows(IllegalStateException.class,
+        () -> plant.runTransient(0.5, TransientStepIdentifier.deterministicPhysicalStep("failed-model-event", 0L)));
+
+    assertEquals("shared trip failed", failure.getMessage());
+    assertEquals(0.5, firstArea.getTime(), 0.0,
+        "first area currently advances before the shared event failure; model-wide rollback remains required");
+    assertEquals(0.0, secondArea.getTime(), 0.0, "later areas must not continue after a failed shared event");
+    assertEquals(1, shared.getPendingEvents().size());
+    assertEquals(0, shared.getFiredEvents().size());
   }
 
   /**
@@ -314,9 +383,9 @@ public class RunTransientEventSchedulerTest {
     plant.add("first", firstArea);
     plant.add("second", secondArea);
 
-    UUID stepIdentifier = UUID.randomUUID();
     for (int step = 1; step <= 4; step++) {
-      plant.runTransient(0.25, stepIdentifier);
+      UUID physicalStepId = TransientStepIdentifier.deterministicPhysicalStep("aligned-model", step - 1L);
+      plant.runTransient(0.25, physicalStepId);
       assertEquals(step * 0.25, firstArea.getTime(), 0.0);
       assertEquals(firstArea.getTime(), secondArea.getTime(), 0.0);
     }
