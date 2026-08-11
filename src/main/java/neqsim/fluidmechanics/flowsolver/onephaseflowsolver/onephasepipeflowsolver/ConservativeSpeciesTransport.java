@@ -261,8 +261,9 @@ final class ConservativeSpeciesTransport {
         + ": maximum relative component inventory residual=" + maximumRelativeResidual + " (tolerance "
         + INVENTORY_RELATIVE_TOLERANCE + "), mass-fraction range=[" + minimumMassFraction + ", " + maximumMassFraction
         + "], maximum sum error=" + maximumSumError + " (tolerance " + MASS_FRACTION_TOLERANCE + ").";
-    return new OnePhaseSpeciesConservationReport(reason, componentNames, massFraction, initialInventory, finalInventory,
-        inletMass, outletMass, residual, relativeResidual, maximumRelativeResidual, minimumMassFraction,
+    return new OnePhaseSpeciesConservationReport(reason, componentNames, massFraction, newCellMassKg,
+        initialInventory, finalInventory, inletMass, outletMass, residual, relativeResidual, maximumRelativeResidual,
+        minimumMassFraction,
         maximumMassFraction, maximumSumError, Double.NaN, diagnostics, message);
   }
 
@@ -540,8 +541,8 @@ final class ConservativeSpeciesTransport {
 
   private static OnePhaseSpeciesConservationReport failed(ConservationReason reason, String[] componentNames,
       String message) {
-    return new OnePhaseSpeciesConservationReport(reason, componentNames, new double[0][0], new double[0], new double[0],
-        new double[0], new double[0], new double[0], new double[0], Double.NaN, Double.NaN, Double.NaN, Double.NaN,
-        Double.NaN, message);
+    return new OnePhaseSpeciesConservationReport(reason, componentNames, new double[0][0], new double[0],
+        new double[0], new double[0], new double[0], new double[0], new double[0], new double[0], Double.NaN,
+        Double.NaN, Double.NaN, Double.NaN, Double.NaN, message);
   }
 }
