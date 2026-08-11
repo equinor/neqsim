@@ -49,6 +49,8 @@ public final class OnePhaseSpeciesConservationReport implements Serializable {
   private final ConservationReason reason;
   private final String[] componentNames;
   private final double[][] massFractionProfile;
+  private final double[] finalCellInventoryKg;
+  private final double[][] finalComponentCellInventoryKg;
   private final double[] initialInventoryKg;
   private final double[] finalInventoryKg;
   private final double[] inletBoundaryMassKg;
@@ -68,38 +70,43 @@ public final class OnePhaseSpeciesConservationReport implements Serializable {
   private final String message;
 
   OnePhaseSpeciesConservationReport(ConservationReason reason, String[] componentNames, double[][] massFractionProfile,
-      double[] initialInventoryKg, double[] finalInventoryKg, double[] inletBoundaryMassKg,
-      double[] outletBoundaryMassKg, double[] inventoryResidualKg, double[] relativeInventoryResidual,
-      double maximumRelativeInventoryResidual, double minimumMassFraction, double maximumMassFraction,
-      double maximumMassFractionSumError, double maximumThermodynamicMassFractionError, String message) {
-    this(reason, componentNames, massFractionProfile, initialInventoryKg, finalInventoryKg, inletBoundaryMassKg,
-        outletBoundaryMassKg, inventoryResidualKg, relativeInventoryResidual, maximumRelativeInventoryResidual,
-        minimumMassFraction, maximumMassFraction, maximumMassFractionSumError, maximumThermodynamicMassFractionError,
-        SpeciesTransportDiagnostics.notRun(), message);
-  }
-
-  OnePhaseSpeciesConservationReport(ConservationReason reason, String[] componentNames, double[][] massFractionProfile,
-      double[] initialInventoryKg, double[] finalInventoryKg, double[] inletBoundaryMassKg,
-      double[] outletBoundaryMassKg, double[] inventoryResidualKg, double[] relativeInventoryResidual,
-      double maximumRelativeInventoryResidual, double minimumMassFraction, double maximumMassFraction,
-      double maximumMassFractionSumError, double maximumThermodynamicMassFractionError,
-      SpeciesTransportDiagnostics transportDiagnostics, String message) {
-    this(reason, componentNames, massFractionProfile, initialInventoryKg, finalInventoryKg, inletBoundaryMassKg,
-        outletBoundaryMassKg, inventoryResidualKg, relativeInventoryResidual, maximumRelativeInventoryResidual,
-        minimumMassFraction, maximumMassFraction, maximumMassFractionSumError, maximumThermodynamicMassFractionError, 0,
-        new double[0], new double[0], transportDiagnostics, message);
-  }
-
-  private OnePhaseSpeciesConservationReport(ConservationReason reason, String[] componentNames,
-      double[][] massFractionProfile, double[] initialInventoryKg, double[] finalInventoryKg,
+      double[] finalCellInventoryKg, double[] initialInventoryKg, double[] finalInventoryKg,
       double[] inletBoundaryMassKg, double[] outletBoundaryMassKg, double[] inventoryResidualKg,
       double[] relativeInventoryResidual, double maximumRelativeInventoryResidual, double minimumMassFraction,
       double maximumMassFraction, double maximumMassFractionSumError, double maximumThermodynamicMassFractionError,
-      int couplingIterations, double[] maximumMassFractionChangeHistory, double[] densityResidualHistory,
+      String message) {
+    this(reason, componentNames, massFractionProfile, finalCellInventoryKg, initialInventoryKg, finalInventoryKg,
+        inletBoundaryMassKg, outletBoundaryMassKg, inventoryResidualKg, relativeInventoryResidual,
+        maximumRelativeInventoryResidual, minimumMassFraction, maximumMassFraction, maximumMassFractionSumError,
+        maximumThermodynamicMassFractionError, SpeciesTransportDiagnostics.notRun(), message);
+  }
+
+  OnePhaseSpeciesConservationReport(ConservationReason reason, String[] componentNames, double[][] massFractionProfile,
+      double[] finalCellInventoryKg, double[] initialInventoryKg, double[] finalInventoryKg,
+      double[] inletBoundaryMassKg, double[] outletBoundaryMassKg, double[] inventoryResidualKg,
+      double[] relativeInventoryResidual, double maximumRelativeInventoryResidual, double minimumMassFraction,
+      double maximumMassFraction, double maximumMassFractionSumError, double maximumThermodynamicMassFractionError,
+      SpeciesTransportDiagnostics transportDiagnostics, String message) {
+    this(reason, componentNames, massFractionProfile, finalCellInventoryKg, initialInventoryKg, finalInventoryKg,
+        inletBoundaryMassKg, outletBoundaryMassKg, inventoryResidualKg, relativeInventoryResidual,
+        maximumRelativeInventoryResidual, minimumMassFraction, maximumMassFraction, maximumMassFractionSumError,
+        maximumThermodynamicMassFractionError, 0, new double[0], new double[0], transportDiagnostics, message);
+  }
+
+  private OnePhaseSpeciesConservationReport(ConservationReason reason, String[] componentNames,
+      double[][] massFractionProfile, double[] finalCellInventoryKg, double[] initialInventoryKg,
+      double[] finalInventoryKg, double[] inletBoundaryMassKg, double[] outletBoundaryMassKg,
+      double[] inventoryResidualKg, double[] relativeInventoryResidual, double maximumRelativeInventoryResidual,
+      double minimumMassFraction, double maximumMassFraction, double maximumMassFractionSumError,
+      double maximumThermodynamicMassFractionError, int couplingIterations,
+      double[] maximumMassFractionChangeHistory, double[] densityResidualHistory,
       SpeciesTransportDiagnostics transportDiagnostics, String message) {
     this.reason = reason;
     this.componentNames = copy(componentNames);
     this.massFractionProfile = copy(massFractionProfile);
+    this.finalCellInventoryKg = copy(finalCellInventoryKg);
+    this.finalComponentCellInventoryKg =
+        componentCellInventory(this.massFractionProfile, this.finalCellInventoryKg);
     this.initialInventoryKg = copy(initialInventoryKg);
     this.finalInventoryKg = copy(finalInventoryKg);
     this.inletBoundaryMassKg = copy(inletBoundaryMassKg);
@@ -126,8 +133,9 @@ public final class OnePhaseSpeciesConservationReport implements Serializable {
    */
   public static OnePhaseSpeciesConservationReport notRun() {
     return new OnePhaseSpeciesConservationReport(ConservationReason.NOT_RUN, new String[0], new double[0][0],
-        new double[0], new double[0], new double[0], new double[0], new double[0], new double[0], Double.NaN,
-        Double.NaN, Double.NaN, Double.NaN, Double.NaN, "Conservative species transport has not run.");
+        new double[0], new double[0], new double[0], new double[0], new double[0], new double[0], new double[0],
+        Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN,
+        "Conservative species transport has not run.");
   }
 
   /** @return reason why transport stopped */
@@ -148,6 +156,16 @@ public final class OnePhaseSpeciesConservationReport implements Serializable {
   /** @return defensive copy of component-by-cell mass fractions */
   public double[][] getMassFractionProfile() {
     return copy(massFractionProfile);
+  }
+
+  /** @return defensive copy of final total inventory by physical finite-volume cell in kg */
+  public double[] getFinalCellInventoryKg() {
+    return copy(finalCellInventoryKg);
+  }
+
+  /** @return defensive copy of final component-by-cell inventories in kg */
+  public double[][] getFinalComponentCellInventoryKg() {
+    return copy(finalComponentCellInventoryKg);
   }
 
   /** @return defensive copy of previous-time component inventories in kg */
@@ -250,8 +268,8 @@ public final class OnePhaseSpeciesConservationReport implements Serializable {
     }
     String updatedMessage = message + " Thermodynamic mass-fraction synchronization error=" + maximumError
         + " (tolerance " + tolerance + ").";
-    return new OnePhaseSpeciesConservationReport(updatedReason, componentNames, massFractionProfile, initialInventoryKg,
-        finalInventoryKg, inletBoundaryMassKg, outletBoundaryMassKg, inventoryResidualKg, relativeInventoryResidual,
+    return new OnePhaseSpeciesConservationReport(updatedReason, componentNames, massFractionProfile, finalCellInventoryKg,
+        initialInventoryKg, finalInventoryKg, inletBoundaryMassKg, outletBoundaryMassKg, inventoryResidualKg, relativeInventoryResidual,
         maximumRelativeInventoryResidual, minimumMassFraction, maximumMassFraction, maximumMassFractionSumError,
         maximumError, couplingIterations, maximumMassFractionChangeHistory, densityResidualHistory,
         transportDiagnostics, updatedMessage);
@@ -260,19 +278,38 @@ public final class OnePhaseSpeciesConservationReport implements Serializable {
   OnePhaseSpeciesConservationReport withCouplingDiagnostics(int iterations, double[] massFractionChangeHistory,
       double[] eosDensityResidualHistory) {
     String updatedMessage = message + " Hydraulic/species fixed point iterations=" + iterations + ".";
-    return new OnePhaseSpeciesConservationReport(reason, componentNames, massFractionProfile, initialInventoryKg,
-        finalInventoryKg, inletBoundaryMassKg, outletBoundaryMassKg, inventoryResidualKg, relativeInventoryResidual,
+    return new OnePhaseSpeciesConservationReport(reason, componentNames, massFractionProfile, finalCellInventoryKg,
+        initialInventoryKg, finalInventoryKg, inletBoundaryMassKg, outletBoundaryMassKg, inventoryResidualKg, relativeInventoryResidual,
         maximumRelativeInventoryResidual, minimumMassFraction, maximumMassFraction, maximumMassFractionSumError,
         maximumThermodynamicMassFractionError, iterations, massFractionChangeHistory, eosDensityResidualHistory,
         transportDiagnostics, updatedMessage);
   }
 
   OnePhaseSpeciesConservationReport withReason(ConservationReason updatedReason, String updatedMessage) {
-    return new OnePhaseSpeciesConservationReport(updatedReason, componentNames, massFractionProfile, initialInventoryKg,
-        finalInventoryKg, inletBoundaryMassKg, outletBoundaryMassKg, inventoryResidualKg, relativeInventoryResidual,
+    return new OnePhaseSpeciesConservationReport(updatedReason, componentNames, massFractionProfile, finalCellInventoryKg,
+        initialInventoryKg, finalInventoryKg, inletBoundaryMassKg, outletBoundaryMassKg, inventoryResidualKg, relativeInventoryResidual,
         maximumRelativeInventoryResidual, minimumMassFraction, maximumMassFraction, maximumMassFractionSumError,
         maximumThermodynamicMassFractionError, couplingIterations, maximumMassFractionChangeHistory,
         densityResidualHistory, transportDiagnostics, updatedMessage);
+  }
+
+  private static double[][] componentCellInventory(double[][] massFractionProfile,
+      double[] finalCellInventoryKg) {
+    if (massFractionProfile.length == 0 || finalCellInventoryKg.length == 0) {
+      return new double[0][0];
+    }
+    double[][] inventory = new double[massFractionProfile.length][finalCellInventoryKg.length];
+    for (int component = 0; component < massFractionProfile.length; component++) {
+      if (massFractionProfile[component].length != finalCellInventoryKg.length) {
+        throw new IllegalArgumentException(
+            "Mass-fraction and cell-inventory profiles must have identical physical-cell dimensions.");
+      }
+      for (int cell = 0; cell < finalCellInventoryKg.length; cell++) {
+        inventory[component][cell] =
+            massFractionProfile[component][cell] * finalCellInventoryKg[cell];
+      }
+    }
+    return inventory;
   }
 
   private static double[] copy(double[] values) {
