@@ -559,10 +559,6 @@ public final class DynamicCapabilityReport implements Serializable {
   private static void addExecutionIssues(String areaName, String containerPath, ProcessSystem process,
       List<String> executionIssues) {
     String processName = qualifiedProcessName(areaName, containerPath, process);
-    if (process.isParallelTransientEnabled()) {
-      executionIssues.add(processName
-          + " enables parallel transient execution, whose equipment worker failures are not yet fail-loud; disable parallel transient mode for strict qualification until worker failures propagate and whole-step rollback exists");
-    }
     if (process.isAdaptiveTimestepEnabled()) {
       executionIssues.add(processName
           + " enables adaptive transient execution, but runTransientAdaptive currently mutates one full step and adjusts a following timestep without rejected-step rollback or full-step/two-half-step error estimation");
