@@ -813,6 +813,301 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     }
   }
 
+  /** Evidence flags retained for one local objective/constraint sensitivity pair. */
+  public enum SensitivityEvidenceFlag {
+    /** The base process simulation did not converge. */
+    BASE_NOT_CONVERGED,
+    /** The base point violated at least one registered hard constraint. */
+    BASE_INFEASIBLE,
+    /** The base evaluation reported an exception or other error. */
+    BASE_EVALUATION_ERROR,
+    /** At least one finite-difference perturbation did not converge. */
+    PERTURBATION_NOT_CONVERGED,
+    /** At least one finite-difference perturbation violated a registered hard constraint. */
+    PERTURBATION_INFEASIBLE,
+    /** At least one finite-difference perturbation reported an evaluation error. */
+    PERTURBATION_EVALUATION_ERROR,
+    /** The returned objective or constraint-margin derivative is not finite. */
+    NON_FINITE_DERIVATIVE,
+    /** Coarse and fine derivatives do not meet the declared relative tolerance. */
+    NUMERICALLY_UNSTABLE,
+    /** A forward or backward stencil was used instead of a two-sided central stencil. */
+    ONE_SIDED_STENCIL,
+    /** The parameter has equal lower and upper bounds and cannot be perturbed. */
+    FIXED_PARAMETER
+  }
+
+  /**
+   * Immutable policy for qualifying local objective/constraint sensitivity evidence.
+   *
+   * <p>
+   * Convergence, finite derivatives, finite coarse/fine comparisons, numerical stability, and a perturbable decision
+   * variable are always required. Callers explicitly decide whether an infeasible base point, infeasible perturbations,
+   * or a one-sided stencil is acceptable for their engineering use case.
+   * </p>
+   */
+  public static final class SensitivityQualificationPolicy implements Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1L;
+
+    /** Maximum accepted relative disagreement between coarse and fine derivatives. */
+    private final double relativeTolerance;
+
+    /** Whether the sampled base point must satisfy every registered hard constraint. */
+    private final boolean requireBaseFeasible;
+
+    /** Whether every perturbation must satisfy every registered hard constraint. */
+    private final boolean requirePerturbationsFeasible;
+
+    /** Whether forward and backward stencils are accepted. */
+    private final boolean allowOneSidedStencil;
+
+    /**
+     * Creates an explicit qualification policy.
+     *
+     * @param relativeTolerance finite non-negative coarse/fine disagreement limit
+     * @param requireBaseFeasible whether the base point must satisfy hard constraints
+     * @param requirePerturbationsFeasible whether every perturbation must satisfy hard constraints
+     * @param allowOneSidedStencil whether forward/backward stencils are acceptable
+     */
+    public SensitivityQualificationPolicy(double relativeTolerance, boolean requireBaseFeasible,
+        boolean requirePerturbationsFeasible, boolean allowOneSidedStencil) {
+      if (!Double.isFinite(relativeTolerance) || relativeTolerance < 0.0) {
+        throw new IllegalArgumentException("Relative tolerance must be finite and non-negative");
+      }
+      this.relativeTolerance = relativeTolerance;
+      this.requireBaseFeasible = requireBaseFeasible;
+      this.requirePerturbationsFeasible = requirePerturbationsFeasible;
+      this.allowOneSidedStencil = allowOneSidedStencil;
+    }
+
+    /**
+     * Creates a strict feasible-region policy that accepts one-sided stencils.
+     *
+     * @param relativeTolerance finite non-negative coarse/fine disagreement limit
+     * @return strict qualification policy
+     */
+    public static SensitivityQualificationPolicy strict(double relativeTolerance) {
+      return new SensitivityQualificationPolicy(relativeTolerance, true, true, true);
+    }
+
+    /**
+     * Creates a numerical-evidence policy that retains infeasible samples and one-sided stencils.
+     *
+     * <p>
+     * Infeasibility and stencil evidence remain visible as flags even when this policy does not reject them.
+     * </p>
+     *
+     * @param relativeTolerance finite non-negative coarse/fine disagreement limit
+     * @return numerical-only qualification policy
+     */
+    public static SensitivityQualificationPolicy numericalOnly(double relativeTolerance) {
+      return new SensitivityQualificationPolicy(relativeTolerance, false, false, true);
+    }
+
+    /** @return maximum accepted relative disagreement */
+    public double getRelativeTolerance() {
+      return relativeTolerance;
+    }
+
+    /** @return true when the base point must satisfy hard constraints */
+    public boolean isBaseFeasibleRequired() {
+      return requireBaseFeasible;
+    }
+
+    /** @return true when every perturbation must satisfy hard constraints */
+    public boolean arePerturbationsFeasibleRequired() {
+      return requirePerturbationsFeasible;
+    }
+
+    /** @return true when forward and backward stencils are allowed */
+    public boolean isOneSidedStencilAllowed() {
+      return allowOneSidedStencil;
+    }
+  }
+
+  /**
+   * Immutable qualification of one constraint-margin derivative with respect to one decision variable.
+   *
+   * <p>
+   * The assessment retains raw engineering units and is local to the sampled operating point. It is not a ranking,
+   * global sensitivity, KKT multiplier, economic shadow price, or process-safety approval.
+   * </p>
+   */
+  public static final class ConstraintSensitivityAssessment implements Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1L;
+
+    /** Immutable constraint identity and base state. */
+    private final SensitivityConstraintSnapshot constraint;
+
+    /** Immutable decision-variable identity and base state. */
+    private final SensitivityParameterSnapshot parameter;
+
+    /** Immutable selected-objective identity and base state. */
+    private final SensitivityObjectiveSnapshot objective;
+
+    /** Actual bounded finite-difference stencil. */
+    private final AppliedFiniteDifferenceStencil stencil;
+
+    /** Objective derivative in minimizer sign convention. */
+    private final double minimizerObjectiveDerivative;
+
+    /** Objective derivative in the declared raw objective direction. */
+    private final double rawObjectiveDerivative;
+
+    /** Constraint-margin derivative. */
+    private final double marginDerivative;
+
+    /** Coarse/fine relative disagreement for the selected objective derivative. */
+    private final double objectiveRelativeDisagreement;
+
+    /** Coarse/fine relative disagreement for this constraint-margin derivative. */
+    private final double constraintRelativeDisagreement;
+
+    /** Complete evidence flags, including policy-accepted cautions. */
+    private final List<SensitivityEvidenceFlag> evidenceFlags;
+
+    /** Evidence flags that reject this pair under the selected policy. */
+    private final List<SensitivityEvidenceFlag> rejectionReasons;
+
+    /** Human-readable evidence and policy diagnostics. */
+    private final List<String> diagnostics;
+
+    /** Creates one immutable local assessment. */
+    private ConstraintSensitivityAssessment(SensitivityConstraintSnapshot constraint,
+        SensitivityParameterSnapshot parameter, SensitivityObjectiveSnapshot objective,
+        AppliedFiniteDifferenceStencil stencil, double minimizerObjectiveDerivative, double rawObjectiveDerivative,
+        double marginDerivative, double objectiveRelativeDisagreement, double constraintRelativeDisagreement,
+        List<SensitivityEvidenceFlag> evidenceFlags, List<SensitivityEvidenceFlag> rejectionReasons,
+        List<String> diagnostics) {
+      this.constraint = constraint;
+      this.parameter = parameter;
+      this.objective = objective;
+      this.stencil = stencil;
+      this.minimizerObjectiveDerivative = minimizerObjectiveDerivative;
+      this.rawObjectiveDerivative = rawObjectiveDerivative;
+      this.marginDerivative = marginDerivative;
+      this.objectiveRelativeDisagreement = objectiveRelativeDisagreement;
+      this.constraintRelativeDisagreement = constraintRelativeDisagreement;
+      this.evidenceFlags = Collections.unmodifiableList(new ArrayList<SensitivityEvidenceFlag>(evidenceFlags));
+      this.rejectionReasons = Collections.unmodifiableList(new ArrayList<SensitivityEvidenceFlag>(rejectionReasons));
+      this.diagnostics = Collections.unmodifiableList(new ArrayList<String>(diagnostics));
+    }
+
+    /** @return immutable constraint identity and base state */
+    public SensitivityConstraintSnapshot getConstraint() {
+      return constraint;
+    }
+
+    /** @return immutable decision-variable identity and base state */
+    public SensitivityParameterSnapshot getParameter() {
+      return parameter;
+    }
+
+    /** @return immutable selected-objective identity and base state */
+    public SensitivityObjectiveSnapshot getObjective() {
+      return objective;
+    }
+
+    /** @return actual bounded finite-difference stencil */
+    public AppliedFiniteDifferenceStencil getStencil() {
+      return stencil;
+    }
+
+    /** @return objective derivative in minimizer sign convention */
+    public double getMinimizerObjectiveDerivative() {
+      return minimizerObjectiveDerivative;
+    }
+
+    /** @return objective derivative before minimize/maximize sign conversion */
+    public double getRawObjectiveDerivative() {
+      return rawObjectiveDerivative;
+    }
+
+    /** @return derivative of constraint margin with respect to the decision variable */
+    public double getMarginDerivative() {
+      return marginDerivative;
+    }
+
+    /** @return objective derivative coarse/fine relative disagreement */
+    public double getObjectiveRelativeDisagreement() {
+      return objectiveRelativeDisagreement;
+    }
+
+    /** @return this constraint derivative's coarse/fine relative disagreement */
+    public double getConstraintRelativeDisagreement() {
+      return constraintRelativeDisagreement;
+    }
+
+    /**
+     * Gets the declared raw-objective derivative unit.
+     *
+     * @return objective unit per parameter unit, or null when either unit is missing
+     */
+    public String getRawObjectiveDerivativeUnit() {
+      return derivativeUnit(objective.getUnit(), parameter.getUnit());
+    }
+
+    /**
+     * Gets the declared constraint-margin derivative unit.
+     *
+     * @return constraint unit per parameter unit, or null when either unit is missing
+     */
+    public String getMarginDerivativeUnit() {
+      return derivativeUnit(constraint.getUnit(), parameter.getUnit());
+    }
+
+    /** @return complete evidence flags, including policy-accepted cautions */
+    public List<SensitivityEvidenceFlag> getEvidenceFlags() {
+      return evidenceFlags;
+    }
+
+    /** @return evidence flags that reject this pair under the selected policy */
+    public List<SensitivityEvidenceFlag> getRejectionReasons() {
+      return rejectionReasons;
+    }
+
+    /** @return human-readable evidence and policy diagnostics */
+    public List<String> getDiagnostics() {
+      return diagnostics;
+    }
+
+    /** @return true when no evidence flag rejects this pair under the selected policy */
+    public boolean isAccepted() {
+      return rejectionReasons.isEmpty();
+    }
+
+    /** @return true when increasing the parameter reduces the local constraint margin */
+    public boolean isMarginReducedByIncreasingParameter() {
+      return Double.isFinite(marginDerivative) && marginDerivative < 0.0;
+    }
+
+    /**
+     * Checks whether increasing the parameter improves the declared raw objective locally.
+     *
+     * @return true for a positive derivative of a maximized objective or a negative derivative of a minimized one
+     */
+    public boolean isRawObjectiveImprovedByIncreasingParameter() {
+      if (!Double.isFinite(rawObjectiveDerivative)) {
+        return false;
+      }
+      return objective.getDirection() == ObjectiveDefinition.Direction.MAXIMIZE ? rawObjectiveDerivative > 0.0
+          : rawObjectiveDerivative < 0.0;
+    }
+
+    /**
+     * Builds a readable derivative unit without attempting unit conversion or dimensional simplification.
+     */
+    private static String derivativeUnit(String numeratorUnit, String denominatorUnit) {
+      if (numeratorUnit == null || numeratorUnit.trim().isEmpty() || denominatorUnit == null
+          || denominatorUnit.trim().isEmpty()) {
+        return null;
+      }
+      return numeratorUnit + " per " + denominatorUnit;
+    }
+  }
+
   /** Immutable self-describing objective gradient, constraint Jacobian, and quality evidence. */
   public static final class SensitivityQualityResult implements Serializable {
     /** Serialization version UID. */
@@ -949,6 +1244,158 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      */
     public List<SensitivityConstraintSnapshot> getConstraintSnapshots() {
       return constraintSnapshots;
+    }
+
+    /**
+     * Qualifies every local constraint/parameter sensitivity using an explicit evidence policy.
+     *
+     * <p>
+     * Results are ordered constraint-major and then parameter-major. Every pair retains complete evidence flags even
+     * when the policy accepts a caution such as an infeasible perturbation or a bound-driven one-sided stencil. No
+     * process simulation is performed by this method; it consumes only this immutable sensitivity result.
+     * </p>
+     *
+     * <p>
+     * Accepted pairs remain local derivatives in their declared raw units. The method does not compare unlike
+     * constraints, infer an active set, calculate a KKT multiplier or shadow price, or establish engineering validity
+     * outside the sampled base and perturbation points.
+     * </p>
+     *
+     * @param policy explicit numerical and feasible-region qualification policy
+     * @return immutable assessments for every constraint/parameter pair
+     */
+    public List<ConstraintSensitivityAssessment> assessConstraintSensitivities(SensitivityQualificationPolicy policy) {
+      if (policy == null) {
+        throw new IllegalArgumentException("Sensitivity qualification policy must not be null");
+      }
+      List<ConstraintSensitivityAssessment> assessments = new ArrayList<ConstraintSensitivityAssessment>();
+      for (int constraintIndex = 0; constraintIndex < constraintSnapshots.size(); constraintIndex++) {
+        SensitivityConstraintSnapshot constraint = constraintSnapshots.get(constraintIndex);
+        for (int parameterIndex = 0; parameterIndex < parameterSnapshots.size(); parameterIndex++) {
+          SensitivityParameterSnapshot parameter = parameterSnapshots.get(parameterIndex);
+          ParameterSensitivityQuality quality = parameterQuality.get(parameterIndex);
+          double objectiveDerivative = objectiveGradient[parameterIndex];
+          double rawObjectiveDerivative = objectiveSnapshot.getDirection() == ObjectiveDefinition.Direction.MAXIMIZE
+              ? -objectiveDerivative
+              : objectiveDerivative;
+          double marginDerivative = constraintJacobian[constraintIndex][parameterIndex];
+          double objectiveDisagreement = quality.getObjectiveRelativeDisagreement();
+          double constraintDisagreement = quality.getConstraintRelativeDisagreement()[constraintIndex];
+          List<SensitivityEvidenceFlag> flags = new ArrayList<SensitivityEvidenceFlag>();
+          List<SensitivityEvidenceFlag> rejections = new ArrayList<SensitivityEvidenceFlag>();
+          List<String> diagnostics = new ArrayList<String>();
+
+          if (!baseSimulationConverged) {
+            flags.add(SensitivityEvidenceFlag.BASE_NOT_CONVERGED);
+            rejections.add(SensitivityEvidenceFlag.BASE_NOT_CONVERGED);
+            diagnostics.add("Base process simulation did not converge");
+          }
+          if (!baseFeasible) {
+            flags.add(SensitivityEvidenceFlag.BASE_INFEASIBLE);
+            diagnostics.add("Base point violates at least one registered hard constraint");
+            if (policy.isBaseFeasibleRequired()) {
+              rejections.add(SensitivityEvidenceFlag.BASE_INFEASIBLE);
+            }
+          }
+          if (baseErrorMessage != null) {
+            flags.add(SensitivityEvidenceFlag.BASE_EVALUATION_ERROR);
+            rejections.add(SensitivityEvidenceFlag.BASE_EVALUATION_ERROR);
+            diagnostics.add("Base evaluation error: " + baseErrorMessage);
+          }
+
+          boolean perturbationNotConverged = false;
+          boolean perturbationInfeasible = false;
+          boolean perturbationError = false;
+          for (SensitivityPerturbation perturbation : quality.getPerturbations()) {
+            perturbationNotConverged = perturbationNotConverged || !perturbation.isSimulationConverged();
+            perturbationInfeasible = perturbationInfeasible || !perturbation.isFeasible();
+            if (perturbation.getErrorMessage() != null) {
+              perturbationError = true;
+              diagnostics.add("Perturbation error at " + perturbation.getParameterValue() + " "
+                  + safeUnit(parameter.getUnit()) + ": " + perturbation.getErrorMessage());
+            }
+          }
+          if (perturbationNotConverged) {
+            flags.add(SensitivityEvidenceFlag.PERTURBATION_NOT_CONVERGED);
+            rejections.add(SensitivityEvidenceFlag.PERTURBATION_NOT_CONVERGED);
+            diagnostics.add("At least one finite-difference perturbation did not converge");
+          }
+          if (perturbationInfeasible) {
+            flags.add(SensitivityEvidenceFlag.PERTURBATION_INFEASIBLE);
+            diagnostics.add("At least one perturbation violates a registered hard constraint");
+            if (policy.arePerturbationsFeasibleRequired()) {
+              rejections.add(SensitivityEvidenceFlag.PERTURBATION_INFEASIBLE);
+            }
+          }
+          if (perturbationError) {
+            flags.add(SensitivityEvidenceFlag.PERTURBATION_EVALUATION_ERROR);
+            rejections.add(SensitivityEvidenceFlag.PERTURBATION_EVALUATION_ERROR);
+          }
+
+          if (!Double.isFinite(objectiveDerivative) || !Double.isFinite(marginDerivative)) {
+            flags.add(SensitivityEvidenceFlag.NON_FINITE_DERIVATIVE);
+            rejections.add(SensitivityEvidenceFlag.NON_FINITE_DERIVATIVE);
+            diagnostics.add("Objective or constraint-margin derivative is non-finite");
+          }
+          if (!Double.isFinite(objectiveDisagreement) || !Double.isFinite(constraintDisagreement)
+              || objectiveDisagreement > policy.getRelativeTolerance()
+              || constraintDisagreement > policy.getRelativeTolerance()) {
+            flags.add(SensitivityEvidenceFlag.NUMERICALLY_UNSTABLE);
+            rejections.add(SensitivityEvidenceFlag.NUMERICALLY_UNSTABLE);
+            diagnostics.add("Coarse/fine relative disagreement exceeds or cannot be compared with tolerance "
+                + policy.getRelativeTolerance() + " (objective=" + objectiveDisagreement + ", constraint="
+                + constraintDisagreement + ")");
+          }
+
+          AppliedFiniteDifferenceStencil stencil = quality.getStencil();
+          if (stencil == AppliedFiniteDifferenceStencil.FORWARD || stencil == AppliedFiniteDifferenceStencil.BACKWARD) {
+            flags.add(SensitivityEvidenceFlag.ONE_SIDED_STENCIL);
+            diagnostics.add("One-sided " + stencil + " finite-difference stencil used");
+            if (!policy.isOneSidedStencilAllowed()) {
+              rejections.add(SensitivityEvidenceFlag.ONE_SIDED_STENCIL);
+            }
+          } else if (stencil == AppliedFiniteDifferenceStencil.FIXED) {
+            flags.add(SensitivityEvidenceFlag.FIXED_PARAMETER);
+            rejections.add(SensitivityEvidenceFlag.FIXED_PARAMETER);
+            diagnostics.add("Parameter has equal lower and upper bounds and is not an available operating action");
+          }
+
+          if (rejections.isEmpty()) {
+            diagnostics.add("Accepted under the declared local sensitivity qualification policy");
+          }
+          assessments.add(new ConstraintSensitivityAssessment(constraint, parameter, objectiveSnapshot, stencil,
+              objectiveDerivative, rawObjectiveDerivative, marginDerivative, objectiveDisagreement,
+              constraintDisagreement, flags, rejections, diagnostics));
+        }
+      }
+      return Collections.unmodifiableList(assessments);
+    }
+
+    /**
+     * Gets only constraint/parameter pairs accepted by an explicit evidence policy.
+     *
+     * <p>
+     * Call {@link #assessConstraintSensitivities(SensitivityQualificationPolicy)} when rejected pairs and their
+     * diagnostics must also be retained. Filtering does not perform another process simulation.
+     * </p>
+     *
+     * @param policy explicit numerical and feasible-region qualification policy
+     * @return immutable accepted assessments in constraint-major, parameter-major order
+     */
+    public List<ConstraintSensitivityAssessment> getAcceptedConstraintSensitivities(
+        SensitivityQualificationPolicy policy) {
+      List<ConstraintSensitivityAssessment> accepted = new ArrayList<ConstraintSensitivityAssessment>();
+      for (ConstraintSensitivityAssessment assessment : assessConstraintSensitivities(policy)) {
+        if (assessment.isAccepted()) {
+          accepted.add(assessment);
+        }
+      }
+      return Collections.unmodifiableList(accepted);
+    }
+
+    /** Returns a readable placeholder for a missing unit in diagnostics. */
+    private static String safeUnit(String unit) {
+      return unit == null || unit.trim().isEmpty() ? "(unit unspecified)" : unit;
     }
 
     /**
