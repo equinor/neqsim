@@ -3,9 +3,7 @@ title: External Optimizer Integration Guide
 description: This guide explains how to use NeqSim's simulation evaluators to integrate process simulations and multi-area process models with external optimization frameworks like Python's SciPy, NLopt, or other optimization libraries.
 ---
 
-# External Optimizer Integration Guide
-
-> **New to process optimization?** Start with the [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW) to understand when to use which optimizer.
+> **New to process optimization?** Start with the [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW.md) to understand when to use which optimizer.
 
 This guide explains how to use NeqSim's simulation evaluators to integrate process simulation with external optimization frameworks like Python's SciPy, NLopt, or other optimization libraries.
 
@@ -13,10 +11,10 @@ This guide explains how to use NeqSim's simulation evaluators to integrate proce
 
 | Document | Description |
 |----------|-------------|
-| [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW) | When to use which optimizer |
-| [Production Optimization Guide](../examples/PRODUCTION_OPTIMIZATION_GUIDE) | ProductionOptimizer examples |
-| [Practical Examples](../process/optimization/PRACTICAL_EXAMPLES) | Code samples |
-| [Capacity Constraint Framework](../process/CAPACITY_CONSTRAINT_FRAMEWORK) | Installed equipment limits and bottleneck detection |
+| [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW.md) | When to use which optimizer |
+| [Production Optimization Guide](../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | ProductionOptimizer examples |
+| [Practical Examples](../process/optimization/PRACTICAL_EXAMPLES.md) | Code samples |
+| [Capacity Constraint Framework](../process/CAPACITY_CONSTRAINT_FRAMEWORK.md) | Installed equipment limits and bottleneck detection |
 
 ## Overview
 
@@ -177,30 +175,31 @@ evaluator.addConstraintUpperBound("maxTemperature",
     80.0);
 ```
 
-## Python Integration with JPype
+## Python integration through neqsim-python
 
 ### Installation
 
 ```bash
-pip install jpype1 scipy numpy
+pip install neqsim scipy numpy
 ```
 
-### Basic Setup
+### Basic setup
+
+The public `neqsim` package starts and configures the Java gateway. Do not start a second JVM or
+assume that a local NeqSim JAR file exists.
 
 ```python
-import jpype
-import jpype.imports
 import numpy as np
-from scipy.optimize import minimize, differential_evolution
+from scipy.optimize import differential_evolution, minimize
+from neqsim import jneqsim
 
-# Start JVM with NeqSim
-jpype.startJVM(classpath=['neqsim.jar'])
-
-from neqsim.process.util.optimizer import ProcessSimulationEvaluator
-from neqsim.process.processmodel import ProcessSystem
-from neqsim.process.equipment.stream import Stream
-from neqsim.process.equipment.valve import ThrottlingValve
-from neqsim.thermo.system import SystemSrkEos
+ProcessSimulationEvaluator = (
+    jneqsim.process.util.optimizer.ProcessSimulationEvaluator
+)
+ProcessSystem = jneqsim.process.processmodel.ProcessSystem
+Stream = jneqsim.process.equipment.stream.Stream
+ThrottlingValve = jneqsim.process.equipment.valve.ThrottlingValve
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
 ```
 
 ### Creating the Process
@@ -402,44 +401,15 @@ x_opt = opt.optimize(evaluator.getInitialValues())
 
 ## Using with Pyomo
 
-```python
-from pyomo.environ import *
+An ordinary Pyomo `Objective(rule=...)` or `Constraint(rule=...)` must build a symbolic
+expression. Reading `.value` from Pyomo variables inside those rules and immediately calling
+NeqSim evaluates only the construction-time values; it does not create a live connection that
+Pyomo can differentiate or re-evaluate while solving.
 
-def create_pyomo_model():
-    """Create a Pyomo model that calls NeqSim evaluator"""
-    model = ConcreteModel()
-
-    # Get bounds from evaluator
-    n = evaluator.getParameterCount()
-    bounds_array = evaluator.getBounds()
-
-    # Decision variables
-    model.x = Var(range(n),
-                  bounds=lambda m, i: (bounds_array[i][0], bounds_array[i][1]))
-
-    # Initialize
-    x0 = evaluator.getInitialValues()
-    for i in range(n):
-        model.x[i] = x0[i]
-
-    # External function for objective
-    def obj_rule(m):
-        x = [m.x[i].value for i in range(n)]
-        return evaluator.evaluateObjective(x)
-
-    model.obj = Objective(rule=obj_rule, sense=minimize)
-
-    # External constraints (simplified approach)
-    def constraint_rule(m, j):
-        x = [m.x[i].value for i in range(n)]
-        margins = evaluator.getConstraintMargins(x)
-        return margins[j] >= 0
-
-    model.constraints = Constraint(range(evaluator.getConstraintCount()),
-                                    rule=constraint_rule)
-
-    return model
-```
+NeqSim does not currently provide a maintained Pyomo `ExternalFunction` or PyNumero callback
+adapter. Use the SciPy or NLopt black-box patterns above, or implement and validate a dedicated
+Pyomo external-function bridge with explicit value, gradient, lifecycle, and failure handling.
+Do not present a construction-time numeric callback as a Pyomo optimization model.
 
 ## Advanced Features
 
@@ -456,17 +426,18 @@ evaluator.addParameterWithSetter(
 )
 ```
 
-### Caching for Expensive Evaluations
+### Evaluation accounting
 
-The evaluator tracks evaluation count and can be configured for caching:
+`ProcessSimulationEvaluator` counts evaluation attempts:
 
 ```python
-# Check evaluation statistics
 print(f"Total evaluations: {evaluator.getEvaluationCount()}")
-
-# Reset counter
 evaluator.resetEvaluationCount()
 ```
+
+These methods measure work; they do not enable result caching. Add caching in the external
+optimizer only when the complete parameter vector, model identity, operating case, and mutable
+process state are part of a safe cache key.
 
 ### Gradient Configuration
 
@@ -580,33 +551,36 @@ print("Objectives:", problem['objectives'])
 print("Constraints:", problem['constraints'])
 ```
 
-### Process Cloning for Thread Safety
+### Process cloning and parallel evaluation
 
-For parallel evaluations (e.g., with Dask or multiprocessing):
+Only `ProcessSimulationEvaluator` exposes `setCloneForEvaluation(true)`. It clones the
+`ProcessSystem` used for an evaluation so the registered base process is not mutated by that
+call:
 
 ```python
-# Enable process cloning for thread safety
 evaluator.setCloneForEvaluation(True)
 ```
+
+This switch does not make one evaluator instance safe for concurrent calls: counters, last-result
+state, and registered definitions remain mutable. Use one evaluator and one JVM-owned process
+model per worker, and validate deterministic equivalence before parallel production studies.
 
 ## Complete Example: Gas Processing Optimization
 
 ```python
-import jpype
-import jpype.imports
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import minimize
-import matplotlib.pyplot as plt
+from neqsim import jneqsim
 
-# Start JVM
-jpype.startJVM(classpath=['neqsim.jar'])
-
-from neqsim.process.util.optimizer import ProcessSimulationEvaluator
-from neqsim.process.processmodel import ProcessSystem
-from neqsim.process.equipment.stream import Stream
-from neqsim.process.equipment.compressor import Compressor
-from neqsim.process.equipment.cooler import Cooler
-from neqsim.thermo.system import SystemSrkEos
+ProcessSimulationEvaluator = (
+    jneqsim.process.util.optimizer.ProcessSimulationEvaluator
+)
+ProcessSystem = jneqsim.process.processmodel.ProcessSystem
+Stream = jneqsim.process.equipment.stream.Stream
+Compressor = jneqsim.process.equipment.compressor.Compressor
+Cooler = jneqsim.process.equipment.cooler.Cooler
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
 
 # Create process
 fluid = SystemSrkEos(273.15 + 30.0, 20.0)
@@ -707,12 +681,21 @@ jpype.shutdownJVM()
 | `getConstraintMargins(double[] x)` | Get constraint slack values |
 | `estimateGradient(double[] x)` | Finite-difference gradient |
 | `estimateConstraintJacobian(double[] x)` | Constraint Jacobian matrix |
-| `estimateSensitivitiesWithQuality(double[] x)` | Fine-step gradient/Jacobian plus immutable parameter/objective/constraint identity, base-point values and margins, capacity origin, steps, convergence, feasibility, and step-halving evidence |
 | `getBounds()` | Get parameter bounds array |
 | `getLowerBounds()` | Get lower bounds vector |
 | `getUpperBounds()` | Get upper bounds vector |
 | `getInitialValues()` | Get initial parameter values |
 | `toJson()` | Export problem definition |
+
+### ProcessModelSimulationEvaluator
+
+| Method | Description |
+|--------|-------------|
+| `estimateSensitivitiesWithQuality(double[] x)` | Primary-objective fine-step gradient and constraint-margin Jacobian, plus immutable parameter/objective/constraint identity, base values, capacity origin, perturbation convergence, feasibility, and step-halving evidence |
+| `estimateSensitivitiesWithQuality(double[] x, int objectiveIndex)` | The same evidence for the selected registered objective |
+
+The sensitivity-quality methods belong to `ProcessModelSimulationEvaluator`; they are not methods
+on `ProcessSimulationEvaluator`.
 
 ### EvaluationResult
 
@@ -731,7 +714,7 @@ jpype.shutdownJVM()
 
 ## See Also
 
-- [OPTIMIZER_PLUGIN_ARCHITECTURE.md](../process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE) - Plugin architecture for equipment-specific optimization
-- [flow-rate-optimization.md](../process/optimization/flow-rate-optimization) - FlowRateOptimizer for lift curve generation
-- [pressure_boundary_optimization.md](../process/pressure_boundary_optimization) - Simplified pressure boundary optimizer
-- [PRODUCTION_OPTIMIZATION_GUIDE.md](../examples/PRODUCTION_OPTIMIZATION_GUIDE) - Complete production optimization examples
+- [OPTIMIZER_PLUGIN_ARCHITECTURE.md](../process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md) - Plugin architecture for equipment-specific optimization
+- [flow-rate-optimization.md](../process/optimization/flow-rate-optimization.md) - FlowRateOptimizer for lift curve generation
+- [pressure_boundary_optimization.md](../process/pressure_boundary_optimization.md) - Simplified pressure boundary optimizer
+- [PRODUCTION_OPTIMIZATION_GUIDE.md](../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) - Complete production optimization examples
