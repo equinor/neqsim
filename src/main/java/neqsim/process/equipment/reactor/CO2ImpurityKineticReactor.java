@@ -119,33 +119,26 @@ public class CO2ImpurityKineticReactor extends TwoPortEquipment {
     // Arrhenius Rate Constants (SI units: m, kmol, s, K)
     double R_GAS = 8.31446;
 
-    // Check NO2 concentration (ppm)
-    double no2Frac = 0.0;
-    if (outletSystem.getPhase(0).hasComponent("NO2")) {
-      no2Frac = outletSystem.getPhase(0).getComponent("NO2").getx();
-    }
-    double no2_ppm = no2Frac * 1.0e6;
-
-    // Thermal Freeze Factor for low T (T <= -25 °C = 248.15 K) without NO2 catalyst
+    // Sub-Zero Thermal Freeze Factor for low T (T <= -25 °C = 248.15 K)
     double temp_freeze = 1.0;
-    if (T_kelvin <= 255.0 && no2_ppm < 0.1) {
-      temp_freeze = 0.0; // Complete reaction shutdown (0% conversion)
-    } else if (T_kelvin <= 265.0 && no2_ppm < 0.1) {
+    if (T_kelvin <= 255.0) {
+      temp_freeze = 0.0; // Complete reaction shutdown (0% conversion, NO CHEMICAL REACTIONS)
+    } else if (T_kelvin <= 265.0) {
       temp_freeze = (T_kelvin - 255.0) / 10.0;
     }
 
     // R4: Termolecular NO oxidation (negative activation energy)
-    double k4 = 1.2e3 * Math.exp(530.0 / T_kelvin);
+    double k4 = 1.0e5 * Math.exp(530.0 / T_kelvin) * temp_freeze;
 
     // R2: H2S + 3 NO2 -> SO2 + H2O + 3 NO
-    double k2 = 5.0e7 * Math.exp(-28000.0 / (R_GAS * T_kelvin));
+    double k2 = 5.0e7 * Math.exp(-28000.0 / (R_GAS * T_kelvin)) * temp_freeze;
 
     // R3: SO2 + NO2 + H2O -> NO + H2SO4
-    double k3_base = 2.0e6 * Math.exp(-20000.0 / (R_GAS * T_kelvin));
+    double k3_base = 3.5e6 * Math.exp(-18000.0 / (R_GAS * T_kelvin)) * temp_freeze;
 
     // R5: 3 NO2 + H2O <=> 2 HNO3 + NO (Reversible NO2 Hydrolysis)
-    double k5_f = 2.4e5 * Math.exp(-32000.0 / (R_GAS * T_kelvin));
-    double k5_r = 1.5e6 * Math.exp(-25000.0 / (R_GAS * T_kelvin));
+    double k5_f = 2.4e5 * Math.exp(-32000.0 / (R_GAS * T_kelvin)) * temp_freeze;
+    double k5_r = 1.5e6 * Math.exp(-25000.0 / (R_GAS * T_kelvin)) * temp_freeze;
 
     // Water mole fraction check
     double h2oFrac = 0.0;
