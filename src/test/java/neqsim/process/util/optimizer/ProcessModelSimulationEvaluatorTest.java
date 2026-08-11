@@ -591,8 +591,7 @@ class ProcessModelSimulationEvaluatorTest {
     ProcessModelSimulationEvaluator.ObjectiveDefinition objective = evaluator.getObjectives().get(0);
     objective.setUnit("kg/hr");
     objective.setWeight(2.5);
-    evaluator.addConstraintRange("operating envelope", model -> fixture.feed.getFlowRate("kg/hr"), 1000.0,
-        2000.0);
+    evaluator.addConstraintRange("operating envelope", model -> fixture.feed.getFlowRate("kg/hr"), 1000.0, 2000.0);
     ProcessModelSimulationEvaluator.ConstraintDefinition rangeConstraint = evaluator.getConstraints().get(0);
     rangeConstraint.setUnit("kg/hr");
     rangeConstraint.setHard(false);
@@ -678,8 +677,7 @@ class ProcessModelSimulationEvaluatorTest {
     input.close();
     assertEquals("field feed", restored.getParameterSnapshots().get(0).getName());
     assertEquals("export production", restored.getObjectiveSnapshot().getName());
-    assertEquals("installedFeedCapacity",
-        restored.getConstraintSnapshots().get(1).getEquipmentConstraintName());
+    assertEquals("installedFeedCapacity", restored.getConstraintSnapshots().get(1).getEquipmentConstraintName());
     assertEquals(-1.0, restored.getConstraintSnapshots().get(1).getMarginGradient()[0], 1.0e-8);
   }
 
