@@ -1205,9 +1205,10 @@ public class TPflash extends Flash {
    * endpoint whose fugacity residual is already outside the equilibrium tolerance may still use the cloned stability
    * calculation because it is not an acceptable result. A cheap aqueous tangent-plane trial and safeguarded multiphase
    * beta solve are used for trace-water gas/oil endpoints whose small hydrocarbon liquid disproportionately
-   * concentrates water. Full recursive flashing is avoided. A multiphase-enabled water-rich endpoint uses one cold
-   * ordinary candidate; an ordinary endpoint uses the multiphase candidate. The nested candidate cannot start another
-   * cross-algorithm fallback. A candidate replaces the original state only after strict phase-fraction,
+   * concentrates water. Full recursive flashing is avoided. A multiphase-enabled water-rich gas/aqueous endpoint uses
+   * one cold ordinary candidate; a genuine oil/aqueous liquid-liquid endpoint remains on the multiphase path. An
+   * ordinary endpoint uses the multiphase candidate. The nested candidate cannot start another cross-algorithm
+   * fallback. A candidate replaces the original state only after strict phase-fraction,
    * composition-normalization, material-balance, fugacity, distinct-composition, and lower-Gibbs checks pass.
    * </p>
    */
@@ -1233,6 +1234,12 @@ public class TPflash extends Flash {
         && (waterFeedFraction <= 0.0 || !shouldRefineTraceWaterAqueousEndpoint(waterFeedFraction))) {
       return;
     }
+    boolean gasAqueousMultiphaseEndpoint = system.doMultiPhaseCheck() && hasAqueousPhase
+        && system.hasPhaseType(PhaseType.GAS);
+    if (system.doMultiPhaseCheck() && waterFeedFraction >= WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT
+        && !gasAqueousMultiphaseEndpoint) {
+      return;
+    }
     double materialBalanceResidual = maximumComponentMaterialBalanceResidual(system);
     boolean materialBalanceInvalid = !Double.isFinite(materialBalanceResidual)
         || materialBalanceResidual > WATER_RICH_MATERIAL_BALANCE_TOLERANCE;
@@ -1242,7 +1249,7 @@ public class TPflash extends Flash {
     }
 
     double referenceGibbsEnergy = system.getGibbsEnergy();
-    boolean ordinaryFallback = system.doMultiPhaseCheck()
+    boolean ordinaryFallback = gasAqueousMultiphaseEndpoint
         && waterFeedFraction >= WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT;
     SystemInterface candidate;
     if (ordinaryFallback) {
