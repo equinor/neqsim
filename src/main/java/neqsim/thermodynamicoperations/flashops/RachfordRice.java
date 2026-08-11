@@ -518,3 +518,56 @@ public class RachfordRice implements Serializable {
         deriv = 0.0;
         gbeta = 0.0;
 
+        for (i = 0; i < system.getNumberOfComponents(); i++) {
+          deriv -= (compArray[i].getz() * (compArray[i].getK() - 1.0) * (1.0 - compArray[i].getK()))
+              / Math.pow((betal + (1 - betal) * compArray[i].getK()), 2);
+          gbeta += compArray[i].getz() * (compArray[i].getK() - 1.0) / (betal + (-betal + 1.0) * compArray[i].getK());
+        }
+
+        if (gbeta < 0) {
+          minBeta = betal;
+        } else {
+          maxBeta = betal;
+        }
+
+        betal -= (gbeta / deriv);
+
+        if (betal > maxBeta) {
+          betal = maxBeta;
+        }
+        if (betal < minBeta) {
+          betal = minBeta;
+        }
+
+        nybeta = 1.0 - betal;
+      }
+      step = gbeta / deriv;
+    } while (Math.abs(step) >= 1.0e-10 && iterations < maxIterations); // &&
+
+    if (nybeta <= phaseFractionMinimumLimit) {
+      // this.phase = 1;
+      nybeta = phaseFractionMinimumLimit;
+    } else if (nybeta >= 1.0 - phaseFractionMinimumLimit) {
+      // this.phase = 0;
+      nybeta = 1.0 - phaseFractionMinimumLimit;
+      // superheated vapour
+    } else {
+      // this.phase = 2;
+    } // two-phase liquid-gas
+
+    this.beta[0] = nybeta;
+    this.beta[1] = 1.0 - nybeta;
+
+    if (iterations >= maxIterations) {
+      throw new neqsim.util.exception.TooManyIterationsException(this, "calcBetaS", maxIterations);
+    }
+    if (Double.isNaN(beta[1])) {
+      /*
+       * for (i = 0; i < numberOfComponents; i++) { System.out.println("K " + compArray[i].getK());
+       * System.out.println("z " + compArray[i].getz()); }
+       */
+      throw new neqsim.util.exception.IsNaNException(this, "calcBetaS", "beta");
+    }
+    return this.beta[0];
+  }
+}
