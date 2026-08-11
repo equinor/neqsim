@@ -842,8 +842,8 @@ public class ProcessModelSimulationEvaluator implements Serializable {
    *
    * <p>
    * Convergence, finite derivatives, finite coarse/fine comparisons, numerical stability, and a perturbable decision
-   * variable are always required. Callers explicitly decide whether an infeasible base point, infeasible
-   * perturbations, or a bound-driven one-sided stencil is acceptable for their engineering use case.
+   * variable are always required. Callers explicitly decide whether an infeasible base point, infeasible perturbations,
+   * or a one-sided stencil is acceptable for their engineering use case.
    * </p>
    */
   public static final class SensitivityQualificationPolicy implements Serializable {
@@ -977,9 +977,8 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     /** Creates one immutable local assessment. */
     private ConstraintSensitivityAssessment(SensitivityConstraintSnapshot constraint,
         SensitivityParameterSnapshot parameter, SensitivityObjectiveSnapshot objective,
-        AppliedFiniteDifferenceStencil stencil,
-        double minimizerObjectiveDerivative, double rawObjectiveDerivative, double marginDerivative,
-        double objectiveRelativeDisagreement, double constraintRelativeDisagreement,
+        AppliedFiniteDifferenceStencil stencil, double minimizerObjectiveDerivative, double rawObjectiveDerivative,
+        double marginDerivative, double objectiveRelativeDisagreement, double constraintRelativeDisagreement,
         List<SensitivityEvidenceFlag> evidenceFlags, List<SensitivityEvidenceFlag> rejectionReasons,
         List<String> diagnostics) {
       this.constraint = constraint;
@@ -991,10 +990,8 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       this.marginDerivative = marginDerivative;
       this.objectiveRelativeDisagreement = objectiveRelativeDisagreement;
       this.constraintRelativeDisagreement = constraintRelativeDisagreement;
-      this.evidenceFlags = Collections
-          .unmodifiableList(new ArrayList<SensitivityEvidenceFlag>(evidenceFlags));
-      this.rejectionReasons = Collections
-          .unmodifiableList(new ArrayList<SensitivityEvidenceFlag>(rejectionReasons));
+      this.evidenceFlags = Collections.unmodifiableList(new ArrayList<SensitivityEvidenceFlag>(evidenceFlags));
+      this.rejectionReasons = Collections.unmodifiableList(new ArrayList<SensitivityEvidenceFlag>(rejectionReasons));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<String>(diagnostics));
     }
 
@@ -1267,8 +1264,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      * @param policy explicit numerical and feasible-region qualification policy
      * @return immutable assessments for every constraint/parameter pair
      */
-    public List<ConstraintSensitivityAssessment> assessConstraintSensitivities(
-        SensitivityQualificationPolicy policy) {
+    public List<ConstraintSensitivityAssessment> assessConstraintSensitivities(SensitivityQualificationPolicy policy) {
       if (policy == null) {
         throw new IllegalArgumentException("Sensitivity qualification policy must not be null");
       }
@@ -1352,8 +1348,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
           }
 
           AppliedFiniteDifferenceStencil stencil = quality.getStencil();
-          if (stencil == AppliedFiniteDifferenceStencil.FORWARD
-              || stencil == AppliedFiniteDifferenceStencil.BACKWARD) {
+          if (stencil == AppliedFiniteDifferenceStencil.FORWARD || stencil == AppliedFiniteDifferenceStencil.BACKWARD) {
             flags.add(SensitivityEvidenceFlag.ONE_SIDED_STENCIL);
             diagnostics.add("One-sided " + stencil + " finite-difference stencil used");
             if (!policy.isOneSidedStencilAllowed()) {

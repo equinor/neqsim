@@ -845,10 +845,8 @@ class ProcessModelSimulationEvaluatorTest {
 
     ProcessModelSimulationEvaluator.SensitivityQualityResult fixedResult = evaluator
         .estimateSensitivitiesWithQuality(new double[] { 1000.0 });
-    ProcessModelSimulationEvaluator.ConstraintSensitivityAssessment fixed = fixedResult
-        .assessConstraintSensitivities(ProcessModelSimulationEvaluator.SensitivityQualificationPolicy.numericalOnly(
-            0.0))
-        .get(0);
+    ProcessModelSimulationEvaluator.ConstraintSensitivityAssessment fixed = fixedResult.assessConstraintSensitivities(
+        ProcessModelSimulationEvaluator.SensitivityQualificationPolicy.numericalOnly(0.0)).get(0);
     assertFalse(fixed.isAccepted());
     assertEquals(ProcessModelSimulationEvaluator.SensitivityEvidenceFlag.FIXED_PARAMETER,
         fixed.getRejectionReasons().get(0));
