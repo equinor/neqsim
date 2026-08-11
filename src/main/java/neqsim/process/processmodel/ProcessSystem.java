@@ -4726,11 +4726,17 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * Runs transient calculations in dependency order using the cached process-graph levels. Independent groups within a
-   * level execute in parallel; a downstream level is not submitted until every upstream group has completed. If the
-   * caller is interrupted while waiting, its interrupt status is restored and the wait loop stops. Each dependency
-   * level checks that status before submitting work, so an interrupt at a level boundary does not enqueue downstream
-   * equipment. Already submitted equipment that is queued is cancelled without interrupting tasks already updating
-   * state.
+   * level execute in parallel; a downstream level is not submitted until every upstream group has completed. Worker
+   * exceptions propagate fail-loudly to the caller, stop later groups and dependency levels, and prevent controller,
+   * measurement-history, alarm, timestep-counter, and calculation-identifier commit for the failed step. If the caller
+   * is interrupted while waiting, its interrupt status is restored and the wait loop stops. Each dependency level checks
+   * that status before submitting work, so an interrupt at a level boundary does not enqueue downstream equipment.
+   * Already submitted equipment that is queued is cancelled without interrupting tasks already updating state.
+   *
+   * <p>
+   * This boundary is not a whole-step transaction: the process clock, due-event effects, and state already mutated by
+   * equipment (including same-level siblings) are not rolled back.
+   * </p>
    *
    * @param dt time step in seconds
    * @param id calculation identifier
@@ -4761,11 +4767,7 @@ public class ProcessSystem extends SimulationBaseClass {
               if (stopRequested.get()) {
                 return;
               }
-              try {
-                runUnitTransientSkippingInactive(node.getEquipment(), stepSize, calcId);
-              } catch (Exception ex) {
-                logger.error("Parallel transient equipment execution failed for {}", node.getName(), ex);
-              }
+              runUnitTransientSkippingInactive(node.getEquipment(), stepSize, calcId);
             }
           }
         }));
@@ -4783,8 +4785,11 @@ public class ProcessSystem extends SimulationBaseClass {
           logger.warn("Parallel transient execution interrupted; caller interrupt status restored");
           return false;
         } catch (ExecutionException ex) {
-          Throwable cause = ex.getCause();
-          logger.error("Parallel transient equipment execution failed", cause == null ? ex : cause);
+          stopRequested.set(true);
+          for (int pendingIndex = i + 1; pendingIndex < futures.size(); pendingIndex++) {
+            futures.get(pendingIndex).cancel(false);
+          }
+          throw createWorkerExecutionException("Parallel transient", ex);
         }
       }
     }
