@@ -55,7 +55,6 @@ class BubbleSizeClosureTest {
     assertThrows(IllegalArgumentException.class, () -> closure.setSurfaceTension(0.0));
     assertThrows(IllegalArgumentException.class, () -> closure.setMaximumPipeDiameterFraction(1.1));
     assertThrows(IllegalArgumentException.class, () -> closure.estimateDiameter(0.0, 1000.0, 5.0, 9.81));
-    assertThrows(IllegalArgumentException.class,
-        () -> closure.estimateDiameter(0.1, Double.NaN, 5.0, 9.81));
+    assertThrows(IllegalArgumentException.class, () -> closure.estimateDiameter(0.1, Double.NaN, 5.0, 9.81));
   }
 }
