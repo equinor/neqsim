@@ -64,6 +64,9 @@ public class NaphtaliSandholmSolver {
   /** Maximum forced-root fugacity fixed-point sweeps for one tray evaluation. */
   private static final int THERMO_K_VALUE_ITERATIONS = 2;
 
+  /** Maximum forced-root fugacity sweeps when refining a retained column state. */
+  private static final int THERMO_WARM_START_K_VALUE_ITERATIONS = 3;
+
   /** Convergence tolerance for the largest absolute logarithmic K-value update. */
   private static final double THERMO_K_VALUE_TOLERANCE = 1.0e-8;
 
@@ -3353,13 +3356,16 @@ public class NaphtaliSandholmSolver {
     }
 
     // Self-consistency loop: K = phi_L(x) / phi_V(y), then y = K x / sum(K x).
-    // Perform at most two sweeps and stop once the existing convergence criterion
-    // is met so already-converged compositions do not pay for a redundant EOS call.
+    // Perform at most two sweeps for a cold state and one additional sweep when
+    // refining a retained state. Stop once the existing convergence criterion is
+    // met so already-converged compositions do not pay for a redundant EOS call.
     boolean kOk = phiOk;
     boolean kConverged = false;
     double finalMaxLogKUpdate = Double.POSITIVE_INFINITY;
     if (kOk) {
-      for (int sweep = 0; sweep < THERMO_K_VALUE_ITERATIONS; sweep++) {
+      int maximumKValueIterations = warmStartFromColumn ? THERMO_WARM_START_K_VALUE_ITERATIONS
+          : THERMO_K_VALUE_ITERATIONS;
+      for (int sweep = 0; sweep < maximumKValueIterations; sweep++) {
         if (!computeSinglePhaseFugacityCoefficients(y, T[j], Pbar, true, phiV)) {
           kOk = false;
           break;
