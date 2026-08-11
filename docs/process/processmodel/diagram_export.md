@@ -61,10 +61,13 @@ successfully. An unrun or failed area remains in the topology and emits
 `DIAGRAM_OPERATING_CASE_NOT_SUCCESSFUL` instead of publishing potentially stale values.
 
 The established three-argument overload remains topology-only, so existing fingerprints and
-consumers do not acquire simulation values silently. The assessed DEXPI 2.0 Process path consumes
-the canonical material projection, but it does not yet consume these canonical operating-value
-nodes. Legacy DOT, Graphviz, and DEXPI compatibility APIs remain unchanged. This adapter is still a
-shared semantic contract rather than a rendering or standards-conformance claim.
+consumers do not acquire simulation values silently. The opt-in five-argument
+`Dexpi20ProcessModelWriter.writeAndAssessTopology(...)` overload consumes both the canonical
+material projection and matching calculation nodes for one named operating case. It converts K to
+degree Celsius and kg/s to kg/hour, keeps bara as absolute bar, records the canonical value source,
+and reports omitted values without reading streams as a fallback. Legacy DOT, Graphviz, and DEXPI
+compatibility APIs remain unchanged. This adapter is still a shared semantic contract rather than a
+rendering or standards-conformance claim.
 
 ### Topology-equivalence reference cases
 

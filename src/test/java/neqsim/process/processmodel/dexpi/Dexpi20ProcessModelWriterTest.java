@@ -2,12 +2,15 @@ package neqsim.process.processmodel.dexpi;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import javax.xml.parsers.DocumentBuilderFactory;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
@@ -18,6 +21,9 @@ import neqsim.process.processmodel.diagram.ProcessDiagramGoldenFixtures;
 import neqsim.thermo.system.SystemSrkEos;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 /** Tests official DEXPI 2.0 Process-model serialization and scoped conformance evidence. */
 class Dexpi20ProcessModelWriterTest {
@@ -45,8 +51,51 @@ class Dexpi20ProcessModelWriterTest {
     assertEquals(new String(Files.readAllBytes(legacyOutput), StandardCharsets.UTF_8),
         new String(Files.readAllBytes(canonicalOutput), StandardCharsets.UTF_8));
     assertEquals("CANONICAL_ENGINEERING_GRAPH", report.getExportTopologySource());
+    assertNull(report.getExportOperatingValueSource());
+    assertFalse(report.toMap().containsKey("exportOperatingValueSource"));
     assertTrue(report.toJson().contains("\"exportTopologySource\": \"CANONICAL_ENGINEERING_GRAPH\""));
     assertTrue(report.isSchemaProfileAndSupportedTopologyValid(), report.getDiagnostics().toString());
+  }
+
+  @Test
+  void optInAssessedExportUsesCanonicalOperatingValuesWithDeterministicUnitConversion() throws Exception {
+    ProcessSystem process = operatingProcess();
+    process.run();
+    Path first = temporaryDirectory.resolve("canonical-values-first.dexpi.xml");
+    Path second = temporaryDirectory.resolve("canonical-values-second.dexpi.xml");
+
+    Dexpi20ProcessTopologyAssessment.Report firstReport = Dexpi20ProcessModelWriter.writeAndAssessTopology(process,
+        first.toFile(), "DEXPI-CANONICAL-VALUES", "A", "NORMAL-001");
+    Dexpi20ProcessTopologyAssessment.Report secondReport = Dexpi20ProcessModelWriter.writeAndAssessTopology(process,
+        second.toFile(), "DEXPI-CANONICAL-VALUES", "A", "NORMAL-001");
+
+    assertEquals("CANONICAL_ENGINEERING_GRAPH_CALCULATION_NODES", firstReport.getExportOperatingValueSource());
+    assertEquals(1000.0, physicalQuantity(first, "10-FEED-001", "MassFlow"), 1.0e-9);
+    assertEquals(40.0, physicalQuantity(first, "10-FEED-001", "Pressure"), 1.0e-12);
+    assertEquals(25.0, physicalQuantity(first, "10-FEED-001", "Temperature"), 1.0e-12);
+    assertTrue(hasDiagnostic(firstReport, "DEXPI_PROCESS_OPERATING_VALUE_MISSING"));
+    assertEquals(new String(Files.readAllBytes(first), StandardCharsets.UTF_8),
+        new String(Files.readAllBytes(second), StandardCharsets.UTF_8));
+    assertEquals(firstReport.toJson(), secondReport.toJson());
+    assertTrue(firstReport.isSchemaProfileAndSupportedTopologyValid(), firstReport.getDiagnostics().toString());
+  }
+
+  @Test
+  void optInAssessedExportOmitsUnrunValuesWithoutDirectStreamFallback() throws Exception {
+    ProcessSystem process = operatingProcess();
+    Path output = temporaryDirectory.resolve("canonical-values-unrun.dexpi.xml");
+
+    Dexpi20ProcessTopologyAssessment.Report report = Dexpi20ProcessModelWriter.writeAndAssessTopology(process,
+        output.toFile(), "DEXPI-CANONICAL-VALUES-UNRUN", "A", "NORMAL-001");
+    String xml = new String(Files.readAllBytes(output), StandardCharsets.UTF_8);
+
+    assertFalse(xml.contains("PhysicalQuantities.MassFlowRateUnit"));
+    assertFalse(xml.contains("PhysicalQuantities.PressureAbsoluteUnit"));
+    assertFalse(xml.contains("PhysicalQuantities.TemperatureUnit"));
+    assertTrue(hasDiagnostic(report, "DIAGRAM_OPERATING_CASE_NOT_SUCCESSFUL"));
+    assertTrue(hasDiagnostic(report, "DEXPI_PROCESS_OPERATING_VALUE_MISSING"));
+    assertEquals("CANONICAL_ENGINEERING_GRAPH_CALCULATION_NODES", report.getExportOperatingValueSource());
+    assertTrue(report.getConformanceReport().isSchemaAndProfileConformant());
   }
 
   @Test
@@ -226,6 +275,43 @@ class Dexpi20ProcessModelWriterTest {
     return false;
   }
 
+  private static double physicalQuantity(Path file, String streamLabel, String property) throws Exception {
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+    factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+    factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+    factory.setXIncludeAware(false);
+    factory.setExpandEntityReferences(false);
+    NodeList objects = factory.newDocumentBuilder().parse(file.toFile()).getElementsByTagName("Object");
+    for (int index = 0; index < objects.getLength(); index++) {
+      Element object = (Element) objects.item(index);
+      if (!"Process/Process.Stream".equals(object.getAttribute("type")) || !streamLabel.equals(label(object))) {
+        continue;
+      }
+      for (Node child = object.getFirstChild(); child != null; child = child.getNextSibling()) {
+        if (child instanceof Element && "Components".equals(((Element) child).getTagName())
+            && property.equals(((Element) child).getAttribute("property"))) {
+          NodeList values = ((Element) child).getElementsByTagName("Double");
+          if (values.getLength() > 0) {
+            return Double.parseDouble(values.item(0).getTextContent());
+          }
+        }
+      }
+    }
+    throw new AssertionError("Missing " + property + " for stream " + streamLabel);
+  }
+
+  private static String label(Element object) {
+    for (Node child = object.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child instanceof Element && "Data".equals(((Element) child).getTagName())
+          && "Label".equals(((Element) child).getAttribute("property"))) {
+        NodeList strings = ((Element) child).getElementsByTagName("String");
+        return strings.getLength() == 0 ? "" : strings.item(0).getTextContent();
+      }
+    }
+    return "";
+  }
+
   private ProcessSystem process() {
     SystemSrkEos fluid = new SystemSrkEos(298.15, 40.0);
     fluid.addComponent("methane", 0.8);
@@ -243,6 +329,19 @@ class Dexpi20ProcessModelWriterTest {
     process.add(compressor);
     process.add(pipeline);
     process.add(pump);
+    return process;
+  }
+
+  private static ProcessSystem operatingProcess() {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 40.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+    Stream feed = new Stream("10-FEED-001", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    Heater heater = new Heater("10-HA-001", feed);
+    ProcessSystem process = new ProcessSystem("DEXPI canonical operating-value test");
+    process.add(feed);
+    process.add(heater);
     return process;
   }
 }
