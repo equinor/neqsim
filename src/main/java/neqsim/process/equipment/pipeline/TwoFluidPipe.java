@@ -6314,8 +6314,8 @@ public class TwoFluidPipe extends Pipeline {
    * Set the fixed bubble-size surface tension.
    *
    * <p>
-   * This value is used by default and preserves legacy behavior at {@code 0.02 N/m}. Enable local
-   * surface tension explicitly to use each section's thermodynamic phase-property value instead.
+   * This value is used by default and preserves legacy behavior at {@code 0.02 N/m}. Enable local surface tension
+   * explicitly to use each section's thermodynamic phase-property value instead.
    * </p>
    *
    * @param surfaceTension fixed surface tension in N/m
