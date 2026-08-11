@@ -51,7 +51,7 @@ public class RachfordRice implements Serializable {
   /**
    * calcBeta. For gas liquid systems. Method used is defined in method String variable
    *
-   * @param K an array of type double
+   * @param K equilibrium-ratio array; this method does not modify the caller's array
    * @param z an array of type double
    * @return Beta Mole fraction of gas phase
    * @throws neqsim.util.exception.IsNaNException if any.
@@ -71,7 +71,7 @@ public class RachfordRice implements Serializable {
   /**
    * calcBeta. For gas liquid systems. Method based on Michelsen Mollerup, 2001
    *
-   * @param K an array of type double
+   * @param K equilibrium-ratio array; this method does not modify the caller's array
    * @param z an array of type double
    * @return Beta Mole fraction of gas phase
    * @throws neqsim.util.exception.IsNaNException if any.
@@ -226,7 +226,7 @@ public class RachfordRice implements Serializable {
    * calcBetaNielsen2023. For gas liquid systems. Method based on Avoiding round-off error in the Rachford–Rice
    * equation, Nielsen, Lia, 2023
    *
-   * @param K an array of type double
+   * @param K equilibrium-ratio array; this method does not modify the caller's array
    * @param z an array of type double
    * @return Beta Mole fraction of gas phase
    * @throws neqsim.util.exception.IsNaNException if any.
@@ -264,12 +264,14 @@ public class RachfordRice implements Serializable {
       }
       h += z[i] * (K[i] - 1.0) / (1.0 + V * (K[i] - 1.0));
     }
+    double[] workK = K;
     if (h > 0) {
-      for (int i = 0; i < K.length; i++) {
-        if (K[i] < 1e-30) {
+      workK = K.clone();
+      for (int i = 0; i < workK.length; i++) {
+        if (workK[i] < 1e-30) {
           continue; // Skip ions
         }
-        K[i] = 1.0 / K[i];
+        workK[i] = 1.0 / workK[i];
       }
     }
 
@@ -277,19 +279,19 @@ public class RachfordRice implements Serializable {
     double Kmin = Double.MAX_VALUE;
     boolean foundNonIon = false;
 
-    for (int i = 0; i < K.length; i++) {
-      if (K[i] < 1e-30) {
+    for (int i = 0; i < workK.length; i++) {
+      if (workK[i] < 1e-30) {
         continue; // Skip ions
       }
       if (!foundNonIon) {
-        Kmax = K[i];
-        Kmin = K[i];
+        Kmax = workK[i];
+        Kmin = workK[i];
         foundNonIon = true;
       } else {
-        if (K[i] < Kmin) {
-          Kmin = K[i];
-        } else if (K[i] > Kmax) {
-          Kmax = K[i];
+        if (workK[i] < Kmin) {
+          Kmin = workK[i];
+        } else if (workK[i] > Kmax) {
+          Kmax = workK[i];
         }
       }
     }
@@ -307,17 +309,17 @@ public class RachfordRice implements Serializable {
     double a = (alpha - alphaMin) / (alphaMax - alpha);
     double b = 1.0 / (alpha - alphaMin);
 
-    if (c.length != K.length) {
-      c = new double[K.length];
-      d = new double[K.length];
+    if (c.length != workK.length) {
+      c = new double[workK.length];
+      d = new double[workK.length];
     }
-    for (int i = 0; i < K.length; i++) {
-      if (K[i] < 1e-30) {
+    for (int i = 0; i < workK.length; i++) {
+      if (workK[i] < 1e-30) {
         c[i] = 0.0;
         d[i] = 0.0;
         continue; // Skip ions
       }
-      double Ki = K[i];
+      double Ki = workK[i];
       if (Ki < 1e-25) {
         Ki = 1e-25;
       } else if (Ki > 1e25) {
@@ -346,8 +348,8 @@ public class RachfordRice implements Serializable {
       double funkder = 0.0;
       hb = 0.0;
       double hbder = 0.0;
-      for (int i = 0; i < K.length; i++) {
-        if (K[i] < 1e-30) {
+      for (int i = 0; i < workK.length; i++) {
+        if (workK[i] < 1e-30) {
           continue; // Skip ions
         }
         funk -= z[i] * a * (1.0 + a) / (d[i] + a * (1.0 + d[i]));
@@ -516,56 +518,3 @@ public class RachfordRice implements Serializable {
         deriv = 0.0;
         gbeta = 0.0;
 
-        for (i = 0; i < system.getNumberOfComponents(); i++) {
-          deriv -= (compArray[i].getz() * (compArray[i].getK() - 1.0) * (1.0 - compArray[i].getK()))
-              / Math.pow((betal + (1 - betal) * compArray[i].getK()), 2);
-          gbeta += compArray[i].getz() * (compArray[i].getK() - 1.0) / (betal + (-betal + 1.0) * compArray[i].getK());
-        }
-
-        if (gbeta < 0) {
-          minBeta = betal;
-        } else {
-          maxBeta = betal;
-        }
-
-        betal -= (gbeta / deriv);
-
-        if (betal > maxBeta) {
-          betal = maxBeta;
-        }
-        if (betal < minBeta) {
-          betal = minBeta;
-        }
-
-        nybeta = 1.0 - betal;
-      }
-      step = gbeta / deriv;
-    } while (Math.abs(step) >= 1.0e-10 && iterations < maxIterations); // &&
-
-    if (nybeta <= phaseFractionMinimumLimit) {
-      // this.phase = 1;
-      nybeta = phaseFractionMinimumLimit;
-    } else if (nybeta >= 1.0 - phaseFractionMinimumLimit) {
-      // this.phase = 0;
-      nybeta = 1.0 - phaseFractionMinimumLimit;
-      // superheated vapour
-    } else {
-      // this.phase = 2;
-    } // two-phase liquid-gas
-
-    this.beta[0] = nybeta;
-    this.beta[1] = 1.0 - nybeta;
-
-    if (iterations >= maxIterations) {
-      throw new neqsim.util.exception.TooManyIterationsException(this, "calcBetaS", maxIterations);
-    }
-    if (Double.isNaN(beta[1])) {
-      /*
-       * for (i = 0; i < numberOfComponents; i++) { System.out.println("K " + compArray[i].getK());
-       * System.out.println("z " + compArray[i].getz()); }
-       */
-      throw new neqsim.util.exception.IsNaNException(this, "calcBetaS", "beta");
-    }
-    return this.beta[0];
-  }
-}
