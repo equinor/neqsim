@@ -444,7 +444,12 @@ shadow-value evidence. `estimateSensitivitiesWithQuality(...)` automates one ste
 returns the fine-step objective gradient and constraint-margin Jacobian, and records the actual
 stencil, applied steps, convergence, hard-constraint feasibility, and evaluation errors for every
 perturbation. Callers select the acceptable relative-disagreement tolerance and must still check
-nearby points and active equipment/control regimes.
+nearby points and active equipment/control regimes. Its immutable parameter, selected-objective,
+and constraint snapshots bind every derivative column and row to names, addresses, units,
+directions or types, bounds, hard/soft semantics, capacity origin, and the sampled base values and
+margins. This avoids joining archived matrices back to mutable evaluator definitions. The
+snapshots preserve raw units; normalize only with declared engineering scales before comparing
+unlike constraints.
 
 ### ProcessOptimizationEngine Algorithms
 

@@ -499,6 +499,36 @@ quality_result = evaluator.estimateSensitivitiesWithQuality(x)
 gradient = quality_result.getObjectiveGradient()
 jacobian = quality_result.getConstraintJacobian()
 
+objective = quality_result.getObjectiveSnapshot()
+print(
+    objective.getName(),
+    objective.getDirection(),
+    objective.getUnit(),
+    objective.getBaseRawValue(),
+    objective.getGradient(),
+)
+
+for parameter in quality_result.getParameterSnapshots():
+    print(
+        parameter.getIndex(),
+        parameter.getName(),
+        parameter.getAddress(),
+        parameter.getUnit(),
+        parameter.getBaseValue(),
+    )
+
+for constraint in quality_result.getConstraintSnapshots():
+    print(
+        constraint.getIndex(),
+        constraint.getName(),
+        constraint.getType(),
+        constraint.getUnit(),
+        constraint.getBaseMargin(),
+        constraint.getMarginGradient(),
+        constraint.getAreaName(),
+        constraint.getEquipmentName(),
+    )
+
 for parameter_quality in quality_result.getParameterQuality():
     print(
         parameter_quality.getParameterName(),
@@ -520,6 +550,16 @@ method needs four perturbed simulations per interior central parameter and two p
 parameter, while a fixed parameter needs none; objective and constraint derivatives reuse those
 same simulations. Existing `estimateGradient(...)` and `estimateConstraintJacobian(...)` remain
 the lower-cost APIs.
+
+The same result snapshots the derivative identities at the base point. Parameter snapshots retain
+registration index, name, automation address, unit, bounds, and the bounded value actually
+evaluated. The objective snapshot retains direction, unit, weight, raw and minimizer-convention
+base values, and the gradient. Each constraint snapshot retains type, unit, hard/soft flag,
+penalty, bounds or tolerance, capacity area/equipment origin, sampled base value, margin, and its
+Jacobian row. These records are immutable and serializable, so later evaluator mutations or
+process runs cannot silently relabel archived sensitivities. Raw margins and derivatives keep
+their declared units; do not compare or rank unlike constraints without explicit engineering
+scaling.
 
 Convergence and numerical agreement are necessary but not sufficient. Inspect perturbation
 feasibility separately, test nearby operating points, and reject or qualify sensitivities that
@@ -667,7 +707,7 @@ jpype.shutdownJVM()
 | `getConstraintMargins(double[] x)` | Get constraint slack values |
 | `estimateGradient(double[] x)` | Finite-difference gradient |
 | `estimateConstraintJacobian(double[] x)` | Constraint Jacobian matrix |
-| `estimateSensitivitiesWithQuality(double[] x)` | Fine-step gradient/Jacobian plus immutable step, convergence, feasibility, and step-halving evidence |
+| `estimateSensitivitiesWithQuality(double[] x)` | Fine-step gradient/Jacobian plus immutable parameter/objective/constraint identity, base-point values and margins, capacity origin, steps, convergence, feasibility, and step-halving evidence |
 | `getBounds()` | Get parameter bounds array |
 | `getLowerBounds()` | Get lower bounds vector |
 | `getUpperBounds()` | Get upper bounds vector |
