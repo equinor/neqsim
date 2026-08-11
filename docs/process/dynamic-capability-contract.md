@@ -107,19 +107,23 @@ findings, `UNCLASSIFIED_DYNAMIC` review items, and known process-level execution
 not yet safe for strict professional qualification. `getExecutionIssues()` exposes those process-level findings
 separately so they are not confused with equipment state ownership or activation.
 
-Two execution modes are explicitly blocked by the current Phase-0 contract:
+Adaptive transient execution remains explicitly blocked by the current Phase-0 contract:
+`runTransientAdaptive(...)` mutates one full timestep and derives a following timestep recommendation without a
+full-step/two-half-step error estimate, rejected-step restore, retry, and one accepted-step commit boundary.
 
-- **parallel transient execution** is not strict-ready while equipment worker failures can be logged/swallowed instead of
-  propagating fail-loudly to abort the physical step. Disabling parallel transient execution avoids that specific worker
-  failure path, but it does not create rejected-step rollback or a whole-model transaction;
-- **adaptive transient execution** is not strict-ready while `runTransientAdaptive(...)` mutates one full timestep and
-  derives a following timestep recommendation without a full-step/two-half-step error estimate, rejected-step restore,
-  retry, and one accepted-step commit boundary.
+Parallel transient execution is no longer blocked solely because of worker error handling. Equipment worker exceptions
+now propagate to the caller, stop later dependency levels, and prevent the controller, measurement/alarm/history,
+timestep-counter, and calculation-identifier commit phases from running. The original runtime exception type and message
+are preserved when it crosses the worker future.
 
-These diagnostics are collected recursively through initialized process modules and preserve `ProcessModel` area paths.
-They make current limitations explicit instead of presenting the modes as qualified transient numerics. Once the
-underlying execution semantics are repaired and quantitatively tested, the corresponding blocker should be removed
-rather than retained as a permanent policy restriction.
+This fail-loud boundary is deliberately narrower than transaction or rollback. The process clock and due-event effects
+occur before equipment execution, and state already mutated by a same-level sibling or earlier equipment is not restored.
+Parallel mode therefore remains unsuitable as evidence of whole-step rollback, transient recycle convergence, or
+qualified adaptive/stiff integration. Passing strict preflight means only that the former swallowed-worker-failure defect
+is absent.
+
+Execution diagnostics are collected recursively through initialized process modules and preserve `ProcessModel` area
+paths. They make remaining limitations explicit instead of presenting an execution mode as quantitatively qualified.
 
 Strict preflight does **not** reject an audited dynamic unit merely because the unit is intentionally inactive, and it
 does not yet reject a state-owning family solely because activation remains `UNVERIFIED`. The preflight is not
@@ -288,8 +292,8 @@ whole-step transaction boundary rather than assumed to come from the process gra
 
 This contract does not yet provide the plant-wide vector ODE/DAE solver required for strongly coupled professional
 dynamics. In particular, it does not add global pressure-flow residual assembly, sparse Jacobians, whole-model timestep
-rejection/rollback, event localization, or multi-rate pipeline subcycling. The strict execution diagnostics make known
-parallel/adaptive limitations explicit; they do not repair those underlying execution paths. Those capabilities build on
+rejection/rollback, event localization, or multi-rate pipeline subcycling. The strict execution diagnostics keep the adaptive blocker explicit, while the parallel failure contract documents its
+remaining non-transactional boundary. Neither provides the missing whole-step transaction. Those capabilities build on
 this contract so the solver can reason explicitly about which objects own dynamic state, which objects are algebraic
 constraints, and which execution modes have qualified transaction/error semantics.
 
