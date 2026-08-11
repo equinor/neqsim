@@ -762,6 +762,116 @@ class ProcessModelSimulationEvaluatorTest {
     assertFalse(quality.getPerturbations().get(0).isSimulationConverged());
   }
 
+  /** Verifies local constraint sensitivities retain evidence while policy controls acceptance. */
+  @Test
+  void constraintSensitivityQualificationSeparatesEvidenceFromPolicy() throws Exception {
+    ModelFixture fixture = createModelFixture();
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
+    evaluator.addParameter("field feed", "wells::feed.flowRate", 500.0, 1500.0, "kg/hr");
+    evaluator.addObjective("export production", model -> fixture.feed.getFlowRate("kg/hr"),
+        ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
+    evaluator.getObjectives().get(0).setUnit("kg/hr");
+    evaluator.addConstraintUpperBound("installed feed limit", model -> fixture.feed.getFlowRate("kg/hr"), 1050.0);
+    evaluator.getConstraints().get(0).setUnit("kg/hr");
+    evaluator.setUseRelativeStep(false);
+    evaluator.setFiniteDifferenceStep(100.0);
+
+    ProcessModelSimulationEvaluator.SensitivityQualityResult result = evaluator
+        .estimateSensitivitiesWithQuality(new double[] { 1000.0 });
+    int evaluationsAfterSampling = evaluator.getEvaluationCount();
+    ProcessModelSimulationEvaluator.SensitivityQualificationPolicy strict = ProcessModelSimulationEvaluator.SensitivityQualificationPolicy
+        .strict(1.0e-8);
+    List<ProcessModelSimulationEvaluator.ConstraintSensitivityAssessment> strictAssessments = result
+        .assessConstraintSensitivities(strict);
+    ProcessModelSimulationEvaluator.ConstraintSensitivityAssessment strictAssessment = strictAssessments.get(0);
+
+    assertFalse(strictAssessment.isAccepted());
+    assertTrue(strictAssessment.getEvidenceFlags()
+        .contains(ProcessModelSimulationEvaluator.SensitivityEvidenceFlag.PERTURBATION_INFEASIBLE));
+    assertTrue(strictAssessment.getEvidenceFlags()
+        .contains(ProcessModelSimulationEvaluator.SensitivityEvidenceFlag.ONE_SIDED_STENCIL));
+    assertEquals(1, strictAssessment.getRejectionReasons().size());
+    assertEquals(ProcessModelSimulationEvaluator.SensitivityEvidenceFlag.PERTURBATION_INFEASIBLE,
+        strictAssessment.getRejectionReasons().get(0));
+    assertTrue(result.getAcceptedConstraintSensitivities(strict).isEmpty());
+
+    ProcessModelSimulationEvaluator.SensitivityQualificationPolicy numericalOnly = ProcessModelSimulationEvaluator.SensitivityQualificationPolicy
+        .numericalOnly(1.0e-8);
+    ProcessModelSimulationEvaluator.ConstraintSensitivityAssessment accepted = result
+        .getAcceptedConstraintSensitivities(numericalOnly).get(0);
+    assertTrue(accepted.isAccepted());
+    assertTrue(accepted.getEvidenceFlags()
+        .contains(ProcessModelSimulationEvaluator.SensitivityEvidenceFlag.PERTURBATION_INFEASIBLE));
+    assertTrue(accepted.getRejectionReasons().isEmpty());
+    assertEquals("installed feed limit", accepted.getConstraint().getName());
+    assertEquals("field feed", accepted.getParameter().getName());
+    assertEquals("export production", accepted.getObjective().getName());
+    assertEquals(-1.0, accepted.getMinimizerObjectiveDerivative(), 1.0e-8);
+    assertEquals(1.0, accepted.getRawObjectiveDerivative(), 1.0e-8);
+    assertEquals(-1.0, accepted.getMarginDerivative(), 1.0e-8);
+    assertEquals("kg/hr per kg/hr", accepted.getRawObjectiveDerivativeUnit());
+    assertEquals("kg/hr per kg/hr", accepted.getMarginDerivativeUnit());
+    assertTrue(accepted.isRawObjectiveImprovedByIncreasingParameter());
+    assertTrue(accepted.isMarginReducedByIncreasingParameter());
+    assertEquals(evaluationsAfterSampling, evaluator.getEvaluationCount(),
+        "qualification must not rerun the process model");
+    assertThrows(UnsupportedOperationException.class, () -> strictAssessments.clear());
+    assertThrows(UnsupportedOperationException.class, () -> accepted.getEvidenceFlags().clear());
+    assertThrows(IllegalArgumentException.class, () -> result.assessConstraintSensitivities(null));
+    assertThrows(IllegalArgumentException.class,
+        () -> new ProcessModelSimulationEvaluator.SensitivityQualificationPolicy(Double.NaN, true, true, true));
+
+    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    ObjectOutputStream output = new ObjectOutputStream(bytes);
+    output.writeObject(accepted);
+    output.close();
+    ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()));
+    ProcessModelSimulationEvaluator.ConstraintSensitivityAssessment restored = (ProcessModelSimulationEvaluator.ConstraintSensitivityAssessment) input
+        .readObject();
+    input.close();
+    assertTrue(restored.isAccepted());
+    assertEquals("installed feed limit", restored.getConstraint().getName());
+    assertEquals(-1.0, restored.getMarginDerivative(), 1.0e-8);
+  }
+
+  /** Verifies fixed and policy-disallowed stencils are refused with explicit reasons. */
+  @Test
+  void constraintSensitivityQualificationRejectsUnavailableOperatingActions() {
+    ModelFixture fixture = createModelFixture();
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
+    evaluator.addParameter("fixed feed", "wells::feed.flowRate", 1000.0, 1000.0, "kg/hr");
+    evaluator.addObjective("feed flow", model -> fixture.feed.getFlowRate("kg/hr"));
+    evaluator.addConstraintUpperBound("feed limit", model -> fixture.feed.getFlowRate("kg/hr"), 1100.0);
+
+    ProcessModelSimulationEvaluator.SensitivityQualityResult fixedResult = evaluator
+        .estimateSensitivitiesWithQuality(new double[] { 1000.0 });
+    ProcessModelSimulationEvaluator.ConstraintSensitivityAssessment fixed = fixedResult
+        .assessConstraintSensitivities(ProcessModelSimulationEvaluator.SensitivityQualificationPolicy.numericalOnly(
+            0.0))
+        .get(0);
+    assertFalse(fixed.isAccepted());
+    assertEquals(ProcessModelSimulationEvaluator.SensitivityEvidenceFlag.FIXED_PARAMETER,
+        fixed.getRejectionReasons().get(0));
+
+    ProcessModelSimulationEvaluator boundedEvaluator = new ProcessModelSimulationEvaluator(fixture.model);
+    boundedEvaluator.addParameter("bounded feed", "wells::feed.flowRate", 500.0, 1000.0, "kg/hr");
+    boundedEvaluator.addObjective("feed flow", model -> fixture.feed.getFlowRate("kg/hr"));
+    boundedEvaluator.addConstraintUpperBound("feed limit", model -> fixture.feed.getFlowRate("kg/hr"), 1100.0);
+    boundedEvaluator.setUseRelativeStep(false);
+    boundedEvaluator.setFiniteDifferenceStep(100.0);
+    ProcessModelSimulationEvaluator.SensitivityQualityResult boundedResult = boundedEvaluator
+        .estimateSensitivitiesWithQuality(new double[] { 1000.0 });
+    ProcessModelSimulationEvaluator.SensitivityQualificationPolicy centralRequired = new ProcessModelSimulationEvaluator.SensitivityQualificationPolicy(
+        1.0e-8, true, true, false);
+    ProcessModelSimulationEvaluator.ConstraintSensitivityAssessment bounded = boundedResult
+        .assessConstraintSensitivities(centralRequired).get(0);
+
+    assertEquals(ProcessModelSimulationEvaluator.AppliedFiniteDifferenceStencil.BACKWARD, bounded.getStencil());
+    assertFalse(bounded.isAccepted());
+    assertEquals(ProcessModelSimulationEvaluator.SensitivityEvidenceFlag.ONE_SIDED_STENCIL,
+        bounded.getRejectionReasons().get(0));
+  }
+
   /** Verifies invalid finite-difference configuration fails before a process evaluation. */
   @Test
   void finiteDifferenceConfigurationRejectsInvalidValues() {

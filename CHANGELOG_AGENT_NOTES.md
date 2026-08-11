@@ -9,6 +9,22 @@
 
 ---
 
+## 2026-08-11 — Evidence-qualified local ProcessModel constraint sensitivities
+
+- `SensitivityQualityResult.assessConstraintSensitivities(policy)` now binds each constraint row
+  and parameter column to pair-specific numerical evidence, immutable engineering identity, raw
+  and minimizer objective derivatives, the constraint-margin derivative, declared derivative
+  units, and actionable diagnostics without rerunning the process model.
+- `SensitivityQualificationPolicy` explicitly controls relative-disagreement tolerance, base and
+  perturbation feasibility requirements, and acceptance of one-sided stencils. Convergence
+  failures, evaluation errors, non-finite derivatives, unstable refinement, and fixed parameters
+  always reject a pair.
+- `getEvidenceFlags()` retains cautions even when a policy permits them;
+  `getRejectionReasons()` explains why a pair is refused. The accepted-only convenience getter
+  must not replace archiving the complete assessment when auditability matters.
+- The API deliberately performs no cross-unit ranking, scaling, active-set inference, KKT
+  multiplier calculation, shadow-price claim, or engineering approval.
+
 ## 2026-08-11 — Self-describing ProcessModel sensitivity snapshots
 
 - `SensitivityQualityResult` now includes immutable parameter, selected-objective, and constraint

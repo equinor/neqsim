@@ -537,6 +537,50 @@ feasibility separately, test nearby operating points, and reject or qualify sens
 cross equipment/control regimes. An infeasible perturbation is retained as evidence rather than
 silently invalidating a constraint-margin derivative.
 
+Use an explicit qualification policy before passing local derivatives into a bottleneck or
+operating-action workflow:
+
+```python
+Policy = (
+    jneqsim.process.util.optimizer.ProcessModelSimulationEvaluator
+    .SensitivityQualificationPolicy
+)
+
+# Requires a feasible base and feasible perturbations. One-sided bounded stencils are allowed.
+strict_policy = Policy.strict(0.05)
+assessments = quality_result.assessConstraintSensitivities(strict_policy)
+
+for assessment in assessments:
+    print(
+        assessment.getConstraint().getName(),
+        assessment.getParameter().getName(),
+        assessment.getRawObjectiveDerivative(),
+        assessment.getRawObjectiveDerivativeUnit(),
+        assessment.getMarginDerivative(),
+        assessment.getMarginDerivativeUnit(),
+        assessment.isAccepted(),
+        list(assessment.getEvidenceFlags()),
+        list(assessment.getRejectionReasons()),
+        list(assessment.getDiagnostics()),
+    )
+
+accepted = quality_result.getAcceptedConstraintSensitivities(strict_policy)
+```
+
+Qualification performs no additional process evaluations. Every assessment binds one constraint
+row and parameter column to the immutable snapshots, reports both raw and minimizer-convention
+objective derivatives, and retains the exact stencil plus objective and constraint coarse/fine
+disagreements. Convergence failures, evaluation errors, non-finite derivatives, unstable
+refinement, and fixed parameters always reject a pair. The policy explicitly controls whether
+base or perturbation infeasibility and one-sided stencils reject it. Even when allowed, these
+conditions remain visible in `getEvidenceFlags()` and the diagnostics.
+
+`Policy.numericalOnly(tolerance)` is useful for diagnosing a violated or boundary-crossing case,
+but acceptance under that policy is numerical evidence only. It is not engineering approval.
+Results remain in declared units and are intentionally not ranked across constraints. Explicit
+scaling, regime validation, active-set logic, and optimizer-specific KKT evidence are separate
+requirements.
+
 ### Export Problem Definition
 
 ```python
@@ -693,6 +737,8 @@ jpype.shutdownJVM()
 |--------|-------------|
 | `estimateSensitivitiesWithQuality(double[] x)` | Primary-objective fine-step gradient and constraint-margin Jacobian, plus immutable parameter/objective/constraint identity, base values, capacity origin, perturbation convergence, feasibility, and step-halving evidence |
 | `estimateSensitivitiesWithQuality(double[] x, int objectiveIndex)` | The same evidence for the selected registered objective |
+| `SensitivityQualityResult.assessConstraintSensitivities(policy)` | Immutable evidence and acceptance/rejection diagnostics for every constraint/parameter pair; performs no process evaluations |
+| `SensitivityQualityResult.getAcceptedConstraintSensitivities(policy)` | Accepted local pairs only; inspect the full assessment list to retain rejected evidence |
 
 The sensitivity-quality methods belong to `ProcessModelSimulationEvaluator`; they are not methods
 on `ProcessSimulationEvaluator`.
