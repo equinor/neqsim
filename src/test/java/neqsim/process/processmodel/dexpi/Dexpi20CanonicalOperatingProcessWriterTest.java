@@ -23,13 +23,13 @@ class Dexpi20CanonicalOperatingProcessWriterTest {
     process.run();
     Path output = temporaryDirectory.resolve("canonical-operating.dexpi.xml");
 
-    Dexpi20ProcessTopologyAssessment.Report report = Dexpi20CanonicalOperatingProcessWriter.writeAndAssessTopology(
-        process, output.toFile(), "DEXPI-C009", "A", "NORMAL-001");
+    Dexpi20ProcessTopologyAssessment.Report report = Dexpi20CanonicalOperatingProcessWriter
+        .writeAndAssessTopology(process, output.toFile(), "DEXPI-C009", "A", "NORMAL-001");
     String xml = new String(Files.readAllBytes(output), StandardCharsets.UTF_8);
 
     assertTrue(report.isSchemaProfileAndSupportedTopologyValid(), report.getDiagnostics().toString());
-    assertTrue(xml.contains("CANONICAL") || "CANONICAL_ENGINEERING_GRAPH_OPERATING_CASE"
-        .equals(report.getExportTopologySource()));
+    assertTrue(xml.contains("CANONICAL")
+        || "CANONICAL_ENGINEERING_GRAPH_OPERATING_CASE".equals(report.getExportTopologySource()));
     assertTrue(xml.contains("MassFlowRateUnit.KilogramPerHour"));
     assertTrue(xml.contains("PressureAbsoluteUnit.Bar"));
     assertTrue(xml.contains("TemperatureUnit.DegreeCelsius"));
@@ -43,8 +43,8 @@ class Dexpi20CanonicalOperatingProcessWriterTest {
     ProcessSystem process = operatingProcess();
     Path output = temporaryDirectory.resolve("not-run.dexpi.xml");
 
-    Dexpi20ProcessTopologyAssessment.Report report = Dexpi20CanonicalOperatingProcessWriter.writeAndAssessTopology(
-        process, output.toFile(), "DEXPI-C009-NOT-RUN", "A", "NORMAL-001");
+    Dexpi20ProcessTopologyAssessment.Report report = Dexpi20CanonicalOperatingProcessWriter
+        .writeAndAssessTopology(process, output.toFile(), "DEXPI-C009-NOT-RUN", "A", "NORMAL-001");
     String xml = new String(Files.readAllBytes(output), StandardCharsets.UTF_8);
 
     assertTrue(hasDiagnostic(report, "DIAGRAM_OPERATING_CASE_NOT_SUCCESSFUL"));
