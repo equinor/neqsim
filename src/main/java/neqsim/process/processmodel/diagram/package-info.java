@@ -15,6 +15,7 @@
  * <li><b>Equipment semantics</b> - Separator outlets correctly positioned</li>
  * <li><b>DEXPI integration</b> - Import P&amp;ID data and generate diagrams</li>
  * <li><b>Canonical topology</b> - Stable plant, area, equipment, port, and connection identities</li>
+ * <li><b>Operating evidence</b> - Opt-in case-scoped stream values with explicit units and provenance</li>
  * <li><b>Multiple detail levels</b> - MINIMAL, STANDARD, DETAILED, DEBUG</li>
  * <li><b>Deterministic output</b> - Same model always produces same diagram</li>
  * </ul>
