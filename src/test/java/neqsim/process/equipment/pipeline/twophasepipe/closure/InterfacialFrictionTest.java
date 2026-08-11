@@ -73,8 +73,7 @@ class InterfacialFrictionTest {
   void bubbleDiameterConfigurationControlsInterfacialAreaWithoutChangingDefault() {
     InterfacialFriction friction = new InterfacialFriction();
     double defaultDiameter = inferredBubbleDiameter(friction, 0.072);
-    double expectedDefault = 2.0
-        * Math.sqrt(0.725 * DEFAULT_BUBBLE_SURFACE_TENSION / ((1000.0 - 5.0) * GRAVITY));
+    double expectedDefault = 2.0 * Math.sqrt(0.725 * DEFAULT_BUBBLE_SURFACE_TENSION / ((1000.0 - 5.0) * GRAVITY));
 
     assertEquals(expectedDefault, defaultDiameter, 1.0e-15);
 
@@ -107,9 +106,8 @@ class InterfacialFrictionTest {
   private static double inferredBubbleDiameter(InterfacialFriction friction, double surfaceTension) {
     double diameter = 1.0;
     double liquidHoldup = 0.9;
-    InterfacialFriction.InterfacialFrictionResult result =
-        friction.calculate(FlowRegime.BUBBLE, 0.7, 0.5, 5.0, 1000.0, 1.5e-5,
-            1.0e-3, liquidHoldup, diameter, surfaceTension);
+    InterfacialFriction.InterfacialFrictionResult result = friction.calculate(FlowRegime.BUBBLE, 0.7, 0.5, 5.0, 1000.0,
+        1.5e-5, 1.0e-3, liquidHoldup, diameter, surfaceTension);
     double gasHoldup = 1.0 - liquidHoldup;
     double area = Math.PI * diameter * diameter / 4.0;
     return 6.0 * gasHoldup * area / result.interfacialAreaPerLength;
