@@ -182,10 +182,7 @@ $$
 
 Bubble and dispersed-bubble regimes use the explicit algebraic diameter closure
 
-$
-d_b=\min\left(2\sqrt{\frac{0.725\,\sigma_b}
-{g|\rho_L-\rho_G|}},\; f_D\,D\right).
-$
+`d_b = min(2 sqrt(0.725 sigma_b / (g |rho_L-rho_G|)), f_D D)`.
 
 The defaults $\sigma_b=0.02$ N/m and $f_D=0.20$ preserve the historical calculation. Change the
 fixed values, or explicitly use each section's thermodynamic phase-property surface tension, through
