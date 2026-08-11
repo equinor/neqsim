@@ -6,8 +6,11 @@ description: Current-master inventory and compatibility contract for NeqSim DOT,
 # Process diagram exporter and API inventory
 
 This inventory records the process-diagram and engineering-exchange paths present on NeqSim
-`master` at commit `60a6bde7` (10 August 2026). It is the Phase 0 baseline for issue #1332. It
-does not change an exporter, qualify a drawing, or claim ISO 10628 conformance.
+`master` at commit `1dee5b51` (11 August 2026). It is the Phase 0 baseline for issue #1332. It
+does not change an exporter, qualify a drawing, or claim ISO 10628 conformance. The paired
+[DEXPI and P&ID current-master audit](../../integration/dexpi-pid-current-master-audit.md)
+extends this baseline across the detailed #2899 reader, writer, validator, engineering, P&ID,
+test, fixture, example, and qualification surfaces.
 
 The intended architecture is one canonical semantic plant model projected into complementary
 outputs:

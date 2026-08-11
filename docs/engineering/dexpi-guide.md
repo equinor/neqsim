@@ -244,6 +244,7 @@ classification, target-system loading, or final information acceptance.
 ## Related documentation
 
 - [DEXPI import, export, and visualization](../integration/dexpi-reader.md)
+- [DEXPI and P&ID current-master audit](../integration/dexpi-pid-current-master-audit.md)
 - [DEXPI 2.0 native exchange and conformance](../integration/dexpi-20-conformance.md)
 - [Standards-based DEXPI engineering generation](../integration/dexpi-engineering-generation.md)
 - [Governed P&ID design synthesis](../pid-design-synthesis.md)
