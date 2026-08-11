@@ -42,8 +42,7 @@ class ProcessSystemTransientFailureContractTest {
     model.add("later", laterArea);
 
     UUID stepId = UUID.randomUUID();
-    IllegalStateException failure =
-        assertThrows(IllegalStateException.class, () -> model.runTransient(1.0, stepId));
+    IllegalStateException failure = assertThrows(IllegalStateException.class, () -> model.runTransient(1.0, stepId));
 
     assertEquals("intentional transient failure", failure.getMessage());
     assertEquals(0, laterEquipment.getTransientCalls(),
@@ -55,8 +54,7 @@ class ProcessSystemTransientFailureContractTest {
   private static FailureScenario createFailureScenario(String name, boolean parallel) {
     Stream dependency = new Stream(name + " dependency", new SystemSrkEos(298.15, 1.0));
     FailingTransientEquipment failing = new FailingTransientEquipment("failing unit", dependency);
-    RecordingTransientEquipment downstream =
-        new RecordingTransientEquipment("downstream unit", dependency);
+    RecordingTransientEquipment downstream = new RecordingTransientEquipment("downstream unit", dependency);
     RecordingController controller = new RecordingController("standalone controller");
 
     ProcessSystem process = new ProcessSystem(name);
@@ -75,14 +73,12 @@ class ProcessSystemTransientFailureContractTest {
 
     assertEquals("intentional transient failure", failure.getMessage());
     assertEquals(1, scenario.failing.getTransientCalls());
-    assertEquals(0, scenario.downstream.getTransientCalls(),
-        "downstream equipment must not run after a failed unit");
+    assertEquals(0, scenario.downstream.getTransientCalls(), "downstream equipment must not run after a failed unit");
     assertEquals(0, scenario.controller.getTransientCalls(),
         "standalone controllers must not run after equipment failure");
     assertNotEquals(stepId, scenario.process.getCalculationIdentifier(),
         "a failed physical step must not commit the ProcessSystem calculation identifier");
-    assertEquals(0, scenario.process.getHistorySize(),
-        "a failed physical step must not append measurement history");
+    assertEquals(0, scenario.process.getHistorySize(), "a failed physical step must not append measurement history");
     assertEquals(1.0, scenario.process.getTime(), 0.0,
         "time advances before equipment; whole-step rollback remains a separate Phase-0 dependency");
   }
@@ -160,8 +156,7 @@ class ProcessSystemTransientFailureContractTest {
 
     @Override
     public List<StreamInterface> getInletStreams() {
-      return inlet == null ? Collections.<StreamInterface>emptyList()
-          : Collections.singletonList(inlet);
+      return inlet == null ? Collections.<StreamInterface>emptyList() : Collections.singletonList(inlet);
     }
 
     private int getTransientCalls() {
