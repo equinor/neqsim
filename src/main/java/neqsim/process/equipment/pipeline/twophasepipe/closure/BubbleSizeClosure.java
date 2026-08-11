@@ -6,15 +6,15 @@ import java.io.Serializable;
  * Configurable algebraic bubble-size closure for liquid-continuous bubbly-flow models.
  *
  * <p>
- * The closure exposes the historical TwoFluidPipe buoyancy/capillary diameter scale as explicit
- * configuration. By default it uses a fixed {@code 0.02 N/m} surface tension and a {@code D/5}
- * geometry cap, preserving the existing bubble and dispersed-bubble calculations. Callers may opt
- * into the local phase-property surface tension already supplied by the pipe section.
+ * The closure exposes the historical TwoFluidPipe buoyancy/capillary diameter scale as explicit configuration. By
+ * default it uses a fixed {@code 0.02 N/m} surface tension and a {@code D/5} geometry cap, preserving the existing
+ * bubble and dispersed-bubble calculations. Callers may opt into the local phase-property surface tension already
+ * supplied by the pipe section.
  * </p>
  *
  * <p>
- * This is a single algebraic characteristic size. It does not model a bubble-size distribution,
- * deformation, coalescence, breakup, or turbulent-dissipation dependence.
+ * This is a single algebraic characteristic size. It does not model a bubble-size distribution, deformation,
+ * coalescence, breakup, or turbulent-dissipation dependence.
  * </p>
  */
 public final class BubbleSizeClosure implements Serializable {
@@ -59,9 +59,8 @@ public final class BubbleSizeClosure implements Serializable {
    * Selects the local phase-property surface tension supplied for each pipe section.
    *
    * <p>
-   * The default is {@code false}, which preserves the historical fixed {@code 0.02 N/m}
-   * calculation. When enabled, the five-argument estimate validates and uses its local surface
-   * tension argument.
+   * The default is {@code false}, which preserves the historical fixed {@code 0.02 N/m} calculation. When enabled, the
+   * five-argument estimate validates and uses its local surface tension argument.
    * </p>
    *
    * @param useLocal true to use the caller-supplied local surface tension
@@ -101,20 +100,18 @@ public final class BubbleSizeClosure implements Serializable {
    * @param gravity gravitational acceleration magnitude in m/s2
    * @return characteristic bubble diameter in m
    */
-  public double estimateDiameter(double pipeDiameter, double continuousPhaseDensity,
-      double dispersedPhaseDensity, double gravity) {
-    return estimate(pipeDiameter, continuousPhaseDensity, dispersedPhaseDensity, gravity,
-        surfaceTension);
+  public double estimateDiameter(double pipeDiameter, double continuousPhaseDensity, double dispersedPhaseDensity,
+      double gravity) {
+    return estimate(pipeDiameter, continuousPhaseDensity, dispersedPhaseDensity, gravity, surfaceTension);
   }
 
   /**
    * Estimates a characteristic bubble diameter with optional local phase-property surface tension.
    *
    * <p>
-   * The uncapped historical scale is
-   * {@code 2 * sqrt(0.725 * sigma / (g * abs(deltaRho)))}. The returned value is capped at
-   * {@code maximumPipeDiameterFraction * pipeDiameter}. The {@code localSurfaceTension} argument is
-   * used only when {@link #isUseLocalSurfaceTension()} is true.
+   * The uncapped historical scale is {@code 2 * sqrt(0.725 * sigma / (g * abs(deltaRho)))}. The returned value is
+   * capped at {@code maximumPipeDiameterFraction * pipeDiameter}. The {@code localSurfaceTension} argument is used only
+   * when {@link #isUseLocalSurfaceTension()} is true.
    * </p>
    *
    * @param pipeDiameter internal pipe diameter in m
@@ -124,19 +121,18 @@ public final class BubbleSizeClosure implements Serializable {
    * @param localSurfaceTension local phase-property surface tension in N/m
    * @return characteristic bubble diameter in m
    */
-  public double estimateDiameter(double pipeDiameter, double continuousPhaseDensity,
-      double dispersedPhaseDensity, double gravity, double localSurfaceTension) {
+  public double estimateDiameter(double pipeDiameter, double continuousPhaseDensity, double dispersedPhaseDensity,
+      double gravity, double localSurfaceTension) {
     double selectedSurfaceTension = surfaceTension;
     if (useLocalSurfaceTension) {
       requirePositiveFinite(localSurfaceTension, "localSurfaceTension");
       selectedSurfaceTension = localSurfaceTension;
     }
-    return estimate(pipeDiameter, continuousPhaseDensity, dispersedPhaseDensity, gravity,
-        selectedSurfaceTension);
+    return estimate(pipeDiameter, continuousPhaseDensity, dispersedPhaseDensity, gravity, selectedSurfaceTension);
   }
 
-  private double estimate(double pipeDiameter, double continuousPhaseDensity,
-      double dispersedPhaseDensity, double gravity, double selectedSurfaceTension) {
+  private double estimate(double pipeDiameter, double continuousPhaseDensity, double dispersedPhaseDensity,
+      double gravity, double selectedSurfaceTension) {
     requirePositiveFinite(pipeDiameter, "pipeDiameter");
     requirePositiveFinite(continuousPhaseDensity, "continuousPhaseDensity");
     requirePositiveFinite(dispersedPhaseDensity, "dispersedPhaseDensity");
@@ -146,9 +142,8 @@ public final class BubbleSizeClosure implements Serializable {
     if (densityDifference == 0.0) {
       return geometryBound;
     }
-    double unconstrained =
-        2.0 * Math.pow(HISTORICAL_SCALE_COEFFICIENT * selectedSurfaceTension
-            / (gravity * densityDifference), 0.5);
+    double unconstrained = 2.0
+        * Math.pow(HISTORICAL_SCALE_COEFFICIENT * selectedSurfaceTension / (gravity * densityDifference), 0.5);
     return Math.min(unconstrained, geometryBound);
   }
 
