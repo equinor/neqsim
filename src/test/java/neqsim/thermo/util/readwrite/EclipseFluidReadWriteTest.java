@@ -1301,6 +1301,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
           1e-6, "Binary interaction parameter must round-trip");
 
       imported.setTemperature(290.15);
+      imported.setPressure(70.0);
       ThermodynamicOperations opsImported = new ThermodynamicOperations(imported);
       opsImported.bubblePointPressureFlash(false);
       assertEquals(psatOriginal, imported.getPressure(), psatOriginal * 0.002,
