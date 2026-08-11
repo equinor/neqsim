@@ -47,4 +47,19 @@ public class RachfordRiceTest {
       logger.error(e.getMessage());
     }
   }
+
+  @Test
+  void testCalcBetaNielsen2023NoArrayMutation() {
+    double[] z = new double[] { 0.9, 0.1 };
+    double[] K = new double[] { 5.0, 0.2 };
+    double k0Original = K[0];
+    double k1Original = K[1];
+
+    RachfordRice rachfordRice = new RachfordRice();
+    double beta = rachfordRice.calcBetaNielsen2023(K, z);
+
+    Assertions.assertTrue(beta > 0.0 && beta < 1.0);
+    Assertions.assertEquals(k0Original, K[0], 1e-12, "Input K[0] must not be mutated in-place");
+    Assertions.assertEquals(k1Original, K[1], 1e-12, "Input K[1] must not be mutated in-place");
+  }
 }
