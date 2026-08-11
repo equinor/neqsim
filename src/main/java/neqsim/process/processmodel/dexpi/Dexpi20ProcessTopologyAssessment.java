@@ -176,8 +176,7 @@ public final class Dexpi20ProcessTopologyAssessment {
     }
 
     /**
-     * @return operating-value source used by an opt-in assessed export, or {@code null} for the
-     *         compatibility path
+     * @return operating-value source used by an opt-in assessed export, or {@code null} for the compatibility path
      */
     public String getExportOperatingValueSource() {
       return exportOperatingValueSource;
@@ -289,8 +288,8 @@ public final class Dexpi20ProcessTopologyAssessment {
     diagnostics.add(new Diagnostic(Severity.WARNING, "DEXPI_PROCESS_GRAPHICS_UNSUPPORTED",
         "Native DEXPI 2.0 Process export contains semantic steps and streams but no governed drawing layout",
         processSystem.getName()));
-    return new Report(conformanceReport, exportTopologySource, exportOperatingValueSource,
-        canonical.getFingerprint(), connectionIds, expected, actual, exported, diagnostics);
+    return new Report(conformanceReport, exportTopologySource, exportOperatingValueSource, canonical.getFingerprint(),
+        connectionIds, expected, actual, exported, diagnostics);
   }
 
   private static void copyAdapterDiagnostics(ProcessDiagramGraphAdapter.Result canonical,

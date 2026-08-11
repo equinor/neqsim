@@ -100,10 +100,10 @@ public final class Dexpi20ProcessModelWriter {
    * Writes an assessed Process exchange whose operating values come from one canonical case snapshot.
    *
    * <p>
-   * This opt-in overload does not change the established topology-only overload. Only finite,
-   * unit-explicit calculation nodes for {@code operatingCaseId} are serialized; missing values are
-   * omitted with structured diagnostics and are never read directly from streams as a fallback.
-   * Generated values remain calculated, review-required engineering evidence.
+   * This opt-in overload does not change the established topology-only overload. Only finite, unit-explicit calculation
+   * nodes for {@code operatingCaseId} are serialized; missing values are omitted with structured diagnostics and are
+   * never read directly from streams as a fallback. Generated values remain calculated, review-required engineering
+   * evidence.
    * </p>
    *
    * @param processSystem source simulation topology with a successful completed run
@@ -548,8 +548,7 @@ public final class Dexpi20ProcessModelWriter {
 
   private static final class CanonicalOperatingValues implements OperatingValues {
     private final Map<String, Map<String, Double>> values = new LinkedHashMap<String, Map<String, Double>>();
-    private final List<Dexpi20ProcessTopologyAssessment.Diagnostic> diagnostics =
-        new ArrayList<Dexpi20ProcessTopologyAssessment.Diagnostic>();
+    private final List<Dexpi20ProcessTopologyAssessment.Diagnostic> diagnostics = new ArrayList<Dexpi20ProcessTopologyAssessment.Diagnostic>();
 
     CanonicalOperatingValues(EngineeringGraph graph, String operatingCaseId) {
       for (EngineeringNode node : graph.getNodes().values()) {
@@ -575,8 +574,7 @@ public final class Dexpi20ProcessModelWriter {
 
     @Override
     public Double value(Link link, String quantity) {
-      String subject = link.canonicalValueSubjectId.isEmpty() ? streamName(link.stream)
-          : link.canonicalValueSubjectId;
+      String subject = link.canonicalValueSubjectId.isEmpty() ? streamName(link.stream) : link.canonicalValueSubjectId;
       Map<String, Double> subjectValues = values.get(link.canonicalValueSubjectId);
       Double result = subjectValues == null ? null : subjectValues.get(quantity);
       if (result == null) {
@@ -604,8 +602,7 @@ public final class Dexpi20ProcessModelWriter {
         value *= 3600.0;
       } else if ("pressure".equals(quantity) && "bara".equals(unit) && "ABSOLUTE".equals(basis)) {
         // DEXPI Process uses bar with an absolute-pressure unit reference.
-      } else if ("temperature".equals(quantity) && "K".equals(unit)
-          && "THERMODYNAMIC_ABSOLUTE".equals(basis)) {
+      } else if ("temperature".equals(quantity) && "K".equals(unit) && "THERMODYNAMIC_ABSOLUTE".equals(basis)) {
         value -= 273.15;
       } else {
         return null;
