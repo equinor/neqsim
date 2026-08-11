@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.util.List;
 import javax.xml.parsers.DocumentBuilderFactory;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
@@ -58,7 +59,7 @@ class Dexpi20ProcessModelWriterTest {
 
   @Test
   void optInAssessedExportUsesCanonicalOperatingValuesWithDeterministicUnitConversion() throws Exception {
-    ProcessSystem process = process();
+    ProcessSystem process = operatingProcess();
     process.run();
     Path first = temporaryDirectory.resolve("canonical-values-first.dexpi.xml");
     Path second = temporaryDirectory.resolve("canonical-values-second.dexpi.xml");
@@ -81,7 +82,7 @@ class Dexpi20ProcessModelWriterTest {
 
   @Test
   void optInAssessedExportOmitsUnrunValuesWithoutDirectStreamFallback() throws Exception {
-    ProcessSystem process = process();
+    ProcessSystem process = operatingProcess();
     Path output = temporaryDirectory.resolve("canonical-values-unrun.dexpi.xml");
 
     Dexpi20ProcessTopologyAssessment.Report report = Dexpi20ProcessModelWriter.writeAndAssessTopology(process,
@@ -328,6 +329,19 @@ class Dexpi20ProcessModelWriterTest {
     process.add(compressor);
     process.add(pipeline);
     process.add(pump);
+    return process;
+  }
+
+  private static ProcessSystem operatingProcess() {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 40.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+    Stream feed = new Stream("10-FEED-001", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    Heater heater = new Heater("10-HA-001", feed);
+    ProcessSystem process = new ProcessSystem("DEXPI canonical operating-value test");
+    process.add(feed);
+    process.add(heater);
     return process;
   }
 }
