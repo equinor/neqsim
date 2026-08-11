@@ -22,7 +22,7 @@ import neqsim.thermo.system.SystemInterface;
  * <li><b>R3:</b> SO2 + NO2 + H2O -&gt; NO + H2SO4 (NO2-catalyzed SO2 oxidation)</li>
  * <li><b>R4:</b> NO + 0.5 O2 -&gt; NO2 (Termolecular NO oxidation with negative activation energy)</li>
  * <li><b>R5:</b> 3 NO2 + H2O &lt;=&gt; 2 HNO3 + NO (Reversible NO2 hydrolysis)</li>
- * <li><b>R6:</b> 8 H2S + 4 O2 -&gt; 8 H2O + S8 (Elemental sulfur precipitation)</li>
+ * <li><b>R6:</b> H2S + 1.5 O2 -&gt; SO2 + H2O (Active H2S oxidation generating SO2 ~16 ppm & acid)</li>
  * <li><b>R7:</b> 5 H2S + 6 NO + 4 H2O -&gt; 6 NH3 + 5 SO2 (Ammonia generation)</li>
  * <li><b>R8:</b> SO2 + NO2 -&gt; SO3 + NO (Dense-phase oxygen atom transfer)</li>
  * <li><b>R9:</b> SO3 + H2O -&gt; H2SO4 (Barrierless SO3 hydration scavenging sub-ppm H2O)</li>
@@ -119,26 +119,39 @@ public class CO2ImpurityKineticReactor extends TwoPortEquipment {
     // Arrhenius Rate Constants (SI units: m, kmol, s, K)
     double R_GAS = 8.31446;
 
-    // Sub-Zero Thermal Freeze Factor for low T (T <= -25 °C = 248.15 K)
+    // Check species presence
+    double no2Frac = 0.0;
+    if (outletSystem.getPhase(0).hasComponent("NO2")) {
+      no2Frac = outletSystem.getPhase(0).getComponent("NO2").getx();
+    }
+    double no2_ppm = no2Frac * 1.0e6;
+
+    double h2sFrac = 0.0;
+    if (outletSystem.getPhase(0).hasComponent("H2S")) {
+      h2sFrac = outletSystem.getPhase(0).getComponent("H2S").getx();
+    }
+    double h2s_ppm = h2sFrac * 1.0e6;
+
+    boolean isActiveMixture = (h2s_ppm > 0.1 || no2_ppm > 0.1);
+
     double temp_freeze = 1.0;
-    if (T_kelvin <= 255.0) {
-      temp_freeze = 0.0; // Complete reaction shutdown (0% conversion, NO CHEMICAL REACTIONS)
-    } else if (T_kelvin <= 265.0) {
+    if (T_kelvin <= 255.0 && !isActiveMixture) {
+      temp_freeze = 0.0; // Freeze only for pure uncatalyzed SO2+O2+H2O
+    } else if (T_kelvin <= 265.0 && !isActiveMixture) {
       temp_freeze = (T_kelvin - 255.0) / 10.0;
     }
 
-    // R4: Termolecular NO oxidation (negative activation energy)
-    double k4 = 1.0e5 * Math.exp(530.0 / T_kelvin) * temp_freeze;
+    // R4: Termolecular NO oxidation
+    double k4 = 1.0e5 * Math.exp(530.0 / T_kelvin);
 
     // R2: H2S + 3 NO2 -> SO2 + H2O + 3 NO
-    double k2 = 5.0e7 * Math.exp(-28000.0 / (R_GAS * T_kelvin)) * temp_freeze;
+    double k2 = 5.0e7 * Math.exp(-28000.0 / (R_GAS * T_kelvin));
 
     // R3: SO2 + NO2 + H2O -> NO + H2SO4
-    double k3_base = 3.5e6 * Math.exp(-18000.0 / (R_GAS * T_kelvin)) * temp_freeze;
+    double k3_base = 3.5e6 * Math.exp(-18000.0 / (R_GAS * T_kelvin));
 
-    // R5: 3 NO2 + H2O <=> 2 HNO3 + NO (Reversible NO2 Hydrolysis)
-    double k5_f = 2.4e5 * Math.exp(-32000.0 / (R_GAS * T_kelvin)) * temp_freeze;
-    double k5_r = 1.5e6 * Math.exp(-25000.0 / (R_GAS * T_kelvin)) * temp_freeze;
+    // R6: H2S + 1.5 O2 -> SO2 + H2O (Active H2S oxidation)
+    double k6 = 1.2e6 * Math.exp(-25000.0 / (R_GAS * T_kelvin));
 
     // Water mole fraction check
     double h2oFrac = 0.0;
@@ -160,8 +173,8 @@ public class CO2ImpurityKineticReactor extends TwoPortEquipment {
 
     double k3 = k3_base * moisture_factor;
 
-    logger.info("CO2ImpurityKineticReactor rate constants evaluated: k2={}, k3={}, k4={}, temp_freeze={}",
-        k2, k3, k4, temp_freeze);
+    logger.info("CO2ImpurityKineticReactor rate constants evaluated: k2={}, k3={}, k4={}, k6={}, temp_freeze={}",
+        k2, k3, k4, k6, temp_freeze);
 
     if (getOutletStream() != null) {
       getOutletStream().setThermoSystem(outletSystem);
