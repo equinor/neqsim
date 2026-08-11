@@ -16,7 +16,7 @@ simulation, an approved P&ID, or a construction release.
 | Export a quick Proteus-compatible P&ID | `DexpiXmlWriter.write(...)` | [DEXPI import, export, and visualization](../integration/dexpi-reader.md#exporting-to-dexpi-xml) |
 | Render through pyDEXPI | `DexpiXmlWriter.writeForPyDexpi(...)` or `DexpiDiagramBridge.exportForPyDexpi(...)` | [pyDEXPI-friendly export](../integration/dexpi-reader.md#pydexpi-friendly-export-namespace-omitted) |
 | Export a native DEXPI 2.0 P&ID Plant model | `Dexpi20XmlWriter.writeAndAssess(...)` | [DEXPI 2.0 conformance](../integration/dexpi-20-conformance.md) |
-| Export a native DEXPI 2.0 PFD/BFD Process model | `Dexpi20ProcessModelWriter.writeAndAssess(...)` | [DEXPI 2.0 conformance](../integration/dexpi-20-conformance.md#process-model-export) |
+| Export a native DEXPI 2.0 PFD/BFD Process model | `Dexpi20ProcessModelWriter.writeAndAssess(...)` or `Dexpi20CanonicalOperatingProcessWriter.writeAndAssessTopology(...)` | [DEXPI 2.0 conformance](../integration/dexpi-20-conformance.md#process-model-export) |
 | Generate a governed engineering package with DEXPI, registers, cases, and evidence | `EngineeringDeliverableCompiler` | [Standards-based DEXPI engineering generation](../integration/dexpi-engineering-generation.md) |
 | Generate a review-required P&ID proposal | `PidDesignSynthesizer`, `PidEngineeringPackageExporter` | [Governed P&ID design synthesis](../pid-design-synthesis.md) |
 
@@ -61,6 +61,14 @@ sinks, process steps, material ports, streams, and physical state quantities.
 
 Use it when the exchange purpose is process topology and state data. A Process exchange is not a less-detailed Plant
 file; it is a different official information model.
+
+Use `Dexpi20CanonicalOperatingProcessWriter.writeAndAssessTopology(...)` when the assessed Process exchange must source
+stream operating values from the canonical engineering-diagram operating case. This opt-in writer preserves the
+established assessed material topology, but replaces direct stream quantities with successful `CALCULATED` canonical
+nodes. It converts mass flow from kg/s to kg/h, temperature from K to degree Celsius, and retains absolute pressure in
+bara. When the source process has not completed successfully, the writer omits those quantities and retains the
+structured `DIAGRAM_OPERATING_CASE_NOT_SUCCESSFUL` evidence. Existing `Dexpi20ProcessModelWriter` APIs and their
+compatibility behavior are unchanged.
 
 ## Recommended engineering workflow
 
