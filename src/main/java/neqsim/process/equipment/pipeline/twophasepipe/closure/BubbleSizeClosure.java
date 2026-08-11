@@ -147,8 +147,8 @@ public final class BubbleSizeClosure implements Serializable {
       return geometryBound;
     }
     double unconstrained =
-        2.0 * Math.sqrt(HISTORICAL_SCALE_COEFFICIENT * selectedSurfaceTension
-            / (gravity * densityDifference));
+        2.0 * Math.pow(HISTORICAL_SCALE_COEFFICIENT * selectedSurfaceTension
+            / (gravity * densityDifference), 0.5);
     return Math.min(unconstrained, geometryBound);
   }
 
