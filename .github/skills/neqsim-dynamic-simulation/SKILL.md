@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-08-10"
+last_verified: "2026-08-11"
 ---
 
 # Dynamic Simulation Guidance
@@ -454,13 +454,18 @@ with `process.setTransientThreadPoolSize(n)`. The per-process worker pool is
 created lazily and reused across timesteps; changing the worker count or
 disabling the option retires it. Execution follows cached process-graph levels,
 so upstream groups complete before downstream equipment is submitted while
-independent groups within a level remain parallel. If the caller is interrupted
+independent groups within a level remain parallel. A worker exception propagates to the caller with its runtime type and message,
+cancels later queued groups, prevents downstream dependency levels from being
+submitted, and skips controller, measurement/alarm/history, timestep-counter,
+and calculation-identifier commit phases. The process clock, due-event effects,
+and equipment state already mutated by a same-level sibling or earlier unit are
+not rolled back; treat that timestep as incomplete. If the caller is interrupted
 while waiting, NeqSim restores the interrupt status, cancels queued work without
 interrupting equipment already updating state, does not submit downstream
-levels, and aborts the remaining timestep phases. Treat that timestep as
-incomplete. Graph ordering does not define transient recycle convergence or
-rollback, so keep parallel execution off for recycle loops and other implicit
-couplings until their transient contract is explicitly supported.
+levels, and likewise aborts the remaining timestep phases. Graph ordering does
+not define transient recycle convergence or transactional rollback, so keep
+parallel execution off for recycle loops and other implicit couplings until
+their transient contract is explicitly supported.
 
 ## Python Dynamic Simulation
 
