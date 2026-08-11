@@ -175,7 +175,6 @@ class ProcessSystemTransientFailureContractTest {
     @Override
     public void runTransient(double initResponse, double dt, UUID id) {
       transientCalls++;
-      setCalculationIdentifier(id);
     }
 
     private int getTransientCalls() {
