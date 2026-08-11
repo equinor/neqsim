@@ -6,16 +6,16 @@ import java.io.Serializable;
  * Configurable algebraic bubble-size closure for bubbly-flow momentum-transfer models.
  *
  * <p>
- * The closure estimates a characteristic spherical-bubble diameter from surface tension,
- * continuous/dispersed-phase density difference, and gravity, and limits the result by a
- * configurable fraction of pipe diameter. It is intentionally independent of a particular
- * flow-regime model so callers can supply phase-property values from the thermodynamic state.
+ * The closure estimates a characteristic spherical-bubble diameter from surface tension, continuous/dispersed-phase
+ * density difference, and gravity, and limits the result by a configurable fraction of pipe diameter. It is
+ * intentionally independent of a particular flow-regime model so callers can supply phase-property values from the
+ * thermodynamic state.
  * </p>
  *
  * <p>
- * The default surface tension of {@code 0.02 N/m} and diameter cap of {@code D/5} reproduce the
- * historical TwoFluidPipe assumptions. Setting different values is explicit and does not imply
- * validation outside approximately spherical, liquid-continuous bubbly flow.
+ * The default surface tension of {@code 0.02 N/m} and diameter cap of {@code D/5} reproduce the historical TwoFluidPipe
+ * assumptions. Setting different values is explicit and does not imply validation outside approximately spherical,
+ * liquid-continuous bubbly flow.
  * </p>
  */
 public final class BubbleSizeClosure implements Serializable {
@@ -27,7 +27,8 @@ public final class BubbleSizeClosure implements Serializable {
   private double maximumPipeDiameterFraction = DEFAULT_PIPE_DIAMETER_FRACTION;
 
   /** Creates a closure with the historical TwoFluidPipe assumptions. */
-  public BubbleSizeClosure() {}
+  public BubbleSizeClosure() {
+  }
 
   /**
    * Creates a closure with explicit surface tension.
@@ -76,9 +77,9 @@ public final class BubbleSizeClosure implements Serializable {
    * Estimates a characteristic spherical-bubble diameter.
    *
    * <p>
-   * The uncapped estimate is {@code sqrt(sigma / (g * abs(deltaRho)))}. The returned value is
-   * capped at {@code maximumPipeDiameterFraction * pipeDiameter}. This algebraic scale preserves
-   * the existing TwoFluidPipe form while making all physical inputs and the geometry cap explicit.
+   * The uncapped estimate is {@code sqrt(sigma / (g * abs(deltaRho)))}. The returned value is capped at
+   * {@code maximumPipeDiameterFraction * pipeDiameter}. This algebraic scale preserves the existing TwoFluidPipe form
+   * while making all physical inputs and the geometry cap explicit.
    * </p>
    *
    * @param pipeDiameter internal pipe diameter in m
@@ -87,8 +88,8 @@ public final class BubbleSizeClosure implements Serializable {
    * @param gravity gravitational acceleration magnitude in m/s2
    * @return characteristic bubble diameter in m
    */
-  public double estimateDiameter(double pipeDiameter, double continuousPhaseDensity,
-      double dispersedPhaseDensity, double gravity) {
+  public double estimateDiameter(double pipeDiameter, double continuousPhaseDensity, double dispersedPhaseDensity,
+      double gravity) {
     requirePositiveFinite(pipeDiameter, "pipeDiameter");
     requirePositiveFinite(continuousPhaseDensity, "continuousPhaseDensity");
     requirePositiveFinite(dispersedPhaseDensity, "dispersedPhaseDensity");
