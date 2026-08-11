@@ -610,4 +610,12 @@ class CompressorTest extends neqsim.NeqSimTest {
     logger.info("  Original speed: " + originalSpeed + " RPM");
     logger.info("  Calculated speed: " + comp.getSpeed() + " RPM");
   }
+
+  @Test
+  void testCompressorRunEfficiencyAndPowerWithInit2() {
+    processOps.run();
+    Assertions.assertTrue(compressor1.getPower() > 0.0);
+    Assertions.assertTrue(compressor1.getOutletStream().getTemperature() > temperature_inlet);
+    Assertions.assertEquals(pressure_Out, compressor1.getOutletStream().getPressure(), 1e-4);
+  }
 }
