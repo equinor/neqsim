@@ -4729,9 +4729,10 @@ public class ProcessSystem extends SimulationBaseClass {
    * level execute in parallel; a downstream level is not submitted until every upstream group has completed. Worker
    * exceptions propagate fail-loudly to the caller, stop later groups and dependency levels, and prevent controller,
    * measurement-history, alarm, timestep-counter, and calculation-identifier commit for the failed step. If the caller
-   * is interrupted while waiting, its interrupt status is restored and the wait loop stops. Each dependency level checks
-   * that status before submitting work, so an interrupt at a level boundary does not enqueue downstream equipment.
-   * Already submitted equipment that is queued is cancelled without interrupting tasks already updating state.
+   * is interrupted while waiting, its interrupt status is restored and the wait loop stops. Each dependency level
+   * checks that status before submitting work, so an interrupt at a level boundary does not enqueue downstream
+   * equipment. Already submitted equipment that is queued is cancelled without interrupting tasks already updating
+   * state.
    *
    * <p>
    * This boundary is not a whole-step transaction: the process clock, due-event effects, and state already mutated by
