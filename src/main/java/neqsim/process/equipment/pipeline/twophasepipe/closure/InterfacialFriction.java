@@ -38,6 +38,9 @@ public class InterfacialFriction implements Serializable {
   /** Retain validated compatibility scaling unless corrected stiff drag is explicitly selected. */
   private boolean useCorrectedBubbleDrag = false;
 
+  /** Configurable bubble-size closure; lazily restored for legacy serialized objects. */
+  private BubbleSizeClosure bubbleSizeClosure = new BubbleSizeClosure();
+
   /** Geometry calculator for stratified flow. */
   private GeometryCalculator geometryCalc;
 
@@ -110,7 +113,7 @@ public class InterfacialFriction implements Serializable {
     case BUBBLE:
     case DISPERSED_BUBBLE:
       return calcBubble(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
-          liquidHoldup, diameter);
+          liquidHoldup, diameter, surfaceTension);
 
     case SINGLE_PHASE_GAS:
     case SINGLE_PHASE_LIQUID:
@@ -414,20 +417,18 @@ public class InterfacialFriction implements Serializable {
    * @return interfacial friction calculation result
    */
   private InterfacialFrictionResult calcBubble(double vG, double vL, double rhoG, double rhoL, double muG, double muL,
-      double alphaL, double D) {
-    return calcBubble(vG, vL, rhoG, rhoL, muG, muL, alphaL, D, useCorrectedBubbleDrag);
+      double alphaL, double D, double surfaceTension) {
+    return calcBubble(vG, vL, rhoG, rhoL, muG, muL, alphaL, D, surfaceTension, useCorrectedBubbleDrag);
   }
 
   private InterfacialFrictionResult calcBubble(double vG, double vL, double rhoG, double rhoL, double muG, double muL,
-      double alphaL, double D, boolean useCorrectedDrag) {
+      double alphaL, double D, double surfaceTension, boolean useCorrectedDrag) {
     InterfacialFrictionResult result = new InterfacialFrictionResult();
 
     result.slipVelocity = vG - vL;
 
-    // Bubble diameter (Hinze)
-    double sigma = 0.02; // Assume typical surface tension if not provided
-    double d_b = 2.0 * Math.pow(0.725 * sigma / ((rhoL - rhoG) * GRAVITY), 0.5);
-    d_b = Math.min(d_b, D / 5.0);
+    // Historical algebraic buoyancy/capillary scale with explicit closure configuration.
+    double d_b = getBubbleSizeClosure().estimateDiameter(D, rhoL, rhoG, GRAVITY, surfaceTension);
 
     // Interfacial area concentration
     double alphaG = 1.0 - alphaL;
@@ -524,9 +525,27 @@ public class InterfacialFriction implements Serializable {
       return calcInterfacialForce(flowRegime, gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity,
           liquidViscosity, liquidHoldup, diameter, surfaceTension);
     }
-    InterfacialFrictionResult result = calcBubble(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity,
-        liquidViscosity, liquidHoldup, diameter, true);
+    InterfacialFrictionResult result =
+        calcBubble(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
+            liquidHoldup, diameter, surfaceTension, true);
     return result.interfacialShear * result.interfacialAreaPerLength;
+  }
+
+  /**
+   * Get the configurable bubble-size closure used by bubble and dispersed-bubble regimes.
+   *
+   * <p>
+   * Lazy initialization preserves compatibility when reading serialized objects created before the
+   * closure was attached to this model.
+   * </p>
+   *
+   * @return mutable bubble-size closure configuration
+   */
+  public BubbleSizeClosure getBubbleSizeClosure() {
+    if (bubbleSizeClosure == null) {
+      bubbleSizeClosure = new BubbleSizeClosure();
+    }
+    return bubbleSizeClosure;
   }
 
   /**
