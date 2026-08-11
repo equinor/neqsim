@@ -381,10 +381,11 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
       }
       totSplit += splitFactor[i];
     }
-    if (Math.abs(totSplit - 1.0) > 1e-10) {
-      logger.debug("total split factor different from 0 in splitter - totsplit = " + totSplit);
-      logger.debug("setting first split to = " + (1.0 - totSplit));
-      splitFactor[0] = 1.0 - totSplit;
+    if (Math.abs(totSplit - 1.0) > 1e-10 && totSplit > 0) {
+      logger.debug("total split factor different from 1.0 in splitter - totsplit = " + totSplit);
+      for (int i = 0; i < splitNumber; i++) {
+        splitFactor[i] /= totSplit;
+      }
     }
 
     for (int i = 0; i < splitNumber; i++) {
@@ -393,7 +394,10 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
       splitStream[i].setThermoSystem(thermoSystem);
       for (int j = 0; j < inletStream.getThermoSystem().getPhase(0).getNumberOfComponents(); j++) {
         int index = inletStream.getThermoSystem().getPhase(0).getComponent(j).getComponentNumber();
-        double moles = inletStream.getThermoSystem().getPhase(0).getComponent(j).getNumberOfmoles();
+        double moles = 0.0;
+        for (int p = 0; p < inletStream.getThermoSystem().getNumberOfPhases(); p++) {
+          moles += inletStream.getThermoSystem().getPhase(p).getComponent(j).getNumberOfmoles();
+        }
         double change = (moles * splitFactor[i] - moles > 0) ? 0.0 : moles * splitFactor[i] - moles;
         splitStream[i].getThermoSystem().addComponent(index, change);
       }
