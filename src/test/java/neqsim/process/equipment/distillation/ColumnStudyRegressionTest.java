@@ -131,18 +131,17 @@ public class ColumnStudyRegressionTest {
   }
 
   /**
-   * Reject a severely perturbed warm start without spending the entire Newton iteration budget on repeated non-descent
-   * line-search steps.
+   * Converge a severely perturbed warm start without exhausting the Newton iteration budget.
    *
    * <p>
    * The initialized column-study state is deliberately perturbed by up to 90 K before a direct simultaneous-correction
-   * warm start. The case is outside the local Newton basin, but it remains a finite, realistic multicomponent
-   * hydrocarbon column state. The solver should preserve its best physical state and return control to the coordinated
-   * fallback path once three line-search steps have failed to reduce the MESH residual.
+   * warm start. The case is outside the two-sweep Newton basin, but it remains a finite, realistic multicomponent
+   * hydrocarbon column state. A retained state needs one additional fugacity fixed-point sweep to keep the Newton
+   * residual locally consistent enough for the guarded line search to recover the rigorous solution.
    * </p>
    */
   @Test
-  public void severeWarmStartPerturbationStopsNonDescentNewtonStall() {
+  public void severeWarmStartPerturbationConvergesWithRefinedKValues() {
     SystemInterface baseFluid = createBaseFluid();
     StreamInterface feedStream = createStream("stall_guard_main_feed", baseFluid, MAIN_FEED_COMPOSITION,
         MAIN_FEED_TEMPERATURE_C, MAIN_FEED_PRESSURE_BARA, MAIN_FEED_MASS_FLOW_KG_HR);
@@ -163,13 +162,19 @@ public class ColumnStudyRegressionTest {
     solver.setMaxIterations(80);
     boolean accepted = solver.solve(new UUID(0L, 1L));
 
-    assertFalse(accepted, "the severely perturbed state must be rejected for coordinated fallback");
-    assertTrue(solver.getLastIterations() <= 30,
-        "the non-descent guard should stop the stalled Newton solve before the 80-iteration cap");
-    assertTrue(solver.getLastMassBalanceError() < 1.0e-3,
-        "the restored best state should preserve total molar closure before fallback");
-    assertPhysicalProduct(column.getGasOutStream(), "stalled warm-start gas product");
-    assertPhysicalProduct(column.getLiquidOutStream(), "stalled warm-start liquid product");
+    assertTrue(accepted, "the severely perturbed retained state should recover without coordinated fallback");
+    assertTrue(solver.getLastIterations() <= 45,
+        "the recovered warm solve should remain well below the 80-iteration cap");
+    assertTrue(solver.getLastMassBalanceError() < 1.0e-8, "the recovered state should close total molar balance");
+    assertTrue(solver.getLastResidualNorm() < 1.0e-8, "the recovered state should satisfy the scaled MESH residual");
+    assertTrue(solver.getLastThermoEvaluationCount() < 24000,
+        "the recovered warm solve should keep thermodynamic evaluations bounded");
+    assertTrue(solver.getLastThermoKValueIterationCount() < 70000,
+        "the recovered warm solve should keep forced-root fugacity sweeps bounded");
+    assertPhysicalProduct(column.getGasOutStream(), "recovered warm-start gas product");
+    assertPhysicalProduct(column.getLiquidOutStream(), "recovered warm-start liquid product");
+    assertOverallMassBalance(feedStream, topFeedStream, column);
+    assertComponentMassBalances(feedStream, topFeedStream, column);
   }
 
   /**
@@ -511,6 +516,8 @@ public class ColumnStudyRegressionTest {
     long changedInletSolveNanos = System.nanoTime() - changedInletStartNanos;
     assertColumnSolveIsValid(column, feedStream, topFeedStream, "10 percent increased-inlet solve");
     int changedInletIterations = column.getLastIterationCount();
+    int changedInletThermo = column.getLastNaphtaliThermoEvaluationCount();
+    int changedInletKSweeps = column.getLastNaphtaliThermoKValueIterationCount();
     ColumnProductSummary changedInletProducts = getProductSummary(column);
 
     logger.info(
@@ -523,8 +530,17 @@ public class ColumnStudyRegressionTest {
     testReporter.publishEntry("cold_solve_ms", Double.toString(nanosToMillis(coldSolveNanos)));
     testReporter.publishEntry("unchanged_warm_solve_ms", Double.toString(nanosToMillis(warmSolveNanos)));
     testReporter.publishEntry("increased_inlet_solve_ms", Double.toString(nanosToMillis(changedInletSolveNanos)));
+    testReporter.publishEntry("increased_inlet_iterations", Integer.toString(changedInletIterations));
+    testReporter.publishEntry("increased_inlet_thermo_evaluations", Integer.toString(changedInletThermo));
+    testReporter.publishEntry("increased_inlet_k_sweeps", Integer.toString(changedInletKSweeps));
     assertTrue(warmStateReused, "unchanged warm solve should reuse the accepted Naphtali-Sandholm state");
     assertEquals(0, warmIterations, "unchanged warm solve should not require initializer or Newton iterations");
+    assertTrue(changedInletIterations <= 4,
+        "the changed-inlet warm solve should converge in at most four Newton iterations");
+    assertTrue(changedInletThermo < 2500,
+        "the changed-inlet warm solve should need fewer than 2500 thermodynamic evaluations");
+    assertTrue(changedInletKSweeps < 7000,
+        "the changed-inlet warm solve should need fewer than 7000 forced-root fugacity sweeps");
   }
 
   /**
