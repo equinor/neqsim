@@ -266,6 +266,73 @@ class TPmultiflashTest {
     assertTrue(Double.isFinite(correction.get(1, 0)));
   }
 
+  /** Verifies the beta objective reuses current fugacity coefficients without changing its equations. */
+  @Test
+  void testCalcQRefreshesFugacityCoefficientCache() {
+    SystemInterface system = createMethaneHeptanePrSystem(0.0, false);
+    system.setTemperature(250.0, "K");
+    system.setPressure(30.0, "bara");
+    new ThermodynamicOperations(system).TPflash();
+    system.init(1);
+
+    assertEquals(2, system.getNumberOfPhases());
+    TPmultiflash operation = new TPmultiflash(system, false);
+    operation.setDoubleArrays();
+    operation.calcQ();
+    assertBetaObjectiveMatchesDirectEvaluation(system, operation);
+
+    double originalFugacityCoefficient = system.getPhase(1).getComponent(0).getFugacityCoefficient();
+    system.getPhase(1).getComponent(0).setFugacityCoefficient(2.0 * originalFugacityCoefficient);
+    operation.calcQ();
+
+    assertBetaObjectiveMatchesDirectEvaluation(system, operation);
+  }
+
+  /**
+   * Compares the cached beta-objective gradient and Hessian with their direct multiphase Rachford-Rice evaluation.
+   *
+   * @param system thermodynamic system supplying phase fractions and fugacity coefficients
+   * @param operation multiflash operation containing the evaluated objective derivatives
+   */
+  private void assertBetaObjectiveMatchesDirectEvaluation(SystemInterface system, TPmultiflash operation) {
+    int numberOfPhases = system.getNumberOfPhases();
+    int numberOfComponents = system.getPhase(0).getNumberOfComponents();
+    double[] denominator = new double[numberOfComponents];
+
+    for (int component = 0; component < numberOfComponents; component++) {
+      for (int phase = 0; phase < numberOfPhases; phase++) {
+        denominator[component] += system.getBeta(phase)
+            / system.getPhase(phase).getComponent(component).getFugacityCoefficient();
+      }
+    }
+
+    for (int phase = 0; phase < numberOfPhases; phase++) {
+      double expectedGradient = 1.0;
+      for (int component = 0; component < numberOfComponents; component++) {
+        double feedFraction = system.getPhase(0).getComponent(component).getz();
+        double fugacityCoefficient = system.getPhase(phase).getComponent(component).getFugacityCoefficient();
+        expectedGradient -= feedFraction / denominator[component] / fugacityCoefficient;
+      }
+      assertEquals(expectedGradient, operation.dQdbeta[phase][0]);
+
+      for (int otherPhase = 0; otherPhase < numberOfPhases; otherPhase++) {
+        double expectedHessian = 0.0;
+        for (int component = 0; component < numberOfComponents; component++) {
+          double feedFraction = system.getPhase(0).getComponent(component).getz();
+          double phaseFugacityCoefficient = system.getPhase(phase).getComponent(component).getFugacityCoefficient();
+          double otherPhaseFugacityCoefficient = system.getPhase(otherPhase).getComponent(component)
+              .getFugacityCoefficient();
+          double feedOverDenominatorSquared = feedFraction / (denominator[component] * denominator[component]);
+          expectedHessian += feedOverDenominatorSquared / (otherPhaseFugacityCoefficient * phaseFugacityCoefficient);
+        }
+        if (phase == otherPhase) {
+          expectedHessian += 1.0e-3;
+        }
+        assertEquals(expectedHessian, operation.Qmatrix[phase][otherPhase]);
+      }
+    }
+  }
+
   /** Verifies a direct beta solve preserves a converged two-phase equilibrium and material balance. */
   @Test
   void testDirectBetaSolvePreservesConvergedTwoPhaseState() {

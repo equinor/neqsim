@@ -35,6 +35,7 @@ public class TPmultiflash extends TPflash {
   boolean multiPhaseTest = false;
   double[][] dQdbeta;
   double[][] Qmatrix;
+  private double[][] fugacityCoefficients;
   double[] Erow;
   double Q = 0;
   boolean doStabilityAnalysis = true;
@@ -86,6 +87,7 @@ public class TPmultiflash extends TPflash {
   public void setDoubleArrays() {
     dQdbeta = new double[system.getNumberOfPhases()][1];
     Qmatrix = new double[system.getNumberOfPhases()][system.getNumberOfPhases()];
+    fugacityCoefficients = new double[system.getNumberOfPhases()][system.getPhase(0).getNumberOfComponents()];
   }
 
   /**
@@ -163,7 +165,7 @@ public class TPmultiflash extends TPflash {
      * double betaTotal = 0; for (int k = 0; k < system.getNumberOfPhases(); k++) { betaTotal +=
      * system.getPhase(k).getBeta(); } Q = betaTotal;
      */
-    this.calcE();
+    calcEAndCacheFugacityCoefficients();
     /*
      * for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) { Q -= Math.log(E[i]) *
      * system.getPhase(0).getComponent(i).getz(); }
@@ -177,7 +179,7 @@ public class TPmultiflash extends TPflash {
     for (int k = 0; k < system.getNumberOfPhases(); k++) {
       dQdbeta[k][0] = 1.0;
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-        dQdbeta[k][0] -= multTerm[i] / system.getPhase(k).getComponent(i).getFugacityCoefficient();
+        dQdbeta[k][0] -= multTerm[i] / fugacityCoefficients[k][i];
       }
     }
 
@@ -185,8 +187,7 @@ public class TPmultiflash extends TPflash {
       for (int j = 0; j < system.getNumberOfPhases(); j++) {
         Qmatrix[i][j] = 0.0;
         for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
-          Qmatrix[i][j] += multTerm2[k] / (system.getPhase(j).getComponent(k).getFugacityCoefficient()
-              * system.getPhase(i).getComponent(k).getFugacityCoefficient());
+          Qmatrix[i][j] += multTerm2[k] / (fugacityCoefficients[j][k] * fugacityCoefficients[i][k]);
         }
         if (i == j) {
           double reg = 1.0e-3;
@@ -204,6 +205,32 @@ public class TPmultiflash extends TPflash {
       }
     }
     return Q;
+  }
+
+  /**
+   * Calculate the phase-split denominator and cache fugacity coefficients for the gradient and Hessian.
+   *
+   * <p>
+   * Retaining the original division sequence is intentional. Algebraically equivalent reciprocal multiplication changes
+   * rounding in repeated reservoir flashes and can alter accepted system-level trajectories.
+   * </p>
+   */
+  private void calcEAndCacheFugacityCoefficients() {
+    for (int component = 0; component < system.getPhase(0).getNumberOfComponents(); component++) {
+      Erow[component] = 0.0;
+      for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+        double fugacityCoefficient = system.getPhase(phase).getComponent(component).getFugacityCoefficient();
+        fugacityCoefficients[phase][component] = fugacityCoefficient;
+        Erow[component] += system.getPhase(phase).getBeta() / fugacityCoefficient;
+      }
+      if (Erow[component] < 1e-100) {
+        Erow[component] = 1e-100;
+      }
+      if (Double.isNaN(Erow[component])) {
+        logger.error("Erow is NaN for component " + system.getPhase(0).getComponent(component).getName());
+        Erow[component] = 1e-100;
+      }
+    }
   }
 
   /**
