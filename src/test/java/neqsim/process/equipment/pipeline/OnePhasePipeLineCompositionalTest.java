@@ -160,8 +160,8 @@ public class OnePhasePipeLineCompositionalTest {
     String reportJson = latest.toJson();
     assertTrue(reportJson.contains("\"finalCellInventoryKg\""));
     assertTrue(reportJson.contains("\"finalComponentCellInventoryKg\""));
-    OnePhaseSpeciesConservationReport restored =
-        new Gson().fromJson(reportJson, OnePhaseSpeciesConservationReport.class);
+    OnePhaseSpeciesConservationReport restored = new Gson().fromJson(reportJson,
+        OnePhaseSpeciesConservationReport.class);
     assertArrayEquals(latest.getFinalCellInventoryKg(), restored.getFinalCellInventoryKg(), 0.0);
     for (int component = 0; component < latest.getComponentNames().length; component++) {
       assertArrayEquals(latest.getFinalComponentCellInventoryKg()[component],
@@ -709,8 +709,8 @@ public class OnePhasePipeLineCompositionalTest {
         assertTrue(Double.isFinite(componentCellInventoryKg[component][cell]));
         assertTrue(componentCellInventoryKg[component][cell] >= 0.0);
         componentSumKg += componentCellInventoryKg[component][cell];
-        assertEquals(massFraction[component][cell],
-            componentCellInventoryKg[component][cell] / cellInventoryKg[cell], 1.0e-12);
+        assertEquals(massFraction[component][cell], componentCellInventoryKg[component][cell] / cellInventoryKg[cell],
+            1.0e-12);
       }
       assertEquals(cellInventoryKg[cell], componentSumKg, Math.max(cellInventoryKg[cell], 1.0) * 1.0e-12);
     }
