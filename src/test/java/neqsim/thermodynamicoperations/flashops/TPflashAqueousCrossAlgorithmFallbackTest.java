@@ -30,8 +30,8 @@ class TPflashAqueousCrossAlgorithmFallbackTest {
 
   @Test
   void multiphaseFallbackRemainsContinuousAcrossNearbyStates() {
-    double[][] states = { { 260.0, 100.0 }, { 255.0, 100.0 }, { 260.0, 90.0 }, { 260.0, 110.0 },
-        { 265.0, 100.0 }, { 260.0, 100.0 } };
+    double[][] states = { { 260.0, 100.0 }, { 255.0, 100.0 }, { 260.0, 90.0 }, { 260.0, 110.0 }, { 265.0, 100.0 },
+        { 260.0, 100.0 } };
     SystemInterface multiphase = createSystem(states[0][0], states[0][1], true, true);
 
     for (double[] state : states) {
@@ -99,8 +99,7 @@ class TPflashAqueousCrossAlgorithmFallbackTest {
     for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
       double recoveredFeed = 0.0;
       for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
-        recoveredFeed += actual.getBeta(phaseIndex)
-            * actual.getPhase(phaseIndex).getComponent(componentIndex).getx();
+        recoveredFeed += actual.getBeta(phaseIndex) * actual.getPhase(phaseIndex).getComponent(componentIndex).getx();
       }
       assertEquals(FEED[componentIndex], recoveredFeed, 1.0e-10);
     }
