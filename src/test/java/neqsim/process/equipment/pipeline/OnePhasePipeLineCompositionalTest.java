@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -160,12 +162,16 @@ public class OnePhasePipeLineCompositionalTest {
     String reportJson = latest.toJson();
     assertTrue(reportJson.contains("\"finalCellInventoryKg\""));
     assertTrue(reportJson.contains("\"finalComponentCellInventoryKg\""));
-    OnePhaseSpeciesConservationReport restored = new Gson().fromJson(reportJson,
-        OnePhaseSpeciesConservationReport.class);
-    assertArrayEquals(latest.getFinalCellInventoryKg(), restored.getFinalCellInventoryKg(), 0.0);
+    Gson gson = new Gson();
+    JsonObject reportJsonObject = JsonParser.parseString(reportJson).getAsJsonObject();
+    double[] restoredCellInventory =
+        gson.fromJson(reportJsonObject.get("finalCellInventoryKg"), double[].class);
+    double[][] restoredComponentCellInventory =
+        gson.fromJson(reportJsonObject.get("finalComponentCellInventoryKg"), double[][].class);
+    assertArrayEquals(latest.getFinalCellInventoryKg(), restoredCellInventory, 0.0);
     for (int component = 0; component < latest.getComponentNames().length; component++) {
       assertArrayEquals(latest.getFinalComponentCellInventoryKg()[component],
-          restored.getFinalComponentCellInventoryKg()[component], 0.0);
+          restoredComponentCellInventory[component], 0.0);
     }
     assertTrue(history.toJson().contains("\"elapsedTimeSeconds\""));
   }
