@@ -362,7 +362,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   public double calcMixStreamEnthalpy() {
     double enthalpy = 0;
     for (int k = 0; k < streams.size(); k++) {
-      streams.get(k).getThermoSystem().init(3);
+      streams.get(k).getThermoSystem().init(2);
       enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
       // logger.info("total enthalpy k : " + ( ((Stream)
       // streams.get(k)).getThermoSystem()).getEnthalpy());

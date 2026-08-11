@@ -1025,7 +1025,7 @@ public class Compressor extends TwoPortEquipment
     }
 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
-    getThermoSystem().init(3);
+    getThermoSystem().init(2);
     getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
     // Optimization: disable stability analysis for single-phase inlet gas, where no
