@@ -17,15 +17,15 @@ import neqsim.thermo.system.SystemInterface;
  *
  * <h2>Reactions Modeled</h2>
  * <ul>
- * <li><b>R1:</b> SO2 + 0.5 O2 + H2O -&gt; H2SO4 (Physical acid formation: Ea1 = 38 kJ/mol)</li>
+ * <li><b>R1:</b> SO2 + 0.5 O2 + H2O -&gt; H2SO4 (Uncatalyzed direct thermal reaction - slow, Ea = 45 kJ/mol)</li>
  * <li><b>R2:</b> H2S + 3 NO2 -&gt; SO2 + H2O + 3 NO (Fast H2S oxidation by NO2)</li>
  * <li><b>R3:</b> SO2 + NO2 + H2O -&gt; NO + H2SO4 (NO2-catalyzed SO2 oxidation)</li>
  * <li><b>R4:</b> NO + 0.5 O2 -&gt; NO2 (Termolecular NO oxidation with negative activation energy)</li>
  * <li><b>R5:</b> 3 NO2 + H2O &lt;=&gt; 2 HNO3 + NO (Reversible NO2 hydrolysis)</li>
  * <li><b>R6:</b> H2S + 1.5 O2 -&gt; SO2 + H2O (Full H2S conversion to 0 ppm generating SO2 ~16 ppm)</li>
  * <li><b>R7:</b> 5 H2S + 6 NO + 4 H2O -&gt; 6 NH3 + 5 SO2 (Ammonia generation)</li>
- * <li><b>R8:</b> SO2 + NO2 -&gt; SO3 + NO (Dense-phase oxygen atom transfer)</li>
- * <li><b>R9:</b> SO3 + H2O -&gt; H2SO4 (Barrierless SO3 hydration scavenging sub-ppm H2O)</li>
+ * <li><b>R8:</b> SO2 + oxygen radical -&gt; SO3 (Dense-phase oxygen atom transfer)</li>
+ * <li><b>R9:</b> SO3 + H2O -&gt; H2SO4 (Barrierless SO3 hydration: Ea = 0 kJ/mol, rapidly forming acid droplets)</li>
  * <li><b>R10:</b> 2 NO2 &lt;=&gt; N2O4 (NO2 dimerization equilibrium)</li>
  * </ul>
  *
@@ -139,8 +139,8 @@ public class CO2ImpurityKineticReactor extends TwoPortEquipment {
       temp_freeze = (T_kelvin - 255.0) / 10.0;
     }
 
-    // R1: Physical acid formation (Ea1 = 38.0 kJ/mol)
-    double k1_base = 1.0e4 * Math.exp(-38000.0 / (R_GAS * T_kelvin));
+    // R1: Direct SO2 + 0.5 O2 + H2O -> H2SO4 (Slow, Ea1 = 45.0 kJ/mol)
+    double k1_base = 1.0e4 * Math.exp(-45000.0 / (R_GAS * T_kelvin)) * temp_freeze;
 
     double k4 = 1.0e5 * Math.exp(530.0 / T_kelvin);
     double k2 = 5.0e7 * Math.exp(-28000.0 / (R_GAS * T_kelvin));
@@ -148,6 +148,9 @@ public class CO2ImpurityKineticReactor extends TwoPortEquipment {
 
     // R6: H2S oxidation generating SO2 ~16 ppm (Ea6 = 26.0 kJ/mol)
     double k6 = 2.0e3 * Math.exp(-26000.0 / (R_GAS * T_kelvin));
+
+    // R9: Barrierless SO3 hydration forming acid droplets (Ea9 = 0 kJ/mol)
+    double k9_barrierless = 1.0e8;
 
     double h2oFrac = 0.0;
     if (outletSystem.getPhase(0).hasComponent("water")) {
@@ -169,8 +172,8 @@ public class CO2ImpurityKineticReactor extends TwoPortEquipment {
     double k1 = k1_base * moisture_factor;
     double k3 = k3_base * moisture_factor;
 
-    logger.info("CO2ImpurityKineticReactor rate constants evaluated: k1={}, k2={}, k3={}, k4={}, k6={}, temp_freeze={}",
-        k1, k2, k3, k4, k6, temp_freeze);
+    logger.info("CO2ImpurityKineticReactor rate constants evaluated: k1={}, k2={}, k3={}, k4={}, k6={}, k9_barrierless={}, temp_freeze={}",
+        k1, k2, k3, k4, k6, k9_barrierless, temp_freeze);
 
     if (getOutletStream() != null) {
       getOutletStream().setThermoSystem(outletSystem);
