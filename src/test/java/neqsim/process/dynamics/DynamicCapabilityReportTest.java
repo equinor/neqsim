@@ -91,23 +91,23 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
     assertEquals(1, report.getCapabilityCounts().get(DynamicCapability.ALGEBRAIC).intValue());
   }
 
-  /**
-   * Known process-level execution defects are explicit strict-preflight blockers for ProcessSystem and ProcessModel.
-   */
+  /** Parallel transient execution passes strict preflight once worker failures propagate fail-loudly. */
   @Test
-  public void unsafeExecutionModesAreExplicitStrictPreflightBlockers() {
+  public void parallelExecutionIsNotAStandaloneStrictPreflightBlocker() {
     ProcessSystem parallel = new ProcessSystem("parallel area");
     parallel.add(createFeed("parallel feed"));
     parallel.setParallelTransientEnabled(true);
 
     DynamicCapabilityReport parallelReport = DynamicCapabilityReport.from(parallel);
     assertEquals("1.2", parallelReport.getSchemaVersion());
-    assertEquals(1, parallelReport.getExecutionIssues().size());
-    assertTrue(parallelReport.getExecutionIssues().get(0).contains("parallel transient"));
-    assertTrue(parallelReport.getExecutionIssues().get(0).contains("not yet fail-loud"));
-    assertTrue(parallelReport.hasBlockingIssues());
-    assertFalse(parallelReport.isStrictPreflightReady());
+    assertTrue(parallelReport.getExecutionIssues().isEmpty());
+    assertFalse(parallelReport.hasBlockingIssues());
+    assertTrue(parallelReport.isStrictPreflightReady());
+  }
 
+  /** Adaptive execution remains an explicit strict-preflight blocker for ProcessSystem and ProcessModel. */
+  @Test
+  public void adaptiveExecutionIsAnExplicitStrictPreflightBlocker() {
     ProcessSystem adaptive = new ProcessSystem("adaptive area");
     adaptive.add(createFeed("adaptive feed"));
     adaptive.setAdaptiveTimestepEnabled(true);
@@ -119,13 +119,17 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
     assertTrue(adaptiveReport.hasBlockingIssues());
     assertFalse(adaptiveReport.isStrictPreflightReady());
 
+    ProcessSystem parallel = new ProcessSystem("parallel area");
+    parallel.add(createFeed("parallel feed"));
+    parallel.setParallelTransientEnabled(true);
+
     ProcessModel model = new ProcessModel();
     model.add("subsea", parallel);
     model.add("topside", adaptive);
 
     DynamicCapabilityReport modelReport = DynamicCapabilityReport.from(model);
-    assertEquals(2, modelReport.getExecutionIssues().size());
-    assertTrue(containsDiagnostic(modelReport.getExecutionIssues(), "subsea"));
+    assertEquals(1, modelReport.getExecutionIssues().size());
+    assertFalse(containsDiagnostic(modelReport.getExecutionIssues(), "subsea"));
     assertTrue(containsDiagnostic(modelReport.getExecutionIssues(), "topside"));
     assertTrue(modelReport.toJson().contains("executionIssues"));
   }
