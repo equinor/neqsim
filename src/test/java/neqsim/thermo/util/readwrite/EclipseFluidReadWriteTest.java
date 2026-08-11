@@ -1268,9 +1268,10 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
    * round trip.
    *
    * @throws IOException if writing the temporary file fails
+   * @throws neqsim.util.exception.IsNaNException if a bubble point calculation diverges
    */
   @Test
-  void testPengRobinsonVariantRoundTrip() throws IOException {
+  void testPengRobinsonVariantRoundTrip() throws IOException, neqsim.util.exception.IsNaNException {
     String[] classNames = new String[] { "SystemPrEos", "SystemPrEos1978" };
     for (String className : classNames) {
       SystemInterface fluid = "SystemPrEos".equals(className) ? new neqsim.thermo.system.SystemPrEos(290.15, 70.0)
