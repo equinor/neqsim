@@ -1199,23 +1199,21 @@ public class TPflash extends Flash {
    * dissolved in a hydrocarbon-labelled phase even when a lower-Gibbs aqueous split exists. Conversely, a multiphase
    * phase-appearance trial can retain an invalid higher-Gibbs aqueous endpoint after its active phase storage changes.
    * An existing aqueous phase label is not by itself proof of equilibrium. Such an endpoint is refined when its
-   * component fugacity residual exceeds
-   * {@link #PHASE_ROOT_EQUILIBRIUM_TOLERANCE} or its component material balance exceeds
-   * {@link #WATER_RICH_MATERIAL_BALANCE_TOLERANCE}. The one-mol-percent feed guard keeps valid trace-water process
-   * flashes outside the minor-phase trace-water screen on the existing fast path. A trace-water gas/oil endpoint whose
-   * fugacity residual is already outside the equilibrium tolerance may still use the cloned stability calculation
-   * because it is not an acceptable result. A cheap aqueous tangent-plane trial and safeguarded multiphase beta solve
-   * are used for trace-water gas/oil endpoints whose small hydrocarbon liquid disproportionately concentrates water.
-   * Full recursive flashing is avoided. A multiphase-enabled water-rich endpoint uses one cold ordinary candidate; an
-   * ordinary endpoint uses the multiphase candidate. The nested candidate cannot start another cross-algorithm
-   * fallback. A candidate replaces the original state only after strict phase-fraction, composition-normalization,
-   * material-balance, fugacity, distinct-composition, and lower-Gibbs checks pass.
+   * component fugacity residual exceeds {@link #PHASE_ROOT_EQUILIBRIUM_TOLERANCE} or its component material balance
+   * exceeds {@link #WATER_RICH_MATERIAL_BALANCE_TOLERANCE}. The one-mol-percent feed guard keeps valid trace-water
+   * process flashes outside the minor-phase trace-water screen on the existing fast path. A trace-water gas/oil
+   * endpoint whose fugacity residual is already outside the equilibrium tolerance may still use the cloned stability
+   * calculation because it is not an acceptable result. A cheap aqueous tangent-plane trial and safeguarded multiphase
+   * beta solve are used for trace-water gas/oil endpoints whose small hydrocarbon liquid disproportionately
+   * concentrates water. Full recursive flashing is avoided. A multiphase-enabled water-rich endpoint uses one cold
+   * ordinary candidate; an ordinary endpoint uses the multiphase candidate. The nested candidate cannot start another
+   * cross-algorithm fallback. A candidate replaces the original state only after strict phase-fraction,
+   * composition-normalization, material-balance, fugacity, distinct-composition, and lower-Gibbs checks pass.
    * </p>
    */
   private void rescueWaterRichEndpoint() {
     if (!waterRichCrossAlgorithmFallbackAllowed || system.isChemicalSystem() || system.hasIons() || solidCheck
-        || system.isMultiphaseWaxCheck()
-        || system.getNumberOfPhases() > 2) {
+        || system.isMultiphaseWaxCheck() || system.getNumberOfPhases() > 2) {
       return;
     }
 
