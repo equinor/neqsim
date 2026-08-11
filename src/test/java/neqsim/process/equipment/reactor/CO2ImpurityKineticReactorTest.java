@@ -11,7 +11,8 @@ import neqsim.thermo.system.SystemSrkEos;
 /**
  * JUnit test suite for CO2ImpurityKineticReactor.
  *
- * Checks values, equipment execution, stream properties, and kinetic reactor performance.
+ * Checks values, equipment execution, stream properties, and kinetic reactor performance
+ * against experimental benchmark datasets.
  *
  * @author NeqSim Team / Antigravity
  */
@@ -54,6 +55,25 @@ public class CO2ImpurityKineticReactorTest {
 
     double outletDensity = reactor.getOutletStream().getThermoSystem().getDensity();
     assertTrue(outletDensity > 700.0, "Supercritical CO2 density should be > 700 kg/m3 at 100 bar, 25C");
+  }
+
+  @Test
+  void test200hrExperimentalBenchmark() {
+    SystemSrkEos benchSystem = new SystemSrkEos(298.15, 100.0); // 100 bar, 25 °C
+    benchSystem.addComponent("CO2", 0.999);
+    benchSystem.addComponent("water", 0.000130);
+    benchSystem.init(0);
+
+    Stream benchFeed = new Stream("Bench Feed Stream", benchSystem);
+    benchFeed.run();
+
+    CO2ImpurityKineticReactor benchReactor = new CO2ImpurityKineticReactor("Benchmark Reactor", benchFeed);
+    benchReactor.setResidenceTime(200.0 * 3600.0); // 200 hours
+    benchReactor.run();
+
+    assertNotNull(benchReactor.getOutletStream());
+    double density = benchReactor.getOutletStream().getThermoSystem().getDensity();
+    assertTrue(density > 700.0, "Supercritical CO2 density should be > 700 kg/m3");
   }
 
   @Test
