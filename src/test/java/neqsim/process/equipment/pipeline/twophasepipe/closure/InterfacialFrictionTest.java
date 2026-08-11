@@ -70,6 +70,23 @@ class InterfacialFrictionTest {
   }
 
   @Test
+  void bubbleDiameterConfigurationControlsInterfacialAreaWithoutChangingDefault() {
+    InterfacialFriction friction = new InterfacialFriction();
+    double defaultDiameter = inferredBubbleDiameter(friction, 0.072);
+    double expectedDefault = 2.0 * Math.sqrt(0.725 * DEFAULT_BUBBLE_SURFACE_TENSION / ((1000.0 - 5.0) * GRAVITY));
+
+    assertEquals(expectedDefault, defaultDiameter, 1.0e-15);
+
+    friction.getBubbleSizeClosure().setSurfaceTension(0.08);
+    double configuredDiameter = inferredBubbleDiameter(friction, 0.072);
+    assertEquals(2.0, configuredDiameter / defaultDiameter, 1.0e-12);
+
+    friction.getBubbleSizeClosure().setUseLocalSurfaceTension(true);
+    double localDiameter = inferredBubbleDiameter(friction, 0.045);
+    assertEquals(Math.sqrt(0.045 / 0.08), localDiameter / configuredDiameter, 1.0e-12);
+  }
+
+  @Test
   void compatibilityScalingRemainsTheDefaultAndFreezesLegacyUnderprediction() {
     InterfacialFriction friction = new InterfacialFriction();
     double diameter = 0.1;
@@ -84,6 +101,16 @@ class InterfacialFrictionTest {
     assertFalse(friction.isUseCorrectedBubbleDrag());
     assertTrue(legacy < corrected);
     assertEquals(bubbleDiameter / diameter, legacy / corrected, 1.0e-14);
+  }
+
+  private static double inferredBubbleDiameter(InterfacialFriction friction, double surfaceTension) {
+    double diameter = 1.0;
+    double liquidHoldup = 0.9;
+    InterfacialFriction.InterfacialFrictionResult result = friction.calculate(FlowRegime.BUBBLE, 0.7, 0.5, 5.0, 1000.0,
+        1.5e-5, 1.0e-3, liquidHoldup, diameter, surfaceTension);
+    double gasHoldup = 1.0 - liquidHoldup;
+    double area = Math.PI * diameter * diameter / 4.0;
+    return 6.0 * gasHoldup * area / result.interfacialAreaPerLength;
   }
 
   private double expectedBubbleDragForcePerLength(double gasVelocity, double liquidVelocity, double gasDensity,

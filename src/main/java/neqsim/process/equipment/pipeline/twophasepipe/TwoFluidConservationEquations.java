@@ -1,6 +1,7 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
 import java.io.Serializable;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.BubbleSizeClosure;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.WallFriction;
@@ -1433,6 +1434,15 @@ public class TwoFluidConservationEquations implements Serializable {
 
   public InterfacialFriction getInterfacialFriction() {
     return interfacialFriction;
+  }
+
+  /**
+   * Get the bubble-size closure used by the interfacial momentum model.
+   *
+   * @return mutable bubble-size closure configuration
+   */
+  public BubbleSizeClosure getBubbleSizeClosure() {
+    return interfacialFriction.getBubbleSizeClosure();
   }
 
   public FlowRegimeDetector getFlowRegimeDetector() {

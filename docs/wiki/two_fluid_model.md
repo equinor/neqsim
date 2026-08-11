@@ -406,9 +406,9 @@ f_i = f_G × enhancement
 For drag on individual bubbles in liquid continuum:
 
 ```java
-// Bubble diameter (Hinze correlation)
-d_b = 2 × (0.725 × σ / ((ρ_L - ρ_G) × g))^0.5
-d_b = min(d_b, D/5)
+// Configurable algebraic bubble diameter
+d_b = 2 × (0.725 × σ_b / (|ρ_L - ρ_G| × g))^0.5
+d_b = min(d_b, f_D × D)
 
 // Bubble Reynolds number
 Re_b = ρ_L × |v_slip| × d_b / μ_L
@@ -441,9 +441,18 @@ the liquid impulse in proportion to active mass, preserving their relative veloc
 dispersed-bubble classifications use the same source treatment; neighboring regimes retain their
 existing closures.
 
-The bubble diameter is the existing Hinze estimate capped at `D/5`; the current closure assumes a
-fixed surface tension of 0.02 N/m. Schiller-Naumann assumes a dilute population of rigid spherical
-particles and does not represent bubble deformation, coalescence, breakup, or a size distribution.
+The defaults `σ_b = 0.02 N/m` and `f_D = 0.20` preserve the historical calculation. The
+configuration is exposed on the public pipe API:
+
+```java
+pipe.setBubbleSurfaceTension(0.025);
+pipe.setMaximumBubbleDiameterFraction(0.15);
+pipe.setUseLocalBubbleSurfaceTension(true);
+```
+
+The opt-in local mode uses the thermodynamic phase-property surface tension already stored for each
+section; fixed mode remains the default. This is a single algebraic size scale. It does not represent
+a bubble-size distribution, deformation, coalescence, breakup, or turbulent-dissipation dependence.
 
 The stiff corrected mode is opt-in. Existing simulations retain the legacy `C_D × d_b/(4D)` scaling
 unless enabled, because the corrected mode is not yet quantitatively validated by the public

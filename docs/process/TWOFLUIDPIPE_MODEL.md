@@ -180,10 +180,23 @@ F_i=\frac{3}{4} C_D \rho_L \alpha_G \frac{A}{d_b}
 \qquad f_i=\frac{C_D}{4}.
 $$
 
-The implementation uses the existing Hinze bubble diameter, capped at one fifth of the pipe
-diameter, and the existing fixed 0.02 N/m surface-tension assumption. Schiller-Naumann describes
-rigid spherical particles in a dilute continuous phase; the closure does not model deformation,
-coalescence, breakup, or a bubble-size distribution.
+Bubble and dispersed-bubble regimes use the explicit algebraic diameter closure
+
+`d_b = min(2 sqrt(0.725 sigma_b / (g |rho_L-rho_G|)), f_D D)`.
+
+The defaults $\sigma_b=0.02$ N/m and $f_D=0.20$ preserve the historical calculation. Change the
+fixed values, or explicitly use each section's thermodynamic phase-property surface tension, through
+the public pipe API:
+
+```java
+pipe.setBubbleSurfaceTension(0.025);
+pipe.setMaximumBubbleDiameterFraction(0.15);
+pipe.setUseLocalBubbleSurfaceTension(true);
+```
+
+Local mode uses the surface tension already stored for each section by the thermodynamic coupling;
+the default remains fixed for compatibility. This single algebraic scale does not model a
+bubble-size distribution, deformation, coalescence, breakup, or turbulent-dissipation dependence.
 
 The source operator solves the active gas and combined-liquid momenta by backward Euler and applies
 one half-step on each side of the transport update. It conserves total active-phase momentum to
