@@ -262,8 +262,11 @@ targets manipulated through condenser or reboiler temperature.
 - Work diagnostics classify every currently assembled derivative column as finite-difference;
   `getLastNaphtaliAnalyticJacobianColumns()` remains available for compatibility and reports zero
   until a mixed analytic/numerical assembly is implemented.
-- Tray thermodynamics perform up to two forced-root fugacity sweeps and stop after the first when
-  its `max(abs(log(Knew/Kold)))` is already at or below `1e-8`. Diagnostics report the actual sweep
+- Tray thermodynamics perform up to two forced-root fugacity sweeps for a cold solve and up to three
+  when refining a retained column state. Both paths stop early when
+  `max(abs(log(Knew/Kold)))` is already at or below `1e-8`. The extra warm-start sweep keeps the
+  finite-difference residual locally consistent after a nearby operating-point change without
+  adding EOS work to cold solves. Diagnostics report the actual sweep
   count, the number of tray evaluations whose final
   `max(abs(log(Knew/Kold)))` exceeds `1e-8`, and the largest such final update through
   `getLastNaphtaliThermoKValueIterationCount()`,
