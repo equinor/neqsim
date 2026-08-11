@@ -7,6 +7,7 @@ import neqsim.process.equipment.pipeline.twophasepipe.closure.WallFriction;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.AUSMPlusFluxCalculator;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.AUSMPlusFluxCalculator.PhaseFlux;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.AUSMPlusFluxCalculator.PhaseState;
+import neqsim.process.equipment.pipeline.twophasepipe.numerics.DispersedBubbleDragSolver;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.MUSCLReconstructor;
 
 /**
@@ -119,6 +120,9 @@ public class TwoFluidConservationEquations implements Serializable {
    * practice.
    */
   private double virtualMassCoefficient = 0.5;
+
+  /** Treat corrected bubble drag with a conservative local implicit source step when opted in. */
+  private boolean enableStiffBubbleDrag = false;
 
   /** Retained timestep setting for source compatibility with existing callers. */
   private double dt = 0.01;
@@ -735,8 +739,9 @@ public class TwoFluidConservationEquations implements Serializable {
 
       // Interfacial friction force (N/m)
       // Positive interfacial shear decelerates gas, accelerates liquid
-      double F_iG = -sec.getInterfacialShear() * S_i;
-      double F_iL = sec.getInterfacialShear() * S_i;
+      boolean stiffBubbleDrag = enableStiffBubbleDrag && isDispersedBubbleRegime(sec.getFlowRegime());
+      double F_iG = stiffBubbleDrag ? 0.0 : -sec.getInterfacialShear() * S_i;
+      double F_iL = stiffBubbleDrag ? 0.0 : sec.getInterfacialShear() * S_i;
 
       // Gravity forces (N/m) - calculated separately for oil and water
       double F_gG = -alphaG * rhoG * GRAVITY * A * sinTheta;
@@ -928,6 +933,62 @@ public class TwoFluidConservationEquations implements Serializable {
       sec.setGasMomentumSource(sec.getGasMomentumSource() + gasVirtualMassForce);
       sec.setLiquidMomentumSource(sec.getLiquidMomentumSource() - gasVirtualMassForce);
     }
+  }
+
+  /**
+   * Advance corrected dispersed-bubble drag with a pure local implicit source solve.
+   *
+   * <p>
+   * The input state is not modified. Gas and combined-liquid momentum are coupled conservatively; the liquid impulse is
+   * distributed by active oil/water mass so water-oil slip is preserved. The energy state is unchanged, making lost
+   * kinetic energy available as internal energy.
+   * </p>
+   *
+   * @param sections sections whose primitive properties correspond to {@code state}
+   * @param state conservative state before the drag source step
+   * @param timeStep source-step duration in s
+   * @return a new conservative state after dispersed-bubble drag
+   * @throws IllegalArgumentException if section/state dimensions or the time step are invalid
+   */
+  public double[][] applyStiffBubbleDrag(TwoFluidSection[] sections, double[][] state, double timeStep) {
+    if (sections == null || state == null || sections.length != state.length) {
+      throw new IllegalArgumentException("Section and state dimensions must agree");
+    }
+    if (!Double.isFinite(timeStep) || timeStep < 0.0) {
+      throw new IllegalArgumentException("Bubble-drag source-step duration must be finite and non-negative");
+    }
+
+    double[][] result = new double[state.length][NUM_EQUATIONS];
+    for (int sectionIndex = 0; sectionIndex < state.length; sectionIndex++) {
+      if (state[sectionIndex] == null || state[sectionIndex].length != NUM_EQUATIONS) {
+        throw new IllegalArgumentException("Every section state must contain seven conservative variables");
+      }
+      System.arraycopy(state[sectionIndex], 0, result[sectionIndex], 0, NUM_EQUATIONS);
+      if (!enableStiffBubbleDrag || timeStep == 0.0) {
+        continue;
+      }
+
+      TwoFluidSection section = sections[sectionIndex];
+      PipeSection.FlowRegime regime = flowRegimeDetector.detectFlowRegime(section);
+      if (!isDispersedBubbleRegime(regime)) {
+        continue;
+      }
+      double[] masses = { state[sectionIndex][IDX_GAS_MASS], state[sectionIndex][IDX_OIL_MASS],
+          state[sectionIndex][IDX_WATER_MASS] };
+      double[] momenta = { state[sectionIndex][IDX_GAS_MOMENTUM], state[sectionIndex][IDX_OIL_MOMENTUM],
+          state[sectionIndex][IDX_WATER_MOMENTUM] };
+      double[] relaxedMomenta = DispersedBubbleDragSolver.relax(regime, masses, momenta, section.getGasDensity(),
+          section.getLiquidDensity(), section.getGasViscosity(), section.getLiquidViscosity(),
+          section.getLiquidHoldup(), section.getDiameter(), section.getSurfaceTension(), timeStep, interfacialFriction);
+      result[sectionIndex][IDX_GAS_MOMENTUM] = relaxedMomenta[0];
+      result[sectionIndex][IDX_OIL_MOMENTUM] = relaxedMomenta[1];
+      result[sectionIndex][IDX_WATER_MOMENTUM] = relaxedMomenta[2];
+    }
+    return result;
+  }
+
+  private boolean isDispersedBubbleRegime(PipeSection.FlowRegime flowRegime) {
+    return flowRegime == PipeSection.FlowRegime.BUBBLE || flowRegime == PipeSection.FlowRegime.DISPERSED_BUBBLE;
   }
 
   /**
@@ -1496,6 +1557,30 @@ public class TwoFluidConservationEquations implements Serializable {
    */
   public double getVirtualMassCoefficient() {
     return virtualMassCoefficient;
+  }
+
+  /**
+   * Enable or disable conservative local implicit treatment of bubble drag.
+   *
+   * <p>
+   * This mode is opt-in because the corrected closure is not yet quantitatively validated by the public Tengesdal
+   * severe-slugging benchmark. Enabling it selects the corrected force and the stiff source treatment together.
+   * </p>
+   *
+   * @param enable true to use the local stiff source solve
+   */
+  public void setEnableStiffBubbleDrag(boolean enable) {
+    this.enableStiffBubbleDrag = enable;
+    interfacialFriction.setUseCorrectedBubbleDrag(enable);
+  }
+
+  /**
+   * Check whether corrected bubble drag uses the local stiff source solve.
+   *
+   * @return true when conservative implicit bubble drag is enabled
+   */
+  public boolean isStiffBubbleDragEnabled() {
+    return enableStiffBubbleDrag;
   }
 
   /**
