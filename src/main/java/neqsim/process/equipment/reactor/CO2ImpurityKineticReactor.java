@@ -119,6 +119,21 @@ public class CO2ImpurityKineticReactor extends TwoPortEquipment {
     // Arrhenius Rate Constants (SI units: m, kmol, s, K)
     double R_GAS = 8.31446;
 
+    // Check NO2 concentration (ppm)
+    double no2Frac = 0.0;
+    if (outletSystem.getPhase(0).hasComponent("NO2")) {
+      no2Frac = outletSystem.getPhase(0).getComponent("NO2").getx();
+    }
+    double no2_ppm = no2Frac * 1.0e6;
+
+    // Thermal Freeze Factor for low T (T <= -25 °C = 248.15 K) without NO2 catalyst
+    double temp_freeze = 1.0;
+    if (T_kelvin <= 255.0 && no2_ppm < 0.1) {
+      temp_freeze = 0.0; // Complete reaction shutdown (0% conversion)
+    } else if (T_kelvin <= 265.0 && no2_ppm < 0.1) {
+      temp_freeze = (T_kelvin - 255.0) / 10.0;
+    }
+
     // R4: Termolecular NO oxidation (negative activation energy)
     double k4 = 1.2e3 * Math.exp(530.0 / T_kelvin);
 
@@ -152,8 +167,8 @@ public class CO2ImpurityKineticReactor extends TwoPortEquipment {
 
     double k3 = k3_base * moisture_factor;
 
-    logger.info("CO2ImpurityKineticReactor rate constants evaluated: k2={}, k3={}, k4={}, k5_f={}",
-        k2, k3, k4, k5_f);
+    logger.info("CO2ImpurityKineticReactor rate constants evaluated: k2={}, k3={}, k4={}, temp_freeze={}",
+        k2, k3, k4, temp_freeze);
 
     if (getOutletStream() != null) {
       getOutletStream().setThermoSystem(outletSystem);
