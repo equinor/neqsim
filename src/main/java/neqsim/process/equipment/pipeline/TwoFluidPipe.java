@@ -15,6 +15,7 @@ import neqsim.process.equipment.pipeline.twophasepipe.ThermodynamicCoupling;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidComponentTransport;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.BubbleSizeClosure;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegimeDetector.OilWaterFlowRegime;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.ConservativeStateLimiter;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.TimeIntegrator;
@@ -6298,6 +6299,62 @@ public class TwoFluidPipe extends Pipeline {
    */
   public boolean isStiffBubbleDragEnabled() {
     return equations.isStiffBubbleDragEnabled();
+  }
+
+  /**
+   * Get the bubble-size closure used by bubble and dispersed-bubble regimes.
+   *
+   * @return mutable bubble-size closure configuration
+   */
+  public BubbleSizeClosure getBubbleSizeClosure() {
+    return equations.getBubbleSizeClosure();
+  }
+
+  /**
+   * Set the fixed bubble-size surface tension.
+   *
+   * <p>
+   * This value is used by default and preserves legacy behavior at {@code 0.02 N/m}. Enable local
+   * surface tension explicitly to use each section's thermodynamic phase-property value instead.
+   * </p>
+   *
+   * @param surfaceTension fixed surface tension in N/m
+   */
+  public void setBubbleSurfaceTension(double surfaceTension) {
+    getBubbleSizeClosure().setSurfaceTension(surfaceTension);
+  }
+
+  /** @return configured fixed bubble-size surface tension in N/m */
+  public double getBubbleSurfaceTension() {
+    return getBubbleSizeClosure().getSurfaceTension();
+  }
+
+  /**
+   * Select local thermodynamic phase-property surface tension for the bubble-size closure.
+   *
+   * @param useLocal true to use the surface tension stored for each pipe section
+   */
+  public void setUseLocalBubbleSurfaceTension(boolean useLocal) {
+    getBubbleSizeClosure().setUseLocalSurfaceTension(useLocal);
+  }
+
+  /** @return true when section-local surface tension is selected */
+  public boolean isUseLocalBubbleSurfaceTension() {
+    return getBubbleSizeClosure().isUseLocalSurfaceTension();
+  }
+
+  /**
+   * Set the maximum bubble diameter as a fraction of pipe diameter.
+   *
+   * @param fraction fraction in the interval (0, 1]
+   */
+  public void setMaximumBubbleDiameterFraction(double fraction) {
+    getBubbleSizeClosure().setMaximumPipeDiameterFraction(fraction);
+  }
+
+  /** @return maximum bubble diameter divided by pipe diameter */
+  public double getMaximumBubbleDiameterFraction() {
+    return getBubbleSizeClosure().getMaximumPipeDiameterFraction();
   }
 
   /**
