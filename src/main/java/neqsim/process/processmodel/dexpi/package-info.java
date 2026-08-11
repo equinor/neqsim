@@ -16,7 +16,8 @@
  * <li>{@link neqsim.process.processmodel.dexpi.DexpiRoundTripProfile} - Validation for round-trip fidelity</li>
  * <li>{@link neqsim.process.processmodel.dexpi.Dexpi20ProcessModelWriter} - Native DEXPI 2.0 Process exchange</li>
  * <li>{@link neqsim.process.processmodel.dexpi.Dexpi20ProcessTopologyAssessment} - Canonical material-topology
- * projection and structured scope evidence for assessed native Process exchange</li>
+ * projection, canonical operating-value provenance, and structured scope evidence for assessed native Process
+ * exchange</li>
  * </ul>
  *
  * <h2>Usage Example</h2>

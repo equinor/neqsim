@@ -5,7 +5,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.xml.XMLConstants;
@@ -94,16 +96,47 @@ public final class Dexpi20ProcessModelWriter {
         "CANONICAL_ENGINEERING_GRAPH");
   }
 
+  /**
+   * Writes an assessed Process exchange whose operating values come from one canonical case snapshot.
+   *
+   * <p>
+   * This opt-in overload does not change the established topology-only overload. Only finite,
+   * unit-explicit calculation nodes for {@code operatingCaseId} are serialized; missing values are
+   * omitted with structured diagnostics and are never read directly from streams as a fallback.
+   * Generated values remain calculated, review-required engineering evidence.
+   * </p>
+   *
+   * @param processSystem source simulation topology with a successful completed run
+   * @param file destination DEXPI XML file
+   * @param plantId persistent plant or project identifier used by the canonical graph
+   * @param revision controlled source-model revision
+   * @param operatingCaseId stable operating-case identifier
+   * @return schema/profile conformance plus topology, value-source, and loss evidence
+   * @throws IOException if serialization, validation, or assessment fails
+   */
+  public static Dexpi20ProcessTopologyAssessment.Report writeAndAssessTopology(ProcessSystem processSystem, File file,
+      String plantId, String revision, String operatingCaseId) throws IOException {
+    ProcessDiagramGraphAdapter.Result canonical = ProcessDiagramGraphAdapter.fromProcessSystem(processSystem, plantId,
+        revision, operatingCaseId);
+    CanonicalOperatingValues operatingValues = new CanonicalOperatingValues(canonical.getGraph(), operatingCaseId);
+    writeCanonical(processSystem, file, canonical, operatingValues);
+    Dexpi20ConformanceAssessment.Report conformance = Dexpi20ConformanceAssessment.assess(file.toPath(),
+        Dexpi20ConformanceAssessment.Profile.PROCESS_PFD_BFD);
+    return Dexpi20ProcessTopologyAssessment.assess(processSystem, file.toPath(), conformance, canonical,
+        "CANONICAL_ENGINEERING_GRAPH", "CANONICAL_ENGINEERING_GRAPH_CALCULATION_NODES",
+        operatingValues.getDiagnostics());
+  }
+
   /** Writes a native DEXPI 2.0 Process model to a stream. */
   public static void write(ProcessSystem processSystem, OutputStream outputStream) throws IOException {
     if (processSystem == null || outputStream == null) {
       throw new IllegalArgumentException("processSystem and outputStream must not be null");
     }
-    write(processSystem, outputStream, topology(processSystem));
+    write(processSystem, outputStream, topology(processSystem), new DirectOperatingValues());
   }
 
-  private static void write(ProcessSystem processSystem, OutputStream outputStream, ModelTopology topology)
-      throws IOException {
+  private static void write(ProcessSystem processSystem, OutputStream outputStream, ModelTopology topology,
+      OperatingValues operatingValues) throws IOException {
     try {
       Document document = createDocument();
       Element model = document.createElement("Model");
@@ -148,24 +181,12 @@ public final class Dexpi20ProcessModelWriter {
         data(document, stream, "Label", link.stream.getName());
         references(document, stream, "Source", sourcePort);
         references(document, stream, "Target", targetPort);
-        physicalQuantity(document, stream, "MassFlow", finite(new ValueSupplier() {
-          @Override
-          public double value() {
-            return link.stream.getFlowRate("kg/hr");
-          }
-        }), "Core/PhysicalQuantities.MassFlowRateUnit.KilogramPerHour");
-        physicalQuantity(document, stream, "Pressure", finite(new ValueSupplier() {
-          @Override
-          public double value() {
-            return link.stream.getPressure("bara");
-          }
-        }), "Core/PhysicalQuantities.PressureAbsoluteUnit.Bar");
-        physicalQuantity(document, stream, "Temperature", finite(new ValueSupplier() {
-          @Override
-          public double value() {
-            return link.stream.getTemperature("C");
-          }
-        }), "Core/PhysicalQuantities.TemperatureUnit.DegreeCelsius");
+        physicalQuantity(document, stream, "MassFlow", operatingValues.value(link, "massFlow"),
+            "Core/PhysicalQuantities.MassFlowRateUnit.KilogramPerHour");
+        physicalQuantity(document, stream, "Pressure", operatingValues.value(link, "pressure"),
+            "Core/PhysicalQuantities.PressureAbsoluteUnit.Bar");
+        physicalQuantity(document, stream, "Temperature", operatingValues.value(link, "temperature"),
+            "Core/PhysicalQuantities.TemperatureUnit.DegreeCelsius");
         processConnections.appendChild(stream);
       }
       transform(document, outputStream);
@@ -178,12 +199,17 @@ public final class Dexpi20ProcessModelWriter {
 
   private static void writeCanonical(ProcessSystem processSystem, File file,
       ProcessDiagramGraphAdapter.Result canonical) throws IOException {
+    writeCanonical(processSystem, file, canonical, new DirectOperatingValues());
+  }
+
+  private static void writeCanonical(ProcessSystem processSystem, File file,
+      ProcessDiagramGraphAdapter.Result canonical, OperatingValues operatingValues) throws IOException {
     if (file == null || canonical == null) {
       throw new IllegalArgumentException("file and canonical must not be null");
     }
     FileOutputStream stream = new FileOutputStream(file);
     try {
-      write(processSystem, stream, topology(processSystem, canonical));
+      write(processSystem, stream, topology(processSystem, canonical), operatingValues);
     } finally {
       stream.close();
     }
@@ -256,6 +282,7 @@ public final class Dexpi20ProcessModelWriter {
       }
       Link match = findDirectLink(direct.links, consumed, node);
       if (match != null) {
+        match.canonicalValueSubjectId = sourceOwnerNodeId(graph, node);
         projected.add(match);
         consumed.put(match, Boolean.TRUE);
       }
@@ -266,6 +293,11 @@ public final class Dexpi20ProcessModelWriter {
       }
     }
     return new ModelTopology(direct.units, projected);
+  }
+
+  private static String sourceOwnerNodeId(EngineeringGraph graph, EngineeringNode connection) {
+    EngineeringNode endpoint = graph.getNode(property(connection, "sourceEndpointId"));
+    return endpoint == null ? "" : property(endpoint, "ownerNodeId");
   }
 
   private static Link findDirectLink(List<Link> links, Map<Link, Boolean> consumed, EngineeringNode connection) {
@@ -479,6 +511,109 @@ public final class Dexpi20ProcessModelWriter {
     double value();
   }
 
+  private interface OperatingValues {
+    Double value(Link link, String quantity);
+  }
+
+  private static final class DirectOperatingValues implements OperatingValues {
+    @Override
+    public Double value(final Link link, String quantity) {
+      if ("massFlow".equals(quantity)) {
+        return finite(new ValueSupplier() {
+          @Override
+          public double value() {
+            return link.stream.getFlowRate("kg/hr");
+          }
+        });
+      }
+      if ("pressure".equals(quantity)) {
+        return finite(new ValueSupplier() {
+          @Override
+          public double value() {
+            return link.stream.getPressure("bara");
+          }
+        });
+      }
+      if ("temperature".equals(quantity)) {
+        return finite(new ValueSupplier() {
+          @Override
+          public double value() {
+            return link.stream.getTemperature("C");
+          }
+        });
+      }
+      return null;
+    }
+  }
+
+  private static final class CanonicalOperatingValues implements OperatingValues {
+    private final Map<String, Map<String, Double>> values = new LinkedHashMap<String, Map<String, Double>>();
+    private final List<Dexpi20ProcessTopologyAssessment.Diagnostic> diagnostics =
+        new ArrayList<Dexpi20ProcessTopologyAssessment.Diagnostic>();
+
+    CanonicalOperatingValues(EngineeringGraph graph, String operatingCaseId) {
+      for (EngineeringNode node : graph.getNodes().values()) {
+        if (node.getKind() != EngineeringNode.Kind.CALCULATION
+            || !operatingCaseId.equals(property(node, "designCaseId"))
+            || !"CALCULATED".equals(property(node, "status"))) {
+          continue;
+        }
+        String subjectNodeId = property(node, "subjectNodeId");
+        String quantity = property(node, "quantity");
+        Double converted = convertedValue(node, quantity);
+        if (subjectNodeId.isEmpty() || quantity.isEmpty() || converted == null) {
+          continue;
+        }
+        Map<String, Double> subjectValues = values.get(subjectNodeId);
+        if (subjectValues == null) {
+          subjectValues = new LinkedHashMap<String, Double>();
+          values.put(subjectNodeId, subjectValues);
+        }
+        subjectValues.put(quantity, converted);
+      }
+    }
+
+    @Override
+    public Double value(Link link, String quantity) {
+      String subject = link.canonicalValueSubjectId.isEmpty() ? streamName(link.stream)
+          : link.canonicalValueSubjectId;
+      Map<String, Double> subjectValues = values.get(link.canonicalValueSubjectId);
+      Double result = subjectValues == null ? null : subjectValues.get(quantity);
+      if (result == null) {
+        diagnostics.add(new Dexpi20ProcessTopologyAssessment.Diagnostic(
+            Dexpi20ProcessTopologyAssessment.Severity.WARNING, "DEXPI_PROCESS_OPERATING_VALUE_MISSING",
+            "No matching canonical calculation node was available; the value was omitted without stream fallback",
+            subject + "/" + quantity));
+      }
+      return result;
+    }
+
+    List<Dexpi20ProcessTopologyAssessment.Diagnostic> getDiagnostics() {
+      return Collections.unmodifiableList(diagnostics);
+    }
+
+    private static Double convertedValue(EngineeringNode node, String quantity) {
+      Object rawValue = node.getProperties().get("resultValue");
+      if (!(rawValue instanceof Number)) {
+        return null;
+      }
+      double value = ((Number) rawValue).doubleValue();
+      String unit = property(node, "resultUnit");
+      String basis = property(node, "quantityBasis");
+      if ("massFlow".equals(quantity) && "kg/s".equals(unit) && "MASS".equals(basis)) {
+        value *= 3600.0;
+      } else if ("pressure".equals(quantity) && "bara".equals(unit) && "ABSOLUTE".equals(basis)) {
+        // DEXPI Process uses bar with an absolute-pressure unit reference.
+      } else if ("temperature".equals(quantity) && "K".equals(unit)
+          && "THERMODYNAMIC_ABSOLUTE".equals(basis)) {
+        value -= 273.15;
+      } else {
+        return null;
+      }
+      return Double.isFinite(value) ? Double.valueOf(value) : null;
+    }
+  }
+
   private static final class Step {
     private final Element ports;
 
@@ -492,6 +627,7 @@ public final class Dexpi20ProcessModelWriter {
     private final ProcessEquipmentInterface source;
     private final ProcessEquipmentInterface target;
     private final StreamInterface stream;
+    private String canonicalValueSubjectId = "";
     private Step syntheticSink;
 
     Link(int number, ProcessEquipmentInterface source, ProcessEquipmentInterface target, StreamInterface stream) {
