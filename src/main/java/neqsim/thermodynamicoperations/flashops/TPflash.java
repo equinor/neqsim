@@ -1208,8 +1208,8 @@ public class TPflash extends Flash {
    * concentrates water. Full recursive flashing is avoided. A multiphase-enabled water-rich gas/aqueous endpoint uses
    * one cold ordinary candidate; a genuine oil/aqueous liquid-liquid endpoint remains on the multiphase path. An
    * ordinary endpoint uses the multiphase candidate. The nested candidate cannot start another cross-algorithm
-   * fallback. A candidate replaces the original state only after strict phase-fraction,
-   * composition-normalization, material-balance, fugacity, distinct-composition, and lower-Gibbs checks pass.
+   * fallback. A candidate replaces the original state only after strict phase-fraction, composition-normalization,
+   * material-balance, fugacity, distinct-composition, and lower-Gibbs checks pass.
    * </p>
    */
   private void rescueWaterRichEndpoint() {
