@@ -393,6 +393,27 @@ public class EclipseFluidReadWrite {
   }
 
   /**
+   * Reads the optional Peng-Robinson correction keyword that may follow the EOS keyword. A plain (1976) PR file carries
+   * no correction keyword, so the line is only consumed when it actually is PRCORR or PRLKCORR.
+   *
+   * @param br the BufferedReader positioned just after the EOS value line
+   * @return "PRCORR", "PRLKCORR" or null when no correction keyword is present
+   * @throws IOException if an I/O error occurs
+   */
+  private static String readCorrectionKeyword(BufferedReader br) throws IOException {
+    br.mark(4096);
+    String line = br.readLine();
+    if (line != null) {
+      String corr = line.trim().replace("/", "").trim();
+      if ("PRCORR".equals(corr) || "PRLKCORR".equals(corr)) {
+        return corr;
+      }
+    }
+    br.reset();
+    return null;
+  }
+
+  /**
    * Internal implementation. If {@code forcedFluid} is non-null it is used as the target (EOS keyword in file is
    * ignored). Otherwise the EOS keyword drives fluid creation.
    *
@@ -466,15 +487,11 @@ public class EclipseFluidReadWrite {
             if (EOS.contains("SRK")) {
               fluid = new neqsim.thermo.system.SystemSrkEos(288.15, ThermodynamicConstantsInterface.referencePressure);
             } else if (EOS.contains("PR")) {
-              String corrLine = br.readLine();
-              if (corrLine == null) {
-                break;
-              }
-              String corr = corrLine.trim().replace("/", "");
-              if (corr.equals("PRLKCORR")) {
+              String corr = readCorrectionKeyword(br);
+              if ("PRLKCORR".equals(corr)) {
                 fluid = new neqsim.thermo.system.SystemPrLeeKeslerEos(288.15,
                     ThermodynamicConstantsInterface.referencePressure);
-              } else if (corr.equals("PRCORR")) {
+              } else if ("PRCORR".equals(corr)) {
                 fluid = new neqsim.thermo.system.SystemPrEos1978(288.15,
                     ThermodynamicConstantsInterface.referencePressure);
               } else {
@@ -484,8 +501,8 @@ public class EclipseFluidReadWrite {
               fluid = new neqsim.thermo.system.SystemPrEos(288.15, ThermodynamicConstantsInterface.referencePressure);
             }
           } else if (EOS.contains("PR")) {
-            // Skip the PRCORR / PRLKCORR line so the reader stays in sync.
-            br.readLine();
+            // Consume the PRCORR / PRLKCORR line, if present, so the reader stays in sync.
+            readCorrectionKeyword(br);
           }
         }
         if (st.trim().equals("CNAMES")) {
@@ -1070,11 +1087,11 @@ public class EclipseFluidReadWrite {
           if (EOS.contains("SRK")) {
             fluid = new neqsim.thermo.system.SystemSrkEos(288.15, ThermodynamicConstantsInterface.referencePressure);
           } else if (EOS.contains("PR")) {
-            String corr = br.readLine().trim().replace("/", "");
-            if (corr.equals("PRLKCORR")) {
+            String corr = readCorrectionKeyword(br);
+            if ("PRLKCORR".equals(corr)) {
               fluid = new neqsim.thermo.system.SystemPrLeeKeslerEos(288.15,
                   ThermodynamicConstantsInterface.referencePressure);
-            } else if (corr.equals("PRCORR")) {
+            } else if ("PRCORR".equals(corr)) {
               fluid = new neqsim.thermo.system.SystemPrEos1978(288.15,
                   ThermodynamicConstantsInterface.referencePressure);
             } else {
@@ -1633,15 +1650,16 @@ public class EclipseFluidReadWrite {
     writer.write("-- Equation of state\n");
     writer.write("EOS\n");
     String eosType = getEOSType(fluid);
-    // PR-LK is written as "PR" in the EOS line (same family), distinguished by
-    // PRLKCORR
-    String eosLine = "PR-LK".equals(eosType) ? "PR" : eosType;
+    // PR-LK and PR-1978 are written as "PR" in the EOS line (same family) and are
+    // distinguished by the following PRLKCORR / PRCORR keyword.
+    String eosLine = eosType.startsWith("PR") ? "PR" : eosType;
     writer.write(eosLine + " /\n");
 
-    // Correction keyword for Peng-Robinson variants
+    // Correction keyword for Peng-Robinson variants. A plain (1976) PR fluid gets
+    // no correction keyword - writing PRCORR there would read back as PR-1978.
     if ("PR-LK".equals(eosType)) {
       writer.write("PRLKCORR\n");
-    } else if ("PR".equals(eosType)) {
+    } else if ("PR-1978".equals(eosType)) {
       writer.write("PRCORR\n");
     }
 
@@ -1859,7 +1877,7 @@ public class EclipseFluidReadWrite {
     } else if (className.contains("leekes") || className.contains("leekesler")) {
       return "PR-LK";
     } else if (className.contains("pr")) {
-      return "PR";
+      return className.contains("1978") ? "PR-1978" : "PR";
     } else {
       return "SRK"; // Default
     }
