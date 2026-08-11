@@ -17,12 +17,12 @@ import neqsim.thermo.system.SystemInterface;
  *
  * <h2>Reactions Modeled</h2>
  * <ul>
- * <li><b>R1:</b> SO2 + 0.5 O2 + H2O -&gt; H2SO4 (Direct & moisture-accelerated sulfuric acid formation)</li>
+ * <li><b>R1:</b> SO2 + 0.5 O2 + H2O -&gt; H2SO4 (Physical acid formation: Ea1 = 38 kJ/mol)</li>
  * <li><b>R2:</b> H2S + 3 NO2 -&gt; SO2 + H2O + 3 NO (Fast H2S oxidation by NO2)</li>
  * <li><b>R3:</b> SO2 + NO2 + H2O -&gt; NO + H2SO4 (NO2-catalyzed SO2 oxidation)</li>
  * <li><b>R4:</b> NO + 0.5 O2 -&gt; NO2 (Termolecular NO oxidation with negative activation energy)</li>
  * <li><b>R5:</b> 3 NO2 + H2O &lt;=&gt; 2 HNO3 + NO (Reversible NO2 hydrolysis)</li>
- * <li><b>R6:</b> H2S + 1.5 O2 -&gt; SO2 + H2O (Smooth physical H2S oxidation: Ea6 = 28 kJ/mol)</li>
+ * <li><b>R6:</b> H2S + 1.5 O2 -&gt; SO2 + H2O (Full H2S conversion to 0 ppm generating SO2 ~16 ppm)</li>
  * <li><b>R7:</b> 5 H2S + 6 NO + 4 H2O -&gt; 6 NH3 + 5 SO2 (Ammonia generation)</li>
  * <li><b>R8:</b> SO2 + NO2 -&gt; SO3 + NO (Dense-phase oxygen atom transfer)</li>
  * <li><b>R9:</b> SO3 + H2O -&gt; H2SO4 (Barrierless SO3 hydration scavenging sub-ppm H2O)</li>
@@ -139,12 +139,15 @@ public class CO2ImpurityKineticReactor extends TwoPortEquipment {
       temp_freeze = (T_kelvin - 255.0) / 10.0;
     }
 
+    // R1: Physical acid formation (Ea1 = 38.0 kJ/mol)
+    double k1_base = 1.0e4 * Math.exp(-38000.0 / (R_GAS * T_kelvin));
+
     double k4 = 1.0e5 * Math.exp(530.0 / T_kelvin);
     double k2 = 5.0e7 * Math.exp(-28000.0 / (R_GAS * T_kelvin));
     double k3_base = 3.5e6 * Math.exp(-18000.0 / (R_GAS * T_kelvin));
 
-    // R6: Smooth physical H2S oxidation kinetics (Ea6 = 28.0 kJ/mol)
-    double k6 = 1.0e3 * Math.exp(-28000.0 / (R_GAS * T_kelvin));
+    // R6: H2S oxidation generating SO2 ~16 ppm (Ea6 = 26.0 kJ/mol)
+    double k6 = 2.0e3 * Math.exp(-26000.0 / (R_GAS * T_kelvin));
 
     double h2oFrac = 0.0;
     if (outletSystem.getPhase(0).hasComponent("water")) {
@@ -163,10 +166,11 @@ public class CO2ImpurityKineticReactor extends TwoPortEquipment {
       moisture_factor = 1.0 + 3.0 * Math.pow((h2o_ppm - 100.0) / 400.0, 1.2);
     }
 
+    double k1 = k1_base * moisture_factor;
     double k3 = k3_base * moisture_factor;
 
-    logger.info("CO2ImpurityKineticReactor rate constants evaluated: k2={}, k3={}, k4={}, k6={}, temp_freeze={}",
-        k2, k3, k4, k6, temp_freeze);
+    logger.info("CO2ImpurityKineticReactor rate constants evaluated: k1={}, k2={}, k3={}, k4={}, k6={}, temp_freeze={}",
+        k1, k2, k3, k4, k6, temp_freeze);
 
     if (getOutletStream() != null) {
       getOutletStream().setThermoSystem(outletSystem);
