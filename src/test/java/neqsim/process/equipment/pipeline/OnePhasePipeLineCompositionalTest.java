@@ -164,14 +164,13 @@ public class OnePhasePipeLineCompositionalTest {
     assertTrue(reportJson.contains("\"finalComponentCellInventoryKg\""));
     Gson gson = new Gson();
     JsonObject reportJsonObject = JsonParser.parseString(reportJson).getAsJsonObject();
-    double[] restoredCellInventory =
-        gson.fromJson(reportJsonObject.get("finalCellInventoryKg"), double[].class);
-    double[][] restoredComponentCellInventory =
-        gson.fromJson(reportJsonObject.get("finalComponentCellInventoryKg"), double[][].class);
+    double[] restoredCellInventory = gson.fromJson(reportJsonObject.get("finalCellInventoryKg"), double[].class);
+    double[][] restoredComponentCellInventory = gson.fromJson(reportJsonObject.get("finalComponentCellInventoryKg"),
+        double[][].class);
     assertArrayEquals(latest.getFinalCellInventoryKg(), restoredCellInventory, 0.0);
     for (int component = 0; component < latest.getComponentNames().length; component++) {
-      assertArrayEquals(latest.getFinalComponentCellInventoryKg()[component],
-          restoredComponentCellInventory[component], 0.0);
+      assertArrayEquals(latest.getFinalComponentCellInventoryKg()[component], restoredComponentCellInventory[component],
+          0.0);
     }
     assertTrue(history.toJson().contains("\"elapsedTimeSeconds\""));
   }
