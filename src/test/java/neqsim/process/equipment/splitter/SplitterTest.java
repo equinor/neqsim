@@ -285,4 +285,26 @@ class SplitterTest {
     neqsim.util.validation.ValidationResult result = splitter.validateSetup();
     assertFalse(result.isValid());
   }
+
+  @Test
+  void testMultiPhaseStreamSplittingPreservesLiquid() {
+    neqsim.thermo.system.SystemInterface multiPhaseFluid = new SystemSrkEos(280.0, 50.0);
+    multiPhaseFluid.addComponent("methane", 0.6);
+    multiPhaseFluid.addComponent("n-heptane", 0.4);
+    multiPhaseFluid.setMixingRule("classic");
+
+    Stream multiPhaseStream = new Stream("multiPhaseStream", multiPhaseFluid);
+    multiPhaseStream.run();
+
+    Splitter splitter = new Splitter("multiPhaseSplitter", multiPhaseStream, 2);
+    splitter.setSplitFactors(new double[] { 0.6, 0.4 });
+    splitter.run();
+
+    double totalHeptaneInlet = multiPhaseStream.getThermoSystem().getComponent("n-heptane").getNumberOfmoles();
+    double split0Heptane = splitter.getSplitStream(0).getThermoSystem().getComponent("n-heptane").getNumberOfmoles();
+    double split1Heptane = splitter.getSplitStream(1).getThermoSystem().getComponent("n-heptane").getNumberOfmoles();
+
+    assertEquals(totalHeptaneInlet * 0.6, split0Heptane, totalHeptaneInlet * 1e-4);
+    assertEquals(totalHeptaneInlet * 0.4, split1Heptane, totalHeptaneInlet * 1e-4);
+  }
 }
