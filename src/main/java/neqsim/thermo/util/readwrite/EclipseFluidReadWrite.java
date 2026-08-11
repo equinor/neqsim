@@ -1709,7 +1709,7 @@ public class EclipseFluidReadWrite {
     // OmegaA EOS parameter — use per-component override when available
     writer.write("-- OmegaA\n");
     writer.write("OMEGAA\n");
-    double omegaADefault = ("PR".equals(eosType) || "PR-LK".equals(eosType)) ? 0.45724 : 0.42748;
+    double omegaADefault = eosType.startsWith("PR") ? 0.45724 : 0.42748;
     for (int i = 0; i < nComps; i++) {
       double omegaAVal = omegaADefault;
       if (fluid.getComponent(i) instanceof ComponentEos) {
@@ -1725,7 +1725,7 @@ public class EclipseFluidReadWrite {
     // OmegaB EOS parameter
     writer.write("-- OmegaB\n");
     writer.write("OMEGAB\n");
-    double omegaB = ("PR".equals(eosType) || "PR-LK".equals(eosType)) ? 0.07780 : 0.08664;
+    double omegaB = eosType.startsWith("PR") ? 0.07780 : 0.08664;
     for (int i = 0; i < nComps; i++) {
       writer.write(String.format(java.util.Locale.US, "     %.5f\n", omegaB));
     }
