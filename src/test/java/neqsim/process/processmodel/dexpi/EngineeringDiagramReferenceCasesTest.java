@@ -64,10 +64,10 @@ class EngineeringDiagramReferenceCasesTest {
     assertMassBalance(first.getFeed(), first.getProducts());
     assertMassBalance(second.getFeed(), second.getProducts());
 
-    ProcessDiagramGraphAdapter.Result firstCanonical = ProcessDiagramGraphAdapter.fromProcessModel(
-        first.getProcessModel(), first.getCaseId(), "A", "NORMAL-001");
-    ProcessDiagramGraphAdapter.Result secondCanonical = ProcessDiagramGraphAdapter.fromProcessModel(
-        second.getProcessModel(), second.getCaseId(), "A", "NORMAL-001");
+    ProcessDiagramGraphAdapter.Result firstCanonical = ProcessDiagramGraphAdapter
+        .fromProcessModel(first.getProcessModel(), first.getCaseId(), "A", "NORMAL-001");
+    ProcessDiagramGraphAdapter.Result secondCanonical = ProcessDiagramGraphAdapter
+        .fromProcessModel(second.getProcessModel(), second.getCaseId(), "A", "NORMAL-001");
     assertEquals(firstCanonical.getFingerprint(), secondCanonical.getFingerprint());
     assertEquals(firstCanonical.getGraphJson(), secondCanonical.getGraphJson());
     assertTrue(firstCanonical.isComplete(), diagnosticCodes(firstCanonical).toString());
@@ -97,8 +97,8 @@ class EngineeringDiagramReferenceCasesTest {
     assertEquals(firstGraphviz.toDot(), secondGraphviz.toDot());
     assertEquals(first.getAreaNames(), new ArrayList<String>(firstGraphviz.toAreaDots().keySet()));
 
-    List<EngineeringProject> projects = NorsokOffshoreEngineeringBuilder.fromProcessModel(
-        "Multi-area DEXPI reference", first.getProcessModel(), false);
+    List<EngineeringProject> projects = NorsokOffshoreEngineeringBuilder.fromProcessModel("Multi-area DEXPI reference",
+        first.getProcessModel(), false);
     assertEquals(first.getAreaNames().size(), projects.size());
     int proposedElementCount = 0;
     for (EngineeringProject project : projects) {
@@ -137,10 +137,10 @@ class EngineeringDiagramReferenceCasesTest {
     assertMassBalance(first.getFeed(), first.getProducts());
     assertMassBalance(second.getFeed(), second.getProducts());
 
-    ProcessDiagramGraphAdapter.Result firstCanonical = ProcessDiagramGraphAdapter.fromProcessSystem(
-        first.getProcessSystem(), first.getCaseId(), "A", "NORMAL-001");
-    ProcessDiagramGraphAdapter.Result secondCanonical = ProcessDiagramGraphAdapter.fromProcessSystem(
-        second.getProcessSystem(), second.getCaseId(), "A", "NORMAL-001");
+    ProcessDiagramGraphAdapter.Result firstCanonical = ProcessDiagramGraphAdapter
+        .fromProcessSystem(first.getProcessSystem(), first.getCaseId(), "A", "NORMAL-001");
+    ProcessDiagramGraphAdapter.Result secondCanonical = ProcessDiagramGraphAdapter
+        .fromProcessSystem(second.getProcessSystem(), second.getCaseId(), "A", "NORMAL-001");
     assertEquals(firstCanonical.getFingerprint(), secondCanonical.getFingerprint());
     assertEquals(firstCanonical.getGraphJson(), secondCanonical.getGraphJson());
     assertTrue(firstCanonical.isComplete(), diagnosticCodes(firstCanonical).toString());
@@ -148,8 +148,8 @@ class EngineeringDiagramReferenceCasesTest {
 
     Path firstProcess = temporaryDirectory.resolve(filePrefix + "-first.process.dexpi.xml");
     Path secondProcess = temporaryDirectory.resolve(filePrefix + "-second.process.dexpi.xml");
-    Dexpi20ProcessTopologyAssessment.Report firstProcessReport = Dexpi20ProcessModelWriter.writeAndAssessTopology(
-        first.getProcessSystem(), firstProcess.toFile(), first.getCaseId(), "A", "NORMAL-001");
+    Dexpi20ProcessTopologyAssessment.Report firstProcessReport = Dexpi20ProcessModelWriter
+        .writeAndAssessTopology(first.getProcessSystem(), firstProcess.toFile(), first.getCaseId(), "A", "NORMAL-001");
     Dexpi20ProcessTopologyAssessment.Report secondProcessReport = Dexpi20ProcessModelWriter.writeAndAssessTopology(
         second.getProcessSystem(), secondProcess.toFile(), second.getCaseId(), "A", "NORMAL-001");
     assertTrue(firstProcessReport.isSchemaProfileAndSupportedTopologyValid(),

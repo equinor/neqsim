@@ -30,8 +30,8 @@ public final class EngineeringDiagramReferenceFixtures {
     private final List<StreamInterface> products;
     private final List<String> materialConnections;
 
-    private SystemCase(String caseId, ProcessSystem processSystem, StreamInterface feed,
-        List<StreamInterface> products, String... materialConnections) {
+    private SystemCase(String caseId, ProcessSystem processSystem, StreamInterface feed, List<StreamInterface> products,
+        String... materialConnections) {
       this.caseId = caseId;
       this.processSystem = processSystem;
       this.feed = feed;
@@ -69,8 +69,8 @@ public final class EngineeringDiagramReferenceFixtures {
     private final List<String> areaNames;
     private final List<String> materialConnections;
 
-    private ModelCase(String caseId, ProcessModel processModel, StreamInterface feed,
-        List<StreamInterface> products, List<String> areaNames, String... materialConnections) {
+    private ModelCase(String caseId, ProcessModel processModel, StreamInterface feed, List<StreamInterface> products,
+        List<String> areaNames, String... materialConnections) {
       this.caseId = caseId;
       this.processModel = processModel;
       this.feed = feed;
@@ -124,8 +124,7 @@ public final class EngineeringDiagramReferenceFixtures {
 
     return new SystemCase("DEXPI-REF-SIMPLE", process, feed,
         Arrays.<StreamInterface>asList(gasCooler.getOutletStream(), separator.getLiquidOutStream()),
-        "10-FEED-001->10-XV-001", "10-XV-001->10-VA-001", "10-VA-001->10-KA-001",
-        "10-KA-001->10-HA-001");
+        "10-FEED-001->10-XV-001", "10-XV-001->10-VA-001", "10-VA-001->10-KA-001", "10-KA-001->10-HA-001");
   }
 
   /** Separator gas compression and liquid pumping branches with explicit product boundaries. */
@@ -151,8 +150,8 @@ public final class EngineeringDiagramReferenceFixtures {
 
     return new SystemCase("DEXPI-REF-BRANCHED", process, feed,
         Arrays.<StreamInterface>asList(gasCooler.getOutletStream(), liquidCooler.getOutletStream()),
-        "20-FEED-001->20-VA-001", "20-VA-001->20-KA-001", "20-KA-001->20-HA-001",
-        "20-VA-001->20-PA-001", "20-PA-001->20-HB-001");
+        "20-FEED-001->20-VA-001", "20-VA-001->20-KA-001", "20-KA-001->20-HA-001", "20-VA-001->20-PA-001",
+        "20-PA-001->20-HB-001");
   }
 
   /** Inlet, compression, export, and flare-area topology sharing one semantic ProcessModel. */
@@ -162,7 +161,7 @@ public final class EngineeringDiagramReferenceFixtures {
     inletValve.setOutletPressure(52.0, "bara");
     Separator separator = new Separator("30-VA-001", inletValve.getOutletStream());
     Splitter gasAllocation = new Splitter("30-SP-001", separator.getGasOutStream());
-    gasAllocation.setSplitFactors(new double[] {0.98, 0.02});
+    gasAllocation.setSplitFactors(new double[] { 0.98, 0.02 });
     ProcessSystem inlet = new ProcessSystem("Inlet process area");
     inlet.add(feed);
     inlet.add(inletValve);
@@ -198,9 +197,9 @@ public final class EngineeringDiagramReferenceFixtures {
     return new ModelCase("DEXPI-REF-MULTI-AREA", model, feed,
         Arrays.<StreamInterface>asList(exportPipeline.getOutletStream(), flareBoundary.getOutletStream(),
             separator.getLiquidOutStream()),
-        Arrays.asList("Inlet", "Compression", "Export", "Flare"), "30-FEED-001->30-XV-001",
-        "30-XV-001->30-VA-001", "30-VA-001->30-SP-001", "30-SP-001->31-KA-001",
-        "31-KA-001->31-HA-001", "31-HA-001->32-PL-001", "30-SP-001->40-PL-001");
+        Arrays.asList("Inlet", "Compression", "Export", "Flare"), "30-FEED-001->30-XV-001", "30-XV-001->30-VA-001",
+        "30-VA-001->30-SP-001", "30-SP-001->31-KA-001", "31-KA-001->31-HA-001", "31-HA-001->32-PL-001",
+        "30-SP-001->40-PL-001");
   }
 
   private static Stream createFeed(String name, double flowRateKgPerHour) {
