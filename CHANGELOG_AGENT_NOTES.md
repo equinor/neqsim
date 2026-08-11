@@ -9,6 +9,23 @@
 
 ---
 
+## 2026-08-11 — Self-describing ProcessModel sensitivity snapshots
+
+- `SensitivityQualityResult` now includes immutable parameter, selected-objective, and constraint
+  snapshots that bind derivative columns and rows to their engineering identity.
+- Parameter snapshots retain index, name, automation address, unit, bounds, and bounded base
+  value. The objective snapshot retains direction, unit, weight, raw and minimizer base values,
+  and its gradient. Constraint snapshots retain type, unit, hard/soft semantics, penalty, bounds,
+  equality tolerance, capacity area/equipment origin, base value, base margin, and the matching
+  Jacobian row.
+- The snapshots are serializable, defensively copy derivative arrays, and remain unchanged after
+  evaluator definitions mutate or another process point runs. Existing matrix getters and
+  sensitivity evaluation cost are unchanged.
+- Agents must preserve these records when archiving or explaining sensitivities and must not rank
+  unlike raw margins or derivatives without explicit engineering scaling.
+
+---
+
 ## 2026-08-10 — ProcessModel sensitivity-quality evidence
 
 - `ProcessModelSimulationEvaluator.estimateSensitivitiesWithQuality(...)` now evaluates one coarse

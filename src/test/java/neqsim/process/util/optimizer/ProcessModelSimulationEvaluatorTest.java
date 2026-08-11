@@ -580,6 +580,107 @@ class ProcessModelSimulationEvaluatorTest {
         restored.getParameterQuality().get(0).getPerturbations().size());
   }
 
+  /** Verifies sensitivity rows and columns retain immutable engineering identity and base values. */
+  @Test
+  void sensitivityQualitySnapshotsRemainSelfDescribing() throws Exception {
+    ModelFixture fixture = createModelFixture();
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
+    evaluator.addParameter("field feed", "wells::feed.flowRate", 500.0, 1500.0, "kg/hr");
+    evaluator.addObjective("export production", model -> fixture.feed.getFlowRate("kg/hr"),
+        ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
+    ProcessModelSimulationEvaluator.ObjectiveDefinition objective = evaluator.getObjectives().get(0);
+    objective.setUnit("kg/hr");
+    objective.setWeight(2.5);
+    evaluator.addConstraintRange("operating envelope", model -> fixture.feed.getFlowRate("kg/hr"), 1000.0, 2000.0);
+    ProcessModelSimulationEvaluator.ConstraintDefinition rangeConstraint = evaluator.getConstraints().get(0);
+    rangeConstraint.setUnit("kg/hr");
+    rangeConstraint.setHard(false);
+    rangeConstraint.setPenaltyWeight(25.0);
+    evaluator.addConstraintUpperBound("installed feed limit", model -> fixture.feed.getFlowRate("kg/hr"), 2000.0);
+    ProcessModelSimulationEvaluator.ConstraintDefinition capacityConstraint = evaluator.getConstraints().get(1);
+    capacityConstraint.setUnit("kg/hr");
+    capacityConstraint.setCapacityMetadata("wells", "feed", "installedFeedCapacity",
+        new CapacityConstraint("installedFeedCapacity", "kg/hr", ConstraintType.HARD));
+    evaluator.setUseRelativeStep(false);
+    evaluator.setFiniteDifferenceStep(100.0);
+
+    ProcessModelSimulationEvaluator.SensitivityQualityResult result = evaluator
+        .estimateSensitivitiesWithQuality(new double[] { 1600.0 });
+    ProcessModelSimulationEvaluator.SensitivityParameterSnapshot parameter = result.getParameterSnapshots().get(0);
+    ProcessModelSimulationEvaluator.SensitivityObjectiveSnapshot objectiveSnapshot = result.getObjectiveSnapshot();
+    ProcessModelSimulationEvaluator.SensitivityConstraintSnapshot rangeSnapshot = result.getConstraintSnapshots()
+        .get(0);
+    ProcessModelSimulationEvaluator.SensitivityConstraintSnapshot capacitySnapshot = result.getConstraintSnapshots()
+        .get(1);
+
+    assertEquals(0, parameter.getIndex());
+    assertEquals("field feed", parameter.getName());
+    assertEquals("wells::feed.flowRate", parameter.getAddress());
+    assertEquals("kg/hr", parameter.getUnit());
+    assertEquals(500.0, parameter.getLowerBound(), 0.0);
+    assertEquals(1500.0, parameter.getUpperBound(), 0.0);
+    assertEquals(1500.0, parameter.getBaseValue(), 0.0, "base value must retain bound clamping");
+
+    assertEquals(0, objectiveSnapshot.getIndex());
+    assertEquals("export production", objectiveSnapshot.getName());
+    assertEquals(ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE,
+        objectiveSnapshot.getDirection());
+    assertEquals("kg/hr", objectiveSnapshot.getUnit());
+    assertEquals(2.5, objectiveSnapshot.getWeight(), 0.0);
+    assertEquals(1500.0, objectiveSnapshot.getBaseRawValue(), 1.0e-8);
+    assertEquals(-1500.0, objectiveSnapshot.getBaseMinimizerValue(), 1.0e-8);
+    assertEquals(result.getObjectiveGradient()[0], objectiveSnapshot.getGradient()[0], 0.0);
+    assertEquals(-1.0, objectiveSnapshot.getGradient()[0], 1.0e-8);
+
+    assertEquals(0, rangeSnapshot.getIndex());
+    assertEquals("operating envelope", rangeSnapshot.getName());
+    assertEquals(ProcessModelSimulationEvaluator.ConstraintDefinition.Type.RANGE, rangeSnapshot.getType());
+    assertEquals("kg/hr", rangeSnapshot.getUnit());
+    assertFalse(rangeSnapshot.isHard());
+    assertEquals(25.0, rangeSnapshot.getPenaltyWeight(), 0.0);
+    assertEquals(1000.0, rangeSnapshot.getLowerBound(), 0.0);
+    assertEquals(2000.0, rangeSnapshot.getUpperBound(), 0.0);
+    assertEquals(1500.0, rangeSnapshot.getBaseValue(), 1.0e-8);
+    assertEquals(500.0, rangeSnapshot.getBaseMargin(), 1.0e-8);
+    assertEquals(result.getConstraintJacobian()[0][0], rangeSnapshot.getMarginGradient()[0], 0.0);
+
+    assertEquals(1, capacitySnapshot.getIndex());
+    assertTrue(capacitySnapshot.isCapacityConstraint());
+    assertEquals("wells", capacitySnapshot.getAreaName());
+    assertEquals("feed", capacitySnapshot.getEquipmentName());
+    assertEquals("installedFeedCapacity", capacitySnapshot.getEquipmentConstraintName());
+    assertEquals(1500.0, capacitySnapshot.getBaseValue(), 1.0e-8);
+    assertEquals(500.0, capacitySnapshot.getBaseMargin(), 1.0e-8);
+    assertEquals(-1.0, capacitySnapshot.getMarginGradient()[0], 1.0e-8);
+
+    evaluator.getParameters().get(0).setName("mutated parameter");
+    evaluator.getObjectives().get(0).setName("mutated objective");
+    evaluator.getConstraints().get(0).setName("mutated constraint");
+    evaluator.evaluate(new double[] { 1000.0 });
+    assertEquals("field feed", parameter.getName());
+    assertEquals("export production", objectiveSnapshot.getName());
+    assertEquals("operating envelope", rangeSnapshot.getName());
+    assertEquals(1500.0, parameter.getBaseValue(), 0.0);
+    assertThrows(UnsupportedOperationException.class, () -> result.getParameterSnapshots().clear());
+    assertThrows(UnsupportedOperationException.class, () -> result.getConstraintSnapshots().clear());
+    double[] defensiveMarginGradient = capacitySnapshot.getMarginGradient();
+    defensiveMarginGradient[0] = 0.0;
+    assertEquals(-1.0, capacitySnapshot.getMarginGradient()[0], 1.0e-8);
+
+    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    ObjectOutputStream output = new ObjectOutputStream(bytes);
+    output.writeObject(result);
+    output.close();
+    ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()));
+    ProcessModelSimulationEvaluator.SensitivityQualityResult restored = (ProcessModelSimulationEvaluator.SensitivityQualityResult) input
+        .readObject();
+    input.close();
+    assertEquals("field feed", restored.getParameterSnapshots().get(0).getName());
+    assertEquals("export production", restored.getObjectiveSnapshot().getName());
+    assertEquals("installedFeedCapacity", restored.getConstraintSnapshots().get(1).getEquipmentConstraintName());
+    assertEquals(-1.0, restored.getConstraintSnapshots().get(1).getMarginGradient()[0], 1.0e-8);
+  }
+
   /** Verifies bound-active quality evidence uses the actual backward steps for all derivatives. */
   @Test
   void sensitivityQualityReportsBoundedBackwardStencil() {

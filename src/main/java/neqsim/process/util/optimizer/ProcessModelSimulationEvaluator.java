@@ -378,7 +378,442 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     }
   }
 
-  /** Immutable primary-objective gradient, constraint Jacobian, and quality evidence. */
+  /** Immutable identity and base-point snapshot for one decision variable. */
+  public static final class SensitivityParameterSnapshot implements Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1L;
+
+    /** Registration index and derivative-matrix column. */
+    private final int index;
+
+    /** Human-readable parameter name. */
+    private final String name;
+
+    /** Area-qualified automation address. */
+    private final String address;
+
+    /** Parameter unit. */
+    private final String unit;
+
+    /** Lower optimization bound. */
+    private final double lowerBound;
+
+    /** Upper optimization bound. */
+    private final double upperBound;
+
+    /** Bounded parameter value used for the base evaluation. */
+    private final double baseValue;
+
+    /** Creates an immutable parameter snapshot. */
+    private SensitivityParameterSnapshot(int index, ParameterDefinition parameter, double baseValue) {
+      this.index = index;
+      this.name = parameter.getName();
+      this.address = parameter.getAddress();
+      this.unit = parameter.getUnit();
+      this.lowerBound = parameter.getLowerBound();
+      this.upperBound = parameter.getUpperBound();
+      this.baseValue = baseValue;
+    }
+
+    /**
+     * Gets the registration index and derivative-matrix column.
+     *
+     * @return zero-based parameter index
+     */
+    public int getIndex() {
+      return index;
+    }
+
+    /**
+     * Gets the parameter name.
+     *
+     * @return human-readable parameter name
+     */
+    public String getName() {
+      return name;
+    }
+
+    /**
+     * Gets the automation address.
+     *
+     * @return area-qualified address, or the custom-setter name
+     */
+    public String getAddress() {
+      return address;
+    }
+
+    /**
+     * Gets the parameter unit.
+     *
+     * @return unit, or null when unspecified
+     */
+    public String getUnit() {
+      return unit;
+    }
+
+    /**
+     * Gets the lower optimization bound.
+     *
+     * @return lower bound in the parameter unit
+     */
+    public double getLowerBound() {
+      return lowerBound;
+    }
+
+    /**
+     * Gets the upper optimization bound.
+     *
+     * @return upper bound in the parameter unit
+     */
+    public double getUpperBound() {
+      return upperBound;
+    }
+
+    /**
+     * Gets the bounded base-point value.
+     *
+     * @return base value in the parameter unit
+     */
+    public double getBaseValue() {
+      return baseValue;
+    }
+  }
+
+  /** Immutable identity, base value, and derivative snapshot for the selected objective. */
+  public static final class SensitivityObjectiveSnapshot implements Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1L;
+
+    /** Registration index represented by the gradient. */
+    private final int index;
+
+    /** Objective name. */
+    private final String name;
+
+    /** Optimization direction. */
+    private final ObjectiveDefinition.Direction direction;
+
+    /** Objective unit. */
+    private final String unit;
+
+    /** Objective weight retained for external scalarization. */
+    private final double weight;
+
+    /** Raw base-point objective value. */
+    private final double baseRawValue;
+
+    /** Sign-adjusted base-point objective value used by minimizers. */
+    private final double baseMinimizerValue;
+
+    /** Fine-step gradient in minimizer sign convention. */
+    private final double[] gradient;
+
+    /** Creates an immutable objective snapshot. */
+    private SensitivityObjectiveSnapshot(int index, ObjectiveDefinition objective, double baseRawValue,
+        double baseMinimizerValue, double[] gradient) {
+      this.index = index;
+      this.name = objective.getName();
+      this.direction = objective.getDirection();
+      this.unit = objective.getUnit();
+      this.weight = objective.getWeight();
+      this.baseRawValue = baseRawValue;
+      this.baseMinimizerValue = baseMinimizerValue;
+      this.gradient = Arrays.copyOf(gradient, gradient.length);
+    }
+
+    /**
+     * Gets the registered objective index.
+     *
+     * @return zero-based objective index
+     */
+    public int getIndex() {
+      return index;
+    }
+
+    /**
+     * Gets the objective name.
+     *
+     * @return objective name
+     */
+    public String getName() {
+      return name;
+    }
+
+    /**
+     * Gets the optimization direction.
+     *
+     * @return minimize or maximize direction
+     */
+    public ObjectiveDefinition.Direction getDirection() {
+      return direction;
+    }
+
+    /**
+     * Gets the objective unit.
+     *
+     * @return unit, or null when unspecified
+     */
+    public String getUnit() {
+      return unit;
+    }
+
+    /**
+     * Gets the external scalarization weight.
+     *
+     * @return objective weight
+     */
+    public double getWeight() {
+      return weight;
+    }
+
+    /**
+     * Gets the raw objective at the base point.
+     *
+     * @return raw objective value in the objective unit
+     */
+    public double getBaseRawValue() {
+      return baseRawValue;
+    }
+
+    /**
+     * Gets the sign-adjusted objective at the base point.
+     *
+     * @return minimizer-convention objective value
+     */
+    public double getBaseMinimizerValue() {
+      return baseMinimizerValue;
+    }
+
+    /**
+     * Gets the fine-step gradient in minimizer sign convention.
+     *
+     * @return defensive gradient ordered like the parameter snapshots
+     */
+    public double[] getGradient() {
+      return Arrays.copyOf(gradient, gradient.length);
+    }
+  }
+
+  /** Immutable identity, base margin, and derivative snapshot for one constraint. */
+  public static final class SensitivityConstraintSnapshot implements Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1L;
+
+    /** Registration index and constraint-Jacobian row. */
+    private final int index;
+
+    /** Constraint name. */
+    private final String name;
+
+    /** Constraint type. */
+    private final ConstraintDefinition.Type type;
+
+    /** Constraint unit. */
+    private final String unit;
+
+    /** Whether violation makes the result infeasible. */
+    private final boolean hard;
+
+    /** Penalty weight for a violated constraint. */
+    private final double penaltyWeight;
+
+    /** Lower bound or equality target. */
+    private final double lowerBound;
+
+    /** Upper bound. */
+    private final double upperBound;
+
+    /** Equality tolerance. */
+    private final double equalityTolerance;
+
+    /** Whether this constraint originates from installed equipment capacity. */
+    private final boolean capacityConstraint;
+
+    /** Capacity-origin process area. */
+    private final String areaName;
+
+    /** Capacity-origin equipment. */
+    private final String equipmentName;
+
+    /** Original equipment capacity-constraint name. */
+    private final String equipmentConstraintName;
+
+    /** Sampled constraint value at the base point. */
+    private final double baseValue;
+
+    /** Constraint margin at the base point. */
+    private final double baseMargin;
+
+    /** Fine-step constraint-margin gradient. */
+    private final double[] marginGradient;
+
+    /** Creates an immutable constraint snapshot. */
+    private SensitivityConstraintSnapshot(int index, ConstraintDefinition constraint, double baseValue,
+        double baseMargin, double[] marginGradient) {
+      this.index = index;
+      this.name = constraint.getName();
+      this.type = constraint.getType();
+      this.unit = constraint.getUnit();
+      this.hard = constraint.isHard();
+      this.penaltyWeight = constraint.getPenaltyWeight();
+      this.lowerBound = constraint.getLowerBound();
+      this.upperBound = constraint.getUpperBound();
+      this.equalityTolerance = constraint.getEqualityTolerance();
+      this.capacityConstraint = constraint.isCapacityConstraint();
+      this.areaName = constraint.getAreaName();
+      this.equipmentName = constraint.getEquipmentName();
+      this.equipmentConstraintName = constraint.getEquipmentConstraintName();
+      this.baseValue = baseValue;
+      this.baseMargin = baseMargin;
+      this.marginGradient = Arrays.copyOf(marginGradient, marginGradient.length);
+    }
+
+    /**
+     * Gets the registration index and constraint-Jacobian row.
+     *
+     * @return zero-based constraint index
+     */
+    public int getIndex() {
+      return index;
+    }
+
+    /**
+     * Gets the constraint name.
+     *
+     * @return constraint name
+     */
+    public String getName() {
+      return name;
+    }
+
+    /**
+     * Gets the constraint type.
+     *
+     * @return lower, upper, range, or equality type
+     */
+    public ConstraintDefinition.Type getType() {
+      return type;
+    }
+
+    /**
+     * Gets the constraint unit.
+     *
+     * @return unit, or null when unspecified
+     */
+    public String getUnit() {
+      return unit;
+    }
+
+    /**
+     * Checks whether a violation makes the evaluated point infeasible.
+     *
+     * @return true for a hard constraint
+     */
+    public boolean isHard() {
+      return hard;
+    }
+
+    /**
+     * Gets the penalty weight.
+     *
+     * @return constraint penalty weight
+     */
+    public double getPenaltyWeight() {
+      return penaltyWeight;
+    }
+
+    /**
+     * Gets the lower bound or equality target.
+     *
+     * @return lower bound in the constraint unit
+     */
+    public double getLowerBound() {
+      return lowerBound;
+    }
+
+    /**
+     * Gets the upper bound.
+     *
+     * @return upper bound in the constraint unit
+     */
+    public double getUpperBound() {
+      return upperBound;
+    }
+
+    /**
+     * Gets the equality tolerance.
+     *
+     * @return absolute tolerance in the constraint unit
+     */
+    public double getEqualityTolerance() {
+      return equalityTolerance;
+    }
+
+    /**
+     * Checks whether this constraint came from installed equipment capacity.
+     *
+     * @return true for an equipment capacity constraint
+     */
+    public boolean isCapacityConstraint() {
+      return capacityConstraint;
+    }
+
+    /**
+     * Gets the capacity-origin process area.
+     *
+     * @return area name, or null for a non-capacity constraint
+     */
+    public String getAreaName() {
+      return areaName;
+    }
+
+    /**
+     * Gets the capacity-origin equipment.
+     *
+     * @return equipment name, or null for a non-capacity constraint
+     */
+    public String getEquipmentName() {
+      return equipmentName;
+    }
+
+    /**
+     * Gets the original equipment capacity-constraint name.
+     *
+     * @return equipment constraint name, or null for a non-capacity constraint
+     */
+    public String getEquipmentConstraintName() {
+      return equipmentConstraintName;
+    }
+
+    /**
+     * Gets the sampled base-point constraint value.
+     *
+     * @return constraint value in the constraint unit
+     */
+    public double getBaseValue() {
+      return baseValue;
+    }
+
+    /**
+     * Gets the base-point constraint margin.
+     *
+     * @return non-negative for satisfaction and negative for violation
+     */
+    public double getBaseMargin() {
+      return baseMargin;
+    }
+
+    /**
+     * Gets the fine-step gradient of the constraint margin.
+     *
+     * @return defensive gradient ordered like the parameter snapshots
+     */
+    public double[] getMarginGradient() {
+      return Arrays.copyOf(marginGradient, marginGradient.length);
+    }
+  }
+
+  /** Immutable self-describing objective gradient, constraint Jacobian, and quality evidence. */
   public static final class SensitivityQualityResult implements Serializable {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1L;
@@ -395,6 +830,15 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     /** Immutable parameter-level quality records. */
     private final List<ParameterSensitivityQuality> parameterQuality;
 
+    /** Immutable parameter identities and bounded base values. */
+    private final List<SensitivityParameterSnapshot> parameterSnapshots;
+
+    /** Immutable selected-objective identity, base values, and gradient. */
+    private final SensitivityObjectiveSnapshot objectiveSnapshot;
+
+    /** Immutable constraint identities, base margins, and derivative rows. */
+    private final List<SensitivityConstraintSnapshot> constraintSnapshots;
+
     /** Base-point convergence flag. */
     private final boolean baseSimulationConverged;
 
@@ -406,12 +850,29 @@ public class ProcessModelSimulationEvaluator implements Serializable {
 
     /** Creates an immutable sensitivity result. */
     private SensitivityQualityResult(int objectiveIndex, double[] objectiveGradient, double[][] constraintJacobian,
-        List<ParameterSensitivityQuality> parameterQuality, EvaluationResult baseResult) {
+        List<ParameterSensitivityQuality> parameterQuality, List<ParameterDefinition> parameterDefinitions,
+        ObjectiveDefinition objectiveDefinition, List<ConstraintDefinition> constraintDefinitions,
+        EvaluationResult baseResult) {
       this.objectiveIndex = objectiveIndex;
       this.objectiveGradient = Arrays.copyOf(objectiveGradient, objectiveGradient.length);
       this.constraintJacobian = copyMatrix(constraintJacobian);
       this.parameterQuality = Collections
           .unmodifiableList(new ArrayList<ParameterSensitivityQuality>(parameterQuality));
+      List<SensitivityParameterSnapshot> capturedParameters = new ArrayList<SensitivityParameterSnapshot>();
+      for (int parameterIndex = 0; parameterIndex < parameterDefinitions.size(); parameterIndex++) {
+        capturedParameters.add(new SensitivityParameterSnapshot(parameterIndex,
+            parameterDefinitions.get(parameterIndex), baseResult.getParameters()[parameterIndex]));
+      }
+      this.parameterSnapshots = Collections.unmodifiableList(capturedParameters);
+      this.objectiveSnapshot = new SensitivityObjectiveSnapshot(objectiveIndex, objectiveDefinition,
+          baseResult.getObjectivesRaw()[objectiveIndex], baseResult.getObjectives()[objectiveIndex], objectiveGradient);
+      List<SensitivityConstraintSnapshot> capturedConstraints = new ArrayList<SensitivityConstraintSnapshot>();
+      for (int constraintIndex = 0; constraintIndex < constraintDefinitions.size(); constraintIndex++) {
+        capturedConstraints.add(new SensitivityConstraintSnapshot(constraintIndex,
+            constraintDefinitions.get(constraintIndex), baseResult.getConstraintValues()[constraintIndex],
+            baseResult.getConstraintMargins()[constraintIndex], constraintJacobian[constraintIndex]));
+      }
+      this.constraintSnapshots = Collections.unmodifiableList(capturedConstraints);
       this.baseSimulationConverged = baseResult.isSimulationConverged();
       this.baseFeasible = baseResult.isFeasible();
       this.baseErrorMessage = baseResult.getErrorMessage();
@@ -451,6 +912,43 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      */
     public List<ParameterSensitivityQuality> getParameterQuality() {
       return parameterQuality;
+    }
+
+    /**
+     * Gets immutable decision-variable identities and bounded base values.
+     *
+     * <p>
+     * Snapshot index equals the objective-gradient and constraint-Jacobian column. The records remain unchanged after
+     * evaluator definitions mutate or another operating point is evaluated.
+     * </p>
+     *
+     * @return parameter snapshots in registration order
+     */
+    public List<SensitivityParameterSnapshot> getParameterSnapshots() {
+      return parameterSnapshots;
+    }
+
+    /**
+     * Gets the selected objective identity, base values, and fine-step gradient.
+     *
+     * @return immutable objective snapshot
+     */
+    public SensitivityObjectiveSnapshot getObjectiveSnapshot() {
+      return objectiveSnapshot;
+    }
+
+    /**
+     * Gets immutable constraint identities, base margins, and fine-step derivative rows.
+     *
+     * <p>
+     * Snapshot index equals the constraint-Jacobian row. Raw margins and derivatives retain their declared units and
+     * must not be ranked across unlike constraints without explicit engineering scaling.
+     * </p>
+     *
+     * @return constraint snapshots in registration order
+     */
+    public List<SensitivityConstraintSnapshot> getConstraintSnapshots() {
+      return constraintSnapshots;
     }
 
     /**
@@ -2751,7 +3249,8 @@ public class ProcessModelSimulationEvaluator implements Serializable {
    * Objective and constraint sensitivities share the same base and perturbed process evaluations. Bounds determine the
    * actual central, forward, backward, or fixed stencil independently for every parameter. The result records the
    * actual steps, convergence, hard-constraint feasibility, evaluation errors, and scale-independent disagreement
-   * between the coarse and fine derivatives.
+   * between the coarse and fine derivatives. Immutable parameter, selected-objective, and constraint snapshots bind
+   * every derivative column and row to the base-point engineering identity and units.
    * </p>
    *
    * <p>
@@ -2856,7 +3355,8 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       quality.add(new ParameterSensitivityQuality(parameter, stencil, requestedStep, coarseStep, fineStep,
           objectiveDisagreement, constraintDisagreement, baseResult, perturbations));
     }
-    return new SensitivityQualityResult(objectiveIndex, gradient, jacobian, quality, baseResult);
+    return new SensitivityQualityResult(objectiveIndex, gradient, jacobian, quality, parameters,
+        objectives.get(objectiveIndex), constraints, baseResult);
   }
 
   /** Evaluates one signed perturbation, returning null when the step is not representable. */
