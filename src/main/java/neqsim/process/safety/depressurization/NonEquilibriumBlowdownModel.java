@@ -262,9 +262,7 @@ public class NonEquilibriumBlowdownModel implements Serializable {
     double initialFluidVolume = fluid.getVolume("m3");
     if (initialFluidVolume > 0.0) {
       double chargeScale = vesselVolume / initialFluidVolume;
-      // Scale each component's moles so the composition and molar mass are preserved. Using
-      // setTotalNumberOfMoles() instead corrupts the per-component inventory, which collapses the
-      // molar mass to zero and breaks every mass-based balance downstream.
+      // Scale each component's moles so the composition and molar mass are preserved.
       scaleMoles(fluid, chargeScale);
       ops.TPflash();
       fluid.initProperties();
