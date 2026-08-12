@@ -32,8 +32,7 @@ import neqsim.util.NamedBaseClass;
  * @author ESOL
  * @version $Id: $Id
  */
-public class ControllerDeviceBaseClass extends NamedBaseClass
-    implements ControllerDeviceInterface,
+public class ControllerDeviceBaseClass extends NamedBaseClass implements ControllerDeviceInterface,
     TransientStateParticipant<ControllerDeviceBaseClass.ControllerTransientState> {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
@@ -782,6 +781,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass
     }
     return actualCount > 0 ? sum / actualCount : 0.0;
   }
+
   /** {@inheritDoc} */
   @Override
   public String getTransientStateIdentity() {
@@ -824,8 +824,8 @@ public class ControllerDeviceBaseClass extends NamedBaseClass
       throw new IllegalArgumentException("Controller transient snapshot cannot be null");
     }
     if (!getTransientStateIdentity().equals(snapshot.stateIdentity)) {
-      throw new IllegalArgumentException("Controller transient snapshot identity does not match "
-          + getTransientStateIdentity());
+      throw new IllegalArgumentException(
+          "Controller transient snapshot identity does not match " + getTransientStateIdentity());
     }
     calcIdentifier = snapshot.calcIdentifier;
     unit = snapshot.unit;
@@ -922,11 +922,10 @@ public class ControllerDeviceBaseClass extends NamedBaseClass
         double error, double response, int propConstant, boolean reverseActing, double kp, double ti, double td,
         StepResponseTuningMethod stepResponseTuningMethod, double tintValue, double derivativeState,
         double oldMeasurement, double oldControllerSetPoint, double derivativeFilterTime, double minResponse,
-        double maxResponse, boolean active, ControllerMode mode, double manualOutput,
-        boolean bumplessTransferPending, NavigableMap<Double, double[]> gainSchedule,
-        java.util.List<ControllerEvent> eventLog, double totalTime, double integralAbsoluteError,
-        double lastTimeOutsideBand, double settlingTolerance, double setpointWeight, double deadBand,
-        neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignation) {
+        double maxResponse, boolean active, ControllerMode mode, double manualOutput, boolean bumplessTransferPending,
+        NavigableMap<Double, double[]> gainSchedule, java.util.List<ControllerEvent> eventLog, double totalTime,
+        double integralAbsoluteError, double lastTimeOutsideBand, double settlingTolerance, double setpointWeight,
+        double deadBand, neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignation) {
       this.stateIdentity = stateIdentity;
       this.calcIdentifier = calcIdentifier;
       this.unit = unit;
