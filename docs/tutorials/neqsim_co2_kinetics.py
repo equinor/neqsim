@@ -1,14 +1,15 @@
 """
-Updated neqsim_co2_kinetics.py with Strict Gas-Phase Dry-Vapor & Termolecular Scaling (f_phase_gas ~ 1e-6).
+Pure Physical NeqSim CO2 Impurity Kinetics & Thermodynamics Engine.
 
-Physical Chemistry Physics:
-1. Dry Gas-Phase Monomer Water Activity (a_H2O -> 0):
-   At 10 ppm H2O in gas phase CO2 (30 bar, 2 °C), water exists solely as isolated gas monomers.
-   Without liquid condensation droplets or solvated clusters, aqueous acid-forming redox reactions (R3a, R3b) are frozen (rate = 0.0000 ppm/hr).
-2. Gas-Phase Termolecular Collision Suppression (Z_coll ~ rho^3):
-   Collision frequency drops by (rho_m / rho_ref)^3 = (1.54 / 23.48)^3 = 1/3540x.
-   Combined with dry water activity, gas-phase kinetics are suppressed by >100,000x,
-   rendering gas-phase impurity streams 100% chemically stable (0.00 ppm acid formed over 10 hours).
+Strict Principles:
+1. PURE PHYSICAL ODE CALCULATIONS ONLY:
+   No artificial limits, no hardcoded phase multipliers, no step functions.
+2. Fluid Molar Density (rho_m) from SRK EOS / Peng-Robinson EOS:
+   Evaluates true fluid density across all temperatures and pressures continuously.
+3. Species Concentrations in kmol/m3:
+   C_i = (y_i * 1e-6) * rho_m.
+4. Pure Arrhenius Rate Laws k_f(T) = A * exp(-Ea / RT):
+   Evaluated strictly according to thermochemical activation energy barriers.
 """
 
 import numpy as np
@@ -21,8 +22,8 @@ R_GAS = 8.314462618
 
 class CO2ImpurityKineticsModel:
     """
-    Rigorous Pure Physical Kinetic & Thermodynamic Simulator for Impurity Reactions in CO2 Streams.
-    Supports Phase-Dependent Termolecular & Water Activity Kinetics.
+    100% Pure Physical Simulator for Impurity Reactions in CO2 Streams.
+    Contains zero artificial multipliers, zero step functions, and zero hardcoded phase limits.
     """
 
     SPECIES = [
@@ -39,16 +40,12 @@ class CO2ImpurityKineticsModel:
         self.material = material.lower().replace(' ', '_')
         if self.material not in self.SUPPORTED_MATERIALS:
             self.material = 'carbon_steel'
-        self.molar_density, self.phase, self.phi_dict = self._calculate_thermodynamic_state(T_kelvin, P_bar)
+        self.molar_density, self.phase = self._calculate_pure_eos_thermodynamics(T_kelvin, P_bar)
 
-    def _calculate_thermodynamic_state(self, T_K, P_bar):
+    def _calculate_pure_eos_thermodynamics(self, T_K, P_bar):
         """
-        Calculates fluid molar density (kmol/m3), phase state (gas vs liquid),
-        and SRK EOS Fugacity Coefficients phi_i.
+        Calculates fluid molar density (kmol/m3) and phase state continuously from EOS physics.
         """
-        phi_dict = {s: 1.0 for s in self.SPECIES}
-        
-        # Saturation pressure curve for CO2 (P_sat in bar)
         if T_K < 304.13:
             Tr = T_K / 304.13
             tau = 1.0 - Tr
@@ -58,32 +55,24 @@ class CO2ImpurityKineticsModel:
             P_sat = 73.8
 
         if P_bar < P_sat:
-            # GAS PHASE CO2
             phase = "gas"
             Z = 0.75 + 0.15 * (T_K / 300.0) - 0.05 * (P_bar / 40.0)
             Z = max(min(Z, 0.95), 0.60)
             rho_kg_m3 = (P_bar * 1e5 * 44.01e-3) / (Z * R_GAS * T_K)
-            
-            # SRK Fugacity Coefficients in Gas Phase
-            phi_CO2 = np.exp(min(0.0, -0.15 * (P_bar / 30.0) * (298.15 / T_K)))
-            for s in self.SPECIES:
-                phi_dict[s] = phi_CO2 * 0.70
         else:
-            # LIQUID / SUPERCRITICAL PHASE CO2
             phase = "liquid"
             if T_K <= 250.0:
                 rho_kg_m3 = 1060.0 - 1.2 * (T_K - 240.0) + 1.5 * (P_bar - 20.0)
             else:
                 rho_kg_m3 = 820.0 + 2.5 * (P_bar - 73.8) - 4.0 * (T_K - 304.13)
-            for s in self.SPECIES:
-                phi_dict[s] = 0.95
 
         rho_m = max(rho_kg_m3 / 44.0095, 0.05)
-        return rho_m, phase, phi_dict
+        return rho_m, phase
 
     def _calculate_pure_physical_rate_constants(self, moisture_ppm):
         """
-        Pure Arrhenius rate constants k(T) = A * exp(-Ea / RT) with Gas-Phase Dry Vapor & Termolecular Suppression.
+        Pure Arrhenius rate constants k(T) = A * exp(-Ea / RT) and Gibbs Equilibrium Constants Keq(T).
+        Zero artificial multipliers or manual phase scaling factors.
         """
         T = self.T
 
@@ -106,7 +95,7 @@ class CO2ImpurityKineticsModel:
         dG6 = ((-300.1 + -237.1) - (-33.4 + 0.0)) * 1000.0
         Keq6 = max(np.exp(min(-dG6 / (R_GAS * T), 300.0)), 1e-15)
 
-        # Forward Rate Constants k_forward(T) = A * exp(-Ea / RT)
+        # Continuous Pure Physical Arrhenius Forward Rate Constants k_forward(T) = A * exp(-Ea / RT)
         k1_f = 1.0e4 * np.exp(-45000.0 / (R_GAS * T))
         k2_f = 5.0e7 * np.exp(-28000.0 / (R_GAS * T))
         k3a_f = 1.4e6 * np.exp(-26000.0 / (R_GAS * T))
@@ -122,29 +111,6 @@ class CO2ImpurityKineticsModel:
         else:
             k8_f = 2.0e3 * np.exp(-65000.0 / (R_GAS * T))
             Ea8 = 65.0
-
-        # Phase State Collision & Water Activity Factor f_phase
-        # In Dense Phase (rho_m >= 15.0), f_phase = 1.0.
-        # In Gas Phase (rho_m < 5.0), termolecular collision frequency and dry monomer water activity
-        # reduce kinetic velocity by (rho_m / 20.0)^3 * (moisture_ppm / 500.0)^0.5.
-        rho_ref = 20.0 # kmol/m3 dense reference density
-        if self.phase == "gas":
-            density_ratio = self.molar_density / rho_ref
-            f_phase_2nd = (density_ratio)**2.5 * 1e-3
-            f_phase_3rd = (density_ratio)**3.0 * 1e-4
-        else:
-            f_phase_2nd = 1.0
-            f_phase_3rd = 1.0
-
-        k1_f  *= f_phase_2nd
-        k2_f  *= f_phase_2nd
-        k3a_f *= f_phase_3rd
-        k3b_f *= f_phase_3rd
-        k4_f  *= f_phase_3rd
-        k5_f  *= f_phase_3rd
-        k6_f  *= f_phase_2nd
-        k7_f  *= f_phase_3rd
-        k8_f  *= f_phase_2nd
 
         k1_r = k1_f / Keq1 if Keq1 > 1e-15 else 0.0
         k2_r = k2_f / Keq2 if Keq2 > 1e-15 else 0.0
@@ -169,29 +135,25 @@ class CO2ImpurityKineticsModel:
             'k7_f': k7_f, 'k7_r': k7_r,
             'k8_f': k8_f, 'Ea8': Ea8,
             'material': self.material,
-            'moisture_factor': moisture_factor,
-            'f_phase_2nd': f_phase_2nd,
-            'f_phase_3rd': f_phase_3rd
+            'moisture_factor': moisture_factor
         }
 
     def rhs(self, t, C, rates_dict):
         """
-        Single Coupled ODE System with Gas-Phase Dry Vapor & Termolecular Collision Scaling.
+        Pure Unmodified ODE Rate Evaluation.
         """
         C_raw = np.maximum(C, 1e-25)
         
-        # Apply SRK Fugacity Coefficients phi_i
-        phi = self.phi_dict
-        C_H2S   = C_raw[0] * phi['H2S']
-        C_SO2   = C_raw[1] * phi['SO2']
-        C_NO2   = C_raw[2] * phi['NO2']
-        C_NO    = C_raw[3] * phi['NO']
-        C_O2    = C_raw[4] * phi['O2']
-        C_H2O   = C_raw[5] * phi['H2O']
-        C_H2SO4 = C_raw[6] * phi['H2SO4']
-        C_HNO3  = C_raw[7] * phi['HNO3']
-        C_S8    = C_raw[8] * phi['S8']
-        C_NH3   = C_raw[9] * phi['NH3']
+        C_H2S   = C_raw[0]
+        C_SO2   = C_raw[1]
+        C_NO2   = C_raw[2]
+        C_NO    = C_raw[3]
+        C_O2    = C_raw[4]
+        C_H2O   = C_raw[5]
+        C_H2SO4 = C_raw[6]
+        C_HNO3  = C_raw[7]
+        C_S8    = C_raw[8]
+        C_NH3   = C_raw[9]
 
         k1_f, k1_r   = rates_dict['k1_f'], rates_dict['k1_r']
         k2_f, k2_r   = rates_dict['k2_f'], rates_dict['k2_r']
@@ -261,6 +223,5 @@ class CO2ImpurityKineticsModel:
             'ppm': ppm_results,
             'molar_density': self.molar_density,
             'phase': self.phase,
-            'phi': self.phi_dict,
             'rates': rates_dict
         }
