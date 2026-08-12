@@ -5159,14 +5159,12 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Audits whether every mutable process element can participate in an identity-preserving transient
-   * step transaction.
+   * Audits whether every mutable process element can participate in an identity-preserving transient step transaction.
    *
    * <p>
-   * Duplicate registrations of the same Java object are counted once. State identities must be
-   * non-empty and unique among the participating objects. Recycle execution remains blocked until
-   * the shared {@link RecycleController} has an in-place snapshot contract in addition to each
-   * recycle unit's own state contract.
+   * Duplicate registrations of the same Java object are counted once. State identities must be non-empty and unique
+   * among the participating objects. Recycle execution remains blocked until the shared {@link RecycleController} has
+   * an in-place snapshot contract in addition to each recycle unit's own state contract.
    * </p>
    *
    * @return immutable quantitative coverage report
@@ -5179,8 +5177,8 @@ public class ProcessSystem extends SimulationBaseClass {
 
     for (ProcessElementInterface element : elements) {
       if (!(element instanceof TransientStateParticipant<?>)) {
-        blockingIssues.add("process element " + describeTransientElement(element)
-            + " does not implement TransientStateParticipant");
+        blockingIssues.add(
+            "process element " + describeTransientElement(element) + " does not implement TransientStateParticipant");
         continue;
       }
       participantCount++;
@@ -5214,8 +5212,8 @@ public class ProcessSystem extends SimulationBaseClass {
           + "rollback cannot start until worker quiescence is guaranteed");
     }
     if (publishEvents) {
-      blockingIssues.add(
-          "ProcessEventBus publishing is externally visible and has no rejected-step commit/defer contract");
+      blockingIssues
+          .add("ProcessEventBus publishing is externally visible and has no rejected-step commit/defer contract");
     }
     if (alarmManager != null && !alarmManager.getActionHandlers().isEmpty()) {
       blockingIssues.add("alarm action handlers may produce external side effects and have no rejected-step "
@@ -5228,26 +5226,25 @@ public class ProcessSystem extends SimulationBaseClass {
    * Captures an identity-preserving rollback point for one physical transient step.
    *
    * <p>
-   * The method completes coverage validation and captures every participant before returning. It
-   * therefore fails before trial mutation when coverage is incomplete or snapshot capture fails.
-   * Only one transaction may be open for a process system at a time.
+   * The method completes coverage validation and captures every participant before returning. It therefore fails before
+   * trial mutation when coverage is incomplete or snapshot capture fails. Only one transaction may be open for a
+   * process system at a time.
    * </p>
    *
    * @return open single-use transaction
-   * @throws IllegalStateException if coverage is incomplete, a snapshot is invalid, or another
-   *         transaction is open
+   * @throws IllegalStateException if coverage is incomplete, a snapshot is invalid, or another transaction is open
    */
   public synchronized TransientStepTransaction beginTransientStepTransaction() {
     if (activeTransientStepTransaction != null && activeTransientStepTransaction.isOpen()) {
-      throw new IllegalStateException("A transient step transaction is already open for process system '" + getName()
-          + "'");
+      throw new IllegalStateException(
+          "A transient step transaction is already open for process system '" + getName() + "'");
     }
 
     TransientTransactionCoverage coverage = getTransientTransactionCoverage();
     coverage.assertComplete();
     List<ProcessElementInterface> elements = getUniqueTransientElements();
-    List<TransientParticipantCheckpoint> participantCheckpoints =
-        new ArrayList<TransientParticipantCheckpoint>(elements.size());
+    List<TransientParticipantCheckpoint> participantCheckpoints = new ArrayList<TransientParticipantCheckpoint>(
+        elements.size());
     for (ProcessElementInterface element : elements) {
       TransientStateParticipant<?> participant = (TransientStateParticipant<?>) element;
       Serializable snapshot = captureParticipantSnapshot(participant);
@@ -5259,9 +5256,9 @@ public class ProcessSystem extends SimulationBaseClass {
       participantCheckpoints.add(new TransientParticipantCheckpoint(participant, stateIdentity, snapshot));
     }
 
-    ProcessSystemStepTransaction transaction =
-        new ProcessSystemStepTransaction(elements, participantCheckpoints, eventScheduler,
-            eventScheduler == null ? null : eventScheduler.snapshot(), new ArrayList<>(alarmManager.getHistory()));
+    ProcessSystemStepTransaction transaction = new ProcessSystemStepTransaction(elements, participantCheckpoints,
+        eventScheduler, eventScheduler == null ? null : eventScheduler.snapshot(),
+        new ArrayList<>(alarmManager.getHistory()));
     activeTransientStepTransaction = transaction;
     return transaction;
   }
@@ -5270,10 +5267,10 @@ public class ProcessSystem extends SimulationBaseClass {
    * Advances one transient step and commits it only if the complete step succeeds.
    *
    * <p>
-   * Any runtime exception or error from event, equipment, controller, measurement, or alarm execution
-   * closes the transaction and restores all captured state in place. This method is intentionally
-   * separate from legacy {@link #runTransient(double, UUID)} so existing simulations are not silently
-   * rejected while built-in equipment families adopt the participant contract.
+   * Any runtime exception or error from event, equipment, controller, measurement, or alarm execution closes the
+   * transaction and restores all captured state in place. This method is intentionally separate from legacy
+   * {@link #runTransient(double, UUID)} so existing simulations are not silently rejected while built-in equipment
+   * families adopt the participant contract.
    * </p>
    *
    * @param dt timestep in seconds
@@ -5294,8 +5291,8 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   private List<ProcessElementInterface> getUniqueTransientElements() {
     List<ProcessElementInterface> unique = new ArrayList<ProcessElementInterface>();
-    java.util.Set<ProcessElementInterface> seen =
-        Collections.newSetFromMap(new IdentityHashMap<ProcessElementInterface, Boolean>());
+    java.util.Set<ProcessElementInterface> seen = Collections
+        .newSetFromMap(new IdentityHashMap<ProcessElementInterface, Boolean>());
     for (ProcessElementInterface element : getAllElements()) {
       if (element == null) {
         throw new IllegalStateException("Process system '" + getName() + "' contains a null process element");
@@ -5397,8 +5394,7 @@ public class ProcessSystem extends SimulationBaseClass {
         EventScheduler.Snapshot capturedEventSchedulerSnapshot,
         List<neqsim.process.alarm.AlarmEvent> capturedAlarmHistory) {
       this.elementIdentities = new ArrayList<ProcessElementInterface>(elementIdentities);
-      this.participantCheckpoints =
-          new ArrayList<TransientParticipantCheckpoint>(participantCheckpoints);
+      this.participantCheckpoints = new ArrayList<TransientParticipantCheckpoint>(participantCheckpoints);
       this.capturedEventScheduler = capturedEventScheduler;
       this.capturedEventSchedulerSnapshot = capturedEventSchedulerSnapshot;
       this.capturedAlarmHistory = new ArrayList<neqsim.process.alarm.AlarmEvent>(capturedAlarmHistory);
@@ -5459,8 +5455,7 @@ public class ProcessSystem extends SimulationBaseClass {
           }
           alarmManager.restoreHistory(capturedAlarmHistory);
         } catch (RuntimeException ex) {
-          failure = accumulateTransactionFailure(failure,
-              "Failed to restore ProcessSystem orchestration state", ex);
+          failure = accumulateTransactionFailure(failure, "Failed to restore ProcessSystem orchestration state", ex);
         } finally {
           status = Status.ROLLED_BACK;
           activeTransientStepTransaction = null;
@@ -5519,8 +5514,7 @@ public class ProcessSystem extends SimulationBaseClass {
         }
       }
       for (TransientParticipantCheckpoint checkpoint : participantCheckpoints) {
-        String currentIdentity =
-            normalizeTransientStateIdentity(checkpoint.participant.getTransientStateIdentity());
+        String currentIdentity = normalizeTransientStateIdentity(checkpoint.participant.getTransientStateIdentity());
         if (!checkpoint.stateIdentity.equals(currentIdentity)) {
           return new IllegalStateException("Transient state identity changed during transaction from '"
               + checkpoint.stateIdentity + "' to '" + currentIdentity + "'");
@@ -5536,15 +5530,13 @@ public class ProcessSystem extends SimulationBaseClass {
      */
     private void requireOpen(String operation) {
       if (status != Status.OPEN) {
-        throw new IllegalStateException(
-            "Cannot " + operation + " transient transaction in state " + status);
+        throw new IllegalStateException("Cannot " + operation + " transient transaction in state " + status);
       }
     }
   }
 
   /**
-   * Accumulates rollback failures while allowing later participants and orchestration state to
-   * restore.
+   * Accumulates rollback failures while allowing later participants and orchestration state to restore.
    *
    * @param existing first failure, or {@code null}
    * @param message diagnostic context

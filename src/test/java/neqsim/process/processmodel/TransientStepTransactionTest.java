@@ -24,8 +24,8 @@ public class TransientStepTransactionTest extends neqsim.NeqSimTest {
   private static final double TOLERANCE = 1.0e-12;
 
   /**
-   * A failed physical step restores participant, process-clock, calculation-identifier, and event
-   * bookkeeping state. Replaying the same physical-step identifier then matches a clean run.
+   * A failed physical step restores participant, process-clock, calculation-identifier, and event bookkeeping state.
+   * Replaying the same physical-step identifier then matches a clean run.
    */
   @Test
   void failedStepRollsBackInPlaceAndReplaysDeterministically() {
@@ -134,8 +134,8 @@ public class TransientStepTransactionTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * Commit retains state, close rolls open state back, and closed transactions are excluded from
-   * serialized restart state.
+   * Commit retains state, close rolls open state back, and closed transactions are excluded from serialized restart
+   * state.
    */
   @Test
   void commitCloseAndSerializationHaveSingleUseSemantics() {

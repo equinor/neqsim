@@ -174,9 +174,9 @@ public class ProcessAlarmManager implements Serializable {
    * Restores alarm-history bookkeeping from a transient step transaction snapshot.
    *
    * <p>
-   * Alarm-device state belongs to each measurement device and must be restored by that device's
-   * transient state participant. This method deliberately restores only the manager's event log and
-   * preserves the manager, device, and action-handler object identities.
+   * Alarm-device state belongs to each measurement device and must be restored by that device's transient state
+   * participant. This method deliberately restores only the manager's event log and preserves the manager, device, and
+   * action-handler object identities.
    * </p>
    *
    * @param snapshot alarm events captured before the trial step

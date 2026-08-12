@@ -1694,8 +1694,8 @@ public class ProcessModel implements Runnable, Serializable {
    * Audits aggregate identity-preserving transient transaction coverage across all process areas.
    *
    * <p>
-   * Counts are summed over area-local unique process elements. Blocking diagnostics are qualified by
-   * area name so duplicate equipment names in different areas remain distinguishable.
+   * Counts are summed over area-local unique process elements. Blocking diagnostics are qualified by area name so
+   * duplicate equipment names in different areas remain distinguishable.
    * </p>
    *
    * @return immutable aggregate coverage report
@@ -1719,14 +1719,14 @@ public class ProcessModel implements Runnable, Serializable {
    * Captures one coordinated rollback point across all process areas.
    *
    * <p>
-   * Area clocks and complete coverage are validated before the first area transaction is opened.
-   * Area transactions are captured in insertion order and rolled back in reverse order, preserving
-   * shared boundary-object identities and deterministic replay order.
+   * Area clocks and complete coverage are validated before the first area transaction is opened. Area transactions are
+   * captured in insertion order and rolled back in reverse order, preserving shared boundary-object identities and
+   * deterministic replay order.
    * </p>
    *
    * @return open multi-area transaction
-   * @throws IllegalStateException if area clocks are misaligned, coverage is incomplete, or another
-   *         model transaction is open
+   * @throws IllegalStateException if area clocks are misaligned, coverage is incomplete, or another model transaction
+   * is open
    */
   public synchronized TransientStepTransaction beginTransientStepTransaction() {
     if (activeTransientStepTransaction != null && activeTransientStepTransaction.isOpen()) {
@@ -1755,8 +1755,8 @@ public class ProcessModel implements Runnable, Serializable {
    * Advances every process area and accepts the common physical step only if all areas succeed.
    *
    * <p>
-   * A failure in any later area restores already-advanced earlier areas in place. The shared event
-   * scheduler bookkeeping is restored with the same object identity by the area transactions.
+   * A failure in any later area restores already-advanced earlier areas in place. The shared event scheduler
+   * bookkeeping is restored with the same object identity by the area transactions.
    * </p>
    *
    * @param dt finite timestep in seconds

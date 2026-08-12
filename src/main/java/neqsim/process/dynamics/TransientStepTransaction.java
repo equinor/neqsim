@@ -4,9 +4,9 @@ package neqsim.process.dynamics;
  * Single-use identity-preserving transaction around one physical transient step.
  *
  * <p>
- * Closing an open transaction rolls it back. A committed transaction retains the trial state; a
- * rolled-back transaction restores the captured state in place. Implementations are not thread
- * safe and must be used by the thread that owns the associated simulation step.
+ * Closing an open transaction rolls it back. A committed transaction retains the trial state; a rolled-back transaction
+ * restores the captured state in place. Implementations are not thread safe and must be used by the thread that owns
+ * the associated simulation step.
  * </p>
  *
  * @author Even Solbraa

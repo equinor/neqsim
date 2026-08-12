@@ -9,10 +9,9 @@ import java.util.List;
  * Immutable quantitative preflight report for transient step transaction coverage.
  *
  * <p>
- * Coverage is complete only when every mutable process element belongs to the typed
- * {@link TransientStateParticipant} contract and no orchestration blocker is present. A complete
- * report says that rollback mechanics are available; it is not evidence of physical or numerical
- * qualification.
+ * Coverage is complete only when every mutable process element belongs to the typed {@link TransientStateParticipant}
+ * contract and no orchestration blocker is present. A complete report says that rollback mechanics are available; it is
+ * not evidence of physical or numerical qualification.
  * </p>
  *
  * @author Even Solbraa

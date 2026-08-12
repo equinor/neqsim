@@ -4,26 +4,24 @@ import java.io.Serializable;
 import neqsim.process.ProcessElementInterface;
 
 /**
- * Contract for a process element that can participate in an identity-preserving transient step
- * transaction.
+ * Contract for a process element that can participate in an identity-preserving transient step transaction.
  *
  * <p>
- * Implementations capture only mutable state that can change during one physical timestep. The
- * owning object is never replaced during rollback; {@link #restoreTransientState(Serializable)}
- * must apply the supplied snapshot to the same object instance. Configuration that may be changed
- * by an event action must be included as well as physical inventory, controller integral, clock,
- * calculation identifier, and other mutable solver state.
+ * Implementations capture only mutable state that can change during one physical timestep. The owning object is never
+ * replaced during rollback; {@link #restoreTransientState(Serializable)} must apply the supplied snapshot to the same
+ * object instance. Configuration that may be changed by an event action must be included as well as physical inventory,
+ * controller integral, clock, calculation identifier, and other mutable solver state.
  * </p>
  *
  * <p>
- * A state identity must remain stable for the lifetime of the participant and must be unique within
- * one {@code ProcessSystem}. It is diagnostic and provenance metadata, not an object lookup key.
- * Transaction code still keys participants by Java object identity.
+ * A state identity must remain stable for the lifetime of the participant and must be unique within one
+ * {@code ProcessSystem}. It is diagnostic and provenance metadata, not an object lookup key. Transaction code still
+ * keys participants by Java object identity.
  * </p>
  *
  * <p>
- * Implementing this interface establishes rollback mechanics only. It does not by itself establish
- * conservation accuracy, timestep independence, numerical stability, or engineering approval.
+ * Implementing this interface establishes rollback mechanics only. It does not by itself establish conservation
+ * accuracy, timestep independence, numerical stability, or engineering approval.
  * </p>
  *
  * @param <S> immutable or defensively copied serializable snapshot type
