@@ -267,7 +267,9 @@ targets manipulated through condenser or reboiler temperature.
   Naphtali-specific Jacobian, thermodynamic, cache, K-value, and linear-solve counters continue to
   describe the rejected simultaneous attempt. Use `getLastSolverTypeUsed()` and
   `getLastSolveStatusReason()` with those counters to distinguish accepted-state convergence from
-  attempted-solver work.
+  attempted-solver work. An identical subsequent invocation reuses the accepted damped tray and
+  product state through its full sequential-state fingerprint without labeling that state as
+  Naphtali-owned. Changed feed, tray, product, or configuration state invalidates that reuse.
 - Tray thermodynamics perform up to two forced-root fugacity sweeps for a cold solve and up to three
   when refining a retained column state. Both paths stop early when
   `max(abs(log(Knew/Kold)))` is already at or below `1e-8`. The extra warm-start sweep keeps the
