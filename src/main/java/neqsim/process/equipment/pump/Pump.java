@@ -520,7 +520,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
     if (inStream.getFlowRate("kg/hr") < minimumFlow) {
       thermoSystem = inStream.getThermoSystem().clone();
       thermoSystem.setPressure(pressure, pressureUnit);
-      thermoSystem.init(2);
+      thermoSystem.init(3);
       dH = 0.0;
       if (!isSetEnergyStream()) {
         getEnergyPort("shaftPower").setDuty(0.0);
@@ -537,7 +537,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
       logger.warn("Pump " + getName() + " may be operating in cavitation conditions");
     }
 
-    inStream.getThermoSystem().init(2);
+    inStream.getThermoSystem().init(3);
     double hinn = inStream.getThermoSystem().getEnthalpy();
     double entropy = inStream.getThermoSystem().getEntropy();
 
