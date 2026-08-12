@@ -7948,6 +7948,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastSolverTypeUsed = SolverType.DAMPED_SUBSTITUTION;
     solveDampedSubstitution(id);
     doInitializion = originalInitializationFlag;
+    // Exact reuse is unsafe while fresh initialization is forced, so the sequential solver
+    // deliberately leaves its cache disarmed. Re-evaluate eligibility after restoring the caller's
+    // initialization contract and record the accepted tray and product state only when it is now
+    // reusable.
+    commitSequentialWarmState();
   }
 
   /**
