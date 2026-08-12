@@ -86,7 +86,6 @@ class ProcessModelOperatingActionTest {
     assertTrue(action.apply(fixture.model, 1100.0).isApplied());
     assertTrue(action.restore(fixture.model, baseline).isApplied());
     assertEquals(1000.0, fixture.feed.getFlowRate("kg/hr"), 1.0e-8);
-
     ApplicationResult rejected = action.apply(fixture.model, 1600.0);
     assertFalse(rejected.isApplied());
     assertEquals(1000.0, fixture.feed.getFlowRate("kg/hr"), 1.0e-8,
@@ -130,6 +129,9 @@ class ProcessModelOperatingActionTest {
     assertEquals(1200.0, fixture.feed.getFlowRate("kg/hr"), 1.0e-8);
     assertTrue(action.restore(fixture.model, baseline).isApplied());
     assertEquals(1000.0, fixture.feed.getFlowRate("kg/hr"), 1.0e-8);
+    ProcessModelSimulationEvaluator invalidInitialEvaluator =
+        new ProcessModelSimulationEvaluator(fixture.model);
+    assertThrows(IllegalStateException.class, () -> action.registerWith(invalidInitialEvaluator));
 
     double[] defensiveValues = action.getAllowedValues();
     defensiveValues[0] = 999.0;
@@ -197,16 +199,16 @@ class ProcessModelOperatingActionTest {
     ProcessModelSimulationEvaluator discreteEvaluator =
         new ProcessModelSimulationEvaluator(discreteFixture.model);
     ProcessModelOperatingAction discrete = ProcessModelOperatingAction.discrete("line-up",
-        "Feed line-up", "wells::feed.flowRate", new double[] {800.0, 1200.0}, "kg/hr",
+        "Feed line-up", "wells::feed.flowRate", new double[] {1000.0, 1200.0}, "kg/hr",
         "synthetic line-up table");
     ActionParameterBinding discreteBinding = discrete.registerWith(discreteEvaluator);
     discreteEvaluator.addObjective("feed", model -> discreteFixture.feed.getFlowRate("kg/hr"));
-    assertArrayEquals(new double[] {800.0, 1200.0}, discreteBinding.getAllowedValues(), 0.0);
+    assertArrayEquals(new double[] {1000.0, 1200.0}, discreteBinding.getAllowedValues(), 0.0);
     assertTrue(discreteEvaluator.evaluate(new double[] {1200.0}).isSimulationConverged());
     assertEquals(1200.0, discreteFixture.feed.getFlowRate("kg/hr"), 1.0e-8);
 
     ProcessModelSimulationEvaluator.EvaluationResult rejected =
-        discreteEvaluator.evaluate(new double[] {1000.0});
+        discreteEvaluator.evaluate(new double[] {1100.0});
     assertFalse(rejected.isSimulationConverged());
     assertNotNull(rejected.getErrorMessage());
     assertEquals(1200.0, discreteFixture.feed.getFlowRate("kg/hr"), 1.0e-8,
@@ -223,6 +225,6 @@ class ProcessModelOperatingActionTest {
     ActionParameterBinding restoredBinding = (ActionParameterBinding) input.readObject();
     input.close();
     assertEquals("line-up", restoredBinding.getAction().getId());
-    assertArrayEquals(new double[] {800.0, 1200.0}, restoredBinding.getAllowedValues(), 0.0);
+    assertArrayEquals(new double[] {1000.0, 1200.0}, restoredBinding.getAllowedValues(), 0.0);
   }
 }
