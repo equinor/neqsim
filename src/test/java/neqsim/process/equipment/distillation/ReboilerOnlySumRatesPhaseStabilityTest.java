@@ -266,7 +266,8 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
     } else {
       assertFalse(testCase.column.wasNaphtaliSandholmWarmStateReused(),
           "a damped fallback state must not be cached as a Naphtali-Sandholm state");
-      assertEquals(DistillationColumn.SolverType.DAMPED_SUBSTITUTION, testCase.column.getLastSolverTypeUsed());
+      assertTrue(testCase.column.getLastNaphtaliThermoEvaluationCount() > 0,
+          "a repeat after damped fallback must execute the simultaneous solver rather than report exact reuse");
       assertEquals(coldGasFlow, testCase.column.getGasOutStream().getFlowRate("kg/hr"),
           Math.max(1.0e-6, Math.abs(coldGasFlow) * 1.0e-5));
       assertEquals(coldLiquidFlow, testCase.column.getLiquidOutStream().getFlowRate("kg/hr"),
