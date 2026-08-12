@@ -975,7 +975,7 @@ public class Compressor extends TwoPortEquipment
       getThermoSystem().setTemperature(bestTemperature);
       thermoOps.TPflash();
     }
-    getThermoSystem().init(2);
+    getThermoSystem().init(3);
   }
 
   /**
