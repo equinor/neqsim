@@ -2,6 +2,7 @@ package neqsim.process.controllerdevice;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
@@ -68,6 +69,31 @@ class ControllerTransientStateTransactionTest extends neqsim.NeqSimTest {
     assertEquals(trialResponse, controller.getResponse(), 1.0e-12);
     assertEquals(1, controller.getEventLog().size());
     assertEquals(1.0, controller.getEventLog().get(0).getTime(), 0.0);
+  }
+
+  @Test
+  void rollbackRestoresMutableReferenceDesignationAndOriginalBinding() {
+    ControllerDeviceBaseClass controller = createController(createTransmitter(50.0));
+    neqsim.process.equipment.iec81346.ReferenceDesignation original =
+        neqsim.process.equipment.iec81346.ReferenceDesignation.parse("=A1-B1+P1");
+    controller.setReferenceDesignation(original);
+    ProcessSystem process = new ProcessSystem("controller designation rollback");
+    process.add(controller);
+
+    TransientStepTransaction transaction = process.beginTransientStepTransaction();
+    original.setFunctionDesignation("TRIAL");
+    original.setLetterCode(neqsim.process.equipment.iec81346.IEC81346LetterCode.K);
+    original.setSequenceNumber(9);
+    controller.setReferenceDesignation(
+        neqsim.process.equipment.iec81346.ReferenceDesignation.parse("=OTHER-K9+TRIAL"));
+    transaction.rollback();
+
+    assertSame(original, controller.getReferenceDesignation(),
+        "rollback must restore the original engineering-reference binding");
+    assertEquals("=A1-B1+P1", controller.getReferenceDesignationString());
+    assertEquals(neqsim.process.equipment.iec81346.IEC81346LetterCode.B,
+        controller.getReferenceDesignation().getLetterCode());
+    assertEquals(1, controller.getReferenceDesignation().getSequenceNumber());
   }
 
   @Test
