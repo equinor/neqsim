@@ -88,8 +88,7 @@ class EngineeringDiagramReferenceCasesTest {
     assertEquals(first.getAreaNames().size(), firstFiles.size());
     assertEquals(fileNames(firstFiles), fileNames(secondFiles));
     for (int index = 0; index < firstFiles.size(); index++) {
-      assertDeterministicProteusXml(read(firstFiles.get(index).toPath()),
-          read(secondFiles.get(index).toPath()));
+      assertDeterministicProteusXml(read(firstFiles.get(index).toPath()), read(secondFiles.get(index).toPath()));
       assertTrue(read(firstFiles.get(index).toPath()).contains("<PlantModel"));
     }
 
@@ -278,8 +277,8 @@ class EngineeringDiagramReferenceCasesTest {
   }
 
   private static String normalizeProteusEmissionMetadata(String xml) {
-    return xml.replaceFirst(" Date=\"[^\"]+\"", " Date=\"<generated-date>\"")
-        .replaceFirst(" Time=\"[^\"]+\"", " Time=\"<generated-time>\"");
+    return xml.replaceFirst(" Date=\"[^\"]+\"", " Date=\"<generated-date>\"").replaceFirst(" Time=\"[^\"]+\"",
+        " Time=\"<generated-time>\"");
   }
 
   private static String areaCode(String areaName) {
