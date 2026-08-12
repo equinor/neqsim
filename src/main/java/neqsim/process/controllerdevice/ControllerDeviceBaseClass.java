@@ -814,7 +814,8 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
         stepResponseTuningMethod, TintValue, derivativeState, oldMeasurement, oldControllerSetPoint,
         derivativeFilterTime, minResponse, maxResponse, isActive, mode, manualOutput, bumplessTransferPending,
         copyGainSchedule(gainSchedule), new ArrayList<ControllerEvent>(eventLog), totalTime, integralAbsoluteError,
-        lastTimeOutsideBand, settlingTolerance, setpointWeight, deadBand, referenceDesignation);
+        lastTimeOutsideBand, settlingTolerance, setpointWeight, deadBand, referenceDesignation,
+        copyReferenceDesignation(referenceDesignation));
   }
 
   /** {@inheritDoc} */
@@ -861,6 +862,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     setpointWeight = snapshot.setpointWeight;
     deadBand = snapshot.deadBand;
     referenceDesignation = snapshot.referenceDesignation;
+    restoreReferenceDesignation(referenceDesignation, snapshot.referenceDesignationState);
   }
 
   /**
@@ -875,6 +877,41 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       copy.put(entry.getKey(), entry.getValue() == null ? null : entry.getValue().clone());
     }
     return copy;
+  }
+
+  /**
+   * Copies the mutable IEC 81346 designation value while keeping its original binding separately.
+   *
+   * @param source designation to copy
+   * @return independent value copy, or {@code null}
+   */
+  private static neqsim.process.equipment.iec81346.ReferenceDesignation copyReferenceDesignation(
+      neqsim.process.equipment.iec81346.ReferenceDesignation source) {
+    if (source == null) {
+      return null;
+    }
+    return new neqsim.process.equipment.iec81346.ReferenceDesignation(source.getFunctionDesignation(),
+        source.getProductDesignation(), source.getLocationDesignation(), source.getLetterCode(),
+        source.getSequenceNumber());
+  }
+
+  /**
+   * Restores a designation in place so rollback retains the pre-trial binding identity.
+   *
+   * @param target original bound designation
+   * @param state captured designation value
+   */
+  private static void restoreReferenceDesignation(
+      neqsim.process.equipment.iec81346.ReferenceDesignation target,
+      neqsim.process.equipment.iec81346.ReferenceDesignation state) {
+    if (target == null || state == null) {
+      return;
+    }
+    target.setFunctionDesignation(state.getFunctionDesignation());
+    target.setProductDesignation(state.getProductDesignation());
+    target.setLocationDesignation(state.getLocationDesignation());
+    target.setLetterCode(state.getLetterCode());
+    target.setSequenceNumber(state.getSequenceNumber());
   }
 
   /** Immutable snapshot of every base PID field mutated by stepping or supported operational setters. */
@@ -916,6 +953,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     private final double setpointWeight;
     private final double deadBand;
     private final neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignation;
+    private final neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignationState;
 
     private ControllerTransientState(String stateIdentity, UUID calcIdentifier, String unit,
         MeasurementDeviceInterface transmitter, double controllerSetPoint, double oldError, double oldoldError,
@@ -925,7 +963,8 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
         double maxResponse, boolean active, ControllerMode mode, double manualOutput, boolean bumplessTransferPending,
         NavigableMap<Double, double[]> gainSchedule, java.util.List<ControllerEvent> eventLog, double totalTime,
         double integralAbsoluteError, double lastTimeOutsideBand, double settlingTolerance, double setpointWeight,
-        double deadBand, neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignation) {
+        double deadBand, neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignation,
+        neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignationState) {
       this.stateIdentity = stateIdentity;
       this.calcIdentifier = calcIdentifier;
       this.unit = unit;
@@ -961,6 +1000,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       this.setpointWeight = setpointWeight;
       this.deadBand = deadBand;
       this.referenceDesignation = referenceDesignation;
+      this.referenceDesignationState = referenceDesignationState;
     }
   }
 
