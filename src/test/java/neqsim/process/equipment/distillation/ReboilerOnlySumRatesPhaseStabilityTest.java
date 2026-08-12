@@ -140,8 +140,9 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
   private static void assertNaphtaliBasinPoint(ColumnCase testCase, String point) {
     DistillationColumn column = testCase.column;
     assertTrue(column.solved(), point + ": " + column.getConvergenceDiagnostics());
-    assertTrue(column.getLastSolverTypeUsed() == DistillationColumn.SolverType.NAPHTALI_SANDHOLM
-        || column.getLastSolverTypeUsed() == DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
+    assertTrue(
+        column.getLastSolverTypeUsed() == DistillationColumn.SolverType.NAPHTALI_SANDHOLM
+            || column.getLastSolverTypeUsed() == DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
         point + " must finish with the simultaneous solver or its coordinated damped fallback");
     assertTrue(column.getLastNaphtaliThermoEvaluationCount() > 0,
         point + " must retain thermodynamic work from the Naphtali-Sandholm attempt");
@@ -151,10 +152,13 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
         point + " must keep tray thermodynamic evaluations bounded");
     assertTrue(column.getLastNaphtaliThermoKValueIterationCount() < 1500000,
         point + " must keep K-value sweeps bounded");
-    assertTrue(Double.isFinite(column.getLastMassResidual())
-        && column.getLastMassResidual() <= column.getMassBalanceTolerance(), point + " must satisfy total mass residual");
-    assertTrue(Double.isFinite(column.getLastEnergyResidual())
-        && column.getLastEnergyResidual() <= column.getEnthalpyBalanceTolerance(),
+    assertTrue(
+        Double.isFinite(column.getLastMassResidual())
+            && column.getLastMassResidual() <= column.getMassBalanceTolerance(),
+        point + " must satisfy total mass residual");
+    assertTrue(
+        Double.isFinite(column.getLastEnergyResidual())
+            && column.getLastEnergyResidual() <= column.getEnthalpyBalanceTolerance(),
         point + " must satisfy the active energy residual");
     assertTrue(Double.isFinite(column.getLastMeshResidualNorm()), point + " must publish a finite MESH residual");
     assertPhysicalProduct(column.getGasOutStream(), point + " gas product");
@@ -243,8 +247,7 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
    */
   @Test
   public void naphtaliSandholmBasinRemainsAccountableAcrossRetainedStates() {
-    ColumnCase testCase = createRepresentativeCase("naphtali basin",
-        DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
+    ColumnCase testCase = createRepresentativeCase("naphtali basin", DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
     testCase.column.run();
     assertNaphtaliBasinPoint(testCase, "cold");
     DistillationColumn.SolverType coldSolver = testCase.column.getLastSolverTypeUsed();
