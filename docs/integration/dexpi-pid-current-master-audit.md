@@ -118,9 +118,12 @@ proposal boundaries from fresh models.
 | `process_to_engineering_simulator.ipynb` | End-to-end calculated engineering package | Not the NeqSim-Colab acceptance notebook |
 | NeqSim-Colab `dexpi_safety_study_workflow.ipynb` | User-facing Proteus/native profile selection, SIS/HIPPS evidence, HAZOP/cause-effect preparation, completeness and traceability | Current saved run uses released NeqSim 3.17.0; it does not yet exercise current-master canonical operating values, realistic multi-area/cross-sheet content, revision delta, or a native professional drawing set |
 
-The inspected NeqSim-Colab notebook has 33 cells: all 14 code cells have execution counts, 16
-outputs are retained, and no saved error output is present. That is saved-notebook evidence, not a
-new clean-runtime execution against NeqSim commit `38ff94fc`.
+Merged NeqSim-Colab PR #119 clean-executed the acceptance notebook against NeqSim source
+`12b0e2fa`: all 15 executable cells and 20 focused checks passed, no saved error output remained,
+native Plant/Process XML and topology evidence were deterministic, and all three figures plus the
+MathJax equation were visually inspected. The source-equivalent hosted Java 8/21 matrix explicitly
+passed the complete DEXPI/P&amp;ID test baseline. Later unrelated changes do not replace that recorded
+Phase 0 evidence; this PR's exact-head regression and full CI cover the new reference cases.
 
 ## Closed-unmerged #2443 reconciliation
 
@@ -137,7 +140,7 @@ other merged work:
 | Count relief/piping/blowdown readiness only from finite evidence | engineering calculation/validation and production-readiness paths | Present as fail-closed engineering evidence; not safeguard approval |
 | Deterministic branching golden fixtures and negative semantic tests | native golden package and semantic-validator tests | Present; product-specific graphical round trip is not implied |
 | Executable pyDEXPI and commercial-CAE evidence contracts | interoperability helper, named-tool evidence template and qualification runner | Present as tooling/contracts; no commercial product is qualified by repository evidence |
-| Notebook, guide, agent, and skill guidance | current engineering notebooks, integration guides, agents, and P&ID skill | Present but still requires continued current-master notebook qualification |
+| Notebook, guide, agent, and skill guidance | current engineering notebooks, integration guides, agents, and P&ID skill | Present; qualification must continue when affected APIs or acceptance evidence change |
 
 No current roadmap item requires reopening #2443. Remaining work is recorded as explicit gaps in
 the current roadmaps and in the traceability matrix below.
@@ -152,7 +155,7 @@ licensed standards, a named external tool, or accountable engineering review.
 | --- | --- | --- |
 | Phase 0 exhaustive source inventory | Present in this audit | All public DEXPI/P&ID writers, readers, validators, layout/rendering helpers, engineering/P&ID models, tests, fixtures, examples, and guides are classified above |
 | Phase 0 #2443 reconciliation | Present in this audit | Closed-unmerged scope mapped to current source without reviving the branch |
-| Phase 0 clean Java and acceptance-notebook baseline | Partial | Current Java tests are listed and PR/full CI supplies follow-up execution; saved Colab run is complete on NeqSim 3.17.0, but a fresh current-master notebook run remains required |
+| Phase 0 clean Java and acceptance-notebook baseline | Present | Merged NeqSim-Colab #119 passed all 15 executable cells and 20 focused checks against source-equivalent NeqSim Java, retained deterministic Plant/Process evidence, and completed visual inspection; the matching hosted Java 8/21 matrix passed the complete DEXPI/P&amp;ID baseline |
 | Phase 0 golden simple, branched, and multi-area cases | Present | Synthetic public executable cases pin material conservation, canonical topology/identity, supported native Process/Plant exchange, Proteus compatibility, legacy DOT, and governed P&ID proposal boundaries; unsupported native multi-area/document/graphics and SVG/PDF scopes remain structured limitations |
 | Stable identities and relationships | Partial | Canonical plant/area/equipment/port/connection IDs and governed engineering identities exist; detailed nozzles, piping, instruments, loops, safeguards, boundaries, and drawing objects do not yet share one qualified model |
 | State, units, case, and provenance separation | Partial | Canonical calculated operating values and governed design/evidence states exist; the full P&ID/document profile is not uniformly projected |
@@ -175,13 +178,8 @@ licensed standards, a named external tool, or accountable engineering review.
 
 ## Dependency-ordered next work
 
-After this reference-case baseline is merged and its exact-head CI is recorded, the remaining
-Phase 0 dependency is a clean, current-master execution record for the focused Java baseline and
-the NeqSim-Colab acceptance notebook. The notebook should consume a public release or verified
-snapshot rather than a hidden local JAR. Its saved output, MathJax rendering, tables, plots, and
-P&ID must be visually inspected.
-
-Only then should the shared lane start the immutable diagram/document model. That model must own
-stable document/drawing/sheet IDs, views of one semantic plant, paired off-page references,
+After this reference-case baseline is merged and its exact-head CI is recorded, the shared lane can
+start the Phase 1 immutable diagram/document model. That model must own stable
+document/drawing/sheet IDs, views of one semantic plant, paired off-page references,
 revision/status metadata, persistent layout decisions, and structured loss diagnostics while
 leaving legacy DOT/Graphviz, native DEXPI 2.0, and Proteus/P&ID APIs unchanged.
