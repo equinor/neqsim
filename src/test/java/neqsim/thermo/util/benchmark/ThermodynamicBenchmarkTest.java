@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,15 @@ class ThermodynamicBenchmarkTest {
   }
 
   @Test
+  void reportsMalformedNumericCsvRowsAsIoFailures() {
+    IOException exception = assertThrows(IOException.class,
+        () -> H2CO2PhaseEquilibriumData.parseCsvRow("bad,-30,bubble,1.45,0.96,0.04,0.0,bara", 12));
+
+    assertTrue(exception.getMessage().contains("line 12"));
+    assertTrue(exception.getCause() instanceof NumberFormatException);
+  }
+
+  @Test
   void calculatesAardBiasRmsAndMaximumError() throws Exception {
     Dataset dataset = H2CO2PhaseEquilibriumData.load();
     Report report = ThermodynamicBenchmark.run("synthetic +2 percent", dataset,
@@ -57,7 +67,7 @@ class ThermodynamicBenchmarkTest {
     Dataset dataset = new Dataset("uncertainty test", "test citation", "10.0000/test", "test data",
         java.util.Collections.singletonList(point));
 
-    Report report = ThermodynamicBenchmark.run("test model", dataset, value -> 37.5);
+    Report report = ThermodynamicBenchmark.run("test model", dataset, pointValue -> 37.5);
 
     assertEquals(2.0, report.getRows().get(0).getUncertaintyNormalizedResidual(), 1.0e-12);
   }
@@ -92,6 +102,22 @@ class ThermodynamicBenchmarkTest {
         NeqSimPhaseEquilibriumPrediction.Model.GERG_2008_H2);
 
     assertEquals(NeqSimPhaseEquilibriumPrediction.Model.GERG_2008_H2, prediction.getModel());
+  }
+
+  @Test
+  void returnsPredictionInPointPressureUnit() throws Exception {
+    Point source = H2CO2PhaseEquilibriumData.load().getPoints().get(0);
+    Point pressureInMegapascal = new Point(source.getProperty(), source.getTemperatureK(),
+        source.getPressureBara(), source.getExperimentalValue() / 10.0, source.getStandardUncertainty(),
+        "MPa", source.getComposition());
+    NeqSimPhaseEquilibriumPrediction prediction =
+        new NeqSimPhaseEquilibriumPrediction(NeqSimPhaseEquilibriumPrediction.Model.SRK);
+
+    double predictionBara = prediction.predict(source);
+    double predictionMegapascal = prediction.predict(pressureInMegapascal);
+
+    assertTrue(Double.isFinite(predictionMegapascal));
+    assertEquals(predictionBara, predictionMegapascal * 10.0, 1.0e-8);
   }
 
   @Test
