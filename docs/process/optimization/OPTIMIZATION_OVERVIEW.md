@@ -471,6 +471,26 @@ duplicate, unitless or stale scales fail closed. Candidate active means only tha
 margin is within the declared tolerance; it is not an optimizer active-set proof, ranking, KKT
 multiplier, economic shadow price or engineering approval.
 
+### Reversible operating actions
+
+`ProcessModelOperatingAction` defines one simulator-bound action with an immutable stable ID,
+display name, area-qualified automation address, unit, provenance, and either inclusive continuous
+bounds or exact enumerated discrete values. `inspectCapability(model)` reports whether the target
+is readable. `capture(model)`, `apply(model, value)`, and `restore(model, state)` provide
+identity-checked candidate mutation with automation read-back verification and explicit rollback
+diagnostics, without running the model.
+
+Use `registerWith(ProcessModelSimulationEvaluator)` for external optimization. Continuous actions
+map directly to bounded evaluator parameters. Discrete actions expose their ordered allowed values
+through the returned binding; callers must enumerate them because intermediate vector values fail
+closed rather than being silently rounded or interpolated. Re-register actions after evaluator
+deserialization because all evaluator callbacks are transient.
+
+This API preserves candidate semantics and restoration only. It does not alter routing topology,
+solve a mixed-integer problem, run the process, establish process feasibility, rank actions, or
+approve an operating change. After each candidate, explicitly run NeqSim and verify convergence,
+constraint residuals, conservation, product quality, equipment limits, and nearby behavior.
+
 ### ProcessOptimizationEngine Algorithms
 
 ```java
