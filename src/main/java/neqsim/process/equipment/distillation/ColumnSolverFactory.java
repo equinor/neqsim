@@ -480,7 +480,7 @@ final class ColumnSolverFactory {
             "Naphtali-Sandholm required guarded feed-flash product fallback", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && !accepted && !isAutoCandidateProbeMode() && !column.solved()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && !column.solved()) {
         applyDampedFallback(column, fallbackCandidate, id, "Naphtali-Sandholm did not satisfy convergence criteria",
             null);
         fallbackApplied = true;
