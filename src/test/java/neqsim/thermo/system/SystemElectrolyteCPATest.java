@@ -20,6 +20,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version $Id: $Id
  * @since 2.2.3
  */
+@Tag("slow")
 public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
   private static final Logger logger = LogManager.getLogger(SystemElectrolyteCPATest.class);
 

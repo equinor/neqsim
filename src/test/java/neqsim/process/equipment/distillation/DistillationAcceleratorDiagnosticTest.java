@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
@@ -14,6 +15,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * method directly on the 5-tray deethanizer benchmark, then dumps the pre-fallback convergence state. Used to
  * investigate why accelerators silently fall back to damped substitution on small heavy-rich columns.
  */
+@Tag("slow")
 public class DistillationAcceleratorDiagnosticTest {
   private static final Logger logger = LogManager.getLogger(DistillationAcceleratorDiagnosticTest.class);
 

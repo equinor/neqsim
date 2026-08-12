@@ -5,17 +5,19 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PhaseEos;
 import neqsim.thermo.phase.PhaseGEInterface;
 import neqsim.thermo.phase.PhaseGEVanLaarAcid;
-import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.phase.PhasePureComponentSolid;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.util.empiric.NitricSulfuricAcidVaporPressure;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.exception.IsNaNException;
 
 /** Tests the reusable EOS-GE topology and thermodynamic-operation support. */
+@Tag("slow")
 public class SystemEosGEOperationsTest extends neqsim.NeqSimTest {
   /** Number of pascals per bar. */
   private static final double PASCALS_PER_BAR = 1.0e5;

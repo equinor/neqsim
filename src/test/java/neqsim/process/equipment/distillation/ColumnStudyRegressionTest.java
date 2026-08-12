@@ -8,6 +8,7 @@ import java.util.Locale;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestReporter;
 import neqsim.process.equipment.stream.Stream;
@@ -21,6 +22,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author Copilot
  * @version 1.0
  */
+@Tag("slow")
 public class ColumnStudyRegressionTest {
   /** Logger for timing reports produced by this regression test. */
   private static final Logger logger = LogManager.getLogger(ColumnStudyRegressionTest.class);
