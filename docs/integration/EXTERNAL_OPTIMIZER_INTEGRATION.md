@@ -648,6 +648,80 @@ explicitly includes them. A normalized derivative remains auditable even when re
 `CANDIDATE_ACTIVE` constraints, and never interpret the candidate set as optimizer KKT evidence or
 rank economic value without an optimizer-specific solution and objective scaling.
 
+### Declare reversible continuous and discrete operating actions
+
+Use `ProcessModelOperatingAction` when an optimizer candidate must retain stable engineering
+identity, provenance, exact value semantics, and an explicit restoration token instead of being an
+anonymous numeric setter:
+
+```python
+Action = jneqsim.process.util.optimizer.ProcessModelOperatingAction
+JDoubleArray = jpype.JArray(jpype.JDouble)
+
+feed_target = Action.continuous(
+    "field-feed",
+    "Field feed target",
+    "wells::feed.flowRate",
+    5000.0,
+    20000.0,
+    "kg/hr",
+    "approved operating envelope revision A",
+)
+compressor_lineup = Action.discrete(
+    "compressor-lineup",
+    "Compressor line-up",
+    "compression::lineup-selector.value",
+    JDoubleArray([1.0, 2.0, 3.0]),
+    "count",
+    "installed train line-up table revision B",
+)
+
+capability = feed_target.inspectCapability(process_model)
+if not capability.isAvailable():
+    raise RuntimeError(list(capability.getDiagnostics()))
+
+baseline = feed_target.capture(process_model)
+application = feed_target.apply(process_model, 12000.0)
+if not application.isApplied():
+    raise RuntimeError(application.getDiagnostic())
+
+# Running and validating the candidate remains explicit.
+process_model.run()
+# Inspect convergence, constraints, conservation, and product specifications here.
+
+restoration = feed_target.restore(process_model, baseline)
+if not restoration.isApplied():
+    raise RuntimeError(restoration.getDiagnostic())
+```
+
+Continuous candidates must lie inside the inclusive declared bounds. Discrete candidates must
+equal one enumerated value exactly; the API never interpolates a line-up. A readable brownfield
+baseline may lie outside the candidate domain and is still capturable for restoration.
+`apply(...)` writes through the existing area-qualified `ProcessAutomation` address and verifies
+the read-back without running the process.
+
+Register an action with the established model evaluator when an external optimizer should own the
+candidate loop:
+
+```python
+binding = feed_target.registerWith(evaluator)
+print(binding.getParameterIndex(), binding.getInitialValue())
+
+lineup_binding = compressor_lineup.registerWith(evaluator)
+allowed_lineups = list(lineup_binding.getAllowedValues())
+```
+
+For a discrete binding, the evaluator vector exposes only the numerical envelope; enumerate
+`getAllowedValues()`. Any intermediate proposal fails the evaluation explicitly and leaves the
+previous verified value unchanged. Evaluator callback setters are transient, consistent with
+objective and constraint callbacks, so re-register actions after deserializing an evaluator.
+Captured actions, bindings, capability/application results, and state tokens are immutable and
+Java-serializable for JPype workflows.
+
+Capability inspection proves only that the exact address is readable in the declared unit.
+Application proves only write/read-back consistency. Neither runs NeqSim, changes topology,
+establishes process feasibility, selects a line-up, or constitutes operating or safety approval.
+
 ### Export Problem Definition
 
 ```python
