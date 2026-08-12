@@ -444,7 +444,6 @@ public final class ProcessSystemQuickStart {
     if (process.hasRecycleLoops()
         || process.getExecutionPartitionInfo().isEmpty()
         || process.getReport_json().isEmpty()
-        || process.reportResults().length == 0
         || process.getStreamSummaryTable().isEmpty()) {
       throw new IllegalStateException("Incomplete process diagnostics");
     }
@@ -488,7 +487,6 @@ topology-derived execution plan. The complete quick start above executes both ca
 | `getExecutionPartitionInfo()` | Describe the current execution partition |
 | `copy()` | Deep-copy the process system |
 | `getReport_json()` | Generate the structured JSON report |
-| `reportResults()` | Return equipment result rows |
 | `getStreamSummaryTable()` | Return a formatted stream-property table |
 
 ---
@@ -669,10 +667,11 @@ for (double t = 0; t < simulationTime; t += timeStep) {
 
 ## Process Reports
 
-After a successful run, use `getReport_json()` for the structured process report,
-`reportResults()` for equipment result rows, and `getStreamSummaryTable()` for a formatted stream
-summary. The complete quick start executes all three supported APIs. Treat `display()` as an
-interactive console helper rather than a machine-readable result contract.
+After a successful run, use `getReport_json()` for the structured process report and
+`getStreamSummaryTable()` for a formatted stream summary. The legacy `reportResults()` aggregator
+assumes that every equipment type supplies a non-null row array and is not safe as a general
+flowsheet reporting contract. The complete quick start executes both supported APIs. Treat
+`display()` as an interactive console helper rather than a machine-readable result contract.
 
 ---
 
