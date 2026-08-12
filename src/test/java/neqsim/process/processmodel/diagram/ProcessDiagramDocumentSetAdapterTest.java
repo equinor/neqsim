@@ -83,8 +83,7 @@ class ProcessDiagramDocumentSetAdapterTest {
 
   @Test
   void carriesOneGovernedOperatingCaseAcrossMultiAreaProcessModel() {
-    EngineeringDiagramReferenceFixtures.ModelCase reference = EngineeringDiagramReferenceFixtures
-        .multiAreaFacility();
+    EngineeringDiagramReferenceFixtures.ModelCase reference = EngineeringDiagramReferenceFixtures.multiAreaFacility();
     reference.getProcessModel().run();
 
     EngineeringDiagramDocumentSet set = ProcessDiagramDocumentSetAdapter.fromProcessModel(reference.getProcessModel(),
