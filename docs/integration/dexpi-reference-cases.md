@@ -30,8 +30,8 @@ provenance, expected counts, engineering state, and qualification boundaries.
   connection topology;
 - native DEXPI 2.0 Process and Plant schema/profile validation for the two `ProcessSystem` cases;
 - explicit, non-reused native Process material-port identities and structured loss diagnostics;
-- deterministic Proteus-compatible output for all cases and deterministic per-area sheets for the
-  `ProcessModel` case;
+- deterministic Proteus-compatible engineering content for all cases and deterministic per-area
+  sheets for the `ProcessModel` case, excluding generated emission date/time metadata;
 - unchanged deterministic legacy combined and per-area DOT/Graphviz output for the multi-area case;
   and
 - deterministic governed P&ID proposal models whose elements remain `REVIEW_REQUIRED` and whose
