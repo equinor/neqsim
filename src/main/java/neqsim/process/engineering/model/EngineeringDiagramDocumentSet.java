@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Immutable controlled-document view of one canonical {@link EngineeringGraph}.
@@ -176,6 +177,210 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
       result.put("approvedBy", approvedBy);
       result.put("approvalReference", approvalReference);
       return result;
+    }
+  }
+
+  /** Immutable provenance snapshot carried into the controlled document set. */
+  public static final class ProvenanceRecord implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String sourceType;
+    private final String sourceReference;
+    private final String method;
+    private final String designCaseId;
+    private final String approvalStatus;
+    private final List<String> evidenceReferences;
+
+    private ProvenanceRecord(EngineeringProvenance source) {
+      this.sourceType = source.getSourceType();
+      this.sourceReference = source.getSourceReference();
+      this.method = source.getMethod();
+      this.designCaseId = source.getDesignCaseId();
+      this.approvalStatus = source.getApprovalStatus();
+      this.evidenceReferences = Collections.unmodifiableList(new ArrayList<String>(source.getEvidenceReferences()));
+    }
+
+    /**
+     * Returns the provenance source classification.
+     *
+     * @return source classification
+     */
+    public String getSourceType() {
+      return sourceType;
+    }
+
+    /**
+     * Returns the stable source semantic-object reference.
+     *
+     * @return source reference
+     */
+    public String getSourceReference() {
+      return sourceReference;
+    }
+
+    /**
+     * Returns the calculation or inference method.
+     *
+     * @return method name
+     */
+    public String getMethod() {
+      return method;
+    }
+
+    /**
+     * Returns the operating or design case identity.
+     *
+     * @return case identity
+     */
+    public String getDesignCaseId() {
+      return designCaseId;
+    }
+
+    /**
+     * Returns the approval state carried by the provenance record.
+     *
+     * @return approval state
+     */
+    public String getApprovalStatus() {
+      return approvalStatus;
+    }
+
+    /**
+     * Returns immutable supporting evidence references.
+     *
+     * @return evidence references
+     */
+    public List<String> getEvidenceReferences() {
+      return evidenceReferences;
+    }
+
+    private Map<String, Object> toMap() {
+      Map<String, Object> result = new LinkedHashMap<String, Object>();
+      result.put("sourceType", sourceType);
+      result.put("sourceReference", sourceReference);
+      result.put("method", method);
+      result.put("designCaseId", designCaseId);
+      result.put("approvalStatus", approvalStatus);
+      result.put("evidenceReferences", evidenceReferences);
+      return result;
+    }
+  }
+
+  /** Immutable governed view of one canonical semantic object. */
+  public static final class SemanticObject implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String id;
+    private final EngineeringNode.Kind kind;
+    private final String externalKey;
+    private final String label;
+    private final Map<String, Object> properties;
+    private final List<ProvenanceRecord> provenance;
+
+    private SemanticObject(EngineeringNode source) {
+      this.id = source.getId();
+      this.kind = source.getKind();
+      this.externalKey = source.getExternalKey();
+      this.label = source.getLabel();
+      this.properties = immutablePropertyMap(source.getProperties());
+      List<ProvenanceRecord> records = new ArrayList<ProvenanceRecord>();
+      for (EngineeringProvenance item : source.getProvenance()) {
+        records.add(new ProvenanceRecord(item));
+      }
+      this.provenance = Collections.unmodifiableList(records);
+    }
+
+    /**
+     * Returns the stable canonical semantic-object identity.
+     *
+     * @return semantic-object identity
+     */
+    public String getId() {
+      return id;
+    }
+
+    /**
+     * Returns the canonical semantic-object kind.
+     *
+     * @return object kind
+     */
+    public EngineeringNode.Kind getKind() {
+      return kind;
+    }
+
+    /**
+     * Returns the stable external source key.
+     *
+     * @return external source key
+     */
+    public String getExternalKey() {
+      return externalKey;
+    }
+
+    /**
+     * Returns the human-readable source label.
+     *
+     * @return source label
+     */
+    public String getLabel() {
+      return label;
+    }
+
+    /**
+     * Returns immutable, key-sorted semantic properties.
+     *
+     * @return semantic properties
+     */
+    public Map<String, Object> getProperties() {
+      return properties;
+    }
+
+    /**
+     * Returns immutable provenance snapshots.
+     *
+     * @return provenance snapshots
+     */
+    public List<ProvenanceRecord> getProvenance() {
+      return provenance;
+    }
+
+    private Map<String, Object> toMap() {
+      Map<String, Object> result = new LinkedHashMap<String, Object>();
+      result.put("id", id);
+      result.put("kind", kind.name());
+      result.put("externalKey", externalKey);
+      result.put("label", label);
+      result.put("properties", properties);
+      List<Map<String, Object>> provenanceMaps = new ArrayList<Map<String, Object>>();
+      for (ProvenanceRecord item : provenance) {
+        provenanceMaps.add(item.toMap());
+      }
+      result.put("provenance", provenanceMaps);
+      return result;
+    }
+
+    private static Map<String, Object> immutablePropertyMap(Map<String, Object> source) {
+      Map<String, Object> result = new TreeMap<String, Object>();
+      for (Map.Entry<String, Object> entry : source.entrySet()) {
+        result.put(entry.getKey(), immutablePropertyValue(entry.getValue()));
+      }
+      return Collections.unmodifiableMap(result);
+    }
+
+    private static Object immutablePropertyValue(Object value) {
+      if (value instanceof Map<?, ?>) {
+        Map<String, Object> result = new TreeMap<String, Object>();
+        for (Map.Entry<?, ?> entry : ((Map<?, ?>) value).entrySet()) {
+          result.put(String.valueOf(entry.getKey()), immutablePropertyValue(entry.getValue()));
+        }
+        return Collections.unmodifiableMap(result);
+      }
+      if (value instanceof List<?>) {
+        List<Object> result = new ArrayList<Object>();
+        for (Object item : (List<?>) value) {
+          result.add(immutablePropertyValue(item));
+        }
+        return Collections.unmodifiableList(result);
+      }
+      return value;
     }
   }
 
@@ -376,6 +581,7 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
   private final IssuePurpose issuePurpose;
   private final String accountableApprovalReference;
   private final List<RevisionEntry> revisionHistory;
+  private final List<SemanticObject> semanticObjects;
   private final List<Drawing> drawings;
   private final List<Diagnostic> diagnostics;
 
@@ -395,8 +601,10 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
       throw new IllegalArgumentException("approved or construction issue requires accountableApprovalReference");
     }
     this.revisionHistory = Collections.unmodifiableList(new ArrayList<RevisionEntry>(revisionHistory));
+    this.semanticObjects = semanticObjects(graph);
     this.drawings = Collections.unmodifiableList(new ArrayList<Drawing>(drawings));
     List<Diagnostic> assessed = new ArrayList<Diagnostic>(diagnostics);
+    assessed.addAll(validateSemanticObjects(semanticObjects));
     assessed.addAll(validate(drawings));
     this.diagnostics = Collections.unmodifiableList(assessed);
   }
@@ -507,6 +715,15 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
     return revisionHistory;
   }
 
+  /**
+   * Returns immutable canonical semantic-object snapshots used by every drawing view.
+   *
+   * @return semantic-object snapshots
+   */
+  public List<SemanticObject> getSemanticObjects() {
+    return semanticObjects;
+  }
+
   public List<Drawing> getDrawings() {
     return drawings;
   }
@@ -542,6 +759,11 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
       revisionMaps.add(entry.toMap());
     }
     result.put("revisionHistory", revisionMaps);
+    List<Map<String, Object>> semanticObjectMaps = new ArrayList<Map<String, Object>>();
+    for (SemanticObject semanticObject : semanticObjects) {
+      semanticObjectMaps.add(semanticObject.toMap());
+    }
+    result.put("semanticObjects", semanticObjectMaps);
     List<Map<String, Object>> drawingMaps = new ArrayList<Map<String, Object>>();
     for (Drawing drawing : drawings) {
       drawingMaps.add(drawing.toMap());
@@ -635,6 +857,64 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
       }
     }
     return result;
+  }
+
+  private static List<SemanticObject> semanticObjects(EngineeringGraph graph) {
+    List<SemanticObject> result = new ArrayList<SemanticObject>();
+    for (EngineeringNode node : graph.getNodes().values()) {
+      result.add(new SemanticObject(node));
+    }
+    return Collections.unmodifiableList(result);
+  }
+
+  private static List<Diagnostic> validateSemanticObjects(List<SemanticObject> objects) {
+    List<Diagnostic> result = new ArrayList<Diagnostic>();
+    Map<String, SemanticObject> objectsById = new LinkedHashMap<String, SemanticObject>();
+    for (SemanticObject object : objects) {
+      if (objectsById.put(object.getId(), object) != null) {
+        result.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_DUPLICATE_SEMANTIC_OBJECT_ID",
+            "Semantic object identity is not unique in the document set", object.getId()));
+      }
+      if (object.getKind() == EngineeringNode.Kind.CALCULATION && object.getProperties().containsKey("resultValue")
+          && !hasGovernedValueMetadata(object)) {
+        Severity severity = hasProvenanceSource(object, "SIMULATION_RESULT") ? Severity.ERROR : Severity.WARNING;
+        result.add(new Diagnostic(severity, "DIAGRAM_DOCUMENT_INCOMPLETE_GOVERNED_VALUE",
+            "Calculated value is missing unit, case, engineering state, approval state, or provenance",
+            object.getId()));
+      }
+    }
+    return result;
+  }
+
+  private static boolean hasGovernedValueMetadata(SemanticObject object) {
+    Map<String, Object> properties = object.getProperties();
+    return hasPropertyText(properties, "resultUnit") && hasPropertyText(properties, "designCaseId")
+        && (hasPropertyText(properties, "engineeringState") || hasPropertyText(properties, "status"))
+        && (hasPropertyText(properties, "approvalStatus") || hasProvenanceApprovalState(object))
+        && !object.getProvenance().isEmpty();
+  }
+
+  private static boolean hasPropertyText(Map<String, Object> properties, String name) {
+    Object value = properties.get(name);
+    return value != null && !value.toString().trim().isEmpty();
+  }
+
+  private static boolean hasProvenanceApprovalState(SemanticObject object) {
+    for (ProvenanceRecord record : object.getProvenance()) {
+      if (!record.getApprovalStatus().trim().isEmpty()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean hasProvenanceSource(SemanticObject object, String sourceType) {
+    for (ProvenanceRecord record : object.getProvenance()) {
+      if (sourceType.equals(record.getSourceType())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static List<EngineeringNode> nodesOfKind(EngineeringGraph graph, EngineeringNode.Kind kind) {

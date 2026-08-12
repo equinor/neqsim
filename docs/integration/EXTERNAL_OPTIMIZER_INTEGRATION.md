@@ -581,6 +581,73 @@ Results remain in declared units and are intentionally not ranked across constra
 scaling, regime validation, active-set logic, and optimizer-specific KKT evidence are separate
 requirements.
 
+Use explicit engineering references before comparing dimensionless margins or exposing a
+candidate-active set:
+
+```python
+import jpype
+
+Analyzer = jneqsim.process.util.optimizer.ConstraintActivityAnalyzer
+ArrayList = jpype.JClass("java.util.ArrayList")
+
+reference_by_name = {
+    # Values are positive and use each constraint's declared unit.
+    "export compressor power": (12_000.0, "installed motor rating"),
+    "gas export nomination": (1_000_000.0, "daily nomination basis"),
+}
+
+scales = ArrayList()
+for constraint in quality_result.getConstraintSnapshots():
+    reference, provenance = reference_by_name[str(constraint.getName())]
+    scales.add(
+        Analyzer.ConstraintScale.fromSnapshot(
+            constraint,
+            reference,
+            provenance,
+        )
+    )
+
+activity_policy = Analyzer.ActivityPolicy.hardConstraints(
+    0.05,  # candidate active when 0 <= normalized margin <= 5% of its reference
+    strict_policy,
+)
+activity = Analyzer.assess(
+    quality_result,
+    scales,
+    activity_policy,
+)
+
+for item in activity:
+    print(
+        item.getConstraint().getName(),
+        item.getScale().getReferenceValue(),
+        item.getScale().getUnit(),
+        item.getScale().getProvenance(),
+        item.getNormalizedMargin(),
+        item.getStatus(),
+        list(item.getDiagnostics()),
+    )
+    for derivative in item.getSensitivities():
+        print(
+            derivative.getSensitivityAssessment().getParameter().getName(),
+            derivative.getNormalizedMarginDerivative(),
+            derivative.getNormalizedMarginDerivativeUnit(),
+            derivative.isUsable(),
+            list(derivative.getRejectionReasons()),
+        )
+
+candidate_active = Analyzer.getCandidateActiveConstraints(activity)
+violated = Analyzer.getViolatedConstraints(activity)
+```
+
+Scales may be supplied in any order, but exactly one identity-matched scale is required for every
+constraint and results remain in registration order. A stale scale fails if type, bounds,
+hardness, penalty or capacity origin changed. Soft constraints are excluded unless the policy
+explicitly includes them. A normalized derivative remains auditable even when rejected; require
+`isUsable()` before consuming it. Keep violated constraints separate from feasible
+`CANDIDATE_ACTIVE` constraints, and never interpret the candidate set as optimizer KKT evidence or
+rank economic value without an optimizer-specific solution and objective scaling.
+
 ### Export Problem Definition
 
 ```python
@@ -739,6 +806,9 @@ jpype.shutdownJVM()
 | `estimateSensitivitiesWithQuality(double[] x, int objectiveIndex)` | The same evidence for the selected registered objective |
 | `SensitivityQualityResult.assessConstraintSensitivities(policy)` | Immutable evidence and acceptance/rejection diagnostics for every constraint/parameter pair; performs no process evaluations |
 | `SensitivityQualityResult.getAcceptedConstraintSensitivities(policy)` | Accepted local pairs only; inspect the full assessment list to retain rejected evidence |
+| `ConstraintActivityAnalyzer.ConstraintScale.fromSnapshot(...)` | Positive identity-bound constraint reference with declared unit and provenance |
+| `ConstraintActivityAnalyzer.assess(result, scales, policy)` | Dimensionless margins, normalized local margin sensitivities and conservative activity diagnostics without process evaluations |
+| `getCandidateActiveConstraints(...)` / `getViolatedConstraints(...)` | Registration-ordered feasible-near-boundary and violated subsets; neither is optimizer KKT evidence |
 
 The sensitivity-quality methods belong to `ProcessModelSimulationEvaluator`; they are not methods
 on `ProcessSimulationEvaluator`.

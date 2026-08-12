@@ -8,8 +8,10 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
@@ -40,6 +42,9 @@ import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.dynamics.EventScheduler;
 import neqsim.process.dynamics.ExplicitEulerIntegrator;
 import neqsim.process.dynamics.IntegratorStrategy;
+import neqsim.process.dynamics.TransientStateParticipant;
+import neqsim.process.dynamics.TransientStepTransaction;
+import neqsim.process.dynamics.TransientTransactionCoverage;
 import neqsim.process.equipment.EquipmentEnum;
 import neqsim.process.equipment.EquipmentFactory;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
@@ -213,6 +218,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    */
   private transient EventScheduler eventScheduler = null;
+
+  /** Active identity-preserving transient transaction, or {@code null} outside a trial step. */
+  private transient ProcessSystemStepTransaction activeTransientStepTransaction = null;
 
   // Graph-based execution fields
   /** Cached process graph for topology analysis. */
@@ -5149,6 +5157,429 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public void setEventScheduler(EventScheduler scheduler) {
     this.eventScheduler = scheduler;
+  }
+
+  /**
+   * Audits whether every mutable process element can participate in an identity-preserving transient step transaction.
+   *
+   * <p>
+   * Duplicate registrations of the same Java object are counted once. State identities must be non-empty and unique
+   * among the participating objects. Recycle execution remains blocked until the shared {@link RecycleController} has
+   * an in-place snapshot contract in addition to each recycle unit's own state contract.
+   * </p>
+   *
+   * @return immutable quantitative coverage report
+   */
+  public TransientTransactionCoverage getTransientTransactionCoverage() {
+    List<ProcessElementInterface> elements = getUniqueTransientElements();
+    List<String> blockingIssues = new ArrayList<String>();
+    Map<String, ProcessElementInterface> identities = new HashMap<String, ProcessElementInterface>();
+    int participantCount = 0;
+
+    for (ProcessElementInterface element : elements) {
+      if (!(element instanceof TransientStateParticipant<?>)) {
+        blockingIssues.add(
+            "process element " + describeTransientElement(element) + " does not implement TransientStateParticipant");
+        continue;
+      }
+      participantCount++;
+      TransientStateParticipant<?> participant = (TransientStateParticipant<?>) element;
+      String stateIdentity;
+      try {
+        stateIdentity = normalizeTransientStateIdentity(participant.getTransientStateIdentity());
+      } catch (RuntimeException ex) {
+        blockingIssues.add("process element " + describeTransientElement(element)
+            + " failed to provide a transient state identity: " + ex.getMessage());
+        continue;
+      }
+      if (stateIdentity == null) {
+        blockingIssues.add(
+            "process element " + describeTransientElement(element) + " has a null or empty transient state identity");
+        continue;
+      }
+      ProcessElementInterface previous = identities.put(stateIdentity, element);
+      if (previous != null && previous != element) {
+        blockingIssues.add("transient state identity '" + stateIdentity + "' is shared by "
+            + describeTransientElement(previous) + " and " + describeTransientElement(element));
+      }
+    }
+
+    if (recycleController != null && recycleController.getRecycleCount() > 0) {
+      blockingIssues.add("shared RecycleController owns mutable convergence state for "
+          + recycleController.getRecycleCount() + " recycle unit(s) but has no in-place transient snapshot contract");
+    }
+    if (parallelTransientEnabled) {
+      blockingIssues.add("parallel transient execution may leave same-level workers running after one worker fails; "
+          + "rollback cannot start until worker quiescence is guaranteed");
+    }
+    if (publishEvents) {
+      blockingIssues
+          .add("ProcessEventBus publishing is externally visible and has no rejected-step commit/defer contract");
+    }
+    if (alarmManager != null && !alarmManager.getActionHandlers().isEmpty()) {
+      blockingIssues.add("alarm action handlers may produce external side effects and have no rejected-step "
+          + "commit/defer contract");
+    }
+    return new TransientTransactionCoverage(elements.size(), participantCount, blockingIssues);
+  }
+
+  /**
+   * Captures an identity-preserving rollback point for one physical transient step.
+   *
+   * <p>
+   * The method completes coverage validation and captures every participant before returning. It therefore fails before
+   * trial mutation when coverage is incomplete or snapshot capture fails. Only one transaction may be open for a
+   * process system at a time.
+   * </p>
+   *
+   * @return open single-use transaction
+   * @throws IllegalStateException if coverage is incomplete, a snapshot is invalid, or another transaction is open
+   */
+  public synchronized TransientStepTransaction beginTransientStepTransaction() {
+    if (activeTransientStepTransaction != null && activeTransientStepTransaction.isOpen()) {
+      throw new IllegalStateException(
+          "A transient step transaction is already open for process system '" + getName() + "'");
+    }
+
+    TransientTransactionCoverage coverage = getTransientTransactionCoverage();
+    coverage.assertComplete();
+    List<ProcessElementInterface> elements = getUniqueTransientElements();
+    List<TransientParticipantCheckpoint> participantCheckpoints = new ArrayList<TransientParticipantCheckpoint>(
+        elements.size());
+    for (ProcessElementInterface element : elements) {
+      TransientStateParticipant<?> participant = (TransientStateParticipant<?>) element;
+      Serializable snapshot = captureParticipantSnapshot(participant);
+      String stateIdentity = normalizeTransientStateIdentity(participant.getTransientStateIdentity());
+      if (stateIdentity == null) {
+        throw new IllegalStateException(
+            "Transient state identity changed to null or empty while capturing " + describeTransientElement(element));
+      }
+      participantCheckpoints.add(new TransientParticipantCheckpoint(participant, stateIdentity, snapshot));
+    }
+
+    ProcessSystemStepTransaction transaction = new ProcessSystemStepTransaction(elements, participantCheckpoints,
+        eventScheduler, eventScheduler == null ? null : eventScheduler.snapshot(),
+        new ArrayList<>(alarmManager.getHistory()));
+    activeTransientStepTransaction = transaction;
+    return transaction;
+  }
+
+  /**
+   * Advances one transient step and commits it only if the complete step succeeds.
+   *
+   * <p>
+   * Any runtime exception or error from event, equipment, controller, measurement, or alarm execution closes the
+   * transaction and restores all captured state in place. This method is intentionally separate from legacy
+   * {@link #runTransient(double, UUID)} so existing simulations are not silently rejected while built-in equipment
+   * families adopt the participant contract.
+   * </p>
+   *
+   * @param dt timestep in seconds
+   * @param id physical-step calculation identifier
+   * @throws IllegalStateException if transaction coverage is incomplete
+   */
+  public void runTransientTransactional(double dt, UUID id) {
+    try (TransientStepTransaction transaction = beginTransientStepTransaction()) {
+      runTransient(dt, id);
+      transaction.commit();
+    }
+  }
+
+  /**
+   * Returns unique registered process elements in deterministic registration order.
+   *
+   * @return identity-de-duplicated process elements
+   */
+  private List<ProcessElementInterface> getUniqueTransientElements() {
+    List<ProcessElementInterface> unique = new ArrayList<ProcessElementInterface>();
+    java.util.Set<ProcessElementInterface> seen = Collections
+        .newSetFromMap(new IdentityHashMap<ProcessElementInterface, Boolean>());
+    for (ProcessElementInterface element : getAllElements()) {
+      if (element == null) {
+        throw new IllegalStateException("Process system '" + getName() + "' contains a null process element");
+      }
+      if (seen.add(element)) {
+        unique.add(element);
+      }
+    }
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      Collection<ControllerDeviceInterface> attachedControllers = unit.getControllers();
+      if (attachedControllers == null) {
+        throw new IllegalStateException(
+            "Process equipment " + describeTransientElement(unit) + " returned a null controller collection");
+      }
+      for (ControllerDeviceInterface controller : attachedControllers) {
+        if (controller == null) {
+          throw new IllegalStateException(
+              "Process equipment " + describeTransientElement(unit) + " contains a null attached controller");
+        }
+        if (seen.add(controller)) {
+          unique.add(controller);
+        }
+      }
+    }
+    return unique;
+  }
+
+  /**
+   * Returns a deterministic diagnostic label for a process element.
+   *
+   * @param element process element
+   * @return diagnostic label
+   */
+  private static String describeTransientElement(ProcessElementInterface element) {
+    String name = element.getName();
+    return "'" + (name == null ? "" : name) + "' (" + element.getClass().getName() + ")";
+  }
+
+  /**
+   * Normalizes a state identity without manufacturing a fallback identity.
+   *
+   * @param identity participant-provided identity
+   * @return trimmed identity, or {@code null} when absent
+   */
+  private static String normalizeTransientStateIdentity(String identity) {
+    if (identity == null || identity.trim().isEmpty()) {
+      return null;
+    }
+    return identity.trim();
+  }
+
+  /**
+   * Captures a typed participant snapshot through a wildcard-safe helper.
+   *
+   * @param participant state participant
+   * @return non-null serializable snapshot
+   */
+  private static <S extends Serializable> Serializable captureParticipantSnapshot(
+      TransientStateParticipant<S> participant) {
+    S snapshot = participant.captureTransientState();
+    if (snapshot == null) {
+      throw new IllegalStateException(
+          "Transient state participant '" + participant.getTransientStateIdentity() + "' returned a null snapshot");
+    }
+    return snapshot;
+  }
+
+  /**
+   * Restores a typed participant snapshot through one checked cast boundary.
+   *
+   * @param participant participant to restore
+   * @param snapshot captured snapshot
+   * @param <S> participant snapshot type
+   */
+  @SuppressWarnings("unchecked")
+  private static <S extends Serializable> void restoreParticipantSnapshot(TransientStateParticipant<S> participant,
+      Serializable snapshot) {
+    participant.restoreTransientState((S) snapshot);
+  }
+
+  /** Captured state for one participant, keyed by object identity. */
+  private static final class TransientParticipantCheckpoint {
+    private final TransientStateParticipant<?> participant;
+    private final String stateIdentity;
+    private final Serializable snapshot;
+
+    private TransientParticipantCheckpoint(TransientStateParticipant<?> participant, String stateIdentity,
+        Serializable snapshot) {
+      this.participant = participant;
+      this.stateIdentity = stateIdentity;
+      this.snapshot = snapshot;
+    }
+  }
+
+  /** Process-system transaction implementation. */
+  private final class ProcessSystemStepTransaction implements TransientStepTransaction {
+    private final List<ProcessElementInterface> elementIdentities;
+    private final List<TransientParticipantCheckpoint> participantCheckpoints;
+    private final double capturedTime = time;
+    private final double capturedTimeStep = timeStep;
+    private final int capturedTimeStepNumber = timeStepNumber;
+    private final UUID capturedCalculationIdentifier = getCalculationIdentifier();
+    private final MeasurementHistory capturedMeasurementHistory = measurementHistory.copy();
+    private final Boolean capturedRecordMeasurementHistory = recordMeasurementHistory;
+    private final double capturedPreviousTotalMass = previousTotalMass;
+    private final double capturedMassBalanceError = massBalanceError;
+    private final ProcessSystem capturedInitialStateSnapshot = initialStateSnapshot;
+    private final EventScheduler capturedEventScheduler;
+    private final EventScheduler.Snapshot capturedEventSchedulerSnapshot;
+    private final List<neqsim.process.alarm.AlarmEvent> capturedAlarmHistory;
+    private Status status = Status.OPEN;
+
+    private ProcessSystemStepTransaction(List<ProcessElementInterface> elementIdentities,
+        List<TransientParticipantCheckpoint> participantCheckpoints, EventScheduler capturedEventScheduler,
+        EventScheduler.Snapshot capturedEventSchedulerSnapshot,
+        List<neqsim.process.alarm.AlarmEvent> capturedAlarmHistory) {
+      this.elementIdentities = new ArrayList<ProcessElementInterface>(elementIdentities);
+      this.participantCheckpoints = new ArrayList<TransientParticipantCheckpoint>(participantCheckpoints);
+      this.capturedEventScheduler = capturedEventScheduler;
+      this.capturedEventSchedulerSnapshot = capturedEventSchedulerSnapshot;
+      this.capturedAlarmHistory = new ArrayList<neqsim.process.alarm.AlarmEvent>(capturedAlarmHistory);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void prepareCommit() {
+      synchronized (ProcessSystem.this) {
+        requireOpen("prepare commit");
+        RuntimeException validationFailure = validateIdentityContract();
+        if (validationFailure != null) {
+          throw validationFailure;
+        }
+      }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void commit() {
+      synchronized (ProcessSystem.this) {
+        try {
+          prepareCommit();
+        } catch (RuntimeException validationFailure) {
+          try {
+            rollback();
+          } catch (RuntimeException rollbackFailure) {
+            validationFailure.addSuppressed(rollbackFailure);
+          }
+          throw validationFailure;
+        }
+        status = Status.COMMITTED;
+        activeTransientStepTransaction = null;
+      }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void rollback() {
+      synchronized (ProcessSystem.this) {
+        if (status == Status.ROLLED_BACK) {
+          return;
+        }
+        requireOpen("rollback");
+        RuntimeException failure = validateIdentityContract();
+
+        for (int i = participantCheckpoints.size() - 1; i >= 0; i--) {
+          TransientParticipantCheckpoint checkpoint = participantCheckpoints.get(i);
+          try {
+            restoreCapturedParticipant(checkpoint);
+          } catch (RuntimeException ex) {
+            failure = accumulateTransactionFailure(failure,
+                "Failed to restore transient state participant '" + checkpoint.stateIdentity + "'", ex);
+          }
+        }
+
+        try {
+          time = capturedTime;
+          timeStep = capturedTimeStep;
+          timeStepNumber = capturedTimeStepNumber;
+          setCalculationIdentifier(capturedCalculationIdentifier);
+          measurementHistory = capturedMeasurementHistory.copy();
+          recordMeasurementHistory = capturedRecordMeasurementHistory;
+          previousTotalMass = capturedPreviousTotalMass;
+          massBalanceError = capturedMassBalanceError;
+          initialStateSnapshot = capturedInitialStateSnapshot;
+          eventScheduler = capturedEventScheduler;
+          if (capturedEventScheduler != null) {
+            capturedEventScheduler.restore(capturedEventSchedulerSnapshot);
+          }
+          alarmManager.restoreHistory(capturedAlarmHistory);
+        } catch (RuntimeException ex) {
+          failure = accumulateTransactionFailure(failure, "Failed to restore ProcessSystem orchestration state", ex);
+        } finally {
+          status = Status.ROLLED_BACK;
+          activeTransientStepTransaction = null;
+        }
+
+        if (failure != null) {
+          throw failure;
+        }
+      }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Status getStatus() {
+      return status;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void close() {
+      if (isOpen()) {
+        rollback();
+      }
+    }
+
+    /**
+     * Restores one captured participant.
+     *
+     * @param checkpoint participant snapshot
+     */
+    private void restoreCapturedParticipant(TransientParticipantCheckpoint checkpoint) {
+      restoreParticipantSnapshot(checkpoint.participant, checkpoint.snapshot);
+    }
+
+    /**
+     * Validates object, registration-order, and stable-state identities.
+     *
+     * @return failure diagnostic, or {@code null}
+     */
+    private RuntimeException validateIdentityContract() {
+      List<ProcessElementInterface> currentElements;
+      try {
+        currentElements = getUniqueTransientElements();
+      } catch (RuntimeException ex) {
+        return new IllegalStateException("Could not inspect process elements while finalizing transient transaction",
+            ex);
+      }
+      if (currentElements.size() != elementIdentities.size()) {
+        return new IllegalStateException("Process structure changed during transient transaction: captured "
+            + elementIdentities.size() + " unique elements but found " + currentElements.size());
+      }
+      for (int i = 0; i < elementIdentities.size(); i++) {
+        if (currentElements.get(i) != elementIdentities.get(i)) {
+          return new IllegalStateException(
+              "Process element identity or registration order changed during transient transaction at index " + i);
+        }
+      }
+      for (TransientParticipantCheckpoint checkpoint : participantCheckpoints) {
+        String currentIdentity = normalizeTransientStateIdentity(checkpoint.participant.getTransientStateIdentity());
+        if (!checkpoint.stateIdentity.equals(currentIdentity)) {
+          return new IllegalStateException("Transient state identity changed during transaction from '"
+              + checkpoint.stateIdentity + "' to '" + currentIdentity + "'");
+        }
+      }
+      return null;
+    }
+
+    /**
+     * Enforces single-use transaction semantics.
+     *
+     * @param operation requested lifecycle operation
+     */
+    private void requireOpen(String operation) {
+      if (status != Status.OPEN) {
+        throw new IllegalStateException("Cannot " + operation + " transient transaction in state " + status);
+      }
+    }
+  }
+
+  /**
+   * Accumulates rollback failures while allowing later participants and orchestration state to restore.
+   *
+   * @param existing first failure, or {@code null}
+   * @param message diagnostic context
+   * @param cause new failure
+   * @return first failure with later failures suppressed
+   */
+  private static RuntimeException accumulateTransactionFailure(RuntimeException existing, String message,
+      RuntimeException cause) {
+    RuntimeException wrapped = new IllegalStateException(message, cause);
+    if (existing == null) {
+      return wrapped;
+    }
+    existing.addSuppressed(wrapped);
+    return existing;
   }
 
   /**

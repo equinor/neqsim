@@ -171,6 +171,26 @@ public class ProcessAlarmManager implements Serializable {
   }
 
   /**
+   * Restores alarm-history bookkeeping from a transient step transaction snapshot.
+   *
+   * <p>
+   * Alarm-device state belongs to each measurement device and must be restored by that device's transient state
+   * participant. This method deliberately restores only the manager's event log and preserves the manager, device, and
+   * action-handler object identities.
+   * </p>
+   *
+   * @param snapshot alarm events captured before the trial step
+   * @throws IllegalArgumentException if {@code snapshot} is null
+   */
+  public void restoreHistory(List<AlarmEvent> snapshot) {
+    if (snapshot == null) {
+      throw new IllegalArgumentException("Alarm history snapshot cannot be null");
+    }
+    history.clear();
+    history.addAll(snapshot);
+  }
+
+  /**
    * Copies the content of another manager instance.
    *
    * @param source source manager to copy from
