@@ -4037,7 +4037,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     rejectedNaphtaliTelemetry.restore(this);
   }
 
-
   /**
    * Check whether the latest MESH residual still needs Newton polishing.
    *
