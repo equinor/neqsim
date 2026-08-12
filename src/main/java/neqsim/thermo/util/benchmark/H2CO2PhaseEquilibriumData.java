@@ -47,34 +47,44 @@ public final class H2CO2PhaseEquilibriumData {
       if (line == null) {
         throw new IOException("Empty benchmark resource " + RESOURCE);
       }
+      int lineNumber = 1;
       while ((line = reader.readLine()) != null) {
+        lineNumber++;
         if (line.trim().isEmpty() || line.trim().startsWith("#")) {
           continue;
         }
-        String[] values = line.split(",", -1);
-        if (values.length != 8) {
-          throw new IOException("Expected 8 CSV columns but found " + values.length);
-        }
-        double temperatureK = Double.parseDouble(values[1]) + 273.15;
-        double pressureBara = Double.parseDouble(values[3]) * 10.0;
-        Map<String, Double> composition = new LinkedHashMap<String, Double>();
-        composition.put("CO2", Double.parseDouble(values[4]));
-        composition.put("hydrogen", Double.parseDouble(values[5]));
-        double nitrogenFraction = Double.parseDouble(values[6]);
-        if (nitrogenFraction > 0.0) {
-          composition.put("nitrogen", nitrogenFraction);
-        }
-        Property property;
-        if ("bubble".equals(values[2])) {
-          property = Property.BUBBLE_POINT_PRESSURE;
-        } else if ("dew".equals(values[2])) {
-          property = Property.DEW_POINT_PRESSURE;
-        } else {
-          throw new IOException("Unknown phase-equilibrium property " + values[2]);
-        }
-        points.add(new Point(property, temperatureK, pressureBara, pressureBara, Double.NaN, "bara", composition));
+        points.add(parseCsvRow(line, lineNumber));
       }
     }
     return new Dataset("Zhang 2026 hydrogen-containing CO2 phase equilibrium", CITATION, DOI, LICENSE, points);
+  }
+
+  static Point parseCsvRow(String line, int lineNumber) throws IOException {
+    String[] values = line.split(",", -1);
+    if (values.length != 8) {
+      throw new IOException("Expected 8 CSV columns at line " + lineNumber + " but found " + values.length);
+    }
+    try {
+      double temperatureK = Double.parseDouble(values[1]) + 273.15;
+      double pressureBara = Double.parseDouble(values[3]) * 10.0;
+      Map<String, Double> composition = new LinkedHashMap<String, Double>();
+      composition.put("CO2", Double.parseDouble(values[4]));
+      composition.put("hydrogen", Double.parseDouble(values[5]));
+      double nitrogenFraction = Double.parseDouble(values[6]);
+      if (nitrogenFraction > 0.0) {
+        composition.put("nitrogen", nitrogenFraction);
+      }
+      Property property;
+      if ("bubble".equals(values[2])) {
+        property = Property.BUBBLE_POINT_PRESSURE;
+      } else if ("dew".equals(values[2])) {
+        property = Property.DEW_POINT_PRESSURE;
+      } else {
+        throw new IOException("Unknown phase-equilibrium property " + values[2] + " at line " + lineNumber);
+      }
+      return new Point(property, temperatureK, pressureBara, pressureBara, Double.NaN, "bara", composition);
+    } catch (NumberFormatException exception) {
+      throw new IOException("Malformed numeric value at line " + lineNumber + ": " + line, exception);
+    }
   }
 }
