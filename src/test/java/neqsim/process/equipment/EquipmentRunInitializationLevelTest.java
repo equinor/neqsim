@@ -9,8 +9,7 @@ import neqsim.process.equipment.util.Recycle;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Guards initialization work whose removal has not demonstrated a representative end-to-end
- * process benefit.
+ * Guards initialization work whose removal has not demonstrated a representative end-to-end process benefit.
  */
 class EquipmentRunInitializationLevelTest {
   private static final class InitTrackingSystemSrkEos extends SystemSrkEos {
