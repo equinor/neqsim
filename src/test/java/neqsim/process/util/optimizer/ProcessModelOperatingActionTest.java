@@ -168,7 +168,7 @@ class ProcessModelOperatingActionTest {
 
   /** Verifies optimization-facing registration and exact discrete failure behavior. */
   @Test
-  void actionRegistersWithProcessModelEvaluator() {
+  void actionRegistersWithProcessModelEvaluator() throws Exception {
     ModelFixture continuousFixture = createModelFixture();
     ProcessModelSimulationEvaluator continuousEvaluator =
         new ProcessModelSimulationEvaluator(continuousFixture.model);
@@ -188,6 +188,10 @@ class ProcessModelOperatingActionTest {
     assertFalse(continuousEvaluator.evaluate(new double[] {1600.0}).isSimulationConverged());
     assertEquals(1300.0, continuousFixture.feed.getFlowRate("kg/hr"), 1.0e-8,
         "a strict continuous action must reject rather than clamp an out-of-bounds candidate");
+    ProcessModelSimulationEvaluator.SensitivityQualityResult quality = continuousEvaluator
+        .estimateSensitivitiesWithQuality(new double[] {1000.0});
+    assertFalse(quality.getParameterSnapshots().get(0).isClampToBounds());
+    assertEquals(1000.0, quality.getParameterSnapshots().get(0).getBaseValue(), 1.0e-8);
 
     ModelFixture discreteFixture = createModelFixture();
     ProcessModelSimulationEvaluator discreteEvaluator =
@@ -210,5 +214,15 @@ class ProcessModelOperatingActionTest {
     assertFalse(discreteEvaluator.evaluate(new double[] {700.0}).isSimulationConverged());
     assertEquals(1200.0, discreteFixture.feed.getFlowRate("kg/hr"), 1.0e-8,
         "an out-of-envelope discrete candidate must reject rather than clamp to a line-up");
+
+    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    ObjectOutputStream output = new ObjectOutputStream(bytes);
+    output.writeObject(discreteBinding);
+    output.close();
+    ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()));
+    ActionParameterBinding restoredBinding = (ActionParameterBinding) input.readObject();
+    input.close();
+    assertEquals("line-up", restoredBinding.getAction().getId());
+    assertArrayEquals(new double[] {800.0, 1200.0}, restoredBinding.getAllowedValues(), 0.0);
   }
 }
