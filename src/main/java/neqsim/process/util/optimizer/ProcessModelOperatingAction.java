@@ -413,6 +413,7 @@ public final class ProcessModelOperatingAction implements Serializable {
         evaluator.getParameters().get(parameterIndex);
     parameter.setAddress(address);
     parameter.setInitialValue(initialState.getValue());
+    parameter.setClampToBounds(false);
     return new ActionParameterBinding(this, parameterIndex, initialState.getValue());
   }
 
