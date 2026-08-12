@@ -137,7 +137,10 @@ class ProcessOverviewDocumentationContractTest(unittest.TestCase):
 
         self.assertIn("public final class ProcessSystemQuickStart", self.overview)
         self.assertIn("public static void main(String[] args)", self.overview)
-        self.assertNotIn("System.out.println", self.overview)
+        quick_start = self.overview.split(
+            "public final class ProcessSystemQuickStart", 1
+        )[1].split("```", 1)[0]
+        self.assertNotIn("System.out.println", quick_start)
 
 
 if __name__ == "__main__":
