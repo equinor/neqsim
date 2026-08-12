@@ -484,8 +484,7 @@ final class ColumnSolverFactory {
       // products specifically miss the active mass-balance gate.
       boolean massBalanceGateFailed = !Double.isFinite(column.getLastMassResidual())
           || column.getLastMassResidual() > column.getMassBalanceTolerance();
-      if (!fallbackApplied && !isAutoCandidateProbeMode() && !column.solved()
-          && (!accepted || massBalanceGateFailed)) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && !column.solved() && (!accepted || massBalanceGateFailed)) {
         applyDampedFallback(column, fallbackCandidate, id, "Naphtali-Sandholm did not satisfy convergence criteria",
             null);
         fallbackApplied = true;
