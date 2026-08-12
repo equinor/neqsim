@@ -133,10 +133,10 @@ boundary across areas in insertion order and rolls back areas in reverse order, 
 earlier area advanced.
 
 Coverage is quantitative: `getProcessElementCount()`, `getParticipantCount()`, and `getBlockingIssues()` distinguish
-complete participation from API presence. Duplicate registration of the same object is counted once; duplicate or
-changing state identities are rejected. Systems containing a mutable process element without the participant contract,
-or a configured recycle whose shared `RecycleController` state cannot yet be restored in place, fail before opening a
-trial.
+complete participation from API presence. Equipment-attached controllers are included even when they are not registered
+as standalone process controllers. Duplicate registration of the same object is counted once; duplicate or changing
+state identities are rejected. Systems containing a mutable process element without the participant contract, or a
+configured recycle whose shared `RecycleController` state cannot yet be restored in place, fail before opening a trial.
 
 This is an additive compatibility boundary. Legacy `runTransient(...)`, `reset()`, and
 `runTransientAdaptive(...)` retain their current behavior. Built-in equipment must adopt the participant contract

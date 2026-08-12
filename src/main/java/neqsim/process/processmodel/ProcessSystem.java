@@ -11,6 +11,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
@@ -5299,6 +5300,22 @@ public class ProcessSystem extends SimulationBaseClass {
       }
       if (seen.add(element)) {
         unique.add(element);
+      }
+    }
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      Collection<ControllerDeviceInterface> attachedControllers = unit.getControllers();
+      if (attachedControllers == null) {
+        throw new IllegalStateException(
+            "Process equipment " + describeTransientElement(unit) + " returned a null controller collection");
+      }
+      for (ControllerDeviceInterface controller : attachedControllers) {
+        if (controller == null) {
+          throw new IllegalStateException(
+              "Process equipment " + describeTransientElement(unit) + " contains a null attached controller");
+        }
+        if (seen.add(controller)) {
+          unique.add(controller);
+        }
       }
     }
     return unique;

@@ -27,7 +27,7 @@ public final class TransientTransactionCoverage implements Serializable {
   /**
    * Creates a coverage report.
    *
-   * @param processElementCount number of registered equipment, measurement devices, and controllers
+   * @param processElementCount number of unique registered elements and equipment-attached controllers
    * @param participantCount number implementing {@link TransientStateParticipant}
    * @param blockingIssues deterministic diagnostics for incomplete coverage
    */

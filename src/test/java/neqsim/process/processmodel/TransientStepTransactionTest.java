@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.Serializable;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.dynamics.EventScheduler;
 import neqsim.process.dynamics.TransientStateParticipant;
 import neqsim.process.dynamics.TransientStepIdentifier;
@@ -131,6 +132,17 @@ public class TransientStepTransactionTest extends neqsim.NeqSimTest {
     assertTrue(duplicateCoverage.getBlockingIssues().get(0).contains("is shared by"));
     assertThrows(IllegalStateException.class, duplicate::beginTransientStepTransaction);
     assertEquals(0.0, duplicate.getTime(), TOLERANCE);
+
+    StatefulTestUnit controlledUnit = new StatefulTestUnit("controlled", "controlled-state", 1.0);
+    controlledUnit.setController(new ControllerDeviceBaseClass("attached-controller"));
+    ProcessSystem attachedController = createProcess("attached-controller", controlledUnit);
+    TransientTransactionCoverage attachedCoverage = attachedController.getTransientTransactionCoverage();
+    assertEquals(2, attachedCoverage.getProcessElementCount());
+    assertEquals(1, attachedCoverage.getParticipantCount());
+    assertFalse(attachedCoverage.isComplete());
+    assertTrue(attachedCoverage.getBlockingIssues().get(0).contains("attached-controller"));
+    assertThrows(IllegalStateException.class, attachedController::beginTransientStepTransaction);
+    assertEquals(0.0, attachedController.getTime(), TOLERANCE);
   }
 
   /**
