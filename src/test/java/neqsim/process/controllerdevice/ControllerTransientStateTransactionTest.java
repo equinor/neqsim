@@ -41,7 +41,7 @@ class ControllerTransientStateTransactionTest extends neqsim.NeqSimTest {
     controller.setTransmitter(createTransmitter(60.0));
     controller.setControllerSetPoint(70.0);
     controller.setControllerParameters(9.0, 8.0, 7.0);
-    controller.setMode(ControllerMode.MANUAL);
+    controller.setMode(ControllerDeviceInterface.ControllerMode.MANUAL);
     controller.setManualOutput(11.0);
     assertEquals(1, controller.getEventLog().size());
     assertTrue(controller.hasRunTransient(stepId));
@@ -61,7 +61,7 @@ class ControllerTransientStateTransactionTest extends neqsim.NeqSimTest {
     assertEquals(2.0, controller.getKp(), 0.0);
     assertEquals(10.0, controller.getTi(), 0.0);
     assertEquals(0.5, controller.getTd(), 0.0);
-    assertEquals(ControllerMode.AUTO, controller.getMode());
+    assertEquals(ControllerDeviceInterface.ControllerMode.AUTO, controller.getMode());
 
     transmitter.getStream().setPressure(50.0, "bara");
     controller.runTransient(initialResponse, 1.0, stepId);
