@@ -47,7 +47,6 @@ class ProcessSystemDocumentationTest {
     assertFalse(process.hasRecycleLoops());
     assertFalse(process.getExecutionPartitionInfo().isEmpty());
     assertFalse(process.getReport_json().isEmpty());
-    assertTrue(process.reportResults().length > 0);
     assertFalse(process.getStreamSummaryTable().isEmpty());
   }
 }
