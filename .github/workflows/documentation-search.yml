@@ -35,6 +35,8 @@ jobs:
           bundler-cache: true
       - name: Check search source contracts
         run: python devtools/check_documentation_search.py
+      - name: Run documentation contract tests
+        run: python -m unittest discover -s docs -p "test_*.py" -v
       - name: Build documentation
         run: bundle exec jekyll build --source docs --destination _site
       - name: Verify generated search coverage
