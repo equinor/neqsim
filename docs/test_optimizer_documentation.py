@@ -77,7 +77,7 @@ class OptimizerDocumentationContractTest(unittest.TestCase):
                         .strip()
                         .replace(" ", "-")
                         for heading in re.findall(
-                            r"^#{1,6}\\s+(.+)$",
+                            r"^#{1,6}\s+(.+)$",
                             target_without_fences,
                             flags=re.MULTILINE,
                         )
