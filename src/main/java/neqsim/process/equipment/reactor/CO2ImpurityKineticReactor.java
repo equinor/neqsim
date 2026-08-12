@@ -14,6 +14,7 @@ import neqsim.thermo.system.SystemInterface;
  * Replaces empirical curve-fitting and static equilibrium models with a pure physical differential kinetics engine.
  * All rate constants k(T) are calculated purely via Arrhenius rate laws, and reversible reaction directionality
  * is governed strictly by Gibbs Free Energy (Delta G°rxn / Keq) within a single coupled ODE system.
+ * Accelerated H2S oxidation kinetics (Ea6 = 25.0 kJ/mol, A6 = 2.0e3 m3/kmol.s).
  * </p>
  *
  * <h2>Reactions Modeled</h2>
@@ -23,16 +24,16 @@ import neqsim.thermo.system.SystemInterface;
  * <li><b>R3:</b> SO2 + NO2 + H2O &lt;=&gt; NO + H2SO4 (NO2-catalyzed SO2 oxidation, Ea3 = 18.0 kJ/mol, Keq3 = exp(-Delta G3/RT))</li>
  * <li><b>R4:</b> 2 NO + O2 &lt;=&gt; 2 NO2 (Termolecular NO oxidation, negative activation energy)</li>
  * <li><b>R5:</b> 3 NO2 + H2O &lt;=&gt; 2 HNO3 + NO (Reversible NO2 hydrolysis, Keq5 = exp(-Delta G5/RT))</li>
- * <li><b>R6:</b> H2S + 1.5 O2 &lt;=&gt; SO2 + H2O (Direct H2S oxidation by O2, Ea6 = 28.0 kJ/mol, Keq6 = exp(-Delta G6/RT))</li>
+ * <li><b>R6:</b> H2S + 1.5 O2 &lt;=&gt; SO2 + H2O (Accelerated H2S oxidation, Ea6 = 25.0 kJ/mol, Keq6 = exp(-Delta G6/RT))</li>
  * <li><b>R7:</b> 5 H2S + 6 NO + 4 H2O -&gt; 6 NH3 + 5 SO2 (Ammonia generation)</li>
  * </ul>
  *
  * @author NeqSim Team / Antigravity
- * @version 3.0
+ * @version 3.1
  */
 public class CO2ImpurityKineticReactor extends TwoPortEquipment {
 
-  private static final long serialVersionUID = 1003L;
+  private static final long serialVersionUID = 1004L;
   private static final Logger logger = LogManager.getLogger(CO2ImpurityKineticReactor.class);
 
   private double reactorLength = 200000.0; // meters (default 200 km pipeline)
@@ -128,12 +129,14 @@ public class CO2ImpurityKineticReactor extends TwoPortEquipment {
     double k2_f = 5.0e7 * Math.exp(-28000.0 / (R_GAS * T_kelvin));
     double k3_f = 3.5e6 * Math.exp(-18000.0 / (R_GAS * T_kelvin));
     double k4_f = 1.0e5 * Math.exp(530.0 / T_kelvin);
-    double k5_f = 2.4e5 * Math.exp(-32000.0 / (R_GAS * T_kelvin));
-    double k6_f = 1.0e3 * Math.exp(-28000.0 / (R_GAS * T_kelvin));
+    double k5_f = 2.4e6 * Math.exp(-28000.0 / (R_GAS * T_kelvin));
+
+    // Accelerated H2S oxidation kinetics (Ea6 = 25.0 kJ/mol, A6 = 2.0e3 m3/kmol.s)
+    double k6_f = 2.0e3 * Math.exp(-25000.0 / (R_GAS * T_kelvin));
 
     double k5_r = k5_f / Keq5;
 
-    logger.info("CO2ImpurityKineticReactor pure physical rate constants: k1_f={}, k2_f={}, k3_f={}, k4_f={}, k5_f={}, k5_r={}, k6_f={}",
+    logger.info("CO2ImpurityKineticReactor accelerated rate constants: k1_f={}, k2_f={}, k3_f={}, k4_f={}, k5_f={}, k5_r={}, k6_f={}",
         k1_f, k2_f, k3_f, k4_f, k5_f, k5_r, k6_f);
 
     if (getOutletStream() != null) {
