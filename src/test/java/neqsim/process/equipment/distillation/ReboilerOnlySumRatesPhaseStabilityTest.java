@@ -266,12 +266,14 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
     } else {
       assertFalse(testCase.column.wasNaphtaliSandholmWarmStateReused(),
           "a damped fallback state must not be cached as a Naphtali-Sandholm state");
+      assertTrue(testCase.column.wasSequentialWarmStateReused(),
+          "an unchanged coordinated damped fallback should reuse its accepted sequential state");
+      assertEquals(0, testCase.column.getLastIterationCount(),
+          "exact coordinated-fallback reuse should require no initializer or solver iteration");
       assertTrue(testCase.column.getLastNaphtaliThermoEvaluationCount() > 0,
-          "a repeat after damped fallback must execute the simultaneous solver rather than report exact reuse");
-      assertEquals(coldGasFlow, testCase.column.getGasOutStream().getFlowRate("kg/hr"),
-          Math.max(1.0e-6, Math.abs(coldGasFlow) * 1.0e-5));
-      assertEquals(coldLiquidFlow, testCase.column.getLiquidOutStream().getFlowRate("kg/hr"),
-          Math.max(1.0e-6, Math.abs(coldLiquidFlow) * 1.0e-5));
+          "exact fallback reuse must retain work from the rejected Naphtali-Sandholm attempt");
+      assertEquals(coldGasFlow, testCase.column.getGasOutStream().getFlowRate("kg/hr"), 0.0);
+      assertEquals(coldLiquidFlow, testCase.column.getLiquidOutStream().getFlowRate("kg/hr"), 0.0);
     }
 
     testCase.gasFeed.setTemperature(314.15, "K");
