@@ -2911,6 +2911,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       reuseNaphtaliSandholmWarmState(id, startTime);
       return true;
     }
+    if (lastSolverTypeUsed == SolverType.DAMPED_SUBSTITUTION && hasSequentialExactReuseState) {
+      long sequentialInputSignature = calculateSequentialExactReuseSignature();
+      if (canReuseSequentialWarmState(sequentialInputSignature)) {
+        reuseSequentialWarmState(id, startTime);
+        return true;
+      }
+      hasSequentialExactReuseState = false;
+    }
 
     Map<Integer, List<SystemInterface>> originalFeedSystems = new java.util.HashMap<>();
     Map<Integer, List<Double>> originalFeedFlowRates = new java.util.HashMap<>();
