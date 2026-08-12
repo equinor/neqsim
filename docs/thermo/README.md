@@ -68,7 +68,7 @@ thermo/
 - [Adsorption Isotherm Models](adsorption_isotherms.md): **Complete reference** for all adsorption isotherm models — Langmuir, Extended Langmuir, BET, Freundlich, Sips, DRA potential theory, capillary condensation, and the parameter database.
 - [PVT and Fluid Characterization](pvt_fluid_characterization.md): Building realistic fluid descriptions, including heavy-end handling and lab-data reconciliation.
 - [Thermodynamic Operations](thermodynamic_operations.md): Flash calculations, phase envelopes, and other process-centric operations.
-- [Physical Properties](physical_properties.md): Density, viscosity, surface tension, and transport-property calculations.
+- [Physical Properties](physical_properties.md): Thermodynamic/transport API boundaries and links to the maintained [physical-properties package guide](../physical_properties/README.md).
 - [Attainable Metastability — Volume Balancing Method](attainable_metastability.md): **Superheat / pressure-undershoot limit of a rapidly depressurising liquid** (Log, 2025). Rarefaction-outflow vs. Plesset-Zwick bubble-growth balance, the `n_bub` tuning parameter, and a CO₂ blowdown example.
 
 ---

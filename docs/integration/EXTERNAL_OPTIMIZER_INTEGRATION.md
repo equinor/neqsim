@@ -537,6 +537,117 @@ feasibility separately, test nearby operating points, and reject or qualify sens
 cross equipment/control regimes. An infeasible perturbation is retained as evidence rather than
 silently invalidating a constraint-margin derivative.
 
+Use an explicit qualification policy before passing local derivatives into a bottleneck or
+operating-action workflow:
+
+```python
+Policy = (
+    jneqsim.process.util.optimizer.ProcessModelSimulationEvaluator
+    .SensitivityQualificationPolicy
+)
+
+# Requires a feasible base and feasible perturbations. One-sided bounded stencils are allowed.
+strict_policy = Policy.strict(0.05)
+assessments = quality_result.assessConstraintSensitivities(strict_policy)
+
+for assessment in assessments:
+    print(
+        assessment.getConstraint().getName(),
+        assessment.getParameter().getName(),
+        assessment.getRawObjectiveDerivative(),
+        assessment.getRawObjectiveDerivativeUnit(),
+        assessment.getMarginDerivative(),
+        assessment.getMarginDerivativeUnit(),
+        assessment.isAccepted(),
+        list(assessment.getEvidenceFlags()),
+        list(assessment.getRejectionReasons()),
+        list(assessment.getDiagnostics()),
+    )
+
+accepted = quality_result.getAcceptedConstraintSensitivities(strict_policy)
+```
+
+Qualification performs no additional process evaluations. Every assessment binds one constraint
+row and parameter column to the immutable snapshots, reports both raw and minimizer-convention
+objective derivatives, and retains the exact stencil plus objective and constraint coarse/fine
+disagreements. Convergence failures, evaluation errors, non-finite derivatives, unstable
+refinement, and fixed parameters always reject a pair. The policy explicitly controls whether
+base or perturbation infeasibility and one-sided stencils reject it. Even when allowed, these
+conditions remain visible in `getEvidenceFlags()` and the diagnostics.
+
+`Policy.numericalOnly(tolerance)` is useful for diagnosing a violated or boundary-crossing case,
+but acceptance under that policy is numerical evidence only. It is not engineering approval.
+Results remain in declared units and are intentionally not ranked across constraints. Explicit
+scaling, regime validation, active-set logic, and optimizer-specific KKT evidence are separate
+requirements.
+
+Use explicit engineering references before comparing dimensionless margins or exposing a
+candidate-active set:
+
+```python
+import jpype
+
+Analyzer = jneqsim.process.util.optimizer.ConstraintActivityAnalyzer
+ArrayList = jpype.JClass("java.util.ArrayList")
+
+reference_by_name = {
+    # Values are positive and use each constraint's declared unit.
+    "export compressor power": (12_000.0, "installed motor rating"),
+    "gas export nomination": (1_000_000.0, "daily nomination basis"),
+}
+
+scales = ArrayList()
+for constraint in quality_result.getConstraintSnapshots():
+    reference, provenance = reference_by_name[str(constraint.getName())]
+    scales.add(
+        Analyzer.ConstraintScale.fromSnapshot(
+            constraint,
+            reference,
+            provenance,
+        )
+    )
+
+activity_policy = Analyzer.ActivityPolicy.hardConstraints(
+    0.05,  # candidate active when 0 <= normalized margin <= 5% of its reference
+    strict_policy,
+)
+activity = Analyzer.assess(
+    quality_result,
+    scales,
+    activity_policy,
+)
+
+for item in activity:
+    print(
+        item.getConstraint().getName(),
+        item.getScale().getReferenceValue(),
+        item.getScale().getUnit(),
+        item.getScale().getProvenance(),
+        item.getNormalizedMargin(),
+        item.getStatus(),
+        list(item.getDiagnostics()),
+    )
+    for derivative in item.getSensitivities():
+        print(
+            derivative.getSensitivityAssessment().getParameter().getName(),
+            derivative.getNormalizedMarginDerivative(),
+            derivative.getNormalizedMarginDerivativeUnit(),
+            derivative.isUsable(),
+            list(derivative.getRejectionReasons()),
+        )
+
+candidate_active = Analyzer.getCandidateActiveConstraints(activity)
+violated = Analyzer.getViolatedConstraints(activity)
+```
+
+Scales may be supplied in any order, but exactly one identity-matched scale is required for every
+constraint and results remain in registration order. A stale scale fails if type, bounds,
+hardness, penalty or capacity origin changed. Soft constraints are excluded unless the policy
+explicitly includes them. A normalized derivative remains auditable even when rejected; require
+`isUsable()` before consuming it. Keep violated constraints separate from feasible
+`CANDIDATE_ACTIVE` constraints, and never interpret the candidate set as optimizer KKT evidence or
+rank economic value without an optimizer-specific solution and objective scaling.
+
 ### Export Problem Definition
 
 ```python
@@ -693,6 +804,11 @@ jpype.shutdownJVM()
 |--------|-------------|
 | `estimateSensitivitiesWithQuality(double[] x)` | Primary-objective fine-step gradient and constraint-margin Jacobian, plus immutable parameter/objective/constraint identity, base values, capacity origin, perturbation convergence, feasibility, and step-halving evidence |
 | `estimateSensitivitiesWithQuality(double[] x, int objectiveIndex)` | The same evidence for the selected registered objective |
+| `SensitivityQualityResult.assessConstraintSensitivities(policy)` | Immutable evidence and acceptance/rejection diagnostics for every constraint/parameter pair; performs no process evaluations |
+| `SensitivityQualityResult.getAcceptedConstraintSensitivities(policy)` | Accepted local pairs only; inspect the full assessment list to retain rejected evidence |
+| `ConstraintActivityAnalyzer.ConstraintScale.fromSnapshot(...)` | Positive identity-bound constraint reference with declared unit and provenance |
+| `ConstraintActivityAnalyzer.assess(result, scales, policy)` | Dimensionless margins, normalized local margin sensitivities and conservative activity diagnostics without process evaluations |
+| `getCandidateActiveConstraints(...)` / `getViolatedConstraints(...)` | Registration-ordered feasible-near-boundary and violated subsets; neither is optimizer KKT evidence |
 
 The sensitivity-quality methods belong to `ProcessModelSimulationEvaluator`; they are not methods
 on `ProcessSimulationEvaluator`.

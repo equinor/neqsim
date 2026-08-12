@@ -381,10 +381,15 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
       }
       totSplit += splitFactor[i];
     }
-    if (Math.abs(totSplit - 1.0) > 1e-10) {
-      logger.debug("total split factor different from 0 in splitter - totsplit = " + totSplit);
-      logger.debug("setting first split to = " + (1.0 - totSplit));
-      splitFactor[0] = 1.0 - totSplit;
+    if (!Double.isFinite(totSplit) || totSplit <= 0.0) {
+      logger.debug("total split factor is not positive and finite in splitter - totsplit = " + totSplit);
+      Arrays.fill(splitFactor, 0.0);
+      splitFactor[0] = 1.0;
+    } else if (Math.abs(totSplit - 1.0) > 1e-10) {
+      logger.debug("total split factor different from 1.0 in splitter - totsplit = " + totSplit);
+      for (int i = 0; i < splitNumber; i++) {
+        splitFactor[i] /= totSplit;
+      }
     }
 
     for (int i = 0; i < splitNumber; i++) {

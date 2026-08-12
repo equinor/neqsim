@@ -449,6 +449,28 @@ margins. This avoids joining archived matrices back to mutable evaluator definit
 snapshots preserve raw units; normalize only with declared engineering scales before comparing
 unlike constraints.
 
+Before using those derivatives in local bottleneck or operating-action logic, construct a
+`SensitivityQualificationPolicy` and call `assessConstraintSensitivities(policy)`. Each immutable
+constraint/parameter assessment retains raw and minimizer objective derivatives, the margin
+derivative, declared derivative units, stencil, pair-specific coarse/fine disagreements, complete
+evidence flags, rejection reasons, and actionable diagnostics. Convergence failures, errors,
+non-finite derivatives, unstable refinement, and fixed parameters always reject a pair; policy
+controls whether infeasible samples or one-sided stencils are permitted. Permitted cautions remain
+flagged. `getAcceptedConstraintSensitivities(policy)` filters accepted pairs without rerunning the
+model. This is local numerical qualification, not constraint scaling, ranking, active-set
+inference, a KKT multiplier, or a shadow price.
+
+After qualifying the raw local derivatives, use `ConstraintActivityAnalyzer` only when every
+constraint has an explicit positive reference value in its declared unit and recorded provenance.
+`ConstraintScale.fromSnapshot(...)` binds that reference to the exact constraint identity,
+including type, bounds, hard/soft semantics, penalty and capacity origin. An `ActivityPolicy`
+retains both the normalized-margin tolerance and the sensitivity qualification policy.
+`assess(...)` reports dimensionless base margins, scaled margin derivatives, violated constraints,
+and conservative `CANDIDATE_ACTIVE` / `INACTIVE` diagnostics without rerunning the model. Missing,
+duplicate, unitless or stale scales fail closed. Candidate active means only that a feasible local
+margin is within the declared tolerance; it is not an optimizer active-set proof, ranking, KKT
+multiplier, economic shadow price or engineering approval.
+
 ### ProcessOptimizationEngine Algorithms
 
 ```java

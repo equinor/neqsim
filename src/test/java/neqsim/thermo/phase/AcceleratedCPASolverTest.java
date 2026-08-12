@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
 import neqsim.process.equipment.heatexchanger.Heater;
@@ -28,6 +29,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * @author Even Solbraa
  */
+@Tag("slow")
 public class AcceleratedCPASolverTest {
   private static final Logger logger = LogManager.getLogger(AcceleratedCPASolverTest.class);
 

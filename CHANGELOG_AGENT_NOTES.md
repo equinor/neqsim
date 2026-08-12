@@ -9,6 +9,38 @@
 
 ---
 
+## 2026-08-12 — Explicit constraint scaling and candidate-active diagnostics
+
+- `ConstraintActivityAnalyzer` consumes an immutable `SensitivityQualityResult` and performs no
+  process evaluations. It reports dimensionless base margins, normalized constraint-margin
+  derivatives, violations and conservative candidate-active/inactive classifications.
+- Every `ConstraintScale` is positive, uses the constraint's declared unit, records provenance and
+  is bound to exact immutable identity: index, name, type, bounds/tolerance, hard/soft semantics,
+  penalty and capacity origin. Missing, duplicate, unitless or stale scales fail closed.
+- `ActivityPolicy` retains the dimensionless activity tolerance, local sensitivity qualification
+  policy and soft-constraint choice. Assessments and policies are immutable and serializable for
+  Java and JPype/Python workflows.
+- A scaled derivative remains linked to its complete raw evidence and must pass `isUsable()` before
+  consumption. `CANDIDATE_ACTIVE` is only a feasible near-boundary diagnostic—not cross-unit
+  ranking, optimizer active-set proof, a KKT multiplier, economic shadow price or engineering
+  approval.
+
+## 2026-08-11 — Evidence-qualified local ProcessModel constraint sensitivities
+
+- `SensitivityQualityResult.assessConstraintSensitivities(policy)` now binds each constraint row
+  and parameter column to pair-specific numerical evidence, immutable engineering identity, raw
+  and minimizer objective derivatives, the constraint-margin derivative, declared derivative
+  units, and actionable diagnostics without rerunning the process model.
+- `SensitivityQualificationPolicy` explicitly controls relative-disagreement tolerance, base and
+  perturbation feasibility requirements, and acceptance of one-sided stencils. Convergence
+  failures, evaluation errors, non-finite derivatives, unstable refinement, and fixed parameters
+  always reject a pair.
+- `getEvidenceFlags()` retains cautions even when a policy permits them;
+  `getRejectionReasons()` explains why a pair is refused. The accepted-only convenience getter
+  must not replace archiving the complete assessment when auditability matters.
+- The API deliberately performs no cross-unit ranking, scaling, active-set inference, KKT
+  multiplier calculation, shadow-price claim, or engineering approval.
+
 ## 2026-08-11 — Self-describing ProcessModel sensitivity snapshots
 
 - `SensitivityQualityResult` now includes immutable parameter, selected-objective, and constraint

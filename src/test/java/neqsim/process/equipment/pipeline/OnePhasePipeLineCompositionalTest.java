@@ -6,6 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -140,6 +143,35 @@ public class OnePhasePipeLineCompositionalTest {
     int nitrogen = componentIndex(latest, "nitrogen");
     assertArrayEquals(latest.getMassFractionProfile()[nitrogen], pipe.getConservativeMassFractionProfile("nitrogen"),
         0.0);
+    assertLocalInventoryInvariants(latest);
+    assertArrayEquals(latest.getFinalCellInventoryKg(), pipe.getConservativeCellInventoryKg(), 0.0);
+    assertArrayEquals(latest.getFinalComponentCellInventoryKg()[nitrogen],
+        pipe.getConservativeComponentInventoryProfileKg("NITROGEN"), 0.0);
+    assertEquals(pipe.getConvergenceReport().getFinalFiniteVolumeMassKg(), sum(latest.getFinalCellInventoryKg()),
+        Math.max(pipe.getConvergenceReport().getFinalFiniteVolumeMassKg(), 1.0) * 1.0e-8);
+
+    double[] cellInventoryCopy = latest.getFinalCellInventoryKg();
+    double originalFirstCellInventory = cellInventoryCopy[0];
+    cellInventoryCopy[0] = -1.0;
+    assertEquals(originalFirstCellInventory, latest.getFinalCellInventoryKg()[0], 0.0);
+    double[][] componentInventoryCopy = latest.getFinalComponentCellInventoryKg();
+    double originalFirstComponentInventory = componentInventoryCopy[0][0];
+    componentInventoryCopy[0][0] = -1.0;
+    assertEquals(originalFirstComponentInventory, latest.getFinalComponentCellInventoryKg()[0][0], 0.0);
+
+    String reportJson = latest.toJson();
+    assertTrue(reportJson.contains("\"finalCellInventoryKg\""));
+    assertTrue(reportJson.contains("\"finalComponentCellInventoryKg\""));
+    Gson gson = new Gson();
+    JsonObject reportJsonObject = JsonParser.parseString(reportJson).getAsJsonObject();
+    double[] restoredCellInventory = gson.fromJson(reportJsonObject.get("finalCellInventoryKg"), double[].class);
+    double[][] restoredComponentCellInventory = gson.fromJson(reportJsonObject.get("finalComponentCellInventoryKg"),
+        double[][].class);
+    assertArrayEquals(latest.getFinalCellInventoryKg(), restoredCellInventory, 0.0);
+    for (int component = 0; component < latest.getComponentNames().length; component++) {
+      assertArrayEquals(latest.getFinalComponentCellInventoryKg()[component], restoredComponentCellInventory[component],
+          0.0);
+    }
     assertTrue(history.toJson().contains("\"elapsedTimeSeconds\""));
   }
 
@@ -256,15 +288,24 @@ public class OnePhasePipeLineCompositionalTest {
     OnePhasePipeLine deterministicPipe = runCoupledEvent(60.0);
     OnePhaseSpeciesConservationReport deterministicReport = deterministicPipe.getSpeciesConservationReport();
     assertArrayEquals(finalReport.getFinalInventoryKg(), deterministicReport.getFinalInventoryKg(), 1.0e-12);
+    assertArrayEquals(finalReport.getFinalCellInventoryKg(), deterministicReport.getFinalCellInventoryKg(), 0.0);
+    assertLocalInventoryInvariants(deterministicReport);
     for (int component = 0; component < finalReport.getComponentNames().length; component++) {
       assertArrayEquals(finalReport.getMassFractionProfile()[component],
           deterministicReport.getMassFractionProfile()[component], 1.0e-12);
+      assertArrayEquals(finalReport.getFinalComponentCellInventoryKg()[component],
+          deterministicReport.getFinalComponentCellInventoryKg()[component], 0.0);
     }
     assertArrayEquals(pipe.getPressureProfile("bara"), deterministicPipe.getPressureProfile("bara"), 1.0e-12);
     assertArrayEquals(pipe.getVelocityProfile(), deterministicPipe.getVelocityProfile(), 1.0e-12);
 
     OnePhasePipeLine halfTimeStepPipe = runCoupledEvent(30.0);
     OnePhaseSpeciesConservationHistory halfTimeStepHistory = halfTimeStepPipe.getSpeciesConservationHistory();
+    OnePhaseSpeciesConservationReport halfTimeStepReport = halfTimeStepPipe.getSpeciesConservationReport();
+    assertLocalInventoryInvariants(halfTimeStepReport);
+    assertEquals(halfTimeStepPipe.getConvergenceReport().getFinalFiniteVolumeMassKg(),
+        sum(halfTimeStepReport.getFinalCellInventoryKg()),
+        Math.max(halfTimeStepPipe.getConvergenceReport().getFinalFiniteVolumeMassKg(), 1.0) * 1.0e-8);
     double halfTimeStepPulseOutlet = last(halfTimeStepHistory.getReport(59).getMassFractionProfile()[nitrogen]);
     assertEquals(pulseOutlet, halfTimeStepPulseOutlet, 1.0e-3,
         "Halving the timestep must not materially change pulse breakthrough.");
@@ -655,6 +696,34 @@ public class OnePhasePipeLineCompositionalTest {
     assertTrue(report.getMinimumMassFraction() >= 0.0, report.getMessage());
     assertTrue(report.getMaximumMassFraction() <= 1.0, report.getMessage());
     assertTrue(report.getMaximumMassFractionSumError() <= 1.0e-12, report.getMessage());
+  }
+
+  private static void assertLocalInventoryInvariants(OnePhaseSpeciesConservationReport report) {
+    double[] cellInventoryKg = report.getFinalCellInventoryKg();
+    double[][] componentCellInventoryKg = report.getFinalComponentCellInventoryKg();
+    double[][] massFraction = report.getMassFractionProfile();
+    assertTrue(cellInventoryKg.length > 0);
+    assertEquals(report.getComponentNames().length, componentCellInventoryKg.length);
+    assertEquals(report.getComponentNames().length, massFraction.length);
+
+    for (int cell = 0; cell < cellInventoryKg.length; cell++) {
+      assertTrue(Double.isFinite(cellInventoryKg[cell]) && cellInventoryKg[cell] > 0.0);
+      double componentSumKg = 0.0;
+      for (int component = 0; component < componentCellInventoryKg.length; component++) {
+        assertEquals(cellInventoryKg.length, componentCellInventoryKg[component].length);
+        assertTrue(Double.isFinite(componentCellInventoryKg[component][cell]));
+        assertTrue(componentCellInventoryKg[component][cell] >= 0.0);
+        componentSumKg += componentCellInventoryKg[component][cell];
+        assertEquals(massFraction[component][cell], componentCellInventoryKg[component][cell] / cellInventoryKg[cell],
+            1.0e-12);
+      }
+      assertEquals(cellInventoryKg[cell], componentSumKg, Math.max(cellInventoryKg[cell], 1.0) * 1.0e-12);
+    }
+
+    for (int component = 0; component < componentCellInventoryKg.length; component++) {
+      assertEquals(report.getFinalInventoryKg()[component], sum(componentCellInventoryKg[component]),
+          Math.max(report.getFinalInventoryKg()[component], 1.0) * 1.0e-12);
+    }
   }
 
   private static void assertPositiveFiniteState(OnePhasePipeLine pipe) {

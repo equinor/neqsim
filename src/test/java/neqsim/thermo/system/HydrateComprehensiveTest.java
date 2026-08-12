@@ -15,6 +15,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author ESOL
  * @version 1.0
  */
+@Tag("slow")
 public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
   private static final Logger logger = LogManager.getLogger(HydrateComprehensiveTest.class);
 

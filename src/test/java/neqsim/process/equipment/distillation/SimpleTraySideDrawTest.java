@@ -8,11 +8,12 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
-import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Tests vapor and liquid side-draw split handling on distillation trays and columns.
@@ -20,6 +21,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author esol
  * @version 1.0
  */
+@Tag("slow")
 public class SimpleTraySideDrawTest {
 
   /** Column whose copied candidates can be forced to fail before solver telemetry is reset. */

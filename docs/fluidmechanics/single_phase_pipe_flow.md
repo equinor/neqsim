@@ -361,6 +361,9 @@ pipeline.runConservativeTransient(new double[] {0.0, 1800.0, 5400.0},
     new SystemInterface[] {pulseGas, baselineGas}, 60, UUID.randomUUID());
 
 double[] nitrogenMassFractionProfile = pipeline.getConservativeMassFractionProfile("nitrogen");
+double[] totalLinepackByCellKg = pipeline.getConservativeCellInventoryKg();
+double[] nitrogenLinepackByCellKg =
+    pipeline.getConservativeComponentInventoryProfileKg("nitrogen");
 String pythonReadyHistoryJson = pipeline.getSpeciesConservationHistory().toJson();
 ```
 
@@ -371,10 +374,16 @@ For the conservative path, that scheduled mass rate is imposed at the authoritat
 inlet face as $v_{in}=\dot m/(A\rho_{EOS})$, using the same inlet EOS density as the continuity
 matrix. A simultaneous composition/rate event therefore preserves the requested integrated inlet
 mass in each accepted-step report. Solver type `1` preserves the initialized temperature profile;
-this path does not yet solve a dynamic energy equation. The authoritative component profiles and
-outlet accessor are mass fractions; the existing `getOutletMoleFraction(...)` remains explicitly
-molar. Python/JPype callers can pass `JArray(JDouble)` and `JArray(SystemInterface)` and read the
-same report/history objects directly.
+this path does not yet solve a dynamic energy equation. The authoritative component profiles and outlet accessor are mass fractions; the existing
+`getOutletMoleFraction(...)` remains explicitly molar. The local linepack accessors return kg for
+physical finite-volume cells in inlet-to-outlet order and exclude boundary nodes. Total cell
+inventory is retained directly from the accepted hydraulic finite-volume state; component-cell
+inventory is that total multiplied by the conservative component mass fraction. Both arrays are
+also serialized as `finalCellInventoryKg` and `finalComponentCellInventoryKg` in stable report
+JSON. Python/JPype callers can pass `JArray(JDouble)` and `JArray(SystemInterface)` and read the
+same report/history objects directly. Full accepted-step history remains opt-in because retaining
+a cell-by-component matrix for every step increases memory in proportion to components, cells,
+and accepted steps.
 `runTransient(dt, id)` also selects type `1` when conservative mode is enabled. When
 `setStoreSpeciesConservationHistory(true)` is enabled, it retains every internal accepted step from
 that call. Legacy `setCompositionalTracking(true)` still selects type `20` for compatibility and
@@ -419,7 +428,8 @@ yet establish event replay after `ProcessSystem.reset()`, dynamic energy transpo
 appearance, or zero/reversed-flow support.
 
 `OnePhaseSpeciesConservationReport` exposes component names, physical-cell mass-fraction profiles,
-initial/final component inventories, integrated inlet/outlet component masses, absolute and
+final total and component inventories by physical cell, initial/final global component inventories,
+integrated inlet/outlet component masses, absolute and
 relative inventory residuals, boundedness and sum-to-one diagnostics, thermodynamic
 synchronization error, hydraulic/species residual histories, and a per-step
 `SpeciesTransportDiagnostics` object. The diagnostic records the selected method, full-step local

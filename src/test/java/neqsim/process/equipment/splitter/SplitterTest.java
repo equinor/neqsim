@@ -75,6 +75,38 @@ class SplitterTest {
   }
 
   @Test
+  void testRunRenormalizesExternallyMutatedSplitFactors() {
+    Splitter splitter = new Splitter("splitter", inletStream, 2);
+    splitter.setSplitFactors(new double[] { 0.6, 0.4 });
+
+    double[] splitFactors = splitter.getSplitFactors();
+    splitFactors[0] = 0.9;
+    splitFactors[1] = 0.6;
+    splitter.run();
+
+    assertEquals(0.6, splitter.getSplitFactor(0), 1e-10);
+    assertEquals(0.4, splitter.getSplitFactor(1), 1e-10);
+    double inletMoles = inletStream.getThermoSystem().getTotalNumberOfMoles();
+    double outletMoles = splitter.getSplitStream(0).getThermoSystem().getTotalNumberOfMoles()
+        + splitter.getSplitStream(1).getThermoSystem().getTotalNumberOfMoles();
+    assertEquals(inletMoles, outletMoles, inletMoles * 1e-4);
+  }
+
+  @Test
+  void testRunHandlesZeroTotalSplitFactors() {
+    Splitter splitter = new Splitter("splitter", inletStream, 2);
+    splitter.setSplitFactors(new double[] { 0.0, 0.0 });
+    splitter.run();
+
+    assertEquals(1.0, splitter.getSplitFactor(0), 1e-10);
+    assertEquals(0.0, splitter.getSplitFactor(1), 1e-10);
+    double inletMoles = inletStream.getThermoSystem().getTotalNumberOfMoles();
+    double outletMoles = splitter.getSplitStream(0).getThermoSystem().getTotalNumberOfMoles()
+        + splitter.getSplitStream(1).getThermoSystem().getTotalNumberOfMoles();
+    assertEquals(inletMoles, outletMoles, inletMoles * 1e-4);
+  }
+
+  @Test
   void testNegativeSplitFactorsClampedToZero() {
     Splitter splitter = new Splitter("splitter", inletStream, 2);
     splitter.setSplitFactors(new double[] { -0.5, 1.5 });

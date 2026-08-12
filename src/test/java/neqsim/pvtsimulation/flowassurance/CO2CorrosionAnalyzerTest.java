@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 /**
  * Tests for CO2CorrosionAnalyzer — coupled electrolyte CPA flash and de Waard-Milliams corrosion model.
  */
+@Tag("slow")
 public class CO2CorrosionAnalyzerTest {
   @Tag("slow")
   @Test
