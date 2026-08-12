@@ -182,8 +182,12 @@ class ProcessModelOperatingActionTest {
     assertEquals(1000.0, continuousBinding.getInitialValue(), 1.0e-8);
     assertEquals("wells::feed.flowRate",
         continuousEvaluator.getParameters().get(0).getAddress());
+    assertFalse(continuousEvaluator.getParameters().get(0).isClampToBounds());
     assertTrue(continuousEvaluator.evaluate(new double[] {1300.0}).isSimulationConverged());
     assertEquals(1300.0, continuousFixture.feed.getFlowRate("kg/hr"), 1.0e-8);
+    assertFalse(continuousEvaluator.evaluate(new double[] {1600.0}).isSimulationConverged());
+    assertEquals(1300.0, continuousFixture.feed.getFlowRate("kg/hr"), 1.0e-8,
+        "a strict continuous action must reject rather than clamp an out-of-bounds candidate");
 
     ModelFixture discreteFixture = createModelFixture();
     ProcessModelSimulationEvaluator discreteEvaluator =
@@ -203,5 +207,8 @@ class ProcessModelOperatingActionTest {
     assertNotNull(rejected.getErrorMessage());
     assertEquals(1200.0, discreteFixture.feed.getFlowRate("kg/hr"), 1.0e-8,
         "a rejected discrete candidate must leave the previous verified value unchanged");
+    assertFalse(discreteEvaluator.evaluate(new double[] {700.0}).isSimulationConverged());
+    assertEquals(1200.0, discreteFixture.feed.getFlowRate("kg/hr"), 1.0e-8,
+        "an out-of-envelope discrete candidate must reject rather than clamp to a line-up");
   }
 }
