@@ -138,11 +138,10 @@ class ProcessModelSimulationEvaluatorTest {
     assertTrue(evaluator.getParameters().get(0).isClampToBounds(),
         "ordinary parameters must retain legacy clamping by default");
 
-    ProcessModelSimulationEvaluator.EvaluationResult clamped =
-        evaluator.evaluate(new double[] {25000.0});
+    ProcessModelSimulationEvaluator.EvaluationResult clamped = evaluator.evaluate(new double[] { 25000.0 });
     assertTrue(clamped.isSimulationConverged());
-    assertEquals(20000.0, fixture.model.getVariableValue("wells::feed.flowRate", "kg/hr"),
-        1.0e-6, "ordinary parameters must retain their historical bound clamping");
+    assertEquals(20000.0, fixture.model.getVariableValue("wells::feed.flowRate", "kg/hr"), 1.0e-6,
+        "ordinary parameters must retain their historical bound clamping");
   }
 
   /**
