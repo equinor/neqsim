@@ -12,17 +12,16 @@ import neqsim.process.processmodel.ProcessModel;
  * Immutable definition of one simulator-bound operating action for a {@link ProcessModel}.
  *
  * <p>
- * An action retains stable identity, an area-qualified automation address, unit, provenance, and
- * either continuous bounds or an exact enumerated discrete domain. Candidate application uses
+ * An action retains stable identity, an area-qualified automation address, unit, provenance, and either continuous
+ * bounds or an exact enumerated discrete domain. Candidate application uses
  * {@link ProcessModel#getVariableValue(String, String)} and
- * {@link ProcessModel#setVariableValue(String, double, String)} so the action remains attached to
- * the existing process-automation architecture. This class does not run the model or infer that a
- * candidate is feasible.
+ * {@link ProcessModel#setVariableValue(String, double, String)} so the action remains attached to the existing
+ * process-automation architecture. This class does not run the model or infer that a candidate is feasible.
  * </p>
  *
  * <p>
- * State capture and restoration are explicit. A captured state is bound to the complete action
- * identity and cannot be restored through a different or subsequently changed definition.
+ * State capture and restoration are explicit. A captured state is bound to the complete action identity and cannot be
+ * restored through a different or subsequently changed definition.
  * </p>
  *
  * @author NeqSim Development Team
@@ -83,9 +82,8 @@ public final class ProcessModelOperatingAction implements Serializable {
    * @param upperBound inclusive upper bound
    * @param allowedValues exact allowed discrete values
    */
-  private ProcessModelOperatingAction(String id, String name, String address, String unit,
-      String provenance, ValueSemantics valueSemantics, double lowerBound, double upperBound,
-      double[] allowedValues) {
+  private ProcessModelOperatingAction(String id, String name, String address, String unit, String provenance,
+      ValueSemantics valueSemantics, double lowerBound, double upperBound, double[] allowedValues) {
     this.id = requireText(id, "Operating-action id");
     this.name = requireText(name, "Operating-action name");
     this.address = requireText(address, "Operating-action address");
@@ -94,8 +92,7 @@ public final class ProcessModelOperatingAction implements Serializable {
     if (valueSemantics == null) {
       throw new IllegalArgumentException("Operating-action value semantics must not be null");
     }
-    if (!Double.isFinite(lowerBound) || !Double.isFinite(upperBound)
-        || lowerBound > upperBound) {
+    if (!Double.isFinite(lowerBound) || !Double.isFinite(upperBound) || lowerBound > upperBound) {
       throw new IllegalArgumentException("Operating-action bounds must be finite and ordered");
     }
     this.valueSemantics = valueSemantics;
@@ -116,18 +113,18 @@ public final class ProcessModelOperatingAction implements Serializable {
    * @param provenance source of the declared bounds
    * @return immutable continuous action
    */
-  public static ProcessModelOperatingAction continuous(String id, String name, String address,
-      double lowerBound, double upperBound, String unit, String provenance) {
-    return new ProcessModelOperatingAction(id, name, address, unit, provenance,
-        ValueSemantics.CONTINUOUS, lowerBound, upperBound, new double[0]);
+  public static ProcessModelOperatingAction continuous(String id, String name, String address, double lowerBound,
+      double upperBound, String unit, String provenance) {
+    return new ProcessModelOperatingAction(id, name, address, unit, provenance, ValueSemantics.CONTINUOUS, lowerBound,
+        upperBound, new double[0]);
   }
 
   /**
    * Creates an enumerated discrete action.
    *
    * <p>
-   * Values retain declaration order for deterministic external enumeration. Duplicates, non-finite
-   * values, and interpolation between allowed values are rejected.
+   * Values retain declaration order for deterministic external enumeration. Duplicates, non-finite values, and
+   * interpolation between allowed values are rejected.
    * </p>
    *
    * @param id stable machine-readable identifier
@@ -138,8 +135,8 @@ public final class ProcessModelOperatingAction implements Serializable {
    * @param provenance source of the allowed values
    * @return immutable discrete action
    */
-  public static ProcessModelOperatingAction discrete(String id, String name, String address,
-      double[] allowedValues, String unit, String provenance) {
+  public static ProcessModelOperatingAction discrete(String id, String name, String address, double[] allowedValues,
+      String unit, String provenance) {
     if (allowedValues == null || allowedValues.length == 0) {
       throw new IllegalArgumentException("A discrete action requires at least one allowed value");
     }
@@ -158,8 +155,8 @@ public final class ProcessModelOperatingAction implements Serializable {
       lowerBound = Math.min(lowerBound, copy[index]);
       upperBound = Math.max(upperBound, copy[index]);
     }
-    return new ProcessModelOperatingAction(id, name, address, unit, provenance,
-        ValueSemantics.DISCRETE, lowerBound, upperBound, copy);
+    return new ProcessModelOperatingAction(id, name, address, unit, provenance, ValueSemantics.DISCRETE, lowerBound,
+        upperBound, copy);
   }
 
   /** @return stable machine-readable identifier */
@@ -241,9 +238,9 @@ public final class ProcessModelOperatingAction implements Serializable {
    * Inspects whether the action target is readable in the supplied model.
    *
    * <p>
-   * A readable finite baseline remains capturable even when it lies outside the candidate domain;
-   * this permits exact restoration of an existing brownfield state. The assessment reports that
-   * condition explicitly and never proves writability or process feasibility.
+   * A readable finite baseline remains capturable even when it lies outside the candidate domain; this permits exact
+   * restoration of an existing brownfield state. The assessment reports that condition explicitly and never proves
+   * writability or process feasibility.
    * </p>
    *
    * @param model process model to inspect
@@ -256,21 +253,18 @@ public final class ProcessModelOperatingAction implements Serializable {
     try {
       double currentValue = model.getVariableValue(address, unit);
       if (!Double.isFinite(currentValue)) {
-        return CapabilityAssessment.unavailable(
-            "Automation address returned a non-finite current value");
+        return CapabilityAssessment.unavailable("Automation address returned a non-finite current value");
       }
       boolean withinDomain = accepts(currentValue);
       List<String> diagnostics = new ArrayList<String>();
       diagnostics.add("Automation address is readable in the declared unit");
       if (!withinDomain) {
-        diagnostics.add(
-            "Current value is outside the candidate domain but remains eligible for restoration");
+        diagnostics.add("Current value is outside the candidate domain but remains eligible for restoration");
       }
       diagnostics.add("Readability does not prove process feasibility or operational approval");
       return new CapabilityAssessment(true, currentValue, withinDomain, diagnostics);
     } catch (RuntimeException exception) {
-      return CapabilityAssessment.unavailable(
-          "Automation address is unavailable: " + safeMessage(exception));
+      return CapabilityAssessment.unavailable("Automation address is unavailable: " + safeMessage(exception));
     }
   }
 
@@ -293,9 +287,8 @@ public final class ProcessModelOperatingAction implements Serializable {
    * Applies a valid candidate without running the process model.
    *
    * <p>
-   * Invalid candidates are rejected without writing. After a write, the value is read back. A
-   * write/read-back failure triggers a best-effort rollback to the captured pre-write value and is
-   * reported rather than hidden.
+   * Invalid candidates are rejected without writing. After a write, the value is read back. A write/read-back failure
+   * triggers a best-effort rollback to the captured pre-write value and is reported rather than hidden.
    * </p>
    *
    * @param model process model
@@ -311,8 +304,7 @@ public final class ProcessModelOperatingAction implements Serializable {
     try {
       priorState = capture(model);
     } catch (RuntimeException exception) {
-      return ApplicationResult.rejected(id, candidateValue,
-          "Action target is unavailable: " + safeMessage(exception));
+      return ApplicationResult.rejected(id, candidateValue, "Action target is unavailable: " + safeMessage(exception));
     }
 
     try {
@@ -335,9 +327,8 @@ public final class ProcessModelOperatingAction implements Serializable {
    * Applies a candidate or throws when it is rejected.
    *
    * <p>
-   * This method is useful as an external-evaluator setter because
-   * {@link ProcessModelSimulationEvaluator} converts the exception into explicit failed-evaluation
-   * evidence.
+   * This method is useful as an external-evaluator setter because {@link ProcessModelSimulationEvaluator} converts the
+   * exception into explicit failed-evaluation evidence.
    * </p>
    *
    * @param model process model
@@ -363,8 +354,7 @@ public final class ProcessModelOperatingAction implements Serializable {
    */
   public ApplicationResult restore(ProcessModel model, ActionState state) {
     if (state == null || !state.matches(this)) {
-      throw new IllegalArgumentException(
-          "Action state does not match the complete operating-action identity");
+      throw new IllegalArgumentException("Action state does not match the complete operating-action identity");
     }
     try {
       model.setVariableValue(address, state.getValue(), unit);
@@ -384,10 +374,10 @@ public final class ProcessModelOperatingAction implements Serializable {
    * Registers this action as a parameter in an external process-model evaluator.
    *
    * <p>
-   * Continuous actions expose their bounds. Discrete actions expose the minimum and maximum only
-   * as an optimizer vector envelope; intermediate values still fail closed in the registered
-   * setter and callers must enumerate {@link ActionParameterBinding#getAllowedValues()}. The
-   * current readable model value is retained as the parameter initial value.
+   * Continuous actions expose their bounds. Discrete actions expose the minimum and maximum only as an optimizer vector
+   * envelope; intermediate values still fail closed in the registered setter and callers must enumerate
+   * {@link ActionParameterBinding#getAllowedValues()}. The current readable model value is retained as the parameter
+   * initial value.
    * </p>
    *
    * @param evaluator evaluator to extend
@@ -413,8 +403,7 @@ public final class ProcessModelOperatingAction implements Serializable {
         action.applyOrThrow(model, value.doubleValue());
       }
     }, lowerBound, upperBound, unit);
-    ProcessModelSimulationEvaluator.ParameterDefinition parameter =
-        evaluator.getParameters().get(parameterIndex);
+    ProcessModelSimulationEvaluator.ParameterDefinition parameter = evaluator.getParameters().get(parameterIndex);
     parameter.setAddress(address);
     parameter.setInitialValue(initialState.getValue());
     parameter.setClampToBounds(false);
@@ -443,9 +432,8 @@ public final class ProcessModelOperatingAction implements Serializable {
 
   /** Compares this definition with all identity-bearing fields in another definition. */
   private boolean sameIdentity(ProcessModelOperatingAction other) {
-    return other != null && id.equals(other.id) && name.equals(other.name)
-        && address.equals(other.address) && unit.equals(other.unit)
-        && provenance.equals(other.provenance) && valueSemantics == other.valueSemantics
+    return other != null && id.equals(other.id) && name.equals(other.name) && address.equals(other.address)
+        && unit.equals(other.unit) && provenance.equals(other.provenance) && valueSemantics == other.valueSemantics
         && sameDouble(lowerBound, other.lowerBound) && sameDouble(upperBound, other.upperBound)
         && Arrays.equals(toLongBits(allowedValues), toLongBits(other.allowedValues));
   }
@@ -475,8 +463,7 @@ public final class ProcessModelOperatingAction implements Serializable {
   /** Returns a useful message without exposing a null exception message. */
   private static String safeMessage(RuntimeException exception) {
     String message = exception.getMessage();
-    return message == null || message.trim().isEmpty() ? exception.getClass().getSimpleName()
-        : message;
+    return message == null || message.trim().isEmpty() ? exception.getClass().getSimpleName() : message;
   }
 
   /** Immutable capability inspection result. */
@@ -497,8 +484,8 @@ public final class ProcessModelOperatingAction implements Serializable {
     private final List<String> diagnostics;
 
     /** Creates a capability result. */
-    private CapabilityAssessment(boolean available, double currentValue,
-        boolean currentValueWithinDomain, List<String> diagnostics) {
+    private CapabilityAssessment(boolean available, double currentValue, boolean currentValueWithinDomain,
+        List<String> diagnostics) {
       this.available = available;
       this.currentValue = currentValue;
       this.currentValueWithinDomain = currentValueWithinDomain;
@@ -507,8 +494,7 @@ public final class ProcessModelOperatingAction implements Serializable {
 
     /** Creates an unavailable result. */
     private static CapabilityAssessment unavailable(String diagnostic) {
-      return new CapabilityAssessment(false, Double.NaN, false,
-          Collections.singletonList(diagnostic));
+      return new CapabilityAssessment(false, Double.NaN, false, Collections.singletonList(diagnostic));
     }
 
     /** @return true when the action target is readable */
@@ -592,9 +578,8 @@ public final class ProcessModelOperatingAction implements Serializable {
     private final String diagnostic;
 
     /** Creates an application result. */
-    private ApplicationResult(String actionId, double requestedValue, double readBackValue,
-        boolean applied, boolean rolledBackAfterFailure, ActionState priorState,
-        String diagnostic) {
+    private ApplicationResult(String actionId, double requestedValue, double readBackValue, boolean applied,
+        boolean rolledBackAfterFailure, ActionState priorState, String diagnostic) {
       this.actionId = actionId;
       this.requestedValue = requestedValue;
       this.readBackValue = readBackValue;
@@ -605,24 +590,21 @@ public final class ProcessModelOperatingAction implements Serializable {
     }
 
     /** Creates a result for a candidate rejected before writing. */
-    private static ApplicationResult rejected(String actionId, double requestedValue,
-        String diagnostic) {
-      return new ApplicationResult(actionId, requestedValue, Double.NaN, false, false, null,
-          diagnostic);
+    private static ApplicationResult rejected(String actionId, double requestedValue, String diagnostic) {
+      return new ApplicationResult(actionId, requestedValue, Double.NaN, false, false, null, diagnostic);
     }
 
     /** Creates a failed write or restoration result. */
-    private static ApplicationResult failed(String actionId, double requestedValue,
-        double readBackValue, ActionState priorState, boolean rolledBack, String diagnostic) {
-      return new ApplicationResult(actionId, requestedValue, readBackValue, false, rolledBack,
-          priorState, diagnostic);
+    private static ApplicationResult failed(String actionId, double requestedValue, double readBackValue,
+        ActionState priorState, boolean rolledBack, String diagnostic) {
+      return new ApplicationResult(actionId, requestedValue, readBackValue, false, rolledBack, priorState, diagnostic);
     }
 
     /** Creates a successful result. */
-    private static ApplicationResult applied(String actionId, double requestedValue,
-        double readBackValue, ActionState priorState) {
-      return new ApplicationResult(actionId, requestedValue, readBackValue, true, false,
-          priorState, "Action value was applied and verified; the process model was not run");
+    private static ApplicationResult applied(String actionId, double requestedValue, double readBackValue,
+        ActionState priorState) {
+      return new ApplicationResult(actionId, requestedValue, readBackValue, true, false, priorState,
+          "Action value was applied and verified; the process model was not run");
     }
 
     /** @return stable action identifier */
@@ -676,8 +658,7 @@ public final class ProcessModelOperatingAction implements Serializable {
     private final double initialValue;
 
     /** Creates a parameter binding. */
-    private ActionParameterBinding(ProcessModelOperatingAction action, int parameterIndex,
-        double initialValue) {
+    private ActionParameterBinding(ProcessModelOperatingAction action, int parameterIndex, double initialValue) {
       this.action = action;
       this.parameterIndex = parameterIndex;
       this.initialValue = initialValue;
