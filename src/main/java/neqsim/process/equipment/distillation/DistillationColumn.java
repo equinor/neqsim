@@ -7974,9 +7974,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param reason reason the accelerator result was rejected
    */
   void solveDampedFallbackAfterRejectedAccelerator(UUID id, String reason) {
+    NaphtaliTelemetrySnapshot rejectedNaphtaliTelemetry = lastSolverTypeUsed == SolverType.NAPHTALI_SANDHOLM
+        ? new NaphtaliTelemetrySnapshot(this)
+        : null;
     logger.warn("Accelerated solver result rejected for column {}: {}. Falling back to damped " + "substitution.",
         getName(), reason);
     solveDampedFallbackFromFreshInitialization(id);
+    lastSolveStatusReason = reason;
+    if (rejectedNaphtaliTelemetry != null) {
+      rejectedNaphtaliTelemetry.restore(this);
+    }
   }
 
   /**
