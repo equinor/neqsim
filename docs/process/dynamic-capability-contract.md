@@ -111,6 +111,44 @@ Adaptive transient execution remains explicitly blocked by the current Phase-0 c
 `runTransientAdaptive(...)` mutates one full timestep and derives a following timestep recommendation without a
 full-step/two-half-step error estimate, rejected-step restore, retry, and one accepted-step commit boundary.
 
+## Identity-preserving transient step transactions
+
+`ProcessSystem` and `ProcessModel` expose an opt-in transaction boundary for equipment families that implement the
+typed `TransientStateParticipant<S extends Serializable>` contract. The participant captures its complete mutable
+one-step state and restores that state to the same object instance. A stable, area-local state identity provides
+diagnostic and replay provenance while rollback remains keyed by Java object identity.
+
+```java
+TransientTransactionCoverage coverage = process.getTransientTransactionCoverage();
+coverage.assertComplete(); // fails before any trial mutation
+
+process.runTransientTransactional(dt, physicalStepId);
+```
+
+`runTransientTransactional(...)` captures all participants, the process clock, timestep counter, calculation
+identifier, measurement history, alarm-history bookkeeping, and the attached event scheduler's pending/fired
+bookkeeping. It commits only after the full event/equipment/controller/measurement/alarm step succeeds. Runtime failures
+close the transaction and restore captured state in reverse participant order. `ProcessModel` coordinates the same
+boundary across areas in insertion order and rolls back areas in reverse order, so a later-area failure does not leave an
+earlier area advanced.
+
+Coverage is quantitative: `getProcessElementCount()`, `getParticipantCount()`, and `getBlockingIssues()` distinguish
+complete participation from API presence. Duplicate registration of the same object is counted once; duplicate or
+changing state identities are rejected. Systems containing a mutable process element without the participant contract,
+or a configured recycle whose shared `RecycleController` state cannot yet be restored in place, fail before opening a
+trial.
+
+This is an additive compatibility boundary. Legacy `runTransient(...)`, `reset()`, and
+`runTransientAdaptive(...)` retain their current behavior. Built-in equipment must adopt the participant contract
+family by family with inventory, controller, conservation, timestep, and replay evidence before transactional execution
+becomes available for those flowsheets. An open transaction is an in-memory trial and is deliberately not serialized as
+a restart checkpoint.
+
+Scheduler rollback restores pending/fired membership, not arbitrary external side effects from event or alarm callbacks.
+Actions used inside a rejectable trial must mutate covered participants or defer external effects until commit. Passing
+transaction coverage proves rollback mechanics only; it does not establish physical validation, numerical convergence,
+safety approval, or OTS qualification.
+
 Parallel transient execution is no longer blocked solely because of worker error handling. Equipment worker exceptions
 now propagate to the caller, stop later dependency levels, and prevent the controller, measurement/alarm/history,
 timestep-counter, and calculation-identifier commit phases from running. The original runtime exception type and message

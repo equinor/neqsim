@@ -26,6 +26,8 @@ import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import neqsim.process.dynamics.EventScheduler;
 import neqsim.process.dynamics.IntegratorStrategy;
+import neqsim.process.dynamics.TransientStepTransaction;
+import neqsim.process.dynamics.TransientTransactionCoverage;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -52,6 +54,9 @@ public class ProcessModel implements Runnable, Serializable {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ProcessModel.class);
   private Map<String, ProcessSystem> processes = new LinkedHashMap<>();
+
+  /** Active multi-area transient transaction, or {@code null} outside a trial step. */
+  private transient ProcessModelStepTransaction activeTransientStepTransaction = null;
 
   /** Absolute tolerance used when checking that transient process-area clocks are aligned. */
   private static final double TRANSIENT_AREA_TIME_ABSOLUTE_TOLERANCE_SECONDS = 1.0e-9;
@@ -1683,6 +1688,266 @@ public class ProcessModel implements Runnable, Serializable {
     for (ProcessSystem area : processes.values()) {
       area.runTransient(dt, id);
     }
+  }
+
+  /**
+   * Audits aggregate identity-preserving transient transaction coverage across all process areas.
+   *
+   * <p>
+   * Counts are summed over area-local unique process elements. Blocking diagnostics are qualified by
+   * area name so duplicate equipment names in different areas remain distinguishable.
+   * </p>
+   *
+   * @return immutable aggregate coverage report
+   */
+  public TransientTransactionCoverage getTransientTransactionCoverage() {
+    int elementCount = 0;
+    int participantCount = 0;
+    List<String> blockingIssues = new ArrayList<String>();
+    for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
+      TransientTransactionCoverage areaCoverage = entry.getValue().getTransientTransactionCoverage();
+      elementCount += areaCoverage.getProcessElementCount();
+      participantCount += areaCoverage.getParticipantCount();
+      for (String issue : areaCoverage.getBlockingIssues()) {
+        blockingIssues.add("process area '" + entry.getKey() + "': " + issue);
+      }
+    }
+    return new TransientTransactionCoverage(elementCount, participantCount, blockingIssues);
+  }
+
+  /**
+   * Captures one coordinated rollback point across all process areas.
+   *
+   * <p>
+   * Area clocks and complete coverage are validated before the first area transaction is opened.
+   * Area transactions are captured in insertion order and rolled back in reverse order, preserving
+   * shared boundary-object identities and deterministic replay order.
+   * </p>
+   *
+   * @return open multi-area transaction
+   * @throws IllegalStateException if area clocks are misaligned, coverage is incomplete, or another
+   *         model transaction is open
+   */
+  public synchronized TransientStepTransaction beginTransientStepTransaction() {
+    if (activeTransientStepTransaction != null && activeTransientStepTransaction.isOpen()) {
+      throw new IllegalStateException("A transient step transaction is already open for this ProcessModel");
+    }
+    validateTransientAreaTimes();
+    getTransientTransactionCoverage().assertComplete();
+
+    List<AreaTransientCheckpoint> areaCheckpoints = new ArrayList<AreaTransientCheckpoint>();
+    try {
+      for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
+        areaCheckpoints.add(new AreaTransientCheckpoint(entry.getKey(), entry.getValue(),
+            entry.getValue().beginTransientStepTransaction()));
+      }
+    } catch (RuntimeException ex) {
+      rollbackOpenAreaTransactions(areaCheckpoints, ex);
+      throw ex;
+    }
+
+    ProcessModelStepTransaction transaction = new ProcessModelStepTransaction(areaCheckpoints);
+    activeTransientStepTransaction = transaction;
+    return transaction;
+  }
+
+  /**
+   * Advances every process area and accepts the common physical step only if all areas succeed.
+   *
+   * <p>
+   * A failure in any later area restores already-advanced earlier areas in place. The shared event
+   * scheduler bookkeeping is restored with the same object identity by the area transactions.
+   * </p>
+   *
+   * @param dt finite timestep in seconds
+   * @param id common physical-step calculation identifier
+   * @throws IllegalStateException if transaction coverage is incomplete
+   */
+  public void runTransientTransactional(double dt, UUID id) {
+    try (TransientStepTransaction transaction = beginTransientStepTransaction()) {
+      runTransient(dt, id);
+      transaction.commit();
+    }
+  }
+
+  /**
+   * Rolls back open child transactions in reverse area order.
+   *
+   * @param areaCheckpoints child transactions captured so far
+   * @param primary primary failure receiving suppressed rollback failures
+   */
+  private static void rollbackOpenAreaTransactions(List<AreaTransientCheckpoint> areaCheckpoints,
+      RuntimeException primary) {
+    for (int i = areaCheckpoints.size() - 1; i >= 0; i--) {
+      TransientStepTransaction transaction = areaCheckpoints.get(i).transaction;
+      if (transaction.isOpen()) {
+        try {
+          transaction.rollback();
+        } catch (RuntimeException rollbackFailure) {
+          primary.addSuppressed(rollbackFailure);
+        }
+      }
+    }
+  }
+
+  /** Captured child-area transaction and identity. */
+  private static final class AreaTransientCheckpoint {
+    private final String areaName;
+    private final ProcessSystem processSystem;
+    private final TransientStepTransaction transaction;
+
+    private AreaTransientCheckpoint(String areaName, ProcessSystem processSystem,
+        TransientStepTransaction transaction) {
+      this.areaName = areaName;
+      this.processSystem = processSystem;
+      this.transaction = transaction;
+    }
+  }
+
+  /** Coordinated multi-area transaction implementation. */
+  private final class ProcessModelStepTransaction implements TransientStepTransaction {
+    private final List<AreaTransientCheckpoint> areaCheckpoints;
+    private Status status = Status.OPEN;
+
+    private ProcessModelStepTransaction(List<AreaTransientCheckpoint> areaCheckpoints) {
+      this.areaCheckpoints = new ArrayList<AreaTransientCheckpoint>(areaCheckpoints);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void commit() {
+      synchronized (ProcessModel.this) {
+        requireOpen("commit");
+        RuntimeException structureFailure = validateAreaIdentities();
+        if (structureFailure != null) {
+          try {
+            rollback();
+          } catch (RuntimeException rollbackFailure) {
+            structureFailure.addSuppressed(rollbackFailure);
+          }
+          throw structureFailure;
+        }
+
+        RuntimeException failure = null;
+        for (AreaTransientCheckpoint checkpoint : areaCheckpoints) {
+          try {
+            checkpoint.transaction.commit();
+          } catch (RuntimeException ex) {
+            failure = appendFailure(failure,
+                "Failed to commit transient transaction for process area '" + checkpoint.areaName + "'", ex);
+            break;
+          }
+        }
+        if (failure != null) {
+          for (int i = areaCheckpoints.size() - 1; i >= 0; i--) {
+            TransientStepTransaction child = areaCheckpoints.get(i).transaction;
+            if (child.isOpen()) {
+              try {
+                child.rollback();
+              } catch (RuntimeException rollbackFailure) {
+                failure.addSuppressed(rollbackFailure);
+              }
+            }
+          }
+          status = Status.ROLLED_BACK;
+          activeTransientStepTransaction = null;
+          throw failure;
+        }
+        status = Status.COMMITTED;
+        activeTransientStepTransaction = null;
+      }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void rollback() {
+      synchronized (ProcessModel.this) {
+        if (status == Status.ROLLED_BACK) {
+          return;
+        }
+        requireOpen("rollback");
+        RuntimeException failure = validateAreaIdentities();
+        for (int i = areaCheckpoints.size() - 1; i >= 0; i--) {
+          AreaTransientCheckpoint checkpoint = areaCheckpoints.get(i);
+          try {
+            checkpoint.transaction.rollback();
+          } catch (RuntimeException ex) {
+            failure = appendFailure(failure,
+                "Failed to roll back transient transaction for process area '" + checkpoint.areaName + "'", ex);
+          }
+        }
+        status = Status.ROLLED_BACK;
+        activeTransientStepTransaction = null;
+        if (failure != null) {
+          throw failure;
+        }
+      }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Status getStatus() {
+      return status;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void close() {
+      if (isOpen()) {
+        rollback();
+      }
+    }
+
+    /**
+     * Verifies area-name, insertion-order, and process-system object identities.
+     *
+     * @return failure diagnostic, or {@code null}
+     */
+    private RuntimeException validateAreaIdentities() {
+      if (processes.size() != areaCheckpoints.size()) {
+        return new IllegalStateException("ProcessModel area structure changed during transient transaction: captured "
+            + areaCheckpoints.size() + " areas but found " + processes.size());
+      }
+      int index = 0;
+      for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
+        AreaTransientCheckpoint checkpoint = areaCheckpoints.get(index);
+        if (!checkpoint.areaName.equals(entry.getKey()) || checkpoint.processSystem != entry.getValue()) {
+          return new IllegalStateException(
+              "ProcessModel area identity or insertion order changed during transient transaction at index " + index);
+        }
+        index++;
+      }
+      return null;
+    }
+
+    /**
+     * Enforces single-use transaction semantics.
+     *
+     * @param operation requested operation
+     */
+    private void requireOpen(String operation) {
+      if (status != Status.OPEN) {
+        throw new IllegalStateException(
+            "Cannot " + operation + " ProcessModel transient transaction in state " + status);
+      }
+    }
+  }
+
+  /**
+   * Accumulates multi-area transaction failures while allowing later rollback work to continue.
+   *
+   * @param existing first failure, or {@code null}
+   * @param message diagnostic context
+   * @param cause new failure
+   * @return first failure with later failures suppressed
+   */
+  private static RuntimeException appendFailure(RuntimeException existing, String message, RuntimeException cause) {
+    RuntimeException wrapped = new IllegalStateException(message, cause);
+    if (existing == null) {
+      return wrapped;
+    }
+    existing.addSuppressed(wrapped);
+    return existing;
   }
 
   /**
