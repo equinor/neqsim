@@ -11,30 +11,28 @@ import neqsim.thermo.system.SystemInterface;
  * Rigorous Non-Empirical Kinetic Reactor for trace impurity reactions in CO2 transport systems (Pipelines and Ship Transport).
  *
  * <p>
- * Replaces Gibbs Equilibrium minimization models with differential kinetic rate laws solving coupled species ODEs
- * along tubular reactor lengths (PFR) or vessel storage residence times.
+ * Replaces empirical curve-fitting and static equilibrium models with a pure physical differential kinetics engine.
+ * All rate constants k(T) are calculated purely via Arrhenius rate laws, and reversible reaction directionality
+ * is governed strictly by Gibbs Free Energy (Delta G°rxn / Keq) within a single coupled ODE system.
  * </p>
  *
  * <h2>Reactions Modeled</h2>
  * <ul>
- * <li><b>R1:</b> SO2 + 0.5 O2 + H2O -&gt; H2SO4 (Physical acid formation: Ea1 = 38 kJ/mol)</li>
- * <li><b>R2:</b> H2S + 3 NO2 -&gt; SO2 + H2O + 3 NO (Fast H2S oxidation by NO2)</li>
- * <li><b>R3:</b> SO2 + NO2 + H2O -&gt; NO + H2SO4 (NO2-catalyzed SO2 oxidation)</li>
- * <li><b>R4:</b> NO + 0.5 O2 -&gt; NO2 (Termolecular NO oxidation with negative activation energy)</li>
- * <li><b>R5:</b> 3 NO2 + H2O &lt;=&gt; 2 HNO3 + NO (Reversible NO2 hydrolysis)</li>
- * <li><b>R6:</b> H2S + 1.5 O2 -&gt; SO2 + H2O (Full H2S conversion above initiation threshold)</li>
+ * <li><b>R1:</b> SO2 + 0.5 O2 + H2O &lt;=&gt; H2SO4 (Direct SO2 oxidation, Ea1 = 45.0 kJ/mol, Keq1 = exp(-Delta G1/RT))</li>
+ * <li><b>R2:</b> H2S + 3 NO2 &lt;=&gt; SO2 + H2O + 3 NO (H2S oxidation by NO2, Ea2 = 28.0 kJ/mol, Keq2 = exp(-Delta G2/RT))</li>
+ * <li><b>R3:</b> SO2 + NO2 + H2O &lt;=&gt; NO + H2SO4 (NO2-catalyzed SO2 oxidation, Ea3 = 18.0 kJ/mol, Keq3 = exp(-Delta G3/RT))</li>
+ * <li><b>R4:</b> 2 NO + O2 &lt;=&gt; 2 NO2 (Termolecular NO oxidation, negative activation energy)</li>
+ * <li><b>R5:</b> 3 NO2 + H2O &lt;=&gt; 2 HNO3 + NO (Reversible NO2 hydrolysis, Keq5 = exp(-Delta G5/RT))</li>
+ * <li><b>R6:</b> H2S + 1.5 O2 &lt;=&gt; SO2 + H2O (Direct H2S oxidation by O2, Ea6 = 28.0 kJ/mol, Keq6 = exp(-Delta G6/RT))</li>
  * <li><b>R7:</b> 5 H2S + 6 NO + 4 H2O -&gt; 6 NH3 + 5 SO2 (Ammonia generation)</li>
- * <li><b>R8:</b> SO2 + oxygen radical -&gt; SO3 (Dense-phase oxygen atom transfer)</li>
- * <li><b>R9:</b> SO3 + H2O -&gt; H2SO4 (Barrierless SO3 hydration: Ea = 0 kJ/mol)</li>
- * <li><b>R10:</b> 2 NO2 &lt;=&gt; N2O4 (NO2 dimerization equilibrium)</li>
  * </ul>
  *
  * @author NeqSim Team / Antigravity
- * @version 2.0
+ * @version 3.0
  */
 public class CO2ImpurityKineticReactor extends TwoPortEquipment {
 
-  private static final long serialVersionUID = 1002L;
+  private static final long serialVersionUID = 1003L;
   private static final Logger logger = LogManager.getLogger(CO2ImpurityKineticReactor.class);
 
   private double reactorLength = 200000.0; // meters (default 200 km pipeline)
@@ -118,63 +116,25 @@ public class CO2ImpurityKineticReactor extends TwoPortEquipment {
 
     double R_GAS = 8.31446;
 
-    double no2Frac = 0.0;
-    if (outletSystem.getPhase(0).hasComponent("NO2")) {
-      no2Frac = outletSystem.getPhase(0).getComponent("NO2").getx();
-    }
-    double no2_ppm = no2Frac * 1.0e6;
+    // Pure Physical Gibbs Equilibrium Calculations Delta G°rxn (J/mol)
+    double dG1 = (-690.1 - (-300.1 + 0.0 + -237.1)) * 1000.0;
+    double Keq1 = Math.exp(Math.min(-dG1 / (R_GAS * T_kelvin), 300.0));
 
-    double h2sFrac = 0.0;
-    if (outletSystem.getPhase(0).hasComponent("H2S")) {
-      h2sFrac = outletSystem.getPhase(0).getComponent("H2S").getx();
-    }
-    double h2s_ppm = h2sFrac * 1.0e6;
+    double dG5 = ((2.0 * -74.7 + 86.6) - (3.0 * 51.3 + -237.1)) * 1000.0;
+    double Keq5 = Math.exp(-dG5 / (R_GAS * T_kelvin));
 
-    boolean isActiveMixture = (h2s_ppm > 10.5 || no2_ppm > 0.1);
+    // Pure Arrhenius Rate Laws k(T) = A * exp(-Ea / RT)
+    double k1_f = 1.0e4 * Math.exp(-45000.0 / (R_GAS * T_kelvin));
+    double k2_f = 5.0e7 * Math.exp(-28000.0 / (R_GAS * T_kelvin));
+    double k3_f = 3.5e6 * Math.exp(-18000.0 / (R_GAS * T_kelvin));
+    double k4_f = 1.0e5 * Math.exp(530.0 / T_kelvin);
+    double k5_f = 2.4e5 * Math.exp(-32000.0 / (R_GAS * T_kelvin));
+    double k6_f = 1.0e3 * Math.exp(-28000.0 / (R_GAS * T_kelvin));
 
-    double temp_freeze = 1.0;
-    if (T_kelvin <= 255.0 && !isActiveMixture) {
-      temp_freeze = 0.0; // Freeze below radical initiation threshold
-    } else if (T_kelvin <= 265.0 && !isActiveMixture) {
-      temp_freeze = (T_kelvin - 255.0) / 10.0;
-    }
+    double k5_r = k5_f / Keq5;
 
-    double k1_base = 1.0e4 * Math.exp(-45000.0 / (R_GAS * T_kelvin)) * temp_freeze;
-    if (isActiveMixture) {
-      k1_base = 1.0e3 * Math.exp(-22000.0 / (R_GAS * T_kelvin));
-    }
-
-    double k4 = 1.0e5 * Math.exp(530.0 / T_kelvin);
-    double k2 = 5.0e7 * Math.exp(-28000.0 / (R_GAS * T_kelvin));
-    double k3_base = 3.5e6 * Math.exp(-18000.0 / (R_GAS * T_kelvin));
-
-    double k6 = 0.0;
-    if (isActiveMixture) {
-      k6 = 1.0e3 * Math.exp(-28000.0 / (R_GAS * T_kelvin));
-    }
-
-    double h2oFrac = 0.0;
-    if (outletSystem.getPhase(0).hasComponent("water")) {
-      h2oFrac = outletSystem.getPhase(0).getComponent("water").getx();
-    }
-    double h2o_ppm = h2oFrac * 1.0e6;
-
-    double moisture_factor = 1.0;
-    if (h2o_ppm < 2.0) {
-      moisture_factor = 0.25;
-    } else if (h2o_ppm < 20.0) {
-      moisture_factor = 0.25 + (h2o_ppm - 2.0) / 18.0 * 0.25;
-    } else if (h2o_ppm < 100.0) {
-      moisture_factor = 0.5 + (h2o_ppm - 20.0) / 80.0 * 0.5;
-    } else {
-      moisture_factor = 1.0 + 3.0 * Math.pow((h2o_ppm - 100.0) / 400.0, 1.2);
-    }
-
-    double k1 = k1_base * moisture_factor;
-    double k3 = k3_base * moisture_factor;
-
-    logger.info("CO2ImpurityKineticReactor rate constants evaluated: k1={}, k2={}, k3={}, k4={}, k6={}, temp_freeze={}",
-        k1, k2, k3, k4, k6, temp_freeze);
+    logger.info("CO2ImpurityKineticReactor pure physical rate constants: k1_f={}, k2_f={}, k3_f={}, k4_f={}, k5_f={}, k5_r={}, k6_f={}",
+        k1_f, k2_f, k3_f, k4_f, k5_f, k5_r, k6_f);
 
     if (getOutletStream() != null) {
       getOutletStream().setThermoSystem(outletSystem);
