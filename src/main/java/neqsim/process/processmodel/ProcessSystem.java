@@ -5184,6 +5184,19 @@ public class ProcessSystem extends SimulationBaseClass {
       }
       participantCount++;
       TransientStateParticipant<?> participant = (TransientStateParticipant<?>) element;
+      String coverageIssue;
+      try {
+        coverageIssue = normalizeTransientStateIdentity(participant.getTransientStateCoverageIssue());
+      } catch (RuntimeException ex) {
+        blockingIssues.add("process element " + describeTransientElement(element)
+            + " failed to report transient state coverage: " + ex.getMessage());
+        continue;
+      }
+      if (coverageIssue != null) {
+        blockingIssues.add("process element " + describeTransientElement(element)
+            + " has incomplete transient state coverage: " + coverageIssue);
+        continue;
+      }
       String stateIdentity;
       try {
         stateIdentity = normalizeTransientStateIdentity(participant.getTransientStateIdentity());
