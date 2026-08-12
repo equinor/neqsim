@@ -56,6 +56,8 @@ import neqsim.mcp.runners.HazopScenarioRunner;
 import neqsim.mcp.runners.IndustrialProfile;
 import neqsim.mcp.runners.LOPARunner;
 import neqsim.mcp.runners.MaterialsReviewRunner;
+import neqsim.mcp.runners.McpRequestContext;
+import neqsim.mcp.runners.ModelRegistry;
 import neqsim.mcp.runners.NorsokS001Clause10ReviewRunner;
 import neqsim.mcp.runners.OpenDrainReviewRunner;
 import neqsim.mcp.runners.ProcessComparisonRunner;
@@ -94,6 +96,10 @@ import neqsim.mcp.runners.Validator;
  */
 @ApplicationScoped
 public class NeqSimTools {
+
+  /** Resolves the caller identity from the transport for each tool invocation. */
+  @jakarta.inject.Inject
+  McpIdentityResolver identityResolver;
 
   /**
    * Run a thermodynamic flash calculation on a fluid mixture.
@@ -154,6 +160,8 @@ public class NeqSimTools {
           withAutoValidation(FlashRunner.run(json.toString()), "flash"), "general");
     } catch (Exception e) {
       return errorJson("Flash calculation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -170,7 +178,9 @@ public class NeqSimTools {
       + "top-level 'areas' for multi-area plants. "
       + "Use getExample with category 'process' for templates.")
   public String runProcess(
-      @ToolArg(description = "Complete process definition as JSON string, OR an absolute path to a "
+      @ToolArg(description = "Complete process definition as JSON string, OR a modelId returned by "
+          + "manageModel(action='register') to reuse a registered model without resending it, "
+          + "OR an absolute path to a "
           + "readable UTF-8 .json file (name ending in .json, <= 25 MB) containing that JSON. "
           + "The JSON must include either 'fluid' with components and model plus a 'process' array, "
           + "or top-level 'areas' containing named process-area JSON objects. "
@@ -181,9 +191,11 @@ public class NeqSimTools {
     }
     try {
       return standardizeResponse("runProcess",
-          withAutoValidation(ProcessRunner.validateAndRun(processJson), "process"), "general");
+          withAutoValidation(ProcessRunner.validateAndRun(resolveModel(processJson)), "process"), "general");
     } catch (Exception e) {
       return errorJson("Process simulation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -204,9 +216,11 @@ public class NeqSimTools {
       return policyBlocked;
     }
     try {
-      return standardizeResponse("validateInput", Validator.validate(inputJson), "general");
+      return standardizeResponse("validateInput", Validator.validate(resolveModel(inputJson)), "general");
     } catch (Exception e) {
       return errorJson("Validation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -231,6 +245,8 @@ public class NeqSimTools {
       return standardizeResponse("searchComponents", ComponentQuery.search(query), "general");
     } catch (Exception e) {
       return errorJson("Component search failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -260,13 +276,17 @@ public class NeqSimTools {
     if (policyBlocked != null) {
       return policyBlocked;
     }
-    String example = ExampleCatalog.getExample(category, name);
-    if (example != null) {
-      return example;
+    try {
+      String example = ExampleCatalog.getExample(category, name);
+      if (example != null) {
+        return example;
+      }
+      return errorJson("Example not found: " + category + "/" + name
+          + ". Use getExample with a listed category such as flash, process, validation, "
+          + "safety, or tool");
+    } finally {
+      McpRequestContext.clear();
     }
-    return errorJson("Example not found: " + category + "/" + name
-        + ". Use getExample with a listed category such as flash, process, validation, "
-        + "safety, or tool");
   }
 
   /**
@@ -292,11 +312,15 @@ public class NeqSimTools {
     if (policyBlocked != null) {
       return policyBlocked;
     }
-    String schema = SchemaCatalog.getSchema(toolName, schemaType);
-    if (schema != null) {
-      return schema;
+    try {
+      String schema = SchemaCatalog.getSchema(toolName, schemaType);
+      if (schema != null) {
+        return schema;
+      }
+      return errorJson("Schema not found: " + toolName + "/" + schemaType);
+    } finally {
+      McpRequestContext.clear();
     }
-    return errorJson("Schema not found: " + toolName + "/" + schemaType);
   }
 
   /**
@@ -309,17 +333,19 @@ public class NeqSimTools {
       + "Returns unit names and types for use with listUnitVariables, "
       + "getSimulationVariable, and setSimulationVariable tools.")
   public String listSimulationUnits(
-      @ToolArg(description = "Complete process definition as JSON string. "
-          + "Same format as runProcess.") String processJson) {
+      @ToolArg(description = "Complete process definition as JSON string, OR a modelId returned by "
+          + "manageModel(action='register'). Same format as runProcess.") String processJson) {
     String policyBlocked = enforceToolAccess("listSimulationUnits");
     if (policyBlocked != null) {
       return policyBlocked;
     }
     try {
-      return standardizeResponse("listSimulationUnits", AutomationRunner.listUnits(processJson),
+      return standardizeResponse("listSimulationUnits", AutomationRunner.listUnits(resolveModel(processJson)),
           "general");
     } catch (Exception e) {
       return errorJson("Failed to list units: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -335,7 +361,7 @@ public class NeqSimTools {
       + "(INPUT = writable, OUTPUT = read-only), default unit, and description. "
       + "Use listSimulationUnits first to discover available unit names.")
   public String listUnitVariables(
-      @ToolArg(description = "Complete process definition as JSON string.") String processJson,
+      @ToolArg(description = "Complete process definition as JSON string, OR a modelId returned by manageModel(action=''register'') to reuse a registered model without resending it.") String processJson,
       @ToolArg(description = "Equipment unit name to list variables for, "
           + "e.g. 'HP Separator', 'Compressor Stage 1'. "
           + "Use listSimulationUnits to find valid names.") String unitName) {
@@ -345,9 +371,11 @@ public class NeqSimTools {
     }
     try {
       return standardizeResponse("listUnitVariables",
-          AutomationRunner.listVariables(processJson, unitName), "general");
+          AutomationRunner.listVariables(resolveModel(processJson), unitName), "general");
     } catch (Exception e) {
       return errorJson("Failed to list variables: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -364,7 +392,7 @@ public class NeqSimTools {
       + "'HP Sep.gasOutStream.temperature', 'Compressor.power', "
       + "'Feed.flowRate'. Use listUnitVariables to discover valid addresses.")
   public String getSimulationVariable(
-      @ToolArg(description = "Complete process definition as JSON string.") String processJson,
+      @ToolArg(description = "Complete process definition as JSON string, OR a modelId returned by manageModel(action=''register'') to reuse a registered model without resending it.") String processJson,
       @ToolArg(description = "Dot-notation variable address, e.g. "
           + "'HP Sep.gasOutStream.temperature' or 'Compressor.power'. "
           + "Use listUnitVariables to find valid addresses.") String address,
@@ -377,9 +405,11 @@ public class NeqSimTools {
     }
     try {
       return standardizeResponse("getSimulationVariable",
-          AutomationRunner.getVariable(processJson, address, unit), "general");
+          AutomationRunner.getVariable(resolveModel(processJson), address, unit), "general");
     } catch (Exception e) {
       return errorJson("Failed to get variable: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -397,7 +427,7 @@ public class NeqSimTools {
       + "Only INPUT-type variables can be modified (use listUnitVariables to check). "
       + "Example: change compressor outlet pressure and see effect on power.")
   public String setSimulationVariable(
-      @ToolArg(description = "Complete process definition as JSON string.") String processJson,
+      @ToolArg(description = "Complete process definition as JSON string, OR a modelId returned by manageModel(action=''register'') to reuse a registered model without resending it.") String processJson,
       @ToolArg(description = "Dot-notation address of the INPUT variable to modify, "
           + "e.g. 'Compressor.outletPressure'.") String address,
       @ToolArg(description = "New value for the variable.") double value,
@@ -409,9 +439,11 @@ public class NeqSimTools {
     }
     try {
       return standardizeResponse("setSimulationVariable",
-          AutomationRunner.setVariableAndRun(processJson, address, value, unit), "general");
+          AutomationRunner.setVariableAndRun(resolveModel(processJson), address, value, unit), "general");
     } catch (Exception e) {
       return errorJson("Failed to set variable: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -428,7 +460,7 @@ public class NeqSimTools {
       + "and comparing design iterations. The returned state can be passed to "
       + "compareSimulationStates to find differences between versions.")
   public String saveSimulationState(
-      @ToolArg(description = "Complete process definition as JSON string.") String processJson,
+      @ToolArg(description = "Complete process definition as JSON string, OR a modelId returned by manageModel(action=''register'') to reuse a registered model without resending it.") String processJson,
       @ToolArg(description = "Name for the state snapshot, "
           + "e.g. 'Gas Processing Base Case'.") String stateName,
       @ToolArg(description = "Version string, e.g. '1.0.0'.") String stateVersion) {
@@ -438,9 +470,11 @@ public class NeqSimTools {
     }
     try {
       return standardizeResponse("saveSimulationState",
-          AutomationRunner.saveState(processJson, stateName, stateVersion), "general");
+          AutomationRunner.saveState(resolveModel(processJson), stateName, stateVersion), "general");
     } catch (Exception e) {
       return errorJson("Failed to save state: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -467,6 +501,8 @@ public class NeqSimTools {
           AutomationRunner.compareStates(stateJson1, stateJson2), "general");
     } catch (Exception e) {
       return errorJson("Failed to compare states: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -485,7 +521,7 @@ public class NeqSimTools {
       + "Returns fuzzy name matches, auto-corrections, and actionable remediation hints. "
       + "Use this tool to self-correct and retry with the corrected address.")
   public String diagnoseAutomation(
-      @ToolArg(description = "Process definition as JSON string") String processJson,
+      @ToolArg(description = "Process definition as JSON string, OR a modelId returned by manageModel(action=''register'') to reuse a registered model without resending it") String processJson,
       @ToolArg(
           description = "The address that failed, e.g. 'HP separator.gasOut.temp'") String failedAddress,
       @ToolArg(
@@ -496,9 +532,11 @@ public class NeqSimTools {
     }
     try {
       return standardizeResponse("diagnoseAutomation",
-          AutomationRunner.diagnose(processJson, failedAddress, operation), "general");
+          AutomationRunner.diagnose(resolveModel(processJson), failedAddress, operation), "general");
     } catch (Exception e) {
       return errorJson("Failed to diagnose: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -514,16 +552,18 @@ public class NeqSimTools {
       + "Use this after multiple automation operations to understand what went wrong "
       + "and improve future calls.")
   public String getAutomationLearningReport(
-      @ToolArg(description = "Process definition as JSON string") String processJson) {
+      @ToolArg(description = "Process definition as JSON string, OR a modelId returned by manageModel(action=''register'') to reuse a registered model without resending it") String processJson) {
     String policyBlocked = enforceToolAccess("getAutomationLearningReport");
     if (policyBlocked != null) {
       return policyBlocked;
     }
     try {
       return standardizeResponse("getAutomationLearningReport",
-          AutomationRunner.getLearningReport(processJson), "general");
+          AutomationRunner.getLearningReport(resolveModel(processJson)), "general");
     } catch (Exception e) {
       return errorJson("Failed to get learning report: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -560,6 +600,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Operational study failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
   // ═══════════════════════════════════════════════════════════════════════════
@@ -640,6 +682,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Property table calculation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -671,6 +715,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Phase envelope calculation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -696,6 +742,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Failed to get capabilities: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -743,6 +791,8 @@ public class NeqSimTools {
       return standardizeResponse("runBatch", BatchRunner.run(json.toString()), "general");
     } catch (Exception e) {
       return errorJson("Batch calculation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -790,6 +840,8 @@ public class NeqSimTools {
           CrossValidationRunner.crossValidate(crossValidationJson), "general");
     } catch (Exception e) {
       return errorJson("Cross-validation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -819,6 +871,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Parametric study failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -853,6 +907,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("PVT simulation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -888,6 +944,8 @@ public class NeqSimTools {
           withAutoValidation(FlowAssuranceRunner.run(flowAssuranceJson), "pipeline"), "general");
     } catch (Exception e) {
       return errorJson("Flow assurance analysis failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -914,6 +972,8 @@ public class NeqSimTools {
       return standardizeResponse("runChemistry", ChemistryRunner.run(chemistryJson), "general");
     } catch (Exception e) {
       return errorJson("Chemistry analysis failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -942,6 +1002,8 @@ public class NeqSimTools {
           withAutoValidation(MaterialsReviewRunner.run(materialsReviewJson), "general"), "general");
     } catch (Exception e) {
       return errorJson("Materials review failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -971,6 +1033,8 @@ public class NeqSimTools {
           withAutoValidation(OpenDrainReviewRunner.run(openDrainReviewJson), "general"), "general");
     } catch (Exception e) {
       return errorJson("Open-drain review failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1004,6 +1068,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("NORSOK S-001 Clause 10 review failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1039,6 +1105,8 @@ public class NeqSimTools {
           withAutoValidation(StandardsRunner.run(standardJson), "general"), "general");
     } catch (Exception e) {
       return errorJson("Standard calculation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1070,6 +1138,8 @@ public class NeqSimTools {
           withAutoValidation(PipelineRunner.run(pipelineJson), "pipeline"), "general");
     } catch (Exception e) {
       return errorJson("Pipeline simulation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1100,6 +1170,8 @@ public class NeqSimTools {
           withAutoValidation(WaterHammerRunner.run(waterHammerJson), "pipeline"), "general");
     } catch (Exception e) {
       return errorJson("Water-hammer study failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1132,6 +1204,8 @@ public class NeqSimTools {
       return standardizeResponse("runReservoir", ReservoirRunner.run(reservoirJson), "general");
     } catch (Exception e) {
       return errorJson("Reservoir simulation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1169,6 +1243,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Field economics calculation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1201,6 +1277,8 @@ public class NeqSimTools {
       return standardizeResponse("runDynamic", DynamicRunner.run(dynamicJson), "general");
     } catch (Exception e) {
       return errorJson("Dynamic simulation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1239,6 +1317,8 @@ public class NeqSimTools {
       return standardizeResponse("runBioprocess", BioprocessRunner.run(bioprocessJson), "general");
     } catch (Exception e) {
       return errorJson("Bioprocess simulation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1282,6 +1362,8 @@ public class NeqSimTools {
       return standardizeResponse("manageSession", SessionRunner.run(sessionJson), "general");
     } catch (Exception e) {
       return errorJson("Session operation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1296,16 +1378,18 @@ public class NeqSimTools {
       + "process once, then returns each parameter's address, lower/upper bounds, unit, and "
       + "source. Use this to discover decision variables before driving a runProcessLoop sweep.")
   public String getAdjustableParameters(@ToolArg(
-      description = "JSON process definition (same schema as runProcess).") String processJson) {
+      description = "JSON process definition (same schema as runProcess), OR a modelId returned by manageModel(action=''register'') to reuse a registered model without resending it.") String processJson) {
     String policyBlocked = enforceToolAccess("getAdjustableParameters");
     if (policyBlocked != null) {
       return policyBlocked;
     }
     try {
       return standardizeResponse("getAdjustableParameters",
-          AutomationRunner.getAdjustableParameters(processJson), "general");
+          AutomationRunner.getAdjustableParameters(resolveModel(processJson)), "general");
     } catch (Exception e) {
       return errorJson("Adjustable-parameter enumeration failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1328,7 +1412,7 @@ public class NeqSimTools {
       + "getAdjustableParameters to discover decision variables.")
   public String runProcessLoop(
       @ToolArg(
-          description = "JSON process definition (same schema as runProcess).") String processJson,
+          description = "JSON process definition (same schema as runProcess), OR a modelId returned by manageModel(action=''register'') to reuse a registered model without resending it.") String processJson,
       @ToolArg(description = "JSON array of setpoint batches; each batch is an object mapping a "
           + "dot-notation address to a numeric value, e.g. "
           + "[{\"Compressor.outletPressure\":150},{\"Compressor.outletPressure\":160}].") String trials,
@@ -1344,10 +1428,12 @@ public class NeqSimTools {
     }
     try {
       return standardizeResponse("runProcessLoop",
-          AutomationRunner.runLoop(processJson, trials, readbacks, setpointUnit, readbackUnit),
+          AutomationRunner.runLoop(resolveModel(processJson), trials, readbacks, setpointUnit, readbackUnit),
           "general");
     } catch (Exception e) {
       return errorJson("Process loop failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1381,6 +1467,8 @@ public class NeqSimTools {
       return standardizeResponse("solveTask", TaskSolverRunner.solveTask(taskJson), "general");
     } catch (Exception e) {
       return errorJson("Task solving failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1409,6 +1497,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Workflow composition failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1437,6 +1527,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Agentic engineering failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1472,6 +1564,8 @@ public class NeqSimTools {
           EngineeringValidator.validate(resultsJson, context), "general");
     } catch (Exception e) {
       return errorJson("Validation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1503,6 +1597,8 @@ public class NeqSimTools {
       return standardizeResponse("generateReport", ReportRunner.run(reportJson), "general");
     } catch (Exception e) {
       return errorJson("Report generation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1537,6 +1633,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Task workflow bridge failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1577,6 +1675,8 @@ public class NeqSimTools {
       }
     } catch (Exception e) {
       return errorJson("Plugin operation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1614,6 +1714,8 @@ public class NeqSimTools {
       }
     } catch (Exception e) {
       return errorJson("Progress query failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1645,6 +1747,8 @@ public class NeqSimTools {
       return standardizeResponse("streamSimulation", StreamingRunner.run(streamJson), "general");
     } catch (Exception e) {
       return errorJson("Streaming operation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1676,6 +1780,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Visualization failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1710,6 +1816,8 @@ public class NeqSimTools {
           CompositionRunner.run(compositionJson), "general");
     } catch (Exception e) {
       return errorJson("Composition failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1740,6 +1848,8 @@ public class NeqSimTools {
       return standardizeResponse("manageSecurity", SecurityRunner.run(securityJson), "general");
     } catch (Exception e) {
       return errorJson("Security operation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1770,6 +1880,8 @@ public class NeqSimTools {
       return standardizeResponse("manageState", StatePersistenceRunner.run(persistJson), "general");
     } catch (Exception e) {
       return errorJson("State persistence failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1803,6 +1915,8 @@ public class NeqSimTools {
           ValidationProfileRunner.run(profileJson), "general");
     } catch (Exception e) {
       return errorJson("Validation profile operation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1834,6 +1948,8 @@ public class NeqSimTools {
       return standardizeResponse("queryDataCatalog", DataCatalogRunner.run(catalogJson), "general");
     } catch (Exception e) {
       return errorJson("Data catalog query failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1860,6 +1976,8 @@ public class NeqSimTools {
       return standardizeResponse("sizeEquipment", EquipmentSizingRunner.run(sizingJson), "general");
     } catch (Exception e) {
       return errorJson("Equipment sizing failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1889,6 +2007,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Utility design failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1914,6 +2034,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Process comparison failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1952,6 +2074,8 @@ public class NeqSimTools {
       return standardizeResponse("runRelief", ReliefRunner.run(reliefJson), "general");
     } catch (Exception e) {
       return errorJson("Relief sizing failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -1981,6 +2105,8 @@ public class NeqSimTools {
       return standardizeResponse("runLOPA", LOPARunner.run(lopaJson), "general");
     } catch (Exception e) {
       return errorJson("LOPA calculation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -2008,6 +2134,8 @@ public class NeqSimTools {
       return standardizeResponse("runSIL", SILRunner.run(silJson), "general");
     } catch (Exception e) {
       return errorJson("SIL verification failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -2034,6 +2162,8 @@ public class NeqSimTools {
       return standardizeResponse("runRiskMatrix", RiskMatrixRunner.run(riskJson), "general");
     } catch (Exception e) {
       return errorJson("Risk matrix scoring failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -2059,6 +2189,8 @@ public class NeqSimTools {
       return standardizeResponse("runFlareNetwork", FlareRadiationRunner.run(flareJson), "general");
     } catch (Exception e) {
       return errorJson("Flare radiation calculation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -2089,6 +2221,8 @@ public class NeqSimTools {
       return standardizeResponse("runHAZOP", HAZOPStudyRunner.run(hazopJson), "general");
     } catch (Exception e) {
       return errorJson("HAZOP study generation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -2120,6 +2254,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("HAZOP scenario evaluation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -2147,6 +2283,8 @@ public class NeqSimTools {
           "general");
     } catch (Exception e) {
       return errorJson("Barrier register analysis failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -2173,6 +2311,8 @@ public class NeqSimTools {
           SafetySystemPerformanceRunner.run(safetySystemJson), "general");
     } catch (Exception e) {
       return errorJson("Safety-system performance analysis failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -2208,6 +2348,8 @@ public class NeqSimTools {
       return standardizeResponse("runRootCauseAnalysis", RootCauseRunner.run(rcaJson), "general");
     } catch (Exception e) {
       return errorJson("Root cause analysis failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -2320,6 +2462,8 @@ public class NeqSimTools {
       }
     } catch (Exception e) {
       return errorJson("Industrial profile operation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -2359,6 +2503,8 @@ public class NeqSimTools {
       }
     } catch (Exception e) {
       return errorJson("Benchmark trust query failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -2408,6 +2554,40 @@ public class NeqSimTools {
       return standardizeResponse("checkToolAccess", GSON_PRETTY.toJson(result), "general");
     } catch (Exception e) {
       return errorJson("Tool access check failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
+    }
+  }
+
+  /**
+   * Register, revise, inspect, list, and delete reusable process-model definitions.
+   *
+   * @param modelJson JSON with the model action and parameters
+   * @return JSON with the model handle or requested model data
+   */
+  @Tool(description = "Register a process model once and address it by a stable modelId instead of "
+      + "resending the full flowsheet JSON on every call. The returned modelId can be passed "
+      + "wherever a tool expects processJson (runProcess, listSimulationUnits, listUnitVariables, "
+      + "getSimulationVariable, setSimulationVariable, saveSimulationState, getAdjustableParameters, "
+      + "runProcessLoop, validateInput, diagnoseAutomation). Use this to keep a conversation anchored "
+      + "to one model, avoid re-parsing large flowsheets, and cite a model revision in results. "
+      + "Actions: register, revise, get, list, inspect, delete.")
+  public String manageModel(
+      @ToolArg(description = "JSON with: 'action' (register|revise|get|list|inspect|delete). "
+          + "For register: 'processJson' (the process definition, as a JSON string or a nested JSON "
+          + "object) plus optional 'name' and 'version'. "
+          + "For revise: 'modelId' and the updated 'processJson'. "
+          + "For get/inspect/delete: 'modelId'.") String modelJson) {
+    String policyBlocked = enforceToolAccess("manageModel");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
+    try {
+      return standardizeResponse("manageModel", ModelRegistry.run(modelJson), "general");
+    } catch (Exception e) {
+      return errorJson("Model registry operation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
     }
   }
 
@@ -2426,15 +2606,45 @@ public class NeqSimTools {
   /**
    * Enforces shared MCP server policy for a tool invocation.
    *
+   * <p>
+   * This is the single choke point every {@code @Tool} method calls first, so it is also where the
+   * transport-resolved caller identity is bound to {@link neqsim.mcp.runners.McpRequestContext}.
+   * Governance then evaluates a real principal instead of a null credential.
+   * </p>
+   *
+   * <p>
+   * The binding is thread-local, so every caller must release it again. Tool methods do that in a
+   * {@code finally} block around their body; when access is denied the body never runs, so the
+   * binding is released here instead. Without this a pooled HTTP worker thread would keep the
+   * previous caller's credential and subject resident between requests.
+   * </p>
+   *
    * @param toolName the MCP tool name
    * @return null if execution may continue, otherwise a standardized blocked response
    */
-  private static String enforceToolAccess(String toolName) {
+  private String enforceToolAccess(String toolName) {
+    if (identityResolver != null) {
+      identityResolver.bindCurrentPrincipal();
+    }
     String blocked = IndustrialProfile.enforceAccess(toolName);
     if (blocked == null) {
       return null;
     }
-    return standardizeResponse(toolName, blocked, "policy");
+    try {
+      return standardizeResponse(toolName, blocked, "policy");
+    } finally {
+      McpRequestContext.clear();
+    }
+  }
+
+  /**
+   * Resolves a process-definition argument that may be a registered model handle.
+   *
+   * @param processJsonOrModelId inline process JSON, or a modelId from {@code manageModel}
+   * @return the process definition JSON
+   */
+  private static String resolveModel(String processJsonOrModelId) {
+    return ModelRegistry.resolve(processJsonOrModelId);
   }
 
   /**
@@ -2465,6 +2675,7 @@ public class NeqSimTools {
       ensureDataBlock(result);
       ApiEnvelope.applyStandardFields(result, toolName, null, null, null);
       ensureWarningsArray(result);
+      neqsim.mcp.runners.ResponseSizeGuard.enforce(result, toolName);
       return GSON_PRETTY.toJson(result);
     } catch (Exception e) {
       JsonObject error = new JsonObject();

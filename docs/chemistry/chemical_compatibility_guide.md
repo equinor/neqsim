@@ -320,7 +320,7 @@ If declared but not attached, a data gap is reported:
 ## 10. Worked Example
 
 See the consolidated notebook
-[`chemical_compatibility_and_rca.ipynb`](../../examples/notebooks/chemical_compatibility_and_rca.ipynb)
+[`chemical_compatibility_and_rca.ipynb`](https://github.com/equinor/neqsim/blob/master/examples/notebooks/chemical_compatibility_and_rca.ipynb)
 for an end-to-end walkthrough covering compatibility screening, scale-control
 assessment, acid treatment sizing, scavenger sizing, and root-cause analysis on
 a representative incident.

@@ -1,19 +1,21 @@
 /**
- * Professional Process Flow Diagram (PFD) generation for NeqSim.
+ * Deterministic Process Flow Diagram (PFD) topology and Graphviz export for NeqSim.
  *
  * <p>
- * This package provides a layout intelligence layer for generating oil &amp; gas industry-standard process flow
- * diagrams from NeqSim process simulations.
+ * This package provides a neutral topology adapter and a layout layer for generating simulator-style process flow
+ * diagrams from NeqSim process simulations. The current exporters are not qualified engineering documents or claims of
+ * ISO 10628 conformance.
  * </p>
  *
  * <h2>Key Features</h2>
  * <ul>
- * <li><b>Industry-standard layout</b> - Left-to-right flow with vertical phase stratification</li>
+ * <li><b>Simulator-style layout</b> - Left-to-right flow with vertical phase stratification</li>
  * <li><b>Gravity-based positioning</b> - Gas at top, oil in middle, water at bottom</li>
  * <li><b>Phase-aware styling</b> - Streams colored by vapor/liquid fraction</li>
  * <li><b>Equipment semantics</b> - Separator outlets correctly positioned</li>
  * <li><b>DEXPI integration</b> - Import P&amp;ID data and generate diagrams</li>
- * <li><b>Professional appearance</b> - Industry-standard shapes and colors</li>
+ * <li><b>Canonical topology</b> - Stable plant, area, equipment, port, and connection identities</li>
+ * <li><b>Operating evidence</b> - Opt-in case-scoped stream values with explicit units and provenance</li>
  * <li><b>Multiple detail levels</b> - MINIMAL, STANDARD, DETAILED, DEBUG</li>
  * <li><b>Deterministic output</b> - Same model always produces same diagram</li>
  * </ul>
@@ -50,6 +52,8 @@
  *
  * <h2>Architecture</h2>
  * <ul>
+ * <li>{@link neqsim.process.processmodel.diagram.ProcessDiagramGraphAdapter} - Neutral adapter to the shared
+ * engineering graph model</li>
  * <li>{@link neqsim.process.processmodel.diagram.ProcessDiagramExporter} - Main exporter class</li>
  * <li>{@link neqsim.process.processmodel.diagram.PFDLayoutPolicy} - Layout intelligence layer</li>
  * <li>{@link neqsim.process.processmodel.diagram.EquipmentRole} - Equipment role classification</li>
@@ -60,7 +64,7 @@
  *
  * <h2>Layout Philosophy</h2>
  * <p>
- * Professional PFDs follow industry conventions:
+ * The current Graphviz layout follows these simulator-style conventions:
  * </p>
  * <ol>
  * <li><b>Left-to-right flow</b> - Feed streams enter left, products exit right</li>

@@ -2,11 +2,14 @@ package neqsim.process.equipment.distillation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.validation.ValidationResult;
 
@@ -35,6 +38,59 @@ public class DistillationColumnModeTest {
   }
 
   /**
+   * Reject fixed liquid-reflux flow and reflux-ratio specifications that claim the same condenser split.
+   */
+  @Test
+  public void fixedLiquidRefluxAndRatioSpecificationAreMutuallyExclusive() {
+    ColumnSpecification refluxRatio = new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
+        ColumnSpecification.ProductLocation.TOP, 0.8);
+
+    DistillationColumn fixedFirst = new DistillationColumn("fixed-first column", 2, true, true);
+    fixedFirst.setCondenserLiquidReflux(100.0, "kg/hr");
+    IllegalArgumentException ratioException = assertThrows(IllegalArgumentException.class,
+        () -> fixedFirst.setTopSpecification(refluxRatio));
+    String ratioMessage = ratioException.getMessage();
+    assertNotNull(ratioMessage);
+    assertTrue(ratioMessage.contains("fixed liquid-reflux"));
+    assertTrue(ratioMessage.contains("reflux-ratio"));
+    assertNull(fixedFirst.getTopSpecification());
+    assertEquals(DistillationColumn.CondenserMode.LIQUID_REFLUX_SPLIT, fixedFirst.getCondenserMode());
+
+    fixedFirst.setCondenserMode(DistillationColumn.CondenserMode.PARTIAL);
+    fixedFirst.setTopSpecification(refluxRatio);
+    assertEquals(refluxRatio, fixedFirst.getTopSpecification());
+
+    DistillationColumn ratioFirst = new DistillationColumn("ratio-first column", 2, true, true);
+    ratioFirst.setCondenserRefluxRatio(0.8);
+    IllegalArgumentException fixedException = assertThrows(IllegalArgumentException.class,
+        () -> ratioFirst.setCondenserLiquidReflux(100.0, "kg/hr"));
+    String fixedMessage = fixedException.getMessage();
+    assertNotNull(fixedMessage);
+    assertTrue(fixedMessage.contains("select one condenser reflux control"));
+    assertEquals(DistillationColumn.CondenserMode.PARTIAL, ratioFirst.getCondenserMode());
+    assertNotNull(ratioFirst.getTopSpecification());
+    assertEquals(0.8, ratioFirst.getTopSpecification().getTargetValue(), 0.0);
+
+    double retainedCondenserRatio = ratioFirst.getCondenser().getRefluxRatio();
+    ColumnSpecification retainedSpecification = ratioFirst.getTopSpecification();
+    assertThrows(IllegalArgumentException.class, () -> ratioFirst.setCondenserRefluxRatio(Double.NaN));
+    assertEquals(retainedCondenserRatio, ratioFirst.getCondenser().getRefluxRatio(), 0.0);
+    assertEquals(retainedSpecification, ratioFirst.getTopSpecification());
+
+    DistillationColumn legacyConflict = new DistillationColumn("legacy conflict column", 2, true, true);
+    legacyConflict.setTopSpecification(refluxRatio);
+    legacyConflict.getCondenser().setSeparation_with_liquid_reflux(true, 100.0, "kg/hr");
+    ValidationResult validation = legacyConflict.validateSpecifications();
+    assertTrue(!validation.isValid());
+    assertTrue(validation.getErrors().stream()
+        .anyMatch(error -> error.getCategory().equals("specification.degreesOfFreedom")));
+    IllegalStateException runException = assertThrows(IllegalStateException.class,
+        () -> legacyConflict.run(UUID.randomUUID()));
+    assertNotNull(runException.getMessage());
+    assertTrue(runException.getMessage().contains("select one condenser reflux control"));
+  }
+
+  /**
    * Test explicit reboiler mode switching.
    */
   @Test
@@ -42,10 +98,20 @@ public class DistillationColumnModeTest {
     DistillationColumn column = new DistillationColumn("reboiler mode column", 2, true, true);
 
     assertEquals(DistillationColumn.ReboilerMode.EQUILIBRIUM, column.getReboilerMode());
-    column.setReboilerVaporBoilupRatio(0.8);
+    column.setReboilerBoilupRatio(0.8);
     assertEquals(DistillationColumn.ReboilerMode.VAPOR_BOILUP_RATIO, column.getReboilerMode());
+    assertNotNull(column.getBottomSpecification());
+    assertEquals(ColumnSpecification.SpecificationType.REFLUX_RATIO, column.getBottomSpecification().getType());
+
     column.setReboilerMode(DistillationColumn.ReboilerMode.EQUILIBRIUM);
     assertEquals(DistillationColumn.ReboilerMode.EQUILIBRIUM, column.getReboilerMode());
+    assertNull(column.getBottomSpecification());
+
+    column.setBottomProductPurity("n-pentane", 0.95);
+    ColumnSpecification bottomPurity = column.getBottomSpecification();
+    column.setReboilerVaporBoilupRatio(1.0);
+    column.setReboilerMode(DistillationColumn.ReboilerMode.EQUILIBRIUM);
+    assertSame(bottomPurity, column.getBottomSpecification());
   }
 
   /**
@@ -94,6 +160,38 @@ public class DistillationColumnModeTest {
     assertTrue(column.getLastPumparoundRelativeChange() >= 0.0);
   }
 
+  /** Test that reinitialization preserves the configured multistage pumparound return state. */
+  @Test
+  public void cooledMultistagePumparoundPreservesReturnState() {
+    double[] temperatureDrops = { 4.0, 5.0 };
+    for (double temperatureDrop : temperatureDrops) {
+      DistillationColumn column = createMultistagePumparoundColumn(temperatureDrop);
+      DistillationColumn.ColumnPumparound pumparound = column.getPumparounds().get(0);
+      column.run(UUID.randomUUID());
+
+      double duty = pumparound.getReturnStream().getFluid().getEnthalpy()
+          - pumparound.getDrawStream().getFluid().getEnthalpy();
+      double returnFlow = pumparound.getReturnStream().getFlowRate("kg/hr");
+      assertTrue(column.solved(), column.getConvergenceDiagnostics());
+      assertTrue(column.isLastColumnTearConverged());
+      assertEquals(temperatureDrop,
+          pumparound.getDrawStream().getTemperature() - pumparound.getReturnStream().getTemperature(), 1.0e-9);
+      assertTrue(returnFlow > 0.0 && returnFlow < 10000.0);
+      assertTrue(duty < 0.0);
+      assertTrue(Math.abs(column.getMassBalance("kg/hr")) < 1.0e-8);
+      assertPumparoundProductsPhysicalAndBalanced(column);
+
+      column.run(UUID.randomUUID());
+      double repeatedDuty = pumparound.getReturnStream().getFluid().getEnthalpy()
+          - pumparound.getDrawStream().getFluid().getEnthalpy();
+      assertEquals(temperatureDrop,
+          pumparound.getDrawStream().getTemperature() - pumparound.getReturnStream().getTemperature(), 1.0e-9);
+      assertEquals(returnFlow, pumparound.getReturnStream().getFlowRate("kg/hr"), 5.0e-5 * returnFlow);
+      assertEquals(duty, repeatedDuty, 5.0e-5 * Math.abs(duty));
+      assertPumparoundProductsPhysicalAndBalanced(column);
+    }
+  }
+
   /**
    * Test hydraulic pressure-drop coupling API and diagnostics.
    */
@@ -135,6 +233,62 @@ public class DistillationColumnModeTest {
     column.addLiquidPumparound("PA-cold", 0, 0, 0.20, 400.0);
 
     assertThrows(IllegalStateException.class, () -> column.run(UUID.randomUUID()));
+  }
+
+  /** Verify physical terminal products and per-component material closure for the pumparound case. */
+  private void assertPumparoundProductsPhysicalAndBalanced(DistillationColumn column) {
+    StreamInterface feed = column.getFeedStreams(3).get(0);
+    StreamInterface gas = column.getGasOutStream();
+    StreamInterface liquid = column.getLiquidOutStream();
+    double feedFlow = feed.getFlowRate("mol/hr");
+    double gasFlow = gas.getFlowRate("mol/hr");
+    double liquidFlow = liquid.getFlowRate("mol/hr");
+
+    assertTrue(Double.isFinite(gasFlow) && gasFlow >= 0.0);
+    assertTrue(Double.isFinite(liquidFlow) && liquidFlow >= 0.0);
+    assertTrue(Double.isFinite(gas.getTemperature()) && gas.getTemperature() > 0.0);
+    assertTrue(Double.isFinite(liquid.getTemperature()) && liquid.getTemperature() > 0.0);
+    assertEquals(feedFlow, gasFlow + liquidFlow, 5.0e-3 * feedFlow);
+
+    double[] feedComposition = feed.getThermoSystem().getMolarComposition();
+    double[] gasComposition = gas.getThermoSystem().getMolarComposition();
+    double[] liquidComposition = liquid.getThermoSystem().getMolarComposition();
+    for (int componentIndex = 0; componentIndex < feedComposition.length; componentIndex++) {
+      assertTrue(gasComposition[componentIndex] >= 0.0 && gasComposition[componentIndex] <= 1.0);
+      assertTrue(liquidComposition[componentIndex] >= 0.0 && liquidComposition[componentIndex] <= 1.0);
+      double feedComponentFlow = feedFlow * feedComposition[componentIndex];
+      double productComponentFlow = gasFlow * gasComposition[componentIndex]
+          + liquidFlow * liquidComposition[componentIndex];
+      assertEquals(feedComponentFlow, productComponentFlow, Math.max(1.0e-6, 5.0e-3 * Math.abs(feedComponentFlow)));
+    }
+  }
+
+  /**
+   * Create the convergent multicomponent reboiler column used by pumparound state tests.
+   *
+   * @param temperatureDrop configured pumparound cooling in Kelvin
+   * @return unrun column with one liquid pumparound
+   */
+  private DistillationColumn createMultistagePumparoundColumn(double temperatureDrop) {
+    SystemSrkEos fluid = new SystemSrkEos(293.15, 10.0);
+    fluid.addComponent("propane", 40.0);
+    fluid.addComponent("n-butane", 30.0);
+    fluid.addComponent("n-pentane", 30.0);
+    fluid.setMixingRule("classic");
+    Stream feed = new Stream("fractionator pumparound feed", fluid);
+    feed.setFlowRate(10000.0, "kg/hr");
+    feed.run();
+
+    DistillationColumn column = new DistillationColumn("fractionator pumparound column", 6, true, false);
+    column.addFeedStream(feed, 3);
+    column.getReboiler().setOutTemperature(353.15);
+    column.setTopPressure(10.0);
+    column.setBottomPressure(10.5);
+    column.setSolverType(DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
+    column.addLiquidPumparound("PA-multistage", 3, 5, 0.02, temperatureDrop);
+    column.setMaxPumparoundIterations(12);
+    column.setPumparoundTolerance(1.0e-4);
+    return column;
   }
 
   /**

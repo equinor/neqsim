@@ -2,12 +2,17 @@ package neqsim.process.fielddevelopment.tieback.capacity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
+import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.fielddevelopment.tieback.HostFacility;
+import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -107,6 +112,71 @@ class TieInCapacityPlannerTest {
     assertTrue(period.getHeldBackSatellite().getGasRateMSm3d() > 2.49);
     assertEquals(1000.0, hostFeed.getFlowRate("kg/hr"), 1.0e-6);
     assertFalse(result.getDebottleneckDecisions().isEmpty());
+  }
+
+  /**
+   * Verifies a multi-area host model applies the satellite at an area-qualified stream, finds the downstream
+   * bottleneck, and restores the complete model to its original operating point.
+   */
+  @Test
+  void multiAreaProcessModelFindsDownstreamBottleneckAndRestoresFeedRate() {
+    final Stream hostFeed = createHostFeed();
+    ProcessSystem gathering = new ProcessSystem("gathering");
+    gathering.add(hostFeed);
+
+    final Separator hostSeparator = new Separator("Host Separator", hostFeed);
+    hostSeparator.addCapacityConstraint(new CapacityConstraint("separatorFeedFlow", "kg/hr", ConstraintType.HARD)
+        .setDesignValue(2500.0).setValueSupplier(() -> hostFeed.getFlowRate("kg/hr")));
+    ProcessSystem processing = new ProcessSystem("processing");
+    processing.add(hostSeparator);
+
+    ProcessModel model = new ProcessModel();
+    model.add("gathering", gathering);
+    model.add("processing", processing);
+    model.run();
+
+    HostFacility host = HostFacility.builder("Host E").gasCapacity(10.0).processModel(model).build();
+    ProductionProfileSeries base = new ProductionProfileSeries("base").addPeriod(2028, 1.0, 0.0, 0.0, 0.0);
+    ProductionProfileSeries satellite = new ProductionProfileSeries("satellite").addPeriod(2028, 4.0, 0.0, 0.0, 0.0);
+    HostTieInPoint tieInPoint = new HostTieInPoint("gathering::Host Feed", "kg/hr").setGasToProcessRateFactor(1000.0);
+
+    TieInCapacityResult result = new TieInCapacityPlanner(host).setHostProductionProfile(base)
+        .setSatelliteProductionProfile(satellite).setTieInPoint(tieInPoint).setProcessUtilizationLimit(1.0).run();
+
+    TieInPeriodResult period = result.getPeriodResults().get(0);
+    assertTrue(period.isProcessModelUsed());
+    assertEquals("processing::Host Separator", period.getProcessBottleneck());
+    assertTrue(period.getProcessUtilizationSummary().containsKey("processing::Host Separator"));
+    assertTrue(period.getAcceptedSatellite().getGasRateMSm3d() > 1.49);
+    assertTrue(period.getAcceptedSatellite().getGasRateMSm3d() < 1.51);
+    assertEquals(1000.0, hostFeed.getFlowRate("kg/hr"), 1.0e-6);
+    assertEquals(1000.0, hostSeparator.getGasOutStream().getFlowRate("kg/hr"), 1.0e-6);
+
+    HostFacility.HostCapacityReport restoredReport = host.assessCapacity(0.0, 0.0, 0.0, 0.0);
+    assertTrue(restoredReport.isProcessModelUsed());
+    assertEquals("processing::Host Separator", restoredReport.getPrimaryBottleneckName());
+    assertEquals(0.4, restoredReport.getPrimaryBottleneckUtilization(), 1.0e-6);
+  }
+
+  /**
+   * Verifies ProcessModel stream addressing is deterministic and rejects ambiguous bare names.
+   */
+  @Test
+  void processModelStreamResolutionRequiresQualificationForDuplicateNames() {
+    Stream firstFeed = createHostFeed();
+    Stream secondFeed = createHostFeed();
+    ProcessSystem firstArea = new ProcessSystem("first");
+    firstArea.add(firstFeed);
+    ProcessSystem secondArea = new ProcessSystem("second");
+    secondArea.add(secondFeed);
+    ProcessModel model = new ProcessModel();
+    model.add("first", firstArea);
+    model.add("second", secondArea);
+
+    assertSame(firstFeed, model.resolveStreamReference("first::Host Feed"));
+    assertNull(model.resolveStreamReference("missing::Host Feed"));
+    assertNull(model.resolveStreamReference("first::Missing Feed"));
+    assertThrows(IllegalArgumentException.class, () -> model.resolveStreamReference("Host Feed"));
   }
 
   /**

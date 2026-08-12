@@ -1,12 +1,14 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
 import java.io.Serializable;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.BubbleSizeClosure;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.WallFriction;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.AUSMPlusFluxCalculator;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.AUSMPlusFluxCalculator.PhaseFlux;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.AUSMPlusFluxCalculator.PhaseState;
+import neqsim.process.equipment.pipeline.twophasepipe.numerics.DispersedBubbleDragSolver;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.MUSCLReconstructor;
 
 /**
@@ -120,14 +122,64 @@ public class TwoFluidConservationEquations implements Serializable {
    */
   private double virtualMassCoefficient = 0.5;
 
-  /** Previous velocities for virtual mass force calculation (stored between timesteps). */
-  private double[] prevGasVelocities;
+  /** Treat corrected bubble drag with a conservative local implicit source step when opted in. */
+  private boolean enableStiffBubbleDrag = false;
 
-  /** Previous velocities for virtual mass force calculation (stored between timesteps). */
-  private double[] prevLiquidVelocities;
-
-  /** Timestep for virtual mass force calculation. */
+  /** Retained timestep setting for source compatibility with existing callers. */
   private double dt = 0.01;
+
+  /** Most recent phase-resolved boundary and source rates calculated by {@link #calcRHS}. */
+  private MassBalanceRate lastMassBalanceRate = new MassBalanceRate(new double[3], new double[3], new double[3]);
+
+  /** Phase-resolved face mass flows from the most recent {@link #calcRHS} evaluation. */
+  private double[][] lastPhaseMassFaceFluxes = new double[0][3];
+
+  /** Phase-resolved cell source rates from the most recent {@link #calcRHS} evaluation. */
+  private double[][] lastPhaseMassSourcesPerLength = new double[0][3];
+
+  /**
+   * Instantaneous phase-resolved terms in the finite-volume domain mass balance.
+   */
+  public static final class MassBalanceRate implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private final double[] inletMassFlowKgPerSecond;
+    private final double[] outletMassFlowKgPerSecond;
+    private final double[] sourceMassFlowKgPerSecond;
+
+    private MassBalanceRate(double[] inletMassFlowKgPerSecond, double[] outletMassFlowKgPerSecond,
+        double[] sourceMassFlowKgPerSecond) {
+      this.inletMassFlowKgPerSecond = inletMassFlowKgPerSecond.clone();
+      this.outletMassFlowKgPerSecond = outletMassFlowKgPerSecond.clone();
+      this.sourceMassFlowKgPerSecond = sourceMassFlowKgPerSecond.clone();
+    }
+
+    /**
+     * Get gas, oil, and water inlet mass-flow rates.
+     *
+     * @return three-element array in kg/s
+     */
+    public double[] getInletMassFlowKgPerSecond() {
+      return inletMassFlowKgPerSecond.clone();
+    }
+
+    /**
+     * Get gas, oil, and water outlet mass-flow rates.
+     *
+     * @return three-element array in kg/s
+     */
+    public double[] getOutletMassFlowKgPerSecond() {
+      return outletMassFlowKgPerSecond.clone();
+    }
+
+    /**
+     * Get gas, oil, and water domain-integrated source rates.
+     *
+     * @return three-element array in kg/s
+     */
+    public double[] getSourceMassFlowKgPerSecond() {
+      return sourceMassFlowKgPerSecond.clone();
+    }
+  }
 
   /**
    * Constructor.
@@ -168,6 +220,13 @@ public class TwoFluidConservationEquations implements Serializable {
     // Calculate source terms for each cell
     double[][] sources = calcSourceTerms(sections);
 
+    // Calculate the two external boundary fluxes once. These exact values are also
+    // retained for a stage-consistent domain mass-balance diagnostic.
+    double[] inletFlux = calcInletFlux(sections[0]);
+    double[] outletFlux = calcOutletFlux(sections[nCells - 1]);
+    lastPhaseMassFaceFluxes = populatePhaseMassFaceFluxes(lastPhaseMassFaceFluxes, nCells, fluxes, inletFlux,
+        outletFlux);
+
     // Assemble RHS: dU/dt = -1/dx_i * (F_{i+1/2} - F_{i-1/2}) + S_i
     //
     // Boundary treatment:
@@ -181,13 +240,13 @@ public class TwoFluidConservationEquations implements Serializable {
         // Inlet cell: Inlet BC maintains the state, so inlet flux = outlet flux from cell 0
         // This creates a "quasi-steady" inlet where what enters = what leaves for the cell
         // The mass is replenished by the boundary condition after each step
-        fluxLeft = calcInletFlux(sections[0]);
+        fluxLeft = inletFlux;
         fluxRight = fluxes[0];
       } else if (i == nCells - 1) {
         // Outlet cell: left flux from last interface, right flux uses extrapolation
         // For transmissive outlet, we compute the outgoing flux from the outlet cell state
         fluxLeft = fluxes[nCells - 2];
-        fluxRight = calcOutletFlux(sections[nCells - 1]);
+        fluxRight = outletFlux;
       } else {
         // Interior cells: use interface fluxes normally
         fluxLeft = fluxes[i - 1];
@@ -202,7 +261,161 @@ public class TwoFluidConservationEquations implements Serializable {
       }
     }
 
+    applyVirtualMassCoupling(sections, dUdt);
+
+    double[] inletMassFlow = { inletFlux[IDX_GAS_MASS], inletFlux[IDX_OIL_MASS], inletFlux[IDX_WATER_MASS] };
+    double[] outletMassFlow = { outletFlux[IDX_GAS_MASS], outletFlux[IDX_OIL_MASS], outletFlux[IDX_WATER_MASS] };
+    double[] sourceMassFlow = new double[3];
+    for (int i = 0; i < nCells; i++) {
+      double sectionLength = sections[i].getLength();
+      sourceMassFlow[0] += sources[i][IDX_GAS_MASS] * sectionLength;
+      sourceMassFlow[1] += sources[i][IDX_OIL_MASS] * sectionLength;
+      sourceMassFlow[2] += sources[i][IDX_WATER_MASS] * sectionLength;
+    }
+    lastMassBalanceRate = new MassBalanceRate(inletMassFlow, outletMassFlow, sourceMassFlow);
+
     return dUdt;
+  }
+
+  /**
+   * Get the phase-resolved boundary and source rates from the most recent right-hand-side evaluation.
+   *
+   * @return immutable mass-balance rate snapshot
+   */
+  public MassBalanceRate getLastMassBalanceRate() {
+    return lastMassBalanceRate;
+  }
+
+  /**
+   * Get a defensive copy of the phase-resolved face mass flows from the most recent
+   * {@link #calcRHS(TwoFluidSection[], double)} evaluation.
+   *
+   * @return face mass flows with shape {@code [sections.length + 1][3]}, or an empty array before the first evaluation
+   */
+  public double[][] getLastPhaseMassFaceFluxes() {
+    double[][] snapshot = new double[lastPhaseMassFaceFluxes.length][];
+    for (int face = 0; face < lastPhaseMassFaceFluxes.length; face++) {
+      snapshot[face] = lastPhaseMassFaceFluxes[face].clone();
+    }
+    return snapshot;
+  }
+
+  /**
+   * Add the most recently evaluated phase-resolved face mass flows to a caller-owned accumulator.
+   *
+   * <p>
+   * This avoids allocating a defensive snapshot for every Runge-Kutta stage while keeping the retained internal buffer
+   * encapsulated. The accumulator must have shape {@code [sections.length + 1][3]} for the most recent
+   * {@link #calcRHS(TwoFluidSection[], double)} evaluation.
+   * </p>
+   *
+   * @param accumulator destination receiving {@code weight * faceMassFlow}
+   * @param weight integration-stage weight
+   * @throws IllegalArgumentException if the accumulator shape is incompatible or the weight is not finite
+   */
+  public void accumulateLastPhaseMassFaceFluxes(double[][] accumulator, double weight) {
+    if (accumulator == null || accumulator.length != lastPhaseMassFaceFluxes.length) {
+      throw new IllegalArgumentException("Accumulator must match the most recent face-flux shape");
+    }
+    if (!Double.isFinite(weight)) {
+      throw new IllegalArgumentException("Integration-stage weight must be finite");
+    }
+    for (int face = 0; face < lastPhaseMassFaceFluxes.length; face++) {
+      if (accumulator[face] == null || accumulator[face].length != 3) {
+        throw new IllegalArgumentException("Accumulator must contain three phase columns at every face");
+      }
+      for (int phase = 0; phase < 3; phase++) {
+        accumulator[face][phase] += weight * lastPhaseMassFaceFluxes[face][phase];
+      }
+    }
+  }
+
+  /**
+   * Add the most recently evaluated cell phase-mass sources to a caller-owned accumulator.
+   *
+   * <p>
+   * Rows are finite-volume cells and columns are gas, oil, and water in kg/(m s). This is the source counterpart to
+   * {@link #accumulateLastPhaseMassFaceFluxes(double[][], double)} and lets component transport use the same
+   * Runge-Kutta stage weights as the accepted hydrodynamic phase masses.
+   * </p>
+   *
+   * @param accumulator destination receiving {@code weight * sourceRate}
+   * @param weight integration-stage weight
+   */
+  public void accumulateLastPhaseMassSourcesPerLength(double[][] accumulator, double weight) {
+    if (accumulator == null || accumulator.length != lastPhaseMassSourcesPerLength.length) {
+      throw new IllegalArgumentException("Accumulator must match the most recent phase-source shape");
+    }
+    if (!Double.isFinite(weight)) {
+      throw new IllegalArgumentException("Accumulator weight must be finite");
+    }
+    for (int cell = 0; cell < lastPhaseMassSourcesPerLength.length; cell++) {
+      if (accumulator[cell] == null || accumulator[cell].length != 3) {
+        throw new IllegalArgumentException("Accumulator must contain three phase columns at every cell");
+      }
+      for (int phase = 0; phase < 3; phase++) {
+        accumulator[cell][phase] += weight * lastPhaseMassSourcesPerLength[cell][phase];
+      }
+    }
+  }
+
+  /**
+   * Calculate phase-resolved mass flow at every finite-volume face from the same boundary and AUSM+ fluxes used by the
+   * conservative equations.
+   *
+   * <p>
+   * Rows are faces from inlet through outlet; columns are gas, oil, and water in kg/s. A positive value points in the
+   * increasing section-index direction. CLOSED boundaries are represented by the zero boundary velocities imposed by
+   * {@link neqsim.process.equipment.pipeline.TwoFluidPipe}, so their external face flow is exactly zero while internal
+   * convection remains available.
+   * </p>
+   *
+   * @param sections current finite-volume sections
+   * @param dx minimum mesh spacing in metres, retained for consistency with the spatial flux API
+   * @return face mass flows with shape {@code [sections.length + 1][3]}
+   * @throws IllegalArgumentException if {@code sections} is null or empty
+   */
+  public double[][] calcPhaseMassFaceFluxes(TwoFluidSection[] sections, double dx) {
+    if (sections == null || sections.length == 0) {
+      throw new IllegalArgumentException("At least one section is required to calculate face fluxes");
+    }
+
+    double[][] interfaceFluxes = sections.length > 1 ? calcInterfaceFluxes(sections, dx) : new double[0][NUM_EQUATIONS];
+    double[] inletFlux = calcInletFlux(sections[0]);
+    double[] outletFlux = calcOutletFlux(sections[sections.length - 1]);
+    return populatePhaseMassFaceFluxes(null, sections.length, interfaceFluxes, inletFlux, outletFlux);
+  }
+
+  /**
+   * Populate a caller-provided face-flux buffer, allocating only when its face count is incompatible.
+   *
+   * @param phaseMassFaceFluxes reusable destination, or {@code null}
+   * @param sectionCount number of finite-volume sections
+   * @param interfaceFluxes conservative fluxes at internal faces
+   * @param inletFlux conservative inlet-face flux
+   * @param outletFlux conservative outlet-face flux
+   * @return populated face mass flows with gas, oil, and water columns
+   */
+  private double[][] populatePhaseMassFaceFluxes(double[][] phaseMassFaceFluxes, int sectionCount,
+      double[][] interfaceFluxes, double[] inletFlux, double[] outletFlux) {
+    if (phaseMassFaceFluxes == null || phaseMassFaceFluxes.length != sectionCount + 1) {
+      phaseMassFaceFluxes = new double[sectionCount + 1][3];
+    }
+    phaseMassFaceFluxes[0][0] = inletFlux[IDX_GAS_MASS];
+    phaseMassFaceFluxes[0][1] = inletFlux[IDX_OIL_MASS];
+    phaseMassFaceFluxes[0][2] = inletFlux[IDX_WATER_MASS];
+
+    for (int face = 1; face < sectionCount; face++) {
+      double[] interfaceFlux = interfaceFluxes[face - 1];
+      phaseMassFaceFluxes[face][0] = interfaceFlux[IDX_GAS_MASS];
+      phaseMassFaceFluxes[face][1] = interfaceFlux[IDX_OIL_MASS];
+      phaseMassFaceFluxes[face][2] = interfaceFlux[IDX_WATER_MASS];
+    }
+
+    phaseMassFaceFluxes[sectionCount][0] = outletFlux[IDX_GAS_MASS];
+    phaseMassFaceFluxes[sectionCount][1] = outletFlux[IDX_OIL_MASS];
+    phaseMassFaceFluxes[sectionCount][2] = outletFlux[IDX_WATER_MASS];
+    return phaseMassFaceFluxes;
   }
 
   /**
@@ -224,7 +437,7 @@ public class TwoFluidConservationEquations implements Serializable {
       rhoG = 1.0; // Default gas density
     double vG = sec.getGasVelocity();
     double alphaG = sec.getGasHoldup();
-    alphaG = Math.max(0.001, Math.min(0.999, alphaG));
+    alphaG = Math.max(0.0, Math.min(1.0, alphaG));
     flux[IDX_GAS_MASS] = alphaG * rhoG * vG * A;
     flux[IDX_GAS_MOMENTUM] = alphaG * rhoG * vG * vG * A + alphaG * sec.getPressure() * A;
 
@@ -234,10 +447,7 @@ public class TwoFluidConservationEquations implements Serializable {
       rhoO = 700.0; // Default oil density
     double vO = sec.getOilVelocity();
     double alphaO = sec.getOilHoldup();
-    // If oil holdup is zero but we have liquid, estimate from liquid holdup
-    if (alphaO < 1e-10 && sec.getLiquidHoldup() > 0.01) {
-      alphaO = sec.getLiquidHoldup() * sec.getOilFractionInLiquid();
-    }
+    // Phase-resolved boundary holdup is authoritative; do not reconstruct an absent oil phase.
     alphaO = Math.max(0, Math.min(1 - alphaG, alphaO));
     flux[IDX_OIL_MASS] = alphaO * rhoO * vO * A;
     flux[IDX_OIL_MOMENTUM] = alphaO * rhoO * vO * vO * A + alphaO * sec.getPressure() * A;
@@ -248,10 +458,7 @@ public class TwoFluidConservationEquations implements Serializable {
       rhoW = 1000.0; // Default water density
     double vW = sec.getWaterVelocity();
     double alphaW = sec.getWaterHoldup();
-    // If water holdup is zero but we have liquid, estimate from liquid holdup
-    if (alphaW < 1e-10 && sec.getLiquidHoldup() > 0.01) {
-      alphaW = sec.getLiquidHoldup() * sec.getWaterCut();
-    }
+    // Phase-resolved boundary holdup is authoritative; do not reconstruct an absent water phase.
     alphaW = Math.max(0, Math.min(1 - alphaG - alphaO, alphaW));
     flux[IDX_WATER_MASS] = alphaW * rhoW * vW * A;
     flux[IDX_WATER_MOMENTUM] = alphaW * rhoW * vW * vW * A + alphaW * sec.getPressure() * A;
@@ -358,18 +565,32 @@ public class TwoFluidConservationEquations implements Serializable {
       sec.setEntrainmentFraction(entrainment.entrainmentFraction);
       sec.setEntrainedDropletDiameter(entrainment.dropletDiameter);
 
-      double severeSluggingNumber = calcSevereSluggingNumber(sec);
-      sec.setSevereSluggingNumber(severeSluggingNumber);
-      sec.setSevereSlugPotential(severeSluggingNumber < 1.0);
+      double gasCarryoverNumber = calcInclinedSectionGasCarryoverNumber(sec);
+      sec.setInclinedSectionGasCarryoverNumber(gasCarryoverNumber);
+      sec.setInclinedSectionLiquidFallbackPotential(gasCarryoverNumber < 1.0);
     }
   }
 
-  private double calcSevereSluggingNumber(TwoFluidSection sec) {
+  /**
+   * Calculate a local inclined-section gas-carryover screen.
+   *
+   * <p>
+   * The result contains no upstream gas volume, riser height, top pressure, or choke response and therefore must not be
+   * interpreted as a severe-slugging system criterion.
+   * </p>
+   *
+   * @param sec local solved pipe section
+   * @return dimensionless gas-carryover number, or positive infinity when not applicable
+   */
+  private double calcInclinedSectionGasCarryoverNumber(TwoFluidSection sec) {
     if (sec.getInclination() <= Math.toRadians(5.0)) {
       return Double.POSITIVE_INFINITY;
     }
 
-    double alphaL = Math.max(sec.getLiquidHoldup(), 1e-6);
+    double alphaL = sec.getLiquidHoldup();
+    if (alphaL <= 0.0) {
+      return Double.POSITIVE_INFINITY;
+    }
     double rhoG = Math.max(sec.getGasDensity(), 0.1);
     double rhoL = Math.max(sec.getLiquidDensity(), 100.0);
     double densityContrast = Math.max(rhoL - rhoG, 1.0);
@@ -477,6 +698,9 @@ public class TwoFluidConservationEquations implements Serializable {
   private double[][] calcSourceTerms(TwoFluidSection[] sections) {
     int nCells = sections.length;
     double[][] sources = new double[nCells][NUM_EQUATIONS];
+    if (lastPhaseMassSourcesPerLength.length != nCells) {
+      lastPhaseMassSourcesPerLength = new double[nCells][3];
+    }
 
     for (int i = 0; i < nCells; i++) {
       TwoFluidSection sec = sections[i];
@@ -516,8 +740,9 @@ public class TwoFluidConservationEquations implements Serializable {
 
       // Interfacial friction force (N/m)
       // Positive interfacial shear decelerates gas, accelerates liquid
-      double F_iG = -sec.getInterfacialShear() * S_i;
-      double F_iL = sec.getInterfacialShear() * S_i;
+      boolean stiffBubbleDrag = enableStiffBubbleDrag && isDispersedBubbleRegime(sec.getFlowRegime());
+      double F_iG = stiffBubbleDrag ? 0.0 : -sec.getInterfacialShear() * S_i;
+      double F_iL = stiffBubbleDrag ? 0.0 : sec.getInterfacialShear() * S_i;
 
       // Gravity forces (N/m) - calculated separately for oil and water
       double F_gG = -alphaG * rhoG * GRAVITY * A * sinTheta;
@@ -532,120 +757,30 @@ public class TwoFluidConservationEquations implements Serializable {
       }
 
       // Mass transfer source (if enabled)
-      double Gamma_G = 0;
-      double Gamma_L = 0;
+      PhaseMassTransfer phaseMassTransfer = PhaseMassTransfer.zero(true, true, null);
       if (includeMassTransfer) {
-        // Simplified equilibrium departure model
-        // Positive Gamma = evaporation (liquid to gas)
-        double[] massTransfer = calcMassTransfer(sec);
-        Gamma_G = massTransfer[0];
-        Gamma_L = massTransfer[1];
+        phaseMassTransfer = calcPhaseMassTransfer(sec);
       }
+      double Gamma_G = phaseMassTransfer.getGasSourceKgPerMetreSecond();
+      double Gamma_O = phaseMassTransfer.getOilSourceKgPerMetreSecond();
+      double Gamma_W = phaseMassTransfer.getWaterSourceKgPerMetreSecond();
+      double Gamma_L = Gamma_O + Gamma_W;
+      double[] transferMomentum = calcTransferMomentumSources(sec, phaseMassTransfer);
 
       // Assemble source terms - now with separate oil and water mass equations
       sources[i][IDX_GAS_MASS] = Gamma_G;
 
-      // Oil and water mass sources (no phase change between oil/water for now)
-      // Gravity-driven segregation source term for water accumulation in low points
-      //
-      // Physical basis: Water (denser) tends to accumulate in valleys while oil
-      // (lighter) accumulates at peaks. The settling rate depends on:
-      // - Density difference (buoyancy driving force)
-      // - Pipe inclination (gravity component)
-      // - Liquid holdup (more liquid = more stratification potential)
-      // - Residence time (slower flow = more settling)
-      //
-      // We use a relaxation approach rather than direct advection to maintain stability.
-      double waterSegregationSource = 0;
-      double oilSegregationSource = 0;
+      // Oil-water segregation is driven by the separate momentum equations and
+      // transported through phase fluxes. A local mass relaxation would convert oil
+      // into water (or vice versa) and, because their densities differ, would also
+      // change total inventory without a conservative face flux.
+      sources[i][IDX_OIL_MASS] = Gamma_O;
+      sources[i][IDX_WATER_MASS] = Gamma_W;
+      lastPhaseMassSourcesPerLength[i][0] = Gamma_G;
+      lastPhaseMassSourcesPerLength[i][1] = Gamma_O;
+      lastPhaseMassSourcesPerLength[i][2] = Gamma_W;
 
-      if (rhoW > rhoO && rhoO > 100 && alphaL > 0.05 && alphaW > 1e-6 && alphaO > 1e-6) {
-        // Settling velocity based on Stokes law for droplets
-        double deltaRho = rhoW - rhoO;
-        double muL_eff = sec.getLiquidViscosity();
-        if (muL_eff < 1e-6)
-          muL_eff = 1e-3; // Default viscosity
-        double dropletDiameter = 0.002; // 2 mm typical droplet
-        double stokesVelocity = deltaRho * GRAVITY * dropletDiameter * dropletDiameter / (18.0 * muL_eff);
-        stokesVelocity = Math.min(stokesVelocity, 0.1); // Cap at 10 cm/s
-
-        // Settling is enhanced in inclined sections
-        // In downhill (sinTheta < 0): water moves forward faster (settles ahead)
-        // In uphill (sinTheta > 0): water slips back (accumulates)
-        double inclinationEffect = Math.abs(sinTheta);
-
-        // Detect valleys (low points) by checking if we're at a local minimum
-        // Valley = previous section going down, next section going up
-        boolean isValley = false;
-        boolean isPeak = false;
-        if (i > 0 && i < nCells - 1) {
-          double elevPrev = sections[i - 1].getElevation();
-          double elevCurr = sec.getElevation();
-          double elevNext = sections[i + 1].getElevation();
-          isValley = (elevPrev > elevCurr) && (elevNext > elevCurr);
-          isPeak = (elevPrev < elevCurr) && (elevNext < elevCurr);
-        }
-
-        // Base settling rate (kg/m/s) - proportional to density difference and gravity
-        double baseRate = 0.0001 * deltaRho * GRAVITY * A;
-
-        if (isValley) {
-          // In valleys: water accumulates, increase local water cut
-          // Rate limited by available oil and existing water content
-          double maxWaterIncrease = alphaO * rhoO * A * 0.001; // Max 0.1% per time unit
-          waterSegregationSource = Math.min(baseRate * (1.0 + 5.0 * inclinationEffect), maxWaterIncrease);
-          oilSegregationSource = -waterSegregationSource * rhoO / rhoW; // Mass balance
-        } else if (isPeak) {
-          // At peaks: water drains faster, decrease local water cut
-          double maxWaterDecrease = alphaW * rhoW * A * 0.001; // Max 0.1% per time unit
-          waterSegregationSource = -Math.min(baseRate * (1.0 + 3.0 * inclinationEffect), maxWaterDecrease);
-          oilSegregationSource = -waterSegregationSource * rhoO / rhoW;
-        } else if (sinTheta > 0.01) {
-          // Uphill sections: water slips back slightly
-          double slipRate = baseRate * 0.3 * sinTheta;
-          waterSegregationSource = Math.min(slipRate, alphaO * rhoO * A * 0.0005);
-          oilSegregationSource = -waterSegregationSource * rhoO / rhoW;
-        }
-      }
-
-      sources[i][IDX_OIL_MASS] = Gamma_L * (1.0 - waterCut) + oilSegregationSource;
-      sources[i][IDX_WATER_MASS] = Gamma_L * waterCut + waterSegregationSource;
-
-      // Virtual mass force calculation (Drew & Lahey, 1987)
-      // F_vm = C_vm * alpha_dispersed * rho_continuous * (dv_dispersed/dt - dv_continuous/dt)
-      // For gas-liquid: gas is dispersed, liquid is continuous
-      double F_vmG = 0;
-      double F_vmL = 0;
-
-      if (enableVirtualMassForce) {
-        // Initialize previous velocity arrays if needed
-        if (prevGasVelocities == null || prevGasVelocities.length != sections.length) {
-          prevGasVelocities = new double[sections.length];
-          prevLiquidVelocities = new double[sections.length];
-          for (int j = 0; j < sections.length; j++) {
-            prevGasVelocities[j] = sections[j].getGasVelocity();
-            prevLiquidVelocities[j] = sections[j].getLiquidVelocity();
-          }
-        }
-
-        // Rate of change of velocities
-        double dvG_dt = 0;
-        double dvL_dt = 0;
-        if (dt > 1e-10) {
-          dvG_dt = (sec.getGasVelocity() - prevGasVelocities[i]) / dt;
-          dvL_dt = (sec.getLiquidVelocity() - prevLiquidVelocities[i]) / dt;
-        }
-
-        // Virtual mass force per unit length (N/m)
-        // Convention: positive F_vmG accelerates gas (added to gas momentum)
-        // The force on gas = -C_vm * alpha_G * rho_L * A * (dv_G/dt - dv_L/dt)
-        // (liquid adds inertia to gas motion)
-        double relAccel = dvG_dt - dvL_dt;
-        F_vmG = -virtualMassCoefficient * alphaG * rhoL * A * relAccel;
-        F_vmL = -F_vmG; // Newton's third law: equal and opposite on liquid
-      }
-
-      sources[i][IDX_GAS_MOMENTUM] = F_wG + F_iG + F_gG + F_vmG + Gamma_G * sec.getGasVelocity();
+      sources[i][IDX_GAS_MOMENTUM] = F_wG + F_iG + F_gG + transferMomentum[0];
 
       if (enableWaterOilSlip && NUM_EQUATIONS == 7) {
         // Separate oil and water momentum equations
@@ -698,20 +833,14 @@ public class TwoFluidConservationEquations implements Serializable {
         double F_ow_oil = -tau_ow * S_ow;
         double F_ow_water = tau_ow * S_ow; // Opposite sign
 
-        // Virtual mass force partitioned to oil and water
-        double F_vmO = F_vmL * oilHoldupFrac;
-        double F_vmW = F_vmL * waterHoldupFrac;
-
         // Assemble oil momentum source
-        sources[i][IDX_OIL_MOMENTUM] = F_wO + F_iO + F_gO + F_ow_oil + F_vmO
-            + Gamma_L * (1.0 - waterCut) * sec.getOilVelocity();
+        sources[i][IDX_OIL_MOMENTUM] = F_wO + F_iO + F_gO + F_ow_oil + transferMomentum[1];
 
         // Assemble water momentum source
-        sources[i][IDX_WATER_MOMENTUM] = F_wW + F_iW + F_gW + F_ow_water + F_vmW
-            + Gamma_L * waterCut * sec.getWaterVelocity();
+        sources[i][IDX_WATER_MOMENTUM] = F_wW + F_iW + F_gW + F_ow_water + transferMomentum[2];
       } else {
         // Combined liquid momentum (original 6-equation model)
-        sources[i][IDX_OIL_MOMENTUM] = F_wL + F_iL + F_gL + F_vmL + Gamma_L * sec.getLiquidVelocity();
+        sources[i][IDX_OIL_MOMENTUM] = F_wL + F_iL + F_gL + transferMomentum[1] + transferMomentum[2];
         sources[i][IDX_WATER_MOMENTUM] = 0; // Not used in 6-equation mode
       }
 
@@ -731,14 +860,136 @@ public class TwoFluidConservationEquations implements Serializable {
       sec.setLiquidMomentumSource(liquidMomSource);
       sec.setEnergySource(sources[i][IDX_ENERGY]);
 
-      // Update previous velocities for next timestep virtual mass calculation
-      if (enableVirtualMassForce && prevGasVelocities != null) {
-        prevGasVelocities[i] = sec.getGasVelocity();
-        prevLiquidVelocities[i] = sec.getLiquidVelocity();
-      }
     }
 
     return sources;
+  }
+
+  /**
+   * Apply the local, stage-pure virtual-mass momentum coupling.
+   *
+   * <p>
+   * The uncoupled conservative rates already contain flux divergence, pressure, gravity, friction, and transfer
+   * sources. Converting those rates to phase accelerations and solving the two-phase added-inertia relation
+   * algebraically avoids hidden velocity history and makes repeated RHS evaluations deterministic.
+   * </p>
+   *
+   * @param sections current stage state
+   * @param dUdt complete uncoupled conservative-variable rates, modified in place
+   */
+  void applyVirtualMassCoupling(TwoFluidSection[] sections, double[][] dUdt) {
+    if (!enableVirtualMassForce || virtualMassCoefficient <= 0.0) {
+      return;
+    }
+
+    for (int i = 0; i < sections.length; i++) {
+      TwoFluidSection sec = sections[i];
+      double gasMass = sec.getGasMassPerLength();
+      double oilMass = sec.getOilMassPerLength();
+      double waterMass = sec.getWaterMassPerLength();
+      double liquidMass = oilMass + waterMass;
+      double liquidDensity = sec.getLiquidDensity();
+      double area = sec.getArea();
+      double gasHoldup = Math.max(0.0, Math.min(1.0, sec.getGasHoldup()));
+
+      if (!Double.isFinite(gasMass) || !Double.isFinite(liquidMass) || !Double.isFinite(liquidDensity)
+          || !Double.isFinite(area) || gasMass <= 0.0 || liquidMass <= 0.0 || liquidDensity <= 0.0 || area <= 0.0
+          || gasHoldup <= 0.0) {
+        continue;
+      }
+
+      double gasVelocity = sec.getGasVelocity();
+      double gasAcceleration = (dUdt[i][IDX_GAS_MOMENTUM] - gasVelocity * dUdt[i][IDX_GAS_MASS]) / gasMass;
+
+      double liquidMomentumRate;
+      double liquidMassVelocityRate;
+      if (enableWaterOilSlip) {
+        liquidMomentumRate = dUdt[i][IDX_OIL_MOMENTUM] + dUdt[i][IDX_WATER_MOMENTUM];
+        liquidMassVelocityRate = sec.getOilVelocity() * dUdt[i][IDX_OIL_MASS]
+            + sec.getWaterVelocity() * dUdt[i][IDX_WATER_MASS];
+      } else {
+        liquidMomentumRate = dUdt[i][IDX_OIL_MOMENTUM];
+        liquidMassVelocityRate = sec.getLiquidVelocity() * (dUdt[i][IDX_OIL_MASS] + dUdt[i][IDX_WATER_MASS]);
+      }
+      double liquidAcceleration = (liquidMomentumRate - liquidMassVelocityRate) / liquidMass;
+
+      double addedMassPerLength = virtualMassCoefficient * gasHoldup * liquidDensity * area;
+      double denominator = 1.0 + addedMassPerLength * (1.0 / gasMass + 1.0 / liquidMass);
+      double gasVirtualMassForce = -addedMassPerLength * (gasAcceleration - liquidAcceleration) / denominator;
+      if (!Double.isFinite(gasVirtualMassForce)) {
+        continue;
+      }
+
+      dUdt[i][IDX_GAS_MOMENTUM] += gasVirtualMassForce;
+      if (enableWaterOilSlip) {
+        double liquidVirtualMassForce = -gasVirtualMassForce;
+        double oilVirtualMassForce = liquidVirtualMassForce * oilMass / liquidMass;
+        double waterVirtualMassForce = liquidVirtualMassForce - oilVirtualMassForce;
+        dUdt[i][IDX_OIL_MOMENTUM] += oilVirtualMassForce;
+        dUdt[i][IDX_WATER_MOMENTUM] += waterVirtualMassForce;
+      } else {
+        dUdt[i][IDX_OIL_MOMENTUM] -= gasVirtualMassForce;
+      }
+
+      sec.setGasMomentumSource(sec.getGasMomentumSource() + gasVirtualMassForce);
+      sec.setLiquidMomentumSource(sec.getLiquidMomentumSource() - gasVirtualMassForce);
+    }
+  }
+
+  /**
+   * Advance corrected dispersed-bubble drag with a pure local implicit source solve.
+   *
+   * <p>
+   * The input state is not modified. Gas and combined-liquid momentum are coupled conservatively; the liquid impulse is
+   * distributed by active oil/water mass so water-oil slip is preserved. The energy state is unchanged, making lost
+   * kinetic energy available as internal energy.
+   * </p>
+   *
+   * @param sections sections whose primitive properties correspond to {@code state}
+   * @param state conservative state before the drag source step
+   * @param timeStep source-step duration in s
+   * @return a new conservative state after dispersed-bubble drag
+   * @throws IllegalArgumentException if section/state dimensions or the time step are invalid
+   */
+  public double[][] applyStiffBubbleDrag(TwoFluidSection[] sections, double[][] state, double timeStep) {
+    if (sections == null || state == null || sections.length != state.length) {
+      throw new IllegalArgumentException("Section and state dimensions must agree");
+    }
+    if (!Double.isFinite(timeStep) || timeStep < 0.0) {
+      throw new IllegalArgumentException("Bubble-drag source-step duration must be finite and non-negative");
+    }
+
+    double[][] result = new double[state.length][NUM_EQUATIONS];
+    for (int sectionIndex = 0; sectionIndex < state.length; sectionIndex++) {
+      if (state[sectionIndex] == null || state[sectionIndex].length != NUM_EQUATIONS) {
+        throw new IllegalArgumentException("Every section state must contain seven conservative variables");
+      }
+      System.arraycopy(state[sectionIndex], 0, result[sectionIndex], 0, NUM_EQUATIONS);
+      if (!enableStiffBubbleDrag || timeStep == 0.0) {
+        continue;
+      }
+
+      TwoFluidSection section = sections[sectionIndex];
+      PipeSection.FlowRegime regime = flowRegimeDetector.detectFlowRegime(section);
+      if (!isDispersedBubbleRegime(regime)) {
+        continue;
+      }
+      double[] masses = { state[sectionIndex][IDX_GAS_MASS], state[sectionIndex][IDX_OIL_MASS],
+          state[sectionIndex][IDX_WATER_MASS] };
+      double[] momenta = { state[sectionIndex][IDX_GAS_MOMENTUM], state[sectionIndex][IDX_OIL_MOMENTUM],
+          state[sectionIndex][IDX_WATER_MOMENTUM] };
+      double[] relaxedMomenta = DispersedBubbleDragSolver.relax(regime, masses, momenta, section.getGasDensity(),
+          section.getLiquidDensity(), section.getGasViscosity(), section.getLiquidViscosity(),
+          section.getLiquidHoldup(), section.getDiameter(), section.getSurfaceTension(), timeStep, interfacialFriction);
+      result[sectionIndex][IDX_GAS_MOMENTUM] = relaxedMomenta[0];
+      result[sectionIndex][IDX_OIL_MOMENTUM] = relaxedMomenta[1];
+      result[sectionIndex][IDX_WATER_MOMENTUM] = relaxedMomenta[2];
+    }
+    return result;
+  }
+
+  private boolean isDispersedBubbleRegime(PipeSection.FlowRegime flowRegime) {
+    return flowRegime == PipeSection.FlowRegime.BUBBLE || flowRegime == PipeSection.FlowRegime.DISPERSED_BUBBLE;
   }
 
   /**
@@ -859,25 +1110,108 @@ public class TwoFluidConservationEquations implements Serializable {
    */
   double[] calcMassTransfer(TwoFluidSection sec) {
     if (thermodynamicCoupling != null) {
-      double gamma = thermodynamicCoupling.calcMassTransferRatePerLength(sec, massTransferRelaxationTime);
-      return conservedMassTransferPair(gamma);
+      PhaseMassTransfer transfer = calcPhaseMassTransfer(sec);
+      return new double[] { transfer.getGasSourceKgPerMetreSecond(),
+          transfer.getOilSourceKgPerMetreSecond() + transfer.getWaterSourceKgPerMetreSecond() };
     }
 
+    return conservedMassTransferPair(getPrescribedGasSourcePerLength(sec));
+  }
+
+  /**
+   * Calculate phase-resolved mass-transfer sources for a section.
+   *
+   * <p>
+   * Flash-driven transfer delegates to {@link ThermodynamicCoupling}. A prescribed evaporation source is distributed
+   * over the actual oil and water donor inventories. A prescribed condensation source has no equilibrium phase
+   * identity, so the explicitly configured hydrodynamic water cut is retained for backward compatibility.
+   * </p>
+   *
+   * @param sec pipe section
+   * @return immutable phase-resolved transfer result in kg/(m s)
+   */
+  PhaseMassTransfer calcPhaseMassTransfer(TwoFluidSection sec) {
+    if (thermodynamicCoupling != null) {
+      return thermodynamicCoupling.calcPhaseMassTransferRatePerLength(sec, massTransferRelaxationTime);
+    }
+
+    double gasSource = getPrescribedGasSourcePerLength(sec);
+    if (gasSource > 0.0) {
+      double oilInventory = Math.max(0.0, sec.getOilMassPerLength());
+      double waterInventory = Math.max(0.0, sec.getWaterMassPerLength());
+      double liquidInventory = oilInventory + waterInventory;
+      if (liquidInventory <= 0.0) {
+        return PhaseMassTransfer.zero(true, false, "No liquid donor inventory for prescribed evaporation");
+      }
+      double oilSource = -gasSource * oilInventory / liquidInventory;
+      double waterSource = -gasSource - oilSource;
+      return new PhaseMassTransfer(gasSource, oilSource, waterSource, true, true, null);
+    }
+    if (gasSource < 0.0) {
+      double waterFraction = Math.max(0.0, Math.min(1.0, sec.getWaterCut()));
+      double oilSource = -gasSource * (1.0 - waterFraction);
+      double waterSource = -gasSource - oilSource;
+      return new PhaseMassTransfer(gasSource, oilSource, waterSource, true, true, null);
+    }
+    return PhaseMassTransfer.zero(true, true, null);
+  }
+
+  /**
+   * Convert a prescribed section transfer rate to a gas source per unit pipe length.
+   *
+   * @param sec pipe section
+   * @return gas source in kg/(m s)
+   */
+  private double getPrescribedGasSourcePerLength(TwoFluidSection sec) {
     double prescribedRate = sec.getMassTransferRate();
     if (!Double.isFinite(prescribedRate)) {
       throw new IllegalStateException("Mass transfer rate must be finite");
     }
-
-    double gamma = 0.0;
-    if (Math.abs(prescribedRate) > 0.0) {
-      double sectionLength = sec.getLength();
-      if (!Double.isFinite(sectionLength) || sectionLength <= 0.0) {
-        throw new IllegalStateException("Section length must be positive for mass transfer");
-      }
-      gamma = prescribedRate / sectionLength;
+    if (Math.abs(prescribedRate) == 0.0) {
+      return 0.0;
     }
+    double sectionLength = sec.getLength();
+    if (!Double.isFinite(sectionLength) || sectionLength <= 0.0) {
+      throw new IllegalStateException("Section length must be positive for mass transfer");
+    }
+    return prescribedRate / sectionLength;
+  }
 
-    return conservedMassTransferPair(gamma);
+  /**
+   * Calculate transfer-only phase momentum sources using donor velocity.
+   *
+   * <p>
+   * During evaporation the gas receives the momentum removed from each liquid donor. During condensation the gas loses
+   * momentum at gas velocity and each receiving liquid gains momentum at that same donor velocity. The three returned
+   * sources therefore sum to zero apart from round-off.
+   * </p>
+   *
+   * @param sec pipe section containing phase velocities
+   * @param transfer phase-resolved mass-transfer sources
+   * @return gas, oil, and water momentum sources in N/m
+   */
+  double[] calcTransferMomentumSources(TwoFluidSection sec, PhaseMassTransfer transfer) {
+    double gasMassSource = transfer.getGasSourceKgPerMetreSecond();
+    double oilMassSource = transfer.getOilSourceKgPerMetreSecond();
+    double waterMassSource = transfer.getWaterSourceKgPerMetreSecond();
+    double gasMomentumSource;
+    double oilMomentumSource;
+    double waterMomentumSource;
+
+    if (gasMassSource > 0.0) {
+      oilMomentumSource = oilMassSource * sec.getOilVelocity();
+      waterMomentumSource = waterMassSource * sec.getWaterVelocity();
+      gasMomentumSource = -oilMomentumSource - waterMomentumSource;
+    } else if (gasMassSource < 0.0) {
+      gasMomentumSource = gasMassSource * sec.getGasVelocity();
+      oilMomentumSource = oilMassSource * sec.getGasVelocity();
+      waterMomentumSource = -gasMomentumSource - oilMomentumSource;
+    } else {
+      gasMomentumSource = 0.0;
+      oilMomentumSource = 0.0;
+      waterMomentumSource = 0.0;
+    }
+    return new double[] { gasMomentumSource, oilMomentumSource, waterMomentumSource };
   }
 
   private double[] conservedMassTransferPair(double gasSource) {
@@ -1102,6 +1436,15 @@ public class TwoFluidConservationEquations implements Serializable {
     return interfacialFriction;
   }
 
+  /**
+   * Get the bubble-size closure used by the interfacial momentum model.
+   *
+   * @return mutable bubble-size closure configuration
+   */
+  public BubbleSizeClosure getBubbleSizeClosure() {
+    return interfacialFriction.getBubbleSizeClosure();
+  }
+
   public FlowRegimeDetector getFlowRegimeDetector() {
     return flowRegimeDetector;
   }
@@ -1227,10 +1570,35 @@ public class TwoFluidConservationEquations implements Serializable {
   }
 
   /**
-   * Set the timestep used for virtual mass force calculation.
+   * Enable or disable conservative local implicit treatment of bubble drag.
    *
    * <p>
-   * This should match the simulation timestep for accurate acceleration calculation.
+   * This mode is opt-in because the corrected closure is not yet quantitatively validated by the public Tengesdal
+   * severe-slugging benchmark. Enabling it selects the corrected force and the stiff source treatment together.
+   * </p>
+   *
+   * @param enable true to use the local stiff source solve
+   */
+  public void setEnableStiffBubbleDrag(boolean enable) {
+    this.enableStiffBubbleDrag = enable;
+    interfacialFriction.setUseCorrectedBubbleDrag(enable);
+  }
+
+  /**
+   * Check whether corrected bubble drag uses the local stiff source solve.
+   *
+   * @return true when conservative implicit bubble drag is enabled
+   */
+  public boolean isStiffBubbleDragEnabled() {
+    return enableStiffBubbleDrag;
+  }
+
+  /**
+   * Retain the timestep setting used by earlier virtual-mass implementations.
+   *
+   * <p>
+   * The stage-pure algebraic coupling no longer depends on a stored timestep. This method remains for source and
+   * serialization compatibility.
    * </p>
    *
    * @param timestep Timestep in seconds
@@ -1240,7 +1608,7 @@ public class TwoFluidConservationEquations implements Serializable {
   }
 
   /**
-   * Get the timestep used for virtual mass force calculation.
+   * Get the retained legacy timestep setting.
    *
    * @return Timestep in seconds
    */
@@ -1248,15 +1616,8 @@ public class TwoFluidConservationEquations implements Serializable {
     return dt;
   }
 
-  /**
-   * Reset the stored previous velocities.
-   *
-   * <p>
-   * Call this when restarting a simulation or changing geometry to avoid spurious accelerations.
-   * </p>
-   */
+  /** Reset legacy virtual-mass history (no-op for the stage-pure implementation). */
   public void resetVirtualMassState() {
-    prevGasVelocities = null;
-    prevLiquidVelocities = null;
+    // No hidden history is retained.
   }
 }

@@ -252,7 +252,8 @@ public class TVfractionFlash extends Flash {
     try {
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
       tpFlash.run();
-      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+      neqsim.thermo.ThermodynamicModelSettings
+          .setUseWarmStartKValues(neqsim.thermo.ThermodynamicModelSettings.isInnerFlashWarmStartSafe(system));
 
       // Check for initial flash failure
       if (stateHasUncountableNumbers(system)) {

@@ -1,7 +1,9 @@
 package neqsim.process.util.optimizer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -115,6 +117,7 @@ class ProcessModelThroughputOptimizerTest {
   private void addSeparatorCapacity(final ModelFixture fixture, double designValue) {
     CapacityConstraint installedCapacity = new CapacityConstraint("installedGasCapacity", "kg/hr", ConstraintType.HARD)
         .setDesignValue(designValue).setMaxValue(designValue * 1.1).setSeverity(ConstraintSeverity.HARD)
+        .setDataSource("installedDataSheet").setConfidence(0.95).setValidityRange(8000.0, designValue)
         .setValueSupplier(new DoubleSupplier() {
           /** {@inheritDoc} */
           @Override
@@ -124,6 +127,39 @@ class ProcessModelThroughputOptimizerTest {
         });
     fixture.separator.clearCapacityConstraints();
     fixture.separator.addCapacityConstraint(installedCapacity);
+  }
+
+  /**
+   * Adds a synthetic minimum headroom constraint that decreases as production rises.
+   *
+   * @param fixture model fixture
+   * @param minimumHeadroom minimum permitted headroom
+   */
+  private void addMinimumHeadroomCapacity(final ModelFixture fixture, double minimumHeadroom) {
+    CapacityConstraint availableHeadroom = new CapacityConstraint("availableHeadroom", "kg/hr", ConstraintType.HARD)
+        .setMinValue(minimumHeadroom).setSeverity(ConstraintSeverity.HARD).setDataSource("operatingEnvelope")
+        .setValueSupplier(new DoubleSupplier() {
+          /** {@inheritDoc} */
+          @Override
+          public double getAsDouble() {
+            return 50000.0 - fixture.feed.getFlowRate("kg/hr");
+          }
+        });
+    fixture.separator.clearCapacityConstraints();
+    fixture.separator.addCapacityConstraint(availableHeadroom);
+  }
+
+  /** Adds two capacity limits whose utilization order changes as throughput rises. */
+  private void addSwitchingCapacityConstraints(final ModelFixture fixture) {
+    CapacityConstraint exportCapacity = new CapacityConstraint("exportCapacity", "kg/hr", ConstraintType.HARD)
+        .setDesignValue(15000.0).setDataSource("exportNomination")
+        .setValueSupplier(() -> fixture.feed.getFlowRate("kg/hr"));
+    CapacityConstraint compressorHeadroom = new CapacityConstraint("compressorHeadroom", "kg/hr", ConstraintType.HARD)
+        .setDesignValue(20000.0).setDataSource("compressorMap")
+        .setValueSupplier(() -> 24000.0 - fixture.feed.getFlowRate("kg/hr"));
+    fixture.separator.clearCapacityConstraints();
+    fixture.separator.addCapacityConstraint(exportCapacity);
+    fixture.separator.addCapacityConstraint(compressorHeadroom);
   }
 
   /**
@@ -161,7 +197,41 @@ class ProcessModelThroughputOptimizerTest {
     assertEquals("separation", result.getFirstInfeasibleCase().getActiveArea());
     assertEquals("separator", result.getFirstInfeasibleCase().getActiveEquipment());
     assertEquals("installedGasCapacity", result.getFirstInfeasibleCase().getActiveConstraint());
-    assertTrue(result.toJson().contains("caseRows"));
+    ThroughputCaseRow best = result.getBestFeasibleCase();
+    ThroughputCaseRow firstInfeasible = result.getFirstInfeasibleCase();
+    assertEquals("installedDataSheet", best.getDataSource());
+    assertTrue(best.hasConfidence());
+    assertEquals(0.95, best.getConfidence(), 0.0);
+    assertTrue(best.hasValidityRange());
+    assertEquals(8000.0, best.getValidityMinimum(), 0.0);
+    assertEquals(15000.0, best.getValidityMaximum(), 0.0);
+    assertTrue(best.isCurrentValueWithinValidityRange());
+    assertFalse(firstInfeasible.isCurrentValueWithinValidityRange());
+    assertTrue(result.toJson().contains("\"confidence\": 0.95"));
+    assertTrue(result.toJson().contains("\"currentValueWithinValidityRange\": false"));
+  }
+
+  /** Verifies the case table preserves emerging and active capacity rankings at each operating point. */
+  @Test
+  void throughputCasesRetainSwitchingCapacityRankings() {
+    ModelFixture fixture = createModelFixture();
+    addSwitchingCapacityConstraints(fixture);
+
+    ProcessModelThroughputResult result = createOptimizer(fixture).findMaximumThroughput(1.0, 2.0, 0.01);
+
+    ThroughputCaseRow lowRate = result.getCaseRows().get(0);
+    ThroughputCaseRow highRate = result.getCaseRows().get(1);
+    assertEquals("compressorHeadroom", lowRate.getRankedCapacityConstraints().get(0).getConstraintName());
+    assertEquals("exportCapacity", highRate.getRankedCapacityConstraints().get(0).getConstraintName());
+    assertEquals(lowRate.getActiveConstraint(), lowRate.getRankedCapacityConstraints().get(0).getConstraintName());
+    assertEquals(highRate.getActiveConstraint(), highRate.getRankedCapacityConstraints().get(0).getConstraintName());
+    assertEquals(2.0 / 3.0, lowRate.getRankedCapacityConstraints().get(1).getUtilization(), 1.0e-12,
+        "later optimizer cases must not mutate the lower-rate snapshot");
+    assertThrows(UnsupportedOperationException.class,
+        () -> lowRate.getRankedCapacityConstraints().add(ProcessModelSimulationEvaluator.BottleneckStatus.none()));
+    String json = result.toJson();
+    assertTrue(json.contains("\"rankedCapacityConstraints\""));
+    assertTrue(json.contains("\"evidenceApplicability\""));
   }
 
   /**
@@ -188,7 +258,82 @@ class ProcessModelThroughputOptimizerTest {
     assertEquals(1, records.size());
     assertTrue(fixture.separator.getCapacityConstraints().containsKey("installedGasCapacity"));
     assertEquals(1.5, result.getOptimalMultiplier(), 0.02);
-    assertTrue(new String(Files.readAllBytes(caseTable), StandardCharsets.UTF_8).contains("activeConstraint"));
+    String csv = new String(Files.readAllBytes(caseTable), StandardCharsets.UTF_8);
+    assertTrue(csv.contains("hasConfidence,confidence,hasValidityRange,validityMinimum,validityMaximum,"
+        + "currentValueWithinValidityRange"));
+    assertTrue(result.toJson().contains("\"hasConfidence\": false"));
+    assertTrue(result.toJson().contains("\"confidence\": null"));
+    assertFalse(result.getBestFeasibleCase().hasConfidence());
+    assertTrue(Double.isNaN(result.getBestFeasibleCase().getConfidence()));
+  }
+
+  /**
+   * Verifies finite, correctly signed engineering margins for minimum-directed bottlenecks.
+   *
+   * @throws Exception if CSV export fails
+   */
+  @Test
+  void minimumConstraintProducesDirectedThroughputMargins() throws Exception {
+    ModelFixture fixture = createModelFixture();
+    addMinimumHeadroomCapacity(fixture, 35000.0);
+
+    ProcessModelThroughputResult result = createOptimizer(fixture).findMaximumThroughput(1.0, 2.0, 0.01);
+    ThroughputCaseRow best = result.getBestFeasibleCase();
+    ThroughputCaseRow firstLimit = result.getFirstInfeasibleCase();
+
+    assertNotNull(best);
+    assertNotNull(firstLimit);
+    assertEquals(1.5, result.getOptimalMultiplier(), 0.02);
+    assertTrue(best.isMinimumConstraint());
+    assertTrue(firstLimit.isMinimumConstraint());
+    assertEquals("operatingEnvelope", best.getDataSource());
+    assertEquals("operatingEnvelope", firstLimit.getDataSource());
+    assertEquals(35000.0, best.getDesignValue(), 1.0e-12);
+    assertTrue(best.getCapacityMargin() >= 0.0, "safe minimum constraint must have non-negative margin");
+    assertTrue(firstLimit.getCapacityMargin() < 0.0, "violated minimum constraint must have negative margin");
+    assertTrue(Double.isFinite(best.getCapacityMargin()));
+    assertTrue(Double.isFinite(firstLimit.getCapacityMargin()));
+
+    Path caseTable = temporaryDirectory.resolve("minimum_constraint_trace.csv");
+    result.exportToCSV(caseTable);
+    String csv = new String(Files.readAllBytes(caseTable), StandardCharsets.UTF_8);
+    assertTrue(csv.contains("minimumConstraint,dataSource"));
+    assertTrue(csv.contains("operatingEnvelope"));
+    assertTrue(result.toJson().contains("\"minimumConstraint\": true"));
+    assertTrue(result.toJson().contains("\"dataSource\": \"operatingEnvelope\""));
+  }
+
+  /**
+   * Verifies malformed manually constructed row evidence cannot leak non-finite JSON or CSV output.
+   */
+  @Test
+  void throughputRowNormalizesMalformedEvidenceToUnset() {
+    ThroughputCaseRow row = new ThroughputCaseRow(1, 1.0, new java.util.LinkedHashMap<String, Double>(), 10000.0, true,
+        true, "separation", "separator", "installedGasCapacity", 1.0, 12000.0, 12000.0, false, "manual", true,
+        Double.NaN, true, 8000.0, Double.POSITIVE_INFINITY, 0.0, 0.0, "kg/hr", null, 0L);
+
+    assertFalse(row.hasConfidence());
+    assertTrue(Double.isNaN(row.getConfidence()));
+    assertFalse(row.hasValidityRange());
+    assertTrue(Double.isNaN(row.getValidityMinimum()));
+    assertTrue(Double.isNaN(row.getValidityMaximum()));
+    assertFalse(row.isCurrentValueWithinValidityRange());
+    assertTrue(row.toMap().get("confidence") == null);
+    assertTrue(row.toMap().get("validityMinimum") == null);
+    assertTrue(row.toMap().get("validityMaximum") == null);
+    assertTrue(row.toMap().get("currentValueWithinValidityRange") == null);
+  }
+
+  /** Verifies row applicability is derived from the row's current value and retained bounds. */
+  @Test
+  void throughputRowDerivesValidityApplicabilityFromSnapshot() {
+    ThroughputCaseRow row = new ThroughputCaseRow(1, 1.0, new java.util.LinkedHashMap<String, Double>(), 10000.0, true,
+        true, "separation", "separator", "installedGasCapacity", 10.0 / 12.0, 10000.0, 12000.0, false, "manual", true,
+        0.95, true, 8000.0, 12000.0, 2000.0, 2.0 / 12.0, "kg/hr", null, 0L);
+
+    assertTrue(row.hasValidityRange());
+    assertTrue(row.isCurrentValueWithinValidityRange());
+    assertEquals(Boolean.TRUE, row.toMap().get("currentValueWithinValidityRange"));
   }
 
   /**

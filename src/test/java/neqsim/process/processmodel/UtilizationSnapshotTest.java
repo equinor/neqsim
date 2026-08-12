@@ -10,8 +10,10 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.automation.ProcessAutomation;
 import neqsim.process.equipment.capacity.CapacityConstraint;
+import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -177,6 +179,45 @@ public class UtilizationSnapshotTest {
       JsonObject u = units.get(i).getAsJsonObject();
       assertTrue(u.has("area"), "Each ProcessModel unit must carry an 'area' label");
     }
+  }
+
+  /**
+   * The plant-wide bottleneck must retain its owning area when different areas reuse the same equipment name.
+   */
+  @Test
+  void testProcessModelBottleneckRetainsAreaForDuplicateEquipmentNames() {
+    Separator northSeparator = new Separator("shared separator", buildFeed());
+    CapacityConstraint northCapacity = new CapacityConstraint("gas capacity", "kg/hr", ConstraintType.HARD)
+        .setDesignValue(100.0).setCurrentValue(80.0).setDataSource("synthetic installed limit");
+    northSeparator.addCapacityConstraint(northCapacity);
+    ProcessSystem north = new ProcessSystem();
+    north.add(northSeparator);
+
+    Separator southSeparator = new Separator("shared separator", buildFeed());
+    southSeparator.addCapacityConstraint(new CapacityConstraint("gas capacity", "kg/hr", ConstraintType.HARD)
+        .setDesignValue(100.0).setCurrentValue(95.0).setDataSource("synthetic installed limit"));
+    ProcessSystem south = new ProcessSystem();
+    south.add(southSeparator);
+
+    ProcessModel plant = new ProcessModel();
+    plant.add("north", north);
+    plant.add("south", south);
+
+    String firstSnapshot = plant.getUtilizationSnapshotJson();
+    JsonObject bottleneck = JsonParser.parseString(firstSnapshot).getAsJsonObject().getAsJsonObject("bottleneck");
+    assertEquals("shared separator", bottleneck.get("name").getAsString());
+    assertEquals("south", bottleneck.get("area").getAsString());
+    assertEquals("south::shared separator", bottleneck.get("qualifiedName").getAsString());
+    assertEquals(0.95, bottleneck.get("utilization").getAsDouble(), 1.0e-12);
+    assertEquals("gas capacity", bottleneck.get("limitingConstraint").getAsString());
+    assertEquals(firstSnapshot, plant.getUtilizationSnapshotJson());
+
+    northCapacity.setCurrentValue(96.0);
+    JsonObject nearbyBottleneck = JsonParser.parseString(plant.getUtilizationSnapshotJson()).getAsJsonObject()
+        .getAsJsonObject("bottleneck");
+    assertEquals("north", nearbyBottleneck.get("area").getAsString());
+    assertEquals("north::shared separator", nearbyBottleneck.get("qualifiedName").getAsString());
+    assertEquals(0.96, nearbyBottleneck.get("utilization").getAsDouble(), 1.0e-12);
   }
 
   /**

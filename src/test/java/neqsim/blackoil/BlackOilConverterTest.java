@@ -1,11 +1,13 @@
 package neqsim.blackoil;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class BlackOilConverterTest {
   @Test
@@ -77,5 +79,46 @@ class BlackOilConverterTest {
       assertTrue(Double.isFinite(result.pvt.mu_w(pressure)));
       assertTrue(result.pvt.mu_w(pressure) > 0.0);
     }
+  }
+
+  /**
+   * The stock-tank oil density reported by the converter must be the volume-shift corrected density, i.e. the same
+   * value a direct standard-condition flash reports. Reading the uncorrected EOS density instead gives an error of the
+   * order of the Peneloux shift (a few percent for a tuned reservoir fluid).
+   */
+  @Test
+  void testStockTankDensitiesUseVolumeShiftCorrectedDensity() {
+    SystemInterface oil = new SystemPrEos(373.15, 300.0);
+    oil.addComponent("nitrogen", 0.005);
+    oil.addComponent("CO2", 0.010);
+    oil.addComponent("methane", 0.350);
+    oil.addComponent("ethane", 0.070);
+    oil.addComponent("propane", 0.065);
+    oil.addComponent("i-butane", 0.025);
+    oil.addComponent("n-butane", 0.040);
+    oil.addComponent("i-pentane", 0.020);
+    oil.addComponent("n-pentane", 0.025);
+    oil.addComponent("n-hexane", 0.050);
+    oil.addComponent("n-heptane", 0.080);
+    oil.addComponent("n-octane", 0.080);
+    oil.addComponent("n-nonane", 0.060);
+    oil.addComponent("nC10", 0.120);
+    oil.setMixingRule("classic");
+    oil.useVolumeCorrection(true);
+    oil.setMultiPhaseCheck(true);
+
+    SystemInterface reference = oil.clone();
+    reference.setTemperature(288.15);
+    reference.setPressure(1.01325);
+    new ThermodynamicOperations(reference).TPflash();
+    reference.initProperties();
+    double expectedOilDensity = reference.getPhase("oil").getDensity("kg/m3");
+    double expectedGasDensity = reference.getPhase("gas").getDensity("kg/m3");
+
+    double[] pressures = { 25.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0 };
+    BlackOilConverter.Result result = BlackOilConverter.convert(oil, 373.15, pressures, 1.01325, 288.15);
+
+    assertEquals(expectedOilDensity, result.rho_o_sc, 0.01 * expectedOilDensity);
+    assertEquals(expectedGasDensity, result.rho_g_sc, 0.02 * expectedGasDensity);
   }
 }

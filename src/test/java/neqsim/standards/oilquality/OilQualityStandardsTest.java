@@ -4,8 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Tests for oil quality standards: ASTM D86, D445, D4052, D4294, D2500, D97, and BS&amp;W.
@@ -440,6 +443,41 @@ public class OilQualityStandardsTest {
     if (!Double.isNaN(densKgM3) && !Double.isNaN(densGCC)) {
       assertEquals(densKgM3 / 1000.0, densGCC, 0.001, "g/cm3 should equal kg/m3 / 1000");
     }
+  }
+
+  @Test
+  void testASTM_D4052_selectsOilPhaseForVolatileCrude() {
+    SystemInterface crude = new SystemPrEos(273.15 + 15.556, 1.01325);
+    crude.addComponent("methane", 0.005);
+    crude.addComponent("ethane", 0.005);
+    crude.addComponent("propane", 0.010);
+    crude.addComponent("n-butane", 0.020);
+    crude.addComponent("n-pentane", 0.030);
+    crude.addComponent("n-hexane", 0.050);
+    crude.addTBPfraction("C7-C9", 0.120, 0.105, 0.750);
+    crude.addTBPfraction("C10-C12", 0.150, 0.145, 0.780);
+    crude.addTBPfraction("C13-C16", 0.180, 0.205, 0.820);
+    crude.addTBPfraction("C17-C24", 0.220, 0.300, 0.870);
+    crude.addTBPfraction("C25-C35", 0.120, 0.430, 0.920);
+    crude.addTBPfraction("C36+", 0.090, 0.650, 0.970);
+    crude.setMixingRule("classic");
+
+    SystemInterface flashed = crude.clone();
+    new ThermodynamicOperations(flashed).TPflash();
+    flashed.initPhysicalProperties("density");
+    assertTrue(flashed.hasPhaseType(PhaseType.GAS), "Test fluid should contain a gas phase");
+    assertTrue(flashed.hasPhaseType(PhaseType.OIL) || flashed.hasPhaseType(PhaseType.LIQUID),
+        "Test fluid should contain a hydrocarbon liquid phase");
+    PhaseType liquidPhaseType = flashed.hasPhaseType(PhaseType.OIL) ? PhaseType.OIL : PhaseType.LIQUID;
+    double expectedOilDensity = flashed.getPhase(liquidPhaseType).getDensity("kg/m3");
+
+    Standard_ASTM_D4052 standard = new Standard_ASTM_D4052(crude);
+    standard.calculate();
+
+    assertEquals(expectedOilDensity, standard.getValue("density"), 1.0e-8,
+        "ASTM D4052 must use the oil phase when volatile crude also forms gas");
+    assertTrue(standard.getValue("API") > 10.0 && standard.getValue("API") < 60.0,
+        "API gravity should be in a plausible crude-oil range");
   }
 
   // ========== ASTM D4294 Tests ==========

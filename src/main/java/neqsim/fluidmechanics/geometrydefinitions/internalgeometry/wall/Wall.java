@@ -24,7 +24,8 @@ import java.util.List;
  * @version $Id: $Id
  * @see PipeWall
  */
-public class Wall implements WallInterface {
+public class Wall implements WallInterface, java.io.Serializable {
+  private static final long serialVersionUID = 1000L;
 
   /** List of material layers from inside to outside. */
   private ArrayList<MaterialLayer> wallMaterialLayers = new ArrayList<MaterialLayer>();

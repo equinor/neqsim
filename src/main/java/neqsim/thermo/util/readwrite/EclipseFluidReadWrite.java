@@ -35,6 +35,122 @@ public class EclipseFluidReadWrite {
   public static String pseudoName = "";
 
   /**
+   * Cache of parsed E300 fluids, keyed on the absolute file path, its last-modified timestamp and length, and the
+   * {@link #pseudoName} prefix in force when the file was parsed.
+   *
+   * <p>
+   * Parsing an E300 file costs on the order of 50 ms while cloning the resulting fluid costs less than 0.1 ms, so
+   * flowsheets that build many fluids from the same file (one per feed stream, per scenario or per optimizer trial)
+   * spend most of their build time re-parsing identical text. The cache stores an independent copy and every read
+   * returns a fresh object, so callers may freely mutate the fluid they receive.
+   * </p>
+   *
+   * <p>
+   * The cache is a bounded least-recently-used map (see {@link #getMaxCacheSize()}) so that a long-running service that
+   * reads many distinct fluid files - or the same file repeatedly after edits - cannot grow without limit.
+   * </p>
+   */
+  private static final java.util.Map<String, SystemInterface> fluidCache = java.util.Collections
+      .synchronizedMap(new java.util.LinkedHashMap<String, SystemInterface>(16, 0.75f, true) {
+        private static final long serialVersionUID = 1000L;
+
+        @Override
+        protected boolean removeEldestEntry(java.util.Map.Entry<String, SystemInterface> eldest) {
+          return size() > maxCacheSize;
+        }
+      });
+
+  /** Default number of parsed E300 fluids retained by the cache. */
+  public static final int DEFAULT_MAX_CACHE_SIZE = 64;
+
+  /** Upper bound on the number of parsed E300 fluids retained by the cache. */
+  private static volatile int maxCacheSize = DEFAULT_MAX_CACHE_SIZE;
+
+  /** When true (default), parsed E300 files are cached and repeated reads are served from the cache. */
+  private static volatile boolean useCache = true;
+
+  /**
+   * Enables or disables caching of parsed E300 fluid files.
+   *
+   * <p>
+   * The cache key includes the file's last-modified timestamp and length, so edits to a file on disk are picked up
+   * automatically. Disable the cache only when files are rewritten within the same timestamp resolution or when the
+   * extra memory is undesirable. Disabling also clears the cache.
+   * </p>
+   *
+   * @param useCacheIn true to cache parsed fluids (default), false to parse on every read
+   */
+  public static void setUseCache(boolean useCacheIn) {
+    useCache = useCacheIn;
+    if (!useCacheIn) {
+      clearCache();
+    }
+  }
+
+  /**
+   * Returns whether parsed E300 fluid files are cached.
+   *
+   * @return true if caching is enabled
+   */
+  public static boolean isUseCache() {
+    return useCache;
+  }
+
+  /**
+   * Returns the maximum number of parsed E300 fluids retained by the cache.
+   *
+   * @return the cache capacity
+   */
+  public static int getMaxCacheSize() {
+    return maxCacheSize;
+  }
+
+  /**
+   * Sets the maximum number of parsed E300 fluids retained by the cache. The least recently used entries are evicted
+   * once the cache exceeds this size.
+   *
+   * @param maxCacheSizeIn the cache capacity; must be at least 1
+   * @throws IllegalArgumentException if {@code maxCacheSizeIn} is less than 1
+   */
+  public static void setMaxCacheSize(int maxCacheSizeIn) {
+    if (maxCacheSizeIn < 1) {
+      throw new IllegalArgumentException("maxCacheSize must be at least 1");
+    }
+    maxCacheSize = maxCacheSizeIn;
+    synchronized (fluidCache) {
+      java.util.Iterator<java.util.Map.Entry<String, SystemInterface>> it = fluidCache.entrySet().iterator();
+      while (fluidCache.size() > maxCacheSizeIn && it.hasNext()) {
+        it.next();
+        it.remove();
+      }
+    }
+  }
+
+  /**
+   * Clears the parsed E300 fluid cache.
+   */
+  public static void clearCache() {
+    fluidCache.clear();
+  }
+
+  /**
+   * Builds the cache key for an E300 file.
+   *
+   * <p>
+   * {@link #pseudoName} is part of the key because it changes how components are named while the file is parsed. It is
+   * read once here and passed through the whole read, so a concurrent change of the static field cannot mismatch a
+   * cached entry with the prefix it was parsed under.
+   * </p>
+   *
+   * @param file the E300 file being read; must exist
+   * @param activePseudoName the pseudo-name prefix in force for this read
+   * @return a key combining absolute path, last-modified timestamp, file length and the pseudo-name prefix
+   */
+  private static String cacheKey(File file, String activePseudoName) {
+    return file.getAbsolutePath() + "|" + file.lastModified() + "|" + file.length() + "|" + activePseudoName;
+  }
+
+  /**
    * Maps common E300 component aliases to NeqSim database component names.
    *
    * @param name component name read from the E300 {@code CNAMES} section
@@ -277,6 +393,27 @@ public class EclipseFluidReadWrite {
   }
 
   /**
+   * Reads the optional Peng-Robinson correction keyword that may follow the EOS keyword. A plain (1976) PR file carries
+   * no correction keyword, so the line is only consumed when it actually is PRCORR or PRLKCORR.
+   *
+   * @param br the BufferedReader positioned just after the EOS value line
+   * @return "PRCORR", "PRLKCORR" or null when no correction keyword is present
+   * @throws IOException if an I/O error occurs
+   */
+  private static String readCorrectionKeyword(BufferedReader br) throws IOException {
+    br.mark(4096);
+    String line = br.readLine();
+    if (line != null) {
+      String corr = line.trim().replace("/", "").trim();
+      if ("PRCORR".equals(corr) || "PRLKCORR".equals(corr)) {
+        return corr;
+      }
+    }
+    br.reset();
+    return null;
+  }
+
+  /**
    * Internal implementation. If {@code forcedFluid} is non-null it is used as the target (EOS keyword in file is
    * ignored). Otherwise the EOS keyword drives fluid creation.
    *
@@ -293,6 +430,20 @@ public class EclipseFluidReadWrite {
     if (!file.canRead()) {
       throw new IllegalArgumentException(
           "Eclipse fluid file cannot be read: " + inputFile + ". Check file permissions.");
+    }
+
+    // Serve repeated reads of an unchanged file from the parse cache. Only the auto-created
+    // path is cacheable - when the caller supplies its own fluid the components must be added
+    // to that exact instance. The pseudo-name prefix is snapshotted here so a concurrent change
+    // of the static field cannot mismatch a cached entry with the prefix it was parsed under.
+    String activePseudoName = pseudoName;
+    boolean cacheable = forcedFluid == null && useCache;
+    String key = cacheable ? cacheKey(file, activePseudoName) : null;
+    if (cacheable) {
+      SystemInterface cached = fluidCache.get(key);
+      if (cached != null) {
+        return cached.clone();
+      }
     }
 
     neqsim.thermo.system.SystemInterface fluid = (forcedFluid != null) ? forcedFluid
@@ -336,15 +487,11 @@ public class EclipseFluidReadWrite {
             if (EOS.contains("SRK")) {
               fluid = new neqsim.thermo.system.SystemSrkEos(288.15, ThermodynamicConstantsInterface.referencePressure);
             } else if (EOS.contains("PR")) {
-              String corrLine = br.readLine();
-              if (corrLine == null) {
-                break;
-              }
-              String corr = corrLine.trim().replace("/", "");
-              if (corr.equals("PRLKCORR")) {
+              String corr = readCorrectionKeyword(br);
+              if ("PRLKCORR".equals(corr)) {
                 fluid = new neqsim.thermo.system.SystemPrLeeKeslerEos(288.15,
                     ThermodynamicConstantsInterface.referencePressure);
-              } else if (corr.equals("PRCORR")) {
+              } else if ("PRCORR".equals(corr)) {
                 fluid = new neqsim.thermo.system.SystemPrEos1978(288.15,
                     ThermodynamicConstantsInterface.referencePressure);
               } else {
@@ -354,8 +501,8 @@ public class EclipseFluidReadWrite {
               fluid = new neqsim.thermo.system.SystemPrEos(288.15, ThermodynamicConstantsInterface.referencePressure);
             }
           } else if (EOS.contains("PR")) {
-            // Skip the PRCORR / PRLKCORR line so the reader stays in sync.
-            br.readLine();
+            // Consume the PRCORR / PRLKCORR line, if present, so the reader stays in sync.
+            readCorrectionKeyword(br);
           }
         }
         if (st.trim().equals("CNAMES")) {
@@ -651,7 +798,7 @@ public class EclipseFluidReadWrite {
           fluid.getPhase(i).getComponent(name).setRacketZ(0.29056 - 0.08775 * ACF.get(counter));
         }
         if (fluid.getPhase(0).getComponent(name).isIsTBPfraction()) {
-          fluid.changeComponentName(name, names.get(counter).replaceAll("_PC", "") + pseudoName);
+          fluid.changeComponentName(name, names.get(counter).replaceAll("_PC", "") + activePseudoName);
         } else {
         }
       }
@@ -731,6 +878,9 @@ public class EclipseFluidReadWrite {
           ex);
     } catch (Exception ex) {
       throw new IllegalArgumentException("Error parsing Eclipse fluid file: " + inputFile + ". " + ex.getMessage(), ex);
+    }
+    if (cacheable) {
+      fluidCache.put(key, fluid.clone());
     }
     return fluid;
   }
@@ -937,11 +1087,11 @@ public class EclipseFluidReadWrite {
           if (EOS.contains("SRK")) {
             fluid = new neqsim.thermo.system.SystemSrkEos(288.15, ThermodynamicConstantsInterface.referencePressure);
           } else if (EOS.contains("PR")) {
-            String corr = br.readLine().trim().replace("/", "");
-            if (corr.equals("PRLKCORR")) {
+            String corr = readCorrectionKeyword(br);
+            if ("PRLKCORR".equals(corr)) {
               fluid = new neqsim.thermo.system.SystemPrLeeKeslerEos(288.15,
                   ThermodynamicConstantsInterface.referencePressure);
-            } else if (corr.equals("PRCORR")) {
+            } else if ("PRCORR".equals(corr)) {
               fluid = new neqsim.thermo.system.SystemPrEos1978(288.15,
                   ThermodynamicConstantsInterface.referencePressure);
             } else {
@@ -1500,15 +1650,16 @@ public class EclipseFluidReadWrite {
     writer.write("-- Equation of state\n");
     writer.write("EOS\n");
     String eosType = getEOSType(fluid);
-    // PR-LK is written as "PR" in the EOS line (same family), distinguished by
-    // PRLKCORR
-    String eosLine = "PR-LK".equals(eosType) ? "PR" : eosType;
+    // PR-LK and PR-1978 are written as "PR" in the EOS line (same family) and are
+    // distinguished by the following PRLKCORR / PRCORR keyword.
+    String eosLine = eosType.startsWith("PR") ? "PR" : eosType;
     writer.write(eosLine + " /\n");
 
-    // Correction keyword for Peng-Robinson variants
+    // Correction keyword for Peng-Robinson variants. A plain (1976) PR fluid gets
+    // no correction keyword - writing PRCORR there would read back as PR-1978.
     if ("PR-LK".equals(eosType)) {
       writer.write("PRLKCORR\n");
-    } else if ("PR".equals(eosType)) {
+    } else if ("PR-1978".equals(eosType)) {
       writer.write("PRCORR\n");
     }
 
@@ -1558,7 +1709,7 @@ public class EclipseFluidReadWrite {
     // OmegaA EOS parameter — use per-component override when available
     writer.write("-- OmegaA\n");
     writer.write("OMEGAA\n");
-    double omegaADefault = ("PR".equals(eosType) || "PR-LK".equals(eosType)) ? 0.45724 : 0.42748;
+    double omegaADefault = eosType.startsWith("PR") ? 0.45724 : 0.42748;
     for (int i = 0; i < nComps; i++) {
       double omegaAVal = omegaADefault;
       if (fluid.getComponent(i) instanceof ComponentEos) {
@@ -1574,7 +1725,7 @@ public class EclipseFluidReadWrite {
     // OmegaB EOS parameter
     writer.write("-- OmegaB\n");
     writer.write("OMEGAB\n");
-    double omegaB = ("PR".equals(eosType) || "PR-LK".equals(eosType)) ? 0.07780 : 0.08664;
+    double omegaB = eosType.startsWith("PR") ? 0.07780 : 0.08664;
     for (int i = 0; i < nComps; i++) {
       writer.write(String.format(java.util.Locale.US, "     %.5f\n", omegaB));
     }
@@ -1726,7 +1877,7 @@ public class EclipseFluidReadWrite {
     } else if (className.contains("leekes") || className.contains("leekesler")) {
       return "PR-LK";
     } else if (className.contains("pr")) {
-      return "PR";
+      return className.contains("1978") ? "PR-1978" : "PR";
     } else {
       return "SRK"; // Default
     }

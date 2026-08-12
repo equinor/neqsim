@@ -174,4 +174,130 @@ public class CalculatorAntiSurgeTest {
         "recycle must remain finite when surge data is missing, got " + recycleAfter);
     assertEquals(recycleBefore, recycleAfter, 1e-9, "recycle should be unchanged when calculator skips");
   }
+
+  /**
+   * The recycle must not be slammed shut when it is the recycle itself that holds the compressor above the surge line.
+   *
+   * <p>
+   * The recycle is fed back into the compressor suction, so {@code getInletStream()} already contains it. Testing the
+   * raw inlet flow against {@code 1.2 * surgeFlow} therefore asked "is the machine safe because of the recycle?" and
+   * then removed exactly the flow that made it safe, producing a limit cycle in which the recycle tear stream swung
+   * between ~0 and its full value on every pass and the owning process never reported solved.
+   * </p>
+   */
+  @Test
+  public void testRecycleNotSlammedShutWhenItIsHoldingTheMachineAboveSurge() {
+    Compressor comp = buildCompressorWithSurgeCurve(200000.0);
+    double inletFlow = comp.getInletStream().getFlowRate("m3/hr");
+    double inletMassFlow = comp.getInletStream().getFlowRate("kg/hr");
+    double surgeFlow = comp.getSurgeFlowRate();
+    assertTrue(inletFlow > 1.2 * surgeFlow,
+        "test precondition: raw inlet " + inletFlow + " must exceed 1.2 * surge " + surgeFlow);
+
+    // Configure a recycle large enough that the fresh feed alone (inlet - recycle)
+    // sits below the 1.2 * surge shortcut threshold.
+    double suctionDensity = inletMassFlow / inletFlow;
+    double targetRecycleMass = (inletFlow - 1.1 * surgeFlow) * suctionDensity;
+    Splitter splitter = new Splitter("anti surge splitter", comp.getOutletStream(), 2);
+    splitter.setFlowRates(new double[] { -1.0, targetRecycleMass }, "kg/hr");
+    splitter.run();
+
+    double recycleMassBefore = splitter.getSplitStream(1).getFlowRate("kg/hr");
+    assertTrue(inletFlow - recycleMassBefore / suctionDensity < 1.2 * surgeFlow,
+        "test precondition: fresh feed must be below the shortcut threshold");
+
+    Calculator calc = new Calculator("anti surge calc");
+    calc.addInputVariable(comp);
+    calc.setOutputVariable(splitter);
+    calc.runAntiSurgeCalc(UUID.randomUUID());
+
+    double recycleMassAfter = splitter.getSplitStream(1).getFlowRate("kg/hr");
+    assertTrue(recycleMassAfter > 0.01 * recycleMassBefore, "recycle must be closed gradually, not slammed to zero: "
+        + recycleMassBefore + " -> " + recycleMassAfter + " kg/hr");
+  }
+
+  /**
+   * The recycle setpoint must be expressed at compressor-suction conditions.
+   *
+   * <p>
+   * The surge curve, and therefore the whole control law, is referenced to suction volumetric flow, but the anti-surge
+   * splitter sits on the discharge side where the same mass occupies a much smaller volume. Writing a suction-sized
+   * volumetric number straight onto the discharge-side splitter overshot the intended recycle by roughly the volume
+   * ratio across the machine. The setpoint is therefore converted through the suction density and written as a mass
+   * flow.
+   * </p>
+   */
+  @Test
+  public void testRecycleSetpointIsReferencedToSuctionConditions() {
+    Compressor comp = buildCompressorWithSurgeCurve(20000.0);
+    double inletVolFlow = comp.getInletStream().getFlowRate("m3/hr");
+    double inletMassFlow = comp.getInletStream().getFlowRate("kg/hr");
+    double suctionDensity = inletMassFlow / inletVolFlow;
+
+    Splitter splitter = new Splitter("anti surge splitter", comp.getOutletStream(), 2);
+    splitter.setFlowRates(new double[] { -1.0, 1.0 }, "kg/hr");
+    splitter.run();
+
+    Calculator calc = new Calculator("anti surge calc");
+    calc.addInputVariable(comp);
+    calc.setOutputVariable(splitter);
+    calc.runAntiSurgeCalc(UUID.randomUUID());
+
+    // Convert the resulting recycle mass back to a suction volume and check it is a
+    // physically sensible fraction of the surge flow rather than a discharge volume
+    // mistaken for a suction volume (which inflates it by the compression ratio).
+    double recycleAtSuction = splitter.getSplitStream(1).getFlowRate("kg/hr") / suctionDensity;
+    double surgeFlow = comp.getSurgeFlowRate();
+    // Calculator caps the recycle setpoint at 2 x the surge flow.
+    assertTrue(recycleAtSuction <= 2.0 * surgeFlow + 1.0e-6, "recycle referenced to suction (" + recycleAtSuction
+        + " m3/hr) must respect the surge-flow cap (" + surgeFlow + " m3/hr)");
+    assertTrue(recycleAtSuction >= 0.0, "recycle must be non-negative, got " + recycleAtSuction);
+  }
+
+  /**
+   * A positive surge-control margin set on the COMPRESSOR must move the recycle target to the right of the surge line.
+   *
+   * <p>
+   * The legacy control law drives the operating point to {@code inletFlow == surgeFlow}, i.e. exactly onto the surge
+   * line with zero margin, which is not how any machine is operated. The margin is a property of the machine and its
+   * chart ({@link Compressor#setSurgeControlMargin(double)} / {@link Compressor#getControlLineFlow()}), so the
+   * calculator reads it from the compressor rather than owning a duplicate setting. The target becomes
+   * {@code surgeFlow * (1 + margin)}, so for the same operating point the calculator must ask for strictly more
+   * recycle.
+   * </p>
+   */
+  @Test
+  public void testSurgeControlMarginIncreasesTheRecycleTarget() {
+    assertEquals(0.0, buildCompressorWithSurgeCurve(20000.0).getSurgeControlMargin(), 1.0e-12,
+        "default compressor margin must stay 0.0 so legacy models are unchanged");
+
+    double recycleNoMargin = runAntiSurgeOnceAndReadRecycle(0.0);
+    double recycleWithMargin = runAntiSurgeOnceAndReadRecycle(0.10);
+
+    assertTrue(recycleWithMargin > recycleNoMargin,
+        "a 10 % control margin must ask for more recycle than control on the surge line itself: " + recycleNoMargin
+            + " -> " + recycleWithMargin + " kg/hr");
+  }
+
+  /**
+   * Builds a turned-down compressor with an anti-surge splitter, runs one anti-surge step with the given control margin
+   * set on the compressor, and returns the resulting recycle mass flow.
+   *
+   * @param margin the surge-control margin as a fraction of the surge flow
+   * @return the recycle leg mass flow in kg/hr after one calculator step
+   */
+  private double runAntiSurgeOnceAndReadRecycle(double margin) {
+    Compressor comp = buildCompressorWithSurgeCurve(20000.0);
+    comp.setSurgeControlMargin(margin);
+    Splitter splitter = new Splitter("anti surge splitter", comp.getOutletStream(), 2);
+    splitter.setFlowRates(new double[] { -1.0, 1.0 }, "kg/hr");
+    splitter.run();
+
+    Calculator calc = new Calculator("anti surge calc");
+    calc.addInputVariable(comp);
+    calc.setOutputVariable(splitter);
+    calc.runAntiSurgeCalc(UUID.randomUUID());
+
+    return splitter.getSplitStream(1).getFlowRate("kg/hr");
+  }
 }

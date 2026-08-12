@@ -72,6 +72,68 @@ column.setSeedTemperature(3, 273.15 + 45.0);
 column.setMaxNumberOfIterations(200);
 ```
 
+### Runtime control: iteration budget, damping and tolerance
+
+Three knobs decide how long a column runs before it gives up. Getting them wrong
+is the usual cause of a column that burns minutes per solve inside a
+`ProcessModel` outer loop.
+
+```java
+// 1. ITERATION BUDGET — setMaxNumberOfIterations(n) is only a SOFT FLOOR.
+//    The effective budget is max(n, 5 * numberOfTrays) and can still be expanded
+//    by the overflow/polish extensions. setMaxNumberOfIterations(10) on an
+//    11-tray column therefore does NOT cap anything (11*5 = 55 -> ~187 with
+//    overflow). NeqSim logs a warning when the request is below the tray floor.
+column.setMaxNumberOfIterations(20, true);   // HARD cap (2-arg overload)
+column.setHardIterationCap(true);            // or flip the flag separately
+column.getEffectiveMaxNumberOfIterations();  // what the solver will actually use
+
+// 2. DAMPING — the adaptive controller clamps the sequential step at
+//    minSequentialRelaxation (default 0.5). setRelaxationFactor now lowers that
+//    floor when you ask for heavier damping, so a request below 0.5 takes effect
+//    instead of being silently clamped back. Use this to break limit cycles.
+column.setRelaxationFactor(0.3);
+column.setMinSequentialRelaxation(0.2);      // explicit floor if needed
+column.setMinInsideOutRelaxation(0.2);       // inside-out tear streams
+
+// 3. TOLERANCE — the default absolute temperature tolerance (~0.02-0.03 K) can
+//    be ~10x tighter than the enclosing ProcessModel boundary gate (1e-3
+//    relative ~ 0.27 K at 270 K), so the column keeps iterating on a residual
+//    the plant model already accepts. Align them:
+column.setTemperatureToleranceRelative(1.0e-3);  // returns the absolute K value
+column.getReferenceTemperature();                // basis used for the conversion
+```
+
+Rule of thumb for a column inside a multi-area `ProcessModel`: set a hard
+iteration cap, damp below 0.5 if the tray temperatures oscillate, and match the
+column tolerance to the model tolerance passed to
+`ProcessModel.runUntilConverged(maxIter, tol)`.
+
+### What `solved()` actually checks
+
+`solved()` is not a single residual. It requires the solve status to be
+`RIGOROUS_CONVERGED` or `RECONCILED_PRODUCTS` **and** every active residual gate
+to pass:
+
+| Gate | Source | Default tolerance |
+|------|--------|-------------------|
+| Temperature | mean per-tray change of the last sweep | `~0.02 K x complexity`; `NaN` for simultaneous solvers, which then require the MESH gate instead |
+| Mass | external feed/product balance | `~0.016 x complexity` |
+| Energy | tray enthalpy balance | not enforced by default (`setEnforceEnergyBalanceTolerance(true)`) |
+| Internal traffic | max tray traffic / feed | 100 |
+| Per-tray material balance | `getLastTrayMaterialBalanceError()` — summed absolute tray imbalance / tray throughput | `getTrayMaterialBalanceTolerance()`, default `0.02` |
+| MESH infinity norm | all residual families | `getMeshResidualTolerance()`, default `1.0` |
+
+The overall feed/product balance closing to machine precision does **not** mean
+the column solved: each tray must close its own component balance too. Read
+`per-tray material imbalance` in `getConvergenceDiagnostics()` before trusting
+duties or a tray profile.
+
+> Do not gate on the MESH `material:` infinity norm. Those entries scale each
+> component by its own throughput, so a trace component going from 1e-25 to
+> 1.2e-25 mol/hr reads as a 0.17 residual. Use
+> `getLastTrayMaterialBalanceError()`, which weights by tray throughput.
+
 ### Solver Selection Guide
 
 | System Type | Recommended Solver | Notes |

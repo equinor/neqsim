@@ -175,12 +175,28 @@ public class Manifold extends ProcessEquipmentBaseClass
     localsplitter.setSplitFactors(splitFactors);
   }
 
+  /**
+   * Propagates the low-flow bypass threshold to the internal mixer and splitter.
+   *
+   * <p>
+   * {@link #run(UUID)} delegates all work to those two internal units, so without this propagation a
+   * {@code setMinimumFlow()} (or a {@code ProcessSystem.setSectionLowFlowThreshold()}) call on a Manifold would be
+   * silently ignored and the manifold would keep flashing a stagnant dead leg.
+   * </p>
+   */
+  private void propagateMinimumFlow() {
+    localmixer.setMinimumFlow(getMinimumFlow());
+    localsplitter.setMinimumFlow(getMinimumFlow());
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    propagateMinimumFlow();
     localmixer.run(id);
     refreshLocalSplitter();
     localsplitter.run(id);
+    isActive(localsplitter.isActive());
   }
 
   /** {@inheritDoc} */
@@ -738,11 +754,25 @@ public class Manifold extends ProcessEquipmentBaseClass
   // MASS BALANCE AND JSON
   // ============================================================================
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * The balance is taken directly across the manifold's own boundary: the sum of the streams fed into the internal
+   * mixer against the sum of the split outlets. Deriving the inlet total from the internal mixer's residual instead
+   * ({@code mixer.getMassBalance() + mixerOutlet}) double-counted that residual and reported the manifold imbalance
+   * with the opposite sign whenever the internal mixer was not itself perfectly balanced - which is exactly the
+   * mid-iteration state a mass-balance check is used to detect.
+   * </p>
+   */
   @Override
   public double getMassBalance(String unit) {
-    double inletFlow = localmixer.getMassBalance(unit)
-        + localmixer.getOutletStream().getThermoSystem().getFlowRate(unit);
+    double inletFlow = 0.0;
+    for (StreamInterface inlet : localmixer.getInletStreams()) {
+      if (inlet != null && inlet.getThermoSystem() != null) {
+        inletFlow += inlet.getThermoSystem().getFlowRate(unit);
+      }
+    }
     double outletFlow = 0.0;
     for (int i = 0; i < getNumberOfOutputStreams(); i++) {
       outletFlow += getSplitStream(i).getThermoSystem().getFlowRate(unit);

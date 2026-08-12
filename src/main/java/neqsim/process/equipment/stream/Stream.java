@@ -56,6 +56,45 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   protected String lastSpecification = null;
 
   /**
+   * Level of physical-property initialization performed at the end of {@link Stream#run(java.util.UUID)}.
+   *
+   * <p>
+   * {@link #FULL} evaluates every physical property (mass density, viscosity, thermal conductivity and diffusivity),
+   * which is what a stream needs when transport properties are read downstream (pipelines, heat exchangers, mechanical
+   * design). {@link #DENSITY_ONLY} evaluates the mass density alone and skips the transport-property correlations,
+   * which is roughly an order of magnitude cheaper and sufficient for pure material-balance flowsheets.
+   * </p>
+   *
+   * <p>
+   * <b>Warning.</b> Under {@link #DENSITY_ONLY} the skipped properties are not flagged as unavailable - they read back
+   * as {@code 0.0}. See {@link Stream#setPropertyInitLevel(PropertyInitLevel)}.
+   * </p>
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  public enum PropertyInitLevel {
+    /** init(2) followed by all physical properties - the historical (default) behaviour. */
+    FULL,
+    /** init(2) followed by mass density only - skips viscosity, conductivity and diffusivity. */
+    DENSITY_ONLY
+  }
+
+  /** Property-initialization level applied after the flash in {@link #run(java.util.UUID)}. */
+  private PropertyInitLevel propertyInitLevel = PropertyInitLevel.FULL;
+
+  /** Cached vapor-pressure standard, reused while the fluid composition and reference temperature are unchanged. */
+  private transient Standard_ASTM_D6377 cachedRvpStandard = null;
+  /** Fluid instance the cached vapor-pressure standard was evaluated for. */
+  private transient SystemInterface cachedRvpFluid = null;
+  /** Molar composition the cached vapor-pressure standard was evaluated for. */
+  private transient double[] cachedRvpComposition = null;
+  /** Reference temperature the cached vapor-pressure standard was evaluated for. */
+  private transient double cachedRvpReferenceTemperature = Double.NaN;
+  /** Reference-temperature unit the cached vapor-pressure standard was evaluated for. */
+  private transient String cachedRvpReferenceTemperatureUnit = null;
+
+  /**
    * Constructor for Stream.
    *
    * @param name name of stream
@@ -115,6 +154,54 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    */
   public void setGasQuality(double gasQuality) {
     this.gasQuality = gasQuality;
+  }
+
+  /**
+   * Getter for the field <code>propertyInitLevel</code>.
+   *
+   * @return the physical-property initialization level used by {@link #run(java.util.UUID)}; never null
+   */
+  public PropertyInitLevel getPropertyInitLevel() {
+    return propertyInitLevel;
+  }
+
+  /**
+   * Setter for the field <code>propertyInitLevel</code>.
+   *
+   * <p>
+   * Use {@link PropertyInitLevel#DENSITY_ONLY} to skip the viscosity, thermal-conductivity and diffusivity correlations
+   * when the flowsheet only needs mass balances and densities. This makes {@link #run(java.util.UUID)} substantially
+   * cheaper on large flowsheets.
+   * </p>
+   *
+   * <p>
+   * <b>Warning - transport properties read back as zero.</b> {@link PropertyInitLevel#DENSITY_ONLY} does not throw when
+   * a transport property is requested afterwards: {@code getViscosity()}, {@code getThermalConductivity()} and the
+   * diffusion coefficients simply return {@code 0.0}. Set the level back to {@link PropertyInitLevel#FULL} (or call
+   * {@code getFluid().initProperties()} explicitly) before any pipeline, heat-exchanger, mechanical-design or
+   * flow-assurance calculation that reads transport properties from this stream.
+   * </p>
+   *
+   * @param propertyInitLevel the level to use; null is treated as {@link PropertyInitLevel#FULL}
+   */
+  public void setPropertyInitLevel(PropertyInitLevel propertyInitLevel) {
+    this.propertyInitLevel = propertyInitLevel == null ? PropertyInitLevel.FULL : propertyInitLevel;
+  }
+
+  /**
+   * Initializes the physical properties of the internal fluid at the configured {@link PropertyInitLevel}.
+   *
+   * <p>
+   * Called at the end of {@link #run(java.util.UUID)} after the flash has converged.
+   * </p>
+   */
+  protected void initStreamProperties() {
+    if (propertyInitLevel == PropertyInitLevel.DENSITY_ONLY) {
+      thermoSystem.init(2);
+      thermoSystem.initPhysicalProperties(neqsim.physicalproperties.PhysicalPropertyType.MASS_DENSITY);
+    } else {
+      thermoSystem.initProperties();
+    }
   }
 
   /** {@inheritDoc} */
@@ -425,7 +512,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
       thermoOps.TPflash();
     }
 
-    thermoSystem.initProperties();
+    initStreamProperties();
 
     lastFlowRate = thermoSystem.getFlowRate("kg/hr");
     lastTemperature = thermoSystem.getTemperature();
@@ -574,34 +661,69 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     return localSyst.getPressure(returnUnit);
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public double getRVP(double referenceTemperature, String unit, String returnUnit) {
-    SystemInterface localSyst = getFluid().clone();
+  /**
+   * Returns a {@link Standard_ASTM_D6377} evaluated for the current fluid at the given reference temperature.
+   *
+   * <p>
+   * A single {@code calculate()} populates every RVP variant, and the result depends only on the fluid and the
+   * reference temperature (the standard overrides temperature and pressure itself). The evaluated standard is therefore
+   * cached and reused until the fluid instance, its composition or the reference temperature changes, which removes the
+   * repeated bubble-point and vapor-fraction flashes when several RVP variants are read from the same stream.
+   * </p>
+   *
+   * @param referenceTemperature the reference temperature, e.g. 37.8
+   * @param unit the reference-temperature unit, e.g. "C"
+   * @return the evaluated standard, or null if the calculation failed
+   */
+  private Standard_ASTM_D6377 getVapourPressureStandard(double referenceTemperature, String unit) {
+    SystemInterface fluid = getFluid();
+    double[] composition = fluid.getMolarComposition();
+    if (cachedRvpStandard != null && cachedRvpFluid == fluid && cachedRvpReferenceTemperature == referenceTemperature
+        && (unit == null ? cachedRvpReferenceTemperatureUnit == null : unit.equals(cachedRvpReferenceTemperatureUnit))
+        && java.util.Arrays.equals(cachedRvpComposition, composition)) {
+      return cachedRvpStandard;
+    }
+    SystemInterface localSyst = fluid.clone();
     Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(localSyst);
     standard.setReferenceTemperature(referenceTemperature, unit);
     try {
       standard.calculate();
     } catch (Exception ex) {
       logger.debug("RVP calculation failed: {}", ex.getMessage());
+      cachedRvpStandard = null;
+      cachedRvpFluid = null;
+      cachedRvpComposition = null;
+      cachedRvpReferenceTemperature = Double.NaN;
+      cachedRvpReferenceTemperatureUnit = null;
+      return null;
+    }
+    cachedRvpStandard = standard;
+    cachedRvpFluid = fluid;
+    cachedRvpComposition = composition;
+    cachedRvpReferenceTemperature = referenceTemperature;
+    cachedRvpReferenceTemperatureUnit = unit;
+    return standard;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getRVP(double referenceTemperature, String unit, String returnUnit) {
+    Standard_ASTM_D6377 standard = getVapourPressureStandard(referenceTemperature, unit);
+    if (standard == null) {
       return 0.0;
     }
+    standard.setMethodRVP(Standard_ASTM_D6377.RvpMethod.VPCR4);
     return standard.getValue("RVP", returnUnit);
   }
 
   /** {@inheritDoc} */
   @Override
   public double getRVP(double referenceTemperature, String unit, String returnUnit, String rvpMethod) {
-    SystemInterface localSyst = getFluid().clone();
-    Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(localSyst);
-    standard.setReferenceTemperature(referenceTemperature, unit);
-    standard.setMethodRVP(rvpMethod);
-    try {
-      standard.calculate();
-    } catch (Exception ex) {
-      logger.debug("RVP calculation failed: {}", ex.getMessage());
+    Standard_ASTM_D6377 standard = getVapourPressureStandard(referenceTemperature, unit);
+    if (standard == null) {
       return 0.0;
     }
+    standard.setMethodRVP(rvpMethod);
     return standard.getValue("RVP", returnUnit);
   }
 

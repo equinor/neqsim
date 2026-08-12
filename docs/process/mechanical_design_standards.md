@@ -33,6 +33,7 @@ the source catalog diverge.
 | NORSOK-P-001 | Rev 5 | SUPERSEDED | [publisher](https://standard.no/en/sectors/petroleum/norsok-standards/p-process) (checked 2026-07-21) | separator process design | SeparatorDesignStandard | SeparatorDesignStandard | SCREENING | no | Preliminary K-factor and sizing inputs only; standard-specific requirements are not independently validated. |
 | NORSOK-P-002 | 2023+AC:2024 | CURRENT | [publisher](https://standard.no/en/sectors/petroleum/norsok-standards/p-process) (checked 2026-07-21) | separator process design | SeparatorDesignStandard | StandardRequirementPackRegistry (3 capabilities) | SCREENING | no | Mapped calculations and review workflows are discoverable as a versioned requirement pack; this is not a complete conformity assessment and is intentionally separate from the legacy factory. |
 | NORSOK-M-001 | 2025 | CURRENT | [publisher](https://standard.no/en/sectors/energi-og-klima/petroleum/norsok-standard-categories/m-material/) (checked 2026-07-21) | material plate design codes | MaterialPlateDesignStandard | StandardRequirementPackRegistry (2 capabilities) | SCREENING | no | Mapped calculations and review workflows are discoverable as a versioned requirement pack; this is not a complete conformity assessment and is intentionally separate from the legacy factory. |
+| NORSOK-M-506 | 2017 | CURRENT | [publisher](https://standard.no/en/news/norsok-m-5062017-co2-corrosion-rate-calculation-model-is-on-systematic-review/) (checked 2026-08-02) | corrosion design codes | DesignStandard | NorsokM506CorrosionDesignKernel | SCREENING | yes | Edition-aware adapter around the existing simplified CO2-corrosion model; wetting, water chemistry, materials selection, localized corrosion, sour-service qualification, inhibitor availability, and conformity assessment remain outside the calculation. |
 | NORSOK-M-630 | 2020 | CURRENT | [publisher](https://standard.no/en/sectors/energi-og-klima/petroleum/norsok-standard-categories/m-material/) (checked 2026-07-21) | material pipe design codes | MaterialPipeDesignStandard | MaterialPipeDesignStandard | SCREENING | no | Material-property lookup only; material selection, qualification, and code acceptance are not implemented. |
 | NORSOK-S-001 | 2020+AC:2021 | CURRENT | [publisher](https://standard.no/en/sectors/energi-og-klima/petroleum/norsok-standard-categories/s-safety-she/) (checked 2026-07-21) | process safety requirements | DesignStandard | StandardRequirementPackRegistry (2 capabilities) | SCREENING | no | Mapped calculations and review workflows are discoverable as a versioned requirement pack; this is not a complete conformity assessment and is intentionally separate from the legacy factory. |
 | NORSOK-I-002 | 2021 | CURRENT | [publisher](https://standard.no/en/sectors/petroleum/norsok-standards/i-instrumentation) (checked 2026-07-21) | functional safety requirements | DesignStandard | None | CATALOGUED | no | No category-specific calculation is connected. |
@@ -52,7 +53,7 @@ the source catalog diverge.
 | API-520-Part-1 | 10th Ed | CURRENT | [publisher](https://www.api.org/products-and-services/standards/digital-catalog) (checked 2026-07-21) | relief valve design codes | DesignStandard | StandardRequirementPackRegistry (2 capabilities) | SCREENING | no | Mapped calculations and review workflows are discoverable as a versioned requirement pack; this is not a complete conformity assessment and is intentionally separate from the legacy factory. |
 | API-520-Part-2 | 7th Ed | CURRENT | [publisher](https://www.api.org/products-and-services/standards/digital-catalog) (checked 2026-07-21) | relief valve design codes | DesignStandard | None | CATALOGUED | no | No category-specific calculation is connected. |
 | API-527 | 5th Ed | CURRENT | [publisher](https://www.api.org/products-and-services/standards/digital-catalog) (checked 2026-07-21) | relief valve design codes | DesignStandard | None | CATALOGUED | no | No category-specific calculation is connected. |
-| API-2000 | 8th Ed | CURRENT | [publisher](https://www.api.org/products-and-services/standards/digital-catalog) (checked 2026-07-21) | tank venting design codes | DesignStandard | None | CATALOGUED | no | No category-specific calculation is connected. |
+| API-2000 | 7th Ed | CURRENT | [publisher](https://www.api.org/-/media/files/publications/2025-catalog/06_refining_2025.pdf) (checked 2026-08-02) | tank venting design codes | DesignStandard | Api2000TankVentingScreeningKernel | SCREENING | yes | Caller-controlled normal movement/thermal demand aggregation, total emergency demand, rated-capacity utilization, and tank pressure/vacuum limit screening only; API demand tables/equations, device sizing, scenario derivation, roofs/refrigerated storage, installation, testing, and conformity remain external. |
 | API-614 | 6th Ed | CURRENT | [publisher](https://www.api.org/products-and-services/standards/digital-catalog) (checked 2026-07-21) | rotating equipment design codes | DesignStandard | None | CATALOGUED | no | No category-specific calculation is connected. |
 | API-618 | 6th Ed | CURRENT | [publisher](https://www.api.org/products-and-services/standards/digital-catalog) (checked 2026-07-21) | compressor design codes | CompressorDesignStandard | CompressorDesignStandard | SCREENING | no | Preliminary compressor-factor screening only; package and vendor requirements are not implemented. |
 | API-625 | 3rd Ed | CURRENT | [publisher](https://www.api.org/products-and-services/standards/digital-catalog) (checked 2026-07-21) | pressure vessel design code | PressureVesselDesignStandard | None | CATALOGUED | no | The registry maps this tank standard to a separator-oriented pressure-vessel class; no edition-specific common calculation is implemented. |
@@ -61,9 +62,17 @@ the source catalog diverge.
 | API-685 | 3rd Ed | CURRENT | [publisher](https://www.api.org/products-and-services/standards/digital-catalog) (checked 2026-07-21) | pump design codes | DesignStandard | None | CATALOGUED | no | No category-specific calculation is connected. |
 | API-5L | 47th Ed | CURRENT | [publisher](https://www.api.org/products-and-services/standards/digital-catalog) (checked 2026-07-21) | material pipe design codes | MaterialPipeDesignStandard | MaterialPipeDesignStandard | SCREENING | no | Material-property lookup only; material selection, qualification, and code acceptance are not implemented. |
 | API-12J | 9th Ed | CURRENT | [publisher](https://www.api.org/products-and-services/standards/digital-catalog) (checked 2026-07-21) | separator process design | SeparatorDesignStandard | Api12JSeparatorDesignKernel | SCREENING | no | Gravity cut-diameter, K-factor, and liquid residence-time screening only; service applicability, vessel construction, internals, and performance guarantees require independent review. |
-| DNV-ST-F101 | 2021 | CURRENT | [publisher](https://www.dnv.com/energy/standards-guidelines/dnv-st-f101-submarine-pipeline-systems/) (checked 2026-07-21) | pipeline design codes | PipelineDesignStandard | StandardRequirementPackRegistry (1 capability) | SCREENING | no | Mapped calculations and review workflows are discoverable as a versioned requirement pack; this is not a complete conformity assessment and is intentionally separate from the legacy factory. |
+| DNV-RP-C203 | 2024-10+AMD:2025-10 | CURRENT | [publisher](https://www.dnv.com/energy/standards-guidelines/dnv-rp-c203-fatigue-design-of-offshore-steel-structures/) (checked 2026-08-02) | fatigue design standards | DesignStandard | DnvRpC203FatigueDesignKernel | SCREENING | yes | User-supplied controlled S-N curve, stress-range factors, spectrum bins, and Palmgren-Miner damage only; stress derivation, curve/detail selection, thickness and environmental basis, SCFs, rainflow counting, load combination, inspection planning, and conformity remain external. |
+| DNV-ST-F101 | 2021 | CURRENT | [publisher](https://www.dnv.com/energy/standards-guidelines/dnv-st-f101-submarine-pipeline-systems/) (checked 2026-07-21) | pipeline design codes | PipelineDesignStandard | DnvStF101PipelineDesignKernel | SCREENING | yes | Typed 2021 screening for containment, collapse, propagation buckling, load interaction, fatigue, pressure cases, de-rating, safety class, ovality, fabrication route, and installation strain; clause-complete conformity and engineering approval remain external. |
 | DNV-OS-F101 | 2013 | UNVERIFIED | unverified | pipeline design codes | PipelineDesignStandard | None | CATALOGUED | no | Catalogued pipeline selections fail closed because no edition-specific wall-thickness calculation is connected. |
-| DNV-RP-F105 | 2021 | UNVERIFIED | unverified | pipeline design codes | PipelineDesignStandard | None | CATALOGUED | no | Catalogued pipeline selections fail closed because no edition-specific wall-thickness calculation is connected. |
+| DNV-RP-F101 | 2019-09+AMD:2025-09 | CURRENT | [publisher](https://www.dnv.com/energy/standards-guidelines/dnv-rp-f101-corroded-pipelines/) (checked 2026-08-02) | pipeline integrity codes | DesignStandard | DnvRpF101CorrodedPipelineScreeningKernel | SCREENING | yes | Isolated longitudinal metal-loss defect failure-pressure equation under internal pressure only, with caller-controlled depth allowance and pressure factor; inspection uncertainty derivation, interacting/complex defects, combined loading, cracking, growth, probabilistic calibration, fitness-for-service acceptance, and DNV-ST-F101 design checks remain external. |
+| DNV-RP-F104 | 2021-02+AMD:2021-09 | CURRENT | [publisher](https://www.dnv.com/energy/standards-guidelines/dnv-rp-f104-design-and-operation-of-carbon-dioxide-pipelines/) (checked 2026-08-02) | pipeline design codes | PipelineDesignStandard | DnvRpF104Co2PipelineEnvelopeScreeningKernel | SCREENING | yes | Caller-controlled CO2/water specification margins and ordered pressure-temperature profile margins against externally verified single-phase boundaries, MAOP, and temperature limits only; phase-model qualification, DNV-ST-F101 design, fracture/decompression and crack arrest, materials, corrosion, construction, safety, operation, requalification, and conformity remain external. |
+| DNV-RP-F105 | 2025-12 | CURRENT | [publisher](https://www.dnv.com/energy/standards-guidelines/dnv-rp-f105-free-spanning-pipelines/) (checked 2026-08-02) | pipeline design codes | PipelineDesignStandard | DnvRpF105FreeSpanScreeningKernel | SCREENING | yes | Simply supported first-mode beam frequency and current/wave dimensionless screening with caller-controlled response triggers only; soil/shoulder stiffness, multi-span interaction, response models, direct-wave loading, ULS/FLS, fatigue, sensors, intervention, and conformity remain external. |
+| DNV-RP-F109 | 2021-05+AMD 2025-09 | CURRENT | [publisher](https://www.dnv.com/energy/standards-guidelines/dnv-rp-f109-on-bottom-stability-design-of-submarine-pipelines/) (checked 2026-08-02) | pipeline design codes | PipelineDesignStandard | DnvRpF109OnBottomStabilityKernel | SCREENING | yes | Vertical equilibrium, transparent absolute-static lateral stability, and externally supplied response displacement checks only; generalized design tables, dynamic response generation, environmental statistics, soil-model qualification, and conformity assessment remain external. |
+| DNV-RP-F110 | 2019-09+AMD:2021-09 | CURRENT | [publisher](https://www.dnv.com/energy/standards-guidelines/dnv-rp-f110-global-buckling-of-submarine-pipelines/) (checked 2026-08-02) | pipeline design codes | PipelineDesignStandard | DnvRpF110GlobalBucklingResponseScreeningKernel | SCREENING | yes | Caller-controlled external-analysis compressive-force, longitudinal-strain, global-displacement, and feed-in-length margins/utilizations only; effective-force derivation, critical buckling, Hobbs/FE response, F114 soil models, triggers/sharing, local capacity, fatigue, ST-F101 checks, lifecycle, and conformity remain external. |
+| DNV-RP-F114 | 2021-05 | CURRENT | [publisher](https://www.dnv.com/energy/standards-guidelines/dnv-rp-f114-pipe-soil-interaction-for-submarine-pipelines/) (checked 2026-08-02) | pipeline design codes | PipelineDesignStandard | DnvRpF114PipeSoilInteractionScreeningKernel | SCREENING | yes | Caller-controlled vertical, axial, and lateral demand/resistance margins and utilizations only; site investigation, soil interpretation, penetration/burial response, load-displacement curves, cyclic and time effects, uncertainty, design actions, F109/F110/F105/ST-F101 interfaces, and conformity remain external. |
+| ISO-5167-1 | 2022 | CURRENT | [publisher](https://www.iso.org/standard/79179.html) (checked 2026-08-02) | flow measurement standards | DesignStandard | None | CATALOGUED | no | The general principles and requirements are catalogued as the companion basis for orifice-plate metering; no standalone Part 1 calculation is exposed. |
+| ISO-5167-2 | 2022 | CURRENT | [publisher](https://www.iso.org/standard/79180.html) (checked 2026-08-02) | flow measurement standards | DesignStandard | Iso5167OrificeMeteringKernel | SCREENING | yes | Single-phase, full-pipe, subsonic, non-pulsating concentric orifice-plate flow calculation only; plate inspection, installation, tapping geometry evidence, uncertainty, calibration, and custody-transfer acceptance remain outside the calculation. |
 | ISO-13623 | 2017 | UNVERIFIED | unverified | pipeline design codes | PipelineDesignStandard | None | CATALOGUED | no | Catalogued pipeline selections fail closed because no edition-specific wall-thickness calculation is connected. |
 | ISO-15649 | 2001 | UNVERIFIED | unverified | pipeline design codes | PipelineDesignStandard | None | CATALOGUED | no | Catalogued pipeline selections fail closed because no edition-specific wall-thickness calculation is connected. |
 | ISO-16812 | 2019 | UNVERIFIED | unverified | heat exchanger design codes | DesignStandard | None | CATALOGUED | no | No standard-specific heat-exchanger mechanical calculation is connected. |
@@ -126,13 +135,18 @@ implemented standard, audited maturity, and structured applicability. Kernels mu
 input or a `ProcessSystem`. Compatibility adapters defensively copy legacy mutable calculators.
 
 `StandardRegistry.getDesignKernel(...)` returns an explicit lookup status. API 617, API 610, API
-521, API 526, and API 12J have connected adapters and return `IMPLEMENTED`; standards that have not
-been adapted return `NOT_IMPLEMENTED`, never an empty or implied success. Each kernel returns an
+521, API 526, API 12J, API 2000, NORSOK M-506, ISO 5167-2, DNV-RP-C203,
+DNV-RP-F105, DNV-RP-F101, DNV-RP-F104, DNV-RP-F109, DNV-RP-F110, DNV-RP-F114, and
+DNV-ST-F101 have connected adapters and return
+`IMPLEMENTED`; standards that have not been adapted return `NOT_IMPLEMENTED`, never an empty or
+implied success. Each kernel returns an
 immutable assessment snapshot and always requires engineering review because its maturity remains
 `SCREENING`. Unsupported editions fail closed as `EDITION_NOT_IMPLEMENTED` until separately
 implemented and validated.
 
-Only API 521 currently has both a publisher-verified current lifecycle and a matching exact kernel.
+API 521, API 2000, NORSOK M-506, ISO 5167-2, DNV-RP-C203, DNV-RP-F105, DNV-RP-F101, DNV-RP-F104,
+DNV-RP-F109, DNV-RP-F110, DNV-RP-F114, and DNV-ST-F101 currently have both a publisher-verified current
+lifecycle and a matching exact kernel.
 API 526, API 617, API 610, and API 12J adapters implement legacy edition labels that do not match
 the current catalog editions; they are available only through an explicit historical selection
 until current-edition kernels and independent benchmark evidence are added.
@@ -144,11 +158,68 @@ inadequate result when a single standard orifice cannot cover it. These adapters
 scenario completeness or qualify valve construction, installation, reaction loads, flare-network
 effects, or vendor certification.
 
+The API 2000 adapter aggregates caller-controlled normal movement, thermal, and other demands,
+compares them and an externally established total emergency demand with rated capacities, and
+screens corresponding rated pressures/vacuum against tank limits. It does not embed licensed API
+demand equations or tables, size a vent, derive scenarios, or qualify installation. See the
+[API 2000 tank-venting guide](mechanical_design/api_2000_tank_venting.md).
+
 The API 617 adapter defensively copies a compressor-casing configuration before evaluating pressure
 containment, hydrotest, flange-rating, nozzle-load allowance, and thermal-growth screens. The API
 12J adapter uses explicitly unit-tagged cut diameter together with K-factor and liquid residence
 time. Passing either result is not a package, vessel, or performance certification.
 
+The ISO 5167-2 adapter makes liquid versus gas/vapour service explicit, iterates the existing
+`Orifice` discharge-coefficient correlation, and blocks conditions outside its single-phase,
+full-pipe, subsonic, non-pulsating numerical envelope. ISO 5167-1 remains the separately catalogued
+companion requirements basis. Installation attestations are caller evidence, not checks performed
+by NeqSim; uncertainty, calibration, inspection, and custody-transfer acceptance remain external.
+
+The DNV-RP-C203 adapter evaluates a caller-controlled single-slope or continuous bi-linear S-N curve,
+explicit stress-range factors, spectrum bins, design fatigue factor, and Palmgren-Miner utilization.
+NeqSim does not select or embed DNV curve tables. Curve/detail selection, structural stress,
+environment and thickness basis, SCFs, load combinations, rainflow counting, inspection, and
+conformity remain controlled external work. See the
+[DNV-RP-C203 fatigue guide](mechanical_design/dnv_rp_c203_fatigue.md).
+
+The DNV-RP-F105 adapter evaluates a simply supported Euler-Bernoulli first mode with externally
+derived effective mass and axial force, then reports current/wave frequency ratios, reduced
+velocities, and Keulegan-Carpenter number. Caller-controlled response triggers only indicate when
+the project workflow requires detailed analysis; they are not DNV limits or acceptance decisions.
+Soil and span-shoulder stiffness, interacting spans, response amplitudes, direct wave loading,
+ULS/FLS, fatigue, monitoring, and intervention remain external. See the
+[DNV-RP-F105 free-span guide](mechanical_design/dnv_rp_f105_free_span.md).
+
+The DNV-RP-F101 adapter evaluates the public isolated longitudinal metal-loss equation under
+internal pressure using verified geometry, inspection sizing, characteristic ultimate tensile
+strength, pressures, and caller-controlled depth allowance and pressure factor. It does not select
+licensed partial factors, assess interactions or complex profiles, combine longitudinal
+compression, or issue a fitness-for-service decision. It is independent of and does not replace
+DNV-ST-F101 original-design checks. See the
+[DNV-RP-F101 corroded-pipeline guide](mechanical_design/dnv_rp_f101_corroded_pipeline.md).
+
+The DNV-RP-F104 adapter screens caller-controlled CO2 and water composition margins and an ordered
+pressure-temperature profile against externally verified single-phase pressure boundaries, MAOP,
+and design temperatures. It does not infer a phase boundary from the pure-CO2 critical point or
+embed publisher composition criteria. Phase-model qualification, fracture/decompression and crack
+arrest, DNV-ST-F101 structural design, materials, corrosion, construction, safety, operation, and
+requalification remain external. The companion requirement pack maps related NeqSim capabilities
+without claiming clause coverage. See the
+[DNV-RP-F104 CO2 pipeline guide](mechanical_design/dnv_rp_f104_co2_pipeline.md).
+
+The DNV-RP-F110 adapter compares effective force, longitudinal strain, global displacement, and
+required feed-in response from an external global structural analysis with caller-controlled
+allowable or available values. These response-envelope identities do not calculate critical
+buckling, initiation, prevention, pipe-soil springs, triggers, buckle sharing, local capacity, or
+DNV-ST-F101 acceptance. See the
+[DNV-RP-F110 global-buckling guide](mechanical_design/dnv_rp_f110_global_buckling.md).
+
+The DNV-RP-F114 adapter compares externally established vertical, axial, and lateral design-action
+magnitudes with caller-controlled resistance magnitudes for named route locations and design
+situations. It does not derive soil parameters, penetration or burial response, load-displacement
+curves, characteristic values, factors, or structural actions. Adjacent DNV-RP-F109, DNV-RP-F110,
+DNV-RP-F105, and DNV-ST-F101 assessments remain separate. See the
+[DNV-RP-F114 pipe-soil interaction guide](mechanical_design/dnv_rp_f114_pipe_soil_interaction.md).
 ## Cross-equipment requirement packs
 
 Some standards express requirements across equipment, calculations, documents, and lifecycle
@@ -163,7 +234,8 @@ StandardRequirementPack requirements = StandardRegistry.requireRequirementPack(s
 
 Each capability declares whether it is a calculation screen or a review workflow, its implementation
 class, and its engineering boundary. Packs currently map NORSOK P-002, NORSOK S-001, NORSOK M-001,
-API 520 Part 1, API 650, API 660, DNV-ST-F101, ISO 10418, IEC 61511, and IEC 60534. Strict lookup
+API 520 Part 1, API 650, API 660, DNV-ST-F101, DNV-RP-F104, DNV-RP-F109, DNV-RP-F110,
+DNV-RP-F114, ISO 10418, IEC 61511, and IEC 60534. Strict lookup
 still fails when the lifecycle is unverified; IEC 60534 therefore remains discoverable in the audit
 but cannot be selected as a verified current requirements basis.
 

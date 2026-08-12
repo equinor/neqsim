@@ -180,6 +180,10 @@ The `ProcessGraphBuilder` automatically detects stream connections for the follo
 | **Turbomachinery** | TurboExpanderCompressor | Expander + compressor outlets |
 | **Columns** | DistillationColumn | Condenser + reboiler outlets |
 
+Connections are identified by stream-object identity. If two distinct material streams connect the
+same source and target equipment, both edges are retained. Repeated discovery of the same stream
+through equipment-specific and generic inlet APIs is represented by one edge.
+
 ---
 
 ## Basic Usage
@@ -978,7 +982,7 @@ For most users, simply using `process.runOptimal()` provides the best of both wo
 
 A complete interactive example is available in the examples directory:
 
-📓 **[GraphBasedProcessSimulation.ipynb](../examples/GraphBasedProcessSimulation.ipynb)**
+📓 **[GraphBasedProcessSimulation.ipynb](https://github.com/equinor/neqsim/blob/master/docs/examples/GraphBasedProcessSimulation.ipynb)**
 
 The notebook demonstrates:
 - Graph construction and analysis

@@ -4,26 +4,39 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.function.ToDoubleFunction;
+
 import org.junit.jupiter.api.Test;
+
 import neqsim.integration.EOSComparison;
+import neqsim.fluidmechanics.flowsolver.AxialDispersionBoundaryCondition;
+import neqsim.fluidmechanics.flowsolver.ConstantAxialDispersion;
+import neqsim.fluidmechanics.flowsolver.SpeciesAdvectionScheme;
+import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.SpeciesTransportDiagnostics;
+import neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.PipeFlowSystem;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.distillation.ColumnSpecification;
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.distillation.RateBasedPackedColumn;
-import neqsim.process.equipment.energy.EnergyNetworkSolver;
 import neqsim.process.equipment.distillation.internals.ColumnInternalsDesigner;
+import neqsim.process.equipment.energy.EnergyNetworkSolver;
 import neqsim.process.equipment.heatexchanger.CoolingWaterSystem;
 import neqsim.process.equipment.heatexchanger.FiredHeater;
+import neqsim.process.equipment.network.TransientCompositionalPipeNetwork;
+import neqsim.process.equipment.network.TransientCompositionalPipeNetworkHistory;
+import neqsim.process.equipment.pipeline.TwoFluidComponentConservationReport;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
-import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction.InterfacialFrictionResult;
+import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.EnergyBus;
 import neqsim.process.equipment.stream.EnergyNetworkReport;
@@ -40,6 +53,10 @@ import neqsim.process.fielddevelopment.concept.FieldConcept;
 import neqsim.process.fielddevelopment.concept.GreenfieldConceptFactory;
 import neqsim.process.fielddevelopment.evaluation.ConceptEvaluator;
 import neqsim.process.fielddevelopment.evaluation.ConceptKPIs;
+import neqsim.process.fielddevelopment.screening.ArtificialLiftScreener;
+import neqsim.process.fielddevelopment.screening.ArtificialLiftScreener.LiftMethod;
+import neqsim.process.fielddevelopment.screening.ArtificialLiftScreener.MethodResult;
+import neqsim.process.fielddevelopment.screening.ArtificialLiftScreener.ScreeningResult;
 import neqsim.process.fielddevelopment.tieback.HostFacility;
 import neqsim.process.fielddevelopment.tieback.capacity.CapacityAllocationPolicy;
 import neqsim.process.fielddevelopment.tieback.capacity.HostTieInPoint;
@@ -50,6 +67,7 @@ import neqsim.process.mechanicaldesign.heatexchanger.BellDelawareMethod;
 import neqsim.process.mechanicaldesign.heatexchanger.LMTDcorrectionFactor;
 import neqsim.process.mechanicaldesign.heatexchanger.ThermalDesignCalculator;
 import neqsim.process.mechanicaldesign.heatexchanger.VibrationAnalysis;
+import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.SimulationResult;
 import neqsim.process.processmodel.dexpi.DexpiXmlWriter;
@@ -57,6 +75,7 @@ import neqsim.process.util.fielddevelopment.DCFCalculator;
 import neqsim.process.util.heatintegration.PinchAnalyzer;
 import neqsim.process.util.optimizer.DebottleneckAnalyzer;
 import neqsim.process.util.optimizer.MonteCarloSimulator;
+import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator;
 import neqsim.process.util.optimizer.SensitivityAnalysis;
 import neqsim.process.util.report.HeatMaterialBalance;
 import neqsim.process.util.report.ProcessValidator;
@@ -66,9 +85,12 @@ import neqsim.pvtsimulation.flowassurance.HydrateRiskMapper;
 import neqsim.pvtsimulation.flowassurance.ScaleMassCalculator;
 import neqsim.pvtsimulation.flowassurance.ScalePredictionCalculator;
 import neqsim.pvtsimulation.flowassurance.WaterCompatibilityScreener;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.FluidBuilder;
+import neqsim.thermo.system.SystemDesmukhMather;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemNRTL;
 import neqsim.thermo.system.SystemPitzer;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -81,6 +103,116 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 public class DocExamplesCompilationTest {
+
+  /** Pitzer hybrid VLLE example from docs/thermo/fluid_creation_guide.md. */
+  @Test
+  public void testPitzerHybridVlleFluidCreationGuide() {
+    SystemPitzer fluid = new SystemPitzer(313.15, 50.0);
+    fluid.addComponent("methane", 5.0);
+    fluid.addComponent("n-heptane", 2.0);
+    fluid.addComponent("water", 55.5);
+    fluid.addComponent("Na+", 1.0);
+    fluid.addComponent("Cl-", 1.0);
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+
+    new ThermodynamicOperations(fluid).TPflash();
+
+    boolean hasAqueousPhase = fluid.hasPhaseType(PhaseType.AQUEOUS);
+    assertTrue(hasAqueousPhase);
+    assertTrue(fluid.hasPhaseType(PhaseType.GAS));
+    assertTrue(fluid.hasPhaseType(PhaseType.OIL));
+  }
+
+  /** Generic SystemEosGE opt-in example from docs/thermo/fluid_creation_guide.md. */
+  @Test
+  public void testGenericEosGeHybridVlleFluidCreationGuide() {
+    SystemNRTL fluid = new SystemNRTL(313.15, 50.0);
+    fluid.addComponent("methane", 5.0);
+    fluid.addComponent("n-heptane", 2.0);
+    fluid.addComponent("water", 55.5);
+    fluid.createDatabase(true);
+    fluid.setMixingRule("classic");
+    fluid.enableHybridEosGeFlash();
+
+    new ThermodynamicOperations(fluid).TPflash();
+
+    assertTrue(fluid.hasPhaseType(PhaseType.GAS));
+    assertTrue(fluid.hasPhaseType(PhaseType.OIL));
+    assertTrue(fluid.hasPhaseType(PhaseType.AQUEOUS));
+  }
+
+  /** Desmukh-Mather reactive hybrid example from docs/pvtsimulation/scale_prediction_api.md. */
+  @Test
+  public void testDesmukhMatherReactiveHybridScalePrediction() throws Exception {
+    SystemDesmukhMather fluid = new SystemDesmukhMather(313.15, 5.0);
+    fluid.addComponent("methane", 5.0);
+    fluid.addComponent("CO2", 0.2);
+    fluid.addComponent("n-heptane", 2.0);
+    fluid.addComponent("MDEA", 1.0);
+    fluid.addComponent("water", 9.0);
+    fluid.addComponent("Ca++", 1.0e-4);
+    fluid.addComponent("Na+", 1.0e-3);
+    fluid.addComponent("Cl-", 2.0e-4);
+    fluid.addComponent("HCO3-", 1.0e-3);
+    fluid.chemicalReactionInit();
+    fluid.createDatabase(true);
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.TPflash();
+    double calciteSaturationRatio = operations.getRelativeScalePotential("CaCO3");
+
+    assertTrue(Double.isFinite(calciteSaturationRatio) && calciteSaturationRatio > 0.0);
+  }
+
+  /**
+   * Transient gas-network example from docs/process/gas_network_operations.md.
+   */
+  @Test
+  public void testTransientCompositionalPipeNetworkDocumentationExample() {
+    SystemInterface asgardGas = new SystemSrkEos(300.0, 70.0);
+    asgardGas.addComponent("methane", 0.98);
+    asgardGas.addComponent("CO2", 0.02);
+    asgardGas.setMixingRule("classic");
+
+    SystemInterface kristinGas = new SystemSrkEos(300.0, 70.0);
+    kristinGas.addComponent("methane", 0.95);
+    kristinGas.addComponent("CO2", 0.05);
+    kristinGas.setMixingRule("classic");
+
+    SystemInterface kristinHighCo2 = new SystemSrkEos(300.0, 70.0);
+    kristinHighCo2.addComponent("methane", 0.75);
+    kristinHighCo2.addComponent("CO2", 0.25);
+    kristinHighCo2.setMixingRule("classic");
+
+    SystemInterface mixedGas = new SystemSrkEos(300.0, 70.0);
+    mixedGas.addComponent("methane", 0.965);
+    mixedGas.addComponent("CO2", 0.035);
+    mixedGas.setMixingRule("classic");
+
+    TransientCompositionalPipeNetwork transientNetwork = new TransientCompositionalPipeNetwork(
+        "Norwegian export teaching case");
+    transientNetwork.addNode("asgard");
+    transientNetwork.addNode("kristin");
+    transientNetwork.addNode("junction");
+    transientNetwork.addNode("karsto");
+    transientNetwork.addPipe("asgardBranch", "asgard", "junction", 2000.0, 0.4, 12, asgardGas);
+    transientNetwork.addPipe("kristinBranch", "kristin", "junction", 2000.0, 0.4, 12, kristinGas);
+    transientNetwork.addPipe("export", "junction", "karsto", 4000.0, 0.4, 12, mixedGas);
+    transientNetwork.setSourceSchedule("asgard", new double[] { 0.0 }, new SystemInterface[] { asgardGas },
+        new double[] { 20.0 });
+    transientNetwork.setSourceSchedule("kristin", new double[] { 0.0, 600.0, 1800.0 },
+        new SystemInterface[] { kristinGas, kristinHighCo2, kristinGas }, new double[] { 20.0, 18.0, 20.0 });
+
+    transientNetwork.run(5400.0, 60.0);
+    TransientCompositionalPipeNetworkHistory species = transientNetwork.getSpeciesHistory();
+    assertEquals(90, species.getElapsedTimeSeconds().length);
+    assertEquals(90, species.getNodeMassFractionHistory("karsto", "CO2").length);
+    assertTrue(species.getFinalNetworkReport().getMaximumRelativeInventoryResidual() <= 1.0e-8,
+        species.getFinalNetworkReport().getMessage());
+  }
 
   /**
    * Quick-start example shared by docs/index.md and docs/README.md.
@@ -102,6 +234,58 @@ public class DocExamplesCompilationTest {
     assertTrue(gas.getDensity("kg/m3") < 50.0);
     assertTrue(gas.getZ() > 0.8);
     assertTrue(gas.getZ() < 1.0);
+  }
+
+  /**
+   * Process-model evaluator example from docs/process/optimization/OPTIMIZATION_OVERVIEW.md.
+   */
+  @Test
+  public void testProcessModelOptimizationDocumentationExample() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.10);
+    fluid.setMixingRule("classic");
+    fluid.setTotalFlowRate(10000.0, "kg/hr");
+
+    Stream feed = new Stream("feed", fluid);
+    Separator separator = new Separator("separator", feed);
+    ProcessSystem wells = new ProcessSystem("wells");
+    wells.add(feed);
+    ProcessSystem separation = new ProcessSystem("separation");
+    separation.add(separator);
+    ProcessModel model = new ProcessModel();
+    model.add("wells", wells);
+    model.add("separation", separation);
+
+    separator.addCapacityConstraint(new CapacityConstraint("installedGasCapacity", "kg/hr", ConstraintType.HARD)
+        .setDesignValue(15000.0).setValueSupplier(() -> feed.getFlowRate("kg/hr")));
+
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(model);
+    evaluator.setIncludeStrategyCapacityConstraints(false);
+    evaluator.addParameter("wells::feed.flowRate", 5000.0, 20000.0, "kg/hr");
+    evaluator.addObjective("exportGas", new ToDoubleFunction<ProcessModel>() {
+      /** {@inheritDoc} */
+      @Override
+      public double applyAsDouble(ProcessModel processModel) {
+        return processModel.getVariableValue("separation::separator.gasOutStream.flowRate", "kg/hr");
+      }
+    }, ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
+    evaluator.addConstraintUpperBound("feedLimit", new ToDoubleFunction<ProcessModel>() {
+      /** {@inheritDoc} */
+      @Override
+      public double applyAsDouble(ProcessModel processModel) {
+        return processModel.getVariableValue("wells::feed.flowRate", "kg/hr");
+      }
+    }, 15000.0);
+    evaluator.addEquipmentCapacityConstraints();
+
+    ProcessModelSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[] { 12000.0 });
+    ProcessModelSimulationEvaluator.BottleneckStatus bottleneck = result.getActiveBottleneck();
+    List<ProcessModelSimulationEvaluator.BottleneckStatus> ranked = result.getRankedCapacityConstraints();
+
+    assertTrue(result.isSimulationConverged());
+    assertNotNull(bottleneck);
+    assertEquals("installedGasCapacity", ranked.get(0).getConstraintName());
   }
 
   /**
@@ -254,6 +438,36 @@ public class DocExamplesCompilationTest {
     assertNotNull(fpso.getSummary());
     assertTrue(tieback.getFacilityConfig().getBlocks().size() > 0);
     assertTrue(fpso.getTotalCapexMusd() > tieback.getTotalCapexMusd());
+  }
+
+  /**
+   * Artificial-lift screening example from docs/fielddevelopment/API_GUIDE.md.
+   */
+  @Test
+  public void testArtificialLiftScreenerApiGuideExample() {
+    ArtificialLiftScreener lift = new ArtificialLiftScreener();
+    lift.setReservoirPressure(180.0, "bara");
+    lift.setWaterCut(0.70);
+    lift.setFormationGOR(100.0);
+    lift.setProductivityIndex(15.0);
+    lift.setWellDepth(2800.0, "m");
+    lift.setReservoirTemperature(95.0, "C");
+    lift.setGasLiftAvailable(true);
+    lift.setElectricityAvailable(true);
+
+    ScreeningResult screening = lift.screen();
+    List<MethodResult> results = screening.getAllMethods();
+    for (MethodResult method : results) {
+      if (method.feasible) {
+        assertTrue(Double.isFinite(method.productionRate) && method.productionRate > 0.0);
+        assertTrue(Double.isFinite(method.powerConsumption) && method.powerConsumption >= 0.0);
+      } else {
+        assertNotNull(method.infeasibilityReason);
+      }
+    }
+
+    LiftMethod recommended = screening.getRecommendedMethod();
+    assertNotNull(recommended);
   }
 
   /**
@@ -559,17 +773,27 @@ public class DocExamplesCompilationTest {
     String[][] table = ops.getResultTable();
     assertTrue(table.length > 1);
 
-    SystemInterface pitzer = new SystemPitzer(273.15 + 80.0, 100.0);
-    pitzer.addComponent("water", 0.90);
-    pitzer.addComponent("Na+", 0.03);
-    pitzer.addComponent("Cl-", 0.035);
-    pitzer.addComponent("Ca++", 0.005);
-    pitzer.addComponent("SO4--", 0.002);
+    SystemInterface pitzer = new SystemPitzer(313.15, 50.0);
+    pitzer.addComponent("methane", 5.0);
+    pitzer.addComponent("CO2", 0.05);
+    pitzer.addComponent("n-heptane", 2.0);
+    pitzer.addComponent("water", 55.5);
+    pitzer.addComponent("Ca++", 1.0e-4);
+    pitzer.addComponent("Na+", 1.0e-3);
+    pitzer.addComponent("Cl-", 2.0e-4);
+    pitzer.addComponent("HCO3-", 1.0e-3);
+    pitzer.chemicalReactionInit();
+    pitzer.createDatabase(true);
     pitzer.setMixingRule("classic");
+    pitzer.setMultiPhaseCheck(true);
     ThermodynamicOperations pitzerOps = new ThermodynamicOperations(pitzer);
     pitzerOps.TPflash();
     pitzer.initProperties();
-    assertTrue(pitzer.getNumberOfPhases() >= 1);
+    double calciteScalePotential = pitzerOps.getRelativeScalePotential("CaCO3");
+    assertTrue(pitzer.hasPhaseType("gas"));
+    assertTrue(pitzer.hasPhaseType("oil"));
+    assertTrue(pitzer.hasPhaseType("aqueous"));
+    assertTrue(Double.isFinite(calciteScalePotential) && calciteScalePotential > 0.0);
 
     WaterCompatibilityScreener screener = new WaterCompatibilityScreener();
     screener.setFormationWater(400, 200, 50, 2, 150, 10, 50000, 90, 200, 3.0, 6.2);
@@ -717,14 +941,15 @@ public class DocExamplesCompilationTest {
     assertNotNull(builderColumn.getTopSpecification());
     assertNotNull(builderColumn.getBottomSpecification());
 
-    apiColumn.setCondenserMode(DistillationColumn.CondenserMode.PARTIAL);
-    apiColumn.setCondenserMode(DistillationColumn.CondenserMode.TOTAL);
-    assertEquals(DistillationColumn.CondenserMode.TOTAL, apiColumn.getCondenserMode());
-    apiColumn.setCondenserLiquidReflux(500.0, "kg/hr");
-    assertEquals(DistillationColumn.CondenserMode.LIQUID_REFLUX_SPLIT, apiColumn.getCondenserMode());
-    apiColumn.setReboilerMode(DistillationColumn.ReboilerMode.EQUILIBRIUM);
-    apiColumn.setReboilerVaporBoilupRatio(1.8);
-    assertEquals(DistillationColumn.ReboilerMode.VAPOR_BOILUP_RATIO, apiColumn.getReboilerMode());
+    DistillationColumn modeColumn = new DistillationColumn("Doc Mode Column", 10, true, true);
+    modeColumn.setCondenserMode(DistillationColumn.CondenserMode.PARTIAL);
+    modeColumn.setCondenserMode(DistillationColumn.CondenserMode.TOTAL);
+    assertEquals(DistillationColumn.CondenserMode.TOTAL, modeColumn.getCondenserMode());
+    modeColumn.setCondenserLiquidReflux(500.0, "kg/hr");
+    assertEquals(DistillationColumn.CondenserMode.LIQUID_REFLUX_SPLIT, modeColumn.getCondenserMode());
+    modeColumn.setReboilerMode(DistillationColumn.ReboilerMode.EQUILIBRIUM);
+    modeColumn.setReboilerVaporBoilupRatio(1.8);
+    assertEquals(DistillationColumn.ReboilerMode.VAPOR_BOILUP_RATIO, modeColumn.getReboilerMode());
 
     apiColumn.setMurphreeEfficiency(0.70);
     apiColumn.setMurphreeEfficiency(3, 0.65);
@@ -1323,9 +1548,10 @@ public class DocExamplesCompilationTest {
   @Test
   public void testTwoFluidPipeSteadyAndDynamicBoundaryDocExamples() {
     SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(293.15, 70.0);
-    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("methane", 0.89);
     fluid.addComponent("ethane", 0.06);
     fluid.addComponent("propane", 0.04);
+    fluid.addComponent("CO2", 0.01);
     fluid.setMixingRule("classic");
 
     Stream inlet = new Stream("inlet", fluid);
@@ -1340,8 +1566,21 @@ public class DocExamplesCompilationTest {
     pipe.setDiameter(0.20);
     pipe.setRoughness(1.0e-5);
     pipe.setNumberOfSections(4);
+    pipe.setComponentTransportEnabled(true);
+    pipe.setComponentConservationTolerance(1.0e-8);
+    pipe.setStoreComponentConservationHistory(true);
     pipe.run();
     assertTrue(pipe.getPressureProfile().length > 0);
+
+    pipe.runTransient(0.1, UUID.randomUUID());
+    TwoFluidComponentConservationReport components = pipe.getLastComponentConservationReport();
+    double[] co2Gas = pipe.getComponentMassFractionProfile(TwoFluidComponentConservationReport.Phase.GAS, "CO2");
+    double outletCo2 = pipe.getOutletComponentMassFraction(TwoFluidComponentConservationReport.Phase.GAS, "CO2");
+    String json = components.toJson();
+    assertNotNull(components);
+    assertEquals(4, co2Gas.length);
+    assertTrue(Double.isFinite(outletCo2));
+    assertNotNull(json);
 
     pipe.setOutletPressure(55.0, "bara");
     pipe.run();
@@ -1357,6 +1596,29 @@ public class DocExamplesCompilationTest {
     pipe.openOutlet(52.0, "bara");
     pipe.runTransient(2.0, java.util.UUID.randomUUID());
     assertEquals(52.0, pipe.getPressureProfile()[pipe.getPressureProfile().length - 1] / 1.0e5, 0.05);
+  }
+
+  /**
+   * Bounded species-advection and physical-dispersion API from docs/fluidmechanics/single_phase_pipe_flow.md.
+   */
+  @Test
+  public void testSinglePhaseSpeciesAdvectionDocExampleCompiles() {
+    PipeFlowSystem pipe = new PipeFlowSystem();
+    pipe.setSpeciesAdvectionScheme(SpeciesAdvectionScheme.TVD_VAN_LEER_SSP_RK2);
+    ConstantAxialDispersion physicalDispersion = new ConstantAxialDispersion(250.0);
+    pipe.setAxialDispersionModel(physicalDispersion);
+
+    SpeciesTransportDiagnostics diagnostics = SpeciesTransportDiagnostics.notRun();
+
+    assertEquals(SpeciesAdvectionScheme.TVD_VAN_LEER_SSP_RK2, pipe.getSpeciesAdvectionScheme());
+    assertEquals("constant", pipe.getAxialDispersionModel().getName());
+    assertEquals(250.0, physicalDispersion.getConstantCoefficientM2PerSecond(), 0.0);
+    assertEquals(SpeciesAdvectionScheme.FIRST_ORDER_IMPLICIT, diagnostics.getScheme());
+    assertEquals(0, diagnostics.getCellCourantNumbers().length);
+    assertFalse(diagnostics.isPhysicalDispersionIncluded());
+    assertEquals(AxialDispersionBoundaryCondition.DIRICHLET_INLET, diagnostics.getInletDispersionBoundaryCondition());
+    assertEquals(AxialDispersionBoundaryCondition.ZERO_GRADIENT_OUTLET,
+        diagnostics.getOutletDispersionBoundaryCondition());
   }
 
   /**
@@ -1662,6 +1924,275 @@ public class DocExamplesCompilationTest {
     assertEquals(80.0, essentialAllocation, 1.0e-12);
     assertEquals(20.0, flexibleAllocation, 1.0e-12);
     assertEquals(60.0, unmetDemand / 1000.0, 1.0e-12);
+  }
+
+  /**
+   * Complete Java quick start and operation table from docs/thermo/thermodynamic_operations.md.
+   */
+  @Test
+  public void testThermodynamicOperationsOverviewQuickStart() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.07);
+    fluid.addComponent("propane", 0.03);
+    fluid.setMixingRule("classic");
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.TPflash();
+    fluid.initProperties();
+
+    assertTrue(fluid.hasPhaseType("gas"));
+    double vaporFraction = fluid.getPhaseFraction("gas", "mole");
+    double inletDensity = fluid.getDensity("kg/m3");
+    double inletEnthalpy = fluid.getEnthalpy();
+    double inletEntropy = fluid.getEntropy();
+    double inletVolume = fluid.getVolume("m3");
+    double inletInternalEnergy = fluid.getInternalEnergy();
+    double inletSpecificInternalEnergy = fluid.getInternalEnergy("J/kg");
+    SystemInterface initialState = fluid.clone();
+
+    double gasDensity = fluid.getPhase("gas").getDensity("kg/m3");
+    assertTrue(gasDensity > 35.0);
+    assertTrue(gasDensity < 50.0);
+
+    fluid.setPressure(30.0, "bara");
+    operations.PHflash(inletEnthalpy);
+    fluid.initProperties();
+
+    SystemInterface psFluid = initialState.clone();
+    psFluid.setPressure(70.0, "bara");
+    ThermodynamicOperations psOperations = new ThermodynamicOperations(psFluid);
+    psOperations.PSflash(inletEntropy);
+    psFluid.initProperties();
+
+    SystemInterface tvFluid = initialState.clone();
+    tvFluid.setPressure(25.0, "bara");
+    ThermodynamicOperations tvOperations = new ThermodynamicOperations(tvFluid);
+    tvOperations.TVflash(inletVolume, "m3");
+    tvFluid.initProperties();
+
+    SystemInterface vuFluid = initialState.clone();
+    vuFluid.setTemperature(310.0, "K");
+    vuFluid.setPressure(35.0, "bara");
+    ThermodynamicOperations vuOperations = new ThermodynamicOperations(vuFluid);
+    vuOperations.VUflash(inletVolume, inletSpecificInternalEnergy, "m3", "J/kg");
+    vuFluid.initProperties();
+
+    assertTrue(vaporFraction > 0.999);
+    assertTrue(inletDensity > 35.0);
+    assertTrue(inletDensity < 50.0);
+    assertTrue(Double.isFinite(fluid.getTemperature("C")));
+    assertEquals(inletEnthalpy, fluid.getEnthalpy(), 1.0e-3);
+    assertEquals(inletEntropy, psFluid.getEntropy(), 1.0e-6);
+    assertEquals(inletVolume, tvFluid.getVolume("m3"), 1.0e-9);
+    assertTrue(tvFluid.getPressure("bara") > 0.0);
+    assertEquals(inletVolume, vuFluid.getVolume("m3"), 1.0e-9);
+    assertEquals(inletInternalEnergy, vuFluid.getInternalEnergy(), 1.0e-2);
+    assertTrue(Double.isFinite(vuFluid.getTemperature("K")));
+    assertTrue(vuFluid.getPressure("bara") > 0.0);
+  }
+
+  /**
+   * Builds a wet-gas stream (methane-rich gas with a small heptane liquid load) for the differential-pressure
+   * flow-meter documentation examples in docs/process/equipment/measurement_devices.md.
+   *
+   * @return a run Stream with both a gas and a liquid phase
+   */
+  private StreamInterface buildDocExampleWetGasStream() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 20.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.05);
+    fluid.addComponent("n-heptane", 0.05);
+    fluid.setMixingRule("classic");
+    Stream stream = new Stream("wet gas feed", fluid);
+    stream.setFlowRate(50000.0, "kg/hr");
+    stream.run();
+    // Guarantees the two-phase condition the wet-gas doc examples rely on, instead of assuming it silently.
+    assertTrue(stream.getThermoSystem().hasPhaseType("gas"));
+    assertTrue(stream.getThermoSystem().hasPhaseType("oil"));
+    return stream;
+  }
+
+  /**
+   * VenturiFlowMeter example from docs/process/equipment/measurement_devices.md, with the default
+   * {@code WetGasCorrelation.NONE} (the wet-gas-capable stream's liquid load is simply ignored in this mode).
+   */
+  @Test
+  public void testVenturiFlowMeterDoc() {
+    StreamInterface stream = buildDocExampleWetGasStream();
+
+    neqsim.process.measurementdevice.VenturiFlowMeter meter = new neqsim.process.measurementdevice.VenturiFlowMeter(
+        "FT-001", stream);
+    meter.setGeometry(205.1, 138.1, "mm");
+    meter.setDischargeCoefficient(0.985);
+    meter.setDifferentialPressure(300.0, "mbar");
+
+    double massFlow = meter.getMassFlowRate("kg/hr");
+    double actualFlow = meter.getVolumeFlowRate("m3/hr");
+    double standardFlow = meter.getStandardVolumeFlowRate("Sm3/hr");
+    boolean withinIso = meter.isWithinIso5167ValidityRange();
+
+    assertTrue(massFlow > 0.0);
+    assertTrue(actualFlow > 0.0);
+    assertTrue(standardFlow > 0.0);
+    assertTrue(withinIso);
+  }
+
+  /**
+   * VenturiFlowMeter ISO/TR 11583 wet-gas example from docs/process/equipment/measurement_devices.md.
+   */
+  @Test
+  public void testVenturiFlowMeterWetGasIsoTr11583Doc() {
+    StreamInterface stream = buildDocExampleWetGasStream();
+
+    neqsim.process.measurementdevice.VenturiFlowMeter meter = new neqsim.process.measurementdevice.VenturiFlowMeter(
+        "FT-001", stream);
+    meter.setGeometry(205.1, 138.1, "mm");
+    meter.setDischargeCoefficient(0.985);
+    meter.setDifferentialPressure(300.0, "mbar");
+    meter.setWetGasCorrelation(neqsim.process.measurementdevice.VenturiFlowMeter.WetGasCorrelation.ISO_TR_11583);
+    meter.setSurfaceTensionFactor(neqsim.process.measurementdevice.VenturiFlowMeter.H_HYDROCARBON);
+    meter.setLiquidFromStream(true);
+
+    double gasFlow = meter.getMassFlowRate("kg/sec");
+    double x = meter.getLockhartMartinelliParameter();
+    double phi = meter.getOverReadingFactor();
+    double uncertainty = meter.getRelativeUncertaintyOfCOverPhi();
+    List<String> issues = meter.getValidityViolations();
+
+    assertTrue(gasFlow > 0.0);
+    assertTrue(x > 0.0);
+    assertTrue(phi >= 1.0);
+    assertTrue(Double.isFinite(uncertainty));
+    assertNotNull(issues);
+  }
+
+  /**
+   * VenturiFlowMeter de Leeuw (1997) wet-gas example from docs/process/equipment/measurement_devices.md.
+   */
+  @Test
+  public void testVenturiFlowMeterWetGasDeLeeuwDoc() {
+    StreamInterface stream = buildDocExampleWetGasStream();
+
+    neqsim.process.measurementdevice.VenturiFlowMeter meter = new neqsim.process.measurementdevice.VenturiFlowMeter(
+        "FT-001", stream);
+    meter.setGeometry(205.1, 138.1, "mm");
+    meter.setDischargeCoefficient(0.985);
+    meter.setDifferentialPressure(300.0, "mbar");
+    meter.setWetGasCorrelation(neqsim.process.measurementdevice.VenturiFlowMeter.WetGasCorrelation.DE_LEEUW);
+    meter.setLiquidFromStream(true);
+
+    double gasFlow = meter.getMassFlowRate("kg/sec");
+    double phi = meter.getOverReadingFactor();
+    boolean inRange = meter.isWithinDeLeeuwValidityRange();
+
+    assertTrue(gasFlow > 0.0);
+    assertTrue(phi >= 1.0);
+    assertEquals(meter.getValidityViolations().isEmpty(), inRange);
+  }
+
+  /**
+   * OrificeFlowMeter example from docs/process/equipment/measurement_devices.md, with the default
+   * {@code WetGasCorrelation.NONE} (the wet-gas-capable stream's liquid load is simply ignored in this mode).
+   */
+  @Test
+  public void testOrificeFlowMeterDoc() {
+    StreamInterface stream = buildDocExampleWetGasStream();
+
+    neqsim.process.measurementdevice.OrificeFlowMeter meter = new neqsim.process.measurementdevice.OrificeFlowMeter(
+        "FT-200", stream);
+    meter.setGeometry(200.0, 100.0, "mm");
+    meter.setTappingArrangement(neqsim.process.measurementdevice.OrificeFlowMeter.TappingArrangement.FLANGE);
+    meter.setDifferentialPressure(300.0, "mbar");
+
+    double massFlow = meter.getMassFlowRate("kg/hr");
+    List<String> issues = meter.getValidityViolations();
+
+    assertTrue(massFlow > 0.0);
+    assertNotNull(issues);
+  }
+
+  /**
+   * OrificeFlowMeter ISO/TR 11583 Clause 7 wet-gas example from docs/process/equipment/measurement_devices.md.
+   */
+  @Test
+  public void testOrificeFlowMeterWetGasIsoTr11583Doc() {
+    StreamInterface stream = buildDocExampleWetGasStream();
+
+    neqsim.process.measurementdevice.OrificeFlowMeter meter = new neqsim.process.measurementdevice.OrificeFlowMeter(
+        "FT-200", stream);
+    meter.setGeometry(200.0, 100.0, "mm");
+    meter.setDifferentialPressure(300.0, "mbar");
+    meter.setWetGasCorrelation(neqsim.process.measurementdevice.OrificeFlowMeter.WetGasCorrelation.ISO_TR_11583);
+    meter.setLiquidFromStream(true);
+
+    double gasFlow = meter.getMassFlowRate("kg/sec");
+    double x = meter.getLockhartMartinelliParameter();
+    double froude = meter.getGasDensiometricFroudeNumber();
+    double phi = meter.getOverReadingFactor();
+    List<String> issues = meter.getValidityViolations();
+
+    assertTrue(gasFlow > 0.0);
+    assertTrue(x > 0.0);
+    assertTrue(Double.isFinite(froude));
+    assertTrue(phi >= 1.0);
+    assertNotNull(issues);
+  }
+
+  /**
+   * NozzleFlowMeter example from docs/process/equipment/measurement_devices.md.
+   */
+  @Test
+  public void testNozzleFlowMeterDoc() {
+    StreamInterface stream = buildDocExampleWetGasStream();
+
+    neqsim.process.measurementdevice.NozzleFlowMeter meter = new neqsim.process.measurementdevice.NozzleFlowMeter(
+        "FT-300", stream);
+    meter.setNozzleType(neqsim.process.measurementdevice.NozzleFlowMeter.NozzleType.ISA_1932);
+    meter.setGeometry(200.0, 100.0, "mm");
+    meter.setDifferentialPressure(300.0, "mbar");
+
+    double massFlow = meter.getMassFlowRate("kg/hr");
+
+    assertTrue(massFlow > 0.0);
+  }
+
+  /**
+   * ConeFlowMeter example from docs/process/equipment/measurement_devices.md.
+   */
+  @Test
+  public void testConeFlowMeterDoc() {
+    StreamInterface stream = buildDocExampleWetGasStream();
+
+    neqsim.process.measurementdevice.ConeFlowMeter meter = new neqsim.process.measurementdevice.ConeFlowMeter("FT-400",
+        stream);
+    meter.setGeometry(200.0, 160.0, "mm");
+    meter.setDifferentialPressure(300.0, "mbar");
+
+    double massFlow = meter.getMassFlowRate("kg/hr");
+    double coneDiameter = meter.getConeDiameter("mm");
+
+    assertTrue(massFlow > 0.0);
+    assertEquals(160.0, coneDiameter, 1.0e-9);
+  }
+
+  /**
+   * WedgeFlowMeter example from docs/process/equipment/measurement_devices.md.
+   */
+  @Test
+  public void testWedgeFlowMeterDoc() {
+    StreamInterface stream = buildDocExampleWetGasStream();
+
+    neqsim.process.measurementdevice.WedgeFlowMeter meter = new neqsim.process.measurementdevice.WedgeFlowMeter(
+        "FT-500", stream);
+    meter.setGeometry(200.0, 80.0, "mm");
+    meter.setDifferentialPressure(300.0, "mbar");
+
+    double massFlow = meter.getMassFlowRate("kg/hr");
+    double wedgeRatio = meter.getWedgeRatio();
+
+    assertTrue(massFlow > 0.0);
+    assertEquals(0.4, wedgeRatio, 1.0e-9);
   }
 
 }

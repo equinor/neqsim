@@ -348,19 +348,29 @@ pipe.setNumberOfNodesInLeg(100);
 pipe.setPipeDiameters(new double[] {0.3, 0.3});
 pipe.setLegPositions(new double[] {0.0, 5000.0});
 
-// Enable compositional tracking with TVD scheme
-pipe.setCompositionalTracking(true);
-pipe.setAdvectionScheme(AdvectionScheme.TVD_VAN_LEER);
+// Select the validated, conservative one-phase solver type 1 path
+pipe.setConservativeCompositionalTracking(true);
+pipe.setStoreSpeciesConservationHistory(true);
+pipe.setFailOnNonConvergence(true);
 
 // Run steady-state initialization
 pipe.run();
 
-// Run transient simulation
+// Run transient simulation and retain accepted-step component balances
 UUID id = UUID.randomUUID();
 for (int step = 0; step < 100; step++) {
     pipe.runTransient(1.0, id);  // 1 second time step
 }
+
+OnePhaseSpeciesConservationReport report = pipe.getSpeciesConservationReport();
+double[] componentInventoryResidualKg = report.getInventoryResidualKg();
 ```
+
+This conservative mode uses first-order finite-volume species transport and explicitly fails for
+zero/reversed flow or phase appearance. The older `setCompositionalTracking(true)` mode selects
+staged solver type `20`; it remains source compatible but does not carry the coupled
+hydraulic/EOS/component-conservation validation above. Configured TVD schemes apply only to that
+legacy route and are not a substitute for physical dispersion.
 
 ---
 

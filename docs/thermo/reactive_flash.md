@@ -413,4 +413,4 @@ double T_outlet = feed.getTemperature(); // Adiabatic reactor outlet temperature
 - [Flash Calculations Guide](flash_calculations_guide.md) — Standard TP, PH, PS flash methods
 - [Electrolyte CPA Model](ElectrolyteCPAModel.md) — The EOS used for ionic systems
 - [Thermodynamic Operations](thermodynamic_operations.md) — All available thermodynamic operations
-- [PH Flash Examples (Notebook)](../../examples/notebooks/reactive_ph_flash_examples.ipynb) — Jupyter notebook with 8 PH/PS flash examples
+- [PH Flash Examples (Notebook)](https://github.com/equinor/neqsim/blob/master/examples/notebooks/reactive_ph_flash_examples.ipynb) — Jupyter notebook with 8 PH/PS flash examples

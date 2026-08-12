@@ -17,7 +17,7 @@ description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engin
   <a href="wiki/getting_started.html" class="cta-button primary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #159957; color: white;">🚀 Get Started</a>
   <a href="https://github.com/equinor/neqsim" class="cta-button secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #fff; color: #24292e; border: 2px solid #e1e4e8;">⭐ Star on GitHub</a>
   <a href="REFERENCE_MANUAL_INDEX.html" class="cta-button secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #fff; color: #24292e; border: 2px solid #e1e4e8;">📖 Reference Manual Index</a>
-  <a href="https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html" class="cta-button secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #fff; color: #24292e; border: 2px solid #e1e4e8;">📘 JavaDoc API</a>
+  <a href="https://equinor.github.io/neqsim/javadoc/index.html" class="cta-button secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #fff; color: #24292e; border: 2px solid #e1e4e8;">📘 JavaDoc API</a>
 </div>
 
 <hr class="section-divider" style="border: none; height: 2px; background: linear-gradient(to right, transparent, #159957, transparent); margin: 2rem 0;">
@@ -116,26 +116,34 @@ description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engin
 ## ⚡ Quick Start Example
 
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-// Create a natural gas fluid
-SystemInterface gas = new SystemSrkEos(298.15, 50.0);
-gas.addComponent("methane", 0.90);
-gas.addComponent("ethane", 0.05);
-gas.addComponent("propane", 0.03);
-gas.addComponent("CO2", 0.02);
-gas.setMixingRule("classic");
+public final class NeqSimQuickStart {
+  private static final Logger logger = LogManager.getLogger(NeqSimQuickStart.class);
 
-// Perform flash calculation
-ThermodynamicOperations ops = new ThermodynamicOperations(gas);
-ops.TPflash();
-gas.initProperties();
+  private NeqSimQuickStart() {}
 
-// Get properties
-System.out.println("Density: " + gas.getDensity("kg/m3") + " kg/m³");
-System.out.println("Compressibility: " + gas.getZ());
+  public static void main(String[] args) {
+    SystemInterface gas = new SystemSrkEos(298.15, 50.0);
+    gas.addComponent("methane", 0.90);
+    gas.addComponent("ethane", 0.05);
+    gas.addComponent("propane", 0.03);
+    gas.addComponent("CO2", 0.02);
+    gas.setMixingRule("classic");
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(gas);
+    operations.TPflash();
+    gas.initProperties();
+
+    logger.info("Density: {} kg/m3", gas.getDensity("kg/m3"));
+    logger.info("Compressibility: {}", gas.getZ());
+  }
+}
 ```
 
 <hr class="section-divider" style="border: none; height: 2px; background: linear-gradient(to right, transparent, #159957, transparent); margin: 2rem 0;">
@@ -179,9 +187,9 @@ System.out.println("Compressibility: " + gas.getZ());
 <h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #f44336; color: #24292e; font-size: 1.25rem;">🔧 Troubleshooting</h3>
 <p style="color: #6a737d; margin-bottom: 1rem;">Solutions to common problems</p>
 <ul style="list-style: none; padding: 0; margin: 0;">
-<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#flash-convergence-issues" style="color: #155799; text-decoration: none;">Flash Convergence</a></li>
-<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#density-issues" style="color: #155799; text-decoration: none;">Density Issues</a></li>
-<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#python-integration-issues" style="color: #155799; text-decoration: none;">Python Integration</a></li>
+<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#flash-convergence-and-unexpected-phases" style="color: #155799; text-decoration: none;">Flash Convergence</a></li>
+<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#density-and-physical-properties" style="color: #155799; text-decoration: none;">Density Issues</a></li>
+<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#python-gateway-and-overload-errors" style="color: #155799; text-decoration: none;">Python Integration</a></li>
 </ul>
 </div>
 
@@ -240,16 +248,16 @@ System.out.println("Compressibility: " + gas.getZ());
 NeqSim is also available for Python through [**neqsim-python**](https://github.com/equinor/neqsim-python):
 
 ```python
-from neqsim.thermo import TPflash, fluid
+from neqsim import jneqsim
 
 # Create and flash a natural gas
-gas = fluid("srk")
+gas = jneqsim.thermo.system.SystemSrkEos(298.15, 50.0)
 gas.addComponent("methane", 0.9)
 gas.addComponent("ethane", 0.1)
-gas.setTemperature(298.15, "K")
-gas.setPressure(50.0, "bara")
+gas.setMixingRule("classic")
 
-TPflash(gas)
+operations = jneqsim.thermodynamicoperations.ThermodynamicOperations(gas)
+operations.TPflash()
 gas.initProperties()
 print(f"Gas density: {gas.getDensity('kg/m3'):.2f} kg/m³")
 ```

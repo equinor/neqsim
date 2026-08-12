@@ -1,10 +1,8 @@
 ---
 title: "DEXPI Engineering Guide"
-description: "Practical guide to selecting, generating, validating, qualifying, and governing DEXPI exchanges from NeqSim process and engineering models."
-keywords: "DEXPI, DEXPI 2.0, Proteus, P&ID, PFD, BFD, pyDEXPI, engineering graph, conformance, round trip"
+description: "Practical guide to selecting, generating, validating, qualifying, and governing DEXPI exchanges, including SIS and HIPPS semantics."
+keywords: "DEXPI, DEXPI 2.0, Proteus, P&ID, PFD, BFD, pyDEXPI, SIS, HIPPS, safety function, engineering graph, conformance, round trip"
 ---
-
-# DEXPI Engineering Guide
 
 This guide helps you choose the correct NeqSim DEXPI workflow. DEXPI is an engineering information-exchange format:
 it can preserve process, plant, connectivity, instrumentation, and diagram information, but it is not itself a process
@@ -14,13 +12,13 @@ simulation, an approved P&ID, or a construction release.
 
 | Need | NeqSim entry point | Detailed documentation |
 | --- | --- | --- |
-| Import an existing Proteus-compatible P&ID and build a process scaffold | `DexpiXmlReader`, `DexpiSimulationBuilder` | [DEXPI import, export, and visualization](../integration/dexpi-reader) |
-| Export a quick Proteus-compatible P&ID | `DexpiXmlWriter.write(...)` | [DEXPI import, export, and visualization](../integration/dexpi-reader#exporting-to-dexpi-xml) |
-| Render through pyDEXPI | `DexpiXmlWriter.writeForPyDexpi(...)` or `DexpiDiagramBridge.exportForPyDexpi(...)` | [pyDEXPI-friendly export](../integration/dexpi-reader#pydexpi-friendly-export-namespace-omitted) |
-| Export a native DEXPI 2.0 P&ID Plant model | `Dexpi20XmlWriter.writeAndAssess(...)` | [DEXPI 2.0 conformance](../integration/dexpi-20-conformance) |
-| Export a native DEXPI 2.0 PFD/BFD Process model | `Dexpi20ProcessModelWriter.writeAndAssess(...)` | [DEXPI 2.0 conformance](../integration/dexpi-20-conformance#process-model-export) |
-| Generate a governed engineering package with DEXPI, registers, cases, and evidence | `EngineeringDeliverableCompiler` | [Standards-based DEXPI engineering generation](../integration/dexpi-engineering-generation) |
-| Generate a review-required P&ID proposal | `PidDesignSynthesizer`, `PidEngineeringPackageExporter` | [Governed P&ID design synthesis](../pid-design-synthesis) |
+| Import an existing Proteus-compatible P&ID and build a process scaffold | `DexpiXmlReader`, `DexpiSimulationBuilder` | [DEXPI import, export, and visualization](../integration/dexpi-reader.md) |
+| Export a quick Proteus-compatible P&ID | `DexpiXmlWriter.write(...)` | [DEXPI import, export, and visualization](../integration/dexpi-reader.md#exporting-to-dexpi-xml) |
+| Render through pyDEXPI | `DexpiXmlWriter.writeForPyDexpi(...)` or `DexpiDiagramBridge.exportForPyDexpi(...)` | [pyDEXPI-friendly export](../integration/dexpi-reader.md#pydexpi-friendly-export-namespace-omitted) |
+| Export a native DEXPI 2.0 P&ID Plant model | `Dexpi20XmlWriter.writeAndAssess(...)` | [DEXPI 2.0 conformance](../integration/dexpi-20-conformance.md) |
+| Export a native DEXPI 2.0 PFD/BFD Process model | `Dexpi20ProcessModelWriter.writeAndAssess(...)` or opt-in `writeAndAssessTopology(..., operatingCaseId)` | [DEXPI 2.0 conformance](../integration/dexpi-20-conformance.md#process-model-export) |
+| Generate a governed engineering package with DEXPI, registers, cases, and evidence | `EngineeringDeliverableCompiler` | [Standards-based DEXPI engineering generation](../integration/dexpi-engineering-generation.md) |
+| Generate a review-required P&ID proposal | `PidDesignSynthesizer`, `PidEngineeringPackageExporter` | [Governed P&ID design synthesis](../pid-design-synthesis.md) |
 
 ## Understand the exchange profiles
 
@@ -32,6 +30,22 @@ unqualified tag lookup.
 
 Use this path for compatibility, visualization, and existing Proteus exchanges. Do not present it as native DEXPI 2.0
 by changing the file header or namespace.
+
+### SIS and HIPPS semantics
+
+Proteus-compatible `DexpiXmlWriter` exports classify common safety-trip tags such as `PSHH`, `PAHH`, `LSHH`,
+`TSHH`, and `FSL` as SIS instruments; ordinary process transmitters remain assigned to the DCS. A configured
+`HIPPSValve` is exported as a gate-valve final element. The valve and each pressure transmitter registered with
+`HIPPSValve.addPressureTransmitter(...)` carry the configured safety-function tag, functional role, sensor/final-element
+membership, SIL, voting architecture, closed safe state, proof-test interval in hours, closure time in seconds, and
+`ControlSystem=SIS`.
+
+This mapping applies to the Proteus-compatible body produced by `DexpiXmlWriter`, including the pyDEXPI-friendly
+variant. It is not currently implemented by the native `Dexpi20XmlWriter`; do not assume that switching writers
+preserves these HIPPS attributes. In either profile, exported configuration is exchange evidence, not SIL verification,
+an approved safety-requirements specification, or permission to claim safeguard credit. See
+[HIPPS implementation](../safety/hipps_implementation.md) and
+[SIS logic implementation](../safety/sis_logic_implementation.md) for the simulation-side models.
 
 ### Native DEXPI 2.0 Plant model
 
@@ -47,6 +61,15 @@ sinks, process steps, material ports, streams, and physical state quantities.
 
 Use it when the exchange purpose is process topology and state data. A Process exchange is not a less-detailed Plant
 file; it is a different official information model.
+
+After a successful simulation, use the five-argument
+`Dexpi20ProcessModelWriter.writeAndAssessTopology(...)` overload when operating values must come
+from one named canonical case. The overload writes only finite, `CALCULATED` calculation nodes
+whose subject is connected through the canonical topology. It converts kg/s to kg/h and K to
+degree Celsius, retains bara as absolute bar, and records
+`exportOperatingValueSource=CANONICAL_ENGINEERING_GRAPH_CALCULATION_NODES`. Missing or incompatible
+values are omitted with `DEXPI_PROCESS_OPERATING_VALUE_MISSING`; live streams are never used as a
+fallback. Existing writer APIs and their compatibility XML remain unchanged.
 
 ## Recommended engineering workflow
 
@@ -66,25 +89,85 @@ file; it is a different official information model.
 8. **Control revisions.** Use the canonical graph and model-change impact analysis to identify stale exchanges,
    calculations, validations, and approvals.
 
+The synthetic public [engineering-diagram reference cases](../integration/dexpi-reference-cases.md)
+provide a reproducible simple, branched, and multi-area baseline across canonical topology, native
+DEXPI where supported, Proteus compatibility, legacy DOT, and review-required P&ID proposals.
+They are regression evidence rather than named-tool qualification or approved engineering.
+
 ## Native DEXPI 2.0 export
 
-Export and assess the Plant and Process models separately:
+Save the following complete Java 8 program as `Dexpi20ExportExample.java`. It builds and runs a small process,
+exports the Plant and Process profiles separately, checks both reports, and writes each report beside the exact XML
+it assessed:
 
 ```java
-Dexpi20ConformanceAssessment.Report plantReport =
-    Dexpi20XmlWriter.writeAndAssess(process, new File("plant.dexpi.xml"));
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.processmodel.dexpi.Dexpi20ConformanceAssessment;
+import neqsim.process.processmodel.dexpi.Dexpi20ProcessModelWriter;
+import neqsim.process.processmodel.dexpi.Dexpi20XmlWriter;
+import neqsim.thermo.system.SystemSrkEos;
 
-Dexpi20ConformanceAssessment.Report processReport =
-    Dexpi20ProcessModelWriter.writeAndAssess(process, new File("process.dexpi.xml"));
 
-if (!plantReport.isSchemaAndProfileConformant()
-    || !processReport.isSchemaAndProfileConformant()) {
-  throw new IllegalStateException("DEXPI 2.0 schema or supported-profile validation failed");
+public final class Dexpi20ExportExample {
+  private Dexpi20ExportExample() {
+  }
+
+  public static void main(String[] args) throws Exception {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 40.0);
+    fluid.addComponent("methane", 0.8);
+    fluid.addComponent("n-heptane", 0.2);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("10-FEED-001", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    Separator separator = new Separator("10-VA-001", feed);
+    Compressor compressor =
+        new Compressor("10-KA-001", separator.getGasOutStream());
+    compressor.setOutletPressure(80.0);
+
+    ProcessSystem process = new ProcessSystem();
+    process.setName("DEXPI 2.0 example");
+    process.add(feed);
+    process.add(separator);
+    process.add(compressor);
+    process.run();
+
+    Path outputDirectory = new File("dexpi-output").toPath();
+    Files.createDirectories(outputDirectory);
+    Path plantXml = outputDirectory.resolve("plant.dexpi.xml");
+    Path processXml = outputDirectory.resolve("process.dexpi.xml");
+
+    Dexpi20ConformanceAssessment.Report plantReport =
+        Dexpi20XmlWriter.writeAndAssess(process, plantXml.toFile());
+    Dexpi20ConformanceAssessment.Report processReport =
+        Dexpi20ProcessModelWriter.writeAndAssess(process, processXml.toFile());
+
+    if (!plantReport.isSchemaAndProfileConformant()
+        || !processReport.isSchemaAndProfileConformant()) {
+      throw new IllegalStateException(
+          "DEXPI 2.0 schema or supported-profile validation failed");
+    }
+
+    Files.write(
+        outputDirectory.resolve("plant.dexpi.conformance.json"),
+        plantReport.toJson().getBytes(StandardCharsets.UTF_8));
+    Files.write(
+        outputDirectory.resolve("process.dexpi.conformance.json"),
+        processReport.toJson().getBytes(StandardCharsets.UTF_8));
+  }
 }
 ```
 
-Keep each conformance JSON beside the exact assessed XML. The report pins the official schema fingerprint, imported
-model versions, supported semantic profile, file digest, object counts, references, and findings.
+The explicit `Files.write(...)` calls create the JSON sidecars; `writeAndAssess(...)` returns a report but does not
+write that report to disk. Each report pins the official schema fingerprint, imported model versions, supported
+semantic profile, assessed-file digest, object counts, references, and findings.
 
 ## Validation and qualification ladder
 
@@ -110,7 +193,7 @@ engineering graph, calculation dependencies, connectivity, validation findings, 
 The canonical graph is the source of identity and provenance. DEXPI is an exchange representation of selected graph
 content; it is not the only engineering database.
 
-See [Engineering Deliverables and Handover](deliverables-and-handover) for the package layers and issue workflow.
+See [Engineering Deliverables and Handover](deliverables-and-handover.md) for the package layers and issue workflow.
 
 ## Importing a P&ID into simulation
 
@@ -165,8 +248,10 @@ classification, target-system loading, or final information acceptance.
 
 ## Related documentation
 
-- [DEXPI import, export, and visualization](../integration/dexpi-reader)
-- [DEXPI 2.0 native exchange and conformance](../integration/dexpi-20-conformance)
-- [Standards-based DEXPI engineering generation](../integration/dexpi-engineering-generation)
-- [Governed P&ID design synthesis](../pid-design-synthesis)
-- [Engineering Deliverables and Handover](deliverables-and-handover)
+- [DEXPI import, export, and visualization](../integration/dexpi-reader.md)
+- [DEXPI and P&ID current-master audit](../integration/dexpi-pid-current-master-audit.md)
+- [DEXPI engineering-diagram reference cases](../integration/dexpi-reference-cases.md)
+- [DEXPI 2.0 native exchange and conformance](../integration/dexpi-20-conformance.md)
+- [Standards-based DEXPI engineering generation](../integration/dexpi-engineering-generation.md)
+- [Governed P&ID design synthesis](../pid-design-synthesis.md)
+- [Engineering Deliverables and Handover](deliverables-and-handover.md)

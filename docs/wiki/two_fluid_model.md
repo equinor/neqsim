@@ -7,6 +7,8 @@ description: "This document describes the two-fluid model implementation in NeqS
 
 This document describes the two-fluid model implementation in NeqSim for transient multiphase pipeline simulation.
 
+The selectable closure sets are literature-inspired NeqSim implementations. Historical API names containing `OLGA` are retained for compatibility and do not claim numerical equivalence with OLGA, LedaFlow, or another commercial simulator.
+
 For practical result extraction, long-flowline reporting, and comparison with OLGA/LedaFlow or
 field data, see [TwoFluidPipe Reporting and Validation](two_fluid_reporting_and_validation).
 
@@ -210,7 +212,7 @@ double[] tempF = pipe.getTemperatureProfile("F");   // Fahrenheit
 
 ### Minimum Holdup Constraints
 
-The model applies a minimum liquid holdup constraint to prevent unrealistically low values in gas-dominant systems. This is based on OLGA's observation that even at high velocities, a thin liquid film remains on the pipe wall.
+The default adaptive minimum is a closure relation, not a phase-presence threshold. It tends continuously to zero with the no-slip liquid fraction. Exact phase presence comes from conservative gas, oil, and water masses, so an absent phase has zero mass, holdup, and velocity.
 
 **Default behavior (adaptive minimum):**
 
@@ -223,13 +225,15 @@ pipe.setUseAdaptiveMinimumOnly(true);   // Default
 pipe.setMinimumSlipFactor(2.0);         // Default multiplier
 ```
 
-**For more conservative OLGA-style behavior:**
+**For an explicit calibrated wetting-film floor:**
 
 ```java
 // Apply absolute floor in addition to correlation
 pipe.setUseAdaptiveMinimumOnly(false);
 pipe.setMinimumLiquidHoldup(0.01);  // 1% absolute minimum
 ```
+
+Fixed-floor mode is opt-in and should be supported by fluid, wall-wetting, and flow-regime data. It is never applied to an exactly absent phase, and `setMinimumLiquidHoldup(0.0)` disables the absolute floor.
 
 ### Configuration Options
 
@@ -261,13 +265,15 @@ The adaptive minimum uses Beggs-Brill type correlations:
 
 - **Stratified flow:** `αL = 0.98 × λL^0.4846 / Fr^0.0868`
 - **Slug/Churn flow:** `αL = 0.845 × λL^0.5351 / Fr^0.0173`
-- **Annular flow:** Film model with minimum thickness + correlation
+- **Annular flow:** Film model + correlation; a nonzero minimum film is used only in explicit fixed-floor mode
 
 Where:
 - `λL` = No-slip liquid holdup (input liquid volume fraction)
 - `Fr` = Froude number = v²/(g×D)
 
 For lean gas systems with λL = 0.003, the stratified correlation gives αL ≈ 0.007 (0.7%), which is more realistic than a fixed 1% floor.
+
+Numerical closure protection is separate from state: `1e-14` is used only in denominators, the stratified closure switches continuously to its trace-liquid asymptote at λL `1e-6`, and the drift-flux correction is withdrawn with `λL / (λL + 1e-3)`. These constants do not create phase inventory. The closure sets are literature-inspired NeqSim implementations and do not claim numerical equivalence with OLGA, LedaFlow, or another commercial simulator.
 
 ## Closure Relations
 
@@ -400,9 +406,9 @@ f_i = f_G × enhancement
 For drag on individual bubbles in liquid continuum:
 
 ```java
-// Bubble diameter (Hinze correlation)
-d_b = 2 × (0.725 × σ / ((ρ_L - ρ_G) × g))^0.5
-d_b = min(d_b, D/5)
+// Configurable algebraic bubble diameter
+d_b = 2 × (0.725 × σ_b / (|ρ_L - ρ_G| × g))^0.5
+d_b = min(d_b, f_D × D)
 
 // Bubble Reynolds number
 Re_b = ρ_L × |v_slip| × d_b / μ_L
@@ -415,9 +421,46 @@ else if (Re_b < 1000):
 else:
     C_D = 0.44          // Newton regime
 
-// Friction factor
-f_i = C_D × d_b / (4 × D)
+// Corrected dispersed-bubble friction factor
+f_i = C_D / 4
 ```
+
+With interfacial area concentration `a_i = 6 × α_G / d_b`, the corresponding force per pipe length
+is
+
+$$
+F_i=\frac{3}{4}C_D\rho_L\alpha_G\frac{A}{d_b}
+(v_G-v_L)|v_G-v_L|.
+$$
+
+The corrected force uses liquid-continuum density and is selected together with a local implicit
+source solve by calling `TwoFluidPipe.setEnableStiffBubbleDrag(true)`. The local backward-Euler
+operator is split into half-steps around transport, conserves active gas-oil-water momentum to
+roundoff, cannot increase kinetic energy, and introduces no phase-mass floor. Oil and water receive
+the liquid impulse in proportion to active mass, preserving their relative velocity. Bubble and
+dispersed-bubble classifications use the same source treatment; neighboring regimes retain their
+existing closures.
+
+The defaults `σ_b = 0.02 N/m` and `f_D = 0.20` preserve the historical calculation. The
+configuration is exposed on the public pipe API:
+
+```java
+pipe.setBubbleSurfaceTension(0.025);
+pipe.setMaximumBubbleDiameterFraction(0.15);
+pipe.setUseLocalBubbleSurfaceTension(true);
+```
+
+The opt-in local mode uses the thermodynamic phase-property surface tension already stored for each
+section; fixed mode remains the default. This is a single algebraic size scale. It does not represent
+a bubble-size distribution, deformation, coalescence, breakup, or turbulent-dissipation dependence.
+
+The stiff corrected mode is opt-in. Existing simulations retain the legacy `C_D × d_b/(4D)` scaling
+unless enabled, because the corrected mode is not yet quantitatively validated by the public
+Tengesdal severe-slugging benchmark. With the published bounds unchanged, the compatibility default
+passes 6 of 6 cases, while the stable corrected mode passes 3 of 6. Its smallest pressure swing is
+167.1 kPa against 98 +/- 5 kPa, its slug-length ratio is 1.164, and the 16-section, 0.1 s case does
+not establish a repeated cycle. This is a documented physical closure/regime-transition limitation,
+not evidence of numerical source instability.
 
 #### Hart et al. (1989) Correlation
 
@@ -499,21 +542,28 @@ f_i = 0.01 × (1 + 10 × Fr²)    // capped at 0.1
 
 ## Virtual Mass Force
 
-The virtual mass (added mass) force accounts for the inertia of the displaced phase during rapid accelerations. This is important for slug flow dynamics, pressure surges, and transient simulations with fast-changing velocities.
+The virtual mass (added mass) force accounts for the inertia of displaced liquid during gas-liquid acceleration. It is an optional local momentum coupling for transient simulations.
 
 ### Physical Basis
 
-When a gas bubble accelerates through liquid, it must also accelerate a portion of the surrounding liquid. This "added mass" effect creates an additional force proportional to the relative acceleration:
+When gas accelerates through liquid, it must also accelerate a portion of the surrounding liquid. After the complete uncoupled finite-volume right-hand side is assembled, NeqSim solves the local added-inertia relation algebraically:
 
 $$
-F_{vm} = C_{vm} \cdot \alpha_G \cdot \rho_L \cdot \left(\frac{dv_G}{dt} - \frac{dv_L}{dt}\right)
+K=C_{vm}\alpha_G\rho_LA,
+\qquad
+F_{vm,G}=\frac{-K(a_{G,0}-a_{L,0})}{1+K(1/m_G+1/m_L)},
+\qquad F_{vm,L}=-F_{vm,G}
 $$
 
 Where:
 - `C_vm` = virtual mass coefficient (0.5 for spheres, default)
 - `α_G` = gas holdup
 - `ρ_L` = liquid density
-- `dv_G/dt - dv_L/dt` = relative acceleration between phases
+- `A` = pipe cross-sectional area
+- `m_G`, `m_L` = conservative gas and combined-liquid masses per length
+- `a_k,0 = (d(m_k v_k)/dt - v_k dm_k/dt) / m_k` = uncoupled stage acceleration
+
+The calculation uses only the supplied integration-stage state and its complete uncoupled rate; it does not retain velocities from previous RHS calls. In gas-oil-water flow, the liquid correction is divided between oil and water by their conservative masses. The gas and combined-liquid forces are equal and opposite, and coupling tends continuously to zero when either phase is absent.
 
 ### Enabling Virtual Mass Force
 
@@ -523,8 +573,8 @@ pipe.setLength(5000);
 pipe.setDiameter(0.3);
 pipe.setNumberOfSections(100);
 
-// Note: Virtual mass force is handled internally by the two-fluid solver.
-// The solver uses C_vm = 0.5 (spherical bubble coefficient) by default.
+pipe.getEquations().setEnableVirtualMassForce(true);
+pipe.getEquations().setVirtualMassCoefficient(0.5); // Spherical-bubble value
 
 pipe.run();
 ```
@@ -536,10 +586,7 @@ The virtual mass force appears as source terms in the phase momentum equations:
 - **Gas momentum:** `+F_vm` (accelerates gas when liquid decelerates)
 - **Liquid momentum:** `-F_vm` (decelerates liquid when gas accelerates)
 
-This coupling improves:
-- Pressure surge prediction during slug passage (±10-20% more accurate)
-- Transient response during flow rate changes
-- Wave speed calculation for fast transients
+The spherical-bubble coefficient is not a universal slug, churn, or annular-flow calibration. The implementation does not by itself establish improved field accuracy or parity with a commercial simulator. Validate the coefficient, discretization, and complete opt-in transient against data applicable to the intended operating envelope.
 
 ### Reference
 
@@ -711,6 +758,17 @@ For gas-oil-water systems, `ThreeFluidSection` and `ThreeFluidConservationEquati
         │     Water       │
         └─────────────────┘
 ```
+
+`ThreeFluidSection` obtains the water and combined-liquid levels by inverting the
+circular-segment area:
+
+$$A(h)=\frac{r^2}{2}\left(\theta-\sin\theta\right),\qquad\theta=2\cos^{-1}\left(1-\frac{2h}{D}\right)$$
+
+The Newton iteration uses the exact derivative
+$$\frac{\mathrm{d}A}{\mathrm{d}h}=2\sqrt{h(D-h)}$$
+so the recovered levels, wetted perimeters, and interfacial widths remain geometrically
+similar across pipe diameters. The regression test checks both the water layer and the
+combined oil-water layer from 0.05 m to 2.0 m diameter.
 
 ## Simulation Modes: Steady-State vs Transient
 

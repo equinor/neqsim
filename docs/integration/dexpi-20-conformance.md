@@ -37,6 +37,56 @@ Files.write(Paths.get("gas-processing-pfd.conformance.json"),
     report.toJson().getBytes(StandardCharsets.UTF_8));
 ```
 
+For a migration or regression gate, also compare the supported material topology with the shared
+canonical diagram graph:
+
+```java
+Dexpi20ProcessTopologyAssessment.Report topology =
+    Dexpi20ProcessModelWriter.writeAndAssessTopology(
+        process, exchange, "PLANT-001", "A");
+if (!topology.isSchemaProfileAndSupportedTopologyValid()) {
+  throw new IllegalStateException(topology.getDiagnostics().toString());
+}
+Files.write(Paths.get("gas-processing-pfd.topology.json"),
+    topology.toJson().getBytes(StandardCharsets.UTF_8));
+```
+
+The topology report records `exportTopologySource=CANONICAL_ENGINEERING_GRAPH`, the canonical graph
+fingerprint and stable connection IDs, calculated/review-required source provenance, the canonical and exported directed
+material-connection manifests, every exported stream and its distinct source/target port IDs, and structured diagnostics. Connection comparison
+is multiplicity-sensitive, so two parallel streams between the same steps must remain two streams.
+Synthetic product sinks are retained in the exported-connection inventory but excluded from the
+in-model topology comparison.
+
+`writeAndAssessTopology(...)` builds one canonical snapshot, uses its supported material-connection
+projection to drive the native Process exchange, and assesses the same snapshot. Regression coverage
+requires the assessed simple and parallel-branch output to preserve the existing sequential DEXPI
+serialization. The compatibility APIs `write(...)` and `writeAndAssess(...)` still use their direct
+`ProcessSystem` traversal and remain unchanged.
+
+After a successful run, an opt-in overload can source physical quantities from the same canonical
+snapshot instead of rereading streams during serialization:
+
+```java
+process.run();
+Dexpi20ProcessTopologyAssessment.Report operatingCase =
+    Dexpi20ProcessModelWriter.writeAndAssessTopology(
+        process, exchange, "PLANT-001", "A", "NORMAL-001");
+```
+
+This overload records
+`exportOperatingValueSource=CANONICAL_ENGINEERING_GRAPH_CALCULATION_NODES`. It accepts only
+finite, case-matched canonical calculation nodes with the reviewed K, bara-absolute, and kg/s
+bases, then converts them deterministically to degree Celsius, bar absolute, and kilogram/hour for
+DEXPI Process. A missing or incompatible node omits that individual quantity and emits
+`DEXPI_PROCESS_OPERATING_VALUE_MISSING`; it never falls back to a live stream read. The established
+four-argument overload remains topology-only and retains its existing XML and report shape.
+
+The assessed path reports energy and signal connections, multi-area `ProcessModel` hierarchy,
+controlled document/sheet semantics, and drawing graphics as unsupported scopes. These warnings do
+not hide a supported material-topology error; missing, unexpected, unresolved-port, and reused-port
+findings are errors.
+
 Each process connection has a dedicated source and target `MaterialPort`. The ports and
 `Process.Stream` carry reciprocal references, stable identifiers, nominal directions, and explicit
 mass-flow, absolute-pressure, and temperature quantities when finite simulation values are
@@ -96,6 +146,9 @@ Record that separate evidence through `DexpiToolQualificationRunner` and
   accountable semantic-difference review together.
 - Compare the committed native golden fixture and semantic inventory when modifying type mappings,
   topology, units, or serialization order.
+- Retain the canonical topology fingerprint, structured topology report, operating-case identifier
+  and value-source evidence, and source model revision beside the XML and conformance report when
+  using the opt-in operating-case overload of `writeAndAssessTopology(...)`.
 - Treat graphics, project standard-library restrictions, vendor extensions, and CAE certification as
   separate qualification scopes.
 

@@ -10,7 +10,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -43,6 +42,18 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 /**
  * Abstract ProcessEquipmentBaseClass class.
  *
+ * <p>
+ * <b>Identity equality.</b> Process equipment does not override {@link Object#equals(Object)} or
+ * {@link Object#hashCode()}, so two units are equal only when they are the same instance. The previous value-based
+ * implementations hashed mutable state ({@code report}, {@code properties}, the attached controllers and the
+ * thermodynamic system), all of which is rewritten by {@code run()}; an entry stored in a {@link java.util.HashMap}
+ * before a run therefore became unreachable afterwards, and two distinct units sharing a name compared equal across
+ * process areas of a {@code ProcessModel}. Registries, caches and graph-traversal sets keyed on equipment may now use a
+ * plain {@link java.util.HashMap}/{@link java.util.HashSet}; {@link java.util.IdentityHashMap} remains equivalent and
+ * is used where the intent is explicitly identity based. To compare two models by value use
+ * {@link neqsim.process.processmodel.lifecycle.ProcessModelState#compare}.
+ * </p>
+ *
  * @author ESOL
  * @version $Id: $Id
  */
@@ -71,7 +82,26 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   protected boolean isSolved = true;
   private boolean isActive = true;
   private boolean lockedInactive = false;
-  private double minimumFlow = 1e-20;
+
+  /**
+   * Default low-flow bypass threshold in kg/hr. This value acts as an "off" sentinel: equipment that only bypasses on
+   * an explicitly configured threshold tests for {@code getMinimumFlow() > DEFAULT_MINIMUM_FLOW}.
+   */
+  public static final double DEFAULT_MINIMUM_FLOW = 1e-20;
+
+  private double minimumFlow = DEFAULT_MINIMUM_FLOW;
+
+  /** Whether the caller, rather than the process auto-tuner, selected {@link #minimumFlow}. */
+  private boolean minimumFlowExplicitlyConfigured = false;
+
+  /** Whether {@link #minimumFlow} is currently owned by the automatic convergence tuner. */
+  private boolean minimumFlowAutoManaged = false;
+
+  /** Forces one real equipment evaluation after the low-flow threshold changes. */
+  private boolean minimumFlowRecalculationPending = false;
+
+  /** Guards the public setter while the auto-tuner assigns or clears its own value. */
+  private transient boolean assigningAutoMinimumFlow = false;
 
   /**
    * Flag to enable/disable capacity analysis for this equipment. When disabled, this equipment is excluded from
@@ -554,39 +584,6 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
 
   /** {@inheritDoc} */
   @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + Arrays.deepHashCode(report);
-    result = prime * result + Objects.hash(conditionAnalysisMessage, controller, controllerMap, energyStream,
-        flowValveController, hasController, isSetEnergyStream, name, properties, specification);
-    return result;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null) {
-      return false;
-    }
-    if (getClass() != obj.getClass()) {
-      return false;
-    }
-    ProcessEquipmentBaseClass other = (ProcessEquipmentBaseClass) obj;
-    return Objects.equals(conditionAnalysisMessage, other.conditionAnalysisMessage)
-        && Objects.equals(controller, other.controller) && Objects.equals(controllerMap, other.controllerMap)
-        && Objects.equals(energyStream, other.energyStream)
-        && Objects.equals(flowValveController, other.flowValveController) && hasController == other.hasController
-        && isSetEnergyStream == other.isSetEnergyStream && Objects.equals(name, other.name)
-        && Objects.equals(properties, other.properties) && Arrays.deepEquals(report, other.report)
-        && Objects.equals(specification, other.specification);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public String toJson() {
     return null;
   }
@@ -612,9 +609,9 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   }
 
   /**
-   * Getter for the field <code>minimumFlow</code>, e.g., the minimum flow rate for the pump.
+   * Getter for the field <code>minimumFlow</code>, the low-flow bypass threshold in kg/hr.
    *
-   * @return a double
+   * @return low-flow bypass threshold in kg/hr
    */
   @Override
   public double getMinimumFlow() {
@@ -622,13 +619,176 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   }
 
   /**
-   * Setter for the field <code>minimumFlow</code>, e.g., the minimum flow rate for the pump.
+   * Setter for the field <code>minimumFlow</code>, the low-flow bypass threshold in kg/hr.
    *
-   * @param minimumFlow a double
+   * <p>
+   * Equipment whose primary inlet mass flow falls below this value auto-bypasses via
+   * {@link #checkAndHandleLowFlow(neqsim.process.equipment.stream.StreamInterface, UUID)}. The unit is kg/hr for every
+   * equipment type.
+   * </p>
+   *
+   * @param minimumFlow low-flow bypass threshold in kg/hr
    */
   @Override
   public void setMinimumFlow(double minimumFlow) {
     this.minimumFlow = minimumFlow;
+    minimumFlowRecalculationPending = true;
+    if (!assigningAutoMinimumFlow) {
+      minimumFlowExplicitlyConfigured = Double.compare(minimumFlow, DEFAULT_MINIMUM_FLOW) != 0;
+      minimumFlowAutoManaged = false;
+    }
+  }
+
+  /**
+   * Applies a low-flow threshold owned by the automatic process-convergence tuner.
+   *
+   * <p>
+   * A caller-supplied non-default value always wins. Ownership is stored on the equipment itself so it survives
+   * {@code ProcessSystem.copy()} and so a caller override made after tuning cannot be overwritten by a later retune or
+   * reset.
+   * </p>
+   *
+   * @param minimumFlow automatically derived threshold in kg/hr
+   * @return true when this equipment is managed by the auto-tuner, false when an explicit value is protected
+   * @throws IllegalArgumentException if {@code minimumFlow} is negative or not finite
+   */
+  public boolean applyAutoMinimumFlow(double minimumFlow) {
+    if (Double.isNaN(minimumFlow) || Double.isInfinite(minimumFlow) || minimumFlow < 0.0) {
+      throw new IllegalArgumentException(
+          "Automatic minimum flow must be a finite non-negative number, was " + minimumFlow);
+    }
+    if (minimumFlowExplicitlyConfigured) {
+      return false;
+    }
+    if (!minimumFlowAutoManaged && Double.compare(getMinimumFlow(), DEFAULT_MINIMUM_FLOW) != 0) {
+      minimumFlowExplicitlyConfigured = true;
+      return false;
+    }
+    assigningAutoMinimumFlow = true;
+    try {
+      setMinimumFlow(minimumFlow);
+    } finally {
+      assigningAutoMinimumFlow = false;
+    }
+    minimumFlowAutoManaged = true;
+    return true;
+  }
+
+  /**
+   * Clears an automatically assigned low-flow threshold.
+   *
+   * @return true when an automatic threshold was cleared, false when the current value belongs to the caller
+   */
+  public boolean resetAutoMinimumFlow() {
+    if (!minimumFlowAutoManaged) {
+      return false;
+    }
+    assigningAutoMinimumFlow = true;
+    try {
+      setMinimumFlow(DEFAULT_MINIMUM_FLOW);
+    } finally {
+      assigningAutoMinimumFlow = false;
+    }
+    minimumFlowAutoManaged = false;
+    minimumFlowExplicitlyConfigured = false;
+    return true;
+  }
+
+  /**
+   * Returns whether the caller explicitly configured a non-default low-flow threshold.
+   *
+   * @return true for a caller-owned threshold
+   */
+  public boolean isMinimumFlowExplicitlyConfigured() {
+    return minimumFlowExplicitlyConfigured;
+  }
+
+  /**
+   * Returns whether the current low-flow threshold is owned by the process auto-tuner.
+   *
+   * @return true for an automatically managed threshold
+   */
+  public boolean isMinimumFlowAutoManaged() {
+    return minimumFlowAutoManaged;
+  }
+
+  /**
+   * Returns whether the threshold changed since the last successful equipment evaluation.
+   *
+   * @return true when process scheduling must force one evaluation
+   */
+  public boolean isMinimumFlowRecalculationPending() {
+    return minimumFlowRecalculationPending;
+  }
+
+  /** Marks the current low-flow threshold as evaluated successfully. */
+  public void clearMinimumFlowRecalculationPending() {
+    minimumFlowRecalculationPending = false;
+  }
+
+  /**
+   * Sets the low-flow bypass threshold in a chosen mass-flow unit.
+   *
+   * <p>
+   * The threshold is stored internally in kg/hr. This overload removes the need for callers to hand-convert, which was
+   * a recurring source of silent errors (a "50" meant as tonnes/day silently becoming 50 kg/hr, or vice versa).
+   * </p>
+   *
+   * @param minimumFlow low-flow bypass threshold expressed in {@code unit}
+   * @param unit mass-flow unit; one of kg/hr, kg/h, kg/sec, kg/s, kg/min, tonne/hr, ton/hr, tonne/day, ton/day, MT/hr,
+   * lb/hr, lbm/hr
+   * @throws IllegalArgumentException if the unit is not a recognised mass-flow unit
+   */
+  public void setMinimumFlow(double minimumFlow, String unit) {
+    setMinimumFlow(minimumFlow * massFlowConversionToKgPerHour(unit));
+  }
+
+  /**
+   * Gets the low-flow bypass threshold expressed in a chosen mass-flow unit.
+   *
+   * @param unit mass-flow unit; see {@link #setMinimumFlow(double, String)} for the accepted values
+   * @return the low-flow bypass threshold in {@code unit}
+   * @throws IllegalArgumentException if the unit is not a recognised mass-flow unit
+   */
+  public double getMinimumFlow(String unit) {
+    return getMinimumFlow() / massFlowConversionToKgPerHour(unit);
+  }
+
+  /**
+   * Conversion factor from a mass-flow unit to kg/hr.
+   *
+   * <p>
+   * Deliberately limited to mass-flow units: the low-flow threshold is compared against
+   * {@code stream.getFlowRate("kg/hr")}, and volumetric or molar units would require a fluid that a not-yet-solved unit
+   * operation does not have.
+   * </p>
+   *
+   * @param unit mass-flow unit name (case-insensitive, surrounding whitespace ignored)
+   * @return the factor that converts a value in {@code unit} to kg/hr
+   * @throws IllegalArgumentException if {@code unit} is null or not a recognised mass-flow unit
+   */
+  public static double massFlowConversionToKgPerHour(String unit) {
+    if (unit == null) {
+      throw new IllegalArgumentException("Mass-flow unit must not be null");
+    }
+    String key = unit.trim().toLowerCase(java.util.Locale.US);
+    if (key.equals("kg/hr") || key.equals("kg/h") || key.equals("kg/hour")) {
+      return 1.0;
+    } else if (key.equals("kg/sec") || key.equals("kg/s")) {
+      return 3600.0;
+    } else if (key.equals("kg/min")) {
+      return 60.0;
+    } else if (key.equals("kg/day")) {
+      return 1.0 / 24.0;
+    } else if (key.equals("tonne/hr") || key.equals("ton/hr") || key.equals("mt/hr") || key.equals("t/hr")) {
+      return 1000.0;
+    } else if (key.equals("tonne/day") || key.equals("ton/day") || key.equals("t/day")) {
+      return 1000.0 / 24.0;
+    } else if (key.equals("lb/hr") || key.equals("lbm/hr")) {
+      return 0.45359237;
+    }
+    throw new IllegalArgumentException("Unsupported mass-flow unit '" + unit
+        + "' for the low-flow threshold. Use kg/hr, kg/sec, kg/min, kg/day, " + "tonne/hr, tonne/day or lb/hr.");
   }
 
   /**

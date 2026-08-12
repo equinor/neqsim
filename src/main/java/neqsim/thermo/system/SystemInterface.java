@@ -389,12 +389,69 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void calc_x_y_nonorm();
 
   /**
-   * calcHenrysConstant.
+   * Calculate the Henry's law constant of a component as fugacity over liquid mole fraction.
    *
-   * @param component a {@link java.lang.String} object
-   * @return a double
+   * <p>
+   * The returned value is {@code H_x = f_i / x_i} in <b>bar per mole fraction</b>, evaluated between the first and the
+   * second phase of the flashed system. Two phases must be present. For a concentration-based constant, which is what a
+   * solubility calculation normally needs, use {@link #calcHenrysConstant(String, String)} rather than converting by
+   * hand.
+   * </p>
+   *
+   * @param component name of the component
+   * @return Henry's law constant in bar per mole fraction
+   * @throws java.lang.IllegalStateException if the system does not have exactly two phases
    */
   public double calcHenrysConstant(String component);
+
+  /**
+   * Calculate the Henry's law constant of a component in a requested unit.
+   *
+   * <p>
+   * Supported units:
+   * </p>
+   *
+   * <table>
+   * <caption>Henry's law constant units</caption>
+   * <tr>
+   * <th>Unit string</th>
+   * <th>Meaning</th>
+   * </tr>
+   * <tr>
+   * <td>{@code bar}</td>
+   * <td>{@code f_i / x_i}, bar per liquid mole fraction</td>
+   * </tr>
+   * <tr>
+   * <td>{@code mol/m3/bar}</td>
+   * <td>dissolved concentration per bar of fugacity</td>
+   * </tr>
+   * <tr>
+   * <td>{@code mmol/L/bar}</td>
+   * <td>numerically identical to {@code mol/m3/bar}</td>
+   * </tr>
+   * <tr>
+   * <td>{@code mol/L/bar}</td>
+   * <td>dissolved concentration per bar, molar basis</td>
+   * </tr>
+   * <tr>
+   * <td>{@code mg/L/bar}</td>
+   * <td>dissolved mass concentration per bar</td>
+   * </tr>
+   * </table>
+   *
+   * <p>
+   * Note that one mol/m3 is identical to one mmol/L, so a constant in mol/(m3 bar) is also the dissolved concentration
+   * in mmol/L per bar. Both spellings are accepted so that a caller does not have to convert, which is where unit
+   * errors are normally introduced.
+   * </p>
+   *
+   * @param component name of the component
+   * @param unit requested unit; null or empty is treated as {@code bar}
+   * @return Henry's law constant in the requested unit
+   * @throws java.lang.IllegalStateException if the system does not have exactly two phases
+   * @throws java.lang.IllegalArgumentException if the unit is not supported
+   */
+  public double calcHenrysConstant(String component, String unit);
 
   /**
    * calcInterfaceProperties.

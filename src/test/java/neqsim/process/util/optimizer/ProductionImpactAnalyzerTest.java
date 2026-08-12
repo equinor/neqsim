@@ -81,6 +81,27 @@ public class ProductionImpactAnalyzerTest {
     process.add(compressor2);
   }
 
+  private ProcessSystem createSingleCompressorIssueProcess() {
+    SystemInterface gas = new SystemSrkEos(298.15, 50.0);
+    gas.addComponent("methane", 0.90);
+    gas.addComponent("ethane", 0.10);
+    gas.setMixingRule("classic");
+
+    Stream issueFeed = new Stream("Issue Feed", gas);
+    issueFeed.setFlowRate(10000.0, "kg/hr");
+    Separator issueSeparator = new Separator("Issue Separator", issueFeed);
+    Compressor issueCompressor = new Compressor("Issue Compressor", issueSeparator.getGasOutStream());
+    issueCompressor.setOutletPressure(100.0, "bara");
+    Stream gasOut = new Stream("Gas Out", issueCompressor.getOutletStream());
+
+    ProcessSystem issueProcess = new ProcessSystem();
+    issueProcess.add(issueFeed);
+    issueProcess.add(issueSeparator);
+    issueProcess.add(issueCompressor);
+    issueProcess.add(gasOut);
+    return issueProcess;
+  }
+
   @Test
   @DisplayName("Analyzer initialization auto-detects streams")
   void testAutoDetectStreams() {
@@ -103,7 +124,7 @@ public class ProductionImpactAnalyzerTest {
     ProductionImpactResult result = analyzer.analyzeFailureImpact("Stage 1 Compressor");
 
     assertNotNull(result);
-    assertTrue(result.isConverged());
+    assertFalse(result.isConverged());
     assertEquals("Stage 1 Compressor", result.getEquipmentName());
     assertEquals("Compressor", result.getEquipmentType());
 
@@ -111,6 +132,38 @@ public class ProductionImpactAnalyzerTest {
     assertTrue(result.getBaselineProductionRate() > 0, "Baseline should have production");
 
     logger.info(result);
+  }
+
+  @Test
+  @DisplayName("Complete trip with unchanged throughput is reported as unresolved")
+  void testCompleteTripWithUnchangedThroughputIsUnresolved() {
+    ProcessSystem issueProcess = createSingleCompressorIssueProcess();
+    ProductionImpactAnalyzer analyzer = new ProductionImpactAnalyzer(issueProcess, "Issue Feed", "Gas Out");
+    analyzer.setOptimizeDegradedOperation(false);
+    ProductionImpactResult result = analyzer.analyzeFailureImpact("Issue Compressor");
+
+    assertFalse(result.isConverged());
+    assertEquals(result.getBaselineProductionRate(), result.getProductionWithFailure(), 1.0e-8);
+    assertEquals(0.0, result.getPercentLoss(), 1.0e-8);
+    assertTrue(result.getAnalysisNotes().contains("unresolved"));
+    assertEquals(RecommendedAction.MANUAL_REVIEW, result.getRecommendedAction());
+  }
+
+  @Test
+  @DisplayName("Minimum product pressure rejects unchanged off-spec trip throughput")
+  void testMinimumProductPressureRejectsOffSpecTripThroughput() {
+    ProcessSystem issueProcess = createSingleCompressorIssueProcess();
+    ProductionImpactAnalyzer analyzer = new ProductionImpactAnalyzer(issueProcess, "Issue Feed", "Gas Out");
+    analyzer.setOptimizeDegradedOperation(false);
+    analyzer.setMinimumProductPressure(90.0, "bara");
+    ProductionImpactResult result = analyzer.analyzeFailureImpact("Issue Compressor");
+
+    assertTrue(result.isConverged());
+    assertTrue(result.getBaselineProductionRate() > 0.0);
+    assertEquals(0.0, result.getProductionWithFailure(), 0.0);
+    assertEquals(100.0, result.getPercentLoss(), 1.0e-8);
+    assertEquals(RecommendedAction.FULL_SHUTDOWN, result.getRecommendedAction());
+    assertTrue(result.getAnalysisNotes().contains("below minimum"));
   }
 
   @Test

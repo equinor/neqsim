@@ -28,8 +28,15 @@ sizing (`neqsim-relief-flare-network`).
 - Overpressure-protection study for a protected item — enumerate credible relief
   contingencies, select the governing case, size the PSV, and check TR3001 / API
   521 compliance
+- Fixed-roof tank normal/emergency vent-demand and rated-capacity screening using externally
+  verified API 2000 demand and device evidence
 
-Standards: **IEC 61508**, **IEC 61511**, **CCPS LOPA Guidelines**, **API 521 / ISO 23251**, **API 520**, **TR3001**, **ASME VIII Div 1 (UG-125)**, **ASME B31.3/B31.4**, **ASME B16.5**, **API 754**, **NORSOK Z-013**.
+Standards: **IEC 61508**, **IEC 61511**, **CCPS LOPA Guidelines**, **API 521 / ISO 23251**, **API 520**, **API 2000**, **TR3001**, **ASME VIII Div 1 (UG-125)**, **ASME B31.3/B31.4**, **ASME B16.5**, **API 754**, **NORSOK Z-013**.
+
+For API 2000, route to `Api2000TankVentingScreeningKernel`. Require caller-controlled licensed
+demand factors/cases, externally rated capacities, consistent gas reference conditions, tank
+pressure/vacuum limits, and evidence attestations. Do not relabel `FireProtectionDesign`, generic
+PSV sizing, or an adequate screen as API tank-vent sizing or conformity.
 
 ## Method 0b — Trapped-Liquid Fire Rupture Screening
 
@@ -522,5 +529,6 @@ disposal.getGoverningContributor();
 
 - [`neqsim-relief-flare-network`](../neqsim-relief-flare-network/SKILL.md) — when LOPA shows PSV is the IPL of last resort
 - [`neqsim-trapped-liquid-fire-rupture`](../neqsim-trapped-liquid-fire-rupture/SKILL.md) — blocked-in liquid fire rupture, PFP demand, and source-term handoff
+- [`neqsim-self-heating-ignition`](../neqsim-self-heating-ignition/SKILL.md) — spontaneous ignition of combustible liquid absorbed into porous insulation (lagging fires); use for any fire with no identified ignition source
 - [`neqsim-dynamic-simulation`](../neqsim-dynamic-simulation/SKILL.md) — depressurization & blowdown
 - [`neqsim-standards-lookup`](../neqsim-standards-lookup/SKILL.md) — IEC 61508/61511, NORSOK Z-013, API 754

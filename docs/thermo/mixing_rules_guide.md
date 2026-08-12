@@ -384,6 +384,9 @@ fluid.addComponent("water", 0.10);
 fluid.addSalinity(2.0, "mole/sec");
 
 fluid.setMixingRule(11);  // Søreide-Whitson mixing rule
+
+// Optional refreshed eight-gas drop-in parameterization
+fluid.setSoreideWhitsonParameterization("BURGOYNE_NIELSEN_2026");
 ```
 
 ### 7.3 Salinity-Dependent kij
@@ -394,6 +397,14 @@ The mixing rule calculates kij for water-gas interactions based on salinity (S i
 $$
 k_{ij} = -0.31092(1 + 0.156 S^{0.75}) + 0.236(1 + 0.178 S^{0.98}) T_r - 21.26 e^{-6.72^{T_r} - S}
 $$
+
+This is the `LEGACY` default. For CO₂-NaCl brine, `CHABAB_2019` replaces only this aqueous
+pair correlation with the 2019 refit; see [Søreide-Whitson Model](SoreideWhitsonModel.md) for
+the equation, coefficients, units, validity range, and comparison example.
+
+`BURGOYNE_NIELSEN_2026` refreshes aqueous and non-aqueous water-gas BIPs for CO₂, H₂S, methane,
+nitrogen, hydrogen, ethane, propane, and n-butane while retaining the original water alpha and
+the `LEGACY` default. See the model guide for validation scope and property-lineage caveats.
 
 **For N2-water:**
 $$

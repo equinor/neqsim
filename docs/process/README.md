@@ -119,6 +119,7 @@ This documentation is organized into the following sections:
 | Document | Description |
 |----------|-------------|
 | [dynamic-simulation.md](dynamic-simulation) | **Dynamic simulation helper — auto-instruments a sized steady-state process with transmitters and PID controllers for transient simulation** |
+| [agent-rca-dynamic-fault-benchmark.md](agent-rca-dynamic-fault-benchmark) | **AgentRCA dynamic fault benchmark — normal-only evidence and ranked diagnoses for controlled sensor bias, gas leaks, blockage, and imposed multiphase slugging excitation** |
 
 **Key Features:**
 - `DynamicProcessHelper` — one-call conversion from steady-state to dynamic
@@ -149,6 +150,8 @@ This documentation is organized into the following sections:
 | [standard_design_kernel_migration.md](standard_design_kernel_migration) | Migrate global editions, metadata factories, mutable calculators, and legacy case execution to typed kernels |
 | [mechanical_design_database.md](mechanical_design_database) | Data sources, database schemas, and CSV configuration |
 | [pipeline_mechanical_design.md](pipeline_mechanical_design) | Pipeline mechanical design (wall thickness, stress, buckling, corrosion) |
+| [dnv_rp_f109_on_bottom_stability.md](dnv_rp_f109_on_bottom_stability) | **DNV-RP-F109 on-bottom stability screening** — typed vertical, transparent absolute-static lateral, and external-response displacement checks with fail-closed readiness |
+| [dnv_st_f101_pipeline_screening.md](dnv_st_f101_pipeline_screening) | **Fail-closed DNV-ST-F101:2021 pipeline limit-state screening with explicit review boundary** |
 | [topside_piping_design.md](topside_piping_design) | **Topside piping design (velocity, support, vibration per ASME B31.3)** |
 | [riser_mechanical_design.md](riser_mechanical_design) | Riser design (catenary, VIV, fatigue per DNV-OS-F201) |
 | [well_mechanical_design.md](well_mechanical_design) | **Well casing/tubing design, barrier verification, cost estimation per NORSOK D-010, API 5CT** |
@@ -206,6 +209,8 @@ This documentation is organized into the following sections:
 | **LNG Liquefaction** | [lng_liquefaction.md](lng_liquefaction) | LNGProcessBuilder, LNGProcessModel, LNGProcessBenchmark, LNGHeatExchanger |
 | **Hydrogen Production** | [hydrogen_production.md](hydrogen_production) | SMR/ATR/POX route templates, ReformerFurnace, CatalyticTubeReformer, AutothermalReformer, PartialOxidationReactor, PSACascade, Electrolyzer |
 | Looped Networks | [looped_networks.md](equipment/looped_networks) | LoopedPipeNetwork, Hardy Cross solver |
+| Gas Network Operations | [gas_network_operations.md](gas_network_operations) | Conservative mixing, coupled hydraulics, quality, optimization, and linepack |
+| Oil Network Operations | [oil_network_operations.md](oil_network_operations) | Pumps, assays, tanks, parcels, blends, and cargo scheduling |
 | Tanks | [tanks.md](equipment/tanks) | Tank, VesselDepressurization |
 | Wells | [wells.md](equipment/wells) | Well equipment |
 | Subsea Trees | [subsea_trees.md](equipment/subsea_trees) | SubseaTree, valve control |

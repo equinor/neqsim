@@ -1,13 +1,16 @@
 ---
-title: "TwoFluidPipe Model: Detailed Review and OLGA Comparison"
-description: "The `TwoFluidPipe` class in NeqSim implements a transient two-fluid model for 1D multiphase pipeline flow. This document provides a detailed review of the model, identifies bugs found and fixed, and c..."
+title: "TwoFluidPipe Model: Detailed Review and External Comparison"
+description: "Technical review of the TwoFluidPipe model, its numerical implementation, and traceable external comparisons."
 ---
 
-# TwoFluidPipe Model: Detailed Review and OLGA Comparison
+# TwoFluidPipe Model: Detailed Review and External Comparison
 
 ## Overview
 
-The `TwoFluidPipe` class in NeqSim implements a transient two-fluid model for 1D multiphase pipeline flow. This document provides a detailed review of the model, identifies bugs found and fixed, and compares the implementation to the commercial OLGA simulator.
+The `TwoFluidPipe` class in NeqSim implements a transient two-fluid model for 1D multiphase
+pipeline flow. This document reviews the implementation and records traceable comparisons. API
+names containing `OLGA` are retained for compatibility; they identify literature-inspired NeqSim
+closure selections and do not claim numerical equivalence with that or any commercial simulator.
 
 ## Table of Contents
 
@@ -367,7 +370,7 @@ The slugs merge:
 ### Slug Tracking Modes
 
 ```java
-// Full OLGA-style Lagrangian tracking (default)
+// Detailed NeqSim Lagrangian tracking (default)
 pipe.setSlugTrackingMode(TwoFluidPipe.SlugTrackingMode.LAGRANGIAN);
 
 // Simplified slug unit model
@@ -407,20 +410,24 @@ A terrain-induced slug is released when:
 2. **Sufficient volume accumulated:** $V_{acc} > V_{min}$
 3. **Gas velocity increases** (pressure buildup behind liquid plug)
 
-### Bøe Criterion for Severe Slugging
+### Explicit Flowline–Riser Stability Diagnostic
 
-Severe slugging occurs in riser systems when:
+The former local “Bøe criterion” description did not match an implemented system model and
+has been removed. Severe slugging depends on the compressible upstream gas volume, the riser
+geometry, and the downstream pressure response. NeqSim now exposes the Taitel (1986)
+quasi-steady system screen:
 
 $$
-\Pi_G = \frac{P_{riser,base} - P_{separator}}{(\rho_L - \rho_G) g H_{riser}} < 1
+P_{top,crit} = \phi\rho_L g\left(\frac{V_G}{A_r\alpha'} - H\right)
 $$
 
-Where $\Pi_G$ is the gas penetration number.
+Use `evaluateSevereSluggingSystem(riserBaseSection)` after solving the pipe. The result reports
+applicability, stable/unstable status, critical top pressure, pressure margin, stability ratio,
+and gas-expansion head. A flowline-to-riser diameter change is permitted, while the continuously
+rising riser itself must have constant area. The diagnostic rejects non-stratified, single-phase,
+three-phase, variable-area-riser, and invalid flowline–riser topologies. This screen does not
+predict dynamic slug cycles and is not a claim of equivalence to a commercial simulator.
 
-**Stability criterion:**
-$$
-\text{Severe slugging if } \Pi_G < 1 \text{ AND } \frac{v_{SL}}{v_{SG}} > 0.1
-$$
 
 ---
 
@@ -430,6 +437,7 @@ $$
 
 ```java
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
+import neqsim.process.equipment.pipeline.twophasepipe.SevereSluggingSystemDiagnostic;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -507,6 +515,13 @@ System.out.printf("  Max volume: %.4f m³%n", tracker.getMaxSlugVolumeAtOutlet()
 System.out.printf("  Outlet frequency: %.4f Hz%n", tracker.getOutletSlugFrequency());
 ```
 
+The tracker-level liquid-mass audit is
+`borrowed - returned to Eulerian - exited at outlet - active slug mass`. Use
+`getMassConservationError()` for the residual and
+`getTotalMassExitedAtOutlet()` for the cumulative interval-accounted outlet
+mass. This diagnostic audit is distinct from the conservative phase-resolved
+`TwoFluidMassBalanceReport` produced by `TwoFluidPipe`.
+
 ### Terrain Profile with Slugging
 
 ```java
@@ -517,7 +532,7 @@ double[] elevations = {0, -50, -100, -50, -150, 0};      // m (relative)
 // Set terrain profile
 pipe.setTerrainProfile(distances, elevations);
 pipe.setEnableTerrainTracking(true);
-pipe.setEnableSevereSlugModel(true);
+pipe.setEnableTerrainSlugClosures(true);
 
 // Configure terrain parameters
 pipe.setTerrainSlugCriticalHoldup(0.6);
@@ -526,11 +541,13 @@ pipe.setLiquidFallbackCoefficient(0.3);
 // Run transient simulation
 pipe.runTransient(7200.0);  // 2 hours
 
-// Check for severe slugging
-if (pipe.isSevereSluggingDetected()) {
-    System.out.println("WARNING: Severe slugging detected!");
-    System.out.println("Bøe criterion: " + pipe.getBoeNumber());
-}
+// Evaluate the explicit system after selecting the first rising section
+int riserBaseSection = 40;
+SevereSluggingSystemDiagnostic.Result stability =
+    pipe.evaluateSevereSluggingSystem(riserBaseSection);
+boolean severeSluggingPossible = stability.isSevereSluggingPossible();
+double pressureMarginPa = stability.getPressureMarginPa();
+// Pass the status and margin to the application's logger or monitoring system.
 
 // Get holdup profile
 double[] positions = pipe.getPositionProfile();
@@ -661,22 +678,36 @@ From the comparison tests (`TwoFluidVsBeggsBrillComparisonTest`):
 Terrain slug detection successfully identifies:
 - Valley liquid accumulation (holdup up to 85% at low Fr)
 - Peak gas accumulation (reduced holdup)
-- Riser base severe slugging potential
+- Riser-base topology and liquid-accumulation conditions for further system screening
 
-### Lagrangian Slug Tracker Validation
+These software scenarios are regression checks, not experimental validation.
 
-The Lagrangian slug tracking model has been validated against:
+### Public severe-slugging benchmark
 
-1. **Analytical benchmarks**: Slug frequency, velocity, and holdup correlations
-2. **Mass conservation**: Total liquid mass tracked within 5% through simulation
-3. **Merging behavior**: Proper coalescence when following slug catches preceding slug
-4. **Wake effects**: Expected acceleration factors observed
+Tengesdal's 2002 public air–mineral-oil experiments provide the current external check. On the
+55-point -3-degree velocity map, the Taitel system diagnostic scores 22/26 severe observations and
+7/15 stable observations correctly; the 14 transition observations remain a separate category.
+Dynamic large-facility Test 3 is a deterministically chaotic limit cycle, so it is evaluated as a
+four-member ensemble. The time-averaged riser-base pressure (171–176 kPa) and the blowout/fallback
+regime signature are reproducible, while the peak-to-peak pressure spans 42–300 kPa against
+98 ± 5 kPa digitized and the apparent period spans 14–35 s against 38 ± 2 s. The current slug
+tracker also underpredicts the experimental severe-slug length. These limits preclude a claim of
+quantitative severe-slugging validation.
 
-Test results from `LagrangianSlugTrackerTest`:
-- 15 tests all passing
-- Slug velocity within 1% of Bendiksen correlation
-- Holdup within 2% of Gregory correlation
-- Mass conservation error < 1% for typical cases
+Source: [Tengesdal (2002), BSEE Technical Assessment Program](https://www.bsee.gov/sites/bsee.gov/files/tap-technical-assessment-program/397aa.pdf).
+
+### Lagrangian slug-tracker regression evidence
+
+`LagrangianSlugTrackerTest` checks the implementation against its selected correlations and
+internal invariants:
+
+1. **Correlation consistency**: slug frequency, velocity, and holdup calculations
+2. **Bookkeeping**: tracked, returned, and exited liquid mass
+3. **Merging behavior**: coalescence when a following slug catches a preceding slug
+4. **Wake behavior**: the configured acceleration response
+
+These are unit/regression checks, not independent experimental validation of predicted slug
+frequency or length. The public Tengesdal comparison above is the relevant external evidence.
 
 ---
 
@@ -731,7 +762,7 @@ Where $c$ is the mixture sound speed. Typical CFL = 0.5-0.8 for stability.
 
 ---
 
-## Recommendations for OLGA-Equivalent Results
+## Recommendations for Reproducible NeqSim Results
 
 1. **Use FULL model type** for best accuracy:
    ```java
@@ -747,7 +778,7 @@ Where $c$ is the mixture sound speed. Typical CFL = 0.5-0.8 for stability.
 3. **Enable terrain tracking** for undulating pipelines:
    ```java
    pipe.setEnableTerrainTracking(true);
-   pipe.setEnableSevereSlugModel(true);
+   pipe.setEnableTerrainSlugClosures(true);
    ```
 
 4. **Configure minimum holdup** based on system:

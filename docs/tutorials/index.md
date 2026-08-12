@@ -35,7 +35,7 @@ Complete walkthroughs for common applications:
 
 | Tutorial | Description | Level |
 |----------|-------------|-------|
-| **[TEG Gas Dehydration](teg_dehydration_tutorial.md)** | Complete TEG loop with contactor and regeneration | Intermediate |
+| **[TEG Gas Dehydration](teg_dehydration_tutorial.md)** | Equilibrium-contact screening with component and total mass balances | Intermediate |
 | **[Gas-Oil Separation Plant (GOSP)](gosp_tutorial.md)** | Multi-stage separation with compression | Intermediate |
 | **[PVT Lab Test Simulations](../pvtsimulation/pvt_lab_tests.md)** | CCE, CVD, DL, separator tests | Intermediate |
 | **[Flow Assurance Overview](../pvtsimulation/flow_assurance_overview.md)** | Hydrates, wax, asphaltenes screening | Intermediate |
@@ -50,4 +50,4 @@ Coming soon! For now, see the [NeqSim Colab notebooks](https://github.com/EvenSo
 - **[Cookbook](../cookbook/index.md)** - Quick recipes for specific tasks
 - **[Examples](../examples/index.md)** - Jupyter notebooks and code samples
 - **[Troubleshooting](../troubleshooting/index.md)** - Common issues and solutions
-- **[JavaDoc API](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html)** - Complete API reference
+- **[JavaDoc API](https://equinor.github.io/neqsim/javadoc/index.html)** - Complete API reference

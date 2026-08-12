@@ -519,8 +519,49 @@ double actualDt = process.runTransientAdaptive(1.0, id);
 // actualDt may be smaller or larger than the requested 1.0
 ```
 
+Every `ProcessSystem` and `ProcessModel` transient entry point requires a
+finite, positive timestep. Zero, negative, NaN, and infinite values throw
+`IllegalArgumentException` before snapshots, setters, events, process areas,
+equipment, controllers, clocks, or identifiers can change. Adaptive stepping
+rejects invalid requested values instead of silently clamping them.
+
+A multi-area `ProcessModel` also requires every child `ProcessSystem` to start
+the step on the same finite simulation clock. A material mismatch throws
+`IllegalStateException` before the first area advances or a shared
+`EventScheduler` fires. Reset or explicitly synchronize restored, copied, or
+independently advanced areas before calling `ProcessModel.runTransient(...)`;
+this prevents one scheduled event from affecting only the areas that happen to
+run later in the insertion order.
+
 The adaptive algorithm compares state changes between the full step and two
 half-steps, reducing or increasing $\Delta t$ based on the relative error.
+
+Setter units form a dedicated pre-step specification phase. Each setter receives
+exactly one `runTransient(dt, id)` call per process timestep, so its specification
+is applied once and its own clock advances by the same $\Delta t$ as the process.
+Setters are excluded from the later explicit, semi-implicit, and parallel
+equipment passes.
+
+Controller execution is coalesced by object identity and timestep calculation
+identifier. Equipment that actually integrates a controller passes the same
+calculation identifier to the controller; registering that object separately with
+`process.add(controller)` therefore keeps it discoverable without advancing its
+time, integral, derivative, or event-log state twice. Merely attaching a controller
+to equipment that does not execute it does not suppress the standalone update.
+Repeated standalone registration is also coalesced to one update per timestep;
+distinct controller objects remain independent even if they share a name.
+`ControllerDeviceBaseClass` tracks the identifier automatically and makes
+repeated calls with one identifier idempotent, including semi-implicit equipment
+passes. Custom controller implementations that integrate inside equipment should
+implement `hasRunTransient(UUID)` and the same one-update-per-identifier contract.
+
+Steady-state equipment can be evaluated more than once while a solver refines one
+physical timestep. The default `SimulationInterface.runTransient(dt, id)` still
+executes `run(id)` on every evaluation, so algebraic recycles retain both
+semi-implicit passes, but advances the equipment clock only on the first
+successful evaluation of a non-null calculation identifier. A new identifier
+advances time for the next physical step. This keeps algebraic solver iterations
+separate from simulated time, including normal low-flow returns.
 
 ### 5.2 Parallel Transient Execution
 
@@ -535,9 +576,37 @@ process.setTransientThreadPoolSize(4); // Number of worker threads
 process.runTransient();
 ```
 
+The configured workers are reused across timesteps. NeqSim creates the executor
+lazily for each `ProcessSystem`, keeps it out of serialized model state, and
+allows idle daemon workers to time out after 60 seconds. Changing
+`setTransientThreadPoolSize(...)` or disabling parallel transient execution
+retires the existing pool. This avoids creating and destroying a complete
+thread pool for every timestep in long dynamic studies.
+
+Parallel transient execution uses the same cached process graph as steady-state
+parallel execution. Equipment is partitioned into topological levels: all
+upstream groups in one level finish before downstream equipment is submitted,
+while independent groups in the same level can use separate workers. Groups
+that must share mutable inlet state execute sequentially within one worker.
+This prevents a downstream unit from observing a partially updated upstream
+stream merely because both units were submitted in the same timestep.
+
+If the thread calling `runTransient(...)` is interrupted while waiting for
+parallel equipment, NeqSim restores the caller's interrupt status and stops
+waiting. No downstream level is submitted. Later parallel passes in the same
+timestep observe that status and do not submit additional equipment work.
+Queued futures are cancelled without interrupting equipment already updating
+state. Because those running updates are not transactionally interruptible,
+NeqSim aborts the remaining controller, measurement, result-storage, and
+event-publication phases for that timestep. Callers should still treat an
+interrupted timestep as incomplete rather than as an atomic rollback.
+
 **Note:** Parallel execution is beneficial for flowsheets with many independent
-equipment units. For small flowsheets or tightly coupled equipment (recycles),
-the overhead may outweigh the benefit.
+branches. Topological ordering covers feed-forward stream dependencies, but it
+does not define iteration or rollback for recycle loops and other implicit
+couplings. Keep the option disabled for those cases until their transient
+convergence contract is explicitly supported. For small flowsheets, the
+scheduling overhead may also outweigh the benefit.
 
 ### 5.3 Integration Methods
 
@@ -559,18 +628,24 @@ process.setIntegrationMethod(IntegrationMethod.RUNGE_KUTTA_4);    // Higher-orde
 
 ## 6. Test Coverage
 
-All features are covered by three test classes with 59 total tests:
+The features in this guide are covered by eight focused test classes with 85
+total tests:
 
 | Test Class | Tests | Coverage |
 |-----------|-------|----------|
 | `DynamicImprovementsTest` | 17 | Controller modes, 2-DOF PID, SFC, control structures, gain scheduling, event logging, performance metrics |
-| `DynamicImprovementsPhase2Test` | 26 | Sensor faults, valve nonlinearities, adaptive timestep, parallel transient, integration methods, JSON process builder |
+| `DynamicImprovementsPhase2Test` | 27 | Sensor faults, valve nonlinearities, adaptive timestep, parallel transient, integration methods, JSON process builder |
 | `DynamicImprovementsPhase3Test` | 16 | Transmitter filter, alarm shelving, separator internals, HX thermal model, distillation MESH dynamics |
+| `ProcessSystemParallelTransientTest` | 9 | Worker reuse, copy lifecycle, dependency ordering, independent-level concurrency, and interruption behavior at waits and level boundaries |
+| `ProcessSystemTransientSetterTest` | 3 | Single setter application, repeated-step clock advancement, and explicit, semi-implicit, and parallel execution |
+| `ProcessSystemTransientControllerTest` | 5 | Equipment execution, semi-implicit passes, attachment-only fallback, duplicate standalone registration, identity semantics, and repeated timesteps |
+| `ProcessSystemTransientAlgebraicTimeTest` | 4 | Repeated algebraic evaluation, semi-implicit recycle iteration, low-flow completion identifiers, null-ID compatibility, and one clock advance per timestep |
+| `ProcessSystemTransientTimestepValidationTest` | 4 | Finite-positive process, adaptive, and multi-area timestep preflight plus valid nearby steps |
 
 Run all tests:
 
 ```bash
-./mvnw test -Dtest=DynamicImprovementsTest,DynamicImprovementsPhase2Test,DynamicImprovementsPhase3Test
+./mvnw test -Dtest=DynamicImprovementsTest,DynamicImprovementsPhase2Test,DynamicImprovementsPhase3Test,ProcessSystemParallelTransientTest,ProcessSystemTransientSetterTest,ProcessSystemTransientControllerTest,ProcessSystemTransientAlgebraicTimeTest,ProcessSystemTransientTimestepValidationTest
 ```
 
 ---

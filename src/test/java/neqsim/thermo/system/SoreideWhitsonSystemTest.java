@@ -1,14 +1,23 @@
 package neqsim.thermo.system;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.mixer.StaticMixer;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.thermo.mixingrule.EosMixingRuleHandler;
+import neqsim.thermo.mixingrule.SoreideWhitsonParameterization;
 import neqsim.thermo.phase.PhaseSoreideWhitson;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class SoreideWhitsonSystemTest {
+  private static final double WATER_MOLAR_MASS_KG_PER_MOL = 0.01801528;
+
   /**
    * Test Soreide-Whitson system with zero salinity. Checks that the phase mole fractions for nitrogen, CO2, methane,
    * ethane, and water in both gas and aqueous phases match the expected values for a system with no added salt.
@@ -171,5 +180,122 @@ public class SoreideWhitsonSystemTest {
 
     org.junit.jupiter.api.Assertions.assertEquals(0.0, gasSalinity, 1e-8, "Gas salinity should be 0.0");
     org.junit.jupiter.api.Assertions.assertEquals(0.05, waterSalinity, 1e-8, "Water salinity should be 0.05");
+  }
+
+  @Test
+  public void testAqueousCO2ParameterizationSelectionAndClone() {
+    SystemSoreideWhitson system = new SystemSoreideWhitson(323.15, 100.0);
+    assertEquals(SoreideWhitsonParameterization.LEGACY, system.getAqueousCO2Parameterization());
+
+    system.setAqueousCO2Parameterization("m-sw");
+    assertEquals(SoreideWhitsonParameterization.CHABAB_2019, system.getAqueousCO2Parameterization());
+    for (int phaseNumber = 0; phaseNumber < system.getNumberOfPhases(); phaseNumber++) {
+      assertEquals(SoreideWhitsonParameterization.CHABAB_2019,
+          ((PhaseSoreideWhitson) system.getPhase(phaseNumber)).getAqueousCO2Parameterization());
+    }
+
+    SystemSoreideWhitson clonedSystem = system.clone();
+    assertEquals(SoreideWhitsonParameterization.CHABAB_2019, clonedSystem.getAqueousCO2Parameterization());
+
+    system.clearAll();
+    assertEquals(SoreideWhitsonParameterization.CHABAB_2019, system.getAqueousCO2Parameterization());
+    for (int phaseNumber = 0; phaseNumber < system.getNumberOfPhases(); phaseNumber++) {
+      assertEquals(SoreideWhitsonParameterization.CHABAB_2019,
+          ((PhaseSoreideWhitson) system.getPhase(phaseNumber)).getAqueousCO2Parameterization());
+    }
+
+    assertThrows(IllegalArgumentException.class, () -> system.setAqueousCO2Parameterization("unknown"));
+  }
+
+  @Test
+  public void testChabab2019PublishedCorrelation() {
+    EosMixingRuleHandler handler = new EosMixingRuleHandler();
+    EosMixingRuleHandler.WhitsonSoreideMixingRule mixingRule = handler.new WhitsonSoreideMixingRule();
+
+    assertEquals(-0.0344593471194527, mixingRule.calculateChabab2019AqueousCO2Kij(342.82, 3.01), 1.0e-14);
+    assertEquals(-0.0709749877386868, mixingRule.calculateChabab2019AqueousCO2Kij(323.02, 1.13), 1.0e-14);
+    assertEquals(0.00113995286294937, mixingRule.calculateChabab2019AqueousCO2KijdT(342.82, 3.01), 1.0e-16);
+    assertEquals(-7.09064388609506e-7, mixingRule.calculateChabab2019AqueousCO2KijdTdT(3.01), 1.0e-18);
+  }
+
+  @Test
+  public void testBurgoyneNielsen2026SelectorPropagation() {
+    SystemSoreideWhitson system = new SystemSoreideWhitson(320.0, 100.0);
+    system.addComponent("methane", 1.0);
+    system.addComponent("water", 10.0);
+
+    system.setSoreideWhitsonParameterization("BN_2026");
+    assertEquals(SoreideWhitsonParameterization.BURGOYNE_NIELSEN_2026, system.getSoreideWhitsonParameterization());
+    assertEquals(SoreideWhitsonParameterization.BURGOYNE_NIELSEN_2026, system.getAqueousCO2Parameterization());
+    for (int phaseNumber = 0; phaseNumber < system.getNumberOfPhases(); phaseNumber++) {
+      PhaseSoreideWhitson phase = (PhaseSoreideWhitson) system.getPhase(phaseNumber);
+      assertEquals(SoreideWhitsonParameterization.BURGOYNE_NIELSEN_2026, phase.getSoreideWhitsonParameterization());
+      assertEquals(SoreideWhitsonParameterization.BURGOYNE_NIELSEN_2026, phase.getAqueousCO2Parameterization());
+    }
+
+    SystemSoreideWhitson clonedSystem = system.clone();
+    assertEquals(SoreideWhitsonParameterization.BURGOYNE_NIELSEN_2026,
+        clonedSystem.getSoreideWhitsonParameterization());
+
+    system.clearAll();
+    assertEquals(SoreideWhitsonParameterization.BURGOYNE_NIELSEN_2026, system.getSoreideWhitsonParameterization());
+  }
+
+  @Test
+  public void testChabab2019Table2CO2Solubility() {
+    double[][] points = { { 1.13, 323.02, 53.450, 0.01030, 0.010872 }, { 1.13, 322.97, 75.550, 0.01290, 0.013990 },
+        { 1.13, 323.03, 100.350, 0.01510, 0.016205 }, { 1.13, 323.04, 145.080, 0.01700, 0.018000 },
+        { 3.01, 342.82, 30.391, 0.00441, 0.003586 }, { 3.01, 342.81, 72.559, 0.00880, 0.007407 },
+        { 3.01, 342.82, 100.910, 0.01057, 0.009160 } };
+    double legacyHighSalinityAbsoluteDeviation = 0.0;
+    double chababHighSalinityAbsoluteDeviation = 0.0;
+
+    for (double[] point : points) {
+      double legacyValue = calculateAqueousCO2MoleFraction(point[0], point[1], point[2],
+          SoreideWhitsonParameterization.LEGACY);
+      double chababValue = calculateAqueousCO2MoleFraction(point[0], point[1], point[2],
+          SoreideWhitsonParameterization.CHABAB_2019);
+
+      assertEquals(point[4], legacyValue, 2.0e-5, "Legacy default must remain backward compatible");
+      assertEquals(point[3], chababValue, point[3] * 0.12,
+          "Chabab parameterization should reproduce the Table 2 CO2 solubility point");
+
+      if (point[0] > 3.0) {
+        legacyHighSalinityAbsoluteDeviation += Math.abs(legacyValue / point[3] - 1.0);
+        chababHighSalinityAbsoluteDeviation += Math.abs(chababValue / point[3] - 1.0);
+      }
+    }
+
+    assertTrue(chababHighSalinityAbsoluteDeviation < legacyHighSalinityAbsoluteDeviation,
+        "Chabab parameterization should reduce high-salinity deviation");
+  }
+
+  /**
+   * Calculate the aqueous CO2 mole fraction for a Chabab et al. (2019) Table 2 condition.
+   *
+   * @param molality NaCl molality in mol/kg water
+   * @param temperatureK temperature in K
+   * @param pressureBara pressure in bara
+   * @param parameterization aqueous CO2-water parameterization
+   * @return calculated aqueous CO2 mole fraction
+   */
+  private double calculateAqueousCO2MoleFraction(double molality, double temperatureK, double pressureBara,
+      SoreideWhitsonParameterization parameterization) {
+    double waterMolesPerSecond = 1.0 / WATER_MOLAR_MASS_KG_PER_MOL;
+    SystemSoreideWhitson system = new SystemSoreideWhitson(temperatureK, pressureBara);
+    system.addComponent("CO2", 5.0);
+    system.addComponent("water", waterMolesPerSecond);
+    system.addSalinity(molality, "mole/sec");
+    system.setTotalFlowRate(waterMolesPerSecond + 5.0, "mole/sec");
+    system.createDatabase(true);
+    system.setMixingRule(11);
+    system.setAqueousCO2Parameterization(parameterization);
+    system.setMultiPhaseCheck(true);
+    system.init(0);
+    system.init(1);
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(system);
+    operations.TPflash();
+    return system.getPhase(PhaseType.AQUEOUS).getComponent("CO2").getx();
   }
 }

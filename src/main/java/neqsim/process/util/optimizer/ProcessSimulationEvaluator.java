@@ -3,6 +3,7 @@ package neqsim.process.util.optimizer;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -319,8 +320,7 @@ public class ProcessSimulationEvaluator implements Serializable {
      * @return objective value (sign-adjusted for minimization)
      */
     public double evaluate(ProcessSystem process) {
-      double value = evaluator.applyAsDouble(process);
-      return direction == Direction.MAXIMIZE ? -value : value;
+      return toMinimizerValue(evaluator.applyAsDouble(process));
     }
 
     /**
@@ -331,6 +331,16 @@ public class ProcessSimulationEvaluator implements Serializable {
      */
     public double evaluateRaw(ProcessSystem process) {
       return evaluator.applyAsDouble(process);
+    }
+
+    /**
+     * Applies the minimizer sign convention to an already sampled objective value.
+     *
+     * @param rawValue raw objective value
+     * @return sign-adjusted objective value
+     */
+    private double toMinimizerValue(double rawValue) {
+      return direction == Direction.MAXIMIZE ? -rawValue : rawValue;
     }
   }
 
@@ -499,7 +509,16 @@ public class ProcessSimulationEvaluator implements Serializable {
      */
     @Override
     public double margin(ProcessSystem process) {
-      double value = evaluate(process);
+      return marginFromValue(evaluate(process));
+    }
+
+    /**
+     * Calculates the constraint margin from an already sampled value.
+     *
+     * @param value sampled constraint value
+     * @return constraint margin
+     */
+    private double marginFromValue(double value) {
       switch (type) {
       case LOWER_BOUND:
         return value - lowerBound;
@@ -533,11 +552,20 @@ public class ProcessSimulationEvaluator implements Serializable {
      */
     @Override
     public double penalty(ProcessSystem process) {
-      double m = margin(process);
-      if (m >= 0) {
+      return penaltyFromMargin(margin(process));
+    }
+
+    /**
+     * Calculates the violation penalty from an already derived margin.
+     *
+     * @param margin sampled constraint margin
+     * @return penalty (0 if satisfied, positive if violated)
+     */
+    private double penaltyFromMargin(double margin) {
+      if (margin >= 0) {
         return 0.0;
       }
-      return penaltyWeight * m * m;
+      return penaltyWeight * margin * margin;
     }
 
     /** {@inheritDoc} */
@@ -551,11 +579,12 @@ public class ProcessSimulationEvaluator implements Serializable {
      * optimizer.
      *
      * <p>
-     * Only LOWER_BOUND and UPPER_BOUND types can be converted directly. RANGE constraints are converted to an
-     * UPPER_BOUND constraint (using the tightest bound). EQUALITY constraints are approximated as a tight range.
+     * <strong>Compatibility note:</strong> this singular method preserves its historical lossy behavior for two-sided
+     * constraints. RANGE and EQUALITY constraints return only their upper side. Use
+     * {@link #toOptimizationConstraints()} whenever both sides must remain enforced.
      * </p>
      *
-     * @return equivalent OptimizationConstraint
+     * @return equivalent single OptimizationConstraint; lossy for RANGE and EQUALITY
      * @throws IllegalStateException if the evaluator function is null
      */
     public ProductionOptimizer.OptimizationConstraint toOptimizationConstraint() {
@@ -591,6 +620,57 @@ public class ProcessSimulationEvaluator implements Serializable {
       default:
         return ProductionOptimizer.OptimizationConstraint.lessThan(name, evaluator, upperBound, sev, penaltyWeight,
             "Converted from ConstraintDefinition");
+      }
+    }
+
+    /**
+     * Converts this constraint without losing either side of a two-sided bound.
+     *
+     * <p>
+     * LOWER_BOUND and UPPER_BOUND constraints produce one internal constraint. RANGE constraints produce
+     * {@code name_lower} and {@code name_upper}. EQUALITY constraints produce the tolerance band
+     * {@code value >= target - tolerance} and {@code value <= target + tolerance} with the same suffixes. Every
+     * generated constraint retains the evaluator, severity, and penalty weight of this definition.
+     * </p>
+     *
+     * @return immutable list containing one or two equivalent OptimizationConstraint instances
+     * @throws IllegalStateException if the evaluator function is null
+     */
+    public List<ProductionOptimizer.OptimizationConstraint> toOptimizationConstraints() {
+      if (evaluator == null) {
+        throw new IllegalStateException(
+            "Cannot convert to OptimizationConstraint: evaluator is null (was this deserialized?)");
+      }
+      ProductionOptimizer.ConstraintSeverity severity = isHard ? ProductionOptimizer.ConstraintSeverity.HARD
+          : ProductionOptimizer.ConstraintSeverity.SOFT;
+      switch (type) {
+      case UPPER_BOUND:
+        return Collections.singletonList(ProductionOptimizer.OptimizationConstraint.lessThan(name, evaluator,
+            upperBound, severity, penaltyWeight, "Converted from ConstraintDefinition"));
+      case LOWER_BOUND:
+        return Collections.singletonList(ProductionOptimizer.OptimizationConstraint.greaterThan(name, evaluator,
+            lowerBound, severity, penaltyWeight, "Converted from ConstraintDefinition"));
+      case RANGE:
+        List<ProductionOptimizer.OptimizationConstraint> rangeConstraints = new ArrayList<ProductionOptimizer.OptimizationConstraint>(
+            2);
+        rangeConstraints.add(ProductionOptimizer.OptimizationConstraint.greaterThan(name + "_lower", evaluator,
+            lowerBound, severity, penaltyWeight, "Converted from range ConstraintDefinition (lower bound)"));
+        rangeConstraints.add(ProductionOptimizer.OptimizationConstraint.lessThan(name + "_upper", evaluator, upperBound,
+            severity, penaltyWeight, "Converted from range ConstraintDefinition (upper bound)"));
+        return Collections.unmodifiableList(rangeConstraints);
+      case EQUALITY:
+        List<ProductionOptimizer.OptimizationConstraint> equalityConstraints = new ArrayList<ProductionOptimizer.OptimizationConstraint>(
+            2);
+        equalityConstraints.add(ProductionOptimizer.OptimizationConstraint.greaterThan(name + "_lower", evaluator,
+            lowerBound - equalityTolerance, severity, penaltyWeight,
+            "Converted from equality ConstraintDefinition (lower bound)"));
+        equalityConstraints.add(ProductionOptimizer.OptimizationConstraint.lessThan(name + "_upper", evaluator,
+            lowerBound + equalityTolerance, severity, penaltyWeight,
+            "Converted from equality ConstraintDefinition (upper bound)"));
+        return Collections.unmodifiableList(equalityConstraints);
+      default:
+        return Collections.singletonList(ProductionOptimizer.OptimizationConstraint.lessThan(name, evaluator,
+            upperBound, severity, penaltyWeight, "Converted from ConstraintDefinition"));
       }
     }
   }
@@ -1151,6 +1231,12 @@ public class ProcessSimulationEvaluator implements Serializable {
    * <li>Returns a complete result object</li>
    * </ol>
    *
+   * <p>
+   * Each registered objective and constraint callback is sampled exactly once after the simulation. Raw and
+   * sign-adjusted objectives, and constraint values, margins, feasibility, and penalties, are derived from those same
+   * samples.
+   * </p>
+   *
    * @param x array of parameter values (length must match parameter count)
    * @return evaluation result with objectives, constraints, and feasibility
    */
@@ -1182,8 +1268,9 @@ public class ProcessSimulationEvaluator implements Serializable {
       double[] objValues = new double[objectives.size()];
       double[] objRaw = new double[objectives.size()];
       for (int i = 0; i < objectives.size(); i++) {
-        objRaw[i] = objectives.get(i).evaluateRaw(process);
-        objValues[i] = objectives.get(i).evaluate(process);
+        ObjectiveDefinition objective = objectives.get(i);
+        objRaw[i] = objective.evaluateRaw(process);
+        objValues[i] = objective.toMinimizerValue(objRaw[i]);
       }
       result.setObjectives(objValues);
       result.setObjectivesRaw(objRaw);
@@ -1194,11 +1281,12 @@ public class ProcessSimulationEvaluator implements Serializable {
       double penaltySum = 0.0;
       boolean feasible = true;
       for (int i = 0; i < constraints.size(); i++) {
-        constraintVals[i] = constraints.get(i).evaluate(process);
-        margins[i] = constraints.get(i).margin(process);
+        ConstraintDefinition constraint = constraints.get(i);
+        constraintVals[i] = constraint.evaluate(process);
+        margins[i] = constraint.marginFromValue(constraintVals[i]);
         if (margins[i] < 0) {
           feasible = false;
-          penaltySum += constraints.get(i).penalty(process);
+          penaltySum += constraint.penaltyFromMargin(margins[i]);
         }
       }
       result.setConstraintValues(constraintVals);

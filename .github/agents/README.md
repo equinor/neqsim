@@ -139,7 +139,7 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **flow.assurance** | `@flow.assurance <description>` | Hydrate prediction, wax, asphaltene, corrosion, pipeline pressure drop |
+| **flow.assurance** | `@flow.assurance <description>` | Hydrate, wax, asphaltene, corrosion, pipeline pressure drop, and bounded F110/F114 input routing |
 
 **Examples:**
 ```
@@ -170,7 +170,7 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **mechanical.design** | `@mechanical.design <description>` | ASME/API/DNV mechanical design plus reconciled equipment, process, topsides, SURF, subsea, and well CAPEX estimates |
+| **mechanical.design** | `@mechanical.design <description>` | ASME/API/DNV mechanical design including F110 global-buckling and F114 pipe-soil screening plus reconciled equipment, process, topsides, SURF, subsea, and well CAPEX estimates |
 
 **Examples:**
 ```
@@ -248,7 +248,7 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **ccs.hydrogen** | `@ccs.hydrogen <description>` | CO2 capture/transport/storage and hydrogen systems — phase behavior with impurities, dense phase pipeline design, injection well analysis, H2 blending |
+| **ccs.hydrogen** | `@ccs.hydrogen <description>` | CO2 capture/transport/storage and hydrogen systems — composition-specific phase behavior, DNV-RP-F104 envelope screening, injection well analysis, H2 blending |
 
 **Examples:**
 ```
@@ -430,14 +430,14 @@ They contain verified patterns, rules, and domain knowledge.
 | `neqsim-capability-map` | Checking what NeqSim can do, planning implementations | Structured inventory of all NeqSim capabilities by discipline |
 | `neqsim-technical-document-reading` | Reading technical documents (PDF, Word, Excel) | Extraction patterns, unit normalization, component mapping, quality scoring |
 | `neqsim-trapped-liquid-fire-rupture` | Blocked-in liquid fire rupture studies | Evidence retrieval, trapped inventory, fire exposure, material/flange derating, PFP demand, source-term handoff |
-| `neqsim-ccs-hydrogen` | CCS or hydrogen system tasks | CO2 phase behavior, impurity management, injection wells, H2 blending |
+| `neqsim-ccs-hydrogen` | CCS or hydrogen system tasks | CO2 phase behavior, DNV-RP-F104 caller-controlled envelope routing, impurity management, injection wells, H2 blending |
 | `neqsim-distillation-design` | Distillation column setup or troubleshooting | Solver selection, feed tray rules, convergence, internals sizing |
 | `neqsim-dynamic-simulation` | Transient simulations, controller tuning | runTransient, PID controllers, transmitters, depressurization |
 | `neqsim-electrolyte-systems` | Brine, MEG, ions, or scale prediction | SystemElectrolyteCPAstatoil, ion components, scale risk |
 | `neqsim-eos-regression` | Fitting EOS to experimental data | kij tuning, PVT matching (CME, CVD), C7+ characterization |
 | `neqsim-field-development` | Field development studies | Concept selection, tieback analysis, production forecasting, lifecycle |
 | `neqsim-field-economics` | NPV, IRR, cash flow, tax regimes | Norwegian NCS, UK fiscal, cost estimation, Monte Carlo |
-| `neqsim-flow-assurance` | Hydrate, wax, corrosion, pipeline hydraulics | All flow assurance threats with NeqSim code patterns |
+| `neqsim-flow-assurance` | Hydrate, wax, corrosion, pipeline hydraulics, F110/F114 inputs | Flow assurance threats and bounded global-buckling/pipe-soil routing with NeqSim code patterns |
 | `neqsim-plant-data` | Connecting to plant historian data | Tagreader API, tag mapping, digital twin loops, data quality |
 | `neqsim-power-generation` | Gas/steam turbines, HRSG, combined cycle | Equipment patterns, efficiency calculations, heat integration |
 | `neqsim-process-extraction` | Extracting process data from text or tables | Equipment mapping, stream wiring, unit conversion, JSON builder |

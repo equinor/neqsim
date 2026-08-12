@@ -60,6 +60,37 @@ class ConvertNotebooksTest(unittest.TestCase):
             )
             self.assertNotIn(f"# {curated_title}", generated_content)
             self.assertEqual(generated_content.count("# Notebook title"), 1)
+    def test_converter_repairs_legacy_process_equipment_guide(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            examples_dir = Path(temp_dir)
+            notebook_path = examples_dir / "process equipmentutl.ipynb"
+            markdown_path = examples_dir / "process equipmentutl.md"
+            title = (
+                "Reservoir-to-Market Optimisation with NeqSim Process Equipment"
+            )
+            write_notebook(notebook_path, title)
+
+            convert_all_notebooks(examples_dir)
+
+            generated_content = markdown_path.read_text(encoding="utf-8")
+            self.assertIn(
+                f"title: {json.dumps(title, ensure_ascii=False)}",
+                generated_content,
+            )
+            self.assertIn(
+                "field-life depletion, well and flowline hydraulics",
+                generated_content,
+            )
+            self.assertEqual(generated_content.count(f"# {title}"), 1)
+            self.assertNotIn("# process equipmentutl", generated_content)
+            self.assertIn(
+                "docs/examples/process%20equipmentutl.ipynb",
+                generated_content,
+            )
+            self.assertNotIn(
+                "docs/examples/process equipmentutl.ipynb",
+                generated_content,
+            )
 
     def test_converter_keeps_default_metadata_behavior(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -106,6 +137,30 @@ class ConvertNotebooksTest(unittest.TestCase):
             for entry in CURATED_NOTEBOOKS:
                 self.assertIn(entry["title"], generated_content)
                 self.assertIn(entry["path"], generated_content)
+            self.assertNotIn("\n# NeqSim Examples\n", generated_content)
+
+    def test_index_preserves_energy_network_collection_and_source_guide(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            index_path = Path(temp_dir) / "index.md"
+
+            create_examples_index(temp_dir)
+
+            generated_content = index_path.read_text(encoding="utf-8")
+            self.assertIn(
+                "../integration/complete-offshore-process-engineering-study.md",
+                generated_content,
+            )
+            self.assertEqual(
+                generated_content.count(
+                    "examples/notebooks/energy_networks/"
+                ),
+                8,
+            )
+            for notebook_number in ("01_", "02_", "03_", "04_"):
+                self.assertIn(
+                    "energy_networks/" + notebook_number,
+                    generated_content,
+                )
 
     def test_index_uses_metadata_and_encodes_space_in_links(self):
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -90,6 +90,17 @@ public final class EquipmentDesignKernelRegistry {
     register(kernels, new Api521ReliefDesignKernel());
     register(kernels, new Api526OrificeSelectionKernel());
     register(kernels, new Api12JSeparatorDesignKernel());
+    register(kernels, new NorsokM506CorrosionDesignKernel());
+    register(kernels, new Iso5167OrificeMeteringKernel());
+    register(kernels, new DnvRpC203FatigueDesignKernel());
+    register(kernels, new DnvRpF105FreeSpanScreeningKernel());
+    register(kernels, new DnvRpF101CorrodedPipelineScreeningKernel());
+    register(kernels, new DnvRpF104Co2PipelineEnvelopeScreeningKernel());
+    register(kernels, new DnvRpF110GlobalBucklingResponseScreeningKernel());
+    register(kernels, new DnvRpF114PipeSoilInteractionScreeningKernel());
+    register(kernels, new Api2000TankVentingScreeningKernel());
+    register(kernels, new DnvRpF109OnBottomStabilityKernel());
+    register(kernels, new DnvStF101PipelineDesignKernel());
     KERNELS = Collections.unmodifiableMap(kernels);
   }
 

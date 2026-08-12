@@ -564,4 +564,4 @@ See test classes for comprehensive validation:
 - [Differentiable Thermodynamics](differentiable_thermodynamics) — detailed thermodynamic derivatives
 - [MPC Integration Guide](../integration/mpc_integration) — using derivatives for control
 - [AI Platform Integration](../integration/ai_platform_integration) — ML framework integration
-- [MPC Integration Tutorial](../examples/MPC_Integration_Tutorial.ipynb) — interactive examples
+- [MPC Integration Tutorial](https://github.com/equinor/neqsim/blob/master/docs/examples/MPC_Integration_Tutorial.ipynb) — interactive examples

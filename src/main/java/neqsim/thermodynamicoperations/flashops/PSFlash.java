@@ -134,19 +134,36 @@ public class PSFlash extends QfuncFlash {
   public void onPhaseSolve() {
   }
 
+  /**
+   * Check whether K-value warm starts are suitable for the inner TP flashes.
+   *
+   * <p>
+   * Delegates to {@link neqsim.thermo.ThermodynamicModelSettings#isInnerFlashWarmStartSafe} so that every iterative
+   * flash shares one policy. CPA association-site fractions can change strongly with temperature, so reusing K-values
+   * while the PS solver moves through temperature space may increase TP-flash work or bias the iteration path. Cubic
+   * EOS models retain the established warm-start acceleration.
+   * </p>
+   *
+   * @return {@code true} when inner TP flashes may reuse K-values
+   */
+  protected boolean isInnerTpFlashWarmStartSafe() {
+    return neqsim.thermo.ThermodynamicModelSettings.isInnerFlashWarmStartSafe(system);
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run() {
     // First TPflash runs COLD (Wilson initial K) so that stale K from a
     // previous unrelated flash (at different P/T) does not bias the solution.
-    // Then enable K-value warm-start only for subsequent TPflash iterations
-    // within this outer PS-flash loop — safe because the outer loop converges
-    // on T, absorbing inner SS-path differences. Typical speedup: 3-5x.
+    // Then enable K-value warm-start for subsequent TPflash iterations only when
+    // the thermodynamic model is suitable. CPA association terms can make K-values
+    // stale as temperature changes, increasing work in glycol/water calculations.
     boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    boolean useInnerWarmStart = isInnerTpFlashWarmStartSafe();
     try {
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
       tpFlash.run();
-      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(useInnerWarmStart);
 
       if (type == 0) {
         solveQ();

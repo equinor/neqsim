@@ -60,6 +60,13 @@ fix it.
    `uncertainty` percentiles are numeric and ordered
    (`p10 ≤ p50 ≤ p90`) and that any `benchmark_validation` block is
    well-formed — treat those as FAIL if step 1 reported them.
+   Also check the substance, not just the shape: at least three *graded*
+   benchmark comparisons, each against a reference that outranks the model
+   basis; and a converged Monte Carlo (sample count and median drift). The
+   community skills `neqsim-benchmark-reference-data` and
+   `neqsim-uncertainty-quantification` (`equinor/neqsim-community-skills`)
+   expose those checks as `blockers()`; flag a task that hand-rolled the
+   blocks and skipped them.
 
 7. **Repo-memory check.** List any `/memories/repo/*.md` files whose
    filename contains keywords from the task title — flag if none of

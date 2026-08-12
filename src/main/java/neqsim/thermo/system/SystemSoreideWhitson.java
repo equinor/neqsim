@@ -1,5 +1,6 @@
 package neqsim.thermo.system;
 
+import neqsim.thermo.mixingrule.SoreideWhitsonParameterization;
 import neqsim.thermo.phase.PhaseSoreideWhitson;
 
 /**
@@ -11,6 +12,7 @@ import neqsim.thermo.phase.PhaseSoreideWhitson;
 public class SystemSoreideWhitson extends SystemPrEos1978 {
   private static final long serialVersionUID = 1000L;
   private double salinity = 0.0; // salinity in mole/sec
+  private SoreideWhitsonParameterization aqueousCO2Parameterization = SoreideWhitsonParameterization.LEGACY;
 
   /**
    * Default constructor: 298.15 K, 1.0 bara, no solid check.
@@ -151,6 +153,87 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
    */
   public double getSalinity() {
     return this.salinity;
+  }
+
+  /**
+   * Select the Soreide-Whitson binary-interaction parameterization.
+   *
+   * <p>
+   * The default is {@link SoreideWhitsonParameterization#LEGACY}, which preserves historical NeqSim results. Select
+   * {@link SoreideWhitsonParameterization#CHABAB_2019} explicitly for the modified CO2 correlation published by Chabab
+   * et al. (2019), or {@link SoreideWhitsonParameterization#BURGOYNE_NIELSEN_2026} for the 2026 drop-in water-gas
+   * parameter set.
+   *
+   * @param parameterization parameterization to use
+   * @throws IllegalArgumentException if {@code parameterization} is null
+   */
+  public void setSoreideWhitsonParameterization(SoreideWhitsonParameterization parameterization) {
+    if (parameterization == null) {
+      throw new IllegalArgumentException("Soreide-Whitson parameterization cannot be null");
+    }
+    aqueousCO2Parameterization = parameterization;
+    for (int phaseNumber = 0; phaseNumber < phaseArray.length; phaseNumber++) {
+      if (phaseArray[phaseNumber] instanceof PhaseSoreideWhitson) {
+        ((PhaseSoreideWhitson) phaseArray[phaseNumber]).setSoreideWhitsonParameterization(parameterization);
+      }
+    }
+  }
+
+  /**
+   * Select the Soreide-Whitson binary-interaction parameterization by name.
+   *
+   * <p>
+   * This overload is convenient for Python/JPype callers.
+   *
+   * @param parameterizationName {@code LEGACY}, {@code CHABAB_2019}, {@code BURGOYNE_NIELSEN_2026}, or a supported
+   * alias
+   * @throws IllegalArgumentException if the name is null or unsupported
+   */
+  public void setSoreideWhitsonParameterization(String parameterizationName) {
+    setSoreideWhitsonParameterization(SoreideWhitsonParameterization.byName(parameterizationName));
+  }
+
+  /**
+   * Get the selected Soreide-Whitson binary-interaction parameterization.
+   *
+   * @return selected parameterization
+   */
+  public SoreideWhitsonParameterization getSoreideWhitsonParameterization() {
+    return aqueousCO2Parameterization;
+  }
+
+  /**
+   * Select the aqueous CO2-water parameterization using the historical API name.
+   *
+   * @param parameterization parameterization to use
+   */
+  public void setAqueousCO2Parameterization(SoreideWhitsonParameterization parameterization) {
+    setSoreideWhitsonParameterization(parameterization);
+  }
+
+  /**
+   * Select the parameterization by name using the historical API name.
+   *
+   * @param parameterizationName parameterization name
+   */
+  public void setAqueousCO2Parameterization(String parameterizationName) {
+    setSoreideWhitsonParameterization(parameterizationName);
+  }
+
+  /**
+   * Get the parameterization using the historical API name.
+   *
+   * @return selected parameterization
+   */
+  public SoreideWhitsonParameterization getAqueousCO2Parameterization() {
+    return getSoreideWhitsonParameterization();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void clearAll() {
+    super.clearAll();
+    setSoreideWhitsonParameterization(aqueousCO2Parameterization);
   }
 
   /**

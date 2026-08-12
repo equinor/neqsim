@@ -57,9 +57,10 @@ public final class PidHazopStudyRunner {
   private static Map<String, Object> node(ProcessEquipmentInterface equipment, List<PidElement> safeguards) {
     HAZOPTemplate seed = new HAZOPTemplate("HAZOP-" + equipment.getName(),
         "Operate " + equipment.getName()
-            + " within the approved pressure, temperature, flow, level and composition envelope")
-        .generateGrid(HAZOPTemplate.Parameter.FLOW, HAZOPTemplate.Parameter.PRESSURE,
-            HAZOPTemplate.Parameter.TEMPERATURE, HAZOPTemplate.Parameter.LEVEL, HAZOPTemplate.Parameter.COMPOSITION);
+            + " within the approved pressure, temperature, flow, level and composition envelope",
+        equipment.getClass().getSimpleName()).generateGrid(HAZOPTemplate.Parameter.FLOW,
+            HAZOPTemplate.Parameter.PRESSURE, HAZOPTemplate.Parameter.TEMPERATURE, HAZOPTemplate.Parameter.LEVEL,
+            HAZOPTemplate.Parameter.COMPOSITION);
     HAZOPTemplate populated = new HazopConsequenceAutoPopulator().populate(seed);
     List<Map<String, Object>> deviations = new ArrayList<Map<String, Object>>();
     for (HAZOPTemplate.HAZOPDeviation deviation : populated.getDeviations()) {

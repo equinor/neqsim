@@ -34,6 +34,7 @@ jobs:
             run_tests:
               - '**/*.java'
               - '**/*.xml'
+              - '.github/workflows/verify_build.yml'
 
   test_javadoc:
     name: Assert javadoc with Java 21 on Ubuntu
@@ -62,6 +63,7 @@ jobs:
       id-token: write
     runs-on: ${{ matrix.os }}
     needs: test_javadoc
+    timeout-minutes: 60
     strategy:
       fail-fast: true
       matrix:
@@ -84,9 +86,9 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           cache: 'maven'
-      - name: Run tests and generate JaCoCo report
+      - name: Run fast tests and generate JaCoCo report
         if: matrix.verify_jacoco
-        run: mvn -B test -ntp -DexcludedTestGroups= "-Daether.connector.basic.retries=5"
+        run: mvn -B test -ntp -DskipITs "-Daether.connector.basic.retries=5"
       - name: Run fast tests, do not generate JaCoCo report
         if: ${{ !matrix.verify_jacoco }}
         run: mvn -B test -ntp -DskipITs "-Daether.connector.basic.retries=5" "-Djacoco.skip=true"
@@ -112,6 +114,58 @@ jobs:
           name: codecov
           use_oidc: true
           fail_ci_if_error: true
+
+  test_java_slow:
+    name: Assert slow tests (${{ matrix.label }}) with Java 21 on Ubuntu
+    runs-on: ubuntu-latest
+    needs: test_javadoc
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shard: 0
+            label: 1/4
+          - shard: 1
+            label: 2/4
+          - shard: 2
+            label: 3/4
+          - shard: 3
+            label: 4/4
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+          token: ${{ github.token }}
+          fetch-depth: 1
+      - name: Set up Java 21 environment
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+      - name: Run slow-test shard without JaCoCo
+        shell: bash
+        run: |
+          mapfile -t slow_files < <(
+            grep -rl --include='*.java' '@Tag("slow")' src/test/java | sort
+          )
+          selected=()
+          for index in "${!slow_files[@]}"; do
+            if ((index % 4 == ${{ matrix.shard }})); then
+              class_name="${slow_files[$index]#src/test/java/}"
+              class_name="${class_name%.java}"
+              selected+=("${class_name//\//.}")
+            fi
+          done
+          if ((${#selected[@]} == 0)); then
+            echo "No slow tests discovered for shard ${{ matrix.shard }}"
+            exit 1
+          fi
+          test_pattern=$(IFS=,; echo "${selected[*]}")
+          mvn -B test -ntp -Dtest="$test_pattern" -Dgroups=slow \
+            "-DexcludedTestGroups=" "-Daether.connector.basic.retries=5" \
+            "-Djacoco.skip=true"
 
   test_java_8:
     name: Assert tests with Java 8 on Ubuntu

@@ -1,7 +1,7 @@
 package neqsim.process.equipment.capacity;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -14,7 +14,7 @@ import neqsim.process.equipment.pump.PumpInterface;
  * <p>
  * This strategy evaluates pump capacity based on multiple constraints including:
  * <ul>
- * <li>NPSH margin (Net Positive Suction Head)</li>
+ * <li>NPSH headroom (Net Positive Suction Head available minus required), enforced as a minimum</li>
  * <li>Power consumption</li>
  * <li>Speed limits</li>
  * <li>Flow rate limits</li>
@@ -114,7 +114,7 @@ public class PumpCapacityStrategy implements EquipmentCapacityStrategy {
   /** {@inheritDoc} */
   @Override
   public Map<String, CapacityConstraint> getConstraints(ProcessEquipmentInterface equipment) {
-    Map<String, CapacityConstraint> constraints = new HashMap<>();
+    Map<String, CapacityConstraint> constraints = new LinkedHashMap<>();
 
     if (!(equipment instanceof Pump)) {
       return constraints;
@@ -132,23 +132,23 @@ public class PumpCapacityStrategy implements EquipmentCapacityStrategy {
       constraints.put("power", powerConstraint);
     }
 
-    // NPSH margin constraint
+    // NPSH headroom minimum constraint
     double npshAvailable = pump.getNPSHAvailable();
     double npshRequired = pump.getNPSHRequired();
-    double npshMargin = npshAvailable - npshRequired;
     if (npshAvailable > 0 && npshRequired > 0) {
-      CapacityConstraint npshConstraint = new CapacityConstraint("npshMargin").setDesignValue(minNpshMargin)
-          .setMinValue(minNpshMargin).setUnit("m").setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
+      CapacityConstraint npshConstraint = new CapacityConstraint("npshMargin", "m",
+          CapacityConstraint.ConstraintType.HARD).setMinValue(minNpshMargin)
+          .setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
           .setValueSupplier(() -> pump.getNPSHAvailable() - pump.getNPSHRequired());
       constraints.put("npshMargin", npshConstraint);
     }
 
-    // Flow rate constraint (using minimum flow as lower limit)
+    // Flow rate constraint (using the low-flow threshold as lower limit, kg/hr)
     double minFlow = pump.getMinimumFlow();
     if (minFlow > 0 && pump.getInletStream() != null && pump.getInletStream().getThermoSystem() != null) {
-      CapacityConstraint flowConstraint = new CapacityConstraint("flowRate").setMinValue(minFlow).setUnit("m3/hr")
+      CapacityConstraint flowConstraint = new CapacityConstraint("flowRate").setMinValue(minFlow).setUnit("kg/hr")
           .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-          .setValueSupplier(() -> pump.getInletStream().getFlowRate("m3/hr"));
+          .setValueSupplier(() -> pump.getInletStream().getFlowRate("kg/hr"));
       constraints.put("flowRate", flowConstraint);
     }
 

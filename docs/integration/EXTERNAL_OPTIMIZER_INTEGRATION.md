@@ -3,9 +3,7 @@ title: External Optimizer Integration Guide
 description: This guide explains how to use NeqSim's simulation evaluators to integrate process simulations and multi-area process models with external optimization frameworks like Python's SciPy, NLopt, or other optimization libraries.
 ---
 
-# External Optimizer Integration Guide
-
-> **New to process optimization?** Start with the [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW) to understand when to use which optimizer.
+> **New to process optimization?** Start with the [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW.md) to understand when to use which optimizer.
 
 This guide explains how to use NeqSim's simulation evaluators to integrate process simulation with external optimization frameworks like Python's SciPy, NLopt, or other optimization libraries.
 
@@ -13,10 +11,10 @@ This guide explains how to use NeqSim's simulation evaluators to integrate proce
 
 | Document | Description |
 |----------|-------------|
-| [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW) | When to use which optimizer |
-| [Production Optimization Guide](../examples/PRODUCTION_OPTIMIZATION_GUIDE) | ProductionOptimizer examples |
-| [Practical Examples](../process/optimization/PRACTICAL_EXAMPLES) | Code samples |
-| [Capacity Constraint Framework](../process/CAPACITY_CONSTRAINT_FRAMEWORK) | Installed equipment limits and bottleneck detection |
+| [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW.md) | When to use which optimizer |
+| [Production Optimization Guide](../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | ProductionOptimizer examples |
+| [Practical Examples](../process/optimization/PRACTICAL_EXAMPLES.md) | Code samples |
+| [Capacity Constraint Framework](../process/CAPACITY_CONSTRAINT_FRAMEWORK.md) | Installed equipment limits and bottleneck detection |
 
 ## Overview
 
@@ -85,6 +83,25 @@ separation,separator,installedGasCapacity,wells::feed.flowRate,15000,16500,kg/hr
 
 By default, the helper uses explicit installed capacity limits attached directly to equipment. Enable strategy-generated constraints with `setIncludeStrategyCapacityConstraints(true)` when you want generic screening limits to participate in addition to installed design data.
 
+Each throughput row records `minimumConstraint` so engineering-unit margins remain unambiguous.
+For a maximum-directed limit, `capacityMargin = limit - current`; for a minimum-directed limit,
+`capacityMargin = current - limit`. A non-negative margin is therefore feasible in both cases, and
+the reported `designValue` is the applicable finite limit even when the equipment constraint was
+constructed with `setMinValue(...)` only. Each row also carries `dataSource`, copied from the
+underlying `CapacityConstraint`, so Python and external optimizers can distinguish an installed
+data-sheet limit from mechanical-design output, an operating envelope, or an untagged `not_set`
+limit. Preserve this provenance in ranked recommendations and result archives.
+
+Evidence metadata is also snapshotted from the active `CapacityConstraint`. Java rows expose
+`hasConfidence()`, `getConfidence()`, `hasValidityRange()`, `getValidityMinimum()`,
+`getValidityMaximum()`, and `isCurrentValueWithinValidityRange()`. JSON represents unset
+numeric and applicability values as `null`; CSV includes the presence flags and leaves unset
+value cells blank. External and AI optimizers should preserve these diagnostics, require
+engineering review for missing or out-of-range evidence, and must not treat confidence as a
+probability of safety. The fields do not change feasibility or ranking automatically.
+
+`utilizationMargin` remains `1 - utilization` for both directions.
+
 ## Key Concepts
 
 ### Decision Variables (Parameters)
@@ -103,6 +120,33 @@ Process restrictions that must be satisfied:
 - **Upper bound**: g(x) ≤ bound
 - **Range**: lower ≤ g(x) ≤ upper
 - **Equality**: g(x) = target ± tolerance
+
+For both `ProcessSimulationEvaluator` and `ProcessModelSimulationEvaluator`, one completed
+`evaluate(...)` call samples each objective and constraint callback exactly once after the
+simulation. Raw and sign-adjusted objectives, plus constraint values, margins, feasibility, and
+penalties, are derived from those same scalar samples. This matters when result extraction includes
+costly reporting or serialization and prevents inconsistent fields when a callback reads mutable
+diagnostics. Callbacks should nevertheless remain side-effect free.
+
+## Converting Constraints to the Internal Optimizer
+
+Use the plural conversion when a `ConstraintDefinition` is passed to `ProductionOptimizer`:
+
+```java
+List<ProductionOptimizer.OptimizationConstraint> internalConstraints =
+    externalConstraint.toOptimizationConstraints();
+```
+
+A lower or upper bound produces one immutable-list element. A range produces `name_lower` and
+`name_upper`; an equality target produces the equivalent `target - tolerance` lower side and
+`target + tolerance` upper side. Each generated side keeps the source evaluator, hard/soft
+severity, and penalty weight.
+
+The singular `toOptimizationConstraint()` method remains available for compatibility. It is
+lossless only for one-sided constraints; for range and equality types it retains the historical
+upper-side-only behavior. Do not use that method for operating envelopes, product-quality bands,
+equipment turndown ranges, or market-nomination tolerances. Treat lower- and upper-side
+sensitivities separately because only one side can normally be active at a given operating point.
 
 ## Java Setup
 
@@ -131,30 +175,31 @@ evaluator.addConstraintUpperBound("maxTemperature",
     80.0);
 ```
 
-## Python Integration with JPype
+## Python integration through neqsim-python
 
 ### Installation
 
 ```bash
-pip install jpype1 scipy numpy
+pip install neqsim scipy numpy
 ```
 
-### Basic Setup
+### Basic setup
+
+The public `neqsim` package starts and configures the Java gateway. Do not start a second JVM or
+assume that a local NeqSim JAR file exists.
 
 ```python
-import jpype
-import jpype.imports
 import numpy as np
-from scipy.optimize import minimize, differential_evolution
+from scipy.optimize import differential_evolution, minimize
+from neqsim import jneqsim
 
-# Start JVM with NeqSim
-jpype.startJVM(classpath=['neqsim.jar'])
-
-from neqsim.process.util.optimizer import ProcessSimulationEvaluator
-from neqsim.process.processmodel import ProcessSystem
-from neqsim.process.equipment.stream import Stream
-from neqsim.process.equipment.valve import ThrottlingValve
-from neqsim.thermo.system import SystemSrkEos
+ProcessSimulationEvaluator = (
+    jneqsim.process.util.optimizer.ProcessSimulationEvaluator
+)
+ProcessSystem = jneqsim.process.processmodel.ProcessSystem
+Stream = jneqsim.process.equipment.stream.Stream
+ThrottlingValve = jneqsim.process.equipment.valve.ThrottlingValve
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
 ```
 
 ### Creating the Process
@@ -356,44 +401,15 @@ x_opt = opt.optimize(evaluator.getInitialValues())
 
 ## Using with Pyomo
 
-```python
-from pyomo.environ import *
+An ordinary Pyomo `Objective(rule=...)` or `Constraint(rule=...)` must build a symbolic
+expression. Reading `.value` from Pyomo variables inside those rules and immediately calling
+NeqSim evaluates only the construction-time values; it does not create a live connection that
+Pyomo can differentiate or re-evaluate while solving.
 
-def create_pyomo_model():
-    """Create a Pyomo model that calls NeqSim evaluator"""
-    model = ConcreteModel()
-
-    # Get bounds from evaluator
-    n = evaluator.getParameterCount()
-    bounds_array = evaluator.getBounds()
-
-    # Decision variables
-    model.x = Var(range(n),
-                  bounds=lambda m, i: (bounds_array[i][0], bounds_array[i][1]))
-
-    # Initialize
-    x0 = evaluator.getInitialValues()
-    for i in range(n):
-        model.x[i] = x0[i]
-
-    # External function for objective
-    def obj_rule(m):
-        x = [m.x[i].value for i in range(n)]
-        return evaluator.evaluateObjective(x)
-
-    model.obj = Objective(rule=obj_rule, sense=minimize)
-
-    # External constraints (simplified approach)
-    def constraint_rule(m, j):
-        x = [m.x[i].value for i in range(n)]
-        margins = evaluator.getConstraintMargins(x)
-        return margins[j] >= 0
-
-    model.constraints = Constraint(range(evaluator.getConstraintCount()),
-                                    rule=constraint_rule)
-
-    return model
-```
+NeqSim does not currently provide a maintained Pyomo `ExternalFunction` or PyNumero callback
+adapter. Use the SciPy or NLopt black-box patterns above, or implement and validate a dedicated
+Pyomo external-function bridge with explicit value, gradient, lifecycle, and failure handling.
+Do not present a construction-time numeric callback as a Pyomo optimization model.
 
 ## Advanced Features
 
@@ -410,17 +426,18 @@ evaluator.addParameterWithSetter(
 )
 ```
 
-### Caching for Expensive Evaluations
+### Evaluation accounting
 
-The evaluator tracks evaluation count and can be configured for caching:
+`ProcessSimulationEvaluator` counts evaluation attempts:
 
 ```python
-# Check evaluation statistics
 print(f"Total evaluations: {evaluator.getEvaluationCount()}")
-
-# Reset counter
 evaluator.resetEvaluationCount()
 ```
+
+These methods measure work; they do not enable result caching. Add caching in the external
+optimizer only when the complete parameter vector, model identity, operating case, and mutable
+process state are part of a safe cache key.
 
 ### Gradient Configuration
 
@@ -429,8 +446,140 @@ evaluator.resetEvaluationCount()
 evaluator.setFiniteDifferenceStep(1e-6)
 
 # Use relative step size
-evaluator.setUseRelativeStep(True)  # step = h * |x_i| + h
+evaluator.setUseRelativeStep(True)  # step = h * max(|x_i|, 1)
+
+# Optional second-order stencil for smooth interior operating points
+FiniteDifferenceMethod = jneqsim.process.util.optimizer.ProcessModelSimulationEvaluator.FiniteDifferenceMethod
+evaluator.setFiniteDifferenceMethod(FiniteDifferenceMethod.CENTRAL)
 ```
+
+`ProcessModelSimulationEvaluator` keeps `FORWARD` as the default because it requires only one
+perturbed simulation per parameter. Both objective gradients and constraint Jacobians use the
+actual perturbation remaining inside each parameter's bounds; they no longer divide by a requested
+step that was partly removed by bound clamping. `CENTRAL` uses symmetric in-bounds points when both
+directions are available and falls back to a one-sided difference at an active bound. A fixed
+parameter has zero derivative because it has no feasible perturbation direction. Treat either
+finite-difference result as a local sensitivity, not as an optimizer-independent shadow price, and
+check step-size stability before using it to rank debottlenecking value.
+
+For a reusable quality record, run the coarse step and one halved step through the combined
+objective/constraint API:
+
+```python
+quality_result = evaluator.estimateSensitivitiesWithQuality(x)
+gradient = quality_result.getObjectiveGradient()
+jacobian = quality_result.getConstraintJacobian()
+
+objective = quality_result.getObjectiveSnapshot()
+print(
+    objective.getName(),
+    objective.getDirection(),
+    objective.getUnit(),
+    objective.getBaseRawValue(),
+    objective.getGradient(),
+)
+
+for parameter in quality_result.getParameterSnapshots():
+    print(
+        parameter.getIndex(),
+        parameter.getName(),
+        parameter.getAddress(),
+        parameter.getUnit(),
+        parameter.getBaseValue(),
+    )
+
+for constraint in quality_result.getConstraintSnapshots():
+    print(
+        constraint.getIndex(),
+        constraint.getName(),
+        constraint.getType(),
+        constraint.getUnit(),
+        constraint.getBaseMargin(),
+        constraint.getMarginGradient(),
+        constraint.getAreaName(),
+        constraint.getEquipmentName(),
+    )
+
+for parameter_quality in quality_result.getParameterQuality():
+    print(
+        parameter_quality.getParameterName(),
+        parameter_quality.getStencil(),
+        parameter_quality.getCoarseStep(),
+        parameter_quality.getFineStep(),
+        parameter_quality.getMaximumRelativeDisagreement(),
+        parameter_quality.isAllEvaluationsConverged(),
+        parameter_quality.isAllEvaluationsFeasible(),
+    )
+```
+
+`estimateSensitivitiesWithQuality(...)` returns the fine-step derivatives and preserves an
+immutable record for every perturbation: signed applied step, actual parameter value, process
+convergence, hard-constraint feasibility, and evaluation error. Its relative disagreement is
+`abs(D_h - D_h/2) / max(abs(D_h), abs(D_h/2))`, or zero when both derivatives are zero. Use
+`isNumericallyStable(tolerance)` with a tolerance justified for the engineering decision. The
+method needs four perturbed simulations per interior central parameter and two per one-sided
+parameter, while a fixed parameter needs none; objective and constraint derivatives reuse those
+same simulations. Existing `estimateGradient(...)` and `estimateConstraintJacobian(...)` remain
+the lower-cost APIs.
+
+The same result snapshots the derivative identities at the base point. Parameter snapshots retain
+registration index, name, automation address, unit, bounds, and the bounded value actually
+evaluated. The objective snapshot retains direction, unit, weight, raw and minimizer-convention
+base values, and the gradient. Each constraint snapshot retains type, unit, hard/soft flag,
+penalty, bounds or tolerance, capacity area/equipment origin, sampled base value, margin, and its
+Jacobian row. These records are immutable and serializable, so later evaluator mutations or
+process runs cannot silently relabel archived sensitivities. Raw margins and derivatives keep
+their declared units; do not compare or rank unlike constraints without explicit engineering
+scaling.
+
+Convergence and numerical agreement are necessary but not sufficient. Inspect perturbation
+feasibility separately, test nearby operating points, and reject or qualify sensitivities that
+cross equipment/control regimes. An infeasible perturbation is retained as evidence rather than
+silently invalidating a constraint-margin derivative.
+
+Use an explicit qualification policy before passing local derivatives into a bottleneck or
+operating-action workflow:
+
+```python
+Policy = (
+    jneqsim.process.util.optimizer.ProcessModelSimulationEvaluator
+    .SensitivityQualificationPolicy
+)
+
+# Requires a feasible base and feasible perturbations. One-sided bounded stencils are allowed.
+strict_policy = Policy.strict(0.05)
+assessments = quality_result.assessConstraintSensitivities(strict_policy)
+
+for assessment in assessments:
+    print(
+        assessment.getConstraint().getName(),
+        assessment.getParameter().getName(),
+        assessment.getRawObjectiveDerivative(),
+        assessment.getRawObjectiveDerivativeUnit(),
+        assessment.getMarginDerivative(),
+        assessment.getMarginDerivativeUnit(),
+        assessment.isAccepted(),
+        list(assessment.getEvidenceFlags()),
+        list(assessment.getRejectionReasons()),
+        list(assessment.getDiagnostics()),
+    )
+
+accepted = quality_result.getAcceptedConstraintSensitivities(strict_policy)
+```
+
+Qualification performs no additional process evaluations. Every assessment binds one constraint
+row and parameter column to the immutable snapshots, reports both raw and minimizer-convention
+objective derivatives, and retains the exact stencil plus objective and constraint coarse/fine
+disagreements. Convergence failures, evaluation errors, non-finite derivatives, unstable
+refinement, and fixed parameters always reject a pair. The policy explicitly controls whether
+base or perturbation infeasibility and one-sided stencils reject it. Even when allowed, these
+conditions remain visible in `getEvidenceFlags()` and the diagnostics.
+
+`Policy.numericalOnly(tolerance)` is useful for diagnosing a violated or boundary-crossing case,
+but acceptance under that policy is numerical evidence only. It is not engineering approval.
+Results remain in declared units and are intentionally not ranked across constraints. Explicit
+scaling, regime validation, active-set logic, and optimizer-specific KKT evidence are separate
+requirements.
 
 ### Export Problem Definition
 
@@ -446,33 +595,36 @@ print("Objectives:", problem['objectives'])
 print("Constraints:", problem['constraints'])
 ```
 
-### Process Cloning for Thread Safety
+### Process cloning and parallel evaluation
 
-For parallel evaluations (e.g., with Dask or multiprocessing):
+Only `ProcessSimulationEvaluator` exposes `setCloneForEvaluation(true)`. It clones the
+`ProcessSystem` used for an evaluation so the registered base process is not mutated by that
+call:
 
 ```python
-# Enable process cloning for thread safety
 evaluator.setCloneForEvaluation(True)
 ```
+
+This switch does not make one evaluator instance safe for concurrent calls: counters, last-result
+state, and registered definitions remain mutable. Use one evaluator and one JVM-owned process
+model per worker, and validate deterministic equivalence before parallel production studies.
 
 ## Complete Example: Gas Processing Optimization
 
 ```python
-import jpype
-import jpype.imports
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import minimize
-import matplotlib.pyplot as plt
+from neqsim import jneqsim
 
-# Start JVM
-jpype.startJVM(classpath=['neqsim.jar'])
-
-from neqsim.process.util.optimizer import ProcessSimulationEvaluator
-from neqsim.process.processmodel import ProcessSystem
-from neqsim.process.equipment.stream import Stream
-from neqsim.process.equipment.compressor import Compressor
-from neqsim.process.equipment.cooler import Cooler
-from neqsim.thermo.system import SystemSrkEos
+ProcessSimulationEvaluator = (
+    jneqsim.process.util.optimizer.ProcessSimulationEvaluator
+)
+ProcessSystem = jneqsim.process.processmodel.ProcessSystem
+Stream = jneqsim.process.equipment.stream.Stream
+Compressor = jneqsim.process.equipment.compressor.Compressor
+Cooler = jneqsim.process.equipment.cooler.Cooler
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
 
 # Create process
 fluid = SystemSrkEos(273.15 + 30.0, 20.0)
@@ -579,6 +731,18 @@ jpype.shutdownJVM()
 | `getInitialValues()` | Get initial parameter values |
 | `toJson()` | Export problem definition |
 
+### ProcessModelSimulationEvaluator
+
+| Method | Description |
+|--------|-------------|
+| `estimateSensitivitiesWithQuality(double[] x)` | Primary-objective fine-step gradient and constraint-margin Jacobian, plus immutable parameter/objective/constraint identity, base values, capacity origin, perturbation convergence, feasibility, and step-halving evidence |
+| `estimateSensitivitiesWithQuality(double[] x, int objectiveIndex)` | The same evidence for the selected registered objective |
+| `SensitivityQualityResult.assessConstraintSensitivities(policy)` | Immutable evidence and acceptance/rejection diagnostics for every constraint/parameter pair; performs no process evaluations |
+| `SensitivityQualityResult.getAcceptedConstraintSensitivities(policy)` | Accepted local pairs only; inspect the full assessment list to retain rejected evidence |
+
+The sensitivity-quality methods belong to `ProcessModelSimulationEvaluator`; they are not methods
+on `ProcessSimulationEvaluator`.
+
 ### EvaluationResult
 
 | Method | Description |
@@ -596,7 +760,7 @@ jpype.shutdownJVM()
 
 ## See Also
 
-- [OPTIMIZER_PLUGIN_ARCHITECTURE.md](../process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE) - Plugin architecture for equipment-specific optimization
-- [flow-rate-optimization.md](../process/optimization/flow-rate-optimization) - FlowRateOptimizer for lift curve generation
-- [pressure_boundary_optimization.md](../process/pressure_boundary_optimization) - Simplified pressure boundary optimizer
-- [PRODUCTION_OPTIMIZATION_GUIDE.md](../examples/PRODUCTION_OPTIMIZATION_GUIDE) - Complete production optimization examples
+- [OPTIMIZER_PLUGIN_ARCHITECTURE.md](../process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md) - Plugin architecture for equipment-specific optimization
+- [flow-rate-optimization.md](../process/optimization/flow-rate-optimization.md) - FlowRateOptimizer for lift curve generation
+- [pressure_boundary_optimization.md](../process/pressure_boundary_optimization.md) - Simplified pressure boundary optimizer
+- [PRODUCTION_OPTIMIZATION_GUIDE.md](../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) - Complete production optimization examples

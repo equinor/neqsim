@@ -2,8 +2,10 @@ package neqsim.process.fielddevelopment.tieback;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 import neqsim.process.fielddevelopment.evaluation.BottleneckAnalyzer;
 import neqsim.process.fielddevelopment.evaluation.BottleneckAnalyzer.BottleneckResult;
+import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
@@ -124,6 +126,9 @@ public class HostFacility implements Serializable {
 
   /** Optional detailed process model for capacity analysis. */
   private transient ProcessSystem processSystem;
+
+  /** Optional detailed multi-area process model for capacity analysis. */
+  private transient ProcessModel processModel;
 
   // ============================================================================
   // ENUMS
@@ -247,9 +252,9 @@ public class HostFacility implements Serializable {
    * Assesses whether the host can accept additional production.
    *
    * <p>
-   * The method first checks the explicit nameplate spare capacities. If a detailed {@link ProcessSystem} is attached,
-   * it also runs {@link BottleneckAnalyzer} and flags active process bottlenecks that could make the nameplate spare
-   * capacity misleading.
+   * The method first checks the explicit nameplate spare capacities. If a detailed {@link ProcessSystem} or
+   * {@link ProcessModel} is attached, it also runs the simulation and flags active process bottlenecks that could make
+   * the nameplate spare capacity misleading.
    * </p>
    *
    * @param additionalGasMSm3d additional gas rate in MSm3/d
@@ -272,7 +277,31 @@ public class HostFacility implements Serializable {
     int activeBottleneckCount = 0;
     String processMessage = "No process model attached";
 
-    if (processSystem != null) {
+    if (processModel != null) {
+      processModelUsed = true;
+      try {
+        processModel.run();
+        neqsim.process.equipment.capacity.BottleneckResult primary = processModel.findBottleneck();
+        Map<String, Double> utilizationSummary = processModel.getCapacityUtilizationSummary();
+        for (Double utilizationPercent : utilizationSummary.values()) {
+          if (utilizationPercent != null && utilizationPercent.doubleValue() >= 95.0) {
+            activeBottleneckCount++;
+          }
+        }
+        if (primary != null && primary.hasBottleneck()) {
+          primaryBottleneckName = getAreaQualifiedBottleneckName(primary);
+          primaryBottleneckUtilization = primary.getUtilization();
+          processOk = primary.getUtilization() < 0.95 && !processModel.isAnyHardLimitExceeded();
+          processMessage = String.format("Primary process bottleneck %s at %.0f%% utilization", primaryBottleneckName,
+              primary.getUtilizationPercent());
+        } else {
+          processMessage = "Process model has no enabled capacity constraints";
+        }
+      } catch (Exception e) {
+        processOk = false;
+        processMessage = "Process model capacity check failed: " + e.getMessage();
+      }
+    } else if (processSystem != null) {
       processModelUsed = true;
       try {
         processSystem.run();
@@ -303,6 +332,22 @@ public class HostFacility implements Serializable {
         additionalGasMSm3d, getSpareGasCapacity(), additionalOilBopd, getSpareOilCapacity(), additionalWaterM3d,
         getSpareWaterCapacity(), additionalLiquidM3d, getSpareLiquidCapacity(), primaryBottleneckName,
         primaryBottleneckUtilization, activeBottleneckCount, summary);
+  }
+
+  /**
+   * Finds the area-qualified name of a ProcessModel bottleneck by equipment identity.
+   *
+   * @param bottleneck plant-wide bottleneck result
+   * @return {@code area::equipment}, or the equipment name when its area cannot be resolved
+   */
+  private String getAreaQualifiedBottleneckName(neqsim.process.equipment.capacity.BottleneckResult bottleneck) {
+    for (String areaName : processModel.getProcessSystemNames()) {
+      ProcessSystem area = processModel.get(areaName);
+      if (area.getUnit(bottleneck.getEquipmentName()) == bottleneck.getEquipment()) {
+        return areaName + "::" + bottleneck.getEquipmentName();
+      }
+    }
+    return bottleneck.getEquipmentName();
   }
 
   /**
@@ -648,6 +693,35 @@ public class HostFacility implements Serializable {
    */
   public void setProcessSystem(ProcessSystem processSystem) {
     this.processSystem = processSystem;
+    if (processSystem != null) {
+      this.processModel = null;
+    }
+  }
+
+  /**
+   * Gets the associated multi-area process model.
+   *
+   * @return process model or null
+   */
+  public ProcessModel getProcessModel() {
+    return processModel;
+  }
+
+  /**
+   * Sets the associated multi-area process model.
+   *
+   * <p>
+   * A host has one detailed simulation basis. Setting a non-null model clears any previously attached
+   * {@link ProcessSystem}; setting a non-null process system likewise clears this model.
+   * </p>
+   *
+   * @param processModel multi-area process model for detailed analysis
+   */
+  public void setProcessModel(ProcessModel processModel) {
+    this.processModel = processModel;
+    if (processModel != null) {
+      this.processSystem = null;
+    }
   }
 
   /**
@@ -1112,6 +1186,17 @@ public class HostFacility implements Serializable {
      */
     public Builder processSystem(ProcessSystem processSystem) {
       facility.setProcessSystem(processSystem);
+      return this;
+    }
+
+    /**
+     * Sets the associated multi-area process model.
+     *
+     * @param processModel process model for plant-wide capacity analysis
+     * @return this builder
+     */
+    public Builder processModel(ProcessModel processModel) {
+      facility.setProcessModel(processModel);
       return this;
     }
 

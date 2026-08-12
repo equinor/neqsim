@@ -2,7 +2,6 @@ package neqsim.process.dynamics;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
@@ -47,7 +46,7 @@ class IntegratorsAndSchedulerTest {
   @Test
   void bdfMatchesAnalyticForStiffStep() {
     // BDF (implicit Euler) handles a much larger step than explicit Euler would tolerate.
-    IntegratorStrategy bdf = new BDFIntegrator();
+    BDFIntegrator bdf = new BDFIntegrator();
     double k = 100.0; // stiff
     double x = 1.0;
     double t = 0.0;
@@ -60,8 +59,38 @@ class IntegratorsAndSchedulerTest {
     // Implicit Euler is monotone-stable; reading at t=1.0 should be a small positive number.
     assertTrue(x > 0.0, "implicit Euler must remain positive for monotone decay, got " + x);
     assertTrue(x < 1.0e-3, "implicit Euler should have decayed below 1e-3, got " + x);
-    assertFalse(((BDFIntegrator) bdf).lastStepFellBack(),
-        "BDF should converge on linear decay, not fall back to explicit");
+    assertTrue(bdf.lastStepConverged(), "BDF should report the implicit Newton solve as converged");
+    assertFalse(bdf.lastStepFellBack(), "BDF should converge on linear decay, not fall back to explicit");
+    assertTrue(bdf.getLastNewtonIterations() > 0);
+    assertTrue(bdf.getLastResidual() <= bdf.getTolerance());
+  }
+
+  @Test
+  void bdfNonConvergenceFailsLoudUnlessFallbackIsExplicitlyEnabled() {
+    IntegratorStrategy.Slope nonlinear = new IntegratorStrategy.Slope() {
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      public double dxdt(double time, double state) {
+        return state * state;
+      }
+    };
+    BDFIntegrator bdf = new BDFIntegrator(1.0e-12, 1, 1.0e-6);
+
+    IllegalStateException failure = assertThrows(IllegalStateException.class, () -> bdf.step(0.0, 1.0, nonlinear, 0.1));
+    assertTrue(failure.getMessage().contains("did not converge"));
+    assertTrue(failure.getMessage().contains("dt=0.1 s"));
+    assertFalse(bdf.lastStepConverged());
+    assertFalse(bdf.lastStepFellBack());
+    assertEquals(1, bdf.getLastNewtonIterations());
+    assertTrue(Double.isFinite(bdf.getLastResidual()));
+
+    bdf.setExplicitEulerFallbackEnabled(true);
+    assertTrue(bdf.isExplicitEulerFallbackEnabled());
+    double fallback = bdf.step(0.0, 1.0, nonlinear, 0.1);
+    assertEquals(1.1, fallback, 1.0e-12);
+    assertFalse(bdf.lastStepConverged(), "an Euler compatibility fallback is not a converged BDF step");
+    assertTrue(bdf.lastStepFellBack());
   }
 
   @Test
@@ -85,6 +114,7 @@ class IntegratorsAndSchedulerTest {
     assertThrows(IllegalArgumentException.class, () -> bdf.step(0.0, 1.0, null, 0.1));
     assertThrows(IllegalArgumentException.class, () -> bdf.step(0.0, 1.0, d, 0.0));
     assertThrows(IllegalArgumentException.class, () -> bdf.step(0.0, 1.0, d, -0.1));
+    assertThrows(IllegalArgumentException.class, () -> bdf.step(0.0, 1.0, d, Double.POSITIVE_INFINITY));
     assertThrows(IllegalArgumentException.class, () -> new BDFIntegrator(0.0, 10, 1e-6));
     assertThrows(IllegalArgumentException.class, () -> new BDFIntegrator(1e-8, 0, 1e-6));
     assertThrows(IllegalArgumentException.class, () -> new BDFIntegrator(1e-8, 10, 0.0));
@@ -150,17 +180,27 @@ class IntegratorsAndSchedulerTest {
   }
 
   @Test
-  void eventSchedulerSwallowsExceptions() {
+  void eventSchedulerFailsLoudAndLeavesFailedEventPending() {
     EventScheduler sched = new EventScheduler();
+    final int[] laterEventRuns = new int[] { 0 };
     sched.scheduleEvent(1.0, "bad", new Runnable() {
       @Override
       public void run() {
-        throw new RuntimeException("boom");
+        throw new IllegalStateException("boom");
       }
     });
-    // Should not throw; should still log as fired.
-    assertEquals(1, sched.fireDueEvents(2.0));
-    assertEquals(1, sched.getFiredEvents().size());
-    assertNotNull(sched.getFiredEvents().get(0));
+    sched.scheduleEvent(1.5, "later", new Runnable() {
+      @Override
+      public void run() {
+        laterEventRuns[0]++;
+      }
+    });
+
+    IllegalStateException failure = assertThrows(IllegalStateException.class, () -> sched.fireDueEvents(2.0));
+    assertEquals("boom", failure.getMessage());
+    assertEquals(2, sched.getPendingEvents().size(), "failed event and later events must remain pending");
+    assertEquals("bad", sched.getPendingEvents().get(0).getLabel());
+    assertEquals(0, sched.getFiredEvents().size(), "failed actions are not recorded as successfully fired");
+    assertEquals(0, laterEventRuns[0], "later due events must not execute after an earlier failure");
   }
 }

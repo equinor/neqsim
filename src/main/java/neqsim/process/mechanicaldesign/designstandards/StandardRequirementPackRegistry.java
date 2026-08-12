@@ -106,9 +106,61 @@ public final class StandardRequirementPackRegistry {
             capability("shell-and-tube-design", Kind.CALCULATION_SCREENING,
                 "neqsim.process.mechanicaldesign.heatexchanger.ShellAndTubeDesignCalculator",
                 "Thermal and mechanical screening; full datasheet and vendor conformity are excluded.")));
-    register(packs, pack(StandardType.DNV_ST_F101, capability("pipeline-mechanical-design", Kind.CALCULATION_SCREENING,
-        "neqsim.process.mechanicaldesign.pipeline.PipeMechanicalDesignCalculator",
-        "Pressure-containment screening; load cases, safety classes, fabrication, and installation checks are incomplete.")));
+    register(packs, pack(StandardType.DNV_RP_F104, capability("co2-phase-behaviour", Kind.CALCULATION_SCREENING,
+        "neqsim.thermodynamicoperations.ThermodynamicOperations",
+        "Property and phase calculations only; project composition, EOS validation, phase margins, and acceptance remain external."),
+        capability("co2-pipeline-hydraulics", Kind.CALCULATION_SCREENING,
+            "neqsim.process.equipment.pipeline.PipeBeggsAndBrills",
+            "Hydraulic and thermal simulation only; CO2-specific validation, transients, and F104 acceptance remain external."),
+        capability("dense-co2-corrosion", Kind.CALCULATION_SCREENING, "neqsim.process.corrosion.DensePhaseCO2Corrosion",
+            "Legacy heuristic impurity/free-water screen only; embedded typical limits are not F104 criteria or conformity evidence."),
+        capability("pipeline-mechanical-design", Kind.CALCULATION_SCREENING,
+            "neqsim.process.mechanicaldesign.pipeline.PipeMechanicalDesignCalculator",
+            "Preliminary pressure-containment screening only; DNV-ST-F101 load cases and F104 integrity requirements remain external."),
+        capability("impurity-monitoring", Kind.CALCULATION_SCREENING,
+            "neqsim.process.measurementdevice.ImpurityMonitor",
+            "Modelled composition monitoring only; sampling, analyser performance, specifications, and operating response remain external."),
+        capability("release-consequence", Kind.CALCULATION_SCREENING,
+            "neqsim.process.safety.dispersion.GasDispersionAnalyzer",
+            "Generic dispersion analysis only; CO2 release thermodynamics, terrain, exposure, emergency response, and QRA remain external.")));
+    register(packs, pack(StandardType.DNV_RP_F110, capability("pipeline-operating-profile", Kind.CALCULATION_SCREENING,
+        "neqsim.process.equipment.pipeline.TwoFluidPipe",
+        "Hydraulic and thermal profiles only; effective axial force and global structural response remain external."),
+        capability("pipeline-route-segmentation", Kind.CALCULATION_SCREENING,
+            "neqsim.process.fielddevelopment.network.TiebackRouteNetwork",
+            "Route structure only; as-laid imperfections, triggers, buckle spacing, and structural boundaries remain external."),
+        capability("pipe-soil-resistance-screen", Kind.CALCULATION_SCREENING,
+            "neqsim.process.engineering.calculation.DnvRpF114PipeSoilInteractionScreeningKernel",
+            "Caller-controlled F114 demand/resistance margins only; global model springs and F110 response remain external."),
+        capability("pipeline-mechanical-design", Kind.CALCULATION_SCREENING,
+            "neqsim.process.mechanicaldesign.pipeline.PipeMechanicalDesignCalculator",
+            "Preliminary pressure-containment screening only; ST-F101 local capacity, fatigue, and F110 response remain external.")));
+    register(packs, pack(StandardType.DNV_RP_F114, capability("pipeline-route-segmentation", Kind.CALCULATION_SCREENING,
+        "neqsim.process.fielddevelopment.network.TiebackRouteNetwork",
+        "Route and segment representation only; geotechnical units, survey coverage, and spatial variability remain external."),
+        capability("pipeline-operating-profile", Kind.CALCULATION_SCREENING,
+            "neqsim.process.equipment.pipeline.TwoFluidPipe",
+            "Hydraulic and thermal profiles only; structural design actions and pipe-soil response remain external."),
+        capability("burial-thermal-environment", Kind.CALCULATION_SCREENING,
+            "neqsim.fluidmechanics.geometrydefinitions.surrounding.PipeSurroundingEnvironment",
+            "Burial depth and soil thermal resistance only; this is not a geotechnical resistance model."),
+        capability("pipeline-mechanical-design", Kind.CALCULATION_SCREENING,
+            "neqsim.process.mechanicaldesign.pipeline.PipeMechanicalDesignCalculator",
+            "Preliminary pressure-containment screening only; F114 interaction actions and ST-F101 checks remain external.")));
+    register(packs,
+        pack(StandardType.DNV_RP_F109,
+            capability("on-bottom-stability", Kind.CALCULATION_SCREENING,
+                "neqsim.process.engineering.calculation.DnvRpF109OnBottomStabilityKernel",
+                "Typed vertical, absolute-static lateral, and external-response displacement screening; "
+                    + "environmental statistics, soil-model qualification, and conformity approval remain external.")));
+    register(packs,
+        pack(StandardType.DNV_ST_F101,
+            capability("pipeline-mechanical-design", Kind.CALCULATION_SCREENING,
+                "neqsim.process.engineering.calculation.DnvStF101PipelineDesignKernel",
+                "Typed 2021 screening for pressure containment, collapse, propagation buckling, "
+                    + "load interaction, fatigue, pressure cases, derating, safety class, ovality, "
+                    + "fabrication route, and installation strain; clause-complete conformity and "
+                    + "engineering approval remain external.")));
     PACKS = Collections.unmodifiableMap(packs);
   }
 

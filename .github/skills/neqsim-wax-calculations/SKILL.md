@@ -196,8 +196,11 @@ wax_weight_fractions = list(wax.getWaxWeightFractions())
 | Symptom | Likely Cause | Fix |
 | --- | --- | --- |
 | No wax phase appears | Wax phase not added or wax check disabled | Add `addSolidComplexPhase("wax")`, enable `setMultiphaseWaxCheck(true)`, and rerun |
+| `NullPointerException: ... getPhases()[5] is null` from `calcWAT()` | `addSolidComplexPhase("wax")` was never called, so the wax phase slot does not exist | Follow the full setup order in "Wax Fluid Setup"; `addTBPWax()` alone does not create the phase |
+| `ArrayIndexOutOfBoundsException: Index -3` in `Characterise.characterisePlusFraction` | Plus-fraction name contains `+` (e.g. `"C36+"`) — the carbon number cannot be parsed | Drop the `+`: use `addPlusFraction("C36", ...)` |
 | WAT is unrealistically low | Heavy-end characterization is too light or missing n-paraffins | Review TBP cuts, plus-fraction molar mass, density, and wax model parameters |
 | WAT calculation fails | Search range or initial fluid state is poor | Use `WaxCurveCalculator` over a broad temperature range and inspect failed flashes |
+| `calcWAT()` throws `molarVolumeAnalytical - compressibility factor is NaN`, or `WaxCurveCalculator` returns `NaN` WAT | Synthetic/hand-built heavy end with no n-paraffin distribution — the wax model has nothing physical to solve against | Do **not** substitute a guessed WAT. Report it as a lab-data gap and require a measured WAT/DSC or a real PVTsim/E300 characterization |
 | Wax fraction decreases when cooling | Numerical flash artifact | Use monotonicity-enforced `WaxCurveCalculator` output and record correction count |
 | Python notebook sees old API | Installed neqsim package is stale | Use the devtools setup cell with workspace classes or rebuild/package the JAR |
 

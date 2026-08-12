@@ -47,73 +47,32 @@ jobs:
           from pathlib import Path
           import nbformat
 
+          workspace_setup = '''get_ipython().run_line_magic("matplotlib", "inline")
+          import os
+          import sys
+          from pathlib import Path
+
+          import jpype
+
+          PROJECT_ROOT = Path(os.environ["NEQSIM_PROJECT_ROOT"]).resolve()
+          sys.path.insert(0, str(PROJECT_ROOT / "devtools"))
+          from neqsim_dev_setup import neqsim_init
+
+          neqsim_init(
+              project_root=PROJECT_ROOT,
+              recompile=False,
+              verbose=True,
+          )
+          jneqsim = jpype.JPackage("neqsim")
+          JClass = jpype.JClass
+          print("NeqSim workspace classes loaded")'''
+
           for path in sorted(Path('examples/notebooks/energy_networks').glob('*.ipynb')):
               notebook = nbformat.read(path, as_version=4)
-              first_code = True
-              for cell in notebook.cells:
-                  if cell.cell_type == 'code' and first_code:
-                      inline = 'get_ipython().run_line_magic("matplotlib", "inline")'
-                      if inline not in cell.source:
-                          cell.source = inline + '\n' + cell.source
-                      first_code = False
-
-              if path.name.startswith('01_'):
-                  notebook.cells[0].source = notebook.cells[0].source.replace(
-                      '**Implementation dependencies:** Energy Networks v3 and PR #2613 for optional minimum-cost/minimum-emissions strategies.',
-                      '**Implementation dependencies:** merged Energy Networks v3 baseline PR #2603 and dispatch PR #2613.'
-                  )
-
-              if path.name.startswith('04_'):
-                  for cell in notebook.cells:
-                      if cell.cell_type != 'code':
-                          continue
-                      if 'result = OffshoreEnergyReferenceCase.run24HourCase()' in cell.source:
-                          cell.source = '''result = OffshoreEnergyReferenceCase.run24HourCase()
-          OffshoreEnergyReferenceCase.requireAcceptanceCriteria(result)
-          print(result.toJson())'''
-                      elif 'interval_rows = []' in cell.source:
-                          cell.source = '''import pandas as pd
-          interval_rows = []
-          for interval in result.getIntervals():
-              report = interval.getNetworkReports().get(0)
-              allocations = {str(a.getParticipantName()): a for a in report.getAllocations()}
-              interval_rows.append({
-                  "start_h": interval.getStartTimeSeconds()/3600.0,
-                  "duration_h": interval.getDurationSeconds()/3600.0,
-                  "served_MW": report.getServedDemand()/1e6,
-                  "unmet_MW": report.getUnmetDemand()/1e6,
-                  "total_curtailed_MW": report.getCurtailedSupply()/1e6,
-                  "wind_MW": allocations["offshore wind.power"].getAllocatedPower()/1e6,
-                  "gas_MW": allocations["gas turbine generation.power"].getAllocatedPower()/1e6,
-                  "critical_MW": allocations["critical process load.power"].getAllocatedPower()/1e6,
-                  "flexible_MW": allocations["flexible process load.power"].getAllocatedPower()/1e6,
-                  "cost_per_h": report.getOperatingCostPerHour(),
-                  "co2_kg_per_h": report.getCo2EmissionRate(),
-              })
-          interval_df = pd.DataFrame(interval_rows)
-          interval_df'''
-                      elif 'served_MW", "unmet_MW"' in cell.source:
-                          cell.source = '''import matplotlib.pyplot as plt
-          ax = interval_df.plot(x="start_h", y=["served_MW", "unmet_MW", "total_curtailed_MW"],
-                                drawstyle="steps-post", marker="o", figsize=(9,4))
-          ax.set_xlabel("Time (h)")
-          ax.set_ylabel("Power (MW)")
-          ax.set_title("Offshore benchmark energy balance")
-          ax.grid()
-          plt.tight_layout()
-          plt.show()'''
-                      elif 'kpis = pd.Series' in cell.source:
-                          cell.source = '''kpis = pd.Series({
-              "served energy (MWh)": result.getServedEnergyMWh(),
-              "unmet energy (MWh)": result.getUnmetEnergyMWh(),
-              "total curtailed supply (MWh)": result.getCurtailedEnergyMWh(),
-              "curtailed wind (MWh)": OffshoreEnergyReferenceCase.getWindCurtailedEnergyMWh(result),
-              "accepted wind (MWh)": OffshoreEnergyReferenceCase.getWindGeneratedEnergyMWh(result),
-              "accepted gas (MWh)": OffshoreEnergyReferenceCase.getGasGeneratedEnergyMWh(result),
-              "operating cost": result.getOperatingCost(),
-              "CO2-equivalent (kg)": result.getCo2EmissionsKg(),
-          })
-          kpis'''
+              first_code_cell = next(
+                  cell for cell in notebook.cells if cell.cell_type == 'code'
+              )
+              first_code_cell.source = workspace_setup
 
               nbformat.write(notebook, path)
               print(f'Normalized {path}')
@@ -144,7 +103,7 @@ jobs:
 
       - name: Upload notebook diagnostics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: energy-network-notebook-diagnostics
           path: |
@@ -180,7 +139,7 @@ jobs:
 
       - name: Upload executed notebooks
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: executed-energy-network-notebooks
           path: examples/notebooks/energy_networks/*.ipynb

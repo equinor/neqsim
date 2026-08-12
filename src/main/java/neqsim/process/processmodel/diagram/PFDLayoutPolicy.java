@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -31,10 +31,10 @@ import neqsim.process.processmodel.graph.ProcessNode;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Layout intelligence layer for generating professional oil &amp; gas PFDs.
+ * Layout intelligence layer for generating simulator-style oil &amp; gas PFDs.
  *
  * <p>
- * This class applies engineering layout rules to produce diagrams that follow industry conventions:
+ * This class applies deterministic layout rules based on common visualization conventions:
  * </p>
  * <ul>
  * <li><b>Gravity logic</b> - Gas flows upward, liquids flow downward</li>
@@ -59,11 +59,17 @@ import neqsim.thermo.system.SystemInterface;
 public class PFDLayoutPolicy implements Serializable {
   private static final long serialVersionUID = 1000L;
 
-  /** Cache for equipment role classifications. */
-  private final Map<ProcessEquipmentInterface, EquipmentRole> roleCache = new HashMap<>();
+  /**
+   * Cache for equipment role classifications. Keyed by object identity so the cache is insulated from any equality
+   * semantics the equipment classes may adopt: a role is a property of one specific unit instance, never of a
+   * different-but-equal unit.
+   */
+  private final Map<ProcessEquipmentInterface, EquipmentRole> roleCache = new IdentityHashMap<ProcessEquipmentInterface, EquipmentRole>();
 
-  /** Cache for stream phase classifications. */
-  private final Map<StreamInterface, StreamPhase> phaseCache = new HashMap<>();
+  /**
+   * Cache for stream phase classifications. Keyed by object identity for the same reason as {@link #roleCache}.
+   */
+  private final Map<StreamInterface, StreamPhase> phaseCache = new IdentityHashMap<StreamInterface, StreamPhase>();
 
   /**
    * Stream phase classification based on vapor/liquid fraction.

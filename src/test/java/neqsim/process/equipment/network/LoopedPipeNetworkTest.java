@@ -1,8 +1,10 @@
 package neqsim.process.equipment.network;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
@@ -12,7 +14,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.reservoir.SimpleReservoir;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -1680,6 +1684,334 @@ class LoopedPipeNetworkTest {
   }
 
   /**
+   * Equal mass rates of methane and n-decane must be mixed on a molar-flow basis rather than by mass-weighting mole
+   * fractions.
+   */
+  @Test
+  void testConservativeMixingEqualMassMethaneAndDecane() {
+    SystemInterface methane = new SystemSrkEos(298.15, 50.0);
+    methane.addComponent("methane", 1.0);
+    methane.setMixingRule("classic");
+
+    SystemInterface decane = new SystemSrkEos(298.15, 50.0);
+    decane.addComponent("nC10", 1.0);
+    decane.setMixingRule("classic");
+
+    LoopedPipeNetwork network = new LoopedPipeNetwork("molar-flow mixing");
+    network.setFluidTemplate(methane);
+    network.addSourceNode("methane source", 50.0, 0.0);
+    network.addSourceNode("decane source", 50.0, 0.0);
+    network.addJunctionNode("mix");
+    network.getNode("mix").setPressure(45.0e5);
+    network.addPipe("methane source", "mix", "methane line", 1.0, 0.1).setFlowRate(1.0);
+    network.addPipe("decane source", "mix", "decane line", 1.0, 0.1).setFlowRate(1.0);
+    network.setNodeFluid("methane source", methane);
+    network.setNodeFluid("decane source", decane);
+
+    NetworkCompositionConvergenceReport report = network.updateCompositionalMixingWithReport();
+    SystemInterface mixed = network.getNodeFluid("mix");
+
+    double methaneMolarFlow = 1.0 / methane.getComponent("methane").getMolarMass();
+    double decaneMolarFlow = 1.0 / decane.getComponent("nC10").getMolarMass();
+    double expectedMethaneFraction = methaneMolarFlow / (methaneMolarFlow + decaneMolarFlow);
+    double actualMethaneFraction = mixed.getComponent("methane").getz();
+
+    assertTrue(report.isConverged(), report.getMessage());
+    assertEquals(expectedMethaneFraction, actualMethaneFraction, 1.0e-10);
+    assertTrue(actualMethaneFraction > 0.89);
+    assertTrue(Double.isFinite(mixed.getDensity("kg/m3")));
+    assertTrue(Double.isFinite(mixed.getViscosity("kg/msec")));
+    assertTrue(Double.isFinite(mixed.getBeta()));
+    assertTrue(report.getMaxComponentBalanceResidualMolS() < 1.0e-10);
+    assertTrue(report.getMaxComponentMassBalanceResidualKgS() < 1.0e-10);
+  }
+
+  /**
+   * Component order and partially different compatible slates must not change component identity during mixing.
+   */
+  @Test
+  void testMixingUsesComponentIdentityAndUnionsCompatibleSlates() {
+    SystemInterface first = new SystemSrkEos(293.15, 60.0);
+    first.addComponent("methane", 0.80);
+    first.addComponent("ethane", 0.20);
+    first.setMixingRule("classic");
+
+    SystemInterface reversed = new SystemSrkEos(293.15, 60.0);
+    reversed.addComponent("ethane", 0.60);
+    reversed.addComponent("methane", 0.40);
+    reversed.setMixingRule("classic");
+
+    SystemInterface third = new SystemSrkEos(293.15, 60.0);
+    third.addComponent("methane", 0.50);
+    third.addComponent("propane", 0.50);
+    third.setMixingRule("classic");
+    first.init(0);
+    reversed.init(0);
+    third.init(0);
+
+    LoopedPipeNetwork network = new LoopedPipeNetwork("identity mixing");
+    network.setFluidTemplate(first);
+    network.addSourceNode("source a", 60.0, 0.0);
+    network.addSourceNode("source b", 60.0, 0.0);
+    network.addSourceNode("source c", 60.0, 0.0);
+    network.addJunctionNode("manifold");
+    network.getNode("manifold").setPressure(55.0e5);
+    network.addPipe("source a", "manifold", "line a", 1.0, 0.1).setFlowRate(1.0);
+    network.addPipe("source b", "manifold", "line b", 1.0, 0.1).setFlowRate(2.0);
+    network.addPipe("source c", "manifold", "line c", 1.0, 0.1).setFlowRate(0.5);
+    network.setNodeFluid("source a", first);
+    network.setNodeFluid("source b", reversed);
+    network.setNodeFluid("source c", third);
+
+    NetworkCompositionConvergenceReport report = network.updateCompositionalMixingWithReport();
+    SystemInterface mixed = network.getNodeFluid("manifold");
+
+    double firstMolarFlow = 1.0 / first.getMolarMass();
+    double reversedMolarFlow = 2.0 / reversed.getMolarMass();
+    double thirdMolarFlow = 0.5 / third.getMolarMass();
+    double totalMolarFlow = firstMolarFlow + reversedMolarFlow + thirdMolarFlow;
+    double expectedMethane = (0.80 * firstMolarFlow + 0.40 * reversedMolarFlow + 0.50 * thirdMolarFlow)
+        / totalMolarFlow;
+
+    assertTrue(report.isConverged(), report.getMessage());
+    assertTrue(mixed.hasComponent("methane"));
+    assertTrue(mixed.hasComponent("ethane"));
+    assertTrue(mixed.hasComponent("propane"));
+    assertEquals(expectedMethane, mixed.getComponent("methane").getz(), 1.0e-10);
+    assertEquals(totalMolarFlow, report.getNodeResults().get("manifold").getTotalMolarFlowMolS(), 1.0e-10);
+  }
+
+  /**
+   * Recirculating composition propagation must converge to the same result regardless of edge insertion order.
+   */
+  @Test
+  void testLoopMixingIsInsertionOrderIndependent() {
+    LoopedPipeNetwork forward = createRecirculatingMixNetwork(false);
+    LoopedPipeNetwork reverse = createRecirculatingMixNetwork(true);
+
+    NetworkCompositionConvergenceReport forwardReport = forward.updateCompositionalMixingWithReport();
+    NetworkCompositionConvergenceReport reverseReport = reverse.updateCompositionalMixingWithReport();
+
+    assertTrue(forwardReport.isConverged(), forwardReport.getMessage());
+    assertTrue(reverseReport.isConverged(), reverseReport.getMessage());
+    assertEquals(forward.getNodeFluid("junction 2").getComponent("methane").getz(),
+        reverse.getNodeFluid("junction 2").getComponent("methane").getz(), 1.0e-10);
+  }
+
+  /**
+   * Identically named pseudo-components with different characterization data must fail explicitly.
+   */
+  @Test
+  void testIncompatiblePseudoComponentsAreRejected() {
+    SystemInterface first = new SystemSrkEos(298.15, 30.0);
+    first.addTBPfraction("C20", 1.0, 0.280, 0.850);
+    first.setMixingRule("classic");
+
+    SystemInterface second = new SystemSrkEos(298.15, 30.0);
+    second.addTBPfraction("C20", 1.0, 0.340, 0.910);
+    second.setMixingRule("classic");
+
+    LoopedPipeNetwork network = new LoopedPipeNetwork("incompatible pseudo-components");
+    network.setFluidTemplate(first);
+    network.addSourceNode("source a", 30.0, 0.0);
+    network.addSourceNode("source b", 30.0, 0.0);
+    network.addJunctionNode("mix");
+    network.getNode("mix").setPressure(25.0e5);
+    network.addPipe("source a", "mix", "line a", 1.0, 0.1).setFlowRate(1.0);
+    network.addPipe("source b", "mix", "line b", 1.0, 0.1).setFlowRate(1.0);
+    network.setNodeFluid("source a", first);
+    network.setNodeFluid("source b", second);
+
+    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        network::updateCompositionalMixingWithReport);
+    assertTrue(exception.getMessage().contains("pseudo-component"));
+  }
+
+  /**
+   * Coupled hydraulics must propagate source-specific compositions into each edge and expose the mixed export inlet
+   * state.
+   */
+  @Test
+  void testCoupledHydraulicsUsesEdgeLocalComposition() {
+    SystemInterface lean = new SystemSrkEos(293.15, 80.0);
+    lean.addComponent("methane", 0.95);
+    lean.addComponent("ethane", 0.05);
+    lean.setMixingRule("classic");
+
+    SystemInterface rich = new SystemSrkEos(303.15, 80.0);
+    rich.addComponent("methane", 0.60);
+    rich.addComponent("ethane", 0.25);
+    rich.addComponent("propane", 0.15);
+    rich.setMixingRule("classic");
+
+    LoopedPipeNetwork network = new LoopedPipeNetwork("coupled local fluids");
+    network.setFluidTemplate(lean);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(500.0);
+    network.setCompositionalHydraulicsEnabled(true);
+    network.setThermalHydraulicsEnabled(true);
+    network.setCouplingMaxIterations(8);
+    network.setCouplingTolerances(1.0e-3, 100.0);
+    network.addSourceNode("lean source", 80.0, 0.0);
+    network.addSourceNode("rich source", 75.0, 0.0);
+    network.addJunctionNode("manifold");
+    network.addFixedPressureSinkNode("delivery", 45.0);
+    network.addPipe("lean source", "manifold", "lean line", 4000.0, 0.25);
+    network.addPipe("rich source", "manifold", "rich line", 4000.0, 0.25);
+    network.addPipe("manifold", "delivery", "export line", 8000.0, 0.35);
+    network.setNodeFluid("lean source", lean);
+    network.setNodeFluid("rich source", rich);
+
+    network.run();
+
+    NetworkCouplingReport report = network.getNetworkCouplingReport();
+    SystemInterface leanOutlet = network.getPipe("lean line").getOutletFluid();
+    SystemInterface exportInlet = network.getPipe("export line").getInletFluid();
+    assertNotNull(report);
+    assertNotNull(leanOutlet);
+    assertNotNull(exportInlet);
+    assertEquals(0.95, leanOutlet.getComponent("methane").getz(), 1.0e-8);
+    double exportMethane = exportInlet.getComponent("methane").getz();
+    assertTrue(exportMethane > 0.60 && exportMethane < 0.95);
+    assertTrue(Double.isFinite(exportInlet.getDensity("kg/m3")));
+    assertTrue(Double.isFinite(exportInlet.getViscosity("kg/msec")));
+  }
+
+  /**
+   * A reversed edge must select the to-node as its physical inlet.
+   */
+  @Test
+  void testCoupledHydraulicsUsesPhysicalUpstreamAfterFlowReversal() {
+    SystemInterface lowFluid = new SystemSrkEos(293.15, 40.0);
+    lowFluid.addComponent("methane", 0.50);
+    lowFluid.addComponent("ethane", 0.50);
+    lowFluid.setMixingRule("classic");
+    SystemInterface highFluid = new SystemSrkEos(303.15, 80.0);
+    highFluid.addComponent("methane", 0.98);
+    highFluid.addComponent("ethane", 0.02);
+    highFluid.setMixingRule("classic");
+
+    LoopedPipeNetwork network = new LoopedPipeNetwork("reversed local fluid");
+    network.setFluidTemplate(lowFluid);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(100);
+    network.setTolerance(500.0);
+    network.setCompositionalHydraulicsEnabled(true);
+    network.setCouplingMaxIterations(5);
+    network.setCouplingTolerances(1.0e-3, 100.0);
+    network.addSourceNode("low", 40.0, 0.0);
+    network.addFixedPressureSinkNode("high", 80.0);
+    network.addPipe("low", "high", "reversed line", 5000.0, 0.3);
+    network.setNodeFluid("low", lowFluid);
+    network.setNodeFluid("high", highFluid);
+
+    network.run();
+
+    LoopedPipeNetwork.NetworkPipe line = network.getPipe("reversed line");
+    assertTrue(line.getFlowRate() < 0.0);
+    assertFalse(line.isThermodynamicStateForward());
+    assertEquals(0.98, line.getInletFluid().getComponent("methane").getz(), 1.0e-8);
+  }
+
+  /**
+   * Compressor discharge temperature must be available to downstream edges.
+   */
+  @Test
+  void testCompressorPropagatesDischargeTemperature() {
+    SystemInterface gas = new SystemSrkEos(288.15, 50.0);
+    gas.addComponent("methane", 0.90);
+    gas.addComponent("ethane", 0.10);
+    gas.setMixingRule("classic");
+
+    LoopedPipeNetwork network = new LoopedPipeNetwork("compressor thermal state");
+    network.setFluidTemplate(gas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(100);
+    network.setTolerance(500.0);
+    network.setCompositionalHydraulicsEnabled(true);
+    network.setThermalHydraulicsEnabled(true);
+    network.setCouplingMaxIterations(5);
+    network.setCouplingTolerances(1.0e-3, 100.0);
+    network.addSourceNode("suction", 50.0, 0.0);
+    network.addFixedPressureSinkNode("discharge", 90.0);
+    network.addCompressor("suction", "discharge", "compressor", 0.78);
+    network.setNodeFluid("suction", gas);
+
+    network.run();
+
+    SystemInterface compressorOutlet = network.getPipe("compressor").getOutletFluid();
+    assertNotNull(compressorOutlet);
+    assertTrue(compressorOutlet.getTemperature() > gas.getTemperature());
+  }
+
+  /**
+   * Route profiles must cover the entire edge and be defensively copied.
+   */
+  @Test
+  void testPipeRouteProfiles() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("profile validation");
+    network.setFluidTemplate(testGas);
+    network.addSourceNode("source", 80.0, 0.0);
+    network.addFixedPressureSinkNode("delivery", 50.0);
+    LoopedPipeNetwork.NetworkPipe pipe = network.addPipe("source", "delivery", "profiled", 1000.0, 0.3);
+    double[] distance = new double[] { 0.0, 400.0, 1000.0 };
+    pipe.setElevationProfile(distance, new double[] { 0.0, -100.0, 20.0 });
+    pipe.setAmbientTemperatureProfile(distance, new double[] { 280.0, 275.0, 278.0 });
+    pipe.setHeatTransferProfile(distance, new double[] { 2.0, 8.0, 4.0 });
+    distance[1] = 500.0;
+
+    assertTrue(pipe.hasRouteProfile());
+    assertArrayEquals(new double[] { 0.0, 400.0, 1000.0 }, pipe.getElevationProfileDistanceM(), 0.0);
+    assertThrows(IllegalArgumentException.class,
+        () -> pipe.setElevationProfile(new double[] { 0.0, 900.0 }, new double[] { 0.0, 10.0 }));
+  }
+
+  /**
+   * Build a two-source network with one recirculating edge.
+   *
+   * @param reverseInsertion true to add edges in reverse order
+   * @return configured network with fixed manual edge flows
+   */
+  private LoopedPipeNetwork createRecirculatingMixNetwork(boolean reverseInsertion) {
+    SystemInterface methane = new SystemSrkEos(293.15, 50.0);
+    methane.addComponent("methane", 1.0);
+    methane.setMixingRule("classic");
+    SystemInterface ethane = new SystemSrkEos(293.15, 50.0);
+    ethane.addComponent("ethane", 1.0);
+    ethane.setMixingRule("classic");
+
+    LoopedPipeNetwork network = new LoopedPipeNetwork("recirculating mix");
+    network.setFluidTemplate(methane);
+    network.setCompositionMaxIterations(200);
+    network.addSourceNode("source a", 50.0, 0.0);
+    network.addSourceNode("source b", 50.0, 0.0);
+    network.addJunctionNode("junction 1");
+    network.addJunctionNode("junction 2");
+    network.addSinkNode("delivery", 2.0 * 3600.0);
+    network.getNode("junction 1").setPressure(45.0e5);
+    network.getNode("junction 2").setPressure(44.0e5);
+    network.getNode("delivery").setPressure(40.0e5);
+
+    if (reverseInsertion) {
+      network.addPipe("junction 2", "delivery", "delivery line", 1.0, 0.1).setFlowRate(2.0);
+      network.addPipe("junction 2", "junction 1", "recycle", 1.0, 0.1).setFlowRate(1.0);
+      network.addPipe("source b", "junction 2", "source b line", 1.0, 0.1).setFlowRate(1.0);
+      network.addPipe("junction 1", "junction 2", "transfer", 1.0, 0.1).setFlowRate(2.0);
+      network.addPipe("source a", "junction 1", "source a line", 1.0, 0.1).setFlowRate(1.0);
+    } else {
+      network.addPipe("source a", "junction 1", "source a line", 1.0, 0.1).setFlowRate(1.0);
+      network.addPipe("junction 1", "junction 2", "transfer", 1.0, 0.1).setFlowRate(2.0);
+      network.addPipe("source b", "junction 2", "source b line", 1.0, 0.1).setFlowRate(1.0);
+      network.addPipe("junction 2", "junction 1", "recycle", 1.0, 0.1).setFlowRate(1.0);
+      network.addPipe("junction 2", "delivery", "delivery line", 1.0, 0.1).setFlowRate(2.0);
+    }
+    network.setNodeFluid("source a", methane);
+    network.setNodeFluid("source b", ethane);
+    return network;
+  }
+
+  /**
    * Test choke optimization to maximize production (Improvement #6).
    */
   @Test
@@ -1738,6 +2070,82 @@ class LoopedPipeNetworkTest {
     assertNotNull(flowline);
     assertEquals(LoopedPipeNetwork.NetworkElementType.MULTIPHASE_PIPE, flowline.getElementType());
     assertTrue(Math.abs(flowline.getFlowRate()) > 0, "Flowline should have non-zero flow");
+  }
+
+  /**
+   * Test that network and standalone Beggs-Brill models use the same metre-based roughness.
+   */
+  @Test
+  void testMultiphasePipeRoughnessMatchesStandaloneBeggsBrill() {
+    double inletPressureBar = 80.0;
+    double inletTemperatureK = 288.15;
+    double lengthM = 15000.0;
+    double diameterM = 0.2;
+    double roughnessM = 4.5e-5;
+    int segments = 20;
+
+    LoopedPipeNetwork network = new LoopedPipeNetwork("RoughnessParityNet");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+    network.addSourceNode("wellhead", inletPressureBar, 0.0);
+    network.getNode("wellhead").setTemperature(inletTemperatureK);
+    network.addFixedPressureSinkNode("platform", 40.0);
+
+    LoopedPipeNetwork.NetworkPipe networkPipe = network.addMultiphasePipe("wellhead", "platform", "flowline", lengthM,
+        diameterM);
+    networkPipe.setRoughness(roughnessM);
+    networkPipe.setMultiphaseSegments(segments);
+    network.run();
+
+    assertTrue(network.isConverged(), "Multiphase pipe network should converge");
+    assertEquals("BB-Multiphase", networkPipe.getFlowRegime());
+
+    double flowRateKgHr = Math.abs(networkPipe.getFlowRate()) * 3600.0;
+    SystemInterface standaloneFluid = testGas.clone();
+    standaloneFluid.setPressure(inletPressureBar, "bara");
+    standaloneFluid.setTemperature(inletTemperatureK, "K");
+    Stream standaloneInlet = new Stream("standalone inlet", standaloneFluid);
+    standaloneInlet.setFlowRate(flowRateKgHr, "kg/hr");
+    standaloneInlet.run();
+
+    PipeBeggsAndBrills standalonePipe = new PipeBeggsAndBrills("standalone Beggs-Brill", standaloneInlet);
+    standalonePipe.setLength(lengthM);
+    standalonePipe.setDiameter(diameterM);
+    standalonePipe.setPipeWallRoughness(roughnessM);
+    standalonePipe.setNumberOfIncrements(segments);
+    standalonePipe.run();
+
+    PipeBeggsAndBrills networkModel = networkPipe.getBBModel();
+    assertNotNull(networkModel);
+    assertEquals(roughnessM, networkModel.getPipeWallRoughness(), 1e-12);
+    double standalonePressureDropBar = standalonePipe.getPressureDrop();
+    double pressureDropToleranceBar = Math.max(1e-6, Math.abs(standalonePressureDropBar) * 1e-6);
+    assertEquals(standalonePressureDropBar, networkModel.getPressureDrop(), pressureDropToleranceBar);
+  }
+
+  /**
+   * Test that the configured pipe model applies to ordinary pipes added afterwards.
+   */
+  @Test
+  void testConfiguredBeggsBrillAppliesToAddedPipe() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("ConfiguredMultiphaseNet");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(200);
+    network.setTolerance(100.0);
+    network.setPipeModelType(LoopedPipeNetwork.PipeModelType.BEGGS_BRILL);
+
+    network.addSourceNode("wellhead", 80.0, 0.0);
+    network.addFixedPressureSinkNode("platform", 40.0);
+    LoopedPipeNetwork.NetworkPipe flowline = network.addPipe("wellhead", "platform", "flowline", 15000.0, 0.2);
+
+    network.run();
+
+    assertTrue(network.isConverged(), "Configured multiphase pipe network should converge");
+    assertEquals(LoopedPipeNetwork.NetworkElementType.MULTIPHASE_PIPE, flowline.getElementType());
+    assertEquals("BB-Multiphase", flowline.getFlowRegime());
   }
 
   /**

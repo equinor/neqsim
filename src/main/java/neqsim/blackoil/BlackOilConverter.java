@@ -147,6 +147,7 @@ public class BlackOilConverter {
       f.setTemperature(Tstd);
       ThermodynamicOperations ops = new ThermodynamicOperations(f);
       ops.TPflash();
+      f.initProperties();
 
       StdTotals s = new StdTotals();
       PhaseInterface oil = findOilPhase(f);
@@ -156,17 +157,17 @@ public class BlackOilConverter {
       if (oil != null) {
         double V = phaseVolume(oil);
         s.O_std = V;
-        s.rho_o_sc = oil.getDensity();
+        s.rho_o_sc = phaseDensity(oil);
       }
       if (gas != null) {
         double V = phaseVolume(gas);
         s.G_std = V;
-        s.rho_g_sc = gas.getDensity();
+        s.rho_g_sc = phaseDensity(gas);
       }
       if (wat != null) {
         double V = phaseVolume(wat);
         s.W_std = V;
-        s.rho_w_sc = wat.getDensity();
+        s.rho_w_sc = phaseDensity(wat);
       }
       return s;
     } catch (Exception e) {
@@ -218,6 +219,7 @@ public class BlackOilConverter {
         oilStd.setTemperature(Tstd);
         ThermodynamicOperations oilStdOps = new ThermodynamicOperations(oilStd);
         oilStdOps.TPflash();
+        oilStd.initProperties();
         PhaseInterface oilStdOil = findOilPhase(oilStd);
         PhaseInterface oilStdGas = findGasPhase(oilStd);
 
@@ -229,10 +231,10 @@ public class BlackOilConverter {
         out.Rs = (V_std_oil > 0.0) ? (V_std_gas / V_std_oil) : 0.0;
 
         if (oilStdOil != null) {
-          out.rho_o_sc = oilStdOil.getDensity();
+          out.rho_o_sc = phaseDensity(oilStdOil);
         }
         if (oilStdGas != null) {
-          out.rho_g_sc = oilStdGas.getDensity();
+          out.rho_g_sc = phaseDensity(oilStdGas);
         }
       }
 
@@ -252,6 +254,7 @@ public class BlackOilConverter {
         gasStd.setTemperature(Tstd);
         ThermodynamicOperations gasStdOps = new ThermodynamicOperations(gasStd);
         gasStdOps.TPflash();
+        gasStd.initProperties();
         PhaseInterface gasStdGas = findGasPhase(gasStd);
         PhaseInterface gasStdOil = findOilPhase(gasStd);
         double V_std_gas = (gasStdGas != null) ? phaseVolume(gasStdGas) : 0.0;
@@ -262,10 +265,10 @@ public class BlackOilConverter {
         out.Rv = (V_std_gas > 0.0) ? (V_std_oil / V_std_gas) : 0.0;
 
         if (gasStdGas != null) {
-          out.rho_g_sc = gasStdGas.getDensity();
+          out.rho_g_sc = phaseDensity(gasStdGas);
         }
         if (gasStdOil != null && Double.isNaN(out.rho_o_sc)) {
-          out.rho_o_sc = gasStdOil.getDensity();
+          out.rho_o_sc = phaseDensity(gasStdOil);
         }
       }
 
@@ -275,7 +278,7 @@ public class BlackOilConverter {
         wOps.TPflash();
         wRes.initProperties();
         PhaseInterface wPhase = findWaterPhase(wRes);
-        double rho_w_res = (wPhase != null) ? wPhase.getDensity() : Double.NaN;
+        double rho_w_res = (wPhase != null) ? phaseDensity(wPhase) : Double.NaN;
         double mu_w = (wPhase != null) ? wPhase.getViscosity() : Double.NaN;
 
         SystemInterface wStd = wRes.clone();
@@ -283,8 +286,9 @@ public class BlackOilConverter {
         wStd.setTemperature(Tstd);
         ThermodynamicOperations wStdOps = new ThermodynamicOperations(wStd);
         wStdOps.TPflash();
+        wStd.initProperties();
         PhaseInterface wStdPhase = findWaterPhase(wStd);
-        double rho_w_std = (wStdPhase != null) ? wStdPhase.getDensity() : Double.NaN;
+        double rho_w_std = (wStdPhase != null) ? phaseDensity(wStdPhase) : Double.NaN;
 
         if (!Double.isNaN(rho_w_res) && !Double.isNaN(rho_w_std) && rho_w_res > 0) {
           out.Bw = rho_w_std / rho_w_res;
@@ -383,20 +387,52 @@ public class BlackOilConverter {
   }
 
   private static double totalVolume(SystemInterface s) {
+    try {
+      double V = s.getCorrectedVolume();
+      if (V > 0.0 && Double.isFinite(V)) {
+        return V;
+      }
+    } catch (Throwable ignored) {
+    }
     return s.getVolume();
   }
 
+  /**
+   * Volume-shift corrected phase volume in m3. The uncorrected EOS volume must not be used here: for a fluid with
+   * Peneloux volume translation the shift differs between the reservoir and stock-tank compositions, so it does not
+   * cancel in the Bo, Bg and Rs ratios.
+   *
+   * @param p the phase
+   * @return the corrected phase volume in m3, or NaN if it cannot be evaluated
+   */
   private static double phaseVolume(PhaseInterface p) {
     try {
-      double V = p.getVolume();
+      double V = p.getCorrectedVolume();
       if (V > 0.0 && Double.isFinite(V)) {
         return V;
       }
     } catch (Throwable ignored) {
     }
     double mass = p.getMass();
-    double rho = p.getDensity();
+    double rho = phaseDensity(p);
     return (rho > 0) ? (mass / rho) : Double.NaN;
+  }
+
+  /**
+   * Volume-shift corrected mass density of a phase in kg/m3.
+   *
+   * @param p the phase
+   * @return the corrected density in kg/m3, or the uncorrected EOS density if the physical properties are unavailable
+   */
+  private static double phaseDensity(PhaseInterface p) {
+    try {
+      double rho = p.getDensity("kg/m3");
+      if (rho > 0.0 && Double.isFinite(rho)) {
+        return rho;
+      }
+    } catch (Throwable ignored) {
+    }
+    return p.getDensity();
   }
 
   private static SystemInterface phaseAsStandaloneSystem(SystemInterface base, PhaseInterface phase, double T, double P)

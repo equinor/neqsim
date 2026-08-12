@@ -19,7 +19,7 @@
 	</scm>
 
 	<properties>
-		<revision>3.16.0</revision>
+		<revision>3.17.0</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<checkstyle.config.location>.config/checkstyle_neqsim.xml</checkstyle.config.location>
@@ -47,13 +47,13 @@
 	<repositories>
 		<repository>
 			<id>central</id>
-			<url>https://repo1.maven.org/maven2/</url>
+			<url>https://repo.maven.apache.org/maven2/</url>
 		</repository>
 	</repositories>
 	<pluginRepositories>
 		<pluginRepository>
 			<id>central</id>
-			<url>https://repo1.maven.org/maven2/</url>
+			<url>https://repo.maven.apache.org/maven2/</url>
 		</pluginRepository>
 	</pluginRepositories>
 
@@ -104,7 +104,7 @@
 		<dependency>
 			<groupId>org.ejml</groupId>
 			<artifactId>ejml-all</artifactId>
-			<version>0.46.0</version>
+			<version>0.46.1</version>
 		</dependency>
 		<dependency>
 			<groupId>gov.nist.math</groupId>
@@ -441,7 +441,7 @@
 			<plugin>
 				<groupId>com.diffplug.spotless</groupId>
 				<artifactId>spotless-maven-plugin</artifactId>
-				<version>3.8.0</version>
+				<version>3.9.0</version>
 				<configuration>
 					<java>
 						<eclipse>
@@ -471,7 +471,7 @@
 			<plugin>
 				<groupId>org.owasp</groupId>
 				<artifactId>dependency-check-maven</artifactId>
-				<version>12.2.2</version>
+				<version>13.0.0</version>
 				<reportSets>
 					<reportSet>
 						<reports>

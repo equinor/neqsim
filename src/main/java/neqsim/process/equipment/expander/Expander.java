@@ -20,6 +20,19 @@ public class Expander extends Compressor implements ExpanderInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
+  /**
+   * Default number of pressure steps used by the polytropic expansion path.
+   *
+   * <p>
+   * The path used a hard-coded 40 steps before this constant was introduced. Five steps reproduce the 40-step result to
+   * within about 0.1 K outlet temperature and 0.5 % shaft power on a 90 to 30 bara rich-gas expansion (see
+   * {@code ExpanderPolytropicStepsTest}) at a fraction of the flash cost. Restore the previous resolution with
+   * {@link neqsim.process.equipment.compressor.Compressor#setNumberOfCompressorCalcSteps(int)} when an exact match with
+   * an older model is required.
+   * </p>
+   */
+  public static final int DEFAULT_EXPANDER_CALC_STEPS = 5;
+
   /** Mechanical design for the expander. */
   private ExpanderMechanicalDesign expanderMechanicalDesign;
 
@@ -59,6 +72,21 @@ public class Expander extends Compressor implements ExpanderInterface {
   /** Speed multiplier from expander shaft speed to the coupled compressor speed. */
   private double coupledCompressorSpeedRatio = 1.0;
 
+  /** Nozzle opening at the start of the current physical transient step. */
+  private double transientStepStartNozzleOpening = 1.0;
+
+  /** Recovered-power state at the start of the current physical transient step, in kW. */
+  private double transientStepStartRecoveredPowerKW = 0.0;
+
+  /** Shaft speed at the start of the current physical transient step, in rpm. */
+  private double transientStepStartSpeedRPM = 0.0;
+
+  /** Physical transient-step identifier associated with the saved step-start state. */
+  private UUID transientStepIdentifier = null;
+
+  /** Guards the steady thermodynamic calculation invoked from {@link #runTransient(double, UUID)}. */
+  private transient boolean transientCalculationInProgress = false;
+
   /**
    * Constructor for Expander.
    *
@@ -66,6 +94,7 @@ public class Expander extends Compressor implements ExpanderInterface {
    */
   public Expander(String name) {
     super(name);
+    setNumberOfCompressorCalcSteps(DEFAULT_EXPANDER_CALC_STEPS);
     initExpanderMechanicalDesign();
   }
 
@@ -115,15 +144,13 @@ public class Expander extends Compressor implements ExpanderInterface {
     return expanderMechanicalDesign;
   }
 
-  /**
-   * Initialize the expander mechanical design.
-   */
+  /** Initialize the expander mechanical design. */
   private void initExpanderMechanicalDesign() {
     expanderMechanicalDesign = new ExpanderMechanicalDesign(this);
   }
 
   /**
-   * Gets the rated recovered shaft power of the expander.
+   * Gets the rated recovered shaft power of the expander in kW.
    *
    * @return rated recovered power in kW; {@code 0} means no recovered-power limit is defined
    */
@@ -165,6 +192,7 @@ public class Expander extends Compressor implements ExpanderInterface {
    */
   public void setNozzleOpening(double opening) {
     this.nozzleOpening = clampOpening(opening);
+    transientStepIdentifier = null;
   }
 
   /**
@@ -196,6 +224,7 @@ public class Expander extends Compressor implements ExpanderInterface {
     this.maximumNozzleOpening = Math.max(this.minimumNozzleOpening, Math.min(1.0, maximumOpening));
     this.nozzleOpening = clampOpening(nozzleOpening);
     this.targetNozzleOpening = clampOpening(targetNozzleOpening);
+    transientStepIdentifier = null;
   }
 
   /**
@@ -293,7 +322,7 @@ public class Expander extends Compressor implements ExpanderInterface {
   }
 
   /**
-   * Sets the speed ratio from the expander shaft to the coupled compressor shaft.
+   * Sets the speed ratio from the expander shaft speed to the coupled compressor shaft speed.
    *
    * @param coupledCompressorSpeedRatio speed ratio; negative values are treated as zero
    */
@@ -374,12 +403,37 @@ public class Expander extends Compressor implements ExpanderInterface {
     return true;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * A non-null calculation identifier represents one physical transient step. Repeated same-ID evaluations restore
+   * nozzle opening, recovered-power ramp state, and shaft speed to their values at physical-step start before
+   * recomputing the step. The expander clock therefore advances once per physical step instead of once per nonlinear or
+   * semi-implicit refinement. A different identifier starts the next physical step from the previously accepted state.
+   * Null identifiers retain the legacy one-call-per-step behavior.
+   * </p>
+   */
   @Override
   public void runTransient(double dt, UUID id) {
+    boolean repeatedEvaluation = id != null && id.equals(transientStepIdentifier);
+    if (!repeatedEvaluation) {
+      transientStepStartNozzleOpening = nozzleOpening;
+      transientStepStartRecoveredPowerKW = dynamicRecoveredPowerKW;
+      transientStepStartSpeedRPM = getSpeed();
+      transientStepIdentifier = id;
+    } else {
+      nozzleOpening = transientStepStartNozzleOpening;
+      dynamicRecoveredPowerKW = transientStepStartRecoveredPowerKW;
+      setSpeed(transientStepStartSpeedRPM);
+    }
+
     if (getCalculateSteadyState()) {
-      run(id);
-      increaseTime(dt);
+      runSteadyCalculationWithinTransient(id);
+      if (!repeatedEvaluation) {
+        increaseTime(dt);
+      }
+      setCalculationIdentifier(id);
       return;
     }
 
@@ -396,7 +450,7 @@ public class Expander extends Compressor implements ExpanderInterface {
     pressure = effectivePressure;
     isentropicEfficiency = targetEfficiency * (0.5 + 0.5 * nozzleOpening);
 
-    run(id);
+    runSteadyCalculationWithinTransient(id);
 
     double steadyRecoveredKW = Math.max(0.0, Math.abs(getPower("kW")));
     updateRecoveredPower(steadyRecoveredKW, dt);
@@ -405,8 +459,24 @@ public class Expander extends Compressor implements ExpanderInterface {
 
     pressure = targetPressure;
     isentropicEfficiency = targetEfficiency;
-    increaseTime(dt);
+    if (!repeatedEvaluation) {
+      increaseTime(dt);
+    }
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Runs the thermodynamic expander calculation without invalidating the current physical-step anchor.
+   *
+   * @param id calculation identifier
+   */
+  private void runSteadyCalculationWithinTransient(UUID id) {
+    transientCalculationInProgress = true;
+    try {
+      run(id);
+    } finally {
+      transientCalculationInProgress = false;
+    }
   }
 
   /**
@@ -548,7 +618,7 @@ public class Expander extends Compressor implements ExpanderInterface {
     inletEnthalpy = hinn;
     double hout = hinn;
     if (usePolytropicCalc) {
-      int numbersteps = 40;
+      int numbersteps = Math.max(1, getNumberOfCompressorCalcSteps());
       double dp = (pressure - getThermoSystem().getPressure()) / (1.0 * numbersteps);
 
       for (int i = 0; i < numbersteps; i++) {
@@ -591,6 +661,9 @@ public class Expander extends Compressor implements ExpanderInterface {
     getEnergyPort("shaftPower").setDuty(-dH);
     // thermoSystem.display();
     outStream.setThermoSystem(getThermoSystem());
+    if (!transientCalculationInProgress) {
+      transientStepIdentifier = null;
+    }
     setCalculationIdentifier(id);
   }
 }

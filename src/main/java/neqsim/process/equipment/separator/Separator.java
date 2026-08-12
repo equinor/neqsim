@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -755,8 +754,12 @@ public class Separator extends ProcessEquipmentBaseClass
     } else {
       finalizePhaseOutlet(gasOutStream, id);
     }
-    if (thermoSystem2.hasPhaseType("aqueous")
-        || thermoSystem2.hasPhaseType("oil") && thermoSystem2.getNumberOfComponents() > 1) {
+    // Water-bearing liquid outlets still need a stream flash to recover the expected
+    // oil/aqueous split after extracting the bulk separator liquid phases. The no-rerun
+    // safeguard only applies to dry hydrocarbon liquid outlets, where an unnecessary
+    // outlet flash can reclassify a heavy reflux stream.
+    if ((thermoSystem2.hasPhaseType("aqueous") || thermoSystem2.hasPhaseType("oil"))
+        && thermoSystem2.getNumberOfComponents() > 1 && (gasInLiquid != 0.0 || thermoSystem2.hasPhaseType("aqueous"))) {
       liquidOutStream.run(id);
     } else {
       finalizePhaseOutlet(liquidOutStream, id);
@@ -976,7 +979,11 @@ public class Separator extends ProcessEquipmentBaseClass
       }
 
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-      thermoOps.VUflash(gasVolume + liquidVolume, newEnergy, "m3", "J");
+      // Preserve the nearby equilibrium seed only for associating fluids. Cubic EOS dynamics
+      // retain the legacy cold initialization and its established trajectory.
+      boolean warmStartInitialization = !neqsim.thermo.ThermodynamicModelSettings
+          .isInnerFlashWarmStartSafe(thermoSystem);
+      thermoOps.VUflash(gasVolume + liquidVolume, newEnergy, "m3", "J", warmStartInitialization);
       thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
       // Update entrainment fractions from performance calculator during transient
@@ -2821,59 +2828,6 @@ public class Separator extends ProcessEquipmentBaseClass
     }
 
     return liquidExergy + gasExergy - exergy;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = super.hashCode();
-    result = prime * result + Objects.hash(designLiquidLevelFraction, efficiency, gasCarryunderFraction, gasInLiquid,
-        gasInLiquidSpec, gasOutStream, gasSystem, gasVolume, inletStreamMixer, getInternalDiameter(),
-        liquidCarryoverFraction, liquidLevel, liquidOutStream, liquidSystem, liquidVolume, numberOfInputStreams,
-        oilInGas, oilInGasSpec, orientation, pressureDrop, getSeparatorLength(), separatorSection, specifiedStream,
-        thermoSystem, thermoSystem2, thermoSystemCloned, waterInGas, waterInGasSpec, waterSystem);
-    return result;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (!super.equals(obj)) {
-      return false;
-    }
-    if (getClass() != obj.getClass()) {
-      return false;
-    }
-    Separator other = (Separator) obj;
-    return Double.doubleToLongBits(designLiquidLevelFraction) == Double
-        .doubleToLongBits(other.designLiquidLevelFraction)
-        && Double.doubleToLongBits(efficiency) == Double.doubleToLongBits(other.efficiency)
-        && Double.doubleToLongBits(gasCarryunderFraction) == Double.doubleToLongBits(other.gasCarryunderFraction)
-        && Double.doubleToLongBits(gasInLiquid) == Double.doubleToLongBits(other.gasInLiquid)
-        && Objects.equals(gasInLiquidSpec, other.gasInLiquidSpec) && Objects.equals(gasOutStream, other.gasOutStream)
-        && Objects.equals(gasSystem, other.gasSystem)
-        && Double.doubleToLongBits(gasVolume) == Double.doubleToLongBits(other.gasVolume)
-        && Objects.equals(inletStreamMixer, other.inletStreamMixer)
-        && Double.doubleToLongBits(getInternalDiameter()) == Double.doubleToLongBits(other.getInternalDiameter())
-        && Double.doubleToLongBits(liquidCarryoverFraction) == Double.doubleToLongBits(other.liquidCarryoverFraction)
-        && Double.doubleToLongBits(liquidLevel) == Double.doubleToLongBits(other.liquidLevel)
-        && Objects.equals(liquidOutStream, other.liquidOutStream) && Objects.equals(liquidSystem, other.liquidSystem)
-        && Double.doubleToLongBits(liquidVolume) == Double.doubleToLongBits(other.liquidVolume)
-        && numberOfInputStreams == other.numberOfInputStreams
-        && Double.doubleToLongBits(oilInGas) == Double.doubleToLongBits(other.oilInGas)
-        && Objects.equals(oilInGasSpec, other.oilInGasSpec) && Objects.equals(orientation, other.orientation)
-        && Double.doubleToLongBits(pressureDrop) == Double.doubleToLongBits(other.pressureDrop)
-        && Double.doubleToLongBits(getSeparatorLength()) == Double.doubleToLongBits(other.getSeparatorLength())
-        && Objects.equals(separatorSection, other.separatorSection)
-        && Objects.equals(specifiedStream, other.specifiedStream) && Objects.equals(thermoSystem, other.thermoSystem)
-        && Objects.equals(thermoSystem2, other.thermoSystem2)
-        && Objects.equals(thermoSystemCloned, other.thermoSystemCloned)
-        && Double.doubleToLongBits(waterInGas) == Double.doubleToLongBits(other.waterInGas)
-        && Objects.equals(waterInGasSpec, other.waterInGasSpec) && Objects.equals(waterSystem, other.waterSystem);
   }
 
   /**

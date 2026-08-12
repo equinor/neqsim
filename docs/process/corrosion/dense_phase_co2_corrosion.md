@@ -1,13 +1,18 @@
 ---
 title: "DensePhaseCO2Corrosion — CCS Pipeline Corrosion Assessment"
-description: "API reference for DensePhaseCO2Corrosion — corrosion assessment for dense-phase CO2 transport pipelines per DNV-RP-J202 and ISO 27913. Covers impurity limits, free water risk, water solubility, and material recommendations for CCS systems."
+description: "API reference for the legacy DensePhaseCO2Corrosion heuristic — impurity, free-water, and materials screening for dense-phase CO2 transport."
 ---
 
 # DensePhaseCO2Corrosion
 
 **Package:** `neqsim.process.corrosion`
 
-**Standards:** DNV-RP-J202, ISO 27913, DNV-RP-F104, ASME B31.4
+**Related publications:** legacy DNV-RP-J202, ISO 27913, DNV-RP-F104, ASME B31.4
+
+> `DensePhaseCO2Corrosion` is a legacy heuristic with embedded typical values. It is not an
+> exact-edition implementation of DNV-RP-F104 and does not provide F104 conformity evidence. Use
+> `DnvRpF104Co2PipelineEnvelopeScreeningKernel` for the current edition's caller-controlled
+> transport-envelope screen, and retain the project corrosion/materials basis externally.
 
 Evaluates corrosion risk in dense-phase CO2 transport systems for carbon capture and storage (CCS). In dry dense-phase CO2, corrosion is negligible — but free water formation from impurity interactions can cause severe attack exceeding 10 mm/yr.
 

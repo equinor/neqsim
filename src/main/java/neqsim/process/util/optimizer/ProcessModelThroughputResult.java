@@ -247,7 +247,8 @@ public class ProcessModelThroughputResult implements Serializable {
    * @return JSON result string
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeNulls().serializeSpecialFloatingPointValues().create()
+        .toJson(toMap());
   }
 
   /**
@@ -271,8 +272,9 @@ public class ProcessModelThroughputResult implements Serializable {
     try {
       writer.write("caseNumber,throughputMultiplier,objectiveValue,feasible,"
           + "simulationConverged,activeArea,activeEquipment,activeConstraint,"
-          + "utilization,currentValue,designValue,capacityMargin,utilizationMargin,unit,"
-          + "errorMessage,evaluationTimeMs");
+          + "utilization,currentValue,designValue,minimumConstraint,dataSource,hasConfidence,confidence,"
+          + "hasValidityRange,validityMinimum,validityMaximum,currentValueWithinValidityRange,"
+          + "capacityMargin,utilizationMargin,unit,errorMessage,evaluationTimeMs");
       writer.newLine();
       for (ThroughputCaseRow row : caseRows) {
         writer.write(Integer.toString(row.getCaseNumber()));
@@ -296,6 +298,30 @@ public class ProcessModelThroughputResult implements Serializable {
         writer.write(Double.toString(row.getCurrentValue()));
         writer.write(",");
         writer.write(Double.toString(row.getDesignValue()));
+        writer.write(",");
+        writer.write(Boolean.toString(row.isMinimumConstraint()));
+        writer.write(",");
+        writer.write(csvEscape(row.getDataSource()));
+        writer.write(",");
+        writer.write(Boolean.toString(row.hasConfidence()));
+        writer.write(",");
+        if (row.hasConfidence()) {
+          writer.write(Double.toString(row.getConfidence()));
+        }
+        writer.write(",");
+        writer.write(Boolean.toString(row.hasValidityRange()));
+        writer.write(",");
+        if (row.hasValidityRange()) {
+          writer.write(Double.toString(row.getValidityMinimum()));
+        }
+        writer.write(",");
+        if (row.hasValidityRange()) {
+          writer.write(Double.toString(row.getValidityMaximum()));
+        }
+        writer.write(",");
+        if (row.hasValidityRange()) {
+          writer.write(Boolean.toString(row.isCurrentValueWithinValidityRange()));
+        }
         writer.write(",");
         writer.write(Double.toString(row.getCapacityMargin()));
         writer.write(",");

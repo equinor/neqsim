@@ -345,17 +345,72 @@ fluid.addComponent("H2S", 0.05);
 fluid.addComponent("water", 0.1);
 fluid.addSalinity(2.0, "mole/sec");  // Salt-equivalent molar flow, not concentration
 fluid.setMixingRule(11);  // Soreide-Whitson mixing rule
+
+// Optional refreshed eight-gas drop-in BIPs; LEGACY remains the default
+fluid.setSoreideWhitsonParameterization("BURGOYNE_NIELSEN_2026");
 ```
+
+The Chabab option is validated against NaCl-brine data at approximately 1-3 mol/kg water, 323-373 K,
+and pressures up to 230 bar. See [Søreide-Whitson Model](SoreideWhitsonModel.md) for the
+correlation, units, comparison example, and extrapolation limits.
+
+The Burgoyne-Nielsen option covers CO₂, H₂S, methane, nitrogen, hydrogen, ethane, propane, and
+n-butane water pairs. It is opt-in because the refreshed BIPs change results and the published
+fit used a specified pure-component property set.
 
 ### 7.3 Pitzer Model
+### 7.3 Electrolyte GE Models and Hybrid VLLE
 
-For concentrated electrolyte solutions.
+For electrolyte solutions, `SystemPitzer`, `SystemDesmukhMather` and `SystemKentEisenberg` provide a fixed-role hybrid
+flash in which gas and hydrocarbon liquid use SRK while the aqueous liquid uses the selected GE model.
 
 ```java
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemPitzer;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-SystemInterface fluid = new SystemPitzer(298.15, 1.0);
+SystemPitzer fluid = new SystemPitzer(313.15, 50.0);
+fluid.addComponent("methane", 5.0);
+fluid.addComponent("n-heptane", 2.0);
+fluid.addComponent("water", 55.5);
+fluid.addComponent("Na+", 1.0);
+fluid.addComponent("Cl-", 1.0);
+fluid.setMixingRule("classic");
+fluid.setMultiPhaseCheck(true);
+
+new ThermodynamicOperations(fluid).TPflash();
+
+// Material roles are selected from gas (SRK), oil (SRK), and aqueous (Pitzer).
+boolean hasAqueousPhase = fluid.hasPhaseType(PhaseType.AQUEOUS);
 ```
+
+The creation-order role objects are stable even when active phases are density-ordered or disappear. A later flash
+reconsiders inactive roles from the current feed and conditions. Neutral non-water species in the Pitzer phase use an
+aqueous Henry reference; water alone uses the Pitzer osmotic/Raoult solvent convention. Calling
+`chemicalReactionInit()` couples aqueous reaction equilibrium to the same fixed gas/oil/aqueous roles. This supports
+activity-based scale-potential screening after reactive gas-aqueous or gas-oil-aqueous flashes. The result is a
+saturation ratio; explicit mineral precipitation, solid amounts, solid-phase equilibrium and wax checks are not yet
+supported by the hybrid strategy.
+
+The solver is not restricted to Pitzer. Desmukh-Mather and Kent-Eisenberg use the same reactive coupling when
+`chemicalReactionInit()` and `setMultiPhaseCheck(true)` are enabled. Other `SystemEosGE` systems can opt in explicitly:
+
+```java
+SystemNRTL fluid = new SystemNRTL(313.15, 50.0);
+fluid.addComponent("methane", 5.0);
+fluid.addComponent("n-heptane", 2.0);
+fluid.addComponent("water", 55.5);
+fluid.createDatabase(true);
+fluid.setMixingRule("classic");
+fluid.enableHybridEosGeFlash();
+
+new ThermodynamicOperations(fluid).TPflash();
+```
+
+`enableHybridEosGeFlash()` configures topology, not electrolyte parameters. Scale calculations require a GE phase
+with meaningful activities for all requested aqueous species. Pitzer has the broadest concentrated-brine parameter
+coverage; the amine models retain their narrower component and validity ranges. `SystemDuanSun` remains excluded from
+this topology because its current public API accepts only CO2.
 
 ---
 

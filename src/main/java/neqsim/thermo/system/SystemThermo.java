@@ -1308,14 +1308,41 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public double calcHenrysConstant(String component) {
     if (numberOfPhases != 2) {
-      logger.error("Can't calculate Henrys constant - two phases must be present.");
-      return 0;
-    } else {
-      int compNumb = getPhase(getPhaseIndex(0)).getComponent(component).getComponentNumber();
-      double hc = getPhase(getPhaseIndex(0)).getFugacity(compNumb)
-          / getPhase(getPhaseIndex(1)).getComponent(component).getx();
-      return hc;
+      throw new IllegalStateException("calcHenrysConstant: Henry's constant cannot be calculated with " + numberOfPhases
+          + " phase(s); exactly two phases must be present. "
+          + "Run a flash that produces a gas and a liquid phase before calling this method.");
     }
+    int compNumb = getPhase(getPhaseIndex(0)).getComponent(component).getComponentNumber();
+    double hc = getPhase(getPhaseIndex(0)).getFugacity(compNumb)
+        / getPhase(getPhaseIndex(1)).getComponent(component).getx();
+    return hc;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double calcHenrysConstant(String component, String unit) {
+    double henryBarPerMoleFraction = calcHenrysConstant(component);
+    String key = unit == null ? "" : unit.trim().toLowerCase().replace(" ", "");
+    if (key.length() == 0 || key.equals("bar")) {
+      return henryBarPerMoleFraction;
+    }
+
+    PhaseInterface liquidPhase = getPhase(getPhaseIndex(1));
+    // Liquid molar volume in m3/mol; getMolarMass returns kg/mol and getDensity kg/m3.
+    double molarVolume = liquidPhase.getMolarMass() / liquidPhase.getDensity("kg/m3");
+    double concentrationPerBar = 1.0 / (molarVolume * henryBarPerMoleFraction);
+
+    if (key.equals("mol/m3/bar") || key.equals("mmol/l/bar")) {
+      return concentrationPerBar;
+    }
+    if (key.equals("mol/l/bar")) {
+      return concentrationPerBar / 1000.0;
+    }
+    if (key.equals("mg/l/bar")) {
+      return concentrationPerBar * liquidPhase.getComponent(component).getMolarMass() * 1000.0;
+    }
+    throw new IllegalArgumentException("calcHenrysConstant: unit '" + unit
+        + "' is not supported; use bar, mol/m3/bar, mmol/L/bar, " + "mol/L/bar or mg/L/bar");
   }
 
   /** {@inheritDoc} */

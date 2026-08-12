@@ -450,17 +450,14 @@ public class Heater extends TwoPortEquipment
       testOps.TPflash();
     }
 
-    // system.setTemperature(temperatureOut);
-    system.init(3);
+    // Physical properties initialize thermodynamic properties at level 2, which is sufficient
+    // for enthalpy. Do this before reading newH to avoid a redundant level-3 derivative pass.
+    system.initProperties();
     double newH = system.getEnthalpy();
     energyInput = newH - oldH;
     if (!isSetEnergyStream() || getEnergyPort("heatDuty").getEnergyStream() instanceof EnergyBus) {
       getEnergyPort("heatDuty").setDuty(energyInput);
     }
-    // system.setTemperature(temperatureOut);
-    // testOps.TPflash();
-    // system.setTemperature(temperatureOut);
-    system.initProperties();
     getOutletStream().setThermoSystem(system);
     lastTemperature = inStream.getFluid().getTemperature();
     lastPressure = inStream.getFluid().getPressure();
@@ -786,9 +783,9 @@ public class Heater extends TwoPortEquipment
   public double getEntropyProduction(String unit) {
     UUID id = UUID.randomUUID();
     inStream.run(id);
-    inStream.getFluid().init(3);
+    inStream.getFluid().init(2);
     outStream.run(id);
-    outStream.getFluid().init(3);
+    outStream.getFluid().init(2);
 
     double entrop = outStream.getThermoSystem().getEntropy(unit) - inStream.getThermoSystem().getEntropy(unit);
 

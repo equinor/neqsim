@@ -1,6 +1,6 @@
 ---
 name: analyze CCS and hydrogen systems
-description: "Models CO2 capture, transport, storage (CCS) value chains and hydrogen systems using NeqSim. Covers CO2 phase behavior with impurities, dense phase pipeline design, injection well analysis, impurity enrichment, shutdown transients, hydrogen blending, green/blue hydrogen, and full CCS chain integration. Uses CO2InjectionWellAnalyzer, TransientWellbore, ImpurityMonitor, and standard process equipment."
+description: "Models CO2 capture, transport, storage (CCS) value chains and hydrogen systems using NeqSim. Covers composition-specific CO2 phase behavior, DNV-RP-F104 transport-envelope screening, injection well analysis, impurity enrichment, shutdown transients, hydrogen blending, green/blue hydrogen, and full CCS chain integration."
 argument-hint: "Describe the CCS or hydrogen task — e.g., 'CO2 pipeline design for 5 Mt/yr with 2% N2 impurity', 'injection well safety analysis for CO2 with H2 impurity', 'hydrogen blending impact on gas network Wobbe index', or 'full CCS chain from capture to injection'."
 ---
 
@@ -16,7 +16,7 @@ value chains — producing working code with validated results.
 
 | Domain | Standards | Key Requirements |
 |--------|-----------|-----------------|
-| CO2 pipeline | DNV-RP-F104, ISO 27913, DNV-ST-F101 | Dense phase transport, impurity limits, wall thickness |
+| CO2 pipeline | DNV-RP-F104, ISO 27913, DNV-ST-F101 | Project composition/phase envelope, transport hydraulics, structural design, fracture/materials/corrosion and lifecycle evidence |
 | CO2 storage | ISO 27914, EU CCS Directive | Site characterization, monitoring |
 | CO2 quality | ISO 27916, DYNAMIS project specs | Composition specifications |
 | H2 pipeline | ASME B31.12 | Hydrogen piping design, embrittlement prevention |
@@ -36,6 +36,8 @@ Load the `neqsim-standards-lookup` skill for database queries and the
 | `CO2FlowCorrections` | `process.equipment.pipeline` | Dense phase flow adjustments |
 | `ImpurityMonitor` | `process.measurementdevice` | Impurity enrichment tracking |
 | `PipeBeggsAndBrills` | `process.equipment.pipeline` | Multiphase pipeline hydraulics |
+| `DnvRpF104Co2PipelineEnvelopeScreeningKernel` | `process.engineering.calculation` | Current-edition caller-controlled composition and transport-envelope margins |
+| `StandardRequirementPackRegistry` | `process.mechanicaldesign.designstandards` | Bounded cross-lifecycle F104 capability discovery |
 | `GibbsReactor` | `process.equipment.reactor` | Equilibrium reactions (SMR, WGS) |
 | `Standard_ISO6976` | `standards.gasquality` | Gas quality for H2 blending |
 
@@ -71,10 +73,26 @@ ops.calcPTphaseEnvelope();
 ```
 
 ### 3. Pipeline Design
-- Operate above cricondenbar (dense phase) to avoid two-phase flow
-- Typical: 110-150 bara inlet, 80+ bara minimum, 4-40°C
-- Use `PipeBeggsAndBrills` with outer temperature for heat transfer
-- Size for erosional velocity limits and allowable pressure drop
+- Calculate the phase envelope using the actual bounded composition and a project-verified EOS.
+- Establish the intended single-phase operating region and uncertainty margins from the controlled
+  project basis; do not substitute the pure-CO2 critical point or a universal cricondenbar rule.
+- Use `PipeBeggsAndBrills` for the hydraulic/thermal profile when validated for the service.
+- Route an explicit current `DNV-RP-F104 2021-02+AMD:2021-09` screen through
+  `DnvRpF104Co2PipelineEnvelopeScreeningKernel` with externally verified boundaries and evidence.
+- Keep DNV-ST-F101 structural design and F104 fracture, materials, corrosion, construction,
+  operation, safety, and requalification work separate.
+
+### DNV-RP-F104 routing rule
+
+The typed kernel compares caller-controlled CO2/water specifications and an ordered operating
+profile with composition-specific single-phase pressure boundaries, MAOP, and design temperatures.
+A negative margin is a screening finding; it is not a DNV FAIL. Missing composition, EOS/phase,
+profile, limits, integrity, or lifecycle evidence blocks calculation. Use the F104 requirement pack
+to discover related NeqSim capabilities, but never report the pack as clause coverage.
+
+`DensePhaseCO2Corrosion` is a legacy heuristic, and `CO2FlowCorrections.isDensePhase(...)` checks a
+pure-CO2 critical-point condition. Neither is exact-edition F104 evidence or a source of project
+limits.
 
 ### 4. Injection Well Analysis
 Use `CO2InjectionWellAnalyzer` for comprehensive safety assessment:
@@ -112,8 +130,9 @@ Use `CO2InjectionWellAnalyzer` for comprehensive safety assessment:
 
 ### Phase Envelope Validation
 - Compare cricondenbar and cricondentherm against published data for similar compositions
-- Pure CO2 critical point: 31.0°C, 73.8 bara (verify NeqSim matches)
-- With 2% N2: cricondenbar shifts to ~85 bara (verify direction and magnitude)
+- Verify the selected EOS against controlled property and phase-boundary data for the actual
+  composition and expected pressure-temperature range.
+- Preserve impurity ranges and quantify model/measurement uncertainty before deriving boundaries.
 
 ### Pipeline Hydraulics Validation
 - Pressure drop: compare against Beggs & Brill correlations for single-phase dense flow
@@ -130,7 +149,7 @@ Use `CO2InjectionWellAnalyzer` for comprehensive safety assessment:
 | Issue | Cause | Fix |
 |-------|-------|-----|
 | Phase envelope fails to close | Impurity too high or wrong EOS | Use SRK, reduce extreme impurity levels |
-| Two-phase in pipeline | Operating below cricondenbar | Increase inlet pressure or reduce impurity |
+| Unintended two-phase region | Operating path crosses the verified composition-specific phase envelope | Revisit pressure/temperature profile, composition envelope, uncertainty, and operating strategy |
 | Negative JT coefficient | CO2 in dense phase (inverted JT) | Expected behavior — document, don't "fix" |
 | Zero viscosity in dense phase | Missing `initProperties()` | Call `fluid.initProperties()` after flash |
 | H2 enrichment > 100% | Numerical artifact at trace levels | Check mass balance, increase H2 in feed |
@@ -160,7 +179,7 @@ PHASE ENVELOPE
 Cricondenbar: XX.X bara
 Cricondentherm: XX.X °C
 Critical point: XX.X °C / XX.X bara
-Operating margin above cricondenbar: XX.X bar
+Minimum margin above caller-controlled single-phase boundary: XX.X bar
 
 KEY RESULTS
 ───────────

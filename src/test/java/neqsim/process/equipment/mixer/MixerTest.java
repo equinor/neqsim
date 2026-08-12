@@ -3,6 +3,7 @@ package neqsim.process.equipment.mixer;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
@@ -14,6 +15,50 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author ESOL
  */
 class MixerTest {
+  private static class InitTrackingSystemSrkEos extends SystemSrkEos {
+    private static final long serialVersionUID = 1000L;
+    private AtomicInteger levelTwoCalls = new AtomicInteger();
+    private AtomicInteger levelThreeCalls = new AtomicInteger();
+
+    InitTrackingSystemSrkEos(double temperature, double pressure) {
+      super(temperature, pressure);
+    }
+
+    @Override
+    public InitTrackingSystemSrkEos clone() {
+      InitTrackingSystemSrkEos cloned = (InitTrackingSystemSrkEos) super.clone();
+      if (cloned == null) {
+        throw new IllegalStateException("Failed to clone initialization-tracking fluid");
+      }
+      cloned.levelTwoCalls = levelTwoCalls;
+      cloned.levelThreeCalls = levelThreeCalls;
+      return cloned;
+    }
+
+    @Override
+    public void init(int initType) {
+      super.init(initType);
+      if (levelTwoCalls != null && initType == 2) {
+        levelTwoCalls.incrementAndGet();
+      } else if (levelThreeCalls != null && initType == 3) {
+        levelThreeCalls.incrementAndGet();
+      }
+    }
+
+    void resetInitCounts() {
+      levelTwoCalls.set(0);
+      levelThreeCalls.set(0);
+    }
+
+    int getLevelTwoCalls() {
+      return levelTwoCalls.get();
+    }
+
+    int getLevelThreeCalls() {
+      return levelThreeCalls.get();
+    }
+  }
+
   static neqsim.thermo.system.SystemInterface testSystem;
   static neqsim.thermo.system.SystemInterface waterSystem;
   static Stream gasStream;
@@ -189,6 +234,73 @@ class MixerTest {
     testMixer.run();
 
     assertEquals(inletEnthalpyJ, testMixer.getOutletStream().getFluid().getEnthalpy("J"), 1e-3);
+  }
+
+  /**
+   * Mixer inlet enthalpy requires caloric properties but not level-3 composition derivatives. The optimized path must
+   * match a level-3 reference at the base state and a nearby operating point.
+   */
+  @Test
+  void testMixStreamEnthalpyUsesMinimumThermodynamicInitializationLevel() {
+    InitTrackingSystemSrkEos fluid = new InitTrackingSystemSrkEos(323.15, 70.0);
+    fluid.addComponent("nitrogen", 0.02);
+    fluid.addComponent("CO2", 0.03);
+    fluid.addComponent("methane", 0.80);
+    fluid.addComponent("ethane", 0.07);
+    fluid.addComponent("propane", 0.04);
+    fluid.addComponent("n-heptane", 0.04);
+    fluid.setMixingRule("classic");
+
+    Stream hotStream = new Stream("tracked hot stream", fluid);
+    hotStream.setFlowRate(15000.0, "kg/hr");
+    hotStream.run();
+
+    Stream coolStream = new Stream("tracked cool stream", fluid.clone());
+    coolStream.setTemperature(313.15, "K");
+    coolStream.setFlowRate(10000.0, "kg/hr");
+    coolStream.run();
+
+    Mixer mixer = new Mixer("tracked enthalpy mixer");
+    mixer.addStream(hotStream);
+    mixer.addStream(coolStream);
+
+    assertMinimumEnthalpyInitialization(fluid, mixer);
+
+    coolStream.setTemperature(318.15, "K");
+    coolStream.run();
+    assertMinimumEnthalpyInitialization(fluid, mixer);
+  }
+
+  private static void assertMinimumEnthalpyInitialization(InitTrackingSystemSrkEos fluid, Mixer mixer) {
+    double expectedEnthalpy = 0.0;
+    for (StreamInterface inlet : mixer.getInletStreams()) {
+      inlet.getThermoSystem().init(3);
+      expectedEnthalpy += inlet.getThermoSystem().getEnthalpy();
+    }
+
+    double[] temperatures = new double[mixer.getInletStreams().size()];
+    double[] pressures = new double[mixer.getInletStreams().size()];
+    double[] flows = new double[mixer.getInletStreams().size()];
+    for (int index = 0; index < mixer.getInletStreams().size(); index++) {
+      StreamInterface inlet = mixer.getInletStreams().get(index);
+      temperatures[index] = inlet.getTemperature("K");
+      pressures[index] = inlet.getPressure("bara");
+      flows[index] = inlet.getFlowRate("kg/hr");
+    }
+
+    fluid.resetInitCounts();
+    double actualEnthalpy = mixer.calcMixStreamEnthalpy();
+
+    assertEquals(expectedEnthalpy, actualEnthalpy, Math.max(1.0e-8, Math.abs(expectedEnthalpy) * 1.0e-12));
+    assertEquals(mixer.getInletStreams().size(), fluid.getLevelTwoCalls(),
+        "Every active inlet still requires caloric initialization");
+    assertEquals(0, fluid.getLevelThreeCalls(), "Mixer enthalpy must not calculate composition derivatives");
+    for (int index = 0; index < mixer.getInletStreams().size(); index++) {
+      StreamInterface inlet = mixer.getInletStreams().get(index);
+      assertEquals(temperatures[index], inlet.getTemperature("K"), 0.0);
+      assertEquals(pressures[index], inlet.getPressure("bara"), 0.0);
+      assertEquals(flows[index], inlet.getFlowRate("kg/hr"), 0.0);
+    }
   }
 
   /**

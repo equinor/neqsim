@@ -3,8 +3,6 @@ title: "Vessel Depressurization and Filling"
 description: "Dynamic modeling of pressure vessel filling, depressurization, and blowdown using VesselDepressurization. Covers thermodynamic modes, heat transfer models (real-gas beta, momentum-based mixed convection, Biot correction, Rohsenow boiling), fire cases, composite vessels, flow assurance, CNG tank scenarios, and Python/Java API reference."
 ---
 
-# Vessel Depressurization and Filling
-
 Dynamic modeling of pressure vessel filling, depressurization, and blowdown using the `VesselDepressurization` class.
 
 ## Table of Contents
@@ -219,12 +217,16 @@ vessel.setFlowDirection(FlowDirection.FILLING);     // pressurization
 
 ```java
 vessel.setBackPressure(1.0);                // downstream pressure [bara]
-vessel.setTargetPressure(20.0);             // stop condition [bar]
+vessel.setTargetPressure(20.0);             // stop condition [bara]
 vessel.setAmbientTemperature(288.15);       // ambient [K]
 vessel.setInletTemperature(288.15);         // filling gas supply T [K]
 vessel.setInletTemperature(15.0, "C");      // or with unit string
 vessel.setValveOpeningTime(5.0);            // ESD ramp time [s] (0 = instant)
 ```
+
+Pressure setters use absolute bar at the public API boundary. `setBackPressure()` and
+`setTargetPressure()` convert their inputs to pascals internally; do not pre-convert these values.
+The initial fluid-system pressure returned by `SystemInterface.getPressure()` is also in bar.
 
 ### Initial Liquid Level
 
@@ -686,10 +688,25 @@ Map<String, String> risks = vessel.assessFlowAssuranceRisks();
 
 ### Validation
 
+Run validation after the initial vessel state and boundary conditions are configured and before
+starting the transient simulation.
+
 ```java
-vessel.validate();                               // throws on errors
-List<String> warnings = vessel.validateWithWarnings();  // non-throwing
+vessel.validate();                                      // throws on configuration errors
+List<String> warnings = vessel.validateWithWarnings();  // returns errors and warnings
 ```
+
+`validate()` rejects configurations that cannot produce a meaningful simulation, including a
+back pressure greater than or equal to the initial pressure. When the calculation type is
+`ENERGY_BALANCE` and heat transfer is `CALCULATED` or `TRANSIENT_WALL`, it also rejects a
+non-positive vessel length or diameter; the default dimensions are positive. It logs non-critical
+configuration warnings.
+
+`validateWithWarnings()` does not throw configuration errors. It returns them with an `ERROR:`
+prefix together with non-critical warnings. Initial pressures above 700 bar produce a non-critical
+warning to confirm that the equation of state is valid for the pressure range. For example, an 80
+bara initial state with 1.2 bara back pressure is valid, while a 750 bara initial state with the same
+back pressure remains valid but produces the high-pressure warning.
 
 ### Orifice Sizing (API 521)
 
@@ -1077,7 +1094,7 @@ print(f"Min gas T: {float(vessel.getMinimumTemperatureReached('C')):.1f} C")
 
 ## Related Documentation
 
-- [HTC Literature Comparison](../../../examples/CNGtankmodelling/CNG_HTC_Literature_Comparison.ipynb) - Validation against published experimental data
+- [HTC Literature Comparison](https://github.com/equinor/neqsim/blob/master/examples/CNGtankmodelling/CNG_HTC_Literature_Comparison.ipynb) - Validation against published experimental data
 - [QRA Integration Guide](../../integration/QRA_INTEGRATION_GUIDE.md) - Safety analysis integration
 - [Fire Heat Transfer](../../safety/fire_heat_transfer_enhancements.md) - Fire exposure and blowdown enhancements
 - [Tank Equipment](tanks.md) - General tank modeling

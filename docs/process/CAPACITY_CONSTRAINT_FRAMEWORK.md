@@ -14,6 +14,7 @@ The Capacity Constraint Framework extends NeqSim's existing bottleneck analysis 
 - **18 built-in capacity strategies**: Pre-configured constraints for compressors, separators, pipes, valves, heat exchangers, pumps, expanders, reactors, power generation, subsea equipment, filters, electrolyzers, wells, and more
 - **Constraint types**: HARD (trip/damage), SOFT (efficiency loss), DESIGN (normal envelope)
 - **Warning thresholds**: Early warning when approaching limits
+- **Evidence metadata**: Record provenance, confidence, and the scalar operating range where a limit is applicable
 - **Integration with ProductionOptimizer**: Works seamlessly with existing optimization tools
 - **ProcessSystem-wide analysis**: `findBottleneck()`, `getCapacityUtilizationSummary()`, and related methods iterate over ALL equipment
 
@@ -230,12 +231,97 @@ CapacityConstraint speedConstraint = new CapacityConstraint("speed", "RPM", Cons
 | Method | Returns | Description |
 |--------|---------|-------------|
 | `getCurrentValue()` | `double` | Current value from the valueSupplier |
-| `getUtilization()` | `double` | Current value / design value (1.0 = 100%) |
+| `getUtilization()` | `double` | Current/design for maximum constraints; minimum/current for minimum constraints (1.0 = limit) |
 | `getUtilizationPercent()` | `double` | Utilization as percentage |
 | `isViolated()` | `boolean` | True if utilization > 1.0 |
-| `isHardLimitExceeded()` | `boolean` | True if HARD constraint exceeds max value |
+| `isHardLimitExceeded()` | `boolean` | True if a HARD maximum is exceeded or a HARD minimum is undershot |
 | `isNearLimit()` | `boolean` | True if above warning threshold (default 90%) |
-| `getMargin()` | `double` | Remaining headroom (1.0 - utilization) |
+| `getMargin()` | `double` | Remaining normalized headroom (1.0 - utilization) |
+| `getConfidence()` | `double` | Evidence-quality score in [0, 1], or `NaN` when unset |
+| `isCurrentValueWithinValidityRange()` | `boolean` | Whether the current value is inside the explicitly assigned range |
+
+> **Minimum constraints:** Set `minValue` and leave `designValue` unset. This makes utilization
+> `minimum/current`, so safe values above the minimum remain below 100%. Setting the same value as
+> both design and minimum changes the direction to `current/design` and is incorrect for minimum
+> NPSH headroom, minimum stable flow, residence time, or similar limits. Required NPSH margin is
+> service- and pump-specific; use vendor or applicable Hydraulic Institute design data instead of
+> treating a generic screening default as an approved installed limit.
+
+`ProcessModelSimulationEvaluator.BottleneckStatus` and `ThroughputCaseRow` preserve this direction
+with `isMinimumConstraint()`. Their reported design value is the applicable finite limit. The
+engineering-unit capacity margin is positive on the feasible side: `limit - current` for maximum
+constraints and `current - limit` for minimum constraints. This convention prevents a minimum-only
+constraint's internal unset design sentinel from appearing in JSON or CSV throughput results.
+
+The same throughput rows preserve `CapacityConstraint.getDataSource()` as `dataSource` in Java,
+JSON, and CSV. Set a concise provenance tag such as `mechanicalDesign`, `installedDataSheet`, or
+`operatingEnvelope` when defining the limit. Untagged and legacy rows report `not_set`; downstream
+optimizers should retain this tag with recommendations rather than treating all limits as equally
+authoritative.
+
+#### Confidence and validity metadata
+
+Use confidence and validity metadata to state how strongly the limit is supported and where its
+basis applies:
+
+```java
+CapacityConstraint gasCapacity = new CapacityConstraint("gasFlow", "kg/h", ConstraintType.HARD)
+    .setDesignValue(12000.0)
+    .setCurrentValue(10000.0)
+    .setDataSource("installedDataSheet")
+    .setConfidence(0.95)
+    .setValidityRange(8000.0, 12000.0);
+
+if (!gasCapacity.hasValidityRange()
+    || !gasCapacity.isCurrentValueWithinValidityRange()) {
+  // Require engineering review before relying on this limit outside its evidence range.
+}
+```
+
+`confidence` is an evidence-quality score from zero to one. It is not a probability of safe
+operation, constraint satisfaction, or model accuracy. The validity bounds are inclusive, finite,
+and use the constraint's own unit. An unset confidence or range remains explicitly distinguishable
+through `hasConfidence()` and `hasValidityRange()`; the numeric getters return `NaN` when unset.
+Invalid scores, non-finite bounds, and reversed ranges fail fast.
+
+When the constraint becomes the active full-model bottleneck,
+`ProcessModelSimulationEvaluator.BottleneckStatus` and `ThroughputCaseRow` preserve the same
+confidence, validity bounds, and snapshotted in-range result. Java callers can use
+`hasConfidence()`, `getConfidence()`, `hasValidityRange()`, `getValidityMinimum()`,
+`getValidityMaximum()`, and `isCurrentValueWithinValidityRange()`. JSON rows include the
+`hasConfidence` and `hasValidityRange` flags; unset numeric or applicability values are
+`null`. CSV traces include the same flags and leave unset confidence, bounds, and applicability
+cells blank. Public snapshot constructors also normalize inconsistent enabled metadata (non-finite
+confidence or bounds, confidence outside [0, 1], or reversed bounds) to this unset state.
+Applicability is derived from each snapshot's current value and retained bounds rather than accepted
+as caller-provided state. Dynamic value suppliers are read once per bottleneck candidate, and that
+same scalar is used for utilization and applicability. This prevents legacy, malformed, or unqualified limits from being mistaken
+for zero-confidence or out-of-range evidence.
+
+This first validity contract is deliberately scalar. Compressor maps and other models whose
+applicability depends on several variables still require a separate multidimensional operating
+envelope. Confidence and validity metadata do not change utilization, feasibility, or optimizer
+behavior by themselves; downstream ranking must preserve and assess them explicitly.
+
+For full-model diagnostics, `ProcessModelSimulationEvaluator.rankCapacityConstraints(model)`
+returns an immutable list of every enabled capacity constraint in descending utilization order.
+Equal-utilization constraints retain process-model registration order, including the declared order
+of built-in strategy-generated constraints. Each
+`BottleneckStatus.getEvidenceApplicability()` value is one of `WITHIN_VALIDITY_RANGE`,
+`OUTSIDE_VALIDITY_RANGE`, or `NOT_ASSESSED`. This makes unsupported and extrapolated limits
+visible beside the engineering ranking without allowing confidence or applicability to change
+utilization, feasibility, or order. The method snapshots every dynamic value supplier exactly once;
+enabled constraints with undefined (`NaN`) utilization remain visible at the end of the ranking;
+`findActiveBottleneck(model)` remains the lower-allocation API when only the leading constraint is
+needed.
+
+After `ProcessModelSimulationEvaluator.evaluate(...)`, use
+`EvaluationResult.getRankedCapacityConstraints()` instead of rescanning the live model. The result
+owns an immutable snapshot tied to that exact operating point, and its legacy active bottleneck is
+the first finite-utilization item in the same ranking. `ProcessModelThroughputOptimizer` copies the
+snapshot into each `ThroughputCaseRow`; JSON case tables therefore preserve near-active limits and
+bottleneck switching across the throughput search. The flat CSV remains a one-row-per-case summary
+of the leading limit; use JSON or the Java/JPype list when the complete per-case ranking is needed.
 
 ### 2. CapacityConstrainedEquipment (Interface)
 
@@ -1962,7 +2048,8 @@ The returned JSON (schema `"1.0"`) has the shape:
       ]
     }
   ],
-  "bottleneck": {"name": "30-KA-01", "utilization": 0.83,
+  "bottleneck": {"area": "Export compression", "name": "30-KA-01",
+                 "qualifiedName": "Export compression::30-KA-01", "utilization": 0.83,
                  "utilizationPercent": 83.0, "limitingConstraint": "power"},
   "anyOverloaded": false,
   "anyHardLimitExceeded": false
@@ -1983,8 +2070,11 @@ The returned JSON (schema `"1.0"`) has the shape:
 </table>
 
 The plant-wide `bottleneck`, `anyOverloaded`, and `anyHardLimitExceeded` fields summarise the whole
-flowsheet. Because the snapshot reads constraints rather than re-solving, it is cheap to call on
-every optimization step.
+flowsheet. In a `ProcessModel` snapshot, a non-null `bottleneck` includes both its owning `area` and
+an unambiguous `qualifiedName` using the existing `area::unit` convention. Consumers should join or
+archive on `qualifiedName`, because separate process areas may legitimately reuse the same unit
+name. Because the snapshot reads constraints rather than re-solving, it is cheap to call on every
+optimization step.
 
 **Closed-loop RL pattern:**
 
@@ -2048,4 +2138,3 @@ double util = expander.getMaxUtilization(); // |getPower| / 5000 kW, no spurious
 - [Mechanical Design](mechanical_design)
 - [Optimizer Plugin Architecture](optimization/OPTIMIZER_PLUGIN_ARCHITECTURE)
 - [Optimization Examples](../examples/index)
-

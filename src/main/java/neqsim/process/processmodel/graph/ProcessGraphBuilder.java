@@ -1072,16 +1072,19 @@ public final class ProcessGraphBuilder {
       ProcessNode sourceNode = graph.getNode(producer);
       ProcessNode targetNode = graph.getNode(consumer);
       if (sourceNode != null && targetNode != null) {
-        // Avoid duplicate edges
+        StreamInterface streamIface = stream instanceof StreamInterface ? (StreamInterface) stream : null;
+
+        // The same stream may be discovered through both equipment-specific and
+        // uniform inlet APIs. Deduplicate that discovery by stream identity, but
+        // preserve distinct parallel streams between the same equipment pair.
         boolean edgeExists = false;
         for (ProcessEdge edge : sourceNode.getOutgoingEdges()) {
-          if (edge.getTarget() == targetNode) {
+          if (edge.getTarget() == targetNode && edge.getStream() == streamIface) {
             edgeExists = true;
             break;
           }
         }
         if (!edgeExists) {
-          StreamInterface streamIface = stream instanceof StreamInterface ? (StreamInterface) stream : null;
           graph.addEdge(sourceNode, targetNode, streamIface);
         }
       }

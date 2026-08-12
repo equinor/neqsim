@@ -89,7 +89,8 @@ public class PVFflash extends Flash {
     // General case: iterate on temperature to match the specified vapor fraction
     // (first TPflash cold, subsequent internal calls warm)
     tpFlash.run();
-    neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+    neqsim.thermo.ThermodynamicModelSettings
+        .setUseWarmStartKValues(neqsim.thermo.ThermodynamicModelSettings.isInnerFlashWarmStartSafe(system));
     system.init(2);
 
     double tempLow = estimateLowTemperature();

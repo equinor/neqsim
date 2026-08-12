@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -65,6 +66,30 @@ public class ColumnSpecificationTest {
     assertThrows(IllegalArgumentException.class,
         () -> new ColumnSpecification(ColumnSpecification.SpecificationType.DUTY,
             ColumnSpecification.ProductLocation.TOP, Double.NaN));
+  }
+
+  /**
+   * Verifies that the warm-state signature distinguishes component names with colliding Java string hashes.
+   *
+   * @throws ReflectiveOperationException if the private signature builder cannot be invoked
+   */
+  @Test
+  public void warmStateSignatureDistinguishesComponentNameHashCollisions() throws ReflectiveOperationException {
+    assertEquals("Aa".hashCode(), "BB".hashCode(), "test requires a known Java String hash collision");
+
+    DistillationColumn column = new DistillationColumn("SignatureColumn", 3, true, true);
+    Method signatureMethod = DistillationColumn.class.getDeclaredMethod("calculateNaphtaliSandholmInputSignature");
+    signatureMethod.setAccessible(true);
+
+    column.setTopSpecification(new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+        ColumnSpecification.ProductLocation.TOP, 0.95, "Aa"));
+    long aaSignature = ((Long) signatureMethod.invoke(column)).longValue();
+
+    column.setTopSpecification(new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+        ColumnSpecification.ProductLocation.TOP, 0.95, "BB"));
+    long bbSignature = ((Long) signatureMethod.invoke(column)).longValue();
+
+    assertNotEquals(aaSignature, bbSignature, "warm-state signatures must retain full component-name content");
   }
 
   /**
@@ -486,7 +511,7 @@ public class ColumnSpecificationTest {
   }
 
   /**
-   * Test that Naphtali-Sandholm exposes semi-analytic Jacobian speed telemetry.
+   * Test that Naphtali-Sandholm classifies its numerical Jacobian and converged K-value work accurately.
    */
   @Test
   public void naphtaliSandholmTelemetryRecordsJacobianWork() {
@@ -497,18 +522,84 @@ public class ColumnSpecificationTest {
 
     column.run();
 
-    assertTrue(column.getGasOutStream().getFlowRate("kg/hr") >= 0.0);
-    assertTrue(column.getLastNaphtaliAnalyticJacobianColumns() > 0);
-    assertTrue(column.getLastNaphtaliFiniteDifferenceJacobianColumns() >= 0);
+    double gasFlow = column.getGasOutStream().getFlowRate("kg/hr");
+    double liquidFlow = column.getLiquidOutStream().getFlowRate("kg/hr");
+    assertTrue(gasFlow >= 0.0);
+    assertTrue(liquidFlow >= 0.0);
+    assertEquals(237.6597295390127, gasFlow, 1.0e-8);
+    assertEquals(12.34027046098738, liquidFlow, 1.0e-8);
+    assertEquals(250.0, gasFlow + liquidFlow, 1.0e-8);
+    assertEquals(0, column.getLastNaphtaliAnalyticJacobianColumns(),
+        "the current implementation does not analytically differentiate any Jacobian column");
+    assertEquals(800, column.getLastNaphtaliFiniteDifferenceJacobianColumns(),
+        "eight stages times five variables times twenty Jacobian builds must all be finite-difference columns");
     assertTrue(column.getLastNaphtaliThermoEvaluationCount() > 0);
+    assertTrue(column.getLastNaphtaliThermoEvaluationCount() < 16000,
+        () -> "accepted line-search trials should be reused without restoring and reevaluating the same Newton step: "
+            + column.getLastNaphtaliThermoEvaluationCount());
+    assertTrue(column.getLastNaphtaliThermoKValueIterationCount() >= column.getLastNaphtaliThermoEvaluationCount(),
+        "each successful tray evaluation must perform at least one forced-root fugacity sweep");
+    assertTrue(column.getLastNaphtaliThermoKValueIterationCount() < 2 * column.getLastNaphtaliThermoEvaluationCount(),
+        () -> "already-converged tray evaluations should avoid a redundant second sweep: evaluations="
+            + column.getLastNaphtaliThermoEvaluationCount() + ", K-value iterations="
+            + column.getLastNaphtaliThermoKValueIterationCount());
+    assertTrue(column.getLastNaphtaliThermoKValueNonConvergedCount() > 0,
+        "this difficult case must expose two-sweep evaluations that remain above the log-K tolerance");
+    assertTrue(column.getLastNaphtaliThermoKValueNonConvergedCount() <= column.getLastNaphtaliThermoEvaluationCount());
+    assertTrue(Double.isFinite(column.getLastNaphtaliThermoMaxLogKValueUpdate()));
+    assertTrue(column.getLastNaphtaliThermoMaxLogKValueUpdate() > 1.0e-8);
     assertTrue(column.getLastNaphtaliThermoCacheHitCount() >= 0);
     assertTrue(column.getLastNaphtaliJacobianBuildTimeSeconds() >= 0.0);
     assertTrue(column.getLastNaphtaliBlockLinearSolveCount() > 0);
     assertTrue(column.getLastNaphtaliDenseLinearSolveCount() >= 0);
     assertTrue(column.getLastNaphtaliLinearSolveTimeSeconds() >= 0.0);
     assertTrue(column.getConvergenceDiagnostics().contains("Naphtali-Sandholm Jacobian"));
+    assertTrue(column.getConvergenceDiagnostics().contains("analytic columns: 0"));
+    assertTrue(column.getConvergenceDiagnostics().contains("finite-difference columns: 800"));
+    assertTrue(column.getConvergenceDiagnostics().contains("K-value iterations"));
+    assertTrue(column.getConvergenceDiagnostics().contains("K-value evaluations at iteration cap"));
     assertTrue(column.getConvergenceDiagnostics().contains("thermodynamic cache hits"));
     assertTrue(column.getConvergenceDiagnostics().contains("block linear solves"));
+  }
+
+  /**
+   * Test that adaptive K-value work diagnostics and physical products repeat at a nearby feed temperature.
+   */
+  @Test
+  public void naphtaliKValueTelemetryIsRepeatableAtNearbyOperatingPoint() {
+    DistillationColumn first = createBinaryFractionator("NaphtaliKNearbyFirst", "propane", "n-butane", "n-pentane",
+        10.0, 273.15 + 47.0, 273.15 + 30.0, 273.15 + 90.0);
+    DistillationColumn second = createBinaryFractionator("NaphtaliKNearbySecond", "propane", "n-butane", "n-pentane",
+        10.0, 273.15 + 47.0, 273.15 + 30.0, 273.15 + 90.0);
+    first.setSolverType(DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
+    second.setSolverType(DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
+    first.setMaxNumberOfIterations(20);
+    second.setMaxNumberOfIterations(20);
+
+    first.run();
+    second.run();
+
+    assertEquals(first.getLastNaphtaliThermoEvaluationCount(), second.getLastNaphtaliThermoEvaluationCount());
+    assertTrue(first.getLastNaphtaliThermoEvaluationCount() < 16000,
+        () -> "the nearby case should also reuse accepted line-search evaluations: "
+            + first.getLastNaphtaliThermoEvaluationCount());
+    assertEquals(first.getLastNaphtaliThermoKValueIterationCount(), second.getLastNaphtaliThermoKValueIterationCount());
+    assertEquals(first.getLastNaphtaliThermoKValueNonConvergedCount(),
+        second.getLastNaphtaliThermoKValueNonConvergedCount());
+    assertEquals(first.getLastNaphtaliThermoMaxLogKValueUpdate(), second.getLastNaphtaliThermoMaxLogKValueUpdate());
+    assertEquals(first.getLastMeshResidualNorm(), second.getLastMeshResidualNorm());
+    assertEquals(first.getLastEnergyResidual(), second.getLastEnergyResidual());
+    assertTrue(first.getLastNaphtaliThermoKValueIterationCount() >= first.getLastNaphtaliThermoEvaluationCount());
+    assertTrue(first.getLastNaphtaliThermoKValueIterationCount() < 2 * first.getLastNaphtaliThermoEvaluationCount(),
+        "the nearby operating point should also avoid already-converged second fugacity sweeps");
+
+    double firstGas = first.getGasOutStream().getFlowRate("kg/hr");
+    double firstLiquid = first.getLiquidOutStream().getFlowRate("kg/hr");
+    assertTrue(firstGas >= 0.0);
+    assertTrue(firstLiquid >= 0.0);
+    assertEquals(250.0, firstGas + firstLiquid, 1.0e-8);
+    assertEquals(firstGas, second.getGasOutStream().getFlowRate("kg/hr"));
+    assertEquals(firstLiquid, second.getLiquidOutStream().getFlowRate("kg/hr"));
   }
 
   /**
@@ -545,19 +636,22 @@ public class ColumnSpecificationTest {
   }
 
   /**
-   * Test that AUTO reports deferred candidate fallbacks instead of rerunning damped substitution inside every rejected
-   * probe.
+   * Test that AUTO accepts preferred sum-rates or reports deferred fallback work instead of rerunning damped
+   * substitution inside every rejected probe.
    */
   @Test
-  public void autoSolverDefersCandidateFallbackWork() {
+  public void autoSolverDefersCandidateFallbackWorkOrAcceptsPreferredSumRates() {
     DistillationColumn column = createLeanGasFractionator();
 
     column.run();
 
     assertTrue(column.solved(), column.getConvergenceDiagnostics());
-    assertTrue(column.getLastAutoSolverSummary().contains("duplicate damped probe skipped"));
-    assertTrue(column.getLastAutoSolverSummary().contains("damped fallback deferred")
-        || column.getLastSolverTypeUsed() != DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
+    String summary = column.getLastAutoSolverSummary();
+    boolean preferredSumRatesAccepted = column.getLastSolverTypeUsed() == DistillationColumn.SolverType.SUM_RATES
+        && summary.contains("SUM_RATES: solved=true");
+    assertTrue(preferredSumRatesAccepted || summary.contains("duplicate damped probe skipped"), summary);
+    assertTrue(preferredSumRatesAccepted || summary.contains("damped fallback deferred")
+        || column.getLastSolverTypeUsed() != DistillationColumn.SolverType.DAMPED_SUBSTITUTION, summary);
   }
 
   /**

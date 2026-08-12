@@ -1205,7 +1205,7 @@ The `SeparatorEfficiencyReport` (and its `toJson()`) exposes:
 > note.
 
 See the worked notebook
-[SeparatorEfficiency_GasScrubber_ThreePhase.ipynb](../../examples/SeparatorEfficiency_GasScrubber_ThreePhase.ipynb)
+[SeparatorEfficiency_GasScrubber_ThreePhase.ipynb](https://github.com/equinor/neqsim/blob/master/docs/examples/SeparatorEfficiency_GasScrubber_ThreePhase.ipynb)
 for a full two-phase gas-scrubber and three-phase separator walkthrough with
 figures.
 

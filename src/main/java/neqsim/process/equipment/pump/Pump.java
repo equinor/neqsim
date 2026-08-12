@@ -513,26 +513,31 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    // System.out.println("pump running..");
-    if (inStream.getFlowRate("kg/sec") < minimumFlow) {
+    // Low-flow bypass. The threshold is interpreted in kg/hr, consistent with
+    // ProcessEquipmentBaseClass.checkAndHandleLowFlow and with
+    // ProcessSystem.setSectionLowFlowThreshold, so that a plant-wide low-flow
+    // threshold does not silently mean something different for pumps.
+    if (inStream.getFlowRate("kg/hr") < minimumFlow) {
       thermoSystem = inStream.getThermoSystem().clone();
       thermoSystem.setPressure(pressure, pressureUnit);
-      thermoSystem.init(3);
+      thermoSystem.init(2);
       dH = 0.0;
       if (!isSetEnergyStream()) {
         getEnergyPort("shaftPower").setDuty(0.0);
       }
       outStream.setThermoSystem(thermoSystem);
+      isActive(false);
       finishRun(id);
       return;
     }
+    isActive(true);
 
     // Check for cavitation risk if enabled
     if (checkNPSH && isCavitating()) {
       logger.warn("Pump " + getName() + " may be operating in cavitation conditions");
     }
 
-    inStream.getThermoSystem().init(3);
+    inStream.getThermoSystem().init(2);
     double hinn = inStream.getThermoSystem().getEnthalpy();
     double entropy = inStream.getThermoSystem().getEntropy();
 
@@ -1251,6 +1256,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
   @Override
   public void setMinimumFlow(double minimumFlow) {
     this.minimumFlow = minimumFlow;
+    super.setMinimumFlow(minimumFlow);
   }
 
   /**

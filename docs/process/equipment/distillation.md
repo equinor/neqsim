@@ -168,9 +168,35 @@ column.setReboilerVaporBoilupRatio(1.8);
 DistillationColumn.ReboilerMode reboilerMode = column.getReboilerMode();
 ```
 
+`setReboilerVaporBoilupRatio(ratio)` configures the direct reboiler mode.
+`setReboilerBoilupRatio(ratio)` also records the target as the bottom `REFLUX_RATIO`
+specification. After either route, `setReboilerMode(DistillationColumn.ReboilerMode.EQUILIBRIUM)`
+clears the active reboiler ratio and any stored bottom reflux-ratio specification, so a later run
+cannot silently restore the old ratio. Bottom purity, recovery, product-flow, and duty
+specifications are preserved.
+
 `setCondenserLiquidReflux(value, unit)` configures the `LIQUID_REFLUX_SPLIT` mode. Use it instead
 of calling `setCondenserMode(LIQUID_REFLUX_SPLIT)` directly because the fixed reflux flow is
-required.
+required. The split never creates condensate to satisfy an oversized request: it returns at most the
+available liquid, preserves material and energy, and leaves the column unsolved when the normalized
+fixed-reflux shortfall exceeds its acceptance tolerance. The requested, available, delivered, and residual values appear
+in
+`getConvergenceDiagnostics()`.
+
+If the column rejects the tray state and installs guarded full-feed fallback products, the
+condenser's separate liquid product from that rejected state is cleared. The fallback gas and
+bottom streams already contain the complete feed inventory, so exposing the old liquid product
+would double-count material. Fixed-reflux delivery diagnostics are invalidated in this state;
+callers must check for `SolveStatus.FALLBACK_PRODUCTS` and must not treat it as a rigorous
+fixed-reflux solution.
+
+A fixed liquid-reflux flow and a top `REFLUX_RATIO` specification are mutually exclusive because
+both control the condenser reflux split. Configuration rejects either setter order, and
+`validateSpecifications()` plus the run preflight detect contradictory state retained by an older
+serialized model or introduced through direct `Condenser` mutation. To recover, call
+`setCondenserMode(DistillationColumn.CondenserMode.PARTIAL)` or
+`setCondenserMode(DistillationColumn.CondenserMode.TOTAL)` to clear fixed-flow mode, or remove the
+top reflux-ratio specification.
 
 ## Solver Options
 
@@ -181,11 +207,11 @@ required.
 | `INSIDE_OUT` | Inside-out style flow correction with K-value tracking and polishing. | General deethanizer/depropanizer and multi-feed work. |
 | `MATRIX_INSIDE_OUT` | Adaptive matrix warm start plus rigorous inside-out polishing. | Larger hydrocarbon fractionators where matrix setup cost is justified. |
 | `WEGSTEIN` | Accelerated successive substitution after warm-up. | Well-conditioned fixed-point problems. |
-| `SUM_RATES` | Flow-corrected tearing method. | Absorbers, strippers, and flow-sensitive columns. |
+| `SUM_RATES` | Flow-corrected tearing method. Native for columns without a condenser; condenser configurations remain guarded to damped substitution. | Absorbers, reboiler-only strippers, and flow-sensitive columns. |
 | `NEWTON` | Tray-temperature Newton accelerator. | Difficult temperature convergence. It is not full simultaneous MESH Newton. |
-| `NAPHTALI_SANDHOLM` | Guarded simultaneous correction of MESH blocks after inside-out warm start. | Residual-driven hydrocarbon fractionators. |
+| `NAPHTALI_SANDHOLM` | Guarded simultaneous correction of MESH blocks after inside-out warm start, with early return to coordinated fallback after repeated non-descent steps. | Residual-driven hydrocarbon fractionators. |
 | `MESH_RESIDUAL` | Inside-out initialization plus full residual auditing. | Material, equilibrium, summation, energy, product-draw, and spec residual checks. |
-| `AUTO` | Runs a feasibility pre-screen, initializes a copied candidate, solves a relaxed damped base case, probes candidate strategies on column copies, and accepts the first solved non-fallback candidate or the best valid fallback. | Agent workflows and uncertain cases where robust automatic selection and diagnostics are useful. |
+| `AUTO` | Runs a feasibility pre-screen and copy-based candidate probes. Fixed-specification reboiler-only strippers try native `SUM_RATES` first; other configurations retain the relaxed damped base and guarded fallback ladder. | Agent workflows and uncertain cases where robust automatic selection and diagnostics are useful. |
 
 ```java
 column.setSolverType(DistillationColumn.SolverType.AUTO);
@@ -199,11 +225,24 @@ concrete solver that completed the run. Inspect `getLastAutoSolverSummary()` or
 iteration counts, solve times, and fallback notes. For product-specification cases, also inspect
 `getLastSpecificationHomotopyStepCount()` to confirm whether staged continuation was used.
 
+Exact unchanged-input reuse is conditional on both an identical problem fingerprint and the same
+active convergence-gate configuration that was recorded after the accepted public solve. Changing
+an enforced mass, energy, MESH, product-draw, specification, or other tolerance disqualifies the
+zero-iteration cache hit. Tolerances for disabled energy and MESH gates, and outer tear tolerances
+when no tear variable is configured, do not participate in the cache key. The next invocation
+executes the solver path after an active-gate change and either meets the new contract or reports
+non-convergence explicitly.
+
 ## Side Draws
 
 Side draws withdraw a fraction of tray vapor or liquid traffic. They are true external product
 streams: `getOutletStreams()` includes them, and `getMassBalance(unit)` subtracts them from the
-feed-product balance.
+feed-product balance. The sequential tray solvers and `NAPHTALI_SANDHOLM` both remove the withdrawn
+phase from inter-tray material and energy traffic; the Naphtali-Sandholm solver also fingerprints the
+configured split so a changed draw cannot reuse an incompatible warm state. An exact liquid
+side-draw fraction of `1.0` leaves zero internal downflow across that stage, so NeqSim routes an
+explicit or reused `NAPHTALI_SANDHOLM` selection to `MESH_RESIDUAL`. Fractions below `1.0`
+retain positive internal traffic and remain eligible for the simultaneous solver.
 
 ```java
 column.setGasSideDrawFraction(6, 0.05);
@@ -231,13 +270,33 @@ double drawResidual = spec.getLastRelativeResidual();
 boolean tearConverged = column.isLastColumnTearConverged();
 ```
 
+Each tray-phase pair has one manipulated split fraction and therefore accepts at most one flow
+specification. Adding a second target for the same tray and phase fails immediately with an
+`IllegalArgumentException`; opposite phases on the same tray and the same phase on different trays
+remain independent specifications. This degrees-of-freedom check prevents contradictory targets
+from alternately overwriting one tear variable. Older serialized columns retaining duplicates also
+fail before solver iteration and report the affected tray and phase.
+
 If the requested side-draw flow is physically impossible, the split is bounded by available tray
 traffic and the latest tear-variable diagnostics report non-convergence.
 
+For one independent side-draw flow specification, every proposed fraction is solved on a cold
+copied column state. Only rigorous or reconciled inner-column results can update the controller or
+become the public result; fallback-product and failed candidates are rejected, and the last
+accepted state is retained. The safeguarded search interpolates or explores from accepted flow
+observations only, avoiding feedback from invalid inner states.
+
+Use `getLastColumnTearRejectedCandidateCount()`, `getLastColumnTearRollbackCount()`,
+`getLastColumnTearInnerIterationCount()`, and `getLastColumnTearCandidateHistory()` to audit that
+search. The history includes the proposed fraction, observed flow, inner status, and acceptance
+decision for each trial. These diagnostics are transient and reset when the column is copied or
+deserialized.
+
 ## Pumparounds
 
-Liquid pumparounds are internal draw/return circuits. They are not external products and do not
-appear in `getOutletStreams()`.
+Liquid pumparounds are internal draw/return circuits. They are neither external feeds nor external
+products, so their return and draw streams do not appear in `getInletStreams()` or
+`getOutletStreams()`.
 
 ```java
 DistillationColumn.ColumnPumparound pumparound = column.addLiquidPumparound("PA-1", 4, 6,
@@ -250,8 +309,19 @@ StreamInterface returnStream = pumparound.getReturnStream();
 double latestChange = column.getLastPumparoundRelativeChange();
 ```
 
+Each draw tray exposes one liquid pumparound fraction and one draw stream, so it can feed at most
+one pumparound circuit. A zero-fraction standby circuit still owns that draw tray. Registering
+another circuit for the same draw tray throws `IllegalArgumentException` without replacing the
+first circuit; different draw trays remain independent. Legacy serialized columns containing
+duplicate draw ownership fail before solver iteration, and `validateSetup()` reports
+`pumparound.degreesOfFreedom`.
+
 The `temperatureDrop` argument is in Kelvin. Positive values cool the returned liquid; negative
-values heat it. A non-finite or below-zero-K return temperature fails explicitly.
+values heat it. A non-finite or below-zero-K return temperature fails explicitly. The column uses
+a thermodynamic snapshot while seeding tray profiles, so initialization cannot change the public
+return temperature. After a converged solve, the draw-to-return temperature difference therefore
+equals the configured drop; the return flow and composition remain coupled through the outer tear
+iteration.
 
 ## Hydraulics and Pressure-Drop Coupling
 
@@ -368,7 +438,7 @@ fraction diagnostics, film/heat-transfer model choices, and equation-oriented re
 
 | Getter | Description |
 |--------|-------------|
-| `solved()` | Current convergence flag. |
+| `solved()` | Current convergence flag, including active side-draw, pumparound, and hydraulic outer tears. |
 | `getLastSolverTypeUsed()` | Concrete solver that completed the latest run, especially useful when requested solver is `AUTO`. |
 | `getLastSolveStatus()` | Strict solve status: rigorous convergence, reconciled products, fallback products, failure, or not run. |
 | `getLastSolveStatusReason()` | Concise explanation for fallback or rejected candidate states. |
@@ -378,6 +448,7 @@ fraction diagnostics, film/heat-transfer model choices, and equation-oriented re
 | `getLastTemperatureResidual()` | Average tray-temperature residual in Kelvin. |
 | `getLastMassResidual()` | Relative mass-balance residual. |
 | `getLastEnergyResidual()` | Relative enthalpy-balance residual. |
+| `getEnergyBalanceError()` | Maximum tray/column enthalpy imbalance, including external side draws and excluding zero-flow phase templates. |
 | `getLastTopSpecificationResidual()`, `getLastBottomSpecificationResidual()` | Endpoint spec errors. |
 | `getLastSpecificationResidual()` | Maximum absolute endpoint spec error. |
 | `getSpecificationHomotopySteps()` | Configured number of staged continuation targets for adjustable product specifications. |
@@ -385,6 +456,7 @@ fraction diagnostics, film/heat-transfer model choices, and equation-oriented re
 | `getLastColumnTearIterationCount()` | Outer side-draw, pumparound, and hydraulic tear iterations. |
 | `getLastColumnTearResidual()` | Maximum outer tear residual. |
 | `isLastColumnTearConverged()` | Whether active side-draw, pumparound, and hydraulic tear variables met tolerance. |
+| `getLastColumnTearCandidateHistory()` | Accepted/rejected single-side-draw attempts, including a guarded continuation retry when a cold solve fails after an accepted state exists. |
 | `getLastPumparoundRelativeChange()` | Maximum latest pumparound return-flow change. |
 | `getLastHydraulicPressureDropPa()` | Latest coupled hydraulic pressure drop in Pa. |
 | `getLastHydraulicPressureDropResidual()` | Relative pressure-profile change from hydraulic coupling. |
@@ -396,6 +468,12 @@ fraction diagnostics, film/heat-transfer model choices, and equation-oriented re
 | `getLastMeshProductDrawResidualNorm()` | Terminal product-draw residual norm. |
 | `getLastMeshSpecificationResidualNorm()` | Active endpoint specification residual norm. |
 | `getLastMeshResidualVector()` | Copy of the complete scaled residual vector. |
+
+An accepted inner tray solution is not sufficient when an outer tear variable is active. If the
+side-draw, pumparound, or hydraulic tear stops or exhausts its iteration budget above tolerance,
+`solved()` returns `false`, `getLastSolveStatus()` returns `FAILED`, and
+`getLastSolveStatusReason()` reports the outer residual, tolerance, and iteration count. Product
+streams remain available for diagnostics but must not be treated as a converged process result.
 
 The MESH residual gate is diagnostic-only for legacy sequential solvers by default. It is effective
 by default for `NAPHTALI_SANDHOLM` and `MESH_RESIDUAL`; call
@@ -428,7 +506,16 @@ absorber.run();
 ```
 
 For a stripper with a reboiler and no condenser, use `new DistillationColumn("Stripper", 8, true,
-false)`.
+false)`. Explicit `SUM_RATES` and `AUTO` use the native sum-rates path for a fixed-specification
+reboiler-only stripper. Condenser-only and full condenser/reboiler columns remain guarded to damped
+substitution because reflux and overhead-energy coupling are not represented directly by the
+sum-rates accelerator.
+
+Separated terminal products use a canonical trace-phase rule: if the intended gas or liquid phase
+contains all but `1e-8` of the product mole inventory, the smaller phase is merged into that intended
+outlet while preserving every component mole. This prevents a parts-per-billion phase from changing
+the reported product phase count solely because two converged sequential solvers approached a dew-
+or bubble-point boundary from opposite sides. Material phase fractions above `1e-8` are retained.
 
 ## Troubleshooting
 

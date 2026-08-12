@@ -1261,4 +1261,53 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     testOps.TPflash();
     Assertions.assertTrue(testSystem.getNumberOfPhases() >= 1);
   }
+
+  /**
+   * A plain (1976) Peng-Robinson fluid must not be written with PRCORR, otherwise it is read back as PR-1978 and the
+   * saturation pressure shifts. Also checks that PR-1978 and the regressed binary interaction parameters survive the
+   * round trip.
+   *
+   * @throws IOException if writing the temporary file fails
+   * @throws neqsim.util.exception.IsNaNException if a bubble point calculation diverges
+   */
+  @Test
+  void testPengRobinsonVariantRoundTrip() throws IOException, neqsim.util.exception.IsNaNException {
+    String[] classNames = new String[] { "SystemPrEos", "SystemPrEos1978" };
+    for (String className : classNames) {
+      SystemInterface fluid = "SystemPrEos".equals(className) ? new neqsim.thermo.system.SystemPrEos(290.15, 70.0)
+          : new neqsim.thermo.system.SystemPrEos1978(290.15, 70.0);
+      fluid.addComponent("methane", 25.0);
+      fluid.addComponent("ethane", 2.4);
+      fluid.addComponent("propane", 2.3);
+      fluid.addComponent("n-butane", 1.7);
+      fluid.addTBPfraction("C7", 20.0, 0.096, 0.727);
+      fluid.addTBPfraction("C20", 10.0, 0.275, 0.866);
+      fluid.setMixingRule("classic");
+      fluid.setBinaryInteractionParameter(0, 5, 0.045);
+      fluid.init(0);
+
+      ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+      ops.bubblePointPressureFlash(false);
+      double psatOriginal = fluid.getPressure();
+
+      String outputFile = file.getAbsolutePath() + "/pr_variant_" + className + ".e300";
+      EclipseFluidReadWrite.write(fluid, outputFile, 17.0);
+
+      EclipseFluidReadWrite.pseudoName = "";
+      SystemInterface imported = EclipseFluidReadWrite.read(outputFile);
+      assertEquals(className, imported.getClass().getSimpleName(),
+          "E300 EOS keyword must round-trip the Peng-Robinson variant");
+      assertEquals(0.045, ((PhaseEos) imported.getPhase(0)).getEosMixingRule().getBinaryInteractionParameter(0, 5),
+          1e-6, "Binary interaction parameter must round-trip");
+
+      imported.setTemperature(290.15);
+      imported.setPressure(70.0);
+      ThermodynamicOperations opsImported = new ThermodynamicOperations(imported);
+      opsImported.bubblePointPressureFlash(false);
+      assertEquals(psatOriginal, imported.getPressure(), psatOriginal * 0.002,
+          "Saturation pressure must round-trip within 0.2% for " + className);
+
+      java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(outputFile));
+    }
+  }
 }

@@ -21,6 +21,11 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 /**
  * SimpleTEGAbsorber class.
  *
+ * <p>
+ * The gas and solvent feeds may have different component slates. The absorber combines their complete component
+ * inventories before flashing and preserves the transferred water in its phase-specific outlet streams.
+ * </p>
+ *
  * @author Even Solbraa
  * @version $Id: $Id
  */
@@ -113,34 +118,8 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    * mixStream.
    */
   public void mixStream() {
-    String compName = new String();
-
     for (int k = 1; k < streams.size(); k++) {
-      for (int i = 0; i < streams.get(k).getThermoSystem().getPhases()[0].getNumberOfComponents(); i++) {
-        boolean gotComponent = false;
-        String componentName = streams.get(k).getThermoSystem().getPhases()[0].getComponent(i).getName();
-        // System.out.println("adding: " + componentName);
-
-        double moles = streams.get(k).getThermoSystem().getPhases()[0].getComponent(i).getNumberOfmoles();
-        // System.out.println("moles: " + moles + " " +
-        // mixedStream.getThermoSystem().getPhases()[0].getNumberOfComponents());
-        for (int p = 0; p < mixedStream.getThermoSystem().getPhases()[0].getNumberOfComponents(); p++) {
-          if (mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getName().equals(componentName)) {
-            gotComponent = true;
-            compName = streams.get(0).getThermoSystem().getPhases()[0].getComponent(p).getComponentName();
-          }
-        }
-
-        if (gotComponent) {
-          // System.out.println("adding moles starting....");
-          mixedStream.getThermoSystem().addComponent(compName, moles);
-          // mixedStream.getThermoSystem().init_x_y();
-          // System.out.println("adding moles finished");
-        } else {
-          // System.out.println("ikke gaa hit");
-          mixedStream.getThermoSystem().addComponent(compName, moles);
-        }
-      }
+      mixedStream.getThermoSystem().addFluid(streams.get(k).getThermoSystem());
     }
     mixedStream.getThermoSystem().init_x_y();
     mixedStream.getThermoSystem().initBeta();

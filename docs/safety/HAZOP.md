@@ -67,6 +67,33 @@ grid.generateGrid(HAZOPTemplate.Parameter.FLOW, HAZOPTemplate.Parameter.PRESSURE
     HAZOPTemplate.Parameter.TEMPERATURE);
 ```
 
+## Equipment-aware auto-population
+
+`HAZOPTemplate.fromProcessSystem(...)` records the simple equipment class on
+each generated node. `HazopConsequenceAutoPopulator.populate(...)` uses this
+metadata when selecting flow-deviation consequences:
+
+- Pump `NO FLOW` rows retain the pump-deadhead mapping and
+  `PumpDeadheadAnalyzer` recommendation.
+- Compressor `NO FLOW` and `REVERSE FLOW` rows use compressor surge,
+  performance-map, and check-valve review mappings.
+- Stream, valve, separator, heat-exchanger, pipeline, and other equipment flow
+  rows never inherit a mapping written for another equipment category. When no
+  defensible category-specific mapping exists, the row explicitly says
+  `facilitator confirmation required` and requests topology, inventory, and
+  transient-response review.
+
+The fallback is intentional: process topology determines whether loss of flow
+causes upstream blocked-in overpressure, downstream loss of feed or utility,
+inventory depletion, thermal excursion, or another consequence. Generated
+content remains a preparation aid for an IEC 61882 workshop, not an approved
+HAZOP record.
+
+Templates created with the existing two-argument constructor have no equipment
+metadata and continue to use the generic guideword/parameter catalogue. The
+three-argument constructor accepts an equipment type when a manually assembled
+workflow has trustworthy equipment metadata.
+
 For automated studies connected to STID extraction and NeqSim process
 simulation, use the MCP `runHAZOP` runner documented in
 [Automated HAZOP from STID and Simulation](automated_hazop_from_stid.md).

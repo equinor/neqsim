@@ -52,10 +52,48 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   private double temperatureTolerance = 1e-2;
   private double pressureTolerance = 1e-2;
 
+  /**
+   * Absolute change in loop mass flow (kg/hr) between the last two iterations. Unlike {@link #getErrorFlow()} this is
+   * always a mass flow, so it can be compared against a physically meaningful tolerance.
+   */
+  private double absoluteFlowChange = Double.NaN;
+
+  /**
+   * Absolute flow tolerance in kg/hr. A value of 0.0 (the default) disables the criterion and restores pure
+   * {@link #getErrorFlow()} checking.
+   */
+  private double absoluteFlowTolerance = 0.0;
+
+  /** True once the caller has set an absolute flow tolerance, which then survives auto-tuning. */
+  private boolean absoluteFlowToleranceExplicit = false;
+
   private double minimumFlow = 1e-20;
 
   // Acceleration method settings
   private AccelerationMethod accelerationMethod = AccelerationMethod.DIRECT_SUBSTITUTION;
+
+  /** True once the caller has chosen an acceleration method; the adaptive upgrade then stands down. */
+  private boolean accelerationMethodExplicit = false;
+  /** Whether a stalling direct-substitution loop may upgrade itself to Wegstein. */
+  private boolean adaptiveAcceleration = false;
+  /** True once the caller has explicitly enabled or disabled adaptive acceleration. */
+  private boolean adaptiveAccelerationExplicit = false;
+  /** True when automatic convergence tuning, rather than the caller, enabled adaptive acceleration. */
+  private boolean adaptiveAccelerationAutoManaged = false;
+  /** True when the adaptive logic (not the caller) selected the current acceleration method. */
+  private boolean accelerationAutoUpgraded = false;
+  /** Flow error of the previous pass, used to detect a stalling loop. */
+  private double previousErrorFlow = Double.NaN;
+  /** Consecutive passes whose flow error failed to shrink materially. */
+  private int stallingPasses = 0;
+  /** A pass counts as stalling when the flow error is still above this fraction of the previous one. */
+  private static final double ADAPTIVE_STALL_RATIO = 0.7;
+  /** Consecutive stalling passes required before switching to Wegstein. */
+  private static final int ADAPTIVE_STALL_PASSES = 3;
+  /** q-factor ceiling applied on an adaptive upgrade so an oscillating loop can damp rather than only accelerate. */
+  private static final double ADAPTIVE_WEGSTEIN_Q_MAX = 0.9;
+  /** True once the caller has chosen a Wegstein q-factor ceiling. */
+  private boolean wegsteinQMaxExplicit = false;
 
   // Wegstein acceleration fields
   /** Minimum bound for Wegstein q-factor to prevent divergence. */
@@ -176,9 +214,27 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
 
   /**
    * resetIterations.
+   *
+   * <p>
+   * Called at the start of every process pass. The adaptive-acceleration bookkeeping deliberately survives it: a tear
+   * stream that closes across process areas is updated only once per outer pass, so a stall counter that reset here
+   * could never reach its threshold and the loop would stay on direct substitution forever. Use
+   * {@link #resetAdaptiveAcceleration()} for a genuine fresh start.
+   * </p>
    */
   public void resetIterations() {
     iterations = 0;
+    resetAccelerationState();
+  }
+
+  /** Clears the adaptive-acceleration bookkeeping and returns the loop to direct substitution. */
+  public void resetAdaptiveAcceleration() {
+    previousErrorFlow = Double.NaN;
+    stallingPasses = 0;
+    if (accelerationAutoUpgraded) {
+      accelerationMethod = AccelerationMethod.DIRECT_SUBSTITUTION;
+      accelerationAutoUpgraded = false;
+    }
     resetAccelerationState();
   }
 
@@ -306,7 +362,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   public double calcMixStreamEnthalpy() {
     double enthalpy = 0;
     for (int k = 0; k < streams.size(); k++) {
-      streams.get(k).getThermoSystem().init(3);
+      streams.get(k).getThermoSystem().init(2);
       enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
       // logger.info("total enthalpy k : " + ( ((Stream)
       // streams.get(k)).getThermoSystem()).getEnthalpy());
@@ -344,6 +400,37 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
   }
 
+  /**
+   * Deactivates this recycle because its loop flow has collapsed below the configured {@link #getMinimumFlow()} cutoff.
+   *
+   * <p>
+   * A recycle below the cutoff carries no physically meaningful inventory, so it is marked inactive and its four
+   * residuals are reported as exactly zero. The previous-iteration snapshot is refreshed at the same time; without that
+   * refresh the flow, temperature and pressure balance checks would keep comparing the (negligible) current stream
+   * against a stale pre-collapse snapshot, so the recycle would report {@code solved() == false} forever. That in turn
+   * makes the owning {@link neqsim.process.processmodel.ProcessSystem} report NOT SOLVED and spend its whole iteration
+   * budget on a dead leg.
+   * </p>
+   *
+   * @param inletSystem clone of the (negligible) inlet thermodynamic system to publish on the outlet
+   * @param id current calculation identifier; {@code null} leaves existing recycle and outlet identifiers unchanged
+   */
+  private void deactivateOnLowFlow(SystemInterface inletSystem, UUID id) {
+    isActive(false);
+    mixedStream.setThermoSystem(inletSystem);
+    setErrorCompositon(0.0);
+    setErrorFlow(0.0);
+    setErrorTemperature(0.0);
+    setErrorPressure(0.0);
+    absoluteFlowChange = 0.0;
+    lastIterationStream = mixedStream.clone();
+    outletStream.setThermoSystem(mixedStream.getThermoSystem());
+    if (id != null) {
+      outletStream.setCalculationIdentifier(id);
+      setCalculationIdentifier(id);
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
@@ -355,14 +442,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     double enthalpy = 0.0;
     SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
     if (numberOfInputStreams == 1 && thermoSystem2.getFlowRate("kg/hr") < minimumFlow) {
-      isActive(false);
-      mixedStream.setThermoSystem(thermoSystem2);
-      setErrorCompositon(0.0);
-      setErrorFlow(flowBalanceCheck());
-      setErrorTemperature(temperatureBalanceCheck());
-      setErrorPressure(pressureBalanceCheck());
-      outletStream.setThermoSystem(mixedStream.getThermoSystem());
-      outletStream.setCalculationIdentifier(id);
+      deactivateOnLowFlow(thermoSystem2, id);
       return;
     }
     mixedStream.setThermoSystem(thermoSystem2);
@@ -375,14 +455,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
       mixStream();
 
       if (mixedStream.getFlowRate("kg/hr") < minimumFlow) {
-        isActive(false);
-        mixedStream.setThermoSystem(thermoSystem2);
-        setErrorCompositon(0.0);
-        setErrorFlow(flowBalanceCheck());
-        setErrorTemperature(temperatureBalanceCheck());
-        setErrorPressure(pressureBalanceCheck());
-        outletStream.setThermoSystem(mixedStream.getThermoSystem());
-        outletStream.setCalculationIdentifier(id);
+        deactivateOnLowFlow(thermoSystem2, id);
         return;
       }
 
@@ -415,6 +488,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     setErrorFlow(flowBalanceCheck());
     setErrorTemperature(temperatureBalanceCheck());
     setErrorPressure(pressureBalanceCheck());
+    updateAdaptiveAcceleration();
     lastIterationStream = mixedStream.clone();
     outletStream.setThermoSystem(mixedStream.getThermoSystem());
     outletStream.setCalculationIdentifier(id);
@@ -431,11 +505,26 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
-   * massBalanceCheck.
+   * Flow residual between this iteration and the previous one.
    *
-   * @return a double
+   * <p>
+   * <b>The returned value is not dimensionally uniform.</b> Below 1 kg/sec it is the ABSOLUTE change in kg/sec; at or
+   * above 1 kg/sec it is the RELATIVE change in PERCENT. A {@link #setFlowTolerance(double)} of 0.1 therefore means
+   * "0.1 kg/sec" on a small loop but "0.1 %" on a large one, and the meaning flips discontinuously across the 1 kg/sec
+   * threshold. A returned value of exactly 100 means the loop carried no flow on the previous iteration (a recycle that
+   * collapsed and re-opened), not "100 kg/sec".
+   * </p>
+   *
+   * <p>
+   * This behaviour is retained for backward compatibility. Use {@link #getAbsoluteFlowChange()} for a properly
+   * dimensioned residual (kg/hr) and {@link #setAbsoluteFlowTolerance(double)} for a scale-independent convergence
+   * criterion.
+   * </p>
+   *
+   * @return the flow residual, in kg/sec below 1 kg/sec and in percent at or above 1 kg/sec
    */
   public double flowBalanceCheck() {
+    absoluteFlowChange = Math.abs(mixedStream.getFlowRate("kg/hr") - lastIterationStream.getFlowRate("kg/hr"));
     double abs_sum_errorFlow = 0.0;
     if (mixedStream.getFlowRate("kg/sec") < 1.0) {
       abs_sum_errorFlow += Math.abs(mixedStream.getFlowRate("kg/sec") - lastIterationStream.getFlowRate("kg/sec"));
@@ -547,8 +636,130 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    */
   public void setAccelerationMethod(AccelerationMethod method) {
     this.accelerationMethod = method;
+    this.accelerationMethodExplicit = true;
+    this.accelerationAutoUpgraded = false;
     // Reset acceleration state when method changes
     resetAccelerationState();
+  }
+
+  /**
+   * Whether a direct-substitution loop that stops converging may switch itself to Wegstein acceleration.
+   *
+   * @return true if adaptive acceleration is enabled
+   */
+  public boolean isAdaptiveAcceleration() {
+    return adaptiveAcceleration;
+  }
+
+  /**
+   * Enables or disables adaptive acceleration explicitly.
+   *
+   * <p>
+   * Direct substitution is robust but converges slowly, and a low-flow loop can oscillate instead of settling, forcing
+   * the surrounding process to iterate to its budget. When enabled, a loop whose flow error stops shrinking for
+   * {@value #ADAPTIVE_STALL_PASSES} consecutive passes switches itself to {@link AccelerationMethod#WEGSTEIN}, which
+   * damps the oscillation and converges to the same solution. Calling
+   * {@link #setAccelerationMethod(AccelerationMethod)} pins the method and disables the upgrade.
+   * </p>
+   *
+   * <p>
+   * Adaptive acceleration is disabled for an ordinary legacy {@code ProcessSystem.run()}. Automatic convergence tuning
+   * may enable it for {@code runUntilConverged(...)} unless the caller has made an explicit choice here.
+   * </p>
+   *
+   * @param adaptiveAcceleration true to let a stalling loop accelerate itself
+   */
+  public void setAdaptiveAcceleration(boolean adaptiveAcceleration) {
+    this.adaptiveAcceleration = adaptiveAcceleration;
+    adaptiveAccelerationExplicit = true;
+    adaptiveAccelerationAutoManaged = false;
+    if (!adaptiveAcceleration && accelerationAutoUpgraded) {
+      resetAdaptiveAcceleration();
+    }
+  }
+
+  /**
+   * Enables adaptive acceleration on behalf of automatic convergence tuning.
+   *
+   * @return true when the tuner owns adaptive acceleration for this recycle
+   */
+  public boolean applyAutoAdaptiveAcceleration() {
+    if (adaptiveAccelerationExplicit) {
+      return false;
+    }
+    adaptiveAcceleration = true;
+    adaptiveAccelerationAutoManaged = true;
+    return true;
+  }
+
+  /**
+   * Clears an automatically enabled adaptive-acceleration setting without touching a caller-owned choice.
+   *
+   * @return true when an automatic setting was cleared
+   */
+  public boolean resetAutoAdaptiveAcceleration() {
+    if (!adaptiveAccelerationAutoManaged) {
+      return false;
+    }
+    adaptiveAcceleration = false;
+    adaptiveAccelerationAutoManaged = false;
+    resetAdaptiveAcceleration();
+    return true;
+  }
+
+  /**
+   * Whether automatic convergence tuning owns the adaptive-acceleration setting.
+   *
+   * @return true when the setting is auto-managed
+   */
+  public boolean isAdaptiveAccelerationAutoManaged() {
+    return adaptiveAccelerationAutoManaged;
+  }
+
+  /**
+   * Whether the current acceleration method was selected by the adaptive logic rather than by the caller.
+   *
+   * @return true if this loop upgraded itself to an accelerated method
+   */
+  public boolean isAccelerationAutoUpgraded() {
+    return accelerationAutoUpgraded;
+  }
+
+  /**
+   * Upgrades a stalling direct-substitution loop to Wegstein acceleration.
+   *
+   * <p>
+   * Called once per pass after the errors have been evaluated. A pass counts as stalling when the flow error is still
+   * above {@value #ADAPTIVE_STALL_RATIO} of the previous one - i.e. the loop is oscillating or crawling rather than
+   * contracting.
+   * </p>
+   */
+  private void updateAdaptiveAcceleration() {
+    if (!adaptiveAcceleration || accelerationMethodExplicit
+        || accelerationMethod != AccelerationMethod.DIRECT_SUBSTITUTION) {
+      return;
+    }
+    double error = Math.abs(getErrorFlow());
+    if (Double.isNaN(error) || Double.isInfinite(error)) {
+      return;
+    }
+    if (!Double.isNaN(previousErrorFlow) && error > ADAPTIVE_STALL_RATIO * previousErrorFlow) {
+      stallingPasses++;
+    } else {
+      stallingPasses = 0;
+    }
+    previousErrorFlow = error;
+    if (stallingPasses >= ADAPTIVE_STALL_PASSES) {
+      accelerationMethod = AccelerationMethod.WEGSTEIN;
+      accelerationAutoUpgraded = true;
+      stallingPasses = 0;
+      // The default ceiling of 0.0 only permits extrapolation; an oscillating loop needs a positive q to damp.
+      if (!wegsteinQMaxExplicit) {
+        wegsteinQMax = ADAPTIVE_WEGSTEIN_Q_MAX;
+      }
+      resetAccelerationState();
+      logger.debug("Recycle {} stalled on direct substitution - switching to Wegstein acceleration", getName());
+    }
   }
 
   /**
@@ -587,6 +798,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    */
   public void setWegsteinQMax(double qMax) {
     this.wegsteinQMax = qMax;
+    this.wegsteinQMaxExplicit = true;
   }
 
   /**
@@ -885,15 +1097,39 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     this.priority = priority;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * A recycle that has been deactivated by the low-flow cutoff (see {@link #setMinimumFlow(double)}) is reported as
+   * solved: it carries no meaningful inventory, so there is nothing left to converge and holding the flowsheet open for
+   * it would only burn the iteration budget on a dead leg. A recycle that the user locked inactive is likewise treated
+   * as solved, because it never executes.
+   * </p>
+   *
+   * <p>
+   * The flow criterion is satisfied when EITHER the {@link #getErrorFlow()} residual is below
+   * {@link #getFlowTolerance()} OR the absolute loop-flow change is below {@link #getAbsoluteFlowTolerance()} (kg/hr).
+   * The absolute term is disabled by default; enabling it gives a scale-independent criterion, which matters because
+   * {@link #flowBalanceCheck()} is an absolute kg/sec residual on small loops and a percentage on large ones.
+   * </p>
+   */
   @Override
   public boolean solved() {
-    if (getOutletStream().getFlowRate("kg/hr") < 1e-20 && lastIterationStream.getFlowRate("kg/hr") < 1e-20
-        && iterations > 1) {
+    if (isLockedInactive() || (!isActive() && iterations > 0)) {
       return true;
     }
 
-    if (Math.abs(this.errorComposition) < compositionTolerance && Math.abs(this.errorFlow) < flowTolerance
+    double zeroFlowFloor = Math.max(minimumFlow, 1e-20);
+    if (getOutletStream().getFlowRate("kg/hr") < zeroFlowFloor
+        && lastIterationStream.getFlowRate("kg/hr") < zeroFlowFloor && iterations > 1) {
+      return true;
+    }
+
+    boolean flowConverged = Math.abs(this.errorFlow) < flowTolerance || (absoluteFlowTolerance > 0.0
+        && Double.isFinite(absoluteFlowChange) && absoluteFlowChange < absoluteFlowTolerance);
+
+    if (Math.abs(this.errorComposition) < compositionTolerance && flowConverged
         && Math.abs(this.errorTemperature) < temperatureTolerance && Math.abs(this.errorPressure) < pressureTolerance
         && iterations > 1) {
       return true;
@@ -961,6 +1197,87 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     lastIterationStream = this.outletStream.clone();
   }
 
+  /**
+   * Absolute change in loop mass flow between the last two iterations.
+   *
+   * <p>
+   * Unlike {@link #getErrorFlow()}, which is an absolute kg/sec residual on loops below 1 kg/sec and a percentage above
+   * it, this is always a mass flow and can therefore be compared against a physically meaningful limit.
+   * </p>
+   *
+   * @return the absolute loop-flow change in kg/hr, or NaN before the first balance check
+   */
+  public double getAbsoluteFlowChange() {
+    return absoluteFlowChange;
+  }
+
+  /**
+   * Absolute flow tolerance used by the recycle convergence check.
+   *
+   * @return the absolute flow tolerance in kg/hr (0.0 means the criterion is disabled)
+   */
+  public double getAbsoluteFlowTolerance() {
+    return absoluteFlowTolerance;
+  }
+
+  /**
+   * Sets an absolute flow tolerance for the recycle convergence check.
+   *
+   * <p>
+   * The recycle counts as flow-converged when EITHER {@link #getErrorFlow()} is below {@link #getFlowTolerance()} OR
+   * the absolute loop-flow change is below this value. This is the standard industrial form of the criterion and is the
+   * recommended way to get a scale-independent tolerance, because {@link #flowBalanceCheck()} switches between an
+   * absolute kg/sec residual and a percentage at 1 kg/sec. It mirrors
+   * {@link neqsim.process.processmodel.ProcessModel#setAbsoluteFlowTolerance(double)} at the recycle level.
+   * </p>
+   *
+   * @param absoluteFlowTolerance the absolute flow tolerance in kg/hr; must be finite and non-negative. Use 0.0 to
+   * disable the criterion (the default)
+   * @throws IllegalArgumentException if the value is negative or not finite
+   */
+  public void setAbsoluteFlowTolerance(double absoluteFlowTolerance) {
+    if (!Double.isFinite(absoluteFlowTolerance) || absoluteFlowTolerance < 0.0) {
+      throw new IllegalArgumentException(
+          "absoluteFlowTolerance must be a finite non-negative number, was " + absoluteFlowTolerance);
+    }
+    this.absoluteFlowTolerance = absoluteFlowTolerance;
+    this.absoluteFlowToleranceExplicit = true;
+  }
+
+  /**
+   * Applies an automatically derived absolute flow tolerance, unless the caller already set one.
+   *
+   * <p>
+   * Used by the process-level auto-tuner so a tear stream is judged on the same flow noise floor as the plant-wide
+   * convergence gate. Without it a recycle keeps iterating on a residual the surrounding model already accepts, or -
+   * worse - reports itself solved on a looser criterion than the plant demands.
+   * </p>
+   *
+   * @param absoluteFlowTolerance the absolute flow tolerance in kg/hr; must be finite and non-negative
+   * @return true if the value was applied, false if an explicit tolerance is already in force
+   */
+  public boolean applyAutoAbsoluteFlowTolerance(double absoluteFlowTolerance) {
+    if (absoluteFlowToleranceExplicit || !Double.isFinite(absoluteFlowTolerance) || absoluteFlowTolerance < 0.0) {
+      return false;
+    }
+    this.absoluteFlowTolerance = absoluteFlowTolerance;
+    return true;
+  }
+
+  /**
+   * Clears an automatically assigned absolute flow tolerance before a fresh process scenario.
+   *
+   * @return true when an automatic value was cleared, false when the caller owns the tolerance
+   */
+  public boolean resetAutoAbsoluteFlowTolerance() {
+    if (absoluteFlowToleranceExplicit) {
+      return false;
+    }
+    boolean changed = absoluteFlowTolerance != 0.0;
+    absoluteFlowTolerance = 0.0;
+    return changed;
+  }
+
   /** {@inheritDoc} */
   @Override
   public double getMassBalance(String unit) {
@@ -987,6 +1304,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   @Override
   public void setMinimumFlow(double minimumFlow) {
     this.minimumFlow = minimumFlow;
+    super.setMinimumFlow(minimumFlow);
   }
 
   /** {@inheritDoc} */

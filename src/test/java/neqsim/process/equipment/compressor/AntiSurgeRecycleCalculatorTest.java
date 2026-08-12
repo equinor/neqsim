@@ -132,4 +132,53 @@ public class AntiSurgeRecycleCalculatorTest {
     Assertions.assertTrue(result.getDistanceToSurge() > 0.05,
         "natural operating point should be above the control line");
   }
+
+  @Test
+  public void testMarginIsTakenFromCompressorWhenSetThere() {
+    Compressor comp = buildCompressor(0.30);
+    Stream suction = (Stream) comp.getInletStream();
+    AntiSurgeRecycleCalculator calc = new AntiSurgeRecycleCalculator(comp, suction);
+
+    // Nothing configured anywhere: the calculator keeps its own historical default.
+    Assertions.assertEquals(0.05, calc.getSurgeControlMargin(), 1.0e-12);
+
+    // Configuring the machine moves the control line without touching the calculator.
+    comp.setSurgeControlMargin(0.12);
+    Assertions.assertEquals(0.12, calc.getSurgeControlMargin(), 1.0e-12);
+
+    // An explicit calculator setting is a local override and wins.
+    calc.setSurgeControlMargin(0.03);
+    Assertions.assertEquals(0.03, calc.getSurgeControlMargin(), 1.0e-12);
+  }
+
+  @Test
+  public void testCompressorMarginDrivesTheSolvedOperatingPoint() {
+    Compressor comp = buildCompressor(0.30);
+    comp.setSurgeControlMargin(0.10);
+    Stream suction = (Stream) comp.getInletStream();
+
+    AntiSurgeRecycleCalculator calc = new AntiSurgeRecycleCalculator(comp, suction);
+    calc.setRecycleCoolerTemperature(40.0, "C");
+    AntiSurgeRecycleCalculator.Result result = calc.solve();
+
+    Assertions.assertTrue(result.isRecycleActive());
+    Assertions.assertEquals(0.10, result.getDistanceToSurge(), 0.02,
+        "control line should follow the margin configured on the compressor");
+  }
+
+  @Test
+  public void testConstraintConfigMarginResolvesAgainstCompressor() {
+    CompressorConstraintConfig config = new CompressorConstraintConfig();
+    double configDefault = config.getAntiSurgeControlMargin();
+
+    Compressor comp = buildCompressor(0.30);
+    Assertions.assertEquals(configDefault, config.getAntiSurgeControlMargin(comp), 1.0e-12,
+        "unconfigured compressor falls back to the config margin");
+
+    comp.setSurgeControlMargin(0.08);
+    Assertions.assertEquals(0.08, config.getAntiSurgeControlMargin(comp), 1.0e-12,
+        "explicit compressor margin wins over the config default");
+    Assertions.assertEquals(configDefault, config.getAntiSurgeControlMargin(null), 1.0e-12,
+        "null compressor falls back to the config margin");
+  }
 }

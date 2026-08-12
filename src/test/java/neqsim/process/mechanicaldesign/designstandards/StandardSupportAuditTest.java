@@ -56,6 +56,35 @@ class StandardSupportAuditTest {
     assertEquals("Api12JSeparatorDesignKernel",
         StandardSupportAudit.getSupport(StandardType.API_12J).getCalculationImplementation());
     assertTrue(StandardSupportAudit.getSupport(StandardType.API_12J).isRegistryConnected());
+    assertEquals("NorsokM506CorrosionDesignKernel",
+        StandardSupportAudit.getSupport(StandardType.NORSOK_M_506).getCalculationImplementation());
+    assertTrue(StandardSupportAudit.getSupport(StandardType.NORSOK_M_506).isRegistryConnected());
+    assertEquals(StandardSupportLevel.CATALOGUED,
+        StandardSupportAudit.getSupport(StandardType.ISO_5167_1).getSupportLevel());
+    assertEquals("Iso5167OrificeMeteringKernel",
+        StandardSupportAudit.getSupport(StandardType.ISO_5167_2).getCalculationImplementation());
+    assertTrue(StandardSupportAudit.getSupport(StandardType.ISO_5167_2).isRegistryConnected());
+    assertEquals("DnvRpC203FatigueDesignKernel",
+        StandardSupportAudit.getSupport(StandardType.DNV_RP_C203).getCalculationImplementation());
+    assertTrue(StandardSupportAudit.getSupport(StandardType.DNV_RP_C203).isRegistryConnected());
+    assertEquals("DnvRpF105FreeSpanScreeningKernel",
+        StandardSupportAudit.getSupport(StandardType.DNV_RP_F105).getCalculationImplementation());
+    assertTrue(StandardSupportAudit.getSupport(StandardType.DNV_RP_F105).isRegistryConnected());
+    assertEquals("DnvRpF101CorrodedPipelineScreeningKernel",
+        StandardSupportAudit.getSupport(StandardType.DNV_RP_F101).getCalculationImplementation());
+    assertTrue(StandardSupportAudit.getSupport(StandardType.DNV_RP_F101).isRegistryConnected());
+    assertEquals("DnvRpF104Co2PipelineEnvelopeScreeningKernel",
+        StandardSupportAudit.getSupport(StandardType.DNV_RP_F104).getCalculationImplementation());
+    assertTrue(StandardSupportAudit.getSupport(StandardType.DNV_RP_F104).isRegistryConnected());
+    assertEquals("DnvRpF110GlobalBucklingResponseScreeningKernel",
+        StandardSupportAudit.getSupport(StandardType.DNV_RP_F110).getCalculationImplementation());
+    assertTrue(StandardSupportAudit.getSupport(StandardType.DNV_RP_F110).isRegistryConnected());
+    assertEquals("DnvRpF114PipeSoilInteractionScreeningKernel",
+        StandardSupportAudit.getSupport(StandardType.DNV_RP_F114).getCalculationImplementation());
+    assertTrue(StandardSupportAudit.getSupport(StandardType.DNV_RP_F114).isRegistryConnected());
+    assertEquals("Api2000TankVentingScreeningKernel",
+        StandardSupportAudit.getSupport(StandardType.API_2000).getCalculationImplementation());
+    assertTrue(StandardSupportAudit.getSupport(StandardType.API_2000).isRegistryConnected());
     assertFalse(StandardSupportAudit.getSupport(StandardType.API_660).isRegistryConnected());
     assertTrue(StandardSupportAudit.getSupport(StandardType.API_660).getCalculationImplementation()
         .startsWith("StandardRequirementPackRegistry"));

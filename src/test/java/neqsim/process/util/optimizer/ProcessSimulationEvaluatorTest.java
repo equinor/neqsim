@@ -6,7 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.separator.Separator;
@@ -350,6 +352,128 @@ class ProcessSimulationEvaluatorTest {
   }
 
   @Test
+  void convertsOneSidedConstraintsWithoutLoss() {
+    final double[] metric = { 5.0 };
+    ProcessSimulationEvaluator.ConstraintDefinition lower = new ProcessSimulationEvaluator.ConstraintDefinition(
+        "minimum", p -> metric[0], 2.0);
+    lower.setHard(false);
+    lower.setPenaltyWeight(37.0);
+
+    ProcessSimulationEvaluator.ConstraintDefinition upper = new ProcessSimulationEvaluator.ConstraintDefinition();
+    upper.setName("maximum");
+    upper.setEvaluator(p -> metric[0]);
+    upper.setUpperBound(8.0);
+    upper.setType(ProcessSimulationEvaluator.ConstraintDefinition.Type.UPPER_BOUND);
+    upper.setPenaltyWeight(41.0);
+
+    List<ProductionOptimizer.OptimizationConstraint> convertedLower = lower.toOptimizationConstraints();
+    List<ProductionOptimizer.OptimizationConstraint> convertedUpper = upper.toOptimizationConstraints();
+
+    assertEquals(1, convertedLower.size());
+    assertEquals("minimum", convertedLower.get(0).getName());
+    assertEquals(ProductionOptimizer.ConstraintDirection.GREATER_THAN, convertedLower.get(0).getDirection());
+    assertEquals(2.0, convertedLower.get(0).getLimit(), 0.0);
+    assertEquals(ProductionOptimizer.ConstraintSeverity.SOFT, convertedLower.get(0).getSeverity());
+    assertEquals(37.0, convertedLower.get(0).getPenaltyWeight(), 0.0);
+    assertEquals(3.0, convertedLower.get(0).margin(processSystem), 0.0);
+
+    assertEquals(1, convertedUpper.size());
+    assertEquals("maximum", convertedUpper.get(0).getName());
+    assertEquals(ProductionOptimizer.ConstraintDirection.LESS_THAN, convertedUpper.get(0).getDirection());
+    assertEquals(8.0, convertedUpper.get(0).getLimit(), 0.0);
+    assertEquals(ProductionOptimizer.ConstraintSeverity.HARD, convertedUpper.get(0).getSeverity());
+    assertEquals(41.0, convertedUpper.get(0).getPenaltyWeight(), 0.0);
+    assertEquals(3.0, convertedUpper.get(0).margin(processSystem), 0.0);
+
+    assertThrows(UnsupportedOperationException.class, () -> convertedLower.add(convertedUpper.get(0)));
+    assertThrows(UnsupportedOperationException.class, () -> convertedUpper.clear());
+  }
+
+  @Test
+  void convertsRangeConstraintWithoutDroppingEitherBound() {
+    final double[] metric = { 1.0 };
+    ProcessSimulationEvaluator.ConstraintDefinition range = new ProcessSimulationEvaluator.ConstraintDefinition(
+        "operatingEnvelope", p -> metric[0], 2.0, 8.0);
+    range.setHard(false);
+    range.setPenaltyWeight(37.0);
+
+    List<ProductionOptimizer.OptimizationConstraint> converted = range.toOptimizationConstraints();
+
+    assertEquals(2, converted.size());
+    assertEquals("operatingEnvelope_lower", converted.get(0).getName());
+    assertEquals("operatingEnvelope_upper", converted.get(1).getName());
+    assertEquals(ProductionOptimizer.ConstraintDirection.GREATER_THAN, converted.get(0).getDirection());
+    assertEquals(ProductionOptimizer.ConstraintDirection.LESS_THAN, converted.get(1).getDirection());
+    assertEquals(2.0, converted.get(0).getLimit(), 0.0);
+    assertEquals(8.0, converted.get(1).getLimit(), 0.0);
+    assertEquals(ProductionOptimizer.ConstraintSeverity.SOFT, converted.get(0).getSeverity());
+    assertEquals(ProductionOptimizer.ConstraintSeverity.SOFT, converted.get(1).getSeverity());
+    assertEquals(37.0, converted.get(0).getPenaltyWeight(), 0.0);
+    assertEquals(37.0, converted.get(1).getPenaltyWeight(), 0.0);
+    assertTrue(converted.get(0).getDescription().contains("range ConstraintDefinition (lower bound)"));
+    assertTrue(converted.get(1).getDescription().contains("range ConstraintDefinition (upper bound)"));
+
+    assertEquals(-1.0, converted.get(0).margin(processSystem), 0.0);
+    assertEquals(7.0, converted.get(1).margin(processSystem), 0.0);
+    assertFalse(converted.get(0).isSatisfied(processSystem));
+    metric[0] = 5.0;
+    assertEquals(3.0, converted.get(0).margin(processSystem), 0.0);
+    assertEquals(3.0, converted.get(1).margin(processSystem), 0.0);
+    assertTrue(converted.get(0).isSatisfied(processSystem));
+    assertTrue(converted.get(1).isSatisfied(processSystem));
+    metric[0] = 9.0;
+    assertEquals(7.0, converted.get(0).margin(processSystem), 0.0);
+    assertEquals(-1.0, converted.get(1).margin(processSystem), 0.0);
+    assertFalse(converted.get(1).isSatisfied(processSystem));
+    assertThrows(UnsupportedOperationException.class, () -> converted.remove(0));
+
+    ProductionOptimizer.OptimizationConstraint singular = range.toOptimizationConstraint();
+    assertEquals("operatingEnvelope_upper", singular.getName());
+    assertEquals(ProductionOptimizer.ConstraintDirection.LESS_THAN, singular.getDirection());
+    assertEquals(8.0, singular.getLimit(), 0.0);
+  }
+
+  @Test
+  void convertsEqualityConstraintToToleranceBand() {
+    final double[] metric = { 4.0 };
+    ProcessSimulationEvaluator.ConstraintDefinition equality = new ProcessSimulationEvaluator.ConstraintDefinition();
+    equality.setName("qualityTarget");
+    equality.setEvaluator(p -> metric[0]);
+    equality.setLowerBound(5.0);
+    equality.setEqualityTolerance(0.1);
+    equality.setType(ProcessSimulationEvaluator.ConstraintDefinition.Type.EQUALITY);
+    equality.setPenaltyWeight(53.0);
+
+    List<ProductionOptimizer.OptimizationConstraint> converted = equality.toOptimizationConstraints();
+
+    assertEquals(2, converted.size());
+    assertEquals("qualityTarget_lower", converted.get(0).getName());
+    assertEquals("qualityTarget_upper", converted.get(1).getName());
+    assertEquals(4.9, converted.get(0).getLimit(), 1.0e-12);
+    assertEquals(5.1, converted.get(1).getLimit(), 1.0e-12);
+    assertEquals(ProductionOptimizer.ConstraintDirection.GREATER_THAN, converted.get(0).getDirection());
+    assertEquals(ProductionOptimizer.ConstraintDirection.LESS_THAN, converted.get(1).getDirection());
+    assertEquals(53.0, converted.get(0).getPenaltyWeight(), 0.0);
+    assertEquals(53.0, converted.get(1).getPenaltyWeight(), 0.0);
+    assertTrue(converted.get(0).getDescription().contains("equality ConstraintDefinition (lower bound)"));
+    assertTrue(converted.get(1).getDescription().contains("equality ConstraintDefinition (upper bound)"));
+
+    assertEquals(-0.9, converted.get(0).margin(processSystem), 1.0e-12);
+    assertTrue(converted.get(1).margin(processSystem) > 0.0);
+    metric[0] = 5.0;
+    assertEquals(0.1, converted.get(0).margin(processSystem), 1.0e-12);
+    assertEquals(0.1, converted.get(1).margin(processSystem), 1.0e-12);
+    metric[0] = 6.0;
+    assertTrue(converted.get(0).margin(processSystem) > 0.0);
+    assertEquals(-0.9, converted.get(1).margin(processSystem), 1.0e-12);
+
+    ProductionOptimizer.OptimizationConstraint singular = equality.toOptimizationConstraint();
+    assertEquals("qualityTarget_eq", singular.getName());
+    assertEquals(ProductionOptimizer.ConstraintDirection.LESS_THAN, singular.getDirection());
+    assertEquals(5.1, singular.getLimit(), 1.0e-12);
+  }
+
+  @Test
   void testEvaluationCount() {
     evaluator.addParameter("feed", "flowRate", 1000.0, 50000.0, "kg/hr");
     evaluator.addObjective("flow", process -> ((StreamInterface) process.getUnit("feed")).getFlowRate("kg/hr"));
@@ -498,5 +622,24 @@ class ProcessSimulationEvaluatorTest {
     // For MAXIMIZE, the returned objective should be negated
     assertTrue(result.getObjective() < 0); // Negated for minimization form
     assertTrue(result.getObjectivesRaw()[0] > 0); // Raw value is positive
+  }
+
+  @Test
+  void evaluateSamplesEachResultCallbackOnce() {
+    AtomicInteger objectiveCalls = new AtomicInteger();
+    AtomicInteger constraintCalls = new AtomicInteger();
+    evaluator.addObjective("statefulObjective", process -> 42.0 + objectiveCalls.getAndIncrement(),
+        ProcessSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
+    evaluator.addConstraintUpperBound("statefulConstraint", process -> 11.0 + constraintCalls.getAndIncrement(), 10.0);
+
+    ProcessSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[0]);
+
+    assertEquals(1, objectiveCalls.get(), "one simulated point must sample each objective once");
+    assertEquals(1, constraintCalls.get(), "one simulated point must sample each constraint once");
+    assertEquals(42.0, result.getObjectivesRaw()[0], 0.0);
+    assertEquals(-42.0, result.getObjectives()[0], 0.0);
+    assertEquals(11.0, result.getConstraintValues()[0], 0.0);
+    assertEquals(-1.0, result.getConstraintMargins()[0], 0.0);
+    assertEquals(1000.0, result.getPenaltySum(), 0.0);
   }
 }

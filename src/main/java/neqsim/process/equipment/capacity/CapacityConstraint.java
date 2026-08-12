@@ -154,6 +154,28 @@ public class CapacityConstraint implements Serializable {
    */
   private String dataSource = "not_set";
 
+  /** Whether a confidence value has been explicitly assigned. */
+  private boolean confidenceSet = false;
+
+  /**
+   * Confidence in the engineering basis of this constraint, on a scale from zero to one.
+   *
+   * <p>
+   * This is evidence-quality metadata, not a probability that the equipment is safe or that the constraint will be
+   * satisfied. Use {@link #hasConfidence()} to distinguish an explicitly assigned value from legacy or unset data.
+   * </p>
+   */
+  private double confidence = Double.NaN;
+
+  /** Whether a validity range has been explicitly assigned. */
+  private boolean validityRangeSet = false;
+
+  /** Lower bound of the validity range, in the constraint unit. */
+  private double validityMinimum = Double.NaN;
+
+  /** Upper bound of the validity range, in the constraint unit. */
+  private double validityMaximum = Double.NaN;
+
   /**
    * Marginal economic value (shadow price) of relaxing this constraint.
    *
@@ -360,18 +382,31 @@ public class CapacityConstraint implements Serializable {
    * @return utilization as fraction (1.0 = 100% of design)
    */
   public double getUtilization() {
-    double current = getCurrentValue();
+    return getUtilization(getCurrentValue());
+  }
+
+  /**
+   * Gets utilization for an explicitly snapshotted current value without invoking the configured value supplier.
+   *
+   * <p>
+   * This overload is useful when a caller must report the same scalar value used to calculate utilization.
+   * </p>
+   *
+   * @param currentValue snapshotted current constraint value
+   * @return utilization as fraction (1.0 = 100% of design)
+   */
+  public double getUtilization(double currentValue) {
     if (minValue > 0 && designValue == Double.MAX_VALUE) {
       // This is a minimum constraint (e.g., residence time)
-      if (current <= 0) {
+      if (currentValue <= 0) {
         return MAX_UTILIZATION;
       }
-      return Math.min(minValue / current, MAX_UTILIZATION);
+      return Math.min(minValue / currentValue, MAX_UTILIZATION);
     }
     if (designValue <= 0 || designValue == Double.MAX_VALUE) {
       return 0.0;
     }
-    return Math.min(current / designValue, MAX_UTILIZATION);
+    return Math.min(currentValue / designValue, MAX_UTILIZATION);
   }
 
   /**
@@ -393,12 +428,18 @@ public class CapacityConstraint implements Serializable {
   }
 
   /**
-   * Checks if this constraint exceeds the absolute maximum (for HARD constraints).
+   * Checks whether this HARD constraint exceeds its absolute limit.
    *
-   * @return true if current value exceeds max value
+   * @return true if a maximum constraint is above its maximum or a minimum constraint is below its minimum
    */
   public boolean isHardLimitExceeded() {
-    if (type != ConstraintType.HARD || maxValue == Double.MAX_VALUE) {
+    if (type != ConstraintType.HARD) {
+      return false;
+    }
+    if (isMinimumConstraint()) {
+      return getCurrentValue() < minValue;
+    }
+    if (maxValue == Double.MAX_VALUE) {
       return false;
     }
     return getCurrentValue() > maxValue;
@@ -587,6 +628,136 @@ public class CapacityConstraint implements Serializable {
    */
   public CapacityConstraint setDataSource(String dataSource) {
     this.dataSource = dataSource != null ? dataSource : "not_set";
+    return this;
+  }
+
+  /**
+   * Sets confidence in the engineering basis of this constraint.
+   *
+   * <p>
+   * Confidence is evidence-quality metadata on a scale from zero to one. It is not a probability of safe operation,
+   * constraint satisfaction, or model accuracy, and it does not change utilization or feasibility calculations.
+   * </p>
+   *
+   * @param confidence confidence score from 0.0 to 1.0, inclusive
+   * @return this constraint for method chaining
+   * @throws IllegalArgumentException if confidence is non-finite or outside [0, 1]
+   */
+  public CapacityConstraint setConfidence(double confidence) {
+    if (Double.isNaN(confidence) || Double.isInfinite(confidence) || confidence < 0.0 || confidence > 1.0) {
+      throw new IllegalArgumentException("confidence must be finite and in the range [0, 1]");
+    }
+    this.confidence = confidence;
+    this.confidenceSet = true;
+    return this;
+  }
+
+  /**
+   * Checks whether confidence has been explicitly assigned.
+   *
+   * @return true when {@link #setConfidence(double)} has been called with a valid value
+   */
+  public boolean hasConfidence() {
+    return confidenceSet;
+  }
+
+  /**
+   * Gets confidence in the engineering basis of this constraint.
+   *
+   * @return confidence from 0.0 to 1.0, or {@link Double#NaN} when unset
+   */
+  public double getConfidence() {
+    return confidenceSet ? confidence : Double.NaN;
+  }
+
+  /**
+   * Clears explicitly assigned confidence metadata.
+   *
+   * @return this constraint for method chaining
+   */
+  public CapacityConstraint clearConfidence() {
+    confidence = Double.NaN;
+    confidenceSet = false;
+    return this;
+  }
+
+  /**
+   * Sets the scalar operating range for which this constraint basis is considered applicable.
+   *
+   * <p>
+   * Both bounds use {@link #getUnit()}, the same unit as the constraint's current value. This metadata does not alter
+   * utilization or feasibility; callers should inspect {@link #isCurrentValueWithinValidityRange()} before relying on
+   * the limit outside its evidenced range.
+   * </p>
+   *
+   * @param minimum lower inclusive validity bound in the constraint unit
+   * @param maximum upper inclusive validity bound in the constraint unit
+   * @return this constraint for method chaining
+   * @throws IllegalArgumentException if either bound is non-finite or minimum exceeds maximum
+   */
+  public CapacityConstraint setValidityRange(double minimum, double maximum) {
+    if (Double.isNaN(minimum) || Double.isInfinite(minimum) || Double.isNaN(maximum) || Double.isInfinite(maximum)) {
+      throw new IllegalArgumentException("validity range bounds must be finite");
+    }
+    if (minimum > maximum) {
+      throw new IllegalArgumentException("validity range minimum must not exceed maximum");
+    }
+    validityMinimum = minimum;
+    validityMaximum = maximum;
+    validityRangeSet = true;
+    return this;
+  }
+
+  /**
+   * Checks whether a validity range has been explicitly assigned.
+   *
+   * @return true when a valid range has been assigned
+   */
+  public boolean hasValidityRange() {
+    return validityRangeSet;
+  }
+
+  /**
+   * Gets the lower inclusive validity bound.
+   *
+   * @return lower bound in {@link #getUnit()}, or {@link Double#NaN} when unset
+   */
+  public double getValidityMinimum() {
+    return validityRangeSet ? validityMinimum : Double.NaN;
+  }
+
+  /**
+   * Gets the upper inclusive validity bound.
+   *
+   * @return upper bound in {@link #getUnit()}, or {@link Double#NaN} when unset
+   */
+  public double getValidityMaximum() {
+    return validityRangeSet ? validityMaximum : Double.NaN;
+  }
+
+  /**
+   * Checks whether the current constraint value lies inside the assigned validity range.
+   *
+   * @return true when a range is assigned and the current value lies within both inclusive bounds; false when no range
+   * is assigned
+   */
+  public boolean isCurrentValueWithinValidityRange() {
+    if (!validityRangeSet) {
+      return false;
+    }
+    double value = getCurrentValue();
+    return value >= validityMinimum && value <= validityMaximum;
+  }
+
+  /**
+   * Clears the assigned validity range.
+   *
+   * @return this constraint for method chaining
+   */
+  public CapacityConstraint clearValidityRange() {
+    validityMinimum = Double.NaN;
+    validityMaximum = Double.NaN;
+    validityRangeSet = false;
     return this;
   }
 

@@ -7,7 +7,6 @@ import java.text.FieldPosition;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -378,7 +377,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
     double enthalpy = 0;
     for (int k = 0; k < streams.size(); k++) {
       if (streams.get(k).getFlowRate("kg/hr") > getMinimumFlow()) {
-        streams.get(k).getThermoSystem().init(3);
+        streams.get(k).getThermoSystem().init(2);
         enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
       }
     }
@@ -780,35 +779,6 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
       }
     }
     return getOutletStream().getFlowRate(unit) - inletFlow;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = super.hashCode();
-    result = prime * result
-        + Objects.hash(isSetOutTemperature, mixedStream, numberOfInputStreams, outTemperature, streams);
-    return result;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (!super.equals(obj)) {
-      return false;
-    }
-    if (getClass() != obj.getClass()) {
-      return false;
-    }
-    Mixer other = (Mixer) obj;
-    return isSetOutTemperature == other.isSetOutTemperature && Objects.equals(mixedStream, other.mixedStream)
-        && numberOfInputStreams == other.numberOfInputStreams
-        && Double.doubleToLongBits(outTemperature) == Double.doubleToLongBits(other.outTemperature)
-        && Objects.equals(streams, other.streams);
   }
 
   /**

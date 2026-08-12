@@ -14,8 +14,6 @@ DNV-ST-F101,Sec13,PropagationBucklingFactor,0.75,,Pipeline,Propagation buckling 
 DNV-ST-F201,Sec4,DynamicAmplificationFactor,1.5,,Riser,Dynamic amplification factor
 DNV-ST-F201,Sec4,FatigueDesignFactor_Normal,6.0,,Riser,Fatigue design factor - normal
 DNV-ST-F201,Sec4,FatigueDesignFactor_High,10.0,,Riser,Fatigue design factor - high safety
-DNV-RP-F109,Sec5,LateralStabilityFactor,1.1,,Pipeline,Lateral stability safety factor
-DNV-RP-F109,Sec5,VerticalStabilityFactor,1.1,,Pipeline,Vertical stability safety factor
 API-Spec-17D,Sec7,DesignFactor,0.67,,SubseaTree,Design stress factor
 API-Spec-17D,Sec8,TestPressureFactor,1.50,,SubseaTree,Factory acceptance test pressure
 API-Spec-17D,Sec8,SystemTestPressure,1.25,,SubseaTree,System integration test pressure
