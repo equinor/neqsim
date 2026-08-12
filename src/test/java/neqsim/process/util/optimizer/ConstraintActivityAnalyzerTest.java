@@ -86,16 +86,11 @@ class ConstraintActivityAnalyzerTest {
     evaluator.addObjective("export production", model -> fixture.feed.getFlowRate("kg/hr"),
         ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
     evaluator.getObjectives().get(0).setUnit("kg/hr");
-    evaluator.addConstraintUpperBound("near installed limit",
-        model -> fixture.feed.getFlowRate("kg/hr"), 1050.0);
-    evaluator.addConstraintUpperBound("spare installed limit",
-        model -> fixture.feed.getFlowRate("kg/hr"), 1300.0);
-    evaluator.addConstraintUpperBound("violated installed limit",
-        model -> fixture.feed.getFlowRate("kg/hr"), 950.0);
-    evaluator.addConstraintUpperBound("soft operating target",
-        model -> fixture.feed.getFlowRate("kg/hr"), 1025.0);
-    for (ProcessModelSimulationEvaluator.ConstraintDefinition constraint : evaluator
-        .getConstraints()) {
+    evaluator.addConstraintUpperBound("near installed limit", model -> fixture.feed.getFlowRate("kg/hr"), 1050.0);
+    evaluator.addConstraintUpperBound("spare installed limit", model -> fixture.feed.getFlowRate("kg/hr"), 1300.0);
+    evaluator.addConstraintUpperBound("violated installed limit", model -> fixture.feed.getFlowRate("kg/hr"), 950.0);
+    evaluator.addConstraintUpperBound("soft operating target", model -> fixture.feed.getFlowRate("kg/hr"), 1025.0);
+    for (ProcessModelSimulationEvaluator.ConstraintDefinition constraint : evaluator.getConstraints()) {
       constraint.setUnit("kg/hr");
     }
     evaluator.getConstraints().get(3).setHard(false);
@@ -110,24 +105,23 @@ class ConstraintActivityAnalyzerTest {
     ModelFixture fixture = createModelFixture();
     ProcessModelSimulationEvaluator evaluator = createEvaluator(fixture);
     ProcessModelSimulationEvaluator.SensitivityQualityResult result = evaluator
-        .estimateSensitivitiesWithQuality(new double[] {1000.0});
+        .estimateSensitivitiesWithQuality(new double[] { 1000.0 });
     int evaluationsAfterSampling = evaluator.getEvaluationCount();
 
-    ConstraintScale near = ConstraintScale.fromSnapshot(result.getConstraintSnapshots().get(0),
-        500.0, "installed throughput operating envelope");
-    ConstraintScale spare = ConstraintScale.fromSnapshot(result.getConstraintSnapshots().get(1),
-        500.0, "installed throughput operating envelope");
-    ConstraintScale violated = ConstraintScale.fromSnapshot(
-        result.getConstraintSnapshots().get(2), 500.0,
+    ConstraintScale near = ConstraintScale.fromSnapshot(result.getConstraintSnapshots().get(0), 500.0,
         "installed throughput operating envelope");
-    ConstraintScale soft = ConstraintScale.fromSnapshot(result.getConstraintSnapshots().get(3),
-        500.0, "operator target range");
+    ConstraintScale spare = ConstraintScale.fromSnapshot(result.getConstraintSnapshots().get(1), 500.0,
+        "installed throughput operating envelope");
+    ConstraintScale violated = ConstraintScale.fromSnapshot(result.getConstraintSnapshots().get(2), 500.0,
+        "installed throughput operating envelope");
+    ConstraintScale soft = ConstraintScale.fromSnapshot(result.getConstraintSnapshots().get(3), 500.0,
+        "operator target range");
     List<ConstraintScale> outOfOrderScales = Arrays.asList(soft, violated, near, spare);
     ActivityPolicy policy = ActivityPolicy.hardConstraints(0.10,
         ProcessModelSimulationEvaluator.SensitivityQualificationPolicy.numericalOnly(1.0e-8));
 
-    List<ConstraintActivityAssessment> assessments = ConstraintActivityAnalyzer.assess(result,
-        outOfOrderScales, policy);
+    List<ConstraintActivityAssessment> assessments = ConstraintActivityAnalyzer.assess(result, outOfOrderScales,
+        policy);
 
     assertEquals(4, assessments.size());
     assertEquals(ActivityStatus.CANDIDATE_ACTIVE, assessments.get(0).getStatus());
@@ -139,8 +133,7 @@ class ConstraintActivityAnalyzerTest {
     assertEquals(-0.10, assessments.get(2).getNormalizedMargin(), 1.0e-12);
     assertEquals("near installed limit", assessments.get(0).getConstraint().getName());
     assertEquals("kg/hr", assessments.get(0).getScale().getUnit());
-    assertEquals("installed throughput operating envelope",
-        assessments.get(0).getScale().getProvenance());
+    assertEquals("installed throughput operating envelope", assessments.get(0).getScale().getProvenance());
     assertEquals(policy, assessments.get(0).getPolicy());
     assertEquals(1, ConstraintActivityAnalyzer.getCandidateActiveConstraints(assessments).size());
     assertEquals(1, ConstraintActivityAnalyzer.getViolatedConstraints(assessments).size());
@@ -155,20 +148,16 @@ class ConstraintActivityAnalyzerTest {
         "scaling and activity analysis must not rerun the process model");
 
     ActivityPolicy includeSoft = new ActivityPolicy(0.10,
-        ProcessModelSimulationEvaluator.SensitivityQualificationPolicy.numericalOnly(1.0e-8),
-        true);
-    List<ConstraintActivityAssessment> includingSoft = ConstraintActivityAnalyzer.assess(result,
-        outOfOrderScales, includeSoft);
+        ProcessModelSimulationEvaluator.SensitivityQualificationPolicy.numericalOnly(1.0e-8), true);
+    List<ConstraintActivityAssessment> includingSoft = ConstraintActivityAnalyzer.assess(result, outOfOrderScales,
+        includeSoft);
     assertEquals(ActivityStatus.CANDIDATE_ACTIVE, includingSoft.get(3).getStatus());
-    assertEquals(2,
-        ConstraintActivityAnalyzer.getCandidateActiveConstraints(includingSoft).size());
+    assertEquals(2, ConstraintActivityAnalyzer.getCandidateActiveConstraints(includingSoft).size());
     assertEquals(evaluationsAfterSampling, evaluator.getEvaluationCount());
 
     assertThrows(UnsupportedOperationException.class, () -> assessments.clear());
-    assertThrows(UnsupportedOperationException.class,
-        () -> assessments.get(0).getSensitivities().clear());
-    assertThrows(UnsupportedOperationException.class,
-        () -> assessments.get(0).getDiagnostics().clear());
+    assertThrows(UnsupportedOperationException.class, () -> assessments.get(0).getSensitivities().clear());
+    assertThrows(UnsupportedOperationException.class, () -> assessments.get(0).getDiagnostics().clear());
 
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     ObjectOutputStream output = new ObjectOutputStream(bytes);
@@ -179,8 +168,7 @@ class ConstraintActivityAnalyzerTest {
     input.close();
     assertEquals(ActivityStatus.CANDIDATE_ACTIVE, restored.getStatus());
     assertEquals(0.10, restored.getNormalizedMargin(), 1.0e-12);
-    assertEquals("installed throughput operating envelope",
-        restored.getScale().getProvenance());
+    assertEquals("installed throughput operating envelope", restored.getScale().getProvenance());
     assertEquals(0.10, restored.getPolicy().getActiveNormalizedMarginTolerance(), 0.0);
   }
 
@@ -190,7 +178,7 @@ class ConstraintActivityAnalyzerTest {
     ModelFixture fixture = createModelFixture();
     ProcessModelSimulationEvaluator evaluator = createEvaluator(fixture);
     ProcessModelSimulationEvaluator.SensitivityQualityResult result = evaluator
-        .estimateSensitivitiesWithQuality(new double[] {1000.0});
+        .estimateSensitivitiesWithQuality(new double[] { 1000.0 });
     List<ConstraintScale> scales = Arrays.asList(
         ConstraintScale.fromSnapshot(result.getConstraintSnapshots().get(0), 500.0, "basis"),
         ConstraintScale.fromSnapshot(result.getConstraintSnapshots().get(1), 500.0, "basis"),
@@ -199,8 +187,7 @@ class ConstraintActivityAnalyzerTest {
     ActivityPolicy strict = ActivityPolicy.hardConstraints(0.10,
         ProcessModelSimulationEvaluator.SensitivityQualificationPolicy.strict(1.0e-8));
 
-    List<ConstraintActivityAssessment> assessments = ConstraintActivityAnalyzer.assess(result,
-        scales, strict);
+    List<ConstraintActivityAssessment> assessments = ConstraintActivityAnalyzer.assess(result, scales, strict);
     ScaledSensitivity rejected = assessments.get(0).getSensitivities().get(0);
 
     assertEquals(ActivityStatus.CANDIDATE_ACTIVE, assessments.get(0).getStatus());
@@ -216,63 +203,44 @@ class ConstraintActivityAnalyzerTest {
     ModelFixture fixture = createModelFixture();
     ProcessModelSimulationEvaluator evaluator = createEvaluator(fixture);
     ProcessModelSimulationEvaluator.SensitivityQualityResult result = evaluator
-        .estimateSensitivitiesWithQuality(new double[] {1000.0});
-    ConstraintScale near = ConstraintScale.fromSnapshot(result.getConstraintSnapshots().get(0),
-        500.0, "basis");
-    ConstraintScale spare = ConstraintScale.fromSnapshot(result.getConstraintSnapshots().get(1),
-        500.0, "basis");
-    ConstraintScale violated = ConstraintScale.fromSnapshot(
-        result.getConstraintSnapshots().get(2), 500.0, "basis");
-    ConstraintScale soft = ConstraintScale.fromSnapshot(result.getConstraintSnapshots().get(3),
-        500.0, "basis");
+        .estimateSensitivitiesWithQuality(new double[] { 1000.0 });
+    ConstraintScale near = ConstraintScale.fromSnapshot(result.getConstraintSnapshots().get(0), 500.0, "basis");
+    ConstraintScale spare = ConstraintScale.fromSnapshot(result.getConstraintSnapshots().get(1), 500.0, "basis");
+    ConstraintScale violated = ConstraintScale.fromSnapshot(result.getConstraintSnapshots().get(2), 500.0, "basis");
+    ConstraintScale soft = ConstraintScale.fromSnapshot(result.getConstraintSnapshots().get(3), 500.0, "basis");
     ActivityPolicy policy = ActivityPolicy.hardConstraints(0.10,
         ProcessModelSimulationEvaluator.SensitivityQualificationPolicy.numericalOnly(1.0e-8));
 
     assertThrows(IllegalArgumentException.class,
-        () -> ConstraintActivityAnalyzer.assess(result, Arrays.asList(near, spare, violated),
-            policy));
+        () -> ConstraintActivityAnalyzer.assess(result, Arrays.asList(near, spare, violated), policy));
     assertThrows(IllegalArgumentException.class,
-        () -> ConstraintActivityAnalyzer.assess(result,
-            Arrays.asList(near, near, violated, soft), policy));
+        () -> ConstraintActivityAnalyzer.assess(result, Arrays.asList(near, near, violated, soft), policy));
     assertThrows(IllegalArgumentException.class,
         () -> ConstraintScale.fromSnapshot(result.getConstraintSnapshots().get(0), 0.0, "basis"));
     assertThrows(IllegalArgumentException.class,
         () -> ConstraintScale.fromSnapshot(result.getConstraintSnapshots().get(0), 500.0, " "));
-    assertThrows(IllegalArgumentException.class,
-        () -> new ActivityPolicy(Double.NaN,
-            ProcessModelSimulationEvaluator.SensitivityQualificationPolicy.numericalOnly(1.0),
-            false));
-    assertThrows(IllegalArgumentException.class,
-        () -> new ActivityPolicy(0.1, null, false));
-    assertThrows(IllegalArgumentException.class,
-        () -> ConstraintActivityAnalyzer.getCandidateActiveConstraints(null));
+    assertThrows(IllegalArgumentException.class, () -> new ActivityPolicy(Double.NaN,
+        ProcessModelSimulationEvaluator.SensitivityQualificationPolicy.numericalOnly(1.0), false));
+    assertThrows(IllegalArgumentException.class, () -> new ActivityPolicy(0.1, null, false));
+    assertThrows(IllegalArgumentException.class, () -> ConstraintActivityAnalyzer.getCandidateActiveConstraints(null));
 
     ProcessModelSimulationEvaluator changedEvaluator = createEvaluator(fixture);
     changedEvaluator.getConstraints().get(0).setUpperBound(1060.0);
     ProcessModelSimulationEvaluator.SensitivityQualityResult changedResult = changedEvaluator
-        .estimateSensitivitiesWithQuality(new double[] {1000.0});
-    assertThrows(IllegalArgumentException.class,
-        () -> ConstraintActivityAnalyzer.assess(changedResult,
-            Arrays.asList(near,
-                ConstraintScale.fromSnapshot(changedResult.getConstraintSnapshots().get(1), 500.0,
-                    "basis"),
-                ConstraintScale.fromSnapshot(changedResult.getConstraintSnapshots().get(2), 500.0,
-                    "basis"),
-                ConstraintScale.fromSnapshot(changedResult.getConstraintSnapshots().get(3), 500.0,
-                    "basis")),
-            policy));
+        .estimateSensitivitiesWithQuality(new double[] { 1000.0 });
+    assertThrows(IllegalArgumentException.class, () -> ConstraintActivityAnalyzer.assess(changedResult,
+        Arrays.asList(near, ConstraintScale.fromSnapshot(changedResult.getConstraintSnapshots().get(1), 500.0, "basis"),
+            ConstraintScale.fromSnapshot(changedResult.getConstraintSnapshots().get(2), 500.0, "basis"),
+            ConstraintScale.fromSnapshot(changedResult.getConstraintSnapshots().get(3), 500.0, "basis")),
+        policy));
 
-    ProcessModelSimulationEvaluator unitlessEvaluator = new ProcessModelSimulationEvaluator(
-        fixture.model);
-    unitlessEvaluator.addParameter("field feed", "wells::feed.flowRate", 500.0, 1500.0,
-        "kg/hr");
+    ProcessModelSimulationEvaluator unitlessEvaluator = new ProcessModelSimulationEvaluator(fixture.model);
+    unitlessEvaluator.addParameter("field feed", "wells::feed.flowRate", 500.0, 1500.0, "kg/hr");
     unitlessEvaluator.addObjective("feed", model -> fixture.feed.getFlowRate("kg/hr"));
-    unitlessEvaluator.addConstraintUpperBound("unitless",
-        model -> fixture.feed.getFlowRate("kg/hr"), 1100.0);
+    unitlessEvaluator.addConstraintUpperBound("unitless", model -> fixture.feed.getFlowRate("kg/hr"), 1100.0);
     ProcessModelSimulationEvaluator.SensitivityQualityResult unitlessResult = unitlessEvaluator
-        .estimateSensitivitiesWithQuality(new double[] {1000.0});
+        .estimateSensitivitiesWithQuality(new double[] { 1000.0 });
     assertThrows(IllegalArgumentException.class,
-        () -> ConstraintScale.fromSnapshot(unitlessResult.getConstraintSnapshots().get(0), 100.0,
-            "basis"));
+        () -> ConstraintScale.fromSnapshot(unitlessResult.getConstraintSnapshots().get(0), 100.0, "basis"));
   }
 }

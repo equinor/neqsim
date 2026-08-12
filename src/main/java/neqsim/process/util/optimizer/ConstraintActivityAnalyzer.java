@@ -17,10 +17,10 @@ import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.Sensitivity
  * {@link SensitivityQualityResult}.
  *
  * <p>
- * Every constraint requires an explicit positive reference value in the constraint's declared unit
- * and a non-empty provenance string. Results preserve constraint registration order and retain the
- * complete unscaled sensitivity assessment. The analyzer performs no process simulation and makes
- * no optimizer-independent active-set, KKT-multiplier, shadow-price, or engineering-approval claim.
+ * Every constraint requires an explicit positive reference value in the constraint's declared unit and a non-empty
+ * provenance string. Results preserve constraint registration order and retain the complete unscaled sensitivity
+ * assessment. The analyzer performs no process simulation and makes no optimizer-independent active-set,
+ * KKT-multiplier, shadow-price, or engineering-approval claim.
  * </p>
  *
  * @author NeqSim Development Team
@@ -46,9 +46,8 @@ public final class ConstraintActivityAnalyzer {
    * Immutable reference scale tied to the exact identity of one constraint snapshot.
    *
    * <p>
-   * The reference value has the same unit as the constraint. Identity includes bounds, hardness,
-   * type, and capacity origin so a scale cannot silently be reused after the engineering constraint
-   * definition changes.
+   * The reference value has the same unit as the constraint. Identity includes bounds, hardness, type, and capacity
+   * origin so a scale cannot silently be reused after the engineering constraint definition changes.
    * </p>
    *
    * @author NeqSim Development Team
@@ -112,8 +111,8 @@ public final class ConstraintActivityAnalyzer {
      * @return immutable constraint scale
      * @throws IllegalArgumentException if any argument is invalid or the constraint unit is absent
      */
-    public static ConstraintScale fromSnapshot(SensitivityConstraintSnapshot snapshot,
-        double referenceValue, String provenance) {
+    public static ConstraintScale fromSnapshot(SensitivityConstraintSnapshot snapshot, double referenceValue,
+        String provenance) {
       if (snapshot == null) {
         throw new IllegalArgumentException("Constraint snapshot must not be null");
       }
@@ -138,8 +137,7 @@ public final class ConstraintActivityAnalyzer {
      * @param referenceValue positive reference value
      * @param provenance non-empty scale provenance
      */
-    private ConstraintScale(SensitivityConstraintSnapshot snapshot, double referenceValue,
-        String provenance) {
+    private ConstraintScale(SensitivityConstraintSnapshot snapshot, double referenceValue, String provenance) {
       this.constraintIndex = snapshot.getIndex();
       this.constraintName = snapshot.getName();
       this.constraintType = snapshot.getType();
@@ -242,12 +240,10 @@ public final class ConstraintActivityAnalyzer {
       return snapshot != null && constraintIndex == snapshot.getIndex()
           && safeEquals(constraintName, snapshot.getName()) && constraintType == snapshot.getType()
           && safeEquals(unit, snapshot.getUnit()) && hard == snapshot.isHard()
-          && sameDouble(penaltyWeight, snapshot.getPenaltyWeight())
-          && sameDouble(lowerBound, snapshot.getLowerBound())
+          && sameDouble(penaltyWeight, snapshot.getPenaltyWeight()) && sameDouble(lowerBound, snapshot.getLowerBound())
           && sameDouble(upperBound, snapshot.getUpperBound())
           && sameDouble(equalityTolerance, snapshot.getEqualityTolerance())
-          && capacityConstraint == snapshot.isCapacityConstraint()
-          && safeEquals(areaName, snapshot.getAreaName())
+          && capacityConstraint == snapshot.isCapacityConstraint() && safeEquals(areaName, snapshot.getAreaName())
           && safeEquals(equipmentName, snapshot.getEquipmentName())
           && safeEquals(equipmentConstraintName, snapshot.getEquipmentConstraintName());
     }
@@ -280,12 +276,10 @@ public final class ConstraintActivityAnalyzer {
      * @param includeSoftConstraints whether soft constraints receive activity classifications
      * @throws IllegalArgumentException if the tolerance or sensitivity policy is invalid
      */
-    public ActivityPolicy(double activeNormalizedMarginTolerance,
-        SensitivityQualificationPolicy sensitivityPolicy, boolean includeSoftConstraints) {
-      if (!Double.isFinite(activeNormalizedMarginTolerance)
-          || activeNormalizedMarginTolerance < 0.0) {
-        throw new IllegalArgumentException(
-            "Active normalized-margin tolerance must be finite and non-negative");
+    public ActivityPolicy(double activeNormalizedMarginTolerance, SensitivityQualificationPolicy sensitivityPolicy,
+        boolean includeSoftConstraints) {
+      if (!Double.isFinite(activeNormalizedMarginTolerance) || activeNormalizedMarginTolerance < 0.0) {
+        throw new IllegalArgumentException("Active normalized-margin tolerance must be finite and non-negative");
       }
       if (sensitivityPolicy == null) {
         throw new IllegalArgumentException("Sensitivity qualification policy must not be null");
@@ -345,8 +339,7 @@ public final class ConstraintActivityAnalyzer {
      * @param sensitivityAssessment complete unscaled derivative assessment
      * @param referenceValue positive constraint reference value
      */
-    private ScaledSensitivity(ConstraintSensitivityAssessment sensitivityAssessment,
-        double referenceValue) {
+    private ScaledSensitivity(ConstraintSensitivityAssessment sensitivityAssessment, double referenceValue) {
       this.sensitivityAssessment = sensitivityAssessment;
       this.normalizedMarginDerivative = sensitivityAssessment.getMarginDerivative() / referenceValue;
     }
@@ -360,8 +353,8 @@ public final class ConstraintActivityAnalyzer {
      * Gets the normalized margin derivative.
      *
      * <p>
-     * Call {@link #isUsable()} before consuming this value. A rejected derivative is retained for
-     * auditability but is not qualified for an operating-action calculation.
+     * Call {@link #isUsable()} before consuming this value. A rejected derivative is retained for auditability but is
+     * not qualified for an operating-action calculation.
      * </p>
      *
      * @return derivative of normalized margin with respect to the parameter
@@ -436,16 +429,15 @@ public final class ConstraintActivityAnalyzer {
      * @param sensitivities normalized parameter sensitivities
      * @param diagnostics scaling and classification diagnostics
      */
-    private ConstraintActivityAssessment(SensitivityConstraintSnapshot constraint,
-        ConstraintScale scale, ActivityPolicy policy, double normalizedMargin,
-        ActivityStatus status, List<ScaledSensitivity> sensitivities, List<String> diagnostics) {
+    private ConstraintActivityAssessment(SensitivityConstraintSnapshot constraint, ConstraintScale scale,
+        ActivityPolicy policy, double normalizedMargin, ActivityStatus status, List<ScaledSensitivity> sensitivities,
+        List<String> diagnostics) {
       this.constraint = constraint;
       this.scale = scale;
       this.policy = policy;
       this.normalizedMargin = normalizedMargin;
       this.status = status;
-      this.sensitivities = Collections
-          .unmodifiableList(new ArrayList<ScaledSensitivity>(sensitivities));
+      this.sensitivities = Collections.unmodifiableList(new ArrayList<ScaledSensitivity>(sensitivities));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<String>(diagnostics));
     }
 
@@ -511,16 +503,16 @@ public final class ConstraintActivityAnalyzer {
   }
 
   /** Utility class; instances are not required. */
-  private ConstraintActivityAnalyzer() {}
+  private ConstraintActivityAnalyzer() {
+  }
 
   /**
    * Builds dimensionless activity and sensitivity diagnostics without rerunning the process model.
    *
    * <p>
-   * Scales may be supplied in any order. Exactly one scale must match every constraint snapshot;
-   * outputs remain in constraint registration order. A violated constraint is reported separately
-   * from a feasible candidate-active constraint. Soft constraints are excluded unless the policy
-   * explicitly includes them.
+   * Scales may be supplied in any order. Exactly one scale must match every constraint snapshot; outputs remain in
+   * constraint registration order. A violated constraint is reported separately from a feasible candidate-active
+   * constraint. Soft constraints are excluded unless the policy explicitly includes them.
    * </p>
    *
    * @param result immutable self-describing sensitivity result
@@ -529,8 +521,8 @@ public final class ConstraintActivityAnalyzer {
    * @return immutable activity assessments in constraint registration order
    * @throws IllegalArgumentException if inputs, scale coverage, or scale identity are invalid
    */
-  public static List<ConstraintActivityAssessment> assess(SensitivityQualityResult result,
-      List<ConstraintScale> scales, ActivityPolicy policy) {
+  public static List<ConstraintActivityAssessment> assess(SensitivityQualityResult result, List<ConstraintScale> scales,
+      ActivityPolicy policy) {
     if (result == null) {
       throw new IllegalArgumentException("Sensitivity quality result must not be null");
     }
@@ -545,11 +537,9 @@ public final class ConstraintActivityAnalyzer {
     Map<Integer, ConstraintScale> scalesByIndex = indexAndValidateScales(constraints, scales);
     List<ConstraintSensitivityAssessment> qualified = result
         .assessConstraintSensitivities(policy.getSensitivityPolicy());
-    Map<Integer, List<ConstraintSensitivityAssessment>> sensitivitiesByConstraint =
-        new LinkedHashMap<Integer, List<ConstraintSensitivityAssessment>>();
+    Map<Integer, List<ConstraintSensitivityAssessment>> sensitivitiesByConstraint = new LinkedHashMap<Integer, List<ConstraintSensitivityAssessment>>();
     for (SensitivityConstraintSnapshot constraint : constraints) {
-      sensitivitiesByConstraint.put(constraint.getIndex(),
-          new ArrayList<ConstraintSensitivityAssessment>());
+      sensitivitiesByConstraint.put(constraint.getIndex(), new ArrayList<ConstraintSensitivityAssessment>());
     }
     for (ConstraintSensitivityAssessment sensitivity : qualified) {
       sensitivitiesByConstraint.get(sensitivity.getConstraint().getIndex()).add(sensitivity);
@@ -560,16 +550,15 @@ public final class ConstraintActivityAnalyzer {
       ConstraintScale scale = scalesByIndex.get(constraint.getIndex());
       double normalizedMargin = constraint.getBaseMargin() / scale.getReferenceValue();
       List<String> diagnostics = new ArrayList<String>();
-      diagnostics.add("Constraint margin scaled by " + scale.getReferenceValue() + " "
-          + scale.getUnit() + " from " + scale.getProvenance());
+      diagnostics.add("Constraint margin scaled by " + scale.getReferenceValue() + " " + scale.getUnit() + " from "
+          + scale.getProvenance());
       ActivityStatus status = classify(result, constraint, normalizedMargin, policy, diagnostics);
       List<ScaledSensitivity> scaledSensitivities = new ArrayList<ScaledSensitivity>();
-      for (ConstraintSensitivityAssessment sensitivity : sensitivitiesByConstraint
-          .get(constraint.getIndex())) {
+      for (ConstraintSensitivityAssessment sensitivity : sensitivitiesByConstraint.get(constraint.getIndex())) {
         scaledSensitivities.add(new ScaledSensitivity(sensitivity, scale.getReferenceValue()));
       }
-      assessments.add(new ConstraintActivityAssessment(constraint, scale, policy,
-          normalizedMargin, status, scaledSensitivities, diagnostics));
+      assessments.add(new ConstraintActivityAssessment(constraint, scale, policy, normalizedMargin, status,
+          scaledSensitivities, diagnostics));
     }
     return Collections.unmodifiableList(assessments);
   }
@@ -606,8 +595,8 @@ public final class ConstraintActivityAnalyzer {
    * @return scales keyed by constraint index
    * @throws IllegalArgumentException for missing, duplicate, out-of-range, or stale scales
    */
-  private static Map<Integer, ConstraintScale> indexAndValidateScales(
-      List<SensitivityConstraintSnapshot> constraints, List<ConstraintScale> scales) {
+  private static Map<Integer, ConstraintScale> indexAndValidateScales(List<SensitivityConstraintSnapshot> constraints,
+      List<ConstraintScale> scales) {
     if (scales.size() != constraints.size()) {
       throw new IllegalArgumentException("Exactly one scale is required for every constraint");
     }
@@ -625,8 +614,7 @@ public final class ConstraintActivityAnalyzer {
       }
       SensitivityConstraintSnapshot constraint = constraints.get(index);
       if (!scale.matches(constraint)) {
-        throw new IllegalArgumentException(
-            "Constraint scale identity no longer matches result row " + index);
+        throw new IllegalArgumentException("Constraint scale identity no longer matches result row " + index);
       }
       indexed.put(index, scale);
     }
@@ -643,9 +631,8 @@ public final class ConstraintActivityAnalyzer {
    * @param diagnostics mutable diagnostics populated by this method
    * @return conservative activity status
    */
-  private static ActivityStatus classify(SensitivityQualityResult result,
-      SensitivityConstraintSnapshot constraint, double normalizedMargin, ActivityPolicy policy,
-      List<String> diagnostics) {
+  private static ActivityStatus classify(SensitivityQualityResult result, SensitivityConstraintSnapshot constraint,
+      double normalizedMargin, ActivityPolicy policy, List<String> diagnostics) {
     if (!result.isBaseSimulationConverged() || result.getBaseErrorMessage() != null
         || !Double.isFinite(normalizedMargin)) {
       diagnostics.add("Activity unavailable because base convergence, evaluation, or margin evidence is invalid");
@@ -656,8 +643,7 @@ public final class ConstraintActivityAnalyzer {
       return ActivityStatus.EXCLUDED_SOFT;
     }
     if (!result.isBaseFeasible()) {
-      diagnostics.add(
-          "Base point violates at least one hard constraint; inspect the complete violated set");
+      diagnostics.add("Base point violates at least one hard constraint; inspect the complete violated set");
     }
     if (normalizedMargin < 0.0) {
       diagnostics.add("Constraint is violated; a violated point is not labelled candidate active");
@@ -679,8 +665,8 @@ public final class ConstraintActivityAnalyzer {
    * @return immutable filtered assessments
    * @throws IllegalArgumentException if assessments is null
    */
-  private static List<ConstraintActivityAssessment> filterByStatus(
-      List<ConstraintActivityAssessment> assessments, ActivityStatus status) {
+  private static List<ConstraintActivityAssessment> filterByStatus(List<ConstraintActivityAssessment> assessments,
+      ActivityStatus status) {
     if (assessments == null) {
       throw new IllegalArgumentException("Constraint activity assessments must not be null");
     }
