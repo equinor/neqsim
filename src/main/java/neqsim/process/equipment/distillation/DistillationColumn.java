@@ -2911,7 +2911,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       reuseNaphtaliSandholmWarmState(id, startTime);
       return true;
     }
-    if (lastSolverTypeUsed == SolverType.DAMPED_SUBSTITUTION && hasSequentialExactReuseState) {
+    if (hasSequentialExactReuseState) {
       long sequentialInputSignature = calculateSequentialExactReuseSignature();
       if (canReuseSequentialWarmState(sequentialInputSignature)) {
         reuseSequentialWarmState(id, startTime);
