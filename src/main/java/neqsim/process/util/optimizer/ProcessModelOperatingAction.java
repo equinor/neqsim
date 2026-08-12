@@ -401,6 +401,10 @@ public final class ProcessModelOperatingAction implements Serializable {
     }
     final ProcessModelOperatingAction action = this;
     ActionState initialState = capture(evaluator.getProcessModel());
+    if (!accepts(initialState.getValue())) {
+      throw new IllegalStateException(
+          "The current model value is outside the action domain and is not a valid optimizer initial candidate");
+    }
     int parameterIndex = evaluator.getParameterCount();
     evaluator.addParameterWithSetter(name, new BiConsumer<ProcessModel, Double>() {
       /** Serialization version is not required because evaluator setters are transient. */
