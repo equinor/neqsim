@@ -714,8 +714,7 @@ public class DistillationSolverBenchmarkTest {
         "accepted iteration count should describe the damped fallback rather than the rejected candidate");
     assertTrue(column.getLastNaphtaliThermoEvaluationCount() > 0,
         "fallback adoption must retain thermodynamic work from the rejected Naphtali-Sandholm attempt");
-    assertTrue(
-        column.getLastNaphtaliThermoKValueIterationCount() >= column.getLastNaphtaliThermoEvaluationCount(),
+    assertTrue(column.getLastNaphtaliThermoKValueIterationCount() >= column.getLastNaphtaliThermoEvaluationCount(),
         "each uncached tray thermodynamic evaluation should perform at least one K-value sweep");
     assertTrue(column.getConvergenceDiagnostics().contains("Naphtali-Sandholm Jacobian:"),
         "combined diagnostics should expose rejected simultaneous-solver work beside accepted fallback residuals");
