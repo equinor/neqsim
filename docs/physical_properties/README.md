@@ -155,9 +155,12 @@ After initialization, the most common phase accessors are:
 | Mass density with unit | `getDensity("kg/m3")` | requested unit |
 | Kinematic viscosity | `getPhysicalProperties().getKinematicViscosity()` | m²/s |
 
-Diffusion coefficients are available from the phase's `PhysicalProperties` object. See the
-[diffusivity guide](diffusivity_models.md) for Maxwell-Stefan, Fick, and effective diffusion
-coefficient access.
+Diffusion coefficients are available from the phase's `PhysicalProperties` object. Use
+`getDiffusionCoefficient(i, j)` or `getDiffusionCoefficient(component1, component2)` for a
+Maxwell-Stefan binary coefficient. Call `calcEffectiveDiffusionCoefficients()` before reading an
+effective coefficient with `getEffectiveDiffusionCoefficient(...)`. See the
+[diffusivity guide](diffusivity_models.md) for model selection, Fick coefficients, and complete
+access patterns.
 
 Surface tension requires two existing phases and an initialized interfacial model. Use phase
 guards and follow the complete examples in the
