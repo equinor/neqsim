@@ -480,7 +480,7 @@ is readable. `capture(model)`, `apply(model, value)`, and `restore(model, state)
 identity-checked candidate mutation with automation read-back verification and explicit rollback
 diagnostics, without running the model.
 
-Use `registerWith(ProcessModelSimulationEvaluator)` for external optimization. Continuous actions
+Use `registerWith(ProcessModelSimulationEvaluator)` for external optimization. Registration fails closed when the current model value is outside the candidate domain, while capture/restore remains available for that brownfield baseline. Continuous actions
 map directly to bounded evaluator parameters. Discrete actions expose their ordered allowed values
 through the returned binding; callers must enumerate them because intermediate vector values fail
 closed rather than being silently rounded or interpolated. Re-register actions after evaluator
