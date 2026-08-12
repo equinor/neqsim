@@ -1670,8 +1670,8 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      * Sets whether direct evaluator calls clamp requested values to the declared bounds.
      *
      * <p>
-     * The default is true for compatibility. Set false only when a strict setter must inspect and
-     * reject the exact requested value, such as an enumerated operating action.
+     * The default is true for compatibility. Set false only when a strict setter must inspect and reject the exact
+     * requested value, such as an enumerated operating action.
      * </p>
      *
      * @param clampToBounds true to retain legacy clamping, false to pass the exact value
