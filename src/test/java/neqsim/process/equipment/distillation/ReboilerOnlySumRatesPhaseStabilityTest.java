@@ -248,6 +248,7 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
   @Test
   public void naphtaliSandholmBasinRemainsAccountableAcrossRetainedStates() {
     ColumnCase testCase = createRepresentativeCase("naphtali basin", DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
+    testCase.column.setMassBalanceTolerance(1.0e-8);
     testCase.column.run();
     assertNaphtaliBasinPoint(testCase, "cold");
     DistillationColumn.SolverType coldSolver = testCase.column.getLastSolverTypeUsed();
