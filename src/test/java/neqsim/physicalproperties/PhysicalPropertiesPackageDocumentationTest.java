@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.FrictionTheoryViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.LBCViscosityMethod;
+import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -27,6 +28,30 @@ class PhysicalPropertiesPackageDocumentationTest {
     assertPositiveFinite(fluid.getPhase("gas").getThermalConductivity("W/mK"));
     assertPositiveFinite(fluid.getPhase("gas").getDensity("kg/m3"));
     assertPositiveFinite(fluid.getPhase("gas").getPhysicalProperties().getKinematicViscosity());
+  }
+
+  @Test
+  void diffusivityGuideUsesPublicBinaryAndEffectiveAccessors() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 1.01325);
+    fluid.addComponent("methane", 0.50);
+    fluid.addComponent("nitrogen", 0.50);
+    fluid.setMixingRule("classic");
+
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.initPhysicalProperties();
+
+    PhysicalProperties properties = fluid.getPhase("gas").getPhysicalProperties();
+    properties.setDiffusionCoefficientModel("Fuller-Schettler-Giddings");
+    fluid.getPhase("gas").initPhysicalProperties();
+
+    assertPositiveFinite(properties.getDiffusionCoefficient("methane", "nitrogen"));
+
+    properties.calcEffectiveDiffusionCoefficients();
+    assertPositiveFinite(properties.getEffectiveDiffusionCoefficient("methane"));
+
+    fluid.setPhysicalPropertyModel(PhysicalPropertyModel.AMINE);
+    fluid.initPhysicalProperties();
+    assertPositiveFinite(fluid.getPhase("gas").getViscosity("kg/msec"));
   }
 
   @Test
