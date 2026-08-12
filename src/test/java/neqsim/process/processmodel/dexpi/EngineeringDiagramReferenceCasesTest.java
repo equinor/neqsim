@@ -78,7 +78,7 @@ class EngineeringDiagramReferenceCasesTest {
     ByteArrayOutputStream secondCombined = new ByteArrayOutputStream();
     DexpiXmlWriter.write(first.getProcessModel(), firstCombined);
     DexpiXmlWriter.write(second.getProcessModel(), secondCombined);
-    assertEquals(firstCombined.toString(StandardCharsets.UTF_8.name()),
+    assertDeterministicProteusXml(firstCombined.toString(StandardCharsets.UTF_8.name()),
         secondCombined.toString(StandardCharsets.UTF_8.name()));
 
     Path firstSheets = temporaryDirectory.resolve("multi-area-first");
@@ -88,7 +88,8 @@ class EngineeringDiagramReferenceCasesTest {
     assertEquals(first.getAreaNames().size(), firstFiles.size());
     assertEquals(fileNames(firstFiles), fileNames(secondFiles));
     for (int index = 0; index < firstFiles.size(); index++) {
-      assertEquals(read(firstFiles.get(index).toPath()), read(secondFiles.get(index).toPath()));
+      assertDeterministicProteusXml(read(firstFiles.get(index).toPath()),
+          read(secondFiles.get(index).toPath()));
       assertTrue(read(firstFiles.get(index).toPath()).contains("<PlantModel"));
     }
 
@@ -177,7 +178,7 @@ class EngineeringDiagramReferenceCasesTest {
     ByteArrayOutputStream secondProteus = new ByteArrayOutputStream();
     DexpiXmlWriter.write(first.getProcessSystem(), firstProteus);
     DexpiXmlWriter.write(second.getProcessSystem(), secondProteus);
-    assertEquals(firstProteus.toString(StandardCharsets.UTF_8.name()),
+    assertDeterministicProteusXml(firstProteus.toString(StandardCharsets.UTF_8.name()),
         secondProteus.toString(StandardCharsets.UTF_8.name()));
 
     EngineeringProject firstProject = NorsokOffshoreEngineeringBuilder
@@ -264,6 +265,21 @@ class EngineeringDiagramReferenceCasesTest {
 
   private static String read(Path path) throws Exception {
     return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+  }
+
+  private static void assertDeterministicProteusXml(String first, String second) {
+    assertTrue(first.contains("<PlantInformation"));
+    assertTrue(first.contains(" Date=\""));
+    assertTrue(first.contains(" Time=\""));
+    assertTrue(second.contains("<PlantInformation"));
+    assertTrue(second.contains(" Date=\""));
+    assertTrue(second.contains(" Time=\""));
+    assertEquals(normalizeProteusEmissionMetadata(first), normalizeProteusEmissionMetadata(second));
+  }
+
+  private static String normalizeProteusEmissionMetadata(String xml) {
+    return xml.replaceFirst(" Date=\"[^\"]+\"", " Date=\"<generated-date>\"")
+        .replaceFirst(" Time=\"[^\"]+\"", " Time=\"<generated-time>\"");
   }
 
   private static String areaCode(String areaName) {
