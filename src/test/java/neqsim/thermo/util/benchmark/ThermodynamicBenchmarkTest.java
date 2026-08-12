@@ -39,7 +39,7 @@ class ThermodynamicBenchmarkTest {
   @Test
   void reportsMalformedNumericCsvRowsAsIoFailures() {
     IOException exception = assertThrows(IOException.class,
-        () -> H2CO2PhaseEquilibriumData.parseCsvRow("bad,-30,bubble,1.45,0.96,0.04,0.0,bara", 12));
+        () -> H2CO2PhaseEquilibriumData.parseCsvRow("binary,bad,bubble,1.45,0.96,0.04,0.0,bara", 12));
 
     assertTrue(exception.getMessage().contains("line 12"));
     assertTrue(exception.getCause() instanceof NumberFormatException);
