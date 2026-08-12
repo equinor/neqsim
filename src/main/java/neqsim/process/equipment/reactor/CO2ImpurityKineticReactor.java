@@ -12,28 +12,29 @@ import neqsim.thermo.system.SystemInterface;
  *
  * <p>
  * Replaces empirical curve-fitting and static equilibrium models with a pure physical differential kinetics engine.
- * All rate constants k(T) are calculated purely via Arrhenius rate laws, and reversible reaction directionality
- * is governed strictly by Gibbs Free Energy (Delta G°rxn / Keq) within a single coupled ODE system.
- * Accelerated Ammonia (NH3) reaction kinetics (Ea7 = 15.0 kJ/mol, A7 = 5.0e5 m3/kmol.s).
+ * Incorporates H2S thiyl/hydroperoxyl radical chain co-catalysis acceleration (R3b):
+ * Without H2S, SO2 + NO2 + O2 + H2O at 25 bar, -25 °C has no significant reaction for 10 hr (Ea3a = 36.0 kJ/mol).
+ * When H2S is introduced, H2S oxidation triggers R3b radical chain propagation (Ea3b = 15.0 kJ/mol) -> strong acid formation.
  * </p>
  *
  * <h2>Reactions Modeled</h2>
  * <ul>
- * <li><b>R1:</b> SO2 + 0.5 O2 + H2O &lt;=&gt; H2SO4 (Direct SO2 oxidation, Ea1 = 45.0 kJ/mol, Keq1 = exp(-Delta G1/RT))</li>
- * <li><b>R2:</b> H2S + 3 NO2 &lt;=&gt; SO2 + H2O + 3 NO (H2S oxidation by NO2, Ea2 = 28.0 kJ/mol, Keq2 = exp(-Delta G2/RT))</li>
- * <li><b>R3:</b> SO2 + NO2 + H2O &lt;=&gt; NO + H2SO4 (NO2-catalyzed SO2 oxidation, Ea3 = 18.0 kJ/mol, Keq3 = exp(-Delta G3/RT))</li>
+ * <li><b>R1:</b> SO2 + 0.5 O2 + H2O &lt;=&gt; H2SO4 (Direct SO2 oxidation, Ea1 = 45.0 kJ/mol)</li>
+ * <li><b>R2:</b> H2S + 3 NO2 &lt;=&gt; SO2 + H2O + 3 NO (H2S oxidation by NO2, Ea2 = 28.0 kJ/mol)</li>
+ * <li><b>R3a:</b> SO2 + NO2 + H2O &lt;=&gt; NO + H2SO4 (Base NO2 oxidation without H2S, Ea3a = 36.0 kJ/mol)</li>
+ * <li><b>R3b:</b> SO2 + H2S + 0.5 O2 + H2O -&gt; H2SO4 + H2S (Radical chain accelerated oxidation, Ea3b = 15.0 kJ/mol)</li>
  * <li><b>R4:</b> 2 NO + O2 &lt;=&gt; 2 NO2 (Termolecular NO oxidation, negative activation energy)</li>
  * <li><b>R5:</b> 3 NO2 + H2O &lt;=&gt; 2 HNO3 + NO (Reversible NO2 hydrolysis, Keq5 = exp(-Delta G5/RT))</li>
- * <li><b>R6:</b> H2S + 1.5 O2 &lt;=&gt; SO2 + H2O (Accelerated H2S oxidation, Ea6 = 25.0 kJ/mol, Keq6 = exp(-Delta G6/RT))</li>
- * <li><b>R7:</b> Fast Ammonia Reactions / Neutralization (Ea7 = 15.0 kJ/mol, A7 = 5.0e5 m3/kmol.s)</li>
+ * <li><b>R6:</b> H2S + 1.5 O2 &lt;=&gt; SO2 + H2O (Accelerated H2S oxidation, Ea6 = 25.0 kJ/mol)</li>
+ * <li><b>R7:</b> Fast Ammonia Reactions / Neutralization (Ea7 = 15.0 kJ/mol)</li>
  * </ul>
  *
  * @author NeqSim Team / Antigravity
- * @version 3.2
+ * @version 3.3
  */
 public class CO2ImpurityKineticReactor extends TwoPortEquipment {
 
-  private static final long serialVersionUID = 1005L;
+  private static final long serialVersionUID = 1006L;
   private static final Logger logger = LogManager.getLogger(CO2ImpurityKineticReactor.class);
 
   private double reactorLength = 200000.0; // meters (default 200 km pipeline)
@@ -127,18 +128,22 @@ public class CO2ImpurityKineticReactor extends TwoPortEquipment {
     // Pure Arrhenius Rate Laws k(T) = A * exp(-Ea / RT)
     double k1_f = 1.0e4 * Math.exp(-45000.0 / (R_GAS * T_kelvin));
     double k2_f = 5.0e7 * Math.exp(-28000.0 / (R_GAS * T_kelvin));
-    double k3_f = 3.5e6 * Math.exp(-18000.0 / (R_GAS * T_kelvin));
+    
+    // R3a: Base NO2-catalyzed rate without H2S (Ea3a = 36.0 kJ/mol)
+    double k3a_f = 3.5e6 * Math.exp(-36000.0 / (R_GAS * T_kelvin));
+    
+    // R3b: Radical chain accelerated rate when H2S is present (Ea3b = 15.0 kJ/mol)
+    double k3b_f = 5.0e7 * Math.exp(-15000.0 / (R_GAS * T_kelvin));
+
     double k4_f = 1.0e5 * Math.exp(530.0 / T_kelvin);
     double k5_f = 2.4e6 * Math.exp(-28000.0 / (R_GAS * T_kelvin));
     double k6_f = 2.0e3 * Math.exp(-25000.0 / (R_GAS * T_kelvin));
-
-    // Accelerated Ammonia reaction kinetics (Ea7 = 15.0 kJ/mol, A7 = 5.0e5 m3/kmol.s)
     double k7_f = 5.0e5 * Math.exp(-15000.0 / (R_GAS * T_kelvin));
 
     double k5_r = k5_f / Keq5;
 
-    logger.info("CO2ImpurityKineticReactor accelerated rate constants: k1_f={}, k2_f={}, k3_f={}, k4_f={}, k5_f={}, k6_f={}, k7_f={}",
-        k1_f, k2_f, k3_f, k4_f, k5_f, k6_f, k7_f);
+    logger.info("CO2ImpurityKineticReactor rate constants evaluated: k1_f={}, k2_f={}, k3a_f={}, k3b_f={}, k4_f={}, k5_f={}, k6_f={}, k7_f={}",
+        k1_f, k2_f, k3a_f, k3b_f, k4_f, k5_f, k6_f, k7_f);
 
     if (getOutletStream() != null) {
       getOutletStream().setThermoSystem(outletSystem);
