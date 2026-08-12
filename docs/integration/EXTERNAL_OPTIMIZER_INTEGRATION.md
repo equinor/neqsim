@@ -711,7 +711,7 @@ lineup_binding = compressor_lineup.registerWith(evaluator)
 allowed_lineups = list(lineup_binding.getAllowedValues())
 ```
 
-For a discrete binding, the evaluator vector exposes only the numerical envelope; enumerate
+Registration requires the current model value to belong to the declared candidate domain; an off-domain brownfield baseline may be captured and restored but is not silently promoted to an optimizer starting point.\nFor a discrete binding, the evaluator vector exposes only the numerical envelope; enumerate
 `getAllowedValues()`. Any intermediate proposal fails the evaluation explicitly and leaves the
 previous verified value unchanged. Evaluator callback setters are transient, consistent with
 objective and constraint callbacks, so re-register actions after deserializing an evaluator.
