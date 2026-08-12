@@ -183,9 +183,10 @@ public class InflowPerformanceTest {
     InflowPerformance ipr = InflowPerformance.composite(PRODUCTIVITY_INDEX, RESERVOIR_PRESSURE, BUBBLE_POINT);
     List<double[]> curve = ipr.curve(11);
     assertEquals(11, curve.size());
-    assertEquals(0.0, curve.get(0)[0], 1.0e-9);
-    assertEquals(RESERVOIR_PRESSURE, curve.get(curve.size() - 1)[0], 1.0e-9);
-    assertEquals(ipr.absoluteOpenFlow(), curve.get(0)[1], 1.0e-9);
+    assertEquals(RESERVOIR_PRESSURE, curve.get(0)[0], 1.0e-9);
+    assertEquals(0.0, curve.get(0)[1], 1.0e-9);
+    assertEquals(0.0, curve.get(curve.size() - 1)[0], 1.0e-9);
+    assertEquals(ipr.absoluteOpenFlow(), curve.get(curve.size() - 1)[1], 1.0e-9);
   }
 
   /** Invalid inputs must be rejected rather than producing a silently wrong productivity index. */
