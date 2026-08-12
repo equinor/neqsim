@@ -486,7 +486,7 @@ final class ColumnSolverFactory {
         fallbackApplied = true;
       }
       if (!fallbackApplied && accepted && !isAutoCandidateProbeMode() && column.getLastIterationCount() <= 0
-          && !column.wasNaphtaliSandholmWarmStateReused()
+          && !column.wasNaphtaliSandholmWarmStateReused() && !column.wasSequentialWarmStateReused()
           && validateNaphtaliWarmStartProductSplit(column, warmStartCandidate, id)) {
         fallbackApplied = true;
       }
