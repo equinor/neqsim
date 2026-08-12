@@ -1213,7 +1213,8 @@ public class TPflash extends Flash {
    * the cold candidate first preserves its gas/oil cubic-root classification whenever it already reaches the same
    * feasible equilibrium. The nested candidates cannot start a reciprocal fallback cycle. A candidate replaces the
    * original state only after strict phase-fraction, composition-normalization, material-balance, fugacity,
-   * distinct-composition, and lower-Gibbs checks pass.
+   * distinct-composition, and lower-Gibbs checks pass. A collapsed multiphase endpoint additionally requires the
+   * candidate to restore the missing aqueous phase, keeping ordinary gas appearance outside this fallback's scope.
    * </p>
    */
   private void rescueWaterRichEndpoint() {
@@ -1287,7 +1288,10 @@ public class TPflash extends Flash {
       }
       boolean incipientCpaAqueousTrial = system.getNumberOfPhases() == 1 && !system.doMultiPhaseCheck()
           && system.getModelName() != null && system.getModelName().contains("CPA");
-      if (candidateConverged && candidate.getNumberOfPhases() == 2 && isBalancedEquilibriumCandidate(candidate)
+      boolean restoresCollapsedAqueousPhase =
+          !singlePhaseWaterRichMultiphaseEndpoint || candidate.hasPhaseType(PhaseType.AQUEOUS);
+      if (candidateConverged && restoresCollapsedAqueousPhase && candidate.getNumberOfPhases() == 2
+          && isBalancedEquilibriumCandidate(candidate)
           && shouldAcceptWaterRichCandidate(candidate, referenceGibbsEnergy, materialBalanceInvalid,
               incipientCpaAqueousTrial)) {
         if (gasAqueousMultiphaseEndpoint) {
