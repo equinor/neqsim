@@ -16,6 +16,8 @@
  * <li><b>DEXPI integration</b> - Import P&amp;ID data and generate diagrams</li>
  * <li><b>Canonical topology</b> - Stable plant, area, equipment, port, and connection identities</li>
  * <li><b>Operating evidence</b> - Opt-in case-scoped stream values with explicit units and provenance</li>
+ * <li><b>Controlled document views</b> - Immutable drawing/sheet identities, revision metadata, and reciprocal
+ * off-page references</li>
  * <li><b>Multiple detail levels</b> - MINIMAL, STANDARD, DETAILED, DEBUG</li>
  * <li><b>Deterministic output</b> - Same model always produces same diagram</li>
  * </ul>
@@ -54,6 +56,8 @@
  * <ul>
  * <li>{@link neqsim.process.processmodel.diagram.ProcessDiagramGraphAdapter} - Neutral adapter to the shared
  * engineering graph model</li>
+ * <li>{@link neqsim.process.processmodel.diagram.ProcessDiagramDocumentSetAdapter} - Immutable controlled drawing and
+ * sheet proposal adapter</li>
  * <li>{@link neqsim.process.processmodel.diagram.ProcessDiagramExporter} - Main exporter class</li>
  * <li>{@link neqsim.process.processmodel.diagram.PFDLayoutPolicy} - Layout intelligence layer</li>
  * <li>{@link neqsim.process.processmodel.diagram.EquipmentRole} - Equipment role classification</li>

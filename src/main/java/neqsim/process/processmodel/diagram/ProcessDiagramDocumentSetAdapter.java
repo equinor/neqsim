@@ -1,0 +1,79 @@
+package neqsim.process.processmodel.diagram;
+
+import java.util.ArrayList;
+import java.util.List;
+import neqsim.process.engineering.model.EngineeringDiagramDocumentSet;
+import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.ContentProfile;
+import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.Diagnostic;
+import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.Severity;
+import neqsim.process.processmodel.ProcessModel;
+import neqsim.process.processmodel.ProcessSystem;
+
+/**
+ * Creates immutable controlled diagram-document proposals from runnable NeqSim process objects.
+ *
+ * <p>The adapter reuses {@link ProcessDiagramGraphAdapter}; it does not change scheduling, existing
+ * Graphviz output, DEXPI writers, or Proteus/P&amp;ID APIs.</p>
+ */
+public final class ProcessDiagramDocumentSetAdapter {
+  private ProcessDiagramDocumentSetAdapter() {
+  }
+
+  /**
+   * Creates one controlled single-area drawing proposal.
+   *
+   * @param processSystem process system to adapt
+   * @param plantId persistent plant identity
+   * @param revision controlled source revision
+   * @param drawingNumber controlled drawing number
+   * @param title drawing-set title
+   * @param profile requested content profile
+   * @return immutable document-set proposal
+   */
+  public static EngineeringDiagramDocumentSet fromProcessSystem(ProcessSystem processSystem,
+      String plantId, String revision, String drawingNumber, String title, ContentProfile profile) {
+    ProcessDiagramGraphAdapter.Result topology = ProcessDiagramGraphAdapter
+        .fromProcessSystem(processSystem, plantId, revision);
+    return EngineeringDiagramDocumentSet.fromGraph(topology.getGraph(), drawingNumber, title, profile,
+        convert(topology.getDiagnostics()));
+  }
+
+  /**
+   * Creates one controlled multi-area drawing proposal with reciprocal off-page references.
+   *
+   * @param processModel multi-area process model to adapt
+   * @param plantId persistent plant identity
+   * @param revision controlled source revision
+   * @param drawingNumber controlled drawing number
+   * @param title drawing-set title
+   * @param profile requested content profile
+   * @return immutable document-set proposal
+   */
+  public static EngineeringDiagramDocumentSet fromProcessModel(ProcessModel processModel,
+      String plantId, String revision, String drawingNumber, String title, ContentProfile profile) {
+    ProcessDiagramGraphAdapter.Result topology = ProcessDiagramGraphAdapter
+        .fromProcessModel(processModel, plantId, revision);
+    return EngineeringDiagramDocumentSet.fromGraph(topology.getGraph(), drawingNumber, title, profile,
+        convert(topology.getDiagnostics()));
+  }
+
+  private static List<Diagnostic> convert(
+      List<ProcessDiagramGraphAdapter.Diagnostic> sourceDiagnostics) {
+    List<Diagnostic> result = new ArrayList<Diagnostic>();
+    for (ProcessDiagramGraphAdapter.Diagnostic diagnostic : sourceDiagnostics) {
+      result.add(new Diagnostic(convert(diagnostic.getSeverity()), diagnostic.getCode(),
+          diagnostic.getMessage(), diagnostic.getSubject()));
+    }
+    return result;
+  }
+
+  private static Severity convert(ProcessDiagramGraphAdapter.Severity severity) {
+    if (severity == ProcessDiagramGraphAdapter.Severity.ERROR) {
+      return Severity.ERROR;
+    }
+    if (severity == ProcessDiagramGraphAdapter.Severity.WARNING) {
+      return Severity.WARNING;
+    }
+    return Severity.INFO;
+  }
+}
