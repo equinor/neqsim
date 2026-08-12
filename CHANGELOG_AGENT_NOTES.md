@@ -9,6 +9,19 @@
 
 ---
 
+## 2026-08-12 — Reversible ProcessModel operating actions
+
+- `ProcessModelOperatingAction` adds immutable, serializable action identity, area-qualified
+  automation address, unit, provenance, and strict continuous or enumerated-discrete semantics.
+- `inspectCapability`, `capture`, `apply`, and `restore` provide explicit diagnostics,
+  write/read-back verification and identity-bound restoration without running the process model.
+- `registerWith(ProcessModelSimulationEvaluator)` exposes bounded continuous actions and exact
+  discrete-value discovery to Java and JPype/Python optimizers. Intermediate discrete values fail
+  closed and evaluator callbacks must be re-registered after deserialization.
+- The API does not mutate topology, solve mixed-integer decisions, infer feasibility, rank actions,
+  or approve an operating change. Candidate process runs and all engineering constraints remain
+  explicit.
+
 ## 2026-08-12 — Explicit constraint scaling and candidate-active diagnostics
 
 - `ConstraintActivityAnalyzer` consumes an immutable `SensitivityQualityResult` and performs no
