@@ -12,8 +12,10 @@ import neqsim.process.processmodel.ProcessSystem;
 /**
  * Creates immutable controlled diagram-document proposals from runnable NeqSim process objects.
  *
- * <p>The adapter reuses {@link ProcessDiagramGraphAdapter}; it does not change scheduling, existing
- * Graphviz output, DEXPI writers, or Proteus/P&amp;ID APIs.</p>
+ * <p>
+ * The adapter reuses {@link ProcessDiagramGraphAdapter}; it does not change scheduling, existing Graphviz output, DEXPI
+ * writers, or Proteus/P&amp;ID APIs.
+ * </p>
  */
 public final class ProcessDiagramDocumentSetAdapter {
   private ProcessDiagramDocumentSetAdapter() {
@@ -30,10 +32,10 @@ public final class ProcessDiagramDocumentSetAdapter {
    * @param profile requested content profile
    * @return immutable document-set proposal
    */
-  public static EngineeringDiagramDocumentSet fromProcessSystem(ProcessSystem processSystem,
-      String plantId, String revision, String drawingNumber, String title, ContentProfile profile) {
-    ProcessDiagramGraphAdapter.Result topology = ProcessDiagramGraphAdapter
-        .fromProcessSystem(processSystem, plantId, revision);
+  public static EngineeringDiagramDocumentSet fromProcessSystem(ProcessSystem processSystem, String plantId,
+      String revision, String drawingNumber, String title, ContentProfile profile) {
+    ProcessDiagramGraphAdapter.Result topology = ProcessDiagramGraphAdapter.fromProcessSystem(processSystem, plantId,
+        revision);
     return EngineeringDiagramDocumentSet.fromGraph(topology.getGraph(), drawingNumber, title, profile,
         convert(topology.getDiagnostics()));
   }
@@ -49,20 +51,19 @@ public final class ProcessDiagramDocumentSetAdapter {
    * @param profile requested content profile
    * @return immutable document-set proposal
    */
-  public static EngineeringDiagramDocumentSet fromProcessModel(ProcessModel processModel,
-      String plantId, String revision, String drawingNumber, String title, ContentProfile profile) {
-    ProcessDiagramGraphAdapter.Result topology = ProcessDiagramGraphAdapter
-        .fromProcessModel(processModel, plantId, revision);
+  public static EngineeringDiagramDocumentSet fromProcessModel(ProcessModel processModel, String plantId,
+      String revision, String drawingNumber, String title, ContentProfile profile) {
+    ProcessDiagramGraphAdapter.Result topology = ProcessDiagramGraphAdapter.fromProcessModel(processModel, plantId,
+        revision);
     return EngineeringDiagramDocumentSet.fromGraph(topology.getGraph(), drawingNumber, title, profile,
         convert(topology.getDiagnostics()));
   }
 
-  private static List<Diagnostic> convert(
-      List<ProcessDiagramGraphAdapter.Diagnostic> sourceDiagnostics) {
+  private static List<Diagnostic> convert(List<ProcessDiagramGraphAdapter.Diagnostic> sourceDiagnostics) {
     List<Diagnostic> result = new ArrayList<Diagnostic>();
     for (ProcessDiagramGraphAdapter.Diagnostic diagnostic : sourceDiagnostics) {
-      result.add(new Diagnostic(convert(diagnostic.getSeverity()), diagnostic.getCode(),
-          diagnostic.getMessage(), diagnostic.getSubject()));
+      result.add(new Diagnostic(convert(diagnostic.getSeverity()), diagnostic.getCode(), diagnostic.getMessage(),
+          diagnostic.getSubject()));
     }
     return result;
   }

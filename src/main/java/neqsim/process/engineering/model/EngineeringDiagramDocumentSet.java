@@ -14,9 +14,11 @@ import java.util.Map;
 /**
  * Immutable controlled-document view of one canonical {@link EngineeringGraph}.
  *
- * <p>The document set owns drawing and sheet identity, revision/status metadata, and paired
- * off-page references without changing the semantic plant graph. It is an engineering proposal
- * unless accountable approval evidence is supplied explicitly.</p>
+ * <p>
+ * The document set owns drawing and sheet identity, revision/status metadata, and paired off-page references without
+ * changing the semantic plant graph. It is an engineering proposal unless accountable approval evidence is supplied
+ * explicitly.
+ * </p>
  */
 public final class EngineeringDiagramDocumentSet implements Serializable {
   private static final long serialVersionUID = 1000L;
@@ -128,8 +130,8 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
     private final String approvedBy;
     private final String approvalReference;
 
-    public RevisionEntry(String revision, String description, String preparedBy, String checkedBy,
-        String approvedBy, String approvalReference) {
+    public RevisionEntry(String revision, String description, String preparedBy, String checkedBy, String approvedBy,
+        String approvalReference) {
       this.revision = requireText(revision, "revision");
       this.description = requireText(description, "description");
       this.preparedBy = optionalText(preparedBy);
@@ -189,8 +191,8 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
     private final String peerConnectorId;
     private final String zoneReference;
 
-    private OffPageConnector(String id, String pairId, String semanticConnectionId, ConnectorRole role,
-        String sheetId, String peerSheetId, String peerConnectorId, String zoneReference) {
+    private OffPageConnector(String id, String pairId, String semanticConnectionId, ConnectorRole role, String sheetId,
+        String peerSheetId, String peerConnectorId, String zoneReference) {
       this.id = requireText(id, "connector id");
       this.pairId = requireText(pairId, "pairId");
       this.semanticConnectionId = requireText(semanticConnectionId, "semanticConnectionId");
@@ -260,15 +262,14 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
     private final List<String> objectNodeIds;
     private final List<OffPageConnector> offPageConnectors;
 
-    private Sheet(String id, String number, String title, List<String> areaNodeIds,
-        List<String> objectNodeIds, List<OffPageConnector> connectors) {
+    private Sheet(String id, String number, String title, List<String> areaNodeIds, List<String> objectNodeIds,
+        List<OffPageConnector> connectors) {
       this.id = requireText(id, "sheet id");
       this.number = requireText(number, "sheet number");
       this.title = requireText(title, "sheet title");
       this.areaNodeIds = immutableStrings(areaNodeIds, "areaNodeIds");
       this.objectNodeIds = immutableStrings(objectNodeIds, "objectNodeIds");
-      this.offPageConnectors = Collections
-          .unmodifiableList(new ArrayList<OffPageConnector>(connectors));
+      this.offPageConnectors = Collections.unmodifiableList(new ArrayList<OffPageConnector>(connectors));
     }
 
     public String getId() {
@@ -320,8 +321,7 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
     private final ContentProfile contentProfile;
     private final List<Sheet> sheets;
 
-    private Drawing(String id, String number, String title, ContentProfile contentProfile,
-        List<Sheet> sheets) {
+    private Drawing(String id, String number, String title, ContentProfile contentProfile, List<Sheet> sheets) {
       this.id = requireText(id, "drawing id");
       this.number = requireText(number, "drawing number");
       this.title = requireText(title, "drawing title");
@@ -379,9 +379,9 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
   private final List<Drawing> drawings;
   private final List<Diagnostic> diagnostics;
 
-  private EngineeringDiagramDocumentSet(String id, EngineeringGraph graph, String title,
-      DocumentStatus status, IssuePurpose issuePurpose, String accountableApprovalReference,
-      List<RevisionEntry> revisionHistory, List<Drawing> drawings, List<Diagnostic> diagnostics) {
+  private EngineeringDiagramDocumentSet(String id, EngineeringGraph graph, String title, DocumentStatus status,
+      IssuePurpose issuePurpose, String accountableApprovalReference, List<RevisionEntry> revisionHistory,
+      List<Drawing> drawings, List<Diagnostic> diagnostics) {
     this.id = requireText(id, "document set id");
     this.plantId = graph.getProjectId();
     this.title = requireText(title, "title");
@@ -392,11 +392,9 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
     this.accountableApprovalReference = optionalText(accountableApprovalReference);
     if ((status == DocumentStatus.APPROVED || issuePurpose == IssuePurpose.CONSTRUCTION)
         && this.accountableApprovalReference.isEmpty()) {
-      throw new IllegalArgumentException(
-          "approved or construction issue requires accountableApprovalReference");
+      throw new IllegalArgumentException("approved or construction issue requires accountableApprovalReference");
     }
-    this.revisionHistory = Collections
-        .unmodifiableList(new ArrayList<RevisionEntry>(revisionHistory));
+    this.revisionHistory = Collections.unmodifiableList(new ArrayList<RevisionEntry>(revisionHistory));
     this.drawings = Collections.unmodifiableList(new ArrayList<Drawing>(drawings));
     List<Diagnostic> assessed = new ArrayList<Diagnostic>(diagnostics);
     assessed.addAll(validate(drawings));
@@ -406,9 +404,10 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
   /**
    * Creates a deterministic area-sheet view of a canonical graph.
    *
-   * <p>A single-area graph produces one sheet. A multi-area graph produces one sheet per area and
-   * projects each cross-area connection through reciprocal off-page connectors while preserving one
-   * semantic connection identity.</p>
+   * <p>
+   * A single-area graph produces one sheet. A multi-area graph produces one sheet per area and projects each cross-area
+   * connection through reciprocal off-page connectors while preserving one semantic connection identity.
+   * </p>
    *
    * @param graph canonical semantic graph
    * @param drawingNumber controlled drawing number
@@ -417,8 +416,8 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
    * @param inheritedDiagnostics diagnostics produced by the source adapter
    * @return immutable controlled-document proposal
    */
-  public static EngineeringDiagramDocumentSet fromGraph(EngineeringGraph graph, String drawingNumber,
-      String title, ContentProfile profile, List<Diagnostic> inheritedDiagnostics) {
+  public static EngineeringDiagramDocumentSet fromGraph(EngineeringGraph graph, String drawingNumber, String title,
+      ContentProfile profile, List<Diagnostic> inheritedDiagnostics) {
     if (graph == null) {
       throw new IllegalArgumentException("graph must not be null");
     }
@@ -439,8 +438,8 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
       int index = 1;
       for (EngineeringNode area : areas) {
         String areaName = stringProperty(area, "areaName", area.getLabel());
-        MutableSheet sheet = new MutableSheet(sheetId(normalizedNumber, area.getExternalKey()),
-            String.valueOf(index), areaName);
+        MutableSheet sheet = new MutableSheet(sheetId(normalizedNumber, area.getExternalKey()), String.valueOf(index),
+            areaName);
         sheet.areaNodeIds.add(area.getId());
         for (EngineeringNode node : graph.getNodes().values()) {
           if (belongsToArea(node, areaName) && isVisual(node.getKind())) {
@@ -459,17 +458,16 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
     }
     String drawingId = "drawing:" + EngineeringIds.canonical(normalizedNumber);
     Drawing drawing = new Drawing(drawingId, normalizedNumber, title, profile, sheets);
-    List<RevisionEntry> history = Collections.singletonList(new RevisionEntry(graph.getRevision(),
-        "Initial simulation-driven engineering proposal", "NEQSIM", "", "", ""));
-    return new EngineeringDiagramDocumentSet(
-        "document-set:" + EngineeringIds.canonical(normalizedNumber), graph, title,
-        DocumentStatus.WORKING, IssuePurpose.ENGINEERING_PROPOSAL, "", history,
-        Collections.singletonList(drawing), diagnostics);
+    List<RevisionEntry> history = Collections.singletonList(
+        new RevisionEntry(graph.getRevision(), "Initial simulation-driven engineering proposal", "NEQSIM", "", "", ""));
+    return new EngineeringDiagramDocumentSet("document-set:" + EngineeringIds.canonical(normalizedNumber), graph, title,
+        DocumentStatus.WORKING, IssuePurpose.ENGINEERING_PROPOSAL, "", history, Collections.singletonList(drawing),
+        diagnostics);
   }
 
   /** Convenience overload without inherited source diagnostics. */
-  public static EngineeringDiagramDocumentSet fromGraph(EngineeringGraph graph, String drawingNumber,
-      String title, ContentProfile profile) {
+  public static EngineeringDiagramDocumentSet fromGraph(EngineeringGraph graph, String drawingNumber, String title,
+      ContentProfile profile) {
     return fromGraph(graph, drawingNumber, title, profile, Collections.<Diagnostic>emptyList());
   }
 
@@ -562,9 +560,8 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
     return new GsonBuilder().setPrettyPrinting().create().toJson(toMap());
   }
 
-  private static void addCrossSheetReferences(EngineeringGraph graph,
-      List<MutableSheet> allSheets, Map<String, MutableSheet> sheetsByAreaName,
-      List<Diagnostic> diagnostics) {
+  private static void addCrossSheetReferences(EngineeringGraph graph, List<MutableSheet> allSheets,
+      Map<String, MutableSheet> sheetsByAreaName, List<Diagnostic> diagnostics) {
     for (EngineeringNode node : graph.getNodes().values()) {
       if (!Boolean.TRUE.equals(node.getProperties().get("crossArea"))) {
         continue;
@@ -574,16 +571,13 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
       MutableSheet sourceSheet = sheetsByAreaName.get(sourceArea);
       MutableSheet targetSheet = sheetsByAreaName.get(targetArea);
       if (sourceSheet == null || targetSheet == null) {
-        diagnostics.add(new Diagnostic(Severity.ERROR,
-            "DIAGRAM_DOCUMENT_BROKEN_CROSS_SHEET_REFERENCE",
+        diagnostics.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_BROKEN_CROSS_SHEET_REFERENCE",
             "Cross-area semantic connection does not resolve to both controlled sheets", node.getId()));
         continue;
       }
       if (sourceSheet.id.equals(targetSheet.id)) {
-        diagnostics.add(new Diagnostic(Severity.WARNING,
-            "DIAGRAM_DOCUMENT_REDUNDANT_OFF_PAGE_REFERENCE",
-            "Cross-area connection resolved to one sheet and does not need off-page connectors",
-            node.getId()));
+        diagnostics.add(new Diagnostic(Severity.WARNING, "DIAGRAM_DOCUMENT_REDUNDANT_OFF_PAGE_REFERENCE",
+            "Cross-area connection resolved to one sheet and does not need off-page connectors", node.getId()));
         continue;
       }
       String key = EngineeringIds.canonical(node.getId()) + "-" + shortHash(node.getId());
@@ -592,10 +586,10 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
       String targetId = "offpage:" + key + ":target";
       sourceSheet.objectNodeIds.add(node.getId());
       targetSheet.objectNodeIds.add(node.getId());
-      sourceSheet.connectors.add(new OffPageConnector(sourceId, pairId, node.getId(),
-          ConnectorRole.SOURCE, sourceSheet.id, targetSheet.id, targetId, "AUTO"));
-      targetSheet.connectors.add(new OffPageConnector(targetId, pairId, node.getId(),
-          ConnectorRole.TARGET, targetSheet.id, sourceSheet.id, sourceId, "AUTO"));
+      sourceSheet.connectors.add(new OffPageConnector(sourceId, pairId, node.getId(), ConnectorRole.SOURCE,
+          sourceSheet.id, targetSheet.id, targetId, "AUTO"));
+      targetSheet.connectors.add(new OffPageConnector(targetId, pairId, node.getId(), ConnectorRole.TARGET,
+          targetSheet.id, sourceSheet.id, sourceId, "AUTO"));
     }
     if (allSheets.size() > 1 && sheetsByAreaName.isEmpty()) {
       diagnostics.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_MISSING_AREA_SHEET_INDEX",
@@ -627,13 +621,11 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
     for (OffPageConnector connector : connectors.values()) {
       OffPageConnector peer = connectors.get(connector.getPeerConnectorId());
       if (!sheets.containsKey(connector.getPeerSheetId()) || peer == null
-          || !connector.getId().equals(peer.getPeerConnectorId())
-          || !connector.getPairId().equals(peer.getPairId())
+          || !connector.getId().equals(peer.getPeerConnectorId()) || !connector.getPairId().equals(peer.getPairId())
           || !connector.getSemanticConnectionId().equals(peer.getSemanticConnectionId())
           || connector.getRole() == peer.getRole()) {
         result.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_BROKEN_OFF_PAGE_PAIR",
-            "Off-page connector does not have one reciprocal peer on the referenced sheet",
-            connector.getId()));
+            "Off-page connector does not have one reciprocal peer on the referenced sheet", connector.getId()));
       }
     }
     for (Map.Entry<String, Integer> entry : pairCounts.entrySet()) {
@@ -645,8 +637,7 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
     return result;
   }
 
-  private static List<EngineeringNode> nodesOfKind(EngineeringGraph graph,
-      EngineeringNode.Kind kind) {
+  private static List<EngineeringNode> nodesOfKind(EngineeringGraph graph, EngineeringNode.Kind kind) {
     List<EngineeringNode> result = new ArrayList<EngineeringNode>();
     for (EngineeringNode node : graph.getNodes().values()) {
       if (node.getKind() == kind) {
@@ -671,8 +662,7 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
         || kind == EngineeringNode.Kind.LINE || kind == EngineeringNode.Kind.INSTRUMENT
         || kind == EngineeringNode.Kind.BOUNDARY || kind == EngineeringNode.Kind.PORT
         || kind == EngineeringNode.Kind.NOZZLE || kind == EngineeringNode.Kind.PIPE_SEGMENT
-        || kind == EngineeringNode.Kind.SIGNAL_CONNECTION
-        || kind == EngineeringNode.Kind.ENERGY_CONNECTION;
+        || kind == EngineeringNode.Kind.SIGNAL_CONNECTION || kind == EngineeringNode.Kind.ENERGY_CONNECTION;
   }
 
   private static boolean belongsToArea(EngineeringNode node, String areaName) {
@@ -688,8 +678,7 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
   }
 
   private static String sheetId(String drawingNumber, String areaKey) {
-    return "sheet:" + EngineeringIds.canonical(drawingNumber) + ":"
-        + EngineeringIds.canonical(areaKey);
+    return "sheet:" + EngineeringIds.canonical(drawingNumber) + ":" + EngineeringIds.canonical(areaKey);
   }
 
   private static String stringProperty(EngineeringNode node, String name, String fallback) {
