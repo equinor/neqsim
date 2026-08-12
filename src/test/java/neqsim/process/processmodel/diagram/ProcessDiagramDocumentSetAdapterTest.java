@@ -82,6 +82,21 @@ class ProcessDiagramDocumentSetAdapterTest {
   }
 
   @Test
+  void carriesOneGovernedOperatingCaseAcrossMultiAreaProcessModel() {
+    EngineeringDiagramReferenceFixtures.ModelCase reference = EngineeringDiagramReferenceFixtures
+        .multiAreaFacility();
+    reference.getProcessModel().run();
+
+    EngineeringDiagramDocumentSet set = ProcessDiagramDocumentSetAdapter.fromProcessModel(reference.getProcessModel(),
+        reference.getCaseId(), "B", "PFD-30-002", "Governed multi-area case", ContentProfile.PFD, "NORMAL-01");
+
+    SemanticObject pressure = findSemanticObject(set, EngineeringNode.Kind.CALCULATION, "quantity", "pressure");
+    assertEquals("NORMAL-01", pressure.getProperties().get("designCaseId"));
+    assertEquals(4, set.getDrawings().get(0).getSheets().size());
+    assertTrue(set.isValid());
+  }
+
+  @Test
   void rejectsCalculatedValuesWithoutGovernanceMetadata() {
     EngineeringGraph graph = new EngineeringGraph("INCOMPLETE-VALUE-PLANT", "A");
     graph.addNode(new EngineeringNode("calculation:pressure", EngineeringNode.Kind.CALCULATION, "pressure", "Pressure")
