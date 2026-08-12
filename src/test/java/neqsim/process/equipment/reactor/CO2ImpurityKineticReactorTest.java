@@ -95,4 +95,13 @@ public class CO2ImpurityKineticReactorTest {
     double shipDensity = shipReactor.getOutletStream().getThermoSystem().getDensity();
     assertTrue(shipDensity > 950.0, "Cold liquid CO2 density should be > 950 kg/m3 at 20 bar, -25C");
   }
+
+  @Test
+  void testMaterialSelection() {
+    reactor.setMaterial("carbon_steel");
+    assertEquals("carbon_steel", reactor.getMaterial());
+
+    reactor.setMaterial("stainless_steel");
+    assertEquals("stainless_steel", reactor.getMaterial());
+  }
 }
