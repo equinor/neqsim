@@ -89,6 +89,11 @@ fallback. Existing writer APIs and their compatibility XML remain unchanged.
 8. **Control revisions.** Use the canonical graph and model-change impact analysis to identify stale exchanges,
    calculations, validations, and approvals.
 
+The synthetic public [engineering-diagram reference cases](../integration/dexpi-reference-cases.md)
+provide a reproducible simple, branched, and multi-area baseline across canonical topology, native
+DEXPI where supported, Proteus compatibility, legacy DOT, and review-required P&ID proposals.
+They are regression evidence rather than named-tool qualification or approved engineering.
+
 ## Native DEXPI 2.0 export
 
 Save the following complete Java 8 program as `Dexpi20ExportExample.java`. It builds and runs a small process,
@@ -245,6 +250,7 @@ classification, target-system loading, or final information acceptance.
 
 - [DEXPI import, export, and visualization](../integration/dexpi-reader.md)
 - [DEXPI and P&ID current-master audit](../integration/dexpi-pid-current-master-audit.md)
+- [DEXPI engineering-diagram reference cases](../integration/dexpi-reference-cases.md)
 - [DEXPI 2.0 native exchange and conformance](../integration/dexpi-20-conformance.md)
 - [Standards-based DEXPI engineering generation](../integration/dexpi-engineering-generation.md)
 - [Governed P&ID design synthesis](../pid-design-synthesis.md)

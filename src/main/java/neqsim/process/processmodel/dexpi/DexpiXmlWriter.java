@@ -570,8 +570,8 @@ public final class DexpiXmlWriter {
 
     // Track equipment IDs -> outlet nozzle IDs for connection wiring
     Map<String, String> equipmentInletNozzle = new LinkedHashMap<>();
-    // Map from outlet stream identity hash to its nozzle ID
-    Map<Integer, String> outletStreamToNozzle = new HashMap<>();
+    // Preserve registration order so product boundary connectors serialize deterministically.
+    Map<Integer, String> outletStreamToNozzle = new LinkedHashMap<>();
     // Pre-built PipingComponent elements for valves, keyed by inlet nozzle ID
     Map<String, Element> valvePipingComponents = new LinkedHashMap<>();
     // Nozzle positions for connection line geometry (nozzle ID -> {x, y})
