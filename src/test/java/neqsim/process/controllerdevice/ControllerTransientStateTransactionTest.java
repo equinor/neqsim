@@ -74,8 +74,8 @@ class ControllerTransientStateTransactionTest extends neqsim.NeqSimTest {
   @Test
   void rollbackRestoresMutableReferenceDesignationAndOriginalBinding() {
     ControllerDeviceBaseClass controller = createController(createTransmitter(50.0));
-    neqsim.process.equipment.iec81346.ReferenceDesignation original =
-        neqsim.process.equipment.iec81346.ReferenceDesignation.parse("=A1-B1+P1");
+    neqsim.process.equipment.iec81346.ReferenceDesignation original = neqsim.process.equipment.iec81346.ReferenceDesignation
+        .parse("=A1-B1+P1");
     controller.setReferenceDesignation(original);
     ProcessSystem process = new ProcessSystem("controller designation rollback");
     process.add(controller);
@@ -84,8 +84,7 @@ class ControllerTransientStateTransactionTest extends neqsim.NeqSimTest {
     original.setFunctionDesignation("TRIAL");
     original.setLetterCode(neqsim.process.equipment.iec81346.IEC81346LetterCode.K);
     original.setSequenceNumber(9);
-    controller.setReferenceDesignation(
-        neqsim.process.equipment.iec81346.ReferenceDesignation.parse("=OTHER-K9+TRIAL"));
+    controller.setReferenceDesignation(neqsim.process.equipment.iec81346.ReferenceDesignation.parse("=OTHER-K9+TRIAL"));
     transaction.rollback();
 
     assertSame(original, controller.getReferenceDesignation(),
