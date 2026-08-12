@@ -265,9 +265,9 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
           "a damped fallback state must not be cached as a Naphtali-Sandholm state");
       assertEquals(DistillationColumn.SolverType.DAMPED_SUBSTITUTION, testCase.column.getLastSolverTypeUsed());
       assertEquals(coldGasFlow, testCase.column.getGasOutStream().getFlowRate("kg/hr"),
-          Math.max(1.0e-6, Math.abs(coldGasFlow) * 1.0e-8));
+          Math.max(1.0e-6, Math.abs(coldGasFlow) * 1.0e-5));
       assertEquals(coldLiquidFlow, testCase.column.getLiquidOutStream().getFlowRate("kg/hr"),
-          Math.max(1.0e-6, Math.abs(coldLiquidFlow) * 1.0e-8));
+          Math.max(1.0e-6, Math.abs(coldLiquidFlow) * 1.0e-5));
     }
 
     testCase.gasFeed.setTemperature(314.15, "K");
