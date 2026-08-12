@@ -545,7 +545,8 @@ public final class ConstraintActivityAnalyzer {
     Map<Integer, ConstraintScale> scalesByIndex = indexAndValidateScales(constraints, scales);
     List<ConstraintSensitivityAssessment> qualified = result
         .assessConstraintSensitivities(policy.getSensitivityPolicy());
-    Map<Integer, List<ConstraintSensitivityAssessment>> sensitivitiesByConstraint = new LinkedHashMap<Integer, List<ConstraintSensitivityAssessment>>();
+    Map<Integer, List<ConstraintSensitivityAssessment>> sensitivitiesByConstraint =
+        new LinkedHashMap<Integer, List<ConstraintSensitivityAssessment>>();
     for (SensitivityConstraintSnapshot constraint : constraints) {
       sensitivitiesByConstraint.put(constraint.getIndex(),
           new ArrayList<ConstraintSensitivityAssessment>());
