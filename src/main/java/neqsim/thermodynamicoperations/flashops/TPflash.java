@@ -1211,9 +1211,9 @@ public class TPflash extends Flash {
    * invalid two-phase cubic-root split may seed the multiphase solver. For an ordinary endpoint, an existing invalid
    * two-phase split is retained as the multiphase phase-set seed when the existing cold candidate is rejected. Trying
    * the cold candidate first preserves its gas/oil cubic-root classification whenever it already reaches the same
-   * feasible equilibrium. The nested candidates cannot start a reciprocal fallback cycle. A candidate
-   * replaces the original state only after strict phase-fraction, composition-normalization, material-balance,
-   * fugacity, distinct-composition, and lower-Gibbs checks pass.
+   * feasible equilibrium. The nested candidates cannot start a reciprocal fallback cycle. A candidate replaces the
+   * original state only after strict phase-fraction, composition-normalization, material-balance, fugacity,
+   * distinct-composition, and lower-Gibbs checks pass.
    * </p>
    */
   private void rescueWaterRichEndpoint() {
@@ -1240,8 +1240,8 @@ public class TPflash extends Flash {
     }
     boolean gasAqueousMultiphaseEndpoint = system.doMultiPhaseCheck() && hasAqueousPhase
         && system.hasPhaseType(PhaseType.GAS);
-    boolean singlePhaseWaterRichMultiphaseEndpoint = system.doMultiPhaseCheck()
-        && system.getNumberOfPhases() == 1 && !hasAqueousPhase;
+    boolean singlePhaseWaterRichMultiphaseEndpoint = system.doMultiPhaseCheck() && system.getNumberOfPhases() == 1
+        && !hasAqueousPhase;
     if (system.doMultiPhaseCheck() && waterFeedFraction >= WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT
         && !gasAqueousMultiphaseEndpoint && !singlePhaseWaterRichMultiphaseEndpoint) {
       return;
@@ -1257,8 +1257,7 @@ public class TPflash extends Flash {
     double referenceGibbsEnergy = system.getGibbsEnergy();
     boolean invalidOrdinaryTwoPhaseSeed = !system.doMultiPhaseCheck() && !hasAqueousPhase
         && system.getNumberOfPhases() == 2 && !isBalancedEquilibriumCandidate(system);
-    boolean ordinaryFallback = (gasAqueousMultiphaseEndpoint
-        || singlePhaseWaterRichMultiphaseEndpoint)
+    boolean ordinaryFallback = (gasAqueousMultiphaseEndpoint || singlePhaseWaterRichMultiphaseEndpoint)
         && waterFeedFraction >= WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT;
     SystemInterface candidate;
     if (ordinaryFallback) {
@@ -1311,8 +1310,8 @@ public class TPflash extends Flash {
    *
    * <p>
    * A cold multiphase calculation can collapse before reaching the aqueous split, while the ordinary flash has already
-   * produced two distinct compositions that provide a useful stability seed. The fully initialized multiphase solver
-   * is therefore run on a clone of that split after the existing cold candidate is rejected. Rejected, three-phase,
+   * produced two distinct compositions that provide a useful stability seed. The fully initialized multiphase solver is
+   * therefore run on a clone of that split after the existing cold candidate is rejected. Rejected, three-phase,
    * unbalanced, non-equilibrium, or higher-Gibbs trials leave the original endpoint untouched.
    * </p>
    *
@@ -1320,16 +1319,14 @@ public class TPflash extends Flash {
    * @param referenceMaterialBalanceInvalid whether the reference endpoint fails component material balance
    * @return true when a strict lower-Gibbs two-phase candidate replaced the endpoint
    */
-  private boolean trySeededWaterRichPhaseSet(double referenceGibbsEnergy,
-      boolean referenceMaterialBalanceInvalid) {
+  private boolean trySeededWaterRichPhaseSet(double referenceGibbsEnergy, boolean referenceMaterialBalanceInvalid) {
     SystemInterface candidate = system.clone();
     try {
       candidate.setMultiPhaseCheck(true);
       new TPmultiflash(candidate, candidate.doSolidPhaseCheck()).run();
       candidate.init(1);
       if (candidate.getNumberOfPhases() == 2 && isBalancedEquilibriumCandidate(candidate)
-          && shouldAcceptWaterRichCandidate(candidate, referenceGibbsEnergy,
-              referenceMaterialBalanceInvalid, false)) {
+          && shouldAcceptWaterRichCandidate(candidate, referenceGibbsEnergy, referenceMaterialBalanceInvalid, false)) {
         copyFlashStateFrom(candidate);
         return true;
       }
