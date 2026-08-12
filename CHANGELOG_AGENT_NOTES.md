@@ -9,6 +9,22 @@
 
 ---
 
+## 2026-08-12 — Explicit constraint scaling and candidate-active diagnostics
+
+- `ConstraintActivityAnalyzer` consumes an immutable `SensitivityQualityResult` and performs no
+  process evaluations. It reports dimensionless base margins, normalized constraint-margin
+  derivatives, violations and conservative candidate-active/inactive classifications.
+- Every `ConstraintScale` is positive, uses the constraint's declared unit, records provenance and
+  is bound to exact immutable identity: index, name, type, bounds/tolerance, hard/soft semantics,
+  penalty and capacity origin. Missing, duplicate, unitless or stale scales fail closed.
+- `ActivityPolicy` retains the dimensionless activity tolerance, local sensitivity qualification
+  policy and soft-constraint choice. Assessments and policies are immutable and serializable for
+  Java and JPype/Python workflows.
+- A scaled derivative remains linked to its complete raw evidence and must pass `isUsable()` before
+  consumption. `CANDIDATE_ACTIVE` is only a feasible near-boundary diagnostic—not cross-unit
+  ranking, optimizer active-set proof, a KKT multiplier, economic shadow price or engineering
+  approval.
+
 ## 2026-08-11 — Evidence-qualified local ProcessModel constraint sensitivities
 
 - `SensitivityQualityResult.assessConstraintSensitivities(policy)` now binds each constraint row
