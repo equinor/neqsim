@@ -64,9 +64,8 @@ class ProcessModelOperatingActionTest {
   @Test
   void continuousActionAppliesAndRestoresWithoutRunningModel() throws Exception {
     ModelFixture fixture = createModelFixture();
-    ProcessModelOperatingAction action = ProcessModelOperatingAction.continuous("field-feed",
-        "Field feed target", "wells::feed.flowRate", 500.0, 1500.0, "kg/hr",
-        "synthetic installed operating envelope");
+    ProcessModelOperatingAction action = ProcessModelOperatingAction.continuous("field-feed", "Field feed target",
+        "wells::feed.flowRate", 500.0, 1500.0, "kg/hr", "synthetic installed operating envelope");
 
     CapabilityAssessment capability = action.inspectCapability(fixture.model);
     assertTrue(capability.isAvailable());
@@ -97,8 +96,7 @@ class ProcessModelOperatingActionTest {
     output.writeObject(baseline);
     output.close();
     ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()));
-    ProcessModelOperatingAction restoredAction =
-        (ProcessModelOperatingAction) input.readObject();
+    ProcessModelOperatingAction restoredAction = (ProcessModelOperatingAction) input.readObject();
     ActionState restoredState = (ActionState) input.readObject();
     input.close();
     assertEquals("field-feed", restoredAction.getId());
@@ -110,9 +108,8 @@ class ProcessModelOperatingActionTest {
   @Test
   void discreteActionEnumeratesCandidatesAndRestoresExistingBaseline() {
     ModelFixture fixture = createModelFixture();
-    ProcessModelOperatingAction action = ProcessModelOperatingAction.discrete("feed-lineup",
-        "Feed line-up", "wells::feed.flowRate", new double[] {800.0, 1200.0}, "kg/hr",
-        "synthetic line-up table");
+    ProcessModelOperatingAction action = ProcessModelOperatingAction.discrete("feed-lineup", "Feed line-up",
+        "wells::feed.flowRate", new double[] { 800.0, 1200.0 }, "kg/hr", "synthetic line-up table");
 
     CapabilityAssessment capability = action.inspectCapability(fixture.model);
     assertTrue(capability.isAvailable());
@@ -120,7 +117,7 @@ class ProcessModelOperatingActionTest {
         "a brownfield baseline may be restorable without being a candidate");
     ActionState baseline = action.capture(fixture.model);
     assertEquals(ValueSemantics.DISCRETE, action.getValueSemantics());
-    assertArrayEquals(new double[] {800.0, 1200.0}, action.getAllowedValues(), 0.0);
+    assertArrayEquals(new double[] { 800.0, 1200.0 }, action.getAllowedValues(), 0.0);
 
     assertFalse(action.apply(fixture.model, 1000.0).isApplied(),
         "interpolation between discrete line-ups must fail closed");
@@ -129,91 +126,81 @@ class ProcessModelOperatingActionTest {
     assertEquals(1200.0, fixture.feed.getFlowRate("kg/hr"), 1.0e-8);
     assertTrue(action.restore(fixture.model, baseline).isApplied());
     assertEquals(1000.0, fixture.feed.getFlowRate("kg/hr"), 1.0e-8);
-    ProcessModelSimulationEvaluator invalidInitialEvaluator =
-        new ProcessModelSimulationEvaluator(fixture.model);
+    ProcessModelSimulationEvaluator invalidInitialEvaluator = new ProcessModelSimulationEvaluator(fixture.model);
     assertThrows(IllegalStateException.class, () -> action.registerWith(invalidInitialEvaluator));
 
     double[] defensiveValues = action.getAllowedValues();
     defensiveValues[0] = 999.0;
-    assertArrayEquals(new double[] {800.0, 1200.0}, action.getAllowedValues(), 0.0);
+    assertArrayEquals(new double[] { 800.0, 1200.0 }, action.getAllowedValues(), 0.0);
   }
 
   /** Verifies unavailable targets and foreign state tokens fail with explicit diagnostics. */
   @Test
   void unavailableOrForeignActionsFailClosed() {
     ModelFixture fixture = createModelFixture();
-    ProcessModelOperatingAction missing = ProcessModelOperatingAction.continuous("missing",
-        "Missing target", "wells::does-not-exist.value", 0.0, 1.0, "fraction",
-        "synthetic test");
+    ProcessModelOperatingAction missing = ProcessModelOperatingAction.continuous("missing", "Missing target",
+        "wells::does-not-exist.value", 0.0, 1.0, "fraction", "synthetic test");
     CapabilityAssessment unavailable = missing.inspectCapability(fixture.model);
     assertFalse(unavailable.isAvailable());
     assertFalse(missing.apply(fixture.model, 0.5).isApplied());
     assertThrows(IllegalStateException.class, () -> missing.capture(fixture.model));
 
-    ProcessModelOperatingAction first = ProcessModelOperatingAction.continuous("feed-a",
-        "Feed A", "wells::feed.flowRate", 500.0, 1500.0, "kg/hr", "basis A");
-    ProcessModelOperatingAction second = ProcessModelOperatingAction.continuous("feed-b",
-        "Feed B", "wells::feed.flowRate", 500.0, 1500.0, "kg/hr", "basis B");
+    ProcessModelOperatingAction first = ProcessModelOperatingAction.continuous("feed-a", "Feed A",
+        "wells::feed.flowRate", 500.0, 1500.0, "kg/hr", "basis A");
+    ProcessModelOperatingAction second = ProcessModelOperatingAction.continuous("feed-b", "Feed B",
+        "wells::feed.flowRate", 500.0, 1500.0, "kg/hr", "basis B");
     ActionState firstState = first.capture(fixture.model);
-    assertThrows(IllegalArgumentException.class,
-        () -> second.restore(fixture.model, firstState));
+    assertThrows(IllegalArgumentException.class, () -> second.restore(fixture.model, firstState));
     assertEquals(1000.0, fixture.feed.getFlowRate("kg/hr"), 1.0e-8);
 
-    assertThrows(IllegalArgumentException.class, () -> ProcessModelOperatingAction.continuous(
-        " ", "name", "wells::feed.flowRate", 0.0, 1.0, "kg/hr", "basis"));
-    assertThrows(IllegalArgumentException.class, () -> ProcessModelOperatingAction.continuous(
-        "id", "name", "wells::feed.flowRate", 2.0, 1.0, "kg/hr", "basis"));
-    assertThrows(IllegalArgumentException.class, () -> ProcessModelOperatingAction.discrete(
-        "id", "name", "wells::feed.flowRate", new double[] {1.0, 1.0}, "kg/hr",
-        "basis"));
+    assertThrows(IllegalArgumentException.class,
+        () -> ProcessModelOperatingAction.continuous(" ", "name", "wells::feed.flowRate", 0.0, 1.0, "kg/hr", "basis"));
+    assertThrows(IllegalArgumentException.class,
+        () -> ProcessModelOperatingAction.continuous("id", "name", "wells::feed.flowRate", 2.0, 1.0, "kg/hr", "basis"));
+    assertThrows(IllegalArgumentException.class, () -> ProcessModelOperatingAction.discrete("id", "name",
+        "wells::feed.flowRate", new double[] { 1.0, 1.0 }, "kg/hr", "basis"));
   }
 
   /** Verifies optimization-facing registration and exact discrete failure behavior. */
   @Test
   void actionRegistersWithProcessModelEvaluator() throws Exception {
     ModelFixture continuousFixture = createModelFixture();
-    ProcessModelSimulationEvaluator continuousEvaluator =
-        new ProcessModelSimulationEvaluator(continuousFixture.model);
-    ProcessModelOperatingAction continuous = ProcessModelOperatingAction.continuous("feed",
-        "Field feed", "wells::feed.flowRate", 500.0, 1500.0, "kg/hr",
-        "synthetic operating envelope");
+    ProcessModelSimulationEvaluator continuousEvaluator = new ProcessModelSimulationEvaluator(continuousFixture.model);
+    ProcessModelOperatingAction continuous = ProcessModelOperatingAction.continuous("feed", "Field feed",
+        "wells::feed.flowRate", 500.0, 1500.0, "kg/hr", "synthetic operating envelope");
     ActionParameterBinding continuousBinding = continuous.registerWith(continuousEvaluator);
     continuousEvaluator.addObjective("feed", model -> continuousFixture.feed.getFlowRate("kg/hr"));
 
     assertEquals(0, continuousBinding.getParameterIndex());
     assertEquals(1000.0, continuousBinding.getInitialValue(), 1.0e-8);
-    assertEquals("wells::feed.flowRate",
-        continuousEvaluator.getParameters().get(0).getAddress());
+    assertEquals("wells::feed.flowRate", continuousEvaluator.getParameters().get(0).getAddress());
     assertFalse(continuousEvaluator.getParameters().get(0).isClampToBounds());
-    assertTrue(continuousEvaluator.evaluate(new double[] {1300.0}).isSimulationConverged());
+    assertTrue(continuousEvaluator.evaluate(new double[] { 1300.0 }).isSimulationConverged());
     assertEquals(1300.0, continuousFixture.feed.getFlowRate("kg/hr"), 1.0e-8);
-    assertFalse(continuousEvaluator.evaluate(new double[] {1600.0}).isSimulationConverged());
+    assertFalse(continuousEvaluator.evaluate(new double[] { 1600.0 }).isSimulationConverged());
     assertEquals(1300.0, continuousFixture.feed.getFlowRate("kg/hr"), 1.0e-8,
         "a strict continuous action must reject rather than clamp an out-of-bounds candidate");
     ProcessModelSimulationEvaluator.SensitivityQualityResult quality = continuousEvaluator
-        .estimateSensitivitiesWithQuality(new double[] {1000.0});
+        .estimateSensitivitiesWithQuality(new double[] { 1000.0 });
     assertFalse(quality.getParameterSnapshots().get(0).isClampToBounds());
     assertEquals(1000.0, quality.getParameterSnapshots().get(0).getBaseValue(), 1.0e-8);
 
     ModelFixture discreteFixture = createModelFixture();
-    ProcessModelSimulationEvaluator discreteEvaluator =
-        new ProcessModelSimulationEvaluator(discreteFixture.model);
-    ProcessModelOperatingAction discrete = ProcessModelOperatingAction.discrete("line-up",
-        "Feed line-up", "wells::feed.flowRate", new double[] {1000.0, 1200.0}, "kg/hr",
-        "synthetic line-up table");
+    ProcessModelSimulationEvaluator discreteEvaluator = new ProcessModelSimulationEvaluator(discreteFixture.model);
+    ProcessModelOperatingAction discrete = ProcessModelOperatingAction.discrete("line-up", "Feed line-up",
+        "wells::feed.flowRate", new double[] { 1000.0, 1200.0 }, "kg/hr", "synthetic line-up table");
     ActionParameterBinding discreteBinding = discrete.registerWith(discreteEvaluator);
     discreteEvaluator.addObjective("feed", model -> discreteFixture.feed.getFlowRate("kg/hr"));
-    assertArrayEquals(new double[] {1000.0, 1200.0}, discreteBinding.getAllowedValues(), 0.0);
-    assertTrue(discreteEvaluator.evaluate(new double[] {1200.0}).isSimulationConverged());
+    assertArrayEquals(new double[] { 1000.0, 1200.0 }, discreteBinding.getAllowedValues(), 0.0);
+    assertTrue(discreteEvaluator.evaluate(new double[] { 1200.0 }).isSimulationConverged());
     assertEquals(1200.0, discreteFixture.feed.getFlowRate("kg/hr"), 1.0e-8);
 
-    ProcessModelSimulationEvaluator.EvaluationResult rejected =
-        discreteEvaluator.evaluate(new double[] {1100.0});
+    ProcessModelSimulationEvaluator.EvaluationResult rejected = discreteEvaluator.evaluate(new double[] { 1100.0 });
     assertFalse(rejected.isSimulationConverged());
     assertNotNull(rejected.getErrorMessage());
     assertEquals(1200.0, discreteFixture.feed.getFlowRate("kg/hr"), 1.0e-8,
         "a rejected discrete candidate must leave the previous verified value unchanged");
-    assertFalse(discreteEvaluator.evaluate(new double[] {700.0}).isSimulationConverged());
+    assertFalse(discreteEvaluator.evaluate(new double[] { 700.0 }).isSimulationConverged());
     assertEquals(1200.0, discreteFixture.feed.getFlowRate("kg/hr"), 1.0e-8,
         "an out-of-envelope discrete candidate must reject rather than clamp to a line-up");
 
@@ -225,6 +212,6 @@ class ProcessModelOperatingActionTest {
     ActionParameterBinding restoredBinding = (ActionParameterBinding) input.readObject();
     input.close();
     assertEquals("line-up", restoredBinding.getAction().getId());
-    assertArrayEquals(new double[] {1000.0, 1200.0}, restoredBinding.getAllowedValues(), 0.0);
+    assertArrayEquals(new double[] { 1000.0, 1200.0 }, restoredBinding.getAllowedValues(), 0.0);
   }
 }
