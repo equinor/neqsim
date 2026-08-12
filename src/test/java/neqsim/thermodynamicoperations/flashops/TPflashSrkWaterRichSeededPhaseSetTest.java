@@ -11,9 +11,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPflashSrkWaterRichSeededPhaseSetTest {
-  private static final String[] COMPONENTS = {"CO2", "methane", "ethane", "water"};
-  private static final double[] FEED = {0.543865141103918, 0.2937712952303271,
-      0.07010605470616459, 0.09225750895959021};
+  private static final String[] COMPONENTS = { "CO2", "methane", "ethane", "water" };
+  private static final double[] FEED = { 0.543865141103918, 0.2937712952303271, 0.07010605470616459,
+      0.09225750895959021 };
 
   @Test
   void seededPhaseSetRepairsInvalidOrdinaryAndCollapsedMultiphaseEndpoints() {
@@ -38,8 +38,8 @@ class TPflashSrkWaterRichSeededPhaseSetTest {
 
   @Test
   void seededPhaseSetRemainsContinuousAcrossChangedNearbyStates() {
-    double[][] states = {{215.0, 225.0}, {220.0, 200.0}, {220.0, 225.0},
-        {225.0, 200.0}, {230.0, 250.0}, {220.0, 200.0}};
+    double[][] states = { { 215.0, 225.0 }, { 220.0, 200.0 }, { 220.0, 225.0 }, { 225.0, 200.0 }, { 230.0, 250.0 },
+        { 220.0, 200.0 } };
     SystemInterface multiphase = createSystem(states[0][0], states[0][1], true, true);
 
     for (double[] state : states) {
@@ -65,16 +65,16 @@ class TPflashSrkWaterRichSeededPhaseSetTest {
     assertTrue(maximumLogFugacityResidual(ordinary) < 1.0e-8);
   }
 
-  private SystemInterface createAndFlash(double temperature, double pressure,
-      boolean multiphaseCheck, boolean poorBetaGuess) {
+  private SystemInterface createAndFlash(double temperature, double pressure, boolean multiphaseCheck,
+      boolean poorBetaGuess) {
     SystemInterface system = createSystem(temperature, pressure, multiphaseCheck, poorBetaGuess);
     new ThermodynamicOperations(system).TPflash();
     system.init(3);
     return system;
   }
 
-  private SystemInterface createSystem(double temperature, double pressure,
-      boolean multiphaseCheck, boolean poorBetaGuess) {
+  private SystemInterface createSystem(double temperature, double pressure, boolean multiphaseCheck,
+      boolean poorBetaGuess) {
     SystemInterface system = new SystemSrkEos(temperature, pressure);
     for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
       system.addComponent(COMPONENTS[componentIndex], FEED[componentIndex]);
@@ -100,16 +100,14 @@ class TPflashSrkWaterRichSeededPhaseSetTest {
       assertEquals(expected.getBeta(phaseIndex), actual.getBeta(phaseIndex), 1.0e-10);
       assertTrue(actual.getBeta(phaseIndex) > 0.0 && actual.getBeta(phaseIndex) < 1.0);
       assertEquals(expected.getPhase(phaseIndex).getZ(), actual.getPhase(phaseIndex).getZ(), 1.0e-10);
-      assertEquals(expected.getPhase(phaseIndex).getDensity(),
-          actual.getPhase(phaseIndex).getDensity(), 1.0e-7);
+      assertEquals(expected.getPhase(phaseIndex).getDensity(), actual.getPhase(phaseIndex).getDensity(), 1.0e-7);
       betaTotal += actual.getBeta(phaseIndex);
 
       double compositionTotal = 0.0;
       for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
         double composition = actual.getPhase(phaseIndex).getComponent(componentIndex).getx();
         assertTrue(Double.isFinite(composition) && composition >= 0.0 && composition <= 1.0);
-        assertEquals(expected.getPhase(phaseIndex).getComponent(componentIndex).getx(),
-            composition, 1.0e-10);
+        assertEquals(expected.getPhase(phaseIndex).getComponent(componentIndex).getx(), composition, 1.0e-10);
         compositionTotal += composition;
       }
       assertEquals(1.0, compositionTotal, 1.0e-10);
@@ -119,8 +117,7 @@ class TPflashSrkWaterRichSeededPhaseSetTest {
     for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
       double recoveredFeed = 0.0;
       for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
-        recoveredFeed += actual.getBeta(phaseIndex)
-            * actual.getPhase(phaseIndex).getComponent(componentIndex).getx();
+        recoveredFeed += actual.getBeta(phaseIndex) * actual.getPhase(phaseIndex).getComponent(componentIndex).getx();
       }
       assertEquals(FEED[componentIndex], recoveredFeed, 1.0e-10);
     }
@@ -131,15 +128,12 @@ class TPflashSrkWaterRichSeededPhaseSetTest {
     double maximumResidual = 0.0;
     for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
       double firstLogFugacity = Math
-          .log(Math.max(system.getPhase(0).getComponent(componentIndex).getx(),
-              Double.MIN_NORMAL))
+          .log(Math.max(system.getPhase(0).getComponent(componentIndex).getx(), Double.MIN_NORMAL))
           + Math.log(system.getPhase(0).getComponent(componentIndex).getFugacityCoefficient());
       double secondLogFugacity = Math
-          .log(Math.max(system.getPhase(1).getComponent(componentIndex).getx(),
-              Double.MIN_NORMAL))
+          .log(Math.max(system.getPhase(1).getComponent(componentIndex).getx(), Double.MIN_NORMAL))
           + Math.log(system.getPhase(1).getComponent(componentIndex).getFugacityCoefficient());
-      maximumResidual = Math.max(maximumResidual,
-          Math.abs(firstLogFugacity - secondLogFugacity));
+      maximumResidual = Math.max(maximumResidual, Math.abs(firstLogFugacity - secondLogFugacity));
     }
     return maximumResidual;
   }
