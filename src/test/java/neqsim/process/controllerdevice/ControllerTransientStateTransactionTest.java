@@ -39,6 +39,7 @@ class ControllerTransientStateTransactionTest extends neqsim.NeqSimTest {
 
     TransientStepTransaction transaction = process.beginTransientStepTransaction();
     controller.runTransient(initialResponse, 1.0, stepId);
+    double automaticTrialResponse = controller.getResponse();
     controller.setTransmitter(createTransmitter(60.0));
     controller.setControllerSetPoint(70.0);
     controller.setControllerParameters(9.0, 8.0, 7.0);
@@ -47,7 +48,7 @@ class ControllerTransientStateTransactionTest extends neqsim.NeqSimTest {
     assertEquals(1, controller.getEventLog().size());
     assertTrue(controller.hasRunTransient(stepId));
     assertTrue(controller.getIntegralAbsoluteError() > 0.0);
-    double trialResponse = controller.getResponse();
+    assertEquals(11.0, controller.getResponse(), 0.0);
     transaction.rollback();
 
     assertEquals(stateIdentity, controller.getTransientStateIdentity());
@@ -66,7 +67,7 @@ class ControllerTransientStateTransactionTest extends neqsim.NeqSimTest {
 
     transmitter.getStream().setPressure(50.0, "bara");
     controller.runTransient(initialResponse, 1.0, stepId);
-    assertEquals(trialResponse, controller.getResponse(), 1.0e-12);
+    assertEquals(automaticTrialResponse, controller.getResponse(), 1.0e-12);
     assertEquals(1, controller.getEventLog().size());
     assertEquals(1.0, controller.getEventLog().get(0).getTime(), 0.0);
   }
