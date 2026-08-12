@@ -262,6 +262,12 @@ targets manipulated through condenser or reboiler temperature.
 - Work diagnostics classify every currently assembled derivative column as finite-difference;
   `getLastNaphtaliAnalyticJacobianColumns()` remains available for compatibility and reports zero
   until a mixed analytic/numerical assembly is implemented.
+- When coordinated routing rejects a Naphtali-Sandholm result and adopts damped substitution,
+  products, residuals, status, and `getLastIterationCount()` describe the accepted fallback.
+  Naphtali-specific Jacobian, thermodynamic, cache, K-value, and linear-solve counters continue to
+  describe the rejected simultaneous attempt. Use `getLastSolverTypeUsed()` and
+  `getLastSolveStatusReason()` with those counters to distinguish accepted-state convergence from
+  attempted-solver work.
 - Tray thermodynamics perform up to two forced-root fugacity sweeps for a cold solve and up to three
   when refining a retained column state. Both paths stop early when
   `max(abs(log(Knew/Kold)))` is already at or below `1e-8`. The extra warm-start sweep keeps the
