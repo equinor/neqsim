@@ -130,7 +130,8 @@ identifier, measurement history, alarm-history bookkeeping, and the attached eve
 bookkeeping. It commits only after the full event/equipment/controller/measurement/alarm step succeeds. Runtime failures
 close the transaction and restore captured state in reverse participant order. `ProcessModel` coordinates the same
 boundary across areas in insertion order and rolls back areas in reverse order, so a later-area failure does not leave an
-earlier area advanced.
+earlier area advanced. Its commit uses a non-mutating prepare phase across every child transaction before accepting any
+child, preventing a later area's identity/structure failure from leaving an earlier area partially committed.
 
 Coverage is quantitative: `getProcessElementCount()`, `getParticipantCount()`, and `getBlockingIssues()` distinguish
 complete participation from API presence. Equipment-attached controllers are included even when they are not registered

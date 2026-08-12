@@ -5419,11 +5419,23 @@ public class ProcessSystem extends SimulationBaseClass {
 
     /** {@inheritDoc} */
     @Override
-    public void commit() {
+    public void prepareCommit() {
       synchronized (ProcessSystem.this) {
-        requireOpen("commit");
+        requireOpen("prepare commit");
         RuntimeException validationFailure = validateIdentityContract();
         if (validationFailure != null) {
+          throw validationFailure;
+        }
+      }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void commit() {
+      synchronized (ProcessSystem.this) {
+        try {
+          prepareCommit();
+        } catch (RuntimeException validationFailure) {
           try {
             rollback();
           } catch (RuntimeException rollbackFailure) {

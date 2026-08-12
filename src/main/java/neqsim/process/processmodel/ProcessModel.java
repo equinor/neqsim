@@ -1815,17 +1815,39 @@ public class ProcessModel implements Runnable, Serializable {
 
     /** {@inheritDoc} */
     @Override
+    public void prepareCommit() {
+      synchronized (ProcessModel.this) {
+        requireOpen("prepare commit");
+        RuntimeException failure = validateAreaIdentities();
+        if (failure == null) {
+          for (AreaTransientCheckpoint checkpoint : areaCheckpoints) {
+            try {
+              checkpoint.transaction.prepareCommit();
+            } catch (RuntimeException ex) {
+              failure = appendFailure(failure,
+                  "Failed to prepare transient transaction for process area '" + checkpoint.areaName + "'", ex);
+            }
+          }
+        }
+        if (failure != null) {
+          throw failure;
+        }
+      }
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public void commit() {
       synchronized (ProcessModel.this) {
-        requireOpen("commit");
-        RuntimeException structureFailure = validateAreaIdentities();
-        if (structureFailure != null) {
+        try {
+          prepareCommit();
+        } catch (RuntimeException validationFailure) {
           try {
             rollback();
           } catch (RuntimeException rollbackFailure) {
-            structureFailure.addSuppressed(rollbackFailure);
+            validationFailure.addSuppressed(rollbackFailure);
           }
-          throw structureFailure;
+          throw validationFailure;
         }
 
         RuntimeException failure = null;

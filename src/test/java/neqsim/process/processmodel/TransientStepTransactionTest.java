@@ -108,6 +108,31 @@ public class TransientStepTransactionTest extends neqsim.NeqSimTest {
   }
 
   /**
+   * A later-area commit-contract failure is detected before any earlier child transaction is committed.
+   */
+  @Test
+  void processModelPreparesEveryAreaBeforeCommittingAnyChild() {
+    StatefulTestUnit firstUnit = new StatefulTestUnit("first", "prepare/first", 1.0);
+    StatefulTestUnit secondUnit = new StatefulTestUnit("second", "prepare/second", 1.0);
+    ProcessModel model = new ProcessModel();
+    model.add("first-area", createProcess("first-area", firstUnit));
+    model.add("second-area", createProcess("second-area", secondUnit));
+
+    TransientStepTransaction transaction = model.beginTransientStepTransaction();
+    firstUnit.addValue(4.0);
+    secondUnit.addValue(7.0);
+    secondUnit.setStateIdentity("prepare/changed");
+
+    IllegalStateException failure = assertThrows(IllegalStateException.class, transaction::commit);
+    assertTrue(failure.getMessage().contains("second-area"));
+    assertEquals(TransientStepTransaction.Status.ROLLED_BACK, transaction.getStatus());
+    assertEquals(0.0, firstUnit.getValue(), TOLERANCE);
+    assertEquals(0.0, secondUnit.getValue(), TOLERANCE);
+    assertEquals("prepare/first", firstUnit.getTransientStateIdentity());
+    assertEquals("prepare/second", secondUnit.getTransientStateIdentity());
+  }
+
+  /**
    * Coverage diagnostics are quantitative and reject unsupported or ambiguous state before mutation.
    */
   @Test
@@ -191,7 +216,7 @@ public class TransientStepTransactionTest extends neqsim.NeqSimTest {
   private static final class StatefulTestUnit extends ProcessEquipmentBaseClass
       implements TransientStateParticipant<StatefulTestUnit.Snapshot> {
     private static final long serialVersionUID = 1000L;
-    private final String stateIdentity;
+    private String stateIdentity;
     private final double rate;
     private double value;
     private boolean failAfterMutation;
@@ -224,11 +249,12 @@ public class TransientStepTransactionTest extends neqsim.NeqSimTest {
 
     @Override
     public Snapshot captureTransientState() {
-      return new Snapshot(value, getTime(), getCalculationIdentifier(), failAfterMutation);
+      return new Snapshot(stateIdentity, value, getTime(), getCalculationIdentifier(), failAfterMutation);
     }
 
     @Override
     public void restoreTransientState(Snapshot snapshot) {
+      stateIdentity = snapshot.stateIdentity;
       value = snapshot.value;
       setTime(snapshot.time);
       setCalculationIdentifier(snapshot.calculationIdentifier);
@@ -247,15 +273,22 @@ public class TransientStepTransactionTest extends neqsim.NeqSimTest {
       this.failAfterMutation = failAfterMutation;
     }
 
+    private void setStateIdentity(String stateIdentity) {
+      this.stateIdentity = stateIdentity;
+    }
+
     /** Immutable participant snapshot. */
     private static final class Snapshot implements Serializable {
       private static final long serialVersionUID = 1000L;
+      private final String stateIdentity;
       private final double value;
       private final double time;
       private final UUID calculationIdentifier;
       private final boolean failAfterMutation;
 
-      private Snapshot(double value, double time, UUID calculationIdentifier, boolean failAfterMutation) {
+      private Snapshot(String stateIdentity, double value, double time, UUID calculationIdentifier,
+          boolean failAfterMutation) {
+        this.stateIdentity = stateIdentity;
         this.value = value;
         this.time = time;
         this.calculationIdentifier = calculationIdentifier;
