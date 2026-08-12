@@ -667,7 +667,7 @@ feed_target = Action.continuous(
     "kg/hr",
     "approved operating envelope revision A",
 )
-compressor_lineup = Action.discrete(
+pressure_mode = Action.discrete(
     "compressor-lineup",
     "Compressor line-up",
     "compression::lineup-selector.value",
