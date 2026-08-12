@@ -27,8 +27,8 @@ public interface TransientStepTransaction extends AutoCloseable {
    * Verifies that the open trial can be committed without changing its lifecycle state.
    *
    * <p>
-   * Coordinators use this as the prepare phase of a two-phase commit: every child transaction must prepare
-   * successfully before any child is committed.
+   * Coordinators use this as the prepare phase of a two-phase commit: every child transaction must prepare successfully
+   * before any child is committed.
    * </p>
    *
    * @throws IllegalStateException if the transaction is closed or its identity/structure contract changed
