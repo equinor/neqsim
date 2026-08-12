@@ -85,8 +85,7 @@ public class PressureTransmitter extends StreamMeasurementDeviceBaseClass
   /** {@inheritDoc} */
   @Override
   public PressureTransmitterState captureTransientState() {
-    return new PressureTransmitterState(getTransientStateIdentity(), stream,
-        captureMeasurementDeviceTransientState());
+    return new PressureTransmitterState(getTransientStateIdentity(), stream, captureMeasurementDeviceTransientState());
   }
 
   /** {@inheritDoc} */
