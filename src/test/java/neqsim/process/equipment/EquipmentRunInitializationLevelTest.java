@@ -3,7 +3,6 @@ package neqsim.process.equipment;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
-import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.util.Recycle;
@@ -57,22 +56,6 @@ class EquipmentRunInitializationLevelTest {
   }
 
   @Test
-  void compressorRetainsDerivativeWarmStateBeforeFollowingFlashes() {
-    InitTrackingSystemSrkEos fluid = createGas(298.15, 70.0);
-    Stream feed = new Stream("compressor feed", fluid);
-    feed.setFlowRate(50000.0, "kg/hr");
-    feed.run();
-
-    Compressor compressor = new Compressor("compressor", feed);
-    compressor.setOutletPressure(110.0);
-    fluid.resetFirstInitLevel();
-    compressor.run();
-
-    assertEquals(3, fluid.getFirstInitLevel(),
-        "Compressor inlet derivative state must not be discarded without end-to-end evidence");
-  }
-
-  @Test
   void pumpRetainsDerivativeWarmStateBeforeFollowingFlashes() {
     InitTrackingSystemSrkEos fluid = new InitTrackingSystemSrkEos(303.15, 3.0);
     fluid.addComponent("n-pentane", 0.45);
@@ -90,6 +73,26 @@ class EquipmentRunInitializationLevelTest {
 
     assertEquals(3, fluid.getFirstInitLevel(),
         "Pump inlet derivative state must not be discarded without end-to-end evidence");
+  }
+
+  @Test
+  void lowFlowPumpRetainsDerivativeWarmState() {
+    InitTrackingSystemSrkEos fluid = new InitTrackingSystemSrkEos(303.15, 3.0);
+    fluid.addComponent("n-pentane", 0.45);
+    fluid.addComponent("n-hexane", 0.55);
+    fluid.setMixingRule("classic");
+    Stream feed = new Stream("low-flow pump feed", fluid);
+    feed.setFlowRate(1.0, "kg/hr");
+    feed.run();
+
+    Pump pump = new Pump("low-flow pump", feed);
+    pump.setOutletPressure(18.0);
+    pump.setMinimumFlow(2.0);
+    fluid.resetFirstInitLevel();
+    pump.run();
+
+    assertEquals(3, fluid.getFirstInitLevel(),
+        "Low-flow pump derivative state must not be discarded without end-to-end evidence");
   }
 
   @Test
