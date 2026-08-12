@@ -86,12 +86,12 @@ public final class NeqSimPhaseEquilibriumPrediction implements Prediction {
     } else {
       operations.dewPointPressureFlash();
     }
-    double pressureBara = system.getPressure("bara");
-    if (!Double.isFinite(pressureBara) || pressureBara <= 0.0) {
+    double pressure = system.getPressure(point.getUnit());
+    if (!Double.isFinite(pressure) || pressure <= 0.0) {
       throw new IllegalStateException(
           model + " returned invalid " + point.getProperty() + " at " + point.getTemperatureK() + " K");
     }
-    return pressureBara;
+    return pressure;
   }
 
   private SystemInterface createSystem(double temperatureK, double pressureBara) {
