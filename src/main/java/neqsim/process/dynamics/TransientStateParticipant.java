@@ -37,6 +37,20 @@ public interface TransientStateParticipant<S extends Serializable> extends Proce
   String getTransientStateIdentity();
 
   /**
+   * Returns a deterministic reason why this implementation cannot provide complete transaction coverage.
+   *
+   * <p>
+   * The default is {@code null}, meaning that the participant is ready to capture. Extensible base classes should
+   * override this method when inherited snapshot logic cannot account for subclass-owned state.
+   * </p>
+   *
+   * @return {@code null} when complete, otherwise a non-empty blocking diagnostic
+   */
+  default String getTransientStateCoverageIssue() {
+    return null;
+  }
+
+  /**
    * Captures the complete mutable state owned by this participant.
    *
    * @return non-null snapshot independent of later participant mutation

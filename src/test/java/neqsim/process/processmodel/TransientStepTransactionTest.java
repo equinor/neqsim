@@ -163,10 +163,12 @@ public class TransientStepTransactionTest extends neqsim.NeqSimTest {
     ProcessSystem attachedController = createProcess("attached-controller", controlledUnit);
     TransientTransactionCoverage attachedCoverage = attachedController.getTransientTransactionCoverage();
     assertEquals(2, attachedCoverage.getProcessElementCount());
-    assertEquals(1, attachedCoverage.getParticipantCount());
-    assertFalse(attachedCoverage.isComplete());
-    assertTrue(attachedCoverage.getBlockingIssues().get(0).contains("attached-controller"));
-    assertThrows(IllegalStateException.class, attachedController::beginTransientStepTransaction);
+    assertEquals(2, attachedCoverage.getParticipantCount());
+    assertTrue(attachedCoverage.isComplete());
+    assertTrue(attachedCoverage.getBlockingIssues().isEmpty());
+    try (TransientStepTransaction transaction = attachedController.beginTransientStepTransaction()) {
+      assertEquals(TransientStepTransaction.Status.OPEN, transaction.getStatus());
+    }
     assertEquals(0.0, attachedController.getTime(), TOLERANCE);
   }
 
