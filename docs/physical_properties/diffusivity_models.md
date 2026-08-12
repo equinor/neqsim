@@ -563,7 +563,6 @@ double co2AmineDiffusivityM2PerS =
 Confirm the component ordering before using integer indexes. For named components, prefer
 `getDiffusionCoefficient(component1, component2)`.
 
-
 ---
 
 ## Physical Background
