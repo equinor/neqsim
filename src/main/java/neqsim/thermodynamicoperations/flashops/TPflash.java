@@ -1206,10 +1206,15 @@ public class TPflash extends Flash {
    * calculation because it is not an acceptable result. A cheap aqueous tangent-plane trial and safeguarded multiphase
    * beta solve are used for trace-water gas/oil endpoints whose small hydrocarbon liquid disproportionately
    * concentrates water. Full recursive flashing is avoided. A multiphase-enabled water-rich gas/aqueous endpoint uses
-   * one cold ordinary candidate; a genuine oil/aqueous liquid-liquid endpoint remains on the multiphase path. An
-   * ordinary endpoint uses the multiphase candidate. The nested candidate cannot start another cross-algorithm
-   * fallback. A candidate replaces the original state only after strict phase-fraction, composition-normalization,
-   * material-balance, fugacity, distinct-composition, and lower-Gibbs checks pass.
+   * one cold ordinary candidate; a genuine oil/aqueous liquid-liquid endpoint remains on the multiphase path. A
+   * water-rich multiphase endpoint that collapsed to one hydrocarbon phase also uses a cold ordinary candidate, whose
+   * invalid two-phase cubic-root split may seed the multiphase solver. For an ordinary endpoint, an existing invalid
+   * two-phase split is retained as the multiphase phase-set seed when the existing cold candidate is rejected. Trying
+   * the cold candidate first preserves its gas/oil cubic-root classification whenever it already reaches the same
+   * feasible equilibrium. The nested candidates cannot start a reciprocal fallback cycle. A candidate replaces the
+   * original state only after strict phase-fraction, composition-normalization, material-balance, fugacity,
+   * distinct-composition, and lower-Gibbs checks pass. A collapsed multiphase endpoint additionally requires the
+   * candidate to restore the missing aqueous phase, keeping ordinary gas appearance outside this fallback's scope.
    * </p>
    */
   private void rescueWaterRichEndpoint() {
@@ -1236,8 +1241,10 @@ public class TPflash extends Flash {
     }
     boolean gasAqueousMultiphaseEndpoint = system.doMultiPhaseCheck() && hasAqueousPhase
         && system.hasPhaseType(PhaseType.GAS);
+    boolean singlePhaseWaterRichMultiphaseEndpoint = system.doMultiPhaseCheck() && system.getNumberOfPhases() == 1
+        && !hasAqueousPhase;
     if (system.doMultiPhaseCheck() && waterFeedFraction >= WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT
-        && !gasAqueousMultiphaseEndpoint) {
+        && !gasAqueousMultiphaseEndpoint && !singlePhaseWaterRichMultiphaseEndpoint) {
       return;
     }
     double materialBalanceResidual = maximumComponentMaterialBalanceResidual(system);
@@ -1249,7 +1256,9 @@ public class TPflash extends Flash {
     }
 
     double referenceGibbsEnergy = system.getGibbsEnergy();
-    boolean ordinaryFallback = gasAqueousMultiphaseEndpoint
+    boolean invalidOrdinaryTwoPhaseSeed = !system.doMultiPhaseCheck() && !hasAqueousPhase
+        && system.getNumberOfPhases() == 2 && !isBalancedEquilibriumCandidate(system);
+    boolean ordinaryFallback = (gasAqueousMultiphaseEndpoint || singlePhaseWaterRichMultiphaseEndpoint)
         && waterFeedFraction >= WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT;
     SystemInterface candidate;
     if (ordinaryFallback) {
@@ -1273,24 +1282,61 @@ public class TPflash extends Flash {
         candidateConverged = refineTraceWaterAqueousCandidateActiveSet(candidate);
       } else {
         TPflash candidateFlash = new TPflash(candidate, candidate.doSolidPhaseCheck());
-        candidateFlash.waterRichCrossAlgorithmFallbackAllowed = false;
+        candidateFlash.waterRichCrossAlgorithmFallbackAllowed = singlePhaseWaterRichMultiphaseEndpoint;
         candidateFlash.run();
         candidateConverged = true;
       }
       boolean incipientCpaAqueousTrial = system.getNumberOfPhases() == 1 && !system.doMultiPhaseCheck()
           && system.getModelName() != null && system.getModelName().contains("CPA");
-      if (candidateConverged && candidate.getNumberOfPhases() == 2 && isBalancedEquilibriumCandidate(candidate)
-          && shouldAcceptWaterRichCandidate(candidate, referenceGibbsEnergy, materialBalanceInvalid,
-              incipientCpaAqueousTrial)) {
-        if (ordinaryFallback) {
+      boolean restoresCollapsedAqueousPhase = !singlePhaseWaterRichMultiphaseEndpoint
+          || candidate.hasPhaseType(PhaseType.AQUEOUS);
+      if (candidateConverged && restoresCollapsedAqueousPhase && candidate.getNumberOfPhases() == 2
+          && isBalancedEquilibriumCandidate(candidate) && shouldAcceptWaterRichCandidate(candidate,
+              referenceGibbsEnergy, materialBalanceInvalid, incipientCpaAqueousTrial)) {
+        if (gasAqueousMultiphaseEndpoint) {
           runAcceptedOrdinaryWaterRichFallback(candidate);
         } else {
           copyFlashStateFrom(candidate);
         }
+        return;
       }
     } catch (Exception ex) {
       logger.debug("Water-rich endpoint refinement failed: {}", ex.getMessage());
     }
+    if (invalidOrdinaryTwoPhaseSeed) {
+      trySeededWaterRichPhaseSet(referenceGibbsEnergy, materialBalanceInvalid);
+    }
+  }
+
+  /**
+   * Refines an invalid ordinary two-phase water-rich endpoint from its converged phase-set seed.
+   *
+   * <p>
+   * A cold multiphase calculation can collapse before reaching the aqueous split, while the ordinary flash has already
+   * produced two distinct compositions that provide a useful stability seed. The fully initialized multiphase solver is
+   * therefore run on a clone of that split after the existing cold candidate is rejected. Rejected, three-phase,
+   * unbalanced, non-equilibrium, or higher-Gibbs trials leave the original endpoint untouched.
+   * </p>
+   *
+   * @param referenceGibbsEnergy Gibbs energy of the invalid ordinary endpoint
+   * @param referenceMaterialBalanceInvalid whether the reference endpoint fails component material balance
+   * @return true when a strict lower-Gibbs two-phase candidate replaced the endpoint
+   */
+  private boolean trySeededWaterRichPhaseSet(double referenceGibbsEnergy, boolean referenceMaterialBalanceInvalid) {
+    SystemInterface candidate = system.clone();
+    try {
+      candidate.setMultiPhaseCheck(true);
+      new TPmultiflash(candidate, candidate.doSolidPhaseCheck()).run();
+      candidate.init(1);
+      if (candidate.getNumberOfPhases() == 2 && isBalancedEquilibriumCandidate(candidate)
+          && shouldAcceptWaterRichCandidate(candidate, referenceGibbsEnergy, referenceMaterialBalanceInvalid, false)) {
+        copyFlashStateFrom(candidate);
+        return true;
+      }
+    } catch (Exception ex) {
+      logger.debug("Seeded water-rich phase-set refinement failed: {}", ex.getMessage());
+    }
+    return false;
   }
 
   /**
