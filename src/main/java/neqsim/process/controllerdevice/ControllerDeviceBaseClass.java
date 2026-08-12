@@ -901,8 +901,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
    * @param target original bound designation
    * @param state captured designation value
    */
-  private static void restoreReferenceDesignation(
-      neqsim.process.equipment.iec81346.ReferenceDesignation target,
+  private static void restoreReferenceDesignation(neqsim.process.equipment.iec81346.ReferenceDesignation target,
       neqsim.process.equipment.iec81346.ReferenceDesignation state) {
     if (target == null || state == null) {
       return;
