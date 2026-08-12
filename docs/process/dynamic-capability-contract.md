@@ -339,3 +339,18 @@ constraints, and which execution modes have qualified transaction/error semantic
 The report also does not certify that a model is suitable for a control, relief, HIPPS/SIS, HAZOP, DEXPI/P&ID, virtual
 commissioning, OTS, or other safety-critical study. Those studies require scenario-specific modelling, validation
 evidence, engineering limits, deterministic timing/replay evidence where applicable, and appropriate review.
+
+
+## Base PID controller transaction coverage
+
+The concrete `ControllerDeviceBaseClass` participates in identity-preserving step transactions. Its snapshot covers the
+calculation identifier, PID error history, integral and filtered-derivative state, output/manual/bumpless-transfer
+state,
+clock and performance metrics, event log, gain schedule, transmitter binding, setpoint/tuning/limits, activation state,
+and engineering reference binding. Gain-schedule arrays and event-log membership are defensively copied.
+
+Coverage is deliberately fail-closed for subclasses. A controller subclass inherits the marker interface but reports an
+incomplete-coverage blocker until it overrides the transaction contract with a snapshot that includes every
+subclass-owned mutable field. Passing this rollback gate establishes transaction mechanics only; it does not qualify
+loop
+tuning, scan-time fidelity, final-element dynamics, deterministic I/O, safety action, or OTS behavior.
