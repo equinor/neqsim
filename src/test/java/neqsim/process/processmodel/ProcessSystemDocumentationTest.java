@@ -37,14 +37,9 @@ class ProcessSystemDocumentationTest {
 
     double inletMassFlowKgPerHr = feed.getFlowRate("kg/hr");
     double gasMassFlowKgPerHr = separator.getGasOutStream().getFlowRate("kg/hr");
-    double liquidMassFlowKgPerHr =
-        separator.getLiquidOutStream().getFlowRate("kg/hr");
-    double relativeMassBalanceError =
-        Math.abs(
-                inletMassFlowKgPerHr
-                    - gasMassFlowKgPerHr
-                    - liquidMassFlowKgPerHr)
-            / inletMassFlowKgPerHr;
+    double liquidMassFlowKgPerHr = separator.getLiquidOutStream().getFlowRate("kg/hr");
+    double relativeMassBalanceError = Math.abs(inletMassFlowKgPerHr - gasMassFlowKgPerHr - liquidMassFlowKgPerHr)
+        / inletMassFlowKgPerHr;
 
     assertTrue(gasMassFlowKgPerHr > 0.0);
     assertTrue(relativeMassBalanceError < 1.0e-6);
