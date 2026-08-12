@@ -105,7 +105,6 @@ class ProcessOverviewDocumentationContractTest(unittest.TestCase):
             "public synchronized void runHybrid(UUID id)",
             "public boolean hasRecycleLoops()",
             "public String getExecutionPartitionInfo()",
-            "public String[][] reportResults()",
             "public String getStreamSummaryTable()",
             "public String getReport_json()",
         ):
@@ -117,7 +116,6 @@ class ProcessOverviewDocumentationContractTest(unittest.TestCase):
             "process.hasRecycleLoops()",
             "process.getExecutionPartitionInfo()",
             "process.getReport_json()",
-            "process.reportResults()",
             "process.getStreamSummaryTable()",
         ):
             with self.subTest(documented_call=documented_call):
@@ -127,6 +125,7 @@ class ProcessOverviewDocumentationContractTest(unittest.TestCase):
         for stale_pattern in (
             "process.runHybrid();",
             "getUnitOperationsAsTable()",
+            "process.reportResults()",
             "runTransient(time, dt)",
             "28-40%",
             "40-57%",
