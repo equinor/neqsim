@@ -307,9 +307,9 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
     }
 
     /**
-     * Returns the optional external source key.
+     * Returns the stable external source key.
      *
-     * @return external source key, or {@code null}
+     * @return external source key
      */
     public String getExternalKey() {
       return externalKey;
@@ -875,8 +875,8 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
         result.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_DUPLICATE_SEMANTIC_OBJECT_ID",
             "Semantic object identity is not unique in the document set", object.getId()));
       }
-      if (object.getKind() == EngineeringNode.Kind.CALCULATION
-          && object.getProperties().containsKey("resultValue") && !hasGovernedValueMetadata(object)) {
+      if (object.getKind() == EngineeringNode.Kind.CALCULATION && object.getProperties().containsKey("resultValue")
+          && !hasGovernedValueMetadata(object)) {
         Severity severity = hasProvenanceSource(object, "SIMULATION_RESULT") ? Severity.ERROR : Severity.WARNING;
         result.add(new Diagnostic(severity, "DIAGRAM_DOCUMENT_INCOMPLETE_GOVERNED_VALUE",
             "Calculated value is missing unit, case, engineering state, approval state, or provenance",

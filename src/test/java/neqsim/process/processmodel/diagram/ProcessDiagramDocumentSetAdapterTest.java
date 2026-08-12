@@ -71,11 +71,9 @@ class ProcessDiagramDocumentSetAdapterTest {
     assertEquals("REVIEW_REQUIRED", pressure.getProperties().get("approvalStatus"));
     assertEquals("SIMULATION_RESULT", pressure.getProvenance().get(0).getSourceType());
     assertEquals("NORMAL-01", pressure.getProvenance().get(0).getDesignCaseId());
-    assertThrows(UnsupportedOperationException.class,
-        () -> pressure.getProperties().put("resultUnit", "psia"));
+    assertThrows(UnsupportedOperationException.class, () -> pressure.getProperties().put("resultUnit", "psia"));
 
-    SemanticObject equipment = findSemanticObject(set, EngineeringNode.Kind.EQUIPMENT, "equipmentName",
-        "10-VA-001");
+    SemanticObject equipment = findSemanticObject(set, EngineeringNode.Kind.EQUIPMENT, "equipmentName", "10-VA-001");
     assertEquals("10-VA-001", equipment.getLabel());
     SemanticObject connection = findSemanticObject(set, EngineeringNode.Kind.PIPE_SEGMENT, "carriedObjectName",
         "10-FEED-001");
@@ -86,9 +84,9 @@ class ProcessDiagramDocumentSetAdapterTest {
   @Test
   void rejectsCalculatedValuesWithoutGovernanceMetadata() {
     EngineeringGraph graph = new EngineeringGraph("INCOMPLETE-VALUE-PLANT", "A");
-    graph.addNode(new EngineeringNode("calculation:pressure", EngineeringNode.Kind.CALCULATION, "pressure",
-        "Pressure").putProperty("resultValue", Double.valueOf(42.0))
-            .addProvenance(new EngineeringProvenance("SIMULATION_RESULT", "equipment:V-001")));
+    graph.addNode(new EngineeringNode("calculation:pressure", EngineeringNode.Kind.CALCULATION, "pressure", "Pressure")
+        .putProperty("resultValue", Double.valueOf(42.0))
+        .addProvenance(new EngineeringProvenance("SIMULATION_RESULT", "equipment:V-001")));
 
     EngineeringDiagramDocumentSet set = EngineeringDiagramDocumentSet.fromGraph(graph, "PFD-INCOMPLETE-001",
         "Incomplete governed value", ContentProfile.PFD);
@@ -100,10 +98,10 @@ class ProcessDiagramDocumentSetAdapterTest {
   @Test
   void reportsLegacyCalculationGovernanceGapsWithoutBreakingExistingDocuments() {
     EngineeringGraph graph = new EngineeringGraph("LEGACY-CALCULATION-PLANT", "A");
-    graph.addNode(new EngineeringNode("calculation:pressure", EngineeringNode.Kind.CALCULATION, "pressure",
-        "Pressure").putProperty("resultValue", Double.valueOf(42.0)).putProperty("resultUnit", "bara")
-            .putProperty("status", "CALCULATED")
-            .addProvenance(new EngineeringProvenance("CALCULATION", "legacy-pressure")));
+    graph.addNode(new EngineeringNode("calculation:pressure", EngineeringNode.Kind.CALCULATION, "pressure", "Pressure")
+        .putProperty("resultValue", Double.valueOf(42.0)).putProperty("resultUnit", "bara")
+        .putProperty("status", "CALCULATED")
+        .addProvenance(new EngineeringProvenance("CALCULATION", "legacy-pressure")));
 
     EngineeringDiagramDocumentSet set = EngineeringDiagramDocumentSet.fromGraph(graph, "PFD-LEGACY-001",
         "Legacy calculation governance", ContentProfile.PFD);
