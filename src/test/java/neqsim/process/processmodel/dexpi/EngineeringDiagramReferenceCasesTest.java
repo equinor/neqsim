@@ -94,7 +94,20 @@ class EngineeringDiagramReferenceCasesTest {
 
     ProcessModelGraphvizExporter firstGraphviz = new ProcessModelGraphvizExporter(first.getProcessModel());
     ProcessModelGraphvizExporter secondGraphviz = new ProcessModelGraphvizExporter(second.getProcessModel());
-    assertEquals(firstGraphviz.toDot(), secondGraphviz.toDot());
+    String firstDot = firstGraphviz.toDot();
+    assertEquals(firstDot, secondGraphviz.toDot());
+    assertDotEdgeBefore(firstDot, "Inlet::30-FEED-001\" -> \"Inlet::30-XV-001",
+        "Inlet::30-XV-001\" -> \"Inlet::30-VA-001");
+    assertDotEdgeBefore(firstDot, "Inlet::30-XV-001\" -> \"Inlet::30-VA-001",
+        "Inlet::30-VA-001\" -> \"Inlet::30-SP-001");
+    assertDotEdgeBefore(firstDot, "Inlet::30-VA-001\" -> \"Inlet::30-SP-001",
+        "Inlet::30-SP-001\" -> \"Compression::31-KA-001");
+    assertDotEdgeBefore(firstDot, "Inlet::30-SP-001\" -> \"Compression::31-KA-001",
+        "Inlet::30-SP-001\" -> \"Flare::40-PL-001");
+    assertDotEdgeBefore(firstDot, "Inlet::30-SP-001\" -> \"Flare::40-PL-001",
+        "Compression::31-KA-001\" -> \"Compression::31-HA-001");
+    assertDotEdgeBefore(firstDot, "Compression::31-KA-001\" -> \"Compression::31-HA-001",
+        "Compression::31-HA-001\" -> \"Export::32-PL-001");
     assertEquals(first.getAreaNames(), new ArrayList<String>(firstGraphviz.toAreaDots().keySet()));
 
     List<EngineeringProject> projects = NorsokOffshoreEngineeringBuilder.fromProcessModel("Multi-area DEXPI reference",
@@ -109,6 +122,14 @@ class EngineeringDiagramReferenceCasesTest {
       assertProposalBoundary(proposal, false);
     }
     assertTrue(proposedElementCount > 0);
+  }
+
+  private static void assertDotEdgeBefore(String dot, String firstEdge, String secondEdge) {
+    int firstIndex = dot.indexOf(firstEdge);
+    int secondIndex = dot.indexOf(secondEdge);
+    assertTrue(firstIndex >= 0, firstEdge);
+    assertTrue(secondIndex >= 0, secondEdge);
+    assertTrue(firstIndex < secondIndex, firstEdge + " should precede " + secondEdge);
   }
 
   @Test
