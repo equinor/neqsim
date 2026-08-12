@@ -107,11 +107,10 @@ class ThermodynamicBenchmarkTest {
   @Test
   void returnsPredictionInPointPressureUnit() throws Exception {
     Point source = H2CO2PhaseEquilibriumData.load().getPoints().get(0);
-    Point pressureInMegapascal = new Point(source.getProperty(), source.getTemperatureK(),
-        source.getPressureBara(), source.getExperimentalValue() / 10.0, source.getStandardUncertainty(),
-        "MPa", source.getComposition());
-    NeqSimPhaseEquilibriumPrediction prediction =
-        new NeqSimPhaseEquilibriumPrediction(NeqSimPhaseEquilibriumPrediction.Model.SRK);
+    Point pressureInMegapascal = new Point(source.getProperty(), source.getTemperatureK(), source.getPressureBara(),
+        source.getExperimentalValue() / 10.0, source.getStandardUncertainty(), "MPa", source.getComposition());
+    NeqSimPhaseEquilibriumPrediction prediction = new NeqSimPhaseEquilibriumPrediction(
+        NeqSimPhaseEquilibriumPrediction.Model.SRK);
 
     double predictionBara = prediction.predict(source);
     double predictionMegapascal = prediction.predict(pressureInMegapascal);
