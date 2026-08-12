@@ -20,6 +20,9 @@ The initial model provides:
 - explicit source/peer sheet and connector references with machine-readable pair identity;
 - controlled revision history, drawing status, issue purpose, source-graph fingerprint, and
   structured validation diagnostics; and
+- immutable canonical semantic-object snapshots retaining source names, carried stream/connection
+  designations, case-scoped calculated values, explicit units, quantity basis, engineering state,
+  approval state, and provenance; and
 - byte-deterministic JSON for equivalent fresh process models.
 
 The initial automatic partition is deliberately conservative. It does not yet choose sheet sizes,
@@ -46,6 +49,17 @@ if (!documents.isValid()) {
 
 String controlledProposalJson = documents.toJson();
 ```
+
+Use the overload with a final operating-case ID after a successful process run to retain governed
+stream results in the same controlled snapshot. Temperature is stored in K, absolute pressure in
+bara, and mass flow in kg/s. Each value remains `CALCULATED` and `REVIEW_REQUIRED`, identifies its
+case and source semantic object, and includes simulation-result provenance. The topology-only
+overloads remain unchanged and do not read live operating values.
+
+Canonical source names and carried connection names are retained as source designations. They are
+not silently promoted to project-approved equipment tags or line numbers. Project-entered tags and
+stream numbers require their own provenance and review state before they can supersede those source
+designations.
 
 The adapter reuses `ProcessDiagramGraphAdapter`. It does not modify the source `ProcessSystem` or
 `ProcessModel`, and it does not change legacy `toDOT()`, `ProcessDiagramExporter`, native DEXPI 2.0,
@@ -74,3 +88,6 @@ Run the focused regression with:
 The regression verifies deterministic single- and multi-area output, immutable collections,
 unchanged Classic DOT output, distinct parallel cross-sheet connections, reciprocal pair
 cardinality, and fail-visible broken references.
+It also verifies immutable semantic snapshots, unit/case/provenance retention, rejection of
+incompletely governed simulation-result values, warning-only diagnostics for pre-existing generic
+calculation graphs, and unchanged topology-only behavior.

@@ -14,10 +14,12 @@ import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.ContentPro
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.Diagnostic;
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.Drawing;
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.OffPageConnector;
+import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.SemanticObject;
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.Sheet;
 import neqsim.process.engineering.model.EngineeringGraph;
 import neqsim.process.engineering.model.EngineeringIds;
 import neqsim.process.engineering.model.EngineeringNode;
+import neqsim.process.engineering.model.EngineeringProvenance;
 import neqsim.process.processmodel.ProcessSystem;
 import org.junit.jupiter.api.Test;
 
@@ -49,6 +51,84 @@ class ProcessDiagramDocumentSetAdapterTest {
     assertTrue(first.isValid());
     assertFalse(first.getSourceGraphFingerprint().isEmpty());
     assertThrows(UnsupportedOperationException.class, () -> first.getDrawings().add(first.getDrawings().get(0)));
+    assertThrows(UnsupportedOperationException.class, () -> first.getSemanticObjects().clear());
+  }
+
+  @Test
+  void carriesGovernedOperatingValuesAndSourceDesignationsIntoControlledSnapshot() {
+    EngineeringDiagramReferenceFixtures.SystemCase reference = EngineeringDiagramReferenceFixtures.simpleTrain();
+    ProcessSystem process = reference.getProcessSystem();
+    process.run();
+
+    EngineeringDiagramDocumentSet set = ProcessDiagramDocumentSetAdapter.fromProcessSystem(process,
+        reference.getCaseId(), "B", "PFD-10-002", "Governed operating case", ContentProfile.PFD, "NORMAL-01");
+
+    SemanticObject pressure = findSemanticObject(set, EngineeringNode.Kind.CALCULATION, "quantity", "pressure");
+    assertEquals("bara", pressure.getProperties().get("resultUnit"));
+    assertEquals("ABSOLUTE", pressure.getProperties().get("quantityBasis"));
+    assertEquals("NORMAL-01", pressure.getProperties().get("designCaseId"));
+    assertEquals("CALCULATED", pressure.getProperties().get("engineeringState"));
+    assertEquals("REVIEW_REQUIRED", pressure.getProperties().get("approvalStatus"));
+    assertEquals("SIMULATION_RESULT", pressure.getProvenance().get(0).getSourceType());
+    assertEquals("NORMAL-01", pressure.getProvenance().get(0).getDesignCaseId());
+    assertThrows(UnsupportedOperationException.class,
+        () -> pressure.getProperties().put("resultUnit", "psia"));
+
+    SemanticObject equipment = findSemanticObject(set, EngineeringNode.Kind.EQUIPMENT, "equipmentName",
+        "10-VA-001");
+    assertEquals("10-VA-001", equipment.getLabel());
+    SemanticObject connection = findSemanticObject(set, EngineeringNode.Kind.PIPE_SEGMENT, "carriedObjectName",
+        "10-FEED-001");
+    assertEquals("MATERIAL", connection.getProperties().get("connectionType"));
+    assertTrue(set.isValid());
+  }
+
+  @Test
+  void rejectsCalculatedValuesWithoutGovernanceMetadata() {
+    EngineeringGraph graph = new EngineeringGraph("INCOMPLETE-VALUE-PLANT", "A");
+    graph.addNode(new EngineeringNode("calculation:pressure", EngineeringNode.Kind.CALCULATION, "pressure",
+        "Pressure").putProperty("resultValue", Double.valueOf(42.0))
+            .addProvenance(new EngineeringProvenance("SIMULATION_RESULT", "equipment:V-001")));
+
+    EngineeringDiagramDocumentSet set = EngineeringDiagramDocumentSet.fromGraph(graph, "PFD-INCOMPLETE-001",
+        "Incomplete governed value", ContentProfile.PFD);
+
+    assertFalse(set.isValid());
+    assertTrue(hasDiagnostic(set, "DIAGRAM_DOCUMENT_INCOMPLETE_GOVERNED_VALUE"));
+  }
+
+  @Test
+  void reportsLegacyCalculationGovernanceGapsWithoutBreakingExistingDocuments() {
+    EngineeringGraph graph = new EngineeringGraph("LEGACY-CALCULATION-PLANT", "A");
+    graph.addNode(new EngineeringNode("calculation:pressure", EngineeringNode.Kind.CALCULATION, "pressure",
+        "Pressure").putProperty("resultValue", Double.valueOf(42.0)).putProperty("resultUnit", "bara")
+            .putProperty("status", "CALCULATED")
+            .addProvenance(new EngineeringProvenance("CALCULATION", "legacy-pressure")));
+
+    EngineeringDiagramDocumentSet set = EngineeringDiagramDocumentSet.fromGraph(graph, "PFD-LEGACY-001",
+        "Legacy calculation governance", ContentProfile.PFD);
+
+    assertTrue(set.isValid());
+    assertTrue(hasDiagnostic(set, "DIAGRAM_DOCUMENT_INCOMPLETE_GOVERNED_VALUE"));
+  }
+
+  @Test
+  void snapshotsNestedSemanticPropertiesWithoutSharingMutableCollections() {
+    List<String> sourceEvidence = new ArrayList<String>();
+    sourceEvidence.add("calculation:C-001");
+    EngineeringGraph graph = new EngineeringGraph("IMMUTABLE-PROPERTY-PLANT", "A");
+    graph.addNode(new EngineeringNode("equipment:V-001", EngineeringNode.Kind.EQUIPMENT, "V-001", "V-001")
+        .putProperty("evidenceReferences", sourceEvidence));
+
+    EngineeringDiagramDocumentSet set = EngineeringDiagramDocumentSet.fromGraph(graph, "PFD-IMMUTABLE-001",
+        "Immutable semantic properties", ContentProfile.PFD);
+    sourceEvidence.add("calculation:C-002");
+
+    @SuppressWarnings("unchecked")
+    List<String> snapshotEvidence = (List<String>) set.getSemanticObjects().get(0).getProperties()
+        .get("evidenceReferences");
+    assertEquals(1, snapshotEvidence.size());
+    assertThrows(UnsupportedOperationException.class, () -> snapshotEvidence.add("calculation:C-003"));
   }
 
   @Test
@@ -162,5 +242,15 @@ class ProcessDiagramDocumentSetAdapterTest {
       codes.add(diagnostic.getCode());
     }
     return codes.contains(code);
+  }
+
+  private static SemanticObject findSemanticObject(EngineeringDiagramDocumentSet set, EngineeringNode.Kind kind,
+      String property, String value) {
+    for (SemanticObject object : set.getSemanticObjects()) {
+      if (object.getKind() == kind && value.equals(object.getProperties().get(property))) {
+        return object;
+      }
+    }
+    throw new AssertionError("Missing semantic object " + kind + " with " + property + "=" + value);
   }
 }
