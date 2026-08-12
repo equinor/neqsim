@@ -94,6 +94,11 @@ provide a reproducible simple, branched, and multi-area baseline across canonica
 DEXPI where supported, Proteus compatibility, legacy DOT, and review-required P&ID proposals.
 They are regression evidence rather than named-tool qualification or approved engineering.
 
+The [engineering diagram document and sheet model](../integration/engineering-diagram-document-model.md)
+adds an immutable controlled-document view of the same canonical topology. It provides stable
+drawing/sheet identities, revision and proposal state, and reciprocal off-page references without
+changing current DEXPI, Proteus, P&ID, or Classic DOT output.
+
 ## Native DEXPI 2.0 export
 
 Save the following complete Java 8 program as `Dexpi20ExportExample.java`. It builds and runs a small process,
@@ -251,6 +256,7 @@ classification, target-system loading, or final information acceptance.
 - [DEXPI import, export, and visualization](../integration/dexpi-reader.md)
 - [DEXPI and P&ID current-master audit](../integration/dexpi-pid-current-master-audit.md)
 - [DEXPI engineering-diagram reference cases](../integration/dexpi-reference-cases.md)
+- [Engineering diagram document and sheet model](../integration/engineering-diagram-document-model.md)
 - [DEXPI 2.0 native exchange and conformance](../integration/dexpi-20-conformance.md)
 - [Standards-based DEXPI engineering generation](../integration/dexpi-engineering-generation.md)
 - [Governed P&ID design synthesis](../pid-design-synthesis.md)
