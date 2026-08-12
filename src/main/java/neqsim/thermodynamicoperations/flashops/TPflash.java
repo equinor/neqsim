@@ -1288,12 +1288,11 @@ public class TPflash extends Flash {
       }
       boolean incipientCpaAqueousTrial = system.getNumberOfPhases() == 1 && !system.doMultiPhaseCheck()
           && system.getModelName() != null && system.getModelName().contains("CPA");
-      boolean restoresCollapsedAqueousPhase =
-          !singlePhaseWaterRichMultiphaseEndpoint || candidate.hasPhaseType(PhaseType.AQUEOUS);
+      boolean restoresCollapsedAqueousPhase = !singlePhaseWaterRichMultiphaseEndpoint
+          || candidate.hasPhaseType(PhaseType.AQUEOUS);
       if (candidateConverged && restoresCollapsedAqueousPhase && candidate.getNumberOfPhases() == 2
-          && isBalancedEquilibriumCandidate(candidate)
-          && shouldAcceptWaterRichCandidate(candidate, referenceGibbsEnergy, materialBalanceInvalid,
-              incipientCpaAqueousTrial)) {
+          && isBalancedEquilibriumCandidate(candidate) && shouldAcceptWaterRichCandidate(candidate,
+              referenceGibbsEnergy, materialBalanceInvalid, incipientCpaAqueousTrial)) {
         if (gasAqueousMultiphaseEndpoint) {
           runAcceptedOrdinaryWaterRichFallback(candidate);
         } else {
