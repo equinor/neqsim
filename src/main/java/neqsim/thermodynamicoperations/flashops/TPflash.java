@@ -23,14 +23,14 @@ public class TPflash extends Flash {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(TPflash.class);
-  /** Local lower-temperature seed step for legacy multiphase endpoint rescue. */
+  /** Local lower-temperature seed step for the rare hydrocarbon endpoint continuation rescue. */
   private static final double MULTIPHASE_RESCUE_TEMPERATURE_STEP = 2.0;
   /** Lower sum(zK) bound for a general gas endpoint rescue. */
   private static final double MULTIPHASE_RESCUE_GAS_SUM_Z_K_LOWER_LIMIT = 0.95;
   /** Upper sum(zK) bound for a general gas endpoint rescue. */
   private static final double MULTIPHASE_RESCUE_GAS_SUM_Z_K_UPPER_LIMIT = 1.05;
   /** Lower sum(zK) bound for a screened asymmetric-mixture gas endpoint rescue. */
-  private static final double MULTIPHASE_RESCUE_GAS_ASYMMETRIC_SUM_Z_K_LOWER_LIMIT = 1.05;
+  private static final double MULTIPHASE_RESCUE_GAS_ASYMMETRIC_SUM_Z_K_LOWER_LIMIT = 0.85;
   /** Lower sum(z/K) bound for a general gas endpoint rescue. */
   private static final double MULTIPHASE_RESCUE_GAS_SUM_Z_OVER_K_LOWER_LIMIT = 1.05;
   /** Lower sum(z/K) bound for a screened asymmetric-mixture gas endpoint rescue. */
@@ -59,6 +59,8 @@ public class TPflash extends Flash {
   private static final double LIQUID_LIQUID_CRITICAL_TEMPERATURE_MARGIN = 115.0;
   /** Minimum critical-temperature margin above the flash temperature for a single-endpoint retry. */
   private static final double MULTIPHASE_ENDPOINT_CRITICAL_TEMPERATURE_MARGIN = 80.0;
+  /** Minimum gas-phase V/B ratio that justifies a second stability minimum search. */
+  private static final double METASTABLE_GAS_VOLUME_OVER_B_LIMIT = 4.0;
   /** Minimum water feed fraction for ordinary water-rich endpoint refinement. */
   private static final double WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT = 0.01;
   /** Largest incipient secondary-phase fraction eligible for trace-water phase-selection retry. */
@@ -148,6 +150,8 @@ public class TPflash extends Flash {
   private PhaseType referenceSinglePhaseType = null;
   /** True after the bounded water-bearing ordinary-flash retry has been attempted in this run. */
   private boolean waterBearingRescueAttempted = false;
+  /** Cold initial state retained only for a screened asymmetric multiphase endpoint retry. */
+  private transient SystemInterface multiphaseEndpointRescueSeed;
   /** Prevents a bounded water-rich cross-algorithm fallback from recursively starting another fallback. */
   private boolean waterRichCrossAlgorithmFallbackAllowed = true;
   /** Reusable rollback state for GDEM acceleration; transient because it contains no thermodynamic state. */
@@ -614,6 +618,7 @@ public class TPflash extends Flash {
     try {
       runInternal();
     } finally {
+      multiphaseEndpointRescueSeed = null;
       if (disableWarmStart) {
         neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarmStart);
       }
@@ -643,6 +648,7 @@ public class TPflash extends Flash {
     double minimumGibbsEnergy = 0;
 
     system.init(0);
+    prepareMultiphaseEndpointRescueSeed();
     if (gammaPhiModel != null) {
       gammaPhiModel.prepareGammaPhiFlash();
     }
@@ -880,6 +886,8 @@ public class TPflash extends Flash {
         refineInvalidNeutralTwoPhaseEndpoint();
         normalizeUnchangedStableSinglePhaseEndpoint(stableSinglePhaseType, stableSinglePhaseZ,
             stableSinglePhaseComposition);
+        rescueSinglePhaseMultiphaseEndpoint();
+        normalizeSourGasSinglePhaseEndpoint();
         return;
       }
     }
@@ -1026,11 +1034,11 @@ public class TPflash extends Flash {
           + gammaPhiModel.getGammaPhiFlashDiagnostics(deviation, phaseFractionMinimumLimit));
     }
     if (system.doMultiPhaseCheck()) {
-      BalancedTwoPhaseState balancedWaterBearingReference = balancedWaterBearingReferenceBeforeMultiphaseCheck();
+      BalancedTwoPhaseState balancedReference = balancedReferenceBeforeMultiphaseCheck();
       TPmultiflash operation = new TPmultiflash(system, system.doSolidPhaseCheck());
       operation.run();
-      restoreBalancedAqueousReferenceAfterInvalidPhaseRemoval(balancedWaterBearingReference);
-      restoreLowerGibbsReferenceAfterSinglePhaseCollapse(balancedWaterBearingReference);
+      restoreBalancedAqueousReferenceAfterInvalidPhaseRemoval(balancedReference);
+      restoreLowerGibbsReferenceAfterSinglePhaseCollapse(balancedReference);
       rescueSinglePhaseWaterBearingEndpoint();
       rescueSinglePhaseMultiphaseEndpointLegacy();
       rescueSinglePhaseMultiphaseEndpoint();
@@ -1103,6 +1111,8 @@ public class TPflash extends Flash {
     refineInvalidAqueousTwoPhaseEndpoint();
     refineInvalidNeutralGasLiquidTwoPhaseEndpointLegacy();
     refineInvalidNeutralTwoPhaseEndpoint();
+    rescueSinglePhaseMultiphaseEndpoint();
+    normalizeSourGasSinglePhaseEndpoint();
 
     // Final chemical equilibrium call after all phase reordering
     // This ensures chemical equilibrium is solved on the final phase configuration
@@ -1249,14 +1259,15 @@ public class TPflash extends Flash {
       }
       hasGasPhase |= phaseType == PhaseType.GAS;
     }
-    if (!hasPotentialLiquidLiquidInstability()) {
-      return;
-    }
-    if (system.getNumberOfPhases() == 1 && !hasPotentialMultiphaseEndpoint(system.getPhase(0).getType())) {
-      return;
-    }
-    if (system.getNumberOfPhases() == 2 && !hasGasPhase) {
-      return;
+    if (system.getNumberOfPhases() == 1) {
+      if (!hasPotentialAsymmetricNeutralInstability(MULTIPHASE_ENDPOINT_CRITICAL_TEMPERATURE_MARGIN)
+          || !hasPotentialMultiphaseEndpoint(system.getPhase(0).getType())) {
+        return;
+      }
+    } else {
+      if (!hasGasPhase || !hasPotentialLiquidLiquidInstability() || !hasPotentialCompetingNeutralMinimum()) {
+        return;
+      }
     }
 
     system.init(1);
@@ -1291,6 +1302,40 @@ public class TPflash extends Flash {
     } finally {
       MULTIPHASE_RESCUE_ACTIVE.set(Boolean.FALSE);
     }
+  }
+
+  /**
+   * Screens an already-balanced gas/liquid split for a competing liquid-like minimum.
+   *
+   * <p>
+   * Michelsen stability analysis is valuable here only when the ordinary flash has selected a very dilute vapor root
+   * far from the liquid root. The inexpensive V/B separation check avoids repeating a complete stability-seeded flash
+   * for the common, already-converged gas/liquid result. It is only a performance screen; the candidate stability,
+   * material-balance, fugacity, and Gibbs checks remain authoritative.
+   * </p>
+   *
+   * @return true when a second stability minimum is plausible
+   */
+  private boolean hasPotentialCompetingNeutralMinimum() {
+    if (system.getNumberOfPhases() != 2) {
+      return false;
+    }
+    double gasVolumeOverB = Double.NaN;
+    double liquidVolumeOverB = Double.NaN;
+    for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
+      PhaseInterface phase = system.getPhase(phaseIndex);
+      double volumeOverB = phase.getVolume() / phase.getB();
+      if (!Double.isFinite(volumeOverB)) {
+        return true;
+      }
+      if (phase.getType() == PhaseType.GAS) {
+        gasVolumeOverB = volumeOverB;
+      } else if (phase.getType() == PhaseType.OIL || phase.getType() == PhaseType.LIQUID) {
+        liquidVolumeOverB = volumeOverB;
+      }
+    }
+    return Double.isFinite(gasVolumeOverB) && Double.isFinite(liquidVolumeOverB)
+        && gasVolumeOverB > METASTABLE_GAS_VOLUME_OVER_B_LIMIT && liquidVolumeOverB < 1.75;
   }
 
   /**
@@ -1810,6 +1855,8 @@ public class TPflash extends Flash {
     }
 
     BalancedTwoPhaseState referenceState = new BalancedTwoPhaseState(system);
+    boolean referenceMaterialBalanceInvalid = !Double.isFinite(referenceMaterialResidual)
+        || referenceMaterialResidual > WATER_RICH_MATERIAL_BALANCE_TOLERANCE;
     boolean referenceWasInvalid = !Double.isFinite(referenceMaterialResidual)
         || referenceMaterialResidual > WATER_RICH_MATERIAL_BALANCE_TOLERANCE
         || !Double.isFinite(referenceFugacityResidual) || referenceFugacityResidual >= PHASE_ROOT_EQUILIBRIUM_TOLERANCE;
@@ -1849,7 +1896,8 @@ public class TPflash extends Flash {
       candidate.init(1);
       double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceState.gibbsEnergy) * 1.0e-8);
       if (isNeutralFluidCandidate(candidate) && isBalancedEquilibriumCandidate(candidate)
-          && (referenceWasInvalid || candidate.getGibbsEnergy() < referenceState.gibbsEnergy - gibbsTolerance)) {
+          && (referenceMaterialBalanceInvalid
+              || candidate.getGibbsEnergy() < referenceState.gibbsEnergy - gibbsTolerance)) {
         copyNeutralFlashStatePreservingRoots(candidate);
       }
     } catch (Exception ex) {
@@ -1900,17 +1948,17 @@ public class TPflash extends Flash {
    * A converged phase may expose a gas/oil label while its lower-Gibbs cubic root is stored separately by the system.
    * {@link #copyFlashStateFrom(SystemInterface)} copies the public label and can therefore reinitialize the phase on a
    * different root. The reciprocal fallback infers each selected root from the candidate compressibility factor and
-   * reapplies the public label only after initialization.
+   * then lets the final EOS initialization assign the public gas/oil label deterministically from V/B. Retaining a
+   * stale candidate label here can otherwise make ordinary and multiphase flashes report different phase types for
+   * numerically identical states.
    * </p>
    *
    * @param source accepted neutral two-phase candidate
    */
   private void copyNeutralFlashStatePreservingRoots(SystemInterface source) {
     int numberOfPhases = source.getNumberOfPhases();
-    PhaseType[] publicTypes = new PhaseType[numberOfPhases];
     PhaseType[] rootTypes = new PhaseType[numberOfPhases];
     for (int phaseIndex = 0; phaseIndex < numberOfPhases; phaseIndex++) {
-      publicTypes[phaseIndex] = source.getPhase(phaseIndex).getType();
       rootTypes[phaseIndex] = inferSelectedCubicRoot(source, phaseIndex);
     }
     copyFlashStateFrom(source);
@@ -1918,9 +1966,6 @@ public class TPflash extends Flash {
       system.setPhaseType(phaseIndex, rootTypes[phaseIndex]);
     }
     system.init(1);
-    for (int phaseIndex = 0; phaseIndex < numberOfPhases; phaseIndex++) {
-      system.getPhase(phaseIndex).setType(publicTypes[phaseIndex]);
-    }
   }
 
   /**
@@ -2024,6 +2069,24 @@ public class TPflash extends Flash {
     }
     return carbonDioxideFraction >= 0.05 && hydrogenSulfideFraction >= 0.20
         && carbonDioxideFraction + hydrogenSulfideFraction >= 0.30 && hydrocarbonFraction > 0.0;
+  }
+
+  /**
+   * Restores exact material closure for a final single-phase sour-gas endpoint.
+   *
+   * <p>
+   * A collapsed trial phase can leave its incipient composition and a beta infinitesimally below unity in the active
+   * phase slot. For a one-phase result the composition is, by definition, the overall feed. Resetting it here is an
+   * allocation-free finalization step and leaves the already-selected cubic root unchanged.
+   * </p>
+   */
+  private void normalizeSourGasSinglePhaseEndpoint() {
+    if (!isSourGasConsistencyRefinementCase() || system.getNumberOfPhases() != 1) {
+      return;
+    }
+    system.setBeta(0, 1.0);
+    resetSinglePhaseCompositionToFeed();
+    system.init(1, 0);
   }
 
   /**
@@ -2155,13 +2218,38 @@ public class TPflash extends Flash {
   }
 
   /**
+   * Retains the cold pre-iteration state for a narrowly screened multiphase endpoint retry.
+   *
+   * <p>
+   * Once a multiphase stability trial has collapsed a phase, cloning that endpoint also copies its local cubic-root and
+   * phase-storage history. A later ordinary retry can then reproduce the same homogeneous minimum even though a cold
+   * ordinary flash finds a lower-Gibbs split. The seed is therefore captured before the two-phase iteration, but only
+   * for neutral asymmetric mixtures whose deterministic Wilson endpoint test already justifies a possible retry. It is
+   * consumed at most once and cleared when the operation returns. Strong hydrocarbon Wilson splits retain the existing
+   * nearby-temperature continuation instead, so normal flashes allocate nothing.
+   * </p>
+   */
+  private void prepareMultiphaseEndpointRescueSeed() {
+    multiphaseEndpointRescueSeed = null;
+    if (!system.doMultiPhaseCheck() || system.isChemicalSystem() || system.hasIons() || solidCheck
+        || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck() || directGammaPhiModel != null
+        || hybridEosGeFlashModel != null || system.getPhase(0).getNumberOfComponents() <= 1
+        || !hasPotentialAsymmetricNeutralInstability(MULTIPHASE_ENDPOINT_CRITICAL_TEMPERATURE_MARGIN)
+        || !(hasPotentialMultiphaseEndpoint(PhaseType.GAS) || hasPotentialMultiphaseEndpoint(PhaseType.LIQUID))) {
+      return;
+    }
+    multiphaseEndpointRescueSeed = system.clone();
+  }
+
+  /**
    * Retries a single-phase hydrocarbon endpoint through the ordinary two-phase path.
    *
    * <p>
    * A multiphase cleanup can collapse a valid gas/liquid split even though Wilson K-values satisfy the guarded
    * Rachford-Rice endpoint tests. This guarded retry is only used when the user has explicitly enabled multiphase
-   * checking and those inexpensive tests indicate a split. A single ordinary flash is sufficient and avoids the two
-   * nearby-temperature multiphase flashes previously needed by this fallback.
+   * checking and those inexpensive tests indicate a split. A screened cold seed avoids reusing cubic-root history from
+   * a collapsed asymmetric endpoint, where a single ordinary flash is sufficient. A strong hydrocarbon Wilson split
+   * retains the established nearby-temperature continuation only when the cheaper ordinary retry fails.
    * </p>
    */
   private void rescueSinglePhaseMultiphaseEndpoint() {
@@ -2172,16 +2260,50 @@ public class TPflash extends Flash {
       return;
     }
 
+    normalizeActivePhaseFractions();
     system.init(1);
     double referenceGibbsEnergy = system.getGibbsEnergy();
-    SystemInterface candidate = system.clone();
+    boolean hasColdSeed = multiphaseEndpointRescueSeed != null;
+    SystemInterface candidate = hasColdSeed ? multiphaseEndpointRescueSeed : system.clone();
+    multiphaseEndpointRescueSeed = null;
     MULTIPHASE_RESCUE_ACTIVE.set(Boolean.TRUE);
     try {
+      if (!hasColdSeed && hasPotentialAsymmetricNeutralInstability(MULTIPHASE_ENDPOINT_CRITICAL_TEMPERATURE_MARGIN)) {
+        resetNeutralCandidateToFeed(candidate);
+      }
       candidate.setMultiPhaseCheck(false);
       candidate.setEnhancedMultiPhaseCheck(false);
       new TPflash(candidate, candidate.doSolidPhaseCheck()).run();
       if (isLowerGibbsMultiphaseCandidate(candidate, referenceGibbsEnergy)) {
         copyFlashStateFrom(candidate);
+        return;
+      }
+      if (hasPotentialAsymmetricNeutralInstability(MULTIPHASE_ENDPOINT_CRITICAL_TEMPERATURE_MARGIN)) {
+        return;
+      }
+
+      double targetTemperature = system.getTemperature();
+      double targetPressure = system.getPressure();
+      candidate = system.clone();
+      candidate.setMultiPhaseCheck(true);
+      candidate.setEnhancedMultiPhaseCheck(false);
+      boolean previousWarmStart = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+      try {
+        neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+        candidate.setTemperature(Math.max(1.0, targetTemperature - MULTIPHASE_RESCUE_TEMPERATURE_STEP), "K");
+        candidate.setPressure(targetPressure, "bara");
+        new TPflash(candidate, candidate.doSolidPhaseCheck()).run();
+        if (candidate.getNumberOfPhases() < 2) {
+          return;
+        }
+        candidate.setTemperature(targetTemperature, "K");
+        candidate.setPressure(targetPressure, "bara");
+        new TPflash(candidate, candidate.doSolidPhaseCheck()).run();
+        if (isLowerGibbsMultiphaseCandidate(candidate, referenceGibbsEnergy)) {
+          copyFlashStateFrom(candidate);
+        }
+      } finally {
+        neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(previousWarmStart);
       }
     } catch (Exception ex) {
       logger.debug("Multiphase endpoint rescue failed: {}", ex.getMessage());
@@ -2346,11 +2468,13 @@ public class TPflash extends Flash {
           && sumZOverK > MULTIPHASE_RESCUE_GAS_SUM_Z_OVER_K_LOWER_LIMIT
           && sumZOverK < MULTIPHASE_RESCUE_GAS_SUM_Z_OVER_K_UPPER_LIMIT;
       boolean asymmetricNearSplit = sumZK > MULTIPHASE_RESCUE_GAS_ASYMMETRIC_SUM_Z_K_LOWER_LIMIT
-          && sumZOverK > MULTIPHASE_RESCUE_GAS_ASYMMETRIC_SUM_Z_OVER_K_LOWER_LIMIT
-          && sumZOverK < MULTIPHASE_RESCUE_GAS_SUM_Z_OVER_K_UPPER_LIMIT;
+          && sumZOverK > MULTIPHASE_RESCUE_GAS_ASYMMETRIC_SUM_Z_OVER_K_LOWER_LIMIT;
       boolean stronglyAsymmetric = sumZOverK > MULTIPHASE_RESCUE_LIQUID_SUM_Z_OVER_K_LIMIT
           && maxAbsLogK > MULTIPHASE_RESCUE_LIQUID_LOG_K_SPREAD_LIMIT;
-      return generalNearSplit || (asymmetricNearSplit || stronglyAsymmetric)
+      boolean strongWilsonSplit = sumZK > MULTIPHASE_RESCUE_GAS_SUM_Z_K_UPPER_LIMIT
+          && sumZOverK > MULTIPHASE_RESCUE_GAS_SUM_Z_OVER_K_UPPER_LIMIT
+          && maxAbsLogK > MULTIPHASE_RESCUE_LIQUID_LOG_K_SPREAD_LIMIT;
+      return generalNearSplit || strongWilsonSplit || (asymmetricNearSplit || stronglyAsymmetric)
           && hasPotentialAsymmetricNeutralInstability(MULTIPHASE_ENDPOINT_CRITICAL_TEMPERATURE_MARGIN);
     }
     boolean nearSplit = sumZK > MULTIPHASE_RESCUE_LIQUID_NEAR_SPLIT_SUM_Z_K_LIMIT
@@ -2492,20 +2616,24 @@ public class TPflash extends Flash {
   }
 
   /**
-   * Captures a feasible water-bearing equilibrium before multiphase phase-appearance trials.
+   * Captures a feasible equilibrium before multiphase phase-appearance trials.
    *
    * <p>
-   * The compact snapshot is restricted to neutral, exactly-two-phase endpoints that contain an aqueous phase or at
-   * least one mole percent water and already satisfy the strict feasibility and equilibrium checks. It avoids a full
-   * system clone, and dry flashes allocate no snapshot.
+   * The compact snapshot is restricted to neutral, exactly-two-phase endpoints that already satisfy the strict
+   * feasibility and equilibrium checks. Water-bearing states are retained for the existing active-set recovery. Dry
+   * states are retained only for the inexpensive asymmetric-mixture screen, where a multiphase stability pass can
+   * otherwise collapse a lower-Gibbs liquid-liquid split. Common dry flashes allocate no snapshot.
    * </p>
    *
    * @return balanced state, or {@code null} when recovery is not applicable
    */
-  private BalancedTwoPhaseState balancedWaterBearingReferenceBeforeMultiphaseCheck() {
+  private BalancedTwoPhaseState balancedReferenceBeforeMultiphaseCheck() {
     if (system.getNumberOfPhases() != 2 || system.isChemicalSystem() || system.hasIons() || solidCheck
-        || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck() || !system.hasPhaseType(PhaseType.AQUEOUS)
-        || !isBalancedEquilibriumCandidate(system)) {
+        || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck() || !isBalancedEquilibriumCandidate(system)) {
+      return null;
+    }
+    if (!system.hasPhaseType(PhaseType.AQUEOUS)
+        && !hasPotentialAsymmetricNeutralInstability(MULTIPHASE_ENDPOINT_CRITICAL_TEMPERATURE_MARGIN)) {
       return null;
     }
     return new BalancedTwoPhaseState(system);
@@ -2540,9 +2668,9 @@ public class TPflash extends Flash {
    * <p>
    * A successful ordinary two-phase flash is already a feasible phase-split candidate. If the subsequent multiphase
    * stability path removes a phase and returns a one-phase state with higher extensive Gibbs energy, the collapse
-   * cannot represent the stable minimum. This gate is limited to neutral water-bearing systems and requires the
-   * ordinary reference to pass the strict material-balance, composition, phase-fraction, and fugacity checks before it
-   * is captured.
+   * cannot represent the stable minimum. This gate is limited to neutral water-bearing or screened asymmetric systems
+   * and requires the ordinary reference to pass the strict material-balance, composition, phase-fraction, and fugacity
+   * checks before it is captured.
    * </p>
    *
    * @param balancedReference feasible pre-trial state, or {@code null} when recovery is not applicable

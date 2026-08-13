@@ -15,8 +15,9 @@ class TPflashSourGasConsistencyTest {
 
   @Test
   void ordinaryAndMultiphaseFlashReachSameStableOneOrTwoPhaseState() {
-    double[][] conditions = { { 145.0, 10.98 }, { 170.0, 20.96 }, { 200.0, 50.90 }, { 220.0, 100.80 },
-        { 250.0, 105.79 }, { 280.0, 120.76 } };
+    double[][] conditions = { { 145.0, 10.98 }, { 170.0, 20.96 }, { 170.0, 380.24 }, { 200.0, 50.90 },
+        { 210.0, 145.71 }, { 220.0, 100.80 }, { 225.0, 105.79 }, { 250.0, 105.79 }, { 255.0, 105.79 },
+        { 270.0, 120.76 }, { 280.0, 120.76 } };
 
     for (double[] condition : conditions) {
       SystemInterface ordinary = flash(condition[0], condition[1], false, false);
