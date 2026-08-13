@@ -8,13 +8,14 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Rigorous Non-Empirical Kinetic Reactor for trace impurity reactions in CO2 transport systems (Pipelines and Ship Transport).
+ * Rigorous Non-Empirical Kinetic Reactor for trace impurity reactions in CO2 transport systems (Pipelines and Ship
+ * Transport).
  *
  * <p>
  * Replaces empirical curve-fitting and static equilibrium models with a pure physical differential kinetics engine.
- * Incorporates H2S thiyl/hydroperoxyl radical chain co-catalysis acceleration (R3b):
- * Without H2S, SO2 + NO2 + O2 + H2O at 25 bar, -25 °C has no significant reaction for 10 hr (Ea3a = 36.0 kJ/mol).
- * When H2S is introduced, H2S oxidation triggers R3b radical chain propagation (Ea3b = 15.0 kJ/mol) -> strong acid formation.
+ * Incorporates H2S thiyl/hydroperoxyl radical chain co-catalysis acceleration (R3b): Without H2S, SO2 + NO2 + O2 + H2O
+ * at 25 bar, -25 °C has no significant reaction for 10 hr (Ea3a = 36.0 kJ/mol). When H2S is introduced, H2S oxidation
+ * triggers R3b radical chain propagation (Ea3b = 15.0 kJ/mol) -> strong acid formation.
  * </p>
  *
  * <h2>Reactions Modeled</h2>
@@ -22,7 +23,8 @@ import neqsim.thermo.system.SystemInterface;
  * <li><b>R1:</b> SO2 + 0.5 O2 + H2O &lt;=&gt; H2SO4 (Direct SO2 oxidation, Ea1 = 45.0 kJ/mol)</li>
  * <li><b>R2:</b> H2S + 3 NO2 &lt;=&gt; SO2 + H2O + 3 NO (H2S oxidation by NO2, Ea2 = 28.0 kJ/mol)</li>
  * <li><b>R3a:</b> SO2 + NO2 + H2O &lt;=&gt; NO + H2SO4 (Base NO2 oxidation without H2S, Ea3a = 36.0 kJ/mol)</li>
- * <li><b>R3b:</b> SO2 + H2S + 0.5 O2 + H2O -&gt; H2SO4 + H2S (Radical chain accelerated oxidation, Ea3b = 15.0 kJ/mol)</li>
+ * <li><b>R3b:</b> SO2 + H2S + 0.5 O2 + H2O -&gt; H2SO4 + H2S (Radical chain accelerated oxidation, Ea3b = 15.0
+ * kJ/mol)</li>
  * <li><b>R4:</b> 2 NO + O2 &lt;=&gt; 2 NO2 (Termolecular NO oxidation, negative activation energy)</li>
  * <li><b>R5:</b> 3 NO2 + H2O &lt;=&gt; 2 HNO3 + NO (Reversible NO2 hydrolysis, Keq5 = exp(-Delta G5/RT))</li>
  * <li><b>R6:</b> H2S + 1.5 O2 &lt;=&gt; SO2 + H2O (Accelerated H2S oxidation, Ea6 = 25.0 kJ/mol)</li>
@@ -43,65 +45,73 @@ public class CO2ImpurityKineticReactor extends TwoPortEquipment {
   private boolean isShipMode = false;
   private String material = "carbon_steel"; // default: carbon_steel / magnetite
 
-    // Reactor Geometry Parameters (Defaults: V = 300 mL, D = 6.5 cm, flow = 50 g/h)
-    private double diameter_cm = 6.50;
-    private double volume_ml = 300.0;
-    private double mass_flow_g_h = 50.0;
+  // Reactor Geometry Parameters (Defaults: V = 300 mL, D = 6.5 cm, flow = 50 g/h)
+  private double diameter_cm = 6.50;
+  private double volume_ml = 300.0;
+  private double mass_flow_g_h = 50.0;
 
-    // Settable reaction parameters
-    private double A_R3b = 2.13e8;
-    private double Ea_R3b = 15000.0;
-    private double A_R2 = 5.0e7;
-    private double Ea_R2 = 28000.0;
+  // Settable reaction parameters
+  private double A_R3b = 2.13e8;
+  private double Ea_R3b = 15000.0;
+  private double A_R2 = 5.0e7;
+  private double Ea_R2 = 28000.0;
 
-    public void setReactionConstants(String reactionId, double A_forward, double Ea_forward_kJ_mol) {
-        String clean = reactionId.toLowerCase();
-        if (clean.contains("r3b") || clean.contains("so2 + h2s")) {
-            this.A_R3b = A_forward;
-            this.Ea_R3b = Ea_forward_kJ_mol * 1000.0;
-        } else if (clean.contains("r2") || clean.contains("h2s + 3 no2")) {
-            this.A_R2 = A_forward;
-            this.Ea_R2 = Ea_forward_kJ_mol * 1000.0;
-        }
+  public void setReactionConstants(String reactionId, double A_forward, double Ea_forward_kJ_mol) {
+    String clean = reactionId.toLowerCase();
+    if (clean.contains("r3b") || clean.contains("so2 + h2s")) {
+      this.A_R3b = A_forward;
+      this.Ea_R3b = Ea_forward_kJ_mol * 1000.0;
+    } else if (clean.contains("r2") || clean.contains("h2s + 3 no2")) {
+      this.A_R2 = A_forward;
+      this.Ea_R2 = Ea_forward_kJ_mol * 1000.0;
     }
+  }
 
-    public void setReactorGeometry(double diameter_cm, double volume_ml, double mass_flow_g_h) {
-        this.diameter_cm = diameter_cm;
-        this.volume_ml = volume_ml;
-        this.mass_flow_g_h = mass_flow_g_h;
-    }
+  public void setReactorGeometry(double diameter_cm, double volume_ml, double mass_flow_g_h) {
+    this.diameter_cm = diameter_cm;
+    this.volume_ml = volume_ml;
+    this.mass_flow_g_h = mass_flow_g_h;
+  }
 
-    public String generateReactorReport(double T_kelvin, double P_bar) {
-        double V_m3 = volume_ml * 1e-6;
-        double D_m = diameter_cm * 1e-2;
-        double A_cross_cm2 = Math.PI * Math.pow(diameter_cm, 2) / 4.0;
-        double A_cross_m2 = A_cross_cm2 * 1e-4;
-        double L_cm = volume_ml / A_cross_cm2;
-        double L_m = L_cm * 1e-2;
+  public String generateReactorReport(double T_kelvin, double P_bar) {
+    double V_m3 = volume_ml * 1e-6;
+    double D_m = diameter_cm * 1e-2;
+    double A_cross_cm2 = Math.PI * Math.pow(diameter_cm, 2) / 4.0;
+    double A_cross_m2 = A_cross_cm2 * 1e-4;
+    double L_cm = volume_ml / A_cross_cm2;
+    double L_m = L_cm * 1e-2;
 
-        double rho_kg_m3 = (P_bar > 20.0) ? 1057.72 : 44.23;
-        double rho_m = rho_kg_m3 / 44.0095;
-        double rho_g_ml = rho_kg_m3 * 1e-3;
+    double rho_kg_m3 = (P_bar > 20.0) ? 1057.72 : 44.23;
+    double rho_m = rho_kg_m3 / 44.0095;
+    double rho_g_ml = rho_kg_m3 * 1e-3;
 
-        double m_reactor_g = volume_ml * rho_g_ml;
-        double tau_hours = m_reactor_g / mass_flow_g_h;
-        double tau_sec = tau_hours * 3600.0;
+    double m_reactor_g = volume_ml * rho_g_ml;
+    double tau_hours = m_reactor_g / mass_flow_g_h;
+    double tau_sec = tau_hours * 3600.0;
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("1. Reactor Geometry & Length (L) Derivation\n");
-        sb.append(String.format("Target Volume (V): %.1f mL = %.1f cm3 = %.1e m3\n", volume_ml, volume_ml, V_m3));
-        sb.append(String.format("Inner Diameter (D): %.2f cm = %.4f m\n", diameter_cm, D_m));
-        sb.append(String.format("Cross-Sectional Area (A_cross): A_cross = pi * D^2 / 4 = pi * (%.2f cm)^2 / 4 = %.4f cm2 (%.5e m2)\n", diameter_cm, A_cross_cm2, A_cross_m2));
-        sb.append(String.format("Calculated Reactor Length (L): L = V / A_cross = %.1f cm3 / %.4f cm2 = %.4f cm (%.6f m)\n\n", volume_ml, A_cross_cm2, L_cm, L_m));
-        
-        sb.append(String.format("2. Hydrodynamic Residence Time (tau) at %.1f bar, %.1f°C\n", P_bar, T_kelvin - 273.15));
-        sb.append(String.format("Fluid Density from SRK EOS: CO2 density rho = %.2f kg/m3 (rho_m = %.4f kmol/m3).\n", rho_kg_m3, rho_m));
-        sb.append(String.format("Liquid Mass Inventory: m_reactor = %.1f mL * %.5f g/mL = %.2f grams of CO2.\n", volume_ml, rho_g_ml, m_reactor_g));
-        sb.append(String.format("Mass Flow Rate (m_dot): %.1f g/h.\n", mass_flow_g_h));
-        sb.append(String.format("CSTR Residence Time (tau): tau = m_reactor / m_dot = %.2f g / %.1f g/h = %.4f HOURS (%.1f seconds)\n", m_reactor_g, mass_flow_g_h, tau_hours, tau_sec));
+    StringBuilder sb = new StringBuilder();
+    sb.append("1. Reactor Geometry & Length (L) Derivation\n");
+    sb.append(String.format("Target Volume (V): %.1f mL = %.1f cm3 = %.1e m3\n", volume_ml, volume_ml, V_m3));
+    sb.append(String.format("Inner Diameter (D): %.2f cm = %.4f m\n", diameter_cm, D_m));
+    sb.append(String.format(
+        "Cross-Sectional Area (A_cross): A_cross = pi * D^2 / 4 = pi * (%.2f cm)^2 / 4 = %.4f cm2 (%.5e m2)\n",
+        diameter_cm, A_cross_cm2, A_cross_m2));
+    sb.append(
+        String.format("Calculated Reactor Length (L): L = V / A_cross = %.1f cm3 / %.4f cm2 = %.4f cm (%.6f m)\n\n",
+            volume_ml, A_cross_cm2, L_cm, L_m));
 
-        return sb.toString();
-    }
+    sb.append(String.format("2. Hydrodynamic Residence Time (tau) at %.1f bar, %.1f°C\n", P_bar, T_kelvin - 273.15));
+    sb.append(String.format("Fluid Density from SRK EOS: CO2 density rho = %.2f kg/m3 (rho_m = %.4f kmol/m3).\n",
+        rho_kg_m3, rho_m));
+    sb.append(String.format("Liquid Mass Inventory: m_reactor = %.1f mL * %.5f g/mL = %.2f grams of CO2.\n", volume_ml,
+        rho_g_ml, m_reactor_g));
+    sb.append(String.format("Mass Flow Rate (m_dot): %.1f g/h.\n", mass_flow_g_h));
+    sb.append(String.format(
+        "CSTR Residence Time (tau): tau = m_reactor / m_dot = %.2f g / %.1f g/h = %.4f HOURS (%.1f seconds)\n",
+        m_reactor_g, mass_flow_g_h, tau_hours, tau_sec));
+
+    return sb.toString();
+  }
 
   public void setMaterial(String materialName) {
     if (materialName != null) {
@@ -184,8 +194,8 @@ public class CO2ImpurityKineticReactor extends TwoPortEquipment {
     double rho_kg_m3 = outletSystem.getDensity(); // kg/m3
     double rho_m = rho_kg_m3 / 44.0095; // kmol/m3
 
-    logger.info("Running CO2ImpurityKineticReactor '{}' at T={} K, P={} bar, Density={} kmol/m3",
-        getName(), T_kelvin, P_bar, rho_m);
+    logger.info("Running CO2ImpurityKineticReactor '{}' at T={} K, P={} bar, Density={} kmol/m3", getName(), T_kelvin,
+        P_bar, rho_m);
 
     double R_GAS = 8.31446;
 
@@ -199,10 +209,10 @@ public class CO2ImpurityKineticReactor extends TwoPortEquipment {
     // Pure Arrhenius Rate Laws k(T) = A * exp(-Ea / RT)
     double k1_f = 1.0e4 * Math.exp(-45000.0 / (R_GAS * T_kelvin));
     double k2_f = 5.0e7 * Math.exp(-28000.0 / (R_GAS * T_kelvin));
-    
+
     // R3a: Base NO2-catalyzed rate without H2S (Calibrated 2.5x slower: Ea3a = 26.0 kJ/mol, A3a = 1.40e6)
     double k3a_f = 1.4e6 * Math.exp(-26000.0 / (R_GAS * T_kelvin));
-    
+
     // R3b: Radical chain accelerated rate when H2S is present (Ea3b = 15.0 kJ/mol)
     double k3b_f = 2.13e8 * Math.exp(-15000.0 / (R_GAS * T_kelvin));
 
@@ -213,7 +223,8 @@ public class CO2ImpurityKineticReactor extends TwoPortEquipment {
 
     double k5_r = k5_f / Keq5;
 
-    logger.info("CO2ImpurityKineticReactor rate constants evaluated: k1_f={}, k2_f={}, k3a_f={}, k3b_f={}, k4_f={}, k5_f={}, k6_f={}, k7_f={}",
+    logger.info(
+        "CO2ImpurityKineticReactor rate constants evaluated: k1_f={}, k2_f={}, k3a_f={}, k3b_f={}, k4_f={}, k5_f={}, k6_f={}, k7_f={}",
         k1_f, k2_f, k3a_f, k3b_f, k4_f, k5_f, k6_f, k7_f);
 
     if (getOutletStream() != null) {

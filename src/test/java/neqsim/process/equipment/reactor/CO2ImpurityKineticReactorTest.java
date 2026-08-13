@@ -11,8 +11,8 @@ import neqsim.thermo.system.SystemSrkEos;
 /**
  * JUnit test suite for CO2ImpurityKineticReactor.
  *
- * Checks values, equipment execution, stream properties, and kinetic reactor performance
- * against experimental benchmark datasets.
+ * Checks values, equipment execution, stream properties, and kinetic reactor performance against experimental benchmark
+ * datasets.
  *
  * @author NeqSim Team / Antigravity
  */

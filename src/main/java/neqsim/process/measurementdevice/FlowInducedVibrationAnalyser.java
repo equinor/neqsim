@@ -30,6 +30,17 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
       "Flexible" };
 
   /**
+   * Reference viscosity used by the Energy Institute fluid-viscosity factor for GVF &gt; 0.99, in centipoise.
+   *
+   * <p>
+   * The dry-gas branch of F_VF is the square root of the fluid viscosity relative to that of water (1 cP).
+   * {@code PipeBeggsAndBrills.getSegmentMixtureViscosity(int)} already returns cP, so no further unit conversion is
+   * applied.
+   * </p>
+   */
+  public static final double REFERENCE_VISCOSITY_CP = 1.0;
+
+  /**
    * Informational support spacing in metres.
    *
    * <p>
@@ -105,7 +116,12 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass {
       double FVF = 1.0;
       if (GVF > 0.88) {
         if (GVF > 0.99) {
-          FVF = Math.sqrt(pipe.getSegmentMixtureViscosity(segment) / Math.sqrt(0.001));
+          // Essentially dry gas: F_VF is referenced to the viscosity of water. getSegmentMixtureViscosity returns cP,
+          // so dividing by REFERENCE_VISCOSITY_CP (1 cP) makes the ratio dimensionless. A hydrocarbon gas at
+          // ~0.012-0.018 cP therefore gives F_VF ~ 0.11-0.13, continuing the downward trend of the 0.88-0.99 branch
+          // (which reaches 0.268 at GVF = 0.99). Any formulation that returns F_VF > 1 here is wrong: removing the
+          // liquid from a wet-gas line lowers the flow-induced-vibration driver, it does not raise it.
+          FVF = Math.sqrt(pipe.getSegmentMixtureViscosity(segment) / REFERENCE_VISCOSITY_CP);
         } else {
           FVF = -27.882 * GVF * GVF + 45.545 * GVF - 17.495;
         }

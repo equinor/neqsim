@@ -123,6 +123,39 @@ PRESSURE deviations can be screened with
 `neqsim.process.safety.depressurization.BlockedOutletOverpressureAnalyzer`. See
 `docs/safety/ai_hazop_input_format.md` for the full input-data format.
 
+### Method 1b — Quantify the governing deviations of a separator node
+
+A guide-word grid on its own is not decision-grade. For a separation node, four
+deviations carry the risk; each maps to a class that turns the qualitative row
+into a number against a data-sheet limit:
+
+| Guideword / parameter | Class | Standard |
+| --- | --- | --- |
+| MORE FLOW / MORE LEVEL (carryover) | Souders-Brown `K = v_gas / sqrt((rho_l-rho_g)/rho_g)` from the run `ProcessSystem`; `SeparatorMechanicalDesign.setFromExistingDesign(id, lTanTan, wallThickness)` to pin the as-built geometry | NORSOK P-002, GPSA |
+| MORE PRESSURE (fire) | `neqsim.process.safety.overpressure.FireCaseRelief` | API 521 §4.3 |
+| MORE PRESSURE (blocked outlet) | `neqsim.process.util.fire.ReliefValveSizing.calculateRequiredArea` on the **full inlet gas rate**; `BlockedOutletOverpressureAnalyzer` for the transient | API 520 Part I, API 521 §4.4.2 |
+| LESS LEVEL (gas blow-by) | `neqsim.process.safety.blowby.GasBlowbyAnalyzer` | API 521 §4.4.7 |
+| LESS TEMPERATURE (MDMT) | `neqsim.process.safety.depressurization.DepressurizationSimulator` + `result.meetsMDMT(mdmtK)` | API 521 §5.20, ASME VIII UCS-66 |
+
+Three heuristics that repeatedly decide the outcome:
+
+- **Fire is rarely the governing relief case for a high-throughput separator.**
+  The fire case only vents vapour generated from the wetted area, while a blocked
+  gas outlet must vent the whole inlet gas rate. Always size both and state which
+  governs — a 10× difference in required orifice area is normal.
+- **Blow-by on LESS LEVEL is choked in nearly every HP→LP pair**, so the rate is
+  set purely by the open area of the level-control valve, not by downstream
+  pressure. When the valve Cv is unknown, present a 2″–8″ equivalent-diameter
+  sensitivity rather than picking one number.
+- **A thick-walled vessel does not reach MDMT during blowdown.** Model the wall
+  (`setWall(mass, area, cp, htc)`); several hundred tonnes of steel keeps the
+  metal near ambient. The cold spot is the BDV/PSV tail pipe — check it with an
+  isenthalpic `PHflash` of the gas down to flare pressure, not with the vessel
+  temperature.
+
+Carryover margin scales as `1/(1-level)`, so report the utilisation as a level
+sensitivity — it converts "verify the HH trip" into a numeric trip setpoint.
+
 ## Method 2 — LOPA Worksheet
 
 Use [`LOPAResult`](../../../src/main/java/neqsim/process/safety/risk/sis/LOPAResult.java) to compute residual frequency:
