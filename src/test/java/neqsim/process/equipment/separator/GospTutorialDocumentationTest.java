@@ -23,16 +23,12 @@ class GospTutorialDocumentationTest extends NeqSimTest {
     feed.setPressure(50.0, "bara");
 
     ThreePhaseSeparator hpSeparator = new ThreePhaseSeparator("HP separator", feed);
-    ThrottlingValve mpValve =
-        new ThrottlingValve("MP valve", hpSeparator.getOilOutStream());
+    ThrottlingValve mpValve = new ThrottlingValve("MP valve", hpSeparator.getOilOutStream());
     mpValve.setOutletPressure(10.0, "bara");
-    ThreePhaseSeparator mpSeparator =
-        new ThreePhaseSeparator("MP separator", mpValve.getOutletStream());
-    ThrottlingValve lpValve =
-        new ThrottlingValve("LP valve", mpSeparator.getOilOutStream());
+    ThreePhaseSeparator mpSeparator = new ThreePhaseSeparator("MP separator", mpValve.getOutletStream());
+    ThrottlingValve lpValve = new ThrottlingValve("LP valve", mpSeparator.getOilOutStream());
     lpValve.setOutletPressure(2.0, "bara");
-    ThreePhaseSeparator lpSeparator =
-        new ThreePhaseSeparator("LP separator", lpValve.getOutletStream());
+    ThreePhaseSeparator lpSeparator = new ThreePhaseSeparator("LP separator", lpValve.getOutletStream());
 
     ProcessSystem process = new ProcessSystem();
     process.add(feed);
@@ -43,18 +39,15 @@ class GospTutorialDocumentationTest extends NeqSimTest {
     process.add(lpSeparator);
     process.run();
 
-    double gasMassFlow = massFlow(hpSeparator.getGasOutStream())
-        + massFlow(mpSeparator.getGasOutStream())
+    double gasMassFlow = massFlow(hpSeparator.getGasOutStream()) + massFlow(mpSeparator.getGasOutStream())
         + massFlow(lpSeparator.getGasOutStream());
-    double waterMassFlow = massFlow(hpSeparator.getWaterOutStream())
-        + massFlow(mpSeparator.getWaterOutStream())
+    double waterMassFlow = massFlow(hpSeparator.getWaterOutStream()) + massFlow(mpSeparator.getWaterOutStream())
         + massFlow(lpSeparator.getWaterOutStream());
     StreamInterface exportOil = lpSeparator.getOilOutStream();
     double oilMassFlow = massFlow(exportOil);
     double feedMassFlow = massFlow(feed);
     double recoveredMassFlow = gasMassFlow + waterMassFlow + oilMassFlow;
-    double relativeMassBalanceError =
-        Math.abs(recoveredMassFlow - feedMassFlow) / feedMassFlow;
+    double relativeMassBalanceError = Math.abs(recoveredMassFlow - feedMassFlow) / feedMassFlow;
     double vpcr4Bara = exportOil.getRVP(37.8, "C", "bara");
 
     assertEquals(50000.0, feedMassFlow, 1.0e-6);
