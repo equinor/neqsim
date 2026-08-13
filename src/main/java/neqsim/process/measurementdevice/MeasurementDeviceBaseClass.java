@@ -1,5 +1,12 @@
 package neqsim.process.measurementdevice;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -546,4 +553,181 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
   public void setConditionAnalysisMaxDeviation(double conditionAnalysisMaxDeviation) {
     this.conditionAnalysisMaxDeviation = conditionAnalysisMaxDeviation;
   }
+
+  /**
+   * Returns a blocker for measurement modes whose mutable state is outside the in-memory snapshot boundary.
+   *
+   * @return {@code null} for snapshot-ready local measurements, otherwise a blocking diagnostic
+   */
+  protected String getMeasurementTransientStateCoverageIssue() {
+    if (onlineSignal != null || isOnlineSignal) {
+      return "online measurement binding may perform external I/O and has no rejected-step commit/defer contract";
+    }
+    return null;
+  }
+
+  /**
+   * Captures all mutable state owned by this base measurement device.
+   *
+   * @return independent base-state snapshot
+   */
+  protected final MeasurementDeviceTransientState captureMeasurementDeviceTransientState() {
+    Random currentRandom = random;
+    if (currentRandom == null) {
+      currentRandom = new Random();
+      random = currentRandom;
+    }
+    return new MeasurementDeviceTransientState(getName(), getTagNumber(), unit, maximumValue, minimumValue, logging,
+        onlineSignal, isOnlineSignal, onlineMeasurementValue, onlineMeasurementValueUnit,
+        new ArrayList<Double>(delayBuffer), delaySteps, noiseStdDev, serializeRandom(currentRandom),
+        firstOrderTimeConstant, filteredPreviousValue, conditionAnalysis, conditionAnalysisMessage,
+        conditionAnalysisMaxDeviation, faultType, faultParameter, faultAccumulator, alarmConfig, alarmState.copy(), tag,
+        tagRole, fieldValue, fieldValueSet);
+  }
+
+  /**
+   * Restores base measurement state while preserving this measurement and alarm-state object identities.
+   *
+   * @param snapshot snapshot returned by {@link #captureMeasurementDeviceTransientState()}
+   */
+  protected final void restoreMeasurementDeviceTransientState(MeasurementDeviceTransientState snapshot) {
+    if (snapshot == null) {
+      throw new IllegalArgumentException("Measurement device transient snapshot cannot be null");
+    }
+    setName(snapshot.name);
+    setTagNumber(snapshot.tagNumber);
+    unit = snapshot.unit;
+    maximumValue = snapshot.maximumValue;
+    minimumValue = snapshot.minimumValue;
+    logging = snapshot.logging;
+    onlineSignal = snapshot.onlineSignal;
+    isOnlineSignal = snapshot.onlineSignalEnabled;
+    onlineMeasurementValue = snapshot.onlineMeasurementValue;
+    onlineMeasurementValueUnit = snapshot.onlineMeasurementValueUnit;
+    delayBuffer.clear();
+    delayBuffer.addAll(snapshot.delayBuffer);
+    delaySteps = snapshot.delaySteps;
+    noiseStdDev = snapshot.noiseStdDev;
+    random = deserializeRandom(snapshot.randomState);
+    firstOrderTimeConstant = snapshot.firstOrderTimeConstant;
+    filteredPreviousValue = snapshot.filteredPreviousValue;
+    conditionAnalysis = snapshot.conditionAnalysis;
+    conditionAnalysisMessage = snapshot.conditionAnalysisMessage;
+    conditionAnalysisMaxDeviation = snapshot.conditionAnalysisMaxDeviation;
+    faultType = snapshot.faultType;
+    faultParameter = snapshot.faultParameter;
+    faultAccumulator = snapshot.faultAccumulator;
+    alarmConfig = snapshot.alarmConfig;
+    alarmState.restore(snapshot.alarmState);
+    tag = snapshot.tag;
+    tagRole = snapshot.tagRole;
+    fieldValue = snapshot.fieldValue;
+    fieldValueSet = snapshot.fieldValueSet;
+  }
+
+  /**
+   * Serializes {@link Random}'s complete Gaussian generator state without relying on JDK internals.
+   *
+   * @param source random generator to capture
+   * @return serialized generator state
+   */
+  private static byte[] serializeRandom(Random source) {
+    try (ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        ObjectOutputStream output = new ObjectOutputStream(bytes)) {
+      output.writeObject(source);
+      output.flush();
+      return bytes.toByteArray();
+    } catch (IOException ex) {
+      throw new IllegalStateException("Could not capture measurement random-generator state", ex);
+    }
+  }
+
+  /**
+   * Recreates a random generator from a captured state.
+   *
+   * @param state serialized generator state
+   * @return restored random generator
+   */
+  private static Random deserializeRandom(byte[] state) {
+    if (state == null) {
+      throw new IllegalArgumentException("Measurement random-generator snapshot cannot be null");
+    }
+    try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(state))) {
+      return (Random) input.readObject();
+    } catch (IOException | ClassNotFoundException | ClassCastException ex) {
+      throw new IllegalArgumentException("Could not restore measurement random-generator state", ex);
+    }
+  }
+
+  /** Immutable snapshot of mutable state shared by concrete measurement devices. */
+  protected static final class MeasurementDeviceTransientState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    private final String name;
+    private final String tagNumber;
+    private final String unit;
+    private final double maximumValue;
+    private final double minimumValue;
+    private final boolean logging;
+    private final OnlineSignal onlineSignal;
+    private final boolean onlineSignalEnabled;
+    private final double onlineMeasurementValue;
+    private final String onlineMeasurementValueUnit;
+    private final List<Double> delayBuffer;
+    private final int delaySteps;
+    private final double noiseStdDev;
+    private final byte[] randomState;
+    private final double firstOrderTimeConstant;
+    private final double filteredPreviousValue;
+    private final boolean conditionAnalysis;
+    private final String conditionAnalysisMessage;
+    private final double conditionAnalysisMaxDeviation;
+    private final SensorFaultType faultType;
+    private final double faultParameter;
+    private final double faultAccumulator;
+    private final AlarmConfig alarmConfig;
+    private final AlarmState alarmState;
+    private final String tag;
+    private final InstrumentTagRole tagRole;
+    private final double fieldValue;
+    private final boolean fieldValueSet;
+
+    private MeasurementDeviceTransientState(String name, String tagNumber, String unit, double maximumValue,
+        double minimumValue, boolean logging, OnlineSignal onlineSignal, boolean onlineSignalEnabled,
+        double onlineMeasurementValue, String onlineMeasurementValueUnit, List<Double> delayBuffer, int delaySteps,
+        double noiseStdDev, byte[] randomState, double firstOrderTimeConstant, double filteredPreviousValue,
+        boolean conditionAnalysis, String conditionAnalysisMessage, double conditionAnalysisMaxDeviation,
+        SensorFaultType faultType, double faultParameter, double faultAccumulator, AlarmConfig alarmConfig,
+        AlarmState alarmState, String tag, InstrumentTagRole tagRole, double fieldValue, boolean fieldValueSet) {
+      this.name = name;
+      this.tagNumber = tagNumber;
+      this.unit = unit;
+      this.maximumValue = maximumValue;
+      this.minimumValue = minimumValue;
+      this.logging = logging;
+      this.onlineSignal = onlineSignal;
+      this.onlineSignalEnabled = onlineSignalEnabled;
+      this.onlineMeasurementValue = onlineMeasurementValue;
+      this.onlineMeasurementValueUnit = onlineMeasurementValueUnit;
+      this.delayBuffer = delayBuffer;
+      this.delaySteps = delaySteps;
+      this.noiseStdDev = noiseStdDev;
+      this.randomState = randomState.clone();
+      this.firstOrderTimeConstant = firstOrderTimeConstant;
+      this.filteredPreviousValue = filteredPreviousValue;
+      this.conditionAnalysis = conditionAnalysis;
+      this.conditionAnalysisMessage = conditionAnalysisMessage;
+      this.conditionAnalysisMaxDeviation = conditionAnalysisMaxDeviation;
+      this.faultType = faultType;
+      this.faultParameter = faultParameter;
+      this.faultAccumulator = faultAccumulator;
+      this.alarmConfig = alarmConfig;
+      this.alarmState = alarmState;
+      this.tag = tag;
+      this.tagRole = tagRole;
+      this.fieldValue = fieldValue;
+      this.fieldValueSet = fieldValueSet;
+    }
+  }
+
 }
