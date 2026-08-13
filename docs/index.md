@@ -43,7 +43,7 @@ description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engin
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="thermo/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Thermo Package</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Equations of state, mixing rules, fluids</span></li>
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="thermodynamicoperations/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Thermodynamic Operations</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Flash calculations, phase envelopes</span></li>
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="physical_properties/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Physical Properties</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Viscosity, conductivity, diffusivity</span></li>
-<li style="padding: 0.5rem 0;"><a href="chemicalreactions/co2_impurity_kinetics_guide.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>CO₂ Impurity Kinetic Model Guide</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">CCS impurity reactions, SRK EOS fugacities, CSTR hydrodynamics</span></li>
+<li style="padding: 0.5rem 0;"><a href="chemicalreactions/co2_impurity_kinetics_guide.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Experimental CO₂ Impurity Kinetic Reactor</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Balanced trace-reaction network, reactor usage, safeguards, and limitations</span></li>
 </ul>
 </div>
 
