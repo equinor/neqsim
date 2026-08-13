@@ -6,19 +6,11 @@ This module provides a pure physical rate laws engine integrated DIRECTLY with t
 for exact thermodynamic fluid density and fugacity coefficient calculations.
 
 Features:
+- Super-Visible 3-Panel Plotting Engine with Shaded Crimson Red Fill & Giant Annotation Box for H2SO4 Acid Peak
 - Reaction R3b (SO2 + H2S + NO2 -> H2SO4 + ...) directly triggered when H2S and NO2 are together!
 - Slower Reaction R4 Kinetics (2 NO + O2 -> 2 NO2) allowing NO gas persistence up to ~9.23 ppm and O2 coexistence
 - Continuous H2SO4 (Sulfuric Acid) & NH3 (Ammonia) Formation across all stepwise and multi-phase experiments
-- Reaction R2 Kinetics driving NO2 -> ~0 ppm in BOTH liquid CO2 experiments
-- NO Generation (up to ~9.23 ppm in 10 ppm case, and 5.27 - 9.23 ppm in CSTR experiments)
-- SO2 Boosted above 20 - 39 ppm continuously
-- Robust Bounds & Overflow Protection for 1000+ hour simulations
 - Direct NeqSim Java SRK EOS thermodynamic calculations for all impurity species fugacities
-- Flexible Initial Vessel Charge (default: N2 gas at 1 bar, 25 °C)
-- Flexible Multi-Phase Addition via add_phase(duration_hours, feed_ppm, phase_name)
-- Built-in 2-hour (or custom) resolution DataFrame generator via get_table_results(resolution_hours=2.0)
-- Easy 1-line plotting helper via plot_results()
-- Automated reactor geometry and hydrodynamic residence time reporting
 """
 
 import numpy as np
@@ -646,33 +638,60 @@ class CO2ImpurityReactorExperiment:
         t_h = self.simulation_results['time_hours']
         ppm = self.simulation_results['ppm']
 
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(11, 8), sharex=True)
+        # Enhanced 3-Panel Plotting Engine for Maximum Visual Clarity:
+        # Panel 1: Main Feed Reactants (H2S, SO2, NO2, O2, H2O)
+        # Panel 2: Sulfuric Acid (H2SO4) Highlighted with Shaded Fill & Annotation Box
+        # Panel 3: Nitrogen & Ammonia Reaction Products (NO, NH3, S8, HNO3)
+        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(11, 10), sharex=True)
 
         ax1.plot(t_h, ppm['H2S'], label='H2S', linewidth=2.0, color='#e74c3c')
         ax1.plot(t_h, ppm['SO2'], label='SO2', linewidth=2.0, color='#f39c12')
         ax1.plot(t_h, ppm['NO2'], label='NO2', linewidth=2.0, color='#9b59b6')
         ax1.plot(t_h, ppm['O2'],  label='O2',  linewidth=2.0, color='#2ecc71')
         ax1.plot(t_h, ppm['H2O'], label='H2O', linewidth=2.0, color='#3498db')
-        ax1.set_ylabel('Reactants Concentration (ppm)', fontsize=11, fontweight='bold')
+        ax1.set_ylabel('Reactants (ppm)', fontsize=11, fontweight='bold')
         ax1.set_title(title, fontsize=13, fontweight='bold')
         ax1.grid(True, linestyle='--', alpha=0.6)
         ax1.legend(loc='upper right', frameon=True)
 
-        ax2.plot(t_h, ppm['H2SO4'], label='H2SO4 Acid', linewidth=2.5, color='#c0392b')
-        ax2.plot(t_h, ppm['NO'],    label='NO Gas',      linewidth=2.0, color='#8e44ad')
-        ax2.plot(t_h, ppm['NH3'],   label='NH3 Ammonia', linewidth=2.0, color='#16a085')
-        ax2.plot(t_h, ppm['S8'],    label='S8 Sulfur',   linewidth=2.0, color='#f1c40f')
-        ax2.plot(t_h, ppm['HNO3'],  label='HNO3 Acid',   linewidth=2.0, color='#d35400')
-        ax2.set_xlabel('Time (hours)', fontsize=11, fontweight='bold')
-        ax2.set_ylabel('Products Concentration (ppm)', fontsize=11, fontweight='bold')
+        # PANEL 2: EXTREMELY PROMINENT H2SO4 ACID HIGHLIGHT PANEL WITH SHADED FILL
+        ax2.plot(t_h, ppm['H2SO4'], label='H2SO4 Sulfuric Acid (Formed)', linewidth=4.0, color='#FF0033', marker='o', markevery=40)
+        ax2.fill_between(t_h, ppm['H2SO4'], color='#FF0033', alpha=0.3, label='H2SO4 Shaded Acid Accumulation')
+        ax2.set_ylabel('H2SO4 Acid (ppm)', fontsize=11, fontweight='bold')
+        max_h2so4 = np.max(ppm['H2SO4'])
+        ax2.set_ylim(-0.2, max(max_h2so4 * 1.35, 2.0))
         ax2.grid(True, linestyle='--', alpha=0.6)
-        ax2.legend(loc='upper right', frameon=True)
+        ax2.legend(loc='upper left', frameon=True)
+
+        if max_h2so4 > 0.05:
+            max_idx = np.argmax(ppm['H2SO4'])
+            max_t = t_h[max_idx]
+            ax2.annotate(
+                f'H2SO4 Acid Peak: {max_h2so4:.2f} ppm',
+                xy=(max_t, max_h2so4),
+                xytext=(max_t - 180.0, max_h2so4 + 0.8),
+                arrowprops=dict(facecolor='#FF0033', shrink=0.08, width=3.0, headwidth=10.0),
+                fontsize=12,
+                fontweight='bold',
+                color='#B20000',
+                bbox=dict(boxstyle="round,pad=0.3", fc="#FFE6E6", ec="#FF0033", lw=1.5)
+            )
+
+        # PANEL 3: NO GAS & NH3 AMMONIA PRODUCTS PANEL
+        ax3.plot(t_h, ppm['NO'],    label='NO Gas',      linewidth=2.5, color='#8e44ad')
+        ax3.plot(t_h, ppm['NH3'],   label='NH3 Ammonia', linewidth=2.5, color='#16a085')
+        ax3.plot(t_h, ppm['S8'],    label='S8 Elemental Sulfur', linewidth=2.0, color='#f1c40f')
+        ax3.set_xlabel('Time (hours)', fontsize=11, fontweight='bold')
+        ax3.set_ylabel('Gaseous Products (ppm)', fontsize=11, fontweight='bold')
+        ax3.grid(True, linestyle='--', alpha=0.6)
+        ax3.legend(loc='upper right', frameon=True)
 
         cum_t = 0.0
         for phase in self.phases[:-1]:
             cum_t += phase['duration_hours']
             ax1.axvline(cum_t, color='black', linestyle=':', linewidth=1.5, alpha=0.7)
             ax2.axvline(cum_t, color='black', linestyle=':', linewidth=1.5, alpha=0.7)
+            ax3.axvline(cum_t, color='black', linestyle=':', linewidth=1.5, alpha=0.7)
 
         plt.tight_layout()
 
@@ -680,4 +699,4 @@ class CO2ImpurityReactorExperiment:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
             print(f"Plot saved successfully to: {save_path}")
 
-        return fig, (ax1, ax2)
+        return fig, (ax1, ax2, ax3)
