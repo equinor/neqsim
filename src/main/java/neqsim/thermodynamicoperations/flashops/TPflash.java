@@ -2242,18 +2242,17 @@ public class TPflash extends Flash {
    * two-phase path reaches the lower root and a slightly adjusted equilibrium composition. A cheap alternate-root
    * comparison screens the converged gas phase before any retry. Only a lower root beyond numerical noise starts an
    * ordinary TP flash on a clone; the candidate is replayed on the live system only when it retains exactly gas and
-   * aqueous phases, passes the existing strict phase-fraction, normalization, material-balance,
-   * distinct-composition, and fugacity checks, and lowers total extensive Gibbs energy beyond the same tolerance.
-   * Three-phase results and chemical, electrolyte, solid, and wax calculations remain on their existing paths.
+   * aqueous phases, passes the existing strict phase-fraction, normalization, material-balance, distinct-composition,
+   * and fugacity checks, and lowers total extensive Gibbs energy beyond the same tolerance. Three-phase results and
+   * chemical, electrolyte, solid, and wax calculations remain on their existing paths.
    * </p>
    */
   private void rescueLowerGibbsMultiphaseAqueousRoot() {
-    if (!system.doMultiPhaseCheck() || system.getNumberOfPhases() != 2 || system.isChemicalSystem()
-        || system.hasIons() || solidCheck || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck()
+    if (!system.doMultiPhaseCheck() || system.getNumberOfPhases() != 2 || system.isChemicalSystem() || system.hasIons()
+        || solidCheck || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck()
         || !system.hasPhaseType(PhaseType.GAS) || !system.hasPhaseType(PhaseType.AQUEOUS)
         || !waterRichCrossAlgorithmFallbackAllowed || MULTIPHASE_RESCUE_ACTIVE.get().booleanValue()
-        || !isBalancedEquilibriumCandidate(system)
-        || !hasLowerGibbsAlternateGasRoot()) {
+        || !isBalancedEquilibriumCandidate(system) || !hasLowerGibbsAlternateGasRoot()) {
       return;
     }
 
