@@ -587,6 +587,9 @@ pipe.setSurfaceTemperature(4.0, "C"); // Cold seabed
 pipe.configureSubseaThermalModel(0.050, 0.040,
     RadialThermalLayer.MaterialType.PU_FOAM);
 
+// Explicit shutdown assumption; the documented default is also 50 W/(m2 K)
+pipe.setStagnantInnerHeatTransferCoefficient(50.0);
+
 // Set hydrate formation temperature
 pipe.setHydrateFormationTemperature(20.0, "C");
 
@@ -603,6 +606,14 @@ System.out.println(pipe.getThermalSummary());
 
 ### Thermal Calculations
 - **Overall U-value**: Based on series thermal resistance through all layers
+- **Coefficient ownership**: `setHeatTransferCoefficient(...)` is the simple-model or configuration-level overall
+  U-value. In the multi-layer transient model it enables heat transfer but is not reused as a fluid-side film
+  coefficient, so calling it before or after radial-layer configuration does not change closed-flow heat flux.
+- **Closed-flow inner HTC**: `setStagnantInnerHeatTransferCoefficient(...)` controls the zero-throughput fluid-to-wall
+  film coefficient independently. The default is 50 W/(m²·K), a pragmatic gas-rich shutdown assumption; set a
+  case-specific value for the fluid inventory and natural-convection regime being studied.
+- **Flowing inner HTC**: Cells with local face throughput use the model's laminar constant-Nusselt or turbulent
+  Dittus-Boelter correlation instead of the stagnant value.
 - **Transient response**: Explicit finite-difference with thermal mass in each layer
 - **Cooldown time**: Lumped capacitance approximation for shutdown scenarios
 - **Transient advection**: Uses the gas, oil, and water mass flow retained from each conservative AUSM+ integration
