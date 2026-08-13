@@ -93,8 +93,7 @@ class ProcessDiagramDocumentSetAdapterTest {
     String classicDot = process.toDOT();
     EngineeringDiagramDocumentSet source = ProcessDiagramDocumentSetAdapter.fromProcessSystem(process,
         reference.getCaseId(), "A", "PFD-10-003", "Reviewed designations", ContentProfile.PFD);
-    SemanticObject equipment = findSemanticObject(source, EngineeringNode.Kind.EQUIPMENT, "equipmentName",
-        "10-VA-001");
+    SemanticObject equipment = findSemanticObject(source, EngineeringNode.Kind.EQUIPMENT, "equipmentName", "10-VA-001");
     SemanticObject stream = findSemanticObject(source, EngineeringNode.Kind.PIPE_SEGMENT, "carriedObjectName",
         "10-FEED-001");
     EngineeringDiagramDesignationRegister register = new EngineeringDiagramDesignationRegister()
@@ -139,8 +138,8 @@ class ProcessDiagramDocumentSetAdapterTest {
     addCrossAreaConnection(baselineGraph, "pipe-segment:feed", "feed");
     EngineeringGraph revisedGraph = twoAreaGraph("B");
     addCrossAreaConnection(revisedGraph, "pipe-segment:feed", "feed");
-    EngineeringDiagramDocumentSet baseline = EngineeringDiagramDocumentSet.fromGraph(baselineGraph,
-        "PFD-IMPACT-001", "Revision impact", ContentProfile.PFD);
+    EngineeringDiagramDocumentSet baseline = EngineeringDiagramDocumentSet.fromGraph(baselineGraph, "PFD-IMPACT-001",
+        "Revision impact", ContentProfile.PFD);
     EngineeringDiagramDesignationRegister register = new EngineeringDiagramDesignationRegister()
         .withDesignation(reviewedDesignation("pipe-segment:feed", Kind.STREAM_NUMBER, "10-P-1001-B"));
     EngineeringDiagramDocumentSet revised = EngineeringDiagramDocumentSet.fromGraph(revisedGraph, "PFD-IMPACT-001",
@@ -164,8 +163,8 @@ class ProcessDiagramDocumentSetAdapterTest {
   void reportsUnchangedSemanticImpactAcrossRevisionOnlyChange() {
     EngineeringDiagramDocumentSet baseline = EngineeringDiagramDocumentSet.fromGraph(twoAreaGraph("A"),
         "PFD-IMPACT-002", "Revision-only impact", ContentProfile.PFD);
-    EngineeringDiagramDocumentSet revised = EngineeringDiagramDocumentSet.fromGraph(twoAreaGraph("B"),
-        "PFD-IMPACT-002", "Revision-only impact", ContentProfile.PFD);
+    EngineeringDiagramDocumentSet revised = EngineeringDiagramDocumentSet.fromGraph(twoAreaGraph("B"), "PFD-IMPACT-002",
+        "Revision-only impact", ContentProfile.PFD);
 
     EngineeringDiagramRevisionImpact impact = baseline.compareTo(revised);
 
@@ -321,8 +320,8 @@ class ProcessDiagramDocumentSetAdapterTest {
   }
 
   private static Designation reviewedDesignation(String semanticObjectId, Kind kind, String value) {
-    return new Designation(semanticObjectId, kind, value, "project-register:diagram-designations",
-        ReviewState.REVIEWED, "Process discipline", "review:DIAGRAM-42", "2026-08-13T07:00:00Z", "B");
+    return new Designation(semanticObjectId, kind, value, "project-register:diagram-designations", ReviewState.REVIEWED,
+        "Process discipline", "review:DIAGRAM-42", "2026-08-13T07:00:00Z", "B");
   }
 
   private static void addCrossAreaConnection(EngineeringGraph graph, String id, String externalKey) {

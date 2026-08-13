@@ -43,8 +43,8 @@ public final class EngineeringDiagramRevisionImpact implements Serializable {
   private final List<String> affectedDrawingIds;
 
   private EngineeringDiagramRevisionImpact(EngineeringDiagramDocumentSet baseline,
-      EngineeringDiagramDocumentSet revised, List<String> addedIds, List<String> removedIds,
-      List<String> modifiedIds, List<String> sheetIds, List<String> drawingIds) {
+      EngineeringDiagramDocumentSet revised, List<String> addedIds, List<String> removedIds, List<String> modifiedIds,
+      List<String> sheetIds, List<String> drawingIds) {
     this.documentSetId = baseline.getId();
     this.plantId = baseline.getPlantId();
     this.baselineRevision = baseline.getRevision();
@@ -64,8 +64,8 @@ public final class EngineeringDiagramRevisionImpact implements Serializable {
    * Compares two revisions of the same controlled diagram document set.
    *
    * <p>
-   * Impact is based on canonical semantic-object content, including reviewed designations. Added, removed, and
-   * modified object identities are projected to every sheet and drawing that contains the object in either revision.
+   * Impact is based on canonical semantic-object content, including reviewed designations. Added, removed, and modified
+   * object identities are projected to every sheet and drawing that contains the object in either revision.
    * </p>
    *
    * @param baseline controlled baseline revision
@@ -186,8 +186,7 @@ public final class EngineeringDiagramRevisionImpact implements Serializable {
 
   private static Map<String, EngineeringDiagramDocumentSet.SemanticObject> semanticObjectsById(
       EngineeringDiagramDocumentSet set) {
-    Map<String, EngineeringDiagramDocumentSet.SemanticObject> result =
-        new TreeMap<String, EngineeringDiagramDocumentSet.SemanticObject>();
+    Map<String, EngineeringDiagramDocumentSet.SemanticObject> result = new TreeMap<String, EngineeringDiagramDocumentSet.SemanticObject>();
     for (EngineeringDiagramDocumentSet.SemanticObject object : set.getSemanticObjects()) {
       result.put(object.getId(), object);
     }

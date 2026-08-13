@@ -288,8 +288,8 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
         records.add(new ProvenanceRecord(item));
       }
       this.provenance = Collections.unmodifiableList(records);
-      this.designations = Collections.unmodifiableList(
-          new ArrayList<EngineeringDiagramDesignationRegister.Designation>(designations));
+      this.designations = Collections
+          .unmodifiableList(new ArrayList<EngineeringDiagramDesignationRegister.Designation>(designations));
     }
 
     /**
@@ -918,22 +918,21 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
 
   private static List<SemanticObject> semanticObjects(EngineeringGraph graph,
       EngineeringDiagramDesignationRegister designationRegister, List<Diagnostic> diagnostics) {
-    Map<String, List<EngineeringDiagramDesignationRegister.Designation>> designationsByObject =
-        validDesignations(graph, designationRegister, diagnostics);
+    Map<String, List<EngineeringDiagramDesignationRegister.Designation>> designationsByObject = validDesignations(graph,
+        designationRegister, diagnostics);
     List<SemanticObject> result = new ArrayList<SemanticObject>();
     for (EngineeringNode node : graph.getNodes().values()) {
       List<EngineeringDiagramDesignationRegister.Designation> designations = designationsByObject.get(node.getId());
-      result.add(new SemanticObject(node, designations == null
-          ? Collections.<EngineeringDiagramDesignationRegister.Designation>emptyList() : designations));
+      result.add(new SemanticObject(node,
+          designations == null ? Collections.<EngineeringDiagramDesignationRegister.Designation>emptyList()
+              : designations));
     }
     return Collections.unmodifiableList(result);
   }
 
   private static Map<String, List<EngineeringDiagramDesignationRegister.Designation>> validDesignations(
-      EngineeringGraph graph, EngineeringDiagramDesignationRegister designationRegister,
-      List<Diagnostic> diagnostics) {
-    Map<String, List<EngineeringDiagramDesignationRegister.Designation>> result =
-        new LinkedHashMap<String, List<EngineeringDiagramDesignationRegister.Designation>>();
+      EngineeringGraph graph, EngineeringDiagramDesignationRegister designationRegister, List<Diagnostic> diagnostics) {
+    Map<String, List<EngineeringDiagramDesignationRegister.Designation>> result = new LinkedHashMap<String, List<EngineeringDiagramDesignationRegister.Designation>>();
     for (EngineeringDiagramDesignationRegister.Designation designation : designationRegister.getDesignations()) {
       EngineeringNode node = graph.getNode(designation.getSemanticObjectId());
       if (node == null) {
