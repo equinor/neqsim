@@ -246,9 +246,7 @@ public class VacuumCollapseAnalyzer implements Serializable {
     state.initProperties();
 
     // Align the mole basis so the inventory exactly fills the rigid vessel volume at the
-    // initial blocked-in conditions. Scaling is done per component (preserving composition);
-    // setTotalNumberOfMoles must not be used because it leaves component moles unchanged and
-    // corrupts the average molar mass and density.
+    // initial blocked-in conditions. Scaling is done per component (preserving composition).
     double volumeM3 = state.getVolume("m3");
     if (volumeM3 > 0.0) {
       scaleMoles(state, vesselVolumeM3 / volumeM3);
@@ -339,11 +337,6 @@ public class VacuumCollapseAnalyzer implements Serializable {
 
   /**
    * Scales the absolute inventory of the closed system by the given factor while preserving composition.
-   *
-   * <p>
-   * Implemented as per-component mole additions because {@code setTotalNumberOfMoles} only sets the scalar total and
-   * leaves the component moles unchanged, corrupting the average molar mass and density.
-   * </p>
    *
    * @param state the fluid state to scale
    * @param factor multiplicative scaling factor; values &lt;= 0, NaN, or equal to 1 are ignored
