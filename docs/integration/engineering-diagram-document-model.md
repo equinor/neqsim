@@ -22,7 +22,11 @@ The initial model provides:
   structured validation diagnostics; and
 - immutable canonical semantic-object snapshots retaining source names, carried stream/connection
   designations, case-scoped calculated values, explicit units, quantity basis, engineering state,
-  approval state, and provenance; and
+  approval state, and provenance;
+- opt-in reviewed equipment tags and stream numbers with explicit source, reviewer, review record,
+  timestamp, and project revision evidence; and
+- deterministic revision impact identifying added, removed, and modified semantic objects and every
+  affected drawing and sheet; and
 - byte-deterministic JSON for equivalent fresh process models.
 
 The initial automatic partition is deliberately conservative. It does not yet choose sheet sizes,
@@ -61,6 +65,44 @@ not silently promoted to project-approved equipment tags or line numbers. Projec
 stream numbers require their own provenance and review state before they can supersede those source
 designations.
 
+Use an `EngineeringDiagramDesignationRegister` when a project has reviewed designation evidence.
+The register targets stable semantic-object IDs and supports `EQUIPMENT_TAG` for equipment plus
+`STREAM_NUMBER` for line or pipe-segment objects. An invalid target or designation/object-kind
+combination produces a structured error and is not attached to the semantic object. The canonical
+source label remains available alongside the reviewed designation.
+
+```java
+EngineeringDiagramDesignationRegister register =
+    new EngineeringDiagramDesignationRegister()
+        .withDesignation(
+            new EngineeringDiagramDesignationRegister.Designation(
+                equipmentId,
+                EngineeringDiagramDesignationRegister.Kind.EQUIPMENT_TAG,
+                "V-101",
+                "project-register:equipment-tags",
+                EngineeringDiagramDesignationRegister.ReviewState.REVIEWED,
+                "Process discipline",
+                "review:TAG-42",
+                "2026-08-13T07:00:00Z",
+                "B"));
+
+EngineeringDiagramDocumentSet reviewedDocuments =
+    ProcessDiagramDocumentSetAdapter.fromProcessModel(
+        processModel,
+        "PLANT-01",
+        "B",
+        "PFD-01-001",
+        "Gas processing facility",
+        EngineeringDiagramDocumentSet.ContentProfile.PFD,
+        register);
+```
+
+Compare two revisions of the same document-set and plant identity with `baseline.compareTo(revised)`.
+The returned `EngineeringDiagramRevisionImpact` has deterministic added, removed, and modified
+semantic-object IDs. It projects those changes to the sheets and drawings containing each object in
+either revision. A cross-sheet stream-number change therefore affects both sheets while retaining
+one semantic connection identity.
+
 The adapter reuses `ProcessDiagramGraphAdapter`. It does not modify the source `ProcessSystem` or
 `ProcessModel`, and it does not change legacy `toDOT()`, `ProcessDiagramExporter`, native DEXPI 2.0,
 or Proteus/P&ID output.
@@ -71,6 +113,10 @@ Generated document sets start with status `WORKING` and issue purpose `ENGINEERI
 They are not approved for design or construction. The model rejects approved/construction state
 without an explicit accountable approval reference; a simulation result cannot promote its own
 engineering state.
+
+A designation register records review evidence only. It does not represent engineering approval,
+does not authorize a P&ID or PFD for design or construction, and does not replace project ownership
+of piping, valve, nozzle, instrument, safeguard, or design data.
 
 The document model does not claim ISO 10628, ISO 5457, ISO 7200, ISO 14617, ISA, DEXPI EV, or
 commercial CAE conformance. Licensed standards mapping, project conventions, qualified symbols,
@@ -90,4 +136,5 @@ unchanged Classic DOT output, distinct parallel cross-sheet connections, recipro
 cardinality, and fail-visible broken references.
 It also verifies immutable semantic snapshots, unit/case/provenance retention, rejection of
 incompletely governed simulation-result values, warning-only diagnostics for pre-existing generic
-calculation graphs, and unchanged topology-only behavior.
+calculation graphs, unchanged topology-only behavior, reviewed designation governance, fail-visible
+designation mismatches, and deterministic cross-sheet revision impact.
