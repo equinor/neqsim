@@ -246,9 +246,13 @@ class ProcessModelOperatingActionEvaluatorTest {
     double baselineRate = producer.getFlowRate("kg/hr");
     ProcessModelSimulationEvaluator simulationEvaluator = new ProcessModelSimulationEvaluator(model);
     simulationEvaluator.setIncludeStrategyCapacityConstraints(false);
-    ProcessModelOperatingAction action = ProcessModelOperatingAction.continuous("well-rate", "Producer gas rate",
-        "Subsurface::producer.flowRate", 0.5 * baselineRate, 1.5 * baselineRate, "kg/hr",
-        "synthetic well operating envelope");
+    double readBackTolerance = baselineRate * 1.0e-6;
+    String readBackToleranceProvenance =
+        "One part per million of the baseline rate for Stream mass-flow conversion read-back";
+    ProcessModelOperatingAction action = ProcessModelOperatingAction
+        .continuous("well-rate", "Producer gas rate", "Subsurface::producer.flowRate", 0.5 * baselineRate,
+            1.5 * baselineRate, "kg/hr", "synthetic well operating envelope")
+        .withReadBackTolerance(readBackTolerance, 0.0, readBackToleranceProvenance);
     ProcessModelOperatingActionEvaluator evaluator = new ProcessModelOperatingActionEvaluator(simulationEvaluator,
         action).requireHydraulicConstraint(HydraulicLimitRole.WELL_INFLOW_OUTFLOW, "Subsurface", "well",
             "well drawdown", "WellFlow installed maximum drawdown");
@@ -257,6 +261,13 @@ class ProcessModelOperatingActionEvaluatorTest {
     CandidateEvaluationResult higherRate = evaluator.evaluate(1.2 * baselineRate);
 
     assertEquals(Outcome.FEASIBLE, lowerRate.getOutcome(), lowerRate.getDiagnostics().toString());
+    assertEquals(readBackTolerance, lowerRate.getAction().getReadBackAbsoluteTolerance(), 0.0);
+    assertEquals(0.0, lowerRate.getAction().getReadBackRelativeTolerance(), 0.0);
+    assertEquals(readBackToleranceProvenance, lowerRate.getAction().getReadBackToleranceProvenance());
+    assertTrue(lowerRate.getDiagnostics().get(0).contains("absolute residual="),
+        lowerRate.getDiagnostics().toString());
+    assertTrue(lowerRate.getDiagnostics().get(0).contains("tolerance provenance=" + readBackToleranceProvenance),
+        lowerRate.getDiagnostics().toString());
     assertEquals(Outcome.HYDRAULIC_CONSTRAINT_VIOLATED, higherRate.getOutcome(),
         higherRate.getDiagnostics().toString());
     assertTrue(lowerRate.getHydraulicConstraints().get(0).getUtilization() < higherRate.getHydraulicConstraints().get(0)
