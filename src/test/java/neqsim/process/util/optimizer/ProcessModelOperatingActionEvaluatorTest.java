@@ -247,8 +247,7 @@ class ProcessModelOperatingActionEvaluatorTest {
     ProcessModelSimulationEvaluator simulationEvaluator = new ProcessModelSimulationEvaluator(model);
     simulationEvaluator.setIncludeStrategyCapacityConstraints(false);
     double readBackTolerance = baselineRate * 1.0e-6;
-    String readBackToleranceProvenance =
-        "One part per million of the baseline rate for Stream mass-flow conversion read-back";
+    String readBackToleranceProvenance = "One part per million of the baseline rate for Stream mass-flow conversion read-back";
     ProcessModelOperatingAction action = ProcessModelOperatingAction
         .continuous("well-rate", "Producer gas rate", "Subsurface::producer.flowRate", 0.5 * baselineRate,
             1.5 * baselineRate, "kg/hr", "synthetic well operating envelope")
@@ -264,8 +263,7 @@ class ProcessModelOperatingActionEvaluatorTest {
     assertEquals(readBackTolerance, lowerRate.getAction().getReadBackAbsoluteTolerance(), 0.0);
     assertEquals(0.0, lowerRate.getAction().getReadBackRelativeTolerance(), 0.0);
     assertEquals(readBackToleranceProvenance, lowerRate.getAction().getReadBackToleranceProvenance());
-    assertTrue(lowerRate.getDiagnostics().get(0).contains("absolute residual="),
-        lowerRate.getDiagnostics().toString());
+    assertTrue(lowerRate.getDiagnostics().get(0).contains("absolute residual="), lowerRate.getDiagnostics().toString());
     assertTrue(lowerRate.getDiagnostics().get(0).contains("tolerance provenance=" + readBackToleranceProvenance),
         lowerRate.getDiagnostics().toString());
     assertEquals(Outcome.HYDRAULIC_CONSTRAINT_VIOLATED, higherRate.getOutcome(),
