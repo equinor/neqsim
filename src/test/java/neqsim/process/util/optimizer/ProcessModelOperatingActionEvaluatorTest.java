@@ -2,6 +2,7 @@ package neqsim.process.util.optimizer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayInputStream;
@@ -174,6 +175,8 @@ class ProcessModelOperatingActionEvaluatorTest {
     assertEquals(1100.0, original.getRawObjectives()[0], 1.0e-8);
     assertThrows(UnsupportedOperationException.class, () -> original.getDiagnostics().clear());
     assertThrows(UnsupportedOperationException.class, () -> original.getHydraulicConstraints().clear());
+    assertNotSame(original.getDiagnostics(), original.getDiagnostics());
+    assertNotSame(original.getHydraulicConstraints(), original.getHydraulicConstraints());
 
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     ObjectOutputStream output = new ObjectOutputStream(bytes);

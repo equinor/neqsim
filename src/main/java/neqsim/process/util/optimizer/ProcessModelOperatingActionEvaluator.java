@@ -733,14 +733,14 @@ public final class ProcessModelOperatingActionEvaluator {
       return Arrays.copyOf(constraintMargins, constraintMargins.length);
     }
 
-    /** @return immutable hydraulic snapshots in binding order */
+    /** @return fresh immutable snapshot of hydraulic evidence in binding order */
     public List<HydraulicConstraintSnapshot> getHydraulicConstraints() {
-      return hydraulicConstraints;
+      return Collections.unmodifiableList(new ArrayList<HydraulicConstraintSnapshot>(hydraulicConstraints));
     }
 
-    /** @return immutable diagnostics */
+    /** @return fresh immutable snapshot of diagnostics */
     public List<String> getDiagnostics() {
-      return diagnostics;
+      return Collections.unmodifiableList(new ArrayList<String>(diagnostics));
     }
   }
 }
