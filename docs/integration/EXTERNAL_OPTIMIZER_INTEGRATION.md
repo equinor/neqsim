@@ -755,6 +755,10 @@ well_rate = Action.continuous(
     1.5,
     "MSm3/day",
     "approved well operating envelope revision A",
+).withReadBackTolerance(
+    1.0e-5,
+    0.0,
+    "producer flow-control tag resolution in MSm3/day",
 )
 hydraulic = ActionEvaluator(simulation, well_rate)
 hydraulic.requireHydraulicConstraint(
@@ -788,8 +792,12 @@ Exact names are intentional: a missing or disabled bound constraint fails closed
 silently accepting a different limit. Finite utilization at or below one is insufficient when an
 explicit validity range exists and the candidate lies outside it. Missing validity metadata is
 reported as `NOT_ASSESSED`; confidence remains evidence-quality metadata, not a safety
-probability. The immutable result is Java-serializable and exposes defensive arrays and immutable
-lists for JPype/Python consumers.
+probability. Where automation conversion or control-tag resolution is coarser than the default
+floating-point comparison, configure `withReadBackTolerance(absolute, relative, provenance)`.
+The action unit applies to the absolute tolerance. Application diagnostics retain requested,
+read-back, residual, allowed-tolerance, and tolerance-provenance evidence; this qualifies only
+write/read-back consistency, not process feasibility. The immutable result is Java-serializable
+and exposes defensive arrays and immutable lists for JPype/Python consumers.
 
 The wrapper evaluates one steady-state action at a time and is synchronized because it mutates the
 supplied model. It does not coordinate routing/topology transactions, solve multiple simultaneous
