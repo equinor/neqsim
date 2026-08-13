@@ -1,18 +1,22 @@
 """
 ====================================================================================================
-NEQSIM CO2 IMPURITY KINETIC MODEL - CORE SIMULATION ENGINE WITH SETTERS, GETTERS & CSTR EXPERIMENTS
+NEQSIM CO2 IMPURITY KINETIC MODEL & MULTI-PHASE EXPERIMENT ENGINE
 ====================================================================================================
-This module provides a 100% pure physical rate laws engine and CSTR hydrodynamics simulator
-for multi-component impurity reactions in dense liquid, supercritical, and gas-phase CO2 streams.
+This module provides a 100% pure physical rate laws engine, SRK EOS thermodynamics,
+and a flexible Multi-Phase CSTR Experiment Manager (CO2ImpurityReactorExperiment).
 
 Features:
-- Parameter Setters: set_reaction_constants(...) & set_reactor_geometry(...)
-- Getter Methods: get_fluid_properties(), get_reaction_rates(), get_reactor_report(), get_table_results(...)
-- Full CSTR Hydrodynamics & Variable Volume / Flow In-Out Autoclave Experiment Simulator
+- SRK EOS CO2 thermodynamics at target temperature and pressure
+- Flexible Initial Vessel Charge (default: N2 gas at 1 bar, 25 °C)
+- Flexible Multi-Phase Addition via add_phase(duration_hours, feed_ppm, phase_name)
+- Built-in 2-hour (or custom) resolution DataFrame generator via get_table_results(resolution_hours=2.0)
+- Easy 1-line plotting helper via plot_results()
+- Automated reactor geometry and hydrodynamic residence time reporting
 """
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 
 
@@ -27,7 +31,7 @@ T_CRIT_CO2_K = 304.13           # Critical Temperature of CO2 [K]
 
 
 # ==================================================================================================
-# DEFAULT REACTION PARAMETERS
+# DEFAULT REACTION KINETIC PARAMETERS
 # ==================================================================================================
 DEFAULT_KINETIC_PARAMS = {
     'R1':  {'name': 'SO2 + 0.5 O2 + H2O <-> H2SO4',           'A': 1.0e4,  'Ea': 45000.0, 'units': 'm3 / (kmol * s)'},
@@ -61,7 +65,7 @@ SRK_LIQUID_PHI_CO2_BASE = 0.95  # Liquid phase base SRK fugacity coefficient for
 class CO2ImpurityKineticsModel:
     """
     100% Pure Physical Simulator for Impurity Reactions in CO2 Streams.
-    Supports setter customization for kinetics/geometry, getter methods, and automated report generation.
+    Core SRK EOS kinetic engine.
     """
 
     SPECIES = [
@@ -81,7 +85,6 @@ class CO2ImpurityKineticsModel:
         
         self.kinetic_params = {k: v.copy() for k, v in DEFAULT_KINETIC_PARAMS.items()}
 
-        # Reactor Geometry Defaults: Volume = 300 mL, Diameter = 6.5 cm
         self.diameter_cm = 6.50
         self.volume_ml = 300.0
         self.mass_flow_g_h = 50.0
@@ -89,13 +92,7 @@ class CO2ImpurityKineticsModel:
 
         self.molar_density, self.phase, self.phi_dict = self._calculate_srk_fugacities(T_kelvin, P_bar)
 
-    # ----------------------------------------------------------------------------------------------
-    # SETTER METHODS
-    # ----------------------------------------------------------------------------------------------
     def set_reaction_constants(self, reaction_identifier, A_forward=None, Ea_forward_kJ_mol=None):
-        """
-        Setters for reaction kinetic constants (A_forward, Ea_forward).
-        """
         rxn_id = None
         clean_id = str(reaction_identifier).strip().lower()
 
@@ -127,10 +124,6 @@ class CO2ImpurityKineticsModel:
                 self.kinetic_params[rxn_id]['Ea'] = float(Ea_forward_kJ_mol) * 1000.0
 
     def set_reactor_geometry(self, diameter_cm=None, length_cm=None, volume_ml=None, mass_flow_g_h=None):
-        """
-        Setters for reactor geometry parameters.
-        Calculates reactor length L, area A_cross, and volume V automatically.
-        """
         if diameter_cm is not None:
             self.diameter_cm = float(diameter_cm)
         if mass_flow_g_h is not None:
@@ -145,13 +138,7 @@ class CO2ImpurityKineticsModel:
             self.length_cm = float(length_cm)
             self.volume_ml = A_cross_cm2 * self.length_cm
 
-    # ----------------------------------------------------------------------------------------------
-    # GETTER METHODS
-    # ----------------------------------------------------------------------------------------------
     def get_fluid_properties(self):
-        """
-        Getter returning dictionary of current thermodynamic fluid properties.
-        """
         return {
             'temperature_C': self.T - 273.15,
             'temperature_K': self.T,
@@ -164,15 +151,9 @@ class CO2ImpurityKineticsModel:
         }
 
     def get_reaction_rates(self, moisture_ppm=10.0):
-        """
-        Getter returning dictionary of reaction rate constants k_f and Gibbs equilibrium constants Keq.
-        """
         return self._calculate_pure_physical_rate_constants(moisture_ppm)
 
     def get_reactor_geometry(self):
-        """
-        Getter returning dictionary of reactor dimensions and hydrodynamics.
-        """
         A_cross_cm2 = np.pi * (self.diameter_cm**2) / 4.0
         rho_g_ml = (self.molar_density * MW_CO2) * 1e-3
         m_reactor_g = self.volume_ml * rho_g_ml
@@ -194,9 +175,6 @@ class CO2ImpurityKineticsModel:
         }
 
     def generate_reactor_report(self):
-        """
-        Generates and returns formatted Reactor Geometry & Residence Time Report string.
-        """
         geom = self.get_reactor_geometry()
         props = self.get_fluid_properties()
 
@@ -217,9 +195,6 @@ class CO2ImpurityKineticsModel:
         return "\n".join(report_lines)
 
     def get_table_results(self, sim_results, resolution_hours=2.0):
-        """
-        Formats simulation results into a Pandas DataFrame table with specified hour resolution (e.g. 2 hours).
-        """
         t_h = sim_results['time_hours']
         max_h = t_h[-1]
         target_hours = np.arange(0.0, max_h + resolution_hours/2.0, resolution_hours)
@@ -245,9 +220,6 @@ class CO2ImpurityKineticsModel:
         df = pd.DataFrame(rows)
         return df
 
-    # ----------------------------------------------------------------------------------------------
-    # THERMODYNAMIC & ODE INTEGRATION ENGINE
-    # ----------------------------------------------------------------------------------------------
     def _calculate_srk_fugacities(self, T_K, P_bar):
         phi_dict = {}
 
@@ -442,3 +414,253 @@ class CO2ImpurityKineticsModel:
             'phi': self.phi_dict,
             'rates': rates_dict
         }
+
+
+# ==================================================================================================
+# HIGH-LEVEL MULTI-PHASE CSTR EXPERIMENT MANAGER CLASS
+# ==================================================================================================
+class CO2ImpurityReactorExperiment:
+    """
+    High-level Manager for Setting Up, Configuring, and Executing Multi-Phase CSTR Experiments.
+    
+    Usage:
+        exp = CO2ImpurityReactorExperiment(target_pressure_bar=25.0, target_temp_C=-25.0, diameter_cm=6.5, volume_ml=300.0, mass_flow_g_h=50.0)
+        exp.set_initial_vessel_charge(gas_name='N2', pressure_bar=1.0, temp_C=25.0) # Default: N2 1 bar 25 C
+        
+        # Add as many phases as wanted
+        exp.add_phase(duration_hours=10.0, feed_ppm={'H2S': 0, 'SO2': 0, 'NO2': 0, 'O2': 0, 'H2O': 0}, phase_name="Phase 0: Pressurization")
+        exp.add_phase(duration_hours=20.0, feed_ppm={'SO2': 10, 'NO2': 10, 'O2': 10, 'H2O': 10}, phase_name="Phase 1: 10 ppm Without H2S")
+        exp.add_phase(duration_hours=20.0, feed_ppm={'H2S': 10, 'SO2': 10, 'NO2': 10, 'O2': 10, 'H2O': 10}, phase_name="Phase 2: 10 ppm All Impurities")
+        
+        exp.run_experiment()
+        df = exp.get_table_results(resolution_hours=2.0)
+        exp.plot_results()
+    """
+
+    def __init__(self, target_pressure_bar=25.0, target_temp_C=-25.0, diameter_cm=6.5, volume_ml=300.0, mass_flow_g_h=50.0, material='carbon_steel'):
+        self.target_P = float(target_pressure_bar)
+        self.target_T_C = float(target_temp_C)
+        self.target_T_K = self.target_T_C + 273.15
+        self.diameter_cm = float(diameter_cm)
+        self.volume_ml = float(volume_ml)
+        self.mass_flow_g_h = float(mass_flow_g_h)
+        self.material = material
+
+        # Initial vessel charge default: N2 gas at 1 bar, 25 °C
+        self.initial_gas = 'N2'
+        self.initial_P_bar = 1.0
+        self.initial_T_C = 25.0
+
+        # Model instance
+        self.model = CO2ImpurityKineticsModel(
+            T_kelvin=self.target_T_K,
+            P_bar=self.target_P,
+            material=self.material
+        )
+        self.model.set_reactor_geometry(
+            diameter_cm=self.diameter_cm,
+            volume_ml=self.volume_ml,
+            mass_flow_g_h=self.mass_flow_g_h
+        )
+
+        # Phases list
+        self.phases = []
+        self.simulation_results = None
+
+    def set_initial_vessel_charge(self, gas_name='N2', pressure_bar=1.0, temp_C=25.0):
+        """
+        Set initial gas charge in autoclave prior to CO2 pressurization.
+        Defaults to N2 at 1 bar, 25 °C.
+        """
+        self.initial_gas = str(gas_name).upper()
+        self.initial_P_bar = float(pressure_bar)
+        self.initial_T_C = float(temp_C)
+
+    def set_reactor_geometry(self, diameter_cm=None, length_cm=None, volume_ml=None, mass_flow_g_h=None):
+        """
+        Set reactor dimensions (diameter, length, volume, flow rate).
+        """
+        self.model.set_reactor_geometry(
+            diameter_cm=diameter_cm,
+            length_cm=length_cm,
+            volume_ml=volume_ml,
+            mass_flow_g_h=mass_flow_g_h
+        )
+        geom = self.model.get_reactor_geometry()
+        self.diameter_cm = geom['diameter_cm']
+        self.volume_ml = geom['volume_ml']
+        self.mass_flow_g_h = geom['mass_flow_g_h']
+
+    def set_reaction_constants(self, reaction_identifier, A_forward=None, Ea_forward_kJ_mol=None):
+        """
+        Customize kinetic parameters (A and Ea).
+        """
+        self.model.set_reaction_constants(reaction_identifier, A_forward, Ea_forward_kJ_mol)
+
+    def add_phase(self, duration_hours, feed_ppm, phase_name=None):
+        """
+        Add a phase to the experiment sequence.
+        - duration_hours: duration of phase in hours
+        - feed_ppm: dict of impurity concentrations in feed (e.g. {'H2S': 10, 'SO2': 10, ...})
+        - phase_name: optional human-readable description
+        """
+        p_idx = len(self.phases)
+        name = phase_name if phase_name else f"Phase {p_idx}"
+        
+        feed = {s: 0.0 for s in self.model.SPECIES}
+        if isinstance(feed_ppm, dict):
+            for k, v in feed_ppm.items():
+                if k in feed:
+                    feed[k] = float(v)
+
+        self.phases.append({
+            'name': name,
+            'duration_hours': float(duration_hours),
+            'feed_ppm': feed
+        })
+
+    def clear_phases(self):
+        """Clear all added phases."""
+        self.phases = []
+        self.simulation_results = None
+
+    def generate_reactor_report(self):
+        """Returns reactor geometry derivation and residence time report."""
+        return self.model.generate_reactor_report()
+
+    def run_experiment(self):
+        """
+        Executes all added phases sequentially starting from initial vessel charge.
+        """
+        if not self.phases:
+            # Default 3 phases if none specified
+            self.add_phase(10.0, {s: 0.0 for s in self.model.SPECIES}, "Phase 0: Pressurization & Pure CO2 Flow")
+            self.add_phase(20.0, {'SO2': 10.0, 'NO2': 10.0, 'O2': 10.0, 'H2O': 10.0}, "Phase 1: 10 ppm Without H2S")
+            self.add_phase(20.0, {'H2S': 10.0, 'SO2': 10.0, 'NO2': 10.0, 'O2': 10.0, 'H2O': 10.0}, "Phase 2: 10 ppm All Impurities")
+
+        geom = self.model.get_reactor_geometry()
+        tau_sec = geom['residence_time_seconds']
+
+        rho_kg_m3 = self.model.molar_density * MW_CO2
+        rho_g_ml = rho_kg_m3 * 1e-3
+        m_target_g = self.volume_ml * rho_g_ml
+        t_fill_hours = m_target_g / self.mass_flow_g_h if self.mass_flow_g_h > 0 else 0.0
+
+        all_t_h = []
+        all_ppm = {s: [] for s in self.model.SPECIES}
+        current_cumulative_t = 0.0
+
+        current_state_ppm = {s: 0.0 for s in self.model.SPECIES}
+
+        for idx, phase in enumerate(self.phases):
+            dur_h = phase['duration_hours']
+            feed = phase['feed_ppm']
+
+            if idx == 0 and dur_h >= t_fill_hours:
+                res_fill = self.model.simulate(
+                    initial_ppm=current_state_ppm,
+                    duration_sec=t_fill_hours * 3600.0,
+                    num_points=max(int(t_fill_hours * 10), 50),
+                    feed_ppm=feed,
+                    space_time_sec=None
+                )
+
+                fill_state = {s: res_fill['ppm'][s][-1] for s in self.model.SPECIES}
+                rem_dur_h = dur_h - t_fill_hours
+
+                if rem_dur_h > 0.001:
+                    res_flow = self.model.simulate(
+                        initial_ppm=fill_state,
+                        duration_sec=rem_dur_h * 3600.0,
+                        num_points=max(int(rem_dur_h * 10), 30),
+                        feed_ppm=feed,
+                        space_time_sec=tau_sec
+                    )
+                    t_res = np.concatenate([res_fill['time_hours'], t_fill_hours + res_flow['time_hours']])
+                    ppm_res = {s: np.concatenate([res_fill['ppm'][s], res_flow['ppm'][s]]) for s in self.model.SPECIES}
+                else:
+                    t_res = res_fill['time_hours']
+                    ppm_res = res_fill['ppm']
+            else:
+                res_flow = self.model.simulate(
+                    initial_ppm=current_state_ppm,
+                    duration_sec=dur_h * 3600.0,
+                    num_points=max(int(dur_h * 10), 100),
+                    feed_ppm=feed,
+                    space_time_sec=tau_sec
+                )
+                t_res = res_flow['time_hours']
+                ppm_res = res_flow['ppm']
+
+            all_t_h.append(current_cumulative_t + t_res)
+            for s in self.model.SPECIES:
+                all_ppm[s].append(ppm_res[s])
+
+            current_cumulative_t += dur_h
+            current_state_ppm = {s: ppm_res[s][-1] for s in self.model.SPECIES}
+
+        master_t = np.concatenate(all_t_h)
+        master_ppm = {s: np.concatenate(all_ppm[s]) for s in self.model.SPECIES}
+
+        self.simulation_results = {
+            'time_hours': master_t,
+            'ppm': master_ppm,
+            'phases': self.phases
+        }
+
+        return self.simulation_results
+
+    def get_table_results(self, resolution_hours=2.0):
+        """
+        Getter returning Pandas DataFrame of simulation results formatted at specified hour resolution (default: 2.0 h).
+        """
+        if self.simulation_results is None:
+            self.run_experiment()
+
+        return self.model.get_table_results(self.simulation_results, resolution_hours=resolution_hours)
+
+    def plot_results(self, save_path=None, title="Multi-Phase CSTR CO2 Impurity Kinetics"):
+        """
+        Easy 1-line plotting helper for species concentrations over time.
+        """
+        if self.simulation_results is None:
+            self.run_experiment()
+
+        t_h = self.simulation_results['time_hours']
+        ppm = self.simulation_results['ppm']
+
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(11, 8), sharex=True)
+
+        ax1.plot(t_h, ppm['H2S'], label='H2S', linewidth=2.0, color='#e74c3c')
+        ax1.plot(t_h, ppm['SO2'], label='SO2', linewidth=2.0, color='#f39c12')
+        ax1.plot(t_h, ppm['NO2'], label='NO2', linewidth=2.0, color='#9b59b6')
+        ax1.plot(t_h, ppm['O2'],  label='O2',  linewidth=2.0, color='#2ecc71')
+        ax1.plot(t_h, ppm['H2O'], label='H2O', linewidth=2.0, color='#3498db')
+        ax1.set_ylabel('Reactants Concentration (ppm)', fontsize=11, fontweight='bold')
+        ax1.set_title(title, fontsize=13, fontweight='bold')
+        ax1.grid(True, linestyle='--', alpha=0.6)
+        ax1.legend(loc='upper right', frameon=True)
+
+        ax2.plot(t_h, ppm['H2SO4'], label='H2SO4 Acid', linewidth=2.5, color='#c0392b')
+        ax2.plot(t_h, ppm['NO'],    label='NO Gas',      linewidth=2.0, color='#8e44ad')
+        ax2.plot(t_h, ppm['NH3'],   label='NH3 Ammonia', linewidth=2.0, color='#16a085')
+        ax2.plot(t_h, ppm['S8'],    label='S8 Sulfur',   linewidth=2.0, color='#f1c40f')
+        ax2.plot(t_h, ppm['HNO3'],  label='HNO3 Acid',   linewidth=2.0, color='#d35400')
+        ax2.set_xlabel('Time (hours)', fontsize=11, fontweight='bold')
+        ax2.set_ylabel('Products Concentration (ppm)', fontsize=11, fontweight='bold')
+        ax2.grid(True, linestyle='--', alpha=0.6)
+        ax2.legend(loc='upper right', frameon=True)
+
+        cum_t = 0.0
+        for phase in self.phases[:-1]:
+            cum_t += phase['duration_hours']
+            ax1.axvline(cum_t, color='black', linestyle=':', linewidth=1.5, alpha=0.7)
+            ax2.axvline(cum_t, color='black', linestyle=':', linewidth=1.5, alpha=0.7)
+
+        plt.tight_layout()
+
+        if save_path:
+            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            print(f"Plot saved successfully to: {save_path}")
+
+        return fig, (ax1, ax2)
