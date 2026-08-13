@@ -9,26 +9,6 @@
 
 ---
 
-## 2026-08-13 — Transactional hydraulic operating-action evaluation
-
-- `ProcessModelOperatingActionEvaluator` binds one immutable operating action to exact required
-  reservoir, well, gathering, or pipeline capacity constraints, runs the actual `ProcessModel`,
-  and restores and reruns the captured baseline before returning.
-- Immutable serializable candidate results retain action identity/provenance, objectives,
-  registered constraint values and margins, hydraulic utilization and margin, direction, units,
-  equipment/design provenance, confidence, validity applicability, and restoration diagnostics.
-- Missing constraints, non-finite evidence, violations, out-of-range evidence, simulation failure,
-  and restoration failure have distinct fail-closed outcomes. An absent validity range remains
-  `NOT_ASSESSED`; confidence is never treated as a probability of safe operation.
-- `withReadBackTolerance(absolute, relative, provenance)` qualifies a known automation conversion
-  or control-tag resolution without weakening the compatibility-preserving strict default.
-  Application diagnostics retain requested/read-back values, absolute residual, allowed tolerance,
-  and tolerance provenance; successful write verification is not process-feasibility evidence.
-- The wrapped simulation evaluator must have no parameters because the wrapper owns the one
-  candidate write. The API consumes existing hydraulic correlations and does not change routing,
-  coordinate multiple actions, or provide mechanical, safety, environmental, quality, market, or
-  operating approval. Use independent model instances for parallel evaluations.
-
 ## 2026-08-13 — Independent stagnant inner HTC for TwoFluidPipe cooldown
 
 - `TwoFluidPipe.setStagnantInnerHeatTransferCoefficient(...)` and its getter now own the zero-local-throughput
