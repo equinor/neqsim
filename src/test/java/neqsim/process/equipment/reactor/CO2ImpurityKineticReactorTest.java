@@ -2,106 +2,183 @@ package neqsim.process.equipment.reactor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.NeqSimTest;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
-/**
- * JUnit test suite for CO2ImpurityKineticReactor.
- *
- * Checks values, equipment execution, stream properties, and kinetic reactor performance
- * against experimental benchmark datasets.
- *
- * @author NeqSim Team / Antigravity
- */
-public class CO2ImpurityKineticReactorTest {
+/** Regression tests for {@link CO2ImpurityKineticReactor}. */
+public class CO2ImpurityKineticReactorTest extends NeqSimTest {
+  private static final String[] REACTION_IDS = { "R1", "R2", "R3A", "R3B", "R4", "R5", "R6", "R7", "R8CS", "R8SS" };
+  private static final String[] MODELED_SPECIES = { "H2S", "SO2", "NO2", "NO", "oxygen", "water", "H2SO4", "HNO3", "S8",
+      "ammonia" };
 
-  private SystemSrkEos testSystem;
   private Stream feedStream;
   private CO2ImpurityKineticReactor reactor;
 
   @BeforeEach
   void setUp() {
-    testSystem = new SystemSrkEos(298.15, 100.0);
-    testSystem.addComponent("CO2", 0.999);
-    testSystem.addComponent("water", 0.001);
-    testSystem.init(0);
-
-    feedStream = new Stream("Feed Stream", testSystem);
-    feedStream.run();
-
-    reactor = new CO2ImpurityKineticReactor("CO2 Kinetic Reactor", feedStream);
+    feedStream = createReactingFeed();
+    reactor = new CO2ImpurityKineticReactor("CO2 kinetic reactor", feedStream);
   }
 
   @Test
   void testReactorInitialization() {
-    assertNotNull(reactor);
-    assertEquals("CO2 Kinetic Reactor", reactor.getName());
-    assertEquals(200000.0, reactor.getReactorLength(), 1e-3);
-    assertEquals(2.0, reactor.getFluidVelocity(), 1e-3);
-    assertEquals(100000.0, reactor.getResidenceTime(), 1e-3);
+    assertEquals("CO2 kinetic reactor", reactor.getName());
+    assertEquals(200000.0, reactor.getReactorLength(), 1.0e-12);
+    assertEquals(2.0, reactor.getFluidVelocity(), 1.0e-12);
+    assertEquals(100000.0, reactor.getResidenceTime(), 1.0e-12);
+    assertEquals("carbon_steel", reactor.getMaterial());
   }
 
   @Test
-  void testReactorExecutionPipeline() {
-    reactor.setReactorLength(100000.0); // 100 km
-    reactor.setFluidVelocity(2.0); // 2 m/s
+  void testReactingStreamChangesCompositionAndConservesElements() {
+    disableAllReactions(reactor);
+    reactor.setReactionConstants("R2", 1.0e4, 0.0);
+    reactor.setResidenceTime(30.0);
+
+    double[] inletElements = elementInventory(feedStream.getThermoSystem());
+    double inletH2s = moles(feedStream.getThermoSystem(), "H2S");
     reactor.run();
 
-    assertNotNull(reactor.getOutletStream());
-    assertNotNull(reactor.getOutletStream().getThermoSystem());
+    SystemInterface outlet = reactor.getOutletStream().getThermoSystem();
+    assertNotNull(outlet);
+    assertTrue(moles(outlet, "H2S") < inletH2s, "R2 must consume H2S");
+    assertTrue(moles(outlet, "SO2") > moles(feedStream.getThermoSystem(), "SO2"), "R2 must produce SO2");
+    assertTrue(moles(outlet, "NO") > moles(feedStream.getThermoSystem(), "NO"), "R2 must produce NO");
 
-    double outletDensity = reactor.getOutletStream().getThermoSystem().getDensity();
-    assertTrue(outletDensity > 700.0, "Supercritical CO2 density should be > 700 kg/m3 at 100 bar, 25C");
+    assertElementConservation(inletElements, outlet);
+    for (String species : MODELED_SPECIES) {
+      assertTrue(moles(outlet, species) >= 0.0, species + " inventory must be non-negative");
+    }
   }
 
   @Test
-  void test200hrExperimentalBenchmark() {
-    SystemSrkEos benchSystem = new SystemSrkEos(298.15, 100.0); // 100 bar, 25 °C
-    benchSystem.addComponent("CO2", 0.999);
-    benchSystem.addComponent("water", 0.000130);
-    benchSystem.init(0);
+  void testR3bTreatsH2sAndNo2AsConservedCoCatalysts() {
+    disableAllReactions(reactor);
+    reactor.setReactionConstants("R3B", 1.0e4, 0.0);
+    reactor.setResidenceTime(30.0);
 
-    Stream benchFeed = new Stream("Bench Feed Stream", benchSystem);
-    benchFeed.run();
+    SystemInterface inlet = feedStream.getThermoSystem();
+    double[] inletElements = elementInventory(inlet);
+    double inletH2s = moles(inlet, "H2S");
+    double inletNo2 = moles(inlet, "NO2");
+    double inletSo2 = moles(inlet, "SO2");
+    reactor.run();
 
-    CO2ImpurityKineticReactor benchReactor = new CO2ImpurityKineticReactor("Benchmark Reactor", benchFeed);
-    benchReactor.setResidenceTime(200.0 * 3600.0); // 200 hours
-    benchReactor.run();
-
-    assertNotNull(benchReactor.getOutletStream());
-    double density = benchReactor.getOutletStream().getThermoSystem().getDensity();
-    assertTrue(density > 700.0, "Supercritical CO2 density should be > 700 kg/m3");
+    SystemInterface outlet = reactor.getOutletStream().getThermoSystem();
+    assertTrue(moles(outlet, "SO2") < inletSo2, "R3B must consume SO2");
+    assertEquals(inletH2s, moles(outlet, "H2S"), inletH2s * 1.0e-9);
+    assertEquals(inletNo2, moles(outlet, "NO2"), inletNo2 * 1.0e-9);
+    assertElementConservation(inletElements, outlet);
   }
 
   @Test
-  void testShipModeExecution() {
-    SystemSrkEos shipSystem = new SystemSrkEos(248.15, 20.0); // -25 °C, 20 bar
-    shipSystem.addComponent("CO2", 0.999);
-    shipSystem.addComponent("water", 0.001);
-    shipSystem.init(0);
+  void testLongerResidenceTimeIncreasesConversion() {
+    CO2ImpurityKineticReactor shortReactor = createR8OnlyReactor("short reactor", "carbon_steel", 2.0);
+    CO2ImpurityKineticReactor longReactor = createR8OnlyReactor("long reactor", "carbon_steel", 200.0);
 
-    Stream shipFeed = new Stream("Ship Feed Stream", shipSystem);
-    shipFeed.run();
+    shortReactor.run();
+    longReactor.run();
 
-    CO2ImpurityKineticReactor shipReactor = new CO2ImpurityKineticReactor("Ship Kinetic Reactor", shipFeed);
-    shipReactor.setShipMode(true);
-    shipReactor.setResidenceTime(7.0 * 24.0 * 3600.0); // 7 days
-    shipReactor.run();
-
-    assertNotNull(shipReactor.getOutletStream());
-    double shipDensity = shipReactor.getOutletStream().getThermoSystem().getDensity();
-    assertTrue(shipDensity > 950.0, "Cold liquid CO2 density should be > 950 kg/m3 at 20 bar, -25C");
+    double shortOutletH2s = moles(shortReactor.getOutletStream().getThermoSystem(), "H2S");
+    double longOutletH2s = moles(longReactor.getOutletStream().getThermoSystem(), "H2S");
+    assertTrue(longOutletH2s < shortOutletH2s, "Longer residence time must increase R8 conversion");
   }
 
   @Test
-  void testMaterialSelection() {
-    reactor.setMaterial("carbon_steel");
-    assertEquals("carbon_steel", reactor.getMaterial());
+  void testCarbonSteelMaterialAcceleratesR8() {
+    CO2ImpurityKineticReactor carbonSteel = createR8OnlyReactor("carbon-steel reactor", "carbon_steel", 60.0);
+    CO2ImpurityKineticReactor stainlessSteel = createR8OnlyReactor("stainless-steel reactor", "stainless_steel", 60.0);
 
-    reactor.setMaterial("stainless_steel");
-    assertEquals("stainless_steel", reactor.getMaterial());
+    carbonSteel.run();
+    stainlessSteel.run();
+
+    double carbonSteelH2s = moles(carbonSteel.getOutletStream().getThermoSystem(), "H2S");
+    double stainlessSteelH2s = moles(stainlessSteel.getOutletStream().getThermoSystem(), "H2S");
+    assertTrue(carbonSteelH2s < stainlessSteelH2s,
+        "Carbon-steel R8 parameters must give more conversion than stainless-steel parameters");
+  }
+
+  @Test
+  void testGeometryResidenceTimeUsesCalculatedDensity() {
+    reactor.setReactorGeometry(6.5, 300.0, 50.0);
+    double density = feedStream.getThermoSystem().getDensity("kg/m3");
+    double expectedSeconds = 300.0e-6 * density * 1000.0 / 50.0 * 3600.0;
+
+    double calculatedSeconds = reactor.calculateGeometryResidenceTime(298.15, 100.0);
+    assertEquals(expectedSeconds, calculatedSeconds, expectedSeconds * 1.0e-8);
+    assertTrue(reactor.generateReactorReport().contains("NeqSim fluid density"));
+  }
+
+  @Test
+  void testPublicInputValidation() {
+    assertThrows(IllegalArgumentException.class, () -> reactor.setMaterial("wood"));
+    assertThrows(IllegalArgumentException.class, () -> reactor.setMaterial(null));
+    assertThrows(IllegalArgumentException.class, () -> reactor.setReactionConstants("unknown", 1.0, 10.0));
+    assertThrows(IllegalArgumentException.class, () -> reactor.setReactionConstants("R2", Double.NaN, 10.0));
+    assertThrows(IllegalArgumentException.class, () -> reactor.setResidenceTime(-1.0));
+    assertThrows(IllegalArgumentException.class, () -> reactor.setReactorGeometry(0.0, 300.0, 50.0));
+  }
+
+  private Stream createReactingFeed() {
+    SystemSrkEos system = new SystemSrkEos(298.15, 100.0);
+    system.addComponent("CO2", 1.0);
+    system.addComponent("H2S", 1.0e-4);
+    system.addComponent("SO2", 1.0e-5);
+    system.addComponent("NO2", 5.0e-4);
+    system.addComponent("NO", 1.0e-8);
+    system.addComponent("oxygen", 5.0e-4);
+    system.addComponent("water", 5.0e-4);
+    system.addComponent("H2SO4", 1.0e-20);
+    system.addComponent("HNO3", 1.0e-20);
+    system.addComponent("S8", 1.0e-20);
+    system.addComponent("ammonia", 1.0e-20);
+    system.setMixingRule("classic");
+    Stream stream = new Stream("reacting CO2 feed", system);
+    stream.run();
+    return stream;
+  }
+
+  private CO2ImpurityKineticReactor createR8OnlyReactor(String name, String material, double residenceTimeSeconds) {
+    CO2ImpurityKineticReactor r8Reactor = new CO2ImpurityKineticReactor(name, createReactingFeed());
+    disableAllReactions(r8Reactor);
+    r8Reactor.setReactionConstants("R8CS", 1.0, 0.0);
+    r8Reactor.setReactionConstants("R8SS", 0.01, 0.0);
+    r8Reactor.setMaterial(material);
+    r8Reactor.setResidenceTime(residenceTimeSeconds);
+    return r8Reactor;
+  }
+
+  private void disableAllReactions(CO2ImpurityKineticReactor target) {
+    for (String reactionId : REACTION_IDS) {
+      target.setReactionConstants(reactionId, 0.0, 0.0);
+    }
+  }
+
+  private double[] elementInventory(SystemInterface system) {
+    double hydrogen = 2.0 * moles(system, "H2S") + 2.0 * moles(system, "water") + 2.0 * moles(system, "H2SO4")
+        + moles(system, "HNO3") + 3.0 * moles(system, "ammonia");
+    double nitrogen = moles(system, "NO2") + moles(system, "NO") + moles(system, "HNO3") + moles(system, "ammonia");
+    double oxygen = 2.0 * moles(system, "SO2") + 2.0 * moles(system, "NO2") + moles(system, "NO")
+        + 2.0 * moles(system, "oxygen") + moles(system, "water") + 4.0 * moles(system, "H2SO4")
+        + 3.0 * moles(system, "HNO3");
+    double sulfur = moles(system, "H2S") + moles(system, "SO2") + moles(system, "H2SO4") + 8.0 * moles(system, "S8");
+    return new double[] { hydrogen, nitrogen, oxygen, sulfur };
+  }
+
+  private void assertElementConservation(double[] inletElements, SystemInterface outlet) {
+    double[] outletElements = elementInventory(outlet);
+    for (int i = 0; i < inletElements.length; i++) {
+      assertEquals(inletElements[i], outletElements[i], Math.max(1.0e-12, inletElements[i] * 1.0e-9));
+    }
+  }
+
+  private double moles(SystemInterface system, String component) {
+    return system.hasComponent(component) ? system.getComponent(component).getNumberOfmoles() : 0.0;
   }
 }
