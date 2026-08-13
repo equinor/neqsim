@@ -191,6 +191,11 @@ tt.setUnit("C");
 double temperature = tt.getMeasuredValue();
 ```
 
+When registered in a `ProcessSystem`, concrete local `PressureTransmitter` and `TemperatureTransmitter` instances take
+part in transient step transactions. Rollback restores their stream binding, noise generator, delay/filter/fault state,
+alarm state, and measurement configuration so a rejected sample can be replayed exactly. Subclasses and online-signal
+bindings fail the transaction-coverage preflight until they provide a complete snapshot or external-I/O commit contract.
+
 ### LevelTransmitter
 
 Monitors liquid level in vessels.
@@ -214,6 +219,23 @@ VolumeFlowTransmitter vft = new VolumeFlowTransmitter(stream);
 vft.setUnit("m3/hr");
 double volumeFlow = vft.getMeasuredValue();
 ```
+
+### DifferentialPressureTransmitter
+
+Measures the pressure difference between a high- and low-pressure stream. The sign convention is
+`high pressure - low pressure`.
+
+```java
+import neqsim.process.measurementdevice.DifferentialPressureTransmitter;
+
+DifferentialPressureTransmitter pdt =
+    new DifferentialPressureTransmitter("PDT-101", upstream, downstream);
+double differentialPressure = pdt.getMeasuredValue("bar");
+```
+
+A concrete local differential-pressure transmitter registered in a `ProcessSystem` also participates in transient step
+transactions. Its two stream bindings and signal/alarm state are restored in place on rollback. Subclasses and
+online-signal bindings remain fail-closed.
 
 ### VenturiFlowMeter
 
