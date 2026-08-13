@@ -9,6 +9,10 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import neqsim.process.engineering.model.EngineeringDiagramDesignationRegister;
+import neqsim.process.engineering.model.EngineeringDiagramDesignationRegister.Designation;
+import neqsim.process.engineering.model.EngineeringDiagramDesignationRegister.Kind;
+import neqsim.process.engineering.model.EngineeringDiagramDesignationRegister.ReviewState;
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet;
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.ContentProfile;
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.Diagnostic;
@@ -17,6 +21,7 @@ import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.OffPageCon
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.SemanticObject;
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.Sheet;
 import neqsim.process.engineering.model.EngineeringGraph;
+import neqsim.process.engineering.model.EngineeringDiagramRevisionImpact;
 import neqsim.process.engineering.model.EngineeringIds;
 import neqsim.process.engineering.model.EngineeringNode;
 import neqsim.process.engineering.model.EngineeringProvenance;
@@ -79,6 +84,94 @@ class ProcessDiagramDocumentSetAdapterTest {
         "10-FEED-001");
     assertEquals("MATERIAL", connection.getProperties().get("connectionType"));
     assertTrue(set.isValid());
+  }
+
+  @Test
+  void appliesReviewedDesignationsWithoutMutatingSourceLabelsOrClassicDot() {
+    EngineeringDiagramReferenceFixtures.SystemCase reference = EngineeringDiagramReferenceFixtures.simpleTrain();
+    ProcessSystem process = reference.getProcessSystem();
+    String classicDot = process.toDOT();
+    EngineeringDiagramDocumentSet source = ProcessDiagramDocumentSetAdapter.fromProcessSystem(process,
+        reference.getCaseId(), "A", "PFD-10-003", "Reviewed designations", ContentProfile.PFD);
+    SemanticObject equipment = findSemanticObject(source, EngineeringNode.Kind.EQUIPMENT, "equipmentName",
+        "10-VA-001");
+    SemanticObject stream = findSemanticObject(source, EngineeringNode.Kind.PIPE_SEGMENT, "carriedObjectName",
+        "10-FEED-001");
+    EngineeringDiagramDesignationRegister register = new EngineeringDiagramDesignationRegister()
+        .withDesignation(reviewedDesignation(equipment.getId(), Kind.EQUIPMENT_TAG, "V-101"))
+        .withDesignation(reviewedDesignation(stream.getId(), Kind.STREAM_NUMBER, "10-P-1001-A"));
+
+    EngineeringDiagramDocumentSet reviewed = ProcessDiagramDocumentSetAdapter.fromProcessSystem(process,
+        reference.getCaseId(), "A", "PFD-10-003", "Reviewed designations", ContentProfile.PFD, register);
+
+    SemanticObject reviewedEquipment = findSemanticObjectById(reviewed, equipment.getId());
+    SemanticObject reviewedStream = findSemanticObjectById(reviewed, stream.getId());
+    assertEquals("10-VA-001", reviewedEquipment.getLabel());
+    assertEquals("V-101", reviewedEquipment.getDesignations().get(0).getValue());
+    assertEquals(ReviewState.REVIEWED, reviewedEquipment.getDesignations().get(0).getReviewState());
+    assertEquals("10-P-1001-A", reviewedStream.getDesignations().get(0).getValue());
+    assertThrows(UnsupportedOperationException.class, () -> reviewedEquipment.getDesignations().clear());
+    assertFalse(source.toJson().contains("\"designations\""));
+    assertEquals(classicDot, process.toDOT());
+    assertTrue(reviewed.isValid());
+  }
+
+  @Test
+  void rejectsUnknownAndKindMismatchedReviewedDesignations() {
+    EngineeringGraph graph = new EngineeringGraph("DESIGNATION-PLANT", "A");
+    graph.addNode(new EngineeringNode("equipment:V-001", EngineeringNode.Kind.EQUIPMENT, "V-001", "Source V-001"));
+    EngineeringDiagramDesignationRegister register = new EngineeringDiagramDesignationRegister()
+        .withDesignation(reviewedDesignation("equipment:V-001", Kind.STREAM_NUMBER, "10-P-1001-A"))
+        .withDesignation(reviewedDesignation("equipment:UNKNOWN", Kind.EQUIPMENT_TAG, "V-999"));
+
+    EngineeringDiagramDocumentSet set = EngineeringDiagramDocumentSet.fromGraph(graph, "PFD-DESIGNATION-001",
+        "Designation diagnostics", ContentProfile.PFD, register);
+
+    assertFalse(set.isValid());
+    assertTrue(hasDiagnostic(set, "DIAGRAM_DOCUMENT_DESIGNATION_KIND_MISMATCH"));
+    assertTrue(hasDiagnostic(set, "DIAGRAM_DOCUMENT_DESIGNATION_UNKNOWN_OBJECT"));
+    assertTrue(set.getSemanticObjects().get(0).getDesignations().isEmpty());
+  }
+
+  @Test
+  void reportsDeterministicCrossSheetImpactForReviewedStreamNumberChange() {
+    EngineeringGraph baselineGraph = twoAreaGraph("A");
+    addCrossAreaConnection(baselineGraph, "pipe-segment:feed", "feed");
+    EngineeringGraph revisedGraph = twoAreaGraph("B");
+    addCrossAreaConnection(revisedGraph, "pipe-segment:feed", "feed");
+    EngineeringDiagramDocumentSet baseline = EngineeringDiagramDocumentSet.fromGraph(baselineGraph,
+        "PFD-IMPACT-001", "Revision impact", ContentProfile.PFD);
+    EngineeringDiagramDesignationRegister register = new EngineeringDiagramDesignationRegister()
+        .withDesignation(reviewedDesignation("pipe-segment:feed", Kind.STREAM_NUMBER, "10-P-1001-B"));
+    EngineeringDiagramDocumentSet revised = EngineeringDiagramDocumentSet.fromGraph(revisedGraph, "PFD-IMPACT-001",
+        "Revision impact", ContentProfile.PFD, register);
+
+    EngineeringDiagramRevisionImpact first = baseline.compareTo(revised);
+    EngineeringDiagramRevisionImpact second = EngineeringDiagramRevisionImpact.compare(baseline, revised);
+
+    assertEquals(EngineeringDiagramRevisionImpact.Status.CHANGED, first.getStatus());
+    assertEquals(1, first.getModifiedSemanticObjectIds().size());
+    assertEquals("pipe-segment:feed", first.getModifiedSemanticObjectIds().get(0));
+    assertTrue(first.getAddedSemanticObjectIds().isEmpty());
+    assertTrue(first.getRemovedSemanticObjectIds().isEmpty());
+    assertEquals(2, first.getAffectedSheetIds().size());
+    assertEquals(1, first.getAffectedDrawingIds().size());
+    assertEquals(first.toJson(), second.toJson());
+    assertThrows(UnsupportedOperationException.class, () -> first.getAffectedSheetIds().clear());
+  }
+
+  @Test
+  void reportsUnchangedSemanticImpactAcrossRevisionOnlyChange() {
+    EngineeringDiagramDocumentSet baseline = EngineeringDiagramDocumentSet.fromGraph(twoAreaGraph("A"),
+        "PFD-IMPACT-002", "Revision-only impact", ContentProfile.PFD);
+    EngineeringDiagramDocumentSet revised = EngineeringDiagramDocumentSet.fromGraph(twoAreaGraph("B"),
+        "PFD-IMPACT-002", "Revision-only impact", ContentProfile.PFD);
+
+    EngineeringDiagramRevisionImpact impact = baseline.compareTo(revised);
+
+    assertEquals(EngineeringDiagramRevisionImpact.Status.UNCHANGED, impact.getStatus());
+    assertTrue(impact.getAffectedSheetIds().isEmpty());
+    assertNotEquals(impact.getBaselineFingerprint(), impact.getRevisedFingerprint());
   }
 
   @Test
@@ -215,12 +308,21 @@ class ProcessDiagramDocumentSetAdapterTest {
   }
 
   private static EngineeringGraph twoAreaGraph() {
-    EngineeringGraph graph = new EngineeringGraph("PARALLEL-PLANT", "A");
+    return twoAreaGraph("A");
+  }
+
+  private static EngineeringGraph twoAreaGraph(String revision) {
+    EngineeringGraph graph = new EngineeringGraph("PARALLEL-PLANT", revision);
     graph.addNode(new EngineeringNode(EngineeringIds.nodeId(EngineeringNode.Kind.AREA, "PARALLEL-PLANT/Area A"),
         EngineeringNode.Kind.AREA, "PARALLEL-PLANT/Area A", "Area A").putProperty("areaName", "Area A"));
     graph.addNode(new EngineeringNode(EngineeringIds.nodeId(EngineeringNode.Kind.AREA, "PARALLEL-PLANT/Area B"),
         EngineeringNode.Kind.AREA, "PARALLEL-PLANT/Area B", "Area B").putProperty("areaName", "Area B"));
     return graph;
+  }
+
+  private static Designation reviewedDesignation(String semanticObjectId, Kind kind, String value) {
+    return new Designation(semanticObjectId, kind, value, "project-register:diagram-designations",
+        ReviewState.REVIEWED, "Process discipline", "review:DIAGRAM-42", "2026-08-13T07:00:00Z", "B");
   }
 
   private static void addCrossAreaConnection(EngineeringGraph graph, String id, String externalKey) {
@@ -264,5 +366,14 @@ class ProcessDiagramDocumentSetAdapterTest {
       }
     }
     throw new AssertionError("Missing semantic object " + kind + " with " + property + "=" + value);
+  }
+
+  private static SemanticObject findSemanticObjectById(EngineeringDiagramDocumentSet set, String id) {
+    for (SemanticObject object : set.getSemanticObjects()) {
+      if (id.equals(object.getId())) {
+        return object;
+      }
+    }
+    throw new AssertionError("Missing semantic object " + id);
   }
 }

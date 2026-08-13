@@ -274,8 +274,10 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
     private final String label;
     private final Map<String, Object> properties;
     private final List<ProvenanceRecord> provenance;
+    private final List<EngineeringDiagramDesignationRegister.Designation> designations;
 
-    private SemanticObject(EngineeringNode source) {
+    private SemanticObject(EngineeringNode source,
+        List<EngineeringDiagramDesignationRegister.Designation> designations) {
       this.id = source.getId();
       this.kind = source.getKind();
       this.externalKey = source.getExternalKey();
@@ -286,6 +288,8 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
         records.add(new ProvenanceRecord(item));
       }
       this.provenance = Collections.unmodifiableList(records);
+      this.designations = Collections.unmodifiableList(
+          new ArrayList<EngineeringDiagramDesignationRegister.Designation>(designations));
     }
 
     /**
@@ -342,7 +346,16 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
       return provenance;
     }
 
-    private Map<String, Object> toMap() {
+    /**
+     * Returns reviewed project designations without replacing the canonical source label.
+     *
+     * @return immutable reviewed designations
+     */
+    public List<EngineeringDiagramDesignationRegister.Designation> getDesignations() {
+      return designations;
+    }
+
+    Map<String, Object> toMap() {
       Map<String, Object> result = new LinkedHashMap<String, Object>();
       result.put("id", id);
       result.put("kind", kind.name());
@@ -354,6 +367,13 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
         provenanceMaps.add(item.toMap());
       }
       result.put("provenance", provenanceMaps);
+      if (!designations.isEmpty()) {
+        List<Map<String, Object>> designationMaps = new ArrayList<Map<String, Object>>();
+        for (EngineeringDiagramDesignationRegister.Designation designation : designations) {
+          designationMaps.add(designation.toMap());
+        }
+        result.put("designations", designationMaps);
+      }
       return result;
     }
 
@@ -587,7 +607,7 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
 
   private EngineeringDiagramDocumentSet(String id, EngineeringGraph graph, String title, DocumentStatus status,
       IssuePurpose issuePurpose, String accountableApprovalReference, List<RevisionEntry> revisionHistory,
-      List<Drawing> drawings, List<Diagnostic> diagnostics) {
+      List<Drawing> drawings, List<Diagnostic> diagnostics, EngineeringDiagramDesignationRegister designationRegister) {
     this.id = requireText(id, "document set id");
     this.plantId = graph.getProjectId();
     this.title = requireText(title, "title");
@@ -601,9 +621,9 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
       throw new IllegalArgumentException("approved or construction issue requires accountableApprovalReference");
     }
     this.revisionHistory = Collections.unmodifiableList(new ArrayList<RevisionEntry>(revisionHistory));
-    this.semanticObjects = semanticObjects(graph);
     this.drawings = Collections.unmodifiableList(new ArrayList<Drawing>(drawings));
     List<Diagnostic> assessed = new ArrayList<Diagnostic>(diagnostics);
+    this.semanticObjects = semanticObjects(graph, designationRegister, assessed);
     assessed.addAll(validateSemanticObjects(semanticObjects));
     assessed.addAll(validate(drawings));
     this.diagnostics = Collections.unmodifiableList(assessed);
@@ -626,11 +646,32 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
    */
   public static EngineeringDiagramDocumentSet fromGraph(EngineeringGraph graph, String drawingNumber, String title,
       ContentProfile profile, List<Diagnostic> inheritedDiagnostics) {
+    return fromGraph(graph, drawingNumber, title, profile, inheritedDiagnostics,
+        new EngineeringDiagramDesignationRegister());
+  }
+
+  /**
+   * Creates a deterministic area-sheet view with reviewed project designations.
+   *
+   * @param graph canonical semantic graph
+   * @param drawingNumber controlled drawing number
+   * @param title document-set title
+   * @param profile requested content profile
+   * @param inheritedDiagnostics diagnostics produced by the source adapter
+   * @param designationRegister reviewed project designation evidence
+   * @return immutable controlled-document proposal
+   */
+  public static EngineeringDiagramDocumentSet fromGraph(EngineeringGraph graph, String drawingNumber, String title,
+      ContentProfile profile, List<Diagnostic> inheritedDiagnostics,
+      EngineeringDiagramDesignationRegister designationRegister) {
     if (graph == null) {
       throw new IllegalArgumentException("graph must not be null");
     }
     if (profile == null) {
       throw new IllegalArgumentException("profile must not be null");
+    }
+    if (designationRegister == null) {
+      throw new IllegalArgumentException("designationRegister must not be null");
     }
     String normalizedNumber = requireText(drawingNumber, "drawingNumber");
     List<Diagnostic> diagnostics = inheritedDiagnostics == null ? new ArrayList<Diagnostic>()
@@ -670,13 +711,19 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
         new RevisionEntry(graph.getRevision(), "Initial simulation-driven engineering proposal", "NEQSIM", "", "", ""));
     return new EngineeringDiagramDocumentSet("document-set:" + EngineeringIds.canonical(normalizedNumber), graph, title,
         DocumentStatus.WORKING, IssuePurpose.ENGINEERING_PROPOSAL, "", history, Collections.singletonList(drawing),
-        diagnostics);
+        diagnostics, designationRegister);
   }
 
   /** Convenience overload without inherited source diagnostics. */
   public static EngineeringDiagramDocumentSet fromGraph(EngineeringGraph graph, String drawingNumber, String title,
       ContentProfile profile) {
     return fromGraph(graph, drawingNumber, title, profile, Collections.<Diagnostic>emptyList());
+  }
+
+  /** Convenience overload with reviewed project designations and no inherited diagnostics. */
+  public static EngineeringDiagramDocumentSet fromGraph(EngineeringGraph graph, String drawingNumber, String title,
+      ContentProfile profile, EngineeringDiagramDesignationRegister designationRegister) {
+    return fromGraph(graph, drawingNumber, title, profile, Collections.<Diagnostic>emptyList(), designationRegister);
   }
 
   public String getId() {
@@ -782,6 +829,16 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
     return new GsonBuilder().setPrettyPrinting().create().toJson(toMap());
   }
 
+  /**
+   * Compares this controlled revision with a newer revision of the same document set.
+   *
+   * @param newer newer controlled revision
+   * @return deterministic semantic-object and affected-view impact
+   */
+  public EngineeringDiagramRevisionImpact compareTo(EngineeringDiagramDocumentSet newer) {
+    return EngineeringDiagramRevisionImpact.compare(this, newer);
+  }
+
   private static void addCrossSheetReferences(EngineeringGraph graph, List<MutableSheet> allSheets,
       Map<String, MutableSheet> sheetsByAreaName, List<Diagnostic> diagnostics) {
     for (EngineeringNode node : graph.getNodes().values()) {
@@ -859,12 +916,52 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
     return result;
   }
 
-  private static List<SemanticObject> semanticObjects(EngineeringGraph graph) {
+  private static List<SemanticObject> semanticObjects(EngineeringGraph graph,
+      EngineeringDiagramDesignationRegister designationRegister, List<Diagnostic> diagnostics) {
+    Map<String, List<EngineeringDiagramDesignationRegister.Designation>> designationsByObject =
+        validDesignations(graph, designationRegister, diagnostics);
     List<SemanticObject> result = new ArrayList<SemanticObject>();
     for (EngineeringNode node : graph.getNodes().values()) {
-      result.add(new SemanticObject(node));
+      List<EngineeringDiagramDesignationRegister.Designation> designations = designationsByObject.get(node.getId());
+      result.add(new SemanticObject(node, designations == null
+          ? Collections.<EngineeringDiagramDesignationRegister.Designation>emptyList() : designations));
     }
     return Collections.unmodifiableList(result);
+  }
+
+  private static Map<String, List<EngineeringDiagramDesignationRegister.Designation>> validDesignations(
+      EngineeringGraph graph, EngineeringDiagramDesignationRegister designationRegister,
+      List<Diagnostic> diagnostics) {
+    Map<String, List<EngineeringDiagramDesignationRegister.Designation>> result =
+        new LinkedHashMap<String, List<EngineeringDiagramDesignationRegister.Designation>>();
+    for (EngineeringDiagramDesignationRegister.Designation designation : designationRegister.getDesignations()) {
+      EngineeringNode node = graph.getNode(designation.getSemanticObjectId());
+      if (node == null) {
+        diagnostics.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_DESIGNATION_UNKNOWN_OBJECT",
+            "Reviewed designation references an unknown semantic object", designation.getSemanticObjectId()));
+        continue;
+      }
+      if (!supportsDesignation(node.getKind(), designation.getKind())) {
+        diagnostics.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_DESIGNATION_KIND_MISMATCH",
+            "Reviewed designation type is not valid for the target semantic-object kind", node.getId()));
+        continue;
+      }
+      List<EngineeringDiagramDesignationRegister.Designation> values = result.get(node.getId());
+      if (values == null) {
+        values = new ArrayList<EngineeringDiagramDesignationRegister.Designation>();
+        result.put(node.getId(), values);
+      }
+      values.add(designation);
+    }
+    return result;
+  }
+
+  private static boolean supportsDesignation(EngineeringNode.Kind nodeKind,
+      EngineeringDiagramDesignationRegister.Kind designationKind) {
+    if (designationKind == EngineeringDiagramDesignationRegister.Kind.EQUIPMENT_TAG) {
+      return nodeKind == EngineeringNode.Kind.EQUIPMENT;
+    }
+    return nodeKind == EngineeringNode.Kind.LINE || nodeKind == EngineeringNode.Kind.PIPE_SEGMENT;
   }
 
   private static List<Diagnostic> validateSemanticObjects(List<SemanticObject> objects) {
