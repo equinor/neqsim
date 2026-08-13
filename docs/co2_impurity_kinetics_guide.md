@@ -1,3 +1,9 @@
+---
+title: "NeqSim CO2 Impurity Chemical Kinetic Model and CSTR Experiment System"
+description: "Technical, thermodynamic and chemical-engineering reference for the NeqSim CO2 impurity kinetic model — CO2ImpurityKineticReactor, reaction network, rate expressions, CSTR experiment set-up and validation of impurity conversion in dense-phase CO2 transport."
+keywords: "CO2, impurity, chemical kinetics, CSTR, reactor, CO2ImpurityKineticReactor, dense phase, CCS, reaction network, rate constants, NeqSim"
+---
+
 # Comprehensive Guide: NeqSim CO2 Impurity Chemical Kinetic Model & CSTR Experiment System
 
 ## 1. Executive Summary & Scope
