@@ -1216,7 +1216,6 @@ public class TPflash extends Flash {
     }
   }
 
-
   /**
    * Refines a guarded ordinary endpoint with the multiphase stability solver.
    *
@@ -1361,8 +1360,7 @@ public class TPflash extends Flash {
       return;
     }
     double waterFeedFraction = 0.0;
-    for (int componentIndex = 0; componentIndex < system.getPhase(0)
-        .getNumberOfComponents(); componentIndex++) {
+    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
       neqsim.thermo.component.ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
       if ("water".equalsIgnoreCase(component.getComponentName())) {
         waterFeedFraction = component.getz();
@@ -1776,7 +1774,6 @@ public class TPflash extends Flash {
     }
   }
 
-
   /**
    * Performs a bounded final SSI refinement of a stale neutral gas/liquid two-phase endpoint.
    *
@@ -2071,7 +2068,6 @@ public class TPflash extends Flash {
         && maximumCriticalTemperature - minimumCriticalTemperature >= LIQUID_LIQUID_CRITICAL_TEMPERATURE_SPAN;
   }
 
-
   /**
    * Screens for an asymmetric neutral mixture in the temperature range where an extra fluid phase is plausible.
    *
@@ -2158,7 +2154,6 @@ public class TPflash extends Flash {
     }
   }
 
-
   /**
    * Retries a single-phase hydrocarbon endpoint through the ordinary two-phase path.
    *
@@ -2236,7 +2231,6 @@ public class TPflash extends Flash {
     return hasHydrocarbon && hasPotentialMultiphaseEndpointLegacy(phaseType);
   }
 
-
   /**
    * Checks if the endpoint rescue should run for the current flash result.
    *
@@ -2310,7 +2304,6 @@ public class TPflash extends Flash {
         && sumZOverK > MULTIPHASE_RESCUE_LIQUID_SUM_Z_OVER_K_LIMIT
         && maxAbsLogK > MULTIPHASE_RESCUE_LIQUID_LOG_K_SPREAD_LIMIT;
   }
-
 
   /**
    * Checks whether deterministic Wilson K-values indicate a split worth a local endpoint rescue.
