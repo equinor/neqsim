@@ -710,6 +710,16 @@ public class DistillationSolverBenchmarkTest {
     assertEquals(DistillationColumn.SolverType.DAMPED_SUBSTITUTION, column.getLastSolverTypeUsed(),
         "the leaky Naphtali-Sandholm candidate should be rejected and fall back to damped substitution");
     assertTrue(column.solved(), "the fallback solve should converge: " + column.getConvergenceDiagnostics());
+    assertTrue(column.getLastIterationCount() > 0,
+        "accepted iteration count should describe the damped fallback rather than the rejected candidate");
+    assertTrue(column.getLastNaphtaliThermoEvaluationCount() > 0,
+        "fallback adoption must retain thermodynamic work from the rejected Naphtali-Sandholm attempt");
+    assertTrue(column.getLastNaphtaliThermoKValueIterationCount() >= column.getLastNaphtaliThermoEvaluationCount(),
+        "each uncached tray thermodynamic evaluation should perform at least one K-value sweep");
+    assertTrue(column.getConvergenceDiagnostics().contains("Naphtali-Sandholm Jacobian:"),
+        "combined diagnostics should expose rejected simultaneous-solver work beside accepted fallback residuals");
+    assertTrue(column.getLastSolveStatusReason().contains("Naphtali-Sandholm"),
+        "fallback status should retain the rejected solver provenance");
 
     double massBalance = Math
         .abs(100.0 - column.getGasOutStream().getFlowRate("kg/hr") - column.getLiquidOutStream().getFlowRate("kg/hr"))
