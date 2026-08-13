@@ -2094,6 +2094,7 @@ public class ProcessModel implements Runnable, Serializable {
       publishModelEvent(ProcessEvent.EventType.SIMULATION_COMPLETE, "ProcessModel step mode completed",
           ProcessEvent.Severity.INFO);
     } else {
+      boolean previouslyConverged = modelConverged;
       // Reset convergence tracking
       lastIterationCount = 0;
       modelConverged = false;
@@ -2116,6 +2117,12 @@ public class ProcessModel implements Runnable, Serializable {
       java.util.Set<ProcessSystem> dirtyAreas = null;
       resetAutoTuningRunState();
       applyAutoDefaultTolerance();
+      // A converged model already has populated internal streams, so repeated execution can
+      // safely apply automatic thresholds before the first area pass. Cold execution and
+      // observable lifecycle-hook runs retain the post-pass tuning/confirmation behaviour.
+      if (previouslyConverged && useIncrementalAreaExecution && progressListener == null && !publishEvents) {
+        applyAutoConvergenceTuning();
+      }
 
       int iterations = 0;
       while (!Thread.currentThread().isInterrupted() && iterations < maxIterations) {
@@ -3025,8 +3032,7 @@ public class ProcessModel implements Runnable, Serializable {
    */
   private java.util.Set<ProcessSystem> getDirtyAreasForNextIteration(AreaExecutionPlan plan,
       java.util.Set<Object> changedBoundaryStreams) {
-    if (!useIncrementalAreaExecution || progressListener != null || publishEvents || changedBoundaryStreams == null
-        || changedBoundaryStreams.isEmpty()) {
+    if (!useIncrementalAreaExecution || progressListener != null || publishEvents || changedBoundaryStreams == null) {
       return null;
     }
     java.util.Set<ProcessSystem> dirtyAreas = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
@@ -3054,7 +3060,7 @@ public class ProcessModel implements Runnable, Serializable {
         }
       }
     }
-    if (dirtyAreas.isEmpty() || dirtyAreas.size() >= processes.size()) {
+    if (dirtyAreas.size() >= processes.size()) {
       return null;
     }
     return dirtyAreas;
