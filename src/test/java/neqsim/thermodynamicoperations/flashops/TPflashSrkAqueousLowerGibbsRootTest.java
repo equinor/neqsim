@@ -11,9 +11,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPflashSrkAqueousLowerGibbsRootTest {
-  private static final String[] COMPONENTS = {"CO2", "methane", "ethane", "water"};
-  private static final double[] FEED = {0.543865141103918, 0.2937712952303271,
-      0.07010605470616459, 0.09225750895959021};
+  private static final String[] COMPONENTS = { "CO2", "methane", "ethane", "water" };
+  private static final double[] FEED = { 0.543865141103918, 0.2937712952303271, 0.07010605470616459,
+      0.09225750895959021 };
 
   @Test
   void multiphaseSrkSelectsSameLowerGibbsGasAqueousRootAsOrdinaryFlash() {
@@ -36,10 +36,8 @@ class TPflashSrkAqueousLowerGibbsRootTest {
 
   @Test
   void lowerGibbsRootSelectionRemainsContinuousAcrossNearbySrkStates() {
-    double[][] states = {{260.0, 100.0}, {262.5, 105.0}, {265.0, 110.0},
-        {260.0, 100.0}};
-    SystemInterface multiphase =
-        createSystem(new SystemSrkEos(states[0][0], states[0][1]), true);
+    double[][] states = { { 260.0, 100.0 }, { 262.5, 105.0 }, { 265.0, 110.0 }, { 260.0, 100.0 } };
+    SystemInterface multiphase = createSystem(new SystemSrkEos(states[0][0], states[0][1]), true);
 
     for (double[] state : states) {
       multiphase.setTemperature(state[0]);
@@ -47,8 +45,7 @@ class TPflashSrkAqueousLowerGibbsRootTest {
       new ThermodynamicOperations(multiphase).TPflash();
       multiphase.init(3);
 
-      SystemInterface ordinary =
-          createAndFlash(new SystemSrkEos(state[0], state[1]), false);
+      SystemInterface ordinary = createAndFlash(new SystemSrkEos(state[0], state[1]), false);
       assertEquivalentGasAqueousEquilibrium(ordinary, multiphase);
     }
   }
@@ -101,8 +98,7 @@ class TPflashSrkAqueousLowerGibbsRootTest {
     system.setMultiPhaseCheck(multiphaseCheck);
   }
 
-  private void assertEquivalentGasAqueousEquilibrium(
-      SystemInterface expected, SystemInterface actual) {
+  private void assertEquivalentGasAqueousEquilibrium(SystemInterface expected, SystemInterface actual) {
     assertEquals(2, expected.getNumberOfPhases());
     assertEquals(2, actual.getNumberOfPhases());
     assertEquals(PhaseType.GAS, expected.getPhase(0).getType());
@@ -115,20 +111,16 @@ class TPflashSrkAqueousLowerGibbsRootTest {
     double betaTotal = 0.0;
     for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
       assertEquals(expected.getBeta(phaseIndex), actual.getBeta(phaseIndex), 1.0e-10);
-      assertTrue(Double.isFinite(actual.getBeta(phaseIndex))
-          && actual.getBeta(phaseIndex) > 0.0 && actual.getBeta(phaseIndex) < 1.0);
-      assertEquals(expected.getPhase(phaseIndex).getZ(),
-          actual.getPhase(phaseIndex).getZ(), 1.0e-10);
+      assertTrue(Double.isFinite(actual.getBeta(phaseIndex)) && actual.getBeta(phaseIndex) > 0.0
+          && actual.getBeta(phaseIndex) < 1.0);
+      assertEquals(expected.getPhase(phaseIndex).getZ(), actual.getPhase(phaseIndex).getZ(), 1.0e-10);
       betaTotal += actual.getBeta(phaseIndex);
 
       double compositionTotal = 0.0;
       for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
-        double composition =
-            actual.getPhase(phaseIndex).getComponent(componentIndex).getx();
-        assertTrue(Double.isFinite(composition) && composition >= 0.0
-            && composition <= 1.0);
-        assertEquals(expected.getPhase(phaseIndex).getComponent(componentIndex).getx(),
-            composition, 1.0e-10);
+        double composition = actual.getPhase(phaseIndex).getComponent(componentIndex).getx();
+        assertTrue(Double.isFinite(composition) && composition >= 0.0 && composition <= 1.0);
+        assertEquals(expected.getPhase(phaseIndex).getComponent(componentIndex).getx(), composition, 1.0e-10);
         compositionTotal += composition;
       }
       assertEquals(1.0, compositionTotal, 1.0e-10);
@@ -143,11 +135,9 @@ class TPflashSrkAqueousLowerGibbsRootTest {
     for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
       double recoveredFeed = 0.0;
       for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
-        recoveredFeed += system.getBeta(phaseIndex)
-            * system.getPhase(phaseIndex).getComponent(componentIndex).getx();
+        recoveredFeed += system.getBeta(phaseIndex) * system.getPhase(phaseIndex).getComponent(componentIndex).getx();
       }
-      maximumResidual =
-          Math.max(maximumResidual, Math.abs(FEED[componentIndex] - recoveredFeed));
+      maximumResidual = Math.max(maximumResidual, Math.abs(FEED[componentIndex] - recoveredFeed));
     }
     return maximumResidual;
   }
@@ -155,22 +145,15 @@ class TPflashSrkAqueousLowerGibbsRootTest {
   private double maximumLogFugacityResidual(SystemInterface system) {
     double maximumResidual = 0.0;
     for (int firstPhase = 0; firstPhase < system.getNumberOfPhases(); firstPhase++) {
-      for (int secondPhase = firstPhase + 1;
-          secondPhase < system.getNumberOfPhases(); secondPhase++) {
-        for (int componentIndex = 0; componentIndex < COMPONENTS.length;
-            componentIndex++) {
-          double firstLogFugacity = Math.log(Math.max(
-              system.getPhase(firstPhase).getComponent(componentIndex).getx(),
-              Double.MIN_NORMAL))
-              + Math.log(system.getPhase(firstPhase).getComponent(componentIndex)
-                  .getFugacityCoefficient());
-          double secondLogFugacity = Math.log(Math.max(
-              system.getPhase(secondPhase).getComponent(componentIndex).getx(),
-              Double.MIN_NORMAL))
-              + Math.log(system.getPhase(secondPhase).getComponent(componentIndex)
-                  .getFugacityCoefficient());
-          maximumResidual =
-              Math.max(maximumResidual, Math.abs(firstLogFugacity - secondLogFugacity));
+      for (int secondPhase = firstPhase + 1; secondPhase < system.getNumberOfPhases(); secondPhase++) {
+        for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
+          double firstLogFugacity = Math
+              .log(Math.max(system.getPhase(firstPhase).getComponent(componentIndex).getx(), Double.MIN_NORMAL))
+              + Math.log(system.getPhase(firstPhase).getComponent(componentIndex).getFugacityCoefficient());
+          double secondLogFugacity = Math
+              .log(Math.max(system.getPhase(secondPhase).getComponent(componentIndex).getx(), Double.MIN_NORMAL))
+              + Math.log(system.getPhase(secondPhase).getComponent(componentIndex).getFugacityCoefficient());
+          maximumResidual = Math.max(maximumResidual, Math.abs(firstLogFugacity - secondLogFugacity));
         }
       }
     }
