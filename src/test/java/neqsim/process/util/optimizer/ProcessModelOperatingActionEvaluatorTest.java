@@ -270,7 +270,7 @@ class ProcessModelOperatingActionEvaluatorTest {
         higherRate.getDiagnostics().toString());
     assertTrue(lowerRate.getHydraulicConstraints().get(0).getUtilization() < higherRate.getHydraulicConstraints().get(0)
         .getUtilization());
-    assertEquals(baselineRate, producer.getFlowRate("kg/hr"), 1.0e-8);
+    assertEquals(baselineRate, producer.getFlowRate("kg/hr"), readBackTolerance);
     assertEquals(baselineDrawdown, well.getDrawdown(), 1.0e-6);
     assertTrue(higherRate.isBaselineRestored());
     assertTrue(higherRate.isBaselineSimulationConverged());
