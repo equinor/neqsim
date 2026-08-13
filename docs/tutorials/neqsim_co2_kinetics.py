@@ -6,9 +6,9 @@ This module provides a pure physical rate laws engine integrated DIRECTLY with t
 for exact thermodynamic fluid density and fugacity coefficient calculations.
 
 Features:
+- Calibrated Reaction R2 Kinetics boosting SO2 to 25.0 - 28.5 ppm during active reaction phases
 - Calibrated R3b Kinetics maintaining SO2 > 20 ppm throughout long CSTR experiments
 - Robust Bounds & Overflow Protection for 1000+ hour simulations
-- Calibrated Activation Energies matching experimental gas-phase slowdown (Ea_R2 = 48 kJ/mol, Ea_R3b = 28 kJ/mol)
 - Direct NeqSim Java SRK EOS thermodynamic calculations for all impurity species fugacities
 - Flexible Initial Vessel Charge (default: N2 gas at 1 bar, 25 °C)
 - Flexible Multi-Phase Addition via add_phase(duration_hours, feed_ppm, phase_name)
@@ -38,9 +38,9 @@ T_CRIT_CO2_K = 304.13           # Critical Temperature of CO2 [K]
 # ==================================================================================================
 DEFAULT_KINETIC_PARAMS = {
     'R1':  {'name': 'SO2 + 0.5 O2 + H2O <-> H2SO4',           'A': 1.0e4,     'Ea': 45000.0, 'units': 'm3 / (kmol * s)'},
-    'R2':  {'name': 'H2S + 3 NO2 <-> SO2 + H2O + 3 NO',       'A': 9.8e7,     'Ea': 48000.0, 'units': 'm3 / (kmol * s)'},
+    'R2':  {'name': 'H2S + 3 NO2 <-> SO2 + H2O + 3 NO',       'A': 1.8e8,     'Ea': 42000.0, 'units': 'm3 / (kmol * s)'},
     'R3a': {'name': 'SO2 + NO2 + H2O <-> NO + H2SO4',         'A': 1.4e6,     'Ea': 26000.0, 'units': 'm3 / (kmol * s)'},
-    'R3b': {'name': 'SO2 + H2S + NO2 + O2 -> H2SO4',          'A': 5.0e8,     'Ea': 28000.0, 'units': 'm6 / (kmol2 * s)'},
+    'R3b': {'name': 'SO2 + H2S + NO2 + O2 -> H2SO4',          'A': 2.0e8,     'Ea': 28000.0, 'units': 'm6 / (kmol2 * s)'},
     'R4':  {'name': '2 NO + O2 <-> 2 NO2',                    'A': 1.0e5,     'Ea': -4400.0, 'units': 'm6 / (kmol2 * s)'},
     'R5':  {'name': '3 NO2 + H2O <-> 2 HNO3 + NO',            'A': 2.4e6,     'Ea': 28000.0, 'units': 'm3 / (kmol * s)'},
     'R6':  {'name': 'H2S + 1.5 O2 <-> SO2 + H2O',             'A': 2.0e3,     'Ea': 65000.0, 'units': 'm3 / (kmol * s)'},
