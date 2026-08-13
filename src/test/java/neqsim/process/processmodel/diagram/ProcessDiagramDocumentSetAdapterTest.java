@@ -3,6 +3,7 @@ package neqsim.process.processmodel.diagram;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
@@ -109,6 +110,7 @@ class ProcessDiagramDocumentSetAdapterTest {
     assertEquals("V-101", reviewedEquipment.getDesignations().get(0).getValue());
     assertEquals(ReviewState.REVIEWED, reviewedEquipment.getDesignations().get(0).getReviewState());
     assertEquals("10-P-1001-A", reviewedStream.getDesignations().get(0).getValue());
+    assertNotSame(reviewedEquipment.getDesignations(), reviewedEquipment.getDesignations());
     assertThrows(UnsupportedOperationException.class, () -> reviewedEquipment.getDesignations().clear());
     assertFalse(source.toJson().contains("\"designations\""));
     assertEquals(classicDot, process.toDOT());
@@ -155,6 +157,7 @@ class ProcessDiagramDocumentSetAdapterTest {
     assertTrue(first.getRemovedSemanticObjectIds().isEmpty());
     assertEquals(2, first.getAffectedSheetIds().size());
     assertEquals(1, first.getAffectedDrawingIds().size());
+    assertNotSame(first.getAffectedSheetIds(), first.getAffectedSheetIds());
     assertEquals(first.toJson(), second.toJson());
     assertThrows(UnsupportedOperationException.class, () -> first.getAffectedSheetIds().clear());
   }
