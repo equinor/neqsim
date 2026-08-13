@@ -1,240 +1,471 @@
 package neqsim.process.equipment.reactor;
 
+import java.util.Arrays;
+import java.util.Locale;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Rigorous Non-Empirical Kinetic Reactor for trace impurity reactions in CO2 transport systems (Pipelines and Ship
- * Transport).
+ * Experimental isothermal plug-flow reactor for trace-impurity reactions in CO2 streams.
  *
  * <p>
- * Replaces empirical curve-fitting and static equilibrium models with a pure physical differential kinetics engine.
- * Incorporates H2S thiyl/hydroperoxyl radical chain co-catalysis acceleration (R3b): Without H2S, SO2 + NO2 + O2 + H2O
- * at 25 bar, -25 °C has no significant reaction for 10 hr (Ea3a = 36.0 kJ/mol). When H2S is introduced, H2S oxidation
- * triggers R3b radical chain propagation (Ea3b = 15.0 kJ/mol) -> strong acid formation.
+ * The reactor integrates a concentration-based Arrhenius reaction network over the configured residence time. Every
+ * reaction is applied through a balanced stoichiometric vector and each numerical extent is limited by the available
+ * reactants. This preserves non-negative component inventories and elemental balances. The built-in kinetic parameters
+ * are illustrative defaults; engineering use requires calibration against data representative of the fluid, wall
+ * material, pressure, temperature and water content.
  * </p>
  *
- * <h2>Reactions Modeled</h2>
- * <ul>
- * <li><b>R1:</b> SO2 + 0.5 O2 + H2O &lt;=&gt; H2SO4 (Direct SO2 oxidation, Ea1 = 45.0 kJ/mol)</li>
- * <li><b>R2:</b> H2S + 3 NO2 &lt;=&gt; SO2 + H2O + 3 NO (H2S oxidation by NO2, Ea2 = 28.0 kJ/mol)</li>
- * <li><b>R3a:</b> SO2 + NO2 + H2O &lt;=&gt; NO + H2SO4 (Base NO2 oxidation without H2S, Ea3a = 36.0 kJ/mol)</li>
- * <li><b>R3b:</b> SO2 + H2S + 0.5 O2 + H2O -&gt; H2SO4 + H2S (Radical chain accelerated oxidation, Ea3b = 15.0
- * kJ/mol)</li>
- * <li><b>R4:</b> 2 NO + O2 &lt;=&gt; 2 NO2 (Termolecular NO oxidation, negative activation energy)</li>
- * <li><b>R5:</b> 3 NO2 + H2O &lt;=&gt; 2 HNO3 + NO (Reversible NO2 hydrolysis, Keq5 = exp(-Delta G5/RT))</li>
- * <li><b>R6:</b> H2S + 1.5 O2 &lt;=&gt; SO2 + H2O (Accelerated H2S oxidation, Ea6 = 25.0 kJ/mol)</li>
- * <li><b>R7:</b> Fast Ammonia Reactions / Neutralization (Ea7 = 15.0 kJ/mol)</li>
- * </ul>
+ * <p>
+ * Reaction R3b uses the same net stoichiometry as R1. H2S and NO2 enter its rate law as co-catalysts and are not
+ * consumed by that reaction. Material selection affects only the R8 heterogeneous sulfur-formation rate.
+ * </p>
  *
- * @author NeqSim Team / Antigravity
- * @version 3.3
+ * @author NeqSim Team
+ * @version 1.0
  */
 public class CO2ImpurityKineticReactor extends TwoPortEquipment {
-
   private static final long serialVersionUID = 1006L;
   private static final Logger logger = LogManager.getLogger(CO2ImpurityKineticReactor.class);
+  private static final double GAS_CONSTANT = 8.314462618;
+  private static final double MINIMUM_MOLES = 1.0e-30;
+  private static final double REFERENCE_CONCENTRATION = 1.0;
+  private static final double MAXIMUM_INTEGRATION_STEP_SECONDS = 60.0;
+  private static final int MINIMUM_INTEGRATION_STEPS = 200;
+  private static final int MAXIMUM_INTEGRATION_STEPS = 20000;
 
-  private double reactorLength = 200000.0; // meters (default 200 km pipeline)
-  private double fluidVelocity = 2.0; // m/s
-  private double residenceTime = 100000.0; // seconds
-  private boolean isShipMode = false;
-  private String material = "carbon_steel"; // default: carbon_steel / magnetite
+  private static final String[] SPECIES = { "H2S", "SO2", "NO2", "NO", "oxygen", "water", "H2SO4", "HNO3", "S8",
+      "ammonia" };
+  private static final String[] REACTION_IDS = { "R1", "R2", "R3A", "R3B", "R4", "R5", "R6", "R7" };
 
-  // Reactor Geometry Parameters (Defaults: V = 300 mL, D = 6.5 cm, flow = 50 g/h)
-  private double diameter_cm = 6.50;
-  private double volume_ml = 300.0;
-  private double mass_flow_g_h = 50.0;
+  /** Stoichiometry in the same order as {@link #SPECIES}. */
+  private static final double[][] STOICHIOMETRY = { { 0.0, -1.0, 0.0, 0.0, -0.5, -1.0, 1.0, 0.0, 0.0, 0.0 },
+      { -1.0, 1.0, -3.0, 3.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0 }, { 0.0, -1.0, -1.0, 1.0, 0.0, -1.0, 1.0, 0.0, 0.0, 0.0 },
+      { 0.0, -1.0, 0.0, 0.0, -0.5, -1.0, 1.0, 0.0, 0.0, 0.0 }, { 0.0, 0.0, 2.0, -2.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0 },
+      { 0.0, 0.0, -3.0, 1.0, 0.0, -1.0, 0.0, 2.0, 0.0, 0.0 }, { -1.0, 1.0, 0.0, 0.0, -1.5, 1.0, 0.0, 0.0, 0.0, 0.0 },
+      { -5.0, 5.0, 0.0, -6.0, 0.0, -4.0, 0.0, 0.0, 0.0, 6.0 },
+      { -1.0, 0.0, 0.0, 0.0, -0.5, 1.0, 0.0, 0.0, 0.125, 0.0 } };
 
-  // Settable reaction parameters
-  private double A_R3b = 2.13e8;
-  private double Ea_R3b = 15000.0;
-  private double A_R2 = 5.0e7;
-  private double Ea_R2 = 28000.0;
+  private double reactorLength = 200000.0;
+  private double fluidVelocity = 2.0;
+  private double residenceTime = 100000.0;
+  private String material = "carbon_steel";
 
-  public void setReactionConstants(String reactionId, double A_forward, double Ea_forward_kJ_mol) {
-    String clean = reactionId.toLowerCase();
-    if (clean.contains("r3b") || clean.contains("so2 + h2s")) {
-      this.A_R3b = A_forward;
-      this.Ea_R3b = Ea_forward_kJ_mol * 1000.0;
-    } else if (clean.contains("r2") || clean.contains("h2s + 3 no2")) {
-      this.A_R2 = A_forward;
-      this.Ea_R2 = Ea_forward_kJ_mol * 1000.0;
-    }
-  }
+  private double diameterCm = 6.50;
+  private double volumeMl = 300.0;
+  private double massFlowGPerHour = 50.0;
+  private boolean useGeometryResidenceTime = false;
 
-  public void setReactorGeometry(double diameter_cm, double volume_ml, double mass_flow_g_h) {
-    this.diameter_cm = diameter_cm;
-    this.volume_ml = volume_ml;
-    this.mass_flow_g_h = mass_flow_g_h;
-  }
-
-  public String generateReactorReport(double T_kelvin, double P_bar) {
-    double V_m3 = volume_ml * 1e-6;
-    double D_m = diameter_cm * 1e-2;
-    double A_cross_cm2 = Math.PI * Math.pow(diameter_cm, 2) / 4.0;
-    double A_cross_m2 = A_cross_cm2 * 1e-4;
-    double L_cm = volume_ml / A_cross_cm2;
-    double L_m = L_cm * 1e-2;
-
-    double rho_kg_m3 = (P_bar > 20.0) ? 1057.72 : 44.23;
-    double rho_m = rho_kg_m3 / 44.0095;
-    double rho_g_ml = rho_kg_m3 * 1e-3;
-
-    double m_reactor_g = volume_ml * rho_g_ml;
-    double tau_hours = m_reactor_g / mass_flow_g_h;
-    double tau_sec = tau_hours * 3600.0;
-
-    StringBuilder sb = new StringBuilder();
-    sb.append("1. Reactor Geometry & Length (L) Derivation\n");
-    sb.append(String.format("Target Volume (V): %.1f mL = %.1f cm3 = %.1e m3\n", volume_ml, volume_ml, V_m3));
-    sb.append(String.format("Inner Diameter (D): %.2f cm = %.4f m\n", diameter_cm, D_m));
-    sb.append(String.format(
-        "Cross-Sectional Area (A_cross): A_cross = pi * D^2 / 4 = pi * (%.2f cm)^2 / 4 = %.4f cm2 (%.5e m2)\n",
-        diameter_cm, A_cross_cm2, A_cross_m2));
-    sb.append(
-        String.format("Calculated Reactor Length (L): L = V / A_cross = %.1f cm3 / %.4f cm2 = %.4f cm (%.6f m)\n\n",
-            volume_ml, A_cross_cm2, L_cm, L_m));
-
-    sb.append(String.format("2. Hydrodynamic Residence Time (tau) at %.1f bar, %.1f°C\n", P_bar, T_kelvin - 273.15));
-    sb.append(String.format("Fluid Density from SRK EOS: CO2 density rho = %.2f kg/m3 (rho_m = %.4f kmol/m3).\n",
-        rho_kg_m3, rho_m));
-    sb.append(String.format("Liquid Mass Inventory: m_reactor = %.1f mL * %.5f g/mL = %.2f grams of CO2.\n", volume_ml,
-        rho_g_ml, m_reactor_g));
-    sb.append(String.format("Mass Flow Rate (m_dot): %.1f g/h.\n", mass_flow_g_h));
-    sb.append(String.format(
-        "CSTR Residence Time (tau): tau = m_reactor / m_dot = %.2f g / %.1f g/h = %.4f HOURS (%.1f seconds)\n",
-        m_reactor_g, mass_flow_g_h, tau_hours, tau_sec));
-
-    return sb.toString();
-  }
-
-  public void setMaterial(String materialName) {
-    if (materialName != null) {
-      this.material = materialName.toLowerCase().trim();
-    }
-  }
-
-  public String getMaterial() {
-    return material;
-  }
+  private final double[] preExponentialFactors = { 1.0e4, 5.0e7, 1.4e6, 2.13e8, 1.0e5, 2.4e6, 2.0e3, 5.0e5 };
+  private final double[] activationEnergies = { 45000.0, 28000.0, 26000.0, 15000.0, -4400.0, 28000.0, 65000.0,
+      15000.0 };
+  private double carbonSteelR8PreExponentialFactor = 1.5e4;
+  private double carbonSteelR8ActivationEnergy = 42000.0;
+  private double inertR8PreExponentialFactor = 2.0e3;
+  private double inertR8ActivationEnergy = 65000.0;
 
   /**
-   * Constructor for CO2ImpurityKineticReactor.
+   * Constructor for a reactor without an inlet stream.
    *
-   * @param name Name of reactor
+   * @param name reactor name
    */
   public CO2ImpurityKineticReactor(String name) {
     super(name);
   }
 
   /**
-   * Constructor with inlet stream.
+   * Constructor with an inlet stream.
    *
-   * @param name Name of reactor
-   * @param inlet Inlet stream
+   * @param name reactor name
+   * @param inlet inlet stream
    */
   public CO2ImpurityKineticReactor(String name, StreamInterface inlet) {
     super(name, inlet);
   }
 
-  public void setReactorLength(double lengthInMeters) {
-    this.reactorLength = lengthInMeters;
-    this.residenceTime = this.reactorLength / this.fluidVelocity;
+  /**
+   * Configure an Arrhenius parameter pair.
+   *
+   * <p>
+   * Supported identifiers are R1, R2, R3A, R3B, R4-R7, R8CS and R8SS. R8 configures the parameter pair for the
+   * currently selected material family.
+   * </p>
+   *
+   * @param reactionId reaction identifier
+   * @param preExponentialFactor pre-exponential factor, non-negative
+   * @param activationEnergyKJPerMol activation energy [kJ/mol]
+   */
+  public void setReactionConstants(String reactionId, double preExponentialFactor, double activationEnergyKJPerMol) {
+    validateFiniteNonNegative(preExponentialFactor, "pre-exponential factor");
+    validateFinite(activationEnergyKJPerMol, "activation energy");
+    if (reactionId == null) {
+      throw new IllegalArgumentException("Reaction identifier cannot be null");
+    }
+
+    String normalizedId = reactionId.trim().toUpperCase(Locale.ROOT);
+    for (int i = 0; i < REACTION_IDS.length; i++) {
+      if (REACTION_IDS[i].equals(normalizedId)) {
+        preExponentialFactors[i] = preExponentialFactor;
+        activationEnergies[i] = activationEnergyKJPerMol * 1000.0;
+        return;
+      }
+    }
+
+    if ("R8".equals(normalizedId)) {
+      normalizedId = isCatalyticMaterial() ? "R8CS" : "R8SS";
+    }
+    if ("R8CS".equals(normalizedId)) {
+      carbonSteelR8PreExponentialFactor = preExponentialFactor;
+      carbonSteelR8ActivationEnergy = activationEnergyKJPerMol * 1000.0;
+      return;
+    }
+    if ("R8SS".equals(normalizedId)) {
+      inertR8PreExponentialFactor = preExponentialFactor;
+      inertR8ActivationEnergy = activationEnergyKJPerMol * 1000.0;
+      return;
+    }
+    throw new IllegalArgumentException("Unsupported reaction identifier: " + reactionId);
   }
 
+  /**
+   * Configure cylindrical reactor geometry and mass flow.
+   *
+   * <p>
+   * Calling this method makes the reactor calculate its residence time from the inlet-system density on each run.
+   * </p>
+   *
+   * @param diameterCm internal diameter [cm]
+   * @param volumeMl reactor volume [mL]
+   * @param massFlowGPerHour mass flow [g/h]
+   */
+  public void setReactorGeometry(double diameterCm, double volumeMl, double massFlowGPerHour) {
+    validateFinitePositive(diameterCm, "reactor diameter");
+    validateFinitePositive(volumeMl, "reactor volume");
+    validateFinitePositive(massFlowGPerHour, "mass flow");
+    this.diameterCm = diameterCm;
+    this.volumeMl = volumeMl;
+    this.massFlowGPerHour = massFlowGPerHour;
+    this.useGeometryResidenceTime = true;
+  }
+
+  /**
+   * Generate a geometry and residence-time report at the inlet state.
+   *
+   * @return reactor report
+   */
+  public String generateReactorReport() {
+    ensureInletAvailable();
+    return generateReactorReport(getInletStream().getThermoSystem().getTemperature(),
+        getInletStream().getThermoSystem().getPressure());
+  }
+
+  /**
+   * Generate a geometry and residence-time report at a specified thermodynamic state.
+   *
+   * <p>
+   * Density is calculated from a flashed clone of the inlet fluid; it is not selected from a pressure threshold or
+   * another hard-coded phase assumption.
+   * </p>
+   *
+   * @param temperatureKelvin temperature [K]
+   * @param pressureBar pressure [bar absolute]
+   * @return reactor report
+   */
+  public String generateReactorReport(double temperatureKelvin, double pressureBar) {
+    double densityKgPerM3 = calculateDensity(temperatureKelvin, pressureBar);
+    double areaCm2 = Math.PI * diameterCm * diameterCm / 4.0;
+    double lengthCm = volumeMl / areaCm2;
+    double residenceTimeSeconds = calculateGeometryResidenceTime(densityKgPerM3);
+
+    StringBuilder report = new StringBuilder();
+    report.append("Reactor geometry\n");
+    report.append(String.format(Locale.ROOT, "Volume: %.3f mL%n", volumeMl));
+    report.append(String.format(Locale.ROOT, "Internal diameter: %.3f cm%n", diameterCm));
+    report.append(String.format(Locale.ROOT, "Calculated length: %.6f cm%n", lengthCm));
+    report.append(String.format(Locale.ROOT, "Temperature: %.3f K%n", temperatureKelvin));
+    report.append(String.format(Locale.ROOT, "Pressure: %.3f bar absolute%n", pressureBar));
+    report.append(String.format(Locale.ROOT, "NeqSim fluid density: %.6f kg/m3%n", densityKgPerM3));
+    report.append(String.format(Locale.ROOT, "Mass flow: %.6f g/h%n", massFlowGPerHour));
+    report.append(String.format(Locale.ROOT, "Residence time: %.6f s%n", residenceTimeSeconds));
+    return report.toString();
+  }
+
+  /**
+   * Calculate geometry-derived residence time at a specified state.
+   *
+   * @param temperatureKelvin temperature [K]
+   * @param pressureBar pressure [bar absolute]
+   * @return residence time [s]
+   */
+  public double calculateGeometryResidenceTime(double temperatureKelvin, double pressureBar) {
+    return calculateGeometryResidenceTime(calculateDensity(temperatureKelvin, pressureBar));
+  }
+
+  /**
+   * Select wall material for heterogeneous R8 kinetics.
+   *
+   * @param materialName carbon_steel, magnetite, stainless_steel or inert
+   */
+  public void setMaterial(String materialName) {
+    if (materialName == null) {
+      throw new IllegalArgumentException("Material cannot be null");
+    }
+    String normalizedMaterial = materialName.toLowerCase(Locale.ROOT).trim().replace(' ', '_');
+    if (!Arrays.asList("carbon_steel", "magnetite", "stainless_steel", "inert").contains(normalizedMaterial)) {
+      throw new IllegalArgumentException("Unsupported reactor material: " + materialName);
+    }
+    this.material = normalizedMaterial;
+  }
+
+  /** @return selected wall material. */
+  public String getMaterial() {
+    return material;
+  }
+
+  /**
+   * Set reactor length and derive residence time from the current velocity.
+   *
+   * @param lengthInMeters length [m]
+   */
+  public void setReactorLength(double lengthInMeters) {
+    validateFinitePositive(lengthInMeters, "reactor length");
+    this.reactorLength = lengthInMeters;
+    this.residenceTime = reactorLength / fluidVelocity;
+    this.useGeometryResidenceTime = false;
+  }
+
+  /** @return reactor length [m]. */
   public double getReactorLength() {
     return reactorLength;
   }
 
+  /**
+   * Set fluid velocity and derive residence time from the current reactor length.
+   *
+   * @param velocityInMetersPerSec velocity [m/s]
+   */
   public void setFluidVelocity(double velocityInMetersPerSec) {
+    validateFinitePositive(velocityInMetersPerSec, "fluid velocity");
     this.fluidVelocity = velocityInMetersPerSec;
-    if (this.fluidVelocity > 0.0) {
-      this.residenceTime = this.reactorLength / this.fluidVelocity;
-    }
+    this.residenceTime = reactorLength / fluidVelocity;
+    this.useGeometryResidenceTime = false;
   }
 
+  /** @return fluid velocity [m/s]. */
   public double getFluidVelocity() {
     return fluidVelocity;
   }
 
+  /**
+   * Set residence time directly.
+   *
+   * @param timeInSeconds residence time [s], non-negative
+   */
   public void setResidenceTime(double timeInSeconds) {
+    validateFiniteNonNegative(timeInSeconds, "residence time");
     this.residenceTime = timeInSeconds;
+    this.useGeometryResidenceTime = false;
   }
 
+  /** @return residence time [s]. */
   public double getResidenceTime() {
     return residenceTime;
   }
 
-  public void setShipMode(boolean isShip) {
-    this.isShipMode = isShip;
-  }
-
-  public boolean isShipMode() {
-    return isShipMode;
-  }
-
+  /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    StreamInterface inlet = getInletStream();
-    if (inlet == null) {
-      logger.warn("Cannot run CO2ImpurityKineticReactor '{}': inlet stream is null", getName());
-      return;
-    }
-
-    SystemInterface outletSystem = inlet.getThermoSystem().clone();
+    ensureInletAvailable();
+    SystemInterface outletSystem = prepareSystem(getInletStream().getThermoSystem());
     outletSystem.init(3);
+    outletSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
-    double T_kelvin = outletSystem.getTemperature(); // K
-    double P_bar = outletSystem.getPressure(); // bar
-    double rho_kg_m3 = outletSystem.getDensity(); // kg/m3
-    double rho_m = rho_kg_m3 / 44.0095; // kmol/m3
-
-    logger.info("Running CO2ImpurityKineticReactor '{}' at T={} K, P={} bar, Density={} kmol/m3", getName(), T_kelvin,
-        P_bar, rho_m);
-
-    double R_GAS = 8.31446;
-
-    // Pure Physical Gibbs Equilibrium Calculations Delta G°rxn (J/mol)
-    double dG1 = (-690.1 - (-300.1 + 0.0 + -237.1)) * 1000.0;
-    double Keq1 = Math.exp(Math.min(-dG1 / (R_GAS * T_kelvin), 300.0));
-
-    double dG5 = ((2.0 * -74.7 + 86.6) - (3.0 * 51.3 + -237.1)) * 1000.0;
-    double Keq5 = Math.exp(-dG5 / (R_GAS * T_kelvin));
-
-    // Pure Arrhenius Rate Laws k(T) = A * exp(-Ea / RT)
-    double k1_f = 1.0e4 * Math.exp(-45000.0 / (R_GAS * T_kelvin));
-    double k2_f = 5.0e7 * Math.exp(-28000.0 / (R_GAS * T_kelvin));
-
-    // R3a: Base NO2-catalyzed rate without H2S (Calibrated 2.5x slower: Ea3a = 26.0 kJ/mol, A3a = 1.40e6)
-    double k3a_f = 1.4e6 * Math.exp(-26000.0 / (R_GAS * T_kelvin));
-
-    // R3b: Radical chain accelerated rate when H2S is present (Ea3b = 15.0 kJ/mol)
-    double k3b_f = 2.13e8 * Math.exp(-15000.0 / (R_GAS * T_kelvin));
-
-    double k4_f = 1.0e5 * Math.exp(530.0 / T_kelvin);
-    double k5_f = 2.4e6 * Math.exp(-28000.0 / (R_GAS * T_kelvin));
-    double k6_f = 2.0e3 * Math.exp(-25000.0 / (R_GAS * T_kelvin));
-    double k7_f = 5.0e5 * Math.exp(-15000.0 / (R_GAS * T_kelvin));
-
-    double k5_r = k5_f / Keq5;
-
-    logger.info(
-        "CO2ImpurityKineticReactor rate constants evaluated: k1_f={}, k2_f={}, k3a_f={}, k3b_f={}, k4_f={}, k5_f={}, k6_f={}, k7_f={}",
-        k1_f, k2_f, k3a_f, k3b_f, k4_f, k5_f, k6_f, k7_f);
-
-    if (getOutletStream() != null) {
-      getOutletStream().setThermoSystem(outletSystem);
-      getOutletStream().run();
+    double temperatureKelvin = outletSystem.getTemperature();
+    double densityKgPerM3 = outletSystem.getDensity("kg/m3");
+    double molarDensityKmolPerM3 = densityKgPerM3 / (outletSystem.getMolarMass() * 1000.0);
+    if (!Double.isFinite(molarDensityKmolPerM3) || molarDensityKmolPerM3 <= 0.0) {
+      throw new IllegalStateException("Cannot integrate CO2 impurity kinetics with invalid molar density");
     }
+
+    if (useGeometryResidenceTime) {
+      residenceTime = calculateGeometryResidenceTime(densityKgPerM3);
+    }
+
+    double totalMoles = outletSystem.getNumberOfMoles();
+    double parcelVolumeM3 = totalMoles / 1000.0 / molarDensityKmolPerM3;
+    double[] concentrations = new double[SPECIES.length];
+    for (int i = 0; i < SPECIES.length; i++) {
+      concentrations[i] = getMoles(outletSystem, SPECIES[i]) / 1000.0 / parcelVolumeM3;
+    }
+
+    integrateConcentrations(concentrations, temperatureKelvin, residenceTime);
+    for (int i = 0; i < SPECIES.length; i++) {
+      setMoles(outletSystem, SPECIES[i], concentrations[i] * parcelVolumeM3 * 1000.0);
+    }
+    outletSystem.init(0);
+
+    logger.info("Ran CO2 impurity reactor '{}' at {} K for {} s using material {}", getName(), temperatureKelvin,
+        residenceTime, material);
+    getOutletStream().setThermoSystem(outletSystem);
+    getOutletStream().run(id);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void run() {
     run(UUID.randomUUID());
+  }
+
+  private SystemInterface prepareSystem(SystemInterface source) {
+    SystemInterface system = source.clone();
+    boolean componentAdded = false;
+    for (String species : SPECIES) {
+      if (!system.hasComponent(species)) {
+        system.addComponent(species, MINIMUM_MOLES);
+        componentAdded = true;
+      }
+    }
+    if (componentAdded) {
+      system.createDatabase(true);
+    }
+    system.init(0);
+    return system;
+  }
+
+  private void integrateConcentrations(double[] concentrations, double temperatureKelvin,
+      double integrationTimeSeconds) {
+    if (integrationTimeSeconds <= 0.0) {
+      return;
+    }
+    int integrationSteps = (int) Math.ceil(integrationTimeSeconds / MAXIMUM_INTEGRATION_STEP_SECONDS);
+    integrationSteps = Math.max(integrationSteps, MINIMUM_INTEGRATION_STEPS);
+    integrationSteps = Math.min(integrationSteps, MAXIMUM_INTEGRATION_STEPS);
+    double timeStepSeconds = integrationTimeSeconds / integrationSteps;
+
+    for (int step = 0; step < integrationSteps; step++) {
+      double[] rates = calculateRates(concentrations, temperatureKelvin);
+      for (int reaction = 0; reaction < STOICHIOMETRY.length; reaction++) {
+        double proposedExtent = Math.max(0.0, rates[reaction] * timeStepSeconds);
+        double boundedExtent = boundExtent(proposedExtent, concentrations, STOICHIOMETRY[reaction]);
+        applyExtent(concentrations, STOICHIOMETRY[reaction], boundedExtent);
+      }
+    }
+  }
+
+  private double[] calculateRates(double[] concentration, double temperatureKelvin) {
+    double[] rateConstants = new double[STOICHIOMETRY.length];
+    for (int i = 0; i < REACTION_IDS.length; i++) {
+      rateConstants[i] = calculateArrhenius(preExponentialFactors[i], activationEnergies[i], temperatureKelvin);
+    }
+    double r8PreExponential = isCatalyticMaterial() ? carbonSteelR8PreExponentialFactor : inertR8PreExponentialFactor;
+    double r8ActivationEnergy = isCatalyticMaterial() ? carbonSteelR8ActivationEnergy : inertR8ActivationEnergy;
+    rateConstants[8] = calculateArrhenius(r8PreExponential, r8ActivationEnergy, temperatureKelvin);
+
+    double h2s = activity(concentration[0]);
+    double so2 = activity(concentration[1]);
+    double no2 = activity(concentration[2]);
+    double no = activity(concentration[3]);
+    double oxygen = activity(concentration[4]);
+    double water = activity(concentration[5]);
+
+    double[] rates = new double[STOICHIOMETRY.length];
+    rates[0] = rateConstants[0] * REFERENCE_CONCENTRATION * so2 * Math.sqrt(oxygen) * water;
+    rates[1] = rateConstants[1] * REFERENCE_CONCENTRATION * h2s * no2;
+    rates[2] = rateConstants[2] * REFERENCE_CONCENTRATION * so2 * no2 * water;
+    rates[3] = rateConstants[3] * REFERENCE_CONCENTRATION * so2 * Math.sqrt(oxygen) * Math.sqrt(h2s) * no2;
+    rates[4] = rateConstants[4] * REFERENCE_CONCENTRATION * no * no * oxygen;
+    rates[5] = rateConstants[5] * REFERENCE_CONCENTRATION * no2 * no2 * no2 * water;
+    rates[6] = rateConstants[6] * REFERENCE_CONCENTRATION * h2s * Math.pow(oxygen, 1.5);
+    rates[7] = rateConstants[7] * REFERENCE_CONCENTRATION * h2s * no * water;
+    rates[8] = rateConstants[8] * REFERENCE_CONCENTRATION * h2s * Math.sqrt(oxygen);
+    return rates;
+  }
+
+  private double activity(double concentrationKmolPerM3) {
+    return Math.max(0.0, concentrationKmolPerM3) / REFERENCE_CONCENTRATION;
+  }
+
+  private double calculateArrhenius(double preExponentialFactor, double activationEnergy, double temperatureKelvin) {
+    return preExponentialFactor * Math.exp(-activationEnergy / (GAS_CONSTANT * temperatureKelvin));
+  }
+
+  private double boundExtent(double proposedExtent, double[] concentration, double[] stoichiometry) {
+    double boundedExtent = proposedExtent;
+    for (int i = 0; i < stoichiometry.length; i++) {
+      if (stoichiometry[i] < 0.0) {
+        boundedExtent = Math.min(boundedExtent, concentration[i] / -stoichiometry[i]);
+      }
+    }
+    return Math.max(0.0, boundedExtent);
+  }
+
+  private void applyExtent(double[] concentration, double[] stoichiometry, double extent) {
+    for (int i = 0; i < concentration.length; i++) {
+      concentration[i] = Math.max(0.0, concentration[i] + stoichiometry[i] * extent);
+    }
+  }
+
+  private double calculateDensity(double temperatureKelvin, double pressureBar) {
+    ensureInletAvailable();
+    validateFinitePositive(temperatureKelvin, "temperature");
+    validateFinitePositive(pressureBar, "pressure");
+    SystemInterface reportSystem = getInletStream().getThermoSystem().clone();
+    reportSystem.setTemperature(temperatureKelvin);
+    reportSystem.setPressure(pressureBar);
+    ThermodynamicOperations operations = new ThermodynamicOperations(reportSystem);
+    operations.TPflash();
+    reportSystem.initProperties();
+    return reportSystem.getDensity("kg/m3");
+  }
+
+  private double calculateGeometryResidenceTime(double densityKgPerM3) {
+    double inventoryG = volumeMl * 1.0e-6 * densityKgPerM3 * 1000.0;
+    return inventoryG / massFlowGPerHour * 3600.0;
+  }
+
+  private boolean isCatalyticMaterial() {
+    return "carbon_steel".equals(material) || "magnetite".equals(material);
+  }
+
+  private void ensureInletAvailable() {
+    if (getInletStream() == null || getOutletStream() == null) {
+      throw new IllegalStateException("CO2 impurity reactor requires connected inlet and outlet streams");
+    }
+  }
+
+  private double getMoles(SystemInterface system, String component) {
+    if (!system.hasComponent(component)) {
+      return 0.0;
+    }
+    return Math.max(0.0, system.getComponent(component).getNumberOfmoles());
+  }
+
+  private void setMoles(SystemInterface system, String component, double targetMoles) {
+    double boundedMoles = Math.max(targetMoles, MINIMUM_MOLES);
+    system.addComponent(component, boundedMoles - getMoles(system, component));
+  }
+
+  private void validateFinitePositive(double value, String propertyName) {
+    if (!Double.isFinite(value) || value <= 0.0) {
+      throw new IllegalArgumentException(propertyName + " must be finite and positive");
+    }
+  }
+
+  private void validateFiniteNonNegative(double value, String propertyName) {
+    if (!Double.isFinite(value) || value < 0.0) {
+      throw new IllegalArgumentException(propertyName + " must be finite and non-negative");
+    }
+  }
+
+  private void validateFinite(double value, String propertyName) {
+    if (!Double.isFinite(value)) {
+      throw new IllegalArgumentException(propertyName + " must be finite");
+    }
   }
 }
