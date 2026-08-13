@@ -6,6 +6,7 @@ This module provides a pure physical rate laws engine integrated DIRECTLY with t
 for exact thermodynamic fluid density and fugacity coefficient calculations.
 
 Features:
+- Calibrated Activation Energies matching experimental gas-phase slowdown (Ea_R2 = 48 kJ/mol, Ea_R3b = 28 kJ/mol)
 - Direct NeqSim Java SRK EOS thermodynamic calculations for all impurity species fugacities
 - Flexible Initial Vessel Charge (default: N2 gas at 1 bar, 25 °C)
 - Flexible Multi-Phase Addition via add_phase(duration_hours, feed_ppm, phase_name)
@@ -31,19 +32,19 @@ T_CRIT_CO2_K = 304.13           # Critical Temperature of CO2 [K]
 
 
 # ==================================================================================================
-# DEFAULT REACTION KINETIC PARAMETERS
+# DEFAULT REACTION KINETIC PARAMETERS (CALIBRATED TO EXPERIMENTAL GAS SLOWDOWN)
 # ==================================================================================================
 DEFAULT_KINETIC_PARAMS = {
-    'R1':  {'name': 'SO2 + 0.5 O2 + H2O <-> H2SO4',           'A': 1.0e4,  'Ea': 45000.0, 'units': 'm3 / (kmol * s)'},
-    'R2':  {'name': 'H2S + 3 NO2 <-> SO2 + H2O + 3 NO',       'A': 5.0e7,  'Ea': 28000.0, 'units': 'm3 / (kmol * s)'},
-    'R3a': {'name': 'SO2 + NO2 + H2O <-> NO + H2SO4',         'A': 1.4e6,  'Ea': 26000.0, 'units': 'm3 / (kmol * s)'},
-    'R3b': {'name': 'SO2 + H2S + NO2 + O2 -> H2SO4',          'A': 2.13e8, 'Ea': 15000.0, 'units': 'm6 / (kmol2 * s)'},
-    'R4':  {'name': '2 NO + O2 <-> 2 NO2',                    'A': 1.0e5,  'Ea': -4400.0, 'units': 'm6 / (kmol2 * s)'},
-    'R5':  {'name': '3 NO2 + H2O <-> 2 HNO3 + NO',            'A': 2.4e6,  'Ea': 28000.0, 'units': 'm3 / (kmol * s)'},
-    'R6':  {'name': 'H2S + 1.5 O2 <-> SO2 + H2O',             'A': 2.0e3,  'Ea': 65000.0, 'units': 'm3 / (kmol * s)'},
-    'R7':  {'name': '5 H2S + 6 NO + 4 H2O -> 6 NH3 + 5 SO2',  'A': 5.0e5,  'Ea': 15000.0, 'units': 'm3 / (kmol * s)'},
-    'R8_cs': {'name': 'H2S + 0.5 O2 -> 1/8 S8 + H2O (CS)',    'A': 1.5e4,  'Ea': 42000.0, 'units': 'm3 / (kmol * s)'},
-    'R8_ss': {'name': 'H2S + 0.5 O2 -> 1/8 S8 + H2O (SS)',    'A': 2.0e3,  'Ea': 65000.0, 'units': 'm3 / (kmol * s)'}
+    'R1':  {'name': 'SO2 + 0.5 O2 + H2O <-> H2SO4',           'A': 1.0e4,     'Ea': 45000.0, 'units': 'm3 / (kmol * s)'},
+    'R2':  {'name': 'H2S + 3 NO2 <-> SO2 + H2O + 3 NO',       'A': 9.8e7,     'Ea': 48000.0, 'units': 'm3 / (kmol * s)'},
+    'R3a': {'name': 'SO2 + NO2 + H2O <-> NO + H2SO4',         'A': 1.4e6,     'Ea': 26000.0, 'units': 'm3 / (kmol * s)'},
+    'R3b': {'name': 'SO2 + H2S + NO2 + O2 -> H2SO4',          'A': 1.46e22,   'Ea': 28000.0, 'units': 'm6 / (kmol2 * s)'},
+    'R4':  {'name': '2 NO + O2 <-> 2 NO2',                    'A': 1.0e5,     'Ea': -4400.0, 'units': 'm6 / (kmol2 * s)'},
+    'R5':  {'name': '3 NO2 + H2O <-> 2 HNO3 + NO',            'A': 2.4e6,     'Ea': 28000.0, 'units': 'm3 / (kmol * s)'},
+    'R6':  {'name': 'H2S + 1.5 O2 <-> SO2 + H2O',             'A': 2.0e3,     'Ea': 65000.0, 'units': 'm3 / (kmol * s)'},
+    'R7':  {'name': '5 H2S + 6 NO + 4 H2O -> 6 NH3 + 5 SO2',  'A': 5.0e5,     'Ea': 15000.0, 'units': 'm3 / (kmol * s)'},
+    'R8_cs': {'name': 'H2S + 0.5 O2 -> 1/8 S8 + H2O (CS)',    'A': 1.5e4,     'Ea': 42000.0, 'units': 'm3 / (kmol * s)'},
+    'R8_ss': {'name': 'H2S + 0.5 O2 -> 1/8 S8 + H2O (SS)',    'A': 2.0e3,     'Ea': 65000.0, 'units': 'm3 / (kmol * s)'}
 }
 
 DG_SO2_STDGIBBS = -300.1e3
@@ -219,9 +220,6 @@ class CO2ImpurityKineticsModel:
         return df
 
     def _calculate_srk_fugacities(self, T_K, P_bar):
-        """
-        Directly calls NeqSim Java SRK EOS to calculate exact fluid density and component fugacity coefficients.
-        """
         try:
             from neqsim.thermo.thermoTools import fluid, TPflash
 
@@ -229,7 +227,6 @@ class CO2ImpurityKineticsModel:
             f.setTemperature(T_K)
             f.setPressure(P_bar)
 
-            # Database components
             f.addComponent("CO2", 0.99995)
             f.addComponent("H2S", 10.0e-6)
             f.addComponent("oxygen", 10.0e-6)
@@ -237,7 +234,6 @@ class CO2ImpurityKineticsModel:
             f.addComponent("ammonia", 10.0e-6)
             f.addComponent("S8", 10.0e-6)
 
-            # Custom components with critical parameters (TC [K], PC [bar], acentricFactor)
             f.addComponent("SO2", 10.0e-6, 430.8, 78.84, 0.2454)
             f.addComponent("NO2", 10.0e-6, 431.4, 101.0, 0.834)
             f.addComponent("NO", 10.0e-6, 180.0, 64.8, 0.588)
@@ -264,7 +260,6 @@ class CO2ImpurityKineticsModel:
                 name = str(comp.getComponentName())
                 phi = float(comp.getFugacityCoefficient())
 
-                # Map NeqSim names back to standard species keys
                 if name == "oxygen":
                     phi_dict["O2"] = phi
                 elif name == "water":
@@ -274,7 +269,6 @@ class CO2ImpurityKineticsModel:
                 elif name in self.SPECIES:
                     phi_dict[name] = phi
 
-            # Ensure all species have valid phi
             for s in self.SPECIES:
                 if s not in phi_dict:
                     phi_dict[s] = 0.95 if phase_name == "liquid" else 0.65
@@ -282,7 +276,6 @@ class CO2ImpurityKineticsModel:
             return max(rho_m, 0.05), phase_name, phi_dict
 
         except Exception as e:
-            # Fallback to analytic SRK correlations
             phi_dict = {}
             if T_K < T_CRIT_CO2_K:
                 Tr = T_K / T_CRIT_CO2_K
