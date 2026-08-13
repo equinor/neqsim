@@ -243,22 +243,25 @@ class ProcessModelOperatingActionEvaluatorTest {
     ProcessModel model = new ProcessModel();
     model.add("Subsurface", subsurface);
     model.run();
+    double baselineRate = producer.getFlowRate("kg/hr");
     ProcessModelSimulationEvaluator simulationEvaluator = new ProcessModelSimulationEvaluator(model);
     simulationEvaluator.setIncludeStrategyCapacityConstraints(false);
     ProcessModelOperatingAction action = ProcessModelOperatingAction.continuous("well-rate", "Producer gas rate",
-        "Subsurface::producer.flowRate", 0.5, 1.5, "MSm3/day", "synthetic well operating envelope");
+        "Subsurface::producer.flowRate", 0.5 * baselineRate, 1.5 * baselineRate, "kg/hr",
+        "synthetic well operating envelope");
     ProcessModelOperatingActionEvaluator evaluator = new ProcessModelOperatingActionEvaluator(simulationEvaluator,
         action).requireHydraulicConstraint(HydraulicLimitRole.WELL_INFLOW_OUTFLOW, "Subsurface", "well",
             "well drawdown", "WellFlow installed maximum drawdown");
 
-    CandidateEvaluationResult lowerRate = evaluator.evaluate(0.8);
-    CandidateEvaluationResult higherRate = evaluator.evaluate(1.2);
+    CandidateEvaluationResult lowerRate = evaluator.evaluate(0.8 * baselineRate);
+    CandidateEvaluationResult higherRate = evaluator.evaluate(1.2 * baselineRate);
 
-    assertEquals(Outcome.FEASIBLE, lowerRate.getOutcome());
-    assertEquals(Outcome.HYDRAULIC_CONSTRAINT_VIOLATED, higherRate.getOutcome());
+    assertEquals(Outcome.FEASIBLE, lowerRate.getOutcome(), lowerRate.getDiagnostics().toString());
+    assertEquals(Outcome.HYDRAULIC_CONSTRAINT_VIOLATED, higherRate.getOutcome(),
+        higherRate.getDiagnostics().toString());
     assertTrue(lowerRate.getHydraulicConstraints().get(0).getUtilization() < higherRate.getHydraulicConstraints().get(0)
         .getUtilization());
-    assertEquals(1.0, producer.getFlowRate("MSm3/day"), 1.0e-8);
+    assertEquals(baselineRate, producer.getFlowRate("kg/hr"), 1.0e-8);
     assertEquals(baselineDrawdown, well.getDrawdown(), 1.0e-6);
     assertTrue(higherRate.isBaselineRestored());
     assertTrue(higherRate.isBaselineSimulationConverged());
