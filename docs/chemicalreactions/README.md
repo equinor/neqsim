@@ -130,6 +130,14 @@ CO₂ + 2RNH₂ ⇌ RNHCOO⁻ + RNH₃⁺
 CO₂ + RNH₂ + H₂O ⇌ RNH₃⁺ + HCO₃⁻
 ```
 
+### CO₂ Impurity Kinetics (CCS & Transportation)
+
+Multi-component impurity kinetics in dense liquid, supercritical, and gas-phase $\text{CO}_2$ streams ($\text{H}_2\text{S}, \text{SO}_2, \text{NO}_2, \text{NO}, \text{O}_2, \text{H}_2\text{O}, \text{H}_2\text{SO}_4, \text{HNO}_3, \text{NH}_3, \text{S}_8$).
+
+For full technical documentation, SRK EOS fugacity rate laws, reactor hydrodynamics, and CSTR experiment tutorials, see:
+- [**CO₂ Impurity Kinetics Guide**](co2_impurity_kinetics_guide.md)
+
+
 ---
 
 ## ChemicalReactionOperations
