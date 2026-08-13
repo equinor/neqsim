@@ -1,74 +1,80 @@
 package neqsim.process.safety.vibration;
 
+import com.google.gson.GsonBuilder;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import com.google.gson.GsonBuilder;
 
 /**
- * Result of a flow-induced pulsation (FIP) screening for a single closed side branch (dead leg) on a gas main line.
+ * Result of a flow-induced pulsation (FIP) screening for a single side branch (dead leg) on a gas main line.
  *
  * <p>
- * Carries the acoustic mode frequencies of the branch, the Strouhal number of each mode at the screened main-line
- * velocity, the main-line velocity band that would drive each mode into shear-layer lock-in, and the resulting
- * likelihood band.
+ * Carries the vortex-shedding frequency at the screened main-line velocity, the acoustic eigenfrequencies of the branch
+ * with their &plusmn;20 % lock-in envelopes, the main-line velocity that would drive each mode into resonance, and the
+ * resulting likelihood band.
  * </p>
  *
  * @author ESOL
- * @version 1.0
+ * @version 2.0
  */
 public class FlowInducedPulsationResult implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
   /**
-   * One acoustic quarter-wave mode of the closed branch.
+   * One acoustic mode of the side branch, with its lock-in envelope.
    */
   public static class BranchMode implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private final int modeNumber;
+    private final int modeIndex;
     private final double frequencyHz;
-    private final double strouhalNumber;
+    private final double envelopeLowHz;
+    private final double envelopeHighHz;
     private final boolean lockedIn;
-    private final double lockInVelocityLowMPerS;
-    private final double lockInVelocityHighMPerS;
+    private final double resonanceVelocityMPerS;
+    private final double resonanceVelocityLowMPerS;
+    private final double resonanceVelocityHighMPerS;
 
     /**
      * Creates an acoustic mode record.
      *
-     * @param modeNumber mode index, 1 for the fundamental quarter-wave mode
-     * @param frequencyHz acoustic natural frequency of the mode, Hz
-     * @param strouhalNumber Strouhal number of the mode at the screened main-line velocity
-     * @param lockedIn true when the Strouhal number falls inside the shear-layer lock-in band
-     * @param lockInVelocityLowMPerS lowest main-line velocity that drives this mode into lock-in, m/s
-     * @param lockInVelocityHighMPerS highest main-line velocity that drives this mode into lock-in, m/s
+     * @param modeIndex mode index n, 0 for the fundamental
+     * @param frequencyHz acoustic eigenfrequency of the mode, Hz
+     * @param envelopeLowHz lower bound of the lock-in envelope, Hz
+     * @param envelopeHighHz upper bound of the lock-in envelope, Hz
+     * @param lockedIn true when the shedding frequency falls inside the envelope
+     * @param resonanceVelocityMPerS main-line velocity that places the shedding frequency exactly on this mode, m/s
+     * @param resonanceVelocityLowMPerS lower main-line velocity that still excites this mode, m/s
+     * @param resonanceVelocityHighMPerS upper main-line velocity that still excites this mode, m/s
      */
-    public BranchMode(int modeNumber, double frequencyHz, double strouhalNumber, boolean lockedIn,
-        double lockInVelocityLowMPerS, double lockInVelocityHighMPerS) {
-      this.modeNumber = modeNumber;
+    public BranchMode(int modeIndex, double frequencyHz, double envelopeLowHz, double envelopeHighHz, boolean lockedIn,
+        double resonanceVelocityMPerS, double resonanceVelocityLowMPerS, double resonanceVelocityHighMPerS) {
+      this.modeIndex = modeIndex;
       this.frequencyHz = frequencyHz;
-      this.strouhalNumber = strouhalNumber;
+      this.envelopeLowHz = envelopeLowHz;
+      this.envelopeHighHz = envelopeHighHz;
       this.lockedIn = lockedIn;
-      this.lockInVelocityLowMPerS = lockInVelocityLowMPerS;
-      this.lockInVelocityHighMPerS = lockInVelocityHighMPerS;
+      this.resonanceVelocityMPerS = resonanceVelocityMPerS;
+      this.resonanceVelocityLowMPerS = resonanceVelocityLowMPerS;
+      this.resonanceVelocityHighMPerS = resonanceVelocityHighMPerS;
     }
 
     /**
      * Gets the mode index.
      *
-     * @return mode number, 1 for the fundamental
+     * @return mode index, 0 for the fundamental
      */
-    public int getModeNumber() {
-      return modeNumber;
+    public int getModeIndex() {
+      return modeIndex;
     }
 
     /**
-     * Gets the acoustic natural frequency.
+     * Gets the acoustic eigenfrequency.
      *
      * @return frequency, Hz
      */
@@ -77,46 +83,65 @@ public class FlowInducedPulsationResult implements Serializable {
     }
 
     /**
-     * Gets the Strouhal number at the screened main-line velocity.
+     * Gets the lower bound of the lock-in envelope.
      *
-     * @return Strouhal number, dimensionless
+     * @return frequency, Hz
      */
-    public double getStrouhalNumber() {
-      return strouhalNumber;
+    public double getEnvelopeLowHz() {
+      return envelopeLowHz;
     }
 
     /**
-     * Reports whether this mode is in lock-in at the screened velocity.
+     * Gets the upper bound of the lock-in envelope.
      *
-     * @return true when the mode is excited
+     * @return frequency, Hz
+     */
+    public double getEnvelopeHighHz() {
+      return envelopeHighHz;
+    }
+
+    /**
+     * Reports whether this mode is in resonance at the screened velocity.
+     *
+     * @return true when the shedding frequency falls inside the envelope
      */
     public boolean isLockedIn() {
       return lockedIn;
     }
 
     /**
-     * Gets the lower end of the main-line velocity band that excites this mode.
+     * Gets the main-line velocity that places the shedding frequency exactly on this mode.
      *
      * @return velocity, m/s
      */
-    public double getLockInVelocityLowMPerS() {
-      return lockInVelocityLowMPerS;
+    public double getResonanceVelocityMPerS() {
+      return resonanceVelocityMPerS;
     }
 
     /**
-     * Gets the upper end of the main-line velocity band that excites this mode.
+     * Gets the lower main-line velocity that still excites this mode.
      *
      * @return velocity, m/s
      */
-    public double getLockInVelocityHighMPerS() {
-      return lockInVelocityHighMPerS;
+    public double getResonanceVelocityLowMPerS() {
+      return resonanceVelocityLowMPerS;
+    }
+
+    /**
+     * Gets the upper main-line velocity that still excites this mode.
+     *
+     * @return velocity, m/s
+     */
+    public double getResonanceVelocityHighMPerS() {
+      return resonanceVelocityHighMPerS;
     }
   }
 
   private final String branchName;
   private final PipingFivLikelihood likelihood;
   private final boolean anyModeLockedIn;
-  private final double lowestLockInVelocityMPerS;
+  private final double sheddingFrequencyHz;
+  private final double lowestResonanceVelocityMPerS;
   private final List<BranchMode> modes;
   private final Map<String, Double> contributingFactors;
   private final String recommendation;
@@ -126,20 +151,21 @@ public class FlowInducedPulsationResult implements Serializable {
    *
    * @param branchName branch identifier
    * @param likelihood derived likelihood band
-   * @param anyModeLockedIn true when at least one acoustic mode is in lock-in at the screened velocity
-   * @param lowestLockInVelocityMPerS lowest main-line velocity at which any mode enters lock-in, m/s, or
-   * {@link Double#NaN} when no mode can be excited within the screened velocity range
+   * @param anyModeLockedIn true when a resonance condition is possible at the screened velocity
+   * @param sheddingFrequencyHz vortex-shedding frequency at the screened velocity, Hz
+   * @param lowestResonanceVelocityMPerS lowest main-line velocity at which any evaluated mode resonates, m/s
    * @param modes acoustic modes of the branch
    * @param contributingFactors factor name to factor value
    * @param recommendation recommended action
    */
   public FlowInducedPulsationResult(String branchName, PipingFivLikelihood likelihood, boolean anyModeLockedIn,
-      double lowestLockInVelocityMPerS, List<BranchMode> modes, Map<String, Double> contributingFactors,
-      String recommendation) {
+      double sheddingFrequencyHz, double lowestResonanceVelocityMPerS, List<BranchMode> modes,
+      Map<String, Double> contributingFactors, String recommendation) {
     this.branchName = branchName;
     this.likelihood = likelihood;
     this.anyModeLockedIn = anyModeLockedIn;
-    this.lowestLockInVelocityMPerS = lowestLockInVelocityMPerS;
+    this.sheddingFrequencyHz = sheddingFrequencyHz;
+    this.lowestResonanceVelocityMPerS = lowestResonanceVelocityMPerS;
     this.modes = new ArrayList<BranchMode>(modes);
     this.contributingFactors = new LinkedHashMap<String, Double>(contributingFactors);
     this.recommendation = recommendation;
@@ -164,7 +190,7 @@ public class FlowInducedPulsationResult implements Serializable {
   }
 
   /**
-   * Reports whether any acoustic mode is excited at the screened velocity.
+   * Reports whether a resonance condition is possible at the screened velocity.
    *
    * @return true when at least one mode is in lock-in
    */
@@ -173,18 +199,27 @@ public class FlowInducedPulsationResult implements Serializable {
   }
 
   /**
-   * Gets the lowest main-line velocity that drives any mode into lock-in.
+   * Gets the vortex-shedding frequency at the screened velocity.
    *
-   * @return velocity, m/s, or {@link Double#NaN} when no mode is reachable
+   * @return frequency, Hz
    */
-  public double getLowestLockInVelocityMPerS() {
-    return lowestLockInVelocityMPerS;
+  public double getSheddingFrequencyHz() {
+    return sheddingFrequencyHz;
+  }
+
+  /**
+   * Gets the lowest main-line velocity at which any evaluated mode resonates.
+   *
+   * @return velocity, m/s
+   */
+  public double getLowestResonanceVelocityMPerS() {
+    return lowestResonanceVelocityMPerS;
   }
 
   /**
    * Gets the acoustic modes of the branch.
    *
-   * @return modes (defensive copy)
+   * @return modes (unmodifiable copy)
    */
   public List<BranchMode> getModes() {
     return Collections.unmodifiableList(new ArrayList<BranchMode>(modes));
