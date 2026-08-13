@@ -139,6 +139,14 @@ as standalone process controllers. Duplicate registration of the same object is 
 state identities are rejected. Systems containing a mutable process element without the participant contract, or a
 configured recycle whose shared `RecycleController` state cannot yet be restored in place, fail before opening a trial.
 
+Concrete `TransferFunctionBlock` and `LogicBlock` instances are covered participants. Transfer-function snapshots
+include both lag states, the complete circular dead-time buffer and index, output, physical-step identifier, tuning,
+biases, activity, unit, name, and the original transmitter binding. Logic snapshots include evaluated output,
+physical-step identifier, comparison tolerance, activity, unit, name, and an identity-preserving copy of the input-list
+membership. Both blocks reject duplicate advancement for the same non-null physical-step identifier and allow exact
+continuation after rollback or Java serialization. Subclasses fail closed until they extend the snapshot for any
+additional mutable state.
+
 This is an additive compatibility boundary. Legacy `runTransient(...)`, `reset()`, and
 `runTransientAdaptive(...)` retain their current behavior. Built-in equipment must adopt the participant contract
 family by family with inventory, controller, conservation, timestep, and replay evidence before transactional execution
