@@ -352,8 +352,8 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
      * @return immutable reviewed designations
      */
     public List<EngineeringDiagramDesignationRegister.Designation> getDesignations() {
-      return Collections.unmodifiableList(
-          new ArrayList<EngineeringDiagramDesignationRegister.Designation>(designations));
+      return Collections
+          .unmodifiableList(new ArrayList<EngineeringDiagramDesignationRegister.Designation>(designations));
     }
 
     Map<String, Object> toMap() {
