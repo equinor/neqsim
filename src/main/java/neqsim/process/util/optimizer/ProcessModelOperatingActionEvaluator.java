@@ -198,9 +198,8 @@ public final class ProcessModelOperatingActionEvaluator {
     EvaluationResult candidateEvaluation = null;
     List<HydraulicConstraintSnapshot> constraintSnapshots = Collections.emptyList();
     ApplicationResult application = action.apply(model, candidateValue);
-    if (!application.isApplied()) {
-      diagnostics.add(application.getDiagnostic());
-    } else {
+    diagnostics.add(application.getDiagnostic());
+    if (application.isApplied()) {
       candidateEvaluation = evaluator.evaluate(new double[0]);
       if (!candidateEvaluation.isSimulationConverged()) {
         outcome = Outcome.CANDIDATE_SIMULATION_FAILED;
@@ -215,8 +214,8 @@ public final class ProcessModelOperatingActionEvaluator {
     ApplicationResult restoration = action.restore(model, baseline);
     boolean baselineSimulationConverged = false;
     boolean baselineRestored = restoration.isApplied();
+    diagnostics.add(restoration.getDiagnostic());
     if (!restoration.isApplied()) {
-      diagnostics.add(restoration.getDiagnostic());
       outcome = Outcome.RESTORATION_FAILED;
     } else {
       try {
