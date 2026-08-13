@@ -142,6 +142,11 @@ class ControlBlockTransientStateTransactionTest extends neqsim.NeqSimTest {
     assertEquals(logicAfterFirstEvaluation, logic.getOutput(), TOLERANCE);
     assertTrue(transfer.hasRunTransient(physicalStepId));
     assertTrue(logic.hasRunTransient(physicalStepId));
+
+    transfer.reset();
+    assertFalse(transfer.hasRunTransient(physicalStepId), "reset must reopen deterministic replay from initial state");
+    transfer.runTransient(0.0, 1.0, physicalStepId);
+    assertTrue(transfer.hasRunTransient(physicalStepId));
   }
 
   @Test

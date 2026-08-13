@@ -304,6 +304,7 @@ public class TransferFunctionBlock extends NamedBaseClass
     deadTimeBuffer = null;
     deadTimeWriteIndex = 0;
     output = outputBias;
+    calcIdentifier = null;
   }
 
   /** {@inheritDoc} */

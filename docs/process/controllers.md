@@ -111,7 +111,8 @@ transactions. A rejected step restores their dynamic states, delay buffer, outpu
 configuration, and original transmitter/input bindings. Replaying the same physical-step identifier after rollback
 therefore produces the same deterministic control-block continuation. Repeated evaluation with an already accepted
 physical-step identifier is ignored; use one UUID per physical timestep and reuse it only for refinements inside that
-step.
+step. `TransferFunctionBlock.reset()` also clears the remembered step identifier so a deterministic run can restart
+from the block's initial state.
 
 Subclass instances fail transaction coverage until the subclass supplies a snapshot for its own mutable state. The
 transaction contract is an in-memory rollback mechanism: it does not validate tuning, prove safety integrity, or defer
