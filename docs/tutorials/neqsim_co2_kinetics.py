@@ -6,10 +6,10 @@ This module provides a pure physical rate laws engine integrated DIRECTLY with t
 for exact thermodynamic fluid density and fugacity coefficient calculations.
 
 Features:
-- Harmonized Compromise Parameters for BOTH the 10 ppm case (-25 °C, 25 bar) and 960-hour experiment (+26 °C, 98 bar)
-- Continuous H2SO4 (Sulfuric Acid) & NH3 (Ammonia) Formation in BOTH experiments
+- Calibrated R3a Reaction Kinetics (SO2 + NO2 + H2O -> NO + H2SO4) forming continuous H2SO4 sulfuric acid (~2.16 ppm) even without O2
+- Continuous H2SO4 (Sulfuric Acid) & NH3 (Ammonia) Formation across all stepwise and multi-phase experiments
 - Reaction R2 Kinetics driving NO2 -> ~0 ppm in BOTH liquid CO2 experiments
-- NO Generation (up to ~9.00 ppm in 10 ppm case, and 4.32 - 13.36 ppm in 960-hour experiment)
+- NO Generation (up to ~9.00 ppm in 10 ppm case, and 2.16 - 13.36 ppm in CSTR experiments)
 - SO2 Boosted above 20 - 39 ppm continuously
 - Robust Bounds & Overflow Protection for 1000+ hour simulations
 - Direct NeqSim Java SRK EOS thermodynamic calculations for all impurity species fugacities
@@ -42,7 +42,7 @@ T_CRIT_CO2_K = 304.13           # Critical Temperature of CO2 [K]
 DEFAULT_KINETIC_PARAMS = {
     'R1':  {'name': 'SO2 + 0.5 O2 + H2O <-> H2SO4',           'A': 5.0e5,     'Ea': 30000.0, 'units': 'm3 / (kmol * s)'},
     'R2':  {'name': 'H2S + 3 NO2 <-> SO2 + H2O + 3 NO',       'A': 1.0e10,    'Ea': 30000.0, 'units': 'm3 / (kmol * s)'},
-    'R3a': {'name': 'SO2 + NO2 + H2O <-> NO + H2SO4',         'A': 1.4e6,     'Ea': 26000.0, 'units': 'm3 / (kmol * s)'},
+    'R3a': {'name': 'SO2 + NO2 + H2O <-> NO + H2SO4',         'A': 5.0e7,     'Ea': 22000.0, 'units': 'm3 / (kmol * s)'},
     'R3b': {'name': 'SO2 + H2S + NO2 + O2 -> H2SO4',          'A': 1.0e9,     'Ea': 25000.0, 'units': 'm6 / (kmol2 * s)'},
     'R4':  {'name': '2 NO + O2 <-> 2 NO2',                    'A': 1.0e5,     'Ea': -4400.0, 'units': 'm6 / (kmol2 * s)'},
     'R5':  {'name': '3 NO2 + H2O <-> 2 HNO3 + NO',            'A': 2.4e6,     'Ea': 28000.0, 'units': 'm3 / (kmol * s)'},
