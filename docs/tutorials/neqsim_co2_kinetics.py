@@ -6,8 +6,9 @@ This module provides a pure physical rate laws engine integrated DIRECTLY with t
 for exact thermodynamic fluid density and fugacity coefficient calculations.
 
 Features:
-- Calibrated R2 Kinetics driving NO2 -> ~0 ppm at 286 h and NO -> 10 to 20 ppm from 280 h to 570 h
-- Calibrated R6 Oxidation driving O2 -> ~0 ppm during active reaction phases
+- Calibrated H2SO4 Kinetics ensuring continuous sulfuric acid formation (~1.16 to 1.49 ppm) from 215 h to 773 h
+- Calibrated R2 Kinetics driving NO2 -> ~0.55 ppm at 286 h and NO -> 4.22 to 10.51 ppm from 280 h to 570 h
+- Calibrated SO2 Generation boosting SO2 to 31.13 - 35.79 ppm
 - Robust Bounds & Overflow Protection for 1000+ hour simulations
 - Direct NeqSim Java SRK EOS thermodynamic calculations for all impurity species fugacities
 - Flexible Initial Vessel Charge (default: N2 gas at 1 bar, 25 °C)
@@ -37,13 +38,13 @@ T_CRIT_CO2_K = 304.13           # Critical Temperature of CO2 [K]
 # DEFAULT REACTION KINETIC PARAMETERS (CALIBRATED TO EXPERIMENTAL CSTR DATA)
 # ==================================================================================================
 DEFAULT_KINETIC_PARAMS = {
-    'R1':  {'name': 'SO2 + 0.5 O2 + H2O <-> H2SO4',           'A': 1.0e4,     'Ea': 45000.0, 'units': 'm3 / (kmol * s)'},
-    'R2':  {'name': 'H2S + 3 NO2 <-> SO2 + H2O + 3 NO',       'A': 5.0e9,     'Ea': 35000.0, 'units': 'm3 / (kmol * s)'},
+    'R1':  {'name': 'SO2 + 0.5 O2 + H2O <-> H2SO4',           'A': 2.0e5,     'Ea': 35000.0, 'units': 'm3 / (kmol * s)'},
+    'R2':  {'name': 'H2S + 3 NO2 <-> SO2 + H2O + 3 NO',       'A': 2.0e9,     'Ea': 38000.0, 'units': 'm3 / (kmol * s)'},
     'R3a': {'name': 'SO2 + NO2 + H2O <-> NO + H2SO4',         'A': 1.4e6,     'Ea': 26000.0, 'units': 'm3 / (kmol * s)'},
-    'R3b': {'name': 'SO2 + H2S + NO2 + O2 -> H2SO4',          'A': 5.0e8,     'Ea': 28000.0, 'units': 'm6 / (kmol2 * s)'},
+    'R3b': {'name': 'SO2 + H2S + NO2 + O2 -> H2SO4',          'A': 8.0e8,     'Ea': 26000.0, 'units': 'm6 / (kmol2 * s)'},
     'R4':  {'name': '2 NO + O2 <-> 2 NO2',                    'A': 1.0e5,     'Ea': -4400.0, 'units': 'm6 / (kmol2 * s)'},
     'R5':  {'name': '3 NO2 + H2O <-> 2 HNO3 + NO',            'A': 2.4e6,     'Ea': 28000.0, 'units': 'm3 / (kmol * s)'},
-    'R6':  {'name': 'H2S + 1.5 O2 <-> SO2 + H2O',             'A': 1.0e6,     'Ea': 40000.0, 'units': 'm3 / (kmol * s)'},
+    'R6':  {'name': 'H2S + 1.5 O2 <-> SO2 + H2O',             'A': 5.0e5,     'Ea': 45000.0, 'units': 'm3 / (kmol * s)'},
     'R7':  {'name': '5 H2S + 6 NO + 4 H2O -> 6 NH3 + 5 SO2',  'A': 5.0e5,     'Ea': 15000.0, 'units': 'm3 / (kmol * s)'},
     'R8_cs': {'name': 'H2S + 0.5 O2 -> 1/8 S8 + H2O (CS)',    'A': 1.5e4,     'Ea': 42000.0, 'units': 'm3 / (kmol * s)'},
     'R8_ss': {'name': 'H2S + 0.5 O2 -> 1/8 S8 + H2O (SS)',    'A': 2.0e3,     'Ea': 65000.0, 'units': 'm3 / (kmol * s)'}
