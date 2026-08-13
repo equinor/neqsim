@@ -1,6264 +1,1565 @@
-# NeqSim API Changelog â€” Agent Notes
-
-> **Purpose:** Track API changes that affect agent instructions, code patterns,
-> and existing examples. Agents read this file to stay aware of breaking changes,
-> deprecated methods, and new capabilities.
->
-> Format: most recent changes at the top. Include the date, what changed,
-> migration steps, and which agents/skills need updating.
-
----
-
-## 2026-08-12 â€” Reversible ProcessModel operating actions
-
-- `ProcessModelOperatingAction` adds immutable, serializable action identity, area-qualified
-  automation address, unit, provenance, and strict continuous or enumerated-discrete semantics.
-- `inspectCapability`, `capture`, `apply`, and `restore` provide explicit diagnostics,
-  write/read-back verification and identity-bound restoration without running the process model.
-- `registerWith(ProcessModelSimulationEvaluator)` exposes bounded continuous actions and exact
-  discrete-value discovery to Java and JPype/Python optimizers. Intermediate discrete values fail
-  closed and evaluator callbacks must be re-registered after deserialization.
-- The API does not mutate topology, solve mixed-integer decisions, infer feasibility, rank actions,
-  or approve an operating change. Candidate process runs and all engineering constraints remain
-  explicit.
-
-## 2026-08-12 â€” Explicit constraint scaling and candidate-active diagnostics
-
-- `ConstraintActivityAnalyzer` consumes an immutable `SensitivityQualityResult` and performs no
-  process evaluations. It reports dimensionless base margins, normalized constraint-margin
-  derivatives, violations and conservative candidate-active/inactive classifications.
-- Every `ConstraintScale` is positive, uses the constraint's declared unit, records provenance and
-  is bound to exact immutable identity: index, name, type, bounds/tolerance, hard/soft semantics,
-  penalty and capacity origin. Missing, duplicate, unitless or stale scales fail closed.
-- `ActivityPolicy` retains the dimensionless activity tolerance, local sensitivity qualification
-  policy and soft-constraint choice. Assessments and policies are immutable and serializable for
-  Java and JPype/Python workflows.
-- A scaled derivative remains linked to its complete raw evidence and must pass `isUsable()` before
-  consumption. `CANDIDATE_ACTIVE` is only a feasible near-boundary diagnosticâ€”not cross-unit
-  ranking, optimizer active-set proof, a KKT multiplier, economic shadow price or engineering
-  approval.
-
-## 2026-08-11 â€” Evidence-qualified local ProcessModel constraint sensitivities
-
-- `SensitivityQualityResult.assessConstraintSensitivities(policy)` now binds each constraint row
-  and parameter column to pair-specific numerical evidence, immutable engineering identity, raw
-  and minimizer objective derivatives, the constraint-margin derivative, declared derivative
-  units, and actionable diagnostics without rerunning the process model.
-- `SensitivityQualificationPolicy` explicitly controls relative-disagreement tolerance, base and
-  perturbation feasibility requirements, and acceptance of one-sided stencils. Convergence
-  failures, evaluation errors, non-finite derivatives, unstable refinement, and fixed parameters
-  always reject a pair.
-- `getEvidenceFlags()` retains cautions even when a policy permits them;
-  `getRejectionReasons()` explains why a pair is refused. The accepted-only convenience getter
-  must not replace archiving the complete assessment when auditability matters.
-- The API deliberately performs no cross-unit ranking, scaling, active-set inference, KKT
-  multiplier calculation, shadow-price claim, or engineering approval.
-
-## 2026-08-11 â€” Self-describing ProcessModel sensitivity snapshots
-
-- `SensitivityQualityResult` now includes immutable parameter, selected-objective, and constraint
-  snapshots that bind derivative columns and rows to their engineering identity.
-- Parameter snapshots retain index, name, automation address, unit, bounds, and bounded base
-  value. The objective snapshot retains direction, unit, weight, raw and minimizer base values,
-  and its gradient. Constraint snapshots retain type, unit, hard/soft semantics, penalty, bounds,
-  equality tolerance, capacity area/equipment origin, base value, base margin, and the matching
-  Jacobian row.
-- The snapshots are serializable, defensively copy derivative arrays, and remain unchanged after
-  evaluator definitions mutate or another process point runs. Existing matrix getters and
-  sensitivity evaluation cost are unchanged.
-- Agents must preserve these records when archiving or explaining sensitivities and must not rank
-  unlike raw margins or derivatives without explicit engineering scaling.
-
----
-
-## 2026-08-10 â€” ProcessModel sensitivity-quality evidence
-
-- `ProcessModelSimulationEvaluator.estimateSensitivitiesWithQuality(...)` now evaluates one coarse
-  and one halved finite-difference step, reusing each process run for the selected objective and
-  every constraint-margin derivative.
-- The immutable result returns the fine-step gradient/Jacobian and records each parameter's actual
-  bounded stencil, requested/coarse/fine steps, scale-independent coarse/fine disagreement, and
-  every perturbation's parameter value, convergence, hard-constraint feasibility, and error.
-- `isNumericallyStable(tolerance)` is deliberately a numerical consistency check. Agents must
-  inspect feasibility and active equipment/control regimes separately and must not label the
-  derivative a shadow price without optimizer-specific KKT evidence.
-- Existing gradient/Jacobian methods and their lower evaluation cost remain unchanged.
-
----
-
-## 2026-08-09 â€” Bound-aware ProcessModel finite-difference sensitivities
-
-- `ProcessModelSimulationEvaluator` objective gradients and constraint Jacobians now divide by the
-  actual perturbation available inside each parameter's bounds. Narrow ranges and active bounds no
-  longer silently understate derivatives after parameter clamping.
-- `FiniteDifferenceMethod.CENTRAL` adds a symmetric second-order interior stencil with a one-sided
-  boundary fallback. `FORWARD` remains the default and retains one perturbed simulation per
-  non-fixed parameter.
-- Non-positive or non-finite finite-difference steps and a null method now fail before simulation.
-  Fixed parameters report zero derivative because no feasible perturbation direction exists.
-- Treat the outputs as local sensitivities. Check step-size stability and active-set consistency
-  before using them as debottlenecking or shadow-value evidence.
-
----
-
-## 2026-08-09 â€” ProcessModel bottleneck snapshots retain area identity
-
-`ProcessModel.getUtilizationSnapshotJson()` now adds `area` and `qualifiedName` to a
-non-null plant-wide `bottleneck`. The existing `name`, utilization, constraint, ranking,
-tie behavior, and schema version remain unchanged. Python and AI consumers should use
-`qualifiedName` (`area::unit`) when joining or archiving bottlenecks because different
-process areas may legitimately reuse the same unit name.
-
----
-## 2026-08-09 â€” Expose Naphtali-Sandholm tray K-value convergence work
-
-- Naphtali-Sandholm diagnostics now report forced-root K-value sweep count, the number of tray
-  evaluations still above the `1e-8` log-K update criterion after two sweeps, and the maximum final
-  update.
-- The two-sweep numerical path, MESH equations, acceptance gates, and fallback behavior are
-  unchanged. The telemetry establishes the baseline needed for a later bounded convergence method.
-
-## 2026-08-09 â€” Correct Naphtali-Sandholm Jacobian work classification
-
-- Naphtali-Sandholm diagnostics now count each numerically perturbed Jacobian column only as
-  finite-difference work; the analytic-column counter reports zero for the current implementation.
-- Both public telemetry getters remain available. Solver equations, Jacobian values, convergence,
-  and fallback behavior are unchanged.
-
-## 2026-08-07 â€” Flow-accelerated corrosion + in-situ pH at temperature (new classes) + DEA protonation enabled
-
-**New in `neqsim.process.corrosion`** â€” for closed heating- and cooling-medium loops,
-boiler feedwater and WHRU / economiser tubes, where the damage mechanism is magnetite
-dissolution rather than acid-gas corrosion.
-
-- `AmineBufferedPH` â€” converts a laboratory pH measured on a **cooled sample** into the
-  **in-situ pH at operating temperature**, and reports the **alkaline margin** above
-  neutrality. Critical point for agents: neutral water is pH 7.00 at 25 Â°C but about
-  **pH 5.85 at 150 Â°C**, so a hot-system pH cannot be judged against pH 7. For a buffered
-  fluid the pH shift equals the pKa shift exactly. Supports `BufferAmine.DEA` and
-  `BufferAmine.MDEA`; verdicts `ROBUST` / `ADEQUATE` / `MARGINAL` / `INSUFFICIENT`.
-- `FlowAcceleratedCorrosion` + `FacGeometry` â€” FAC screening index built from a
-  Berger-Hau mass-transfer coefficient and factors for temperature (bell peaking at
-  150 Â°C), in-situ pH, local geometry (bend / weld / weld-at-bend / orifice) and chromium
-  content. `getDominantFactor()` names the controlling lever; `ratioTo(other)` quantifies
-  a proposed change.
-
-**Agent guidance â€” pick the right corrosion model:**
-
-- `NorsokM506CorrosionRate` is **CO2 corrosion**. It does not apply to a CO2-free closed
-  loop; using it there is a misapplication.
-- FAC is **not** erosion-corrosion. FAC is electrochemical dissolution under mass-transfer
-  control; erosion-corrosion needs mechanical particle impingement or cavitation. They
-  occur at the same locations but need different mitigation. `RootCauseAnalyser` now
-  raises `FLOW_ACCELERATED_CORROSION` separately from `EROSION_CORROSION`.
-- Always feed `FlowAcceleratedCorrosion.setInSituPH(...)` a value from `AmineBufferedPH`,
-  never a raw laboratory pH.
-- The FAC index is **comparison-only**. Ratios between cases are meaningful; the absolute
-  value is not a wall-loss rate.
-- Wall shear scales as roughly `v^1.75`, so a 3 % velocity exceedance is a ~13 % shear
-  exceedance. Report shear, not just velocity.
-
-**Data fix â€” DEA protonation was disabled.** The `DEAprot` reaction
-(`DEA+ + H2O <-> DEA + H3O+`, index 52, Austgen 1989) had complete stoichiometry in
-`STOCCOEFDATA.csv` and complete constants in `REACTIONDATA.csv`, but `USEREACTION = 0`,
-so any DEA-buffered electrolyte system silently returned no acid-base equilibrium. Now
-enabled; a half-neutralised DEA buffer in `SystemFurstElectrolyteEos` returns pH 8.98 at
-25 Â°C against a literature pKa of 8.88-8.92. The CPA electrolyte path
-(`SystemElectrolyteCPAstatoil`) remains unreliable for amine buffers â€” pre-existing, and
-affects MDEA equally.
-
-**New skill:** `neqsim-flow-accelerated-corrosion`. Loaded by `@flow.assurance` and
-`@root.cause`.
-
----
-
-## 2026-08-07 â€” Self-heating / spontaneous-ignition criticality (new package) + glycol formation-property fix
-
-**New package `neqsim.process.safety.selfheating`** â€” screening for low-temperature
-self-heating leading to spontaneous ignition ("lagging fires", where a combustible
-liquid soaks into porous thermal insulation and ignites with no external ignition
-source).
-
-- `PorousMediaSelfHeatingAnalyzer` â€” Frank-Kamenetskii steady-state criticality.
-  Returns the dimensionless parameter `delta` against its shape-dependent critical
-  value, plus the two engineering answers: **critical surface temperature** for a
-  given layer thickness and **critical thickness** at a given temperature.
-  `forPipeInsulation(...)` configures the conservative bounding case for lagging on
-  a hot line and records the assumption in `getWarnings()`.
-- `SemenovSelfHeatingAnalyzer` â€” Semenov `1/e` criterion for the surface-cooling
-  limit (drained pools, thin films, small samples).
-- `SelfHeatingInductionSolver` â€” transient 1-D conduction with an Arrhenius source,
-  giving the **induction time** to ignition (hours to days, not seconds).
-- `BasketTestRegression` â€” fits activation energy and volumetric heat-release
-  pre-factor from hot-storage (basket) test data per EN 15188 / ASTM E2021, and
-  `createAnalyzer(...)` carries the fit straight to a plant-scale screening.
-- `SelfHeatingGeometry` carries the published critical values (slab 0.878,
-  infinite cylinder 2.00, sphere 3.32, cube 2.52, equicylinder 2.76).
-
-**Agent guidance â€” do not substitute the wrong model:**
-
-- `neqsim.process.safety.reaction.RunawayReactionAnalyzer` is **lumped adiabatic**
-  (MTSR / dT_ad / TMR_ad). It has no spatial conduction, therefore no concept of a
-  critical thickness or critical ambient temperature, and **cannot** assess
-  spontaneous ignition in insulation. Use `selfheating` instead.
-- `GibbsReactor` will report complete oxidation of any hydrocarbon at ambient
-  temperature. Equilibrium gives the fuel, not the hazard â€” ignition is always a
-  kinetic question.
-- Activation energy and pre-factor are **measured**, never derived from
-  thermodynamics. Flag them as assumptions in `results.json` when not from testing.
-
-**Data fix â€” TEG and DEG formation properties were placeholders.** Both carried
-water's enthalpy of formation (`-242000 J/mol`) and CO2's Gibbs energy of formation
-(`-394370 J/mol`) in `COMP.csv` and `COMP_EXT.csv`. Corrected to literature
-ideal-gas values: TEG `-726500 / -474700 J/mol`, DEG `-571200 / -402900 J/mol`.
-Any previous Gibbs-minimisation, reactive-flash or heat-of-reaction result
-involving a glycol was wrong (TEG heat of combustion was ~25.4 MJ/kg, now
-~22.2 MJ/kg). Normal enthalpy calculations were unaffected, because the formation
-term is multiplied by zero in that path.
-
-**New skill:** `neqsim-self-heating-ignition`. Loaded by `@safety.depressuring` and
-`@reaction.engineering`; routed from `@router` on "self-ignition, spontaneous
-combustion, lagging fire, fire with no ignition source".
-
----
-
-## 2026-08-07 â€” Coupled transient gas-network hydraulics and source schedules
-
-- Added `TransientGasNetwork` for bounded, positive-flow, one-phase isothermal
-  gathering trees. It simultaneously solves source and junction pressures,
-  Darcy edge flow, compressible linepack, and conservative named-component
-  transport for scheduled source rates/compositions and one fixed-pressure
-  sink.
-- `TransientGasNetworkHistory` provides time-aligned node pressure/composition,
-  edge inlet/average/outlet flow, edge linepack, and immutable hydraulic,
-  junction, and component-conservation reports. The history and reports have a
-  stable JSON path for Python/JPype.
-- Source pressure is an emergent feasibility result, not a prescribed boundary
-  or a deliverability controller. Pressure bounds and edge velocity limits fail
-  explicitly; reverse flow, phase appearance, thermal transport, recirculation,
-  and branching splits remain outside the initial API.
-- Added a 700 km synthetic Ã…sgard/Kristin-to-KÃ¥rstÃ¸ rate-event regression with
-  the sink fixed at 110 bara, comparison to the 200/207 bara quasi-steady
-  anchors, deterministic repeat, linepack response, component/junction/total
-  balance gates, unsupported-state diagnostics, and joint grid/timestep
-  refinement.
-## 2026-08-06 â€” Per-case ranked capacity snapshots
-
-- `ProcessModelSimulationEvaluator.EvaluationResult.getRankedCapacityConstraints()` retains the
-  immutable full-model capacity ranking produced after that exact simulation point.
-- The legacy active bottleneck is selected from the same ranking, while undefined-utilization
-  constraints remain visible at the end for diagnosis.
-- `ThroughputCaseRow.getRankedCapacityConstraints()` preserves emerging and switching constraints
-  for every scalar-throughput case. JSON exports include the complete ranked list and its evidence
-  applicability; CSV remains the flat leading-limit summary.
-- Use these case-owned snapshots for debottleneck histories and AI/tool output. Do not rescan the
-  live model after a later evaluation and attribute that state to an earlier case.
-
----
-## 2026-08-06 â€” Artificial-lift screening rejects non-physical calculated results
-
-- `ArtificialLiftScreener.screen()` now rejects a calculated method result before ranking when its
-  production rate is non-finite or non-positive, or when its power consumption is non-finite or
-  negative.
-- Rejected results have zero reported rate and power, negative-infinite NPV, rank zero, and an
-  explicit infeasibility reason. A method reported as feasible therefore always has a finite,
-  positive rate and finite, non-negative power.
-- The field-development API example now uses the current `ArtificialLiftScreener` method names,
-  units, and `ScreeningResult` return type.
-
-## 2026-08-06 â€” Evidence-aware full-model capacity ranking
-
-- `ProcessModelSimulationEvaluator.rankCapacityConstraints(model)` returns every enabled
-  `CapacityConstraint` as an immutable list ordered by descending utilization. Stable ties retain
-  process-model registration order, and each dynamic value supplier is sampled once per call.
-- `BottleneckStatus.getEvidenceApplicability()` reports `WITHIN_VALIDITY_RANGE`,
-  `OUTSIDE_VALIDITY_RANGE`, or `NOT_ASSESSED` for the snapshotted operating point.
-- Evidence confidence and applicability remain diagnostics only. They do not change utilization,
-  feasibility, or ranking and must not be interpreted as probabilities of safe operation.
-- `findActiveBottleneck(model)` remains available when only the leading constraint is required.
-
----
-
-## 2026-08-06 â€” Side-draw flow targets reject invalid inner column states
-
-- A column with one independent side-draw flow specification now evaluates trial split fractions
-  on cold copied column states and accepts only rigorous or reconciled inner solves.
-- Failed and fallback-product trials no longer update the side-draw controller or replace the last
-  accepted public column state. The safeguarded search uses only accepted flow observations for
-  interpolation and bounded exploration.
-- When a cold trial is rejected after an accepted state exists, the same fraction is retried once
-  from the nearest accepted solved profile. This continuation path removes Java-runtime-dependent
-  cold-start failures without reusing a failed or fallback-product state.
-- `DistillationColumn` now reports rejected candidates, state rollbacks, accumulated inner-solver
-  work, and the candidate history through its column-tear diagnostics. These values are transient
-  and reset on copied or deserialized columns.
-
----
-
-## 2026-08-05 â€” Lossless external-to-internal constraint conversion
-
-- `ProcessSimulationEvaluator.ConstraintDefinition.toOptimizationConstraints()` now converts
-  lower/upper bounds to one immutable-list element and range/equality definitions to explicit
-  `_lower` and `_upper` internal constraints.
-- Both generated sides retain the source evaluator, severity, and penalty weight, preventing
-  operating envelopes and tolerance bands from silently losing their lower bound.
-- The singular `toOptimizationConstraint()` API is unchanged for compatibility and remains lossy
-  for range and equality definitions. New integrations must use the plural method.
-- Interpret sensitivities and shadow values for the generated lower and upper constraints
-  separately.
-
----
-
-## 2026-08-05 â€” Column pumparound returns remain internal recycles
-
-- `DistillationColumn` no longer captures a named pumparound return stream as a legacy direct
-  external tray feed during iterative solves.
-- `getInletStreams()`, feed fingerprints, and feed/product balance diagnostics therefore retain
-  only caller-supplied feeds; configured pumparound returns remain internal recycles.
-
----
-
-## 2026-08-05 â€” Conservative transient gas-network species transport
-
-- Added `TransientCompositionalPipeNetwork` for prescribed positive-flow,
-  one-phase, isothermal gathering networks. Source composition and mass-flow
-  schedules propagate through finite-volume edge inventories and conservative
-  component-name junction mixing without an instantaneous manual handoff.
-- `TransientCompositionalPipeNetworkHistory` exposes defensive, time-aligned
-  node mass fractions plus immutable edge, junction, and cumulative network
-  conservation reports. The history and reports provide JSON capture for
-  Python/JPype.
-- The first validated scope is a directed acyclic network with at most one
-  outgoing edge per node. Reverse flow, branching splits, recirculation,
-  hydraulic/thermal coupling, dispersion, and phase appearance fail explicitly
-  or remain outside this API.
-- Added a two-source finite-CO2-pulse regression with deterministic repeat,
-  component-order independence, balance/boundedness gates, linepack delay and
-  broadening, unsupported-state diagnostics, and joint grid/timestep
-  refinement.
-
----
-
-## 2026-08-05 â€” Conservative TwoFluidPipe component transport
-
-### Added
-- Opt-in per-cell, per-phase named-component inventories in `TwoFluidPipe`, advected with the accepted gas/oil/water face fluxes.
-- Equal-and-opposite component mapping for gas/oil/water flash transfer, fail-loud thermodynamic synchronization, bounded profiles, immutable reports, JSON diagnostics, and report history.
-- Composition-dependent interphase latent heat in the transient temperature equation and thermal-energy ledger.
-- Java and JPype/Python access to gas, oil, and water component profiles and outlet mass fractions.
-
-### Compatibility and scope
-- Backward compatible: component transport is disabled by default and must be enabled before `run()`.
-- The initial validated scope requires a fixed named component slate, known inlet composition, gas/oil/aqueous phase identities, and no reverse inflow through the outlet boundary.
-- Internal signed phase-flow reversals are handled with phase-consistent upwinding; unsupported phase transitions and non-closing component/phase ledgers throw.
-
----
-
-## 2026-08-05 â€” External process evaluators sample result callbacks once
-
-- `ProcessSimulationEvaluator.evaluate(...)` and `ProcessModelSimulationEvaluator.evaluate(...)`
-  now invoke each registered objective and constraint callback exactly once per completed
-  simulation point.
-- Raw and minimizer-sign objectives reuse one scalar. Constraint value, margin, feasibility, and
-  penalty likewise reuse one scalar, avoiding repeated report or serialization work and preventing
-  internally inconsistent results from mutable diagnostics.
-- Direct calls to objective and constraint definition methods retain their existing behavior and
-  public signatures.
-
----
-
-## 2026-08-05 â€” TwoFluidPipe transient thermal-energy closure
-
-- The multilayer cooldown path now removes fluid energy with the same instantaneous fluid-to-first-layer flux that
-  advances the radial wall state. It no longer mixes that transient flux with a separate steady overall-U heat-loss
-  estimate.
-- `MultilayerThermalCalculator` exposes the fluid-side and ambient-side heat rates used by its most recent transient
-  update through `getLastFluidHeatTransferPerLength()` and `getLastAmbientHeatTransferPerLength()`.
-- `TwoFluidPipe.getLastThermalEnergyBalanceReport()` now reports time-integrated fluid and wall energy changes,
-  conservative-face sensible advection, Joule-Thomson energy, ambient heat loss, and absolute/relative residuals for
-  the most recent thermal transient call.
-- Added simple/multilayer, Euler/IMEX, mesh/time-step refinement, disabled-heat-transfer, serialized-copy, and closed
-  SRK-CPA water-dew-point appearance/disappearance regressions. The phase-transition case checks gas, oil, water, and
-  total mass closure without a seeded liquid phase.
-
----
-
-## 2026-08-05 â€” Column exact reuse honors active convergence gates
-
-### Corrected
-
-Naphtali-Sandholm exact unchanged-input reuse now requires the active convergence-gate
-configuration to match the snapshot recorded after the accepted public solve. Changing an enforced
-tolerance no longer returns the previous state with zero iterations under a different convergence
-contract. Disabled energy and MESH tolerances, plus outer tear tolerances when no tear variable is
-configured, are excluded from the cache key so irrelevant setting changes retain zero-iteration
-reuse.
-
-## 2026-08-05 â€” ProcessModel unit-level mass closure is reported again
-
-### Added
-
-`ProcessModel` now reports a second mass-closure figure covering the units the recycle-tear gate
-does not own. `getLastUnitMassClosureError()` and `getUnitMassClosureOffenders()` expose the mass
-created or destroyed by non-recycle unit operations as a fraction of plant feed, the
-`getMassClosureSummary()` text states it alongside the recycle-tear result, and the `massClosure`
-JSON block gained `unitRelativeError`, `unitWorstUnits`, and `unitGateEnabled`. Bypassed and
-low-flow units are excluded (`ProcessSystem.getFailedMassBalance`), and recycles are skipped so
-they are not counted twice.
-
-The figure is **report-only by default**: a non-recycle unit that does not conserve mass is an
-equipment defect rather than something the outer solver can close, so gating on it would iterate
-to the cap and bury the real diagnosis. Opt in with `setUnitMassClosureGate(true)` to make it
-block a converged verdict as well.
-
-The closure is now also evaluated once after a run that never reached the acceptance test, so a
-model that stops on the iteration cap still reports what it is failing to conserve instead of
-leaving `relativeError` null behind a max-iterations warning.
-
-### Compatibility and validation
-
-No default, gate outcome, or existing JSON field changed; the recycle-tear gate and its
-`relativeError`/`worstUnits` fields behave exactly as before. Callers that only read the recycle
-figures are unaffected.
-
----
-## 2026-08-05 â€” Optional Chabab 2019 SÃ¸reide-Whitson CO2-brine parameterization
-
-### Added
-
-`SystemSoreideWhitson` now exposes `setAqueousCO2Parameterization(...)` with enum and string
-overloads. `LEGACY` remains the default and preserves existing results. Select `CHABAB_2019`
-(aliases `M_SW` or `m-sw`) to use the Chabab et al. (2019) aqueous CO2-water binary-interaction
-correlation for NaCl brine. The salt basis used by the correlation is equivalent NaCl molality in
-mol/kg water; the published measured range is approximately 1-3 mol/kg, 323-373 K, and up to 230 bar.
-
-The selector is directly accessible through Java and Python/JPype, survives system cloning, and
-does not change other gas-water or non-aqueous interaction parameters.
-
-## 2026-08-04 â€” Fixed-reflux fallback product inventory
-
-### Corrected
-
-When a fixed-liquid-reflux column rejects its tray state and installs guarded full-feed fallback
-products, the condenser's separate liquid product is now cleared. The fallback gas and bottom
-streams already contain the complete feed inventory; retaining the rejected liquid product beside
-them previously exposed more material than entered the column. Fixed-reflux availability,
-delivery, and residual diagnostics are invalidated because they no longer describe the exposed
-fallback products.
-
-The solve status remains `FALLBACK_PRODUCTS`, `solved()` remains false, and no tray equation,
-tolerance, flash, or iteration rule changed. Callers must continue to inspect the solve status
-before treating column products as a rigorous fixed-reflux solution.
-
-## 2026-08-04 â€” TwoFluidPipe closed thermal boundary consistency
-
-- Transient temperature advection now consumes the conservative solver's retained phase-resolved face mass fluxes,
-  combined with the configured integrator's stage weights and one pre-update temperature snapshot; it no longer
-  recomputes AUSM+ fluxes after acceptance or reads already-updated upstream cells.
-- CLOSED external faces contribute exactly zero advective transport while internal phase convection remains active.
-- Simple and multilayer radial heat transfer now visit section zero and use local conservative fluid inventory for
-  thermal inertia. Stateful multilayer wall temperatures are retained independently for every cell and advanced once
-  per accepted thermal time step.
-- The post-step temperature model is the single owner of ambient heat exchange, preventing the duplicate equation-level
-  wall source from applying the same loss twice.
-- Added deterministic regressions for disconnected inlet-rate invariance, uniform closed adiabatic behavior, all-cell
-  cooldown without ambient undershoot, independent multilayer cell state, and zero closed external face flux.
-## 2026-08-04 â€” ProcessModel recycle mass-closure reporting
-
-### Corrected
-
-The automatic model-level mass-closure convergence gate now evaluates active `Recycle` tear
-imbalances only. Unit-level mass-balance diagnostics remain available through `ProcessSystem` but
-no longer masquerade as open recycle tears or block an otherwise converged multi-area model.
-
-The `massClosure` JSON block reports `enabled: true` only when automatic convergence tuning and
-the closure gate are both active. An unevaluated `relativeError` is emitted as JSON `null` rather
-than the non-standard numeric literal `NaN`.
-
-### Compatibility and validation
-
-No public method or default is removed. Existing callers should treat `relativeError: null` as
-"not evaluated" and inspect unit-level mass-balance reports separately from the recycle-tear
-convergence gate.
-## 2026-08-04 â€” Capacity evidence in bottleneck and throughput results
-
-### Added
-
-`ProcessModelSimulationEvaluator.BottleneckStatus` and `ThroughputCaseRow` now snapshot the
-active constraint's confidence presence/value, scalar validity-range presence/bounds, and whether
-the evaluated current value lies inside the inclusive range. The metadata is available through
-Java getters and is retained by throughput JSON and CSV exports.
-
-### Compatibility and reporting
-
-Existing constructors remain available and represent evidence metadata as unset. Manually constructed
-snapshots normalize inconsistent enabled metadata (non-finite/out-of-range confidence or
-non-finite/reversed bounds) to the same unset state, and derive applicability from the current value
-and retained bounds. Bottleneck scans read dynamic constraint suppliers once per candidate and use
-that scalar for both utilization and applicability. JSON includes presence flags and uses `null` for
-unset confidence, bounds, and applicability. CSV includes the same flags and uses blank cells for
-unset values. Utilization, constraint direction, margins, feasibility, thermodynamics, hydraulics,
-and throughput search are unchanged.
-
----
-
-## 2026-08-04 â€” ConeFlowMeter rejects non-physical geometry (Copilot review round 11)
-
-### Fixed
-
-- `ConeFlowMeter.setGeometry(double, double, String)` now validates `coneDiameter &lt; pipeDiameter` (both positive)
-  instead of silently clamping the beta formula's `sqrt` argument to 0 with `Math.max(0.0, ...)`. Invalid geometry
-  (cone diameter &gt;= pipe diameter, or either non-positive) now logs a warning and stores a `NaN` throat diameter,
-  consistent with `WedgeFlowMeter`'s invalid-geometry handling, instead of silently producing beta = 0.
-- `ConeFlowMeter.getConeDiameter(String)` now returns `NaN` for a non-physical beta (NaN, &lt;= 0, or &gt; 1) instead
-  of clamping to a misleading 0 diameter.
-
----
-
-## 2026-08-04 â€” Reject non-physical discharge coefficients in the Reynolds iteration (Copilot review round 10)
-
-### Fixed
-
-- `DifferentialPressureFlowMeter.getMassFlowRatePerSecond()`'s Reynolds-number iteration only checked
-  `Double.isFinite(updatedFlow)`, so a Reynolds-independent device whose `calcDischargeCoefficient(...)` returns a
-  non-physical value (`C &lt;= 0`) could silently converge to a negative (but finite) mass flow and Reynolds number on
-  the very first pass. The initial guess and every iteration now also reject `flow &lt;= 0.0`, returning `NaN` (with a
-  warning identifying the offending Re,D) instead of a silently wrong negative flow.
-
----
-
-## 2026-08-04 â€” Test doc/privacy wording fixes (Copilot review round 9)
-
-### Fixed
-
-- `OrificeFlowMeterTest.buildWetGasMeter(double)` JavaDoc claimed `p1 = 60 bara`, but the meter uses the shared
-  `stream` fixture from `setUp()`, which is 20 bara. Reworded to describe the actual upstream pressure source.
-- Redacted equipment tag identifiers (`27A-KA01A` / `27A-KA60`) from a `VenturiFlowMeterTest` JavaDoc comment, per the
-  repository's privacy rule against including equipment tag numbers in public/reusable content.
-- `DocExamplesCompilationTest.buildDocExampleWetGasStream()` no longer hard-asserts an exact phase count of 2 (brittle
-  if NeqSim ever adds another phase type); it now asserts the intended `gas` and `oil` phases are both present via
-  `hasPhaseType(...)`.
-
----
-
-## 2026-08-04 â€” Volume-unit conversion gaps fixed (Copilot review round 8)
-
-### Fixed
-
-- `DifferentialPressureFlowMeter.volumeFlowConversionToM3PerSecond(String)` now supports every unit string that
-  `isActualVolumeUnit(String)`/`isStandardVolumeUnit(String)` classify as valid: `Sm^3/sec`, `kSm3/sec`, `MSm3/sec`,
-  `m^3/min`, `Sm^3/min`, `kSm3/min`, `MSm3/min`, and `m^3/day` were previously missing, so `getVolumeFlowRate(unit)` /
-  `getStandardVolumeFlowRate(unit)` threw `RuntimeException` for those (previously "valid-looking") unit strings.
-
-### Verified as a false positive (no change made)
-
-- A review also claimed `OrificeFlowMeter`/`VenturiFlowMeter`'s `buildWetGasSignature()` cache never hits because
-  `Arrays.equals(double[], double[])` treats `NaN != NaN`. This is incorrect: per the method's own Javadoc contract
-  (and confirmed with a standalone JVM check), `Arrays.equals(double[], double[])` compares `Double.doubleToLongBits`
-  values and explicitly treats two `NaN`s as equal. Added a one-line note to `buildWetGasSignature()` in both classes
-  documenting this so future reviews don't re-flag it.
-
----
-
-## 2026-08-04 â€” Reynolds-cache staleness and nozzle math-domain fixes (Copilot review round 7)
-
-### Fixed
-
-- `DifferentialPressureFlowMeter.getMassFlowRatePerSecond()` now resets `lastReynoldsNumberPipe` to `NaN` on every
-  invalid-input/invalid-expansibility early return, not just when `dp &lt;= 0`, so `getReynoldsNumberPipe()` never
-  reports a stale value from a previous successful solve after a failed one.
-- The Reynolds-number iteration now checks `Double.isFinite(updatedFlow)` each pass and fails fast (NaN + a logged
-  warning identifying the offending Re,D) instead of running all `MAX_ITERATIONS` passes and logging a misleading
-  "did not converge" warning when a device-specific discharge-coefficient correlation produces NaN/Infinity.
-- `NozzleFlowMeter.calcThroatTappedDischargeCoefficient(double)` now explicitly returns `NaN` for
-  `reynoldsThroat &lt; 400000`, instead of relying on `Math.pow(negative, 0.8)` (a non-integer power of a negative
-  base) to produce `NaN` indirectly once `1 - 400000 / Re,d` goes negative.
-
----
-
-## 2026-08-04 â€” Doc/test wording fixes and CONE beta validation (Copilot review round 6)
-
-### Fixed
-
-- `ExpansibilityModel.CONE.calculate(...)` now validates `0 < beta < 1` like `ORIFICE` and `ISENTROPIC`, instead of
-  silently returning a finite value for non-physical geometry.
-- Corrected the low-dP limit comment on `ExpansibilityModel.ISENTROPIC`: the indeterminate
-  `(1 - tau^((kappa-1)/kappa)) / (1 - tau)` term itself tends to `(kappa-1)/kappa`, not `1`; it is the overall
-  expansibility factor that tends to `1.0`.
-- `WedgeFlowMeter.setWedgeRatio(double)` JavaDoc no longer claims the pipe diameter is "required" to already be set
-  (it isn't enforced); it now documents the actual behavior, including the base class's 0.2 m default.
-- Renamed the misleading "dry-gas example" JavaDoc on `testVenturiFlowMeterDoc()`/`testOrificeFlowMeterDoc()` in
-  `DocExamplesCompilationTest`, which actually exercise the two-phase `buildDocExampleWetGasStream()` helper with
-  `WetGasCorrelation.NONE` (the liquid load is simply ignored in that mode, not absent from the stream).
-- Removed the remaining `System.out.println` calls from `docs/process/equipment/measurement_devices.md` code
-  snippets (CO2 emissions, NMVOC, HC/water dew point, cricondenbar, FIV LOF/F-RMS, molar mass, water content, pH).
-
----
-
-## 2026-08-04 â€” Wet-gas getter caching for OrificeFlowMeter and VenturiFlowMeter
-
-### Changed
-
-- `OrificeFlowMeter` and `VenturiFlowMeter` no longer re-run the full iterative wet-gas solve on every getter call
-  (`getLockhartMartinelliParameter()`, `getGasDensiometricFroudeNumber()`, `getOverReadingFactor()`, etc., plus
-  `getMassFlowRatePerSecond()`). Each now caches the last `WetGasResult` behind a cheap input fingerprint
-  (`buildWetGasSignature()`: differential pressure, upstream pressure, beta, gas density, viscosity/discharge
-  coefficient, liquid load configuration, and wet-gas correlation settings). Reading multiple derived quantities within
-  the same timestep now reuses one solve instead of re-solving per getter, and all getters are guaranteed to reflect
-  the same solved state. The cache is not manually invalidated by setters; it is recomputed automatically whenever the
-  fingerprint changes (e.g. after `process.run()` advances the stream, or after any wet-gas setter call).
-- Documentation code snippets no longer use `System.out.println` (project convention: avoid it in examples that may be
-  copied into production code).
-- `DocExamplesCompilationTest.buildDocExampleWetGasStream()` now asserts the built stream is two-phase, instead of
-  assuming it silently.
-
----
-
-## 2026-08-04 â€” DP flow-meter Copilot review fixes (Reynolds cache, volume-unit dispatch, near-zero-dP expansibility)
-
-### Fixed
-
-- `DifferentialPressureFlowMeter.getMassFlowRatePerSecond()` now resets the cached
-  `lastReynoldsNumberPipe` to `NaN` when the differential pressure is not positive, instead of
-  leaving it at the previous solve's converged value. `getReynoldsNumberPipe()`,
-  `getReynoldsNumberThroat()`, and `getValidityViolations()` no longer report stale Reynolds-number
-  information after `dp` drops to zero (or negative).
-- `DifferentialPressureFlowMeter.getVolumeFlowRate(String unit)` now delegates to
-  `getStandardVolumeFlowRate(unit)` when `unit` is a standard-volume unit (`Sm3/...`, `kSm3/...`,
-  `MSm3/...`). Previously it always divided by the flowing (actual) gas density, so
-  `getVolumeFlowRate("Sm3/hr")` silently returned a dimensionally-wrong value instead of the correct
-  standard-condition flow.
-- `ExpansibilityModel.ISENTROPIC.calculate(...)` now returns `1.0` instead of `NaN` when `tau` is
-  within `1e-12` of `1.0` (the low-differential-pressure limit). The `(1 - tau^((kappa-1)/kappa)) /
-  (1 - tau)` term is a removable 0/0 indeterminate form whose limit is `(kappa-1)/kappa`, which makes
-  the overall expansibility factor tend to `1.0` â€” i.e. no expansion for a negligible pressure drop,
-  matching physical expectation instead of propagating `NaN` into the flow calculation.
-- Documentation code snippets in `docs/process/equipment/measurement_devices.md` that reference
-  `List<String> issues = meter.getValidityViolations();` now include `import java.util.List;` so
-  they compile standalone if copied into a small program.
-
----
-
-## 2026-08-04 â€” ISO/TR 11583 Clause 7 wet-gas correction added to OrificeFlowMeter
-
-### Added
-
-`OrificeFlowMeter.setWetGasCorrelation(WetGasCorrelation.ISO_TR_11583)` switches the meter to the
-ISO/TR 11583 Clause 7 wet-gas orifice method. The liquid load is supplied via
-`setLiquidFromStream(true)` (reads the connected stream's own phase split), `setLiquidToGasMassRatio(x)`,
-`setLiquidMassFlowRate(v, unit)`, or (when 0.5 <= beta <= 0.68 and no explicit liquid rate/ratio is
-given) the 7.5.5 permanent pressure-loss route via `setPressureLoss(v, unit)`. New getters:
-`getLockhartMartinelliParameter()`, `getGasDensiometricFroudeNumber()`, `getOverReadingFactor()`,
-`getChisholmCoefficient()`, `getChisholmExponent()`. `getValidityViolations()` now reports the Clause 7
-limits of use (0.24 <= beta <= 0.73, 0 < X <= 0.3, Fr,gas >= 0.2, rho,gas/rho,liquid > 0.014, D >= 50 mm,
-plus the additional 7.5.5 bounds when the pressure-loss route is used) instead of the dry-gas ISO 5167-2
-limits when the correlation is active.
-
-**Key difference from `VenturiFlowMeter`'s Clause 6 wet-gas method**: the orifice discharge coefficient
-is **never replaced** (Clause 7.5.2) â€” it stays the plain Reader-Harris/Gallagher equation evaluated at
-the gas-only Reynolds number, so there is no `useWetGasDischargeCoefficient`-style guard. The Chisholm
-exponent also has no diameter-ratio term (unlike Venturi's beta-reduced exponent):
-`n = 0.214` for `Fr,gas < 1.5`, `n = (1/sqrt(2) - 0.3/sqrt(Fr,gas))^2` for `Fr,gas > 1.5`.
-
-`DifferentialPressureFlowMeter` gained a protected `setReynoldsNumberPipe(double)` so a wet-gas subclass
-can record its own converged Reynolds number on the base class; without it, `getReynoldsNumberPipe()`
-stayed pinned at the dry-gas seed value from the initial solve.
-
-### Compatibility
-
-All 8 pre-existing `OrificeFlowMeterTest` cases pass unchanged (default correlation is `NONE`). 9 new
-wet-gas tests added (17 total). No other DP flow meter class is affected.
-
-## 2026-08-04 â€” ISO 5167 differential-pressure flow meters: shared base class + orifice/nozzle/cone/wedge
-
-### Added
-
-`DifferentialPressureFlowMeter` (abstract, `neqsim.process.measurementdevice`) is the new shared base
-for ISO 5167-1 general-principles physics: geometry (`setGeometry`/`setPipeDiameter`/`setThroatDiameter`,
-diameter ratio always `beta = d/D` recomputed on demand), differential pressure (explicit or via
-`DifferentialPressureTransmitter`), gas density/isentropic exponent/dynamic viscosity readers (each
-overridable), a Reynolds-number fixed-point iteration for devices whose discharge coefficient depends on
-`Re,D`, and the mass/actual-volume/standard-volume/`getMeasuredValue` accessors. `ExpansibilityModel`
-(enum: `ORIFICE`, `ISENTROPIC`, `CONE`) holds the three expansibility-factor families shared across ISO
-5167-2/-3/-4/-5/-6.
-
-Four new concrete devices, each implementing only its own discharge coefficient and expansibility model:
-
-- `OrificeFlowMeter` (ISO 5167-2) â€” Reader-Harris/Gallagher (1998) discharge coefficient,
-  `TappingArrangement` (`CORNER`, `D_AND_D_HALF`, `FLANGE`).
-- `NozzleFlowMeter` (ISO 5167-3) â€” `NozzleType` (`ISA_1932`, `LONG_RADIUS`, `THROAT_TAPPED`,
-  `VENTURI_NOZZLE`); the first three depend on the Reynolds number, the Venturi nozzle does not.
-- `ConeFlowMeter` (ISO 5167-5) â€” constant C = 0.82; no physical throat, `beta = sqrt(1 - dc^2/D^2)`
-  derived from the cone diameter via `setGeometry(D, dc, unit)`.
-- `WedgeFlowMeter` (ISO 5167-6) â€” C = 0.77 - 0.09 beta; no physical throat, beta derived from the wedge
-  gap height (`setGeometry(D, h, unit)`) or wedge ratio (`setWedgeRatio(h/D)`) via ISO 5167-6 Formula (3).
-
-### Compatibility and migration
-
-`VenturiFlowMeter` (ISO 5167-4) is re-parented onto `DifferentialPressureFlowMeter` with **no public API
-change** â€” same constructors, same method signatures, same wet-gas (ISO/TR 11583, de Leeuw) behavior. All
-20 pre-existing `VenturiFlowMeterTest` cases pass unchanged. Wet-gas over-reading correction (liquid load,
-Lockhart-Martinelli, Froude number, Chisholm form) remains Venturi-specific; it has not been generalized to
-the other four devices in this change.
-
-### Not in scope (raise separately if needed)
-
-`neqsim.standards.gasquality.Standard_AGA3`'s own Reader-Harris/Gallagher implementation has known
-transcription bugs (missing terms, wrong Reynolds-number basis) found while verifying `OrificeFlowMeter`
-against the same ISO 5167-2:2022 Formula (4); it was deliberately left untouched pending maintainer review.
-
-## 2026-08-03 â€” Capacity constraint confidence and validity metadata
-
-### Added
-
-`CapacityConstraint` now records an optional evidence-quality confidence score in `[0, 1]` and an
-optional inclusive scalar validity range in the constraint's own unit. Fluent setters validate all
-values, explicit `hasConfidence()` and `hasValidityRange()` methods preserve unset semantics, and
-`isCurrentValueWithinValidityRange()` checks the live constraint value against the stated range.
-
-### Compatibility and behavior
-
-Existing constructors and serialized constraints remain compatible. Unset and legacy metadata is
-reported as absent and numeric getters return `NaN`. The metadata does not alter utilization,
-constraint direction, margins, violation status, feasibility, or optimizer search. Confidence is
-an evidence-quality score, not a probability of safety or constraint satisfaction. This release
-propagates confidence and validity into throughput case rows as of 2026-08-04, but does not
-implement a multidimensional operating envelope.
-## 2026-08-03 â€” TwoFluidPipe phase-resolved flash transfer
-
-### Corrected
-
-`ThermodynamicCoupling` now identifies phases by `PhaseType`, aggregates all hydrocarbon and
-aqueous liquid contributions, and returns immutable `PhaseMassTransfer` gas/oil/water sources.
-Condensation follows equilibrium liquid mass contributions. Evaporation follows and is limited by
-the actual conservative oil and water inventories. Transfer momentum uses donor velocity and is
-conservative across all three phases.
-
-`FlashTable` now stores the aggregate liquid fraction, oil/aqueous mass split, and gas/liquid molar
-masses. Existing serialized tables without these arrays return a rebuild diagnostic instead of
-silently reconstructing ambiguous liquid identity.
-
-### Compatibility and validation
-
-`calcMassTransferRatePerLength(...)` and the internal two-element gas/liquid adapter remain
-available. Code needing phase identity should call `calcPhaseMassTransferRatePerLength(...)` and
-read the SI-unit gas, oil, and water sources. Validate each phase with `TwoFluidMassBalanceReport`;
-total-mass closure alone does not prove correct liquid identity.
-
-## 2026-08-03 â€” Capacity provenance in process-model throughput results
-
-### Added
-
-`ProcessModelSimulationEvaluator.BottleneckStatus` and `ThroughputCaseRow` now preserve the
-underlying `CapacityConstraint.dataSource`. Java getters, JSON case rows, and CSV throughput traces
-therefore retain whether a limiting value came from sources such as mechanical design, an installed
-data sheet, or an operating envelope. Untagged and legacy constructor paths use `not_set`.
-
-### Compatibility and reporting
-
-Existing constructors remain available and retain their previous behavior. JSON adds `dataSource`;
-the CSV column is inserted after `minimumConstraint`. No thermodynamic, hydraulic, utilization,
-feasibility, equipment-design, or throughput-search calculation changed.
-
-## 2026-08-02 â€” Directed capacity margins in process-model throughput results
-
-### Corrected
-
-`ProcessModelSimulationEvaluator.BottleneckStatus` and `ThroughputCaseRow` now preserve whether an
-equipment bottleneck is minimum-directed. Minimum-only constraints report their finite
-`getDisplayDesignValue()` limit instead of the internal unset `Double.MAX_VALUE` design sentinel.
-Engineering-unit `capacityMargin` is `current - minimum` for lower limits and remains
-`limit - current` for upper limits, so non-negative consistently means feasible.
-
-### Compatibility and reporting
-
-Existing constructors remain available and default to maximum-directed behavior. JSON case rows
-and CSV throughput traces add `minimumConstraint`; the CSV column is inserted after `designValue`.
-No thermodynamic, hydraulic, utilization, feasibility, or optimizer search calculation changed.
-
-## 2026-08-02 â€” DNV-RP-F101 isolated metal-loss pressure screening added
-
-### Added
-
-`DnvRpF101CorrodedPipelineScreeningKernel` implements a fail-closed calculation for the current
-`DNV-RP-F101 2019-09+AMD:2025-09` basis. Its narrow scope is one isolated longitudinal metal-loss
-defect under internal pressure. It reports assessment depth, remaining wall, length correction,
-uncorroded and defect failure pressures, a caller-controlled pressure limit, utilization, margin,
-and within-limit status.
-
-### Required evidence and migration
-
-Measured defect geometry, depth allowance, assessment wall thickness, characteristic ultimate
-tensile strength, internal/external pressures, caller-controlled pressure factor, applicability,
-and verification attestations are explicit inputs. Interacting or complex defects, combined
-compression, probabilistic assessment, inspection-uncertainty derivation, corrosion growth,
-crack-like damage, repair, and fitness-for-service approval remain external.
-
-Agents must not convert a NORSOK M-506 corrosion rate or projected uniform loss into inspected
-RP-F101 defect geometry. The RP-F101 kernel is also separate from and does not replace DNV-ST-F101
-pressure containment, collapse, propagation/local buckling, load interaction, fatigue,
-incidental/test pressure, de-rating, safety class, ovality, fabrication route, or installation
-strain.
-
-## 2026-08-02 â€” DNV-RP-F105 added as a first-mode free-span screening kernel
-
-### Added
-
-`DnvRpF105FreeSpanScreeningKernel` implements an edition-aware, fail-closed screen for
-`DNV-RP-F105 2025-12`. It calculates a simply supported Euler-Bernoulli first-mode frequency with
-externally derived effective mass and axial force, then reports current/wave frequency ratios,
-reduced velocities, and Keulegan-Carpenter number. Steel and hydrodynamic diameters are distinct.
-
-### Required evidence and migration
-
-Geometry, structural-model, environmental, and project-trigger verification are mandatory caller
-attestations. Strouhal number, frequency-ratio band, and reduced-velocity triggers are
-project-controlled evidence; they are not embedded DNV criteria or acceptance decisions. Soil and
-span-shoulder stiffness, interacting spans, response amplitudes, direct wave loading, ULS/FLS,
-fatigue, monitoring, intervention, and conformity remain external.
-
-`PipeMechanicalDesignCalculator.calculateAllowableSpanLength(...)` remains compatible but is a
-legacy fixed-assumption estimate with fallback/cap behavior. Agents must not relabel it as F105 and
-must route an explicit current-edition basis through the typed kernel.
-
-The standards resource index now records the current F105 edition/applicability. Unverified legacy
-CSV values labelled as F105 safety factors, fatigue factors, allowable stress, and maximum span were
-removed rather than relabelled as current. The generic transient-pipe surge allowance is now
-identified as project basis, not F105.
-
----
-
-## 2026-08-02 â€” DNV-RP-C203 added as a controlled-curve fatigue kernel
-
-### Added
-
-`DnvRpC203FatigueDesignKernel` implements the S-N and Palmgren-Miner arithmetic for the current
-`2024-10+AMD:2025-10` basis. It accepts immutable spectrum bins, stress-range factors, a design
-fatigue factor, damage limit, and a caller-supplied single-slope or continuous bi-linear curve.
-`DnvRpC203FatigueAssessment` reports per-bin cycles to failure and damage, cumulative raw and design
-damage, utilization, governing bin, and linear-extrapolated life.
-
-### Required evidence and migration
-
-NeqSim deliberately does not embed or select licensed DNV S-N tables. Curve and spectrum
-verification flags are attestations and both are required before calculation. Curve/detail
-selection, structural stress derivation, environment/thickness factors, SCFs, rainflow counting,
-load combination, inspection planning, and conformity remain external.
-
-Existing pipeline and riser fatigue methods remain compatible but use inconsistent embedded
-parameters. Agents must call them legacy estimates and must route an explicit current-edition C203
-basis through the typed kernel with a controlled project curve.
-
----
-
-## 2026-08-02 â€” ISO 5167-1/-2 added to the edition-aware standards pipeline
-
-### Added
-
-`ISO-5167-1 2022` and `ISO-5167-2 2022` are catalogued separately with ISO publisher lifecycle
-sources. Part 1 records the companion general-principles basis; Part 2 registers the new
-`Iso5167OrificeMeteringKernel` for `Orifice` equipment.
-
-The kernel reuses the existing `Orifice` Reader-Harris/Gallagher and pressure-loss equations through
-an immutable, unit-explicit contract. Liquid service uses an explicit expansibility factor of one,
-while gas/vapour service requires kappa and applies the existing compressible correction. The typed
-result records beta ratio, differential and pressure ratios, discharge and expansibility factors,
-mass and actual-volume flow, pipe Reynolds number, permanent pressure loss, and iteration count.
-
-### Applicability and boundary
-
-The adapter fails closed for unsupported editions or amendments, non-`Orifice` equipment,
-multiphase/part-full/pulsating/non-subsonic flow, pipe diameter outside 50 mm to 1,000 mm, beta ratio
-outside the implemented 0.10 to 0.75 screen, Reynolds number below 5,000, invalid absolute
-pressures/properties, and missing external geometry/installation verification. That verification is
-a caller attestation; NeqSim does not inspect the installed meter.
-
-The method remains `SCREENING`. It does not replace purchased ISO 5167-1/-2 documents, uncertainty
-analysis, calibration, plate and tapping inspection, straight-length verification, pulsation or
-two-phase analysis, custody-transfer acceptance, or accountable engineering approval. Existing
-`Orifice`, `Standard_AGA3`, and `GpsaOrificeCalculator` entry points remain available under their
-respective process-simulation and AGA/API/GPSA bases.
-
-### Documentation and example
-
-Added `docs/process/measurement/iso_5167_orifice_metering.md` and an executed
-`examples/notebooks/iso_5167_orifice_metering_kernel.ipynb`. The common regression suite, support
-matrix, migration/program/design-framework guides, standards lookup skill, standards reviewer, and
-gas-quality agent now cover the exact ISO path and its exclusions.
-
-## 2026-08-02 â€” NORSOK M-506 added to the edition-aware standards kernel registry
-
-### Summary
-
-The existing mutable `NorsokM506CorrosionRate` calculation now has a strict common-kernel adapter.
-`NORSOK-M-506 2017` is catalogued with publisher lifecycle evidence, exact-edition support, equipment
-applicability, readiness blockers, immutable inputs and outputs, and regression coverage.
-
-### New API
-
-| API | What it does |
-|---|---|
-| `NorsokM506CorrosionDesignKernel` | Runs the existing simplified calculation only after edition, applicability, range, and input-quality checks pass |
-| `NorsokM506CorrosionDesignKernel.Input.builder(...)` | Retains unit-explicit raw inputs without the legacy setters' silent clamping |
-| `NorsokM506CorrosionAssessment` | Reports rate, pH, fugacity, correction factors, wall shear, and projected uniform wall loss as an immutable review-gated snapshot |
-
-### Migration
-
-Use the kernel for new auditable studies. Keep `NorsokM506CorrosionRate` for legacy mutable workflows
-and sweeps, and use `NorsokM506ElectrolyteBridge` when an electrolyte-model pH or FeCO3 saturation
-ratio is required. The projected wall loss is not a code corrosion allowance or acceptance decision.
-
-### Agent and skill behavior
-
-Standards and flow-assurance guidance now route explicit M-506 compliance work through the common
-kernel and require the screening boundary, purchased-standard review, and NeqSim FeCO3 extension to
-remain visible.
-
----
-
-## 2026-08-02 â€” Pump NPSH capacity constraint direction corrected
-
-### Summary
-
-`PumpCapacityStrategy` now represents NPSH headroom (`NPSHA - NPSHR`, metres) as a true minimum
-HARD constraint. The previous strategy set the minimum headroom as both a design value and a
-minimum, which selected `current/design` utilization and therefore classified a pump with abundant
-NPSH headroom as overloaded. Utilization is now `minimumHeadroom/currentHeadroom`: values below
-1.0 are feasible, exactly 1.0 is at the limit, and values above 1.0 violate the minimum.
-
-### Compatibility and engineering basis
-
-No public API or pump thermodynamic calculation changed. The strategy default remains a screening
-value; installed studies should use service- and vendor-specific NPSH margin requirements. This
-follows the Hydraulic Institute convention that adequate NPSH is a minimum-availability condition.
-
-### Tests
-
-`PumpCapacityStrategyTest` covers safe, exact-limit, and violated operating points using an executed
-water-pump process case and checks normalized utilization plus HARD-limit behavior.
-
----
-
-## 2026-08-02 â€” Typed DNV-RP-F109 on-bottom stability screening
-
-### Summary
-
-NeqSim now exposes a fail-closed `SCREENING` kernel for DNV-RP-F109 edition
-`2021-05+AMD 2025-09`. It covers vertical equilibrium, a transparent
-absolute-static lateral screen, and acceptance checks for displacement supplied by
-an externally validated generalized or dynamic response model. Every calculated
-result remains `CALCULATED_REVIEW_REQUIRED`.
-
-### New API
-
-| API | What it does |
-|---|---|
-| `DnvRpF109OnBottomStabilityInput` | Carries explicit asset, geometry, environmental, hydrodynamic, soil, factor, and response-model inputs without numerical project defaults |
-| `DnvRpF109OnBottomStabilityCalculator` | Calculates normal Morison loads, lift, vertical equilibrium, friction/passive lateral resistance, required submerged weight, and specific gravity |
-| `DnvRpF109OnBottomStabilityAssessment` | Returns immutable load-case intermediates, limit-state checks, governing utilization, and approval-required state |
-| `DnvRpF109OnBottomStabilityKernel` | Enforces edition, equipment applicability, complete inputs, unique cases, and external-response evidence before calculation |
-| `StandardType.DNV_RP_F109` | Adds current publisher-sourced standard discovery for pipelines, flexible pipes, cables, and umbilicals |
-
-### Boundary and migration
-
-No existing API changes. The kernel does not reproduce generalized design tables,
-generate dynamic response, derive environmental statistics, qualify pipe-soil
-models, or claim DNV conformity. Use the licensed current RP and independent
-engineering review for design approval. The `neqsim-subsea-and-wells`,
-`neqsim-flow-assurance`, and `neqsim-standards-lookup` skills now route on-bottom
-stability work to the typed kernel; the previous incorrect association of
-DNV-RP-F109 with cooldown/no-touch time has been removed. Two unreferenced legacy
-CSV rows that presented 1.1 lateral and vertical factors as generic standard
-defaults were also removed; factors must now be traceable project inputs.
-
-### Tests and example
-
-`DnvRpF109OnBottomStabilityKernelTest` checks fail-closed readiness, static and
-external-response routes, directional loading, hydrodynamic and soil monotonicity,
-displacement limits, registry discovery, and the audit boundary. The executed
-`dnv_rp_f109_on_bottom_stability.ipynb` notebook demonstrates load-case results,
-velocity sensitivity, and the submerged-weight/friction design space.
-
----
-
-## 2026-08-02 â€” Typed DNV-ST-F101 pipeline screening kernel
-
-### New API
-
-- `DnvStF101PipelineDesignInput` keeps the standard edition, safety class, fabrication route,
-  geometry, ovality, material de-rating, operating/incidental/test pressures, combined loads,
-  fatigue spectrum, and installation strain explicit.
-- `DnvStF101PipelineDesignKernel` is registered for `StandardType.DNV_ST_F101` with
-  `SCREENING` maturity and always returns a review-required calculated result.
-- `DnvStF101PipelineAssessment` reports separate utilization checks for pressure containment,
-  collapse, propagation buckling, local-buckling load interaction, fatigue, ovality, and
-  installation strain.
-- `PipelineMechanicalDesign.assessDnvStF101(input, context)` exposes the kernel from the pipeline
-  mechanical-design object without mutating the process model.
-
-### Migration and governance
-
-- Do not use `PipeMechanicalDesignCalculator.DNV_OS_F101` for current DNV-ST-F101 work.
-- `PipelineMechanicalDesign.calcDesign()` now fails closed for the `DNV-ST-F101` string code;
-  it no longer silently selects ASME B31.8.
-- Passing checks are option-screening evidence only. The licensed standard, project amendments,
-  detailed load cases, installation analysis, fabrication records, and independent engineering
-  verification remain required.
-
----
-
-## 2026-07-30 â€” TwoFluidPipe closure diagnostics exposed as profiles
-
-### Summary
-
-`TwoFluidPipe` now exposes the closure diagnostics already calculated for each
-`TwoFluidSection`. The steady-state and transient report CSVs include the new profiles, and the
-benchmark harness captures their numeric values and risk flags for comparison with public
-simulator exports or field data.
-
-### New API
-
-| API | What it does |
-|---|---|
-| `getOilWaterFlowRegimeProfile()` | Reports the oil-water flow configuration by section |
-| `getWaterWettingProfile()` | Reports water-wetting flags for corrosion screening |
-| `getWaterDropoutRiskProfile()` | Reports water dropout or accumulation flags |
-| `getEntrainmentFractionProfile()` | Reports estimated liquid entrainment fractions |
-| `getEntrainedDropletDiameterProfile()` | Reports characteristic entrained droplet diameters |
-| `getSevereSluggingNumberProfile()` | Reports the riser-base severe-slugging stability number |
-| `getSevereSlugPotentialProfile()` | Reports severe-slugging risk flags |
-
-### Reporting and validation
-
-`TwoFluidPipeReport` appends the closure profiles to its steady-state and transient CSV exports.
-`TwoFluidBenchmarkHarness` adds `entrainment_fraction`, `entrained_droplet_diameter_m`,
-`severe_slugging_number`, `water_wetting_flag`, `water_dropout_risk_flag`, and
-`severe_slug_potential_flag`.
-
-Continuous benchmark profiles use linear interpolation. Variables ending in `_flag` and intervals
-with non-finite diagnostic sentinels use nearest-neighbour sampling, preserving binary flags and
-avoiding interpolation-generated `NaN` values.
-
-### Tests
-
-`TwoFluidPipeReportTest` verifies profile shape, physical bounds, and report columns.
-`TwoFluidBenchmarkHarnessTest` verifies capture, continuous interpolation, discrete flag sampling,
-non-finite sentinel handling, and comparison of the new benchmark variables.
-
----
-
-## 2026-07-30 â€” Boundary-flow convergence filters and wider low-flow bypass coverage
-
-### Summary
-
-Multi-area plant convergence used a pure **maximum-of-relative-errors** gate with a hard-coded
-`1e-9 kg/hr` exclusion floor. A stagnant dead leg carrying `0.1 kg/hr` could wobble by
-`0.007 kg/hr` â€” a `6.6e-02` relative error â€” and dominate the gate, masking a real `443 kg/hr`
-residual on a `138 t/hr` export stream (`3.2e-03`). The floor is now configurable and an absolute
-flow criterion has been added. The low-flow section bypass has also been extended to the equipment
-that previously ignored it, and now always publishes the bypassed unit's outlet state so downstream
-units keep a valid pressure boundary.
-
-### New API
-
-| API | What it does |
-|---|---|
-| `ProcessModel.setBoundaryFlowFloor(kgPerHour)` / `getBoundaryFlowFloor()` | Boundary streams below this flow are excluded from the convergence metric and from `getNonConvergedBoundaryStreamErrors()`. Default `ProcessModel.DEFAULT_BOUNDARY_FLOW_FLOOR` = `1e-9` |
-| `ProcessModel.runUntilConverged(maxIter, relTol, absFlowTolKgPerHr)` | A stream is flow-converged when relative error &lt; `relTol` **OR** absolute change &lt; `absFlowTol` |
-| `ProcessModel.setAbsoluteFlowTolerance(kgPerHour)` / `getAbsoluteFlowTolerance()` | Same criterion, set independently of the run call. Default `0.0` = legacy relative-only |
-| `ProcessModel.BoundaryStreamError.getAbsoluteFlowChange()` | Absolute Î”flow (kg/hr) for a boundary stream â€” tells noise from residual at a glance |
-| `ProcessEquipmentBaseClass.setMinimumFlow(value, unit)` / `getMinimumFlow(unit)` | Unit-aware low-flow threshold (`kg/hr`, `kg/sec`, `kg/min`, `kg/day`, `tonne/hr`, `tonne/day`, `lb/hr`) |
-| `ProcessEquipmentBaseClass.massFlowConversionToKgPerHour(unit)` | Static conversion helper used by the above |
-| `ProcessEquipmentBaseClass.DEFAULT_MINIMUM_FLOW` | `1e-20` sentinel meaning "no explicit threshold configured" |
-| `ProcessSystem.setSectionLowFlowThreshold(value, unit)` | Unit-aware section threshold |
-
-### Behaviour changes
-
-- **`Manifold` bug fix.** `setMinimumFlow()` / `setSectionLowFlowThreshold()` on a `Manifold` was a
-  silent no-op because `run()` delegates to an internal mixer and splitter that never received the
-  threshold. It is now propagated, and the manifold reports `isActive()` from its splitter.
-- **`Pump` unit fix.** `Pump.run()` compared `minimumFlow` against **kg/sec** while every other
-  equipment and `ProcessSystem.setSectionLowFlowThreshold()` use **kg/hr**, so a plant-wide
-  threshold of 50 kg/hr silently meant 50 kg/sec (180 000 kg/hr) for pumps and bypassed them at any
-  normal flow. `minimumFlow` is now kg/hr everywhere. `PumpCapacityStrategy` likewise changed its
-  `flowRate` constraint from `m3/hr` to `kg/hr`.
-- **New bypass coverage (opt-in).** `ThrottlingValve`, `PipeBeggsAndBrills` and
-  `MultiStreamHeatExchanger` now honour the threshold. They fire **only** when a threshold above
-  `DEFAULT_MINIMUM_FLOW` is configured, because deactivating on the default would permanently skip a
-  unit that is momentarily dry inside a recycle loop (the scheduler skips inactive units for the
-  rest of the solve pass). `MultiStreamHeatExchanger` bypasses only when *all* sides are stagnant.
-- **Downstream-safe bypass.** The three new bypasses still write their outlet streams: the valve
-  publishes its specified let-down pressure with zero moles, the pipe and exchanger pass the inlet
-  state through. `Mixer.mixStream()` already ignores inlets at or below its own `minimumFlow` when
-  choosing the outlet pressure, so a dead branch cannot drag the live train down.
-- **`getConvergenceSummary()`** now prints the absolute Î”flow next to each relative error and adds a
-  `Flow filters:` line when a non-default floor or absolute tolerance is active.
-
-### Migration
-
-No action required â€” all defaults reproduce the previous behaviour. For plants with stagnant legs:
-
-```java
-plant.setBoundaryFlowFloor(1.0);                       // drop sub-1 kg/hr boundary streams
-boolean ok = plant.runUntilConverged(15, 1e-3, 1.0);   // rel 1e-3 OR abs 1 kg/hr
-```
-
-If you previously called `pump.setMinimumFlow(x)` intending kg/sec, multiply by 3600.
-
-### Tests
-
-`ProcessModelConvergenceFilterTest`, `LowFlowBypassDownstreamEffectTest`, `ManifoldLowFlowTest`,
-`PumpLowFlowThresholdTest`.
-
-### Docs / skills to update
-
-`docs/process/processmodel/low_flow_bypass.md` (updated), `neqsim-troubleshooting`,
-`neqsim-platform-modeling`, `neqsim-agentic-process-optimization`.
-
----
-
-## 2026-07-28 â€” Dynamic VU flashes preserve nearby CPA state
-
-### Summary
-
-Continuous separator and tank calculations with associating fluids now initialize each VU flash
-from the immediately preceding converged thermodynamic state. This preserves CPA association and
-phase-equilibrium work between nearby time steps. Cubic-EOS dynamics and standalone VU flashes keep
-their previous cold-start behavior, and a dynamic warm initialization retries once from the
-incoming pressure and temperature if it does not satisfy the volume and internal-energy residuals.
-
-### New API
-
-| API | What it does |
-|---|---|
-| `ThermodynamicOperations.VUflash(Vspec, Uspec, warmStartInitialization)` | Explicitly selects warm or cold initialization for a VU flash |
-| `ThermodynamicOperations.VUflash(volume, energy, volumeUnit, energyUnit, warmStartInitialization)` | Unit-aware version of the same option |
-| `OptimizedVUflash.getLastIterationCount()` | Reports the Newton iterations used by the last solve |
-| `OptimizedVUflash.isLastRunConverged()` | Reports whether the final state met the accepted V/U residual criteria |
-| `OptimizedVUflash.wasColdFallbackUsed()` | Reports whether a requested warm initialization needed the cold retry |
-
-### Dynamic behavior
-
-`Separator.runTransient`, `ThreePhaseSeparator.runTransient`, and `Tank.runTransient` opt in to
-warm initialization for associating fluids. Cubic-EOS dynamics, existing VU-flash overloads, and
-steady-state calls remain cold by default.
-
-### Test
-
-`VUFlashTest.testDynamicCpaVUflashUsesBoundedWarmStarts` covers repeated, nearby three-phase
-SRK-CPA VU flashes and verifies bounded convergence without a cold fallback.
-`DynamicCompressorNotebookRegressionTest` protects the established cubic-EOS dynamic trajectory.
-
----
-
-## 2026-07-27 â€” Capacity-aware compressor operating points and optimizer alignment
-
-### Summary
-
-Compressor reporting, bottleneck detection, and pressure-boundary optimization now use the same
-capacity-constraint semantics. A typed immutable result provides a stable handoff to field-life,
-energy, emissions, and external calculation tools without replacing the existing map/JSON API.
-
-### New API
-
-| API | What it does |
-|---|---|
-| `Compressor.getOperatingPointResult()` | Returns physical performance, map status, recycle losses, pressure-target status, limiting constraint, and detached capacity snapshots |
-| `Compressor.getOperatingPointResult(tolerance)` | Uses a caller-defined relative discharge-pressure tolerance |
-| `CompressorOperatingPointResult.toJson()` | Exports the typed result as schema-versioned JSON |
-
-### Capacity and optimization behavior
-
-- Surge and stonewall are now true minimum-good constraints: their current values are physical
-  margin percentages, and configured minima are 10 % and 5 % by default.
-- Hard minimum constraints now report `isHardLimitExceeded() == true` below their minimum.
-- `PressureBoundaryOptimizer` consumes every enabled, non-design, non-advisory compressor
-  `CapacityConstraint`. Custom power and speed settings remain explicit additional overrides.
-
-> **Behavior change:** a compressor below its required surge or stonewall margin is now infeasible
-> to bottleneck and optimization APIs. Previously the already-normalized margin supplier prevented
-> the minimum value from becoming a violation.
-
-### Tests
-
-`CompressorOperatingPointResultTest`, `CapacityConstraintMinimumLimitTest`, and
-`PressureBoundaryCapacityIntegrationTest`.
-
-## 2026-07-27 â€” Column convergence gate corrected, solver runtime knobs reachable, ProcessModel per-boundary-stream diagnostics
-
-### Summary
-
-`DistillationColumn.solved()` could return `true` for a tray profile that violated the MESH component
-material balance by 79 %, because two of the three residual gates were fed fabricated zeros and the
-third had a tolerance no bounded residual can exceed. Separately, three configuration knobs were
-silently ignored or unreachable, so a column inside a `ProcessModel` could burn hundreds of
-iterations per solve with no way to stop it, and `ProcessModel` reported convergence-error magnitudes
-without naming the stream that produced them.
-
-### `DistillationColumn` â€” convergence gate (correctness)
-
-| Problem | Fix |
-|---|---|
-| `NaphtaliSandholmSolver.getLastTemperatureResidual()` and `getLastEnergyResidual()` were `return 0.0;` stubs. The column stored those zeros, so the temperature gate passed unconditionally and the energy gate reported a perfect balance for any solution | The temperature getter returns `Double.NaN` (this solver has no successive-substitution sweep, so it genuinely has no such residual) and the energy getter returns the real `computeMaxRelativeEnergyError()` of the accepted state. `solved()` treats a `NaN` temperature residual by requiring the MESH residual gate to be active instead â€” the actual convergence measure of a simultaneous-correction solver |
-| The MESH gate could not reject a broken component material balance. The `MATERIAL` residual entries scale each component by its **own** throughput, so a trace component moving from 1e-25 to 1.2e-25 mol/hr produces the same 0.17 residual as a 17 % imbalance on the key component â€” and they were compared against `meshResidualTolerance = 1.0`, which a residual bounded by 1 can never exceed | New throughput-weighted per-tray measure `getLastTrayMaterialBalanceError()` (summed absolute tray imbalance / tray molar throughput, trace-insensitive) gated by `getTrayMaterialBalanceTolerance()` / `setTrayMaterialBalanceTolerance(t)`, default `2.0e-2` |
-| `finalizeNaphtaliSolve()` never recomputed `lastInternalTrafficRatio`, so a stale ratio from a previously used solver leaked into the gate, and it reported `RECONCILED_PRODUCTS` even when the solver had rejected its own result | The mass residual and internal traffic ratio are recomputed from the applied tray state, and a rejected solve is reported as `SolveStatus.FAILED` |
-| `lastSolveStatus` is `transient`, so a column restored from a serialized model returned `null` from `getLastSolveStatus()` | Both `getLastSolveStatus()` and `getLastSolveStatusReason()` are now null-safe (`NOT_RUN` / `""`) |
-
-`getConvergenceDiagnostics()` prints the per-tray material imbalance next to its tolerance and adds a
-recommendation when it is exceeded.
-
-> **Behavior change:** a solve whose tray profile does not close the per-tray component material
-> balance now reports `solved() == false` where it previously reported `true`. The products are
-> unchanged â€” only the verdict is. Callers that gate on `solved()` will start seeing failures they
-> were previously blind to.
-
-### `DistillationColumn` â€” runtime knobs
-
-| Problem | Fix |
-|---|---|
-| `setMaxNumberOfIterations(n)` is only a **soft floor** â€” the effective budget is `max(n, 5 Ã— trays)` plus the overflow expansion, so `setMaxNumberOfIterations(10)` on an 11-tray column still ran ~187 iterations | Now logs a warning when the request is below the tray-based floor. New `getMaxNumberOfIterations()` (configured) and `getEffectiveMaxNumberOfIterations()` (what the solver will use). Use the existing `setMaxNumberOfIterations(n, true)` / `setHardIterationCap(true)` for a hard cap |
-| `minSequentialRelaxation = 0.5` was private with no setter and clamped `setRelaxationFactor` from below, so damping below 0.5 was impossible | `setRelaxationFactor(f)` now also lowers the sequential and inside-out relaxation floors, and validates that `f` is finite and positive. New `setMinSequentialRelaxation` / `getMinSequentialRelaxation`, `setMinInsideOutRelaxation` / `getMinInsideOutRelaxation`, `getRelaxationFactor` |
-| The default absolute temperature tolerance (~0.02â€“0.03 K) can be ~10Ã— tighter than the enclosing `ProcessModel` boundary gate (1e-3 relative â‰ˆ 0.27 K) | New `setTemperatureToleranceRelative(rel)` (returns the resulting absolute K value) and `getReferenceTemperature()` (average tray temperature, else average external feed temperature, else 300 K) |
-
-```java
-column.setMaxNumberOfIterations(20, true);       // HARD cap, not a floor
-column.setRelaxationFactor(0.3);                 // now actually damps below 0.5
-column.setTemperatureToleranceRelative(1.0e-3);  // match the plant-level gate
-```
-
-> **Behavior change:** `setRelaxationFactor(0.0)` (or a non-finite value) now throws
-> `IllegalArgumentException` instead of disabling the update. `DistillationColumn.Builder`
-> only forwards a relaxation factor that is strictly positive.
-
-### `ProcessModel`
-
-`getConvergenceSummary()` and `getConvergenceReportJson()` now name the offending boundary stream:
-
-| API | What it does |
-|---|---|
-| `getLastBoundaryStreamErrors()` | Per-stream flow/temperature/pressure errors from the last outer iteration, worst first |
-| `getNonConvergedBoundaryStreamErrors()` | Same list filtered to streams outside tolerance |
-| `getWorstBoundaryStreamName(variable)` / `getWorstBoundaryStreamError(variable)` | Worst offender for `"flow"`, `"temperature"` or `"pressure"` |
-| `BoundaryStreamError.isFlowCollapsedToZero()` / `isFlowStartedFromZero()` | Explains a relative flow error of **exactly 1.0** â€” the stream stopped (or started) flowing between outer passes, i.e. an upstream fault rather than a slow recycle |
-
-JSON report gains `errors.{flow,temperature,pressure}.worstStream` and a top-level
-`boundaryStreamErrors` array (`name`, `flowError`, `temperatureError`, `pressureError`,
-`previousFlowKgPerHr`, `currentFlowKgPerHr`, `flowCollapsedToZero`, `flowStartedFromZero`).
-
-### Agents / skills updated
-
-- `neqsim-distillation-design` â€” new "Runtime control: iteration budget, damping and tolerance" section.
-- `neqsim-troubleshooting` â€” new "Column runs hundreds of iterations" and "ProcessModel Boundary Convergence" playbooks.
-
-### Tests
-
-`DistillationColumnConvergenceGateTest`, `DistillationColumnSolverTuningTest`,
-`ProcessModelBoundaryStreamDiagnosticsTest`.
-
----
-
-## 2026-07-27 â€” Flowsheet performance switches, shared CPA warm-start policy, identity-equality follow-ups
-
-### Summary
-
-Follow-up pass over the process/flash performance work merged the same day. It documents three
-public APIs that shipped undocumented, makes two closely related flowsheet-wide switches behave
-the same way, extends the CPA warm-start policy from two flash routines to all of them, and
-corrects documentation that contradicted the identity-equality change.
-
-### New public API (previously undocumented)
-
-| API | What it does |
-|---|---|
-| `Stream.PropertyInitLevel` (`FULL`, `DENSITY_ONLY`) | Selects how much of `initProperties()` runs after each stream flash. |
-| `Stream.setPropertyInitLevel(level)` / `getPropertyInitLevel()` | Per-stream control. |
-| `ProcessSystem.setPropertyInitLevel(level)` â†’ `int` | Flowsheet-wide control; returns the number of streams updated. |
-| `ProcessModel.setPropertyInitLevel(level)` / `setPropertyInitLevel(area, level)` | Plant-wide and per-area control (new in this pass). |
-| `EclipseFluidReadWrite.setUseCache` / `isUseCache` / `clearCache` | Enables and clears the parsed-E300 fluid cache. |
-| `EclipseFluidReadWrite.setMaxCacheSize` / `getMaxCacheSize` / `DEFAULT_MAX_CACHE_SIZE` | Bounds that cache (new in this pass). |
-
-> **âš  `PropertyInitLevel.DENSITY_ONLY` reads transport properties back as zero.**
-> It skips the viscosity, thermal-conductivity and diffusivity correlations. Those getters do
-> **not** throw afterwards â€” `getViscosity()`, `getThermalConductivity()` and the diffusion
-> coefficients simply return `0.0`. Only use it for flowsheets that need mass and energy
-> balances; switch back to `PropertyInitLevel.FULL` before any pipeline, heat-exchanger,
-> mechanical-design or flow-assurance calculation that reads transport properties.
-
-```java
-// Fast material-balance solve of a big plant, full properties in the flow-assurance area only.
-plant.setPropertyInitLevel(Stream.PropertyInitLevel.DENSITY_ONLY);
-plant.setPropertyInitLevel("subsea", Stream.PropertyInitLevel.FULL);
-plant.run();
-```
-
-### `setPropertyInitLevel` and `setMultiPhaseCheck` now behave the same
-
-`ProcessSystem.setPropertyInitLevel` previously returned `void`, was not propagated into nested
-`ModuleInterface` sub-processes, had no `ProcessModel` delegation, and was not re-applied when the
-model ran. It now matches `setMultiPhaseCheck` on all four points.
-
-**Migration:** `setPropertyInitLevel` returns `int` instead of `void`. Existing call sites compile
-unchanged; only a caller that assigned the result of a `void` method (not possible) would break.
-
-Both settings are now re-applied at the start of **every** execution entry point â€” `run(UUID)`,
-`run_step(UUID)`, `runSequential(UUID)`, `runParallel(UUID)`, `runHybrid(UUID)`,
-`runDataflow(UUID)` and `runTransient(double, UUID)`. Previously only `run`, `run_step` and
-`runParallel` re-applied `setMultiPhaseCheck`, so a `ThreePhaseSeparator` that turned the
-multiphase check back on leaked it into the rest of the area under the other four entry points.
-
-### CPA K-value warm starts: one policy, all iterative flashes
-
-New shared predicate:
-
-```java
-neqsim.thermo.ThermodynamicModelSettings.isInnerFlashWarmStartSafe(SystemInterface system)
-```
-
-Returns `false` for CPA models (by model name, plus a `PhaseCPAInterface` check), `true` for cubic
-EOS. `PHflash.isInnerTpFlashWarmStartSafe()` and `PSFlash.isInnerTpFlashWarmStartSafe()` â€” which
-carried byte-identical copies of this logic â€” now delegate to it.
-
-The policy is applied to the remaining iterative flashes from issue #2110, which all enabled
-K-value reuse unconditionally: `THflash`, `TSFlash`, `TUflash`, `TVflash`, `TVfractionFlash`,
-`VSflash`, `VHflashQfunc`, `VUflashQfunc`, `ImprovedVUflashQfunc`, `OptimizedVUflash`,
-`PHsolidFlash`, `PUflash`, `PVFflash`, `PVflash`, `PVrefluxflash`, `QfuncFlash`.
-
-`TPflash`'s multiphase-rescue path deliberately keeps an unconditional warm start for every model:
-it continues from a seed flash at a nearby temperature, and carrying the seed K-values over is the
-mechanism that finds the extra phase.
-
-**Impact:** CPA flowsheets (TEG/MEG/glycol, water-bearing) avoid the documented CPA runtime
-regression in these flashes. Cubic EOS behaviour is unchanged. No tolerance, convergence-acceptance
-or flash-equation change.
-
-### `EnergyStream` now uses identity equality
-
-`EnergyStream.hashCode()` returned `Objects.hashCode(duty)` and `equals()` compared duty only, but
-`duty` is rewritten by `setDuty()` on every run â€” the same mutable-hash defect that motivated
-removing `equals`/`hashCode` from `ProcessSystem` and the process-equipment classes. Two distinct
-energy streams also compared equal whenever their duties matched.
-
-**Migration:** `energyStreamA.equals(energyStreamB)` is now `true` only for the same instance.
-Compare `getDuty()` explicitly when a value comparison is intended.
-
-### `EclipseFluidReadWrite` cache is bounded
-
-The parsed-fluid cache was an unbounded `ConcurrentHashMap`, so a long-running service reading many
-distinct E300 files (or the same file repeatedly after edits, since the key includes the
-last-modified timestamp) grew without limit. It is now an LRU map capped at
-`DEFAULT_MAX_CACHE_SIZE = 64`, adjustable with `setMaxCacheSize(int)`. The mutable
-`public static pseudoName` is also snapshotted once per read, so a concurrent change of that field
-can no longer mismatch a cached entry with the prefix it was parsed under.
-
-### Documentation corrections
-
-The identity-equality change removed `equals`/`hashCode` from `ProcessSystem`,
-`ProcessEquipmentBaseClass`, `Compressor`, `Mixer` and `Separator`. Javadoc added afterwards still
-described those hashes as "value based and mutable", and had been attached to `getReport_json()`
-and `toJson()` â€” both `String`-returning methods that then carried a wrong
-`@return content-based hash â€¦` tag. Those blocks are removed and a correct identity-equality note
-now sits in the class Javadoc of `ProcessSystem`, `ProcessEquipmentBaseClass` and `EnergyStream`.
-The `PFDLayoutPolicy` cache comments and the `ProcessObjectIdentityKeyTest` class Javadoc were
-corrected the same way.
-
-`Expander.DEFAULT_EXPANDER_CALC_STEPS` (5, down from a hard-coded 40) claimed "the same result â€¦
-to within numerical noise". Measured on a 90 â†’ 30 bara rich-gas expansion the difference is about
-**0.06 K** outlet temperature out of a 51 K drop and under 0.5 % shaft power â€” now stated
-quantitatively and locked in by `ExpanderPolytropicStepsTest`.
-
-### Agents and skills to update
-
-- `neqsim-process-modeling`, `neqsim-platform-modeling` â€” the two flowsheet-wide performance
-  switches and the `DENSITY_ONLY` transport-property warning.
-- `neqsim-api-patterns` â€” `EclipseFluidReadWrite` cache controls.
-- `neqsim-troubleshooting` â€” "viscosity/thermal conductivity is zero" now has a second cause:
-  a stream running at `PropertyInitLevel.DENSITY_ONLY`.
-
----
-
-## 2026-07-27 â€” Fix: `DistillationColumn.solved()` no longer contradicts the reported solve status
-
-### Summary
-
-`DistillationColumn.solved()` could return `false` for a column whose
-`getLastSolveStatus()` was `RIGOROUS_CONVERGED` and whose residuals â€” as reported by
-`getLastTemperatureResidual()` and `getConvergenceDiagnostics()` â€” were all inside their
-tolerances. Observed on a TEG regeneration column: reported temperature residual
-`0.0168 K` against a `0.05 K` tolerance, while the internal gate saw `0.270`.
-
-Cause: the convergence gate tested the private working field `err` instead of
-`lastTemperatureResidual`. `err` is the live iteration variable of every inner solver loop â€”
-reset to `1e10` or `0.0` on solver entry and accumulated tray by tray â€” so any solver pass
-that exits before `finalizeSolve()` leaves it holding a partial value.
-
-Impact: enclosing `Recycle`, `ProcessSystem`, and `ProcessModel` loops never saw the column
-as converged and kept iterating until an iteration cap or wall-clock timeout, then returned a
-partially converged state. Downstream consumers saw very long run times and results that
-drifted between runs.
-
-### What changed
-
-- `residualConvergenceSatisfied()` now gates on `lastTemperatureResidual`, the same value
-  reported by `getLastTemperatureResidual()` and `getConvergenceDiagnostics()`. Both it and
-  `lastSolveStatus` are written by `finalizeSolve()` and cleared by `resetLastSolveMetrics()`,
-  so they stay consistent.
-- `internalTrafficSatisfied()` now compares against `MAX_SOLVED_INTERNAL_TRAFFIC_TO_FEED_RATIO`
-  (100) instead of the relaxed-update limit `MAX_RELAXED_INTERNAL_TRAFFIC_TO_FEED_RATIO` (1e5).
-- Guarded fallback products now log a warning. When the tray solution is rejected,
-  `updateProductsFromOverallFeedFlash()` replaces the public products with a **single
-  equilibrium flash of the mixed feeds**. The residual getters are computed against those
-  fallback products and therefore look converged. Check `getLastSolveStatus()` â€”
-  `FALLBACK_PRODUCTS` means product flows and duties are not a rigorous column result.
-- A non-finite reboiler or condenser duty after a solve is now logged instead of being
-  silently returned by `getDuty()`.
-- `massBalanceCheck()` and `componentMassBalanceCheck()` use `logger.debug` instead of
-  `System.out.println`.
-
-### Migration
-
-No API change. Callers that worked around the old behaviour by ignoring `solved()` can now
-rely on it. When reading column results programmatically, always check
-`getLastSolveStatus()` in addition to the residual getters.
-
-Regression test: `src/test/java/neqsim/process/equipment/distillation/DistillationColumnSolvedConsistencyTest.java`.
-
----
-
-## 2026-05-14 â€” Breaking: `Condenser.setRefluxRatio()` now means L/D, not a split fraction
-
-### Summary
-
-Before PR #2156 the value passed to `Condenser.setRefluxRatio(r)` was used directly as the
-split fraction of the condensed liquid returned as reflux:
-
-```java
-mixedStreamSplitter.setSplitFactors(new double[] {r, 1.0 - r});
-```
-
-It is now interpreted as a true reflux ratio `R = L/D` and converted internally:
-
-```java
-double refluxFraction = r <= 0.0 ? 0.0 : r / (1.0 + r);
-mixedStreamSplitter.setSplitFactors(new double[] {refluxFraction, 1.0 - refluxFraction});
-## 2026-07-27 â€” Fix: never use `ProcessSystem` or process equipment as a hash-map key
-
-### Summary
-
-`ProcessSystem.hashCode()` and `ProcessEquipmentBaseClass.hashCode()` are **value based over
-mutable state**. `ProcessSystem` hashes `time`, `timeStepNumber`, the measurement history and
-every unit operation; equipment hashes `report`, `properties`, `conditionAnalysisMessage` and
-the attached controllers. All of those are rewritten by `run()`, so the hash of a process or a
-unit changes as the model solves.
-
-Using such an object as a `HashMap` key or `HashSet` element violates the `Map` contract: after
-a run the entry sits in the wrong bucket, so lookups miss. It never returns a *wrong* value â€”
-`equals()` still guards â€” which is why the failure is silent: caches degrade to permanent
-misses, registries lose entries and re-register duplicates, and stale entries are never
-collected.
-
-### What changed
-
-- `PFDLayoutPolicy.roleCache` / `phaseCache` â€” were `HashMap` keyed on equipment and streams.
-  These are long-lived caches, so they were guaranteed to stop resolving after the first
-  `run()`. Now `IdentityHashMap`.
-- `ProcessSystem.buildHybridPlan()` â€” the `iterativeSet` membership set is now identity based.
-- `ProcessSystem.deactivateSection(String)` / `activateSection(String)` â€” the `visited`
-  traversal sets are now identity based. Besides the mutable-hash issue, an equals-based set
-  could mark a *different* unit as already visited when two units share a name, which happens
-  across the areas of a `ProcessModel`.
-- Both `hashCode()` methods now carry an explicit JavaDoc warning.
-
-This aligns the remaining call sites with the pattern already used by `ProcessModel`,
-`JsonProcessExporter`, `KValueProcessSimulator`, the DEXPI writers and the Graphviz exporters.
-
-### Migration
-
-No API change. **Agents and downstream code:** never key a map or set on `ProcessSystem`,
-`ProcessEquipmentInterface` or `StreamInterface`. Use:
-
-```java
-Map<StreamInterface, Foo> byStream = new IdentityHashMap<StreamInterface, Foo>();
-Set<ProcessEquipmentInterface> seen =
-    Collections.newSetFromMap(new IdentityHashMap<ProcessEquipmentInterface, Boolean>());
-```
-
-To compare two models **by value**, use `ProcessModelState.compare(oldState, newState)` rather
-than `equals()`.
-
----
-
-## 2026-07-27 â€” New: per-area three-phase flash control (`setMultiPhaseCheck`)
-
-### Summary
-
-The multiphase (three-phase) flash can now be switched on or off for a whole
-`ProcessSystem`, and per area on a `ProcessModel`. On a large multi-area plant the
-separation trains keep the check (free water, glycol, MEG), while areas that are known to be
-two-phase only â€” recompression, export compression, fuel gas â€” skip the extra
-phase-stability analysis on every flash of every recycle iteration.
-
-### What changed
-
-- `ProcessSystem.setMultiPhaseCheck(boolean)` â€” applies the setting to every fluid held by
-  the unit operations and their inlet/outlet streams, propagates into nested
-  `ModuleInterface` sub-processes, and returns the number of distinct fluids updated
-  (identity-based, so a shared fluid counts once).
-- `ProcessSystem.getMultiPhaseCheck()` â€” returns `TRUE`, `FALSE`, or `null` when the method
-  has never been called.
-- The setting is **re-applied at the start of every run** (`run(UUID)`, `runParallel(UUID)`,
-  `run_step(UUID)`), so equipment that temporarily enables the check â€”
-  `ThreePhaseSeparator` does this for its own flash â€” cannot leak three-phase mode into the
-  rest of the area across recycle iterations.
-- `ProcessModel.setMultiPhaseCheck(boolean)` â€” all areas; returns the total fluids updated.
-- `ProcessModel.setMultiPhaseCheck(String areaName, boolean)` â€” one area; returns `-1` if the
-  area name is unknown.
-
-```java
-plant.setMultiPhaseCheck(true);                    // baseline for all areas
-plant.setMultiPhaseCheck("Export train A", false); // dry gas only
-compressionTrain.setMultiPhaseCheck(false);        // single ProcessSystem
-```
-
-### Migration
-
-Any model calibrated against the old meaning runs at a different reflux and must be re-tuned.
-To reproduce the old split fraction `f`, pass `R = f / (1 - f)`.
-
-Affected: TEG regeneration and other columns that call `getCondenser().setRefluxRatio(...)`.
-None. The default is unset (`getMultiPhaseCheck()` returns `null`), which leaves the
-multiphase flag of each fluid exactly as the fluid was built, so existing models are
-unaffected until the method is called.
-
-**Correctness warning for agents:** only disable the check where the absence of a third
-phase is known from the process, not assumed. Turning it off on an area where free water, an
-aqueous glycol/MEG phase, or a liquid CO2 phase can form silently produces a two-phase
-answer.
-
-Docs: [`docs/process/processmodel/process_system.md`](docs/process/processmodel/process_system.md),
-[`docs/process/processmodel/process_model.md`](docs/process/processmodel/process_model.md).
-Test: `src/test/java/neqsim/process/processmodel/ProcessSystemMultiPhaseCheckTest.java`.
-
----
-
-## 2026-07-27 â€” Change: `Expander` polytropic path defaults to 5 pressure steps
-
-### Summary
-
-`Expander.run()` integrated the polytropic expansion over a hard-coded 40 pressure steps,
-i.e. 40 flashes per expander per iteration. The step count is now taken from the inherited
-`Compressor.getNumberOfCompressorCalcSteps()` and the `Expander` constructor seeds it with
-`Expander.DEFAULT_EXPANDER_CALC_STEPS = 5`. Five steps reproduce the 40-step result to within
-numerical noise at a fraction of the flash cost, which matters in recycle loops where the
-expander is re-run every iteration.
-
-### Migration
-
-None required. To restore the previous resolution â€” or to raise it for a strongly
-non-ideal fluid â€” call `expander.setNumberOfCompressorCalcSteps(40)`. Results may move in
-the last significant digits; re-baseline any test that asserted expander outlet enthalpy or
-temperature to a tolerance tighter than the integration error.
-## 2026-07-27 â€” Breaking: `ProcessSystem` and process equipment use identity equality
-
-### Summary
-
-`ProcessSystem`, `ProcessEquipmentBaseClass`, `Compressor`, `Mixer` and `Separator` implemented
-value-based `equals()`/`hashCode()` over **mutable** state. `ProcessSystem` hashed `time`,
-`timeStepNumber`, the measurement history and every unit operation; the equipment classes hashed
-`report`, `properties`, the attached controllers and their thermodynamic systems. All of that is
-rewritten by `run()`.
-
-A hash that changes while the object is a key breaks the `Map` contract: after a run the entry sits
-in the wrong bucket, so lookups miss. It never returned a *wrong* value â€” `equals()` still guarded â€”
-which is why the failure was silent: caches degraded to permanent misses, registries lost entries
-and re-registered duplicates, and stale entries were never collected. The overrides were also
-expensive (`Arrays.deepHashCode(report)` plus a recursive hash over every unit operation) and
-semantically ambiguous â€” "is this the same flowsheet" is a different question from "is this the
-same object".
-
-These types now inherit identity semantics from `Object`, so the hash is stable for the lifetime of
-the instance.
-
-### What changed
-
-Removed `equals()` and `hashCode()` from:
-
-- `ProcessSystem` (and its private `MeasurementHistory` helper, which only existed to serve them)
-- `ProcessEquipmentBaseClass`
-- `Compressor`, `Mixer`, `Separator` â€” these called `super.equals()`/`super.hashCode()`, so they
-  had to go with the base class to keep the hierarchy consistent
-
-The redundant `equals`/`hashCode` re-declarations in `ProcessEquipmentInterface` and
-`StreamInterface` were removed as well; they only restated `Object` methods and now implied an
-override that no longer exists.
-
-Genuine immutable value objects are **unchanged** â€” `ProcessConnection`, `ProcessNode`,
-`ProcessEdge`, `CompressorChart`, `CompressorCurve`, `BoundaryCurve`, `FunctionalLocation`,
-`ReferenceDesignation`, `EnergyStream`, the design-standard and cost classes all keep their
-value semantics.
-
-### Migration
-
-- `processA.equals(processB)` and `compressorA.equals(compressorB)` now return `true` only for the
-  same instance. Two independently built but identically configured objects no longer compare equal.
-- To compare two models **by value**, use `ProcessModelState.compare(oldState, newState)` (or
-  `ProcessSystemState`), which reports modified parameters and added/removed equipment.
-- `ProcessSystem.getUnitOperations().contains(unit)` and similar list lookups are now identity
-  checks. This is the intended meaning and fixes the case where two distinct units compared equal
-  because they shared a name â€” which happens across the areas of a `ProcessModel`.
-- Hash-based collections keyed on a process or a unit now work as expected. `IdentityHashMap` is
-  still the more explicit choice and remains correct.
-
-Regression test: `src/test/java/neqsim/process/processmodel/ProcessEqualityIdentityTest.java`.
-
----
-
-## 2026-07-25 â€” New: Energy Networks v3
-
-### Summary
-
-Typed energy streams now support deterministic multi-party dispatch rather than relying only on sequential net-duty
-updates. The implementation adds explicit requests, allocations, priorities, balancing, shortages, curtailment,
-persistent participant IDs, energy-quality metadata, conversion equipment, utility levels, fuel-energy reporting, transient storage/shaft
-behavior, and auditable cost/emissions reporting.
-
-### New capability
-
-- `EnergyBus.solveBalance()` and `EnergyNetworkSolver`: priority/proportional dispatch with real `BALANCE` mode.
-- `EnergyNetworkReport`: supply, demand, unmet load, curtailment, balancing, loss, efficiency, cost, and CO2.
-- `EnergyQuality` and `UtilityLevel`: voltage/frequency, thermal grade, pressure, temperature, and shaft speed.
-- `ElectricMotor`, `Generator`, `Gearbox`, `Inverter`, `Transformer`, and `PrimeMover`: explicit conversion and heat loss.
-- `MotorDriveTrain` and `MotorAssistedDriveTrain`: pump/compressor electrical drives and expander motor assist.
-- `UtilityEnergyBus`, `ThermalUtilitySource`, and `ThermalUtilityConsumer`: typed steam, hot-oil, water, and
-  refrigeration networks.
-- `MechanicalShaft.advanceTransient(dt)` and dynamic `BatteryStorage`: inertia/SOC, ramp limits, and trips.
-- Two-stream, multi-stream, and LNG heat exchangers publish calculated recoverable heat.
-
-### Compatibility
-
-Legacy sequential buses and owner-name/port-name contribution lookup remain supported. Internal network bookkeeping
-uses stable serialized participant IDs, so equipment renaming no longer changes allocation identity.
-
----
-
-
----
-
-## 2026-07-15 â€” New: `CompressorChartIGV` (vendor IGV-position chart family, Phase 2)
-
-### Summary
-
-Rigorous IGV path complementing the parametric `InletGuideVaneModel`: a vendor performance map per
-IGV position, interpolated into a standard `CompressorChart` at any opening (mirrors the expander
-IGV-position families in `TurboMachineryChartLibrary`).
-
-### New capability
-
-- **`neqsim.process.equipment.compressor.CompressorChartIGV`** (serializable) â€”
-  `addPosition(opening, chartConditions, speed[], flow[][], head[][], polyEff[][])` (positions in any
-  order), `setHeadUnit`, `setReferenceConditions`, `getNumberOfPositions`, and
-  `getChartAtOpening(f)` which linearly interpolates the flow/head/efficiency curves between the two
-  bracketing positions (clamps outside the supplied range), regenerates the surge curve, and returns
-  a ready `CompressorChart`. Positions must share the same speed lines / array shapes.
-- **`Compressor`**: `setInletGuideVaneChart(CompressorChartIGV)` / `getInletGuideVaneChart()` â€” attach
-  a vendor family; the active compressor chart is rebuilt from it at the current opening and on every
-  `setInletGuideVaneOpening(f)`. While a family is attached the parametric `InletGuideVaneModel`
-  corrections are bypassed (the chart already encodes the IGV effect).
-
-### Usage
-
-```java
-CompressorChartIGV family = new CompressorChartIGV();
-family.setHeadUnit("kJ/kg");
-family.addPosition(1.0, cc, speed, flow, headOpen, eff);   // fully open
-family.addPosition(0.5, cc, speed, flow, headHalf, eff);   // half open
-comp.setInletGuideVaneChart(family);
-comp.setInletGuideVaneOpening(0.75);   // active chart = interpolated map at 75% open
-```
-
-### Scope note
-
-The family selects the compressor's active performance chart per opening (verified at the chart
-level). For fixed-speed *discharge* control the parametric `InletGuideVaneModel` (Phase 1) remains the
-validated end-to-end path; driving fixed-speed discharge purely from an externally-set chart has a
-pre-existing quirk unrelated to IGV. Use the family to supply vendor maps and the parametric model
-for fixed-speed head/efficiency/surge control.
-
-### Tests
-
-`CompressorInletGuideVaneTest` (5) â€” includes interpolation monotonicity and the active-chart swap
-per opening. Full compressor/shaft/mixer suite (49) green.
-
----
-
-## 2026-07-15 â€” New: first-class inlet-guide-vane (IGV) control on `Compressor`
-
-### Summary
-
-`Compressor` now models inlet guide vanes as a first-class fixed-speed control (replacing the
-"effective chart speed" screening proxy). Closing the vanes reduces head and efficiency AND lowers
-the surge flow (shifts the surge line left), so anti-surge sees the correct margin. Additive and
-backward-compatible: the default opening is 1.0 (fully open = no correction).
-
-### New capability
-
-- **`neqsim.process.equipment.compressor.InletGuideVaneModel`** (serializable) â€” parametric IGV
-  physics as functions of an opening fraction `f` in `[0, 1]` (`f = 1` fully open):
-  `headMultiplier(f)`, `efficiencyDelta(f)` (fraction), `surgeFlowMultiplier(f)`, plus
-  angleâ†”opening conversion and configurable sensitivities (`setHeadDrop`, `setEfficiencyDrop`,
-  `setSurgeFlowDrop`, `setReferenceAngles`). Defaults are generic screening-level linear
-  sensitivities (`value = 1 - k*(1 - f)`), NOT vendor-certified.
-- **`Compressor`**: `setInletGuideVaneOpening(f)` / `getInletGuideVaneOpening()`,
-  `setGuideVaneAngle(deg)` / `getGuideVaneAngle()`, `getInletGuideVaneModel()` /
-  `setInletGuideVaneModel(model)`. The corrections are applied on the chart-based (fixed-speed)
-  operating point: head and efficiency in `run()`, and surge flow through `getSurgeFlowRate()`,
-  `getSurgeFlowRateMargin()`, and `getDistanceToSurge()`.
-
-### Usage
-
-```java
-comp.setSolveSpeed(false);            // fixed speed
-comp.setInletGuideVaneOpening(0.8);   // close IGV to 80% -> lower head/eff, lower surge flow
-comp.run();
-// discharge, getPolytropicEfficiency(), getSurgeFlowRate(), getDistanceToSurge() all reflect IGV
-```
-
-### Tests
-
-`CompressorInletGuideVaneTest` (4) â€” model monotonicity, fixed-speed discharge drop, surge-flow
-drop / distance-to-surge increase, angle mapping. All pass; existing compressor/shaft tests (35)
-unchanged.
-
-### Follow-up (not implemented)
-
-- Rigorous IGV-position **chart family** (2-D interpolation over speed Ã— IGV position), mirroring
-  the expander `ExpanderChartKhader` IGV handling in `TurboMachineryChartLibrary`, for vendor IGV maps.
-
-### Agents/skills to update
-
-- `compressor_shaft.md` fixed-speed section + notebook `CompressorShaft_ThreeStageSeparation.ipynb`
-  Section 9 now use the real IGV API (was a screening proxy).
-
----
-
-## 2026-07-15 â€” New: `CompressorShaft` feasibility result + pressure control (eCalc-aligned)
-
-### Summary
-
-`CompressorShaft` and `CompressorShaftCalculator` no longer just saturate-and-warn when a target
-discharge is unreachable â€” they now return a **feasibility result** and support a **pressure-control**
-action, matching how eCalc classifies a compressor-train operating point. Additive; existing behaviour
-(saturate to nearest bound) is unchanged for the default `PressureControl.NONE`.
-
-### New capability
-
-- **`CompressorShaft.SolveResult`** (nested, serializable) â€” `isFeasible()`, `getStatus()`,
-  `getTargetPressure()`, `getAchievedPressure()`, `getMinAchievablePressure()`,
-  `getMaxAchievablePressure()`, `getSpeed()`, `getMessage()`, `toJson()`. The min/max achievable
-  pressures come for free from the two speed-bound bracket evaluations `solveSpeed` already does.
-- **`CompressorShaft.SolveStatus`** enum â€” `FEASIBLE`, `PRESSURE_CONTROLLED`,
-  `PRESSURE_ABOVE_MAX_SPEED`, `PRESSURE_BELOW_MIN_SPEED`, `OVER_POWER`, `STONEWALL`, `SURGE`,
-  `NOT_CONFIGURED`.
-- **`CompressorShaft.PressureControl`** enum â€” `NONE` (default), `DOWNSTREAM_CHOKE`, `UPSTREAM_CHOKE`,
-  `ASV_RECYCLE`. For a target below the minimum-speed capability, a non-`NONE` control sheds the
-  surplus head so the point is feasible (`PRESSURE_CONTROLLED`).
-- **`CompressorShaft`**: `getLastSolveResult()`, `isFeasible()`, `setPressureControl(...)`,
-  `getPressureControl()`. `solveSpeed` now classifies the outcome (above/below capability, over-power,
-  stonewall, surge) instead of only logging a warning.
-- **`CompressorShaftCalculator`**: same `getLastSolveResult()`, `isFeasible()`,
-  `setPressureControl(...)`, `setPressureTolerance(...)` â€” updated every internal pass so an optimizer /
-  `evaluate()` loop can gate on `shaftCalc.isFeasible()` directly.
-
-### Usage
-
-```java
-shaft.solveSpeed(hpBody, 49.0, "bara", () -> process.run());
-if (!shaft.isFeasible()) {
-  CompressorShaft.SolveResult r = shaft.getLastSolveResult();
-  // r.getStatus(), r.getMaxAchievablePressure(), r.toJson()
-}
-// too-low target: shed surplus head instead of flagging infeasible
-shaft.setPressureControl(CompressorShaft.PressureControl.DOWNSTREAM_CHOKE);
-```
-
-### Tests
-
-`CompressorShaftTest` (8) + `CompressorShaftCalculatorTest` (2) â€” added feasible / above-max-speed /
-below-min-speed+pressure-control cases; all pass, spotless, BUILD SUCCESS.
-
-### Agents/skills to update
-
-- `compressor_shaft.md` doc â€” "When the Target Pressure Is Not Reachable" now documents the
-  `SolveResult` / `PressureControl` API (was a manual-detection recipe).
-
-### Related
-
-- Companion **`Mixer` pressure-mismatch flag** (`isPressureMismatch()`, `getInletPressureSpread()`,
-  `getMaxInletPressure()`, `getMinInletPressure()`, `setPressureMismatchTolerance()`): raised when
-  active mixer inlets arrive at materially different pressures (the join collapses to the lowest) â€”
-  the downstream signal that an upstream machine did not reach its target.
-
----
-
-## 2026-07-15 â€” New: `CompressorShaft` (multiple compressor bodies on one shaft, single common speed)
-
-### Summary
-
-Additive class for modelling a multi-body compressor string driven by ONE shaft (a single gas
-turbine or motor), so all bodies turn at the same speed. No change to existing behaviour.
-
-### New capability
-
-- **`neqsim.process.equipment.compressor.CompressorShaft`** â€” groups several `Compressor` bodies on
-  one shaft at a single common speed. A shared shaft has exactly one mechanical DOF (the common
-  speed) and one controlled target (the string's final discharge pressure); intermediate inter-body
-  pressures **float** off the charts.
-  - `addCompressor(c)` â€” add bodies in flow order.
-  - `solveSpeed(reference, targetPressure, unit, runnable)` â€” solve the ONE common speed until the
-    reference (usually last) body's outlet pressure hits the target, re-running the flowsheet via the
-    `Runnable` callback between guesses (so inter-body streams/scrubbers/mixers update). Intermediate
-    pressures float. Uses a bracketed **false-position (Illinois) secant** (superlinear on the smooth,
-    monotonic speedâ†”discharge map) â€” far fewer flowsheet solves than bisection. This is the correct
-    shared-shaft solve.
-  - `runAtFixedSpeed(rpm, runnable)` â€” for constant-speed drivers (no VSD): lock the speed, discharge
-    floats off the chart; meet any pressure spec by recycle/throttle/IGV, not by moving speed.
-  - `setSpeed`, `setSpeedBounds`, `setMaxIterations`, `setPressureTolerance`, `getSpeed`,
-    `getTotalPower`, `getCompressors`, `applySpeed` (puts every body in fixed-speed chart-forward mode).
-
-### Usage
-
-```java
-CompressorShaft shaft = new CompressorShaft("recompression shaft (single GT)");
-shaft.addCompressor(rc1); // LP body
-shaft.addCompressor(rc2);
-shaft.addCompressor(rc3); // HP body = reference
-shaft.setSpeedBounds(8000.0, 16000.0);
-shaft.solveSpeed(rc3, 49.0, "bara", () -> process.run());
-double rpm = shaft.getSpeed();
-```
-
-From Python (jpype), wrap the flowsheet re-run as a Runnable proxy:
-`jpype.JProxy("java.lang.Runnable", dict(run=lambda: process.run()))`.
-
-### DOF rule (do not violate)
-
-Do NOT fix every stage outlet pressure AND set a common speed â€” that is over-constrained and
-non-physical. Set the ONE common speed (or iterate it to the final discharge) and let intermediate
-pressures float. Model a unit that ties into an interstage (e.g. a 2nd-stage separator gas) as a
-pressure **equality** (a setter or small valve), not as a second pressure spec.
-
-### Agents/skills to update
-
-- `neqsim-compressor-antisurge-recycle` skill â€” has a "Multi-Body Compressor Trains on One Shaft"
-  section documenting this pattern. Anti-surge loops coexist (they set recycle flow; the shaft sets
-  speed) â€” apply the shaft solve after charts + anti-surge are active.
-- `neqsim-platform-modeling` skill â€” Â§6.4 documents multiple parallel trains, 2-stage machines,
-  dehydration, shared shafts, fuel-from-power, and vessel utilization.
-
-### Suggested follow-up NIPs (not yet implemented)
-
-- **Process-recycle-integrated shaft speed.** Today `CompressorShaft.solveSpeed` re-runs the whole
-  flowsheet N times via an external `Runnable` (a jpype `JProxy` from Python). A shaft-speed node that
-  participates in the normal `ProcessSystem.run()` recycle/adjuster iteration would converge the common
-  speed *inside one* solve â€” removing the N re-runs and the callback, and letting the shared shaft be
-  the default rather than opt-in. Highest-leverage next step.
-- **Multi-body `CompressorTrain` unit.** The existing `CompressorTrain` is single-body. A class owning
-  N bodies + interstage coolers/scrubbers on one shaft (aggregate power/surge, one speed) would make a
-  recompression train one object instead of N `antisurge_stage` calls + a manual `CompressorShaft`.
-- **First-class separator gas-load utilization.** A `SeparatorMechanicalDesign.getGasLoadUtilization()`
-  (Souders-Brown K / K_design from the vessel ID) would replace hand-rolled Python and align with the
-  capacity-constraint framework.
-
----
-
-## 2026-07-15 â€” New: `CompressorChartLibrary` (multiple named/selectable compressor charts) + `GasTurbine` power-demand mode
-
-### Summary
-
-Two additive features on the `process.equipment` compressor and power-generation classes. No
-change to existing behaviour.
-
-### New capability â€” compressor chart library
-
-- **`neqsim.process.equipment.compressor.CompressorChartLibrary`** â€” a named bundle/database of
-  several performance charts for one compressor (e.g. vendor expected, as-tested, field-fitted).
-  Store charts under unique names with optional metadata, select the active chart by name, and
-  round-trip the whole library to/from JSON (`describe()` for a catalog, `toJson()`/`fromJson()`
-  and `saveToFile()`/`loadFromFile()` for full curve+surge serialization).
-- **`neqsim.process.equipment.compressor.CompressorChartMetadata`** â€” self-describing metadata for
-  a chart: casing/model, service, tag, document reference, `CurveType`
-  (`EXPECTED`/`AS_TESTED`/`GENERATED`/`FIELD_FITTED`/`UNSPECIFIED`), and reference (basis)
-  conditions (MW, T, P, Z).
-- **`Compressor`** new methods: `getChartLibrary()` (lazy, never null), `setChartLibrary(lib)`,
-  `addChart(name, chart[, metadata])` (fluent), `selectChart(name)` (sets + enables the chart and
-  turns on polytropic calc in one call), `getAvailableCharts()`, `getSelectedChartName()`.
-- Tests: `CompressorChartLibraryTest` (all pass). Spotless clean, Java 8, log4j2.
-
-### New capability â€” GasTurbine inverse (power-demand) mode
-
-- **`neqsim.process.equipment.powergeneration.GasTurbine`** can now run in inverse (power-demand)
-  mode: `setRequiredPower(value, "W"|"kW"|"MW")` sizes the fuel-gas flow so the turbine delivers
-  the required net power from the fuel LCV and `thermalEfficiency`, so fuel consumption always
-  matches the driven load as the process solves. Set required power to 0 to return to normal
-  fuel-to-power mode. New: `getRequiredPower()` (W), `isPowerDemandMode()`, and
-  `getFuelFlowRate(unit)` (fuel-gas consumption in any flow unit). Requires a positive
-  `thermalEfficiency`.
-- Tests: `GasTurbineTest` (added cases pass).
-
-### Migration
-
-None (purely additive). Docs updated: `docs/process/equipment/compressor_curves.md` (new
-"Compressor Chart Library" section + API reference). Skills updated: `neqsim-power-generation`
-(GasTurbine power-demand mode), `neqsim-platform-modeling` and `neqsim-api-patterns` (chart
-library). Agents: `@compressor.model.builder` / compressor agents can use `selectChart(name)` to
-switch between vendor/as-tested/field-fitted curves.
-
----
-
-## 2026-07-14 â€” New: `CoolantBoilingMargin` coolant boiling-margin helper (heatexchanger)
-
-### Summary
-
-Additive utility for liquid-cooled gas coolers / heat exchangers: a one-call screen of the
-coolant-side boiling constraint (coolant must stay sub-cooled relative to the hot process-side
-temperature). Motivated by a Gullfaks A export-cooler (27-HX01A/B) study where the safety limit
-was the coolant boiling pressure at the 140 C gas inlet. No change to existing behaviour.
-
-### New capability
-
-- **`neqsim.process.equipment.heatexchanger.CoolantBoilingMargin`** â€” static
-  `evaluate(SystemInterface coolant, double coolantPressureBara, double hotSideTemperatureC)`
-  and `evaluate(..., double minimumMarginC)`. Clones the coolant fluid (caller not modified),
-  runs a `bubblePointTemperatureFlash` at the coolant pressure, and returns an immutable
-  `Result` with `getSaturationTemperatureC()`, `getSubcoolingMarginC()` (= Tsat - hotSideT),
-  `isBoiling()` (margin <= 0), and `isWithinMargin()` (margin >= minimumMargin). Saturation
-  temperature is `NaN` (not an exception) if the bubble-point flash does not converge.
-- Tests: `CoolantBoilingMarginTest` (5, all pass): water margin monotonic in pressure, ~0 at
-  the operator 2.5 barg floor at 140 C gas, Tsat ~140 C at the floor, min-margin logic,
-  caller-fluid-not-modified, invalid-input guards. Spotless clean.
-
-### Migration
-
-None (purely additive). Java 8 compatible; log4j2 logging; no `System.out`.
-
----
-
-## 2026-07-13 â€” New: multi-source decision-support helpers in `neqsim.util.agentic`
-
-### Summary
-
-Two additive, deterministic, schema-versioned helper classes that let an agentic solver
-combine knowledge from many sources into a ranked, defensible conclusion and solution.
-No change to existing behaviour.
-
-### New capability
-
-- **`neqsim.util.agentic.EvidenceSynthesis`** â€” multi-source weight-of-evidence ranking of
-  competing hypotheses. Register hypotheses (`addHypothesis(id, desc)`) and attach evidence
-  facts (`addEvidence(hypId, sourceType, supporting, strength[0..1], note)`) from distinct
-  source types (historian, maintenance, stid, tr2000, literature, reliability_prior,
-  simulation). `rank()` returns hypotheses ordered by net score then by number of **distinct**
-  supporting source types; `toJson()` emits the ranked list plus a `singleSourceWarning` flag
-  (top hypothesis backed by only one source type). Confidence labels: UNSUPPORTED / DISPUTED /
-  WEAK / MODERATE / STRONG. Use for root-cause triangulation.
-- **`neqsim.util.agentic.SolutionRanker`** â€” weighted multi-criteria ranking of candidate
-  solutions. `addCriterion(name, weight, benefit)` (benefit=false for cost/risk/lead-time),
-  `addSolution(id, desc)`, `setScore(id, criterion, rawScore)`; `rank()` / `toJson()` min-max
-  normalize per criterion, apply direction, weight-average to an overall [0,1] score, and emit
-  a ranked decision matrix with `recommendedSolutionId` and per-solution `missingCriteria`.
-
-### Who uses it
-
-- The `pepr-solve-task-agent` (evidence synthesis step + solution option-ranking step). Any
-  RCA / diagnostic / option-selection workflow that must combine multi-source evidence.
-
----
-
-## 2026-07-13 â€” New: agentic optimization helpers on `ProcessAutomation` (all equipment types, routing, parallel batch)
-
-### Summary
-
-Additive expansion of the string-addressable, never-throwing, schema-versioned JSON
-agentic-optimization surface on `neqsim.process.automation.ProcessAutomation`. All new
-methods work for **both** a `ProcessSystem` and a multi-area `ProcessModel`, and integrate
-directly with `AgenticProcessOptimizer`, `ProductionOptimizer`, and external Python/ML
-optimizers. No change to existing behaviour.
-
-### New capability
-
-- **`enableCapacityConstraints()` â€” capacity for ALL equipment types.** Now enables the
-  capacity constraints on every `CapacityConstrainedEquipment` (separators, pumps, valves,
-  pipelines, heaters/coolers, heat exchangers, manifolds), not just separators, so any type
-  can bind as the bottleneck. It preserves the chartless-compressor gating by calling
-  `Compressor.reinitializeCapacityConstraints()` (surge/speed stay disabled, power stays
-  enabled) instead of the blind `enableAllConstraints()` (which would re-pin chartless
-  machines at a degenerate 100 %). Still adds the separator Souders-Brown gas-load
-  constraint; return value stays the separator count.
-- **`getProductQualityJson(address[, refTempC])`** â€” export-oil RVP/TVP
-  (`Standard_ASTM_D6377`) and gas `cricondenbar_bara` / `cricondentherm_K`
-  (`calcPTphaseEnvelope`) for a resolved stream, on a cloned fluid (live model untouched);
-  never throws (`rvpError` / `envelopeError` on failure).
-- **`findMaxThroughputJson(feedAddresses, min, max, rateUnit, utilizationLimit)`** â€” enables
-  the capacity constraints then bisects the total feed rate (feeds scaled proportionally)
-  until the first unit reaches the utilisation limit; returns
-  `{maxRate, feasibleAtMin, bindingUnit, bindingConstraint, bindingUtilizationPercent}`.
-- **Routing / feed-scale decision variables** â€” feed `flowRate` is a writable INPUT;
-  splitters now expose one bounded `splitFactor_i` (0â€“1) INPUT per outlet in
-  `getAdjustableParameters()` (read = current fraction; write = branch weight, renormalised
-  to sum 1), so `AgenticProcessOptimizer.useAdjustableParameters()` picks them up.
-- **`evaluateBatchJson(candidates, unit, readbacks, maxParallel[, readbackUnit, maxIter,
-  tol])`** â€” scores a list of setpoint maps in one call; for a `ProcessSystem` with
-  `maxParallel > 1` each candidate runs on an independent `ProcessSystem.copy()` on its own
-  thread (parallel, **live model untouched**); `ProcessModel` / `maxParallel == 1` run
-  sequentially. Each result carries the full `evaluate` payload (incl. `converged`,
-  `iterations`, `maxError`, `failedUnitName`, `failedUnitError`) + `index`; root reports
-  `parallel`, `feasibleCount`, `firstFeasibleIndex`.
-
-### Production + emissions pattern (no new code)
-
-Compose decision space (`getAdjustableParameters()` bounded setpoints + splitter routing;
-bound feed `flowRate` for feed-scale) + feasibility (`enableCapacityConstraints()` +
-snapshot) + a reward `production âˆ’ Î»Â·Î£(compressor power)` via
-`AgenticProcessOptimizer.setObjectiveFunction`, or `ProductionOptimizer.optimizePareto`
-`[MAXIMIZE production, MINIMIZE Î£ compressor power]`. Compression shaft power is a CO2 proxy
-for turbine-driven trains.
-
-### Agents / skills to update
-
-- `neqsim-agentic-process-optimization` SKILL (updated), `AGENTS.md` +
-  `.github/copilot-instructions.md` ProcessAutomation sections (updated). Tests:
-  `ProcessAutomationTest` (101), full regression 134 tests, BUILD SUCCESS. Branch
-  `separator-opt-fix` (PR #2433).
-
-### Deferred (follow-up PR)
-
-- Whole-flowsheet **predictive** compressor mode (pressure-node solver so compressors
-  predict discharge P from speed+flow across the flowsheet without a fixed
-  `outletPressure`) and a rigorous CO2/emissions accessor (currently use compressor power
-  as the proxy).
-
----
-
-## 2026-07-12 â€” New: combustion / flue-gas calculator (turbines, burners, fired heaters)
-
-### Summary
-
-New state-of-the-art combustion calculator for the exhaust (flue-gas) composition,
-pollutant rates, air/fuel ratio, and adiabatic flame temperature of any gas turbine,
-burner, or fired heater. Purely additive; no change to existing behaviour.
-
-### New capability
-
-- **`neqsim.process.util.combustion.CombustionCalculator`** â€” from a fuel
-  `SystemInterface` + fuel mass flow + excess-air ratio, computes the full flue gas.
-  It deliberately splits the exhaust into two physically different families:
-  - **Major species (N2, O2, CO2, H2O, Ar) and SO2 â€” stoichiometric.** Exact element
-    balance of full combustion with excess air (all fuel Câ†’CO2, Hâ†’H2O, Sâ†’SO2). Robust.
-  - **NOx and CO â€” kinetically frozen.** These are NOT equilibrium â€” a Gibbs reactor
-    over-predicts NO at flame temperature and gives ~0 at stack temperature, so it is
-    the WRONG tool. They come from EMEP/EEA-style **emission factors** (g per GJ fuel
-    LHV), which the caller replaces with a vendor guarantee or CEMS value.
-  - **Adiabatic flame temperature** by a rigorous NeqSim energy balance (bisection on
-    product-mixture enthalpy so the released LHV heats the products from 298 K).
-- Fluent setters: `setFuelFlowRate(kgPerHr)`, `setExcessAirRatio(lambda)` (GT ~3-3.5
-  â†’ ~14-15 vol% O2; burner ~1.05-1.2), `setNoxFactorGPerGJ`, `setCoFactorGPerGJ`,
-  `setAssumedFuelH2sPpmv`. `calculate()` returns a `CombustionResult` with
-  `flueMoleFraction`, `pollutantPpmv` (SO2/NOx/CO), `massRateKgPerHr`,
-  `exhaustO2VolPercent`, `airFuelMassRatio`/`stoichAirFuelMassRatio`,
-  `fuelLhvKJperKg`, `fuelEnergyGJperHr`, `adiabaticFlameTemperatureK`, and `toJson()`.
-
-### Why not the existing classes
-
-- `CombustionEmissionsCalculator` (measurement device) is CO2-only with hardcoded
-  per-component factors â€” no flue composition, no SO2/NOx, no stoichiometry.
-- `GasTurbine` / `GasTurbineVendorPerformance` give the fuel rate and CO2; pair them
-  with `CombustionCalculator` for the full exhaust composition and pollutants.
-
-### Agents / skills updated
-
-- Skill `neqsim-power-generation` â€” new section documenting `CombustionCalculator`.
-- Agents that compute exhaust / emissions (emissions & environmental, power
-  generation, reaction engineering) should use this class for NOx/SO2/flue gas.
-
-### 2026-07-13 update â€” stack-emission reporting + closed physics gaps
-
-Purely additive (every new field defaults to 0 / NaN / off, so all existing tests and
-callers are unchanged). `CombustionCalculator` is now a regulatory-grade stack-emission
-model:
-
-- **Dry basis + reference O2 + mg/Nm3 + Nm3/hr + t/yr.** New setters
-  `setReferenceO2VolPercent` (3 % heaters, 15 % GT), `setNormalTemperatureC`,
-  `setAnnualOperatingHours`. New result fields `exhaustO2VolPercentDry`,
-  `pollutantPpmvDry`, `pollutantPpmvAtReferenceO2`, `pollutantMgPerNm3Dry`,
-  `pollutantMgPerNm3AtReferenceO2`, `flueGasNm3PerHrWet/Dry`, `massRateTonnesPerYear`.
-  Correction `C_ref = C*(20.9-O2ref)/(20.9-O2meas)` applied on the DRY value at the DRY
-  exhaust O2 (EPA Method 19 / EN 14792). Static `correctToReferenceO2(v, o2meas, o2ref)`.
-- **Air-driven turndown.** `setAirFlowRate(kgPerHr)` floats lambda from a fixed air rate +
-  fuel rate/composition; result flags `airDriven` and `subStoichiometric`.
-- **Field calibration.** `calibrateNoxFromMeasuredPpmv(ppmv, o2pct)` /
-  `calibrateCoFromMeasuredPpmv(...)` anchor factors to a CEMS/stack-test point.
-- **Optional thermal scaling.** `enableThermalNoxScaling(refFlameTempK)` (Zeldovich,
-  Taâ‰ˆ38000 K). `enableThermalCoScaling(...)` exists but has a documented WARNING â€” it
-  gives the wrong sign on an excess-air sweep; field-calibrate CO instead.
-- **SO3 & dew points.** `setSo3FractionOfSox` â†’ `SO3` in the flue, plus `acidDewPointC`
-  (Verhoff-Banchero sulfuric-acid dew point) and always `waterDewPointC` (Antoine).
-- **Other pollutants.** `setPmFactorGPerGJ`, `setCh4SlipFactorGPerGJ`,
-  `setVocFactorGPerGJ`, `setN2oFactorGPerGJ` â€” added to the mass-rate / mg-Nm3 maps.
-- **NOx route breakdown.** `setPromptNoxFactorGPerGJ` (Fenimore) +
-  `setFuelNoxFactorGPerGJ` (fuel-bound N) add to the base thermal route; result carries
-  `noxThermalKgPerHr` / `noxPromptKgPerHr` / `noxFuelKgPerHr`.
-- **Actual stack conditions.** `setStackGasTemperatureC` (measured/stack T, NOT the flame
-  T) â†’ `stackActualM3PerHr`; add `setStackDiameterM` â†’ `stackVelocityMPerS`;
-  `setStackPressureBara` sets the basis for actual flow and dew-point partial pressures.
-
-Key quirk for callers: `pollutantPpmv` uses key `"NOx"`, but `massRateKgPerHr` /
-`massRateTonnesPerYear` use `"NOx_as_NO2"`. The only remaining true physics limit is
-high-temperature dissociation in the adiabatic flame temperature.
-
-Docs updated: skill `neqsim-power-generation` (stack-emission + extended-physics
-subsections), agent `emissions.environmental` (regulatory report + extended setters),
-and the `CombustionCalculator` class JavaDoc physics-basis block.
-
----
-
-## 2026-07-11 â€” New: valve scale-drift plugging + scale/deposit remediation advisor
-
-### Summary
-
-Additive flow-assurance/integrity capability for analysing scale/solids fouling
-of control valves (Cv loss â†’ opening drift â†’ time-to-plug) and for recommending
-dissolver/solvent cleaning of already-fouled equipment. No changes to existing
-behaviour; a clean valve keeps `foulingFraction = 0`.
-
-### New capability
-
-- **`neqsim.process.equipment.valve.ThrottlingValve`** â€” new fouling coupling:
-  `setFoulingFraction(f)` / `getFoulingFraction()`, `getEffectiveKv()` /
-  `getEffectiveCv()`. Effective flow coefficient is `Kv*(1-f)`, applied inside
-  all flow/pressure calculations; `f` is clamped to `[0, 1)`.
-- **`neqsim.process.chemistry.scale.ValveScaleDrift`** â€” turns a deposit growth
-  rate (mm/yr, directly or from `ScaleKinetics`) into the valve fouling fraction
-  via a uniform radial-deposit trim model (`foulingFraction = 1-((d0-2t)/d0)^2`).
-  `advance(days)`, `getTimeToPlugDays()`, `predictOpeningPercent(clean)`,
-  `predictTimeToPinDays(clean)`, `toJson()`. Drive it inside a `runTransient`
-  loop to reproduce the "both LVs â†’ 100% open, level rising, no surge" signature.
-- **`neqsim.process.chemistry.scale.ScaleRemediationAdvisor`** â€” deposit â†’ dissolver
-  recommendation backed by `/data/scale_remediation.csv`. `recommendFor(type)`
-  (aliases: calcite/barite/gypsum/mackinawite/halite/â€¦), `recommendForMinerals`,
-  `toJson`. Encodes the key gotcha: acid dissolves carbonate/sulfide (CaCO3, FeCO3,
-  FeS) but NOT sulfate scale (BaSO4/SrSO4 â†’ high-pH chelant); dithiazine scavenger
-  solids â†’ proprietary dissolver + restore water pH control.
-- **`neqsim.process.chemistry.rca.RootCauseAnalyser`** â€” every deposit candidate
-  (`MINERAL_SCALE`, `WAX_DEPOSITION`, `ASPHALTENE`, `FES_DEPOSITION`) now appends a
-  concrete "to clean fouled equipment: <dissolver> â€¦" cleaning hint, targeting the
-  coupled dominant mineral when ion chemistry is available.
-
-### Agents / skills updated
-
-- `neqsim-flow-assurance` skill â€” new "Valve scale drift" and "Scale / precipitation
-  remediation" subsections (section 5-scale) + description keywords.
-- `@flow.assurance` agent â€” corrosion+scale section references the valve-plugging
-  and remediation-advisor classes.
-
----
-
-## 2026-07-11 â€” New: reservoir & production engineering (material balance, decline fitting, Gray well flow)
-
-### Summary
-
-Additive reservoir-surveillance and production-engineering toolkit. Regress
-reserves and drive mechanism directly from measured pressure/production history,
-fit decline curves to production data, and model gas-condensate vertical-well
-hydraulics with the Gray (1974) correlation. All new classes are static/utility
-or standard `Pipeline` equipment â€” no changes to existing behaviour.
-
-### New capability
-
-- **`neqsim.pvtsimulation.reservoirproperties.materialbalance.GasMaterialBalance`**
-  â€” gas P/Z straight line (OGIP), Cole plot aquifer diagnostic, Havlena-Odeh gas
-  balance. `fitVolumetric(...)` can compute Z internally (Sutton + Hall-Yarborough).
-- **`...materialbalance.OilMaterialBalance`** â€” Havlena-Odeh oil balance:
-  `fitDepletionDrive`, `fitGasCapDrive` (OOIP + gas-cap ratio m), `fitWaterDrive`,
-  and Pirson `driveIndices` (DDI/SDI/WDI/EDI).
-- **`...materialbalance.VanEverdingenHurstAquifer`** â€” radial aquifer influence
-  functions (Edwardson approximation), Carter-Tracy `cumulativeInfluxCarterTracy`,
-  and ECLIPSE `exportAqutab` include-table export. Feeds the `We` term of the
-  material-balance regressions.
-- **`neqsim.pvtsimulation.util.DeclineCurveAnalysis`** (extended) â€” least-squares
-  history matching `fitArps(t, q[, startIndex, endIndex])` (grid-searched b) and
-  `eurFromFit`; new Duong (2011) model `rateDuong` / `cumulativeDuong` / `fitDuong`
-  for tight / unconventional wells.
-- **`neqsim.process.equipment.pipeline.PipeGray`** â€” Gray (1974) multiphase
-  vertical-flow correlation for gas / gas-condensate wells, with a
-  Woldesemayat-Ghajar holdup option via `setHoldupMethod(...)`; readers for
-  holdup, superficial velocities, and effective (condensate-film) roughness.
-- **`...pipeline.VoidFractionCorrelations`** â€” static Woldesemayat-Ghajar (2007)
-  void-fraction correlation.
-
-### Units
-
-- Material balance: pressures in bara, temperatures in Kelvin, cumulative volumes
-  in any consistent surface unit (returned in-place volume matches). Aquifer
-  functions are SI (mÂ², s, PaÂ·s, 1/Pa) except `aquiferConstant`/`deltaP` in 1/bar
-  and bar.
-- `DeclineCurveAnalysis` is unit-agnostic; times in days.
-
-### Agents / skills updated
-
-- `neqsim-production-optimization` â€” added decline-curve history matching and
-  reservoir material-balance / surveillance sections.
-- `neqsim-field-development` â€” added inverse material balance and Arps/Duong
-  history-matching snippets.
-- `neqsim-capability-map` â€” added the new pipeline and reservoir/PVT classes.
-- `neqsim-flow-assurance` â€” added the Gray correlation for gas-condensate wells.
-- Docs: `docs/pvtsimulation/reservoir_material_balance.md` (new).
-
----
-
-
-### Summary
-
-Added an on-demand separation-efficiency assessment for two-phase and three-phase
-separators and gas scrubbers that ties the mechanical-design internals
-configuration (PR #2098 architecture) to the existing droplet-physics entrainment
-engine and the internals database. Fully additive and opt-in â€” default behaviour
-(no entrainment, or manually specified `setEntrainment(...)`) is unchanged.
-
-### New capability
-
-- **`SeparatorMechanicalDesign.calculateSeparationEfficiency()`** returns a
-  `SeparatorEfficiencyReport` (read-only; does not change `run()` behaviour). Works
-  for two-phase and three-phase (inherited by `GasScrubberMechanicalDesign`).
-- **`SeparatorMechanicalDesign.setEfficiencyModelEnabled(boolean)` /
-  `isEfficiencyModelEnabled()`** â€” toggle whether the physics entrainment/
-  carry-under model is applied during `run()`. Delegates to
-  `Separator.setDetailedEntrainmentCalculation(...)` and configures the
-  performance calculator from the configured internals + database.
-- **`SeparatorMechanicalDesign.setDemisterSubType(String)`** â€” selects a specific
-  internals-database sub-type (e.g. "High Efficiency") for K-factor window and
-  grade-efficiency lookup.
-- **`neqsim.process.mechanicaldesign.separator.SeparatorEfficiencyReport`** â€” per
-  -internal K-factor windows, overall gas-liquid efficiency, gas/oil/water
-  entrainment + carry-under fractions, verdict (`GOOD_PERFORMANCE`,
-  `BELOW_TURNDOWN`, `FLOODING_RISK`, `MARGINAL_EFFICIENCY`), and `toJson()`.
-- **`neqsim.process.mechanicaldesign.separator.internals.InternalOperatingWindow`**
-  â€” classifies an operating Souders-Brown K vs a `[Kmin, Kmax]` window as
-  `BELOW_MIN_TURNDOWN` / `IN_RANGE` / `ABOVE_MAX_FLOODING`, with utilization and
-  turndown ratio.
-- **`DemistingInternal`** gains `subType`, `minKFactor`, `maxKFactor`, `d50Um`,
-  `sharpness`, `maxEfficiency`, `reference`, `applyDatabaseRecord(record)`, static
-  `fromDatabase(type, subType)`, and `getOperatingWindow(operatingK)`.
-- **`Separator.computeSeparationPerformance()`** â€” runs the performance calculator
-  against the last flashed system without mutating entrainment fractions (used by
-  the report). `SeparatorPerformanceCalculator` gains DSD getters
-  (`getOilInWaterDSD`, `getWaterInOilDSD`, `getGasBubbleDSD`);
-  `SeparatorSection.getType()` added.
-
-### Notes
-
-- Operating K-factor for the report comes from `Separator.getGasLoadFactor()`
-  (robust; independent of the enhanced-calculator flag). Run and size the
-  separator (`calcDesign()`/`setDesign()`) before calling for a meaningful K.
-- K-factor windows are sourced from `resources/designdata/SeparatorInternals.csv`
-  (`MinKFactor_m_s`/`MaxKFactor_m_s` columns) via `SeparatorInternalsDatabase`.
-
-### Agents/skills to update
-
-- `neqsim-separator-modelling` / separator design skills: document
-  `calculateSeparationEfficiency()`, the K-factor operating-window concept, and
-  the enable/disable toggle.
-
----
-
-## 2026-07-10 â€” New: ControllerPerformanceMetrics loop-tuning KPI helper + level-loop recipe
-
-### Summary
-
-Added a reusable KPI helper for PID loop-tuning studies and documented the
-dynamic separator level-loop setup (from PEPR 80300477 NIP-2 / NIP-3). No physics
-change to existing controllers.
-
-### New capability
-
-- **`neqsim.process.controllerdevice.ControllerPerformanceMetrics`** â€” immutable
-  KPI object with static factories `fromEventLog(List<ControllerEvent>[, tol])`
-  and `fromArrays(time, pv, sp, op[, tol])`. Computes IAE, ISE, ITAE (trapezoidal,
-  irregular-dt safe), PV mean/std dev (variability), peak absolute error, total
-  controller-output (valve) travel, output reversals, and settling time.
-- **`ControllerDeviceInterface.getPerformanceMetrics()`** default method returns
-  `ControllerPerformanceMetrics.fromEventLog(getEventLog())`.
-
-### Fix
-
-- Corrected the `neqsim-dynamic-simulation` skill's PID example: the liquid-outlet
-  level controller was `setReverseActing(true)` (sign-inverted / unstable);
-  changed to `false` (direct acting), matching the canonical transient tests.
-
-### Agents/skills updated
-
-- `neqsim-dynamic-simulation`: new "Dynamic level-loop recipe" and "Loop-tuning
-  KPIs (ControllerPerformanceMetrics)" sections; `last_verified` bumped.
-
----
-
-## 2026-07-09 â€” Agent/skill hygiene: accurate orphan detection + skill-declaration parser
-
-### Summary
-
-Reduced `verify_agent_skill_refs.py` noise from **227 â†’ 1 warning** by fixing
-measurement blind spots (not by hiding real issues) â€” the single remaining
-warning is a genuine data gap (the enterprise `maintenance-agent` requires
-`enterprise-plant-maintenance-records`, whose folder has no `SKILL.md`). No
-NeqSim physics change.
-
-### Fixes
-
-- **Orphan check now uses the combined cross-repo agent index.** `check #4`
-  previously compared neqsim's 183 mirrored skills only against neqsim's own 34
-  agents, falsely flagging 137 "orphans". New `combined_referenced_skills()`
-  (via agent_search) counts a skill as referenced if ANY agent in ANY repo loads
-  it. True orphans: **5** (flash/gibbs research-benchmark skills that are
-  intentionally direct-use, not agent-loaded).
-- **`agent_search._extract_loaded_skills_body` now recognises a third
-  convention: the `## Loaded skills` heading** (agents used inline
-  `Loaded skills:`, `## Skills to Load`, AND `## Loaded skills`). Bullet parsing
-  also accepts underscores (`paperlab_*`). This fixed the false orphaning of
-  `neqsim-consequence-analysis` and `neqsim-hazid-fmea-eta-fta` (both loaded by
-  `consequence.analysis.agent`) and improves discovery accuracy generally.
-- **NO SKILLS check** now recognises the `Loaded skills:` line / skills headings
-  (was `neqsim-*`-backtick only), clearing two false positives
-  (`dynamic.equipment.agent`, `paperlab.agent`).
-- **Wired two genuinely-orphaned skills**: `neqsim-wax-calculations` â†’
-  `flow.assurance.agent`, `neqsim_standard_requirement_extraction` â†’
-  `standards.review.agent`.
-- **`USE WHEN:` trigger check is now case-insensitive** (`Use when:` was missed),
-  clearing 65 false NO-TRIGGER warnings. Fixed the one native skill missing a
-  trigger (`neqsim-dynamic-equipment-implementation`).
-- **Paperlab-managed skills** (mirrored from `neqsim-paperlab/skills/`) are exempt
-  from the orphan and USE-WHEN checks â€” they use a narrative convention and are
-  invoked by the paperlab router / research notebooks, not the agent
-  loaded-skills graph. This cleared the remaining paperlab/research false
-  positives.
-
-Tests: `test_agent_search.py` gains `LoadedSkillsBodyTest` (3 cases);
-`test_verify_agent_skill_refs.py` gains `UseWhenTriggerTest` (3 cases).
-
----
-
-## 2026-07-09 â€” Report "Solution Workflow" section, combined-index ref linting, devtools CI
-
-### Summary
-
-Three follow-ups to the agent/skill discovery work. No NeqSim physics change.
-
-### Report rendering â€” first-class `agent_workflow_plan`
-
-- `devtools/task_template/step3_report/generate_report.py` now renders a
-  **"Solution Workflow"** section (after Approach) from `results.json`
-  `agent_workflow_plan`: `format_workflow_html` + `add_workflow_word_section`
-  (Word), a `has_workflow` section in `build_sections`, and a
-  `_required_section_available` entry. It documents *how* the task was solved
-  (discovered/used agents, workflow composition, rationale) instead of the plan
-  only riding inside the `approach` text. Reuses existing risk-card/table CSS.
-- This canonical template is the authoritative one (overlaid over the embedded
-  `GENERATE_REPORT` string in `new_task.py`), so it propagates to new tasks.
-
-### Combined-index broken-ref linting
-
-- `devtools/verify_agent_skill_refs.py` gains `check_combined_skill_refs`, which
-  reuses `agent_search` + `skill_search` to validate every agent's
-  `required_skills` against the **combined cross-repo skill index**. It
-  distinguishes legitimate cross-repo loads (skill in a sibling *-skills repo /
-  neqsim-paperlab, reported as a count) from **genuinely broken** refs (skill in
-  no repo, reported as a warning; error under `--strict`). Inert in the
-  neqsim-only CI checkout. Surfaced a real data gap: the enterprise
-  `maintenance-agent` requires `enterprise-plant-maintenance-records`, whose
-  folder has no `SKILL.md`.
-
-### Devtools CI coverage
-
-- New `.github/workflows/devtools_tests.yml` runs the hermetic pytest suites
-  (`test_agent_search`, `test_skill_search`, `test_verify_agent_skill_refs`,
-  `test_report_workflow`, `test_unisim_outputs`) plus the `test_report_gen.py`
-  integration script (installs `python-docx` + `matplotlib`) on `devtools/**`
-  changes â€” previously no CI ran the devtools Python tests.
-- New tests: `test_report_workflow.py` (5), `test_verify_agent_skill_refs.py` (2).
-
----
-
-## 2026-07-09 â€” Agent discovery: `agent_search.py` + mandatory agent/workflow plan in task solving
-
-### Summary
-
-The task solver now **discovers the best agents (not just skills)** at the start
-of a task and records a workflow plan, so all functionality across the neqsim +
-community + enterprise agent/skill repos gets utilized. No NeqSim physics change.
-
-### New tool: `devtools/agent_search.py`
-
-- Semantic (TF-IDF + cosine, sklearn with pure-python Jaccard fallback) ranking
-  of agents across `neqsim/.github/agents/*.agent.md`,
-  `neqsim-community-agents/agents/*/AGENT.md`, and
-  `neqsim-enterprise-agents/agents/*/AGENT.md`. Mirrors `skill_search.py`.
-- Output lists, per agent, the **skills it loads** and the **`@handle`** used to
-  invoke it (for neqsim agents the front-matter `name` is a prose title, so the
-  handle is derived from the `<handle>.agent.md` file stem; for community/
-  enterprise it is the `agents/<handle>/` directory). `--json` and `--out <file>`
-  persist the ranking to `step1_scope_and_research/agent_plan.json` (audit trail).
-- Dedup keys on **(repo, name)** so a community screening agent and its
-  enterprise policy-gated counterpart with the same name are BOTH indexed
-  (name-only dedup previously dropped one â€” e.g. the enterprise
-  `asset-economics-agent`). Covered by `devtools/test_agent_search.py`.
-- Auto-detects sibling repos from the workspace root; `--agents-root` adds more.
-
-### Workflow wiring (results stored underway + report basis)
-
-- `capability_assessment.md` template gains **Â§4b Agents to Delegate To** and
-  **Â§4c Workflow Plan** (single agent / router composition pattern / declarative
-  `composeWorkflow` / `engineering-harness` study).
-- `solve.task` Step 1 and `capability.scout` Step 6b now mandate running
-  `skill_search.py` + `agent_search.py`, filling Â§4/Â§4b/Â§4c, checkpointing the
-  plan in `progress.json`, and mirroring it into `results.json`
-  `agent_workflow_plan` (added to the professional-reporting master schema and
-  the AGENTS.md example) so the generated report documents *how* the task was
-  solved.
-- `router.agent.md` notes that its table is a fast path and to fall back to
-  `agent_search.py` + declarative workflows for cross-repo / multi-discipline work.
-- `validate_task_results.py` warns when Â§4b/Â§4c is empty and no `agent_plan.json`
-  exists.
-
-### Agents/skills to update
-
-- `solve.task.agent.md`, `capability.scout.agent.md`, `router.agent.md`,
-  `neqsim-professional-reporting` â€” updated in this change.
-
----
-
-## 2026-07-09 â€” Task-solving gates hardened: sweep-aware consistency, results.json sub-schema validation, task-dir walker
-
-### Summary
-
-Workflow-wide task-solving reliability improvements (no NeqSim physics change).
-Chains across the three task steps: capability scouting (Step 1), notebook
-execution + consistency (Step 2), and results.json validation for reporting
-(Step 3). Tests: `TaskResultValidatorTest` (23, +5). All Java 8.
-
-### `TaskResultValidator` (Java) + `validate_task_results.py` (Python CI mirror)
-
-- **`benchmark_validation`** is now a recognised (recommended) key and is
-  structurally validated: object or array of entries, each expected to identify
-  what was compared, a reference, and a comparison; a `status` other than
-  `PASS`/`FAIL`/`WARN`/`INFO` is rejected. A malformed benchmark block now fails
-  the gate instead of crashing the report generator.
-- **`uncertainty` percentiles** `p10`/`p50`/`p90` must be numeric and
-  monotonically ordered (`p10 â‰¤ p50 â‰¤ p90`) â€” out-of-order or non-numeric is now
-  a hard error.
-
-### `devtools/consistency_checker.py`
-
-- Now **sweep-aware**: values in a parametric/sensitivity/Monte-Carlo/table
-  context (keyword-tagged, `results.json` sweep sections, or â‰¥3 distinct
-  non-swept values for one concept) are no longer cross-checked, eliminating the
-  documented false-positive CRITICAL findings on deliberately-varied series.
-  Genuine two-value contradictions are still flagged.
-
-### `devtools/neqsim_dev_setup.py`
-
-- New **`find_task_dir(start=None)`** â€” canonical upward walker that resolves the
-  `task_solve/<slug>/` root from the runner's subprocess cwd (honours
-  `NEQSIM_TASK_DIR`). Replaces the fragile `NOTEBOOK_DIR.parent` heuristic that
-  overshot the task folder when `__vsc_ipynb_file__` was unset.
-
-### Agents/skills updated
-
-- `neqsim-capability-map` â€” added Â§L gap-detection protocol + `capability_readiness`
-  verdict; recorded that two-phase PSV (omega method) **exists**
-  (`ReliefValveSizing.calculateTwoPhaseReliefArea`) and API 2000 tank venting is a
-  genuine gap.
-- `capability.scout` agent â€” emits a `capability_readiness:` verdict line.
-- `neqsim-notebook-patterns` â€” runner robustness (find_task_dir, runner-output
-  cleanup, system-Python fallback) + sub-schema keys.
-- `neqsim-professional-reporting` â€” documents the `benchmark_validation` and
-  `uncertainty` sub-schemas now enforced by the gate.
-- `review` agent â€” checks the `capability_readiness` verdict and the hardened
-  schema results.
-
----
-
-## 2026-07-09 â€” New: anti-surge control line, recycle energy penalty, chart calibrator; fix: getMolarMass invariance
-
-### Summary
-
-Compressor anti-surge / surge-control-line additions motivated by an
-energy-efficiency task (verify whether a control line can be moved so the ASV
-can be closed), plus a molar-mass correctness fix. All Java 8, no API breaks.
-Related skill: `neqsim-compressor-antisurge-recycle` (updated). Tests:
-`CompressorAntiSurgeControlLineTest` (8), `SystemThermoMolarMassTest` (2).
-
-### New methods on `neqsim.process.equipment.compressor.Compressor`
-
-- **`setSurgeControlMargin(double frac)` / `getSurgeControlMargin()`** â€” anti-surge
-  control-line flow margin as a fraction of surge flow (e.g. 0.10 = control line
-  10 % right of surge). 0 disables. Negative rejected.
-- **`getControlLineFlow()`** â€” control-line inlet volumetric flow (m3/hr) =
-  `getSurgeFlowRate() * (1 + margin)` at the current head.
-- **`getDistanceToControlLine()`** â€” `inletFlow / controlLineFlow - 1` (mirrors
-  `getDistanceToSurge()`); positive â‡’ right of the control line (ASV can close).
-- **`getRequiredRecycleFractionToControlLine()`** â€” recycle fraction of total
-  suction flow needed to hold the operating point on the control line (0 if the
-  natural point is already right of it).
-- **`getAntiSurgeRecyclePower(double recycleFraction, String unit)`** â€” wasted
-  shaft power from recycling â‰ˆ `getPower(unit) * recycleFraction`.
-- **`getAntiSurgeRecycleHeatDuty(double recycleFraction, String unit)`** â€” recycle
-  cooler heat duty (equals wasted shaft work at screening level).
-- `getOperatingPoint()` / `getOperatingPointJson()` schema bumped **1.0 â†’ 1.1**;
-  adds `surgeControlMargin`, `controlLineFlow_m3hr`, `distanceToControlLine`.
-
-### New class
-
-- **`neqsim.process.equipment.compressor.CompressorChartCalibrator`** â€” calibrate a
-  chart from field data: `fitSurgeCurve(double[] flow, double[] head)` (installs a
-  `SafeSplineSurgeCurve` from surge-test points), static
-  `molarMassHeadCorrectionFactor(mwRef, mwActual)` (= mwRef/mwActual, head âˆ 1/MW),
-  and `recommendControlMargin(baseMargin, double[] measuredSurgeFlow)` (widens the
-  margin by the surge-point coefficient of variation).
-
-### Fixed (backward-compatible)
-
-- **`SystemThermo.getMolarMass()`** now normalises by the sum of overall mole
-  fractions, so molar mass (an intensive property) is invariant to
-  `setTotalNumberOfMoles()`. Previously, calling `setTotalNumberOfMoles(1.0)` on a
-  fluid whose components were added as mol% left `getMolarMass()` ~100x too high.
-  No change for normally-flashed fluids (Î£z = 1).
-
-### Agents/skills to update
-
-- `neqsim-compressor-antisurge-recycle` skill â€” documents the new control-line and
-  recycle-energy methods and `CompressorChartCalibrator` (done).
-
----
-
-## 2026-07-09 â€” New: rigorous corrosion/scaling coupling (NORSOK M-506, scale kinetics, brine mixing)
-
-### Summary
-
-Additive corrosion/scaling classes that let an investigation go from a brine +
-gas composition to an EOS-consistent corrosion rate and a per-segment
-corrosion+scale profile. All Java 8, no API breaks. Related skill:
-`neqsim-flow-assurance` (updated). Tests: `NorsokM506ElectrolyteBridgeTest`,
-`NorsokM506FeCO3FilmTest`, `NorsokM506ValidationTest`, `PipeSegmentIntegrityTest`,
-`ScaleKineticsTest`, `BrineMixingScaleEvaluatorTest`, `RobustAqueousPHTest`.
-
-### New classes
-
-- **`neqsim.process.corrosion.NorsokM506ElectrolyteBridge`** â€” drives the standard
-  `NorsokM506CorrosionRate` from a `SystemElectrolyteCPAstatoil` fluid: extracts the
-  rigorous in-situ pH (`getpH()`), CO2/H2S fractions, and FeCO3 supersaturation from
-  aqueous Fe++/CO3-- (Sun & Nesic 2009 Ksp). Flashes a clone (input not mutated).
-- **`neqsim.process.corrosion.PipeSegmentIntegrity`** â€” walks a T/P/velocity profile
-  (arrays or `fromPipe(PipeBeggsAndBrills)`) and reports per-segment CO2 corrosion
-  rate + CaCO3 scale SI, ranking worst corrosion and worst scale segments.
-- **`neqsim.process.corrosion.RobustAqueousPH`** â€” always-finite in-situ pH: rigorous
-  electrolyte value when valid, else a CO2-water correlation; records the source.
-- **`neqsim.process.chemistry.scale.ScaleKinetics`** â€” induction time + surface-reaction
-  vs mass-transport growth regime on top of a thermodynamic SI.
-- **`neqsim.process.chemistry.scale.BrineMixingScaleEvaluator`** â€” two-brine mixing
-  sweep (seawater + formation water), reports worst mixing fraction and mineral.
-
-### Changed (backward-compatible)
-
-- **`NorsokM506CorrosionRate`** â€” new `setFeCO3SaturationRatio(SR)` /
-  `getFeCO3SaturationRatio()` / `calculateFeCO3FilmFactor()`. When SR>1 a protective
-  siderite film strengthens the scale correction (closes corrosionâ†”scaling loop).
-  Unset (-1) leaves behaviour identical to before.
-
-### Gotchas for agents
-
-- `SystemInterface.clone()` drops the chemical-reaction setup â€” re-run
-  `chemicalReactionInit()` on the clone before flashing, or CO2-brine pH comes out
-  unphysically basic (~10).
-- `NorsokM506CorrosionRate.setActualPH()` is read back via `getEffectivePH()`, NOT
-  `getCalculatedPH()` (which always returns the model's own correlation pH).
-
----
-
-## 2026-07-07 â€” New: ProductionRateFitter (match measured gas rate + GOR + water)
-
-### Summary
-
-Added `neqsim.process.equipment.util.ProductionRateFitter` (extends
-`TwoPortEquipment`). It reconciles a stream to measured production in one unit:
-(1) optional GOR fit at standard conditions, (2) scales total flow so the
-**gas-phase** standard volumetric rate equals a target, (3) sets the aqueous flow
-to a target produced-water rate. Complements `GORfitter` (GOR only). The feed
-fluid must contain a `water` component for the water fit. Test:
-`ProductionRateFitterTest`. Related skill: `enterprise-rigga-production`.
-
-```java
-ProductionRateFitter prf = new ProductionRateFitter("fit", stream);
-prf.setReferenceConditions("standard");
-prf.setGOR(3085.0);
-prf.setGasRate(3.32, "MSm3/day");
-prf.setWaterRate(234.0, "Sm3/day");
-```
-
----
-
-## 2026-07-02 â€” NeqSimDataBase: clearer failures for replaceTable/useExtendedComponentDatabase
-
-### Summary
-
-Fixes two related database-management bugs found while exercising
-`NeqSimDataBase.replaceTable()` and `useExtendedComponentDatabase()`
-repeatedly from a Python/Jupyter notebook (custom component database
-tutorial). Both are additive robustness fixes â€” no API signature changes.
-
-### What changed
-
-- **`useExtendedComponentDatabase(boolean)`** now verifies the COMP table
-  actually loaded (has rows) after switching between `COMP.csv`/`COMP_EXT.csv`.
-  Previously, if the underlying `DROP TABLE` + `CREATE TABLE ... CSVREAD(...)`
-  step failed for any reason, the COMP table was silently left missing, and
-  the failure only surfaced later as an unrelated, confusing
-  `NotInitializedException: Table "COMP" not found` on the next component
-  lookup. It now throws a clear `InvalidInputException` immediately, naming
-  the failed mode (`extended=true/false`).
-- **`replaceTable(String, String)`** previously discarded the real underlying
-  exception and always threw a generic `"- Resource <path> not found"`
-  message â€” misleading when the file existed but the SQL/CSV read itself
-  failed for another reason. It now preserves the original exception as the
-  `cause` and includes its message in the thrown `InvalidInputException`,
-  while still falling back to reloading the default bundled table so the
-  database is not left in a missing-table state.
-
-### Repro that found this
-
-Adding a custom component to a NeqSim fluid database from a pandas
-DataFrame/CSV (as shown in the NeqSim-Colab `parameter_database.ipynb`
-tutorial) and then toggling `useExtendedComponentDatabase(true)` /
-`replaceTable(...)` several times in the same long-lived kernel session could
-leave the COMP table missing with no actionable error message.
-
-### Tests
-
-- `neqsim.util.database.NeqSimDataBaseTest#testReplaceTable` updated to check
-  the new message format and that the cause chain is preserved, plus that the
-  COMP table is left usable (not missing) after a failed `replaceTable` call.
-- `testComponentOnlyInExtendedDatabase` / `testFlashWithExtendedDatabaseComponent`
-  continue to pass unchanged (success path is unaffected).
-
-### Migration
-
-None required â€” both changes only affect the failure path (a previously
-silent/confusing failure now throws promptly with a clear message).
-
----
-
-
-
-### Summary
-
-Closes the loop between a qualitative HAZOP grid (browser P&ID Safety Analyser /
-AI-HAZOP front-end) and simulation-backed verdicts. Five additive gaps, no
-breaking change.
-
-### What's new (all additive)
-
-- **Per-deviation MCP scenario quantification** â€” `runHazopScenario` MCP tool
-  backed by `neqsim.mcp.runners.HazopScenarioRunner`. Accepts a process model +
-  optional `guideWord`/`parameter`/`nodeTag`/`limits` and returns a stable
-  `schemaVersion="1.0"` response with per-finding `computedValue`,
-  `designLimit`, `verdict`, `calculator`, `standardReference`, and `limitBasis`.
-  Example registered as `safetyHazopScenario()` in `ExampleCatalog` (key
-  `hazop-scenario`).
-- **DEXPI design-conditions export** â€” `neqsim.process.mechanicaldesign.DesignConditions`
-  (design pressure, max/min design temperature, relief set pressure, corrosion
-  allowance, construction material, failure action). Attached per equipment via
-  `ProcessEquipmentInterface.getDesignConditions()` (lazy-created) and exported
-  by `dexpi/DexpiXmlWriter` as a `GenericAttributes Set="DesignConditions"`
-  group.
-- **Blocked-outlet overpressure screening** â€”
-  `neqsim.process.safety.depressurization.BlockedOutletOverpressureAnalyzer`
-  wraps `VesselFillingSimulator` for MORE PRESSURE / blocked-outlet deviations
-  per API 521 Â§4.4 (time-to-relief-set, relief demand, max pressure).
-- **Limit-basis provenance** â€” `HazopConsequenceFinding` carries an auditable
-  `limitBasis` (12-arg constructor; 11-arg defaults to `"not specified"`).
-  `HazopQuantificationLimits` holds screening defaults (max discharge temp
-  150 Â°C / API 617; MDMT âˆ’46 Â°C / ASME UCS-66) with per-unit overrides and
-  basis strings; `HazopConsequenceAutoPopulator.quantify(process, limits)`
-  attaches the basis to each finding.
-
-### Tests
-
-- `DexpiDesignConditionsExportTest` (2), `BlockedOutletOverpressureAnalyzerTest`
-  (3), `HazopScenarioRunnerTest` (4), `HazopConsequenceProvenanceTest` (4) â€” all
-  pass.
-
-### Docs
-
-- New: `docs/safety/ai_hazop_input_format.md` (input-data format reference);
-  linked from `docs/safety/README.md` and `docs/safety/HAZOP.md`.
-
----
-
-## 2026-07-?? â€” 13 standalone screening & sizing calculators + process bridges + docs
-
-### Summary
-Thirteen new self-contained, `Serializable` screening-level calculators across
-flare, pipeline, pump, thermowell, valve, overpressure, gas-quality, and
-oil-quality packages. Each has scalar setters, a single `calcâ€¦()` method,
-individual output getters, and `toJson()`. Five expose an optional
-`fromâ€¦(processObject)` **bridge** that populates inputs from a running NeqSim
-process object (scalar setters remain unchanged / backward-compatible). All
-additive; backed by passing JUnit regression and integration tests.
-
-### What's new (all additive)
-- `neqsim.process.equipment.flare.FlareFrustumRadiationCalculator` â€” API 521
-  solid-flame (frustum) flare radiation. `calcRadiation()`; bridge `fromFlare(Flare)`.
-- `neqsim.process.equipment.flare.RelevantWindCalculator` â€” design wind speed via
-  power-law profile + wind-rose scan. `calc()`. Inner class `WindSector`.
-- `neqsim.process.mechanicaldesign.pipeline.LineSizingLofCalculator` â€” API RP 14E
-  erosional velocity + kinetic-energy likelihood-of-failure band. `calcScreening()`;
-  bridge `fromStream(StreamInterface, double pipeInternalDiameterM)`.
-- `neqsim.process.mechanicaldesign.pipeline.AviffScreeningCalculator` â€” Energy
-  Institute AVIFF flow-induced-vibration LOF. `calcScreening()`. enum `SupportArrangement`.
-- `neqsim.process.mechanicaldesign.pump.PumpHydraulicsNpshCalculator` â€” hydraulic/
-  brake power + NPSH margin / cavitation screening. `calcHydraulics()`; bridge `fromPump(Pump)`.
-- `neqsim.process.mechanicaldesign.thermowell.ThermowellDesignCalculator` â€” ASME
-  PTC 19.3 TW-2016 (TW-1974 fallback) wake-frequency + strength. `calcAll()`.
-- `neqsim.process.mechanicaldesign.valve.ControlValveGasSizing_IEC_60534_2_1` â€”
-  compressible Kv/Cv sizing. `setFlowConditions(...)` + `setValveCoefficients(gamma, xT, Fp)`;
-  `calcSizing()`; bridge `fromValve(ThrottlingValve)`.
-- `neqsim.process.mechanicaldesign.valve.ControlValveNoise_IEC_60534_8_3` â€”
-  aerodynamic valve noise (A-weighted SPL 1 m downstream). `calcNoise()`.
-- `neqsim.process.safety.overpressure.PipelinePressureProtectionCalculator` â€”
-  two-barrier overpressure screening; `setPressureBasis(...)` + `setBarriers(...)`;
-  `calcProtection()`.
-- `neqsim.standards.gasquality.GpsaOrificeCalculator` â€” liquid/steam DP orifice
-  metering (GPSA / ISO 5167 / API 14.3). `calcFlow()`. enum `FluidService`.
-- `neqsim.standards.gasquality.CriticalFlowOrifice` â€” choked (sonic) discharge
-  through a restriction. `calcCriticalFlow()`.
-- `neqsim.standards.gasquality.OrificeWellTester` â€” gas-well rate via GPSA
-  critical-flow prover. `calcRate()`.
-- `neqsim.standards.oilquality.CrudeDesalterCalculator` â€” electrostatic desalter
-  residual-salt screening (ASTM D3230 companion). `setFeedConditions(...)` +
-  `setStageConfiguration(...)`; `calcPerformance()`;
-  bridge `fromStreams(StreamInterface crude, StreamInterface washWater, double inletSalt)`.
-
-### Migration / usage notes
-- These are **screening tools**, not code-compliant detailed design. Scalar
-  setters are unchanged â€” the `fromâ€¦()` bridges are purely additive convenience.
-- Process objects passed to a bridge must already be run/flashed.
-- `ControlValveGasSizing` splits flow conditions (`setFlowConditions`) from gas/
-  valve coefficients (`setValveCoefficients(gamma, xT, Fp)`).
-- `PipelinePressureProtectionCalculator` source/design setter is `setPressureBasis`.
-
-### Docs / agents
-- New page `docs/process/screening_calculators.md` (wired into
-  `docs/process/README.md` Documentation Structure and `docs/REFERENCE_MANUAL_INDEX.md`).
-- Existing screening agents/skills (debottlenecking, piping-integrity,
-  process-safety, flow-induced-vibration, line-velocity, PSV/flare,
-  pump/control-valve sizing) already cover these domains; no new agent required â€”
-  point them at the new calculators when a process object is available.
-
----
-
-## 2026-07-?? â€” Kent-Eisenberg amine CO2 solubility (screening) + docs + demo notebook
-
-### Summary
-Validated screening-level Kent-Eisenberg model for CO2 solubility in aqueous
-MEA / DEA / MDEA / activated-MDEA solvents in package
-`neqsim.thermo.util.amines`. All additive, backed by a passing 8-test regression
-guard (`AmineCO2SolubilityTest`). New documentation page and a fully executed
-demonstration notebook.
-
-### What's new (all additive)
-- `AmineKentEisenberg` â€” static screening API. `AmineType{MEA,DEA,MDEA}`;
-  `amineMolarity(massFraction, amineMolarMass)`;
-  `partialPressureCO2Bara(type, temperatureK, amineMolarity, loading)` (bara;
-  returns 0 at loading 0; throws `IllegalArgumentException` on non-physical inputs).
-- `AmineSystem` â€” convenience wrapper. `AmineType{MEA,DEA,MDEA,AMDEA}` (AMDEA maps
-  to MDEA for screening); `setAmineConcentration(massFraction)`,
-  `setCO2Loading(loading)`, `getCO2PartialPressure()` (validated default).
-  `getCO2PartialPressureRigorous()` is EXPERIMENTAL / uncalibrated (may return NaN).
-- `AmineHeatOfAbsorption` â€” `AmineType{MEA,DEA,MDEA,AMDEA}`;
-  `calcHeatOfAbsorptionCO2()` returns kJ/mol CO2.
-- Accuracy: ~factor-of-2 on pCO2 in engineering loading windows (MEA/DEA 0.2-0.5,
-  MDEA/aMDEA 0.1-1.0 mol/mol). Use for screening, not custody-grade design.
-
-### Docs / examples
-- `docs/thermo/amine_co2_solubility.md` (wired into `docs/thermo/README.md` and
-  `docs/REFERENCE_MANUAL_INDEX.md`).
-- `examples/notebooks/amine_co2_solubility.ipynb` â€” executed; 3 figures
-  (isotherm MEA vs MDEA, temperature-swing stripping, heat of absorption).
-
-### Golden numbers (anchors)
-- 50 wt% MDEA molarity ~= 4.36 mol/L; 30 wt% MEA molarity ~= 5.03 mol/L.
-- MDEA pCO2 @40C: loading 0.10 ~= 0.0095 bara; loading 0.40 ~= 0.233 bara.
-
----
-
-## 2026-06-27 â€” Overpressure-protection study engine (TR3001 / API 521) + JSON reporting
-
-### Summary
-New additive package `neqsim.process.safety.overpressure` implements a TR3001 /
-API STD 521 overpressure-protection study workflow: multi-cause relief load
-evaluation, governing-case selection, PSV sizing with area-based adequacy,
-TR3001 compliance checking, and shared-header disposal-load roll-up. All
-additive, no breaking changes, 21/21 JUnit 5 tests green.
-
-### What's new (all additive)
-- `OverpressureProtectionStudy` â€” builder-style engine: `new
-  OverpressureProtectionStudy(item).addScenario(scenario).evaluate()` returns an
-  immutable `OverpressureStudyResult` with the governing scenario, required vs.
-  selected PSV orifice area, capacity adequacy, and acceptance findings.
-- Relief-cause models: `BlockedOutletRelief`, `ControlValveFailureRelief`,
-  `FireCaseRelief`, `TubeRuptureRelief`, `CheckValveLeakRelief`, plus
-  `ReliefScenario` / `ReliefCause` / `ReliefPhase` / `ProtectedItem` /
-  `ReliefFluidState` inputs and `NozzleFlow` sizing helpers.
-- `TR3001ComplianceChecker.check(result)` â†’ `List<ComplianceFinding>` (6 checks
-  incl. SR-26565 dynamic fire-case determination); `isCompliant(findings)`.
-- `ReliefDisposalNetwork` / `ReliefDisposalResult` â€” sums simultaneous relief
-  loads for shared flare/vent headers per API STD 521 Â§5.3.
-
-### Reporting integration (this update)
-- Added `toJson()` to `OverpressureStudyResult` and `ReliefDisposalResult`, and a
-  static `TR3001ComplianceChecker.findingsToJson(List<ComplianceFinding>)`,
-  matching the `GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues()`
-  convention used across `neqsim.process.safety.*`. NaN fields are emitted as
-  `NaN`; the transient `PSVSizingResult` is omitted (not Serializable). This
-  makes the package results.json / professional-reporting ready.
-
-### Agents / skills
-- Already referenced by `neqsim-process-safety`, `neqsim-relief-flare-network`
-  skills and the `safety.depressuring` agent (TR3001 overpressure capability).
-
-## 2026-06-23 â€” Process-safety rollout: NOG 070 / STS-0131 / API 14C / NORSOK P-002 / ISO 17776 / EI AVIFF / API 521 Â§7 / IEC 60079 / API 537 PFP
-
-### Summary
-New additive classes under `neqsim.process.safety.*` close the gap between
-NeqSim's existing consequence/relief models and the Equinor TR + international
-standards stack used on NCS projects. Five phases, all with JUnit 5 tests, no
-breaking changes.
-
-### What's new (all additive)
-
-**Phase 1 â€” SIL / SIS (NOG 070, STS-0131)**
-- `neqsim.process.safety.risk.sis.nog070.Nog070SilCatalogue` /
-  `Nog070SilDetermination` / `Nog070SifType` â€” Norwegian Oil & Gas 070
-  minimum-SIL catalogue and per-SIF determination.
-- `neqsim.process.safety.compliance.Sts0131Gate` â€” Equinor STS-0131
-  safety-gate screening.
-
-**Phase 2 â€” SAFE charts / piping (API RP 14C, NORSOK P-002)**
-- `neqsim.process.safety.api14c.{Api14cEquipmentCategory, Api14cSafetyAnalysisTable,
-  Api14cSafeChartItem, Api14cSafeChartBuilder}` â€” API RP 14C Safety Analysis
-  Function Evaluation (SAFE) chart builder.
-- `neqsim.process.safety.compliance.{P002Finding, NorsokP002ComplianceChecker}` â€”
-  NORSOK P-002 process-design compliance checker.
-
-**Phase 3 â€” Major-accident bow-tie + piping vibration (ISO 17776, EI AVIFF)**
-- `neqsim.process.safety.hazid.{MahCatalogue, MahBowTieBuilder}` â€” ISO 17776
-  major-accident-hazard catalogue â†’ bow-tie builder.
-- `neqsim.process.safety.vibration.{PipingFivLikelihood, PipingFivScreening}` â€”
-  Energy Institute AVIFF flow-induced-vibration likelihood screening.
-
-**Phase 4 â€” Coupled blowdown + ESD timing (API 521 Â§7, NOG 070 / IEC 61511)**
-- `neqsim.process.safety.depressurization.MultiVesselBlowdownStudy` â€” superimposes
-  multiple vessel blowdowns on a shared flare header (peak load, header Mach check).
-  Constructor-less; build with `.addSource(name, DepressurizationSimulator)` or
-  `.addSourceResult(name, DepressurizationResult)`, `.setHeader(diameterM,
-  pressureBara, temperatureK, molarMassKgPerMol, gamma)`, `.run()` â†’
-  `MultiVesselBlowdownResult` (`getPeakTotalMassFlowKgPerS`, `getPeakTimeS`,
-  `getHeaderMach`, `isHeaderMachAcceptable`, `summary`).
-- `neqsim.process.safety.esd.EsdResponseTimeSimulator` â€” ESD loop response-time
-  budget. `.addDetection(name, s)`, `.addLogic(name, s)`,
-  `.addValve(name, solenoidDelayS, strokeS)`, `.setAllowableResponseTimeS(s)`,
-  `.evaluate()` â†’ `EsdResponseTimeResult` (`getTotalResponseTimeS`, `getMarginS`,
-  `isWithinBudget`).
-
-**Phase 5 â€” Flare flame, hazardous area, PFP demand (API 537, IEC 60079-10-1, API 521 / NORSOK S-001)**
-- `neqsim.process.safety.fire.Api537FlareFlameModel` â€” flare flame length (Kent),
-  wind tilt, sterile-zone iso-flux radii, noise PWL/SPL.
-  `new Api537FlareFlameModel(massFlowKgPerS, hocJPerKg, radiantFraction, exitVelocityMPerS)`
-  then `.setStackHeightM(...)`, `.setWindSpeedMPerS(...)`; flux constants
-  `FLUX_1_58_KW`, `FLUX_4_73_KW`, `FLUX_9_46_KW`.
-- `neqsim.process.safety.dispersion.HazardousAreaCalculator` â€” IEC 60079-10-1 jet
-  hazardous-area zone classification.
-  `new HazardousAreaCalculator(massFlowKgPerS, pressureBara, temperatureK,
-  lflVolFraction, molarMassKgPerMol)`, `.setReleaseGrade(ReleaseGrade.SECONDARY)`,
-  `.zoneClassification()` â†’ `"Zone 0/1/2"`.
-- `neqsim.process.safety.fire.PfpDemandCalculator` â€” passive-fire-protection
-  rating + intumescent thickness.
-  `new PfpDemandCalculator(fireHeatFluxWPerM2, wallThicknessM)`,
-  `.setFireType(FireType.POOL|JET)`, `.evaluate(requiredSurvivalTimeS)` â†’
-  `PfpDemandResult` (`isPfpRequired`, `getRequiredPfpThicknessMm`, `getRating`).
-
-### Agent guidance
-- Skills updated: `neqsim-depressurization-mdmt` (multi-vessel + ESD timing),
-  `neqsim-relief-flare-network` (`Api537FlareFlameModel`, `MultiVesselBlowdownStudy`),
-  `neqsim-consequence-analysis` (`Api537FlareFlameModel`, `HazardousAreaCalculator`,
-  `PfpDemandCalculator`), `neqsim-process-safety` (NOG 070 SIL, STS-0131,
-  API 14C SAFE chart, NORSOK P-002, ESD timing),
-  `neqsim-hazid-fmea-eta-fta` (ISO 17776 MAH bow-tie, EI AVIFF FIV screening).
-- Use the exact constructor/method signatures above â€” no convenience overloads
-  are assumed by the verifying tests.
-
-### Verification
-```bash
-./mvnw test -Dtest=Nog070SilCatalogueTest,Sts0131GateTest,Api14cSafeChartBuilderTest,NorsokP002ComplianceCheckerTest,PipingFivScreeningTest,MultiVesselBlowdownStudyTest,EsdResponseTimeSimulatorTest,Api537FlareFlameModelTest,HazardousAreaCalculatorTest,PfpDemandCalculatorTest
-```
-
----
-
-## 2026-06-21 â€” Closed-form uncertainty propagation for linear production allocation
-
-### Summary
-The `neqsim.process.allocation` package now ships a closed-form first-order
-uncertainty propagator that reuses the cached `(I âˆ’ A_k)â»Â¹` factorisation built
-by `SourceAllocator.allocate()`. Per-source per-custody confidence intervals
-are therefore available **at no extra factorisation cost** â€” no Monte-Carlo
-loop, no fresh simulations.
-
-### What's new (additive, no breaking change)
-- `AllocationUncertaintyEstimator` (new) â€” implements `Î£_v = J Î£_b Jáµ€` for the
-  independent-metering case. Two `propagate(...)` overloads (convenience over a
-  `SourceAllocator`, and a low-level overload over raw network/source/custody
-  arrays). The result object exposes per-source per-custody flow variance,
-  std-dev in mol/s and kg/hr, per-component std-dev, product-type aggregates,
-  and a `toJson()` with `schemaVersion = "1.0"`.
-- `SourceAllocator.getSources()` and `SourceAllocator.getCustodyOutlets()`
-  (new, unmodifiable views) â€” used by the estimator so that uncertainty
-  results share the same names as the allocation result. Empty until
-  `allocate()` has run when auto-detection is in effect.
-
-### Agent guidance
-- For 1 % per-source metering uncertainty (or any independent Gaussian
-  injection variance): prefer `AllocationUncertaintyEstimator.propagate(...)`
-  over wrapping the allocator in a Monte-Carlo loop.
-- Correlated metering and frozen-split-factor uncertainty are listed as
-  future work (see `docs/process/production-allocation.md` Â§ "Uncertainty
-  propagation" â†’ Scope).
-
-### Docs touched
-- `docs/process/production-allocation.md` â€” new "Uncertainty propagation"
-  section with math, API, scope and a code example.
-- `docs/REFERENCE_MANUAL_INDEX.md` â€” production-allocation row mentions
-  closed-form uncertainty propagation.
-
----
-
-## 2026-06-19 â€” Optional equal-mass (shared-imaginary) reference boundaries for `characterizeToReference`
-
-### Summary
-`PseudoComponentCombiner.characterizeToReference(source, reference, options)` can now
-place the reference cut boundaries as **carbon-number-based equal-mass cut points on the
-reference's imaginary (delumped) composition** instead of arithmetic boiling-point
-midpoints. This is the reference-only (NFLUID = 1) form of the Pedersen et al.
-(Chapter 5.6, Eqs. 5.58-5.59) common-slate cut-point rule: the reference is rebuilt into
-a fine single-carbon-number distribution and the cut points are placed so each cut carries
-an equal mass fraction (Section 5.3 lumping criterion), rather than ignoring how much mass
-each lump represents.
-
-### What's new (additive â€” default off, no breaking change)
-- `CharacterizationOptions.sharedImaginaryBoundaries(boolean)` (default `false`), getter
-  `isSharedImaginaryBoundaries()`. Reuses the existing `delumpResolution` as the fine grid
-  for the imaginary composition (so no second knob).
-- Each equal-mass cut is **clamped into the gap between the two adjacent reference
-  pseudo-components**, guaranteeing every reference PC stays inside its own cut. This
-  preserves the strict one-to-one ordering that the positional property inheritance in
-  `characterizeToReferenceCore` relies on, even when the reference lumps carry unequal mass
-  (an unclamped equal-mass cut could otherwise fall across a lump and silently mis-bin the
-  source). When clamping cannot recover an in-gap value the boiling-point midpoint is used.
-- `delumpResolution <= 1` falls back to the legacy midpoint boundaries.
-
-### Why reference-only (not a pooled multi-fluid imaginary composition)
-`characterizeToReference` inherits the trusted reference PC properties one-to-one, so the
-reference fluid is the correct authority for the grid. The pooled/shared multi-fluid
-imaginary composition of Eqs. 5.58-5.59 remains used by `characterizeToCommonSlate`
-(Â§5.6, free new slate); applying it naively here would break the inherit alignment.
-
-### Migration
-None. Existing two-argument and options-based calls are unchanged when the flag is off.
-
----
-
-## 2026-06-18 â€” Optional delumping stage for `characterizeToReference` (Pedersen Ch. 5 lumping/delumping)
-
-### Summary
-`PseudoComponentCombiner.characterizeToReference(source, reference, options)` can now
-**delump** each coarse source lump into a finer grid of single-carbon-number (SCN)
-sub-fractions before re-distributing them onto the reference cuts. This fixes the
-per-field molar-mass and density drift that occurred when a field's native lumps
-already sat close to the reference grid: the old source-to-reference mapping was
-effectively the identity, the lump mole fractions were frozen, and only the molar
-mass changed (overwritten by the reference under `inheritReferenceProperties=true`),
-so mass per cut was not conserved.
-
-### What's new (additive â€” default off, no breaking change)
-- `CharacterizationOptions.delumpBeforeRecharacterization(boolean)` (default `false`)
-  and `delumpResolution(int)` (default `12`), with getters
-  `isDelumpBeforeRecharacterization()` / `getDelumpResolution()`.
-- When enabled, each parent lump is split into `delumpResolution` sub-fractions whose
-  moles and mass **exactly** reproduce the parent (a single linear MW rescale enforces
-  `Î£ n_k M_k = n_parent M_parent`). The normal boiling point spreads monotonically with
-  molar mass so sub-fractions can cross reference cut boundaries; density and critical
-  constants are held at the parent values. Sub-fractions are re-lumped onto the
-  reference grid via the existing `distributeToProfiles`, so per-cut MW = mass/moles is
-  recomputed self-consistently.
-- Most effective with `inheritReferenceProperties(false)`; combining delump with
-  `inheritReferenceProperties(true)` logs a warning because the reference MW/density
-  still overwrites the redistributed lump properties.
-
-### Migration
-None. Existing two-argument and options-based calls are unchanged when the flag is
-left at its default (`false`). Tests: `CharacterizeToReferenceDelumpTest`.
-
----
-
-## 2026-06-18 â€” Faithful common-slate characterization (Pedersen Ch. 5.6, Eqs. 5.55-5.60)
-
-### Summary
-Added `PseudoComponentCombiner.characterizeToCommonSlate(...)` â€” a faithful
-implementation of the Pedersen "Common EoS / common slate" procedure that keeps
-several fluids **separate** while forcing them to share one mole-fraction weighted
-pseudo-component property set. This is distinct from `characterizeToReference`
-(PR #2318), which *snaps* a fluid's lumps to one privileged reference fluid, and
-from `combineReservoirFluids` (Ch. 5.5), which *merges* fluids into one.
-
-### What's new (additive â€” no breaking change)
-- `static List<SystemInterface> characterizeToCommonSlate(List<SystemInterface> fluids, double[] weights)`
-  â€” infers the shared lump count as the max pseudo-component count across the inputs.
-- `static List<SystemInterface> characterizeToCommonSlate(List<SystemInterface> fluids, double[] weights, int targetPseudoComponents)`
-  â€” explicit shared lump count.
-- Per shared cut `i`: molar mass (Eq. 5.59), `Tc`, `Pc`, `Ï‰` (Eqs. 5.55-5.58) are
-  the weighted means `X_i = Î£_j Wgt(j)Â·z_i^jÂ·X_i^j / Î£_j Wgt(j)Â·z_i^j`, with
-  `Wgt(j)` the per-fluid weight (pass `null` for equal weights) and `z_i^j` the lump
-  mole fraction. Lump density is reconstructed from weighted MW + weighted molar
-  volume (Peneloux basis, Eq. 5.6). Inputs are not modified; clones are returned in
-  input order keeping each fluid's own lump mole fractions.
-
-### Tests
-- `CharacterizeToCommonSlateTest` (6 tests): weighted-mean per-cut properties,
-  shared slate identical across fluids, genuine average (not snap-to-reference),
-  fluids stay separate with their own mole fractions, `null` == equal weights,
-  inferred slate size, and argument validation.
-
----
-
-## 2026-06-17 â€” Expander capacity constraints fixed + constraint provenance in utilization snapshot
-
-### Summary
-Two additive changes that make the capacity/utilization framework correct for
-turbo-expanders and self-describing for agents/optimizers:
-
-1. **Expander capacity fix (root cause).** `Expander` now reports realistic
-   utilization instead of a spurious ~150 %. The inherited
-   `Compressor.getMaxUtilization()` returns `1.5` when `maxUtilization == 0 && !isSimulationValid()`,
-   and `Compressor.isSimulationValid()` is `false` for a healthy expander (negative
-   shaft power, outlet colder than inlet, pressure ratio < 1 are all normal for an
-   expander). The fix overrides both methods on `Expander`.
-2. **Constraint provenance in the snapshot.** Each constraint object in
-   `getUtilizationSnapshotJson()` now carries its `dataSource` (e.g. `"equipment"`,
-   `"design"`) so an agent can tell a measured/rated limit from an estimate.
-
-### What's new (additive â€” no breaking change)
-- `Expander.isSimulationValid()` â€” expander-correct validity (negative power and a
-  cooler outlet are valid; only NaN or an outlet *hotter* than inlet flags invalid).
-- `Expander.initializeCapacityConstraints()` â€” removes the inherited consumed-power
-  constraints (`power`, `ratedPower`) and, when a rating is set, adds a
-  `recoveredPower` HARD constraint sourced from `Math.abs(getPower("kW"))`.
-- `Expander.setRatedRecoveredPower(double kW)` / `getRatedRecoveredPower()` â€” set the
-  rated recovered shaft power; the setter rebuilds the constraints via
-  `reinitializeCapacityConstraints()`. Default `0` â‡’ no `recoveredPower` constraint.
-- `ProcessSystem.buildUtilizationUnitsJson(...)` now emits `dataSource` per constraint.
-  `ProcessModel.getUtilizationSnapshotJson()` inherits this automatically (it delegates
-  per area to the same method).
-
-### Migration
-None. Existing code is unaffected. For an expander whose recovered-power ceiling is
-known, call `expander.setRatedRecoveredPower(ratedKW)` to get a meaningful
-`recoveredPower` utilization; otherwise the expander simply reports no spurious limit.
-Downstream tooling that previously injected an external "ESTIMATE" expander rating or
-suppressed the spurious 150 % can now read the native `recoveredPower` constraint and
-its `dataSource` provenance directly.
-
-### Agents/skills to update
-- `neqsim-agentic-process-optimization` and `neqsim-platform-modeling` skills (mention
-  the expander `recoveredPower` constraint and the `dataSource` field in the snapshot).
-- Documented in `AGENTS.md` and `.github/copilot-instructions.md` in the
-  `getUtilizationSnapshot()` sections. Tests: `ExpanderCapacityTest` (5 tests, all pass).
-
----
-
-## 2026-06-14 â€” AgenticProcessOptimizer: closed-loop optimizer for ML/agentic loops (new class)
-
-### Summary
-Added `neqsim.process.automation.AgenticProcessOptimizer`, a ready-made closed-loop,
-derivative-free optimizer that drives a process simulation through the existing
-`ProcessAutomation.evaluate(...)` primitive. Purpose-built for ML/agentic workflows:
-string-addressable decision variables, a never-throwing schema-versioned JSON contract,
-and a replayable (state, action, reward) trajectory tape.
-
-### What's new (additive â€” no breaking change)
-- `ProcessAutomation.newOptimizer()` â†’ returns a fresh `AgenticProcessOptimizer` bound to the facade.
-- `AgenticProcessOptimizer` fluent API: `addVariable(addr, lo, hi, unit)`,
-  `useAdjustableParameters()`, `minimize/maximize/setObjective(addr, Sense, unit)`,
-  `setObjectiveFunction(Function<Map<String,Double>,Double>)`, `addWatch(addr, unit)`,
-  `addConstraintLessOrEqual/GreaterOrEqual/addConstraint(addr, type, limit, unit, penaltyWeight)`,
-  `setMaxEvaluations/setInnerConvergence/setConvergenceTolerance/setSeed`.
-- `optimize()` â†’ `OptimizationResult` (never throws); `optimizeToJson()` â†’ schema-versioned JSON
-  with the full trajectory; `getReadinessJson()` â†’ machine-readable ML/agentic self-rating.
-- Algorithm: bounded Nelderâ€“Mead simplex with deterministic (seeded) random init. Hard constraints
-  folded in as weighted quadratic penalties; infeasible trials logged but penalized.
-
-### Migration
-None. Existing code is unaffected. Agents optimizing a live `ProcessSystem`/`ProcessModel` should
-prefer `auto.newOptimizer()` over hand-rolling loops on top of `evaluate()`. Distinct from the
-classic `neqsim.process.util.optimizer` classes (which take a `Function<double[],Double>` over an
-opaque `ProcessSystem`).
-
-### Agents/skills to update
-- `neqsim-agentic-process-optimization` and `neqsim-optimization-and-doe` skills (mention the new class).
-- Documented in `AGENTS.md` and `.github/copilot-instructions.md` next to the `evaluate()` /
-  `getUtilizationSnapshot()` sections. Tests: `AgenticProcessOptimizerTest` (7 tests, all pass).
-
----
-
-## 2026-06-02 â€” CriticalPointFlash robustness fix (no API change)
-
-### Summary
-Fixed `criticalPointFlash()` (via `CriticalPointFlash`) which threw a
-`NullPointerException` ("eigenVector is null") during critical-point
-calculation for some mixtures (e.g. methane/propane SRK).
-
-### What changed (internal only â€” public API unchanged)
-- The Heidemann &amp; Khalil Q matrix is now explicitly symmetrized after
-  assembly, and the eigenproblem is solved with the dedicated symmetric solver
-  `DecompositionFactory_DDRM.eig(n, true, true)` instead of the generic
-  `SimpleMatrix.eig()` (which returns `null` eigenvectors for eigenvalues it
-  flags as complex).
-- The temperature Newton loop now drives the **smallest eigenvalue** (Rayleigh
-  quotient) to zero instead of the badly-scaled determinant.
-- Added null/NaN guards and Newton step limiting so the search stays physical.
-- Removed dead debug code (`calcMmatrixHeidemann()`, `system.display()`).
-
-### Migration
-None â€” `ThermodynamicOperations.criticalPointFlash()` signature is unchanged.
-Callers that previously hit the NPE now get a converged critical T/P.
-
-### Agents/skills to update
-None required. Documented in `docs/thermo/flash_calculations_guide.md`.
-
----
-
-## 2026-05-30 â€” Agentic Process Engineering v1.1 (depth, not foundation)
-
-### Summary
-Closes three depth gaps surfaced by the v1 self-assessment in
-`docs/integration/agentic_capability_rating.md`:
-
-1. **More integrator options** for dynamic simulation.
-2. **Gradient access** through `ProcessAutomation` without instrumenting
-   individual equipment classes.
-3. **Broader synthesis coverage** â€” multi-stage compression with
-   inter/after-coolers.
-
-### New classes
-
-- `neqsim.process.dynamics.RK4Integrator` â€” classical fixed-step 4th-order
-  Rungeâ€“Kutta. Drop-in `IntegratorStrategy` for smooth non-stiff problems where
-  Explicit Euler is too noisy and BDF is overkill.
-- `neqsim.process.dynamics.AdaptiveRK45Integrator` â€” Cashâ€“Karp 5(4) embedded RK
-  with adaptive sub-stepping inside one outer `step()` call. Tolerance-controlled
-  via `setAbsoluteTolerance`/`setRelativeTolerance`/`setMaxSubSteps` (chainable).
-  Use `getLastSubSteps()` to inspect work per outer step.
-- `neqsim.process.automation.SensitivityAnalyzer` â€” finite-difference gradients
-  and Jacobians built on top of `ProcessAutomation`. Supports `CENTRAL` and
-  `FORWARD` modes, per-variable step from `max(absStep, relStep Â· |x|)`,
-  always restores original inputs (try/finally). Returns Java structures
-  (`double`, `Map`, `double[][]`) and JSON with stable `SCHEMA_VERSION = "1.0"`.
-- `neqsim.process.synthesis.CompressionDuty` â€” immutable+chainable spec for a
-  compression service: feed, discharge pressure, max stage ratio (default 3.5),
-  inter-stage cooler T (default 35 Â°C), polytropic efficiency (default 0.78),
-  after-cooler on/off.
-- `neqsim.process.synthesis.CompressionProposal` â€” result of the heuristic:
-  built `ProcessSystem`, stage count, per-stage ratio, rationale, ordered stage
-  names. `toJson()` for agent handoff.
-
-### New methods
-- `FlowsheetSynthesisEngine.proposeAndBuildCompression(CompressionDuty)` â€”
-  picks stage count from `ceil(ln(overallRatio)/ln(maxStageRatio))`, builds
-  alternating `Compressor`/`Cooler` units named `<duty>-K{i}` / `<duty>-IC{i}`,
-  appends `<duty>-AC` if the after-cooler is enabled. Returns an **unrun**
-  `ProcessSystem` so callers can wire it into a larger flowsheet before solving.
-
-### Migration notes
-- Pure additions; no existing methods or class shapes changed.
-- `AdaptiveRK45Integrator` exposes both short (`getAbsTol/getRelTol`) and
-  long (`getAbsoluteTolerance/getRelativeTolerance`) accessors for clarity;
-  the long names are also the chainable setters.
-
-### Tests
-- `src/test/java/neqsim/process/dynamics/AdvancedIntegratorsTest.java`
-- `src/test/java/neqsim/process/automation/SensitivityAnalyzerTest.java`
-- `src/test/java/neqsim/process/synthesis/CompressionDutyTest.java`
-
-All 18 tests pass (`mvnw.cmd test -Dtest=AdvancedIntegratorsTest,SensitivityAnalyzerTest,CompressionDutyTest`).
-
-### Agents / skills to update
-- `neqsim-dynamic-simulation` â€” mention `RK4Integrator` and `AdaptiveRK45Integrator`
-  in the integrator-strategies section.
-- `neqsim-api-patterns` â€” add a "finite-difference sensitivity via
-  `ProcessAutomation`" recipe.
-- `neqsim-process-extraction` / `@flowsheet.synthesis` â€” extend the synthesis
-  block with a "compression train" example using `CompressionDuty`.
-
----
-
-## 2026-05-30 â€” Agentic Process Engineering v1 (3 features + dynamics wiring)
-
-### Summary
-Three new capability bundles for autonomous process-engineering agents:
-typed automation writes with rollback, structured separation-duty synthesis,
-and pluggable dynamic-simulation infrastructure with event scheduling.
-
-### Feature 1 â€” Typed automation writes with rollback
-- `neqsim.process.automation.ProcessAutomation` now performs typed validation
-  before any `setVariableValue` write (range, allowed-values, unit conversion)
-  and supports transactional `setValuesWithRollback(Map updates, String unit)`
-  that reverts all writes if any single update fails.
-- Adds `getWriteHistory()` audit log (timestamped, with old/new value, unit,
-  status, error category). Diagnostics now tag failures with
-  `VALUE_OUT_OF_BOUNDS`, `INVALID_TYPE`, `READ_ONLY_VARIABLE`,
-  `UNIT_CONVERSION_FAILED`. Schema: `SCHEMA_VERSION = "1.0"`.
-
-### Feature 2 â€” SeparationDuty + FlowsheetSynthesisEngine
-- `neqsim.process.synthesis.SeparationDuty` â€” structured spec for a
-  separation requirement (feed composition, recovery targets, purity targets,
-  energy/utility constraints, allowed unit-operation classes).
-- `neqsim.process.synthesis.FlowsheetSynthesisEngine` â€” generates candidate
-  flowsheet topologies (separator trains, columns, flash cascades) from a
-  `SeparationDuty`, scores them on TAC / recovery / energy and emits a ranked
-  `List<FlowsheetCandidate>` with JSON-serializable spec for downstream agents.
-
-### Feature 3 â€” Pluggable dynamics infrastructure (wired into `runTransient`)
-- `neqsim.process.dynamics.IntegratorStrategy` interface with two
-  implementations: `ExplicitEulerIntegrator` (default) and `BDFIntegrator`
-  (implicit-Euler/BDF-1 with Newton + central-FD Jacobian, tol 1e-8,
-  maxIter 25, falls back to explicit Euler on Newton divergence;
-  `lastStepFellBack()` flags the fallback).
-- `neqsim.process.dynamics.EventScheduler` â€” time-stamped `Runnable` queue
-  for ESD trips, valve closures, setpoint ramps. Events with
-  `time <= currentTime` fire at the top of every `runTransient` step
-  (before equipment runs).
-- **Wired into the live transient loop**: `ProcessSystem.runTransient(dt, id)`
-  fires due events before `applyFieldInputs()`. Accessors:
-  `get/setIntegratorStrategy()`, `get/setEventScheduler()`.
-- **`ProcessModel` orchestration**: new `runTransient(dt, UUID)` iterates all
-  child areas; `setIntegratorStrategy()` and `setEventScheduler()` propagate to
-  every child area.
-- Three new measurement devices in `neqsim.process.measurementdevice`:
-  `DifferentialPressureTransmitter` (bar), `CompositionAnalyzer`
-  (OVERALL/GAS/LIQUID mole fraction), `FlowRatioMeter` (MASS/MOLE/VOLUME).
-- **Serialization note**: `eventScheduler` is `transient` on `ProcessSystem`
-  because `Runnable` payloads (lambdas, anonymous classes) are usually not
-  serializable. Re-install after deserialising.
-
-### Tests
-- Feature 1: 23 tests pass.
-- Feature 2: 7 tests pass.
-- Feature 3 core: 16 tests pass.
-- `RunTransientEventSchedulerTest`: 4 tests pass â€” verifies the scheduler fires
-  at the correct timestep, mutates external state, integrator-strategy
-  accessors round-trip, and `ProcessModel` propagates the scheduler to all
-  child areas.
-
-### Migration / agent guidance
-- **No breaking changes**. All new APIs are additive.
-- Agents performing dynamic studies should prefer `EventScheduler` over
-  manually polling `i == 300` step-counter patterns inside the transient loop.
-- For stiff dynamics (small pressure-vessel volumes, fast PID loops), set
-  `process.setIntegratorStrategy(new BDFIntegrator())`.
-- For multi-area plants, install the scheduler once on `ProcessModel`; it
-  propagates to every area.
-- Skills updated: `neqsim-dynamic-simulation` (Pluggable Integrator
-  Strategies, Event Scheduling, New Measurement Devices sections).
-
----
-
-
-
-### Summary
-Added the first Horizon-3 hydrogen-production foundation utilities: cryogenic
-para/ortho Hâ‚‚ correction factors and catalyst deactivation activity screening.
-
-### New classes
-- `neqsim.thermo.util.hydrogen.ParaOrthoH2Correction` â€” rigid-rotor
-  para/ortho partition-function utility for equilibrium para fraction,
-  normal-to-equilibrium conversion heat, equilibrium-vs-frozen Cp correction,
-  bounded thermal-conductivity correction factor and catalyst conversion time
-  screening.
-- `neqsim.process.equipment.reactor.CatalystDeactivationKinetics` â€” first-order
-  activity decay model for `CatalystBed`, covering sulfur poisoning, chloride
-  poisoning, coking and thermal sintering for nickel reforming, iron-chromium
-  HT-shift, copper-zinc LT-shift and ruthenium ammonia-cracking catalysts.
-
-### Skill and docs
-- `neqsim-hydrogen-production` skill: added Horizon-3 foundation class table,
-  para/ortho correction recipe and catalyst deactivation recipe.
-- `skill-index.json`: added para/ortho hydrogen and catalyst-life keywords.
-- `docs/process/hydrogen_production.md`: added cryogenic spin-isomer and
-  catalyst-deactivation screening sections.
-
-### Tests
-- `ParaOrthoH2CorrectionTest` â€” equilibrium para-fraction limits, conversion
-  heat, Cp correction, thermal-conductivity factor and catalyst time ranking.
-- `CatalystDeactivationKineticsTest` â€” catalyst family sensitivity, coking,
-  thermal sintering, dominant mechanism, JSON output and `CatalystBed` activity
-  update.
-
-### Compatibility
-No breaking changes. Existing Leachman, reactor and CatalystBed APIs are unchanged.
-
----
-
-## 2026-05-27 â€” Horizon-1.5 PSA Cascade and Cost Estimate
-
-### Summary
-Multi-bed PSA orchestration and CAPEX correlation added on top of the H1
-`PressureSwingAdsorptionBed`. Closes the H1.5 deferral list from the H1 PR.
-
-### New classes
-- `neqsim.process.equipment.adsorber.PSACascade` â€” orchestrates 2/4/6/8/10/12
-  beds in a Skarstrom cycle. Inner `CascadeConfiguration` enum encodes the
-  pressure-equalisation count and the recovery uplift over a single bed
-  (0.00 / 0.05 / 0.08 / 0.10 / 0.11 / 0.12). Total cascade recovery is capped at
-  0.93 (industrial benchmark for Hâ‚‚ PSA on shifted syngas).
-- `neqsim.process.costestimation.adsorber.PSACostEstimate` â€” per-bed vessel
-  (USD 250 000 reference @ 2 m Ã— 4 m TL-TL, scale exponent 0.6) + valve skid
-  (USD 60 000/bed) + sorbent inventory (USD 4/kg AC, USD 10/kg Zeolite 13X) Ã—
-  CEPCI ratio (2024 ref = 800). `setIncludeBalanceOfPlant(false)` strips ~25 %
-  for stack-only quotes. Convenience constructor `PSACostEstimate(PSACascade)`
-  derives bed count, sorbent, and sorbent mass from the template bed geometry.
-
-### Skill and docs
-- `neqsim-hydrogen-production` skill: PSACascade/PSACostEstimate promoted from
-  the Horizon-2/3 deferred list into a new **Core Classes (Horizon 1.5)** table.
-  Added Recipe 4 (multi-bed PSA cascade) and Recipe 5 (PSA CAPEX). Bumped
-  `last_verified` to 2026-05-27.
-- `skill-index.json`: added keys `psa cascade`, `multi-bed psa`,
-  `skarstrom cycle`, `psa cost`, `psa capex` â†’ `neqsim-hydrogen-production`.
-- `docs/process/hydrogen_production.md`: extended with PSA cascade and CAPEX
-  sections (see PR description).
-
-### Tests
-- `PSACascadeTest` â€” 9 assertions: cascade uplift, bed-count monotonicity,
-  0.93 cap, tail-gas mass balance, sorbent propagation, invalid-input rejection.
-- `PSACostEstimateTest` â€” 7 assertions: bed-count linearity, sorbent ordering
-  (Zeolite > AC), BoP toggle (~0.75Ã— ratio), cascade-derived constructor, order
-  of magnitude (USD 1â€“10 M for 4 beds Ã— 20 t AC).
-
-### Compatibility
-No breaking changes. H1 `PressureSwingAdsorptionBed` API unchanged.
-
----
-
-## 2026-07-04 â€” Horizon-1 Hydrogen Production Capabilities
-
-### Summary
-
-Added first-pass hydrogen production stack: Hâ‚‚-tuned pressure-swing adsorption,
-electrolyzer technology selector with I-V characteristic, electrolyzer cost
-estimate. New skill `neqsim-hydrogen-production` packages the recipes.
-
-### New classes
-
-| Class                           | Package                                      |
-| ------------------------------- | -------------------------------------------- |
-| `PressureSwingAdsorptionBed`    | `neqsim.process.equipment.adsorber`          |
-| `ElectrolyzerTechnology` (enum) | `neqsim.process.equipment.electrolyzer`      |
-| `ElectrolyzerIVCharacteristic`  | `neqsim.process.equipment.electrolyzer`      |
-| `ElectrolyzerCostEstimate`      | `neqsim.process.costestimation.electrolyzer` |
-
-### Modified classes
-
-- `Electrolyzer` â€” added `setTechnology`, `setIVCharacteristic`, `setCurrentDensity`,
-  `setFaradaicEfficiency`, `getStackPower`,
-  `getSpecificEnergyConsumption_kWh_per_kg_H2`. Backward-compatible: default
-  cell voltage 1.23 V and Î·_F = 1.0 preserve the legacy `testElectrolyzer`
-  energy-duty assertion.
-
-### Skill
-
-- New: `.github/skills/neqsim-hydrogen-production/SKILL.md` with SMR+WGS+PSA
-  recipe, electrolyzer technology selector, I-V model, and CAPEX recipe.
-  Indexed under `psa`, `electrolyzer`, `green hydrogen`, `blue hydrogen`, etc.
-
-### Deferred to Horizon 1.5
-
-- `PSACascade` (multi-bed Skarstrom) and `PSACostEstimate` â€” to keep this PR scoped.
-
-### Migration
-
-None. All existing tests pass unchanged.
-
----
-
-
-
-### Summary
-
-`ProcessAutomation` gains a batch / introspection / diagnostics surface designed for
-multi-turn agent workflows. `ProcessSystem.getAutomation()` and `ProcessModel.getAutomation()`
-now return a **cached singleton** so diagnostics history, learned corrections, and the new
-`dirty` flag persist across agent turns. All structured outputs include a stable
-`schemaVersion` field (`ProcessAutomation.SCHEMA_VERSION = "1.0"`).
-
-### New API
-
-| Method                                   | Description                                                                                           |
-| ---------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `getSchemaVersion()` / `SCHEMA_VERSION`  | Stable JSON-output schema version (`"1.0"`).                                                          |
-| `isDirty()`                              | `true` after any successful `setVariableValue` and until the next `run()`.                            |
-| `runIfDirty()`                           | Calls `run()` only when dirty; returns whether a run was performed.                                   |
-| `setVariableValueAndRun(addr, val, uom)` | Atomic set + run + clear-dirty.                                                                       |
-| `getValues(addresses, uom)`              | Batch read â†’ `Map<String, Double>` of successful entries.                                             |
-| `setValues(updates, uom, runAfter)`      | Batch write with optional single `run()`; returns count of successes.                                 |
-| `describe()`                             | JSON manifest of units and variables (`{schemaVersion, multiArea, units:[...]}`).                     |
-| `snapshot(scope)`                        | JSON snapshot for a unit / area / `"*"`.                                                              |
-| `getTopology()`                          | JSON listing equipment and `ProcessConnection` edges.                                                 |
-| `getNeighbors(unitName)`                 | Immediate upstream / downstream units as JSON.                                                        |
-| `getStructured(address)`                 | Returns `JsonElement` â€” composition / components / phaseFractions / kvalues yield objects/arrays.     |
-| `validateAddress(address)`               | Non-throwing pre-flight: returns `null` if OK or a `DiagnosticResult` with the right `ErrorCategory`. |
-| `getAllowedUnits(address)`               | List of valid UOM strings for the given variable.                                                     |
-
-### Diagnostic Taxonomy
-
-`AutomationDiagnostics.ErrorCategory` is wired through `diagnoseAndAttemptRecovery` for:
-`UNIT_NOT_FOUND`, `PROPERTY_NOT_FOUND`, `PORT_NOT_FOUND`, `READ_ONLY_VARIABLE`,
-`VALUE_OUT_OF_BOUNDS`, `UNKNOWN_UNIT`, `INVALID_ADDRESS_FORMAT`, `CONVERGENCE_FAILURE`.
-The category appears in the JSON payload returned by `*Safe` accessors and `validateAddress`.
-
-### Thread Safety
-
-`AutomationDiagnostics.history` is now a `Collections.synchronizedList` and
-`learnedCorrections` is a `ConcurrentHashMap`, allowing multiple agents to share a
-single `ProcessAutomation` facade.
-
-### Migration
-
-- No breaking changes. Existing `getVariableValue` / `setVariableValue` / `*Safe` calls keep
-  working unchanged.
-- Agents previously calling `process.run()` after every `setVariableValue` should switch to
-  `setVariableValueAndRun` or batch `setValues(..., runAfter=true)` for fewer redundant runs.
-- If code depended on `getAutomation()` returning a fresh instance each call, retain a local
-  reference instead. The new cached behaviour is required for diagnostics persistence.
-
-### Agents / Skills to Update
-
-- `neqsim-api-patterns` â€” add batch/introspection patterns.
-- `neqsim-pid-process-operations`, `neqsim-plant-data` â€” recommend `setVariableValueAndRun`.
-- `@process.simulation`, `@plant.data` â€” note cached facade and dirty tracking.
-
----
-
-## 2026-05-17 â€” Adaptive Matrix Inside-Out Distillation Solver
-
-### Summary
-
-`DistillationColumn.SolverType.MATRIX_INSIDE_OUT` is now an adaptive matrix warm-start mode.
-For small columns it bypasses matrix setup and runs the rigorous inside-out path directly, avoiding
-the fixed overhead seen in benchmark columns. For larger columns it attempts a tridiagonal
-component-balance matrix warm start, records matrix-stage diagnostics, and then finishes with the
-same rigorous inside-out polishing and product acceptance checks used by `INSIDE_OUT`.
-
-### New API
-
-| Method                                        | Description                                                                                       |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `wasMatrixInsideOutWarmStartUsed()`           | Reports whether the latest `MATRIX_INSIDE_OUT` run accepted a matrix warm-start state.            |
-| `wasMatrixInsideOutWarmStartBypassed()`       | Reports whether the adaptive solver skipped matrix setup and used rigorous inside-out directly.   |
-| `getLastMatrixInsideOutIterationCount()`      | Matrix warm-start iteration count, or zero if no matrix stage ran.                                |
-| `getLastMatrixInsideOutTemperatureResidual()` | Matrix-stage average tray-temperature residual in Kelvin, or `Double.NaN` if no matrix stage ran. |
-| `getLastMatrixInsideOutSolveTimeSeconds()`    | Matrix-stage wall time in seconds, or zero if no matrix stage ran.                                |
-
-### Agent Guidance
-
-- Use `INSIDE_OUT` as the default robust hydrocarbon-column solver.
-- Use `MATRIX_INSIDE_OUT` for larger hydrocarbon fractionators where a component-balance matrix
-  warm start may reduce rigorous flash sweeps. Expect it to bypass the matrix stage on small
-  columns.
-- Use the new matrix diagnostics before claiming a matrix-stage speedup; `solved()` still reflects
-  the rigorous inside-out polish and the standard mass/product/fallback gates.
-- Keep using `MESH_RESIDUAL` or `NAPHTALI_SANDHOLM` when a task needs explicit residual-oriented
-  MESH convergence checks.
-
-### Affected Guidance
-
-- `.github/skills/neqsim-distillation-design/SKILL.md`
-- `docs/process/equipment/distillation.md`
-- `docs/wiki/distillation_column.md`
-- `docs/development/CODE_PATTERNS.md`
-- `docs/modules.md`
-
-## 2026-05-16 â€” Naphtali-Sandholm Distillation Solver
-
-### Summary
-
-`DistillationColumn` now exposes `SolverType.NAPHTALI_SANDHOLM` for guarded
-simultaneous MESH residual correction. The solver warm-starts from the existing
-inside-out path, solves tray blocks containing liquid component flows, tray
-temperature, and vapor flow, and accepts the Newton-refined state only when the
-scaled residual improves.
-
-### Agent Guidance
-
-- Use `NAPHTALI_SANDHOLM` when a well-conditioned hydrocarbon fractionator needs
-  residual-driven MESH convergence checks beyond the tray-temperature `NEWTON`
-  accelerator.
-- Use `MESH_RESIDUAL` for diagnostics-only auditing of material, equilibrium,
-  summation, energy, specification, and product-draw residuals.
-- `NEWTON` remains a tray-temperature accelerator and should not be described as
-  a full simultaneous MESH solver.
-
----
-
-## 2026-05-10 â€” Root Cause Analysis Framework & Public Reliability Data
-
-### Summary
-
-New `neqsim.process.diagnostics` package provides Bayesian-inspired root cause
-analysis for process equipment (compressors, pumps, separators, heat exchangers,
-valves). `ReliabilityDataSource` now loads from multiple **public** databases
-by default â€” no commercial OREDA license required.
-
-### New classes
-
-- `RootCauseAnalyzer` â€” orchestrator: symptom â†’ hypotheses â†’ evidence â†’ verification â†’ ranked report
-- `Symptom` â€” enum of 12 equipment symptoms (TRIP, HIGH_VIBRATION, SURGE, etc.)
-- `Hypothesis` â€” ranked hypothesis with Builder pattern, expected signals, evidence
-- `HypothesisGenerator` â€” built-in libraries for 5 equipment types + custom registry
-- `EvidenceCollector` â€” time-series trend, threshold, rate-of-change, correlation analysis
-- `SimulationVerifier` â€” clone ProcessSystem, apply graduated perturbations, compare KPIs
-- `RootCauseReport` â€” JSON and text output with ranked hypotheses
-
-### Reliability data sources (loaded automatically)
-
-| CSV                          | Source                                                        | Access             |
-| ---------------------------- | ------------------------------------------------------------- | ------------------ |
-| `equipment_reliability.csv`  | IOGP Report 434 / SINTEF, CCPS 1989, IEEE 493-2007, Lees 2012 | Free / published   |
-| `process_industry_data.csv`  | CCPS, AIChE, API RP 689, HSE UK                               | Free / published   |
-| `offshore_specific_data.csv` | IOGP / SINTEF, OGP 434, DNV-RP-G101, NORSOK Z-016             | Free / purchasable |
-| `generic_literature.csv`     | Lees, MIL-HDBK-217F, DNV-RP-G101                              | Free / purchasable |
-
-### Agent/skill updates
-
-- Skill `neqsim-root-cause-analysis` updated to reference multi-source data
-- Agent `diagnose equipment root cause` description updated
-- Capability map now includes "I-ter. Equipment Diagnostics & Reliability" section
-
-### Migration notes
-
-- Replace any `"OREDA"` references in documentation with "reliability data" or
-  "multi-source reliability data (IOGP/SINTEF, CCPS, IEEE 493, Lees)"
-- `ReliabilityDataSource.getDataSources()` returns the list of loaded sources
-- `ReliabilityDataSource.getEntryCount()` returns total loaded records
-
----
-## 2026-05-08 â€” MCP Server Quarkiverse Transport Refresh
-
-### Summary
-
-The standalone MCP server now follows the current Quarkiverse MCP Server docs:
-Quarkus `3.33.1`, Quarkiverse MCP Server `1.12.0`, STDIO for local clients, and
-`quarkus-mcp-server-http` for Streamable HTTP.
-
-### Migration notes
-
-- Replace the deprecated `quarkus-mcp-server-sse` artifact with
-  `quarkus-mcp-server-http`.
-- Use `http://localhost:8080/mcp` for Streamable HTTP clients.
-- Older HTTP/SSE clients can still use `http://localhost:8080/mcp/sse`.
-- MCP initialize examples now use protocol version `2025-11-25`.
-
----
-
-## 2026-05-07 â€” Simulation-backed HAZOP MCP Workflow
-
-### Summary
-
-New `HAZOPStudyRunner` connects STID/P&ID-extracted HAZOP nodes to NeqSim
-`ProcessSystem` simulations. MCP `runHAZOP` builds the baseline process, uses
-`AutomaticScenarioGenerator` to create equipment-failure scenarios, runs copied
-process models, maps failures to IEC 61882 guidewords/parameters, and returns
-HAZOP rows, scenario evidence, quality gates, optional barrier-register handoff,
-and report markdown.
-
-### Agent Guidance
-
-- Use `getExample("safety", "hazop-study")` for a complete input template.
-- Use `getSchema("run_hazop", "input")` and `getSchema("run_hazop", "output")`
-  for the contract.
-- Treat generated rows as screening output. A chaired HAZOP team must verify
-  nodes, causes, consequences, safeguards, barrier credit, and action ownership.
-- Use `docs/safety/automated_hazop_from_stid.md` for the end-to-end STID/data/
-  simulation/report workflow.
-
----
-
-## 2026-05-XX â€” Process Safety Consequence Analysis & QRA Package
-
-### Summary
-
-New package `neqsim.process.safety` adds quantitative consequence analysis and
-risk-quantification primitives covering API 521 / API 752 / NORSOK Z-013 /
-CCPS QRA Guidelines / IEC 61025 / IEC 61882 / IEC 60812 / ASME UCS-66.
-
-### New classes
-
-| Subpackage         | Classes                                                                                |
-| ------------------ | -------------------------------------------------------------------------------------- |
-| `depressurization` | `DepressurizationSimulator` (VU-flash transient blowdown, fire heat input, BDV sizing) |
-| `mdmt`             | `MDMTCalculator` (UCS-66 Curves A/B/C/D, UCS-66.1 stress reduction, API 579)           |
-| `dispersion`       | `GaussianPlume`, `HeavyGasDispersion`, `ProbitModel`, `ToxicLibrary`                   |
-| `fire`             | `JetFireModel`, `PoolFireModel`, `VCEModel` (TNO multi-energy), `BLEVECalculator`      |
-| `risk.eta`         | `EventTreeAnalyzer` (forward outcome frequencies, IEC 62502)                           |
-| `risk.fta`         | `FaultTreeAnalyzer`, `FaultTreeNode` (AND/OR/k-of-N + Î²-factor CCF, IEC 61025)         |
-| `hazid`            | `HAZOPTemplate` (IEC 61882), `FMEAWorksheet` (IEC 60812, RPN=SÂ·OÂ·D)                    |
-| `escalation`       | `EscalationGraphAnalyzer` (domino/escalation screening)                                |
-| `qra`              | `ConsequenceAnalysisEngine` (IRPA roll-up, source-term JSON export)                    |
-| `inherent`         | `InherentSafetyEvaluator` (Substitute/Minimize/Moderate/Simplify)                      |
-| `alarp`            | `ALARPAuditReport` (ICAF vs VSLÂ·GDF gross-disproportion)                               |
-| `compliance`       | `StandardsComplianceReport` (API 14C / NORSOK S-001 / IEC 61511)                       |
-
-### Î²-factor semantics (FaultTreeAnalyzer)
-
-`P_top_with_CCF = (1-Î²)Â·P_indep + Î²Â·max(P_basic_i)` â€” convex combination per
-IEC 61508 Part 6. Note the directional effect differs by gate type: AND gates
-see *increased* probability (CCF defeats redundancy), OR gates see *decreased*
-probability (replaces independent disjunction with correlated single-event).
-
-### New skills
-
-- `neqsim-consequence-analysis`
-- `neqsim-hazid-fmea-eta-fta`
-- `neqsim-depressurization-mdmt`
-
-### New agent
-
-- `@analyze consequences and dispersion` â€” orchestrates the three skills above.
-
-### New documentation
-
-- `docs/safety/depressurization_per_API_521.md`
-- `docs/safety/mdmt_assessment.md`
-- `docs/safety/dispersion_and_consequence.md`
-- `docs/safety/HAZOP.md`
-- `docs/safety/FMEA.md`
-- `docs/safety/event_fault_trees.md`
-
-All classes are `Serializable` with `serialVersionUID`. 30 JUnit 5 tests under
-`src/test/java/neqsim/process/safety/` pass.
-
----
-
-## 2026-04-30 â€” Distillation Column MESH Residual Diagnostics
-
-### Summary
-
-`DistillationColumn` now records a scaled MESH residual vector after every run. The residual
-diagnostics group material, equilibrium, summation, energy, and active specification equations.
-A new `SolverType.MESH_RESIDUAL` entry uses inside-out initialization and keeps the residual
-diagnostics central to the solve path.
-
-### New API
-
-| Method                                     | Description                                                |
-| ------------------------------------------ | ---------------------------------------------------------- |
-| `getLastMeshResidualNorm()`                | Full scaled MESH residual infinity norm                    |
-| `getLastMeshMaterialResidualNorm()`        | Component material residual norm                           |
-| `getLastMeshEquilibriumResidualNorm()`     | Fugacity-equilibrium residual norm                         |
-| `getLastMeshSummationResidualNorm()`       | Vapor/liquid summation residual norm                       |
-| `getLastMeshEnergyResidualNorm()`          | Tray energy residual norm                                  |
-| `getLastMeshSpecificationResidualNorm()`   | Active specification residual norm                         |
-| `getLastMeshResidualVector()`              | Copy of the full residual vector                           |
-| `setMeshResidualTolerance(double)`         | Configure the optional MESH residual convergence tolerance |
-| `setEnforceMeshResidualTolerance(boolean)` | Include the latest MESH residual norm in `solved()`        |
-
-### Agent Guidance
-
-- Use `SolverType.MESH_RESIDUAL` when a task needs explicit MESH residual auditing.
-- Do not describe `SolverType.NEWTON` as a full simultaneous MESH Newton solver; it is a
-  tray-temperature correction accelerator.
-- The MESH residual gate is effective by default for residual-driven solver modes. Disable it only
-  when a task intentionally needs diagnostic residuals without acceptance gating.
-
-### Affected Guidance
-
-- `docs/process/equipment/distillation.md`
-- `docs/wiki/distillation_column.md`
-- `.github/skills/neqsim-distillation-design/SKILL.md`
-## 2026-04-30 â€” CSP/PFCT Viscosity Parameter Fitting
-
-### Summary
-
-The PFCT/Pedersen viscosity model now exposes four tunable CSP viscosity
-correction factors. `PhysicalProperties.setViscosityModel("CSP")` is an alias for
-the standard PFCT/Pedersen viscosity model, and the four-parameter vector can be
-read or written with `setCspViscosityParameters`, `setCspViscosityParameter`, and
-`getCspViscosityParameters`. The longer `*CorrectionFactors` accessors are
-equivalent.
-
-### Agent Guidance
-
-- Use `"PFCT"` or `"CSP"` for the standard Pedersen corresponding-states
-  viscosity model; use `"PFCT-Heavy-Oil"` for the heavy-oil variant.
-- The four CSP viscosity parameters default to `1.0`. Supplying values such as
-  `0.6232`, `1.1507`, `1.0000`, `1.0000` preserves the external four-value order.
-- For regression, add viscosity observations with `PVTRegression.addViscosityData(...)`
-  and register `RegressionParameter.VISCOSITY_CSP_1` through
-  `VISCOSITY_CSP_4`, or call `addCspViscosityRegressionParameters()`.
-- Viscosity observations are in Pa s. Supported phase names are `gas`, `vapor`,
-  `oil`, `liquid`, `aqueous`, and `water`.
-- After TP flashes used for viscosity matching, call `fluid.initProperties()` so
-  physical properties are initialized before viscosity is read.
-
-### Reference
-
-- Viscosity reference: [`docs/physical_properties/viscosity_models.md`](docs/physical_properties/viscosity_models.md)
-- PVT regression guide: [`docs/pvtsimulation/fluid_characterization_mathematics.md`](docs/pvtsimulation/fluid_characterization_mathematics.md)
-
-## 2026-04-30 â€” UniSim Reader: Operation Handler Registry
-
-### Summary
-
-The UniSim-to-NeqSim converter now centralizes operation mapping in a typed
-`UniSimOperationHandler` registry. Each UniSim `TypeName` records a NeqSim target
-type, strategy (`native`, `adapter`, `reference`, `control`, `column_internal`,
-or `skip`), stream role, and explanatory note. Generated JSON includes
-`_unisim_operation_mapping` so imported cases can audit whether operation types
-were mapped to native NeqSim physics, adapters, reference objects, control
-metadata, column internals, skipped utilities, or unsupported types.
-
-### Agent Guidance
-
-- Do not implement one UniSim-named NeqSim class for every UniSim operation.
-  Keep physical equipment native to NeqSim and add UniSim compatibility through
-  the converter registry and factory aliases.
-- Add new UniSim type behavior by extending `UniSimOperationHandler` metadata
-  first, including `strategy` and `stream_role`.
-- Use `UniSimReader.is_material_stream_operation(type_name)` for topology
-  reconstruction; do not add local `_NON_STREAM_OPS` lists.
-- Preserve stream-carrying placeholder logic (`balanceop`, `virtualstreamop`,
-  template interfaces) with `UnisimCalculator` until equations/properties are
-  clear enough for a real NeqSim class and tests.
-- Use `SpreadsheetBlock` for spreadsheet formula/import/export behavior when
-  cells are extractable; logical/control operations should not create material
-  topology edges.
-- Validate changes with `python devtools/test_unisim_outputs.py`; the suite now
-  checks handler strategy and `_unisim_operation_mapping` JSON summaries.
-
-### Affected Guidance
-
-- `.github/skills/neqsim-unisim-reader/SKILL.md`
-- `.github/agents/unisim.reader.agent.md`
-- `docs/process/unisim-to-neqsim-conversion.md`
-- `devtools/README.md`
-- `AGENTS.md`
-
-## 2026-04-30 â€” UniSim Reader: Robust E300 Fluid-Package Extraction
-
-### Summary
-
-The UniSim-to-NeqSim conversion workflow now treats E300 full-fluid transfer as
-a separate verification gate from structural process build and numerical stream
-matching. `UniSimReader` can recover fluid packages when `comp.AcentricFactor`
-is missing by using property-package vectors or the Edmister fallback from Tc,
-Pc, and normal boiling point.
-
-### Agent Guidance
-
-- Request UniSim component critical temperature and normal boiling point in
-  `C`, then convert to K.
-- Request critical pressure in `kPa`, then convert to bara.
-- Sanity-check exported E300 files with known components: methane should be
-  about 190.7 K / 46.4 bara, water about 647.3 K / 221 bara.
-- Report four separate gates: E300 exported, E300 loaded in the NeqSim build
-  route, structural build status, and numerical stream verification status.
-- Do not treat E300 fluid parity as full process parity. Virtual streams,
-  spreadsheet/balance logic, template operations, compressor curves, and
-  sub-flowsheet interface wiring can still dominate stream deviations.
-
-### Affected Guidance
-
-- `.github/skills/neqsim-unisim-reader/SKILL.md`
-- `.github/agents/unisim.reader.agent.md`
-- `docs/process/unisim-to-neqsim-conversion.md`
-- `devtools/README.md`
-
-## 2026-04-29 â€” Route-Level Piping Hydraulic Builder for STID Line Lists
-
-### Summary
-
-`PipingRouteBuilder` converts STID/E3D/P&ID/stress-isometric line-list rows into
-a serial `ProcessSystem` with one `PipeBeggsAndBrills` unit per route segment.
-It stores from/to nodes, straight length, hydraulic diameter, wall thickness,
-roughness, elevation change, and K-value minor losses. Minor losses are converted
-to equivalent length ratio by `K / f_D`, with default Darcy friction factor
-`0.02` and a configurable `setMinorLossFrictionFactor(...)` assumption. Routes
-can be run standalone with `build(feedStream)` or inserted into a larger plant
-model with `addToProcessSystem(process, inletStream)`, which returns the last
-pipe outlet stream for downstream equipment.
-
-### New API
-
-| Class                             | Package                                     | Purpose                                                                    |
-| --------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------- |
-| `PipingRouteBuilder`              | `neqsim.process.equipment.pipeline.routing` | Build route-level pipe hydraulic models from line-list tables              |
-| `PipingRouteBuilder.RouteSegment` | same                                        | Route segment metadata, total K, total equivalent L/D, generated pipe name |
-| `PipingRouteBuilder.MinorLoss`    | same                                        | K-value fitting/valve loss converted to equivalent L/D                     |
-
-Important methods:
-
-- `build(StreamInterface inletStream)` creates a standalone route `ProcessSystem`.
-- `addToProcessSystem(ProcessSystem process, StreamInterface inletStream)` adds
-  only the generated pipe units to an existing process and returns the final
-  pipe outlet stream.
-- `addToProcessSystem(ProcessSystem process, StreamInterface inletStream,
-  String sourceEquipmentName, String sourcePortName)` preserves explicit source
-  equipment/port metadata when the route starts from an upstream equipment outlet.
-
-### Agent Usage
-
-- For STID, E3D, P&ID, or stress-isometric tasks where the source has line-list
-  rows with lengths, sizes, fittings, valves, elevations, and equipment nodes,
-  use `PipingRouteBuilder` instead of hand-assembling individual pipes.
-- In full plant simulations, pass an upstream `StreamInterface` into
-  `addToProcessSystem(...)` and feed the returned outlet stream into downstream
-  process equipment constructors.
-- Preserve source document/page/row references in the task notes and export
-  `route.toJson()` into task results for later reuse.
-- Use looped-network tools for branched or ring-main hydraulics; this builder is
-  for serial routes and serial branches.
-
-### Reference
-
-- Full guide: [`docs/process/piping_route_builder.md`](docs/process/piping_route_builder.md)
-- Focused tests: `PipingRouteBuilderTest`
-
-### Skills/Agents Updated
-
-- `neqsim-api-patterns`
-- `neqsim-process-extraction`
-- `neqsim-stid-retriever`
-- `neqsim-technical-document-reading`
-
-## 2026-04-27 â€” Flash Warm-Start: New `ProcessSystem.setUseFlashWarmStart()` API
-
-### Summary
-
-Warm-start K-values are now exposed at the `ProcessSystem` level as a scoped,
-opt-in flag. When enabled, the iterative TPflash inside every fluid evaluation
-re-uses the previously converged K-values as the initial estimate instead of
-seeding from Wilson on every call. The flag is applied via
-`ThermodynamicModelSettings.setUseWarmStartKValues(true)` for the duration of
-`run(UUID)` and restored afterwards (try/finally), so it never leaks to other
-code on the same thread.
-
-### New API on `ProcessSystem`
-
-| Method                          | Description                                           |
-| ------------------------------- | ----------------------------------------------------- |
-| `setUseFlashWarmStart(boolean)` | Enable/disable warm-start for the duration of `run()` |
-| `isUseFlashWarmStart()`         | Returns the current setting                           |
-
-### New API on `ProcessModel`
-
-| Method                          | Description                                                                                                 |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `setUseFlashWarmStart(boolean)` | Propagates the warm-start flag to every registered `ProcessSystem` and applies to any area added afterwards |
-| `isUseFlashWarmStart()`         | Returns the model-level setting                                                                             |
-
-**Default:** `false` (historical behaviour preserved). Recycle-heavy
-flowsheets are sensitive to the flash trajectory and warm-start can shift the
-converged fixed point â€” opt in deliberately.
-
-### Usage
-
-```java
-// Single ProcessSystem
-ProcessSystem process = new ProcessSystem();
-// ... build flowsheet ...
-process.setUseFlashWarmStart(true);
-process.run();   // 10â€“20% wall-time reduction on recycle-heavy flowsheets
-
-// Multi-area ProcessModel
-ProcessModel plant = new ProcessModel();
-plant.add("separation", separationArea);
-plant.add("compression", compressionArea);
-plant.setUseFlashWarmStart(true); // applies to both areas
-plant.run();
-```
-
-### Inner-loop benefit (automatic, no opt-in needed)
-
-`PHflash`, `PSFlash`, `PVflash`, `PUflash`, `TVflash`, `PVFflash`,
-`PVrefluxflash`, `PHsolidFlash`, `OptimizedVUflash`, `ImprovedVUflashQfunc`,
-`QfuncFlash`, `THflash`, `TSFlash`, `TUflash`, `VHflashQfunc`, `VSflash`,
-`VUflashQfunc`, and `TVfractionFlash` already use a cold-first-then-warm
-pattern internally (since 2026-04-21 / 2026-04-27). The first inner TPflash
-runs cold (Wilson seed) to guard against stale K, all subsequent Newton
-iterations re-use the previous step's converged K. This benefit is automatic
-and does not require any flag.
-
-### Skills/Agents to update
-
-- `neqsim-troubleshooting` â€” mention `setUseFlashWarmStart(true)` as a
-  performance lever for recycle-heavy flowsheets.
-- `neqsim-platform-modeling` â€” recommend opt-in for large topside models
-  with multiple recycles.
-
-### Reference
-
-- Full guide: [`docs/development/performance_tuning.md`](docs/development/performance_tuning.md)
-- PRs: #2124, #2125
-
----
-
-## 2026-04-20 â€” Gas Scrubber Mechanical Design: Internals Configuration & Conformity Checking
-
-### Summary
-
-Major expansion of `GasScrubberMechanicalDesign` with ~40 new public methods for
-configuring scrubber internals (inlet devices, demisting cyclones, mesh pads, vane
-packs, drain pipes, level alarms) and a new conformity-checking package for
-automated design verification against an operator-specific technical requirement.
-Geometry fields moved from `Separator` to `SeparatorMechanicalDesign` so physical
-dimensions are owned by the mechanical design layer. Bug fixes for autoSize liquid
-level and drainage-head formula.
-
-### Bug Fixes
-
-| Bug                                                                                           | File(s)                                  | Impact                                            |
-| --------------------------------------------------------------------------------------------- | ---------------------------------------- | ------------------------------------------------- |
-| `autoSize()` used runtime `liquidLevel` (0 before sim) instead of `designLiquidLevelFraction` | `SeparatorMechanicalDesign`              | Auto-sized vessel had wrong liquid height         |
-| Drainage-head formula had spurious Ã—100 factor                                                | `GasScrubberMechanicalDesign`            | Drainage head was 100x too large                  |
-| Geometry fields on `Separator` could go stale relative to `MechanicalDesign`                  | `Separator`, `SeparatorMechanicalDesign` | Inconsistent diameter/length after design changes |
-
-### Architecture Changes
-
-| Change                                                      | Details                                                                                                                                                      |
-| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Geometry ownership moved to MechanicalDesign**            | `innerDiameter` and `tantanLength` now live on `SeparatorMechanicalDesign`; `Separator` delegates via computed getters. Eliminates dual-state inconsistency. |
-| **`GasScrubber.initMechanicalDesign()` preserves geometry** | Re-initialising no longer resets previously configured internals.                                                                                            |
-| **Derived fields replaced with computed methods**           | Gas/liquid area fractions, velocities etc. are computed on the fly rather than stored.                                                                       |
-
-### New Classes
-
-| Class               | Package                                 | Purpose                                                                                                                            |
-| ------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `ConformityResult`  | `mechanicaldesign.separator.conformity` | Single rule check result (PASS/WARNING/FAIL, 90% warning threshold)                                                                |
-| `ConformityReport`  | `mechanicaldesign.separator.conformity` | Collection of results with `isConforming()`, `toTextReport()`                                                                      |
-| `ConformityRuleSet` | `mechanicaldesign.separator.conformity` | Abstract base plus operator-specific rule sets for K-factor, inlet momentum, drainage head, cyclone-dp-to-drain, and mesh-K checks |
-
-### New Methods on `GasScrubberMechanicalDesign`
-
-| Method                                                                                                        | Description                                                                       |
-| ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `setInletDevice(String)`                                                                                      | Case-insensitive inlet device selection (e.g. `"schoepentoeter"`, `"inlet_vane"`) |
-| `setInletCyclones(n, diam)`                                                                                   | Configure inlet cyclone count and diameter                                        |
-| `setDemistingCyclones(n, diam, deckElev)`                                                                     | 3-arg: cyclone count, diameter, deck elevation                                    |
-| `setDemistingCyclones(n, diam, deckElev, length)`                                                             | 4-arg: adds cyclone length                                                        |
-| `setMeshPad(area, thickness)`                                                                                 | Mesh pad area (mÂ²) and thickness (mm)                                             |
-| `setVanePack(area)`                                                                                           | Vane pack area (mÂ²)                                                               |
-| `setDrainPipeDiameterM(diam)`                                                                                 | Drain/down-comer pipe diameter                                                    |
-| `setLaLLElevationM()` / `setLaLElevationM()` / `setLaHElevationM()` / `setLaHHElevationM()`                   | Level alarm elevations                                                            |
-| `setHhllElevationM()`                                                                                         | High-high liquid level elevation                                                  |
-| `setCycloneDeckElevationM()` / `setCycloneLengthM()` / `setCycloneEulerNumber()` / `setCycloneDpToDrainPct()` | Cyclone parameters                                                                |
-| `setConformityRules(String)`                                                                                  | Load a conformity rule set by key                                                 |
-| `checkConformity()`                                                                                           | Run all loaded rules, returns `ConformityReport`                                  |
-| `getConformityStandard()`                                                                                     | Get currently loaded standard name                                                |
-| `toTextReport()`                                                                                              | Full text report of internals configuration and conformity                        |
-| `getResponse()`                                                                                               | Structured `SeparatorMechanicalDesignResponse` with all design data               |
-
-### Usage Example
-
-```java
-GasScrubber scrubber = new GasScrubber("V-301", feedStream);
-scrubber.setInternalDiameter(2.9);
-scrubber.setLength(4.23);
-ProcessSystem process = new ProcessSystem();
-process.add(feedStream);
-process.add(scrubber);
-process.run();
-
-scrubber.initMechanicalDesign();
-GasScrubberMechanicalDesign design =
-    (GasScrubberMechanicalDesign) scrubber.getMechanicalDesign();
-design.setMaxOperationPressure(110.0);
-design.setInletDevice("schoepentoeter");
-design.setDemistingCyclones(256, 0.110, 3.287, 0.943);
-design.setMeshPad(6.605, 150.0);
-design.setDrainPipeDiameterM(0.2032);
-design.setConformityRules("operator-specific-key");
-design.calcDesign();
-
-ConformityReport report = design.checkConformity();
-System.out.println(report.toTextReport());
-System.out.println("Conforming: " + report.isConforming());
-```
-
-### Test Classes
-
-- Operator-specific scrubber design tests â€” 4 tests covering full internals configuration and conformity checking
-- `SeparatorTest` â€” 10 existing tests (all pass, no regressions)
-
-### Affected Skills / Agents
-
-- `neqsim-api-patterns` â€” Add scrubber internals configuration pattern
-- `neqsim-standards-lookup` â€” Add operator-specific conformity rules to standards database
-## 2026-04-22 â€” PT Phase Envelope: NaN Branch-Break Sentinels + Structured Segments API
-
-### Summary
-
-Two improvements to `PTPhaseEnvelopeMichelsen` (the default PT phase envelope
-tracer). Both are backward-compatible. Full docs at
-`docs/pvtsimulation/phase_envelope_guide.md`.
-
-### Bug Fix â€” NaN branch-break sentinels
-
-The Michelsen tracer uses a two-pass algorithm and can cross several critical
-points. Previously, points from disjoint envelope segments were all appended
-to the same flat `dewT` / `bubT` arrays with no separator, causing plotters
-(e.g. matplotlib) to draw spurious straight lines across the two-phase region
-at every branch transition.
-
-Fix: a `NaN` sentinel is now inserted into all ten per-point arrays
-(`dewT`, `dewP`, `dewH`, `dewDens`, `dewS`, `bubT`, `bubP`, `bubH`, `bubDens`,
-`bubS`) at every branch transition (pass restart, first critical point flip,
-second critical point flip). Matplotlib renders `NaN` as a polyline gap.
-
-**Migration for consumers that iterate the flat arrays:** skip `NaN` entries
-or use the new structured segment API below. The cricondentherm/cricondenbar
-getters and point counts (excluding `NaN`) are unchanged.
-
-### New Feature â€” Structured segments API
-
-New class:
-`neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.EnvelopeSegment`
-
-- Immutable polyline with `PhaseType` enum (`DEW` or `BUBBLE`) and T/P/H/density/entropy arrays.
-- Never contains `NaN`.
-
-New accessor on `PTPhaseEnvelopeMichelsen`:
-
-```java
-List<EnvelopeSegment> segments = michelsen.getSegments();
-```
-
-New convenience method on `ThermodynamicOperations`:
-
-```java
-List<EnvelopeSegment> segments = ops.getEnvelopeSegments();
-// Returns empty list for legacy (non-Michelsen) envelope implementations.
-```
-
-Python usage:
-
-```python
-for seg in ops.getEnvelopeSegments():
-    T = list(seg.getTemperatures())
-    P = list(seg.getPressures())
-    plt.plot([t - 273.15 for t in T], P, label=str(seg.getPhaseType()))
-```
-
-### Agent / Skill Updates
-
-- `neqsim-api-patterns` â€” prefer `getEnvelopeSegments()` over flat arrays for new code.
-- `neqsim-troubleshooting` â€” "kinks/teleports in phase envelope plot" â†’ use segments API or skip `NaN` in flat arrays.
-
----
-
-## 2026-04-17 â€” Diffusion Coefficient Model Fixes and Validation
-
-### Summary
-
-Major bug fixes and accuracy improvements to all diffusion coefficient models
-(gas and liquid). Added 6 new model names to `setDiffusionCoefficientModel()`.
-All models validated against published experimental data (Marrero & Mason 1972,
-Poling 2001). Full docs at `docs/physical_properties/diffusivity_models.md`.
-
-### Bug Fixes
-
-| Bug                                                                            | File(s)                                                                                                                               | Impact                                      |
-| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| Fuller constant 10x too large (`1.013e-2` â†’ `1.013e-3`)                        | `FullerSchettlerGiddingsDiffusivity`                                                                                                  | Gas D values were 10x too high              |
-| Critical volume unit conversion (`Vc * 1e3` removed)                           | `FullerSchettlerGiddingsDiffusivity`, `SiddiqiLucasMethod`, `WilkeChangDiffusivity`, `TynCalusDiffusivity`, `HaydukMinhasDiffusivity` | Fallback molar volumes were 1000x too large |
-| HaydukMinhas volume formula inverted (`Vc * 1e6 / 0.285` â†’ `0.285 * Vc^1.048`) | `HaydukMinhasDiffusivity`                                                                                                             | Completely wrong liquid D values            |
-| Gas LJ parameters from DB unsuitable for diffusion                             | `Diffusivity` (gas base class)                                                                                                        | Chapman-Enskog/Wilke-Lee gave ~60% error    |
-
-### New Features
-
-- **Diffusion-specific LJ parameter table** â€” ~35 common components from Poling (2001)
-  and Bird, Stewart, Lightfoot (2002). Automatically overrides DB LJ parameters for
-  gas diffusion calculations in Chapman-Enskog and Wilke-Lee models.
-- **`"Chapman-Enskog"` model name** â€” Added to `setDiffusionCoefficientModel()` for
-  explicit selection of the base Chapman-Enskog gas diffusion model.
-
-### New/Updated Model Names for `setDiffusionCoefficientModel()`
-
-| Model String                  | Phase      | Class                                | Status           |
-| ----------------------------- | ---------- | ------------------------------------ | ---------------- |
-| `"Chapman-Enskog"`            | Gas        | `Diffusivity`                        | **NEW**          |
-| `"Wilke Lee"`                 | Gas        | `WilkeLeeDiffusivity`                | Existing (fixed) |
-| `"Fuller-Schettler-Giddings"` | Gas        | `FullerSchettlerGiddingsDiffusivity` | Existing (fixed) |
-| `"Siddiqi Lucas"`             | Liquid     | `SiddiqiLucasMethod`                 | Existing (fixed) |
-| `"Wilke-Chang"`               | Liquid     | `WilkeChangDiffusivity`              | Existing (fixed) |
-| `"Tyn-Calus"`                 | Liquid     | `TynCalusDiffusivity`                | Existing (fixed) |
-| `"Hayduk-Minhas"`             | Liquid     | `HaydukMinhasDiffusivity`            | Existing (fixed) |
-| `"CSP"`                       | Gas/Liquid | `CorrespondingStatesDiffusivity`     | Unchanged        |
-| `"High Pressure"`             | Liquid     | `HighPressureDiffusivity`            | Unchanged        |
-| `"Alkanol amine"`             | Aqueous    | `AmineDiffusivity`                   | Unchanged        |
-
-### Validation Results (298 K, 1 atm)
-
-Gas models (vs Marrero & Mason 1972, Poling 2001):
-- CHâ‚„-Nâ‚‚: Chapman-Enskog 0.7%, Fuller 2.0%, Wilke-Lee 5.0%
-- COâ‚‚-Nâ‚‚: Chapman-Enskog 7.4%, Fuller 2.7%, Wilke-Lee 0.3%
-
-Liquid models (COâ‚‚ in water vs Poling 2001):
-- Wilke-Chang 10%, Hayduk-Minhas 15%, Siddiqi-Lucas 31%
-
-### Test Classes
-
-- `DiffusivityExperimentalValidationTest` â€” 13 tests validating all models against experimental data
-- `AllDiffusivityModelsTest` â€” 17 tests (existing, all pass)
-- `DiffusivityModelsTest` â€” 15 tests (existing, all pass)
-
-### Affected Skills
-
-- `neqsim-api-patterns` â€” Update diffusivity model examples
-- `neqsim-flow-assurance` â€” May reference diffusion models for corrosion/mass transfer
-
----
-
-## 2026-04-17 â€” Process Optimization Enhancements: Rate-Based Absorber, SQP Optimizer, Flow Correlations, Multi-Variable Adjuster
-
-### Summary
-
-Five new classes and one enum addition for improved process simulation fidelity
-and optimization capability. These close key gaps identified in a reservoir-to-market
-process optimization review comparing NeqSim to commercial simulators.
-
-### New Classes
-
-#### 1. RateBasedAbsorber (`neqsim.process.equipment.absorber`)
-
-Rate-based (non-equilibrium) absorption column with rigorous mass transfer
-calculations. Two mass transfer correlations and three enhancement factor models.
-
-| Method                                                     | Description                                                  |
-| ---------------------------------------------------------- | ------------------------------------------------------------ |
-| `setMassTransferModel(MassTransferModel)`                  | `ONDA_1968` or `BILLET_SCHULTES_1999`                        |
-| `setEnhancementModel(EnhancementModel)`                    | `NONE`, `HATTA_PSEUDO_FIRST_ORDER`, `VAN_KREVELEN_HOFTIJZER` |
-| `setColumnDiameter(double)`                                | Column diameter in metres                                    |
-| `setPackedHeight(double)`                                  | Packed height in metres                                      |
-| `setPackingSpecificArea(double)`                           | Packing specific area (m2/m3)                                |
-| `setPackingVoidFraction(double)`                           | Packing void fraction                                        |
-| `setPackingNominalSize(double)`                            | Packing nominal size (m)                                     |
-| `setPackingCriticalSurfaceTension(double)`                 | Packing critical surface tension (N/m)                       |
-| `setReactionRateConstant(double)`                          | Pseudo-first-order reaction rate constant (1/s)              |
-| `setStoichiometricRatio(double)`                           | Stoichiometric ratio for VKH model                           |
-| `setBilletSchultesConstants(double, double)`               | Cl and Cv for Billet-Schultes                                |
-| `getOverallKGa()` / `getOverallKLa()`                      | Overall mass transfer coefficients                           |
-| `getWettedArea()`                                          | Wetted area from correlation                                 |
-| `getHeightOfTransferUnit()` / `getNumberOfTransferUnits()` | HTU/NTU                                                      |
-| `getStageResults()`                                        | List of `StageResult` with per-stage detail                  |
-
-**Extends:** `SimpleAbsorber`
-**Test:** `RateBasedAbsorberTest` (6 tests)
-
-#### 2. SQPoptimizer (`neqsim.process.util.optimizer`)
-
-Full Sequential Quadratic Programming NLP solver with damped BFGS Hessian
-update, active-set QP sub-problem, L1 exact penalty merit function, and
-Armijo backtracking line search.
-
-| Method                                           | Description                                            |
-| ------------------------------------------------ | ------------------------------------------------------ |
-| `setObjectiveFunction(ObjectiveFunc)`            | Set objective f(x)                                     |
-| `addEqualityConstraint(ConstraintFunc)`          | Add c(x) = 0 constraint                                |
-| `addInequalityConstraint(ConstraintFunc)`        | Add h(x) >= 0 constraint                               |
-| `setVariableBounds(double[], double[])`          | Lower/upper bounds on variables                        |
-| `solve(double[])`                                | Solve from initial point; returns `OptimizationResult` |
-| `setMaxIterations(int)` / `setTolerance(double)` | Convergence controls                                   |
-| `setFiniteDifferenceStep(double)`                | Step for central-difference gradients                  |
-
-**Inner interfaces:** `ObjectiveFunc`, `ConstraintFunc`
-**Inner class:** `OptimizationResult` â€” `isConverged()`, `getOptimalPoint()`, `getOptimalValue()`, `getIterations()`, `getKktError()`
-**Enum added:** `ProcessOptimizationEngine.SearchAlgorithm.SEQUENTIAL_QUADRATIC_PROGRAMMING`
-**Test:** `SQPoptimizerTest` (5 tests)
-
-#### 3. PipeHagedornBrown (`neqsim.process.equipment.pipeline`)
-
-Hagedorn-Brown (1965) empirical holdup correlation for vertical/near-vertical
-multiphase pipe flow. Best suited for oil production wells.
-
-| Method                                                           | Description                        |
-| ---------------------------------------------------------------- | ---------------------------------- |
-| `setLength(double)` / `setDiameter(double)` / `setAngle(double)` | Geometry                           |
-| `setNumberOfIncrements(int)`                                     | Discretization segments            |
-| `setWallRoughness(double)`                                       | Absolute roughness (m)             |
-| `getOutletSuperficialVelocity()`                                 | Gas superficial velocity at outlet |
-| `getLiquidHoldupProfile()`                                       | `double[]` holdup along pipe       |
-| `getFlowPatternDescription()`                                    | Descriptive string                 |
-| `getPressureProfile()` / `getTemperatureProfile()`               | `double[]` profiles                |
-
-**Extends:** `Pipeline`
-**Test:** `PipeHagedornBrownTest` (3 tests)
-
-#### 4. PipeMukherjeeAndBrill (`neqsim.process.equipment.pipeline`)
-
-Mukherjee-Brill (1985) all-inclination holdup and friction correlation. Handles
-horizontal, uphill, and downhill flows with flow pattern detection.
-
-| Method                                     | Description                                                                            |
-| ------------------------------------------ | -------------------------------------------------------------------------------------- |
-| `getFlowPattern()`                         | Returns outlet flow pattern as String: STRATIFIED, SLUG, ANNULAR, BUBBLE, SINGLE_PHASE |
-| `getFlowPatternEnum()`                     | Returns `FlowPattern` enum                                                             |
-| `getLiquidHoldup()`                        | Scalar outlet liquid holdup                                                            |
-| `getFlowPatternProfile()`                  | `List<String>` pattern at each increment                                               |
-| Same geometry methods as PipeHagedornBrown | â€”                                                                                      |
-
-**Extends:** `Pipeline`
-**Test:** `PipeMukherjeeAndBrillTest` (5 tests)
-
-#### 5. MultiVariableAdjuster (`neqsim.process.equipment.util`)
-
-Simultaneous multi-variable adjuster using damped successive substitution.
-Solves N equations in N unknowns (target specifications) by adjusting N
-process variables simultaneously.
-
-| Method                                                                      | Description                  |
-| --------------------------------------------------------------------------- | ---------------------------- |
-| `addAdjustedVariable(ProcessEquipmentInterface, String, String)`            | Variable to manipulate       |
-| `addTargetSpecification(ProcessEquipmentInterface, String, double, String)` | Target to satisfy            |
-| `setVariableBounds(int, double, double)`                                    | Bounds on adjusted variable  |
-| `setMaxIterations(int)` / `setTolerance(double)`                            | Convergence controls         |
-| `isConverged()` / `getIterations()` / `getMaxResidual()`                    | Solution status              |
-| `getNumberOfVariables()`                                                    | Number of adjusted variables |
-
-**Test:** `MultiVariableAdjusterTest` (4 tests)
-
-### Agents/Skills Affected
-
-- `neqsim-api-patterns` skill â€” add rate-based absorber, SQP optimizer, flow correlation, multi-variable adjuster patterns
-- `neqsim-capability-map` skill â€” update mass transfer, optimization, and multiphase flow sections
-- `@solve.process` agent â€” can now use RateBasedAbsorber and MultiVariableAdjuster
-- `@mechanical.design` agent â€” PipeHagedornBrown/PipeMukherjeeAndBrill for well tubing design
-
----
-
-## 2026-04-17 â€” Universal Capacity Constraints for All Equipment
-
-### Summary
-
-Capacity constraint methods are now available on ALL 144+ equipment types via
-`ProcessEquipmentBaseClass`. Previously, only ~60 equipment classes implementing
-`CapacityConstrainedEquipment` could participate in bottleneck analysis and
-optimization. Now any equipment can have constraints added at runtime.
-
-Six new capacity strategies were added (18 total built-in), covering reactors,
-power generation, subsea equipment, filters/adsorbers, electrolyzers, and wells.
-
-### New API on ProcessEquipmentBaseClass
-
-All equipment now inherits these methods (no need to cast or check interface):
-
-| Method                                      | Returns                           | Description                            |
-| ------------------------------------------- | --------------------------------- | -------------------------------------- |
-| `addCapacityConstraint(CapacityConstraint)` | `void`                            | Add a constraint to any equipment      |
-| `getCapacityConstraints()`                  | `Map<String, CapacityConstraint>` | Get all constraints (unmodifiable)     |
-| `getBottleneckConstraint()`                 | `CapacityConstraint`              | Most limiting enabled constraint       |
-| `isCapacityExceeded()`                      | `boolean`                         | Any enabled constraint violated        |
-| `isHardLimitExceeded()`                     | `boolean`                         | Any HARD constraint exceeded           |
-| `getMaxUtilization()`                       | `double`                          | Highest utilization ratio (fraction)   |
-| `getMaxUtilizationPercent()`                | `double`                          | Highest utilization as percentage      |
-| `getAvailableMargin()`                      | `double`                          | Headroom on bottleneck (fraction)      |
-| `getAvailableMarginPercent()`               | `double`                          | Headroom as percentage                 |
-| `isNearCapacityLimit()`                     | `boolean`                         | Any constraint above warning threshold |
-| `getUtilizationSummary()`                   | `Map<String, Double>`             | All constraint utilizations            |
-| `getConstraintEvaluationReport()`           | `String`                          | Multi-line diagnostic report           |
-
-### Updated ProcessSystem Methods
-
-These methods now iterate over ALL equipment (not just `CapacityConstrainedEquipment`):
-
-- `findBottleneck()` â€” returns `BottleneckResult` for the most-utilized equipment
-- `isAnyEquipmentOverloaded()` â€” checks all equipment for capacity exceedance
-- `isAnyHardLimitExceeded()` â€” checks all equipment for HARD limit violations
-- `getCapacityUtilizationSummary()` â€” map of all equipment utilizations
-- `getEquipmentNearCapacityLimit()` â€” list of equipment near their limits
-
-### New Capacity Strategy Classes (6 new, 18 total)
-
-| Class                             | Equipment Types                                      |
-| --------------------------------- | ---------------------------------------------------- |
-| `ReactorCapacityStrategy`         | GibbsReactor, PlugFlowReactor, StirredTankReactor    |
-| `PowerGenerationCapacityStrategy` | GasTurbine, SteamTurbine, HRSG, CombinedCycleSystem  |
-| `SubseaEquipmentCapacityStrategy` | SubseaWell, SubseaTree                               |
-| `FilterAdsorberCapacityStrategy`  | Filter, SulfurFilter, CharCoalFilter, SimpleAdsorber |
-| `ElectrolyzerCapacityStrategy`    | Electrolyzer, CO2Electrolyzer                        |
-| `WellFlowCapacityStrategy`        | WellFlow                                             |
-
-### Migration Notes
-
-- **No breaking changes** â€” existing code using `CapacityConstrainedEquipment` still works
-- For new code, prefer using `ProcessEquipmentInterface` methods directly
-- `ProcessEquipmentBaseClass.initializeDefaultConstraints()` is a protected hook
-  for subclasses to set up default constraints (called lazily)
-- Constraint map is `transient` (not serialized) â€” reconstructed on first access
-
-### Affected Skills
-
-- `neqsim-api-patterns` â€” add universal constraint patterns
-- `neqsim-capability-map` â€” update optimization capabilities
-
----
-
-## 2025-07-14 â€” Dynamic Process Simulation Enhancements (PR #2064)
-
-### Summary
-
-Comprehensive audit and fix of 29 bugs across the `fluidmechanics` package where
-methods that accept a `phase` or `phaseNum` parameter internally used phase-0 defaults
-for Reynolds number, velocity, or friction factor calculations. This caused all
-liquid-phase (phase 1) transport coefficients to be computed with gas-phase values.
-
-### What Changed
-
-**Round 1 (13 bugs):** Critical fixes in core solver and flow nodes:
-- `NonEquilibriumFluidBoundary`: Prandtl number missing `/getMolarMass()`, heat transfer solver step clamping
-- `ReactiveKrishnaStandartFilmModel`: Per-component enhancement factor scaling
-- `KrishnaStandartFilmModel`: 3 NaN guards (Schmidt, phi matrix, mass transfer inverse)
-- `TwoPhaseFixedStaggeredGridSolver`: `initFinalResults` phase param, sign error, zero guards, velocity/enthalpy phase fixes
-- `InterphaseStratifiedFlow`: Liquid mass transfer floor, friction uses `phase` param, heat/mass transfer use `getReynoldsNumber(phaseNum)`
-- `TwoPhaseFlowNode`: Hydraulic diameter guards, convergence fix, Reynolds viscosity guard, `interphaseFrictionFactor[1]` uses phase 1
-
-**Round 2 (6 bugs):**
-- `TwoPhaseFixedStaggeredGridSolver`: Component conservation uses `getVelocity(phaseNum)`
-- `TwoPhaseFixedStaggeredGridSolver`: Latent heat enthalpy zero-moles guard (2 locations)
-- `InterphaseDropletFlow`: Friction factor uses `phase` parameter
-- `InterphaseSlugFlow`: Friction factor uses `phase` parameter
-- `InterphaseStratifiedFlow`: `calcWallMassTransferCoefficient` uses `getReynoldsNumber(phaseNum)`
-
-**Round 3 (10 bugs):**
-- `InterphaseTransportCoefficientBaseClass`: Base class `calcInterPhaseFrictionFactor` now uses `calcWallFrictionFactor(phase, node)` instead of hardcoded 0
-- `MultiPhaseFlowNode`: `interphaseFrictionFactor[1]` uses phase 1 (same as TwoPhaseFlowNode fix)
-- `InterphaseDropletFlow`: `calcWallMassTransferCoefficient` uses `getReynoldsNumber(phaseNum)`
-- `InterphaseSlugFlow`: Both `calcInterphaseHeatTransferCoefficient` and `calcWallMassTransferCoefficient` use `getReynoldsNumber(phaseNum)`
-- `InterphasePipeFlow` (one-phase): All 3 methods use `getReynoldsNumber(phase)` consistently; turbulent branches use `getVelocity(phaseNum)`
-- `InterphaseStirredCellFlow`: Both `calcInterphaseHeatTransferCoefficient` and `calcWallMassTransferCoefficient` use `getReynoldsNumber(phaseNum)`
-
-### Files Changed
-
-| File                                           | Change                                         |
-| ---------------------------------------------- | ---------------------------------------------- |
-| `NonEquilibriumFluidBoundary.java`             | Prandtl fix, step clamping, df==0 guard        |
-| `ReactiveKrishnaStandartFilmModel.java`        | Enhancement factor diagonal scaling            |
-| `KrishnaStandartFilmModel.java`                | 3 NaN guards                                   |
-| `TwoPhaseFixedStaggeredGridSolver.java`        | Phase params, sign fix, zero guards            |
-| `InterphaseStratifiedFlow.java`                | Phase params for Re, friction, mass transfer   |
-| `TwoPhaseFlowNode.java`                        | Hydraulic diameter, convergence, friction[1]   |
-| `InterphaseDropletFlow.java`                   | Phase params for friction and Re               |
-| `InterphaseSlugFlow.java`                      | Phase params for friction, heat, mass transfer |
-| `InterphaseTransportCoefficientBaseClass.java` | Base class friction uses phase param           |
-| `MultiPhaseFlowNode.java`                      | `interphaseFrictionFactor[1]` phase fix        |
-| `InterphasePipeFlow.java`                      | Consistent Re and velocity phase usage         |
-| `InterphaseStirredCellFlow.java`               | Phase params for heat and mass transfer        |
-
-### Impact
-
-Liquid-phase mass transfer, heat transfer, and friction factor calculations now
-use the correct liquid-phase Reynolds number and velocity. This significantly
-affects non-equilibrium pipeline simulations where condensation occurs â€” the
-liquid film transport was previously computed with gas-phase properties.
-
-### Migration
-
-No API changes. All fixes are internal corrections. Results from two-phase
-non-equilibrium simulations will differ from previous versions â€” this is the
-**correct** behavior. Previous results had incorrect liquid-phase transport.
-
----
-
-## 2026-04-17 â€” InterphaseDropletFlow: Corrected Mass/Heat Transfer for Dispersed Flow
-
-### Summary
-
-Fixed and enhanced `InterphaseDropletFlow` â€” the interphase transport coefficient
-calculator for droplet (mist) and bubble flow regimes. The previous implementation
-erroneously reused stratified flow (Yih-Chen) correlations via copy-paste. The new
-implementation uses physics-appropriate correlations for dispersed particles.
-
-### What Changed
-
-1. **Bug fix:** Mass and heat transfer now use the **particle diameter** (droplet/bubble)
-   as the characteristic length, not the pipe hydraulic diameter. This is the fundamental
-   difference between dispersed and stratified flow transport.
-
-2. **Ranz-Marshall correlation** for continuous phase: `Sh = 2 + 0.6Â·Re_p^0.5Â·Sc^0.33`
-   (both mass and heat transfer).
-
-3. **Kronig-Brink model** for dispersed phase interior: `Sh = 17.66` (steady-state limit
-   for internally circulating spheres).
-
-4. **Abramzon-Sirignano (1989) extended film model** â€” optional correction for
-   evaporating droplets that accounts for Stefan flow (blowing) at the droplet surface.
-   Enabled via `setUseAbramzonSirignano(true)` and `setSpaldingMassTransferNumber(B_M)`.
-
-5. **Particle diameter resolution** from `DropletFlowNode.getAverageDropletDiameter()`
-   and `BubbleFlowNode.getAverageBubbleDiameter()`.
-
-### New/Changed Files
-
-| File                                                        | Change                                                                                    |
-| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `InterphaseDropletFlow.java`                                | **Rewritten** â€” Ranz-Marshall, Kronig-Brink, Abramzon-Sirignano                           |
-| `InterphaseDropletFlowMassTransferTest.java`                | **NEW** â€” 9 tests covering correlations and limits                                        |
-| `condensation_pipeline_equilibrium_vs_nonequilibrium.ipynb` | **NEW** â€” Example notebook comparing equilibrium vs non-equilibrium pipeline condensation |
-| `docs/fluidmechanics/droplet_flow_correlations.md`          | **NEW** â€” Full documentation of dispersed flow correlations                               |
-
-### New API Methods on `InterphaseDropletFlow`
-
-| Method                                  | Description                          |
-| --------------------------------------- | ------------------------------------ |
-| `setUseAbramzonSirignano(boolean)`      | Enable/disable blowing correction    |
-| `isUseAbramzonSirignano()`              | Query blowing correction state       |
-| `setSpaldingMassTransferNumber(double)` | Set B_M for Abramzon-Sirignano       |
-| `getSpaldingMassTransferNumber()`       | Get current B_M value                |
-| `calcAbramzonSirignanoF(double bm)`     | Calculate F(B_M) correction function |
-
-### Migration
-
-No breaking API changes. The corrected correlations may produce different mass
-transfer coefficients than before for droplet/bubble flow nodes, but this is a
-**bug fix** â€” the old values were physically incorrect (using pipe diameter instead
-of particle diameter).
-
----
-
-## 2026-04-17 â€” Separator MechanicalDesign Bridge Methods & Internals Classes
-
-### Summary
-
-MechanicalDesign is now the single gateway for ALL separator physical
-configuration. Four changes:
-
-1. **Bridge methods on SeparatorMechanicalDesign** â€” New methods that delegate
-   to the Separator process equipment:
-   - `setInletPipeDiameter(double)` / `getInletPipeDiameter()` â€” sets inlet
-     pipe diameter on the performance calculator for DSD generation
-   - `setInletDeviceType(InletDeviceModel.InletDeviceType)` â€” sets inlet
-     device (INLET_VANE, INLET_CYCLONE, etc.)
-   - `setGasLiquidSurfaceTension(double)` â€” sets interfacial tension for DSD
-   - `addSeparatorSection(String, String)` â€” adds vane/meshpad/nozzle/manway
-     sections
-   - `getSeparatorSections()` / `getSeparatorSection(int)` /
-     `getSeparatorSection(String)` â€” read sections
-   - `setDesign()` now also pushes `inletNozzleID` back to Separator
-
-2. **New `internals/` package** (`process.mechanicaldesign.separator.internals`):
-   - `DemistingInternal` â€” base class for wire mesh, vane pack, cyclone
-     demisting devices. Calculates Souders-Brown max gas velocity, Euler-number
-     pressure drop, and exponential liquid carry-over model.
-   - `DemistingInternalWithDrainage` â€” adds drainage section efficiency
-     (reduces carry-over by drainage factor).
-
-3. **New `primaryseparation/` package**
-   (`process.mechanicaldesign.separator.primaryseparation`):
-   - `PrimarySeparation` â€” base class for inlet devices: inlet momentum
-     (rho*v^2), momentum limit checking, liquid carry-over with degradation.
-   - `InletVane` â€” inlet vane (6000 Pa max momentum, 85% efficiency)
-   - `InletVaneWithMeshpad` â€” inlet vane + downstream mesh pad (92% + mesh
-     pad capture)
-   - `InletCyclones` â€” inlet cyclone cluster (8000 Pa, 95% efficiency)
-
-4. **Logging cleanup** â€” Replaced `System.out.println` with log4j2 `logger`
-   in `SeparatorMechanicalDesign`, `GasScrubberMechanicalDesign`, and
-   `GasScrubberSimple`.
-
-### Migration
-
-**Before (setting inlet pipe diameter directly on Separator):**
-```java
-separator.setInletPipeDiameter(0.254);
-```
-
-**After (set via MechanicalDesign â€” preferred):**
-```java
-SeparatorMechanicalDesign design =
-    (SeparatorMechanicalDesign) separator.getMechanicalDesign();
-design.setInletPipeDiameter(0.254);
-```
-
-Both paths still work â€” the old Separator methods remain for backward
-compatibility. But all new code should use the MechanicalDesign gateway.
-
-### Agents/Skills affected
-
-- `neqsim-api-patterns` â€” updated with bridge method examples
-- `neqsim-capability-map` â€” added internals and primaryseparation packages
-- `copilot-instructions.md` / `AGENTS.md` â€” updated architecture table and
-  example code
-
----
-
-## 2026-04-17 â€” Dynamic Internals Bridge Methods on SeparatorMechanicalDesign
-
-### Summary
-
-Extended the MechanicalDesign gateway with bridge methods for separator dynamic
-simulation parameters (weir, boot, mist eliminator). These delegate to the
-corresponding `Separator` fields used by `runTransient()`:
-
-- `setWeirHeightAbsolute(double)` / `getWeirHeightAbsolute()` â€” sets weir
-  height [m] on Separator, also syncs `weirFraction` from inner diameter
-- `setWeirLength(double)` / `getWeirLength()` â€” weir crest length [m]
-- `setBootVolume(double)` / `getBootVolume()` â€” boot/sump volume [m3]
-- `setMistEliminatorDpCoeff(double)` / `getMistEliminatorDpCoeff()` â€” Euler
-  number for mist eliminator dP calculation (dP = Eu * 0.5 * rho * v^2)
-- `setMistEliminatorThickness(double)` / `getMistEliminatorThickness()` â€”
-  demister pad thickness [m] (converts to/from MechanicalDesign mm storage)
-- `applyDemistingInternal(DemistingInternal)` â€” convenience method that pushes
-  Eu number and thickness from a design object to the dynamic Separator
-
-### Naming note
-
-`setWeirHeightAbsolute` is used (not `setWeirHeight`) because the existing
-`getWeirHeight()` in SeparatorMechanicalDesign returns `weirFraction * ID`
-(design-phase calculated value), not the absolute dynamic height.
-
-### Migration
-
-**Before (setting dynamic params directly on Separator):**
-```java
-separator.setWeirHeight(0.30);
-separator.setMistEliminatorDpCoeff(150.0);
-```
-
-**After (set via MechanicalDesign â€” preferred):**
-```java
-SeparatorMechanicalDesign design =
-    (SeparatorMechanicalDesign) separator.getMechanicalDesign();
-design.setWeirHeightAbsolute(0.30);
-design.setMistEliminatorDpCoeff(150.0);
-// Or push from a design object:
-design.applyDemistingInternal(new DemistingInternal("WireMesh", "wire_mesh"));
-```
-
-### Agents/Skills affected
-
-- `neqsim-api-patterns` â€” added dynamic bridge method examples
-- `copilot-instructions.md` / `AGENTS.md` â€” updated code examples and
-  architecture table with full bridge method list
-
----
-
-## 2026-04-13 â€” MCP Server: Professional-Use Improvements (48 Tools)
-
-### Summary
-
-Five improvements for professional engineering use:
-
-1. **Build coordination** â€” `neqsim-mcp-server/pom.xml` now has a `local-dev` Maven
-   profile (`-Plocal-dev`) that resolves NeqSim from local `~/.m2/` using SNAPSHOT
-   version. Keeps MCP server and core in sync during development.
-
-2. **HTTP/SSE transport** â€” Added `quarkus-mcp-server-sse` dependency alongside
-   existing STDIO. SSE endpoint at `http://localhost:8080/mcp` with CORS for
-   `localhost:3000` and `localhost:5173`. Web-based clients can now connect
-   without STDIO subprocess management.
-
-3. **NIST benchmark validation** â€” New `BenchmarkValidationTest.java` (7 tests)
-   validates accuracy claims against reference data: methane density vs NIST
-   (Â±2%), ISO 6976 GCV (Â±0.5%), separator mass balance (<0.1%), VLE phase check,
-   dew point range, and trust report completeness.
-
-4. **Full E2E test coverage** â€” `test_mcp_server.py` expanded from 19 to 48 tool
-   coverage. All three tiers tested: Tier 1 (21 core), Tier 2 (13 advanced),
-   Tier 3 (14 experimental), plus governance tools.
-
-5. **Task workflow bridge** â€” New `bridgeTaskWorkflow` tool + `TaskWorkflowBridge`
-   runner. Converts MCP tool output to `task_solve/` `results.json` format.
-   Actions: `toResultsJson`, `getSchema`. Classified as Tier 3 EXPERIMENTAL /
-   ADVISORY category. Enables end-to-end MCP â†’ task-solving â†’ report pipeline.
-
-### New/Changed Files
-
-| File                                                                 | Change                                                |
-| -------------------------------------------------------------------- | ----------------------------------------------------- |
-| `neqsim-mcp-server/pom.xml`                                          | Added `local-dev` profile, SSE dependency             |
-| `neqsim-mcp-server/src/main/resources/application.properties`        | Added HTTP/SSE/CORS config                            |
-| `src/main/java/neqsim/mcp/runners/TaskWorkflowBridge.java`           | **NEW** â€” results.json bridge                         |
-| `src/main/java/neqsim/mcp/runners/IndustrialProfile.java`            | Added `bridgeTaskWorkflow` to EXPERIMENTAL + ADVISORY |
-| `neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java` | Added `bridgeTaskWorkflow` tool method                |
-| `src/test/java/neqsim/mcp/runners/BenchmarkValidationTest.java`      | **NEW** â€” 7 NIST benchmark tests                      |
-| `src/test/java/neqsim/mcp/runners/IndustrialProfileTest.java`        | Updated tier size assertions (13â†’14 experimental)     |
-| `neqsim-mcp-server/test_mcp_server.py`                               | Expanded from 19 to 48 tool E2E coverage              |
-
-### Tool Count
-
-- Total: **48** tools (was 47)
-- Tier 1 (TRUSTED_CORE): 21
-- Tier 2 (ENGINEERING_ADVANCED): 13
-- Tier 3 (EXPERIMENTAL): 14 (was 13, added `bridgeTaskWorkflow`)
-
----
-
-## 2026-07-13 â€” MCP Server: 42 Tools, 9 Prompts, 11 Resources
-
-### MCP Server Expansion Summary
-
-The NeqSim MCP Server has expanded from 8 basic tools to a comprehensive
-engineering simulation platform:
-
-**42 @Tool methods** in `NeqSimTools.java`:
-- 9 core thermodynamic tools (flash, batch, property table, phase envelope, validation, search, capabilities, example, schema)
-- 8 automation tools (list units, list variables, get/set variable, save/compare state, diagnose, learning report)
-- 3 analysis tools (cross-validation, parametric study, property table)
-- 8 domain-specific tools (PVT, flow assurance, standards, pipeline, reservoir, field economics, dynamic, bioprocess)
-- 7 session/workflow tools (session, task solver, workflow, validation, report, plugin, progress)
-- 7 platform tools (streaming, visualization, multi-server composition, security, state persistence, validation profiles, data catalog)
-
-**9 @Prompt guided workflows** in `NeqSimPrompts.java`:
-- gas processing, PVT study, flow assurance, field development, CCS, TEG dehydration, biorefinery, dynamic simulation, pipeline sizing
-
-**11 resource endpoints** in `NeqSimResources.java` (4 static + 7 templates):
-- example-catalog, schema-catalog, components, components/{name}, standards, standards/{code}, models, materials/{type}, data-tables, examples/{category}/{name}, schemas/{tool}/{type}
-
-### New Runner Classes (in `src/main/java/neqsim/mcp/runners/`)
-
-| Runner                    | Purpose                                                                 |
-| ------------------------- | ----------------------------------------------------------------------- |
-| `PVTRunner`               | PVT lab experiments (CME, CVD, DL, separator, swelling, GOR, viscosity) |
-| `FlowAssuranceRunner`     | Hydrate, wax, asphaltene, corrosion, erosion, cooldown                  |
-| `StandardsRunner`         | Gas/oil quality per 22 industry standards                               |
-| `PipelineRunner`          | Multiphase pipeline flow (Beggs & Brill)                                |
-| `ReservoirRunner`         | Material balance reservoir simulation                                   |
-| `FieldDevelopmentRunner`  | NPV, IRR, cash flow, fiscal regimes, decline curves                     |
-| `DynamicRunner`           | Transient simulation with auto-instrumented PID controllers             |
-| `BioprocessRunner`        | Anaerobic digestion, fermentation, gasification, pyrolysis              |
-| `CrossValidationRunner`   | Multi-EOS cross-validation                                              |
-| `ParametricStudyRunner`   | Multi-variable parametric sweeps                                        |
-| `SessionRunner`           | Persistent simulation sessions (create/modify/run/snapshot/restore)     |
-| `TaskSolverRunner`        | Engineering task solving from high-level descriptions                   |
-| `EngineeringValidator`    | Design rule validation against standards                                |
-| `ReportRunner`            | Structured engineering report generation                                |
-| `McpRunnerPlugin`         | Plugin interface for custom runners                                     |
-| `PluginRegistry`          | Plugin lifecycle management                                             |
-| `ProgressTracker`         | Long-running simulation progress tracking                               |
-| `StreamingRunner`         | Async simulation with incremental polling                               |
-| `VisualizationRunner`     | SVG/Mermaid/HTML visualization generation                               |
-| `CompositionRunner`       | Multi-server MCP orchestration                                          |
-| `SecurityRunner`          | API key management, rate limiting, audit logging                        |
-| `StatePersistenceRunner`  | Simulation state save/load/compare across restarts                      |
-| `ValidationProfileRunner` | Jurisdiction-specific validation (NCS, UKCS, GoM, Brazil, generic)      |
-| `DataCatalogRunner`       | Database browsing (components, standards, materials, EOS models)        |
-
-### Key Architecture Points
-
-- All runners follow the stateless `Runner.run(String json) â†’ String json` pattern
-- Runners live in neqsim core (`src/main/java/neqsim/mcp/runners/`)
-- MCP server is a thin Quarkus wrapper (`neqsim-mcp-server/`)
-- Each runner can be used independently from REST, CLI, or other MCP frameworks
-- New runners are added by implementing the runner + adding a @Tool method to NeqSimTools.java
-
-### Documentation Updated
-
-- `neqsim-mcp-server/README.md` â€” Full rewrite with all 42 tools, 11 resources, 9 prompts
-- `neqsim-mcp-server/MCP_CONTRACT.md` â€” Added Session/Workflow tools (stable), Platform tools (experimental), Resources
-- `CHANGELOG_AGENT_NOTES.md` â€” This entry
-
----
-
-## 2026-04-12 â€” Bioprocessing & Bioenergy: Phases 5â€“7
-
-### New Classes
-
-| Class                         | Package                            | Purpose                                                                                                                |
-| ----------------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `FermentationReactor`         | `process.equipment.reactor`        | Monod/Contois/substrate-inhibited kinetics; batch, fed-batch, continuous modes. Extends `Fermenter`.                   |
-| `SustainabilityMetrics`       | `process.util.fielddevelopment`    | COâ‚‚eq tracking (IPCC AR6 GWP), carbon intensity (kgCOâ‚‚/MWh), EROI, renewable energy fraction, fossil fuel displacement |
-| `BiogasToGridModule`          | `process.processmodel.biorefinery` | Pre-built: AnaerobicDigester â†’ BiogasUpgrader â†’ Compressor â†’ Cooler â†’ grid injection                                   |
-| `GasificationSynthesisModule` | `process.processmodel.biorefinery` | Pre-built: BiomassGasifier â†’ gas cleaning â†’ Fischer-Tropsch synthesis                                                  |
-| `WasteToEnergyCHPModule`      | `process.processmodel.biorefinery` | Pre-built: AnaerobicDigester â†’ gas engine CHP with electrical + thermal output                                         |
-
-### Key API Patterns
-
-```java
-// FermentationReactor
-FermentationReactor reactor = new FermentationReactor("FR-1", sugarFeed);
-reactor.setKineticModel(FermentationReactor.KineticModel.MONOD);
-reactor.setOperationMode(FermentationReactor.OperationMode.CONTINUOUS);
-reactor.setMaxSpecificGrowthRate(0.30);  // NOT setMuMax()
-reactor.setResidenceTime(10.0, "hr");    // requires unit string
-reactor.setFeedingRate(50.0);            // NOT setFedBatchFeedRate()
-reactor.setFeedSubstrateConcentration(200.0);  // NOT setFedBatchFeedConcentration()
-reactor.run();
-Map<String, Object> results = reactor.getResults();
-
-// BiogasUpgrader enum methods
-BiogasUpgrader.UpgradingTechnology tech = BiogasUpgrader.UpgradingTechnology.MEMBRANE;
-tech.getMethaneRecovery();       // NOT getCh4Recovery()
-tech.getCo2RemovalEfficiency();  // NOT getCo2Removal()
-
-// SustainabilityMetrics
-SustainabilityMetrics metrics = new SustainabilityMetrics();
-metrics.setBiogasProductionNm3PerYear(3_000_000.0);
-metrics.calculate();
-metrics.getCarbonIntensityKgCO2PerMWh();
-
-// BiogasToGridModule
-BiogasToGridModule btg = new BiogasToGridModule("BTG");
-btg.setFeedStream(wasteStream);
-btg.setSubstrateType(AnaerobicDigester.SubstrateType.FOOD_WASTE);
-btg.setUpgradingTechnology(BiogasUpgrader.UpgradingTechnology.MEMBRANE);
-btg.setGridPressureBara(40.0);
-btg.run();
-Map<String, Object> results = btg.getResults();
-```
-
-### Common Mistakes (from testing)
-
-- `getCh4Recovery()` â†’ use `getMethaneRecovery()`
-- `getCo2Removal()` â†’ use `getCo2RemovalEfficiency()`
-- `setMuMax()` â†’ use `setMaxSpecificGrowthRate()`
-- `setResidenceTime(10.0)` â†’ use `setResidenceTime(10.0, "hr")` (unit required)
-- `GasificationSynthesisModule` constructor takes `(String name)` only â€” set biomass via `setBiomass(BiomassCharacterization, feedRateKgPerHr)`
-
-### Skills/Agents Updated
-
-- `neqsim-capability-map` â€” added Section I-bis (Bioprocessing & Bioenergy) + quick lookup entries
-- `neqsim-reaction-engineering` â€” added Bioprocessing Reactors section
-- `copilot-instructions.md` â€” added bioprocessing class import paths
-- `AGENTS.md` â€” updated reaction-engineering skill description
-- `CONTEXT.md` â€” added bioprocessing to equipment and where-to-find tables
-- `neqsim_dev_setup.py` â€” added all bioprocessing classes to `neqsim_classes()`
-
-### Existing Classes (Phases 1â€“3, prior sessions)
-
-| Class                      | Package                      | Tests    |
-| -------------------------- | ---------------------------- | -------- |
-| `BiomassCharacterization`  | `thermo.characterization`    | 12 tests |
-| `AnaerobicDigester`        | `process.equipment.reactor`  | 10 tests |
-| `BiomassGasifier`          | `process.equipment.reactor`  | 8 tests  |
-| `PyrolysisReactor`         | `process.equipment.reactor`  | 8 tests  |
-| `BiogasUpgrader`           | `process.equipment.splitter` | 10 tests |
-| `BiorefineryCostEstimator` | `process.mechanicaldesign`   | 18 tests |
-
----
-
-## 2026-07-12 â€” LoopedPipeNetwork: 6 Advanced Production Features
-
-### New Capabilities in `LoopedPipeNetwork`
-
-Six production network features added to `neqsim.process.equipment.network.LoopedPipeNetwork`:
-
-1. **Artificial Lift** â€” Gas lift (`setGasLift`), ESP (`setESP`), jet pump (`setJetPump`), rod pump (`setRodPump`) with `ArtificialLiftType` enum. Pressure boost applied in NR-GGA solver.
-2. **Large-Scale Networks** â€” 120+ wells with 6 manifolds converge in 15-20 iterations (< 0.1 s). Schur complement keeps matrix size proportional to loops, not elements.
-3. **Water Handling** â€” `setWaterCut`, `addWaterInjection(src, res, name, rate)`, `setWaterBreakthrough(elem, btWC, finalWC, currentWC)`, `calculateWaterBalance()`.
-4. **Sand/Solids Tracking** â€” `setSandRate`, `calculateSandTransport()` per DNV RP O501, `getSandViolations()`, configurable erosion/sand rate limits.
-5. **Corrosion & Integrity** â€” `setCorrosiveGas(elem, co2, h2s)`, `setCorrosionModel(elem, "NORSOK")`, `calculateCorrosion()` with de Waard-Milliams and NORSOK M-506 models, wall life, `getCorrosionViolations()`.
-6. **GHG Emissions** â€” `setCO2EmissionFactor`, `setMethaneSlipFactor`, `calculateEmissions()`, `getTotalCO2Emissions()`, `getAnnualCO2EmissionsTonnes()`, `getEmissionsIntensity()`. Defaults: EF=2.75, slip=2%, GWP(CH4)=28 (IPCC AR5).
-
-### Affected Skills/Agents
-
-- **neqsim-capability-map**: Updated â€” no longer "limited to simple networks"
-- **neqsim-production-optimization**: Added LoopedPipeNetwork section with advanced API
-- **neqsim-flow-assurance**: Added network-level corrosion (de Waard/NORSOK) and sand erosion (DNV RP O501) patterns
-- **emissions agent**: Added LoopedPipeNetwork emissions tracking section
-
-### Documentation
-
-- `docs/process/equipment/production_well_networks.md` â€” 6 new sections with API, formulas, and examples
-- `examples/notebooks/production_network_advanced_features.ipynb` â€” 25-cell notebook demonstrating all features
-- 96 unit tests in `LoopedPipeNetworkTest.java`
-
----
-
-## 2026-07-08 â€” UniSim Reader: Default E300 Fluid Export
-
-### E300 is Now the Default Fluid Transfer Route
-
-When importing fluids from UniSim to NeqSim, the **E300 file route is now the
-default**. `UniSimReader.read(export_e300=True)` (the default) extracts critical
-properties (Tc, Pc, acentric factor, MW, BIPs, volume shifts) from each component
-via COM and writes an E300 file per fluid package.
-
-This preserves all thermodynamic characterization â€” including hypothetical/pseudo
-components like C7+ fractions â€” that component name mapping alone cannot capture.
-
-### New Java Overloads
-
-```java
-// Build and run with a pre-built fluid (e.g., from E300 file)
-ProcessSystem.fromJsonAndRun(String json, SystemInterface fluid)
-JsonProcessBuilder.buildAndRun(String json, SystemInterface fluid)
-```
-
-### Python Usage (Automatic)
-
-```python
-reader = UniSimReader()
-model = reader.read(r'C:\path\to\model.usc')  # auto-exports E300 files
-for fp in model.fluid_packages:
-    print(f"  {fp.name}: {fp.e300_file_path}")
-
-converter = UniSimToNeqSim(model)
-result = converter.build_and_run()  # auto-loads E300 fluid
-```
-
-### Python Usage (Manual E300 Loading)
-
-```python
-from neqsim import jneqsim
-EclipseFluidReadWrite = jneqsim.thermo.util.readwrite.EclipseFluidReadWrite
-fluid = EclipseFluidReadWrite.read(r'C:\path\to\model_FluidPkg.e300')
-```
-
-### Affected Files
-- `devtools/unisim_reader.py` â€” `UniSimComponent` (critical properties), `UniSimFluidPackage` (`write_e300()`, `has_critical_properties`), `_extract_fluid_packages()` (COM property extraction), `_extract_bips()` (new), `read()` (`export_e300` parameter), `_build_fluid_section()` (E300 path in fluid dict), `build_and_run()` (E300 auto-loading)
-- `src/main/java/neqsim/process/processmodel/JsonProcessBuilder.java` â€” `buildAndRun(String, SystemInterface)`, `buildFromJsonObject(JsonObject, SystemInterface)`
-- `src/main/java/neqsim/process/processmodel/ProcessSystem.java` â€” `fromJsonAndRun(String, SystemInterface)`
-- `.github/skills/neqsim-unisim-reader/SKILL.md` â€” E300 section added
-- `AGENTS.md` â€” Updated descriptions
-
----
-
-## 2026-07-08 â€” UniSim Reader: Orientation Detection (GasScrubber)
-
-### Vertical Separator â†’ GasScrubber Mapping
-
-The UniSim reader (`devtools/unisim_reader.py`) now detects separator orientation.
-Vertical `flashtank` operations are mapped to `GasScrubber` instead of `Separator`.
-
-| UniSim flashtank     | NeqSim Type           |
-| -------------------- | --------------------- |
-| horizontal (default) | `Separator`           |
-| vertical             | `GasScrubber`         |
-| has WaterProduct     | `ThreePhaseSeparator` |
-
-`GasScrubber` extends `Separator` â€” it is a vertical vessel with K-value
-sizing constraints and 10% liquid level. The orientation is detected from
-UniSim COM attributes (`Orientation`, `VesselOrientation`, `SeparatorOrientation`).
-
-### Affected Files
-- `devtools/unisim_reader.py` â€” `resolve_neqsim_type()` method, orientation extraction
-- `.github/skills/neqsim-unisim-reader/SKILL.md`
-- `.github/agents/unisim.reader.agent.md`
-- `AGENTS.md`
-
----
-
-## 2026-07-07 â€” Full FPSO Model: Architecture Learnings
-
-### HP Separator Water Routing
-
-When replicating UniSim models in NeqSim, the HP separator at high pressure (90 bar)
-may not produce a separate aqueous phase in UniSim. To match this behavior, use
-`ThreePhaseSeparator` and then `Mixer` to recombine oil + water:
-
-```java
-ThreePhaseSeparator hpSep = new ThreePhaseSeparator("HP Sep", feedStream);
-Mixer hpLiqRecombine = new Mixer("HP Liquid Recombine");
-hpLiqRecombine.addStream(hpSep.getOilOutStream());
-hpLiqRecombine.addStream(hpSep.getWaterOutStream());
-// hpLiqRecombine.getOutletStream() now matches UniSim HP oil (includes water)
-```
-
-### Import Gas Compression Architecture
-
-Large FPSO models use staged import gas compression matching pressure levels:
-- VLP gas (~2 bar) â†’ VRU compressor â†’ ~5 bar â†’ mix with LP gas
-- LP+VRU gas (~5 bar) â†’ 1st import compressor â†’ ~22 bar â†’ mix with MP gas
-- MP+1st import gas (~22 bar) â†’ 2nd import compressor â†’ ~90 bar â†’ mix with HP gas
-
-Each stage has cooler + flash drum before the compressor (removes condensate).
-
-### Pump API
-
-```java
-Pump pump = new Pump("P-100", liquidStream);
-pump.setOutletPressure(6.1);          // bara
-pump.setIsentropicEfficiency(0.75);
-pump.getPower("kW");                  // after run
-```
-
-### ComponentSplitter for TEG Dehydration
-
-```java
-ComponentSplitter teg = new ComponentSplitter("TEG", wetGasStream);
-int nComp = wetGasStream.getFluid().getNumberOfComponents();
-double[] sf = new double[nComp];
-java.util.Arrays.fill(sf, 1.0);
-sf[nComp - 1] = 0.0;  // water is last component
-teg.setSplitFactors(sf);
-// getSplitStream(0) = dry gas, getSplitStream(1) = removed water
-```
-
-### Model Scale: 50+ Equipment Units in Single ProcessSystem
-
-The reference FPSO model demonstrates ~50 equipment units in a single `ProcessSystem`
-covering wellhead â†’ HP/MP/LP/VLP separation â†’ VRU + import gas compression â†’
-gas cooling + TEG â†’ 2-stage export compression â†’ seal gas JT â†’ oil export.
-Single `ProcessSystem` converges in ~2 seconds without recycles.
-
----
-
-## 2026-07-06 â€” JT Expansion: Use ThrottlingValve, Not PHflash
-
-### Critical Agent Guidance
-
-When modeling isenthalpic (Joule-Thomson) expansion, **always use `ThrottlingValve` in a
-`ProcessSystem`**, never manual `PHflash()` on a cloned fluid. Tested on FPSO seal gas
-(90â†’48 bar):
-
-| Method                             | Temperature (Â°C) | UniSim Reference | Error    |
-| ---------------------------------- | ---------------- | ---------------- | -------- |
-| `ThrottlingValve` in ProcessSystem | 16.44            | 18.17            | -1.73Â°C  |
-| Manual `PHflash(H/n)` on clone     | 33.05            | 18.17            | +14.88Â°C |
-
-The manual PHflash approach fails because `getEnthalpy('J')` returns total system enthalpy
-while `PHflash(double)` expects a specific enthalpy convention (per mole at the system's
-reference state). The ThrottlingValve handles the enthalpy bookkeeping internally.
-
-**Pattern:**
-```java
-// CORRECT: Use process-level valve
-ProcessSystem proc = new ProcessSystem();
-Stream sg = new Stream("SG", fluid.clone());
-proc.add(sg);
-ThrottlingValve jt = new ThrottlingValve("JT", sg);
-jt.setOutletPressure(48.0);
-proc.add(jt);
-proc.run();
-double T_jt = jt.getOutletStream().getTemperature("C");  // Correct JT temperature
-
-// WRONG: Manual PHflash â€” gives incorrect JT temperature
-// SystemInterface clone = fluid.clone();
-// clone.setPressure(48.0);
-// new ThermodynamicOperations(clone).PHflash(fluid.getEnthalpy("J") / fluid.getTotalNumberOfMoles());
-```
-
-### FPSO Model Extension
-
-Extended the NeqSim FPSO replication to include:
-- LP/MP gas recompression + mixing with HP gas
-- Gas cooling (24HA101, 75Â°Câ†’36Â°C) + flash drum (24VG101)
-- Seal gas takeoff (5.4% split)
-- 2-stage export compression (26KA101: 86â†’259 bar, 26KA102: 258â†’554 bar)
-- Seal gas JT expansion curve showing 1.35% max condensation at 30 bar
-
-Compressor discharge temperature comparison:
-- 26KA101: NeqSim 126.7Â°C vs UniSim 117.8Â°C (75% Î·_is assumed)
-- 26KA102: NeqSim 85.9Â°C vs UniSim 83.6Â°C
-- Suggests UniSim uses ~83-85% isentropic efficiency
-
----
-
-## 2026-07-05 â€” EclipseFluidReadWrite Null BIC Fix, UniSim BIP Extraction
-
-### Bug Fix
-
-| Class                   | Issue                                                                               | Fix                                                                                                                                                   |
-| ----------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `EclipseFluidReadWrite` | `NullPointerException` when E300 file has no BIC section â€” `kij` array stays `null` | Both `read()` methods now initialize `kij` to zero matrix if BIC section is missing. E300 files without BIC load correctly (all BIPs default to 0.0). |
-
-### Impact on Agents
-
-- **E300 file loading**: Previously required a BIC section or the reader crashed. Now optional (defaults to zero BIPs). However, agents should always include BIC in generated E300 files for accurate results.
-- **UniSim â†’ E300 workflow**: BIPs can now be extracted from UniSim via `pp.Kij.Values` (tuple-of-tuples). See `neqsim-unisim-reader` skill Section 1.1 for the COM access pattern.
-
-### Key Discovery
-
-UniSim COM BIP extraction pattern:
-```python
-kij_obj = pp.Kij          # CDispatch (RealFlexVariable)
-raw = kij_obj.Values      # tuple-of-tuples (nÃ—n symmetric matrix)
-# Diagonal sentinel = -32767.0, replace with 0.0
-```
-- `pp.GetInteractionParameter(i,j)` returns 0.0 for PR-LK (correlation BIPs not accessible this way)
-- `kij_obj.GetValues()` fails â€” use `.Values` property instead
-
----
-
-## 2026-04-08 â€” IEC 81346 Reference Designation Support
-
-### Vertical Separator â†’ GasScrubber Mapping
-
-The UniSim reader (`devtools/unisim_reader.py`) now detects separator orientation.
-Vertical `flashtank` operations are mapped to `GasScrubber` instead of `Separator`.
-
-| UniSim flashtank     | NeqSim Type           |
-| -------------------- | --------------------- |
-| horizontal (default) | `Separator`           |
-| vertical             | `GasScrubber`         |
-| has WaterProduct     | `ThreePhaseSeparator` |
-
-`GasScrubber` extends `Separator` â€” it is a vertical vessel with K-value
-sizing constraints and 10% liquid level. The orientation is detected from
-UniSim COM attributes (`Orientation`, `VesselOrientation`, `SeparatorOrientation`).
-
-### Affected Files
-- `devtools/unisim_reader.py` â€” `resolve_neqsim_type()` method, orientation extraction
-- `.github/skills/neqsim-unisim-reader/SKILL.md`
-- `.github/agents/unisim.reader.agent.md`
-- `AGENTS.md`
-
----
-
-## 2026-07-07 â€” Full FPSO Model: Architecture Learnings
-
-### HP Separator Water Routing
-
-When replicating UniSim models in NeqSim, the HP separator at high pressure (90 bar)
-may not produce a separate aqueous phase in UniSim. To match this behavior, use
-`ThreePhaseSeparator` and then `Mixer` to recombine oil + water:
-
-```java
-ThreePhaseSeparator hpSep = new ThreePhaseSeparator("HP Sep", feedStream);
-Mixer hpLiqRecombine = new Mixer("HP Liquid Recombine");
-hpLiqRecombine.addStream(hpSep.getOilOutStream());
-hpLiqRecombine.addStream(hpSep.getWaterOutStream());
-// hpLiqRecombine.getOutletStream() now matches UniSim HP oil (includes water)
-```
-
-### Import Gas Compression Architecture
-
-Large FPSO models use staged import gas compression matching pressure levels:
-- VLP gas (~2 bar) â†’ VRU compressor â†’ ~5 bar â†’ mix with LP gas
-- LP+VRU gas (~5 bar) â†’ 1st import compressor â†’ ~22 bar â†’ mix with MP gas
-- MP+1st import gas (~22 bar) â†’ 2nd import compressor â†’ ~90 bar â†’ mix with HP gas
-
-Each stage has cooler + flash drum before the compressor (removes condensate).
-
-### Pump API
-
-```java
-Pump pump = new Pump("P-100", liquidStream);
-pump.setOutletPressure(6.1);          // bara
-pump.setIsentropicEfficiency(0.75);
-pump.getPower("kW");                  // after run
-```
-
-### ComponentSplitter for TEG Dehydration
-
-```java
-ComponentSplitter teg = new ComponentSplitter("TEG", wetGasStream);
-int nComp = wetGasStream.getFluid().getNumberOfComponents();
-double[] sf = new double[nComp];
-java.util.Arrays.fill(sf, 1.0);
-sf[nComp - 1] = 0.0;  // water is last component
-teg.setSplitFactors(sf);
-// getSplitStream(0) = dry gas, getSplitStream(1) = removed water
-```
-
-### Model Scale: 50+ Equipment Units in Single ProcessSystem
-
-The reference FPSO model demonstrates ~50 equipment units in a single `ProcessSystem`
-covering wellhead â†’ HP/MP/LP/VLP separation â†’ VRU + import gas compression â†’
-gas cooling + TEG â†’ 2-stage export compression â†’ seal gas JT â†’ oil export.
-Single `ProcessSystem` converges in ~2 seconds without recycles.
-
----
-
-## 2026-07-06 â€” JT Expansion: Use ThrottlingValve, Not PHflash
-
-### Critical Agent Guidance
-
-When modeling isenthalpic (Joule-Thomson) expansion, **always use `ThrottlingValve` in a
-`ProcessSystem`**, never manual `PHflash()` on a cloned fluid. Tested on FPSO seal gas
-(90â†’48 bar):
-
-| Method                             | Temperature (Â°C) | UniSim Reference | Error    |
-| ---------------------------------- | ---------------- | ---------------- | -------- |
-| `ThrottlingValve` in ProcessSystem | 16.44            | 18.17            | -1.73Â°C  |
-| Manual `PHflash(H/n)` on clone     | 33.05            | 18.17            | +14.88Â°C |
-
-The manual PHflash approach fails because `getEnthalpy('J')` returns total system enthalpy
-while `PHflash(double)` expects a specific enthalpy convention (per mole at the system's
-reference state). The ThrottlingValve handles the enthalpy bookkeeping internally.
-
-**Pattern:**
-```java
-// CORRECT: Use process-level valve
-ProcessSystem proc = new ProcessSystem();
-Stream sg = new Stream("SG", fluid.clone());
-proc.add(sg);
-ThrottlingValve jt = new ThrottlingValve("JT", sg);
-jt.setOutletPressure(48.0);
-proc.add(jt);
-proc.run();
-double T_jt = jt.getOutletStream().getTemperature("C");  // Correct JT temperature
-
-// WRONG: Manual PHflash â€” gives incorrect JT temperature
-// SystemInterface clone = fluid.clone();
-// clone.setPressure(48.0);
-// new ThermodynamicOperations(clone).PHflash(fluid.getEnthalpy("J") / fluid.getTotalNumberOfMoles());
-```
-
-### FPSO Model Extension
-
-Extended the NeqSim FPSO replication to include:
-- LP/MP gas recompression + mixing with HP gas
-- Gas cooling (24HA101, 75Â°Câ†’36Â°C) + flash drum (24VG101)
-- Seal gas takeoff (5.4% split)
-- 2-stage export compression (26KA101: 86â†’259 bar, 26KA102: 258â†’554 bar)
-- Seal gas JT expansion curve showing 1.35% max condensation at 30 bar
-
-Compressor discharge temperature comparison:
-- 26KA101: NeqSim 126.7Â°C vs UniSim 117.8Â°C (75% Î·_is assumed)
-- 26KA102: NeqSim 85.9Â°C vs UniSim 83.6Â°C
-- Suggests UniSim uses ~83-85% isentropic efficiency
-
----
-
-## 2026-07-05 â€” EclipseFluidReadWrite Null BIC Fix, UniSim BIP Extraction
-
-### Bug Fix
-
-| Class                   | Issue                                                                               | Fix                                                                                                                                                   |
-| ----------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `EclipseFluidReadWrite` | `NullPointerException` when E300 file has no BIC section â€” `kij` array stays `null` | Both `read()` methods now initialize `kij` to zero matrix if BIC section is missing. E300 files without BIC load correctly (all BIPs default to 0.0). |
-
-### Impact on Agents
-
-- **E300 file loading**: Previously required a BIC section or the reader crashed. Now optional (defaults to zero BIPs). However, agents should always include BIC in generated E300 files for accurate results.
-- **UniSim â†’ E300 workflow**: BIPs can now be extracted from UniSim via `pp.Kij.Values` (tuple-of-tuples). See `neqsim-unisim-reader` skill Section 1.1 for the COM access pattern.
-
-### Key Discovery
-
-UniSim COM BIP extraction pattern:
-```python
-kij_obj = pp.Kij          # CDispatch (RealFlexVariable)
-raw = kij_obj.Values      # tuple-of-tuples (nÃ—n symmetric matrix)
-# Diagonal sentinel = -32767.0, replace with 0.0
-```
-- `pp.GetInteractionParameter(i,j)` returns 0.0 for PR-LK (correlation BIPs not accessible this way)
-- `kij_obj.GetValues()` fails â€” use `.Values` property instead
-
----
-
-## 2026-04-05 â€” Heat Integration, Power Generation, Agentic QA Gate
-
-### New Java Classes
-
-| Class                   | Package                                           | Description                                                                                                                                                                                                     |
-| ----------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PinchAnalysis`         | `process.equipment.heatexchanger.heatintegration` | Linnhoff pinch analysis: composite curves, grand composite curve, minimum hot/cold utility targeting, pinch temperature. Accepts hot/cold `HeatStream` objects with MCp and temperature range.                  |
-| `HeatStream`            | `process.equipment.heatexchanger.heatintegration` | Data model for hot/cold process streams. Auto-classifies HOT/COLD from supply vs target temperature. Celsius convenience API, Kelvin internal storage.                                                          |
-| `SteamTurbine`          | `process.equipment.powergeneration`               | Isentropic steam expansion with configurable efficiency. PS/PH flash for outlet conditions. `getPower("kW")` API.                                                                                               |
-| `HRSG`                  | `process.equipment.powergeneration`               | Heat Recovery Steam Generator. Takes hot gas exhaust, calculates steam production rate at specified pressure/temperature using approach temperature and effectiveness.                                          |
-| `CombinedCycleSystem`   | `process.equipment.powergeneration`               | Integrates GasTurbine + HRSG + SteamTurbine. `getTotalPower("MW")`, `getOverallEfficiency()`, `toJson()`.                                                                                                       |
-| `SimulationQualityGate` | `util.agentic`                                    | Automated QA gate for ProcessSystem validation: physical bounds (T > 0 K, P > 0), stream consistency (no NaN/Inf), composition normalization. Returns JSON report with issues, severity, and remediation hints. |
-
-### New Skills (5)
-
-`neqsim-eos-regression`, `neqsim-reaction-engineering`, `neqsim-dynamic-simulation`,
-`neqsim-distillation-design`, `neqsim-electrolyte-systems`.
-
-### New Agents (3)
-
-`reaction.engineering`, `control.system`, `emissions.environmental`.
-
-### Usage â€” PinchAnalysis
-
-```java
-PinchAnalysis pinch = new PinchAnalysis(10.0); // deltaT_min = 10 C
-pinch.addHotStream("H1", 180, 80, 30);   // 180â†’80 C, MCp=30 kW/K
-pinch.addColdStream("C1", 30, 140, 20);  // 30â†’140 C, MCp=20 kW/K
-pinch.run();
-double Qh = pinch.getMinimumHeatingUtility();  // kW
-double Qc = pinch.getMinimumCoolingUtility();   // kW
-double Tpinch = pinch.getPinchTemperatureC();   // Â°C
-String json = pinch.toJson();
-```
-
-### Usage â€” SimulationQualityGate
-
-```java
-ProcessSystem process = new ProcessSystem();
-// ... build and run process ...
-process.run();
-SimulationQualityGate gate = new SimulationQualityGate(process);
-gate.validate();
-if (!gate.isPassed()) {
-    System.out.println(gate.toJson());
-}
-```
-
-### Usage â€” CombinedCycleSystem
-
-```java
-CombinedCycleSystem cc = new CombinedCycleSystem("CC-1", fuelGasStream);
-cc.setCombustionPressure(15.0);
-cc.setSteamPressure(40.0);
-cc.setSteamTemperature(400.0, "C");
-cc.setSteamTurbineEfficiency(0.85);
-cc.run();
-double totalMW = cc.getTotalPower("MW");
-double efficiency = cc.getOverallEfficiency();
-```
-
----
-
-## 2026-03-31 â€” GibbsReactor Jacobian Fix & Solver Performance Improvements
-
-### Bug Fix â€” RT-Corrected Off-Diagonal Jacobian (Always On)
-
-The off-diagonal entries of the Newton-Raphson Jacobian were missing an `RT`
-factor. The corrected formula `RT * (-1/n_total + d ln(Ï†)/dn)` is now the only
-code path â€” the legacy formula has been removed. This fixes convergence issues
-for adiabatic and mixed-phase equilibrium. No user action needed (previously
-required `setUseConsistentOffDiagonal(true)` which is now a deprecated no-op).
-
-### Performance Improvements
-
-Four algorithmic improvements to the Newton-Raphson solver in `GibbsReactor`:
-
-1. **LU decomposition replaces explicit matrix inverse** â€” The Newton linear
-   system $J \cdot \Delta x = -F$ is now solved via EJML's `solve()` (LU
-   decomposition) instead of computing $J^{-1}$ then multiplying. ~3Ã— faster
-   and more numerically stable. Falls back to pseudo-inverse if LU fails.
-
-2. **Removed SVD condition number check** â€” The per-iteration `conditionP2()`
-   call (O(nÂ³) SVD) has been removed from the hot path. The legacy
-   `calculateJacobianInverse()` method is kept for backward compatibility but
-   is only used as a fallback.
-
-3. **NASA CEA-style adaptive step sizing** â€” New opt-in feature via
-   `setUseAdaptiveStepSize(true)`. Computes step size each iteration to limit
-   max relative mole change (factor of ~5Ã—). Skips near-zero components so
-   they can grow freely. Prevents negative moles.
-
-4. **Configurable minimum iterations** â€” `setMinIterations(int n)` replaces the
-   hardcoded `iteration >= 100` convergence guard. Default unchanged at 100 for
-   backward compatibility. Set to 3 for simple isothermal systems.
-
-### New Methods on `GibbsReactor`
-
-| Method                            | Default | Description                             |
-| --------------------------------- | ------- | --------------------------------------- |
-| `setMinIterations(int)`           | 100     | Min iterations before convergence check |
-| `getMinIterations()`              | â€”       | Get current minimum iterations          |
-| `setUseAdaptiveStepSize(boolean)` | false   | Enable adaptive step sizing             |
-| `isUseAdaptiveStepSize()`         | â€”       | Check if adaptive step sizing is active |
-
-### Deprecated Methods on `GibbsReactor`
-
-| Method                                 | Notes                                  |
-| -------------------------------------- | -------------------------------------- |
-| `setUseConsistentOffDiagonal(boolean)` | No-op. RT correction is always active. |
-| `isUseConsistentOffDiagonal()`         | Always returns `true`.                 |
-
-### Migration Notes
-
-- **No breaking changes** â€” all defaults preserved, existing code runs identically.
-- `setUseConsistentOffDiagonal(true)` calls still compile but are no-ops.
-- To opt into faster convergence for isothermal systems:
-  ```java
-  reactor.setUseAdaptiveStepSize(true);
-  reactor.setMinIterations(3);
-  ```
-- The internal method `solveNewtonSystem(double[])` is private â€” no public API change.
-
----
-
-## 2026-03-30 â€” Serialization Cleanup & ProcessLogic Extends Serializable
-
-### Breaking Change â€” `ProcessLogic` now extends `Serializable`
-
-- **`ProcessLogic`** (`process.logic.ProcessLogic`) now extends `java.io.Serializable`.
-  This was required to eliminate the last SpotBugs SE_BAD_FIELD warning caused by
-  a compiler-generated synthetic field in `AlarmActionHandler`'s anonymous inner class
-  that captured a `ProcessLogic` reference.
-- Any class implementing `ProcessLogic` is now implicitly `Serializable`.
-- Non-serializable fields in `ProcessLogic` implementations (`ESDLogic`, `HIPPSLogic`,
-  `ShutdownLogic`, `StartupLogic`, `SafetyInstrumentedFunction`) have been marked
-  `transient`.
-
-### Serialization Audit â€” 56 SE_BAD_FIELD Warnings Fixed
-
-All SpotBugs SE_BAD_FIELD warnings have been resolved by adding `transient` to
-non-serializable fields across 40+ classes. Categories fixed:
-
-- **Thermo phases**: `doubleW[]`, `doubleW[][]`, GERG EOS objects in phase classes
-- **Database classes**: JDBC `Connection` and `Statement` fields (6 database classes)
-- **Process equipment**: Inner class types (`NetworkNode`, `GibbsComponent`,
-  `ReservoirLayer`, `ValveSkid`, `UmbilicalElement`, `TransientWallHeatTransfer`, etc.)
-- **Functional interfaces**: `Function`, `BiConsumer`, `Consumer` fields in
-  `Adjuster`, `SetPoint`, `Calculator`, `SpreadsheetBlock`, `EquipmentStateAdapter`,
-  `BatchStudy`, `SensitivityAnalysis`, `ProcessSafetyScenario`
-- **Util/optimizer**: `ProductionOptimizer`, `ProcessLinearizer`, `ProgressCallback`
-- **Mechanical design**: `SubseaCostEstimator`, `ShellAndTubeDesignCalculator`,
-  `TorgManager`, `MechanicalDesignDataSource`
-- **Standards**: Apache Commons Math interpolators in `Standard_ISO6578`
-- **Core**: `Thread` in `ThermodynamicOperations`, `BicubicInterpolator` in
-  `OLGApropertyTableGeneratorWater`
-
-**Pattern for new code:** When adding fields to any class that extends
-`ProcessEquipmentBaseClass`, `MeasurementDeviceBaseClass`, `MechanicalDesign`,
-or any other `Serializable` class, mark non-serializable fields `transient`:
-
-```java
-// Correct modifier order:
-private transient MyNonSerializableType field;
-private final transient List<NonSerializableInner> items = new ArrayList<>();
-transient SomeType packagePrivateField;  // package-private
-```
-
-**Agents/skills updated:** `neqsim-java8-rules/SKILL.md`, `copilot-instructions.md`.
-
----
-
-## 2026-03-27 â€” UniSimToNeqSim Python Code Generation
-
-### New Method â€” `to_python()` on `UniSimToNeqSim`
-
-- **`UniSimToNeqSim.to_python(include_subflowsheets=True)`** generates a self-contained,
-  **human-readable Python script** that recreates the entire UniSim process using
-  explicit `jneqsim` API calls â€” instead of the opaque JSON intermediate format.
-- The generated script includes: all imports, fluid/EOS definition with components,
-  feed streams with T/P/flow, every equipment item in topological order wired through
-  outlet stream references (`getGasOutStream()`, `getLiquidOutStream()`,
-  `getSplitStream(int)`, `getOutletStream()`), and `process.run()`.
-- Handles all supported equipment types: Separator, ThreePhaseSeparator, Mixer,
-  Splitter, Compressor, ThrottlingValve, Cooler, Heater, HeatExchanger, Pump,
-  Expander, AdiabaticPipe, Recycle, DistillationColumn, StreamSaturatorUtil.
-- Sanitizes variable names (spaces, hyphens, special chars â†’ underscores; numeric
-  prefixes get `_` prefix; uniqueness guaranteed).
-- Located in `devtools/unisim_reader.py`.
-
-**Usage:**
-```python
-from devtools.unisim_reader import UniSimReader, UniSimToNeqSim
-
-reader = UniSimReader(visible=False)
-model = reader.read(r"path\to\file.usc")
-reader.close()
-
-converter = UniSimToNeqSim(model)
-python_code = converter.to_python()
-
-with open("my_process.py", "w") as f:
-    f.write(python_code)
-```
-
-**Agents/skills updated:** `unisim.reader.agent.md`, `neqsim-unisim-reader/SKILL.md`,
-`PR_DESCRIPTION_PROCESS_EXTRACTION.md`, `devtools/README.md`.
-
----
-
-## 2026-03-27 â€” Distillation Column Internals, Air Cooler, PVF Flash, Amine Framework
-
-### New Classes â€” Distillation Internals
-
-- **`PackedColumn`** (`process.equipment.distillation`) â€” Extends `DistillationColumn`
-  for packed absorption/distillation columns (absorbers, strippers, contactors).
-  Wraps rigorous VLE column solver and adds packing-specific functionality:
-  - HETP calculation from packed bed height
-  - Packing hydraulics via `PackingHydraulicsCalculator`
-  - Built-in presets (Pall Ring, Mellapak, IMTP, etc.)
-  - API: `setPackedHeight()`, `setPackingType()`, `setStructuredPacking()`,
-    `addSolventStream()`, `getHETP()`, `getPercentFlood()`, `toJson()`
-
-- **`ShortcutDistillationColumn`** (`process.equipment.distillation`) â€” Rapid conceptual
-  design using Fenske-Underwood-Gilliland (FUG) method:
-  - Fenske: minimum stages from relative volatility
-  - Underwood: minimum reflux ratio
-  - Gilliland: actual stages (Molokanov correlation)
-  - Kirkbride: optimal feed tray location
-  - API: `setLightKey()`, `setHeavyKey()`, `setLightKeyRecoveryDistillate()`,
-    `setRefluxRatioMultiplier()`, `getMinimumNumberOfStages()`,
-    `getActualRefluxRatio()`, `getResultsJson()`
-
-- **`ColumnInternalsDesigner`** (`process.equipment.distillation.internals`) â€” High-level
-  internals sizing facade. Evaluates hydraulic performance on every tray of a converged
-  `DistillationColumn`, identifies controlling tray, sizes column diameter.
-  Supports tray (sieve, valve, bubble-cap) and packed modes.
-  API: `calculate()`, `getRequiredDiameter()`, `isDesignOk()`, `toJson()`
-
-- **`TrayHydraulicsCalculator`** (`process.equipment.distillation.internals`) â€” Per-tray
-  hydraulic evaluation for sieve, valve, and bubble-cap trays. Correlations: Fair
-  (flooding, entrainment), Sinnott (weeping), Francis weir (downcomer backup),
-  O'Connell (tray efficiency). References: Kister (1992), Ludwig (2001), Sinnott (2005).
-
-- **`PackingHydraulicsCalculator`** (`process.equipment.distillation.internals`) â€” Packing
-  hydraulics engine with Eckert GPDC (flooding), Leva (pressure drop), Onda 1968
-  (mass transfer coefficients), HTU/HETP. Built-in presets for 10 random packings
-  and 7 structured packings (Mellapak 125Yâ€“500Y, Flexipac 1Yâ€“3Y).
-
-### New Class â€” AirCooler Rewrite
-
-- **`AirCooler`** (`process.equipment.heatexchanger`) â€” Complete rewrite from simple
-  air flow calculator to full API 661 thermal design model (~960 lines):
-  - Briggs-Young fin-tube correlation for air-side HTC
-  - Schmidt annular fin efficiency
-  - Robinson-Briggs air-side pressure drop
-  - LMTD with F-correction for cross-flow
-  - Fan model with cubic polynomial fan curve (dP vs Q)
-  - Ambient temperature correction (ITD ratio method)
-  - Bundle sizing (tubes per row, total tubes, face area, fin area)
-  - Comprehensive `toJson()` report
-  - API: `setDesignAmbientTemperature(T, "C")`, `setNumberOfTubeRows()`,
-    `setTubeLength()`, `getFanPower("kW")`, `getOverallU()`, `toJson()`
-
-### New Class â€” PVF Flash
-
-- **`PVFflash`** (`thermodynamicoperations.flashops`) â€” Pressure-Vapor Fraction flash.
-  Given P + target vapor fraction Î² â†’ find temperature. Uses Illinois method
-  (accelerated regula falsi). Integrated into `ThermodynamicOperations` via
-  `ops.PVFflash(beta)`. Î²=0.0 â†’ bubble point, Î²=1.0 â†’ dew point.
-
-### New Classes â€” Amine Framework
-
-- **`AmineSystem`** (`thermo.util.amines`) â€” Convenience wrapper for creating
-  electrolyte-CPA amine systems. Supports MEA, DEA, MDEA, aMDEA. Auto-configures
-  species (neutral + ionic + carbamate), mixing rules, reactions, physical properties.
-  - Enum: `AmineType` (`MEA`, `DEA`, `MDEA`, `AMDEA`)
-  - API: `new AmineSystem(AmineType, T_K, P_bara, amineMolFraction, co2Loading)`,
-    `getSystem()`, `getAmineType()`
-
-- **`AmineViscosity`** (`physicalproperties.methods.liquidphysicalproperties.viscosity`) â€”
-  Correlations for COâ‚‚-loaded amine solution viscosity:
-  - Weiland et al. (1998) for MEA, DEA, aMDEA
-  - Teng et al. (1994) for MDEA
-  - Auto-detects amine type from fluid composition
-
-### Updated Classes
-
-- **`DistillationColumn`** â€” Column specification framework with `ColumnSpecification`,
-  secant-method outer adjustment loop (+531 lines)
-
-- **`ProcessSystem`** â€” Three new UniSim/HYSYS-style stream summary methods:
-  - `getStreamSummaryTable()` â€” formatted text table with T, P, flow, composition
-  - `getStreamSummaryJson()` â€” JSON output for programmatic access
-  - `getAllStreams()` â€” collects all unique `StreamInterface` objects
-
-- **`ThermodynamicOperations`** â€” Added `PVFflash(double vaporFraction)` entry point
-
-- **`ThermalDesignCalculator`** â€” Added `toJson()` method for JSON reporting
-
-### New Database Entries
-
-- **COMP.csv**: MEA+ (ID 1259, charge=+1) and MEACOO- (ID 1260, charge=-1)
-- **REACTIONDATA.csv**: MEA/DEA equilibrium reactions (Austgen 1989)
-- **STOCCOEFDATA.csv**: Updated stoichiometric coefficients for amine reactions
-
-### Usage Examples
-
-```java
-// Packed column absorber
-PackedColumn absorber = new PackedColumn("CO2 Absorber", 10, feed);
-absorber.setPackedHeight(15.0);
-absorber.setPackingType("Mellapak 250Y");
-absorber.setStructuredPacking(true);
-absorber.addSolventStream(leanAmine, 1);
-absorber.run();
-
-// Shortcut design
-ShortcutDistillationColumn shortcut = new ShortcutDistillationColumn("Deprop", feed);
-shortcut.setLightKey("propane");
-shortcut.setHeavyKey("n-butane");
-shortcut.setLightKeyRecoveryDistillate(0.98);
-shortcut.setHeavyKeyRecoveryDistillate(0.02);
-shortcut.run();
-
-// Air cooler
-AirCooler cooler = new AirCooler("Gas Cooler", hotStream);
-cooler.setOutTemperature(40.0, "C");
-cooler.setDesignAmbientTemperature(15.0, "C");
-cooler.run();
-double fanPower = cooler.getFanPower("kW");
-
-// PVF flash
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.PVFflash(0.5);  // Find T where Î² = 0.5
-
-// Amine system
-AmineSystem amine = new AmineSystem(AmineSystem.AmineType.MEA,
-    273.15 + 40.0, 1.0, 0.30, 0.40);
-SystemInterface fluid = amine.getSystem();
-
-// Stream summary
-process.run();
-System.out.println(process.getStreamSummaryTable());
-String json = process.getStreamSummaryJson();
-```
-
-### New Tests
-
-| Test                              | Methods                                                              |
-| --------------------------------- | -------------------------------------------------------------------- |
-| `PackedColumnTest`                | 4 tests: basic absorber, setters/getters, condenser/reboiler, JSON   |
-| `ShortcutDistillationColumnTest`  | 3 tests: deethanizer, depropanizer, JSON                             |
-| `ColumnInternalsDesignerTest`     | 4 tests: sieve tray, convenience, packed, structured                 |
-| `PackingHydraulicsCalculatorTest` | 6 tests: Pall Ring, structured, diameter, presets, mass transfer, dP |
-| `TrayHydraulicsCalculatorTest`    | 6 tests: sieve, diameter, valve, liquid rate, weeping, O'Connell     |
-| `ProcessSystemStreamSummaryTest`  | 3 tests: text table, JSON, getAllStreams                             |
-| `PVFflashTest`                    | 4 tests: mid-fraction, bubble point, dew point, consistency          |
-| `AirCoolerTest`                   | 14 new tests: LMTD, U, fin efficiency, fan, bundle, ITD, JSON        |
-| `ColumnSpecificationTest`         | Column spec purity/recovery/flow rate tests                          |
-
-### New Documentation
-
-- `docs/development/NEQSIM_VS_UNISIM_COMPARISON.md` â€” NeqSim vs UniSim feature comparison
-- `docs/process/process-simulation-enhancements.md` â€” User guide for all new capabilities
-- `examples/notebooks/air_cooler_and_packed_column.ipynb` â€” Jupyter notebook example
-
-### Agents/Skills to Update
-
-- `neqsim-capability-map` â€” Add PackedColumn, ShortcutDistillationColumn, ColumnInternalsDesigner,
-  TrayHydraulicsCalculator, PackingHydraulicsCalculator, PVFflash, AmineSystem, AirCooler
-- `neqsim-api-patterns` â€” Add packed column, shortcut distillation, air cooler, PVF flash,
-  amine system, stream summary patterns
-- `CONTEXT.md` â€” Add distillation internals, amine framework to repo map
-- `docs/development/CODE_PATTERNS.md` â€” Add packed column, shortcut, air cooler, amine patterns
-
----
-
-## 2026-03-27 â€” Column Specification Flexibility
-
-### New Classes
-
-- **`ColumnSpecification`** (`process.equipment.distillation`) â€” Represents one
-  degree-of-freedom specification for a distillation column. Five specification
-  types via `SpecificationType` enum:
-  - `PRODUCT_PURITY` â€” mole-fraction purity target for a product stream
-  - `REFLUX_RATIO` â€” condenser reflux ratio (L/D)
-  - `COMPONENT_RECOVERY` â€” fractional recovery of a named component (0â€“1)
-  - `PRODUCT_FLOW_RATE` â€” molar flow rate target (kmol/h)
-  - `DUTY` â€” condenser or reboiler duty (W)
-  - `ProductLocation` enum: `TOP`, `BOTTOM`
-  - Configurable tolerance (default 1e-4) and max iterations (default 20)
-  - Full input validation, serializable
-
-### Updated Classes
-
-- **`DistillationColumn`** â€” Integrated `ColumnSpecification` support:
-  - New convenience methods: `setTopProductPurity(component, target)`,
-    `setBottomProductPurity(component, target)`, `setCondenserRefluxRatio(ratio)`,
-    `setReboilerBoilupRatio(ratio)`, `setTopComponentRecovery(component, fraction)`,
-    `setBottomComponentRecovery(component, fraction)`, `setTopProductFlowRate(rate)`,
-    `setBottomProductFlowRate(rate)`, `getTopSpecification()`, `getBottomSpecification()`
-  - Outer secant-method adjustment loop (`solveWithSpecifications()`) iterates
-    condenser/reboiler temperatures to satisfy purity, recovery, or flow-rate specs.
-    Safeguards: max step 50 K, temperature bounds 100â€“1000 K.
-  - Direct-set specs (reflux ratio, duty) applied before inner solve without outer loop.
-  - Builder pattern extended: `topSpecification()`, `bottomSpecification()`,
-    `topProductPurity()`, `bottomProductPurity()` methods.
-
-### Usage
-
-```java
-// Product purity specification
-DistillationColumn column = new DistillationColumn("T-100", 25, true, true);
-column.addFeedStream(feed, 12);
-column.setTopPressure(25.0, "bara");
-column.setTopProductPurity("ethane", 0.95);      // 95 mol% ethane overhead
-column.setBottomProductPurity("propane", 0.98);   // 98 mol% propane bottoms
-column.run();
-
-// Component recovery specification
-column.setTopComponentRecovery("ethane", 0.99);   // 99% ethane recovery overhead
-column.run();
-
-// Reflux ratio specification (applied directly, no outer loop)
-column.setCondenserRefluxRatio(3.5);
-column.run();
-
-// Builder pattern with specs
-DistillationColumn col = DistillationColumn.builder()
-    .name("Deethanizer")
-    .numberOfTrays(25)
-    .hasCondenser(true)
-    .hasReboiler(true)
-    .topPressure(25.0)
-    .topProductPurity("ethane", 0.95)
-    .bottomProductPurity("propane", 0.98)
-    .build();
-```
-
-### Agents/Skills to Update
-
-- `neqsim-api-patterns` â€” Add column specification pattern
-- `docs/process/equipment/distillation.md` â€” Add Column Specifications section
-- `docs/development/CODE_PATTERNS.md` â€” Add distillation specification pattern
-
----
-
-## 2026-03-26 â€” Heat Exchanger Thermal-Hydraulic Design Toolkit
-
-### New Classes
-
-- **`ThermalDesignCalculator`** (`process.mechanicaldesign.heatexchanger`) â€” Central
-  calculator for tube-side and shell-side heat transfer coefficients, overall U,
-  pressure drops, and zone-by-zone analysis. Supports Gnielinski (tube-side) and
-  Kern or Bell-Delaware (shell-side) methods.
-  - Inner enum: `ShellSideMethod` (`KERN`, `BELL_DELAWARE`)
-
-- **`BellDelawareMethod`** (`process.mechanicaldesign.heatexchanger`) â€” Static utility
-  for industry-standard Bell-Delaware shell-side HTC and pressure drop with J-factor
-  correction factors (Jc, Jl, Jb, Js, Jr) and Zhukauskas correlation for tube banks.
-
-- **`VibrationAnalysis`** (`process.mechanicaldesign.heatexchanger`) â€” Flow-induced
-  vibration screening per TEMA RCB-4.6. Evaluates vortex shedding (Von Karman),
-  fluid-elastic instability (Connors), and acoustic resonance.
-  - Inner class: `VibrationResult` with pass/fail, natural frequency, critical velocity
-
-- **`LMTDcorrectionFactor`** (`process.mechanicaldesign.heatexchanger`) â€” LMTD correction
-  factor F_t for multi-pass configurations using Bowman-Mueller-Nagle (1940) method.
-  Supports 1-N shell passes, calculates R and P parameters, recommends minimum shell
-  passes needed.
-
-- **`InterfacialFriction`** (`process.equipment.pipeline.twophasepipe.closure`) â€”
-  Interfacial friction correlations for two-fluid pipe model. Flow regime-dependent:
-  Taitel-Dukler (stratified smooth), Andritsos-Hanratty (stratified wavy), Wallis
-  (annular), Oliemans (slug).
-  - Inner class: `InterfacialFrictionResult` with shear, friction factor, slip velocity
-
-### Updated Classes
-
-- **`ShellAndTubeDesignCalculator`** â€” Major expansion: now includes ASME VIII Div.1
-  pressure design (UHX-13 tubesheet, UG-27 MAWP, UG-37 nozzle reinforcement, UG-99
-  hydro test), NACE MR0175/ISO 15156 sour service assessment, thermal-hydraulic
-  integration (auto-runs `ThermalDesignCalculator` + `VibrationAnalysis` when fluid
-  properties are provided), weight/cost estimation with Bill of Materials.
-
-- **`HeatExchangerMechanicalDesign`** â€” New high-level orchestrator auto-selecting
-  exchanger type (shell-and-tube, plate, air-cooled) based on configurable criteria
-  (`MIN_AREA`, `MIN_WEIGHT`, `MIN_PRESSURE_DROP`). Handles TEMA class (R/C/B),
-  shell types (E/F/G/H/J/K/X), fouling resistances, velocity limits, materials,
-  and NACE sour service.
-
-- **`HeatExchanger`** â€” Added `getRatingCalculator()` returning `ThermalDesignCalculator`
-  for rating mode. Added `getThermalEffectiveness()` and `calcThermalEffectivenes(NTU, Cr)`.
-
-- **`TwoFluidPipe`** â€” Enhanced with boundary condition API (STREAM_CONNECTED,
-  CONSTANT_FLOW, CONSTANT_PRESSURE, CLOSED), elevation profile support, temperature
-  profile output (K and Â°C), liquid inventory calculation, cooldown time estimation.
-
-- **`TwoFluidConservationEquations`** â€” Extended to 7 conservation equations for
-  three-phase (gas/oil/water) with separate oil and water momentum. Uses AUSM+ flux
-  scheme and MUSCL reconstruction.
-
-- **`Pump`** â€” Added pump curve support with affinity law scaling, cavitation detection
-  (NPSH available vs required), operating status monitoring, outlet temperature mode.
-
-### Usage
-
-```java
-// Standalone thermal design
-ThermalDesignCalculator calc = new ThermalDesignCalculator();
-calc.setTubeODm(0.01905);
-calc.setTubeIDm(0.01483);
-calc.setTubeLengthm(6.0);
-calc.setTubeCount(200);
-calc.setTubePasses(2);
-calc.setTubePitchm(0.0254);
-calc.setTriangularPitch(true);
-calc.setShellIDm(0.489);
-calc.setBaffleSpacingm(0.15);
-calc.setBaffleCount(30);
-calc.setBaffleCut(0.25);
-calc.setTubeSideFluid(995.0, 0.0008, 4180.0, 0.62, 5.0, true);
-calc.setShellSideFluid(820.0, 0.003, 2200.0, 0.13, 8.0);
-calc.setShellSideMethod(ThermalDesignCalculator.ShellSideMethod.BELL_DELAWARE);
-calc.calculate();
-String json = calc.toJson();
-
-// Vibration screening
-VibrationAnalysis.VibrationResult result = VibrationAnalysis.performScreening(
-    tubeOD, tubeID, unsupportedSpan, tubeMaterialE, tubeDensity,
-    fluidDensityTube, fluidDensityShell, endCondition,
-    crossflowVelocity, tubePitch, triangularPitch, shellID, sonicVelocity
-);
-boolean safe = result.passed;
-
-// LMTD correction factor
-double ft = LMTDcorrectionFactor.calcFt(tHotIn, tHotOut, tColdIn, tColdOut, shellPasses);
-int minShells = LMTDcorrectionFactor.requiredShellPasses(tHotIn, tHotOut, tColdIn, tColdOut);
-
-// Full mechanical design with thermal-hydraulic
-ShellAndTubeDesignCalculator stCalc = new ShellAndTubeDesignCalculator();
-stCalc.setTubeSideFluidProperties(density, viscosity, cp, k, massFlow, isHeating);
-stCalc.setShellSideFluidProperties(density, viscosity, cp, k, massFlow);
-stCalc.calculate();  // runs mech + thermal + vibration
-String report = stCalc.toJson();
-```
-
-### Agents/Skills to Update
-
-- `neqsim-capability-map` â€” Add ThermalDesignCalculator, BellDelawareMethod, VibrationAnalysis, LMTDcorrectionFactor, InterfacialFriction
-- `neqsim-api-patterns` â€” Add HX thermal design pattern
-- `CONTEXT.md` â€” Add HX thermal design to repo map
-- `docs/REFERENCE_MANUAL_INDEX.md` â€” Add thermal_hydraulic_design.md entry
-
----
-
-## 2026-03-26 â€” InstrumentScheduleGenerator and Updated Engineering Deliverables
-
-### New Classes
-
-- **`InstrumentScheduleGenerator`** (`process.mechanicaldesign`) â€” ISA-5.1 tagged
-  instrument schedule generator that bridges engineering deliverables and dynamic
-  simulation. Walks a `ProcessSystem`, creates `MeasurementDeviceInterface` objects
-  (PT, TT, LT, FT) with `AlarmConfig` (HH/H/L/LL thresholds) and SIL ratings.
-  With `setRegisterOnProcess(true)`, live devices are registered on the ProcessSystem.
-
-### Updated Classes
-
-- **`StudyClass`** â€” Added `INSTRUMENT_SCHEDULE` to `DeliverableType` enum.
-  CLASS_A now produces 7 deliverables (was 6), CLASS_B produces 4 (was 3).
-- **`EngineeringDeliverablesPackage`** â€” Added `generateInstrumentSchedule()` and
-  `getInstrumentSchedule()`. The `INSTRUMENT_SCHEDULE` case is handled in `generate()`.
-
-### StudyClass Deliverable Counts (IMPORTANT for tests)
-
-| Study Class | Count | Deliverables                                                       |
-| ----------- | ----- | ------------------------------------------------------------------ |
-| CLASS_A     | 7     | PFD, Thermal, Alarm/Trip, Spares, Fire, Noise, Instrument Schedule |
-| CLASS_B     | 4     | PFD, Thermal, Fire, Instrument Schedule                            |
-| CLASS_C     | 1     | PFD                                                                |
-
-### Usage
-
-```java
-InstrumentScheduleGenerator gen = new InstrumentScheduleGenerator(process);
-gen.setRegisterOnProcess(true);  // creates live MeasurementDevice objects
-gen.generate();
-List<InstrumentScheduleGenerator.InstrumentEntry> entries = gen.getEntries();
-String json = gen.toJson();
-
-// Through package
-EngineeringDeliverablesPackage pkg =
-    new EngineeringDeliverablesPackage(process, StudyClass.CLASS_A);
-pkg.generate();  // includes instrument schedule
-InstrumentScheduleGenerator instrSchedule = pkg.getInstrumentSchedule();
-```
-
-### Agents/Skills Updated
-
-- `neqsim-capability-map` SKILL â€” Expanded Measurement Devices table, added Engineering Deliverables subsection
-- `neqsim-api-patterns` SKILL â€” Added Engineering Deliverables section with instrument schedule pattern
-- `engineering.deliverables.agent.md` â€” Added instrument schedule deliverable section and code examples
-- `field.development.agent.md` â€” Added item 17 (instrument schedule), updated StudyClass table and class map
-- `AGENTS.md` â€” Updated key paths table
-- `CONTEXT.md` â€” Updated repo map and key locations table
-
----
-
-## 2026-03-25 â€” TwoFluidPipe Boundary Condition API
-
-### New API
-
-Added public setters for configuring inlet and outlet boundary conditions during
-transient `TwoFluidPipe` simulations. Includes CLOSED BC for shut-in/surge scenarios.
-
-### New Methods
-
-```java
-// Set boundary condition types
-pipe.setInletBoundaryCondition(BoundaryCondition.STREAM_CONNECTED);  // default
-pipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_FLOW);
-pipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_PRESSURE);
-pipe.setInletBoundaryCondition(BoundaryCondition.CLOSED);            // NEW: blocked
-pipe.setOutletBoundaryCondition(BoundaryCondition.CONSTANT_PRESSURE); // default
-pipe.setOutletBoundaryCondition(BoundaryCondition.CLOSED);            // NEW: blocked
-
-// Query boundary condition types
-BoundaryCondition inletBC = pipe.getInletBoundaryCondition();
-BoundaryCondition outletBC = pipe.getOutletBoundaryCondition();
-
-// Set explicit values for CONSTANT_FLOW / CONSTANT_PRESSURE BCs
-pipe.setInletMassFlow(50.0);             // kg/s
-pipe.setInletMassFlow(180000, "kg/hr");  // with unit
-pipe.setInletPressure(60.0, "bara");     // with unit
-
-// Convenience methods for shut-in scenarios
-pipe.closeOutlet();                       // Set outlet BC to CLOSED
-pipe.openOutlet();                        // Restore to CONSTANT_PRESSURE
-pipe.openOutlet(30.0, "bara");            // Open with specified pressure
-pipe.closeInlet();                        // Set inlet BC to CLOSED
-pipe.openInlet();                         // Restore to STREAM_CONNECTED
-boolean closed = pipe.isOutletClosed();   // Check if outlet is blocked
-boolean closed = pipe.isInletClosed();    // Check if inlet is blocked
-```
-
-### Boundary Condition Types
-
-| Type                | Description                                                     |
-| ------------------- | --------------------------------------------------------------- |
-| `STREAM_CONNECTED`  | Flow rate, T, composition from connected stream (default inlet) |
-| `CONSTANT_FLOW`     | Fixed mass flow via `setInletMassFlow()`                        |
-| `CONSTANT_PRESSURE` | Fixed pressure (default outlet, optional inlet)                 |
-| `CLOSED`            | Zero velocity (blocked/shut-in) â€” pressure floats               |
-
-### Common Configurations
-
-| Config        | Inlet BC          | Outlet BC         | Inlet P  | Flow        |
-| ------------- | ----------------- | ----------------- | -------- | ----------- |
-| Default       | STREAM_CONNECTED  | CONSTANT_PRESSURE | Computed | From stream |
-| Explicit flow | CONSTANT_FLOW     | CONSTANT_PRESSURE | Computed | Fixed       |
-| Both P fixed  | CONSTANT_PRESSURE | CONSTANT_PRESSURE | Fixed    | Computed    |
-| Shut-in       | STREAM_CONNECTED  | CLOSED            | Computed | From stream |
-| Blowdown      | CLOSED            | CONSTANT_PRESSURE | Floats   | Zero        |
-| Blocked pipe  | CLOSED            | CLOSED            | Floats   | Zero        |
-
-### Python Usage
-
-```python
-TwoFluidPipe = jneqsim.process.equipment.pipeline.TwoFluidPipe
-BoundaryCondition = TwoFluidPipe.BoundaryCondition
-
-pipe = TwoFluidPipe("Pipeline", feed)
-pipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_FLOW)
-pipe.setInletMassFlow(50.0)
-pipe.setOutletPressure(30.0, "bara")
-
-# Shut-in scenario
-pipe.closeOutlet()
-for t in range(60):
-    pipe.runTransient(1.0)
-pipe.openOutlet(30.0, "bara")  # Reopen
-```
-
-### Documentation
-
-- Updated [Pipeline Recipes](docs/cookbook/pipeline-recipes.md) with Boundary Conditions section
-
-### Migration
-
-No breaking changes. Existing code using default BCs continues to work unchanged.
-
----
-
-## 2026-06-18 â€” TwoFluidPipe Transient & Pressure Gradient Improvements
-
-### Bug Fixes
-
-- **Transient inlet pressure override (FIXED):** `applyBoundaryConditions()` was
-  overwriting the inlet pressure from the stream during transient runs, preventing
-  the pressure profile from evolving. Added `isTransientMode` boolean flag; when
-  `true` (set automatically by `runTransient()`), inlet pressure comes from
-  `reconstructPressureProfile()` (backward march from fixed outlet BC) instead of
-  from the inlet stream.
-
-- **Outlet pressure captured before convergence (FIXED):** `outletPressure` was
-  being captured before `runSteadyState()` converged, recording the initial guess
-  (~54 bar) rather than the converged value (~59 bar). Now captured after
-  steady-state convergence.
-
-### Updated Files
-
-- **`TwoFluidPipe.java`** (`process.equipment.pipeline`):
-  - New field: `private boolean isTransientMode = false;`
-  - New method: `reconstructPressureProfile()` â€” backward marches from fixed outlet
-    boundary condition to compute inlet pressure from the local pressure gradient.
-  - New method: `calcDarcyFrictionFactor(rho, velocity, D, mu)` â€” extracted Haaland
-    equation (turbulent), 64/Re (laminar), linear interpolation (transitional
-    Re 2300â€“4000). Used in `estimatePressureGradient()`.
-  - Updated `estimatePressureGradient()`: replaced holdup-weighted viscosity
-    (`Î±G*Î¼G + Î±L*Î¼L`) with McAdams quality-based harmonic averaging
-    (`1/(x/Î¼G + (1-x)/Î¼L)`) where x is vapor mass fraction. Density remains
-    holdup-weighted (`Î±G*ÏG + Î±L*ÏL`).
-  - Updated `applyBoundaryConditions()`: inlet pressure only set from stream when
-    `!isTransientMode`.
-  - Updated `runTransient()`: sets `isTransientMode = true` at entry, calls
-    `reconstructPressureProfile()` for inlet pressure.
-
-### New Test File
-
-- **`TwoFluidPipeBenchmarkTest.java`** (`test/.../pipeline/`) â€” 19 benchmark tests
-  in 8 categories:
-  1. **SinglePhaseTests** (2): Gas and liquid horizontal flow
-  2. **TwoPhaseHorizontalTests** (3): Gas-dominated, liquid-dominated, intermediate GOR
-  3. **InclinedFlowTests** (3): Uphill 5Â°, downhill 5Â°, vertical riser
-  4. **ThreePhaseTests** (2): Moderate and high water cut
-  5. **ConsistencyTests** (3): dP monotonicity, smooth pressure profile, holdup sum = 1
-  6. **TransientTests** (1): 200 m pipe, 100% flow rate step-change, holdup evolution
-  7. **CrossValidationTests** (1): GLR sweep 0.50â€“0.95 vs PipeBeggsAndBrills
-  8. **LiteratureValidationTests** (4): Moody chart, holdup vs gas velocity, gravity in
-     vertical riser, diameter Dâ»âµ scaling
-
-### Benchmark Results Summary
-
-| Test                       | TwoFluidPipe / BeggsAndBrill | Notes                                |
-| -------------------------- | ---------------------------- | ------------------------------------ |
-| Single-phase gas           | 0.98                         | Excellent agreement                  |
-| Two-phase GLR 0.50â€“0.95    | 0.81â€“1.33                    | Within engineering accuracy          |
-| Vertical riser             | 1.04 bar gravity dP          | Matches ÏgH calculation              |
-| Diameter scaling (6"/12")  | 33.7Ã—                        | Close to theoretical ~32Ã— (Dâ»âµ)      |
-| Transient holdup evolution | 0.19 â†’ 0.09                  | Holdup decreases after flow increase |
-
-### Migration
-
-No breaking API changes. Existing code calling `run()` and `runTransient()` will
-behave identically (steady-state) or more correctly (transient now evolves).
-
----
-
-## 2026-03-24 â€” Field Development Agent and Skills
-
-### New Agent
-
-- **`@field.development`** (`.github/agents/field.development.agent.md`) â€” Expert agent for oil & gas field development workflows: concept selection, subsea tieback, production forecasting, and project economics (NPV/IRR). Orchestrates concept screening through final investment decision.
-
-### New Skills (4)
-
-- **`neqsim-field-development`** â€” Field development lifecycle (DG1â†’Operations), concept selection, reservoir/well/facility API patterns
-- **`neqsim-field-economics`** â€” NPV, IRR, cash flow engines, Norwegian NCS and UK UKCS tax models, cost estimation
-- **`neqsim-subsea-and-wells`** â€” Subsea equipment APIs, well casing design (API 5C3/NORSOK D-010), SURF cost estimation, tieback analysis
-- **`neqsim-production-optimization`** â€” Decline curves, bottleneck analysis, gas lift optimization, IOR/EOR screening, emissions tracking
-
-### Updated Files
-
-- `AGENTS.md` â€” Added field development paths and skills references
-- `CONTEXT.md` â€” Updated agent/skill counts (16 agents, 14 skills)
-- `.github/agents/router.agent.md` â€” Added field development routing
-- `.github/agents/README.md` â€” Added field development section
-- `.github/agents/solve.task.agent.md` â€” Added `@field.development` to delegation table
-- `docs/integration/ai_agents_reference.md` â€” Added agent entry, 4 skill entries, updated cross-reference tables
-- `docs/integration/ai_agentic_programming_intro.md` â€” Updated count and added agent to catalog
-- `docs/integration/ai_workflow_examples.md` â€” Added Example 8: Field Development Concept Selection
-- `docs/fielddevelopment/README.md` â€” Added AI Agent & Skills section
-- `docs/REFERENCE_MANUAL_INDEX.md` â€” Updated description
-
-### Migration
-
-No code changes needed. Use `@field.development` for field development tasks that were previously handled by `@solve.task`.
-
----
-
-## 2026-03-23 â€” CO2 Injection Well Analysis Module (NIP-1 to NIP-6)
-
-### New Classes
-
-- **`CO2InjectionWellAnalyzer`** (`process.equipment.pipeline`) â€” High-level safety orchestrator for CO2 injection wells:
-  - Steady-state wellbore flow via PipeBeggsAndBrills
-  - Phase boundary scanning (P-T space flash grid)
-  - Impurity enrichment mapping in two-phase region
-  - Shutdown safety assessment at various trapped WHPs
-  - Returns `isSafeToOperate()` boolean and comprehensive `getResults()` map
-  - API: `setFluid()`, `setWellGeometry()`, `setOperatingConditions()`, `setFormationTemperature()`, `addTrackedComponent()`, `runFullAnalysis()`
-
-- **`ImpurityMonitor`** (`process.measurementdevice`) â€” Phase-partitioned composition tracking device:
-  - Extends `StreamMeasurementDeviceBaseClass`
-  - Tracks gas/liquid/bulk mole fractions and enrichment factors (K-values = y/z)
-  - Configurable alarm thresholds per component
-  - API: `addTrackedComponent(name, alarmThreshold)`, `getGasPhaseMoleFraction()`, `getEnrichmentFactor()`, `isAlarmExceeded()`, `getFullReport()`
-
-- **`TransientWellbore`** (`process.equipment.pipeline`) â€” Shutdown cooling transient model:
-  - Extends `Pipeline`
-  - Exponential temperature decay toward formation temperature (geothermal gradient)
-  - Vertical segmentation with TP flash at each depth and time step
-  - Tracks phase evolution and impurity enrichment over time
-  - Inner class `TransientSnapshot` stores per-timestep depth profiles
-  - API: `setWellDepth()`, `setFormationTemperature(topK, bottomK)`, `setShutdownCoolingRate(tau_hr)`, `runShutdownSimulation(hours, dt)`
-
-- **`CO2FlowCorrections`** (`process.equipment.pipeline`) â€” Static utility for CO2-specific flow corrections:
-  - `isCO2DominatedFluid()` â€” checks >50 mol% CO2
-  - `getLiquidHoldupCorrectionFactor()` â€” returns 0.70-0.85 based on reduced temperature
-  - `getFrictionCorrectionFactor()` â€” returns 0.85-0.95
-  - `estimateCO2SurfaceTension()` â€” Sugden correlation
-  - `isDensePhase()`, `getReducedTemperature()`, `getReducedPressure()`
-
-### Modified Classes
-
-- **`PipeBeggsAndBrills`** â€” Added formation temperature gradient support (NIP-1):
-  - New method: `setFormationTemperatureGradient(double inletTemp, double gradient, String unit)`
-  - Enables depth-dependent heat transfer with geothermal gradient
-  - Sign convention: negative gradient = temperature increases with depth
-
-### Test Coverage
-
-- 19 tests in `CO2InjectionNIPsTest.java` covering all NIP classes
-
-### Documentation
-
-- New doc: `docs/process/co2_injection_well_analysis.md`
-- Updated: `REFERENCE_MANUAL_INDEX.md`, `docs/process/README.md`
-
----
-
-## 2026-03-22 â€” Motor Mechanical Design and Combined Equipment Design Report
-
-### New Classes
-
-- **`MotorMechanicalDesign`** (`process.mechanicaldesign.motor`) â€” Physical/mechanical design of electric motors:
-  - Foundation loads (static + dynamic) and mass per IEEE 841 (3:1 ratio)
-  - Cooling classification per IEC 60034-6 (IC411/IC611/IC81W)
-  - Bearing selection and L10 life per ISO 281 (ball vs roller, lubrication)
-  - Vibration limits per IEC 60034-14 Grade A and ISO 10816-3 zone classification
-  - Noise assessment per IEC 60034-9 and NORSOK S-002 (83 dB(A) at 1m)
-  - Enclosure/IP rating per IEC 60034-5, Ex marking per IEC 60079 (Zone 0/1/2)
-  - Environmental derating per IEC 60034-1 (altitude: 1%/100m above 1000m; temperature: 2.5%/Â°C above 40Â°C)
-  - Motor weight and dimensional estimation
-  - Constructors: `MotorMechanicalDesign(double shaftPowerKW)`, `MotorMechanicalDesign(ElectricalDesign)`
-
-- **`EquipmentDesignReport`** (`process.mechanicaldesign`) â€” Combined design report for any process equipment:
-  - Orchestrates mechanical design + electrical design + motor mechanical design
-  - Produces FEASIBLE / FEASIBLE_WITH_WARNINGS / NOT_FEASIBLE verdict
-  - Checks: motor undersizing, excessive derating, noise exceedance, low bearing life
-  - `toJson()` â€” comprehensive JSON with all three design disciplines
-  - `toLoadListEntry()` â€” summary for electrical load list integration
-  - Works with any `ProcessEquipmentInterface` (compressor, pump, separator, etc.)
-
-### Key API Methods
-
-```java
-// Motor mechanical design â€” standalone
-MotorMechanicalDesign motorDesign = new MotorMechanicalDesign(250.0);
-motorDesign.setPoles(4);
-motorDesign.setAmbientTemperatureC(45.0);
-motorDesign.setAltitudeM(500.0);
-motorDesign.setHazardousZone(1);
-motorDesign.calcDesign();
-motorDesign.toJson();
-
-// Combined report â€” from any equipment
-EquipmentDesignReport report = new EquipmentDesignReport(compressor);
-report.setUseVFD(true);
-report.setRatedVoltageV(6600);
-report.setHazardousZone(1);
-report.generateReport();
-report.getVerdict();   // "FEASIBLE" / "FEASIBLE_WITH_WARNINGS" / "NOT_FEASIBLE"
-report.toJson();
-```
-
-### Bug Fix
-- Fixed IP rating override in Zone 0 hazardous areas â€” IEEE 841 IP55 minimum no longer overrides Zone 0 IP66 requirement
-
-### Test Coverage
-- 22 new tests in `MotorMechanicalDesignTest`: standalone design, small/large motors, altitude/temperature derating, hazardous area enclosure, vibration zones, NORSOK noise compliance, bearing L10 life, VFD notes, applied standards, compressor integration, JSON/Map output, combined reports
-
-### Documentation
-- New doc: `docs/process/motor-mechanical-design.md`
-- Updated: `REFERENCE_MANUAL_INDEX.md`, capability map, `mechanical_design.md`, `electrical-design.md`
-
----
-
-## 2026-03-22 â€” Heat Exchanger Mechanical Design Standards Expansion
-
-### New Data Files
-- **`HeatExchangerTubeMaterials.csv`** â€” 22 material grades for tubes and shells with
-  SMYS, SMTS, allowable stress, thermal conductivity, NACE compliance, and temperature limits.
-  Covers SA-179, SA-213 (T11/T22/TP304/304L/316/316L/321), duplex/super-duplex, Cu-Ni,
-  titanium, Inconel, Hastelloy, Incoloy, and shell plate materials.
-
-### Standards Database Additions
-| Standard           | Equipment Types             | New Entries                                                                                      |
-| ------------------ | --------------------------- | ------------------------------------------------------------------------------------------------ |
-| API-660 9th Ed     | HeatExchanger               | 21 entries (design margins, velocity limits, hydro test, joint efficiency, vibration)            |
-| API-661 7th Ed     | HeatExchanger/Cooler        | 9 entries (air cooler fins, face velocity, fan efficiency)                                       |
-| API-662 1st Ed     | HeatExchanger               | 10 entries (plate HX gasketed/welded pressure/temp limits)                                       |
-| NORSOK-P-002 Rev 5 | HeatExchanger/Cooler/Heater | 14 entries (duty/area/pressure margins, velocity limits)                                         |
-| NORSOK-M-001 Rev 6 | HeatExchanger/Cooler/Heater | 7 entries (min/max design temp, hardness, H2S limits)                                            |
-| ASME VIII Div.1    | HeatExchanger               | 19 entries (UG-27, UHX-13, UG-37, UG-99, allowable stresses, joint efficiencies, flange ratings) |
-| ISO-16812          | HeatExchanger               | 12 entries (velocity, fouling resistance, baffle cut range)                                      |
-| ISO-15547          | HeatExchanger               | 3 entries (plate-fin aluminium HX)                                                               |
-| EN-13445           | HeatExchanger               | 3 entries (pressure, joint efficiency, corrosion allowance)                                      |
-| PD-5500            | HeatExchanger               | 3 entries (pressure, joint efficiency, corrosion allowance)                                      |
-
-### `ShellAndTubeDesignCalculator` Expanded
-| New Capability                      | Standard                   | Method                                              |
-| ----------------------------------- | -------------------------- | --------------------------------------------------- |
-| Tubesheet thickness per UHX-13      | ASME VIII                  | `calculateTubesheetThicknessUHX()`                  |
-| Nozzle reinforcement per UG-37      | ASME VIII                  | `calculateNozzleReinforcement()`                    |
-| MAWP back-calculation per UG-27     | ASME VIII                  | `calculateMAWP()`                                   |
-| Hydrostatic test pressure per UG-99 | ASME VIII                  | `calculateHydroTestPressure()`                      |
-| Material property lookup from DB    | HeatExchangerTubeMaterials | `loadMaterialProperties()`                          |
-| NACE MR0175 sour service assessment | NACE MR0175 / NORSOK M-001 | `performNACEAssessment()`                           |
-| Shell/tube material grade tracking  | â€”                          | `setShellMaterialGrade()`, `setTubeMaterialGrade()` |
-
-### `HeatExchangerMechanicalDesign` Integration
-- New fields: `shellMaterialGrade`, `tubeMaterialGrade`, `h2sPartialPressure`,
-  `sourServiceAssessment`, `shellJointEfficiency`
-- `calcDesign()` now runs `ShellAndTubeDesignCalculator` with ASME VIII and NACE
-- `getShellAndTubeCalculator()` provides access to detailed calculator results
-- `HeatExchangerMechanicalDesignResponse` updated with MAWP, hydro test, NACE fields
-
-### Migration Notes
-- Existing `calcDesign()` calls work unchanged â€” new calculator runs automatically
-- To access ASME/NACE results: `design.getShellAndTubeCalculator().getMawpShellSide()`
-- For sour service: set `design.setSourServiceAssessment(true)` and `setH2sPartialPressure(pp)`
-- Material grades default to SA-516-70 (shell) and SA-179 (tubes) if not set
-
----
-
-## 2026-03-22 â€” Compressor Casing Mechanical Design (API 617 / ASME VIII)
-
-### New Class
-- **`CompressorCasingDesignCalculator`** â€” Standalone calculator for compressor casing
-  pressure containment design per API 617 and ASME Section VIII Div. 1.
-
-### Capabilities Added
-| Feature                                       | Standard                |
-| --------------------------------------------- | ----------------------- |
-| Casing wall thickness (UG-27 formula)         | ASME VIII Div. 1        |
-| Material selection with SMYS/SMTS (9 grades)  | ASME II Part D          |
-| Temperature derating of allowable stress      | ASME II Part D Table 1A |
-| Nozzle load analysis (force/moment scaling)   | API 617 Table 3         |
-| Flange rating verification with temp derating | ASME B16.5 / B16.47     |
-| Hydrostatic test pressure                     | ASME VIII UG-99         |
-| Corrosion allowance integration               | API 617                 |
-| NACE MR0175 / ISO 15156 sour service check    | NACE MR0175             |
-| Thermal growth & differential expansion       | API 617                 |
-| Split-line bolt sizing (horizontally-split)   | API 617                 |
-| Barrel casing outer/inner/end-cover sizing    | ASME VIII UG-34         |
-| MAWP back-calculation                         | ASME VIII               |
-| Automatic material recommendation             | â€”                       |
-
-### Integration
-- `CompressorMechanicalDesign.calcDesign()` now automatically runs the casing
-  calculator after process sizing and populates
-  `getCasingDesignCalculator()` with results.
-- New configuration methods on `CompressorMechanicalDesign`:
-  `setCasingMaterialGrade(String)`, `setCasingCorrosionAllowanceMm(double)`,
-  `setH2sPartialPressureKPa(double)`.
-- `CompressorMechanicalDesignResponse` includes full casing design data in
-  the `casingDesign` section of JSON output.
-
-### New Data Files
-| File                                       | Content                                       |
-| ------------------------------------------ | --------------------------------------------- |
-| `designdata/CompressorCasingMaterials.csv` | 20 material grades with mechanical properties |
-| `designdata/standards/api_standards.csv`   | +22 API-617 compressor entries                |
-| `designdata/standards/asme_standards.csv`  | +18 ASME VIII / B16.5 compressor entries      |
-
-### Agent Migration
-- When writing compressor casing design code, use `CompressorCasingDesignCalculator`
-  directly or via `comp.getMechanicalDesign().getCasingDesignCalculator()`.
-- For sour service: set `design.setNaceCompliance(true)` and
-  `design.setH2sPartialPressureKPa(value)` before calling `calcDesign()`.
-- For automatic material selection: call `casingCalc.recommendMaterial()`.
-
----
-
-## 2026-03-21 â€” Capability Scout Agent and Capability Map Skill
-
-### New Agent
-- **`@capability.scout`** â€” Analyzes engineering tasks, identifies required capabilities,
-  checks NeqSim coverage, identifies gaps, writes NIPs, recommends skills and agent pipelines.
-  Use before starting complex multi-discipline tasks.
-
-### New Skill
-| Skill                   | Purpose                                                                                                                                              |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `neqsim-capability-map` | Structured inventory of all NeqSim capabilities by discipline (EOS, equipment, PVT, standards, mechanical design, flow assurance, safety, economics) |
-
-### Updated Files
-- `solve.task.agent.md` â€” Phase 1.5 Section 7b.3 now recommends invoking `@capability.scout` for comprehensive tasks
-- `router.agent.md` â€” Added capability scout to routing table and Pattern 6 (Capability Assessment + Implementation)
-- `README.md` â€” Added capability scout to Routing & Help section and capability-map to Skills table
-- `AGENTS.md` â€” Added capability scout to Key Paths and capability-map to Skills Reference
-- `CONTEXT.md` â€” Updated agent count to 14, skill count to 9
-- `copilot-instructions.md` â€” Added Capability Assessment bullet point
-
----
-
-## 2026-03-21 â€” Agent Ecosystem v2: Router, Skills, Validation
-
-### New Agents
-- **`@neqsim.help` (router agent)** â€” Routes requests to specialist agents. Use when unsure which agent to pick.
-
-### New Skills (6 added)
-| Skill                         | Purpose                                                                               |
-| ----------------------------- | ------------------------------------------------------------------------------------- |
-| `neqsim-troubleshooting`      | Recovery strategies for convergence failures, zero values, phase issues               |
-| `neqsim-input-validation`     | Pre-simulation input checks (T, P, composition, component names, order of operations) |
-| `neqsim-regression-baselines` | Baseline management for preventing silent accuracy drift                              |
-| `neqsim-agent-handoff`        | Structured schemas for agent-to-agent result passing                                  |
-| `neqsim-physics-explanations` | Plain-language explanations of thermodynamic and process phenomena                    |
-| `neqsim-performance-guide`    | Simulation time estimates and optimization strategies (in notebook-patterns skill)    |
-
-### Updated Files
-- `solve.task.agent.md` â€” Added auto-search past solutions (Phase 0, Step 1.5) and cross-discipline consistency gate
-- `README.md` â€” Updated with new router agent, skills table, and cross-references
-- `neqsim-notebook-patterns/SKILL.md` â€” Added performance estimation table and optimization tips
-
----
-
-## 2026-03-14 â€” Fix IEC 60534 Gas Valve Sizing
-
-### Changed
-- `ControlValveSizing_IEC_60534.java` â€” Gas valve Cv now uses standard volumetric flow instead of actual
-- `ControlValveSizing_IEC_60534_full.java` â€” Same fix applied to full version
-
-### Migration
-- If you have code using `sizeControlValveGas()`, results will now be correct (previously ~98% too low at 50 bara)
-- No API change â€” same methods, corrected internal calculations
-
----
-
-## 2026-03-10 â€” Process Architecture Improvements
-
-### New APIs
-| API                              | Class                       | Description                                      |
-| -------------------------------- | --------------------------- | ------------------------------------------------ |
-| `getInletStreams()`              | `ProcessEquipmentInterface` | Returns list of inlet streams for any equipment  |
-| `getOutletStreams()`             | `ProcessEquipmentInterface` | Returns list of outlet streams for any equipment |
-| `addController(tag, ctrl)`       | `ProcessEquipmentBaseClass` | Attach named controller to equipment             |
-| `getController(tag)`             | `ProcessEquipmentBaseClass` | Retrieve controller by tag name                  |
-| `getControllers()`               | `ProcessEquipmentBaseClass` | Get all named controllers as map                 |
-| `connect(src, dst, type, label)` | `ProcessSystem`             | Record typed connection metadata                 |
-| `getConnections()`               | `ProcessSystem`             | Query all recorded connections                   |
-| `getAllElements()`               | `ProcessSystem`             | Get all equipment, controllers, and measurements |
-
-### New Classes
-| Class                     | Package                | Purpose                                                    |
-| ------------------------- | ---------------------- | ---------------------------------------------------------- |
-| `ProcessElementInterface` | `process`              | Unified supertype for equipment, controllers, measurements |
-| `MultiPortEquipment`      | `process.equipment`    | Abstract base for multi-inlet/outlet equipment             |
-| `ProcessConnection`       | `process.processmodel` | Typed connection metadata (MATERIAL/ENERGY/SIGNAL)         |
-
-### Migration
-- **Backward compatible** â€” all existing code continues to work
-- Legacy `setController()`/`getController()` still work alongside named controllers
-- `getInletStreams()`/`getOutletStreams()` default to empty lists for classes that don't override
-
----
-
-## 2026-03-09 â€” CO2 Corrosion Analyzer
-
-### New Classes
-| Class                  | Package                       | Purpose                                                            |
-| ---------------------- | ----------------------------- | ------------------------------------------------------------------ |
-| `CO2CorrosionAnalyzer` | `pvtsimulation.flowassurance` | Couples electrolyte CPA EOS with de Waard-Milliams corrosion model |
-
-### Important Note
-Must call `chemicalReactionInit()` before `createDatabase(true)` and `setMixingRule(10)` to enable aqueous chemical equilibrium. Without this, pH returns 7.0 (neutral) because H3O+ is not generated.
-
----
-
-## Pre-2026 â€” Stable API Reference
-
-### Key Methods (Unchanged)
-These core methods have been stable for years and are safe to use:
-- `SystemInterface.addComponent(name, moleFraction)`
-- `SystemInterface.setMixingRule(rule)`
-- `SystemInterface.initProperties()`
-- `ThermodynamicOperations.TPflash()` / `PHflash()` / `PSflash()`
-- `Stream.setFlowRate(value, unit)` / `setTemperature(value, unit)` / `setPressure(value, unit)`
-- `ProcessSystem.add(equipment)` / `run()`
-- `Separator.getGasOutStream()` / `getLiquidOutStream()`
-- `Compressor.setOutletPressure(value)` / `getPower(unit)`
-
-### Known Method Name Corrections
-| Wrong Name (Don't Use)     | Correct Name                     |
-| -------------------------- | -------------------------------- |
-| `getUnitOperation("name")` | `getUnit("name")`                |
-| `characterise()`           | `characterisePlusFraction()`     |
-| `characterize()`           | `characterisePlusFraction()`     |
-| `Optional.isEmpty()`       | `!optional.isPresent()` (Java 8) |
+YªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éí×^¶ëÔèµ©hºÚn¶X§zÍHÈ™\TÚ[HTHÚ[™Ù[ÙÈ8 %YÙ[›Ý\Â‚ˆ
+Š”\œÜÙNŠŠˆ˜XÚÈTHÚ[™Ù\È]Y™™XÝYÙ[[œÝXÝ[ÛœËÛÙH]\›œËˆ[™^\Ý[™È^[\\ËˆYÙ[È™XY\Èš[HÈÝ^H]Ø\™HÙˆœ™XZÚ[™ÈÚ[™Ù\Ëˆ\™XØ]YY]ÙË[™™]ÈØ\Xš[]Y\Ë‚‚ˆ›Ü›X]ˆ[ÜÝ™XÙ[Ú[™Ù\È]HÜˆ[˜ÛYHH]KÚ]Ú[™ÙYˆZYÜ˜][ÛˆÝ\Ë[™ÚXÚYÙ[ËÜÚÚ[È™YY\][™Ë‚‚‹KKB‚ˆÈÈŒ‹LLLÈ8 %˜[œØXÝ[Û˜[Y˜][XÈÜ\˜][™ËXXÝ[Ûˆ]˜[X][Û‚‚‹H›ØÙ\ÜÓ[Ù[Ü\˜][™ÐXÝ[Û‘]˜[X]Ü˜š[™ÈÛ™H[[]]X›HÜ\˜][™ÈXÝ[ÛˆÈ^XÝ™\]Z\™Yˆ™\Ù\›Ú\‹Ù[Ø]\š[™ËÜˆ\[[™HØ\XÚ]HÛÛœÝ˜Z[Ë[œÈHXÝX[›ØÙ\ÜÓ[Ù[ˆ[™™\ÝÜ™\È[™™\[œÈHØ\\™Y˜\Ù[[™H™Y›Ü™H™]\›š[™Ë‚‹H[[]]X›HÙ\šX[^˜X›HØ[™Y]H™\Ý[È™]Z[ˆXÝ[ÛˆY[]KÜ›Ý™[˜[˜ÙKØš™XÝ]™\Ëˆ™YÚ\Ý\™YÛÛœÝ˜Z[˜[Y\È[™X\™Ú[œËY˜][XÈ][^˜][Ûˆ[™X\™Ú[‹\™XÝ[Û‹[š]Ëˆ\]Z\Y[Ù\ÚYÛˆ›Ý™[˜[˜ÙKÛÛ™šY[˜ÙK˜[Y]H\XØXš[]K[™™\ÝÜ˜][ÛˆXYÛ›ÜÝXÜË‚‹HZ\ÜÚ[™ÈÛÛœÝ˜Z[Ë›Û‹Yš[š]H]šY[˜ÙKš[Û][ÛœËÝ][Ù‹\˜[™ÙH]šY[˜ÙKÚ[][][Ûˆ˜Z[\™Kˆ[™™\ÝÜ˜][Ûˆ˜Z[\™H]™H\Ý[˜Ý˜Z[XÛÜÙYÝ]ÛÛY\Ëˆ[ˆXœÙ[˜[Y]H˜[™ÙH™[XZ[œÂˆ“ÕÐTÔÑTÔÑQÈÛÛ™šY[˜ÙH\È™]™\ˆ™X]Y\ÈH›Ø˜Xš[]HÙˆØY™HÜ\˜][Û‹‚‹HHÜ˜\YÚ[][][Ûˆ]˜[X]Üˆ]\Ý]™H›È\˜[Y]\œÈ™XØ]\ÙHHÜ˜\\ˆÝÛœÈHÛ™BˆØ[™Y]HÜš]KˆHTHÛÛœÝ[Y\È^\Ý[™ÈY˜][XÈÛÜœ™[][ÛœÈ[™Ù\È›ÝÚ[™ÙH›Ý][™ËˆÛÛÜ™[˜]H][\HXÝ[ÛœËÜˆ›ÝšYHYXÚ[šXØ[ØY™]K[š\›Û›Y[[]X[]KX\šÙ]Ü‚ˆÜ\˜][™È\›Ý˜[ˆ\ÙH[™\[™[[Ù[[œÝ[˜Ù\È›Üˆ\˜[[]˜[X][ÛœË‚‚ˆÈÈŒ‹LLLˆ8 %™]™\œÚX›H›ØÙ\ÜÓ[Ù[Ü\˜][™ÈXÝ[ÛœÂ‚‹H›ØÙ\ÜÓ[Ù[Ü\˜][™ÐXÝ[Û˜YÈ[[]]X›KÙ\šX[^˜X›HXÝ[ÛˆY[]K\™XK\]X[YšYYˆ]]ÛX][ÛˆY™\ÜË[š]›Ý™[˜[˜ÙK[™ÝšXÝÛÛ[[Ý\ÈÜˆ[[Y\˜]YY\ØÜ™]HÙ[X[XÜË‚‹H[œÜXÝØ\Xš[]XØ\\™X\X[™™\ÝÜ™X›ÝšYH^XÚ]XYÛ›ÜÝXÜËˆÜš]KÜ™XYX˜XÚÈ™\šYšXØ][Ûˆ[™Y[]KX›Ý[™™\ÝÜ˜][ÛˆÚ]Ý][›š[™ÈH›ØÙ\ÜÈ[Ù[‚‹H™YÚ\Ý\•Ú]
+›ØÙ\ÜÓ[Ù[Ú[][][Û‘]˜[X]ÜŠX^ÜÙ\È›Ý[™YÛÛ[[Ý\ÈXÝ[ÛœÈ[™^XÝˆ\ØÜ™]K]˜[YH\ØÛÝ™\žHÈ˜]˜H[™”\KÔ]ÛˆÜ[Z^™\œËˆ[\›YYX]H\ØÜ™]H˜[Y\È˜Z[ˆÛÜÙY[™]˜[X]ÜˆØ[˜XÚÜÈ]\Ý™H™K\™YÚ\Ý\™YY\ˆ\Ù\šX[^˜][Û‹‚‹HHTHÙ\È›Ý]]]HÜÛÙÞKÛÛ™HZ^YZ[YÙ\ˆXÚ\Ú[ÛœË[™™\ˆ™X\ÚXš[]K˜[šÈXÝ[ÛœËˆÜˆ\›Ý™H[ˆÜ\˜][™ÈÚ[™ÙKˆØ[™Y]H›ØÙ\ÜÈ[œÈ[™[[™Ú[™Y\š[™ÈÛÛœÝ˜Z[È™[XZ[‚ˆ^XÚ]‚‚ˆÈÈŒ‹LLLˆ8 %^XÚ]ÛÛœÝ˜Z[ØØ[[™È[™Ø[™Y]KXXÝ]™HXYÛ›ÜÝXÜÂ‚‹HÛÛœÝ˜Z[XÝ]š]P[˜[^™\˜ÛÛœÝ[Y\È[ˆ[[]]X›HÙ[œÚ]]š]T]X[]T™\Ý[[™\™›Ü›\È›Âˆ›ØÙ\ÜÈ]˜[X][ÛœËˆ]™\ÜÈ[Y[œÚ[Û›\ÜÈ˜\ÙHX\™Ú[œË›Ü›X[^™YÛÛœÝ˜Z[[X\™Ú[‚ˆ\š]˜]]™\Ëš[Û][ÛœÈ[™ÛÛœÙ\˜]]™HØ[™Y]KXXÝ]™KÚ[˜XÝ]™HÛ\ÜÚYšXØ][ÛœË‚‹H]™\žHÛÛœÝ˜Z[ØØ[X\ÈÜÚ]]™K\Ù\ÈHÛÛœÝ˜Z[	ÜÈXÛ\™Y[š]™XÛÜ™È›Ý™[˜[˜ÙH[™ˆ\È›Ý[™È^XÝ[[]]X›HY[]Nˆ[™^˜[YK\K›Ý[™ËÝÛ\˜[˜ÙK\™ÜÛÙÙ[X[XÜËˆ[˜[H[™Ø\XÚ]HÜšYÚ[‹ˆZ\ÜÚ[™Ë\XØ]K[š]\ÜÈÜˆÝ[HØØ[\È˜Z[ÛÜÙY‚‹HXÝ]š]TÛXÞX™]Z[œÈH[Y[œÚ[Û›\ÜÈXÝ]š]HÛ\˜[˜ÙKØØ[Ù[œÚ]]š]H]X[YšXØ][Û‚ˆÛXÞH[™ÛÙXÛÛœÝ˜Z[ÚÚXÙKˆ\ÜÙ\ÜÛY[È[™ÛXÚY\È\™H[[]]X›H[™Ù\šX[^˜X›H›Ü‚ˆ˜]˜H[™”\KÔ]ÛˆÛÜšÙ›ÝÜË‚‹HHØØ[Y\š]˜]]™H™[XZ[œÈ[šÙYÈ]ÈÛÛ\]H˜]È]šY[˜ÙH[™]\Ý\ÜÈ\Õ\ØX›J
+X™Y›Ü™BˆÛÛœÝ[\[Û‹ˆÐS‘QUWÐPÕU‘X\ÈÛ›HH™X\ÚX›H™X\‹X›Ý[™\žHXYÛ›ÜÝXø %›ÝÜ›ÜÜË][š]ˆ˜[šÚ[™ËÜ[Z^™\ˆXÝ]™K\Ù]›ÛÙ‹HÒÕ][\Y\‹XÛÛ›ÛZXÈÚYÝÈšXÙHÜˆ[™Ú[™Y\š[™Âˆ\›Ý˜[‚‚ˆÈÈŒ‹LLLH8 %]šY[˜ÙK\]X[YšYYØØ[›ØÙ\ÜÓ[Ù[ÛÛœÝ˜Z[Ù[œÚ]]š]Y\Â‚‹HÙ[œÚ]]š]T]X[]T™\Ý[˜\ÜÙ\ÜÐÛÛœÝ˜Z[Ù[œÚ]]š]Y\ÊÛXÞJX›ÝÈš[™ÈXXÚÛÛœÝ˜Z[›ÝÂˆ[™\˜[Y]\ˆÛÛ[[ˆÈZ\‹\ÜXÚYšXÈ[Y\šXØ[]šY[˜ÙK[[]]X›H[™Ú[™Y\š[™ÈY[]K˜]Âˆ[™Z[š[Z^™\ˆØš™XÝ]™H\š]˜]]™\ËHÛÛœÝ˜Z[[X\™Ú[ˆ\š]˜]]™KXÛ\™Y\š]˜]]™Bˆ[š]Ë[™XÝ[Û˜X›HXYÛ›ÜÝXÜÈÚ]Ý]™\[›š[™ÈH›ØÙ\ÜÈ[Ù[‚‹HÙ[œÚ]]š]T]X[YšXØ][Û”ÛXÞX^XÚ]HÛÛ›ÛÈ™[]]™KY\ØYÜ™Y[Y[Û\˜[˜ÙK˜\ÙH[™ˆ\\˜˜][Ûˆ™X\ÚXš[]H™\]Z\™[Y[Ë[™XØÙ\[˜ÙHÙˆÛ™K\ÚYYÝ[˜Ú[ËˆÛÛ™\™Ù[˜ÙBˆ˜Z[\™\Ë]˜[X][Ûˆ\œ›ÜœË›Û‹Yš[š]H\š]˜]]™\Ë[œÝX›H™Yš[™[Y[[™š^Y\˜[Y]\œÂˆ[Ø^\È™Z™XÝHZ\‹‚‹HÙ]]šY[˜ÙQ›YÜÊ
+X™]Z[œÈØ]][ÛœÈ]™[ˆÚ[ˆHÛXÞH\›Z]È[NÂˆÙ]™Z™XÝ[Û”™X\ÛÛœÊ
+X^Z[œÈÚHHZ\ˆ\È™Y\ÙYˆHXØÙ\Y[Û›HÛÛ™[šY[˜ÙHÙ]\‚ˆ]\Ý›Ý™\XÙH\˜Ú]š[™ÈHÛÛ\]H\ÜÙ\ÜÛY[Ú[ˆ]Y]Xš[]HX]\œË‚‹HHTH[X™\˜][H\™›Ü›\È›ÈÜ›ÜÜË][š]˜[šÚ[™ËØØ[[™ËXÝ]™K\Ù][™™\™[˜ÙKÒÕˆ][\Y\ˆØ[Ý[][Û‹ÚYÝË\šXÙHÛZ[KÜˆ[™Ú[™Y\š[™È\›Ý˜[‚‚ˆÈÈŒ‹LLLH8 %Ù[‹Y\ØÜšXš[™È›ØÙ\ÜÓ[Ù[Ù[œÚ]]š]HÛ˜\ÚÝÂ‚‹HÙ[œÚ]]š]T]X[]T™\Ý[›ÝÈ[˜ÛY\È[[]]X›H\˜[Y]\‹Ù[XÝY[Øš™XÝ]™K[™ÛÛœÝ˜Z[ˆÛ˜\ÚÝÈ]š[™\š]˜]]™HÛÛ[[œÈ[™›ÝÜÈÈZ\ˆ[™Ú[™Y\š[™ÈY[]K‚‹H\˜[Y]\ˆÛ˜\ÚÝÈ™]Z[ˆ[™^˜[YK]]ÛX][ÛˆY™\ÜË[š]›Ý[™Ë[™›Ý[™Y˜\ÙBˆ˜[YKˆHØš™XÝ]™HÛ˜\ÚÝ™]Z[œÈ\™XÝ[Û‹[š]ÙZYÚ˜]È[™Z[š[Z^™\ˆ˜\ÙH˜[Y\Ëˆ[™]ÈÜ˜YY[ˆÛÛœÝ˜Z[Û˜\ÚÝÈ™]Z[ˆ\K[š]\™ÜÛÙÙ[X[XÜË[˜[K›Ý[™Ëˆ\]X[]HÛ\˜[˜ÙKØ\XÚ]H\™XKÙ\]Z\Y[ÜšYÚ[‹˜\ÙH˜[YK˜\ÙHX\™Ú[‹[™HX]Ú[™Âˆ˜XÛØšX[ˆ›ÝË‚‹HHÛ˜\ÚÝÈ\™HÙ\šX[^˜X›KY™[œÚ]™[HÛÜH\š]˜]]™H\œ˜^\Ë[™™[XZ[ˆ[˜Ú[™ÙYY\‚ˆ]˜[X]ÜˆYš[š][ÛœÈ]]]HÜˆ[›Ý\ˆ›ØÙ\ÜÈÚ[[œËˆ^\Ý[™ÈX]š^Ù]\œÈ[™ˆÙ[œÚ]]š]H]˜[X][ÛˆÛÜÝ\™H[˜Ú[™ÙY‚‹HYÙ[È]\Ý™\Ù\™H\ÙH™XÛÜ™ÈÚ[ˆ\˜Ú]š[™ÈÜˆ^Z[š[™ÈÙ[œÚ]]š]Y\È[™]\Ý›Ý˜[šÂˆ[›ZÙH˜]ÈX\™Ú[œÈÜˆ\š]˜]]™\ÈÚ]Ý]^XÚ][™Ú[™Y\š[™ÈØØ[[™Ë‚‚‹KKB‚ˆÈÈŒ‹LLL8 %›ØÙ\ÜÓ[Ù[Ù[œÚ]]š]K\]X[]H]šY[˜ÙB‚‹H›ØÙ\ÜÓ[Ù[Ú[][][Û‘]˜[X]Ü‹™\Ý[X]TÙ[œÚ]]š]Y\ÕÚ]]X[]J‹‹ŠX›ÝÈ]˜[X]\ÈÛ™HÛØ\œÙBˆ[™Û™H[™Yš[š]KYY™™\™[˜ÙHÝ\™]\Ú[™ÈXXÚ›ØÙ\ÜÈ[ˆ›ÜˆHÙ[XÝYØš™XÝ]™H[™ˆ]™\žHÛÛœÝ˜Z[[X\™Ú[ˆ\š]˜]]™K‚‹HH[[]]X›H™\Ý[™]\›œÈHš[™K\Ý\Ü˜YY[Ò˜XÛØšX[ˆ[™™XÛÜ™ÈXXÚ\˜[Y]\‰ÜÈXÝX[ˆ›Ý[™YÝ[˜Ú[™\]Y\ÝYØÛØ\œÙKÙš[™HÝ\ËØØ[KZ[™\[™[ÛØ\œÙKÙš[™H\ØYÜ™Y[Y[[™ˆ]™\žH\\˜˜][Û‰ÜÈ\˜[Y]\ˆ˜[YKÛÛ™\™Ù[˜ÙK\™XÛÛœÝ˜Z[™X\ÚXš[]K[™\œ›Ü‹‚‹H\Ó[Y\šXØ[TÝX›JÛ\˜[˜ÙJX\È[X™\˜][HH[Y\šXØ[ÛÛœÚ\Ý[˜ÞHÚXÚËˆYÙ[È]\Ýˆ[œÜXÝ™X\ÚXš[]H[™XÝ]™H\]Z\Y[ØÛÛ›Û™YÚ[Y\ÈÙ\\˜][H[™]\Ý›ÝX™[Bˆ\š]˜]]™HHÚYÝÈšXÙHÚ]Ý]Ü[Z^™\‹\ÜXÚYšXÈÒÕ]šY[˜ÙK‚‹H^\Ý[™ÈÜ˜YY[Ò˜XÛØšX[ˆY]ÙÈ[™Z\ˆÝÙ\ˆ]˜[X][ÛˆÛÜÝ™[XZ[ˆ[˜Ú[™ÙY‚‚‹KKB‚ˆÈÈŒ‹LLH8 %›Ý[™X]Ø\™H›ØÙ\ÜÓ[Ù[š[š]KYY™™\™[˜ÙHÙ[œÚ]]š]Y\Â‚‹H›ØÙ\ÜÓ[Ù[Ú[][][Û‘]˜[X]Ü˜Øš™XÝ]™HÜ˜YY[È[™ÛÛœÝ˜Z[˜XÛØšX[œÈ›ÝÈ]šYHžHBˆXÝX[\\˜˜][Ûˆ]˜Z[X›H[œÚYHXXÚ\˜[Y]\‰ÜÈ›Ý[™Ëˆ˜\œ›ÝÈ˜[™Ù\È[™XÝ]™H›Ý[™È›ÂˆÛ™Ù\ˆÚ[[H[™\œÝ]H\š]˜]]™\ÈY\ˆ\˜[Y]\ˆÛ[\[™Ë‚‹Hš[š]QY™™\™[˜ÙSY]ÙÑS•SYÈHÞ[[Y]šXÈÙXÛÛ™[Ü™\ˆ[\š[ÜˆÝ[˜Ú[Ú]HÛ™K\ÚYYˆ›Ý[™\žH˜[˜XÚËˆ“Ô•ÐT‘™[XZ[œÈHY˜][[™™]Z[œÈÛ™H\\˜™YÚ[][][Ûˆ\‚ˆ›Û‹Yš^Y\˜[Y]\‹‚‹H›Û‹\ÜÚ]]™HÜˆ›Û‹Yš[š]Hš[š]KYY™™\™[˜ÙHÝ\È[™H[Y]Ù›ÝÈ˜Z[™Y›Ü™HÚ[][][Û‹‚ˆš^Y\˜[Y]\œÈ™\Ü™\›È\š]˜]]™H™XØ]\ÙH›È™X\ÚX›H\\˜˜][Ûˆ\™XÝ[Ûˆ^\ÝË‚‹H™X]HÝ]]È\ÈØØ[Ù[œÚ]]š]Y\ËˆÚXÚÈÝ\\Ú^™HÝXš[]H[™XÝ]™K\Ù]ÛÛœÚ\Ý[˜ÞBˆ™Y›Ü™H\Ú[™È[H\ÈX›Ý[™XÚÚ[™ÈÜˆÚYÝË]˜[YH]šY[˜ÙK‚‚‹KKB‚ˆÈÈŒ‹LLH8 %›ØÙ\ÜÓ[Ù[›Ý[™XÚÈÛ˜\ÚÝÈ™]Z[ˆ\™XHY[]B‚˜›ØÙ\ÜÓ[Ù[™Ù]][^˜][Û”Û˜\ÚÝœÛÛŠ
+X›ÝÈYÈ\™XX[™]X[YšYY˜[YXÈB››Û‹[[[]ÚYH›Ý[™XÚØˆH^\Ý[™È˜[YX][^˜][Û‹ÛÛœÝ˜Z[˜[šÚ[™ËYH™Z]š[Ü‹[™ØÚ[XH™\œÚ[Ûˆ™[XZ[ˆ[˜Ú[™ÙYˆ]Ûˆ[™RHÛÛœÝ[Y\œÈÚÝ[\ÙB˜]X[YšYY˜[YX
+\™XNŽ[š]
+HÚ[ˆ›Ú[š[™ÈÜˆ\˜Ú]š[™È›Ý[™XÚÜÈ™XØ]\ÙHY™™\™[œ›ØÙ\ÜÈ\™X\ÈX^HYÚ][X][H™]\ÙHHØ[YH[š]˜[YK‚‚‹KKBˆÈÈŒ‹LLH8 %^ÜÙH˜\[KTØ[™ÛH˜^HË]˜[YHÛÛ™\™Ù[˜ÙHÛÜšÂ‚‹H˜\[KTØ[™ÛHXYÛ›ÜÝXÜÈ›ÝÈ™\Ü›Ü˜ÙY\›ÛÝË]˜[YHÝÙY\ÛÝ[H[X™\ˆÙˆ˜^Bˆ]˜[X][ÛœÈÝ[X›Ý™HHYKNÙËRÈ\]HÜš]\š[ÛˆY\ˆÛÈÝÙY\Ë[™HX^[][Hš[˜[ˆ\]K‚‹HHÛË\ÝÙY\[Y\šXØ[]QTÒ\]X][ÛœËXØÙ\[˜ÙHØ]\Ë[™˜[˜XÚÈ™Z]š[Üˆ\™Bˆ[˜Ú[™ÙYˆH[[Y]žH\ÝX›\Ú\ÈH˜\Ù[[™H™YYY›ÜˆH]\ˆ›Ý[™YÛÛ™\™Ù[˜ÙHY]Ù‚‚ˆÈÈŒ‹LLH8 %ÛÜœ™XÝ˜\[KTØ[™ÛH˜XÛØšX[ˆÛÜšÈÛ\ÜÚYšXØ][Û‚‚‹H˜\[KTØ[™ÛHXYÛ›ÜÝXÜÈ›ÝÈÛÝ[XXÚ[Y\šXØ[H\\˜™Y˜XÛØšX[ˆÛÛ[[ˆÛ›H\Âˆš[š]KYY™™\™[˜ÙHÛÜšÎÈH[˜[]XËXÛÛ[[ˆÛÝ[\ˆ™\ÜÈ™\›È›ÜˆHÝ\œ™[[\[Y[][Û‹‚‹H›ÝX›XÈ[[Y]žHÙ]\œÈ™[XZ[ˆ]˜Z[X›KˆÛÛ™\ˆ\]X][ÛœË˜XÛØšX[ˆ˜[Y\ËÛÛ™\™Ù[˜ÙKˆ[™˜[˜XÚÈ™Z]š[Üˆ\™H[˜Ú[™ÙY‚‚ˆÈÈŒ‹LLÈ8 %›ÝËXXØÙ[\˜]YÛÜœ›ÜÚ[Ûˆ
+È[‹\Ú]H][\\˜]\™H
+™]ÈÛ\ÜÙ\ÊH
+ÈPH›ÝÛ˜][Ûˆ[˜X›Y‚ŠŠ“™]È[ˆ™\\Ú[Kœ›ØÙ\ÜË˜ÛÜœ›ÜÚ[Û˜
+Šˆ8 %›ÜˆÛÜÙYX][™ËH[™ÛÛÛ[™Ë[YY][HÛÜË˜›Ú[\ˆ™YYØ]\ˆ[™Ò•HÈXÛÛ›ÛZ\Ù\ˆX™\ËÚ\™HH[XYÙHYXÚ[š\ÛH\ÈXYÛ™]]B™\ÜÛÛ][Ûˆ˜]\ˆ[ˆXÚYYØ\ÈÛÜœ›ÜÚ[Û‹‚‚‹H[Z[™PY™™\™Y8 %ÛÛ™\ÈHX›Ü˜]ÜžHYX\Ý\™YÛˆH
+Š˜ÛÛÛYØ[\JŠˆ[ÈBˆ
+Šš[‹\Ú]H]Ü\˜][™È[\\˜]\™JŠ‹[™™\ÜÈH
+Š˜[Ø[[™HX\™Ú[ŠŠˆX›Ý™Bˆ™]]˜[]KˆÜš]XØ[Ú[›ÜˆYÙ[Îˆ™]]˜[Ø]\ˆ\ÈËŒ]H0¬È]X›Ý]ˆ
+ŠœKŽH]ML0¬ÊŠ‹ÛÈHÝ\Þ\Ý[HØ[››Ý™HYÙYYØZ[œÝËˆ›ÜˆHY™™\™Yˆ›ZYHÚY\]X[ÈHØHÚY^XÝKˆÝ\ÜÈY™™\[Z[™K‘PX[™ˆY™™\[Z[™K“QPXÈ™\™XÝÈ“Ð•TÕÈQTUPUXÈPT‘ÒSSÈS”ÕQ‘’PÒQS•‚‹H›ÝÐXØÙ[\˜]YÛÜœ›ÜÚ[Û˜
+È˜XÑÙ[ÛY]žX8 %PÈØÜ™Y[š[™È[™^Z[œ›ÛHBˆ™\™Ù\‹R]HX\ÜË]˜[œÙ™\ˆÛÙY™šXÚY[[™˜XÝÜœÈ›Üˆ[\\˜]\™H
+™[XZÚ[™È]ˆML0¬ÊK[‹\Ú]HØØ[Ù[ÛY]žH
+™[™ÈÙ[ÈÙ[X]X™[™ÈÜšYšXÙJH[™Ú›ÛZ][BˆÛÛ[ˆÙ]ÛZ[˜[˜XÝÜŠ
+X˜[Y\ÈHÛÛ›Û[™È]™\ŽÈ˜][ÕÊÝ\ŠX]X[YšY\ÂˆH›ÜÜÙYÚ[™ÙK‚‚ŠŠYÙ[ÝZY[˜ÙH8 %XÚÈHšYÚÛÜœ›ÜÚ[Ûˆ[Ù[ŠŠ‚‚‹H›ÜœÛÚÓMLÛÜœ›ÜÚ[Û”˜]X\È
+ŠÓÌˆÛÜœ›ÜÚ[ÛŠŠ‹ˆ]Ù\È›Ý\HÈHÓÌ‹Yœ™YHÛÜÙYˆÛÜÈ\Ú[™È]\™H\ÈHZ\Ø\XØ][Û‹‚‹HPÈ\È
+Š››Ý
+Šˆ\›ÜÚ[Û‹XÛÜœ›ÜÚ[Û‹ˆPÈ\È[XÝ›ØÚ[ZXØ[\ÜÛÛ][Ûˆ[™\ˆX\ÜË]˜[œÙ™\‚ˆÛÛ›ÛÈ\›ÜÚ[Û‹XÛÜœ›ÜÚ[Ûˆ™YYÈYXÚ[šXØ[\XÛH[\[™Ù[Y[ÜˆØ]š]][Û‹ˆ^BˆØØÝ\ˆ]HØ[YHØØ][ÛœÈ]™YYY™™\™[Z]YØ][Û‹ˆ›ÛÝØ]\ÙP[˜[\Ù\˜›ÝÂˆ˜Z\Ù\È“Õ×ÐPÐÑSTUQÐÓÔ”“ÔÒSÓ˜Ù\\˜][Hœ›ÛHT“ÔÒSÓ—ÐÓÔ”“ÔÒSÓ˜‚‹H[Ø^\È™YY›ÝÐXØÙ[\˜]YÛÜœ›ÜÚ[Û‹œÙ][”Ú]T
+‹‹ŠXH˜[YHœ›ÛH[Z[™PY™™\™Yˆ™]™\ˆH˜]ÈX›Ü˜]ÜžH‚‹HHPÈ[™^\È
+Š˜ÛÛ\\š\ÛÛ‹[Û›JŠ‹ˆ˜][ÜÈ™]ÙY[ˆØ\Ù\È\™HYX[š[™Ù[ÈHXœÛÛ]Bˆ˜[YH\È›ÝHØ[[ÜÜÈ˜]K‚‹HØ[ÚX\ˆØØ[\È\È›ÝYÚH—ŒKÍXÛÈHÈ	H™[ØÚ]H^ÙYY[˜ÙH\ÈHŒLÈ	HÚX\‚ˆ^ÙYY[˜ÙKˆ™\ÜÚX\‹›Ý\Ý™[ØÚ]K‚‚ŠŠ‘]Hš^8 %PH›ÝÛ˜][ÛˆØ\È\ØX›YŠŠˆHP\›Ý™XXÝ[Û‚ŠPJÈ
+È“ÈOˆPH
+ÈÓÊØ[™^L‹]\ÝÙ[ˆNNJHYÛÛ\]HÝÚXÚ[ÛY]žH[‚˜ÕÐÐÓÑQ‘UK˜ÜÝ˜[™ÛÛ\]HÛÛœÝ[È[ˆ‘PPÕSÓ‘UK˜ÜÝ˜]TÑT‘PPÕSÓˆHœÛÈ[žHPKXY™™\™Y[XÝ›Û]HÞ\Ý[HÚ[[H™]\›™Y›ÈXÚYX˜\ÙH\]Z[Xœš][Kˆ›ÝÂ™[˜X›YÈH[‹[™]]˜[\ÙYPHY™™\ˆ[ˆÞ\Ý[Q\œÝ[XÝ›Û]Q[ÜØ™]\›œÈŽN]ŒH0¬ÈYØZ[œÝH]\˜]\™HØHÙˆŽNŽL‹ˆHÔH[XÝ›Û]H]ŠÞ\Ý[Q[XÝ›Û]PÔ\Ý]Ú[
+H™[XZ[œÈ[œ™[XX›H›Üˆ[Z[™HY™™\œÈ8 %™KY^\Ý[™Ë[™˜Y™™XÝÈQPH\]X[K‚‚ŠŠ“™]ÈÚÚ[ŠŠˆ™\\Ú[KY›ÝËXXØÙ[\˜]YXÛÜœ›ÜÚ[Û˜ˆØYYžH›ÝË˜\ÜÝ\˜[˜ÙX[™˜›ÛÝ˜Ø]\ÙX‚‚‹KKB‚ˆÈÈŒ‹LLÈ8 %Ù[‹ZX][™ÈÈÜÛ[™[Ý\ËZYÛš][ÛˆÜš]XØ[]H
+™]ÈXÚØYÙJH
+ÈÛXÛÛ›Ü›X][Û‹\›Ü\Hš^‚ŠŠ“™]ÈXÚØYÙH™\\Ú[Kœ›ØÙ\ÜËœØY™]KœÙ[šX][™Ø
+Šˆ8 %ØÜ™Y[š[™È›ÜˆÝË][\\˜]\™BœÙ[‹ZX][™ÈXY[™ÈÈÜÛ[™[Ý\ÈYÛš][Ûˆ
+›YÙÚ[™Èš\™\È‹Ú\™HHÛÛX\ÝX›B›\]ZYÛØZÜÈ[ÈÜ›Ý\È\›X[[œÝ[][Ûˆ[™YÛš]\ÈÚ]›È^\›˜[YÛš][Û‚œÛÝ\˜ÙJK‚‚‹HÜ›Ý\ÓYYXTÙ[’X][™Ð[˜[^™\˜8 %œ˜[šËRØ[Y[™]ÚÚZHÝXYK\Ý]HÜš]XØ[]K‚ˆ™]\›œÈH[Y[œÚ[Û›\ÜÈ\˜[Y]\ˆ[XYØZ[œÝ]ÈÚ\KY\[™[Üš]XØ[ˆ˜[YK\ÈHÛÈ[™Ú[™Y\š[™È[œÝÙ\œÎˆ
+Š˜Üš]XØ[Ý\™˜XÙH[\\˜]\™JŠˆ›ÜˆBˆÚ]™[ˆ^Y\ˆXÚÛ™\ÜÈ[™
+Š˜Üš]XØ[XÚÛ™\ÜÊŠˆ]HÚ]™[ˆ[\\˜]\™K‚ˆ›Ü”\R[œÝ[][ÛŠ‹‹ŠXÛÛ™šYÝ\™\ÈHÛÛœÙ\˜]]™H›Ý[™[™ÈØ\ÙH›ÜˆYÙÚ[™ÈÛ‚ˆHÝ[™H[™™XÛÜ™ÈH\ÜÝ[\[Ûˆ[ˆÙ]Ø\›š[™ÜÊ
+X‚‹HÙ[Y[›Ý”Ù[’X][™Ð[˜[^™\˜8 %Ù[Y[›ÝˆKÙXÜš]\š[Ûˆ›ÜˆHÝ\™˜XÙKXÛÛÛ[™Âˆ[Z]
+˜Z[™YÛÛË[ˆš[\ËÛX[Ø[\\ÊK‚‹HÙ[’X][™Ò[™XÝ[Û”ÛÛ™\˜8 %˜[œÚY[KQÛÛ™XÝ[ÛˆÚ][ˆ\œš[š]\ÈÛÝ\˜ÙKˆÚ]š[™ÈH
+Šš[™XÝ[Ûˆ[YJŠˆÈYÛš][Ûˆ
+Ý\œÈÈ^\Ë›ÝÙXÛÛ™ÊK‚‹H˜\ÚÙ]\Ý™YÜ™\ÜÚ[Û˜8 %š]ÈXÝ]˜][Ûˆ[™\™ÞH[™›Û[Y]šXÈX]\™[X\ÙBˆ™KY˜XÝÜˆœ›ÛHÝ\ÝÜ˜YÙH
+˜\ÚÙ]
+H\Ý]H\ˆSˆMLNÈTÕHLŒŒK[™ˆÜ™X]P[˜[^™\Š‹‹ŠXØ\œšY\ÈHš]Ý˜ZYÚÈH[\ØØ[HØÜ™Y[š[™Ë‚‹HÙ[’X][™ÑÙ[ÛY]žXØ\œšY\ÈHX›\ÚYÜš]XØ[˜[Y\È
+ÛXˆŽÎˆ[™š[š]HÞ[[™\ˆ‹ŒÜ\™HËŒÌ‹ÝX™H‹L‹\]ZXÞ[[™\ˆ‹ÍŠK‚‚ŠŠYÙ[ÝZY[˜ÙH8 %È›ÝÝXœÝ]]HHÜ›Û™È[Ù[ŠŠ‚‚‹H™\\Ú[Kœ›ØÙ\ÜËœØY™]Kœ™XXÝ[Û‹”[˜]Ø^T™XXÝ[Û[˜[^™\˜\È
+Š›[\YYXX˜]XÊŠ‚ˆ
+UÔˆÈØYÈT—ØY
+Kˆ]\È›ÈÜ]X[ÛÛ™XÝ[Û‹\™Y›Ü™H›ÈÛÛ˜Ù\ÙˆBˆÜš]XØ[XÚÛ™\ÜÈÜˆÜš]XØ[[XšY[[\\˜]\™K[™
+Š˜Ø[››Ý
+Šˆ\ÜÙ\ÜÂˆÜÛ[™[Ý\ÈYÛš][Ûˆ[ˆ[œÝ[][Û‹ˆ\ÙHÙ[šX][™Ø[œÝXY‚‹HÚX˜œÔ™XXÝÜ˜Ú[™\ÜÛÛ\]HÞY][ÛˆÙˆ[žHY›ØØ\˜›Ûˆ][XšY[ˆ[\\˜]\™Kˆ\]Z[Xœš][HÚ]™\ÈHY[›ÝH^˜\™8 %YÛš][Ûˆ\È[Ø^\ÈBˆÚ[™]XÈ]Y\Ý[Û‹‚‹HXÝ]˜][Ûˆ[™\™ÞH[™™KY˜XÝÜˆ\™H
+Š›YX\Ý\™Y
+Š‹™]™\ˆ\š]™Yœ›ÛBˆ\›[Ù[˜[ZXÜËˆ›YÈ[H\È\ÜÝ[\[ÛœÈ[ˆ™\Ý[ËšœÛÛ˜Ú[ˆ›Ýœ›ÛH\Ý[™Ë‚‚ŠŠ‘]Hš^8 %QÈ[™QÈ›Ü›X][Ûˆ›Ü\Y\ÈÙ\™HXÙZÛ\œËŠŠˆ›ÝØ\œšYYØ]\‰ÜÈ[[HÙˆ›Ü›X][Ûˆ
+LŒ‹Û[Û
+H[™ÓÌ‰ÜÈÚX˜œÈ[™\™ÞHÙˆ›Ü›X][Û‚ŠLÎMÍÌ‹Û[Û
+H[ˆÓÓT˜ÜÝ˜[™ÓÓTÑV˜ÜÝ˜ˆÛÜœ™XÝYÈ]\˜]\™BšYX[YØ\È˜[Y\ÎˆQÈMÌLÈMÍÌ‹Û[ÛQÈMMÌLŒÈMŽL‹Û[Û‚[žH™]š[Ý\ÈÚX˜œË[Z[š[Z\Ø][Û‹™XXÝ]™KY›\ÚÜˆX][Ù‹\™XXÝ[Ûˆ™\Ý[š[›Ûš[™ÈHÛXÛÛØ\ÈÜ›Û™È
+QÈX]ÙˆÛÛX\Ý[ÛˆØ\ÈŒKR‹ÚÙË›ÝÂŸŒŒ‹ŒˆR‹ÚÙÊKˆ›Ü›X[[[HØ[Ý[][ÛœÈÙ\™H[˜Y™™XÝY™XØ]\ÙHH›Ü›X][Û‚\›H\È][\YYžH™\›È[ˆ]]‚‚ŠŠ“™]ÈÚÚ[ŠŠˆ™\\Ú[K\Ù[‹ZX][™ËZYÛš][Û˜ˆØYYžHØY™]K™\™\ÜÝ\š[™Ø[™˜™XXÝ[Û‹™[™Ú[™Y\š[™ØÈ›Ý]Yœ›ÛH›Ý]\˜ÛˆœÙ[‹ZYÛš][Û‹ÜÛ[™[Ý\Â˜ÛÛX\Ý[Û‹YÙÚ[™Èš\™Kš\™HÚ]›ÈYÛš][ÛˆÛÝ\˜ÙH‹‚‚‹KKB‚ˆÈÈŒ‹LLÈ8 %ÛÝ\Y˜[œÚY[Ø\Ë[™]ÛÜšÈY˜][XÜÈ[™ÛÝ\˜ÙHØÚY[\Â‚‹HYY˜[œÚY[Ø\Ó™]ÛÜšØ›Üˆ›Ý[™YÜÚ]]™KY›ÝËÛ™K\\ÙH\ÛÝ\›X[ˆØ]\š[™È™Y\Ëˆ]Ú[][[™[Ý\ÛHÛÛ™\ÈÛÝ\˜ÙH[™[˜Ý[Ûˆ™\ÜÝ\™\Ëˆ\˜ÞHYÙH›ÝËÛÛ\™\ÜÚX›H[™\XÚË[™ÛÛœÙ\˜]]™H˜[YYXÛÛ\Û™[ˆ˜[œÜÜ›ÜˆØÚY[YÛÝ\˜ÙH˜]\ËØÛÛ\ÜÚ][ÛœÈ[™Û™Hš^Y\™\ÜÝ\™BˆÚ[šË‚‹H˜[œÚY[Ø\Ó™]ÛÜšÒ\ÝÜžX›ÝšY\È[YKX[YÛ™Y›ÙH™\ÜÝ\™KØÛÛ\ÜÚ][Û‹ˆYÙH[›]Ø]™\˜YÙKÛÝ]]›ÝËYÙH[™\XÚË[™[[]]X›HY˜][XËˆ[˜Ý[Û‹[™ÛÛ\Û™[XÛÛœÙ\˜][Ûˆ™\ÜËˆH\ÝÜžH[™™\ÜÈ]™HBˆÝX›H”ÓÓˆ]›Üˆ]Û‹Ò”\K‚‹HÛÝ\˜ÙH™\ÜÝ\™H\È[ˆ[Y\™Ù[™X\ÚXš[]H™\Ý[›ÝH™\ØÜšX™Y›Ý[™\žBˆÜˆH[]™\˜Xš[]HÛÛ›Û\‹ˆ™\ÜÝ\™H›Ý[™È[™YÙH™[ØÚ]H[Z]È˜Z[ˆ^XÚ]NÈ™]™\œÙH›ÝË\ÙH\X\˜[˜ÙK\›X[˜[œÜÜ™XÚ\˜Ý[][Û‹ˆ[™œ˜[˜Ú[™ÈÜ]È™[XZ[ˆÝ]ÚYHH[š]X[TK‚‹HYYHÌÛHÞ[]XÈ0á\ÙØ\™ÒÜš\Ý[‹]ËRðé\œÝ0î˜]KY]™[™YÜ™\ÜÚ[ÛˆÚ]ˆHÚ[šÈš^Y]LL˜\˜KÛÛ\\š\ÛÛˆÈHŒÌŒÈ˜\˜H]X\ÚK\ÝXYBˆ[˜ÚÜœË]\›Z[š\ÝXÈ™\X][™\XÚÈ™\ÜÛœÙKÛÛ\Û™[Ú[˜Ý[Û‹ÝÝ[ˆ˜[[˜ÙHØ]\Ë[œÝ\ÜY\Ý]HXYÛ›ÜÝXÜË[™›Ú[ÜšYÝ[Y\Ý\ˆ™Yš[™[Y[‚ˆÈÈŒ‹LLˆ8 %\‹XØ\ÙH˜[šÙYØ\XÚ]HÛ˜\ÚÝÂ‚‹H›ØÙ\ÜÓ[Ù[Ú[][][Û‘]˜[X]Ü‹‘]˜[X][Û”™\Ý[™Ù]˜[šÙYØ\XÚ]PÛÛœÝ˜Z[Ê
+X™]Z[œÈBˆ[[]]X›H[[[Ù[Ø\XÚ]H˜[šÚ[™È›ÙXÙYY\ˆ]^XÝÚ[][][ÛˆÚ[‚‹HHYØXÞHXÝ]™H›Ý[™XÚÈ\ÈÙ[XÝYœ›ÛHHØ[YH˜[šÚ[™ËÚ[H[™Yš[™Y]][^˜][Û‚ˆÛÛœÝ˜Z[È™[XZ[ˆš\ÚX›H]H[™›ÜˆXYÛ›ÜÚ\Ë‚‹H›ÝYÚ]Ø\ÙT›ÝË™Ù]˜[šÙYØ\XÚ]PÛÛœÝ˜Z[Ê
+X™\Ù\™\È[Y\™Ú[™È[™ÝÚ]Ú[™ÈÛÛœÝ˜Z[Âˆ›Üˆ]™\žHØØ[\‹]›ÝYÚ]Ø\ÙKˆ”ÓÓˆ^ÜÈ[˜ÛYHHÛÛ\]H˜[šÙY\Ý[™]È]šY[˜ÙBˆ\XØXš[]NÈÔÕˆ™[XZ[œÈH›]XY[™Ë[[Z]Ý[[X\žK‚‹H\ÙH\ÙHØ\ÙK[ÝÛ™YÛ˜\ÚÝÈ›ÜˆX›Ý[™XÚÈ\ÝÜšY\È[™RKÝÛÛÝ]]ˆÈ›Ý™\ØØ[ˆBˆ]™H[Ù[Y\ˆH]\ˆ]˜[X][Ûˆ[™]šX]H]Ý]HÈ[ˆX\›Y\ˆØ\ÙK‚‚‹KKBˆÈÈŒ‹LLˆ8 %\YšXÚX[[YØÜ™Y[š[™È™Z™XÝÈ›Û‹\\ÚXØ[Ø[Ý[]Y™\Ý[Â‚‹H\YšXÚX[YØÜ™Y[™\‹œØÜ™Y[Š
+X›ÝÈ™Z™XÝÈHØ[Ý[]YY]Ù™\Ý[™Y›Ü™H˜[šÚ[™ÈÚ[ˆ]Âˆ›ÙXÝ[Ûˆ˜]H\È›Û‹Yš[š]HÜˆ›Û‹\ÜÚ]]™KÜˆÚ[ˆ]ÈÝÙ\ˆÛÛœÝ[\[Ûˆ\È›Û‹Yš[š]HÜ‚ˆ™YØ]]™K‚‹H™Z™XÝY™\Ý[È]™H™\›È™\ÜY˜]H[™ÝÙ\‹™YØ]]™KZ[™š[š]H”‹˜[šÈ™\›Ë[™[‚ˆ^XÚ][™™X\ÚXš[]H™X\ÛÛ‹ˆHY]Ù™\ÜY\È™X\ÚX›H\™Y›Ü™H[Ø^\È\ÈHš[š]KˆÜÚ]]™H˜]H[™š[š]K›Û‹[™YØ]]™HÝÙ\‹‚‹HHšY[Y]™[ÜY[TH^[\H›ÝÈ\Ù\ÈHÝ\œ™[\YšXÚX[YØÜ™Y[™\˜Y]Ù˜[Y\Ëˆ[š]Ë[™ØÜ™Y[š[™Ô™\Ý[™]\›ˆ\K‚‚ˆÈÈŒ‹LLˆ8 %]šY[˜ÙKX]Ø\™H[[[Ù[Ø\XÚ]H˜[šÚ[™Â‚‹H›ØÙ\ÜÓ[Ù[Ú[][][Û‘]˜[X]Ü‹œ˜[šÐØ\XÚ]PÛÛœÝ˜Z[Ê[Ù[
+X™]\›œÈ]™\žH[˜X›YˆØ\XÚ]PÛÛœÝ˜Z[\È[ˆ[[]]X›H\ÝÜ™\™YžH\ØÙ[™[™È][^˜][Û‹ˆÝX›HY\È™]Z[‚ˆ›ØÙ\ÜË[[Ù[™YÚ\Ý˜][ÛˆÜ™\‹[™XXÚ[˜[ZXÈ˜[YHÝ\Y\ˆ\ÈØ[\YÛ˜ÙH\ˆØ[‚‹H›Ý[™XÚÔÝ]\Ë™Ù]]šY[˜ÙP\XØXš[]J
+X™\ÜÈÒUS—ÕSQUWÔS‘ÑXˆÕUÒQWÕSQUWÔS‘ÑXÜˆ“ÕÐTÔÑTÔÑQ›ÜˆHÛ˜\ÚÝYÜ\˜][™ÈÚ[‚‹H]šY[˜ÙHÛÛ™šY[˜ÙH[™\XØXš[]H™[XZ[ˆXYÛ›ÜÝXÜÈÛ›Kˆ^HÈ›ÝÚ[™ÙH][^˜][Û‹ˆ™X\ÚXš[]KÜˆ˜[šÚ[™È[™]\Ý›Ý™H[\œ™]Y\È›Ø˜Xš[]Y\ÈÙˆØY™HÜ\˜][Û‹‚‹Hš[™XÝ]™P›Ý[™XÚÊ[Ù[
+X™[XZ[œÈ]˜Z[X›HÚ[ˆÛ›HHXY[™ÈÛÛœÝ˜Z[\È™\]Z\™Y‚‚‹KKB‚ˆÈÈŒ‹LLˆ8 %ÚYKY˜]È›ÝÈ\™Ù]È™Z™XÝ[˜[Y[›™\ˆÛÛ[[ˆÝ]\Â‚‹HHÛÛ[[ˆÚ]Û™H[™\[™[ÚYKY˜]È›ÝÈÜXÚYšXØ][Ûˆ›ÝÈ]˜[X]\ÈšX[Ü]œ˜XÝ[ÛœÂˆÛˆÛÛÛÜYYÛÛ[[ˆÝ]\È[™XØÙ\ÈÛ›HšYÛÜ›Ý\ÈÜˆ™XÛÛ˜Ú[Y[›™\ˆÛÛ™\Ë‚‹H˜Z[Y[™˜[˜XÚË\›ÙXÝšX[È›ÈÛ™Ù\ˆ\]HHÚYKY˜]ÈÛÛ›Û\ˆÜˆ™\XÙHH\ÝˆXØÙ\YX›XÈÛÛ[[ˆÝ]KˆHØY™YÝX\™YÙX\˜Ú\Ù\ÈÛ›HXØÙ\Y›ÝÈØœÙ\˜][ÛœÈ›Ü‚ˆ[\œÛ][Ûˆ[™›Ý[™Y^Ü˜][Û‹‚‹HÚ[ˆHÛÛšX[\È™Z™XÝYY\ˆ[ˆXØÙ\YÝ]H^\ÝËHØ[YHœ˜XÝ[Ûˆ\È™]šYYÛ˜ÙBˆœ›ÛHH™X\™\ÝXØÙ\YÛÛ™Y›Ùš[Kˆ\ÈÛÛ[X][Ûˆ]™[[Ý™\È˜]˜K\[[YKY\[™[ˆÛÛ\Ý\˜Z[\™\ÈÚ]Ý]™]\Ú[™ÈH˜Z[YÜˆ˜[˜XÚË\›ÙXÝÝ]K‚‹H\Ý[][ÛÛÛ[[˜›ÝÈ™\ÜÈ™Z™XÝYØ[™Y]\ËÝ]H›Û˜XÚÜËXØÝ[][]Y[›™\‹\ÛÛ™\‚ˆÛÜšË[™HØ[™Y]H\ÝÜžH›ÝYÚ]ÈÛÛ[[‹]X\ˆXYÛ›ÜÝXÜËˆ\ÙH˜[Y\È\™H˜[œÚY[ˆ[™™\Ù]ÛˆÛÜYYÜˆ\Ù\šX[^™YÛÛ[[œË‚‚‹KKB‚ˆÈÈŒ‹LLH8 %ÜÜÛ\ÜÈ^\›˜[]ËZ[\›˜[ÛÛœÝ˜Z[ÛÛ™\œÚ[Û‚‚‹H›ØÙ\ÜÔÚ[][][Û‘]˜[X]Ü‹ÛÛœÝ˜Z[Yš[š][Û‹ÓÜ[Z^˜][ÛÛÛœÝ˜Z[Ê
+X›ÝÈÛÛ™\ÂˆÝÙ\‹Ý\\ˆ›Ý[™ÈÈÛ™H[[]]X›K[\Ý[[Y[[™˜[™ÙKÙ\]X[]HYš[š][ÛœÈÈ^XÚ]ˆÛÝÙ\˜[™Ý\\˜[\›˜[ÛÛœÝ˜Z[Ë‚‹H›ÝÙ[™\˜]YÚY\È™]Z[ˆHÛÝ\˜ÙH]˜[X]Ü‹Ù]™\š]K[™[˜[HÙZYÚ™]™[[™ÂˆÜ\˜][™È[™[Ü\È[™Û\˜[˜ÙH˜[™Èœ›ÛHÚ[[HÜÚ[™ÈZ\ˆÝÙ\ˆ›Ý[™‚‹HHÚ[™Ý[\ˆÓÜ[Z^˜][ÛÛÛœÝ˜Z[
+
+XTH\È[˜Ú[™ÙY›ÜˆÛÛ\]Xš[]H[™™[XZ[œÈÜÜÞBˆ›Üˆ˜[™ÙH[™\]X[]HYš[š][ÛœËˆ™]È[YÜ˜][ÛœÈ]\Ý\ÙHH\˜[Y]Ù‚‹H[\œ™]Ù[œÚ]]š]Y\È[™ÚYÝÈ˜[Y\È›ÜˆHÙ[™\˜]YÝÙ\ˆ[™\\ˆÛÛœÝ˜Z[ÂˆÙ\\˜][K‚‚‹KKB‚ˆÈÈŒ‹LLH8 %ÛÛ[[ˆ[\\›Ý[™™]\›œÈ™[XZ[ˆ[\›˜[™XÞXÛ\Â‚‹H\Ý[][ÛÛÛ[[˜›ÈÛ™Ù\ˆØ\\™\ÈH˜[YY[\\›Ý[™™]\›ˆÝ™X[H\ÈHYØXÞH\™XÝˆ^\›˜[˜^H™YY\š[™È]\˜]]™HÛÛ™\Ë‚‹HÙ][›]Ý™X[\Ê
+X™YYš[™Ù\œš[Ë[™™YYÜ›ÙXÝ˜[[˜ÙHXYÛ›ÜÝXÜÈ\™Y›Ü™H™]Z[‚ˆÛ›HØ[\‹\Ý\YY™YYÎÈÛÛ™šYÝ\™Y[\\›Ý[™™]\›œÈ™[XZ[ˆ[\›˜[™XÞXÛ\Ë‚‚‹KKB‚ˆÈÈŒ‹LLH8 %ÛÛœÙ\˜]]™H˜[œÚY[Ø\Ë[™]ÛÜšÈÜXÚY\È˜[œÜÜ‚‹HYY˜[œÚY[ÛÛ\ÜÚ][Û˜[\S™]ÛÜšØ›Üˆ™\ØÜšX™YÜÚ]]™KY›ÝËˆÛ™K\\ÙK\ÛÝ\›X[Ø]\š[™È™]ÛÜšÜËˆÛÝ\˜ÙHÛÛ\ÜÚ][Ûˆ[™X\ÜËY›ÝÂˆØÚY[\È›ÜYØ]H›ÝYÚš[š]K]›Û[YHYÙH[™[ÜšY\È[™ÛÛœÙ\˜]]™BˆÛÛ\Û™[[˜[YH[˜Ý[ÛˆZ^[™ÈÚ]Ý][ˆ[œÝ[[™[Ý\ÈX[X[[™Ù™‹‚‹H˜[œÚY[ÛÛ\ÜÚ][Û˜[\S™]ÛÜšÒ\ÝÜžX^ÜÙ\ÈY™[œÚ]™K[YKX[YÛ™Yˆ›ÙHX\ÜÈœ˜XÝ[ÛœÈ\È[[]]X›HYÙK[˜Ý[Û‹[™Ý[][]]™H™]ÛÜšÂˆÛÛœÙ\˜][Ûˆ™\ÜËˆH\ÝÜžH[™™\ÜÈ›ÝšYH”ÓÓˆØ\\™H›Ü‚ˆ]Û‹Ò”\K‚‹HHš\œÝ˜[Y]YØÛÜH\ÈH\™XÝYXÞXÛXÈ™]ÛÜšÈÚ]][ÜÝÛ™BˆÝ]ÛÚ[™ÈYÙH\ˆ›ÙKˆ™]™\œÙH›ÝËœ˜[˜Ú[™ÈÜ]Ë™XÚ\˜Ý[][Û‹ˆY˜][XËÝ\›X[ÛÝ\[™Ë\Ü\œÚ[Û‹[™\ÙH\X\˜[˜ÙH˜Z[^XÚ]BˆÜˆ™[XZ[ˆÝ]ÚYH\ÈTK‚‹HYYHÛË\ÛÝ\˜ÙHš[š]KPÓÌ‹\[ÙH™YÜ™\ÜÚ[ÛˆÚ]]\›Z[š\ÝXÈ™\X]ˆÛÛ\Û™[[Ü™\ˆ[™\[™[˜ÙK˜[[˜ÙKØ›Ý[™Y™\ÜÈØ]\Ë[™\XÚÈ[^H[™ˆœ›ØY[š[™Ë[œÝ\ÜY\Ý]HXYÛ›ÜÝXÜË[™›Ú[ÜšYÝ[Y\Ý\ˆ™Yš[™[Y[‚‚‹KKB‚ˆÈÈŒ‹LLH8 %ÛÛœÙ\˜]]™HÛÑ›ZY\HÛÛ\Û™[˜[œÜÜ‚ˆÈÈÈYY‹HÜZ[ˆ\‹XÙ[\‹\\ÙH˜[YYXÛÛ\Û™[[™[ÜšY\È[ˆÛÑ›ZY\XY™XÝYÚ]HXØÙ\YØ\ËÛÚ[ÝØ]\ˆ˜XÙH›^\Ë‚‹H\]X[X[™[ÜÜÚ]HÛÛ\Û™[X\[™È›ÜˆØ\ËÛÚ[ÝØ]\ˆ›\Ú˜[œÙ™\‹˜Z[[ÝY\›[Ù[˜[ZXÈÞ[˜Ú›Ûš^˜][Û‹›Ý[™Y›Ùš[\Ë[[]]X›H™\ÜË”ÓÓˆXYÛ›ÜÝXÜË[™™\Ü\ÝÜžK‚‹HÛÛ\ÜÚ][Û‹Y\[™[[\œ\ÙH][X][ˆH˜[œÚY[[\\˜]\™H\]X][Ûˆ[™\›X[Y[™\™ÞHYÙ\‹‚‹H˜]˜H[™”\KÔ]ÛˆXØÙ\ÜÈÈØ\ËÚ[[™Ø]\ˆÛÛ\Û™[›Ùš[\È[™Ý]]X\ÜÈœ˜XÝ[ÛœË‚‚ˆÈÈÈÛÛ\]Xš[]H[™ØÛÜB‹H˜XÚÝØ\™ÛÛ\]X›NˆÛÛ\Û™[˜[œÜÜ\È\ØX›YžHY˜][[™]\Ý™H[˜X›Y™Y›Ü™H[Š
+X‚‹HH[š]X[˜[Y]YØÛÜH™\]Z\™\ÈHš^Y˜[YYÛÛ\Û™[Û]KÛ›ÝÛˆ[›]ÛÛ\ÜÚ][Û‹Ø\ËÛÚ[Ø\]Y[Ý\È\ÙHY[]Y\Ë[™›È™]™\œÙH[™›ÝÈ›ÝYÚHÝ]]›Ý[™\žK‚‹H[\›˜[ÚYÛ™Y\ÙKY›ÝÈ™]™\œØ[È\™H[™YÚ]\ÙKXÛÛœÚ\Ý[\Ú[™[™ÎÈ[œÝ\ÜY\ÙH˜[œÚ][ÛœÈ[™›Û‹XÛÜÚ[™ÈÛÛ\Û™[Ü\ÙHYÙ\œÈ›ÝË‚‚‹KKB‚ˆÈÈŒ‹LLH8 %^\›˜[›ØÙ\ÜÈ]˜[X]ÜœÈØ[\H™\Ý[Ø[˜XÚÜÈÛ˜ÙB‚‹H›ØÙ\ÜÔÚ[][][Û‘]˜[X]Ü‹™]˜[X]J‹‹ŠX[™›ØÙ\ÜÓ[Ù[Ú[][][Û‘]˜[X]Ü‹™]˜[X]J‹‹ŠXˆ›ÝÈ[›ÚÙHXXÚ™YÚ\Ý\™YØš™XÝ]™H[™ÛÛœÝ˜Z[Ø[˜XÚÈ^XÝHÛ˜ÙH\ˆÛÛ\]YˆÚ[][][ÛˆÚ[‚‹H˜]È[™Z[š[Z^™\‹\ÚYÛˆØš™XÝ]™\È™]\ÙHÛ™HØØ[\‹ˆÛÛœÝ˜Z[˜[YKX\™Ú[‹™X\ÚXš[]K[™ˆ[˜[HZÙ]Ú\ÙH™]\ÙHÛ™HØØ[\‹]›ÚY[™È™\X]Y™\ÜÜˆÙ\šX[^˜][ÛˆÛÜšÈ[™™]™[[™Âˆ[\›˜[H[˜ÛÛœÚ\Ý[™\Ý[Èœ›ÛH]]X›HXYÛ›ÜÝXÜË‚‹H\™XÝØ[ÈÈØš™XÝ]™H[™ÛÛœÝ˜Z[Yš[š][ÛˆY]ÙÈ™]Z[ˆZ\ˆ^\Ý[™È™Z]š[Üˆ[™ˆX›XÈÚYÛ˜]\™\Ë‚‚‹KKB‚ˆÈÈŒ‹LLH8 %ÛÑ›ZY\H˜[œÚY[\›X[Y[™\™ÞHÛÜÝ\™B‚‹HH][[^Y\ˆÛÛÛÝÛˆ]›ÝÈ™[[Ý™\È›ZY[™\™ÞHÚ]HØ[YH[œÝ[[™[Ý\È›ZY]ËYš\œÝ[^Y\ˆ›^]ˆY˜[˜Ù\ÈH˜YX[Ø[Ý]Kˆ]›ÈÛ™Ù\ˆZ^\È]˜[œÚY[›^Ú]HÙ\\˜]HÝXYHÝ™\˜[UHX][ÜÜÂˆ\Ý[X]K‚‹H][[^Y\•\›X[Ø[Ý[]Ü˜^ÜÙ\ÈH›ZY\ÚYH[™[XšY[\ÚYHX]˜]\È\ÙYžH]È[ÜÝ™XÙ[˜[œÚY[ˆ\]H›ÝYÚÙ]\Ý›ZYX]˜[œÙ™\”\“[™Ý
+
+X[™Ù]\Ý[XšY[X]˜[œÙ™\”\“[™Ý
+
+X‚‹HÛÑ›ZY\K™Ù]\Ý\›X[[™\™ÞP˜[[˜ÙT™\Ü
+
+X›ÝÈ™\ÜÈ[YKZ[YÜ˜]Y›ZY[™Ø[[™\™ÞHÚ[™Ù\ËˆÛÛœÙ\˜]]™KY˜XÙHÙ[œÚX›HY™XÝ[Û‹›Ý[KUÛ\ÛÛˆ[™\™ÞK[XšY[X]ÜÜË[™XœÛÛ]KÜ™[]]™H™\ÚYX[È›Ü‚ˆH[ÜÝ™XÙ[\›X[˜[œÚY[Ø[‚‹HYYÚ[\KÛ][[^Y\‹][\‹ÒSQVY\ÚÝ[YK\Ý\™Yš[™[Y[\ØX›YZX]]˜[œÙ™\‹Ù\šX[^™YXÛÜK[™ÛÜÙYˆÔ’ËPÔHØ]\‹Y]Ë\Ú[\X\˜[˜ÙKÙ\Ø\X\˜[˜ÙH™YÜ™\ÜÚ[ÛœËˆH\ÙK]˜[œÚ][ÛˆØ\ÙHÚXÚÜÈØ\ËÚ[Ø]\‹[™ˆÝ[X\ÜÈÛÜÝ\™HÚ]Ý]HÙYYY\]ZY\ÙK‚‚‹KKB‚ˆÈÈŒ‹LLH8 %ÛÛ[[ˆ^XÝ™]\ÙHÛ›ÜœÈXÝ]™HÛÛ™\™Ù[˜ÙHØ]\Â‚ˆÈÈÈÛÜœ™XÝY‚“˜\[KTØ[™ÛH^XÝ[˜Ú[™ÙYZ[œ]™]\ÙH›ÝÈ™\]Z\™\ÈHXÝ]™HÛÛ™\™Ù[˜ÙKYØ]B˜ÛÛ™šYÝ\˜][ÛˆÈX]ÚHÛ˜\ÚÝ™XÛÜ™YY\ˆHXØÙ\YX›XÈÛÛ™KˆÚ[™Ú[™È[ˆ[™›Ü˜ÙYÛ\˜[˜ÙH›ÈÛ™Ù\ˆ™]\›œÈH™]š[Ý\ÈÝ]HÚ]™\›È]\˜][ÛœÈ[™\ˆHY™™\™[ÛÛ™\™Ù[˜ÙB˜ÛÛ˜XÝˆ\ØX›Y[™\™ÞH[™QTÒÛ\˜[˜Ù\Ë\ÈÝ]\ˆX\ˆÛ\˜[˜Ù\ÈÚ[ˆ›ÈX\ˆ˜\šXX›H\Â˜ÛÛ™šYÝ\™Y\™H^ÛYYœ›ÛHHØXÚHÙ^HÛÈ\œ™[]˜[Ù][™ÈÚ[™Ù\È™]Z[ˆ™\›ËZ]\˜][Û‚œ™]\ÙK‚‚ˆÈÈŒ‹LLH8 %›ØÙ\ÜÓ[Ù[[š][]™[X\ÜÈÛÜÝ\™H\È™\ÜYYØZ[‚‚ˆÈÈÈYY‚˜›ØÙ\ÜÓ[Ù[›ÝÈ™\ÜÈHÙXÛÛ™X\ÜËXÛÜÝ\™HšYÝ\™HÛÝ™\š[™ÈH[š]ÈH™XÞXÛK]X\ˆØ]B™Ù\È›ÝÝÛ‹ˆÙ]\Ý[š]X\ÜÐÛÜÝ\™Q\œ›ÜŠ
+X[™Ù][š]X\ÜÐÛÜÝ\™SÙ™™[™\œÊ
+X^ÜÙHHX\ÜÂ˜Ü™X]YÜˆ\Ý›ÞYYžH›Û‹\™XÞXÛH[š]Ü\˜][ÛœÈ\ÈHœ˜XÝ[ÛˆÙˆ[™YYB˜Ù]X\ÜÐÛÜÝ\™TÝ[[X\žJ
+X^Ý]\È][Û™ÜÚYHH™XÞXÛK]X\ˆ™\Ý[[™HX\ÜÐÛÜÝ\™X’”ÓÓˆ›ØÚÈØZ[™Y[š]™[]]™Q\œ›Ü˜[š]ÛÜœÝ[š]Ø[™[š]Ø]Q[˜X›Yˆž\\ÜÙY[™›ÝËY›ÝÈ[š]È\™H^ÛYY
+›ØÙ\ÜÔÞ\Ý[K™Ù]˜Z[YX\ÜÐ˜[[˜ÙX
+K[™™XÞXÛ\È\™HÚÚ\YÛÂ^H\™H›ÝÛÝ[YÚXÙK‚‚•HšYÝ\™H\È
+Šœ™\Ü[Û›HžHY˜][
+ŠŽˆH›Û‹\™XÞXÛH[š]]Ù\È›ÝÛÛœÙ\™HX\ÜÈ\È[‚™\]Z\Y[Y™XÝ˜]\ˆ[ˆÛÛY][™ÈHÝ]\ˆÛÛ™\ˆØ[ˆÛÜÙKÛÈØ][™ÈÛˆ]ÛÝ[]\˜]BÈHØ\[™\žHH™X[XYÛ›ÜÚ\ËˆÜ[ˆÚ]Ù][š]X\ÜÐÛÜÝ\™QØ]JYJXÈXZÙH]˜›ØÚÈHÛÛ™\™ÙY™\™XÝ\ÈÙ[‚‚•HÛÜÝ\™H\È›ÝÈ[ÛÈ]˜[X]YÛ˜ÙHY\ˆH[ˆ]™]™\ˆ™XXÚYHXØÙ\[˜ÙH\ÝÛÈB›[Ù[]ÝÜÈÛˆH]\˜][ÛˆØ\Ý[™\ÜÈÚ]]\È˜Z[[™ÈÈÛÛœÙ\™H[œÝXYÙ‚›X]š[™È™[]]™Q\œ›Ü˜[™Z[™HX^Z]\˜][ÛœÈØ\›š[™Ë‚‚ˆÈÈÈÛÛ\]Xš[]H[™˜[Y][Û‚‚“›ÈY˜][Ø]HÝ]ÛÛYKÜˆ^\Ý[™È”ÓÓˆšY[Ú[™ÙYÈH™XÞXÛK]X\ˆØ]H[™]Â˜™[]]™Q\œ›Ü˜ØÛÜœÝ[š]ØšY[È™Z]™H^XÝH\È™Y›Ü™KˆØ[\œÈ]Û›H™XYH™XÞXÛB™šYÝ\™\È\™H[˜Y™™XÝY‚‚‹KKBˆÈÈŒ‹LLH8 %Ü[Û˜[ÚX˜XˆŒNHðî™ZYKUÚ]ÛÛˆÓÌ‹Xœš[™H\˜[Y]\š^˜][Û‚‚ˆÈÈÈYY‚˜Þ\Ý[TÛÜ™ZYUÚ]ÛÛ˜›ÝÈ^ÜÙ\ÈÙ]\]Y[Ý\ÐÓÌ”\˜[Y]\š^˜][ÛŠ‹‹ŠXÚ][[H[™Ýš[™Â›Ý™\›ØYËˆQÐPÖX™[XZ[œÈHY˜][[™™\Ù\™\È^\Ý[™È™\Ý[ËˆÙ[XÝÒPP—ÌŒNXŠ[X\Ù\ÈWÔÕØÜˆK\ÝØ
+HÈ\ÙHHÚX˜Xˆ][ˆ
+ŒNJH\]Y[Ý\ÈÓÌ‹]Ø]\ˆš[˜\žKZ[\˜XÝ[Û‚˜ÛÜœ™[][Ûˆ›Üˆ˜PÛœš[™KˆHØ[˜\Ú\È\ÙYžHHÛÜœ™[][Ûˆ\È\]Z]˜[[˜PÛ[Û[]H[‚›[ÛÚÙÈØ]\ŽÈHX›\ÚYYX\Ý\™Y˜[™ÙH\È\›Þ[X][HKLÈ[ÛÚÙËÌŒËLÍÌÈË[™\ÈŒÌ˜\‹‚‚•HÙ[XÝÜˆ\È\™XÝHXØÙ\ÜÚX›H›ÝYÚ˜]˜H[™]Û‹Ò”\KÝ\š]™\ÈÞ\Ý[HÛÛš[™Ë[™™Ù\È›ÝÚ[™ÙHÝ\ˆØ\Ë]Ø]\ˆÜˆ›Û‹X\]Y[Ý\È[\˜XÝ[Ûˆ\˜[Y]\œË‚‚ˆÈÈŒ‹LL8 %š^Y\™Y›^˜[˜XÚÈ›ÙXÝ[™[ÜžB‚ˆÈÈÈÛÜœ™XÝY‚•Ú[ˆHš^Y[\]ZY\™Y›^ÛÛ[[ˆ™Z™XÝÈ]È˜^HÝ]H[™[œÝ[ÈÝX\™Y[Y™YY˜[˜XÚÂœ›ÙXÝËHÛÛ™[œÙ\‰ÜÈÙ\\˜]H\]ZY›ÙXÝ\È›ÝÈÛX\™YˆH˜[˜XÚÈØ\È[™›ÝÛBœÝ™X[\È[™XYHÛÛZ[ˆHÛÛ\]H™YY[™[ÜžNÈ™]Z[š[™ÈH™Z™XÝY\]ZY›ÙXÝ™\ÚYB[H™]š[Ý\ÛH^ÜÙY[Ü™HX]\šX[[ˆ[\™YHÛÛ[[‹ˆš^Y\™Y›^]˜Z[Xš[]K™[]™\žK[™™\ÚYX[XYÛ›ÜÝXÜÈ\™H[˜[Y]Y™XØ]\ÙH^H›ÈÛ™Ù\ˆ\ØÜšX™HH^ÜÙY™˜[˜XÚÈ›ÙXÝË‚‚•HÛÛ™HÝ]\È™[XZ[œÈSPÒ×Ô“ÑPÕØÛÛ™Y
+
+X™[XZ[œÈ˜[ÙK[™›È˜^H\]X][Û‹Û\˜[˜ÙK›\ÚÜˆ]\˜][Ûˆ[HÚ[™ÙYˆØ[\œÈ]\ÝÛÛ[YHÈ[œÜXÝHÛÛ™HÝ]\Â˜™Y›Ü™H™X][™ÈÛÛ[[ˆ›ÙXÝÈ\ÈHšYÛÜ›Ý\Èš^Y\™Y›^ÛÛ][Û‹‚‚ˆÈÈŒ‹LL8 %ÛÑ›ZY\HÛÜÙY\›X[›Ý[™\žHÛÛœÚ\Ý[˜ÞB‚‹H˜[œÚY[[\\˜]\™HY™XÝ[Ûˆ›ÝÈÛÛœÝ[Y\ÈHÛÛœÙ\˜]]™HÛÛ™\‰ÜÈ™]Z[™Y\ÙK\™\ÛÛ™Y˜XÙHX\ÜÈ›^\ËˆÛÛXš[™YÚ]HÛÛ™šYÝ\™Y[YÜ˜]Ü‰ÜÈÝYÙHÙZYÚÈ[™Û™H™K]\]H[\\˜]\™HÛ˜\ÚÝÈ]›ÈÛ™Ù\‚ˆ™XÛÛ\]\ÈUTÓJÈ›^\ÈY\ˆXØÙ\[˜ÙHÜˆ™XYÈ[™XYK]\]Y\Ý™X[HÙ[Ë‚‹HÓÔÑQ^\›˜[˜XÙ\ÈÛÛšX]H^XÝH™\›ÈY™XÝ]™H˜[œÜÜÚ[H[\›˜[\ÙHÛÛ™XÝ[Ûˆ™[XZ[œÈXÝ]™K‚‹HÚ[\H[™][[^Y\ˆ˜YX[X]˜[œÙ™\ˆ›ÝÈš\Ú]ÙXÝ[Ûˆ™\›È[™\ÙHØØ[ÛÛœÙ\˜]]™H›ZY[™[ÜžH›Ü‚ˆ\›X[[™\XKˆÝ]Y[][[^Y\ˆØ[[\\˜]\™\È\™H™]Z[™Y[™\[™[H›Üˆ]™\žHÙ[[™Y˜[˜ÙYÛ˜ÙBˆ\ˆXØÙ\Y\›X[[YHÝ\‚‹HHÜÝ\Ý\[\\˜]\™H[Ù[\ÈHÚ[™ÛHÝÛ™\ˆÙˆ[XšY[X]^Ú[™ÙK™]™[[™ÈH\XØ]H\]X][Û‹[]™[ˆØ[ÛÝ\˜ÙHœ›ÛH\Z[™ÈHØ[YHÜÜÈÚXÙK‚‹HYY]\›Z[š\ÝXÈ™YÜ™\ÜÚ[ÛœÈ›Üˆ\ØÛÛ›™XÝY[›]\˜]H[˜\šX[˜ÙK[šY›Ü›HÛÜÙYYXX˜]XÈ™Z]š[Ü‹[XÙ[ˆÛÛÛÝÛˆÚ]Ý][XšY[[™\œÚÛÝ[™\[™[][[^Y\ˆÙ[Ý]K[™™\›ÈÛÜÙY^\›˜[˜XÙH›^‚ˆÈÈŒ‹LL8 %›ØÙ\ÜÓ[Ù[™XÞXÛHX\ÜËXÛÜÝ\™H™\Ü[™Â‚ˆÈÈÈÛÜœ™XÝY‚•H]]ÛX]XÈ[Ù[[]™[X\ÜËXÛÜÝ\™HÛÛ™\™Ù[˜ÙHØ]H›ÝÈ]˜[X]\ÈXÝ]™H™XÞXÛXX\‚š[X˜[[˜Ù\ÈÛ›Kˆ[š][]™[X\ÜËX˜[[˜ÙHXYÛ›ÜÝXÜÈ™[XZ[ˆ]˜Z[X›H›ÝYÚ›ØÙ\ÜÔÞ\Ý[X]››ÈÛ™Ù\ˆX\Ü]Y\˜YH\ÈÜ[ˆ™XÞXÛHX\œÈÜˆ›ØÚÈ[ˆÝ\Ú\ÙHÛÛ™\™ÙY][KX\™XH[Ù[‚‚•HX\ÜÐÛÜÝ\™X”ÓÓˆ›ØÚÈ™\ÜÈ[˜X›YˆYXÛ›HÚ[ˆ]]ÛX]XÈÛÛ™\™Ù[˜ÙH[š[™È[™HÛÜÝ\™HØ]H\™H›ÝXÝ]™Kˆ[ˆ[™]˜[X]Y™[]]™Q\œ›Ü˜\È[Z]Y\È”ÓÓˆ[˜]\‚[ˆH›Û‹\Ý[™\™[Y\šXÈ]\˜[˜S˜‚‚ˆÈÈÈÛÛ\]Xš[]H[™˜[Y][Û‚‚“›ÈX›XÈY]ÙÜˆY˜][\È™[[Ý™Yˆ^\Ý[™ÈØ[\œÈÚÝ[™X]™[]]™Q\œ›ÜŽˆ[\Âˆ››Ý]˜[X]Yˆ[™[œÜXÝ[š][]™[X\ÜËX˜[[˜ÙH™\ÜÈÙ\\˜][Hœ›ÛHH™XÞXÛK]X\‚˜ÛÛ™\™Ù[˜ÙHØ]K‚ˆÈÈŒ‹LL8 %Ø\XÚ]H]šY[˜ÙH[ˆ›Ý[™XÚÈ[™›ÝYÚ]™\Ý[Â‚ˆÈÈÈYY‚˜›ØÙ\ÜÓ[Ù[Ú[][][Û‘]˜[X]Ü‹›Ý[™XÚÔÝ]\Ø[™›ÝYÚ]Ø\ÙT›ÝØ›ÝÈÛ˜\ÚÝB˜XÝ]™HÛÛœÝ˜Z[	ÜÈÛÛ™šY[˜ÙH™\Ù[˜ÙKÝ˜[YKØØ[\ˆ˜[Y]K\˜[™ÙH™\Ù[˜ÙKØ›Ý[™Ë[™Ú]\‚H]˜[X]YÝ\œ™[˜[YHY\È[œÚYHH[˜Û\Ú]™H˜[™ÙKˆHY]Y]H\È]˜Z[X›H›ÝYÚ’˜]˜HÙ]\œÈ[™\È™]Z[™YžH›ÝYÚ]”ÓÓˆ[™ÔÕˆ^ÜË‚‚ˆÈÈÈÛÛ\]Xš[]H[™™\Ü[™Â‚‘^\Ý[™ÈÛÛœÝXÝÜœÈ™[XZ[ˆ]˜Z[X›H[™™\™\Ù[]šY[˜ÙHY]Y]H\È[œÙ]ˆX[X[HÛÛœÝXÝYœÛ˜\ÚÝÈ›Ü›X[^™H[˜ÛÛœÚ\Ý[[˜X›YY]Y]H
+›Û‹Yš[š]KÛÝ][Ù‹\˜[™ÙHÛÛ™šY[˜ÙHÜ‚››Û‹Yš[š]KÜ™]™\œÙY›Ý[™ÊHÈHØ[YH[œÙ]Ý]K[™\š]™H\XØXš[]Hœ›ÛHHÝ\œ™[˜[YB˜[™™]Z[™Y›Ý[™Ëˆ›Ý[™XÚÈØØ[œÈ™XY[˜[ZXÈÛÛœÝ˜Z[Ý\Y\œÈÛ˜ÙH\ˆØ[™Y]H[™\ÙB]ØØ[\ˆ›Üˆ›Ý][^˜][Ûˆ[™\XØXš[]Kˆ”ÓÓˆ[˜ÛY\È™\Ù[˜ÙH›YÜÈ[™\Ù\È[›Ü‚[œÙ]ÛÛ™šY[˜ÙK›Ý[™Ë[™\XØXš[]KˆÔÕˆ[˜ÛY\ÈHØ[YH›YÜÈ[™\Ù\È›[šÈÙ[È›Ü‚[œÙ]˜[Y\Ëˆ][^˜][Û‹ÛÛœÝ˜Z[\™XÝ[Û‹X\™Ú[œË™X\ÚXš[]K\›[Ù[˜[ZXÜËY˜][XÜË˜[™›ÝYÚ]ÙX\˜Ú\™H[˜Ú[™ÙY‚‚‹KKB‚ˆÈÈŒ‹LL8 %ÛÛ™Q›ÝÓY]\ˆ™Z™XÝÈ›Û‹\\ÚXØ[Ù[ÛY]žH
+ÛÜ[Ý™]šY]È›Ý[™LJB‚ˆÈÈÈš^Y‚‹HÛÛ™Q›ÝÓY]\‹œÙ]Ù[ÛY]žJÝX›KÝX›KÝš[™ÊX›ÝÈ˜[Y]\ÈÛÛ™QX[Y]\ˆ	›È\QX[Y]\˜
+›ÝÜÚ]]™JBˆ[œÝXYÙˆÚ[[HÛ[\[™ÈH™]H›Ü›][IÜÈÜ\\™Ý[Y[ÈÚ]X]›X^
+Œ‹‹ŠXˆ[˜[YÙ[ÛY]žBˆ
+ÛÛ™HX[Y]\ˆ	™ÝÏH\HX[Y]\‹ÜˆZ]\ˆ›Û‹\ÜÚ]]™JH›ÝÈÙÜÈHØ\›š[™È[™ÝÜ™\ÈH˜S˜›Ø]X[Y]\‹ˆÛÛœÚ\Ý[Ú]ÙYÙQ›ÝÓY]\˜	ÜÈ[˜[YYÙ[ÛY]žH[™[™Ë[œÝXYÙˆÚ[[H›ÙXÚ[™È™]HH‚‹HÛÛ™Q›ÝÓY]\‹™Ù]ÛÛ™QX[Y]\ŠÝš[™ÊX›ÝÈ™]\›œÈ˜S˜›ÜˆH›Û‹\\ÚXØ[™]H
+˜S‹	›ÏHÜˆ	™ÝÈJH[œÝXYˆÙˆÛ[\[™ÈÈHZ\ÛXY[™ÈX[Y]\‹‚‚‹KKB‚ˆÈÈŒ‹LL8 %™Z™XÝ›Û‹\\ÚXØ[\ØÚ\™ÙHÛÙY™šXÚY[È[ˆH™^[›ÛÈ]\˜][Ûˆ
+ÛÜ[Ý™]šY]È›Ý[™L
+B‚ˆÈÈÈš^Y‚‹HY™™\™[X[™\ÜÝ\™Q›ÝÓY]\‹™Ù]X\ÜÑ›ÝÔ˜]T\”ÙXÛÛ™
+
+X	ÜÈ™^[›ÛË[[X™\ˆ]\˜][ÛˆÛ›HÚXÚÙYˆÝX›Kš\Ñš[š]J\]Y›ÝÊXÛÈH™^[›ÛËZ[™\[™[]šXÙHÚÜÙHØ[Ñ\ØÚ\™ÙPÛÙY™šXÚY[
+‹‹ŠX™]\›œÈBˆ›Û‹\\ÚXØ[˜[YH
+È	›ÏH
+HÛÝ[Ú[[HÛÛ™\™ÙHÈH™YØ]]™H
+]š[š]JHX\ÜÈ›ÝÈ[™™^[›ÛÈ[X™\ˆÛ‚ˆH™\žHš\œÝ\ÜËˆH[š]X[ÝY\ÜÈ[™]™\žH]\˜][Ûˆ›ÝÈ[ÛÈ™Z™XÝ›ÝÈ	›ÏHŒ™]\›š[™È˜S˜
+Ú]BˆØ\›š[™ÈY[YžZ[™ÈHÙ™™[™[™È™K
+H[œÝXYÙˆHÚ[[HÜ›Û™È™YØ]]™H›ÝË‚‚‹KKB‚ˆÈÈŒ‹LL8 %\ÝØËÜš]˜XÞHÛÜ™[™Èš^\È
+ÛÜ[Ý™]šY]È›Ý[™JB‚ˆÈÈÈš^Y‚‹HÜšYšXÙQ›ÝÓY]\•\Ý˜Z[Ù]Ø\ÓY]\ŠÝX›JX˜]˜QØÈÛZ[YYHHŒ˜\˜X]HY]\ˆ\Ù\ÈHÚ\™YˆÝ™X[Xš^\™Hœ›ÛHÙ]\
+
+XÚXÚ\ÈŒ˜\˜Kˆ™]ÛÜ™YÈ\ØÜšX™HHXÝX[\Ý™X[H™\ÜÝ\™HÛÝ\˜ÙK‚‹H™YXÝY\]Z\Y[YÈY[YšY\œÈ
+ÐKRÐLPXÈÐKRÐMŒ
+Hœ›ÛHH™[\šQ›ÝÓY]\•\Ý˜]˜QØÈÛÛ[Y[\ˆBˆ™\ÜÚ]ÜžIÜÈš]˜XÞH[HYØZ[œÝ[˜ÛY[™È\]Z\Y[YÈ[X™\œÈ[ˆX›XËÜ™]\ØX›HÛÛ[‚‹HØÑ^[\\ÐÛÛ\[][Û•\Ý˜Z[ØÑ^[\UÙ]Ø\ÔÝ™X[J
+X›ÈÛ™Ù\ˆ\™X\ÜÙ\È[ˆ^XÝ\ÙHÛÝ[Ùˆˆ
+œš]BˆYˆ™\TÚ[H]™\ˆYÈ[›Ý\ˆ\ÙH\JNÈ]›ÝÈ\ÜÙ\ÈH[[™YØ\Ø[™Ú[\Ù\È\™H›Ý™\Ù[šXBˆ\Ô\ÙU\J‹‹ŠX‚‚‹KKB‚ˆÈÈŒ‹LL8 %›Û[YK][š]ÛÛ™\œÚ[ÛˆØ\Èš^Y
+ÛÜ[Ý™]šY]È›Ý[™
+B‚ˆÈÈÈš^Y‚‹HY™™\™[X[™\ÜÝ\™Q›ÝÓY]\‹›Û[YQ›ÝÐÛÛ™\œÚ[Û•ÓLÔ\”ÙXÛÛ™
+Ýš[™ÊX›ÝÈÝ\ÜÈ]™\žH[š]Ýš[™È]ˆ\ÐXÝX[›Û[YU[š]
+Ýš[™ÊXØ\ÔÝ[™\™›Û[YU[š]
+Ýš[™ÊXÛ\ÜÚYžH\È˜[YˆÛWŒËÜÙXØÔÛLËÜÙXØTÛLËÜÙXØˆWŒËÛZ[˜ÛWŒËÛZ[˜ÔÛLËÛZ[˜TÛLËÛZ[˜[™WŒËÙ^XÙ\™H™]š[Ý\ÛHZ\ÜÚ[™ËÛÈÙ]›Û[YQ›ÝÔ˜]J[š]
+XÂˆÙ]Ý[™\™›Û[YQ›ÝÔ˜]J[š]
+X™]È[[YQ^Ù\[Û˜›ÜˆÜÙH
+™]š[Ý\ÛH˜[Y[ÛÚÚ[™ÈŠH[š]Ýš[™ÜË‚‚ˆÈÈÈ™\šYšYY\ÈH˜[ÙHÜÚ]]™H
+›ÈÚ[™ÙHXYJB‚‹HH™]šY]È[ÛÈÛZ[YYÜšYšXÙQ›ÝÓY]\˜Ø™[\šQ›ÝÓY]\˜	ÜÈZ[Ù]Ø\ÔÚYÛ˜]\™J
+XØXÚH™]™\ˆ]È™XØ]\ÙBˆ\œ˜^\Ë™\]X[ÊÝX›V×KÝX›V×JX™X]È˜SˆOH˜S˜ˆ\È\È[˜ÛÜœ™XÝˆ\ˆHY]Ù	ÜÈÝÛˆ˜]˜YØÈÛÛ˜XÝˆ
+[™ÛÛ™š\›YYÚ]HÝ[™[Û™H•“HÚXÚÊK\œ˜^\Ë™\]X[ÊÝX›V×KÝX›V×JXÛÛ\\™\ÈÝX›K™ÝX›UÓÛ™Ðš]Øˆ˜[Y\È[™^XÚ]H™X]ÈÛÈ˜S˜È\È\]X[ˆYYHÛ™K[[™H›ÝHÈZ[Ù]Ø\ÔÚYÛ˜]\™J
+X[ˆ›ÝÛ\ÜÙ\ÂˆØÝ[Y[[™È\ÈÛÈ]\™H™]šY]ÜÈÛ‰Ý™KY›YÈ]‚‚‹KKB‚ˆÈÈŒ‹LL8 %™^[›ÛËXØXÚHÝ[[™\ÜÈ[™›Þž›HX]YÛXZ[ˆš^\È
+ÛÜ[Ý™]šY]È›Ý[™ÊB‚ˆÈÈÈš^Y‚‹HY™™\™[X[™\ÜÝ\™Q›ÝÓY]\‹™Ù]X\ÜÑ›ÝÔ˜]T\”ÙXÛÛ™
+
+X›ÝÈ™\Ù]È\Ý™^[›ÛÓ[X™\”\XÈ˜S˜Ûˆ]™\žBˆ[˜[YZ[œ]Ú[˜[YY^[œÚXš[]HX\›H™]\›‹›Ý\ÝÚ[ˆ	›ÏHÛÈÙ]™^[›ÛÓ[X™\”\J
+X™]™\‚ˆ™\ÜÈHÝ[H˜[YHœ›ÛHH™]š[Ý\ÈÝXØÙ\ÜÙ[ÛÛ™HY\ˆH˜Z[YÛ™K‚‹HH™^[›ÛË[[X™\ˆ]\˜][Ûˆ›ÝÈÚXÚÜÈÝX›Kš\Ñš[š]J\]Y›ÝÊXXXÚ\ÜÈ[™˜Z[È˜\Ý
+˜Sˆ
+ÈHÙÙÙYˆØ\›š[™ÈY[YžZ[™ÈHÙ™™[™[™È™K
+H[œÝXYÙˆ[›š[™È[PVÒUTUSÓ”Ø\ÜÙ\È[™ÙÙÚ[™ÈHZ\ÛXY[™Âˆ™Y›ÝÛÛ™\™ÙHˆØ\›š[™ÈÚ[ˆH]šXÙK\ÜXÚYšXÈ\ØÚ\™ÙKXÛÙY™šXÚY[ÛÜœ™[][Ûˆ›ÙXÙ\È˜S‹Ò[™š[š]K‚‹H›Þž›Q›ÝÓY]\‹˜Ø[Õ›Ø]\Y\ØÚ\™ÙPÛÙY™šXÚY[
+ÝX›JX›ÝÈ^XÚ]H™]\›œÈ˜S˜›Ü‚ˆ™^[›ÛÕ›Ø]	›È[œÝXYÙˆ™[Z[™ÈÛˆX]œÝÊ™YØ]]™KŽ
+X
+H›Û‹Z[YÙ\ˆÝÙ\ˆÙˆH™YØ]]™Bˆ˜\ÙJHÈ›ÙXÙH˜S˜[™\™XÝHÛ˜ÙHHHÈ™KÛÙ\È™YØ]]™K‚‚‹KKB‚ˆÈÈŒ‹LL8 %ØËÝ\ÝÛÜ™[™Èš^\È[™ÓÓ‘H™]H˜[Y][Ûˆ
+ÛÜ[Ý™]šY]È›Ý[™ŠB‚ˆÈÈÈš^Y‚‹H^[œÚXš[]S[Ù[ÓÓ‘K˜Ø[Ý[]J‹‹ŠX›ÝÈ˜[Y]\È™]HXZÙHÔ’Q’PÑX[™TÑS•“ÔPØ[œÝXYÙ‚ˆÚ[[H™]\›š[™ÈHš[š]H˜[YH›Üˆ›Û‹\\ÚXØ[Ù[ÛY]žK‚‹HÛÜœ™XÝYHÝËY[Z]ÛÛ[Y[Ûˆ^[œÚXš[]S[Ù[’TÑS•“ÔPØˆH[™]\›Z[˜]Bˆ
+HH]WŠ
+Ø\KLJKÚØ\JJHÈ
+HH]JX\›H]Ù[ˆ[™ÈÈ
+Ø\KLJKÚØ\X›ÝXÈ]\ÈHÝ™\˜[ˆ^[œÚXš[]H˜XÝÜˆ][™ÈÈKŒ‚‹HÙYÙQ›ÝÓY]\‹œÙ]ÙYÙT˜][ÊÝX›JX˜]˜QØÈ›ÈÛ™Ù\ˆÛZ[\ÈH\HX[Y]\ˆ\Èœ™\]Z\™YˆÈ[™XYH™HÙ]ˆ
+]\Û‰Ý[™›Ü˜ÙY
+NÈ]›ÝÈØÝ[Y[ÈHXÝX[™Z]š[Ü‹[˜ÛY[™ÈH˜\ÙHÛ\ÜÉÜÈŒˆHY˜][‚‹H™[˜[YYHZ\ÛXY[™È™žKYØ\È^[\Hˆ˜]˜QØÈÛˆ\Ý™[\šQ›ÝÓY]\‘ØÊ
+XØ\ÝÜšYšXÙQ›ÝÓY]\‘ØÊ
+X[‚ˆØÑ^[\\ÐÛÛ\[][Û•\ÝÚXÚXÝX[H^\˜Ú\ÙHHÛË\\ÙHZ[ØÑ^[\UÙ]Ø\ÔÝ™X[J
+X[\ˆÚ]ˆÙ]Ø\ÐÛÜœ™[][Û‹““Ó‘X
+H\]ZYØY\ÈÚ[\HYÛ›Ü™Y[ˆ][ÙK›ÝXœÙ[œ›ÛHHÝ™X[JK‚‹H™[[Ý™YH™[XZ[š[™ÈÞ\Ý[K›Ý]œš[˜Ø[Èœ›ÛHØÜËÜ›ØÙ\ÜËÙ\]Z\Y[ÛYX\Ý\™[Y[Ù]šXÙ\Ë›YÛÙBˆÛš\]È
+ÓÌˆ[Z\ÜÚ[ÛœË“U“ÐËËÝØ]\ˆ]ÈÚ[ÜšXÛÛ™[˜˜\‹’UˆÑ‹Ñ‹T“TË[Û\ˆX\ÜËØ]\ˆÛÛ[
+K‚‚‹KKB‚ˆÈÈŒ‹LL8 %Ù]YØ\ÈÙ]\ˆØXÚ[™È›ÜˆÜšYšXÙQ›ÝÓY]\ˆ[™™[\šQ›ÝÓY]\‚‚ˆÈÈÈÚ[™ÙY‚‹HÜšYšXÙQ›ÝÓY]\˜[™™[\šQ›ÝÓY]\˜›ÈÛ™Ù\ˆ™K\[ˆH[]\˜]]™HÙ]YØ\ÈÛÛ™HÛˆ]™\žHÙ]\ˆØ[ˆ
+Ù]ØÚÚ\X\[™[T\˜[Y]\Š
+XÙ]Ø\Ñ[œÚ[ÛY]šXÑœ›ÝYS[X™\Š
+XÙ]Ý™\”™XY[™Ñ˜XÝÜŠ
+X]Ë‹\ÂˆÙ]X\ÜÑ›ÝÔ˜]T\”ÙXÛÛ™
+
+X
+KˆXXÚ›ÝÈØXÚ\ÈH\ÝÙ]Ø\Ô™\Ý[™Z[™HÚX\[œ]š[™Ù\œš[ˆ
+Z[Ù]Ø\ÔÚYÛ˜]\™J
+XˆY™™\™[X[™\ÜÝ\™K\Ý™X[H™\ÜÝ\™K™]KØ\È[œÚ]Kš\ØÛÜÚ]KÙ\ØÚ\™ÙBˆÛÙY™šXÚY[\]ZYØYÛÛ™šYÝ\˜][Û‹[™Ù]YØ\ÈÛÜœ™[][ÛˆÙ][™ÜÊKˆ™XY[™È][\H\š]™Y]X[]Y\ÈÚ][‚ˆHØ[YH[Y\Ý\›ÝÈ™]\Ù\ÈÛ™HÛÛ™H[œÝXYÙˆ™K\ÛÛš[™È\ˆÙ]\‹[™[Ù]\œÈ\™HÝX\˜[YYÈ™Y›XÝˆHØ[YHÛÛ™YÝ]KˆHØXÚH\È›ÝX[X[H[˜[Y]YžHÙ]\œÎÈ]\È™XÛÛ\]Y]]ÛX]XØ[HÚ[™]™\ˆBˆš[™Ù\œš[Ú[™Ù\È
+K™ËˆY\ˆ›ØÙ\ÜËœ[Š
+XY˜[˜Ù\ÈHÝ™X[KÜˆY\ˆ[žHÙ]YØ\ÈÙ]\ˆØ[
+K‚‹HØÝ[Y[][ÛˆÛÙHÛš\]È›ÈÛ™Ù\ˆ\ÙHÞ\Ý[K›Ý]œš[˜
+›Ú™XÝÛÛ™[[ÛŽˆ]›ÚY][ˆ^[\\È]X^H™BˆÛÜYY[È›ÙXÝ[ÛˆÛÙJK‚‹HØÑ^[\\ÐÛÛ\[][Û•\Ý˜Z[ØÑ^[\UÙ]Ø\ÔÝ™X[J
+X›ÝÈ\ÜÙ\ÈHZ[Ý™X[H\ÈÛË\\ÙK[œÝXYÙ‚ˆ\ÜÝ[Z[™È]Ú[[K‚‚‹KKB‚ˆÈÈŒ‹LL8 %›ÝË[Y]\ˆÛÜ[Ý™]šY]Èš^\È
+™^[›ÛÈØXÚK›Û[YK][š]\Ü]Ú™X\‹^™\›ËY^[œÚXš[]JB‚ˆÈÈÈš^Y‚‹HY™™\™[X[™\ÜÝ\™Q›ÝÓY]\‹™Ù]X\ÜÑ›ÝÔ˜]T\”ÙXÛÛ™
+
+X›ÝÈ™\Ù]ÈHØXÚYˆ\Ý™^[›ÛÓ[X™\”\XÈ˜S˜Ú[ˆHY™™\™[X[™\ÜÝ\™H\È›ÝÜÚ]]™K[œÝXYÙ‚ˆX]š[™È]]H™]š[Ý\ÈÛÛ™IÜÈÛÛ™\™ÙY˜[YKˆÙ]™^[›ÛÓ[X™\”\J
+XˆÙ]™^[›ÛÓ[X™\•›Ø]
+
+X[™Ù]˜[Y]Uš[Û][ÛœÊ
+X›ÈÛ™Ù\ˆ™\ÜÝ[H™^[›ÛË[[X™\‚ˆ[™›Ü›X][ÛˆY\ˆ›ÜÈÈ™\›È
+Üˆ™YØ]]™JK‚‹HY™™\™[X[™\ÜÝ\™Q›ÝÓY]\‹™Ù]›Û[YQ›ÝÔ˜]JÝš[™È[š]
+X›ÝÈ[YØ]\ÈÂˆÙ]Ý[™\™›Û[YQ›ÝÔ˜]J[š]
+XÚ[ˆ[š]\ÈHÝ[™\™]›Û[YH[š]
+ÛLËË‹‹˜ÔÛLËË‹‹˜ˆTÛLËË‹‹˜
+Kˆ™]š[Ý\ÛH][Ø^\È]šYYžHH›ÝÚ[™È
+XÝX[
+HØ\È[œÚ]KÛÂˆÙ]›Û[YQ›ÝÔ˜]J”ÛLËÚˆŠXÚ[[H™]\›™YH[Y[œÚ[Û˜[K]Ü›Û™È˜[YH[œÝXYÙˆHÛÜœ™XÝˆÝ[™\™XÛÛ™][Ûˆ›ÝË‚‹H^[œÚXš[]S[Ù[’TÑS•“ÔPË˜Ø[Ý[]J‹‹ŠX›ÝÈ™]\›œÈKŒ[œÝXYÙˆ˜S˜Ú[ˆ]X\ÂˆÚ][ˆYKLL˜ÙˆKŒ
+HÝËYY™™\™[X[\™\ÜÝ\™H[Z]
+KˆH
+HH]WŠ
+Ø\KLJKÚØ\JJHÂˆ
+HH]JX\›H\ÈH™[[Ý˜X›HÌ[™]\›Z[˜]H›Ü›HÚÜÙH[Z]\È
+Ø\KLJKÚØ\XÚXÚXZÙ\ÂˆHÝ™\˜[^[œÚXš[]H˜XÝÜˆ[™ÈKŒ8 %K™Kˆ›È^[œÚ[Ûˆ›ÜˆH™YÛYÚX›H™\ÜÝ\™H›ÜˆX]Ú[™È\ÚXØ[^XÝ][Ûˆ[œÝXYÙˆ›ÜYØ][™È˜S˜[ÈH›ÝÈØ[Ý[][Û‹‚‹HØÝ[Y[][ÛˆÛÙHÛš\]È[ˆØÜËÜ›ØÙ\ÜËÙ\]Z\Y[ÛYX\Ý\™[Y[Ù]šXÙ\Ë›Y]™Y™\™[˜ÙBˆ\ÝÝš[™Ïˆ\ÜÝY\ÈHY]\‹™Ù]˜[Y]Uš[Û][ÛœÊ
+NØ›ÝÈ[˜ÛYH[\Ü˜]˜K][“\ÝØÛÂˆ^HÛÛ\[HÝ[™[Û™HYˆÛÜYY[ÈHÛX[›ÙÜ˜[K‚‚‹KKB‚ˆÈÈŒ‹LL8 %TÓËÕˆLMNÈÛ]\ÙHÈÙ]YØ\ÈÛÜœ™XÝ[ÛˆYYÈÜšYšXÙQ›ÝÓY]\‚‚ˆÈÈÈYY‚˜ÜšYšXÙQ›ÝÓY]\‹œÙ]Ù]Ø\ÐÛÜœ™[][ÛŠÙ]Ø\ÐÛÜœ™[][Û‹’TÓ×Õ—ÌLMNÊXÝÚ]Ú\ÈHY]\ˆÈB’TÓËÕˆLMNÈÛ]\ÙHÈÙ]YØ\ÈÜšYšXÙHY]ÙˆH\]ZYØY\ÈÝ\YYšXB˜Ù]\]ZYœ›ÛTÝ™X[JYJX
+™XYÈHÛÛ›™XÝYÝ™X[IÜÈÝÛˆ\ÙHÜ]
+KÙ]\]ZYÑØ\ÓX\ÜÔ˜][Ê
+X˜Ù]\]ZYX\ÜÑ›ÝÔ˜]J‹[š]
+XÜˆ
+Ú[ˆHH™]HHŽ[™›È^XÚ]\]ZY˜]KÜ˜][È\Â™Ú]™[ŠHHËKH\›X[™[™\ÜÝ\™K[ÜÜÈ›Ý]HšXHÙ]™\ÜÝ\™SÜÜÊ‹[š]
+Xˆ™]ÈÙ]\œÎ‚˜Ù]ØÚÚ\X\[™[T\˜[Y]\Š
+XÙ]Ø\Ñ[œÚ[ÛY]šXÑœ›ÝYS[X™\Š
+XÙ]Ý™\”™XY[™Ñ˜XÝÜŠ
+X˜Ù]Ú\ÚÛPÛÙY™šXÚY[
+
+XÙ]Ú\ÚÛQ^Û™[
+
+XˆÙ]˜[Y]Uš[Û][ÛœÊ
+X›ÝÈ™\ÜÈHÛ]\ÙHÂ›[Z]ÈÙˆ\ÙH
+ŒH™]HHÌËHŒËœ‹Ø\ÈHŒ‹šËØ\ËÜšË\]ZYˆŒMHL[Kœ\ÈHY][Û˜[ËKH›Ý[™ÈÚ[ˆH™\ÜÝ\™K[ÜÜÈ›Ý]H\È\ÙY
+H[œÝXYÙˆHžKYØ\ÈTÓÈLMËL‚›[Z]ÈÚ[ˆHÛÜœ™[][Ûˆ\ÈXÝ]™K‚‚ŠŠ’Ù^HY™™\™[˜ÙHœ›ÛH™[\šQ›ÝÓY]\˜	ÜÈÛ]\ÙHˆÙ]YØ\ÈY]Ù
+ŠŽˆHÜšYšXÙH\ØÚ\™ÙHÛÙY™šXÚY[š\È
+Š›™]™\ˆ™\XÙY
+Šˆ
+Û]\ÙHËKŒŠH8 %]Ý^\ÈHZ[ˆ™XY\‹R\œš\ËÑØ[YÚ\ˆ\]X][Ûˆ]˜[X]Y]HØ\Ë[Û›H™^[›ÛÈ[X™\‹ÛÈ\™H\È›È\ÙUÙ]Ø\Ñ\ØÚ\™ÙPÛÙY™šXÚY[\Ý[HÝX\™ˆHÚ\ÚÛB™^Û™[[ÛÈ\È›ÈX[Y]\‹\˜][È\›H
+[›ZÙH™[\šIÜÈ™]K\™YXÙY^Û™[
+N‚˜ˆHŒŒM›Üˆœ‹Ø\ÈKXˆH
+KÜÜ\
+ŠHHŒËÜÜ\
+œ‹Ø\ÊJWŒ˜›Üˆœ‹Ø\ÈˆKX‚‚˜Y™™\™[X[™\ÜÝ\™Q›ÝÓY]\˜ØZ[™YH›ÝXÝYÙ]™^[›ÛÓ[X™\”\JÝX›JXÛÈHÙ]YØ\ÈÝX˜Û\ÜÂ˜Ø[ˆ™XÛÜ™]ÈÝÛˆÛÛ™\™ÙY™^[›ÛÈ[X™\ˆÛˆH˜\ÙHÛ\ÜÎÈÚ]Ý]]Ù]™^[›ÛÓ[X™\”\J
+XœÝ^YY[›™Y]HžKYØ\ÈÙYY˜[YHœ›ÛHH[š]X[ÛÛ™K‚‚ˆÈÈÈÛÛ\]Xš[]B‚[™KY^\Ý[™ÈÜšYšXÙQ›ÝÓY]\•\ÝØ\Ù\È\ÜÈ[˜Ú[™ÙY
+Y˜][ÛÜœ™[][Ûˆ\È“Ó‘X
+KˆH™]ÂÙ]YØ\È\ÝÈYY
+MÈÝ[
+Kˆ›ÈÝ\ˆ›ÝÈY]\ˆÛ\ÜÈ\ÈY™™XÝY‚‚ˆÈÈŒ‹LL8 %TÓÈLMÈY™™\™[X[\™\ÜÝ\™H›ÝÈY]\œÎˆÚ\™Y˜\ÙHÛ\ÜÈ
+ÈÜšYšXÙKÛ›Þž›KØÛÛ™KÝÙYÙB‚ˆÈÈÈYY‚˜Y™™\™[X[™\ÜÝ\™Q›ÝÓY]\˜
+XœÝ˜XÝ™\\Ú[Kœ›ØÙ\ÜË›YX\Ý\™[Y[]šXÙX
+H\ÈH™]ÈÚ\™Y˜\ÙB™›ÜˆTÓÈLMËLHÙ[™\˜[\š[˜Ú\\È\ÚXÜÎˆÙ[ÛY]žH
+Ù]Ù[ÛY]žXØÙ]\QX[Y]\˜ØÙ]›Ø]X[Y]\˜™X[Y]\ˆ˜][È[Ø^\È™]HHÑ™XÛÛ\]YÛˆ[X[™
+KY™™\™[X[™\ÜÝ\™H
+^XÚ]ÜˆšXB˜Y™™\™[X[™\ÜÝ\™U˜[œÛZ]\˜
+KØ\È[œÚ]KÚ\Ù[›ÜXÈ^Û™[Ù[˜[ZXÈš\ØÛÜÚ]H™XY\œÈ
+XXÚ›Ý™\œšYX›JKH™^[›ÛË[[X™\ˆš^Y\Ú[]\˜][Ûˆ›Üˆ]šXÙ\ÈÚÜÙH\ØÚ\™ÙHÛÙY™šXÚY[\[™ÈÛ‚˜™K[™HX\ÜËØXÝX[]›Û[YKÜÝ[™\™]›Û[YKØÙ]YX\Ý\™Y˜[YXXØÙ\ÜÛÜœËˆ^[œÚXš[]S[Ù[Š[[NˆÔ’Q’PÑXTÑS•“ÔPØÓÓ‘X
+HÛÈH™YH^[œÚXš[]KY˜XÝÜˆ˜[Z[Y\ÈÚ\™YXÜ›ÜÜÈTÓÂLMËL‹ËLËËMËMKËM‹‚‚‘›Ý\ˆ™]ÈÛÛ˜Ü™]H]šXÙ\ËXXÚ[\[Y[[™ÈÛ›H]ÈÝÛˆ\ØÚ\™ÙHÛÙY™šXÚY[[™^[œÚXš[]H[Ù[‚‚‹HÜšYšXÙQ›ÝÓY]\˜
+TÓÈLMËLŠH8 %™XY\‹R\œš\ËÑØ[YÚ\ˆ
+NNN
+H\ØÚ\™ÙHÛÙY™šXÚY[ˆ\[™Ð\œ˜[™Ù[Y[
+ÓÔ“‘T˜ÐS‘ÑÒS˜“S‘ÑX
+K‚‹H›Þž›Q›ÝÓY]\˜
+TÓÈLMËLÊH8 %›Þž›U\X
+TÐWÌNLÌ˜Ó‘×ÔQUTØ“ÐUÕTQˆ‘S•T’WÓ“Ö–“X
+NÈHš\œÝ™YH\[™ÛˆH™^[›ÛÈ[X™\‹H™[\šH›Þž›HÙ\È›Ý‚‹HÛÛ™Q›ÝÓY]\˜
+TÓÈLMËMJH8 %ÛÛœÝ[ÈHŽŽÈ›È\ÚXØ[›Ø]™]HHÜ\
+HH×Œ‹ÑŒŠXˆ\š]™Yœ›ÛHHÛÛ™HX[Y]\ˆšXHÙ]Ù[ÛY]žJË[š]
+X‚‹HÙYÙQ›ÝÓY]\˜
+TÓÈLMËMŠH8 %ÈHÍÈHŒH™]NÈ›È\ÚXØ[›Ø]™]H\š]™Yœ›ÛHHÙYÙBˆØ\ZYÚ
+Ù]Ù[ÛY]žJ[š]
+X
+HÜˆÙYÙH˜][È
+Ù]ÙYÙT˜][ÊÑ
+X
+HšXHTÓÈLMËMˆ›Ü›][H
+ÊK‚‚ˆÈÈÈÛÛ\]Xš[]H[™ZYÜ˜][Û‚‚˜™[\šQ›ÝÓY]\˜
+TÓÈLMËM
+H\È™K\\™[YÛÈY™™\™[X[™\ÜÝ\™Q›ÝÓY]\˜Ú]
+Š››ÈX›XÈTB˜Ú[™ÙJŠˆ8 %Ø[YHÛÛœÝXÝÜœËØ[YHY]ÙÚYÛ˜]\™\ËØ[YHÙ]YØ\È
+TÓËÕˆLMNËHY]]ÊH™Z]š[Ü‹ˆ[ŒŒ™KY^\Ý[™È™[\šQ›ÝÓY]\•\ÝØ\Ù\È\ÜÈ[˜Ú[™ÙYˆÙ]YØ\ÈÝ™\‹\™XY[™ÈÛÜœ™XÝ[Ûˆ
+\]ZYØY“ØÚÚ\SX\[™[Kœ›ÝYH[X™\‹Ú\ÚÛH›Ü›JH™[XZ[œÈ™[\šK\ÜXÚYšXÎÈ]\È›Ý™Y[ˆÙ[™\˜[^™YÂHÝ\ˆ›Ý\ˆ]šXÙ\È[ˆ\ÈÚ[™ÙK‚‚ˆÈÈÈ›Ý[ˆØÛÜH
+˜Z\ÙHÙ\\˜][HYˆ™YYY
+B‚˜™\\Ú[KœÝ[™\™Ë™Ø\Ü]X[]K”Ý[™\™ÐQÐLØ	ÜÈÝÛˆ™XY\‹R\œš\ËÑØ[YÚ\ˆ[\[Y[][Ûˆ\ÈÛ›ÝÛ‚˜[œØÜš\[ÛˆYÜÈ
+Z\ÜÚ[™È\›\ËÜ›Û™È™^[›ÛË[[X™\ˆ˜\Ú\ÊH›Ý[™Ú[H™\šYžZ[™ÈÜšYšXÙQ›ÝÓY]\˜˜YØZ[œÝHØ[YHTÓÈLMËLŽŒŒŒˆ›Ü›][H
+
+NÈ]Ø\È[X™\˜][HY[ÝXÚY[™[™ÈXZ[Z[™\ˆ™]šY]Ë‚‚ˆÈÈŒ‹LLÈ8 %Ø\XÚ]HÛÛœÝ˜Z[ÛÛ™šY[˜ÙH[™˜[Y]HY]Y]B‚ˆÈÈÈYY‚˜Ø\XÚ]PÛÛœÝ˜Z[›ÝÈ™XÛÜ™È[ˆÜ[Û˜[]šY[˜ÙK\]X[]HÛÛ™šY[˜ÙHØÛÜ™H[ˆÌWX[™[‚›Ü[Û˜[[˜Û\Ú]™HØØ[\ˆ˜[Y]H˜[™ÙH[ˆHÛÛœÝ˜Z[	ÜÈÝÛˆ[š]ˆ›Y[Ù]\œÈ˜[Y]H[˜[Y\Ë^XÚ]\ÐÛÛ™šY[˜ÙJ
+X[™\Õ˜[Y]T˜[™ÙJ
+XY]ÙÈ™\Ù\™H[œÙ]Ù[X[XÜË[™˜\ÐÝ\œ™[˜[YUÚ][•˜[Y]T˜[™ÙJ
+XÚXÚÜÈH]™HÛÛœÝ˜Z[˜[YHYØZ[œÝHÝ]Y˜[™ÙK‚‚ˆÈÈÈÛÛ\]Xš[]H[™™Z]š[Ü‚‚‘^\Ý[™ÈÛÛœÝXÝÜœÈ[™Ù\šX[^™YÛÛœÝ˜Z[È™[XZ[ˆÛÛ\]X›Kˆ[œÙ][™YØXÞHY]Y]H\Âœ™\ÜY\ÈXœÙ[[™[Y\šXÈÙ]\œÈ™]\›ˆ˜S˜ˆHY]Y]HÙ\È›Ý[\ˆ][^˜][Û‹˜ÛÛœÝ˜Z[\™XÝ[Û‹X\™Ú[œËš[Û][ÛˆÝ]\Ë™X\ÚXš[]KÜˆÜ[Z^™\ˆÙX\˜ÚˆÛÛ™šY[˜ÙH\Â˜[ˆ]šY[˜ÙK\]X[]HØÛÜ™K›ÝH›Ø˜Xš[]HÙˆØY™]HÜˆÛÛœÝ˜Z[Ø]\Ù˜XÝ[Û‹ˆ\È™[X\ÙBœ›ÜYØ]\ÈÛÛ™šY[˜ÙH[™˜[Y]H[È›ÝYÚ]Ø\ÙH›ÝÜÈ\ÈÙˆŒ‹LL]Ù\È›Ýš[\[Y[H][Y[Y[œÚ[Û˜[Ü\˜][™È[™[ÜK‚ˆÈÈŒ‹LLÈ8 %ÛÑ›ZY\H\ÙK\™\ÛÛ™Y›\Ú˜[œÙ™\‚‚ˆÈÈÈÛÜœ™XÝY‚˜\›[Ù[˜[ZXÐÛÝ\[™Ø›ÝÈY[YšY\È\Ù\ÈžH\ÙU\XYÙÜ™YØ]\È[Y›ØØ\˜›Ûˆ[™˜\]Y[Ý\È\]ZYÛÛšX][ÛœË[™™]\›œÈ[[]]X›H\ÙSX\ÜÕ˜[œÙ™\˜Ø\ËÛÚ[ÝØ]\ˆÛÝ\˜Ù\Ë‚ÛÛ™[œØ][Ûˆ›ÛÝÜÈ\]Z[Xœš][H\]ZYX\ÜÈÛÛšX][ÛœËˆ]˜\Ü˜][Ûˆ›ÛÝÜÈ[™\È[Z]YžBHXÝX[ÛÛœÙ\˜]]™HÚ[[™Ø]\ˆ[™[ÜšY\Ëˆ˜[œÙ™\ˆ[ÛY[[H\Ù\ÈÛ›Üˆ™[ØÚ]H[™\Â˜ÛÛœÙ\˜]]™HXÜ›ÜÜÈ[™YH\Ù\Ë‚‚˜›\ÚX›X›ÝÈÝÜ™\ÈHYÙÜ™YØ]H\]ZYœ˜XÝ[Û‹Ú[Ø\]Y[Ý\ÈX\ÜÈÜ][™Ø\ËÛ\]ZY[Û\‚›X\ÜÙ\Ëˆ^\Ý[™ÈÙ\šX[^™YX›\ÈÚ]Ý]\ÙH\œ˜^\È™]\›ˆH™XZ[XYÛ›ÜÝXÈ[œÝXYÙ‚œÚ[[H™XÛÛœÝXÝ[™È[XšYÝ[Ý\È\]ZYY[]K‚‚ˆÈÈÈÛÛ\]Xš[]H[™˜[Y][Û‚‚˜Ø[ÓX\ÜÕ˜[œÙ™\”˜]T\“[™Ý
+‹‹ŠX[™H[\›˜[ÛËY[[Y[Ø\ËÛ\]ZYY\\ˆ™[XZ[‚˜]˜Z[X›KˆÛÙH™YY[™È\ÙHY[]HÚÝ[Ø[Ø[Ô\ÙSX\ÜÕ˜[œÙ™\”˜]T\“[™Ý
+‹‹ŠX[™œ™XYHÒK][š]Ø\ËÚ[[™Ø]\ˆÛÝ\˜Ù\Ëˆ˜[Y]HXXÚ\ÙHÚ]ÛÑ›ZYX\ÜÐ˜[[˜ÙT™\ÜÂÝ[[X\ÜÈÛÜÝ\™H[Û™HÙ\È›Ý›Ý™HÛÜœ™XÝ\]ZYY[]K‚‚ˆÈÈŒ‹LLÈ8 %Ø\XÚ]H›Ý™[˜[˜ÙH[ˆ›ØÙ\ÜË[[Ù[›ÝYÚ]™\Ý[Â‚ˆÈÈÈYY‚˜›ØÙ\ÜÓ[Ù[Ú[][][Û‘]˜[X]Ü‹›Ý[™XÚÔÝ]\Ø[™›ÝYÚ]Ø\ÙT›ÝØ›ÝÈ™\Ù\™HB[™\›Z[™ÈØ\XÚ]PÛÛœÝ˜Z[™]TÛÝ\˜ÙXˆ˜]˜HÙ]\œË”ÓÓˆØ\ÙH›ÝÜË[™ÔÕˆ›ÝYÚ]˜XÙ\Â\™Y›Ü™H™]Z[ˆÚ]\ˆH[Z][™È˜[YHØ[YHœ›ÛHÛÝ\˜Ù\ÈÝXÚ\ÈYXÚ[šXØ[\ÚYÛ‹[ˆ[œÝ[Y™]HÚY]Üˆ[ˆÜ\˜][™È[™[ÜKˆ[YÙÙY[™YØXÞHÛÛœÝXÝÜˆ]È\ÙH›ÝÜÙ]‚‚ˆÈÈÈÛÛ\]Xš[]H[™™\Ü[™Â‚‘^\Ý[™ÈÛÛœÝXÝÜœÈ™[XZ[ˆ]˜Z[X›H[™™]Z[ˆZ\ˆ™]š[Ý\È™Z]š[Ü‹ˆ”ÓÓˆYÈ]TÛÝ\˜ÙXÂHÔÕˆÛÛ[[ˆ\È[œÙ\YY\ˆZ[š[][PÛÛœÝ˜Z[ˆ›È\›[Ù[˜[ZXËY˜][XË][^˜][Û‹™™X\ÚXš[]K\]Z\Y[Y\ÚYÛ‹Üˆ›ÝYÚ]\ÙX\˜ÚØ[Ý[][ÛˆÚ[™ÙY‚‚ˆÈÈŒ‹LLˆ8 %\™XÝYØ\XÚ]HX\™Ú[œÈ[ˆ›ØÙ\ÜË[[Ù[›ÝYÚ]™\Ý[Â‚ˆÈÈÈÛÜœ™XÝY‚˜›ØÙ\ÜÓ[Ù[Ú[][][Û‘]˜[X]Ü‹›Ý[™XÚÔÝ]\Ø[™›ÝYÚ]Ø\ÙT›ÝØ›ÝÈ™\Ù\™HÚ]\ˆ[‚™\]Z\Y[›Ý[™XÚÈ\ÈZ[š[][KY\™XÝYˆZ[š[][K[Û›HÛÛœÝ˜Z[È™\ÜZ\ˆš[š]B˜Ù]\Ü^Q\ÚYÛ•˜[YJ
+X[Z][œÝXYÙˆH[\›˜[[œÙ]ÝX›K“PVÕSQX\ÚYÛˆÙ[[™[‚‘[™Ú[™Y\š[™Ë][š]Ø\XÚ]SX\™Ú[˜\ÈÝ\œ™[HZ[š[][X›ÜˆÝÙ\ˆ[Z]È[™™[XZ[œÂ˜[Z]HÝ\œ™[›Üˆ\\ˆ[Z]ËÛÈ›Û‹[™YØ]]™HÛÛœÚ\Ý[HYX[œÈ™X\ÚX›K‚‚ˆÈÈÈÛÛ\]Xš[]H[™™\Ü[™Â‚‘^\Ý[™ÈÛÛœÝXÝÜœÈ™[XZ[ˆ]˜Z[X›H[™Y˜][ÈX^[][KY\™XÝY™Z]š[Ü‹ˆ”ÓÓˆØ\ÙH›ÝÜÂ˜[™ÔÕˆ›ÝYÚ]˜XÙ\ÈYZ[š[][PÛÛœÝ˜Z[ÈHÔÕˆÛÛ[[ˆ\È[œÙ\YY\ˆ\ÚYÛ•˜[YX‚“›È\›[Ù[˜[ZXËY˜][XË][^˜][Û‹™X\ÚXš[]KÜˆÜ[Z^™\ˆÙX\˜ÚØ[Ý[][ÛˆÚ[™ÙY‚‚ˆÈÈŒ‹LLˆ8 %•‹T”QŒLH\ÛÛ]YY][[ÜÜÈ™\ÜÝ\™HØÜ™Y[š[™ÈYY‚ˆÈÈÈYY‚˜”œŒLPÛÜœ›ÙY\[[™TØÜ™Y[š[™ÒÙ\›™[[\[Y[ÈH˜Z[XÛÜÙYØ[Ý[][Ûˆ›ÜˆHÝ\œ™[˜•‹T”QŒLHŒNKLJÐSQŒŒKLX˜\Ú\Ëˆ]È˜\œ›ÝÈØÛÜH\ÈÛ™H\ÛÛ]YÛ™Ú]Y[˜[Y][[ÜÜÂ™Y™XÝ[™\ˆ[\›˜[™\ÜÝ\™Kˆ]™\ÜÈ\ÜÙ\ÜÛY[\™[XZ[š[™ÈØ[[™ÝÛÜœ™XÝ[Û‹[˜ÛÜœ›ÙY[™Y™XÝ˜Z[\™H™\ÜÝ\™\ËHØ[\‹XÛÛ›ÛY™\ÜÝ\™H[Z]][^˜][Û‹X\™Ú[‹˜[™Ú][‹[[Z]Ý]\Ë‚‚ˆÈÈÈ™\]Z\™Y]šY[˜ÙH[™ZYÜ˜][Û‚‚“YX\Ý\™YY™XÝÙ[ÛY]žK\[ÝØ[˜ÙK\ÜÙ\ÜÛY[Ø[XÚÛ™\ÜËÚ\˜XÝ\š\ÝXÈ[[X]B[œÚ[HÝ™[™Ý[\›˜[Ù^\›˜[™\ÜÝ\™\ËØ[\‹XÛÛ›ÛY™\ÜÝ\™H˜XÝÜ‹\XØXš[]K˜[™™\šYšXØ][Ûˆ]\Ý][ÛœÈ\™H^XÚ][œ]Ëˆ[\˜XÝ[™ÈÜˆÛÛ\^Y™XÝËÛÛXš[™Y˜ÛÛ\™\ÜÚ[Û‹›Ø˜Xš[\ÝXÈ\ÜÙ\ÜÛY[[œÜXÝ[Û‹][˜Ù\Z[H\š]˜][Û‹ÛÜœ›ÜÚ[ÛˆÜ›ÝÝ˜Ü˜XÚË[ZÙH[XYÙK™\Z\‹[™š]™\ÜËY›Ü‹\Ù\šXÙH\›Ý˜[™[XZ[ˆ^\›˜[‚‚YÙ[È]\Ý›ÝÛÛ™\H“Ô”ÓÒÈKMLˆÛÜœ›ÜÚ[Ûˆ˜]HÜˆ›Ú™XÝY[šY›Ü›HÜÜÈ[È[œÜXÝY””QŒLHY™XÝÙ[ÛY]žKˆH”QŒLHÙ\›™[\È[ÛÈÙ\\˜]Hœ›ÛH[™Ù\È›Ý™\XÙH•‹TÕQŒLBœ™\ÜÝ\™HÛÛZ[›Y[ÛÛ\ÙK›ÜYØ][Û‹ÛØØ[XÚÛ[™ËØY[\˜XÝ[Û‹˜]YÝYKš[˜ÚY[[Ý\Ý™\ÜÝ\™KK\˜][™ËØY™]HÛ\ÜËÝ˜[]K˜XœšXØ][Ûˆ›Ý]KÜˆ[œÝ[][Û‚œÝ˜Z[‹‚‚ˆÈÈŒ‹LLˆ8 %•‹T”QŒLHYY\ÈHš\œÝ[[ÙHœ™YK\Ü[ˆØÜ™Y[š[™ÈÙ\›™[‚ˆÈÈÈYY‚˜”œŒLQœ™YTÜ[”ØÜ™Y[š[™ÒÙ\›™[[\[Y[È[ˆY][Û‹X]Ø\™K˜Z[XÛÜÙYØÜ™Y[ˆ›Ü‚˜•‹T”QŒLHŒKLL˜ˆ]Ø[Ý[]\ÈHÚ[\HÝ\ÜY][\‹P™\››Ý[Hš\œÝ[[ÙHœ™\]Y[˜ÞHÚ]™^\›˜[H\š]™YY™™XÝ]™HX\ÜÈ[™^X[›Ü˜ÙK[ˆ™\ÜÈÝ\œ™[ÝØ]™Hœ™\]Y[˜ÞH˜][ÜËœ™YXÙY™[ØÚ]Y\Ë[™Ù][YØ[‹PØ\œ[\ˆ[X™\‹ˆÝY[[™Y›Ù[˜[ZXÈX[Y]\œÈ\™H\Ý[˜Ý‚‚ˆÈÈÈ™\]Z\™Y]šY[˜ÙH[™ZYÜ˜][Û‚‚‘Ù[ÛY]žKÝXÝ\˜[[[Ù[[š\›Û›Y[[[™›Ú™XÝ]šYÙÙ\ˆ™\šYšXØ][Ûˆ\™HX[™]ÜžHØ[\‚˜]\Ý][ÛœËˆÝ›ÝZ[[X™\‹œ™\]Y[˜ÞK\˜][È˜[™[™™YXÙY]™[ØÚ]HšYÙÙ\œÈ\™Bœ›Ú™XÝXÛÛ›ÛY]šY[˜ÙNÈ^H\™H›Ý[X™YY•ˆÜš]\šXHÜˆXØÙ\[˜ÙHXÚ\Ú[ÛœËˆÛÚ[[™œÜ[‹\ÚÝ[\ˆÝY™›™\ÜË[\˜XÝ[™ÈÜ[œË™\ÜÛœÙH[\]Y\Ë\™XÝØ]™HØY[™ËSËÑ“Ë™˜]YÝYK[Ûš]Üš[™Ë[\™[[Û‹[™ÛÛ™›Ü›Z]H™[XZ[ˆ^\›˜[‚‚˜\SYXÚ[šXØ[\ÚYÛØ[Ý[]Ü‹˜Ø[Ý[]P[ÝØX›TÜ[“[™Ý
+‹‹ŠX™[XZ[œÈÛÛ\]X›H]\ÈB›YØXÞHš^YX\ÜÝ[\[Ûˆ\Ý[X]HÚ]˜[˜XÚËØØ\™Z]š[Ü‹ˆYÙ[È]\Ý›Ý™[X™[]\ÈŒLH[™›]\Ý›Ý]H[ˆ^XÚ]Ý\œ™[YY][Ûˆ˜\Ú\È›ÝYÚH\YÙ\›™[‚‚•HÝ[™\™È™\ÛÝ\˜ÙH[™^›ÝÈ™XÛÜ™ÈHÝ\œ™[ŒLHY][Û‹Ø\XØXš[]Kˆ[™\šYšYYYØXÞBÔÕˆ˜[Y\ÈX™[Y\ÈŒLHØY™]H˜XÝÜœË˜]YÝYH˜XÝÜœË[ÝØX›HÝ™\ÜË[™X^[][HÜ[ˆÙ\™Bœ™[[Ý™Y˜]\ˆ[ˆ™[X™[Y\ÈÝ\œ™[ˆHÙ[™\šXÈ˜[œÚY[\\HÝ\™ÙH[ÝØ[˜ÙH\È›ÝÂšY[YšYY\È›Ú™XÝ˜\Ú\Ë›ÝŒLK‚‚‹KKB‚ˆÈÈŒ‹LLˆ8 %•‹T”PÌŒÈYY\ÈHÛÛ›ÛYXÝ\™H˜]YÝYHÙ\›™[‚ˆÈÈÈYY‚˜”œÌŒÑ˜]YÝYQ\ÚYÛ’Ù\›™[[\[Y[ÈHËSˆ[™[YÜ™[‹SZ[™\ˆ\š]Y]XÈ›ÜˆHÝ\œ™[˜ŒLL
+ÐSQŒŒKLL˜\Ú\Ëˆ]XØÙ\È[[]]X›HÜXÝ[Hš[œËÝ™\ÜË\˜[™ÙH˜XÝÜœËH\ÚYÛ‚™˜]YÝYH˜XÝÜ‹[XYÙH[Z][™HØ[\‹\Ý\YYÚ[™ÛK\ÛÜHÜˆÛÛ[[Ý\ÈšK[[™X\ˆÝ\™K‚˜”œÌŒÑ˜]YÝYP\ÜÙ\ÜÛY[™\ÜÈ\‹Xš[ˆÞXÛ\ÈÈ˜Z[\™H[™[XYÙKÝ[][]]™H˜]È[™\ÚYÛ‚™[XYÙK][^˜][Û‹ÛÝ™\›š[™Èš[‹[™[™X\‹Y^˜\Û]YY™K‚‚ˆÈÈÈ™\]Z\™Y]šY[˜ÙH[™ZYÜ˜][Û‚‚“™\TÚ[H[X™\˜][HÙ\È›Ý[X™YÜˆÙ[XÝXÙ[œÙY•ˆËSˆX›\ËˆÝ\™H[™ÜXÝ[B™\šYšXØ][Ûˆ›YÜÈ\™H]\Ý][ÛœÈ[™›Ý\™H™\]Z\™Y™Y›Ü™HØ[Ý[][Û‹ˆÝ\™KÙ]Z[œÙ[XÝ[Û‹ÝXÝ\˜[Ý™\ÜÈ\š]˜][Û‹[š\›Û›Y[ÝXÚÛ™\ÜÈ˜XÝÜœËÐÑœË˜Z[™›ÝÈÛÝ[[™Ë›ØYÛÛXš[˜][Û‹[œÜXÝ[Ûˆ[›š[™Ë[™ÛÛ™›Ü›Z]H™[XZ[ˆ^\›˜[‚‚‘^\Ý[™È\[[™H[™š\Ù\ˆ˜]YÝYHY]ÙÈ™[XZ[ˆÛÛ\]X›H]\ÙH[˜ÛÛœÚ\Ý[[X™YYœ\˜[Y]\œËˆYÙ[È]\ÝØ[[HYØXÞH\Ý[X]\È[™]\Ý›Ý]H[ˆ^XÚ]Ý\œ™[YY][ÛˆÌŒÂ˜˜\Ú\È›ÝYÚH\YÙ\›™[Ú]HÛÛ›ÛY›Ú™XÝÝ\™K‚‚‹KKB‚ˆÈÈŒ‹LLˆ8 %TÓÈLMËLKËLˆYYÈHY][Û‹X]Ø\™HÝ[™\™È\[[™B‚ˆÈÈÈYY‚˜TÓËMLMËLHŒŒ˜[™TÓËMLMËLˆŒŒ˜\™HØ][ÙÝYYÙ\\˜][HÚ]TÓÈX›\Ú\ˆY™XÞXÛBœÛÝ\˜Ù\Ëˆ\H™XÛÜ™ÈHÛÛ\[š[ÛˆÙ[™\˜[\š[˜Ú\\È˜\Ú\ÎÈ\ˆ™YÚ\Ý\œÈH™]Â˜\ÛÍLMÓÜšYšXÙSY]\š[™ÒÙ\›™[›ÜˆÜšYšXÙX\]Z\Y[‚‚•HÙ\›™[™]\Ù\ÈH^\Ý[™ÈÜšYšXÙX™XY\‹R\œš\ËÑØ[YÚ\ˆ[™™\ÜÝ\™K[ÜÜÈ\]X][ÛœÈ›ÝYÚ˜[ˆ[[]]X›K[š]Y^XÚ]ÛÛ˜XÝˆ\]ZYÙ\šXÙH\Ù\È[ˆ^XÚ]^[œÚXš[]H˜XÝÜˆÙˆÛ™KÚ[HØ\ËÝ˜\Ý\ˆÙ\šXÙH™\]Z\™\ÈØ\H[™\Y\ÈH^\Ý[™ÈÛÛ\™\ÜÚX›HÛÜœ™XÝ[Û‹ˆH\Yœ™\Ý[™XÛÜ™È™]H˜][ËY™™\™[X[[™™\ÜÝ\™H˜][ÜË\ØÚ\™ÙH[™^[œÚXš[]H˜XÝÜœË›X\ÜÈ[™XÝX[]›Û[YH›ÝË\H™^[›ÛÈ[X™\‹\›X[™[™\ÜÝ\™HÜÜË[™]\˜][ÛˆÛÝ[‚‚ˆÈÈÈ\XØXš[]H[™›Ý[™\žB‚•HY\\ˆ˜Z[ÈÛÜÙY›Üˆ[œÝ\ÜYY][ÛœÈÜˆ[Y[™Y[Ë›Û‹XÜšYšXÙX\]Z\Y[›][\\ÙKÜ\Y[Ü[Ø][™ËÛ›Û‹\ÝXœÛÛšXÈ›ÝË\HX[Y]\ˆÝ]ÚYHL[HÈK[K™]H˜][Â›Ý]ÚYHH[\[Y[YŒLÈÍHØÜ™Y[‹™^[›ÛÈ[X™\ˆ™[ÝÈK[˜[YXœÛÛ]Bœ™\ÜÝ\™\ËÜ›Ü\Y\Ë[™Z\ÜÚ[™È^\›˜[Ù[ÛY]žKÚ[œÝ[][Ûˆ™\šYšXØ][Û‹ˆ]™\šYšXØ][Ûˆ\Â˜HØ[\ˆ]\Ý][ÛŽÈ™\TÚ[HÙ\È›Ý[œÜXÝH[œÝ[YY]\‹‚‚•HY]Ù™[XZ[œÈÐÔ‘QS’S‘Øˆ]Ù\È›Ý™\XÙH\˜Ú\ÙYTÓÈLMËLKËLˆØÝ[Y[Ë[˜Ù\Z[B˜[˜[\Ú\ËØ[Xœ˜][Û‹]H[™\[™È[œÜXÝ[Û‹Ý˜ZYÚ[[™Ý™\šYšXØ][Û‹[Ø][ÛˆÜ‚ÛË\\ÙH[˜[\Ú\ËÝ\ÝÙK]˜[œÙ™\ˆXØÙ\[˜ÙKÜˆXØÛÝ[X›H[™Ú[™Y\š[™È\›Ý˜[ˆ^\Ý[™Â˜ÜšYšXÙXÝ[™\™ÐQÐLØ[™ÜØSÜšYšXÙPØ[Ý[]Ü˜[žHÚ[È™[XZ[ˆ]˜Z[X›H[™\ˆZ\‚œ™\ÜXÝ]™H›ØÙ\ÜË\Ú[][][Ûˆ[™QÐKÐTKÑÔÐH˜\Ù\Ë‚‚ˆÈÈÈØÝ[Y[][Ûˆ[™^[\B‚YYØÜËÜ›ØÙ\ÜËÛYX\Ý\™[Y[Ú\Û×ÍLM×ÛÜšYšXÙWÛY]\š[™Ë›Y[™[ˆ^XÝ]Y˜^[\\ËÛ›ÝX›ÛÚÜËÚ\Û×ÍLM×ÛÜšYšXÙWÛY]\š[™×ÚÙ\›™[š\[˜˜ˆHÛÛ[[Ûˆ™YÜ™\ÜÚ[ÛˆÝZ]KÝ\Ü›X]š^ZYÜ˜][Û‹Ü›ÙÜ˜[KÙ\ÚYÛ‹Yœ˜[Y]ÛÜšÈÝZY\ËÝ[™\™ÈÛÚÝ\ÚÚ[Ý[™\™È™]šY]Ù\‹[™™Ø\Ë\]X[]HYÙ[›ÝÈÛÝ™\ˆH^XÝTÓÈ][™]È^Û\Ú[ÛœË‚‚ˆÈÈŒ‹LLˆ8 %“Ô”ÓÒÈKMLˆYYÈHY][Û‹X]Ø\™HÝ[™\™ÈÙ\›™[™YÚ\ÝžB‚ˆÈÈÈÝ[[X\žB‚•H^\Ý[™È]]X›H›ÜœÛÚÓMLÛÜœ›ÜÚ[Û”˜]XØ[Ý[][Ûˆ›ÝÈ\ÈHÝšXÝÛÛ[[Û‹ZÙ\›™[Y\\‹‚˜“Ô”ÓÒËSKMLˆŒMØ\ÈØ][ÙÝYYÚ]X›\Ú\ˆY™XÞXÛH]šY[˜ÙK^XÝYY][ÛˆÝ\Ü\]Z\Y[˜\XØXš[]K™XY[™\ÜÈ›ØÚÙ\œË[[]]X›H[œ]È[™Ý]]Ë[™™YÜ™\ÜÚ[ÛˆÛÝ™\˜YÙK‚‚ˆÈÈÈ™]ÈTB‚ŸTHÚ]]Ù\ÈŸKK_KK_Ÿ›ÜœÛÚÓMLÛÜœ›ÜÚ[Û‘\ÚYÛ’Ù\›™[[œÈH^\Ý[™ÈÚ[\YšYYØ[Ý[][ÛˆÛ›HY\ˆY][Û‹\XØXš[]K˜[™ÙK[™[œ]\]X[]HÚXÚÜÈ\ÜÈŸ›ÜœÛÚÓMLÛÜœ›ÜÚ[Û‘\ÚYÛ’Ù\›™[’[œ]˜Z[\Š‹‹ŠX™]Z[œÈ[š]Y^XÚ]˜]È[œ]ÈÚ]Ý]HYØXÞHÙ]\œÉÈÚ[[Û[\[™ÈŸ›ÜœÛÚÓMLÛÜœ›ÜÚ[Û\ÜÙ\ÜÛY[™\ÜÈ˜]KYØXÚ]KÛÜœ™XÝ[Ûˆ˜XÝÜœËØ[ÚX\‹[™›Ú™XÝY[šY›Ü›HØ[ÜÜÈ\È[ˆ[[]]X›H™]šY]ËYØ]YÛ˜\ÚÝ‚ˆÈÈÈZYÜ˜][Û‚‚•\ÙHHÙ\›™[›Üˆ™]È]Y]X›HÝYY\ËˆÙY\›ÜœÛÚÓMLÛÜœ›ÜÚ[Û”˜]X›ÜˆYØXÞH]]X›HÛÜšÙ›ÝÜÂ˜[™ÝÙY\Ë[™\ÙH›ÜœÛÚÓML‘[XÝ›Û]PœšYÙXÚ[ˆ[ˆ[XÝ›Û]K[[Ù[Üˆ™PÓÌÈØ]\˜][Û‚œ˜][È\È™\]Z\™YˆH›Ú™XÝYØ[ÜÜÈ\È›ÝHÛÙHÛÜœ›ÜÚ[Ûˆ[ÝØ[˜ÙHÜˆXØÙ\[˜ÙHXÚ\Ú[Û‹‚‚ˆÈÈÈYÙ[[™ÚÚ[™Z]š[Ü‚‚”Ý[™\™È[™›ÝËX\ÜÝ\˜[˜ÙHÝZY[˜ÙH›ÝÈ›Ý]H^XÚ]KMLˆÛÛ\X[˜ÙHÛÜšÈ›ÝYÚHÛÛ[[Û‚šÙ\›™[[™™\]Z\™HHØÜ™Y[š[™È›Ý[™\žK\˜Ú\ÙY\Ý[™\™™]šY]Ë[™™\TÚ[H™PÓÌÈ^[œÚ[ÛˆÂœ™[XZ[ˆš\ÚX›K‚‚‹KKB‚ˆÈÈŒ‹LLˆ8 %[\”ÒØ\XÚ]HÛÛœÝ˜Z[\™XÝ[ÛˆÛÜœ™XÝY‚ˆÈÈÈÝ[[X\žB‚˜[\Ø\XÚ]TÝ˜]YÞX›ÝÈ™\™\Ù[È”ÒXY›ÛÛH
+”ÒHH”Ò˜Y]™\ÊH\ÈHYHZ[š[][B’T‘ÛÛœÝ˜Z[ˆH™]š[Ý\ÈÝ˜]YÞHÙ]HZ[š[][HXY›ÛÛH\È›ÝH\ÚYÛˆ˜[YH[™B›Z[š[][KÚXÚÙ[XÝYÝ\œ™[Ù\ÚYÛ˜][^˜][Ûˆ[™\™Y›Ü™HÛ\ÜÚYšYYH[\Ú]X[™[“”ÒXY›ÛÛH\ÈÝ™\›ØYYˆ][^˜][Ûˆ\È›ÝÈZ[š[][RXY›ÛÛKØÝ\œ™[XY›ÛÛXˆ˜[Y\È™[ÝÂŒKŒ\™H™X\ÚX›K^XÝHKŒ\È]H[Z][™˜[Y\ÈX›Ý™HKŒš[Û]HHZ[š[][K‚‚ˆÈÈÈÛÛ\]Xš[]H[™[™Ú[™Y\š[™È˜\Ú\Â‚“›ÈX›XÈTHÜˆ[\\›[Ù[˜[ZXÈØ[Ý[][ÛˆÚ[™ÙYˆHÝ˜]YÞHY˜][™[XZ[œÈHØÜ™Y[š[™Â˜[YNÈ[œÝ[YÝYY\ÈÚÝ[\ÙHÙ\šXÙKH[™™[™Ü‹\ÜXÚYšXÈ”ÒX\™Ú[ˆ™\]Z\™[Y[Ëˆ\Â™›ÛÝÜÈHY˜][XÈ[œÝ]]HÛÛ™[[Ûˆ]Y\]X]H”Ò\ÈHZ[š[][KX]˜Z[Xš[]HÛÛ™][Û‹‚‚ˆÈÈÈ\ÝÂ‚˜[\Ø\XÚ]TÝ˜]YÞU\ÝÛÝ™\œÈØY™K^XÝ[[Z][™š[Û]YÜ\˜][™ÈÚ[È\Ú[™È[ˆ^XÝ]YØ]\‹\[\›ØÙ\ÜÈØ\ÙH[™ÚXÚÜÈ›Ü›X[^™Y][^˜][Ûˆ\ÈT‘[[Z]™Z]š[Ü‹‚‚‹KKB‚ˆÈÈŒ‹LLˆ8 %\Y•‹T”QŒLHÛ‹X›ÝÛHÝXš[]HØÜ™Y[š[™Â‚ˆÈÈÈÝ[[X\žB‚“™\TÚ[H›ÝÈ^ÜÙ\ÈH˜Z[XÛÜÙYÐÔ‘QS’S‘ØÙ\›™[›Üˆ•‹T”QŒLHY][Û‚˜ŒŒKLJÐSQŒKLXˆ]ÛÝ™\œÈ™\XØ[\]Z[Xœš][KH˜[œÜ\™[˜XœÛÛ]K\Ý]XÈ]\˜[ØÜ™Y[‹[™XØÙ\[˜ÙHÚXÚÜÈ›Üˆ\ÜXÙ[Y[Ý\YYžB˜[ˆ^\›˜[H˜[Y]YÙ[™\˜[^™YÜˆ[˜[ZXÈ™\ÜÛœÙH[Ù[ˆ]™\žHØ[Ý[]Yœ™\Ý[™[XZ[œÈÐSÕSUQÔ‘U’QU×Ô‘TURT‘Q‚‚ˆÈÈÈ™]ÈTB‚ŸTHÚ]]Ù\ÈŸKK_KK_Ÿ”œŒLSÛ›ÝÛTÝXš[]R[œ]Ø\œšY\È^XÚ]\ÜÙ]Ù[ÛY]žK[š\›Û›Y[[Y›Ù[˜[ZXËÛÚ[˜XÝÜ‹[™™\ÜÛœÙK[[Ù[[œ]ÈÚ]Ý][Y\šXØ[›Ú™XÝY˜][ÈŸ”œŒLSÛ›ÝÛTÝXš[]PØ[Ý[]Ü˜Ø[Ý[]\È›Ü›X[[Üš\ÛÛˆØYËY™\XØ[\]Z[Xœš][KœšXÝ[Û‹Ü\ÜÚ]™H]\˜[™\Ú\Ý[˜ÙK™\]Z\™YÝX›Y\™ÙYÙZYÚ[™ÜXÚYšXÈÜ˜]š]HŸ”œŒLSÛ›ÝÛTÝXš[]P\ÜÙ\ÜÛY[™]\›œÈ[[]]X›HØYXØ\ÙH[\›YYX]\Ë[Z]\Ý]HÚXÚÜËÛÝ™\›š[™È][^˜][Û‹[™\›Ý˜[\™\]Z\™YÝ]HŸ”œŒLSÛ›ÝÛTÝXš[]RÙ\›™[[™›Ü˜Ù\ÈY][Û‹\]Z\Y[\XØXš[]KÛÛ\]H[œ]Ë[š\]YHØ\Ù\Ë[™^\›˜[\™\ÜÛœÙH]šY[˜ÙH™Y›Ü™HØ[Ý[][ÛˆŸÝ[™\™\K‘•—Ô”ÑŒLXYÈÝ\œ™[X›\Ú\‹\ÛÝ\˜ÙYÝ[™\™\ØÛÝ™\žH›Üˆ\[[™\Ë›^X›H\\ËØX›\Ë[™[Xš[XØ[È‚ˆÈÈÈ›Ý[™\žH[™ZYÜ˜][Û‚‚“›È^\Ý[™ÈTHÚ[™Ù\ËˆHÙ\›™[Ù\È›Ý™\›ÙXÙHÙ[™\˜[^™Y\ÚYÛˆX›\Ë™Ù[™\˜]H[˜[ZXÈ™\ÜÛœÙK\š]™H[š\›Û›Y[[Ý]\ÝXÜË]X[YžH\K\ÛÚ[›[Ù[ËÜˆÛZ[H•ˆÛÛ™›Ü›Z]Kˆ\ÙHHXÙ[œÙYÝ\œ™[”[™[™\[™[™[™Ú[™Y\š[™È™]šY]È›Üˆ\ÚYÛˆ\›Ý˜[ˆH™\\Ú[K\ÝXœÙXKX[™]Ù[Ø˜™\\Ú[KY›ÝËX\ÜÝ\˜[˜ÙX[™™\\Ú[K\Ý[™\™Ë[ÛÚÝ\ÚÚ[È›ÝÈ›Ý]HÛ‹X›ÝÛBœÝXš[]HÛÜšÈÈH\YÙ\›™[ÈH™]š[Ý\È[˜ÛÜœ™XÝ\ÜÛØÚX][ÛˆÙ‚‘•‹T”QŒLHÚ]ÛÛÛÝÛ‹Û›Ë]ÝXÚ[YH\È™Y[ˆ™[[Ý™YˆÛÈ[œ™Y™\™[˜ÙYYØXÞBÔÕˆ›ÝÜÈ]™\Ù[YKŒH]\˜[[™™\XØ[˜XÝÜœÈ\ÈÙ[™\šXÈÝ[™\™™Y˜][ÈÙ\™H[ÛÈ™[[Ý™YÈ˜XÝÜœÈ]\Ý›ÝÈ™H˜XÙXX›H›Ú™XÝ[œ]Ë‚‚ˆÈÈÈ\ÝÈ[™^[\B‚˜”œŒLSÛ›ÝÛTÝXš[]RÙ\›™[\ÝÚXÚÜÈ˜Z[XÛÜÙY™XY[™\ÜËÝ]XÈ[™™^\›˜[\™\ÜÛœÙH›Ý]\Ë\™XÝ[Û˜[ØY[™ËY›Ù[˜[ZXÈ[™ÛÚ[[Û›ÝÛšXÚ]K™\ÜXÙ[Y[[Z]Ë™YÚ\ÝžH\ØÛÝ™\žK[™H]Y]›Ý[™\žKˆH^XÝ]Y˜—ÜœÙŒLWÛÛ—Ø›ÝÛWÜÝXš[]Kš\[˜˜›ÝX›ÛÚÈ[[ÛœÝ˜]\ÈØYXØ\ÙH™\Ý[Ë™[ØÚ]HÙ[œÚ]]š]K[™HÝX›Y\™ÙY]ÙZYÚÙœšXÝ[Ûˆ\ÚYÛˆÜXÙK‚‚‹KKB‚ˆÈÈŒ‹LLˆ8 %\Y•‹TÕQŒLH\[[™HØÜ™Y[š[™ÈÙ\›™[‚ˆÈÈÈ™]ÈTB‚‹H”ÝŒLT\[[™Q\ÚYÛ’[œ]ÙY\ÈHÝ[™\™Y][Û‹ØY™]HÛ\ÜË˜XœšXØ][Ûˆ›Ý]KˆÙ[ÛY]žKÝ˜[]KX]\šX[K\˜][™ËÜ\˜][™ËÚ[˜ÚY[[Ý\Ý™\ÜÝ\™\ËÛÛXš[™YØYËˆ˜]YÝYHÜXÝ[K[™[œÝ[][ÛˆÝ˜Z[ˆ^XÚ]‚‹H”ÝŒLT\[[™Q\ÚYÛ’Ù\›™[\È™YÚ\Ý\™Y›ÜˆÝ[™\™\K‘•—ÔÕÑŒLXÚ]ˆÐÔ‘QS’S‘ØX]\š]H[™[Ø^\È™]\›œÈH™]šY]Ë\™\]Z\™YØ[Ý[]Y™\Ý[‚‹H”ÝŒLT\[[™P\ÜÙ\ÜÛY[™\ÜÈÙ\\˜]H][^˜][ÛˆÚXÚÜÈ›Üˆ™\ÜÝ\™HÛÛZ[›Y[ˆÛÛ\ÙK›ÜYØ][ÛˆXÚÛ[™ËØØ[XXÚÛ[™ÈØY[\˜XÝ[Û‹˜]YÝYKÝ˜[]K[™ˆ[œÝ[][ÛˆÝ˜Z[‹‚‹H\[[™SYXÚ[šXØ[\ÚYÛ‹˜\ÜÙ\ÜÑ”ÝŒLJ[œ]ÛÛ^
+X^ÜÙ\ÈHÙ\›™[œ›ÛHH\[[™BˆYXÚ[šXØ[Y\ÚYÛˆØš™XÝÚ]Ý]]]][™ÈH›ØÙ\ÜÈ[Ù[‚‚ˆÈÈÈZYÜ˜][Ûˆ[™ÛÝ™\›˜[˜ÙB‚‹HÈ›Ý\ÙH\SYXÚ[šXØ[\ÚYÛØ[Ý[]Ü‹‘•—ÓÔ×ÑŒLX›ÜˆÝ\œ™[•‹TÕQŒLHÛÜšË‚‹H\[[™SYXÚ[šXØ[\ÚYÛ‹˜Ø[Ñ\ÚYÛŠ
+X›ÝÈ˜Z[ÈÛÜÙY›ÜˆH•‹TÕQŒLXÝš[™ÈÛÙNÂˆ]›ÈÛ™Ù\ˆÚ[[HÙ[XÝÈTÓQHŒÌKŽ‚‹H\ÜÚ[™ÈÚXÚÜÈ\™HÜ[Û‹\ØÜ™Y[š[™È]šY[˜ÙHÛ›KˆHXÙ[œÙYÝ[™\™›Ú™XÝ[Y[™Y[Ëˆ]Z[YØYØ\Ù\Ë[œÝ[][Ûˆ[˜[\Ú\Ë˜XœšXØ][Ûˆ™XÛÜ™Ë[™[™\[™[[™Ú[™Y\š[™Âˆ™\šYšXØ][Ûˆ™[XZ[ˆ™\]Z\™Y‚‚‹KKB‚ˆÈÈŒ‹LËLÌ8 %ÛÑ›ZY\HÛÜÝ\™HXYÛ›ÜÝXÜÈ^ÜÙY\È›Ùš[\Â‚ˆÈÈÈÝ[[X\žB‚˜ÛÑ›ZY\X›ÝÈ^ÜÙ\ÈHÛÜÝ\™HXYÛ›ÜÝXÜÈ[™XYHØ[Ý[]Y›ÜˆXXÚ˜ÛÑ›ZYÙXÝ[Û˜ˆHÝXYK\Ý]H[™˜[œÚY[™\ÜÔÕœÈ[˜ÛYHH™]È›Ùš[\Ë[™B˜™[˜ÚX\šÈ\›™\ÜÈØ\\™\ÈZ\ˆ[Y\šXÈ˜[Y\È[™š\ÚÈ›YÜÈ›ÜˆÛÛ\\š\ÛÛˆÚ]X›XÂœÚ[][]Üˆ^ÜÈÜˆšY[]K‚‚ˆÈÈÈ™]ÈTB‚ŸTHÚ]]Ù\ÈŸKK_KK_ŸÙ]Ú[Ø]\‘›ÝÔ™YÚ[YT›Ùš[J
+X™\ÜÈHÚ[]Ø]\ˆ›ÝÈÛÛ™šYÝ\˜][ÛˆžHÙXÝ[ÛˆŸÙ]Ø]\•Ù][™Ô›Ùš[J
+X™\ÜÈØ]\‹]Ù][™È›YÜÈ›ÜˆÛÜœ›ÜÚ[ÛˆØÜ™Y[š[™ÈŸÙ]Ø]\‘›ÜÝ]š\ÚÔ›Ùš[J
+X™\ÜÈØ]\ˆ›ÜÝ]ÜˆXØÝ[][][Ûˆ›YÜÈŸÙ][˜Z[›Y[œ˜XÝ[Û”›Ùš[J
+X™\ÜÈ\Ý[X]Y\]ZY[˜Z[›Y[œ˜XÝ[ÛœÈŸÙ][˜Z[™Y›Ü]X[Y]\”›Ùš[J
+X™\ÜÈÚ\˜XÝ\š\ÝXÈ[˜Z[™Y›Ü]X[Y]\œÈŸÙ]Ù]™\™TÛYÙÚ[™Ó[X™\”›Ùš[J
+X™\ÜÈHš\Ù\‹X˜\ÙHÙ]™\™K\ÛYÙÚ[™ÈÝXš[]H[X™\ˆŸÙ]Ù]™\™TÛYÔÝ[X[›Ùš[J
+X™\ÜÈÙ]™\™K\ÛYÙÚ[™Èš\ÚÈ›YÜÈ‚ˆÈÈÈ™\Ü[™È[™˜[Y][Û‚‚˜ÛÑ›ZY\T™\Ü\[™ÈHÛÜÝ\™H›Ùš[\ÈÈ]ÈÝXYK\Ý]H[™˜[œÚY[ÔÕˆ^ÜË‚˜ÛÑ›ZY™[˜ÚX\šÒ\›™\ÜØYÈ[˜Z[›Y[Ùœ˜XÝ[Û˜[˜Z[™YÙ›Ü]ÙX[Y]\—ÛX˜Ù]™\™WÜÛYÙÚ[™×Û[X™\˜Ø]\—ÝÙ][™×Ù›YØØ]\—Ù›ÜÝ]Üš\Ú×Ù›YØ[™˜Ù]™\™WÜÛY×ÜÝ[X[Ù›YØ‚‚ÛÛ[[Ý\È™[˜ÚX\šÈ›Ùš[\È\ÙH[™X\ˆ[\œÛ][Û‹ˆ˜\šXX›\È[™[™È[ˆÙ›YØ[™[\˜[ÂÚ]›Û‹Yš[š]HXYÛ›ÜÝXÈÙ[[™[È\ÙH™X\™\Ý[™ZYÚ›Ý\ˆØ[\[™Ë™\Ù\š[™Èš[˜\žH›YÜÈ[™˜]›ÚY[™È[\œÛ][Û‹YÙ[™\˜]Y˜S˜˜[Y\Ë‚‚ˆÈÈÈ\ÝÂ‚˜ÛÑ›ZY\T™\Ü\Ý™\šYšY\È›Ùš[HÚ\K\ÚXØ[›Ý[™Ë[™™\ÜÛÛ[[œË‚˜ÛÑ›ZY™[˜ÚX\šÒ\›™\ÜÕ\Ý™\šYšY\ÈØ\\™KÛÛ[[Ý\È[\œÛ][Û‹\ØÜ™]H›YÈØ[\[™Ë››Û‹Yš[š]HÙ[[™[[™[™Ë[™ÛÛ\\š\ÛÛˆÙˆH™]È™[˜ÚX\šÈ˜\šXX›\Ë‚‚‹KKB‚ˆÈÈŒ‹LËLÌ8 %›Ý[™\žKY›ÝÈÛÛ™\™Ù[˜ÙHš[\œÈ[™ÚY\ˆÝËY›ÝÈž\\ÜÈÛÝ™\˜YÙB‚ˆÈÈÈÝ[[X\žB‚“][KX\™XH[ÛÛ™\™Ù[˜ÙH\ÙYH\™H
+Š›X^[][K[Ù‹\™[]]™KY\œ›ÜœÊŠˆØ]HÚ]H\™XÛÙY˜YKNHÙËÚ˜^Û\Ú[Ûˆ›ÛÜ‹ˆHÝYÛ˜[XYYÈØ\œžZ[™ÈŒHÙËÚ˜ÛÝ[ÛØ˜›HžB˜ŒÈÙËÚ˜8 %H‹™KL˜™[]]™H\œ›Üˆ8 %[™ÛZ[˜]HHØ]KX\ÚÚ[™ÈH™X[ÈÙËÚ˜œ™\ÚYX[ÛˆHLÎÚ˜^ÜÝ™X[H
+ËŒ™KLØ
+KˆH›ÛÜˆ\È›ÝÈÛÛ™šYÝ\˜X›H[™[ˆXœÛÛ]B™›ÝÈÜš]\š[Ûˆ\È™Y[ˆYYˆHÝËY›ÝÈÙXÝ[Ûˆž\\ÜÈ\È[ÛÈ™Y[ˆ^[™YÈH\]Z\Y[]™]š[Ý\ÛHYÛ›Ü™Y][™›ÝÈ[Ø^\ÈX›\Ú\ÈHž\\ÜÙY[š]	ÜÈÝ]]Ý]HÛÈÝÛœÝ™X[B[š]ÈÙY\H˜[Y™\ÜÝ\™H›Ý[™\žK‚‚ˆÈÈÈ™]ÈTB‚ŸTHÚ]]Ù\ÈŸKK_KK_Ÿ›ØÙ\ÜÓ[Ù[œÙ]›Ý[™\žQ›ÝÑ›ÛÜŠÙÔ\’Ý\ŠXÈÙ]›Ý[™\žQ›ÝÑ›ÛÜŠ
+X›Ý[™\žHÝ™X[\È™[ÝÈ\È›ÝÈ\™H^ÛYYœ›ÛHHÛÛ™\™Ù[˜ÙHY]šXÈ[™œ›ÛHÙ]›ÛÛÛ™\™ÙY›Ý[™\žTÝ™X[Q\œ›ÜœÊ
+XˆY˜][›ØÙ\ÜÓ[Ù[‘QUSÐ“ÕS‘T–WÑ“Õ×Ñ“ÓÔ˜HYKNXŸ›ØÙ\ÜÓ[Ù[œ[•[[ÛÛ™\™ÙY
+X^]\‹™[ÛXœÑ›ÝÕÛÙÔ\’ŠXHÝ™X[H\È›ÝËXÛÛ™\™ÙYÚ[ˆ™[]]™H\œ›Üˆ	›È™[Û
+Š“ÔŠŠˆXœÛÛ]HÚ[™ÙH	›ÈXœÑ›ÝÕÛŸ›ØÙ\ÜÓ[Ù[œÙ]XœÛÛ]Q›ÝÕÛ\˜[˜ÙJÙÔ\’Ý\ŠXÈÙ]XœÛÛ]Q›ÝÕÛ\˜[˜ÙJ
+XØ[YHÜš]\š[Û‹Ù][™\[™[HÙˆH[ˆØ[ˆY˜][ŒHYØXÞH™[]]™K[Û›HŸ›ØÙ\ÜÓ[Ù[›Ý[™\žTÝ™X[Q\œ›Ü‹™Ù]XœÛÛ]Q›ÝÐÚ[™ÙJ
+XXœÛÛ]H3¥›ÝÈ
+ÙËÚŠH›ÜˆH›Ý[™\žHÝ™X[H8 %[È›Ú\ÙHœ›ÛH™\ÚYX[]HÛ[˜ÙHŸ›ØÙ\ÜÑ\]Z\Y[˜\ÙPÛ\ÜËœÙ]Z[š[][Q›ÝÊ˜[YK[š]
+XÈÙ]Z[š[][Q›ÝÊ[š]
+X[š]X]Ø\™HÝËY›ÝÈ™\ÚÛ
+ÙËÚ˜ÙËÜÙXØÙËÛZ[˜ÙËÙ^XÛ›™KÚ˜Û›™KÙ^X‹Ú˜
+HŸ›ØÙ\ÜÑ\]Z\Y[˜\ÙPÛ\ÜË›X\ÜÑ›ÝÐÛÛ™\œÚ[Û•ÒÙÔ\’Ý\Š[š]
+XÝ]XÈÛÛ™\œÚ[Ûˆ[\ˆ\ÙYžHHX›Ý™HŸ›ØÙ\ÜÑ\]Z\Y[˜\ÙPÛ\ÜË‘QUSÓRS’SUSWÑ“ÕØYKLŒÙ[[™[YX[š[™È››È^XÚ]™\ÚÛÛÛ™šYÝ\™YˆŸ›ØÙ\ÜÔÞ\Ý[KœÙ]ÙXÝ[Û“ÝÑ›ÝÕ™\ÚÛ
+˜[YK[š]
+X[š]X]Ø\™HÙXÝ[Ûˆ™\ÚÛ‚ˆÈÈÈ™Z]š[Ý\ˆÚ[™Ù\Â‚‹H
+Š˜X[šY›ÛYÈš^ŠŠˆÙ]Z[š[][Q›ÝÊ
+XÈÙ]ÙXÝ[Û“ÝÑ›ÝÕ™\ÚÛ
+
+XÛˆHX[šY›ÛØ\ÈBˆÚ[[›Ë[Ü™XØ]\ÙH[Š
+X[YØ]\ÈÈ[ˆ[\›˜[Z^\ˆ[™Ü]\ˆ]™]™\ˆ™XÙZ]™YBˆ™\ÚÛˆ]\È›ÝÈ›ÜYØ]Y[™HX[šY›Û™\ÜÈ\ÐXÝ]™J
+Xœ›ÛH]ÈÜ]\‹‚‹H
+Š˜[\[š]š^ŠŠˆ[\œ[Š
+XÛÛ\\™YZ[š[][Q›ÝØYØZ[œÝ
+ŠšÙËÜÙXÊŠˆÚ[H]™\žHÝ\‚ˆ\]Z\Y[[™›ØÙ\ÜÔÞ\Ý[KœÙ]ÙXÝ[Û“ÝÑ›ÝÕ™\ÚÛ
+
+X\ÙH
+ŠšÙËÚŠŠ‹ÛÈH[]ÚYBˆ™\ÚÛÙˆLÙËÚˆÚ[[HYX[LÙËÜÙXÈ
+NÙËÚŠH›Üˆ[\È[™ž\\ÜÙY[H][žBˆ›Ü›X[›ÝËˆZ[š[][Q›ÝØ\È›ÝÈÙËÚˆ]™\ž]Ú\™Kˆ[\Ø\XÚ]TÝ˜]YÞXZÙ]Ú\ÙHÚ[™ÙY]Âˆ›ÝÔ˜]XÛÛœÝ˜Z[œ›ÛHLËÚ˜ÈÙËÚ˜‚‹H
+Š“™]Èž\\ÜÈÛÝ™\˜YÙH
+ÜZ[ŠKŠŠˆ›Ý[™Õ˜[™X\P™YÙÜÐ[™œš[Ø[™ˆ][TÝ™X[RX]^Ú[™Ù\˜›ÝÈÛ›Ý\ˆH™\ÚÛˆ^Hš\™H
+Š›Û›JŠˆÚ[ˆH™\ÚÛX›Ý™BˆQUSÓRS’SUSWÑ“ÕØ\ÈÛÛ™šYÝ\™Y™XØ]\ÙHXXÝ]˜][™ÈÛˆHY˜][ÛÝ[\›X[™[HÚÚ\Bˆ[š]]\È[ÛY[\š[HžH[œÚYHH™XÞXÛHÛÜ
+HØÚY[\ˆÚÚ\È[˜XÝ]™H[š]È›ÜˆBˆ™\ÝÙˆHÛÛ™H\ÜÊKˆ][TÝ™X[RX]^Ú[™Ù\˜ž\\ÜÙ\ÈÛ›HÚ[ˆ
+˜[
+ˆÚY\È\™HÝYÛ˜[‚‹H
+Š‘ÝÛœÝ™X[K\ØY™Hž\\ÜËŠŠˆH™YH™]Èž\\ÜÙ\ÈÝ[Üš]HZ\ˆÝ]]Ý™X[\ÎˆH˜[™BˆX›\Ú\È]ÈÜXÚYšYY]YÝÛˆ™\ÜÝ\™HÚ]™\›È[Û\ËH\H[™^Ú[™Ù\ˆ\ÜÈH[›]ˆÝ]H›ÝYÚˆZ^\‹›Z^Ý™X[J
+X[™XYHYÛ›Ü™\È[›]È]Üˆ™[ÝÈ]ÈÝÛˆZ[š[][Q›ÝØÚ[‚ˆÚÛÜÚ[™ÈHÝ]]™\ÜÝ\™KÛÈHXYœ˜[˜ÚØ[››Ý˜YÈH]™H˜Z[ˆÝÛ‹‚‹H
+Š˜Ù]ÛÛ™\™Ù[˜ÙTÝ[[X\žJ
+X
+Šˆ›ÝÈš[ÈHXœÛÛ]H3¥›ÝÈ™^ÈXXÚ™[]]™H\œ›Üˆ[™YÈBˆ›ÝÈš[\œÎ˜[™HÚ[ˆH›Û‹YY˜][›ÛÜˆÜˆXœÛÛ]HÛ\˜[˜ÙH\ÈXÝ]™K‚‚ˆÈÈÈZYÜ˜][Û‚‚“›ÈXÝ[Ûˆ™\]Z\™Y8 %[Y˜][È™\›ÙXÙHH™]š[Ý\È™Z]š[Ý\‹ˆ›Üˆ[ÈÚ]ÝYÛ˜[YÜÎ‚‚˜˜]˜Bœ[œÙ]›Ý[™\žQ›ÝÑ›ÛÜŠKŒ
+NÈËÈ›ÜÝX‹LHÙËÚˆ›Ý[™\žHÝ™X[\Â˜›ÛÛX[ˆÚÈH[œ[•[[ÛÛ™\™ÙY
+MKYKLËKŒ
+NÈËÈ™[YKLÈÔˆXœÈHÙËÚ‚˜‚’Yˆ[ÝH™]š[Ý\ÛHØ[Y[\œÙ]Z[š[][Q›ÝÊ
+X[[™[™ÈÙËÜÙXË][\HžHÍŒ‚‚ˆÈÈÈ\ÝÂ‚˜›ØÙ\ÜÓ[Ù[ÛÛ™\™Ù[˜ÙQš[\•\ÝÝÑ›ÝÐž\\ÜÑÝÛœÝ™X[QY™™XÝ\ÝX[šY›ÛÝÑ›ÝÕ\Ý˜[\ÝÑ›ÝÕ™\ÚÛ\Ý‚‚ˆÈÈÈØÜÈÈÚÚ[ÈÈ\]B‚˜ØÜËÜ›ØÙ\ÜËÜ›ØÙ\ÜÛ[Ù[ÛÝ×Ù›Ý×Øž\\ÜË›Y
+\]Y
+K™\\Ú[K]›ÝX›\ÚÛÝ[™Ø˜™\\Ú[K\]›Ü›K[[Ù[[™Ø™\\Ú[KXYÙ[XË\›ØÙ\ÜË[Ü[Z^˜][Û˜‚‚‹KKB‚ˆÈÈŒ‹LËLŽ8 %[˜[ZXÈ•H›\Ú\È™\Ù\™H™X\˜žHÔHÝ]B‚ˆÈÈÈÝ[[X\žB‚ÛÛ[[Ý\ÈÙ\\˜]Üˆ[™[šÈØ[Ý[][ÛœÈÚ]\ÜÛØÚX][™È›ZYÈ›ÝÈ[š]X[^™HXXÚ•H›\Ú™œ›ÛHH[[YYX][H™XÙY[™ÈÛÛ™\™ÙY\›[Ù[˜[ZXÈÝ]Kˆ\È™\Ù\™\ÈÔH\ÜÛØÚX][Ûˆ[™œ\ÙKY\]Z[Xœš][HÛÜšÈ™]ÙY[ˆ™X\˜žH[YHÝ\ËˆÝXšXËQSÔÈ[˜[ZXÜÈ[™Ý[™[Û™H•H›\Ú\ÈÙY\Z\ˆ™]š[Ý\ÈÛÛ\Ý\™Z]š[Ü‹[™H[˜[ZXÈØ\›H[š]X[^˜][Ûˆ™]šY\ÈÛ˜ÙHœ›ÛHBš[˜ÛÛZ[™È™\ÜÝ\™H[™[\\˜]\™HYˆ]Ù\È›ÝØ]\ÙžHH›Û[YH[™[\›˜[Y[™\™ÞH™\ÚYX[Ë‚‚ˆÈÈÈ™]ÈTB‚ŸTHÚ]]Ù\ÈŸKK_KK_Ÿ\›[Ù[˜[ZXÓÜ\˜][ÛœË••Y›\Ú
+œÜXË\ÜXËØ\›TÝ\[š]X[^˜][ÛŠX^XÚ]HÙ[XÝÈØ\›HÜˆÛÛ[š]X[^˜][Ûˆ›ÜˆH•H›\ÚŸ\›[Ù[˜[ZXÓÜ\˜][ÛœË••Y›\Ú
+›Û[YK[™\™ÞK›Û[YU[š][™\™ÞU[š]Ø\›TÝ\[š]X[^˜][ÛŠX[š]X]Ø\™H™\œÚ[ÛˆÙˆHØ[YHÜ[ÛˆŸÜ[Z^™Y•Y›\Ú™Ù]\Ý]\˜][ÛÛÝ[
+
+X™\ÜÈH™]ÝÛˆ]\˜][ÛœÈ\ÙYžHH\ÝÛÛ™HŸÜ[Z^™Y•Y›\Úš\Ó\Ý[ÛÛ™\™ÙY
+
+X™\ÜÈÚ]\ˆHš[˜[Ý]HY]HXØÙ\Y‹ÕH™\ÚYX[Üš]\šXHŸÜ[Z^™Y•Y›\ÚØ\ÐÛÛ˜[˜XÚÕ\ÙY
+
+X™\ÜÈÚ]\ˆH™\]Y\ÝYØ\›H[š]X[^˜][Ûˆ™YYYHÛÛ™]žH‚ˆÈÈÈ[˜[ZXÈ™Z]š[Ü‚‚˜Ù\\˜]Ü‹œ[•˜[œÚY[™YT\ÙTÙ\\˜]Ü‹œ[•˜[œÚY[[™[šËœ[•˜[œÚY[Ü[ˆÂØ\›H[š]X[^˜][Ûˆ›Üˆ\ÜÛØÚX][™È›ZYËˆÝXšXËQSÔÈ[˜[ZXÜË^\Ý[™È•KY›\ÚÝ™\›ØYË[™œÝXYK\Ý]HØ[È™[XZ[ˆÛÛžHY˜][‚‚ˆÈÈÈ\Ý‚˜•Q›\Ú\Ý\Ý[˜[ZXÐÜU•Y›\Ú\Ù\Ð›Ý[™YØ\›TÝ\ØÛÝ™\œÈ™\X]Y™X\˜žH™YK\\ÙB”Ô’ËPÔH•H›\Ú\È[™™\šYšY\È›Ý[™YÛÛ™\™Ù[˜ÙHÚ]Ý]HÛÛ˜[˜XÚË‚˜[˜[ZXÐÛÛ\™\ÜÛÜ“›ÝX›ÛÚÔ™YÜ™\ÜÚ[Û•\Ý›ÝXÝÈH\ÝX›\ÚYÝXšXËQSÔÈ[˜[ZXÈ˜Z™XÝÜžK‚‚‹KKB‚ˆÈÈŒ‹LËLÈ8 %Ø\XÚ]KX]Ø\™HÛÛ\™\ÜÛÜˆÜ\˜][™ÈÚ[È[™Ü[Z^™\ˆ[YÛ›Y[‚ˆÈÈÈÝ[[X\žB‚ÛÛ\™\ÜÛÜˆ™\Ü[™Ë›Ý[™XÚÈ]XÝ[Û‹[™™\ÜÝ\™KX›Ý[™\žHÜ[Z^˜][Ûˆ›ÝÈ\ÙHHØ[YB˜Ø\XÚ]KXÛÛœÝ˜Z[Ù[X[XÜËˆH\Y[[]]X›H™\Ý[›ÝšY\ÈHÝX›H[™Ù™ˆÈšY[[Y™K™[™\™ÞK[Z\ÜÚ[ÛœË[™^\›˜[Ø[Ý[][ÛˆÛÛÈÚ]Ý]™\XÚ[™ÈH^\Ý[™ÈX\Ò”ÓÓˆTK‚‚ˆÈÈÈ™]ÈTB‚ŸTHÚ]]Ù\ÈŸKK_KK_ŸÛÛ\™\ÜÛÜ‹™Ù]Ü\˜][™ÔÚ[™\Ý[
+
+X™]\›œÈ\ÚXØ[\™›Ü›X[˜ÙKX\Ý]\Ë™XÞXÛHÜÜÙ\Ë™\ÜÝ\™K]\™Ù]Ý]\Ë[Z][™ÈÛÛœÝ˜Z[[™]XÚYØ\XÚ]HÛ˜\ÚÝÈŸÛÛ\™\ÜÛÜ‹™Ù]Ü\˜][™ÔÚ[™\Ý[
+Û\˜[˜ÙJX\Ù\ÈHØ[\‹YYš[™Y™[]]™H\ØÚ\™ÙK\™\ÜÝ\™HÛ\˜[˜ÙHŸÛÛ\™\ÜÛÜ“Ü\˜][™ÔÚ[™\Ý[ÒœÛÛŠ
+X^ÜÈH\Y™\Ý[\ÈØÚ[XK]™\œÚ[Û™Y”ÓÓˆ‚ˆÈÈÈØ\XÚ]H[™Ü[Z^˜][Ûˆ™Z]š[Ü‚‚‹HÝ\™ÙH[™ÝÛ™]Ø[\™H›ÝÈYHZ[š[][KYÛÛÙÛÛœÝ˜Z[ÎˆZ\ˆÝ\œ™[˜[Y\È\™H\ÚXØ[ˆX\™Ú[ˆ\˜Ù[YÙ\Ë[™ÛÛ™šYÝ\™YZ[š[XH\™HL	H[™H	HžHY˜][‚‹H\™Z[š[][HÛÛœÝ˜Z[È›ÝÈ™\Ü\Ò\™[Z]^ÙYYY
+
+HOHYX™[ÝÈZ\ˆZ[š[][K‚‹H™\ÜÝ\™P›Ý[™\žSÜ[Z^™\˜ÛÛœÝ[Y\È]™\žH[˜X›Y›Û‹Y\ÚYÛ‹›Û‹XYš\ÛÜžHÛÛ\™\ÜÛÜ‚ˆØ\XÚ]PÛÛœÝ˜Z[ˆÝ\ÝÛHÝÙ\ˆ[™ÜYYÙ][™ÜÈ™[XZ[ˆ^XÚ]Y][Û˜[Ý™\œšY\Ë‚‚ˆ
+Š™Z]š[ÜˆÚ[™ÙNŠŠˆHÛÛ\™\ÜÛÜˆ™[ÝÈ]È™\]Z\™YÝ\™ÙHÜˆÝÛ™]Ø[X\™Ú[ˆ\È›ÝÈ[™™X\ÚX›BˆÈ›Ý[™XÚÈ[™Ü[Z^˜][ÛˆT\Ëˆ™]š[Ý\ÛHH[™XYK[›Ü›X[^™YX\™Ú[ˆÝ\Y\ˆ™]™[YˆHZ[š[][H˜[YHœ›ÛH™XÛÛZ[™ÈHš[Û][Û‹‚‚ˆÈÈÈ\ÝÂ‚˜ÛÛ\™\ÜÛÜ“Ü\˜][™ÔÚ[™\Ý[\ÝØ\XÚ]PÛÛœÝ˜Z[Z[š[][S[Z]\Ý[™˜™\ÜÝ\™P›Ý[™\žPØ\XÚ]R[YÜ˜][Û•\Ý‚‚ˆÈÈŒ‹LËLÈ8 %ÛÛ[[ˆÛÛ™\™Ù[˜ÙHØ]HÛÜœ™XÝYÛÛ™\ˆ[[YHÛ›ØœÈ™XXÚX›K›ØÙ\ÜÓ[Ù[\‹X›Ý[™\žK\Ý™X[HXYÛ›ÜÝXÜÂ‚ˆÈÈÈÝ[[X\žB‚˜\Ý[][ÛÛÛ[[‹œÛÛ™Y
+
+XÛÝ[™]\›ˆYX›ÜˆH˜^H›Ùš[H]š[Û]YHQTÒÛÛ\Û™[›X]\šX[˜[[˜ÙHžHÎH	K™XØ]\ÙHÛÈÙˆH™YH™\ÚYX[Ø]\ÈÙ\™H™Y˜XœšXØ]Y™\›ÜÈ[™B\™YHÛ\˜[˜ÙH›È›Ý[™Y™\ÚYX[Ø[ˆ^ÙYYˆÙ\\˜][K™YHÛÛ™šYÝ\˜][ÛˆÛ›ØœÈÙ\™BœÚ[[HYÛ›Ü™YÜˆ[œ™XXÚX›KÛÈHÛÛ[[ˆ[œÚYHH›ØÙ\ÜÓ[Ù[ÛÝ[\›ˆ[™™YÈÙ‚š]\˜][ÛœÈ\ˆÛÛ™HÚ]›ÈØ^HÈÝÜ][™›ØÙ\ÜÓ[Ù[™\ÜYÛÛ™\™Ù[˜ÙKY\œ›ÜˆXYÛš]Y\ÂÚ]Ý]˜[Z[™ÈHÝ™X[H]›ÙXÙY[K‚‚ˆÈÈÈ\Ý[][ÛÛÛ[[˜8 %ÛÛ™\™Ù[˜ÙHØ]H
+ÛÜœ™XÝ™\ÜÊB‚Ÿ›Ø›[Hš^ŸKK_KK_Ÿ˜\[TØ[™ÛTÛÛ™\‹™Ù]\Ý[\\˜]\™T™\ÚYX[
+
+X[™Ù]\Ý[™\™ÞT™\ÚYX[
+
+XÙ\™H™]\›ˆŒØÝXœËˆHÛÛ[[ˆÝÜ™YÜÙH™\›ÜËÛÈH[\\˜]\™HØ]H\ÜÙY[˜ÛÛ™][Û˜[H[™H[™\™ÞHØ]H™\ÜYH\™™XÝ˜[[˜ÙH›Üˆ[žHÛÛ][ÛˆH[\\˜]\™HÙ]\ˆ™]\›œÈÝX›K“˜S˜
+\ÈÛÛ™\ˆ\È›ÈÝXØÙ\ÜÚ]™K\ÝXœÝ]][ÛˆÝÙY\ÛÈ]Ù[Z[™[H\È›ÈÝXÚ™\ÚYX[
+H[™H[™\™ÞHÙ]\ˆ™]\›œÈH™X[ÛÛ\]SX^™[]]™Q[™\™ÞQ\œ›ÜŠ
+XÙˆHXØÙ\YÝ]KˆÛÛ™Y
+
+X™X]ÈH˜S˜[\\˜]\™H™\ÚYX[žH™\]Z\š[™ÈHQTÒ™\ÚYX[Ø]HÈ™HXÝ]™H[œÝXY8 %HXÝX[ÛÛ™\™Ù[˜ÙHYX\Ý\™HÙˆHÚ[][[™[Ý\ËXÛÜœ™XÝ[ÛˆÛÛ™\ˆŸHQTÒØ]HÛÝ[›Ý™Z™XÝHœ›ÚÙ[ˆÛÛ\Û™[X]\šX[˜[[˜ÙKˆHPUT’PS™\ÚYX[[šY\ÈØØ[HXXÚÛÛ\Û™[žH]È
+Š›ÝÛŠŠˆ›ÝYÚ]ÛÈH˜XÙHÛÛ\Û™[[Ýš[™Èœ›ÛHYKLHÈKŒ™KLH[ÛÚˆ›ÙXÙ\ÈHØ[YHŒMÈ™\ÚYX[\ÈHMÈ	H[X˜[[˜ÙHÛˆHÙ^HÛÛ\Û™[8 %[™^HÙ\™HÛÛ\\™YYØZ[œÝY\Ú™\ÚYX[Û\˜[˜ÙHHKŒÚXÚH™\ÚYX[›Ý[™YžHHØ[ˆ™]™\ˆ^ÙYY™]È›ÝYÚ]]ÙZYÚY\‹]˜^HYX\Ý\™HÙ]\Ý˜^SX]\šX[˜[[˜ÙQ\œ›ÜŠ
+X
+Ý[[YYXœÛÛ]H˜^H[X˜[[˜ÙHÈ˜^H[Û\ˆ›ÝYÚ]˜XÙKZ[œÙ[œÚ]]™JHØ]YžHÙ]˜^SX]\šX[˜[[˜ÙUÛ\˜[˜ÙJ
+XÈÙ]˜^SX]\šX[˜[[˜ÙUÛ\˜[˜ÙJ
+XY˜][‹ŒKL˜Ÿš[˜[^™S˜\[TÛÛ™J
+X™]™\ˆ™XÛÛ\]Y\Ý[\›˜[˜Y™šXÔ˜][ØÛÈHÝ[H˜][Èœ›ÛHH™]š[Ý\ÛH\ÙYÛÛ™\ˆXZÙY[ÈHØ]K[™]™\ÜY‘PÓÓÒSQÔ“ÑPÕØ]™[ˆÚ[ˆHÛÛ™\ˆY™Z™XÝY]ÈÝÛˆ™\Ý[HX\ÜÈ™\ÚYX[[™[\›˜[˜Y™šXÈ˜][È\™H™XÛÛ\]Yœ›ÛHH\YY˜^HÝ]K[™H™Z™XÝYÛÛ™H\È™\ÜY\ÈÛÛ™TÝ]\Ë‘RSQŸ\ÝÛÛ™TÝ]\Ø\È˜[œÚY[ÛÈHÛÛ[[ˆ™\ÝÜ™Yœ›ÛHHÙ\šX[^™Y[Ù[™]\›™Y[œ›ÛHÙ]\ÝÛÛ™TÝ]\Ê
+X›ÝÙ]\ÝÛÛ™TÝ]\Ê
+X[™Ù]\ÝÛÛ™TÝ]\Ô™X\ÛÛŠ
+X\™H›ÝÈ[\ØY™H
+“ÕÔ•S˜Èˆ˜
+H‚˜Ù]ÛÛ™\™Ù[˜ÙQXYÛ›ÜÝXÜÊ
+Xš[ÈH\‹]˜^HX]\šX[[X˜[[˜ÙH™^È]ÈÛ\˜[˜ÙH[™YÈBœ™XÛÛ[Y[™][ÛˆÚ[ˆ]\È^ÙYYY‚‚ˆ
+Š™Z]š[ÜˆÚ[™ÙNŠŠˆHÛÛ™HÚÜÙH˜^H›Ùš[HÙ\È›ÝÛÜÙHH\‹]˜^HÛÛ\Û™[X]\šX[ˆ˜[[˜ÙH›ÝÈ™\ÜÈÛÛ™Y
+
+HOH˜[ÙXÚ\™H]™]š[Ý\ÛH™\ÜYYXˆH›ÙXÝÈ\™Bˆ[˜Ú[™ÙY8 %Û›HH™\™XÝ\ËˆØ[\œÈ]Ø]HÛˆÛÛ™Y
+
+XÚ[Ý\ÙYZ[™È˜Z[\™\È^BˆÙ\™H™]š[Ý\ÛH›[™Ë‚‚ˆÈÈÈ\Ý[][ÛÛÛ[[˜8 %[[YHÛ›ØœÂ‚Ÿ›Ø›[Hš^ŸKK_KK_ŸÙ]X^[X™\“Ù’]\˜][ÛœÊŠX\ÈÛ›HH
+ŠœÛÙ›ÛÜŠŠˆ8 %HY™™XÝ]™HYÙ]\ÈX^
+‹H0åÈ˜^\ÊX\ÈHÝ™\™›ÝÈ^[œÚ[Û‹ÛÈÙ]X^[X™\“Ù’]\˜][ÛœÊL
+XÛˆ[ˆLK]˜^HÛÛ[[ˆÝ[˜[ˆŒNÈ]\˜][ÛœÈ›ÝÈÙÜÈHØ\›š[™ÈÚ[ˆH™\]Y\Ý\È™[ÝÈH˜^KX˜\ÙY›ÛÜ‹ˆ™]ÈÙ]X^[X™\“Ù’]\˜][ÛœÊ
+X
+ÛÛ™šYÝ\™Y
+H[™Ù]Y™™XÝ]™SX^[X™\“Ù’]\˜][ÛœÊ
+X
+Ú]HÛÛ™\ˆÚ[\ÙJKˆ\ÙHH^\Ý[™ÈÙ]X^[X™\“Ù’]\˜][ÛœÊ‹YJXÈÙ]\™]\˜][ÛØ\
+YJX›ÜˆH\™Ø\ŸZ[”Ù\]Y[X[™[^][ÛˆHXØ\Èš]˜]HÚ]›ÈÙ]\ˆ[™Û[\YÙ]™[^][Û‘˜XÝÜ˜œ›ÛH™[ÝËÛÈ[\[™È™[ÝÈHØ\È[\ÜÜÚX›HÙ]™[^][Û‘˜XÝÜŠŠX›ÝÈ[ÛÈÝÙ\œÈHÙ\]Y[X[[™[œÚYK[Ý]™[^][Ûˆ›ÛÜœË[™˜[Y]\È]˜\Èš[š]H[™ÜÚ]]™Kˆ™]ÈÙ]Z[”Ù\]Y[X[™[^][Û˜ÈÙ]Z[”Ù\]Y[X[™[^][Û˜Ù]Z[’[œÚYSÝ]™[^][Û˜ÈÙ]Z[’[œÚYSÝ]™[^][Û˜Ù]™[^][Û‘˜XÝÜ˜ŸHY˜][XœÛÛ]H[\\˜]\™HÛ\˜[˜ÙH
+ŒŒ¸ $ÌŒÈÊHØ[ˆ™HŒL0åÈYÚ\ˆ[ˆH[˜ÛÜÚ[™È›ØÙ\ÜÓ[Ù[›Ý[™\žHØ]H
+YKLÈ™[]]™H8¢bŒÈÊH™]ÈÙ][\\˜]\™UÛ\˜[˜ÙT™[]]™J™[
+X
+™]\›œÈH™\Ý[[™ÈXœÛÛ]HÈ˜[YJH[™Ù]™Y™\™[˜ÙU[\\˜]\™J
+X
+]™\˜YÙH˜^H[\\˜]\™K[ÙH]™\˜YÙH^\›˜[™YY[\\˜]\™K[ÙHÌÊH‚˜˜]˜B˜ÛÛ[[‹œÙ]X^[X™\“Ù’]\˜][ÛœÊŒYJNÈËÈT‘Ø\›ÝH›ÛÜ‚˜ÛÛ[[‹œÙ]™[^][Û‘˜XÝÜŠŒÊNÈËÈ›ÝÈXÝX[H[\È™[ÝÈB˜ÛÛ[[‹œÙ][\\˜]\™UÛ\˜[˜ÙT™[]]™JKŒKLÊNÈËÈX]ÚH[[]™[Ø]B˜‚ˆ
+Š™Z]š[ÜˆÚ[™ÙNŠŠˆÙ]™[^][Û‘˜XÝÜŠŒ
+X
+ÜˆH›Û‹Yš[š]H˜[YJH›ÝÈ›ÝÜÂˆ[YØ[\™Ý[Y[^Ù\[Û˜[œÝXYÙˆ\ØX›[™ÈH\]Kˆ\Ý[][ÛÛÛ[[‹Z[\˜ˆÛ›H›ÜØ\™ÈH™[^][Ûˆ˜XÝÜˆ]\ÈÝšXÝHÜÚ]]™K‚‚ˆÈÈÈ›ØÙ\ÜÓ[Ù[‚˜Ù]ÛÛ™\™Ù[˜ÙTÝ[[X\žJ
+X[™Ù]ÛÛ™\™Ù[˜ÙT™\ÜœÛÛŠ
+X›ÝÈ˜[YHHÙ™™[™[™È›Ý[™\žHÝ™X[N‚‚ŸTHÚ]]Ù\ÈŸKK_KK_ŸÙ]\Ý›Ý[™\žTÝ™X[Q\œ›ÜœÊ
+X\‹\Ý™X[H›ÝËÝ[\\˜]\™KÜ™\ÜÝ\™H\œ›ÜœÈœ›ÛHH\ÝÝ]\ˆ]\˜][Û‹ÛÜœÝš\œÝŸÙ]›ÛÛÛ™\™ÙY›Ý[™\žTÝ™X[Q\œ›ÜœÊ
+XØ[YH\Ýš[\™YÈÝ™X[\ÈÝ]ÚYHÛ\˜[˜ÙHŸÙ]ÛÜœÝ›Ý[™\žTÝ™X[S˜[YJ˜\šXX›JXÈÙ]ÛÜœÝ›Ý[™\žTÝ™X[Q\œ›ÜŠ˜\šXX›JXÛÜœÝÙ™™[™\ˆ›Üˆ™›ÝÈ˜[\\˜]\™H˜Üˆœ™\ÜÝ\™H˜Ÿ›Ý[™\žTÝ™X[Q\œ›Ü‹š\Ñ›ÝÐÛÛ\ÙYÖ™\›Ê
+XÈ\Ñ›ÝÔÝ\Yœ›ÛV™\›Ê
+X^Z[œÈH™[]]™H›ÝÈ\œ›ÜˆÙˆ
+Š™^XÝHKŒ
+Šˆ8 %HÝ™X[HÝÜY
+ÜˆÝ\Y
+H›ÝÚ[™È™]ÙY[ˆÝ]\ˆ\ÜÙ\ËK™Kˆ[ˆ\Ý™X[H˜][˜]\ˆ[ˆHÛÝÈ™XÞXÛH‚’”ÓÓˆ™\ÜØZ[œÈ\œ›ÜœËžÙ›ÝË[\\˜]\™K™\ÜÝ\™_KÛÜœÝÝ™X[X[™HÜ[]™[˜›Ý[™\žTÝ™X[Q\œ›ÜœØ\œ˜^H
+˜[YX›ÝÑ\œ›Ü˜[\\˜]\™Q\œ›Ü˜™\ÜÝ\™Q\œ›Ü˜˜™]š[Ý\Ñ›ÝÒÙÔ\’˜Ý\œ™[›ÝÒÙÔ\’˜›ÝÐÛÛ\ÙYÖ™\›Ø›ÝÔÝ\Yœ›ÛV™\›Ø
+K‚‚ˆÈÈÈYÙ[ÈÈÚÚ[È\]Y‚‹H™\\Ú[KY\Ý[][Û‹Y\ÚYÛ˜8 %™]È”[[YHÛÛ›Ûˆ]\˜][ÛˆYÙ][\[™È[™Û\˜[˜ÙHˆÙXÝ[Û‹‚‹H™\\Ú[K]›ÝX›\ÚÛÝ[™Ø8 %™]ÈÛÛ[[ˆ[œÈ[™™YÈÙˆ]\˜][ÛœÈˆ[™”›ØÙ\ÜÓ[Ù[›Ý[™\žHÛÛ™\™Ù[˜ÙHˆ^X›ÛÚÜË‚‚ˆÈÈÈ\ÝÂ‚˜\Ý[][ÛÛÛ[[ÛÛ™\™Ù[˜ÙQØ]U\Ý\Ý[][ÛÛÛ[[”ÛÛ™\•[š[™Õ\Ý˜›ØÙ\ÜÓ[Ù[›Ý[™\žTÝ™X[QXYÛ›ÜÝXÜÕ\Ý‚‚‹KKB‚ˆÈÈŒ‹LËLÈ8 %›ÝÜÚY]\™›Ü›X[˜ÙHÝÚ]Ú\ËÚ\™YÔHØ\›K\Ý\ÛXÞKY[]KY\]X[]H›ÛÝË]\Â‚ˆÈÈÈÝ[[X\žB‚‘›ÛÝË]\\ÜÈÝ™\ˆH›ØÙ\ÜËÙ›\Ú\™›Ü›X[˜ÙHÛÜšÈY\™ÙYHØ[YH^Kˆ]ØÝ[Y[È™YBœX›XÈT\È]Ú\Y[™ØÝ[Y[YXZÙ\ÈÛÈÛÜÙ[H™[]Y›ÝÜÚY]]ÚYHÝÚ]Ú\È™Z]™BHØ[YHØ^K^[™ÈHÔHØ\›K\Ý\ÛXÞHœ›ÛHÛÈ›\Ú›Ý][™\ÈÈ[Ùˆ[K[™˜ÛÜœ™XÝÈØÝ[Y[][Ûˆ]ÛÛ˜YXÝYHY[]KY\]X[]HÚ[™ÙK‚‚ˆÈÈÈ™]ÈX›XÈTH
+™]š[Ý\ÛH[™ØÝ[Y[Y
+B‚ŸTHÚ]]Ù\ÈŸKK_KK_ŸÝ™X[K”›Ü\R[š]]™[
+•SS”ÒUWÓÓ“X
+HÙ[XÝÈÝÈ]XÚÙˆ[š]›Ü\Y\Ê
+X[œÈY\ˆXXÚÝ™X[H›\ÚˆŸÝ™X[KœÙ]›Ü\R[š]]™[
+]™[
+XÈÙ]›Ü\R[š]]™[
+
+X\‹\Ý™X[HÛÛ›ÛˆŸ›ØÙ\ÜÔÞ\Ý[KœÙ]›Ü\R[š]]™[
+]™[
+X8¡¤ˆ[›ÝÜÚY]]ÚYHÛÛ›ÛÈ™]\›œÈH[X™\ˆÙˆÝ™X[\È\]YˆŸ›ØÙ\ÜÓ[Ù[œÙ]›Ü\R[š]]™[
+]™[
+XÈÙ]›Ü\R[š]]™[
+\™XK]™[
+X[]ÚYH[™\‹X\™XHÛÛ›Û
+™]È[ˆ\È\ÜÊKˆŸXÛ\ÙQ›ZY™XYÜš]KœÙ]\ÙPØXÚXÈ\Õ\ÙPØXÚXÈÛX\ØXÚX[˜X›\È[™ÛX\œÈH\œÙYQLÌ›ZYØXÚKˆŸXÛ\ÙQ›ZY™XYÜš]KœÙ]X^ØXÚTÚ^™XÈÙ]X^ØXÚTÚ^™XÈQUSÓPVÐÐPÒWÔÒV‘X›Ý[™È]ØXÚH
+™]È[ˆ\È\ÜÊKˆ‚ˆ
+Š¸¦¨›Ü\R[š]]™[‘S”ÒUWÓÓ“X™XYÈ˜[œÜÜ›Ü\Y\È˜XÚÈ\È™\›ËŠŠ‚ˆ]ÚÚ\ÈHš\ØÛÜÚ]K\›X[XÛÛ™XÝ]š]H[™Y™\Ú]š]HÛÜœ™[][ÛœËˆÜÙHÙ]\œÈÂˆ
+Š››Ý
+Šˆ›ÝÈY\Ø\™È8 %Ù]š\ØÛÜÚ]J
+XÙ]\›X[ÛÛ™XÝ]š]J
+X[™HY™\Ú[Û‚ˆÛÙY™šXÚY[ÈÚ[\H™]\›ˆŒˆÛ›H\ÙH]›Üˆ›ÝÜÚY]È]™YYX\ÜÈ[™[™\™ÞBˆ˜[[˜Ù\ÎÈÝÚ]Ú˜XÚÈÈ›Ü\R[š]]™[‘•S™Y›Ü™H[žH\[[™KX]Y^Ú[™Ù\‹ˆYXÚ[šXØ[Y\ÚYÛˆÜˆ›ÝËX\ÜÝ\˜[˜ÙHØ[Ý[][Ûˆ]™XYÈ˜[œÜÜ›Ü\Y\Ë‚‚˜˜]˜B‹ËÈ˜\ÝX]\šX[X˜[[˜ÙHÛÛ™HÙˆHšYÈ[[›Ü\Y\È[ˆH›ÝËX\ÜÝ\˜[˜ÙH\™XHÛ›K‚œ[œÙ]›Ü\R[š]]™[
+Ý™X[K”›Ü\R[š]]™[‘S”ÒUWÓÓ“JNÂœ[œÙ]›Ü\R[š]]™[
+œÝXœÙXH‹Ý™X[K”›Ü\R[š]]™[‘•S
+NÂœ[œ[Š
+NÂ˜‚ˆÈÈÈÙ]›Ü\R[š]]™[[™Ù]][T\ÙPÚXÚØ›ÝÈ™Z]™HHØ[YB‚˜›ØÙ\ÜÔÞ\Ý[KœÙ]›Ü\R[š]]™[™]š[Ý\ÛH™]\›™Y›ÚYØ\È›Ý›ÜYØ]Y[È™\ÝY˜[Ù[R[\™˜XÙXÝX‹\›ØÙ\ÜÙ\ËY›È›ØÙ\ÜÓ[Ù[[YØ][Û‹[™Ø\È›Ý™KX\YYÚ[ˆB›[Ù[˜[‹ˆ]›ÝÈX]Ú\ÈÙ]][T\ÙPÚXÚØÛˆ[›Ý\ˆÚ[Ë‚‚ŠŠ“ZYÜ˜][ÛŽŠŠˆÙ]›Ü\R[š]]™[™]\›œÈ[[œÝXYÙˆ›ÚYˆ^\Ý[™ÈØ[Ú]\ÈÛÛ\[B[˜Ú[™ÙYÈÛ›HHØ[\ˆ]\ÜÚYÛ™YH™\Ý[ÙˆH›ÚYY]Ù
+›ÝÜÜÚX›JHÛÝ[œ™XZË‚‚›ÝÙ][™ÜÈ\™H›ÝÈ™KX\YY]HÝ\Ùˆ
+Š™]™\žJŠˆ^XÝ][Ûˆ[žHÚ[8 %[ŠURQ
+X˜[—ÜÝ\
+URQ
+X[”Ù\]Y[X[
+URQ
+X[”\˜[[
+URQ
+X[’XœšY
+URQ
+X˜[‘]Y›ÝÊURQ
+X[™[•˜[œÚY[
+ÝX›KURQ
+Xˆ™]š[Ý\ÛHÛ›H[˜[—ÜÝ\[™˜[”\˜[[™KX\YYÙ]][T\ÙPÚXÚØÛÈH™YT\ÙTÙ\\˜]Ü˜]\›™YB›][\\ÙHÚXÚÈ˜XÚÈÛˆXZÙY][ÈH™\ÝÙˆH\™XH[™\ˆHÝ\ˆ›Ý\ˆ[žHÚ[Ë‚‚ˆÈÈÈÔHË]˜[YHØ\›HÝ\ÎˆÛ™HÛXÞK[]\˜]]™H›\Ú\Â‚“™]ÈÚ\™Y™YXØ]N‚‚˜˜]˜B›™\\Ú[K\›[Ë•\›[Ù[˜[ZXÓ[Ù[Ù][™ÜËš\Ò[›™\‘›\ÚØ\›TÝ\ØY™JÞ\Ý[R[\™˜XÙHÞ\Ý[JB˜‚”™]\›œÈ˜[ÙX›ÜˆÔH[Ù[È
+žH[Ù[˜[YK\ÈH\ÙPÔR[\™˜XÙXÚXÚÊKYX›ÜˆÝXšXÂ‘SÔËˆ›\Úš\Ò[›™\•›\ÚØ\›TÝ\ØY™J
+X[™Ñ›\Úš\Ò[›™\•›\ÚØ\›TÝ\ØY™J
+X8 %ÚXÚ˜Ø\œšYYž]KZY[XØ[ÛÜY\ÈÙˆ\ÈÙÚXÈ8 %›ÝÈ[YØ]HÈ]‚‚•HÛXÞH\È\YYÈH™[XZ[š[™È]\˜]]™H›\Ú\Èœ›ÛH\ÜÝYHÌŒLLÚXÚ[[˜X›Y’Ë]˜[YH™]\ÙH[˜ÛÛ™][Û˜[Nˆ›\ÚÑ›\ÚY›\Ú™›\Ú™œ˜XÝ[Û‘›\Ú˜”Ù›\Ú’›\ÚY[˜Ø•Y›\ÚY[˜Ø[\›Ý™Y•Y›\ÚY[˜ØÜ[Z^™Y•Y›\Ú˜ÛÛY›\ÚY›\Ú‘™›\Ú™›\Úœ™Y›^›\ÚY[˜Ñ›\Ú‚‚˜›\Ú	ÜÈ][\\ÙK\™\ØÝYH][X™\˜][HÙY\È[ˆ[˜ÛÛ™][Û˜[Ø\›HÝ\›Üˆ]™\žH[Ù[‚š]ÛÛ[Y\Èœ›ÛHHÙYY›\Ú]H™X\˜žH[\\˜]\™K[™Ø\œžZ[™ÈHÙYYË]˜[Y\ÈÝ™\ˆ\ÈB›YXÚ[š\ÛH]š[™ÈH^˜H\ÙK‚‚ŠŠ’[\XÝŠŠˆÔH›ÝÜÚY]È
+QËÓQQËÙÛXÛÛØ]\‹X™X\š[™ÊH]›ÚYHØÝ[Y[YÔH[[YBœ™YÜ™\ÜÚ[Ûˆ[ˆ\ÙH›\Ú\ËˆÝXšXÈSÔÈ™Z]š[Ý\ˆ\È[˜Ú[™ÙYˆ›ÈÛ\˜[˜ÙKÛÛ™\™Ù[˜ÙKXXØÙ\[˜ÙB›Üˆ›\ÚY\]X][ÛˆÚ[™ÙK‚‚ˆÈÈÈ[™\™ÞTÝ™X[X›ÝÈ\Ù\ÈY[]H\]X[]B‚˜[™\™ÞTÝ™X[Kš\ÚÛÙJ
+X™]\›™YØš™XÝËš\ÚÛÙJ]JX[™\]X[Ê
+XÛÛ\\™Y]HÛ›K]˜]X\È™]Üš][ˆžHÙ]]J
+XÛˆ]™\žH[ˆ8 %HØ[YH]]X›KZ\ÚY™XÝ][Ý]˜]Yœ™[[Ýš[™È\]X[ØØ\ÚÛÙXœ›ÛH›ØÙ\ÜÔÞ\Ý[X[™H›ØÙ\ÜËY\]Z\Y[Û\ÜÙ\ËˆÛÈ\Ý[˜Ý™[™\™ÞHÝ™X[\È[ÛÈÛÛ\\™Y\]X[Ú[™]™\ˆZ\ˆ]Y\ÈX]ÚY‚‚ŠŠ“ZYÜ˜][ÛŽŠŠˆ[™\™ÞTÝ™X[PK™\]X[Ê[™\™ÞTÝ™X[PŠX\È›ÝÈYXÛ›H›ÜˆHØ[YH[œÝ[˜ÙK‚ÛÛ\\™HÙ]]J
+X^XÚ]HÚ[ˆH˜[YHÛÛ\\š\ÛÛˆ\È[[™Y‚‚ˆÈÈÈXÛ\ÙQ›ZY™XYÜš]XØXÚH\È›Ý[™Y‚•H\œÙYY›ZYØXÚHØ\È[ˆ[˜›Ý[™YÛÛ˜Ý\œ™[\ÚX\ÛÈHÛ™Ë\[›š[™ÈÙ\šXÙH™XY[™ÈX[žB™\Ý[˜ÝLÌš[\È
+ÜˆHØ[YHš[H™\X]YHY\ˆY]ËÚ[˜ÙHHÙ^H[˜ÛY\ÈB›\Ý[[ÙYšYY[Y\Ý[\
+HÜ™]ÈÚ]Ý][Z]ˆ]\È›ÝÈ[ˆ•HX\Ø\Y]˜QUSÓPVÐÐPÒWÔÒV‘HHY\ÝX›HÚ]Ù]X^ØXÚTÚ^™J[
+XˆH]]X›B˜X›XÈÝ]XÈÙ]YÓ˜[YX\È[ÛÈÛ˜\ÚÝYÛ˜ÙH\ˆ™XYÛÈHÛÛ˜Ý\œ™[Ú[™ÙHÙˆ]šY[˜Ø[ˆ›ÈÛ™Ù\ˆZ\ÛX]ÚHØXÚY[žHÚ]H™Yš^]Ø\È\œÙY[™\‹‚‚ˆÈÈÈØÝ[Y[][ÛˆÛÜœ™XÝ[ÛœÂ‚•HY[]KY\]X[]HÚ[™ÙH™[[Ý™Y\]X[ØØ\ÚÛÙXœ›ÛH›ØÙ\ÜÔÞ\Ý[X˜›ØÙ\ÜÑ\]Z\Y[˜\ÙPÛ\ÜØÛÛ\™\ÜÛÜ˜Z^\˜[™Ù\\˜]Ü˜ˆ˜]˜YØÈYYY\Ø\™ÈÝ[™\ØÜšX™YÜÙH\Ú\È\È˜[YH˜\ÙY[™]]X›H‹[™Y™Y[ˆ]XÚYÈÙ]™\ÜÚœÛÛŠ
+X˜[™ÒœÛÛŠ
+X8 %›ÝÝš[™Ø\™]\›š[™ÈY]ÙÈ][ˆØ\œšYYHÜ›Û™Â˜™]\›ˆÛÛ[X˜\ÙY\Ú8 )˜YËˆÜÙH›ØÚÜÈ\™H™[[Ý™Y[™HÛÜœ™XÝY[]KY\]X[]H›ÝB››ÝÈÚ]È[ˆHÛ\ÜÈ˜]˜YØÈÙˆ›ØÙ\ÜÔÞ\Ý[X›ØÙ\ÜÑ\]Z\Y[˜\ÙPÛ\ÜØ[™[™\™ÞTÝ™X[X‚•H‘^[Ý]ÛXÞXØXÚHÛÛ[Y[È[™H›ØÙ\ÜÓØš™XÝY[]RÙ^U\ÝÛ\ÜÈ˜]˜YØÈÙ\™B˜ÛÜœ™XÝYHØ[YHØ^K‚‚˜^[™\‹‘QUSÑVS‘T—ÐÐS×ÔÕTØ
+KÝÛˆœ›ÛHH\™XÛÙY
+HÛZ[YYHØ[YH™\Ý[8 )‚ÈÚ][ˆ[Y\šXØ[›Ú\ÙH‹ˆYX\Ý\™YÛˆHL8¡¤ˆÌ˜\˜HšXÚYØ\È^[œÚ[ÛˆHY™™\™[˜ÙH\ÈX›Ý]ŠŠŒŒˆÊŠˆÝ]][\\˜]\™HÝ]ÙˆHLHÈ›Ü[™[™\ˆH	HÚYÝÙ\ˆ8 %›ÝÈÝ]Yœ]X[]]]™[H[™ØÚÙY[ˆžH^[™\”Û]›ÜXÔÝ\Õ\Ý‚‚ˆÈÈÈYÙ[È[™ÚÚ[ÈÈ\]B‚‹H™\\Ú[K\›ØÙ\ÜË[[Ù[[™Ø™\\Ú[K\]›Ü›K[[Ù[[™Ø8 %HÛÈ›ÝÜÚY]]ÚYH\™›Ü›X[˜ÙBˆÝÚ]Ú\È[™HS”ÒUWÓÓ“X˜[œÜÜ\›Ü\HØ\›š[™Ë‚‹H™\\Ú[KX\K\]\›œØ8 %XÛ\ÙQ›ZY™XYÜš]XØXÚHÛÛ›ÛË‚‹H™\\Ú[K]›ÝX›\ÚÛÝ[™Ø8 %š\ØÛÜÚ]KÝ\›X[ÛÛ™XÝ]š]H\È™\›Èˆ›ÝÈ\ÈHÙXÛÛ™Ø]\ÙN‚ˆHÝ™X[H[›š[™È]›Ü\R[š]]™[‘S”ÒUWÓÓ“X‚‚‹KKB‚ˆÈÈŒ‹LËLÈ8 %š^ˆ\Ý[][ÛÛÛ[[‹œÛÛ™Y
+
+X›ÈÛ™Ù\ˆÛÛ˜YXÝÈH™\ÜYÛÛ™HÝ]\Â‚ˆÈÈÈÝ[[X\žB‚˜\Ý[][ÛÛÛ[[‹œÛÛ™Y
+
+XÛÝ[™]\›ˆ˜[ÙX›ÜˆHÛÛ[[ˆÚÜÙB˜Ù]\ÝÛÛ™TÝ]\Ê
+XØ\È’QÓÔ“ÕT×ÐÓÓ•‘T‘ÑQ[™ÚÜÙH™\ÚYX[È8 %\È™\ÜYžB˜Ù]\Ý[\\˜]\™T™\ÚYX[
+
+X[™Ù]ÛÛ™\™Ù[˜ÙQXYÛ›ÜÝXÜÊ
+X8 %Ù\™H[[œÚYHZ\‚Û\˜[˜Ù\ËˆØœÙ\™YÛˆHQÈ™YÙ[™\˜][ÛˆÛÛ[[Žˆ™\ÜY[\\˜]\™H™\ÚYX[˜ŒMŽØYØZ[œÝHŒHØÛ\˜[˜ÙKÚ[HH[\›˜[Ø]HØ]ÈŒÌ‚‚Ø]\ÙNˆHÛÛ™\™Ù[˜ÙHØ]H\ÝYHš]˜]HÛÜšÚ[™ÈšY[\œ˜[œÝXYÙ‚˜\Ý[\\˜]\™T™\ÚYX[ˆ\œ˜\ÈH]™H]\˜][Ûˆ˜\šXX›HÙˆ]™\žH[›™\ˆÛÛ™\ˆÛÜ8 %œ™\Ù]ÈYLLÜˆŒÛˆÛÛ™\ˆ[žH[™XØÝ[][]Y˜^HžH˜^H8 %ÛÈ[žHÛÛ™\ˆ\ÜÂ]^]È™Y›Ü™Hš[˜[^™TÛÛ™J
+XX]™\È]Û[™ÈH\X[˜[YK‚‚’[\XÝˆ[˜ÛÜÚ[™È™XÞXÛX›ØÙ\ÜÔÞ\Ý[X[™›ØÙ\ÜÓ[Ù[ÛÜÈ™]™\ˆØ]ÈHÛÛ[[‚˜\ÈÛÛ™\™ÙY[™Ù\]\˜][™È[[[ˆ]\˜][ÛˆØ\ÜˆØ[XÛØÚÈ[Y[Ý][ˆ™]\›™YBœ\X[HÛÛ™\™ÙYÝ]KˆÝÛœÝ™X[HÛÛœÝ[Y\œÈØ]È™\žHÛ™È[ˆ[Y\È[™™\Ý[È]™šYY™]ÙY[ˆ[œË‚‚ˆÈÈÈÚ]Ú[™ÙY‚‹H™\ÚYX[ÛÛ™\™Ù[˜ÙTØ]\ÙšYY
+
+X›ÝÈØ]\ÈÛˆ\Ý[\\˜]\™T™\ÚYX[HØ[YH˜[YBˆ™\ÜYžHÙ]\Ý[\\˜]\™T™\ÚYX[
+
+X[™Ù]ÛÛ™\™Ù[˜ÙQXYÛ›ÜÝXÜÊ
+Xˆ›Ý][™ˆ\ÝÛÛ™TÝ]\Ø\™HÜš][ˆžHš[˜[^™TÛÛ™J
+X[™ÛX\™YžH™\Ù]\ÝÛÛ™SY]šXÜÊ
+XˆÛÈ^HÝ^HÛÛœÚ\Ý[‚‹H[\›˜[˜Y™šXÔØ]\ÙšYY
+
+X›ÝÈÛÛ\\™\ÈYØZ[œÝPVÔÓÓ‘QÒS•T“SÕQ‘’P×Õ×Ñ‘QQÔUSØˆ
+L
+H[œÝXYÙˆH™[^Y]\]H[Z]PVÔ‘SVQÒS•T“SÕQ‘’P×Õ×Ñ‘QQÔUSØ
+YMJK‚‹HÝX\™Y˜[˜XÚÈ›ÙXÝÈ›ÝÈÙÈHØ\›š[™ËˆÚ[ˆH˜^HÛÛ][Ûˆ\È™Z™XÝYˆ\]T›ÙXÝÑœ›ÛSÝ™\˜[™YY›\Ú
+
+X™\XÙ\ÈHX›XÈ›ÙXÝÈÚ]H
+ŠœÚ[™ÛBˆ\]Z[Xœš][H›\ÚÙˆHZ^Y™YYÊŠ‹ˆH™\ÚYX[Ù]\œÈ\™HÛÛ\]YYØZ[œÝÜÙBˆ˜[˜XÚÈ›ÙXÝÈ[™\™Y›Ü™HÛÚÈÛÛ™\™ÙYˆÚXÚÈÙ]\ÝÛÛ™TÝ]\Ê
+X8 %ˆSPÒ×Ô“ÑPÕØYX[œÈ›ÙXÝ›ÝÜÈ[™]Y\È\™H›ÝHšYÛÜ›Ý\ÈÛÛ[[ˆ™\Ý[‚‹HH›Û‹Yš[š]H™X›Ú[\ˆÜˆÛÛ™[œÙ\ˆ]HY\ˆHÛÛ™H\È›ÝÈÙÙÙY[œÝXYÙˆ™Z[™ÂˆÚ[[H™]\›™YžHÙ]]J
+X‚‹HX\ÜÐ˜[[˜ÙPÚXÚÊ
+X[™ÛÛ\Û™[X\ÜÐ˜[[˜ÙPÚXÚÊ
+X\ÙHÙÙÙ\‹™XYØ[œÝXYÙ‚ˆÞ\Ý[K›Ý]œš[˜‚‚ˆÈÈÈZYÜ˜][Û‚‚“›ÈTHÚ[™ÙKˆØ[\œÈ]ÛÜšÙY\›Ý[™HÛ™Z]š[Ý\ˆžHYÛ›Üš[™ÈÛÛ™Y
+
+XØ[ˆ›ÝÂœ™[HÛˆ]ˆÚ[ˆ™XY[™ÈÛÛ[[ˆ™\Ý[È›ÙÜ˜[[X]XØ[K[Ø^\ÈÚXÚÂ˜Ù]\ÝÛÛ™TÝ]\Ê
+X[ˆY][ÛˆÈH™\ÚYX[Ù]\œË‚‚”™YÜ™\ÜÚ[Ûˆ\ÝˆÜ˜ËÝ\ÝÚ˜]˜KÛ™\\Ú[KÜ›ØÙ\ÜËÙ\]Z\Y[Ù\Ý[][Û‹Ñ\Ý[][ÛÛÛ[[”ÛÛ™YÛÛœÚ\Ý[˜ÞU\Ýš˜]˜X‚‚‹KKB‚ˆÈÈŒ‹LKLM8 %œ™XZÚ[™ÎˆÛÛ™[œÙ\‹œÙ]™Y›^˜][Ê
+X›ÝÈYX[œÈÑ›ÝHÜ]œ˜XÝ[Û‚‚ˆÈÈÈÝ[[X\žB‚™Y›Ü™HˆÌŒMMˆH˜[YH\ÜÙYÈÛÛ™[œÙ\‹œÙ]™Y›^˜][ÊŠXØ\È\ÙY\™XÝH\ÈBœÜ]œ˜XÝ[ÛˆÙˆHÛÛ™[œÙY\]ZY™]\›™Y\È™Y›^‚‚˜˜]˜B›Z^YÝ™X[TÜ]\‹œÙ]Ü]˜XÝÜœÊ™]ÈÝX›V×HÜ‹KŒHŸJNÂ˜‚’]\È›ÝÈ[\œ™]Y\ÈHYH™Y›^˜][ÈˆHÑ[™ÛÛ™\Y[\›˜[N‚‚˜˜]˜B™ÝX›H™Y›^œ˜XÝ[ÛˆHˆHŒÈŒˆˆÈ
+KŒ
+ÈŠNÂ›Z^YÝ™X[TÜ]\‹œÙ]Ü]˜XÝÜœÊ™]ÈÝX›V×HÜ™Y›^œ˜XÝ[Û‹KŒH™Y›^œ˜XÝ[ÛŸJNÂˆÈÈŒ‹LËLÈ8 %š^ˆ™]™\ˆ\ÙH›ØÙ\ÜÔÞ\Ý[XÜˆ›ØÙ\ÜÈ\]Z\Y[\ÈH\Ú[X\Ù^B‚ˆÈÈÈÝ[[X\žB‚˜›ØÙ\ÜÔÞ\Ý[Kš\ÚÛÙJ
+X[™›ØÙ\ÜÑ\]Z\Y[˜\ÙPÛ\ÜËš\ÚÛÙJ
+X\™H
+Š˜[YH˜\ÙYÝ™\‚›]]X›HÝ]JŠ‹ˆ›ØÙ\ÜÔÞ\Ý[X\Ú\È[YX[YTÝ\[X™\˜HYX\Ý\™[Y[\ÝÜžH[™™]™\žH[š]Ü\˜][ÛŽÈ\]Z\Y[\Ú\È™\Ü›Ü\Y\ØÛÛ™][Û[˜[\Ú\ÓY\ÜØYÙX[™H]XÚYÛÛ›Û\œËˆ[ÙˆÜÙH\™H™]Üš][ˆžH[Š
+XÛÈH\ÚÙˆH›ØÙ\ÜÈÜˆB[š]Ú[™Ù\È\ÈH[Ù[ÛÛ™\Ë‚‚•\Ú[™ÈÝXÚ[ˆØš™XÝ\ÈH\ÚX\Ù^HÜˆ\ÚÙ][[Y[š[Û]\ÈHX\ÛÛ˜XÝˆY\‚˜H[ˆH[žHÚ]È[ˆHÜ›Û™ÈXÚÙ]ÛÈÛÚÝ\ÈZ\ÜËˆ]™]™\ˆ™]\›œÈH
+Ü›Û™Êˆ˜[YH8 %˜\]X[Ê
+XÝ[ÝX\™È8 %ÚXÚ\ÈÚHH˜Z[\™H\ÈÚ[[ˆØXÚ\ÈYÜ˜YHÈ\›X[™[›Z\ÜÙ\Ë™YÚ\ÝšY\ÈÜÙH[šY\È[™™K\™YÚ\Ý\ˆ\XØ]\Ë[™Ý[H[šY\È\™H™]™\‚˜ÛÛXÝY‚‚ˆÈÈÈÚ]Ú[™ÙY‚‹H‘^[Ý]ÛXÞKœ›ÛPØXÚXÈ\ÙPØXÚX8 %Ù\™H\ÚX\Ù^YYÛˆ\]Z\Y[[™Ý™X[\Ë‚ˆ\ÙH\™HÛ™Ë[]™YØXÚ\ËÛÈ^HÙ\™HÝX\˜[YYÈÝÜ™\ÛÛš[™ÈY\ˆHš\œÝˆ[Š
+Xˆ›ÝÈY[]R\ÚX\‚‹H›ØÙ\ÜÔÞ\Ý[K˜Z[XœšY[Š
+X8 %H]\˜]]™TÙ]Y[X™\œÚ\Ù]\È›ÝÈY[]H˜\ÙY‚‹H›ØÙ\ÜÔÞ\Ý[K™XXÝ]˜]TÙXÝ[ÛŠÝš[™ÊXÈXÝ]˜]TÙXÝ[ÛŠÝš[™ÊX8 %Hš\Ú]Yˆ˜]™\œØ[Ù]È\™H›ÝÈY[]H˜\ÙYˆ™\ÚY\ÈH]]X›KZ\Ú\ÜÝYK[ˆ\]X[ËX˜\ÙYÙ]ˆÛÝ[X\šÈH
+™Y™™\™[
+ˆ[š]\È[™XYHš\Ú]YÚ[ˆÛÈ[š]ÈÚ\™HH˜[YKÚXÚ\[œÂˆXÜ›ÜÜÈH\™X\ÈÙˆH›ØÙ\ÜÓ[Ù[‚‹H›Ý\ÚÛÙJ
+XY]ÙÈ›ÝÈØ\œžH[ˆ^XÚ]˜]˜QØÈØ\›š[™Ë‚‚•\È[YÛœÈH™[XZ[š[™ÈØ[Ú]\ÈÚ]H]\›ˆ[™XYH\ÙYžH›ØÙ\ÜÓ[Ù[˜œÛÛ”›ØÙ\ÜÑ^Ü\˜Õ˜[YT›ØÙ\ÜÔÚ[][]Ü˜HVHÜš]\œÈ[™HÜ˜\š^ˆ^Ü\œË‚‚ˆÈÈÈZYÜ˜][Û‚‚“›ÈTHÚ[™ÙKˆ
+ŠYÙ[È[™ÝÛœÝ™X[HÛÙNŠŠˆ™]™\ˆÙ^HHX\ÜˆÙ]Ûˆ›ØÙ\ÜÔÞ\Ý[X˜›ØÙ\ÜÑ\]Z\Y[[\™˜XÙXÜˆÝ™X[R[\™˜XÙXˆ\ÙN‚‚˜˜]˜B“X\Ý™X[R[\™˜XÙK›ÛÏˆžTÝ™X[HH™]ÈY[]R\ÚX\Ý™X[R[\™˜XÙK›ÛÏŠ
+NÂ”Ù]›ØÙ\ÜÑ\]Z\Y[[\™˜XÙOˆÙY[ˆBˆÛÛXÝ[ÛœË›™]ÔÙ]œ›ÛSX\
+™]ÈY[]R\ÚX\›ØÙ\ÜÑ\]Z\Y[[\™˜XÙK›ÛÛX[Š
+JNÂ˜‚•ÈÛÛ\\™HÛÈ[Ù[È
+Š˜žH˜[YJŠ‹\ÙH›ØÙ\ÜÓ[Ù[Ý]K˜ÛÛ\\™JÛÝ]K™]ÔÝ]JX˜]\‚[ˆ\yën½¶‰žËkºwµçYZ\‘œ˜XÝ[Û˜œ›ÛH[›™\ˆX[Y]\‚‹HÙ]ÙZ\“[™Ý
+ÝX›JXÈÙ]ÙZ\“[™Ý
+
+X8 %ÙZ\ˆÜ™\Ý[™ÝÛWB‹HÙ]›ÛÝ›Û[YJÝX›JXÈÙ]›ÛÝ›Û[YJ
+X8 %›ÛÝÜÝ[\›Û[YHÛL×B‹HÙ]Z\Ý[[Z[˜]Ü‘ÛÙY™ŠÝX›JXÈÙ]Z\Ý[[Z[˜]Ü‘ÛÙY™Š
+X8 %][\‚ˆ[X™\ˆ›ÜˆZ\Ý[[Z[˜]ÜˆØ[Ý[][Ûˆ
+H]H
+ˆH
+ˆšÈ
+ˆ—ŒŠB‹HÙ]Z\Ý[[Z[˜]Ü•XÚÛ™\ÜÊÝX›JXÈÙ]Z\Ý[[Z[˜]Ü•XÚÛ™\ÜÊ
+X8 %ˆ[Z\Ý\ˆYXÚÛ™\ÜÈÛWH
+ÛÛ™\ÈËÙœ›ÛHYXÚ[šXØ[\ÚYÛˆ[HÝÜ˜YÙJB‹H\Q[Z\Ý[™Ò[\›˜[
+[Z\Ý[™Ò[\›˜[
+X8 %ÛÛ™[šY[˜ÙHY]Ù]\Ú\Âˆ]H[X™\ˆ[™XÚÛ™\ÜÈœ›ÛHH\ÚYÛˆØš™XÝÈH[˜[ZXÈÙ\\˜]Ü‚‚ˆÈÈÈ˜[Z[™È›ÝB‚˜Ù]ÙZ\’ZYÚXœÛÛ]X\È\ÙY
+›ÝÙ]ÙZ\’ZYÚ
+H™XØ]\ÙHH^\Ý[™Â˜Ù]ÙZ\’ZYÚ
+
+X[ˆÙ\\˜]Ü“YXÚ[šXØ[\ÚYÛˆ™]\›œÈÙZ\‘œ˜XÝ[Ûˆ
+ˆQŠ\ÚYÛ‹\\ÙHØ[Ý[]Y˜[YJK›ÝHXœÛÛ]H[˜[ZXÈZYÚ‚‚ˆÈÈÈZYÜ˜][Û‚‚ŠŠ™Y›Ü™H
+Ù][™È[˜[ZXÈ\˜[\È\™XÝHÛˆÙ\\˜]ÜŠNŠŠ‚˜˜]˜BœÙ\\˜]Ü‹œÙ]ÙZ\’ZYÚ
+ŒÌ
+NÂœÙ\\˜]Ü‹œÙ]Z\Ý[[Z[˜]Ü‘ÛÙY™ŠMLŒ
+NÂ˜‚ŠŠY\ˆ
+Ù]šXHYXÚ[šXØ[\ÚYÛˆ8 %™Y™\œ™Y
+NŠŠ‚˜˜]˜B”Ù\\˜]Ü“YXÚ[šXØ[\ÚYÛˆ\ÚYÛˆBˆ
+Ù\\˜]Ü“YXÚ[šXØ[\ÚYÛŠHÙ\\˜]Ü‹™Ù]YXÚ[šXØ[\ÚYÛŠ
+NÂ™\ÚYÛ‹œÙ]ÙZ\’ZYÚXœÛÛ]JŒÌ
+NÂ™\ÚYÛ‹œÙ]Z\Ý[[Z[˜]Ü‘ÛÙY™ŠMLŒ
+NÂ‹ËÈÜˆ\Úœ›ÛHH\ÚYÛˆØš™XÝ‚™\ÚYÛ‹˜\Q[Z\Ý[™Ò[\›˜[
+™]È[Z\Ý[™Ò[\›˜[
+•Ú\™SY\Ú‹Ú\™WÛY\ÚŠJNÂ˜‚ˆÈÈÈYÙ[ËÔÚÚ[ÈY™™XÝY‚‹H™\\Ú[KX\K\]\›œØ8 %YY[˜[ZXÈœšYÙHY]Ù^[\\Â‹HÛÜ[ÝZ[œÝXÝ[ÛœË›YÈQÑS•Ë›Y8 %\]YÛÙH^[\\È[™ˆ\˜Ú]XÝ\™HX›HÚ][œšYÙHY]Ù\Ý‚‹KKB‚ˆÈÈŒ‹LLLÈ8 %PÔÙ\™\Žˆ›Ù™\ÜÚ[Û˜[U\ÙH[\›Ý™[Y[È
+ÛÛÊB‚ˆÈÈÈÝ[[X\žB‚‘š]™H[\›Ý™[Y[È›Üˆ›Ù™\ÜÚ[Û˜[[™Ú[™Y\š[™È\ÙN‚‚ŒKˆ
+ŠZ[ÛÛÜ™[˜][ÛŠŠˆ8 %™\\Ú[K[XÜ\Ù\™\‹ÜÛKž[›ÝÈ\ÈHØØ[Y]˜X]™[‚ˆ›Ùš[H
+TØØ[Y]˜
+H]™\ÛÛ™\È™\TÚ[Hœ›ÛHØØ[‹Ë›L‹Ø\Ú[™ÈÓTÒÕˆ™\œÚ[Û‹ˆÙY\ÈPÔÙ\™\ˆ[™ÛÜ™H[ˆÞ[˜È\š[™È]™[ÜY[‚‚Œ‹ˆ
+Š’ÔÔÑH˜[œÜÜ
+Šˆ8 %YY]X\šÝ\Ë[XÜ\Ù\™\‹\ÜÙX\[™[˜ÞH[Û™ÜÚYBˆ^\Ý[™ÈÕSËˆÔÑH[™Ú[]‹ËÛØØ[ÜÝŽÛXÜÚ]ÓÔ”È›Ü‚ˆØØ[ÜÝŒÌ[™ØØ[ÜÝLMÌØˆÙX‹X˜\ÙYÛY[ÈØ[ˆ›ÝÈÛÛ›™XÝˆÚ]Ý]ÕSÈÝXœ›ØÙ\ÜÈX[˜YÙ[Y[‚‚ŒËˆ
+Š“’TÕ™[˜ÚX\šÈ˜[Y][ÛŠŠˆ8 %™]È™[˜ÚX\šÕ˜[Y][Û•\Ýš˜]˜X
+È\ÝÊBˆ˜[Y]\ÈXØÝ\˜XÞHÛZ[\ÈYØZ[œÝ™Y™\™[˜ÙH]NˆY][™H[œÚ]HœÈ’TÕˆ
+0¬L‰JKTÓÈŽMÍˆÐÕˆ
+0¬LIJKÙ\\˜]ÜˆX\ÜÈ˜[[˜ÙH
+ŒIJK“H\ÙHÚXÚËˆ]ÈÚ[˜[™ÙK[™\Ý™\ÜÛÛ\][™\ÜË‚‚ˆ
+Š‘[L‘H\ÝÛÝ™\˜YÙJŠˆ8 %\ÝÛXÜÜÙ\™\‹œX^[™Yœ›ÛHNHÈÛÛˆÛÝ™\˜YÙKˆ[™YHY\œÈ\ÝYˆY\ˆH
+ŒHÛÜ™JKY\ˆˆ
+LÈY˜[˜ÙY
+KˆY\ˆÈ
+M^\š[Y[[
+K\ÈÛÝ™\›˜[˜ÙHÛÛË‚‚Kˆ
+Š•\ÚÈÛÜšÙ›ÝÈœšYÙJŠˆ8 %™]ÈœšYÙU\ÚÕÛÜšÙ›ÝØÛÛ
+È\ÚÕÛÜšÙ›ÝÐœšYÙXˆ[›™\‹ˆÛÛ™\ÈPÔÛÛÝ]]È\Ú×ÜÛÛ™KØ™\Ý[ËšœÛÛ˜›Ü›X]‚ˆXÝ[ÛœÎˆÔ™\Ý[ÒœÛÛ˜Ù]ØÚ[XXˆÛ\ÜÚYšYY\ÈY\ˆÈVT’SQS•SÂˆQ’TÓÔ–HØ]YÛÜžKˆ[˜X›\È[™]ËY[™PÔ8¡¤ˆ\ÚË\ÛÛš[™È8¡¤ˆ™\Ü\[[™K‚‚ˆÈÈÈ™]ËÐÚ[™ÙYš[\Â‚Ÿš[HÚ[™ÙHŸKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHŸ™\\Ú[K[XÜ\Ù\™\‹ÜÛKž[YYØØ[Y]˜›Ùš[KÔÑH\[™[˜ÞHŸ™\\Ú[K[XÜ\Ù\™\‹ÜÜ˜ËÛXZ[‹Ü™\ÛÝ\˜Ù\ËØ\XØ][Û‹œ›Ü\Y\ØYYÔÔÑKÐÓÔ”ÈÛÛ™šYÈŸÜ˜ËÛXZ[‹Ú˜]˜KÛ™\\Ú[KÛXÜÜ[›™\œËÕ\ÚÕÛÜšÙ›ÝÐœšYÙKš˜]˜X
+Š“‘UÊŠˆ8 %™\Ý[ËšœÛÛˆœšYÙHŸÜ˜ËÛXZ[‹Ú˜]˜KÛ™\\Ú[KÛXÜÜ[›™\œËÒ[™\ÝšX[›Ùš[Kš˜]˜XYYœšYÙU\ÚÕÛÜšÙ›ÝØÈVT’SQS•S
+ÈQ’TÓÔ–HŸ™\\Ú[K[XÜ\Ù\™\‹ÜÜ˜ËÛXZ[‹Ú˜]˜KÛ™\\Ú[KÛXÜÜÙ\™\‹Ó™\TÚ[UÛÛËš˜]˜XYYœšYÙU\ÚÕÛÜšÙ›ÝØÛÛY]ÙŸÜ˜ËÝ\ÝÚ˜]˜KÛ™\\Ú[KÛXÜÜ[›™\œËÐ™[˜ÚX\šÕ˜[Y][Û•\Ýš˜]˜X
+Š“‘UÊŠˆ8 %È’TÕ™[˜ÚX\šÈ\ÝÈŸÜ˜ËÝ\ÝÚ˜]˜KÛ™\\Ú[KÛXÜÜ[›™\œËÒ[™\ÝšX[›Ùš[U\Ýš˜]˜X\]YY\ˆÚ^™H\ÜÙ\[ÛœÈ
+Lø¡¤ŒM^\š[Y[[
+HŸ™\\Ú[K[XÜ\Ù\™\‹Ý\ÝÛXÜÜÙ\™\‹œX^[™Yœ›ÛHNHÈÛÛL‘HÛÝ™\˜YÙH‚ˆÈÈÈÛÛÛÝ[‚‹HÝ[ˆ
+Š
+ŠˆÛÛÈ
+Ø\ÈÊB‹HY\ˆH
+•TÕQÐÓÔ‘JNˆŒB‹HY\ˆˆ
+S‘ÒS‘QT’S‘×ÐQSÑQ
+NˆLÂ‹HY\ˆÈ
+VT’SQS•S
+NˆM
+Ø\ÈLËYYœšYÙU\ÚÕÛÜšÙ›ÝØ
+B‚‹KKB‚ˆÈÈŒ‹LËLLÈ8 %PÔÙ\™\ŽˆˆÛÛËH›Û\ËLH™\ÛÝ\˜Ù\Â‚ˆÈÈÈPÔÙ\™\ˆ^[œÚ[ÛˆÝ[[X\žB‚•H™\TÚ[HPÔÙ\™\ˆ\È^[™Yœ›ÛH˜\ÚXÈÛÛÈÈHÛÛ\™Z[œÚ]™B™[™Ú[™Y\š[™ÈÚ[][][Ûˆ]›Ü›N‚‚ŠŠˆÛÛY]ÙÊŠˆ[ˆ™\TÚ[UÛÛËš˜]˜X‚‹HHÛÜ™H\›[Ù[˜[ZXÈÛÛÈ
+›\Ú˜]Ú›Ü\HX›K\ÙH[™[ÜK˜[Y][Û‹ÙX\˜ÚØ\Xš[]Y\Ë^[\KØÚ[XJB‹H]]ÛX][ÛˆÛÛÈ
+\Ý[š]Ë\Ý˜\šXX›\ËÙ]ÜÙ]˜\šXX›KØ]™KØÛÛ\\™HÝ]KXYÛ›ÜÙKX\›š[™È™\Ü
+B‹HÈ[˜[\Ú\ÈÛÛÈ
+Ü›ÜÜË]˜[Y][Û‹\˜[Y]šXÈÝYK›Ü\HX›JB‹HÛXZ[‹\ÜXÚYšXÈÛÛÈ
+•›ÝÈ\ÜÝ\˜[˜ÙKÝ[™\™Ë\[[™K™\Ù\›Ú\‹šY[XÛÛ›ÛZXÜË[˜[ZXËš[Ü›ØÙ\ÜÊB‹HÈÙ\ÜÚ[Û‹ÝÛÜšÙ›ÝÈÛÛÈ
+Ù\ÜÚ[Û‹\ÚÈÛÛ™\‹ÛÜšÙ›ÝË˜[Y][Û‹™\ÜYÚ[‹›ÙÜ™\ÜÊB‹HÈ]›Ü›HÛÛÈ
+Ý™X[Z[™Ëš\ÝX[^˜][Û‹][K\Ù\™\ˆÛÛ\ÜÚ][Û‹ÙXÝ\š]KÝ]H\œÚ\Ý[˜ÙK˜[Y][Ûˆ›Ùš[\Ë]HØ][ÙÊB‚ŠŠŽH›Û\ÝZYYÛÜšÙ›ÝÜÊŠˆ[ˆ™\TÚ[T›Û\Ëš˜]˜X‚‹HØ\È›ØÙ\ÜÚ[™Ë•ÝYK›ÝÈ\ÜÝ\˜[˜ÙKšY[]™[ÜY[ÐÔËQÈZY˜][Û‹š[Ü™Yš[™\žK[˜[ZXÈÚ[][][Û‹\[[™HÚ^š[™Â‚ŠŠŒLH™\ÛÝ\˜ÙH[™Ú[ÊŠˆ[ˆ™\TÚ[T™\ÛÝ\˜Ù\Ëš˜]˜X
+Ý]XÈ
+ÈÈ[\]\ÊN‚‹H^[\KXØ][ÙËØÚ[XKXØ][ÙËÛÛ\Û™[ËÛÛ\Û™[ËÞÛ˜[Y_KÝ[™\™ËÝ[™\™ËÞØÛÙ_K[Ù[ËX]\šX[ËÞÝ\_K]K]X›\Ë^[\\ËÞØØ]YÛÜž_KÞÛ˜[Y_KØÚ[X\ËÞÝÛÛKÞÝ\_B‚ˆÈÈÈ™]È[›™\ˆÛ\ÜÙ\È
+[ˆÜ˜ËÛXZ[‹Ú˜]˜KÛ™\\Ú[KÛXÜÜ[›™\œËØ
+B‚Ÿ[›™\ˆ\œÜÙHŸKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHŸ•[›™\˜•Xˆ^\š[Y[È
+ÓQKÕ‘Ù\\˜]Ü‹ÝÙ[[™ËÓÔ‹š\ØÛÜÚ]JHŸ›ÝÐ\ÜÝ\˜[˜ÙT[›™\˜Y˜]KØ^\Ü[[™KÛÜœ›ÜÚ[Û‹\›ÜÚ[Û‹ÛÛÛÝÛˆŸÝ[™\™Ô[›™\˜Ø\ËÛÚ[]X[]H\ˆŒˆ[™\ÝžHÝ[™\™ÈŸ\[[™T[›™\˜][\\ÙH\[[™H›ÝÈ
+™YÙÜÈ	ˆœš[
+HŸ™\Ù\›Ú\”[›™\˜X]\šX[˜[[˜ÙH™\Ù\›Ú\ˆÚ[][][ÛˆŸšY[]™[ÜY[[›™\˜”‹T”‹Ø\Ú›ÝËš\ØØ[™YÚ[Y\ËXÛ[™HÝ\™\ÈŸ[˜[ZXÔ[›™\˜˜[œÚY[Ú[][][ÛˆÚ]]]ËZ[œÝ[Y[YQÛÛ›Û\œÈŸš[Ü›ØÙ\ÜÔ[›™\˜[˜Y\›ØšXÈYÙ\Ý[Û‹™\›Y[][Û‹Ø\ÚYšXØ][Û‹\›Û\Ú\ÈŸÜ›ÜÜÕ˜[Y][Û”[›™\˜][KQSÔÈÜ›ÜÜË]˜[Y][ÛˆŸ\˜[Y]šXÔÝYT[›™\˜][K]˜\šXX›H\˜[Y]šXÈÝÙY\ÈŸÙ\ÜÚ[Û”[›™\˜\œÚ\Ý[Ú[][][ÛˆÙ\ÜÚ[ÛœÈ
+Ü™X]KÛ[ÙYžKÜ[‹ÜÛ˜\ÚÝÜ™\ÝÜ™JHŸ\ÚÔÛÛ™\”[›™\˜[™Ú[™Y\š[™È\ÚÈÛÛš[™Èœ›ÛHYÚ[]™[\ØÜš\[ÛœÈŸ[™Ú[™Y\š[™Õ˜[Y]Ü˜\ÚYÛˆ[H˜[Y][ÛˆYØZ[œÝÝ[™\™ÈŸ™\Ü[›™\˜ÝXÝ\™Y[™Ú[™Y\š[™È™\ÜÙ[™\˜][ÛˆŸXÜ[›™\”YÚ[˜YÚ[ˆ[\™˜XÙH›ÜˆÝ\ÝÛH[›™\œÈŸYÚ[”™YÚ\ÝžXYÚ[ˆY™XÞXÛHX[˜YÙ[Y[Ÿ›ÙÜ™\ÜÕ˜XÚÙ\˜Û™Ë\[›š[™ÈÚ[][][Ûˆ›ÙÜ™\ÜÈ˜XÚÚ[™ÈŸÝ™X[Z[™Ô[›™\˜\Þ[˜ÈÚ[][][ÛˆÚ][˜Ü™[Y[[Û[™ÈŸš\ÝX[^˜][Û”[›™\˜Õ‘ËÓY\›XZYÒSš\ÝX[^˜][ÛˆÙ[™\˜][ÛˆŸÛÛ\ÜÚ][Û”[›™\˜][K\Ù\™\ˆPÔÜ˜Ú\Ý˜][ÛˆŸÙXÝ\š]T[›™\˜THÙ^HX[˜YÙ[Y[˜]H[Z][™Ë]Y]ÙÙÚ[™ÈŸÝ]T\œÚ\Ý[˜ÙT[›™\˜Ú[][][ÛˆÝ]HØ]™KÛØYØÛÛ\\™HXÜ›ÜÜÈ™\Ý\ÈŸ˜[Y][Û”›Ùš[T[›™\˜\š\ÙXÝ[Û‹\ÜXÚYšXÈ˜[Y][Ûˆ
+ÔËRÐÔËÛÓKœ˜^š[Ù[™\šXÊHŸ]PØ][ÙÔ[›™\˜]X˜\ÙHœ›ÝÜÚ[™È
+ÛÛ\Û™[ËÝ[™\™ËX]\šX[ËSÔÈ[Ù[ÊH‚ˆÈÈÈÙ^H\˜Ú]XÝ\™HÚ[Â‚‹H[[›™\œÈ›ÛÝÈHÝ][\ÜÈ[›™\‹œ[ŠÝš[™ÈœÛÛŠH8¡¤ˆÝš[™ÈœÛÛ˜]\›‚‹H[›™\œÈ]™H[ˆ™\\Ú[HÛÜ™H
+Ü˜ËÛXZ[‹Ú˜]˜KÛ™\\Ú[KÛXÜÜ[›™\œËØ
+B‹HPÔÙ\™\ˆ\ÈH[ˆ]X\šÝ\ÈÜ˜\\ˆ
+™\\Ú[K[XÜ\Ù\™\‹Ø
+B‹HXXÚ[›™\ˆØ[ˆ™H\ÙY[™\[™[Hœ›ÛH‘TÕÓKÜˆÝ\ˆPÔœ˜[Y]ÛÜšÜÂ‹H™]È[›™\œÈ\™HYYžH[\[Y[[™ÈH[›™\ˆ
+ÈY[™ÈHÛÛY]ÙÈ™\TÚ[UÛÛËš˜]˜B‚ˆÈÈÈØÝ[Y[][Ûˆ\]Y‚‹H™\\Ú[K[XÜ\Ù\™\‹Ô‘PQQK›Y8 %[™]Üš]HÚ][ˆÛÛËLH™\ÛÝ\˜Ù\ËH›Û\Â‹H™\\Ú[K[XÜ\Ù\™\‹ÓPÔÐÓÓ•PÕ›Y8 %YYÙ\ÜÚ[Û‹ÕÛÜšÙ›ÝÈÛÛÈ
+ÝX›JK]›Ü›HÛÛÈ
+^\š[Y[[
+K™\ÛÝ\˜Ù\Â‹HÒS‘ÑSÑ×ÐQÑS•Ó“ÕTË›Y8 %\È[žB‚‹KKB‚ˆÈÈŒ‹LLLˆ8 %š[Ü›ØÙ\ÜÚ[™È	ˆš[Ù[™\™ÞNˆ\Ù\Èx $ÍÂ‚ˆÈÈÈ™]ÈÛ\ÜÙ\Â‚ŸÛ\ÜÈXÚØYÙH\œÜÙHŸKKKKKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHŸ™\›Y[][Û”™XXÝÜ˜›ØÙ\ÜË™\]Z\Y[œ™XXÝÜ˜[Û›ÙÐÛÛÚ\ËÜÝXœÝ˜]KZ[šXš]YÚ[™]XÜÎÈ˜]Ú™YX˜]ÚÛÛ[[Ý\È[Ù\Ëˆ^[™È™\›Y[\˜ˆŸÝ\ÝZ[˜Xš[]SY]šXÜØ›ØÙ\ÜË][™šY[]™[ÜY[Óø  ™\H˜XÚÚ[™È
+TÐÈTˆÕÔ
+KØ\˜›Ûˆ[[œÚ]H
+ÙÐÓø  ‹ÓUÚ
+KT“ÒK™[™]ØX›H[™\™ÞHœ˜XÝ[Û‹›ÜÜÚ[Y[\ÜXÙ[Y[Ÿš[ÙØ\ÕÑÜšY[Ù[X›ØÙ\ÜËœ›ØÙ\ÜÛ[Ù[˜š[Ü™Yš[™\žX™KXZ[ˆ[˜Y\›ØšXÑYÙ\Ý\ˆ8¡¤ˆš[ÙØ\Õ\Ü˜Y\ˆ8¡¤ˆÛÛ\™\ÜÛÜˆ8¡¤ˆÛÛÛ\ˆ8¡¤ˆÜšY[š™XÝ[ÛˆŸØ\ÚYšXØ][Û”Þ[\Ú\Ó[Ù[X›ØÙ\ÜËœ›ØÙ\ÜÛ[Ù[˜š[Ü™Yš[™\žX™KXZ[ˆš[ÛX\ÜÑØ\ÚYšY\ˆ8¡¤ˆØ\ÈÛX[š[™È8¡¤ˆš\ØÚ\‹U›ÜØÚÞ[\Ú\ÈŸØ\ÝUÑ[™\™ÞPÒ[Ù[X›ØÙ\ÜËœ›ØÙ\ÜÛ[Ù[˜š[Ü™Yš[™\žX™KXZ[ˆ[˜Y\›ØšXÑYÙ\Ý\ˆ8¡¤ˆØ\È[™Ú[™HÒÚ][XÝšXØ[
+È\›X[Ý]]‚ˆÈÈÈÙ^HTH]\›œÂ‚˜˜]˜B‹ËÈ™\›Y[][Û”™XXÝÜ‚‘™\›Y[][Û”™XXÝÜˆ™XXÝÜˆH™]È™\›Y[][Û”™XXÝÜŠ‘”‹LH‹ÝYØ\‘™YY
+NÂœ™XXÝÜ‹œÙ]Ú[™]XÓ[Ù[
+™\›Y[][Û”™XXÝÜ‹’Ú[™]XÓ[Ù[“SÓ“Ñ
+NÂœ™XXÝÜ‹œÙ]Ü\˜][Û“[ÙJ™\›Y[][Û”™XXÝÜ‹“Ü\˜][Û“[ÙKÓÓ•S•SÕTÊNÂœ™XXÝÜ‹œÙ]X^ÜXÚYšXÑÜ›ÝÝ˜]JŒÌ
+NÈËÈ“ÕÙ]]SX^
+
+Bœ™XXÝÜ‹œÙ]™\ÚY[˜ÙU[YJLŒšˆŠNÈËÈ™\]Z\™\È[š]Ýš[™Âœ™XXÝÜ‹œÙ]™YY[™Ô˜]JLŒ
+NÈËÈ“ÕÙ]™Y˜]Ú™YY˜]J
+Bœ™XXÝÜ‹œÙ]™YYÝXœÝ˜]PÛÛ˜Ù[˜][ÛŠŒŒ
+NÈËÈ“ÕÙ]™Y˜]Ú™YYÛÛ˜Ù[˜][ÛŠ
+Bœ™XXÝÜ‹œ[Š
+NÂ“X\Ýš[™ËØš™XÝˆ™\Ý[ÈH™XXÝÜ‹™Ù]™\Ý[Ê
+NÂ‚‹ËÈš[ÙØ\Õ\Ü˜Y\ˆ[[HY]ÙÂš[ÙØ\Õ\Ü˜Y\‹•\Ü˜Y[™ÕXÚ›ÛÙÞHXÚHš[ÙØ\Õ\Ü˜Y\‹•\Ü˜Y[™ÕXÚ›ÛÙÞK“QSP”S‘NÂXÚ™Ù]Y][™T™XÛÝ™\žJ
+NÈËÈ“ÕÙ]Ú™XÛÝ™\žJ
+BXÚ™Ù]ÛÌ”™[[Ý˜[Y™šXÚY[˜ÞJ
+NÈËÈ“ÕÙ]ÛÌ”™[[Ý˜[
+
+B‚‹ËÈÝ\ÝZ[˜Xš[]SY]šXÜÂ”Ý\ÝZ[˜Xš[]SY]šXÜÈY]šXÜÈH™]ÈÝ\ÝZ[˜Xš[]SY]šXÜÊ
+NÂ›Y]šXÜËœÙ]š[ÙØ\Ô›ÙXÝ[Û“›LÔ\–YX\Š×ÌÌŒ
+NÂ›Y]šXÜË˜Ø[Ý[]J
+NÂ›Y]šXÜË™Ù]Ø\˜›Û’[[œÚ]RÙÐÓÌ”\“UÚ
+
+NÂ‚‹ËÈš[ÙØ\ÕÑÜšY[Ù[Bš[ÙØ\ÕÑÜšY[Ù[HÈH™]Èš[ÙØ\ÕÑÜšY[Ù[J•ÈŠNÂ˜ËœÙ]™YYÝ™X[JØ\ÝTÝ™X[JNÂ˜ËœÙ]ÝXœÝ˜]U\J[˜Y\›ØšXÑYÙ\Ý\‹”ÝXœÝ˜]U\K‘“ÓÑÕÐTÕJNÂ˜ËœÙ]\Ü˜Y[™ÕXÚ›ÛÙÞJš[ÙØ\Õ\Ü˜Y\‹•\Ü˜Y[™ÕXÚ›ÛÙÞK“QSP”S‘JNÂ˜ËœÙ]ÜšY™\ÜÝ\™P˜\˜JŒ
+NÂ˜Ëœ[Š
+NÂ“X\Ýš[™ËØš™XÝˆ™\Ý[ÈHË™Ù]™\Ý[Ê
+NÂ˜‚ˆÈÈÈÛÛ[[ÛˆZ\ÝZÙ\È
+œ›ÛH\Ý[™ÊB‚‹HÙ]Ú™XÛÝ™\žJ
+X8¡¤ˆ\ÙHÙ]Y][™T™XÛÝ™\žJ
+X‹HÙ]ÛÌ”™[[Ý˜[
+
+X8¡¤ˆ\ÙHÙ]ÛÌ”™[[Ý˜[Y™šXÚY[˜ÞJ
+X‹HÙ]]SX^
+
+X8¡¤ˆ\ÙHÙ]X^ÜXÚYšXÑÜ›ÝÝ˜]J
+X‹HÙ]™\ÚY[˜ÙU[YJLŒ
+X8¡¤ˆ\ÙHÙ]™\ÚY[˜ÙU[YJLŒšˆŠX
+[š]™\]Z\™Y
+B‹HØ\ÚYšXØ][Û”Þ[\Ú\Ó[Ù[XÛÛœÝXÝÜˆZÙ\È
+Ýš[™È˜[YJXÛ›H8 %Ù]š[ÛX\ÜÈšXHÙ]š[ÛX\ÜÊš[ÛX\ÜÐÚ\˜XÝ\š^˜][Û‹™YY˜]RÙÔ\’ŠX‚ˆÈÈÈÚÚ[ËÐYÙ[È\]Y‚‹H™\\Ú[KXØ\Xš[]K[X\8 %YYÙXÝ[ÛˆKXš\È
+š[Ü›ØÙ\ÜÚ[™È	ˆš[Ù[™\™ÞJH
+È]ZXÚÈÛÚÝ\[šY\Â‹H™\\Ú[K\™XXÝ[Û‹Y[™Ú[™Y\š[™Ø8 %YYš[Ü›ØÙ\ÜÚ[™È™XXÝÜœÈÙXÝ[Û‚‹HÛÜ[ÝZ[œÝXÝ[ÛœË›Y8 %YYš[Ü›ØÙ\ÜÚ[™ÈÛ\ÜÈ[\Ü]Â‹HQÑS•Ë›Y8 %\]Y™XXÝ[Û‹Y[™Ú[™Y\š[™ÈÚÚ[\ØÜš\[Û‚‹HÓÓ•V›Y8 %YYš[Ü›ØÙ\ÜÚ[™ÈÈ\]Z\Y[[™Ú\™K]ËYš[™X›\Â‹H™\\Ú[WÙ]—ÜÙ]\œX8 %YY[š[Ü›ØÙ\ÜÚ[™ÈÛ\ÜÙ\ÈÈ™\\Ú[WØÛ\ÜÙ\Ê
+X‚ˆÈÈÈ^\Ý[™ÈÛ\ÜÙ\È
+\Ù\Èx $ÌËš[ÜˆÙ\ÜÚ[ÛœÊB‚ŸÛ\ÜÈXÚØYÙH\ÝÈŸKKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKHŸš[ÛX\ÜÐÚ\˜XÝ\š^˜][Û˜\›[Ë˜Ú\˜XÝ\š^˜][Û˜Lˆ\ÝÈŸ[˜Y\›ØšXÑYÙ\Ý\˜›ØÙ\ÜË™\]Z\Y[œ™XXÝÜ˜L\ÝÈŸš[ÛX\ÜÑØ\ÚYšY\˜›ØÙ\ÜË™\]Z\Y[œ™XXÝÜ˜\ÝÈŸ\›Û\Ú\Ô™XXÝÜ˜›ØÙ\ÜË™\]Z\Y[œ™XXÝÜ˜\ÝÈŸš[ÙØ\Õ\Ü˜Y\˜›ØÙ\ÜË™\]Z\Y[œÜ]\˜L\ÝÈŸš[Ü™Yš[™\žPÛÜÝ\Ý[X]Ü˜›ØÙ\ÜË›YXÚ[šXØ[\ÚYÛ˜N\ÝÈ‚‹KKB‚ˆÈÈŒ‹LËLLˆ8 %ÛÜY\S™]ÛÜšÎˆˆY˜[˜ÙY›ÙXÝ[Ûˆ™X]\™\Â‚ˆÈÈÈ™]ÈØ\Xš[]Y\È[ˆÛÜY\S™]ÛÜšØ‚”Ú^›ÙXÝ[Ûˆ™]ÛÜšÈ™X]\™\ÈYYÈ™\\Ú[Kœ›ØÙ\ÜË™\]Z\Y[›™]ÛÜšË“ÛÜY\S™]ÛÜšØ‚‚ŒKˆ
+Š\YšXÚX[Y
+Šˆ8 %Ø\ÈY
+Ù]Ø\ÓY
+KTÔ
+Ù]TÔ
+K™][\
+Ù]™][\
+K›Ù[\
+Ù]›Ù[\
+HÚ]\YšXÚX[Y\X[[Kˆ™\ÜÝ\™H›ÛÜÝ\YY[ˆ”‹QÑÐHÛÛ™\‹‚Œ‹ˆ
+Š“\™ÙKTØØ[H™]ÛÜšÜÊŠˆ8 %LŒ
+ÈÙ[ÈÚ]ˆX[šY›ÛÈÛÛ™\™ÙH[ˆMKLŒ]\˜][ÛœÈ
+ŒHÊKˆØÚ\ˆÛÛ\[Y[ÙY\ÈX]š^Ú^™H›ÜÜ[Û˜[ÈÛÜË›Ý[[Y[Ë‚ŒËˆ
+Š•Ø]\ˆ[™[™ÊŠˆ8 %Ù]Ø]\Ý]YØ]\’[š™XÝ[ÛŠÜ˜Ë™\Ë˜[YK˜]JXÙ]Ø]\œ™XZÝ›ÝYÚ
+[[KÐËš[˜[ÐËÝ\œ™[ÐÊXØ[Ý[]UØ]\˜[[˜ÙJ
+X‚ˆ
+Š”Ø[™ÔÛÛYÈ˜XÚÚ[™ÊŠˆ8 %Ù]Ø[™˜]XØ[Ý[]TØ[™˜[œÜÜ
+
+X\ˆ•ˆ”ÍLKÙ]Ø[™š[Û][ÛœÊ
+XÛÛ™šYÝ\˜X›H\›ÜÚ[Û‹ÜØ[™˜]H[Z]Ë‚Kˆ
+ŠÛÜœ›ÜÚ[Ûˆ	ˆ[YÜš]JŠˆ8 %Ù]ÛÜœ›ÜÚ]™QØ\Ê[[KÛÌ‹œÊXÙ]ÛÜœ›ÜÚ[Û“[Ù[
+[[K““Ô”ÓÒÈŠXØ[Ý[]PÛÜœ›ÜÚ[ÛŠ
+XÚ]HØX\™SZ[X[\È[™“Ô”ÓÒÈKMLˆ[Ù[ËØ[Y™KÙ]ÛÜœ›ÜÚ[Û•š[Û][ÛœÊ
+X‚‹ˆ
+Š‘ÒÈ[Z\ÜÚ[ÛœÊŠˆ8 %Ù]ÓÌ‘[Z\ÜÚ[Û‘˜XÝÜ˜Ù]Y][™TÛ\˜XÝÜ˜Ø[Ý[]Q[Z\ÜÚ[ÛœÊ
+XÙ]Ý[ÓÌ‘[Z\ÜÚ[ÛœÊ
+XÙ][›X[ÓÌ‘[Z\ÜÚ[ÛœÕÛ›™\Ê
+XÙ][Z\ÜÚ[ÛœÒ[[œÚ]J
+XˆY˜][ÎˆQL‹ÍKÛ\L‰KÕÔ
+Ò
+OLŽ
+TÐÈTJK‚‚ˆÈÈÈY™™XÝYÚÚ[ËÐYÙ[Â‚‹H
+Š›™\\Ú[KXØ\Xš[]K[X\
+ŠŽˆ\]Y8 %›ÈÛ™Ù\ˆ›[Z]YÈÚ[\H™]ÛÜšÜÈ‚‹H
+Š›™\\Ú[K\›ÙXÝ[Û‹[Ü[Z^˜][ÛŠŠŽˆYYÛÜY\S™]ÛÜšÈÙXÝ[ÛˆÚ]Y˜[˜ÙYTB‹H
+Š›™\\Ú[KY›ÝËX\ÜÝ\˜[˜ÙJŠŽˆYY™]ÛÜšË[]™[ÛÜœ›ÜÚ[Ûˆ
+HØX\™Ó“Ô”ÓÒÊH[™Ø[™\›ÜÚ[Ûˆ
+•ˆ”ÍLJH]\›œÂ‹H
+Š™[Z\ÜÚ[ÛœÈYÙ[
+ŠŽˆYYÛÜY\S™]ÛÜšÈ[Z\ÜÚ[ÛœÈ˜XÚÚ[™ÈÙXÝ[Û‚‚ˆÈÈÈØÝ[Y[][Û‚‚‹HØÜËÜ›ØÙ\ÜËÙ\]Z\Y[Ü›ÙXÝ[Û—ÝÙ[Û™]ÛÜšÜË›Y8 %ˆ™]ÈÙXÝ[ÛœÈÚ]TK›Ü›][\Ë[™^[\\Â‹H^[\\ËÛ›ÝX›ÛÚÜËÜ›ÙXÝ[Û—Û™]ÛÜš×ØY˜[˜ÙYÙ™X]\™\Ëš\[˜˜8 %KXÙ[›ÝX›ÛÚÈ[[ÛœÝ˜][™È[™X]\™\Â‹HMˆ[š]\ÝÈ[ˆÛÜY\S™]ÛÜšÕ\Ýš˜]˜X‚‹KKB‚ˆÈÈŒ‹LËL8 %[šTÚ[H™XY\ŽˆY˜][LÌ›ZY^Ü‚ˆÈÈÈLÌ\È›ÝÈHY˜][›ZY˜[œÙ™\ˆ›Ý]B‚•Ú[ˆ[\Ü[™È›ZYÈœ›ÛH[šTÚ[HÈ™\TÚ[KH
+Š‘LÌš[H›Ý]H\È›ÝÈB™Y˜][
+Š‹ˆ[šTÚ[T™XY\‹œ™XY
+^ÜÙLÌUYJX
+HY˜][
+H^˜XÝÈÜš]XØ[œ›Ü\Y\È
+ËËXÙ[šXÈ˜XÝÜ‹UË’TË›Û[YHÚYÊHœ›ÛHXXÚÛÛ\Û™[šXHÓÓH[™Üš]\È[ˆLÌš[H\ˆ›ZYXÚØYÙK‚‚•\È™\Ù\™\È[\›[Ù[˜[ZXÈÚ\˜XÝ\š^˜][Ûˆ8 %[˜ÛY[™È\Ý]XØ[ÜÙ]YÂ˜ÛÛ\Û™[ÈZÙHÍÊÈœ˜XÝ[ÛœÈ8 %]ÛÛ\Û™[˜[YHX\[™È[Û™HØ[››ÝØ\\™K‚‚ˆÈÈÈ™]È˜]˜HÝ™\›ØYÂ‚˜˜]˜B‹ËÈZ[[™[ˆÚ]H™KXZ[›ZY
+K™Ë‹œ›ÛHLÌš[JB”›ØÙ\ÜÔÞ\Ý[K™œ›ÛRœÛÛ[™[ŠÝš[™ÈœÛÛ‹Þ\Ý[R[\™˜XÙH›ZY
+B’œÛÛ”›ØÙ\ÜÐZ[\‹˜Z[[™[ŠÝš[™ÈœÛÛ‹Þ\Ý[R[\™˜XÙH›ZY
+B˜‚ˆÈÈÈ]Ûˆ\ØYÙH
+]]ÛX]XÊB‚˜]Û‚œ™XY\ˆH[šTÚ[T™XY\Š
+B›[Ù[H™XY\‹œ™XY
+‰ÐÎ—]×[Ù[\ØÉÊHÈ]]ËY^ÜÈLÌš[\Â™›Üˆœ[ˆ[Ù[™›ZYÜXÚØYÙ\Î‚ˆš[
+ˆˆÙœ›˜[Y_NˆÙœ™LÌÙš[WÜ]HŠB‚˜ÛÛ™\\ˆH[šTÚ[UÓ™\TÚ[J[Ù[
+Bœ™\Ý[HÛÛ™\\‹˜Z[Ø[™Ü[Š
+HÈ]]Ë[ØYÈLÌ›ZY˜‚ˆÈÈÈ]Ûˆ\ØYÙH
+X[X[LÌØY[™ÊB‚˜]Û‚™œ›ÛH™\\Ú[H[\Ü›™\\Ú[B‘XÛ\ÙQ›ZY™XYÜš]HH›™\\Ú[K\›[Ë][œ™XYÜš]K‘XÛ\ÙQ›ZY™XYÜš]B™›ZYHXÛ\ÙQ›ZY™XYÜš]Kœ™XY
+‰ÐÎ—]×[Ù[Ñ›ZYÙË™LÌ	ÊB˜‚ˆÈÈÈY™™XÝYš[\Â‹H]ÛÛËÝ[š\Ú[WÜ™XY\‹œX8 %[šTÚ[PÛÛ\Û™[
+Üš]XØ[›Ü\Y\ÊK[šTÚ[Q›ZYXÚØYÙX
+Üš]WÙLÌ
+
+X\×ØÜš]XØ[Ü›Ü\Y\Ø
+KÙ^˜XÝÙ›ZYÜXÚØYÙ\Ê
+X
+ÓÓH›Ü\H^˜XÝ[ÛŠKÙ^˜XÝØš\Ê
+X
+™]ÊK™XY
+
+X
+^ÜÙLÌ\˜[Y]\ŠKØZ[Ù›ZYÜÙXÝ[ÛŠ
+X
+LÌ][ˆ›ZYXÝ
+KZ[Ø[™Ü[Š
+X
+LÌ]]Ë[ØY[™ÊB‹HÜ˜ËÛXZ[‹Ú˜]˜KÛ™\\Ú[KÜ›ØÙ\ÜËÜ›ØÙ\ÜÛ[Ù[ÒœÛÛ”›ØÙ\ÜÐZ[\‹š˜]˜X8 %Z[[™[ŠÝš[™ËÞ\Ý[R[\™˜XÙJXZ[œ›ÛRœÛÛ“Øš™XÝ
+œÛÛ“Øš™XÝÞ\Ý[R[\™˜XÙJX‹HÜ˜ËÛXZ[‹Ú˜]˜KÛ™\\Ú[KÜ›ØÙ\ÜËÜ›ØÙ\ÜÛ[Ù[Ô›ØÙ\ÜÔÞ\Ý[Kš˜]˜X8 %œ›ÛRœÛÛ[™[ŠÝš[™ËÞ\Ý[R[\™˜XÙJX‹H™Ú]X‹ÜÚÚ[ËÛ™\\Ú[K][š\Ú[K\™XY\‹ÔÒÒS›Y8 %LÌÙXÝ[ÛˆYY‹HQÑS•Ë›Y8 %\]Y\ØÜš\[ÛœÂ‚‹KKB‚ˆÈÈŒ‹LËL8 %[šTÚ[H™XY\ŽˆÜšY[][Ûˆ]XÝ[Ûˆ
+Ø\ÔØÜX˜™\ŠB‚ˆÈÈÈ™\XØ[Ù\\˜]Üˆ8¡¤ˆØ\ÔØÜX˜™\ˆX\[™Â‚•H[šTÚ[H™XY\ˆ
+]ÛÛËÝ[š\Ú[WÜ™XY\‹œX
+H›ÝÈ]XÝÈÙ\\˜]ÜˆÜšY[][Û‹‚•™\XØ[›\Ú[šØÜ\˜][ÛœÈ\™HX\YÈØ\ÔØÜX˜™\˜[œÝXYÙˆÙ\\˜]Ü˜‚‚Ÿ[šTÚ[H›\Ú[šÈ™\TÚ[H\HŸKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKHŸÜš^›Û[
+Y˜][
+HÙ\\˜]Ü˜Ÿ™\XØ[Ø\ÔØÜX˜™\˜Ÿ\ÈØ]\”›ÙXÝ™YT\ÙTÙ\\˜]Ü˜‚˜Ø\ÔØÜX˜™\˜^[™ÈÙ\\˜]Ü˜8 %]\ÈH™\XØ[™\ÜÙ[Ú]Ë]˜[YBœÚ^š[™ÈÛÛœÝ˜Z[È[™L	H\]ZY]™[ˆHÜšY[][Ûˆ\È]XÝYœ›ÛB•[šTÚ[HÓÓH]šX]\È
+ÜšY[][Û˜™\ÜÙ[ÜšY[][Û˜Ù\\˜]Ü“ÜšY[][Û˜
+K‚‚ˆÈÈÈY™™XÝYš[\Â‹H]ÛÛËÝ[š\Ú[WÜ™XY\‹œX8 %™\ÛÛ™WÛ™\\Ú[WÝ\J
+XY]ÙÜšY[][Ûˆ^˜XÝ[Û‚‹H™Ú]X‹ÜÚÚ[ËÛ™\\Ú[K][š\Ú[K\™XY\‹ÔÒÒS›Y‹H™Ú]X‹ØYÙ[ËÝ[š\Ú[Kœ™XY\‹˜YÙ[›Y‹HQÑS•Ë›Y‚‹KKB‚ˆÈÈŒ‹LËLÈ8 %[”ÓÈ[Ù[ˆ\˜Ú]XÝ\™HX\›š[™ÜÂ‚ˆÈÈÈÙ\\˜]ÜˆØ]\ˆ›Ý][™Â‚•Ú[ˆ™\XØ][™È[šTÚ[H[Ù[È[ˆ™\TÚ[KHÙ\\˜]Üˆ]YÚ™\ÜÝ\™H
+L˜\ŠB›X^H›Ý›ÙXÙHHÙ\\˜]H\]Y[Ý\È\ÙH[ˆ[šTÚ[KˆÈX]Ú\È™Z]š[Ü‹\ÙB˜™YT\ÙTÙ\\˜]Ü˜[™[ˆZ^\˜È™XÛÛXš[™HÚ[
+ÈØ]\Ž‚‚˜˜]˜B•™YT\ÙTÙ\\˜]ÜˆÙ\H™]È™YT\ÙTÙ\\˜]ÜŠ’Ù\‹™YYÝ™X[JNÂ“Z^\ˆ\T™XÛÛXš[™HH™]ÈZ^\Š’\]ZY™XÛÛXš[™HŠNÂš\T™XÛÛXš[™K˜YÝ™X[JÙ\™Ù]Ú[Ý]Ý™X[J
+JNÂš\T™XÛÛXš[™K˜YÝ™X[JÙ\™Ù]Ø]\“Ý]Ý™X[J
+JNÂ‹ËÈ\T™XÛÛXš[™K™Ù]Ý]]Ý™X[J
+H›ÝÈX]Ú\È[šTÚ[HÚ[
+[˜ÛY\ÈØ]\ŠB˜‚ˆÈÈÈ[\ÜØ\ÈÛÛ\™\ÜÚ[Ûˆ\˜Ú]XÝ\™B‚“\™ÙH”ÓÈ[Ù[È\ÙHÝYÙY[\ÜØ\ÈÛÛ\™\ÜÚ[ÛˆX]Ú[™È™\ÜÝ\™H]™[Î‚‹H“Ø\È
+Œˆ˜\ŠH8¡¤ˆ”•HÛÛ\™\ÜÛÜˆ8¡¤ˆH˜\ˆ8¡¤ˆZ^Ú]Ø\Â‹H
+Õ”•HØ\È
+H˜\ŠH8¡¤ˆ\Ý[\ÜÛÛ\™\ÜÛÜˆ8¡¤ˆŒŒˆ˜\ˆ8¡¤ˆZ^Ú]TØ\Â‹HT
+Ì\Ý[\ÜØ\È
+ŒŒˆ˜\ŠH8¡¤ˆ›™[\ÜÛÛ\™\ÜÛÜˆ8¡¤ˆŽL˜\ˆ8¡¤ˆZ^Ú]Ø\Â‚‘XXÚÝYÙH\ÈÛÛÛ\ˆ
+È›\Ú[H™Y›Ü™HHÛÛ\™\ÜÛÜˆ
+™[[Ý™\ÈÛÛ™[œØ]JK‚‚ˆÈÈÈ[\TB‚˜˜]˜B”[\[\H™]È[\
+”LL‹\]ZYÝ™X[JNÂœ[\œÙ]Ý]]™\ÜÝ\™J‹ŒJNÈËÈ˜\˜Bœ[\œÙ]\Ù[›ÜXÑY™šXÚY[˜ÞJÍJNÂœ[\™Ù]ÝÙ\ŠšÕÈŠNÈËÈY\ˆ[‚˜‚ˆÈÈÈÛÛ\Û™[Ü]\ˆ›ÜˆQÈZY˜][Û‚‚˜˜]˜BÛÛ\Û™[Ü]\ˆYÈH™]ÈÛÛ\Û™[Ü]\Š•QÈ‹Ù]Ø\ÔÝ™X[JNÂš[ÛÛ\HÙ]Ø\ÔÝ™X[K™Ù]›ZY
+
+K™Ù][X™\“ÙÛÛ\Û™[Ê
+NÂ™ÝX›V×HÙˆH™]ÈÝX›VÛÛÛ\NÂš˜]˜K][\œ˜^\Ë™š[
+Ù‹KŒ
+NÂœÙ–ÛÛÛ\HWHHŒÈËÈØ]\ˆ\È\ÝÛÛ\Û™[YËœÙ]Ü]˜XÝÜœÊÙŠNÂ‹ËÈÙ]Ü]Ý™X[J
+HHžHØ\ËÙ]Ü]Ý™X[JJHH™[[Ý™YØ]\‚˜‚ˆÈÈÈ[Ù[ØØ[NˆL
+È\]Z\Y[[š]È[ˆÚ[™ÛH›ØÙ\ÜÔÞ\Ý[B‚•H™Y™\™[˜ÙH”ÓÈ[Ù[[[ÛœÝ˜]\ÈL\]Z\Y[[š]È[ˆHÚ[™ÛH›ØÙ\ÜÔÞ\Ý[X˜ÛÝ™\š[™ÈÙ[XY8¡¤ˆÓTÓÕ“Ù\\˜][Ûˆ8¡¤ˆ”•H
+È[\ÜØ\ÈÛÛ\™\ÜÚ[Ûˆ8¡¤‚™Ø\ÈÛÛÛ[™È
+ÈQÈ8¡¤ˆ‹\ÝYÙH^ÜÛÛ\™\ÜÚ[Ûˆ8¡¤ˆÙX[Ø\È•8¡¤ˆÚ[^Ü‚”Ú[™ÛH›ØÙ\ÜÔÞ\Ý[XÛÛ™\™Ù\È[ˆŒˆÙXÛÛ™ÈÚ]Ý]™XÞXÛ\Ë‚‚‹KKB‚ˆÈÈŒ‹LËLˆ8 %•^[œÚ[ÛŽˆ\ÙH›Ý[™Õ˜[™K›Ý›\Ú‚ˆÈÈÈÜš]XØ[YÙ[ÝZY[˜ÙB‚•Ú[ˆ[Ù[[™È\Ù[[XÈ
+›Ý[KUÛ\ÛÛŠH^[œÚ[Û‹
+Š˜[Ø^\È\ÙH›Ý[™Õ˜[™X[ˆB˜›ØÙ\ÜÔÞ\Ý[X
+Š‹™]™\ˆX[X[›\Ú
+
+XÛˆHÛÛ™Y›ZYˆ\ÝYÛˆ”ÓÈÙX[Ø\ÂŠL8¡¤˜\ŠN‚‚ŸY]Ù[\\˜]\™H
+0¬ÊH[šTÚ[H™Y™\™[˜ÙH\œ›ÜˆŸKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKHKKKKKKKHŸ›Ý[™Õ˜[™X[ˆ›ØÙ\ÜÔÞ\Ý[HM‹NŒMÈLKÌð¬ÈŸX[X[›\Ú
+ÛŠXÛˆÛÛ™HÌËŒHNŒMÈ
+ÌMŽ0¬È‚•HX[X[›\Ú\›ØXÚ˜Z[È™XØ]\ÙHÙ][[J	Ò‰ÊX™]\›œÈÝ[Þ\Ý[H[[BÚ[H›\Ú
+ÝX›JX^XÝÈHÜXÚYšXÈ[[HÛÛ™[[Ûˆ
+\ˆ[ÛH]HÞ\Ý[IÜÂœ™Y™\™[˜ÙHÝ]JKˆH›Ý[™Õ˜[™H[™\ÈH[[H›ÛÚÚÙY\[™È[\›˜[K‚‚ŠŠ”]\›ŽŠŠ‚˜˜]˜B‹ËÈÓÔ”‘PÕˆ\ÙH›ØÙ\ÜË[]™[˜[™B”›ØÙ\ÜÔÞ\Ý[H›ØÈH™]È›ØÙ\ÜÔÞ\Ý[J
+NÂ”Ý™X[HÙÈH™]ÈÝ™X[J”ÑÈ‹›ZY˜ÛÛ™J
+JNÂœ›ØË˜Y
+ÙÊNÂ•›Ý[™Õ˜[™HH™]È›Ý[™Õ˜[™J’•‹ÙÊNÂšœÙ]Ý]]™\ÜÝ\™JŒ
+NÂœ›ØË˜Y
+
+NÂœ›ØËœ[Š
+NÂ™ÝX›HÚH™Ù]Ý]]Ý™X[J
+K™Ù][\\˜]\™JÈŠNÈËÈÛÜœ™XÝ•[\\˜]\™B‚‹ËÈÔ“Ó‘ÎˆX[X[›\Ú8 %Ú]™\È[˜ÛÜœ™XÝ•[\\˜]\™B‹ËÈÞ\Ý[R[\™˜XÙHÛÛ™HH›ZY˜ÛÛ™J
+NÂ‹ËÈÛÛ™KœÙ]™\ÜÝ\™JŒ
+NÂ‹ËÈ™]È\›[Ù[˜[ZXÓÜ\˜][ÛœÊÛÛ™JK”›\Ú
+›ZY™Ù][[J’ˆŠHÈ›ZY™Ù]Ý[[X™\“Ù“[Û\Ê
+JNÂ˜‚ˆÈÈÈ”ÓÈ[Ù[^[œÚ[Û‚‚‘^[™YH™\TÚ[H”ÓÈ™\XØ][ÛˆÈ[˜ÛYN‚‹HÓTØ\È™XÛÛ\™\ÜÚ[Ûˆ
+ÈZ^[™ÈÚ]Ø\Â‹HØ\ÈÛÛÛ[™È
+LLKÍp¬ø¡¤ŒÍ°¬ÊH
+È›\Ú[H
+‘ÌLJB‹HÙX[Ø\ÈZÙ[Ù™ˆ
+K	HÜ]
+B‹H‹\ÝYÙH^ÜÛÛ\™\ÜÚ[Ûˆ
+’ÐLLNˆ¸¡¤ŒNH˜\‹’ÐLLŽˆN8¡¤MM˜\ŠB‹HÙX[Ø\È•^[œÚ[ÛˆÝ\™HÚÝÚ[™ÈKŒÍIHX^ÛÛ™[œØ][Ûˆ]Ì˜\‚‚ÛÛ\™\ÜÛÜˆ\ØÚ\™ÙH[\\˜]\™HÛÛ\\š\ÛÛŽ‚‹H’ÐLLNˆ™\TÚ[HL‹ð¬ÈœÈ[šTÚ[HLMËŽ0¬È
+ÍIH3­×Ú\È\ÜÝ[YY
+B‹H’ÐLLŽˆ™\TÚ[HKŽp¬ÈœÈ[šTÚ[HË°¬Â‹HÝYÙÙ\ÝÈ[šTÚ[H\Ù\ÈŽËNIH\Ù[›ÜXÈY™šXÚY[˜ÞB‚‹KKB‚ˆÈÈŒ‹LËLH8 %XÛ\ÙQ›ZY™XYÜš]H[’PÈš^[šTÚ[H’T^˜XÝ[Û‚‚ˆÈÈÈYÈš^‚ŸÛ\ÜÈ\ÜÝYHš^ŸKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHŸXÛ\ÙQ›ZY™XYÜš]X[Ú[\‘^Ù\[Û˜Ú[ˆLÌš[H\È›È’PÈÙXÝ[Ûˆ8 %ÚZ˜\œ˜^HÝ^\È[›Ý™XY
+
+XY]ÙÈ›ÝÈ[š]X[^™HÚZ˜È™\›ÈX]š^Yˆ’PÈÙXÝ[Ûˆ\ÈZ\ÜÚ[™ËˆLÌš[\ÈÚ]Ý]’PÈØYÛÜœ™XÝH
+[’TÈY˜][ÈŒ
+Kˆ‚ˆÈÈÈ[\XÝÛˆYÙ[Â‚‹H
+Š‘LÌš[HØY[™ÊŠŽˆ™]š[Ý\ÛH™\]Z\™YH’PÈÙXÝ[ÛˆÜˆH™XY\ˆÜ˜\ÚYˆ›ÝÈÜ[Û˜[
+Y˜][ÈÈ™\›È’TÊKˆÝÙ]™\‹YÙ[ÈÚÝ[[Ø^\È[˜ÛYH’PÈ[ˆÙ[™\˜]YLÌš[\È›ÜˆXØÝ\˜]H™\Ý[Ë‚‹H
+Š•[šTÚ[H8¡¤ˆLÌÛÜšÙ›ÝÊŠŽˆ’TÈØ[ˆ›ÝÈ™H^˜XÝYœ›ÛH[šTÚ[HšXH’ÚZ‹•˜[Y\Ø
+\K[Ù‹]\\ÊKˆÙYH™\\Ú[K][š\Ú[K\™XY\˜ÚÚ[ÙXÝ[ÛˆKŒH›ÜˆHÓÓHXØÙ\ÜÈ]\›‹‚‚ˆÈÈÈÙ^H\ØÛÝ™\žB‚•[šTÚ[HÓÓH’T^˜XÝ[Ûˆ]\›Ž‚˜]Û‚šÚZ—ÛØšˆH’ÚZˆÈÑ\Ü]Ú
+™X[›^˜\šXX›JBœ˜]ÈHÚZ—ÛØš‹•˜[Y\ÈÈ\K[Ù‹]\\È
+°åÛˆÞ[[Y]šXÈX]š^
+BˆÈXYÛÛ˜[Ù[[™[HLÌÍËŒ™\XÙHÚ]Œ˜‹H‘Ù][\˜XÝ[Û”\˜[Y]\ŠKŠX™]\›œÈŒ›Üˆ‹SÈ
+ÛÜœ™[][Ûˆ’TÈ›ÝXØÙ\ÜÚX›H\ÈØ^JB‹HÚZ—ÛØš‹‘Ù]˜[Y\Ê
+X˜Z[È8 %\ÙH•˜[Y\Ø›Ü\H[œÝXY‚‹KKB‚ˆÈÈŒ‹LL8 %QPÈLÍˆ™Y™\™[˜ÙH\ÚYÛ˜][ÛˆÝ\Ü‚ˆÈÈÈ™\XØ[Ù\\˜]Üˆ8¡¤ˆØ\ÔØÜX˜™\ˆX\[™Â‚•H[šTÚ[H™XY\ˆ
+]ÛÛËÝ[š\Ú[WÜ™XY\‹œX
+H›ÝÈ]XÝÈÙ\\˜]ÜˆÜšY[][Û‹‚•™\XØ[›\Ú[šØÜ\˜][ÛœÈ\™HX\YÈØ\ÔØÜX˜™\˜[œÝXYÙˆÙ\\˜]Ü˜‚‚Ÿ[šTÚ[H›\Ú[šÈ™\TÚ[H\HŸKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKHŸÜš^›Û[
+Y˜][
+HÙ\\˜]Ü˜Ÿ™\XØ[Ø\ÔØÜX˜™\˜Ÿ\ÈØ]\”›ÙXÝ™YT\ÙTÙ\\˜]Ü˜‚˜Ø\ÔØÜX˜™\˜^[™ÈÙ\\˜]Ü˜8 %]\ÈH™\XØ[™\ÜÙ[Ú]Ë]˜[YBœÚ^š[™ÈÛÛœÝ˜Z[È[™L	H\]ZY]™[ˆHÜšY[][Ûˆ\È]XÝYœ›ÛB•[šTÚ[HÓÓH]šX]\È
+ÜšY[][Û˜™\ÜÙ[ÜšY[][Û˜Ù\\˜]Ü“ÜšY[][Û˜
+K‚‚ˆÈÈÈY™™XÝYš[\Â‹H]ÛÛËÝ[š\Ú[WÜ™XY\‹œX8 %™\ÛÛ™WÛ™\\Ú[WÝ\J
+XY]ÙÜšY[][Ûˆ^˜XÝ[Û‚‹H™Ú]X‹ÜÚÚ[ËÛ™\\Ú[K][š\Ú[K\™XY\‹ÔÒÒS›Y‹H™Ú]X‹ØYÙ[ËÝ[š\Ú[Kœ™XY\‹˜YÙ[›Y‹HQÑS•Ë›Y‚‹KKB‚ˆÈÈŒ‹LËLÈ8 %[”ÓÈ[Ù[ˆ\˜Ú]XÝ\™HX\›š[™ÜÂ‚ˆÈÈÈÙ\\˜]ÜˆØ]\ˆ›Ý][™Â‚•Ú[ˆ™\XØ][™È[šTÚ[H[Ù[È[ˆ™\TÚ[KHÙ\\˜]Üˆ]YÚ™\ÜÝ\™H
+L˜\ŠB›X^H›Ý›ÙXÙHHÙ\\˜]H\]Y[Ý\È\ÙH[ˆ[šTÚ[KˆÈX]Ú\È™Z]š[Ü‹\ÙB˜™YT\ÙTÙ\\˜]Ü˜[™[ˆZ^\˜È™XÛÛXš[™HÚ[
+ÈØ]\Ž‚‚˜˜]˜B•™YT\ÙTÙ\\˜]ÜˆÙ\H™]È™YT\ÙTÙ\\˜]ÜŠ’Ù\‹™YYÝ™X[JNÂ“Z^\ˆ\T™XÛÛXš[™HH™]ÈZ^\Š’\]ZY™XÛÛXš[™HŠNÂš\T™XÛÛXš[™K˜YÝ™X[JÙ\™Ù]Ú[Ý]Ý™X[J
+JNÂš\T™XÛÛXš[™K˜YÝ™X[JÙ\™Ù]Ø]\“Ý]Ý™X[J
+JNÂ‹ËÈ\T™XÛÛXš[™K™Ù]Ý]]Ý™X[J
+H›ÝÈX]Ú\È[šTÚ[HÚ[
+[˜ÛY\ÈØ]\ŠB˜‚ˆÈÈÈ[\ÜØ\ÈÛÛ\™\ÜÚ[Ûˆ\˜Ú]XÝ\™B‚“\™ÙH”ÓÈ[Ù[È\ÙHÝYÙY[\ÜØ\ÈÛÛ\™\ÜÚ[ÛˆX]Ú[™È™\ÜÝ\™H]™[Î‚‹H“Ø\È
+Œˆ˜\ŠH8¡¤ˆ”•HÛÛ\™\ÜÛÜˆ8¡¤ˆH˜\ˆ8¡¤ˆZ^Ú]Ø\Â‹H
+Õ”•HØ\È
+H˜\ŠH8¡¤ˆ\Ý[\ÜÛÛ\™\ÜÛÜˆ8¡¤ˆŒŒˆ˜\ˆ8¡¤ˆZ^Ú]TØ\Â‹HT
+Ì\Ý[\ÜØ\È
+ŒŒˆ˜\ŠH8¡¤ˆ›™[\ÜÛÛ\™\ÜÛÜˆ8¡¤ˆŽL˜\ˆ8¡¤ˆZ^Ú]Ø\Â‚‘XXÚÝYÙH\ÈÛÛÛ\ˆ
+È›\Ú[H™Y›Ü™HHÛÛ\™\ÜÛÜˆ
+™[[Ý™\ÈÛÛ™[œØ]JK‚‚ˆÈÈÈ[\TB‚˜˜]˜B”[\[\H™]È[\
+”LL‹\]ZYÝ™X[JNÂœ[\œÙ]Ý]]™\ÜÝ\™J‹ŒJNÈËÈ˜\˜Bœ[\œÙ]\Ù[›ÜXÑY™šXÚY[˜ÞJÍJNÂœ[\™Ù]ÝÙ\ŠšÕÈŠNÈËÈY\ˆ[‚˜‚ˆÈÈÈÛÛ\Û™[Ü]\ˆ›ÜˆQÈZY˜][Û‚‚˜˜]˜BÛÛ\Û™[Ü]\ˆYÈH™]ÈÛÛ\Û™[Ü]\Š•QÈ‹Ù]Ø\ÔÝ™X[JNÂš[ÛÛ\HÙ]Ø\ÔÝ™X[K™Ù]›ZY
+
+K™Ù][X™\“ÙÛÛ\Û™[Ê
+NÂ™ÝX›V×HÙˆH™]ÈÝX›VÛÛÛ\NÂš˜]˜K][\œ˜^\Ë™š[
+Ù‹KŒ
+NÂœÙ–ÛÛÛ\HWHHŒÈËÈØ]\ˆ\È\ÝÛÛ\Û™[YËœÙ]Ü]˜XÝÜœÊÙŠNÂ‹ËÈÙ]Ü]Ý™X[J
+HHžHØ\ËÙ]Ü]Ý™X[JJHH™[[Ý™YØ]\‚˜‚ˆÈÈÈ[Ù[ØØ[NˆL
+È\]Z\Y[[š]È[ˆÚ[™ÛH›ØÙ\ÜÔÞ\Ý[B‚•H™Y™\™[˜ÙH”ÓÈ[Ù[[[ÛœÝ˜]\ÈL\]Z\Y[[š]È[ˆHÚ[™ÛH›ØÙ\ÜÔÞ\Ý[X˜ÛÝ™\š[™ÈÙ[XY8¡¤ˆÓTÓÕ“Ù\\˜][Ûˆ8¡¤ˆ”•H
+È[\ÜØ\ÈÛÛ\™\ÜÚ[Ûˆ8¡¤‚™Ø\ÈÛÛÛ[™È
+ÈQÈ8¡¤ˆ‹\ÝYÙH^ÜÛÛ\™\ÜÚ[Ûˆ8¡¤ˆÙX[Ø\È•8¡¤ˆÚ[^Ü‚”Ú[™ÛH›ØÙ\ÜÔÞ\Ý[XÛÛ™\™Ù\È[ˆŒˆÙXÛÛ™ÈÚ]Ý]™XÞXÛ\Ë‚‚‹KKB‚ˆÈÈŒ‹LËLˆ8 %•^[œÚ[ÛŽˆ\ÙH›Ý[™Õ˜[™K›Ý›\Ú‚ˆÈÈÈÜš]XØ[YÙ[ÝZY[˜ÙB‚•Ú[ˆ[Ù[[™È\Ù[[XÈ
+›Ý[KUÛ\ÛÛŠH^[œÚ[Û‹
+Š˜[Ø^\È\ÙH›Ý[™Õ˜[™X[ˆB˜›ØÙ\ÜÔÞ\Ý[X
+Š‹™]™\ˆX[X[›\Ú
+
+XÛˆHÛÛ™Y›ZYˆ\ÝYÛˆ”ÓÈÙX[Ø\ÂŠL8¡¤˜\ŠN‚‚ŸY]Ù[\\˜]\™H
+0¬ÊH[šTÚ[H™Y™\™[˜ÙH\œ›ÜˆŸKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKHKKKKKKKHŸ›Ý[™Õ˜[™X[ˆ›ØÙ\ÜÔÞ\Ý[HM‹NŒMÈLKÌð¬ÈŸX[X[›\Ú
+ÛŠXÛˆÛÛ™HÌËŒHNŒMÈ
+ÌMŽ0¬È‚•HX[X[›\Ú\›ØXÚ˜Z[È™XØ]\ÙHÙ][[J	Ò‰ÊX™]\›œÈÝ[Þ\Ý[H[[BÚ[H›\Ú
+ÝX›JX^XÝÈHÜXÚYšXÈ[[HÛÛ™[[Ûˆ
+\ˆ[ÛH]HÞ\Ý[IÜÂœ™Y™\™[˜ÙHÝ]JKˆH›Ý[™Õ˜[™H[™\ÈH[[H›ÛÚÚÙY\[™È[\›˜[K‚‚ŠŠ”]\›ŽŠŠ‚˜˜]˜B‹ËÈÓÔ”‘PÕˆ\ÙH›ØÙ\ÜË[]™[˜[™B”›ØÙ\ÜÔÞ\Ý[H›ØÈH™]È›ØÙ\ÜÔÞ\Ý[J
+NÂ”Ý™X[HÙÈH™]ÈÝ™X[J”ÑÈ‹›ZY˜ÛÛ™J
+JNÂœ›ØË˜Y
+ÙÊNÂ•›Ý[™Õ˜[™HH™]È›Ý[™Õ˜[™J’•‹ÙÊNÂšœÙ]Ý]]™\ÜÝ\™JŒ
+NÂœ›ØË˜Y
+
+NÂœ›ØËœ[Š
+NÂ™ÝX›HÚH™Ù]Ý]]Ý™X[J
+K™Ù][\\˜]\™JÈŠNÈËÈÛÜœ™XÝ•[\\˜]\™B‚‹ËÈÔ“Ó‘ÎˆX[X[›\Ú8 %Ú]™\È[˜ÛÜœ™XÝ•[\\˜]\™B‹ËÈÞ\Ý[R[\™˜XÙHÛÛ™HH›ZY˜ÛÛ™J
+NÂ‹ËÈÛÛ™KœÙ]™\ÜÝ\™JŒ
+NÂ‹ËÈ™]È\›[Ù[˜[ZXÓÜ\˜][ÛœÊÛÛ™JK”›\Ú
+›ZY™Ù][[J’ˆŠHÈ›ZY™Ù]Ý[[X™\“Ù“[Û\Ê
+JNÂ˜‚ˆÈÈÈ”ÓÈ[Ù[^[œÚ[Û‚‚‘^[™YH™\TÚ[H”ÓÈ™\XØ][ÛˆÈ[˜ÛYN‚‹HÓTØ\È™XÛÛ\™\ÜÚ[Ûˆ
+ÈZ^[™ÈÚ]Ø\Â‹HØ\ÈÛÛÛ[™È
+LLKÍp¬ø¡¤ŒÍ°¬ÊH
+È›\Ú[H
+‘ÌLJB‹HÙX[Ø\ÈZÙ[Ù™ˆ
+K	HÜ]
+B‹H‹\ÝYÙH^ÜÛÛ\™\ÜÚ[Ûˆ
+’ÐLLNˆ¸¡¤ŒNH˜\‹’ÐLLŽˆN8¡¤MM˜\ŠB‹HÙX[Ø\È•^[œÚ[ÛˆÝ\™HÚÝÚ[™ÈKŒÍIHX^ÛÛ™[œØ][Ûˆ]Ì˜\‚‚ÛÛ\™\ÜÛÜˆ\ØÚ\™ÙH[\\˜]\™HÛÛ\\š\ÛÛŽ‚‹H’ÐLLNˆ™\TÚ[HL‹ð¬ÈœÈ[šTÚ[HLMËŽ0¬È
+ÍIH3­×Ú\È\ÜÝ[YY
+B‹H’ÐLLŽˆ™\TÚ[HKŽp¬ÈœÈ[šTÚ[HË°¬Â‹HÝYÙÙ\ÝÈ[šTÚ[H\Ù\ÈŽËNIH\Ù[›ÜXÈY™šXÚY[˜ÞB‚‹KKB‚ˆÈÈŒ‹LËLH8 %XÛ\ÙQ›ZY™XYÜš]H[’PÈš^[šTÚ[H’T^˜XÝ[Û‚‚ˆÈÈÈYÈš^‚ŸÛ\ÜÈ\ÜÝYHš^ŸKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHŸXÛ\ÙQ›ZY™XYÜš]X[Ú[\‘^Ù\[Û˜Ú[ˆLÌš[H\È›È’PÈÙXÝ[Ûˆ8 %ÚZ˜\œ˜^HÝ^\È[›Ý™XY
+
+XY]ÙÈ›ÝÈ[š]X[^™HÚZ˜È™\›ÈX]š^Yˆ’PÈÙXÝ[Ûˆ\ÈZ\ÜÚ[™ËˆLÌš[\ÈÚ]Ý]’PÈØYÛÜœ™XÝH
+[’TÈY˜][ÈŒ
+Kˆ‚ˆÈÈÈ[\XÝÛˆYÙ[Â‚‹H
+Š‘LÌš[HØY[™ÊŠŽˆ™]š[Ý\ÛH™\]Z\™YH’PÈÙXÝ[ÛˆÜˆH™XY\ˆÜ˜\ÚYˆ›ÝÈÜ[Û˜[
+Y˜][ÈÈ™\›È’TÊKˆÝÙ]™\‹YÙ[ÈÚÝ[[Ø^\È[˜ÛYH’PÈ[ˆÙ[™\˜]YLÌš[\È›ÜˆXØÝ\˜]H™\Ý[Ë‚‹H
+Š•[šTÚ[H8¡¤ˆLÌÛÜšÙ›ÝÊŠŽˆ’TÈØ[ˆ›ÝÈ™H^˜XÝYœ›ÛH[šTÚ[HšXH’ÚZ‹•˜[Y\Ø
+\K[Ù‹]\\ÊKˆÙYH™\\Ú[K][š\Ú[K\™XY\˜ÚÚ[ÙXÝ[ÛˆKŒH›ÜˆHÓÓHXØÙ\ÜÈ]\›‹‚‚ˆÈÈÈÙ^H\ØÛÝ™\žB‚•[šTÚ[HÓÓH’T^˜XÝ[Ûˆ]\›Ž‚˜]Û‚šÚZ—ÛØšˆH’ÚZˆÈÑ\Ü]Ú
+™X[›^˜\šXX›JBœ˜]ÈHÚZ—ÛØš‹•˜[Y\ÈÈ\K[Ù‹]\\È
+°åÛˆÞ[[Y]šXÈX]š^
+BˆÈXYÛÛ˜[Ù[[™[HLÌÍËŒ™\XÙHÚ]Œ˜‹H‘Ù][\˜XÝ[Û”\˜[Y]\ŠKŠX™]\›œÈŒ›Üˆ‹SÈ
+ÛÜœ™[][Ûˆ’TÈ›ÝXØÙ\ÜÚX›H\ÈØ^JB‹HÚZ—ÛØš‹‘Ù]˜[Y\Ê
+X˜Z[È8 %\ÙH•˜[Y\Ø›Ü\H[œÝXY‚‹KKB‚ˆÈÈŒ‹LLH8 %X][YÜ˜][Û‹ÝÙ\ˆÙ[™\˜][Û‹YÙ[XÈPHØ]B‚ˆÈÈÈ™]È˜]˜HÛ\ÜÙ\Â‚ŸÛ\ÜÈXÚØYÙH\ØÜš\[ÛˆŸKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHŸ[˜Ú[˜[\Ú\Ø›ØÙ\ÜË™\]Z\Y[šX]^Ú[™Ù\‹šX][YÜ˜][Û˜[›šÙ™ˆ[˜Ú[˜[\Ú\ÎˆÛÛ\ÜÚ]HÝ\™\ËÜ˜[™ÛÛ\ÜÚ]HÝ\™KZ[š[][HÝØÛÛ][]H\™Ù][™Ë[˜Ú[\\˜]\™KˆXØÙ\ÈÝØÛÛX]Ý™X[XØš™XÝÈÚ]PÜ[™[\\˜]\™H˜[™ÙKˆŸX]Ý™X[X›ØÙ\ÜË™\]Z\Y[šX]^Ú[™Ù\‹šX][YÜ˜][Û˜]H[Ù[›ÜˆÝØÛÛ›ØÙ\ÜÈÝ™X[\Ëˆ]]ËXÛ\ÜÚYšY\ÈÕÐÓÓœ›ÛHÝ\HœÈ\™Ù][\\˜]\™KˆÙ[Ú]\ÈÛÛ™[šY[˜ÙHTKÙ[š[ˆ[\›˜[ÝÜ˜YÙKˆŸÝX[U\˜š[™X›ØÙ\ÜË™\]Z\Y[œÝÙ\™Ù[™\˜][Û˜\Ù[›ÜXÈÝX[H^[œÚ[ÛˆÚ]ÛÛ™šYÝ\˜X›HY™šXÚY[˜ÞKˆËÔ›\Ú›ÜˆÝ]]ÛÛ™][ÛœËˆÙ]ÝÙ\ŠšÕÈŠXTKˆŸ”ÑØ›ØÙ\ÜË™\]Z\Y[œÝÙ\™Ù[™\˜][Û˜X]™XÛÝ™\žHÝX[HÙ[™\˜]Ü‹ˆZÙ\ÈÝØ\È^]\ÝØ[Ý[]\ÈÝX[H›ÙXÝ[Ûˆ˜]H]ÜXÚYšYY™\ÜÝ\™KÝ[\\˜]\™H\Ú[™È\›ØXÚ[\\˜]\™H[™Y™™XÝ]™[™\ÜËˆŸÛÛXš[™YÞXÛTÞ\Ý[X›ØÙ\ÜË™\]Z\Y[œÝÙ\™Ù[™\˜][Û˜[YÜ˜]\ÈØ\Õ\˜š[™H
+È”ÑÈ
+ÈÝX[U\˜š[™KˆÙ]Ý[ÝÙ\Š“UÈŠXÙ]Ý™\˜[Y™šXÚY[˜ÞJ
+XÒœÛÛŠ
+XˆŸÚ[][][Û”]X[]QØ]X][˜YÙ[XØ]]ÛX]YPHØ]H›Üˆ›ØÙ\ÜÔÞ\Ý[H˜[Y][ÛŽˆ\ÚXØ[›Ý[™È
+ˆËˆ
+KÝ™X[HÛÛœÚ\Ý[˜ÞH
+›È˜S‹Ò[™ŠKÛÛ\ÜÚ][Ûˆ›Ü›X[^˜][Û‹ˆ™]\›œÈ”ÓÓˆ™\ÜÚ]\ÜÝY\ËÙ]™\š]K[™™[YYX][Ûˆ[Ëˆ‚ˆÈÈÈ™]ÈÚÚ[È
+JB‚˜™\\Ú[KY[ÜË\™YÜ™\ÜÚ[Û˜™\\Ú[K\™XXÝ[Û‹Y[™Ú[™Y\š[™Ø™\\Ú[KY[˜[ZXË\Ú[][][Û˜˜™\\Ú[KY\Ý[][Û‹Y\ÚYÛ˜™\\Ú[KY[XÝ›Û]K\Þ\Ý[\Ø‚‚ˆÈÈÈ™]ÈYÙ[È
+ÊB‚˜™XXÝ[Û‹™[™Ú[™Y\š[™ØÛÛ›ÛœÞ\Ý[X[Z\ÜÚ[ÛœË™[š\›Û›Y[[‚‚ˆÈÈÈ\ØYÙH8 %[˜Ú[˜[\Ú\Â‚˜˜]˜B”[˜Ú[˜[\Ú\È[˜ÚH™]È[˜Ú[˜[\Ú\ÊLŒ
+NÈËÈ[UÛZ[ˆHLÂœ[˜Ú˜YÝÝ™X[J’H‹NÌ
+NÈËÈN8¡¤ŽËPÜLÌÕËÒÂœ[˜Ú˜YÛÛÝ™X[JÌH‹ÌMŒ
+NÈËÈÌ8¡¤ŒMËPÜLŒÕËÒÂœ[˜Úœ[Š
+NÂ™ÝX›HZH[˜Ú™Ù]Z[š[][RX][™Õ][]J
+NÈËÈÕÂ™ÝX›HXÈH[˜Ú™Ù]Z[š[][PÛÛÛ[™Õ][]J
+NÈËÈÕÂ™ÝX›H[˜ÚH[˜Ú™Ù][˜Ú[\\˜]\™PÊ
+NÈËÈ0¬Â”Ýš[™ÈœÛÛˆH[˜ÚÒœÛÛŠ
+NÂ˜‚ˆÈÈÈ\ØYÙH8 %Ú[][][Û”]X[]QØ]B‚˜˜]˜B”›ØÙ\ÜÔÞ\Ý[H›ØÙ\ÜÈH™]È›ØÙ\ÜÔÞ\Ý[J
+NÂ‹ËÈ‹‹ˆZ[[™[ˆ›ØÙ\ÜÈ‹‹‚œ›ØÙ\ÜËœ[Š
+NÂ”Ú[][][Û”]X[]QØ]HØ]HH™]ÈÚ[][][Û”]X[]QØ]J›ØÙ\ÜÊNÂ™Ø]K˜[Y]J
+NÂšYˆ
+YØ]Kš\Ô\ÜÙY
+
+JHÂˆÞ\Ý[K›Ý]œš[ŠØ]KÒœÛÛŠ
+JNÂŸB˜‚ˆÈÈÈ\ØYÙH8 %ÛÛXš[™YÞXÛTÞ\Ý[B‚˜˜]˜BÛÛXš[™YÞXÛTÞ\Ý[HØÈH™]ÈÛÛXš[™YÞXÛTÞ\Ý[JÐËLH‹Y[Ø\ÔÝ™X[JNÂ˜ØËœÙ]ÛÛX\Ý[Û”™\ÜÝ\™JMKŒ
+NÂ˜ØËœÙ]ÝX[T™\ÜÝ\™JŒ
+NÂ˜ØËœÙ]ÝX[U[\\˜]\™JŒÈŠNÂ˜ØËœÙ]ÝX[U\˜š[™QY™šXÚY[˜ÞJŽJNÂ˜ØËœ[Š
+NÂ™ÝX›HÝ[UÈHØË™Ù]Ý[ÝÙ\Š“UÈŠNÂ™ÝX›HY™šXÚY[˜ÞHHØË™Ù]Ý™\˜[Y™šXÚY[˜ÞJ
+NÂ˜‚‹KKB‚ˆÈÈŒ‹LËLÌH8 %ÚX˜œÔ™XXÝÜˆ˜XÛØšX[ˆš^	ˆÛÛ™\ˆ\™›Ü›X[˜ÙH[\›Ý™[Y[Â‚ˆÈÈÈYÈš^8 %•PÛÜœ™XÝYÙ™‹QXYÛÛ˜[˜XÛØšX[ˆ
+[Ø^\ÈÛŠB‚•HÙ™‹YXYÛÛ˜[[šY\ÈÙˆH™]ÝÛ‹T˜\ÛÛˆ˜XÛØšX[ˆÙ\™HZ\ÜÚ[™È[ˆ•™˜XÝÜ‹ˆHÛÜœ™XÝY›Ü›][H•
+ˆ
+LKÛ—ÝÝ[
+ÈŠ3áŠKÙŠX\È›ÝÈHÛ›B˜ÛÙH]8 %HYØXÞH›Ü›][H\È™Y[ˆ™[[Ý™Yˆ\Èš^\ÈÛÛ™\™Ù[˜ÙH\ÜÝY\Â™›ÜˆYXX˜]XÈ[™Z^Y\\ÙH\]Z[Xœš][Kˆ›È\Ù\ˆXÝ[Ûˆ™YYY
+™]š[Ý\ÛBœ™\]Z\™YÙ]\ÙPÛÛœÚ\Ý[Ù™‘XYÛÛ˜[
+YJXÚXÚ\È›ÝÈH\™XØ]Y›Ë[Ü
+K‚‚ˆÈÈÈ\™›Ü›X[˜ÙH[\›Ý™[Y[Â‚‘›Ý\ˆ[ÛÜš]ZXÈ[\›Ý™[Y[ÈÈH™]ÝÛ‹T˜\ÛÛˆÛÛ™\ˆ[ˆÚX˜œÔ™XXÝÜ˜‚‚ŒKˆ
+Š“HXÛÛ\ÜÚ][Ûˆ™\XÙ\È^XÚ]X]š^[™\œÙJŠˆ8 %H™]ÝÛˆ[™X\‚ˆÞ\Ý[H	ˆÙÝ[HHQ‰\È›ÝÈÛÛ™YšXHR“S	ÜÈÛÛ™J
+X
+BˆXÛÛ\ÜÚ][ÛŠH[œÝXYÙˆÛÛ\][™È	—žËL_I[ˆ][\Z[™ËˆŒðåÈ˜\Ý\‚ˆ[™[Ü™H[Y\šXØ[HÝX›Kˆ˜[È˜XÚÈÈÙ]YËZ[™\œÙHYˆH˜Z[Ë‚‚Œ‹ˆ
+Š”™[[Ý™YÕ‘ÛÛ™][Ûˆ[X™\ˆÚXÚÊŠˆ8 %H\‹Z]\˜][ÛˆÛÛ™][Û”Š
+XˆØ[
+Ê°¬ÊHÕ‘
+H\È™Y[ˆ™[[Ý™Yœ›ÛHHÝ]ˆHYØXÞBˆØ[Ý[]R˜XÛØšX[’[™\œÙJ
+XY]Ù\ÈÙ\›Üˆ˜XÚÝØ\™ÛÛ\]Xš[]H]ˆ\ÈÛ›H\ÙY\ÈH˜[˜XÚË‚‚ŒËˆ
+Š“TÐHÑPK\Ý[HY\]™HÝ\Ú^š[™ÊŠˆ8 %™]ÈÜZ[ˆ™X]\™HšXBˆÙ]\ÙPY\]™TÝ\Ú^™JYJXˆÛÛ\]\ÈÝ\Ú^™HXXÚ]\˜][ÛˆÈ[Z]ˆX^™[]]™H[ÛHÚ[™ÙH
+˜XÝÜˆÙˆpåÊKˆÚÚ\È™X\‹^™\›ÈÛÛ\Û™[ÈÛÂˆ^HØ[ˆÜ›ÝÈœ™Y[Kˆ™]™[È™YØ]]™H[Û\Ë‚‚ˆ
+ŠÛÛ™šYÝ\˜X›HZ[š[][H]\˜][ÛœÊŠˆ8 %Ù]Z[’]\˜][ÛœÊ[ŠX™\XÙ\ÈBˆ\™ÛÙY]\˜][ÛˆHLÛÛ™\™Ù[˜ÙHÝX\™ˆY˜][[˜Ú[™ÙY]L›Ü‚ˆ˜XÚÝØ\™ÛÛ\]Xš[]KˆÙ]ÈÈ›ÜˆÚ[\H\ÛÝ\›X[Þ\Ý[\Ë‚‚ˆÈÈÈ™]ÈY]ÙÈÛˆÚX˜œÔ™XXÝÜ˜‚ŸY]ÙY˜][\ØÜš\[ÛˆŸKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHŸÙ]Z[’]\˜][ÛœÊ[
+XLZ[ˆ]\˜][ÛœÈ™Y›Ü™HÛÛ™\™Ù[˜ÙHÚXÚÈŸÙ]Z[’]\˜][ÛœÊ
+X8 %Ù]Ý\œ™[Z[š[][H]\˜][ÛœÈŸÙ]\ÙPY\]™TÝ\Ú^™J›ÛÛX[ŠX˜[ÙH[˜X›HY\]™HÝ\Ú^š[™ÈŸ\Õ\ÙPY\]™TÝ\Ú^™J
+X8 %ÚXÚÈYˆY\]™HÝ\Ú^š[™È\ÈXÝ]™H‚ˆÈÈÈ\™XØ]YY]ÙÈÛˆÚX˜œÔ™XXÝÜ˜‚ŸY]Ù›Ý\ÈŸKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHŸÙ]\ÙPÛÛœÚ\Ý[Ù™‘XYÛÛ˜[
+›ÛÛX[ŠX›Ë[Üˆ•ÛÜœ™XÝ[Ûˆ\È[Ø^\ÈXÝ]™KˆŸ\Õ\ÙPÛÛœÚ\Ý[Ù™‘XYÛÛ˜[
+
+X[Ø^\È™]\›œÈYXˆ‚ˆÈÈÈZYÜ˜][Ûˆ›Ý\Â‚‹H
+Š“›Èœ™XZÚ[™ÈÚ[™Ù\ÊŠˆ8 %[Y˜][È™\Ù\™Y^\Ý[™ÈÛÙH[œÈY[XØ[K‚‹HÙ]\ÙPÛÛœÚ\Ý[Ù™‘XYÛÛ˜[
+YJXØ[ÈÝ[ÛÛ\[H]\™H›Ë[ÜË‚‹HÈÜ[È˜\Ý\ˆÛÛ™\™Ù[˜ÙH›Üˆ\ÛÝ\›X[Þ\Ý[\Î‚ˆ˜]˜Bˆ™XXÝÜ‹œÙ]\ÙPY\]™TÝ\Ú^™JYJNÂˆ™XXÝÜ‹œÙ]Z[’]\˜][ÛœÊÊNÂˆ‹HH[\›˜[Y]ÙÛÛ™S™]ÝÛ”Þ\Ý[JÝX›V×JX\Èš]˜]H8 %›ÈX›XÈTHÚ[™ÙK‚‚‹KKB‚ˆÈÈŒ‹LËLÌ8 %Ù\šX[^˜][ÛˆÛX[\	ˆ›ØÙ\ÜÓÙÚXÈ^[™ÈÙ\šX[^˜X›B‚ˆÈÈÈœ™XZÚ[™ÈÚ[™ÙH8 %›ØÙ\ÜÓÙÚXØ›ÝÈ^[™ÈÙ\šX[^˜X›X‚‹H
+Š˜›ØÙ\ÜÓÙÚXØ
+Šˆ
+›ØÙ\ÜË›ÙÚXË”›ØÙ\ÜÓÙÚXØ
+H›ÝÈ^[™È˜]˜Kš[Ë”Ù\šX[^˜X›X‚ˆ\ÈØ\È™\]Z\™YÈ[[Z[˜]HH\ÝÜÝYÜÈÑWÐQÑ’QSØ\›š[™ÈØ]\ÙYžBˆHÛÛ\[\‹YÙ[™\˜]YÞ[]XÈšY[[ˆ[\›PXÝ[Û’[™\˜	ÜÈ[›Ûž[[Ý\È[›™\ˆÛ\ÜÂˆ]Ø\\™YH›ØÙ\ÜÓÙÚXØ™Y™\™[˜ÙK‚‹H[žHÛ\ÜÈ[\[Y[[™È›ØÙ\ÜÓÙÚXØ\È›ÝÈ[\XÚ]HÙ\šX[^˜X›X‚‹H›Û‹\Ù\šX[^˜X›HšY[È[ˆ›ØÙ\ÜÓÙÚXØ[\[Y[][ÛœÈ
+TÑÙÚXØTÓÙÚXØˆÚ]ÝÛ“ÙÚXØÝ\\ÙÚXØØY™]R[œÝ[Y[Y[˜Ý[Û˜
+H]™H™Y[ˆX\šÙYˆ˜[œÚY[‚‚ˆÈÈÈÙ\šX[^˜][Ûˆ]Y]8 %MˆÑWÐQÑ’QSØ\›š[™ÜÈš^Y‚[ÜÝYÜÈÑWÐQÑ’QSØ\›š[™ÜÈ]™H™Y[ˆ™\ÛÛ™YžHY[™È˜[œÚY[Â››Û‹\Ù\šX[^˜X›HšY[ÈXÜ›ÜÜÈ
+ÈÛ\ÜÙ\ËˆØ]YÛÜšY\Èš^Y‚‚‹H
+Š•\›[È\Ù\ÊŠŽˆÝX›UÖ×XÝX›UÖ×V×XÑT‘ÈSÔÈØš™XÝÈ[ˆ\ÙHÛ\ÜÙ\Â‹H
+Š‘]X˜\ÙHÛ\ÜÙ\ÊŠŽˆ‘ÈÛÛ›™XÝ[Û˜[™Ý][Y[šY[È
+ˆ]X˜\ÙHÛ\ÜÙ\ÊB‹H
+Š”›ØÙ\ÜÈ\]Z\Y[
+ŠŽˆ[›™\ˆÛ\ÜÈ\\È
+™]ÛÜšÓ›ÙXÚX˜œÐÛÛ\Û™[ˆ™\Ù\›Ú\“^Y\˜˜[™TÚÚY[Xš[XØ[[[Y[˜[œÚY[Ø[X]˜[œÙ™\˜]ËŠB‹H
+Š‘[˜Ý[Û˜[[\™˜XÙ\ÊŠŽˆ[˜Ý[Û˜šPÛÛœÝ[Y\˜ÛÛœÝ[Y\˜šY[È[‚ˆY\Ý\˜Ù]Ú[Ø[Ý[]Ü˜Ü™XYÚY]›ØÚØ\]Z\Y[Ý]PY\\˜ˆ˜]ÚÝYXÙ[œÚ]]š]P[˜[\Ú\Ø›ØÙ\ÜÔØY™]TØÙ[˜\š[Ø‹H
+Š•][ÛÜ[Z^™\ŠŠŽˆ›ÙXÝ[Û“Ü[Z^™\˜›ØÙ\ÜÓ[™X\š^™\˜›ÙÜ™\ÜÐØ[˜XÚØ‹H
+Š“YXÚ[šXØ[\ÚYÛŠŠŽˆÝXœÙXPÛÜÝ\Ý[X]Ü˜Ú[[™X™Q\ÚYÛØ[Ý[]Ü˜ˆÜ™ÓX[˜YÙ\˜YXÚ[šXØ[\ÚYÛ‘]TÛÝ\˜ÙX‹H
+Š”Ý[™\™ÊŠŽˆ\XÚHÛÛ[[ÛœÈX][\œÛ]ÜœÈ[ˆÝ[™\™ÒTÓÍMÎ‹H
+ŠÛÜ™JŠŽˆ™XY[ˆ\›[Ù[˜[ZXÓÜ\˜][ÛœØšXÝXšXÒ[\œÛ]Ü˜[‚ˆÓÐ\›Ü\UX›QÙ[™\˜]Ü•Ø]\˜‚ŠŠ”]\›ˆ›Üˆ™]ÈÛÙNŠŠˆÚ[ˆY[™ÈšY[ÈÈ[žHÛ\ÜÈ]^[™Â˜›ØÙ\ÜÑ\]Z\Y[˜\ÙPÛ\ÜØYX\Ý\™[Y[]šXÙP˜\ÙPÛ\ÜØYXÚ[šXØ[\ÚYÛ˜›Üˆ[žHÝ\ˆÙ\šX[^˜X›XÛ\ÜËX\šÈ›Û‹\Ù\šX[^˜X›HšY[È˜[œÚY[‚‚˜˜]˜B‹ËÈÛÜœ™XÝ[ÙYšY\ˆÜ™\Ž‚œš]˜]H˜[œÚY[^S›Û”Ù\šX[^˜X›U\HšY[Âœš]˜]Hš[˜[˜[œÚY[\Ý›Û”Ù\šX[^˜X›R[›™\ˆ][\ÈH™]È\œ˜^S\ÝŠ
+NÂ˜[œÚY[ÛÛYU\HXÚØYÙTš]˜]QšY[ÈËÈXÚØYÙK\š]˜]B˜‚ŠŠYÙ[ËÜÚÚ[È\]YŠŠˆ™\\Ú[KZ˜]˜N\[\ËÔÒÒS›YÛÜ[ÝZ[œÝXÝ[ÛœË›Y‚‚‹KKB‚ˆÈÈŒ‹LËLÈ8 %[šTÚ[UÓ™\TÚ[H]ÛˆÛÙHÙ[™\˜][Û‚‚ˆÈÈÈ™]ÈY]Ù8 %×Ü]ÛŠ
+XÛˆ[šTÚ[UÓ™\TÚ[X‚‹H
+Š˜[šTÚ[UÓ™\TÚ[K×Ü]ÛŠ[˜ÛYWÜÝX™›ÝÜÚY]ÏUYJX
+ŠˆÙ[™\˜]\ÈHÙ[‹XÛÛZ[™Yˆ
+Šš[X[‹\™XYX›H]ÛˆØÜš\
+Šˆ]™XÜ™X]\ÈH[\™H[šTÚ[H›ØÙ\ÜÈ\Ú[™Âˆ^XÚ]›™\\Ú[XTHØ[È8 %[œÝXYÙˆHÜ\]YH”ÓÓˆ[\›YYX]H›Ü›X]‚‹HHÙ[™\˜]YØÜš\[˜ÛY\Îˆ[[\ÜË›ZYÑSÔÈYš[š][ÛˆÚ]ÛÛ\Û™[Ëˆ™YYÝ™X[\ÈÚ]ÔÙ›ÝË]™\žH\]Z\Y[][H[ˆÜÛÙÚXØ[Ü™\ˆÚ\™Y›ÝYÚˆÝ]]Ý™X[H™Y™\™[˜Ù\È
+Ù]Ø\ÓÝ]Ý™X[J
+XÙ]\]ZYÝ]Ý™X[J
+XˆÙ]Ü]Ý™X[J[
+XÙ]Ý]]Ý™X[J
+X
+K[™›ØÙ\ÜËœ[Š
+X‚‹H[™\È[Ý\ÜY\]Z\Y[\\ÎˆÙ\\˜]Ü‹™YT\ÙTÙ\\˜]Ü‹Z^\‹ˆÜ]\‹ÛÛ\™\ÜÛÜ‹›Ý[™Õ˜[™KÛÛÛ\‹X]\‹X]^Ú[™Ù\‹[\ˆ^[™\‹YXX˜]XÔ\K™XÞXÛK\Ý[][ÛÛÛ[[‹Ý™X[TØ]\˜]Ü•][‚‹HØ[š]^™\È˜\šXX›H˜[Y\È
+ÜXÙ\Ë\[œËÜXÚX[Ú\œÈ8¡¤ˆ[™\œØÛÜ™\ÎÈ[Y\šXÂˆ™Yš^\ÈÙ]Ø™Yš^È[š\]Y[™\ÜÈÝX\˜[YY
+K‚‹HØØ]Y[ˆ]ÛÛËÝ[š\Ú[WÜ™XY\‹œX‚‚ŠŠ•\ØYÙNŠŠ‚˜]Û‚™œ›ÛH]ÛÛË[š\Ú[WÜ™XY\ˆ[\Ü[šTÚ[T™XY\‹[šTÚ[UÓ™\TÚ[B‚œ™XY\ˆH[šTÚ[T™XY\Šš\ÚX›OQ˜[ÙJB›[Ù[H™XY\‹œ™XY
+ˆœ]×š[K\ØÈŠBœ™XY\‹˜ÛÜÙJ
+B‚˜ÛÛ™\\ˆH[šTÚ[UÓ™\TÚ[J[Ù[
+Bœ]Û—ØÛÙHHÛÛ™\\‹×Ü]ÛŠ
+B‚Ú]Ü[Š›^WÜ›ØÙ\ÜËœH‹ÈŠH\ÈŽ‚ˆ‹Üš]J]Û—ØÛÙJB˜‚ŠŠYÙ[ËÜÚÚ[È\]YŠŠˆ[š\Ú[Kœ™XY\‹˜YÙ[›Y™\\Ú[K][š\Ú[K\™XY\‹ÔÒÒS›Y˜—ÑTÐÔ’TSÓ—Ô“ÐÑTÔ×ÑVPÕSÓ‹›Y]ÛÛËÔ‘PQQK›Y‚‚‹KKB‚ˆÈÈŒ‹LËLÈ8 %\Ý[][ÛˆÛÛ[[ˆ[\›˜[ËZ\ˆÛÛÛ\‹‘ˆ›\Ú[Z[™Hœ˜[Y]ÛÜšÂ‚ˆÈÈÈ™]ÈÛ\ÜÙ\È8 %\Ý[][Ûˆ[\›˜[Â‚‹H
+Š˜XÚÙYÛÛ[[˜
+Šˆ
+›ØÙ\ÜË™\]Z\Y[™\Ý[][Û˜
+H8 %^[™È\Ý[][ÛÛÛ[[˜ˆ›ÜˆXÚÙYXœÛÜœ[Û‹Ù\Ý[][ÛˆÛÛ[[œÈ
+XœÛÜ˜™\œËÝš\\œËÛÛXÝÜœÊK‚ˆÜ˜\ÈšYÛÜ›Ý\È“HÛÛ[[ˆÛÛ™\ˆ[™YÈXÚÚ[™Ë\ÜXÚYšXÈ[˜Ý[Û˜[]N‚ˆHUØ[Ý[][Ûˆœ›ÛHXÚÙY™YZYÚˆHXÚÚ[™ÈY˜][XÜÈšXHXÚÚ[™ÒY˜][XÜÐØ[Ý[]Ü˜ˆHZ[Z[ˆ™\Ù]È
+[š[™ËY[\ZËSU]ËŠBˆHTNˆÙ]XÚÙYZYÚ
+
+XÙ]XÚÚ[™Õ\J
+XÙ]ÝXÝ\™YXÚÚ[™Ê
+XˆYÛÛ™[Ý™X[J
+XÙ]U
+
+XÙ]\˜Ù[›ÛÙ
+
+XÒœÛÛŠ
+X‚‹H
+Š˜ÚÜÝ]\Ý[][ÛÛÛ[[˜
+Šˆ
+›ØÙ\ÜË™\]Z\Y[™\Ý[][Û˜
+H8 %˜\YÛÛ˜Ù\X[ˆ\ÚYÛˆ\Ú[™È™[œÚÙKU[™\ÛÛÙQÚ[[[™
+•QÊHY]Ù‚ˆH™[œÚÙNˆZ[š[][HÝYÙ\Èœ›ÛH™[]]™H›Û][]BˆH[™\ÛÛÙˆZ[š[][H™Y›^˜][ÂˆHÚ[[[™ˆXÝX[ÝYÙ\È
+[ÛÚØ[›ÝˆÛÜœ™[][ÛŠBˆHÚ\šØœšYNˆÜ[X[™YY˜^HØØ][Û‚ˆHTNˆÙ]YÚÙ^J
+XÙ]X]žRÙ^J
+XÙ]YÚÙ^T™XÛÝ™\žQ\Ý[]J
+XˆÙ]™Y›^˜][Ó][\Y\Š
+XÙ]Z[š[][S[X™\“Ù”ÝYÙ\Ê
+XˆÙ]XÝX[™Y›^˜][Ê
+XÙ]™\Ý[ÒœÛÛŠ
+X‚‹H
+Š˜ÛÛ[[’[\›˜[Ñ\ÚYÛ™\˜
+Šˆ
+›ØÙ\ÜË™\]Z\Y[™\Ý[][Û‹š[\›˜[Ø
+H8 %YÚ[]™[ˆ[\›˜[ÈÚ^š[™È˜XØYKˆ]˜[X]\ÈY˜][XÈ\™›Ü›X[˜ÙHÛˆ]™\žH˜^HÙˆHÛÛ™\™ÙYˆ\Ý[][ÛÛÛ[[˜Y[YšY\ÈÛÛ›Û[™È˜^KÚ^™\ÈÛÛ[[ˆX[Y]\‹‚ˆÝ\ÜÈ˜^H
+ÚY]™K˜[™KX˜›KXØ\
+H[™XÚÙY[Ù\Ë‚ˆTNˆØ[Ý[]J
+XÙ]™\]Z\™YX[Y]\Š
+X\Ñ\ÚYÛ“ÚÊ
+XÒœÛÛŠ
+X‚‹H
+Š˜˜^RY˜][XÜÐØ[Ý[]Ü˜
+Šˆ
+›ØÙ\ÜË™\]Z\Y[™\Ý[][Û‹š[\›˜[Ø
+H8 %\‹]˜^BˆY˜][XÈ]˜[X][Ûˆ›ÜˆÚY]™K˜[™K[™X˜›KXØ\˜^\ËˆÛÜœ™[][ÛœÎˆ˜Z\‚ˆ
+›ÛÙ[™Ë[˜Z[›Y[
+KÚ[››Ý
+ÙY\[™ÊKœ˜[˜Ú\ÈÙZ\ˆ
+ÝÛ˜ÛÛY\ˆ˜XÚÝ\
+KˆÉÐÛÛ›™[
+˜^HY™šXÚY[˜ÞJKˆ™Y™\™[˜Ù\ÎˆÚ\Ý\ˆ
+NNLŠKYÚYÈ
+ŒJKÚ[››Ý
+ŒJK‚‚‹H
+Š˜XÚÚ[™ÒY˜][XÜÐØ[Ý[]Ü˜
+Šˆ
+›ØÙ\ÜË™\]Z\Y[™\Ý[][Û‹š[\›˜[Ø
+H8 %XÚÚ[™ÂˆY˜][XÜÈ[™Ú[™HÚ]XÚÙ\ÔÈ
+›ÛÙ[™ÊK]˜H
+™\ÜÝ\™H›Ü
+KÛ™HNMŽˆ
+X\ÜÈ˜[œÙ™\ˆÛÙY™šXÚY[ÊKKÒUˆZ[Z[ˆ™\Ù]È›ÜˆL˜[™ÛHXÚÚ[™ÜÂˆ[™ÈÝXÝ\™YXÚÚ[™ÜÈ
+Y[\ZÈLVx $ÍLK›^\XÈVx $ÌÖJK‚‚ˆÈÈÈ™]ÈÛ\ÜÈ8 %Z\ÛÛÛ\ˆ™]Üš]B‚‹H
+Š˜Z\ÛÛÛ\˜
+Šˆ
+›ØÙ\ÜË™\]Z\Y[šX]^Ú[™Ù\˜
+H8 %ÛÛ\]H™]Üš]Hœ›ÛHÚ[\BˆZ\ˆ›ÝÈØ[Ý[]ÜˆÈ[THŒH\›X[\ÚYÛˆ[Ù[
+ŽMŒ[™\ÊN‚ˆHœšYÙÜËV[Ý[™Èš[‹]X™HÛÜœ™[][Ûˆ›ÜˆZ\‹\ÚYHÂˆHØÚZY[›[\ˆš[ˆY™šXÚY[˜ÞBˆH›Øš[œÛÛ‹PœšYÙÜÈZ\‹\ÚYH™\ÜÝ\™H›ÜˆHUÚ]‹XÛÜœ™XÝ[Ûˆ›ÜˆÜ›ÜÜËY›ÝÂˆH˜[ˆ[Ù[Ú]ÝXšXÈÛ[›ÛZX[˜[ˆÝ\™H
+œÈJBˆH[XšY[[\\˜]\™HÛÜœ™XÝ[Ûˆ
+U˜][ÈY]Ù
+BˆH[™HÚ^š[™È
+X™\È\ˆ›ÝËÝ[X™\Ë˜XÙH\™XKš[ˆ\™XJBˆHÛÛ\™Z[œÚ]™HÒœÛÛŠ
+X™\ÜˆHTNˆÙ]\ÚYÛ[XšY[[\\˜]\™JÈŠXÙ][X™\“Ù•X™T›ÝÜÊ
+XˆÙ]X™S[™Ý
+
+XÙ]˜[”ÝÙ\ŠšÕÈŠXÙ]Ý™\˜[J
+XÒœÛÛŠ
+X‚ˆÈÈÈ™]ÈÛ\ÜÈ8 %‘ˆ›\Ú‚‹H
+Š˜‘™›\Ú
+Šˆ
+\›[Ù[˜[ZXÛÜ\˜][ÛœË™›\ÚÜØ
+H8 %™\ÜÝ\™KU˜\Üˆœ˜XÝ[Ûˆ›\Ú‚ˆÚ]™[ˆ
+È\™Ù]˜\Üˆœ˜XÝ[Ûˆ3¬ˆ8¡¤ˆš[™[\\˜]\™Kˆ\Ù\È[[›Ú\ÈY]Ùˆ
+XØÙ[\˜]Y™YÝ[H˜[ÚJKˆ[YÜ˜]Y[È\›[Ù[˜[ZXÓÜ\˜][ÛœØšXBˆÜË”‘™›\Ú
+™]JXˆ3¬LŒ8¡¤ˆX˜›HÚ[3¬LKŒ8¡¤ˆ]ÈÚ[‚‚ˆÈÈÈ™]ÈÛ\ÜÙ\È8 %[Z[™Hœ˜[Y]ÛÜšÂ‚‹H
+Š˜[Z[™TÞ\Ý[X
+Šˆ
+\›[Ë][˜[Z[™\Ø
+H8 %ÛÛ™[šY[˜ÙHÜ˜\\ˆ›ÜˆÜ™X][™Âˆ[XÝ›Û]KPÔH[Z[™HÞ\Ý[\ËˆÝ\ÜÈQPKPKQPKSQPKˆ]]ËXÛÛ™šYÝ\™\ÂˆÜXÚY\È
+™]]˜[
+È[ÛšXÈ
+ÈØ\˜˜[X]JKZ^[™È[\Ë™XXÝ[ÛœË\ÚXØ[›Ü\Y\Ë‚ˆH[[Nˆ[Z[™U\X
+QPXPXQPXSQPX
+BˆHTNˆ™]È[Z[™TÞ\Ý[J[Z[™U\KÒËØ˜\˜K[Z[™S[Ûœ˜XÝ[Û‹ÛÌ“ØY[™ÊXˆÙ]Þ\Ý[J
+XÙ][Z[™U\J
+X‚‹H
+Š˜[Z[™Uš\ØÛÜÚ]X
+Šˆ
+\ÚXØ[›Ü\Y\Ë›Y]ÙË›\]ZY\ÚXØ[›Ü\Y\Ëš\ØÛÜÚ]X
+H8 %ˆÛÜœ™[][ÛœÈ›ÜˆÓø  ‹[ØYY[Z[™HÛÛ][Ûˆš\ØÛÜÚ]N‚ˆHÙZ[[™][ˆ
+NNN
+H›ÜˆQPKPKSQPBˆH[™È][ˆ
+NNM
+H›ÜˆQPBˆH]]ËY]XÝÈ[Z[™H\Hœ›ÛH›ZYÛÛ\ÜÚ][Û‚‚ˆÈÈÈ\]YÛ\ÜÙ\Â‚‹H
+Š˜\Ý[][ÛÛÛ[[˜
+Šˆ8 %ÛÛ[[ˆÜXÚYšXØ][Ûˆœ˜[Y]ÛÜšÈÚ]ÛÛ[[”ÜXÚYšXØ][Û˜ˆÙXØ[[Y]ÙÝ]\ˆY\ÝY[ÛÜ
+
+ÍLÌH[™\ÊB‚‹H
+Š˜›ØÙ\ÜÔÞ\Ý[X
+Šˆ8 %™YH™]È[šTÚ[KÒTÖTË\Ý[HÝ™X[HÝ[[X\žHY]ÙÎ‚ˆHÙ]Ý™X[TÝ[[X\žUX›J
+X8 %›Ü›X]Y^X›HÚ]›ÝËÛÛ\ÜÚ][Û‚ˆHÙ]Ý™X[TÝ[[X\žRœÛÛŠ
+X8 %”ÓÓˆÝ]]›Üˆ›ÙÜ˜[[X]XÈXØÙ\ÜÂˆHÙ][Ý™X[\Ê
+X8 %ÛÛXÝÈ[[š\]YHÝ™X[R[\™˜XÙXØš™XÝÂ‚‹H
+Š˜\›[Ù[˜[ZXÓÜ\˜][ÛœØ
+Šˆ8 %YY‘™›\Ú
+ÝX›H˜\Ü‘œ˜XÝ[ÛŠX[žHÚ[‚‹H
+Š˜\›X[\ÚYÛØ[Ý[]Ü˜
+Šˆ8 %YYÒœÛÛŠ
+XY]Ù›Üˆ”ÓÓˆ™\Ü[™Â‚ˆÈÈÈ™]È]X˜\ÙH[šY\Â‚‹H
+ŠÓÓT˜ÜÝŠŠŽˆQPJÈ
+QLNKÚ\™ÙOJÌJH[™QPPÓÓËH
+QLŒÚ\™ÙOKLJB‹H
+Š”‘PPÕSÓ‘UK˜ÜÝŠŠŽˆQPKÑPH\]Z[Xœš][H™XXÝ[ÛœÈ
+]\ÝÙ[ˆNNJB‹H
+Š”ÕÐÐÓÑQ‘UK˜ÜÝŠŠŽˆ\]YÝÚXÚ[ÛY]šXÈÛÙY™šXÚY[È›Üˆ[Z[™H™XXÝ[ÛœÂ‚ˆÈÈÈ\ØYÙH^[\\Â‚˜˜]˜B‹ËÈXÚÙYÛÛ[[ˆXœÛÜ˜™\‚”XÚÙYÛÛ[[ˆXœÛÜ˜™\ˆH™]ÈXÚÙYÛÛ[[ŠÓÌˆXœÛÜ˜™\ˆ‹L™YY
+NÂ˜XœÛÜ˜™\‹œÙ]XÚÙYZYÚ
+MKŒ
+NÂ˜XœÛÜ˜™\‹œÙ]XÚÚ[™Õ\J“Y[\ZÈLHŠNÂ˜XœÛÜ˜™\‹œÙ]ÝXÝ\™YXÚÚ[™ÊYJNÂ˜XœÛÜ˜™\‹˜YÛÛ™[Ý™X[JX[[Z[™KJNÂ˜XœÛÜ˜™\‹œ[Š
+NÂ‚‹ËÈÚÜÝ]\ÚYÛ‚”ÚÜÝ]\Ý[][ÛÛÛ[[ˆÚÜÝ]H™]ÈÚÜÝ]\Ý[][ÛÛÛ[[Š‘\›Ü‹™YY
+NÂœÚÜÝ]œÙ]YÚÙ^Jœ›Ü[™HŠNÂœÚÜÝ]œÙ]X]žRÙ^J›‹X][™HŠNÂœÚÜÝ]œÙ]YÚÙ^T™XÛÝ™\žQ\Ý[]JŽN
+NÂœÚÜÝ]œÙ]X]žRÙ^T™XÛÝ™\žQ\Ý[]JŒŠNÂœÚÜÝ]œ[Š
+NÂ‚‹ËÈZ\ˆÛÛÛ\‚Z\ÛÛÛ\ˆÛÛÛ\ˆH™]ÈZ\ÛÛÛ\Š‘Ø\ÈÛÛÛ\ˆ‹ÝÝ™X[JNÂ˜ÛÛÛ\‹œÙ]Ý][\\˜]\™JŒÈŠNÂ˜ÛÛÛ\‹œÙ]\ÚYÛ[XšY[[\\˜]\™JMKŒÈŠNÂ˜ÛÛÛ\‹œ[Š
+NÂ™ÝX›H˜[”ÝÙ\ˆHÛÛÛ\‹™Ù]˜[”ÝÙ\ŠšÕÈŠNÂ‚‹ËÈ‘ˆ›\Ú•\›[Ù[˜[ZXÓÜ\˜][ÛœÈÜÈH™]È\›[Ù[˜[ZXÓÜ\˜][ÛœÊ›ZY
+NÂ›ÜË”‘™›\Ú
+JNÈËÈš[™Ú\™H3¬ˆHB‚‹ËÈ[Z[™HÞ\Ý[B[Z[™TÞ\Ý[H[Z[™HH™]È[Z[™TÞ\Ý[J[Z[™TÞ\Ý[K[Z[™U\K“QPKˆÌËŒMH
+ÈŒKŒŒÌ
+NÂ”Þ\Ý[R[\™˜XÙH›ZYH[Z[™K™Ù]Þ\Ý[J
+NÂ‚‹ËÈÝ™X[HÝ[[X\žBœ›ØÙ\ÜËœ[Š
+NÂ”Þ\Ý[K›Ý]œš[Š›ØÙ\ÜË™Ù]Ý™X[TÝ[[X\žUX›J
+JNÂ”Ýš[™ÈœÛÛˆH›ØÙ\ÜË™Ù]Ý™X[TÝ[[X\žRœÛÛŠ
+NÂ˜‚ˆÈÈÈ™]È\ÝÂ‚Ÿ\ÝY]ÙÈŸKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHŸXÚÙYÛÛ[[•\Ý\ÝÎˆ˜\ÚXÈXœÛÜ˜™\‹Ù]\œËÙÙ]\œËÛÛ™[œÙ\‹Ü™X›Ú[\‹”ÓÓˆŸÚÜÝ]\Ý[][ÛÛÛ[[•\ÝÈ\ÝÎˆY][š^™\‹\›Ü[š^™\‹”ÓÓˆŸÛÛ[[’[\›˜[Ñ\ÚYÛ™\•\Ý\ÝÎˆÚY]™H˜^KÛÛ™[šY[˜ÙKXÚÙYÝXÝ\™YŸXÚÚ[™ÒY˜][XÜÐØ[Ý[]Ü•\Ýˆ\ÝÎˆ[š[™ËÝXÝ\™YX[Y]\‹™\Ù]ËX\ÜÈ˜[œÙ™\‹Ÿ˜^RY˜][XÜÐØ[Ý[]Ü•\Ýˆ\ÝÎˆÚY]™KX[Y]\‹˜[™K\]ZY˜]KÙY\[™ËÉÐÛÛ›™[Ÿ›ØÙ\ÜÔÞ\Ý[TÝ™X[TÝ[[X\žU\ÝÈ\ÝÎˆ^X›K”ÓÓ‹Ù][Ý™X[\ÈŸ‘™›\Ú\Ý\ÝÎˆZYYœ˜XÝ[Û‹X˜›HÚ[]ÈÚ[ÛÛœÚ\Ý[˜ÞHŸZ\ÛÛÛ\•\ÝM™]È\ÝÎˆUKš[ˆY™šXÚY[˜ÞK˜[‹[™KU”ÓÓˆŸÛÛ[[”ÜXÚYšXØ][Û•\ÝÛÛ[[ˆÜXÈ\š]KÜ™XÛÝ™\žKÙ›ÝÈ˜]H\ÝÈ‚ˆÈÈÈ™]ÈØÝ[Y[][Û‚‚‹HØÜËÙ]™[ÜY[Ó‘TTÒSWÕ”×ÕS’TÒSWÐÓÓTT’TÓÓ‹›Y8 %™\TÚ[HœÈ[šTÚ[H™X]\™HÛÛ\\š\ÛÛ‚‹HØÜËÜ›ØÙ\ÜËÜ›ØÙ\ÜË\Ú[][][Û‹Y[š[˜Ù[Y[Ë›Y8 %\Ù\ˆÝZYH›Üˆ[™]ÈØ\Xš[]Y\Â‹H^[\\ËÛ›ÝX›ÛÚÜËØZ\—ØÛÛÛ\—Ø[™ÜXÚÙYØÛÛ[[‹š\[˜˜8 %\]\ˆ›ÝX›ÛÚÈ^[\B‚ˆÈÈÈYÙ[ËÔÚÚ[ÈÈ\]B‚‹H™\\Ú[KXØ\Xš[]K[X\8 %YXÚÙYÛÛ[[‹ÚÜÝ]\Ý[][ÛÛÛ[[‹ÛÛ[[’[\›˜[Ñ\ÚYÛ™\‹ˆ˜^RY˜][XÜÐØ[Ý[]Ü‹XÚÚ[™ÒY˜][XÜÐØ[Ý[]Ü‹‘™›\Ú[Z[™TÞ\Ý[KZ\ÛÛÛ\‚‹H™\\Ú[KX\K\]\›œØ8 %YXÚÙYÛÛ[[‹ÚÜÝ]\Ý[][Û‹Z\ˆÛÛÛ\‹‘ˆ›\Úˆ[Z[™HÞ\Ý[KÝ™X[HÝ[[X\žH]\›œÂ‹HÓÓ•V›Y8 %Y\Ý[][Ûˆ[\›˜[Ë[Z[™Hœ˜[Y]ÛÜšÈÈ™\ÈX\‹HØÜËÙ]™[ÜY[ÐÓÑWÔUT“”Ë›Y8 %YXÚÙYÛÛ[[‹ÚÜÝ]Z\ˆÛÛÛ\‹[Z[™H]\›œÂ‚‹KKB‚ˆÈÈŒ‹LËLÈ8 %ÛÛ[[ˆÜXÚYšXØ][Ûˆ›^Xš[]B‚ˆÈÈÈ™]ÈÛ\ÜÙ\Â‚‹H
+Š˜ÛÛ[[”ÜXÚYšXØ][Û˜
+Šˆ
+›ØÙ\ÜË™\]Z\Y[™\Ý[][Û˜
+H8 %™\™\Ù[ÈÛ™BˆYÜ™YK[Ù‹Yœ™YYÛHÜXÚYšXØ][Ûˆ›ÜˆH\Ý[][ÛˆÛÛ[[‹ˆš]™HÜXÚYšXØ][Û‚ˆ\\ÈšXHÜXÚYšXØ][Û•\X[[N‚ˆH“ÑPÕÔT’UX8 %[ÛKYœ˜XÝ[Ûˆ\š]H\™Ù]›ÜˆH›ÙXÝÝ™X[BˆH‘Q“VÔUSØ8 %ÛÛ™[œÙ\ˆ™Y›^˜][È
+Ñ
+BˆHÓÓTÓ‘S•Ô‘PÓÕ‘T–X8 %œ˜XÝ[Û˜[™XÛÝ™\žHÙˆH˜[YYÛÛ\Û™[
+8 $ÌJBˆH“ÑPÕÑ“Õ×ÔUX8 %[Û\ˆ›ÝÈ˜]H\™Ù]
+Û[ÛÚ
+BˆHUX8 %ÛÛ™[œÙ\ˆÜˆ™X›Ú[\ˆ]H
+ÊBˆH›ÙXÝØØ][Û˜[[NˆÔ“ÕÓXˆHÛÛ™šYÝ\˜X›HÛ\˜[˜ÙH
+Y˜][YKM
+H[™X^]\˜][ÛœÈ
+Y˜][Œ
+BˆH[[œ]˜[Y][Û‹Ù\šX[^˜X›B‚ˆÈÈÈ\]YÛ\ÜÙ\Â‚‹H
+Š˜\Ý[][ÛÛÛ[[˜
+Šˆ8 %[YÜ˜]YÛÛ[[”ÜXÚYšXØ][Û˜Ý\Ü‚ˆH™]ÈÛÛ™[šY[˜ÙHY]ÙÎˆÙ]Ü›ÙXÝ\š]JÛÛ\Û™[\™Ù]
+XˆÙ]›ÝÛT›ÙXÝ\š]JÛÛ\Û™[\™Ù]
+XÙ]ÛÛ™[œÙ\”™Y›^˜][Ê˜][ÊXˆÙ]™X›Ú[\›Ú[\˜][Ê˜][ÊXÙ]ÜÛÛ\Û™[™XÛÝ™\žJÛÛ\Û™[œ˜XÝ[ÛŠXˆÙ]›ÝÛPÛÛ\Û™[™XÛÝ™\žJÛÛ\Û™[œ˜XÝ[ÛŠXÙ]Ü›ÙXÝ›ÝÔ˜]J˜]JXˆÙ]›ÝÛT›ÙXÝ›ÝÔ˜]J˜]JXÙ]ÜÜXÚYšXØ][ÛŠ
+XÙ]›ÝÛTÜXÚYšXØ][ÛŠ
+XˆHÝ]\ˆÙXØ[[Y]ÙY\ÝY[ÛÜ
+ÛÛ™UÚ]ÜXÚYšXØ][ÛœÊ
+X
+H]\˜]\ÂˆÛÛ™[œÙ\‹Ü™X›Ú[\ˆ[\\˜]\™\ÈÈØ]\ÙžH\š]K™XÛÝ™\žKÜˆ›ÝË\˜]HÜXÜË‚ˆØY™YÝX\™ÎˆX^Ý\LË[\\˜]\™H›Ý[™ÈL8 $ÌLË‚ˆH\™XÝ\Ù]ÜXÜÈ
+™Y›^˜][Ë]JH\YY™Y›Ü™H[›™\ˆÛÛ™HÚ]Ý]Ý]\ˆÛÜ‚ˆHZ[\ˆ]\›ˆ^[™YˆÜÜXÚYšXØ][ÛŠ
+X›ÝÛTÜXÚYšXØ][ÛŠ
+XˆÜ›ÙXÝ\š]J
+X›ÝÛT›ÙXÝ\š]J
+XY]ÙË‚‚ˆÈÈÈ\ØYÙB‚˜˜]˜B‹ËÈ›ÙXÝ\š]HÜXÚYšXØ][Û‚‘\Ý[][ÛÛÛ[[ˆÛÛ[[ˆH™]È\Ý[][ÛÛÛ[[Š•LL‹KYKYJNÂ˜ÛÛ[[‹˜Y™YYÝ™X[J™YYLŠNÂ˜ÛÛ[[‹œÙ]Ü™\ÜÝ\™JKŒ˜˜\˜HŠNÂ˜ÛÛ[[‹œÙ]Ü›ÙXÝ\š]J™][™H‹ŽMJNÈËÈMH[Û	H][™HÝ™\šXY˜ÛÛ[[‹œÙ]›ÝÛT›ÙXÝ\š]Jœ›Ü[™H‹ŽN
+NÈËÈN[Û	H›Ü[™H›ÝÛ\Â˜ÛÛ[[‹œ[Š
+NÂ‚‹ËÈÛÛ\Û™[™XÛÝ™\žHÜXÚYšXØ][Û‚˜ÛÛ[[‹œÙ]ÜÛÛ\Û™[™XÛÝ™\žJ™][™H‹ŽNJNÈËÈNIH][™H™XÛÝ™\žHÝ™\šXY˜ÛÛ[[‹œ[Š
+NÂ‚‹ËÈ™Y›^˜][ÈÜXÚYšXØ][Ûˆ
+\YY\™XÝK›ÈÝ]\ˆÛÜ
+B˜ÛÛ[[‹œÙ]ÛÛ™[œÙ\”™Y›^˜][ÊËJNÂ˜ÛÛ[[‹œ[Š
+NÂ‚‹ËÈZ[\ˆ]\›ˆÚ]ÜXÜÂ‘\Ý[][ÛÛÛ[[ˆÛÛH\Ý[][ÛÛÛ[[‹˜Z[\Š
+Bˆ›˜[YJ‘Y][š^™\ˆŠBˆ›[X™\“Ù•˜^\ÊJBˆš\ÐÛÛ™[œÙ\ŠYJBˆš\Ô™X›Ú[\ŠYJBˆÜ™\ÜÝ\™JKŒ
+BˆÜ›ÙXÝ\š]J™][™H‹ŽMJBˆ˜›ÝÛT›ÙXÝ\š]Jœ›Ü[™H‹ŽN
+Bˆ˜Z[
+
+NÂ˜‚ˆÈÈÈYÙ[ËÔÚÚ[ÈÈ\]B‚‹H™\\Ú[KX\K\]\›œØ8 %YÛÛ[[ˆÜXÚYšXØ][Ûˆ]\›‚‹HØÜËÜ›ØÙ\ÜËÙ\]Z\Y[Ù\Ý[][Û‹›Y8 %YÛÛ[[ˆÜXÚYšXØ][ÛœÈÙXÝ[Û‚‹HØÜËÙ]™[ÜY[ÐÓÑWÔUT“”Ë›Y8 %Y\Ý[][ÛˆÜXÚYšXØ][Ûˆ]\›‚‚‹KKB‚ˆÈÈŒ‹LËLˆ8 %X]^Ú[™Ù\ˆ\›X[RY˜][XÈ\ÚYÛˆÛÛÚ]‚ˆÈÈÈ™]ÈÛ\ÜÙ\Â‚‹H
+Š˜\›X[\ÚYÛØ[Ý[]Ü˜
+Šˆ
+›ØÙ\ÜË›YXÚ[šXØ[\ÚYÛ‹šX]^Ú[™Ù\˜
+H8 %Ù[˜[ˆØ[Ý[]Üˆ›ÜˆX™K\ÚYH[™Ú[\ÚYHX]˜[œÙ™\ˆÛÙY™šXÚY[ËÝ™\˜[Kˆ™\ÜÝ\™H›ÜË[™›Û™KXžK^›Û™H[˜[\Ú\ËˆÝ\ÜÈÛšY[[œÚÚH
+X™K\ÚYJH[™ˆÙ\›ˆÜˆ™[Q[]Ø\™H
+Ú[\ÚYJHY]ÙË‚ˆH[›™\ˆ[[NˆÚ[ÚYSY]Ù
+ÑT“˜‘SÑSUÐT‘X
+B‚‹H
+Š˜™[[]Ø\™SY]Ù
+Šˆ
+›ØÙ\ÜË›YXÚ[šXØ[\ÚYÛ‹šX]^Ú[™Ù\˜
+H8 %Ý]XÈ][]Bˆ›Üˆ[™\ÝžK\Ý[™\™™[Q[]Ø\™HÚ[\ÚYHÈ[™™\ÜÝ\™H›ÜÚ]‹Y˜XÝÜ‚ˆÛÜœ™XÝ[Ûˆ˜XÝÜœÈ
+˜Ë›˜‹œËœŠH[™šZØ]\ÚØ\ÈÛÜœ™[][Ûˆ›ÜˆX™H˜[šÜË‚‚‹H
+Š˜šXœ˜][Û[˜[\Ú\Ø
+Šˆ
+›ØÙ\ÜË›YXÚ[šXØ[\ÚYÛ‹šX]^Ú[™Ù\˜
+H8 %›ÝËZ[™XÙYˆšXœ˜][ÛˆØÜ™Y[š[™È\ˆSPHÐ‹M‹ˆ]˜[X]\È›Ü^ÚY[™È
+›ÛˆØ\›X[ŠKˆ›ZYY[\ÝXÈ[œÝXš[]H
+ÛÛ››ÜœÊK[™XÛÝ\ÝXÈ™\ÛÛ˜[˜ÙK‚ˆH[›™\ˆÛ\ÜÎˆšXœ˜][Û”™\Ý[Ú]\ÜËÙ˜Z[˜]\˜[œ™\]Y[˜ÞKÜš]XØ[™[ØÚ]B‚‹H
+Š˜UÛÜœ™XÝ[Û‘˜XÝÜ˜
+Šˆ
+›ØÙ\ÜË›YXÚ[šXØ[\ÚYÛ‹šX]^Ú[™Ù\˜
+H8 %UÛÜœ™XÝ[Û‚ˆ˜XÝÜˆ—Ý›Üˆ][K\\ÜÈÛÛ™šYÝ\˜][ÛœÈ\Ú[™È›ÝÛX[‹S]Y[\‹S˜YÛH
+NM
+HY]Ù‚ˆÝ\ÜÈKSˆÚ[\ÜÙ\ËØ[Ý[]\Èˆ[™\˜[Y]\œË™XÛÛ[Y[™ÈZ[š[][HÚ[ˆ\ÜÙ\È™YYY‚‚‹H
+Š˜[\™˜XÚX[œšXÝ[Û˜
+Šˆ
+›ØÙ\ÜË™\]Z\Y[œ\[[™KÛÜ\Ù\\K˜ÛÜÝ\™X
+H8 %ˆ[\™˜XÚX[œšXÝ[ÛˆÛÜœ™[][ÛœÈ›ÜˆÛËY›ZY\H[Ù[ˆ›ÝÈ™YÚ[YKY\[™[‚ˆZ][QZÛ\ˆ
+Ý˜]YšYYÛ[ÛÝ
+K[™š]ÛÜËR[œ˜]H
+Ý˜]YšYYØ]žJKØ[\Âˆ
+[›[\ŠKÛY[X[œÈ
+ÛYÊK‚ˆH[›™\ˆÛ\ÜÎˆ[\™˜XÚX[œšXÝ[Û”™\Ý[Ú]ÚX\‹œšXÝ[Ûˆ˜XÝÜ‹Û\™[ØÚ]B‚ˆÈÈÈ\]YÛ\ÜÙ\Â‚‹H
+Š˜Ú[[™X™Q\ÚYÛØ[Ý[]Ü˜
+Šˆ8 %XZ›Üˆ^[œÚ[ÛŽˆ›ÝÈ[˜ÛY\ÈTÓQH’RRH]‹ŒBˆ™\ÜÝ\™H\ÚYÛˆ
+RLLÈX™\ÚY]QËLÈPUÔQËLÍÈ›Þž›H™Z[™›Ü˜Ù[Y[QËNNBˆY›È\Ý
+KPÑHTŒMÍKÒTÓÈMLMMˆÛÝ\ˆÙ\šXÙH\ÜÙ\ÜÛY[\›X[ZY˜][XÂˆ[YÜ˜][Ûˆ
+]]Ë\[œÈ\›X[\ÚYÛØ[Ý[]Ü˜
+ÈšXœ˜][Û[˜[\Ú\ØÚ[ˆ›ZYˆ›Ü\Y\È\™H›ÝšYY
+KÙZYÚØÛÜÝ\Ý[X][ÛˆÚ]š[ÙˆX]\šX[Ë‚‚‹H
+Š˜X]^Ú[™Ù\“YXÚ[šXØ[\ÚYÛ˜
+Šˆ8 %™]ÈYÚ[]™[Ü˜Ú\Ý˜]Üˆ]]Ë\Ù[XÝ[™Âˆ^Ú[™Ù\ˆ\H
+Ú[X[™]X™K]KZ\‹XÛÛÛY
+H˜\ÙYÛˆÛÛ™šYÝ\˜X›HÜš]\šXBˆ
+RS—ÐT‘PXRS—ÕÑRQÒRS—Ô‘TÔÕT‘WÑ“Ô
+Kˆ[™\ÈSPHÛ\ÜÈ
+‹ÐËÐŠKˆÚ[\\È
+KÑ‹ÑËÒÒ‹ÒËÖ
+K›Ý[[™È™\Ú\Ý[˜Ù\Ë™[ØÚ]H[Z]ËX]\šX[Ëˆ[™PÑHÛÝ\ˆÙ\šXÙK‚‚‹H
+Š˜X]^Ú[™Ù\˜
+Šˆ8 %YYÙ]˜][™ÐØ[Ý[]ÜŠ
+X™]\›š[™È\›X[\ÚYÛØ[Ý[]Ü˜ˆ›Üˆ˜][™È[ÙKˆYYÙ]\›X[Y™™XÝ]™[™\ÜÊ
+X[™Ø[Õ\›X[Y™™XÝ]™[™\Ê•KÜŠX‚‚‹H
+Š˜ÛÑ›ZY\X
+Šˆ8 %[š[˜ÙYÚ]›Ý[™\žHÛÛ™][ÛˆTH
+Õ‘PSWÐÓÓ“‘PÕQˆÓÓ”ÕS•Ñ“ÕËÓÓ”ÕS•Ô‘TÔÕT‘KÓÔÑQ
+K[]˜][Ûˆ›Ùš[HÝ\Ü[\\˜]\™Bˆ›Ùš[HÝ]]
+È[™0¬ÊK\]ZY[™[ÜžHØ[Ý[][Û‹ÛÛÛÝÛˆ[YH\Ý[X][Û‹‚‚‹H
+Š˜ÛÑ›ZYÛÛœÙ\˜][Û‘\]X][ÛœØ
+Šˆ8 %^[™YÈÈÛÛœÙ\˜][Ûˆ\]X][ÛœÈ›Ü‚ˆ™YK\\ÙH
+Ø\ËÛÚ[ÝØ]\ŠHÚ]Ù\\˜]HÚ[[™Ø]\ˆ[ÛY[[Kˆ\Ù\ÈUTÓJÈ›^ˆØÚ[YH[™UTÐÓ™XÛÛœÝXÝ[Û‹‚‚‹H
+Š˜[\
+Šˆ8 %YY[\Ý\™HÝ\ÜÚ]Y™š[š]H]ÈØØ[[™ËØ]š]][Ûˆ]XÝ[Û‚ˆ
+”Ò]˜Z[X›HœÈ™\]Z\™Y
+KÜ\˜][™ÈÝ]\È[Ûš]Üš[™ËÝ]][\\˜]\™H[ÙK‚‚ˆÈÈÈ\ØYÙB‚˜˜]˜B‹ËÈÝ[™[Û™H\›X[\ÚYÛ‚•\›X[\ÚYÛØ[Ý[]ÜˆØ[ÈH™]È\›X[\ÚYÛØ[Ý[]ÜŠ
+NÂ˜Ø[ËœÙ]X™SÑJŒNLJNÂ˜Ø[ËœÙ]X™RQJŒMÊNÂ˜Ø[ËœÙ]X™S[™ÝJ‹Œ
+NÂ˜Ø[ËœÙ]X™PÛÝ[
+Œ
+NÂ˜Ø[ËœÙ]X™T\ÜÙ\ÊŠNÂ˜Ø[ËœÙ]X™T]ÚJŒM
+NÂ˜Ø[ËœÙ]šX[™Ý[\”]Ú
+YJNÂ˜Ø[ËœÙ]Ú[QJJNÂ˜Ø[ËœÙ]˜Y™›TÜXÚ[™ÛJŒMJNÂ˜Ø[ËœÙ]˜Y™›PÛÝ[
+Ì
+NÂ˜Ø[ËœÙ]˜Y™›PÝ]
+ŒJNÂ˜Ø[ËœÙ]X™TÚYQ›ZY
+NMKŒŒNŒŒ‹KŒYJNÂ˜Ø[ËœÙ]Ú[ÚYQ›ZY
+ŒŒŒËŒŒŒŒLËŒ
+NÂ˜Ø[ËœÙ]Ú[ÚYSY]Ù
+\›X[\ÚYÛØ[Ý[]Ü‹”Ú[ÚYSY]Ù‘SÑSUÐT‘JNÂ˜Ø[Ë˜Ø[Ý[]J
+NÂ”Ýš[™ÈœÛÛˆHØ[ËÒœÛÛŠ
+NÂ‚‹ËÈšXœ˜][ÛˆØÜ™Y[š[™Â•šXœ˜][Û[˜[\Ú\Ë•šXœ˜][Û”™\Ý[™\Ý[HšXœ˜][Û[˜[\Ú\Ëœ\™›Ü›TØÜ™Y[š[™ÊˆX™SÑX™RQ[œÝ\ÜYÜ[‹X™SX]\šX[KX™Q[œÚ]Kˆ›ZY[œÚ]UX™K›ZY[œÚ]TÚ[[™ÛÛ™][Û‹ˆÜ›ÜÜÙ›ÝÕ™[ØÚ]KX™T]ÚšX[™Ý[\”]ÚÚ[QÛÛšXÕ™[ØÚ]BŠNÂ˜›ÛÛX[ˆØY™HH™\Ý[œ\ÜÙYÂ‚‹ËÈUÛÜœ™XÝ[Ûˆ˜XÝÜ‚™ÝX›HHUÛÜœ™XÝ[Û‘˜XÝÜ‹˜Ø[Ñ
+Ý[‹ÝÝ]ÛÛ[‹ÛÛÝ]Ú[\ÜÙ\ÊNÂš[Z[”Ú[ÈHUÛÜœ™XÝ[Û‘˜XÝÜ‹œ™\]Z\™YÚ[\ÜÙ\ÊÝ[‹ÝÝ]ÛÛ[‹ÛÛÝ]
+NÂ‚‹ËÈ[YXÚ[šXØ[\ÚYÛˆÚ]\›X[ZY˜][XÂ”Ú[[™X™Q\ÚYÛØ[Ý[]ÜˆÝØ[ÈH™]ÈÚ[[™X™Q\ÚYÛØ[Ý[]ÜŠ
+NÂœÝØ[ËœÙ]X™TÚYQ›ZY›Ü\Y\Ê[œÚ]Kš\ØÛÜÚ]KÜËX\ÜÑ›ÝË\ÒX][™ÊNÂœÝØ[ËœÙ]Ú[ÚYQ›ZY›Ü\Y\Ê[œÚ]Kš\ØÛÜÚ]KÜËX\ÜÑ›ÝÊNÂœÝØ[Ë˜Ø[Ý[]J
+NÈËÈ[œÈYXÚ
+È\›X[
+ÈšXœ˜][Û‚”Ýš[™È™\ÜHÝØ[ËÒœÛÛŠ
+NÂ˜‚ˆÈÈÈYÙ[ËÔÚÚ[ÈÈ\]B‚‹H™\\Ú[KXØ\Xš[]K[X\8 %Y\›X[\ÚYÛØ[Ý[]Ü‹™[[]Ø\™SY]ÙšXœ˜][Û[˜[\Ú\ËUÛÜœ™XÝ[Û‘˜XÝÜ‹[\™˜XÚX[œšXÝ[Û‚‹H™\\Ú[KX\K\]\›œØ8 %Y\›X[\ÚYÛˆ]\›‚‹HÓÓ•V›Y8 %Y\›X[\ÚYÛˆÈ™\ÈX\‹HØÜËÔ‘Q‘T‘SÑWÓPS•PSÒS‘V›Y8 %Y\›X[ÚY˜][X×Ù\ÚYÛ‹›Y[žB‚‹KKB‚ˆÈÈŒ‹LËLˆ8 %[œÝ[Y[ØÚY[QÙ[™\˜]Üˆ[™\]Y[™Ú[™Y\š[™È[]™\˜X›\Â‚ˆÈÈÈ™]ÈÛ\ÜÙ\Â‚‹H
+Š˜[œÝ[Y[ØÚY[QÙ[™\˜]Ü˜
+Šˆ
+›ØÙ\ÜË›YXÚ[šXØ[\ÚYÛ˜
+H8 %TÐKMKŒHYÙÙYˆ[œÝ[Y[ØÚY[HÙ[™\˜]Üˆ]œšYÙ\È[™Ú[™Y\š[™È[]™\˜X›\È[™[˜[ZXÂˆÚ[][][Û‹ˆØ[ÜÈH›ØÙ\ÜÔÞ\Ý[XÜ™X]\ÈYX\Ý\™[Y[]šXÙR[\™˜XÙXØš™XÝÂˆ
+•
+HÚ][\›PÛÛ™šYØ
+ÒÓÓ™\ÚÛÊH[™ÒS˜][™ÜË‚ˆÚ]Ù]™YÚ\Ý\“Û”›ØÙ\ÜÊYJX]™H]šXÙ\È\™H™YÚ\Ý\™YÛˆH›ØÙ\ÜÔÞ\Ý[K‚‚ˆÈÈÈ\]YÛ\ÜÙ\Â‚‹H
+Š˜ÝYPÛ\ÜØ
+Šˆ8 %YYS”Õ•SQS•ÔÐÒQSXÈ[]™\˜X›U\X[[K‚ˆÓTÔ×ÐH›ÝÈ›ÙXÙ\ÈÈ[]™\˜X›\È
+Ø\ÈŠKÓTÔ×Ðˆ›ÙXÙ\È
+Ø\ÈÊK‚‹H
+Š˜[™Ú[™Y\š[™Ñ[]™\˜X›\ÔXÚØYÙX
+Šˆ8 %YYÙ[™\˜]R[œÝ[Y[ØÚY[J
+X[™ˆÙ][œÝ[Y[ØÚY[J
+XˆHS”Õ•SQS•ÔÐÒQSXØ\ÙH\È[™Y[ˆÙ[™\˜]J
+X‚‚ˆÈÈÈÝYPÛ\ÜÈ[]™\˜X›HÛÝ[È
+STÔ•S•›Üˆ\ÝÊB‚ŸÝYHÛ\ÜÈÛÝ[[]™\˜X›\ÈŸKKKKKKKKKKHKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHŸÓTÔ×ÐHÈ‘\›X[[\›KÕš\Ü\™\Ëš\™K›Ú\ÙK[œÝ[Y[ØÚY[HŸÓTÔ×Ðˆ‘\›X[š\™K[œÝ[Y[ØÚY[HŸÓTÔ×ÐÈH‘‚ˆÈÈÈ\ØYÙB‚˜˜]˜B’[œÝ[Y[ØÚY[QÙ[™\˜]ÜˆÙ[ˆH™]È[œÝ[Y[ØÚY[QÙ[™\˜]ÜŠ›ØÙ\ÜÊNÂ™Ù[‹œÙ]™YÚ\Ý\“Û”›ØÙ\ÜÊYJNÈËÈÜ™X]\È]™HYX\Ý\™[Y[]šXÙHØš™XÝÂ™Ù[‹™Ù[™\˜]J
+NÂ“\Ý[œÝ[Y[ØÚY[QÙ[™\˜]Ü‹’[œÝ[Y[[žOˆ[šY\ÈHÙ[‹™Ù][šY\Ê
+NÂ”Ýš[™ÈœÛÛˆHÙ[‹ÒœÛÛŠ
+NÂ‚‹ËÈ›ÝYÚXÚØYÙB‘[™Ú[™Y\š[™Ñ[]™\˜X›\ÔXÚØYÙHÙÈBˆ™]È[™Ú[™Y\š[™Ñ[]™\˜X›\ÔXÚØYÙJ›ØÙ\ÜËÝYPÛ\ÜËÓTÔ×ÐJNÂœÙË™Ù[™\˜]J
+NÈËÈ[˜ÛY\È[œÝ[Y[ØÚY[B’[œÝ[Y[ØÚY[QÙ[™\˜]Üˆ[œÝ”ØÚY[HHÙË™Ù][œÝ[Y[ØÚY[J
+NÂ˜‚ˆÈÈÈYÙ[ËÔÚÚ[È\]Y‚‹H™\\Ú[KXØ\Xš[]K[X\ÒÒS8 %^[™YYX\Ý\™[Y[]šXÙ\ÈX›KYY[™Ú[™Y\š[™È[]™\˜X›\ÈÝXœÙXÝ[Û‚‹H™\\Ú[KX\K\]\›œØÒÒS8 %YY[™Ú[™Y\š[™È[]™\˜X›\ÈÙXÝ[ÛˆÚ][œÝ[Y[ØÚY[H]\›‚‹H[™Ú[™Y\š[™Ë™[]™\˜X›\Ë˜YÙ[›Y8 %YY[œÝ[Y[ØÚY[H[]™\˜X›HÙXÝ[Ûˆ[™ÛÙH^[\\Â‹HšY[™]™[ÜY[˜YÙ[›Y8 %YY][HMÈ
+[œÝ[Y[ØÚY[JK\]YÝYPÛ\ÜÈX›H[™Û\ÜÈX\‹HQÑS•Ë›Y8 %\]YÙ^H]ÈX›B‹HÓÓ•V›Y8 %\]Y™\ÈX\[™Ù^HØØ][ÛœÈX›B‚‹KKB‚ˆÈÈŒ‹LËLH8 %ÛÑ›ZY\H›Ý[™\žHÛÛ™][ÛˆTB‚ˆÈÈÈ™]ÈTB‚YYX›XÈÙ]\œÈ›ÜˆÛÛ™šYÝ\š[™È[›][™Ý]]›Ý[™\žHÛÛ™][ÛœÈ\š[™Â˜[œÚY[ÛÑ›ZY\XÚ[][][ÛœËˆ[˜ÛY\ÈÓÔÑQÈ›ÜˆÚ]Z[‹ÜÝ\™ÙHØÙ[˜\š[ÜË‚‚ˆÈÈÈ™]ÈY]ÙÂ‚˜˜]˜B‹ËÈÙ]›Ý[™\žHÛÛ™][Ûˆ\\Âœ\KœÙ][›]›Ý[™\žPÛÛ™][ÛŠ›Ý[™\žPÛÛ™][Û‹”Õ‘PSWÐÓÓ“‘PÕQ
+NÈËÈY˜][œ\KœÙ][›]›Ý[™\žPÛÛ™][ÛŠ›Ý[™\žPÛÛ™][Û‹ÓÓ”ÕS•Ñ“ÕÊNÂœ\KœÙ][›]›Ý[™\žPÛÛ™][ÛŠ›Ý[™\žPÛÛ™][Û‹ÓÓ”ÕS•Ô‘TÔÕT‘JNÂœ\KœÙ][›]›Ý[™\žPÛÛ™][ÛŠ›Ý[™\žPÛÛ™][Û‹ÓÔÑQ
+NÈËÈ‘UÎˆ›ØÚÙYœ\KœÙ]Ý]]›Ý[™\žPÛÛ™][ÛŠ›Ý[™\žPÛÛ™][Û‹ÓÓ”ÕS•Ô‘TÔÕT‘JNÈËÈY˜][œ\KœÙ]Ý]]›Ý[™\žPÛÛ™][ÛŠ›Ý[™\žPÛÛ™][Û‹ÓÔÑQ
+NÈËÈ‘UÎˆ›ØÚÙY‚‹ËÈ]Y\žH›Ý[™\žHÛÛ™][Ûˆ\\Â›Ý[™\žPÛÛ™][Ûˆ[›]ÈH\K™Ù][›]›Ý[™\žPÛÛ™][ÛŠ
+NÂ›Ý[™\žPÛÛ™][ÛˆÝ]]ÈH\K™Ù]Ý]]›Ý[™\žPÛÛ™][ÛŠ
+NÂ‚‹ËÈÙ]^XÚ]˜[Y\È›ÜˆÓÓ”ÕS•Ñ“ÕÈÈÓÓ”ÕS•Ô‘TÔÕT‘HÜÂœ\KœÙ][›]X\ÜÑ›ÝÊLŒ
+NÈËÈÙËÜÂœ\KœÙ][›]X\ÜÑ›ÝÊNšÙËÚˆŠNÈËÈÚ][š]œ\KœÙ][›]™\ÜÝ\™JŒŒ˜˜\˜HŠNÈËÈÚ][š]‚‹ËÈÛÛ™[šY[˜ÙHY]ÙÈ›ÜˆÚ]Z[ˆØÙ[˜\š[ÜÂœ\K˜ÛÜÙSÝ]]
+
+NÈËÈÙ]Ý]]ÈÈÓÔÑQœ\K›Ü[“Ý]]
+
+NÈËÈ™\ÝÜ™HÈÓÓ”ÕS•Ô‘TÔÕT‘Bœ\K›Ü[“Ý]]
+ÌŒ˜˜\˜HŠNÈËÈÜ[ˆÚ]ÜXÚYšYY™\ÜÝ\™Bœ\K˜ÛÜÙR[›]
+
+NÈËÈÙ][›]ÈÈÓÔÑQœ\K›Ü[’[›]
+
+NÈËÈ™\ÝÜ™HÈÕ‘PSWÐÓÓ“‘PÕQ˜›ÛÛX[ˆÛÜÙYH\Kš\ÓÝ]]ÛÜÙY
+
+NÈËÈÚXÚÈYˆÝ]]\È›ØÚÙY˜›ÛÛX[ˆÛÜÙYH\Kš\Ò[›]ÛÜÙY
+
+NÈËÈÚXÚÈYˆ[›]\È›ØÚÙY˜‚ˆÈÈÈ›Ý[™\žHÛÛ™][Ûˆ\\Â‚Ÿ\H\ØÜš\[ÛˆŸKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHŸÕ‘PSWÐÓÓ“‘PÕQ›ÝÈ˜]KÛÛ\ÜÚ][Ûˆœ›ÛHÛÛ›™XÝYÝ™X[H
+Y˜][[›]
+HŸÓÓ”ÕS•Ñ“ÕØš^YX\ÜÈ›ÝÈšXHÙ][›]X\ÜÑ›ÝÊ
+XŸÓÓ”ÕS•Ô‘TÔÕT‘Xš^Y™\ÜÝ\™H
+Y˜][Ý]]Ü[Û˜[[›]
+HŸÓÔÑQ™\›È™[ØÚ]H
+›ØÚÙYÜÚ]Z[ŠH8 %™\ÜÝ\™H›Ø]È‚ˆÈÈÈÛÛ[[ÛˆÛÛ™šYÝ\˜][ÛœÂ‚ŸÛÛ™šYÈ[›]ÈÝ]]È[›]›ÝÈŸKKKKKKKKKKKKHKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKHKKKKKKKHKKKKKKKKKKHŸY˜][Õ‘PSWÐÓÓ“‘PÕQÓÓ”ÕS•Ô‘TÔÕT‘HÛÛ\]Yœ›ÛHÝ™X[HŸ^XÚ]›ÝÈÓÓ”ÕS•Ñ“ÕÈÓÓ”ÕS•Ô‘TÔÕT‘HÛÛ\]Yš^YŸ›Ýš^YÓÓ”ÕS•Ô‘TÔÕT‘HÓÓ”ÕS•Ô‘TÔÕT‘Hš^YÛÛ\]YŸÚ]Z[ˆÕ‘PSWÐÓÓ“‘PÕQÓÔÑQÛÛ\]Yœ›ÛHÝ™X[HŸ›ÝÙÝÛˆÓÔÑQÓÓ”ÕS•Ô‘TÔÕT‘H›Ø]È™\›ÈŸ›ØÚÙY\HÓÔÑQÓÔÑQ›Ø]È™\›È‚ˆÈÈÈ]Ûˆ\ØYÙB‚˜]Û‚•ÛÑ›ZY\HH›™\\Ú[Kœ›ØÙ\ÜË™\]Z\Y[œ\[[™K•ÛÑ›ZY\B›Ý[™\žPÛÛ™][ÛˆHÛÑ›ZY\K›Ý[™\žPÛÛ™][Û‚‚œ\HHÛÑ›ZY\J”\[[™H‹™YY
+Bœ\KœÙ][›]›Ý[™\žPÛÛ™][ÛŠ›Ý[™\žPÛÛ™][Û‹ÓÓ”ÕS•Ñ“ÕÊBœ\KœÙ][›]X\ÜÑ›ÝÊLŒ
+Bœ\KœÙ]Ý]]™\ÜÝ\™JÌŒ˜˜\˜HŠB‚ˆÈÚ]Z[ˆØÙ[˜\š[Âœ\K˜ÛÜÙSÝ]]
+
+B™›Üˆ[ˆ˜[™ÙJŒ
+N‚ˆ\Kœ[•˜[œÚY[
+KŒ
+Bœ\K›Ü[“Ý]]
+ÌŒ˜˜\˜HŠHÈ™[Ü[‚˜‚ˆÈÈÈØÝ[Y[][Û‚‚‹H\]YÔ\[[™H™XÚ\\×JØÜËØÛÛÚØ›ÛÚËÜ\[[™K\™XÚ\\Ë›Y
+HÚ]›Ý[™\žHÛÛ™][ÛœÈÙXÝ[Û‚‚ˆÈÈÈZYÜ˜][Û‚‚“›Èœ™XZÚ[™ÈÚ[™Ù\Ëˆ^\Ý[™ÈÛÙH\Ú[™ÈY˜][ÜÈÛÛ[Y\ÈÈÛÜšÈ[˜Ú[™ÙY‚‚‹KKB‚ˆÈÈŒ‹L‹LN8 %ÛÑ›ZY\H˜[œÚY[	ˆ™\ÜÝ\™HÜ˜YY[[\›Ý™[Y[Â‚ˆÈÈÈYÈš^\Â‚‹H
+Š•˜[œÚY[[›]™\ÜÝ\™HÝ™\œšYH
+’VQ
+NŠŠˆ\P›Ý[™\žPÛÛ™][ÛœÊ
+XØ\ÂˆÝ™\Üš][™ÈH[›]™\ÜÝ\™Hœ›ÛHHÝ™X[H\š[™È˜[œÚY[[œË™]™[[™ÂˆH™\ÜÝ\™H›Ùš[Hœ›ÛH]›Ûš[™ËˆYY\Õ˜[œÚY[[ÙX›ÛÛX[ˆ›YÎÈÚ[‚ˆYX
+Ù]]]ÛX]XØ[HžH[•˜[œÚY[
+
+X
+K[›]™\ÜÝ\™HÛÛY\Èœ›ÛBˆ™XÛÛœÝXÝ™\ÜÝ\™T›Ùš[J
+X
+˜XÚÝØ\™X\˜Úœ›ÛHš^YÝ]]ÊH[œÝXYÙ‚ˆœ›ÛHH[›]Ý™X[K‚‚‹H
+Š“Ý]]™\ÜÝ\™HØ\\™Y™Y›Ü™HÛÛ™\™Ù[˜ÙH
+’VQ
+NŠŠˆÝ]]™\ÜÝ\™XØ\Âˆ™Z[™ÈØ\\™Y™Y›Ü™H[”ÝXYTÝ]J
+XÛÛ™\™ÙY™XÛÜ™[™ÈH[š]X[ÝY\ÜÂˆ
+M˜\ŠH˜]\ˆ[ˆHÛÛ™\™ÙY˜[YH
+NH˜\ŠKˆ›ÝÈØ\\™YY\‚ˆÝXYK\Ý]HÛÛ™\™Ù[˜ÙK‚‚ˆÈÈÈ\]Yš[\Â‚‹H
+Š˜ÛÑ›ZY\Kš˜]˜X
+Šˆ
+›ØÙ\ÜË™\]Z\Y[œ\[[™X
+N‚ˆH™]ÈšY[ˆš]˜]H›ÛÛX[ˆ\Õ˜[œÚY[[ÙHH˜[ÙNØˆH™]ÈY]Ùˆ™XÛÛœÝXÝ™\ÜÝ\™T›Ùš[J
+X8 %˜XÚÝØ\™X\˜Ú\Èœ›ÛHš^YÝ]]ˆ›Ý[™\žHÛÛ™][ÛˆÈÛÛ\]H[›]™\ÜÝ\™Hœ›ÛHHØØ[™\ÜÝ\™HÜ˜YY[‚ˆH™]ÈY]ÙˆØ[Ñ\˜ÞQœšXÝ[Û‘˜XÝÜŠšË™[ØÚ]K]JX8 %^˜XÝYX[[™ˆ\]X][Ûˆ
+\˜[[
+KÔ™H
+[Z[˜\ŠK[™X\ˆ[\œÛ][Ûˆ
+˜[œÚ][Û˜[ˆ™HŒÌ8 $Í
+Kˆ\ÙY[ˆ\Ý[X]T™\ÜÝ\™QÜ˜YY[
+
+X‚ˆH\]Y\Ý[X]T™\ÜÝ\™QÜ˜YY[
+
+Xˆ™\XÙYÛ\]ÙZYÚYš\ØÛÜÚ]Bˆ
+3¬QÊ³¯È
+È3¬S
+³¯
+HÚ]XÐY[\È]X[]KX˜\ÙY\›[ÛšXÈ]™\˜YÚ[™Âˆ
+KÊó¯È
+È
+K^
+Kó¯
+X
+HÚ\™H\È˜\ÜˆX\ÜÈœ˜XÝ[Û‹ˆ[œÚ]H™[XZ[œÂˆÛ\]ÙZYÚY
+3¬QÊ³àQÈ
+È3¬S
+³àS
+K‚ˆH\]Y\P›Ý[™\žPÛÛ™][ÛœÊ
+Xˆ[›]™\ÜÝ\™HÛ›HÙ]œ›ÛHÝ™X[HÚ[‚ˆZ\Õ˜[œÚY[[ÙX‚ˆH\]Y[•˜[œÚY[
+
+XˆÙ]È\Õ˜[œÚY[[ÙHHYX][žKØ[Âˆ™XÛÛœÝXÝ™\ÜÝ\™T›Ùš[J
+X›Üˆ[›]™\ÜÝ\™K‚‚ˆÈÈÈ™]È\Ýš[B‚‹H
+Š˜ÛÑ›ZY\P™[˜ÚX\šÕ\Ýš˜]˜X
+Šˆ
+\ÝË‹‹‹Ü\[[™KØ
+H8 %NH™[˜ÚX\šÈ\ÝÂˆ[ˆØ]YÛÜšY\Î‚ˆKˆ
+Š”Ú[™ÛT\ÙU\ÝÊŠˆ
+ŠNˆØ\È[™\]ZYÜš^›Û[›ÝÂˆ‹ˆ
+Š•ÛÔ\ÙRÜš^›Û[\ÝÊŠˆ
+ÊNˆØ\ËYÛZ[˜]Y\]ZYYÛZ[˜]Y[\›YYX]HÓÔ‚ˆËˆ
+Š’[˜Û[™Y›ÝÕ\ÝÊŠˆ
+ÊNˆ\[p¬ÝÛš[p¬™\XØ[š\Ù\‚ˆˆ
+Š•™YT\ÙU\ÝÊŠˆ
+ŠNˆ[Ù\˜]H[™YÚØ]\ˆÝ]ˆKˆ
+ŠÛÛœÚ\Ý[˜ÞU\ÝÊŠˆ
+ÊNˆ[Û›ÝÛšXÚ]KÛ[ÛÝ™\ÜÝ\™H›Ùš[KÛ\Ý[HHBˆ‹ˆ
+Š•˜[œÚY[\ÝÊŠˆ
+JNˆŒH\KL	H›ÝÈ˜]HÝ\XÚ[™ÙKÛ\]›Û][Û‚ˆËˆ
+ŠÜ›ÜÜÕ˜[Y][Û•\ÝÊŠˆ
+JNˆÓˆÝÙY\L8 $ÌŽMHœÈ\P™YÙÜÐ[™œš[Âˆˆ
+Š“]\˜]\™U˜[Y][Û•\ÝÊŠˆ
+
+Nˆ[ÛÙHÚ\Û\œÈØ\È™[ØÚ]KÜ˜]š]H[‚ˆ™\XØ[š\Ù\‹X[Y]\ˆ8 nø mHØØ[[™Â‚ˆÈÈÈ™[˜ÚX\šÈ™\Ý[ÈÝ[[X\žB‚Ÿ\ÝÛÑ›ZY\HÈ™YÙÜÐ[™œš[›Ý\ÈŸKKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHŸÚ[™ÛK\\ÙHØ\ÈŽN^Ù[[YÜ™Y[Y[ŸÛË\\ÙHÓˆL8 $ÌŽMHŽx $ÌKŒÌÈÚ][ˆ[™Ú[™Y\š[™ÈXØÝ\˜XÞHŸ™\XØ[š\Ù\ˆKŒ˜\ˆÜ˜]š]HX]Ú\È3àYÒØ[Ý[][ÛˆŸX[Y]\ˆØØ[[™È
+ˆ‹ÌLˆŠHÌËðåÈÛÜÙHÈ[Ü™]XØ[ŒÌ°åÈ
+8 nø mJHŸ˜[œÚY[Û\]›Û][ÛˆŒNH8¡¤ˆŒHÛ\XÜ™X\Ù\ÈY\ˆ›ÝÈ[˜Ü™X\ÙH‚ˆÈÈÈZYÜ˜][Û‚‚“›Èœ™XZÚ[™ÈTHÚ[™Ù\Ëˆ^\Ý[™ÈÛÙHØ[[™È[Š
+X[™[•˜[œÚY[
+
+XÚ[˜™Z]™HY[XØ[H
+ÝXYK\Ý]JHÜˆ[Ü™HÛÜœ™XÝH
+˜[œÚY[›ÝÈ]›Û™\ÊK‚‚‹KKB‚ˆÈÈŒ‹LËL8 %šY[]™[ÜY[YÙ[[™ÚÚ[Â‚ˆÈÈÈ™]ÈYÙ[‚‹H
+Š˜šY[™]™[ÜY[
+Šˆ
+™Ú]X‹ØYÙ[ËÙšY[™]™[ÜY[˜YÙ[›Y
+H8 %^\YÙ[›ÜˆÚ[	ˆØ\ÈšY[]™[ÜY[ÛÜšÙ›ÝÜÎˆÛÛ˜Ù\Ù[XÝ[Û‹ÝXœÙXHYX˜XÚË›ÙXÝ[Ûˆ›Ü™XØ\Ý[™Ë[™›Ú™XÝXÛÛ›ÛZXÜÈ
+”‹ÒT”ŠKˆÜ˜Ú\Ý˜]\ÈÛÛ˜Ù\ØÜ™Y[š[™È›ÝYÚš[˜[[™\ÝY[XÚ\Ú[Û‹‚‚ˆÈÈÈ™]ÈÚÚ[È
+
+B‚‹H
+Š˜™\\Ú[KYšY[Y]™[ÜY[
+Šˆ8 %šY[]™[ÜY[Y™XÞXÛH
+Ìx¡¤“Ü\˜][ÛœÊKÛÛ˜Ù\Ù[XÝ[Û‹™\Ù\›Ú\‹ÝÙ[Ù˜XÚ[]HTH]\›œÂ‹H
+Š˜™\\Ú[KYšY[YXÛÛ›ÛZXÜØ
+Šˆ8 %”‹T”‹Ø\Ú›ÝÈ[™Ú[™\Ë›ÜÙYÚX[ˆÔÈ[™RÈRÐÔÈ^[Ù[ËÛÜÝ\Ý[X][Û‚‹H
+Š˜™\\Ú[K\ÝXœÙXKX[™]Ù[Ø
+Šˆ8 %ÝXœÙXH\]Z\Y[T\ËÙ[Ø\Ú[™È\ÚYÛˆ
+THPÌËÓ“Ô”ÓÒÈLL
+KÕT‘ˆÛÜÝ\Ý[X][Û‹YX˜XÚÈ[˜[\Ú\Â‹H
+Š˜™\\Ú[K\›ÙXÝ[Û‹[Ü[Z^˜][Û˜
+Šˆ8 %XÛ[™HÝ\™\Ë›Ý[™XÚÈ[˜[\Ú\ËØ\ÈYÜ[Z^˜][Û‹SÔ‹ÑSÔˆØÜ™Y[š[™Ë[Z\ÜÚ[ÛœÈ˜XÚÚ[™Â‚ˆÈÈÈ\]Yš[\Â‚‹HQÑS•Ë›Y8 %YYšY[]™[ÜY[]È[™ÚÚ[È™Y™\™[˜Ù\Â‹HÓÓ•V›Y8 %\]YYÙ[ÜÚÚ[ÛÝ[È
+MˆYÙ[ËMÚÚ[ÊB‹H™Ú]X‹ØYÙ[ËÜ›Ý]\‹˜YÙ[›Y8 %YYšY[]™[ÜY[›Ý][™Â‹H™Ú]X‹ØYÙ[ËÔ‘PQQK›Y8 %YYšY[]™[ÜY[ÙXÝ[Û‚‹H™Ú]X‹ØYÙ[ËÜÛÛ™K\ÚË˜YÙ[›Y8 %YYšY[™]™[ÜY[È[YØ][ÛˆX›B‹HØÜËÚ[YÜ˜][Û‹ØZWØYÙ[×Ü™Y™\™[˜ÙK›Y8 %YYYÙ[[žKÚÚ[[šY\Ë\]YÜ›ÜÜË\™Y™\™[˜ÙHX›\Â‹HØÜËÚ[YÜ˜][Û‹ØZWØYÙ[X×Ü›ÙÜ˜[[Z[™×Ú[›Ë›Y8 %\]YÛÝ[[™YYYÙ[ÈØ][ÙÂ‹HØÜËÚ[YÜ˜][Û‹ØZWÝÛÜšÙ›Ý×Ù^[\\Ë›Y8 %YY^[\HˆšY[]™[ÜY[ÛÛ˜Ù\Ù[XÝ[Û‚‹HØÜËÙšY[]™[ÜY[Ô‘PQQK›Y8 %YYRHYÙ[	ˆÚÚ[ÈÙXÝ[Û‚‹HØÜËÔ‘Q‘T‘SÑWÓPS•PSÒS‘V›Y8 %\]Y\ØÜš\[Û‚‚ˆÈÈÈZYÜ˜][Û‚‚“›ÈÛÙHÚ[™Ù\È™YYYˆ\ÙHšY[™]™[ÜY[›ÜˆšY[]™[ÜY[\ÚÜÈ]Ù\™H™]š[Ý\ÛH[™YžHÛÛ™K\ÚØ‚‚‹KKB‚ˆÈÈŒ‹LËLŒÈ8 %ÓÌˆ[š™XÝ[ÛˆÙ[[˜[\Ú\È[Ù[H
+’TLHÈ’TMŠB‚ˆÈÈÈ™]ÈÛ\ÜÙ\Â‚‹H
+Š˜ÓÌ’[š™XÝ[Û•Ù[[˜[^™\˜
+Šˆ
+›ØÙ\ÜË™\]Z\Y[œ\[[™X
+H8 %YÚ[]™[ØY™]HÜ˜Ú\Ý˜]Üˆ›ÜˆÓÌˆ[š™XÝ[ÛˆÙ[Î‚ˆHÝXYK\Ý]HÙ[›Ü™H›ÝÈšXH\P™YÙÜÐ[™œš[ÂˆH\ÙH›Ý[™\žHØØ[›š[™È
+UÜXÙH›\ÚÜšY
+BˆH[\\š]H[œšXÚY[X\[™È[ˆÛË\\ÙH™YÚ[Û‚ˆHÚ]ÝÛˆØY™]H\ÜÙ\ÜÛY[]˜\š[Ý\È˜\YÒÂˆH™]\›œÈ\ÔØY™UÓÜ\˜]J
+X›ÛÛX[ˆ[™ÛÛ\™Z[œÚ]™HÙ]™\Ý[Ê
+XX\ˆHTNˆÙ]›ZY
+
+XÙ]Ù[Ù[ÛY]žJ
+XÙ]Ü\˜][™ÐÛÛ™][ÛœÊ
+XÙ]›Ü›X][Û•[\\˜]\™J
+XY˜XÚÙYÛÛ\Û™[
+
+X[‘[[˜[\Ú\Ê
+X‚‹H
+Š˜[\\š]S[Ûš]Ü˜
+Šˆ
+›ØÙ\ÜË›YX\Ý\™[Y[]šXÙX
+H8 %\ÙK\\][Û™YÛÛ\ÜÚ][Ûˆ˜XÚÚ[™È]šXÙN‚ˆH^[™ÈÝ™X[SYX\Ý\™[Y[]šXÙP˜\ÙPÛ\ÜØˆH˜XÚÜÈØ\ËÛ\]ZYØ[È[ÛHœ˜XÝ[ÛœÈ[™[œšXÚY[˜XÝÜœÈ
+Ë]˜[Y\ÈHKÞŠBˆHÛÛ™šYÝ\˜X›H[\›H™\ÚÛÈ\ˆÛÛ\Û™[ˆHTNˆY˜XÚÙYÛÛ\Û™[
+˜[YK[\›U™\ÚÛ
+XÙ]Ø\Ô\ÙS[ÛQœ˜XÝ[ÛŠ
+XÙ][œšXÚY[˜XÝÜŠ
+X\Ð[\›Q^ÙYYY
+
+XÙ][™\Ü
+
+X‚‹H
+Š˜˜[œÚY[Ù[›Ü™X
+Šˆ
+›ØÙ\ÜË™\]Z\Y[œ\[[™X
+H8 %Ú]ÝÛˆÛÛÛ[™È˜[œÚY[[Ù[‚ˆH^[™È\[[™XˆH^Û™[X[[\\˜]\™HXØ^HÝØ\™›Ü›X][Ûˆ[\\˜]\™H
+Ù[Ý\›X[Ü˜YY[
+BˆH™\XØ[ÙYÛY[][ÛˆÚ]›\Ú]XXÚ\[™[YHÝ\ˆH˜XÚÜÈ\ÙH]›Û][Ûˆ[™[\\š]H[œšXÚY[Ý™\ˆ[YBˆH[›™\ˆÛ\ÜÈ˜[œÚY[Û˜\ÚÝÝÜ™\È\‹][Y\Ý\\›Ùš[\ÂˆHTNˆÙ]Ù[\
+
+XÙ]›Ü›X][Û•[\\˜]\™JÜË›ÝÛRÊXÙ]Ú]ÝÛÛÛÛ[™Ô˜]J]WÚŠX[”Ú]ÝÛ”Ú[][][ÛŠÝ\œË
+X‚‹H
+Š˜ÓÌ‘›ÝÐÛÜœ™XÝ[ÛœØ
+Šˆ
+›ØÙ\ÜË™\]Z\Y[œ\[[™X
+H8 %Ý]XÈ][]H›ÜˆÓÌ‹\ÜXÚYšXÈ›ÝÈÛÜœ™XÝ[ÛœÎ‚ˆH\ÐÓÌ‘ÛZ[˜]Y›ZY
+
+X8 %ÚXÚÜÈL[Û	HÓÌ‚ˆHÙ]\]ZYÛ\ÛÜœ™XÝ[Û‘˜XÝÜŠ
+X8 %™]\›œÈÌLŽH˜\ÙYÛˆ™YXÙY[\\˜]\™BˆHÙ]œšXÝ[ÛÛÜœ™XÝ[Û‘˜XÝÜŠ
+X8 %™]\›œÈŽKLŽMBˆH\Ý[X]PÓÌ”Ý\™˜XÙU[œÚ[ÛŠ
+X8 %ÝYÙ[ˆÛÜœ™[][Û‚ˆH\Ñ[œÙT\ÙJ
+XÙ]™YXÙY[\\˜]\™J
+XÙ]™YXÙY™\ÜÝ\™J
+X‚ˆÈÈÈ[ÙYšYYÛ\ÜÙ\Â‚‹H
+Š˜\P™YÙÜÐ[™œš[Ø
+Šˆ8 %YY›Ü›X][Ûˆ[\\˜]\™HÜ˜YY[Ý\Ü
+’TLJN‚ˆH™]ÈY]ÙˆÙ]›Ü›X][Û•[\\˜]\™QÜ˜YY[
+ÝX›H[›][\ÝX›HÜ˜YY[Ýš[™È[š]
+XˆH[˜X›\È\Y\[™[X]˜[œÙ™\ˆÚ]Ù[Ý\›X[Ü˜YY[ˆHÚYÛˆÛÛ™[[ÛŽˆ™YØ]]™HÜ˜YY[H[\\˜]\™H[˜Ü™X\Ù\ÈÚ]\‚ˆÈÈÈ\ÝÛÝ™\˜YÙB‚‹HNH\ÝÈ[ˆÓÌ’[š™XÝ[Û“’TÕ\Ýš˜]˜XÛÝ™\š[™È[’TÛ\ÜÙ\Â‚ˆÈÈÈØÝ[Y[][Û‚‚‹H™]ÈØÎˆØÜËÜ›ØÙ\ÜËØÛÌ—Ú[š™XÝ[Û—ÝÙ[Ø[˜[\Ú\Ë›Y‹H\]Yˆ‘Q‘T‘SÑWÓPS•PSÒS‘V›YØÜËÜ›ØÙ\ÜËÔ‘PQQK›Y‚‹KKB‚ˆÈÈŒ‹LËLŒˆ8 %[ÝÜˆYXÚ[šXØ[\ÚYÛˆ[™ÛÛXš[™Y\]Z\Y[\ÚYÛˆ™\Ü‚ˆÈÈÈ™]ÈÛ\ÜÙ\Â‚‹H
+Š˜[ÝÜ“YXÚ[šXØ[\ÚYÛ˜
+Šˆ
+›ØÙ\ÜË›YXÚ[šXØ[\ÚYÛ‹›[ÝÜ˜
+H8 %\ÚXØ[ÛYXÚ[šXØ[\ÚYÛˆÙˆ[XÝšXÈ[ÝÜœÎ‚ˆH›Ý[™][ÛˆØYÈ
+Ý]XÈ
+È[˜[ZXÊH[™X\ÜÈ\ˆQQQHH
+ÎŒH˜][ÊBˆHÛÛÛ[™ÈÛ\ÜÚYšXØ][Ûˆ\ˆQPÈŒÍMˆ
+PÍLKÒPÍŒLKÒPÎUÊBˆH™X\š[™ÈÙ[XÝ[Ûˆ[™LY™H\ˆTÓÈŽH
+˜[œÈ›Û\‹XœšXØ][ÛŠBˆHšXœ˜][Ûˆ[Z]È\ˆQPÈŒÍLMÜ˜YHH[™TÓÈLM‹LÈ›Û™HÛ\ÜÚYšXØ][Û‚ˆH›Ú\ÙH\ÜÙ\ÜÛY[\ˆQPÈŒÍNH[™“Ô”ÓÒÈËLˆ
+ÈŠJH][JBˆH[˜ÛÜÝ\™KÒT˜][™È\ˆQPÈŒÍMK^X\šÚ[™È\ˆQPÈŒÎH
+›Û™HÌKÌŠBˆH[š\›Û›Y[[\˜][™È\ˆQPÈŒÍLH
+[]YNˆIKÌLHX›Ý™HLNÈ[\\˜]\™Nˆ‹IKð¬ÈX›Ý™H0¬ÊBˆH[ÝÜˆÙZYÚ[™[Y[œÚ[Û˜[\Ý[X][Û‚ˆHÛÛœÝXÝÜœÎˆ[ÝÜ“YXÚ[šXØ[\ÚYÛŠÝX›HÚYÝÙ\’ÕÊX[ÝÜ“YXÚ[šXØ[\ÚYÛŠ[XÝšXØ[\ÚYÛŠX‚‹H
+Š˜\]Z\Y[\ÚYÛ”™\Ü
+Šˆ
+›ØÙ\ÜË›YXÚ[šXØ[\ÚYÛ˜
+H8 %ÛÛXš[™Y\ÚYÛˆ™\Ü›Üˆ[žH›ØÙ\ÜÈ\]Z\Y[‚ˆHÜ˜Ú\Ý˜]\ÈYXÚ[šXØ[\ÚYÛˆ
+È[XÝšXØ[\ÚYÛˆ
+È[ÝÜˆYXÚ[šXØ[\ÚYÛ‚ˆH›ÙXÙ\È‘PTÒP“HÈ‘PTÒP“WÕÒUÕÐT“’S‘ÔÈÈ“ÕÑ‘PTÒP“H™\™XÝˆHÚXÚÜÎˆ[ÝÜˆ[™\œÚ^š[™Ë^Ù\ÜÚ]™H\˜][™Ë›Ú\ÙH^ÙYY[˜ÙKÝÈ™X\š[™ÈY™BˆHÒœÛÛŠ
+X8 %ÛÛ\™Z[œÚ]™H”ÓÓˆÚ][™YH\ÚYÛˆ\ØÚ\[™\ÂˆHÓØY\Ý[žJ
+X8 %Ý[[X\žH›Üˆ[XÝšXØ[ØY\Ý[YÜ˜][Û‚ˆHÛÜšÜÈÚ][žH›ØÙ\ÜÑ\]Z\Y[[\™˜XÙX
+ÛÛ\™\ÜÛÜ‹[\Ù\\˜]Ü‹]ËŠB‚ˆÈÈÈÙ^HTHY]ÙÂ‚˜˜]˜B‹ËÈ[ÝÜˆYXÚ[šXØ[\ÚYÛˆ8 %Ý[™[Û™B“[ÝÜ“YXÚ[šXØ[\ÚYÛˆ[ÝÜ‘\ÚYÛˆH™]È[ÝÜ“YXÚ[šXØ[\ÚYÛŠLŒ
+NÂ›[ÝÜ‘\ÚYÛ‹œÙ]Û\Ê
+NÂ›[ÝÜ‘\ÚYÛ‹œÙ][XšY[[\\˜]\™PÊKŒ
+NÂ›[ÝÜ‘\ÚYÛ‹œÙ][]YSJLŒ
+NÂ›[ÝÜ‘\ÚYÛ‹œÙ]^˜\™Ý\Ö›Û™JJNÂ›[ÝÜ‘\ÚYÛ‹˜Ø[Ñ\ÚYÛŠ
+NÂ›[ÝÜ‘\ÚYÛ‹ÒœÛÛŠ
+NÂ‚‹ËÈÛÛXš[™Y™\Ü8 %œ›ÛH[žH\]Z\Y[‘\]Z\Y[\ÚYÛ”™\Ü™\ÜH™]È\]Z\Y[\ÚYÛ”™\Ü
+ÛÛ\™\ÜÛÜŠNÂœ™\ÜœÙ]\ÙU‘‘
+YJNÂœ™\ÜœÙ]˜]Y›ÛYÙUŠŒ
+NÂœ™\ÜœÙ]^˜\™Ý\Ö›Û™JJNÂœ™\Ü™Ù[™\˜]T™\Ü
+
+NÂœ™\Ü™Ù]™\™XÝ
+
+NÈËÈ‘‘PTÒP“HˆÈ‘‘PTÒP“WÕÒUÕÐT“’S‘ÔÈˆÈ““ÕÑ‘PTÒP“H‚œ™\ÜÒœÛÛŠ
+NÂ˜‚ˆÈÈÈYÈš^‹Hš^YT˜][™ÈÝ™\œšYH[ˆ›Û™H^˜\™Ý\È\™X\È8 %QQQHHTMHZ[š[][H›ÈÛ™Ù\ˆÝ™\œšY\È›Û™HTˆ™\]Z\™[Y[‚ˆÈÈÈ\ÝÛÝ™\˜YÙB‹HŒˆ™]È\ÝÈ[ˆ[ÝÜ“YXÚ[šXØ[\ÚYÛ•\ÝˆÝ[™[Û™H\ÚYÛ‹ÛX[Û\™ÙH[ÝÜœË[]YKÝ[\\˜]\™H\˜][™Ë^˜\™Ý\È\™XH[˜ÛÜÝ\™KšXœ˜][Ûˆ›Û™\Ë“Ô”ÓÒÈ›Ú\ÙHÛÛ\X[˜ÙK™X\š[™ÈLY™K‘‘›Ý\Ë\YYÝ[™\™ËÛÛ\™\ÜÛÜˆ[YÜ˜][Û‹”ÓÓ‹ÓX\Ý]]ÛÛXš[™Y™\ÜÂ‚ˆÈÈÈØÝ[Y[][Û‚‹H™]ÈØÎˆØÜËÜ›ØÙ\ÜËÛ[ÝÜ‹[YXÚ[šXØ[Y\ÚYÛ‹›Y‹H\]Yˆ‘Q‘T‘SÑWÓPS•PSÒS‘V›YØ\Xš[]HX\YXÚ[šXØ[Ù\ÚYÛ‹›Y[XÝšXØ[Y\ÚYÛ‹›Y‚‹KKB‚ˆÈÈŒ‹LËLŒˆ8 %X]^Ú[™Ù\ˆYXÚ[šXØ[\ÚYÛˆÝ[™\™È^[œÚ[Û‚‚ˆÈÈÈ™]È]Hš[\Â‹H
+Š˜X]^Ú[™Ù\•X™SX]\šX[Ë˜ÜÝ˜
+Šˆ8 %ŒˆX]\šX[Ü˜Y\È›ÜˆX™\È[™Ú[ÈÚ]ˆÓVTËÓUË[ÝØX›HÝ™\ÜË\›X[ÛÛ™XÝ]š]KPÑHÛÛ\X[˜ÙK[™[\\˜]\™H[Z]Ë‚ˆÛÝ™\œÈÐKLMÎKÐKLŒLÈ
+LKÕŒ‹ÕÌÌÌÌÌM‹ÌÌM“ÌÌŒJK\^ÜÝ\\‹Y\^ÝKSšKˆ][š][K[˜ÛÛ™[\Ý[ÞK[˜ÛÛÞK[™Ú[]HX]\šX[Ë‚‚ˆÈÈÈÝ[™\™È]X˜\ÙHY][ÛœÂŸÝ[™\™\]Z\Y[\\È™]È[šY\ÈŸKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHŸTKMŒ]YX]^Ú[™Ù\ˆŒH[šY\È
+\ÚYÛˆX\™Ú[œË™[ØÚ]H[Z]ËY›È\Ý›Ú[Y™šXÚY[˜ÞKšXœ˜][ÛŠHŸTKMŒHÝYX]^Ú[™Ù\‹ÐÛÛÛ\ˆH[šY\È
+Z\ˆÛÛÛ\ˆš[œË˜XÙH™[ØÚ]K˜[ˆY™šXÚY[˜ÞJHŸTKMŒˆ\ÝYX]^Ú[™Ù\ˆL[šY\È
+]HØ\ÚÙ]YÝÙ[Y™\ÜÝ\™KÝ[\[Z]ÊHŸ“Ô”ÓÒËTLˆ™]ˆHX]^Ú[™Ù\‹ÐÛÛÛ\‹ÒX]\ˆM[šY\È
+]KØ\™XKÜ™\ÜÝ\™HX\™Ú[œË™[ØÚ]H[Z]ÊHŸ“Ô”ÓÒËSKLH™]ˆˆX]^Ú[™Ù\‹ÐÛÛÛ\‹ÒX]\ˆÈ[šY\È
+Z[‹ÛX^\ÚYÛˆ[\\™™\ÜË”È[Z]ÊHŸTÓQH’RRH]‹ŒHX]^Ú[™Ù\ˆNH[šY\È
+QËLËRLLËQËLÍËQËNNK[ÝØX›HÝ™\ÜÙ\Ë›Ú[Y™šXÚY[˜ÚY\Ë›[™ÙH˜][™ÜÊHŸTÓËLMŽLˆX]^Ú[™Ù\ˆLˆ[šY\È
+™[ØÚ]K›Ý[[™È™\Ú\Ý[˜ÙK˜Y™›HÝ]˜[™ÙJHŸTÓËLMMMÈX]^Ú[™Ù\ˆÈ[šY\È
+]KYš[ˆ[[Z[š][H
+HŸS‹LLÍHX]^Ú[™Ù\ˆÈ[šY\È
+™\ÜÝ\™K›Ú[Y™šXÚY[˜ÞKÛÜœ›ÜÚ[Ûˆ[ÝØ[˜ÙJHŸMMLX]^Ú[™Ù\ˆÈ[šY\È
+™\ÜÝ\™K›Ú[Y™šXÚY[˜ÞKÛÜœ›ÜÚ[Ûˆ[ÝØ[˜ÙJH‚ˆÈÈÈÚ[[™X™Q\ÚYÛØ[Ý[]Ü˜^[™YŸ™]ÈØ\Xš[]HÝ[™\™Y]ÙŸKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHŸX™\ÚY]XÚÛ™\ÜÈ\ˆRLLÈTÓQH’RRHØ[Ý[]UX™\ÚY]XÚÛ™\ÜÕR
+
+XŸ›Þž›H™Z[™›Ü˜Ù[Y[\ˆQËLÍÈTÓQH’RRHØ[Ý[]S›Þž›T™Z[™›Ü˜Ù[Y[
+
+XŸPUÔ˜XÚËXØ[Ý[][Ûˆ\ˆQËLÈTÓQH’RRHØ[Ý[]SPUÔ
+
+XŸY›ÜÝ]XÈ\Ý™\ÜÝ\™H\ˆQËNNHTÓQH’RRHØ[Ý[]RY›Õ\Ý™\ÜÝ\™J
+XŸX]\šX[›Ü\HÛÚÝ\œ›ÛHˆX]^Ú[™Ù\•X™SX]\šX[ÈØYX]\šX[›Ü\Y\Ê
+XŸPÑHTŒMÍHÛÝ\ˆÙ\šXÙH\ÜÙ\ÜÛY[PÑHTŒMÍHÈ“Ô”ÓÒÈKLH\™›Ü›SPÑP\ÜÙ\ÜÛY[
+
+XŸÚ[ÝX™HX]\šX[Ü˜YH˜XÚÚ[™È8 %Ù]Ú[X]\šX[Ü˜YJ
+XÙ]X™SX]\šX[Ü˜YJ
+X‚ˆÈÈÈX]^Ú[™Ù\“YXÚ[šXØ[\ÚYÛ˜[YÜ˜][Û‚‹H™]ÈšY[ÎˆÚ[X]\šX[Ü˜YXX™SX]\šX[Ü˜YXœÔ\X[™\ÜÝ\™XˆÛÝ\”Ù\šXÙP\ÜÙ\ÜÛY[Ú[›Ú[Y™šXÚY[˜ÞX‹HØ[Ñ\ÚYÛŠ
+X›ÝÈ[œÈÚ[[™X™Q\ÚYÛØ[Ý[]Ü˜Ú]TÓQH’RRH[™PÑB‹HÙ]Ú[[™X™PØ[Ý[]ÜŠ
+X›ÝšY\ÈXØÙ\ÜÈÈ]Z[YØ[Ý[]Üˆ™\Ý[Â‹HX]^Ú[™Ù\“YXÚ[šXØ[\ÚYÛ”™\ÜÛœÙX\]YÚ]PUÔY›È\ÝPÑHšY[Â‚ˆÈÈÈZYÜ˜][Ûˆ›Ý\Â‹H^\Ý[™ÈØ[Ñ\ÚYÛŠ
+XØ[ÈÛÜšÈ[˜Ú[™ÙY8 %™]ÈØ[Ý[]Üˆ[œÈ]]ÛX]XØ[B‹HÈXØÙ\ÜÈTÓQKÓPÑH™\Ý[Îˆ\ÚYÛ‹™Ù]Ú[[™X™PØ[Ý[]ÜŠ
+K™Ù]X]ÜÚ[ÚYJ
+X‹H›ÜˆÛÝ\ˆÙ\šXÙNˆÙ]\ÚYÛ‹œÙ]ÛÝ\”Ù\šXÙP\ÜÙ\ÜÛY[
+YJX[™Ù]œÔ\X[™\ÜÝ\™J
+X‹HX]\šX[Ü˜Y\ÈY˜][ÈÐKMLM‹MÌ
+Ú[
+H[™ÐKLMÎH
+X™\ÊHYˆ›ÝÙ]‚‹KKB‚ˆÈÈŒ‹LËLŒˆ8 %ÛÛ\™\ÜÛÜˆØ\Ú[™ÈYXÚ[šXØ[\ÚYÛˆ
+THŒMÈÈTÓQH’RRJB‚ˆÈÈÈ™]ÈÛ\ÜÂ‹H
+Š˜ÛÛ\™\ÜÛÜØ\Ú[™Ñ\ÚYÛØ[Ý[]Ü˜
+Šˆ8 %Ý[™[Û™HØ[Ý[]Üˆ›ÜˆÛÛ\™\ÜÛÜˆØ\Ú[™Âˆ™\ÜÝ\™HÛÛZ[›Y[\ÚYÛˆ\ˆTHŒMÈ[™TÓQHÙXÝ[Ûˆ’RRH]‹ˆK‚‚ˆÈÈÈØ\Xš[]Y\ÈYYŸ™X]\™HÝ[™\™ŸKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKHŸØ\Ú[™ÈØ[XÚÛ™\ÜÈ
+QËLÈ›Ü›][JHTÓQH’RRH]‹ˆHŸX]\šX[Ù[XÝ[ÛˆÚ]ÓVTËÔÓUÈ
+HÜ˜Y\ÊHTÓQHRH\Ÿ[\\˜]\™H\˜][™ÈÙˆ[ÝØX›HÝ™\ÜÈTÓQHRH\X›HPHŸ›Þž›HØY[˜[\Ú\È
+›Ü˜ÙKÛ[ÛY[ØØ[[™ÊHTHŒMÈX›HÈŸ›[™ÙH˜][™È™\šYšXØ][ÛˆÚ][\\˜][™ÈTÓQHŒM‹HÈŒM‹ÈŸY›ÜÝ]XÈ\Ý™\ÜÝ\™HTÓQH’RRHQËNNHŸÛÜœ›ÜÚ[Ûˆ[ÝØ[˜ÙH[YÜ˜][ÛˆTHŒMÈŸPÑHTŒMÍHÈTÓÈMLMMˆÛÝ\ˆÙ\šXÙHÚXÚÈPÑHTŒMÍHŸ\›X[Ü›ÝÝ	ˆY™™\™[X[^[œÚ[ÛˆTHŒMÈŸÜ][[™H›ÛÚ^š[™È
+Üš^›Û[K\Ü]
+HTHŒMÈŸ˜\œ™[Ø\Ú[™ÈÝ]\‹Ú[›™\‹Ù[™XÛÝ™\ˆÚ^š[™ÈTÓQH’RRHQËLÍŸPUÔ˜XÚËXØ[Ý[][ÛˆTÓQH’RRHŸ]]ÛX]XÈX]\šX[™XÛÛ[Y[™][Ûˆ8 %‚ˆÈÈÈ[YÜ˜][Û‚‹HÛÛ\™\ÜÛÜ“YXÚ[šXØ[\ÚYÛ‹˜Ø[Ñ\ÚYÛŠ
+X›ÝÈ]]ÛX]XØ[H[œÈHØ\Ú[™ÂˆØ[Ý[]ÜˆY\ˆ›ØÙ\ÜÈÚ^š[™È[™Ü[]\ÂˆÙ]Ø\Ú[™Ñ\ÚYÛØ[Ý[]ÜŠ
+XÚ]™\Ý[Ë‚‹H™]ÈÛÛ™šYÝ\˜][ÛˆY]ÙÈÛˆÛÛ\™\ÜÛÜ“YXÚ[šXØ[\ÚYÛ˜‚ˆÙ]Ø\Ú[™ÓX]\šX[Ü˜YJÝš[™ÊXÙ]Ø\Ú[™ÐÛÜœ›ÜÚ[Û[ÝØ[˜ÙS[JÝX›JXˆÙ]œÔ\X[™\ÜÝ\™RÔJÝX›JX‚‹HÛÛ\™\ÜÛÜ“YXÚ[šXØ[\ÚYÛ”™\ÜÛœÙX[˜ÛY\È[Ø\Ú[™È\ÚYÛˆ]H[‚ˆHØ\Ú[™Ñ\ÚYÛ˜ÙXÝ[ÛˆÙˆ”ÓÓˆÝ]]‚‚ˆÈÈÈ™]È]Hš[\ÂŸš[HÛÛ[ŸKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHŸ\ÚYÛ™]KÐÛÛ\™\ÜÛÜØ\Ú[™ÓX]\šX[Ë˜ÜÝ˜ŒX]\šX[Ü˜Y\ÈÚ]YXÚ[šXØ[›Ü\Y\ÈŸ\ÚYÛ™]KÜÝ[™\™ËØ\WÜÝ[™\™Ë˜ÜÝ˜
+ÌŒˆTKMŒMÈÛÛ\™\ÜÛÜˆ[šY\ÈŸ\ÚYÛ™]KÜÝ[™\™ËØ\ÛYWÜÝ[™\™Ë˜ÜÝ˜
+ÌNTÓQH’RRHÈŒM‹HÛÛ\™\ÜÛÜˆ[šY\È‚ˆÈÈÈYÙ[ZYÜ˜][Û‚‹HÚ[ˆÜš][™ÈÛÛ\™\ÜÛÜˆØ\Ú[™È\ÚYÛˆÛÙK\ÙHÛÛ\™\ÜÛÜØ\Ú[™Ñ\ÚYÛØ[Ý[]Ü˜ˆ\™XÝHÜˆšXHÛÛ\™Ù]YXÚ[šXØ[\ÚYÛŠ
+K™Ù]Ø\Ú[™Ñ\ÚYÛØ[Ý[]ÜŠ
+X‚‹H›ÜˆÛÝ\ˆÙ\šXÙNˆÙ]\ÚYÛ‹œÙ]˜XÙPÛÛ\X[˜ÙJYJX[™ˆ\ÚYÛ‹œÙ]œÔ\X[™\ÜÝ\™RÔJ˜[YJX™Y›Ü™HØ[[™ÈØ[Ñ\ÚYÛŠ
+X‚‹H›Üˆ]]ÛX]XÈX]\šX[Ù[XÝ[ÛŽˆØ[Ø\Ú[™ÐØ[Ëœ™XÛÛ[Y[™X]\šX[
+
+X‚‚‹KKB‚ˆÈÈŒ‹LËLŒH8 %Ø\Xš[]HØÛÝ]YÙ[[™Ø\Xš[]HX\ÚÚ[‚ˆÈÈÈ™]ÈYÙ[‹H
+Š˜Ø\Xš[]KœØÛÝ]
+Šˆ8 %[˜[^™\È[™Ú[™Y\š[™È\ÚÜËY[YšY\È™\]Z\™YØ\Xš[]Y\ËˆÚXÚÜÈ™\TÚ[HÛÝ™\˜YÙKY[YšY\ÈØ\ËÜš]\È’TË™XÛÛ[Y[™ÈÚÚ[È[™YÙ[\[[™\Ë‚ˆ\ÙH™Y›Ü™HÝ\[™ÈÛÛ\^][KY\ØÚ\[™H\ÚÜË‚‚ˆÈÈÈ™]ÈÚÚ[ŸÚÚ[\œÜÙHŸKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHŸ™\\Ú[KXØ\Xš[]K[X\ÝXÝ\™Y[™[ÜžHÙˆ[™\TÚ[HØ\Xš[]Y\ÈžH\ØÚ\[™H
+SÔË\]Z\Y[•Ý[™\™ËYXÚ[šXØ[\ÚYÛ‹›ÝÈ\ÜÝ\˜[˜ÙKØY™]KXÛÛ›ÛZXÜÊH‚ˆÈÈÈ\]Yš[\Â‹HÛÛ™K\ÚË˜YÙ[›Y8 %\ÙHKHÙXÝ[ÛˆØ‹ŒÈ›ÝÈ™XÛÛ[Y[™È[›ÚÚ[™ÈØ\Xš[]KœØÛÝ]›ÜˆÛÛ\™Z[œÚ]™H\ÚÜÂ‹H›Ý]\‹˜YÙ[›Y8 %YYØ\Xš[]HØÛÝ]È›Ý][™ÈX›H[™]\›ˆˆ
+Ø\Xš[]H\ÜÙ\ÜÛY[
+È[\[Y[][ÛŠB‹H‘PQQK›Y8 %YYØ\Xš[]HØÛÝ]È›Ý][™È	ˆ[ÙXÝ[Ûˆ[™Ø\Xš[]K[X\ÈÚÚ[ÈX›B‹HQÑS•Ë›Y8 %YYØ\Xš[]HØÛÝ]ÈÙ^H]È[™Ø\Xš[]K[X\ÈÚÚ[È™Y™\™[˜ÙB‹HÓÓ•V›Y8 %\]YYÙ[ÛÝ[ÈMÚÚ[ÛÝ[ÈB‹HÛÜ[ÝZ[œÝXÝ[ÛœË›Y8 %YYØ\Xš[]H\ÜÙ\ÜÛY[[]Ú[‚‹KKB‚ˆÈÈŒ‹LËLŒH8 %YÙ[XÛÜÞ\Ý[HŒŽˆ›Ý]\‹ÚÚ[Ë˜[Y][Û‚‚ˆÈÈÈ™]ÈYÙ[Â‹H
+Š˜™\\Ú[Kš[
+›Ý]\ˆYÙ[
+JŠˆ8 %›Ý]\È™\]Y\ÝÈÈÜXÚX[\ÝYÙ[Ëˆ\ÙHÚ[ˆ[œÝ\™HÚXÚYÙ[ÈXÚË‚‚ˆÈÈÈ™]ÈÚÚ[È
+ˆYY
+BŸÚÚ[\œÜÙHŸKKKKKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHŸ™\\Ú[K]›ÝX›\ÚÛÝ[™Ø™XÛÝ™\žHÝ˜]YÚY\È›ÜˆÛÛ™\™Ù[˜ÙH˜Z[\™\Ë™\›È˜[Y\Ë\ÙH\ÜÝY\ÈŸ™\\Ú[KZ[œ]]˜[Y][Û˜™K\Ú[][][Ûˆ[œ]ÚXÚÜÈ
+ÛÛ\ÜÚ][Û‹ÛÛ\Û™[˜[Y\ËÜ™\ˆÙˆÜ\˜][ÛœÊHŸ™\\Ú[K\™YÜ™\ÜÚ[Û‹X˜\Ù[[™\Ø˜\Ù[[™HX[˜YÙ[Y[›Üˆ™]™[[™ÈÚ[[XØÝ\˜XÞHšYŸ™\\Ú[KXYÙ[Z[™Ù™˜ÝXÝ\™YØÚ[X\È›ÜˆYÙ[]ËXYÙ[™\Ý[\ÜÚ[™ÈŸ™\\Ú[K\\ÚXÜËY^[˜][ÛœØZ[‹[[™ÝXYÙH^[˜][ÛœÈÙˆ\›[Ù[˜[ZXÈ[™›ØÙ\ÜÈ[›ÛY[˜HŸ™\\Ú[K\\™›Ü›X[˜ÙKYÝZYXÚ[][][Ûˆ[YH\Ý[X]\È[™Ü[Z^˜][ÛˆÝ˜]YÚY\È
+[ˆ›ÝX›ÛÚË\]\›œÈÚÚ[
+H‚ˆÈÈÈ\]Yš[\Â‹HÛÛ™K\ÚË˜YÙ[›Y8 %YY]]Ë\ÙX\˜Ú\ÝÛÛ][ÛœÈ
+\ÙHÝ\KJH[™Ü›ÜÜËY\ØÚ\[™HÛÛœÚ\Ý[˜ÞHØ]B‹H‘PQQK›Y8 %\]YÚ]™]È›Ý]\ˆYÙ[ÚÚ[ÈX›K[™Ü›ÜÜË\™Y™\™[˜Ù\Â‹H™\\Ú[K[›ÝX›ÛÚË\]\›œËÔÒÒS›Y8 %YY\™›Ü›X[˜ÙH\Ý[X][ÛˆX›H[™Ü[Z^˜][Ûˆ\Â‚‹KKB‚ˆÈÈŒ‹LËLM8 %š^QPÈŒLÍØ\È˜[™HÚ^š[™Â‚ˆÈÈÈÚ[™ÙY‹HÛÛ›Û˜[™TÚ^š[™×ÒQP×ÍŒLÍš˜]˜X8 %Ø\È˜[™HÝˆ›ÝÈ\Ù\ÈÝ[™\™›Û[Y]šXÈ›ÝÈ[œÝXYÙˆXÝX[‹HÛÛ›Û˜[™TÚ^š[™×ÒQP×ÍŒLÍÙ[š˜]˜X8 %Ø[YHš^\YYÈ[™\œÚ[Û‚‚ˆÈÈÈZYÜ˜][Û‚‹HYˆ[ÝH]™HÛÙH\Ú[™ÈÚ^™PÛÛ›Û˜[™QØ\Ê
+X™\Ý[ÈÚ[›ÝÈ™HÛÜœ™XÝ
+™]š[Ý\ÛHŽN	HÛÈÝÈ]L˜\˜JB‹H›ÈTHÚ[™ÙH8 %Ø[YHY]ÙËÛÜœ™XÝY[\›˜[Ø[Ý[][ÛœÂ‚‹KKB‚ˆÈÈŒ‹LËLL8 %›ØÙ\ÜÈ\˜Ú]XÝ\™H[\›Ý™[Y[Â‚ˆÈÈÈ™]ÈT\ÂŸTHÛ\ÜÈ\ØÜš\[ÛˆŸKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHŸÙ][›]Ý™X[\Ê
+X›ØÙ\ÜÑ\]Z\Y[[\™˜XÙX™]\›œÈ\ÝÙˆ[›]Ý™X[\È›Üˆ[žH\]Z\Y[ŸÙ]Ý]]Ý™X[\Ê
+X›ØÙ\ÜÑ\]Z\Y[[\™˜XÙX™]\›œÈ\ÝÙˆÝ]]Ý™X[\È›Üˆ[žH\]Z\Y[ŸYÛÛ›Û\ŠYËÝ›
+X›ØÙ\ÜÑ\]Z\Y[˜\ÙPÛ\ÜØ]XÚ˜[YYÛÛ›Û\ˆÈ\]Z\Y[ŸÙ]ÛÛ›Û\ŠYÊX›ØÙ\ÜÑ\]Z\Y[˜\ÙPÛ\ÜØ™]šY]™HÛÛ›Û\ˆžHYÈ˜[YHŸÙ]ÛÛ›Û\œÊ
+X›ØÙ\ÜÑ\]Z\Y[˜\ÙPÛ\ÜØÙ][˜[YYÛÛ›Û\œÈ\ÈX\ŸÛÛ›™XÝ
+Ü˜ËÝ\KX™[
+X›ØÙ\ÜÔÞ\Ý[X™XÛÜ™\YÛÛ›™XÝ[ÛˆY]Y]HŸÙ]ÛÛ›™XÝ[ÛœÊ
+X›ØÙ\ÜÔÞ\Ý[X]Y\žH[™XÛÜ™YÛÛ›™XÝ[ÛœÈŸÙ][[[Y[Ê
+X›ØÙ\ÜÔÞ\Ý[XÙ][\]Z\Y[ÛÛ›Û\œË[™YX\Ý\™[Y[È‚ˆÈÈÈ™]ÈÛ\ÜÙ\ÂŸÛ\ÜÈXÚØYÙH\œÜÙHŸKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHŸ›ØÙ\ÜÑ[[Y[[\™˜XÙX›ØÙ\ÜØ[šYšYYÝ\\\H›Üˆ\]Z\Y[ÛÛ›Û\œËYX\Ý\™[Y[ÈŸ][TÜ\]Z\Y[›ØÙ\ÜË™\]Z\Y[XœÝ˜XÝ˜\ÙH›Üˆ][KZ[›]ÛÝ]]\]Z\Y[Ÿ›ØÙ\ÜÐÛÛ›™XÝ[Û˜›ØÙ\ÜËœ›ØÙ\ÜÛ[Ù[\YÛÛ›™XÝ[ÛˆY]Y]H
+PUT’PSÑS‘T‘ÖKÔÒQÓS
+H‚ˆÈÈÈZYÜ˜][Û‚‹H
+Š˜XÚÝØ\™ÛÛ\]X›JŠˆ8 %[^\Ý[™ÈÛÙHÛÛ[Y\ÈÈÛÜšÂ‹HYØXÞHÙ]ÛÛ›Û\Š
+XØÙ]ÛÛ›Û\Š
+XÝ[ÛÜšÈ[Û™ÜÚYH˜[YYÛÛ›Û\œÂ‹HÙ][›]Ý™X[\Ê
+XØÙ]Ý]]Ý™X[\Ê
+XY˜][È[\H\ÝÈ›ÜˆÛ\ÜÙ\È]Û‰ÝÝ™\œšYB‚‹KKB‚ˆÈÈŒ‹LËLH8 %ÓÌˆÛÜœ›ÜÚ[Ûˆ[˜[^™\‚‚ˆÈÈÈ™]ÈÛ\ÜÙ\ÂŸÛ\ÜÈXÚØYÙH\œÜÙHŸKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHŸÓÌÛÜœ›ÜÚ[Û[˜[^™\˜Ú[][][Û‹™›ÝØ\ÜÝ\˜[˜ÙXÛÝ\\È[XÝ›Û]HÔHSÔÈÚ]HØX\™SZ[X[\ÈÛÜœ›ÜÚ[Ûˆ[Ù[‚ˆÈÈÈ[\Ü[›ÝB“]\ÝØ[Ú[ZXØ[™XXÝ[Û’[š]
+
+X™Y›Ü™HÜ™X]Q]X˜\ÙJYJX[™Ù]Z^[™Ô[JL
+XÈ[˜X›H\]Y[Ý\ÈÚ[ZXØ[\]Z[Xœš][KˆÚ]Ý]\Ë™]\›œÈËŒ
+™]]˜[
+H™XØ]\ÙHÓÊÈ\È›ÝÙ[™\˜]Y‚‚‹KKB‚ˆÈÈ™KLŒˆ8 %ÝX›HTH™Y™\™[˜ÙB‚ˆÈÈÈÙ^HY]ÙÈ
+[˜Ú[™ÙY
+B•\ÙHÛÜ™HY]ÙÈ]™H™Y[ˆÝX›H›ÜˆYX\œÈ[™\™HØY™HÈ\ÙN‚‹HÞ\Ý[R[\™˜XÙK˜YÛÛ\Û™[
+˜[YK[ÛQœ˜XÝ[ÛŠX‹HÞ\Ý[R[\™˜XÙKœÙ]Z^[™Ô[J[JX‹HÞ\Ý[R[\™˜XÙKš[š]›Ü\Y\Ê
+X‹H\›[Ù[˜[ZXÓÜ\˜][ÛœË•›\Ú
+
+XÈ›\Ú
+
+XÈÙ›\Ú
+
+X‹HÝ™X[KœÙ]›ÝÔ˜]J˜[YK[š]
+XÈÙ][\\˜]\™J˜[YK[š]
+XÈÙ]™\ÜÝ\™J˜[YK[š]
+X‹H›ØÙ\ÜÔÞ\Ý[K˜Y
+\]Z\Y[
+XÈ[Š
+X‹HÙ\\˜]Ü‹™Ù]Ø\ÓÝ]Ý™X[J
+XÈÙ]\]ZYÝ]Ý™X[J
+X‹HÛÛ\™\ÜÛÜ‹œÙ]Ý]]™\ÜÝ\™J˜[YJXÈÙ]ÝÙ\Š[š]
+X‚ˆÈÈÈÛ›ÝÛˆY]Ù˜[YHÛÜœ™XÝ[ÛœÂŸÜ›Û™È˜[YH
+Û‰Ý\ÙJHÛÜœ™XÝ˜[YHŸKKKKKKKKKKKKKKKKKKKKKKKKKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKHŸÙ][š]Ü\˜][ÛŠ›˜[YHŠXÙ][š]
+›˜[YHŠXŸÚ\˜XÝ\š\ÙJ
+XÚ\˜XÝ\š\ÙT\Ñœ˜XÝ[ÛŠ
+XŸÚ\˜XÝ\š^™J
+XÚ\˜XÝ\š\ÙT\Ñœ˜XÝ[ÛŠ
+XŸÜ[Û˜[š\Ñ[\J
+X[Ü[Û˜[š\Ô™\Ù[
+
+X
+˜]˜H
+H

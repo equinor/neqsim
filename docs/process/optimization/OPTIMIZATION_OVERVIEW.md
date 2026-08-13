@@ -491,6 +491,52 @@ solve a mixed-integer problem, run the process, establish process feasibility, r
 approve an operating change. After each candidate, explicitly run NeqSim and verify convergence,
 constraint residuals, conservation, product quality, equipment limits, and nearby behavior.
 
+### Transactional hydraulic action evaluation
+
+`ProcessModelOperatingActionEvaluator` closes the steady-state validation loop for one action and
+explicitly selected reservoir, well, gathering, or pipeline capacity constraints. It establishes a
+converged baseline, captures the action state, applies and runs one candidate through
+`ProcessModelSimulationEvaluator`, snapshots every exact required hydraulic constraint, then
+restores and reruns the baseline before returning. `CandidateEvaluationResult` is immutable and
+serializable and retains action identity/provenance, raw and sign-adjusted objectives, registered
+constraint values and margins, hydraulic utilization and margin, equipment/design provenance,
+confidence, validity applicability, restoration evidence, and diagnostics.
+
+The wrapped simulation evaluator must have no parameters because the transactional wrapper owns
+the one candidate write. Objectives and non-equipment constraints may still be registered before
+construction. The wrapper adds enabled equipment capacity constraints automatically. Require at
+least one exact `area`, `equipment`, and `constraint` binding; a misspelled or disabled constraint,
+non-finite value, limit violation, or sample outside an explicitly declared validity range fails
+closed with a distinct `Outcome`. An absent validity range is reported as `NOT_ASSESSED` and is not
+silently invented.
+
+```java
+ProcessModelSimulationEvaluator simulation = new ProcessModelSimulationEvaluator(model);
+simulation.addObjective("export gas", processModel -> export.getFlowRate("kg/hr"),
+    ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
+
+ProcessModelOperatingAction rate = ProcessModelOperatingAction.continuous("producer-rate",
+    "Producer gas rate", "Subsurface::producer.flowRate", 0.5, 1.5, "MSm3/day",
+    "approved well operating envelope revision A");
+
+ProcessModelOperatingActionEvaluator hydraulic =
+    new ProcessModelOperatingActionEvaluator(simulation, rate)
+        .requireHydraulicConstraint(
+            ProcessModelOperatingActionEvaluator.HydraulicLimitRole.WELL_INFLOW_OUTFLOW,
+            "Subsurface", "well", "well drawdown", "installed maximum drawdown basis");
+
+ProcessModelOperatingActionEvaluator.CandidateEvaluationResult candidate =
+    hydraulic.evaluate(1.2);
+if (!candidate.isBaselineRestored() || !candidate.isBaselineSimulationConverged()) {
+  throw new IllegalStateException("The model baseline was not recovered");
+}
+```
+
+This API consumes existing hydraulic and equipment calculations; it does not add a correlation,
+change topology, prove conservation beyond the configured model, or approve an operating change.
+Use independent `ProcessModel` instances for parallel candidates. Add product, mechanical, safety,
+environmental, and market constraints to the wrapped evaluator when those limits are in scope.
+
 ### ProcessOptimizationEngine Algorithms
 
 ```java

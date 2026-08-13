@@ -725,6 +725,78 @@ Capability inspection proves only that the exact address is readable in the decl
 Application proves only write/read-back consistency. Neither runs NeqSim, changes topology,
 establishes process feasibility, selects a line-up, or constitutes operating or safety approval.
 
+### Evaluate and restore one hydraulic operating candidate
+
+Use `ProcessModelOperatingActionEvaluator` when an optimizer needs a complete candidate result
+against exact enabled reservoir, well, gathering, or pipeline capacity constraints and the shared
+model must be returned to its baseline state before the callback returns. Configure objectives and
+other process constraints on a zero-parameter `ProcessModelSimulationEvaluator`; the transactional
+wrapper owns the action write and automatically registers enabled equipment capacities.
+
+```python
+SimulationEvaluator = (
+    jneqsim.process.util.optimizer.ProcessModelSimulationEvaluator
+)
+ActionEvaluator = (
+    jneqsim.process.util.optimizer.ProcessModelOperatingActionEvaluator
+)
+HydraulicRole = (
+    ActionEvaluator.HydraulicLimitRole
+)
+
+simulation = SimulationEvaluator(process_model)
+simulation.setIncludeStrategyCapacityConstraints(False)
+
+well_rate = Action.continuous(
+    "producer-rate",
+    "Producer gas rate",
+    "Subsurface::producer.flowRate",
+    0.5,
+    1.5,
+    "MSm3/day",
+    "approved well operating envelope revision A",
+)
+hydraulic = ActionEvaluator(simulation, well_rate)
+hydraulic.requireHydraulicConstraint(
+    HydraulicRole.WELL_INFLOW_OUTFLOW,
+    "Subsurface",
+    "well",
+    "well drawdown",
+    "installed maximum drawdown basis",
+)
+
+candidate = hydraulic.evaluate(1.2)
+if not candidate.isBaselineRestored():
+    raise RuntimeError(list(candidate.getDiagnostics()))
+if not candidate.isBaselineSimulationConverged():
+    raise RuntimeError("Restored baseline did not reconverge")
+
+print(candidate.getOutcome())
+for constraint in candidate.getHydraulicConstraints():
+    print(
+        constraint.getBinding().getQualifiedConstraintName(),
+        constraint.getCurrentValue(),
+        constraint.getUnit(),
+        constraint.getUtilization(),
+        constraint.getMargin(),
+        constraint.getDataSource(),
+        constraint.getEvidenceApplicability(),
+    )
+```
+
+Exact names are intentional: a missing or disabled bound constraint fails closed instead of
+silently accepting a different limit. Finite utilization at or below one is insufficient when an
+explicit validity range exists and the candidate lies outside it. Missing validity metadata is
+reported as `NOT_ASSESSED`; confidence remains evidence-quality metadata, not a safety
+probability. The immutable result is Java-serializable and exposes defensive arrays and immutable
+lists for JPype/Python consumers.
+
+The wrapper evaluates one steady-state action at a time and is synchronized because it mutates the
+supplied model. It does not coordinate routing/topology transactions, solve multiple simultaneous
+actions, replace `WellFlow` or pipeline correlations, or infer mechanical, safety, environmental,
+product-quality, or market approval. Register all other applicable constraints on `simulation`
+before constructing the wrapper, and use separate model instances for parallel candidate calls.
+
 ### Export Problem Definition
 
 ```python
