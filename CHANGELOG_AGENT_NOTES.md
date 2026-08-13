@@ -9,6 +9,43 @@
 
 ---
 
+## 2026-08-13 — FIV fluid-viscosity factor corrected, and dead-leg pulsation screening added
+
+**Breaking behaviour change.** `FlowInducedVibrationAnalyser` evaluated the Energy Institute
+fluid-viscosity factor for void fraction above 0.99 as `sqrt(mu / sqrt(0.001))` while
+`PipeBeggsAndBrills.getSegmentMixtureViscosity(int)` already returns **centipoise**. The extra
+square root combined with a Pa·s / cP unit mismatch inflated the dry-gas `F_VF` by a factor 5.6
+and produced an *upward* jump across the GVF = 0.99 boundary, so removing liquid from a wet-gas
+line appeared to *raise* the vibration driver. The governing form is `FVF = sqrt(mu_gas / 1e-3)`
+with the viscosity in Pa·s, i.e. `sqrt(mu_cP / 1 cP)`.
+
+- Corrected to `Math.sqrt(viscosity_cP / REFERENCE_VISCOSITY_CP)`, with
+  `FlowInducedVibrationAnalyser.REFERENCE_VISCOSITY_CP = 1.0` exposed as a public constant.
+- **Impact:** any single-phase-gas LOF computed before this change is a factor 5.6 too high.
+  Two-phase results (GVF ≤ 0.99) and liquid results are unaffected. Re-run gas-dominated cases.
+- Sanity rule for agents: `F_VF` must *fall* as the void fraction goes to 1. The wet-gas branch
+  reaches 0.268 at GVF = 0.99, so a single-phase gas must come out below that (~0.11 for a
+  hydrocarbon gas). At equal standard rate and pressure the wet-over-dry driver ratio is ~3–4.
+- Regression tests: `FlowInducedVibrationAnalyserTest#testDryGasLofBelowWetGasLof` and
+  `#testDryGasFluidViscosityFactorReferencedToOneCentipoise`.
+
+**New capability.** `neqsim.process.safety.vibration.FlowInducedPulsationScreening` and
+`FlowInducedPulsationResult` screen closed side branches (dead legs) for acoustic lock-in — the
+tonal mechanism that governs when a wet-gas line is converted to dry-gas service and that
+main-line FIV screening does not cover.
+
+- Acoustic length runs to the *first acoustic boundary*; **no end correction** is applied.
+- Modes: `f_n = (2n+1)c/(4L)` for `AcousticTermination.CLOSED`, `(n+1)c/(2L)` for `OPEN`, n from 0.
+- Shedding: `f_s = Sr·U0/W_eff` with `W_eff = pi·d_s/4 + r_eff` (the effective mouth width, **not**
+  the branch diameter); `DEFAULT_STROUHAL_MODE_A = 0.37`, `DEFAULT_STROUHAL_MODE_C = 0.20`.
+- Resonance when `0.8 f_n <= f_s <= 1.2 f_n` (`LOCK_IN_ENVELOPE_FRACTION = 0.20`).
+- Helpers `effectiveWidth(...)` and `eigenFrequency(...)` allow length or velocity windows to be
+  built without a full screening.
+- Verified against a published worked example: 3 m closed branch at c = 400 m/s gives
+  33.3 / 100 / 166.7 Hz.
+- Docs: `docs/safety/mah_bowtie_fiv_screening.md`; examples executed by
+  `MahBowTieFivScreeningDocExamplesTest`.
+
 ## 2026-08-13 — Independent stagnant inner HTC for TwoFluidPipe cooldown
 
 - `TwoFluidPipe.setStagnantInnerHeatTransferCoefficient(...)` and its getter now own the zero-local-throughput
