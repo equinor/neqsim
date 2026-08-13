@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.powergeneration.GasTurbine;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -171,6 +172,93 @@ public class CompressorShaftTest {
     assertEquals(1, shaft.getCompressors().size());
     shaft.setSpeed(9000.0);
     assertEquals(9000.0, c1.getSpeed(), 1e-6);
+  }
+
+  /**
+   * An explicit shaft power limit gives a whole-string utilization that accounts for gearbox losses, with no driver
+   * model needed.
+   */
+  @Test
+  void testExplicitMaxShaftPowerGivesUtilization() {
+    Stream f1 = feed(10.0);
+    Compressor c1 = new Compressor("body1", f1);
+    c1.setOutletPressure(20.0);
+    c1.setUsePolytropicCalc(true);
+    c1.setPolytropicEfficiency(0.75);
+    c1.run();
+
+    Compressor c2 = new Compressor("body2", c1.getOutletStream());
+    c2.setOutletPressure(40.0);
+    c2.setUsePolytropicCalc(true);
+    c2.setPolytropicEfficiency(0.75);
+    c2.run();
+
+    CompressorShaft shaft = new CompressorShaft("power-limited shaft");
+    shaft.addCompressor(c1);
+    shaft.addCompressor(c2);
+
+    // No limit configured yet: utilization is reported as zero rather than a fabricated number.
+    assertEquals(0.0, shaft.getPowerUtilization(), 1e-12);
+    assertFalse(shaft.isOverPower());
+
+    double totalKW = shaft.getTotalPower("kW");
+    shaft.setMaxShaftPower(totalKW * 2.0, "kW");
+    assertEquals(0.5, shaft.getPowerUtilization(), 1e-6);
+    assertFalse(shaft.isOverPower());
+
+    shaft.setMechanicalEfficiency(0.97);
+    assertEquals(0.5 / 0.97, shaft.getPowerUtilization(), 1e-6);
+
+    shaft.setMaxShaftPower(totalKW * 0.5, "kW");
+    assertTrue(shaft.isOverPower());
+  }
+
+  /**
+   * A gas-turbine driver supplies the shaft power limit and picks up the bodies as driven loads.
+   */
+  @Test
+  void testGasTurbineDriverLimitsShaft() {
+    Stream f1 = feed(10.0);
+    Compressor c1 = new Compressor("body1", f1);
+    c1.setOutletPressure(20.0);
+    c1.setUsePolytropicCalc(true);
+    c1.setPolytropicEfficiency(0.75);
+    c1.run();
+
+    Compressor c2 = new Compressor("body2", c1.getOutletStream());
+    c2.setOutletPressure(40.0);
+    c2.setUsePolytropicCalc(true);
+    c2.setPolytropicEfficiency(0.75);
+    c2.run();
+
+    CompressorShaft shaft = new CompressorShaft("GT-driven shaft");
+    shaft.addCompressor(c1);
+    shaft.addCompressor(c2);
+
+    SystemSrkEos fuel = new SystemSrkEos(273.15 + 20.0, 20.0);
+    fuel.addComponent("methane", 1.0);
+    fuel.setMixingRule("classic");
+    Stream fuelStream = new Stream("fuel gas", fuel);
+    fuelStream.setFlowRate(500.0, "kg/hr");
+    fuelStream.run();
+
+    GasTurbine turbine = new GasTurbine("GT-1", fuelStream);
+    double ratedKW = shaft.getTotalPower("kW") * 1.25;
+    turbine.setRatedPower(ratedKW, "kW");
+    shaft.setTurbineDriver(turbine);
+
+    assertEquals(2, turbine.getDrivenLoads().size());
+    assertEquals(ratedKW, shaft.getAvailableShaftPower("kW"), ratedKW * 1e-9);
+    assertEquals(1.0 / 1.25, shaft.getPowerUtilization(), 1e-6);
+    assertFalse(shaft.isOverPower());
+
+    // Attaching the same turbine twice must not double count the driven loads.
+    shaft.setTurbineDriver(turbine);
+    assertEquals(2, turbine.getDrivenLoads().size());
+
+    // An explicit limit overrides the turbine rating.
+    shaft.setMaxShaftPower(shaft.getTotalPower("kW") * 0.8, "kW");
+    assertTrue(shaft.isOverPower());
   }
 
   /**

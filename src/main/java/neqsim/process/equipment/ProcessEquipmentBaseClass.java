@@ -1108,6 +1108,25 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   }
 
   /**
+   * Removes a capacity constraint by name.
+   *
+   * @param constraintName the name of the constraint to remove
+   * @return true if the constraint was found and removed
+   */
+  public boolean removeCapacityConstraint(String constraintName) {
+    ensureCapacityConstraintsInitialized();
+    return capacityConstraints.remove(constraintName) != null;
+  }
+
+  /**
+   * Clears all capacity constraints from this equipment.
+   */
+  public void clearCapacityConstraints() {
+    ensureCapacityConstraintsInitialized();
+    capacityConstraints.clear();
+  }
+
+  /**
    * Derives capacity constraints from this equipment's mechanical-design limits and registers them for
    * capacity/utilization analysis.
    *

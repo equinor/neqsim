@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.powergeneration.GasTurbine;
 
 /**
  * Groups several {@link Compressor} bodies that sit on ONE common shaft (driven by a single gas turbine or motor) so
@@ -34,10 +35,24 @@ import org.apache.logging.log4j.Logger;
  * shaft.addCompressor(rc2); // 2nd body
  * shaft.addCompressor(rc3); // 3rd body (reference)
  * shaft.setSpeedBounds(6000.0, 15000.0);
+ * shaft.setMaxShaftPower(24.0, "MW"); // or shaft.setTurbineDriver(gasTurbine)
  * // re-run the whole flowsheet between speed guesses so inter-body streams update
  * shaft.solveSpeed(rc3, 49.0, "bara", () -> process.run());
  * double rpm = shaft.getSpeed();
+ * double util = shaft.getPowerUtilization(); // whole-string power vs the driver limit
  * }</pre>
+ *
+ * <h2>Driver power limit</h2>
+ *
+ * <p>
+ * A common shaft has ONE driver, so the power limit belongs to the shaft rather than to any single body. Set it either
+ * explicitly with {@link #setMaxShaftPower(double, String)}, or from a driver model: {@link #setTurbineDriver} attaches
+ * a {@link GasTurbine} (the bodies become its driven loads, so its fuel gas and its own power utilization track the
+ * string duty, and its rated power limits the shaft) and {@link #setDriver} attaches a {@link CompressorDriver} whose
+ * speed-dependent, ambient-derated curve is evaluated at the solved common speed. Gearbox losses are covered by
+ * {@link #setMechanicalEfficiency(double)}. {@link #getPowerUtilization()} then reports the whole-string utilization
+ * and {@link #solveSpeed} returns {@link SolveStatus#OVER_POWER} when the driver cannot deliver.
+ * </p>
  *
  * @author NeqSim Development Team
  * @version 1.0
@@ -57,6 +72,18 @@ public class CompressorShaft implements Serializable {
 
   /** Common shaft speed in rpm. */
   private double speed = 10000.0;
+
+  /** Explicit installed shaft power limit in watts (0 = not set, resolve from the driver instead). */
+  private double maxShaftPowerW = 0.0;
+
+  /** Gearbox / coupling efficiency between the driver output and the compressor bodies. */
+  private double mechanicalEfficiency = 1.0;
+
+  /** Optional driver model (motor or gas turbine) giving a speed- and ambient-dependent power limit. */
+  private CompressorDriver driver = null;
+
+  /** Optional gas turbine driving this shaft. */
+  private GasTurbine turbineDriver = null;
 
   /** Lower speed bound in rpm. */
   private double minSpeed = 500.0;
@@ -303,6 +330,187 @@ public class CompressorShaft implements Serializable {
       throw new IllegalArgumentException("CompressorShaft " + name + ": compressor must not be null.");
     }
     compressors.add(compressor);
+    registerDrivenLoad(compressor);
+  }
+
+  /**
+   * Set an explicit installed shaft power limit for the whole string (all bodies plus gearbox losses). This is the
+   * simplest way to get a shaft utilization: no driver model is needed.
+   *
+   * @param maxPower the installed shaft power limit (0 or negative clears the limit)
+   * @param unit power unit: "W", "kW" or "MW"
+   */
+  public void setMaxShaftPower(double maxPower, String unit) {
+    this.maxShaftPowerW = maxPower > 0.0 ? maxPower * powerFactor(unit) : 0.0;
+  }
+
+  /**
+   * Get the explicit installed shaft power limit.
+   *
+   * @param unit power unit: "W", "kW" or "MW"
+   * @return the configured shaft power limit, or 0 if none was set
+   */
+  public double getMaxShaftPower(String unit) {
+    return maxShaftPowerW / powerFactor(unit);
+  }
+
+  /**
+   * Set the gearbox / coupling efficiency between the driver output and the compressor bodies. The driver must deliver
+   * the sum of the body powers divided by this efficiency.
+   *
+   * @param efficiency the mechanical efficiency in the range (0, 1]
+   */
+  public void setMechanicalEfficiency(double efficiency) {
+    if (efficiency <= 0.0 || efficiency > 1.0) {
+      throw new IllegalArgumentException("mechanical efficiency must be in the range (0, 1]");
+    }
+    this.mechanicalEfficiency = efficiency;
+  }
+
+  /**
+   * Get the gearbox / coupling efficiency.
+   *
+   * @return the mechanical efficiency
+   */
+  public double getMechanicalEfficiency() {
+    return mechanicalEfficiency;
+  }
+
+  /**
+   * Attach a driver model (electric motor or gas turbine) whose speed-dependent and ambient-derated power curve limits
+   * the shaft. Used when no explicit {@link #setMaxShaftPower(double, String)} limit is configured.
+   *
+   * @param driver the driver model, or {@code null} to detach
+   */
+  public void setDriver(CompressorDriver driver) {
+    this.driver = driver;
+  }
+
+  /**
+   * Get the attached driver model.
+   *
+   * @return the driver model, or {@code null}
+   */
+  public CompressorDriver getDriver() {
+    return driver;
+  }
+
+  /**
+   * Attach a {@link GasTurbine} as the driver of this shaft. Every body already on the shaft (and every body added
+   * later) is registered as a driven load on the turbine, so the turbine's fuel gas and its own power utilization track
+   * the string duty. The turbine's rated power also becomes the shaft power limit when no explicit
+   * {@link #setMaxShaftPower(double, String)} limit is set.
+   *
+   * @param turbine the driving gas turbine, or {@code null} to detach
+   */
+  public void setTurbineDriver(GasTurbine turbine) {
+    this.turbineDriver = turbine;
+    if (turbine != null) {
+      for (Compressor compressor : compressors) {
+        registerDrivenLoad(compressor);
+      }
+    }
+  }
+
+  /**
+   * Get the gas turbine driving this shaft.
+   *
+   * @return the driving gas turbine, or {@code null}
+   */
+  public GasTurbine getTurbineDriver() {
+    return turbineDriver;
+  }
+
+  /**
+   * Register a body as a driven load on the turbine driver (no-op when no turbine is attached or the body is already
+   * registered, so the aggregated load is never double counted).
+   *
+   * @param compressor the body to register
+   */
+  private void registerDrivenLoad(Compressor compressor) {
+    if (turbineDriver != null && !turbineDriver.getDrivenLoads().contains(compressor)) {
+      turbineDriver.addDrivenLoad(compressor);
+    }
+  }
+
+  /**
+   * Get the shaft power the driver must deliver: the sum of the body powers divided by the mechanical (gearbox)
+   * efficiency.
+   *
+   * @param unit power unit: "W", "kW" or "MW"
+   * @return the required driver power in the requested unit
+   */
+  public double getRequiredDriverPower(String unit) {
+    return getTotalPower() / mechanicalEfficiency / powerFactor(unit);
+  }
+
+  /**
+   * Get the power the driver can deliver at the current shaft speed and ambient conditions.
+   *
+   * <p>
+   * Resolution order: an explicit {@link #setMaxShaftPower(double, String)} limit wins, then a {@link CompressorDriver}
+   * curve evaluated at the current speed (ambient-derated for a gas-turbine driver), then the rated power of an
+   * attached {@link GasTurbine}. Returns 0 when no limit is configured.
+   * </p>
+   *
+   * @param unit power unit: "W", "kW" or "MW"
+   * @return the available shaft power in the requested unit, or 0 if no limit is defined
+   */
+  public double getAvailableShaftPower(String unit) {
+    double availableW = 0.0;
+    if (maxShaftPowerW > 0.0) {
+      availableW = maxShaftPowerW;
+    } else if (driver != null && driver.getMaxAvailablePowerAtSpeed(speed) > 0.0) {
+      availableW = driver.getMaxAvailablePowerAtSpeed(speed) * 1.0e3;
+    } else if (turbineDriver != null && turbineDriver.getRatedPower() > 0.0) {
+      availableW = turbineDriver.getRatedPower();
+    }
+    return availableW / powerFactor(unit);
+  }
+
+  /**
+   * Get the shaft power utilization: required driver power divided by available driver power.
+   *
+   * @return the utilization as a fraction (1.0 = at the limit), or 0 when no power limit is configured
+   */
+  public double getPowerUtilization() {
+    double available = getAvailableShaftPower("W");
+    if (available <= 0.0) {
+      return 0.0;
+    }
+    double required = getRequiredDriverPower("W");
+    if (Double.isNaN(required) || required <= 0.0) {
+      return 0.0;
+    }
+    return required / available;
+  }
+
+  /**
+   * Whether the string draws more power than the driver can deliver at the current speed.
+   *
+   * @return {@code true} when a power limit is configured and exceeded
+   */
+  public boolean isOverPower() {
+    return getPowerUtilization() > 1.0;
+  }
+
+  /**
+   * Convert a power unit to its factor relative to watts.
+   *
+   * @param unit power unit: "W", "kW" or "MW"
+   * @return the number of watts per unit
+   */
+  private static double powerFactor(String unit) {
+    if ("kW".equals(unit)) {
+      return 1.0e3;
+    }
+    if ("MW".equals(unit)) {
+      return 1.0e6;
+    }
+    if ("W".equals(unit) || unit == null) {
+      return 1.0;
+    }
+    throw new IllegalArgumentException("unsupported power unit '" + unit + "' (use W, kW or MW).");
   }
 
   /**
@@ -524,6 +732,9 @@ public class CompressorShaft implements Serializable {
    * @return the first limit hit, or {@link SolveStatus#FEASIBLE} if all bodies are within limits
    */
   private SolveStatus checkBodyLimits() {
+    if (isOverPower()) {
+      return SolveStatus.OVER_POWER;
+    }
     for (Compressor compressor : compressors) {
       if (compressor.getCompressorChart() == null) {
         continue;
@@ -631,6 +842,16 @@ public class CompressorShaft implements Serializable {
       sum += compressor.getPower();
     }
     return sum;
+  }
+
+  /**
+   * Get the total shaft power (sum of the body powers) in the requested unit.
+   *
+   * @param unit power unit: "W", "kW" or "MW"
+   * @return the total shaft power in the requested unit
+   */
+  public double getTotalPower(String unit) {
+    return getTotalPower() / powerFactor(unit);
   }
 
   /**
