@@ -1,20 +1,18 @@
 """
 ====================================================================================================
-NEQSIM CO2 IMPURITY KINETIC MODEL - CORE SIMULATION ENGINE WITH SETTERS & AUTOMATED REPORTING
+NEQSIM CO2 IMPURITY KINETIC MODEL - CORE SIMULATION ENGINE WITH SETTERS, GETTERS & CSTR EXPERIMENTS
 ====================================================================================================
 This module provides a 100% pure physical rate laws engine and CSTR hydrodynamics simulator
 for multi-component impurity reactions in dense liquid, supercritical, and gas-phase CO2 streams.
 
 Features:
 - Parameter Setters: set_reaction_constants(...) & set_reactor_geometry(...)
-- Automated Printable Reactor Report: generate_reactor_report()
-- Full CSTR Hydrodynamics & Continuous Flow Mass Balance
-
-ALL physical, kinetic, and thermodynamic constants are explicitly defined as named constants 
-with thorough documentation comments. NO BLANK / MAGIC NUMBERS ARE USED IN FORMULAS.
+- Getter Methods: get_fluid_properties(), get_reaction_rates(), get_reactor_report(), get_table_results(...)
+- Full CSTR Hydrodynamics & Variable Volume / Flow In-Out Autoclave Experiment Simulator
 """
 
 import numpy as np
+import pandas as pd
 from scipy.integrate import solve_ivp
 
 
@@ -23,12 +21,13 @@ from scipy.integrate import solve_ivp
 # ==================================================================================================
 R_GAS = 8.314462618             # Universal Gas Constant [J / (mol * K)]
 MW_CO2 = 44.0095                # Molar Mass of CO2 [g / mol]
+MW_N2 = 28.0134                 # Molar Mass of N2 [g / mol]
 P_CRIT_CO2_BAR = 73.8           # Critical Pressure of CO2 [bar]
 T_CRIT_CO2_K = 304.13           # Critical Temperature of CO2 [K]
 
 
 # ==================================================================================================
-# DEFAULT REACTION PARAMETERS: PRE-EXPONENTIAL FACTORS (A) AND ACTIVATION ENERGIES (Ea)
+# DEFAULT REACTION PARAMETERS
 # ==================================================================================================
 DEFAULT_KINETIC_PARAMS = {
     'R1':  {'name': 'SO2 + 0.5 O2 + H2O <-> H2SO4',           'A': 1.0e4,  'Ea': 45000.0, 'units': 'm3 / (kmol * s)'},
@@ -43,7 +42,6 @@ DEFAULT_KINETIC_PARAMS = {
     'R8_ss': {'name': 'H2S + 0.5 O2 -> 1/8 S8 + H2O (SS)',    'A': 2.0e3,  'Ea': 65000.0, 'units': 'm3 / (kmol * s)'}
 }
 
-# Standard Gibbs Free Energy of Species [J / mol]
 DG_SO2_STDGIBBS = -300.1e3
 DG_O2_STDGIBBS = 0.0
 DG_H2O_STDGIBBS = -237.1e3
@@ -63,7 +61,7 @@ SRK_LIQUID_PHI_CO2_BASE = 0.95  # Liquid phase base SRK fugacity coefficient for
 class CO2ImpurityKineticsModel:
     """
     100% Pure Physical Simulator for Impurity Reactions in CO2 Streams.
-    Supports setter customization for kinetics/geometry and automated report generation.
+    Supports setter customization for kinetics/geometry, getter methods, and automated report generation.
     """
 
     SPECIES = [
@@ -81,7 +79,6 @@ class CO2ImpurityKineticsModel:
         if self.material not in self.SUPPORTED_MATERIALS:
             self.material = 'carbon_steel'
         
-        # Deep copy default kinetic parameters so user can customize
         self.kinetic_params = {k: v.copy() for k, v in DEFAULT_KINETIC_PARAMS.items()}
 
         # Reactor Geometry Defaults: Volume = 300 mL, Diameter = 6.5 cm
@@ -92,11 +89,12 @@ class CO2ImpurityKineticsModel:
 
         self.molar_density, self.phase, self.phi_dict = self._calculate_srk_fugacities(T_kelvin, P_bar)
 
+    # ----------------------------------------------------------------------------------------------
+    # SETTER METHODS
+    # ----------------------------------------------------------------------------------------------
     def set_reaction_constants(self, reaction_identifier, A_forward=None, Ea_forward_kJ_mol=None):
         """
         Setters for reaction kinetic constants (A_forward, Ea_forward).
-        Accepts reaction ID ('R1', 'R2', 'R3a', 'R3b', 'R4', 'R5', 'R6', 'R7', 'R8')
-        or reaction equation string (e.g. 'SO2 + H2S + NO2 + O2 -> H2SO4').
         """
         rxn_id = None
         clean_id = str(reaction_identifier).strip().lower()
@@ -131,7 +129,6 @@ class CO2ImpurityKineticsModel:
     def set_reactor_geometry(self, diameter_cm=None, length_cm=None, volume_ml=None, mass_flow_g_h=None):
         """
         Setters for reactor geometry parameters.
-        Can specify (diameter_cm, volume_ml), (diameter_cm, length_cm), or volume_ml.
         Calculates reactor length L, area A_cross, and volume V automatically.
         """
         if diameter_cm is not None:
@@ -148,55 +145,110 @@ class CO2ImpurityKineticsModel:
             self.length_cm = float(length_cm)
             self.volume_ml = A_cross_cm2 * self.length_cm
 
+    # ----------------------------------------------------------------------------------------------
+    # GETTER METHODS
+    # ----------------------------------------------------------------------------------------------
+    def get_fluid_properties(self):
+        """
+        Getter returning dictionary of current thermodynamic fluid properties.
+        """
+        return {
+            'temperature_C': self.T - 273.15,
+            'temperature_K': self.T,
+            'pressure_bar': self.P,
+            'phase': self.phase,
+            'molar_density_kmol_m3': self.molar_density,
+            'mass_density_kg_m3': self.molar_density * MW_CO2,
+            'mass_density_g_ml': (self.molar_density * MW_CO2) * 1e-3,
+            'phi_fugacities': self.phi_dict
+        }
+
+    def get_reaction_rates(self, moisture_ppm=10.0):
+        """
+        Getter returning dictionary of reaction rate constants k_f and Gibbs equilibrium constants Keq.
+        """
+        return self._calculate_pure_physical_rate_constants(moisture_ppm)
+
+    def get_reactor_geometry(self):
+        """
+        Getter returning dictionary of reactor dimensions and hydrodynamics.
+        """
+        A_cross_cm2 = np.pi * (self.diameter_cm**2) / 4.0
+        rho_g_ml = (self.molar_density * MW_CO2) * 1e-3
+        m_reactor_g = self.volume_ml * rho_g_ml
+        tau_hours = m_reactor_g / self.mass_flow_g_h if self.mass_flow_g_h > 0 else 0.0
+
+        return {
+            'volume_ml': self.volume_ml,
+            'volume_m3': self.volume_ml * 1e-6,
+            'diameter_cm': self.diameter_cm,
+            'diameter_m': self.diameter_cm * 1e-2,
+            'cross_sectional_area_cm2': A_cross_cm2,
+            'cross_sectional_area_m2': A_cross_cm2 * 1e-4,
+            'length_cm': self.length_cm,
+            'length_m': self.length_cm * 1e-2,
+            'mass_flow_g_h': self.mass_flow_g_h,
+            'inventory_mass_g': m_reactor_g,
+            'residence_time_hours': tau_hours,
+            'residence_time_seconds': tau_hours * 3600.0
+        }
+
     def generate_reactor_report(self):
         """
-        Generates and prints the formatted Reactor Geometry & Residence Time Report requested by user.
+        Generates and returns formatted Reactor Geometry & Residence Time Report string.
         """
-        V_ml = self.volume_ml
-        V_m3 = V_ml * 1e-6
-        D_cm = self.diameter_cm
-        D_m = D_cm * 1e-2
-
-        A_cross_cm2 = np.pi * (D_cm**2) / 4.0
-        A_cross_m2 = A_cross_cm2 * 1e-4
-
-        L_cm = V_ml / A_cross_cm2
-        L_m = L_cm * 1e-2
-
-        T_C = self.T - 273.15
-        P_bar = self.P
-
-        rho_m = self.molar_density
-        rho_kg_m3 = rho_m * MW_CO2
-        rho_g_ml = rho_kg_m3 * 1e-3
-
-        m_reactor_g = V_ml * rho_g_ml
-        m_flow_g_h = self.mass_flow_g_h
-
-        tau_hours = m_reactor_g / m_flow_g_h if m_flow_g_h > 0 else 0.0
-        tau_sec = tau_hours * 3600.0
+        geom = self.get_reactor_geometry()
+        props = self.get_fluid_properties()
 
         report_lines = [
             "1. Reactor Geometry & Length (L) Derivation",
-            f"Target Volume (V): {V_ml:.1f} mL = {V_ml:.1f} cm3 = {V_m3:.1e} m3",
-            f"Inner Diameter (D): {D_cm:.2f} cm = {D_m:.4f} m",
-            f"Cross-Sectional Area (A_cross): A_cross = pi * D^2 / 4 = pi * ({D_cm:.2f} cm)^2 / 4 = {A_cross_cm2:.4f} cm2 ({A_cross_m2:.5e} m2)",
-            f"Calculated Reactor Length (L): L = V / A_cross = {V_ml:.1f} cm3 / {A_cross_cm2:.4f} cm2 = {L_cm:.4f} cm ({L_m:.6f} m)",
+            f"Target Volume (V): {geom['volume_ml']:.1f} mL = {geom['volume_ml']:.1f} cm3 = {geom['volume_m3']:.1e} m3",
+            f"Inner Diameter (D): {geom['diameter_cm']:.2f} cm = {geom['diameter_m']:.4f} m",
+            f"Cross-Sectional Area (A_cross): A_cross = pi * D^2 / 4 = pi * ({geom['diameter_cm']:.2f} cm)^2 / 4 = {geom['cross_sectional_area_cm2']:.4f} cm2 ({geom['cross_sectional_area_m2']:.5e} m2)",
+            f"Calculated Reactor Length (L): L = V / A_cross = {geom['volume_ml']:.1f} cm3 / {geom['cross_sectional_area_cm2']:.4f} cm2 = {geom['length_cm']:.4f} cm ({geom['length_m']:.6f} m)",
             "",
-            f"2. Hydrodynamic Residence Time (tau) at {P_bar:.1f} bar, {T_C:.1f}°C",
-            f"Fluid Density from SRK EOS: {self.phase.capitalize()} CO2 density rho = {rho_kg_m3:.2f} kg/m3 (rho_m = {rho_m:.4f} kmol/m3).",
-            f"Liquid Mass Inventory: m_reactor = {V_ml:.1f} mL * {rho_g_ml:.5f} g/mL = {m_reactor_g:.2f} grams of {self.phase} CO2.",
-            f"Mass Flow Rate (m_dot): {m_flow_g_h:.1f} g/h.",
-            f"CSTR Residence Time (tau): tau = m_reactor / m_dot = {m_reactor_g:.2f} g / {m_flow_g_h:.1f} g/h = {tau_hours:.4f} HOURS ({tau_sec:.1f} seconds)"
+            f"2. Hydrodynamic Residence Time (tau) at {props['pressure_bar']:.1f} bar, {props['temperature_C']:.1f}°C",
+            f"Fluid Density from SRK EOS: {props['phase'].capitalize()} CO2 density rho = {props['mass_density_kg_m3']:.2f} kg/m3 (rho_m = {props['molar_density_kmol_m3']:.4f} kmol/m3).",
+            f"Liquid Mass Inventory: m_reactor = {geom['volume_ml']:.1f} mL * {props['mass_density_g_ml']:.5f} g/mL = {geom['inventory_mass_g']:.2f} grams of {props['phase']} CO2.",
+            f"Mass Flow Rate (m_dot): {geom['mass_flow_g_h']:.1f} g/h.",
+            f"CSTR Residence Time (tau): tau = m_reactor / m_dot = {geom['inventory_mass_g']:.2f} g / {geom['mass_flow_g_h']:.1f} g/h = {geom['residence_time_hours']:.4f} HOURS ({geom['residence_time_seconds']:.1f} seconds)"
         ]
 
-        report_text = "\n".join(report_lines)
-        return report_text
+        return "\n".join(report_lines)
 
+    def get_table_results(self, sim_results, resolution_hours=2.0):
+        """
+        Formats simulation results into a Pandas DataFrame table with specified hour resolution (e.g. 2 hours).
+        """
+        t_h = sim_results['time_hours']
+        max_h = t_h[-1]
+        target_hours = np.arange(0.0, max_h + resolution_hours/2.0, resolution_hours)
+
+        rows = []
+        for target in target_hours:
+            idx = np.argmin(np.abs(t_h - target))
+            row = {
+                'Time (h)': round(float(t_h[idx]), 1),
+                'H2S (ppm)': round(float(sim_results['ppm']['H2S'][idx]), 2),
+                'SO2 (ppm)': round(float(sim_results['ppm']['SO2'][idx]), 2),
+                'NO2 (ppm)': round(float(sim_results['ppm']['NO2'][idx]), 2),
+                'NO (ppm)': round(float(sim_results['ppm']['NO'][idx]), 4),
+                'O2 (ppm)': round(float(sim_results['ppm']['O2'][idx]), 2),
+                'H2O (ppm)': round(float(sim_results['ppm']['H2O'][idx]), 2),
+                'H2SO4 (ppm)': round(float(sim_results['ppm']['H2SO4'][idx]), 4),
+                'HNO3 (ppm)': round(float(sim_results['ppm']['HNO3'][idx]), 4),
+                'NH3 (ppm)': round(float(sim_results['ppm']['NH3'][idx]), 4),
+                'S8 (ppm)': round(float(sim_results['ppm']['S8'][idx]), 4),
+            }
+            rows.append(row)
+
+        df = pd.DataFrame(rows)
+        return df
+
+    # ----------------------------------------------------------------------------------------------
+    # THERMODYNAMIC & ODE INTEGRATION ENGINE
+    # ----------------------------------------------------------------------------------------------
     def _calculate_srk_fugacities(self, T_K, P_bar):
-        """
-        Calculates fluid molar density (kmol/m3) and SRK EOS Fugacity Coefficients phi_i.
-        """
         phi_dict = {}
 
         if T_K < T_CRIT_CO2_K:
@@ -208,18 +260,14 @@ class CO2ImpurityKineticsModel:
             P_sat = P_CRIT_CO2_BAR
 
         if P_bar < P_sat:
-            # GAS PHASE CO2
             phase = "gas"
             Z = 0.75 + 0.15 * (T_K / 300.0) - 0.05 * (P_bar / 40.0)
             Z = max(min(Z, 0.95), 0.60)
             rho_kg_m3 = (P_bar * 1e5 * (MW_CO2 * 1e-3)) / (Z * R_GAS * T_K)
-            
-            # SRK Gas Phase Fugacity Coefficient
             phi_CO2 = np.exp(min(0.0, -0.15 * (P_bar / 30.0) * (298.15 / T_K)))
             for s in self.SPECIES:
                 phi_dict[s] = phi_CO2 * SRK_GAS_PHI_CO2_BASE
         else:
-            # LIQUID / SUPERCRITICAL PHASE CO2
             phase = "liquid"
             if T_K <= 250.0:
                 rho_kg_m3 = 1060.0 - 1.2 * (T_K - 240.0) + 1.5 * (P_bar - 20.0)
@@ -232,12 +280,8 @@ class CO2ImpurityKineticsModel:
         return rho_m, phase, phi_dict
 
     def _calculate_pure_physical_rate_constants(self, moisture_ppm):
-        """
-        Pure Arrhenius rate constants k(T) = A * exp(-Ea / RT) and Gibbs Equilibrium Constants Keq(T).
-        """
         T = self.T
 
-        # Standard Gibbs Free Energy of Reactions Delta G°rxn [J / mol]
         dG1 = DG_H2SO4_STDGIBBS - (DG_SO2_STDGIBBS + 0.5 * DG_O2_STDGIBBS + DG_H2O_STDGIBBS)
         Keq1 = max(np.exp(min(-dG1 / (R_GAS * T), MAX_KEQ_EXPONENT)), 1e-15)
 
@@ -262,7 +306,6 @@ class CO2ImpurityKineticsModel:
         k3a_f = p['R3a']['A'] * np.exp(-p['R3a']['Ea'] / (R_GAS * T))
         k3b_f = p['R3b']['A'] * np.exp(-p['R3b']['Ea'] / (R_GAS * T))
         
-        # R4 temperature scaling
         k4_f = p['R4']['A'] * np.exp(-p['R4']['Ea'] / (R_GAS * T)) if p['R4']['Ea'] > 0 else p['R4']['A'] * np.exp(530.0 / T)
         
         k5_f = p['R5']['A'] * np.exp(-p['R5']['Ea'] / (R_GAS * T))
@@ -300,12 +343,8 @@ class CO2ImpurityKineticsModel:
         }
 
     def rhs(self, t, C, rates_dict, C_in=None, space_time_sec=None):
-        """
-        ODE Evaluation for Batch or CSTR Hydrodynamics using SRK Fugacity Driving Forces.
-        """
         C_raw = np.maximum(C, MIN_CONCENTRATION_FLOOR)
         
-        # Apply SRK Fugacity Coefficients phi_i
         phi = self.phi_dict
         C_H2S   = C_raw[0] * phi['H2S']
         C_SO2   = C_raw[1] * phi['SO2']
@@ -355,10 +394,8 @@ class CO2ImpurityKineticsModel:
         ])
 
         if C_in is not None and space_time_sec is not None and space_time_sec > 0.0:
-            # CSTR Mass Balance: dC/dt = (C_in - C) / tau + R(C)
             dC_dt = (C_in - C) / space_time_sec + R_vector
         else:
-            # Batch Reactor Mass Balance: dC/dt = R(C)
             dC_dt = R_vector
 
         return dC_dt
