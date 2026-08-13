@@ -138,13 +138,13 @@ public class CO2ImpurityKineticReactor extends TwoPortEquipment {
 
     // Pure Arrhenius Rate Laws k(T) = A * exp(-Ea / RT)
     double k1_f = 1.0e4 * Math.exp(-45000.0 / (R_GAS * T_kelvin));
-    double k2_f = 1.0e6 * Math.exp(-48000.0 / (R_GAS * T_kelvin));
+    double k2_f = 5.0e7 * Math.exp(-28000.0 / (R_GAS * T_kelvin));
     
     // R3a: Base NO2-catalyzed rate without H2S (Calibrated 2.5x slower: Ea3a = 26.0 kJ/mol, A3a = 1.40e6)
     double k3a_f = 1.4e6 * Math.exp(-26000.0 / (R_GAS * T_kelvin));
     
     // R3b: Radical chain accelerated rate when H2S is present (Ea3b = 15.0 kJ/mol)
-    double k3b_f = 2.0e7 * Math.exp(-28000.0 / (R_GAS * T_kelvin));
+    double k3b_f = 2.13e8 * Math.exp(-15000.0 / (R_GAS * T_kelvin));
 
     double k4_f = 1.0e5 * Math.exp(530.0 / T_kelvin);
     double k5_f = 2.4e6 * Math.exp(-28000.0 / (R_GAS * T_kelvin));
