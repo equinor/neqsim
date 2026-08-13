@@ -83,10 +83,8 @@ class FieldDevelopmentOverviewDocumentationTest extends neqsim.NeqSimTest {
   @Test
   void hostCapacityWorkflowReportsTheDocumentedHoldback() {
     HostFacility host = HostFacility.builder("Brownfield host").gasCapacity(10.0).build();
-    ProductionProfileSeries base =
-        new ProductionProfileSeries("base").addPeriod(2028, 7.0, 0.0, 0.0, 0.0);
-    ProductionProfileSeries satellite =
-        new ProductionProfileSeries("satellite").addPeriod(2028, 4.0, 0.0, 0.0, 0.0);
+    ProductionProfileSeries base = new ProductionProfileSeries("base").addPeriod(2028, 7.0, 0.0, 0.0, 0.0);
+    ProductionProfileSeries satellite = new ProductionProfileSeries("satellite").addPeriod(2028, 4.0, 0.0, 0.0, 0.0);
 
     TieInCapacityResult capacity = new TieInCapacityPlanner(host).setHostProductionProfile(base)
         .setSatelliteProductionProfile(satellite).setAllocationPolicy(CapacityAllocationPolicy.BASE_FIRST)
