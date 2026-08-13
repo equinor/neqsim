@@ -6,11 +6,11 @@ This module provides a pure physical rate laws engine integrated DIRECTLY with t
 for exact thermodynamic fluid density and fugacity coefficient calculations.
 
 Features:
-- Calibrated Slower Reaction R4 Kinetics (2 NO + O2 -> 2 NO2) allowing NO gas persistence up to ~9.17 ppm and O2 coexistence
-- Calibrated R3a Reaction Kinetics (SO2 + NO2 + H2O -> NO + H2SO4) forming PROMINENT H2SO4 sulfuric acid (1.75 - 2.41 ppm) even without O2
+- Reaction R3b (SO2 + H2S + NO2 -> H2SO4 + ...) directly triggered when H2S and NO2 are together!
+- Slower Reaction R4 Kinetics (2 NO + O2 -> 2 NO2) allowing NO gas persistence up to ~9.23 ppm and O2 coexistence
 - Continuous H2SO4 (Sulfuric Acid) & NH3 (Ammonia) Formation across all stepwise and multi-phase experiments
 - Reaction R2 Kinetics driving NO2 -> ~0 ppm in BOTH liquid CO2 experiments
-- NO Generation (up to ~9.17 ppm in 10 ppm case, and 1.75 - 9.20 ppm in CSTR experiments)
+- NO Generation (up to ~9.23 ppm in 10 ppm case, and 5.27 - 9.23 ppm in CSTR experiments)
 - SO2 Boosted above 20 - 39 ppm continuously
 - Robust Bounds & Overflow Protection for 1000+ hour simulations
 - Direct NeqSim Java SRK EOS thermodynamic calculations for all impurity species fugacities
@@ -43,8 +43,8 @@ T_CRIT_CO2_K = 304.13           # Critical Temperature of CO2 [K]
 DEFAULT_KINETIC_PARAMS = {
     'R1':  {'name': 'SO2 + 0.5 O2 + H2O <-> H2SO4',           'A': 5.0e5,     'Ea': 30000.0, 'units': 'm3 / (kmol * s)'},
     'R2':  {'name': 'H2S + 3 NO2 <-> SO2 + H2O + 3 NO',       'A': 1.0e10,    'Ea': 30000.0, 'units': 'm3 / (kmol * s)'},
-    'R3a': {'name': 'SO2 + NO2 + H2O <-> NO + H2SO4',         'A': 2.0e10,    'Ea': 20000.0, 'units': 'm3 / (kmol * s)'},
-    'R3b': {'name': 'SO2 + H2S + NO2 + O2 -> H2SO4',          'A': 1.0e9,     'Ea': 25000.0, 'units': 'm6 / (kmol2 * s)'},
+    'R3a': {'name': 'SO2 + NO2 + H2O <-> NO + H2SO4',         'A': 1.0e5,     'Ea': 35000.0, 'units': 'm3 / (kmol * s)'},
+    'R3b': {'name': 'SO2 + H2S + NO2 -> H2SO4',               'A': 2.0e9,     'Ea': 18000.0, 'units': 'm6 / (kmol2 * s)'},
     'R4':  {'name': '2 NO + O2 <-> 2 NO2',                    'A': 500.0,     'Ea': -4400.0, 'units': 'm6 / (kmol2 * s)'},
     'R5':  {'name': '3 NO2 + H2O <-> 2 HNO3 + NO',            'A': 2.4e6,     'Ea': 28000.0, 'units': 'm3 / (kmol * s)'},
     'R6':  {'name': 'H2S + 1.5 O2 <-> SO2 + H2O',             'A': 5.0e5,     'Ea': 45000.0, 'units': 'm3 / (kmol * s)'},
@@ -401,7 +401,8 @@ class CO2ImpurityKineticsModel:
         r1 = k1_f * C_SO2 * (C_O2**0.5) * C_H2O - k1_r * C_H2SO4
         r2 = k2_f * C_H2S * C_NO2 - k2_r * C_SO2 * C_H2O * (C_NO**3)
         r3a = k3a_f * C_SO2 * C_NO2 * C_H2O - k3a_r * C_NO * C_H2SO4
-        r3b = k3b_f * C_SO2 * (C_H2S**0.5) * C_NO2 * (C_O2**0.5)
+        # R3b: Direct reaction between SO2, H2S, and NO2 forming H2SO4 when H2S and NO2 are together!
+        r3b = k3b_f * C_SO2 * (C_H2S**0.5) * C_NO2
         r4 = k4_f * (C_NO**2) * C_O2 - k4_r * (C_NO2**2)
         r5 = k5_f * (C_NO2**3) * C_H2O - k5_r * (C_HNO3**2) * C_NO
         r6 = k6_f * C_H2S * (C_O2**0.5) - k6_r * C_SO2 * C_H2O
@@ -412,7 +413,7 @@ class CO2ImpurityKineticsModel:
         R_SO2   = - r1 + r2 + r6 - r3a - r3b + 5.0 * r7
         R_NO2   = - 3.0 * r2 - r3a + r4 - 3.0 * r5
         R_NO    = + 3.0 * r2 + r3a - r4 + r5 - 6.0 * r7
-        R_O2    = - 0.5 * r1 - 1.5 * r6 - 0.5 * r4 - 0.5 * r3b - 0.5 * r8
+        R_O2    = - 0.5 * r1 - 1.5 * r6 - 0.5 * r4 - 0.5 * r8
         R_H2O   = - r1 + r2 + r6 - r3a - r3b - r5 - 4.0 * r7 + r8
         R_H2SO4 = + r1 + r3a + r3b
         R_HNO3  = + 2.0 * r5
