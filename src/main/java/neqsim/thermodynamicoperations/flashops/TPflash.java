@@ -30,7 +30,7 @@ public class TPflash extends Flash {
   /** Upper sum(zK) bound for a general gas endpoint rescue. */
   private static final double MULTIPHASE_RESCUE_GAS_SUM_Z_K_UPPER_LIMIT = 1.05;
   /** Lower sum(zK) bound for a screened asymmetric-mixture gas endpoint rescue. */
-  private static final double MULTIPHASE_RESCUE_GAS_ASYMMETRIC_SUM_Z_K_LOWER_LIMIT = 0.85;
+  private static final double MULTIPHASE_RESCUE_GAS_ASYMMETRIC_SUM_Z_K_LOWER_LIMIT = 0.75;
   /** Lower sum(z/K) bound for a general gas endpoint rescue. */
   private static final double MULTIPHASE_RESCUE_GAS_SUM_Z_OVER_K_LOWER_LIMIT = 1.05;
   /** Lower sum(z/K) bound for a screened asymmetric-mixture gas endpoint rescue. */
@@ -61,6 +61,8 @@ public class TPflash extends Flash {
   private static final double MULTIPHASE_ENDPOINT_CRITICAL_TEMPERATURE_MARGIN = 80.0;
   /** Minimum gas-phase V/B ratio that justifies a second stability minimum search. */
   private static final double METASTABLE_GAS_VOLUME_OVER_B_LIMIT = 4.0;
+  /** Maximum beta for replacing an invalid incipient sour-gas phase with a balanced endpoint. */
+  private static final double INVALID_INCIPIENT_PHASE_FRACTION_LIMIT = 0.01;
   /** Minimum water feed fraction for ordinary water-rich endpoint refinement. */
   private static final double WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT = 0.01;
   /** Largest incipient secondary-phase fraction eligible for trace-water phase-selection retry. */
@@ -1104,13 +1106,13 @@ public class TPflash extends Flash {
     rescueLowerGibbsPhaseRoot();
     rescueLowerGibbsHydrocarbonPhaseRoots();
     rescueLiquidLiquidEndpointLegacy();
-    rescueLowerGibbsNeutralEndpoint();
     rescueWaterRichEndpoint();
     rescueLowerGibbsMultiphaseAqueousRoot();
     rescueLowerGibbsPhaseRoot();
     refineInvalidAqueousTwoPhaseEndpoint();
     refineInvalidNeutralGasLiquidTwoPhaseEndpointLegacy();
     refineInvalidNeutralTwoPhaseEndpoint();
+    rescueLowerGibbsNeutralEndpoint();
     rescueSinglePhaseMultiphaseEndpoint();
     normalizeSourGasSinglePhaseEndpoint();
 
@@ -1278,13 +1280,21 @@ public class TPflash extends Flash {
       candidate.setMultiPhaseCheck(true);
       candidate.setEnhancedMultiPhaseCheck(false);
       if (system.getNumberOfPhases() == 2 && hasGasPhase) {
-        resetNeutralCandidateToFeed(candidate);
         new TPflash(candidate, candidate.doSolidPhaseCheck()).run();
       } else {
         new TPmultiflash(candidate, candidate.doSolidPhaseCheck()).run();
       }
       boolean accepted = isNeutralFluidTwoPhaseCandidate(candidate) && isBalancedEquilibriumCandidate(candidate)
           && isLowerGibbsMultiphaseCandidate(candidate, referenceGibbsEnergy);
+      if (!accepted && system.getNumberOfPhases() == 2 && hasGasPhase) {
+        candidate = system.clone();
+        resetNeutralCandidateToFeed(candidate);
+        candidate.setMultiPhaseCheck(true);
+        candidate.setEnhancedMultiPhaseCheck(false);
+        new TPflash(candidate, candidate.doSolidPhaseCheck()).run();
+        accepted = isNeutralFluidTwoPhaseCandidate(candidate) && isBalancedEquilibriumCandidate(candidate)
+            && isLowerGibbsMultiphaseCandidate(candidate, referenceGibbsEnergy);
+      }
       if (!accepted && system.getNumberOfPhases() == 1) {
         candidate = system.clone();
         resetNeutralCandidateToFeed(candidate);
@@ -1295,7 +1305,7 @@ public class TPflash extends Flash {
             && isLowerGibbsMultiphaseCandidate(candidate, referenceGibbsEnergy);
       }
       if (accepted) {
-        copyFlashStateFrom(candidate);
+        copyNeutralFlashStatePreservingRoots(candidate);
       }
     } catch (Exception ex) {
       logger.debug("Neutral endpoint stability refinement failed: {}", ex.getMessage());
@@ -1895,9 +1905,15 @@ public class TPflash extends Flash {
       new TPflash(candidate, false).run();
       candidate.init(1);
       double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceState.gibbsEnergy) * 1.0e-8);
+      boolean replacesInvalidIncipientPhase = !Double.isFinite(referenceFugacityResidual)
+          || referenceFugacityResidual >= PHASE_ROOT_EQUILIBRIUM_TOLERANCE;
+      replacesInvalidIncipientPhase &= candidate.getNumberOfPhases() == 1
+          && Math.min(referenceState.betas[0], referenceState.betas[1]) < INVALID_INCIPIENT_PHASE_FRACTION_LIMIT
+          && candidate.getGibbsEnergy() <= referenceState.gibbsEnergy + gibbsTolerance;
       if (isNeutralFluidCandidate(candidate) && isBalancedEquilibriumCandidate(candidate)
           && (referenceMaterialBalanceInvalid
-              || candidate.getGibbsEnergy() < referenceState.gibbsEnergy - gibbsTolerance)) {
+              || candidate.getGibbsEnergy() < referenceState.gibbsEnergy - gibbsTolerance
+              || replacesInvalidIncipientPhase)) {
         copyNeutralFlashStatePreservingRoots(candidate);
       }
     } catch (Exception ex) {
