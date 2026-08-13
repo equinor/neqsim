@@ -121,6 +121,9 @@ public class TwoFluidPipe extends Pipeline {
   /** Upper no-slip fraction for the trace-liquid asymptote of the stratified closure. */
   private static final double STRATIFIED_TRACE_LIQUID_TRANSITION = 1.0e-6;
 
+  /** Default closed-flow fluid-side heat-transfer coefficient in W/(m2 K). */
+  private static final double DEFAULT_STAGNANT_INNER_HEAT_TRANSFER_COEFFICIENT = 50.0;
+
   // ============ Geometry ============
 
   /** Total pipe length (m). */
@@ -259,8 +262,11 @@ public class TwoFluidPipe extends Pipeline {
   /** Surface temperature for heat transfer (K). */
   private double surfaceTemperature = 288.15;
 
-  /** Heat transfer coefficient (W/(m²·K)). */
+  /** Overall or simple-model heat transfer coefficient (W/(m²·K)). */
   private double heatTransferCoefficient = 0.0;
+
+  /** Fluid-side heat transfer coefficient used at zero local throughput (W/(m²·K)). */
+  private double stagnantInnerHeatTransferCoefficient = DEFAULT_STAGNANT_INNER_HEAT_TRANSFER_COEFFICIENT;
 
   /** Heat transfer coefficient profile along pipe (W/(m²·K)). */
   private double[] heatTransferProfile = null;
@@ -2196,16 +2202,18 @@ public class TwoFluidPipe extends Pipeline {
    * Calculate inner (fluid-side) heat transfer coefficient based on flow conditions.
    *
    * <p>
-   * Uses Dittus-Boelter correlation for turbulent flow, constant Nusselt for laminar.
+   * Uses the configured stagnant coefficient at zero local face throughput, Dittus-Boelter for turbulent flow, and a
+   * constant Nusselt number for laminar flow. The stagnant coefficient is independent of the overall pipe-to-ambient
+   * coefficient used by the simple thermal model.
    * </p>
    *
    * @param massFlow Mass flow rate [kg/s]
    * @param area Pipe cross-sectional area [m²]
    * @return Inner HTC in W/(m²·K)
    */
-  private double calculateInnerHTC(double massFlow, double area) {
+  double calculateInnerHTC(double massFlow, double area) {
     if (massFlow <= 0 || area <= 0) {
-      return heatTransferCoefficient; // Default
+      return stagnantInnerHeatTransferCoefficient;
     }
 
     SystemInterface fluid = getInletStream().getFluid();
@@ -6417,11 +6425,11 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Set heat transfer coefficient for convective heat transfer.
+   * Set the overall heat transfer coefficient used by the simple thermal model.
    *
    * <p>
-   * Heat transfer rate: Q = h * A * (T_pipe - T_surface)<br>
-   * where h = heat transfer coefficient (W/(m²·K))<br>
+   * Heat transfer rate: Q = U * A * (T_pipe - T_surface)<br>
+   * where U = overall heat transfer coefficient (W/(m²·K))<br>
    * A = pipe surface area (m²)<br>
    * T_pipe = bulk fluid temperature (K)<br>
    * T_surface = surrounding surface temperature (K)<br>
@@ -6435,7 +6443,13 @@ public class TwoFluidPipe extends Pipeline {
    * <li>Exposed/above-ground pipe: 50-100 W/(m²·K)</li>
    * </ul>
    *
-   * @param heatTransferCoefficient Heat transfer coefficient in W/(m²·K)
+   * <p>
+   * For the multi-layer model, this value enables heat transfer and reports the configuration-level overall U-value; it
+   * is not used as the fluid-side film coefficient. Configure the zero-throughput fluid film with
+   * {@link #setStagnantInnerHeatTransferCoefficient(double)}.
+   * </p>
+   *
+   * @param heatTransferCoefficient overall heat transfer coefficient in W/(m²·K)
    */
   @Override
   public void setHeatTransferCoefficient(double heatTransferCoefficient) {
@@ -6465,13 +6479,43 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Get the heat transfer coefficient.
+   * Get the overall or simple-model heat transfer coefficient.
    *
-   * @return Heat transfer coefficient in W/(m²·K)
+   * @return overall heat transfer coefficient in W/(m²·K)
    */
   @Override
   public double getHeatTransferCoefficient() {
     return heatTransferCoefficient;
+  }
+
+  /**
+   * Set the fluid-side heat transfer coefficient used at zero local face throughput.
+   *
+   * <p>
+   * This coefficient is used only by the multi-layer transient model when the local cell has no gas, oil, or water
+   * throughput. It represents stagnant fluid-to-inner-wall heat transfer and is independent of the overall
+   * pipe-to-ambient coefficient configured by {@link #setHeatTransferCoefficient(double)}. The default is 50 W/(m2 K),
+   * a pragmatic gas-rich shutdown assumption that should be replaced with a case-specific value when available.
+   * </p>
+   *
+   * @param coefficient stagnant fluid-side heat transfer coefficient in W/(m2 K)
+   * @throws IllegalArgumentException if the coefficient is negative or non-finite
+   */
+  public void setStagnantInnerHeatTransferCoefficient(double coefficient) {
+    if (!Double.isFinite(coefficient) || coefficient < 0.0) {
+      throw new IllegalArgumentException(
+          "Stagnant inner heat transfer coefficient must be finite and non-negative: " + coefficient);
+    }
+    stagnantInnerHeatTransferCoefficient = coefficient;
+  }
+
+  /**
+   * Get the fluid-side heat transfer coefficient used at zero local face throughput.
+   *
+   * @return stagnant fluid-side heat transfer coefficient in W/(m2 K)
+   */
+  public double getStagnantInnerHeatTransferCoefficient() {
+    return stagnantInnerHeatTransferCoefficient;
   }
 
   /**
@@ -7289,7 +7333,8 @@ public class TwoFluidPipe extends Pipeline {
     calc.setAmbientTemperature(surfaceTemperature);
     multilayerLayerTemperatureProfiles = null;
     useMultilayerThermalModel = true;
-    // Update the simple U-value and all thermal ownership flags consistently.
+    // Retain the calculated overall U-value for reporting and activation. Closed-flow inner-film
+    // resistance is owned independently by stagnantInnerHeatTransferCoefficient.
     setHeatTransferCoefficient(calc.calculateOverallUValue());
   }
 
@@ -7327,9 +7372,15 @@ public class TwoFluidPipe extends Pipeline {
     if (useMultilayerThermalModel && thermalCalculator != null) {
       // Use initial fluid temperature
       double initialTemp = getInletStream().getTemperature("K");
+      double configuredInnerHtc = thermalCalculator.getInnerHTC();
       thermalCalculator.setFluidTemperature(initialTemp);
-      thermalCalculator.initializeLayerTemperaturesLinear();
-      return thermalCalculator.calculateCooldownTime(targetK);
+      thermalCalculator.setInnerHTC(stagnantInnerHeatTransferCoefficient);
+      try {
+        thermalCalculator.initializeLayerTemperaturesLinear();
+        return thermalCalculator.calculateCooldownTime(targetK);
+      } finally {
+        thermalCalculator.setInnerHTC(configuredInnerHtc);
+      }
     }
 
     // Simple exponential decay estimate with U-value
@@ -7390,6 +7441,8 @@ public class TwoFluidPipe extends Pipeline {
 
     if (useMultilayerThermalModel && thermalCalculator != null) {
       sb.append("\nMulti-layer model enabled:\n");
+      sb.append(String.format("  Closed-flow inner HTC: %.1f W/(m²·K) (independent)\n",
+          stagnantInnerHeatTransferCoefficient));
       sb.append(thermalCalculator.getSummary());
     } else {
       sb.append(String.format("  U-value: %.2f W/(m²·K)\n", heatTransferCoefficient));
