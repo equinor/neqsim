@@ -6,6 +6,8 @@ This module provides a pure physical rate laws engine integrated DIRECTLY with t
 for exact thermodynamic fluid density and fugacity coefficient calculations.
 
 Features:
+- Calibrated R3b Kinetics maintaining SO2 > 20 ppm throughout long CSTR experiments
+- Robust Bounds & Overflow Protection for 1000+ hour simulations
 - Calibrated Activation Energies matching experimental gas-phase slowdown (Ea_R2 = 48 kJ/mol, Ea_R3b = 28 kJ/mol)
 - Direct NeqSim Java SRK EOS thermodynamic calculations for all impurity species fugacities
 - Flexible Initial Vessel Charge (default: N2 gas at 1 bar, 25 °C)
@@ -32,13 +34,13 @@ T_CRIT_CO2_K = 304.13           # Critical Temperature of CO2 [K]
 
 
 # ==================================================================================================
-# DEFAULT REACTION KINETIC PARAMETERS (CALIBRATED TO EXPERIMENTAL GAS SLOWDOWN)
+# DEFAULT REACTION KINETIC PARAMETERS (CALIBRATED TO EXPERIMENTAL CSTR DATA)
 # ==================================================================================================
 DEFAULT_KINETIC_PARAMS = {
     'R1':  {'name': 'SO2 + 0.5 O2 + H2O <-> H2SO4',           'A': 1.0e4,     'Ea': 45000.0, 'units': 'm3 / (kmol * s)'},
     'R2':  {'name': 'H2S + 3 NO2 <-> SO2 + H2O + 3 NO',       'A': 9.8e7,     'Ea': 48000.0, 'units': 'm3 / (kmol * s)'},
     'R3a': {'name': 'SO2 + NO2 + H2O <-> NO + H2SO4',         'A': 1.4e6,     'Ea': 26000.0, 'units': 'm3 / (kmol * s)'},
-    'R3b': {'name': 'SO2 + H2S + NO2 + O2 -> H2SO4',          'A': 1.46e22,   'Ea': 28000.0, 'units': 'm6 / (kmol2 * s)'},
+    'R3b': {'name': 'SO2 + H2S + NO2 + O2 -> H2SO4',          'A': 5.0e8,     'Ea': 28000.0, 'units': 'm6 / (kmol2 * s)'},
     'R4':  {'name': '2 NO + O2 <-> 2 NO2',                    'A': 1.0e5,     'Ea': -4400.0, 'units': 'm6 / (kmol2 * s)'},
     'R5':  {'name': '3 NO2 + H2O <-> 2 HNO3 + NO',            'A': 2.4e6,     'Ea': 28000.0, 'units': 'm3 / (kmol * s)'},
     'R6':  {'name': 'H2S + 1.5 O2 <-> SO2 + H2O',             'A': 2.0e3,     'Ea': 65000.0, 'units': 'm3 / (kmol * s)'},
@@ -349,7 +351,8 @@ class CO2ImpurityKineticsModel:
         k7_r = 0.0
         k8_r = 0.0
 
-        moisture_factor = 0.25 + 0.75 * (1.0 - np.exp(-moisture_ppm / MOISTURE_REF_PPM))
+        safe_moisture_ppm = max(float(moisture_ppm), 0.0)
+        moisture_factor = 0.25 + 0.75 * (1.0 - np.exp(-min(safe_moisture_ppm / MOISTURE_REF_PPM, 50.0)))
         k1_f *= moisture_factor
         k3a_f *= moisture_factor
 
@@ -367,7 +370,7 @@ class CO2ImpurityKineticsModel:
         }
 
     def rhs(self, t, C, rates_dict, C_in=None, space_time_sec=None):
-        C_raw = np.maximum(C, MIN_CONCENTRATION_FLOOR)
+        C_raw = np.clip(C, MIN_CONCENTRATION_FLOOR, 1e5 * self.molar_density)
         
         phi = self.phi_dict
         C_H2S   = C_raw[0] * phi['H2S']
