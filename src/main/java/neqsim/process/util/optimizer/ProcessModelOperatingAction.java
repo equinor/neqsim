@@ -35,8 +35,7 @@ public final class ProcessModelOperatingAction implements Serializable {
   private static final double DEFAULT_READ_BACK_RELATIVE_TOLERANCE = 1.0e-10;
 
   /** Provenance for the compatibility-preserving default read-back tolerance. */
-  private static final String DEFAULT_READ_BACK_TOLERANCE_PROVENANCE =
-      "ProcessModelOperatingAction default floating-point read-back tolerance";
+  private static final String DEFAULT_READ_BACK_TOLERANCE_PROVENANCE = "ProcessModelOperatingAction default floating-point read-back tolerance";
 
   /** Declared action value semantics. */
   public enum ValueSemantics {
@@ -124,8 +123,8 @@ public final class ProcessModelOperatingAction implements Serializable {
     this.allowedValues = Arrays.copyOf(allowedValues, allowedValues.length);
     this.readBackAbsoluteTolerance = readBackAbsoluteTolerance;
     this.readBackRelativeTolerance = readBackRelativeTolerance;
-    this.readBackToleranceProvenance =
-        requireText(readBackToleranceProvenance, "Operating-action read-back tolerance provenance");
+    this.readBackToleranceProvenance = requireText(readBackToleranceProvenance,
+        "Operating-action read-back tolerance provenance");
   }
 
   /**
@@ -143,8 +142,7 @@ public final class ProcessModelOperatingAction implements Serializable {
   public static ProcessModelOperatingAction continuous(String id, String name, String address, double lowerBound,
       double upperBound, String unit, String provenance) {
     return new ProcessModelOperatingAction(id, name, address, unit, provenance, ValueSemantics.CONTINUOUS, lowerBound,
-        upperBound, new double[0], 0.0, DEFAULT_READ_BACK_RELATIVE_TOLERANCE,
-        DEFAULT_READ_BACK_TOLERANCE_PROVENANCE);
+        upperBound, new double[0], 0.0, DEFAULT_READ_BACK_RELATIVE_TOLERANCE, DEFAULT_READ_BACK_TOLERANCE_PROVENANCE);
   }
 
   /**
@@ -386,8 +384,7 @@ public final class ProcessModelOperatingAction implements Serializable {
     } catch (RuntimeException exception) {
       boolean rolledBack = restoreAfterFailure(model, priorState);
       return ApplicationResult.failed(id, candidateValue, Double.NaN, readBackTolerance(candidateValue),
-          readBackToleranceProvenance, priorState, rolledBack,
-          "Action application failed: " + safeMessage(exception));
+          readBackToleranceProvenance, priorState, rolledBack, "Action application failed: " + safeMessage(exception));
     }
   }
 
@@ -429,15 +426,13 @@ public final class ProcessModelOperatingAction implements Serializable {
       double readBack = model.getVariableValue(address, unit);
       if (!matchesReadBack(state.getValue(), readBack)) {
         return ApplicationResult.failed(id, state.getValue(), readBack, readBackTolerance(state.getValue()),
-            readBackToleranceProvenance, state, false,
-            "Restoration read-back does not match the captured value");
+            readBackToleranceProvenance, state, false, "Restoration read-back does not match the captured value");
       }
       return ApplicationResult.applied(id, state.getValue(), readBack, readBackTolerance(state.getValue()),
           readBackToleranceProvenance, state);
     } catch (RuntimeException exception) {
       return ApplicationResult.failed(id, state.getValue(), Double.NaN, readBackTolerance(state.getValue()),
-          readBackToleranceProvenance, state, false,
-          "Action restoration failed: " + safeMessage(exception));
+          readBackToleranceProvenance, state, false, "Action restoration failed: " + safeMessage(exception));
     }
   }
 
@@ -669,8 +664,7 @@ public final class ProcessModelOperatingAction implements Serializable {
       this.actionId = actionId;
       this.requestedValue = requestedValue;
       this.readBackValue = readBackValue;
-      this.readBackResidual =
-          Double.isFinite(readBackValue) ? Math.abs(requestedValue - readBackValue) : Double.NaN;
+      this.readBackResidual = Double.isFinite(readBackValue) ? Math.abs(requestedValue - readBackValue) : Double.NaN;
       this.readBackTolerance = readBackTolerance;
       this.readBackToleranceProvenance = readBackToleranceProvenance;
       this.applied = applied;
@@ -683,8 +677,8 @@ public final class ProcessModelOperatingAction implements Serializable {
     /** Creates a result for a candidate rejected before writing. */
     private static ApplicationResult rejected(String actionId, double requestedValue, double readBackTolerance,
         String readBackToleranceProvenance, String diagnostic) {
-      return new ApplicationResult(actionId, requestedValue, Double.NaN, readBackTolerance,
-          readBackToleranceProvenance, false, false, null, diagnostic);
+      return new ApplicationResult(actionId, requestedValue, Double.NaN, readBackTolerance, readBackToleranceProvenance,
+          false, false, null, diagnostic);
     }
 
     /** Creates a failed write or restoration result. */
