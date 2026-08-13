@@ -481,21 +481,43 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
   /** Immutable drawing sheet containing views of canonical semantic objects. */
   public static final class Sheet implements Serializable {
     private static final long serialVersionUID = 1000L;
+    private final String key;
     private final String id;
     private final String number;
     private final String title;
     private final List<String> areaNodeIds;
     private final List<String> objectNodeIds;
     private final List<OffPageConnector> offPageConnectors;
+    private final EngineeringDiagramLayoutRegister.SheetDefinition manualDefinition;
+    private final List<EngineeringDiagramLayoutRegister.SheetAssignment> manualAssignments;
+    private final List<EngineeringDiagramLayoutRegister.PinnedPosition> pinnedPositions;
+    private final List<EngineeringDiagramLayoutRegister.ProtectedRoute> protectedRoutes;
 
-    private Sheet(String id, String number, String title, List<String> areaNodeIds, List<String> objectNodeIds,
-        List<OffPageConnector> connectors) {
+    private Sheet(String key, String id, String number, String title, List<String> areaNodeIds,
+        List<String> objectNodeIds, List<OffPageConnector> connectors,
+        EngineeringDiagramLayoutRegister.SheetDefinition manualDefinition,
+        List<EngineeringDiagramLayoutRegister.SheetAssignment> manualAssignments,
+        List<EngineeringDiagramLayoutRegister.PinnedPosition> pinnedPositions,
+        List<EngineeringDiagramLayoutRegister.ProtectedRoute> protectedRoutes) {
+      this.key = requireText(key, "sheet key");
       this.id = requireText(id, "sheet id");
       this.number = requireText(number, "sheet number");
       this.title = requireText(title, "sheet title");
       this.areaNodeIds = immutableStrings(areaNodeIds, "areaNodeIds");
       this.objectNodeIds = immutableStrings(objectNodeIds, "objectNodeIds");
       this.offPageConnectors = Collections.unmodifiableList(new ArrayList<OffPageConnector>(connectors));
+      this.manualDefinition = manualDefinition;
+      this.manualAssignments = Collections
+          .unmodifiableList(new ArrayList<EngineeringDiagramLayoutRegister.SheetAssignment>(manualAssignments));
+      this.pinnedPositions = Collections
+          .unmodifiableList(new ArrayList<EngineeringDiagramLayoutRegister.PinnedPosition>(pinnedPositions));
+      this.protectedRoutes = Collections
+          .unmodifiableList(new ArrayList<EngineeringDiagramLayoutRegister.ProtectedRoute>(protectedRoutes));
+    }
+
+    /** @return stable register key used for manual assignments */
+    public String getKey() {
+      return key;
     }
 
     public String getId() {
@@ -522,6 +544,29 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
       return offPageConnectors;
     }
 
+    /** @return manual sheet evidence, or {@code null} for an automatically generated sheet */
+    public EngineeringDiagramLayoutRegister.SheetDefinition getManualDefinition() {
+      return manualDefinition;
+    }
+
+    /** @return immutable defensive snapshot of explicit semantic-object assignments */
+    public List<EngineeringDiagramLayoutRegister.SheetAssignment> getManualAssignments() {
+      return Collections
+          .unmodifiableList(new ArrayList<EngineeringDiagramLayoutRegister.SheetAssignment>(manualAssignments));
+    }
+
+    /** @return immutable defensive snapshot of pinned object positions */
+    public List<EngineeringDiagramLayoutRegister.PinnedPosition> getPinnedPositions() {
+      return Collections
+          .unmodifiableList(new ArrayList<EngineeringDiagramLayoutRegister.PinnedPosition>(pinnedPositions));
+    }
+
+    /** @return immutable defensive snapshot of protected connection routes */
+    public List<EngineeringDiagramLayoutRegister.ProtectedRoute> getProtectedRoutes() {
+      return Collections
+          .unmodifiableList(new ArrayList<EngineeringDiagramLayoutRegister.ProtectedRoute>(protectedRoutes));
+    }
+
     private Map<String, Object> toMap() {
       Map<String, Object> result = new LinkedHashMap<String, Object>();
       result.put("id", id);
@@ -534,6 +579,30 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
         connectorMaps.add(connector.toMap());
       }
       result.put("offPageConnectors", connectorMaps);
+      if (manualDefinition != null) {
+        result.put("manualDefinition", manualDefinition.toMap());
+      }
+      if (!manualAssignments.isEmpty()) {
+        List<Map<String, Object>> assignmentMaps = new ArrayList<Map<String, Object>>();
+        for (EngineeringDiagramLayoutRegister.SheetAssignment assignment : manualAssignments) {
+          assignmentMaps.add(assignment.toMap());
+        }
+        result.put("manualAssignments", assignmentMaps);
+      }
+      if (!pinnedPositions.isEmpty()) {
+        List<Map<String, Object>> positionMaps = new ArrayList<Map<String, Object>>();
+        for (EngineeringDiagramLayoutRegister.PinnedPosition position : pinnedPositions) {
+          positionMaps.add(position.toMap());
+        }
+        result.put("pinnedPositions", positionMaps);
+      }
+      if (!protectedRoutes.isEmpty()) {
+        List<Map<String, Object>> routeMaps = new ArrayList<Map<String, Object>>();
+        for (EngineeringDiagramLayoutRegister.ProtectedRoute route : protectedRoutes) {
+          routeMaps.add(route.toMap());
+        }
+        result.put("protectedRoutes", routeMaps);
+      }
       return result;
     }
   }
@@ -665,6 +734,25 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
   public static EngineeringDiagramDocumentSet fromGraph(EngineeringGraph graph, String drawingNumber, String title,
       ContentProfile profile, List<Diagnostic> inheritedDiagnostics,
       EngineeringDiagramDesignationRegister designationRegister) {
+    return fromGraph(graph, drawingNumber, title, profile, inheritedDiagnostics, designationRegister,
+        new EngineeringDiagramLayoutRegister());
+  }
+
+  /**
+   * Creates a deterministic area-sheet view with reviewed designations and persistent manual layout evidence.
+   *
+   * @param graph canonical semantic graph
+   * @param drawingNumber controlled drawing number
+   * @param title document-set title
+   * @param profile requested content profile
+   * @param inheritedDiagnostics diagnostics produced by the source adapter
+   * @param designationRegister reviewed project designation evidence
+   * @param layoutRegister controlled manual sheet and layout evidence
+   * @return immutable controlled-document proposal
+   */
+  public static EngineeringDiagramDocumentSet fromGraph(EngineeringGraph graph, String drawingNumber, String title,
+      ContentProfile profile, List<Diagnostic> inheritedDiagnostics,
+      EngineeringDiagramDesignationRegister designationRegister, EngineeringDiagramLayoutRegister layoutRegister) {
     if (graph == null) {
       throw new IllegalArgumentException("graph must not be null");
     }
@@ -674,6 +762,9 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
     if (designationRegister == null) {
       throw new IllegalArgumentException("designationRegister must not be null");
     }
+    if (layoutRegister == null) {
+      throw new IllegalArgumentException("layoutRegister must not be null");
+    }
     String normalizedNumber = requireText(drawingNumber, "drawingNumber");
     List<Diagnostic> diagnostics = inheritedDiagnostics == null ? new ArrayList<Diagnostic>()
         : new ArrayList<Diagnostic>(inheritedDiagnostics);
@@ -681,15 +772,15 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
     List<MutableSheet> mutableSheets = new ArrayList<MutableSheet>();
     Map<String, MutableSheet> sheetsByAreaName = new LinkedHashMap<String, MutableSheet>();
     if (areas.isEmpty()) {
-      MutableSheet sheet = new MutableSheet(sheetId(normalizedNumber, "plant"), "1", title);
+      MutableSheet sheet = new MutableSheet("plant", sheetId(normalizedNumber, "plant"), "1", title, null);
       sheet.objectNodeIds.addAll(visualNodeIds(graph));
       mutableSheets.add(sheet);
     } else {
       int index = 1;
       for (EngineeringNode area : areas) {
         String areaName = stringProperty(area, "areaName", area.getLabel());
-        MutableSheet sheet = new MutableSheet(sheetId(normalizedNumber, area.getExternalKey()), String.valueOf(index),
-            areaName);
+        MutableSheet sheet = new MutableSheet(area.getExternalKey(), sheetId(normalizedNumber, area.getExternalKey()),
+            String.valueOf(index), areaName, null);
         sheet.areaNodeIds.add(area.getId());
         for (EngineeringNode node : graph.getNodes().values()) {
           if (belongsToArea(node, areaName) && isVisual(node.getKind())) {
@@ -701,7 +792,11 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
         index++;
       }
     }
+    Map<String, MutableSheet> sheetsByKey = sheetsByKey(mutableSheets);
+    addManualSheets(normalizedNumber, layoutRegister, mutableSheets, sheetsByKey, diagnostics);
+    applyManualAssignments(graph, layoutRegister, mutableSheets, sheetsByKey, diagnostics);
     addCrossSheetReferences(graph, mutableSheets, sheetsByAreaName, diagnostics);
+    applyLayoutOverrides(graph, layoutRegister, sheetsByKey, diagnostics);
     List<Sheet> sheets = new ArrayList<Sheet>();
     for (MutableSheet mutable : mutableSheets) {
       sheets.add(mutable.toSheet());
@@ -725,6 +820,14 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
   public static EngineeringDiagramDocumentSet fromGraph(EngineeringGraph graph, String drawingNumber, String title,
       ContentProfile profile, EngineeringDiagramDesignationRegister designationRegister) {
     return fromGraph(graph, drawingNumber, title, profile, Collections.<Diagnostic>emptyList(), designationRegister);
+  }
+
+  /** Convenience overload with reviewed designations and persistent manual layout evidence. */
+  public static EngineeringDiagramDocumentSet fromGraph(EngineeringGraph graph, String drawingNumber, String title,
+      ContentProfile profile, EngineeringDiagramDesignationRegister designationRegister,
+      EngineeringDiagramLayoutRegister layoutRegister) {
+    return fromGraph(graph, drawingNumber, title, profile, Collections.<Diagnostic>emptyList(), designationRegister,
+        layoutRegister);
   }
 
   public String getId() {
@@ -840,26 +943,112 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
     return EngineeringDiagramRevisionImpact.compare(this, newer);
   }
 
+  private static Map<String, MutableSheet> sheetsByKey(List<MutableSheet> sheets) {
+    Map<String, MutableSheet> result = new LinkedHashMap<String, MutableSheet>();
+    for (MutableSheet sheet : sheets) {
+      result.put(sheet.key, sheet);
+    }
+    return result;
+  }
+
+  private static void addManualSheets(String drawingNumber, EngineeringDiagramLayoutRegister layoutRegister,
+      List<MutableSheet> allSheets, Map<String, MutableSheet> sheetsByKey, List<Diagnostic> diagnostics) {
+    for (EngineeringDiagramLayoutRegister.SheetDefinition definition : layoutRegister.getSheets()) {
+      if (sheetsByKey.containsKey(definition.getSheetKey())) {
+        diagnostics.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_DUPLICATE_LAYOUT_SHEET_KEY",
+            "Manual sheet key conflicts with an automatically generated or earlier manual sheet",
+            definition.getSheetKey()));
+        continue;
+      }
+      MutableSheet sheet = new MutableSheet(definition.getSheetKey(), sheetId(drawingNumber, definition.getSheetKey()),
+          definition.getNumber(), definition.getTitle(), definition);
+      allSheets.add(sheet);
+      sheetsByKey.put(sheet.key, sheet);
+    }
+  }
+
+  private static void applyManualAssignments(EngineeringGraph graph, EngineeringDiagramLayoutRegister layoutRegister,
+      List<MutableSheet> allSheets, Map<String, MutableSheet> sheetsByKey, List<Diagnostic> diagnostics) {
+    Map<String, EngineeringDiagramLayoutRegister.SheetAssignment> assignmentsByObject = new LinkedHashMap<String, EngineeringDiagramLayoutRegister.SheetAssignment>();
+    for (EngineeringDiagramLayoutRegister.SheetAssignment assignment : layoutRegister.getAssignments()) {
+      EngineeringNode node = graph.getNode(assignment.getSemanticObjectId());
+      MutableSheet target = sheetsByKey.get(assignment.getSheetKey());
+      if (node == null) {
+        diagnostics.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_LAYOUT_UNKNOWN_OBJECT",
+            "Manual sheet assignment references an unknown semantic object", assignment.getSemanticObjectId()));
+        continue;
+      }
+      if (target == null) {
+        diagnostics.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_LAYOUT_UNKNOWN_SHEET",
+            "Manual sheet assignment references an unknown sheet key", assignment.getSheetKey()));
+        continue;
+      }
+      if (!isVisual(node.getKind())) {
+        diagnostics.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_LAYOUT_NON_VISUAL_OBJECT",
+            "Manual sheet assignment targets an object that has no drawing view", node.getId()));
+        continue;
+      }
+      if (isConnection(node.getKind())) {
+        diagnostics.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_LAYOUT_CONNECTION_ASSIGNMENT_DERIVED",
+            "Connection sheet projection is derived from its endpoint assignments; use protected routes for each view",
+            node.getId()));
+        continue;
+      }
+      assignmentsByObject.put(node.getId(), assignment);
+      moveObject(node.getId(), target, allSheets);
+      target.manualAssignments.add(assignment);
+    }
+    for (EngineeringNode endpoint : graph.getNodes().values()) {
+      if (endpoint.getKind() != EngineeringNode.Kind.PORT && endpoint.getKind() != EngineeringNode.Kind.NOZZLE) {
+        continue;
+      }
+      String ownerNodeId = stringProperty(endpoint, "ownerNodeId", "");
+      EngineeringDiagramLayoutRegister.SheetAssignment ownerAssignment = assignmentsByObject.get(ownerNodeId);
+      if (ownerAssignment != null && !assignmentsByObject.containsKey(endpoint.getId())) {
+        moveObject(endpoint.getId(), sheetsByKey.get(ownerAssignment.getSheetKey()), allSheets);
+      }
+    }
+  }
+
+  private static void moveObject(String objectId, MutableSheet target, List<MutableSheet> allSheets) {
+    for (MutableSheet sheet : allSheets) {
+      sheet.objectNodeIds.remove(objectId);
+    }
+    if (!target.objectNodeIds.contains(objectId)) {
+      target.objectNodeIds.add(objectId);
+    }
+  }
+
   private static void addCrossSheetReferences(EngineeringGraph graph, List<MutableSheet> allSheets,
       Map<String, MutableSheet> sheetsByAreaName, List<Diagnostic> diagnostics) {
     for (EngineeringNode node : graph.getNodes().values()) {
-      if (!Boolean.TRUE.equals(node.getProperties().get("crossArea"))) {
+      if (!isConnection(node.getKind())) {
         continue;
       }
-      String sourceArea = stringProperty(node, "sourceArea", "");
-      String targetArea = stringProperty(node, "targetArea", "");
-      MutableSheet sourceSheet = sheetsByAreaName.get(sourceArea);
-      MutableSheet targetSheet = sheetsByAreaName.get(targetArea);
+      MutableSheet sourceSheet = sheetContaining(allSheets, stringProperty(node, "sourceEndpointId", ""));
+      MutableSheet targetSheet = sheetContaining(allSheets, stringProperty(node, "targetEndpointId", ""));
       if (sourceSheet == null || targetSheet == null) {
-        diagnostics.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_BROKEN_CROSS_SHEET_REFERENCE",
-            "Cross-area semantic connection does not resolve to both controlled sheets", node.getId()));
+        sourceSheet = sheetsByAreaName.get(stringProperty(node, "sourceArea", ""));
+        targetSheet = sheetsByAreaName.get(stringProperty(node, "targetArea", ""));
+      }
+      if (sourceSheet == null || targetSheet == null) {
+        if (Boolean.TRUE.equals(node.getProperties().get("crossArea"))) {
+          diagnostics.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_BROKEN_CROSS_SHEET_REFERENCE",
+              "Cross-sheet semantic connection does not resolve to both controlled sheets", node.getId()));
+        }
         continue;
       }
+      removeObject(node.getId(), allSheets);
       if (sourceSheet.id.equals(targetSheet.id)) {
-        diagnostics.add(new Diagnostic(Severity.WARNING, "DIAGRAM_DOCUMENT_REDUNDANT_OFF_PAGE_REFERENCE",
-            "Cross-area connection resolved to one sheet and does not need off-page connectors", node.getId()));
+        sourceSheet.objectNodeIds.add(node.getId());
+        if (Boolean.TRUE.equals(node.getProperties().get("crossArea"))) {
+          diagnostics.add(new Diagnostic(Severity.WARNING, "DIAGRAM_DOCUMENT_REDUNDANT_OFF_PAGE_REFERENCE",
+              "Cross-area connection resolved to one sheet and does not need off-page connectors", node.getId()));
+        }
         continue;
       }
+      sourceSheet.objectNodeIds.add(node.getId());
+      targetSheet.objectNodeIds.add(node.getId());
       String key = EngineeringIds.canonical(node.getId()) + "-" + shortHash(node.getId());
       String pairId = "offpage-pair:" + key;
       String sourceId = "offpage:" + key + ":source";
@@ -871,15 +1060,71 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
       targetSheet.connectors.add(new OffPageConnector(targetId, pairId, node.getId(), ConnectorRole.TARGET,
           targetSheet.id, sourceSheet.id, sourceId, "AUTO"));
     }
-    if (allSheets.size() > 1 && sheetsByAreaName.isEmpty()) {
-      diagnostics.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_MISSING_AREA_SHEET_INDEX",
-          "Multi-sheet document set has no area-to-sheet index", ""));
+  }
+
+  private static MutableSheet sheetContaining(List<MutableSheet> sheets, String objectId) {
+    if (objectId.isEmpty()) {
+      return null;
+    }
+    MutableSheet result = null;
+    for (MutableSheet sheet : sheets) {
+      if (!sheet.objectNodeIds.contains(objectId)) {
+        continue;
+      }
+      if (result != null) {
+        return null;
+      }
+      result = sheet;
+    }
+    return result;
+  }
+
+  private static void removeObject(String objectId, List<MutableSheet> sheets) {
+    for (MutableSheet sheet : sheets) {
+      sheet.objectNodeIds.remove(objectId);
+    }
+  }
+
+  private static void applyLayoutOverrides(EngineeringGraph graph, EngineeringDiagramLayoutRegister layoutRegister,
+      Map<String, MutableSheet> sheetsByKey, List<Diagnostic> diagnostics) {
+    for (EngineeringDiagramLayoutRegister.PinnedPosition position : layoutRegister.getPinnedPositions()) {
+      EngineeringNode node = graph.getNode(position.getSemanticObjectId());
+      MutableSheet sheet = sheetsByKey.get(position.getSheetKey());
+      if (node == null) {
+        diagnostics.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_LAYOUT_UNKNOWN_OBJECT",
+            "Pinned position references an unknown semantic object", position.getSemanticObjectId()));
+      } else if (sheet == null) {
+        diagnostics.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_LAYOUT_UNKNOWN_SHEET",
+            "Pinned position references an unknown sheet key", position.getSheetKey()));
+      } else if (!sheet.objectNodeIds.contains(node.getId())) {
+        diagnostics.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_LAYOUT_OBJECT_NOT_ON_SHEET",
+            "Pinned position must target a sheet containing the semantic object", node.getId()));
+      } else {
+        sheet.pinnedPositions.add(position);
+      }
+    }
+    for (EngineeringDiagramLayoutRegister.ProtectedRoute route : layoutRegister.getProtectedRoutes()) {
+      EngineeringNode node = graph.getNode(route.getSemanticConnectionId());
+      MutableSheet sheet = sheetsByKey.get(route.getSheetKey());
+      if (node == null || !isConnection(node.getKind())) {
+        diagnostics.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_LAYOUT_UNKNOWN_CONNECTION",
+            "Protected route must reference a canonical semantic connection", route.getSemanticConnectionId()));
+      } else if (sheet == null) {
+        diagnostics.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_LAYOUT_UNKNOWN_SHEET",
+            "Protected route references an unknown sheet key", route.getSheetKey()));
+      } else if (!sheet.objectNodeIds.contains(node.getId())) {
+        diagnostics.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_LAYOUT_CONNECTION_NOT_ON_SHEET",
+            "Protected route must target a sheet containing the semantic connection view", node.getId()));
+      } else {
+        sheet.protectedRoutes.add(route);
+      }
     }
   }
 
   private static List<Diagnostic> validate(List<Drawing> drawings) {
     List<Diagnostic> result = new ArrayList<Diagnostic>();
     Map<String, Sheet> sheets = new LinkedHashMap<String, Sheet>();
+    Map<String, Sheet> sheetNumbers = new LinkedHashMap<String, Sheet>();
     Map<String, OffPageConnector> connectors = new LinkedHashMap<String, OffPageConnector>();
     Map<String, Integer> pairCounts = new LinkedHashMap<String, Integer>();
     for (Drawing drawing : drawings) {
@@ -887,6 +1132,11 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
         if (sheets.put(sheet.getId(), sheet) != null) {
           result.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_DUPLICATE_SHEET_ID",
               "Sheet identity is not unique in the document set", sheet.getId()));
+        }
+        String numberKey = drawing.getId() + "\n" + sheet.getNumber();
+        if (sheetNumbers.put(numberKey, sheet) != null) {
+          result.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_DUPLICATE_SHEET_NUMBER",
+              "Sheet number is not unique within the controlled drawing", sheet.getNumber()));
         }
         for (OffPageConnector connector : sheet.getOffPageConnectors()) {
           if (connectors.put(connector.getId(), connector) != null) {
@@ -1042,6 +1292,11 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
         || kind == EngineeringNode.Kind.SIGNAL_CONNECTION || kind == EngineeringNode.Kind.ENERGY_CONNECTION;
   }
 
+  private static boolean isConnection(EngineeringNode.Kind kind) {
+    return kind == EngineeringNode.Kind.LINE || kind == EngineeringNode.Kind.PIPE_SEGMENT
+        || kind == EngineeringNode.Kind.SIGNAL_CONNECTION || kind == EngineeringNode.Kind.ENERGY_CONNECTION;
+  }
+
   private static boolean belongsToArea(EngineeringNode node, String areaName) {
     if (Boolean.TRUE.equals(node.getProperties().get("crossArea"))) {
       return false;
@@ -1117,21 +1372,30 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
   }
 
   private static final class MutableSheet {
+    private final String key;
     private final String id;
     private final String number;
     private final String title;
+    private final EngineeringDiagramLayoutRegister.SheetDefinition manualDefinition;
     private final List<String> areaNodeIds = new ArrayList<String>();
     private final List<String> objectNodeIds = new ArrayList<String>();
     private final List<OffPageConnector> connectors = new ArrayList<OffPageConnector>();
+    private final List<EngineeringDiagramLayoutRegister.SheetAssignment> manualAssignments = new ArrayList<EngineeringDiagramLayoutRegister.SheetAssignment>();
+    private final List<EngineeringDiagramLayoutRegister.PinnedPosition> pinnedPositions = new ArrayList<EngineeringDiagramLayoutRegister.PinnedPosition>();
+    private final List<EngineeringDiagramLayoutRegister.ProtectedRoute> protectedRoutes = new ArrayList<EngineeringDiagramLayoutRegister.ProtectedRoute>();
 
-    private MutableSheet(String id, String number, String title) {
+    private MutableSheet(String key, String id, String number, String title,
+        EngineeringDiagramLayoutRegister.SheetDefinition manualDefinition) {
+      this.key = key;
       this.id = id;
       this.number = number;
       this.title = title;
+      this.manualDefinition = manualDefinition;
     }
 
     private Sheet toSheet() {
-      return new Sheet(id, number, title, areaNodeIds, objectNodeIds, connectors);
+      return new Sheet(key, id, number, title, areaNodeIds, objectNodeIds, connectors, manualDefinition,
+          manualAssignments, pinnedPositions, protectedRoutes);
     }
   }
 }

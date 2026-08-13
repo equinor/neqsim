@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,14 @@ import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.SemanticOb
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.Sheet;
 import neqsim.process.engineering.model.EngineeringGraph;
 import neqsim.process.engineering.model.EngineeringDiagramRevisionImpact;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.CoordinateUnit;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.EvidenceState;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.PinnedPosition;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.ProtectedRoute;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.SheetAssignment;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.SheetDefinition;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.Waypoint;
 import neqsim.process.engineering.model.EngineeringIds;
 import neqsim.process.engineering.model.EngineeringNode;
 import neqsim.process.engineering.model.EngineeringProvenance;
@@ -264,6 +273,160 @@ class ProcessDiagramDocumentSetAdapterTest {
   }
 
   @Test
+  void persistsManualSheetAssignmentPinnedPositionAndProtectedRoute() {
+    EngineeringDiagramReferenceFixtures.SystemCase reference = EngineeringDiagramReferenceFixtures.simpleTrain();
+    ProcessSystem process = reference.getProcessSystem();
+    String classicDot = process.toDOT();
+    EngineeringDiagramDocumentSet baseline = ProcessDiagramDocumentSetAdapter.fromProcessSystem(process,
+        reference.getCaseId(), "A", "PFD-LAYOUT-001", "Controlled layout", ContentProfile.PFD);
+    SemanticObject equipment = findSemanticObject(baseline, EngineeringNode.Kind.EQUIPMENT, "equipmentName",
+        "10-VA-001");
+    SemanticObject connection = findSemanticObject(baseline, EngineeringNode.Kind.PIPE_SEGMENT, "targetEquipment",
+        "10-VA-001");
+    EngineeringDiagramLayoutRegister layout = new EngineeringDiagramLayoutRegister()
+        .withSheet(reviewedSheet("separator-detail", "2", "Separator detail"))
+        .withAssignment(reviewedAssignment(equipment.getId(), "separator-detail"))
+        .withPinnedPosition(reviewedPosition(equipment.getId(), "separator-detail", 80.0, 60.0))
+        .withProtectedRoute(reviewedRoute(connection.getId(), "separator-detail"));
+
+    EngineeringDiagramDocumentSet first = ProcessDiagramDocumentSetAdapter.fromProcessSystem(process,
+        reference.getCaseId(), "A", "PFD-LAYOUT-001", "Controlled layout", ContentProfile.PFD,
+        new EngineeringDiagramDesignationRegister(), layout);
+    EngineeringDiagramDocumentSet second = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
+        EngineeringDiagramReferenceFixtures.simpleTrain().getProcessSystem(), reference.getCaseId(), "A",
+        "PFD-LAYOUT-001", "Controlled layout", ContentProfile.PFD, new EngineeringDiagramDesignationRegister(), layout);
+
+    Sheet detail = findSheet(first, "separator-detail");
+    assertEquals(first.toJson(), second.toJson());
+    assertEquals(classicDot, process.toDOT());
+    assertEquals(2, first.getDrawings().get(0).getSheets().size());
+    assertEquals("2", detail.getNumber());
+    assertEquals("project-layout:PFD-LAYOUT-001", detail.getManualDefinition().getSourceReference());
+    assertTrue(detail.getObjectNodeIds().contains(equipment.getId()));
+    assertTrue(detail.getObjectNodeIds().contains(connection.getId()));
+    assertEquals(1, detail.getManualAssignments().size());
+    assertEquals(equipment.getId(), detail.getManualAssignments().get(0).getSemanticObjectId());
+    assertEquals(EvidenceState.REVIEWED, detail.getManualAssignments().get(0).getEvidenceState());
+    assertEquals(1, detail.getPinnedPositions().size());
+    assertEquals(80.0, detail.getPinnedPositions().get(0).getX());
+    assertEquals(CoordinateUnit.MILLIMETRE, detail.getPinnedPositions().get(0).getUnit());
+    assertEquals(1, detail.getProtectedRoutes().size());
+    assertEquals(3, detail.getProtectedRoutes().get(0).getWaypoints().size());
+    assertNotSame(detail.getPinnedPositions(), detail.getPinnedPositions());
+    assertNotSame(detail.getProtectedRoutes(), detail.getProtectedRoutes());
+    assertThrows(UnsupportedOperationException.class, () -> detail.getManualAssignments().clear());
+    assertThrows(UnsupportedOperationException.class, () -> detail.getPinnedPositions().clear());
+    assertEquals(2, connectorCountFor(first.getDrawings().get(0), connection.getId()));
+    assertTrue(first.isValid());
+  }
+
+  @Test
+  void appliesTheSameManualLayoutContractToMultiAreaProcessModels() {
+    EngineeringDiagramDocumentSet baseline = ProcessDiagramDocumentSetAdapter.fromProcessModel(
+        EngineeringDiagramReferenceFixtures.multiAreaFacility().getProcessModel(), "DEXPI-REF-MULTI-AREA", "A",
+        "PFD-LAYOUT-004", "Multi-area layout", ContentProfile.PFD);
+    SemanticObject equipment = firstSemanticObject(baseline, EngineeringNode.Kind.EQUIPMENT);
+    EngineeringDiagramLayoutRegister layout = new EngineeringDiagramLayoutRegister()
+        .withSheet(reviewedSheet("equipment-detail", "5", "Equipment detail"))
+        .withAssignment(reviewedAssignment(equipment.getId(), "equipment-detail"))
+        .withPinnedPosition(reviewedPosition(equipment.getId(), "equipment-detail", 75.0, 50.0));
+
+    EngineeringDiagramDocumentSet set = ProcessDiagramDocumentSetAdapter.fromProcessModel(
+        EngineeringDiagramReferenceFixtures.multiAreaFacility().getProcessModel(), "DEXPI-REF-MULTI-AREA", "A",
+        "PFD-LAYOUT-004", "Multi-area layout", ContentProfile.PFD, new EngineeringDiagramDesignationRegister(), layout);
+
+    assertEquals(5, set.getDrawings().get(0).getSheets().size());
+    assertTrue(findSheet(set, "equipment-detail").getObjectNodeIds().contains(equipment.getId()));
+    assertEquals(1, findSheet(set, "equipment-detail").getPinnedPositions().size());
+    assertTrue(set.isValid());
+  }
+
+  @Test
+  void emptyLayoutRegisterPreservesTheLegacyDocumentShape() {
+    EngineeringDiagramReferenceFixtures.SystemCase reference = EngineeringDiagramReferenceFixtures.simpleTrain();
+    EngineeringDiagramDocumentSet legacy = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
+        reference.getProcessSystem(), reference.getCaseId(), "A", "PFD-LAYOUT-005", "Empty layout", ContentProfile.PFD,
+        new EngineeringDiagramDesignationRegister());
+    EngineeringDiagramDocumentSet additive = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
+        EngineeringDiagramReferenceFixtures.simpleTrain().getProcessSystem(), reference.getCaseId(), "A",
+        "PFD-LAYOUT-005", "Empty layout", ContentProfile.PFD, new EngineeringDiagramDesignationRegister(),
+        new EngineeringDiagramLayoutRegister());
+
+    assertEquals(legacy.toJson(), additive.toJson());
+    assertFalse(additive.toJson().contains("manualDefinition"));
+    assertFalse(additive.toJson().contains("manualAssignments"));
+    assertFalse(additive.toJson().contains("pinnedPositions"));
+    assertFalse(additive.toJson().contains("protectedRoutes"));
+  }
+
+  @Test
+  void carriesManualLayoutEvidenceAcrossRegenerationWithoutChangingSemanticIdentity() {
+    EngineeringDiagramReferenceFixtures.SystemCase reference = EngineeringDiagramReferenceFixtures.simpleTrain();
+    EngineeringDiagramDocumentSet baseline = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
+        reference.getProcessSystem(), reference.getCaseId(), "A", "PFD-LAYOUT-002", "Persistent layout",
+        ContentProfile.PFD);
+    SemanticObject equipment = findSemanticObject(baseline, EngineeringNode.Kind.EQUIPMENT, "equipmentName",
+        "10-VA-001");
+    EngineeringDiagramLayoutRegister layout = new EngineeringDiagramLayoutRegister()
+        .withSheet(reviewedSheet("separator-detail", "2", "Separator detail"))
+        .withAssignment(reviewedAssignment(equipment.getId(), "separator-detail"))
+        .withPinnedPosition(reviewedPosition(equipment.getId(), "separator-detail", 90.0, 65.0));
+
+    EngineeringDiagramDocumentSet revisionA = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
+        EngineeringDiagramReferenceFixtures.simpleTrain().getProcessSystem(), reference.getCaseId(), "A",
+        "PFD-LAYOUT-002", "Persistent layout", ContentProfile.PFD, new EngineeringDiagramDesignationRegister(), layout);
+    EngineeringDiagramDocumentSet revisionB = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
+        EngineeringDiagramReferenceFixtures.simpleTrain().getProcessSystem(), reference.getCaseId(), "B",
+        "PFD-LAYOUT-002", "Persistent layout", ContentProfile.PFD, new EngineeringDiagramDesignationRegister(), layout);
+
+    assertEquals(equipment.getId(),
+        findSheet(revisionA, "separator-detail").getPinnedPositions().get(0).getSemanticObjectId());
+    assertEquals(equipment.getId(),
+        findSheet(revisionB, "separator-detail").getPinnedPositions().get(0).getSemanticObjectId());
+    assertEquals("LAYOUT-B", findSheet(revisionB, "separator-detail").getPinnedPositions().get(0).getRevision());
+    assertEquals(EngineeringDiagramRevisionImpact.Status.UNCHANGED, revisionA.compareTo(revisionB).getStatus());
+  }
+
+  @Test
+  void reportsInvalidManualLayoutReferencesWithoutSilentlyApplyingThem() {
+    EngineeringDiagramReferenceFixtures.SystemCase reference = EngineeringDiagramReferenceFixtures.simpleTrain();
+    EngineeringDiagramDocumentSet baseline = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
+        reference.getProcessSystem(), reference.getCaseId(), "A", "PFD-LAYOUT-003", "Invalid layout",
+        ContentProfile.PFD);
+    SemanticObject connection = findSemanticObject(baseline, EngineeringNode.Kind.PIPE_SEGMENT, "carriedObjectName",
+        "10-FEED-001");
+    EngineeringDiagramLayoutRegister layout = new EngineeringDiagramLayoutRegister()
+        .withAssignment(reviewedAssignment("equipment:unknown", "plant"))
+        .withAssignment(
+            reviewedAssignment(connection.getId(), baseline.getDrawings().get(0).getSheets().get(0).getKey()))
+        .withPinnedPosition(reviewedPosition(connection.getId(), "unknown-sheet", 10.0, 20.0))
+        .withProtectedRoute(reviewedRoute("pipe-segment:unknown", "unknown-sheet"));
+
+    EngineeringDiagramDocumentSet set = ProcessDiagramDocumentSetAdapter.fromProcessSystem(reference.getProcessSystem(),
+        reference.getCaseId(), "A", "PFD-LAYOUT-003", "Invalid layout", ContentProfile.PFD,
+        new EngineeringDiagramDesignationRegister(), layout);
+
+    assertFalse(set.isValid());
+    assertTrue(hasDiagnostic(set, "DIAGRAM_DOCUMENT_LAYOUT_UNKNOWN_OBJECT"));
+    assertTrue(hasDiagnostic(set, "DIAGRAM_DOCUMENT_LAYOUT_CONNECTION_ASSIGNMENT_DERIVED"));
+    assertTrue(hasDiagnostic(set, "DIAGRAM_DOCUMENT_LAYOUT_UNKNOWN_SHEET"));
+    assertTrue(hasDiagnostic(set, "DIAGRAM_DOCUMENT_LAYOUT_UNKNOWN_CONNECTION"));
+  }
+
+  @Test
+  void rejectsAmbiguousOrNonFiniteLayoutRegisterInputs() {
+    SheetAssignment assignment = reviewedAssignment("equipment:V-001", "detail");
+    assertThrows(IllegalArgumentException.class,
+        () -> new EngineeringDiagramLayoutRegister(new ArrayList<SheetDefinition>(),
+            Arrays.asList(assignment, assignment), new ArrayList<PinnedPosition>(), new ArrayList<ProtectedRoute>()));
+    assertThrows(IllegalArgumentException.class, () -> reviewedPosition("equipment:V-001", "detail", Double.NaN, 10.0));
+    assertThrows(IllegalArgumentException.class,
+        () -> new ProtectedRoute("pipe-segment:feed", "detail", Arrays.asList(new Waypoint(1.0, 2.0)),
+            CoordinateUnit.MILLIMETRE, "project-layout:PFD-LAYOUT-001", EvidenceState.REVIEWED, "Process discipline",
+            "2026-08-13T14:00:00Z", "LAYOUT-B"));
+  }
+
+  @Test
   void preservesDistinctParallelCrossSheetConnections() {
     EngineeringGraph graph = twoAreaGraph();
     addCrossAreaConnection(graph, "pipe-segment:first", "first");
@@ -327,6 +490,29 @@ class ProcessDiagramDocumentSetAdapterTest {
         "Process discipline", "review:DIAGRAM-42", "2026-08-13T07:00:00Z", "B");
   }
 
+  private static SheetDefinition reviewedSheet(String key, String number, String title) {
+    return new SheetDefinition(key, number, title, "project-layout:PFD-LAYOUT-001", EvidenceState.REVIEWED,
+        "Process discipline", "2026-08-13T14:00:00Z", "LAYOUT-B");
+  }
+
+  private static SheetAssignment reviewedAssignment(String semanticObjectId, String sheetKey) {
+    return new SheetAssignment(semanticObjectId, sheetKey, "project-layout:PFD-LAYOUT-001", EvidenceState.REVIEWED,
+        "Process discipline", "2026-08-13T14:00:00Z", "LAYOUT-B");
+  }
+
+  private static PinnedPosition reviewedPosition(String semanticObjectId, String sheetKey, double x, double y) {
+    return new PinnedPosition(semanticObjectId, sheetKey, x, y, CoordinateUnit.MILLIMETRE,
+        "project-layout:PFD-LAYOUT-001", EvidenceState.REVIEWED, "Process discipline", "2026-08-13T14:00:00Z",
+        "LAYOUT-B");
+  }
+
+  private static ProtectedRoute reviewedRoute(String connectionId, String sheetKey) {
+    return new ProtectedRoute(connectionId, sheetKey,
+        Arrays.asList(new Waypoint(10.0, 20.0), new Waypoint(40.0, 20.0), new Waypoint(40.0, 50.0)),
+        CoordinateUnit.MILLIMETRE, "project-layout:PFD-LAYOUT-001", EvidenceState.REVIEWED, "Process discipline",
+        "2026-08-13T14:00:00Z", "LAYOUT-B");
+  }
+
   private static void addCrossAreaConnection(EngineeringGraph graph, String id, String externalKey) {
     graph.addNode(new EngineeringNode(id, EngineeringNode.Kind.PIPE_SEGMENT, externalKey, externalKey)
         .putProperty("crossArea", Boolean.TRUE).putProperty("sourceArea", "Area A").putProperty("targetArea", "Area B")
@@ -352,6 +538,25 @@ class ProcessDiagramDocumentSetAdapterTest {
     return result;
   }
 
+  private static int connectorCountFor(Drawing drawing, String semanticConnectionId) {
+    int result = 0;
+    for (OffPageConnector connector : connectorsById(drawing).values()) {
+      if (semanticConnectionId.equals(connector.getSemanticConnectionId())) {
+        result++;
+      }
+    }
+    return result;
+  }
+
+  private static Sheet findSheet(EngineeringDiagramDocumentSet set, String key) {
+    for (Sheet sheet : set.getDrawings().get(0).getSheets()) {
+      if (key.equals(sheet.getKey())) {
+        return sheet;
+      }
+    }
+    throw new AssertionError("Missing sheet " + key);
+  }
+
   private static boolean hasDiagnostic(EngineeringDiagramDocumentSet set, String code) {
     List<String> codes = new ArrayList<String>();
     for (Diagnostic diagnostic : set.getDiagnostics()) {
@@ -368,6 +573,15 @@ class ProcessDiagramDocumentSetAdapterTest {
       }
     }
     throw new AssertionError("Missing semantic object " + kind + " with " + property + "=" + value);
+  }
+
+  private static SemanticObject firstSemanticObject(EngineeringDiagramDocumentSet set, EngineeringNode.Kind kind) {
+    for (SemanticObject object : set.getSemanticObjects()) {
+      if (object.getKind() == kind) {
+        return object;
+      }
+    }
+    throw new AssertionError("Missing semantic object " + kind);
   }
 
   private static SemanticObject findSemanticObjectById(EngineeringDiagramDocumentSet set, String id) {
