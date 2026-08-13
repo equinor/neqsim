@@ -515,9 +515,11 @@ ProcessModelSimulationEvaluator simulation = new ProcessModelSimulationEvaluator
 simulation.addObjective("export gas", processModel -> export.getFlowRate("kg/hr"),
     ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
 
-ProcessModelOperatingAction rate = ProcessModelOperatingAction.continuous("producer-rate",
-    "Producer gas rate", "Subsurface::producer.flowRate", 0.5, 1.5, "MSm3/day",
-    "approved well operating envelope revision A");
+ProcessModelOperatingAction rate = ProcessModelOperatingAction
+    .continuous("producer-rate", "Producer gas rate", "Subsurface::producer.flowRate",
+        0.5, 1.5, "MSm3/day", "approved well operating envelope revision A")
+    .withReadBackTolerance(1.0e-5, 0.0,
+        "producer flow-control tag resolution in MSm3/day");
 
 ProcessModelOperatingActionEvaluator hydraulic =
     new ProcessModelOperatingActionEvaluator(simulation, rate)
@@ -531,6 +533,12 @@ if (!candidate.isBaselineRestored() || !candidate.isBaselineSimulationConverged(
   throw new IllegalStateException("The model baseline was not recovered");
 }
 ```
+
+The default action tolerance remains a strict scale-aware floating-point comparison. When a
+specific automation conversion or control tag has coarser resolution, declare its absolute and/or
+relative tolerance with `withReadBackTolerance` and retain the evidence source. Application
+diagnostics report the requested and read-back values, absolute residual, allowed tolerance, and
+tolerance provenance. A tolerated write does not prove process feasibility.
 
 This API consumes existing hydraulic and equipment calculations; it does not add a correlation,
 change topology, prove conservation beyond the configured model, or approve an operating change.
