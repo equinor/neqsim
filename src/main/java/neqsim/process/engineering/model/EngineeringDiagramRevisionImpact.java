@@ -140,23 +140,23 @@ public final class EngineeringDiagramRevisionImpact implements Serializable {
   }
 
   public List<String> getAddedSemanticObjectIds() {
-    return addedSemanticObjectIds;
+    return immutableStrings(addedSemanticObjectIds);
   }
 
   public List<String> getRemovedSemanticObjectIds() {
-    return removedSemanticObjectIds;
+    return immutableStrings(removedSemanticObjectIds);
   }
 
   public List<String> getModifiedSemanticObjectIds() {
-    return modifiedSemanticObjectIds;
+    return immutableStrings(modifiedSemanticObjectIds);
   }
 
   public List<String> getAffectedSheetIds() {
-    return affectedSheetIds;
+    return immutableStrings(affectedSheetIds);
   }
 
   public List<String> getAffectedDrawingIds() {
-    return affectedDrawingIds;
+    return immutableStrings(affectedDrawingIds);
   }
 
   /** @return deterministic machine-readable revision-impact representation */
@@ -170,11 +170,11 @@ public final class EngineeringDiagramRevisionImpact implements Serializable {
     result.put("baselineFingerprint", baselineFingerprint);
     result.put("revisedFingerprint", revisedFingerprint);
     result.put("status", status.name());
-    result.put("addedSemanticObjectIds", addedSemanticObjectIds);
-    result.put("removedSemanticObjectIds", removedSemanticObjectIds);
-    result.put("modifiedSemanticObjectIds", modifiedSemanticObjectIds);
-    result.put("affectedSheetIds", affectedSheetIds);
-    result.put("affectedDrawingIds", affectedDrawingIds);
+    result.put("addedSemanticObjectIds", immutableStrings(addedSemanticObjectIds));
+    result.put("removedSemanticObjectIds", immutableStrings(removedSemanticObjectIds));
+    result.put("modifiedSemanticObjectIds", immutableStrings(modifiedSemanticObjectIds));
+    result.put("affectedSheetIds", immutableStrings(affectedSheetIds));
+    result.put("affectedDrawingIds", immutableStrings(affectedDrawingIds));
     result.put("fingerprint", fingerprint(result));
     return result;
   }
