@@ -857,6 +857,7 @@ public class TPflash extends Flash {
         rescueLowerGibbsHydrocarbonPhaseRoots();
         rescueLiquidLiquidEndpoint();
         rescueWaterRichEndpoint();
+        rescueLowerGibbsMultiphaseAqueousRoot();
         refineInvalidAqueousTwoPhaseEndpoint();
         refineInvalidNeutralGasLiquidTwoPhaseEndpoint();
         normalizeUnchangedStableSinglePhaseEndpoint(stableSinglePhaseType, stableSinglePhaseZ,
@@ -1075,6 +1076,7 @@ public class TPflash extends Flash {
     rescueLowerGibbsHydrocarbonPhaseRoots();
     rescueLiquidLiquidEndpoint();
     rescueWaterRichEndpoint();
+    rescueLowerGibbsMultiphaseAqueousRoot();
     rescueLowerGibbsPhaseRoot();
     refineInvalidAqueousTwoPhaseEndpoint();
     refineInvalidNeutralGasLiquidTwoPhaseEndpoint();
@@ -2230,6 +2232,74 @@ public class TPflash extends Flash {
     } finally {
       system.setMultiPhaseCheck(multiphaseCheck);
     }
+  }
+
+  /**
+   * Refines a feasible multiphase gas/aqueous endpoint when its gas phase has a lower-Gibbs cubic root.
+   *
+   * <p>
+   * {@link TPmultiflash} can converge a balanced gas/aqueous split on a higher-Gibbs cubic root while the ordinary
+   * two-phase path reaches the lower root and a slightly adjusted equilibrium composition. A cheap alternate-root
+   * comparison screens the converged gas phase before any retry. Only a lower root beyond numerical noise starts an
+   * ordinary TP flash on a clone; the candidate is replayed on the live system only when it retains exactly gas and
+   * aqueous phases, passes the existing strict phase-fraction, normalization, material-balance, distinct-composition,
+   * and fugacity checks, and lowers total extensive Gibbs energy beyond the same tolerance. Three-phase results and
+   * chemical, electrolyte, solid, and wax calculations remain on their existing paths.
+   * </p>
+   */
+  private void rescueLowerGibbsMultiphaseAqueousRoot() {
+    if (!system.doMultiPhaseCheck() || system.getNumberOfPhases() != 2 || system.isChemicalSystem() || system.hasIons()
+        || solidCheck || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck()
+        || !system.hasPhaseType(PhaseType.GAS) || !system.hasPhaseType(PhaseType.AQUEOUS)
+        || !waterRichCrossAlgorithmFallbackAllowed || MULTIPHASE_RESCUE_ACTIVE.get().booleanValue()
+        || !isBalancedEquilibriumCandidate(system) || !hasLowerGibbsAlternateGasRoot()) {
+      return;
+    }
+
+    double referenceGibbsEnergy = system.getGibbsEnergy();
+    SystemInterface candidate = system.clone();
+    MULTIPHASE_RESCUE_ACTIVE.set(Boolean.TRUE);
+    try {
+      candidate.setMultiPhaseCheck(false);
+      new TPflash(candidate, false).run();
+      candidate.init(1);
+      double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceGibbsEnergy) * 1.0e-8);
+      if (candidate.getNumberOfPhases() == 2 && candidate.hasPhaseType(PhaseType.GAS)
+          && candidate.hasPhaseType(PhaseType.AQUEOUS) && isBalancedEquilibriumCandidate(candidate)
+          && candidate.getGibbsEnergy() < referenceGibbsEnergy - gibbsTolerance) {
+        runAcceptedOrdinaryWaterRichFallback(candidate);
+      }
+    } catch (Exception ex) {
+      logger.debug("Multiphase aqueous lower-Gibbs root refinement failed: {}", ex.getMessage());
+    } finally {
+      MULTIPHASE_RESCUE_ACTIVE.set(Boolean.FALSE);
+    }
+  }
+
+  /**
+   * Screens the converged gas phase for a lower-Gibbs alternate cubic root.
+   *
+   * @return true when another cubic root lowers the gas-phase Gibbs energy beyond numerical noise
+   */
+  private boolean hasLowerGibbsAlternateGasRoot() {
+    int gasPhaseIndex = system.getPhaseNumberOfPhase(PhaseType.GAS);
+    PhaseInterface gasPhase = system.getPhase(gasPhaseIndex);
+    double referenceGibbsEnergy = gasPhase.getGibbsEnergy();
+    double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceGibbsEnergy) * 1.0e-8);
+    for (PhaseType trialRoot : CUBIC_ROOT_PHASE_TYPES) {
+      try {
+        PhaseInterface trialPhase = gasPhase.clone();
+        trialPhase.init(system.getTotalNumberOfMoles(), trialPhase.getNumberOfComponents(), 1, trialRoot,
+            system.getBeta(gasPhaseIndex));
+        double gibbsReduction = referenceGibbsEnergy - trialPhase.getGibbsEnergy();
+        if (Double.isFinite(gibbsReduction) && gibbsReduction > gibbsTolerance) {
+          return true;
+        }
+      } catch (Exception ex) {
+        logger.debug("Multiphase gas-root screen failed for {}: {}", trialRoot, ex.getMessage());
+      }
+    }
+    return false;
   }
 
   /**
