@@ -18,6 +18,9 @@
  * <li><b>Operating evidence</b> - Opt-in case-scoped stream values with explicit units and provenance</li>
  * <li><b>Controlled document views</b> - Immutable drawing/sheet identities, revision metadata, and reciprocal off-page
  * references</li>
+ * <li><b>Reviewed designations</b> - Opt-in equipment tags and stream numbers retain project review evidence without
+ * replacing canonical source labels</li>
+ * <li><b>Revision impact</b> - Deterministic changed-object, affected-sheet, and affected-drawing evidence</li>
  * <li><b>Multiple detail levels</b> - MINIMAL, STANDARD, DETAILED, DEBUG</li>
  * <li><b>Deterministic output</b> - Same model always produces same diagram</li>
  * </ul>

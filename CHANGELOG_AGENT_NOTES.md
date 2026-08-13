@@ -9,6 +9,16 @@
 
 ---
 
+## 2026-08-13 — Independent stagnant inner HTC for TwoFluidPipe cooldown
+
+- `TwoFluidPipe.setStagnantInnerHeatTransferCoefficient(...)` and its getter now own the zero-local-throughput
+  fluid-to-wall coefficient used by the multi-layer transient model. The documented default is 50 W/(m²·K).
+- `setHeatTransferCoefficient(...)` remains the simple-model or configuration-level overall U-value and no longer
+  becomes the closed-flow inner film coefficient. Multi-layer shutdown results are therefore independent of whether
+  that overall coefficient is set before or after radial-layer configuration.
+- Migration: replace post-configuration `setHeatTransferCoefficient(value)` workarounds that intended to set the
+  stagnant fluid film with `setStagnantInnerHeatTransferCoefficient(value)`.
+
 ## 2026-08-12 — Reversible ProcessModel operating actions
 
 - `ProcessModelOperatingAction` adds immutable, serializable action identity, area-qualified
