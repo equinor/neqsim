@@ -243,9 +243,7 @@ public class DepressurizationSimulator implements Serializable {
     // basis produces an energy balance that drives the VU flash to a non-physical state
     // (instant pressure collapse, no cooling). The moles are scaled by adding per-component
     // mole deltas (preserving composition); pressure and temperature are intensive and so
-    // are unchanged. NOTE: setTotalNumberOfMoles(...) MUST NOT be used here because it only
-    // sets the scalar total without re-scaling the component moles, which corrupts the
-    // average molar mass and density.
+    // are unchanged.
     double currentMoles = fluid.getNumberOfMoles();
     double molarMass = fluid.getMolarMass(); // kg/mol
     if (molarMass > 0.0 && currentMoles > 0.0) {
@@ -348,8 +346,7 @@ public class DepressurizationSimulator implements Serializable {
       double newU = (fluid.getInternalEnergy()) + dU;
 
       // Update fluid state by VU flash (constant volume, new internal energy).
-      // Scale the remaining inventory by adding per-component mole deltas (preserving
-      // composition) instead of setTotalNumberOfMoles, which would corrupt the molar mass.
+      // Scale the remaining inventory by adding per-component mole deltas (preserving composition).
       if (mass > 0.0) {
         scaleMoles(newMass / mass);
       }
@@ -383,9 +380,7 @@ public class DepressurizationSimulator implements Serializable {
 
   /**
    * Scale the total mole inventory of the fluid by the given factor while preserving the composition (mole fractions).
-   * Each component's moles are adjusted by adding a delta of {@code currentMoles * (factor - 1)}. This is the correct
-   * way to change the absolute inventory of a closed {@link SystemInterface}; {@code setTotalNumberOfMoles} only sets
-   * the scalar total and leaves the component moles unchanged, corrupting the average molar mass.
+   * Each component's moles are adjusted by adding a delta of {@code currentMoles * (factor - 1)}.
    *
    * @param factor the multiplicative scaling factor for the total moles; values &lt;= 0, NaN or equal to 1 are ignored
    */

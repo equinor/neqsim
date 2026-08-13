@@ -118,6 +118,61 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
     }
   }
 
+  private static void assertPhysicalProduct(StreamInterface product, String label) {
+    double flowRate = product.getFlowRate("kg/hr");
+    double temperature = product.getTemperature("K");
+    double pressure = product.getPressure("bara");
+    assertTrue(Double.isFinite(flowRate) && flowRate >= 0.0, label + " flow must be finite and non-negative");
+    assertTrue(Double.isFinite(temperature) && temperature > 100.0 && temperature < 1000.0,
+        label + " temperature must remain physical");
+    assertTrue(Double.isFinite(pressure) && pressure > 0.0, label + " pressure must remain positive");
+
+    double compositionSum = 0.0;
+    double[] composition = product.getThermoSystem().getMolarComposition();
+    for (int componentIndex = 0; componentIndex < composition.length; componentIndex++) {
+      assertTrue(Double.isFinite(composition[componentIndex]) && composition[componentIndex] >= 0.0,
+          label + " composition must remain finite and non-negative");
+      compositionSum += composition[componentIndex];
+    }
+    assertEquals(1.0, compositionSum, 1.0e-10, label + " composition must remain normalized");
+  }
+
+  private static void assertNaphtaliBasinPoint(ColumnCase testCase, String point) {
+    DistillationColumn column = testCase.column;
+    assertTrue(column.solved(), point + ": " + column.getConvergenceDiagnostics());
+    assertTrue(
+        column.getLastSolverTypeUsed() == DistillationColumn.SolverType.NAPHTALI_SANDHOLM
+            || column.getLastSolverTypeUsed() == DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
+        point + " must finish with the simultaneous solver or its coordinated damped fallback");
+    assertTrue(column.getLastNaphtaliThermoEvaluationCount() > 0,
+        point + " must retain thermodynamic work from the Naphtali-Sandholm attempt");
+    assertTrue(column.getLastNaphtaliThermoKValueIterationCount() >= column.getLastNaphtaliThermoEvaluationCount(),
+        point + " must perform at least one K-value sweep per uncached thermodynamic evaluation");
+    assertTrue(column.getLastNaphtaliThermoEvaluationCount() < 500000,
+        point + " must keep tray thermodynamic evaluations bounded");
+    assertTrue(column.getLastNaphtaliThermoKValueIterationCount() < 1500000,
+        point + " must keep K-value sweeps bounded");
+    assertTrue(
+        Double.isFinite(column.getLastMassResidual())
+            && column.getLastMassResidual() <= column.getMassBalanceTolerance(),
+        point + " must satisfy total mass residual");
+    assertTrue(
+        Double.isFinite(column.getLastEnergyResidual())
+            && column.getLastEnergyResidual() <= column.getEnthalpyBalanceTolerance(),
+        point + " must satisfy the active energy residual");
+    assertTrue(Double.isFinite(column.getLastMeshResidualNorm()), point + " must publish a finite MESH residual");
+    assertPhysicalProduct(column.getGasOutStream(), point + " gas product");
+    assertPhysicalProduct(column.getLiquidOutStream(), point + " liquid product");
+    assertEquals(330.15, column.getLiquidOutStream().getTemperature("K"), 0.1,
+        point + " must satisfy the fixed reboiler temperature");
+    double feedMassFlow = testCase.gasFeed.getFlowRate("kg/hr") + testCase.solventFeed.getFlowRate("kg/hr");
+    double productMassFlow = column.getGasOutStream().getFlowRate("kg/hr")
+        + column.getLiquidOutStream().getFlowRate("kg/hr");
+    assertEquals(feedMassFlow, productMassFlow, Math.max(1.0e-6, feedMassFlow * 1.0e-8),
+        point + " must close total product mass");
+    assertComponentClosure(testCase);
+  }
+
   private static void assertEquivalentProducts(ColumnCase dampedCase, ColumnCase sumRatesCase) {
     DistillationColumn damped = dampedCase.column;
     DistillationColumn sumRates = sumRatesCase.column;
@@ -184,6 +239,63 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
       sumRates.column.run();
       assertEquivalentProducts(damped, sumRates);
     }
+  }
+
+  /**
+   * Map cold, exact-reuse, nearby-point, and severe retained-state Naphtali-Sandholm behavior on a two-feed
+   * absorber/stripper.
+   */
+  @Test
+  public void naphtaliSandholmBasinRemainsAccountableAcrossRetainedStates() {
+    ColumnCase testCase = createRepresentativeCase("naphtali basin", DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
+    testCase.column.setMassBalanceTolerance(1.0e-8);
+    testCase.column.run();
+    assertNaphtaliBasinPoint(testCase, "cold");
+    DistillationColumn.SolverType coldSolver = testCase.column.getLastSolverTypeUsed();
+    double coldGasFlow = testCase.column.getGasOutStream().getFlowRate("kg/hr");
+    double coldLiquidFlow = testCase.column.getLiquidOutStream().getFlowRate("kg/hr");
+
+    testCase.column.run();
+    assertNaphtaliBasinPoint(testCase, "exact repeat");
+    if (coldSolver == DistillationColumn.SolverType.NAPHTALI_SANDHOLM) {
+      assertTrue(testCase.column.wasNaphtaliSandholmWarmStateReused(),
+          "an accepted simultaneous state should be reused for identical inputs");
+      assertEquals(0, testCase.column.getLastIterationCount(),
+          "exact simultaneous-state reuse should require no initializer or Newton iteration");
+      assertEquals(coldGasFlow, testCase.column.getGasOutStream().getFlowRate("kg/hr"), 0.0);
+      assertEquals(coldLiquidFlow, testCase.column.getLiquidOutStream().getFlowRate("kg/hr"), 0.0);
+    } else {
+      assertFalse(testCase.column.wasNaphtaliSandholmWarmStateReused(),
+          "a damped fallback state must not be cached as a Naphtali-Sandholm state");
+      assertTrue(testCase.column.wasSequentialWarmStateReused(),
+          "an unchanged coordinated damped fallback should reuse its accepted sequential state");
+      assertEquals(0, testCase.column.getLastIterationCount(),
+          "exact coordinated-fallback reuse should require no initializer or solver iteration");
+      assertTrue(testCase.column.getLastNaphtaliThermoEvaluationCount() > 0,
+          "exact fallback reuse must retain work from the rejected Naphtali-Sandholm attempt");
+      assertEquals(coldGasFlow, testCase.column.getGasOutStream().getFlowRate("kg/hr"), 0.0);
+      assertEquals(coldLiquidFlow, testCase.column.getLiquidOutStream().getFlowRate("kg/hr"), 0.0);
+    }
+
+    testCase.gasFeed.setTemperature(314.15, "K");
+    testCase.gasFeed.run();
+    testCase.column.run();
+    assertFalse(testCase.column.wasNaphtaliSandholmWarmStateReused(),
+        "a nearby feed state must invalidate exact simultaneous-state reuse");
+    assertNaphtaliBasinPoint(testCase, "nearby");
+
+    for (int trayIndex = 0; trayIndex < testCase.column.getNumberOfTrays(); trayIndex++) {
+      double perturbedTemperature = testCase.column.getTray(trayIndex).getTemperature()
+          + 90.0 * Math.sin((trayIndex + 1.0) * 1.9);
+      testCase.column.getTray(trayIndex).setTemperature(perturbedTemperature);
+      testCase.column.getTray(trayIndex).getThermoSystem().setTemperature(perturbedTemperature);
+    }
+    testCase.solventFeed.setFlowRate(1260.0, "kg/hr");
+    testCase.solventFeed.run();
+    testCase.column.run();
+    assertFalse(testCase.column.wasNaphtaliSandholmWarmStateReused(),
+        "a changed feed must force evaluation of the severe retained-state perturbation");
+    assertNaphtaliBasinPoint(testCase, "severe retained perturbation");
   }
 
   /** Exact reuse must remain lossless, while a changed feed must invalidate the accepted state. */

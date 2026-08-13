@@ -2644,7 +2644,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setTotalFlowRate(double flowRate, String flowunit);
 
   /**
-   * Setter for property <code>totalNumberOfMoles</code>.
+   * Setter for property <code>totalNumberOfMoles</code>. The per-component mole numbers are rescaled by the same factor
+   * so the composition is preserved and the sum of the component moles stays equal to the total.
    *
    * @param totalNumberOfMoles Total molar flow rate of fluid in unit mol/sec
    */

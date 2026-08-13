@@ -401,7 +401,10 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     /** Upper optimization bound. */
     private final double upperBound;
 
-    /** Bounded parameter value used for the base evaluation. */
+    /** Whether direct evaluator calls clamp this parameter to its declared bounds. */
+    private final boolean clampToBounds;
+
+    /** Bounded or strict parameter value used for the base evaluation. */
     private final double baseValue;
 
     /** Creates an immutable parameter snapshot. */
@@ -412,6 +415,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       this.unit = parameter.getUnit();
       this.lowerBound = parameter.getLowerBound();
       this.upperBound = parameter.getUpperBound();
+      this.clampToBounds = parameter.isClampToBounds();
       this.baseValue = baseValue;
     }
 
@@ -470,7 +474,16 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     }
 
     /**
-     * Gets the bounded base-point value.
+     * Checks whether direct evaluator calls clamp this parameter to its bounds.
+     *
+     * @return true for legacy clamping, false for strict candidate rejection
+     */
+    public boolean isClampToBounds() {
+      return clampToBounds;
+    }
+
+    /**
+     * Gets the bounded or strict base-point value.
      *
      * @return base value in the parameter unit
      */
@@ -1496,6 +1509,9 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     /** Initial value for optimizers that need a starting point. */
     private double initialValue;
 
+    /** Whether direct evaluator calls clamp requested values to the declared bounds. */
+    private boolean clampToBounds = true;
+
     /** Optional custom setter for non-automation variables. */
     private transient BiConsumer<ProcessModel, Double> setter;
 
@@ -1639,6 +1655,29 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      */
     public void setInitialValue(double initialValue) {
       this.initialValue = initialValue;
+    }
+
+    /**
+     * Checks whether direct evaluator calls clamp requested values to the declared bounds.
+     *
+     * @return true when requested values are clamped before the setter is called
+     */
+    public boolean isClampToBounds() {
+      return clampToBounds;
+    }
+
+    /**
+     * Sets whether direct evaluator calls clamp requested values to the declared bounds.
+     *
+     * <p>
+     * The default is true for compatibility. Set false only when a strict setter must inspect and reject the exact
+     * requested value, such as an enumerated operating action.
+     * </p>
+     *
+     * @param clampToBounds true to retain legacy clamping, false to pass the exact value
+     */
+    public void setClampToBounds(boolean clampToBounds) {
+      this.clampToBounds = clampToBounds;
     }
 
     /**
@@ -3507,7 +3546,8 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   private void setParameterValues(ProcessModel model, double[] parameterValues) {
     for (int parameterIndex = 0; parameterIndex < parameters.size(); parameterIndex++) {
       ParameterDefinition parameter = parameters.get(parameterIndex);
-      double value = parameter.clamp(parameterValues[parameterIndex]);
+      double value = parameter.isClampToBounds() ? parameter.clamp(parameterValues[parameterIndex])
+          : parameterValues[parameterIndex];
       if (parameter.getSetter() != null) {
         parameter.getSetter().accept(model, value);
       } else {
@@ -4003,7 +4043,10 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   private double[] getBoundedParameterValues(double[] parameterValues) {
     double[] boundedValues = Arrays.copyOf(parameterValues, parameterValues.length);
     for (int parameterIndex = 0; parameterIndex < boundedValues.length; parameterIndex++) {
-      boundedValues[parameterIndex] = parameters.get(parameterIndex).clamp(boundedValues[parameterIndex]);
+      ParameterDefinition parameter = parameters.get(parameterIndex);
+      if (parameter.isClampToBounds()) {
+        boundedValues[parameterIndex] = parameter.clamp(boundedValues[parameterIndex]);
+      }
     }
     return boundedValues;
   }

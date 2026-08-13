@@ -480,13 +480,17 @@ final class ColumnSolverFactory {
             "Naphtali-Sandholm required guarded feed-flash product fallback", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && !accepted && !isAutoCandidateProbeMode() && !column.solved()) {
+      // Preserve the established no-side-draw direct-acceptance contract unless the applied
+      // products specifically miss the active mass-balance gate.
+      boolean massBalanceGateFailed = !Double.isFinite(column.getLastMassResidual())
+          || column.getLastMassResidual() > column.getMassBalanceTolerance();
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && !column.solved() && (!accepted || massBalanceGateFailed)) {
         applyDampedFallback(column, fallbackCandidate, id, "Naphtali-Sandholm did not satisfy convergence criteria",
             null);
         fallbackApplied = true;
       }
       if (!fallbackApplied && accepted && !isAutoCandidateProbeMode() && column.getLastIterationCount() <= 0
-          && !column.wasNaphtaliSandholmWarmStateReused()
+          && !column.wasNaphtaliSandholmWarmStateReused() && !column.wasSequentialWarmStateReused()
           && validateNaphtaliWarmStartProductSplit(column, warmStartCandidate, id)) {
         fallbackApplied = true;
       }

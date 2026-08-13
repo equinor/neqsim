@@ -2911,6 +2911,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       reuseNaphtaliSandholmWarmState(id, startTime);
       return true;
     }
+    if (hasSequentialExactReuseState) {
+      long sequentialInputSignature = calculateSequentialExactReuseSignature();
+      if (canReuseSequentialWarmState(sequentialInputSignature)) {
+        reuseSequentialWarmState(id, startTime);
+        return true;
+      }
+      hasSequentialExactReuseState = false;
+    }
 
     Map<Integer, List<SystemInterface>> originalFeedSystems = new java.util.HashMap<>();
     Map<Integer, List<Double>> originalFeedFlowRates = new java.util.HashMap<>();
@@ -3942,6 +3950,49 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
   }
 
+  /** Snapshot of work performed by one Naphtali-Sandholm attempt. */
+  private static final class NaphtaliTelemetrySnapshot {
+    private final int analyticJacobianColumns;
+    private final int finiteDifferenceJacobianColumns;
+    private final int thermoEvaluationCount;
+    private final int thermoKValueIterationCount;
+    private final int thermoKValueNonConvergedCount;
+    private final double thermoMaxLogKValueUpdate;
+    private final int thermoCacheHitCount;
+    private final double jacobianBuildTimeSeconds;
+    private final int blockLinearSolveCount;
+    private final int denseLinearSolveCount;
+    private final double linearSolveTimeSeconds;
+
+    private NaphtaliTelemetrySnapshot(DistillationColumn column) {
+      analyticJacobianColumns = column.lastNaphtaliAnalyticJacobianColumns;
+      finiteDifferenceJacobianColumns = column.lastNaphtaliFiniteDifferenceJacobianColumns;
+      thermoEvaluationCount = column.lastNaphtaliThermoEvaluationCount;
+      thermoKValueIterationCount = column.lastNaphtaliThermoKValueIterationCount;
+      thermoKValueNonConvergedCount = column.lastNaphtaliThermoKValueNonConvergedCount;
+      thermoMaxLogKValueUpdate = column.lastNaphtaliThermoMaxLogKValueUpdate;
+      thermoCacheHitCount = column.lastNaphtaliThermoCacheHitCount;
+      jacobianBuildTimeSeconds = column.lastNaphtaliJacobianBuildTimeSeconds;
+      blockLinearSolveCount = column.lastNaphtaliBlockLinearSolveCount;
+      denseLinearSolveCount = column.lastNaphtaliDenseLinearSolveCount;
+      linearSolveTimeSeconds = column.lastNaphtaliLinearSolveTimeSeconds;
+    }
+
+    private void restore(DistillationColumn column) {
+      column.lastNaphtaliAnalyticJacobianColumns = analyticJacobianColumns;
+      column.lastNaphtaliFiniteDifferenceJacobianColumns = finiteDifferenceJacobianColumns;
+      column.lastNaphtaliThermoEvaluationCount = thermoEvaluationCount;
+      column.lastNaphtaliThermoKValueIterationCount = thermoKValueIterationCount;
+      column.lastNaphtaliThermoKValueNonConvergedCount = thermoKValueNonConvergedCount;
+      column.lastNaphtaliThermoMaxLogKValueUpdate = thermoMaxLogKValueUpdate;
+      column.lastNaphtaliThermoCacheHitCount = thermoCacheHitCount;
+      column.lastNaphtaliJacobianBuildTimeSeconds = jacobianBuildTimeSeconds;
+      column.lastNaphtaliBlockLinearSolveCount = blockLinearSolveCount;
+      column.lastNaphtaliDenseLinearSolveCount = denseLinearSolveCount;
+      column.lastNaphtaliLinearSolveTimeSeconds = linearSolveTimeSeconds;
+    }
+  }
+
   /**
    * Accept a damped fallback candidate after an accelerator result has been rejected.
    *
@@ -3949,12 +4000,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param reason reason the accelerator result was rejected
    */
   void acceptDampedFallbackCandidate(DistillationColumn candidate, String reason) {
+    NaphtaliTelemetrySnapshot rejectedNaphtaliTelemetry = lastSolverTypeUsed == SolverType.NAPHTALI_SANDHOLM
+        ? new NaphtaliTelemetrySnapshot(this)
+        : null;
     logger.warn(
         "Accelerated solver result rejected for column {}: {}. Using damped " + "substitution fallback candidate.",
         getName(), reason);
     acceptSolvedStateCandidate(candidate);
     lastSolverTypeUsed = SolverType.DAMPED_SUBSTITUTION;
     lastSolveStatusReason = reason;
+    if (rejectedNaphtaliTelemetry != null) {
+      rejectedNaphtaliTelemetry.restore(this);
+    }
   }
 
   /**
@@ -3976,17 +4033,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param reason reason the direct Naphtali-Sandholm candidate was rejected
    */
   void acceptNaphtaliWarmStartCandidate(DistillationColumn candidate, String reason) {
-    int analyticJacobianColumns = lastNaphtaliAnalyticJacobianColumns;
-    int finiteDifferenceJacobianColumns = lastNaphtaliFiniteDifferenceJacobianColumns;
-    int thermoEvaluationCount = lastNaphtaliThermoEvaluationCount;
-    int thermoKValueIterationCount = lastNaphtaliThermoKValueIterationCount;
-    int thermoKValueNonConvergedCount = lastNaphtaliThermoKValueNonConvergedCount;
-    double thermoMaxLogKValueUpdate = lastNaphtaliThermoMaxLogKValueUpdate;
-    int thermoCacheHitCount = lastNaphtaliThermoCacheHitCount;
-    double jacobianBuildTimeSeconds = lastNaphtaliJacobianBuildTimeSeconds;
-    int blockLinearSolveCount = lastNaphtaliBlockLinearSolveCount;
-    int denseLinearSolveCount = lastNaphtaliDenseLinearSolveCount;
-    double linearSolveTimeSeconds = lastNaphtaliLinearSolveTimeSeconds;
+    NaphtaliTelemetrySnapshot rejectedNaphtaliTelemetry = new NaphtaliTelemetrySnapshot(this);
 
     logger.warn(
         "Naphtali-Sandholm candidate rejected for column {}: {}. Keeping " + "residual-monitored warm-start state.",
@@ -3995,17 +4042,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastSolverTypeUsed = SolverType.NAPHTALI_SANDHOLM;
     lastSolveStatusReason = reason;
     naphtaliSandholmStateOwned = true;
-    lastNaphtaliAnalyticJacobianColumns = analyticJacobianColumns;
-    lastNaphtaliFiniteDifferenceJacobianColumns = finiteDifferenceJacobianColumns;
-    lastNaphtaliThermoEvaluationCount = thermoEvaluationCount;
-    lastNaphtaliThermoKValueIterationCount = thermoKValueIterationCount;
-    lastNaphtaliThermoKValueNonConvergedCount = thermoKValueNonConvergedCount;
-    lastNaphtaliThermoMaxLogKValueUpdate = thermoMaxLogKValueUpdate;
-    lastNaphtaliThermoCacheHitCount = thermoCacheHitCount;
-    lastNaphtaliJacobianBuildTimeSeconds = jacobianBuildTimeSeconds;
-    lastNaphtaliBlockLinearSolveCount = blockLinearSolveCount;
-    lastNaphtaliDenseLinearSolveCount = denseLinearSolveCount;
-    lastNaphtaliLinearSolveTimeSeconds = linearSolveTimeSeconds;
+    rejectedNaphtaliTelemetry.restore(this);
   }
 
   /**
@@ -7911,6 +7948,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastSolverTypeUsed = SolverType.DAMPED_SUBSTITUTION;
     solveDampedSubstitution(id);
     doInitializion = originalInitializationFlag;
+    // Exact reuse is unsafe while fresh initialization is forced, so the sequential solver
+    // deliberately leaves its cache disarmed. Re-evaluate eligibility after restoring the caller's
+    // initialization contract and record the accepted tray and product state only when it is now
+    // reusable.
+    commitSequentialWarmState();
   }
 
   /**
@@ -7945,9 +7987,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param reason reason the accelerator result was rejected
    */
   void solveDampedFallbackAfterRejectedAccelerator(UUID id, String reason) {
+    NaphtaliTelemetrySnapshot rejectedNaphtaliTelemetry = lastSolverTypeUsed == SolverType.NAPHTALI_SANDHOLM
+        ? new NaphtaliTelemetrySnapshot(this)
+        : null;
     logger.warn("Accelerated solver result rejected for column {}: {}. Falling back to damped " + "substitution.",
         getName(), reason);
     solveDampedFallbackFromFreshInitialization(id);
+    lastSolveStatusReason = reason;
+    if (rejectedNaphtaliTelemetry != null) {
+      rejectedNaphtaliTelemetry.restore(this);
+    }
   }
 
   /**

@@ -135,6 +135,13 @@ class ProcessModelSimulationEvaluatorTest {
     assertEquals(-result.getObjectivesRaw()[0], result.getObjectives()[0], 1.0e-6,
         "maximization objective should be sign-adjusted for minimizers");
     assertEquals(3000.0, result.getConstraintMargins()[0], 1.0e-6);
+    assertTrue(evaluator.getParameters().get(0).isClampToBounds(),
+        "ordinary parameters must retain legacy clamping by default");
+
+    ProcessModelSimulationEvaluator.EvaluationResult clamped = evaluator.evaluate(new double[] { 25000.0 });
+    assertTrue(clamped.isSimulationConverged());
+    assertEquals(20000.0, fixture.model.getVariableValue("wells::feed.flowRate", "kg/hr"), 1.0e-6,
+        "ordinary parameters must retain their historical bound clamping");
   }
 
   /**

@@ -460,11 +460,15 @@ public class BlackOilConverter {
     for (int i = 0; i < z.length; i++) {
       z[i] /= sum;
     }
-    sys.setMolarComposition(z);
-    try {
-      sys.setTotalNumberOfMoles(1.0);
-    } catch (Throwable ignored) {
+    // Rebuilding from an emptied fluid clears the stale phase and K-value state left by
+    // the parent flash; setMolarComposition() keeps it and the next flash can converge to
+    // the trivial single-phase solution, silently reporting Rs = 0 for a live oil.
+    sys.setEmptyFluid();
+    for (int i = 0; i < nc; i++) {
+      sys.addComponent(i, z[i]);
     }
+    sys.setTemperature(T);
+    sys.setPressure(P);
     return sys;
   }
 }

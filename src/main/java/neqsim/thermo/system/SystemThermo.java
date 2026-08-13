@@ -252,7 +252,7 @@ public abstract class SystemThermo implements SystemInterface {
         tmpPhase.addMolesChemReac(index, moles, moles);
       }
     }
-    setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
+    setTotalNumberOfMolesRaw(getTotalNumberOfMoles() + moles);
     // TODO: isInitialized = false;
   }
 
@@ -274,7 +274,7 @@ public abstract class SystemThermo implements SystemInterface {
       phaseArray[phaseIndex[i]].addMolesChemReac(index, moles * k, moles);
     }
 
-    setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
+    setTotalNumberOfMolesRaw(getTotalNumberOfMoles() + moles);
     // TODO: isInitialized = false;
   }
 
@@ -326,7 +326,7 @@ public abstract class SystemThermo implements SystemInterface {
         }
       }
     }
-    setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
+    setTotalNumberOfMolesRaw(getTotalNumberOfMoles() + moles);
     // TODO: isInitialized = false;
   }
 
@@ -385,7 +385,7 @@ public abstract class SystemThermo implements SystemInterface {
 
     componentNames.add(componentName);
     double k = 1.0;
-    setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
+    setTotalNumberOfMolesRaw(getTotalNumberOfMoles() + moles);
 
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       if (phaseNumber == i) {
@@ -1396,7 +1396,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void clearAll() {
-    setTotalNumberOfMoles(0);
+    setTotalNumberOfMolesRaw(0);
     phaseType[0] = PhaseType.GAS;
     phaseType[1] = PhaseType.LIQUID;
     numberOfComponents = 0;
@@ -2293,7 +2293,7 @@ public abstract class SystemThermo implements SystemInterface {
       totalMolesInSystem = 1.0e-50;
     }
 
-    newSystem.setTotalNumberOfMoles(totalMolesInSystem);
+    ((SystemThermo) newSystem).setTotalNumberOfMolesRaw(totalMolesInSystem);
     ((SystemThermo) newSystem).isInitialized = false;
 
     newSystem.init(0);
@@ -4037,7 +4037,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public final void initTotalNumberOfMoles(double change) {
-    setTotalNumberOfMoles(getTotalNumberOfMoles() + change);
+    setTotalNumberOfMolesRaw(getTotalNumberOfMoles() + change);
     // System.out.println("total moles: " + totalNumberOfMoles);
     for (int j = 0; j < numberOfPhases; j++) {
       for (int i = 0; i < numberOfComponents; i++) {
@@ -4206,7 +4206,7 @@ public abstract class SystemThermo implements SystemInterface {
       }
     }
 
-    newSystem.setTotalNumberOfMoles(getPhase(phaseNumber).getNumberOfMolesInPhase());
+    ((SystemThermo) newSystem).setTotalNumberOfMolesRaw(getPhase(phaseNumber).getNumberOfMolesInPhase());
 
     newSystem.init(0);
     newSystem.setNumberOfPhases(1);
@@ -4231,7 +4231,7 @@ public abstract class SystemThermo implements SystemInterface {
       }
     }
 
-    newSystem.setTotalNumberOfMoles(
+    ((SystemThermo) newSystem).setTotalNumberOfMolesRaw(
         getPhase(phaseNumber1).getNumberOfMolesInPhase() + getPhase(phaseNumber2).getNumberOfMolesInPhase());
 
     newSystem.init(0);
@@ -4255,7 +4255,7 @@ public abstract class SystemThermo implements SystemInterface {
       phaseArray[i] = newPhase.clone();
     }
 
-    setTotalNumberOfMoles(newPhase.getNumberOfMolesInPhase());
+    setTotalNumberOfMolesRaw(newPhase.getNumberOfMolesInPhase());
     this.init(0);
     setNumberOfPhases(1);
     setPhaseType(0, newPhase.getType());
@@ -4398,7 +4398,7 @@ public abstract class SystemThermo implements SystemInterface {
   public void removeComponent(String name) {
     name = ComponentInterface.getComponentNameFromAlias(name);
 
-    setTotalNumberOfMoles(getTotalNumberOfMoles() - phaseArray[0].getComponent(name).getNumberOfmoles());
+    setTotalNumberOfMolesRaw(getTotalNumberOfMoles() - phaseArray[0].getComponent(name).getNumberOfmoles());
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       getPhase(i).removeComponent(name, getTotalNumberOfMoles(),
           getPhase(i).getComponent(name).getNumberOfMolesInPhase());
@@ -4411,7 +4411,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void removePhase(int specPhase) {
-    setTotalNumberOfMoles(getTotalNumberOfMoles() - getPhase(specPhase).getNumberOfMolesInPhase());
+    setTotalNumberOfMolesRaw(getTotalNumberOfMoles() - getPhase(specPhase).getNumberOfMolesInPhase());
 
     for (int j = 0; j < numberOfPhases; j++) {
       for (int i = 0; i < numberOfComponents; i++) {
@@ -4474,7 +4474,7 @@ public abstract class SystemThermo implements SystemInterface {
     for (int i = 0; i < 2; i++) {
       phaseArray[i] = newPhase.clone();
     }
-    setTotalNumberOfMoles(newPhase.getNumberOfMolesInPhase());
+    setTotalNumberOfMolesRaw(newPhase.getNumberOfMolesInPhase());
   }
 
   /** {@inheritDoc} */
@@ -5546,7 +5546,76 @@ public abstract class SystemThermo implements SystemInterface {
        */
       totalNumberOfMoles = 0;
     }
+    rescaleComponentMoles(totalNumberOfMoles);
     this.totalNumberOfMoles = totalNumberOfMoles;
+  }
+
+  /**
+   * Sets the scalar total-moles field only, leaving the per-component mole numbers untouched. For internal bookkeeping
+   * where the caller has already updated the component moles.
+   *
+   * @param totalNumberOfMoles new total number of moles, negative values are clipped to zero
+   */
+  protected final void setTotalNumberOfMolesRaw(double totalNumberOfMoles) {
+    this.totalNumberOfMoles = totalNumberOfMoles < 0 ? 0.0 : totalNumberOfMoles;
+  }
+
+  /**
+   * Scales every component's mole numbers so they sum to {@code target}, keeping the composition unchanged. Component
+   * moles are what {@code init(0)} divides by the total to get the overall mole fractions, so a total that disagrees
+   * with the component moles makes z sum to something other than one and corrupts the next flash.
+   *
+   * @param target the new total number of moles
+   */
+  private void rescaleComponentMoles(double target) {
+    if (phaseArray == null || numberOfComponents == 0 || phaseArray[phaseIndex[0]] == null) {
+      return;
+    }
+    double current = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      current += getPhase(0).getComponent(i).getNumberOfmoles();
+    }
+    if (Math.abs(target - current) <= 1.0e-12 * Math.max(1.0, Math.abs(current))) {
+      return;
+    }
+
+    double[] change = new double[numberOfComponents];
+    if (current > 1.0e-100) {
+      double factor = target / current;
+      for (int i = 0; i < numberOfComponents; i++) {
+        change[i] = factor - 1.0;
+      }
+      for (PhaseInterface tmpPhase : phaseArray) {
+        if (tmpPhase == null) {
+          continue;
+        }
+        for (int i = 0; i < numberOfComponents && i < tmpPhase.getNumberOfComponents(); i++) {
+          ComponentInterface comp = tmpPhase.getComponent(i);
+          tmpPhase.addMolesChemReac(i, comp.getNumberOfMolesInPhase() * change[i], comp.getNumberOfmoles() * change[i]);
+        }
+      }
+      return;
+    }
+
+    // Empty fluid: distribute on the stored overall mole fractions, as init(initType > 0) does.
+    double sumz = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      sumz += getPhase(0).getComponent(i).getz();
+    }
+    if (sumz <= 0.0) {
+      return;
+    }
+    for (int i = 0; i < numberOfComponents; i++) {
+      change[i] = target * getPhase(0).getComponent(i).getz() / sumz;
+    }
+    for (PhaseInterface tmpPhase : phaseArray) {
+      if (tmpPhase == null) {
+        continue;
+      }
+      for (int i = 0; i < numberOfComponents && i < tmpPhase.getNumberOfComponents(); i++) {
+        tmpPhase.addMolesChemReac(i, change[i], change[i]);
+      }
+    }
   }
 
   /** {@inheritDoc} */

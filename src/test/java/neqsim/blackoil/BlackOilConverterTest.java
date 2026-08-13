@@ -121,4 +121,53 @@ class BlackOilConverterTest {
     assertEquals(expectedOilDensity, result.rho_o_sc, 0.01 * expectedOilDensity);
     assertEquals(expectedGasDensity, result.rho_g_sc, 0.02 * expectedGasDensity);
   }
+
+  /**
+   * Below the bubble point the solution gas-oil ratio of a live oil must fall smoothly with pressure. A standalone
+   * phase system rebuilt from stale flash state can converge to the trivial single-phase solution, which reports Rs = 0
+   * and Bo = 1 for an oil that plainly carries dissolved gas, so this asserts that Rs stays positive and monotone
+   * rather than merely non-negative.
+   */
+  @Test
+  void testSolutionGasOilRatioDoesNotCollapseBelowBubblePoint() {
+    SystemInterface oil = new SystemPrEos(290.4, 70.0);
+    oil.addComponent("nitrogen", 0.004);
+    oil.addComponent("CO2", 0.008);
+    oil.addComponent("methane", 0.180);
+    oil.addComponent("ethane", 0.035);
+    oil.addComponent("propane", 0.030);
+    oil.addComponent("i-butane", 0.012);
+    oil.addComponent("n-butane", 0.020);
+    oil.addComponent("i-pentane", 0.012);
+    oil.addComponent("n-pentane", 0.015);
+    oil.addComponent("n-hexane", 0.030);
+    oil.addComponent("n-heptane", 0.060);
+    oil.addComponent("n-octane", 0.070);
+    oil.addComponent("n-nonane", 0.064);
+    oil.addComponent("nC10", 0.460);
+    oil.setMixingRule("classic");
+    oil.useVolumeCorrection(true);
+    oil.setMultiPhaseCheck(true);
+
+    double[] pressures = { 20.0, 30.0, 40.0, 50.0, 55.0, 60.0, 65.0, 70.0 };
+    BlackOilConverter.Result result = BlackOilConverter.convert(oil, 290.4, pressures, 1.01325, 288.15);
+
+    double previous = 0.0;
+    for (double pressure : pressures) {
+      double rs = result.pvt.Rs(pressure);
+      assertTrue(rs > 0.0, "Rs collapsed to zero at " + pressure + " bara; the oil is live");
+      assertTrue(rs >= previous - 1.0e-9,
+          "Rs decreased with rising pressure at " + pressure + " bara: " + previous + " -> " + rs);
+      previous = rs;
+    }
+
+    // A dissolved-gas step of this size between neighbouring points is a solver artefact, not
+    // physics; the historical failure jumped from 0 to about 40 Sm3/Sm3 across one bar.
+    double[] finer = { 50.0, 51.0, 52.0, 53.0, 54.0, 55.0, 56.0, 57.0, 58.0 };
+    BlackOilConverter.Result fine = BlackOilConverter.convert(oil, 290.4, finer, 1.01325, 288.15);
+    for (int i = 1; i < finer.length; i++) {
+      double jump = Math.abs(fine.pvt.Rs(finer[i]) - fine.pvt.Rs(finer[i - 1]));
+      assertTrue(jump < 10.0, "Rs jumped by " + jump + " Sm3/Sm3 over one bar near " + finer[i] + " bara");
+    }
+  }
 }

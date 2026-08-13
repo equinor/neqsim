@@ -354,3 +354,23 @@ incomplete-coverage blocker until it overrides the transaction contract with a s
 subclass-owned mutable field. Passing this rollback gate establishes transaction mechanics only; it does not qualify
 loop
 tuning, scan-time fidelity, final-element dynamics, deterministic I/O, safety action, or OTS behavior.
+
+
+## Pressure-transmitter transaction coverage
+
+The concrete `PressureTransmitter` participates when it is registered in the `ProcessSystem`. Its snapshot preserves
+the stream binding and the inherited measurement configuration, instrument tags and field value, condition-analysis
+state, discrete-delay queue, first-order-filter memory, injected-fault accumulator, alarm configuration and mutable alarm
+state. The Java `Random` generator is captured independently, including its cached Gaussian value, so a rejected noisy
+sample replays exactly rather than merely repeating the same nominal process input. The alarm object is restored in place
+to preserve references held by alarm and operator interfaces.
+
+A transmitter consumed by a controller must also be registered as a process measurement device; the controller's
+transmitter reference does not transfer ownership of the transmitter's delay, filter, noise, fault, or alarm state.
+Coverage fails closed for `PressureTransmitter` subclasses until they extend the snapshot for subclass fields. It also
+blocks online-signal mode because database reads and their externally visible timing do not yet have a rejected-step
+commit/defer contract.
+
+This coverage establishes in-memory rollback, deterministic replay, and Java-serialization mechanics. It does not qualify
+sensor accuracy, sample-time or network jitter, alarm or trip integrity, external historian/DCS writes, safety action,
+virtual commissioning, or OTS behavior.
