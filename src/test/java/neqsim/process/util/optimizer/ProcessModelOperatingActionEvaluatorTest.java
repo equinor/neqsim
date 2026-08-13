@@ -253,8 +253,8 @@ class ProcessModelOperatingActionEvaluatorTest {
 
     assertEquals(Outcome.FEASIBLE, lowerRate.getOutcome());
     assertEquals(Outcome.HYDRAULIC_CONSTRAINT_VIOLATED, higherRate.getOutcome());
-    assertTrue(lowerRate.getHydraulicConstraints().get(0).getUtilization()
-        < higherRate.getHydraulicConstraints().get(0).getUtilization());
+    assertTrue(lowerRate.getHydraulicConstraints().get(0).getUtilization() < higherRate.getHydraulicConstraints().get(0)
+        .getUtilization());
     assertEquals(1.0, producer.getFlowRate("MSm3/day"), 1.0e-8);
     assertEquals(baselineDrawdown, well.getDrawdown(), 1.0e-6);
     assertTrue(higherRate.isBaselineRestored());

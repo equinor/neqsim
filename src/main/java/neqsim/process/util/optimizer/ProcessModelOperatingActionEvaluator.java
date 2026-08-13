@@ -18,15 +18,15 @@ import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.EvaluationR
  * The evaluator runs the supplied {@link ProcessModel} at its current baseline, captures the action state, applies one
  * candidate, runs the configured {@link ProcessModelSimulationEvaluator}, snapshots the selected constraint evidence,
  * and restores and reruns the baseline before returning. The configured simulation evaluator must have no registered
- * parameters: this class owns the single candidate write so an optimizer parameter setter cannot silently overwrite
- * the captured baseline or prevent restoration of an existing off-domain brownfield state.
+ * parameters: this class owns the single candidate write so an optimizer parameter setter cannot silently overwrite the
+ * captured baseline or prevent restoration of an existing off-domain brownfield state.
  * </p>
  *
  * <p>
  * Constraint bindings use exact area, equipment, and constraint names. Missing constraints, non-finite utilization,
- * violations, and operation outside an explicitly supplied validity range fail closed with distinct outcomes. An
- * absent validity range remains visible as not assessed and does not by itself reject a candidate. Evidence confidence
- * is retained as engineering-basis metadata; it is not interpreted as a probability of safe operation.
+ * violations, and operation outside an explicitly supplied validity range fail closed with distinct outcomes. An absent
+ * validity range remains visible as not assessed and does not by itself reject a candidate. Evidence confidence is
+ * retained as engineering-basis metadata; it is not interpreted as a probability of safe operation.
  * </p>
  *
  * <p>
@@ -140,12 +140,12 @@ public final class ProcessModelOperatingActionEvaluator {
    */
   public ProcessModelOperatingActionEvaluator requireHydraulicConstraint(HydraulicLimitRole role, String areaName,
       String equipmentName, String constraintName, String provenance) {
-    HydraulicConstraintBinding candidate = new HydraulicConstraintBinding(role, areaName, equipmentName,
-        constraintName, provenance);
+    HydraulicConstraintBinding candidate = new HydraulicConstraintBinding(role, areaName, equipmentName, constraintName,
+        provenance);
     for (HydraulicConstraintBinding binding : bindings) {
       if (binding.hasSameAddress(candidate)) {
-        throw new IllegalArgumentException("Hydraulic constraint binding is already registered: "
-            + candidate.getQualifiedConstraintName());
+        throw new IllegalArgumentException(
+            "Hydraulic constraint binding is already registered: " + candidate.getQualifiedConstraintName());
       }
     }
     bindings.add(candidate);
@@ -250,11 +250,12 @@ public final class ProcessModelOperatingActionEvaluator {
         HydraulicConstraintSnapshot snapshot = new HydraulicConstraintSnapshot(binding, match);
         snapshots.add(snapshot);
         if (!snapshot.hasFiniteValue()) {
-          diagnostics.add("Required hydraulic constraint returned non-finite evidence: "
-              + binding.getQualifiedConstraintName());
+          diagnostics.add(
+              "Required hydraulic constraint returned non-finite evidence: " + binding.getQualifiedConstraintName());
         } else if (!snapshot.isFeasible()) {
           diagnostics.add("Required hydraulic constraint is violated: " + binding.getQualifiedConstraintName());
-        } else if (snapshot.getEvidenceApplicability() == BottleneckStatus.EvidenceApplicability.OUTSIDE_VALIDITY_RANGE) {
+        } else if (snapshot
+            .getEvidenceApplicability() == BottleneckStatus.EvidenceApplicability.OUTSIDE_VALIDITY_RANGE) {
           diagnostics.add("Required hydraulic constraint is outside its evidence validity range: "
               + binding.getQualifiedConstraintName());
         }
@@ -264,8 +265,7 @@ public final class ProcessModelOperatingActionEvaluator {
   }
 
   /** Finds an exact area/equipment/constraint match. */
-  private BottleneckStatus findExactConstraint(List<BottleneckStatus> available,
-      HydraulicConstraintBinding binding) {
+  private BottleneckStatus findExactConstraint(List<BottleneckStatus> available, HydraulicConstraintBinding binding) {
     for (BottleneckStatus status : available) {
       if (binding.getAreaName().equals(status.getAreaName())
           && binding.getEquipmentName().equals(status.getEquipmentName())
@@ -620,8 +620,8 @@ public final class ProcessModelOperatingActionEvaluator {
     private CandidateEvaluationResult(ProcessModelOperatingAction action, double baselineValue, double candidateValue,
         Outcome outcome, boolean candidateSimulationConverged, boolean candidateEvaluatorFeasible,
         boolean baselineRestored, boolean baselineSimulationConverged, double[] rawObjectives, double[] objectives,
-        double[] constraintValues, double[] constraintMargins,
-        List<HydraulicConstraintSnapshot> hydraulicConstraints, List<String> diagnostics) {
+        double[] constraintValues, double[] constraintMargins, List<HydraulicConstraintSnapshot> hydraulicConstraints,
+        List<String> diagnostics) {
       this.action = action;
       this.baselineValue = baselineValue;
       this.candidateValue = candidateValue;
