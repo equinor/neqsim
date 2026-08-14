@@ -70,9 +70,6 @@ public class NaphtaliSandholmSolver {
   /** Convergence tolerance for the largest absolute logarithmic K-value update. */
   private static final double THERMO_K_VALUE_TOLERANCE = 1.0e-8;
 
-  /** Maximum residual-aware full-column refinements before a finite-difference Jacobian build. */
-  private static final int JACOBIAN_BASE_REFINEMENT_LIMIT = 3;
-
   /** Logger for this class. */
   private static final Logger logger = LogManager.getLogger(NaphtaliSandholmSolver.class);
 
@@ -3256,12 +3253,12 @@ public class NaphtaliSandholmSolver {
    * Refine the derived tray state before a finite-difference Jacobian build.
    *
    * <p>
-   * The primary Newton variables remain unchanged. At least one and up to three full-column thermodynamic passes are
-   * evaluated, and the state with the smallest finite MESH residual among those refreshed states is retained. The
-   * incoming derived state remains only as a fallback if no refinement is finite. Refinement stops when consecutive
-   * residual vectors differ by no more than one tenth of the outer tolerance. This replaces the accidental,
-   * column-order-dependent K-value refinement that previously occurred while restoring each finite-difference
-   * perturbation.
+   * The primary Newton variables remain unchanged. Up to one full-column thermodynamic pass per local finite-difference
+   * variable is evaluated, matching the restore-evaluation budget that the frozen base replaces. The state with the
+   * smallest finite MESH residual among those refreshed states is retained, while the incoming derived state remains
+   * only as a fallback if no refinement is finite. Refinement stops early when consecutive residual vectors differ by
+   * no more than one tenth of the outer tolerance. This replaces the accidental, column-order-dependent K-value
+   * refinement that previously occurred while restoring each finite-difference perturbation.
    * </p>
    *
    * @param initialResidual residual at the current primary state
@@ -3280,7 +3277,7 @@ public class NaphtaliSandholmSolver {
     saveDerivedThermodynamicState(bestK, bestVap, bestL, bestHL, bestHV);
 
     double residualChangeTolerance = Math.max(1.0e-12, tolerance * 0.1);
-    for (int refinement = 0; refinement < JACOBIAN_BASE_REFINEMENT_LIMIT; refinement++) {
+    for (int refinement = 0; refinement < varsPerTray; refinement++) {
       evaluateThermo();
       lastJacobianBaseRefinementCount++;
       double[] candidateResidual = computeResidual();

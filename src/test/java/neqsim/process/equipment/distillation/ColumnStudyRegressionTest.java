@@ -166,7 +166,12 @@ public class ColumnStudyRegressionTest {
     solver.setMaxIterations(80);
     boolean accepted = solver.solve(new UUID(0L, 1L));
 
-    assertTrue(accepted, "the severely perturbed retained state should recover without coordinated fallback");
+    assertTrue(accepted,
+        () -> "the severely perturbed retained state should recover without coordinated fallback: iterations="
+            + solver.getLastIterations() + ", residual=" + solver.getLastResidualNorm() + ", mass balance="
+            + solver.getLastMassBalanceError() + ", base refinements=" + solver.getLastJacobianBaseRefinementCount()
+            + ", thermo evaluations=" + solver.getLastThermoEvaluationCount() + ", K sweeps="
+            + solver.getLastThermoKValueIterationCount());
     assertTrue(solver.getLastIterations() <= 45,
         "the recovered warm solve should remain well below the 80-iteration cap");
     assertTrue(solver.getLastMassBalanceError() < 1.0e-8, "the recovered state should close total molar balance");

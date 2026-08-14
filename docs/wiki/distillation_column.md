@@ -255,13 +255,14 @@ targets manipulated through condenser or reboiler temperature.
 - Solves a simultaneous block of MESH residual equations with liquid component flows, tray
   temperature, and vapor flow as tray variables.
 - Builds a finite-difference block-tridiagonal Jacobian from neighboring tray couplings and uses a
-  guarded Newton line search with flow and temperature trust limits. Before each build, at least one
-  and up to three full-column thermodynamic passes refresh the base; the lowest finite MESH-residual
-  state among those passes is retained, while the incoming derived state is only a non-finite
-  fallback. Refinement stops early when consecutive residual vectors agree within one tenth of the
-  outer tolerance. Every perturbed column then starts from that same frozen K-value, vapor-flow, and
-  enthalpy state; exact restoration prevents finite-difference column order from silently refining
-  the base residual.
+  guarded Newton line search with flow and temperature trust limits. Before each build, up to one
+  full-column thermodynamic pass per local finite-difference variable refreshes the base. This
+  matches the restore-evaluation budget that the frozen base replaces. The lowest finite
+  MESH-residual state among those passes is retained, while the incoming derived state is only a
+  non-finite fallback. Refinement stops early when consecutive residual vectors agree within one
+  tenth of the outer tolerance. Every perturbed column then starts from that same frozen K-value,
+  vapor-flow, and enthalpy state; exact restoration prevents finite-difference column order from
+  silently refining the base residual.
 - Leaves the accepted line-search trial applied and reuses its evaluated MESH residual. The solver
   does not restore the old tray state and repeat the same thermodynamic evaluation merely to apply
   a step that the line search has already accepted.
