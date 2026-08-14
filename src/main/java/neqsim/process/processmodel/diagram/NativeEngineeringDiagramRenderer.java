@@ -30,10 +30,10 @@ import neqsim.process.engineering.model.EngineeringNode;
  *
  * <p>
  * The renderer consumes the immutable semantic document model directly. It does not invoke Graphviz and therefore
- * preserves stable sheet identities, pinned millimetre positions, protected routes, reciprocal off-page references,
- * and controlled title/revision metadata. Automatically placed objects use a deterministic grid. Native output is an
- * engineering proposal unless the source document set carries accountable approval evidence; rendering does not
- * qualify symbols, layout, or content against ISO 10628 or any other drawing standard.
+ * preserves stable sheet identities, pinned millimetre positions, protected routes, reciprocal off-page references, and
+ * controlled title/revision metadata. Automatically placed objects use a deterministic grid. Native output is an
+ * engineering proposal unless the source document set carries accountable approval evidence; rendering does not qualify
+ * symbols, layout, or content against ISO 10628 or any other drawing standard.
  * </p>
  */
 public final class NativeEngineeringDiagramRenderer {
@@ -251,8 +251,8 @@ public final class NativeEngineeringDiagramRenderer {
     Page page = new Page(sheet.getId(), format.getWidthMillimetres(), format.getHeightMillimetres());
     double contentRight = page.width - CONTENT_LEFT;
     double contentBottom = page.height - TITLE_BLOCK_HEIGHT - 7.0;
-    page.commands.add(Command.rect(8.0, 8.0, page.width - 16.0, page.height - 16.0, "#1f2937", "none", 0.5,
-        "sheet-border", ""));
+    page.commands
+        .add(Command.rect(8.0, 8.0, page.width - 16.0, page.height - 16.0, "#1f2937", "none", 0.5, "sheet-border", ""));
     page.commands.add(Command.text(12.0, 17.0, 4.2, documentSet.getTitle(), "#111827", "document-title", ""));
     page.commands.add(Command.text(page.width - 12.0, 17.0, 2.7,
         drawing.getContentProfile().name() + " / " + format.name(), "#374151", "sheet-format", "end"));
@@ -376,8 +376,9 @@ public final class NativeEngineeringDiagramRenderer {
   private void addOffPageConnector(Page page, OffPageConnector connector, double contentRight, double contentBottom) {
     Point point = connectorPoint(connector, contentRight, contentBottom);
     double direction = connector.getRole() == EngineeringDiagramDocumentSet.ConnectorRole.SOURCE ? 1.0 : -1.0;
-    List<Point> triangle = Arrays.asList(new Point(point.x, point.y), new Point(point.x - direction * 5.0, point.y - 3.0),
-        new Point(point.x - direction * 5.0, point.y + 3.0), new Point(point.x, point.y));
+    List<Point> triangle = Arrays.asList(new Point(point.x, point.y),
+        new Point(point.x - direction * 5.0, point.y - 3.0), new Point(point.x - direction * 5.0, point.y + 3.0),
+        new Point(point.x, point.y));
     page.commands.add(Command.polyline(triangle, "#111827", 0.7, "", connector.getId(), false));
     String label = "TO/FROM " + connector.getZoneReference() + " [" + connector.getPeerSheetId() + "]";
     double textX = point.x - direction * 7.0;
@@ -392,24 +393,23 @@ public final class NativeEngineeringDiagramRenderer {
     page.commands.add(Command.rect(x, y, OBJECT_WIDTH, OBJECT_HEIGHT, "#1f2937", fill, 0.7, object.getId(), ""));
     String primary = displayLabel(object);
     page.commands.add(Command.text(position.x, position.y - 0.8, 2.8, primary, "#111827", object.getId(), "middle"));
-    page.commands.add(Command.text(position.x, position.y + 4.0, 2.0, object.getKind().name(), "#4b5563",
-        object.getId(), "middle"));
+    page.commands.add(
+        Command.text(position.x, position.y + 4.0, 2.0, object.getKind().name(), "#4b5563", object.getId(), "middle"));
   }
 
   private void addTitleBlock(Page page, Drawing drawing, Sheet sheet) {
     double top = page.height - TITLE_BLOCK_HEIGHT;
-    page.commands.add(Command.rect(8.0, top, page.width - 16.0, TITLE_BLOCK_HEIGHT - 8.0, "#1f2937", "#ffffff",
-        0.5, "title-block", ""));
-    page.commands.add(Command.line(page.width * 0.58, top, page.width * 0.58, page.height - 8.0, "#1f2937", 0.4,
+    page.commands.add(Command.rect(8.0, top, page.width - 16.0, TITLE_BLOCK_HEIGHT - 8.0, "#1f2937", "#ffffff", 0.5,
         "title-block", ""));
+    page.commands.add(
+        Command.line(page.width * 0.58, top, page.width * 0.58, page.height - 8.0, "#1f2937", 0.4, "title-block", ""));
     page.commands.add(Command.text(12.0, top + 6.0, 3.0, drawing.getTitle(), "#111827", "drawing-title", ""));
-    page.commands.add(Command.text(12.0, top + 12.0, 2.5, "DRAWING " + drawing.getNumber(), "#111827",
-        "drawing-number", ""));
+    page.commands
+        .add(Command.text(12.0, top + 12.0, 2.5, "DRAWING " + drawing.getNumber(), "#111827", "drawing-number", ""));
     page.commands.add(Command.text(12.0, top + 17.0, 2.3, "SHEET " + sheet.getNumber() + " - " + sheet.getTitle(),
         "#111827", "sheet-number", ""));
     page.commands.add(Command.text(page.width * 0.60, top + 6.0, 2.4,
-        "REV " + documentSet.getRevision() + "  STATUS " + documentSet.getStatus().name(), "#111827",
-        "revision", ""));
+        "REV " + documentSet.getRevision() + "  STATUS " + documentSet.getStatus().name(), "#111827", "revision", ""));
     page.commands.add(Command.text(page.width * 0.60, top + 11.0, 2.2,
         "PURPOSE " + documentSet.getIssuePurpose().name(), "#111827", "issue-purpose", ""));
     page.commands.add(Command.text(page.width * 0.60, top + 16.0, 1.8,
@@ -417,18 +417,16 @@ public final class NativeEngineeringDiagramRenderer {
     if (documentSet.getStatus() != EngineeringDiagramDocumentSet.DocumentStatus.APPROVED
         || documentSet.getIssuePurpose() == EngineeringDiagramDocumentSet.IssuePurpose.ENGINEERING_PROPOSAL) {
       page.commands.add(Command.text(page.width / 2.0, top - 3.0, 3.0,
-          "ENGINEERING PROPOSAL - NOT APPROVED FOR DESIGN OR CONSTRUCTION", "#b91c1c", "proposal-boundary",
-          "middle"));
+          "ENGINEERING PROPOSAL - NOT APPROVED FOR DESIGN OR CONSTRUCTION", "#b91c1c", "proposal-boundary", "middle"));
     }
   }
 
   private String toSvg(Page page) {
     StringBuilder svg = new StringBuilder();
     svg.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-    svg.append("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"").append(number(page.width))
-        .append("mm\" height=\"").append(number(page.height)).append("mm\" viewBox=\"0 0 ")
-        .append(number(page.width)).append(' ').append(number(page.height)).append("\" data-sheet-id=\"")
-        .append(xml(page.sheetId)).append("\">\n");
+    svg.append("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"").append(number(page.width)).append("mm\" height=\"")
+        .append(number(page.height)).append("mm\" viewBox=\"0 0 ").append(number(page.width)).append(' ')
+        .append(number(page.height)).append("\" data-sheet-id=\"").append(xml(page.sheetId)).append("\">\n");
     svg.append("  <title>").append(xml(documentSet.getTitle())).append(" - ").append(xml(page.sheetId))
         .append("</title>\n");
     svg.append("  <g font-family=\"Arial,Helvetica,sans-serif\" fill=\"none\">\n");
@@ -481,8 +479,8 @@ public final class NativeEngineeringDiagramRenderer {
     for (int index = 1; index < offsets.size(); index++) {
       write(output, bytes(String.format(Locale.ROOT, "%010d 00000 n \n", offsets.get(index))));
     }
-    write(output, bytes("trailer\n<< /Size " + (objects.size() + 1) + " /Root 1 0 R >>\nstartxref\n" + xref
-        + "\n%%EOF\n"));
+    write(output,
+        bytes("trailer\n<< /Size " + (objects.size() + 1) + " /Root 1 0 R >>\nstartxref\n" + xref + "\n%%EOF\n"));
     return output.toByteArray();
   }
 
@@ -670,8 +668,8 @@ public final class NativeEngineeringDiagramRenderer {
     }
 
     private static Command text(double x, double y, double size, String text, String fill, String id, String anchor) {
-      return new Command("text", Collections.<Point>emptyList(), x, y, 0.0, 0.0, size, text, "none", fill, 0.0, "",
-          id, anchor, false);
+      return new Command("text", Collections.<Point>emptyList(), x, y, 0.0, 0.0, size, text, "none", fill, 0.0, "", id,
+          anchor, false);
     }
 
     private String toSvg() {
@@ -680,8 +678,8 @@ public final class NativeEngineeringDiagramRenderer {
         result.append("rect x=\"").append(number(x)).append("\" y=\"").append(number(y)).append("\" width=\"")
             .append(number(width)).append("\" height=\"").append(number(height)).append("\"");
       } else if ("text".equals(type)) {
-        result.append("text x=\"").append(number(x)).append("\" y=\"").append(number(y))
-            .append("\" font-size=\"").append(number(size)).append("\" dominant-baseline=\"middle\"");
+        result.append("text x=\"").append(number(x)).append("\" y=\"").append(number(y)).append("\" font-size=\"")
+            .append(number(size)).append("\" dominant-baseline=\"middle\"");
         if (!anchor.isEmpty()) {
           result.append(" text-anchor=\"").append(anchor).append("\"");
         }
@@ -751,8 +749,8 @@ public final class NativeEngineeringDiagramRenderer {
             .append(" m ");
         for (int index = 1; index < points.size(); index++) {
           Point point = points.get(index);
-          result.append(number(point.x * MM_TO_POINT)).append(' ')
-              .append(number((pageHeight - point.y) * MM_TO_POINT)).append(" l ");
+          result.append(number(point.x * MM_TO_POINT)).append(' ').append(number((pageHeight - point.y) * MM_TO_POINT))
+              .append(" l ");
         }
         result.append("S\n");
       }

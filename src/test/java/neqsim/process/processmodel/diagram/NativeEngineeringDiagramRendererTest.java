@@ -128,8 +128,8 @@ class NativeEngineeringDiagramRendererTest {
   }
 
   private static PinnedPosition reviewedPosition(String semanticObjectId, String sheetKey, double x, double y) {
-    return new PinnedPosition(semanticObjectId, sheetKey, x, y, CoordinateUnit.MILLIMETRE,
-        "project-layout:PFD-NATIVE", EvidenceState.REVIEWED, "Process discipline", "2026-08-14T08:00:00Z", "B");
+    return new PinnedPosition(semanticObjectId, sheetKey, x, y, CoordinateUnit.MILLIMETRE, "project-layout:PFD-NATIVE",
+        EvidenceState.REVIEWED, "Process discipline", "2026-08-14T08:00:00Z", "B");
   }
 
   private static ProtectedRoute reviewedRoute(String connectionId, String sheetKey) {
