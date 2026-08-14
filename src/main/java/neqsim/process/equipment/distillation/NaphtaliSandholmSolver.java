@@ -67,9 +67,6 @@ public class NaphtaliSandholmSolver {
   /** Maximum forced-root fugacity sweeps when refining a retained column state. */
   private static final int THERMO_WARM_START_K_VALUE_ITERATIONS = 3;
 
-  /** Maximum forced-root fugacity sweeps for a perturbed finite-difference state. */
-  private static final int THERMO_JACOBIAN_K_VALUE_ITERATIONS = 6;
-
   /** Convergence tolerance for the largest absolute logarithmic K-value update. */
   private static final double THERMO_K_VALUE_TOLERANCE = 1.0e-8;
 
@@ -3224,7 +3221,7 @@ public class NaphtaliSandholmSolver {
         double origVal = getVariable(jj, k);
         double h = Math.max(Math.abs(origVal) * pertSize, minPert);
         setVariable(jj, k, origVal + h);
-        evaluateThermoForTray(jj, THERMO_JACOBIAN_K_VALUE_ITERATIONS);
+        evaluateThermoForTray(jj);
 
         // Only the perturbed tray and its two neighbors can depend on this variable.
         int jStart = Math.max(0, jj - 1);
@@ -3472,18 +3469,6 @@ public class NaphtaliSandholmSolver {
   }
 
   private void evaluateThermoForTray(int j) {
-    int maximumKValueIterations = warmStartFromColumn ? THERMO_WARM_START_K_VALUE_ITERATIONS
-        : THERMO_K_VALUE_ITERATIONS;
-    evaluateThermoForTray(j, maximumKValueIterations);
-  }
-
-  /**
-   * Evaluate one tray with an explicit K-value fixed-point sweep limit.
-   *
-   * @param j tray index
-   * @param maximumKValueIterations maximum forced-root fugacity sweeps
-   */
-  private void evaluateThermoForTray(int j, int maximumKValueIterations) {
     lastThermoEvaluationCount++;
     double sumLiq = 0;
     for (int i = 0; i < C; i++) {
@@ -3539,6 +3524,8 @@ public class NaphtaliSandholmSolver {
     boolean kConverged = false;
     double finalMaxLogKUpdate = Double.POSITIVE_INFINITY;
     if (kOk) {
+      int maximumKValueIterations = warmStartFromColumn ? THERMO_WARM_START_K_VALUE_ITERATIONS
+          : THERMO_K_VALUE_ITERATIONS;
       for (int sweep = 0; sweep < maximumKValueIterations; sweep++) {
         if (!computeSinglePhaseFugacityCoefficients(y, T[j], Pbar, true, phiV)) {
           kOk = false;
