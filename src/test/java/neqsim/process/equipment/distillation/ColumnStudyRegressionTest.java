@@ -143,7 +143,7 @@ public class ColumnStudyRegressionTest {
    * </p>
    */
   @Test
-  public void severeWarmStartPerturbationConvergesWithRefinedKValues() {
+  public void severeWarmStartPerturbationConvergesWithRefinedKValues(TestReporter testReporter) {
     SystemInterface baseFluid = createBaseFluid();
     StreamInterface feedStream = createStream("stall_guard_main_feed", baseFluid, MAIN_FEED_COMPOSITION,
         MAIN_FEED_TEMPERATURE_C, MAIN_FEED_PRESSURE_BARA, MAIN_FEED_MASS_FLOW_KG_HR);
@@ -173,6 +173,18 @@ public class ColumnStudyRegressionTest {
         "the recovered warm solve should keep thermodynamic evaluations bounded");
     assertTrue(solver.getLastThermoKValueIterationCount() < 70000,
         "the recovered warm solve should keep forced-root fugacity sweeps bounded");
+    assertTrue(solver.getLastJacobianBaseRefinementCount() > 0,
+        "the difficult solve should exercise residual-aware Jacobian base refinement");
+    assertEquals(0.0, solver.getLastJacobianBaseResidualMutation(), 0.0,
+        "finite-difference assembly must leave the base MESH residual bitwise unchanged");
+    testReporter.publishEntry("severe_jacobian_base_refinements",
+        Integer.toString(solver.getLastJacobianBaseRefinementCount()));
+    testReporter.publishEntry("severe_jacobian_base_residual_mutation",
+        Double.toString(solver.getLastJacobianBaseResidualMutation()));
+    testReporter.publishEntry("severe_thermo_evaluations",
+        Integer.toString(solver.getLastThermoEvaluationCount()));
+    testReporter.publishEntry("severe_k_sweeps",
+        Integer.toString(solver.getLastThermoKValueIterationCount()));
     assertPhysicalProduct(column.getGasOutStream(), "recovered warm-start gas product");
     assertPhysicalProduct(column.getLiquidOutStream(), "recovered warm-start liquid product");
     assertOverallMassBalance(feedStream, topFeedStream, column);
