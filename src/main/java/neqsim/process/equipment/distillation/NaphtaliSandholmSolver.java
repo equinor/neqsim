@@ -869,6 +869,9 @@ public class NaphtaliSandholmSolver {
             norm = vectorNorm(residual);
             failedSteps++;
             if (failedSteps > 5) {
+              if (warmStartFromColumn) {
+                return retryWithColdInitialization(id);
+              }
               applyResultsToColumn(id, iter, bestNorm, startTime);
               return false;
             }
@@ -926,6 +929,9 @@ public class NaphtaliSandholmSolver {
           failedSteps++;
           logger.warn("NS: NaN/Inf — reverting to best (||F||={})", String.format("%.6e", norm));
           if (failedSteps > 5) {
+            if (warmStartFromColumn) {
+              return retryWithColdInitialization(id);
+            }
             applyResultsToColumn(id, iter, bestNorm, startTime);
             return false;
           }
@@ -999,15 +1005,42 @@ public class NaphtaliSandholmSolver {
 
       logger.warn("Naphtali-Sandholm did not converge in {} iterations, ||F|| = {}", completedNewtonIterations,
           String.format("%.6e", norm));
-      applyResultsToColumn(id, completedNewtonIterations, norm, startTime);
       // Partial convergence is only acceptable when each component balance still closes; a leaky
       // profile must be reported as not accepted so the column does not present it as a solution.
-      return norm < tolerance * 100 && meshClosureAcceptable("partial convergence");
+      boolean partialConvergenceAccepted =
+          norm < tolerance * 100 && meshClosureAcceptable("partial convergence");
+      if (!partialConvergenceAccepted && warmStartFromColumn) {
+        return retryWithColdInitialization(id);
+      }
+      applyResultsToColumn(id, completedNewtonIterations, norm, startTime);
+      return partialConvergenceAccepted;
     } catch (Exception ex) {
       logger.error("Naphtali-Sandholm solver exception", ex);
       logger.error("NS EXCEPTION: {}: {}", ex.getClass().getName(), ex.getMessage());
+      if (warmStartFromColumn) {
+        return retryWithColdInitialization(id);
+      }
       return false;
     }
+  }
+
+  /**
+   * Retry a rejected retained-state solve from the column's normal cold initializer.
+   *
+   * <p>
+   * A rejected warm state must not be materialized on the live column before recovery. Otherwise
+   * the nominal cold retry initializes from tray systems and cached products that already contain
+   * the rejected Newton profile. Clearing the warm-start flag and restarting here keeps the live
+   * column authoritative until either the cold attempt is accepted or its best result is applied.
+   * </p>
+   *
+   * @param id calculation identifier for NeqSim
+   * @return {@code true} if the cold retry converges or meets an accepted closure criterion
+   */
+  private boolean retryWithColdInitialization(UUID id) {
+    logger.info("NS: rejected warm-start state; retrying from cold initialization before applying results");
+    warmStartFromColumn = false;
+    return solve(id);
   }
 
   /** Reset solver telemetry before a new solve. */
@@ -3217,42 +3250,20 @@ public class NaphtaliSandholmSolver {
       for (int k = 0; k < varsPerTray; k++) {
         int varIdx = jj * varsPerTray + k;
 
-        // Save and perturb one primary variable from the same frozen base state. Use
-        // a centred difference away from the physical lower bounds. The symmetric
-        // evaluation cancels the leading truncation error that made the frozen
-        // forward difference sensitive to the capped local K fixed point. This adds
-        // one tray evaluation per interior variable but does not reintroduce
-        // column-order-dependent state drift.
+        // Save and perturb one primary variable from the same frozen base state.
         double origVal = getVariable(jj, k);
         double h = Math.max(Math.abs(origVal) * pertSize, minPert);
         setVariable(jj, k, origVal + h);
         evaluateThermoForTray(jj);
 
+        // Only the perturbed tray and its two neighbors can depend on this variable.
         int jStart = Math.max(0, jj - 1);
         int jEnd = Math.min(N - 1, jj + 1);
-        double[][] forwardResidual = new double[jEnd - jStart + 1][];
         for (int j = jStart; j <= jEnd; j++) {
-          forwardResidual[j - jStart] = computeResidualForTray(j);
-        }
-
-        boolean centeredDifference = canUseCenteredJacobianPerturbation(k, origVal, h);
-        if (centeredDifference) {
-          setVariable(jj, k, origVal);
-          restoreDerivedThermodynamicStateForTray(jj, baseK, baseVap, baseL, baseHL, baseHV);
-          setVariable(jj, k, origVal - h);
-          evaluateThermoForTray(jj);
-        }
-
-        // Only the perturbed tray and its two neighbors can depend on this variable.
-        for (int j = jStart; j <= jEnd; j++) {
-          double[] comparisonResidual = centeredDifference ? computeResidualForTray(j) : null;
+          double[] Fpert = computeResidualForTray(j);
           int rowBase = j * varsPerTray;
           for (int eq = 0; eq < varsPerTray; eq++) {
-            if (centeredDifference) {
-              J[rowBase + eq][varIdx] = (forwardResidual[j - jStart][eq] - comparisonResidual[eq]) / (2.0 * h);
-            } else {
-              J[rowBase + eq][varIdx] = (forwardResidual[j - jStart][eq] - F0[rowBase + eq]) / h;
-            }
+            J[rowBase + eq][varIdx] = (Fpert[eq] - F0[rowBase + eq]) / h;
           }
         }
 
@@ -3269,19 +3280,6 @@ public class NaphtaliSandholmSolver {
     lastFiniteDifferenceJacobianColumns += totalVars;
     lastJacobianBuildTimeSeconds += (System.nanoTime() - jacobianStart) / 1.0e9;
     return J;
-  }
-
-  /**
-   * Check whether a Jacobian variable can be perturbed symmetrically without crossing its physical lower bound.
-   *
-   * @param variableIndex local tray-variable index
-   * @param value unperturbed variable value
-   * @param perturbation finite-difference perturbation
-   * @return {@code true} when {@code value - perturbation} remains inside the variable domain
-   */
-  private boolean canUseCenteredJacobianPerturbation(int variableIndex, double value, double perturbation) {
-    double lowerBound = variableIndex == C ? 100.0 : 1.0e-20;
-    return value - perturbation > lowerBound;
   }
 
   /**
