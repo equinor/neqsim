@@ -1,11 +1,14 @@
 package neqsim.process.measurementdevice;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import neqsim.process.dynamics.TransientStateParticipant;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -48,9 +51,13 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author Even Solbraa
  * @version 1.0
  */
-public abstract class DifferentialPressureFlowMeter extends StreamMeasurementDeviceBaseClass {
+public abstract class DifferentialPressureFlowMeter extends StreamMeasurementDeviceBaseClass
+    implements TransientStateParticipant<DifferentialPressureFlowMeter.DifferentialPressureFlowMeterState> {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000L;
+
+  /** Persistent identity used only for transient transaction provenance. */
+  private String transientStateParticipantId = UUID.randomUUID().toString();
 
   /** Logger object for class. */
   private static final Logger logger = LogManager.getLogger(DifferentialPressureFlowMeter.class);
@@ -551,6 +558,140 @@ public abstract class DifferentialPressureFlowMeter extends StreamMeasurementDev
       value = getMassFlowRate(unit);
     }
     return applySignalModifiers(value);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateIdentity() {
+    if (transientStateParticipantId == null || transientStateParticipantId.trim().isEmpty()) {
+      transientStateParticipantId = UUID.randomUUID().toString();
+    }
+    return "measurement:differential-pressure-flow:" + transientStateParticipantId;
+  }
+
+  /**
+   * Reports whether the concrete primary-device subtype has complete extension-state coverage.
+   *
+   * <p>
+   * The default is deliberately fail-closed. Each qualified concrete subtype must override this method and reject its
+   * own descendants.
+   * </p>
+   *
+   * @return blocking diagnostic for an unqualified subtype, otherwise {@code null}
+   */
+  protected String getDifferentialPressureFlowMeterTransientStateCoverageIssue() {
+    return "differential-pressure-flow-meter subtype " + getClass().getName()
+        + " must provide a snapshot that includes subtype-owned mutable state";
+  }
+
+  /**
+   * Captures subtype-owned mutable state.
+   *
+   * @return serializable subtype state, never {@code null} for a qualified subtype
+   */
+  protected Serializable captureDifferentialPressureFlowMeterExtensionState() {
+    return null;
+  }
+
+  /**
+   * Restores subtype-owned mutable state.
+   *
+   * @param extensionState state returned by {@link #captureDifferentialPressureFlowMeterExtensionState()}
+   */
+  protected void restoreDifferentialPressureFlowMeterExtensionState(Serializable extensionState) {
+    if (extensionState != null) {
+      throw new IllegalArgumentException(
+          "Unqualified differential-pressure flow-meter subtype state cannot be restored");
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateCoverageIssue() {
+    String measurementIssue = getMeasurementTransientStateCoverageIssue();
+    if (measurementIssue != null) {
+      return measurementIssue;
+    }
+    return getDifferentialPressureFlowMeterTransientStateCoverageIssue();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public DifferentialPressureFlowMeterState captureTransientState() {
+    String coverageIssue = getTransientStateCoverageIssue();
+    if (coverageIssue != null) {
+      throw new IllegalStateException(coverageIssue);
+    }
+    return new DifferentialPressureFlowMeterState(getTransientStateIdentity(), getClass().getName(), stream,
+        pipeDiameterMeters, throatDiameterMeters, differentialPressure, differentialPressureTransmitter,
+        gasDensityOverride, isentropicExponentOverride, dynamicViscosityOverride, lastReynoldsNumberPipe,
+        captureMeasurementDeviceTransientState(), captureDifferentialPressureFlowMeterExtensionState());
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreTransientState(DifferentialPressureFlowMeterState snapshot) {
+    if (snapshot == null) {
+      throw new IllegalArgumentException("Differential-pressure flow-meter transient snapshot cannot be null");
+    }
+    if (!getTransientStateIdentity().equals(snapshot.stateIdentity)) {
+      throw new IllegalArgumentException(
+          "Differential-pressure flow-meter snapshot identity does not match " + getTransientStateIdentity());
+    }
+    if (!getClass().getName().equals(snapshot.concreteClassName)) {
+      throw new IllegalArgumentException("Differential-pressure flow-meter snapshot subtype does not match "
+          + getClass().getName());
+    }
+    stream = snapshot.stream;
+    pipeDiameterMeters = snapshot.pipeDiameterMeters;
+    throatDiameterMeters = snapshot.throatDiameterMeters;
+    differentialPressure = snapshot.differentialPressure;
+    differentialPressureTransmitter = snapshot.differentialPressureTransmitter;
+    gasDensityOverride = snapshot.gasDensityOverride;
+    isentropicExponentOverride = snapshot.isentropicExponentOverride;
+    dynamicViscosityOverride = snapshot.dynamicViscosityOverride;
+    lastReynoldsNumberPipe = snapshot.lastReynoldsNumberPipe;
+    restoreDifferentialPressureFlowMeterExtensionState(snapshot.extensionState);
+    restoreMeasurementDeviceTransientState(snapshot.measurementState);
+  }
+
+  /** Immutable differential-pressure primary-device rollback point. */
+  public static final class DifferentialPressureFlowMeterState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    private final String stateIdentity;
+    private final String concreteClassName;
+    private final StreamInterface stream;
+    private final double pipeDiameterMeters;
+    private final double throatDiameterMeters;
+    private final double differentialPressure;
+    private final DifferentialPressureTransmitter differentialPressureTransmitter;
+    private final double gasDensityOverride;
+    private final double isentropicExponentOverride;
+    private final double dynamicViscosityOverride;
+    private final double lastReynoldsNumberPipe;
+    private final MeasurementDeviceTransientState measurementState;
+    private final Serializable extensionState;
+
+    private DifferentialPressureFlowMeterState(String stateIdentity, String concreteClassName, StreamInterface stream,
+        double pipeDiameterMeters, double throatDiameterMeters, double differentialPressure,
+        DifferentialPressureTransmitter differentialPressureTransmitter, double gasDensityOverride,
+        double isentropicExponentOverride, double dynamicViscosityOverride, double lastReynoldsNumberPipe,
+        MeasurementDeviceTransientState measurementState, Serializable extensionState) {
+      this.stateIdentity = stateIdentity;
+      this.concreteClassName = concreteClassName;
+      this.stream = stream;
+      this.pipeDiameterMeters = pipeDiameterMeters;
+      this.throatDiameterMeters = throatDiameterMeters;
+      this.differentialPressure = differentialPressure;
+      this.differentialPressureTransmitter = differentialPressureTransmitter;
+      this.gasDensityOverride = gasDensityOverride;
+      this.isentropicExponentOverride = isentropicExponentOverride;
+      this.dynamicViscosityOverride = dynamicViscosityOverride;
+      this.lastReynoldsNumberPipe = lastReynoldsNumberPipe;
+      this.measurementState = measurementState;
+      this.extensionState = extensionState;
+    }
   }
 
   /** {@inheritDoc} */
