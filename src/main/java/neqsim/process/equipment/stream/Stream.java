@@ -19,6 +19,9 @@ import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.standards.gasquality.Standard_ISO6976;
 import neqsim.standards.oilquality.Standard_ASTM_D6377;
+import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.mixingrule.EosMixingRulesInterface;
+import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -40,6 +43,17 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    * temperature and in bara to the pressure.
    */
   private static final double CRICONDEN_ECHO_TOLERANCE = 1.0e-6;
+  /** Initial value for the deterministic criconden-envelope input fingerprint. */
+  private static final long CRICONDEN_SIGNATURE_SEED = 1125899906842597L;
+
+  /** Fingerprint of the fluid state used for the cached criconden envelope. */
+  private transient long cachedCricondenInputSignature = Long.MIN_VALUE;
+  /** Whether both cached cricondenpoints were resolved successfully. */
+  private transient boolean hasCachedCricondenEnvelope = false;
+  /** Cached cricondentherm as temperature in Kelvin and pressure in bara. */
+  private transient double[] cachedCricondenTherm = null;
+  /** Cached cricondenbar as temperature in Kelvin and pressure in bara. */
+  private transient double[] cachedCricondenBar = null;
 
   protected SystemInterface thermoSystem;
 
@@ -604,6 +618,14 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    * </p>
    *
    * <p>
+   * A single envelope contains both cricondenpoints. The result is therefore cached against a deterministic fingerprint
+   * of the complete EOS input used by the trace, so repeated {@link #CCT(String)} and {@link #CCB(String)} calls do not
+   * repeat the expensive envelope calculation. Temperature and pressure are part of the fingerprint because they seed
+   * the numerical trace. Composition, pseudo-component properties and EOS binary-interaction parameters are included to
+   * prevent stale reuse after direct mutation of the stream fluid.
+   * </p>
+   *
+   * <p>
    * When the trace fails, {@code PTphaseEnvelope} falls back to reporting the source fluid's own temperature and
    * pressure. That fallback is indistinguishable from a real result to the caller, so it is detected here and reported
    * as unresolved rather than returned as a value. A genuine cricondenpoint that coincides with the stream temperature
@@ -616,18 +638,60 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    * @return a two-element array holding the temperature in Kelvin at index 0 and the pressure in bara at index 1, or
    * {@code null} when the point could not be resolved
    */
-  private double[] calcCricondenPoint(String pointName) {
-    SystemInterface localSyst = getFluid().clone();
-    // Captured before the trace runs, because tracing mutates the cloned system's state.
-    double sourceTemperatureK = localSyst.getTemperature();
-    double sourcePressureBara = localSyst.getPressure();
+  private synchronized double[] calcCricondenPoint(String pointName) {
+    SystemInterface sourceSystem = getFluid();
+    long inputSignature = calculateCricondenInputSignature(sourceSystem);
+    if (!hasCachedCricondenEnvelope || inputSignature != cachedCricondenInputSignature) {
+      SystemInterface localSyst = sourceSystem.clone();
+      // Captured before the trace runs, because tracing mutates the cloned system's state.
+      double sourceTemperatureK = localSyst.getTemperature();
+      double sourcePressureBara = localSyst.getPressure();
 
-    ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
-    ops.setRunAsThread(true);
-    ops.calcPTphaseEnvelope(true, 1.0);
-    ops.waitAndCheckForFinishedCalculation(10000);
+      ThermodynamicOperations ops = createCricondenOperations(localSyst);
+      ops.setRunAsThread(true);
+      ops.calcPTphaseEnvelope(true, 1.0);
+      ops.waitAndCheckForFinishedCalculation(10000);
 
-    double[] point = ops.get(pointName);
+      cachedCricondenTherm = validateCricondenPoint(ops.get("cricondentherm"), "cricondentherm", sourceTemperatureK,
+          sourcePressureBara);
+      cachedCricondenBar = validateCricondenPoint(ops.get("cricondenbar"), "cricondenbar", sourceTemperatureK,
+          sourcePressureBara);
+      cachedCricondenInputSignature = inputSignature;
+      hasCachedCricondenEnvelope = cachedCricondenTherm != null && cachedCricondenBar != null;
+    }
+
+    if ("cricondentherm".equals(pointName)) {
+      return cachedCricondenTherm;
+    }
+    return cachedCricondenBar;
+  }
+
+  /**
+   * Create the operations object used to trace a criconden envelope.
+   *
+   * <p>
+   * Package access keeps the production API unchanged while allowing the cache behavior to be counted in a focused
+   * regression test.
+   * </p>
+   *
+   * @param system cloned thermodynamic system to trace
+   * @return operations object for the supplied system
+   */
+  ThermodynamicOperations createCricondenOperations(SystemInterface system) {
+    return new ThermodynamicOperations(system);
+  }
+
+  /**
+   * Validate an envelope point and copy the two values retained by the stream cache.
+   *
+   * @param point raw point returned by the envelope operation
+   * @param pointName name used in diagnostics
+   * @param sourceTemperatureK source-stream temperature in Kelvin
+   * @param sourcePressureBara source-stream pressure in bara
+   * @return copied temperature-pressure pair, or {@code null} when unresolved
+   */
+  private double[] validateCricondenPoint(double[] point, String pointName, double sourceTemperatureK,
+      double sourcePressureBara) {
     if (point == null || point.length < 2 || !Double.isFinite(point[0]) || !Double.isFinite(point[1])) {
       logger.error("{}: phase envelope did not resolve {} for stream {}", getClass().getSimpleName(), pointName,
           getName());
@@ -643,7 +707,92 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
           getClass().getSimpleName(), getName(), pointName, sourceTemperatureK, sourcePressureBara);
       return null;
     }
-    return point;
+    return new double[] { point[0], point[1] };
+  }
+
+  /**
+   * Calculate a deterministic fingerprint of every EOS input that can affect the traced envelope.
+   *
+   * @param system stream fluid to fingerprint
+   * @return exact criconden-envelope input fingerprint
+   */
+  private long calculateCricondenInputSignature(SystemInterface system) {
+    long signature = CRICONDEN_SIGNATURE_SEED;
+    signature = updateCricondenInputSignature(signature, system.getClass().getName());
+    signature = updateCricondenInputSignature(signature, system.getModelName());
+    signature = updateCricondenInputSignature(signature, system.getMixingRuleName());
+    signature = updateCricondenInputSignature(signature, system.getTemperature());
+    signature = updateCricondenInputSignature(signature, system.getPressure());
+
+    int componentCount = system.getNumberOfComponents();
+    signature = updateCricondenInputSignature(signature, componentCount);
+    for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+      ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
+      signature = updateCricondenInputSignature(signature, component.getComponentName());
+      signature = updateCricondenInputSignature(signature, component.getz());
+      signature = updateCricondenInputSignature(signature, component.getMolarMass());
+      signature = updateCricondenInputSignature(signature, component.getNormalLiquidDensity());
+      signature = updateCricondenInputSignature(signature, component.getTC());
+      signature = updateCricondenInputSignature(signature, component.getPC());
+      signature = updateCricondenInputSignature(signature, component.getAcentricFactor());
+    }
+
+    if (system.getPhase(0) instanceof PhaseEosInterface) {
+      EosMixingRulesInterface mixingRule = ((PhaseEosInterface) system.getPhase(0)).getEosMixingRule();
+      if (mixingRule != null) {
+        signature = updateCricondenInputSignature(signature, ((long) componentCount) * componentCount);
+        for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+          for (int otherComponentIndex = 0; otherComponentIndex < componentCount; otherComponentIndex++) {
+            signature = updateCricondenInputSignature(signature,
+                mixingRule.getBinaryInteractionParameter(componentIndex, otherComponentIndex));
+            signature = updateCricondenInputSignature(signature,
+                mixingRule.getBinaryInteractionParameterT1(componentIndex, otherComponentIndex));
+          }
+        }
+      }
+    }
+    return signature;
+  }
+
+  /**
+   * Add one numeric input to a criconden-envelope fingerprint.
+   *
+   * @param signature fingerprint accumulated so far
+   * @param value numeric input value
+   * @return updated fingerprint
+   */
+  private long updateCricondenInputSignature(long signature, double value) {
+    return updateCricondenInputSignature(signature, Double.doubleToLongBits(value));
+  }
+
+  /**
+   * Add one integral input to a criconden-envelope fingerprint.
+   *
+   * @param signature fingerprint accumulated so far
+   * @param value integral input value
+   * @return updated fingerprint
+   */
+  private long updateCricondenInputSignature(long signature, long value) {
+    return 31L * signature + value;
+  }
+
+  /**
+   * Add complete text content to a criconden-envelope fingerprint.
+   *
+   * @param signature fingerprint accumulated so far
+   * @param value text input, which may be null
+   * @return updated fingerprint
+   */
+  private long updateCricondenInputSignature(long signature, String value) {
+    if (value == null) {
+      return updateCricondenInputSignature(signature, -1L);
+    }
+    long updatedSignature = updateCricondenInputSignature(signature, value.length());
+    for (int index = 0; index < value.length(); index++) {
+      updatedSignature ^= value.charAt(index);
+      updatedSignature *= 0x100000001b3L;
+    }
+    return updatedSignature;
   }
 
   /**
