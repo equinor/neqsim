@@ -3106,7 +3106,7 @@ public class ProcessModel implements Runnable, Serializable {
         : Math.min(current.size(), lastBoundaryStreamErrors.size());
     List<BoundaryStreamError> streamErrors = new ArrayList<>(expectedStreamErrors);
     Map<Object, BoundaryStreamError> priorStreamErrors = boundaryStreamErrorCache;
-    Map<Object, BoundaryStreamError> nextStreamErrors = current.isEmpty() ? null
+    Map<Object, BoundaryStreamError> nextStreamErrors = current.isEmpty() ? Collections.emptyMap()
         : new IdentityHashMap<>(current.size());
 
     for (Object key : current.keySet()) {
