@@ -194,8 +194,7 @@ public class DistillationColumnModeTest {
       assertEquals(temperatureDrop,
           pumparound.getDrawStream().getTemperature() - pumparound.getReturnStream().getTemperature(), 1.0e-9);
       assertEquals(returnFlow, pumparound.getReturnStream().getFlowRate("kg/hr"), 5.0e-5 * returnFlow);
-      assertEquals(repeatedEnthalpyDifference, repeatedDuty,
-          Math.max(1.0e-9, 1.0e-12 * Math.abs(repeatedDuty)));
+      assertEquals(repeatedEnthalpyDifference, repeatedDuty, Math.max(1.0e-9, 1.0e-12 * Math.abs(repeatedDuty)));
       assertEquals(duty, repeatedDuty, 5.0e-5 * Math.abs(duty));
       assertTrue(column.getEnergyBalanceError() <= column.getEnthalpyBalanceTolerance(),
           column.getConvergenceDiagnostics());
