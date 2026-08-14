@@ -69,9 +69,9 @@ class ProcessModelOperatingActionSetEvaluatorTest {
     chokeA.setOutletPressure(30.0, "bara");
     chokeB.setOutletPressure(30.0, "bara");
     Separator gatheringSink = new Separator("gathering sink", chokeA.getOutletStream());
-    CapacityConstraint sharedCapacity = new CapacityConstraint("installed gathering rate", "kg/hr",
-        ConstraintType.HARD).setDesignValue(1200.0).setSeverity(ConstraintSeverity.HARD)
-        .setDataSource("synthetic shared manifold basis").setConfidence(0.95).setValidityRange(500.0, 1400.0)
+    CapacityConstraint sharedCapacity = new CapacityConstraint("installed gathering rate", "kg/hr", ConstraintType.HARD)
+        .setDesignValue(1200.0).setSeverity(ConstraintSeverity.HARD).setDataSource("synthetic shared manifold basis")
+        .setConfidence(0.95).setValidityRange(500.0, 1400.0)
         .setValueSupplier(() -> producerA.getFlowRate("kg/hr") + producerB.getFlowRate("kg/hr"));
     gatheringSink.clearCapacityConstraints();
     gatheringSink.addCapacityConstraint(sharedCapacity);
@@ -103,8 +103,8 @@ class ProcessModelOperatingActionSetEvaluatorTest {
         "wells::producer B.flowRate", 200.0, 1000.0, "kg/hr", "synthetic producer B envelope");
     return new ProcessModelOperatingActionSetEvaluator("well-allocation", "Coupled well allocation",
         "synthetic two-well allocation basis", simulation, Arrays.asList(actionA, actionB))
-            .requireHydraulicConstraint(HydraulicLimitRole.GATHERING_HYDRAULICS, "gathering", "gathering sink",
-                "installed gathering rate", "shared installed gathering capacity");
+        .requireHydraulicConstraint(HydraulicLimitRole.GATHERING_HYDRAULICS, "gathering", "gathering sink",
+            "installed gathering rate", "shared installed gathering capacity");
   }
 
   /** Verifies redistribution, overload evidence, deterministic repetition, and complete baseline recovery. */
@@ -185,12 +185,10 @@ class ProcessModelOperatingActionSetEvaluatorTest {
     ProcessModelOperatingAction duplicateAddress = ProcessModelOperatingAction.continuous("other", "Rate A duplicate",
         "wells::producer A.flowRate", 200.0, 1000.0, "kg/hr", "basis C");
 
-    assertThrows(IllegalArgumentException.class,
-        () -> new ProcessModelOperatingActionSetEvaluator("set", "Set", "basis", simulation,
-            Arrays.asList(actionA, duplicateId)));
-    assertThrows(IllegalArgumentException.class,
-        () -> new ProcessModelOperatingActionSetEvaluator("set", "Set", "basis", simulation,
-            Arrays.asList(actionA, duplicateAddress)));
+    assertThrows(IllegalArgumentException.class, () -> new ProcessModelOperatingActionSetEvaluator("set", "Set",
+        "basis", simulation, Arrays.asList(actionA, duplicateId)));
+    assertThrows(IllegalArgumentException.class, () -> new ProcessModelOperatingActionSetEvaluator("set", "Set",
+        "basis", simulation, Arrays.asList(actionA, duplicateAddress)));
 
     ProcessModelOperatingActionSetEvaluator evaluator = createCoupledEvaluator(fixture);
     assertEquals(Outcome.CANDIDATE_VECTOR_INVALID, evaluator.evaluate(new double[] { 700.0 }).getOutcome());
@@ -262,8 +260,8 @@ class ProcessModelOperatingActionSetEvaluatorTest {
     double baselineRateA = producerA.getFlowRate("kg/hr");
     double baselineRateB = producerB.getFlowRate("kg/hr");
     double baselineTotal = baselineRateA + baselineRateB;
-    CapacityConstraint sharedCapacity = new CapacityConstraint("installed gathering rate", "kg/hr",
-        ConstraintType.HARD).setDesignValue(1.10 * baselineTotal).setSeverity(ConstraintSeverity.HARD)
+    CapacityConstraint sharedCapacity = new CapacityConstraint("installed gathering rate", "kg/hr", ConstraintType.HARD)
+        .setDesignValue(1.10 * baselineTotal).setSeverity(ConstraintSeverity.HARD)
         .setDataSource("synthetic installed capacity over two real WellFlow producers").setConfidence(0.90)
         .setValidityRange(0.5 * baselineTotal, 1.5 * baselineTotal)
         .setValueSupplier(() -> producerA.getFlowRate("kg/hr") + producerB.getFlowRate("kg/hr"));
@@ -294,25 +292,22 @@ class ProcessModelOperatingActionSetEvaluatorTest {
     ProcessModelOperatingActionSetEvaluator evaluator = new ProcessModelOperatingActionSetEvaluator(
         "two-well-allocation", "Two-well allocation", "synthetic coupled allocation validation", simulation,
         Arrays.asList(actionA, actionB))
-            .requireHydraulicConstraint(HydraulicLimitRole.WELL_INFLOW_OUTFLOW, "Subsurface", "well A",
-                "well drawdown", "WellFlow A installed maximum drawdown")
-            .requireHydraulicConstraint(HydraulicLimitRole.WELL_INFLOW_OUTFLOW, "Subsurface", "well B",
-                "well drawdown", "WellFlow B installed maximum drawdown")
-            .requireHydraulicConstraint(HydraulicLimitRole.GATHERING_HYDRAULICS, "Gathering", "gathering sink",
-                "installed gathering rate", "shared installed gathering capacity");
+        .requireHydraulicConstraint(HydraulicLimitRole.WELL_INFLOW_OUTFLOW, "Subsurface", "well A", "well drawdown",
+            "WellFlow A installed maximum drawdown")
+        .requireHydraulicConstraint(HydraulicLimitRole.WELL_INFLOW_OUTFLOW, "Subsurface", "well B", "well drawdown",
+            "WellFlow B installed maximum drawdown")
+        .requireHydraulicConstraint(HydraulicLimitRole.GATHERING_HYDRAULICS, "Gathering", "gathering sink",
+            "installed gathering rate", "shared installed gathering capacity");
 
-    CandidateSetEvaluationResult lower =
-        evaluator.evaluate(new double[] { 0.8 * baselineRateA, 0.8 * baselineRateB });
-    CandidateSetEvaluationResult higher =
-        evaluator.evaluate(new double[] { 1.2 * baselineRateA, 1.2 * baselineRateB });
+    CandidateSetEvaluationResult lower = evaluator.evaluate(new double[] { 0.8 * baselineRateA, 0.8 * baselineRateB });
+    CandidateSetEvaluationResult higher = evaluator.evaluate(new double[] { 1.2 * baselineRateA, 1.2 * baselineRateB });
 
     assertEquals(Outcome.FEASIBLE, lower.getOutcome(), lower.getDiagnostics().toString());
-    assertEquals(Outcome.HYDRAULIC_CONSTRAINT_VIOLATED, higher.getOutcome(),
-        higher.getDiagnostics().toString());
-    assertTrue(lower.getHydraulicConstraints().get(0).getUtilization()
-        < higher.getHydraulicConstraints().get(0).getUtilization());
-    assertTrue(lower.getHydraulicConstraints().get(1).getUtilization()
-        < higher.getHydraulicConstraints().get(1).getUtilization());
+    assertEquals(Outcome.HYDRAULIC_CONSTRAINT_VIOLATED, higher.getOutcome(), higher.getDiagnostics().toString());
+    assertTrue(lower.getHydraulicConstraints().get(0).getUtilization() < higher.getHydraulicConstraints().get(0)
+        .getUtilization());
+    assertTrue(lower.getHydraulicConstraints().get(1).getUtilization() < higher.getHydraulicConstraints().get(1)
+        .getUtilization());
     assertEquals(1.2 * baselineTotal, higher.getHydraulicConstraints().get(2).getCurrentValue(),
         toleranceA + toleranceB);
     assertEquals(1.2 * baselineTotal, higher.getRawObjectives()[0], toleranceA + toleranceB,
