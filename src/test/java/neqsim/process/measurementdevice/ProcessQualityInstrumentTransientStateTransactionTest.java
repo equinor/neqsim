@@ -36,10 +36,8 @@ class ProcessQualityInstrumentTransientStateTransactionTest extends neqsim.NeqSi
 
     MolarMassAnalyser molarMass = new MolarMassAnalyser("AIT-MM-100", source);
     WaterContentAnalyser waterContent = new WaterContentAnalyser("AIT-W-100", source);
-    CompositionAnalyzer composition =
-        new CompositionAnalyzer("AIT-Z-100", source, "methane", AnalyzerPhase.OVERALL);
-    FlowRatioMeter flowRatio =
-        new FlowRatioMeter("FIT-R-100", source, denominator, FlowBasis.MASS);
+    CompositionAnalyzer composition = new CompositionAnalyzer("AIT-Z-100", source, "methane", AnalyzerPhase.OVERALL);
+    FlowRatioMeter flowRatio = new FlowRatioMeter("FIT-R-100", source, denominator, FlowBasis.MASS);
     ImpurityMonitor impurity = new ImpurityMonitor("AIT-I-100", source);
     impurity.addTrackedComponent("methane", 0.50);
 
@@ -109,8 +107,7 @@ class ProcessQualityInstrumentTransientStateTransactionTest extends neqsim.NeqSi
     impurity.addTrackedComponent("hydrogen", 0.01);
     transaction.rollback();
 
-    assertEquals(identities,
-        transientIdentities(molarMass, waterContent, composition, flowRatio, impurity));
+    assertEquals(identities, transientIdentities(molarMass, waterContent, composition, flowRatio, impurity));
     assertEquals("AIT-MM-100", molarMass.getName());
     assertEquals("AIT-W-100", waterContent.getName());
     assertEquals("AIT-Z-100", composition.getName());
@@ -206,8 +203,7 @@ class ProcessQualityInstrumentTransientStateTransactionTest extends neqsim.NeqSi
     ProcessSystem onlineProcess = new ProcessSystem("online blocker");
     onlineProcess.add(online);
     assertFalse(onlineProcess.getTransientTransactionCoverage().isComplete());
-    assertTrue(onlineProcess.getTransientTransactionCoverage().getBlockingIssues().get(0)
-        .contains("external I/O"));
+    assertTrue(onlineProcess.getTransientTransactionCoverage().getBlockingIssues().get(0).contains("external I/O"));
 
     MolarMassAnalyser first = new MolarMassAnalyser(source);
     MolarMassAnalyser second = new MolarMassAnalyser(source);
@@ -225,14 +221,12 @@ class ProcessQualityInstrumentTransientStateTransactionTest extends neqsim.NeqSi
 
   private static double[] readAll(MolarMassAnalyser molarMass, WaterContentAnalyser waterContent,
       CompositionAnalyzer composition, FlowRatioMeter flowRatio, ImpurityMonitor impurity) {
-    return new double[] {molarMass.getMeasuredValue("gr/mol"), waterContent.getMeasuredValue("kg/day"),
-        composition.getMeasuredValue("mole/mole"), flowRatio.getMeasuredValue(""),
-        impurity.getMeasuredValue("mol%")};
+    return new double[] { molarMass.getMeasuredValue("gr/mol"), waterContent.getMeasuredValue("kg/day"),
+        composition.getMeasuredValue("mole/mole"), flowRatio.getMeasuredValue(""), impurity.getMeasuredValue("mol%") };
   }
 
-  private static List<String> transientIdentities(MolarMassAnalyser molarMass,
-      WaterContentAnalyser waterContent, CompositionAnalyzer composition, FlowRatioMeter flowRatio,
-      ImpurityMonitor impurity) {
+  private static List<String> transientIdentities(MolarMassAnalyser molarMass, WaterContentAnalyser waterContent,
+      CompositionAnalyzer composition, FlowRatioMeter flowRatio, ImpurityMonitor impurity) {
     List<String> identities = new ArrayList<String>();
     identities.add(molarMass.getTransientStateIdentity());
     identities.add(waterContent.getTransientStateIdentity());
