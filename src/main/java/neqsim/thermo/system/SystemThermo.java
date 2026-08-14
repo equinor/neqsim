@@ -2496,18 +2496,21 @@ public abstract class SystemThermo implements SystemInterface {
       return totalNumberOfMoles * getMolarMass() * 3600.0;
     } else if (flowunit.equals("kg/day")) {
       return totalNumberOfMoles * getMolarMass() * 3600.0 * 24.0;
-    } else if (flowunit.equals("m3/sec")) {
+    } else if (flowunit.equals("m3/sec") || flowunit.equals("Am3/sec")) {
       initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       return totalNumberOfMoles * getMolarMass() / getDensity("kg/m3");
       // return getVolume() / 1.0e5;
-    } else if (flowunit.equals("m3/min")) {
+    } else if (flowunit.equals("m3/min") || flowunit.equals("Am3/min")) {
       initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       return totalNumberOfMoles * getMolarMass() * 60.0 / getDensity("kg/m3");
       // return getVolume() / 1.0e5 * 60.0;
-    } else if (flowunit.equals("m3/hr")) {
+    } else if (flowunit.equals("m3/hr") || flowunit.equals("Am3/hr")) {
       // return getVolume() / 1.0e5 * 3600.0;
       initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       return totalNumberOfMoles * getMolarMass() * 3600.0 / getDensity("kg/m3");
+    } else if (flowunit.equals("m3/day") || flowunit.equals("Am3/day")) {
+      initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+      return totalNumberOfMoles * getMolarMass() * 3600.0 * 24.0 / getDensity("kg/m3");
     } else if (flowunit.equals("idSm3/hr")) {
       return totalNumberOfMoles * getMolarMass() * 3600.0 / getIdealLiquidDensity("kg/m3");
     } else if (flowunit.equals("gallons/min")) {
@@ -2550,7 +2553,8 @@ public abstract class SystemThermo implements SystemInterface {
       return totalNumberOfMoles * getMolarMass() * 3600.0 * 24.0 * 2.20462262 * 0.068;
     } else {
       throw new RuntimeException("failed.. unit: " + flowunit + " not supported. Supported units: kg/sec, kg/min, "
-          + "kg/hr, kg/day, m3/sec, m3/min, m3/hr, idSm3/hr, gallons/min, Sm3/sec, Sm3/hr, "
+          + "kg/hr, kg/day, m3/sec, Am3/sec, m3/min, Am3/min, m3/hr, Am3/hr, m3/day, Am3/day, "
+          + "idSm3/hr, gallons/min, Sm3/sec, Sm3/hr, "
           + "Sm3/day, MSm3/day, MSm3/hr, mole/sec, mol/sec, mole/min, mol/min, mole/hr, "
           + "mol/hr, kmole/sec, kmol/sec, kmole/min, kmol/min, kmole/hr, kmol/hr, "
           + "kmole/day, kmol/day, lbmole/hr, lbmol/hr, lb/hr, barrel/day, bbl/day");
@@ -5507,8 +5511,8 @@ public abstract class SystemThermo implements SystemInterface {
     }
     double density = 0.0;
     if (flowunit.equals("Am3/hr") || flowunit.equals("Am3/min") || flowunit.equals("gallons/min")
-        || flowunit.equals("Am3/sec") || flowunit.equals("m3/hr") || flowunit.equals("m3/min")
-        || flowunit.equals("m3/sec") || flowunit.equals("m3/day")) {
+        || flowunit.equals("Am3/sec") || flowunit.equals("Am3/day") || flowunit.equals("m3/hr")
+        || flowunit.equals("m3/min") || flowunit.equals("m3/sec") || flowunit.equals("m3/day")) {
       initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     }
 
