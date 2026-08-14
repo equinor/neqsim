@@ -198,6 +198,14 @@ sheet. Use `exportSvg(directory)` or `exportPdf(path)` when files are required. 
 modify the source document set, legacy DOT/Graphviz output, DEXPI 2.0 Process exchange, or the
 Proteus/DEXPI P&ID workflow.
 
+The rendering result also carries deterministic drawing-quality diagnostics. It reports overlapping
+object symbols, symbols clipped by the border/header/title-block boundary, primary labels estimated
+to exceed their available symbol width, and missing semantic-object references. Existing controlled-
+document diagnostics are retained in the same report, including broken reciprocal off-page pairs and
+stale manual layout references. Errors make `Result.isComplete()` false; warnings retain the proposed
+geometry unchanged for review. These geometric and text-width checks are conservative proposal gates,
+not proof of standards compliance or accountable visual approval.
+
 Compare two revisions of the same document-set and plant identity with `baseline.compareTo(revised)`.
 The returned `EngineeringDiagramRevisionImpact` has deterministic added, removed, and modified
 semantic-object IDs. It projects those changes to the sheets and drawings containing each object in
@@ -244,6 +252,6 @@ designation mismatches, deterministic cross-sheet revision impact, persistent ma
 unchanged semantic identities after layout-only revision changes, protected-route retention, and
 fail-visible stale layout references.
 The native-renderer regression verifies byte-deterministic SVG/PDF, A3 and A1 geometry, exact pinned
-coordinates and protected routes, reciprocal off-page references, structured layout-loss
-diagnostics, multi-page drawing sets, fresh-model determinism, and unchanged Classic DOT and
-controlled-document JSON.
+coordinates and protected routes, reciprocal off-page references, deterministic collision, clipping,
+label-overflow and broken-reference diagnostics, multi-page drawing sets, fresh-model determinism,
+and unchanged Classic DOT and controlled-document JSON.
