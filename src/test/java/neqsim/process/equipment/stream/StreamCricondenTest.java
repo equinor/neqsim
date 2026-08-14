@@ -36,6 +36,40 @@ public class StreamCricondenTest extends neqsim.NeqSimTest {
   /** Stream temperature in degrees Celsius. */
   private static final double STREAM_TEMPERATURE_C = 86.30090581135869;
 
+  /** Stream variant that counts actual phase-envelope traces. */
+  private static final class CountingStream extends Stream {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1L;
+    /** Number of operations objects created for an envelope trace. */
+    private int cricondenTraceCount = 0;
+
+    /**
+     * Create a counting stream.
+     *
+     * @param name stream name
+     * @param fluid stream fluid
+     */
+    private CountingStream(String name, SystemInterface fluid) {
+      super(name, fluid);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    ThermodynamicOperations createCricondenOperations(SystemInterface system) {
+      cricondenTraceCount++;
+      return super.createCricondenOperations(system);
+    }
+
+    /**
+     * Get the number of actual envelope traces requested.
+     *
+     * @return trace count
+     */
+    private int getCricondenTraceCount() {
+      return cricondenTraceCount;
+    }
+  }
+
   /**
    * Build the lean natural gas export stream that exposes the defect.
    *
@@ -173,5 +207,34 @@ public class StreamCricondenTest extends neqsim.NeqSimTest {
         "CCT(\"K\") minus CCT(\"C\") must be exactly 273.15");
     assertEquals(273.15, exportGasStream.CCB("K") - exportGasStream.CCB("C"), 1.0e-6,
         "CCB(\"K\") minus CCB(\"C\") must be exactly 273.15");
+  }
+
+  /**
+   * One PT-envelope trace yields both cricondenpoints and every supported return unit. Repeated accessor calls for an
+   * unchanged stream must therefore reuse that trace, while direct fluid-state and EOS-parameter mutations must
+   * invalidate the cache.
+   */
+  @Test
+  @DisplayName("CCT and CCB share one envelope trace and invalidate it after input changes")
+  public void testCricondenEnvelopeCacheReuseAndInvalidation() {
+    Stream exportGasStream = createExportGasStream();
+    CountingStream countingStream = new CountingStream("counting export gas", exportGasStream.getFluid().clone());
+
+    assertFalse(Double.isNaN(countingStream.CCT("C")));
+    assertFalse(Double.isNaN(countingStream.CCT("bara")));
+    assertFalse(Double.isNaN(countingStream.CCB("C")));
+    assertFalse(Double.isNaN(countingStream.CCB("bara")));
+    assertEquals(1, countingStream.getCricondenTraceCount(),
+        "all criconden accessors for one unchanged state must share one phase-envelope trace");
+
+    countingStream.setTemperature(STREAM_TEMPERATURE_C + 1.0, "C");
+    countingStream.CCT("C");
+    assertEquals(2, countingStream.getCricondenTraceCount(),
+        "changing an input that seeds the envelope trace must invalidate the cache");
+
+    countingStream.getFluid().setBinaryInteractionParameter(0, 1, 0.0123);
+    countingStream.CCB("C");
+    assertEquals(3, countingStream.getCricondenTraceCount(),
+        "changing an EOS binary-interaction parameter must invalidate the cache");
   }
 }
