@@ -458,7 +458,9 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
     }
     bubP = calcBubP(temperatures);
     // dewP = calcDewP(temperatures);
-    bubT = calcBubT(temperatures);
+    // One bubble point temperature per pressure - this is what the BUBBLETEMPERATURES
+    // keyword expects, and what writeOLGAinpFile iterates over.
+    bubT = calcBubT(pressures);
     logger.info("Finished creating arrays");
     initCalc();
   }
@@ -553,6 +555,9 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
       }
       writer.write(") C,\\\n");
 
+      // OLGA requires BUBBLEPRESSURES and BUBBLETEMPERATURES to be paired arrays of
+      // equal length: the bubble point pressure at each grid temperature, and the
+      // grid temperature it belongs to.
       writer.write("BUBBLEPRESSURES = (");
       for (int i = 0; i < temperatures.length; i++) {
         writer.write(Double.toString(bubPLOG[i]));
@@ -563,9 +568,9 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
       writer.write(") Pa,\\\n");
 
       writer.write("BUBBLETEMPERATURES = (");
-      for (int i = 0; i < pressures.length; i++) {
-        writer.write(Double.toString(bubTLOG[i]));
-        if (i < pressures.length - 1) {
+      for (int i = 0; i < temperatures.length; i++) {
+        writer.write(Double.toString(temperatureLOG[i]));
+        if (i < temperatures.length - 1) {
           writer.write(",");
         }
       }

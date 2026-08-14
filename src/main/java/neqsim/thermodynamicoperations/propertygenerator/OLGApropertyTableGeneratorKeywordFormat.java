@@ -1,6 +1,7 @@
 package neqsim.thermodynamicoperations.propertygenerator;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -384,7 +385,9 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
     }
     bubP = calcBubP(temperatures);
     // dewP = calcDewP(temperatures);
-    bubT = calcBubT(temperatures);
+    // One bubble point temperature per pressure - this is what the BUBBLETEMPERATURES
+    // keyword expects, and what writeOLGAinpFile iterates over.
+    bubT = calcBubT(pressures);
     logger.info("Finished creating arrays");
     initCalc();
   }
@@ -410,9 +413,13 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
    * @param filename a {@link java.lang.String} object
    */
   public void writeOLGAinpFile(String filename) {
-    try (Writer writer = new BufferedWriter(new OutputStreamWriter(
-        new FileOutputStream("C:/Users/Kjetil Raul/Documents/Master KRB/2phaseTables/testFluidKeyCPAExtra.tab"),
-        "utf-8"))) {
+    File outputFile = new File(filename);
+    File parent = outputFile.getParentFile();
+    if (parent != null && !parent.exists() && !parent.mkdirs()) {
+      logger.error("Could not create output directory {}", parent.getAbsolutePath());
+      return;
+    }
+    try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile), "utf-8"))) {
       writer.write("PVTTABLE LABEL = " + "\"" + "NewFluid" + "\"" + "," + "PHASE = TWO" + ",\\" + "\n");
       writer.write("EOS = " + "\"" + "Equation" + "\"" + ",\\" + "\n");
 
@@ -481,6 +488,9 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
       }
       writer.write(") C,\\" + "\n");
 
+      // OLGA requires BUBBLEPRESSURES and BUBBLETEMPERATURES to be paired arrays of
+      // equal length: the bubble point pressure at each grid temperature, and the
+      // grid temperature it belongs to.
       writer.write("BUBBLEPRESSURES = (");
       for (int i = 0; i < temperatures.length; i++) {
         writer.write(bubPLOG[i] + "");
@@ -491,9 +501,9 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
       writer.write(") Pa,\\" + "\n");
 
       writer.write("BUBBLETEMPERATURES = (");
-      for (int i = 0; i < pressures.length; i++) {
-        writer.write(bubTLOG[i] + "");
-        if (i < pressures.length - 1) {
+      for (int i = 0; i < temperatures.length; i++) {
+        writer.write(temperatureLOG[i] + "");
+        if (i < temperatures.length - 1) {
           writer.write(",");
         }
       }
@@ -525,7 +535,7 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
         }
       }
     } catch (IOException ex) {
-      // report
+      logger.error("Failed writing OLGA table to " + filename, ex);
     }
   }
 }

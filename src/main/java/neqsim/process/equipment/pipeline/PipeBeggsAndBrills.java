@@ -1175,23 +1175,23 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     double L3 = 0.1 * Math.pow(inputVolumeFractionLiquid, -1.4516);
     double L4 = 0.5 * Math.pow(inputVolumeFractionLiquid, -6.738);
 
+    // The branches must be evaluated in the order published by Beggs and Brill:
+    // segregated, transition, intermittent, distributed. L1 and L3 cross close to
+    // a no-slip liquid fraction of 0.01, so testing distributed before transition
+    // misclassifies points just above that crossing.
     if (regime != FlowRegime.SINGLE_PHASE) {
       if ((inputVolumeFractionLiquid < 0.01 && mixtureFroudeNumber < L1)
           || (inputVolumeFractionLiquid >= 0.01 && mixtureFroudeNumber < L2)) {
         regime = FlowRegime.SEGREGATED;
-      } else if ((inputVolumeFractionLiquid < 0.4 && inputVolumeFractionLiquid >= 0.01 && mixtureFroudeNumber <= L1
-          && mixtureFroudeNumber > L3)
-          || (inputVolumeFractionLiquid >= 0.4 && mixtureFroudeNumber <= L4 && mixtureFroudeNumber > L3)) {
+      } else if (inputVolumeFractionLiquid >= 0.01 && mixtureFroudeNumber >= L2 && mixtureFroudeNumber <= L3) {
+        regime = FlowRegime.TRANSITION;
+      } else if ((inputVolumeFractionLiquid >= 0.01 && inputVolumeFractionLiquid < 0.4 && mixtureFroudeNumber > L3
+          && mixtureFroudeNumber <= L1)
+          || (inputVolumeFractionLiquid >= 0.4 && mixtureFroudeNumber > L3 && mixtureFroudeNumber <= L4)) {
         regime = FlowRegime.INTERMITTENT;
-      } else if ((inputVolumeFractionLiquid < 0.4 && mixtureFroudeNumber >= L4)
+      } else if ((inputVolumeFractionLiquid < 0.4 && mixtureFroudeNumber >= L1)
           || (inputVolumeFractionLiquid >= 0.4 && mixtureFroudeNumber > L4)) {
         regime = FlowRegime.DISTRIBUTED;
-      } else if (mixtureFroudeNumber > L2 && mixtureFroudeNumber < L3) {
-        regime = FlowRegime.TRANSITION;
-      } else if (inputVolumeFractionLiquid < 0.1 || inputVolumeFractionLiquid > 0.9) {
-        regime = FlowRegime.INTERMITTENT;
-      } else if (mixtureFroudeNumber > 110) {
-        regime = FlowRegime.INTERMITTENT;
       } else {
         throw new RuntimeException(new neqsim.util.exception.InvalidOutputException("PipeBeggsAndBrills",
             "run: calcFlowRegime", "FlowRegime", "Flow regime is not found"));
@@ -1248,7 +1248,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
         SG = system.getPhase(1).getDensity("lb/ft3") / (1000 * 0.0624279606);
       }
 
-      double APIgrav = (141.5 / (SG)) - 131.0;
+      double APIgrav = (141.5 / (SG)) - 131.5;
       double sigma68 = 39.0 - 0.2571 * APIgrav;
       double sigma100 = 37.5 - 0.2571 * APIgrav;
       double sigma;
@@ -1263,8 +1263,13 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       }
       double pressureCorrection = 1.0 - 0.024 * Math.pow((system.getPressure("psi")), 0.45);
       sigma = sigma * pressureCorrection;
-      double Nvl = 1.938 * supLiquidVel
-          * Math.pow(system.getPhase(1).getDensity() * 0.0624279606 / (32.2 * sigma), 0.25);
+      // Duns and Ros liquid velocity number. The 1.938 prefactor already absorbs
+      // the gravitational acceleration and the field-unit conversion, so density
+      // (lb/ft3) is divided by surface tension (dynes/cm) alone.
+      // The density must be read through getDensity("lb/ft3") so it carries the same
+      // volume correction as the specific gravity used for the surface tension above;
+      // the no-argument getDensity() returns the uncorrected equation-of-state value.
+      double Nvl = 1.938 * supLiquidVel * Math.pow(system.getPhase(1).getDensity("lb/ft3") / sigma, 0.25);
       double betta = 0;
 
       if (elevation > 0) {
@@ -1291,8 +1296,10 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
         }
       }
       betta = (betta > 0) ? betta : 0;
-      BThetta = 1 + betta
-          * (Math.sin(1.8 * angle * 0.01745329) - (1.0 / 3.0) * Math.pow(Math.sin(1.8 * angle * 0.01745329), 3.0));
+      // The field angle has already been converted from degrees to radians by
+      // convertSystemUnitToImperial(), so it must not be scaled again here.
+      double sin18Theta = Math.sin(1.8 * angle);
+      BThetta = 1 + betta * (sin18Theta - (1.0 / 3.0) * Math.pow(sin18Theta, 3.0));
 
       El = BThetta * El;
 
@@ -1335,7 +1342,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
         if (1 < y && y < 1.2) {
           S = Math.log(2.2 * y - 1.2);
         } else {
-          S = Math.log(y) / (-0.0523 + 3.18 * Math.log(y) - 0.872 * Math.pow(Math.log(y), 2.0)
+          S = Math.log(y) / (-0.0523 + 3.182 * Math.log(y) - 0.8725 * Math.pow(Math.log(y), 2.0)
               + 0.01853 * Math.pow(Math.log(y), 4));
         }
         if (system.getNumberOfPhases() == 3) {

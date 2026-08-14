@@ -9,6 +9,60 @@
 
 ---
 
+## 2026-08-15 — Beggs and Brill correlation corrected in `PipeBeggsAndBrills`
+
+Four defects in the Beggs and Brill (1973) implementation, found by cross-validating a 74 km
+gas-export line against OLGA 2025.1 and then auditing the correlation term by term against a
+clean-room reimplementation of the published equations. All four now have regression tests in
+`PipeBeggsAndBrillsCorrelationTest`.
+
+**1. The pipe angle was converted from degrees to radians twice.**
+`convertSystemUnitToImperial()` already converts `angle` to radians, but the inclination
+correction then evaluated `Math.sin(1.8 * angle * 0.01745329)`. The correction was suppressed by
+roughly a factor of 57, so liquid holdup barely responded to inclination — the correction factor
+came out as 1.011 where the published correlation gives 2.00 at +4 degrees.
+
+- **Impact:** every inclined two-phase result. Holdup, mixture density and the hydrostatic term
+  were all wrong on any non-horizontal segment, and elevation profiles were effectively ignored.
+  Horizontal lines were unaffected. Re-run any inclined or undulating pipeline case.
+
+**2. The distributed-regime boundary tested `L4` instead of `L1`.**
+For a no-slip liquid fraction below 0.4 the published map gives distributed flow when
+`Fr >= L1`. Testing `L4` — which is astronomically large at low liquid fraction — made the branch
+unreachable, and such points fell through to a `Fr > 110` catch-all and were reported as
+intermittent. The branch order is now segregated, transition, intermittent, distributed, because
+`L1` and `L3` cross near a liquid fraction of 0.01; the two ad-hoc catch-alls that were masking the
+gap have been removed.
+
+- **Impact:** flow regime, holdup and the two-phase friction multiplier for high-Froude flow at
+  liquid fractions below 0.4. `BeggsAndBrillsPipeTest.testPipeLineBeggsAndBrills2` now reports
+  `DISTRIBUTED` at the outlet instead of `INTERMITTENT`.
+
+**3. The liquid velocity number counted gravity twice.**
+`N_LV = 1.938 * vsl * (rho_L / sigma)^0.25`; the 1.938 prefactor already absorbs the gravitational
+acceleration and the field-unit conversion. The code divided by a further 32.2.
+
+**4. A volume-corrected density was mixed with an uncorrected one in the same formula.**
+The specific gravity feeding the surface-tension correlation used
+`getPhase(1).getDensity("lb/ft3")`, but the liquid velocity number used the no-argument
+`getPhase(1).getDensity()`. **These are not the same number when volume correction is on** — 558.0
+against 675.4 kg/m3 for a lean methane/n-decane liquid, a 21 % difference. Both now use the
+explicit-unit accessor.
+
+- **General rule for agents:** treat `phase.getDensity()` and `phase.getDensity("kg/m3")` as
+  different quantities and never mix them inside one calculation.
+
+Minor: the API gravity constant was `141.5/SG - 131.0`, corrected to the standard `- 131.5`, and
+the two-phase friction `S` coefficients `3.18` / `0.872` are now the published `3.182` / `0.8725`.
+
+**Still not modelled:** the Payne et al. (1979) holdup correction (times 0.924 uphill, 0.685
+downhill) is not applied. Beggs and Brill is known to over-predict liquid holdup, and on
+large-bore high-pressure gas lines carrying a few mass per cent of condensate `PipeBeggsAndBrills`
+will still predict more holdup and more pressure drop than a transient multiphase code. State this
+as a correlation limitation when reporting.
+
+---
+
 ## 2026-08-14 — Component clone keeps its attractive term, and E300 export keeps the volume shift
 
 Two defects that together made EOS regression results disagree with the Eclipse file they were
