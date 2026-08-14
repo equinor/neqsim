@@ -24,8 +24,11 @@
  * project review evidence without changing process topology</li>
  * <li><b>Native controlled output</b> - Deterministic vector SVG sheets and multi-page PDF consume the same controlled
  * document model without requiring Graphviz</li>
- * <li><b>Drawing-quality diagnostics</b> - Deterministic collision, clipping, label-overflow, and broken-reference
- * evidence remains structured and fail-visible without silently moving reviewed geometry</li>
+ * <li><b>Drawing-quality diagnostics</b> - Deterministic collision, clipping, route/object, connection-label,
+ * label-overflow, and broken-reference evidence remains structured and fail-visible without silently moving reviewed
+ * geometry</li>
+ * <li><b>Visual regression evidence</b> - Normalized per-sheet fingerprints cover visible geometry, text, and style
+ * shared by native SVG/PDF without implying visual approval</li>
  * <li><b>Revision impact</b> - Deterministic changed-object, affected-sheet, and affected-drawing evidence</li>
  * <li><b>Multiple detail levels</b> - MINIMAL, STANDARD, DETAILED, DEBUG</li>
  * <li><b>Deterministic output</b> - Same model always produces same diagram</li>
@@ -96,3 +99,4 @@
  * @see neqsim.process.processmodel.diagram.DexpiDiagramBridge
  */
 package neqsim.process.processmodel.diagram;
+
