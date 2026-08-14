@@ -844,7 +844,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   /** {@inheritDoc} */
   @Override
   public ControllerTransientState captureTransientState() {
-    return new ControllerTransientState(getTransientStateIdentity(), calcIdentifier, unit, transmitter,
+    return new ControllerTransientState(getTransientStateIdentity(), getName(), calcIdentifier, unit, transmitter,
         controllerSetPoint, oldError, oldoldError, error, response, propConstant, reverseActing, Kp, Ti, Td,
         stepResponseTuningMethod, TintValue, derivativeState, oldMeasurement, oldControllerSetPoint,
         derivativeFilterTime, minResponse, maxResponse, isActive, mode, manualOutput, bumplessTransferPending,
@@ -863,6 +863,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       throw new IllegalArgumentException(
           "Controller transient snapshot identity does not match " + getTransientStateIdentity());
     }
+    setName(snapshot.name);
     calcIdentifier = snapshot.calcIdentifier;
     unit = snapshot.unit;
     transmitter = snapshot.transmitter;
@@ -954,6 +955,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     private static final long serialVersionUID = 1000L;
 
     private final String stateIdentity;
+    private final String name;
     private final UUID calcIdentifier;
     private final String unit;
     private final MeasurementDeviceInterface transmitter;
@@ -991,7 +993,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     private final neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignationState;
     private final Serializable subclassState;
 
-    private ControllerTransientState(String stateIdentity, UUID calcIdentifier, String unit,
+    private ControllerTransientState(String stateIdentity, String name, UUID calcIdentifier, String unit,
         MeasurementDeviceInterface transmitter, double controllerSetPoint, double oldError, double oldoldError,
         double error, double response, int propConstant, boolean reverseActing, double kp, double ti, double td,
         StepResponseTuningMethod stepResponseTuningMethod, double tintValue, double derivativeState,
@@ -1003,6 +1005,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
         neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignationState,
         Serializable subclassState) {
       this.stateIdentity = stateIdentity;
+      this.name = name;
       this.calcIdentifier = calcIdentifier;
       this.unit = unit;
       this.transmitter = transmitter;
