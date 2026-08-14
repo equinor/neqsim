@@ -545,6 +545,50 @@ change topology, prove conservation beyond the configured model, or approve an o
 Use independent `ProcessModel` instances for parallel candidates. Add product, mechanical, safety,
 environmental, and market constraints to the wrapped evaluator when those limits are in scope.
 
+### Coupled well-allocation action transactions
+
+Use `ProcessModelOperatingActionSetEvaluator` when one candidate changes two or more independent
+automation addresses, such as producer-rate allocation against per-well drawdown and a shared
+manifold capacity. The constructor retains a stable set ID, name, provenance, and declaration-ordered
+actions. Duplicate action IDs or addresses fail before mutation.
+
+The evaluator establishes one converged baseline and captures every action before the first write.
+It applies the complete vector in order, refuses to simulate a partial vector after any rejected
+write, snapshots exact required hydraulic constraints, restores all actions in reverse order, and
+reruns the baseline. The serializable result exposes immutable per-action requested/read-back values,
+residuals, tolerances and provenance together with objective, constraint, hydraulic and restoration
+evidence for Java and JPype/Python.
+
+```java
+ProcessModelOperatingActionSetEvaluator allocation =
+    new ProcessModelOperatingActionSetEvaluator(
+        "field-allocation", "Field production allocation",
+        "approved well operating envelopes and gathering basis revision A", simulation,
+        Arrays.asList(wellAAction, wellBAction))
+            .requireHydraulicConstraint(
+                ProcessModelOperatingActionEvaluator.HydraulicLimitRole.WELL_INFLOW_OUTFLOW,
+                "Subsurface", "well A", "well drawdown", "well A installed drawdown basis")
+            .requireHydraulicConstraint(
+                ProcessModelOperatingActionEvaluator.HydraulicLimitRole.WELL_INFLOW_OUTFLOW,
+                "Subsurface", "well B", "well drawdown", "well B installed drawdown basis")
+            .requireHydraulicConstraint(
+                ProcessModelOperatingActionEvaluator.HydraulicLimitRole.GATHERING_HYDRAULICS,
+                "Gathering", "inlet separator", "installed gathering rate",
+                "shared installed gathering capacity");
+
+ProcessModelOperatingActionSetEvaluator.CandidateSetEvaluationResult result =
+    allocation.evaluate(new double[] {wellARate, wellBRate});
+if (!result.isBaselineRestored() || !result.isBaselineSimulationConverged()) {
+  throw new IllegalStateException(result.getDiagnostics().toString());
+}
+```
+
+A feasible result proves only the configured steady-state simulation and exact constraints at that
+candidate. It does not choose an allocation, mutate routing, qualify dynamics, create new hydraulic
+physics, or approve an operating change. Check mass and energy balance, product specifications,
+mechanical/safety/environmental/market limits, nearby points and evidence validity. Use independent
+`ProcessModel` instances for parallel candidates.
+
 ### ProcessOptimizationEngine Algorithms
 
 ```java
@@ -783,6 +827,7 @@ for (ScenarioRequest scenario : scenarios) {
 | `ProcessConstraintEvaluator` | Constraint evaluation | `evaluate()` | [Capacity Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) |
 | `ProcessSimulationEvaluator` | External optimizer interface | `evaluate()` | [External Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) |
 | `ProcessModelSimulationEvaluator` | External optimizer interface for multi-area `ProcessModel` studies | `evaluate()` | [External Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) |
+| `ProcessModelOperatingActionSetEvaluator` | Atomic coupled-action candidate evaluation | `evaluate(double[])` | [External Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) |
 | `ProcessModelThroughputOptimizer` | Full-model throughput-to-bottleneck study helper | `findMaximumThroughput()` | [External Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) |
 | `InstalledCapacityTableLoader` | Attach fixed equipment limits from CSV | `load()` | [Capacity Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) |
 | `EclipseVFPExporter` | Eclipse VFP tables | `exportVFPPROD()` | [Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE.md#eclipse-vfp-export) |
@@ -799,4 +844,5 @@ Choose based on your use case:
 - **Custom objectives/multi-variable** → `ProductionOptimizer`
 - **Full `ProcessModel` with several process areas and producer ramping** → `ProcessModelThroughputOptimizer`
 - **Full `ProcessModel` custom external optimization** → `ProcessModelSimulationEvaluator`
+- **Coupled well-rate candidate with mandatory rollback** → `ProcessModelOperatingActionSetEvaluator`
 - **Model calibration** → `BatchParameterEstimator`
