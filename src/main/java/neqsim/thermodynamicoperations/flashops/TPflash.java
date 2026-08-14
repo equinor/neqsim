@@ -152,7 +152,7 @@ public class TPflash extends Flash {
   private PhaseType referenceSinglePhaseType = null;
   /** True after the bounded water-bearing ordinary-flash retry has been attempted in this run. */
   private boolean waterBearingRescueAttempted = false;
-  /** Cold initial state retained only for a screened asymmetric multiphase endpoint retry. */
+  /** Cold initial state retained only for a screened asymmetric endpoint retry. */
   private transient SystemInterface multiphaseEndpointRescueSeed;
   /** Prevents a bounded water-rich cross-algorithm fallback from recursively starting another fallback. */
   private boolean waterRichCrossAlgorithmFallbackAllowed = true;
@@ -1240,8 +1240,9 @@ public class TPflash extends Flash {
    *
    * <p>
    * The accepted candidate must contain exactly two neutral fluid phases, close material balance and fugacity equality,
-   * and lower Gibbs energy. Chemical/electrolyte, aqueous, solid, wax, ordinary gas-only, and compositions outside the
-   * instability screen remain on the existing fast path.
+   * and lower Gibbs energy. Chemical/electrolyte, aqueous, solid, wax, and compositions outside the instability screen
+   * remain on the existing fast path. A screened single-phase sour-gas endpoint is normalized to the feed before its
+   * Gibbs energy is compared, because an incipient phase composition is not a valid one-phase reference state.
    * </p>
    */
   private void rescueLowerGibbsNeutralEndpoint() {
@@ -1272,14 +1273,22 @@ public class TPflash extends Flash {
       }
     }
 
-    system.init(1);
+    if (system.getNumberOfPhases() == 1) {
+      normalizeSourGasSinglePhaseEndpoint();
+    } else {
+      system.init(1);
+    }
     double referenceGibbsEnergy = system.getGibbsEnergy();
-    SystemInterface candidate = system.clone();
+    boolean hasColdSeed = multiphaseEndpointRescueSeed != null;
+    SystemInterface candidate = hasColdSeed ? multiphaseEndpointRescueSeed : system.clone();
+    multiphaseEndpointRescueSeed = null;
     MULTIPHASE_RESCUE_ACTIVE.set(Boolean.TRUE);
     try {
       candidate.setMultiPhaseCheck(true);
       candidate.setEnhancedMultiPhaseCheck(false);
-      if (system.getNumberOfPhases() == 2 && hasGasPhase) {
+      if (hasColdSeed && system.getNumberOfPhases() == 1) {
+        new TPflash(candidate, candidate.doSolidPhaseCheck()).run();
+      } else if (system.getNumberOfPhases() == 2 && hasGasPhase) {
         new TPflash(candidate, candidate.doSolidPhaseCheck()).run();
       } else {
         new TPmultiflash(candidate, candidate.doSolidPhaseCheck()).run();
@@ -2237,18 +2246,19 @@ public class TPflash extends Flash {
    * Retains the cold pre-iteration state for a narrowly screened multiphase endpoint retry.
    *
    * <p>
-   * Once a multiphase stability trial has collapsed a phase, cloning that endpoint also copies its local cubic-root and
-   * phase-storage history. A later ordinary retry can then reproduce the same homogeneous minimum even though a cold
-   * ordinary flash finds a lower-Gibbs split. The seed is therefore captured before the two-phase iteration, but only
-   * for neutral asymmetric mixtures whose deterministic Wilson endpoint test already justifies a possible retry. It is
-   * consumed at most once and cleared when the operation returns. Strong hydrocarbon Wilson splits retain the existing
-   * nearby-temperature continuation instead, so normal flashes allocate nothing.
+   * Once a stability trial has collapsed a phase, cloning that endpoint also copies its local cubic-root and
+   * phase-storage history. A later retry can then reproduce the same homogeneous minimum even though a cold flash finds
+   * a lower-Gibbs split. The seed is therefore captured before the two-phase iteration, but only for multiphase flashes
+   * or ordinary sour-gas flashes whose deterministic asymmetric and Wilson endpoint screens justify a possible retry.
+   * It is consumed at most once and cleared when the operation returns. Strong hydrocarbon Wilson splits retain the
+   * existing nearby-temperature continuation instead, so ordinary non-sour-gas flashes allocate nothing.
    * </p>
    */
   private void prepareMultiphaseEndpointRescueSeed() {
     multiphaseEndpointRescueSeed = null;
-    if (!system.doMultiPhaseCheck() || system.isChemicalSystem() || system.hasIons() || solidCheck
-        || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck() || directGammaPhiModel != null
+    boolean ordinarySourGasCandidate = !system.doMultiPhaseCheck() && isSourGasConsistencyRefinementCase();
+    if ((!system.doMultiPhaseCheck() && !ordinarySourGasCandidate) || system.isChemicalSystem() || system.hasIons()
+        || solidCheck || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck() || directGammaPhiModel != null
         || hybridEosGeFlashModel != null || system.getPhase(0).getNumberOfComponents() <= 1
         || !hasPotentialAsymmetricNeutralInstability(MULTIPHASE_ENDPOINT_CRITICAL_TEMPERATURE_MARGIN)
         || !(hasPotentialMultiphaseEndpoint(PhaseType.GAS) || hasPotentialMultiphaseEndpoint(PhaseType.LIQUID))) {

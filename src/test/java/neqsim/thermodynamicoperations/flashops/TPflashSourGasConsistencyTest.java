@@ -39,6 +39,22 @@ class TPflashSourGasConsistencyTest {
     }
   }
 
+  @Test
+  void ordinaryBoundaryFlashRecoversStableSplitFromColdFeedSeed() {
+    SystemInterface ordinary = flash(245.0, 100.80, false, false);
+    SystemInterface multiphase = flash(245.0, 100.80, true, false);
+
+    assertEquals(2, ordinary.getNumberOfPhases());
+    assertEquivalent(multiphase, ordinary, 1.0e-10, "cold boundary flash");
+    assertEquals(5204.65719950532, ordinary.getGibbsEnergy(), 1.0e-6);
+    assertEquals(0.330402477242444, ordinary.getBeta(phaseOrder(ordinary)[0]), 1.0e-10);
+
+    SystemInterface repeatedReference = ordinary.clone();
+    new ThermodynamicOperations(ordinary).TPflash();
+    ordinary.init(1);
+    assertEquivalent(repeatedReference, ordinary, 1.0e-10, "repeated boundary flash");
+  }
+
   private SystemInterface flash(double temperature, double pressure, boolean multiphase, boolean enhanced) {
     SystemInterface system = new SystemPrEos(temperature, pressure);
     for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
