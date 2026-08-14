@@ -554,8 +554,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       returnStream.run(id);
       double drawEnthalpy = newDrawStream.getFluid().getEnthalpy();
       double returnEnthalpy = returnStream.getFluid().getEnthalpy();
-      lastDutyW = Double.isFinite(drawEnthalpy) && Double.isFinite(returnEnthalpy)
-          ? returnEnthalpy - drawEnthalpy
+      lastDutyW = Double.isFinite(drawEnthalpy) && Double.isFinite(returnEnthalpy) ? returnEnthalpy - drawEnthalpy
           : Double.NaN;
       lastReturnFlowKgPerHour = Math.abs(returnStream.getFlowRate("kg/hr"));
       double scale = Math.max(1.0e-12, Math.max(previousFlow, lastReturnFlowKgPerHour));
