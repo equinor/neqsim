@@ -183,9 +183,8 @@ class TransferFunctionBlockTest {
     block.setTransmitter(transmitter);
 
     // Run many steps to reach steady state
-    UUID id = UUID.randomUUID();
     for (int i = 0; i < 1000; i++) {
-      block.runTransient(0.0, 1.0, id);
+      block.runTransient(0.0, 1.0, UUID.randomUUID());
     }
 
     // Should converge to K * u = 2.0 * 5.0 = 10.0
@@ -201,16 +200,15 @@ class TransferFunctionBlockTest {
     StubTransmitter transmitter = new StubTransmitter(0.0);
     block.setTransmitter(transmitter);
 
-    UUID id = UUID.randomUUID();
     // Initial step to initialize
-    block.runTransient(0.0, 1.0, id);
+    block.runTransient(0.0, 1.0, UUID.randomUUID());
 
     // Step change in input
     transmitter.setValue(10.0);
 
     // After one time constant (tau=10s, dt=1s), should reach ~63.2% of final value
     for (int i = 0; i < 10; i++) {
-      block.runTransient(0.0, 1.0, id);
+      block.runTransient(0.0, 1.0, UUID.randomUUID());
     }
 
     double expectedApprox = 10.0 * (1.0 - Math.exp(-1.0)); // ~6.32
@@ -228,9 +226,8 @@ class TransferFunctionBlockTest {
     StubTransmitter transmitter = new StubTransmitter(10.0);
     block.setTransmitter(transmitter);
 
-    UUID id = UUID.randomUUID();
     for (int i = 0; i < 2000; i++) {
-      block.runTransient(0.0, 1.0, id);
+      block.runTransient(0.0, 1.0, UUID.randomUUID());
     }
 
     // Steady state: K * u = 1.5 * 10.0 = 15.0
@@ -246,23 +243,21 @@ class TransferFunctionBlockTest {
     StubTransmitter transmitter = new StubTransmitter(0.0);
     block.setTransmitter(transmitter);
 
-    UUID id = UUID.randomUUID();
-
     // Initialize with zero
-    block.runTransient(0.0, 1.0, id);
+    block.runTransient(0.0, 1.0, UUID.randomUUID());
 
     // Step change at t=1
     transmitter.setValue(10.0);
 
     // Run for less than dead time - output should still be ~0
     for (int i = 0; i < 3; i++) {
-      block.runTransient(0.0, 1.0, id);
+      block.runTransient(0.0, 1.0, UUID.randomUUID());
     }
     assertEquals(0.0, block.getOutput(), 0.1);
 
     // Run past dead time - output should reach the step value
     for (int i = 0; i < 5; i++) {
-      block.runTransient(0.0, 1.0, id);
+      block.runTransient(0.0, 1.0, UUID.randomUUID());
     }
     assertEquals(10.0, block.getOutput(), 0.1);
   }
@@ -277,9 +272,8 @@ class TransferFunctionBlockTest {
     StubTransmitter transmitter = new StubTransmitter(4.0);
     block.setTransmitter(transmitter);
 
-    UUID id = UUID.randomUUID();
     for (int i = 0; i < 2000; i++) {
-      block.runTransient(0.0, 1.0, id);
+      block.runTransient(0.0, 1.0, UUID.randomUUID());
     }
 
     // Steady state: K * u = 3.0 * 4.0 = 12.0
@@ -299,9 +293,8 @@ class TransferFunctionBlockTest {
     StubTransmitter transmitter = new StubTransmitter(15.0);
     block.setTransmitter(transmitter);
 
-    UUID id = UUID.randomUUID();
     for (int i = 0; i < 1000; i++) {
-      block.runTransient(0.0, 1.0, id);
+      block.runTransient(0.0, 1.0, UUID.randomUUID());
     }
 
     assertEquals(60.0, block.getOutput(), 0.1);
@@ -317,9 +310,8 @@ class TransferFunctionBlockTest {
     StubTransmitter transmitter = new StubTransmitter(100.0);
     block.setTransmitter(transmitter);
 
-    UUID id = UUID.randomUUID();
     for (int i = 0; i < 100; i++) {
-      block.runTransient(0.0, 1.0, id);
+      block.runTransient(0.0, 1.0, UUID.randomUUID());
     }
     assertTrue(block.getOutput() > 50.0);
 
@@ -349,9 +341,8 @@ class TransferFunctionBlockTest {
     block.setGain(1.0);
     block.setLagTime(1.0);
 
-    UUID id = UUID.randomUUID();
     for (int i = 0; i < 100; i++) {
-      block.runTransient(5.0, 1.0, id);
+      block.runTransient(5.0, 1.0, UUID.randomUUID());
     }
 
     // Steady state should converge to K * u = 1.0 * 5.0 = 5.0
@@ -368,20 +359,19 @@ class TransferFunctionBlockTest {
     StubTransmitter transmitter = new StubTransmitter(0.0);
     block.setTransmitter(transmitter);
 
-    UUID id = UUID.randomUUID();
-    block.runTransient(0.0, 1.0, id);
+    block.runTransient(0.0, 1.0, UUID.randomUUID());
 
     // Step change
     transmitter.setValue(10.0);
 
     // During dead time, output should still be close to zero
-    block.runTransient(0.0, 1.0, id);
-    block.runTransient(0.0, 1.0, id);
+    block.runTransient(0.0, 1.0, UUID.randomUUID());
+    block.runTransient(0.0, 1.0, UUID.randomUUID());
     assertEquals(0.0, block.getOutput(), 0.5);
 
     // After dead time + long enough for lag, should approach steady state
     for (int i = 0; i < 200; i++) {
-      block.runTransient(0.0, 1.0, id);
+      block.runTransient(0.0, 1.0, UUID.randomUUID());
     }
     assertEquals(10.0, block.getOutput(), 0.5);
   }

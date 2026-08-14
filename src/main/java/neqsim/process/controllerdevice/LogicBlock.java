@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import neqsim.process.dynamics.TransientStateParticipant;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.util.NamedBaseClass;
 
@@ -34,7 +35,8 @@ import neqsim.util.NamedBaseClass;
  * @author ESOL
  * @version 1.0
  */
-public class LogicBlock extends NamedBaseClass implements ControllerDeviceInterface {
+public class LogicBlock extends NamedBaseClass
+    implements ControllerDeviceInterface, TransientStateParticipant<LogicBlock.LogicBlockState> {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -92,6 +94,9 @@ public class LogicBlock extends NamedBaseClass implements ControllerDeviceInterf
 
   /** UUID from last calculation. */
   protected UUID calcIdentifier;
+
+  /** Persistent identity used only for transient transaction provenance. */
+  private String transientStateParticipantId = UUID.randomUUID().toString();
 
   /**
    * Constructor for LogicBlock.
@@ -180,6 +185,15 @@ public class LogicBlock extends NamedBaseClass implements ControllerDeviceInterf
     }
   }
 
+  /**
+   * Get the tolerance used for {@link Comparator#EQUAL} comparisons.
+   *
+   * @return non-negative equality tolerance
+   */
+  public double getEqualityTolerance() {
+    return equalityTolerance;
+  }
+
   /** {@inheritDoc} */
   @Override
   public double getMeasuredValue() {
@@ -219,6 +233,9 @@ public class LogicBlock extends NamedBaseClass implements ControllerDeviceInterf
   /** {@inheritDoc} */
   @Override
   public void runTransient(double initResponse, double dt, UUID id) {
+    if (hasRunTransient(id)) {
+      return;
+    }
     if (!isActive) {
       calcIdentifier = id;
       return;
@@ -260,6 +277,12 @@ public class LogicBlock extends NamedBaseClass implements ControllerDeviceInterf
 
   /** {@inheritDoc} */
   @Override
+  public boolean hasRunTransient(UUID id) {
+    return id != null && id.equals(calcIdentifier);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getResponse() {
     return output;
   }
@@ -292,6 +315,55 @@ public class LogicBlock extends NamedBaseClass implements ControllerDeviceInterf
   @Override
   public boolean isActive() {
     return isActive;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateIdentity() {
+    if (transientStateParticipantId == null || transientStateParticipantId.trim().isEmpty()) {
+      transientStateParticipantId = UUID.randomUUID().toString();
+    }
+    return "controller:logic-block:" + transientStateParticipantId;
+  }
+
+  /**
+   * The snapshot is complete only for this concrete logic-block implementation.
+   *
+   * @return blocking diagnostic for subclasses, otherwise {@code null}
+   */
+  @Override
+  public String getTransientStateCoverageIssue() {
+    if (getClass() != LogicBlock.class) {
+      return "logic-block subclass " + getClass().getName()
+          + " must provide a snapshot that includes subclass-owned mutable state";
+    }
+    return null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public LogicBlockState captureTransientState() {
+    return new LogicBlockState(getTransientStateIdentity(), getName(), new ArrayList<LogicInput>(inputs), output,
+        isActive, unit, equalityTolerance, calcIdentifier);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreTransientState(LogicBlockState snapshot) {
+    if (snapshot == null) {
+      throw new IllegalArgumentException("Logic-block transient snapshot cannot be null");
+    }
+    if (!getTransientStateIdentity().equals(snapshot.stateIdentity)) {
+      throw new IllegalArgumentException("Logic-block snapshot identity does not match " + getTransientStateIdentity());
+    }
+    setName(snapshot.name);
+    inputs.clear();
+    inputs.addAll(snapshot.inputs);
+    output = snapshot.output;
+    isActive = snapshot.active;
+    unit = snapshot.unit;
+    equalityTolerance = snapshot.equalityTolerance;
+    calcIdentifier = snapshot.calcIdentifier;
   }
 
   private boolean evaluateAnd(List<Boolean> values) {
@@ -444,6 +516,32 @@ public class LogicBlock extends NamedBaseClass implements ControllerDeviceInterf
     @Override
     public boolean evaluate(double equalityTolerance) {
       return upstream.getOutputBoolean();
+    }
+  }
+
+  /** Immutable rollback point for logic-block configuration, bindings, and evaluated state. */
+  public static final class LogicBlockState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    private final String stateIdentity;
+    private final String name;
+    private final List<LogicInput> inputs;
+    private final double output;
+    private final boolean active;
+    private final String unit;
+    private final double equalityTolerance;
+    private final UUID calcIdentifier;
+
+    private LogicBlockState(String stateIdentity, String name, List<LogicInput> inputs, double output, boolean active,
+        String unit, double equalityTolerance, UUID calcIdentifier) {
+      this.stateIdentity = stateIdentity;
+      this.name = name;
+      this.inputs = inputs;
+      this.output = output;
+      this.active = active;
+      this.unit = unit;
+      this.equalityTolerance = equalityTolerance;
+      this.calcIdentifier = calcIdentifier;
     }
   }
 }
