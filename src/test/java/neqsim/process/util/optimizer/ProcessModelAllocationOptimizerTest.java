@@ -109,8 +109,8 @@ class ProcessModelAllocationOptimizerTest {
    */
   private CapacityConstraint rateConstraint(String name, double designValue,
       java.util.function.DoubleSupplier valueSupplier, String dataSource) {
-    java.util.function.DoubleSupplier stableValueSupplier =
-        () -> Math.rint(valueSupplier.getAsDouble() * 1.0e9) / 1.0e9;
+    java.util.function.DoubleSupplier stableValueSupplier = () -> Math.rint(valueSupplier.getAsDouble() * 1.0e9)
+        / 1.0e9;
     return new CapacityConstraint(name, "kg/hr", ConstraintType.HARD).setDesignValue(designValue)
         .setSeverity(ConstraintSeverity.HARD).setDataSource(dataSource).setConfidence(0.95)
         .setValidityRange(200.0, 1200.0).setValueSupplier(stableValueSupplier);
