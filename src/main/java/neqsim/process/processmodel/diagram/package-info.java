@@ -24,6 +24,8 @@
  * project review evidence without changing process topology</li>
  * <li><b>Native controlled output</b> - Deterministic vector SVG sheets and multi-page PDF consume the same controlled
  * document model without requiring Graphviz</li>
+ * <li><b>Drawing-quality diagnostics</b> - Deterministic collision, clipping, label-overflow, and broken-reference
+ * evidence remains structured and fail-visible without silently moving reviewed geometry</li>
  * <li><b>Revision impact</b> - Deterministic changed-object, affected-sheet, and affected-drawing evidence</li>
  * <li><b>Multiple detail levels</b> - MINIMAL, STANDARD, DETAILED, DEBUG</li>
  * <li><b>Deterministic output</b> - Same model always produces same diagram</li>
