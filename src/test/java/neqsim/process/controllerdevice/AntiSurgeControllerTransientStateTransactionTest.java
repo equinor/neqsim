@@ -75,7 +75,7 @@ class AntiSurgeControllerTransientStateTransactionTest extends neqsim.NeqSimTest
     ProcessSystem process = new ProcessSystem("anti-surge configuration");
     process.add(fixture.controller);
     ProcessSystem expectedProcess = process.copy();
-    AntiSurgeController expected = (AntiSurgeController) expectedProcess.getUnitOperations().get(0);
+    AntiSurgeController expected = (AntiSurgeController) expectedProcess.getControllerDevices().get(0);
 
     String originalName = fixture.controller.getName();
     String stateIdentity = fixture.controller.getTransientStateIdentity();
@@ -160,7 +160,7 @@ class AntiSurgeControllerTransientStateTransactionTest extends neqsim.NeqSimTest
         TransientStepIdentifier.deterministicPhysicalStep("anti-surge-restart", 1L));
 
     ProcessSystem restartedProcess = process.copy();
-    AntiSurgeController restarted = (AntiSurgeController) restartedProcess.getUnitOperations().get(0);
+    AntiSurgeController restarted = (AntiSurgeController) restartedProcess.getControllerDevices().get(0);
     assertTrue(restartedProcess.getTransientTransactionCoverage().isComplete());
     ((MarginCompressor) restarted.getCompressor()).setMargin(0.10);
     fixture.compressor.setMargin(0.10);
