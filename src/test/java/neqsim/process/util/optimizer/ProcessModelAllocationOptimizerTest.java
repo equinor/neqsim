@@ -104,18 +104,16 @@ class ProcessModelAllocationOptimizerTest {
    * Creates a hard rate constraint with a numerical allowance for the analytical fixture.
    *
    * <p>
-   * Stream actions round-trip mass flow through molar units. A 16-ULP allowance keeps an exactly
-   * binding synthetic limit from becoming platform-dependent without changing production
-   * feasibility semantics.
+   * Stream actions round-trip mass flow through molar units. A 16-ULP allowance keeps an exactly binding synthetic
+   * limit from becoming platform-dependent without changing production feasibility semantics.
    * </p>
    */
   private CapacityConstraint rateConstraint(String name, double designValue,
       java.util.function.DoubleSupplier valueSupplier, String dataSource) {
     double stableDesignValue = designValue + 16.0 * Math.ulp(designValue);
-    return new CapacityConstraint(name, "kg/hr", ConstraintType.HARD)
-        .setDesignValue(stableDesignValue).setSeverity(ConstraintSeverity.HARD)
-        .setDataSource(dataSource).setConfidence(0.95).setValidityRange(200.0, 1200.0)
-        .setValueSupplier(valueSupplier);
+    return new CapacityConstraint(name, "kg/hr", ConstraintType.HARD).setDesignValue(stableDesignValue)
+        .setSeverity(ConstraintSeverity.HARD).setDataSource(dataSource).setConfidence(0.95)
+        .setValidityRange(200.0, 1200.0).setValueSupplier(valueSupplier);
   }
 
   /** Creates the documented bounded transfer search. */
