@@ -836,8 +836,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
    */
   protected void restoreControllerSubclassTransientState(Serializable state) {
     if (state != null) {
-      throw new IllegalArgumentException(
-          "Concrete base controller cannot restore non-null subclass transient state");
+      throw new IllegalArgumentException("Concrete base controller cannot restore non-null subclass transient state");
     }
   }
 
@@ -1002,8 +1001,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
         NavigableMap<Double, double[]> gainSchedule, java.util.List<ControllerEvent> eventLog, double totalTime,
         double integralAbsoluteError, double lastTimeOutsideBand, double settlingTolerance, double setpointWeight,
         double deadBand, neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignation,
-        neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignationState,
-        Serializable subclassState) {
+        neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignationState, Serializable subclassState) {
       this.stateIdentity = stateIdentity;
       this.name = name;
       this.calcIdentifier = calcIdentifier;
