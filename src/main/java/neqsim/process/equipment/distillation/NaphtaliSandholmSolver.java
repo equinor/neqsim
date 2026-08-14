@@ -3256,18 +3256,20 @@ public class NaphtaliSandholmSolver {
    * Refine the derived tray state before a finite-difference Jacobian build.
    *
    * <p>
-   * The primary Newton variables remain unchanged. Up to three full-column thermodynamic passes are evaluated, and the
-   * state with the smallest finite MESH residual is retained. Refinement stops when consecutive residual vectors differ
-   * by no more than one tenth of the outer tolerance. This replaces the accidental, column-order-dependent K-value
-   * refinement that previously occurred while restoring each finite-difference perturbation.
+   * The primary Newton variables remain unchanged. At least one and up to three full-column thermodynamic passes are
+   * evaluated, and the state with the smallest finite MESH residual among those refreshed states is retained. The
+   * incoming derived state remains only as a fallback if no refinement is finite. Refinement stops when consecutive
+   * residual vectors differ by no more than one tenth of the outer tolerance. This replaces the accidental,
+   * column-order-dependent K-value refinement that previously occurred while restoring each finite-difference
+   * perturbation.
    * </p>
    *
    * @param initialResidual residual at the current primary state
    * @return residual owned by the retained derived thermodynamic state
    */
   private double[] refineJacobianBaseState(double[] initialResidual) {
-    double[] bestResidual = initialResidual.clone();
-    double bestNorm = vectorNorm(bestResidual);
+    double[] bestResidual = null;
+    double bestNorm = Double.POSITIVE_INFINITY;
     double[] previousResidual = initialResidual;
 
     double[][] bestK = new double[N][C];
@@ -3297,7 +3299,7 @@ public class NaphtaliSandholmSolver {
     }
 
     restoreDerivedThermodynamicState(bestK, bestVap, bestL, bestHL, bestHV);
-    return bestResidual;
+    return bestResidual == null ? initialResidual : bestResidual;
   }
 
   /**
