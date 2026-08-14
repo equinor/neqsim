@@ -70,6 +70,9 @@ public class NaphtaliSandholmSolver {
   /** Convergence tolerance for the largest absolute logarithmic K-value update. */
   private static final double THERMO_K_VALUE_TOLERANCE = 1.0e-8;
 
+  /** Maximum residual-aware full-column refinements before a finite-difference Jacobian build. */
+  private static final int JACOBIAN_BASE_REFINEMENT_LIMIT = 3;
+
   /** Logger for this class. */
   private static final Logger logger = LogManager.getLogger(NaphtaliSandholmSolver.class);
 
@@ -285,6 +288,12 @@ public class NaphtaliSandholmSolver {
   /** Number of cached tray thermodynamic evaluations reused in the last solve. */
   private int lastThermoCacheHitCount;
 
+  /** Number of full-column thermodynamic refinements used to prepare Jacobian base states. */
+  private int lastJacobianBaseRefinementCount;
+
+  /** Largest residual-vector mutation measured across a completed Jacobian build. */
+  private double lastJacobianBaseResidualMutation;
+
   /** Time spent assembling Jacobian matrices in the last solve. */
   private double lastJacobianBuildTimeSeconds;
 
@@ -429,6 +438,24 @@ public class NaphtaliSandholmSolver {
    */
   int getLastThermoCacheHitCount() {
     return lastThermoCacheHitCount;
+  }
+
+  /**
+   * Get the number of residual-aware full-column refinements used to prepare Jacobian base states.
+   *
+   * @return Jacobian base-state refinement count
+   */
+  int getLastJacobianBaseRefinementCount() {
+    return lastJacobianBaseRefinementCount;
+  }
+
+  /**
+   * Get the largest residual-vector mutation across a completed Jacobian build.
+   *
+   * @return L2 norm of the largest post-build residual difference at unchanged primary variables
+   */
+  double getLastJacobianBaseResidualMutation() {
+    return lastJacobianBaseResidualMutation;
   }
 
   /**
@@ -820,7 +847,15 @@ public class NaphtaliSandholmSolver {
           return true;
         }
 
-        // Compute Jacobian analytically
+        // Refine and freeze the derived K/enthalpy state that owns both the
+        // finite-difference base residual and every perturbed Jacobian column.
+        residual = refineJacobianBaseState(residual);
+        norm = vectorNorm(residual);
+        if (norm < bestNorm) {
+          bestNorm = norm;
+          saveTrayState(bestLiq, bestT, bestV);
+        }
+
         double[][] jacobian = computeJacobian(residual);
 
         // Solve J * dx = F using block-tridiagonal solver
@@ -987,6 +1022,8 @@ public class NaphtaliSandholmSolver {
     lastThermoKValueNonConvergedCount = 0;
     lastThermoMaxLogKValueUpdate = 0.0;
     lastThermoCacheHitCount = 0;
+    lastJacobianBaseRefinementCount = 0;
+    lastJacobianBaseResidualMutation = 0.0;
     lastJacobianBuildTimeSeconds = 0.0;
     lastBlockLinearSolveCount = 0;
     lastDenseLinearSolveCount = 0;
@@ -3172,21 +3209,24 @@ public class NaphtaliSandholmSolver {
     double pertSize = 1e-4;
     double minPert = 1e-8;
 
+    double[][] baseK = new double[N][C];
+    double[][] baseVap = new double[N][C];
+    double[] baseL = new double[N];
+    double[] baseHL = new double[N];
+    double[] baseHV = new double[N];
+    saveDerivedThermodynamicState(baseK, baseVap, baseL, baseHL, baseHV);
+
     for (int jj = 0; jj < N; jj++) {
       for (int k = 0; k < varsPerTray; k++) {
         int varIdx = jj * varsPerTray + k;
 
-        // Save original value
+        // Save and perturb one primary variable from the same frozen base state.
         double origVal = getVariable(jj, k);
         double h = Math.max(Math.abs(origVal) * pertSize, minPert);
-
-        // Perturb
         setVariable(jj, k, origVal + h);
-
-        // Re-evaluate thermo ONLY for the tray whose variable changed
         evaluateThermoForTray(jj);
 
-        // Compute perturbed residuals for affected trays (j-1, j, j+1)
+        // Only the perturbed tray and its two neighbors can depend on this variable.
         int jStart = Math.max(0, jj - 1);
         int jEnd = Math.min(N - 1, jj + 1);
         for (int j = jStart; j <= jEnd; j++) {
@@ -3197,15 +3237,138 @@ public class NaphtaliSandholmSolver {
           }
         }
 
-        // Restore
+        // Restore primary and derived state exactly. Re-evaluating thermo here
+        // would advance the K fixed point and give the next column a different base.
         setVariable(jj, k, origVal);
-        evaluateThermoForTray(jj);
+        restoreDerivedThermodynamicStateForTray(jj, baseK, baseVap, baseL, baseHL, baseHV);
       }
     }
 
+    double[] restoredResidual = computeResidual();
+    lastJacobianBaseResidualMutation = Math.max(lastJacobianBaseResidualMutation,
+        vectorDifferenceNorm(F0, restoredResidual));
     lastFiniteDifferenceJacobianColumns += totalVars;
     lastJacobianBuildTimeSeconds += (System.nanoTime() - jacobianStart) / 1.0e9;
     return J;
+  }
+
+  /**
+   * Refine the derived tray state before a finite-difference Jacobian build.
+   *
+   * <p>
+   * The primary Newton variables remain unchanged. Up to three full-column thermodynamic passes are evaluated, and the
+   * state with the smallest finite MESH residual is retained. Refinement stops when consecutive residual vectors differ
+   * by no more than one tenth of the outer tolerance. This replaces the accidental, column-order-dependent K-value
+   * refinement that previously occurred while restoring each finite-difference perturbation.
+   * </p>
+   *
+   * @param initialResidual residual at the current primary state
+   * @return residual owned by the retained derived thermodynamic state
+   */
+  private double[] refineJacobianBaseState(double[] initialResidual) {
+    double[] bestResidual = initialResidual.clone();
+    double bestNorm = vectorNorm(bestResidual);
+    double[] previousResidual = initialResidual;
+
+    double[][] bestK = new double[N][C];
+    double[][] bestVap = new double[N][C];
+    double[] bestL = new double[N];
+    double[] bestHL = new double[N];
+    double[] bestHV = new double[N];
+    saveDerivedThermodynamicState(bestK, bestVap, bestL, bestHL, bestHV);
+
+    double residualChangeTolerance = Math.max(1.0e-12, tolerance * 0.1);
+    for (int refinement = 0; refinement < JACOBIAN_BASE_REFINEMENT_LIMIT; refinement++) {
+      evaluateThermo();
+      lastJacobianBaseRefinementCount++;
+      double[] candidateResidual = computeResidual();
+      double candidateNorm = vectorNorm(candidateResidual);
+      double residualChange = vectorDifferenceNorm(previousResidual, candidateResidual);
+
+      if (Double.isFinite(candidateNorm) && candidateNorm < bestNorm) {
+        bestNorm = candidateNorm;
+        bestResidual = candidateResidual;
+        saveDerivedThermodynamicState(bestK, bestVap, bestL, bestHL, bestHV);
+      }
+      if (residualChange <= residualChangeTolerance) {
+        break;
+      }
+      previousResidual = candidateResidual;
+    }
+
+    restoreDerivedThermodynamicState(bestK, bestVap, bestL, bestHL, bestHV);
+    return bestResidual;
+  }
+
+  /**
+   * Save all derived thermodynamic tray values that participate in the MESH residual.
+   *
+   * @param saveK K-value destination
+   * @param saveVap vapor component-flow destination
+   * @param saveL total liquid-flow destination
+   * @param saveHL liquid enthalpy destination
+   * @param saveHV vapor enthalpy destination
+   */
+  private void saveDerivedThermodynamicState(double[][] saveK, double[][] saveVap, double[] saveL, double[] saveHL,
+      double[] saveHV) {
+    for (int j = 0; j < N; j++) {
+      System.arraycopy(K[j], 0, saveK[j], 0, C);
+      System.arraycopy(vap[j], 0, saveVap[j], 0, C);
+      saveL[j] = L[j];
+      saveHL[j] = hL[j];
+      saveHV[j] = hV[j];
+    }
+  }
+
+  /**
+   * Restore every derived thermodynamic tray value from a saved state.
+   *
+   * @param saveK saved K-values
+   * @param saveVap saved vapor component flows
+   * @param saveL saved liquid flows
+   * @param saveHL saved liquid enthalpies
+   * @param saveHV saved vapor enthalpies
+   */
+  private void restoreDerivedThermodynamicState(double[][] saveK, double[][] saveVap, double[] saveL, double[] saveHL,
+      double[] saveHV) {
+    for (int j = 0; j < N; j++) {
+      restoreDerivedThermodynamicStateForTray(j, saveK, saveVap, saveL, saveHL, saveHV);
+    }
+  }
+
+  /**
+   * Restore one tray's derived thermodynamic state.
+   *
+   * @param j tray index
+   * @param saveK saved K-values
+   * @param saveVap saved vapor component flows
+   * @param saveL saved liquid flows
+   * @param saveHL saved liquid enthalpies
+   * @param saveHV saved vapor enthalpies
+   */
+  private void restoreDerivedThermodynamicStateForTray(int j, double[][] saveK, double[][] saveVap, double[] saveL,
+      double[] saveHL, double[] saveHV) {
+    System.arraycopy(saveK[j], 0, K[j], 0, C);
+    System.arraycopy(saveVap[j], 0, vap[j], 0, C);
+    L[j] = saveL[j];
+    hL[j] = saveHL[j];
+    hV[j] = saveHV[j];
+  }
+
+  /**
+   * Compute the L2 norm of the difference between two vectors.
+   *
+   * @param first first vector
+   * @param second second vector
+   * @return L2 norm of {@code first - second}
+   */
+  private double vectorDifferenceNorm(double[] first, double[] second) {
+    double sum = 0.0;
+    for (int i = 0; i < first.length; i++) {
+      double difference = first[i] - second[i];
+      sum += difference * difference;
+    }
+    return Math.sqrt(sum);
   }
 
   /**
