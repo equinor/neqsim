@@ -28,9 +28,9 @@ import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.EvaluationR
  *
  * <p>
  * The action-set identifier, name, provenance, ordered action definitions, per-action write/read-back evidence,
- * objective and constraint arrays, hydraulic evidence, restoration status, and diagnostics are retained in an
- * immutable serializable result suitable for JPype/Python. Action identifiers and automation addresses must be unique
- * so one transaction cannot write the same control target twice under different metadata.
+ * objective and constraint arrays, hydraulic evidence, restoration status, and diagnostics are retained in an immutable
+ * serializable result suitable for JPype/Python. Action identifiers and automation addresses must be unique so one
+ * transaction cannot write the same control target twice under different metadata.
  * </p>
  *
  * <p>
@@ -367,8 +367,7 @@ public final class ProcessModelOperatingActionSetEvaluator {
   }
 
   /** Applies fail-closed outcome precedence after a converged candidate run. */
-  private static Outcome classifyCandidate(EvaluationResult evaluation,
-      List<HydraulicConstraintSnapshot> snapshots) {
+  private static Outcome classifyCandidate(EvaluationResult evaluation, List<HydraulicConstraintSnapshot> snapshots) {
     for (HydraulicConstraintSnapshot snapshot : snapshots) {
       if (!snapshot.isPresent()) {
         return Outcome.REQUIRED_CONSTRAINT_MISSING;
@@ -680,10 +679,9 @@ public final class ProcessModelOperatingActionSetEvaluator {
             new double[0], hydraulicConstraints, diagnostics);
       }
       return new CandidateSetEvaluationResult(id, name, provenance, actions, candidateValues, actionEvidence, outcome,
-          evaluation.isSimulationConverged(), evaluation.isFeasible(), baselineRestored,
-          baselineSimulationConverged, copy(evaluation.getObjectivesRaw()), copy(evaluation.getObjectives()),
-          copy(evaluation.getConstraintValues()), copy(evaluation.getConstraintMargins()), hydraulicConstraints,
-          diagnostics);
+          evaluation.isSimulationConverged(), evaluation.isFeasible(), baselineRestored, baselineSimulationConverged,
+          copy(evaluation.getObjectivesRaw()), copy(evaluation.getObjectives()), copy(evaluation.getConstraintValues()),
+          copy(evaluation.getConstraintMargins()), hydraulicConstraints, diagnostics);
     }
 
     /** Returns a defensive array or an empty array for null. */
