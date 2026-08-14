@@ -19,8 +19,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Quantitative rollback, replay, coverage, multi-area, and restart evidence for the anti-surge
- * controller state family.
+ * Quantitative rollback, replay, coverage, multi-area, and restart evidence for the anti-surge controller state family.
  */
 class AntiSurgeControllerTransientStateTransactionTest extends neqsim.NeqSimTest {
   private static final double TOLERANCE = 1.0e-12;
@@ -29,8 +28,7 @@ class AntiSurgeControllerTransientStateTransactionTest extends neqsim.NeqSimTest
   void rollbackRestoresInternalHistoryValveCommandAndDeterministicReplay() {
     Fixture fixture = new Fixture("rollback", 0.30);
     configure(fixture.controller);
-    fixture.controller.runTransient(0.0, 1.0,
-        TransientStepIdentifier.deterministicPhysicalStep("anti-surge-seed", 0L));
+    fixture.controller.runTransient(0.0, 1.0, TransientStepIdentifier.deterministicPhysicalStep("anti-surge-seed", 0L));
 
     ProcessSystem process = new ProcessSystem("anti-surge transaction");
     process.add(fixture.controller);
@@ -77,8 +75,7 @@ class AntiSurgeControllerTransientStateTransactionTest extends neqsim.NeqSimTest
     ProcessSystem process = new ProcessSystem("anti-surge configuration");
     process.add(fixture.controller);
     ProcessSystem expectedProcess = process.copy();
-    AntiSurgeController expected =
-        (AntiSurgeController) expectedProcess.getUnitOperations().get(0);
+    AntiSurgeController expected = (AntiSurgeController) expectedProcess.getUnitOperations().get(0);
 
     String originalName = fixture.controller.getName();
     String stateIdentity = fixture.controller.getTransientStateIdentity();
@@ -113,12 +110,9 @@ class AntiSurgeControllerTransientStateTransactionTest extends neqsim.NeqSimTest
     fixture.controller.runTransient(0.0, 0.5, replayId);
     expected.runTransient(0.0, 0.5, replayId);
     assertEquals(expected.getValveOpening(), fixture.controller.getValveOpening(), TOLERANCE);
-    assertEquals(expected.getTargetValveOpening(), fixture.controller.getTargetValveOpening(),
-        TOLERANCE);
-    assertEquals(expected.getFilteredMarginRate(), fixture.controller.getFilteredMarginRate(),
-        TOLERANCE);
-    assertEquals(expected.getPredictedMargin(), fixture.controller.getPredictedMargin(),
-        TOLERANCE);
+    assertEquals(expected.getTargetValveOpening(), fixture.controller.getTargetValveOpening(), TOLERANCE);
+    assertEquals(expected.getFilteredMarginRate(), fixture.controller.getFilteredMarginRate(), TOLERANCE);
+    assertEquals(expected.getPredictedMargin(), fixture.controller.getPredictedMargin(), TOLERANCE);
   }
 
   @Test
@@ -166,8 +160,7 @@ class AntiSurgeControllerTransientStateTransactionTest extends neqsim.NeqSimTest
         TransientStepIdentifier.deterministicPhysicalStep("anti-surge-restart", 1L));
 
     ProcessSystem restartedProcess = process.copy();
-    AntiSurgeController restarted =
-        (AntiSurgeController) restartedProcess.getUnitOperations().get(0);
+    AntiSurgeController restarted = (AntiSurgeController) restartedProcess.getUnitOperations().get(0);
     assertTrue(restartedProcess.getTransientTransactionCoverage().isComplete());
     ((MarginCompressor) restarted.getCompressor()).setMargin(0.10);
     fixture.compressor.setMargin(0.10);
@@ -176,14 +169,11 @@ class AntiSurgeControllerTransientStateTransactionTest extends neqsim.NeqSimTest
     restarted.runTransient(restarted.getValveOpening(), 0.25, nextId);
 
     assertEquals(fixture.controller.getValveOpening(), restarted.getValveOpening(), TOLERANCE);
-    assertEquals(fixture.controller.getTargetValveOpening(), restarted.getTargetValveOpening(),
+    assertEquals(fixture.controller.getTargetValveOpening(), restarted.getTargetValveOpening(), TOLERANCE);
+    assertEquals(fixture.controller.getFilteredMarginRate(), restarted.getFilteredMarginRate(), TOLERANCE);
+    assertEquals(fixture.controller.getPredictedMargin(), restarted.getPredictedMargin(), TOLERANCE);
+    assertEquals(fixture.valve.getPercentValveOpening(), restarted.getRecycleValve().getPercentValveOpening(),
         TOLERANCE);
-    assertEquals(fixture.controller.getFilteredMarginRate(), restarted.getFilteredMarginRate(),
-        TOLERANCE);
-    assertEquals(fixture.controller.getPredictedMargin(), restarted.getPredictedMargin(),
-        TOLERANCE);
-    assertEquals(fixture.valve.getPercentValveOpening(),
-        restarted.getRecycleValve().getPercentValveOpening(), TOLERANCE);
 
     ProcessSystem unsupported = new ProcessSystem("unsupported anti-surge subclass");
     unsupported.add(new DerivedAntiSurgeController());
@@ -193,8 +183,7 @@ class AntiSurgeControllerTransientStateTransactionTest extends neqsim.NeqSimTest
 
     Fixture foreign = new Fixture("foreign", 0.10);
     assertThrows(IllegalArgumentException.class,
-        () -> fixture.controller.restoreTransientState(
-            foreign.controller.captureTransientState()));
+        () -> fixture.controller.restoreTransientState(foreign.controller.captureTransientState()));
   }
 
   private static void configure(AntiSurgeController controller) {
