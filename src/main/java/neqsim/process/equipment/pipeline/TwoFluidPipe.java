@@ -622,8 +622,22 @@ public class TwoFluidPipe extends Pipeline {
    * If the solver has not converged within this time, it stops with the best available profile and logs a warning.
    * Prevents truly infinite run times for difficult configurations.
    * </p>
+   *
+   * <p>
+   * A long transmission line needs a few hundred sweeps to settle its pressure profile against the updated section
+   * densities; a 74 km line at 320 sections takes about 50 s. The budget has to leave room for that, otherwise the
+   * guard silently truncates the solve and {@link #isSteadyStateConverged()} reports false on an otherwise ordinary
+   * case.
+   * </p>
    */
-  private double ssMaxWallClockTime = 30.0;
+  private double ssMaxWallClockTime = 300.0;
+
+  /**
+   * Fraction of the inlet pressure the line must lose before the density coupling is taken to matter for steady-state
+   * convergence. Below this the fluid density is uniform to within about the same fraction, so the pressure profile
+   * cannot be materially wrong for want of a thermodynamic update.
+   */
+  private static final double SS_DENSITY_COUPLING_PRESSURE_FRACTION = 0.01;
 
   /**
    * Set when the last steady-state initialization was stopped by the wall-clock guard.
@@ -1265,6 +1279,11 @@ public class TwoFluidPipe extends Pipeline {
     }
 
     // ===== PHASE 2: Iterative refinement with under-relaxation and sparse flash =====
+    // The per-section pressure change used below is proportional to the section length, so
+    // on a fine mesh it falls under any fixed tolerance after a single sweep even when the
+    // accumulated profile is still far from the solution. The total pressure drop is tracked
+    // as well, which is mesh-independent and is the quantity the caller actually reads.
+    double previousTotalDrop = Double.NaN;
     for (int iter = 0; iter < maxIter; iter++) {
       ssIterationsUsed = iter;
       // Wall-clock time guard
@@ -1384,8 +1403,21 @@ public class TwoFluidPipe extends Pipeline {
       // Update thermodynamics only every ssFlashInterval iterations to reduce cost.
       // TP-flash for every section is the dominant expense; sparse updates are sufficient
       // because properties change slowly with small pressure changes between iterations.
+      boolean thermodynamicsRefreshed = false;
       if (referenceFluid != null && (iter % ssFlashInterval == 0)) {
+        double[] densityBefore = new double[numberOfSections];
+        for (int i = 0; i < numberOfSections; i++) {
+          densityBefore[i] = sections[i].getGasDensity();
+        }
         updateThermodynamicsWithCondensation(massFlow, localMDotGas, localMDotLiq);
+        double maxDensityChange = 0.0;
+        for (int i = 0; i < numberOfSections; i++) {
+          double density = sections[i].getGasDensity();
+          if (density > 0.0) {
+            maxDensityChange = Math.max(maxDensityChange, Math.abs(density - densityBefore[i]) / density);
+          }
+        }
+        thermodynamicsRefreshed = maxDensityChange > tolerance;
       }
 
       // Update liquid accumulation zones and apply terrain-induced accumulation
@@ -1396,7 +1428,20 @@ public class TwoFluidPipe extends Pipeline {
         // steady-state
       }
 
-      if (maxChange < tolerance) {
+      // The pressure march above ran on the densities the sections had BEFORE the flash in
+      // this iteration, so convergence may only be declared once a flash has stopped moving
+      // them - on a gas line the density change along the pipe is exactly what makes the
+      // pressure gradient steepen towards the outlet. That coupling only exists when the
+      // line actually loses a meaningful fraction of its pressure; on a short pipe the
+      // density is uniform and the cheaper per-section criterion is sufficient.
+      double totalDrop = P_inlet - sections[numberOfSections - 1].getPressure();
+      boolean densityCouplingMatters = totalDrop > SS_DENSITY_COUPLING_PRESSURE_FRACTION * P_inlet;
+      double dropChange = Double.isNaN(previousTotalDrop) ? Double.POSITIVE_INFINITY
+          : Math.abs(totalDrop - previousTotalDrop) / Math.max(Math.abs(totalDrop), 1.0e3);
+      previousTotalDrop = totalDrop;
+
+      boolean profileSettled = !densityCouplingMatters || (dropChange < tolerance && !thermodynamicsRefreshed);
+      if (maxChange < tolerance && profileSettled) {
         ssConverged = true;
         logger.info("Steady-state converged after {} iterations ({}ms wall-clock)", iter,
             System.currentTimeMillis() - startWallClock);

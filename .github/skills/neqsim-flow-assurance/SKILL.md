@@ -375,6 +375,85 @@ for (double qgMSm3d : gasRates) {
 > `INTERMITTENT` (plug/slug), `DISTRIBUTED` (bubble/mist). "Gravity-dominated /
 > liquid loading" = SEGREGATED (+ low-velocity TRANSITION).
 
+> **GOTCHA — profile index vs `getFlowRegime()`.** `run()` evaluates the
+> correlation once per increment **and then once more at the outlet state**, so
+> every correlation profile (`getLiquidHoldupProfile()`,
+> `getFlowRegimeProfileList()`, …) has `numberOfIncrements + 1` entries and
+> index *i* belongs to `getPressureProfile()[i]`. `getFlowRegime()` returns the
+> **outlet** state. Reading `getFlowRegime()` next to
+> `getSegmentLiquidHoldup(0)` compares two different states and can look like a
+> discontinuity. Always pair `getSegmentFlowRegime(i)` with
+> `getSegmentLiquidHoldup(i)`.
+
+> **VALIDITY — low liquid loading.** Benchmarked against OLGA 2025.1 on a 73.8 km
+> wet-gas export line (ID 0.355 m, no-slip liquid fraction λ_L ≈ 0.006), Beggs &
+> Brill over-predicts ΔP by **30–60%** and the gap is entirely the two-phase
+> friction multiplier `exp(S)`: removing it brings ΔP within 11% of OLGA and 4%
+> of a single-phase Darcy-Weisbach integration. `S` is monotonically *increasing*
+> in `y = λ_L / H_L²`, so *less* liquid gives a *larger* multiplier — the
+> opposite of the physical trend — up to a bounded maximum of `exp(S) = 3.19` at
+> `y = 52.1`. B&B is calibrated for λ_L down to roughly 0.01–0.02; below that,
+> use `TwoFluidPipe` or a mechanistic simulator and treat B&B as a conservative
+> upper bound. The published map also has a genuine step where the segregated and
+> distributed correlations meet at `L1` for λ_L < 0.01 (no transition band
+> exists there): hold-up ×0.70 and ΔP ×1.12 across a 1 bara change. That step is
+> in the correlation — do not smooth it.
+
+> **Fixed defects worth knowing (all affected the *inclination* correction).**
+> Older NeqSim builds silently returned the horizontal hold-up on an inclined leg
+> when (a) the pipe angle was converted degrees→radians twice, (b) the
+> Baker-Swerdloff surface tension went negative above 274 bara or for a very
+> light liquid, making the liquid velocity number NaN, or (c) the flow regime was
+> `TRANSITION`, which had no inclination branch at all. All three are fixed and
+> locked by `PipeBeggsAndBrillsCorrelationTest`. If you are on an older build,
+> sanity-check that uphill hold-up clearly exceeds horizontal hold-up before
+> trusting an inclined result.
+
+> **Phase-count code paths.** `PipeBeggsAndBrills` assumes phase 0 is the gas
+> whenever the stream has more than one phase. A **gas-free** stream that splits
+> into oil and water (dead oil with free water at high pressure) used to be
+> modelled as gas–liquid, with the oil phase acting as the gas: fictitious flow
+> regime, hold-up 0.21 instead of 1, and ΔP 44% above the homogeneous liquid
+> value. It is now carried as a homogeneous liquid with a volume-weighted density
+> and viscosity. The three-phase liquid density is also now combined on **volume**
+> fractions (total mass over total volume) rather than mass fractions. Locked by
+> `PipeBeggsAndBrillsPhasePathsTest`.
+
+> **Validation status vs OLGA 2025.1** (73.8 km × ID 0.355 m export line):
+> on a **single-phase** gas line Beggs & Brill is within **0.1–0.3%** of OLGA on
+> pressure drop and within **0.15 K** on arrival temperature — the friction and
+> energy paths are sound. The 30–60% over-prediction seen on the *two-phase*
+> version of the same line is therefore entirely the two-phase friction
+> multiplier, not the solver.
+
+> **`TwoFluidPipe` steady-state usage.** The refinement loop needs a few hundred
+> sweeps to settle the pressure profile against the updated section densities
+> (74 km at 160 sections ≈ 25 s, at 320 sections ≈ 60 s). Always
+> `assert pipe.isSteadyStateConverged()` **and** check
+> `pipe.getSteadyStateIterationsUsed() > 1` — a result reported after one sweep
+> still carries the densities the sections were initialised with and understates
+> the pressure drop of a gas line by roughly ten per cent. Around 160 sections
+> (≈450 m) is the sweet spot on a long transmission line: it converges reliably
+> and lands within 1% of OLGA on both pressure drop and arrival temperature.
+> Raise `setSteadyStateMaxWallClockTime(...)` before blaming the model if
+> `isSteadyStateWallClockLimited()` is true.
+
+> **DO NOT use `PipeBeggsAndBrills.runTransient` for pipeline dynamics.** It is an
+> advection-relaxation transport lag, not a conservation-law solver, and the
+> Beggs & Brill correlation is not even used on that path (friction reverts to
+> single-phase Darcy-Weisbach, viscosity is frozen at the inlet). Two measured
+> failures on a 74 km gas line: with the boundary conditions held **exactly
+> constant** it leaves its own steady state, swinging +30 bar and settling
+> +7.95 bar off; and on a rate step the outlet mass flow equals the inlet at every
+> timestep, so `∫(ṁ_in − ṁ_out)dt = 0` while the inventory implied by its own
+> profile moves 171 t — about 192 t of gas appears from nowhere. Note also that
+> `calculateSteadyState` defaults to **true**, so without
+> `setCalculateSteadyState(false)` `runTransient` is only a steady-state solve with
+> the clock advanced. Use it for transport delay in a flowsheet; use `TwoFluidPipe`
+> for line pack, shut-in, ramps and blowdown (0.00 bar drift on the same null test,
+> mass balance closing to the digit, and within 0.13% of OLGA on a line-pack step),
+> and `WaterHammerPipe` for surge.
+
 ### Gray (1974) Correlation — Gas / Gas-Condensate Vertical Wells
 
 `PipeGray` implements the Gray (1974) correlation, the industry standard for

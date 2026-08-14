@@ -34,6 +34,16 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <td>Liquid velocity number divided by an extra 32.2</td>
  * <td>Gravity was counted twice because the 1.938 prefactor already absorbs it</td>
  * </tr>
+ * <tr>
+ * <td>Baker-Swerdloff surface tension left unbounded</td>
+ * <td>The pressure correction crosses zero at 3971 psi, so above 274 bara the liquid velocity number became NaN and the
+ * inclination correction was silently dropped</td>
+ * </tr>
+ * <tr>
+ * <td>Transition regime had no inclination correction</td>
+ * <td>Only the segregated, intermittent and distributed branches set the inclination coefficient, so a leg falling in
+ * the transition band reported the horizontal holdup</td>
+ * </tr>
  * </table>
  *
  * @author NeqSim
@@ -163,5 +173,63 @@ class PipeBeggsAndBrillsCorrelationTest {
     double froude = Math.pow(pipe.getSegmentMixtureSuperficialVelocity(1) * 3.2808399, 2) / (32.174 * diameterFeet);
     double expected = 0.98 * Math.pow(lambda, 0.4846) / Math.pow(froude, 0.0868);
     Assertions.assertEquals(expected, pipe.getSegmentLiquidHoldup(1), HOLDUP_TOLERANCE);
+  }
+
+  /**
+   * Runs a high-pressure reference segment: 50000 kg/hr of methane/n-decane at 40 C through a 0.25 m line.
+   *
+   * @param pressureBara pressure in bara, must be positive
+   * @param moleFractionC10 n-decane mole fraction, between 0 and 1
+   * @param angleDegrees pipe inclination in degrees, positive upwards
+   * @return the liquid holdup reported for the single segment
+   */
+  private double highPressureHoldup(double pressureBara, double moleFractionC10, double angleDegrees) {
+    return runSingleSegment(buildStream(pressureBara, 40.0, moleFractionC10, 50000.0), 0.25, angleDegrees)
+        .getSegmentLiquidHoldup(1);
+  }
+
+  @Test
+  @DisplayName("Inclination correction survives above the Baker-Swerdloff pressure limit")
+  void testSurfaceTensionFloorKeepsInclinationCorrection() {
+    // The Baker-Swerdloff pressure correction 1 - 0.024 * P^0.45 crosses zero at
+    // 3971 psi = 274 bara. With no floor the surface tension turns negative, the
+    // Duns and Ros liquid velocity number becomes NaN, every "logArg > 0" test then
+    // fails and the inclination coefficient stays zero. The uphill-to-horizontal
+    // holdup ratio below used to fall from 2.95 at 274 bara to exactly 1.0 at
+    // 276 bara, i.e. an uphill leg reported the horizontal holdup.
+    double ratioBelow = highPressureHoldup(274.0, 0.02, 5.0) / highPressureHoldup(274.0, 0.02, 0.0);
+    double ratioAbove = highPressureHoldup(300.0, 0.02, 5.0) / highPressureHoldup(300.0, 0.02, 0.0);
+
+    Assertions.assertTrue(ratioAbove > 2.0,
+        "inclination correction lost above 274 bara, uphill/horizontal holdup ratio was " + ratioAbove);
+    Assertions.assertEquals(ratioBelow, ratioAbove, 0.1,
+        "the inclination correction must not step across the surface tension zero crossing");
+  }
+
+  @Test
+  @DisplayName("Liquid holdup is continuous across the surface tension zero crossing")
+  void testHoldupContinuousAcrossSurfaceTensionZeroCrossing() {
+    // Two bar apart, on either side of the 274 bara crossing. Before the floor was
+    // applied these were 0.524 and 0.175, a factor of three for a 2 bar change.
+    double below = highPressureHoldup(274.0, 0.02, 5.0);
+    double above = highPressureHoldup(276.0, 0.02, 5.0);
+    Assertions.assertEquals(below, above, 0.02,
+        "holdup stepped from " + below + " to " + above + " over a 2 bar pressure change");
+  }
+
+  @Test
+  @DisplayName("Transition regime applies the inclination correction")
+  void testTransitionRegimeAppliesInclinationCorrection() {
+    // 5 mol% n-decane at 300 bara puts the segment in the transition band, which
+    // interpolates between the segregated and intermittent correlations. The
+    // correction used to be applied only to the three named regimes, so the
+    // transition band reported the horizontal holdup and the correction jumped
+    // between 1 and about 1.8 at both transition boundaries.
+    PipeBeggsAndBrills uphill = runSingleSegment(buildStream(300.0, 40.0, 0.05, 50000.0), 0.25, 5.0);
+    Assertions.assertEquals(PipeBeggsAndBrills.FlowRegime.TRANSITION, uphill.getSegmentFlowRegime(1));
+
+    double ratio = uphill.getSegmentLiquidHoldup(1) / highPressureHoldup(300.0, 0.05, 0.0);
+    Assertions.assertEquals(1.784, ratio, 0.05,
+        "transition regime inclination correction, uphill/horizontal holdup ratio was " + ratio);
   }
 }
