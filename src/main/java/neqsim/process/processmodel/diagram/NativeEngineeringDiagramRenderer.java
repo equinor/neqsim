@@ -588,8 +588,7 @@ public final class NativeEngineeringDiagramRenderer {
 
   private static boolean objectInside(Point point, double width, double contentBottom) {
     return point.x - OBJECT_WIDTH / 2.0 >= 8.0 && point.x + OBJECT_WIDTH / 2.0 <= width - 8.0
-        && point.y - OBJECT_HEIGHT / 2.0 >= CONTENT_TOP
-        && point.y + OBJECT_HEIGHT / 2.0 <= contentBottom;
+        && point.y - OBJECT_HEIGHT / 2.0 >= CONTENT_TOP && point.y + OBJECT_HEIGHT / 2.0 <= contentBottom;
   }
 
   private static boolean overlaps(Point left, Point right) {
