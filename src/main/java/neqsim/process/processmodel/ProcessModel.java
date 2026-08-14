@@ -3106,8 +3106,8 @@ public class ProcessModel implements Runnable, Serializable {
         : Math.min(current.size(), lastBoundaryStreamErrors.size());
     List<BoundaryStreamError> streamErrors = new ArrayList<>(expectedStreamErrors);
     Map<Object, BoundaryStreamError> priorStreamErrors = boundaryStreamErrorCache;
-    Map<Object, BoundaryStreamError> nextStreamErrors =
-        current.isEmpty() ? null : new IdentityHashMap<>(current.size());
+    Map<Object, BoundaryStreamError> nextStreamErrors = current.isEmpty() ? null
+        : new IdentityHashMap<>(current.size());
 
     for (Object key : current.keySet()) {
       if (previous.containsKey(key)) {
@@ -3149,8 +3149,8 @@ public class ProcessModel implements Runnable, Serializable {
         BoundaryStreamError streamError = priorStreamErrors == null ? null : priorStreamErrors.get(key);
         if (!matchesBoundaryStreamError(streamError, streamName, producerLabel, flowErr, tempErr, pressErr, prev[0],
             curr[0])) {
-          streamError = new BoundaryStreamError(streamName, producerLabel, flowErr, tempErr, pressErr,
-              prev[0], curr[0]);
+          streamError = new BoundaryStreamError(streamName, producerLabel, flowErr, tempErr, pressErr, prev[0],
+              curr[0]);
         }
         streamErrors.add(streamError);
         nextStreamErrors.put(key, streamError);
