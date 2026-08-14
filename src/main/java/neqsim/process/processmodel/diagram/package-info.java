@@ -99,4 +99,3 @@
  * @see neqsim.process.processmodel.diagram.DexpiDiagramBridge
  */
 package neqsim.process.processmodel.diagram;
-
