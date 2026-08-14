@@ -35,6 +35,11 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Stream.class);
+  /**
+   * Tolerance used when testing whether a cricondenpoint merely echoes the source fluid state. Applied in Kelvin to the
+   * temperature and in bara to the pressure.
+   */
+  private static final double CRICONDEN_ECHO_TOLERANCE = 1.0e-6;
 
   protected SystemInterface thermoSystem;
 
@@ -589,46 +594,90 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     // ops.getJfreeChart();
   }
 
+  /**
+   * Compute a cricondenpoint of the stream fluid from its PT phase envelope.
+   *
+   * <p>
+   * The envelope is traced with the two-argument {@code calcPTphaseEnvelope(true, 1.0)} overload because the
+   * no-argument overload fails to trace some fluids - notably lean export gases that carry heavy pseudo-components at
+   * (near) zero moles.
+   * </p>
+   *
+   * <p>
+   * When the trace fails, {@code PTphaseEnvelope} falls back to reporting the source fluid's own temperature and
+   * pressure. That fallback is indistinguishable from a real result to the caller, so it is detected here and reported
+   * as unresolved rather than returned as a value. A genuine cricondenpoint that coincides with the stream temperature
+   * <em>and</em> the stream pressure to within {@value #CRICONDEN_ECHO_TOLERANCE} is treated as unresolved as well; a
+   * stream sitting exactly on its own cricondenpoint is not distinguishable from the fallback and is vanishingly rare
+   * in practice.
+   * </p>
+   *
+   * @param pointName envelope point to read, either {@code "cricondentherm"} or {@code "cricondenbar"}
+   * @return a two-element array holding the temperature in Kelvin at index 0 and the pressure in bara at index 1, or
+   * {@code null} when the point could not be resolved
+   */
+  private double[] calcCricondenPoint(String pointName) {
+    SystemInterface localSyst = getFluid().clone();
+    // Captured before the trace runs, because tracing mutates the cloned system's state.
+    double sourceTemperatureK = localSyst.getTemperature();
+    double sourcePressureBara = localSyst.getPressure();
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
+    ops.setRunAsThread(true);
+    ops.calcPTphaseEnvelope(true, 1.0);
+    ops.waitAndCheckForFinishedCalculation(10000);
+
+    double[] point = ops.get(pointName);
+    if (point == null || point.length < 2 || !Double.isFinite(point[0]) || !Double.isFinite(point[1])) {
+      logger.error("{}: phase envelope did not resolve {} for stream {}", getClass().getSimpleName(), pointName,
+          getName());
+      return null;
+    }
+
+    boolean echoesSourceState = Math.abs(point[0] - sourceTemperatureK) <= CRICONDEN_ECHO_TOLERANCE
+        && Math.abs(point[1] - sourcePressureBara) <= CRICONDEN_ECHO_TOLERANCE;
+    if (echoesSourceState) {
+      logger.error(
+          "{}: phase envelope failed to trace for stream {}; {} returned the stream's own state "
+              + "({} K, {} bara) and is reported as unresolved",
+          getClass().getSimpleName(), getName(), pointName, sourceTemperatureK, sourcePressureBara);
+      return null;
+    }
+    return point;
+  }
+
+  /**
+   * Convert a cricondenpoint to the requested unit.
+   *
+   * @param point envelope point as returned by {@link #calcCricondenPoint(String)}, holding the temperature in Kelvin
+   * at index 0 and the pressure in bara at index 1, or {@code null} when unresolved
+   * @param unit {@code "bara"} or {@code "bar"} for the pressure in bara, {@code "C"} for the temperature in degrees
+   * Celsius, anything else for the temperature in Kelvin
+   * @return the requested value, or {@link Double#NaN} when {@code point} is {@code null}
+   */
+  private double convertCricondenPoint(double[] point, String unit) {
+    if (point == null) {
+      return Double.NaN;
+    }
+    if (unit.equals("bara") || unit.equals("bar")) {
+      return point[1];
+    }
+    if (unit.equals("C")) {
+      return point[0] - 273.15;
+    }
+    return point[0];
+  }
+
   /** {@inheritDoc} */
   @Override
   public double CCB(String unit) {
-    SystemInterface localSyst = getFluid().clone();
-    ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
-    ops.setRunAsThread(true);
-    ops.calcPTphaseEnvelope();
-    ops.waitAndCheckForFinishedCalculation(10000);
-    if (unit.equals("bara") || unit.equals("bar")) {
-      return ops.get("cricondenbar")[1];
-    } else {
-      if (unit.equals("C")) {
-        return ops.get("cricondenbar")[0] - 273.15;
-      } else {
-        return ops.get("cricondenbar")[0];
-      }
-    }
-    // return ops.get
-    // ops.getJfreeChart();
+    return convertCricondenPoint(calcCricondenPoint("cricondenbar"), unit);
   }
 
   /** {@inheritDoc} */
   @Override
   public double CCT(String unit) {
-    SystemInterface localSyst = getFluid().clone();
-    ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
-    ops.setRunAsThread(true);
-    ops.calcPTphaseEnvelope();
-    ops.waitAndCheckForFinishedCalculation(10000);
-    if (unit.equals("bara") || unit.equals("bar")) {
-      return ops.get("cricondentherm")[1];
-    } else {
-      if (unit.equals("C")) {
-        return ops.get("cricondentherm")[0] - 273.15;
-      } else {
-        return ops.get("cricondentherm")[0];
-      }
-    }
-    // return ops.get
-    // ops.getJfreeChart();
+    return convertCricondenPoint(calcCricondenPoint("cricondentherm"), unit);
   }
 
   /** {@inheritDoc} */
