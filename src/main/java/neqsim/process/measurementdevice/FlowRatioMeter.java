@@ -135,6 +135,7 @@ public class FlowRatioMeter extends MeasurementDeviceBaseClass
   public void displayResult() {
     System.out.println(getName() + " [" + flowBasis + "] ratio = " + getMeasuredValue(""));
   }
+
   /** {@inheritDoc} */
   @Override
   public String getTransientStateIdentity() {
@@ -191,8 +192,7 @@ public class FlowRatioMeter extends MeasurementDeviceBaseClass
     private final MeasurementDeviceTransientState measurementState;
 
     private FlowRatioMeterState(String stateIdentity, StreamInterface numeratorStream,
-        StreamInterface denominatorStream, FlowBasis flowBasis,
-        MeasurementDeviceTransientState measurementState) {
+        StreamInterface denominatorStream, FlowBasis flowBasis, MeasurementDeviceTransientState measurementState) {
       this.stateIdentity = stateIdentity;
       this.numeratorStream = numeratorStream;
       this.denominatorStream = denominatorStream;
