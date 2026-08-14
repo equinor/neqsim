@@ -6,10 +6,11 @@ This module provides a pure physical rate laws engine integrated DIRECTLY with t
 for exact thermodynamic fluid density and fugacity coefficient calculations.
 
 Features:
+- Guaranteed non-negative zero-floor clipping (max(0.0, val)) eliminating -0.00 formatting artifacts
+- Built-in 1-hour resolution table generator via get_table_results(resolution_hours=1.0)
 - Super-Visible 3-Panel Plotting Engine with Shaded Crimson Red Fill & Giant Annotation Box for H2SO4 Acid Peak
 - Reaction R3b (SO2 + H2S + NO2 -> H2SO4 + ...) directly triggered when H2S and NO2 are together!
 - Slower Reaction R4 Kinetics (2 NO + O2 -> 2 NO2) allowing NO gas persistence up to ~9.23 ppm and O2 coexistence
-- Continuous H2SO4 (Sulfuric Acid) & NH3 (Ammonia) Formation across all stepwise and multi-phase experiments
 - Direct NeqSim Java SRK EOS thermodynamic calculations for all impurity species fugacities
 """
 
@@ -191,7 +192,7 @@ class CO2ImpurityKineticsModel:
 
         return "\n".join(report_lines)
 
-    def get_table_results(self, sim_results, resolution_hours=2.0):
+    def get_table_results(self, sim_results, resolution_hours=1.0):
         t_h = sim_results['time_hours']
         max_h = t_h[-1]
         target_hours = np.arange(0.0, max_h + resolution_hours/2.0, resolution_hours)
@@ -201,16 +202,16 @@ class CO2ImpurityKineticsModel:
             idx = np.argmin(np.abs(t_h - target))
             row = {
                 'Time (h)': round(float(t_h[idx]), 1),
-                'H2S (ppm)': round(float(sim_results['ppm']['H2S'][idx]), 2),
-                'SO2 (ppm)': round(float(sim_results['ppm']['SO2'][idx]), 2),
-                'NO2 (ppm)': round(float(sim_results['ppm']['NO2'][idx]), 2),
-                'NO (ppm)': round(float(sim_results['ppm']['NO'][idx]), 4),
-                'O2 (ppm)': round(float(sim_results['ppm']['O2'][idx]), 2),
-                'H2O (ppm)': round(float(sim_results['ppm']['H2O'][idx]), 2),
-                'H2SO4 (ppm)': round(float(sim_results['ppm']['H2SO4'][idx]), 4),
-                'HNO3 (ppm)': round(float(sim_results['ppm']['HNO3'][idx]), 4),
-                'NH3 (ppm)': round(float(sim_results['ppm']['NH3'][idx]), 4),
-                'S8 (ppm)': round(float(sim_results['ppm']['S8'][idx]), 4),
+                'H2S (ppm)': round(max(0.0, float(sim_results['ppm']['H2S'][idx])), 2),
+                'SO2 (ppm)': round(max(0.0, float(sim_results['ppm']['SO2'][idx])), 2),
+                'NO2 (ppm)': round(max(0.0, float(sim_results['ppm']['NO2'][idx])), 2),
+                'NO (ppm)': round(max(0.0, float(sim_results['ppm']['NO'][idx])), 4),
+                'O2 (ppm)': round(max(0.0, float(sim_results['ppm']['O2'][idx])), 2),
+                'H2O (ppm)': round(max(0.0, float(sim_results['ppm']['H2O'][idx])), 2),
+                'H2SO4 (ppm)': round(max(0.0, float(sim_results['ppm']['H2SO4'][idx])), 4),
+                'HNO3 (ppm)': round(max(0.0, float(sim_results['ppm']['HNO3'][idx])), 4),
+                'NH3 (ppm)': round(max(0.0, float(sim_results['ppm']['NH3'][idx])), 4),
+                'S8 (ppm)': round(max(0.0, float(sim_results['ppm']['S8'][idx])), 4),
             }
             rows.append(row)
 
@@ -369,16 +370,16 @@ class CO2ImpurityKineticsModel:
         C_raw = np.clip(C, MIN_CONCENTRATION_FLOOR, 1e5 * self.molar_density)
         
         phi = self.phi_dict
-        C_H2S   = C_raw[0] * phi['H2S']
-        C_SO2   = C_raw[1] * phi['SO2']
-        C_NO2   = C_raw[2] * phi['NO2']
-        C_NO    = C_raw[3] * phi['NO']
-        C_O2    = C_raw[4] * phi['O2']
-        C_H2O   = C_raw[5] * phi['H2O']
-        C_H2SO4 = C_raw[6] * phi['H2SO4']
-        C_HNO3  = C_raw[7] * phi['HNO3']
-        C_S8    = C_raw[8] * phi['S8']
-        C_NH3   = C_raw[9] * phi['NH3']
+        C_H2S   = max(0.0, C_raw[0] * phi['H2S'])
+        C_SO2   = max(0.0, C_raw[1] * phi['SO2'])
+        C_NO2   = max(0.0, C_raw[2] * phi['NO2'])
+        C_NO    = max(0.0, C_raw[3] * phi['NO'])
+        C_O2    = max(0.0, C_raw[4] * phi['O2'])
+        C_H2O   = max(0.0, C_raw[5] * phi['H2O'])
+        C_H2SO4 = max(0.0, C_raw[6] * phi['H2SO4'])
+        C_HNO3  = max(0.0, C_raw[7] * phi['HNO3'])
+        C_S8    = max(0.0, C_raw[8] * phi['S8'])
+        C_NH3   = max(0.0, C_raw[9] * phi['NH3'])
 
         k1_f, k1_r   = rates_dict['k1_f'], rates_dict['k1_r']
         k2_f, k2_r   = rates_dict['k2_f'], rates_dict['k2_r']
@@ -455,7 +456,8 @@ class CO2ImpurityKineticsModel:
 
         ppm_results = {}
         for idx, spec in enumerate(self.SPECIES):
-            ppm_results[spec] = (sol.y[idx, :] / self.molar_density) * 1.0e6
+            raw_ppm = (sol.y[idx, :] / self.molar_density) * 1.0e6
+            ppm_results[spec] = np.maximum(0.0, raw_ppm)
 
         return {
             'time_seconds': sol.t,
@@ -625,7 +627,7 @@ class CO2ImpurityReactorExperiment:
 
         return self.simulation_results
 
-    def get_table_results(self, resolution_hours=2.0):
+    def get_table_results(self, resolution_hours=1.0):
         if self.simulation_results is None:
             self.run_experiment()
 
@@ -638,10 +640,6 @@ class CO2ImpurityReactorExperiment:
         t_h = self.simulation_results['time_hours']
         ppm = self.simulation_results['ppm']
 
-        # Enhanced 3-Panel Plotting Engine for Maximum Visual Clarity:
-        # Panel 1: Main Feed Reactants (H2S, SO2, NO2, O2, H2O)
-        # Panel 2: Sulfuric Acid (H2SO4) Highlighted with Shaded Fill & Annotation Box
-        # Panel 3: Nitrogen & Ammonia Reaction Products (NO, NH3, S8, HNO3)
         fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(11, 10), sharex=True)
 
         ax1.plot(t_h, ppm['H2S'], label='H2S', linewidth=2.0, color='#e74c3c')
@@ -654,12 +652,11 @@ class CO2ImpurityReactorExperiment:
         ax1.grid(True, linestyle='--', alpha=0.6)
         ax1.legend(loc='upper right', frameon=True)
 
-        # PANEL 2: EXTREMELY PROMINENT H2SO4 ACID HIGHLIGHT PANEL WITH SHADED FILL
         ax2.plot(t_h, ppm['H2SO4'], label='H2SO4 Sulfuric Acid (Formed)', linewidth=4.0, color='#FF0033', marker='o', markevery=40)
         ax2.fill_between(t_h, ppm['H2SO4'], color='#FF0033', alpha=0.3, label='H2SO4 Shaded Acid Accumulation')
         ax2.set_ylabel('H2SO4 Acid (ppm)', fontsize=11, fontweight='bold')
         max_h2so4 = np.max(ppm['H2SO4'])
-        ax2.set_ylim(-0.2, max(max_h2so4 * 1.35, 2.0))
+        ax2.set_ylim(0.0, max(max_h2so4 * 1.35, 2.0))
         ax2.grid(True, linestyle='--', alpha=0.6)
         ax2.legend(loc='upper left', frameon=True)
 
@@ -677,7 +674,6 @@ class CO2ImpurityReactorExperiment:
                 bbox=dict(boxstyle="round,pad=0.3", fc="#FFE6E6", ec="#FF0033", lw=1.5)
             )
 
-        # PANEL 3: NO GAS & NH3 AMMONIA PRODUCTS PANEL
         ax3.plot(t_h, ppm['NO'],    label='NO Gas',      linewidth=2.5, color='#8e44ad')
         ax3.plot(t_h, ppm['NH3'],   label='NH3 Ammonia', linewidth=2.5, color='#16a085')
         ax3.plot(t_h, ppm['S8'],    label='S8 Elemental Sulfur', linewidth=2.0, color='#f1c40f')
