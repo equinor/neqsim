@@ -160,8 +160,7 @@ class NativeEngineeringDiagramRendererTest {
         "10-XV-001");
     ProtectedRoute obstructedRoute = new ProtectedRoute(feedConnection.getId(), sheetKey,
         Arrays.asList(new Waypoint(20.0, 60.0), new Waypoint(140.0, 60.0)), CoordinateUnit.MILLIMETRE,
-        "project-layout:PFD-NATIVE-007", EvidenceState.REVIEWED, "Process discipline", "2026-08-15T00:00:00Z",
-        "A");
+        "project-layout:PFD-NATIVE-007", EvidenceState.REVIEWED, "Process discipline", "2026-08-15T00:00:00Z", "A");
     EngineeringDiagramLayoutRegister layout = new EngineeringDiagramLayoutRegister()
         .withPinnedPosition(reviewedPosition(separator.getId(), sheetKey, 80.0, 60.0))
         .withProtectedRoute(obstructedRoute);
@@ -264,4 +263,3 @@ class NativeEngineeringDiagramRendererTest {
     return signatures;
   }
 }
-
