@@ -140,8 +140,7 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
           .append(system.getPhase(phaseIndex).getComponent(componentIndex).getNumberOfMolesInPhase()).append("]");
     }
     if (system.getNumberOfPhases() > 0) {
-      inventory.append(", componentTotal=")
-          .append(system.getPhase(0).getComponent(componentIndex).getNumberOfmoles());
+      inventory.append(", componentTotal=").append(system.getPhase(0).getComponent(componentIndex).getNumberOfmoles());
     }
     return inventory.append("}").toString();
   }
