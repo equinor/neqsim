@@ -81,8 +81,7 @@ public class MolarMassAnalyser extends StreamMeasurementDeviceBaseClass
   /** {@inheritDoc} */
   @Override
   public MolarMassAnalyserState captureTransientState() {
-    return new MolarMassAnalyserState(getTransientStateIdentity(), stream,
-        captureMeasurementDeviceTransientState());
+    return new MolarMassAnalyserState(getTransientStateIdentity(), stream, captureMeasurementDeviceTransientState());
   }
 
   /** {@inheritDoc} */
