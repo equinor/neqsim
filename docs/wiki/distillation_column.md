@@ -255,10 +255,17 @@ targets manipulated through condenser or reboiler temperature.
 - Solves a simultaneous block of MESH residual equations with liquid component flows, tray
   temperature, and vapor flow as tray variables.
 - Builds a finite-difference block-tridiagonal Jacobian from neighboring tray couplings and uses a
-  guarded Newton line search with flow and temperature trust limits.
+  guarded Newton line search with flow and temperature trust limits. Before each build, up to three
+  full-column thermodynamic passes retain the lowest finite MESH-residual state and stop early when
+  consecutive residual vectors agree within one tenth of the outer tolerance. Every perturbed
+  column then starts from that same frozen K-value, vapor-flow, and enthalpy state; exact restoration
+  prevents finite-difference column order from silently refining the base residual.
 - Leaves the accepted line-search trial applied and reuses its evaluated MESH residual. The solver
   does not restore the old tray state and repeat the same thermodynamic evaluation merely to apply
   a step that the line search has already accepted.
+- Package-level solver diagnostics record Jacobian base-refinement passes and the residual-vector
+  mutation measured after each completed build. The mutation is expected to be bitwise zero; these
+  counters support deterministic regression and do not change the public column API.
 - Work diagnostics classify every currently assembled derivative column as finite-difference;
   `getLastNaphtaliAnalyticJacobianColumns()` remains available for compatibility and reports zero
   until a mixed analytic/numerical assembly is implemented.
