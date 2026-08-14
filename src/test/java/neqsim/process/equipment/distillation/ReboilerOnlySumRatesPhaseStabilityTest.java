@@ -111,11 +111,38 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
     double[] gasProductMoles = componentMoles(testCase.column.getGasOutStream());
     double[] liquidProductMoles = componentMoles(testCase.column.getLiquidOutStream());
     for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
+      final int diagnosticComponentIndex = componentIndex;
       double feedMoles = gasFeedMoles[componentIndex] + solventFeedMoles[componentIndex];
       double productMoles = gasProductMoles[componentIndex] + liquidProductMoles[componentIndex];
       assertEquals(feedMoles, productMoles, Math.max(1.0e-12, feedMoles * 1.0e-9),
-          COMPONENTS[componentIndex] + " must close across the column");
+          () -> COMPONENTS[diagnosticComponentIndex] + " must close across the column; "
+              + componentClosureDiagnostics(testCase, diagnosticComponentIndex));
     }
+  }
+
+  private static String componentClosureDiagnostics(ColumnCase testCase, int componentIndex) {
+    DistillationColumn column = testCase.column;
+    return "solver=" + column.getLastSolverTypeUsed() + ", status=" + column.getLastSolveStatus() + ", reason="
+        + column.getLastSolveStatusReason() + ", gasFeed=" + componentInventory(testCase.gasFeed, componentIndex)
+        + ", solventFeed=" + componentInventory(testCase.solventFeed, componentIndex) + ", gasProduct="
+        + componentInventory(column.getGasOutStream(), componentIndex) + ", liquidProduct="
+        + componentInventory(column.getLiquidOutStream(), componentIndex);
+  }
+
+  private static String componentInventory(StreamInterface stream, int componentIndex) {
+    SystemInterface system = stream.getThermoSystem();
+    StringBuilder inventory = new StringBuilder();
+    inventory.append(stream.getName()).append("{total=").append(system.getTotalNumberOfMoles()).append(", phases=")
+        .append(system.getNumberOfPhases());
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      inventory.append(", ").append(system.getPhase(phaseIndex).getPhaseTypeName()).append("[beta=")
+          .append(system.getBeta(phaseIndex)).append(", componentInPhase=")
+          .append(system.getPhase(phaseIndex).getComponent(componentIndex).getNumberOfMolesInPhase()).append("]");
+    }
+    if (system.getNumberOfPhases() > 0) {
+      inventory.append(", componentTotal=").append(system.getPhase(0).getComponent(componentIndex).getNumberOfmoles());
+    }
+    return inventory.append("}").toString();
   }
 
   private static void assertPhysicalProduct(StreamInterface product, String label) {

@@ -255,10 +255,28 @@ targets manipulated through condenser or reboiler temperature.
 - Solves a simultaneous block of MESH residual equations with liquid component flows, tray
   temperature, and vapor flow as tray variables.
 - Builds a finite-difference block-tridiagonal Jacobian from neighboring tray couplings and uses a
-  guarded Newton line search with flow and temperature trust limits.
-- Leaves the accepted line-search trial applied and reuses its evaluated MESH residual. The solver
-  does not restore the old tray state and repeat the same thermodynamic evaluation merely to apply
-  a step that the line search has already accepted.
+  guarded Newton line search with flow and temperature trust limits. Before each build, up to one
+  full-column thermodynamic pass per local finite-difference variable refreshes the base. This
+  matches the restore-evaluation budget that the frozen base replaces. The latest finite state
+  among those passes is retained so the base owns the most thermodynamically consistent K-value
+  fixed point, while the incoming derived state is only a non-finite fallback. Refinement stops
+  early when consecutive residual vectors agree within one tenth of the outer tolerance. Every
+  perturbed column then starts from that same frozen K-value, vapor-flow, and enthalpy state.
+  Exact restoration prevents finite-difference column order from silently refining the base
+  residual.
+- Starts every backtracking line-search trial from the same primary and derived thermodynamic base,
+  so a rejected larger step cannot change the K-value seed of the next trial. The accepted trial
+  remains applied and its evaluated MESH residual is reused; the solver does not repeat the same
+  thermodynamic evaluation merely to apply a step that the line search has already accepted.
+- Retries a rejected retained-state solve from the normal cold initializer before materializing the
+  rejected tray profile. This keeps the live column and its product caches unchanged until a cold
+  recovery attempt has either been accepted or exhausted.
+- Restores the intended single gas or liquid phase after composition initialization when applying
+  no-side-draw products. This prevents initialization from re-expanding both phase slots with the
+  same accepted component inventory.
+- Package-level solver diagnostics record Jacobian base-refinement passes and the residual-vector
+  mutation measured after each completed build. The mutation is expected to be bitwise zero; these
+  counters support deterministic regression and do not change the public column API.
 - Work diagnostics classify every currently assembled derivative column as finite-difference;
   `getLastNaphtaliAnalyticJacobianColumns()` remains available for compatibility and reports zero
   until a mixed analytic/numerical assembly is implemented.

@@ -461,9 +461,10 @@ final class ColumnSolverFactory {
       boolean exactReuseExpected = !isAutoCandidateProbeMode() && column.willReuseNaphtaliSandholmWarmState();
       DistillationColumn warmStartCandidate = isAutoCandidateProbeMode() || exactReuseExpected ? null
           : createDampedFallbackCandidate(column);
-      DistillationColumn fallbackCandidate = shouldPrepareAcceleratedFallback() && !exactReuseExpected
-          ? createDampedFallbackCandidate(column)
-          : null;
+      // The same untouched copy guards both validation and coordinated fallback. A rejected
+      // simultaneous solve may have mutated live trays and product caches, so starting damped
+      // substitution from the live column can duplicate retained feed inventory.
+      DistillationColumn fallbackCandidate = warmStartCandidate;
       boolean accepted = false;
       boolean fallbackApplied = false;
       try {

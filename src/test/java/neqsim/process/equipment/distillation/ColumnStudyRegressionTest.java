@@ -125,7 +125,9 @@ public class ColumnStudyRegressionTest {
     assertTrue(column.solved(), "Column-study case should converge with Naphtali-Sandholm");
     assertEquals(DistillationColumn.SolveStatus.RECONCILED_PRODUCTS, column.getLastSolveStatus(),
         "a no-side-draw direct result should preserve the established reconciled-product status");
-    assertEquals(17, column.getLastIterationCount(), "Newton iteration count guards against premature SR acceptance");
+    assertEquals(DistillationColumn.SolverType.NAPHTALI_SANDHOLM, column.getLastSolverTypeUsed(),
+        "the nominal case must be accepted by the simultaneous solver rather than a premature SR fallback");
+    assertTrue(column.getLastIterationCount() > 0, "the nominal rigorous solve should exercise Newton refinement");
     assertTrayTemperatureProfile(column);
     assertTrayPressureProfile(column);
     assertOverallMassBalance(feedStream, topFeedStream, column);
@@ -143,7 +145,7 @@ public class ColumnStudyRegressionTest {
    * </p>
    */
   @Test
-  public void severeWarmStartPerturbationConvergesWithRefinedKValues() {
+  public void severeWarmStartPerturbationConvergesWithRefinedKValues(TestReporter testReporter) {
     SystemInterface baseFluid = createBaseFluid();
     StreamInterface feedStream = createStream("stall_guard_main_feed", baseFluid, MAIN_FEED_COMPOSITION,
         MAIN_FEED_TEMPERATURE_C, MAIN_FEED_PRESSURE_BARA, MAIN_FEED_MASS_FLOW_KG_HR);
@@ -164,7 +166,12 @@ public class ColumnStudyRegressionTest {
     solver.setMaxIterations(80);
     boolean accepted = solver.solve(new UUID(0L, 1L));
 
-    assertTrue(accepted, "the severely perturbed retained state should recover without coordinated fallback");
+    assertTrue(accepted,
+        () -> "the severely perturbed retained state should recover without coordinated fallback: iterations="
+            + solver.getLastIterations() + ", residual=" + solver.getLastResidualNorm() + ", mass balance="
+            + solver.getLastMassBalanceError() + ", base refinements=" + solver.getLastJacobianBaseRefinementCount()
+            + ", thermo evaluations=" + solver.getLastThermoEvaluationCount() + ", K sweeps="
+            + solver.getLastThermoKValueIterationCount());
     assertTrue(solver.getLastIterations() <= 45,
         "the recovered warm solve should remain well below the 80-iteration cap");
     assertTrue(solver.getLastMassBalanceError() < 1.0e-8, "the recovered state should close total molar balance");
@@ -173,6 +180,16 @@ public class ColumnStudyRegressionTest {
         "the recovered warm solve should keep thermodynamic evaluations bounded");
     assertTrue(solver.getLastThermoKValueIterationCount() < 70000,
         "the recovered warm solve should keep forced-root fugacity sweeps bounded");
+    assertTrue(solver.getLastJacobianBaseRefinementCount() > 0,
+        "the difficult solve should exercise residual-aware Jacobian base refinement");
+    assertEquals(0.0, solver.getLastJacobianBaseResidualMutation(), 0.0,
+        "finite-difference assembly must leave the base MESH residual bitwise unchanged");
+    testReporter.publishEntry("severe_jacobian_base_refinements",
+        Integer.toString(solver.getLastJacobianBaseRefinementCount()));
+    testReporter.publishEntry("severe_jacobian_base_residual_mutation",
+        Double.toString(solver.getLastJacobianBaseResidualMutation()));
+    testReporter.publishEntry("severe_thermo_evaluations", Integer.toString(solver.getLastThermoEvaluationCount()));
+    testReporter.publishEntry("severe_k_sweeps", Integer.toString(solver.getLastThermoKValueIterationCount()));
     assertPhysicalProduct(column.getGasOutStream(), "recovered warm-start gas product");
     assertPhysicalProduct(column.getLiquidOutStream(), "recovered warm-start liquid product");
     assertOverallMassBalance(feedStream, topFeedStream, column);
