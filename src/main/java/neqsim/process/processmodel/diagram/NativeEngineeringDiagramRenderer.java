@@ -72,6 +72,8 @@ public final class NativeEngineeringDiagramRenderer {
 
   /** Renderer diagnostic severity. */
   public enum Severity {
+    /** Informational source-document evidence retained in the rendering report. */
+    INFO,
     /** Recoverable rendering limitation requiring review. */
     WARNING,
     /** Broken source or rendering state that prevents a complete view. */
@@ -187,6 +189,7 @@ public final class NativeEngineeringDiagramRenderer {
    */
   public Result render() {
     List<Diagnostic> diagnostics = new ArrayList<Diagnostic>();
+    addDocumentDiagnostics(diagnostics);
     Map<String, SemanticObject> objects = objectsById();
     List<Page> pages = new ArrayList<Page>();
     for (Drawing drawing : documentSet.getDrawings()) {
@@ -258,6 +261,7 @@ public final class NativeEngineeringDiagramRenderer {
         drawing.getContentProfile().name() + " / " + format.name(), "#374151", "sheet-format", "end"));
 
     Map<String, Point> positions = layoutPositions(sheet, objects, contentRight, contentBottom, diagnostics);
+    addDrawingQualityDiagnostics(sheet, objects, positions, page.width, contentBottom, diagnostics);
     Map<String, OffPageConnector> connectors = new TreeMap<String, OffPageConnector>();
     for (OffPageConnector connector : sheet.getOffPageConnectors()) {
       connectors.put(connector.getSemanticConnectionId(), connector);
@@ -276,7 +280,10 @@ public final class NativeEngineeringDiagramRenderer {
     Collections.sort(ids);
     for (String id : ids) {
       SemanticObject object = objects.get(id);
-      if (object != null && isConnection(object.getKind())) {
+      if (object == null) {
+        diagnostics.add(diagnostic(Severity.ERROR, "DIAGRAM_RENDER_BROKEN_OBJECT_REFERENCE",
+            "Controlled sheet references a semantic object that is absent from the document set", id));
+      } else if (isConnection(object.getKind())) {
         addConnection(page, object, positions, connectors.get(id), protectedRoutes.get(id), objects, contentRight,
             contentBottom, diagnostics);
       }
@@ -293,6 +300,51 @@ public final class NativeEngineeringDiagramRenderer {
     }
     addTitleBlock(page, drawing, sheet);
     return page;
+  }
+
+  private void addDocumentDiagnostics(List<Diagnostic> diagnostics) {
+    for (EngineeringDiagramDocumentSet.Diagnostic source : documentSet.getDiagnostics()) {
+      Severity severity = Severity.INFO;
+      if (source.getSeverity() == EngineeringDiagramDocumentSet.Severity.WARNING) {
+        severity = Severity.WARNING;
+      } else if (source.getSeverity() == EngineeringDiagramDocumentSet.Severity.ERROR) {
+        severity = Severity.ERROR;
+      }
+      diagnostics.add(diagnostic(severity, source.getCode(), source.getMessage(), source.getSubjectId()));
+    }
+  }
+
+  private void addDrawingQualityDiagnostics(Sheet sheet, Map<String, SemanticObject> objects,
+      Map<String, Point> positions, double pageWidth, double contentBottom, List<Diagnostic> diagnostics) {
+    List<String> drawableIds = new ArrayList<String>();
+    for (String id : sheet.getObjectNodeIds()) {
+      SemanticObject object = objects.get(id);
+      if (object != null && isDrawableNode(object.getKind()) && positions.containsKey(id)) {
+        drawableIds.add(id);
+      }
+    }
+    Collections.sort(drawableIds);
+    for (int index = 0; index < drawableIds.size(); index++) {
+      String id = drawableIds.get(index);
+      SemanticObject object = objects.get(id);
+      Point position = positions.get(id);
+      if (!objectInside(position, pageWidth, contentBottom)) {
+        diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_OBJECT_CLIPPED",
+            "Rendered object boundary intersects the sheet border, document header, or title-block area", id));
+      }
+      String label = displayLabel(object);
+      if (estimatedTextWidth(label, 2.8) > OBJECT_WIDTH - 4.0) {
+        diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_LABEL_OVERFLOW",
+            "Primary object label exceeds the available symbol width and requires drawing review", id));
+      }
+      for (int otherIndex = index + 1; otherIndex < drawableIds.size(); otherIndex++) {
+        String otherId = drawableIds.get(otherIndex);
+        if (overlaps(position, positions.get(otherId))) {
+          diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_OBJECT_COLLISION",
+              "Rendered object overlaps semantic object " + otherId, id));
+        }
+      }
+    }
   }
 
   private Map<String, Point> layoutPositions(Sheet sheet, Map<String, SemanticObject> objects, double contentRight,
@@ -532,6 +584,19 @@ public final class NativeEngineeringDiagramRenderer {
 
   private static boolean inside(double x, double y, double width, double contentBottom) {
     return x >= 8.0 && x <= width - 8.0 && y >= 8.0 && y <= contentBottom;
+  }
+
+  private static boolean objectInside(Point point, double width, double contentBottom) {
+    return point.x - OBJECT_WIDTH / 2.0 >= 8.0 && point.x + OBJECT_WIDTH / 2.0 <= width - 8.0
+        && point.y - OBJECT_HEIGHT / 2.0 >= CONTENT_TOP && point.y + OBJECT_HEIGHT / 2.0 <= contentBottom;
+  }
+
+  private static boolean overlaps(Point left, Point right) {
+    return Math.abs(left.x - right.x) < OBJECT_WIDTH && Math.abs(left.y - right.y) < OBJECT_HEIGHT;
+  }
+
+  private static double estimatedTextWidth(String value, double fontSize) {
+    return value.length() * fontSize * 0.52;
   }
 
   private static boolean insideAll(List<Waypoint> waypoints, double width, double contentBottom) {
