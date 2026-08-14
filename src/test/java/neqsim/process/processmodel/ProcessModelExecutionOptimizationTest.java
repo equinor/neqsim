@@ -2,6 +2,8 @@ package neqsim.process.processmodel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.UUID;
@@ -295,6 +297,57 @@ class ProcessModelExecutionOptimizationTest {
     assertEquals(1, upstream.getRuns(), "clean producer should not rerun");
     assertEquals(2, downstream.getRuns(), "changed boundary consumer should rerun");
     assertTrue(model.isModelConverged(), "changed boundary model should converge after downstream confirmation");
+  }
+
+  /**
+   * Verifies that immutable diagnostics are reused only while the exact boundary observation remains unchanged.
+   */
+  @Test
+  void boundaryDiagnosticsReuseExactObservationsAndInvalidateAfterChange() {
+    Stream feed = new Stream("feed", createGasFluid());
+    feed.setFlowRate(1000.0, "kg/hr");
+    Heater producer = new Heater("producer", feed);
+    producer.setOutTemperature(298.15);
+    StreamInterface boundary = producer.getOutletStream();
+    Separator consumer = new Separator("consumer", boundary);
+
+    BoundaryRecordingProcessSystem upstream = new BoundaryRecordingProcessSystem("upstream", boundary);
+    upstream.add(feed);
+    upstream.add(producer);
+    BoundaryRecordingProcessSystem downstream = new BoundaryRecordingProcessSystem("downstream", null);
+    downstream.add(consumer);
+
+    ProcessModel model = new ProcessModel();
+    model.setFlowTolerance(1.0e-8);
+    model.add("upstream", upstream);
+    model.add("downstream", downstream);
+    model.run();
+    ProcessModel.BoundaryStreamError initial = model.getLastBoundaryStreamErrors().get(0);
+
+    model.run();
+    ProcessModel.BoundaryStreamError unchanged = model.getLastBoundaryStreamErrors().get(0);
+    assertSame(initial, unchanged, "an exact immutable diagnostic should be reused");
+
+    upstream.updateBoundaryOnNextRun(1100.0);
+    model.run();
+    ProcessModel.BoundaryStreamError changed = model.getLastBoundaryStreamErrors().get(0);
+    assertNotSame(unchanged, changed, "a changed flow observation must invalidate the cached diagnostic");
+    assertEquals(1100.0, changed.getPreviousFlow(), 1.0e-9);
+    assertEquals(1100.0, changed.getCurrentFlow(), 1.0e-9);
+
+    model.run();
+    assertSame(changed, model.getLastBoundaryStreamErrors().get(0),
+        "the new exact observation should become reusable after convergence");
+
+    boundary.setName("renamed boundary");
+    model.run();
+    ProcessModel.BoundaryStreamError renamed = model.getLastBoundaryStreamErrors().get(0);
+    assertNotSame(changed, renamed, "a changed stream label must invalidate the cached diagnostic");
+    assertEquals("renamed boundary", renamed.getStreamName());
+
+    model.run();
+    assertSame(renamed, model.getLastBoundaryStreamErrors().get(0),
+        "the renamed exact observation should become reusable after convergence");
   }
 
   /**
