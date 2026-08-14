@@ -792,30 +792,64 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   }
 
   /**
-   * The base snapshot is complete only for this concrete implementation. A subclass must explicitly override the
-   * transaction contract after adding its own fields to a snapshot.
+   * The base snapshot is complete only when the concrete controller explicitly qualifies all subclass-owned state.
    *
    * @return blocking diagnostic for an unqualified subclass, otherwise {@code null}
    */
   @Override
   public String getTransientStateCoverageIssue() {
-    if (getClass() != ControllerDeviceBaseClass.class) {
+    if (!hasCompleteControllerTransientStateCoverage()) {
       return "controller subclass " + getClass().getName()
           + " must provide a snapshot that includes subclass-owned mutable state";
     }
     return null;
   }
 
+  /**
+   * Reports whether this concrete controller extends the base snapshot for all subclass-owned mutable state.
+   *
+   * <p>
+   * Subclasses remain fail-closed unless they override this method together with
+   * {@link #captureControllerSubclassTransientState()} and
+   * {@link #restoreControllerSubclassTransientState(Serializable)}.
+   * </p>
+   *
+   * @return {@code true} only when the concrete class has complete transaction coverage
+   */
+  protected boolean hasCompleteControllerTransientStateCoverage() {
+    return getClass() == ControllerDeviceBaseClass.class;
+  }
+
+  /**
+   * Captures controller-specific state appended to the base PID snapshot.
+   *
+   * @return serializable subclass state, or {@code null} for the concrete base controller
+   */
+  protected Serializable captureControllerSubclassTransientState() {
+    return null;
+  }
+
+  /**
+   * Restores controller-specific state after the base PID fields have been restored.
+   *
+   * @param state captured subclass state
+   */
+  protected void restoreControllerSubclassTransientState(Serializable state) {
+    if (state != null) {
+      throw new IllegalArgumentException("Concrete base controller cannot restore non-null subclass transient state");
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public ControllerTransientState captureTransientState() {
-    return new ControllerTransientState(getTransientStateIdentity(), calcIdentifier, unit, transmitter,
+    return new ControllerTransientState(getTransientStateIdentity(), getName(), calcIdentifier, unit, transmitter,
         controllerSetPoint, oldError, oldoldError, error, response, propConstant, reverseActing, Kp, Ti, Td,
         stepResponseTuningMethod, TintValue, derivativeState, oldMeasurement, oldControllerSetPoint,
         derivativeFilterTime, minResponse, maxResponse, isActive, mode, manualOutput, bumplessTransferPending,
         copyGainSchedule(gainSchedule), new ArrayList<ControllerEvent>(eventLog), totalTime, integralAbsoluteError,
         lastTimeOutsideBand, settlingTolerance, setpointWeight, deadBand, referenceDesignation,
-        copyReferenceDesignation(referenceDesignation));
+        copyReferenceDesignation(referenceDesignation), captureControllerSubclassTransientState());
   }
 
   /** {@inheritDoc} */
@@ -828,6 +862,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       throw new IllegalArgumentException(
           "Controller transient snapshot identity does not match " + getTransientStateIdentity());
     }
+    setName(snapshot.name);
     calcIdentifier = snapshot.calcIdentifier;
     unit = snapshot.unit;
     transmitter = snapshot.transmitter;
@@ -863,6 +898,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     deadBand = snapshot.deadBand;
     referenceDesignation = snapshot.referenceDesignation;
     restoreReferenceDesignation(referenceDesignation, snapshot.referenceDesignationState);
+    restoreControllerSubclassTransientState(snapshot.subclassState);
   }
 
   /**
@@ -918,6 +954,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     private static final long serialVersionUID = 1000L;
 
     private final String stateIdentity;
+    private final String name;
     private final UUID calcIdentifier;
     private final String unit;
     private final MeasurementDeviceInterface transmitter;
@@ -953,8 +990,9 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     private final double deadBand;
     private final neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignation;
     private final neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignationState;
+    private final Serializable subclassState;
 
-    private ControllerTransientState(String stateIdentity, UUID calcIdentifier, String unit,
+    private ControllerTransientState(String stateIdentity, String name, UUID calcIdentifier, String unit,
         MeasurementDeviceInterface transmitter, double controllerSetPoint, double oldError, double oldoldError,
         double error, double response, int propConstant, boolean reverseActing, double kp, double ti, double td,
         StepResponseTuningMethod stepResponseTuningMethod, double tintValue, double derivativeState,
@@ -963,8 +1001,9 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
         NavigableMap<Double, double[]> gainSchedule, java.util.List<ControllerEvent> eventLog, double totalTime,
         double integralAbsoluteError, double lastTimeOutsideBand, double settlingTolerance, double setpointWeight,
         double deadBand, neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignation,
-        neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignationState) {
+        neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignationState, Serializable subclassState) {
       this.stateIdentity = stateIdentity;
+      this.name = name;
       this.calcIdentifier = calcIdentifier;
       this.unit = unit;
       this.transmitter = transmitter;
@@ -1000,6 +1039,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       this.deadBand = deadBand;
       this.referenceDesignation = referenceDesignation;
       this.referenceDesignationState = referenceDesignationState;
+      this.subclassState = subclassState;
     }
   }
 

@@ -249,6 +249,24 @@ The application layer does not replace `AntiSurgeController` in every transient 
 
 Certification remains outside the open simulation model. `CompressorAntiSurgeApplication.getCertificationStatus()` returns `NOT_CERTIFIED_FOR_PROTECTION`; `runCommissioningChecks()` creates evidence useful for review and testing, but it does not certify the logic as a safety instrumented function or machinery protection package.
 
+## Transactional Trial Steps
+
+A concrete `AntiSurgeController` can participate in
+`ProcessSystem.beginTransientStepTransaction()` and `ProcessModel.beginTransientStepTransaction()`.
+Rollback restores the controller's PI integral, predictive margin-rate filter, actuator state, physical-step
+identifier, configuration and equipment bindings. It also restores both the actual and target opening of the bound
+recycle valve, so a rejected controller trial does not leave an actuator command behind.
+
+Use one non-null physical-step identifier for every evaluation of the same physical step. Repeating that identifier is
+idempotent; after rollback, replaying it from the restored inputs produces the same controller and valve outputs.
+Register every other mutable process element separately: this controller snapshot owns only the anti-surge controller
+and the two valve-command values it writes. It does not make the compressor, valve flow solution, streams, recycles,
+event callbacks or external control-system I/O transactional.
+
+This coverage supports numerical trial/rejection mechanics. It is not evidence of vendor-certified anti-surge
+protection, machinery safety approval, scan-cycle fidelity, valve-stroke qualification, deterministic external I/O or
+operator-training-system readiness.
+
 ## Practical Modeling Notes
 
 - Use vendor-certified compressor maps for design work. The notebook map is illustrative.
