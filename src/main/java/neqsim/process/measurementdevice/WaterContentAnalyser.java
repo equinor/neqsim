@@ -59,6 +59,7 @@ public class WaterContentAnalyser extends StreamMeasurementDeviceBaseClass
         * stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass() * 3600 * 24;
     return applySignalModifiers(raw);
   }
+
   /** {@inheritDoc} */
   @Override
   public String getTransientStateIdentity() {
@@ -85,8 +86,7 @@ public class WaterContentAnalyser extends StreamMeasurementDeviceBaseClass
   /** {@inheritDoc} */
   @Override
   public WaterContentAnalyserState captureTransientState() {
-    return new WaterContentAnalyserState(getTransientStateIdentity(), stream,
-        captureMeasurementDeviceTransientState());
+    return new WaterContentAnalyserState(getTransientStateIdentity(), stream, captureMeasurementDeviceTransientState());
   }
 
   /** {@inheritDoc} */
