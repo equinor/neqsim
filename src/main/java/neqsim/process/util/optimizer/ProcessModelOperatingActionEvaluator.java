@@ -335,8 +335,8 @@ public final class ProcessModelOperatingActionEvaluator {
     private final String provenance;
 
     /** Creates a validated binding. */
-    HydraulicConstraintBinding(HydraulicLimitRole role, String areaName, String equipmentName,
-        String constraintName, String provenance) {
+    HydraulicConstraintBinding(HydraulicLimitRole role, String areaName, String equipmentName, String constraintName,
+        String provenance) {
       if (role == null) {
         throw new IllegalArgumentException("Hydraulic limit role must not be null");
       }
@@ -743,4 +743,3 @@ public final class ProcessModelOperatingActionEvaluator {
     }
   }
 }
-
