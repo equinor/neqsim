@@ -22,6 +22,8 @@
  * replacing canonical source labels</li>
  * <li><b>Manual layout evidence</b> - Opt-in stable sheet assignments, pinned positions, and protected routes retain
  * project review evidence without changing process topology</li>
+ * <li><b>Native controlled output</b> - Deterministic vector SVG sheets and multi-page PDF consume the same controlled
+ * document model without requiring Graphviz</li>
  * <li><b>Revision impact</b> - Deterministic changed-object, affected-sheet, and affected-drawing evidence</li>
  * <li><b>Multiple detail levels</b> - MINIMAL, STANDARD, DETAILED, DEBUG</li>
  * <li><b>Deterministic output</b> - Same model always produces same diagram</li>
@@ -63,6 +65,8 @@
  * engineering graph model</li>
  * <li>{@link neqsim.process.processmodel.diagram.ProcessDiagramDocumentSetAdapter} - Immutable controlled drawing and
  * sheet proposal adapter</li>
+ * <li>{@link neqsim.process.processmodel.diagram.NativeEngineeringDiagramRenderer} - Deterministic native SVG/PDF
+ * renderer for controlled drawing sets</li>
  * <li>{@link neqsim.process.engineering.model.EngineeringDiagramLayoutRegister} - Persistent reviewed manual sheet,
  * position, and route intent</li>
  * <li>{@link neqsim.process.processmodel.diagram.ProcessDiagramExporter} - Main exporter class</li>

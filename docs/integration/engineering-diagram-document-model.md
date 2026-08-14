@@ -7,7 +7,7 @@ description: Immutable controlled-document views, stable sheet identities, recip
 
 NeqSim can project one canonical process topology into an immutable controlled-document proposal.
 The document model is separate from process execution scheduling and from every renderer or exchange
-format. It is the shared semantic layer for future native SVG/PDF PFD drawing sets and the existing
+format. It is the shared semantic layer for native SVG/PDF PFD drawing sets and the existing
 DEXPI/Proteus P&ID workflow.
 
 The initial model provides:
@@ -164,6 +164,40 @@ Coordinates and waypoints are renderer-neutral proposal data. The register does 
 route is physically constructible, that a layout complies with a drawing standard, or that an
 accountable engineer has approved the result.
 
+### Deterministic native SVG/PDF rendering
+
+`NativeEngineeringDiagramRenderer` projects the controlled document set directly to native SVG and
+PDF without Graphviz. Both formats consume the same deterministic page plan. The renderer preserves
+stable sheet and semantic-object IDs, positions pinned in drawing-paper millimetres, protected route
+waypoints, reciprocal off-page references, drawing/sheet titles, revision, status, issue purpose,
+and source-graph fingerprint.
+
+```java
+NativeEngineeringDiagramRenderer.Result rendered =
+    new NativeEngineeringDiagramRenderer(
+            manuallyArranged,
+            NativeEngineeringDiagramRenderer.SheetFormat.A3_LANDSCAPE)
+        .render();
+
+Map<String, String> svgBySheetId = rendered.getSvgBySheetId();
+byte[] multiPagePdf = rendered.getPdf();
+for (NativeEngineeringDiagramRenderer.Diagnostic diagnostic : rendered.getDiagnostics()) {
+  logger.warn("{}: {}", diagnostic.getCode(), diagnostic.getMessage());
+}
+```
+
+`A3_LANDSCAPE` and `A1_LANDSCAPE` provide controlled paper geometry in millimetres. They identify
+the paper dimensions only; they do not assert standards conformance. Unpinned objects receive a
+stable grid position, while out-of-bounds pinned coordinates, protected routes, and automatic
+layout overflow remain fail-visible through structured diagnostics. Manual geometry is retained
+unchanged instead of being silently repaired.
+
+SVG output contains stable `data-sheet-id`, `data-semantic-id`, and protected-route attributes for
+machine inspection. PDF output is a deterministic vector drawing set with one page per controlled
+sheet. Use `exportSvg(directory)` or `exportPdf(path)` when files are required. Rendering does not
+modify the source document set, legacy DOT/Graphviz output, DEXPI 2.0 Process exchange, or the
+Proteus/DEXPI P&ID workflow.
+
 Compare two revisions of the same document-set and plant identity with `baseline.compareTo(revised)`.
 The returned `EngineeringDiagramRevisionImpact` has deterministic added, removed, and modified
 semantic-object IDs. It projects those changes to the sheets and drawings containing each object in
@@ -185,10 +219,11 @@ Designation and layout registers record review evidence only. They do not repres
 approval, do not authorize a P&ID or PFD for design or construction, and do not replace project
 ownership of piping, valve, nozzle, instrument, safeguard, routing, or design data.
 
-The document model does not claim ISO 10628, ISO 5457, ISO 7200, ISO 14617, ISA, DEXPI EV, or
-commercial CAE conformance. Licensed standards mapping, project conventions, qualified symbols,
-rendered visual review, external-product round trips, and accountable discipline approval remain
-separate evidence gates.
+The document model and native renderer do not claim ISO 10628, ISO 5457, ISO 7200, ISO 14617, ISA,
+DEXPI EV, or commercial CAE conformance. Licensed standards mapping, project conventions, qualified
+symbols, rendered visual review, external-product round trips, and accountable discipline approval
+remain separate evidence gates. Working proposals carry an explicit not-approved-for-design-or-
+construction banner in native output.
 
 ## Validation
 
@@ -196,6 +231,7 @@ Run the focused regression with:
 
 ```bash
 ./mvnw -Dtest=ProcessDiagramDocumentSetAdapterTest test
+./mvnw -Dtest=NativeEngineeringDiagramRendererTest test
 ```
 
 The regression verifies deterministic single- and multi-area output, immutable collections,
@@ -207,3 +243,7 @@ calculation graphs, unchanged topology-only behavior, reviewed designation gover
 designation mismatches, deterministic cross-sheet revision impact, persistent manual layout evidence,
 unchanged semantic identities after layout-only revision changes, protected-route retention, and
 fail-visible stale layout references.
+The native-renderer regression verifies byte-deterministic SVG/PDF, A3 and A1 geometry, exact pinned
+coordinates and protected routes, reciprocal off-page references, structured layout-loss
+diagnostics, multi-page drawing sets, fresh-model determinism, and unchanged Classic DOT and
+controlled-document JSON.
