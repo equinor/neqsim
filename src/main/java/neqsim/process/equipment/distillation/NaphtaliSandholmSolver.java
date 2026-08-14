@@ -5090,8 +5090,9 @@ public class NaphtaliSandholmSolver {
         gasSystem.setPressure(P[j] / 1e5);
         gasSystem.setTotalNumberOfMoles(V[j] / 3600.0);
         gasSystem.setMolarComposition(y);
-        gasSystem.setNumberOfPhases(1);
         gasSystem.init(0);
+        gasSystem.setNumberOfPhases(1);
+        gasSystem.setPhaseType(0, PhaseType.GAS);
         gasSystem.init(2);
         tray.setCachedGasOutStream(new neqsim.process.equipment.stream.Stream("gas_" + j, gasSystem));
 
@@ -5100,8 +5101,9 @@ public class NaphtaliSandholmSolver {
         liqSystem.setPressure(P[j] / 1e5);
         liqSystem.setTotalNumberOfMoles(L[j] / 3600.0);
         liqSystem.setMolarComposition(x);
-        liqSystem.setNumberOfPhases(1);
         liqSystem.init(0);
+        liqSystem.setNumberOfPhases(1);
+        liqSystem.setPhaseType(0, PhaseType.LIQUID);
         liqSystem.init(2);
         tray.setCachedLiquidOutStream(new neqsim.process.equipment.stream.Stream("liq_" + j, liqSystem));
       }

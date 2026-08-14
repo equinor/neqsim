@@ -271,6 +271,9 @@ targets manipulated through condenser or reboiler temperature.
 - Retries a rejected retained-state solve from the normal cold initializer before materializing the
   rejected tray profile. This keeps the live column and its product caches unchanged until a cold
   recovery attempt has either been accepted or exhausted.
+- Restores the intended single gas or liquid phase after composition initialization when applying
+  no-side-draw products. This prevents initialization from re-expanding both phase slots with the
+  same accepted component inventory.
 - Package-level solver diagnostics record Jacobian base-refinement passes and the residual-vector
   mutation measured after each completed build. The mutation is expected to be bitwise zero; these
   counters support deterministic regression and do not change the public column API.
