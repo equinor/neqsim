@@ -1,5 +1,6 @@
 package neqsim.process.measurementdevice;
 
+import java.io.Serializable;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -123,6 +124,38 @@ public class ConeFlowMeter extends DifferentialPressureFlowMeter {
     double pipeDiameterMeters = getPipeDiameter("m");
     double coneDiameterMeters = pipeDiameterMeters * Math.sqrt(1.0 - beta * beta);
     return coneDiameterMeters / lengthConversionToMeter(unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected String getDifferentialPressureFlowMeterTransientStateCoverageIssue() {
+    if (getClass() != ConeFlowMeter.class) {
+      return "cone-flow-meter subclass " + getClass().getName()
+          + " must provide a snapshot that includes subclass-owned mutable state";
+    }
+    return null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected Serializable captureDifferentialPressureFlowMeterExtensionState() {
+    return ConeFlowMeterState.INSTANCE;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected void restoreDifferentialPressureFlowMeterExtensionState(Serializable extensionState) {
+    if (!(extensionState instanceof ConeFlowMeterState)) {
+      throw new IllegalArgumentException("Cone flow-meter extension snapshot has the wrong type");
+    }
+  }
+
+  /** Immutable marker proving that the concrete cone meter owns no state beyond its base snapshot. */
+  private static final class ConeFlowMeterState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private static final ConeFlowMeterState INSTANCE = new ConeFlowMeterState();
+
+    private ConeFlowMeterState() {}
   }
 
   /** {@inheritDoc} */
