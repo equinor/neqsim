@@ -734,7 +734,14 @@ public final class NativeEngineeringDiagramRenderer {
       } else {
         result.append('[');
         for (String item : dash.split(" ")) {
-          result.append(number(Double.parseDouble(item) * MM_TO_POINT)).append(' ');
+          if (item.isEmpty()) {
+            continue;
+          }
+          try {
+            result.append(number(Double.parseDouble(item) * MM_TO_POINT)).append(' ');
+          } catch (NumberFormatException exception) {
+            // Ignore malformed dash tokens while retaining every valid dash length.
+          }
         }
         result.append("] 0 d ");
       }
@@ -758,14 +765,19 @@ public final class NativeEngineeringDiagramRenderer {
     }
 
     private static String rgb(String value, boolean stroke) {
-      if (value == null || "none".equals(value)) {
-        return "0 0 0 " + (stroke ? "RG" : "rg");
+      String fallback = "0 0 0 " + (stroke ? "RG" : "rg");
+      if (value == null || "none".equals(value) || value.length() != 7 || value.charAt(0) != '#') {
+        return fallback;
       }
-      int red = Integer.parseInt(value.substring(1, 3), 16);
-      int green = Integer.parseInt(value.substring(3, 5), 16);
-      int blue = Integer.parseInt(value.substring(5, 7), 16);
-      return number(red / 255.0) + " " + number(green / 255.0) + " " + number(blue / 255.0) + " "
-          + (stroke ? "RG" : "rg");
+      try {
+        int red = Integer.parseInt(value.substring(1, 3), 16);
+        int green = Integer.parseInt(value.substring(3, 5), 16);
+        int blue = Integer.parseInt(value.substring(5, 7), 16);
+        return number(red / 255.0) + " " + number(green / 255.0) + " " + number(blue / 255.0) + " "
+            + (stroke ? "RG" : "rg");
+      } catch (NumberFormatException exception) {
+        return fallback;
+      }
     }
   }
 }
