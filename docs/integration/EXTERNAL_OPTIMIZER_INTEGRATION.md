@@ -805,6 +805,78 @@ actions, replace `WellFlow` or pipeline correlations, or infer mechanical, safet
 product-quality, or market approval. Register all other applicable constraints on `simulation`
 before constructing the wrapper, and use separate model instances for parallel candidate calls.
 
+### Evaluate a coupled well-allocation candidate atomically
+
+Use `ProcessModelOperatingActionSetEvaluator` for a candidate vector that must be applied as one
+transaction, such as two well-rate targets competing for one gathering limit. All actions are
+captured before the first write. Duplicate IDs or automation addresses fail at construction. If a
+later value is rejected, the partial candidate is not simulated and every captured action is
+restored in reverse declaration order.
+
+```python
+ActionSetEvaluator = (
+    jneqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator
+)
+
+allocation = ActionSetEvaluator(
+    "field-allocation",
+    "Field production allocation",
+    "approved well envelopes and gathering basis revision A",
+    simulation,
+    [well_a_action, well_b_action],
+)
+allocation.requireHydraulicConstraint(
+    HydraulicRole.WELL_INFLOW_OUTFLOW,
+    "Subsurface",
+    "well A",
+    "well drawdown",
+    "well A installed maximum drawdown",
+)
+allocation.requireHydraulicConstraint(
+    HydraulicRole.WELL_INFLOW_OUTFLOW,
+    "Subsurface",
+    "well B",
+    "well drawdown",
+    "well B installed maximum drawdown",
+)
+allocation.requireHydraulicConstraint(
+    HydraulicRole.GATHERING_HYDRAULICS,
+    "Gathering",
+    "inlet separator",
+    "installed gathering rate",
+    "shared installed gathering capacity",
+)
+
+candidate = allocation.evaluate([well_a_rate, well_b_rate])
+for action_result in candidate.getActionEvidence():
+    print(
+        action_result.getAction().getId(),
+        action_result.getBaselineValue(),
+        action_result.getRequestedValue(),
+        action_result.getReadBackValue(),
+        action_result.getReadBackResidual(),
+        action_result.getReadBackTolerance(),
+        action_result.getReadBackToleranceProvenance(),
+        action_result.isRestored(),
+    )
+
+if not candidate.isBaselineRestored():
+    raise RuntimeError(list(candidate.getDiagnostics()))
+if not candidate.isBaselineSimulationConverged():
+    raise RuntimeError("Restored coupled baseline did not reconverge")
+```
+
+The candidate array follows action declaration order and each value uses its action's declared unit.
+Wrong-length vectors, invalid continuous or discrete values, missing addresses, failed read-back,
+missing/non-finite/out-of-range exact constraints, hard violations, non-convergence, or incomplete
+restoration fail closed with distinct outcomes. Results retain defensive arrays and fresh immutable
+Java lists for JPype consumers and are Java-serializable.
+
+The evaluator does not optimize the vector, interpolate discrete line-ups, change routing or
+hydraulic correlations, or establish operating approval. Validate conservation, constraint
+residuals, product specifications and nearby operating points with the underlying NeqSim model.
+Use independent models for parallel candidates.
+
 ### Export Problem Definition
 
 ```python
@@ -991,3 +1063,4 @@ on `ProcessSimulationEvaluator`.
 - [flow-rate-optimization.md](../process/optimization/flow-rate-optimization.md) - FlowRateOptimizer for lift curve generation
 - [pressure_boundary_optimization.md](../process/pressure_boundary_optimization.md) - Simplified pressure boundary optimizer
 - [PRODUCTION_OPTIMIZATION_GUIDE.md](../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) - Complete production optimization examples
+

@@ -1,5 +1,6 @@
 package neqsim.process.controllerdevice;
 
+import java.io.Serializable;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -135,6 +136,9 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
    */
   @Override
   public void runTransient(double initResponse, double dt, UUID id) {
+    if (id != null && hasRunTransient(id)) {
+      return;
+    }
     if (!isActive()) {
       valveOpening = initResponse;
       calcIdentifier = id;
@@ -482,6 +486,56 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
     this.emergencyOpening = emergencyOpening;
   }
 
+  /** {@inheritDoc} */
+  @Override
+  protected boolean hasCompleteControllerTransientStateCoverage() {
+    return getClass() == AntiSurgeController.class;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected Serializable captureControllerSubclassTransientState() {
+    double recycleValveOpening = recycleValve == null ? Double.NaN : recycleValve.getPercentValveOpening();
+    double recycleValveTarget = recycleValve == null ? Double.NaN : recycleValve.getTargetPercentValveOpening();
+    return new AntiSurgeTransientState(compressor, recycleValve, surgeMarginSetPoint, proportionalGain, integralTime,
+        minOpening, maxOpening, valveOpening, integralState, lastMargin, predictiveActionEnabled, predictionHorizon,
+        marginRateFilterTime, filteredMarginRate, predictedMargin, targetValveOpening, valveRateLimit,
+        actuatorTimeConstant, emergencyMargin, emergencyOpening, recycleValveOpening, recycleValveTarget);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected void restoreControllerSubclassTransientState(Serializable state) {
+    if (!(state instanceof AntiSurgeTransientState)) {
+      throw new IllegalArgumentException("Anti-surge controller requires an anti-surge transient snapshot");
+    }
+    AntiSurgeTransientState snapshot = (AntiSurgeTransientState) state;
+    compressor = snapshot.compressor;
+    recycleValve = snapshot.recycleValve;
+    surgeMarginSetPoint = snapshot.surgeMarginSetPoint;
+    proportionalGain = snapshot.proportionalGain;
+    integralTime = snapshot.integralTime;
+    minOpening = snapshot.minOpening;
+    maxOpening = snapshot.maxOpening;
+    valveOpening = snapshot.valveOpening;
+    integralState = snapshot.integralState;
+    lastMargin = snapshot.lastMargin;
+    predictiveActionEnabled = snapshot.predictiveActionEnabled;
+    predictionHorizon = snapshot.predictionHorizon;
+    marginRateFilterTime = snapshot.marginRateFilterTime;
+    filteredMarginRate = snapshot.filteredMarginRate;
+    predictedMargin = snapshot.predictedMargin;
+    targetValveOpening = snapshot.targetValveOpening;
+    valveRateLimit = snapshot.valveRateLimit;
+    actuatorTimeConstant = snapshot.actuatorTimeConstant;
+    emergencyMargin = snapshot.emergencyMargin;
+    emergencyOpening = snapshot.emergencyOpening;
+    if (recycleValve != null) {
+      recycleValve.setPercentValveOpening(snapshot.recycleValveOpening);
+      recycleValve.setTargetPercentValveOpening(snapshot.recycleValveTarget);
+    }
+  }
+
   /**
    * Reset the controller integral state and output to fully closed.
    */
@@ -492,5 +546,63 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
     this.lastMargin = Double.NaN;
     this.filteredMarginRate = 0.0;
     this.predictedMargin = Double.NaN;
+  }
+
+  /** Immutable anti-surge state appended to the base controller rollback snapshot. */
+  private static final class AntiSurgeTransientState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    private final Compressor compressor;
+    private final ThrottlingValve recycleValve;
+    private final double surgeMarginSetPoint;
+    private final double proportionalGain;
+    private final double integralTime;
+    private final double minOpening;
+    private final double maxOpening;
+    private final double valveOpening;
+    private final double integralState;
+    private final double lastMargin;
+    private final boolean predictiveActionEnabled;
+    private final double predictionHorizon;
+    private final double marginRateFilterTime;
+    private final double filteredMarginRate;
+    private final double predictedMargin;
+    private final double targetValveOpening;
+    private final double valveRateLimit;
+    private final double actuatorTimeConstant;
+    private final double emergencyMargin;
+    private final double emergencyOpening;
+    private final double recycleValveOpening;
+    private final double recycleValveTarget;
+
+    private AntiSurgeTransientState(Compressor compressor, ThrottlingValve recycleValve, double surgeMarginSetPoint,
+        double proportionalGain, double integralTime, double minOpening, double maxOpening, double valveOpening,
+        double integralState, double lastMargin, boolean predictiveActionEnabled, double predictionHorizon,
+        double marginRateFilterTime, double filteredMarginRate, double predictedMargin, double targetValveOpening,
+        double valveRateLimit, double actuatorTimeConstant, double emergencyMargin, double emergencyOpening,
+        double recycleValveOpening, double recycleValveTarget) {
+      this.compressor = compressor;
+      this.recycleValve = recycleValve;
+      this.surgeMarginSetPoint = surgeMarginSetPoint;
+      this.proportionalGain = proportionalGain;
+      this.integralTime = integralTime;
+      this.minOpening = minOpening;
+      this.maxOpening = maxOpening;
+      this.valveOpening = valveOpening;
+      this.integralState = integralState;
+      this.lastMargin = lastMargin;
+      this.predictiveActionEnabled = predictiveActionEnabled;
+      this.predictionHorizon = predictionHorizon;
+      this.marginRateFilterTime = marginRateFilterTime;
+      this.filteredMarginRate = filteredMarginRate;
+      this.predictedMargin = predictedMargin;
+      this.targetValveOpening = targetValveOpening;
+      this.valveRateLimit = valveRateLimit;
+      this.actuatorTimeConstant = actuatorTimeConstant;
+      this.emergencyMargin = emergencyMargin;
+      this.emergencyOpening = emergencyOpening;
+      this.recycleValveOpening = recycleValveOpening;
+      this.recycleValveTarget = recycleValveTarget;
+    }
   }
 }

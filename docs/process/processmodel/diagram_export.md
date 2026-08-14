@@ -9,6 +9,14 @@ NeqSim can export deterministic simulator-style process flow diagrams (PFDs) as 
 when Graphviz is installed, SVG or PDF. These exports help inspect simulation topology; they are not
 qualified engineering drawings and do not claim ISO 10628 conformance.
 
+For controlled multi-sheet drawing proposals, first create an `EngineeringDiagramDocumentSet` with
+`ProcessDiagramDocumentSetAdapter`, then use `NativeEngineeringDiagramRenderer`. The native renderer
+does not require Graphviz and emits deterministic vector SVG sheets plus one multi-page PDF from the
+same semantic document model. It preserves pinned millimetre positions, protected routes,
+reciprocal off-page references, and title/revision metadata. The result remains an engineering
+proposal and is not a qualified P&amp;ID or standards-conformance claim. See
+[Engineering diagram document and sheet model](../../integration/engineering-diagram-document-model.md).
+
 ## Canonical Topology Foundation
 
 Use `ProcessDiagramGraphAdapter` when a downstream renderer or exchange workflow needs a stable,

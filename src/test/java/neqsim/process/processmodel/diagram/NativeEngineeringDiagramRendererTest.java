@@ -1,0 +1,162 @@
+package neqsim.process.processmodel.diagram;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Map;
+import neqsim.process.engineering.model.EngineeringDiagramDesignationRegister;
+import neqsim.process.engineering.model.EngineeringDiagramDocumentSet;
+import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.ContentProfile;
+import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.SemanticObject;
+import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.Sheet;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.CoordinateUnit;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.EvidenceState;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.PinnedPosition;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.ProtectedRoute;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.Waypoint;
+import neqsim.process.engineering.model.EngineeringNode;
+import neqsim.process.processmodel.ProcessSystem;
+import org.junit.jupiter.api.Test;
+
+class NativeEngineeringDiagramRendererTest {
+  @Test
+  void rendersDeterministicNativeSvgAndPdfWithoutChangingClassicOutputs() {
+    EngineeringDiagramReferenceFixtures.SystemCase reference = EngineeringDiagramReferenceFixtures.simpleTrain();
+    ProcessSystem process = reference.getProcessSystem();
+    String classicDot = process.toDOT();
+    EngineeringDiagramDocumentSet baseline = ProcessDiagramDocumentSetAdapter.fromProcessSystem(process,
+        reference.getCaseId(), "A", "PFD-NATIVE-001", "Native renderer reference", ContentProfile.PFD);
+    String sheetKey = baseline.getDrawings().get(0).getSheets().get(0).getKey();
+    SemanticObject separator = findObject(baseline, EngineeringNode.Kind.EQUIPMENT, "equipmentName", "10-VA-001");
+    SemanticObject feedConnection = findObject(baseline, EngineeringNode.Kind.PIPE_SEGMENT, "targetEquipment",
+        "10-XV-001");
+    EngineeringDiagramLayoutRegister layout = new EngineeringDiagramLayoutRegister()
+        .withPinnedPosition(reviewedPosition(separator.getId(), sheetKey, 80.0, 60.0))
+        .withProtectedRoute(reviewedRoute(feedConnection.getId(), sheetKey));
+    EngineeringDiagramDocumentSet documents = ProcessDiagramDocumentSetAdapter.fromProcessSystem(process,
+        reference.getCaseId(), "A", "PFD-NATIVE-001", "Native renderer reference", ContentProfile.PFD,
+        new EngineeringDiagramDesignationRegister(), layout);
+    String controlledJson = documents.toJson();
+
+    NativeEngineeringDiagramRenderer renderer = new NativeEngineeringDiagramRenderer(documents);
+    NativeEngineeringDiagramRenderer.Result first = renderer.render();
+    NativeEngineeringDiagramRenderer.Result second = renderer.render();
+    String svg = first.getSvgBySheetId().values().iterator().next();
+
+    assertEquals(first.getSvgBySheetId(), second.getSvgBySheetId());
+    assertArrayEquals(first.getPdf(), second.getPdf());
+    assertTrue(svg.contains("width=\"420mm\" height=\"297mm\" viewBox=\"0 0 420 297\""));
+    assertTrue(svg.contains("x=\"63\" y=\"52\" width=\"34\" height=\"16\""));
+    assertTrue(svg.contains("points=\"10,20 40,20 40,50\""));
+    assertTrue(svg.contains("data-protected-route=\"true\""));
+    assertTrue(svg.contains("REV A  STATUS WORKING"));
+    assertTrue(svg.contains("ENGINEERING PROPOSAL - NOT APPROVED FOR DESIGN OR CONSTRUCTION"));
+    assertTrue(new String(first.getPdf(), 0, 8, StandardCharsets.ISO_8859_1).startsWith("%PDF-1.4"));
+    assertTrue(first.isComplete());
+    assertEquals(controlledJson, documents.toJson());
+    assertEquals(classicDot, process.toDOT());
+  }
+
+  @Test
+  void rendersEveryMultiAreaSheetWithReciprocalOffPageReferencesInOnePdf() {
+    EngineeringDiagramDocumentSet documents = ProcessDiagramDocumentSetAdapter.fromProcessModel(
+        EngineeringDiagramReferenceFixtures.multiAreaFacility().getProcessModel(), "DEXPI-REF-MULTI-AREA", "B",
+        "PFD-NATIVE-002", "Multi-area native drawing set", ContentProfile.PFD);
+
+    NativeEngineeringDiagramRenderer.Result result = new NativeEngineeringDiagramRenderer(documents,
+        NativeEngineeringDiagramRenderer.SheetFormat.A1_LANDSCAPE).render();
+    String pdf = new String(result.getPdf(), StandardCharsets.ISO_8859_1);
+
+    assertEquals(4, result.getSvgBySheetId().size());
+    assertTrue(pdf.contains("/Count 4"));
+    for (Sheet sheet : documents.getDrawings().get(0).getSheets()) {
+      String svg = result.getSvgBySheetId().get(sheet.getId());
+      assertTrue(svg.contains("width=\"841mm\" height=\"594mm\" viewBox=\"0 0 841 594\""));
+      for (EngineeringDiagramDocumentSet.OffPageConnector connector : sheet.getOffPageConnectors()) {
+        assertTrue(svg.contains(connector.getId()));
+        assertTrue(svg.contains(connector.getPeerSheetId()));
+        assertTrue(svg.contains(connector.getZoneReference()));
+      }
+    }
+    assertTrue(result.isComplete());
+  }
+
+  @Test
+  void reportsOutOfBoundsManualGeometryWithoutSilentlyReplacingIt() {
+    EngineeringDiagramReferenceFixtures.SystemCase reference = EngineeringDiagramReferenceFixtures.simpleTrain();
+    EngineeringDiagramDocumentSet baseline = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
+        reference.getProcessSystem(), reference.getCaseId(), "A", "PFD-NATIVE-003", "Layout loss diagnostics",
+        ContentProfile.PFD);
+    String sheetKey = baseline.getDrawings().get(0).getSheets().get(0).getKey();
+    SemanticObject separator = findObject(baseline, EngineeringNode.Kind.EQUIPMENT, "equipmentName", "10-VA-001");
+    EngineeringDiagramLayoutRegister layout = new EngineeringDiagramLayoutRegister()
+        .withPinnedPosition(reviewedPosition(separator.getId(), sheetKey, 600.0, 60.0));
+    EngineeringDiagramDocumentSet documents = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
+        reference.getProcessSystem(), reference.getCaseId(), "A", "PFD-NATIVE-003", "Layout loss diagnostics",
+        ContentProfile.PFD, new EngineeringDiagramDesignationRegister(), layout);
+
+    NativeEngineeringDiagramRenderer.Result result = new NativeEngineeringDiagramRenderer(documents).render();
+    String svg = result.getSvgBySheetId().values().iterator().next();
+
+    assertTrue(hasDiagnostic(result, "DIAGRAM_RENDER_PIN_OUTSIDE_SHEET"));
+    assertTrue(svg.contains("x=\"583\" y=\"52\" width=\"34\" height=\"16\""));
+    assertTrue(result.isComplete());
+  }
+
+  @Test
+  void keepsSheetOrderAndRenderedBytesStableAcrossFreshEquivalentModels() {
+    Map<String, String> expectedSvg = null;
+    byte[] expectedPdf = null;
+    for (int attempt = 0; attempt < 4; attempt++) {
+      EngineeringDiagramDocumentSet documents = ProcessDiagramDocumentSetAdapter.fromProcessModel(
+          EngineeringDiagramReferenceFixtures.multiAreaFacility().getProcessModel(), "DEXPI-REF-MULTI-AREA", "A",
+          "PFD-NATIVE-004", "Fresh deterministic rendering", ContentProfile.PFD);
+      NativeEngineeringDiagramRenderer.Result result = new NativeEngineeringDiagramRenderer(documents).render();
+      if (expectedSvg == null) {
+        expectedSvg = result.getSvgBySheetId();
+        expectedPdf = result.getPdf();
+      } else {
+        assertEquals(expectedSvg, result.getSvgBySheetId());
+        assertArrayEquals(expectedPdf, result.getPdf());
+      }
+    }
+  }
+
+  private static PinnedPosition reviewedPosition(String semanticObjectId, String sheetKey, double x, double y) {
+    return new PinnedPosition(semanticObjectId, sheetKey, x, y, CoordinateUnit.MILLIMETRE, "project-layout:PFD-NATIVE",
+        EvidenceState.REVIEWED, "Process discipline", "2026-08-14T08:00:00Z", "B");
+  }
+
+  private static ProtectedRoute reviewedRoute(String connectionId, String sheetKey) {
+    return new ProtectedRoute(connectionId, sheetKey,
+        Arrays.asList(new Waypoint(10.0, 20.0), new Waypoint(40.0, 20.0), new Waypoint(40.0, 50.0)),
+        CoordinateUnit.MILLIMETRE, "project-layout:PFD-NATIVE", EvidenceState.REVIEWED, "Process discipline",
+        "2026-08-14T08:00:00Z", "B");
+  }
+
+  private static SemanticObject findObject(EngineeringDiagramDocumentSet documents, EngineeringNode.Kind kind,
+      String property, String value) {
+    for (SemanticObject object : documents.getSemanticObjects()) {
+      if (object.getKind() == kind && value.equals(object.getProperties().get(property))) {
+        return object;
+      }
+    }
+    throw new AssertionError("Missing semantic object " + kind + " with " + property + "=" + value);
+  }
+
+  private static boolean hasDiagnostic(NativeEngineeringDiagramRenderer.Result result, String code) {
+    for (NativeEngineeringDiagramRenderer.Diagnostic diagnostic : result.getDiagnostics()) {
+      if (code.equals(diagnostic.getCode())) {
+        assertFalse(diagnostic.getMessage().isEmpty());
+        assertFalse(diagnostic.getSubjectId().isEmpty());
+        return true;
+      }
+    }
+    return false;
+  }
+}

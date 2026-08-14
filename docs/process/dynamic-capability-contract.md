@@ -349,19 +349,28 @@ commissioning, OTS, or other safety-critical study. Those studies require scenar
 evidence, engineering limits, deterministic timing/replay evidence where applicable, and appropriate review.
 
 
-## Base PID controller transaction coverage
+## Base PID and anti-surge controller transaction coverage
 
 The concrete `ControllerDeviceBaseClass` participates in identity-preserving step transactions. Its snapshot covers the
-calculation identifier, PID error history, integral and filtered-derivative state, output/manual/bumpless-transfer
-state,
-clock and performance metrics, event log, gain schedule, transmitter binding, setpoint/tuning/limits, activation state,
-and engineering reference binding. Gain-schedule arrays and event-log membership are defensively copied.
+name and calculation identifier, PID error history, integral and filtered-derivative state,
+output/manual/bumpless-transfer state, clock and performance metrics, event log, gain schedule, transmitter binding,
+setpoint/tuning/limits, activation state, and engineering reference binding. Gain-schedule arrays and event-log
+membership are defensively copied. Protected fail-closed extension hooks let a qualified concrete subclass append its
+state without weakening the default subclass blocker.
 
-Coverage is deliberately fail-closed for subclasses. A controller subclass inherits the marker interface but reports an
-incomplete-coverage blocker until it overrides the transaction contract with a snapshot that includes every
-subclass-owned mutable field. Passing this rollback gate establishes transaction mechanics only; it does not qualify
-loop
-tuning, scan-time fidelity, final-element dynamics, deterministic I/O, safety action, or OTS behavior.
+The concrete `AntiSurgeController` is the first qualified extension. Its appended snapshot covers compressor and recycle
+valve bindings, all PI/predictive/actuator/emergency configuration, integral and margin-rate histories, predicted margin,
+target and actual controller output, and both the actual and target recycle-valve opening. Rejected steps therefore
+restore the external valve command as well as controller memory. A repeated non-null physical-step identifier is
+idempotent, and exact continuation is covered for one `ProcessSystem`, coordinated two-area `ProcessModel` rollback,
+and Java-serialization restart.
+
+Coverage remains deliberately fail-closed for every other controller subclass and for descendants of
+`AntiSurgeController`. A subclass inherits the marker interface but reports an incomplete-coverage blocker until its
+concrete class explicitly extends the snapshot for every subclass-owned mutation and external command side effect.
+Passing this rollback gate establishes transaction mechanics only; it does not qualify loop tuning, scan-time fidelity,
+compressor or valve physics, deterministic external I/O, machinery protection, safety action, vendor certification, or
+OTS behavior.
 
 
 ## Local signal-modifying transmitter transaction coverage
