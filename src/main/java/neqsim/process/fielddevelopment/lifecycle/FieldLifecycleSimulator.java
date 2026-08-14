@@ -483,6 +483,7 @@ public class FieldLifecycleSimulator {
         host = reduced[1];
       } catch (RuntimeException ex) {
         lastFailure = ex;
+        logger.warn("DEBUGATTEMPT failed: {}", ex.toString(), ex);
         FacilityProductionRate[] reduced = reduceForPolicy(strategy.getAllocationPolicy(), satellite, host, 0.70);
         satellite = reduced[0];
         host = reduced[1];
@@ -638,6 +639,11 @@ public class FieldLifecycleSimulator {
       }
       Compressor compressor = (Compressor) equipment;
       StreamInterface inlet = compressor.getInletStream();
+      logger.warn("DEBUGALL {} inT={} inP={} outP={} flow={} power={}", compressor.getName(),
+          inlet == null ? Double.NaN : inlet.getTemperature("C"),
+          inlet == null ? Double.NaN : inlet.getPressure("bara"),
+          compressor.getOutletStream() == null ? Double.NaN : compressor.getOutletStream().getPressure("bara"),
+          inlet == null ? Double.NaN : inlet.getFlowRate("kg/sec"), compressor.getPower("kW"));
       if (inlet == null || compressor.getOutletStream() == null || inlet.getFlowRate("kg/sec") <= 1.0e-9
           || compressor.getOutletStream().getPressure("bara") <= inlet.getPressure("bara") + 1.0e-9) {
         continue;
@@ -645,9 +651,13 @@ public class FieldLifecycleSimulator {
       try {
         double powerKw = compressor.getPower("kW");
         if (!Double.isFinite(powerKw) || powerKw <= 0.0) {
+          logger.warn("DEBUGCOMP {} power={} inletT={} inletP={} outP={} flow={}", compressor.getName(), powerKw,
+              inlet.getTemperature("C"), inlet.getPressure("bara"), compressor.getOutletStream().getPressure("bara"),
+              inlet.getFlowRate("kg/sec"));
           return true;
         }
       } catch (RuntimeException ex) {
+        logger.warn("DEBUGCOMP {} threw {}", compressor.getName(), ex.toString());
         return true;
       }
     }

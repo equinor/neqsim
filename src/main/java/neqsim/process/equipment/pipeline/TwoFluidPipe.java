@@ -638,6 +638,18 @@ public class TwoFluidPipe extends Pipeline {
   /** Iterations used by the last steady-state refinement loop. */
   private int ssIterationsUsed = 0;
 
+  /**
+   * User-specified iteration limit for the steady-state refinement loop.
+   *
+   * <p>
+   * Zero or negative means the limit is derived from the section count.
+   * </p>
+   */
+  private int ssMaxIterations = 0;
+
+  /** True when the last steady-state refinement loop met its tolerance. */
+  private boolean ssConverged = false;
+
   /** Current step count. */
   private int currentStep = 0;
 
@@ -1161,10 +1173,14 @@ public class TwoFluidPipe extends Pipeline {
    * </ul>
    */
   private void runSteadyState() {
-    int maxIter = 100;
+    // The refinement loop is an under-relaxed fixed-point sweep, so information travels at
+    // roughly one section per iteration. A fixed budget therefore silently fails on long,
+    // finely-discretised lines. Scale the default with the mesh unless the user set a limit.
+    int maxIter = ssMaxIterations > 0 ? ssMaxIterations : Math.max(100, 20 * numberOfSections);
     double tolerance = 1e-4;
     long startWallClock = System.currentTimeMillis();
     ssWallClockLimited = false;
+    ssConverged = false;
     ssIterationsUsed = 0;
 
     // Get total mass flow rate (conserved)
@@ -1224,9 +1240,7 @@ public class TwoFluidPipe extends Pipeline {
         TwoFluidSection prev = sections[i - 1];
 
         // Pressure from upstream section gradient
-        double dPdx = estimatePressureGradient(prev);
-        double P_new = prev.getPressure() - dPdx * prev.getLength();
-        P_new = Math.max(1e5, P_new);
+        double P_new = marchPressure(prev, sec);
         sec.setPressure(P_new);
 
         // Holdup and velocities
@@ -1308,9 +1322,7 @@ public class TwoFluidPipe extends Pipeline {
         TwoFluidSection prev = sections[i - 1];
 
         // Pressure drop estimate (simplified steady-state)
-        double dPdx = estimatePressureGradient(sec);
-        double P_calc = prev.getPressure() - dPdx * prev.getLength();
-        P_calc = Math.max(1e5, P_calc); // Minimum 1 bar
+        double P_calc = marchPressure(prev, sec);
 
         // Under-relaxed pressure update
         double P_new = sec.getPressure() + omega * (P_calc - sec.getPressure());
@@ -1363,8 +1375,9 @@ public class TwoFluidPipe extends Pipeline {
         sec.updateStratifiedGeometry();
       }
 
-      // Update temperature profile if heat transfer is enabled
-      if (enableHeatTransfer && heatTransferCoefficient > 0) {
+      // Solve the energy equation whenever either mechanism is active. Joule-Thomson is driven by
+      // the pressure drop, not by the wall, so an adiabatic line must still cool on expansion.
+      if ((enableHeatTransfer && heatTransferCoefficient > 0) || enableJouleThomson) {
         updateTemperatureProfile(massFlow, area);
       }
 
@@ -1384,10 +1397,17 @@ public class TwoFluidPipe extends Pipeline {
       }
 
       if (maxChange < tolerance) {
+        ssConverged = true;
         logger.info("Steady-state converged after {} iterations ({}ms wall-clock)", iter,
             System.currentTimeMillis() - startWallClock);
         break;
       }
+    }
+
+    if (!ssConverged && !ssWallClockLimited) {
+      logger.warn("Steady-state solver did not converge within {} iterations for {} sections; "
+          + "the reported profile is not converged. Increase setSteadyStateMaxIterations(...) "
+          + "or reduce setSteadyStateUnderRelaxation(...).", maxIter, numberOfSections);
     }
 
     // ===== Final consistency pass: flash + holdup recalculation =====
@@ -1685,17 +1705,11 @@ public class TwoFluidPipe extends Pipeline {
     double muJT = 0.0;
     if (enableJouleThomson) {
       try {
-        // μ_JT = (1/Cp) * [T*(dV/dT)_P - V] ≈ (T*β - 1)*V/Cp for ideal gas approximation
-        // For real gas, use thermodynamic calculation
-        double kappa = inletFluid.getKappa(); // Cp/Cv
-        if (kappa > 1.0 && kappa < 2.0) {
-          double T = inletFluid.getTemperature();
-          double Z = inletFluid.getZ();
-          double MW = inletFluid.getMolarMass() * 1000; // kg/kmol to g/mol
-          double R = 8.314; // J/(mol·K)
-          // Simplified J-T coefficient for real gas: μ_JT ≈ (2a/RT - b) / Cp
-          // For typical natural gas: 0.3-0.6 K/bar
-          muJT = 0.4 / 1e5; // K/Pa (typical for natural gas)
+        // Real thermodynamic coefficient for the actual (possibly two-phase) mixture.
+        // Do not gate this on Cp/Cv: for a two-phase mixture that ratio is not bounded by 1..2.
+        double muJTperBar = inletFluid.getJouleThomsonCoefficient("K/bar");
+        if (!Double.isNaN(muJTperBar) && Math.abs(muJTperBar) < 10.0) {
+          muJT = muJTperBar / 1.0e5; // K/bar to K/Pa
         }
       } catch (Exception e) {
         muJT = 0.0;
@@ -1736,7 +1750,10 @@ public class TwoFluidPipe extends Pipeline {
 
       // Joule-Thomson cooling from pressure drop
       double dP = sec.getPressure() - P_prev;
-      double dT_JT = muJT * dP; // Temperature change due to J-T effect
+      // The coefficient rises strongly as the gas expands, so evaluate it at the local state
+      // rather than holding the inlet value over the whole line.
+      double muJTlocal = localJouleThomsonCoefficient(0.5 * (sec.getPressure() + P_prev), T_prev, muJT);
+      double dT_JT = muJTlocal * dP; // Temperature change due to J-T effect
 
       // Heat transfer calculation with exponential solution
       double T_new;
@@ -1749,19 +1766,23 @@ public class TwoFluidPipe extends Pipeline {
         T_new = T_prev;
       }
 
+      // Bound the heat-exchange term only: wall heat transfer alone can approach the surface
+      // temperature but never cross it. Joule-Thomson is applied afterwards and is deliberately
+      // not bounded by the surface temperature, because expansion cooling can and does take the
+      // fluid below ambient - that is what drives subsea hydrate and MDMT exposure.
+      if (h > 0) {
+        if (T_prev > T_surface) {
+          T_new = Math.max(T_new, T_surface);
+          T_new = Math.min(T_new, T_prev);
+        } else {
+          T_new = Math.min(T_new, T_surface);
+          T_new = Math.max(T_new, T_prev);
+        }
+      }
+
       // Add Joule-Thomson effect
       T_new += dT_JT;
 
-      // Ensure physical bounds
-      if (h > 0) {
-        if (T_prev > T_surface) {
-          T_new = Math.max(T_new, T_surface); // Cannot cool below ambient
-          T_new = Math.min(T_new, T_prev); // Cannot heat up when cooling
-        } else {
-          T_new = Math.min(T_new, T_surface); // Cannot heat above ambient
-          T_new = Math.max(T_new, T_prev); // Cannot cool when heating
-        }
-      }
       T_new = Math.max(T_new, 100.0); // Never below 100K (absolute minimum)
 
       sec.setTemperature(T_new);
@@ -1775,6 +1796,39 @@ public class TwoFluidPipe extends Pipeline {
       }
 
       P_prev = sec.getPressure();
+    }
+  }
+
+  /**
+   * Evaluate the Joule-Thomson coefficient at a local pipe state.
+   *
+   * <p>
+   * The coefficient of a rich gas rises substantially as the fluid expands along the line, so holding the inlet value
+   * over the whole pipe under-predicts the expansion cooling.
+   * </p>
+   *
+   * @param pressurePa local pressure in Pa
+   * @param temperatureK local temperature in K
+   * @param fallback coefficient in K/Pa to return when the local flash is unavailable or fails
+   * @return Joule-Thomson coefficient in K/Pa
+   */
+  private double localJouleThomsonCoefficient(double pressurePa, double temperatureK, double fallback) {
+    if (!enableJouleThomson || referenceFluid == null || pressurePa <= 0.0 || temperatureK <= 0.0) {
+      return fallback;
+    }
+    try {
+      SystemInterface local = referenceFluid.clone();
+      local.setPressure(pressurePa / 1.0e5, "bara");
+      local.setTemperature(temperatureK, "K");
+      new ThermodynamicOperations(local).TPflash();
+      local.initProperties();
+      double muJTperBar = local.getJouleThomsonCoefficient("K/bar");
+      if (Double.isNaN(muJTperBar) || Math.abs(muJTperBar) >= 10.0) {
+        return fallback;
+      }
+      return muJTperBar / 1.0e5;
+    } catch (Exception e) {
+      return fallback;
     }
   }
 
@@ -3229,6 +3283,26 @@ public class TwoFluidPipe extends Pipeline {
         sec.setTerrainSlugPending(false);
       }
     }
+  }
+
+  /**
+   * March the steady-state pressure from one section to the next.
+   *
+   * <p>
+   * Both the forward-marching initialization and the iterative refinement must integrate the <em>same</em> discrete
+   * momentum balance, otherwise the refinement drives the profile away from a consistent initialization. The gradient
+   * is therefore always evaluated on the upstream section and applied over that section's own length, so the
+   * hydrostatic contribution telescopes to {@code rho * g * dz} across the line and terrain undulation cancels
+   * correctly.
+   * </p>
+   *
+   * @param prev upstream section supplying the pressure and the gradient
+   * @param sec downstream section whose pressure is being computed
+   * @return pressure at the downstream section (Pa), floored at 1 bar
+   */
+  private double marchPressure(TwoFluidSection prev, TwoFluidSection sec) {
+    double dPdx = estimatePressureGradient(prev);
+    return Math.max(1e5, prev.getPressure() - dPdx * prev.getLength());
   }
 
   /**
@@ -6718,6 +6792,44 @@ public class TwoFluidPipe extends Pipeline {
    */
   public int getSteadyStateIterationsUsed() {
     return ssIterationsUsed;
+  }
+
+  /**
+   * Set the maximum number of steady-state refinement iterations.
+   *
+   * <p>
+   * The refinement loop is an under-relaxed fixed-point sweep, so information travels roughly one section per
+   * iteration. When this is not set, the limit defaults to {@code max(100, 20 * numberOfSections)}, which is adequate
+   * for long transport lines. Set an explicit value to trade run time against convergence.
+   * </p>
+   *
+   * @param maxIterations maximum refinement iterations; zero or negative restores the mesh-derived default
+   */
+  public void setSteadyStateMaxIterations(int maxIterations) {
+    this.ssMaxIterations = maxIterations;
+  }
+
+  /**
+   * Get the maximum number of steady-state refinement iterations.
+   *
+   * @return the user-specified limit, or zero when the mesh-derived default is in use
+   */
+  public int getSteadyStateMaxIterations() {
+    return ssMaxIterations;
+  }
+
+  /**
+   * Check whether the last steady-state solve met its convergence tolerance.
+   *
+   * <p>
+   * When this returns {@code false} the reported pressure, holdup and temperature profiles are the last iterate rather
+   * than a converged solution and must not be used for design.
+   * </p>
+   *
+   * @return true when the last steady-state refinement loop converged
+   */
+  public boolean isSteadyStateConverged() {
+    return ssConverged;
   }
 
   // ============ Minimum Slip Methods ============

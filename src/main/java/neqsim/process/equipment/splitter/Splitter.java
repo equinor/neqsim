@@ -4,12 +4,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import com.google.gson.GsonBuilder;
-
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.equipment.mixer.Mixer;
@@ -403,7 +400,12 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
         splitStream[i].getThermoSystem().addComponent(index, change);
       }
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(splitStream[i].getThermoSystem());
-      thermoOps.TPflash();
+      if (splitFactor[i] > 0.0) {
+        thermoOps.TPflash();
+      }
+      // A branch that is switched off holds a numerically empty system. Flashing it makes
+      // Rachford-Rice diverge and leaves a non-physical enthalpy that downstream equipment
+      // reports as an absurd duty, so the already-flashed inlet phase split is kept instead.
     }
 
     // Store inlet stream values for needRecalculation check (not split stream values)
