@@ -495,24 +495,19 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
   /** {@inheritDoc} */
   @Override
   protected Serializable captureControllerSubclassTransientState() {
-    double recycleValveOpening =
-        recycleValve == null ? Double.NaN : recycleValve.getPercentValveOpening();
-    double recycleValveTarget =
-        recycleValve == null ? Double.NaN : recycleValve.getTargetPercentValveOpening();
-    return new AntiSurgeTransientState(compressor, recycleValve, surgeMarginSetPoint,
-        proportionalGain, integralTime, minOpening, maxOpening, valveOpening, integralState,
-        lastMargin, predictiveActionEnabled, predictionHorizon, marginRateFilterTime,
-        filteredMarginRate, predictedMargin, targetValveOpening, valveRateLimit,
-        actuatorTimeConstant, emergencyMargin, emergencyOpening, recycleValveOpening,
-        recycleValveTarget);
+    double recycleValveOpening = recycleValve == null ? Double.NaN : recycleValve.getPercentValveOpening();
+    double recycleValveTarget = recycleValve == null ? Double.NaN : recycleValve.getTargetPercentValveOpening();
+    return new AntiSurgeTransientState(compressor, recycleValve, surgeMarginSetPoint, proportionalGain, integralTime,
+        minOpening, maxOpening, valveOpening, integralState, lastMargin, predictiveActionEnabled, predictionHorizon,
+        marginRateFilterTime, filteredMarginRate, predictedMargin, targetValveOpening, valveRateLimit,
+        actuatorTimeConstant, emergencyMargin, emergencyOpening, recycleValveOpening, recycleValveTarget);
   }
 
   /** {@inheritDoc} */
   @Override
   protected void restoreControllerSubclassTransientState(Serializable state) {
     if (!(state instanceof AntiSurgeTransientState)) {
-      throw new IllegalArgumentException(
-          "Anti-surge controller requires an anti-surge transient snapshot");
+      throw new IllegalArgumentException("Anti-surge controller requires an anti-surge transient snapshot");
     }
     AntiSurgeTransientState snapshot = (AntiSurgeTransientState) state;
     compressor = snapshot.compressor;
@@ -580,14 +575,12 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
     private final double recycleValveOpening;
     private final double recycleValveTarget;
 
-    private AntiSurgeTransientState(Compressor compressor, ThrottlingValve recycleValve,
-        double surgeMarginSetPoint, double proportionalGain, double integralTime,
-        double minOpening, double maxOpening, double valveOpening, double integralState,
-        double lastMargin, boolean predictiveActionEnabled, double predictionHorizon,
-        double marginRateFilterTime, double filteredMarginRate, double predictedMargin,
-        double targetValveOpening, double valveRateLimit, double actuatorTimeConstant,
-        double emergencyMargin, double emergencyOpening, double recycleValveOpening,
-        double recycleValveTarget) {
+    private AntiSurgeTransientState(Compressor compressor, ThrottlingValve recycleValve, double surgeMarginSetPoint,
+        double proportionalGain, double integralTime, double minOpening, double maxOpening, double valveOpening,
+        double integralState, double lastMargin, boolean predictiveActionEnabled, double predictionHorizon,
+        double marginRateFilterTime, double filteredMarginRate, double predictedMargin, double targetValveOpening,
+        double valveRateLimit, double actuatorTimeConstant, double emergencyMargin, double emergencyOpening,
+        double recycleValveOpening, double recycleValveTarget) {
       this.compressor = compressor;
       this.recycleValve = recycleValve;
       this.surgeMarginSetPoint = surgeMarginSetPoint;
