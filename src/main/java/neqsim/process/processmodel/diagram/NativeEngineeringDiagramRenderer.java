@@ -453,16 +453,15 @@ public final class NativeEngineeringDiagramRenderer {
           "Rendered connection has no primary label and requires drawing review", connection.getId()));
       label = "";
     } else {
-      page.commands.add(
-          Command.text(labelPoint.x, labelPoint.y - 3.0, 2.3, label, color, connection.getId(), "middle"));
+      page.commands
+          .add(Command.text(labelPoint.x, labelPoint.y - 3.0, 2.3, label, color, connection.getId(), "middle"));
     }
     page.routes.add(new RouteView(connection.getId(), points, label, labelPoint,
         endpointOwnerId(connection, "sourceEndpointId", objects),
         endpointOwnerId(connection, "targetEndpointId", objects)));
   }
 
-  private void addRouteQualityDiagnostics(Page page, Map<String, Point> positions,
-      List<Diagnostic> diagnostics) {
+  private void addRouteQualityDiagnostics(Page page, Map<String, Point> positions, List<Diagnostic> diagnostics) {
     List<String> objectIds = new ArrayList<String>(positions.keySet());
     Collections.sort(objectIds);
     for (int routeIndex = 0; routeIndex < page.routes.size(); routeIndex++) {
@@ -722,8 +721,7 @@ public final class NativeEngineeringDiagramRenderer {
     for (int index = 1; index < points.size(); index++) {
       Point start = points.get(index - 1);
       Point end = points.get(index);
-      if (pointInsideRectangle(start, left, right, top, bottom)
-          || pointInsideRectangle(end, left, right, top, bottom)
+      if (pointInsideRectangle(start, left, right, top, bottom) || pointInsideRectangle(end, left, right, top, bottom)
           || segmentsIntersect(start, end, new Point(left, top), new Point(right, top))
           || segmentsIntersect(start, end, new Point(right, top), new Point(right, bottom))
           || segmentsIntersect(start, end, new Point(right, bottom), new Point(left, bottom))
@@ -744,10 +742,10 @@ public final class NativeEngineeringDiagramRenderer {
     double third = cross(secondStart, secondEnd, firstStart);
     double fourth = cross(secondStart, secondEnd, firstEnd);
     return first * second <= 0.0 && third * fourth <= 0.0
-        && Math.max(Math.min(firstStart.x, firstEnd.x), Math.min(secondStart.x, secondEnd.x))
-            <= Math.min(Math.max(firstStart.x, firstEnd.x), Math.max(secondStart.x, secondEnd.x))
-        && Math.max(Math.min(firstStart.y, firstEnd.y), Math.min(secondStart.y, secondEnd.y))
-            <= Math.min(Math.max(firstStart.y, firstEnd.y), Math.max(secondStart.y, secondEnd.y));
+        && Math.max(Math.min(firstStart.x, firstEnd.x), Math.min(secondStart.x, secondEnd.x)) <= Math
+            .min(Math.max(firstStart.x, firstEnd.x), Math.max(secondStart.x, secondEnd.x))
+        && Math.max(Math.min(firstStart.y, firstEnd.y), Math.min(secondStart.y, secondEnd.y)) <= Math
+            .min(Math.max(firstStart.y, firstEnd.y), Math.max(secondStart.y, secondEnd.y));
   }
 
   private static double cross(Point start, Point end, Point point) {
@@ -755,13 +753,13 @@ public final class NativeEngineeringDiagramRenderer {
   }
 
   private static boolean labelIntersectsObject(String label, Point labelPoint, Point objectPosition) {
-    return rectanglesOverlap(labelPoint.x, labelPoint.y - 3.0, estimatedTextWidth(label, 2.3), 3.2,
-        objectPosition.x, objectPosition.y, OBJECT_WIDTH, OBJECT_HEIGHT);
+    return rectanglesOverlap(labelPoint.x, labelPoint.y - 3.0, estimatedTextWidth(label, 2.3), 3.2, objectPosition.x,
+        objectPosition.y, OBJECT_WIDTH, OBJECT_HEIGHT);
   }
 
   private static boolean labelsOverlap(String firstLabel, Point firstPoint, String secondLabel, Point secondPoint) {
-    return rectanglesOverlap(firstPoint.x, firstPoint.y - 3.0, estimatedTextWidth(firstLabel, 2.3), 3.2,
-        secondPoint.x, secondPoint.y - 3.0, estimatedTextWidth(secondLabel, 2.3), 3.2);
+    return rectanglesOverlap(firstPoint.x, firstPoint.y - 3.0, estimatedTextWidth(firstLabel, 2.3), 3.2, secondPoint.x,
+        secondPoint.y - 3.0, estimatedTextWidth(secondLabel, 2.3), 3.2);
   }
 
   private static boolean rectanglesOverlap(double firstX, double firstY, double firstWidth, double firstHeight,
@@ -975,10 +973,10 @@ public final class NativeEngineeringDiagramRenderer {
     }
 
     private void appendVisualSignature(StringBuilder result) {
-      result.append(type).append('|').append(number(x)).append('|').append(number(y)).append('|')
-          .append(number(width)).append('|').append(number(height)).append('|').append(number(size)).append('|')
-          .append(stroke).append('|').append(fill).append('|').append(number(strokeWidth)).append('|').append(dash)
-          .append('|').append(anchor).append('|').append(text.length()).append(':').append(text);
+      result.append(type).append('|').append(number(x)).append('|').append(number(y)).append('|').append(number(width))
+          .append('|').append(number(height)).append('|').append(number(size)).append('|').append(stroke).append('|')
+          .append(fill).append('|').append(number(strokeWidth)).append('|').append(dash).append('|').append(anchor)
+          .append('|').append(text.length()).append(':').append(text);
       for (Point point : points) {
         result.append('|').append(number(point.x)).append(',').append(number(point.y));
       }
@@ -1052,4 +1050,3 @@ public final class NativeEngineeringDiagramRenderer {
     }
   }
 }
-
