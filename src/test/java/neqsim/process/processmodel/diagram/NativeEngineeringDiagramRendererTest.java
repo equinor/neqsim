@@ -6,9 +6,14 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import neqsim.process.engineering.model.EngineeringDiagramDesignationRegister;
+import neqsim.process.engineering.model.EngineeringDiagramDesignationRegister.Designation;
+import neqsim.process.engineering.model.EngineeringDiagramDesignationRegister.Kind;
+import neqsim.process.engineering.model.EngineeringDiagramDesignationRegister.ReviewState;
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet;
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.ContentProfile;
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.SemanticObject;
@@ -109,6 +114,56 @@ class NativeEngineeringDiagramRendererTest {
   }
 
   @Test
+  void reportsDeterministicCollisionClippingAndReadabilityDiagnostics() {
+    EngineeringDiagramReferenceFixtures.SystemCase reference = EngineeringDiagramReferenceFixtures.simpleTrain();
+    EngineeringDiagramDocumentSet baseline = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
+        reference.getProcessSystem(), reference.getCaseId(), "A", "PFD-NATIVE-005", "Drawing quality diagnostics",
+        ContentProfile.PFD);
+    String sheetKey = baseline.getDrawings().get(0).getSheets().get(0).getKey();
+    SemanticObject separator = findObject(baseline, EngineeringNode.Kind.EQUIPMENT, "equipmentName", "10-VA-001");
+    SemanticObject valve = findObject(baseline, EngineeringNode.Kind.EQUIPMENT, "equipmentName", "10-XV-001");
+    EngineeringDiagramDesignationRegister designations = new EngineeringDiagramDesignationRegister()
+        .withDesignation(new Designation(separator.getId(), Kind.EQUIPMENT_TAG, "10-VERY-LONG-SEPARATOR-DESIGNATION",
+            "equipment-register:PFD-NATIVE-005", ReviewState.REVIEWED, "Process discipline", "review:PFD-NATIVE-005",
+            "2026-08-14T18:00:00Z", "A"));
+    EngineeringDiagramLayoutRegister layout = new EngineeringDiagramLayoutRegister()
+        .withPinnedPosition(reviewedPosition(separator.getId(), sheetKey, 10.0, 60.0))
+        .withPinnedPosition(reviewedPosition(valve.getId(), sheetKey, 10.0, 60.0));
+    EngineeringDiagramDocumentSet documents = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
+        reference.getProcessSystem(), reference.getCaseId(), "A", "PFD-NATIVE-005", "Drawing quality diagnostics",
+        ContentProfile.PFD, designations, layout);
+
+    NativeEngineeringDiagramRenderer renderer = new NativeEngineeringDiagramRenderer(documents);
+    NativeEngineeringDiagramRenderer.Result first = renderer.render();
+    NativeEngineeringDiagramRenderer.Result second = renderer.render();
+
+    assertTrue(hasDiagnostic(first, "DIAGRAM_RENDER_OBJECT_COLLISION"));
+    assertTrue(hasDiagnostic(first, "DIAGRAM_RENDER_OBJECT_CLIPPED"));
+    assertTrue(hasDiagnostic(first, "DIAGRAM_RENDER_LABEL_OVERFLOW"));
+    assertEquals(diagnosticSignatures(first), diagnosticSignatures(second));
+    assertTrue(first.isComplete());
+  }
+
+  @Test
+  void propagatesBrokenControlledDocumentReferencesAsRendererErrors() {
+    EngineeringDiagramReferenceFixtures.SystemCase reference = EngineeringDiagramReferenceFixtures.simpleTrain();
+    EngineeringDiagramDocumentSet baseline = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
+        reference.getProcessSystem(), reference.getCaseId(), "A", "PFD-NATIVE-006", "Broken reference diagnostics",
+        ContentProfile.PFD);
+    String sheetKey = baseline.getDrawings().get(0).getSheets().get(0).getKey();
+    EngineeringDiagramLayoutRegister layout = new EngineeringDiagramLayoutRegister()
+        .withPinnedPosition(reviewedPosition("missing-semantic-object", sheetKey, 80.0, 60.0));
+    EngineeringDiagramDocumentSet documents = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
+        reference.getProcessSystem(), reference.getCaseId(), "A", "PFD-NATIVE-006", "Broken reference diagnostics",
+        ContentProfile.PFD, new EngineeringDiagramDesignationRegister(), layout);
+
+    NativeEngineeringDiagramRenderer.Result result = new NativeEngineeringDiagramRenderer(documents).render();
+
+    assertTrue(hasDiagnostic(result, "DIAGRAM_DOCUMENT_LAYOUT_UNKNOWN_OBJECT"));
+    assertFalse(result.isComplete());
+  }
+
+  @Test
   void keepsSheetOrderAndRenderedBytesStableAcrossFreshEquivalentModels() {
     Map<String, String> expectedSvg = null;
     byte[] expectedPdf = null;
@@ -158,5 +213,13 @@ class NativeEngineeringDiagramRendererTest {
       }
     }
     return false;
+  }
+
+  private static List<String> diagnosticSignatures(NativeEngineeringDiagramRenderer.Result result) {
+    List<String> signatures = new ArrayList<String>();
+    for (NativeEngineeringDiagramRenderer.Diagnostic diagnostic : result.getDiagnostics()) {
+      signatures.add(diagnostic.getSeverity().name() + ":" + diagnostic.getCode() + ":" + diagnostic.getSubjectId());
+    }
+    return signatures;
   }
 }
