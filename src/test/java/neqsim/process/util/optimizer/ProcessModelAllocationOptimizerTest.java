@@ -41,8 +41,7 @@ class ProcessModelAllocationOptimizerTest {
     private final ProcessModelOperatingActionSetEvaluator evaluator;
 
     /** Creates a fixture. */
-    private AllocationFixture(Stream producerA, Stream producerB,
-        ProcessModelOperatingActionSetEvaluator evaluator) {
+    private AllocationFixture(Stream producerA, Stream producerB, ProcessModelOperatingActionSetEvaluator evaluator) {
       this.producerA = producerA;
       this.producerB = producerB;
       this.evaluator = evaluator;
@@ -67,8 +66,7 @@ class ProcessModelAllocationOptimizerTest {
     allocationSink.addCapacityConstraint(rateConstraint("producer B installed rate", 800.0,
         () -> producerB.getFlowRate("kg/hr"), "synthetic producer B installed envelope"));
     allocationSink.addCapacityConstraint(rateConstraint("shared gathering rate", 1000.0,
-        () -> producerA.getFlowRate("kg/hr") + producerB.getFlowRate("kg/hr"),
-        "synthetic shared gathering capacity"));
+        () -> producerA.getFlowRate("kg/hr") + producerB.getFlowRate("kg/hr"), "synthetic shared gathering capacity"));
 
     ProcessSystem wells = new ProcessSystem("wells");
     wells.add(producerA);
@@ -86,21 +84,19 @@ class ProcessModelAllocationOptimizerTest {
         processModel -> 2.0 * producerA.getFlowRate("kg/hr") + producerB.getFlowRate("kg/hr"),
         ObjectiveDefinition.Direction.MAXIMIZE);
     simulation.getObjectives().get(0).setUnit("value-unit/hr");
-    ProcessModelOperatingAction actionA = ProcessModelOperatingAction.continuous("producer-a-rate",
-        "Producer A rate", "wells::producer A.flowRate", 200.0, 1000.0, "kg/hr",
-        "synthetic producer A operating envelope");
-    ProcessModelOperatingAction actionB = ProcessModelOperatingAction.continuous("producer-b-rate",
-        "Producer B rate", "wells::producer B.flowRate", 200.0, 1000.0, "kg/hr",
-        "synthetic producer B operating envelope");
+    ProcessModelOperatingAction actionA = ProcessModelOperatingAction.continuous("producer-a-rate", "Producer A rate",
+        "wells::producer A.flowRate", 200.0, 1000.0, "kg/hr", "synthetic producer A operating envelope");
+    ProcessModelOperatingAction actionB = ProcessModelOperatingAction.continuous("producer-b-rate", "Producer B rate",
+        "wells::producer B.flowRate", 200.0, 1000.0, "kg/hr", "synthetic producer B operating envelope");
     ProcessModelOperatingActionSetEvaluator evaluator = new ProcessModelOperatingActionSetEvaluator(
-        "allocation-actions", "Producer allocation actions", "synthetic fixed-total allocation",
-        simulation, Arrays.asList(actionA, actionB))
-        .requireHydraulicConstraint(HydraulicLimitRole.WELL_INFLOW_OUTFLOW, "gathering",
-            "allocation sink", "producer A installed rate", "producer A installed capacity")
-        .requireHydraulicConstraint(HydraulicLimitRole.WELL_INFLOW_OUTFLOW, "gathering",
-            "allocation sink", "producer B installed rate", "producer B installed capacity")
-        .requireHydraulicConstraint(HydraulicLimitRole.GATHERING_HYDRAULICS, "gathering",
-            "allocation sink", "shared gathering rate", "shared gathering capacity");
+        "allocation-actions", "Producer allocation actions", "synthetic fixed-total allocation", simulation,
+        Arrays.asList(actionA, actionB))
+        .requireHydraulicConstraint(HydraulicLimitRole.WELL_INFLOW_OUTFLOW, "gathering", "allocation sink",
+            "producer A installed rate", "producer A installed capacity")
+        .requireHydraulicConstraint(HydraulicLimitRole.WELL_INFLOW_OUTFLOW, "gathering", "allocation sink",
+            "producer B installed rate", "producer B installed capacity")
+        .requireHydraulicConstraint(HydraulicLimitRole.GATHERING_HYDRAULICS, "gathering", "allocation sink",
+            "shared gathering rate", "shared gathering capacity");
     return new AllocationFixture(producerA, producerB, evaluator);
   }
 
@@ -116,8 +112,8 @@ class ProcessModelAllocationOptimizerTest {
   private ProcessModelAllocationOptimizer createOptimizer(AllocationFixture fixture) {
     return new ProcessModelAllocationOptimizer("producer-allocation", "Producer allocation",
         "synthetic installed-capacity allocation basis", fixture.evaluator, 1000.0, "kg/hr")
-        .setInitialAllocation(new double[] {500.0, 500.0}).setObjectiveIndex(0)
-        .setInitialStepFraction(0.10).setRelativeStepTolerance(1.0e-3)
+        .setInitialAllocation(new double[] { 500.0, 500.0 }).setObjectiveIndex(0).setInitialStepFraction(0.10)
+        .setRelativeStepTolerance(1.0e-3)
         .setObjectiveImprovementTolerance(1.0e-9,
             "synthetic objective is deterministic to substantially better than one nano-unit")
         .setMaximumEvaluations(100);
@@ -140,21 +136,18 @@ class ProcessModelAllocationOptimizerTest {
     assertEquals("allocation value proxy", result.getObjective().getName());
     assertEquals(ObjectiveDefinition.Direction.MAXIMIZE, result.getObjective().getDirection());
     assertEquals("value-unit/hr", result.getObjective().getUnit());
-    assertArrayEquals(new double[] {700.0, 300.0},
-        result.getBestFeasibleCandidate().getCandidateValues(), 1.0e-10);
+    assertArrayEquals(new double[] { 700.0, 300.0 }, result.getBestFeasibleCandidate().getCandidateValues(), 1.0e-10);
     assertEquals(1700.0, result.getBestFeasibleCandidate().getRawObjective(), 1.0e-8);
-    assertArrayEquals(new double[] {800.0, 200.0},
-        result.getBestSampledObjectiveCandidate().getCandidateValues(), 1.0e-10);
+    assertArrayEquals(new double[] { 800.0, 200.0 }, result.getBestSampledObjectiveCandidate().getCandidateValues(),
+        1.0e-10);
     assertFalse(result.getBestSampledObjectiveCandidate().getEvaluation().isFeasible());
     assertEquals(100.0, result.getSampledObjectiveOpportunityGap(), 1.0e-8);
-    assertEquals("producer A installed rate", result.getRankedHydraulicConstraintsAtBestFeasible()
-        .get(0).getBinding().getConstraintName());
-    assertEquals(1.0, result.getRankedHydraulicConstraintsAtBestFeasible().get(0).getUtilization(),
-        1.0e-12);
-    assertEquals("producer A installed rate", result.getRankedHydraulicConstraintsAtBestSampledObjective()
-        .get(0).getBinding().getConstraintName());
-    assertEquals(800.0 / 700.0,
-        result.getRankedHydraulicConstraintsAtBestSampledObjective().get(0).getUtilization(),
+    assertEquals("producer A installed rate",
+        result.getRankedHydraulicConstraintsAtBestFeasible().get(0).getBinding().getConstraintName());
+    assertEquals(1.0, result.getRankedHydraulicConstraintsAtBestFeasible().get(0).getUtilization(), 1.0e-12);
+    assertEquals("producer A installed rate",
+        result.getRankedHydraulicConstraintsAtBestSampledObjective().get(0).getBinding().getConstraintName());
+    assertEquals(800.0 / 700.0, result.getRankedHydraulicConstraintsAtBestSampledObjective().get(0).getUtilization(),
         1.0e-12);
     for (CandidateRecord candidate : result.getCandidates()) {
       double[] values = candidate.getCandidateValues();
@@ -186,8 +179,7 @@ class ProcessModelAllocationOptimizerTest {
     assertFalse(result.isConverged());
     assertTrue(result.isModelRecovered());
     assertEquals(2, result.getEvaluationCount());
-    assertArrayEquals(new double[] {600.0, 400.0},
-        result.getBestFeasibleCandidate().getCandidateValues(), 1.0e-10);
+    assertArrayEquals(new double[] { 600.0, 400.0 }, result.getBestFeasibleCandidate().getCandidateValues(), 1.0e-10);
   }
 
   /** Verifies immutable Java serialization and frozen objective identity for JPype consumers. */
@@ -209,11 +201,10 @@ class ProcessModelAllocationOptimizerTest {
     assertEquals("synthetic installed-capacity allocation basis", restored.getProvenance());
     double[] allocation = restored.getBestFeasibleCandidate().getCandidateValues();
     allocation[0] = -1.0;
-    assertArrayEquals(new double[] {700.0, 300.0},
-        restored.getBestFeasibleCandidate().getCandidateValues(), 1.0e-10);
+    assertArrayEquals(new double[] { 700.0, 300.0 }, restored.getBestFeasibleCandidate().getCandidateValues(), 1.0e-10);
     double[] lowerBounds = restored.getLowerBounds();
     lowerBounds[0] = -1.0;
-    assertArrayEquals(new double[] {200.0, 200.0}, restored.getLowerBounds(), 0.0);
+    assertArrayEquals(new double[] { 200.0, 200.0 }, restored.getLowerBounds(), 0.0);
     assertNotSame(restored.getCandidates(), restored.getCandidates());
     assertNotSame(restored.getDiagnostics(), restored.getDiagnostics());
     assertNotSame(restored.getRankedHydraulicConstraintsAtBestFeasible(),
@@ -228,20 +219,16 @@ class ProcessModelAllocationOptimizerTest {
   @Test
   void validatesAllocationDomainBeforeSimulation() {
     AllocationFixture fixture = createFixture();
-    assertThrows(IllegalArgumentException.class,
-        () -> new ProcessModelAllocationOptimizer("allocation", "Allocation", "basis",
-            fixture.evaluator, 2500.0, "kg/hr"));
-    assertThrows(IllegalArgumentException.class,
-        () -> new ProcessModelAllocationOptimizer("allocation", "Allocation", "basis",
-            fixture.evaluator, 1000.0, "Sm3/day"));
+    assertThrows(IllegalArgumentException.class, () -> new ProcessModelAllocationOptimizer("allocation", "Allocation",
+        "basis", fixture.evaluator, 2500.0, "kg/hr"));
+    assertThrows(IllegalArgumentException.class, () -> new ProcessModelAllocationOptimizer("allocation", "Allocation",
+        "basis", fixture.evaluator, 1000.0, "Sm3/day"));
     ProcessModelAllocationOptimizer optimizer = createOptimizer(fixture);
-    assertThrows(IllegalArgumentException.class,
-        () -> optimizer.setInitialAllocation(new double[] {700.0, 400.0}));
+    assertThrows(IllegalArgumentException.class, () -> optimizer.setInitialAllocation(new double[] { 700.0, 400.0 }));
     assertThrows(IllegalArgumentException.class, () -> optimizer.setObjectiveIndex(1));
     assertThrows(IllegalArgumentException.class, () -> optimizer.setMaximumEvaluations(0));
     assertThrows(IllegalArgumentException.class, () -> optimizer.setInitialStepFraction(0.0));
     assertThrows(IllegalArgumentException.class, () -> optimizer.setRelativeStepTolerance(0.0));
-    assertThrows(IllegalArgumentException.class,
-        () -> optimizer.setObjectiveImprovementTolerance(-1.0, "invalid"));
+    assertThrows(IllegalArgumentException.class, () -> optimizer.setObjectiveImprovementTolerance(-1.0, "invalid"));
   }
 }
