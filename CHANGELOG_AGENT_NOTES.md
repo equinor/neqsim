@@ -55,11 +55,15 @@ explicit-unit accessor.
 Minor: the API gravity constant was `141.5/SG - 131.0`, corrected to the standard `- 131.5`, and
 the two-phase friction `S` coefficients `3.18` / `0.872` are now the published `3.182` / `0.8725`.
 
-**Still not modelled:** the Payne et al. (1979) holdup correction (times 0.924 uphill, 0.685
-downhill) is not applied. Beggs and Brill is known to over-predict liquid holdup, and on
-large-bore high-pressure gas lines carrying a few mass per cent of condensate `PipeBeggsAndBrills`
-will still predict more holdup and more pressure drop than a transient multiphase code. State this
-as a correlation limitation when reporting.
+**Still not modelled:** the Payne et al. (1979) holdup correction is not applied. Note, however, that
+it would *not* have explained the residual difference against a transient two-fluid code on a large-bore
+gas line: the Beggs and Brill `S` factor is monotonically increasing in `y = lambda_L / H_L^2` over that
+range, so lowering the holdup *raises* the friction multiplier. On a 74 km 14-inch line at a mean
+no-slip liquid fraction of 0.009 the multiplier was 1.42 and accounted for the entire gap; removing it
+brought the correlation from 124 bar to 87 bar against 78 bar from OLGA and 84 bar from a single-phase
+Darcy check. Beggs and Brill is calibrated for no-slip liquid fractions down to roughly 0.01-0.02, so
+below that the two-phase friction multiplier is an extrapolation. State this as a correlation
+applicability limit when reporting.
 
 ---
 
