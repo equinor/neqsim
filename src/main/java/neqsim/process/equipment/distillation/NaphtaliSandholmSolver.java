@@ -3217,20 +3217,43 @@ public class NaphtaliSandholmSolver {
       for (int k = 0; k < varsPerTray; k++) {
         int varIdx = jj * varsPerTray + k;
 
-        // Save and perturb one primary variable from the same frozen base state.
+        // Save and perturb one primary variable from the same frozen base state. Use
+        // a centred difference away from the physical lower bounds. The symmetric
+        // evaluation cancels the leading truncation error that made the frozen
+        // forward difference sensitive to the capped local K fixed point. This adds
+        // one tray evaluation per interior variable but does not reintroduce
+        // column-order-dependent state drift.
         double origVal = getVariable(jj, k);
         double h = Math.max(Math.abs(origVal) * pertSize, minPert);
         setVariable(jj, k, origVal + h);
         evaluateThermoForTray(jj);
 
-        // Only the perturbed tray and its two neighbors can depend on this variable.
         int jStart = Math.max(0, jj - 1);
         int jEnd = Math.min(N - 1, jj + 1);
+        double[][] forwardResidual = new double[jEnd - jStart + 1][];
         for (int j = jStart; j <= jEnd; j++) {
-          double[] Fpert = computeResidualForTray(j);
+          forwardResidual[j - jStart] = computeResidualForTray(j);
+        }
+
+        boolean centeredDifference = canUseCenteredJacobianPerturbation(k, origVal, h);
+        if (centeredDifference) {
+          setVariable(jj, k, origVal);
+          restoreDerivedThermodynamicStateForTray(jj, baseK, baseVap, baseL, baseHL, baseHV);
+          setVariable(jj, k, origVal - h);
+          evaluateThermoForTray(jj);
+        }
+
+        // Only the perturbed tray and its two neighbors can depend on this variable.
+        for (int j = jStart; j <= jEnd; j++) {
+          double[] comparisonResidual = centeredDifference ? computeResidualForTray(j) : null;
           int rowBase = j * varsPerTray;
           for (int eq = 0; eq < varsPerTray; eq++) {
-            J[rowBase + eq][varIdx] = (Fpert[eq] - F0[rowBase + eq]) / h;
+            if (centeredDifference) {
+              J[rowBase + eq][varIdx] =
+                  (forwardResidual[j - jStart][eq] - comparisonResidual[eq]) / (2.0 * h);
+            } else {
+              J[rowBase + eq][varIdx] = (forwardResidual[j - jStart][eq] - F0[rowBase + eq]) / h;
+            }
           }
         }
 
@@ -3247,6 +3270,19 @@ public class NaphtaliSandholmSolver {
     lastFiniteDifferenceJacobianColumns += totalVars;
     lastJacobianBuildTimeSeconds += (System.nanoTime() - jacobianStart) / 1.0e9;
     return J;
+  }
+
+  /**
+   * Check whether a Jacobian variable can be perturbed symmetrically without crossing its physical lower bound.
+   *
+   * @param variableIndex local tray-variable index
+   * @param value unperturbed variable value
+   * @param perturbation finite-difference perturbation
+   * @return {@code true} when {@code value - perturbation} remains inside the variable domain
+   */
+  private boolean canUseCenteredJacobianPerturbation(int variableIndex, double value, double perturbation) {
+    double lowerBound = variableIndex == C ? 100.0 : 1.0e-20;
+    return value - perturbation > lowerBound;
   }
 
   /**
