@@ -3472,8 +3472,8 @@ public class NaphtaliSandholmSolver {
   }
 
   private void evaluateThermoForTray(int j) {
-    int maximumKValueIterations =
-        warmStartFromColumn ? THERMO_WARM_START_K_VALUE_ITERATIONS : THERMO_K_VALUE_ITERATIONS;
+    int maximumKValueIterations = warmStartFromColumn ? THERMO_WARM_START_K_VALUE_ITERATIONS
+        : THERMO_K_VALUE_ITERATIONS;
     evaluateThermoForTray(j, maximumKValueIterations);
   }
 
