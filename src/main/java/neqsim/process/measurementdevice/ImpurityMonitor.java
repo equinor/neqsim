@@ -301,6 +301,7 @@ public class ImpurityMonitor extends StreamMeasurementDeviceBaseClass
       }
     }
   }
+
   /** {@inheritDoc} */
   @Override
   public String getTransientStateIdentity() {
