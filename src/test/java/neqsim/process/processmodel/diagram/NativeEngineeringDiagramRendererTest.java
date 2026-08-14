@@ -123,9 +123,9 @@ class NativeEngineeringDiagramRendererTest {
     SemanticObject separator = findObject(baseline, EngineeringNode.Kind.EQUIPMENT, "equipmentName", "10-VA-001");
     SemanticObject valve = findObject(baseline, EngineeringNode.Kind.EQUIPMENT, "equipmentName", "10-XV-001");
     EngineeringDiagramDesignationRegister designations = new EngineeringDiagramDesignationRegister()
-        .withDesignation(new Designation(separator.getId(), Kind.EQUIPMENT_TAG,
-            "10-VERY-LONG-SEPARATOR-DESIGNATION", "equipment-register:PFD-NATIVE-005", ReviewState.REVIEWED,
-            "Process discipline", "review:PFD-NATIVE-005", "2026-08-14T18:00:00Z", "A"));
+        .withDesignation(new Designation(separator.getId(), Kind.EQUIPMENT_TAG, "10-VERY-LONG-SEPARATOR-DESIGNATION",
+            "equipment-register:PFD-NATIVE-005", ReviewState.REVIEWED, "Process discipline", "review:PFD-NATIVE-005",
+            "2026-08-14T18:00:00Z", "A"));
     EngineeringDiagramLayoutRegister layout = new EngineeringDiagramLayoutRegister()
         .withPinnedPosition(reviewedPosition(separator.getId(), sheetKey, 10.0, 60.0))
         .withPinnedPosition(reviewedPosition(valve.getId(), sheetKey, 10.0, 60.0));
