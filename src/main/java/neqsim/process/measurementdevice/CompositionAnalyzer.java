@@ -132,6 +132,7 @@ public class CompositionAnalyzer extends StreamMeasurementDeviceBaseClass
   public void displayResult() {
     System.out.println(getName() + " " + componentName + " [" + analyzerPhase + "] = " + getMeasuredValue("mole/mole"));
   }
+
   /** {@inheritDoc} */
   @Override
   public String getTransientStateIdentity() {
@@ -158,8 +159,7 @@ public class CompositionAnalyzer extends StreamMeasurementDeviceBaseClass
   /** {@inheritDoc} */
   @Override
   public CompositionAnalyzerState captureTransientState() {
-    return new CompositionAnalyzerState(getTransientStateIdentity(), stream,
-        captureMeasurementDeviceTransientState());
+    return new CompositionAnalyzerState(getTransientStateIdentity(), stream, captureMeasurementDeviceTransientState());
   }
 
   /** {@inheritDoc} */
