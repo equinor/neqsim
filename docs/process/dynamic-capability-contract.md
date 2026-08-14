@@ -411,9 +411,32 @@ its closed snapshot. Concrete descendants and online-signal operation remain fai
 This tranche is limited to local instruments whose production measured-value path actually calls
 `applySignalModifiers(...)`. `VolumeFlowTransmitter` and the total/oil/water level-transmitter families still return
 raw values without advancing that inherited signal state, so they are intentionally not presented as transaction
-participants. Differential-pressure primary flow devices and other state-owning analysers remain unaudited until all
-device-specific iteration, cache, configuration and binding state is covered.
+participants. Other state-owning analysers remain unaudited until all device-specific iteration, cache,
+configuration and binding state is covered.
 
 Passing this rollback gate does not qualify laboratory or online analyser accuracy, phase-sampling fidelity, wet-gas or
 metering standards, allocation, emissions or export-spec decisions, alarm/trip integrity, external I/O, safety action,
 virtual commissioning or OTS use.
+
+## Differential-pressure primary flow-meter transaction coverage
+
+The concrete local `OrificeFlowMeter`, `NozzleFlowMeter`, `VenturiFlowMeter`, `ConeFlowMeter`, and
+`WedgeFlowMeter` families participate when registered as measurement devices in a `ProcessSystem`. The common
+snapshot preserves stable transaction identity, the stream and optional differential-pressure-transmitter bindings,
+geometry, explicit differential pressure, density/isentropic-exponent/viscosity overrides, the last accepted pipe
+Reynolds number, and all inherited signal/alarm state.
+
+Subtype snapshots preserve orifice tapping and wet-gas settings, nozzle type, Venturi discharge and wet-gas settings, and
+wedge geometry state. Orifice and Venturi wet-gas result caches are derived from snapshotted inputs, so rollback
+invalidates them and deterministically recomputes rather than retaining a result from a rejected trial. Cone meters
+explicitly record that they own no additional mutable state beyond the common snapshot.
+
+Coverage is quantitative across one `ProcessSystem` and coordinated multi-area `ProcessModel` rollback, exact replay
+of Reynolds iteration plus noise/drift/filter/delay state, a nearby differential-pressure square-root trend, and
+Java-serialization restart with wet-gas cache invalidation. Concrete descendants and online-signal operation fail closed.
+A linked `DifferentialPressureTransmitter` must be registered separately in the same process transaction because its
+own signal state is not owned by the primary flow meter.
+
+This transaction gate does not alter or newly qualify ISO 5167 or ISO/TR 11583 physics, wet-gas correlation validity,
+meter uncertainty, installation effects, sampling accuracy, allocation/fiscal metering, external I/O, alarm/trip
+integrity, safety action, virtual commissioning or OTS use.
