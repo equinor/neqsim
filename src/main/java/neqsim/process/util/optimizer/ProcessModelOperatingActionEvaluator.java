@@ -335,8 +335,8 @@ public final class ProcessModelOperatingActionEvaluator {
     private final String provenance;
 
     /** Creates a validated binding. */
-    private HydraulicConstraintBinding(HydraulicLimitRole role, String areaName, String equipmentName,
-        String constraintName, String provenance) {
+    HydraulicConstraintBinding(HydraulicLimitRole role, String areaName, String equipmentName, String constraintName,
+        String provenance) {
       if (role == null) {
         throw new IllegalArgumentException("Hydraulic limit role must not be null");
       }
@@ -378,7 +378,7 @@ public final class ProcessModelOperatingActionEvaluator {
     }
 
     /** Checks exact address equality while allowing different explanatory provenance to be rejected as a duplicate. */
-    private boolean hasSameAddress(HydraulicConstraintBinding other) {
+    boolean hasSameAddress(HydraulicConstraintBinding other) {
       return areaName.equals(other.areaName) && equipmentName.equals(other.equipmentName)
           && constraintName.equals(other.constraintName);
     }
@@ -438,7 +438,7 @@ public final class ProcessModelOperatingActionEvaluator {
     private final boolean feasible;
 
     /** Creates a present snapshot. */
-    private HydraulicConstraintSnapshot(HydraulicConstraintBinding binding, BottleneckStatus status) {
+    HydraulicConstraintSnapshot(HydraulicConstraintBinding binding, BottleneckStatus status) {
       this.binding = binding;
       present = true;
       utilization = status.getUtilization();
@@ -478,7 +478,7 @@ public final class ProcessModelOperatingActionEvaluator {
     }
 
     /** Creates missing evidence. */
-    private static HydraulicConstraintSnapshot missing(HydraulicConstraintBinding binding) {
+    static HydraulicConstraintSnapshot missing(HydraulicConstraintBinding binding) {
       return new HydraulicConstraintSnapshot(binding);
     }
 
