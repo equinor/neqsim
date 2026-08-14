@@ -181,10 +181,8 @@ public class ColumnStudyRegressionTest {
         Integer.toString(solver.getLastJacobianBaseRefinementCount()));
     testReporter.publishEntry("severe_jacobian_base_residual_mutation",
         Double.toString(solver.getLastJacobianBaseResidualMutation()));
-    testReporter.publishEntry("severe_thermo_evaluations",
-        Integer.toString(solver.getLastThermoEvaluationCount()));
-    testReporter.publishEntry("severe_k_sweeps",
-        Integer.toString(solver.getLastThermoKValueIterationCount()));
+    testReporter.publishEntry("severe_thermo_evaluations", Integer.toString(solver.getLastThermoEvaluationCount()));
+    testReporter.publishEntry("severe_k_sweeps", Integer.toString(solver.getLastThermoKValueIterationCount()));
     assertPhysicalProduct(column.getGasOutStream(), "recovered warm-start gas product");
     assertPhysicalProduct(column.getLiquidOutStream(), "recovered warm-start liquid product");
     assertOverallMassBalance(feedStream, topFeedStream, column);
