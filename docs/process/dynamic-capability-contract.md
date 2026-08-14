@@ -394,3 +394,26 @@ signal state and that all subclass-owned state is covered.
 This coverage establishes in-memory rollback, deterministic replay, and Java-serialization mechanics. It does not qualify
 sensor accuracy, sample-time or network jitter, alarm or trip integrity, external historian/DCS writes, safety action,
 virtual commissioning, or OTS behavior.
+
+## Local process-quality instrument transaction coverage
+
+The concrete local `MolarMassAnalyser`, `WaterContentAnalyser`, `CompositionAnalyzer`, `FlowRatioMeter`, and
+`ImpurityMonitor` families participate when registered as measurement devices in a `ProcessSystem`. Each snapshot
+includes its original stream binding or bindings plus all inherited signal state described above. The flow-ratio snapshot
+also preserves the selected mass, mole, or volume basis. The impurity-monitor snapshot defensively copies the primary
+component and ordered tracked-component/threshold map, then restores the original map object in place.
+
+Rejected trials therefore restore Gaussian continuation, drift, first-order-filter memory, sample delay, alarm state and
+event-editable configuration together with analyser-specific bindings and configuration. Coverage is quantitative across
+one process system and coordinated multi-area process models, and restart evidence serializes both the participant and
+its closed snapshot. Concrete descendants and online-signal operation remain fail-closed.
+
+This tranche is limited to local instruments whose production measured-value path actually calls
+`applySignalModifiers(...)`. `VolumeFlowTransmitter` and the total/oil/water level-transmitter families still return
+raw values without advancing that inherited signal state, so they are intentionally not presented as transaction
+participants. Differential-pressure primary flow devices and other state-owning analysers remain unaudited until all
+device-specific iteration, cache, configuration and binding state is covered.
+
+Passing this rollback gate does not qualify laboratory or online analyser accuracy, phase-sampling fidelity, wet-gas or
+metering standards, allocation, emissions or export-spec decisions, alarm/trip integrity, external I/O, safety action,
+virtual commissioning or OTS use.
