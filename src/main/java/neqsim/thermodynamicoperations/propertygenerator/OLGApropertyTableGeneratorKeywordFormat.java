@@ -419,7 +419,8 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
       logger.error("Could not create output directory {}", parent.getAbsolutePath());
       return;
     }
-    try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile), "utf-8"))) {
+    try (FileOutputStream outputStream = new FileOutputStream(outputFile);
+        Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream, "utf-8"))) {
       writer.write("PVTTABLE LABEL = " + "\"" + "NewFluid" + "\"" + "," + "PHASE = TWO" + ",\\" + "\n");
       writer.write("EOS = " + "\"" + "Equation" + "\"" + ",\\" + "\n");
 
