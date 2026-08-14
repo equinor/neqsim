@@ -1,0 +1,773 @@
+package neqsim.process.processmodel.diagram;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TreeMap;
+import neqsim.process.engineering.model.EngineeringDiagramDesignationRegister;
+import neqsim.process.engineering.model.EngineeringDiagramDocumentSet;
+import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.Drawing;
+import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.OffPageConnector;
+import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.SemanticObject;
+import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.Sheet;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.PinnedPosition;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.ProtectedRoute;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.Waypoint;
+import neqsim.process.engineering.model.EngineeringNode;
+
+/**
+ * Deterministic native SVG and PDF renderer for controlled engineering-diagram document sets.
+ *
+ * <p>
+ * The renderer consumes the immutable semantic document model directly. It does not invoke Graphviz and therefore
+ * preserves stable sheet identities, pinned millimetre positions, protected routes, reciprocal off-page references,
+ * and controlled title/revision metadata. Automatically placed objects use a deterministic grid. Native output is an
+ * engineering proposal unless the source document set carries accountable approval evidence; rendering does not
+ * qualify symbols, layout, or content against ISO 10628 or any other drawing standard.
+ * </p>
+ */
+public final class NativeEngineeringDiagramRenderer {
+  private static final double MM_TO_POINT = 72.0 / 25.4;
+  private static final double CONTENT_LEFT = 16.0;
+  private static final double CONTENT_TOP = 24.0;
+  private static final double TITLE_BLOCK_HEIGHT = 30.0;
+  private static final double OBJECT_WIDTH = 34.0;
+  private static final double OBJECT_HEIGHT = 16.0;
+
+  /** Controlled paper sizes supported by the native renderer. */
+  public enum SheetFormat {
+    /** ISO A3 landscape paper geometry (420 x 297 mm); no conformance claim is implied. */
+    A3_LANDSCAPE(420.0, 297.0),
+    /** ISO A1 landscape paper geometry (841 x 594 mm); no conformance claim is implied. */
+    A1_LANDSCAPE(841.0, 594.0);
+
+    private final double widthMillimetres;
+    private final double heightMillimetres;
+
+    SheetFormat(double widthMillimetres, double heightMillimetres) {
+      this.widthMillimetres = widthMillimetres;
+      this.heightMillimetres = heightMillimetres;
+    }
+
+    /** @return sheet width in drawing-paper millimetres */
+    public double getWidthMillimetres() {
+      return widthMillimetres;
+    }
+
+    /** @return sheet height in drawing-paper millimetres */
+    public double getHeightMillimetres() {
+      return heightMillimetres;
+    }
+  }
+
+  /** Renderer diagnostic severity. */
+  public enum Severity {
+    /** Recoverable rendering limitation requiring review. */
+    WARNING,
+    /** Broken source or rendering state that prevents a complete view. */
+    ERROR
+  }
+
+  /** Immutable structured rendering diagnostic. */
+  public static final class Diagnostic {
+    private final Severity severity;
+    private final String code;
+    private final String message;
+    private final String subjectId;
+
+    private Diagnostic(Severity severity, String code, String message, String subjectId) {
+      this.severity = severity;
+      this.code = code;
+      this.message = message;
+      this.subjectId = subjectId;
+    }
+
+    /** @return diagnostic severity */
+    public Severity getSeverity() {
+      return severity;
+    }
+
+    /** @return stable machine-readable diagnostic code */
+    public String getCode() {
+      return code;
+    }
+
+    /** @return human-readable diagnostic message */
+    public String getMessage() {
+      return message;
+    }
+
+    /** @return stable source subject identity, or an empty string */
+    public String getSubjectId() {
+      return subjectId;
+    }
+  }
+
+  /** Immutable rendering result containing every SVG sheet, one PDF drawing set, and diagnostics. */
+  public static final class Result {
+    private final Map<String, String> svgBySheetId;
+    private final byte[] pdf;
+    private final List<Diagnostic> diagnostics;
+
+    private Result(Map<String, String> svgBySheetId, byte[] pdf, List<Diagnostic> diagnostics) {
+      this.svgBySheetId = Collections.unmodifiableMap(new LinkedHashMap<String, String>(svgBySheetId));
+      this.pdf = Arrays.copyOf(pdf, pdf.length);
+      this.diagnostics = Collections.unmodifiableList(new ArrayList<Diagnostic>(diagnostics));
+    }
+
+    /** @return deterministic sheet-ID-ordered native SVG documents */
+    public Map<String, String> getSvgBySheetId() {
+      return svgBySheetId;
+    }
+
+    /** @return defensive copy of the deterministic multi-page native PDF */
+    public byte[] getPdf() {
+      return Arrays.copyOf(pdf, pdf.length);
+    }
+
+    /** @return immutable structured rendering diagnostics */
+    public List<Diagnostic> getDiagnostics() {
+      return diagnostics;
+    }
+
+    /** @return {@code true} when no renderer error was recorded */
+    public boolean isComplete() {
+      for (Diagnostic diagnostic : diagnostics) {
+        if (diagnostic.getSeverity() == Severity.ERROR) {
+          return false;
+        }
+      }
+      return true;
+    }
+  }
+
+  private final EngineeringDiagramDocumentSet documentSet;
+  private final SheetFormat format;
+
+  /**
+   * Creates an A3-landscape native renderer.
+   *
+   * @param documentSet immutable controlled engineering-diagram document set
+   */
+  public NativeEngineeringDiagramRenderer(EngineeringDiagramDocumentSet documentSet) {
+    this(documentSet, SheetFormat.A3_LANDSCAPE);
+  }
+
+  /**
+   * Creates a native renderer with explicit controlled sheet geometry.
+   *
+   * @param documentSet immutable controlled engineering-diagram document set
+   * @param format paper geometry
+   */
+  public NativeEngineeringDiagramRenderer(EngineeringDiagramDocumentSet documentSet, SheetFormat format) {
+    if (documentSet == null) {
+      throw new IllegalArgumentException("documentSet must not be null");
+    }
+    if (format == null) {
+      throw new IllegalArgumentException("format must not be null");
+    }
+    this.documentSet = documentSet;
+    this.format = format;
+  }
+
+  /**
+   * Renders every controlled sheet to native SVG and the drawing set to one multi-page native PDF.
+   *
+   * @return deterministic rendering result
+   */
+  public Result render() {
+    List<Diagnostic> diagnostics = new ArrayList<Diagnostic>();
+    Map<String, SemanticObject> objects = objectsById();
+    List<Page> pages = new ArrayList<Page>();
+    for (Drawing drawing : documentSet.getDrawings()) {
+      for (Sheet sheet : drawing.getSheets()) {
+        pages.add(buildPage(drawing, sheet, objects, diagnostics));
+      }
+    }
+    Collections.sort(pages, new Comparator<Page>() {
+      @Override
+      public int compare(Page left, Page right) {
+        return left.sheetId.compareTo(right.sheetId);
+      }
+    });
+    Map<String, String> svg = new LinkedHashMap<String, String>();
+    for (Page page : pages) {
+      svg.put(page.sheetId, toSvg(page));
+    }
+    return new Result(svg, toPdf(pages), diagnostics);
+  }
+
+  /**
+   * Writes one SVG file per stable sheet ID.
+   *
+   * @param directory target directory
+   * @return stable sheet-ID-to-path map
+   * @throws IOException when output cannot be written
+   */
+  public Map<String, Path> exportSvg(Path directory) throws IOException {
+    if (directory == null) {
+      throw new IllegalArgumentException("directory must not be null");
+    }
+    Result result = render();
+    Files.createDirectories(directory);
+    Map<String, Path> paths = new LinkedHashMap<String, Path>();
+    for (Map.Entry<String, String> entry : result.getSvgBySheetId().entrySet()) {
+      Path path = directory.resolve(fileName(entry.getKey()) + ".svg");
+      Files.write(path, entry.getValue().getBytes(StandardCharsets.UTF_8));
+      paths.put(entry.getKey(), path);
+    }
+    return Collections.unmodifiableMap(paths);
+  }
+
+  /**
+   * Writes one deterministic multi-page native PDF drawing set.
+   *
+   * @param path target PDF path
+   * @throws IOException when output cannot be written
+   */
+  public void exportPdf(Path path) throws IOException {
+    if (path == null) {
+      throw new IllegalArgumentException("path must not be null");
+    }
+    Path parent = path.toAbsolutePath().getParent();
+    if (parent != null) {
+      Files.createDirectories(parent);
+    }
+    Files.write(path, render().getPdf());
+  }
+
+  private Page buildPage(Drawing drawing, Sheet sheet, Map<String, SemanticObject> objects,
+      List<Diagnostic> diagnostics) {
+    Page page = new Page(sheet.getId(), format.getWidthMillimetres(), format.getHeightMillimetres());
+    double contentRight = page.width - CONTENT_LEFT;
+    double contentBottom = page.height - TITLE_BLOCK_HEIGHT - 7.0;
+    page.commands.add(Command.rect(8.0, 8.0, page.width - 16.0, page.height - 16.0, "#1f2937", "none", 0.5,
+        "sheet-border", ""));
+    page.commands.add(Command.text(12.0, 17.0, 4.2, documentSet.getTitle(), "#111827", "document-title", ""));
+    page.commands.add(Command.text(page.width - 12.0, 17.0, 2.7,
+        drawing.getContentProfile().name() + " / " + format.name(), "#374151", "sheet-format", "end"));
+
+    Map<String, Point> positions = layoutPositions(sheet, objects, contentRight, contentBottom, diagnostics);
+    Map<String, OffPageConnector> connectors = new TreeMap<String, OffPageConnector>();
+    for (OffPageConnector connector : sheet.getOffPageConnectors()) {
+      connectors.put(connector.getSemanticConnectionId(), connector);
+    }
+    Map<String, ProtectedRoute> protectedRoutes = new TreeMap<String, ProtectedRoute>();
+    for (ProtectedRoute route : sheet.getProtectedRoutes()) {
+      protectedRoutes.put(route.getSemanticConnectionId(), route);
+      if (!insideAll(route.getWaypoints(), page.width, contentBottom)) {
+        diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_ROUTE_OUTSIDE_SHEET",
+            "Protected route contains a waypoint outside the drawable sheet area and is retained unchanged",
+            route.getSemanticConnectionId()));
+      }
+    }
+
+    List<String> ids = new ArrayList<String>(sheet.getObjectNodeIds());
+    Collections.sort(ids);
+    for (String id : ids) {
+      SemanticObject object = objects.get(id);
+      if (object != null && isConnection(object.getKind())) {
+        addConnection(page, object, positions, connectors.get(id), protectedRoutes.get(id), objects, contentRight,
+            contentBottom, diagnostics);
+      }
+    }
+    for (OffPageConnector connector : sheet.getOffPageConnectors()) {
+      addOffPageConnector(page, connector, contentRight, contentBottom);
+    }
+    for (String id : ids) {
+      SemanticObject object = objects.get(id);
+      Point position = positions.get(id);
+      if (object != null && position != null && isDrawableNode(object.getKind())) {
+        addObject(page, object, position);
+      }
+    }
+    addTitleBlock(page, drawing, sheet);
+    return page;
+  }
+
+  private Map<String, Point> layoutPositions(Sheet sheet, Map<String, SemanticObject> objects, double contentRight,
+      double contentBottom, List<Diagnostic> diagnostics) {
+    Map<String, Point> result = new TreeMap<String, Point>();
+    for (PinnedPosition pinned : sheet.getPinnedPositions()) {
+      result.put(pinned.getSemanticObjectId(), new Point(pinned.getX(), pinned.getY()));
+      if (!inside(pinned.getX(), pinned.getY(), format.getWidthMillimetres(), contentBottom)) {
+        diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_PIN_OUTSIDE_SHEET",
+            "Pinned millimetre position is outside the drawable sheet area and is retained unchanged",
+            pinned.getSemanticObjectId()));
+      }
+    }
+    List<String> automatic = new ArrayList<String>();
+    for (String id : sheet.getObjectNodeIds()) {
+      SemanticObject object = objects.get(id);
+      if (object != null && isDrawableNode(object.getKind()) && !result.containsKey(id)) {
+        automatic.add(id);
+      }
+    }
+    Collections.sort(automatic);
+    int columns = Math.max(1, (int) Math.floor((contentRight - CONTENT_LEFT) / 62.0));
+    for (int index = 0; index < automatic.size(); index++) {
+      int column = index % columns;
+      int row = index / columns;
+      double x = CONTENT_LEFT + 24.0 + column * 62.0;
+      double y = CONTENT_TOP + 18.0 + row * 34.0;
+      if (y > contentBottom - OBJECT_HEIGHT) {
+        diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_AUTO_LAYOUT_OVERFLOW",
+            "Automatic grid placement exceeds the drawable area; manual sheet assignment or pinned layout is needed",
+            automatic.get(index)));
+      }
+      result.put(automatic.get(index), new Point(x, y));
+    }
+    return result;
+  }
+
+  private void addConnection(Page page, SemanticObject connection, Map<String, Point> positions,
+      OffPageConnector connector, ProtectedRoute protectedRoute, Map<String, SemanticObject> objects,
+      double contentRight, double contentBottom, List<Diagnostic> diagnostics) {
+    List<Point> points = new ArrayList<Point>();
+    boolean protectedGeometry = protectedRoute != null;
+    if (protectedGeometry) {
+      for (Waypoint waypoint : protectedRoute.getWaypoints()) {
+        points.add(new Point(waypoint.getX(), waypoint.getY()));
+      }
+    } else {
+      Point source = endpointPosition(connection, "sourceEndpointId", positions, objects);
+      Point target = endpointPosition(connection, "targetEndpointId", positions, objects);
+      Point offPage = connector == null ? null : connectorPoint(connector, contentRight, contentBottom);
+      if (connector != null && connector.getRole() == EngineeringDiagramDocumentSet.ConnectorRole.SOURCE) {
+        target = offPage;
+      } else if (connector != null) {
+        source = offPage;
+      }
+      if (source != null && target != null) {
+        points.add(source);
+        points.add(new Point((source.x + target.x) / 2.0, source.y));
+        points.add(new Point((source.x + target.x) / 2.0, target.y));
+        points.add(target);
+      } else {
+        diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_CONNECTION_ENDPOINT_OMITTED",
+            "Connection endpoints cannot both be placed on this sheet; the semantic connection remains in the source document",
+            connection.getId()));
+        return;
+      }
+    }
+    String connectionType = stringProperty(connection, "connectionType", "MATERIAL");
+    String color = "#1f2937";
+    String dash = "";
+    if ("ENERGY".equals(connectionType)) {
+      color = "#b45309";
+      dash = "4 2";
+    } else if ("SIGNAL".equals(connectionType)) {
+      color = "#2563eb";
+      dash = "2 2";
+    }
+    page.commands.add(Command.polyline(points, color, 0.8, dash, connection.getId(), protectedGeometry));
+  }
+
+  private void addOffPageConnector(Page page, OffPageConnector connector, double contentRight, double contentBottom) {
+    Point point = connectorPoint(connector, contentRight, contentBottom);
+    double direction = connector.getRole() == EngineeringDiagramDocumentSet.ConnectorRole.SOURCE ? 1.0 : -1.0;
+    List<Point> triangle = Arrays.asList(new Point(point.x, point.y), new Point(point.x - direction * 5.0, point.y - 3.0),
+        new Point(point.x - direction * 5.0, point.y + 3.0), new Point(point.x, point.y));
+    page.commands.add(Command.polyline(triangle, "#111827", 0.7, "", connector.getId(), false));
+    String label = "TO/FROM " + connector.getZoneReference() + " [" + connector.getPeerSheetId() + "]";
+    double textX = point.x - direction * 7.0;
+    page.commands.add(Command.text(textX, point.y - 4.0, 2.4, label, "#111827", connector.getId(),
+        direction > 0.0 ? "end" : "start"));
+  }
+
+  private void addObject(Page page, SemanticObject object, Point position) {
+    double x = position.x - OBJECT_WIDTH / 2.0;
+    double y = position.y - OBJECT_HEIGHT / 2.0;
+    String fill = object.getKind() == EngineeringNode.Kind.EQUIPMENT ? "#eef6ee" : "#eff6ff";
+    page.commands.add(Command.rect(x, y, OBJECT_WIDTH, OBJECT_HEIGHT, "#1f2937", fill, 0.7, object.getId(), ""));
+    String primary = displayLabel(object);
+    page.commands.add(Command.text(position.x, position.y - 0.8, 2.8, primary, "#111827", object.getId(), "middle"));
+    page.commands.add(Command.text(position.x, position.y + 4.0, 2.0, object.getKind().name(), "#4b5563",
+        object.getId(), "middle"));
+  }
+
+  private void addTitleBlock(Page page, Drawing drawing, Sheet sheet) {
+    double top = page.height - TITLE_BLOCK_HEIGHT;
+    page.commands.add(Command.rect(8.0, top, page.width - 16.0, TITLE_BLOCK_HEIGHT - 8.0, "#1f2937", "#ffffff",
+        0.5, "title-block", ""));
+    page.commands.add(Command.line(page.width * 0.58, top, page.width * 0.58, page.height - 8.0, "#1f2937", 0.4,
+        "title-block", ""));
+    page.commands.add(Command.text(12.0, top + 6.0, 3.0, drawing.getTitle(), "#111827", "drawing-title", ""));
+    page.commands.add(Command.text(12.0, top + 12.0, 2.5, "DRAWING " + drawing.getNumber(), "#111827",
+        "drawing-number", ""));
+    page.commands.add(Command.text(12.0, top + 17.0, 2.3, "SHEET " + sheet.getNumber() + " - " + sheet.getTitle(),
+        "#111827", "sheet-number", ""));
+    page.commands.add(Command.text(page.width * 0.60, top + 6.0, 2.4,
+        "REV " + documentSet.getRevision() + "  STATUS " + documentSet.getStatus().name(), "#111827",
+        "revision", ""));
+    page.commands.add(Command.text(page.width * 0.60, top + 11.0, 2.2,
+        "PURPOSE " + documentSet.getIssuePurpose().name(), "#111827", "issue-purpose", ""));
+    page.commands.add(Command.text(page.width * 0.60, top + 16.0, 1.8,
+        "SOURCE " + documentSet.getSourceGraphFingerprint(), "#4b5563", "fingerprint", ""));
+    if (documentSet.getStatus() != EngineeringDiagramDocumentSet.DocumentStatus.APPROVED
+        || documentSet.getIssuePurpose() == EngineeringDiagramDocumentSet.IssuePurpose.ENGINEERING_PROPOSAL) {
+      page.commands.add(Command.text(page.width / 2.0, top - 3.0, 3.0,
+          "ENGINEERING PROPOSAL - NOT APPROVED FOR DESIGN OR CONSTRUCTION", "#b91c1c", "proposal-boundary",
+          "middle"));
+    }
+  }
+
+  private String toSvg(Page page) {
+    StringBuilder svg = new StringBuilder();
+    svg.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+    svg.append("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"").append(number(page.width))
+        .append("mm\" height=\"").append(number(page.height)).append("mm\" viewBox=\"0 0 ")
+        .append(number(page.width)).append(' ').append(number(page.height)).append("\" data-sheet-id=\"")
+        .append(xml(page.sheetId)).append("\">\n");
+    svg.append("  <title>").append(xml(documentSet.getTitle())).append(" - ").append(xml(page.sheetId))
+        .append("</title>\n");
+    svg.append("  <g font-family=\"Arial,Helvetica,sans-serif\" fill=\"none\">\n");
+    for (Command command : page.commands) {
+      svg.append(command.toSvg());
+    }
+    svg.append("  </g>\n</svg>\n");
+    return svg.toString();
+  }
+
+  private byte[] toPdf(List<Page> pages) {
+    List<byte[]> objects = new ArrayList<byte[]>();
+    objects.add(bytes("<< /Type /Catalog /Pages 2 0 R >>"));
+    StringBuilder kids = new StringBuilder();
+    for (int index = 0; index < pages.size(); index++) {
+      kids.append(4 + index * 2).append(" 0 R ");
+    }
+    objects.add(bytes("<< /Type /Pages /Kids [" + kids + "] /Count " + pages.size() + " >>"));
+    objects.add(bytes("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"));
+    for (int index = 0; index < pages.size(); index++) {
+      Page page = pages.get(index);
+      int contentObject = 5 + index * 2;
+      String mediaBox = "0 0 " + number(page.width * MM_TO_POINT) + " " + number(page.height * MM_TO_POINT);
+      objects.add(bytes("<< /Type /Page /Parent 2 0 R /MediaBox [" + mediaBox
+          + "] /Resources << /Font << /F1 3 0 R >> >> /Contents " + contentObject + " 0 R >>"));
+      StringBuilder stream = new StringBuilder("q\n");
+      for (Command command : page.commands) {
+        stream.append(command.toPdf(page.height));
+      }
+      stream.append("Q\n");
+      byte[] streamBytes = bytes(stream.toString());
+      ByteArrayOutputStream content = new ByteArrayOutputStream();
+      write(content, bytes("<< /Length " + streamBytes.length + " >>\nstream\n"));
+      write(content, streamBytes);
+      write(content, bytes("endstream"));
+      objects.add(content.toByteArray());
+    }
+    ByteArrayOutputStream output = new ByteArrayOutputStream();
+    write(output, bytes("%PDF-1.4\n%âãÏÓ\n"));
+    List<Integer> offsets = new ArrayList<Integer>();
+    offsets.add(Integer.valueOf(0));
+    for (int index = 0; index < objects.size(); index++) {
+      offsets.add(Integer.valueOf(output.size()));
+      write(output, bytes((index + 1) + " 0 obj\n"));
+      write(output, objects.get(index));
+      write(output, bytes("\nendobj\n"));
+    }
+    int xref = output.size();
+    write(output, bytes("xref\n0 " + (objects.size() + 1) + "\n0000000000 65535 f \n"));
+    for (int index = 1; index < offsets.size(); index++) {
+      write(output, bytes(String.format(Locale.ROOT, "%010d 00000 n \n", offsets.get(index))));
+    }
+    write(output, bytes("trailer\n<< /Size " + (objects.size() + 1) + " /Root 1 0 R >>\nstartxref\n" + xref
+        + "\n%%EOF\n"));
+    return output.toByteArray();
+  }
+
+  private Map<String, SemanticObject> objectsById() {
+    Map<String, SemanticObject> result = new TreeMap<String, SemanticObject>();
+    for (SemanticObject object : documentSet.getSemanticObjects()) {
+      result.put(object.getId(), object);
+    }
+    return result;
+  }
+
+  private static Point endpointPosition(SemanticObject connection, String property, Map<String, Point> positions,
+      Map<String, SemanticObject> objects) {
+    String endpointId = stringProperty(connection, property, "");
+    Point direct = positions.get(endpointId);
+    if (direct != null) {
+      return direct;
+    }
+    SemanticObject endpoint = objects.get(endpointId);
+    if (endpoint == null) {
+      return null;
+    }
+    return positions.get(stringProperty(endpoint, "ownerNodeId", ""));
+  }
+
+  private static Point connectorPoint(OffPageConnector connector, double contentRight, double contentBottom) {
+    int bucket = Math.abs(connector.getPairId().hashCode() % 7);
+    double y = Math.min(contentBottom - 10.0, CONTENT_TOP + 20.0 + bucket * 22.0);
+    double x = connector.getRole() == EngineeringDiagramDocumentSet.ConnectorRole.SOURCE ? contentRight : CONTENT_LEFT;
+    return new Point(x, y);
+  }
+
+  private static String displayLabel(SemanticObject object) {
+    for (EngineeringDiagramDesignationRegister.Designation designation : object.getDesignations()) {
+      return designation.getValue();
+    }
+    return object.getLabel();
+  }
+
+  private static boolean isDrawableNode(EngineeringNode.Kind kind) {
+    return kind == EngineeringNode.Kind.EQUIPMENT || kind == EngineeringNode.Kind.INSTRUMENT
+        || kind == EngineeringNode.Kind.BOUNDARY || kind == EngineeringNode.Kind.PROCESS_TAP;
+  }
+
+  private static boolean isConnection(EngineeringNode.Kind kind) {
+    return kind == EngineeringNode.Kind.PIPE_SEGMENT || kind == EngineeringNode.Kind.SIGNAL_CONNECTION
+        || kind == EngineeringNode.Kind.ENERGY_CONNECTION;
+  }
+
+  private static boolean inside(double x, double y, double width, double contentBottom) {
+    return x >= 8.0 && x <= width - 8.0 && y >= 8.0 && y <= contentBottom;
+  }
+
+  private static boolean insideAll(List<Waypoint> waypoints, double width, double contentBottom) {
+    for (Waypoint waypoint : waypoints) {
+      if (!inside(waypoint.getX(), waypoint.getY(), width, contentBottom)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static String stringProperty(SemanticObject object, String name, String fallback) {
+    Object value = object.getProperties().get(name);
+    return value == null ? fallback : String.valueOf(value);
+  }
+
+  private static Diagnostic diagnostic(Severity severity, String code, String message, String subjectId) {
+    return new Diagnostic(severity, code, message, subjectId == null ? "" : subjectId);
+  }
+
+  private static String fileName(String value) {
+    return value.replaceAll("[^A-Za-z0-9._-]+", "-");
+  }
+
+  private static String number(double value) {
+    if (Math.abs(value - Math.rint(value)) < 0.0000001) {
+      return Long.toString(Math.round(value));
+    }
+    return String.format(Locale.ROOT, "%.4f", value).replaceAll("0+$", "").replaceAll("\\.$", "");
+  }
+
+  private static String xml(String value) {
+    return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
+  }
+
+  private static String pdf(String value) {
+    StringBuilder result = new StringBuilder();
+    for (int index = 0; index < value.length(); index++) {
+      char character = value.charAt(index);
+      if (character == '(' || character == ')' || character == '\\') {
+        result.append('\\').append(character);
+      } else if (character >= 32 && character <= 255) {
+        result.append(character);
+      } else {
+        result.append('?');
+      }
+    }
+    return result.toString();
+  }
+
+  private static byte[] bytes(String value) {
+    return value.getBytes(StandardCharsets.ISO_8859_1);
+  }
+
+  private static void write(ByteArrayOutputStream output, byte[] value) {
+    output.write(value, 0, value.length);
+  }
+
+  private static final class Point {
+    private final double x;
+    private final double y;
+
+    private Point(double x, double y) {
+      this.x = x;
+      this.y = y;
+    }
+  }
+
+  private static final class Page {
+    private final String sheetId;
+    private final double width;
+    private final double height;
+    private final List<Command> commands = new ArrayList<Command>();
+
+    private Page(String sheetId, double width, double height) {
+      this.sheetId = sheetId;
+      this.width = width;
+      this.height = height;
+    }
+  }
+
+  private static final class Command {
+    private final String type;
+    private final List<Point> points;
+    private final double x;
+    private final double y;
+    private final double width;
+    private final double height;
+    private final double size;
+    private final String text;
+    private final String stroke;
+    private final String fill;
+    private final double strokeWidth;
+    private final String dash;
+    private final String id;
+    private final String anchor;
+    private final boolean protectedGeometry;
+
+    private Command(String type, List<Point> points, double x, double y, double width, double height, double size,
+        String text, String stroke, String fill, double strokeWidth, String dash, String id, String anchor,
+        boolean protectedGeometry) {
+      this.type = type;
+      this.points = points;
+      this.x = x;
+      this.y = y;
+      this.width = width;
+      this.height = height;
+      this.size = size;
+      this.text = text;
+      this.stroke = stroke;
+      this.fill = fill;
+      this.strokeWidth = strokeWidth;
+      this.dash = dash;
+      this.id = id;
+      this.anchor = anchor;
+      this.protectedGeometry = protectedGeometry;
+    }
+
+    private static Command rect(double x, double y, double width, double height, String stroke, String fill,
+        double strokeWidth, String id, String dash) {
+      return new Command("rect", Collections.<Point>emptyList(), x, y, width, height, 0.0, "", stroke, fill,
+          strokeWidth, dash, id, "", false);
+    }
+
+    private static Command line(double x1, double y1, double x2, double y2, String stroke, double strokeWidth,
+        String id, String dash) {
+      return polyline(Arrays.asList(new Point(x1, y1), new Point(x2, y2)), stroke, strokeWidth, dash, id, false);
+    }
+
+    private static Command polyline(List<Point> points, String stroke, double strokeWidth, String dash, String id,
+        boolean protectedGeometry) {
+      return new Command("polyline", new ArrayList<Point>(points), 0.0, 0.0, 0.0, 0.0, 0.0, "", stroke, "none",
+          strokeWidth, dash, id, "", protectedGeometry);
+    }
+
+    private static Command text(double x, double y, double size, String text, String fill, String id, String anchor) {
+      return new Command("text", Collections.<Point>emptyList(), x, y, 0.0, 0.0, size, text, "none", fill, 0.0, "",
+          id, anchor, false);
+    }
+
+    private String toSvg() {
+      StringBuilder result = new StringBuilder("    <");
+      if ("rect".equals(type)) {
+        result.append("rect x=\"").append(number(x)).append("\" y=\"").append(number(y)).append("\" width=\"")
+            .append(number(width)).append("\" height=\"").append(number(height)).append("\"");
+      } else if ("text".equals(type)) {
+        result.append("text x=\"").append(number(x)).append("\" y=\"").append(number(y))
+            .append("\" font-size=\"").append(number(size)).append("\" dominant-baseline=\"middle\"");
+        if (!anchor.isEmpty()) {
+          result.append(" text-anchor=\"").append(anchor).append("\"");
+        }
+      } else {
+        result.append("polyline points=\"");
+        for (int index = 0; index < points.size(); index++) {
+          if (index > 0) {
+            result.append(' ');
+          }
+          result.append(number(points.get(index).x)).append(',').append(number(points.get(index).y));
+        }
+        result.append("\"");
+      }
+      result.append(" stroke=\"").append(stroke).append("\" fill=\"").append(fill).append("\"");
+      if (strokeWidth > 0.0) {
+        result.append(" stroke-width=\"").append(number(strokeWidth)).append("\"");
+      }
+      if (!dash.isEmpty()) {
+        result.append(" stroke-dasharray=\"").append(dash).append("\"");
+      }
+      if (!id.isEmpty()) {
+        result.append(" data-semantic-id=\"").append(xml(id)).append("\"");
+      }
+      if (protectedGeometry) {
+        result.append(" data-protected-route=\"true\"");
+      }
+      if ("text".equals(type)) {
+        result.append('>').append(xml(text)).append("</text>\n");
+      } else {
+        result.append("/>\n");
+      }
+      return result.toString();
+    }
+
+    private String toPdf(double pageHeight) {
+      StringBuilder result = new StringBuilder();
+      if ("text".equals(type)) {
+        double adjustedX = x;
+        if ("middle".equals(anchor)) {
+          adjustedX -= text.length() * size * 0.24;
+        } else if ("end".equals(anchor)) {
+          adjustedX -= text.length() * size * 0.48;
+        }
+        result.append(rgb(fill, false)).append(" BT /F1 ").append(number(size * MM_TO_POINT * 0.78)).append(" Tf ")
+            .append(number(adjustedX * MM_TO_POINT)).append(' ').append(number((pageHeight - y) * MM_TO_POINT))
+            .append(" Td (").append(pdf(text)).append(") Tj ET\n");
+        return result.toString();
+      }
+      result.append(rgb(stroke, true)).append(' ').append(number(strokeWidth * MM_TO_POINT)).append(" w ");
+      if (dash.isEmpty()) {
+        result.append("[] 0 d ");
+      } else {
+        result.append('[');
+        for (String item : dash.split(" ")) {
+          result.append(number(Double.parseDouble(item) * MM_TO_POINT)).append(' ');
+        }
+        result.append("] 0 d ");
+      }
+      if ("rect".equals(type)) {
+        result.append(rgb(fill, false)).append(' ').append(number(x * MM_TO_POINT)).append(' ')
+            .append(number((pageHeight - y - height) * MM_TO_POINT)).append(' ').append(number(width * MM_TO_POINT))
+            .append(' ').append(number(height * MM_TO_POINT)).append(" re ");
+        result.append("none".equals(fill) ? "S\n" : "B\n");
+      } else if (!points.isEmpty()) {
+        Point first = points.get(0);
+        result.append(number(first.x * MM_TO_POINT)).append(' ').append(number((pageHeight - first.y) * MM_TO_POINT))
+            .append(" m ");
+        for (int index = 1; index < points.size(); index++) {
+          Point point = points.get(index);
+          result.append(number(point.x * MM_TO_POINT)).append(' ')
+              .append(number((pageHeight - point.y) * MM_TO_POINT)).append(" l ");
+        }
+        result.append("S\n");
+      }
+      return result.toString();
+    }
+
+    private static String rgb(String value, boolean stroke) {
+      if (value == null || "none".equals(value)) {
+        return "0 0 0 " + (stroke ? "RG" : "rg");
+      }
+      int red = Integer.parseInt(value.substring(1, 3), 16);
+      int green = Integer.parseInt(value.substring(3, 5), 16);
+      int blue = Integer.parseInt(value.substring(5, 7), 16);
+      return number(red / 255.0) + " " + number(green / 255.0) + " " + number(blue / 255.0) + " "
+          + (stroke ? "RG" : "rg");
+    }
+  }
+}
