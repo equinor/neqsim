@@ -167,4 +167,28 @@ public class SystemThermoTotalNumberOfMolesTest {
     assertEquals(0.2986026976360107, fluid.getPhase(0).getComponent("water").getx(), 1e-10);
     assertEquals(0.7013973023639892, fluid.getPhase(0).getComponent("MEG").getx(), 1e-10);
   }
+
+  /**
+   * A stale serialized total on a wet-gas-plus-MEG feed used to leave the overall composition non-normalized, which
+   * could collapse the flash onto a single named phase and make {@code getPhase("gas")} or {@code
+   * getPhase("aqueous")} throw depending on the trial point (as seen when a GDR-style MEG injection solver sweeps flow
+   * between 0.1 and 100 kg/hr on a deserialized process).
+   */
+  @Test
+  public void testFlashReconcilesStaleSerializedTotalForWetGasWithMeg() {
+    SystemThermo fluid = new SystemSrkCPAstatoil(278.45, 37.21325);
+    fluid.addComponent("methane", 5.0);
+    fluid.addComponent("water", 0.11833608283886514);
+    fluid.addComponent("MEG", 0.2779633604538873);
+    fluid.setMixingRule(10);
+    fluid.setMultiPhaseCheck(true);
+    fluid.setTotalNumberOfMolesRaw(1986.7470206432324);
+
+    new ThermodynamicOperations(fluid).TPflash();
+
+    assertEquals(1.0, sumOverallMoleFractions(fluid), 1e-12);
+    assertTrue(fluid.getNumberOfPhases() >= 2);
+    assertEquals(PhaseType.GAS, fluid.getPhase("gas").getType());
+    assertEquals(PhaseType.AQUEOUS, fluid.getPhase("aqueous").getType());
+  }
 }
