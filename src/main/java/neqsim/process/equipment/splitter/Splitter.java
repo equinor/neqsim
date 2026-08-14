@@ -400,12 +400,12 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
         splitStream[i].getThermoSystem().addComponent(index, change);
       }
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(splitStream[i].getThermoSystem());
+      // A branch that is switched off holds a numerically empty system. Flashing it makes
+      // Rachford-Rice diverge and leaves a non-physical enthalpy that downstream equipment then
+      // reports as an absurd duty, so the already-flashed inlet phase split is kept instead.
       if (splitFactor[i] > 0.0) {
         thermoOps.TPflash();
       }
-      // A branch that is switched off holds a numerically empty system. Flashing it makes
-      // Rachford-Rice diverge and leaves a non-physical enthalpy that downstream equipment
-      // reports as an absurd duty, so the already-flashed inlet phase split is kept instead.
     }
 
     // Store inlet stream values for needRecalculation check (not split stream values)
