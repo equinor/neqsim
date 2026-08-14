@@ -3254,27 +3254,27 @@ public class NaphtaliSandholmSolver {
    *
    * <p>
    * The primary Newton variables remain unchanged. Up to one full-column thermodynamic pass per local finite-difference
-   * variable is evaluated, matching the restore-evaluation budget that the frozen base replaces. The state with the
-   * smallest finite MESH residual among those refreshed states is retained, while the incoming derived state remains
-   * only as a fallback if no refinement is finite. Refinement stops early when consecutive residual vectors differ by
-   * no more than one tenth of the outer tolerance. This replaces the accidental, column-order-dependent K-value
-   * refinement that previously occurred while restoring each finite-difference perturbation.
+   * variable is evaluated, matching the restore-evaluation budget that the frozen base replaces. The latest finite
+   * refreshed state is retained so the Jacobian base owns the most thermodynamically consistent K-value fixed point;
+   * the incoming derived state remains only as a fallback if no refinement is finite. Refinement stops early when
+   * consecutive residual vectors differ by no more than one tenth of the outer tolerance. This replaces the accidental,
+   * column-order-dependent K-value refinement that previously occurred while restoring each finite-difference
+   * perturbation.
    * </p>
    *
    * @param initialResidual residual at the current primary state
    * @return residual owned by the retained derived thermodynamic state
    */
   private double[] refineJacobianBaseState(double[] initialResidual) {
-    double[] bestResidual = null;
-    double bestNorm = Double.POSITIVE_INFINITY;
+    double[] retainedResidual = null;
     double[] previousResidual = initialResidual;
 
-    double[][] bestK = new double[N][C];
-    double[][] bestVap = new double[N][C];
-    double[] bestL = new double[N];
-    double[] bestHL = new double[N];
-    double[] bestHV = new double[N];
-    saveDerivedThermodynamicState(bestK, bestVap, bestL, bestHL, bestHV);
+    double[][] retainedK = new double[N][C];
+    double[][] retainedVap = new double[N][C];
+    double[] retainedL = new double[N];
+    double[] retainedHL = new double[N];
+    double[] retainedHV = new double[N];
+    saveDerivedThermodynamicState(retainedK, retainedVap, retainedL, retainedHL, retainedHV);
 
     double residualChangeTolerance = Math.max(1.0e-12, tolerance * 0.1);
     for (int refinement = 0; refinement < varsPerTray; refinement++) {
@@ -3284,19 +3284,18 @@ public class NaphtaliSandholmSolver {
       double candidateNorm = vectorNorm(candidateResidual);
       double residualChange = vectorDifferenceNorm(previousResidual, candidateResidual);
 
-      if (Double.isFinite(candidateNorm) && candidateNorm < bestNorm) {
-        bestNorm = candidateNorm;
-        bestResidual = candidateResidual;
-        saveDerivedThermodynamicState(bestK, bestVap, bestL, bestHL, bestHV);
+      if (Double.isFinite(candidateNorm)) {
+        retainedResidual = candidateResidual;
+        saveDerivedThermodynamicState(retainedK, retainedVap, retainedL, retainedHL, retainedHV);
       }
-      if (residualChange <= residualChangeTolerance) {
+      if (Double.isFinite(candidateNorm) && residualChange <= residualChangeTolerance) {
         break;
       }
       previousResidual = candidateResidual;
     }
 
-    restoreDerivedThermodynamicState(bestK, bestVap, bestL, bestHL, bestHV);
-    return bestResidual == null ? initialResidual : bestResidual;
+    restoreDerivedThermodynamicState(retainedK, retainedVap, retainedL, retainedHL, retainedHV);
+    return retainedResidual == null ? initialResidual : retainedResidual;
   }
 
   /**

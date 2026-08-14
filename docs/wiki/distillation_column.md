@@ -258,9 +258,10 @@ targets manipulated through condenser or reboiler temperature.
   guarded Newton line search with flow and temperature trust limits. Before each build, up to one
   full-column thermodynamic pass per local finite-difference variable refreshes the base. This
   matches the restore-evaluation budget that the frozen base replaces. The lowest finite
-  MESH-residual state among those passes is retained, while the incoming derived state is only a
-  non-finite fallback. Refinement stops early when consecutive residual vectors agree within one
-  tenth of the outer tolerance. Every perturbed column then starts from that same frozen K-value,
+  latest finite state among those passes is retained so the base owns the most thermodynamically
+  consistent K-value fixed point, while the incoming derived state is only a non-finite fallback.
+  Refinement stops early when consecutive residual vectors agree within one tenth of the outer
+  tolerance. Every perturbed column then starts from that same frozen K-value,
   vapor-flow, and enthalpy state; exact restoration prevents finite-difference column order from
   silently refining the base residual.
 - Leaves the accepted line-search trial applied and reuses its evaluated MESH residual. The solver
