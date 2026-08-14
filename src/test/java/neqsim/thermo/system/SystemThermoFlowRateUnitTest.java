@@ -40,6 +40,14 @@ public class SystemThermoFlowRateUnitTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void testAdditionalRateUnitRoundTrips() {
+    assertEquals(fluid.getFlowRate("Sm3/sec") * 60.0, fluid.getFlowRate("Sm3/min"), 1e-6);
+    assertEquals(fluid.getFlowRate("idSm3/hr") / 3600.0, fluid.getFlowRate("idSm3/sec"), 1e-6);
+    assertEquals(fluid.getFlowRate("idSm3/hr") / 60.0, fluid.getFlowRate("idSm3/min"), 1e-6);
+    assertEquals(fluid.getFlowRate("idSm3/hr") * 24.0, fluid.getFlowRate("idSm3/day"), 1e-6);
+  }
+
+  @Test
   void testUnsupportedUnitStillThrows() {
     assertThrows(RuntimeException.class, () -> fluid.getFlowRate("not/a/unit"));
   }

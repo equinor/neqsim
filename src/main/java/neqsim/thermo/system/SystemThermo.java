@@ -2511,13 +2511,22 @@ public abstract class SystemThermo implements SystemInterface {
     } else if (flowunit.equals("m3/day") || flowunit.equals("Am3/day")) {
       initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       return totalNumberOfMoles * getMolarMass() * 3600.0 * 24.0 / getDensity("kg/m3");
+    } else if (flowunit.equals("idSm3/sec")) {
+      return totalNumberOfMoles * getMolarMass() / getIdealLiquidDensity("kg/m3");
+    } else if (flowunit.equals("idSm3/min")) {
+      return totalNumberOfMoles * getMolarMass() * 60.0 / getIdealLiquidDensity("kg/m3");
     } else if (flowunit.equals("idSm3/hr")) {
       return totalNumberOfMoles * getMolarMass() * 3600.0 / getIdealLiquidDensity("kg/m3");
+    } else if (flowunit.equals("idSm3/day")) {
+      return totalNumberOfMoles * getMolarMass() * 3600.0 * 24.0 / getIdealLiquidDensity("kg/m3");
     } else if (flowunit.equals("gallons/min")) {
       initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       return totalNumberOfMoles * getMolarMass() * 60.0 / getDensity("kg/m3") * 1000 / 3.78541178;
     } else if (flowunit.equals("Sm3/sec")) {
       return totalNumberOfMoles * ThermodynamicConstantsInterface.R
+          * ThermodynamicConstantsInterface.standardStateTemperature / ThermodynamicConstantsInterface.atm;
+    } else if (flowunit.equals("Sm3/min")) {
+      return totalNumberOfMoles * 60.0 * ThermodynamicConstantsInterface.R
           * ThermodynamicConstantsInterface.standardStateTemperature / ThermodynamicConstantsInterface.atm;
     } else if (flowunit.equals("Sm3/hr")) {
       return totalNumberOfMoles * 3600.0 * ThermodynamicConstantsInterface.R
@@ -2554,7 +2563,7 @@ public abstract class SystemThermo implements SystemInterface {
     } else {
       throw new RuntimeException("failed.. unit: " + flowunit + " not supported. Supported units: kg/sec, kg/min, "
           + "kg/hr, kg/day, m3/sec, Am3/sec, m3/min, Am3/min, m3/hr, Am3/hr, m3/day, Am3/day, "
-          + "idSm3/hr, gallons/min, Sm3/sec, Sm3/hr, "
+          + "idSm3/sec, idSm3/min, idSm3/hr, idSm3/day, gallons/min, Sm3/sec, Sm3/min, Sm3/hr, "
           + "Sm3/day, MSm3/day, MSm3/hr, mole/sec, mol/sec, mole/min, mol/min, mole/hr, "
           + "mol/hr, kmole/sec, kmol/sec, kmole/min, kmol/min, kmole/hr, kmol/hr, "
           + "kmole/day, kmol/day, lbmole/hr, lbmol/hr, lb/hr, barrel/day, bbl/day");
