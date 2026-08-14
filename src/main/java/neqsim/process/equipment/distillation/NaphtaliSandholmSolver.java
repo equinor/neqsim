@@ -1007,8 +1007,7 @@ public class NaphtaliSandholmSolver {
           String.format("%.6e", norm));
       // Partial convergence is only acceptable when each component balance still closes; a leaky
       // profile must be reported as not accepted so the column does not present it as a solution.
-      boolean partialConvergenceAccepted =
-          norm < tolerance * 100 && meshClosureAcceptable("partial convergence");
+      boolean partialConvergenceAccepted = norm < tolerance * 100 && meshClosureAcceptable("partial convergence");
       if (!partialConvergenceAccepted && warmStartFromColumn) {
         return retryWithColdInitialization(id);
       }
@@ -1028,10 +1027,10 @@ public class NaphtaliSandholmSolver {
    * Retry a rejected retained-state solve from the column's normal cold initializer.
    *
    * <p>
-   * A rejected warm state must not be materialized on the live column before recovery. Otherwise
-   * the nominal cold retry initializes from tray systems and cached products that already contain
-   * the rejected Newton profile. Clearing the warm-start flag and restarting here keeps the live
-   * column authoritative until either the cold attempt is accepted or its best result is applied.
+   * A rejected warm state must not be materialized on the live column before recovery. Otherwise the nominal cold retry
+   * initializes from tray systems and cached products that already contain the rejected Newton profile. Clearing the
+   * warm-start flag and restarting here keeps the live column authoritative until either the cold attempt is accepted
+   * or its best result is applied.
    * </p>
    *
    * @param id calculation identifier for NeqSim
