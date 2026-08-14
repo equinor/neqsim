@@ -1,6 +1,7 @@
 package neqsim.process.measurementdevice;
 
 import java.util.ArrayList;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
@@ -1009,6 +1010,76 @@ public class VenturiFlowMeter extends DifferentialPressureFlowMeter {
   @Override
   protected double calcDischargeCoefficient(double beta, double reynoldsD) {
     return dischargeCoefficient;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected String getDifferentialPressureFlowMeterTransientStateCoverageIssue() {
+    if (getClass() != VenturiFlowMeter.class) {
+      return "venturi-flow-meter subclass " + getClass().getName()
+          + " must provide a snapshot that includes subclass-owned mutable state";
+    }
+    return null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected Serializable captureDifferentialPressureFlowMeterExtensionState() {
+    return new VenturiFlowMeterState(dischargeCoefficient, wetGasCorrelation, liquidMassFlowRate,
+        liquidToGasMassRatio, liquidDensity, liquidFromStream, surfaceTensionFactor, gravitationalAcceleration,
+        pressureLoss, useWetGasDischargeCoefficient);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected void restoreDifferentialPressureFlowMeterExtensionState(Serializable extensionState) {
+    if (!(extensionState instanceof VenturiFlowMeterState)) {
+      throw new IllegalArgumentException("Venturi flow-meter extension snapshot has the wrong type");
+    }
+    VenturiFlowMeterState state = (VenturiFlowMeterState) extensionState;
+    dischargeCoefficient = state.dischargeCoefficient;
+    wetGasCorrelation = state.wetGasCorrelation;
+    liquidMassFlowRate = state.liquidMassFlowRate;
+    liquidToGasMassRatio = state.liquidToGasMassRatio;
+    liquidDensity = state.liquidDensity;
+    liquidFromStream = state.liquidFromStream;
+    surfaceTensionFactor = state.surfaceTensionFactor;
+    gravitationalAcceleration = state.gravitationalAcceleration;
+    pressureLoss = state.pressureLoss;
+    useWetGasDischargeCoefficient = state.useWetGasDischargeCoefficient;
+    cachedWetGasResult = null;
+    cachedWetGasSignature = null;
+  }
+
+  /** Immutable Venturi-specific rollback point. Derived wet-gas caches are invalidated on restore. */
+  private static final class VenturiFlowMeterState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final double dischargeCoefficient;
+    private final WetGasCorrelation wetGasCorrelation;
+    private final double liquidMassFlowRate;
+    private final double liquidToGasMassRatio;
+    private final double liquidDensity;
+    private final boolean liquidFromStream;
+    private final double surfaceTensionFactor;
+    private final double gravitationalAcceleration;
+    private final double pressureLoss;
+    private final boolean useWetGasDischargeCoefficient;
+
+    private VenturiFlowMeterState(double dischargeCoefficient, WetGasCorrelation wetGasCorrelation,
+        double liquidMassFlowRate, double liquidToGasMassRatio, double liquidDensity, boolean liquidFromStream,
+        double surfaceTensionFactor, double gravitationalAcceleration, double pressureLoss,
+        boolean useWetGasDischargeCoefficient) {
+      this.dischargeCoefficient = dischargeCoefficient;
+      this.wetGasCorrelation = wetGasCorrelation;
+      this.liquidMassFlowRate = liquidMassFlowRate;
+      this.liquidToGasMassRatio = liquidToGasMassRatio;
+      this.liquidDensity = liquidDensity;
+      this.liquidFromStream = liquidFromStream;
+      this.surfaceTensionFactor = surfaceTensionFactor;
+      this.gravitationalAcceleration = gravitationalAcceleration;
+      this.pressureLoss = pressureLoss;
+      this.useWetGasDischargeCoefficient = useWetGasDischargeCoefficient;
+    }
   }
 
   /** {@inheritDoc} */
