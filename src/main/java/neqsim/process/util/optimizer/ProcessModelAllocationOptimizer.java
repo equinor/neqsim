@@ -13,24 +13,22 @@ import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.ObjectiveDe
  * Performs a deterministic fixed-total allocation search through an atomic operating-action set.
  *
  * <p>
- * The optimizer transfers a shrinking quantity between pairs of continuous actions. Every trial is
- * evaluated by {@link ProcessModelOperatingActionSetEvaluator}, so all action states are captured
- * before the first write, shared constraints are evaluated on the complete vector, and the baseline
- * is restored before the next trial. Search stops immediately if a candidate cannot restore and
- * reconverge the model.
+ * The optimizer transfers a shrinking quantity between pairs of continuous actions. Every trial is evaluated by
+ * {@link ProcessModelOperatingActionSetEvaluator}, so all action states are captured before the first write, shared
+ * constraints are evaluated on the complete vector, and the baseline is restored before the next trial. Search stops
+ * immediately if a candidate cannot restore and reconverge the model.
  * </p>
  *
  * <p>
- * Results retain immutable objective identity, bounds, tolerances, every candidate evaluation,
- * sampled objective opportunity, and utilization-ranked hydraulic evidence. Pattern search is a
- * local derivative-free method: convergence means that no improving feasible pair transfer was
- * found above the declared step tolerance. It is not proof of a global optimum, a shadow price,
- * production loss, or operational approval.
+ * Results retain immutable objective identity, bounds, tolerances, every candidate evaluation, sampled objective
+ * opportunity, and utilization-ranked hydraulic evidence. Pattern search is a local derivative-free method: convergence
+ * means that no improving feasible pair transfer was found above the declared step tolerance. It is not proof of a
+ * global optimum, a shadow price, production loss, or operational approval.
  * </p>
  *
  * <p>
- * All actions must be continuous and use the same unit as the fixed total. Independent optimizer,
- * evaluator, and {@code ProcessModel} instances are required for parallel searches.
+ * All actions must be continuous and use the same unit as the fixed total. Independent optimizer, evaluator, and
+ * {@code ProcessModel} instances are required for parallel searches.
  * </p>
  *
  * @author NeqSim Development Team
@@ -160,8 +158,7 @@ public final class ProcessModelAllocationOptimizer {
    * @throws IllegalArgumentException if the index is unavailable
    */
   public ProcessModelAllocationOptimizer setObjectiveIndex(int objectiveIndex) {
-    if (objectiveIndex < 0
-        || objectiveIndex >= candidateEvaluator.getSimulationEvaluator().getObjectiveCount()) {
+    if (objectiveIndex < 0 || objectiveIndex >= candidateEvaluator.getSimulationEvaluator().getObjectiveCount()) {
       throw new IllegalArgumentException("Objective index is outside the registered objective range");
     }
     this.objectiveIndex = objectiveIndex;
@@ -201,8 +198,7 @@ public final class ProcessModelAllocationOptimizer {
    * @return this optimizer
    */
   public ProcessModelAllocationOptimizer setInitialStepFraction(double initialStepFraction) {
-    if (!isFinite(initialStepFraction) || initialStepFraction <= 0.0
-        || initialStepFraction > 1.0) {
+    if (!isFinite(initialStepFraction) || initialStepFraction <= 0.0 || initialStepFraction > 1.0) {
       throw new IllegalArgumentException("Initial step fraction must be finite and in (0, 1]");
     }
     this.initialStepFraction = initialStepFraction;
@@ -236,8 +232,7 @@ public final class ProcessModelAllocationOptimizer {
       throw new IllegalArgumentException("Objective improvement tolerance must be finite and non-negative");
     }
     this.objectiveImprovementTolerance = tolerance;
-    this.objectiveToleranceProvenance = requireText(toleranceProvenance,
-        "Objective improvement tolerance provenance");
+    this.objectiveToleranceProvenance = requireText(toleranceProvenance, "Objective improvement tolerance provenance");
     return this;
   }
 
@@ -248,8 +243,7 @@ public final class ProcessModelAllocationOptimizer {
    */
   public synchronized AllocationSearchResult optimize() {
     validateConfiguration();
-    ObjectiveDefinition objective = candidateEvaluator.getSimulationEvaluator().getObjectives()
-        .get(objectiveIndex);
+    ObjectiveDefinition objective = candidateEvaluator.getSimulationEvaluator().getObjectives().get(objectiveIndex);
     ObjectiveSnapshot objectiveSnapshot = new ObjectiveSnapshot(objectiveIndex, objective);
     double[] seed = initialAllocation == null ? createDefaultAllocation() : initialAllocation.clone();
     List<CandidateRecord> records = new ArrayList<CandidateRecord>();
@@ -261,8 +255,8 @@ public final class ProcessModelAllocationOptimizer {
     }
     if (hasUnsafeRecovery(records.get(records.size() - 1))) {
       diagnostics.add("Search stopped because the seed did not restore and reconverge the process model");
-      return createResult(objectiveSnapshot, seed, SearchOutcome.MODEL_RECOVERY_FAILED, records,
-          incumbent, bestSampledObjective, initialStepFraction * fixedTotal, false, diagnostics);
+      return createResult(objectiveSnapshot, seed, SearchOutcome.MODEL_RECOVERY_FAILED, records, incumbent,
+          bestSampledObjective, initialStepFraction * fixedTotal, false, diagnostics);
     }
 
     double step = initialStepFraction * fixedTotal;
@@ -271,10 +265,8 @@ public final class ProcessModelAllocationOptimizer {
     while (step > threshold && records.size() < maximumEvaluations && !unsafeRecovery) {
       boolean improved = false;
       double[] reference = incumbent == null ? seed : incumbent.getCandidateValues();
-      for (int receiver = 0; receiver < reference.length && records.size() < maximumEvaluations;
-          receiver++) {
-        for (int donor = 0; donor < reference.length && records.size() < maximumEvaluations;
-            donor++) {
+      for (int receiver = 0; receiver < reference.length && records.size() < maximumEvaluations; receiver++) {
+        for (int donor = 0; donor < reference.length && records.size() < maximumEvaluations; donor++) {
           if (receiver == donor || !canTransfer(reference, receiver, donor, step)) {
             continue;
           }
@@ -289,13 +281,11 @@ public final class ProcessModelAllocationOptimizer {
             break;
           }
           if (isFiniteObjective(candidate)
-              && (bestSampledObjective == null
-                  || isBetter(candidate, bestSampledObjective, objectiveSnapshot, 0.0))) {
+              && (bestSampledObjective == null || isBetter(candidate, bestSampledObjective, objectiveSnapshot, 0.0))) {
             bestSampledObjective = candidate;
           }
-          if (isEligibleIncumbent(candidate)
-              && (incumbent == null || isBetter(candidate, incumbent, objectiveSnapshot,
-                  objectiveImprovementTolerance))) {
+          if (isEligibleIncumbent(candidate) && (incumbent == null
+              || isBetter(candidate, incumbent, objectiveSnapshot, objectiveImprovementTolerance))) {
             candidate = candidate.withAcceptedAsIncumbent(true);
             records.set(records.size() - 1, candidate);
             incumbent = candidate;
@@ -324,8 +314,8 @@ public final class ProcessModelAllocationOptimizer {
     if (incumbent == null) {
       diagnostics.add("No candidate combined feasibility, a finite selected objective, and complete recovery");
     }
-    return createResult(objectiveSnapshot, seed, outcome, records, incumbent, bestSampledObjective,
-        step, !unsafeRecovery && step <= threshold, diagnostics);
+    return createResult(objectiveSnapshot, seed, outcome, records, incumbent, bestSampledObjective, step,
+        !unsafeRecovery && step <= threshold, diagnostics);
   }
 
   /** Creates one immutable candidate record and appends it to the trace. */
@@ -334,26 +324,22 @@ public final class ProcessModelAllocationOptimizer {
     CandidateSetEvaluationResult evaluation = candidateEvaluator.evaluate(allocation);
     double rawObjective = valueAt(evaluation.getRawObjectives(), objective.getIndex());
     double minimizerObjective = valueAt(evaluation.getObjectives(), objective.getIndex());
-    boolean accepted = acceptedAsIncumbent && evaluation.isFeasible()
-        && evaluation.isBaselineRestored() && evaluation.isBaselineSimulationConverged()
-        && isFinite(rawObjective);
-    CandidateRecord record = new CandidateRecord(records.size(), allocation, rawObjective,
-        minimizerObjective, accepted, evaluation);
+    boolean accepted = acceptedAsIncumbent && evaluation.isFeasible() && evaluation.isBaselineRestored()
+        && evaluation.isBaselineSimulationConverged() && isFinite(rawObjective);
+    CandidateRecord record = new CandidateRecord(records.size(), allocation, rawObjective, minimizerObjective, accepted,
+        evaluation);
     records.add(record);
     return record;
   }
 
   /** Creates the final immutable result. */
-  private AllocationSearchResult createResult(ObjectiveSnapshot objective, double[] seed,
-      SearchOutcome outcome, List<CandidateRecord> records, CandidateRecord incumbent,
-      CandidateRecord bestSampledObjective, double finalStep, boolean converged,
-      List<String> diagnostics) {
-    return new AllocationSearchResult(id, name, provenance, candidateEvaluator.getId(),
-        candidateEvaluator.getName(), candidateEvaluator.getProvenance(), fixedTotal, unit,
-        lowerBounds(), upperBounds(), seed, maximumEvaluations, initialStepFraction,
-        relativeStepTolerance, objectiveImprovementTolerance, objectiveToleranceProvenance,
-        objective, outcome, records, incumbent, bestSampledObjective, finalStep, converged,
-        diagnostics);
+  private AllocationSearchResult createResult(ObjectiveSnapshot objective, double[] seed, SearchOutcome outcome,
+      List<CandidateRecord> records, CandidateRecord incumbent, CandidateRecord bestSampledObjective, double finalStep,
+      boolean converged, List<String> diagnostics) {
+    return new AllocationSearchResult(id, name, provenance, candidateEvaluator.getId(), candidateEvaluator.getName(),
+        candidateEvaluator.getProvenance(), fixedTotal, unit, lowerBounds(), upperBounds(), seed, maximumEvaluations,
+        initialStepFraction, relativeStepTolerance, objectiveImprovementTolerance, objectiveToleranceProvenance,
+        objective, outcome, records, incumbent, bestSampledObjective, finalStep, converged, diagnostics);
   }
 
   /** Returns whether a transfer respects both affected action bounds. */
@@ -365,10 +351,8 @@ public final class ProcessModelAllocationOptimizer {
 
   /** Returns true when a candidate is safe and eligible to become the incumbent. */
   private static boolean isEligibleIncumbent(CandidateRecord candidate) {
-    return candidate != null && candidate.getEvaluation().isFeasible()
-        && candidate.getEvaluation().isBaselineRestored()
-        && candidate.getEvaluation().isBaselineSimulationConverged()
-        && isFinite(candidate.getRawObjective());
+    return candidate != null && candidate.getEvaluation().isFeasible() && candidate.getEvaluation().isBaselineRestored()
+        && candidate.getEvaluation().isBaselineSimulationConverged() && isFinite(candidate.getRawObjective());
   }
 
   /** Returns true for a candidate that has a sampled finite objective. */
@@ -384,8 +368,8 @@ public final class ProcessModelAllocationOptimizer {
   }
 
   /** Compares selected raw objectives using frozen direction metadata. */
-  private static boolean isBetter(CandidateRecord candidate, CandidateRecord reference,
-      ObjectiveSnapshot objective, double tolerance) {
+  private static boolean isBetter(CandidateRecord candidate, CandidateRecord reference, ObjectiveSnapshot objective,
+      double tolerance) {
     if (objective.getDirection() == ObjectiveDefinition.Direction.MAXIMIZE) {
       return candidate.getRawObjective() > reference.getRawObjective() + tolerance;
     }
@@ -401,12 +385,12 @@ public final class ProcessModelAllocationOptimizer {
   private void validateActions() {
     for (ProcessModelOperatingAction action : candidateEvaluator.getActions()) {
       if (action.isDiscrete()) {
-        throw new IllegalArgumentException("Fixed-total allocation search requires continuous actions: "
-            + action.getId());
+        throw new IllegalArgumentException(
+            "Fixed-total allocation search requires continuous actions: " + action.getId());
       }
       if (!unit.equals(action.getUnit())) {
-        throw new IllegalArgumentException("Action unit must exactly match fixed-total unit for "
-            + action.getId() + ": " + action.getUnit() + " != " + unit);
+        throw new IllegalArgumentException("Action unit must exactly match fixed-total unit for " + action.getId()
+            + ": " + action.getUnit() + " != " + unit);
       }
       if (!isFinite(action.getLowerBound()) || !isFinite(action.getUpperBound())) {
         throw new IllegalArgumentException("Allocation action bounds must be finite: " + action.getId());
@@ -419,8 +403,8 @@ public final class ProcessModelAllocationOptimizer {
     double minimum = sum(lowerBounds());
     double maximum = sum(upperBounds());
     if (fixedTotal < minimum - totalTolerance() || fixedTotal > maximum + totalTolerance()) {
-      throw new IllegalArgumentException("Fixed total is outside the aggregate action bounds ["
-          + minimum + ", " + maximum + "] " + unit);
+      throw new IllegalArgumentException(
+          "Fixed total is outside the aggregate action bounds [" + minimum + ", " + maximum + "] " + unit);
     }
   }
 
@@ -480,8 +464,8 @@ public final class ProcessModelAllocationOptimizer {
       }
     }
     if (Math.abs(sum(copy) - fixedTotal) > totalTolerance()) {
-      throw new IllegalArgumentException(description + " must sum to " + fixedTotal + " " + unit
-          + " within " + totalTolerance() + " " + unit);
+      throw new IllegalArgumentException(
+          description + " must sum to " + fixedTotal + " " + unit + " within " + totalTolerance() + " " + unit);
     }
     correctTotalRounding(copy);
     return copy;
@@ -630,9 +614,8 @@ public final class ProcessModelAllocationOptimizer {
     private final CandidateSetEvaluationResult evaluation;
 
     /** Creates an immutable candidate record. */
-    private CandidateRecord(int sequenceIndex, double[] candidateValues, double rawObjective,
-        double minimizerObjective, boolean acceptedAsIncumbent,
-        CandidateSetEvaluationResult evaluation) {
+    private CandidateRecord(int sequenceIndex, double[] candidateValues, double rawObjective, double minimizerObjective,
+        boolean acceptedAsIncumbent, CandidateSetEvaluationResult evaluation) {
       this.sequenceIndex = sequenceIndex;
       this.candidateValues = candidateValues.clone();
       this.rawObjective = rawObjective;
@@ -643,8 +626,8 @@ public final class ProcessModelAllocationOptimizer {
 
     /** Creates a copy with updated incumbent acceptance. */
     private CandidateRecord withAcceptedAsIncumbent(boolean accepted) {
-      return new CandidateRecord(sequenceIndex, candidateValues, rawObjective,
-          minimizerObjective, accepted, evaluation);
+      return new CandidateRecord(sequenceIndex, candidateValues, rawObjective, minimizerObjective, accepted,
+          evaluation);
     }
 
     /** @return zero-based evaluation sequence */
@@ -709,14 +692,13 @@ public final class ProcessModelAllocationOptimizer {
     private final List<String> diagnostics;
 
     /** Creates immutable search evidence. */
-    private AllocationSearchResult(String id, String name, String provenance, String actionSetId,
-        String actionSetName, String actionSetProvenance, double fixedTotal, String unit,
-        double[] lowerBounds, double[] upperBounds, double[] initialAllocation,
-        int maximumEvaluations, double initialStepFraction, double relativeStepTolerance,
-        double objectiveImprovementTolerance, String objectiveToleranceProvenance,
-        ObjectiveSnapshot objective, SearchOutcome outcome, List<CandidateRecord> candidates,
-        CandidateRecord bestFeasibleCandidate, CandidateRecord bestSampledObjectiveCandidate,
-        double finalTransferStep, boolean converged, List<String> diagnostics) {
+    private AllocationSearchResult(String id, String name, String provenance, String actionSetId, String actionSetName,
+        String actionSetProvenance, double fixedTotal, String unit, double[] lowerBounds, double[] upperBounds,
+        double[] initialAllocation, int maximumEvaluations, double initialStepFraction, double relativeStepTolerance,
+        double objectiveImprovementTolerance, String objectiveToleranceProvenance, ObjectiveSnapshot objective,
+        SearchOutcome outcome, List<CandidateRecord> candidates, CandidateRecord bestFeasibleCandidate,
+        CandidateRecord bestSampledObjectiveCandidate, double finalTransferStep, boolean converged,
+        List<String> diagnostics) {
       this.id = id;
       this.name = name;
       this.provenance = provenance;
@@ -882,11 +864,9 @@ public final class ProcessModelAllocationOptimizer {
         return Double.NaN;
       }
       if (objective.getDirection() == ObjectiveDefinition.Direction.MAXIMIZE) {
-        return Math.max(0.0, bestSampledObjectiveCandidate.getRawObjective()
-            - bestFeasibleCandidate.getRawObjective());
+        return Math.max(0.0, bestSampledObjectiveCandidate.getRawObjective() - bestFeasibleCandidate.getRawObjective());
       }
-      return Math.max(0.0, bestFeasibleCandidate.getRawObjective()
-          - bestSampledObjectiveCandidate.getRawObjective());
+      return Math.max(0.0, bestFeasibleCandidate.getRawObjective() - bestSampledObjectiveCandidate.getRawObjective());
     }
 
     /** @return utilization-ranked hydraulic constraints at the best feasible candidate */
