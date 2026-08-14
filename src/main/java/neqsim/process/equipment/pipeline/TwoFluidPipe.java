@@ -1240,7 +1240,7 @@ public class TwoFluidPipe extends Pipeline {
         TwoFluidSection prev = sections[i - 1];
 
         // Pressure from upstream section gradient
-        double P_new = marchPressure(prev, sec);
+        double P_new = marchPressure(prev);
         sec.setPressure(P_new);
 
         // Holdup and velocities
@@ -1322,7 +1322,7 @@ public class TwoFluidPipe extends Pipeline {
         TwoFluidSection prev = sections[i - 1];
 
         // Pressure drop estimate (simplified steady-state)
-        double P_calc = marchPressure(prev, sec);
+        double P_calc = marchPressure(prev);
 
         // Under-relaxed pressure update
         double P_new = sec.getPressure() + omega * (P_calc - sec.getPressure());
@@ -3297,10 +3297,9 @@ public class TwoFluidPipe extends Pipeline {
    * </p>
    *
    * @param prev upstream section supplying the pressure and the gradient
-   * @param sec downstream section whose pressure is being computed
    * @return pressure at the downstream section (Pa), floored at 1 bar
    */
-  private double marchPressure(TwoFluidSection prev, TwoFluidSection sec) {
+  private double marchPressure(TwoFluidSection prev) {
     double dPdx = estimatePressureGradient(prev);
     return Math.max(1e5, prev.getPressure() - dPdx * prev.getLength());
   }
