@@ -740,7 +740,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     if (system.getPhase(0) instanceof PhaseEosInterface) {
       EosMixingRulesInterface mixingRule = ((PhaseEosInterface) system.getPhase(0)).getEosMixingRule();
       if (mixingRule != null) {
-        signature = updateCricondenInputSignature(signature, componentCount * componentCount);
+        signature = updateCricondenInputSignature(signature, ((long) componentCount) * componentCount);
         for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
           for (int otherComponentIndex = 0; otherComponentIndex < componentCount; otherComponentIndex++) {
             signature = updateCricondenInputSignature(signature,
