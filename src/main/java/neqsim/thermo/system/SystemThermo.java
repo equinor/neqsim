@@ -3611,6 +3611,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void init(int initType) {
+    reconcileTotalMolesWithComponentInventory();
     if (!this.isInitialized) {
       initBeta();
       init_x_y();
@@ -3647,6 +3648,30 @@ public abstract class SystemThermo implements SystemInterface {
             .setx(getPhase(j).getComponent(i).getNumberOfMolesInPhase() / getPhase(j).getNumberOfMolesInPhase());
       }
       getPhase(j).normalize();
+    }
+  }
+
+  /**
+   * Reconciles a stale scalar total with the overall component inventory.
+   *
+   * <p>
+   * Serialized systems can retain the total flow of an upstream fluid after their component inventory has been replaced
+   * by a separated phase. The overall mole fractions are derived from the component moles divided by this scalar total,
+   * so this mismatch creates a non-normalized feed and corrupts the following flash.
+   * </p>
+   */
+  private void reconcileTotalMolesWithComponentInventory() {
+    if (phaseArray == null || numberOfComponents == 0 || phaseArray[phaseIndex[0]] == null) {
+      return;
+    }
+    double componentMoles = 0.0;
+    for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
+      componentMoles += getPhase(0).getComponent(componentIndex).getNumberOfmoles();
+    }
+    if (componentMoles > 1.0e-100
+        && Math.abs(componentMoles - totalNumberOfMoles) > 1.0e-12 * Math.max(1.0, componentMoles)) {
+      setTotalNumberOfMolesRaw(componentMoles);
+      isInitialized = false;
     }
   }
 
