@@ -9,6 +9,47 @@
 
 ---
 
+## 2026-08-14 — Component clone keeps its attractive term, and E300 export keeps the volume shift
+
+Two defects that together made EOS regression results disagree with the Eclipse file they were
+exported to. Both surfaced while characterising a gas condensate and both now have regression tests.
+
+**1. `ComponentEos.clone()` left the cloned attractive term bound to the original component.**
+The alpha function reads `Tc`, `Pc` and the acentric factor live from `getComponent()`, so the
+usual regression pattern — clone a base fluid, then adjust critical properties on the clone — only
+changed the `a` parameter while `alpha(T)` kept evaluating against the untuned critical temperature.
+The tuning was silently half-applied.
+
+- `AttractiveTermInterface.setComponent(ComponentEosInterface)` is now public, and
+  `ComponentEos.clone()` re-points the cloned term at the cloned component.
+- **Impact:** any tuning applied to a *clone* via `setTC` / `setPC` / `setAcentricFactor` was
+  partly ignored. Tuning applied to a freshly built fluid was always correct. Re-run regressions
+  that used the clone-then-tune pattern.
+- Regression test: `ComponentEosCloneAttractiveTermTest`.
+
+**2. `EclipseFluidReadWrite.write` wrote `SSHIFT`/`SSHIFTS` as zero for characterised fractions.**
+It emitted `getVolumeCorrectionConst()`, which is only populated when a shift is set explicitly.
+TBP and plus fractions derive their Péneloux translation from the Rackett compressibility instead,
+so the translation was dropped on export — condensate liquid density came back ~14 % too high, both
+on NeqSim read-back and in Eclipse.
+
+- Now writes the effective dimensionless shift `getVolumeCorrection() / getb()`, matching the
+  Eclipse convention `v = v_EOS − s·b`. The reader reproduces the original molar volume exactly.
+- **Impact:** E300 files written before this change carry `SSHIFT = 0` for pseudo-components and
+  will give untranslated PR liquid densities. Re-export them.
+- Regression test: `EclipseFluidReadWriteVolumeShiftTest`.
+
+**Agent-facing notes** (also added to the `neqsim-eos-regression` skill):
+
+- Apply per-component tuning by iterating `fluid.getPhases()` (skipping nulls), **not**
+  `getPhase(i)` — the latter resolves through the phase-index map and can return the same phase
+  object several times while leaving other phase objects untuned.
+- `dewPointPressureFlash()` / `dewPointPressureFlashHC()` can return the initial guess on
+  near-critical fluids. Verify against a pressure scan or `calcPTphaseEnvelope` before using them
+  as a regression target.
+
+---
+
 ## 2026-08-13 — FIV fluid-viscosity factor corrected, and dead-leg pulsation screening added
 
 **Breaking behaviour change.** `FlowInducedVibrationAnalyser` evaluated the Energy Institute

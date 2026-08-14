@@ -32,4 +32,45 @@ public class dewPointTemperatureFlashTest {
     }
     assertEquals(1.7007677589821242, fluid0_HC.getTemperature("C"), 1e-2);
   }
+
+  /**
+   * A component present with a zero mole fraction must not change the dew point. Water used to be special-cased on
+   * presence alone, which seeded the incipient liquid as pure water and stalled the flash on the initial temperature
+   * guess even when the fluid carried no water at all.
+   */
+  @Test
+  void testZeroWaterGivesSameDewPointAsNoWater() {
+    SystemSrkEos withoutWater = new SystemSrkEos();
+    withoutWater.addComponent("methane", 0.7);
+    withoutWater.addComponent("ethane", 0.1);
+    withoutWater.addComponent("propane", 0.1);
+    withoutWater.addComponent("n-butane", 0.1);
+    withoutWater.setMixingRule("classic");
+    withoutWater.setPressure(10.0, "bara");
+    withoutWater.setTemperature(0.0, "C");
+
+    SystemSrkEos withZeroWater = new SystemSrkEos();
+    withZeroWater.addComponent("methane", 0.7);
+    withZeroWater.addComponent("ethane", 0.1);
+    withZeroWater.addComponent("propane", 0.1);
+    withZeroWater.addComponent("n-butane", 0.1);
+    withZeroWater.addComponent("water", 0.1);
+    withZeroWater.setMixingRule("classic");
+    withZeroWater.setMolarComposition(new double[] { 0.7, 0.1, 0.1, 0.1, 0.0 });
+    withZeroWater.setPressure(10.0, "bara");
+    withZeroWater.setTemperature(0.0, "C");
+
+    ThermodynamicOperations opsWithout = new ThermodynamicOperations(withoutWater);
+    ThermodynamicOperations opsZeroWater = new ThermodynamicOperations(withZeroWater);
+    try {
+      opsWithout.dewPointTemperatureFlash();
+      opsZeroWater.dewPointTemperatureFlash();
+    } catch (Exception e) {
+      logger.error(e.getMessage());
+    }
+
+    assertEquals(withoutWater.getTemperature("C"), withZeroWater.getTemperature("C"), 1e-4);
+    // Guard against both flashes silently returning the 0 C starting guess.
+    assertEquals(1.7007677589821242, withZeroWater.getTemperature("C"), 1e-2);
+  }
 }

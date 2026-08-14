@@ -132,7 +132,12 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
       logger.error("Cloning failed.", ex);
     }
 
-    clonedComponent.setAttractiveParameter(this.getAttractiveParameter().clone());
+    AttractiveTermInterface clonedAttractiveTerm = this.getAttractiveParameter().clone();
+    // The alpha function reads Tc, Pc and the acentric factor from its component on every
+    // evaluation, so the clone must point at the cloned component. Leaving the original reference
+    // in place silently discards any critical-property tuning applied after the clone.
+    clonedAttractiveTerm.setComponent(clonedComponent);
+    clonedComponent.setAttractiveParameter(clonedAttractiveTerm);
 
     return clonedComponent;
   }

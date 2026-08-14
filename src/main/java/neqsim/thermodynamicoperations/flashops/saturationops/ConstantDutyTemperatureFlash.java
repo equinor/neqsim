@@ -27,6 +27,28 @@ public class ConstantDutyTemperatureFlash extends ConstantDutyFlash {
     super(system);
   }
 
+  /** Mole fraction at or below which a component is treated as absent. */
+  protected static final double TRACE_MOLE_FRACTION = 1e-20;
+
+  /**
+   * Check whether a system contains water in a non-negligible amount.
+   *
+   * <p>
+   * The dew point saturation flashes seed the incipient liquid as essentially pure water when water is a component of
+   * the system. That is the correct start for the aqueous dew point, but a component carrying zero moles must not
+   * change the result, so the aqueous seed is only used when water actually has a mole fraction.
+   * </p>
+   *
+   * @param system the system to inspect, not null
+   * @return true when water is present with a mole fraction above {@value #TRACE_MOLE_FRACTION}, false otherwise
+   */
+  protected static boolean hasSignificantWater(SystemInterface system) {
+    if (!system.getPhase(0).hasComponent("water")) {
+      return false;
+    }
+    return system.getPhase(0).getComponent("water").getz() > TRACE_MOLE_FRACTION;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run() {

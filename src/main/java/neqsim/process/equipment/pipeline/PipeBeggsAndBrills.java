@@ -596,6 +596,11 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   // fluid
   private boolean includeFrictionHeating = false;
 
+  /**
+   * Direct electrical heating (DEH) power delivered to the fluid per metre of pipe, in W/m. Zero means no DEH.
+   */
+  private double directElectricalHeatingPowerPerMeter = 0.0;
+
   // Heat transfer parameters
   double Tmi; // medium temperature
   double Tmo; // outlet temperature
@@ -1569,6 +1574,13 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       if (!runIsothermal) {
         double inletTempBeforeHeat = system.getTemperature();
         double analyticalDeltaT = calcTemperatureDifference(system);
+        if (directElectricalHeatingPowerPerMeter != 0.0) {
+          // DEH lifts the increment above the wall-heat-transfer band checked below
+          double mCp = system.getFlowRate("kg/sec") * system.getCp("J/kgK");
+          if (mCp > 0.0) {
+            analyticalDeltaT += directElectricalHeatingPowerPerMeter * length / mCp;
+          }
+        }
         enthalpyInlet = calcHeatBalance(enthalpyInlet, system, testOps);
         // Defensive guard: PHflash can diverge (clamping T to its 0.1 K minimum sentinel
         // or to other unphysical values) on some JVM/locale combinations, e.g. for
@@ -2152,6 +2164,12 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       enthalpy = enthalpy + massFlowRate * Cp * calcTemperatureDifference(system);
     }
 
+    // 1b. Direct electrical heating (DEH) - uniform power per metre of pipe.
+    // Applied independently of the wall heat loss, which it counteracts.
+    if (directElectricalHeatingPowerPerMeter != 0.0) {
+      enthalpy = enthalpy + directElectricalHeatingPowerPerMeter * length;
+    }
+
     // 2. Joule-Thomson effect: temperature change due to pressure drop
     // JT coefficient calculated from mixture thermodynamics (mass-weighted average)
     // dH_JT = m_dot * Cp * μ_JT * dP (where dP is pressure drop, positive value)
@@ -2270,6 +2288,64 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    */
   public boolean isIncludeFrictionHeating() {
     return includeFrictionHeating;
+  }
+
+  /**
+   * Sets the direct electrical heating (DEH) power delivered to the fluid, distributed uniformly over the pipe length.
+   *
+   * <p>
+   * DEH passes current through the pipe wall to keep the fluid above the hydrate or wax formation temperature. The
+   * power set here is the electrical power actually reaching the fluid, so any cable and coating losses must already be
+   * deducted. The heat is added to the energy balance independently of the wall heat loss it counteracts, so the fluid
+   * warms whenever the DEH power exceeds the loss to the surroundings.
+   * </p>
+   *
+   * @param power total DEH power delivered to the fluid in W, non-negative
+   * @throws IllegalArgumentException if power is negative or the pipe length has not been set
+   */
+  public void setDirectElectricalHeatingPower(double power) {
+    if (power < 0) {
+      throw new IllegalArgumentException("DEH power must be non-negative, got: " + power);
+    }
+    if (Double.isNaN(totalLength) || totalLength <= 0) {
+      throw new IllegalArgumentException("Pipe length must be set before the total DEH power");
+    }
+    this.directElectricalHeatingPowerPerMeter = power / totalLength;
+  }
+
+  /**
+   * Sets the direct electrical heating (DEH) power per metre of pipe.
+   *
+   * @param powerPerMeter DEH power delivered to the fluid in W/m, non-negative
+   * @throws IllegalArgumentException if powerPerMeter is negative
+   */
+  public void setDirectElectricalHeatingPowerPerMeter(double powerPerMeter) {
+    if (powerPerMeter < 0) {
+      throw new IllegalArgumentException("DEH power per metre must be non-negative, got: " + powerPerMeter);
+    }
+    this.directElectricalHeatingPowerPerMeter = powerPerMeter;
+  }
+
+  /**
+   * Gets the direct electrical heating (DEH) power per metre of pipe.
+   *
+   * @return DEH power delivered to the fluid in W/m, zero when DEH is not used
+   * @see #setDirectElectricalHeatingPower(double)
+   */
+  public double getDirectElectricalHeatingPowerPerMeter() {
+    return directElectricalHeatingPowerPerMeter;
+  }
+
+  /**
+   * Gets the total direct electrical heating (DEH) power over the pipe length.
+   *
+   * @return total DEH power delivered to the fluid in W, zero when DEH is not used or the length is unset
+   */
+  public double getDirectElectricalHeatingPower() {
+    if (Double.isNaN(totalLength)) {
+      return 0.0;
+    }
+    return directElectricalHeatingPowerPerMeter * totalLength;
   }
 
   private void initializeTransientState(UUID id) {
