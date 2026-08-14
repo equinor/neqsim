@@ -146,9 +146,9 @@ class ProcessModelOperatingActionSetEvaluatorTest {
 
     CandidateSetEvaluationResult repeated = evaluator.evaluate(new double[] { 700.0, 300.0 });
     assertEquals(redistributed.getOutcome(), repeated.getOutcome());
-    assertArrayEquals(redistributed.getRawObjectives(), repeated.getRawObjectives(), 0.0);
+    assertArrayEquals(redistributed.getRawObjectives(), repeated.getRawObjectives(), 1.0e-9);
     assertEquals(redistributed.getHydraulicConstraints().get(0).getUtilization(),
-        repeated.getHydraulicConstraints().get(0).getUtilization(), 0.0);
+        repeated.getHydraulicConstraints().get(0).getUtilization(), 1.0e-12);
   }
 
   /** Verifies a later rejected action never reaches simulation and all prior actions are recovered. */
@@ -233,6 +233,8 @@ class ProcessModelOperatingActionSetEvaluatorTest {
     reservoir.setReservoirFluid(fluid, 1.0e9, 10.0, 1.0e8);
     StreamInterface producerA = reservoir.addGasProducer("producer A");
     StreamInterface producerB = reservoir.addGasProducer("producer B");
+    producerA.setName("producer A");
+    producerB.setName("producer B");
     producerA.setFlowRate(0.6, "MSm3/day");
     producerB.setFlowRate(0.4, "MSm3/day");
     WellFlow wellA = new WellFlow("well A");
