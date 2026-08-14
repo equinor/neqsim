@@ -27,11 +27,13 @@ The initial model provides:
   timestamp, and project revision evidence; and
 - deterministic revision impact identifying added, removed, and modified semantic objects and every
   affected drawing and sheet; and
+- opt-in manual sheet definitions, stable object-to-sheet assignments, pinned coordinates, and
+  protected connection routes with explicit review evidence; and
 - byte-deterministic JSON for equivalent fresh process models.
 
-The initial automatic partition is deliberately conservative. It does not yet choose sheet sizes,
-grids, coordinates, routing, symbols, legends, title-block geometry, or manual layout overrides.
-Those are later document-rendering concerns and must not be hidden in the process execution graph.
+The automatic partition remains deliberately conservative. It does not choose sheet sizes, grids,
+symbols, legends, or title-block geometry. Manual layout intent is supplied separately through an
+`EngineeringDiagramLayoutRegister`; it is never hidden in the process execution graph.
 
 ## Java example
 
@@ -97,6 +99,71 @@ EngineeringDiagramDocumentSet reviewedDocuments =
         register);
 ```
 
+### Persistent manual layout intent
+
+Use an `EngineeringDiagramLayoutRegister` to retain reviewed layout choices across regeneration.
+The register can add a stable manual sheet, assign an equipment or endpoint object to that sheet,
+pin an object in millimetres, and protect a connection route with ordered waypoints. Every entry
+records its source, evidence state, recorder, timestamp, and revision. The document adapter validates
+all stable IDs and produces structured errors instead of silently applying stale references.
+
+Connection sheet membership is derived from its endpoint locations. Moving equipment also moves its
+owned ports and nozzles unless an endpoint has an explicit assignment. When the endpoints land on
+different sheets, the adapter retains one authoritative semantic connection and creates exactly two
+reciprocal off-page connectors. Protected route geometry is attached to each applicable sheet view;
+it does not create another process connection.
+
+```java
+EngineeringDiagramLayoutRegister layout =
+    new EngineeringDiagramLayoutRegister()
+        .withSheet(
+            new EngineeringDiagramLayoutRegister.SheetDefinition(
+                "separator-detail",
+                "002",
+                "Separator detail",
+                "project-layout-register",
+                EngineeringDiagramLayoutRegister.EvidenceState.REVIEWED,
+                "Process discipline",
+                "2026-08-13T12:00:00Z",
+                "B"))
+        .withAssignment(
+            new EngineeringDiagramLayoutRegister.SheetAssignment(
+                separatorId,
+                "separator-detail",
+                "project-layout-register",
+                EngineeringDiagramLayoutRegister.EvidenceState.REVIEWED,
+                "Process discipline",
+                "2026-08-13T12:00:00Z",
+                "B"))
+        .withPinnedPosition(
+            new EngineeringDiagramLayoutRegister.PinnedPosition(
+                separatorId,
+                "separator-detail",
+                180.0,
+                95.0,
+                EngineeringDiagramLayoutRegister.CoordinateUnit.MILLIMETRE,
+                "project-layout-register",
+                EngineeringDiagramLayoutRegister.EvidenceState.REVIEWED,
+                "Process discipline",
+                "2026-08-13T12:00:00Z",
+                "B"));
+
+EngineeringDiagramDocumentSet manuallyArranged =
+    ProcessDiagramDocumentSetAdapter.fromProcessModel(
+        processModel,
+        "PLANT-01",
+        "B",
+        "PFD-01-001",
+        "Gas processing facility",
+        EngineeringDiagramDocumentSet.ContentProfile.PFD,
+        register,
+        layout);
+```
+
+Coordinates and waypoints are renderer-neutral proposal data. The register does not assert that a
+route is physically constructible, that a layout complies with a drawing standard, or that an
+accountable engineer has approved the result.
+
 Compare two revisions of the same document-set and plant identity with `baseline.compareTo(revised)`.
 The returned `EngineeringDiagramRevisionImpact` has deterministic added, removed, and modified
 semantic-object IDs. It projects those changes to the sheets and drawings containing each object in
@@ -114,9 +181,9 @@ They are not approved for design or construction. The model rejects approved/con
 without an explicit accountable approval reference; a simulation result cannot promote its own
 engineering state.
 
-A designation register records review evidence only. It does not represent engineering approval,
-does not authorize a P&ID or PFD for design or construction, and does not replace project ownership
-of piping, valve, nozzle, instrument, safeguard, or design data.
+Designation and layout registers record review evidence only. They do not represent engineering
+approval, do not authorize a P&ID or PFD for design or construction, and do not replace project
+ownership of piping, valve, nozzle, instrument, safeguard, routing, or design data.
 
 The document model does not claim ISO 10628, ISO 5457, ISO 7200, ISO 14617, ISA, DEXPI EV, or
 commercial CAE conformance. Licensed standards mapping, project conventions, qualified symbols,
@@ -137,4 +204,6 @@ cardinality, and fail-visible broken references.
 It also verifies immutable semantic snapshots, unit/case/provenance retention, rejection of
 incompletely governed simulation-result values, warning-only diagnostics for pre-existing generic
 calculation graphs, unchanged topology-only behavior, reviewed designation governance, fail-visible
-designation mismatches, and deterministic cross-sheet revision impact.
+designation mismatches, deterministic cross-sheet revision impact, persistent manual layout evidence,
+unchanged semantic identities after layout-only revision changes, protected-route retention, and
+fail-visible stale layout references.
