@@ -3249,8 +3249,7 @@ public class NaphtaliSandholmSolver {
           int rowBase = j * varsPerTray;
           for (int eq = 0; eq < varsPerTray; eq++) {
             if (centeredDifference) {
-              J[rowBase + eq][varIdx] =
-                  (forwardResidual[j - jStart][eq] - comparisonResidual[eq]) / (2.0 * h);
+              J[rowBase + eq][varIdx] = (forwardResidual[j - jStart][eq] - comparisonResidual[eq]) / (2.0 * h);
             } else {
               J[rowBase + eq][varIdx] = (forwardResidual[j - jStart][eq] - F0[rowBase + eq]) / h;
             }
