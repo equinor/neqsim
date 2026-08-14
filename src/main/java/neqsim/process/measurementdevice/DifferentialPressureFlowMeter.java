@@ -639,8 +639,8 @@ public abstract class DifferentialPressureFlowMeter extends StreamMeasurementDev
           "Differential-pressure flow-meter snapshot identity does not match " + getTransientStateIdentity());
     }
     if (!getClass().getName().equals(snapshot.concreteClassName)) {
-      throw new IllegalArgumentException("Differential-pressure flow-meter snapshot subtype does not match "
-          + getClass().getName());
+      throw new IllegalArgumentException(
+          "Differential-pressure flow-meter snapshot subtype does not match " + getClass().getName());
     }
     stream = snapshot.stream;
     pipeDiameterMeters = snapshot.pipeDiameterMeters;

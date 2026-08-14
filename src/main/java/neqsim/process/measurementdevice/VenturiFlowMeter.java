@@ -1025,9 +1025,9 @@ public class VenturiFlowMeter extends DifferentialPressureFlowMeter {
   /** {@inheritDoc} */
   @Override
   protected Serializable captureDifferentialPressureFlowMeterExtensionState() {
-    return new VenturiFlowMeterState(dischargeCoefficient, wetGasCorrelation, liquidMassFlowRate,
-        liquidToGasMassRatio, liquidDensity, liquidFromStream, surfaceTensionFactor, gravitationalAcceleration,
-        pressureLoss, useWetGasDischargeCoefficient);
+    return new VenturiFlowMeterState(dischargeCoefficient, wetGasCorrelation, liquidMassFlowRate, liquidToGasMassRatio,
+        liquidDensity, liquidFromStream, surfaceTensionFactor, gravitationalAcceleration, pressureLoss,
+        useWetGasDischargeCoefficient);
   }
 
   /** {@inheritDoc} */

@@ -155,7 +155,8 @@ public class ConeFlowMeter extends DifferentialPressureFlowMeter {
     private static final long serialVersionUID = 1000L;
     private static final ConeFlowMeterState INSTANCE = new ConeFlowMeterState();
 
-    private ConeFlowMeterState() {}
+    private ConeFlowMeterState() {
+    }
   }
 
   /** {@inheritDoc} */

@@ -27,8 +27,8 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Quantitative transaction, restart, and physical-trend evidence for the ISO 5167
- * differential-pressure flow-meter family.
+ * Quantitative transaction, restart, and physical-trend evidence for the ISO 5167 differential-pressure flow-meter
+ * family.
  */
 class DifferentialPressureFlowMeterTransientStateTransactionTest extends neqsim.NeqSimTest {
   @Test
@@ -159,8 +159,7 @@ class DifferentialPressureFlowMeterTransientStateTransactionTest extends neqsim.
     DifferentialPressureFlowMeter.DifferentialPressureFlowMeterState restoredSnapshot;
     try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(serialized))) {
       restoredMeter = (OrificeFlowMeter) input.readObject();
-      restoredSnapshot =
-          (DifferentialPressureFlowMeter.DifferentialPressureFlowMeterState) input.readObject();
+      restoredSnapshot = (DifferentialPressureFlowMeter.DifferentialPressureFlowMeterState) input.readObject();
     }
 
     restoredMeter.setWetGasCorrelation(WetGasCorrelation.NONE);
@@ -176,12 +175,9 @@ class DifferentialPressureFlowMeterTransientStateTransactionTest extends neqsim.
 
   @Test
   void nearbyDifferentialPressurePointFollowsSquareRootPhysicalTrend() {
-    List<DifferentialPressureFlowMeter> meters =
-        meters(new OrificeFlowMeter("O", createGasStream("O source")),
-            new NozzleFlowMeter("N", createGasStream("N source")),
-            new VenturiFlowMeter("V", createGasStream("V source")),
-            new ConeFlowMeter("C", createGasStream("C source")),
-            new WedgeFlowMeter("W", createGasStream("W source")));
+    List<DifferentialPressureFlowMeter> meters = meters(new OrificeFlowMeter("O", createGasStream("O source")),
+        new NozzleFlowMeter("N", createGasStream("N source")), new VenturiFlowMeter("V", createGasStream("V source")),
+        new ConeFlowMeter("C", createGasStream("C source")), new WedgeFlowMeter("W", createGasStream("W source")));
 
     for (DifferentialPressureFlowMeter meter : meters) {
       configureMeter(meter, 1L);
