@@ -130,6 +130,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
       clonedComponent = (ComponentEos) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Failed to clone EOS component", ex);
     }
 
     AttractiveTermInterface clonedAttractiveTerm = this.getAttractiveParameter().clone();
