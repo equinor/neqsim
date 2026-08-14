@@ -4536,15 +4536,19 @@ public class NaphtaliSandholmSolver {
     double rho = 0.5; // backtracking factor
     int maxBacktrack = 15;
 
-    // Save current state
+    // Save the complete current state. Every backtracking trial must start
+    // from the same primary and derived thermodynamic base; otherwise a
+    // rejected larger step silently changes the K-value seed of the next trial.
     double[][] saveLiq = new double[N][C];
     double[] saveT = new double[N];
     double[] saveV = new double[N];
-    for (int j = 0; j < N; j++) {
-      System.arraycopy(liq[j], 0, saveLiq[j], 0, C);
-      saveT[j] = T[j];
-      saveV[j] = V[j];
-    }
+    saveTrayState(saveLiq, saveT, saveV);
+    double[][] saveK = new double[N][C];
+    double[][] saveVap = new double[N][C];
+    double[] saveL = new double[N];
+    double[] saveHL = new double[N];
+    double[] saveHV = new double[N];
+    saveDerivedThermodynamicState(saveK, saveVap, saveL, saveHL, saveHV);
 
     double bestAlpha = 0.0;
     double bestTrialNorm = Double.POSITIVE_INFINITY;
@@ -4552,8 +4556,9 @@ public class NaphtaliSandholmSolver {
     double lastEvaluatedAlpha = Double.NaN;
 
     for (int bt = 0; bt < maxBacktrack; bt++) {
-      // Trial update
+      // Trial update from one reproducible primary and derived base.
       restoreTrayState(saveLiq, saveT, saveV);
+      restoreDerivedThermodynamicState(saveK, saveVap, saveL, saveHL, saveHV);
       applyUpdate(dx, alpha);
 
       evaluateThermo();
@@ -4581,11 +4586,13 @@ public class NaphtaliSandholmSolver {
 
     if (bestAlpha <= 0.0 || bestResidual == null) {
       restoreTrayState(saveLiq, saveT, saveV);
+      restoreDerivedThermodynamicState(saveK, saveVap, saveL, saveHL, saveHV);
       return new LineSearchResult(0.0, null, Double.POSITIVE_INFINITY);
     }
 
     if (bestAlpha != lastEvaluatedAlpha) {
       restoreTrayState(saveLiq, saveT, saveV);
+      restoreDerivedThermodynamicState(saveK, saveVap, saveL, saveHL, saveHV);
       applyUpdate(dx, bestAlpha);
       evaluateThermo();
       bestResidual = computeResidual();
