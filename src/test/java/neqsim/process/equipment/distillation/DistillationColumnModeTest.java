@@ -156,6 +156,7 @@ public class DistillationColumnModeTest {
 
     assertNotNull(pumparound.getReturnStream());
     assertTrue(pumparound.getReturnStream().getFlowRate("kg/hr") >= 0.0);
+    assertTrue(Double.isFinite(pumparound.getDuty()));
     assertTrue(column.getLastColumnTearIterationCount() > 0);
     assertTrue(column.getLastPumparoundRelativeChange() >= 0.0);
   }
@@ -169,8 +170,9 @@ public class DistillationColumnModeTest {
       DistillationColumn.ColumnPumparound pumparound = column.getPumparounds().get(0);
       column.run(UUID.randomUUID());
 
-      double duty = pumparound.getReturnStream().getFluid().getEnthalpy()
+      double enthalpyDifference = pumparound.getReturnStream().getFluid().getEnthalpy()
           - pumparound.getDrawStream().getFluid().getEnthalpy();
+      double duty = pumparound.getDuty();
       double returnFlow = pumparound.getReturnStream().getFlowRate("kg/hr");
       assertTrue(column.solved(), column.getConvergenceDiagnostics());
       assertTrue(column.isLastColumnTearConverged());
@@ -178,16 +180,24 @@ public class DistillationColumnModeTest {
           pumparound.getDrawStream().getTemperature() - pumparound.getReturnStream().getTemperature(), 1.0e-9);
       assertTrue(returnFlow > 0.0 && returnFlow < 10000.0);
       assertTrue(duty < 0.0);
+      assertEquals(enthalpyDifference, duty, Math.max(1.0e-9, 1.0e-12 * Math.abs(duty)));
+      assertEquals(duty / 1000.0, pumparound.getDuty("kW"), Math.max(1.0e-12, 1.0e-12 * Math.abs(duty)));
       assertTrue(Math.abs(column.getMassBalance("kg/hr")) < 1.0e-8);
+      assertTrue(column.getEnergyBalanceError() <= column.getEnthalpyBalanceTolerance(),
+          column.getConvergenceDiagnostics());
       assertPumparoundProductsPhysicalAndBalanced(column);
 
       column.run(UUID.randomUUID());
-      double repeatedDuty = pumparound.getReturnStream().getFluid().getEnthalpy()
+      double repeatedEnthalpyDifference = pumparound.getReturnStream().getFluid().getEnthalpy()
           - pumparound.getDrawStream().getFluid().getEnthalpy();
+      double repeatedDuty = pumparound.getDuty();
       assertEquals(temperatureDrop,
           pumparound.getDrawStream().getTemperature() - pumparound.getReturnStream().getTemperature(), 1.0e-9);
       assertEquals(returnFlow, pumparound.getReturnStream().getFlowRate("kg/hr"), 5.0e-5 * returnFlow);
+      assertEquals(repeatedEnthalpyDifference, repeatedDuty, Math.max(1.0e-9, 1.0e-12 * Math.abs(repeatedDuty)));
       assertEquals(duty, repeatedDuty, 5.0e-5 * Math.abs(duty));
+      assertTrue(column.getEnergyBalanceError() <= column.getEnthalpyBalanceTolerance(),
+          column.getConvergenceDiagnostics());
       assertPumparoundProductsPhysicalAndBalanced(column);
     }
   }

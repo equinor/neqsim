@@ -306,6 +306,7 @@ column.setPumparoundTolerance(1.0e-4);
 column.run();
 
 StreamInterface returnStream = pumparound.getReturnStream();
+double dutyKw = pumparound.getDuty("kW");
 double latestChange = column.getLastPumparoundRelativeChange();
 ```
 
@@ -322,6 +323,13 @@ a thermodynamic snapshot while seeding tray profiles, so initialization cannot c
 return temperature. After a converged solve, the draw-to-return temperature difference therefore
 equals the configured drop; the return flow and composition remain coupled through the outer tear
 iteration.
+
+`ColumnPumparound.getDuty()` reports return-stream enthalpy minus draw-stream enthalpy in watts;
+`getDuty(String)` converts that value to another supported power unit. Cooling therefore has negative duty
+and heating positive duty. Before the first return update the duty is `Double.NaN`. The public column energy
+diagnostic includes the liquid draw as a tray outlet while the return remains a tray inlet, so their
+enthalpy difference is retained as pumparound utility duty without treating the internal circulation
+as an external feed or product.
 
 ## Hydraulics and Pressure-Drop Coupling
 
@@ -448,7 +456,7 @@ fraction diagnostics, film/heat-transfer model choices, and equation-oriented re
 | `getLastTemperatureResidual()` | Average tray-temperature residual in Kelvin. |
 | `getLastMassResidual()` | Relative mass-balance residual. |
 | `getLastEnergyResidual()` | Relative enthalpy-balance residual. |
-| `getEnergyBalanceError()` | Maximum tray/column enthalpy imbalance, including external side draws and excluding zero-flow phase templates. |
+| `getEnergyBalanceError()` | Maximum tray/column enthalpy imbalance, including external side draws, pumparound draw/return duty, and excluding zero-flow phase templates. |
 | `getLastTopSpecificationResidual()`, `getLastBottomSpecificationResidual()` | Endpoint spec errors. |
 | `getLastSpecificationResidual()` | Maximum absolute endpoint spec error. |
 | `getSpecificationHomotopySteps()` | Configured number of staged continuation targets for adjustable product specifications. |
@@ -457,6 +465,7 @@ fraction diagnostics, film/heat-transfer model choices, and equation-oriented re
 | `getLastColumnTearResidual()` | Maximum outer tear residual. |
 | `isLastColumnTearConverged()` | Whether active side-draw, pumparound, and hydraulic tear variables met tolerance. |
 | `getLastColumnTearCandidateHistory()` | Accepted/rejected single-side-draw attempts, including a guarded continuation retry when a cold solve fails after an accepted state exists. |
+| `ColumnPumparound.getDuty()`, `getDuty(String)` | Latest pumparound cooler/heater duty, negative for cooling and positive for heating. |
 | `getLastPumparoundRelativeChange()` | Maximum latest pumparound return-flow change. |
 | `getLastHydraulicPressureDropPa()` | Latest coupled hydraulic pressure drop in Pa. |
 | `getLastHydraulicPressureDropResidual()` | Relative pressure-profile change from hydraulic coupling. |

@@ -419,6 +419,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     private transient StreamInterface drawStream;
     private transient StreamInterface returnStream;
     private transient double lastReturnFlowKgPerHour = 0.0;
+    /** Latest cooler/heater duty, positive for heat added to the returning liquid, in W. */
+    private transient double lastDutyW = Double.NaN;
 
     /**
      * Create a liquid pumparound definition.
@@ -502,6 +504,33 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     /**
+     * Get the latest pumparound cooler/heater duty.
+     *
+     * <p>
+     * Duty is the return-stream enthalpy minus the draw-stream enthalpy. It is negative for cooling and positive for
+     * heating.
+     * </p>
+     *
+     * @return latest duty in W, or {@link Double#NaN} before the first draw update
+     */
+    public double getDuty() {
+      return lastDutyW;
+    }
+
+    /**
+     * Get the latest pumparound cooler/heater duty in a requested power unit.
+     *
+     * @param unit power unit supported by {@link neqsim.util.unit.PowerUnit}
+     * @return latest duty in the requested unit, or {@link Double#NaN} before the first draw update
+     */
+    public double getDuty(String unit) {
+      if (!Double.isFinite(lastDutyW)) {
+        return lastDutyW;
+      }
+      return new neqsim.util.unit.PowerUnit(lastDutyW, "W").getValue(unit);
+    }
+
+    /**
      * Update the return stream from a tray liquid draw.
      *
      * @param newDrawStream latest liquid draw stream
@@ -523,6 +552,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         returnStream.setThermoSystem(returnSystem);
       }
       returnStream.run(id);
+      double drawEnthalpy = newDrawStream.getFluid().getEnthalpy();
+      double returnEnthalpy = returnStream.getFluid().getEnthalpy();
+      lastDutyW = Double.isFinite(drawEnthalpy) && Double.isFinite(returnEnthalpy) ? returnEnthalpy - drawEnthalpy
+          : Double.NaN;
       lastReturnFlowKgPerHour = Math.abs(returnStream.getFlowRate("kg/hr"));
       double scale = Math.max(1.0e-12, Math.max(previousFlow, lastReturnFlowKgPerHour));
       return Math.abs(lastReturnFlowKgPerHour - previousFlow) / scale;
@@ -11626,8 +11659,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Calculates the relative enthalpy imbalance across all trays.
    *
    * <p>
-   * External gas and liquid side draws are included with the main inter-tray outlets. Zero-flow streams are ignored
-   * because a phase template can retain a finite molar enthalpy even when it carries no material or energy.
+   * External gas and liquid side draws and internal pumparound liquid draws are included with the main inter-tray
+   * outlets. The corresponding pumparound return is already a tray inlet, so the draw/return enthalpy difference
+   * accounts for its cooler or heater duty. Zero-flow streams are ignored because a phase template can retain a finite
+   * molar enthalpy even when it carries no material or energy.
    * </p>
    *
    * @return maximum of tray-wise and overall relative enthalpy imbalance
@@ -11677,6 +11712,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
       if (includeSideDraws && trays.get(i).getLiquidSideDrawFraction() > 0.0) {
         outlet += getFiniteStreamEnthalpy(trays.get(i).getLiquidSideDrawStream(), true);
+      }
+      if (includeSideDraws) {
+        for (ColumnPumparound pumparound : pumparounds) {
+          if (pumparound.getDrawTrayNumber() == i && pumparound.getDrawFraction() > 0.0) {
+            outlet += getFiniteStreamEnthalpy(trays.get(i).getLiquidPumparoundDrawStream(), true);
+          }
+        }
       }
 
       if (trays.get(i) instanceof Reboiler) {
