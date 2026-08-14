@@ -441,6 +441,8 @@ public class ProcessModel implements Runnable, Serializable {
   private int lastBoundaryStreamCount = 0;
   /** Per-boundary-stream convergence errors recorded on the last outer iteration. */
   private List<BoundaryStreamError> lastBoundaryStreamErrors = new ArrayList<>();
+  /** Identity cache for immutable boundary diagnostics reused across unchanged observations. */
+  private transient Map<Object, BoundaryStreamError> boundaryStreamErrorCache = new IdentityHashMap<>();
 
   /**
    * Per-stream convergence diagnostics for a single boundary stream.
@@ -3103,6 +3105,9 @@ public class ProcessModel implements Runnable, Serializable {
     int expectedStreamErrors = lastBoundaryStreamErrors == null ? 0
         : Math.min(current.size(), lastBoundaryStreamErrors.size());
     List<BoundaryStreamError> streamErrors = new ArrayList<>(expectedStreamErrors);
+    Map<Object, BoundaryStreamError> priorStreamErrors = boundaryStreamErrorCache;
+    Map<Object, BoundaryStreamError> nextStreamErrors =
+        current.isEmpty() ? null : new IdentityHashMap<>(current.size());
 
     for (Object key : current.keySet()) {
       if (previous.containsKey(key)) {
@@ -3139,13 +3144,34 @@ public class ProcessModel implements Runnable, Serializable {
         double pressErr = Math.abs(curr[2] - prev[2]) / pressBase;
         maxPressErr = Math.max(maxPressErr, pressErr);
 
-        streamErrors.add(new BoundaryStreamError(getStreamName(key), getStreamProducerLabel(key, areaPlan), flowErr,
-            tempErr, pressErr, prev[0], curr[0]));
+        String streamName = getStreamName(key);
+        String producerLabel = getStreamProducerLabel(key, areaPlan);
+        BoundaryStreamError streamError = priorStreamErrors == null ? null : priorStreamErrors.get(key);
+        if (!matchesBoundaryStreamError(streamError, streamName, producerLabel, flowErr, tempErr, pressErr, prev[0],
+            curr[0])) {
+          streamError = new BoundaryStreamError(streamName, producerLabel, flowErr, tempErr, pressErr,
+              prev[0], curr[0]);
+        }
+        streamErrors.add(streamError);
+        nextStreamErrors.put(key, streamError);
       }
     }
 
     lastBoundaryStreamErrors = streamErrors;
+    boundaryStreamErrorCache = nextStreamErrors;
     return new double[] { maxFlowErr, maxTempErr, maxPressErr };
+  }
+
+  /** Returns whether an immutable cached diagnostic exactly represents the current boundary observation. */
+  private boolean matchesBoundaryStreamError(BoundaryStreamError cached, String streamName, String producerLabel,
+      double flowError, double temperatureError, double pressureError, double previousFlow, double currentFlow) {
+    return cached != null && java.util.Objects.equals(cached.getStreamName(), streamName)
+        && java.util.Objects.equals(cached.getProducerLabel(), producerLabel)
+        && Double.doubleToLongBits(cached.getFlowError()) == Double.doubleToLongBits(flowError)
+        && Double.doubleToLongBits(cached.getTemperatureError()) == Double.doubleToLongBits(temperatureError)
+        && Double.doubleToLongBits(cached.getPressureError()) == Double.doubleToLongBits(pressureError)
+        && Double.doubleToLongBits(cached.getPreviousFlow()) == Double.doubleToLongBits(previousFlow)
+        && Double.doubleToLongBits(cached.getCurrentFlow()) == Double.doubleToLongBits(currentFlow);
   }
 
   /**
