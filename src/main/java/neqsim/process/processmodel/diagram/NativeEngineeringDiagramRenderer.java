@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -119,11 +121,15 @@ public final class NativeEngineeringDiagramRenderer {
   public static final class Result {
     private final Map<String, String> svgBySheetId;
     private final byte[] pdf;
+    private final Map<String, String> visualFingerprintsBySheetId;
     private final List<Diagnostic> diagnostics;
 
-    private Result(Map<String, String> svgBySheetId, byte[] pdf, List<Diagnostic> diagnostics) {
+    private Result(Map<String, String> svgBySheetId, byte[] pdf, Map<String, String> visualFingerprintsBySheetId,
+        List<Diagnostic> diagnostics) {
       this.svgBySheetId = Collections.unmodifiableMap(new LinkedHashMap<String, String>(svgBySheetId));
       this.pdf = Arrays.copyOf(pdf, pdf.length);
+      this.visualFingerprintsBySheetId = Collections
+          .unmodifiableMap(new LinkedHashMap<String, String>(visualFingerprintsBySheetId));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<Diagnostic>(diagnostics));
     }
 
@@ -135,6 +141,20 @@ public final class NativeEngineeringDiagramRenderer {
     /** @return defensive copy of the deterministic multi-page native PDF */
     public byte[] getPdf() {
       return Arrays.copyOf(pdf, pdf.length);
+    }
+
+    /**
+     * Returns normalized visual fingerprints for reviewed-baseline comparison.
+     *
+     * <p>
+     * Each SHA-256 fingerprint covers visible page geometry, text and style shared by the SVG and PDF renderers while
+     * excluding serialization syntax and invisible semantic identifiers.
+     * </p>
+     *
+     * @return immutable stable sheet-ID-to-fingerprint map
+     */
+    public Map<String, String> getVisualFingerprintsBySheetId() {
+      return visualFingerprintsBySheetId;
     }
 
     /** @return immutable structured rendering diagnostics */
@@ -204,10 +224,12 @@ public final class NativeEngineeringDiagramRenderer {
       }
     });
     Map<String, String> svg = new LinkedHashMap<String, String>();
+    Map<String, String> visualFingerprints = new LinkedHashMap<String, String>();
     for (Page page : pages) {
       svg.put(page.sheetId, toSvg(page));
+      visualFingerprints.put(page.sheetId, visualFingerprint(page));
     }
-    return new Result(svg, toPdf(pages), diagnostics);
+    return new Result(svg, toPdf(pages), visualFingerprints, diagnostics);
   }
 
   /**
@@ -288,6 +310,7 @@ public final class NativeEngineeringDiagramRenderer {
             contentBottom, diagnostics);
       }
     }
+    addRouteQualityDiagnostics(page, positions, diagnostics);
     for (OffPageConnector connector : sheet.getOffPageConnectors()) {
       addOffPageConnector(page, connector, contentRight, contentBottom);
     }
@@ -423,6 +446,47 @@ public final class NativeEngineeringDiagramRenderer {
       dash = "2 2";
     }
     page.commands.add(Command.polyline(points, color, 0.8, dash, connection.getId(), protectedGeometry));
+    String label = displayLabel(connection);
+    Point labelPoint = routeLabelPoint(points);
+    if (label == null || label.trim().isEmpty()) {
+      diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_CONNECTION_LABEL_MISSING",
+          "Rendered connection has no primary label and requires drawing review", connection.getId()));
+      label = "";
+    } else {
+      page.commands
+          .add(Command.text(labelPoint.x, labelPoint.y - 3.0, 2.3, label, color, connection.getId(), "middle"));
+    }
+    page.routes.add(new RouteView(connection.getId(), points, label, labelPoint,
+        endpointOwnerId(connection, "sourceEndpointId", objects),
+        endpointOwnerId(connection, "targetEndpointId", objects)));
+  }
+
+  private void addRouteQualityDiagnostics(Page page, Map<String, Point> positions, List<Diagnostic> diagnostics) {
+    List<String> objectIds = new ArrayList<String>(positions.keySet());
+    Collections.sort(objectIds);
+    for (int routeIndex = 0; routeIndex < page.routes.size(); routeIndex++) {
+      RouteView route = page.routes.get(routeIndex);
+      for (String objectId : objectIds) {
+        Point objectPosition = positions.get(objectId);
+        boolean endpointOwner = objectId.equals(route.sourceOwnerId) || objectId.equals(route.targetOwnerId);
+        if (!endpointOwner && polylineIntersectsObject(route.points, objectPosition)) {
+          diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_ROUTE_OBJECT_INTERSECTION",
+              "Rendered connection route intersects non-endpoint semantic object " + objectId, route.connectionId));
+        }
+        if (!route.label.isEmpty() && labelIntersectsObject(route.label, route.labelPoint, objectPosition)) {
+          diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_ROUTE_LABEL_OBJECT_COLLISION",
+              "Rendered connection label overlaps semantic object " + objectId, route.connectionId));
+        }
+      }
+      for (int otherIndex = routeIndex + 1; otherIndex < page.routes.size(); otherIndex++) {
+        RouteView other = page.routes.get(otherIndex);
+        if (!route.label.isEmpty() && !other.label.isEmpty()
+            && labelsOverlap(route.label, route.labelPoint, other.label, other.labelPoint)) {
+          diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_CONNECTION_LABEL_COLLISION",
+              "Rendered connection label overlaps connection label " + other.connectionId, route.connectionId));
+        }
+      }
+    }
   }
 
   private void addOffPageConnector(Page page, OffPageConnector connector, double contentRight, double contentBottom) {
@@ -487,6 +551,25 @@ public final class NativeEngineeringDiagramRenderer {
     }
     svg.append("  </g>\n</svg>\n");
     return svg.toString();
+  }
+
+  private static String visualFingerprint(Page page) {
+    StringBuilder normalized = new StringBuilder();
+    normalized.append(number(page.width)).append('x').append(number(page.height)).append('\n');
+    for (Command command : page.commands) {
+      command.appendVisualSignature(normalized);
+    }
+    try {
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      byte[] bytes = digest.digest(normalized.toString().getBytes(StandardCharsets.UTF_8));
+      StringBuilder result = new StringBuilder(bytes.length * 2);
+      for (byte value : bytes) {
+        result.append(String.format(Locale.ROOT, "%02x", value & 0xff));
+      }
+      return result.toString();
+    } catch (NoSuchAlgorithmException ex) {
+      throw new IllegalStateException("SHA-256 is required by the Java runtime", ex);
+    }
   }
 
   private byte[] toPdf(List<Page> pages) {
@@ -595,6 +678,96 @@ public final class NativeEngineeringDiagramRenderer {
     return Math.abs(left.x - right.x) < OBJECT_WIDTH && Math.abs(left.y - right.y) < OBJECT_HEIGHT;
   }
 
+  private static Point routeLabelPoint(List<Point> points) {
+    double totalLength = 0.0;
+    for (int index = 1; index < points.size(); index++) {
+      totalLength += distance(points.get(index - 1), points.get(index));
+    }
+    double remaining = totalLength / 2.0;
+    for (int index = 1; index < points.size(); index++) {
+      Point start = points.get(index - 1);
+      Point end = points.get(index);
+      double segmentLength = distance(start, end);
+      if (remaining <= segmentLength || index == points.size() - 1) {
+        double fraction = segmentLength == 0.0 ? 0.0 : remaining / segmentLength;
+        return new Point(start.x + (end.x - start.x) * fraction, start.y + (end.y - start.y) * fraction);
+      }
+      remaining -= segmentLength;
+    }
+    return points.get(0);
+  }
+
+  private static double distance(Point start, Point end) {
+    double deltaX = end.x - start.x;
+    double deltaY = end.y - start.y;
+    return Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+  }
+
+  private static String endpointOwnerId(SemanticObject connection, String property,
+      Map<String, SemanticObject> objects) {
+    String endpointId = stringProperty(connection, property, "");
+    SemanticObject endpoint = objects.get(endpointId);
+    if (endpoint == null) {
+      return endpointId;
+    }
+    return stringProperty(endpoint, "ownerNodeId", endpointId);
+  }
+
+  private static boolean polylineIntersectsObject(List<Point> points, Point objectPosition) {
+    double left = objectPosition.x - OBJECT_WIDTH / 2.0;
+    double right = objectPosition.x + OBJECT_WIDTH / 2.0;
+    double top = objectPosition.y - OBJECT_HEIGHT / 2.0;
+    double bottom = objectPosition.y + OBJECT_HEIGHT / 2.0;
+    for (int index = 1; index < points.size(); index++) {
+      Point start = points.get(index - 1);
+      Point end = points.get(index);
+      if (pointInsideRectangle(start, left, right, top, bottom) || pointInsideRectangle(end, left, right, top, bottom)
+          || segmentsIntersect(start, end, new Point(left, top), new Point(right, top))
+          || segmentsIntersect(start, end, new Point(right, top), new Point(right, bottom))
+          || segmentsIntersect(start, end, new Point(right, bottom), new Point(left, bottom))
+          || segmentsIntersect(start, end, new Point(left, bottom), new Point(left, top))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean pointInsideRectangle(Point point, double left, double right, double top, double bottom) {
+    return point.x >= left && point.x <= right && point.y >= top && point.y <= bottom;
+  }
+
+  private static boolean segmentsIntersect(Point firstStart, Point firstEnd, Point secondStart, Point secondEnd) {
+    double first = cross(firstStart, firstEnd, secondStart);
+    double second = cross(firstStart, firstEnd, secondEnd);
+    double third = cross(secondStart, secondEnd, firstStart);
+    double fourth = cross(secondStart, secondEnd, firstEnd);
+    return first * second <= 0.0 && third * fourth <= 0.0
+        && Math.max(Math.min(firstStart.x, firstEnd.x), Math.min(secondStart.x, secondEnd.x)) <= Math
+            .min(Math.max(firstStart.x, firstEnd.x), Math.max(secondStart.x, secondEnd.x))
+        && Math.max(Math.min(firstStart.y, firstEnd.y), Math.min(secondStart.y, secondEnd.y)) <= Math
+            .min(Math.max(firstStart.y, firstEnd.y), Math.max(secondStart.y, secondEnd.y));
+  }
+
+  private static double cross(Point start, Point end, Point point) {
+    return (end.x - start.x) * (point.y - start.y) - (end.y - start.y) * (point.x - start.x);
+  }
+
+  private static boolean labelIntersectsObject(String label, Point labelPoint, Point objectPosition) {
+    return rectanglesOverlap(labelPoint.x, labelPoint.y - 3.0, estimatedTextWidth(label, 2.3), 3.2, objectPosition.x,
+        objectPosition.y, OBJECT_WIDTH, OBJECT_HEIGHT);
+  }
+
+  private static boolean labelsOverlap(String firstLabel, Point firstPoint, String secondLabel, Point secondPoint) {
+    return rectanglesOverlap(firstPoint.x, firstPoint.y - 3.0, estimatedTextWidth(firstLabel, 2.3), 3.2, secondPoint.x,
+        secondPoint.y - 3.0, estimatedTextWidth(secondLabel, 2.3), 3.2);
+  }
+
+  private static boolean rectanglesOverlap(double firstX, double firstY, double firstWidth, double firstHeight,
+      double secondX, double secondY, double secondWidth, double secondHeight) {
+    return Math.abs(firstX - secondX) * 2.0 < firstWidth + secondWidth
+        && Math.abs(firstY - secondY) * 2.0 < firstHeight + secondHeight;
+  }
+
   private static double estimatedTextWidth(String value, double fontSize) {
     return value.length() * fontSize * 0.52;
   }
@@ -670,11 +843,31 @@ public final class NativeEngineeringDiagramRenderer {
     private final double width;
     private final double height;
     private final List<Command> commands = new ArrayList<Command>();
+    private final List<RouteView> routes = new ArrayList<RouteView>();
 
     private Page(String sheetId, double width, double height) {
       this.sheetId = sheetId;
       this.width = width;
       this.height = height;
+    }
+  }
+
+  private static final class RouteView {
+    private final String connectionId;
+    private final List<Point> points;
+    private final String label;
+    private final Point labelPoint;
+    private final String sourceOwnerId;
+    private final String targetOwnerId;
+
+    private RouteView(String connectionId, List<Point> points, String label, Point labelPoint, String sourceOwnerId,
+        String targetOwnerId) {
+      this.connectionId = connectionId;
+      this.points = Collections.unmodifiableList(new ArrayList<Point>(points));
+      this.label = label;
+      this.labelPoint = labelPoint;
+      this.sourceOwnerId = sourceOwnerId;
+      this.targetOwnerId = targetOwnerId;
     }
   }
 
@@ -777,6 +970,17 @@ public final class NativeEngineeringDiagramRenderer {
         result.append("/>\n");
       }
       return result.toString();
+    }
+
+    private void appendVisualSignature(StringBuilder result) {
+      result.append(type).append('|').append(number(x)).append('|').append(number(y)).append('|').append(number(width))
+          .append('|').append(number(height)).append('|').append(number(size)).append('|').append(stroke).append('|')
+          .append(fill).append('|').append(number(strokeWidth)).append('|').append(dash).append('|').append(anchor)
+          .append('|').append(text.length()).append(':').append(text);
+      for (Point point : points) {
+        result.append('|').append(number(point.x)).append(',').append(number(point.y));
+      }
+      result.append('\n');
     }
 
     private String toPdf(double pageHeight) {
