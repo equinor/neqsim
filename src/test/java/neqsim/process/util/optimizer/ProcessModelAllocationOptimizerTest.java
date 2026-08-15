@@ -107,12 +107,20 @@ class ProcessModelAllocationOptimizerTest {
     return new AllocationFixture(producerA, producerB, evaluator);
   }
 
-  /** Creates a hard rate constraint with explicit evidence metadata. */
+  /**
+   * Creates a hard rate constraint with nano-kg/hr-normalized analytical observations.
+   *
+   * <p>
+   * This removes platform noise from stream mass/molar unit round trips without changing nominal capacity limits.
+   * </p>
+   */
   private CapacityConstraint rateConstraint(String name, double designValue,
       java.util.function.DoubleSupplier valueSupplier, String dataSource) {
+    java.util.function.DoubleSupplier stableValueSupplier = () -> Math.rint(valueSupplier.getAsDouble() * 1.0e9)
+        / 1.0e9;
     return new CapacityConstraint(name, "kg/hr", ConstraintType.HARD).setDesignValue(designValue)
         .setSeverity(ConstraintSeverity.HARD).setDataSource(dataSource).setConfidence(0.95)
-        .setValidityRange(200.0, 1200.0).setValueSupplier(valueSupplier);
+        .setValidityRange(200.0, 1200.0).setValueSupplier(stableValueSupplier);
   }
 
   /** Creates the documented bounded transfer search. */
