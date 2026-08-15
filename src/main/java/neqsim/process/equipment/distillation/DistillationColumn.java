@@ -2247,8 +2247,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return {@code true} when top and bottom recoveries refer to the same feed component
    */
   private boolean hasMatchingTerminalComponentRecoverySpecifications() {
-    return isComponentRecoverySpecification(topSpecification)
-        && isComponentRecoverySpecification(bottomSpecification)
+    return isComponentRecoverySpecification(topSpecification) && isComponentRecoverySpecification(bottomSpecification)
         && topSpecification.getComponentName() != null
         && topSpecification.getComponentName().equals(bottomSpecification.getComponentName());
   }
@@ -13632,14 +13631,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private void validateTerminalSpecificationIndependence(ValidationResult result) {
     if (hasDependentTerminalProductFlowSpecifications()) {
-      result.addError("specification.degreesOfFreedom",
-          createDependentTerminalProductFlowSpecificationsMessage(),
+      result.addError("specification.degreesOfFreedom", createDependentTerminalProductFlowSpecificationsMessage(),
           "Keep one terminal product-flow target and replace the other with purity, recovery, duty, or reflux "
               + "specification");
     }
     if (hasDependentTerminalComponentRecoverySpecifications()) {
-      result.addError("specification.degreesOfFreedom",
-          createDependentTerminalComponentRecoverySpecificationsMessage(),
+      result.addError("specification.degreesOfFreedom", createDependentTerminalComponentRecoverySpecificationsMessage(),
           "Keep one recovery target for that component and replace the other terminal target with an independent "
               + "specification");
     }
@@ -13738,8 +13735,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return {@code true} for component-recovery specifications
    */
   private boolean isComponentRecoverySpecification(ColumnSpecification specification) {
-    return specification != null
-        && specification.getType() == ColumnSpecification.SpecificationType.COMPONENT_RECOVERY;
+    return specification != null && specification.getType() == ColumnSpecification.SpecificationType.COMPONENT_RECOVERY;
   }
 
   /**
