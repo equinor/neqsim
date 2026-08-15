@@ -456,178 +456,181 @@ public class TPmultiflash extends TPflash {
     }
 
     // --- O2: Wilson K early exit + O3: K-value based trial phases ---
-    int numComp = system.getPhase(0).getNumberOfComponents();
-    double tempK = system.getTemperature();
-    double presBar = system.getPressure();
-    double[] wilsonK = new double[numComp];
-    double maxAbsLogK = 0.0;
-    boolean[] validComp = new boolean[numComp];
+    if (system.doEnhancedMultiPhaseCheck()) {
+      int numComp = system.getPhase(0).getNumberOfComponents();
+      double tempK = system.getTemperature();
+      double presBar = system.getPressure();
+      double[] wilsonK = new double[numComp];
+      double maxAbsLogK = 0.0;
+      boolean[] validComp = new boolean[numComp];
 
-    for (int i = 0; i < numComp; i++) {
-      double z = system.getPhase(0).getComponent(i).getz();
-      boolean isIon = system.getPhase(0).getComponent(i).getIonicCharge() != 0
-          || system.getPhase(0).getComponent(i).isIsIon();
-      validComp[i] = z > 1e-100 && !isIon;
-      if (validComp[i]) {
-        double tc = system.getPhase(0).getComponent(i).getTC();
-        double pc = system.getPhase(0).getComponent(i).getPC();
-        double omega = system.getPhase(0).getComponent(i).getAcentricFactor();
-        double kVal = (pc / presBar) * Math.exp(5.373 * (1.0 + omega) * (1.0 - tc / tempK));
-        wilsonK[i] = Math.max(kVal, 1e-20);
-        double absLogK = Math.abs(Math.log(wilsonK[i]));
-        if (absLogK > maxAbsLogK) {
-          maxAbsLogK = absLogK;
-        }
-      } else {
-        wilsonK[i] = 1.0;
-      }
-    }
-
-    // O2: Early exit — if all K ≈ 1.0 the system is near/above critical.
-    // Only skip Wilson K-based trials; still fall through to pure-component trials
-    // which use independent initial guesses not affected by K ≈ 1.
-    boolean skipWilsonKTrials = (maxAbsLogK < 0.01);
-
-    // O3: Wilson K-based trial phases — liquid-like (z/K) first, then vapor-like (K·z)
-    // Liquid-like trial runs first because most multi-phase systems have liquid-driven
-    // instability (water dropout, heavy end fallout). Heavy components have K << 1,
-    // so z/K heavily enriches them, creating a trial similar to pure-component heavy trials.
-    // Skip when all Wilson K ≈ 1 (near-critical) — these trials produce trivial initial
-    // guesses. The pure-component trials below still run and provide independent checks.
-    for (int trial = 0; !skipWilsonKTrials && trial < 2; trial++) {
-      // Initialize trial composition from Wilson K
       for (int i = 0; i < numComp; i++) {
+        double z = system.getPhase(0).getComponent(i).getz();
+        boolean isIon = system.getPhase(0).getComponent(i).getIonicCharge() != 0
+            || system.getPhase(0).getComponent(i).isIsIon();
+        validComp[i] = z > 1e-100 && !isIon;
         if (validComp[i]) {
-          double z = system.getPhase(0).getComponent(i).getz();
-          // trial 0 = liquid-like (z/K), trial 1 = vapor-like (K*z)
-          double wVal = (trial == 0) ? z / wilsonK[i] : wilsonK[i] * z;
-          logWi[i] = Math.log(Math.max(wVal, 1e-100));
+          double tc = system.getPhase(0).getComponent(i).getTC();
+          double pc = system.getPhase(0).getComponent(i).getPC();
+          double omega = system.getPhase(0).getComponent(i).getAcentricFactor();
+          double kVal = (pc / presBar) * Math.exp(5.373 * (1.0 + omega) * (1.0 - tc / tempK));
+          wilsonK[i] = Math.max(kVal, 1e-20);
+          double absLogK = Math.abs(Math.log(wilsonK[i]));
+          if (absLogK > maxAbsLogK) {
+            maxAbsLogK = absLogK;
+          }
         } else {
-          logWi[i] = -10000.0;
-        }
-      }
-      // Set trial phase composition (unnormalized, same as pure-component trials)
-      for (int i = 0; i < numComp; i++) {
-        if (clonedSystem.get(0).isPhase(1)) {
-          clonedSystem.get(0).getPhase(1).getComponent(i).setx(validComp[i] ? safeExp(logWi[i]) : 1e-50);
+          wilsonK[i] = 1.0;
         }
       }
 
-      // Successive substitution with Wegstein acceleration (same as pure-component trials)
-      int iter = 0;
-      err = 1.0e10;
-      double errOld = 1.0e100;
-      boolean useAccel = true;
-      boolean trialInitFailed = false;
-      int maxiter = 50;
-      do {
-        errOld = err;
-        iter++;
-        err = 0;
+      // O2: Early exit — if all K ≈ 1.0 the system is near/above critical.
+      // Only skip Wilson K-based trials; still fall through to pure-component trials
+      // which use independent initial guesses not affected by K ≈ 1.
+      boolean skipWilsonKTrials = (maxAbsLogK < 0.01);
 
+      // O3: Wilson K-based trial phases — liquid-like (z/K) first, then vapor-like (K·z)
+      // Liquid-like trial runs first because most multi-phase systems have liquid-driven
+      // instability (water dropout, heavy end fallout). Heavy components have K << 1,
+      // so z/K heavily enriches them, creating a trial similar to pure-component heavy trials.
+      // Skip when all Wilson K ≈ 1 (near-critical) — these trials produce trivial initial
+      // guesses. The pure-component trials below still run and provide independent checks.
+      for (int trial = 0; !skipWilsonKTrials && trial < 2; trial++) {
+        // Initialize trial composition from Wilson K
         for (int i = 0; i < numComp; i++) {
-          oldoldoldlogw[i] = oldoldlogw[i];
-          oldoldlogw[i] = oldlogw[i];
-          oldlogw[i] = logWi[i];
-          oldoldDeltalogWi[i] = oldoldlogw[i] - oldoldoldlogw[i];
-          oldDeltalogWi[i] = oldlogw[i] - oldoldlogw[i];
-        }
-        try {
-          clonedSystem.get(0).init(1, 1);
-        } catch (Exception ex) {
-          trialInitFailed = true;
-          break;
-        }
-        for (int i = 0; i < numComp; i++) {
-          if (validComp[i]
-              && !Double.isInfinite(clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient())) {
-            logWi[i] = d[i] - clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient();
+          if (validComp[i]) {
+            double z = system.getPhase(0).getComponent(i).getz();
+            // trial 0 = liquid-like (z/K), trial 1 = vapor-like (K*z)
+            double wVal = (trial == 0) ? z / wilsonK[i] : wilsonK[i] * z;
+            logWi[i] = Math.log(Math.max(wVal, 1e-100));
+          } else {
+            logWi[i] = -10000.0;
           }
-          deltalogWi[i] = logWi[i] - oldlogw[i];
-          err += Math.abs(deltalogWi[i]);
+        }
+        // Set trial phase composition (unnormalized, same as pure-component trials)
+        for (int i = 0; i < numComp; i++) {
+          if (clonedSystem.get(0).isPhase(1)) {
+            clonedSystem.get(0).getPhase(1).getComponent(i).setx(validComp[i] ? safeExp(logWi[i]) : 1e-50);
+          }
         }
 
-        // Wegstein acceleration every 7th iteration
-        if (iter % 7 == 0 && iter > 7 && useAccel && err < errOld) {
-          double prod1 = 0.0;
-          double prod2 = 0.0;
+        // Successive substitution with Wegstein acceleration (same as pure-component trials)
+        int iter = 0;
+        err = 1.0e10;
+        double errOld = 1.0e100;
+        boolean useAccel = true;
+        boolean trialInitFailed = false;
+        int maxiter = 50;
+        do {
+          errOld = err;
+          iter++;
+          err = 0;
+
           for (int i = 0; i < numComp; i++) {
-            if (validComp[i]) {
-              prod1 += deltalogWi[i] * oldDeltalogWi[i];
-              prod2 += oldDeltalogWi[i] * oldDeltalogWi[i];
-            }
+            oldoldoldlogw[i] = oldoldlogw[i];
+            oldoldlogw[i] = oldlogw[i];
+            oldlogw[i] = logWi[i];
+            oldoldDeltalogWi[i] = oldoldlogw[i] - oldoldoldlogw[i];
+            oldDeltalogWi[i] = oldlogw[i] - oldoldlogw[i];
           }
-          if (prod2 > 1e-20) {
-            double lambda = prod1 / prod2;
-            if (lambda > 0.0 && lambda < 1.0) {
-              double accelFactor = lambda / (1.0 - lambda);
-              for (int i = 0; i < numComp; i++) {
-                if (validComp[i]) {
-                  logWi[i] += accelFactor * deltalogWi[i];
+          try {
+            clonedSystem.get(0).init(1, 1);
+          } catch (Exception ex) {
+            trialInitFailed = true;
+            break;
+          }
+          for (int i = 0; i < numComp; i++) {
+            if (validComp[i]
+                && !Double.isInfinite(clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient())) {
+              logWi[i] = d[i] - clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient();
+            }
+            deltalogWi[i] = logWi[i] - oldlogw[i];
+            err += Math.abs(deltalogWi[i]);
+          }
+
+          // Wegstein acceleration every 7th iteration
+          if (iter % 7 == 0 && iter > 7 && useAccel && err < errOld) {
+            double prod1 = 0.0;
+            double prod2 = 0.0;
+            for (int i = 0; i < numComp; i++) {
+              if (validComp[i]) {
+                prod1 += deltalogWi[i] * oldDeltalogWi[i];
+                prod2 += oldDeltalogWi[i] * oldDeltalogWi[i];
+              }
+            }
+            if (prod2 > 1e-20) {
+              double lambda = prod1 / prod2;
+              if (lambda > 0.0 && lambda < 1.0) {
+                double accelFactor = lambda / (1.0 - lambda);
+                for (int i = 0; i < numComp; i++) {
+                  if (validComp[i]) {
+                    logWi[i] += accelFactor * deltalogWi[i];
+                  }
                 }
               }
             }
           }
-        }
-        if (iter > 2 && err > errOld) {
-          useAccel = false;
-        }
-
-        // Update trial phase composition
-        for (int i = 0; i < numComp; i++) {
-          clonedSystem.get(0).getPhase(1).getComponent(i).setx(validComp[i] ? safeExp(logWi[i]) : 1e-50);
-        }
-      } while (!trialInitFailed && (Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
-
-      if (trialInitFailed) {
-        continue;
-      }
-
-      // Calculate tangent plane distance and check for instability
-      double tmVal = 1.0;
-      double xTrivialCheck0 = 0.0;
-      double xTrivialCheck1 = 0.0;
-      double[] xTrial = new double[numComp];
-      for (int i = 0; i < numComp; i++) {
-        if (validComp[i]) {
-          tmVal -= safeExp(logWi[i]);
-        }
-        xTrial[i] = clonedSystem.get(0).getPhase(1).getComponent(i).getx();
-        xTrivialCheck0 += Math.abs(xTrial[i] - system.getPhase(0).getComponent(i).getx());
-        xTrivialCheck1 += Math.abs(xTrial[i] - system.getPhase(1).getComponent(i).getx());
-      }
-
-      boolean isTrivial = Math.abs(xTrivialCheck0) < 1e-4 || Math.abs(xTrivialCheck1) < 1e-4;
-
-      if (!isTrivial && tmVal < -1e-8 && iter < maxiter) {
-        // Unstable — add new phase and return
-        system.addPhase();
-        int newPhaseIdx = system.getNumberOfPhases() - 1;
-        for (int i = 0; i < numComp; i++) {
-          system.getPhase(newPhaseIdx).getComponent(i).setx(xTrial[i]);
-        }
-        system.getPhases()[newPhaseIdx].normalize();
-        multiPhaseTest = true;
-        int dominantComp = 0;
-        double maxX = 0;
-        for (int i = 0; i < numComp; i++) {
-          if (xTrial[i] > maxX) {
-            maxX = xTrial[i];
-            dominantComp = i;
+          if (iter > 2 && err > errOld) {
+            useAccel = false;
           }
+
+          // Update trial phase composition
+          for (int i = 0; i < numComp; i++) {
+            clonedSystem.get(0).getPhase(1).getComponent(i).setx(validComp[i] ? safeExp(logWi[i]) : 1e-50);
+          }
+        } while (!trialInitFailed && (Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
+
+        if (trialInitFailed) {
+          continue;
         }
-        system.setBeta(newPhaseIdx, system.getPhase(0).getComponent(dominantComp).getz());
-        try {
-          system.init(1);
-        } catch (Exception ex) {
-          logger.warn("K-value trial addPhase init failed: " + ex.getMessage());
-          system.removePhaseKeepTotalComposition(newPhaseIdx);
-          multiPhaseTest = false;
+
+        // Calculate tangent plane distance and check for instability
+        double tmVal = 1.0;
+        double xTrivialCheck0 = 0.0;
+        double xTrivialCheck1 = 0.0;
+        double[] xTrial = new double[numComp];
+        for (int i = 0; i < numComp; i++) {
+          if (validComp[i]) {
+            tmVal -= safeExp(logWi[i]);
+          }
+          xTrial[i] = clonedSystem.get(0).getPhase(1).getComponent(i).getx();
+          xTrivialCheck0 += Math.abs(xTrial[i] - system.getPhase(0).getComponent(i).getx());
+          xTrivialCheck1 += Math.abs(xTrial[i] - system.getPhase(1).getComponent(i).getx());
+        }
+
+        boolean isTrivial = Math.abs(xTrivialCheck0) < 1e-4 || Math.abs(xTrivialCheck1) < 1e-4;
+
+        if (!isTrivial && tmVal < -1e-8 && iter < maxiter) {
+          // Unstable — add new phase and return
+          system.addPhase();
+          int newPhaseIdx = system.getNumberOfPhases() - 1;
+          for (int i = 0; i < numComp; i++) {
+            system.getPhase(newPhaseIdx).getComponent(i).setx(xTrial[i]);
+          }
+          system.getPhases()[newPhaseIdx].normalize();
+          multiPhaseTest = true;
+          int dominantComp = 0;
+          double maxX = 0;
+          for (int i = 0; i < numComp; i++) {
+            if (xTrial[i] > maxX) {
+              maxX = xTrial[i];
+              dominantComp = i;
+            }
+          }
+          system.setBeta(newPhaseIdx, system.getPhase(0).getComponent(dominantComp).getz());
+          try {
+            system.init(1);
+          } catch (Exception ex) {
+            logger.warn("K-value trial addPhase init failed: " + ex.getMessage());
+            system.removePhaseKeepTotalComposition(newPhaseIdx);
+            multiPhaseTest = false;
+            return;
+          }
+          system.normalizeBeta();
           return;
         }
-        system.normalizeBeta();
-        return;
       }
+
     }
 
     // Wilson K trial phases can report a comfortable positive TPD while pure-component

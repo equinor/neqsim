@@ -3,8 +3,14 @@ package neqsim.pvtsimulation.simulation;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermo.system.SystemUMRPRUMCEos;
 
 class SaturationPressureTest extends neqsim.NeqSimTest {
   @BeforeAll
@@ -82,5 +88,52 @@ class SaturationPressureTest extends neqsim.NeqSimTest {
 
     // Correct upper dew point ~106.2 bara; the trivial-split regression returned ~109 bara.
     assertEquals(106.2, satPresSim.getSaturationPressure(), 1.0);
+  }
+
+  /**
+   * Regression test for a hydrocarbon scrubber model near the dew-point boundary.
+   *
+   * <p>
+   * Multiphase stability changes must retain the historical export-gas phase selection and saturation pressure.
+   * </p>
+   */
+  @Test
+  void hydrocarbonScrubberModelRetainsHistoricalDewPointPressure() {
+    SystemInterface fluid = new SystemUMRPRUMCEos(280.0, 10.0);
+    String[] componentNames = { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
+        "n-pentane", "2-m-C5", "3-m-C5", "n-hexane", "c-hexane", "n-heptane", "benzene", "n-octane", "c-C7", "toluene",
+        "n-nonane", "c-C8", "m-Xylene", "nC10", "nC11", "nC12" };
+    double[] componentAmounts = { 0.01, 0.01, 0.9, 0.1, 0.03, 0.01, 0.01, 0.01, 0.001, 0.001, 0.001, 0.001, 0.001,
+        0.001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.00001, 0.00001, 3.0e-12, 3.0e-12, 3.0e-12 };
+    for (int componentIndex = 0; componentIndex < componentNames.length; componentIndex++) {
+      fluid.addComponent(componentNames[componentIndex], componentAmounts[componentIndex]);
+    }
+    fluid.setMixingRule("HV", "UNIFAC_UMRPRU");
+
+    Stream feed = new Stream("feed gas", fluid);
+    feed.setFlowRate(25.0, "MSm3/day");
+    feed.setTemperature(22.5, "C");
+    feed.setPressure(81.0, "bara");
+    Separator upstreamSeparator = new Separator("upstream separator", feed);
+    Heater cooler = new Heater("cooler", upstreamSeparator.getGasOutStream());
+    cooler.setOutPressure(78.0, "bara");
+    cooler.setOutTemperature(15.0, "C");
+    ThreePhaseSeparator dewPointScrubber = new ThreePhaseSeparator("dewpoint scrubber", cooler.getOutStream());
+    dewPointScrubber.setEntrainment(0.5, "volume", "feed", "oil", "gas");
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(upstreamSeparator);
+    process.add(cooler);
+    process.add(dewPointScrubber);
+    process.run();
+
+    SystemInterface exportGas = dewPointScrubber.getGasOutStream().getFluid().clone();
+    exportGas.setTemperature(0.0, "C");
+    exportGas.setPressure(10.0, "bara");
+    SaturationPressure saturationPressure = new SaturationPressure(exportGas);
+    saturationPressure.run();
+
+    assertEquals(105.90159034729004, saturationPressure.getSaturationPressure(), 1.0e-6);
   }
 }
