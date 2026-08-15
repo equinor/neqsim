@@ -932,7 +932,7 @@ public class ColumnSpecificationTest {
     feed.setFlowRate(100.0, "kg/hr");
     feed.run();
 
-    DistillationColumn column = new DistillationColumn("Deethanizer", 7, true, false);
+    DistillationColumn column = new DistillationColumn("Deethanizer", 7, true, true);
     column.addFeedStream(feed, 4);
     column.setTopPressure(30.0);
     column.setBottomPressure(31.0);
