@@ -112,8 +112,15 @@ public class TwoFluidConservationEquations implements Serializable {
   /**
    * Enable the non-conservative holdup-gradient momentum term, including the interfacial pressure correction that keeps
    * the two-fluid system hyperbolic.
+   *
+   * <p>
+   * Off by default. The term removes the sustained phase backflow and the unbounded liquid packing that liquid-rich
+   * lines otherwise show, but it is acoustic in scale and is evaluated explicitly, so it needs a CFL number near 0.05
+   * rather than the default 0.5. Enabling it without also tightening the CFL diverges. Completing it means folding the
+   * term into the implicit pressure solve of the IMEX integrator.
+   * </p>
    */
-  private boolean enableInterfacialPressure = true;
+  private boolean enableInterfacialPressure = false;
 
   /**
    * Interfacial pressure coefficient delta in the Bestion closure. The two-fluid system has real characteristics for
@@ -121,6 +128,15 @@ public class TwoFluidConservationEquations implements Serializable {
    * physical closure laws in the CATHARE code", Nuclear Engineering and Design 124, 229-245.
    */
   private double interfacialPressureCoefficient = 1.2;
+
+  /** Interface gas holdup used by the pressure part of the momentum flux, one per interface. */
+  private double[] interfaceGasHoldup = new double[0];
+
+  /** Interface liquid holdup used by the pressure part of the momentum flux, one per interface. */
+  private double[] interfaceLiquidHoldup = new double[0];
+
+  /** Interface pressure used by the pressure part of the momentum flux, one per interface. */
+  private double[] interfacePressure = new double[0];
 
   /**
    * Enable virtual mass force term in momentum equations. The virtual mass force accounts for the inertia of the
@@ -629,6 +645,11 @@ public class TwoFluidConservationEquations implements Serializable {
     int nCells = sections.length;
     int nInterfaces = nCells - 1;
     double[][] fluxes = new double[nInterfaces][NUM_EQUATIONS];
+    if (interfaceGasHoldup.length != nInterfaces) {
+      interfaceGasHoldup = new double[nInterfaces];
+      interfaceLiquidHoldup = new double[nInterfaces];
+      interfacePressure = new double[nInterfaces];
+    }
 
     for (int i = 0; i < nInterfaces; i++) {
       TwoFluidSection left = sections[i];
@@ -643,6 +664,8 @@ public class TwoFluidConservationEquations implements Serializable {
       PhaseFlux gasFlux = fluxCalculator.calcPhaseFlux(gasL, gasR, A);
       fluxes[i][IDX_GAS_MASS] = gasFlux.massFlux;
       fluxes[i][IDX_GAS_MOMENTUM] = gasFlux.momentumFlux;
+      interfaceGasHoldup[i] = gasFlux.interfaceHoldup;
+      interfacePressure[i] = gasFlux.interfacePressure;
 
       // For oil and water, use coupled approach to prevent oscillations.
       // Calculate combined liquid flux first, then split by upwind water cut.
@@ -650,6 +673,7 @@ public class TwoFluidConservationEquations implements Serializable {
       PhaseState liqL = createLiquidState(left);
       PhaseState liqR = createLiquidState(right);
       PhaseFlux liqFlux = fluxCalculator.calcPhaseFlux(liqL, liqR, A);
+      interfaceLiquidHoldup[i] = liqFlux.interfaceHoldup;
 
       // Determine upwind direction for liquid
       double cHalf = 0.5 * (liqL.soundSpeed + liqR.soundSpeed);
@@ -909,7 +933,7 @@ public class TwoFluidConservationEquations implements Serializable {
       return;
     }
     int nCells = sections.length;
-    if (nCells < 2) {
+    if (nCells < 2 || interfaceGasHoldup.length != nCells - 1) {
       return;
     }
 
@@ -917,34 +941,42 @@ public class TwoFluidConservationEquations implements Serializable {
       TwoFluidSection sec = sections[i];
       double area = sec.getArea();
       double pressure = sec.getPressure();
-      if (!(area > 0.0) || !(pressure > 0.0)) {
+      double secDx = sec.getLength();
+      if (!(area > 0.0) || !(pressure > 0.0) || !(secDx > 0.0)) {
         continue;
       }
 
-      // Central difference on the interior, one-sided at the ends.
-      int left = Math.max(0, i - 1);
-      int right = Math.min(nCells - 1, i + 1);
-      double span = 0.0;
-      for (int k = left; k < right; k++) {
-        span += 0.5 * (sections[k].getLength() + sections[k + 1].getLength());
-      }
-      if (!(span > 0.0)) {
-        continue;
-      }
-
-      double dAlphaG = (sections[right].getGasHoldup() - sections[left].getGasHoldup()) / span;
-      double dAlphaO = (sections[right].getOilHoldup() - sections[left].getOilHoldup()) / span;
-      double dAlphaW = (sections[right].getWaterHoldup() - sections[left].getWaterHoldup()) / span;
+      // Cancel the spurious force exactly: the flux divergence contributes
+      // d(alphaBar * pBar)/dx, while the physical term is alpha_i * dp/dx. Differencing the
+      // same interface values the flux used leaves no residual when the holdup is uniform.
+      double gasRight = (i < nCells - 1) ? interfaceGasHoldup[i] : sec.getGasHoldup();
+      double gasLeft = (i > 0) ? interfaceGasHoldup[i - 1] : sec.getGasHoldup();
+      double liqRight = (i < nCells - 1) ? interfaceLiquidHoldup[i] : sec.getLiquidHoldup();
+      double liqLeft = (i > 0) ? interfaceLiquidHoldup[i - 1] : sec.getLiquidHoldup();
+      double pRight = (i < nCells - 1) ? interfacePressure[i] : pressure;
+      double pLeft = (i > 0) ? interfacePressure[i - 1] : pressure;
 
       double deltaPi = calcInterfacialPressureDifference(sec);
-      double factor = (pressure - deltaPi) * area;
+      double dp = pRight - pLeft;
 
-      dUdt[i][IDX_GAS_MOMENTUM] += factor * dAlphaG;
+      double gasSpurious = (gasRight * pRight - gasLeft * pLeft) - sec.getGasHoldup() * dp;
+      double liqSpurious = (liqRight * pRight - liqLeft * pLeft) - sec.getLiquidHoldup() * dp;
+      double gasStabiliser = deltaPi * (gasRight - gasLeft);
+      double liqStabiliser = deltaPi * (liqRight - liqLeft);
+
+      double gasSource = (gasSpurious - gasStabiliser) * area / secDx;
+      double liqSource = (liqSpurious - liqStabiliser) * area / secDx;
+
+      dUdt[i][IDX_GAS_MOMENTUM] += gasSource;
       if (enableWaterOilSlip && NUM_EQUATIONS == 7) {
-        dUdt[i][IDX_OIL_MOMENTUM] += factor * dAlphaO;
-        dUdt[i][IDX_WATER_MOMENTUM] += factor * dAlphaW;
+        // Split the liquid share by holdup so the three phases still sum to zero.
+        double alphaL = sec.getLiquidHoldup();
+        double oilFraction = alphaL > 1.0e-9 ? sec.getOilHoldup() / alphaL : 1.0;
+        oilFraction = Math.max(0.0, Math.min(1.0, oilFraction));
+        dUdt[i][IDX_OIL_MOMENTUM] += liqSource * oilFraction;
+        dUdt[i][IDX_WATER_MOMENTUM] += liqSource * (1.0 - oilFraction);
       } else {
-        dUdt[i][IDX_OIL_MOMENTUM] += factor * (dAlphaO + dAlphaW);
+        dUdt[i][IDX_OIL_MOMENTUM] += liqSource;
       }
     }
   }

@@ -452,12 +452,24 @@ for (double qgMSm3d : gasRates) {
 > screen (`SevereSluggingBenchmarkHarnessTest`, Taitel criterion vs the Tengesdal
 > 2002 map, 70.7% accuracy) and treat any transient slug-cycle result as invalid.
 >
+> A partial remedy exists but is **off by default**:
+> `setEnableInterfacialPressure(true)` adds the missing holdup-gradient momentum
+> term with a Bestion interfacial pressure correction. It removes the backflow
+> entirely (0 of 40 cells versus 9 of 40) and stops the unbounded packing, but it
+> is acoustic in scale and evaluated explicitly, so it needs `setCflNumber(0.05)`
+> — at the default 0.5 it diverges. At that CFL it settles ~26% below the OLGA
+> holdup, so it is not yet a validated replacement. Finishing it means folding
+> the term into the IMEX implicit pressure solve.
+>
 > **Three-phase (gas/oil/water) steady state is fixed and benchmarked.** Against
-> OLGA 2025.1 on a matched case: outlet temperature −0.03%, mean liquid holdup
-> +7.1%, liquid inventory +7.1%. Two known gaps: water holdup is under-predicted
-> ~42% (the oil/water slip ratio reaches only ~1.09 where OLGA implies ~2.1), and
-> the pressure drop is over-predicted ~3× in this liquid-rich regime. Build the
-> OLGA side with `OLGApropertyTableGeneratorWaterKeywordFormat` (the `WaterEven`
+> OLGA 2025.1 on a matched case: outlet temperature −0.05%, mean liquid holdup
+> +7.1%, liquid inventory +7.1%, mean water holdup +10.0%. The oil/water slip
+> ratio uses `S = 1 + 1.75·max(0, 1 − (Fr/3)²)`, a stratified plateau that rolls
+> off to no slip once the liquid disperses above a liquid Froude number of about
+> 3; the previous form cut off at Fr = 2 and under-predicted water holdup by 42%.
+> One gap remains open: the pressure drop is over-predicted ~3× in this
+> liquid-rich regime (the gas-dominated line is within 0.5–3.4%). Build the OLGA
+> side with `OLGApropertyTableGeneratorWaterKeywordFormat` (the `WaterEven`
 > generator throws on `bubPLOG` and then on a NaN compressibility factor).
 >
 > **Never build a volumetric phase fraction from `phase.getVolume()`.** With a

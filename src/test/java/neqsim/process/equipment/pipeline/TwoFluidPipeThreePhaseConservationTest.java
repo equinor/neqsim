@@ -142,4 +142,67 @@ public class TwoFluidPipeThreePhaseConservationTest {
     Assertions.assertTrue(inventory < pipeVolume,
         "liquid inventory " + inventory + " m3 cannot exceed the pipe volume " + pipeVolume + " m3");
   }
+
+  private static TwoFluidPipe runPipeAtRate(double massFlowKgPerHour) {
+    Stream feed = new Stream("feed", threePhaseFluid());
+    feed.setFlowRate(massFlowKgPerHour, "kg/hr");
+    feed.setTemperature(50.0, "C");
+    feed.setPressure(60.0, "bara");
+    feed.run();
+
+    TwoFluidPipe pipe = new TwoFluidPipe("pipe", feed);
+    pipe.setLength(PIPE_LENGTH);
+    pipe.setDiameter(PIPE_DIAMETER);
+    pipe.setNumberOfSections(SECTIONS);
+    pipe.setElevationProfile(new double[SECTIONS]);
+    pipe.run();
+    return pipe;
+  }
+
+  /** Mean in-situ water fraction of the liquid over the interior cells. */
+  private static double meanWaterCut(TwoFluidPipe pipe) {
+    double[] water = pipe.getWaterHoldupProfile();
+    double[] oil = pipe.getOilHoldupProfile();
+    double sum = 0.0;
+    int count = 0;
+    for (int i = 1; i < water.length; i++) {
+      double liquid = water[i] + oil[i];
+      if (liquid > 1.0e-9) {
+        sum += water[i] / liquid;
+        count++;
+      }
+    }
+    return count > 0 ? sum / count : Double.NaN;
+  }
+
+  /**
+   * Oil/water slip behaviour.
+   *
+   * <p>
+   * The slip ratio is near 2.7 while the liquid is stratified and returns to 1.0 once it is dispersed above a liquid
+   * Froude number of about 3. The in-situ water fraction must therefore sit well above the transported fraction at low
+   * rate and fall back towards it at high rate.
+   * </p>
+   */
+  @Test
+  void testWaterAccumulatesAtLowRateAndDisperseAtHighRate() {
+    double lowRateWaterCut = meanWaterCut(runPipeAtRate(25.0 * 3600.0));
+    double highRateWaterCut = meanWaterCut(runPipeAtRate(120.0 * 3600.0));
+
+    Assertions.assertTrue(lowRateWaterCut > highRateWaterCut,
+        "slip must hold water back more at low rate: low=" + lowRateWaterCut + " high=" + highRateWaterCut);
+    // The transported water volume fraction of this fluid is about 0.068.
+    Assertions.assertTrue(lowRateWaterCut > 0.10,
+        "stratified flow must accumulate water above the transported fraction, got " + lowRateWaterCut);
+    Assertions.assertTrue(highRateWaterCut < 0.09,
+        "dispersed flow must approach the transported fraction, got " + highRateWaterCut);
+  }
+
+  @Test
+  void testInSituWaterFractionMatchesTheThreePhaseBenchmark() {
+    // Reference three-phase benchmark for this case: mean water holdup 0.0527 against a mean
+    // liquid holdup of 0.3942, so the in-situ water fraction of the liquid is 0.1337.
+    double waterCut = meanWaterCut(runPipe());
+    Assertions.assertEquals(0.1337, waterCut, 0.02, "in-situ water fraction must track the three-phase benchmark");
+  }
 }

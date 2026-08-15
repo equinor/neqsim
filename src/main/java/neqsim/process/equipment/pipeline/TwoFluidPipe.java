@@ -646,6 +646,18 @@ public class TwoFluidPipe extends Pipeline {
   private static final double MAX_OIL_WATER_SLIP_RATIO = 4.0;
 
   /**
+   * Plateau value of {@code S - 1} for the oil-over-water slip ratio in stratified liquid flow, where S is
+   * {@code v_oil / v_water}. Water settles towards the pipe bottom and lags the oil layer, so the in-situ water
+   * fraction sits above the transported one until the liquid disperses.
+   */
+  private static final double OIL_WATER_SLIP_PLATEAU = 1.75;
+
+  /**
+   * Liquid Froude number above which oil and water are dispersed and travel together, so the slip ratio returns to one.
+   */
+  private static final double OIL_WATER_SLIP_CRITICAL_FROUDE = 3.0;
+
+  /**
    * Set when the last steady-state initialization was stopped by the wall-clock guard.
    *
    * <p>
@@ -3527,39 +3539,25 @@ public class TwoFluidPipe extends Pipeline {
     double effectiveRhoL = lambdaW * rhoWater + (1.0 - lambdaW) * rhoOil;
     double liquidFroude = vL / Math.sqrt(g * diameter * Math.abs(deltaRho) / effectiveRhoL + 1e-10);
 
-    // Stratification enhancement factor: significant below Fr_L ~ 2
-    double stratificationFroude = 2.0;
-    double stratificationFactor = 1.0;
+    // Oil-over-water slip ratio S = v_oil / v_water. The ratio plateaus near 2.75 while the
+    // liquid is stratified and rolls off to 1 once it disperses above a liquid Froude number
+    // of about 3.
     double slipRatio = 1.0;
 
-    if (liquidFroude < stratificationFroude && deltaRho > 10.0 && alphaL > 0.01) {
-      // Low velocity stratified flow - water segregates to bottom
-      // Enhancement factor increases as velocity decreases
-      double froudeRatio = liquidFroude / stratificationFroude;
+    if (deltaRho > 10.0 && alphaL > 0.01) {
+      double froudeRatio = liquidFroude / OIL_WATER_SLIP_CRITICAL_FROUDE;
+      double excess = OIL_WATER_SLIP_PLATEAU * Math.max(0.0, 1.0 - froudeRatio * froudeRatio);
 
-      // Stronger enhancement at very low velocities (Fr < 0.5)
-      if (liquidFroude < 0.5) {
-        // Very low velocity: significant water pooling
-        // Water cut can effectively increase by 50-100% due to local accumulation
-        stratificationFactor = 1.0 + 1.5 * Math.pow(1.0 - froudeRatio, 1.5);
-      } else {
-        // Moderate stratification
-        stratificationFactor = 1.0 + 0.5 * Math.pow(1.0 - froudeRatio, 1.2);
-      }
-
-      // Inclination effect: downhill enhances water accumulation at front
-      // Uphill causes water to lag and pool
+      // Inclination tilts the settling balance; kept as a modest correction.
       if (sinTheta < -0.02) {
-        // Downhill: water accumulates at front
-        stratificationFactor *= 1.0 + 0.3 * Math.abs(sinTheta);
+        // Downhill: water runs ahead, so the layers separate less.
+        excess *= 1.0 + 0.3 * Math.abs(sinTheta);
       } else if (sinTheta > 0.02) {
-        // Uphill: water pools behind (increases local holdup)
-        stratificationFactor *= 1.0 + 0.5 * sinTheta;
+        // Uphill: water lags further behind and pools.
+        excess *= 1.0 + 0.5 * sinTheta;
       }
 
-      // Apply the stratification tendency as an oil-over-water slip ratio. A factor of 1
-      // means no segregation; larger values mean the water lags further behind the oil.
-      slipRatio = stratificationFactor;
+      slipRatio = 1.0 + excess;
     }
 
     // Oil/water drift is only meaningful when both liquids are actually present and the
