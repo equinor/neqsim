@@ -5,6 +5,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
@@ -45,6 +46,78 @@ import neqsim.util.unit.Units;
 public abstract class SystemThermo implements SystemInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+
+  /**
+   * Restores the serialized fields and reconciles a stale scalar total with the duplicated
+   * overall-component inventory.
+   *
+   * <p>A separated phase may be serialized after its component inventory has changed while the
+   * scalar total still describes the upstream system. Overall mole fractions are derived by
+   * dividing component inventories by that scalar, so the mismatch must be repaired before the
+   * first initialization or flash. The reconciliation is deliberately limited to deserialization
+   * and to phase slots that agree on the overall inventory.</p>
+   *
+   * @param input serialized object input
+   * @throws IOException if the serialized object cannot be read
+   * @throws ClassNotFoundException if a serialized class cannot be resolved
+   */
+  private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+    input.defaultReadObject();
+    reconcileTotalMolesWithComponentInventory();
+  }
+
+  /**
+   * Reconciles the scalar total with a finite, positive overall-component inventory.
+   *
+   * <p>Every active phase slot normally carries the same overall component amounts while storing
+   * its phase-specific amounts separately. Reconciliation is skipped when those duplicated
+   * inventories disagree, because that state cannot safely identify one authoritative total.</p>
+   */
+  private void reconcileTotalMolesWithComponentInventory() {
+    if (phaseArray == null
+        || numberOfComponents == 0
+        || phaseArray[phaseIndex[0]] == null) {
+      return;
+    }
+
+    double inventory = 0.0;
+    for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
+      double componentMoles =
+          getPhase(0).getComponent(componentIndex).getNumberOfmoles();
+      if (!Double.isFinite(componentMoles) || componentMoles < 0.0) {
+        return;
+      }
+      inventory += componentMoles;
+    }
+    if (!Double.isFinite(inventory) || inventory <= 0.0) {
+      return;
+    }
+
+    for (int phase = 1; phase < numberOfPhases; phase++) {
+      if (getPhase(phase) == null
+          || getPhase(phase).getNumberOfComponents() != numberOfComponents) {
+        return;
+      }
+      for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
+        double referenceMoles =
+            getPhase(0).getComponent(componentIndex).getNumberOfmoles();
+        double phaseMoles =
+            getPhase(phase).getComponent(componentIndex).getNumberOfmoles();
+        double tolerance = 1.0e-12 * Math.max(1.0, Math.abs(referenceMoles));
+        if (!Double.isFinite(phaseMoles)
+            || Math.abs(phaseMoles - referenceMoles) > tolerance) {
+          return;
+        }
+      }
+    }
+
+    double tolerance = 1.0e-12 * Math.max(1.0, inventory);
+    if (!Double.isFinite(totalNumberOfMoles)
+        || Math.abs(totalNumberOfMoles - inventory) > tolerance) {
+      setTotalNumberOfMolesRaw(inventory);
+      isInitialized = false;
+    }
+  }
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SystemThermo.class);
 
