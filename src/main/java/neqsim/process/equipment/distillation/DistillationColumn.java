@@ -2731,7 +2731,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double target = startValue + boundedFraction * (specification.getTargetValue() - startValue);
     target = boundSpecificationTarget(specification, target);
     ColumnSpecification staged = new ColumnSpecification(specification.getType(), specification.getLocation(), target,
-        specification.getComponentName());
+        specification.getComponentName(), specification.getTargetUnit());
     staged.setTolerance(specification.getTolerance());
     staged.setMaxIterations(specification.getMaxIterations());
     return staged;
@@ -3280,6 +3280,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getTolerance());
       signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getMaxIterations());
       signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getComponentName());
+      signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getTargetUnit());
     }
 
     signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification == null ? 0L : 1L);
@@ -3290,6 +3291,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getTolerance());
       signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getMaxIterations());
       signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getComponentName());
+      signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getTargetUnit());
     }
 
     signature = updateColumnConfigurationSignature(signature);
@@ -4119,7 +4121,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       return recovery - spec.getTargetValue();
     }
     case PRODUCT_FLOW_RATE: {
-      double currentFlow = productStream.getFluid().getFlowRate("mol/hr");
+      double currentFlow = productStream.getFlowRate(spec.getTargetUnit());
       return currentFlow - spec.getTargetValue();
     }
     default:
@@ -9453,7 +9455,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Retrieve the latest top specification residual.
    *
-   * @return top specification residual as current value minus target value
+   * @return top specification residual as current value minus target value, in the specification target unit
    */
   public double getLastTopSpecificationResidual() {
     return lastTopSpecificationResidual;
@@ -9462,7 +9464,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Retrieve the latest bottom specification residual.
    *
-   * @return bottom specification residual as current value minus target value
+   * @return bottom specification residual as current value minus target value, in the specification target unit
    */
   public double getLastBottomSpecificationResidual() {
     return lastBottomSpecificationResidual;
@@ -13549,27 +13551,60 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param result validation result receiving product-flow feasibility errors
    */
   private void validateProductFlowSpecificationsAgainstFeed(ValidationResult result) {
-    double totalFeedFlow = getTotalExternalFeedFlowMolPerHour();
+    validateProductFlowSpecificationAgainstFeed(result, topSpecification, "top");
+    validateProductFlowSpecificationAgainstFeed(result, bottomSpecification, "bottom");
+
+    if (!isProductFlowSpecification(topSpecification) || !isProductFlowSpecification(bottomSpecification)
+        || !topSpecification.getTargetUnit().equals(bottomSpecification.getTargetUnit())) {
+      return;
+    }
+    String unit = topSpecification.getTargetUnit();
+    double totalFeedFlow = getTotalExternalFeedFlow(unit);
     if (!Double.isFinite(totalFeedFlow) || totalFeedFlow <= 0.0) {
       return;
     }
-
-    double topProductFlowTarget = getProductFlowSpecificationTarget(topSpecification);
-    double bottomProductFlowTarget = getProductFlowSpecificationTarget(bottomSpecification);
-    if (topProductFlowTarget > totalFeedFlow * (1.0 + 1.0e-12)) {
-      result.addError("specification.productFlow", "Product-flow target for the top product exceeds total feed flow",
-          "Use a top product-flow target below the total feed flow or check the mol/hr units");
-    }
-    if (bottomProductFlowTarget > totalFeedFlow * (1.0 + 1.0e-12)) {
-      result.addError("specification.productFlow", "Product-flow target for the bottom product exceeds total feed flow",
-          "Use a bottom product-flow target below the total feed flow or check the mol/hr units");
-    }
-    double productFlowSum = positiveFiniteOrZero(topProductFlowTarget) + positiveFiniteOrZero(bottomProductFlowTarget);
+    double productFlowSum = topSpecification.getTargetValue() + bottomSpecification.getTargetValue();
     if (productFlowSum > totalFeedFlow * (1.0 + 1.0e-12)) {
       result.addError("specification.productFlow.sum", "Top and bottom product-flow targets exceed total feed flow",
-          "Reduce one product-flow target or replace one flow target with purity, "
-              + "recovery, duty, or reflux specification");
+          "Reduce one product-flow target or replace one flow target with purity, recovery, duty, or reflux "
+              + "specification; targets and feed were compared in " + unit);
     }
+  }
+
+  /**
+   * Validate one product-flow target against the external feed in the target's own unit.
+   *
+   * @param result validation result receiving errors
+   * @param specification specification to validate
+   * @param productName product-end label used in diagnostics
+   */
+  private void validateProductFlowSpecificationAgainstFeed(ValidationResult result,
+      ColumnSpecification specification, String productName) {
+    if (!isProductFlowSpecification(specification)) {
+      return;
+    }
+    String unit = specification.getTargetUnit();
+    double totalFeedFlow = getTotalExternalFeedFlow(unit);
+    if (!Double.isFinite(totalFeedFlow)) {
+      result.addError("specification.productFlow.unit", "Product-flow specification uses an unsupported unit: " + unit,
+          "Use a flow unit accepted by StreamInterface.getFlowRate, for example mol/hr or kg/hr");
+      return;
+    }
+    if (totalFeedFlow > 0.0 && specification.getTargetValue() > totalFeedFlow * (1.0 + 1.0e-12)) {
+      result.addError("specification.productFlow", "Product-flow target for the " + productName
+          + " product exceeds total feed flow in " + unit,
+          "Use a " + productName + " product-flow target below the total feed flow or check the supplied unit");
+    }
+  }
+
+  /**
+   * Check whether a specification controls total product flow.
+   *
+   * @param specification specification to inspect
+   * @return {@code true} for product-flow specifications
+   */
+  private boolean isProductFlowSpecification(ColumnSpecification specification) {
+    return specification != null && specification.getType() == ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE;
   }
 
   /**
@@ -13596,19 +13631,24 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Calculate total external feed flow in mol/hr.
+   * Calculate total external feed flow in a requested unit.
    *
-   * @return total molar feed flow in mol/hr
+   * @param unit flow-rate unit
+   * @return total feed flow, or {@link Double#NaN} when the unit is unsupported
    */
-  private double getTotalExternalFeedFlowMolPerHour() {
+  private double getTotalExternalFeedFlow(String unit) {
     double totalFeedFlow = 0.0;
     for (StreamInterface feed : getAllExternalFeedStreams()) {
       if (feed == null) {
         continue;
       }
-      double flow = feed.getFlowRate("mol/hr");
-      if (Double.isFinite(flow)) {
-        totalFeedFlow += Math.abs(flow);
+      try {
+        double flow = feed.getFlowRate(unit);
+        if (Double.isFinite(flow)) {
+          totalFeedFlow += Math.abs(flow);
+        }
+      } catch (RuntimeException exception) {
+        return Double.NaN;
       }
     }
     return totalFeedFlow;
@@ -14388,11 +14428,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Convenience method to specify a target molar flow rate for the top product.
    *
    * @param flowRate the desired flow rate value
-   * @param unit the flow rate unit (currently expected as {@code mol/hr})
+   * @param unit the flow-rate unit used for the target and residual
    */
   public void setTopProductFlowRate(double flowRate, String unit) {
     this.topSpecification = new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE,
-        ColumnSpecification.ProductLocation.TOP, flowRate);
+        ColumnSpecification.ProductLocation.TOP, flowRate, null, unit);
   }
 
   /**
@@ -14402,10 +14442,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param unit the flow rate unit (e.g. "mol/hr")
    */
   public void setBottomProductFlowRate(double flowRate, String unit) {
-    // Store the specification in mol/hr (the column evaluator uses mol/hr
-    // internally)
     this.bottomSpecification = new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE,
-        ColumnSpecification.ProductLocation.BOTTOM, flowRate);
+        ColumnSpecification.ProductLocation.BOTTOM, flowRate, null, unit);
   }
 
   /**
