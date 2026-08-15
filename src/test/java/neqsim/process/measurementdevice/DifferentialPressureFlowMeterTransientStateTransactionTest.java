@@ -183,6 +183,7 @@ class DifferentialPressureFlowMeterTransientStateTransactionTest extends neqsim.
       configureMeter(meter, 1L);
       meter.setNoiseStdDev(0.0);
       meter.setDelaySteps(0);
+      meter.setFirstOrderTimeConstant(0.0);
       meter.clearFault();
       if (meter instanceof ConeFlowMeter) {
         meter.setGeometry(0.25, 0.165, "m");
