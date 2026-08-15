@@ -83,7 +83,7 @@ import neqsim.process.measurementdevice.HydrocarbonDewPointAnalyser;
 
 HydrocarbonDewPointAnalyser hcdp =
     new HydrocarbonDewPointAnalyser("HC Dew Point", gasStream);
-hcdp.setReferencePressure(50.0, "bara");
+hcdp.setReferencePressure(50.0);  // bara
 
 double dewPointC = hcdp.getMeasuredValue("C");  // hydrocarbon dew point, degC
 ```
@@ -97,7 +97,7 @@ import neqsim.process.measurementdevice.WaterDewPointAnalyser;
 
 WaterDewPointAnalyser wdp =
     new WaterDewPointAnalyser("Water Dew Point", gasStream);
-wdp.setReferencePressure(50.0, "bara");
+wdp.setReferencePressure(50.0);  // bara
 
 double waterDewPoint = wdp.getMeasuredValue("C");  // water dew point, degC
 ```
@@ -124,6 +124,18 @@ HydrateEquilibriumTemperatureAnalyser hydrateAnalyser =
     new HydrateEquilibriumTemperatureAnalyser(gasStream);
 double hydrateTemp = hydrateAnalyser.getMeasuredValue("C");  // hydrate formation temperature, degC
 ```
+
+Concrete local instances of these four thermodynamic-limit analysers participate in transient-step
+transactions when registered in a `ProcessSystem`. Rollback restores each stream binding and
+complete inherited measurement/alarm state. It also restores reference pressure for the hydrate,
+hydrocarbon-dew-point and water-dew-point analysers, plus the configured method for both dew-point
+analysers. Scheduled configuration changes therefore replay together with `EventScheduler`
+pending/fired bookkeeping, and Java serialization preserves identity and restart state.
+
+Concrete descendants and online-signal operation fail closed. This support changes no phase
+envelope, dew-point, hydrate or empirical correlation. It establishes rollback mechanics only; it
+does not qualify thermodynamic model selection, fluid characterization, sampling, analyser
+accuracy, alarm/trip integrity, external I/O, virtual commissioning or OTS use.
 
 ## Vibration Analysis
 
