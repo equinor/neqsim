@@ -321,7 +321,7 @@ public abstract class SystemThermo implements SystemInterface {
       }
     }
     setTotalNumberOfMolesRaw(getTotalNumberOfMoles() + moles);
-    isInitialized = false;
+    // TODO: isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -343,7 +343,7 @@ public abstract class SystemThermo implements SystemInterface {
     }
 
     setTotalNumberOfMolesRaw(getTotalNumberOfMoles() + moles);
-    isInitialized = false;
+    // TODO: isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -395,7 +395,7 @@ public abstract class SystemThermo implements SystemInterface {
       }
     }
     setTotalNumberOfMolesRaw(getTotalNumberOfMoles() + moles);
-    isInitialized = false;
+    // TODO: isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -5615,7 +5615,6 @@ public abstract class SystemThermo implements SystemInterface {
         addComponent(i, SIval);
       }
     }
-    isInitialized = false;
   }
 
   /** {@inheritDoc} */
