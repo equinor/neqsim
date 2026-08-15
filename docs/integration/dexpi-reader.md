@@ -284,6 +284,10 @@ Each piping connection carries operating line data and a NORSOK Z-003 line-ident
 - Operating pressure, temperature and flow generic attributes when available on the stream
 - A line-number text label (e.g. `PG-001`) composed by `NorsokLineNumber`
 
+The writer serializes numeric generic-attribute values with at most nine fractional digits. This
+canonical engineering precision suppresses insignificant solver noise so repeated exports remain
+stable while retaining substantially more resolution than typical drawing data.
+
 Battery-limit feeds and products that are not wired to another unit on the sheet are marked with
 off-page connector symbols carrying `FEED` / `PRODUCT` cross references, and instrument tags are
 checked against ISA-5.1 with a `TagConformanceWarning` attribute added for non-conforming tags.

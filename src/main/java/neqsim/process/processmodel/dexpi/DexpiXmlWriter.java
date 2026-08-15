@@ -87,8 +87,8 @@ public final class DexpiXmlWriter {
   private static final Pattern COMMON_SAFETY_TRIP_TAG = Pattern.compile("^(?:[PLTF](?:S|A)(?:HH|LL)|FSL)$");
   private static final transient ThreadLocal<DecimalFormat> DECIMAL_FORMAT = ThreadLocal.withInitial(() -> {
     DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(Locale.ROOT);
-    DecimalFormat format = new DecimalFormat("0.############", symbols);
-    format.setMaximumFractionDigits(12);
+    DecimalFormat format = new DecimalFormat("0.#########", symbols);
+    format.setMaximumFractionDigits(9);
     format.setGroupingUsed(false);
     return format;
   });

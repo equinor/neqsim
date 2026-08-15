@@ -317,6 +317,40 @@ public class DexpiXmlWriterTest extends NeqSimTest {
   }
 
   /**
+   * Tests that insignificant solver noise beyond the canonical DEXPI precision does not change the exported document.
+   *
+   * @throws IOException if writing fails
+   */
+  @Test
+  public void testSimulationResultPrecisionIsDeterministic() throws IOException {
+    Stream feed = createFeedStream();
+    Separator sep = new Separator("HP-Sep", feed);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(sep);
+    process.run();
+
+    sep.getGasOutStream().setTemperature(30.707918388829, "C");
+    ByteArrayOutputStream firstOut = new ByteArrayOutputStream();
+    DexpiXmlWriter.write(process, firstOut);
+    String firstXml = firstOut.toString(StandardCharsets.UTF_8.name());
+
+    sep.getGasOutStream().setTemperature(30.707918388769, "C");
+    ByteArrayOutputStream secondOut = new ByteArrayOutputStream();
+    DexpiXmlWriter.write(process, secondOut);
+    String secondXml = secondOut.toString(StandardCharsets.UTF_8.name());
+
+    assertTrue(firstXml.contains("Name=\"OperatingTemperatureValue\" Unit=\"C\" Value=\"30.707918389\""));
+    assertEquals(normalizeEmissionMetadata(firstXml), normalizeEmissionMetadata(secondXml));
+  }
+
+  private static String normalizeEmissionMetadata(String xml) {
+    return xml.replaceFirst(" Date=\"[^\"]+\"", " Date=\"<generated-date>\"").replaceFirst(" Time=\"[^\"]+\"",
+        " Time=\"<generated-time>\"");
+  }
+
+  /**
    * Tests that round-trip write-then-read produces a valid ProcessSystem without throwing.
    *
    * @throws Exception if write or read fails
