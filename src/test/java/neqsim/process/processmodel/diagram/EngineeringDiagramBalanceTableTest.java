@@ -32,8 +32,7 @@ class EngineeringDiagramBalanceTableTest {
     EngineeringDiagramStreamTable streamTable = streamTable(reference);
     List<Boundary> boundaries = boundaries(reference, streamTable);
 
-    EngineeringDiagramBalanceTable table =
-        EngineeringDiagramBalanceTable.fromStreamTable(streamTable, boundaries);
+    EngineeringDiagramBalanceTable table = EngineeringDiagramBalanceTable.fromStreamTable(streamTable, boundaries);
 
     assertTrue(table.isValid());
     assertEquals(1, table.getBalances().size());
@@ -66,10 +65,10 @@ class EngineeringDiagramBalanceTableTest {
     List<Boundary> secondBoundaries = boundaries(secondReference, secondStreamTable);
     Collections.reverse(secondBoundaries);
 
-    EngineeringDiagramBalanceTable first =
-        EngineeringDiagramBalanceTable.fromStreamTable(firstStreamTable, firstBoundaries);
-    EngineeringDiagramBalanceTable second =
-        EngineeringDiagramBalanceTable.fromStreamTable(secondStreamTable, secondBoundaries);
+    EngineeringDiagramBalanceTable first = EngineeringDiagramBalanceTable.fromStreamTable(firstStreamTable,
+        firstBoundaries);
+    EngineeringDiagramBalanceTable second = EngineeringDiagramBalanceTable.fromStreamTable(secondStreamTable,
+        secondBoundaries);
 
     assertEquals(first.toJson(), second.toJson());
   }
@@ -85,8 +84,8 @@ class EngineeringDiagramBalanceTableTest {
     EngineeringDiagramBalanceTable duplicate = EngineeringDiagramBalanceTable.fromStreamTable(streamTable,
         Arrays.asList(declared, declared));
     EngineeringDiagramBalanceTable unknown = EngineeringDiagramBalanceTable.fromStreamTable(streamTable,
-        Arrays.asList(new Boundary("BAL-SIMPLE-01", "line:missing", Direction.OUTLET,
-            "project-balance-register:test", EvidenceState.PROPOSED)));
+        Arrays.asList(new Boundary("BAL-SIMPLE-01", "line:missing", Direction.OUTLET, "project-balance-register:test",
+            EvidenceState.PROPOSED)));
 
     assertFalse(duplicate.isValid());
     assertTrue(hasDiagnostic(duplicate, "BALANCE_BOUNDARY_DUPLICATE_STREAM"));
@@ -115,11 +114,10 @@ class EngineeringDiagramBalanceTableTest {
     return reference;
   }
 
-  private static EngineeringDiagramStreamTable streamTable(
-      EngineeringDiagramReferenceFixtures.SystemCase reference) {
+  private static EngineeringDiagramStreamTable streamTable(EngineeringDiagramReferenceFixtures.SystemCase reference) {
     EngineeringDiagramDocumentSet documents = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
-        reference.getProcessSystem(), reference.getCaseId(), "A", "PFD-HMB-005", "Boundary balance",
-        ContentProfile.PFD, "NORMAL-01");
+        reference.getProcessSystem(), reference.getCaseId(), "A", "PFD-HMB-005", "Boundary balance", ContentProfile.PFD,
+        "NORMAL-01");
     return EngineeringDiagramStreamTable.fromDocumentSet(documents, "NORMAL-01");
   }
 
