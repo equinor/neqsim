@@ -670,6 +670,20 @@ public class TwoFluidPipe extends Pipeline {
    */
   private boolean ssWallClockLimited = false;
 
+  /**
+   * Lower bound applied to every section pressure during the steady-state march (Pa).
+   *
+   * <p>
+   * The clamp keeps the marching solver numerically alive when the line has no deliverability, but a profile resting on
+   * it is not a solution of the momentum balance. {@link #ssPressureFloorLimited} records that so it cannot be mistaken
+   * for one.
+   * </p>
+   */
+  private static final double MIN_SECTION_PRESSURE_PA = 1.0e5;
+
+  /** Set when the converged steady-state profile rests on {@link #MIN_SECTION_PRESSURE_PA}. */
+  private boolean ssPressureFloorLimited = false;
+
   /** Iterations used by the last steady-state refinement loop. */
   private int ssIterationsUsed = 0;
 
@@ -1219,6 +1233,7 @@ public class TwoFluidPipe extends Pipeline {
     long startWallClock = System.currentTimeMillis();
     ssWallClockLimited = false;
     ssConverged = false;
+    ssPressureFloorLimited = false;
     ssIterationsUsed = 0;
 
     // Get total mass flow rate (conserved)
@@ -1468,6 +1483,17 @@ public class TwoFluidPipe extends Pipeline {
 
       boolean profileSettled = !densityCouplingMatters || (dropChange < tolerance && !thermodynamicsRefreshed);
       if (maxChange < tolerance && profileSettled) {
+        // A section resting on the pressure floor is a fixed point of the clamp, not of the
+        // momentum balance: marchPressure keeps returning the floor, the under-relaxed update
+        // stops moving, and the loop would otherwise report success on a profile the line
+        // cannot actually deliver. Beggs & Brills throws on the same condition.
+        if (isAnySectionAtPressureFloor()) {
+          ssPressureFloorLimited = true;
+          logger.warn("Steady-state profile rests on the {} bara pressure floor after {} iterations; the line cannot "
+              + "deliver the specified rate at the specified inlet pressure. Reduce the flow rate, raise the "
+              + "inlet pressure, or increase the diameter.", MIN_SECTION_PRESSURE_PA / 1.0e5, iter);
+          break;
+        }
         ssConverged = true;
         logger.info("Steady-state converged after {} iterations ({}ms wall-clock)", iter,
             System.currentTimeMillis() - startWallClock);
@@ -1475,7 +1501,12 @@ public class TwoFluidPipe extends Pipeline {
       }
     }
 
-    if (!ssConverged && !ssWallClockLimited) {
+    if (!ssPressureFloorLimited && isAnySectionAtPressureFloor()) {
+      ssPressureFloorLimited = true;
+      ssConverged = false;
+    }
+
+    if (!ssConverged && !ssWallClockLimited && !ssPressureFloorLimited) {
       logger.warn("Steady-state solver did not converge within {} iterations for {} sections; "
           + "the reported profile is not converged. Increase setSteadyStateMaxIterations(...) "
           + "or reduce setSteadyStateUnderRelaxation(...).", maxIter, numberOfSections);
@@ -3392,7 +3423,24 @@ public class TwoFluidPipe extends Pipeline {
    */
   private double marchPressure(TwoFluidSection prev) {
     double dPdx = estimatePressureGradient(prev);
-    return Math.max(1e5, prev.getPressure() - dPdx * prev.getLength());
+    return Math.max(MIN_SECTION_PRESSURE_PA, prev.getPressure() - dPdx * prev.getLength());
+  }
+
+  /**
+   * Check whether any section pressure rests on the marching floor.
+   *
+   * @return true when at least one section sits at {@link #MIN_SECTION_PRESSURE_PA}
+   */
+  private boolean isAnySectionAtPressureFloor() {
+    if (sections == null) {
+      return false;
+    }
+    for (TwoFluidSection sec : sections) {
+      if (sec != null && sec.getPressure() <= MIN_SECTION_PRESSURE_PA * (1.0 + 1.0e-9)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -7036,6 +7084,21 @@ public class TwoFluidPipe extends Pipeline {
    */
   public boolean isSteadyStateWallClockLimited() {
     return ssWallClockLimited;
+  }
+
+  /**
+   * Check whether the steady-state profile rests on the internal pressure floor.
+   *
+   * <p>
+   * True means the line cannot deliver the specified rate at the specified inlet pressure, so one or more sections were
+   * clamped at 1 bara. {@link #isSteadyStateConverged()} is false in that case, and the reported pressure profile is
+   * the clamp rather than a solution. Reduce the rate, raise the inlet pressure, or increase the diameter.
+   * </p>
+   *
+   * @return true when at least one section was clamped at the pressure floor
+   */
+  public boolean isSteadyStatePressureFloorLimited() {
+    return ssPressureFloorLimited;
   }
 
   /**

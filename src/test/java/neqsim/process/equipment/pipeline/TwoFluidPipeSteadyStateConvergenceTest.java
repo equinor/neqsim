@@ -53,7 +53,9 @@ public class TwoFluidPipeSteadyStateConvergenceTest {
   private TwoFluidPipe makePipe(double length, int sections) {
     TwoFluidPipe pipe = new TwoFluidPipe("pipe", makeStream());
     pipe.setLength(length);
-    pipe.setDiameter(0.3);
+    // 0.3 m ran this line into the 1 bara pressure floor, which made every case clamp to the
+    // same 99 bar drop: the terrain assertions below then compared the clamp against itself.
+    pipe.setDiameter(0.5);
     pipe.setRoughness(4.5e-5);
     pipe.setNumberOfSections(sections);
     pipe.setElevationProfile(new double[sections + 1]);

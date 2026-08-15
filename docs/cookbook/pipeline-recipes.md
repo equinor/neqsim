@@ -451,6 +451,24 @@ for step in range(600):  # 5 minutes @ 0.5s steps
 | Slug tracking | ✅ (Lagrangian) | No |
 | Terrain-induced slugging | ✅ | Empirical |
 | Transient dynamics | ✅ Full | Pseudo-steady |
+| Direct electrical heating | ✅ | ✅ |
+
+**Accuracy caveats.** Benchmarked against OLGA 2025.1 on a 73.8 km subsea gas-condensate export
+line at matched inlet conditions, `TwoFluidPipe` predicts pressure drop within a few per cent on a
+dry line and about 12% low with free water, and arrival temperature within ~1.5 K — but **liquid
+holdup runs 2–4x OLGA**, and pressure drop did not respond to a 22 K temperature change from
+direct electrical heating. `PipeBeggsAndBrills` was 38–75% high on pressure drop for the same
+cases. See [Known limitations](../wiki/two_fluid_model#known-limitations).
+
+**Always check the steady-state outcome** — `run()` does not throw when the solve fails:
+
+```python
+pipe.run()
+if not pipe.isSteadyStateConverged():
+    if pipe.isSteadyStatePressureFloorLimited():
+        raise RuntimeError("Line cannot deliver this rate at this inlet pressure")
+    raise RuntimeError("Steady state did not converge")
+```
 
 > **Further Reading**: See [TwoFluidPipe Tutorial](../examples/TwoFluidPipe_Tutorial) for comprehensive examples including slug visualization and transient analysis.
 
@@ -1182,7 +1200,8 @@ print(f"Water dropout risk: {result.waterDropoutRisk}")
 |-----------|--------|---------|-------------|
 | Under-relaxation | `setSteadyStateUnderRelaxation(double)` | 0.5 | Update damping (0 to 1) |
 | Flash interval | `setSteadyStateFlashInterval(int)` | 3 | Flash thermodynamics every N iterations |
-| Max wall-clock time | `setSteadyStateMaxWallClockTime(double)` | 30 s | Timeout for SS solver |
+| Max iterations | `setSteadyStateMaxIterations(int)` | 0 = mesh-scaled | 0 uses `max(100, 20 x sections)` |
+| Max wall-clock time | `setSteadyStateMaxWallClockTime(double)` | 300 s | Timeout for SS solver |
 
 ### Flow Assurance
 

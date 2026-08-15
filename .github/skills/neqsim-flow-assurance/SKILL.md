@@ -434,9 +434,40 @@ for (double qgMSm3d : gasRates) {
 > still carries the densities the sections were initialised with and understates
 > the pressure drop of a gas line by roughly ten per cent. Around 160 sections
 > (≈450 m) is the sweet spot on a long transmission line: it converges reliably
-> and lands within 1% of OLGA on both pressure drop and arrival temperature.
-> Raise `setSteadyStateMaxWallClockTime(...)` before blaming the model if
-> `isSteadyStateWallClockLimited()` is true.
+> and lands within a few per cent of OLGA on pressure drop and within ~1.5 K on
+> arrival temperature. Raise `setSteadyStateMaxWallClockTime(...)` (default 300 s)
+> before blaming the model if `isSteadyStateWallClockLimited()` is true.
+
+> **`TwoFluidPipe` also fails silently when a line has no deliverability.** The
+> marching solver clamps section pressure at a 1 bara floor; that clamp is a
+> fixed point of itself, so the per-section change falls below tolerance and the
+> sweep would report success on a case with no physical solution. Check
+> `pipe.isSteadyStatePressureFloorLimited()` — when it is true,
+> `isSteadyStateConverged()` is withheld and the profile must be discarded, not
+> reported. `PipeBeggsAndBrills` throws `Outlet pressure is negative` and OLGA
+> aborts with `PRESSURE ABOVE TABLE VALUES` on the same condition.
+
+> **`TwoFluidPipe` holdup runs 2–4x OLGA, and its ΔP can be blind to temperature.**
+> On a 73.8 km gas-condensate export line at matched inlet conditions: arrival
+> holdup 0.064 vs OLGA 0.023 dry, and 0.119 vs 0.034 with 15 m³/hr free water
+> (slip ratio ≈10 against OLGA's ≈3). The three-phase bookkeeping is sound —
+> gas/oil/water fractions sum to one and stay in range at every node — so the gap
+> is in the slip closure. Separately, adding 10 MW of DEH raised arrival
+> temperature 22 K but left ΔP unchanged to five figures, where OLGA moved +12.3%
+> and B&B +23.4%. Do not quote `TwoFluidPipe` holdup or inventory as a design
+> number, and treat ΔP from a case whose temperature field changes as indicative.
+
+> **Direct electrical heating (DEH)** is available on both models with the same
+> convention — the power set is what reaches the fluid, so cable and coating
+> losses must already be deducted:
+> `pipe.setDirectElectricalHeatingPower(watts)` or
+> `setDirectElectricalHeatingPowerPerMeter(wattsPerMetre)`. In `TwoFluidPipe`
+> steady state each segment decays toward the balance temperature
+> `T_surface + q/(U·π·D)` (exact for a uniform source, cannot overshoot); it also
+> works in transient and with wall heat transfer switched off. OLGA has no
+> distributed-DEH keyword, so to benchmark against it use the identity
+> `−UπD(T−T_surf) + q ≡ −UπD(T − [T_surf + q/(UπD)])` and raise OLGA's ambient
+> temperature by `q/(UπD)` instead.
 
 > **`TwoFluidPipe` transient is NOT usable for liquid-rich lines — including
 > severe slugging.** With every boundary condition held constant it leaves its
@@ -471,6 +502,23 @@ for (double qgMSm3d : gasRates) {
 > liquid-rich regime (the gas-dominated line is within 0.5–3.4%). Build the OLGA
 > side with `OLGApropertyTableGeneratorWaterKeywordFormat` (the `WaterEven`
 > generator throws on `bubPLOG` and then on a NaN compressibility factor).
+>
+> **Exporting NeqSim to OLGA — the fluid basis is two files, not one.** The
+> `.tab` PVT table fixes the phase behaviour; the **hydrate boundary is separate**
+> and OLGA does not compute it. Without a `HYDRATECURVE` in the case, OLGA falls
+> back to the Hammerschmidt correlation, so a study whose NeqSim half uses CPA
+> hydrate equilibrium and whose OLGA half uses Hammerschmidt disagrees about where
+> hydrates form, invisibly. Export both from the same fluid:
+> `OLGAhydrateCurveGenerator` writes the `HYDRATECURVE LABEL=..., PRESSURE=(...)
+> bara, TEMPERATURE=(...) C` block and returns the matching
+> `HYDRATECHECK HYDRATECURVE="..."` line for the flowpath. OLGA interpolates that
+> curve **linearly**, so span the pressures the case actually visits and use ≥20
+> points when the range reaches below ~50 bara (4 points over 10–200 bara costs
+> 4.1 K of hydrate temperature; 20 points costs 0.48 K). The OLGA output variable
+> is `DTHYD` in °C, and it is `T_hydrate − T_fluid` — **positive means inside the
+> hydrate region**, negative is the safe margin, which is the opposite of the
+> intuitive reading. Full OLGA-side workflow in the community
+> `neqsim-olga-multiphase-simulator` skill.
 >
 > **Never build a volumetric phase fraction from `phase.getVolume()`.** With a
 > Peneloux volume shift active it disagrees with `getDensity()` by the shift —
