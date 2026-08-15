@@ -79,8 +79,9 @@ class TransientSlugSeparatorControlDocumentationContractTest(unittest.TestCase):
             "3,601 samples",
             "10 minutes",
         )
+        normalized_doc = re.sub(r"\\s+", " ", self.doc)
         for pattern in doc_patterns:
-            self.assertIn(pattern, self.doc)
+            self.assertIn(pattern, normalized_doc)
         self.assertRegex(self.doc, r"does not\s+use `pipeLength`")
 
     def test_model_boundaries_and_cli_are_explicit(self):
@@ -95,8 +96,9 @@ class TransientSlugSeparatorControlDocumentationContractTest(unittest.TestCase):
             "stores no governed reference output",
             "not universal operating targets",
         )
+        normalized_doc = re.sub(r"\\s+", " ", self.doc)
         for pattern in required:
-            self.assertIn(pattern, self.doc)
+            self.assertIn(pattern, normalized_doc)
 
         rejected = (
             "1.5 km",
