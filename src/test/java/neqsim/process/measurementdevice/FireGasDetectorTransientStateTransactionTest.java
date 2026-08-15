@@ -13,6 +13,7 @@ import java.io.ObjectOutputStream;
 import org.junit.jupiter.api.Test;
 import neqsim.process.alarm.AlarmConfig;
 import neqsim.process.alarm.AlarmState;
+import neqsim.process.dynamics.EventScheduler;
 import neqsim.process.dynamics.TransientStepTransaction;
 import neqsim.process.dynamics.TransientTransactionCoverage;
 import neqsim.process.measurementdevice.GasDetector.GasType;
@@ -46,8 +47,10 @@ class FireGasDetectorTransientStateTransactionTest extends neqsim.NeqSimTest {
     AlarmState originalFireAlarmState = fire.getAlarmState();
 
     ProcessSystem gasArea = new ProcessSystem("gas detection area");
+    gasArea.setEventScheduler(new EventScheduler());
     gasArea.add(gas);
     ProcessSystem fireArea = new ProcessSystem("fire detection area");
+    fireArea.setEventScheduler(new EventScheduler());
     fireArea.add(fire);
     assertCompleteCoverage(gasArea.getTransientTransactionCoverage(), 1);
     assertCompleteCoverage(fireArea.getTransientTransactionCoverage(), 1);
