@@ -2249,6 +2249,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private boolean hasMatchingTerminalComponentRecoverySpecifications() {
     return isComponentRecoverySpecification(topSpecification)
         && isComponentRecoverySpecification(bottomSpecification)
+        && topSpecification.getComponentName() != null
         && topSpecification.getComponentName().equals(bottomSpecification.getComponentName());
   }
 
