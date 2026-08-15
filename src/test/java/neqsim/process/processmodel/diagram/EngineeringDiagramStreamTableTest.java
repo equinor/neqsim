@@ -26,8 +26,8 @@ class EngineeringDiagramStreamTableTest {
     EngineeringDiagramReferenceFixtures.SystemCase reference = EngineeringDiagramReferenceFixtures.simpleTrain();
     reference.getProcessSystem().run();
     EngineeringDiagramDocumentSet documents = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
-        reference.getProcessSystem(), reference.getCaseId(), "A", "PFD-HMB-001", "Stream table",
-        ContentProfile.PFD, "NORMAL-01");
+        reference.getProcessSystem(), reference.getCaseId(), "A", "PFD-HMB-001", "Stream table", ContentProfile.PFD,
+        "NORMAL-01");
     String documentJson = documents.toJson();
 
     EngineeringDiagramStreamTable table = EngineeringDiagramStreamTable.fromDocumentSet(documents, "NORMAL-01");
@@ -59,13 +59,11 @@ class EngineeringDiagramStreamTableTest {
         .multiAreaFacility();
     secondReference.getProcessModel().run();
     EngineeringDiagramDocumentSet secondDocuments = ProcessDiagramDocumentSetAdapter.fromProcessModel(
-        secondReference.getProcessModel(), secondReference.getCaseId(), "A", "PFD-HMB-002",
-        "Multi-area stream table", ContentProfile.PFD, "NORMAL-01");
+        secondReference.getProcessModel(), secondReference.getCaseId(), "A", "PFD-HMB-002", "Multi-area stream table",
+        ContentProfile.PFD, "NORMAL-01");
 
-    EngineeringDiagramStreamTable first = EngineeringDiagramStreamTable.fromDocumentSet(firstDocuments,
-        "NORMAL-01");
-    EngineeringDiagramStreamTable second = EngineeringDiagramStreamTable.fromDocumentSet(secondDocuments,
-        "NORMAL-01");
+    EngineeringDiagramStreamTable first = EngineeringDiagramStreamTable.fromDocumentSet(firstDocuments, "NORMAL-01");
+    EngineeringDiagramStreamTable second = EngineeringDiagramStreamTable.fromDocumentSet(secondDocuments, "NORMAL-01");
 
     assertEquals(first.toJson(), second.toJson());
     assertTrue(first.isValid());
@@ -81,10 +79,9 @@ class EngineeringDiagramStreamTableTest {
         reference.getProcessSystem(), reference.getCaseId(), "B", "PFD-HMB-003", "Reviewed stream number",
         ContentProfile.PFD, "NORMAL-01");
     SemanticObject stream = firstLine(baseline);
-    EngineeringDiagramDesignationRegister register = new EngineeringDiagramDesignationRegister()
-        .withDesignation(new Designation(stream.getId(), Kind.STREAM_NUMBER, "10-P-1001-A",
-            "project-register:stream-numbers", ReviewState.REVIEWED, "Process discipline", "review:STREAM-42",
-            "2026-08-15T08:00:00Z", "B"));
+    EngineeringDiagramDesignationRegister register = new EngineeringDiagramDesignationRegister().withDesignation(
+        new Designation(stream.getId(), Kind.STREAM_NUMBER, "10-P-1001-A", "project-register:stream-numbers",
+            ReviewState.REVIEWED, "Process discipline", "review:STREAM-42", "2026-08-15T08:00:00Z", "B"));
     EngineeringDiagramDocumentSet reviewed = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
         reference.getProcessSystem(), reference.getCaseId(), "B", "PFD-HMB-003", "Reviewed stream number",
         ContentProfile.PFD, "NORMAL-01", register);
@@ -102,11 +99,9 @@ class EngineeringDiagramStreamTableTest {
   void reportsMissingOperatingCaseAsStructuredLoss() {
     EngineeringDiagramReferenceFixtures.SystemCase reference = EngineeringDiagramReferenceFixtures.simpleTrain();
     EngineeringDiagramDocumentSet topologyOnly = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
-        reference.getProcessSystem(), reference.getCaseId(), "A", "PFD-HMB-004", "Topology only",
-        ContentProfile.PFD);
+        reference.getProcessSystem(), reference.getCaseId(), "A", "PFD-HMB-004", "Topology only", ContentProfile.PFD);
 
-    EngineeringDiagramStreamTable table = EngineeringDiagramStreamTable.fromDocumentSet(topologyOnly,
-        "MISSING-CASE");
+    EngineeringDiagramStreamTable table = EngineeringDiagramStreamTable.fromDocumentSet(topologyOnly, "MISSING-CASE");
 
     assertFalse(table.isValid());
     assertTrue(hasDiagnostic(table, "STREAM_TABLE_CASE_NOT_FOUND"));
