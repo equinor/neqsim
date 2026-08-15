@@ -83,8 +83,8 @@ public class DistillationColumnModeTest {
     legacyConflict.getCondenser().setSeparation_with_liquid_reflux(true, 100.0, "kg/hr");
     ValidationResult validation = legacyConflict.validateSpecifications();
     assertTrue(!validation.isValid());
-    assertTrue(
-        validation.getErrors().stream().anyMatch(error -> error.getCategory().equals("specification.degreesOfFreedom")));
+    assertTrue(validation.getErrors().stream()
+        .anyMatch(error -> error.getCategory().equals("specification.degreesOfFreedom")));
     IllegalStateException runException = assertThrows(IllegalStateException.class,
         () -> legacyConflict.run(UUID.randomUUID()));
     assertNotNull(runException.getMessage());
@@ -185,8 +185,8 @@ public class DistillationColumnModeTest {
 
     ValidationResult topValidation = topControlled.validateSpecifications();
     assertFalse(topValidation.isValid());
-    assertTrue(
-        topValidation.getErrors().stream().anyMatch(error -> error.getCategory().equals("specification.controlOwnership")));
+    assertTrue(topValidation.getErrors().stream()
+        .anyMatch(error -> error.getCategory().equals("specification.controlOwnership")));
     assertThrows(IllegalStateException.class, () -> topControlled.run(UUID.randomUUID()));
 
     topControlled.clearCondenserRefluxRatio();
@@ -198,8 +198,8 @@ public class DistillationColumnModeTest {
 
     ValidationResult bottomValidation = bottomControlled.validateSpecifications();
     assertFalse(bottomValidation.isValid());
-    assertTrue(
-        bottomValidation.getErrors().stream().anyMatch(error -> error.getCategory().equals("specification.controlOwnership")));
+    assertTrue(bottomValidation.getErrors().stream()
+        .anyMatch(error -> error.getCategory().equals("specification.controlOwnership")));
     assertThrows(IllegalStateException.class, () -> bottomControlled.run(UUID.randomUUID()));
 
     bottomControlled.setReboilerMode(DistillationColumn.ReboilerMode.EQUILIBRIUM);
