@@ -512,6 +512,21 @@ configured response time and detection delay are retained settings; the current 
 not integrate those values as physical sensor dynamics. External I/O, voting logic, ESD action,
 detector coverage, reliability and safety-integrity qualification remain outside this support.
 
+### PushButton transaction boundary
+
+A registered concrete local `PushButton` participates in transient-step transactions. Rollback
+restores its pushed latch, optional blowdown-valve binding, automatic-activation setting,
+logic-binding list and inherited measurement/alarm state. Scheduled pushes can therefore be
+rejected and replayed together with `EventScheduler` pending/fired bookkeeping, and Java
+serialization preserves the transaction identity and local restart state.
+
+Automatic activation of a bound `BlowdownValve` and linked `ProcessLogic` actions fail the
+transaction preflight because they mutate state outside the button. Setting automatic valve
+activation to `false` permits a valve binding to remain as configuration while the push changes
+only local state. Subclasses and online-signal operation also remain fail-closed. This is rollback
+mechanics, not ESD, manual-input reliability, safety-integrity, external-I/O, virtual-commissioning
+or OTS qualification.
+
 ## Quality Analysers
 
 ### MolarMassAnalyser
