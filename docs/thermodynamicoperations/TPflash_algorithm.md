@@ -958,6 +958,16 @@ The stability analysis proceeds in two stages. First, **Wilson K-based trial pha
 4. Test vapor-like trial ($W_i = K_i \cdot z_i$): enriches volatile components
 5. If either trial shows instability ($\text{tm} < -10^{-8}$), add phase and return
 
+These Wilson trials are part of ordinary `setMultiPhaseCheck(true)` as well as explicit enhanced
+multiphase checking. A negative tangent-plane distance identifies a missing phase composition, but
+does not determine that phase's equilibrium amount. The admitted trial therefore starts at the
+ordinary beta solver's regularization scale (normally `1e-3`, and never larger than the dominant
+component's overall fraction). This keeps the trial incipient without pinning it below the solver's
+useful correction scale. The existing phase-fraction and fugacity-equilibrium solve then grows or
+removes the phase. This avoids turning a
+stability composition guess into an order-one material split while preserving Wilson coverage for
+hydrate, electrolyte, and ordinary multiphase callers.
+
 **Stage 2: Pure-component trials** (fallback for cases K-based trials miss):
 
 1. **Pure component initialization**: For each component $j$, create a trial phase with:
