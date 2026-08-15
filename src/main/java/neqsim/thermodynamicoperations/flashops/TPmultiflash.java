@@ -314,9 +314,8 @@ public class TPmultiflash extends TPflash {
    *
    * <p>
    * EJML's raw common-operations solve can report success for a singular matrix while writing NaN values to the
-   * correction vector. The former {@link SimpleMatrix#solve(SimpleMatrix)} path raised a singular-matrix exception in
-   * that case, allowing enhanced mode to regularize the Hessian and ordinary mode to stop without corrupting phase
-   * fractions.
+   * correction vector. The former {@code SimpleMatrix.solve(...)} path raised a singular-matrix exception in that case,
+   * allowing enhanced mode to regularize the Hessian and ordinary mode to stop without corrupting phase fractions.
    * </p>
    *
    * @param betaHessian beta-Hessian matrix
