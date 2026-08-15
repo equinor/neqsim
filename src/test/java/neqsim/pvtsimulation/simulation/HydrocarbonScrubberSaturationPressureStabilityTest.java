@@ -28,7 +28,7 @@ class HydrocarbonScrubberSaturationPressureStabilityTest extends neqsim.NeqSimTe
     double enhancedPressure = calculateSaturationPressure(exportGas, true);
     double nearbyPressure = calculateSaturationPressureAtTemperature(exportGas, 1.0);
 
-    assertEquals(106.2, ordinaryPressure, 1.0);
+    assertEquals(105.9, ordinaryPressure, 0.5);
     assertEquals(ordinaryPressure, enhancedPressure, 0.25);
     assertTrue(Math.abs(nearbyPressure - ordinaryPressure) < 5.0);
 
