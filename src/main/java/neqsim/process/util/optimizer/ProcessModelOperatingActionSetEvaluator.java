@@ -261,7 +261,8 @@ public final class ProcessModelOperatingActionSetEvaluator {
     List<HydraulicConstraintSnapshot> constraintSnapshots = Collections.emptyList();
     if (allApplied) {
       candidateEvaluation = evaluator.evaluate(new double[0]);
-      objectiveEvidence = CandidateSetEvaluationResult.snapshotObjectives(evaluator.getObjectives(), candidateEvaluation);
+      objectiveEvidence = CandidateSetEvaluationResult.snapshotObjectives(evaluator.getObjectives(),
+          candidateEvaluation);
       constraintEvidence = CandidateSetEvaluationResult.snapshotConstraints(evaluator.getConstraints(),
           candidateEvaluation);
       if (!candidateEvaluation.isSimulationConverged()) {
