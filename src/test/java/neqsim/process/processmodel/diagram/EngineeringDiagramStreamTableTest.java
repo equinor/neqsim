@@ -2,6 +2,7 @@ package neqsim.process.processmodel.diagram;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import neqsim.process.engineering.model.EngineeringDiagramDesignationRegister;
@@ -42,6 +43,11 @@ class EngineeringDiagramStreamTableTest {
     assertEquals("NORMAL-01", table.getDesignCaseId());
     assertEquals(documents.getSourceGraphFingerprint(), table.getSourceGraphFingerprint());
     assertEquals(documentJson, documents.toJson());
+    assertNotSame(table.getRows(), table.getRows());
+    assertNotSame(table.getDiagnostics(), table.getDiagnostics());
+    assertNotSame(row.getValues(), row.getValues());
+    assertNotSame(row.getValues().get(Quantity.PRESSURE).getProvenance(),
+        row.getValues().get(Quantity.PRESSURE).getProvenance());
     assertThrows(UnsupportedOperationException.class, () -> table.getRows().clear());
     assertThrows(UnsupportedOperationException.class, () -> row.getValues().clear());
   }
