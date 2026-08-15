@@ -1420,9 +1420,6 @@ public class TPflash extends Flash {
     }
 
     boolean hasAqueousPhase = system.hasPhaseType(PhaseType.AQUEOUS);
-    if (hasAqueousPhase && system.getNumberOfPhases() < 2) {
-      return;
-    }
     double waterFeedFraction = 0.0;
     for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
       neqsim.thermo.component.ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
@@ -1430,6 +1427,10 @@ public class TPflash extends Flash {
         waterFeedFraction = component.getz();
         break;
       }
+    }
+    boolean singlePhaseCpaAqueousEndpoint = shouldRefineSinglePhaseCpaAqueousEndpoint(waterFeedFraction);
+    if (hasAqueousPhase && system.getNumberOfPhases() < 2 && !singlePhaseCpaAqueousEndpoint) {
+      return;
     }
     if (waterFeedFraction < WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT
         && (waterFeedFraction <= 0.0 || !shouldRefineTraceWaterAqueousEndpoint(waterFeedFraction))) {
@@ -1446,7 +1447,7 @@ public class TPflash extends Flash {
     double materialBalanceResidual = maximumComponentMaterialBalanceResidual(system);
     boolean materialBalanceInvalid = !Double.isFinite(materialBalanceResidual)
         || materialBalanceResidual > WATER_RICH_MATERIAL_BALANCE_TOLERANCE;
-    if (hasAqueousPhase && !materialBalanceInvalid
+    if (hasAqueousPhase && !singlePhaseCpaAqueousEndpoint && !materialBalanceInvalid
         && maximumLogFugacityResidualWithReplacement(0, system.getPhase(0)) < PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
       return;
     }
@@ -1502,6 +1503,43 @@ public class TPflash extends Flash {
     if (invalidOrdinaryTwoPhaseSeed) {
       trySeededWaterRichPhaseSet(referenceGibbsEnergy, materialBalanceInvalid);
     }
+  }
+
+  /**
+   * Screens a single-phase CPA aqueous endpoint for a missed hydrocarbon-liquid phase.
+   *
+   * <p>
+   * A substantial water feed can make the ordinary vapor-liquid stability trial select the aqueous minimum and never
+   * test the competing hydrocarbon-liquid minimum. The screen is restricted to an ordinary, neutral CPA aqueous
+   * endpoint with at least one substantial hydrocarbon whose critical temperature remains well above the flash
+   * temperature. Water fugacity must also be near pure-water saturation. These checks use only the converged endpoint
+   * and immutable component data; the subsequent multiphase stability calculation and strict balance, fugacity, phase
+   * fraction, distinct-composition, and lower-Gibbs gates remain authoritative.
+   * </p>
+   *
+   * @param waterFeedFraction overall water mole fraction
+   * @return true when a guarded multiphase stability refinement is justified
+   */
+  private boolean shouldRefineSinglePhaseCpaAqueousEndpoint(double waterFeedFraction) {
+    String modelName = system.getModelName();
+    if (system.doMultiPhaseCheck() || system.getNumberOfPhases() != 1 || !system.hasPhaseType(PhaseType.AQUEOUS)
+        || modelName == null || !modelName.contains("CPA")
+        || waterFeedFraction < WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT
+        || !isCpaWaterNearSaturation(CPA_WATER_SUPERSATURATION_SCREEN_LIMIT)) {
+      return false;
+    }
+    double condensableHydrocarbonFraction = 0.0;
+    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
+      neqsim.thermo.component.ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
+      double feedFraction = component.getz();
+      if (feedFraction <= LIQUID_LIQUID_ACTIVE_COMPONENT_LIMIT || !component.isHydrocarbon()) {
+        continue;
+      }
+      if (component.getTC() > system.getTemperature() + MULTIPHASE_ENDPOINT_CRITICAL_TEMPERATURE_MARGIN) {
+        condensableHydrocarbonFraction += feedFraction;
+      }
+    }
+    return condensableHydrocarbonFraction >= WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT;
   }
 
   /**
