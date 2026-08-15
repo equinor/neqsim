@@ -53,9 +53,7 @@ class SystemThermoSerializationInventoryTest extends neqsim.NeqSimTest {
 
   private static double sumComponentMoles(SystemThermo fluid) {
     double sum = 0.0;
-    for (int componentIndex = 0;
-        componentIndex < fluid.getPhase(0).getNumberOfComponents();
-        componentIndex++) {
+    for (int componentIndex = 0; componentIndex < fluid.getPhase(0).getNumberOfComponents(); componentIndex++) {
       sum += fluid.getPhase(0).getComponent(componentIndex).getNumberOfmoles();
     }
     return sum;
@@ -63,9 +61,7 @@ class SystemThermoSerializationInventoryTest extends neqsim.NeqSimTest {
 
   private static double sumOverallMoleFractions(SystemThermo fluid) {
     double sum = 0.0;
-    for (int componentIndex = 0;
-        componentIndex < fluid.getPhase(0).getNumberOfComponents();
-        componentIndex++) {
+    for (int componentIndex = 0; componentIndex < fluid.getPhase(0).getNumberOfComponents(); componentIndex++) {
       sum += fluid.getPhase(0).getComponent(componentIndex).getz();
     }
     return sum;
@@ -76,8 +72,7 @@ class SystemThermoSerializationInventoryTest extends neqsim.NeqSimTest {
     try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
       output.writeObject(fluid);
     }
-    try (ObjectInputStream input =
-        new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+    try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
       return (SystemThermo) input.readObject();
     }
   }
