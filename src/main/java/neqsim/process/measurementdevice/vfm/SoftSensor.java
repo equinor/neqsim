@@ -422,8 +422,7 @@ public class SoftSensor extends StreamMeasurementDeviceBaseClass
       throw new IllegalArgumentException("Soft-sensor transient snapshot cannot be null");
     }
     if (!getTransientStateIdentity().equals(snapshot.stateIdentity)) {
-      throw new IllegalArgumentException(
-          "Soft-sensor snapshot identity does not match " + getTransientStateIdentity());
+      throw new IllegalArgumentException("Soft-sensor snapshot identity does not match " + getTransientStateIdentity());
     }
     stream = snapshot.stream;
     propertyType = snapshot.propertyType;
