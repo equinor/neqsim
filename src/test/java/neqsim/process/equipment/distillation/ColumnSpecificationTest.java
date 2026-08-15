@@ -43,6 +43,17 @@ public class ColumnSpecificationTest {
         ColumnSpecification.ProductLocation.TOP, 3.0);
     assertEquals(3.0, refluxSpec.getTargetValue(), 1e-10);
 
+    ColumnSpecification legacyFlowSpec = new ColumnSpecification(
+        ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE, ColumnSpecification.ProductLocation.TOP, 25.0);
+    assertEquals("mol/hr", legacyFlowSpec.getTargetUnit());
+    ColumnSpecification massFlowSpec = new ColumnSpecification(
+        ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE, ColumnSpecification.ProductLocation.BOTTOM, 25.0,
+        null, "kg/hr");
+    assertEquals("kg/hr", massFlowSpec.getTargetUnit());
+    assertThrows(IllegalArgumentException.class,
+        () -> new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE,
+            ColumnSpecification.ProductLocation.TOP, 25.0, null, ""));
+
     // Purity spec without component name should throw
     assertThrows(IllegalArgumentException.class,
         () -> new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
@@ -182,8 +193,9 @@ public class ColumnSpecificationTest {
     assertEquals(ColumnSpecification.SpecificationType.COMPONENT_RECOVERY, column.getTopSpecification().getType());
 
     // Test product flow rate convenience
-    column.setBottomProductFlowRate(50.0, "mol/hr");
+    column.setBottomProductFlowRate(50.0, "kg/hr");
     assertEquals(ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE, column.getBottomSpecification().getType());
+    assertEquals("kg/hr", column.getBottomSpecification().getTargetUnit());
   }
 
   /**
@@ -279,6 +291,33 @@ public class ColumnSpecificationTest {
   }
 
   /**
+   * Test that product-flow feasibility screening uses the supplied mass-flow unit.
+   */
+  @Test
+  public void validateSpecificationsUsesProductFlowTargetUnit() {
+    SystemSrkEos testSystem = new SystemSrkEos(273.15 + 25.0, 15.0);
+    testSystem.addComponent("methane", 0.60);
+    testSystem.addComponent("ethane", 0.20);
+    testSystem.addComponent("propane", 0.10);
+    testSystem.addComponent("n-butane", 0.07);
+    testSystem.addComponent("n-pentane", 0.03);
+    testSystem.setMixingRule("classic");
+
+    Stream feed = new Stream("mass flow validation feed", testSystem);
+    feed.setFlowRate(100.0, "kg/hr");
+
+    DistillationColumn column = new DistillationColumn("MassFlowValidationColumn", 6, true, true);
+    column.addFeedStream(feed, 3);
+    column.setBottomProductFlowRate(150.0, "kg/hr");
+
+    ValidationResult result = column.validateSpecifications();
+
+    assertEquals("kg/hr", column.getBottomSpecification().getTargetUnit());
+    assertFalse(result.isValid());
+    assertTrue(result.getReport().contains("exceeds total feed flow in kg/hr"));
+  }
+
+  /**
    * Test that paired top and bottom flow specifications cannot exceed total feed flow.
    */
   @Test
@@ -300,6 +339,93 @@ public class ColumnSpecificationTest {
 
     assertFalse(result.isValid());
     assertTrue(result.getReport().contains("Top and bottom product-flow targets"));
+  }
+
+  /**
+   * Test mass-unit product-flow control, conservation, physical bounds, repeatability, and an equivalent molar target.
+   */
+  @Test
+  public void multicomponentProductFlowSpecificationHonorsMassUnit() {
+    SystemSrkEos testSystem = new SystemSrkEos(273.15 + 45.0, 10.0);
+    testSystem.addComponent("methane", 0.05);
+    testSystem.addComponent("ethane", 0.15);
+    testSystem.addComponent("propane", 0.35);
+    testSystem.addComponent("n-butane", 0.30);
+    testSystem.addComponent("n-pentane", 0.15);
+    testSystem.setMixingRule("classic");
+
+    Stream feed = new Stream("unit aware flow feed", testSystem);
+    feed.setFlowRate(250.0, "kg/hr");
+    feed.run();
+
+    DistillationColumn column = new DistillationColumn("UnitAwareFlowColumn", 7, true, true);
+    column.addFeedStream(feed, 3);
+    column.setTopPressure(10.0);
+    column.setBottomPressure(10.5);
+    column.getCondenser().setOutTemperature(273.15 + 15.0);
+    column.getReboiler().setOutTemperature(273.15 + 85.0);
+    column.setTemperatureTolerance(5.0e-2);
+    column.setMassBalanceTolerance(5.0e-2);
+    column.setEnthalpyBalanceTolerance(5.0e-2);
+    column.setMaxNumberOfIterations(80);
+
+    column.run();
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    double targetKgPerHour = column.getGasOutStream().getFlowRate("kg/hr");
+    double equivalentMolPerHour = column.getGasOutStream().getFlowRate("mol/hr");
+    assertTrue(targetKgPerHour > 0.0 && targetKgPerHour < feed.getFlowRate("kg/hr"));
+
+    column.setTopProductFlowRate(targetKgPerHour, "kg/hr");
+    column.getTopSpecification().setTolerance(Math.max(1.0e-4, targetKgPerHour * 1.0e-4));
+    column.getTopSpecification().setMaxIterations(8);
+    column.run();
+
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    assertEquals("kg/hr", column.getTopSpecification().getTargetUnit());
+    assertEquals(targetKgPerHour, column.getGasOutStream().getFlowRate("kg/hr"),
+        column.getTopSpecification().getTolerance());
+    assertTrue(Math.abs(column.getLastTopSpecificationResidual()) <= column.getTopSpecification().getTolerance());
+    assertColumnFlowSpecificationBalances(column, feed);
+
+    double repeatedKgPerHour = column.getGasOutStream().getFlowRate("kg/hr");
+    column.run();
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    assertEquals(repeatedKgPerHour, column.getGasOutStream().getFlowRate("kg/hr"),
+        Math.max(1.0e-6, repeatedKgPerHour * 1.0e-6));
+
+    column.setTopProductFlowRate(equivalentMolPerHour, "mol/hr");
+    column.getTopSpecification().setTolerance(Math.max(1.0e-3, equivalentMolPerHour * 1.0e-4));
+    column.getTopSpecification().setMaxIterations(8);
+    column.run();
+
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    assertEquals(equivalentMolPerHour, column.getGasOutStream().getFlowRate("mol/hr"),
+        column.getTopSpecification().getTolerance());
+    assertColumnFlowSpecificationBalances(column, feed);
+  }
+
+  /**
+   * Assert engineering balances and physical product bounds for the unit-aware flow regression.
+   *
+   * @param column solved column
+   * @param feed external feed
+   */
+  private void assertColumnFlowSpecificationBalances(DistillationColumn column, Stream feed) {
+    double feedFlow = feed.getFlowRate("kg/hr");
+    assertTrue(Math.abs(column.getMassBalance("kg/hr")) <= feedFlow * column.getMassBalanceTolerance());
+    assertTrue(column.getLastEnergyResidual() <= column.getEnthalpyBalanceTolerance());
+    assertTrue(column.getGasOutStream().getFlowRate("kg/hr") >= 0.0);
+    assertTrue(column.getLiquidOutStream().getFlowRate("kg/hr") >= 0.0);
+    assertTrue(column.getGasOutStream().getTemperature("K") > 0.0);
+    assertTrue(column.getLiquidOutStream().getTemperature("K") > 0.0);
+    for (String componentName : feed.getFluid().getComponentNames()) {
+      double feedComponentFlow = feed.getFluid().getComponent(componentName).getTotalFlowRate("mol/hr");
+      double productComponentFlow = column.getGasOutStream().getFluid().getComponent(componentName)
+          .getTotalFlowRate("mol/hr") + column.getLiquidOutStream().getFluid().getComponent(componentName)
+              .getTotalFlowRate("mol/hr");
+      assertEquals(feedComponentFlow, productComponentFlow, Math.max(1.0e-8, feedComponentFlow * 5.0e-2),
+          componentName);
+    }
   }
 
   /**
