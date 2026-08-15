@@ -303,9 +303,8 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass
   /** {@inheritDoc} */
   @Override
   public FlowInducedVibrationAnalyserState captureTransientState() {
-    return new FlowInducedVibrationAnalyserState(getTransientStateIdentity(), supportDistance,
-        calcSupportArrangement, supportArrangement, method, pipe, segmentSet, segment, FRMSConstant,
-        captureMeasurementDeviceTransientState());
+    return new FlowInducedVibrationAnalyserState(getTransientStateIdentity(), supportDistance, calcSupportArrangement,
+        supportArrangement, method, pipe, segmentSet, segment, FRMSConstant, captureMeasurementDeviceTransientState());
   }
 
   /** {@inheritDoc} */
