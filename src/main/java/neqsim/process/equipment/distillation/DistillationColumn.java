@@ -13586,8 +13586,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param specification specification to validate
    * @param productName product-end label used in diagnostics
    */
-  private void validateProductFlowSpecificationAgainstFeed(ValidationResult result,
-      ColumnSpecification specification, String productName) {
+  private void validateProductFlowSpecificationAgainstFeed(ValidationResult result, ColumnSpecification specification,
+      String productName) {
     if (!isProductFlowSpecification(specification)) {
       return;
     }
@@ -13599,8 +13599,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       return;
     }
     if (totalFeedFlow > 0.0 && specification.getTargetValue() > totalFeedFlow * (1.0 + 1.0e-12)) {
-      result.addError("specification.productFlow", "Product-flow target for the " + productName
-          + " product exceeds total feed flow in " + unit,
+      result.addError("specification.productFlow",
+          "Product-flow target for the " + productName + " product exceeds total feed flow in " + unit,
           "Use a " + productName + " product-flow target below the total feed flow or check the supplied unit");
     }
   }
