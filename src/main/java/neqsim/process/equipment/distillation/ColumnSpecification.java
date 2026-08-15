@@ -92,6 +92,8 @@ public class ColumnSpecification implements Serializable {
   private final ProductLocation location;
   private final double targetValue;
   private final String componentName;
+  /** Unit used to interpret a product-flow target; null only in legacy serialized objects. */
+  private final String targetUnit;
   private double tolerance = DEFAULT_TOLERANCE;
   private int maxIterations = DEFAULT_MAX_ITERATIONS;
 
@@ -116,11 +118,48 @@ public class ColumnSpecification implements Serializable {
    */
   public ColumnSpecification(SpecificationType type, ProductLocation location, double targetValue,
       String componentName) {
+    this(type, location, targetValue, componentName, defaultTargetUnit(type));
+  }
+
+  /**
+   * Creates a column specification with an explicit target unit.
+   *
+   * <p>
+   * The explicit unit is currently used by {@link SpecificationType#PRODUCT_FLOW_RATE}; other specification types keep
+   * their established dimensionless or watt targets. Existing constructors remain source compatible and use mol/hr for
+   * product-flow specifications.
+   * </p>
+   *
+   * @param type the specification type
+   * @param location which end of the column this applies to
+   * @param targetValue the target value in {@code targetUnit}
+   * @param componentName component name for component-based specifications, otherwise {@code null}
+   * @param targetUnit unit for a product-flow target
+   */
+  public ColumnSpecification(SpecificationType type, ProductLocation location, double targetValue,
+      String componentName, String targetUnit) {
     this.type = type;
     this.location = location;
     this.targetValue = targetValue;
     this.componentName = componentName;
+    this.targetUnit = targetUnit;
     validate();
+  }
+
+  /**
+   * Return the backward-compatible target unit for a specification type.
+   *
+   * @param type specification type
+   * @return mol/hr for product flow, W for duty, or an empty string for dimensionless targets
+   */
+  private static String defaultTargetUnit(SpecificationType type) {
+    if (type == SpecificationType.PRODUCT_FLOW_RATE) {
+      return "mol/hr";
+    }
+    if (type == SpecificationType.DUTY) {
+      return "W";
+    }
+    return "";
   }
 
   /**
@@ -162,6 +201,9 @@ public class ColumnSpecification implements Serializable {
       if (targetValue <= 0.0) {
         throw new IllegalArgumentException("Product flow rate must be positive, got: " + targetValue);
       }
+      if (targetUnit == null || targetUnit.trim().isEmpty()) {
+        throw new IllegalArgumentException("Product flow rate requires a non-empty flow unit");
+      }
     }
   }
 
@@ -199,6 +241,20 @@ public class ColumnSpecification implements Serializable {
    */
   public String getComponentName() {
     return componentName;
+  }
+
+  /**
+   * Returns the unit used to interpret the target value.
+   *
+   * <p>
+   * Product-flow specifications created through the legacy constructors, including deserialized historical objects,
+   * use mol/hr. Duty specifications use W and fraction/ratio targets are dimensionless.
+   * </p>
+   *
+   * @return target unit, or an empty string for dimensionless specifications
+   */
+  public String getTargetUnit() {
+    return targetUnit == null ? defaultTargetUnit(type) : targetUnit;
   }
 
   /**
@@ -250,6 +306,9 @@ public class ColumnSpecification implements Serializable {
     sb.append("ColumnSpecification[type=").append(type);
     sb.append(", location=").append(location);
     sb.append(", target=").append(targetValue);
+    if (!getTargetUnit().isEmpty()) {
+      sb.append(" ").append(getTargetUnit());
+    }
     if (componentName != null) {
       sb.append(", component=").append(componentName);
     }
