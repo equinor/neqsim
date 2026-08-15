@@ -372,7 +372,70 @@ public class ColumnSpecificationTest {
   }
 
   /**
-   * Test mass-unit product-flow control, conservation, physical bounds, repeatability, and an equivalent molar target.
+   * Test that matching terminal recoveries are dependent without a side draw.
+   */
+  @Test
+  public void validateSpecificationsRejectsDependentSameComponentRecoveries() {
+    SystemSrkEos testSystem = new SystemSrkEos(273.15 + 35.0, 12.0);
+    testSystem.addComponent("methane", 0.55);
+    testSystem.addComponent("ethane", 0.25);
+    testSystem.addComponent("propane", 0.12);
+    testSystem.addComponent("n-butane", 0.08);
+    testSystem.setMixingRule("classic");
+
+    Stream feed = new Stream("recovery independence feed", testSystem);
+    feed.setFlowRate(180.0, "kg/hr");
+
+    DistillationColumn column = new DistillationColumn("RecoveryIndependenceColumn", 6, true, true);
+    column.addFeedStream(feed, 3);
+    column.setTopComponentRecovery("methane", 0.70);
+    column.setBottomComponentRecovery("methane", 0.30);
+
+    ValidationResult result = column.validateSpecifications();
+
+    assertFalse(result.isValid());
+    assertTrue(result.getReport().contains("component balance makes the terminal recoveries dependent"));
+    IllegalStateException exception = assertThrows(IllegalStateException.class, column::run);
+    assertTrue(exception.getMessage().contains("component balance makes the terminal recoveries dependent"));
+
+    column.setBottomComponentRecovery("n-butane", 0.80);
+    assertTrue(column.validateSpecifications().isValid());
+  }
+
+  /**
+   * Test recovery inventory screening when a side draw makes terminal recoveries structurally independent.
+   */
+  @Test
+  public void validateSpecificationsScreensPairedRecoveriesWithSideDraw() {
+    SystemSrkEos testSystem = new SystemSrkEos(273.15 + 35.0, 12.0);
+    testSystem.addComponent("methane", 0.55);
+    testSystem.addComponent("ethane", 0.25);
+    testSystem.addComponent("propane", 0.12);
+    testSystem.addComponent("n-butane", 0.08);
+    testSystem.setMixingRule("classic");
+
+    Stream feed = new Stream("side draw recovery feed", testSystem);
+    feed.setFlowRate(180.0, "kg/hr");
+
+    DistillationColumn column = new DistillationColumn("SideDrawRecoveryColumn", 6, true, true);
+    column.addFeedStream(feed, 3);
+    column.setLiquidSideDrawFraction(2, 0.10);
+    column.setTopComponentRecovery("methane", 0.80);
+    column.setBottomComponentRecovery("methane", 0.30);
+
+    ValidationResult excessiveResult = column.validateSpecifications();
+
+    assertFalse(excessiveResult.isValid());
+    assertTrue(excessiveResult.getReport().contains("exceed the available feed component"));
+    assertFalse(excessiveResult.getReport().contains("terminal recoveries dependent"));
+
+    column.setBottomComponentRecovery("methane", 0.20);
+    assertTrue(column.validateSpecifications().isValid());
+  }
+
+  /**
+   * Test mass-unit product-flow control, conservation, physical bounds, repeatability, an equivalent molar target, and
+   * rejection of conservation-linked terminal flow controls without disturbing an accepted warm state.
    */
   @Test
   public void multicomponentProductFlowSpecificationHonorsMassUnit() {
@@ -426,6 +489,27 @@ public class ColumnSpecificationTest {
     column.setTopProductFlowRate(equivalentMolPerHour, "mol/hr");
     column.getTopSpecification().setTolerance(Math.max(1.0e-3, equivalentMolPerHour * 1.0e-4));
     column.getTopSpecification().setMaxIterations(8);
+    column.run();
+
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    assertEquals(equivalentMolPerHour, column.getGasOutStream().getFlowRate("mol/hr"),
+        column.getTopSpecification().getTolerance());
+    assertColumnFlowSpecificationBalances(column, feed);
+
+    double acceptedTopMolPerHour = column.getGasOutStream().getFlowRate("mol/hr");
+    double acceptedBottomMolPerHour = column.getLiquidOutStream().getFlowRate("mol/hr");
+    column.setBottomProductFlowRate(acceptedBottomMolPerHour, "mol/hr");
+
+    ValidationResult dependentFlowResult = column.validateSpecifications();
+
+    assertFalse(dependentFlowResult.isValid());
+    assertTrue(dependentFlowResult.getReport().contains("total material balance makes the terminal flows dependent"));
+    IllegalStateException exception = assertThrows(IllegalStateException.class, column::run);
+    assertTrue(exception.getMessage().contains("total material balance makes the terminal flows dependent"));
+    assertEquals(acceptedTopMolPerHour, column.getGasOutStream().getFlowRate("mol/hr"), 0.0);
+    assertEquals(acceptedBottomMolPerHour, column.getLiquidOutStream().getFlowRate("mol/hr"), 0.0);
+
+    column.setBottomSpecification(null);
     column.run();
 
     assertTrue(column.solved(), column.getConvergenceDiagnostics());

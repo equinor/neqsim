@@ -26,13 +26,20 @@ import java.io.Serializable;
  * ColumnSpecification topSpec = new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
  *     ColumnSpecification.ProductLocation.TOP, 0.95, "methane");
  *
- * // Specify reflux ratio of 3.0 at the condenser
- * ColumnSpecification condenserSpec = new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
- *     ColumnSpecification.ProductLocation.TOP, 3.0);
+ * // Specify boilup ratio of 2.0 at the reboiler
+ * ColumnSpecification bottomSpec = new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
+ *     ColumnSpecification.ProductLocation.BOTTOM, 2.0);
  *
  * column.setTopSpecification(topSpec);
- * column.setBottomSpecification(condenserSpec);
+ * column.setBottomSpecification(bottomSpec);
  * </pre>
+ *
+ * <p>
+ * On a column without an external side draw, top and bottom product-flow targets are linked by total material balance,
+ * and top and bottom recoveries of the same component are linked by component balance. Use one member of either pair
+ * with an independent purity, recovery, duty, or reflux specification. The column validator and run preflight reject
+ * dependent pairs before solver iteration.
+ * </p>
  *
  * @author esol
  * @version 1.0
