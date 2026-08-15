@@ -55,6 +55,36 @@ class TPflashSourGasConsistencyTest {
     assertEquivalent(repeatedReference, ordinary, 1.0e-10, "repeated boundary flash");
   }
 
+  @Test
+  void ordinaryLiquidLiquidBoundaryRetainsAcceptedCandidateRoot() {
+    SystemInterface ordinary = flash(225.0, 95.81, false, false);
+    SystemInterface multiphase = flash(225.0, 95.81, true, false);
+
+    assertEquals(2, ordinary.getNumberOfPhases());
+    assertEquivalent(multiphase, ordinary, 1.0e-10, "liquid-liquid root boundary");
+    assertEquals(3877.865927361861, ordinary.getGibbsEnergy(), 1.0e-6);
+    assertEquals(0.572813112145268, ordinary.getBeta(phaseOrder(ordinary)[0]), 1.0e-10);
+
+    double[][] nearbyConditions = { { 220.0, 95.81 }, { 225.0, 100.80 }, { 230.0, 95.81 } };
+    for (double[] condition : nearbyConditions) {
+      SystemInterface nearbyOrdinary = flash(condition[0], condition[1], false, false);
+      SystemInterface nearbyMultiphase = flash(condition[0], condition[1], true, false);
+      assertEquivalent(nearbyMultiphase, nearbyOrdinary, 2.0e-6,
+          "near liquid-liquid root boundary T=" + condition[0] + " K, P=" + condition[1] + " bara");
+    }
+
+    SystemInterface changedState = flash(225.0, 90.82, false, false);
+    changedState.setPressure(95.81, "bara");
+    new ThermodynamicOperations(changedState).TPflash();
+    changedState.init(1);
+    assertEquivalent(multiphase, changedState, 5.0e-6, "changed pressure at liquid-liquid root boundary");
+
+    SystemInterface repeatedReference = changedState.clone();
+    new ThermodynamicOperations(changedState).TPflash();
+    changedState.init(1);
+    assertEquivalent(repeatedReference, changedState, 1.0e-10, "repeated changed-state liquid-liquid boundary");
+  }
+
   private SystemInterface flash(double temperature, double pressure, boolean multiphase, boolean enhanced) {
     SystemInterface system = new SystemPrEos(temperature, pressure);
     for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
