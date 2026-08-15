@@ -1996,12 +1996,19 @@ public class TPflash extends Flash {
   /**
    * Infers the cubic root that reproduces a converged phase's compressibility factor.
    *
+   * <p>
+   * If retained cubic-root history makes both trial types reproduce the same compressibility factor, the candidate's
+   * declared gas/liquid class breaks the numerical tie. Otherwise iteration order could replace an accepted liquid root
+   * with a gas root during state transfer.
+   * </p>
+   *
    * @param source converged candidate system
    * @param phaseIndex active phase index
    * @return gas-like or liquid-like cubic root closest to the converged phase
    */
   private PhaseType inferSelectedCubicRoot(SystemInterface source, int phaseIndex) {
     PhaseType selectedRoot = source.getPhase(phaseIndex).getType();
+    PhaseType declaredRoot = selectedRoot == PhaseType.GAS ? PhaseType.GAS : PhaseType.LIQUID;
     double selectedDifference = Double.POSITIVE_INFINITY;
     for (PhaseType trialRoot : CUBIC_ROOT_PHASE_TYPES) {
       try {
@@ -2009,7 +2016,10 @@ public class TPflash extends Flash {
         trialPhase.init(source.getTotalNumberOfMoles(), trialPhase.getNumberOfComponents(), 1, trialRoot,
             source.getBeta(phaseIndex));
         double difference = Math.abs(trialPhase.getZ() - source.getPhase(phaseIndex).getZ());
-        if (Double.isFinite(difference) && difference < selectedDifference) {
+        boolean tiedDeclaredRoot = Double.isFinite(difference) && Double.isFinite(selectedDifference)
+            && Math.abs(difference - selectedDifference) <= UNCHANGED_SINGLE_PHASE_STATE_TOLERANCE
+            && trialRoot == declaredRoot;
+        if (Double.isFinite(difference) && (difference < selectedDifference || tiedDeclaredRoot)) {
           selectedDifference = difference;
           selectedRoot = trialRoot;
         }
