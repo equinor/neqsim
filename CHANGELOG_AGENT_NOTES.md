@@ -9,6 +9,105 @@
 
 ---
 
+## 2026-08-15 — Beggs and Brill correlation corrected in `PipeBeggsAndBrills`
+
+Four defects in the Beggs and Brill (1973) implementation, found by cross-validating a 74 km
+gas-export line against OLGA 2025.1 and then auditing the correlation term by term against a
+clean-room reimplementation of the published equations. All four now have regression tests in
+`PipeBeggsAndBrillsCorrelationTest`.
+
+**1. The pipe angle was converted from degrees to radians twice.**
+`convertSystemUnitToImperial()` already converts `angle` to radians, but the inclination
+correction then evaluated `Math.sin(1.8 * angle * 0.01745329)`. The correction was suppressed by
+roughly a factor of 57, so liquid holdup barely responded to inclination — the correction factor
+came out as 1.011 where the published correlation gives 2.00 at +4 degrees.
+
+- **Impact:** every inclined two-phase result. Holdup, mixture density and the hydrostatic term
+  were all wrong on any non-horizontal segment, and elevation profiles were effectively ignored.
+  Horizontal lines were unaffected. Re-run any inclined or undulating pipeline case.
+
+**2. The distributed-regime boundary tested `L4` instead of `L1`.**
+For a no-slip liquid fraction below 0.4 the published map gives distributed flow when
+`Fr >= L1`. Testing `L4` — which is astronomically large at low liquid fraction — made the branch
+unreachable, and such points fell through to a `Fr > 110` catch-all and were reported as
+intermittent. The branch order is now segregated, transition, intermittent, distributed, because
+`L1` and `L3` cross near a liquid fraction of 0.01; the two ad-hoc catch-alls that were masking the
+gap have been removed.
+
+- **Impact:** flow regime, holdup and the two-phase friction multiplier for high-Froude flow at
+  liquid fractions below 0.4. `BeggsAndBrillsPipeTest.testPipeLineBeggsAndBrills2` now reports
+  `DISTRIBUTED` at the outlet instead of `INTERMITTENT`.
+
+**3. The liquid velocity number counted gravity twice.**
+`N_LV = 1.938 * vsl * (rho_L / sigma)^0.25`; the 1.938 prefactor already absorbs the gravitational
+acceleration and the field-unit conversion. The code divided by a further 32.2.
+
+**4. A volume-corrected density was mixed with an uncorrected one in the same formula.**
+The specific gravity feeding the surface-tension correlation used
+`getPhase(1).getDensity("lb/ft3")`, but the liquid velocity number used the no-argument
+`getPhase(1).getDensity()`. **These are not the same number when volume correction is on** — 558.0
+against 675.4 kg/m3 for a lean methane/n-decane liquid, a 21 % difference. Both now use the
+explicit-unit accessor.
+
+- **General rule for agents:** treat `phase.getDensity()` and `phase.getDensity("kg/m3")` as
+  different quantities and never mix them inside one calculation.
+
+Minor: the API gravity constant was `141.5/SG - 131.0`, corrected to the standard `- 131.5`, and
+the two-phase friction `S` coefficients `3.18` / `0.872` are now the published `3.182` / `0.8725`.
+
+**Still not modelled:** the Payne et al. (1979) holdup correction is not applied. Note, however, that
+it would *not* have explained the residual difference against a transient two-fluid code on a large-bore
+gas line: the Beggs and Brill `S` factor is monotonically increasing in `y = lambda_L / H_L^2` over that
+range, so lowering the holdup *raises* the friction multiplier. On a 74 km 14-inch line at a mean
+no-slip liquid fraction of 0.009 the multiplier was 1.42 and accounted for the entire gap; removing it
+brought the correlation from 124 bar to 87 bar against 78 bar from OLGA and 84 bar from a single-phase
+Darcy check. Beggs and Brill is calibrated for no-slip liquid fractions down to roughly 0.01-0.02, so
+below that the two-phase friction multiplier is an extrapolation. State this as a correlation
+applicability limit when reporting.
+
+---
+
+## 2026-08-14 — Component clone keeps its attractive term, and E300 export keeps the volume shift
+
+Two defects that together made EOS regression results disagree with the Eclipse file they were
+exported to. Both surfaced while characterising a gas condensate and both now have regression tests.
+
+**1. `ComponentEos.clone()` left the cloned attractive term bound to the original component.**
+The alpha function reads `Tc`, `Pc` and the acentric factor live from `getComponent()`, so the
+usual regression pattern — clone a base fluid, then adjust critical properties on the clone — only
+changed the `a` parameter while `alpha(T)` kept evaluating against the untuned critical temperature.
+The tuning was silently half-applied.
+
+- `AttractiveTermInterface.setComponent(ComponentEosInterface)` is now public, and
+  `ComponentEos.clone()` re-points the cloned term at the cloned component.
+- **Impact:** any tuning applied to a *clone* via `setTC` / `setPC` / `setAcentricFactor` was
+  partly ignored. Tuning applied to a freshly built fluid was always correct. Re-run regressions
+  that used the clone-then-tune pattern.
+- Regression test: `ComponentEosCloneAttractiveTermTest`.
+
+**2. `EclipseFluidReadWrite.write` wrote `SSHIFT`/`SSHIFTS` as zero for characterised fractions.**
+It emitted `getVolumeCorrectionConst()`, which is only populated when a shift is set explicitly.
+TBP and plus fractions derive their Péneloux translation from the Rackett compressibility instead,
+so the translation was dropped on export — condensate liquid density came back ~14 % too high, both
+on NeqSim read-back and in Eclipse.
+
+- Now writes the effective dimensionless shift `getVolumeCorrection() / getb()`, matching the
+  Eclipse convention `v = v_EOS − s·b`. The reader reproduces the original molar volume exactly.
+- **Impact:** E300 files written before this change carry `SSHIFT = 0` for pseudo-components and
+  will give untranslated PR liquid densities. Re-export them.
+- Regression test: `EclipseFluidReadWriteVolumeShiftTest`.
+
+**Agent-facing notes** (also added to the `neqsim-eos-regression` skill):
+
+- Apply per-component tuning by iterating `fluid.getPhases()` (skipping nulls), **not**
+  `getPhase(i)` — the latter resolves through the phase-index map and can return the same phase
+  object several times while leaving other phase objects untuned.
+- `dewPointPressureFlash()` / `dewPointPressureFlashHC()` can return the initial guess on
+  near-critical fluids. Verify against a pressure scan or `calcPTphaseEnvelope` before using them
+  as a regression target.
+
+---
+
 ## 2026-08-13 — FIV fluid-viscosity factor corrected, and dead-leg pulsation screening added
 
 **Breaking behaviour change.** `FlowInducedVibrationAnalyser` evaluated the Energy Institute

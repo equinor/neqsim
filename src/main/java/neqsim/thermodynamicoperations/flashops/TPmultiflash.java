@@ -616,7 +616,7 @@ public class TPmultiflash extends TPflash {
             dominantComp = i;
           }
         }
-        system.setBeta(newPhaseIdx, system.getPhase(0).getComponent(dominantComp).getz());
+        system.setBeta(newPhaseIdx, getIncipientWilsonPhaseFraction(dominantComp));
         try {
           system.init(1);
         } catch (Exception ex) {
@@ -1203,7 +1203,7 @@ public class TPmultiflash extends TPflash {
               dominantComp = i;
             }
           }
-          system.setBeta(newPhaseIdx, system.getPhase(0).getComponent(dominantComp).getz());
+          system.setBeta(newPhaseIdx, getIncipientWilsonPhaseFraction(dominantComp));
           try {
             system.init(1);
           } catch (Exception ex) {
@@ -1219,6 +1219,25 @@ public class TPmultiflash extends TPflash {
     }
 
     system.normalizeBeta();
+  }
+
+  /**
+   * Returns a bounded initial fraction for a phase admitted by a Wilson-K stability trial.
+   *
+   * <p>
+   * A negative tangent-plane distance establishes that the current topology is unstable, but it does not determine the
+   * equilibrium amount of the new phase. Seeding beta from the trial's dominant overall component can therefore
+   * introduce an order-one material phase before the phase-fraction solve. Use the existing ordinary beta solver's
+   * regularization scale so the trial is incipient without being pinned below the solver's useful correction scale, then
+   * let the beta/equilibrium solve grow or remove it.
+   * </p>
+   *
+   * @param dominantComponent index of the largest component in the trial composition
+   * @return bounded incipient phase fraction
+   */
+  private double getIncipientWilsonPhaseFraction(int dominantComponent) {
+    double numericalSeed = Math.max(1.0e-3, 100.0 * phaseFractionMinimumLimit);
+    return Math.min(system.getPhase(0).getComponent(dominantComponent).getz(), numericalSeed);
   }
 
   /**

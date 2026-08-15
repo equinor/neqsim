@@ -1,7 +1,10 @@
 package neqsim.process.measurementdevice.vfm;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
+import neqsim.process.dynamics.TransientStateParticipant;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.measurementdevice.StreamMeasurementDeviceBaseClass;
 import neqsim.thermo.system.SystemInterface;
@@ -30,8 +33,11 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author ESOL
  * @version 1.0
  */
-public class SoftSensor extends StreamMeasurementDeviceBaseClass {
+public class SoftSensor extends StreamMeasurementDeviceBaseClass
+    implements TransientStateParticipant<SoftSensor.SoftSensorState> {
   private static final long serialVersionUID = 1000L;
+  /** Persistent identity used only for transient transaction provenance. */
+  private String transientStateParticipantId = UUID.randomUUID().toString();
 
   /**
    * Types of properties that can be estimated.
@@ -376,5 +382,77 @@ public class SoftSensor extends StreamMeasurementDeviceBaseClass {
     }
 
     return value;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateIdentity() {
+    if (transientStateParticipantId == null || transientStateParticipantId.trim().isEmpty()) {
+      transientStateParticipantId = UUID.randomUUID().toString();
+    }
+    return "measurement:soft-sensor:" + transientStateParticipantId;
+  }
+
+  /**
+   * The snapshot is complete only for the concrete local soft sensor.
+   *
+   * @return blocking diagnostic for descendants or external online-signal operation, otherwise {@code null}
+   */
+  @Override
+  public String getTransientStateCoverageIssue() {
+    if (getClass() != SoftSensor.class) {
+      return "soft-sensor subclass " + getClass().getName()
+          + " must provide a snapshot that includes subclass-owned mutable state";
+    }
+    return getMeasurementTransientStateCoverageIssue();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public SoftSensorState captureTransientState() {
+    return new SoftSensorState(getTransientStateIdentity(), stream, propertyType,
+        new HashMap<String, Double>(inputValues), lastEstimate,
+        lastSensitivity == null ? null : lastSensitivity.clone(), captureMeasurementDeviceTransientState());
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreTransientState(SoftSensorState snapshot) {
+    if (snapshot == null) {
+      throw new IllegalArgumentException("Soft-sensor transient snapshot cannot be null");
+    }
+    if (!getTransientStateIdentity().equals(snapshot.stateIdentity)) {
+      throw new IllegalArgumentException("Soft-sensor snapshot identity does not match " + getTransientStateIdentity());
+    }
+    stream = snapshot.stream;
+    propertyType = snapshot.propertyType;
+    inputValues = new HashMap<String, Double>(snapshot.inputValues);
+    lastEstimate = snapshot.lastEstimate;
+    lastSensitivity = snapshot.lastSensitivity == null ? null : snapshot.lastSensitivity.clone();
+    restoreMeasurementDeviceTransientState(snapshot.measurementState);
+  }
+
+  /** Immutable soft-sensor rollback point. */
+  public static final class SoftSensorState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String stateIdentity;
+    private final StreamInterface stream;
+    private final PropertyType propertyType;
+    private final Map<String, Double> inputValues;
+    private final double lastEstimate;
+    private final double[] lastSensitivity;
+    private final MeasurementDeviceTransientState measurementState;
+
+    private SoftSensorState(String stateIdentity, StreamInterface stream, PropertyType propertyType,
+        Map<String, Double> inputValues, double lastEstimate, double[] lastSensitivity,
+        MeasurementDeviceTransientState measurementState) {
+      this.stateIdentity = stateIdentity;
+      this.stream = stream;
+      this.propertyType = propertyType;
+      this.inputValues = inputValues;
+      this.lastEstimate = lastEstimate;
+      this.lastSensitivity = lastSensitivity;
+      this.measurementState = measurementState;
+    }
   }
 }

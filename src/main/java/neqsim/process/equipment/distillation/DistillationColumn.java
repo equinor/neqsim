@@ -2226,6 +2226,69 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Check whether both terminal specifications control conservation-linked product flows.
+   *
+   * <p>
+   * Without an external side draw, steady-state total material balance fixes one terminal flow once the other and the
+   * feed are known. Treating both as independent temperature controls creates a rank-deficient outer problem even when
+   * their targets sum exactly to the feed.
+   * </p>
+   *
+   * @return {@code true} when top and bottom product-flow specifications are dependent
+   */
+  private boolean hasDependentTerminalProductFlowSpecifications() {
+    return !hasActiveSideDrawFractions() && isProductFlowSpecification(topSpecification)
+        && isProductFlowSpecification(bottomSpecification);
+  }
+
+  /**
+   * Check whether both terminal specifications control recovery of the same component.
+   *
+   * @return {@code true} when top and bottom recoveries refer to the same feed component
+   */
+  private boolean hasMatchingTerminalComponentRecoverySpecifications() {
+    return isComponentRecoverySpecification(topSpecification) && isComponentRecoverySpecification(bottomSpecification)
+        && topSpecification.getComponentName() != null
+        && topSpecification.getComponentName().equals(bottomSpecification.getComponentName());
+  }
+
+  /**
+   * Check whether matching terminal recoveries are conservation-linked.
+   *
+   * <p>
+   * Without an external side draw, component balance fixes bottom recovery as one minus top recovery. The pair
+   * therefore supplies only one independent degree of freedom.
+   * </p>
+   *
+   * @return {@code true} when matching top and bottom recoveries are dependent
+   */
+  private boolean hasDependentTerminalComponentRecoverySpecifications() {
+    return !hasActiveSideDrawFractions() && hasMatchingTerminalComponentRecoverySpecifications();
+  }
+
+  /**
+   * Create an actionable message for dependent terminal product-flow controls.
+   *
+   * @return degrees-of-freedom error message
+   */
+  private String createDependentTerminalProductFlowSpecificationsMessage() {
+    return "Column " + getName()
+        + " cannot combine top and bottom product-flow specifications without an external side draw; total material "
+        + "balance makes the terminal flows dependent";
+  }
+
+  /**
+   * Create an actionable message for dependent terminal component-recovery controls.
+   *
+   * @return degrees-of-freedom error message
+   */
+  private String createDependentTerminalComponentRecoverySpecificationsMessage() {
+    return "Column " + getName() + " cannot combine top and bottom recovery specifications for component "
+        + topSpecification.getComponentName()
+        + " without an external side draw; component balance makes the terminal recoveries dependent";
+  }
+
+  /**
    * Create an actionable message for contradictory condenser reflux controls.
    *
    * @return degrees-of-freedom error message
@@ -2243,6 +2306,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private void ensureIndependentTerminalSpecifications() {
     if (hasConflictingCondenserRefluxSpecifications()) {
       throw new IllegalStateException(createConflictingCondenserRefluxSpecificationsMessage());
+    }
+    if (hasDependentTerminalProductFlowSpecifications()) {
+      throw new IllegalStateException(createDependentTerminalProductFlowSpecificationsMessage());
+    }
+    if (hasDependentTerminalComponentRecoverySpecifications()) {
+      throw new IllegalStateException(createDependentTerminalComponentRecoverySpecificationsMessage());
     }
   }
 
@@ -2731,7 +2800,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double target = startValue + boundedFraction * (specification.getTargetValue() - startValue);
     target = boundSpecificationTarget(specification, target);
     ColumnSpecification staged = new ColumnSpecification(specification.getType(), specification.getLocation(), target,
-        specification.getComponentName());
+        specification.getComponentName(), specification.getTargetUnit());
     staged.setTolerance(specification.getTolerance());
     staged.setMaxIterations(specification.getMaxIterations());
     return staged;
@@ -3280,6 +3349,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getTolerance());
       signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getMaxIterations());
       signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getComponentName());
+      signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getTargetUnit());
     }
 
     signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification == null ? 0L : 1L);
@@ -3290,6 +3360,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getTolerance());
       signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getMaxIterations());
       signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getComponentName());
+      signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getTargetUnit());
     }
 
     signature = updateColumnConfigurationSignature(signature);
@@ -4119,7 +4190,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       return recovery - spec.getTargetValue();
     }
     case PRODUCT_FLOW_RATE: {
-      double currentFlow = productStream.getFluid().getFlowRate("mol/hr");
+      double currentFlow = productStream.getFlowRate(spec.getTargetUnit());
       return currentFlow - spec.getTargetValue();
     }
     default:
@@ -9453,7 +9524,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Retrieve the latest top specification residual.
    *
-   * @return top specification residual as current value minus target value
+   * @return top specification residual as current value minus target value, in the specification target unit
    */
   public double getLastTopSpecificationResidual() {
     return lastTopSpecificationResidual;
@@ -9462,7 +9533,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Retrieve the latest bottom specification residual.
    *
-   * @return bottom specification residual as current value minus target value
+   * @return bottom specification residual as current value minus target value, in the specification target unit
    */
   public double getLastBottomSpecificationResidual() {
     return lastBottomSpecificationResidual;
@@ -9703,6 +9774,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       diagnostics.append("    linear solve time: ").append(lastNaphtaliLinearSolveTimeSeconds).append(" s\n");
     }
     diagnostics.append("  Residuals:\n");
+    if (topSpecification != null) {
+      diagnostics.append("    top specification: ").append(topSpecification).append(", residual ")
+          .append(lastTopSpecificationResidual).append(" ").append(topSpecification.getTargetUnit()).append("\n");
+    }
+    if (bottomSpecification != null) {
+      diagnostics.append("    bottom specification: ").append(bottomSpecification).append(", residual ")
+          .append(lastBottomSpecificationResidual).append(" ").append(bottomSpecification.getTargetUnit()).append("\n");
+    }
     diagnostics.append("    temperature: ").append(lastTemperatureResidual).append(" K (tolerance ")
         .append(getEffectiveTemperatureTolerance()).append(")\n");
     diagnostics.append("    applied temperature step: ").append(lastAppliedTemperatureStepResidual).append(" K\n");
@@ -13536,10 +13615,30 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private void validateColumnSpecifications(ValidationResult result) {
     validateColumnSpecification(result, topSpecification, ColumnSpecification.ProductLocation.TOP);
     validateColumnSpecification(result, bottomSpecification, ColumnSpecification.ProductLocation.BOTTOM);
+    validateTerminalSpecificationIndependence(result);
     validateProductFlowSpecificationsAgainstFeed(result);
+    validatePairedComponentRecoverySpecifications(result);
     if (hasConflictingCondenserRefluxSpecifications()) {
       result.addError("specification.degreesOfFreedom", createConflictingCondenserRefluxSpecificationsMessage(),
           "Call setCondenserMode(DistillationColumn.CondenserMode.PARTIAL) or setCondenserMode(DistillationColumn.CondenserMode.TOTAL) to clear fixed-flow mode, or remove the top reflux-ratio specification");
+    }
+  }
+
+  /**
+   * Validate that top and bottom specifications own independent column degrees of freedom.
+   *
+   * @param result validation result receiving degrees-of-freedom errors
+   */
+  private void validateTerminalSpecificationIndependence(ValidationResult result) {
+    if (hasDependentTerminalProductFlowSpecifications()) {
+      result.addError("specification.degreesOfFreedom", createDependentTerminalProductFlowSpecificationsMessage(),
+          "Keep one terminal product-flow target and replace the other with purity, recovery, duty, or reflux "
+              + "specification");
+    }
+    if (hasDependentTerminalComponentRecoverySpecifications()) {
+      result.addError("specification.degreesOfFreedom", createDependentTerminalComponentRecoverySpecificationsMessage(),
+          "Keep one recovery target for that component and replace the other terminal target with an independent "
+              + "specification");
     }
   }
 
@@ -13549,66 +13648,115 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param result validation result receiving product-flow feasibility errors
    */
   private void validateProductFlowSpecificationsAgainstFeed(ValidationResult result) {
-    double totalFeedFlow = getTotalExternalFeedFlowMolPerHour();
+    validateProductFlowSpecificationAgainstFeed(result, topSpecification, "top");
+    validateProductFlowSpecificationAgainstFeed(result, bottomSpecification, "bottom");
+
+    if (!isProductFlowSpecification(topSpecification) || !isProductFlowSpecification(bottomSpecification)
+        || !topSpecification.getTargetUnit().equals(bottomSpecification.getTargetUnit())) {
+      return;
+    }
+    String unit = topSpecification.getTargetUnit();
+    double totalFeedFlow = getTotalExternalFeedFlow(unit);
     if (!Double.isFinite(totalFeedFlow) || totalFeedFlow <= 0.0) {
       return;
     }
-
-    double topProductFlowTarget = getProductFlowSpecificationTarget(topSpecification);
-    double bottomProductFlowTarget = getProductFlowSpecificationTarget(bottomSpecification);
-    if (topProductFlowTarget > totalFeedFlow * (1.0 + 1.0e-12)) {
-      result.addError("specification.productFlow", "Product-flow target for the top product exceeds total feed flow",
-          "Use a top product-flow target below the total feed flow or check the mol/hr units");
-    }
-    if (bottomProductFlowTarget > totalFeedFlow * (1.0 + 1.0e-12)) {
-      result.addError("specification.productFlow", "Product-flow target for the bottom product exceeds total feed flow",
-          "Use a bottom product-flow target below the total feed flow or check the mol/hr units");
-    }
-    double productFlowSum = positiveFiniteOrZero(topProductFlowTarget) + positiveFiniteOrZero(bottomProductFlowTarget);
+    double productFlowSum = topSpecification.getTargetValue() + bottomSpecification.getTargetValue();
     if (productFlowSum > totalFeedFlow * (1.0 + 1.0e-12)) {
       result.addError("specification.productFlow.sum", "Top and bottom product-flow targets exceed total feed flow",
-          "Reduce one product-flow target or replace one flow target with purity, "
-              + "recovery, duty, or reflux specification");
+          "Reduce one product-flow target or replace one flow target with purity, recovery, duty, or reflux "
+              + "specification; targets and feed were compared in " + unit);
     }
   }
 
   /**
-   * Get the target value for a product-flow specification.
+   * Validate one product-flow target against the external feed in the target's own unit.
    *
-   * @param specification column specification to inspect
-   * @return product-flow target in mol/hr, or {@link Double#NaN} when the specification is not a product-flow target
+   * @param result validation result receiving errors
+   * @param specification specification to validate
+   * @param productName product-end label used in diagnostics
    */
-  private double getProductFlowSpecificationTarget(ColumnSpecification specification) {
-    if (specification == null || specification.getType() != ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE) {
-      return Double.NaN;
+  private void validateProductFlowSpecificationAgainstFeed(ValidationResult result, ColumnSpecification specification,
+      String productName) {
+    if (!isProductFlowSpecification(specification)) {
+      return;
     }
-    return specification.getTargetValue();
+    String unit = specification.getTargetUnit();
+    double totalFeedFlow = getTotalExternalFeedFlow(unit);
+    if (!Double.isFinite(totalFeedFlow)) {
+      result.addError("specification.productFlow.unit", "Product-flow specification uses an unsupported unit: " + unit,
+          "Use a flow unit accepted by StreamInterface.getFlowRate, for example mol/hr or kg/hr");
+      return;
+    }
+    if (totalFeedFlow > 0.0 && specification.getTargetValue() > totalFeedFlow * (1.0 + 1.0e-12)) {
+      result.addError("specification.productFlow",
+          "Product-flow target for the " + productName + " product exceeds total feed flow in " + unit,
+          "Use a " + productName + " product-flow target below the total feed flow or check the supplied unit");
+    }
   }
 
   /**
-   * Return a finite positive value, otherwise zero.
+   * Validate paired component-recovery targets against component conservation.
    *
-   * @param value value to screen
-   * @return {@code value} when finite and positive, otherwise zero
+   * <p>
+   * A side draw can carry the recovery not assigned to the two terminal products, but the two terminal recoveries can
+   * never exceed the available feed component.
+   * </p>
+   *
+   * @param result validation result receiving component-recovery feasibility errors
    */
-  private double positiveFiniteOrZero(double value) {
-    return Double.isFinite(value) && value > 0.0 ? value : 0.0;
+  private void validatePairedComponentRecoverySpecifications(ValidationResult result) {
+    if (!hasMatchingTerminalComponentRecoverySpecifications()
+        || hasDependentTerminalComponentRecoverySpecifications()) {
+      return;
+    }
+    double recoverySum = topSpecification.getTargetValue() + bottomSpecification.getTargetValue();
+    if (recoverySum > 1.0 + 1.0e-12) {
+      result.addError("specification.componentRecovery.sum",
+          "Top and bottom recovery targets for component " + topSpecification.getComponentName()
+              + " exceed the available feed component",
+          "Reduce one recovery target so their sum is at most one, including any recovery required in side draws");
+    }
   }
 
   /**
-   * Calculate total external feed flow in mol/hr.
+   * Check whether a specification controls total product flow.
    *
-   * @return total molar feed flow in mol/hr
+   * @param specification specification to inspect
+   * @return {@code true} for product-flow specifications
    */
-  private double getTotalExternalFeedFlowMolPerHour() {
+  private boolean isProductFlowSpecification(ColumnSpecification specification) {
+    return specification != null && specification.getType() == ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE;
+  }
+
+  /**
+   * Check whether a specification controls component recovery.
+   *
+   * @param specification specification to inspect
+   * @return {@code true} for component-recovery specifications
+   */
+  private boolean isComponentRecoverySpecification(ColumnSpecification specification) {
+    return specification != null && specification.getType() == ColumnSpecification.SpecificationType.COMPONENT_RECOVERY;
+  }
+
+  /**
+   * Calculate total external feed flow in a requested unit.
+   *
+   * @param unit flow-rate unit
+   * @return total feed flow, or {@link Double#NaN} when the unit is unsupported
+   */
+  private double getTotalExternalFeedFlow(String unit) {
     double totalFeedFlow = 0.0;
     for (StreamInterface feed : getAllExternalFeedStreams()) {
       if (feed == null) {
         continue;
       }
-      double flow = feed.getFlowRate("mol/hr");
-      if (Double.isFinite(flow)) {
-        totalFeedFlow += Math.abs(flow);
+      try {
+        double flow = feed.getFlowRate(unit);
+        if (Double.isFinite(flow)) {
+          totalFeedFlow += Math.abs(flow);
+        }
+      } catch (RuntimeException exception) {
+        return Double.NaN;
       }
     }
     return totalFeedFlow;
@@ -14388,11 +14536,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Convenience method to specify a target molar flow rate for the top product.
    *
    * @param flowRate the desired flow rate value
-   * @param unit the flow rate unit (currently expected as {@code mol/hr})
+   * @param unit the flow-rate unit used for the target and residual
    */
   public void setTopProductFlowRate(double flowRate, String unit) {
     this.topSpecification = new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE,
-        ColumnSpecification.ProductLocation.TOP, flowRate);
+        ColumnSpecification.ProductLocation.TOP, flowRate, null, unit);
   }
 
   /**
@@ -14402,10 +14550,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param unit the flow rate unit (e.g. "mol/hr")
    */
   public void setBottomProductFlowRate(double flowRate, String unit) {
-    // Store the specification in mol/hr (the column evaluator uses mol/hr
-    // internally)
     this.bottomSpecification = new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE,
-        ColumnSpecification.ProductLocation.BOTTOM, flowRate);
+        ColumnSpecification.ProductLocation.BOTTOM, flowRate, null, unit);
   }
 
   /**

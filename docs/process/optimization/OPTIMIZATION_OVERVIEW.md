@@ -589,6 +589,51 @@ physics, or approve an operating change. Check mass and energy balance, product 
 mechanical/safety/environmental/market limits, nearby points and evidence validity. Use independent
 `ProcessModel` instances for parallel candidates.
 
+### Fixed-total allocation search with complete candidate evidence
+
+`ProcessModelAllocationOptimizer` turns the atomic action-set evaluator into a bounded continuous
+allocation search. Every candidate preserves one declared total and moves rate only by pairwise
+transfer, so the sum remains constant while per-action bounds and all configured process and
+hydraulic constraints are enforced by NeqSim. The optimizer stops immediately if rollback or
+restored-baseline convergence fails.
+
+```java
+ProcessModelAllocationOptimizer optimizer = new ProcessModelAllocationOptimizer(
+    "field-rate-allocation", "Field rate allocation",
+    "approved well envelopes and host capacity basis revision A", allocation,
+    totalRate, "kg/hr")
+        .setInitialAllocation(new double[] {initialWellARate, initialWellBRate})
+        .setObjectiveIndex(0)
+        .setInitialStepFraction(0.10)
+        .setRelativeStepTolerance(1.0e-3)
+        .setObjectiveImprovementTolerance(
+            1.0e-6, "validated export-rate calculation resolution")
+        .setMaximumEvaluations(100);
+
+ProcessModelAllocationOptimizer.AllocationSearchResult search = optimizer.optimize();
+if (!search.isModelRecovered()) {
+  throw new IllegalStateException(search.getDiagnostics().toString());
+}
+ProcessModelAllocationOptimizer.CandidateRecord best = search.getBestFeasibleCandidate();
+if (best != null) {
+  double[] allocationRates = best.getCandidateValues();
+  List<ProcessModelOperatingActionEvaluator.HydraulicConstraintSnapshot> limiting =
+      search.getRankedHydraulicConstraintsAtBestFeasible();
+}
+```
+
+The immutable serializable result freezes optimizer/action-set/objective identity, bounds, seed,
+budget, transfer and objective tolerances with provenance, every atomic candidate result, the best
+feasible candidate, and utilization-ranked hydraulic evidence. It also reports the gap to the best
+objective among sampled points. That sampled gap is a search diagnostic, not global production loss,
+economic value, or a shadow price.
+
+This first allocation optimizer requires continuous actions with exactly matching units and a
+feasible fixed total. Convergence means that no improving feasible pair transfer was found above the
+declared step tolerance; it does not prove global optimality. Validate nearby allocations,
+conservation, product specifications, rotating-equipment maps, utilities, safety and market limits,
+and use independent model/evaluator/optimizer instances for parallel searches.
+
 ### ProcessOptimizationEngine Algorithms
 
 ```java
@@ -828,6 +873,7 @@ for (ScenarioRequest scenario : scenarios) {
 | `ProcessSimulationEvaluator` | External optimizer interface | `evaluate()` | [External Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) |
 | `ProcessModelSimulationEvaluator` | External optimizer interface for multi-area `ProcessModel` studies | `evaluate()` | [External Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) |
 | `ProcessModelOperatingActionSetEvaluator` | Atomic coupled-action candidate evaluation | `evaluate(double[])` | [External Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) |
+| `ProcessModelAllocationOptimizer` | Fixed-total continuous allocation search with complete candidate evidence | `optimize()` | [External Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) |
 | `ProcessModelThroughputOptimizer` | Full-model throughput-to-bottleneck study helper | `findMaximumThroughput()` | [External Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) |
 | `InstalledCapacityTableLoader` | Attach fixed equipment limits from CSV | `load()` | [Capacity Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) |
 | `EclipseVFPExporter` | Eclipse VFP tables | `exportVFPPROD()` | [Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE.md#eclipse-vfp-export) |
@@ -845,4 +891,5 @@ Choose based on your use case:
 - **Full `ProcessModel` with several process areas and producer ramping** → `ProcessModelThroughputOptimizer`
 - **Full `ProcessModel` custom external optimization** → `ProcessModelSimulationEvaluator`
 - **Coupled well-rate candidate with mandatory rollback** → `ProcessModelOperatingActionSetEvaluator`
+- **Fixed-total continuous allocation across coupled actions** → `ProcessModelAllocationOptimizer`
 - **Model calibration** → `BatchParameterEstimator`

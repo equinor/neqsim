@@ -202,7 +202,7 @@ A slug unit consists of:
     │                        │                                │
     └────────────────────────┴────────────────────────────────┘
          ← L_bubble →          ←────── L_slug ──────→
-         
+
     ◄──────────────── L_unit = L_slug + L_bubble ─────────────►
 ```
 
@@ -466,9 +466,9 @@ pipe.setOutletPressure(45.0, "bara");
 pipe.run();
 
 // Print results
-System.out.println("Pressure drop: " + 
+System.out.println("Pressure drop: " +
     (pipe.getInletPressure() - pipe.getOutletPressure()) + " bar");
-System.out.println("Outlet temperature: " + 
+System.out.println("Outlet temperature: " +
     pipe.getOutletStream().getTemperature("C") + " °C");
 ```
 
@@ -504,7 +504,7 @@ System.out.println(pipe.getSlugStatisticsSummary());
 System.out.println("\nActive slugs:");
 for (LagrangianSlugTracker.SlugBubbleUnit slug : tracker.getSlugs()) {
     System.out.printf("  Slug #%d: pos=%.1fm, L=%.1fm, v=%.2fm/s, H=%.2f%n",
-        slug.id, slug.frontPosition, slug.slugLength, 
+        slug.id, slug.frontPosition, slug.slugLength,
         slug.frontVelocity, slug.slugHoldup);
 }
 
@@ -589,9 +589,9 @@ System.out.printf("Temperature: %.1f°C (inlet) → %.1f°C (outlet)%n",
     temps[0] - 273.15, temps[temps.length-1] - 273.15);
 
 // Check hydrate risk
-System.out.printf("Hydrate formation temperature: %.1f°C%n", 
+System.out.printf("Hydrate formation temperature: %.1f°C%n",
     thermal.getHydrateFormationTemperature() - 273.15);
-System.out.printf("Cooldown time to hydrate: %.1f hours%n", 
+System.out.printf("Cooldown time to hydrate: %.1f hours%n",
     thermal.getCooldownTimeToHydrate());
 ```
 
@@ -681,6 +681,38 @@ Terrain slug detection successfully identifies:
 - Riser-base topology and liquid-accumulation conditions for further system screening
 
 These software scenarios are regression checks, not experimental validation.
+
+### Measured comparison against OLGA 2025.1
+
+The tests above compare NeqSim against NeqSim. The following is a direct run against the OLGA
+engine on a 73.8 km subsea gas-condensate export line (ID 0.355 m, U = 3 W/m2K, seabed 4 C,
+10 MSm3/d), with identical fluid, rate, geometry and heat transfer. OLGA is driven by a source with
+the arrival pressure secant-iterated until its computed inlet equals the 200 bara the NeqSim models
+are given, so every case is compared at the same inlet state.
+
+| Case | OLGA ΔP | TwoFluidPipe ΔP | PipeBeggsAndBrills ΔP |
+|------|---------|-----------------|------------------------|
+| Dry line | 78.50 bar | 81.20 bar (+3.4%) | 125.00 bar (+59%) |
+| 10 MW direct electrical heating | 88.19 bar | 81.20 bar (−7.9%) | 154.19 bar (+75%) |
+| 15 m3/hr free water | 104.06 bar | 91.31 bar (−12.3%) | 143.94 bar (+38%) |
+
+Arrival temperature tracks OLGA closely — 6.8 C against 8.4 C dry, and 28.9 C against 27.8 C with
+DEH — so the thermal side is in good agreement. Two limitations are visible:
+
+**Liquid holdup is 2–4x OLGA.** Arrival holdup 0.064 against 0.023 on the dry line, and 0.119
+against 0.034 with free water (water 0.074 vs 0.020, oil 0.045 vs 0.013). The phase bookkeeping is
+sound — gas, oil and water volume fractions sum to one and stay in range at every node in both
+codes — so the discrepancy sits in the slip closure, not in the three-phase accounting. The slip
+ratio is roughly 10 against OLGA's 3.
+
+**Pressure drop does not always respond to a temperature change.** Adding 10 MW of heating raised
+the arrival temperature 22 K but left the computed pressure drop at 81.20 bar, unchanged to five
+figures, where OLGA moved +12.3% and Beggs–Brill +23.4%. Warmer gas at fixed mass rate is less
+dense and ΔP ~ G²/ρ, so a response is expected. Pressure drop from a case whose temperature field
+changes should be treated as indicative until this is resolved.
+
+Both are model-to-model comparisons at a single grid resolution on one line, and are recorded so
+the model is not assumed to be OLGA-equivalent despite sharing its modelling class.
 
 ### Public severe-slugging benchmark
 

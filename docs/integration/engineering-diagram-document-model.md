@@ -58,9 +58,88 @@ String controlledProposalJson = documents.toJson();
 
 Use the overload with a final operating-case ID after a successful process run to retain governed
 stream results in the same controlled snapshot. Temperature is stored in K, absolute pressure in
-bara, and mass flow in kg/s. Each value remains `CALCULATED` and `REVIEW_REQUIRED`, identifies its
-case and source semantic object, and includes simulation-result provenance. The topology-only
+bara, mass flow in kg/s, and mass-specific enthalpy in J/kg. Each value remains `CALCULATED` and
+`REVIEW_REQUIRED`, identifies its case and source semantic object, and includes simulation-result
+provenance. The topology-only
 overloads remain unchanged and do not read live operating values.
+
+### Governed stream-table companion
+
+`EngineeringDiagramStreamTable` creates an immutable, deterministic stream-table companion from one
+operating-case document snapshot. It reads only canonical `LINE` and `CALCULATION` semantic objects;
+it does not read live process objects or add fields to `EngineeringDiagramDocumentSet.toJson()`.
+Every row retains the canonical stream ID, external key, source label, and process area. Temperature,
+absolute pressure, mass flow, and mass-specific enthalpy retain their explicit unit, quantity basis,
+engineering state, approval state, source calculation ID, and simulation-result provenance.
+
+A reviewed `STREAM_NUMBER` designation is preferred as the display identifier and its source
+reference is retained. Without reviewed evidence, the canonical source label remains visible.
+Missing cases or quantities, malformed values, duplicate values, and calculation references to
+unknown streams are reported as structured diagnostics rather than silently invented or discarded.
+
+```java
+EngineeringDiagramDocumentSet operatingDocuments =
+    ProcessDiagramDocumentSetAdapter.fromProcessModel(
+        processModel,
+        "PLANT-01",
+        "B",
+        "PFD-01-001",
+        "Gas processing facility",
+        EngineeringDiagramDocumentSet.ContentProfile.PFD,
+        "NORMAL-01",
+        new EngineeringDiagramDesignationRegister());
+EngineeringDiagramStreamTable streamTable =
+    EngineeringDiagramStreamTable.fromDocumentSet(operatingDocuments, "NORMAL-01");
+
+for (EngineeringDiagramStreamTable.Row row : streamTable.getRows()) {
+  EngineeringDiagramStreamTable.Value pressure =
+      row.getValues().get(EngineeringDiagramStreamTable.Quantity.PRESSURE);
+  if (pressure != null) {
+    logger.info("{} pressure: {} {}", row.getDisplayIdentifier(), pressure.getResultValue(),
+        pressure.getResultUnit());
+  }
+}
+```
+
+### Explicit-boundary mass and stream-enthalpy balances
+
+`EngineeringDiagramBalanceTable` aggregates only explicit boundary assignments against a governed
+stream table. Each assignment records a stable balance ID, canonical stream semantic ID, inlet or
+outlet direction, source reference, and `PROPOSED` or `REVIEWED` evidence state. The aggregator never
+guesses direction from drawing topology. Unknown or duplicate assignments, missing values, wrong
+units or bases, negative boundary flow, non-finite results, and source-table losses remain visible as
+structured diagnostics.
+
+```java
+List<EngineeringDiagramBalanceTable.Boundary> boundaries =
+    Arrays.asList(
+        new EngineeringDiagramBalanceTable.Boundary(
+            "BAL-AREA-01",
+            feedStreamId,
+            EngineeringDiagramBalanceTable.Direction.INLET,
+            "project-balance-register:BAL-AREA-01",
+            EngineeringDiagramBalanceTable.EvidenceState.PROPOSED),
+        new EngineeringDiagramBalanceTable.Boundary(
+            "BAL-AREA-01",
+            productStreamId,
+            EngineeringDiagramBalanceTable.Direction.OUTLET,
+            "project-balance-register:BAL-AREA-01",
+            EngineeringDiagramBalanceTable.EvidenceState.PROPOSED));
+EngineeringDiagramBalanceTable balanceTable =
+    EngineeringDiagramBalanceTable.fromStreamTable(streamTable, boundaries);
+```
+
+For each balance, mass residual is inlet mass flow minus outlet mass flow in kg/s. Relative mass
+residual divides that result by the larger absolute inlet or outlet total and is zero when both totals
+are zero. Stream enthalpy flow is `massFlow [kg/s] * specificEnthalpy [J/kg]` in W; its residual is the
+inlet total minus the outlet total, and its relative residual uses the same larger-total denominator.
+It intentionally excludes equipment heat duties and shaft work, so it is not a complete energy
+balance. Component balances,
+reconciliation, tolerances, and approved project boundaries remain later engineering layers.
+
+Building either companion does not change Classic DOT/Graphviz, native SVG/PDF, DEXPI 2.0 Process
+exchange, or the Proteus/DEXPI P&ID workflow. `REVIEWED` boundary evidence does not approve a PFD,
+P&ID, simulation result, balance, or design data.
 
 Canonical source names and carried connection names are retained as source designations. They are
 not silently promoted to project-approved equipment tags or line numbers. Project-entered tags and
@@ -181,6 +260,7 @@ NativeEngineeringDiagramRenderer.Result rendered =
 
 Map<String, String> svgBySheetId = rendered.getSvgBySheetId();
 byte[] multiPagePdf = rendered.getPdf();
+Map<String, String> visualFingerprints = rendered.getVisualFingerprintsBySheetId();
 for (NativeEngineeringDiagramRenderer.Diagnostic diagnostic : rendered.getDiagnostics()) {
   logger.warn("{}: {}", diagnostic.getCode(), diagnostic.getMessage());
 }
@@ -193,18 +273,27 @@ layout overflow remain fail-visible through structured diagnostics. Manual geome
 unchanged instead of being silently repaired.
 
 SVG output contains stable `data-sheet-id`, `data-semantic-id`, and protected-route attributes for
-machine inspection. PDF output is a deterministic vector drawing set with one page per controlled
-sheet. Use `exportSvg(directory)` or `exportPdf(path)` when files are required. Rendering does not
-modify the source document set, legacy DOT/Graphviz output, DEXPI 2.0 Process exchange, or the
-Proteus/DEXPI P&ID workflow.
+machine inspection. Every material, energy, and information connection receives a deterministic
+primary label at the geometric half-length of its rendered route. PDF output is a deterministic vector
+drawing set with one page per controlled sheet. Use `exportSvg(directory)` or `exportPdf(path)` when
+files are required. Rendering does not modify the source document set, legacy DOT/Graphviz output,
+DEXPI 2.0 Process exchange, or the Proteus/DEXPI P&ID workflow.
+
+`getVisualFingerprintsBySheetId()` exposes one normalized SHA-256 fingerprint per sheet. The
+fingerprint covers visible page geometry, text, and style shared by SVG and PDF while excluding XML/PDF
+serialization syntax and invisible semantic identifiers. Store a reviewed fingerprint as a regression
+baseline only together with the corresponding rendered artifacts and accountable visual review; a hash
+match is evidence of unchanged rendering, not evidence that the drawing is correct.
 
 The rendering result also carries deterministic drawing-quality diagnostics. It reports overlapping
 object symbols, symbols clipped by the border/header/title-block boundary, primary labels estimated
-to exceed their available symbol width, and missing semantic-object references. Existing controlled-
-document diagnostics are retained in the same report, including broken reciprocal off-page pairs and
-stale manual layout references. Errors make `Result.isComplete()` false; warnings retain the proposed
-geometry unchanged for review. These geometric and text-width checks are conservative proposal gates,
-not proof of standards compliance or accountable visual approval.
+to exceed their available symbol width, connection routes crossing non-endpoint objects, connection
+labels overlapping objects or other connection labels, missing connection labels, and missing
+semantic-object references. Existing controlled-document diagnostics are retained in the same report,
+including broken reciprocal off-page pairs and stale manual layout references. Errors make
+`Result.isComplete()` false; warnings retain the proposed geometry unchanged for review. These
+geometric and text-width checks are conservative proposal gates, not proof of standards compliance or
+accountable visual approval.
 
 Compare two revisions of the same document-set and plant identity with `baseline.compareTo(revised)`.
 The returned `EngineeringDiagramRevisionImpact` has deterministic added, removed, and modified
@@ -240,6 +329,7 @@ Run the focused regression with:
 ```bash
 ./mvnw -Dtest=ProcessDiagramDocumentSetAdapterTest test
 ./mvnw -Dtest=NativeEngineeringDiagramRendererTest test
+./mvnw -Dtest=EngineeringDiagramStreamTableTest,EngineeringDiagramBalanceTableTest test
 ```
 
 The regression verifies deterministic single- and multi-area output, immutable collections,
@@ -252,6 +342,8 @@ designation mismatches, deterministic cross-sheet revision impact, persistent ma
 unchanged semantic identities after layout-only revision changes, protected-route retention, and
 fail-visible stale layout references.
 The native-renderer regression verifies byte-deterministic SVG/PDF, A3 and A1 geometry, exact pinned
-coordinates and protected routes, reciprocal off-page references, deterministic collision, clipping,
-label-overflow and broken-reference diagnostics, multi-page drawing sets, fresh-model determinism,
-and unchanged Classic DOT and controlled-document JSON.
+coordinates and protected routes, reciprocal off-page references, deterministic connection labels,
+route/object and route-label obstacle diagnostics, collision, clipping, label-overflow and
+broken-reference diagnostics, normalized visual fingerprints, multi-page drawing sets, fresh-model
+determinism, and unchanged Classic DOT and controlled-document JSON.
+

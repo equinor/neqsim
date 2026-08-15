@@ -162,14 +162,15 @@ public class CapillaryDewPointFlash extends ConstantDutyTemperatureFlash {
     }
 
     // Initialize liquid compositions (same as DewPointTemperatureFlash)
+    boolean aqueousSeed = hasSignificantWater(system);
     for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
       system.getPhases()[0].getComponent(i).setx(system.getPhases()[0].getComponent(i).getz());
       if (system.getPhases()[0].getComponent(i).getIonicCharge() != 0) {
         system.getPhases()[0].getComponent(i).setx(1e-40);
       } else {
-        if (system.getPhases()[1].getComponent(i).getName().equals("water")) {
+        if (aqueousSeed && system.getPhases()[1].getComponent(i).getName().equals("water")) {
           system.getPhases()[1].getComponent(i).setx(1.0);
-        } else if (system.getPhases()[1].hasComponent("water")) {
+        } else if (aqueousSeed) {
           system.getPhases()[1].getComponent(i).setx(1.0e-10);
         } else {
           system.getPhases()[1].getComponent(i)

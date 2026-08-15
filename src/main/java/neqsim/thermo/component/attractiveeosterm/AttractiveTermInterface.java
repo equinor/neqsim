@@ -97,6 +97,19 @@ public interface AttractiveTermInterface extends Cloneable, java.io.Serializable
   public AttractiveTermInterface clone();
 
   /**
+   * Set the component this attractive term reads its critical properties from.
+   *
+   * <p>
+   * The alpha function is evaluated from the live component state, so a cloned attractive term must be re-pointed at
+   * the cloned component. Otherwise it keeps evaluating against the component it was originally built for and any
+   * critical-property tuning applied after the clone is ignored.
+   * </p>
+   *
+   * @param component the component owning this attractive term
+   */
+  public void setComponent(neqsim.thermo.component.ComponentEosInterface component);
+
+  /**
    * getm.
    *
    * @return a double

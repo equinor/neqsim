@@ -213,6 +213,13 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 │     → Accept a lower-Gibbs physical candidate, or replace a non-conservative     │
 │       reference only with a balanced, equilibrated physical candidate            │
 │                                                                                 │
+│  IF ordinary CPA flash ends in one AQUEOUS phase with water feed ≥ 0.01:        │
+│     → Require f_water / p_water_sat ≥ 0.8 and at least 0.01 condensable          │
+│       hydrocarbon feed with T_c > T + 80 K; these checks gate cost only          │
+│     → Evaluate one cloned multiphase stability candidate                         │
+│     → Accept only an exactly-two-phase, normalized, balanced, fugacity-equal,    │
+│       distinct, lower-Gibbs OIL+AQUEOUS endpoint                                │
+│                                                                                 │
 │  IF trace water, GAS+OIL, min(β) ≤ 0.01, and x_water,oil ≥ 10 z_water:           │
 │     → Run the existing aqueous tangent-plane stability trial on a clone          │
 │     → Solve the multiphase beta problem, remove exactly one disappearing phase   │
@@ -285,6 +292,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 | Supplementary stability TPD limit | -1e-6 | Accept a converged amplified-K or composition-perturbation trial only when its reduced TPD exceeds that SSI solve's residual/step resolution and the trial composition is non-trivial |
 | Ordinary water-rich refinement feed threshold | 0.01 mole fraction water | Avoid phase-search overhead for valid trace-water flashes. An already-active neutral aqueous split bypasses only this feed threshold when `max abs(Delta z_i)` is non-finite or above `1e-8`, allowing the bounded beta correction below without another stability calculation. An incipient trace-water GAS+OIL endpoint with `min(beta) <= 1e-4` also bypasses the threshold when its confirmed log-fugacity residual is non-finite or at least `1e-8`; the guarded candidate must then pass the strict feasibility and lower-Gibbs gates. |
 | Water-rich cross-algorithm fallback | water feed `>= 0.01` and current `max abs(Delta ln(f_i)) >= 1e-8`, material-balance failure, or multiphase collapse to one hydrocarbon phase | Evaluate the existing cold candidate through the alternate path first. If an invalid ordinary two-phase split remains after that candidate is rejected, preserve its compositions as the seed for one fully initialized `TPmultiflash` trial. A multiphase endpoint collapsed to one phase may try the ordinary path, including the same seeded refinement when the cold ordinary result is invalid, but accepts only a result that restores an AQUEOUS phase; ordinary gas appearance remains outside this aqueous-recovery fallback. Genuine OIL+AQUEOUS liquid-liquid endpoints remain on the multiphase path. Prevent reciprocal recursion and replace the endpoint only when the candidate has exactly two distinct bounded phases, normalized beta and compositions, material balance and fugacity residuals below `1e-8`, and a Gibbs reduction larger than `max(1e-6 J, 1e-8 abs(G))`. Already-feasible two-phase endpoints incur only the residual acceptance scan. |
+| CPA high-water hydrocarbon-liquid stability screen | ordinary one-phase AQUEOUS CPA endpoint, water feed `>= 0.01`, `f_water / p_water_sat >= 0.8`, and at least 0.01 hydrocarbon feed with `T_c > T + 80 K` | Use the water saturation, composition, and critical-temperature checks only as a performance gate for one cloned multiphase stability calculation. Accept only an exactly-two-phase, distinct, bounded, normalized result with material-balance and log-fugacity residuals below `1e-8` and a Gibbs reduction larger than `max(1e-8 J, 1e-12 abs(G))`. Chemical, ionic, solid, wax, non-CPA, explicit-multiphase, gas, and non-aqueous endpoints retain their existing paths. |
 | Trace-water aqueous-stability screen | water feed `< 0.01`, GAS+OIL, `min(beta) <= 0.01`, and `x_water,oil >= 10 z_water` | Use the structural conditions only as a performance gate for an aqueous TPD trial. The TPD result, reduced-active-set convergence below `1e-10`, phase normalization, `1e-8` material/fugacity checks, distinct compositions, and lower Gibbs energy determine acceptance. Full recursive TPmultiflash is not run. |
 | CPA one-phase aqueous-stability screen | water feed `< 0.01`, one ordinary phase, CPA model, and `f_water / p_water_sat >= 0.8` | Use the fugacity ratio only as a conservative performance gate for the existing aqueous TPD trial. When the trial adds one phase, rebuild the two-phase active set and require beta-solver residual `< 1e-10`, phase normalization, `1e-8` material/fugacity checks, distinct compositions, and a Gibbs reduction larger than `max(1e-8 J, 1e-12 abs(G))`. The tighter Gibbs tolerance retains independently converged incipient aqueous fractions without treating the saturation screen itself as a stability criterion. |
 | Water-rich material-balance tolerance | 1e-8 in `max abs(Delta z_i)` | Reject a non-conservative reference before comparing feasible Gibbs minima |
@@ -949,6 +957,16 @@ The stability analysis proceeds in two stages. First, **Wilson K-based trial pha
 3. Test liquid-like trial ($W_i = z_i / K_i$): enriches heavy components
 4. Test vapor-like trial ($W_i = K_i \cdot z_i$): enriches volatile components
 5. If either trial shows instability ($\text{tm} < -10^{-8}$), add phase and return
+
+These Wilson trials are part of ordinary `setMultiPhaseCheck(true)` as well as explicit enhanced
+multiphase checking. A negative tangent-plane distance identifies a missing phase composition, but
+does not determine that phase's equilibrium amount. The admitted trial therefore starts at the
+ordinary beta solver's regularization scale (normally `1e-3`, and never larger than the dominant
+component's overall fraction). This keeps the trial incipient without pinning it below the solver's
+useful correction scale. The existing phase-fraction and fugacity-equilibrium solve then grows or
+removes the phase. This avoids turning a
+stability composition guess into an order-one material split while preserving Wilson coverage for
+hydrate, electrolyte, and ordinary multiphase callers.
 
 **Stage 2: Pure-component trials** (fallback for cases K-based trials miss):
 
@@ -1766,6 +1784,15 @@ Commercial process simulators do not publish all implementation details, but pub
   feasible lower-Gibbs result. That invalid-endpoint retry is restricted to an incipient secondary phase with
   `min(beta) <= 1e-4`, so established valid gas/oil splits avoid even the component residual scan unless they satisfy
   the separate aqueous-stability screen.
+- An ordinary, neutral CPA endpoint containing substantial water can select the aqueous minimum before testing a
+  competing hydrocarbon-liquid minimum. A one-phase AQUEOUS result therefore receives one cloned multiphase stability
+  calculation only when water feed is at least `0.01`, `f_water / p_water_sat >= 0.8`, and at least `0.01` of the
+  feed is hydrocarbon with `T_c > T + 80 K`. These are performance screens, not stability evidence. The candidate
+  replaces the endpoint only when it contains exactly two distinct phases, has finite bounded and normalized phase
+  fractions and compositions, closes component balance and interphase log-fugacity residuals below `1e-8`, and lowers
+  Gibbs energy by more than `max(1e-8 J, 1e-12 abs(G))`. Stable polar aqueous endpoints without condensable
+  hydrocarbons stay on the ordinary fast path. Chemical, ionic, solid, wax, and explicit-multiphase calculations are
+  excluded.
 - The same strict gate is reciprocal for a water-rich multiphase GAS+AQUEOUS endpoint. If phase-appearance cleanup
   returns that phase set with a non-finite or at-least `1e-8` log-fugacity residual, one cold ordinary candidate is
   evaluated from the unchanged feed. It replaces the multiphase endpoint only when it is independently feasible and

@@ -54,7 +54,7 @@ jobs:
           java-version: '21'
           cache: 'maven'
       - name: Generate javadoc
-        run: mvn javadoc:javadoc -ntp "-Daether.connector.basic.retries=5"
+        run: mvn javadoc:javadoc -ntp
 
   test_java_matrix:
     name: Assert tests with Java 21 on ${{ matrix.platform }}
@@ -88,10 +88,10 @@ jobs:
           cache: 'maven'
       - name: Run fast tests and generate JaCoCo report
         if: matrix.verify_jacoco
-        run: mvn -B test -ntp -DskipITs "-Daether.connector.basic.retries=5"
+        run: mvn -B test -ntp -DskipITs
       - name: Run fast tests, do not generate JaCoCo report
         if: ${{ !matrix.verify_jacoco }}
-        run: mvn -B test -ntp -DskipITs "-Daether.connector.basic.retries=5" "-Djacoco.skip=true"
+        run: mvn -B test -ntp -DskipITs "-Djacoco.skip=true"
       - name: Verify JaCoCo report exists
         if: matrix.verify_jacoco && github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: |
@@ -164,8 +164,7 @@ jobs:
           fi
           test_pattern=$(IFS=,; echo "${selected[*]}")
           mvn -B test -ntp -Dtest="$test_pattern" -Dgroups=slow \
-            "-DexcludedTestGroups=" "-Daether.connector.basic.retries=5" \
-            "-Djacoco.skip=true"
+            "-DexcludedTestGroups=" "-Djacoco.skip=true"
 
   test_java_8:
     name: Assert tests with Java 8 on Ubuntu
@@ -184,7 +183,7 @@ jobs:
           java-version: '8'
           cache: 'maven'
       - name: Run tests
-        run: mvn -B test --file pomJava8.xml -ntp "-Daether.connector.basic.retries=5" "-Djacoco.skip=true"
+        run: mvn -B test --file pomJava8.xml -ntp "-Djacoco.skip=true"
 
   test_java_8_windows:
     name: Assert tests with Java 8 on Windows
@@ -203,7 +202,7 @@ jobs:
           java-version: '8'
           cache: 'maven'
       - name: Run tests
-        run: mvn -B test --file pomJava8.xml -ntp "-Daether.connector.basic.retries=5" "-Djacoco.skip=true"
+        run: mvn -B test --file pomJava8.xml -ntp "-Djacoco.skip=true"
 
   verify_agent_skills:
     name: Verify agent-skill cross-references
