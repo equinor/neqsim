@@ -22,7 +22,7 @@ class TPflashCpaHydrocarbonLiquidStabilityTest {
 
     assertOilAqueousEquilibrium(ordinary);
     assertEquals(0.3488579645, ordinary.getBeta(findPhase(ordinary, PhaseType.OIL)), 1.0e-10);
-    assertEquals(-5702.359476, ordinary.getGibbsEnergy(), 1.0e-5);
+    assertEquals(-5702.35947620, ordinary.getGibbsEnergy(), 1.0e-6);
     assertEquivalentEquilibrium(multiphase, ordinary);
     assertEquivalentEquilibrium(ordinary, poorGuess);
 
@@ -43,7 +43,7 @@ class TPflashCpaHydrocarbonLiquidStabilityTest {
       assertEquivalentEquilibrium(multiphase, ordinary);
     }
 
-    for (double waterFraction : new double[] {0.50, 0.60, 0.65, 0.70, 0.80}) {
+    for (double waterFraction : new double[] { 0.50, 0.60, 0.65, 0.70, 0.80 }) {
       SystemInterface ordinary = createAndFlash(300.0, 200.0, waterFraction, false, false);
       SystemInterface multiphase = createAndFlash(300.0, 200.0, waterFraction, true, false);
       assertOilAqueousEquilibrium(ordinary);
@@ -133,8 +133,8 @@ class TPflashCpaHydrocarbonLiquidStabilityTest {
 
   private void assertEquivalentEquilibrium(SystemInterface expected, SystemInterface actual) {
     assertEquals(expected.getNumberOfPhases(), actual.getNumberOfPhases());
-    assertEquals(expected.getGibbsEnergy(), actual.getGibbsEnergy(), 1.0e-5);
-    assertEquals(expected.getEnthalpy(), actual.getEnthalpy(), 1.0e-5);
+    assertEquals(expected.getGibbsEnergy(), actual.getGibbsEnergy(), 2.0e-6);
+    assertEquals(expected.getEnthalpy(), actual.getEnthalpy(), 2.0e-6);
     for (int expectedPhase = 0; expectedPhase < expected.getNumberOfPhases(); expectedPhase++) {
       PhaseType phaseType = expected.getPhase(expectedPhase).getType();
       int actualPhase = findPhase(actual, phaseType);
@@ -151,7 +151,9 @@ class TPflashCpaHydrocarbonLiquidStabilityTest {
 
   private int findPhase(SystemInterface system, PhaseType phaseType) {
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
-      if (system.getPhase(phaseIndex).getType() == phaseType) return phaseIndex;
+      if (system.getPhase(phaseIndex).getType() == phaseType) {
+        return phaseIndex;
+      }
     }
     throw new AssertionError("Missing phase " + phaseType);
   }
@@ -170,7 +172,9 @@ class TPflashCpaHydrocarbonLiquidStabilityTest {
   }
 
   private double maximumLogFugacityResidual(SystemInterface system) {
-    if (system.getNumberOfPhases() < 2) return 0.0;
+    if (system.getNumberOfPhases() < 2) {
+      return 0.0;
+    }
     double maximumResidual = 0.0;
     for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
       double firstLogFugacity = Math
