@@ -136,8 +136,8 @@ public class ColumnSpecification implements Serializable {
    * @param componentName component name for component-based specifications, otherwise {@code null}
    * @param targetUnit unit for a product-flow target
    */
-  public ColumnSpecification(SpecificationType type, ProductLocation location, double targetValue,
-      String componentName, String targetUnit) {
+  public ColumnSpecification(SpecificationType type, ProductLocation location, double targetValue, String componentName,
+      String targetUnit) {
     this.type = type;
     this.location = location;
     this.targetValue = targetValue;
@@ -248,8 +248,8 @@ public class ColumnSpecification implements Serializable {
    * Returns the unit used to interpret the target value.
    *
    * <p>
-   * Product-flow specifications created through the legacy constructors, including deserialized historical objects,
-   * use mol/hr. Duty specifications use W and fraction/ratio targets are dimensionless.
+   * Product-flow specifications created through the legacy constructors, including deserialized historical objects, use
+   * mol/hr. Duty specifications use W and fraction/ratio targets are dimensionless.
    * </p>
    *
    * @return target unit, or an empty string for dimensionless specifications
