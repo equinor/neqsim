@@ -129,8 +129,7 @@ class StatefulDerivedInstrumentTransientStateTransactionTest extends neqsim.NeqS
     vibration.setMethod("LOF");
     vibration.setSupportArrangement("Stiff");
     double expectedVibration = vibration.getMeasuredValue();
-    FlowInducedVibrationAnalyser.FlowInducedVibrationAnalyserState vibrationState =
-        vibration.captureTransientState();
+    FlowInducedVibrationAnalyser.FlowInducedVibrationAnalyserState vibrationState = vibration.captureTransientState();
 
     byte[] serialized;
     try (ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -150,8 +149,8 @@ class StatefulDerivedInstrumentTransientStateTransactionTest extends neqsim.NeqS
       SoftSensor restoredSoftSensor = (SoftSensor) input.readObject();
       SoftSensor.SoftSensorState restoredSoftSensorState = (SoftSensor.SoftSensorState) input.readObject();
       FlowInducedVibrationAnalyser restoredVibration = (FlowInducedVibrationAnalyser) input.readObject();
-      FlowInducedVibrationAnalyser.FlowInducedVibrationAnalyserState restoredVibrationState =
-          (FlowInducedVibrationAnalyser.FlowInducedVibrationAnalyserState) input.readObject();
+      FlowInducedVibrationAnalyser.FlowInducedVibrationAnalyserState restoredVibrationState = (FlowInducedVibrationAnalyser.FlowInducedVibrationAnalyserState) input
+          .readObject();
 
       restoredProbe.setAlkalinity(50.0);
       restoredProbe.restoreTransientState(restoredProbeState);
