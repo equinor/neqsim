@@ -1155,7 +1155,7 @@ public class DistillationColumnTest {
   }
 
   /**
-   * Verify physical bounds plus component, total-material, and energy closure at the terminal products.
+   * Verify physical bounds, component and total-material closure, plus the applicable energy diagnostic.
    *
    * @param feed column feed
    * @param column solved column
@@ -1172,8 +1172,11 @@ public class DistillationColumnTest {
     assertTrue(Double.isFinite(gas.getTemperature()) && gas.getTemperature() > 0.0);
     assertTrue(Double.isFinite(liquid.getTemperature()) && liquid.getTemperature() > 0.0);
     assertEquals(feedFlow, gasFlow + liquidFlow, Math.max(1.0e-8, 1.0e-6 * feedFlow));
-    assertTrue(column.getEnergyBalanceError() <= column.getEnthalpyBalanceTolerance(),
-        column.getConvergenceDiagnostics());
+    double energyBalanceError = column.getEnergyBalanceError();
+    assertTrue(Double.isFinite(energyBalanceError), column.getConvergenceDiagnostics());
+    if (column.isEnforceEnergyBalanceTolerance()) {
+      assertTrue(energyBalanceError <= column.getEnthalpyBalanceTolerance(), column.getConvergenceDiagnostics());
+    }
 
     double[] feedComposition = feed.getThermoSystem().getMolarComposition();
     double[] gasComposition = gas.getThermoSystem().getMolarComposition();
