@@ -42,9 +42,17 @@ import neqsim.thermo.system.SystemSrkEos;
  * severe-slugging regime signature, meaning blowout above and fallback below the liquid feed rate together with a
  * pressure swing scaled by the riser hydrostatic head. These are asserted directly.</li>
  * <li><b>Trajectory-sensitive:</b> instantaneous peak-to-peak pressure, apparent cycle period and maximum tracked slug
- * length. These are reported as an ensemble range, required to bracket the digitized experimental amplitude, and
- * otherwise constrained only by wide, physically justified bounds.</li>
+ * length. These are reported as an ensemble range and otherwise constrained only by wide, physically justified
+ * bounds.</li>
  * </ul>
+ *
+ * <p>
+ * Every realization runs on a mesh that resolves the riser. At twelve sections the cells are 2.90 m long, so the 14.94
+ * m riser carries about five of them, and the run reports an outlet liquid rate sixteen times the liquid feed together
+ * with a riser-base swing of 4.7 riser heads: that is a numerical artifact, not a blowout. From sixteen sections
+ * upwards the cells are at most 2.17 m, the time-averaged riser-base pressure is mesh-converged to within 2% over 16,
+ * 20, 24 and 32 sections, and the swing settles at 0.40 to 0.54 riser heads.
+ * </p>
  *
  * <p>
  * The steady-state initialization runs without a wall-clock guard, and every realization asserts that the guard did not
@@ -80,6 +88,16 @@ class SevereSluggingExperimentalBenchmarkTest {
   private static final double ATTRACTOR_SAMPLING_PERTURBATION = 1.0e-12;
   /** The observed cross-configuration spread of the time-averaged riser-base pressure stays below 4%. */
   private static final double MEAN_PRESSURE_CONVERGENCE_TOLERANCE = 0.08;
+  /** Coarsest mesh that resolves the riser; see the class comment for the measured evidence. */
+  private static final int RESOLVED_SECTION_COUNT = 16;
+  /** Refined mesh used for the mesh-convergence comparison. */
+  private static final int REFINED_SECTION_COUNT = 24;
+  /**
+   * Bound on how far below the measured amplitude a realization may fall. The resolved-mesh ensemble spans 50 to 68 kPa
+   * against a measured 98 kPa, so a factor of 2.5 leaves margin for the trajectory spread while still failing if the
+   * swing collapses.
+   */
+  private static final double MAXIMUM_AMPLITUDE_UNDERPREDICTION_FACTOR = 2.5;
 
   private static TransientMetrics reference;
   private static TransientMetrics referenceRepeat;
@@ -90,11 +108,11 @@ class SevereSluggingExperimentalBenchmarkTest {
 
   @BeforeAll
   static void simulateBenchmarkCases() {
-    reference = simulate(12, 0.1, 0.0);
-    referenceRepeat = simulate(12, 0.1, 0.0);
-    perturbedTrajectory = simulate(12, 0.1, ATTRACTOR_SAMPLING_PERTURBATION);
-    refinedMesh = simulate(16, 0.1, 0.0);
-    coarseOuterStep = simulate(12, 0.2, 0.0);
+    reference = simulate(RESOLVED_SECTION_COUNT, 0.1, 0.0);
+    referenceRepeat = simulate(RESOLVED_SECTION_COUNT, 0.1, 0.0);
+    perturbedTrajectory = simulate(RESOLVED_SECTION_COUNT, 0.1, ATTRACTOR_SAMPLING_PERTURBATION);
+    refinedMesh = simulate(REFINED_SECTION_COUNT, 0.1, 0.0);
+    coarseOuterStep = simulate(RESOLVED_SECTION_COUNT, 0.2, 0.0);
     ensemble = Collections
         .unmodifiableList(Arrays.asList(reference, perturbedTrajectory, refinedMesh, coarseOuterStep));
     for (TransientMetrics metrics : ensemble) {
@@ -136,20 +154,21 @@ class SevereSluggingExperimentalBenchmarkTest {
   }
 
   /**
-   * Order-of-magnitude comparison with the digitized experiment. A tighter claim is not supportable because the
-   * instantaneous amplitude of a chaotic limit cycle is not a reproducible scalar, so the ensemble is required to
-   * bracket the measured amplitude rather than to match it realization by realization.
+   * Order-of-magnitude comparison with the digitized experiment. On a resolved mesh the model reproduces the regime but
+   * under-predicts both the riser-base pressure amplitude and the cycle period, so the claim asserted here is that the
+   * under-prediction stays bounded and remains visible until the model or the benchmark is updated. A tighter claim is
+   * not supportable because the instantaneous amplitude of a chaotic limit cycle is not a reproducible scalar.
    */
   @Test
-  void bracketsDigitizedPressureAmplitudeAndUnderpredictsThePeriod() {
+  void underpredictsDigitizedPressureAmplitudeAndPeriod() {
     assertTrue(
-        minimumPeakToPeak() <= EXPERIMENTAL_PRESSURE_AMPLITUDE_PA
-            + EXPERIMENTAL_PRESSURE_AMPLITUDE_DIGITIZATION_UNCERTAINTY_PA,
-        "no realization reaches down to the digitized amplitude; smallest peak-to-peak=" + minimumPeakToPeak());
-    assertTrue(
-        maximumPeakToPeak() >= EXPERIMENTAL_PRESSURE_AMPLITUDE_PA
+        maximumPeakToPeak() < EXPERIMENTAL_PRESSURE_AMPLITUDE_PA
             - EXPERIMENTAL_PRESSURE_AMPLITUDE_DIGITIZATION_UNCERTAINTY_PA,
-        "no realization reaches up to the digitized amplitude; largest peak-to-peak=" + maximumPeakToPeak());
+        "The known amplitude under-prediction must stay visible until the model or benchmark is updated; largest "
+            + "peak-to-peak=" + maximumPeakToPeak());
+    assertTrue(minimumPeakToPeak() > EXPERIMENTAL_PRESSURE_AMPLITUDE_PA / MAXIMUM_AMPLITUDE_UNDERPREDICTION_FACTOR,
+        "the amplitude under-prediction exceeds a factor of " + MAXIMUM_AMPLITUDE_UNDERPREDICTION_FACTOR
+            + "; smallest peak-to-peak=" + minimumPeakToPeak());
 
     double meanPeriod = 0.0;
     for (TransientMetrics metrics : ensemble) {

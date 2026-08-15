@@ -393,6 +393,16 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
       thermoSystem = inletStream.getThermoSystem().clone();
       thermoSystem.init(0);
       splitStream[i].setThermoSystem(thermoSystem);
+      if (splitFactor[i] <= 0.0) {
+        // A branch that is switched off carries no inventory. Subtracting every mole would leave
+        // 0/0 mole fractions, and flashing that makes Rachford-Rice diverge, so a consumer of the
+        // branch sees a NaN enthalpy. Scaling the inlet split to zero flow keeps the composition
+        // well defined, so the flash below stays on the inlet solution and every extensive
+        // property comes out at zero.
+        thermoSystem.setTotalFlowRate(0.0, "kg/hr");
+        new ThermodynamicOperations(thermoSystem).TPflash();
+        continue;
+      }
       for (int j = 0; j < inletStream.getThermoSystem().getPhase(0).getNumberOfComponents(); j++) {
         int index = inletStream.getThermoSystem().getPhase(0).getComponent(j).getComponentNumber();
         double moles = inletStream.getThermoSystem().getPhase(0).getComponent(j).getNumberOfmoles();
@@ -400,12 +410,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
         splitStream[i].getThermoSystem().addComponent(index, change);
       }
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(splitStream[i].getThermoSystem());
-      // A branch that is switched off holds a numerically empty system. Flashing it makes
-      // Rachford-Rice diverge and leaves a non-physical enthalpy that downstream equipment then
-      // reports as an absurd duty, so the already-flashed inlet phase split is kept instead.
-      if (splitFactor[i] > 0.0) {
-        thermoOps.TPflash();
-      }
+      thermoOps.TPflash();
     }
 
     // Store inlet stream values for needRecalculation check (not split stream values)
