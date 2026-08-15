@@ -142,7 +142,8 @@ public class ColumnSpecification implements Serializable {
     this.location = location;
     this.targetValue = targetValue;
     this.componentName = componentName;
-    this.targetUnit = targetUnit;
+    this.targetUnit = type == SpecificationType.PRODUCT_FLOW_RATE && targetUnit != null ? targetUnit.trim()
+        : defaultTargetUnit(type);
     validate();
   }
 
