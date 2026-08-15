@@ -1,5 +1,6 @@
 package neqsim.process.measurementdevice;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
@@ -367,6 +368,68 @@ public class OrificeFlowMeter extends DifferentialPressureFlowMeter {
    */
   public double getChisholmExponent() {
     return solveWetGas().chisholmExponent;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected String getDifferentialPressureFlowMeterTransientStateCoverageIssue() {
+    if (getClass() != OrificeFlowMeter.class) {
+      return "orifice-flow-meter subclass " + getClass().getName()
+          + " must provide a snapshot that includes subclass-owned mutable state";
+    }
+    return null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected Serializable captureDifferentialPressureFlowMeterExtensionState() {
+    return new OrificeFlowMeterState(tappingArrangement, wetGasCorrelation, liquidMassFlowRate, liquidToGasMassRatio,
+        liquidDensity, liquidFromStream, gravitationalAcceleration, pressureLoss);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected void restoreDifferentialPressureFlowMeterExtensionState(Serializable extensionState) {
+    if (!(extensionState instanceof OrificeFlowMeterState)) {
+      throw new IllegalArgumentException("Orifice flow-meter extension snapshot has the wrong type");
+    }
+    OrificeFlowMeterState state = (OrificeFlowMeterState) extensionState;
+    tappingArrangement = state.tappingArrangement;
+    wetGasCorrelation = state.wetGasCorrelation;
+    liquidMassFlowRate = state.liquidMassFlowRate;
+    liquidToGasMassRatio = state.liquidToGasMassRatio;
+    liquidDensity = state.liquidDensity;
+    liquidFromStream = state.liquidFromStream;
+    gravitationalAcceleration = state.gravitationalAcceleration;
+    pressureLoss = state.pressureLoss;
+    cachedWetGasResult = null;
+    cachedWetGasSignature = null;
+  }
+
+  /** Immutable orifice-specific rollback point. Derived wet-gas caches are invalidated on restore. */
+  private static final class OrificeFlowMeterState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final TappingArrangement tappingArrangement;
+    private final WetGasCorrelation wetGasCorrelation;
+    private final double liquidMassFlowRate;
+    private final double liquidToGasMassRatio;
+    private final double liquidDensity;
+    private final boolean liquidFromStream;
+    private final double gravitationalAcceleration;
+    private final double pressureLoss;
+
+    private OrificeFlowMeterState(TappingArrangement tappingArrangement, WetGasCorrelation wetGasCorrelation,
+        double liquidMassFlowRate, double liquidToGasMassRatio, double liquidDensity, boolean liquidFromStream,
+        double gravitationalAcceleration, double pressureLoss) {
+      this.tappingArrangement = tappingArrangement;
+      this.wetGasCorrelation = wetGasCorrelation;
+      this.liquidMassFlowRate = liquidMassFlowRate;
+      this.liquidToGasMassRatio = liquidToGasMassRatio;
+      this.liquidDensity = liquidDensity;
+      this.liquidFromStream = liquidFromStream;
+      this.gravitationalAcceleration = gravitationalAcceleration;
+      this.pressureLoss = pressureLoss;
+    }
   }
 
   /** {@inheritDoc} */

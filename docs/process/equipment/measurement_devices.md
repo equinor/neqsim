@@ -247,6 +247,13 @@ exponent/dynamic viscosity readers (each overridable), the Reynolds-number itera
 mass/actual-volume/standard-volume accessors. They differ only in the discharge coefficient and
 the expansibility factor, `ExpansibilityModel` (`ORIFICE`, `ISENTROPIC` or `CONE`).
 
+When any of the five concrete local meters is registered in a `ProcessSystem`, it participates in transient step
+transactions. Rollback restores geometry, pressure/property overrides, the last Reynolds solve, subtype configuration,
+stream/transmitter bindings, and noise/delay/filter/fault/alarm state. Orifice and Venturi wet-gas caches are invalidated
+and recomputed from restored inputs. A linked `DifferentialPressureTransmitter` must also be registered because it owns
+its own signal state. Subclasses and online-signal bindings remain fail-closed. This rollback support does not extend the
+validity ranges or qualify the meters for allocation or fiscal service.
+
 Derives mass, actual volume and standard volume flow from a measured differential pressure across a
 classical Venturi tube, using the ISO 5167-1 general equation with the ISO 5167-4 Venturi expansibility
 factor. The differential pressure is either set explicitly or read from a linked
