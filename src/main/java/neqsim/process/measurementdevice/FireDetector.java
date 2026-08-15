@@ -50,6 +50,11 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * fireDetector2.reset();
  * </pre>
  *
+ * <p>
+ * A concrete local detector registered in a process participates in transient-step transactions.
+ * Rollback restores the fire latch, signal/configuration and inherited alarm/measurement state.
+ * Subclasses and online-signal bindings remain fail-closed.
+ *
  * @author ESOL
  * @version $Id: $Id
  */
