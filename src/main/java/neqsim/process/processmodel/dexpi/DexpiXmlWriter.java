@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
@@ -92,6 +95,7 @@ public final class DexpiXmlWriter {
     format.setGroupingUsed(false);
     return format;
   });
+  private static final MathContext NUMERIC_ATTRIBUTE_PRECISION = new MathContext(11, RoundingMode.HALF_EVEN);
 
   /**
    * Thread-local flag controlling whether the root {@code PlantModel} element declares the DEXPI default XML namespace.
@@ -1832,7 +1836,17 @@ public final class DexpiXmlWriter {
     if (Double.isNaN(value) || Double.isInfinite(value)) {
       return;
     }
-    appendGenericAttribute(document, parent, name, DECIMAL_FORMAT.get().format(value), unit);
+    appendGenericAttribute(document, parent, name, formatNumericAttribute(value), unit);
+  }
+
+  /**
+   * Formats a finite engineering value as a deterministic, scale-aware decimal attribute.
+   *
+   * @param value finite numeric value to format
+   * @return canonical decimal representation using the writer's significant-digit precision
+   */
+  static String formatNumericAttribute(double value) {
+    return BigDecimal.valueOf(value).round(NUMERIC_ATTRIBUTE_PRECISION).stripTrailingZeros().toPlainString();
   }
 
   /**
