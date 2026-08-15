@@ -22,10 +22,9 @@ import neqsim.process.engineering.model.EngineeringDiagramStreamTable.Value;
  * Immutable, deterministic mass and stream-enthalpy balance projection.
  *
  * <p>
- * The projection consumes a governed {@link EngineeringDiagramStreamTable} plus explicit boundary
- * assignments. It never guesses whether a stream is an inlet or outlet. Stream enthalpy flow is
- * calculated as mass flow times mass-specific enthalpy. The result therefore excludes equipment
- * heat duties and shaft work and is not a complete energy balance.
+ * The projection consumes a governed {@link EngineeringDiagramStreamTable} plus explicit boundary assignments. It never
+ * guesses whether a stream is an inlet or outlet. Stream enthalpy flow is calculated as mass flow times mass-specific
+ * enthalpy. The result therefore excludes equipment heat duties and shaft work and is not a complete energy balance.
  * </p>
  */
 public final class EngineeringDiagramBalanceTable implements Serializable {
@@ -66,8 +65,8 @@ public final class EngineeringDiagramBalanceTable implements Serializable {
      * @param sourceReference source or register reference for the assignment
      * @param evidenceState review evidence state
      */
-    public Boundary(String balanceId, String streamSemanticObjectId, Direction direction,
-        String sourceReference, EvidenceState evidenceState) {
+    public Boundary(String balanceId, String streamSemanticObjectId, Direction direction, String sourceReference,
+        EvidenceState evidenceState) {
       this.balanceId = requireText(balanceId, "balanceId");
       this.streamSemanticObjectId = requireText(streamSemanticObjectId, "streamSemanticObjectId");
       if (direction == null) {
@@ -190,10 +189,8 @@ public final class EngineeringDiagramBalanceTable implements Serializable {
       this.inletStreamEnthalpyFlow = values.inletStreamEnthalpyFlow;
       this.outletStreamEnthalpyFlow = values.outletStreamEnthalpyFlow;
       this.streamEnthalpyResidual = inletStreamEnthalpyFlow - outletStreamEnthalpyFlow;
-      double enthalpyScale =
-          Math.max(Math.abs(inletStreamEnthalpyFlow), Math.abs(outletStreamEnthalpyFlow));
-      this.relativeStreamEnthalpyResidual =
-          enthalpyScale == 0.0 ? 0.0 : streamEnthalpyResidual / enthalpyScale;
+      double enthalpyScale = Math.max(Math.abs(inletStreamEnthalpyFlow), Math.abs(outletStreamEnthalpyFlow));
+      this.relativeStreamEnthalpyResidual = enthalpyScale == 0.0 ? 0.0 : streamEnthalpyResidual / enthalpyScale;
       this.streamEnthalpyFlowComplete = values.streamEnthalpyFlowComplete;
     }
 
@@ -478,16 +475,14 @@ public final class EngineeringDiagramBalanceTable implements Serializable {
     Value enthalpy = row.getValues().get(Quantity.SPECIFIC_ENTHALPY);
     if (!validValue(enthalpy, "J/kg", "MASS_SPECIFIC")) {
       diagnostics.add(new Diagnostic(Severity.ERROR, "BALANCE_SPECIFIC_ENTHALPY_UNAVAILABLE",
-          "A boundary stream requires specific enthalpy in J/kg on a MASS_SPECIFIC basis",
-          row.getSemanticObjectId()));
+          "A boundary stream requires specific enthalpy in J/kg on a MASS_SPECIFIC basis", row.getSemanticObjectId()));
       accumulator.streamEnthalpyFlowComplete = false;
       return;
     }
     double enthalpyFlow = mass * enthalpy.getResultValue();
     if (!Double.isFinite(enthalpyFlow)) {
       diagnostics.add(new Diagnostic(Severity.ERROR, "BALANCE_STREAM_ENTHALPY_FLOW_NONFINITE",
-          "Mass flow times specific enthalpy produced a non-finite stream enthalpy flow",
-          row.getSemanticObjectId()));
+          "Mass flow times specific enthalpy produced a non-finite stream enthalpy flow", row.getSemanticObjectId()));
       accumulator.streamEnthalpyFlowComplete = false;
       return;
     }
