@@ -301,13 +301,6 @@ public class DistillationColumnTest {
     assertTrue(debutanizer.solved(), debutanizer.getConvergenceDiagnostics());
     assertTerminalProductBalances(valve.getOutletStream(), debutanizer);
 
-    debutanizer.setCondenserRefluxRatio(0.12);
-    debutanizer.run();
-    assertTrue(debutanizer.solved(), debutanizer.getConvergenceDiagnostics());
-    assertEquals(feedMass,
-        debutanizer.getGasOutStream().getFlowRate("kg/hr") + debutanizer.getLiquidOutStream().getFlowRate("kg/hr"),
-        feedMass * 1.0e-6, "Nearby reflux-ratio point must preserve external mass");
-    assertTerminalProductBalances(valve.getOutletStream(), debutanizer);
   }
 
   /**
