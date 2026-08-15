@@ -77,8 +77,18 @@ Missing cases or quantities, malformed values, duplicate values, and calculation
 unknown streams are reported as structured diagnostics rather than silently invented or discarded.
 
 ```java
+EngineeringDiagramDocumentSet operatingDocuments =
+    ProcessDiagramDocumentSetAdapter.fromProcessModel(
+        processModel,
+        "PLANT-01",
+        "B",
+        "PFD-01-001",
+        "Gas processing facility",
+        EngineeringDiagramDocumentSet.ContentProfile.PFD,
+        "NORMAL-01",
+        register);
 EngineeringDiagramStreamTable streamTable =
-    EngineeringDiagramStreamTable.fromDocumentSet(reviewedDocuments, "NORMAL-01");
+    EngineeringDiagramStreamTable.fromDocumentSet(operatingDocuments, "NORMAL-01");
 
 for (EngineeringDiagramStreamTable.Row row : streamTable.getRows()) {
   EngineeringDiagramStreamTable.Value pressure =
