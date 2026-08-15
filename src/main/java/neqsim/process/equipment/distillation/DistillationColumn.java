@@ -2226,6 +2226,69 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Check whether both terminal specifications control conservation-linked product flows.
+   *
+   * <p>
+   * Without an external side draw, steady-state total material balance fixes one terminal flow once the other and the
+   * feed are known. Treating both as independent temperature controls creates a rank-deficient outer problem even when
+   * their targets sum exactly to the feed.
+   * </p>
+   *
+   * @return {@code true} when top and bottom product-flow specifications are dependent
+   */
+  private boolean hasDependentTerminalProductFlowSpecifications() {
+    return !hasActiveSideDrawFractions() && isProductFlowSpecification(topSpecification)
+        && isProductFlowSpecification(bottomSpecification);
+  }
+
+  /**
+   * Check whether both terminal specifications control recovery of the same component.
+   *
+   * @return {@code true} when top and bottom recoveries refer to the same feed component
+   */
+  private boolean hasMatchingTerminalComponentRecoverySpecifications() {
+    return isComponentRecoverySpecification(topSpecification)
+        && isComponentRecoverySpecification(bottomSpecification)
+        && topSpecification.getComponentName().equals(bottomSpecification.getComponentName());
+  }
+
+  /**
+   * Check whether matching terminal recoveries are conservation-linked.
+   *
+   * <p>
+   * Without an external side draw, component balance fixes bottom recovery as one minus top recovery. The pair
+   * therefore supplies only one independent degree of freedom.
+   * </p>
+   *
+   * @return {@code true} when matching top and bottom recoveries are dependent
+   */
+  private boolean hasDependentTerminalComponentRecoverySpecifications() {
+    return !hasActiveSideDrawFractions() && hasMatchingTerminalComponentRecoverySpecifications();
+  }
+
+  /**
+   * Create an actionable message for dependent terminal product-flow controls.
+   *
+   * @return degrees-of-freedom error message
+   */
+  private String createDependentTerminalProductFlowSpecificationsMessage() {
+    return "Column " + getName()
+        + " cannot combine top and bottom product-flow specifications without an external side draw; total material "
+        + "balance makes the terminal flows dependent";
+  }
+
+  /**
+   * Create an actionable message for dependent terminal component-recovery controls.
+   *
+   * @return degrees-of-freedom error message
+   */
+  private String createDependentTerminalComponentRecoverySpecificationsMessage() {
+    return "Column " + getName() + " cannot combine top and bottom recovery specifications for component "
+        + topSpecification.getComponentName()
+        + " without an external side draw; component balance makes the terminal recoveries dependent";
+  }
+
+  /**
    * Create an actionable message for contradictory condenser reflux controls.
    *
    * @return degrees-of-freedom error message
@@ -2243,6 +2306,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private void ensureIndependentTerminalSpecifications() {
     if (hasConflictingCondenserRefluxSpecifications()) {
       throw new IllegalStateException(createConflictingCondenserRefluxSpecificationsMessage());
+    }
+    if (hasDependentTerminalProductFlowSpecifications()) {
+      throw new IllegalStateException(createDependentTerminalProductFlowSpecificationsMessage());
+    }
+    if (hasDependentTerminalComponentRecoverySpecifications()) {
+      throw new IllegalStateException(createDependentTerminalComponentRecoverySpecificationsMessage());
     }
   }
 
@@ -13546,10 +13615,32 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private void validateColumnSpecifications(ValidationResult result) {
     validateColumnSpecification(result, topSpecification, ColumnSpecification.ProductLocation.TOP);
     validateColumnSpecification(result, bottomSpecification, ColumnSpecification.ProductLocation.BOTTOM);
+    validateTerminalSpecificationIndependence(result);
     validateProductFlowSpecificationsAgainstFeed(result);
+    validatePairedComponentRecoverySpecifications(result);
     if (hasConflictingCondenserRefluxSpecifications()) {
       result.addError("specification.degreesOfFreedom", createConflictingCondenserRefluxSpecificationsMessage(),
           "Call setCondenserMode(DistillationColumn.CondenserMode.PARTIAL) or setCondenserMode(DistillationColumn.CondenserMode.TOTAL) to clear fixed-flow mode, or remove the top reflux-ratio specification");
+    }
+  }
+
+  /**
+   * Validate that top and bottom specifications own independent column degrees of freedom.
+   *
+   * @param result validation result receiving degrees-of-freedom errors
+   */
+  private void validateTerminalSpecificationIndependence(ValidationResult result) {
+    if (hasDependentTerminalProductFlowSpecifications()) {
+      result.addError("specification.degreesOfFreedom",
+          createDependentTerminalProductFlowSpecificationsMessage(),
+          "Keep one terminal product-flow target and replace the other with purity, recovery, duty, or reflux "
+              + "specification");
+    }
+    if (hasDependentTerminalComponentRecoverySpecifications()) {
+      result.addError("specification.degreesOfFreedom",
+          createDependentTerminalComponentRecoverySpecificationsMessage(),
+          "Keep one recovery target for that component and replace the other terminal target with an independent "
+              + "specification");
     }
   }
 
@@ -13606,6 +13697,30 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Validate paired component-recovery targets against component conservation.
+   *
+   * <p>
+   * A side draw can carry the recovery not assigned to the two terminal products, but the two terminal recoveries can
+   * never exceed the available feed component.
+   * </p>
+   *
+   * @param result validation result receiving component-recovery feasibility errors
+   */
+  private void validatePairedComponentRecoverySpecifications(ValidationResult result) {
+    if (!hasMatchingTerminalComponentRecoverySpecifications()
+        || hasDependentTerminalComponentRecoverySpecifications()) {
+      return;
+    }
+    double recoverySum = topSpecification.getTargetValue() + bottomSpecification.getTargetValue();
+    if (recoverySum > 1.0 + 1.0e-12) {
+      result.addError("specification.componentRecovery.sum",
+          "Top and bottom recovery targets for component " + topSpecification.getComponentName()
+              + " exceed the available feed component",
+          "Reduce one recovery target so their sum is at most one, including any recovery required in side draws");
+    }
+  }
+
+  /**
    * Check whether a specification controls total product flow.
    *
    * @param specification specification to inspect
@@ -13613,6 +13728,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private boolean isProductFlowSpecification(ColumnSpecification specification) {
     return specification != null && specification.getType() == ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE;
+  }
+
+  /**
+   * Check whether a specification controls component recovery.
+   *
+   * @param specification specification to inspect
+   * @return {@code true} for component-recovery specifications
+   */
+  private boolean isComponentRecoverySpecification(ColumnSpecification specification) {
+    return specification != null
+        && specification.getType() == ColumnSpecification.SpecificationType.COMPONENT_RECOVERY;
   }
 
   /**
