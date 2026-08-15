@@ -272,7 +272,7 @@ public class ColumnSpecificationTest {
   }
 
   /**
-   * Test that validation warns when an adjustable top specification has no condenser handle.
+   * Test that validation rejects an adjustable top specification with no condenser handle.
    */
   @Test
   public void validateSetupRejectsTopSpecWithoutCondenser() {
