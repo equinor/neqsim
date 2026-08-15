@@ -1,5 +1,6 @@
 package neqsim.process.measurementdevice;
 
+import java.io.Serializable;
 import java.util.List;
 
 import neqsim.process.equipment.stream.StreamInterface;
@@ -91,6 +92,41 @@ public class NozzleFlowMeter extends DifferentialPressureFlowMeter {
    */
   public NozzleType getNozzleType() {
     return nozzleType;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected String getDifferentialPressureFlowMeterTransientStateCoverageIssue() {
+    if (getClass() != NozzleFlowMeter.class) {
+      return "nozzle-flow-meter subclass " + getClass().getName()
+          + " must provide a snapshot that includes subclass-owned mutable state";
+    }
+    return null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected Serializable captureDifferentialPressureFlowMeterExtensionState() {
+    return new NozzleFlowMeterState(nozzleType);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected void restoreDifferentialPressureFlowMeterExtensionState(Serializable extensionState) {
+    if (!(extensionState instanceof NozzleFlowMeterState)) {
+      throw new IllegalArgumentException("Nozzle flow-meter extension snapshot has the wrong type");
+    }
+    nozzleType = ((NozzleFlowMeterState) extensionState).nozzleType;
+  }
+
+  /** Immutable nozzle-specific rollback point. */
+  private static final class NozzleFlowMeterState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final NozzleType nozzleType;
+
+    private NozzleFlowMeterState(NozzleType nozzleType) {
+      this.nozzleType = nozzleType;
+    }
   }
 
   /** {@inheritDoc} */

@@ -1,5 +1,8 @@
 package neqsim.process.measurementdevice;
 
+import java.io.Serializable;
+import java.util.UUID;
+import neqsim.process.dynamics.TransientStateParticipant;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
@@ -47,12 +50,20 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * fireDetector2.reset();
  * </pre>
  *
+ * <p>
+ * A concrete local detector registered in a process participates in transient-step transactions. Rollback restores the
+ * fire latch, signal/configuration and inherited alarm/measurement state. Subclasses and online-signal bindings remain
+ * fail-closed.
+ *
  * @author ESOL
  * @version $Id: $Id
  */
-public class FireDetector extends MeasurementDeviceBaseClass {
+public class FireDetector extends MeasurementDeviceBaseClass
+    implements TransientStateParticipant<FireDetector.FireDetectorState> {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Persistent identity used only for transient transaction provenance. */
+  private String transientStateParticipantId = UUID.randomUUID().toString();
 
   /** Indicates if fire is currently detected. */
   private boolean fireDetected = false;
@@ -266,5 +277,76 @@ public class FireDetector extends MeasurementDeviceBaseClass {
     sb.append("] - State: ").append(fireDetected ? "FIRE DETECTED" : "NO FIRE");
     sb.append(", Signal: ").append(String.format("%.2f", signalLevel));
     return sb.toString();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateIdentity() {
+    if (transientStateParticipantId == null || transientStateParticipantId.trim().isEmpty()) {
+      transientStateParticipantId = UUID.randomUUID().toString();
+    }
+    return "measurement:fire-detector:" + transientStateParticipantId;
+  }
+
+  /**
+   * The snapshot is complete only for the concrete local fire detector.
+   *
+   * @return blocking diagnostic for descendants or external online-signal operation, otherwise {@code null}
+   */
+  @Override
+  public String getTransientStateCoverageIssue() {
+    if (getClass() != FireDetector.class) {
+      return "fire-detector subclass " + getClass().getName()
+          + " must provide a snapshot that includes subclass-owned mutable state";
+    }
+    return getMeasurementTransientStateCoverageIssue();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public FireDetectorState captureTransientState() {
+    return new FireDetectorState(getTransientStateIdentity(), fireDetected, detectionThreshold, detectionDelay,
+        signalLevel, location, captureMeasurementDeviceTransientState());
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreTransientState(FireDetectorState snapshot) {
+    if (snapshot == null) {
+      throw new IllegalArgumentException("Fire-detector transient snapshot cannot be null");
+    }
+    if (!getTransientStateIdentity().equals(snapshot.stateIdentity)) {
+      throw new IllegalArgumentException(
+          "Fire-detector snapshot identity does not match " + getTransientStateIdentity());
+    }
+    fireDetected = snapshot.fireDetected;
+    detectionThreshold = snapshot.detectionThreshold;
+    detectionDelay = snapshot.detectionDelay;
+    signalLevel = snapshot.signalLevel;
+    location = snapshot.location;
+    restoreMeasurementDeviceTransientState(snapshot.measurementState);
+  }
+
+  /** Immutable fire-detector rollback point. */
+  public static final class FireDetectorState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String stateIdentity;
+    private final boolean fireDetected;
+    private final double detectionThreshold;
+    private final double detectionDelay;
+    private final double signalLevel;
+    private final String location;
+    private final MeasurementDeviceTransientState measurementState;
+
+    private FireDetectorState(String stateIdentity, boolean fireDetected, double detectionThreshold,
+        double detectionDelay, double signalLevel, String location, MeasurementDeviceTransientState measurementState) {
+      this.stateIdentity = stateIdentity;
+      this.fireDetected = fireDetected;
+      this.detectionThreshold = detectionThreshold;
+      this.detectionDelay = detectionDelay;
+      this.signalLevel = signalLevel;
+      this.location = location;
+      this.measurementState = measurementState;
+    }
   }
 }

@@ -165,6 +165,13 @@ double frms = fivAnalyser.getMeasuredValue("");
 - `"LOF"` - Likelihood of Failure (API RP 14E based)
 - `"FRMS"` - Fatigue Root Mean Square
 
+When a concrete local `FlowInducedVibrationAnalyser` is registered as a process measurement
+device, transient transactions preserve its pipe binding, support and method configuration,
+segment set, and the segment selected by an implicit calculation. Rejected trials can therefore
+restore the analyser configuration and reproduce the same derived value; accepted commits retain
+the update. This is transaction and restart coverage only and does not newly qualify the FIV
+correlations or the underlying pipe model.
+
 ## Process Monitors
 
 ### PressureTransmitter
@@ -246,6 +253,13 @@ All five differential-pressure flow meters below share a common base,
 exponent/dynamic viscosity readers (each overridable), the Reynolds-number iteration, and the
 mass/actual-volume/standard-volume accessors. They differ only in the discharge coefficient and
 the expansibility factor, `ExpansibilityModel` (`ORIFICE`, `ISENTROPIC` or `CONE`).
+
+When any of the five concrete local meters is registered in a `ProcessSystem`, it participates in transient step
+transactions. Rollback restores geometry, pressure/property overrides, the last Reynolds solve, subtype configuration,
+stream/transmitter bindings, and noise/delay/filter/fault/alarm state. Orifice and Venturi wet-gas caches are invalidated
+and recomputed from restored inputs. A linked `DifferentialPressureTransmitter` must also be registered because it owns
+its own signal state. Subclasses and online-signal bindings remain fail-closed. This rollback support does not extend the
+validity ranges or qualify the meters for allocation or fiscal service.
 
 Derives mass, actual volume and standard volume flow from a measured differential pressure across a
 classical Venturi tube, using the ISO 5167-1 general equation with the ISO 5167-4 Venturi expansibility
@@ -465,9 +479,10 @@ Simulates gas detection for safety systems.
 ```java
 import neqsim.process.measurementdevice.GasDetector;
 
-GasDetector gasDetector = new GasDetector("Gas Detector 1", stream);
-gasDetector.setDetectionLimit(20.0);  // % LEL
-boolean gasDetected = gasDetector.isTriggered();
+GasDetector gasDetector =
+    new GasDetector("Gas Detector 1", GasDetector.GasType.COMBUSTIBLE);
+gasDetector.setGasConcentration(25.0);  // % LEL
+boolean gasDetected = gasDetector.isGasDetected(20.0);
 ```
 
 ### FireDetector
@@ -478,9 +493,24 @@ Simulates fire detection for safety systems.
 import neqsim.process.measurementdevice.FireDetector;
 
 FireDetector fireDetector = new FireDetector("Fire Detector 1");
-fireDetector.setTemperatureThreshold(65.0);  // °C
-boolean fireDetected = fireDetector.isTriggered();
+fireDetector.setDetectionThreshold(0.8);
+fireDetector.setSignalLevel(0.9);
+boolean fireDetected = fireDetector.isFireDetected();
 ```
+
+
+When concrete local `GasDetector` and `FireDetector` instances are registered in a
+`ProcessSystem`, their complete detector and inherited alarm/measurement state participates in
+transient-step transactions. This includes gas type, concentration, species, location, LEL and
+response-time configuration, plus the fire latch, signal, threshold, configured delay and location.
+Scheduled event actions that change these detectors can therefore be rolled back and replayed
+deterministically together with scheduler pending/fired bookkeeping. Concrete descendants and
+online-signal bindings remain fail-closed.
+
+This is an in-memory numerical rollback contract, not fire-and-gas detector certification. The
+configured response time and detection delay are retained settings; the current detector classes do
+not integrate those values as physical sensor dynamics. External I/O, voting logic, ESD action,
+detector coverage, reliability and safety-integrity qualification remain outside this support.
 
 ## Quality Analysers
 
@@ -516,6 +546,12 @@ import neqsim.process.measurementdevice.pHProbe;
 pHProbe ph = new pHProbe(aqueousStream);
 double phValue = ph.getMeasuredValue("");  // pH
 ```
+
+A registered concrete local `pHProbe` participates in transient transactions. Its snapshot
+preserves the stream and reactive-system bindings, alkalinity, reaction-calculation scratch
+objects, and the last cached pH input/result. Rollback therefore restores an exact cached reading
+instead of retaining work from a rejected trial. The coverage does not newly validate aqueous
+chemistry, alkalinity assumptions, sampling, or sensor accuracy.
 
 ## Multi-Phase Measurement
 

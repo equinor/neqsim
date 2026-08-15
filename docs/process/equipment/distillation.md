@@ -129,23 +129,44 @@ column.setReboilerBoilupRatio(2.5);
 ```
 
 Product-quality and recovery targets use `ColumnSpecification`. Purity and recovery targets are
-dimensionless fractions from `0` to `1`; product-flow-rate specifications are evaluated internally
-in `mol/hr`.
+dimensionless fractions from `0` to `1`. Product-flow-rate targets and their absolute residuals use
+the unit supplied to `setTopProductFlowRate` or `setBottomProductFlowRate`; common molar and mass
+units such as `mol/hr` and `kg/hr` are supported by the product stream. Constructors that do not
+supply a unit remain backward compatible and default product flow to `mol/hr`.
 
 ```java
 column.setTopProductPurity("ethane", 0.95);
 column.setBottomProductPurity("propane", 0.98);
 column.setTopComponentRecovery("ethane", 0.99);
 column.setBottomComponentRecovery("propane", 0.99);
-column.setBottomProductFlowRate(1000.0, "mol/hr");
+column.setBottomProductFlowRate(1000.0, "kg/hr");
 
 ColumnSpecification topFlow = new ColumnSpecification(
     ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE,
-    ColumnSpecification.ProductLocation.TOP, 500.0);
-topFlow.setTolerance(1.0e-3);
+    ColumnSpecification.ProductLocation.TOP, 500.0, null, "kg/hr");
+topFlow.setTolerance(1.0e-3); // kg/hr, matching the target
 topFlow.setMaxIterations(30);
 column.setTopSpecification(topFlow);
 ```
+
+The selected unit is retained through specification homotopy, diagnostics, warm-state identity,
+copying, and serialization. Feasibility screening compares each flow target with external feed flow
+in the same unit. When both terminal flow targets use the same unit, their sum is screened as well.
+Mixed-unit terminal targets on a column with an external side draw are evaluated during the solve
+because their product compositions may differ. `getLastTopSpecificationResidual()` and
+`getLastBottomSpecificationResidual()` report flow residuals in the corresponding target unit.
+
+Without an external side draw, top and bottom product-flow targets are not two independent
+specifications: steady-state total material balance fixes one terminal flow after the feed and the
+other terminal flow are known. The run preflight and `validateSpecifications()` therefore reject
+the pair even when its targets sum exactly to feed. Use one product-flow target and an independent
+purity, component-recovery, duty, or reflux specification. For the same reason, top and bottom
+recovery targets for the same component are dependent without an external side draw and are
+rejected before iteration. Different-component recovery targets remain independent. When an
+external side draw is active, paired terminal controls can be structurally independent; paired
+recoveries for one component are still screened so their sum cannot exceed the feed-component
+inventory. These checks intentionally prevent rank-deficient outer solves and leave any previously
+accepted tray and product state untouched.
 
 For iterative specifications, NeqSim wraps the selected inner solver in an outer adjustment loop and
 uses condenser or reboiler temperature as the manipulated variable where possible. Product purity,

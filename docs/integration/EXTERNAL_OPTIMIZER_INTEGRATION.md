@@ -875,6 +875,67 @@ Java lists for JPype consumers and are Java-serializable.
 The evaluator does not optimize the vector, interpolate discrete line-ups, change routing or
 hydraulic correlations, or establish operating approval. Validate conservation, constraint
 residuals, product specifications and nearby operating points with the underlying NeqSim model.
+
+### Search a fixed-total continuous allocation
+
+`ProcessModelAllocationOptimizer` composes the atomic evaluator when all allocation actions are
+continuous, use one exact unit, and must preserve a declared shared total. Its deterministic
+transfer search retains every candidate result instead of reducing simulator evidence to one score.
+
+```python
+AllocationOptimizer = (
+    jneqsim.process.util.optimizer.ProcessModelAllocationOptimizer
+)
+
+optimizer = AllocationOptimizer(
+    "field-rate-allocation",
+    "Field rate allocation",
+    "approved well envelopes and host capacity basis revision A",
+    allocation,
+    total_rate,
+    "kg/hr",
+)
+optimizer.setInitialAllocation([initial_well_a_rate, initial_well_b_rate])
+optimizer.setObjectiveIndex(0)
+optimizer.setInitialStepFraction(0.10)
+optimizer.setRelativeStepTolerance(1.0e-3)
+optimizer.setObjectiveImprovementTolerance(
+    1.0e-6,
+    "validated export-rate calculation resolution",
+)
+optimizer.setMaximumEvaluations(100)
+
+search = optimizer.optimize()
+if not search.isModelRecovered():
+    raise RuntimeError(list(search.getDiagnostics()))
+
+best = search.getBestFeasibleCandidate()
+if best is not None:
+    best_rates = list(best.getCandidateValues())
+    bottlenecks = list(search.getRankedHydraulicConstraintsAtBestFeasible())
+    for constraint in bottlenecks:
+        print(
+            constraint.getBinding().getQualifiedConstraintName(),
+            constraint.getUtilization(),
+            constraint.getMargin(),
+            constraint.getDataSource(),
+        )
+
+sampled_gap = search.getSampledObjectiveOpportunityGap()
+```
+
+The result is Java-serializable and exposes defensive arrays and fresh immutable lists through
+JPype. It freezes objective direction, unit and weight together with allocation identity,
+provenance, bounds, seed, budget, tolerances, terminal outcome, complete candidate results and
+ranked hydraulic evidence. `getBestSampledObjectiveCandidate()` may be infeasible; its gap to the
+best feasible point is only an opportunity among evaluated points.
+
+A converged transfer step is local numerical evidence, not a global optimum or shadow price. A
+budget-exhausted result retains the best feasible point but remains unconverged. Any incomplete
+baseline recovery stops the search and sets `isModelRecovered()` false. This API does not support
+discrete line-ups, routing changes, mixed-unit allocation, dynamic qualification, economics or
+operating approval.
+
 Use independent models for parallel candidates.
 
 ### Export Problem Definition
@@ -1041,6 +1102,18 @@ jpype.shutdownJVM()
 
 The sensitivity-quality methods belong to `ProcessModelSimulationEvaluator`; they are not methods
 on `ProcessSimulationEvaluator`.
+
+### ProcessModelAllocationOptimizer
+
+| Method | Description |
+|--------|-------------|
+| `optimize()` | Run fixed-total continuous pair-transfer search through the atomic action-set evaluator |
+| `AllocationSearchResult.getCandidates()` | Complete immutable candidate and restoration trace |
+| `getBestFeasibleCandidate()` | Best feasible finite-objective candidate under the frozen direction |
+| `getBestSampledObjectiveCandidate()` | Best sampled objective candidate, whether feasible or not |
+| `getSampledObjectiveOpportunityGap()` | Non-negative sampled diagnostic gap; not global production loss or shadow value |
+| `getRankedHydraulicConstraintsAtBestFeasible()` | Stable descending-utilization evidence at the feasible incumbent |
+| `getRankedHydraulicConstraintsAtBestSampledObjective()` | Stable descending-utilization evidence at the best sampled objective |
 
 ### EvaluationResult
 

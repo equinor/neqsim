@@ -55,6 +55,9 @@ class NativeEngineeringDiagramRendererTest {
 
     assertEquals(first.getSvgBySheetId(), second.getSvgBySheetId());
     assertArrayEquals(first.getPdf(), second.getPdf());
+    assertEquals(first.getVisualFingerprintsBySheetId(), second.getVisualFingerprintsBySheetId());
+    assertEquals(first.getSvgBySheetId().keySet(), first.getVisualFingerprintsBySheetId().keySet());
+    assertTrue(first.getVisualFingerprintsBySheetId().values().iterator().next().matches("[0-9a-f]{64}"));
     assertTrue(svg.contains("width=\"420mm\" height=\"297mm\" viewBox=\"0 0 420 297\""));
     assertTrue(svg.contains("x=\"63\" y=\"52\" width=\"34\" height=\"16\""));
     assertTrue(svg.contains("points=\"10,20 40,20 40,50\""));
@@ -78,6 +81,7 @@ class NativeEngineeringDiagramRendererTest {
     String pdf = new String(result.getPdf(), StandardCharsets.ISO_8859_1);
 
     assertEquals(4, result.getSvgBySheetId().size());
+    assertEquals(4, result.getVisualFingerprintsBySheetId().size());
     assertTrue(pdf.contains("/Count 4"));
     for (Sheet sheet : documents.getDrawings().get(0).getSheets()) {
       String svg = result.getSvgBySheetId().get(sheet.getId());
@@ -145,6 +149,39 @@ class NativeEngineeringDiagramRendererTest {
   }
 
   @Test
+  void labelsConnectionsAndReportsDeterministicRouteAndLabelObstacles() {
+    EngineeringDiagramReferenceFixtures.SystemCase reference = EngineeringDiagramReferenceFixtures.simpleTrain();
+    EngineeringDiagramDocumentSet baseline = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
+        reference.getProcessSystem(), reference.getCaseId(), "A", "PFD-NATIVE-007", "Route quality diagnostics",
+        ContentProfile.PFD);
+    String sheetKey = baseline.getDrawings().get(0).getSheets().get(0).getKey();
+    SemanticObject separator = findObject(baseline, EngineeringNode.Kind.EQUIPMENT, "equipmentName", "10-VA-001");
+    SemanticObject feedConnection = findObject(baseline, EngineeringNode.Kind.PIPE_SEGMENT, "targetEquipment",
+        "10-XV-001");
+    ProtectedRoute obstructedRoute = new ProtectedRoute(feedConnection.getId(), sheetKey,
+        Arrays.asList(new Waypoint(20.0, 60.0), new Waypoint(140.0, 60.0)), CoordinateUnit.MILLIMETRE,
+        "project-layout:PFD-NATIVE-007", EvidenceState.REVIEWED, "Process discipline", "2026-08-15T00:00:00Z", "A");
+    EngineeringDiagramLayoutRegister layout = new EngineeringDiagramLayoutRegister()
+        .withPinnedPosition(reviewedPosition(separator.getId(), sheetKey, 80.0, 60.0))
+        .withProtectedRoute(obstructedRoute);
+    EngineeringDiagramDocumentSet documents = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
+        reference.getProcessSystem(), reference.getCaseId(), "A", "PFD-NATIVE-007", "Route quality diagnostics",
+        ContentProfile.PFD, new EngineeringDiagramDesignationRegister(), layout);
+
+    NativeEngineeringDiagramRenderer renderer = new NativeEngineeringDiagramRenderer(documents);
+    NativeEngineeringDiagramRenderer.Result first = renderer.render();
+    NativeEngineeringDiagramRenderer.Result second = renderer.render();
+    String svg = first.getSvgBySheetId().values().iterator().next();
+
+    assertTrue(svg.contains(">" + feedConnection.getLabel() + "</text>"));
+    assertTrue(hasDiagnostic(first, "DIAGRAM_RENDER_ROUTE_OBJECT_INTERSECTION"));
+    assertTrue(hasDiagnostic(first, "DIAGRAM_RENDER_ROUTE_LABEL_OBJECT_COLLISION"));
+    assertEquals(first.getVisualFingerprintsBySheetId(), second.getVisualFingerprintsBySheetId());
+    assertEquals(diagnosticSignatures(first), diagnosticSignatures(second));
+    assertTrue(first.isComplete());
+  }
+
+  @Test
   void propagatesBrokenControlledDocumentReferencesAsRendererErrors() {
     EngineeringDiagramReferenceFixtures.SystemCase reference = EngineeringDiagramReferenceFixtures.simpleTrain();
     EngineeringDiagramDocumentSet baseline = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
@@ -166,6 +203,7 @@ class NativeEngineeringDiagramRendererTest {
   @Test
   void keepsSheetOrderAndRenderedBytesStableAcrossFreshEquivalentModels() {
     Map<String, String> expectedSvg = null;
+    Map<String, String> expectedVisualFingerprints = null;
     byte[] expectedPdf = null;
     for (int attempt = 0; attempt < 4; attempt++) {
       EngineeringDiagramDocumentSet documents = ProcessDiagramDocumentSetAdapter.fromProcessModel(
@@ -174,9 +212,11 @@ class NativeEngineeringDiagramRendererTest {
       NativeEngineeringDiagramRenderer.Result result = new NativeEngineeringDiagramRenderer(documents).render();
       if (expectedSvg == null) {
         expectedSvg = result.getSvgBySheetId();
+        expectedVisualFingerprints = result.getVisualFingerprintsBySheetId();
         expectedPdf = result.getPdf();
       } else {
         assertEquals(expectedSvg, result.getSvgBySheetId());
+        assertEquals(expectedVisualFingerprints, result.getVisualFingerprintsBySheetId());
         assertArrayEquals(expectedPdf, result.getPdf());
       }
     }

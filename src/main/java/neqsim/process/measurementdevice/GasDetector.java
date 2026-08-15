@@ -1,5 +1,8 @@
 package neqsim.process.measurementdevice;
 
+import java.io.Serializable;
+import java.util.UUID;
+import neqsim.process.dynamics.TransientStateParticipant;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
@@ -60,12 +63,20 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <li>Confined space monitoring</li>
  * </ul>
  *
+ * <p>
+ * A concrete local detector registered in a process participates in transient-step transactions. Rollback restores
+ * detector configuration, concentration and inherited alarm/measurement state. Subclasses and online-signal bindings
+ * remain fail-closed.
+ *
  * @author ESOL
  * @version $Id: $Id
  */
-public class GasDetector extends MeasurementDeviceBaseClass {
+public class GasDetector extends MeasurementDeviceBaseClass
+    implements TransientStateParticipant<GasDetector.GasDetectorState> {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Persistent identity used only for transient transaction provenance. */
+  private String transientStateParticipantId = UUID.randomUUID().toString();
 
   /**
    * Enumeration of gas detector types.
@@ -436,5 +447,80 @@ public class GasDetector extends MeasurementDeviceBaseClass {
     sb.append(" [").append(gasSpecies).append("]");
 
     return sb.toString();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateIdentity() {
+    if (transientStateParticipantId == null || transientStateParticipantId.trim().isEmpty()) {
+      transientStateParticipantId = UUID.randomUUID().toString();
+    }
+    return "measurement:gas-detector:" + transientStateParticipantId;
+  }
+
+  /**
+   * The snapshot is complete only for the concrete local gas detector.
+   *
+   * @return blocking diagnostic for descendants or external online-signal operation, otherwise {@code null}
+   */
+  @Override
+  public String getTransientStateCoverageIssue() {
+    if (getClass() != GasDetector.class) {
+      return "gas-detector subclass " + getClass().getName()
+          + " must provide a snapshot that includes subclass-owned mutable state";
+    }
+    return getMeasurementTransientStateCoverageIssue();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public GasDetectorState captureTransientState() {
+    return new GasDetectorState(getTransientStateIdentity(), gasType, gasConcentration, gasSpecies, location,
+        lowerExplosiveLimit, responseTime, captureMeasurementDeviceTransientState());
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreTransientState(GasDetectorState snapshot) {
+    if (snapshot == null) {
+      throw new IllegalArgumentException("Gas-detector transient snapshot cannot be null");
+    }
+    if (!getTransientStateIdentity().equals(snapshot.stateIdentity)) {
+      throw new IllegalArgumentException(
+          "Gas-detector snapshot identity does not match " + getTransientStateIdentity());
+    }
+    gasType = snapshot.gasType;
+    gasConcentration = snapshot.gasConcentration;
+    gasSpecies = snapshot.gasSpecies;
+    location = snapshot.location;
+    lowerExplosiveLimit = snapshot.lowerExplosiveLimit;
+    responseTime = snapshot.responseTime;
+    restoreMeasurementDeviceTransientState(snapshot.measurementState);
+  }
+
+  /** Immutable gas-detector rollback point. */
+  public static final class GasDetectorState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String stateIdentity;
+    private final GasType gasType;
+    private final double gasConcentration;
+    private final String gasSpecies;
+    private final String location;
+    private final double lowerExplosiveLimit;
+    private final double responseTime;
+    private final MeasurementDeviceTransientState measurementState;
+
+    private GasDetectorState(String stateIdentity, GasType gasType, double gasConcentration, String gasSpecies,
+        String location, double lowerExplosiveLimit, double responseTime,
+        MeasurementDeviceTransientState measurementState) {
+      this.stateIdentity = stateIdentity;
+      this.gasType = gasType;
+      this.gasConcentration = gasConcentration;
+      this.gasSpecies = gasSpecies;
+      this.location = location;
+      this.lowerExplosiveLimit = lowerExplosiveLimit;
+      this.responseTime = responseTime;
+      this.measurementState = measurementState;
+    }
   }
 }

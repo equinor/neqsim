@@ -1,5 +1,6 @@
 package neqsim.process.measurementdevice;
 
+import java.io.Serializable;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -139,6 +140,41 @@ public class WedgeFlowMeter extends DifferentialPressureFlowMeter {
    */
   public double getWedgeRatio() {
     return wedgeRatio;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected String getDifferentialPressureFlowMeterTransientStateCoverageIssue() {
+    if (getClass() != WedgeFlowMeter.class) {
+      return "wedge-flow-meter subclass " + getClass().getName()
+          + " must provide a snapshot that includes subclass-owned mutable state";
+    }
+    return null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected Serializable captureDifferentialPressureFlowMeterExtensionState() {
+    return new WedgeFlowMeterState(wedgeRatio);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected void restoreDifferentialPressureFlowMeterExtensionState(Serializable extensionState) {
+    if (!(extensionState instanceof WedgeFlowMeterState)) {
+      throw new IllegalArgumentException("Wedge flow-meter extension snapshot has the wrong type");
+    }
+    wedgeRatio = ((WedgeFlowMeterState) extensionState).wedgeRatio;
+  }
+
+  /** Immutable wedge-specific rollback point. */
+  private static final class WedgeFlowMeterState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final double wedgeRatio;
+
+    private WedgeFlowMeterState(double wedgeRatio) {
+      this.wedgeRatio = wedgeRatio;
+    }
   }
 
   /** {@inheritDoc} */
