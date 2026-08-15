@@ -485,7 +485,7 @@ public class TPmultiflash extends TPflash {
     // O2: Early exit — if all K ≈ 1.0 the system is near/above critical.
     // Only skip Wilson K-based trials; still fall through to pure-component trials
     // which use independent initial guesses not affected by K ≈ 1.
-    boolean skipWilsonKTrials = (maxAbsLogK < 0.01);
+    boolean skipWilsonKTrials = !system.doEnhancedMultiPhaseCheck() || (maxAbsLogK < 0.01);
 
     // O3: Wilson K-based trial phases — liquid-like (z/K) first, then vapor-like (K·z)
     // Liquid-like trial runs first because most multi-phase systems have liquid-driven
