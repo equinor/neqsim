@@ -129,23 +129,32 @@ column.setReboilerBoilupRatio(2.5);
 ```
 
 Product-quality and recovery targets use `ColumnSpecification`. Purity and recovery targets are
-dimensionless fractions from `0` to `1`; product-flow-rate specifications are evaluated internally
-in `mol/hr`.
+dimensionless fractions from `0` to `1`. Product-flow-rate targets and their absolute residuals use
+the unit supplied to `setTopProductFlowRate` or `setBottomProductFlowRate`; common molar and mass
+units such as `mol/hr` and `kg/hr` are supported by the product stream. Constructors that do not
+supply a unit remain backward compatible and default product flow to `mol/hr`.
 
 ```java
 column.setTopProductPurity("ethane", 0.95);
 column.setBottomProductPurity("propane", 0.98);
 column.setTopComponentRecovery("ethane", 0.99);
 column.setBottomComponentRecovery("propane", 0.99);
-column.setBottomProductFlowRate(1000.0, "mol/hr");
+column.setBottomProductFlowRate(1000.0, "kg/hr");
 
 ColumnSpecification topFlow = new ColumnSpecification(
     ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE,
-    ColumnSpecification.ProductLocation.TOP, 500.0);
-topFlow.setTolerance(1.0e-3);
+    ColumnSpecification.ProductLocation.TOP, 500.0, null, "kg/hr");
+topFlow.setTolerance(1.0e-3); // kg/hr, matching the target
 topFlow.setMaxIterations(30);
 column.setTopSpecification(topFlow);
 ```
+
+The selected unit is retained through specification homotopy, diagnostics, warm-state identity,
+copying, and serialization. Feasibility screening compares each flow target with external feed flow
+in the same unit. When both terminal flow targets use the same unit, their sum is screened as well;
+mixed-unit terminal targets are evaluated during the solve because their product compositions may
+differ. `getLastTopSpecificationResidual()` and `getLastBottomSpecificationResidual()` report flow
+residuals in the corresponding target unit.
 
 For iterative specifications, NeqSim wraps the selected inner solver in an outer adjustment loop and
 uses condenser or reboiler temperature as the manipulated variable where possible. Product purity,
