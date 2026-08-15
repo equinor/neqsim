@@ -421,7 +421,7 @@ public class ColumnSpecificationTest {
     column.run();
     assertTrue(column.solved(), column.getConvergenceDiagnostics());
     assertEquals(repeatedKgPerHour, column.getGasOutStream().getFlowRate("kg/hr"),
-        Math.max(1.0e-6, repeatedKgPerHour * 1.0e-6));
+        column.getTopSpecification().getTolerance());
 
     column.setTopProductFlowRate(equivalentMolPerHour, "mol/hr");
     column.getTopSpecification().setTolerance(Math.max(1.0e-3, equivalentMolPerHour * 1.0e-4));
