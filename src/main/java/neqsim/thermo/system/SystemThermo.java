@@ -3719,7 +3719,9 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * Reconciles a stale scalar total with tint. 0 to initialize and 1 to reset, 2 to calculate T and P derivatives, 3 to calculate all
+   * initAnalytic.
+   *
+   * @param type a int. 0 to initialize and 1 to reset, 2 to calculate T and P derivatives, 3 to calculate all
    * derivatives and 4 to calculate all derivatives numerically
    */
   public void initAnalytic(int type) {

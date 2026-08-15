@@ -144,6 +144,4 @@ public class SystemThermoTotalNumberOfMolesTest {
     assertEquals(4.0, fluid.getTotalNumberOfMoles(), 1e-12);
     assertEquals(4.0, sumComponentMoles(fluid), 1e-12);
   }
-
-  /**
-   * A stale serialized total mu}
+}
