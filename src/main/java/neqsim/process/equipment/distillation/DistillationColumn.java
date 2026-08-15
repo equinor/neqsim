@@ -13753,8 +13753,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private void validateTerminalModeFeasibility(ValidationResult result) {
     if (hasTotalCondenserWithoutRatioControl()) {
-      result.addError("specification.terminalMode",
-          "Total condenser requires an explicit reflux ratio",
+      result.addError("specification.terminalMode", "Total condenser requires an explicit reflux ratio",
           "Call setCondenserRefluxRatio(ratio) before running, or select PARTIAL condenser mode");
     }
     if (hasTopSpecificationControlConflict()) {
