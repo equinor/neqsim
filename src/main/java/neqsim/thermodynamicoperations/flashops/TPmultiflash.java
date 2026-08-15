@@ -1224,20 +1224,19 @@ public class TPmultiflash extends TPflash {
   /**
    * Returns a bounded initial fraction for a phase admitted by a Wilson-K stability trial.
    *
-   * <p>A negative tangent-plane distance establishes that the current topology is unstable, but
-   * it does not determine the equilibrium amount of the new phase. Seeding beta from the trial's
-   * dominant overall component can therefore introduce an order-one material phase before the
-   * phase-fraction solve. Start the admitted phase above the numerical disappearance limit and let
-   * the existing beta/equilibrium solve grow or remove it.</p>
+   * <p>
+   * A negative tangent-plane distance establishes that the current topology is unstable, but it does not determine the
+   * equilibrium amount of the new phase. Seeding beta from the trial's dominant overall component can therefore
+   * introduce an order-one material phase before the phase-fraction solve. Start the admitted phase above the numerical
+   * disappearance limit and let the existing beta/equilibrium solve grow or remove it.
+   * </p>
    *
    * @param dominantComponent index of the largest component in the trial composition
    * @return bounded incipient phase fraction
    */
   private double getIncipientWilsonPhaseFraction(int dominantComponent) {
-    double numericalSeed =
-        Math.min(1.0e-3, Math.max(1.0e-6, 100.0 * phaseFractionMinimumLimit));
-    return Math.min(
-        system.getPhase(0).getComponent(dominantComponent).getz(), numericalSeed);
+    double numericalSeed = Math.min(1.0e-3, Math.max(1.0e-6, 100.0 * phaseFractionMinimumLimit));
+    return Math.min(system.getPhase(0).getComponent(dominantComponent).getz(), numericalSeed);
   }
 
   /**
