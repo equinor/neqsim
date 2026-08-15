@@ -22,10 +22,10 @@ import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.Severity;
  * Immutable, deterministic stream-table projection of one governed operating case.
  *
  * <p>
- * The table is derived only from the canonical semantic-object snapshots in an
- * {@link EngineeringDiagramDocumentSet}. It does not read live process objects, change the controlled document JSON,
- * or imply accountable approval of calculated values. A reviewed stream number is preferred for display while the
- * canonical semantic-object identity remains authoritative.
+ * The table is derived only from the canonical semantic-object snapshots in an {@link EngineeringDiagramDocumentSet}.
+ * It does not read live process objects, change the controlled document JSON, or imply accountable approval of
+ * calculated values. A reviewed stream number is preferred for display while the canonical semantic-object identity
+ * remains authoritative.
  * </p>
  */
 public final class EngineeringDiagramStreamTable implements Serializable {
@@ -140,8 +140,7 @@ public final class EngineeringDiagramStreamTable implements Serializable {
     private final List<ProvenanceRecord> provenance;
 
     private Value(Quantity quantity, double resultValue, String resultUnit, String quantityBasis,
-        String engineeringState, String approvalStatus, String sourceCalculationId,
-        List<ProvenanceRecord> provenance) {
+        String engineeringState, String approvalStatus, String sourceCalculationId, List<ProvenanceRecord> provenance) {
       this.quantity = quantity;
       this.resultValue = resultValue;
       this.resultUnit = resultUnit;
@@ -399,8 +398,7 @@ public final class EngineeringDiagramStreamTable implements Serializable {
       for (Quantity quantity : Quantity.values()) {
         if (!values.containsKey(quantity)) {
           diagnostics.add(new Diagnostic(Severity.WARNING, "STREAM_TABLE_VALUE_MISSING",
-              "The requested operating case has no governed " + quantity.getPropertyName() + " value",
-              stream.getId()));
+              "The requested operating case has no governed " + quantity.getPropertyName() + " value", stream.getId()));
         }
       }
       Designation streamNumber = reviewedStreamNumber(stream);
@@ -589,8 +587,8 @@ public final class EngineeringDiagramStreamTable implements Serializable {
           "More than one governed value exists for the stream, case, and quantity", subjectId));
       return;
     }
-    values.put(quantity, new Value(quantity, number, unit, basis, engineeringState, approvalStatus,
-        calculation.getId(), calculation.getProvenance()));
+    values.put(quantity, new Value(quantity, number, unit, basis, engineeringState, approvalStatus, calculation.getId(),
+        calculation.getProvenance()));
     String areaName = optionalProperty(calculation, "areaName");
     if (!areaName.isEmpty() && !areaByStream.containsKey(subjectId)) {
       areaByStream.put(subjectId, areaName);
