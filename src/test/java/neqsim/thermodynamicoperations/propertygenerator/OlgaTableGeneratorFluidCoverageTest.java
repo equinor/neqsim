@@ -2,6 +2,7 @@ package neqsim.thermodynamicoperations.propertygenerator;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -223,7 +224,12 @@ public class OlgaTableGeneratorFluidCoverageTest {
       String inside = line.substring(line.indexOf('(') + 1, line.lastIndexOf(')'));
       String[] parts = inside.split(",");
       if (index < parts.length) {
-        values.add(Double.valueOf(parts[index].trim()));
+        String valueText = parts[index].trim();
+        try {
+          values.add(Double.valueOf(valueText));
+        } catch (NumberFormatException e) {
+          fail("Invalid numeric value '" + valueText + "' in PVTTABLE POINT row: " + line, e);
+        }
       }
     }
     assertFalse(values.isEmpty(), "The table has no PVTTABLE POINT rows");
