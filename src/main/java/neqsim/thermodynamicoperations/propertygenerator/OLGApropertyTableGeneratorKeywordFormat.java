@@ -1,6 +1,7 @@
 package neqsim.thermodynamicoperations.propertygenerator;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -8,6 +9,7 @@ import java.io.Writer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -23,6 +25,18 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(OLGApropertyTableGeneratorKeywordFormat.class);
+
+  /** GOR written when no liquid forms at standard conditions, so the key stays finite. */
+  private static final double SINGLE_PHASE_GOR = 1.0e6;
+  /** Gas density written when the grid holds no gas at all, in kg/m3. */
+  private static final double DEFAULT_GAS_DENSITY = 1.0;
+  /** Liquid density written when the grid holds no liquid at all, in kg/m3. */
+  private static final double DEFAULT_LIQUID_DENSITY = 1000.0;
+  /** Gas column keywords, used when the gas branch has to be extrapolated. */
+  private static final String[] GAS_KEYWORDS = { "ROG", "DROGDP", "DROGDT", "VISG", "CPG", "HG", "TCG", "SEG" };
+  /** Liquid column keywords, used when the liquid branch has to be extrapolated. */
+  private static final String[] LIQUID_KEYWORDS = { "ROHL", "DROHLDP", "DROHLDT", "VISHL", "CPHL", "HHL", "TCHL",
+      "SEHL" };
 
   SystemInterface thermoSystem = null;
   ThermodynamicOperations thermoOps = null;
@@ -70,6 +84,363 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
   String[] names;
   String[] units;
   String[] namesKeyword;
+
+  /** True at grid nodes where a gas phase exists. */
+  private boolean[][] gasPresent;
+  /** True at grid nodes where a hydrocarbon or aqueous liquid phase exists. */
+  private boolean[][] liquidPresent;
+  /** True for property columns that require a gas phase. */
+  private boolean[] needsGas;
+  /** True for property columns that require a liquid phase. */
+  private boolean[] needsLiquid;
+  /** Fluid label written to the table and referenced by the OLGA BRANCH FLUID key. */
+  private String fluidLabel = "NewFluid";
+
+  /**
+   * Set the fluid label written to the table.
+   *
+   * <p>
+   * The OLGA case refers to this exact string in {@code BRANCH FLUID="..."}, so it has to match.
+   * </p>
+   *
+   * @param label fluid label, ignored when null or empty
+   */
+  public void setFluidLabel(String label) {
+    if (label != null && label.trim().length() > 0) {
+      this.fluidLabel = label.trim();
+    }
+  }
+
+  /**
+   * Get the fluid label written to the table.
+   *
+   * @return fluid label
+   */
+  public String getFluidLabel() {
+    return fluidLabel;
+  }
+
+  /**
+   * Resolve the liquid phase used for the OLGA liquid columns.
+   *
+   * <p>
+   * A hydrocarbon liquid is preferred. A water-only fluid has an aqueous phase and no oil phase, and its liquid columns
+   * must still be populated, so the aqueous phase is used when there is no oil.
+   * </p>
+   *
+   * @return liquid phase, or null when the node is all gas
+   */
+  private PhaseInterface resolveLiquidPhase() {
+    if (thermoSystem.hasPhaseType("oil")) {
+      return thermoSystem.getPhaseOfType("oil");
+    }
+    if (thermoSystem.hasPhaseType("aqueous")) {
+      return thermoSystem.getPhaseOfType("aqueous");
+    }
+    return null;
+  }
+
+  /**
+   * Find the index of a phase in the system's active phase array.
+   *
+   * <p>
+   * The interphase property model is addressed by array position, which is not the same as the phase type once the
+   * phases are resolved by type rather than by index.
+   * </p>
+   *
+   * @param phase phase to locate
+   * @return array index, or -1 when the phase is not active
+   */
+  private int phaseIndex(PhaseInterface phase) {
+    for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
+      if (thermoSystem.getPhase(i) == phase) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  /**
+   * Get a phase density, or NaN when the phase is absent.
+   *
+   * @param phase phase or null
+   * @return density in kg/m3
+   */
+  private static double density(PhaseInterface phase) {
+    return phase == null ? Double.NaN : phase.getPhysicalProperties().getDensity();
+  }
+
+  /**
+   * Get a phase viscosity, or NaN when the phase is absent.
+   *
+   * @param phase phase or null
+   * @return viscosity in Ns/m2
+   */
+  private static double viscosity(PhaseInterface phase) {
+    return phase == null ? Double.NaN : phase.getPhysicalProperties().getViscosity();
+  }
+
+  /**
+   * Get a phase thermal conductivity, or NaN when the phase is absent.
+   *
+   * @param phase phase or null
+   * @return conductivity in W/(m K)
+   */
+  private static double conductivity(PhaseInterface phase) {
+    return phase == null ? Double.NaN : phase.getPhysicalProperties().getConductivity();
+  }
+
+  /**
+   * Get a mass-specific heat capacity, or NaN when the phase is absent.
+   *
+   * @param phase phase or null
+   * @return heat capacity in J/(kg K)
+   */
+  private static double specificHeatCapacity(PhaseInterface phase) {
+    return phase == null ? Double.NaN : phase.getCp() / phase.getNumberOfMolesInPhase() / phase.getMolarMass();
+  }
+
+  /**
+   * Get a mass-specific enthalpy, or NaN when the phase is absent.
+   *
+   * @param phase phase or null
+   * @return enthalpy in J/kg
+   */
+  private static double specificEnthalpy(PhaseInterface phase) {
+    return phase == null ? Double.NaN : phase.getEnthalpy() / phase.getNumberOfMolesInPhase() / phase.getMolarMass();
+  }
+
+  /**
+   * Get a mass-specific entropy, or NaN when the phase is absent.
+   *
+   * @param phase phase or null
+   * @return entropy in J/(kg K)
+   */
+  private static double specificEntropy(PhaseInterface phase) {
+    return phase == null ? Double.NaN : phase.getEntropy() / phase.getNumberOfMolesInPhase() / phase.getMolarMass();
+  }
+
+  /**
+   * Extrapolate every phase-specific column into the nodes where that phase does not exist.
+   *
+   * <p>
+   * OLGA rejects a table containing a zero gas or liquid density, so single-phase regions cannot be left empty. Nodes
+   * inside the grid are filled from the nearest node where the phase exists. When a phase exists nowhere on the grid -
+   * a dry gas has no liquid anywhere, a dead oil no gas - there is no neighbour to borrow from, so the column is taken
+   * from a forced single-phase evaluation of the whole composition, and only if that fails from a physical default.
+   * </p>
+   */
+  private void fillAbsentPhaseNodes() {
+    boolean anyGas = anyTrue(gasPresent);
+    boolean anyLiquid = anyTrue(liquidPresent);
+    java.util.Map<String, double[][]> gasBranch = anyGas ? null : forcedPhaseBranch("gas");
+    java.util.Map<String, double[][]> liquidBranch = anyLiquid ? null : forcedPhaseBranch("oil");
+
+    for (int k = 0; k < nProps; k++) {
+      if (needsGas[k] && needsLiquid[k]) {
+        boolean[][] both = new boolean[pressures.length][temperatures.length];
+        for (int i = 0; i < pressures.length; i++) {
+          for (int j = 0; j < temperatures.length; j++) {
+            both[i][j] = gasPresent[i][j] && liquidPresent[i][j];
+          }
+        }
+        OlgaTableGridFiller.fillAbsentNodes(props[k], both, defaultFor(namesKeyword[k]));
+      } else if (needsGas[k]) {
+        applyBranch(k, gasBranch);
+        OlgaTableGridFiller.fillAbsentNodes(props[k], anyGas ? gasPresent : allTrue(), defaultFor(namesKeyword[k]));
+      } else if (needsLiquid[k]) {
+        applyBranch(k, liquidBranch);
+        OlgaTableGridFiller.fillAbsentNodes(props[k], anyLiquid ? liquidPresent : allTrue(),
+            defaultFor(namesKeyword[k]));
+      }
+    }
+  }
+
+  /**
+   * Overwrite a property column with a forced single-phase branch when one was computed.
+   *
+   * @param k property column index
+   * @param branch forced-branch values by keyword, or null when the phase exists on the grid
+   */
+  private void applyBranch(int k, java.util.Map<String, double[][]> branch) {
+    if (branch == null) {
+      return;
+    }
+    double[][] values = branch.get(namesKeyword[k]);
+    if (values == null) {
+      return;
+    }
+    for (int i = 0; i < pressures.length; i++) {
+      System.arraycopy(values[i], 0, props[k][i], 0, temperatures.length);
+    }
+  }
+
+  /**
+   * Evaluate the whole composition as a single forced phase over the grid.
+   *
+   * <p>
+   * This is the metastable branch a table needs when the phase never flashes out on its own. If the equation of state
+   * cannot produce a usable root the entry is left NaN and the caller's default applies.
+   * </p>
+   *
+   * @param phaseTypeName "gas" or "oil"
+   * @return property values by OLGA keyword, or null when the forced evaluation is unusable
+   */
+  private java.util.Map<String, double[][]> forcedPhaseBranch(String phaseTypeName) {
+    java.util.Map<String, double[][]> branch = new java.util.HashMap<String, double[][]>();
+    String[] keywords = "gas".equals(phaseTypeName) ? GAS_KEYWORDS : LIQUID_KEYWORDS;
+    for (String keyword : keywords) {
+      branch.put(keyword, new double[pressures.length][temperatures.length]);
+    }
+
+    SystemInterface forced;
+    try {
+      forced = thermoSystem.clone();
+      forced.setForcePhaseTypes(true);
+      forced.setNumberOfPhases(1);
+      forced.setPhaseType(0, phaseTypeName);
+    } catch (Exception ex) {
+      logger.warn("Could not force a {} phase for the absent-phase branch: {}", phaseTypeName, ex.getMessage());
+      return null;
+    }
+
+    boolean usable = false;
+    for (int i = 0; i < pressures.length; i++) {
+      for (int j = 0; j < temperatures.length; j++) {
+        PhaseInterface phase = null;
+        try {
+          forced.setPressure(pressures[i]);
+          forced.setTemperature(temperatures[j]);
+          forced.init(3);
+          forced.initPhysicalProperties();
+          phase = forced.getPhase(0);
+        } catch (Exception ex) {
+          phase = null;
+        }
+        double rho = density(phase);
+        boolean nodeOk = !Double.isNaN(rho) && !Double.isInfinite(rho) && rho > 0.0;
+        usable = usable || nodeOk;
+        for (String keyword : keywords) {
+          branch.get(keyword)[i][j] = nodeOk ? phaseProperty(keyword, phase) : Double.NaN;
+        }
+      }
+    }
+    if (!usable) {
+      logger.warn("Forced {} branch produced no usable root; falling back to default properties", phaseTypeName);
+      return null;
+    }
+    return branch;
+  }
+
+  /**
+   * Evaluate one OLGA property keyword on a phase.
+   *
+   * @param keyword OLGA column keyword
+   * @param phase phase to evaluate, may be null
+   * @return property value, NaN when unavailable
+   */
+  private static double phaseProperty(String keyword, PhaseInterface phase) {
+    if (phase == null) {
+      return Double.NaN;
+    }
+    if ("ROG".equals(keyword) || "ROHL".equals(keyword)) {
+      return density(phase);
+    }
+    if ("DROGDP".equals(keyword) || "DROHLDP".equals(keyword)) {
+      return phase.getdrhodP() / 1.0e5;
+    }
+    if ("DROGDT".equals(keyword) || "DROHLDT".equals(keyword)) {
+      return phase.getdrhodT();
+    }
+    if ("VISG".equals(keyword) || "VISHL".equals(keyword)) {
+      return viscosity(phase);
+    }
+    if ("CPG".equals(keyword) || "CPHL".equals(keyword)) {
+      return specificHeatCapacity(phase);
+    }
+    if ("HG".equals(keyword) || "HHL".equals(keyword)) {
+      return specificEnthalpy(phase);
+    }
+    if ("TCG".equals(keyword) || "TCHL".equals(keyword)) {
+      return conductivity(phase);
+    }
+    if ("SEG".equals(keyword) || "SEHL".equals(keyword)) {
+      return specificEntropy(phase);
+    }
+    return Double.NaN;
+  }
+
+  /**
+   * Physically sensible value for a column whose phase exists nowhere and cannot be forced.
+   *
+   * <p>
+   * OLGA only requires these to be finite and, for density, positive: the phase mass fraction pins at zero everywhere,
+   * so the branch is never used in a flow calculation. Zero density is the one value OLGA refuses.
+   * </p>
+   *
+   * @param keyword OLGA column keyword
+   * @return default value
+   */
+  private static double defaultFor(String keyword) {
+    if ("ROG".equals(keyword)) {
+      return DEFAULT_GAS_DENSITY;
+    }
+    if ("ROHL".equals(keyword)) {
+      return DEFAULT_LIQUID_DENSITY;
+    }
+    if ("VISG".equals(keyword)) {
+      return 1.0e-5;
+    }
+    if ("VISHL".equals(keyword)) {
+      return 1.0e-3;
+    }
+    if ("CPG".equals(keyword) || "CPHL".equals(keyword)) {
+      return 2000.0;
+    }
+    if ("TCG".equals(keyword)) {
+      return 0.03;
+    }
+    if ("TCHL".equals(keyword)) {
+      return 0.13;
+    }
+    if ("SIGGHL".equals(keyword)) {
+      return 0.02;
+    }
+    if ("DROGDP".equals(keyword) || "DROHLDP".equals(keyword)) {
+      return 1.0e-6;
+    }
+    return 0.0;
+  }
+
+  /**
+   * Check whether a presence mask has any true entry.
+   *
+   * @param mask presence mask
+   * @return true when the phase exists somewhere
+   */
+  private static boolean anyTrue(boolean[][] mask) {
+    for (int i = 0; i < mask.length; i++) {
+      for (int j = 0; j < mask[i].length; j++) {
+        if (mask[i][j]) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Build a mask that accepts every grid node.
+   *
+   * @return all-true mask sized to the grid
+   */
+  private boolean[][] allTrue() {
+    boolean[][] mask = new boolean[pressures.length][temperatures.length];
+    for (int i = 0; i < pressures.length; i++) {
+      java.util.Arrays.fill(mask[i], true);
+    }
+    return mask;
+  }
 
   /**
    * Constructor for OLGApropertyTableGeneratorKeywordFormat.
@@ -223,11 +594,42 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
     thermoOps.TPflash();
     thermoSystem.initPhysicalProperties();
 
-    GOR = thermoSystem.getPhase(0).getTotalVolume() / thermoSystem.getPhase(1).getTotalVolume();
-    GLR = thermoSystem.getPhase(0).getTotalVolume() / thermoSystem.getPhase(1).getTotalVolume();
+    // A dry gas has no liquid at standard conditions and a dead oil has no gas, so neither
+    // phase can be assumed present. OLGA still requires a finite positive STDGASDENSITY and
+    // STDOILDENSITY, which are taken from the table grid when the phase does not flash out.
+    PhaseInterface stdGas = thermoSystem.hasPhaseType("gas") ? thermoSystem.getPhaseOfType("gas") : null;
+    PhaseInterface stdLiquid = resolveLiquidPhase();
+    double gasVolume = stdGas == null ? 0.0 : stdGas.getTotalVolume();
+    double liquidVolume = stdLiquid == null ? 0.0 : stdLiquid.getTotalVolume();
 
-    stdGasDens = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
-    stdLiqDens = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
+    GOR = liquidVolume > 0.0 ? gasVolume / liquidVolume : SINGLE_PHASE_GOR;
+    GLR = GOR;
+    stdGasDens = stdGas != null ? stdGas.getPhysicalProperties().getDensity()
+        : representativeValue(props[0], DEFAULT_GAS_DENSITY);
+    stdLiqDens = stdLiquid != null ? stdLiquid.getPhysicalProperties().getDensity()
+        : representativeValue(props[1], DEFAULT_LIQUID_DENSITY);
+  }
+
+  /**
+   * Pick a finite positive representative value from a filled property grid.
+   *
+   * @param grid property values indexed [pressure][temperature]
+   * @param fallback value returned when the grid holds nothing usable
+   * @return representative value
+   */
+  private static double representativeValue(double[][] grid, double fallback) {
+    if (grid == null) {
+      return fallback;
+    }
+    for (int i = 0; i < grid.length; i++) {
+      for (int j = 0; j < grid[i].length; j++) {
+        double value = grid[i][j];
+        if (!Double.isNaN(value) && !Double.isInfinite(value) && value > 0.0) {
+          return value;
+        }
+      }
+    }
+    return fallback;
   }
 
   /** {@inheritDoc} */
@@ -240,6 +642,10 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
     units = new String[nProps];
     names = new String[nProps];
     namesKeyword = new String[nProps];
+    needsGas = new boolean[nProps];
+    needsLiquid = new boolean[nProps];
+    gasPresent = new boolean[pressures.length][temperatures.length];
+    liquidPresent = new boolean[pressures.length][temperatures.length];
     calcPhaseEnvelope();
     /*
      * ROG = new double[pressures.length][temperatures.length]; ROL = new double[pressures.length][temperatures.length];
@@ -266,125 +672,134 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
         }
         thermoSystem.init(3);
         thermoSystem.initPhysicalProperties();
-        /*
-         * ROG[i][j] = thermoSystem.getPhase(0).getPhysicalProperties().getDensity(); ROL[i][j] =
-         * thermoSystem.getPhase(1).getPhysicalProperties().getDensity(); DROGDP[i][j] =
-         * thermoSystem.getPhase(0).getdrhodP(); // DROHLDP[i][j] = thermoSystem.getPhase(1).getdrhodP(); //
-         * DROGDT[i][j] = thermoSystem.getPhase(0).getdrhodT(); // DROHLDT[i][j] = thermoSystem.getPhase(1).getdrhodT();
-         * CPG[i][j] = thermoSystem.getPhase(0).getCp(); CPHL[i][j] = thermoSystem.getPhase(1).getCp(); HG[i][j] =
-         * thermoSystem.getPhase(0).getEnthalpy(); HHL[i][j] = thermoSystem.getPhase(1).getEnthalpy(); TCG[i][j] =
-         * thermoSystem.getPhase(0).getPhysicalProperties().getConductivity(); TCHL[i][j] =
-         * thermoSystem.getPhase(1).getPhysicalProperties().getConductivity(); VISG[i][j] =
-         * thermoSystem.getPhase(0).getPhysicalProperties().getViscosity(); VISHL[i][j] =
-         * thermoSystem.getPhase(1).getPhysicalProperties().getViscosity(); // SIGGHL[i][j] =
-         * thermoSystem.getInterphaseProperties().getSurfaceTension(0, 1); SEG[i][j] =
-         * thermoSystem.getPhase(0).getEntropy(); SEHL[i][j] = thermoSystem.getPhase(1).getEntropy(); RS[i][j] =
-         * thermoSystem.getPhase(0).getBeta();
-         */
+
+        // A flash only returns the phases that exist. Resolving them by TYPE rather than by
+        // array position keeps the gas column gas and the liquid column liquid even when the
+        // node is single-phase, where getPhase(0) is whichever phase happens to be present.
+        PhaseInterface gas = thermoSystem.hasPhaseType("gas") ? thermoSystem.getPhaseOfType("gas") : null;
+        PhaseInterface liquid = resolveLiquidPhase();
+        gasPresent[i][j] = gas != null;
+        liquidPresent[i][j] = liquid != null;
 
         int k = 0;
-        props[k][i][j] = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
+        props[k][i][j] = density(gas);
         names[k] = "GAS DENSITY";
         units[k] = "KG/M3";
         namesKeyword[k] = "ROG";
+        needsGas[k] = true;
         k++;
-        props[k][i][j] = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
+        props[k][i][j] = density(liquid);
         names[k] = "LIQUID DENSITY";
         units[k] = "KG/M3";
         namesKeyword[k] = "ROHL";
+        needsLiquid[k] = true;
         k++;
-        props[k][i][j] = thermoSystem.getPhase(0).getdrhodP() / 1.0e5;
+        props[k][i][j] = gas == null ? Double.NaN : gas.getdrhodP() / 1.0e5;
         names[k] = "DRHOG/DP";
         units[k] = "S2/M2";
         namesKeyword[k] = "DROGDP";
+        needsGas[k] = true;
         k++;
-        props[k][i][j] = thermoSystem.getPhase(1).getdrhodP() / 1.0e5;
+        props[k][i][j] = liquid == null ? Double.NaN : liquid.getdrhodP() / 1.0e5;
         names[k] = "DRHOL/DP";
         units[k] = "S2/M2";
         namesKeyword[k] = "DROHLDP";
+        needsLiquid[k] = true;
         k++;
-        props[k][i][j] = thermoSystem.getPhase(0).getdrhodT();
+        props[k][i][j] = gas == null ? Double.NaN : gas.getdrhodT();
         names[k] = "DRHOG/DT";
         units[k] = "KG/M3-K";
         namesKeyword[k] = "DROGDT";
+        needsGas[k] = true;
         k++;
-        props[k][i][j] = thermoSystem.getPhase(1).getdrhodT();
+        props[k][i][j] = liquid == null ? Double.NaN : liquid.getdrhodT();
         names[k] = "DRHOL/DT";
         units[k] = "KG/M3-K";
         namesKeyword[k] = "DROHLDT";
+        needsLiquid[k] = true;
         k++;
-        props[k][i][j] = thermoSystem.getPhase(0).getBeta() * thermoSystem.getPhase(0).getMolarMass()
-            / thermoSystem.getMolarMass();
+        // Genuinely zero when there is no gas, so this column is never extrapolated.
+        props[k][i][j] = gas == null ? 0.0 : gas.getBeta() * gas.getMolarMass() / thermoSystem.getMolarMass();
         names[k] = "GAS MASS FRACTION";
         units[k] = "-";
         namesKeyword[k] = "RS";
         k++;
-        props[k][i][j] = thermoSystem.getPhase(0).getPhysicalProperties().getViscosity();
+        props[k][i][j] = viscosity(gas);
         names[k] = "GAS VISCOSITY";
         units[k] = "NS/M2";
         namesKeyword[k] = "VISG";
+        needsGas[k] = true;
         k++;
-        props[k][i][j] = thermoSystem.getPhase(1).getPhysicalProperties().getViscosity();
+        props[k][i][j] = viscosity(liquid);
         names[k] = "LIQUID VISCOSITY";
         units[k] = "NS/M2";
         namesKeyword[k] = "VISHL";
+        needsLiquid[k] = true;
         k++;
-        props[k][i][j] = thermoSystem.getPhase(0).getCp() / thermoSystem.getPhase(0).getNumberOfMolesInPhase()
-            / thermoSystem.getPhase(0).getMolarMass();
+        props[k][i][j] = specificHeatCapacity(gas);
         names[k] = "GAS HEAT CAPACITY";
         units[k] = "J/KG-K";
         namesKeyword[k] = "CPG";
+        needsGas[k] = true;
         k++;
-        props[k][i][j] = thermoSystem.getPhase(1).getCp() / thermoSystem.getPhase(1).getNumberOfMolesInPhase()
-            / thermoSystem.getPhase(1).getMolarMass();
+        props[k][i][j] = specificHeatCapacity(liquid);
         names[k] = "LIQUID HEAT CAPACITY";
         units[k] = "J/KG-K";
         namesKeyword[k] = "CPHL";
+        needsLiquid[k] = true;
         k++;
-        props[k][i][j] = thermoSystem.getPhase(0).getEnthalpy() / thermoSystem.getPhase(0).getNumberOfMolesInPhase()
-            / thermoSystem.getPhase(0).getMolarMass();
+        props[k][i][j] = specificEnthalpy(gas);
         names[k] = "GAS ENTHALPY";
         units[k] = "J/KG";
         namesKeyword[k] = "HG";
+        needsGas[k] = true;
         k++;
-        props[k][i][j] = thermoSystem.getPhase(1).getEnthalpy() / thermoSystem.getPhase(1).getNumberOfMolesInPhase()
-            / thermoSystem.getPhase(1).getMolarMass();
+        props[k][i][j] = specificEnthalpy(liquid);
         names[k] = "LIQUD ENTHALPY";
         units[k] = "J/KG";
         namesKeyword[k] = "HHL";
+        needsLiquid[k] = true;
         k++;
-        props[k][i][j] = thermoSystem.getPhase(0).getPhysicalProperties().getConductivity();
+        props[k][i][j] = conductivity(gas);
         names[k] = "GAS THERMAL CONDUCTIVITY";
         units[k] = "W/M-K";
         namesKeyword[k] = "TCG";
+        needsGas[k] = true;
         k++;
-        props[k][i][j] = thermoSystem.getPhase(1).getPhysicalProperties().getConductivity();
+        props[k][i][j] = conductivity(liquid);
         names[k] = "LIQUID THERMAL CONDUCTIVITY";
         units[k] = "W/M-K";
         namesKeyword[k] = "TCHL";
+        needsLiquid[k] = true;
         k++;
-        props[k][i][j] = thermoSystem.getInterphaseProperties().getSurfaceTension(0, 1);
+        props[k][i][j] = (gas == null || liquid == null) ? Double.NaN
+            : thermoSystem.getInterphaseProperties().getSurfaceTension(phaseIndex(gas), phaseIndex(liquid));
         names[k] = "VAPOR-LIQUID SURFACE TENSION";
         units[k] = "N/M";
         namesKeyword[k] = "SIGGHL";
+        needsGas[k] = true;
+        needsLiquid[k] = true;
         k++;
-        props[k][i][j] = thermoSystem.getPhase(0).getEntropy() / thermoSystem.getPhase(0).getNumberOfMolesInPhase()
-            / thermoSystem.getPhase(0).getMolarMass();
+        props[k][i][j] = specificEntropy(gas);
         names[k] = "GAS ENTROPY";
         units[k] = "J/KG-K";
         namesKeyword[k] = "SEG";
+        needsGas[k] = true;
         k++;
-        props[k][i][j] = thermoSystem.getPhase(1).getEntropy() / thermoSystem.getPhase(1).getNumberOfMolesInPhase()
-            / thermoSystem.getPhase(1).getMolarMass();
+        props[k][i][j] = specificEntropy(liquid);
         names[k] = "LIQUID ENTROPY";
         units[k] = "J/KG-K";
         namesKeyword[k] = "SEHL";
+        needsLiquid[k] = true;
         k++;
       }
     }
+    fillAbsentPhaseNodes();
     bubP = calcBubP(temperatures);
     // dewP = calcDewP(temperatures);
-    bubT = calcBubT(temperatures);
+    // One bubble point temperature per pressure - this is what the BUBBLETEMPERATURES
+    // keyword expects, and what writeOLGAinpFile iterates over.
+    bubT = calcBubT(pressures);
     logger.info("Finished creating arrays");
     initCalc();
   }
@@ -410,11 +825,16 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
    * @param filename a {@link java.lang.String} object
    */
   public void writeOLGAinpFile(String filename) {
-    try (Writer writer = new BufferedWriter(new OutputStreamWriter(
-        new FileOutputStream("C:/Users/Kjetil Raul/Documents/Master KRB/2phaseTables/testFluidKeyCPAExtra.tab"),
-        "utf-8"))) {
-      writer.write("PVTTABLE LABEL = " + "\"" + "NewFluid" + "\"" + "," + "PHASE = TWO" + ",\\" + "\n");
-      writer.write("EOS = " + "\"" + "Equation" + "\"" + ",\\" + "\n");
+    File outputFile = new File(filename);
+    File parent = outputFile.getParentFile();
+    if (parent != null && !parent.exists() && !parent.mkdirs()) {
+      logger.error("Could not create output directory {}", parent.getAbsolutePath());
+      return;
+    }
+    try (FileOutputStream outputStream = new FileOutputStream(outputFile);
+        Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream, "utf-8"))) {
+      writer.write("PVTTABLE LABEL = " + "\"" + fluidLabel + "\"" + "," + "PHASE = TWO" + ",\\" + "\n");
+      writer.write("EOS = " + "\"" + thermoSystem.getModelName() + "\"" + ",\\" + "\n");
 
       writer.write("COMPONENTS = (");
       for (int i = 0; i < molfracs.length; i++) {
@@ -481,6 +901,9 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
       }
       writer.write(") C,\\" + "\n");
 
+      // OLGA requires BUBBLEPRESSURES and BUBBLETEMPERATURES to be paired arrays of
+      // equal length: the bubble point pressure at each grid temperature, and the
+      // grid temperature it belongs to.
       writer.write("BUBBLEPRESSURES = (");
       for (int i = 0; i < temperatures.length; i++) {
         writer.write(bubPLOG[i] + "");
@@ -491,9 +914,9 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
       writer.write(") Pa,\\" + "\n");
 
       writer.write("BUBBLETEMPERATURES = (");
-      for (int i = 0; i < pressures.length; i++) {
-        writer.write(bubTLOG[i] + "");
-        if (i < pressures.length - 1) {
+      for (int i = 0; i < temperatures.length; i++) {
+        writer.write(temperatureLOG[i] + "");
+        if (i < temperatures.length - 1) {
           writer.write(",");
         }
       }
@@ -525,7 +948,7 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
         }
       }
     } catch (IOException ex) {
-      // report
+      logger.error("Failed writing OLGA table to " + filename, ex);
     }
   }
 }

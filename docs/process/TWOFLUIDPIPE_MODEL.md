@@ -946,19 +946,75 @@ Algorithm per macro-step:
 ### Steady-State Solver Tuning
 
 The initial steady-state solve iterates between the transient solver and thermodynamic flashes
-until convergence. Three parameters control this:
+until convergence. Four parameters control this:
 
 | Parameter | Setter | Default | Description |
 |-----------|--------|---------|-------------|
 | Under-relaxation | `setSteadyStateUnderRelaxation(double)` | 0.5 | Update damping factor (0–1); lower = more damping, more stable |
 | Flash interval | `setSteadyStateFlashInterval(int)` | 3 | Re-flash thermodynamics every N iterations; higher = faster but less accurate |
-| Max wall-clock time | `setSteadyStateMaxWallClockTime(double)` | 30 s | Timeout for the SS solver; prevents runaway iterations |
+| Max iterations | `setSteadyStateMaxIterations(int)` | 0 = mesh-scaled | 0 uses `max(100, 20 x sections)`; the sweep moves information about one section per iteration, so a fixed budget silently truncates long, finely-discretised lines |
+| Max wall-clock time | `setSteadyStateMaxWallClockTime(double)` | 300 s | Timeout for the SS solver; prevents runaway iterations |
 
 ```java
 pipe.setSteadyStateUnderRelaxation(0.3);   // More conservative damping
 pipe.setSteadyStateFlashInterval(5);       // Flash every 5th iteration
 pipe.setSteadyStateMaxWallClockTime(60.0); // Allow 60 seconds
 ```
+
+### Always check the steady-state outcome
+
+`run()` does not throw when the steady state fails to settle, so the outcome has to be read back.
+Three independent flags describe it, and a profile is only trustworthy when the first is true:
+
+| Query | Meaning when true |
+|-------|-------------------|
+| `isSteadyStateConverged()` | The sweep met the tolerance and the profile is a solution |
+| `isSteadyStateWallClockLimited()` | The wall-clock guard stopped the sweep early |
+| `isSteadyStatePressureFloorLimited()` | One or more sections rest on the internal 1 bara pressure floor |
+
+```java
+pipe.run();
+if (!pipe.isSteadyStateConverged()) {
+  if (pipe.isSteadyStatePressureFloorLimited()) {
+    throw new IllegalStateException(
+        "The line cannot deliver this rate at this inlet pressure");
+  }
+  throw new IllegalStateException("Steady state did not converge");
+}
+```
+
+**Why the pressure floor matters.** The marching solver clamps every section at 1 bara so it stays
+numerically alive when a line has no deliverability. A profile resting on that clamp is a fixed
+point of the *clamp*, not of the momentum balance: the per-section change falls below tolerance and
+the sweep would otherwise report success on a line that cannot physically deliver the requested
+rate. `isSteadyStatePressureFloorLimited()` makes that case visible, and `isSteadyStateConverged()`
+is withheld. `PipeBeggsAndBrills` throws `Outlet pressure is negative` on the same condition, and
+OLGA aborts with `PRESSURE ABOVE TABLE VALUES`, so all three codes now agree that such a case has
+no solution.
+
+### Direct electrical heating (DEH)
+
+A uniform electrical heat input can be added to the energy equation, in steady state and in
+transient runs, and it works with wall heat transfer switched off:
+
+```java
+pipe.setLength(73845.0);
+pipe.setDirectElectricalHeatingPower(10.0e6);        // W, spread over the pipe length
+// or, equivalently:
+pipe.setDirectElectricalHeatingPowerPerMeter(135.4); // W/m
+```
+
+The power set here is what reaches the fluid, so cable and coating losses must already be deducted.
+The same convention is used by `PipeBeggsAndBrills.setDirectElectricalHeatingPower(double)`, so the
+two models can be compared like for like.
+
+In steady state the segment solution decays toward the wall-loss/DEH **balance temperature**
+
+$$T_\infty = T_{surf} + \frac{q}{U \pi D}$$
+
+rather than toward the surface temperature. This is exact for a uniform source, so the profile
+cannot overshoot the balance temperature — unlike explicit per-increment stepping, which does.
+
 
 ## Validation Status
 
@@ -969,11 +1025,39 @@ not by themselves establish agreement with experiment. Current external evidence
 
 - the public Tengesdal flow-map confusion matrix for the Taitel diagnostic;
 - the public Tengesdal Test 3 pressure, production-cycle, period, and slug-length comparison;
-- Beggs–Brill steady-profile comparisons, which are model-to-model checks rather than experiment.
+- Beggs–Brill steady-profile comparisons, which are model-to-model checks rather than experiment;
+- an OLGA 2025.1 comparison on a 73.8 km subsea gas-condensate export line, summarised below,
+  which is also a model-to-model check.
 
 The public severe-slugging benchmark deliberately retains failed/limited metrics in its assertions
 and documentation. In particular, the present cycle period and slug-length result prevent a claim
 of fully quantitative severe-slugging validation.
+
+### Measured comparison against OLGA 2025.1
+
+Same fluid, rate, geometry, diameter, roughness, U-value and seabed temperature; OLGA driven by a
+source with the arrival pressure secant-iterated until its inlet matched the 200 bara the NeqSim
+models were given. Pressure drop, in bar:
+
+| Case | OLGA | TwoFluidPipe | PipeBeggsAndBrills |
+|------|------|--------------|--------------------|
+| Dry line, 10 MSm3/d | 78.50 | 81.20 (+3.4%) | 125.00 (+59%) |
+| 10 MW direct electrical heating | 88.19 | 81.20 (−7.9%) | 154.19 (+75%) |
+| 15 m3/hr free water | 104.06 | 91.31 (−12.3%) | 143.94 (+38%) |
+
+Two limitations are visible in that table and should be assumed until shown otherwise:
+
+- **Liquid holdup runs 2–4x higher than OLGA** across dry and water-bearing cases (arrival holdup
+  0.064 vs 0.023 dry; 0.119 vs 0.034 with water). The slip closure, not the phase bookkeeping, is
+  responsible: gas/oil/water volume fractions sum correctly and stay in range in every case.
+- **Pressure drop does not always respond to temperature.** Adding 10 MW of heating raised the
+  arrival temperature by 22 K but left the computed pressure drop unchanged, where OLGA moved
+  +12.3% and Beggs–Brill +23.4%. Warmer gas at fixed mass rate is less dense and
+  $\Delta P \sim G^2/\rho$, so a response is expected. Treat pressure drop from a case whose
+  temperature field changes as indicative until this is resolved.
+
+Both observations are model-to-model and were taken at a single grid resolution on one line. They
+are recorded here so the model is not assumed to be OLGA-equivalent.
 
 ### Implemented regression tests
 

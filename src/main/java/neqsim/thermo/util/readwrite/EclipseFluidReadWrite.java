@@ -18,6 +18,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentEos;
+import neqsim.thermo.component.ComponentEosInterface;
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -1772,7 +1774,7 @@ public class EclipseFluidReadWrite {
     writer.write("-- Volume Translation\n");
     writer.write("SSHIFT\n");
     for (int i = 0; i < nComps; i++) {
-      writer.write(String.format(java.util.Locale.US, "   %.6f\n", fluid.getComponent(i).getVolumeCorrectionConst()));
+      writer.write(String.format(java.util.Locale.US, "   %.6f\n", getDimensionlessVolumeShift(fluid, i)));
     }
     writer.write("/\n");
 
@@ -1827,7 +1829,7 @@ public class EclipseFluidReadWrite {
     writer.write("-- Volume translation at surface conditions\n");
     writer.write("SSHIFTS\n");
     for (int i = 0; i < nComps; i++) {
-      writer.write(String.format(java.util.Locale.US, "   %.6f\n", fluid.getComponent(i).getVolumeCorrectionConst()));
+      writer.write(String.format(java.util.Locale.US, "   %.6f\n", getDimensionlessVolumeShift(fluid, i)));
     }
     writer.write("/\n");
 
@@ -1842,6 +1844,33 @@ public class EclipseFluidReadWrite {
       }
       writer.write(lbcLine.toString().trim() + " /\n");
     }
+  }
+
+  /**
+   * Effective dimensionless Peneloux volume shift of a component, in the Eclipse SSHIFT convention v = v_EOS - s * b.
+   *
+   * <p>
+   * The component's own {@code volumeCorrectionConst} is only populated when a shift has been set explicitly.
+   * Characterised TBP and plus fractions instead derive their volume translation from the Rackett compressibility of
+   * the characterisation, so reading the constant back would write SSHIFT = 0 and silently drop the translation.
+   * Dividing the applied volume correction by the covolume recovers the dimensionless shift in both cases, and the
+   * reader reproduces the original molar volume exactly.
+   * </p>
+   *
+   * @param fluid the fluid being written
+   * @param i index of the component
+   * @return the dimensionless volume shift, or zero when the component has no covolume
+   */
+  private static double getDimensionlessVolumeShift(SystemInterface fluid, int i) {
+    ComponentInterface component = fluid.getComponent(i);
+    if (!(component instanceof ComponentEosInterface)) {
+      return component.getVolumeCorrectionConst();
+    }
+    double covolume = ((ComponentEosInterface) component).getb();
+    if (Math.abs(covolume) < 1.0e-12) {
+      return component.getVolumeCorrectionConst();
+    }
+    return component.getVolumeCorrection() / covolume;
   }
 
   /**

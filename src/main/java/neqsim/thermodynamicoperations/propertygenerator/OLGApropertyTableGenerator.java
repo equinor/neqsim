@@ -226,8 +226,12 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicoperations.B
    * @param filename a {@link java.lang.String} object
    */
   public void writeOLGAinpFile(String filename) {
-    try (Writer writer = new BufferedWriter(
-        new OutputStreamWriter(new FileOutputStream("c:/temp/filename.txt"), "utf-8"))) {
+    if (filename == null || filename.trim().isEmpty()) {
+      logger.error("No output file name given for the OLGA property table");
+      return;
+    }
+    try (FileOutputStream outputStream = new FileOutputStream(filename);
+        Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream, "utf-8"))) {
       writer.write("PRESSURE= (");
       for (int i = 0; i < pressures.length; i++) {
         thermoSystem.setPressure(pressures[i]);
@@ -237,7 +241,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicoperations.B
         }
       }
     } catch (IOException ex) {
-      // report
+      logger.error("Failed writing OLGA table to " + filename, ex);
     }
   }
 }

@@ -186,3 +186,66 @@ fluid.getCharacterization().characterisePlusFraction();
 4. **Compositional shift**: Parameters fitted to one composition may fail for depleted fluids
 5. **Forgetting `setMixingRule`**: Must call before accessing kij parameters
 6. **Wrong units**: MW in kg/mol (not g/mol) for `addTBPfraction`
+
+## Mechanics of Applying Tuning (read before writing a regression loop)
+
+### Iterate `getPhases()`, never `getPhase(i)`
+
+`getPhase(i)` resolves through the phase-index map. On a single-phase system
+`getPhase(0)`, `getPhase(1)` and `getPhase(2)` can all return the *same* phase
+object, while other phase objects the flash will later use are never touched.
+Always walk the raw array:
+
+```python
+for phase in fluid.getPhases():
+    if phase is None:          # the array has 6 slots, several are null
+        continue
+    c = phase.getComponent(i)
+    c.setTC(c.getTC() * tc_mult)
+    c.setPC(c.getPC() * pc_mult)
+```
+
+### Regress in the representation you export
+
+Applying parameters fitted on a 40-component characterization to a 22-component
+lumped fluid moved the dew point 12%. Run the regression on the lumped fluid in
+its own right and the lumping error disappears by construction. Round-trip the
+exported E300 file and re-check Psat and density — that is the only proof the
+delivered file is the model you fitted.
+
+### Do not regress a parameter the data cannot see
+
+On a gas condensate, every CME density point is single-phase gas where the heavy
+pseudo-components are ~1 mol%; their Péneloux volume shift moves mixture density
+by <0.02%. A regression drives it to whichever bound it is given while barely
+changing the objective — and that arbitrary value then dominates the *condensate
+liquid* density in the reservoir model. Check the objective across the bound
+range before including a parameter; if it is monotonic to the bound, drop it and
+keep the correlation value.
+
+### Plus-fraction back-out fails on lean gas
+
+Backing MW(C36+) out of the C7+ mass balance works for a black oil but not when
+the plus fraction is 0.001–0.006 mol%: the residual is smaller than the reporting
+precision and the molecular weight comes out negative. Instead keep the Katz SCN
+shape and rescale it with one MW factor and one SG factor to reproduce the
+measured `mw7p` and `den7p` — both factors are simply lab/Katz.
+
+### Saturation-pressure flashes on near-critical fluids
+
+`dewPointPressureFlash()` and `dewPointPressureFlashHC()` can return the initial
+guess plus a small offset, so the "saturation pressure" silently tracks whatever
+start value the regression supplied. Verify against a pressure scan before
+trusting them. A reliable fallback is bisection on the pressure where `TPflash`
+first produces a second phase — but **clone the fluid for every evaluation**,
+because a reused fluid object carries its previous converged K-values into the
+next flash and the answer then depends on the order the bracket is walked.
+Cross-check the result against `calcPTphaseEnvelope`.
+
+### Quantify the data noise floor before chasing residuals
+
+Compare samples that are compositionally near-identical. If two such samples
+report saturation pressures 24% apart, no EOS will fit both; tuning harder just
+fits noise. Report bias and scatter separately, and stop when the scatter matches
+the data's own inconsistency.
+

@@ -998,6 +998,7 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 | Engineering Simulator Foundations | [docs/integration/engineering-simulator-foundations.md](integration/engineering-simulator-foundations) | Isolated deterministic case execution, typed readiness/provenance/uncertainty contracts, coupled relief-blowdown-flare envelopes, and dynamic control/SIS scenario verification |
 | Process-to-Engineering Simulator | [docs/integration/process-to-engineering-simulator.md](integration/process-to-engineering-simulator) | Iterative process/design convergence, discipline sizing modules, designed-process DEXPI export, and review-governed engineering handoff |
 | QRA Integration | [docs/integration/QRA_INTEGRATION_GUIDE.md](integration/QRA_INTEGRATION_GUIDE) | QRA integration |
+| OLGA PVT Table and Hydrate Curve Generation | [docs/integration/olga_pvt_table_generation.md](integration/olga_pvt_table_generation) | Export any NeqSim fluid as an OLGA `.tab` PVT table and hydrate equilibrium curve: two-phase and three-phase generators, absent-phase extrapolation, grid selection, source phase-split conventions, hydrate curve export, and OLGA-run validation |
 
 ### Chapter 47: Process Logic Framework
 

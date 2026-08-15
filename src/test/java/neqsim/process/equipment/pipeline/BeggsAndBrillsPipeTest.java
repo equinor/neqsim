@@ -163,7 +163,11 @@ public class BeggsAndBrillsPipeTest {
     double temperatureOut = pipe.getOutletTemperature() - 273.15;
     Assertions.assertEquals(pressureOut, 13.366143179275166, 1);
     Assertions.assertEquals(temperatureOut, 38.8, 0.1);
-    Assertions.assertEquals(pipe.getFlowRegimeEnum(), PipeBeggsAndBrills.FlowRegime.INTERMITTENT);
+    // At the outlet (13.4 bara) the no-slip liquid fraction is 0.099 and the
+    // mixture Froude number is 792, well above L1 = 157, so the published Beggs
+    // and Brill map gives DISTRIBUTED. The previous INTERMITTENT expectation came
+    // from a distributed-regime boundary that tested L4 instead of L1.
+    Assertions.assertEquals(PipeBeggsAndBrills.FlowRegime.DISTRIBUTED, pipe.getFlowRegimeEnum());
     Assertions.assertEquals(pipe.getOutletSuperficialVelocity(),
         pipe.getSegmentMixtureSuperficialVelocity(pipe.getNumberOfIncrements()), 0.1);
   }

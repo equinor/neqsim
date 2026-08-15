@@ -793,7 +793,7 @@ The `run()` method performs a complete steady-state initialization of the pipeli
 │    └─ Identify liquid accumulation zones                     │
 │                                                              │
 │ 2. runSteadyState()                                          │
-│    ├─ Iterative solver (max 100 iterations)                  │
+│    ├─ Iterative solver (max(100, 20 x sections) iterations)  │
 │    │   ├─ Update flow regimes for all sections               │
 │    │   ├─ Calculate pressure gradient (momentum balance)     │
 │    │   ├─ Update local holdups using drift-flux model        │
@@ -815,6 +815,7 @@ The `run()` method performs a complete steady-state initialization of the pipeli
 - **Iterative convergence:** Pressure and holdup profiles converge simultaneously
 - **Terrain-aware holdups:** Liquid accumulates at low points
 - **Single call:** Establishes initial state for subsequent transient runs
+- **Does not throw on failure:** the outcome must be read back (see below)
 
 **Example:**
 ```java
@@ -824,9 +825,48 @@ pipe.setDiameter(0.3);
 pipe.setNumberOfSections(100);
 pipe.run();  // Steady-state initialization
 
+if (!pipe.isSteadyStateConverged()) {
+  if (pipe.isSteadyStatePressureFloorLimited()) {
+    throw new IllegalStateException(
+        "Line cannot deliver this rate at this inlet pressure");
+  }
+  throw new IllegalStateException("Steady state did not converge");
+}
+
 double[] pressures = pipe.getPressureProfile();
 double[] holdups = pipe.getLiquidHoldupProfile();
 ```
+
+**Checking the outcome.** Three flags describe how the sweep ended, and a profile is only
+trustworthy when the first is true:
+
+| Query | Meaning when true |
+|-------|-------------------|
+| `isSteadyStateConverged()` | The sweep met the 1e-4 tolerance and the profile is a solution |
+| `isSteadyStateWallClockLimited()` | The wall-clock guard (default 300 s) stopped it early |
+| `isSteadyStatePressureFloorLimited()` | One or more sections rest on the internal 1 bara pressure floor |
+
+The marching solver clamps section pressure at 1 bara so it stays numerically alive on a line with
+no deliverability. That clamp is a fixed point of itself: the per-section change falls below
+tolerance and the sweep would otherwise report success on a case that has no physical solution.
+When the floor is touched, `isSteadyStateConverged()` is withheld and
+`isSteadyStatePressureFloorLimited()` is set. `PipeBeggsAndBrills` throws
+`Outlet pressure is negative` on the same condition, and OLGA aborts with
+`PRESSURE ABOVE TABLE VALUES`.
+
+**Direct electrical heating.** A uniform electrical heat input can be added in both steady-state
+and transient runs, and works with wall heat transfer switched off:
+
+```java
+pipe.setDirectElectricalHeatingPower(10.0e6);        // W over the whole length
+pipe.setDirectElectricalHeatingPowerPerMeter(135.4); // or W/m directly
+```
+
+The value is the power delivered *to the fluid*, so cable and coating losses must already be
+deducted. In steady state each segment decays toward the balance temperature
+`T_surface + q / (U * pi * D)` rather than toward the surface temperature, which is exact for a
+uniform source and cannot overshoot. `PipeBeggsAndBrills.setDirectElectricalHeatingPower(double)`
+uses the same convention, so the two models can be compared like for like.
 
 ### Transient Simulation: `runTransient(dt, id)`
 
@@ -1414,6 +1454,27 @@ For applications where empirical accuracy is preferred over mechanistic modeling
 | Heat transfer | Configurable | Built-in |
 | Terrain effects | Elevation profile | Single angle |
 | Best for | Transient, complex terrain | Quick steady-state |
+
+### Known limitations
+
+Measured against OLGA 2025.1 on a 73.8 km subsea gas-condensate export line at matched inlet
+conditions (see [TwoFluidPipe OLGA comparison](two_fluid_model_olga_comparison#measured-comparison-against-olga-20251)):
+
+- **Pressure drop** is within a few per cent of OLGA on a dry line (81.20 vs 78.50 bar) and
+  degrades to about 12% low when free water is present (91.31 vs 104.06 bar). Beggs–Brill is
+  38–75% high on the same cases.
+- **Arrival temperature** tracks OLGA well (6.8 vs 8.4 C dry, 28.9 vs 27.8 C with 10 MW of DEH).
+- **Liquid holdup runs 2–4x OLGA** (0.064 vs 0.023 dry, 0.119 vs 0.034 with free water). The
+  three-phase bookkeeping is sound — gas, oil and water fractions sum to one and stay in range at
+  every node — so the gap is in the slip closure.
+- **Pressure drop does not always respond to a temperature change.** Adding 10 MW of heating raised
+  the arrival temperature 22 K but left the computed pressure drop unchanged, where OLGA moved
+  +12.3%. Treat pressure drop from a case whose temperature field changes as indicative.
+- **Terrain-slug holdup is clamped** at 0.85–0.90 in accumulation zones, so valley inventory is
+  bounded by construction rather than by the momentum balance.
+- The steady-state solve is an under-relaxed fixed-point sweep and can fail to settle on long
+  transmission lines; always check `isSteadyStateConverged()`. The transient solve is a genuine
+  conservative scheme (null-test drift 0.00 bar, closing mass balance).
 
 ## References
 

@@ -718,8 +718,8 @@ public class OLGApropertyTableGeneratorWaterEven extends neqsim.thermodynamicope
      * thermoSystem.setTemperature(temperatures[j]); writer.write(ROG[i][j] + ","); } } writer.write(")"); } catch
      * (IOException ex) { // report } finally { try { } writer.close(); } catch (Exception ex) { } }
      */
-    try (
-        Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("C:/temp/temp.tab"), "utf-8"))) {
+    try (FileOutputStream outputStream = new FileOutputStream(filename);
+        Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream, "utf-8"))) {
       writer.write("'WATER-OPTION ENTROPY NONEQ '" + "\n");
       writer.write(pressures.length + "   " + temperatures.length + "    " + RSWTOB + "\n");
       int Pcounter = 0;
@@ -788,7 +788,7 @@ public class OLGApropertyTableGeneratorWaterEven extends neqsim.thermodynamicope
         }
       }
     } catch (IOException ex) {
-      // report
+      logger.error("Failed writing OLGA table to " + filename, ex);
     }
   }
 
