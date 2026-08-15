@@ -1522,8 +1522,8 @@ public class TPflash extends Flash {
    */
   private boolean shouldRefineSinglePhaseCpaAqueousEndpoint(double waterFeedFraction) {
     String modelName = system.getModelName();
-    if (system.doMultiPhaseCheck() || system.getNumberOfPhases() != 1
-        || !system.hasPhaseType(PhaseType.AQUEOUS) || modelName == null || !modelName.contains("CPA")
+    if (system.doMultiPhaseCheck() || system.getNumberOfPhases() != 1 || !system.hasPhaseType(PhaseType.AQUEOUS)
+        || modelName == null || !modelName.contains("CPA")
         || waterFeedFraction < WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT
         || !isCpaWaterNearSaturation(CPA_WATER_SUPERSATURATION_SCREEN_LIMIT)) {
       return false;
