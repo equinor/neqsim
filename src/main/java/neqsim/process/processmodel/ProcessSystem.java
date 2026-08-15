@@ -1519,17 +1519,9 @@ public class ProcessSystem extends SimulationBaseClass {
         }
       } else if (hasMultiInputEquipment()) {
         // Process has multi-input equipment (Mixer, HeatExchanger, etc.) but no
-        // recycles or adjusters. The graph correctly places multi-input equipment
-        // at levels after all their input producers, so parallel execution of
-        // independent units at earlier levels is safe. Use runParallel which
-        // respects the topological order and Union-Find grouping.
-        try {
-          runParallel(id);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          logger.warn("Parallel execution interrupted, falling back to sequential");
-          runSequential(id);
-        }
+        // recycles or adjusters. Multi-input units can retain phase state between
+        // runs, so use the sequential path to preserve their mass-balance order.
+        runSequential(id);
       } else {
         // Feed-forward process with single-input equipment only. For larger,
         // genuinely wide flowsheets use dataflow scheduling (no level barriers,

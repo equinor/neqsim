@@ -12,6 +12,7 @@ import neqsim.process.util.monitor.MixerResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.thermo.system.SystemSoreideWhitson;
+import neqsim.thermo.system.SystemThermo;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -102,8 +103,13 @@ public class StaticMixer extends Mixer {
     }
     mixedStream.setThermoSystem((streams.get(0).getThermoSystem().clone()));
     mixedStream.getThermoSystem().setNumberOfPhases(2);
-    mixedStream.getThermoSystem().reInitPhaseType();
+    if (mixedStream.getThermoSystem() instanceof SystemThermo) {
+      ((SystemThermo) mixedStream.getThermoSystem()).reInitPhaseInformation();
+    } else {
+      mixedStream.getThermoSystem().reInitPhaseType();
+    }
     mixStream();
+    mixedStream.getThermoSystem().init(0);
     // System.out.println("filan temp " + mixedStream.getTemperature());
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(mixedStream.getThermoSystem());

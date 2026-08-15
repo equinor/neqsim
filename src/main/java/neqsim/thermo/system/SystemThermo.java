@@ -253,7 +253,7 @@ public abstract class SystemThermo implements SystemInterface {
       }
     }
     setTotalNumberOfMolesRaw(getTotalNumberOfMoles() + moles);
-    // TODO: isInitialized = false;
+    isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -275,7 +275,7 @@ public abstract class SystemThermo implements SystemInterface {
     }
 
     setTotalNumberOfMolesRaw(getTotalNumberOfMoles() + moles);
-    // TODO: isInitialized = false;
+    isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -327,7 +327,7 @@ public abstract class SystemThermo implements SystemInterface {
       }
     }
     setTotalNumberOfMolesRaw(getTotalNumberOfMoles() + moles);
-    // TODO: isInitialized = false;
+    isInitialized = false;
   }
 
   /** {@inheritDoc} */
@@ -3611,6 +3611,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void init(int initType) {
+    reconcileTotalMolesWithComponentInventory();
     if (!this.isInitialized) {
       initBeta();
       init_x_y();
@@ -3647,6 +3648,50 @@ public abstract class SystemThermo implements SystemInterface {
             .setx(getPhase(j).getComponent(i).getNumberOfMolesInPhase() / getPhase(j).getNumberOfMolesInPhase());
       }
       getPhase(j).normalize();
+    }
+  }
+
+  /**
+   * Reconciles a stale scalar total with the overall component inventory.
+   *
+   * <p>
+   * Serialized systems can retain the total flow of an upstream fluid after their component inventory has been replaced
+   * by a separated phase. The overall mole fractions are derived from the component moles divided by this scalar total,
+   * so this mismatch creates a non-normalized feed and corrupts the following flash. The correction is only safe when
+   * all active phase slots contain the same feed inventory; a genuinely split multiphase inventory is left untouched.
+   * </p>
+   *
+   */
+  private void reconcileTotalMolesWithComponentInventory() {
+    if (phaseArray == null || numberOfComponents == 0 || numberOfPhases == 0) {
+      return;
+    }
+    double firstPhaseMoles = 0.0;
+    double componentMoles = 0.0;
+    boolean duplicatedPhaseInventory = true;
+    for (int phaseNumber = 0; phaseNumber < numberOfPhases; phaseNumber++) {
+      if (!isPhase(phaseNumber)) {
+        continue;
+      }
+      for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
+        double phaseComponentMoles = getPhase(phaseNumber).getComponent(componentIndex).getNumberOfmoles();
+        componentMoles += phaseComponentMoles;
+        if (phaseNumber == 0) {
+          firstPhaseMoles += phaseComponentMoles;
+        } else if (Math.abs(phaseComponentMoles - getPhase(0).getComponent(componentIndex).getNumberOfmoles()) > 1.0e-12
+            * Math.max(1.0, Math.abs(phaseComponentMoles))) {
+          duplicatedPhaseInventory = false;
+        }
+      }
+    }
+    if (!duplicatedPhaseInventory) {
+      return;
+    }
+    componentMoles = firstPhaseMoles;
+    if (componentMoles > 1.0e-100
+        && Math.abs(componentMoles - totalNumberOfMoles) > 1.0e-12 * Math.max(1.0, componentMoles)) {
+      setTotalNumberOfMolesRaw(componentMoles);
+      isInitialized = false;
     }
   }
 
@@ -5547,6 +5592,7 @@ public abstract class SystemThermo implements SystemInterface {
         addComponent(i, SIval);
       }
     }
+    isInitialized = false;
   }
 
   /** {@inheritDoc} */
