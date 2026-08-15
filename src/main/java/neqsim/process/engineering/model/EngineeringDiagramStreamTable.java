@@ -30,7 +30,7 @@ import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.Severity;
  */
 public final class EngineeringDiagramStreamTable implements Serializable {
   private static final long serialVersionUID = 1000L;
-  public static final String SCHEMA_VERSION = "neqsim_engineering_diagram_stream_table.v1";
+  public static final String SCHEMA_VERSION = "neqsim_engineering_diagram_stream_table.v2";
 
   /** Supported stream-table quantities in deterministic column order. */
   public enum Quantity {
@@ -39,7 +39,9 @@ public final class EngineeringDiagramStreamTable implements Serializable {
     /** Absolute pressure. */
     PRESSURE("pressure"),
     /** Mass-flow rate. */
-    MASS_FLOW("massFlow");
+    MASS_FLOW("massFlow"),
+    /** Mass-specific enthalpy. */
+    SPECIFIC_ENTHALPY("specificEnthalpy");
 
     private final String propertyName;
 

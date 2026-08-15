@@ -58,8 +58,9 @@ String controlledProposalJson = documents.toJson();
 
 Use the overload with a final operating-case ID after a successful process run to retain governed
 stream results in the same controlled snapshot. Temperature is stored in K, absolute pressure in
-bara, and mass flow in kg/s. Each value remains `CALCULATED` and `REVIEW_REQUIRED`, identifies its
-case and source semantic object, and includes simulation-result provenance. The topology-only
+bara, mass flow in kg/s, and mass-specific enthalpy in J/kg. Each value remains `CALCULATED` and
+`REVIEW_REQUIRED`, identifies its case and source semantic object, and includes simulation-result
+provenance. The topology-only
 overloads remain unchanged and do not read live operating values.
 
 ### Governed stream-table companion
@@ -68,8 +69,8 @@ overloads remain unchanged and do not read live operating values.
 operating-case document snapshot. It reads only canonical `LINE` and `CALCULATION` semantic objects;
 it does not read live process objects or add fields to `EngineeringDiagramDocumentSet.toJson()`.
 Every row retains the canonical stream ID, external key, source label, and process area. Temperature,
-absolute pressure, and mass flow retain their explicit unit, quantity basis, engineering state,
-approval state, source calculation ID, and simulation-result provenance.
+absolute pressure, mass flow, and mass-specific enthalpy retain their explicit unit, quantity basis,
+engineering state, approval state, source calculation ID, and simulation-result provenance.
 
 A reviewed `STREAM_NUMBER` designation is preferred as the display identifier and its source
 reference is retained. Without reviewed evidence, the canonical source label remains visible.
@@ -100,10 +101,45 @@ for (EngineeringDiagramStreamTable.Row row : streamTable.getRows()) {
 }
 ```
 
-This first companion is the stream-condition foundation for later heat/material-balance aggregation.
-It does not yet calculate component balances, enthalpy duties, or reconciliation residuals. Building
-the table does not change Classic DOT/Graphviz, native SVG/PDF, DEXPI 2.0 Process exchange, or the
-Proteus/DEXPI P&ID workflow, and it does not promote calculated values to approved design data.
+### Explicit-boundary mass and stream-enthalpy balances
+
+`EngineeringDiagramBalanceTable` aggregates only explicit boundary assignments against a governed
+stream table. Each assignment records a stable balance ID, canonical stream semantic ID, inlet or
+outlet direction, source reference, and `PROPOSED` or `REVIEWED` evidence state. The aggregator never
+guesses direction from drawing topology. Unknown or duplicate assignments, missing values, wrong
+units or bases, negative boundary flow, non-finite results, and source-table losses remain visible as
+structured diagnostics.
+
+```java
+List<EngineeringDiagramBalanceTable.Boundary> boundaries =
+    Arrays.asList(
+        new EngineeringDiagramBalanceTable.Boundary(
+            "BAL-AREA-01",
+            feedStreamId,
+            EngineeringDiagramBalanceTable.Direction.INLET,
+            "project-balance-register:BAL-AREA-01",
+            EngineeringDiagramBalanceTable.EvidenceState.PROPOSED),
+        new EngineeringDiagramBalanceTable.Boundary(
+            "BAL-AREA-01",
+            productStreamId,
+            EngineeringDiagramBalanceTable.Direction.OUTLET,
+            "project-balance-register:BAL-AREA-01",
+            EngineeringDiagramBalanceTable.EvidenceState.PROPOSED));
+EngineeringDiagramBalanceTable balanceTable =
+    EngineeringDiagramBalanceTable.fromStreamTable(streamTable, boundaries);
+```
+
+For each balance, mass residual is inlet mass flow minus outlet mass flow in kg/s. Relative mass
+residual divides that result by the larger absolute inlet or outlet total and is zero when both totals
+are zero. Stream enthalpy flow is `massFlow [kg/s] * specificEnthalpy [J/kg]` in W; its residual is the
+inlet total minus the outlet total, and its relative residual uses the same larger-total denominator.
+It intentionally excludes equipment heat duties and shaft work, so it is not a complete energy
+balance. Component balances,
+reconciliation, tolerances, and approved project boundaries remain later engineering layers.
+
+Building either companion does not change Classic DOT/Graphviz, native SVG/PDF, DEXPI 2.0 Process
+exchange, or the Proteus/DEXPI P&ID workflow. `REVIEWED` boundary evidence does not approve a PFD,
+P&ID, simulation result, balance, or design data.
 
 Canonical source names and carried connection names are retained as source designations. They are
 not silently promoted to project-approved equipment tags or line numbers. Project-entered tags and
@@ -293,7 +329,7 @@ Run the focused regression with:
 ```bash
 ./mvnw -Dtest=ProcessDiagramDocumentSetAdapterTest test
 ./mvnw -Dtest=NativeEngineeringDiagramRendererTest test
-./mvnw -Dtest=EngineeringDiagramStreamTableTest test
+./mvnw -Dtest=EngineeringDiagramStreamTableTest,EngineeringDiagramBalanceTableTest test
 ```
 
 The regression verifies deterministic single- and multi-area output, immutable collections,
