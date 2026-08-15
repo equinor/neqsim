@@ -289,6 +289,9 @@ public class TwoFluidPipe extends Pipeline {
   /** Soil/burial thermal resistance (m²·K/W). */
   private double soilThermalResistance = 0.0;
 
+  /** Direct electrical heating power delivered to the fluid (W/m). */
+  private double directElectricalHeatingPowerPerMeter = 0.0;
+
   /** Multi-layer radial heat-transfer calculator and public configuration template. */
   private MultilayerThermalCalculator thermalCalculator = null;
 
@@ -1415,9 +1418,11 @@ public class TwoFluidPipe extends Pipeline {
         sec.updateStratifiedGeometry();
       }
 
-      // Solve the energy equation whenever either mechanism is active. Joule-Thomson is driven by
-      // the pressure drop, not by the wall, so an adiabatic line must still cool on expansion.
-      if ((enableHeatTransfer && heatTransferCoefficient > 0) || enableJouleThomson) {
+      // Solve the energy equation whenever any thermal mechanism is active. Joule-Thomson is driven
+      // by the pressure drop, not by the wall, so an adiabatic line must still cool on expansion,
+      // and a DEH-heated line must still warm without wall heat transfer.
+      if ((enableHeatTransfer && heatTransferCoefficient > 0) || enableJouleThomson
+          || directElectricalHeatingPowerPerMeter > 0) {
         updateTemperatureProfile(massFlow, area);
       }
 
@@ -1761,7 +1766,7 @@ public class TwoFluidPipe extends Pipeline {
    * Update temperature profile along the pipe accounting for heat transfer.
    *
    * <p>
-   * Steady-state energy balance: m_dot * Cp * dT/dx = -h * π * D * (T - T_surface) - μ_JT * dP/dx
+   * Steady-state energy balance: m_dot * Cp * dT/dx = -h * π * D * (T - T_surface) + q_DEH - μ_JT * dP/dx
    * </p>
    *
    * @param massFlow Total mass flow rate [kg/s]
@@ -1829,27 +1834,33 @@ public class TwoFluidPipe extends Pipeline {
       double muJTlocal = localJouleThomsonCoefficient(0.5 * (sec.getPressure() + P_prev), T_prev, muJT);
       double dT_JT = muJTlocal * dP; // Temperature change due to J-T effect
 
-      // Heat transfer calculation with exponential solution
+      // Heat transfer calculation with exponential solution. Direct electrical heating enters as a
+      // uniform source, which shifts the asymptote the exponential decays towards from the surface
+      // temperature to the wall-loss/DEH balance temperature. Solving it this way is exact for a
+      // constant source and cannot overshoot the balance the way explicit per-segment stepping does.
       double T_new;
+      double T_asymptote = T_surface;
       if (h > 0 && massFlow > 0 && Cp > 0) {
-        // Exponential decay solution for segment:
-        // T(x) = T_surface + (T_inlet - T_surface) * exp(-h*π*D*dx_i / (m_dot*Cp))
+        T_asymptote = T_surface + directElectricalHeatingPowerPerMeter / (h * pipePerimeter);
         double exponent = -h * pipePerimeter * sec.getLength() / (massFlow * Cp);
-        T_new = T_surface + (T_prev - T_surface) * Math.exp(exponent);
+        T_new = T_asymptote + (T_prev - T_asymptote) * Math.exp(exponent);
       } else {
         T_new = T_prev;
+        if (massFlow > 0 && Cp > 0) {
+          T_new += directElectricalHeatingPowerPerMeter * sec.getLength() / (massFlow * Cp);
+        }
       }
 
-      // Bound the heat-exchange term only: wall heat transfer alone can approach the surface
+      // Bound the heat-exchange term only: wall heat transfer alone can approach the balance
       // temperature but never cross it. Joule-Thomson is applied afterwards and is deliberately
       // not bounded by the surface temperature, because expansion cooling can and does take the
       // fluid below ambient - that is what drives subsea hydrate and MDMT exposure.
       if (h > 0) {
-        if (T_prev > T_surface) {
-          T_new = Math.max(T_new, T_surface);
+        if (T_prev > T_asymptote) {
+          T_new = Math.max(T_new, T_asymptote);
           T_new = Math.min(T_new, T_prev);
         } else {
-          T_new = Math.min(T_new, T_surface);
+          T_new = Math.min(T_new, T_asymptote);
           T_new = Math.max(T_new, T_prev);
         }
       }
@@ -1914,6 +1925,7 @@ public class TwoFluidPipe extends Pipeline {
     private double jouleThomsonEnergyJ;
     private double latentHeatEnergyJ;
     private double ambientHeatLossJ;
+    private double directElectricalHeatingEnergyJ;
   }
 
   /**
@@ -1997,6 +2009,7 @@ public class TwoFluidPipe extends Pipeline {
       double sensibleAdvection = calcSensibleAdvectionSource(i, phaseMassFaceFluxes, previousFluidTemperatures, Cp);
       double jouleThomsonSource = calcLocalJouleThomsonSource(i, phaseMassFaceFluxes, Cp, muJT);
       double latentHeatSource = latentHeatEnergyByCellJ[i] / (dt * sec.getLength());
+      double dehSource = directElectricalHeatingPowerPerMeter;
 
       double wallThermalMass = wallMassPerLength * wallHeatCapacity;
       if (wallThermalMass > 0.0) {
@@ -2006,8 +2019,8 @@ public class TwoFluidPipe extends Pipeline {
 
       double fluidMassPerLength = getLocalFluidMassPerLength(sec, fallbackFluidMassPerLength);
       double newFluidTemperature = oldFluidTemperature
-          + (sensibleAdvection - fluidToWallHeat + jouleThomsonSource + latentHeatSource) / (fluidMassPerLength * Cp)
-              * dt;
+          + (sensibleAdvection - fluidToWallHeat + jouleThomsonSource + latentHeatSource + dehSource)
+              / (fluidMassPerLength * Cp) * dt;
       newFluidTemperature = Math.max(newFluidTemperature, 100.0);
       sec.setTemperature(newFluidTemperature);
       updateThermalRiskFlags(i, newFluidTemperature);
@@ -2020,6 +2033,7 @@ public class TwoFluidPipe extends Pipeline {
       energyStep.jouleThomsonEnergyJ += jouleThomsonSource * dt * cellLength;
       energyStep.latentHeatEnergyJ += latentHeatEnergyByCellJ[i];
       energyStep.ambientHeatLossJ += wallToAmbientHeat * dt * cellLength;
+      energyStep.directElectricalHeatingEnergyJ += dehSource * dt * cellLength;
     }
     return energyStep;
   }
@@ -2207,9 +2221,11 @@ public class TwoFluidPipe extends Pipeline {
       double sensibleAdvection = calcSensibleAdvectionSource(i, phaseMassFaceFluxes, previousFluidTemperatures, Cp);
       double jouleThomsonSource = calcLocalJouleThomsonSource(i, phaseMassFaceFluxes, Cp, muJT);
       double latentHeatSource = latentHeatEnergyByCellJ[i] / (dt * sec.getLength());
+      double dehSource = directElectricalHeatingPowerPerMeter;
       double fluidMassPerLength = getLocalFluidMassPerLength(sec, fallbackFluidMassPerLength);
       double newFluidTemperature = oldFluidTemperature
-          + (sensibleAdvection - heatLoss + jouleThomsonSource + latentHeatSource) / (fluidMassPerLength * Cp) * dt;
+          + (sensibleAdvection - heatLoss + jouleThomsonSource + latentHeatSource + dehSource)
+              / (fluidMassPerLength * Cp) * dt;
 
       newFluidTemperature = Math.max(newFluidTemperature, 100.0);
       sec.setTemperature(newFluidTemperature);
@@ -2229,6 +2245,7 @@ public class TwoFluidPipe extends Pipeline {
       energyStep.jouleThomsonEnergyJ += jouleThomsonSource * dt * cellLength;
       energyStep.latentHeatEnergyJ += latentHeatEnergyByCellJ[i];
       energyStep.ambientHeatLossJ += ambientHeatLoss * dt * cellLength;
+      energyStep.directElectricalHeatingEnergyJ += dehSource * dt * cellLength;
     }
     return energyStep;
   }
@@ -3679,6 +3696,7 @@ public class TwoFluidPipe extends Pipeline {
     double jouleThomsonEnergyJ = 0.0;
     double latentHeatEnergyJ = 0.0;
     double ambientHeatLossJ = 0.0;
+    double directElectricalHeatingEnergyJ = 0.0;
     boolean thermalEnergyTracked = false;
     double acceptedElapsedTime = 0.0;
     int acceptedSubsteps = 0;
@@ -3738,7 +3756,7 @@ public class TwoFluidPipe extends Pipeline {
       // 3. Calculate RHS and advance solution
       final double dtFinal = dtActual;
       final boolean captureThermalStageFluxes = enableHeatTransfer && heatTransferCoefficient > 0.0
-          || componentTransportEnabled;
+          || componentTransportEnabled || directElectricalHeatingPowerPerMeter > 0.0;
       final boolean captureComponentStageFluxes = componentTransportEnabled;
       final boolean capturePhaseStageTerms = captureThermalStageFluxes || captureComponentStageFluxes;
       final List<TwoFluidConservationEquations.MassBalanceRate> stageMassBalanceRates = new ArrayList<>();
@@ -3968,6 +3986,7 @@ public class TwoFluidPipe extends Pipeline {
         jouleThomsonEnergyJ += energyStep.jouleThomsonEnergyJ;
         latentHeatEnergyJ += energyStep.latentHeatEnergyJ;
         ambientHeatLossJ += energyStep.ambientHeatLossJ;
+        directElectricalHeatingEnergyJ += energyStep.directElectricalHeatingEnergyJ;
         thermalEnergyTracked = true;
       }
 
@@ -3982,7 +4001,7 @@ public class TwoFluidPipe extends Pipeline {
     if (thermalEnergyTracked) {
       lastThermalEnergyBalanceReport = new TwoFluidThermalEnergyBalanceReport(acceptedElapsedTime, acceptedSubsteps,
           fluidEnergyChangeJ, wallEnergyChangeJ, sensibleAdvectionEnergyJ, jouleThomsonEnergyJ, latentHeatEnergyJ,
-          ambientHeatLossJ);
+          ambientHeatLossJ, directElectricalHeatingEnergyJ);
     }
     if (componentTransportEnabled) {
       lastComponentConservationReport = componentTransport.createReport(acceptedElapsedTime, acceptedSubsteps,
@@ -6674,6 +6693,78 @@ public class TwoFluidPipe extends Pipeline {
    */
   public double getSurfaceTemperature() {
     return surfaceTemperature;
+  }
+
+  /**
+   * Set the direct electrical heating (DEH) power delivered to the fluid, distributed uniformly over the pipe length.
+   *
+   * <p>
+   * DEH passes current through the pipe wall to keep the fluid above the hydrate or wax formation temperature. The
+   * power set here is the electrical power actually reaching the fluid, so cable and coating losses must already be
+   * deducted. It is added directly to the fluid energy equation, independently of the wall heat loss it counteracts,
+   * and therefore bypasses the wall thermal mass in transient runs. The same convention is used by
+   * {@link PipeBeggsAndBrills#setDirectElectricalHeatingPower(double)}, so the two models can be compared
+   * like-for-like. DEH is active in both steady-state and transient runs, and also when wall heat transfer is off.
+   * </p>
+   *
+   * @param power total DEH power delivered to the fluid in W, non-negative
+   * @throws IllegalArgumentException if power is negative or the pipe length is not positive
+   */
+  public void setDirectElectricalHeatingPower(double power) {
+    if (power < 0) {
+      throw new IllegalArgumentException("DEH power must be non-negative, got: " + power);
+    }
+    if (!Double.isFinite(length) || length <= 0) {
+      throw new IllegalArgumentException("Pipe length must be set before the total DEH power");
+    }
+    this.directElectricalHeatingPowerPerMeter = power / length;
+    if (this.directElectricalHeatingPowerPerMeter > 0) {
+      this.includeEnergyEquation = true;
+      if (equations != null) {
+        equations.setIncludeEnergyEquation(true);
+      }
+    }
+  }
+
+  /**
+   * Set the direct electrical heating (DEH) power per metre of pipe.
+   *
+   * @param powerPerMeter DEH power delivered to the fluid in W/m, non-negative
+   * @throws IllegalArgumentException if powerPerMeter is negative
+   * @see #setDirectElectricalHeatingPower(double)
+   */
+  public void setDirectElectricalHeatingPowerPerMeter(double powerPerMeter) {
+    if (powerPerMeter < 0) {
+      throw new IllegalArgumentException("DEH power per metre must be non-negative, got: " + powerPerMeter);
+    }
+    this.directElectricalHeatingPowerPerMeter = powerPerMeter;
+    if (powerPerMeter > 0) {
+      this.includeEnergyEquation = true;
+      if (equations != null) {
+        equations.setIncludeEnergyEquation(true);
+      }
+    }
+  }
+
+  /**
+   * Get the direct electrical heating (DEH) power per metre of pipe.
+   *
+   * @return DEH power delivered to the fluid in W/m, zero when DEH is not used
+   */
+  public double getDirectElectricalHeatingPowerPerMeter() {
+    return directElectricalHeatingPowerPerMeter;
+  }
+
+  /**
+   * Get the total direct electrical heating (DEH) power over the pipe length.
+   *
+   * @return total DEH power delivered to the fluid in W, zero when DEH is not used or the length is unset
+   */
+  public double getDirectElectricalHeatingPower() {
+    if (!Double.isFinite(length)) {
+      return 0.0;
+    }
+    return directElectricalHeatingPowerPerMeter * length;
   }
 
   /**
