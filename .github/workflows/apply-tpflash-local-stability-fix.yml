@@ -1,0 +1,44 @@
+name: Apply TPflash local stability fix
+
+on:
+  push:
+    branches:
+      - fix/tpflash-local-stability-current
+
+permissions:
+  contents: write
+
+jobs:
+  patch-source:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/tpflash-local-stability-current
+          fetch-depth: 0
+
+      - name: Apply exact TPmultiflash guard
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/main/java/neqsim/thermodynamicoperations/flashops/TPmultiflash.java')
+          text = path.read_text(encoding='utf-8')
+          old = '    boolean skipWilsonKTrials = (maxAbsLogK < 0.01);'
+          new = '    boolean skipWilsonKTrials = !system.doEnhancedMultiPhaseCheck() || (maxAbsLogK < 0.01);'
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected exactly one target line, found {text.count(old)}')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+          git rm .github/workflows/apply-tpflash-local-stability-fix.yml
+
+      - name: Commit source-only result
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/main/java/neqsim/thermodynamicoperations/flashops/TPmultiflash.java
+          git commit -m 'fix(flash): gate Wilson trials behind enhanced multiphase check'
+          git push origin HEAD:fix/tpflash-local-stability-current
