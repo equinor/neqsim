@@ -110,6 +110,19 @@ public class TwoFluidConservationEquations implements Serializable {
   private boolean enableWaterOilSlip = true;
 
   /**
+   * Enable the non-conservative holdup-gradient momentum term, including the interfacial pressure correction that keeps
+   * the two-fluid system hyperbolic.
+   */
+  private boolean enableInterfacialPressure = true;
+
+  /**
+   * Interfacial pressure coefficient delta in the Bestion closure. The two-fluid system has real characteristics for
+   * delta greater than or equal to one; a value slightly above one leaves margin. Reference: Bestion, D. (1990), "The
+   * physical closure laws in the CATHARE code", Nuclear Engineering and Design 124, 229-245.
+   */
+  private double interfacialPressureCoefficient = 1.2;
+
+  /**
    * Enable virtual mass force term in momentum equations. The virtual mass force accounts for the inertia of the
    * displaced phase during rapid acceleration/deceleration. Reference: Drew, D.A. and Lahey, R.T. (1987), "The virtual
    * mass and lift force on a sphere in rotating and straining inviscid flow", Int. J. Multiphase Flow.
@@ -261,6 +274,7 @@ public class TwoFluidConservationEquations implements Serializable {
       }
     }
 
+    applyInterfacialPressure(sections, dUdt);
     applyVirtualMassCoupling(sections, dUdt);
 
     double[] inletMassFlow = { inletFlux[IDX_GAS_MASS], inletFlux[IDX_OIL_MASS], inletFlux[IDX_WATER_MASS] };
@@ -866,6 +880,137 @@ public class TwoFluidConservationEquations implements Serializable {
   }
 
   /**
+   * Apply the non-conservative holdup-gradient momentum term.
+   *
+   * <p>
+   * The momentum flux carries the phase pressure contribution as {@code alpha_k * p * A}, so its divergence produces
+   * {@code p * A * d(alpha_k)/dx} on top of the physical {@code alpha_k * A * dp/dx}. That extra term is spurious and
+   * must be cancelled. Cancelling it alone would leave the classical two-fluid system, which has complex
+   * characteristics and is ill-posed: short wavelengths grow without bound, which shows up as sustained phase backflow
+   * in liquid-rich flow. The standard remedy is to retain an interfacial pressure difference
+   * {@code delta_p_i = p - p_i} in the same term, giving
+   * </p>
+   *
+   * <pre>
+   * S_k += (p - delta_p_i) * A * d(alpha_k) / dx
+   * </pre>
+   *
+   * <p>
+   * with the Bestion closure {@code delta_p_i = delta * rho_g * rho_l * (u_g - u_l)^2 / (alpha_g * rho_l + alpha_l *
+   * rho_g)}. Because the phase fractions sum to one their gradients sum to zero, so the total momentum added over the
+   * three phases is exactly zero and the scheme stays conservative.
+   * </p>
+   *
+   * @param sections current stage state
+   * @param dUdt complete uncoupled conservative-variable rates, modified in place
+   */
+  void applyInterfacialPressure(TwoFluidSection[] sections, double[][] dUdt) {
+    if (!enableInterfacialPressure) {
+      return;
+    }
+    int nCells = sections.length;
+    if (nCells < 2) {
+      return;
+    }
+
+    for (int i = 0; i < nCells; i++) {
+      TwoFluidSection sec = sections[i];
+      double area = sec.getArea();
+      double pressure = sec.getPressure();
+      if (!(area > 0.0) || !(pressure > 0.0)) {
+        continue;
+      }
+
+      // Central difference on the interior, one-sided at the ends.
+      int left = Math.max(0, i - 1);
+      int right = Math.min(nCells - 1, i + 1);
+      double span = 0.0;
+      for (int k = left; k < right; k++) {
+        span += 0.5 * (sections[k].getLength() + sections[k + 1].getLength());
+      }
+      if (!(span > 0.0)) {
+        continue;
+      }
+
+      double dAlphaG = (sections[right].getGasHoldup() - sections[left].getGasHoldup()) / span;
+      double dAlphaO = (sections[right].getOilHoldup() - sections[left].getOilHoldup()) / span;
+      double dAlphaW = (sections[right].getWaterHoldup() - sections[left].getWaterHoldup()) / span;
+
+      double deltaPi = calcInterfacialPressureDifference(sec);
+      double factor = (pressure - deltaPi) * area;
+
+      dUdt[i][IDX_GAS_MOMENTUM] += factor * dAlphaG;
+      if (enableWaterOilSlip && NUM_EQUATIONS == 7) {
+        dUdt[i][IDX_OIL_MOMENTUM] += factor * dAlphaO;
+        dUdt[i][IDX_WATER_MOMENTUM] += factor * dAlphaW;
+      } else {
+        dUdt[i][IDX_OIL_MOMENTUM] += factor * (dAlphaO + dAlphaW);
+      }
+    }
+  }
+
+  /**
+   * Get the interfacial pressure difference {@code p - p_i} from the Bestion closure.
+   *
+   * <p>
+   * The characteristics of the two-fluid system are real when {@code p - p_i} is at least
+   * {@code alpha_g * alpha_l * rho_g * rho_l * (u_g - u_l)^2 / (alpha_g * rho_l + alpha_l * rho_g)}, so the coefficient
+   * is that critical value scaled by delta. The {@code alpha_g * alpha_l} factor makes the term vanish in both
+   * single-phase limits, where no interfacial pressure exists.
+   * </p>
+   *
+   * @param sec pipe section to evaluate
+   * @return interfacial pressure difference in pascals, never negative
+   */
+  double calcInterfacialPressureDifference(TwoFluidSection sec) {
+    double alphaG = Math.max(0.0, Math.min(1.0, sec.getGasHoldup()));
+    double alphaL = Math.max(0.0, Math.min(1.0, sec.getLiquidHoldup()));
+    double rhoG = sec.getGasDensity();
+    double rhoL = sec.getLiquidDensity();
+    if (!(rhoG > 0.0) || !(rhoL > 0.0) || alphaG <= 0.0 || alphaL <= 0.0) {
+      return 0.0;
+    }
+    double mixed = alphaG * rhoL + alphaL * rhoG;
+    if (!(mixed > 0.0)) {
+      return 0.0;
+    }
+    double slip = sec.getGasVelocity() - sec.getLiquidVelocity();
+    double deltaPi = interfacialPressureCoefficient * alphaG * alphaL * rhoG * rhoL * slip * slip / mixed;
+    return Double.isFinite(deltaPi) ? Math.max(0.0, deltaPi) : 0.0;
+  }
+
+  /**
+   * Get the void-wave speed introduced by the interfacial pressure term.
+   *
+   * <p>
+   * This is the extra characteristic speed relative to the mixture velocity, and it must be included in the CFL limit
+   * once the term is active.
+   * </p>
+   *
+   * @param sec pipe section to evaluate
+   * @return void-wave speed in m/s, never negative
+   */
+  public double calcVoidWaveSpeed(TwoFluidSection sec) {
+    if (!enableInterfacialPressure) {
+      return 0.0;
+    }
+    double alphaG = Math.max(0.0, Math.min(1.0, sec.getGasHoldup()));
+    double alphaL = Math.max(0.0, Math.min(1.0, sec.getLiquidHoldup()));
+    double rhoG = sec.getGasDensity();
+    double rhoL = sec.getLiquidDensity();
+    if (!(rhoG > 0.0) || !(rhoL > 0.0) || alphaG <= 0.0 || alphaL <= 0.0) {
+      return 0.0;
+    }
+    double mixed = alphaG * rhoL + alphaL * rhoG;
+    if (!(mixed > 0.0)) {
+      return 0.0;
+    }
+    double deltaPi = calcInterfacialPressureDifference(sec);
+    double speed = Math.sqrt(Math.max(0.0, deltaPi / mixed));
+    return Double.isFinite(speed) ? speed : 0.0;
+  }
+
+  /**
    * Apply the local, stage-pure virtual-mass momentum coupling.
    *
    * <p>
@@ -1381,6 +1526,37 @@ public class TwoFluidConservationEquations implements Serializable {
 
   public void setIncludeMassTransfer(boolean includeMassTransfer) {
     this.includeMassTransfer = includeMassTransfer;
+  }
+
+  /** @return true when the holdup-gradient and interfacial pressure momentum term is applied */
+  public boolean isEnableInterfacialPressure() {
+    return enableInterfacialPressure;
+  }
+
+  /**
+   * Enable or disable the holdup-gradient momentum term with its interfacial pressure correction.
+   *
+   * @param enableInterfacialPressure true to apply the term
+   */
+  public void setEnableInterfacialPressure(boolean enableInterfacialPressure) {
+    this.enableInterfacialPressure = enableInterfacialPressure;
+  }
+
+  /** @return interfacial pressure coefficient delta */
+  public double getInterfacialPressureCoefficient() {
+    return interfacialPressureCoefficient;
+  }
+
+  /**
+   * Set the interfacial pressure coefficient delta. Values below one leave the system ill-posed.
+   *
+   * @param interfacialPressureCoefficient non-negative finite coefficient
+   */
+  public void setInterfacialPressureCoefficient(double interfacialPressureCoefficient) {
+    if (!Double.isFinite(interfacialPressureCoefficient) || interfacialPressureCoefficient < 0.0) {
+      throw new IllegalArgumentException("Interfacial pressure coefficient must be finite and non-negative");
+    }
+    this.interfacialPressureCoefficient = interfacialPressureCoefficient;
   }
 
   public void setThermodynamicCoupling(ThermodynamicCoupling thermodynamicCoupling) {

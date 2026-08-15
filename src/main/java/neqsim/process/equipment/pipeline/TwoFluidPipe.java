@@ -640,6 +640,12 @@ public class TwoFluidPipe extends Pipeline {
   private static final double SS_DENSITY_COUPLING_PRESSURE_FRACTION = 0.01;
 
   /**
+   * Upper bound on the oil-over-water slip ratio {@code v_oil / v_water} used to close the three-phase holdup split.
+   * Beyond roughly this ratio the layers no longer behave as a co-current stratified pair.
+   */
+  private static final double MAX_OIL_WATER_SLIP_RATIO = 4.0;
+
+  /**
    * Set when the last steady-state initialization was stopped by the wall-clock guard.
    *
    * <p>
@@ -918,8 +924,8 @@ public class TwoFluidPipe extends Pipeline {
         rhoWater = inletFluid.getPhase("aqueous").getDensity("kg/m3");
         muOil = inletFluid.getPhase("oil").getViscosity("kg/msec");
         muWater = inletFluid.getPhase("aqueous").getViscosity("kg/msec");
-        double volOil = inletFluid.getPhase("oil").getVolume("m3");
-        double volWater = inletFluid.getPhase("aqueous").getVolume("m3");
+        double volOil = phaseVolumetricFlow(inletFluid, "oil");
+        double volWater = phaseVolumetricFlow(inletFluid, "aqueous");
         double volLiquid = volOil + volWater;
 
         // Water cut = water volume / total liquid volume
@@ -1005,15 +1011,15 @@ public class TwoFluidPipe extends Pipeline {
 
       // Calculate holdup from volumetric phase fractions
       if (hasGas) {
-        double volGas = inletFluid.getPhase("gas").getVolume("m3");
-        double volTotal = inletFluid.getVolume("m3");
+        double volGas = phaseVolumetricFlow(inletFluid, "gas");
+        double volTotal = volGas + phaseVolumetricFlow(inletFluid, "oil") + phaseVolumetricFlow(inletFluid, "aqueous");
         alphaG = volGas / volTotal;
         alphaL = 1.0 - alphaG;
       } else if (hasOil && hasWater) {
         // Oil-water flow (no gas) - treat as two-phase liquid-liquid flow
         // alphaG represents oil (lighter liquid), alphaL represents water (heavier)
-        double volOil = inletFluid.getPhase("oil").getVolume("m3");
-        double volWater = inletFluid.getPhase("aqueous").getVolume("m3");
+        double volOil = phaseVolumetricFlow(inletFluid, "oil");
+        double volWater = phaseVolumetricFlow(inletFluid, "aqueous");
         double volTotal = volOil + volWater;
         // Use gas holdup as oil fraction, liquid holdup as water fraction for oil-water
         alphaG = 0.0; // No gas
@@ -1100,6 +1106,7 @@ public class TwoFluidPipe extends Pipeline {
         sec.setWaterDensity(rhoWater);
         sec.setOilViscosity(muOil);
         sec.setWaterViscosity(muWater);
+        sec.setInputWaterVolumeFraction(inletWaterCut);
         sec.setWaterCut(inletWaterCut);
         sec.setOilFractionInLiquid(inletOilFraction);
 
@@ -1121,6 +1128,7 @@ public class TwoFluidPipe extends Pipeline {
         sec.setWaterViscosity(muL);
         sec.setOilDensity(rhoL); // Dummy value, no oil present
         sec.setOilViscosity(muL);
+        sec.setInputWaterVolumeFraction(1.0);
         sec.setWaterCut(1.0);
         sec.setOilFractionInLiquid(0.0);
 
@@ -1136,6 +1144,7 @@ public class TwoFluidPipe extends Pipeline {
         sec.setOilViscosity(muL);
         sec.setWaterDensity(1000.0); // Dummy value, no water present
         sec.setWaterViscosity(1e-3);
+        sec.setInputWaterVolumeFraction(0.0);
         sec.setWaterCut(0.0);
         sec.setOilFractionInLiquid(1.0);
 
@@ -1615,10 +1624,13 @@ public class TwoFluidPipe extends Pipeline {
             liqMassContrib += massContrib;
           }
 
-          // Track volumes for water/oil split calculation
-          volTotal += flash.getPhase(p).getVolume("m3");
+          // Track volumetric flows for water/oil split calculation. Density-consistent,
+          // so the split is not biased by the equation-of-state volume shift.
+          double phaseDensity = flash.getPhase(p).getDensity("kg/m3");
+          double phaseVolFlow = phaseDensity > 0.0 ? flash.getPhase(p).getFlowRate("kg/sec") / phaseDensity : 0.0;
+          volTotal += phaseVolFlow;
           if (!phaseType.equalsIgnoreCase("gas")) {
-            volLiq += flash.getPhase(p).getVolume("m3");
+            volLiq += phaseVolFlow;
           }
         }
 
@@ -1654,8 +1666,11 @@ public class TwoFluidPipe extends Pipeline {
         if (volTotal > 0 && volLiq > 0) {
           // Update water/oil split if both are present (preserve total liquid holdup)
           if (hasOil && hasWater) {
-            double volOil = flash.getPhase("oil").getVolume("m3");
-            double volWater = flash.getPhase("aqueous").getVolume("m3");
+            double volOil = phaseVolumetricFlow(flash, "oil");
+            double volWater = phaseVolumetricFlow(flash, "aqueous");
+            // Transported fraction. The in-situ split is closed against it in
+            // updateWaterOilHoldups, which may differ from it through slip.
+            sec.setInputWaterVolumeFraction(volWater / (volOil + volWater));
             double waterCut = volWater / volLiq;
             sec.setWaterCut(waterCut);
             sec.setOilFractionInLiquid(1.0 - waterCut);
@@ -1666,12 +1681,14 @@ public class TwoFluidPipe extends Pipeline {
             sec.setOilHoldup(existingAlphaL * (1.0 - waterCut));
           } else if (hasWater && !hasOil) {
             // Gas + water only - all liquid is water
+            sec.setInputWaterVolumeFraction(1.0);
             sec.setWaterCut(1.0);
             sec.setOilFractionInLiquid(0.0);
             sec.setWaterHoldup(sec.getLiquidHoldup());
             sec.setOilHoldup(0.0);
           } else if (hasOil && !hasWater) {
             // Gas + oil only - all liquid is oil
+            sec.setInputWaterVolumeFraction(0.0);
             sec.setWaterCut(0.0);
             sec.setOilFractionInLiquid(1.0);
             sec.setWaterHoldup(0.0);
@@ -3482,34 +3499,38 @@ public class TwoFluidPipe extends Pipeline {
   private void updateWaterOilHoldups(TwoFluidSection sec, TwoFluidSection prev, double alphaL, double area) {
     double rhoOil = sec.getOilDensity();
     double rhoWater = sec.getWaterDensity();
-    double muOil = sec.getOilViscosity();
     double g = 9.81;
     double inclination = sec.getInclination();
     double sinTheta = Math.sin(inclination);
     double deltaRho = rhoWater - rhoOil; // Positive: water is heavier
 
-    // Get previous water cut for continuity
-    double prevWaterCut = (prev != null) ? prev.getWaterCut() : sec.getWaterCut();
+    // Transported (no-slip) water volume fraction. This is the conservation basis: it comes
+    // from the local flash, so it follows condensation, and it must not be modified here.
+    double lambdaW = sec.getInputWaterVolumeFraction();
+    if (lambdaW <= 0.0 && prev != null) {
+      lambdaW = prev.getInputWaterVolumeFraction();
+    }
+    lambdaW = Math.max(0.0, Math.min(1.0, lambdaW));
 
     // Get liquid velocity for stratification assessment
     double vL = sec.getLiquidVelocity();
 
-    // ========== ENHANCED: Low-Velocity Water Stratification Model ==========
-    // At low liquid velocities, water (denser phase) tends to segregate and accumulate
-    // at the pipe bottom in stratified layers, increasing effective water holdup locally.
-    //
-    // This is critical for detecting liquid accumulation in pipelines with water
-    // content at low flow rates.
-    double waterCut = prevWaterCut;
+    // ========== Low-Velocity Water Stratification Model ==========
+    // At low liquid velocities the denser water segregates towards the pipe bottom and
+    // travels slower than the oil. The in-situ water holdup fraction is then LARGER than
+    // the transported water fraction. That effect is expressed here as an oil/water slip
+    // ratio S = v_oil / v_water >= 1, so the holdup split can be closed on the phase mass
+    // balance instead of by scaling the water cut directly (which creates water).
 
     // Calculate liquid Froude number for stratification assessment
     // Fr_L = v_L / sqrt(g * D * Δρ/ρ_L)
-    double effectiveRhoL = waterCut * rhoWater + (1.0 - waterCut) * rhoOil;
+    double effectiveRhoL = lambdaW * rhoWater + (1.0 - lambdaW) * rhoOil;
     double liquidFroude = vL / Math.sqrt(g * diameter * Math.abs(deltaRho) / effectiveRhoL + 1e-10);
 
     // Stratification enhancement factor: significant below Fr_L ~ 2
     double stratificationFroude = 2.0;
     double stratificationFactor = 1.0;
+    double slipRatio = 1.0;
 
     if (liquidFroude < stratificationFroude && deltaRho > 10.0 && alphaL > 0.01) {
       // Low velocity stratified flow - water segregates to bottom
@@ -3536,14 +3557,24 @@ public class TwoFluidPipe extends Pipeline {
         stratificationFactor *= 1.0 + 0.5 * sinTheta;
       }
 
-      // Apply stratification enhancement to water cut
-      // This represents local water accumulation due to settling
-      double enhancedWaterCut = prevWaterCut * stratificationFactor;
-      enhancedWaterCut = Math.min(0.95, enhancedWaterCut); // Physical limit
-
-      // Blend with upstream value for numerical stability
-      waterCut = 0.7 * prevWaterCut + 0.3 * enhancedWaterCut;
+      // Apply the stratification tendency as an oil-over-water slip ratio. A factor of 1
+      // means no segregation; larger values mean the water lags further behind the oil.
+      slipRatio = stratificationFactor;
     }
+
+    // Oil/water drift is only meaningful when both liquids are actually present and the
+    // liquid layer is thick enough to stratify.
+    if (!isWaterOilSlipEnabled() || deltaRho <= 0.0 || alphaL <= 0.02 || lambdaW <= 1.0e-6 || lambdaW >= 1.0 - 1.0e-6) {
+      slipRatio = 1.0;
+    }
+    slipRatio = Math.max(1.0, Math.min(MAX_OIL_WATER_SLIP_RATIO, slipRatio));
+
+    // Close the split on the phase mass balance. With q_w/(q_w + q_o) = lambdaW and
+    // S = v_o/v_w, requiring rho_k*alpha_k*A*v_k to reproduce the transported phase flows
+    // gives alpha_w = alpha_L * S*lambdaW / ((1 - lambdaW) + S*lambdaW). At S = 1 this is
+    // the no-slip split, so the previous behaviour is recovered exactly when slip is off.
+    double denom = (1.0 - lambdaW) + slipRatio * lambdaW;
+    double waterCut = denom > 0.0 ? slipRatio * lambdaW / denom : lambdaW;
 
     // Exact oil-only and water-only states are valid conservative limits. Denominator
     // regularization belongs in closures and must not seed the absent liquid phase.
@@ -3563,51 +3594,20 @@ public class TwoFluidPipe extends Pipeline {
     sec.setWaterMassPerLength(alphaW * rhoWater * area);
     sec.setOilMassPerLength(alphaO * rhoOil * area);
 
-    // Calculate water-oil velocity slip
-    // In steady state, conservation of mass gives:
-    // m_dot_water = rho_w * alpha_w * A * v_w (constant)
-    // m_dot_oil = rho_o * alpha_o * A * v_o (constant)
-    // But with slip, v_w != v_o
-
-    // Note: vL already defined above for stratification assessment
+    // Phase velocities follow from the same mass balance that set the holdups, so
+    // rho_k*alpha_k*A*v_k reproduces the transported phase flows by construction.
+    double qLiquid = alphaL * vL;
     double vOil = vL;
     double vWater = vL;
-
-    if (isWaterOilSlipEnabled() && deltaRho > 0 && alphaL > 0.02 && alphaW > 0.005 && alphaO > 0.005) {
-      // Calculate slip velocity based on density difference and inclination
-      // Use simplified drift-flux model for oil-water
-      double dropletDiameter = 0.001; // 1 mm average droplet (reduced from 2mm)
-      double stokesSettling = deltaRho * g * dropletDiameter * dropletDiameter / (18 * muOil);
-
-      // Limit slip to a fraction of liquid velocity (physical constraint)
-      // In turbulent flow, slip is limited by turbulent mixing
-      double maxSlip = 0.3 * vL; // Maximum 30% of liquid velocity
-      stokesSettling = Math.min(stokesSettling, maxSlip);
-
-      // Slip is enhanced in inclined flow, but moderated
-      double slipEnhancement = 1.0;
-      if (Math.abs(sinTheta) > 0.01) {
-        // In inclined flow, slip is enhanced by gravity component
-        slipEnhancement = 1.0 + 0.3 * Math.abs(sinTheta);
-      }
-
-      double slipVelocity = stokesSettling * slipEnhancement;
-
-      // In uphill flow: water slips back (slower than oil)
-      // In downhill flow: water moves ahead (faster than oil due to density)
-      if (sinTheta > 0) {
-        // Uphill: oil faster, water slower
-        vWater = vL - slipVelocity * (1.0 - waterCut);
-        vOil = vL + slipVelocity * waterCut;
-      } else if (sinTheta < 0) {
-        // Downhill: water faster (gravity pulls heavier phase down), oil slower
-        vWater = vL + slipVelocity * (1.0 - waterCut);
-        vOil = vL - slipVelocity * waterCut;
-      }
-
-      // Ensure velocities stay positive for forward flow
-      vWater = Math.max(0.1 * vL, vWater);
-      vOil = Math.max(0.1 * vL, vOil);
+    if (alphaW > 1.0e-9 && alphaO > 1.0e-9) {
+      vWater = qLiquid * lambdaW / alphaW;
+      vOil = qLiquid * (1.0 - lambdaW) / alphaO;
+    } else if (alphaW > 1.0e-9) {
+      vWater = qLiquid / alphaW;
+      vOil = 0.0;
+    } else if (alphaO > 1.0e-9) {
+      vOil = qLiquid / alphaO;
+      vWater = 0.0;
     }
 
     sec.setOilVelocity(vOil);
@@ -4176,6 +4176,9 @@ public class TwoFluidPipe extends Pipeline {
       double gasSpeed = Math.abs(sec.getGasVelocity()) + sec.getGasSoundSpeed();
       double liqSpeed = Math.abs(sec.getLiquidVelocity()) + sec.getLiquidSoundSpeed();
       double maxSpeed = Math.max(1.0, Math.max(gasSpeed, liqSpeed));
+      if (equations != null) {
+        maxSpeed = Math.max(maxSpeed, equations.calcVoidWaveSpeed(sec));
+      }
       double secDx = sec.getLength();
       minDt = Math.min(minDt, cflNumber * secDx / maxSpeed);
     }
@@ -4206,6 +4209,11 @@ public class TwoFluidPipe extends Pipeline {
       double gasSpeed = Math.abs(sec.getGasVelocity());
       double liqSpeed = Math.abs(sec.getLiquidVelocity());
       double maxMaterialSpeed = Math.max(1.0, Math.max(gasSpeed, liqSpeed));
+
+      // The interfacial pressure term adds a void wave on top of the material velocities.
+      if (equations != null) {
+        maxMaterialSpeed = Math.max(maxMaterialSpeed, equations.calcVoidWaveSpeed(sec));
+      }
 
       // Include gravity-wave speed for inclined/vertical sections (critical for risers)
       // Gravity waves propagate at ~sqrt(g * D * |sin(theta)| * (rhoL - rhoG) / rhoMix)
@@ -4272,12 +4280,13 @@ public class TwoFluidPipe extends Pipeline {
           double rhoWater = flash.getPhase("aqueous").getDensity("kg/m3");
           double muOil = flash.getPhase("oil").getViscosity("kg/msec");
           double muWater = flash.getPhase("aqueous").getViscosity("kg/msec");
-          double volOil = flash.getPhase("oil").getVolume("m3");
-          double volWater = flash.getPhase("aqueous").getVolume("m3");
+          double volOil = phaseVolumetricFlow(flash, "oil");
+          double volWater = phaseVolumetricFlow(flash, "aqueous");
           double volLiquid = volOil + volWater;
 
           double waterCut = volLiquid > 0 ? volWater / volLiquid : 0;
           double oilFraction = 1.0 - waterCut;
+          sec.setInputWaterVolumeFraction(waterCut);
 
           // Update individual phase properties for three-phase tracking
           sec.setOilDensity(rhoOil);
@@ -4557,8 +4566,8 @@ public class TwoFluidPipe extends Pipeline {
       if (mDotLiq > 0) {
         // Calculate water cut from volume fractions
         if (inFluid.hasPhaseType("oil") && inFluid.hasPhaseType("aqueous")) {
-          double volOil = inFluid.getPhase("oil").getVolume("m3");
-          double volWater = inFluid.getPhase("aqueous").getVolume("m3");
+          double volOil = phaseVolumetricFlow(inFluid, "oil");
+          double volWater = phaseVolumetricFlow(inFluid, "aqueous");
           if (volOil + volWater > 0) {
             inletWaterCut = volWater / (volOil + volWater);
           }
@@ -4572,6 +4581,7 @@ public class TwoFluidPipe extends Pipeline {
       // Apply inlet water cut to redistribute oil and water holdups
       double alphaW_target = alphaL * inletWaterCut;
       double alphaO_target = alphaL * (1.0 - inletWaterCut);
+      inlet.setInputWaterVolumeFraction(inletWaterCut);
       inlet.setWaterCut(inletWaterCut);
       inlet.setOilFractionInLiquid(1.0 - inletWaterCut);
       inlet.setWaterHoldup(alphaW_target);
@@ -4684,6 +4694,31 @@ public class TwoFluidPipe extends Pipeline {
    * @param inFluid inlet fluid
    * @return array containing gas, oil, and water mass fractions
    */
+  /**
+   * Get the volumetric flow of one phase as mass flow divided by density.
+   *
+   * <p>
+   * {@code PhaseInterface.getVolume()} reports the untranslated equation-of-state volume, so when a Peneloux volume
+   * shift is active it disagrees with {@code getDensity()} by that shift. The error is negligible for gas but reaches
+   * roughly 17% for oil and 32% for water on a typical SRK three-phase system, which biases every phase fraction built
+   * from it. Mass flow and density are mutually consistent, so phase fractions are built from those instead.
+   * </p>
+   *
+   * @param fluid flashed fluid to query
+   * @param phaseName phase type name, for example gas, oil, or aqueous
+   * @return volumetric flow in m3/s, or zero when the phase is absent
+   */
+  private static double phaseVolumetricFlow(SystemInterface fluid, String phaseName) {
+    if (!fluid.hasPhaseType(phaseName)) {
+      return 0.0;
+    }
+    double density = fluid.getPhase(phaseName).getDensity("kg/m3");
+    if (!(density > 0.0)) {
+      return 0.0;
+    }
+    return fluid.getPhase(phaseName).getFlowRate("kg/sec") / density;
+  }
+
   private double[] calculateInletPhaseMassFractions(SystemInterface inFluid) {
     double[] fractions = new double[3];
     double massTotal = inFluid.getFlowRate("kg/sec");
@@ -5321,6 +5356,53 @@ public class TwoFluidPipe extends Pipeline {
       oilHoldups[i] = sections[i].getOilHoldup();
     }
     return oilHoldups;
+  }
+
+  /**
+   * Get the per-section oil mass flux along the pipeline.
+   *
+   * <p>
+   * Returns {@code rho_o * alpha_o * A * v_o} for each section. In a converged steady state without mass transfer this
+   * profile must be flat and equal to the inlet oil mass flow, so it is the direct check that the oil/water holdup
+   * split is closed on the phase mass balance.
+   * </p>
+   *
+   * @return oil mass flow at each section (kg/s)
+   */
+  public double[] getOilMassFlowProfile() {
+    if (sections == null) {
+      return new double[0];
+    }
+    double area = Math.PI * diameter * diameter / 4.0;
+    double[] flows = new double[numberOfSections];
+    for (int i = 0; i < numberOfSections; i++) {
+      TwoFluidSection sec = sections[i];
+      flows[i] = sec.getOilDensity() * sec.getOilHoldup() * area * sec.getOilVelocity();
+    }
+    return flows;
+  }
+
+  /**
+   * Get the per-section water mass flux along the pipeline.
+   *
+   * <p>
+   * Returns {@code rho_w * alpha_w * A * v_w} for each section. See {@link #getOilMassFlowProfile()} for how to read
+   * it.
+   * </p>
+   *
+   * @return water mass flow at each section (kg/s)
+   */
+  public double[] getWaterMassFlowProfile() {
+    if (sections == null) {
+      return new double[0];
+    }
+    double area = Math.PI * diameter * diameter / 4.0;
+    double[] flows = new double[numberOfSections];
+    for (int i = 0; i < numberOfSections; i++) {
+      TwoFluidSection sec = sections[i];
+      flows[i] = sec.getWaterDensity() * sec.getWaterHoldup() * area * sec.getWaterVelocity();
+    }
+    return flows;
   }
 
   /**
@@ -6772,6 +6854,44 @@ public class TwoFluidPipe extends Pipeline {
       return equations.isEnableWaterOilSlip();
     }
     return false;
+  }
+
+  /**
+   * Enable or disable the holdup-gradient momentum term and its interfacial pressure correction.
+   *
+   * <p>
+   * The term cancels the spurious force left by carrying {@code alpha * p} in the momentum flux and keeps the two-fluid
+   * system hyperbolic. Disabling it reproduces the historical, ill-posed behaviour and is intended only for regression
+   * comparisons.
+   * </p>
+   *
+   * @param enable true to apply the term
+   */
+  public void setEnableInterfacialPressure(boolean enable) {
+    if (equations != null) {
+      equations.setEnableInterfacialPressure(enable);
+    }
+  }
+
+  /** @return true when the interfacial pressure momentum term is applied */
+  public boolean isInterfacialPressureEnabled() {
+    return equations != null && equations.isEnableInterfacialPressure();
+  }
+
+  /**
+   * Set the interfacial pressure coefficient delta used by the Bestion closure.
+   *
+   * @param coefficient non-negative coefficient; values below one leave the system ill-posed
+   */
+  public void setInterfacialPressureCoefficient(double coefficient) {
+    if (equations != null) {
+      equations.setInterfacialPressureCoefficient(coefficient);
+    }
+  }
+
+  /** @return interfacial pressure coefficient delta */
+  public double getInterfacialPressureCoefficient() {
+    return equations != null ? equations.getInterfacialPressureCoefficient() : 0.0;
   }
 
   /**

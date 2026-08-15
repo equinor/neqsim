@@ -438,21 +438,53 @@ for (double qgMSm3d : gasRates) {
 > Raise `setSteadyStateMaxWallClockTime(...)` before blaming the model if
 > `isSteadyStateWallClockLimited()` is true.
 
-> **DO NOT use `PipeBeggsAndBrills.runTransient` for pipeline dynamics.** It is an
+> **`TwoFluidPipe` transient is NOT usable for liquid-rich lines — including
+> severe slugging.** With every boundary condition held constant it leaves its
+> own steady state: on a 5 km liquid-rich line the inventory grows 114.7 → 192.7 t
+> in 30 min and the liquid holdup goes 0.45 → 0.77 while still climbing. The
+> liquid outlet flux collapses to exactly zero because the phase momentum
+> equations develop sustained backflow (oil velocity −2.5 m/s in 9 of 40 cells)
+> and `calcOutletFlux` clamps a negative phase velocity to zero outflow, trapping
+> liquid permanently. The finite-volume balance still closes to 1e-16, so this is
+> a well-posedness defect — there is no interfacial pressure term to keep the
+> two-fluid system hyperbolic at high liquid fraction. Gas-dominated lines are
+> unaffected (0.00 bar null-test drift). For severe slugging use the analytical
+> screen (`SevereSluggingBenchmarkHarnessTest`, Taitel criterion vs the Tengesdal
+> 2002 map, 70.7% accuracy) and treat any transient slug-cycle result as invalid.
+>
+> **Three-phase (gas/oil/water) steady state is fixed and benchmarked.** Against
+> OLGA 2025.1 on a matched case: outlet temperature −0.03%, mean liquid holdup
+> +7.1%, liquid inventory +7.1%. Two known gaps: water holdup is under-predicted
+> ~42% (the oil/water slip ratio reaches only ~1.09 where OLGA implies ~2.1), and
+> the pressure drop is over-predicted ~3× in this liquid-rich regime. Build the
+> OLGA side with `OLGApropertyTableGeneratorWaterKeywordFormat` (the `WaterEven`
+> generator throws on `bubPLOG` and then on a NaN compressibility factor).
+>
+> **Never build a volumetric phase fraction from `phase.getVolume()`.** With a
+> Peneloux volume shift active it disagrees with `getDensity()` by the shift —
+> +16.6% for oil and +31.7% for water on a typical SRK three-phase system, while
+> gas matches to 0.25%. Use `getFlowRate("kg/sec")/getDensity("kg/m3")`.
+
 > advection-relaxation transport lag, not a conservation-law solver, and the
 > Beggs & Brill correlation is not even used on that path (friction reverts to
-> single-phase Darcy-Weisbach, viscosity is frozen at the inlet). Two measured
-> failures on a 74 km gas line: with the boundary conditions held **exactly
-> constant** it leaves its own steady state, swinging +30 bar and settling
-> +7.95 bar off; and on a rate step the outlet mass flow equals the inlet at every
+> single-phase Darcy-Weisbach, viscosity is frozen at the inlet). It **does not
+> store mass**: on a rate step the outlet mass flow equals the inlet at every
 > timestep, so `∫(ṁ_in − ṁ_out)dt = 0` while the inventory implied by its own
-> profile moves 171 t — about 192 t of gas appears from nowhere. Note also that
-> `calculateSteadyState` defaults to **true**, so without
-> `setCalculateSteadyState(false)` `runTransient` is only a steady-state solve with
-> the clock advanced. Use it for transport delay in a flowsheet; use `TwoFluidPipe`
-> for line pack, shut-in, ramps and blowdown (0.00 bar drift on the same null test,
-> mass balance closing to the digit, and within 0.13% of OLGA on a line-pack step),
-> and `WaterHammerPipe` for surge.
+> profile moves 171 t — about 192 t of gas appears from nowhere on a 74 km line.
+> This is not repairable in the class as written: it takes only an inlet boundary
+> condition, so there is nothing to pin the arrival pressure and drive line pack.
+> It also does not exactly preserve its own steady state — with the boundary
+> conditions held **constant** it drifts −6.3 bar on that line (was +30 bar before
+> the cell-density fix), because the transient friction closure differs from the
+> steady one. Note also that `calculateSteadyState` defaults to **true**, so
+> without `setCalculateSteadyState(false)` `runTransient` is only a steady-state
+> solve with the clock advanced; and the time step must be shorter than the
+> *segment* transit time `L/numberOfIncrements/v`, otherwise the relaxation factor
+> saturates at 1 and the whole line responds in a single step. Use it for transport
+> delay in a flowsheet; use `TwoFluidPipe` for line pack, shut-in, ramps and
+> blowdown (0.00 bar drift on the same null test, mass balance closing to the
+> digit, and within 0.13% of OLGA on a line-pack step), and `WaterHammerPipe` for
+> surge.
 
 ### Gray (1974) Correlation — Gas / Gas-Condensate Vertical Wells
 
