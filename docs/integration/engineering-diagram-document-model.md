@@ -132,9 +132,9 @@ EngineeringDiagramBalanceTable balanceTable =
 For each balance, mass residual is inlet mass flow minus outlet mass flow in kg/s. Relative mass
 residual divides that result by the larger absolute inlet or outlet total and is zero when both totals
 are zero. Stream enthalpy flow is `massFlow [kg/s] * specificEnthalpy [J/kg]` in W; its residual is the
-inlet total minus the outlet total. It intentionally excludes equipment heat duties and shaft work,
-and its relative residual uses the same larger-total denominator. It intentionally excludes equipment
-heat duties and shaft work, so it is not a complete energy balance. Component balances,
+inlet total minus the outlet total, and its relative residual uses the same larger-total denominator.
+It intentionally excludes equipment heat duties and shaft work, so it is not a complete energy
+balance. Component balances,
 reconciliation, tolerances, and approved project boundaries remain later engineering layers.
 
 Building either companion does not change Classic DOT/Graphviz, native SVG/PDF, DEXPI 2.0 Process
