@@ -1998,8 +1998,8 @@ public class TPflash extends Flash {
    *
    * <p>
    * If retained cubic-root history makes both trial types reproduce the same compressibility factor, the candidate's
-   * declared gas/liquid class breaks the numerical tie. Otherwise iteration order could replace an accepted liquid
-   * root with a gas root during state transfer.
+   * declared gas/liquid class breaks the numerical tie. Otherwise iteration order could replace an accepted liquid root
+   * with a gas root during state transfer.
    * </p>
    *
    * @param source converged candidate system
