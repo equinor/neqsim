@@ -19,15 +19,13 @@ import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.Severity;
  * Immutable, deterministic assessment of balance residuals against explicit tolerances.
  *
  * <p>
- * The assessment consumes a governed {@link EngineeringDiagramBalanceTable}. It classifies the
- * existing residuals but never adjusts stream values, reconciles measurements, approves a balance,
- * or infers project acceptance criteria.
+ * The assessment consumes a governed {@link EngineeringDiagramBalanceTable}. It classifies the existing residuals but
+ * never adjusts stream values, reconciles measurements, approves a balance, or infers project acceptance criteria.
  * </p>
  */
 public final class EngineeringDiagramBalanceAssessment implements Serializable {
   private static final long serialVersionUID = 1000L;
-  public static final String SCHEMA_VERSION =
-      "neqsim_engineering_diagram_balance_assessment.v1";
+  public static final String SCHEMA_VERSION = "neqsim_engineering_diagram_balance_assessment.v1";
 
   /** Assessment status for one governed quantity. */
   public enum Status {
@@ -56,8 +54,8 @@ public final class EngineeringDiagramBalanceAssessment implements Serializable {
      * Creates explicit tolerance criteria.
      *
      * <p>
-     * A quantity is within tolerance only when both its absolute and relative residual magnitudes
-     * are no greater than the corresponding limits.
+     * A quantity is within tolerance only when both its absolute and relative residual magnitudes are no greater than
+     * the corresponding limits.
      * </p>
      *
      * @param balanceId stable source-balance identity
@@ -69,17 +67,15 @@ public final class EngineeringDiagramBalanceAssessment implements Serializable {
      * @param evidenceState review evidence state without design-approval implication
      */
     public Criteria(String balanceId, double massAbsoluteTolerance, double massRelativeTolerance,
-        double streamEnthalpyAbsoluteTolerance, double streamEnthalpyRelativeTolerance,
-        String sourceReference, EvidenceState evidenceState) {
+        double streamEnthalpyAbsoluteTolerance, double streamEnthalpyRelativeTolerance, String sourceReference,
+        EvidenceState evidenceState) {
       this.balanceId = requireText(balanceId, "balanceId");
-      this.massAbsoluteTolerance =
-          requireTolerance(massAbsoluteTolerance, "massAbsoluteTolerance");
-      this.massRelativeTolerance =
-          requireTolerance(massRelativeTolerance, "massRelativeTolerance");
-      this.streamEnthalpyAbsoluteTolerance = requireTolerance(
-          streamEnthalpyAbsoluteTolerance, "streamEnthalpyAbsoluteTolerance");
-      this.streamEnthalpyRelativeTolerance = requireTolerance(
-          streamEnthalpyRelativeTolerance, "streamEnthalpyRelativeTolerance");
+      this.massAbsoluteTolerance = requireTolerance(massAbsoluteTolerance, "massAbsoluteTolerance");
+      this.massRelativeTolerance = requireTolerance(massRelativeTolerance, "massRelativeTolerance");
+      this.streamEnthalpyAbsoluteTolerance = requireTolerance(streamEnthalpyAbsoluteTolerance,
+          "streamEnthalpyAbsoluteTolerance");
+      this.streamEnthalpyRelativeTolerance = requireTolerance(streamEnthalpyRelativeTolerance,
+          "streamEnthalpyRelativeTolerance");
       this.sourceReference = requireText(sourceReference, "sourceReference");
       if (evidenceState == null) {
         throw new IllegalArgumentException("evidenceState must not be null");
@@ -128,11 +124,9 @@ public final class EngineeringDiagramBalanceAssessment implements Serializable {
       result.put("massAbsoluteTolerance", Double.valueOf(massAbsoluteTolerance));
       result.put("massAbsoluteToleranceUnit", "kg/s");
       result.put("massRelativeTolerance", Double.valueOf(massRelativeTolerance));
-      result.put("streamEnthalpyAbsoluteTolerance",
-          Double.valueOf(streamEnthalpyAbsoluteTolerance));
+      result.put("streamEnthalpyAbsoluteTolerance", Double.valueOf(streamEnthalpyAbsoluteTolerance));
       result.put("streamEnthalpyAbsoluteToleranceUnit", "W");
-      result.put("streamEnthalpyRelativeTolerance",
-          Double.valueOf(streamEnthalpyRelativeTolerance));
+      result.put("streamEnthalpyRelativeTolerance", Double.valueOf(streamEnthalpyRelativeTolerance));
       result.put("sourceReference", sourceReference);
       result.put("evidenceState", evidenceState.name());
       return result;
@@ -155,8 +149,7 @@ public final class EngineeringDiagramBalanceAssessment implements Serializable {
       this.massAbsoluteResidual = Math.abs(balance.getMassResidual());
       this.massRelativeResidual = Math.abs(balance.getRelativeMassResidual());
       this.streamEnthalpyAbsoluteResidual = Math.abs(balance.getStreamEnthalpyResidual());
-      this.streamEnthalpyRelativeResidual =
-          Math.abs(balance.getRelativeStreamEnthalpyResidual());
+      this.streamEnthalpyRelativeResidual = Math.abs(balance.getRelativeStreamEnthalpyResidual());
       this.massStatus = massStatus;
       this.streamEnthalpyStatus = streamEnthalpyStatus;
     }
@@ -202,11 +195,9 @@ public final class EngineeringDiagramBalanceAssessment implements Serializable {
       result.put("massAbsoluteResidual", Double.valueOf(massAbsoluteResidual));
       result.put("massAbsoluteResidualUnit", "kg/s");
       result.put("massRelativeResidual", Double.valueOf(massRelativeResidual));
-      result.put("streamEnthalpyAbsoluteResidual",
-          Double.valueOf(streamEnthalpyAbsoluteResidual));
+      result.put("streamEnthalpyAbsoluteResidual", Double.valueOf(streamEnthalpyAbsoluteResidual));
       result.put("streamEnthalpyAbsoluteResidualUnit", "W");
-      result.put("streamEnthalpyRelativeResidual",
-          Double.valueOf(streamEnthalpyRelativeResidual));
+      result.put("streamEnthalpyRelativeResidual", Double.valueOf(streamEnthalpyRelativeResidual));
       result.put("massStatus", massStatus.name());
       result.put("streamEnthalpyStatus", streamEnthalpyStatus.name());
       return result;
@@ -266,8 +257,8 @@ public final class EngineeringDiagramBalanceAssessment implements Serializable {
   private final List<Result> results;
   private final List<Diagnostic> diagnostics;
 
-  private EngineeringDiagramBalanceAssessment(EngineeringDiagramBalanceTable balanceTable,
-      List<Criteria> criteria, List<Result> results, List<Diagnostic> diagnostics) {
+  private EngineeringDiagramBalanceAssessment(EngineeringDiagramBalanceTable balanceTable, List<Criteria> criteria,
+      List<Result> results, List<Diagnostic> diagnostics) {
     this.documentSetId = balanceTable.getDocumentSetId();
     this.sourceGraphFingerprint = balanceTable.getSourceGraphFingerprint();
     this.designCaseId = balanceTable.getDesignCaseId();
@@ -284,8 +275,8 @@ public final class EngineeringDiagramBalanceAssessment implements Serializable {
    * @param criteria explicit criteria grouped by stable balance identity
    * @return immutable assessment with deterministic diagnostics
    */
-  public static EngineeringDiagramBalanceAssessment fromBalanceTable(
-      EngineeringDiagramBalanceTable balanceTable, List<Criteria> criteria) {
+  public static EngineeringDiagramBalanceAssessment fromBalanceTable(EngineeringDiagramBalanceTable balanceTable,
+      List<Criteria> criteria) {
     if (balanceTable == null) {
       throw new IllegalArgumentException("balanceTable must not be null");
     }
@@ -311,8 +302,7 @@ public final class EngineeringDiagramBalanceAssessment implements Serializable {
     for (Criteria criterion : sortedCriteria) {
       if (!balancesById.containsKey(criterion.getBalanceId())) {
         diagnostics.add(new Diagnostic(Severity.ERROR, "BALANCE_ASSESSMENT_UNKNOWN_BALANCE",
-            "Tolerance criteria reference a balance absent from the governed balance table",
-            criterion.getBalanceId()));
+            "Tolerance criteria reference a balance absent from the governed balance table", criterion.getBalanceId()));
         continue;
       }
       if (criteriaById.containsKey(criterion.getBalanceId())) {
@@ -328,8 +318,7 @@ public final class EngineeringDiagramBalanceAssessment implements Serializable {
       Criteria criterion = criteriaById.get(balance.getBalanceId());
       if (criterion == null) {
         diagnostics.add(new Diagnostic(Severity.WARNING, "BALANCE_ASSESSMENT_CRITERIA_MISSING",
-            "No explicit tolerance criterion was supplied for the source balance",
-            balance.getBalanceId()));
+            "No explicit tolerance criterion was supplied for the source balance", balance.getBalanceId()));
         results.add(new Result(balance, Status.NOT_ASSESSED, Status.NOT_ASSESSED));
         continue;
       }
@@ -337,12 +326,10 @@ public final class EngineeringDiagramBalanceAssessment implements Serializable {
       Status enthalpyStatus = assessStreamEnthalpy(balance, criterion);
       results.add(new Result(balance, massStatus, enthalpyStatus));
       addStatusDiagnostic(balance.getBalanceId(), "MASS", massStatus, diagnostics);
-      addStatusDiagnostic(balance.getBalanceId(), "STREAM_ENTHALPY", enthalpyStatus,
-          diagnostics);
+      addStatusDiagnostic(balance.getBalanceId(), "STREAM_ENTHALPY", enthalpyStatus, diagnostics);
     }
     Collections.sort(diagnostics, diagnosticComparator());
-    return new EngineeringDiagramBalanceAssessment(balanceTable, sortedCriteria, results,
-        diagnostics);
+    return new EngineeringDiagramBalanceAssessment(balanceTable, sortedCriteria, results, diagnostics);
   }
 
   /** @return source controlled-document identity */
@@ -427,46 +414,41 @@ public final class EngineeringDiagramBalanceAssessment implements Serializable {
       return Status.INCOMPLETE;
     }
     return within(Math.abs(balance.getMassResidual()), criterion.getMassAbsoluteTolerance(),
-        Math.abs(balance.getRelativeMassResidual()), criterion.getMassRelativeTolerance())
-            ? Status.WITHIN_TOLERANCE : Status.OUTSIDE_TOLERANCE;
+        Math.abs(balance.getRelativeMassResidual()), criterion.getMassRelativeTolerance()) ? Status.WITHIN_TOLERANCE
+            : Status.OUTSIDE_TOLERANCE;
   }
 
   private static Status assessStreamEnthalpy(Balance balance, Criteria criterion) {
     if (!balance.isStreamEnthalpyFlowComplete()) {
       return Status.INCOMPLETE;
     }
-    return within(Math.abs(balance.getStreamEnthalpyResidual()),
-        criterion.getStreamEnthalpyAbsoluteTolerance(),
-        Math.abs(balance.getRelativeStreamEnthalpyResidual()),
-        criterion.getStreamEnthalpyRelativeTolerance()) ? Status.WITHIN_TOLERANCE
+    return within(Math.abs(balance.getStreamEnthalpyResidual()), criterion.getStreamEnthalpyAbsoluteTolerance(),
+        Math.abs(balance.getRelativeStreamEnthalpyResidual()), criterion.getStreamEnthalpyRelativeTolerance())
+            ? Status.WITHIN_TOLERANCE
             : Status.OUTSIDE_TOLERANCE;
   }
 
-  private static boolean within(double absoluteResidual, double absoluteTolerance,
-      double relativeResidual, double relativeTolerance) {
+  private static boolean within(double absoluteResidual, double absoluteTolerance, double relativeResidual,
+      double relativeTolerance) {
     return absoluteResidual <= absoluteTolerance && relativeResidual <= relativeTolerance;
   }
 
   private static void addStatusDiagnostic(String balanceId, String quantity, Status status,
       List<Diagnostic> diagnostics) {
     if (status == Status.OUTSIDE_TOLERANCE) {
-      diagnostics.add(new Diagnostic(Severity.WARNING,
-          "BALANCE_ASSESSMENT_" + quantity + "_OUTSIDE_TOLERANCE",
+      diagnostics.add(new Diagnostic(Severity.WARNING, "BALANCE_ASSESSMENT_" + quantity + "_OUTSIDE_TOLERANCE",
           "The governed residual exceeds at least one explicit tolerance limit", balanceId));
     } else if (status == Status.INCOMPLETE) {
-      diagnostics.add(new Diagnostic(Severity.ERROR,
-          "BALANCE_ASSESSMENT_" + quantity + "_INCOMPLETE",
+      diagnostics.add(new Diagnostic(Severity.ERROR, "BALANCE_ASSESSMENT_" + quantity + "_INCOMPLETE",
           "The governed residual is incomplete and cannot be assessed", balanceId));
     }
   }
 
-  private static List<Diagnostic> sourceDiagnostics(
-      EngineeringDiagramBalanceTable balanceTable) {
+  private static List<Diagnostic> sourceDiagnostics(EngineeringDiagramBalanceTable balanceTable) {
     List<Diagnostic> result = new ArrayList<Diagnostic>();
     for (EngineeringDiagramBalanceTable.Diagnostic diagnostic : balanceTable.getDiagnostics()) {
-      result.add(new Diagnostic(diagnostic.getSeverity(),
-          "BALANCE_ASSESSMENT_SOURCE_" + diagnostic.getCode(), diagnostic.getMessage(),
-          diagnostic.getSubjectId()));
+      result.add(new Diagnostic(diagnostic.getSeverity(), "BALANCE_ASSESSMENT_SOURCE_" + diagnostic.getCode(),
+          diagnostic.getMessage(), diagnostic.getSubjectId()));
     }
     return result;
   }
