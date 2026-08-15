@@ -440,3 +440,27 @@ own signal state is not owned by the primary flow meter.
 This transaction gate does not alter or newly qualify ISO 5167 or ISO/TR 11583 physics, wet-gas correlation validity,
 meter uncertainty, installation effects, sampling accuracy, allocation/fiscal metering, external I/O, alarm/trip
 integrity, safety action, virtual commissioning or OTS use.
+
+
+## Local fire-and-gas detector transaction coverage
+
+Concrete local `GasDetector` and `FireDetector` instances participate when registered as
+measurement devices in a `ProcessSystem`. Their snapshots include stable transaction identity,
+all inherited measurement/alarm state, and every detector field that an event or operator action
+can change. Gas snapshots preserve detector type, concentration, species, location, LEL and
+configured response time. Fire snapshots preserve the fire latch, signal level, threshold,
+configured delay and location.
+
+A `ProcessSystem` transaction already snapshots its `EventScheduler` pending/fired membership.
+Combining that bookkeeping snapshot with registered detector participants closes the in-memory
+side effect for scheduled fire/gas actions: rejection restores both the event boundary and detector
+state, while replay reproduces the same action and accepted commit retains it. Quantitative tests
+cover coordinated multi-area rollback, replay, commit, delayed-alarm continuation, object identity,
+fail-closed subclass/online modes, foreign-snapshot rejection and Java-serialization restart.
+
+Only registered, in-memory detector state is covered. Arbitrary event callbacks may mutate other
+objects or external systems and remain outside the transaction unless those objects participate
+independently. The detector response-time and detection-delay values are currently configuration
+metadata rather than integrated physical sensor dynamics. This gate does not qualify detector
+placement, fire/gas dispersion, voting, reliability, alarm/trip integrity, ESD action, external
+I/O, safety integrity, certification, virtual commissioning or OTS use.
