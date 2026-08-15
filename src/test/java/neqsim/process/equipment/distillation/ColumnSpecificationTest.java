@@ -6,6 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import org.junit.jupiter.api.Disabled;
@@ -101,6 +105,33 @@ public class ColumnSpecificationTest {
     long bbSignature = ((Long) signatureMethod.invoke(column)).longValue();
 
     assertNotEquals(aaSignature, bbSignature, "warm-state signatures must retain full component-name content");
+  }
+
+  /**
+   * Test that an explicit product-flow unit survives Java serialization.
+   *
+   * @throws Exception if serialization fails
+   */
+  @Test
+  public void productFlowTargetUnitSurvivesSerialization() throws Exception {
+    ColumnSpecification original = new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE,
+        ColumnSpecification.ProductLocation.TOP, 125.0, null, "kg/hr");
+    original.setTolerance(0.01);
+    original.setMaxIterations(12);
+
+    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
+      output.writeObject(original);
+    }
+    ColumnSpecification restored;
+    try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+      restored = (ColumnSpecification) input.readObject();
+    }
+
+    assertEquals("kg/hr", restored.getTargetUnit());
+    assertEquals(125.0, restored.getTargetValue(), 0.0);
+    assertEquals(0.01, restored.getTolerance(), 0.0);
+    assertEquals(12, restored.getMaxIterations());
   }
 
   /**
