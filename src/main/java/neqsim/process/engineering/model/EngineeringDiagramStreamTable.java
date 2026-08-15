@@ -220,7 +220,7 @@ public final class EngineeringDiagramStreamTable implements Serializable {
      * @return provenance snapshots
      */
     public List<ProvenanceRecord> getProvenance() {
-      return provenance;
+      return Collections.unmodifiableList(new ArrayList<ProvenanceRecord>(provenance));
     }
 
     private Map<String, Object> toMap() {
@@ -323,7 +323,7 @@ public final class EngineeringDiagramStreamTable implements Serializable {
      * @return values by quantity
      */
     public Map<Quantity, Value> getValues() {
-      return values;
+      return Collections.unmodifiableMap(new EnumMap<Quantity, Value>(values));
     }
 
     private Map<String, Object> toMap() {
@@ -453,7 +453,7 @@ public final class EngineeringDiagramStreamTable implements Serializable {
    * @return stream rows
    */
   public List<Row> getRows() {
-    return rows;
+    return Collections.unmodifiableList(new ArrayList<Row>(rows));
   }
 
   /**
@@ -462,7 +462,7 @@ public final class EngineeringDiagramStreamTable implements Serializable {
    * @return diagnostics
    */
   public List<Diagnostic> getDiagnostics() {
-    return diagnostics;
+    return Collections.unmodifiableList(new ArrayList<Diagnostic>(diagnostics));
   }
 
   /**
