@@ -21,12 +21,12 @@ import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.ObjectiveDe
  * Derives trace-qualified bottleneck-relief opportunities from a completed fixed-total allocation search.
  *
  * <p>
- * The analyzer is read-only: it consumes immutable {@link AllocationSearchResult} evidence and performs no
- * simulations, action writes, or process-model mutation. It retains only candidates whose selected objective improves
- * on the best feasible sampled allocation by more than the search's declared objective tolerance and whose complete
- * baseline restoration was verified. A general constraint reports the non-negative magnitude of its sampled negative
- * margin. An installed-capacity constraint uses its exact current and design values to report relief in the hydraulic
- * engineering unit; that relief is unavailable when the required evidence is incomplete.
+ * The analyzer is read-only: it consumes immutable {@link AllocationSearchResult} evidence and performs no simulations,
+ * action writes, or process-model mutation. It retains only candidates whose selected objective improves on the best
+ * feasible sampled allocation by more than the search's declared objective tolerance and whose complete baseline
+ * restoration was verified. A general constraint reports the non-negative magnitude of its sampled negative margin. An
+ * installed-capacity constraint uses its exact current and design values to report relief in the hydraulic engineering
+ * unit; that relief is unavailable when the required evidence is incomplete.
  * </p>
  *
  * <p>
@@ -132,7 +132,8 @@ public final class ProcessModelAllocationBottleneckAnalyzer {
       return null;
     }
 
-    double objectiveGain = objectiveGain(search.getObjective(), baseline.getRawObjective(), candidate.getRawObjective());
+    double objectiveGain = objectiveGain(search.getObjective(), baseline.getRawObjective(),
+        candidate.getRawObjective());
     if (!(objectiveGain > search.getObjectiveImprovementTolerance())) {
       return null;
     }
@@ -385,8 +386,7 @@ public final class ProcessModelAllocationBottleneckAnalyzer {
       this.objective = objective;
       this.objectiveEvidence = objectiveEvidence;
       this.evidenceClass = evidenceClass;
-      this.constraintRelief = Collections
-          .unmodifiableList(new ArrayList<ConstraintReliefEvidence>(constraintRelief));
+      this.constraintRelief = Collections.unmodifiableList(new ArrayList<ConstraintReliefEvidence>(constraintRelief));
       this.hydraulicEvidence = Collections
           .unmodifiableList(new ArrayList<HydraulicConstraintSnapshot>(hydraulicEvidence));
     }
@@ -506,8 +506,7 @@ public final class ProcessModelAllocationBottleneckAnalyzer {
       this.objectiveToleranceProvenance = search.getObjectiveToleranceProvenance();
       this.bestFeasibleAllocation = baseline == null ? new double[0] : baseline.getCandidateValues();
       this.bestFeasibleRawObjective = baseline == null ? Double.NaN : baseline.getRawObjective();
-      this.opportunities = Collections
-          .unmodifiableList(new ArrayList<BottleneckReliefOpportunity>(opportunities));
+      this.opportunities = Collections.unmodifiableList(new ArrayList<BottleneckReliefOpportunity>(opportunities));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<String>(diagnostics));
     }
 
