@@ -485,6 +485,12 @@ public final class ProcessDiagramGraphAdapter {
       } catch (RuntimeException exception) {
         operatingValueUnavailable(element, caseId, "massFlow", exception);
       }
+      try {
+        addOperatingValue(element, caseId, caseNodeId, "specificEnthalpy",
+            stream.getThermoSystem().getEnthalpy("J/kg"), "J/kg", "MASS_SPECIFIC");
+      } catch (RuntimeException exception) {
+        operatingValueUnavailable(element, caseId, "specificEnthalpy", exception);
+      }
     }
 
     private void addOperatingValue(ElementReference element, String caseId, String caseNodeId, String quantity,
