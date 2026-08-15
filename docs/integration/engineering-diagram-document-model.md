@@ -62,6 +62,49 @@ bara, and mass flow in kg/s. Each value remains `CALCULATED` and `REVIEW_REQUIRE
 case and source semantic object, and includes simulation-result provenance. The topology-only
 overloads remain unchanged and do not read live operating values.
 
+### Governed stream-table companion
+
+`EngineeringDiagramStreamTable` creates an immutable, deterministic stream-table companion from one
+operating-case document snapshot. It reads only canonical `LINE` and `CALCULATION` semantic objects;
+it does not read live process objects or add fields to `EngineeringDiagramDocumentSet.toJson()`.
+Every row retains the canonical stream ID, external key, source label, and process area. Temperature,
+absolute pressure, and mass flow retain their explicit unit, quantity basis, engineering state,
+approval state, source calculation ID, and simulation-result provenance.
+
+A reviewed `STREAM_NUMBER` designation is preferred as the display identifier and its source
+reference is retained. Without reviewed evidence, the canonical source label remains visible.
+Missing cases or quantities, malformed values, duplicate values, and calculation references to
+unknown streams are reported as structured diagnostics rather than silently invented or discarded.
+
+```java
+EngineeringDiagramDocumentSet operatingDocuments =
+    ProcessDiagramDocumentSetAdapter.fromProcessModel(
+        processModel,
+        "PLANT-01",
+        "B",
+        "PFD-01-001",
+        "Gas processing facility",
+        EngineeringDiagramDocumentSet.ContentProfile.PFD,
+        "NORMAL-01",
+        new EngineeringDiagramDesignationRegister());
+EngineeringDiagramStreamTable streamTable =
+    EngineeringDiagramStreamTable.fromDocumentSet(operatingDocuments, "NORMAL-01");
+
+for (EngineeringDiagramStreamTable.Row row : streamTable.getRows()) {
+  EngineeringDiagramStreamTable.Value pressure =
+      row.getValues().get(EngineeringDiagramStreamTable.Quantity.PRESSURE);
+  if (pressure != null) {
+    logger.info("{} pressure: {} {}", row.getDisplayIdentifier(), pressure.getResultValue(),
+        pressure.getResultUnit());
+  }
+}
+```
+
+This first companion is the stream-condition foundation for later heat/material-balance aggregation.
+It does not yet calculate component balances, enthalpy duties, or reconciliation residuals. Building
+the table does not change Classic DOT/Graphviz, native SVG/PDF, DEXPI 2.0 Process exchange, or the
+Proteus/DEXPI P&ID workflow, and it does not promote calculated values to approved design data.
+
 Canonical source names and carried connection names are retained as source designations. They are
 not silently promoted to project-approved equipment tags or line numbers. Project-entered tags and
 stream numbers require their own provenance and review state before they can supersede those source
@@ -250,6 +293,7 @@ Run the focused regression with:
 ```bash
 ./mvnw -Dtest=ProcessDiagramDocumentSetAdapterTest test
 ./mvnw -Dtest=NativeEngineeringDiagramRendererTest test
+./mvnw -Dtest=EngineeringDiagramStreamTableTest test
 ```
 
 The regression verifies deterministic single- and multi-area output, immutable collections,
