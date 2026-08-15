@@ -103,6 +103,24 @@ class EngineeringDiagramBalanceAssessmentTest {
   }
 
   @Test
+  void reportsIncompleteGovernedSourceValues() {
+    EngineeringDiagramBalanceTable balanceTable = incompleteBalanceTable(completeBoundaryCase());
+
+    EngineeringDiagramBalanceAssessment assessment =
+        EngineeringDiagramBalanceAssessment.fromBalanceTable(balanceTable,
+            Collections.singletonList(criteria(1.0, 1.0, 1.0, 1.0)));
+
+    assertFalse(assessment.isValid());
+    assertEquals(Status.INCOMPLETE, assessment.getResults().get(0).getMassStatus());
+    assertEquals(Status.INCOMPLETE,
+        assessment.getResults().get(0).getStreamEnthalpyStatus());
+    assertTrue(hasDiagnostic(assessment, "BALANCE_ASSESSMENT_MASS_INCOMPLETE"));
+    assertTrue(hasDiagnostic(assessment, "BALANCE_ASSESSMENT_STREAM_ENTHALPY_INCOMPLETE"));
+    assertTrue(hasDiagnostic(assessment,
+        "BALANCE_ASSESSMENT_SOURCE_BALANCE_BOUNDARY_UNKNOWN_STREAM"));
+  }
+
+  @Test
   void isDeterministicForFreshSystemsAndCriteriaOrder() {
     EngineeringDiagramBalanceAssessment first =
         EngineeringDiagramBalanceAssessment.fromBalanceTable(
@@ -178,6 +196,20 @@ class EngineeringDiagramBalanceAssessmentTest {
     Row feed = completeRow(streamTable, reference.getFeed().getName());
     Boundary boundary = new Boundary("BAL-SIMPLE-01", feed.getSemanticObjectId(),
         Direction.INLET, "project-balance-register:test", EvidenceState.PROPOSED);
+    return EngineeringDiagramBalanceTable.fromStreamTable(streamTable,
+        Collections.singletonList(boundary));
+  }
+
+  private static EngineeringDiagramBalanceTable incompleteBalanceTable(
+      EngineeringDiagramReferenceFixtures.SystemCase reference) {
+    EngineeringDiagramDocumentSet documents =
+        ProcessDiagramDocumentSetAdapter.fromProcessSystem(reference.getProcessSystem(),
+            reference.getCaseId(), "A", "PFD-HMB-006", "Boundary tolerance assessment",
+            ContentProfile.PFD, "NORMAL-01");
+    EngineeringDiagramStreamTable streamTable =
+        EngineeringDiagramStreamTable.fromDocumentSet(documents, "NORMAL-01");
+    Boundary boundary = new Boundary("BAL-SIMPLE-01", "line:missing", Direction.INLET,
+        "project-balance-register:test", EvidenceState.PROPOSED);
     return EngineeringDiagramBalanceTable.fromStreamTable(streamTable,
         Collections.singletonList(boundary));
   }
