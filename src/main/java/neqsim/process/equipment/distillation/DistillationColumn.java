@@ -5405,8 +5405,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * <p>
    * The method runs {@link ShortcutDistillationColumn}, converts its stage and feed-tray estimates into this column's
    * bottom-up tray indexing, rebuilds the tray stack, adds the feed at the shortcut-estimated feed tray, applies
-   * condenser reflux/duty and reboiler duty estimates, and stores light-key/heavy-key recovery specifications for later
-   * rigorous solving.
+   * condenser and reboiler duty estimates, preserves the shortcut reflux-ratio value without activating ratio control,
+   * and stores light-key/heavy-key recovery specifications for later rigorous solving.
    * </p>
    *
    * @param feedStream feed stream used for the shortcut calculation and rigorous column
@@ -5456,6 +5456,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     addFeedStream(feedStream, feedTrayNumber);
     setTopComponentRecovery(lightKey, lightKeyRecoveryDistillate);
     setBottomComponentRecovery(heavyKey, heavyKeyRecoveryBottoms);
+    if (hasCondenser) {
+      // Recovery specifications own the endpoint temperatures; retain the shortcut ratio only as an inactive estimate.
+      clearCondenserRefluxRatio();
+    }
 
     lastShortcutInitializationResult = new ShortcutInitializationResult(true, totalStageCount, feedTrayNumber,
         shortcut.getFeedTrayNumber(), shortcut.getMinimumNumberOfStages(), shortcut.getMinimumRefluxRatio(),

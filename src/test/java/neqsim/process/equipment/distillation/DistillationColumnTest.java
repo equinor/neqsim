@@ -263,16 +263,14 @@ public class DistillationColumnTest {
     valve.run();
 
     DistillationColumn debutanizer = new DistillationColumn("issue348 debutanizer", 10, true, true);
-    debutanizer.addFeedStream(valve.getOutletStream(), 9);
+    debutanizer.addFeedStream(valve.getOutletStream(), 5);
     debutanizer.setCondenserMode(DistillationColumn.CondenserMode.TOTAL);
     debutanizer.setCondenserRefluxRatio(0.1);
     debutanizer.getReboiler().setOutTemperature(273.15 + 203.0);
     debutanizer.setTopPressure(12.8);
     debutanizer.setBottomPressure(15.0);
-    debutanizer.setMaxNumberOfIterations(120);
-    debutanizer.setTemperatureTolerance(1.0e-1);
-    debutanizer.setMassBalanceTolerance(1.0e-1);
-    debutanizer.setEnthalpyBalanceTolerance(2.0e-1);
+    debutanizer.setSolverType(DistillationColumn.SolverType.MESH_RESIDUAL);
+    debutanizer.setMaxNumberOfIterations(80);
     assertTrue(debutanizer.validateSpecifications().isValid());
     debutanizer.run();
 
@@ -281,8 +279,8 @@ public class DistillationColumnTest {
     assertTrue(diagnostics.contains("condenser mode: TOTAL, ratio control: true"), diagnostics);
     assertTrue(diagnostics.contains("reboiler mode: EQUILIBRIUM"), diagnostics);
     assertFalse(debutanizer.wasFullFractionatorFastPathApplied(), diagnostics);
-    assertEquals(9, debutanizer.getFeedTrayNumber(valve.getOutletStream()),
-        "Explicit feed tray assignments must be preserved by default");
+    assertEquals(5, debutanizer.getFeedTrayNumber(valve.getOutletStream()),
+        "Explicit mid-column feed assignment must be preserved");
 
     double feedMass = valve.getOutletStream().getFlowRate("kg/hr");
     assertTrue(feedMass < feed.getFlowRate("kg/hr"), "Debutanizer feed should not exceed the original feed mass");
