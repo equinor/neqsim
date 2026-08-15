@@ -443,6 +443,9 @@ class TwoFluidPipeClosedThermalTest {
     pipe.setNumberOfSections(sections);
     pipe.setEnableAdaptiveTimestepping(false);
     pipe.setEnableSlugTracking(false);
+    // These tests isolate wall and transient thermal behaviour, so the fixture must start from a
+    // uniform profile. Joule-Thomson would otherwise impose a small gradient during initialization.
+    pipe.setEnableJouleThomson(false);
     pipe.setThermodynamicUpdateInterval(Integer.MAX_VALUE);
     // Disable the wall-clock cutoff so fixture state depends only on convergence or the fixed iteration cap.
     pipe.setSteadyStateMaxWallClockTime(Double.POSITIVE_INFINITY);

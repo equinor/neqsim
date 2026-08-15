@@ -112,6 +112,16 @@ public class TwoFluidSection extends PipeSection {
   /** Water cut (water fraction of total liquid). */
   private double waterCut = 0.0;
 
+  /**
+   * No-slip water volume fraction of the liquid, q_w / (q_w + q_o).
+   *
+   * <p>
+   * This is the transported (input) fraction set from the local flash, as distinct from {@link #waterCut}, which is the
+   * in-situ holdup fraction after slip. The two are equal only when oil and water travel at the same speed.
+   * </p>
+   */
+  private double inputWaterVolumeFraction = 0.0;
+
   /** Water holdup (fraction of pipe area). α_w */
   private double waterHoldup = 0.0;
 
@@ -826,6 +836,24 @@ public class TwoFluidSection extends PipeSection {
   public void setWaterCut(double waterCut) {
     this.waterCut = waterCut;
     this.oilFractionInLiquid = 1.0 - waterCut;
+  }
+
+  /**
+   * Get the transported (no-slip) water volume fraction of the liquid.
+   *
+   * @return q_w / (q_w + q_o), in [0, 1]
+   */
+  public double getInputWaterVolumeFraction() {
+    return inputWaterVolumeFraction;
+  }
+
+  /**
+   * Set the transported (no-slip) water volume fraction of the liquid.
+   *
+   * @param inputWaterVolumeFraction q_w / (q_w + q_o), clamped to [0, 1]
+   */
+  public void setInputWaterVolumeFraction(double inputWaterVolumeFraction) {
+    this.inputWaterVolumeFraction = Math.max(0.0, Math.min(1.0, inputWaterVolumeFraction));
   }
 
   public double getOilDensity() {

@@ -116,6 +116,20 @@ public class AUSMPlusFluxCalculator implements Serializable {
 
     /** Holdup flux: α * v (m/s). */
     public double holdupFlux;
+
+    /**
+     * Interface holdup used by the pressure part of {@link #momentumFlux}.
+     *
+     * <p>
+     * The non-conservative holdup-gradient momentum source must difference exactly these values to cancel the spurious
+     * force that {@code d(alpha * p)/dx} leaves behind, so the interface value is reported rather than recomputed by
+     * the caller.
+     * </p>
+     */
+    public double interfaceHoldup;
+
+    /** Interface pressure used by the pressure part of {@link #momentumFlux} (Pa). */
+    public double interfacePressure;
   }
 
   /**
@@ -178,10 +192,11 @@ public class AUSMPlusFluxCalculator implements Serializable {
     double Mminus = calcMachMinus(MR);
     double Mhalf = Mplus + Mminus;
 
-    // Split pressures
-    double Pplus = calcPressurePlus(ML) * left.pressure * left.holdup;
-    double Pminus = calcPressureMinus(MR) * right.pressure * right.holdup;
-    double Phalf = Pplus + Pminus;
+    // Split pressures. A single interface holdup is used so that the holdup-gradient
+    // momentum source can difference the same values and cancel the spurious force exactly.
+    double alphaHalf = 0.5 * (left.holdup + right.holdup);
+    double pHalf = calcPressurePlus(ML) * left.pressure + calcPressureMinus(MR) * right.pressure;
+    double Phalf = alphaHalf * pHalf;
 
     // Upwind selection based on interface Mach number
     double rho, v, H, alpha;
@@ -205,6 +220,8 @@ public class AUSMPlusFluxCalculator implements Serializable {
     flux.momentumFlux = mDot * v * area + Phalf * area;
     flux.energyFlux = mDot * H * area;
     flux.holdupFlux = Mhalf >= 0 ? left.holdup * left.velocity : right.holdup * right.velocity;
+    flux.interfaceHoldup = alphaHalf;
+    flux.interfacePressure = pHalf;
 
     return flux;
   }

@@ -8,12 +8,12 @@ import java.io.Serializable;
  *
  * <p>
  * The report covers the post-step thermal model: fluid sensible energy, simple-wall or radial-layer thermal energy,
- * conservative-face sensible advection, the optional Joule-Thomson source, and ambient heat loss. Its signed residual
- * is defined as:
+ * conservative-face sensible advection, the optional Joule-Thomson source, the optional direct electrical heating
+ * source, and ambient heat loss. Its signed residual is defined as:
  * </p>
  *
  * <pre>
- * residual = deltaFluid + deltaWall - advection - jouleThomson - latentHeat + ambientLoss
+ * residual = deltaFluid + deltaWall - advection - jouleThomson - latentHeat - directElectricalHeating + ambientLoss
  * </pre>
  *
  * <p>
@@ -36,6 +36,7 @@ public final class TwoFluidThermalEnergyBalanceReport implements Serializable {
   private final double jouleThomsonEnergyJ;
   private final double latentHeatEnergyJ;
   private final double ambientHeatLossJ;
+  private final double directElectricalHeatingEnergyJ;
 
   /**
    * Create a report from time-integrated thermal-model terms.
@@ -48,10 +49,11 @@ public final class TwoFluidThermalEnergyBalanceReport implements Serializable {
    * @param jouleThomsonEnergyJ net Joule-Thomson energy added in joules
    * @param latentHeatEnergyJ net composition-dependent interphase latent heat added in joules
    * @param ambientHeatLossJ energy transferred from the wall or outer layer to ambient in joules
+   * @param directElectricalHeatingEnergyJ direct electrical heating energy added to the fluid in joules
    */
   TwoFluidThermalEnergyBalanceReport(double elapsedTimeSeconds, int acceptedSubsteps, double fluidEnergyChangeJ,
       double wallEnergyChangeJ, double sensibleAdvectionEnergyJ, double jouleThomsonEnergyJ, double latentHeatEnergyJ,
-      double ambientHeatLossJ) {
+      double ambientHeatLossJ, double directElectricalHeatingEnergyJ) {
     if (!Double.isFinite(elapsedTimeSeconds) || elapsedTimeSeconds < 0.0) {
       throw new IllegalArgumentException("elapsedTimeSeconds must be finite and non-negative");
     }
@@ -64,6 +66,7 @@ public final class TwoFluidThermalEnergyBalanceReport implements Serializable {
     requireFinite(jouleThomsonEnergyJ, "jouleThomsonEnergyJ");
     requireFinite(latentHeatEnergyJ, "latentHeatEnergyJ");
     requireFinite(ambientHeatLossJ, "ambientHeatLossJ");
+    requireFinite(directElectricalHeatingEnergyJ, "directElectricalHeatingEnergyJ");
     this.elapsedTimeSeconds = elapsedTimeSeconds;
     this.acceptedSubsteps = acceptedSubsteps;
     this.fluidEnergyChangeJ = fluidEnergyChangeJ;
@@ -72,6 +75,7 @@ public final class TwoFluidThermalEnergyBalanceReport implements Serializable {
     this.jouleThomsonEnergyJ = jouleThomsonEnergyJ;
     this.latentHeatEnergyJ = latentHeatEnergyJ;
     this.ambientHeatLossJ = ambientHeatLossJ;
+    this.directElectricalHeatingEnergyJ = directElectricalHeatingEnergyJ;
   }
 
   private static void requireFinite(double value, String name) {
@@ -153,6 +157,15 @@ public final class TwoFluidThermalEnergyBalanceReport implements Serializable {
   }
 
   /**
+   * Get the direct electrical heating energy added to the fluid.
+   *
+   * @return direct electrical heating energy in joules, zero when DEH is not used
+   */
+  public double getDirectElectricalHeatingEnergyJ() {
+    return directElectricalHeatingEnergyJ;
+  }
+
+  /**
    * Get the fluid-plus-wall energy change.
    *
    * @return combined energy change in joules
@@ -168,7 +181,7 @@ public final class TwoFluidThermalEnergyBalanceReport implements Serializable {
    */
   public double getResidualJ() {
     return getStoredEnergyChangeJ() - sensibleAdvectionEnergyJ - jouleThomsonEnergyJ - latentHeatEnergyJ
-        + ambientHeatLossJ;
+        - directElectricalHeatingEnergyJ + ambientHeatLossJ;
   }
 
   /**
@@ -183,6 +196,7 @@ public final class TwoFluidThermalEnergyBalanceReport implements Serializable {
     scale = Math.max(scale, Math.abs(jouleThomsonEnergyJ));
     scale = Math.max(scale, Math.abs(latentHeatEnergyJ));
     scale = Math.max(scale, Math.abs(ambientHeatLossJ));
+    scale = Math.max(scale, Math.abs(directElectricalHeatingEnergyJ));
     scale = Math.max(scale, RELATIVE_SCALE_FLOOR_J);
     return Math.abs(getResidualJ()) / scale;
   }

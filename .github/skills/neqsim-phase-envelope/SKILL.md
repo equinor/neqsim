@@ -165,6 +165,30 @@ Use explicit Java 8 types. Do not use `var`, `List.of`, `String.repeat`, records
 | Empty or very short branch | Poor start point, extreme composition, unsuitable EOS, or continuation failure | Check logs, lower start pressure, simplify a clone for diagnosis, and compare with neighboring robustness tests |
 | Unrealistic critical point | Wrong EOS, uncharacterized heavy end, bad composition, or unit error | Validate inputs, characterize plus fractions, and benchmark independently |
 | Trace impurity disappears | Fraction is below the numerical filter threshold | Decide whether it is physically relevant; if so, use a defensible non-negligible composition and document sensitivity |
+| `dewPointTemperatureFlash` returns the initial temperature guess unchanged | Degenerate incipient-liquid seed | Fixed for zero-fraction water (see below). Otherwise reseed the flash near the expected root |
+| Point dew point sits above the cricondentherm | Flash converged on the low-temperature retrograde root | Seed the flash at the cricondentherm temperature and assert `T_dew <= T_cricondentherm` |
+
+### Point Dew-Point Flashes on Wet Gas
+
+`ThermodynamicOperations.dewPointTemperatureFlash()` seeds an aqueous incipient
+liquid whenever water carries moles, so on a wet gas it returns the **water** dew
+point. For a hydrocarbon dew point, clone the fluid and
+`removeComponent("water")` first.
+
+Seed the flash at the cricondentherm temperature so it descends onto the upper
+(physical) dew branch rather than a low-temperature retrograde root:
+
+```java
+double[] cct = envOps.get("cricondentherm"); // [T (K), P (bara)]
+hcFluid.setPressure(pBara, "bara");
+hcFluid.setTemperature(cct[0]);
+hcFluid.init(0);
+new ThermodynamicOperations(hcFluid).dewPointTemperatureFlash();
+```
+
+Zero-fraction water no longer changes the result: the aqueous seed is gated on
+`ConstantDutyTemperatureFlash.hasSignificantWater`, so a component with
+$z_i = 0$ behaves like an absent one.
 
 ## Output Convention
 
