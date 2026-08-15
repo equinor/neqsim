@@ -34,8 +34,8 @@ class TPflashCpaHydrocarbonLiquidStabilityTest {
 
   @Test
   void nearbyStatesCompositionsAndChangedPressureRemainConsistent() {
-    double[][] conditions = { { 280.0, 100.0 }, { 280.0, 200.0 }, { 300.0, 150.0 }, { 300.0, 175.0 },
-        { 313.15, 200.0 }, { 325.0, 225.0 }, { 350.0, 225.0 } };
+    double[][] conditions = { { 280.0, 100.0 }, { 280.0, 200.0 }, { 300.0, 150.0 }, { 300.0, 175.0 }, { 313.15, 200.0 },
+        { 325.0, 225.0 }, { 350.0, 225.0 } };
     for (double[] condition : conditions) {
       SystemInterface ordinary = createAndFlash(condition[0], condition[1], 0.65, false, false);
       SystemInterface multiphase = createAndFlash(condition[0], condition[1], 0.65, true, false);
