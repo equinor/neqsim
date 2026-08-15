@@ -9705,6 +9705,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       diagnostics.append("    linear solve time: ").append(lastNaphtaliLinearSolveTimeSeconds).append(" s\n");
     }
     diagnostics.append("  Residuals:\n");
+    if (topSpecification != null) {
+      diagnostics.append("    top specification: ").append(topSpecification).append(", residual ")
+          .append(lastTopSpecificationResidual).append(" ").append(topSpecification.getTargetUnit()).append("\n");
+    }
+    if (bottomSpecification != null) {
+      diagnostics.append("    bottom specification: ").append(bottomSpecification).append(", residual ")
+          .append(lastBottomSpecificationResidual).append(" ").append(bottomSpecification.getTargetUnit()).append("\n");
+    }
     diagnostics.append("    temperature: ").append(lastTemperatureResidual).append(" K (tolerance ")
         .append(getEffectiveTemperatureTolerance()).append(")\n");
     diagnostics.append("    applied temperature step: ").append(lastAppliedTemperatureStepResidual).append(" K\n");
@@ -13605,29 +13613,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private boolean isProductFlowSpecification(ColumnSpecification specification) {
     return specification != null && specification.getType() == ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE;
-  }
-
-  /**
-   * Get the target value for a product-flow specification.
-   *
-   * @param specification column specification to inspect
-   * @return product-flow target in mol/hr, or {@link Double#NaN} when the specification is not a product-flow target
-   */
-  private double getProductFlowSpecificationTarget(ColumnSpecification specification) {
-    if (specification == null || specification.getType() != ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE) {
-      return Double.NaN;
-    }
-    return specification.getTargetValue();
-  }
-
-  /**
-   * Return a finite positive value, otherwise zero.
-   *
-   * @param value value to screen
-   * @return {@code value} when finite and positive, otherwise zero
-   */
-  private double positiveFiniteOrZero(double value) {
-    return Double.isFinite(value) && value > 0.0 ? value : 0.0;
   }
 
   /**
