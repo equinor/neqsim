@@ -47,20 +47,12 @@ class HydrocarbonScrubberSaturationPressureStabilityTest extends neqsim.NeqSimTe
 
   private static ThreePhaseSeparator runScrubberProcess() {
     SystemInterface fluid = new SystemUMRPRUMCEos(280.0, 10.0);
-    String[] componentNames = {
-      "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane",
-      "i-pentane", "n-pentane", "2-m-C5", "3-m-C5", "n-hexane", "c-hexane",
-      "n-heptane", "benzene", "n-octane", "c-C7", "toluene", "n-nonane", "c-C8",
-      "m-Xylene", "nC10", "nC11", "nC12"
-    };
-    double[] componentAmounts = {
-      0.01, 0.01, 0.9, 0.1, 0.03, 0.01, 0.01, 0.01, 0.001, 0.001, 0.001,
-      0.001, 0.001, 0.001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.00001,
-      0.00001, 3.0e-12, 3.0e-12, 3.0e-12
-    };
-    for (int componentIndex = 0;
-        componentIndex < componentNames.length;
-        componentIndex++) {
+    String[] componentNames = { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
+        "n-pentane", "2-m-C5", "3-m-C5", "n-hexane", "c-hexane", "n-heptane", "benzene", "n-octane", "c-C7", "toluene",
+        "n-nonane", "c-C8", "m-Xylene", "nC10", "nC11", "nC12" };
+    double[] componentAmounts = { 0.01, 0.01, 0.9, 0.1, 0.03, 0.01, 0.01, 0.01, 0.001, 0.001, 0.001, 0.001, 0.001,
+        0.001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.00001, 0.00001, 3.0e-12, 3.0e-12, 3.0e-12 };
+    for (int componentIndex = 0; componentIndex < componentNames.length; componentIndex++) {
       fluid.addComponent(componentNames[componentIndex], componentAmounts[componentIndex]);
     }
     fluid.setMixingRule("HV", "UNIFAC_UMRPRU");
@@ -73,8 +65,7 @@ class HydrocarbonScrubberSaturationPressureStabilityTest extends neqsim.NeqSimTe
     Heater cooler = new Heater("cooler", upstreamSeparator.getGasOutStream());
     cooler.setOutPressure(78.0, "bara");
     cooler.setOutTemperature(15.0, "C");
-    ThreePhaseSeparator scrubber =
-        new ThreePhaseSeparator("dewpoint scrubber", cooler.getOutStream());
+    ThreePhaseSeparator scrubber = new ThreePhaseSeparator("dewpoint scrubber", cooler.getOutStream());
     scrubber.setEntrainment(0.5, "volume", "feed", "oil", "gas");
 
     ProcessSystem process = new ProcessSystem();
@@ -86,8 +77,7 @@ class HydrocarbonScrubberSaturationPressureStabilityTest extends neqsim.NeqSimTe
     return scrubber;
   }
 
-  private static double calculateSaturationPressure(
-      SystemInterface exportGas, boolean enhancedCheck) {
+  private static double calculateSaturationPressure(SystemInterface exportGas, boolean enhancedCheck) {
     SystemInterface fluid = exportGas.clone();
     fluid.setTemperature(0.0, "C");
     fluid.setPressure(10.0, "bara");
@@ -100,8 +90,7 @@ class HydrocarbonScrubberSaturationPressureStabilityTest extends neqsim.NeqSimTe
     return saturationPressure.getSaturationPressure();
   }
 
-  private static double calculateSaturationPressureAtTemperature(
-      SystemInterface exportGas, double temperatureCelsius) {
+  private static double calculateSaturationPressureAtTemperature(SystemInterface exportGas, double temperatureCelsius) {
     SystemInterface fluid = exportGas.clone();
     fluid.setTemperature(temperatureCelsius, "C");
     fluid.setPressure(10.0, "bara");
@@ -118,9 +107,7 @@ class HydrocarbonScrubberSaturationPressureStabilityTest extends neqsim.NeqSimTe
     for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
       betaSum += fluid.getBeta(phase);
       double compositionSum = 0.0;
-      for (int component = 0;
-          component < fluid.getPhase(phase).getNumberOfComponents();
-          component++) {
+      for (int component = 0; component < fluid.getPhase(phase).getNumberOfComponents(); component++) {
         double moleFraction = fluid.getPhase(phase).getComponent(component).getx();
         assertTrue(Double.isFinite(moleFraction));
         assertTrue(moleFraction >= 0.0);
@@ -131,30 +118,19 @@ class HydrocarbonScrubberSaturationPressureStabilityTest extends neqsim.NeqSimTe
     assertEquals(1.0, betaSum, 1.0e-12);
 
     double maxFugacityResidual = 0.0;
-    for (int component = 0;
-        component < fluid.getPhase(0).getNumberOfComponents();
-        component++) {
+    for (int component = 0; component < fluid.getPhase(0).getNumberOfComponents(); component++) {
       double recoveredFeed = 0.0;
       for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
-        recoveredFeed +=
-            fluid.getBeta(phase) * fluid.getPhase(phase).getComponent(component).getx();
+        recoveredFeed += fluid.getBeta(phase) * fluid.getPhase(phase).getComponent(component).getx();
       }
-      assertEquals(
-          fluid.getPhase(0).getComponent(component).getz(), recoveredFeed, 1.0e-10);
+      assertEquals(fluid.getPhase(0).getComponent(component).getz(), recoveredFeed, 1.0e-10);
 
       double phaseZeroX = fluid.getPhase(0).getComponent(component).getx();
       double phaseOneX = fluid.getPhase(1).getComponent(component).getx();
       if (phaseZeroX > 1.0e-12 && phaseOneX > 1.0e-12) {
-        double phaseZeroFugacity =
-            phaseZeroX
-                * fluid.getPhase(0).getComponent(component).getFugacityCoefficient();
-        double phaseOneFugacity =
-            phaseOneX
-                * fluid.getPhase(1).getComponent(component).getFugacityCoefficient();
-        maxFugacityResidual =
-            Math.max(
-                maxFugacityResidual,
-                Math.abs(Math.log(phaseZeroFugacity / phaseOneFugacity)));
+        double phaseZeroFugacity = phaseZeroX * fluid.getPhase(0).getComponent(component).getFugacityCoefficient();
+        double phaseOneFugacity = phaseOneX * fluid.getPhase(1).getComponent(component).getFugacityCoefficient();
+        maxFugacityResidual = Math.max(maxFugacityResidual, Math.abs(Math.log(phaseZeroFugacity / phaseOneFugacity)));
       }
     }
     assertTrue(maxFugacityResidual <= 1.0e-8);
