@@ -50,9 +50,8 @@ public class ColumnSpecificationTest {
     ColumnSpecification legacyFlowSpec = new ColumnSpecification(
         ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE, ColumnSpecification.ProductLocation.TOP, 25.0);
     assertEquals("mol/hr", legacyFlowSpec.getTargetUnit());
-    ColumnSpecification massFlowSpec = new ColumnSpecification(
-        ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE, ColumnSpecification.ProductLocation.BOTTOM, 25.0,
-        null, "kg/hr");
+    ColumnSpecification massFlowSpec = new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE,
+        ColumnSpecification.ProductLocation.BOTTOM, 25.0, null, "kg/hr");
     assertEquals("kg/hr", massFlowSpec.getTargetUnit());
     assertThrows(IllegalArgumentException.class,
         () -> new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE,
@@ -451,9 +450,8 @@ public class ColumnSpecificationTest {
     assertTrue(column.getLiquidOutStream().getTemperature("K") > 0.0);
     for (String componentName : feed.getFluid().getComponentNames()) {
       double feedComponentFlow = feed.getFluid().getComponent(componentName).getTotalFlowRate("mol/hr");
-      double productComponentFlow = column.getGasOutStream().getFluid().getComponent(componentName)
-          .getTotalFlowRate("mol/hr") + column.getLiquidOutStream().getFluid().getComponent(componentName)
-              .getTotalFlowRate("mol/hr");
+      double productComponentFlow = column.getGasOutStream().getFluid().getComponent(componentName).getTotalFlowRate(
+          "mol/hr") + column.getLiquidOutStream().getFluid().getComponent(componentName).getTotalFlowRate("mol/hr");
       assertEquals(feedComponentFlow, productComponentFlow, Math.max(1.0e-8, feedComponentFlow * 5.0e-2),
           componentName);
     }
