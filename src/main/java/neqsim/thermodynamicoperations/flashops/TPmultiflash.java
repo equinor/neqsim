@@ -1228,8 +1228,8 @@ public class TPmultiflash extends TPflash {
    * A negative tangent-plane distance establishes that the current topology is unstable, but it does not determine the
    * equilibrium amount of the new phase. Seeding beta from the trial's dominant overall component can therefore
    * introduce an order-one material phase before the phase-fraction solve. Use the existing ordinary beta solver's
-   * regularization scale so the trial is incipient without being pinned below the solver's useful correction scale, then
-   * let the beta/equilibrium solve grow or remove it.
+   * regularization scale so the trial is incipient without being pinned below the solver's useful correction scale,
+   * then let the beta/equilibrium solve grow or remove it.
    * </p>
    *
    * @param dominantComponent index of the largest component in the trial composition
