@@ -293,8 +293,7 @@ public class ColumnSpecificationTest {
     ValidationResult result = column.validateSetup();
 
     assertFalse(result.isValid());
-    assertTrue(
-        result.getErrors().stream().anyMatch(error -> error.getCategory().equals("specification.hardware")));
+    assertTrue(result.getErrors().stream().anyMatch(error -> error.getCategory().equals("specification.hardware")));
     IllegalStateException exception = assertThrows(IllegalStateException.class, column::run);
     assertTrue(exception.getMessage().contains("requires a condenser"));
   }
