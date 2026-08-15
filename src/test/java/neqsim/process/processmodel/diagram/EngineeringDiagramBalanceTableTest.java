@@ -45,6 +45,7 @@ class EngineeringDiagramBalanceTableTest {
     assertEquals(0.0, balance.getMassResidual(), 1.0e-8);
     assertEquals(0.0, balance.getRelativeMassResidual(), 1.0e-8);
     assertTrue(Double.isFinite(balance.getStreamEnthalpyResidual()));
+    assertTrue(Double.isFinite(balance.getRelativeStreamEnthalpyResidual()));
     assertFalse(table.getSourceStreamTableFingerprint().isEmpty());
     assertNotSame(table.getBoundaries(), table.getBoundaries());
     assertNotSame(table.getBalances(), table.getBalances());
