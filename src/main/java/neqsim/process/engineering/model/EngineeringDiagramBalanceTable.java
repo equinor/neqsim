@@ -175,6 +175,7 @@ public final class EngineeringDiagramBalanceTable implements Serializable {
     private final double inletStreamEnthalpyFlow;
     private final double outletStreamEnthalpyFlow;
     private final double streamEnthalpyResidual;
+    private final double relativeStreamEnthalpyResidual;
     private final boolean streamEnthalpyFlowComplete;
 
     private Balance(String balanceId, Accumulator values) {
@@ -189,6 +190,10 @@ public final class EngineeringDiagramBalanceTable implements Serializable {
       this.inletStreamEnthalpyFlow = values.inletStreamEnthalpyFlow;
       this.outletStreamEnthalpyFlow = values.outletStreamEnthalpyFlow;
       this.streamEnthalpyResidual = inletStreamEnthalpyFlow - outletStreamEnthalpyFlow;
+      double enthalpyScale =
+          Math.max(Math.abs(inletStreamEnthalpyFlow), Math.abs(outletStreamEnthalpyFlow));
+      this.relativeStreamEnthalpyResidual =
+          enthalpyScale == 0.0 ? 0.0 : streamEnthalpyResidual / enthalpyScale;
       this.streamEnthalpyFlowComplete = values.streamEnthalpyFlowComplete;
     }
 
@@ -242,6 +247,11 @@ public final class EngineeringDiagramBalanceTable implements Serializable {
       return streamEnthalpyResidual;
     }
 
+    /** @return stream enthalpy residual divided by the larger absolute boundary total */
+    public double getRelativeStreamEnthalpyResidual() {
+      return relativeStreamEnthalpyResidual;
+    }
+
     /** @return true when every boundary has usable mass flow and specific enthalpy */
     public boolean isStreamEnthalpyFlowComplete() {
       return streamEnthalpyFlowComplete;
@@ -260,6 +270,7 @@ public final class EngineeringDiagramBalanceTable implements Serializable {
       result.put("inletStreamEnthalpyFlow", Double.valueOf(inletStreamEnthalpyFlow));
       result.put("outletStreamEnthalpyFlow", Double.valueOf(outletStreamEnthalpyFlow));
       result.put("streamEnthalpyResidual", Double.valueOf(streamEnthalpyResidual));
+      result.put("relativeStreamEnthalpyResidual", Double.valueOf(relativeStreamEnthalpyResidual));
       result.put("streamEnthalpyFlowUnit", "W");
       result.put("streamEnthalpyFlowComplete", Boolean.valueOf(streamEnthalpyFlowComplete));
       return result;
