@@ -35,9 +35,8 @@ class EngineeringDiagramBalanceAssessmentTest {
     String sourceJson = balanceTable.toJson();
     Criteria criterion = criteria(1.0e-8, 1.0e-8, Double.MAX_VALUE, 2.0);
 
-    EngineeringDiagramBalanceAssessment assessment =
-        EngineeringDiagramBalanceAssessment.fromBalanceTable(balanceTable,
-            Collections.singletonList(criterion));
+    EngineeringDiagramBalanceAssessment assessment = EngineeringDiagramBalanceAssessment.fromBalanceTable(balanceTable,
+        Collections.singletonList(criterion));
 
     assertTrue(assessment.isValid());
     assertEquals(1, assessment.getResults().size());
@@ -54,8 +53,7 @@ class EngineeringDiagramBalanceAssessmentTest {
     assertNotSame(assessment.getDiagnostics(), assessment.getDiagnostics());
     assertThrows(UnsupportedOperationException.class, () -> assessment.getCriteria().clear());
     assertTrue(assessment.toJson().contains("\"massAbsoluteToleranceUnit\": \"kg/s\""));
-    assertTrue(assessment.toJson()
-        .contains("\"streamEnthalpyAbsoluteToleranceUnit\": \"W\""));
+    assertTrue(assessment.toJson().contains("\"streamEnthalpyAbsoluteToleranceUnit\": \"W\""));
   }
 
   @Test
@@ -63,35 +61,29 @@ class EngineeringDiagramBalanceAssessmentTest {
     EngineeringDiagramBalanceTable balanceTable = inletOnlyBalanceTable(completeBoundaryCase());
     Criteria criterion = criteria(1.0e-8, 1.0e-8, 0.0, 0.0);
 
-    EngineeringDiagramBalanceAssessment assessment =
-        EngineeringDiagramBalanceAssessment.fromBalanceTable(balanceTable,
-            Collections.singletonList(criterion));
+    EngineeringDiagramBalanceAssessment assessment = EngineeringDiagramBalanceAssessment.fromBalanceTable(balanceTable,
+        Collections.singletonList(criterion));
 
     assertTrue(assessment.isValid());
     assertEquals(Status.OUTSIDE_TOLERANCE, assessment.getResults().get(0).getMassStatus());
-    assertEquals(Status.OUTSIDE_TOLERANCE,
-        assessment.getResults().get(0).getStreamEnthalpyStatus());
+    assertEquals(Status.OUTSIDE_TOLERANCE, assessment.getResults().get(0).getStreamEnthalpyStatus());
     assertTrue(hasDiagnostic(assessment, "BALANCE_ASSESSMENT_MASS_OUTSIDE_TOLERANCE"));
-    assertTrue(hasDiagnostic(assessment,
-        "BALANCE_ASSESSMENT_STREAM_ENTHALPY_OUTSIDE_TOLERANCE"));
+    assertTrue(hasDiagnostic(assessment, "BALANCE_ASSESSMENT_STREAM_ENTHALPY_OUTSIDE_TOLERANCE"));
   }
 
   @Test
   void rejectsMissingUnknownAndDuplicateCriteria() {
     EngineeringDiagramBalanceTable balanceTable = balanceTable(completeBoundaryCase());
     Criteria declared = criteria(1.0, 1.0, 1.0, 1.0);
-    Criteria unknown = new Criteria("BAL-MISSING", 1.0, 1.0, 1.0, 1.0,
-        "project-balance-criteria:test", EvidenceState.PROPOSED);
+    Criteria unknown = new Criteria("BAL-MISSING", 1.0, 1.0, 1.0, 1.0, "project-balance-criteria:test",
+        EvidenceState.PROPOSED);
 
-    EngineeringDiagramBalanceAssessment missing =
-        EngineeringDiagramBalanceAssessment.fromBalanceTable(balanceTable,
-            Collections.<Criteria>emptyList());
-    EngineeringDiagramBalanceAssessment duplicate =
-        EngineeringDiagramBalanceAssessment.fromBalanceTable(balanceTable,
-            Arrays.asList(declared, declared));
-    EngineeringDiagramBalanceAssessment unknownAssessment =
-        EngineeringDiagramBalanceAssessment.fromBalanceTable(balanceTable,
-            Collections.singletonList(unknown));
+    EngineeringDiagramBalanceAssessment missing = EngineeringDiagramBalanceAssessment.fromBalanceTable(balanceTable,
+        Collections.<Criteria>emptyList());
+    EngineeringDiagramBalanceAssessment duplicate = EngineeringDiagramBalanceAssessment.fromBalanceTable(balanceTable,
+        Arrays.asList(declared, declared));
+    EngineeringDiagramBalanceAssessment unknownAssessment = EngineeringDiagramBalanceAssessment
+        .fromBalanceTable(balanceTable, Collections.singletonList(unknown));
 
     assertFalse(missing.isValid());
     assertTrue(hasDiagnostic(missing, "BALANCE_ASSESSMENT_CRITERIA_NOT_DECLARED"));
@@ -106,58 +98,48 @@ class EngineeringDiagramBalanceAssessmentTest {
   void reportsIncompleteGovernedSourceValues() {
     EngineeringDiagramBalanceTable balanceTable = incompleteBalanceTable(completeBoundaryCase());
 
-    EngineeringDiagramBalanceAssessment assessment =
-        EngineeringDiagramBalanceAssessment.fromBalanceTable(balanceTable,
-            Collections.singletonList(criteria(1.0, 1.0, 1.0, 1.0)));
+    EngineeringDiagramBalanceAssessment assessment = EngineeringDiagramBalanceAssessment.fromBalanceTable(balanceTable,
+        Collections.singletonList(criteria(1.0, 1.0, 1.0, 1.0)));
 
     assertFalse(assessment.isValid());
     assertEquals(Status.INCOMPLETE, assessment.getResults().get(0).getMassStatus());
-    assertEquals(Status.INCOMPLETE,
-        assessment.getResults().get(0).getStreamEnthalpyStatus());
+    assertEquals(Status.INCOMPLETE, assessment.getResults().get(0).getStreamEnthalpyStatus());
     assertTrue(hasDiagnostic(assessment, "BALANCE_ASSESSMENT_MASS_INCOMPLETE"));
     assertTrue(hasDiagnostic(assessment, "BALANCE_ASSESSMENT_STREAM_ENTHALPY_INCOMPLETE"));
-    assertTrue(hasDiagnostic(assessment,
-        "BALANCE_ASSESSMENT_SOURCE_BALANCE_BOUNDARY_UNKNOWN_STREAM"));
+    assertTrue(hasDiagnostic(assessment, "BALANCE_ASSESSMENT_SOURCE_BALANCE_BOUNDARY_UNKNOWN_STREAM"));
   }
 
   @Test
   void isDeterministicForFreshSystemsAndCriteriaOrder() {
-    EngineeringDiagramBalanceAssessment first =
-        EngineeringDiagramBalanceAssessment.fromBalanceTable(
-            balanceTable(completeBoundaryCase()), Collections.singletonList(criteria(1.0, 1.0,
-                Double.MAX_VALUE, 2.0)));
+    EngineeringDiagramBalanceAssessment first = EngineeringDiagramBalanceAssessment.fromBalanceTable(
+        balanceTable(completeBoundaryCase()), Collections.singletonList(criteria(1.0, 1.0, Double.MAX_VALUE, 2.0)));
     List<Criteria> secondCriteria = new ArrayList<Criteria>();
     secondCriteria.add(criteria(1.0, 1.0, Double.MAX_VALUE, 2.0));
     Collections.reverse(secondCriteria);
-    EngineeringDiagramBalanceAssessment second =
-        EngineeringDiagramBalanceAssessment.fromBalanceTable(
-            balanceTable(completeBoundaryCase()), secondCriteria);
+    EngineeringDiagramBalanceAssessment second = EngineeringDiagramBalanceAssessment
+        .fromBalanceTable(balanceTable(completeBoundaryCase()), secondCriteria);
 
     assertEquals(first.toJson(), second.toJson());
   }
 
   @Test
   void rejectsInvalidCriteriaConstruction() {
-    assertThrows(IllegalArgumentException.class,
-        () -> new Criteria("BAL-SIMPLE-01", -1.0, 1.0, 1.0, 1.0,
-            "project-balance-criteria:test", EvidenceState.PROPOSED));
-    assertThrows(IllegalArgumentException.class,
-        () -> new Criteria("BAL-SIMPLE-01", 1.0, Double.NaN, 1.0, 1.0,
-            "project-balance-criteria:test", EvidenceState.PROPOSED));
-    assertThrows(IllegalArgumentException.class,
-        () -> new Criteria("BAL-SIMPLE-01", 1.0, 1.0, Double.POSITIVE_INFINITY, 1.0,
-            "project-balance-criteria:test", EvidenceState.PROPOSED));
+    assertThrows(IllegalArgumentException.class, () -> new Criteria("BAL-SIMPLE-01", -1.0, 1.0, 1.0, 1.0,
+        "project-balance-criteria:test", EvidenceState.PROPOSED));
+    assertThrows(IllegalArgumentException.class, () -> new Criteria("BAL-SIMPLE-01", 1.0, Double.NaN, 1.0, 1.0,
+        "project-balance-criteria:test", EvidenceState.PROPOSED));
+    assertThrows(IllegalArgumentException.class, () -> new Criteria("BAL-SIMPLE-01", 1.0, 1.0, Double.POSITIVE_INFINITY,
+        1.0, "project-balance-criteria:test", EvidenceState.PROPOSED));
   }
 
-  private static Criteria criteria(double massAbsolute, double massRelative,
-      double enthalpyAbsolute, double enthalpyRelative) {
-    return new Criteria("BAL-SIMPLE-01", massAbsolute, massRelative, enthalpyAbsolute,
-        enthalpyRelative, "project-balance-criteria:test", EvidenceState.PROPOSED);
+  private static Criteria criteria(double massAbsolute, double massRelative, double enthalpyAbsolute,
+      double enthalpyRelative) {
+    return new Criteria("BAL-SIMPLE-01", massAbsolute, massRelative, enthalpyAbsolute, enthalpyRelative,
+        "project-balance-criteria:test", EvidenceState.PROPOSED);
   }
 
   private static EngineeringDiagramReferenceFixtures.SystemCase completeBoundaryCase() {
-    EngineeringDiagramReferenceFixtures.SystemCase reference =
-        EngineeringDiagramReferenceFixtures.simpleTrain();
+    EngineeringDiagramReferenceFixtures.SystemCase reference = EngineeringDiagramReferenceFixtures.simpleTrain();
     for (StreamInterface product : reference.getProducts()) {
       reference.getProcessSystem().add(product);
     }
@@ -165,14 +147,11 @@ class EngineeringDiagramBalanceAssessmentTest {
     return reference;
   }
 
-  private static EngineeringDiagramBalanceTable balanceTable(
-      EngineeringDiagramReferenceFixtures.SystemCase reference) {
-    EngineeringDiagramDocumentSet documents =
-        ProcessDiagramDocumentSetAdapter.fromProcessSystem(reference.getProcessSystem(),
-            reference.getCaseId(), "A", "PFD-HMB-006", "Boundary tolerance assessment",
-            ContentProfile.PFD, "NORMAL-01");
-    EngineeringDiagramStreamTable streamTable =
-        EngineeringDiagramStreamTable.fromDocumentSet(documents, "NORMAL-01");
+  private static EngineeringDiagramBalanceTable balanceTable(EngineeringDiagramReferenceFixtures.SystemCase reference) {
+    EngineeringDiagramDocumentSet documents = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
+        reference.getProcessSystem(), reference.getCaseId(), "A", "PFD-HMB-006", "Boundary tolerance assessment",
+        ContentProfile.PFD, "NORMAL-01");
+    EngineeringDiagramStreamTable streamTable = EngineeringDiagramStreamTable.fromDocumentSet(documents, "NORMAL-01");
     List<Boundary> boundaries = new ArrayList<Boundary>();
     Row feed = completeRow(streamTable, reference.getFeed().getName());
     boundaries.add(new Boundary("BAL-SIMPLE-01", feed.getSemanticObjectId(), Direction.INLET,
@@ -187,47 +166,38 @@ class EngineeringDiagramBalanceAssessmentTest {
 
   private static EngineeringDiagramBalanceTable inletOnlyBalanceTable(
       EngineeringDiagramReferenceFixtures.SystemCase reference) {
-    EngineeringDiagramDocumentSet documents =
-        ProcessDiagramDocumentSetAdapter.fromProcessSystem(reference.getProcessSystem(),
-            reference.getCaseId(), "A", "PFD-HMB-006", "Boundary tolerance assessment",
-            ContentProfile.PFD, "NORMAL-01");
-    EngineeringDiagramStreamTable streamTable =
-        EngineeringDiagramStreamTable.fromDocumentSet(documents, "NORMAL-01");
+    EngineeringDiagramDocumentSet documents = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
+        reference.getProcessSystem(), reference.getCaseId(), "A", "PFD-HMB-006", "Boundary tolerance assessment",
+        ContentProfile.PFD, "NORMAL-01");
+    EngineeringDiagramStreamTable streamTable = EngineeringDiagramStreamTable.fromDocumentSet(documents, "NORMAL-01");
     Row feed = completeRow(streamTable, reference.getFeed().getName());
-    Boundary boundary = new Boundary("BAL-SIMPLE-01", feed.getSemanticObjectId(),
-        Direction.INLET, "project-balance-register:test", EvidenceState.PROPOSED);
-    return EngineeringDiagramBalanceTable.fromStreamTable(streamTable,
-        Collections.singletonList(boundary));
+    Boundary boundary = new Boundary("BAL-SIMPLE-01", feed.getSemanticObjectId(), Direction.INLET,
+        "project-balance-register:test", EvidenceState.PROPOSED);
+    return EngineeringDiagramBalanceTable.fromStreamTable(streamTable, Collections.singletonList(boundary));
   }
 
   private static EngineeringDiagramBalanceTable incompleteBalanceTable(
       EngineeringDiagramReferenceFixtures.SystemCase reference) {
-    EngineeringDiagramDocumentSet documents =
-        ProcessDiagramDocumentSetAdapter.fromProcessSystem(reference.getProcessSystem(),
-            reference.getCaseId(), "A", "PFD-HMB-006", "Boundary tolerance assessment",
-            ContentProfile.PFD, "NORMAL-01");
-    EngineeringDiagramStreamTable streamTable =
-        EngineeringDiagramStreamTable.fromDocumentSet(documents, "NORMAL-01");
-    Boundary boundary = new Boundary("BAL-SIMPLE-01", "line:missing", Direction.INLET,
-        "project-balance-register:test", EvidenceState.PROPOSED);
-    return EngineeringDiagramBalanceTable.fromStreamTable(streamTable,
-        Collections.singletonList(boundary));
+    EngineeringDiagramDocumentSet documents = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
+        reference.getProcessSystem(), reference.getCaseId(), "A", "PFD-HMB-006", "Boundary tolerance assessment",
+        ContentProfile.PFD, "NORMAL-01");
+    EngineeringDiagramStreamTable streamTable = EngineeringDiagramStreamTable.fromDocumentSet(documents, "NORMAL-01");
+    Boundary boundary = new Boundary("BAL-SIMPLE-01", "line:missing", Direction.INLET, "project-balance-register:test",
+        EvidenceState.PROPOSED);
+    return EngineeringDiagramBalanceTable.fromStreamTable(streamTable, Collections.singletonList(boundary));
   }
 
   private static Row completeRow(EngineeringDiagramStreamTable table, String sourceLabel) {
     for (Row row : table.getRows()) {
-      if (sourceLabel.equals(row.getSourceLabel())
-          && row.getValues().size() == Quantity.values().length) {
+      if (sourceLabel.equals(row.getSourceLabel()) && row.getValues().size() == Quantity.values().length) {
         return row;
       }
     }
     throw new AssertionError("No complete stream-table row for " + sourceLabel);
   }
 
-  private static boolean hasDiagnostic(EngineeringDiagramBalanceAssessment assessment,
-      String code) {
-    for (EngineeringDiagramBalanceAssessment.Diagnostic diagnostic :
-        assessment.getDiagnostics()) {
+  private static boolean hasDiagnostic(EngineeringDiagramBalanceAssessment assessment, String code) {
+    for (EngineeringDiagramBalanceAssessment.Diagnostic diagnostic : assessment.getDiagnostics()) {
       if (code.equals(diagnostic.getCode())) {
         return true;
       }
