@@ -165,6 +165,13 @@ double frms = fivAnalyser.getMeasuredValue("");
 - `"LOF"` - Likelihood of Failure (API RP 14E based)
 - `"FRMS"` - Fatigue Root Mean Square
 
+When a concrete local `FlowInducedVibrationAnalyser` is registered as a process measurement
+device, transient transactions preserve its pipe binding, support and method configuration,
+segment set, and the segment selected by an implicit calculation. Rejected trials can therefore
+restore the analyser configuration and reproduce the same derived value; accepted commits retain
+the update. This is transaction and restart coverage only and does not newly qualify the FIV
+correlations or the underlying pipe model.
+
 ## Process Monitors
 
 ### PressureTransmitter
@@ -539,6 +546,12 @@ import neqsim.process.measurementdevice.pHProbe;
 pHProbe ph = new pHProbe(aqueousStream);
 double phValue = ph.getMeasuredValue("");  // pH
 ```
+
+A registered concrete local `pHProbe` participates in transient transactions. Its snapshot
+preserves the stream and reactive-system bindings, alkalinity, reaction-calculation scratch
+objects, and the last cached pH input/result. Rollback therefore restores an exact cached reading
+instead of retaining work from a rejected trial. The coverage does not newly validate aqueous
+chemistry, alkalinity assumptions, sampling, or sensor accuracy.
 
 ## Multi-Phase Measurement
 
