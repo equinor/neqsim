@@ -464,3 +464,26 @@ independently. The detector response-time and detection-delay values are current
 metadata rather than integrated physical sensor dynamics. This gate does not qualify detector
 placement, fire/gas dispersion, voting, reliability, alarm/trip integrity, ESD action, external
 I/O, safety integrity, certification, virtual commissioning or OTS use.
+
+## State-mutating derived-instrument transaction coverage
+
+Concrete local `pHProbe`, `SoftSensor`, and `FlowInducedVibrationAnalyser` instances participate
+when registered as measurement devices in a `ProcessSystem`. Their snapshots include stable
+transaction identity and inherited measurement/alarm state. Device-specific state covers the pH
+probe's stream/reactive-system bindings, alkalinity, reaction scratch objects and last cached
+input/result; the soft sensor's stream binding, selected property, defensively copied input map,
+last estimate and sensitivity vector; and the vibration analyser's pipe binding, support and
+method configuration, segment set and implicitly selected segment.
+
+Quantitative tests place one participant in each of three coordinated `ProcessModel` areas.
+Rejection restores original bindings, configuration and exact cached or derived readings, replay
+is deterministic, and commit retains accepted edits. Restart evidence serializes each participant
+together with its closed snapshot. Concrete descendants, online-signal operation, null snapshots
+and snapshots belonging to another participant fail closed.
+
+This tranche covers transaction mechanics for state already mutated by production read paths. It
+does not newly qualify aqueous reaction chemistry, soft-sensor estimate accuracy, FIV correlations
+or pipe physics, sampling, external I/O, alarm/trip integrity, safety action, virtual commissioning
+or OTS use. `VirtualFlowMeter` remains outside this gate because its wall-clock result timestamps
+need a separate deterministic time/provenance design. `SevereSlugAnalyser` remains owned by the
+multiphase physics scope in issue #2907.
