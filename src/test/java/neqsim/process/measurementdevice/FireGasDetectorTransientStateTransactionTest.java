@@ -21,8 +21,7 @@ import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
- * Rollback, event replay, multi-area coverage, and restart evidence for local fire-and-gas
- * detectors.
+ * Rollback, event replay, multi-area coverage, and restart evidence for local fire-and-gas detectors.
  */
 class FireGasDetectorTransientStateTransactionTest extends neqsim.NeqSimTest {
   @Test
@@ -32,8 +31,7 @@ class FireGasDetectorTransientStateTransactionTest extends neqsim.NeqSimTest {
     gas.setGasSpecies("methane");
     gas.setLowerExplosiveLimit(50000.0);
     gas.setResponseTime(8.0);
-    AlarmConfig gasAlarm =
-        AlarmConfig.builder().highLimit(20.0).delay(2.0).unit("% LEL").build();
+    AlarmConfig gasAlarm = AlarmConfig.builder().highLimit(20.0).delay(2.0).unit("% LEL").build();
     gas.setAlarmConfig(gasAlarm);
     AlarmState originalGasAlarmState = gas.getAlarmState();
 
@@ -41,8 +39,7 @@ class FireGasDetectorTransientStateTransactionTest extends neqsim.NeqSimTest {
     fire.setDetectionThreshold(0.8);
     fire.setDetectionDelay(3.0);
     fire.setSignalLevel(0.2);
-    AlarmConfig fireAlarm =
-        AlarmConfig.builder().highLimit(0.5).delay(2.0).unit("binary").build();
+    AlarmConfig fireAlarm = AlarmConfig.builder().highLimit(0.5).delay(2.0).unit("binary").build();
     fire.setAlarmConfig(fireAlarm);
     AlarmState originalFireAlarmState = fire.getAlarmState();
 
@@ -163,14 +160,11 @@ class FireGasDetectorTransientStateTransactionTest extends neqsim.NeqSimTest {
       serialized = bytes.toByteArray();
     }
 
-    try (ObjectInputStream input =
-        new ObjectInputStream(new ByteArrayInputStream(serialized))) {
+    try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(serialized))) {
       GasDetector restoredGas = (GasDetector) input.readObject();
-      GasDetector.GasDetectorState restoredGasSnapshot =
-          (GasDetector.GasDetectorState) input.readObject();
+      GasDetector.GasDetectorState restoredGasSnapshot = (GasDetector.GasDetectorState) input.readObject();
       FireDetector restoredFire = (FireDetector) input.readObject();
-      FireDetector.FireDetectorState restoredFireSnapshot =
-          (FireDetector.FireDetectorState) input.readObject();
+      FireDetector.FireDetectorState restoredFireSnapshot = (FireDetector.FireDetectorState) input.readObject();
 
       restoredGas.restoreTransientState(restoredGasSnapshot);
       restoredFire.restoreTransientState(restoredFireSnapshot);
@@ -214,27 +208,22 @@ class FireGasDetectorTransientStateTransactionTest extends neqsim.NeqSimTest {
     ProcessSystem onlineProcess = new ProcessSystem("online detector blocker");
     onlineProcess.add(onlineGas);
     assertFalse(onlineProcess.getTransientTransactionCoverage().isComplete());
-    assertTrue(
-        onlineProcess.getTransientTransactionCoverage().getBlockingIssues().get(0)
-            .contains("external I/O"));
+    assertTrue(onlineProcess.getTransientTransactionCoverage().getBlockingIssues().get(0).contains("external I/O"));
 
     GasDetector firstGas = new GasDetector("first gas");
     GasDetector secondGas = new GasDetector("second gas");
-    assertThrows(
-        IllegalArgumentException.class,
+    assertThrows(IllegalArgumentException.class,
         () -> secondGas.restoreTransientState(firstGas.captureTransientState()));
     assertThrows(IllegalArgumentException.class, () -> firstGas.restoreTransientState(null));
 
     FireDetector firstFire = new FireDetector("first fire");
     FireDetector secondFire = new FireDetector("second fire");
-    assertThrows(
-        IllegalArgumentException.class,
+    assertThrows(IllegalArgumentException.class,
         () -> secondFire.restoreTransientState(firstFire.captureTransientState()));
     assertThrows(IllegalArgumentException.class, () -> firstFire.restoreTransientState(null));
   }
 
-  private static void assertCompleteCoverage(
-      TransientTransactionCoverage coverage, int expectedCount) {
+  private static void assertCompleteCoverage(TransientTransactionCoverage coverage, int expectedCount) {
     assertEquals(expectedCount, coverage.getProcessElementCount());
     assertEquals(expectedCount, coverage.getParticipantCount());
     assertTrue(coverage.isComplete(), coverage.getBlockingIssues().toString());
