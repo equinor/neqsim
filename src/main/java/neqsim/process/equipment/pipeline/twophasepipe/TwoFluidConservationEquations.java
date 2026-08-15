@@ -968,7 +968,7 @@ public class TwoFluidConservationEquations implements Serializable {
       double liqSource = (liqSpurious - liqStabiliser) * area / secDx;
 
       dUdt[i][IDX_GAS_MOMENTUM] += gasSource;
-      if (enableWaterOilSlip && NUM_EQUATIONS == 7) {
+      if (enableWaterOilSlip) {
         // Split the liquid share by holdup so the three phases still sum to zero.
         double alphaL = sec.getLiquidHoldup();
         double oilFraction = alphaL > 1.0e-9 ? sec.getOilHoldup() / alphaL : 1.0;
