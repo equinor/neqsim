@@ -1407,12 +1407,12 @@ public class TPflash extends Flash {
    * concentrates water. Full recursive flashing is avoided. A multiphase-enabled water-rich gas/aqueous endpoint uses
    * one cold ordinary candidate; a genuine oil/aqueous liquid-liquid endpoint remains on the multiphase path. A
    * water-rich multiphase endpoint that collapsed to one hydrocarbon phase also uses a cold ordinary candidate, whose
-   * invalid two-phase cubic-root split may seed the multiphase solver. An ordinary neutral non-CPA water-rich asymmetric
-   * feed retains its pre-iteration state for this reciprocal calculation; cloning the final endpoint can retain the
-   * collapsed phase/root history and miss the cold phase set. For an ordinary endpoint, an existing invalid two-phase
-   * split is retained as the multiphase phase-set seed when the existing cold candidate is rejected. Trying the cold
-   * candidate first preserves its gas/oil cubic-root classification whenever it already reaches the same feasible
-   * equilibrium. The nested candidates cannot start a reciprocal fallback cycle. A candidate replaces the
+   * invalid two-phase cubic-root split may seed the multiphase solver. An ordinary neutral non-CPA water-rich
+   * asymmetric feed retains its pre-iteration state for this reciprocal calculation; cloning the final endpoint can
+   * retain the collapsed phase/root history and miss the cold phase set. For an ordinary endpoint, an existing invalid
+   * two-phase split is retained as the multiphase phase-set seed when the existing cold candidate is rejected. Trying
+   * the cold candidate first preserves its gas/oil cubic-root classification whenever it already reaches the same
+   * feasible equilibrium. The nested candidates cannot start a reciprocal fallback cycle. A candidate replaces the
    * original state only after strict phase-fraction, composition-normalization, material-balance, fugacity,
    * distinct-composition, and lower-Gibbs checks pass. A collapsed multiphase endpoint additionally requires the
    * candidate to restore the missing aqueous phase, keeping ordinary gas appearance outside this fallback's scope.
@@ -2319,10 +2319,9 @@ public class TPflash extends Flash {
         || system.isChemicalSystem() || system.hasIons() || solidCheck || system.doSolidPhaseCheck()
         || system.isMultiphaseWaxCheck() || directGammaPhiModel != null || hybridEosGeFlashModel != null
         || system.getPhase(0).getNumberOfComponents() <= 1
-        || (!ordinaryWaterRichCandidate
-            && (!hasPotentialAsymmetricNeutralInstability(MULTIPHASE_ENDPOINT_CRITICAL_TEMPERATURE_MARGIN)
-                || !(hasPotentialMultiphaseEndpoint(PhaseType.GAS)
-                    || hasPotentialMultiphaseEndpoint(PhaseType.LIQUID))))) {
+        || (!ordinaryWaterRichCandidate && (!hasPotentialAsymmetricNeutralInstability(
+            MULTIPHASE_ENDPOINT_CRITICAL_TEMPERATURE_MARGIN)
+            || !(hasPotentialMultiphaseEndpoint(PhaseType.GAS) || hasPotentialMultiphaseEndpoint(PhaseType.LIQUID))))) {
       return;
     }
     multiphaseEndpointRescueSeed = system.clone();
