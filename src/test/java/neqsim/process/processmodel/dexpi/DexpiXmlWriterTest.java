@@ -342,7 +342,9 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     String secondXml = secondOut.toString(StandardCharsets.UTF_8.name());
 
     assertTrue(firstXml.contains("Name=\"OperatingTemperatureValue\" Unit=\"C\" Value=\"30.707918389\""));
-    assertEquals(normalizeEmissionMetadata(firstXml), normalizeEmissionMetadata(secondXml));\n    assertEquals("0.00000012345678901",\n        DexpiXmlWriter.formatNumericAttribute(0.0000001234567890123));
+    assertEquals(normalizeEmissionMetadata(firstXml), normalizeEmissionMetadata(secondXml));
+    assertEquals("0.00000012345678901",
+        DexpiXmlWriter.formatNumericAttribute(0.0000001234567890123));
   }
 
   private static String normalizeEmissionMetadata(String xml) {
