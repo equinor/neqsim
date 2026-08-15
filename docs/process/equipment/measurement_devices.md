@@ -472,9 +472,10 @@ Simulates gas detection for safety systems.
 ```java
 import neqsim.process.measurementdevice.GasDetector;
 
-GasDetector gasDetector = new GasDetector("Gas Detector 1", stream);
-gasDetector.setDetectionLimit(20.0);  // % LEL
-boolean gasDetected = gasDetector.isTriggered();
+GasDetector gasDetector =
+    new GasDetector("Gas Detector 1", GasDetector.GasType.COMBUSTIBLE);
+gasDetector.setGasConcentration(25.0);  // % LEL
+boolean gasDetected = gasDetector.isGasDetected(20.0);
 ```
 
 ### FireDetector
@@ -485,9 +486,24 @@ Simulates fire detection for safety systems.
 import neqsim.process.measurementdevice.FireDetector;
 
 FireDetector fireDetector = new FireDetector("Fire Detector 1");
-fireDetector.setTemperatureThreshold(65.0);  // °C
-boolean fireDetected = fireDetector.isTriggered();
+fireDetector.setDetectionThreshold(0.8);
+fireDetector.setSignalLevel(0.9);
+boolean fireDetected = fireDetector.isFireDetected();
 ```
+
+
+When concrete local `GasDetector` and `FireDetector` instances are registered in a
+`ProcessSystem`, their complete detector and inherited alarm/measurement state participates in
+transient-step transactions. This includes gas type, concentration, species, location, LEL and
+response-time configuration, plus the fire latch, signal, threshold, configured delay and location.
+Scheduled event actions that change these detectors can therefore be rolled back and replayed
+deterministically together with scheduler pending/fired bookkeeping. Concrete descendants and
+online-signal bindings remain fail-closed.
+
+This is an in-memory numerical rollback contract, not fire-and-gas detector certification. The
+configured response time and detection delay are retained settings; the current detector classes do
+not integrate those values as physical sensor dynamics. External I/O, voting logic, ESD action,
+detector coverage, reliability and safety-integrity qualification remain outside this support.
 
 ## Quality Analysers
 
