@@ -51,9 +51,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * </pre>
  *
  * <p>
- * A concrete local detector registered in a process participates in transient-step transactions.
- * Rollback restores the fire latch, signal/configuration and inherited alarm/measurement state.
- * Subclasses and online-signal bindings remain fail-closed.
+ * A concrete local detector registered in a process participates in transient-step transactions. Rollback restores the
+ * fire latch, signal/configuration and inherited alarm/measurement state. Subclasses and online-signal bindings remain
+ * fail-closed.
  *
  * @author ESOL
  * @version $Id: $Id
@@ -339,8 +339,7 @@ public class FireDetector extends MeasurementDeviceBaseClass
     private final MeasurementDeviceTransientState measurementState;
 
     private FireDetectorState(String stateIdentity, boolean fireDetected, double detectionThreshold,
-        double detectionDelay, double signalLevel, String location,
-        MeasurementDeviceTransientState measurementState) {
+        double detectionDelay, double signalLevel, String location, MeasurementDeviceTransientState measurementState) {
       this.stateIdentity = stateIdentity;
       this.fireDetected = fireDetected;
       this.detectionThreshold = detectionThreshold;
