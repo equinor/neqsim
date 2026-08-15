@@ -54,7 +54,7 @@ public class FieldLifecycleSimulator {
   }
 
   /**
-   * Creates a lifecycle simulator with a guard invoked before each detailed facility solve.
+   * Creates a lifecycle simulator with a guard invoked once before each timestep facility solve.
    *
    * @param facilityOperationGuard guard that can reject an unavailable facility operating state
    */
@@ -413,9 +413,12 @@ public class FieldLifecycleSimulator {
     String unconstrainedBottleneck = allocation.getRequestedPrimaryBottleneck();
     boolean detailedRequestedStateCaptured = false;
 
+    // Evaluated outside the retry loop so a rejected operating state ends the lifecycle instead of
+    // being consumed by the rate-reduction retries.
+    facilityOperationGuard.run();
+
     for (int attempt = 0; attempt < 10; attempt++) {
       try {
-        facilityOperationGuard.run();
         setReservoirProductionRates(model, config, satellite.getOilSm3PerDay(), satellite.getWaterSm3PerDay());
         setHostProductionRates(model, host);
         configureGasAllocation(model, config, fieldAgeYears);
