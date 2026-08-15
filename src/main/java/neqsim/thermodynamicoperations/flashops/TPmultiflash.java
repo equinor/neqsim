@@ -490,9 +490,8 @@ public class TPmultiflash extends TPflash {
     // Furst-electrolyte and UMR-PRU-MC systems retain their established local
     // pure-component stability path unless enhanced checking is explicitly requested.
     // Other model families still require Wilson trials for water-rich and vapor-like splits.
-    boolean preserveLocalStabilityPath =
-        !system.doEnhancedMultiPhaseCheck()
-            && (system instanceof SystemFurstElectrolyteEos || system instanceof SystemUMRPRUMCEos);
+    boolean preserveLocalStabilityPath = !system.doEnhancedMultiPhaseCheck()
+        && (system instanceof SystemFurstElectrolyteEos || system instanceof SystemUMRPRUMCEos);
     boolean skipWilsonKTrials = preserveLocalStabilityPath || maxAbsLogK < 0.01;
 
     // O3: Wilson K-based trial phases — liquid-like (z/K) first, then vapor-like (K·z)
