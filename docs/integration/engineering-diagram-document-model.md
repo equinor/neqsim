@@ -120,7 +120,7 @@ List<EngineeringDiagramBalanceTable.Boundary> boundaries =
             "project-balance-register:BAL-AREA-01",
             EngineeringDiagramBalanceTable.EvidenceState.PROPOSED),
         new EngineeringDiagramBalanceTable.Boundary(
-            productStreamId,
+            "BAL-AREA-01",
             productStreamId,
             EngineeringDiagramBalanceTable.Direction.OUTLET,
             "project-balance-register:BAL-AREA-01",
