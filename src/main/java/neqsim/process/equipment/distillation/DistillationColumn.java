@@ -13764,7 +13764,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
     if (hasBottomSpecificationControlConflict()) {
       result.addError("specification.controlOwnership",
-          "The adjustable bottom specification cannot manipulate reboiler temperature while vapor boilup ratio is active",
+          "The adjustable bottom specification cannot manipulate reboiler temperature while vapor boilup ratio is "
+              + "active",
           "Select ReboilerMode.EQUILIBRIUM before setting a bottom purity, recovery, or product-flow target");
     }
   }
