@@ -86,7 +86,7 @@ EngineeringDiagramDocumentSet operatingDocuments =
         "Gas processing facility",
         EngineeringDiagramDocumentSet.ContentProfile.PFD,
         "NORMAL-01",
-        register);
+        new EngineeringDiagramDesignationRegister());
 EngineeringDiagramStreamTable streamTable =
     EngineeringDiagramStreamTable.fromDocumentSet(operatingDocuments, "NORMAL-01");
 
