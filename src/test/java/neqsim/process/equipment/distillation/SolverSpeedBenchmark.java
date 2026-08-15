@@ -20,10 +20,20 @@ import neqsim.thermo.system.SystemSrkEos;
  * {@code target/solver_benchmark.txt} path for quick comparison between solver branches.
  * </p>
  *
+ * <p>
+ * This class contains no assertions - it only produces a profiling artifact - so it is tagged {@code benchmark} rather
+ * than {@code slow} and is excluded from CI by default. Solver correctness across every
+ * {@link DistillationColumn.SolverType} is asserted by {@code DistillationSolverBenchmarkTest}. Run it on demand with:
+ * </p>
+ *
+ * <pre>
+ * mvn test -Dtest=SolverSpeedBenchmark -Dgroups=benchmark -DexcludedTestGroups=
+ * </pre>
+ *
  * @author esol
  * @version 1.0
  */
-@Tag("slow")
+@Tag("benchmark")
 public class SolverSpeedBenchmark {
   private static final Logger logger = LogManager.getLogger(SolverSpeedBenchmark.class);
 
