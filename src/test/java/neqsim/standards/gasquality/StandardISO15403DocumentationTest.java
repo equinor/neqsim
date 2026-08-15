@@ -18,13 +18,11 @@ class StandardISO15403DocumentationTest extends NeqSimTest {
     double baseMon = base.getValue("MON");
     double baseNm = base.getValue("NM");
 
-    Standard_ISO15403 carbonDioxideCase =
-        new Standard_ISO15403(createCng(0.90, 0.03, 0.01));
+    Standard_ISO15403 carbonDioxideCase = new Standard_ISO15403(createCng(0.90, 0.03, 0.01));
     carbonDioxideCase.calculate();
     double carbonDioxideNm = carbonDioxideCase.getValue("NM");
 
-    Standard_ISO15403 nitrogenCase =
-        new Standard_ISO15403(createCng(0.90, 0.01, 0.03));
+    Standard_ISO15403 nitrogenCase = new Standard_ISO15403(createCng(0.90, 0.01, 0.03));
     nitrogenCase.calculate();
     double nitrogenNm = nitrogenCase.getValue("NM");
 
