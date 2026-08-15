@@ -1839,6 +1839,12 @@ public final class DexpiXmlWriter {
     appendGenericAttribute(document, parent, name, formatNumericAttribute(value), unit);
   }
 
+  /**
+   * Formats a finite engineering value as a deterministic, scale-aware decimal attribute.
+   *
+   * @param value finite numeric value to format
+   * @return canonical decimal representation using the writer's significant-digit precision
+   */
   static String formatNumericAttribute(double value) {
     return BigDecimal.valueOf(value).round(NUMERIC_ATTRIBUTE_PRECISION).stripTrailingZeros().toPlainString();
   }
