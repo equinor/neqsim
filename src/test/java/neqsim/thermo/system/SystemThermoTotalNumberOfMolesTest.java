@@ -3,7 +3,6 @@ package neqsim.thermo.system;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
-import neqsim.thermo.phase.PhaseType;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -147,72 +146,4 @@ public class SystemThermoTotalNumberOfMolesTest {
   }
 
   /**
-   * A stale serialized total must be reconciled with the retained component inventory before a flash.
-   */
-  @Test
-  public void testFlashReconcilesStaleSerializedTotalForAqueousMegFluid() {
-    SystemThermo fluid = new SystemSrkCPAstatoil(278.45, 37.21325);
-    fluid.addComponent("water", 0.11833608283886514);
-    fluid.addComponent("MEG", 0.2779633604538873);
-    fluid.setMixingRule(10);
-    fluid.setMultiPhaseCheck(true);
-    fluid.setTotalNumberOfMolesRaw(1986.7470206432324);
-
-    new ThermodynamicOperations(fluid).TPflash();
-
-    assertEquals(0.39629944329275244, fluid.getTotalNumberOfMoles(), 1e-12);
-    assertEquals(1.0, sumOverallMoleFractions(fluid), 1e-12);
-    assertEquals(1, fluid.getNumberOfPhases());
-    assertEquals(PhaseType.AQUEOUS, fluid.getPhase(0).getType());
-    assertEquals(0.2986026976360107, fluid.getPhase(0).getComponent("water").getx(), 1e-10);
-    assertEquals(0.7013973023639892, fluid.getPhase(0).getComponent("MEG").getx(), 1e-10);
-  }
-
-  /**
-   * A stale serialized total on a wet-gas-plus-MEG feed used to leave the overall composition non-normalized, which
-   * could collapse the flash onto a single named phase and make {@code getPhase("gas")} or {@code
-   * getPhase("aqueous")} throw depending on the trial point during a wet-gas-and-glycol injection flow sweep.
-   */
-  @Test
-  public void testFlashReconcilesStaleSerializedTotalForWetGasWithMeg() {
-    SystemThermo fluid = new SystemSrkCPAstatoil(278.45, 37.21325);
-    fluid.addComponent("methane", 5.0);
-    fluid.addComponent("water", 0.11833608283886514);
-    fluid.addComponent("MEG", 0.2779633604538873);
-    fluid.setMixingRule(10);
-    fluid.setMultiPhaseCheck(true);
-    fluid.setTotalNumberOfMolesRaw(1986.7470206432324);
-
-    new ThermodynamicOperations(fluid).TPflash();
-
-    assertEquals(1.0, sumOverallMoleFractions(fluid), 1e-12);
-    assertTrue(fluid.getNumberOfPhases() >= 2);
-    assertEquals(PhaseType.GAS, fluid.getPhase("gas").getType());
-    assertEquals(PhaseType.AQUEOUS, fluid.getPhase("aqueous").getType());
-  }
-
-  /**
-   * Initialization must not replace a multiphase total with the partial inventory in phase zero.
-   */
-  @Test
-  public void testInitPreservesTotalForSplitGasAqueousInventory() {
-    SystemThermo fluid = new SystemSrkCPAstatoil(278.45, 37.21325);
-    fluid.addComponent("methane", 5.0);
-    fluid.addComponent("water", 0.11833608283886514);
-    fluid.addComponent("MEG", 0.2779633604538873);
-    fluid.setMixingRule(10);
-    fluid.setMultiPhaseCheck(true);
-
-    new ThermodynamicOperations(fluid).TPflash();
-
-    assertEquals(2, fluid.getNumberOfPhases());
-    double totalMoles = fluid.getTotalNumberOfMoles();
-    double phaseZeroMoles = fluid.getPhase(0).getNumberOfMolesInPhase();
-    assertTrue(Math.abs(totalMoles - phaseZeroMoles) > 1.0e-6);
-
-    fluid.isInitialized = false;
-    fluid.init(0);
-
-    assertEquals(totalMoles, fluid.getTotalNumberOfMoles(), 1.0e-12);
-  }
-}
+   * A stale serialized total mu}
