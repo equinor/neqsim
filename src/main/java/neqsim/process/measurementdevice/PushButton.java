@@ -1,7 +1,10 @@
 package neqsim.process.measurementdevice;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+import neqsim.process.dynamics.TransientStateParticipant;
 import neqsim.process.equipment.valve.BlowdownValve;
 import neqsim.process.logic.ProcessLogic;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -24,6 +27,12 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <li>Measured value: 1.0 when pushed, 0.0 when not pushed</li>
  * <li>Supports alarm configuration for activation logging</li>
  * </ul>
+ *
+ * <p>
+ * A concrete local push button registered in a process participates in transient-step transactions. Rollback restores
+ * its latch, configuration, bindings, and inherited alarm/measurement state. Automatic blowdown-valve activation,
+ * linked process logic, subclasses, and online-signal bindings remain fail-closed because those paths may mutate state
+ * outside the button.
  *
  * <p>
  * Typical usage with blowdown valve:
@@ -50,9 +59,13 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author ESOL
  * @version $Id: $Id
  */
-public class PushButton extends MeasurementDeviceBaseClass {
+public class PushButton extends MeasurementDeviceBaseClass
+    implements TransientStateParticipant<PushButton.PushButtonState> {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+
+  /** Persistent identity used only for transient transaction provenance. */
+  private String transientStateParticipantId = UUID.randomUUID().toString();
 
   /** Indicates if button is currently pushed (active). */
   private boolean isPushed = false;
@@ -121,8 +134,9 @@ public class PushButton extends MeasurementDeviceBaseClass {
    * @param logic process logic to activate when button is pushed
    */
   public void linkToLogic(ProcessLogic logic) {
-    if (!linkedLogics.contains(logic)) {
-      linkedLogics.add(logic);
+    List<ProcessLogic> logics = getOrCreateLinkedLogics();
+    if (!logics.contains(logic)) {
+      logics.add(logic);
     }
   }
 
@@ -132,7 +146,7 @@ public class PushButton extends MeasurementDeviceBaseClass {
    * @return list of linked logic sequences (unmodifiable)
    */
   public List<ProcessLogic> getLinkedLogics() {
-    return new ArrayList<>(linkedLogics);
+    return new ArrayList<>(getOrCreateLinkedLogics());
   }
 
   /**
@@ -152,7 +166,7 @@ public class PushButton extends MeasurementDeviceBaseClass {
     }
 
     // Activate all linked logic sequences
-    for (ProcessLogic logic : linkedLogics) {
+    for (ProcessLogic logic : getOrCreateLinkedLogics()) {
       logic.activate();
     }
   }
@@ -258,17 +272,109 @@ public class PushButton extends MeasurementDeviceBaseClass {
       sb.append(", Linked to: ").append(linkedBlowdownValve.getName());
       sb.append(" (").append(linkedBlowdownValve.isActivated() ? "ACTIVATED" : "NOT ACTIVATED").append(")");
     }
-    if (!linkedLogics.isEmpty()) {
+    List<ProcessLogic> logics = getOrCreateLinkedLogics();
+    if (!logics.isEmpty()) {
       sb.append(", Linked Logic: [");
-      for (int i = 0; i < linkedLogics.size(); i++) {
+      for (int i = 0; i < logics.size(); i++) {
         if (i > 0) {
           sb.append(", ");
         }
-        ProcessLogic logic = linkedLogics.get(i);
+        ProcessLogic logic = logics.get(i);
         sb.append(logic.getName()).append(" (").append(logic.getState()).append(")");
       }
       sb.append("]");
     }
     return sb.toString();
+  }
+
+  /**
+   * Lazily recreates the transient logic-binding list after Java deserialization.
+   *
+   * @return non-null mutable logic-binding list
+   */
+  private List<ProcessLogic> getOrCreateLinkedLogics() {
+    if (linkedLogics == null) {
+      linkedLogics = new ArrayList<>();
+    }
+    return linkedLogics;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateIdentity() {
+    if (transientStateParticipantId == null || transientStateParticipantId.trim().isEmpty()) {
+      transientStateParticipantId = UUID.randomUUID().toString();
+    }
+    return "measurement:push-button:" + transientStateParticipantId;
+  }
+
+  /**
+   * The snapshot is complete only for a concrete local button without automatic external actions.
+   *
+   * @return blocking diagnostic for descendants, external I/O, or linked action side effects; otherwise {@code null}
+   */
+  @Override
+  public String getTransientStateCoverageIssue() {
+    if (getClass() != PushButton.class) {
+      return "push-button subclass " + getClass().getName()
+          + " must provide a snapshot that includes subclass-owned mutable state";
+    }
+    String measurementIssue = getMeasurementTransientStateCoverageIssue();
+    if (measurementIssue != null) {
+      return measurementIssue;
+    }
+    if (linkedBlowdownValve != null && autoActivateValve) {
+      return "automatic blowdown-valve activation may mutate linked equipment without complete transient state "
+          + "coverage";
+    }
+    if (!getOrCreateLinkedLogics().isEmpty()) {
+      return "linked process logic may mutate equipment or sequence state without a rejected-step commit/defer "
+          + "contract";
+    }
+    return null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public PushButtonState captureTransientState() {
+    return new PushButtonState(getTransientStateIdentity(), isPushed, linkedBlowdownValve, autoActivateValve,
+        getOrCreateLinkedLogics(), captureMeasurementDeviceTransientState());
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreTransientState(PushButtonState snapshot) {
+    if (snapshot == null) {
+      throw new IllegalArgumentException("Push-button transient snapshot cannot be null");
+    }
+    if (!getTransientStateIdentity().equals(snapshot.stateIdentity)) {
+      throw new IllegalArgumentException("Push-button snapshot identity does not match " + getTransientStateIdentity());
+    }
+    isPushed = snapshot.pushed;
+    linkedBlowdownValve = snapshot.linkedBlowdownValve;
+    autoActivateValve = snapshot.autoActivateValve;
+    linkedLogics = new ArrayList<>(snapshot.linkedLogics);
+    restoreMeasurementDeviceTransientState(snapshot.measurementState);
+  }
+
+  /** Immutable local push-button rollback point. */
+  public static final class PushButtonState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String stateIdentity;
+    private final boolean pushed;
+    private final BlowdownValve linkedBlowdownValve;
+    private final boolean autoActivateValve;
+    private final List<ProcessLogic> linkedLogics;
+    private final MeasurementDeviceTransientState measurementState;
+
+    private PushButtonState(String stateIdentity, boolean pushed, BlowdownValve linkedBlowdownValve,
+        boolean autoActivateValve, List<ProcessLogic> linkedLogics, MeasurementDeviceTransientState measurementState) {
+      this.stateIdentity = stateIdentity;
+      this.pushed = pushed;
+      this.linkedBlowdownValve = linkedBlowdownValve;
+      this.autoActivateValve = autoActivateValve;
+      this.linkedLogics = new ArrayList<>(linkedLogics);
+      this.measurementState = measurementState;
+    }
   }
 }

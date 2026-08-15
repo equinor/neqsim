@@ -465,6 +465,29 @@ metadata rather than integrated physical sensor dynamics. This gate does not qua
 placement, fire/gas dispersion, voting, reliability, alarm/trip integrity, ESD action, external
 I/O, safety integrity, certification, virtual commissioning or OTS use.
 
+## Local manual push-button transaction coverage
+
+A concrete local `PushButton` participates when registered as a measurement device in a
+`ProcessSystem`. Its snapshot preserves stable transaction identity, the pushed latch, optional
+blowdown-valve binding, automatic-activation configuration, logic-binding list and complete
+inherited measurement/alarm state. A lazily recreated empty logic-binding list also keeps older
+serialized buttons restartable after the field was introduced as transient state.
+
+Together with the existing `EventScheduler` snapshot, this closes the local side effect of a
+scheduled manual push: rejection restores both pending/fired event membership and the button,
+replay produces the same latch and alarm continuation, and accepted commit retains the push.
+Quantitative evidence covers two coordinated `ProcessModel` areas, binding/configuration rollback,
+alarm delay, exact binary replay, stable identity, foreign/null snapshots and Java-serialization
+restart.
+
+Automatic activation of a linked `BlowdownValve` and every linked `ProcessLogic` remain
+fail-closed because those paths mutate equipment or sequence state that does not yet have complete
+transaction coverage. A valve may remain bound with automatic activation disabled; then pushing
+the button changes only the snapshotted local latch. Concrete descendants and online-signal mode
+also fail closed. This gate proves numerical rollback mechanics only; it does not qualify manual
+input reliability, ESD action, safety integrity, external DCS/I/O, virtual commissioning or OTS
+use.
+
 ## State-mutating derived-instrument transaction coverage
 
 Concrete local `pHProbe`, `SoftSensor`, and `FlowInducedVibrationAnalyser` instances participate
