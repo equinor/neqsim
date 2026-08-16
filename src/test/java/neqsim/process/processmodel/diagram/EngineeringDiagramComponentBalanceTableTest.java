@@ -82,12 +82,11 @@ class EngineeringDiagramComponentBalanceTableTest {
     ComponentFlow first = flows.get(0);
     flows.add(first);
     flows.remove(1);
-    flows.add(new ComponentFlow("BAL-SIMPLE-01", "line:missing", "methane", "methane", 1.0, "kg/s",
-        "COMPONENT_MASS", "project-component-register:test", "simulation-case:NORMAL-01",
-        EvidenceState.PROPOSED));
+    flows.add(new ComponentFlow("BAL-SIMPLE-01", "line:missing", "methane", "methane", 1.0, "kg/s", "COMPONENT_MASS",
+        "project-component-register:test", "simulation-case:NORMAL-01", EvidenceState.PROPOSED));
     flows.add(new ComponentFlow("BAL-SIMPLE-01", fixture.boundaries.get(0).getStreamSemanticObjectId(), "water",
-        "water", 0.0, "kg/hr", "COMPONENT_MASS", "project-component-register:test",
-        "simulation-case:NORMAL-01", EvidenceState.PROPOSED));
+        "water", 0.0, "kg/hr", "COMPONENT_MASS", "project-component-register:test", "simulation-case:NORMAL-01",
+        EvidenceState.PROPOSED));
     flows.add(new ComponentFlow("BAL-SIMPLE-01", fixture.boundaries.get(1).getStreamSemanticObjectId(), "nitrogen",
         "nitrogen", Double.NaN, "kg/s", "COMPONENT_MASS", "project-component-register:test",
         "simulation-case:NORMAL-01", EvidenceState.PROPOSED));
@@ -130,11 +129,11 @@ class EngineeringDiagramComponentBalanceTableTest {
     EngineeringDiagramDocumentSet documents = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
         reference.getProcessSystem(), reference.getCaseId(), "A", "PFD-HMB-006", "Component balance",
         ContentProfile.PFD, "NORMAL-01");
-    EngineeringDiagramStreamTable streamTable = EngineeringDiagramStreamTable.fromDocumentSet(documents,
-        "NORMAL-01");
+    EngineeringDiagramStreamTable streamTable = EngineeringDiagramStreamTable.fromDocumentSet(documents, "NORMAL-01");
     List<Boundary> boundaries = new ArrayList<Boundary>();
-    boundaries.add(new Boundary("BAL-SIMPLE-01", completeRow(streamTable, reference.getFeed().getName()).getSemanticObjectId(),
-        Direction.INLET, "project-balance-register:test", EvidenceState.PROPOSED));
+    boundaries.add(
+        new Boundary("BAL-SIMPLE-01", completeRow(streamTable, reference.getFeed().getName()).getSemanticObjectId(),
+            Direction.INLET, "project-balance-register:test", EvidenceState.PROPOSED));
     for (StreamInterface product : reference.getProducts()) {
       boundaries.add(new Boundary("BAL-SIMPLE-01", completeRow(streamTable, product.getName()).getSemanticObjectId(),
           Direction.OUTLET, "project-balance-register:test", EvidenceState.PROPOSED));
@@ -148,9 +147,9 @@ class EngineeringDiagramComponentBalanceTableTest {
     Boundary inlet = direction(boundaries, Direction.INLET, 0);
     Boundary firstOutlet = direction(boundaries, Direction.OUTLET, 0);
     Boundary secondOutlet = direction(boundaries, Direction.OUTLET, 1);
-    return new ArrayList<ComponentFlow>(Arrays.asList(flow(inlet, "methane", 6.0), flow(inlet, "ethane", 4.0),
-        flow(firstOutlet, "methane", 4.0), flow(firstOutlet, "ethane", 1.0),
-        flow(secondOutlet, "methane", 2.0), flow(secondOutlet, "ethane", 3.0)));
+    return new ArrayList<ComponentFlow>(
+        Arrays.asList(flow(inlet, "methane", 6.0), flow(inlet, "ethane", 4.0), flow(firstOutlet, "methane", 4.0),
+            flow(firstOutlet, "ethane", 1.0), flow(secondOutlet, "methane", 2.0), flow(secondOutlet, "ethane", 3.0)));
   }
 
   private static ComponentFlow flow(Boundary boundary, String component, double massFlow) {
