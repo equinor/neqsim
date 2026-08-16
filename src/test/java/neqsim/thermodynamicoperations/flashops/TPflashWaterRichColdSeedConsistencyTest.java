@@ -24,6 +24,8 @@ class TPflashWaterRichColdSeedConsistencyTest extends neqsim.NeqSimTest {
 
     SystemInterface poorGuess = flash(createSystem(230.0, 90.0, FEED, false), true);
     assertEquivalentOilAqueousState(ordinary, poorGuess);
+    SystemInterface poorMultiphaseGuess = flash(createSystem(230.0, 90.0, FEED, true), true);
+    assertEquivalentOilAqueousState(ordinary, poorMultiphaseGuess);
 
     double firstGibbsEnergy = ordinary.getGibbsEnergy();
     double firstOilBeta = ordinary.getPhase("oil").getBeta();
@@ -35,6 +37,17 @@ class TPflashWaterRichColdSeedConsistencyTest extends neqsim.NeqSimTest {
     assertEquals(firstOilBeta, ordinary.getPhase("oil").getBeta(), 1.0e-12);
     assertCompositionEquals(firstOilComposition, phaseComposition(ordinary, PhaseType.OIL), 1.0e-12);
     assertPhysicalEquilibrium(ordinary);
+
+    double firstMultiphaseGibbsEnergy = multiphase.getGibbsEnergy();
+    double firstMultiphaseOilBeta = multiphase.getPhase("oil").getBeta();
+    double[] firstMultiphaseOilComposition = phaseComposition(multiphase, PhaseType.OIL);
+    new ThermodynamicOperations(multiphase).TPflash();
+    multiphase.init(1);
+
+    assertEquals(firstMultiphaseGibbsEnergy, multiphase.getGibbsEnergy(), 1.0e-6);
+    assertEquals(firstMultiphaseOilBeta, multiphase.getPhase("oil").getBeta(), 1.0e-12);
+    assertCompositionEquals(firstMultiphaseOilComposition, phaseComposition(multiphase, PhaseType.OIL), 1.0e-12);
+    assertPhysicalEquilibrium(multiphase);
   }
 
   @Test
