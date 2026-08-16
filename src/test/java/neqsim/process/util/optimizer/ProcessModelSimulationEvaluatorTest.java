@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintSeverity;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
+import neqsim.process.equipment.capacity.EquipmentCapacityStrategyRegistry;
 import neqsim.process.equipment.capacity.ValveCapacityStrategy;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.separator.Separator;
@@ -322,6 +323,7 @@ class ProcessModelSimulationEvaluatorTest {
   /** Verifies built-in capacity strategies expose their declared constraint registration order. */
   @Test
   void strategyCapacityConstraintsPreserveRegistrationOrder() {
+    EquipmentCapacityStrategyRegistry.getInstance().register(new ValveCapacityStrategy());
     ModelFixture fixture = createModelFixture();
     ThrottlingValve valve = new ThrottlingValve("strategyValve", fixture.feed);
 
