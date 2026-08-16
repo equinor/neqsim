@@ -1140,7 +1140,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
    * flow, compressor work, or a bidirectional network calculation.
    *
    * @return {@code true} when a requested outlet pressure above the inlet is retained, or {@code false} when it is
-   *         clamped to the inlet pressure
+   * clamped to the inlet pressure
    */
   public boolean isAcceptNegativeDP() {
     return acceptNegativeDP;
@@ -1156,7 +1156,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
    * network.
    *
    * @param acceptNegativeDP {@code true} to retain the requested outlet pressure, or {@code false} to clamp it to the
-   *        inlet pressure
+   * inlet pressure
    */
   public void setAcceptNegativeDP(boolean acceptNegativeDP) {
     this.acceptNegativeDP = acceptNegativeDP;
