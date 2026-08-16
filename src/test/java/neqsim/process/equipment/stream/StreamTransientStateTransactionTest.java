@@ -141,14 +141,18 @@ class StreamTransientStateTransactionTest extends neqsim.NeqSimTest {
     Stream original = stream("original");
     String identity = original.getTransientStateIdentity();
     Stream restarted = roundTrip(original);
+    Stream clone = original.clone("clone");
     assertEquals(identity, restarted.getTransientStateIdentity());
-    assertNotEquals(identity, original.clone("clone").getTransientStateIdentity());
+    assertNotEquals(identity, clone.getTransientStateIdentity());
 
     Stream.TransientState checkpoint = restarted.captureTransientState();
     restarted.setTemperature(330.0, "K");
     restarted.restoreTransientState(checkpoint);
     assertEquals(298.15, restarted.getTemperature("K"), TOLERANCE);
-    assertThrows(IllegalArgumentException.class, () -> original.restoreTransientState(checkpoint));
+    original.setTemperature(320.0, "K");
+    original.restoreTransientState(checkpoint);
+    assertEquals(298.15, original.getTemperature("K"), TOLERANCE);
+    assertThrows(IllegalArgumentException.class, () -> clone.restoreTransientState(checkpoint));
     assertThrows(NullPointerException.class, () -> original.restoreTransientState(null));
 
     Stream wrapper = new Stream("wrapper", original);
