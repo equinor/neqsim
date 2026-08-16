@@ -3,33 +3,41 @@ name: Validate TPflash repair candidate
 on: [push]
 
 jobs:
-  bisect-focused-regressions:
+  validate-complete-seed-rollback:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: 9a371fb1448bb713990072c2d3d4a291c71dab68
+          ref: fix/tpflash-local-stability-current
           fetch-depth: 0
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
           cache: maven
-      - name: Prepare bisect oracle
+      - name: Apply complete Wilson beta rollback
         run: |
-          cat > /tmp/bisect-test.sh <<'EOF'
-          #!/usr/bin/env bash
-          mvn -q -ntp -Djacoco.skip=true '-Dtest=TPFlashTest#testRun5,TPflashIncipientPhaseStabilityTest#subResidualTpdDoesNotOverrideExistingUmrPruSolution,EclipseFluidReadWriteTest#testFluidWater3' test
-          EOF
-          chmod +x /tmp/bisect-test.sh
-      - name: Bisect regression window
-        run: |
-          git bisect start 9a371fb1448bb713990072c2d3d4a291c71dab68 c9cb4c5824b34643bbe463e286d1f9399816801c
-          set +e
-          git bisect run /tmp/bisect-test.sh
-          rc=$?
-          echo '=== bisect log ==='
-          git bisect log
-          echo '=== current commit ==='
-          git show -s --format='%H%n%P%n%s%n%an%n%ad' HEAD
-          exit $rc
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/main/java/neqsim/thermodynamicoperations/flashops/TPmultiflash.java')
+          s = p.read_text()
+          old = 'system.setBeta(newPhaseIdx, getIncipientWilsonPhaseFraction(dominantComp));'
+          count = s.count(old)
+          assert count == 2, count
+          s = s.replace(old, 'system.setBeta(newPhaseIdx, system.getPhase(0).getComponent(dominantComp).getz());')
+          p.write_text(s)
+
+          p = Path('src/test/java/neqsim/pvtsimulation/simulation/HydrocarbonScrubberSaturationPressureStabilityTest.java')
+          s = p.read_text()
+          old = '      assertEquals(1.0, compositionSum, 1.0e-9);\n'
+          assert s.count(old) == 1
+          p.write_text(s.replace(old, '      assertEquals(1.0, compositionSum, 1.0e-12);\n'))
+          PY
+      - name: Format
+        run: mvn -B -ntp spotless:apply
+      - name: Run focused failures and serialization guard
+        run: mvn -B -ntp -Djacoco.skip=true '-Dtest=TPFlashTest#testRun5,TPflashIncipientPhaseStabilityTest#subResidualTpdDoesNotOverrideExistingUmrPruSolution,EclipseFluidReadWriteTest#testFluidWater3,SystemThermoSerializationInventoryTest' test
+      - name: Run TPflash control regressions
+        run: mvn -B -ntp -Djacoco.skip=true '-Dtest=TPflashIncipientPhaseStabilityTest,TPFlashTest,TPmultiflashHighWaterGasSeedTest,PhaseUMRCPAvolcorTest,HydrateInhibitorFlashTest#testElectrolyteCPA' test
+      - name: Run scrubber regression
+        run: mvn -B -ntp -Djacoco.skip=true -DexcludedTestGroups= -Dtest=HydrocarbonScrubberSaturationPressureStabilityTest test
