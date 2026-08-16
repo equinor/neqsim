@@ -333,9 +333,8 @@ class ProcessModelSimulationEvaluatorTest {
 
     fixture.model.get("wells").add(valve);
     ThrottlingValve directValve = new ThrottlingValve("directValve", fixture.feed);
-    directValve.addCapacityConstraint(
-        new CapacityConstraint("valveOpening", "custom-unit", ConstraintType.HARD)
-            .setDesignValue(1.0).setCurrentValue(0.5));
+    directValve.addCapacityConstraint(new CapacityConstraint("valveOpening", "custom-unit", ConstraintType.HARD)
+        .setDesignValue(1.0).setCurrentValue(0.5));
     fixture.model.get("wells").add(directValve);
     ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
     evaluator.addEquipmentCapacityConstraints();
@@ -370,9 +369,8 @@ class ProcessModelSimulationEvaluatorTest {
         });
     CapacityConstraint finite = new CapacityConstraint("finite", "kg/hr", ConstraintType.HARD).setDesignValue(12000.0)
         .setCurrentValue(9000.0);
-    CapacityConstraint invalidLimit =
-        new CapacityConstraint("invalidLimit", "kg/hr", ConstraintType.HARD).setDesignValue(0.0)
-            .setCurrentValue(5.0);
+    CapacityConstraint invalidLimit = new CapacityConstraint("invalidLimit", "kg/hr", ConstraintType.HARD)
+        .setDesignValue(0.0).setCurrentValue(5.0);
     fixture.separator.clearCapacityConstraints();
     fixture.separator.addCapacityConstraint(undefined);
     fixture.separator.addCapacityConstraint(finite);
@@ -389,8 +387,8 @@ class ProcessModelSimulationEvaluatorTest {
     assertTrue(Double.isNaN(ranked.get(2).getUtilization()));
     assertFalse(ranked.get(2).isFeasible());
     assertEquals(1, undefinedSupplierCalls.get());
-    List<InstalledEquipmentCapacityEvidence> evidence =
-        evaluator.snapshotInstalledEquipmentCapacityEvidence(fixture.model);
+    List<InstalledEquipmentCapacityEvidence> evidence = evaluator
+        .snapshotInstalledEquipmentCapacityEvidence(fixture.model);
     assertEquals(InstalledEquipmentCapacityEvidence.EvidenceStatus.INVALID_APPLICABLE_LIMIT,
         evidence.get(1).getEvidenceStatus());
     assertEquals(InstalledEquipmentCapacityEvidence.EvidenceStatus.NON_FINITE_CURRENT_VALUE,
@@ -505,15 +503,13 @@ class ProcessModelSimulationEvaluatorTest {
   void evaluationReusesUnitSafeInstalledCapacityEvidence() throws Exception {
     final ModelFixture fixture = createModelFixture();
     final AtomicInteger supplierCalls = new AtomicInteger();
-    CapacityConstraint installedCapacity =
-        new CapacityConstraint("installedGasCapacity", "kg/hr", ConstraintType.HARD)
-            .setDesignValue(12000.0).setMaxValue(13200.0).setWarningThreshold(0.85)
-            .setSeverity(ConstraintSeverity.CRITICAL).setDescription("Synthetic separator gas handling limit")
-            .setDataSource("mechanicalDesign:test").setConfidence(0.95).setValidityRange(8000.0, 14000.0)
-            .setValueSupplier(() -> {
-              supplierCalls.incrementAndGet();
-              return 13000.0;
-            });
+    CapacityConstraint installedCapacity = new CapacityConstraint("installedGasCapacity", "kg/hr", ConstraintType.HARD)
+        .setDesignValue(12000.0).setMaxValue(13200.0).setWarningThreshold(0.85).setSeverity(ConstraintSeverity.CRITICAL)
+        .setDescription("Synthetic separator gas handling limit").setDataSource("mechanicalDesign:test")
+        .setConfidence(0.95).setValidityRange(8000.0, 14000.0).setValueSupplier(() -> {
+          supplierCalls.incrementAndGet();
+          return 13000.0;
+        });
     fixture.separator.clearCapacityConstraints();
     fixture.separator.addCapacityConstraint(installedCapacity);
 
@@ -557,8 +553,8 @@ class ProcessModelSimulationEvaluatorTest {
     assertTrue(evidence.isNearLimit());
     assertEquals(evidence.getCurrentValue(), result.getActiveBottleneck().getCurrentValue(), 0.0);
     assertEquals(evidence.getNormalizedUtilization(), result.getActiveBottleneck().getUtilization(), 0.0);
-    CapacityConstraintAdapter adapter =
-        new CapacityConstraintAdapter("separation::separator/installedGasCapacity", installedCapacity);
+    CapacityConstraintAdapter adapter = new CapacityConstraintAdapter("separation::separator/installedGasCapacity",
+        installedCapacity);
     assertEquals("1", adapter.getUnit());
     assertEquals("kg/hr", adapter.getPhysicalUnit());
 
@@ -572,18 +568,15 @@ class ProcessModelSimulationEvaluatorTest {
     output.writeObject(result);
     output.close();
     ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()));
-    ProcessModelSimulationEvaluator.EvaluationResult restored =
-        (ProcessModelSimulationEvaluator.EvaluationResult) input.readObject();
+    ProcessModelSimulationEvaluator.EvaluationResult restored = (ProcessModelSimulationEvaluator.EvaluationResult) input
+        .readObject();
     input.close();
 
-    InstalledEquipmentCapacityEvidence restoredEvidence =
-        restored.getInstalledEquipmentCapacityEvidence().get(0);
+    InstalledEquipmentCapacityEvidence restoredEvidence = restored.getInstalledEquipmentCapacityEvidence().get(0);
     assertEquals("separation::separator/installedGasCapacity", restoredEvidence.getQualifiedConstraintName());
     assertEquals(1000.0, restoredEvidence.getRequiredRelief(), 0.0);
-    assertNotSame(restored.getInstalledEquipmentCapacityEvidence(),
-        restored.getInstalledEquipmentCapacityEvidence());
-    assertThrows(UnsupportedOperationException.class,
-        () -> restored.getInstalledEquipmentCapacityEvidence().clear());
+    assertNotSame(restored.getInstalledEquipmentCapacityEvidence(), restored.getInstalledEquipmentCapacityEvidence());
+    assertThrows(UnsupportedOperationException.class, () -> restored.getInstalledEquipmentCapacityEvidence().clear());
   }
 
   /** Verifies map-sourced compressor evidence is monotonic and deterministic at nearby operating points. */
@@ -593,17 +586,15 @@ class ProcessModelSimulationEvaluatorTest {
     Stream compressorFeed = new Stream("compressor feed", fluid);
     Compressor compressor = new Compressor("export compressor", compressorFeed);
     compressor.setOutletPressure(70.0, "bara");
-    final double[] correctedSpeed = new double[] {9500.0};
+    final double[] correctedSpeed = new double[] { 9500.0 };
     final AtomicInteger supplierCalls = new AtomicInteger();
     compressor.clearCapacityConstraints();
-    compressor.addCapacityConstraint(
-        new CapacityConstraint("mapCorrectedSpeed", "RPM", ConstraintType.HARD)
-            .setDesignValue(10000.0).setMaxValue(10500.0).setSeverity(ConstraintSeverity.HARD)
-            .setDataSource("synthetic compressor map envelope").setValidityRange(8000.0, 10500.0)
-            .setValueSupplier(() -> {
-              supplierCalls.incrementAndGet();
-              return correctedSpeed[0];
-            }));
+    compressor.addCapacityConstraint(new CapacityConstraint("mapCorrectedSpeed", "RPM", ConstraintType.HARD)
+        .setDesignValue(10000.0).setMaxValue(10500.0).setSeverity(ConstraintSeverity.HARD)
+        .setDataSource("synthetic compressor map envelope").setValidityRange(8000.0, 10500.0).setValueSupplier(() -> {
+          supplierCalls.incrementAndGet();
+          return correctedSpeed[0];
+        }));
 
     ProcessSystem compression = new ProcessSystem("compression");
     compression.add(compressorFeed);
@@ -619,12 +610,9 @@ class ProcessModelSimulationEvaluatorTest {
     ProcessModelSimulationEvaluator.EvaluationResult above = evaluator.evaluate(new double[0]);
     ProcessModelSimulationEvaluator.EvaluationResult repeated = evaluator.evaluate(new double[0]);
 
-    InstalledEquipmentCapacityEvidence belowEvidence =
-        below.getInstalledEquipmentCapacityEvidence().get(0);
-    InstalledEquipmentCapacityEvidence aboveEvidence =
-        above.getInstalledEquipmentCapacityEvidence().get(0);
-    InstalledEquipmentCapacityEvidence repeatedEvidence =
-        repeated.getInstalledEquipmentCapacityEvidence().get(0);
+    InstalledEquipmentCapacityEvidence belowEvidence = below.getInstalledEquipmentCapacityEvidence().get(0);
+    InstalledEquipmentCapacityEvidence aboveEvidence = above.getInstalledEquipmentCapacityEvidence().get(0);
+    InstalledEquipmentCapacityEvidence repeatedEvidence = repeated.getInstalledEquipmentCapacityEvidence().get(0);
     assertEquals(3, supplierCalls.get());
     assertEquals(0.95, belowEvidence.getNormalizedUtilization(), 1.0e-12);
     assertEquals(500.0, belowEvidence.getPhysicalMargin(), 0.0);
@@ -1096,3 +1084,4 @@ class ProcessModelSimulationEvaluatorTest {
     assertTrue(evaluator.toJson().contains("separation"));
   }
 }
+
