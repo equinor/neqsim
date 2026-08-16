@@ -622,7 +622,7 @@ public class TPmultiflash extends TPflash {
             dominantComp = i;
           }
         }
-        system.setBeta(newPhaseIdx, getIncipientWilsonPhaseFraction(dominantComp));
+        system.setBeta(newPhaseIdx, system.getPhase(0).getComponent(dominantComp).getz());
         try {
           system.init(1);
         } catch (Exception ex) {
@@ -1209,7 +1209,7 @@ public class TPmultiflash extends TPflash {
               dominantComp = i;
             }
           }
-          system.setBeta(newPhaseIdx, getIncipientWilsonPhaseFraction(dominantComp));
+          system.setBeta(newPhaseIdx, system.getPhase(0).getComponent(dominantComp).getz());
           try {
             system.init(1);
           } catch (Exception ex) {
