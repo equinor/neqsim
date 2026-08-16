@@ -25,9 +25,8 @@ import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.Severity;
  * <p>
  * The projection binds explicit component mass-flow records to the explicit stream boundaries in an
  * {@link EngineeringDiagramBalanceTable}. It never infers a component slate, converts composition, or changes a
- * governed stream value. Callers must provide one explicit zero or non-zero value for every component on every
- * boundary stream. Missing, duplicate, unknown, wrongly based, and non-finite values remain visible as structured
- * diagnostics.
+ * governed stream value. Callers must provide one explicit zero or non-zero value for every component on every boundary
+ * stream. Missing, duplicate, unknown, wrongly based, and non-finite values remain visible as structured diagnostics.
  * </p>
  *
  * <p>
@@ -528,8 +527,8 @@ public final class EngineeringDiagramComponentBalanceTable implements Serializab
   }
 
   private static boolean validFlow(ComponentFlow flow) {
-    return Double.isFinite(flow.getResultValue()) && flow.getResultValue() >= 0.0
-        && "kg/s".equals(flow.getResultUnit()) && "COMPONENT_MASS".equals(flow.getQuantityBasis());
+    return Double.isFinite(flow.getResultValue()) && flow.getResultValue() >= 0.0 && "kg/s".equals(flow.getResultUnit())
+        && "COMPONENT_MASS".equals(flow.getQuantityBasis());
   }
 
   private static String nonFiniteLabel(double value) {
