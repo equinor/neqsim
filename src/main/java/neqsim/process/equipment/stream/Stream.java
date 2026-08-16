@@ -279,11 +279,12 @@ public class Stream extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public Stream clone() {
-    Stream clonedSystem = null;
+    Stream clonedSystem;
     try {
       clonedSystem = (Stream) super.clone();
     } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      logger.error("Failed to clone stream {}", getName(), ex);
+      throw new IllegalStateException("Unable to clone stream '" + getName() + "'", ex);
     }
     if (stream != null) {
       clonedSystem.setStream(stream.clone());
