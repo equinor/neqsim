@@ -2,6 +2,7 @@ package neqsim.process.equipment.util;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -382,5 +383,85 @@ public class BroydenAccelerator implements Serializable {
       return -1.0;
     }
     return vectorNorm(previousF);
+  }
+
+  /**
+   * Captures all mutable quasi-Newton continuation state.
+   *
+   * @return immutable, defensively copied accelerator state
+   */
+  public Snapshot captureState() {
+    return new Snapshot(dimension, copyMatrix(inverseJacobian), copyVector(previousX), copyVector(previousF),
+        iterationCount, delayIterations, relaxationFactor, maxStepSize);
+  }
+
+  /**
+   * Restores a previously captured continuation state to this accelerator instance.
+   *
+   * @param snapshot snapshot returned by {@link #captureState()}
+   * @throws NullPointerException if {@code snapshot} is null
+   */
+  public void restoreState(Snapshot snapshot) {
+    Objects.requireNonNull(snapshot, "snapshot cannot be null");
+    dimension = snapshot.dimension;
+    inverseJacobian = copyMatrix(snapshot.inverseJacobian);
+    previousX = copyVector(snapshot.previousX);
+    previousF = copyVector(snapshot.previousF);
+    iterationCount = snapshot.iterationCount;
+    delayIterations = snapshot.delayIterations;
+    relaxationFactor = snapshot.relaxationFactor;
+    maxStepSize = snapshot.maxStepSize;
+  }
+
+  /**
+   * Copies one vector while retaining a null marker.
+   *
+   * @param vector source vector
+   * @return defensive copy, or null
+   */
+  private static double[] copyVector(double[] vector) {
+    return vector == null ? null : vector.clone();
+  }
+
+  /**
+   * Copies a possibly null rectangular matrix.
+   *
+   * @param matrix source matrix
+   * @return deep defensive copy, or null
+   */
+  private static double[][] copyMatrix(double[][] matrix) {
+    if (matrix == null) {
+      return null;
+    }
+    double[][] copy = new double[matrix.length][];
+    for (int i = 0; i < matrix.length; i++) {
+      copy[i] = matrix[i] == null ? null : matrix[i].clone();
+    }
+    return copy;
+  }
+
+  /** Immutable serializable Broyden continuation state. */
+  public static final class Snapshot implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final int dimension;
+    private final double[][] inverseJacobian;
+    private final double[] previousX;
+    private final double[] previousF;
+    private final int iterationCount;
+    private final int delayIterations;
+    private final double relaxationFactor;
+    private final double maxStepSize;
+
+    private Snapshot(int dimension, double[][] inverseJacobian, double[] previousX, double[] previousF,
+        int iterationCount, int delayIterations, double relaxationFactor, double maxStepSize) {
+      this.dimension = dimension;
+      this.inverseJacobian = inverseJacobian;
+      this.previousX = previousX;
+      this.previousF = previousF;
+      this.iterationCount = iterationCount;
+      this.delayIterations = delayIterations;
+      this.relaxationFactor = relaxationFactor;
+      this.maxStepSize = maxStepSize;
+    }
   }
 }

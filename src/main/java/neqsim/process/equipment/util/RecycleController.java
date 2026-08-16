@@ -1,10 +1,12 @@
 package neqsim.process.equipment.util;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.util.uncertainty.SensitivityMatrix;
@@ -23,7 +25,7 @@ import neqsim.process.util.uncertainty.SensitivityMatrix;
  * @author asmund
  * @version $Id: $Id
  */
-public class RecycleController implements java.io.Serializable {
+public class RecycleController implements Serializable {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(RecycleController.class);
   /** Serialization version UID. */
@@ -39,13 +41,16 @@ public class RecycleController implements java.io.Serializable {
   private int maximumPriorityLevel = 100;
 
   /** Coordinated Broyden accelerator for multi-recycle systems. */
-  private transient BroydenAccelerator coordinatedAccelerator = null;
+  private BroydenAccelerator coordinatedAccelerator = null;
 
   /** Whether to use coordinated acceleration across all recycles at current priority. */
   private boolean useCoordinatedAcceleration = false;
 
   /** Recycles whose previously accepted state can seed the first observation of this solve. */
-  private transient Map<Recycle, Boolean> acceptedRecycleSeeds = new IdentityHashMap<>();
+  private Map<Recycle, Boolean> acceptedRecycleSeeds = new IdentityHashMap<>();
+
+  /** Stable provenance identity for this controller's transaction state. */
+  private String transientStateIdentity = UUID.randomUUID().toString();
 
   /**
    * Constructor for RecycleController.
@@ -796,5 +801,111 @@ public class RecycleController implements java.io.Serializable {
   public boolean hasSensitivityData() {
     return coordinatedAccelerator != null && coordinatedAccelerator.getInverseJacobian() != null
         && coordinatedAccelerator.getIterationCount() > 2;
+  }
+
+  /**
+   * Returns the stable identity used to reject snapshots captured from another controller.
+   *
+   * @return non-empty identity preserved by Java serialization
+   */
+  public String getTransientStateIdentity() {
+    if (transientStateIdentity == null || transientStateIdentity.trim().isEmpty()) {
+      transientStateIdentity = UUID.randomUUID().toString();
+    }
+    return transientStateIdentity;
+  }
+
+  /**
+   * Captures controller-owned recycle orchestration and coordinated solver state.
+   *
+   * <p>
+   * Recycle equipment state is intentionally not captured here. Every registered recycle remains responsible for its
+   * own future {@code TransientStateParticipant} contract.
+   * </p>
+   *
+   * @return immutable serializable controller snapshot
+   */
+  public Snapshot captureTransientState() {
+    ArrayList<Integer> acceptedSeedIndexes = new ArrayList<Integer>();
+    Map<Recycle, Boolean> seeds = acceptedRecycleSeeds();
+    for (int i = 0; i < recycleArray.size(); i++) {
+      if (seeds.containsKey(recycleArray.get(i))) {
+        acceptedSeedIndexes.add(i);
+      }
+    }
+    return new Snapshot(getTransientStateIdentity(), new ArrayList<Recycle>(recycleArray),
+        new ArrayList<Integer>(priorityArray), currentPriorityLevel, minimumPriorityLevel, maximumPriorityLevel,
+        useCoordinatedAcceleration, coordinatedAccelerator == null ? null : coordinatedAccelerator.captureState(),
+        acceptedSeedIndexes);
+  }
+
+  /**
+   * Restores a captured controller snapshot without replacing this controller instance.
+   *
+   * @param snapshot snapshot returned by {@link #captureTransientState()}
+   * @throws NullPointerException if {@code snapshot} is null
+   * @throws IllegalArgumentException if the snapshot belongs to another controller
+   */
+  public void restoreTransientState(Snapshot snapshot) {
+    Objects.requireNonNull(snapshot, "snapshot cannot be null");
+    if (!getTransientStateIdentity().equals(snapshot.stateIdentity)) {
+      throw new IllegalArgumentException("Snapshot belongs to another RecycleController");
+    }
+
+    recycleArray.clear();
+    recycleArray.addAll(snapshot.recycles);
+    priorityArray.clear();
+    priorityArray.addAll(snapshot.priorities);
+    currentPriorityLevel = snapshot.currentPriorityLevel;
+    minimumPriorityLevel = snapshot.minimumPriorityLevel;
+    maximumPriorityLevel = snapshot.maximumPriorityLevel;
+    useCoordinatedAcceleration = snapshot.useCoordinatedAcceleration;
+
+    if (snapshot.coordinatedAcceleratorState == null) {
+      coordinatedAccelerator = null;
+    } else {
+      if (coordinatedAccelerator == null) {
+        coordinatedAccelerator = new BroydenAccelerator();
+      }
+      coordinatedAccelerator.restoreState(snapshot.coordinatedAcceleratorState);
+    }
+
+    Map<Recycle, Boolean> seeds = acceptedRecycleSeeds();
+    seeds.clear();
+    for (int index : snapshot.acceptedSeedIndexes) {
+      if (index < 0 || index >= recycleArray.size()) {
+        throw new IllegalArgumentException("Snapshot contains an invalid accepted-recycle index " + index);
+      }
+      seeds.put(recycleArray.get(index), Boolean.TRUE);
+    }
+  }
+
+  /** Immutable serializable state owned by one recycle controller. */
+  public static final class Snapshot implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String stateIdentity;
+    private final ArrayList<Recycle> recycles;
+    private final ArrayList<Integer> priorities;
+    private final int currentPriorityLevel;
+    private final int minimumPriorityLevel;
+    private final int maximumPriorityLevel;
+    private final boolean useCoordinatedAcceleration;
+    private final BroydenAccelerator.Snapshot coordinatedAcceleratorState;
+    private final ArrayList<Integer> acceptedSeedIndexes;
+
+    private Snapshot(String stateIdentity, ArrayList<Recycle> recycles, ArrayList<Integer> priorities,
+        int currentPriorityLevel, int minimumPriorityLevel, int maximumPriorityLevel,
+        boolean useCoordinatedAcceleration, BroydenAccelerator.Snapshot coordinatedAcceleratorState,
+        ArrayList<Integer> acceptedSeedIndexes) {
+      this.stateIdentity = stateIdentity;
+      this.recycles = recycles;
+      this.priorities = priorities;
+      this.currentPriorityLevel = currentPriorityLevel;
+      this.minimumPriorityLevel = minimumPriorityLevel;
+      this.maximumPriorityLevel = maximumPriorityLevel;
+      this.useCoordinatedAcceleration = useCoordinatedAcceleration;
+      this.coordinatedAcceleratorState = coordinatedAcceleratorState;
+      this.acceptedSeedIndexes = acceptedSeedIndexes;
+    }
   }
 }

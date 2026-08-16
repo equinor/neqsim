@@ -559,3 +559,25 @@ This gate establishes deterministic in-memory rollback and restart mechanics onl
 qualify the MPC model structure, optimization quality, constraint tuning, plant identification,
 closed-loop stability, scan-time fidelity, external DCS commands, safety action, virtual
 commissioning or OTS use.
+
+
+## Shared recycle-controller transaction coverage
+
+`ProcessSystem` now captures its shared `RecycleController` orchestration state in the same
+identity-preserving step transaction as registered process elements. The controller snapshot preserves a stable
+provenance identity, recycle registration and priority order, current/minimum/maximum priority, coordinated-acceleration
+configuration, accepted-state seed membership, and the complete Broyden continuation state. Rollback restores the same
+controller and accelerator instances. Java serialization also retains coordinated Broyden and accepted-seed continuation
+instead of silently restarting those solver memories.
+
+The controller snapshot is orchestration state, so it is intentionally outside the quantitative process-element and
+participant counts reported by `TransientTransactionCoverage`. Every `Recycle` unit remains a separate
+registered process element and does not yet implement `TransientStateParticipant`; a realistic flowsheet that
+contains a recycle therefore still fails closed on that equipment state. This tranche removes only the additional shared
+controller blocker and establishes the reusable boundary needed before recycle equipment inventory, internal streams and
+acceleration state can be qualified.
+
+Coverage includes exact in-memory rollback of priority and coordinated Broyden state, stable object identity, defensive
+matrix/vector copies, foreign/null snapshot rejection, recycle-registration restoration and exact Java-serialization
+continuation. It does not qualify recycle thermodynamics, convergence tolerances, strongly coupled DAE behaviour,
+timestep independence, external side effects, safety action, virtual commissioning or OTS use.
