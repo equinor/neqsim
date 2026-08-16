@@ -1,64 +1,19 @@
 from pathlib import Path
 
-
-def replace_once(path, old, new):
-    file = Path(path)
-    text = file.read_text()
-    count = text.count(old)
-    if count != 1:
-        raise RuntimeError(f"Expected one match in {path}, found {count}")
-    file.write_text(text.replace(old, new))
-
-
+# A/B 1: restore the pre-#3026 beta seed only in ordinary TPmultiflash stability.
 tp = Path("src/main/java/neqsim/thermodynamicoperations/flashops/TPmultiflash.java")
 text = tp.read_text()
-ordinary_end = text.index("    int unstabcomp = 0;")
-prefix, suffix = text[:ordinary_end], text[ordinary_end:]
-anchor = """      if (Math.abs(xTrivialCheck0) < 1e-4 || Math.abs(xTrivialCheck1) < 1e-4) {
-        tm[j] = 10.0;
-      }
+old = "system.setBeta(newPhaseIdx, getIncipientWilsonPhaseFraction(dominantComp));"
+first = text.find(old)
+if first < 0:
+    raise RuntimeError("ordinary Wilson beta seed not found")
+text = text[:first] + "system.setBeta(newPhaseIdx, system.getPhase(0).getComponent(dominantComp).getz());" + text[first + len(old):]
+tp.write_text(text)
 
-      if (tm[j] < -1e-8) {
-        break;
-      }
-"""
-replacement = """      if (Math.abs(xTrivialCheck0) < 1e-4 || Math.abs(xTrivialCheck1) < 1e-4) {
-        tm[j] = 10.0;
-      }
-
-      double tpdAcceptanceTolerance = Math.max(1.0e-8, Math.abs(err));
-      if (tm[j] < -tpdAcceptanceTolerance) {
-        break;
-      }
-      if (tm[j] < -1.0e-8) {
-        // A negative TPD smaller than the converged stability residual is not
-        // significant enough to change the established phase topology.
-        tm[j] = 10.0;
-      }
-"""
-if prefix.count(anchor) != 1:
-    raise RuntimeError(f"Expected one ordinary pure-trial anchor, found {prefix.count(anchor)}")
-tp.write_text(prefix.replace(anchor, replacement) + suffix)
-
-replace_once(
-    "src/main/java/neqsim/thermo/system/SystemThermo.java",
-    "    double tolerance = 1.0e-12 * Math.max(1.0, inventory);\n"
-    "    if (!Double.isFinite(totalNumberOfMoles) || Math.abs(totalNumberOfMoles - inventory) > tolerance) {\n"
-    "      setTotalNumberOfMolesRaw(inventory);\n"
-    "      isInitialized = false;\n"
-    "    }\n",
-    "    double tolerance = 1.0e-12 * Math.max(1.0, inventory);\n"
-    "    double mismatch = Math.abs(totalNumberOfMoles - inventory);\n"
-    "    boolean clearlyStaleUpstreamTotal = !Double.isFinite(totalNumberOfMoles)\n"
-    "        || (totalNumberOfMoles > inventory && totalNumberOfMoles / inventory > 100.0);\n"
-    "    if (clearlyStaleUpstreamTotal && mismatch > tolerance) {\n"
-    "      setTotalNumberOfMolesRaw(inventory);\n"
-    "      isInitialized = false;\n"
-    "    }\n",
-)
-
-replace_once(
-    "src/test/java/neqsim/pvtsimulation/simulation/HydrocarbonScrubberSaturationPressureStabilityTest.java",
-    "      assertEquals(1.0, compositionSum, 1.0e-9);\n",
-    "      assertEquals(1.0, compositionSum, 1.0e-12);\n",
-)
+# A/B 2: disable the #3026 deserialization reconciliation completely.
+st = Path("src/main/java/neqsim/thermo/system/SystemThermo.java")
+text = st.read_text()
+old = "    reconcileTotalMolesWithComponentInventory();\n"
+if text.count(old) != 1:
+    raise RuntimeError(f"readObject reconciliation call count={text.count(old)}")
+st.write_text(text.replace(old, "    // A/B diagnostic: leave serialized scalar/component inventory untouched.\n"))
