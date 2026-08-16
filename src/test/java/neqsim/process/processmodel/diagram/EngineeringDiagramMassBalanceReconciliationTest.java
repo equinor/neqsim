@@ -228,8 +228,7 @@ class EngineeringDiagramMassBalanceReconciliationTest {
     return reference;
   }
 
-  private static EngineeringDiagramStreamTable streamTable(
-      EngineeringDiagramReferenceFixtures.SystemCase reference) {
+  private static EngineeringDiagramStreamTable streamTable(EngineeringDiagramReferenceFixtures.SystemCase reference) {
     EngineeringDiagramDocumentSet documents = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
         reference.getProcessSystem(), reference.getCaseId(), "A", "PFD-HMB-007", "Boundary reconciliation evidence",
         ContentProfile.PFD, "NORMAL-01");
