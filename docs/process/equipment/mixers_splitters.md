@@ -169,8 +169,9 @@ clamped to zero.
 
 ## Static mixer
 
-`StaticMixer` supports the same multi-inlet connection pattern but uses its own mixing
-implementation. This snippet reuses `richGas` and `leanGas` from the complete mixer example:
+`StaticMixer` is a backward-compatible type that uses the same mixing implementation as `Mixer`.
+Existing models can retain the `StaticMixer` class name, while new models can normally use
+`Mixer`. This snippet reuses `richGas` and `leanGas` from the complete mixer example:
 
 ```java
 // Continue from the complete mixer example above.
