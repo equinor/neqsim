@@ -1,7 +1,10 @@
 package neqsim.process.measurementdevice;
 
+import java.io.Serializable;
+import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.dynamics.TransientStateParticipant;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -10,12 +13,19 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 /**
  * CricondenbarAnalyser class.
  *
+ * <p>
+ * Concrete local instances participate in transient-step transactions. The snapshot restores the stream binding and
+ * inherited measurement/alarm state. Descendants and online-signal operation remain fail-closed.
+ *
  * @author ESOL
  * @version $Id: $Id
  */
-public class CricondenbarAnalyser extends StreamMeasurementDeviceBaseClass {
+public class CricondenbarAnalyser extends StreamMeasurementDeviceBaseClass
+    implements TransientStateParticipant<CricondenbarAnalyser.CricondenbarAnalyserState> {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Persistent identity used only for transient transaction provenance. */
+  private String transientStateParticipantId = UUID.randomUUID().toString();
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(CricondenbarAnalyser.class);
 
@@ -90,5 +100,63 @@ public class CricondenbarAnalyser extends StreamMeasurementDeviceBaseClass {
       logger.error(ex.getMessage(), ex);
     }
     return thermoOps.getSaturationPressure();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateIdentity() {
+    if (transientStateParticipantId == null || transientStateParticipantId.trim().isEmpty()) {
+      transientStateParticipantId = UUID.randomUUID().toString();
+    }
+    return "measurement:cricondenbar:" + transientStateParticipantId;
+  }
+
+  /**
+   * The snapshot is complete only for the concrete local analyser.
+   *
+   * @return blocking diagnostic for descendants or external online-signal operation, otherwise {@code null}
+   */
+  @Override
+  public String getTransientStateCoverageIssue() {
+    if (getClass() != CricondenbarAnalyser.class) {
+      return "cricondenbar-analyser subclass " + getClass().getName()
+          + " must provide a snapshot that includes subclass-owned mutable state";
+    }
+    return getMeasurementTransientStateCoverageIssue();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public CricondenbarAnalyserState captureTransientState() {
+    return new CricondenbarAnalyserState(getTransientStateIdentity(), stream, captureMeasurementDeviceTransientState());
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreTransientState(CricondenbarAnalyserState snapshot) {
+    if (snapshot == null) {
+      throw new IllegalArgumentException("Cricondenbar analyser transient snapshot cannot be null");
+    }
+    if (!getTransientStateIdentity().equals(snapshot.stateIdentity)) {
+      throw new IllegalArgumentException(
+          "Cricondenbar analyser snapshot identity does not match " + getTransientStateIdentity());
+    }
+    stream = snapshot.stream;
+    restoreMeasurementDeviceTransientState(snapshot.measurementState);
+  }
+
+  /** Immutable cricondenbar-analyser rollback point. */
+  public static final class CricondenbarAnalyserState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String stateIdentity;
+    private final StreamInterface stream;
+    private final MeasurementDeviceTransientState measurementState;
+
+    private CricondenbarAnalyserState(String stateIdentity, StreamInterface stream,
+        MeasurementDeviceTransientState measurementState) {
+      this.stateIdentity = stateIdentity;
+      this.stream = stream;
+      this.measurementState = measurementState;
+    }
   }
 }

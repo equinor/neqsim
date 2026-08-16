@@ -134,12 +134,40 @@ residual divides that result by the larger absolute inlet or outlet total and is
 are zero. Stream enthalpy flow is `massFlow [kg/s] * specificEnthalpy [J/kg]` in W; its residual is the
 inlet total minus the outlet total, and its relative residual uses the same larger-total denominator.
 It intentionally excludes equipment heat duties and shaft work, so it is not a complete energy
-balance. Component balances,
-reconciliation, tolerances, and approved project boundaries remain later engineering layers.
+balance.
+
+### Explicit tolerance assessment
+
+`EngineeringDiagramBalanceAssessment` evaluates existing residuals against explicit, sourced
+criteria without changing any stream value. Each criterion identifies one stable balance and
+declares absolute and relative limits for mass residual (kg/s and dimensionless) and stream-enthalpy
+residual (W and dimensionless). A quantity is `WITHIN_TOLERANCE` only when both residual magnitudes
+satisfy their declared limits. Missing, duplicate, unknown, incomplete, or exceeded criteria remain
+visible through deterministic status values and structured diagnostics.
+
+```java
+EngineeringDiagramBalanceAssessment.Criteria criteria =
+    new EngineeringDiagramBalanceAssessment.Criteria(
+        "BAL-AREA-01",
+        0.01,
+        0.001,
+        1000.0,
+        0.01,
+        "project-balance-criteria:BAL-AREA-01",
+        EngineeringDiagramBalanceTable.EvidenceState.PROPOSED);
+EngineeringDiagramBalanceAssessment assessment =
+    EngineeringDiagramBalanceAssessment.fromBalanceTable(
+        balanceTable, Collections.singletonList(criteria));
+```
+
+This is a tolerance check, not statistical data reconciliation. It does not adjust measured or
+calculated values, supply component balances, close heat/work terms, infer project tolerances, or
+approve a balance. Component balances, heat/work closure, reconciliation methods, and approved
+project boundary registers remain later engineering layers.
 
 Building either companion does not change Classic DOT/Graphviz, native SVG/PDF, DEXPI 2.0 Process
-exchange, or the Proteus/DEXPI P&ID workflow. `REVIEWED` boundary evidence does not approve a PFD,
-P&ID, simulation result, balance, or design data.
+exchange, or the Proteus/DEXPI P&ID workflow. `REVIEWED` boundary or criterion evidence does not
+approve a PFD, P&ID, simulation result, balance, tolerance, or design data.
 
 Canonical source names and carried connection names are retained as source designations. They are
 not silently promoted to project-approved equipment tags or line numbers. Project-entered tags and
@@ -329,7 +357,8 @@ Run the focused regression with:
 ```bash
 ./mvnw -Dtest=ProcessDiagramDocumentSetAdapterTest test
 ./mvnw -Dtest=NativeEngineeringDiagramRendererTest test
-./mvnw -Dtest=EngineeringDiagramStreamTableTest,EngineeringDiagramBalanceTableTest test
+./mvnw -Dtest=EngineeringDiagramStreamTableTest,EngineeringDiagramBalanceTableTest,\
+EngineeringDiagramBalanceAssessmentTest test
 ```
 
 The regression verifies deterministic single- and multi-area output, immutable collections,
@@ -346,4 +375,3 @@ coordinates and protected routes, reciprocal off-page references, deterministic 
 route/object and route-label obstacle diagnostics, collision, clipping, label-overflow and
 broken-reference diagnostics, normalized visual fingerprints, multi-page drawing sets, fresh-model
 determinism, and unchanged Classic DOT and controlled-document JSON.
-
