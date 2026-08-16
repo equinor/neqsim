@@ -206,9 +206,6 @@ public class RecycleController implements java.io.Serializable {
   public boolean solvedAll() {
     for (Recycle recyc : recycleArray) {
       if (isDeactivated(recyc)) {
-        if (invalidateAcceptedSeedOnAutoDeactivation(recyc)) {
-          return false;
-        }
         continue;
       }
       if (logger.isDebugEnabled()) {
@@ -219,28 +216,6 @@ public class RecycleController implements java.io.Serializable {
       }
     }
     normalizeAcceptedRecycleSeeds();
-    return true;
-  }
-
-  /**
-   * Invalidates reuse when an accepted active recycle collapses below its low-flow threshold.
-   *
-   * <p>
-   * Low-flow deactivation reports the recycle as solved and clears its residuals, but the first physical pass can still
-   * contain upstream inventory from the formerly active loop. Requiring one unseeded confirmation pass lets that
-   * inventory leave the flowsheet before convergence is accepted.
-   * </p>
-   *
-   * @param recycle deactivated recycle inspected by the convergence gate
-   * @return true when an accepted seed was invalidated and another physical pass is required
-   */
-  private boolean invalidateAcceptedSeedOnAutoDeactivation(Recycle recycle) {
-    if (recycle.isLockedInactive() || recycle.isActive() || acceptedRecycleSeeds().remove(recycle) == null) {
-      return false;
-    }
-    if (recycle.iterations > 0) {
-      recycle.iterations = Math.max(1, recycle.iterations - 1);
-    }
     return true;
   }
 
