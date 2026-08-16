@@ -173,12 +173,19 @@ class RecycleAcceptedStateReuseTest {
   void changedSplitterConfigurationRetainsLegacyConfirmationPass() throws Exception {
     Fixture fixture = createFixture(false, 50000.0);
     settle(fixture, ExecutionMode.SEQUENTIAL);
+    long mixerCalls = calls(fixture.process, "mixer");
+    long separatorCalls = calls(fixture.process, "separator");
+    long splitterCalls = calls(fixture.process, "splitter");
     long recycleCalls = calls(fixture.process, "recycle");
 
     fixture.splitter.setFlowRates(new double[] { 50000.0, 0.0 }, "kg/hr");
     run(fixture, ExecutionMode.SEQUENTIAL, UUID.randomUUID());
 
-    assertTrue(calls(fixture.process, "recycle") - recycleCalls >= 2L);
+    assertEquals(2L, calls(fixture.process, "mixer") - mixerCalls);
+    assertEquals(2L, calls(fixture.process, "separator") - separatorCalls);
+    assertEquals(2L, calls(fixture.process, "splitter") - splitterCalls);
+    assertEquals(1L, calls(fixture.process, "recycle") - recycleCalls);
+    assertEquals(2, fixture.recycle.getIterations());
     assertEquals(50000.0, fixture.product.getFlowRate("kg/hr"), 1.0e-6);
     assertEquals(0.0, fixture.splitter.getSplitStream(1).getFlowRate("kg/hr"), 1.0e-6);
     assertTrue(fixture.recycle.solved());
