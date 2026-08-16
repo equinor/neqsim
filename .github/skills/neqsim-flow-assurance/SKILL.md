@@ -466,8 +466,15 @@ for (double qgMSm3d : gasRates) {
 > 2.14 / 2.26 / 3.06 against OLGA's 2.14 / 2.38 / 3.12, so the density feedback
 > along the line is reproduced, not just the level at one rate. 10 MW of DEH raises
 > arrival T by 17.4 K (OLGA 19.4) and ΔP by 15.0% (OLGA 12.3%). Grid-converged.
-> Still indicative: local holdup at low rate is dominated by single terrain trap
-> sections. And **the three-phase free-water case does not converge** — 15 m3/hr
+> Still indicative: **low-point terrain accumulation is ~9x too strong.** A
+> section-by-section holdup comparison at 4 MSm3/d puts 316 of 320 sections within
+> 0.82-0.94 of OLGA (median 0.0201 vs 0.0235), but four terrain low points run
+> 4.6-8.8x OLGA. Scale-free: OLGA lifts its max holdup to 1.26x its own median,
+> this model to 11.0x. `applyTerrainAccumulation` multiplies three proxies for the
+> same effect (Froude up to 11, pooling up to 4, depth up to 6), compounding to
+> order 100 before an arbitrary 0.85 clip. ΔP is barely affected (1.2% of
+> sections) — but do NOT quote valley inventory, slug volume or cooldown from it.
+> And **the three-phase free-water case does not converge** — 15 m3/hr
 > of free water on the same line is wall-clock limited after 4078 iterations at a
 > 1200 s budget (88.6 bar vs OLGA 104.1). ΔP is identical between a 300 s and a
 > 1200 s budget, so the profile is stationary and the criterion is stalling on the

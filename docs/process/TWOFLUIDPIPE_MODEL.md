@@ -1054,9 +1054,16 @@ grid-converged, at default settings.
 
 Remaining limitations:
 
-- **Holdup at low rate is dominated by single terrain trap sections.** The maximum holdup at 4 and
-  7 MSm3/d sits well above OLGA even though the mean and the pressure drop agree, so treat local
-  holdup and valley inventory as indicative rather than as design numbers.
+- **Low-point terrain accumulation is far too strong.** A section-by-section comparison at
+  4 MSm3/d puts 316 of 320 sections within 0.82 to 0.94 of OLGA, with median holdup 0.0201 against
+  0.0235 - the bulk slip closure agrees. Four sections, all terrain low points, run 4.6 to 8.8 times
+  OLGA. Expressed scale-free, OLGA raises its maximum holdup to 1.26 times its own median on this
+  line while this model raises it to 11.0 times. The cause is visible in `applyTerrainAccumulation`:
+  the low-point branch multiplies three separate proxies for the same effect - a Froude factor up to
+  11, a pooling factor up to 4 and a depth factor up to 6 - so they compound to a factor of order
+  100 before an arbitrary 0.85 clip. Pressure drop is barely affected because only 1.2% of sections
+  are involved, but valley inventory, slug volume and cooldown are not design numbers until this is
+  recalibrated against a terrain-holdup dataset.
 - **The three-phase free-water case does not converge.** With 15 m3/hr of free water on the same
   line the solve is wall-clock limited after 4078 iterations at a 1200 s budget, reporting 88.64 bar
   against OLGA's 104.06. The pressure drop is identical to the 300 s run to 0.01 bar, so the profile
