@@ -1,17 +1,21 @@
 ---
 layout: default
-title: "Mercury Removal in LNG Pre-Treatment"
-description: "Executable NeqSim mercury-removal screening with transient loading, preliminary design and cost boundaries, and internal verification"
+title: "MercuryRemoval LNG Pretreatment"
+description: "Jupyter notebook tutorial for NeqSim"
 parent: Examples
 nav_order: 1
 ---
 
-> **Note:** This page is generated from the executed
+# MercuryRemoval LNG Pretreatment
+
+> **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`MercuryRemoval_LNG_Pretreatment.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/MercuryRemoval_LNG_Pretreatment.ipynb).
-> You can also [view the notebook on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/MercuryRemoval_LNG_Pretreatment.ipynb)
-> or [open it in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/MercuryRemoval_LNG_Pretreatment.ipynb).
+> You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/MercuryRemoval_LNG_Pretreatment.ipynb)
+> or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/MercuryRemoval_LNG_Pretreatment.ipynb).
 
 ---
+
+# Mercury Removal in LNG Pre-Treatment — NeqSim Tutorial
 
 ## Purpose and engineering boundary
 
@@ -75,14 +79,13 @@ print(f"NeqSim: {neqsim_version}")
 ```
 
 <details>
-<summary>Saved output</summary>
+<summary>Output</summary>
 
-```text
+```
 Python: 3.12.13
 Java: 17.0.19
 NeqSim: 3.17.0
 ```
-
 
 </details>
 
@@ -130,9 +133,9 @@ print(f"Mercury concentration at 0 °C, 1.01325 bar: {c_hg_ntp:.2f} µg/Nm³")
 ```
 
 <details>
-<summary>Saved output</summary>
+<summary>Output</summary>
 
-```text
+```
 === Synthetic feed conditions ===
 Temperature: 30.0 °C
 Pressure: 60.0 bara
@@ -141,7 +144,6 @@ Gas density: 49.63 kg/m³
 Mercury mole fraction: 2.010050e-08
 Mercury concentration at 0 °C, 1.01325 bar: 179.89 µg/Nm³
 ```
-
 
 </details>
 
@@ -193,9 +195,9 @@ print(f"Outlet pressure: {outlet.getPressure():.2f} bara")
 ```
 
 <details>
-<summary>Saved output</summary>
+<summary>Output</summary>
 
-```text
+```
 === Steady-state screening results ===
 Removal efficiency: 99.87 %
 Pressure drop: 0.3292 bar
@@ -207,7 +209,6 @@ Replacement utilisation input: 0.50
 Outlet temperature: 30.0 °C
 Outlet pressure: 59.67 bara
 ```
-
 
 </details>
 
@@ -291,9 +292,9 @@ print(f"\nBreakthrough time: {bt_hrs:.0f} hours" if bt_hrs > 0 else "\nNo breakt
 ```
 
 <details>
-<summary>Saved output</summary>
+<summary>Output</summary>
 
-```text
+```
 Time (h)  | Avg Loading (mg/kg) | Utilisation (%) | Breakthrough
 ----------------------------------------------------------------------
       100 |             10499.6 |           10.50 | No
@@ -319,7 +320,6 @@ Time (h)  | Avg Loading (mg/kg) | Utilisation (%) | Breakthrough
 
 Breakthrough time: 300 hours
 ```
-
 
 </details>
 
@@ -357,15 +357,11 @@ print("Plot saved to mercury_bed_loading.png")
 ```
 
 <details>
-<summary>Saved output</summary>
+<summary>Output</summary>
 
-```text
-Plot saved to mercury_bed_loading.png
-
-<Figure size 14x5 inches>
 ```
-
-*Two plots of average mercury loading and bed utilisation versus time. The embedded figure is preserved in the executed notebook.*
+Plot saved to mercury_bed_loading.png
+```
 
 </details>
 
@@ -415,16 +411,12 @@ if mtz > 0:
 ```
 
 <details>
-<summary>Saved output</summary>
+<summary>Output</summary>
 
-```text
+```
 Mass Transfer Zone (MTZ) length: 0.00 m
 Bed length: 5.0 m
-
-<Figure size 12x8 inches>
 ```
-
-*Two axial profiles showing sorbent loading and gas-phase mercury concentration. The embedded figure is preserved in the executed notebook.*
 
 </details>
 
@@ -497,20 +489,16 @@ plt.show()
 ```
 
 <details>
-<summary>Saved output</summary>
+<summary>Output</summary>
 
-```text
+```
 Scenario                  | Efficiency (%)  | ΔP (mbar)    | Lifetime (yr) 
 ------------------------------------------------------------------------
 Fresh bed                 | 99.87           | 329.2        | 2.7           
 Mild fouling              | 94.53           | 329.2        | 2.2           
 Moderate degradation      | 88.31           | 329.2        | 1.6           
-Severe channelling        | 74.36           | 329.2        | 1.1
-
-<Figure size 10x5 inches>
+Severe channelling        | 74.36           | 329.2        | 1.1           
 ```
-
-*Bar chart of calculated removal efficiency for four configured degradation scenarios. The embedded figure is preserved in the executed notebook.*
 
 </details>
 
@@ -570,19 +558,15 @@ plt.show()
 ```
 
 <details>
-<summary>Saved output</summary>
+<summary>Output</summary>
 
-```text
+```
 Initial average loading: 80000 mg/kg
 Initial utilisation:     80.0%
 
 Final utilisation after 1000 hours: 100.0%
 Breakthrough occurred: True
-
-<Figure size 10x5 inches>
 ```
-
-*Line plot of utilisation versus time for an initially 80 percent pre-loaded bed. The embedded figure is preserved in the executed notebook.*
 
 </details>
 
@@ -602,9 +586,9 @@ print(json.dumps(report, indent=2))
 ```
 
 <details>
-<summary>Saved output</summary>
+<summary>Output</summary>
 
-```text
+```
 === Mercury Removal Bed — JSON Report ===
 {
   "name": "Mercury Guard Bed",
@@ -642,7 +626,6 @@ print(json.dumps(report, indent=2))
   }
 }
 ```
-
 
 </details>
 
@@ -689,9 +672,9 @@ print(f"Height: {mech_design.getModuleHeight():.1f} m")
 ```
 
 <details>
-<summary>Saved output</summary>
+<summary>Output</summary>
 
-```text
+```
 === Preliminary mechanical-screening results ===
 Inner diameter:      2.00 m
 Outer diameter:      2.1159 m
@@ -715,7 +698,6 @@ Length: 5.0 m
 Height: 8.0 m
 ```
 
-
 </details>
 
 ```python
@@ -732,18 +714,17 @@ for item in bom:
 ```
 
 <details>
-<summary>Saved output</summary>
+<summary>Output</summary>
 
-```text
+```
 === Bill of Materials ===
 Item                                     | Material        | Weight (kg) 
 ------------------------------------------------------------------------
 Pressure Vessel Shell                    | SA-516-70       | 25956       
 Sorbent Charge (PuraSpec)                | PuraSpec        | 10367       
 Support Grids and Distribution Plates    | SS316L          | 668         
-Inlet/Outlet Nozzles                     | SA-516-70       | 1298
+Inlet/Outlet Nozzles                     | SA-516-70       | 1298        
 ```
-
 
 </details>
 
@@ -755,9 +736,9 @@ print(json.dumps(mech_json, indent=2))
 ```
 
 <details>
-<summary>Saved output</summary>
+<summary>Output</summary>
 
-```text
+```
 === Mechanical Design — Full JSON Report ===
 {
   "equipmentName": "Mercury Guard Bed",
@@ -810,7 +791,6 @@ print(json.dumps(mech_json, indent=2))
 }
 ```
 
-
 </details>
 
 ## Part 9: Preliminary cost-factor screening
@@ -859,9 +839,9 @@ for price in [15.0, 20.0, 25.0, 30.0]:
 ```
 
 <details>
-<summary>Saved output</summary>
+<summary>Output</summary>
 
-```text
+```
 === Unindexed nominal-USD screening ===
 Purchased equipment cost: $482,560
 Bare module cost: $1,889,224
@@ -878,7 +858,6 @@ USD 25/kg: purchased USD 482,560; replacement USD 323,977
 USD 30/kg: purchased USD 534,397; replacement USD 388,772
 ```
 
-
 </details>
 
 ```python
@@ -891,9 +870,9 @@ print(json.dumps(cost_json, indent=2))
 ```
 
 <details>
-<summary>Saved output</summary>
+<summary>Output</summary>
 
-```text
+```
 === Cost Estimation — Full JSON Report ===
 {
   "equipmentName": "Mercury Guard Bed",
@@ -918,7 +897,6 @@ print(json.dumps(cost_json, indent=2))
   }
 }
 ```
-
 
 </details>
 
@@ -949,9 +927,9 @@ for i in range(errors.size()):
 ```
 
 <details>
-<summary>Saved output</summary>
+<summary>Output</summary>
 
-```text
+```
 Valid configuration: True
 
 Bad configuration valid: False
@@ -963,7 +941,6 @@ Number of errors: 3
   - [sorbent] Mercury capacity must be positive
     Fix: Set max mercury capacity: setMaxMercuryCapacity(value)
 ```
-
 
 </details>
 
@@ -1048,9 +1025,9 @@ assert all(verification_checks.values())
 ```
 
 <details>
-<summary>Saved output</summary>
+<summary>Output</summary>
 
-```text
+```
 === Internal verification checks ===
 PASS: steady removal is bounded
 PASS: pressure drop is finite and non-negative
@@ -1061,7 +1038,6 @@ PASS: lifetime increases with replacement utilisation
 PASS: lifetime increases with configured capacity
 PASS: normal-basis mercury conversion is reproducible
 ```
-
 
 </details>
 
@@ -1085,17 +1061,6 @@ plt.tight_layout()
 plt.savefig("mercury_internal_sensitivity.png", dpi=150, bbox_inches="tight")
 plt.show()
 ```
-
-<details>
-<summary>Saved output</summary>
-
-```text
-<Figure size 13x5 inches>
-```
-
-*Two model-sensitivity plots of lifetime versus utilisation and configured capacity. The embedded figure is preserved in the executed notebook.*
-
-</details>
 
 ### Interpretation limits
 
@@ -1142,3 +1107,4 @@ This notebook cleanly executes the complete public workflow:
 The saved values belong to one top-to-bottom execution. They show how the current NeqSim model
 responds to the declared synthetic inputs. They do not establish vendor performance, field life,
 pressure-vessel compliance, cost accuracy, or operating approval.
+
