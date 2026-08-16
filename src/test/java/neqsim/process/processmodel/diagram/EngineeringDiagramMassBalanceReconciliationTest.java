@@ -56,8 +56,8 @@ class EngineeringDiagramMassBalanceReconciliationTest {
     assertFalse(reconciliation.getSourceAssessmentFingerprint().isEmpty());
     assertNotSame(reconciliation.getAdjustments(), reconciliation.getAdjustments());
     assertThrows(UnsupportedOperationException.class, () -> reconciliation.getAdjustments().clear());
-    assertTrue(reconciliation.toJson().contains("\"schemaVersion\": \""
-        + EngineeringDiagramMassBalanceReconciliation.SCHEMA_VERSION + "\""));
+    assertTrue(reconciliation.toJson()
+        .contains("\"schemaVersion\": \"" + EngineeringDiagramMassBalanceReconciliation.SCHEMA_VERSION + "\""));
     assertTrue(reconciliation.toJson().contains("\"massFlowUnit\": \"kg/s\""));
   }
 
@@ -82,11 +82,11 @@ class EngineeringDiagramMassBalanceReconciliationTest {
     Uncertainty duplicateFeed = uncertainty(fixture, fixture.feed, 2.0);
     Uncertainty unknownBoundary = new Uncertainty(BALANCE_ID, "line:unknown", 1.0, "kg/s", "MASS",
         "instrument-register:test", "test uncertainty", EvidenceState.PROPOSED);
-    Uncertainty invalidProduct = new Uncertainty(BALANCE_ID, fixture.product.getSemanticObjectId(), 0.0, "kg/s",
-        "MASS", "instrument-register:test", "test uncertainty", EvidenceState.PROPOSED);
+    Uncertainty invalidProduct = new Uncertainty(BALANCE_ID, fixture.product.getSemanticObjectId(), 0.0, "kg/s", "MASS",
+        "instrument-register:test", "test uncertainty", EvidenceState.PROPOSED);
 
-    EngineeringDiagramMassBalanceReconciliation missing = EngineeringDiagramMassBalanceReconciliation.fromSources(
-        fixture.streamTable, fixture.balanceTable, fixture.assessment, Collections.singletonList(feed));
+    EngineeringDiagramMassBalanceReconciliation missing = EngineeringDiagramMassBalanceReconciliation
+        .fromSources(fixture.streamTable, fixture.balanceTable, fixture.assessment, Collections.singletonList(feed));
     EngineeringDiagramMassBalanceReconciliation malformed = EngineeringDiagramMassBalanceReconciliation.fromSources(
         fixture.streamTable, fixture.balanceTable, fixture.assessment,
         Arrays.asList(feed, duplicateFeed, unknownBoundary, invalidProduct));
@@ -114,8 +114,8 @@ class EngineeringDiagramMassBalanceReconciliationTest {
 
     Fixture fixture = outsideToleranceFixture();
     EngineeringDiagramStreamTable otherStreamTable = streamTable(completeBranchedBoundaryCase());
-    EngineeringDiagramMassBalanceReconciliation mismatched = EngineeringDiagramMassBalanceReconciliation.fromSources(
-        otherStreamTable, fixture.balanceTable, fixture.assessment, Collections.<Uncertainty>emptyList());
+    EngineeringDiagramMassBalanceReconciliation mismatched = EngineeringDiagramMassBalanceReconciliation
+        .fromSources(otherStreamTable, fixture.balanceTable, fixture.assessment, Collections.<Uncertainty>emptyList());
 
     assertFalse(underspecified.isValid());
     assertTrue(hasDiagnostic(underspecified, "MASS_RECONCILIATION_BOUNDARY_UNDERSPECIFIED"));
@@ -133,8 +133,8 @@ class EngineeringDiagramMassBalanceReconciliationTest {
     List<Uncertainty> secondUncertainties = uncertainties(secondFixture, 2.0, 1.0);
     Collections.reverse(secondUncertainties);
 
-    EngineeringDiagramMassBalanceReconciliation first = EngineeringDiagramMassBalanceReconciliation.fromSources(
-        firstFixture.streamTable, firstFixture.balanceTable, firstFixture.assessment, firstUncertainties);
+    EngineeringDiagramMassBalanceReconciliation first = EngineeringDiagramMassBalanceReconciliation
+        .fromSources(firstFixture.streamTable, firstFixture.balanceTable, firstFixture.assessment, firstUncertainties);
     EngineeringDiagramMassBalanceReconciliation second = EngineeringDiagramMassBalanceReconciliation.fromSources(
         secondFixture.streamTable, secondFixture.balanceTable, secondFixture.assessment, secondUncertainties);
 
