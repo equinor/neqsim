@@ -1133,18 +1133,28 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * isAcceptNegativeDP.
+   * Returns whether a requested outlet pressure above the inlet is retained.
    *
-   * @return a boolean
+   * <p>The default is {@code true}. This flag controls the outlet thermodynamic pressure state;
+   * it does not enable reverse flow, compressor work, or a bidirectional network calculation.
+   *
+   * @return {@code true} when a requested outlet pressure above the inlet is retained, or
+   *         {@code false} when it is clamped to the inlet pressure
    */
   public boolean isAcceptNegativeDP() {
     return acceptNegativeDP;
   }
 
   /**
-   * Setter for the field <code>acceptNegativeDP</code>.
+   * Sets whether a requested outlet pressure above the inlet is retained.
    *
-   * @param acceptNegativeDP a boolean
+   * <p>Set to {@code false} for a one-way pressure-letdown model that must clamp the outlet
+   * thermodynamic pressure to the inlet pressure. When {@code true}, the requested outlet
+   * pressure is retained, while the valve hydraulic driving differential is limited to zero.
+   * This setting does not calculate reverse flow, compressor work, or a bidirectional network.
+   *
+   * @param acceptNegativeDP {@code true} to retain the requested outlet pressure, or
+   *        {@code false} to clamp it to the inlet pressure
    */
   public void setAcceptNegativeDP(boolean acceptNegativeDP) {
     this.acceptNegativeDP = acceptNegativeDP;

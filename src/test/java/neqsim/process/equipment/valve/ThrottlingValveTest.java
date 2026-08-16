@@ -691,18 +691,25 @@ public class ThrottlingValveTest {
     stream1.setPressure(10.0, "bara");
     stream1.run();
 
-    ThrottlingValve valve1 = new ThrottlingValve("valve1", stream1);
-    valve1.setOutletPressure(15.0, "bara");
-    valve1.setAcceptNegativeDP(false);
-    valve1.run();
-    assertEquals(10.0, valve1.getOutletStream().getPressure("bara"), 1e-4,
-        "When isAcceptNegativeDP is false, pressure must be clamped to inlet pressure");
+    ThrottlingValve defaultValve = new ThrottlingValve("default valve", stream1);
+    assertTrue(defaultValve.isAcceptNegativeDP(), "Requested higher outlet pressure is accepted by default");
+    defaultValve.setOutletPressure(15.0, "bara");
+    defaultValve.run();
+    assertEquals(15.0, defaultValve.getOutletStream().getPressure("bara"), 1e-4,
+        "The default retains the requested outlet thermodynamic pressure state");
 
-    ThrottlingValve valve2 = new ThrottlingValve("valve2", stream1);
-    valve2.setOutletPressure(15.0, "bara");
-    valve2.setAcceptNegativeDP(true);
-    valve2.run();
-    assertEquals(15.0, valve2.getOutletStream().getPressure("bara"), 1e-4,
-        "When isAcceptNegativeDP is true, negative DP (higher pressure) should be accepted");
+    ThrottlingValve clampingValve = new ThrottlingValve("clamping valve", stream1);
+    clampingValve.setOutletPressure(15.0, "bara");
+    clampingValve.setAcceptNegativeDP(false);
+    clampingValve.run();
+    assertEquals(10.0, clampingValve.getOutletStream().getPressure("bara"), 1e-4,
+        "Disabling acceptance clamps the outlet thermodynamic pressure to the inlet");
+
+    ThrottlingValve acceptingValve = new ThrottlingValve("accepting valve", stream1);
+    acceptingValve.setOutletPressure(15.0, "bara");
+    acceptingValve.setAcceptNegativeDP(true);
+    acceptingValve.run();
+    assertEquals(15.0, acceptingValve.getOutletStream().getPressure("bara"), 1e-4,
+        "Enabling acceptance retains the requested outlet thermodynamic pressure state");
   }
 }
