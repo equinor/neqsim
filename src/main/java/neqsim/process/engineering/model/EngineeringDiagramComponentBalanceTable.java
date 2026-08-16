@@ -594,7 +594,31 @@ public final class EngineeringDiagramComponentBalanceTable implements Serializab
         if (streamOrder != 0) {
           return streamOrder;
         }
-        return left.getSourceReference().compareTo(right.getSourceReference());
+        int nameOrder = left.getComponentName().compareTo(right.getComponentName());
+        if (nameOrder != 0) {
+          return nameOrder;
+        }
+        int valueOrder = Double.compare(left.getResultValue(), right.getResultValue());
+        if (valueOrder != 0) {
+          return valueOrder;
+        }
+        int unitOrder = left.getResultUnit().compareTo(right.getResultUnit());
+        if (unitOrder != 0) {
+          return unitOrder;
+        }
+        int basisOrder = left.getQuantityBasis().compareTo(right.getQuantityBasis());
+        if (basisOrder != 0) {
+          return basisOrder;
+        }
+        int sourceOrder = left.getSourceReference().compareTo(right.getSourceReference());
+        if (sourceOrder != 0) {
+          return sourceOrder;
+        }
+        int provenanceOrder = left.getProvenance().compareTo(right.getProvenance());
+        if (provenanceOrder != 0) {
+          return provenanceOrder;
+        }
+        return left.getEvidenceState().name().compareTo(right.getEvidenceState().name());
       }
     };
   }
