@@ -2333,8 +2333,8 @@ public class TPflash extends Flash {
    * <p>
    * This screen mirrors the existing neutral liquid-liquid composition/critical-temperature gate while permitting the
    * water component that defines this fallback. A substantial non-hydrocarbon fraction and a condensable hydrocarbon
-   * are both required, so hydrocarbon/water process flashes do not allocate a seed merely because water is present.
-   * The later reciprocal solve and strict feasibility, equilibrium, and Gibbs gates decide stability.
+   * are both required, so hydrocarbon/water process flashes do not allocate a seed merely because water is present. The
+   * later reciprocal solve and strict feasibility, equilibrium, and Gibbs gates decide stability.
    * </p>
    *
    * @return true when retaining one cold pre-iteration state is justified
@@ -2892,8 +2892,7 @@ public class TPflash extends Flash {
   private void rescueSinglePhaseWaterBearingEndpoint() {
     boolean hasScreenedColdSeed = system.doMultiPhaseCheck() && system.getNumberOfPhases() == 1
         && multiphaseEndpointRescueSeed != null && hasPotentialWaterRichColdSeedInstability();
-    if (waterBearingRescueAttempted
-        || (!hasScreenedColdSeed && !shouldRetryCollapsedWaterBearingEndpoint())) {
+    if (waterBearingRescueAttempted || (!hasScreenedColdSeed && !shouldRetryCollapsedWaterBearingEndpoint())) {
       return;
     }
     waterBearingRescueAttempted = true;
