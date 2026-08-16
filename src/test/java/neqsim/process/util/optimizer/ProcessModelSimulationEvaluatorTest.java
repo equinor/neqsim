@@ -370,24 +370,31 @@ class ProcessModelSimulationEvaluatorTest {
         });
     CapacityConstraint finite = new CapacityConstraint("finite", "kg/hr", ConstraintType.HARD).setDesignValue(12000.0)
         .setCurrentValue(9000.0);
+    CapacityConstraint invalidLimit =
+        new CapacityConstraint("invalidLimit", "kg/hr", ConstraintType.HARD).setDesignValue(0.0)
+            .setCurrentValue(5.0);
     fixture.separator.clearCapacityConstraints();
     fixture.separator.addCapacityConstraint(undefined);
     fixture.separator.addCapacityConstraint(finite);
+    fixture.separator.addCapacityConstraint(invalidLimit);
 
     ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
     evaluator.setIncludeStrategyCapacityConstraints(false);
     List<ProcessModelSimulationEvaluator.BottleneckStatus> ranked = evaluator.rankCapacityConstraints(fixture.model);
 
-    assertEquals(2, ranked.size());
+    assertEquals(3, ranked.size());
     assertEquals("finite", ranked.get(0).getConstraintName());
-    assertEquals("undefined", ranked.get(1).getConstraintName());
-    assertTrue(Double.isNaN(ranked.get(1).getUtilization()));
-    assertFalse(ranked.get(1).isFeasible());
+    assertEquals("invalidLimit", ranked.get(1).getConstraintName());
+    assertEquals("undefined", ranked.get(2).getConstraintName());
+    assertTrue(Double.isNaN(ranked.get(2).getUtilization()));
+    assertFalse(ranked.get(2).isFeasible());
     assertEquals(1, undefinedSupplierCalls.get());
     List<InstalledEquipmentCapacityEvidence> evidence =
         evaluator.snapshotInstalledEquipmentCapacityEvidence(fixture.model);
-    assertEquals(InstalledEquipmentCapacityEvidence.EvidenceStatus.NON_FINITE_CURRENT_VALUE,
+    assertEquals(InstalledEquipmentCapacityEvidence.EvidenceStatus.INVALID_APPLICABLE_LIMIT,
         evidence.get(1).getEvidenceStatus());
+    assertEquals(InstalledEquipmentCapacityEvidence.EvidenceStatus.NON_FINITE_CURRENT_VALUE,
+        evidence.get(2).getEvidenceStatus());
     assertEquals(2, undefinedSupplierCalls.get(),
         "a separate live snapshot call samples once again and does not reuse stale evidence");
   }
