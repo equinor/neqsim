@@ -1054,16 +1054,17 @@ grid-converged, at default settings.
 
 Remaining limitations:
 
-- **Low-point terrain accumulation is far too strong.** A section-by-section comparison at
-  4 MSm3/d puts 316 of 320 sections within 0.82 to 0.94 of OLGA, with median holdup 0.0201 against
-  0.0235 - the bulk slip closure agrees. Four sections, all terrain low points, run 4.6 to 8.8 times
-  OLGA. Expressed scale-free, OLGA raises its maximum holdup to 1.26 times its own median on this
-  line while this model raises it to 11.0 times. The cause is visible in `applyTerrainAccumulation`:
-  the low-point branch multiplies three separate proxies for the same effect - a Froude factor up to
-  11, a pooling factor up to 4 and a depth factor up to 6 - so they compound to a factor of order
-  100 before an arbitrary 0.85 clip. Pressure drop is barely affected because only 1.2% of sections
-  are involved, but valley inventory, slug volume and cooldown are not design numbers until this is
-  recalibrated against a terrain-holdup dataset.
+- **Terrain response now comes from the momentum balance.** The annular film closure accepted an
+  inclination argument but never used it - the film balance was `tau_i = tau_wL` with no gravity
+  term - so in annular flow the holdup had no terrain dependence at all, and the terrain response
+  was supplied instead by an empirical multiplier applied on top of the solved holdup. That
+  multiplier compounded three proxies for one effect to a factor of order 100 and produced a
+  low-point holdup 4.6 to 8.8 times OLGA. The film balance now carries
+  `tau_i = tau_wL + rhoL * g * sin(theta) * delta`, and the multiplier is gone. Measured against
+  OLGA at 4 MSm3/d, the maximum holdup moved from 0.222 to 0.022 against OLGA's 0.030, no section
+  exceeds 3 times OLGA, and the scale-free local response is 1.12 against OLGA's 1.26. The response
+  scales with `sin(theta)` as it should: the same closure gives an 11-fold valley-to-crest holdup
+  variation on a 5 km line undulating at 8.6 degrees.
 - **The three-phase free-water case does not converge.** With 15 m3/hr of free water on the same
   line the solve is wall-clock limited after 4078 iterations at a 1200 s budget, reporting 88.64 bar
   against OLGA's 104.06. The pressure drop is identical to the 300 s run to 0.01 bar, so the profile

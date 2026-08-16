@@ -1466,11 +1466,10 @@ conditions (see [TwoFluidPipe OLGA comparison](two_fluid_model_olga_comparison#m
 - **Arrival temperature** tracks OLGA to between 0.7 and 3.5 K, and responds correctly to heating:
   10 MW of DEH raises it 17.4 K against OLGA's 19.4 K while the pressure drop rises 15.0% against
   12.3%.
-- **Low-point terrain accumulation is far too strong.** At 4 MSm3/d, 316 of 320 sections are within
-  0.82 to 0.94 of OLGA, but four terrain low points run 4.6 to 8.8 times OLGA. OLGA raises its
-  maximum holdup to 1.26 times its own median on this line; this model raises it to 11.0 times.
-  Pressure drop is barely affected, but valley inventory, slug volume and cooldown are not design
-  numbers until the low-point closure is recalibrated.
+- **Terrain response comes from the momentum balance, not a multiplier.** The annular film closure
+  now carries the gravity term, so holdup responds to inclination as `sin(theta)`. At 4 MSm3/d the
+  maximum holdup is 0.022 against OLGA's 0.030 and no section exceeds 3 times OLGA; the scale-free
+  local response is 1.12 against OLGA's 1.26.
 - **The three-phase free-water case does not converge.** With 15 m3/hr of free water the solve is
   wall-clock limited after 4078 iterations at a 1200 s budget (88.64 bar against OLGA's 104.06).
   The pressure drop does not move between a 300 s and a 1200 s budget, so the criterion is stalling
