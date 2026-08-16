@@ -1333,6 +1333,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     ensureIndependentSideDrawSpecifications();
     ensureIndependentPumparounds();
     ensureIndependentTerminalSpecifications();
+    ensureTerminalModeFeasibility();
     assignUnassignedFeeds();
     convergenceHistory = new ArrayList<>();
     applyDirectSpecifications();
@@ -2226,6 +2227,48 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Check whether the condenser currently owns the reflux split through a ratio equation.
+   *
+   * @return {@code true} when a direct or stored top ratio control is active
+   */
+  private boolean hasCondenserRatioControl() {
+    Condenser condenser = hasCondenser ? getCondenser() : null;
+    return condenser != null && !condenser.isSeparation_with_liquid_reflux()
+        && (condenser.isRefluxSet() || isTopRefluxRatioSpecification(topSpecification));
+  }
+
+  /**
+   * Check whether a declared total condenser is missing its required reflux split equation.
+   *
+   * @return {@code true} for an incomplete total-condenser configuration
+   */
+  private boolean hasTotalCondenserWithoutRatioControl() {
+    Condenser condenser = hasCondenser ? getCondenser() : null;
+    return condenser != null && condenser.isTotalCondenser() && !hasCondenserRatioControl();
+  }
+
+  /**
+   * Check whether a top outer specification and condenser ratio both claim the endpoint control.
+   *
+   * @return {@code true} when condenser temperature cannot affect the active top specification solve
+   */
+  private boolean hasTopSpecificationControlConflict() {
+    Condenser condenser = hasCondenser ? getCondenser() : null;
+    return condenser != null && condenser.isRefluxSet() && !condenser.isSeparation_with_liquid_reflux()
+        && needsAdjustment(topSpecification);
+  }
+
+  /**
+   * Check whether a bottom outer specification and reboiler ratio both claim the endpoint control.
+   *
+   * @return {@code true} when reboiler temperature cannot affect the active bottom specification solve
+   */
+  private boolean hasBottomSpecificationControlConflict() {
+    Reboiler reboiler = hasReboiler ? getReboiler() : null;
+    return reboiler != null && reboiler.isRefluxSet() && needsAdjustment(bottomSpecification);
+  }
+
+  /**
    * Check whether both terminal specifications control conservation-linked product flows.
    *
    * <p>
@@ -2312,6 +2355,30 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
     if (hasDependentTerminalComponentRecoverySpecifications()) {
       throw new IllegalStateException(createDependentTerminalComponentRecoverySpecificationsMessage());
+    }
+  }
+
+  /**
+   * Fail before feed assignment or tray mutation when terminal hardware cannot execute the configured controls.
+   */
+  private void ensureTerminalModeFeasibility() {
+    if (topSpecification != null && !hasCondenser) {
+      throw new IllegalStateException("Top specification requires a condenser on the controlled column end");
+    }
+    if (bottomSpecification != null && !hasReboiler) {
+      throw new IllegalStateException("Bottom specification requires a reboiler on the controlled column end");
+    }
+    if (hasTotalCondenserWithoutRatioControl()) {
+      throw new IllegalStateException(
+          "Total condenser requires an explicit reflux ratio; call setCondenserRefluxRatio(ratio) before run");
+    }
+    if (hasTopSpecificationControlConflict()) {
+      throw new IllegalStateException("Adjustable top specification conflicts with active condenser ratio control; "
+          + "call clearCondenserRefluxRatio()");
+    }
+    if (hasBottomSpecificationControlConflict()) {
+      throw new IllegalStateException(
+          "Adjustable bottom specification conflicts with active reboiler vapor boilup ratio; select EQUILIBRIUM mode");
     }
   }
 
@@ -5338,8 +5405,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * <p>
    * The method runs {@link ShortcutDistillationColumn}, converts its stage and feed-tray estimates into this column's
    * bottom-up tray indexing, rebuilds the tray stack, adds the feed at the shortcut-estimated feed tray, applies
-   * condenser reflux/duty and reboiler duty estimates, and stores light-key/heavy-key recovery specifications for later
-   * rigorous solving.
+   * condenser and reboiler duty estimates, preserves the shortcut reflux-ratio value without activating ratio control,
+   * and stores light-key/heavy-key recovery specifications for later rigorous solving.
    * </p>
    *
    * @param feedStream feed stream used for the shortcut calculation and rigorous column
@@ -5389,6 +5456,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     addFeedStream(feedStream, feedTrayNumber);
     setTopComponentRecovery(lightKey, lightKeyRecoveryDistillate);
     setBottomComponentRecovery(heavyKey, heavyKeyRecoveryBottoms);
+    if (hasCondenser) {
+      // Recovery specifications own the endpoint temperatures; retain the shortcut ratio only as an inactive estimate.
+      clearCondenserRefluxRatio();
+    }
 
     lastShortcutInitializationResult = new ShortcutInitializationResult(true, totalStageCount, feedTrayNumber,
         shortcut.getFeedTrayNumber(), shortcut.getMinimumNumberOfStages(), shortcut.getMinimumRefluxRatio(),
@@ -9712,6 +9783,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
     diagnostics.append("  Trays: ").append(numberOfTrays).append(" total, ").append(getEffectiveStageCount())
         .append(" equilibrium stages").append("\n");
+    diagnostics.append("  Terminal controls:\n");
+    if (hasCondenser) {
+      diagnostics.append("    condenser mode: ").append(getCondenserMode()).append(", ratio control: ")
+          .append(hasCondenserRatioControl()).append("\n");
+    } else {
+      diagnostics.append("    condenser: absent\n");
+    }
+    if (hasReboiler) {
+      diagnostics.append("    reboiler mode: ").append(getReboilerMode()).append("\n");
+    } else {
+      diagnostics.append("    reboiler: absent\n");
+    }
     diagnostics.append("  Iterations: ").append(lastIterationCount).append("\n");
     diagnostics.append("  Solve time: ").append(lastSolveTimeSeconds).append(" s\n");
     if (hasActiveColumnTearVariables() || lastColumnTearIterationCount > 0) {
@@ -11262,6 +11345,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Configure the condenser operating mode.
    *
+   * <p>
+   * Switching between partial and total modes preserves an already configured ratio control. A total condenser without
+   * an explicit ratio remains an incomplete configuration and is rejected by validation and the run preflight.
+   * </p>
+   *
    * @param mode condenser operating mode
    * @throws IllegalStateException if the column has no condenser
    * @throws IllegalArgumentException if mode is {@code null} or requires more data
@@ -11298,6 +11386,25 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
     condenser.setTotalCondenser(false);
     condenser.setSeparation_with_liquid_reflux(true, value, unit);
+    setDoInitializion(true);
+  }
+
+  /**
+   * Clear condenser ratio control and a stored top reflux-ratio specification.
+   *
+   * <p>
+   * Unrelated top product specifications are preserved so callers can transfer control to the outer specification
+   * solver explicitly.
+   * </p>
+   *
+   * @throws IllegalStateException if the column has no condenser
+   */
+  public void clearCondenserRefluxRatio() {
+    Condenser condenser = requireCondenser();
+    condenser.clearRefluxRatio();
+    if (isTopRefluxRatioSpecification(topSpecification)) {
+      topSpecification = null;
+    }
     setDoInitializion(true);
   }
 
@@ -13616,6 +13723,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     validateColumnSpecification(result, topSpecification, ColumnSpecification.ProductLocation.TOP);
     validateColumnSpecification(result, bottomSpecification, ColumnSpecification.ProductLocation.BOTTOM);
     validateTerminalSpecificationIndependence(result);
+    validateTerminalModeFeasibility(result);
     validateProductFlowSpecificationsAgainstFeed(result);
     validatePairedComponentRecoverySpecifications(result);
     if (hasConflictingCondenserRefluxSpecifications()) {
@@ -13639,6 +13747,29 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       result.addError("specification.degreesOfFreedom", createDependentTerminalComponentRecoverySpecificationsMessage(),
           "Keep one recovery target for that component and replace the other terminal target with an independent "
               + "specification");
+    }
+  }
+
+  /**
+   * Validate terminal mode feasibility and ownership of the endpoint temperature handles.
+   *
+   * @param result validation result receiving terminal-mode errors
+   */
+  private void validateTerminalModeFeasibility(ValidationResult result) {
+    if (hasTotalCondenserWithoutRatioControl()) {
+      result.addError("specification.terminalMode", "Total condenser requires an explicit reflux ratio",
+          "Call setCondenserRefluxRatio(ratio) before running, or select PARTIAL condenser mode");
+    }
+    if (hasTopSpecificationControlConflict()) {
+      result.addError("specification.controlOwnership",
+          "The adjustable top specification cannot manipulate condenser temperature while ratio reflux is active",
+          "Call clearCondenserRefluxRatio() before setting a top purity, recovery, or product-flow target");
+    }
+    if (hasBottomSpecificationControlConflict()) {
+      result.addError("specification.controlOwnership",
+          "The adjustable bottom specification cannot manipulate reboiler temperature while vapor boilup ratio is "
+              + "active",
+          "Select ReboilerMode.EQUILIBRIUM before setting a bottom purity, recovery, or product-flow target");
     }
   }
 
@@ -13915,13 +14046,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     boolean topSpecificationLocal = specification.getLocation() == ColumnSpecification.ProductLocation.TOP;
     boolean hasControllerEnd = topSpecificationLocal ? hasCondenser : hasReboiler;
     if (!hasControllerEnd && needsAdjustment(specification)) {
-      result.addWarning("specification.hardware",
-          "Adjustable specification has no condenser/reboiler handle on that column end",
-          "Add the matching condenser/reboiler or replace the spec with a directly set temperature/duty");
+      result.addError("specification.hardware",
+          "Adjustable specification has no condenser/reboiler temperature handle on that column end",
+          "Add the matching condenser/reboiler or remove the specification");
     }
     if (!hasControllerEnd && (specification.getType() == ColumnSpecification.SpecificationType.REFLUX_RATIO
         || specification.getType() == ColumnSpecification.SpecificationType.DUTY)) {
-      result.addWarning("specification.hardware",
+      result.addError("specification.hardware",
           "Direct reflux or duty specification has no matching condenser/reboiler",
           "Enable the matching column end or remove the direct specification");
     }
@@ -14421,6 +14552,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       condenser.setRefluxRatio(refluxRatio);
     }
     this.topSpecification = specification;
+    setDoInitializion(true);
   }
 
   // ======================== Column specification convenience methods

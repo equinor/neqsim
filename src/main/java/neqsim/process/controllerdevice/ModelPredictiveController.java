@@ -1,5 +1,8 @@
 package neqsim.process.controllerdevice;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -11,6 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import neqsim.process.dynamics.TransientStateParticipant;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.util.NamedBaseClass;
 
@@ -29,7 +33,8 @@ import neqsim.util.NamedBaseClass;
  * operating on real process data without requiring external optimisation packages.
  * </p>
  */
-public class ModelPredictiveController extends NamedBaseClass implements ControllerDeviceInterface {
+public class ModelPredictiveController extends NamedBaseClass
+    implements ControllerDeviceInterface, TransientStateParticipant<ModelPredictiveController.MpcTransientState> {
   private static final long serialVersionUID = 1000L;
 
   private static final int MIN_ESTIMATION_SAMPLES = 5;
@@ -67,7 +72,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   private double[] controlWeightsVector = new double[0];
   private double[] moveWeightsVector = new double[0];
   private int primaryControlIndex = 0;
-  private final transient List<QualityConstraint> qualityConstraints = new ArrayList<>();
+  private List<QualityConstraint> qualityConstraints = new ArrayList<>();
   private Map<String, Double> lastFeedComposition = new LinkedHashMap<>();
   private Map<String, Double> pendingFeedComposition = new LinkedHashMap<>();
   private double lastFeedRate = 0.0;
@@ -79,7 +84,9 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   private final List<Double> estimationMeasurements = new ArrayList<>();
   private final List<Double> estimationControls = new ArrayList<>();
   private final List<Double> estimationSampleTimes = new ArrayList<>();
-  private transient MovingHorizonEstimate lastMovingHorizonEstimate;
+  private MovingHorizonEstimate lastMovingHorizonEstimate;
+  /** Persistent identity used only for transient transaction provenance. */
+  private String transientStateParticipantId = UUID.randomUUID().toString();
 
   /**
    * Representation of a quality constraint handled by the MPC. Each constraint links a measurement device with linear
@@ -87,7 +94,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
    * changes. Inequality limits are enforced softly by the quadratic program to keep the process within specification
    * while still penalising unnecessary control effort.
    */
-  public static final class QualityConstraint {
+  public static final class QualityConstraint implements Serializable {
+    private static final long serialVersionUID = 1000L;
     private final String name;
     private final MeasurementDeviceInterface measurement;
     private final String unit;
@@ -266,7 +274,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
    * Result from the moving horizon estimation routine. The estimate captures the identified first-order process
    * parameters together with a mean squared prediction error and the number of samples used.
    */
-  public static final class MovingHorizonEstimate {
+  public static final class MovingHorizonEstimate implements Serializable {
+    private static final long serialVersionUID = 1000L;
     private final double processGain;
     private final double timeConstant;
     private final double processBias;
@@ -565,6 +574,20 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
    */
   public ModelPredictiveController(String name) {
     super(name);
+  }
+
+  /**
+   * Restores fields introduced after the original MPC serialization contract.
+   *
+   * @param input serialized object input
+   * @throws IOException if the stream cannot be read
+   * @throws ClassNotFoundException if a serialized field type is unavailable
+   */
+  private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+    input.defaultReadObject();
+    if (qualityConstraints == null) {
+      qualityConstraints = new ArrayList<>();
+    }
   }
 
   /**
@@ -1287,6 +1310,9 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
 
   @Override
   public void runTransient(double initResponse, double dt, UUID id) {
+    if (id != null && id.equals(calcIdentifier)) {
+      return;
+    }
     calcIdentifier = id;
     lastSampleTime = dt;
     if (!qualityConstraints.isEmpty()) {
@@ -2042,6 +2068,268 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
     return trajectory;
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateIdentity() {
+    if (transientStateParticipantId == null || transientStateParticipantId.trim().isEmpty()) {
+      transientStateParticipantId = UUID.randomUUID().toString();
+    }
+    return "controller:mpc:" + transientStateParticipantId;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateCoverageIssue() {
+    if (getClass() != ModelPredictiveController.class) {
+      return "MPC subclass " + getClass().getName()
+          + " must provide a complete transient-state snapshot before transactional execution";
+    }
+    if (transmitter != null && transmitter.isOnlineSignal()) {
+      return "MPC transmitter '" + transmitter.getName()
+          + "' uses online/external I/O without a rejected-step commit/defer contract";
+    }
+    for (QualityConstraint constraint : qualityConstraints) {
+      MeasurementDeviceInterface measurement = constraint.getMeasurement();
+      if (measurement != null && measurement.isOnlineSignal()) {
+        return "MPC quality constraint '" + constraint.getName() + "' uses online/external I/O through measurement '"
+            + measurement.getName() + "'";
+      }
+    }
+    return null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public MpcTransientState captureTransientState() {
+    String coverageIssue = getTransientStateCoverageIssue();
+    if (coverageIssue != null) {
+      throw new IllegalStateException(coverageIssue);
+    }
+    return new MpcTransientState(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreTransientState(MpcTransientState state) {
+    if (state == null) {
+      throw new IllegalArgumentException("MPC transient snapshot cannot be null");
+    }
+    if (!getTransientStateIdentity().equals(state.stateIdentity)) {
+      throw new IllegalArgumentException(
+          "MPC transient snapshot belongs to '" + state.stateIdentity + "', not '" + getTransientStateIdentity() + "'");
+    }
+
+    setName(state.name);
+    transmitter = state.transmitter;
+    controllerSetPoint = state.controllerSetPoint;
+    unit = state.unit;
+    reverseActing = state.reverseActing;
+    isActive = state.active;
+    response = state.response;
+    minResponse = state.minResponse;
+    maxResponse = state.maxResponse;
+    minMove = state.minMove;
+    maxMove = state.maxMove;
+    processGain = state.processGain;
+    timeConstant = state.timeConstant;
+    processBias = state.processBias;
+    predictionHorizon = state.predictionHorizon;
+    outputWeight = state.outputWeight;
+    controlWeight = state.controlWeight;
+    moveWeight = state.moveWeight;
+    preferredControlValue = state.preferredControlValue;
+    calcIdentifier = state.calcIdentifier;
+    lastSampledValue = state.lastSampledValue;
+    lastSampleTime = state.lastSampleTime;
+    lastAppliedControl = state.lastAppliedControl;
+    controlNames.clear();
+    controlNames.addAll(state.controlNames);
+    controlVector = state.controlVector.clone();
+    lastControlVector = state.lastControlVector.clone();
+    minControlVector = state.minControlVector.clone();
+    maxControlVector = state.maxControlVector.clone();
+    minControlMoveVector = state.minControlMoveVector.clone();
+    maxControlMoveVector = state.maxControlMoveVector.clone();
+    preferredControlVector = state.preferredControlVector.clone();
+    controlWeightsVector = state.controlWeightsVector.clone();
+    moveWeightsVector = state.moveWeightsVector.clone();
+    primaryControlIndex = state.primaryControlIndex;
+    qualityConstraints.clear();
+    for (MpcQualityConstraintState constraintState : state.qualityConstraints) {
+      qualityConstraints.add(constraintState.toConstraint());
+    }
+    lastFeedComposition = new LinkedHashMap<>(state.lastFeedComposition);
+    pendingFeedComposition = new LinkedHashMap<>(state.pendingFeedComposition);
+    lastFeedRate = state.lastFeedRate;
+    pendingFeedRate = state.pendingFeedRate;
+    feedInitialised = state.feedInitialised;
+    predictedQualityValues.clear();
+    predictedQualityValues.putAll(state.predictedQualityValues);
+    movingHorizonEstimationEnabled = state.movingHorizonEstimationEnabled;
+    movingHorizonWindow = state.movingHorizonWindow;
+    estimationMeasurements.clear();
+    estimationMeasurements.addAll(state.estimationMeasurements);
+    estimationControls.clear();
+    estimationControls.addAll(state.estimationControls);
+    estimationSampleTimes.clear();
+    estimationSampleTimes.addAll(state.estimationSampleTimes);
+    lastMovingHorizonEstimate = copyEstimate(state.lastMovingHorizonEstimate);
+  }
+
+  private static MovingHorizonEstimate copyEstimate(MovingHorizonEstimate estimate) {
+    if (estimate == null) {
+      return null;
+    }
+    return new MovingHorizonEstimate(estimate.processGain, estimate.timeConstant, estimate.processBias,
+        estimate.meanSquaredError, estimate.sampleCount);
+  }
+
+  /** Immutable, serializable rollback snapshot for one concrete local MPC. */
+  public static final class MpcTransientState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    private final String stateIdentity;
+    private final String name;
+    private final MeasurementDeviceInterface transmitter;
+    private final double controllerSetPoint;
+    private final String unit;
+    private final boolean reverseActing;
+    private final boolean active;
+    private final double response;
+    private final double minResponse;
+    private final double maxResponse;
+    private final double minMove;
+    private final double maxMove;
+    private final double processGain;
+    private final double timeConstant;
+    private final double processBias;
+    private final int predictionHorizon;
+    private final double outputWeight;
+    private final double controlWeight;
+    private final double moveWeight;
+    private final double preferredControlValue;
+    private final UUID calcIdentifier;
+    private final double lastSampledValue;
+    private final double lastSampleTime;
+    private final double lastAppliedControl;
+    private final List<String> controlNames;
+    private final double[] controlVector;
+    private final double[] lastControlVector;
+    private final double[] minControlVector;
+    private final double[] maxControlVector;
+    private final double[] minControlMoveVector;
+    private final double[] maxControlMoveVector;
+    private final double[] preferredControlVector;
+    private final double[] controlWeightsVector;
+    private final double[] moveWeightsVector;
+    private final int primaryControlIndex;
+    private final List<MpcQualityConstraintState> qualityConstraints;
+    private final Map<String, Double> lastFeedComposition;
+    private final Map<String, Double> pendingFeedComposition;
+    private final double lastFeedRate;
+    private final double pendingFeedRate;
+    private final boolean feedInitialised;
+    private final Map<String, Double> predictedQualityValues;
+    private final boolean movingHorizonEstimationEnabled;
+    private final int movingHorizonWindow;
+    private final List<Double> estimationMeasurements;
+    private final List<Double> estimationControls;
+    private final List<Double> estimationSampleTimes;
+    private final MovingHorizonEstimate lastMovingHorizonEstimate;
+
+    private MpcTransientState(ModelPredictiveController controller) {
+      stateIdentity = controller.getTransientStateIdentity();
+      name = controller.getName();
+      transmitter = controller.transmitter;
+      controllerSetPoint = controller.controllerSetPoint;
+      unit = controller.unit;
+      reverseActing = controller.reverseActing;
+      active = controller.isActive;
+      response = controller.response;
+      minResponse = controller.minResponse;
+      maxResponse = controller.maxResponse;
+      minMove = controller.minMove;
+      maxMove = controller.maxMove;
+      processGain = controller.processGain;
+      timeConstant = controller.timeConstant;
+      processBias = controller.processBias;
+      predictionHorizon = controller.predictionHorizon;
+      outputWeight = controller.outputWeight;
+      controlWeight = controller.controlWeight;
+      moveWeight = controller.moveWeight;
+      preferredControlValue = controller.preferredControlValue;
+      calcIdentifier = controller.calcIdentifier;
+      lastSampledValue = controller.lastSampledValue;
+      lastSampleTime = controller.lastSampleTime;
+      lastAppliedControl = controller.lastAppliedControl;
+      controlNames = new ArrayList<>(controller.controlNames);
+      controlVector = controller.controlVector.clone();
+      lastControlVector = controller.lastControlVector.clone();
+      minControlVector = controller.minControlVector.clone();
+      maxControlVector = controller.maxControlVector.clone();
+      minControlMoveVector = controller.minControlMoveVector.clone();
+      maxControlMoveVector = controller.maxControlMoveVector.clone();
+      preferredControlVector = controller.preferredControlVector.clone();
+      controlWeightsVector = controller.controlWeightsVector.clone();
+      moveWeightsVector = controller.moveWeightsVector.clone();
+      primaryControlIndex = controller.primaryControlIndex;
+      qualityConstraints = new ArrayList<>();
+      for (QualityConstraint constraint : controller.qualityConstraints) {
+        qualityConstraints.add(new MpcQualityConstraintState(constraint));
+      }
+      lastFeedComposition = new LinkedHashMap<>(controller.lastFeedComposition);
+      pendingFeedComposition = new LinkedHashMap<>(controller.pendingFeedComposition);
+      lastFeedRate = controller.lastFeedRate;
+      pendingFeedRate = controller.pendingFeedRate;
+      feedInitialised = controller.feedInitialised;
+      predictedQualityValues = new LinkedHashMap<>(controller.predictedQualityValues);
+      movingHorizonEstimationEnabled = controller.movingHorizonEstimationEnabled;
+      movingHorizonWindow = controller.movingHorizonWindow;
+      estimationMeasurements = new ArrayList<>(controller.estimationMeasurements);
+      estimationControls = new ArrayList<>(controller.estimationControls);
+      estimationSampleTimes = new ArrayList<>(controller.estimationSampleTimes);
+      lastMovingHorizonEstimate = copyEstimate(controller.lastMovingHorizonEstimate);
+    }
+  }
+
+  /** Serializable copy of one quality constraint, including its mutable observation cache. */
+  private static final class MpcQualityConstraintState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    private final String name;
+    private final MeasurementDeviceInterface measurement;
+    private final String unit;
+    private final double limit;
+    private final double margin;
+    private final double[] controlSensitivity;
+    private final Map<String, Double> compositionSensitivity;
+    private final double rateSensitivity;
+    private final double lastMeasurement;
+    private final double predictedValue;
+
+    private MpcQualityConstraintState(QualityConstraint constraint) {
+      name = constraint.name;
+      measurement = constraint.measurement;
+      unit = constraint.unit;
+      limit = constraint.limit;
+      margin = constraint.margin;
+      controlSensitivity = constraint.controlSensitivity.clone();
+      compositionSensitivity = new LinkedHashMap<>(constraint.compositionSensitivity);
+      rateSensitivity = constraint.rateSensitivity;
+      lastMeasurement = constraint.lastMeasurement;
+      predictedValue = constraint.predictedValue;
+    }
+
+    private QualityConstraint toConstraint() {
+      QualityConstraint constraint = QualityConstraint.builder(name).measurement(measurement).unit(unit).limit(limit)
+          .margin(margin).controlSensitivity(controlSensitivity).compositionSensitivities(compositionSensitivity)
+          .rateSensitivity(rateSensitivity).build();
+      constraint.setLastMeasurement(lastMeasurement);
+      constraint.setPredictedValue(predictedValue);
+      return constraint;
+    }
+  }
+
   @Override
   public void setActive(boolean isActive) {
     this.isActive = isActive;
@@ -2076,6 +2364,12 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
    */
   public UUID getCalcIdentifier() {
     return calcIdentifier;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean hasRunTransient(UUID id) {
+    return id != null && id.equals(calcIdentifier);
   }
 
   /**

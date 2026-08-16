@@ -531,3 +531,31 @@ or pipe physics, sampling, external I/O, alarm/trip integrity, safety action, vi
 or OTS use. `VirtualFlowMeter` remains outside this gate because its wall-clock result timestamps
 need a separate deterministic time/provenance design. `SevereSlugAnalyser` remains owned by the
 multiphase physics scope in issue #2907.
+
+## Local model-predictive-controller transaction coverage
+
+A concrete local `ModelPredictiveController` participates when registered as a controller in a
+`ProcessSystem`. Its immutable snapshot covers the controller name, stable transaction identity,
+transmitter binding, set point, unit, activation and reverse-action configuration, output and move
+limits, process model, quadratic weights, prediction horizon, last physical-step identity,
+measurement/control history and current response.
+
+Multivariable state is included rather than treated as an independent side channel: control names,
+current/previous vectors, limits, weights and preferred values are defensively copied. Each quality
+constraint snapshots its measurement binding, unit, limit/margin, control/composition/rate
+sensitivities and mutable observed/predicted values. Feedforward composition/rate state, predicted
+quality values, moving-horizon sample windows and the last identified model are also restored.
+Quality constraints and moving-horizon estimates are serializable so restart preserves the same
+configured optimization problem and estimator continuation.
+
+Quantitative evidence covers exact single-input and multivariable rejected-trial replay,
+physical-step idempotence, coordinated two-area `ProcessModel` rollback, moving-horizon
+continuation, foreign/null snapshot rejection and Java-serialization restart. Concrete descendants
+fail closed until they extend the snapshot for their own state. Online/external-I/O transmitter or
+quality-measurement bindings also fail closed because their timing and side effects do not yet have
+a rejected-step commit/defer contract.
+
+This gate establishes deterministic in-memory rollback and restart mechanics only. It does not
+qualify the MPC model structure, optimization quality, constraint tuning, plant identification,
+closed-loop stability, scan-time fidelity, external DCS commands, safety action, virtual
+commissioning or OTS use.

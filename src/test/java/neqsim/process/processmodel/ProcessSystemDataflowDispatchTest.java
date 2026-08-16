@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.mixer.StaticMixer;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -16,6 +17,7 @@ class ProcessSystemDataflowDispatchTest {
     private static final long serialVersionUID = 1000L;
     private int parallelRuns;
     private int dataflowRuns;
+    private int sequentialRuns;
 
     /** Creates an empty recording process. */
     RecordingProcessSystem() {
@@ -33,6 +35,13 @@ class ProcessSystemDataflowDispatchTest {
     @Override
     public synchronized void runDataflow(UUID id) {
       dataflowRuns++;
+      setCalculationIdentifier(id);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public synchronized void runSequential(UUID id) {
+      sequentialRuns++;
       setCalculationIdentifier(id);
     }
   }
@@ -96,5 +105,25 @@ class ProcessSystemDataflowDispatchTest {
 
     assertEquals(0, process.parallelRuns);
     assertEquals(1, process.dataflowRuns);
+  }
+
+  /** Verifies multi-input equipment retains level-based parallel dispatch. */
+  @Test
+  void multiInputEquipmentUsesParallelLevels() {
+    RecordingProcessSystem process = new RecordingProcessSystem();
+    Stream firstFeed = new Stream("first feed", createFluid());
+    Stream secondFeed = new Stream("second feed", createFluid());
+    StaticMixer mixer = new StaticMixer("mixer");
+    mixer.addStream(firstFeed);
+    mixer.addStream(secondFeed);
+    process.add(firstFeed);
+    process.add(secondFeed);
+    process.add(mixer);
+
+    process.runOptimized(UUID.randomUUID());
+
+    assertEquals(1, process.parallelRuns);
+    assertEquals(0, process.dataflowRuns);
+    assertEquals(0, process.sequentialRuns, "multi-input topology should not disable parallel execution");
   }
 }

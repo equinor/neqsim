@@ -1996,6 +1996,51 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Returns whether a recycle needs the legacy second observation before its state can be accepted.
+   *
+   * <p>
+   * A recycle with fewer than two completed observations cannot safely call {@link Recycle#solved()}, because an
+   * unconfigured recycle may not have an outlet stream yet. Previously accepted recycles are inspected before their
+   * per-run iteration counters are reset so an unchanged process can reuse that accepted state.
+   * </p>
+   *
+   * @return true when at least one recycle does not have a previously accepted state
+   */
+  private boolean requiresRecycleConfirmation() {
+    boolean hasRecycle = false;
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof Recycle) {
+        hasRecycle = true;
+        Recycle recycle = (Recycle) unit;
+        if (recycle.getIterations() <= 1 || !recycle.solved()) {
+          return true;
+        }
+      }
+    }
+    return !hasRecycle;
+  }
+
+  /**
+   * Returns whether a recycle auto-deactivated during the current physical pass.
+   *
+   * <p>
+   * A recycle that collapses below its low-flow threshold reports itself solved and clears its residuals. When the run
+   * started from an accepted active recycle state, one additional process pass is still required to clear the prior
+   * loop inventory from upstream equipment.
+   * </p>
+   *
+   * @return true when at least one recycle is auto-deactivated but not explicitly locked inactive
+   */
+  private boolean hasAutoDeactivatedRecycle() {
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof Recycle && !unit.isLockedInactive() && !unit.isActive()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Runs the process using hybrid execution strategy.
    *
    * <p>
@@ -2010,6 +2055,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * @throws InterruptedException if thread is interrupted during parallel execution
    */
   public synchronized void runHybrid(UUID id) throws InterruptedException {
+    boolean requireRecycleConfirmation = requiresRecycleConfirmation();
     resetActiveStates();
     applyFlowsheetWideSettings();
     HybridExecutionPlan plan = getCachedHybridPlan();
@@ -2126,7 +2172,8 @@ public class ProcessSystem extends SimulationBaseClass {
         } else {
           recycleNoProgress = 0;
         }
-      } while ((!isConverged || (iter < 2)) && iter < 100 && !Thread.currentThread().isInterrupted());
+      } while ((!isConverged || (iter < 2 && (requireRecycleConfirmation || hasAutoDeactivatedRecycle()))) && iter < 100
+          && !Thread.currentThread().isInterrupted());
     }
 
     // Update calculation identifiers
@@ -2955,6 +3002,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param id calculation identifier for tracking
    */
   public synchronized void runSequential(UUID id) {
+    boolean requireRecycleConfirmation = requiresRecycleConfirmation();
     resetActiveStates();
     applyFlowsheetWideSettings();
     // Determine execution order: use graph-based if enabled, otherwise use
@@ -3055,8 +3103,8 @@ public class ProcessSystem extends SimulationBaseClass {
           }
         }
       }
-    } while (((!isConverged || (iter < 2 && hasRecycle)) && iter < 100) && !runStep
-        && !Thread.currentThread().isInterrupted());
+    } while (((!isConverged || (iter < 2 && hasRecycle && (requireRecycleConfirmation || hasAutoDeactivatedRecycle())))
+        && iter < 100) && !runStep && !Thread.currentThread().isInterrupted());
 
     // Publish simulation complete event
     publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.SIMULATION_COMPLETE, getName(),
@@ -4267,6 +4315,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param id calculation identifier for tracking
    */
   public void runWithProgress(UUID id) {
+    boolean requireRecycleConfirmation = requiresRecycleConfirmation();
     // Determine execution order
     List<ProcessEquipmentInterface> executionOrder;
     if (useGraphBasedExecution) {
@@ -4392,8 +4441,8 @@ public class ProcessSystem extends SimulationBaseClass {
       double recycleError = recycleController.getMaxResidualError();
       notifyIterationComplete(iter, isConverged, recycleError);
 
-    } while (((!isConverged || (iter < 2 && hasRecycle)) && iter < 100) && !runStep
-        && !Thread.currentThread().isInterrupted());
+    } while (((!isConverged || (iter < 2 && hasRecycle && (requireRecycleConfirmation || hasAutoDeactivatedRecycle())))
+        && iter < 100) && !runStep && !Thread.currentThread().isInterrupted());
 
     // Notify simulation complete
     notifySimulationComplete(iter, isConverged);

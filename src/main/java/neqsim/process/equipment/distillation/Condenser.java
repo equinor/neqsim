@@ -133,7 +133,11 @@ public class Condenser extends SimpleTray {
     if (separation_with_liquid_reflux && (unit == null || unit.trim().isEmpty())) {
       throw new IllegalArgumentException("Fixed liquid reflux requires a flow-rate unit");
     }
-    this.refluxIsSet = separation_with_liquid_reflux;
+    if (separation_with_liquid_reflux) {
+      refluxIsSet = true;
+    } else if (this.separation_with_liquid_reflux) {
+      refluxIsSet = false;
+    }
     this.separation_with_liquid_reflux = separation_with_liquid_reflux;
     this.reflux_value = value;
     this.reflux_unit = separation_with_liquid_reflux ? unit.trim() : unit;
@@ -186,6 +190,15 @@ public class Condenser extends SimpleTray {
   public void setRefluxRatio(double refluxRatio) {
     this.refluxRatio = refluxRatio;
     refluxIsSet = true;
+  }
+
+  /**
+   * Clear ratio-controlled reflux while leaving fixed liquid-reflux mode unchanged.
+   */
+  public void clearRefluxRatio() {
+    if (!separation_with_liquid_reflux) {
+      refluxIsSet = false;
+    }
   }
 
   /**
@@ -277,6 +290,10 @@ public class Condenser extends SimpleTray {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    if (totalCondenser && (!refluxIsSet || separation_with_liquid_reflux)) {
+      throw new IllegalStateException(
+          "Total condenser " + getName() + " requires an explicit reflux ratio before it can run");
+    }
     lastAvailableLiquidReflux = Double.NaN;
     lastFixedLiquidReflux = Double.NaN;
     lastFixedLiquidRefluxResidual = Double.NaN;
@@ -287,7 +304,8 @@ public class Condenser extends SimpleTray {
       try {
         testOps.bubblePointTemperatureFlash();
       } catch (Exception e) {
-        logger.error(e.getMessage());
+        throw new IllegalStateException(
+            "Total condenser " + getName() + " could not calculate its bubble-point temperature", e);
       }
       mixedStream.getThermoSystem().init(3);
       // mixedStream.getThermoSystem().prettyPrint();

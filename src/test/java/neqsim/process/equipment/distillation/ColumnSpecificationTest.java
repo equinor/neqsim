@@ -272,10 +272,10 @@ public class ColumnSpecificationTest {
   }
 
   /**
-   * Test that validation warns when an adjustable top specification has no condenser handle.
+   * Test that validation rejects an adjustable top specification with no condenser handle.
    */
   @Test
-  public void validateSetupWarnsWhenTopSpecHasNoCondenser() {
+  public void validateSetupRejectsTopSpecWithoutCondenser() {
     SystemSrkEos testSystem = new SystemSrkEos(273.15 + 25.0, 15.0);
     testSystem.addComponent("methane", 0.7);
     testSystem.addComponent("ethane", 0.3);
@@ -292,9 +292,10 @@ public class ColumnSpecificationTest {
 
     ValidationResult result = column.validateSetup();
 
-    assertTrue(result.isValid());
-    assertTrue(result.hasWarnings());
-    assertTrue(result.getReport().contains("condenser/reboiler handle"));
+    assertFalse(result.isValid());
+    assertTrue(result.getErrors().stream().anyMatch(error -> error.getCategory().equals("specification.hardware")));
+    IllegalStateException exception = assertThrows(IllegalStateException.class, column::run);
+    assertTrue(exception.getMessage().contains("requires a condenser"));
   }
 
   /**
@@ -931,7 +932,7 @@ public class ColumnSpecificationTest {
     feed.setFlowRate(100.0, "kg/hr");
     feed.run();
 
-    DistillationColumn column = new DistillationColumn("Deethanizer", 7, true, false);
+    DistillationColumn column = new DistillationColumn("Deethanizer", 7, true, true);
     column.addFeedStream(feed, 4);
     column.setTopPressure(30.0);
     column.setBottomPressure(31.0);
