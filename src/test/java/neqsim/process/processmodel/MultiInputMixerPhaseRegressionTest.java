@@ -1,7 +1,11 @@
 package neqsim.process.processmodel;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.mixer.StaticMixer;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
@@ -13,55 +17,72 @@ import neqsim.process.processmodel.graph.ProcessNode;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 
-/**
- * Regression coverage for reused multiphase state in a feed-forward process.
- *
- * @author NeqSim
- * @version 1.0
- */
+/** Regression coverage for reused multiphase state in a feed-forward process. */
 public class MultiInputMixerPhaseRegressionTest {
-  /** Verifies registered stream barriers preserve phase state without disabling parallel execution. */
   @Test
   public void reusedMultiInputProcessPreservesAqueousPhaseAfterFlowChange() {
-    ProcessSystem process = buildProcess();
-    assertTrue(process.isUseOptimizedExecution());
-    ProcessGraph.ParallelPartition partition = process.getParallelPartition();
-    assertTrue(partition.getMaxParallelism() >= 2);
-    assertTrue(findLevel(partition, "saturated gas stream") < findLevel(partition, "multiphase mixer"));
+    ProcessSystem sequential = buildProcess();
+    sequential.setUseOptimizedExecution(false);
+    runChangedInhibitorCase(sequential);
+
+    ProcessSystem optimized = buildProcess();
+    runChangedInhibitorCase(optimized);
+
+    assertEquivalentOutletState(sequential, optimized);
+    assertRegisteredStreamsAreExecutionBoundaries(optimized);
+  }
+
+  private void runChangedInhibitorCase(ProcessSystem process) {
     process.run();
 
     Stream inhibitor = (Stream) process.getUnit("inhibitor stream");
     inhibitor.setFlowRate(0.1, "kg/hr");
     process.run();
-
-    Stream outlet = (Stream) process.getUnit("downstream stream");
-    assertTrue(outlet.getFluid().hasPhaseType("gas"));
-    assertTrue(outlet.getFluid().hasPhaseType("aqueous"));
   }
 
-  /**
-   * Finds the parallel level assigned to a process unit.
-   *
-   * @param partition parallel execution partition
-   * @param unitName process unit name
-   * @return zero-based parallel level, or {@code -1} when absent
-   */
-  private int findLevel(ProcessGraph.ParallelPartition partition, String unitName) {
-    for (int levelIndex = 0; levelIndex < partition.getLevels().size(); levelIndex++) {
-      for (ProcessNode node : partition.getLevels().get(levelIndex)) {
-        if (node.getName().equals(unitName)) {
-          return levelIndex;
-        }
-      }
-    }
-    return -1;
+  private void assertEquivalentOutletState(ProcessSystem sequential, ProcessSystem optimized) {
+    SystemInterface expected = ((Stream) sequential.getUnit("downstream stream")).getFluid();
+    SystemInterface actual = ((Stream) optimized.getUnit("downstream stream")).getFluid();
+
+    assertTrue(actual.hasPhaseType("gas"));
+    assertTrue(actual.hasPhaseType("aqueous"));
+    assertEquals(expected.getNumberOfPhases(), actual.getNumberOfPhases());
+    assertEquals(expected.getTemperature("C"), actual.getTemperature("C"), 1.0e-8);
+    assertEquals(expected.getPressure("bara"), actual.getPressure("bara"), 1.0e-8);
+    assertEquals(expected.getFlowRate("kg/hr"), actual.getFlowRate("kg/hr"),
+        Math.abs(expected.getFlowRate("kg/hr")) * 1.0e-8);
+    assertEquals(expected.getPhase("gas").getFlowRate("kg/hr"), actual.getPhase("gas").getFlowRate("kg/hr"),
+        Math.abs(expected.getPhase("gas").getFlowRate("kg/hr")) * 1.0e-8);
+    assertEquals(expected.getPhase("aqueous").getFlowRate("kg/hr"), actual.getPhase("aqueous").getFlowRate("kg/hr"),
+        Math.abs(expected.getPhase("aqueous").getFlowRate("kg/hr")) * 1.0e-6);
+    assertArrayEquals(expected.getMolarComposition(), actual.getMolarComposition(), 1.0e-10);
   }
 
-  /**
-   * Builds a feed-forward process with a registered producer stream consumed by a multiphase mixer.
-   *
-   * @return configured process system
-   */
+  private void assertRegisteredStreamsAreExecutionBoundaries(ProcessSystem process) {
+    ProcessGraph graph = process.buildGraph();
+    ProcessGraph.ParallelPartition partition = graph.partitionForParallelExecution();
+
+    assertLevelBefore(process, graph, partition, "saturated gas stream", "multiphase mixer");
+    assertLevelBefore(process, graph, partition, "downstream stream", "separator heater");
+    assertTrue(partition.getMaxParallelism() > 1,
+        "Independent feed and downstream reader branches should remain parallel");
+  }
+
+  private void assertLevelBefore(ProcessSystem process, ProcessGraph graph, ProcessGraph.ParallelPartition partition,
+      String beforeName, String afterName) {
+    ProcessEquipmentInterface beforeUnit = process.getUnit(beforeName);
+    ProcessEquipmentInterface afterUnit = process.getUnit(afterName);
+    ProcessNode beforeNode = graph.getNode(beforeUnit);
+    ProcessNode afterNode = graph.getNode(afterUnit);
+    Integer beforeLevel = partition.getNodeToLevel().get(beforeNode);
+    Integer afterLevel = partition.getNodeToLevel().get(afterNode);
+
+    assertNotNull(beforeLevel);
+    assertNotNull(afterLevel);
+    assertTrue(beforeLevel < afterLevel,
+        beforeName + " must complete before " + afterName + " reads its mutable state");
+  }
+
   private ProcessSystem buildProcess() {
     SystemInterface feed = new SystemSrkCPAstatoil(298.15, 1.01325);
     String[] names = { "N2", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane", "n-pentane",
