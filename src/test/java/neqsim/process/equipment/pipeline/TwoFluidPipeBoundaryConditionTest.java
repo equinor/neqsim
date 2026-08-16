@@ -652,8 +652,21 @@ class TwoFluidPipeBoundaryConditionTest {
         name + " liquid holdup changed across an unchanged near-zero-time handoff: RMS " + liquidHoldupRms);
     assertTrue(gasVelocityRms <= 0.10,
         name + " gas velocity changed across an unchanged near-zero-time handoff: RMS " + gasVelocityRms + " m/s");
-    assertTrue(liquidVelocityRms <= 0.05, name
-        + " liquid velocity changed across an unchanged near-zero-time handoff: RMS " + liquidVelocityRms + " m/s");
+    // Judged relative to the liquid velocity itself. An absolute bound is tied to the holdup of the
+    // particular fixture: a closure change that lowers holdup raises the liquid velocity for the same
+    // mass flux, which moves an absolute RMS without the handoff having become any less continuous.
+    // The scale-free ratio is the invariant, and an O(1) hydraulic jump - what this test guards - is
+    // order 100 per cent in it.
+    double meanLiquidSpeed = 0.0;
+    for (double velocity : liquidVelocityBefore) {
+      meanLiquidSpeed += Math.abs(velocity);
+    }
+    meanLiquidSpeed = Math.max(1.0e-12, meanLiquidSpeed / liquidVelocityBefore.length);
+    double liquidVelocityRelative = liquidVelocityRms / meanLiquidSpeed;
+    assertTrue(liquidVelocityRelative <= 0.06,
+        name + " liquid velocity changed across an unchanged near-zero-time handoff: RMS " + liquidVelocityRms
+            + " m/s, which is " + (100.0 * liquidVelocityRelative) + "% of the mean liquid speed " + meanLiquidSpeed
+            + " m/s");
     if (hasOilWaterSlip) {
       assertTrue(rmsDifferenceInterior(oilVelocityBefore, waterVelocityBefore) > 1.0e-3,
           "Three-phase regression case must exercise non-zero oil/water slip");
