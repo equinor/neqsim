@@ -16,11 +16,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.DoubleSupplier;
 import java.util.function.ToDoubleFunction;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Isolated;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintSeverity;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
-import neqsim.process.equipment.capacity.EquipmentCapacityStrategyRegistry;
 import neqsim.process.equipment.capacity.ValveCapacityStrategy;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.separator.Separator;
@@ -37,7 +35,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author NeqSim Development Team
  * @version 1.0
  */
-@Isolated("mutates the process-wide equipment capacity strategy registry")
 class ProcessModelSimulationEvaluatorTest {
 
   /**
@@ -325,7 +322,6 @@ class ProcessModelSimulationEvaluatorTest {
   /** Verifies built-in capacity strategies expose their declared constraint registration order. */
   @Test
   void strategyCapacityConstraintsPreserveRegistrationOrder() {
-    EquipmentCapacityStrategyRegistry.getInstance().register(new ValveCapacityStrategy());
     ModelFixture fixture = createModelFixture();
     ThrottlingValve valve = new ThrottlingValve("strategyValve", fixture.feed);
 
@@ -335,7 +331,6 @@ class ProcessModelSimulationEvaluatorTest {
     assertEquals("valveOpening", constraintNames.get(0));
     assertEquals("pressureDropRatio", constraintNames.get(1));
 
-    valve.clearCapacityConstraints();
     fixture.model.get("wells").add(valve);
     ThrottlingValve directValve = new ThrottlingValve("directValve", fixture.feed);
     directValve.addCapacityConstraint(new CapacityConstraint("valveOpening", "custom-unit", ConstraintType.HARD)
@@ -348,7 +343,7 @@ class ProcessModelSimulationEvaluatorTest {
     InstalledEquipmentCapacityEvidence.ConstraintOrigin directOrigin = null;
     for (ProcessModelSimulationEvaluator.ConstraintDefinition definition : evaluator.getConstraints()) {
       if ("strategyValve".equals(definition.getEquipmentName())
-          && "valveOpening".equals(definition.getEquipmentConstraintName())) {
+          && "pressureDropRatio".equals(definition.getEquipmentConstraintName())) {
         strategyOrigin = definition.getCapacityConstraintOrigin();
       }
       if ("directValve".equals(definition.getEquipmentName())
