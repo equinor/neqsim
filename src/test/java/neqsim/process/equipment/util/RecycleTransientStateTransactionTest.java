@@ -75,7 +75,7 @@ class RecycleTransientStateTransactionTest extends neqsim.NeqSimTest {
     capturedLastIteration.setPressure(5.0, "bara");
     capturedOutlet.setFlowRate(888.0, "kg/hr");
     accelerator.setRelaxationFactor(0.25);
-    accelerator.accelerate(new double[] {1.4, 2.3}, new double[] {1.6, 2.5});
+    accelerator.accelerate(new double[] { 1.4, 2.3 }, new double[] { 1.6, 2.5 });
 
     transaction.rollback();
 
@@ -129,7 +129,7 @@ class RecycleTransientStateTransactionTest extends neqsim.NeqSimTest {
     Recycle.TransientState checkpoint = restarted.captureTransientState();
     double capturedFlow = restarted.getStream(0).getFlowRate("kg/hr");
     restarted.getStream(0).setFlowRate(capturedFlow + 50.0, "kg/hr");
-    restarted.getBroydenAccelerator().accelerate(new double[] {1.4, 2.3}, new double[] {1.6, 2.5});
+    restarted.getBroydenAccelerator().accelerate(new double[] { 1.4, 2.3 }, new double[] { 1.6, 2.5 });
     restarted.restoreTransientState(checkpoint);
 
     assertEquals(capturedFlow, restarted.getStream(0).getFlowRate("kg/hr"), TOLERANCE);
@@ -170,9 +170,9 @@ class RecycleTransientStateTransactionTest extends neqsim.NeqSimTest {
   }
 
   private static void accelerateThreeTimes(BroydenAccelerator accelerator) {
-    accelerator.accelerate(new double[] {1.0, 2.0}, new double[] {1.2, 2.2});
-    accelerator.accelerate(new double[] {1.2, 2.2}, new double[] {1.3, 2.25});
-    accelerator.accelerate(new double[] {1.3, 2.25}, new double[] {1.35, 2.28});
+    accelerator.accelerate(new double[] { 1.0, 2.0 }, new double[] { 1.2, 2.2 });
+    accelerator.accelerate(new double[] { 1.2, 2.2 }, new double[] { 1.3, 2.25 });
+    accelerator.accelerate(new double[] { 1.3, 2.25 }, new double[] { 1.35, 2.28 });
   }
 
   @SuppressWarnings("unchecked")
