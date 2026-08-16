@@ -38,9 +38,8 @@ class EngineeringDiagramEnergyBalanceTableTest {
     List<EnergyPort> ports = completePorts();
     List<EnergyFlow> flows = completeFlows();
 
-    EngineeringDiagramEnergyBalanceTable table =
-        EngineeringDiagramEnergyBalanceTable.fromBalanceTable(
-            fixture.balanceTable, ports, flows);
+    EngineeringDiagramEnergyBalanceTable table = EngineeringDiagramEnergyBalanceTable
+        .fromBalanceTable(fixture.balanceTable, ports, flows);
 
     assertTrue(table.isValid());
     assertEquals(1, table.getEnergyBalances().size());
@@ -49,16 +48,13 @@ class EngineeringDiagramEnergyBalanceTableTest {
     assertEquals("BAL-SIMPLE-01", energy.getBalanceId());
     assertEquals(4, energy.getDeclaredPortCount());
     assertEquals(4, energy.getSuppliedFlowCount());
-    assertEquals(source.getInletStreamEnthalpyFlow(), energy.getInletStreamEnthalpyFlow(),
-        1.0e-12);
-    assertEquals(source.getOutletStreamEnthalpyFlow(), energy.getOutletStreamEnthalpyFlow(),
-        1.0e-12);
+    assertEquals(source.getInletStreamEnthalpyFlow(), energy.getInletStreamEnthalpyFlow(), 1.0e-12);
+    assertEquals(source.getOutletStreamEnthalpyFlow(), energy.getOutletStreamEnthalpyFlow(), 1.0e-12);
     assertEquals(1000.0, energy.getHeatTransferIntoControlVolume(), 1.0e-12);
     assertEquals(0.0, energy.getHeatTransferOutOfControlVolume(), 1.0e-12);
     assertEquals(0.0, energy.getShaftWorkIntoControlVolume(), 1.0e-12);
     assertEquals(500.0, energy.getShaftWorkOutOfControlVolume(), 1.0e-12);
-    assertEquals(source.getStreamEnthalpyResidual() + 500.0, energy.getEnergyResidual(),
-        1.0e-8);
+    assertEquals(source.getStreamEnthalpyResidual() + 500.0, energy.getEnergyResidual(), 1.0e-8);
     assertTrue(Double.isFinite(energy.getRelativeEnergyResidual()));
     assertTrue(energy.isComplete());
     assertFalse(table.getSourceBalanceTableFingerprint().isEmpty());
@@ -83,12 +79,10 @@ class EngineeringDiagramEnergyBalanceTableTest {
     Collections.reverse(secondPorts);
     Collections.reverse(secondFlows);
 
-    EngineeringDiagramEnergyBalanceTable first =
-        EngineeringDiagramEnergyBalanceTable.fromBalanceTable(
-            firstFixture.balanceTable, firstPorts, firstFlows);
-    EngineeringDiagramEnergyBalanceTable second =
-        EngineeringDiagramEnergyBalanceTable.fromBalanceTable(
-            secondFixture.balanceTable, secondPorts, secondFlows);
+    EngineeringDiagramEnergyBalanceTable first = EngineeringDiagramEnergyBalanceTable
+        .fromBalanceTable(firstFixture.balanceTable, firstPorts, firstFlows);
+    EngineeringDiagramEnergyBalanceTable second = EngineeringDiagramEnergyBalanceTable
+        .fromBalanceTable(secondFixture.balanceTable, secondPorts, secondFlows);
 
     assertEquals(first.toJson(), second.toJson());
   }
@@ -102,18 +96,15 @@ class EngineeringDiagramEnergyBalanceTableTest {
         EnergyDirection.INTO_CONTROL_VOLUME);
     EnergyFlow heatFlow = flow("energy:heat", 1000.0);
     List<EnergyPort> ports = new ArrayList<EnergyPort>(Arrays.asList(heat, heat, work,
-        new EnergyPort("BAL-MISSING", "equipment:unknown", "energy:unknown",
-            EnergyKind.HEAT_TRANSFER, EnergyDirection.OUT_OF_CONTROL_VOLUME,
-            "project-energy-register:test", EvidenceState.PROPOSED)));
-    List<EnergyFlow> flows = new ArrayList<EnergyFlow>(Arrays.asList(heatFlow, heatFlow,
-        new EnergyFlow("BAL-SIMPLE-01", "energy:work", Double.NaN, "kW", "ENERGY_RATE",
-            "project-energy-register:test", "simulation-case:NORMAL-01",
-            EvidenceState.PROPOSED),
+        new EnergyPort("BAL-MISSING", "equipment:unknown", "energy:unknown", EnergyKind.HEAT_TRANSFER,
+            EnergyDirection.OUT_OF_CONTROL_VOLUME, "project-energy-register:test", EvidenceState.PROPOSED)));
+    List<EnergyFlow> flows = new ArrayList<EnergyFlow>(Arrays.asList(
+        heatFlow, heatFlow, new EnergyFlow("BAL-SIMPLE-01", "energy:work", Double.NaN, "kW", "ENERGY_RATE",
+            "project-energy-register:test", "simulation-case:NORMAL-01", EvidenceState.PROPOSED),
         flow("energy:missing", 5.0)));
 
-    EngineeringDiagramEnergyBalanceTable table =
-        EngineeringDiagramEnergyBalanceTable.fromBalanceTable(
-            fixture.balanceTable, ports, flows);
+    EngineeringDiagramEnergyBalanceTable table = EngineeringDiagramEnergyBalanceTable
+        .fromBalanceTable(fixture.balanceTable, ports, flows);
 
     assertFalse(table.isValid());
     assertFalse(table.getEnergyBalances().get(0).isComplete());
@@ -130,42 +121,34 @@ class EngineeringDiagramEnergyBalanceTableTest {
   void requiresExplicitPortsFlowsAndValidArguments() {
     Fixture fixture = fixture();
 
-    EngineeringDiagramEnergyBalanceTable empty =
-        EngineeringDiagramEnergyBalanceTable.fromBalanceTable(fixture.balanceTable,
-            Collections.<EnergyPort>emptyList(), Collections.<EnergyFlow>emptyList());
+    EngineeringDiagramEnergyBalanceTable empty = EngineeringDiagramEnergyBalanceTable.fromBalanceTable(
+        fixture.balanceTable, Collections.<EnergyPort>emptyList(), Collections.<EnergyFlow>emptyList());
 
     assertFalse(empty.isValid());
     assertFalse(empty.getEnergyBalances().get(0).isComplete());
     assertTrue(hasDiagnostic(empty, "ENERGY_PORT_NOT_DECLARED"));
     assertTrue(hasDiagnostic(empty, "ENERGY_FLOW_NOT_DECLARED"));
     assertTrue(hasDiagnostic(empty, "ENERGY_PORT_MISSING_FOR_BALANCE"));
+    assertThrows(IllegalArgumentException.class, () -> EngineeringDiagramEnergyBalanceTable.fromBalanceTable(null,
+        Collections.<EnergyPort>emptyList(), Collections.<EnergyFlow>emptyList()));
+    assertThrows(IllegalArgumentException.class, () -> EngineeringDiagramEnergyBalanceTable
+        .fromBalanceTable(fixture.balanceTable, null, Collections.<EnergyFlow>emptyList()));
+    assertThrows(IllegalArgumentException.class, () -> EngineeringDiagramEnergyBalanceTable
+        .fromBalanceTable(fixture.balanceTable, Collections.<EnergyPort>emptyList(), null));
+    assertThrows(IllegalArgumentException.class, () -> new EnergyPort("BAL-SIMPLE-01", "equipment:heater",
+        "energy:heat", null, EnergyDirection.INTO_CONTROL_VOLUME, "source", EvidenceState.PROPOSED));
     assertThrows(IllegalArgumentException.class,
-        () -> EngineeringDiagramEnergyBalanceTable.fromBalanceTable(null,
-            Collections.<EnergyPort>emptyList(), Collections.<EnergyFlow>emptyList()));
-    assertThrows(IllegalArgumentException.class,
-        () -> EngineeringDiagramEnergyBalanceTable.fromBalanceTable(fixture.balanceTable,
-            null, Collections.<EnergyFlow>emptyList()));
-    assertThrows(IllegalArgumentException.class,
-        () -> EngineeringDiagramEnergyBalanceTable.fromBalanceTable(fixture.balanceTable,
-            Collections.<EnergyPort>emptyList(), null));
-    assertThrows(IllegalArgumentException.class,
-        () -> new EnergyPort("BAL-SIMPLE-01", "equipment:heater", "energy:heat",
-            null, EnergyDirection.INTO_CONTROL_VOLUME, "source", EvidenceState.PROPOSED));
-    assertThrows(IllegalArgumentException.class,
-        () -> new EnergyFlow("BAL-SIMPLE-01", "energy:heat", 0.0, "W", "ENERGY_RATE",
-            "source", "provenance", null));
+        () -> new EnergyFlow("BAL-SIMPLE-01", "energy:heat", 0.0, "W", "ENERGY_RATE", "source", "provenance", null));
   }
 
   @Test
   void propagatesInvalidSourceBalanceState() {
     Fixture fixture = fixture();
-    EngineeringDiagramBalanceTable invalidSource =
-        EngineeringDiagramBalanceTable.fromStreamTable(fixture.streamTable,
-            Collections.<Boundary>emptyList());
+    EngineeringDiagramBalanceTable invalidSource = EngineeringDiagramBalanceTable.fromStreamTable(fixture.streamTable,
+        Collections.<Boundary>emptyList());
 
-    EngineeringDiagramEnergyBalanceTable table =
-        EngineeringDiagramEnergyBalanceTable.fromBalanceTable(invalidSource, completePorts(),
-            completeFlows());
+    EngineeringDiagramEnergyBalanceTable table = EngineeringDiagramEnergyBalanceTable.fromBalanceTable(invalidSource,
+        completePorts(), completeFlows());
 
     assertFalse(table.isValid());
     assertTrue(hasDiagnostic(table, "ENERGY_BALANCE_SOURCE_INVALID"));
@@ -173,76 +156,62 @@ class EngineeringDiagramEnergyBalanceTableTest {
   }
 
   private static Fixture fixture() {
-    EngineeringDiagramReferenceFixtures.SystemCase reference =
-        EngineeringDiagramReferenceFixtures.simpleTrain();
+    EngineeringDiagramReferenceFixtures.SystemCase reference = EngineeringDiagramReferenceFixtures.simpleTrain();
     for (StreamInterface product : reference.getProducts()) {
       reference.getProcessSystem().add(product);
     }
     reference.getProcessSystem().run();
-    EngineeringDiagramDocumentSet documents =
-        ProcessDiagramDocumentSetAdapter.fromProcessSystem(reference.getProcessSystem(),
-            reference.getCaseId(), "A", "PFD-HMB-007", "Energy balance",
-            ContentProfile.PFD, "NORMAL-01");
-    EngineeringDiagramStreamTable streamTable =
-        EngineeringDiagramStreamTable.fromDocumentSet(documents, "NORMAL-01");
+    EngineeringDiagramDocumentSet documents = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
+        reference.getProcessSystem(), reference.getCaseId(), "A", "PFD-HMB-007", "Energy balance", ContentProfile.PFD,
+        "NORMAL-01");
+    EngineeringDiagramStreamTable streamTable = EngineeringDiagramStreamTable.fromDocumentSet(documents, "NORMAL-01");
     List<Boundary> boundaries = new ArrayList<Boundary>();
-    boundaries.add(new Boundary("BAL-SIMPLE-01",
-        completeRow(streamTable, reference.getFeed().getName()).getSemanticObjectId(),
-        Direction.INLET, "project-balance-register:test", EvidenceState.PROPOSED));
+    boundaries.add(
+        new Boundary("BAL-SIMPLE-01", completeRow(streamTable, reference.getFeed().getName()).getSemanticObjectId(),
+            Direction.INLET, "project-balance-register:test", EvidenceState.PROPOSED));
     for (StreamInterface product : reference.getProducts()) {
-      boundaries.add(new Boundary("BAL-SIMPLE-01",
-          completeRow(streamTable, product.getName()).getSemanticObjectId(), Direction.OUTLET,
-          "project-balance-register:test", EvidenceState.PROPOSED));
+      boundaries.add(new Boundary("BAL-SIMPLE-01", completeRow(streamTable, product.getName()).getSemanticObjectId(),
+          Direction.OUTLET, "project-balance-register:test", EvidenceState.PROPOSED));
     }
-    EngineeringDiagramBalanceTable balanceTable =
-        EngineeringDiagramBalanceTable.fromStreamTable(streamTable, boundaries);
+    EngineeringDiagramBalanceTable balanceTable = EngineeringDiagramBalanceTable.fromStreamTable(streamTable,
+        boundaries);
     return new Fixture(streamTable, balanceTable);
   }
 
   private static List<EnergyPort> completePorts() {
     return new ArrayList<EnergyPort>(Arrays.asList(
-        port("equipment:heater", "energy:heat-a", EnergyKind.HEAT_TRANSFER,
-            EnergyDirection.INTO_CONTROL_VOLUME),
-        port("equipment:heater", "energy:heat-b", EnergyKind.HEAT_TRANSFER,
-            EnergyDirection.INTO_CONTROL_VOLUME),
-        port("equipment:cooler", "energy:heat-out", EnergyKind.HEAT_TRANSFER,
-            EnergyDirection.OUT_OF_CONTROL_VOLUME),
-        port("equipment:turbine", "energy:shaft-out", EnergyKind.SHAFT_WORK,
-            EnergyDirection.OUT_OF_CONTROL_VOLUME)));
+        port("equipment:heater", "energy:heat-a", EnergyKind.HEAT_TRANSFER, EnergyDirection.INTO_CONTROL_VOLUME),
+        port("equipment:heater", "energy:heat-b", EnergyKind.HEAT_TRANSFER, EnergyDirection.INTO_CONTROL_VOLUME),
+        port("equipment:cooler", "energy:heat-out", EnergyKind.HEAT_TRANSFER, EnergyDirection.OUT_OF_CONTROL_VOLUME),
+        port("equipment:turbine", "energy:shaft-out", EnergyKind.SHAFT_WORK, EnergyDirection.OUT_OF_CONTROL_VOLUME)));
   }
 
   private static List<EnergyFlow> completeFlows() {
-    return new ArrayList<EnergyFlow>(Arrays.asList(flow("energy:heat-a", 700.0),
-        flow("energy:heat-b", 300.0), flow("energy:heat-out", 0.0),
-        flow("energy:shaft-out", 500.0)));
+    return new ArrayList<EnergyFlow>(Arrays.asList(flow("energy:heat-a", 700.0), flow("energy:heat-b", 300.0),
+        flow("energy:heat-out", 0.0), flow("energy:shaft-out", 500.0)));
   }
 
-  private static EnergyPort port(String equipmentId, String portId, EnergyKind kind,
-      EnergyDirection direction) {
-    return new EnergyPort("BAL-SIMPLE-01", equipmentId, portId, kind, direction,
-        "project-energy-register:test", EvidenceState.PROPOSED);
+  private static EnergyPort port(String equipmentId, String portId, EnergyKind kind, EnergyDirection direction) {
+    return new EnergyPort("BAL-SIMPLE-01", equipmentId, portId, kind, direction, "project-energy-register:test",
+        EvidenceState.PROPOSED);
   }
 
   private static EnergyFlow flow(String portId, double value) {
-    return new EnergyFlow("BAL-SIMPLE-01", portId, value, "W", "ENERGY_RATE",
-        "project-energy-register:test", "simulation-case:NORMAL-01",
-        EvidenceState.PROPOSED);
+    return new EnergyFlow("BAL-SIMPLE-01", portId, value, "W", "ENERGY_RATE", "project-energy-register:test",
+        "simulation-case:NORMAL-01", EvidenceState.PROPOSED);
   }
 
   private static Row completeRow(EngineeringDiagramStreamTable table, String sourceLabel) {
     for (Row row : table.getRows()) {
-      if (sourceLabel.equals(row.getSourceLabel())
-          && row.getValues().size() == Quantity.values().length) {
+      if (sourceLabel.equals(row.getSourceLabel()) && row.getValues().size() == Quantity.values().length) {
         return row;
       }
     }
     throw new AssertionError("No complete stream-table row for " + sourceLabel);
   }
 
-  private static boolean hasDiagnostic(EngineeringDiagramEnergyBalanceTable table,
-      String code) {
-    for (EngineeringDiagramEnergyBalanceTable.Diagnostic diagnostic :
-        table.getDiagnostics()) {
+  private static boolean hasDiagnostic(EngineeringDiagramEnergyBalanceTable table, String code) {
+    for (EngineeringDiagramEnergyBalanceTable.Diagnostic diagnostic : table.getDiagnostics()) {
       if (code.equals(diagnostic.getCode())) {
         return true;
       }
@@ -254,8 +223,7 @@ class EngineeringDiagramEnergyBalanceTableTest {
     private final EngineeringDiagramStreamTable streamTable;
     private final EngineeringDiagramBalanceTable balanceTable;
 
-    private Fixture(EngineeringDiagramStreamTable streamTable,
-        EngineeringDiagramBalanceTable balanceTable) {
+    private Fixture(EngineeringDiagramStreamTable streamTable, EngineeringDiagramBalanceTable balanceTable) {
       this.streamTable = streamTable;
       this.balanceTable = balanceTable;
     }
