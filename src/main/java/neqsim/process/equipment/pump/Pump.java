@@ -1454,7 +1454,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
     initializeCapacityConstraints();
 
     autoSized = true;
-    logger.info("Pump '{}' auto-sized: Design flow = {:.1f} m3/hr, Safety factor = {}", getName(), designVolumeFlow,
+    logger.info("Pump '{}' auto-sized: Design flow = {} m3/hr, Safety factor = {}", getName(), designVolumeFlow,
         safetyFactor);
   }
 

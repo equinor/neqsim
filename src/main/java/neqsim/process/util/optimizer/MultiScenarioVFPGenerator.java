@@ -197,8 +197,8 @@ public class MultiScenarioVFPGenerator implements Serializable {
     long elapsed = System.currentTimeMillis() - startTime;
     int feasibleCount = vfpTable.getFeasibleCount();
 
-    logger.info("VFP table complete: {}/{} feasible in {:.1f}s ({:.2f}s/point)", feasibleCount, totalPoints,
-        elapsed / 1000.0, elapsed / 1000.0 / totalPoints);
+    logger.info("VFP table complete: {}/{} feasible in {}s ({}s/point)", feasibleCount, totalPoints, elapsed / 1000.0,
+        elapsed / 1000.0 / totalPoints);
 
     if (flashGenerator != null) {
       logger.info("Fluid cache: {}", flashGenerator.getCacheStatistics());
@@ -247,8 +247,8 @@ public class MultiScenarioVFPGenerator implements Serializable {
 
         if (completed % 20 == 0 || completed == tasks.size()) {
           String status = point.feasible ? String.format("P_in=%.1f bara", point.bhp) : "INFEASIBLE";
-          logger.info("[{}/{}] Rate={:.0f}, THP={:.0f}, WC={:.0f}%, GOR={:.0f} → {}", completed, tasks.size(),
-              point.flowRate, point.thp, point.waterCut * 100, point.gor, status);
+          logger.info("[{}/{}] Rate={}, THP={}, WC={}%, GOR={} → {}", completed, tasks.size(), point.flowRate,
+              point.thp, point.waterCut * 100, point.gor, status);
         }
       } catch (Exception e) {
         logger.error("Task execution failed", e);

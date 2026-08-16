@@ -209,7 +209,7 @@ public class TVfractionFlash extends Flash {
         return lastValidPressure;
       }
 
-      logger.trace("iter {} pressure {:.6f} error {:.3e} damping {:.1f}", iterations, nyPres, error, dampingFactor);
+      logger.trace("iter {} pressure {} error {} damping {}", iterations, nyPres, error, dampingFactor);
 
       // Convergence check with early exit
       if (error < 1e-8 && iterations > 3) {

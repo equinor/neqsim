@@ -208,7 +208,7 @@ public class FluidMagicInput implements Serializable {
 
       // Calculate standard gas volume
       gasStdVolume = gasPhase.getVolume("m3");
-      logger.info("Gas phase extracted: {} components, {:.4f} m3 at std conditions", gasPhase.getNumberOfComponents(),
+      logger.info("Gas phase extracted: {} components, {} m3 at std conditions", gasPhase.getNumberOfComponents(),
           gasStdVolume);
     } else {
       logger.warn("No gas phase found in reference fluid at standard conditions");
@@ -224,7 +224,7 @@ public class FluidMagicInput implements Serializable {
 
       // Calculate standard oil volume
       oilStdVolume = oilPhase.getVolume("m3");
-      logger.info("Oil phase extracted: {} components, {:.4f} m3 at std conditions", oilPhase.getNumberOfComponents(),
+      logger.info("Oil phase extracted: {} components, {} m3 at std conditions", oilPhase.getNumberOfComponents(),
           oilStdVolume);
     } else {
       logger.warn("No oil phase found in reference fluid at standard conditions");
@@ -233,7 +233,7 @@ public class FluidMagicInput implements Serializable {
     // Calculate base case GOR
     if (gasStdVolume > 0 && oilStdVolume > 0) {
       baseCaseGOR = gasStdVolume / oilStdVolume;
-      logger.info("Base case GOR: {:.1f} Sm3/Sm3", baseCaseGOR);
+      logger.info("Base case GOR: {} Sm3/Sm3", baseCaseGOR);
     }
 
     // Create water phase (pure water or brine based on salinity)
@@ -258,7 +258,7 @@ public class FluidMagicInput implements Serializable {
 
     // Calculate standard water volume (1 kmol at std conditions)
     waterStdVolume = waterPhase.getVolume("m3");
-    logger.info("Water phase created: {:.4f} m3/kmol at std conditions", waterStdVolume);
+    logger.info("Water phase created: {} m3/kmol at std conditions", waterStdVolume);
   }
 
   /**

@@ -575,7 +575,7 @@ public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, Cap
     initializeTankCapacityConstraints();
 
     autoSized = true;
-    logger.info("Tank '{}' auto-sized: volume={:.1f} m3, liquid volume={:.1f} m3", getName(), volume, liquidVolume);
+    logger.info("Tank '{}' auto-sized: volume={} m3, liquid volume={} m3", getName(), volume, liquidVolume);
   }
 
   /** {@inheritDoc} */

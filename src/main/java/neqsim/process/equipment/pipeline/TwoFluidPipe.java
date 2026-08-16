@@ -1058,7 +1058,7 @@ public class TwoFluidPipe extends Pipeline {
         inletWaterCut = volWater / volTotal;
         inletOilFraction = 1.0 - inletWaterCut;
         isThreePhase = true; // Use three-fluid tracking even without gas
-        logger.info("Oil-water flow (no gas): water cut = {:.1f}%", inletWaterCut * 100);
+        logger.info("Oil-water flow (no gas): water cut = {}%", inletWaterCut * 100);
       }
     }
 
