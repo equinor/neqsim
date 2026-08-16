@@ -137,11 +137,15 @@ fig, axes = exp.plot_results(save_path='cstr_100hr_experiment_plot.png')
 ### Java NeqSim Equipment Class (`CO2ImpurityKineticReactor.java`)
 ```java
 import neqsim.process.equipment.reactor.CO2ImpurityKineticReactor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
+Logger logger = LogManager.getLogger("CO2ImpurityKineticsExample");
 CO2ImpurityKineticReactor reactor = new CO2ImpurityKineticReactor("CO2 CSTR Reactor");
 reactor.setReactorGeometry(6.50, 300.0, 50.0);
 reactor.setReactionConstants("SO2 + H2S + NO2 + O2 -> H2SO4", 2.13e8, 15.0);
 
 String report = reactor.generateReactorReport(248.15, 25.0);
-System.out.println(report);
+logger.info(report);
 ```
+

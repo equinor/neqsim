@@ -17,33 +17,84 @@ Features:
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.integrate import solve_ivp
+
+try:
+    from scipy.integrate import solve_ivp
+except ImportError as exc:
+    raise ImportError(
+        "CO2 impurity kinetics tutorials require SciPy. Install it with 'python -m pip install scipy'."
+    ) from exc
 
 
 # ==================================================================================================
 # FUNDAMENTAL PHYSICAL AND THERMODYNAMIC CONSTANTS
 # ==================================================================================================
-R_GAS = 8.314462618             # Universal Gas Constant [J / (mol * K)]
-MW_CO2 = 44.0095                # Molar Mass of CO2 [g / mol]
-MW_N2 = 28.0134                 # Molar Mass of N2 [g / mol]
-P_CRIT_CO2_BAR = 73.8           # Critical Pressure of CO2 [bar]
-T_CRIT_CO2_K = 304.13           # Critical Temperature of CO2 [K]
+R_GAS = 8.314462618  # Universal Gas Constant [J / (mol * K)]
+MW_CO2 = 44.0095  # Molar Mass of CO2 [g / mol]
+MW_N2 = 28.0134  # Molar Mass of N2 [g / mol]
+P_CRIT_CO2_BAR = 73.8  # Critical Pressure of CO2 [bar]
+T_CRIT_CO2_K = 304.13  # Critical Temperature of CO2 [K]
 
 
 # ==================================================================================================
 # DEFAULT REACTION KINETIC PARAMETERS (HARMONIZED TO ALL EXPERIMENTAL DATA)
 # ==================================================================================================
 DEFAULT_KINETIC_PARAMS = {
-    'R1':  {'name': 'SO2 + 0.5 O2 + H2O <-> H2SO4',           'A': 5.0e5,     'Ea': 30000.0, 'units': 'm3 / (kmol * s)'},
-    'R2':  {'name': 'H2S + 3 NO2 <-> SO2 + H2O + 3 NO',       'A': 1.0e10,    'Ea': 30000.0, 'units': 'm3 / (kmol * s)'},
-    'R3a': {'name': 'SO2 + NO2 + H2O <-> NO + H2SO4',         'A': 1.0e5,     'Ea': 35000.0, 'units': 'm3 / (kmol * s)'},
-    'R3b': {'name': 'SO2 + H2S + NO2 -> H2SO4',               'A': 2.0e9,     'Ea': 18000.0, 'units': 'm6 / (kmol2 * s)'},
-    'R4':  {'name': '2 NO + O2 <-> 2 NO2',                    'A': 500.0,     'Ea': -4400.0, 'units': 'm6 / (kmol2 * s)'},
-    'R5':  {'name': '3 NO2 + H2O <-> 2 HNO3 + NO',            'A': 2.4e6,     'Ea': 28000.0, 'units': 'm3 / (kmol * s)'},
-    'R6':  {'name': 'H2S + 1.5 O2 <-> SO2 + H2O',             'A': 5.0e5,     'Ea': 45000.0, 'units': 'm3 / (kmol * s)'},
-    'R7':  {'name': '5 H2S + 6 NO + 4 H2O -> 6 NH3 + 5 SO2',  'A': 2.0e6,     'Ea': 12000.0, 'units': 'm3 / (kmol * s)'},
-    'R8_cs': {'name': 'H2S + 0.5 O2 -> 1/8 S8 + H2O (CS)',    'A': 1.5e4,     'Ea': 42000.0, 'units': 'm3 / (kmol * s)'},
-    'R8_ss': {'name': 'H2S + 0.5 O2 -> 1/8 S8 + H2O (SS)',    'A': 2.0e3,     'Ea': 65000.0, 'units': 'm3 / (kmol * s)'}
+    "R1": {
+        "name": "SO2 + 0.5 O2 + H2O <-> H2SO4",
+        "A": 5.0e5,
+        "Ea": 30000.0,
+        "units": "m3 / (kmol * s)",
+    },
+    "R2": {
+        "name": "H2S + 3 NO2 <-> SO2 + H2O + 3 NO",
+        "A": 1.0e10,
+        "Ea": 30000.0,
+        "units": "m3 / (kmol * s)",
+    },
+    "R3a": {
+        "name": "SO2 + NO2 + H2O <-> NO + H2SO4",
+        "A": 1.0e5,
+        "Ea": 35000.0,
+        "units": "m3 / (kmol * s)",
+    },
+    "R3b": {
+        "name": "SO2 + H2S + NO2 -> H2SO4",
+        "A": 2.0e9,
+        "Ea": 18000.0,
+        "units": "m6 / (kmol2 * s)",
+    },
+    "R4": {"name": "2 NO + O2 <-> 2 NO2", "A": 500.0, "Ea": -4400.0, "units": "m6 / (kmol2 * s)"},
+    "R5": {
+        "name": "3 NO2 + H2O <-> 2 HNO3 + NO",
+        "A": 2.4e6,
+        "Ea": 28000.0,
+        "units": "m3 / (kmol * s)",
+    },
+    "R6": {
+        "name": "H2S + 1.5 O2 <-> SO2 + H2O",
+        "A": 5.0e5,
+        "Ea": 45000.0,
+        "units": "m3 / (kmol * s)",
+    },
+    "R7": {
+        "name": "5 H2S + 6 NO + 4 H2O -> 6 NH3 + 5 SO2",
+        "A": 2.0e6,
+        "Ea": 12000.0,
+        "units": "m3 / (kmol * s)",
+    },
+    "R8_cs": {
+        "name": "H2S + 0.5 O2 -> 1/8 S8 + H2O (CS)",
+        "A": 1.5e4,
+        "Ea": 42000.0,
+        "units": "m3 / (kmol * s)",
+    },
+    "R8_ss": {
+        "name": "H2S + 0.5 O2 -> 1/8 S8 + H2O (SS)",
+        "A": 2.0e3,
+        "Ea": 65000.0,
+        "units": "m3 / (kmol * s)",
+    },
 }
 
 DG_SO2_STDGIBBS = -300.1e3
@@ -55,9 +106,9 @@ DG_NO2_STDGIBBS = 51.3e3
 DG_NO_STDGIBBS = 86.6e3
 DG_HNO3_STDGIBBS = -74.7e3
 
-MAX_KEQ_EXPONENT = 300.0        # Exponential ceiling to prevent numerical overflow in Keq
+MAX_KEQ_EXPONENT = 300.0  # Exponential ceiling to prevent numerical overflow in Keq
 MIN_CONCENTRATION_FLOOR = 1e-25  # Minimum concentration floor to prevent log underflow in ODEs
-MOISTURE_REF_PPM = 50.0         # Reference moisture concentration scale for hydration factor [ppm]
+MOISTURE_REF_PPM = 50.0  # Reference moisture concentration scale for hydration factor [ppm]
 
 
 class CO2ImpurityKineticsModel:
@@ -66,20 +117,17 @@ class CO2ImpurityKineticsModel:
     Calculates exact thermodynamic fugacity coefficients using NeqSim Java SRK EOS.
     """
 
-    SPECIES = [
-        'H2S', 'SO2', 'NO2', 'NO', 'O2', 'H2O',
-        'H2SO4', 'HNO3', 'S8', 'NH3'
-    ]
+    SPECIES = ["H2S", "SO2", "NO2", "NO", "O2", "H2O", "H2SO4", "HNO3", "S8", "NH3"]
 
-    SUPPORTED_MATERIALS = ['carbon_steel', 'magnetite', 'stainless_steel', 'inert']
+    SUPPORTED_MATERIALS = ["carbon_steel", "magnetite", "stainless_steel", "inert"]
 
-    def __init__(self, T_kelvin=298.15, P_bar=100.0, water_ppm=50.0, material='carbon_steel'):
+    def __init__(self, T_kelvin=298.15, P_bar=100.0, water_ppm=50.0, material="carbon_steel"):
         self.T = T_kelvin
         self.P = P_bar
         self.water_ppm = water_ppm
-        self.material = material.lower().replace(' ', '_')
+        self.material = material.lower().replace(" ", "_")
         if self.material not in self.SUPPORTED_MATERIALS:
-            self.material = 'carbon_steel'
+            self.material = "carbon_steel"
 
         self.kinetic_params = {k: v.copy() for k, v in DEFAULT_KINETIC_PARAMS.items()}
 
@@ -88,7 +136,9 @@ class CO2ImpurityKineticsModel:
         self.mass_flow_g_h = 50.0
         self.length_cm = self.volume_ml / (np.pi * (self.diameter_cm**2) / 4.0)
 
-        self.molar_density, self.phase, self.phi_dict = self._calculate_srk_fugacities(T_kelvin, P_bar)
+        self.molar_density, self.phase, self.phi_dict = self._calculate_srk_fugacities(
+            T_kelvin, P_bar
+        )
 
     def set_reaction_constants(self, reaction_identifier, A_forward=None, Ea_forward_kJ_mol=None):
         rxn_id = None
@@ -96,32 +146,34 @@ class CO2ImpurityKineticsModel:
 
         if clean_id.upper() in self.kinetic_params:
             rxn_id = clean_id.upper()
-        elif 'r3b' in clean_id or 'so2 + h2s + no2' in clean_id:
-            rxn_id = 'R3b'
-        elif 'r3a' in clean_id or ('so2 + no2 + h2o' in clean_id and 'h2s' not in clean_id):
-            rxn_id = 'R3a'
-        elif 'r2' in clean_id or 'h2s + 3 no2' in clean_id:
-            rxn_id = 'R2'
-        elif 'r1' in clean_id or 'so2 + 0.5 o2' in clean_id:
-            rxn_id = 'R1'
-        elif 'r4' in clean_id or '2 no + o2' in clean_id:
-            rxn_id = 'R4'
-        elif 'r5' in clean_id or '3 no2 + h2o' in clean_id:
-            rxn_id = 'R5'
-        elif 'r6' in clean_id or 'h2s + 1.5 o2' in clean_id:
-            rxn_id = 'R6'
-        elif 'r7' in clean_id or '5 h2s + 6 no' in clean_id:
-            rxn_id = 'R7'
-        elif 'r8' in clean_id or 's8' in clean_id:
-            rxn_id = 'R8_cs' if self.material in ['carbon_steel', 'magnetite'] else 'R8_ss'
+        elif "r3b" in clean_id or "so2 + h2s + no2" in clean_id:
+            rxn_id = "R3b"
+        elif "r3a" in clean_id or ("so2 + no2 + h2o" in clean_id and "h2s" not in clean_id):
+            rxn_id = "R3a"
+        elif "r2" in clean_id or "h2s + 3 no2" in clean_id:
+            rxn_id = "R2"
+        elif "r1" in clean_id or "so2 + 0.5 o2" in clean_id:
+            rxn_id = "R1"
+        elif "r4" in clean_id or "2 no + o2" in clean_id:
+            rxn_id = "R4"
+        elif "r5" in clean_id or "3 no2 + h2o" in clean_id:
+            rxn_id = "R5"
+        elif "r6" in clean_id or "h2s + 1.5 o2" in clean_id:
+            rxn_id = "R6"
+        elif "r7" in clean_id or "5 h2s + 6 no" in clean_id:
+            rxn_id = "R7"
+        elif "r8" in clean_id or "s8" in clean_id:
+            rxn_id = "R8_cs" if self.material in ["carbon_steel", "magnetite"] else "R8_ss"
 
         if rxn_id and rxn_id in self.kinetic_params:
             if A_forward is not None:
-                self.kinetic_params[rxn_id]['A'] = float(A_forward)
+                self.kinetic_params[rxn_id]["A"] = float(A_forward)
             if Ea_forward_kJ_mol is not None:
-                self.kinetic_params[rxn_id]['Ea'] = float(Ea_forward_kJ_mol) * 1000.0
+                self.kinetic_params[rxn_id]["Ea"] = float(Ea_forward_kJ_mol) * 1000.0
 
-    def set_reactor_geometry(self, diameter_cm=None, length_cm=None, volume_ml=None, mass_flow_g_h=None):
+    def set_reactor_geometry(
+        self, diameter_cm=None, length_cm=None, volume_ml=None, mass_flow_g_h=None
+    ):
         if diameter_cm is not None:
             self.diameter_cm = float(diameter_cm)
         if mass_flow_g_h is not None:
@@ -138,14 +190,14 @@ class CO2ImpurityKineticsModel:
 
     def get_fluid_properties(self):
         return {
-            'temperature_C': self.T - 273.15,
-            'temperature_K': self.T,
-            'pressure_bar': self.P,
-            'phase': self.phase,
-            'molar_density_kmol_m3': self.molar_density,
-            'mass_density_kg_m3': self.molar_density * MW_CO2,
-            'mass_density_g_ml': (self.molar_density * MW_CO2) * 1e-3,
-            'phi_fugacities': self.phi_dict
+            "temperature_C": self.T - 273.15,
+            "temperature_K": self.T,
+            "pressure_bar": self.P,
+            "phase": self.phase,
+            "molar_density_kmol_m3": self.molar_density,
+            "mass_density_kg_m3": self.molar_density * MW_CO2,
+            "mass_density_g_ml": (self.molar_density * MW_CO2) * 1e-3,
+            "phi_fugacities": self.phi_dict,
         }
 
     def get_reaction_rates(self, moisture_ppm=10.0):
@@ -158,18 +210,18 @@ class CO2ImpurityKineticsModel:
         tau_hours = m_reactor_g / self.mass_flow_g_h if self.mass_flow_g_h > 0 else 0.0
 
         return {
-            'volume_ml': self.volume_ml,
-            'volume_m3': self.volume_ml * 1e-6,
-            'diameter_cm': self.diameter_cm,
-            'diameter_m': self.diameter_cm * 1e-2,
-            'cross_sectional_area_cm2': A_cross_cm2,
-            'cross_sectional_area_m2': A_cross_cm2 * 1e-4,
-            'length_cm': self.length_cm,
-            'length_m': self.length_cm * 1e-2,
-            'mass_flow_g_h': self.mass_flow_g_h,
-            'inventory_mass_g': m_reactor_g,
-            'residence_time_hours': tau_hours,
-            'residence_time_seconds': tau_hours * 3600.0
+            "volume_ml": self.volume_ml,
+            "volume_m3": self.volume_ml * 1e-6,
+            "diameter_cm": self.diameter_cm,
+            "diameter_m": self.diameter_cm * 1e-2,
+            "cross_sectional_area_cm2": A_cross_cm2,
+            "cross_sectional_area_m2": A_cross_cm2 * 1e-4,
+            "length_cm": self.length_cm,
+            "length_m": self.length_cm * 1e-2,
+            "mass_flow_g_h": self.mass_flow_g_h,
+            "inventory_mass_g": m_reactor_g,
+            "residence_time_hours": tau_hours,
+            "residence_time_seconds": tau_hours * 3600.0,
         }
 
     def generate_reactor_report(self):
@@ -187,31 +239,31 @@ class CO2ImpurityKineticsModel:
             f"Fluid Density from NeqSim SRK EOS: {props['phase'].capitalize()} CO2 density rho = {props['mass_density_kg_m3']:.2f} kg/m3 (rho_m = {props['molar_density_kmol_m3']:.4f} kmol/m3).",
             f"Liquid Mass Inventory: m_reactor = {geom['volume_ml']:.1f} mL * {props['mass_density_g_ml']:.5f} g/mL = {geom['inventory_mass_g']:.2f} grams of {props['phase']} CO2.",
             f"Mass Flow Rate (m_dot): {geom['mass_flow_g_h']:.1f} g/h.",
-            f"CSTR Residence Time (tau): tau = m_reactor / m_dot = {geom['inventory_mass_g']:.2f} g / {geom['mass_flow_g_h']:.1f} g/h = {geom['residence_time_hours']:.4f} HOURS ({geom['residence_time_seconds']:.1f} seconds)"
+            f"CSTR Residence Time (tau): tau = m_reactor / m_dot = {geom['inventory_mass_g']:.2f} g / {geom['mass_flow_g_h']:.1f} g/h = {geom['residence_time_hours']:.4f} HOURS ({geom['residence_time_seconds']:.1f} seconds)",
         ]
 
         return "\n".join(report_lines)
 
     def get_table_results(self, sim_results, resolution_hours=1.0):
-        t_h = sim_results['time_hours']
+        t_h = sim_results["time_hours"]
         max_h = t_h[-1]
-        target_hours = np.arange(0.0, max_h + resolution_hours/2.0, resolution_hours)
+        target_hours = np.arange(0.0, max_h + resolution_hours / 2.0, resolution_hours)
 
         rows = []
         for target in target_hours:
             idx = np.argmin(np.abs(t_h - target))
             row = {
-                'Time (h)': round(float(t_h[idx]), 1),
-                'H2S (ppm)': round(max(0.0, float(sim_results['ppm']['H2S'][idx])), 2),
-                'SO2 (ppm)': round(max(0.0, float(sim_results['ppm']['SO2'][idx])), 2),
-                'NO2 (ppm)': round(max(0.0, float(sim_results['ppm']['NO2'][idx])), 2),
-                'NO (ppm)': round(max(0.0, float(sim_results['ppm']['NO'][idx])), 4),
-                'O2 (ppm)': round(max(0.0, float(sim_results['ppm']['O2'][idx])), 2),
-                'H2O (ppm)': round(max(0.0, float(sim_results['ppm']['H2O'][idx])), 2),
-                'H2SO4 (ppm)': round(max(0.0, float(sim_results['ppm']['H2SO4'][idx])), 4),
-                'HNO3 (ppm)': round(max(0.0, float(sim_results['ppm']['HNO3'][idx])), 4),
-                'NH3 (ppm)': round(max(0.0, float(sim_results['ppm']['NH3'][idx])), 4),
-                'S8 (ppm)': round(max(0.0, float(sim_results['ppm']['S8'][idx])), 4),
+                "Time (h)": round(float(t_h[idx]), 1),
+                "H2S (ppm)": round(max(0.0, float(sim_results["ppm"]["H2S"][idx])), 2),
+                "SO2 (ppm)": round(max(0.0, float(sim_results["ppm"]["SO2"][idx])), 2),
+                "NO2 (ppm)": round(max(0.0, float(sim_results["ppm"]["NO2"][idx])), 2),
+                "NO (ppm)": round(max(0.0, float(sim_results["ppm"]["NO"][idx])), 4),
+                "O2 (ppm)": round(max(0.0, float(sim_results["ppm"]["O2"][idx])), 2),
+                "H2O (ppm)": round(max(0.0, float(sim_results["ppm"]["H2O"][idx])), 2),
+                "H2SO4 (ppm)": round(max(0.0, float(sim_results["ppm"]["H2SO4"][idx])), 4),
+                "HNO3 (ppm)": round(max(0.0, float(sim_results["ppm"]["HNO3"][idx])), 4),
+                "NH3 (ppm)": round(max(0.0, float(sim_results["ppm"]["NH3"][idx])), 4),
+                "S8 (ppm)": round(max(0.0, float(sim_results["ppm"]["S8"][idx])), 4),
             }
             rows.append(row)
 
@@ -251,7 +303,11 @@ class CO2ImpurityKineticsModel:
 
             density_kg_m3 = float(phase.getDensity())
             molar_mass_g_mol = float(phase.getMolarMass()) * 1000.0
-            rho_m = density_kg_m3 / molar_mass_g_mol if molar_mass_g_mol > 0 else density_kg_m3 / 44.0095
+            rho_m = (
+                density_kg_m3 / molar_mass_g_mol
+                if molar_mass_g_mol > 0
+                else density_kg_m3 / 44.0095
+            )
 
             phi_dict = {}
             for i in range(phase.getNumberOfComponents()):
@@ -310,10 +366,14 @@ class CO2ImpurityKineticsModel:
         dG1 = DG_H2SO4_STDGIBBS - (DG_SO2_STDGIBBS + 0.5 * DG_O2_STDGIBBS + DG_H2O_STDGIBBS)
         Keq1 = max(np.exp(min(-dG1 / (R_GAS * T), MAX_KEQ_EXPONENT)), 1e-15)
 
-        dG2 = (DG_SO2_STDGIBBS + DG_H2O_STDGIBBS + 3.0 * DG_NO_STDGIBBS) - (DG_H2S_STDGIBBS + 3.0 * DG_NO2_STDGIBBS)
+        dG2 = (DG_SO2_STDGIBBS + DG_H2O_STDGIBBS + 3.0 * DG_NO_STDGIBBS) - (
+            DG_H2S_STDGIBBS + 3.0 * DG_NO2_STDGIBBS
+        )
         Keq2 = max(np.exp(min(-dG2 / (R_GAS * T), MAX_KEQ_EXPONENT)), 1e-15)
 
-        dG3 = (DG_NO_STDGIBBS + DG_H2SO4_STDGIBBS) - (DG_SO2_STDGIBBS + DG_NO2_STDGIBBS + DG_H2O_STDGIBBS)
+        dG3 = (DG_NO_STDGIBBS + DG_H2SO4_STDGIBBS) - (
+            DG_SO2_STDGIBBS + DG_NO2_STDGIBBS + DG_H2O_STDGIBBS
+        )
         Keq3 = max(np.exp(min(-dG3 / (R_GAS * T), MAX_KEQ_EXPONENT)), 1e-15)
 
         dG4 = (2.0 * DG_NO2_STDGIBBS) - (2.0 * DG_NO_STDGIBBS + DG_O2_STDGIBBS)
@@ -326,18 +386,22 @@ class CO2ImpurityKineticsModel:
         Keq6 = max(np.exp(min(-dG6 / (R_GAS * T), MAX_KEQ_EXPONENT)), 1e-15)
 
         p = self.kinetic_params
-        k1_f = p['R1']['A'] * np.exp(-p['R1']['Ea'] / (R_GAS * T))
-        k2_f = p['R2']['A'] * np.exp(-p['R2']['Ea'] / (R_GAS * T))
-        k3a_f = p['R3a']['A'] * np.exp(-p['R3a']['Ea'] / (R_GAS * T))
-        k3b_f = p['R3b']['A'] * np.exp(-p['R3b']['Ea'] / (R_GAS * T))
-        k4_f = p['R4']['A'] * np.exp(-p['R4']['Ea'] / (R_GAS * T)) if p['R4']['Ea'] > 0 else p['R4']['A'] * np.exp(530.0 / T)
-        k5_f = p['R5']['A'] * np.exp(-p['R5']['Ea'] / (R_GAS * T))
-        k6_f = p['R6']['A'] * np.exp(-p['R6']['Ea'] / (R_GAS * T))
-        k7_f = p['R7']['A'] * np.exp(-p['R7']['Ea'] / (R_GAS * T))
+        k1_f = p["R1"]["A"] * np.exp(-p["R1"]["Ea"] / (R_GAS * T))
+        k2_f = p["R2"]["A"] * np.exp(-p["R2"]["Ea"] / (R_GAS * T))
+        k3a_f = p["R3a"]["A"] * np.exp(-p["R3a"]["Ea"] / (R_GAS * T))
+        k3b_f = p["R3b"]["A"] * np.exp(-p["R3b"]["Ea"] / (R_GAS * T))
+        k4_f = (
+            p["R4"]["A"] * np.exp(-p["R4"]["Ea"] / (R_GAS * T))
+            if p["R4"]["Ea"] > 0
+            else p["R4"]["A"] * np.exp(530.0 / T)
+        )
+        k5_f = p["R5"]["A"] * np.exp(-p["R5"]["Ea"] / (R_GAS * T))
+        k6_f = p["R6"]["A"] * np.exp(-p["R6"]["Ea"] / (R_GAS * T))
+        k7_f = p["R7"]["A"] * np.exp(-p["R7"]["Ea"] / (R_GAS * T))
 
-        r8_key = 'R8_cs' if self.material in ['carbon_steel', 'magnetite'] else 'R8_ss'
-        k8_f = p[r8_key]['A'] * np.exp(-p[r8_key]['Ea'] / (R_GAS * T))
-        Ea8 = p[r8_key]['Ea'] / 1000.0
+        r8_key = "R8_cs" if self.material in ["carbon_steel", "magnetite"] else "R8_ss"
+        k8_f = p[r8_key]["A"] * np.exp(-p[r8_key]["Ea"] / (R_GAS * T))
+        Ea8 = p[r8_key]["Ea"] / 1000.0
 
         k1_r = k1_f / Keq1 if Keq1 > 1e-15 else 0.0
         k2_r = k2_f / Keq2 if Keq2 > 1e-15 else 0.0
@@ -346,50 +410,64 @@ class CO2ImpurityKineticsModel:
         k5_r = k5_f / Keq5
         k6_r = k6_f / Keq6 if Keq6 > 1e-15 else 0.0
         k7_r = 0.0
-        k8_r = 0.0
 
         safe_moisture_ppm = max(float(moisture_ppm), 0.0)
-        moisture_factor = 0.25 + 0.75 * (1.0 - np.exp(-min(safe_moisture_ppm / MOISTURE_REF_PPM, 50.0)))
+        moisture_factor = 0.25 + 0.75 * (
+            1.0 - np.exp(-min(safe_moisture_ppm / MOISTURE_REF_PPM, 50.0))
+        )
         k1_f *= moisture_factor
         k3a_f *= moisture_factor
 
         return {
-            'k1_f': k1_f, 'k1_r': k1_r, 'Keq1': Keq1,
-            'k2_f': k2_f, 'k2_r': k2_r, 'Keq2': Keq2,
-            'k3a_f': k3a_f, 'k3a_r': k3a_r, 'k3b_f': k3b_f, 'Keq3': Keq3,
-            'k4_f': k4_f, 'k4_r': k4_r, 'Keq4': Keq4,
-            'k5_f': k5_f, 'k5_r': k5_r, 'Keq5': Keq5,
-            'k6_f': k6_f, 'k6_r': k6_r, 'Keq6': Keq6,
-            'k7_f': k7_f, 'k7_r': k7_r,
-            'k8_f': k8_f, 'Ea8': Ea8,
-            'material': self.material,
-            'moisture_factor': moisture_factor
+            "k1_f": k1_f,
+            "k1_r": k1_r,
+            "Keq1": Keq1,
+            "k2_f": k2_f,
+            "k2_r": k2_r,
+            "Keq2": Keq2,
+            "k3a_f": k3a_f,
+            "k3a_r": k3a_r,
+            "k3b_f": k3b_f,
+            "Keq3": Keq3,
+            "k4_f": k4_f,
+            "k4_r": k4_r,
+            "Keq4": Keq4,
+            "k5_f": k5_f,
+            "k5_r": k5_r,
+            "Keq5": Keq5,
+            "k6_f": k6_f,
+            "k6_r": k6_r,
+            "Keq6": Keq6,
+            "k7_f": k7_f,
+            "k7_r": k7_r,
+            "k8_f": k8_f,
+            "Ea8": Ea8,
+            "material": self.material,
+            "moisture_factor": moisture_factor,
         }
 
     def rhs(self, t, C, rates_dict, C_in=None, space_time_sec=None):
         C_raw = np.clip(C, MIN_CONCENTRATION_FLOOR, 1e5 * self.molar_density)
 
         phi = self.phi_dict
-        C_H2S   = max(0.0, C_raw[0] * phi['H2S'])
-        C_SO2   = max(0.0, C_raw[1] * phi['SO2'])
-        C_NO2   = max(0.0, C_raw[2] * phi['NO2'])
-        C_NO    = max(0.0, C_raw[3] * phi['NO'])
-        C_O2    = max(0.0, C_raw[4] * phi['O2'])
-        C_H2O   = max(0.0, C_raw[5] * phi['H2O'])
-        C_H2SO4 = max(0.0, C_raw[6] * phi['H2SO4'])
-        C_HNO3  = max(0.0, C_raw[7] * phi['HNO3'])
-        C_S8    = max(0.0, C_raw[8] * phi['S8'])
-        C_NH3   = max(0.0, C_raw[9] * phi['NH3'])
+        C_H2S = max(0.0, C_raw[0] * phi["H2S"])
+        C_SO2 = max(0.0, C_raw[1] * phi["SO2"])
+        C_NO2 = max(0.0, C_raw[2] * phi["NO2"])
+        C_NO = max(0.0, C_raw[3] * phi["NO"])
+        C_O2 = max(0.0, C_raw[4] * phi["O2"])
+        C_H2O = max(0.0, C_raw[5] * phi["H2O"])
+        C_H2SO4 = max(0.0, C_raw[6] * phi["H2SO4"])
+        C_HNO3 = max(0.0, C_raw[7] * phi["HNO3"])
 
-        k1_f, k1_r   = rates_dict['k1_f'], rates_dict['k1_r']
-        k2_f, k2_r   = rates_dict['k2_f'], rates_dict['k2_r']
-        k3a_f, k3a_r = rates_dict['k3a_f'], rates_dict['k3a_r']
-        k3b_f        = rates_dict['k3b_f']
-        k4_f, k4_r   = rates_dict['k4_f'], rates_dict['k4_r']
-        k5_f, k5_r   = rates_dict['k5_f'], rates_dict['k5_r']
-        k6_f, k6_r   = rates_dict['k6_f'], rates_dict['k6_r']
-        k7_f         = rates_dict['k7_f']
-        k8_f         = rates_dict['k8_f']
+        k1_f, k1_r = rates_dict["k1_f"], rates_dict["k1_r"]
+        k2_f, k2_r = rates_dict["k2_f"], rates_dict["k2_r"]
+        k3a_f, k3a_r = rates_dict["k3a_f"], rates_dict["k3a_r"]
+        k3b_f = rates_dict["k3b_f"]
+        k4_f, k4_r = rates_dict["k4_f"], rates_dict["k4_r"]
+        k5_f, k5_r = rates_dict["k5_f"], rates_dict["k5_r"]
+        k6_f, k6_r = rates_dict["k6_f"], rates_dict["k6_r"]
+        k7_f = rates_dict["k7_f"]
+        k8_f = rates_dict["k8_f"]
 
         r1 = k1_f * C_SO2 * (C_O2**0.5) * C_H2O - k1_r * C_H2SO4
         r2 = k2_f * C_H2S * C_NO2 - k2_r * C_SO2 * C_H2O * (C_NO**3)
@@ -402,21 +480,18 @@ class CO2ImpurityKineticsModel:
         r7 = k7_f * C_H2S * C_NO * C_H2O
         r8 = k8_f * C_H2S * (C_O2**0.5)
 
-        R_H2S   = - r2 - r6 - 5.0 * r7 - r8
-        R_SO2   = - r1 + r2 + r6 - r3a - r3b + 5.0 * r7
-        R_NO2   = - 3.0 * r2 - r3a + r4 - 3.0 * r5
-        R_NO    = + 3.0 * r2 + r3a - r4 + r5 - 6.0 * r7
-        R_O2    = - 0.5 * r1 - 1.5 * r6 - 0.5 * r4 - 0.5 * r8
-        R_H2O   = - r1 + r2 + r6 - r3a - r3b - r5 - 4.0 * r7 + r8
-        R_H2SO4 = + r1 + r3a + r3b
-        R_HNO3  = + 2.0 * r5
-        R_S8    = + 0.125 * r8
-        R_NH3   = + 6.0 * r7
+        R_H2S = -r2 - r6 - 5.0 * r7 - r8
+        R_SO2 = -r1 + r2 + r6 - r3a - r3b + 5.0 * r7
+        R_NO2 = -3.0 * r2 - r3a + r4 - 3.0 * r5
+        R_NO = +3.0 * r2 + r3a - r4 + r5 - 6.0 * r7
+        R_O2 = -0.5 * r1 - 1.5 * r6 - 0.5 * r4 - 0.5 * r8
+        R_H2O = -r1 + r2 + r6 - r3a - r3b - r5 - 4.0 * r7 + r8
+        R_H2SO4 = +r1 + r3a + r3b
+        R_HNO3 = +2.0 * r5
+        R_S8 = +0.125 * r8
+        R_NH3 = +6.0 * r7
 
-        R_vector = np.array([
-            R_H2S, R_SO2, R_NO2, R_NO, R_O2, R_H2O,
-            R_H2SO4, R_HNO3, R_S8, R_NH3
-        ])
+        R_vector = np.array([R_H2S, R_SO2, R_NO2, R_NO, R_O2, R_H2O, R_H2SO4, R_HNO3, R_S8, R_NH3])
 
         if C_in is not None and space_time_sec is not None and space_time_sec > 0.0:
             dC_dt = (C_in - C) / space_time_sec + R_vector
@@ -425,7 +500,9 @@ class CO2ImpurityKineticsModel:
 
         return dC_dt
 
-    def simulate(self, initial_ppm, duration_sec=100000.0, num_points=100, feed_ppm=None, space_time_sec=None):
+    def simulate(
+        self, initial_ppm, duration_sec=100000.0, num_points=100, feed_ppm=None, space_time_sec=None
+    ):
         t_span = (0.0, duration_sec)
         t_eval = np.linspace(0.0, duration_sec, num_points)
 
@@ -441,7 +518,7 @@ class CO2ImpurityKineticsModel:
                 if spec in feed_ppm:
                     C_in[idx] = (feed_ppm[spec] * 1.0e-6) * self.molar_density
 
-        moisture_ppm = initial_ppm.get('H2O', self.water_ppm)
+        moisture_ppm = initial_ppm.get("H2O", self.water_ppm)
         rates_dict = self._calculate_pure_physical_rate_constants(moisture_ppm)
 
         sol = solve_ivp(
@@ -449,9 +526,9 @@ class CO2ImpurityKineticsModel:
             t_span=t_span,
             y0=C0,
             t_eval=t_eval,
-            method='Radau',
+            method="Radau",
             rtol=1e-6,
-            atol=1e-12
+            atol=1e-12,
         )
 
         ppm_results = {}
@@ -460,13 +537,13 @@ class CO2ImpurityKineticsModel:
             ppm_results[spec] = np.maximum(0.0, raw_ppm)
 
         return {
-            'time_seconds': sol.t,
-            'time_hours': sol.t / 3600.0,
-            'ppm': ppm_results,
-            'molar_density': self.molar_density,
-            'phase': self.phase,
-            'phi': self.phi_dict,
-            'rates': rates_dict
+            "time_seconds": sol.t,
+            "time_hours": sol.t / 3600.0,
+            "ppm": ppm_results,
+            "molar_density": self.molar_density,
+            "phase": self.phase,
+            "phi": self.phi_dict,
+            "rates": rates_dict,
         }
 
 
@@ -479,7 +556,15 @@ class CO2ImpurityReactorExperiment:
     Uses NeqSim Java SRK EOS directly for thermodynamics and fugacities.
     """
 
-    def __init__(self, target_pressure_bar=25.0, target_temp_C=-25.0, diameter_cm=6.5, volume_ml=300.0, mass_flow_g_h=50.0, material='carbon_steel'):
+    def __init__(
+        self,
+        target_pressure_bar=25.0,
+        target_temp_C=-25.0,
+        diameter_cm=6.5,
+        volume_ml=300.0,
+        mass_flow_g_h=50.0,
+        material="carbon_steel",
+    ):
         self.target_P = float(target_pressure_bar)
         self.target_T_C = float(target_temp_C)
         self.target_T_K = self.target_T_C + 273.15
@@ -488,40 +573,38 @@ class CO2ImpurityReactorExperiment:
         self.mass_flow_g_h = float(mass_flow_g_h)
         self.material = material
 
-        self.initial_gas = 'N2'
+        self.initial_gas = "N2"
         self.initial_P_bar = 1.0
         self.initial_T_C = 25.0
 
         self.model = CO2ImpurityKineticsModel(
-            T_kelvin=self.target_T_K,
-            P_bar=self.target_P,
-            material=self.material
+            T_kelvin=self.target_T_K, P_bar=self.target_P, material=self.material
         )
         self.model.set_reactor_geometry(
-            diameter_cm=self.diameter_cm,
-            volume_ml=self.volume_ml,
-            mass_flow_g_h=self.mass_flow_g_h
+            diameter_cm=self.diameter_cm, volume_ml=self.volume_ml, mass_flow_g_h=self.mass_flow_g_h
         )
 
         self.phases = []
         self.simulation_results = None
 
-    def set_initial_vessel_charge(self, gas_name='N2', pressure_bar=1.0, temp_C=25.0):
+    def set_initial_vessel_charge(self, gas_name="N2", pressure_bar=1.0, temp_C=25.0):
         self.initial_gas = str(gas_name).upper()
         self.initial_P_bar = float(pressure_bar)
         self.initial_T_C = float(temp_C)
 
-    def set_reactor_geometry(self, diameter_cm=None, length_cm=None, volume_ml=None, mass_flow_g_h=None):
+    def set_reactor_geometry(
+        self, diameter_cm=None, length_cm=None, volume_ml=None, mass_flow_g_h=None
+    ):
         self.model.set_reactor_geometry(
             diameter_cm=diameter_cm,
             length_cm=length_cm,
             volume_ml=volume_ml,
-            mass_flow_g_h=mass_flow_g_h
+            mass_flow_g_h=mass_flow_g_h,
         )
         geom = self.model.get_reactor_geometry()
-        self.diameter_cm = geom['diameter_cm']
-        self.volume_ml = geom['volume_ml']
-        self.mass_flow_g_h = geom['mass_flow_g_h']
+        self.diameter_cm = geom["diameter_cm"]
+        self.volume_ml = geom["volume_ml"]
+        self.mass_flow_g_h = geom["mass_flow_g_h"]
 
     def set_reaction_constants(self, reaction_identifier, A_forward=None, Ea_forward_kJ_mol=None):
         self.model.set_reaction_constants(reaction_identifier, A_forward, Ea_forward_kJ_mol)
@@ -536,11 +619,9 @@ class CO2ImpurityReactorExperiment:
                 if k in feed:
                     feed[k] = float(v)
 
-        self.phases.append({
-            'name': name,
-            'duration_hours': float(duration_hours),
-            'feed_ppm': feed
-        })
+        self.phases.append(
+            {"name": name, "duration_hours": float(duration_hours), "feed_ppm": feed}
+        )
 
     def clear_phases(self):
         self.phases = []
@@ -551,12 +632,24 @@ class CO2ImpurityReactorExperiment:
 
     def run_experiment(self):
         if not self.phases:
-            self.add_phase(10.0, {s: 0.0 for s in self.model.SPECIES}, "Phase 0: Pressurization & Pure CO2 Flow")
-            self.add_phase(20.0, {'SO2': 10.0, 'NO2': 10.0, 'O2': 10.0, 'H2O': 10.0}, "Phase 1: 10 ppm Without H2S")
-            self.add_phase(20.0, {'H2S': 10.0, 'SO2': 10.0, 'NO2': 10.0, 'O2': 10.0, 'H2O': 10.0}, "Phase 2: 10 ppm All Impurities")
+            self.add_phase(
+                10.0,
+                {s: 0.0 for s in self.model.SPECIES},
+                "Phase 0: Pressurization & Pure CO2 Flow",
+            )
+            self.add_phase(
+                20.0,
+                {"SO2": 10.0, "NO2": 10.0, "O2": 10.0, "H2O": 10.0},
+                "Phase 1: 10 ppm Without H2S",
+            )
+            self.add_phase(
+                20.0,
+                {"H2S": 10.0, "SO2": 10.0, "NO2": 10.0, "O2": 10.0, "H2O": 10.0},
+                "Phase 2: 10 ppm All Impurities",
+            )
 
         geom = self.model.get_reactor_geometry()
-        tau_sec = geom['residence_time_seconds']
+        tau_sec = geom["residence_time_seconds"]
 
         rho_kg_m3 = self.model.molar_density * MW_CO2
         rho_g_ml = rho_kg_m3 * 1e-3
@@ -570,8 +663,8 @@ class CO2ImpurityReactorExperiment:
         current_state_ppm = {s: 0.0 for s in self.model.SPECIES}
 
         for idx, phase in enumerate(self.phases):
-            dur_h = phase['duration_hours']
-            feed = phase['feed_ppm']
+            dur_h = phase["duration_hours"]
+            feed = phase["feed_ppm"]
 
             if idx == 0 and dur_h >= t_fill_hours:
                 res_fill = self.model.simulate(
@@ -579,10 +672,10 @@ class CO2ImpurityReactorExperiment:
                     duration_sec=t_fill_hours * 3600.0,
                     num_points=max(int(t_fill_hours * 10), 50),
                     feed_ppm=feed,
-                    space_time_sec=None
+                    space_time_sec=None,
                 )
 
-                fill_state = {s: res_fill['ppm'][s][-1] for s in self.model.SPECIES}
+                fill_state = {s: res_fill["ppm"][s][-1] for s in self.model.SPECIES}
                 rem_dur_h = dur_h - t_fill_hours
 
                 if rem_dur_h > 0.001:
@@ -591,23 +684,28 @@ class CO2ImpurityReactorExperiment:
                         duration_sec=rem_dur_h * 3600.0,
                         num_points=max(int(rem_dur_h * 10), 30),
                         feed_ppm=feed,
-                        space_time_sec=tau_sec
+                        space_time_sec=tau_sec,
                     )
-                    t_res = np.concatenate([res_fill['time_hours'], t_fill_hours + res_flow['time_hours']])
-                    ppm_res = {s: np.concatenate([res_fill['ppm'][s], res_flow['ppm'][s]]) for s in self.model.SPECIES}
+                    t_res = np.concatenate(
+                        [res_fill["time_hours"], t_fill_hours + res_flow["time_hours"]]
+                    )
+                    ppm_res = {
+                        s: np.concatenate([res_fill["ppm"][s], res_flow["ppm"][s]])
+                        for s in self.model.SPECIES
+                    }
                 else:
-                    t_res = res_fill['time_hours']
-                    ppm_res = res_fill['ppm']
+                    t_res = res_fill["time_hours"]
+                    ppm_res = res_fill["ppm"]
             else:
                 res_flow = self.model.simulate(
                     initial_ppm=current_state_ppm,
                     duration_sec=dur_h * 3600.0,
                     num_points=max(int(dur_h * 10), 100),
                     feed_ppm=feed,
-                    space_time_sec=tau_sec
+                    space_time_sec=tau_sec,
                 )
-                t_res = res_flow['time_hours']
-                ppm_res = res_flow['ppm']
+                t_res = res_flow["time_hours"]
+                ppm_res = res_flow["ppm"]
 
             all_t_h.append(current_cumulative_t + t_res)
             for s in self.model.SPECIES:
@@ -619,11 +717,7 @@ class CO2ImpurityReactorExperiment:
         master_t = np.concatenate(all_t_h)
         master_ppm = {s: np.concatenate(all_ppm[s]) for s in self.model.SPECIES}
 
-        self.simulation_results = {
-            'time_hours': master_t,
-            'ppm': master_ppm,
-            'phases': self.phases
-        }
+        self.simulation_results = {"time_hours": master_t, "ppm": master_ppm, "phases": self.phases}
 
         return self.simulation_results
 
@@ -631,68 +725,90 @@ class CO2ImpurityReactorExperiment:
         if self.simulation_results is None:
             self.run_experiment()
 
-        return self.model.get_table_results(self.simulation_results, resolution_hours=resolution_hours)
+        return self.model.get_table_results(
+            self.simulation_results, resolution_hours=resolution_hours
+        )
 
     def plot_results(self, save_path=None, title="Multi-Phase CSTR CO2 Impurity Kinetics"):
         if self.simulation_results is None:
             self.run_experiment()
 
-        t_h = self.simulation_results['time_hours']
-        ppm = self.simulation_results['ppm']
+        t_h = self.simulation_results["time_hours"]
+        ppm = self.simulation_results["ppm"]
 
-        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(11, 10), sharex=True)
+        fig, (ax1, ax2, ax3) = plt.subplots(
+            3, 1, figsize=(12, 12), sharex=True, constrained_layout=True
+        )
 
-        ax1.plot(t_h, ppm['H2S'], label='H2S', linewidth=2.0, color='#e74c3c')
-        ax1.plot(t_h, ppm['SO2'], label='SO2', linewidth=2.0, color='#f39c12')
-        ax1.plot(t_h, ppm['NO2'], label='NO2', linewidth=2.0, color='#9b59b6')
-        ax1.plot(t_h, ppm['O2'],  label='O2',  linewidth=2.0, color='#2ecc71')
-        ax1.plot(t_h, ppm['H2O'], label='H2O', linewidth=2.0, color='#3498db')
-        ax1.set_ylabel('Reactants (ppm)', fontsize=11, fontweight='bold')
-        ax1.set_title(title, fontsize=13, fontweight='bold')
-        ax1.grid(True, linestyle='--', alpha=0.6)
-        ax1.legend(loc='upper right', frameon=True)
+        ax1.plot(t_h, ppm["H2S"], label="H2S", linewidth=2.0, color="#e74c3c")
+        ax1.plot(t_h, ppm["SO2"], label="SO2", linewidth=2.0, color="#f39c12")
+        ax1.plot(t_h, ppm["NO2"], label="NO2", linewidth=2.0, color="#9b59b6")
+        ax1.plot(t_h, ppm["O2"], label="O2", linewidth=2.0, color="#2ecc71")
+        ax1.plot(t_h, ppm["H2O"], label="H2O", linewidth=2.0, color="#3498db")
+        ax1.set_ylabel("Reactants (ppm)", fontsize=11, fontweight="bold")
+        ax1.set_title(title, fontsize=13, fontweight="bold")
+        ax1.grid(True, linestyle="--", alpha=0.6)
+        ax1.legend(loc="upper center", bbox_to_anchor=(0.5, 1.16), frameon=True, fontsize=9, ncol=5)
 
-        ax2.plot(t_h, ppm['H2SO4'], label='H2SO4 Sulfuric Acid (Formed)', linewidth=4.0, color='#FF0033', marker='o', markevery=40)
-        ax2.fill_between(t_h, ppm['H2SO4'], color='#FF0033', alpha=0.3, label='H2SO4 Shaded Acid Accumulation')
-        ax2.set_ylabel('H2SO4 Acid (ppm)', fontsize=11, fontweight='bold')
-        max_h2so4 = np.max(ppm['H2SO4'])
+        ax2.plot(
+            t_h,
+            ppm["H2SO4"],
+            label="H2SO4 Sulfuric Acid (Formed)",
+            linewidth=4.0,
+            color="#FF0033",
+            marker="o",
+            markevery=40,
+        )
+        ax2.fill_between(
+            t_h, ppm["H2SO4"], color="#FF0033", alpha=0.3, label="H2SO4 Shaded Acid Accumulation"
+        )
+        ax2.set_ylabel("H2SO4 Acid (ppm)", fontsize=11, fontweight="bold")
+        max_h2so4 = np.max(ppm["H2SO4"])
         ax2.set_ylim(0.0, max(max_h2so4 * 1.35, 2.0))
-        ax2.grid(True, linestyle='--', alpha=0.6)
-        ax2.legend(loc='upper left', frameon=True)
+        ax2.grid(True, linestyle="--", alpha=0.6)
+        ax2.legend(loc="upper center", bbox_to_anchor=(0.5, 1.16), frameon=True, fontsize=9, ncol=2)
 
         if max_h2so4 > 0.05:
-            max_idx = np.argmax(ppm['H2SO4'])
+            max_idx = np.argmax(ppm["H2SO4"])
             max_t = t_h[max_idx]
+            start_t = float(t_h[0])
+            end_t = float(t_h[-1])
+            time_span = max(end_t - start_t, 1.0)
+            label_t = float(
+                np.clip(
+                    max_t - 0.25 * time_span,
+                    start_t + 0.05 * time_span,
+                    end_t - 0.35 * time_span,
+                )
+            )
             ax2.annotate(
-                f'H2SO4 Acid Peak: {max_h2so4:.2f} ppm',
+                f"H2SO4 Acid Peak: {max_h2so4:.2f} ppm",
                 xy=(max_t, max_h2so4),
-                xytext=(max_t - 180.0, max_h2so4 + 0.8),
-                arrowprops=dict(facecolor='#FF0033', shrink=0.08, width=3.0, headwidth=10.0),
+                xytext=(label_t, max_h2so4 * 1.15),
+                arrowprops=dict(facecolor="#FF0033", shrink=0.08, width=3.0, headwidth=10.0),
                 fontsize=12,
-                fontweight='bold',
-                color='#B20000',
-                bbox=dict(boxstyle="round,pad=0.3", fc="#FFE6E6", ec="#FF0033", lw=1.5)
+                fontweight="bold",
+                color="#B20000",
+                bbox=dict(boxstyle="round,pad=0.3", fc="#FFE6E6", ec="#FF0033", lw=1.5),
             )
 
-        ax3.plot(t_h, ppm['NO'],    label='NO Gas',      linewidth=2.5, color='#8e44ad')
-        ax3.plot(t_h, ppm['NH3'],   label='NH3 Ammonia', linewidth=2.5, color='#16a085')
-        ax3.plot(t_h, ppm['S8'],    label='S8 Elemental Sulfur', linewidth=2.0, color='#f1c40f')
-        ax3.set_xlabel('Time (hours)', fontsize=11, fontweight='bold')
-        ax3.set_ylabel('Gaseous Products (ppm)', fontsize=11, fontweight='bold')
-        ax3.grid(True, linestyle='--', alpha=0.6)
-        ax3.legend(loc='upper right', frameon=True)
+        ax3.plot(t_h, ppm["NO"], label="NO Gas", linewidth=2.5, color="#8e44ad")
+        ax3.plot(t_h, ppm["NH3"], label="NH3 Ammonia", linewidth=2.5, color="#16a085")
+        ax3.plot(t_h, ppm["S8"], label="S8 Elemental Sulfur", linewidth=2.0, color="#f1c40f")
+        ax3.set_xlabel("Time (hours)", fontsize=11, fontweight="bold")
+        ax3.set_ylabel("Gaseous Products (ppm)", fontsize=11, fontweight="bold")
+        ax3.grid(True, linestyle="--", alpha=0.6)
+        ax3.legend(loc="upper center", bbox_to_anchor=(0.5, 1.16), frameon=True, fontsize=9, ncol=3)
 
         cum_t = 0.0
         for phase in self.phases[:-1]:
-            cum_t += phase['duration_hours']
-            ax1.axvline(cum_t, color='black', linestyle=':', linewidth=1.5, alpha=0.7)
-            ax2.axvline(cum_t, color='black', linestyle=':', linewidth=1.5, alpha=0.7)
-            ax3.axvline(cum_t, color='black', linestyle=':', linewidth=1.5, alpha=0.7)
-
-        plt.tight_layout()
+            cum_t += phase["duration_hours"]
+            ax1.axvline(cum_t, color="black", linestyle=":", linewidth=1.5, alpha=0.7)
+            ax2.axvline(cum_t, color="black", linestyle=":", linewidth=1.5, alpha=0.7)
+            ax3.axvline(cum_t, color="black", linestyle=":", linewidth=1.5, alpha=0.7)
 
         if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            plt.savefig(save_path, dpi=300, bbox_inches="tight")
             print(f"Plot saved successfully to: {save_path}")
 
         return fig, (ax1, ax2, ax3)

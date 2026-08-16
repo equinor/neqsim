@@ -13,9 +13,11 @@ Output:
 - 3-Panel Plot with y-axis 0.0 to 20.0 ppm
 """
 
-import numpy as np
-import pandas as pd
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+import numpy as np
+
 from neqsim_co2_kinetics import CO2ImpurityReactorExperiment
 
 def run_custom_20bar_minus24C_1hr_experiment():
@@ -46,15 +48,12 @@ def run_custom_20bar_minus24C_1hr_experiment():
     # Generate 1-HOUR STEP RESOLUTION TABLE (451 rows from 0.0 to 450.0 h)
     df_1hr = exp.get_table_results(resolution_hours=1.0)
 
-    # Save to CSV file
-    csv_path = "c:/NeqSim CO2 kinetic model/user_20bar_minus24C_1hr_table.csv"
+    # Save portable artifacts below the caller's working directory.
+    output_dir = Path.cwd() / "co2_impurity_kinetics_outputs"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    csv_path = output_dir / "user_20bar_minus24C_1hr_table.csv"
     df_1hr.to_csv(csv_path, index=False)
     print(f"1-hour step resolution table saved to: {csv_path}")
-
-    # Copy CSV to brain artifact directory
-    brain_csv_path = r"C:\Users\erosh\.gemini\antigravity\brain\80e52b2b-3260-4b68-836a-84d8cc8e46fd\user_20bar_minus24C_1hr_table.csv"
-    import shutil
-    shutil.copy(csv_path, brain_csv_path)
 
     # Display key 1-hour interval checkpoints
     checkpoints = [0.0, 50.0, 60.0, 100.0, 140.0, 144.0, 145.0, 150.0, 160.0, 170.0, 180.0, 190.0, 200.0, 300.0, 400.0, 450.0]
@@ -66,7 +65,7 @@ def run_custom_20bar_minus24C_1hr_experiment():
     print(df_check.to_string(index=False))
 
     # 3-Panel Plot with Y-AXIS FORCED FROM 0 TO 20 PPM
-    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(11, 10), sharex=True)
+    _, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(11, 10), sharex=True)
 
     ax1.plot(t_h, ppm['H2S'], label='H2S', linewidth=2.0, color='#e74c3c')
     ax1.plot(t_h, ppm['SO2'], label='SO2', linewidth=2.0, color='#f39c12')
@@ -120,14 +119,12 @@ def run_custom_20bar_minus24C_1hr_experiment():
 
     plt.tight_layout()
 
-    save_path = "c:/NeqSim CO2 kinetic model/user_20bar_minus24C_experiment.png"
+    save_path = output_dir / "user_20bar_minus24C_experiment.png"
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
     print(f"Plot saved successfully to: {save_path}")
-
-    brain_path = r"C:\Users\erosh\.gemini\antigravity\brain\80e52b2b-3260-4b68-836a-84d8cc8e46fd\user_20bar_minus24C_experiment.png"
-    shutil.copy(save_path, brain_path)
 
     return df_1hr
 
 if __name__ == "__main__":
     run_custom_20bar_minus24C_1hr_experiment()
+

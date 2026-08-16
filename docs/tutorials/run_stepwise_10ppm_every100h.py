@@ -15,9 +15,11 @@ Phases:
 7. 650 - 750 h (100 h): Flush with pure CO2 (0.000 ppm)
 """
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+
 from neqsim_co2_kinetics import CO2ImpurityReactorExperiment
 
 def run_stepwise_10ppm_experiment():
@@ -89,13 +91,17 @@ def run_stepwise_10ppm_experiment():
     # Generate 20-hour resolution master time series table
     df_series = exp.get_table_results(resolution_hours=20.0)
 
-    # Plot results and save figure
+    # Plot results to a portable directory below the caller's working directory.
+    output_dir = Path.cwd() / "co2_impurity_kinetics_outputs"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    save_path = output_dir / "stepwise_10ppm_100hr_h2so4_nh3_experiment.png"
     exp.plot_results(
-        save_path="c:/NeqSim CO2 kinetic model/stepwise_10ppm_100hr_h2so4_nh3_experiment.png",
-        title="Stepwise Impurity Addition: H2SO4 Acid Formed When H2S and NO2 are Together"
+        save_path=str(save_path),
+        title="Stepwise Impurity Addition: H2SO4 Acid Formed When H2S and NO2 are Together",
     )
 
     return df_cp, df_series
 
 if __name__ == "__main__":
     run_stepwise_10ppm_experiment()
+

@@ -20,10 +20,8 @@ Features:
 - High-res 3-panel plot highlighting H2SO4 acid formation
 """
 
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import shutil
+from pathlib import Path
+
 from neqsim_co2_kinetics import CO2ImpurityReactorExperiment
 
 def run_960h_experiment():
@@ -69,30 +67,28 @@ def run_960h_experiment():
     exp.add_phase(97.0, {'H2O': 47, 'H2S': 0, 'SO2': 20, 'NO2': 0.0, 'O2': 20}, "Phase 9: H2O 47, H2S 0, SO2 20, NO2 0, O2 20 (863-960h)")
 
     # Run the full experiment
-    results = exp.run_experiment()
+    exp.run_experiment()
 
     # Generate 1-HOUR STEP RESOLUTION TABLE (961 rows from 0.0 to 960.0 h)
     df_1hr = exp.get_table_results(resolution_hours=1.0)
 
-    # Save to CSV file
-    csv_path = "c:/NeqSim CO2 kinetic model/user_960hr_1hr_table.csv"
+    # Save portable artifacts below the caller's working directory.
+    output_dir = Path.cwd() / "co2_impurity_kinetics_outputs"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    csv_path = output_dir / "user_960hr_1hr_table.csv"
     df_1hr.to_csv(csv_path, index=False)
     print(f"1-hour step resolution table (961 rows) saved to: {csv_path}")
-
-    # Copy CSV to brain artifact directory
-    brain_csv_path = r"C:\Users\erosh\.gemini\antigravity\brain\80e52b2b-3260-4b68-836a-84d8cc8e46fd\user_960hr_1hr_table.csv"
-    shutil.copy(csv_path, brain_csv_path)
 
     # Key Phase Checkpoint Table
     checkpoints = [0.0, 50.0, 101.0, 215.0, 409.0, 447.0, 575.0, 676.0, 773.0, 863.0, 960.0]
     df_checkpoints = df_1hr[df_1hr['Time (h)'].isin(checkpoints)]
 
-    # Save and Copy Plot
-    save_fig_path = "c:/NeqSim CO2 kinetic model/co2_impurity_dynamics_960hr.png"
-    exp.plot_results(save_path=save_fig_path, title="960-Hour Multi-Phase CSTR CO2 Impurity Kinetics (98 bar, +26 °C)")
-
-    brain_fig_path = r"C:\Users\erosh\.gemini\antigravity\brain\80e52b2b-3260-4b68-836a-84d8cc8e46fd\co2_impurity_dynamics_960hr.png"
-    shutil.copy(save_fig_path, brain_fig_path)
+    # Save the plot beside the portable CSV artifact.
+    save_fig_path = output_dir / "co2_impurity_dynamics_960hr.png"
+    exp.plot_results(
+        save_path=str(save_fig_path),
+        title="960-Hour Multi-Phase CSTR CO2 Impurity Kinetics (98 bar, +26 °C)",
+    )
 
     print("=" * 120)
     print("960-HOUR MULTI-PHASE CSTR EXPERIMENT REPORT (98 BAR, +26 °C)")
@@ -108,3 +104,4 @@ def run_960h_experiment():
 
 if __name__ == "__main__":
     run_960h_experiment()
+
