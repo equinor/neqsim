@@ -272,8 +272,12 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
       testOps.TPflash();
       testOps.PHflash(enthalpy, 0);
 
-      kwater = mixedStream.getThermoSystem().getPhase(0).getComponent("water").getx()
-          / mixedStream.getThermoSystem().getPhase(1).getComponent("water").getx();
+      double xWaterLiquid = mixedStream.getThermoSystem().getPhase(1).getComponent("water").getx();
+      if (xWaterLiquid > 1.0e-10) {
+        kwater = mixedStream.getThermoSystem().getPhase(0).getComponent("water").getx() / xWaterLiquid;
+      } else {
+        kwater = 1.0e-5;
+      }
 
       calcNumberOfTheoreticalStages();
       // System.out.println("number of theoretical stages " +
@@ -690,5 +694,9 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
     sb.append(String.format("Number of theoretical stages: %.2f\n", getNumberOfTheoreticalStages()));
 
     return sb.toString();
+  }
+
+  public double getKwater() {
+    return kwater;
   }
 }

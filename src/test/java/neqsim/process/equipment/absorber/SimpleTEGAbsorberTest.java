@@ -148,4 +148,38 @@ class SimpleTEGAbsorberTest extends NeqSimTest {
     double dryGasWater = absorberCase.absorber.getGasOutStream().getFluid().getPhase(0).getComponent("water").getx();
     assertEquals(30.0e-6, dryGasWater, 2.0e-8);
   }
+
+  @Test
+  void testLowWaterLiquidPhaseDoesNotCauseNaN() {
+    SystemSrkCPAstatoil gasFluid = new SystemSrkCPAstatoil(303.15, 70.0);
+    gasFluid.addComponent("methane", 0.999);
+    gasFluid.addComponent("water", 1.0e-6);
+    gasFluid.setMixingRule(10);
+
+    Stream dryGasFeed = new Stream("dry gas", gasFluid);
+    dryGasFeed.setFlowRate(1.0, "MSm3/day");
+    dryGasFeed.setTemperature(30.0, "C");
+    dryGasFeed.setPressure(70.0, "bara");
+
+    SystemSrkCPAstatoil tegFluid = new SystemSrkCPAstatoil(308.15, 70.0);
+    tegFluid.addComponent("TEG", 0.9999);
+    tegFluid.addComponent("water", 0.0001);
+    tegFluid.setMixingRule(10);
+
+    Stream leanTeg = new Stream("lean TEG", tegFluid);
+    leanTeg.setFlowRate(100.0, "kg/hr");
+
+    SimpleTEGAbsorber absorber = new SimpleTEGAbsorber("TEG contactor dry");
+    absorber.addGasInStream(dryGasFeed);
+    absorber.addSolventInStream(leanTeg);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(dryGasFeed);
+    process.add(leanTeg);
+    process.add(absorber);
+    process.run();
+
+    assertTrue(Double.isFinite(absorber.getKwater()), "kwater must be finite");
+    assertTrue(Double.isFinite(absorber.getGasOutStream().getFlowRate("kg/hr")));
+  }
 }
