@@ -637,6 +637,19 @@ public class TwoFluidPipe extends Pipeline {
   private double ssMaxWallClockTime = 300.0;
 
   /**
+   * Use per-phase wall shear for the friction gradient where the phases are separated.
+   *
+   * <p>
+   * Off by default. It is the more consistent description and cuts the three-phase pressure-drop error from +190% to
+   * +17%, but because it uses the real liquid-layer geometry it also amplifies the outstanding hold-up deficit, which
+   * the mixture correlation masks. On the lean gas-condensate reference line it moves the pressure drop from about +5%
+   * to about +16% and drives the highest rate onto the pressure floor. It becomes the right default once hold-up is
+   * corrected.
+   * </p>
+   */
+  private boolean useSeparatedFrictionModel = false;
+
+  /**
    * Fraction of the inlet pressure the line must lose before the density coupling is taken to matter for steady-state
    * convergence. Below this the fluid density is uniform to within about the same fraction, so the pressure profile
    * cannot be materially wrong for want of a thermodynamic update.
@@ -3579,10 +3592,111 @@ public class TwoFluidPipe extends Pipeline {
     // Darcy-Weisbach: dP/dx = f * rho * v^2 / (2 * D)
     double dPdx_fric = fTP * rhoMix * vMix * vMix / (2.0 * diameter);
 
+    // A mixture correlation charges the whole perimeter with a liquid-weighted density, which is
+    // right for a dispersed flow and badly wrong for a separated one. Where the phases are
+    // separated the wall shear belongs to each phase over its own wetted perimeter.
+    if (useSeparatedFrictionModel) {
+      double separatedWeight = separatedFrictionWeight(sec);
+      if (separatedWeight > 0.0) {
+        double dPdx_sep = separatedFrictionGradient(sec);
+        if (Double.isFinite(dPdx_sep)) {
+          dPdx_fric = (1.0 - separatedWeight) * dPdx_fric + separatedWeight * dPdx_sep;
+        }
+      }
+    }
+
     // Gravity gradient
     double dPdx_grav = rhoMix * 9.81 * Math.sin(sec.getInclination());
 
     return dPdx_fric + dPdx_grav;
+  }
+
+  /**
+   * Fraction of the friction gradient that should come from the separated model.
+   *
+   * <p>
+   * Stratified and annular flow have a distinct liquid layer, so the wall shear is per phase. Slug, churn and dispersed
+   * bubble flow are mixed on the scale of the pipe, where the mixture correlation is the appropriate description.
+   * </p>
+   *
+   * @param sec section being evaluated
+   * @return a weight between zero and one
+   */
+  private double separatedFrictionWeight(TwoFluidSection sec) {
+    Map<FlowRegime, Double> weights = sec.getRegimeWeights();
+    if (weights == null) {
+      return isSeparatedRegime(sec.getFlowRegime()) ? 1.0 : 0.0;
+    }
+
+    double separated = 0.0;
+    for (Map.Entry<FlowRegime, Double> entry : weights.entrySet()) {
+      if (isSeparatedRegime(entry.getKey())) {
+        separated += entry.getValue();
+      }
+    }
+    return Math.max(0.0, Math.min(1.0, separated));
+  }
+
+  /**
+   * Whether a regime keeps the phases separated across the bore.
+   *
+   * @param regime the flow regime
+   * @return true for stratified and annular flow
+   */
+  private static boolean isSeparatedRegime(FlowRegime regime) {
+    return regime == FlowRegime.STRATIFIED_SMOOTH || regime == FlowRegime.STRATIFIED_WAVY
+        || regime == FlowRegime.ANNULAR;
+  }
+
+  /**
+   * Friction pressure gradient from the per-phase wall shear of a separated flow.
+   *
+   * <p>
+   * Summing the gas and liquid momentum equations cancels the interfacial shear and leaves
+   * {@code -dP/dx = (tau_wG*S_G + tau_wL*S_L)/A + rho_mix*g*sin(theta)}, so only the wall terms enter here. Each phase
+   * carries its own density, velocity and hydraulic diameter, with the interface counted in the gas perimeter alone.
+   * The single-phase limit reduces to Darcy-Weisbach exactly.
+   * </p>
+   *
+   * @param sec section being evaluated
+   * @return friction pressure gradient, in Pa/m, or NaN when the geometry is degenerate
+   */
+  private double separatedFrictionGradient(TwoFluidSection sec) {
+    double alphaL = sec.getLiquidHoldup();
+    double alphaG = 1.0 - alphaL;
+    if (alphaL <= 0.0 || alphaG <= 0.0) {
+      return Double.NaN;
+    }
+
+    double area = Math.PI * diameter * diameter / 4.0;
+    double liquidArea = alphaL * area;
+    double gasArea = alphaG * area;
+    double beta = calculateStratifiedCentralAngle(alphaL);
+    double liquidPerimeter = diameter * beta / 2.0;
+    double gasPerimeter = diameter * (Math.PI - beta / 2.0);
+    double interfaceWidth = diameter * Math.sin(beta / 2.0);
+
+    if (liquidPerimeter <= 0.0 || gasPerimeter <= 0.0) {
+      return Double.NaN;
+    }
+
+    double liquidHydraulicDiameter = 4.0 * liquidArea / liquidPerimeter;
+    double gasHydraulicDiameter = 4.0 * gasArea / (gasPerimeter + interfaceWidth);
+
+    double liquidVelocity = sec.getLiquidVelocity();
+    double gasVelocity = sec.getGasVelocity();
+    double rhoL = sec.getLiquidDensity();
+    double rhoG = sec.getGasDensity();
+
+    double fL = calcDarcyFrictionFactor(rhoL, Math.abs(liquidVelocity), liquidHydraulicDiameter,
+        sec.getLiquidViscosity());
+    double fG = calcDarcyFrictionFactor(rhoG, Math.abs(gasVelocity), gasHydraulicDiameter, sec.getGasViscosity());
+
+    // tau_w = f_Darcy * rho * U|U| / 8 follows from dP/dx = 4*tau_w/D in the single-phase limit.
+    double liquidWallShear = fL * rhoL * liquidVelocity * Math.abs(liquidVelocity) / 8.0;
+    double gasWallShear = fG * rhoG * gasVelocity * Math.abs(gasVelocity) / 8.0;
+
+    return (gasWallShear * gasPerimeter + liquidWallShear * liquidPerimeter) / area;
   }
 
   /**
@@ -7171,6 +7285,30 @@ public class TwoFluidPipe extends Pipeline {
    */
   public boolean isSteadyStateWallClockLimited() {
     return ssWallClockLimited;
+  }
+
+  /**
+   * Whether the friction gradient uses per-phase wall shear where the phases are separated.
+   *
+   * @return true when the separated friction model is active
+   */
+  public boolean isSeparatedFrictionModel() {
+    return useSeparatedFrictionModel;
+  }
+
+  /**
+   * Selects the friction model used for the pressure gradient.
+   *
+   * <p>
+   * The mixture form charges the whole perimeter with a hold-up weighted density. That is right for a dispersed flow,
+   * but in a separated flow it applies a liquid-dominated density to a bore that is mostly gas and over-predicts the
+   * pressure drop badly at high liquid hold-up. Disable only to reproduce the mixture-only behaviour.
+   * </p>
+   *
+   * @param enable true to use per-phase wall shear in stratified and annular flow
+   */
+  public void setSeparatedFrictionModel(boolean enable) {
+    this.useSeparatedFrictionModel = enable;
   }
 
   /**
