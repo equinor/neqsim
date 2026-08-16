@@ -27,12 +27,14 @@ class RecycleAcceptedStateReuseTest {
     private final ProcessSystem process;
     private final Stream feed;
     private final StreamInterface product;
+    private final Splitter splitter;
     private final Recycle recycle;
 
-    Fixture(ProcessSystem process, Stream feed, StreamInterface product, Recycle recycle) {
+    Fixture(ProcessSystem process, Stream feed, StreamInterface product, Splitter splitter, Recycle recycle) {
       this.process = process;
       this.feed = feed;
       this.product = product;
+      this.splitter = splitter;
       this.recycle = recycle;
     }
   }
@@ -81,7 +83,7 @@ class RecycleAcceptedStateReuseTest {
     process.add(recycle);
     process.setProfilingEnabled(true);
 
-    return new Fixture(process, feed, splitter.getSplitStream(0), recycle);
+    return new Fixture(process, feed, splitter.getSplitStream(0), splitter, recycle);
   }
 
   private void run(Fixture fixture, ExecutionMode mode, UUID id) throws Exception {
@@ -165,6 +167,21 @@ class RecycleAcceptedStateReuseTest {
   @Test
   void stableCpaRecycleUsesOnePhysicalConfirmation() throws Exception {
     assertStableReuse(ExecutionMode.SEQUENTIAL, true);
+  }
+
+  @Test
+  void changedSplitterConfigurationRetainsLegacyConfirmationPass() throws Exception {
+    Fixture fixture = createFixture(false, 50000.0);
+    settle(fixture, ExecutionMode.SEQUENTIAL);
+    long recycleCalls = calls(fixture.process, "recycle");
+
+    fixture.splitter.setFlowRates(new double[] {50000.0, 2500.0}, "kg/hr");
+    run(fixture, ExecutionMode.SEQUENTIAL, UUID.randomUUID());
+
+    assertTrue(calls(fixture.process, "recycle") - recycleCalls >= 2L);
+    assertEquals(50000.0, fixture.product.getFlowRate("kg/hr"), 1.0e-6);
+    assertEquals(2500.0, fixture.splitter.getSplitStream(1).getFlowRate("kg/hr"), 1.0e-6);
+    assertTrue(fixture.recycle.solved());
   }
 
   @Test
