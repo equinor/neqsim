@@ -690,42 +690,57 @@ engine on a 73.8 km subsea gas-condensate export line (ID 0.355 m, U = 3 W/m2K, 
 the arrival pressure secant-iterated until its computed inlet equals the 200 bara the NeqSim models
 are given, so every case is compared at the same inlet state.
 
-A rate sweep was re-measured on this line, at 320 sections. Pressure drop, in bar:
+A rate sweep was measured on this line, at 320 sections and default settings. Pressure drop, in bar:
 
 | Rate | OLGA | TwoFluidPipe | Deviation |
 |------|------|--------------|-----------|
-| 4 MSm3/d | 10.15 | 12.15 | +19.7% |
-| 7 MSm3/d | 33.60 | 40.09 | +19.3% |
-| 10 MSm3/d | 78.50 | 96.29 | +22.6% |
-| 12 MSm3/d | 138.72 | pressure floor | not delivered |
+| 4 MSm3/d | 10.15 | 10.73 | +5.7% |
+| 7 MSm3/d | 33.60 | 35.49 | +5.6% |
+| 10 MSm3/d | 78.50 | 79.58 | +1.4% |
+| 12 MSm3/d | 138.72 | 138.70 | −0.0% |
 
-**ΔP is a consistent +19 to +23% against OLGA** across 4–10 MSm3/d. That offset is grid-converged:
-160 sections gives 95.86 bar against 96.29 bar at 320 on the 10 MSm3/d case, a 0.4% spread. It is a
-closure error, not a discretisation error. 12 MSm3/d is delivered by OLGA at 138.72 bar but hits the
-model's pressure floor, which is the same over-prediction expressed as an apparent loss of
-deliverability.
+Arrival temperature tracks to between 0.7 and 3.5 K (8.36 C against 9.06 at 4 MSm3/d, 7.00 against
+8.38 at 10). Maximum liquid holdup is 0.021 against OLGA's 0.023 at 10 MSm3/d and 0.021 against
+0.020 at 12; at the two lowest rates the maximum sits in a single terrain trap section and is higher.
+The rate exponent in $\Delta P \sim \dot m^{\,n}$ is 2.14 / 2.26 / 3.06 against OLGA's
+2.14 / 2.38 / 3.12, so the density feedback along the line is reproduced rather than merely the level
+at one rate. The result is grid-converged: 160 sections gives 79.31 bar against 79.58 at 320.
 
-**Arrival temperature runs cold by the amount the extra pressure drop implies** — 8.27 C against
-9.06 at 4 MSm3/d, 11.23 against 12.86 at 7, and 2.05 against 8.38 at 10, the error growing with the
-ΔP error through the extra Joule–Thomson expansion.
+Adding 10 MW of direct electrical heating raises the arrival temperature by 17.4 K against OLGA's
+19.4 K, and the pressure drop by 15.0 per cent against OLGA's 12.3 per cent, so the energy equation
+feeds the momentum balance as it should.
 
-**Liquid holdup is 2–4x OLGA.** Maximum holdup 0.064–0.072 against OLGA's 0.020–0.030 in the
-terrain-free sections of the sweep, and 0.119 against 0.034 with 15 m3/hr free water (water 0.074 vs
-0.020, oil 0.045 vs 0.013). The phase bookkeeping is sound — gas, oil and water volume fractions sum
-to one and stay in range at every node in both codes — so the discrepancy sits in the slip closure,
-not in the three-phase accounting. The slip ratio is roughly 10 against OLGA's 3, and it is the most
-likely driver of the ΔP offset through the mixture density.
+Three defects had to be fixed to reach this agreement, and each is worth knowing about because the
+symptoms are generic:
 
-Two earlier figures on this page are superseded. The 81.20 bar (+3.4%) dry-line result came from a
-steady-state exit after a single sweep, before the section densities had been fed back into the
-momentum balance; the convergence gate that now catches this also removes the agreement. A later
-revision reported that the default configuration could not converge on this line at all — that was
-the liquid accumulation tracker being integrated once per steady-state sweep, which has since been
-removed from the steady solve (a steady state carries no net accumulation). The table above is
-produced at default settings.
+1. **A time integrator inside a fixed-point sweep.** The steady solve integrated the liquid
+   accumulation tracker once per iteration with a nominal time step. That tracker only ever adds
+   liquid, ratchets its stored volume up to what the sections already hold, and then adds it back on
+   top of the holdup that already contains it, so it has no fixed point. Valley sections climbed to
+   the holdup cap and the solve never settled.
+2. **A correlation overriding a solved momentum balance.** The minimum-slip constraint applied the
+   Beggs and Brill horizontal holdup correlation as a lower bound in every regime. That correlation
+   was fitted to 1 to 1.5 inch air-water loops at near-atmospheric pressure with no-slip fractions at
+   or above 0.01. This line runs near 0.008 in a 14-inch pipe at 200 bara, where the correlation is
+   an extrapolation in diameter, pressure, fluid and liquid loading at once - and it was binding in
+   every section, so the reported holdup was the correlation, about three times OLGA, which carried
+   roughly twenty per cent onto the pressure drop through the mixture density.
+3. **Convergence declared without re-evaluating thermodynamics.** The flash runs every few sweeps,
+   but the flag recording that it had not moved the densities started false, so on a non-flash sweep
+   it read as "nothing moved" when in truth nothing had been checked. The solve could exit after a
+   single sweep on densities it had never revisited, which showed up as a step in pressure drop
+   against terrain amplitude.
 
-These are model-to-model comparisons on one line, and are recorded so the model is not assumed to be
-OLGA-equivalent despite sharing its modelling class.
+The remaining limitation is that liquid holdup and pressure drop are still model-to-model results on
+one line, recorded so the model is not assumed to be OLGA-equivalent despite sharing its modelling
+class. Two cases remain open: local holdup at low rate is dominated by single terrain trap sections,
+and the three-phase free-water case does not converge - with 15 m3/hr of free water the solve is
+wall-clock limited after 4078 iterations at a 1200 s budget and reports 88.64 bar against OLGA's
+104.06, with the pressure drop unchanged between a 300 s and a 1200 s budget, so the criterion is
+stalling on the three-phase liquid split rather than the solution diverging. An earlier revision of
+this page reported 81.20 bar (+3.4%) on the dry line together with a pressure drop that did not
+respond to temperature; that figure came from a steady-state exit after a single sweep and is
+superseded by the table above.
 
 ### Public severe-slugging benchmark
 

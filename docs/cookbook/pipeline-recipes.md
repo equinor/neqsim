@@ -454,11 +454,13 @@ for step in range(600):  # 5 minutes @ 0.5s steps
 | Direct electrical heating | ✅ | ✅ |
 
 **Accuracy caveats.** Benchmarked against OLGA 2025.1 on a 73.8 km subsea gas-condensate export
-line at matched inlet conditions over 4–12 MSm3/d, `TwoFluidPipe` predicts pressure drop **19–23%
-high** on a dry line and about 12% low with free water, with arrival temperature cold by the amount
-that extra expansion implies — and **liquid holdup runs 2–4x OLGA**. Pressure drop also did not
-respond to a 22 K temperature change from direct electrical heating. `PipeBeggsAndBrills` was
-31–75% high on pressure drop for the same cases.
+line at matched inlet conditions over 4–12 MSm3/d, `TwoFluidPipe` predicts pressure drop **within
+6%** and arrival temperature within 0.7 to 3.5 K, and reproduces the rate exponent.
+`PipeBeggsAndBrills` was 31–59% high on pressure drop for the same cases. Local liquid holdup at low
+rate is still dominated by single terrain trap sections, so valley inventory is indicative rather
+than a design number. **The three-phase free-water case does not converge** - with 15 m3/hr of free
+water the solve is wall-clock limited and reports 88.6 bar against OLGA's 104.1, so always check
+`isSteadyStateConverged()` on a water-bearing line.
 See [Known limitations](../wiki/two_fluid_model#known-limitations).
 
 **Always check the steady-state outcome** — `run()` does not throw when the solve fails:
