@@ -60,6 +60,36 @@ class ConvertNotebooksTest(unittest.TestCase):
             )
             self.assertNotIn(f"# {curated_title}", generated_content)
             self.assertEqual(generated_content.count("# Notebook title"), 1)
+
+    def test_converter_preserves_legacy_mercury_guide_contract(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            examples_dir = Path(temp_dir)
+            notebook_path = (
+                examples_dir / "MercuryRemoval_LNG_Pretreatment.ipynb"
+            )
+            markdown_path = (
+                examples_dir / "MercuryRemoval_LNG_Pretreatment.md"
+            )
+            write_notebook(
+                notebook_path,
+                "Mercury Removal in LNG Pre-Treatment — NeqSim Tutorial",
+            )
+
+            convert_all_notebooks(examples_dir)
+
+            generated_content = markdown_path.read_text(encoding="utf-8")
+            self.assertIn(
+                'title: "Mercury Removal in LNG Pre-Treatment"',
+                generated_content,
+            )
+            self.assertIn(
+                "Executable NeqSim mercury-removal screening with transient",
+                generated_content,
+            )
+            self.assertIn("open it in Google Colab", generated_content)
+            body = generated_content.split("\n---\n", 1)[1]
+            self.assertNotRegex(body, r"(?m)^# ")
+
     def test_converter_repairs_legacy_process_equipment_guide(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             examples_dir = Path(temp_dir)

@@ -1,21 +1,17 @@
 ---
 layout: default
-title: "MercuryRemoval LNG Pretreatment"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "Mercury Removal in LNG Pre-Treatment"
+description: "Executable NeqSim mercury-removal screening with transient loading, preliminary design and cost boundaries, and internal verification"
 parent: Examples
 nav_order: 1
 ---
 
-# MercuryRemoval LNG Pretreatment
-
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`MercuryRemoval_LNG_Pretreatment.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/MercuryRemoval_LNG_Pretreatment.ipynb).
 > You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/MercuryRemoval_LNG_Pretreatment.ipynb)
-> or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/MercuryRemoval_LNG_Pretreatment.ipynb).
+> or [open it in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/MercuryRemoval_LNG_Pretreatment.ipynb).
 
 ---
-
-# Mercury Removal in LNG Pre-Treatment — NeqSim Tutorial
 
 ## Purpose and engineering boundary
 
