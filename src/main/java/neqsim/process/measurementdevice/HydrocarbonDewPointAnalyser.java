@@ -1,21 +1,32 @@
 package neqsim.process.measurementdevice;
 
+import java.io.Serializable;
+import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.dynamics.TransientStateParticipant;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * WaterDewPointAnalyser class.
+ * HydrocarbonDewPointAnalyser class.
+ *
+ * <p>
+ * Concrete local instances participate in transient-step transactions. The snapshot restores the stream binding,
+ * reference pressure, method and inherited measurement/alarm state. Descendants and online-signal operation remain
+ * fail-closed.
  *
  * @author ESOL
  * @version $Id: $Id
  */
-public class HydrocarbonDewPointAnalyser extends StreamMeasurementDeviceBaseClass {
+public class HydrocarbonDewPointAnalyser extends StreamMeasurementDeviceBaseClass
+    implements TransientStateParticipant<HydrocarbonDewPointAnalyser.HydrocarbonDewPointAnalyserState> {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Persistent identity used only for transient transaction provenance. */
+  private String transientStateParticipantId = UUID.randomUUID().toString();
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(WaterDewPointAnalyser.class);
 
@@ -108,5 +119,70 @@ public class HydrocarbonDewPointAnalyser extends StreamMeasurementDeviceBaseClas
    */
   public void setMethod(String method) {
     this.method = method;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateIdentity() {
+    if (transientStateParticipantId == null || transientStateParticipantId.trim().isEmpty()) {
+      transientStateParticipantId = UUID.randomUUID().toString();
+    }
+    return "measurement:hydrocarbon-dew-point:" + transientStateParticipantId;
+  }
+
+  /**
+   * The snapshot is complete only for the concrete local analyser.
+   *
+   * @return blocking diagnostic for descendants or external online-signal operation, otherwise {@code null}
+   */
+  @Override
+  public String getTransientStateCoverageIssue() {
+    if (getClass() != HydrocarbonDewPointAnalyser.class) {
+      return "hydrocarbon-dew-point-analyser subclass " + getClass().getName()
+          + " must provide a snapshot that includes subclass-owned mutable state";
+    }
+    return getMeasurementTransientStateCoverageIssue();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public HydrocarbonDewPointAnalyserState captureTransientState() {
+    return new HydrocarbonDewPointAnalyserState(getTransientStateIdentity(), stream, referencePressure, method,
+        captureMeasurementDeviceTransientState());
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreTransientState(HydrocarbonDewPointAnalyserState snapshot) {
+    if (snapshot == null) {
+      throw new IllegalArgumentException("Hydrocarbon-dew-point analyser transient snapshot cannot be null");
+    }
+    if (!getTransientStateIdentity().equals(snapshot.stateIdentity)) {
+      throw new IllegalArgumentException(
+          "Hydrocarbon-dew-point analyser snapshot identity does not match " + getTransientStateIdentity());
+    }
+    stream = snapshot.stream;
+    referencePressure = snapshot.referencePressure;
+    method = snapshot.method;
+    restoreMeasurementDeviceTransientState(snapshot.measurementState);
+  }
+
+  /** Immutable hydrocarbon-dew-point-analyser rollback point. */
+  public static final class HydrocarbonDewPointAnalyserState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String stateIdentity;
+    private final StreamInterface stream;
+    private final double referencePressure;
+    private final String method;
+    private final MeasurementDeviceTransientState measurementState;
+
+    private HydrocarbonDewPointAnalyserState(String stateIdentity, StreamInterface stream, double referencePressure,
+        String method, MeasurementDeviceTransientState measurementState) {
+      this.stateIdentity = stateIdentity;
+      this.stream = stream;
+      this.referencePressure = referencePressure;
+      this.method = method;
+      this.measurementState = measurementState;
+    }
   }
 }

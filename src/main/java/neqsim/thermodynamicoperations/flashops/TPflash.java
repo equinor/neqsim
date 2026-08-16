@@ -649,6 +649,7 @@ public class TPflash extends Flash {
     int minGibbsPhase = 0;
     double minimumGibbsEnergy = 0;
 
+    BalancedTwoPhaseState balancedWaterRichInput = balancedWaterRichInputBeforeOrdinaryIteration();
     system.init(0);
     prepareMultiphaseEndpointRescueSeed();
     if (gammaPhiModel != null) {
@@ -1114,6 +1115,8 @@ public class TPflash extends Flash {
     refineInvalidNeutralTwoPhaseEndpoint();
     rescueLowerGibbsNeutralEndpoint();
     rescueSinglePhaseMultiphaseEndpoint();
+    restoreBalancedAqueousReferenceAfterInvalidPhaseRemoval(balancedWaterRichInput);
+    restoreLowerGibbsReferenceAfterSinglePhaseCollapse(balancedWaterRichInput);
     normalizeSourGasSinglePhaseEndpoint();
 
     // Final chemical equilibrium call after all phase reordering
@@ -1404,7 +1407,9 @@ public class TPflash extends Flash {
    * concentrates water. Full recursive flashing is avoided. A multiphase-enabled water-rich gas/aqueous endpoint uses
    * one cold ordinary candidate; a genuine oil/aqueous liquid-liquid endpoint remains on the multiphase path. A
    * water-rich multiphase endpoint that collapsed to one hydrocarbon phase also uses a cold ordinary candidate, whose
-   * invalid two-phase cubic-root split may seed the multiphase solver. For an ordinary endpoint, an existing invalid
+   * invalid two-phase cubic-root split may seed the multiphase solver. An ordinary neutral non-CPA water-rich
+   * asymmetric feed retains its pre-iteration state for this reciprocal calculation; cloning the final endpoint can
+   * retain the collapsed phase/root history and miss the cold phase set. For an ordinary endpoint, an existing invalid
    * two-phase split is retained as the multiphase phase-set seed when the existing cold candidate is rejected. Trying
    * the cold candidate first preserves its gas/oil cubic-root classification whenever it already reaches the same
    * feasible equilibrium. The nested candidates cannot start a reciprocal fallback cycle. A candidate replaces the
@@ -1458,7 +1463,10 @@ public class TPflash extends Flash {
     boolean ordinaryFallback = (gasAqueousMultiphaseEndpoint || singlePhaseWaterRichMultiphaseEndpoint)
         && waterFeedFraction >= WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT;
     SystemInterface candidate;
-    if (ordinaryFallback) {
+    if (!system.doMultiPhaseCheck() && multiphaseEndpointRescueSeed != null) {
+      candidate = multiphaseEndpointRescueSeed;
+      multiphaseEndpointRescueSeed = null;
+    } else if (ordinaryFallback) {
       double totalMoles = system.getTotalNumberOfMoles();
       double[] feedComposition = system.getzvector();
       candidate = system.phaseToSystem(0);
@@ -2296,23 +2304,78 @@ public class TPflash extends Flash {
    * <p>
    * Once a stability trial has collapsed a phase, cloning that endpoint also copies its local cubic-root and
    * phase-storage history. A later retry can then reproduce the same homogeneous minimum even though a cold flash finds
-   * a lower-Gibbs split. The seed is therefore captured before the two-phase iteration, but only for multiphase flashes
-   * or ordinary sour-gas flashes whose deterministic asymmetric and Wilson endpoint screens justify a possible retry.
-   * It is consumed at most once and cleared when the operation returns. Strong hydrocarbon Wilson splits retain the
-   * existing nearby-temperature continuation instead, so ordinary non-sour-gas flashes allocate nothing.
+   * a lower-Gibbs split. The seed is therefore captured before the two-phase iteration for multiphase flashes, ordinary
+   * sour-gas flashes whose deterministic asymmetric and Wilson endpoint screens justify a possible retry, and ordinary
+   * non-CPA water-rich asymmetric feeds whose post-flash clone may otherwise retain a collapsed phase history. It is
+   * consumed at most once and cleared when the operation returns. Ordinary dry, CPA, chemical, ionic, solid, wax, and
+   * non-asymmetric water-bearing flashes remain outside the additional cold-seed allocation.
    * </p>
    */
   private void prepareMultiphaseEndpointRescueSeed() {
     multiphaseEndpointRescueSeed = null;
     boolean ordinarySourGasCandidate = !system.doMultiPhaseCheck() && isSourGasConsistencyRefinementCase();
-    if ((!system.doMultiPhaseCheck() && !ordinarySourGasCandidate) || system.isChemicalSystem() || system.hasIons()
-        || solidCheck || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck() || directGammaPhiModel != null
-        || hybridEosGeFlashModel != null || system.getPhase(0).getNumberOfComponents() <= 1
-        || !hasPotentialAsymmetricNeutralInstability(MULTIPHASE_ENDPOINT_CRITICAL_TEMPERATURE_MARGIN)
-        || !(hasPotentialMultiphaseEndpoint(PhaseType.GAS) || hasPotentialMultiphaseEndpoint(PhaseType.LIQUID))) {
+    boolean ordinaryWaterRichCandidate = hasPotentialWaterRichColdSeedInstability();
+    if ((!system.doMultiPhaseCheck() && !ordinarySourGasCandidate && !ordinaryWaterRichCandidate)
+        || system.isChemicalSystem() || system.hasIons() || solidCheck || system.doSolidPhaseCheck()
+        || system.isMultiphaseWaxCheck() || directGammaPhiModel != null || hybridEosGeFlashModel != null
+        || system.getPhase(0).getNumberOfComponents() <= 1
+        || (!ordinaryWaterRichCandidate && (!hasPotentialAsymmetricNeutralInstability(
+            MULTIPHASE_ENDPOINT_CRITICAL_TEMPERATURE_MARGIN)
+            || !(hasPotentialMultiphaseEndpoint(PhaseType.GAS) || hasPotentialMultiphaseEndpoint(PhaseType.LIQUID))))) {
       return;
     }
     multiphaseEndpointRescueSeed = system.clone();
+  }
+
+  /**
+   * Screens an ordinary cubic-EOS water-rich asymmetric feed for a cold reciprocal-stability seed.
+   *
+   * <p>
+   * This screen mirrors the existing neutral liquid-liquid composition/critical-temperature gate while permitting the
+   * water component that defines this fallback. A substantial non-hydrocarbon fraction and a condensable hydrocarbon
+   * are both required, so ordinary hydrocarbon/water process flashes do not allocate a seed merely because water is
+   * present. The later multiphase solve and strict feasibility, equilibrium, and Gibbs gates decide stability.
+   * </p>
+   *
+   * @return true when retaining one cold pre-iteration state is justified
+   */
+  private boolean hasPotentialWaterRichColdSeedInstability() {
+    if (system.doMultiPhaseCheck()) {
+      return false;
+    }
+    String modelName = system.getModelName();
+    if (modelName != null && modelName.contains("CPA")) {
+      return false;
+    }
+    double waterFraction = 0.0;
+    double nonHydrocarbonFraction = 0.0;
+    double minimumCriticalTemperature = Double.POSITIVE_INFINITY;
+    double maximumCriticalTemperature = Double.NEGATIVE_INFINITY;
+    double condensableHydrocarbonFraction = 0.0;
+    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
+      neqsim.thermo.component.ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
+      double feedFraction = component.getz();
+      if (feedFraction <= LIQUID_LIQUID_ACTIVE_COMPONENT_LIMIT) {
+        continue;
+      }
+      if ("water".equalsIgnoreCase(component.getComponentName())) {
+        waterFraction += feedFraction;
+        nonHydrocarbonFraction += feedFraction;
+        continue;
+      }
+      double criticalTemperature = component.getTC();
+      minimumCriticalTemperature = Math.min(minimumCriticalTemperature, criticalTemperature);
+      maximumCriticalTemperature = Math.max(maximumCriticalTemperature, criticalTemperature);
+      if (!component.isHydrocarbon()) {
+        nonHydrocarbonFraction += feedFraction;
+      } else if (criticalTemperature > system.getTemperature() + MULTIPHASE_ENDPOINT_CRITICAL_TEMPERATURE_MARGIN) {
+        condensableHydrocarbonFraction += feedFraction;
+      }
+    }
+    return waterFraction >= WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT
+        && nonHydrocarbonFraction >= LIQUID_LIQUID_NON_HYDROCARBON_FRACTION_LIMIT
+        && condensableHydrocarbonFraction >= WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT
+        && maximumCriticalTemperature - minimumCriticalTemperature >= LIQUID_LIQUID_CRITICAL_TEMPERATURE_SPAN;
   }
 
   /**
@@ -2711,6 +2774,36 @@ public class TPflash extends Flash {
       return null;
     }
     return new BalancedTwoPhaseState(system);
+  }
+
+  /**
+   * Captures a feasible water-rich ordinary input before the two-phase iteration mutates it.
+   *
+   * <p>
+   * Repeating an ordinary flash on an already converged OIL+AQUEOUS state can collapse the split before the reciprocal
+   * stability fallback runs. The retained state is eligible only when it is independently balanced and equilibrated at
+   * the current temperature, pressure, and composition. Changed-state inputs that are no longer equilibrium therefore
+   * cannot be restored as stale results.
+   * </p>
+   *
+   * @return balanced current-state snapshot, or {@code null} when repeat protection is not applicable
+   */
+  private BalancedTwoPhaseState balancedWaterRichInputBeforeOrdinaryIteration() {
+    if (system.doMultiPhaseCheck() || system.getNumberOfPhases() != 2 || !system.hasPhaseType(PhaseType.AQUEOUS)
+        || system.isChemicalSystem() || system.hasIons() || solidCheck || system.doSolidPhaseCheck()
+        || system.isMultiphaseWaxCheck()) {
+      return null;
+    }
+    SystemInterface candidate = system.clone();
+    try {
+      candidate.init(1);
+      if (isBalancedEquilibriumCandidate(candidate)) {
+        return new BalancedTwoPhaseState(candidate);
+      }
+    } catch (Exception ex) {
+      logger.debug("Water-rich input repeat snapshot failed: {}", ex.getMessage());
+    }
+    return null;
   }
 
   /**

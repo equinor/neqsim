@@ -25,8 +25,9 @@
 		<checkstyle.config.location>.config/checkstyle_neqsim.xml</checkstyle.config.location>
 		<skipFlattening>false</skipFlattening>
 		<argLine></argLine>
-		<!-- Exclude slow tests by default. Run with -DexcludedTestGroups= to include all tests -->
-		<excludedTestGroups>slow</excludedTestGroups>
+		<!-- Exclude slow and benchmark tests by default. Run with -DexcludedTestGroups= to include all tests.
+		     "benchmark" marks assertion-free profiling classes that only emit reports; they are never run in CI. -->
+		<excludedTestGroups>slow,benchmark</excludedTestGroups>
 	</properties>
 	<licenses>
 		<license>

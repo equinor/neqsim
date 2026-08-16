@@ -28,8 +28,9 @@
 		<skipFlattening>false</skipFlattening>
 		<argLine></argLine>
 		<jvm.module.opens.argLine></jvm.module.opens.argLine>
-		<!-- Exclude slow tests by default. Run with -DexcludedTestGroups= to include all tests -->
-		<excludedTestGroups>slow</excludedTestGroups>
+		<!-- Exclude slow and benchmark tests by default. Run with -DexcludedTestGroups= to include all tests.
+		     "benchmark" marks assertion-free profiling classes that only emit reports; they are never run in CI. -->
+		<excludedTestGroups>slow,benchmark</excludedTestGroups>
 	</properties>
 	<licenses>
 		<license>
@@ -50,13 +51,13 @@
 	<repositories>
 		<repository>
 			<id>central</id>
-			<url>https://repo1.maven.org/maven2/</url>
+			<url>https://repo.maven.apache.org/maven2/</url>
 		</repository>
 	</repositories>
 	<pluginRepositories>
 		<pluginRepository>
 			<id>central</id>
-			<url>https://repo1.maven.org/maven2/</url>
+			<url>https://repo.maven.apache.org/maven2/</url>
 		</pluginRepository>
 	</pluginRepositories>
 

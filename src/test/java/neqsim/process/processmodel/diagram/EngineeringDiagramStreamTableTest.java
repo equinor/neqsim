@@ -36,10 +36,11 @@ class EngineeringDiagramStreamTableTest {
     assertTrue(table.isValid());
     assertFalse(table.getRows().isEmpty());
     Row row = firstCompleteRow(table);
-    assertEquals(3, row.getValues().size());
+    assertEquals(4, row.getValues().size());
     assertValue(row, Quantity.TEMPERATURE, "K", "THERMODYNAMIC_ABSOLUTE");
     assertValue(row, Quantity.PRESSURE, "bara", "ABSOLUTE");
     assertValue(row, Quantity.MASS_FLOW, "kg/s", "MASS");
+    assertValue(row, Quantity.SPECIFIC_ENTHALPY, "J/kg", "MASS_SPECIFIC");
     assertEquals("NORMAL-01", table.getDesignCaseId());
     assertEquals(documents.getSourceGraphFingerprint(), table.getSourceGraphFingerprint());
     assertEquals(documentJson, documents.toJson());

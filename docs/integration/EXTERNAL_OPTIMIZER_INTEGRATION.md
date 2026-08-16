@@ -938,6 +938,61 @@ operating approval.
 
 Use independent models for parallel candidates.
 
+### Analyze sampled bottleneck relief without another simulation
+
+After a fixed-total search, use the trace-only analyzer to retain exact hard-constraint identity,
+required in-unit relief, and action movement from the best feasible allocation. The call performs
+no model evaluation or mutation.
+
+```python
+BottleneckAnalyzer = (
+    jneqsim.process.util.optimizer.ProcessModelAllocationBottleneckAnalyzer
+)
+
+analyzer = BottleneckAnalyzer(
+    "field-allocation-relief",
+    "Field allocation bottleneck relief",
+    "approved allocation study revision A",
+)
+analysis = analyzer.analyze(search)
+
+for opportunity in analysis.getOpportunities():
+    print(
+        opportunity.getCandidateSequenceIndex(),
+        list(opportunity.getCandidateValues()),
+        list(opportunity.getActionDeltasFromBestFeasible()),
+        opportunity.getObjectiveGain(),
+        opportunity.getObjective().getUnit(),
+        opportunity.getEvidenceClass(),
+    )
+    for relief in opportunity.getConstraintRelief():
+        constraint = relief.getConstraint()
+        print(
+            constraint.getName(),
+            constraint.getAreaName(),
+            constraint.getEquipmentName(),
+            relief.getRequiredMarginRelief(),
+            relief.getUnit(),
+        )
+```
+
+`CandidateSetEvaluationResult.getObjectiveEvidence()` and
+`getConstraintEvidence()` return fresh immutable lists in evaluator registration order. Each row
+freezes the definition metadata together with the sampled raw/minimizer objective or
+constraint value/signed margin. This prevents a serialized trace from being joined back to mutable
+evaluator definitions.
+
+An opportunity requires a converged candidate, verified complete restoration and baseline
+reconvergence, a finite direction-aware improvement above the search tolerance, and at least one
+finite violated hard constraint. Installed-capacity relief is calculated from exact current and
+design values in the hydraulic unit; a general constraint uses `max(0, -margin)` in its declared
+unit. Soft violations are not reported, raw relief is never compared across unlike units, and
+missing/non-finite/out-of-validity hydraulic evidence produces `EVIDENCE_LIMITED`.
+
+The ranking is over the common selected-objective unit and finite sampled points only. It is
+non-causal evidence, not a capacity-sizing answer, global optimum, KKT multiplier, shadow price,
+production-loss estimate, economic value, or operating approval.
+
 ### Export Problem Definition
 
 ```python

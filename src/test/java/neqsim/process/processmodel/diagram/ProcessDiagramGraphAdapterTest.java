@@ -226,14 +226,16 @@ class ProcessDiagramGraphAdapterTest {
     assertEquals(0, countNodeKind(topologyOnly, EngineeringNode.Kind.DESIGN_CASE));
     assertEquals(0, countNodeKind(topologyOnly, EngineeringNode.Kind.CALCULATION));
     assertEquals(1, countNodeKind(enriched, EngineeringNode.Kind.DESIGN_CASE));
-    assertEquals(3, countNodeKind(enriched, EngineeringNode.Kind.CALCULATION));
+    assertEquals(4, countNodeKind(enriched, EngineeringNode.Kind.CALCULATION));
 
     EngineeringNode pressure = findOperatingValue(enriched, "operating feed", "pressure");
     EngineeringNode temperature = findOperatingValue(enriched, "operating feed", "temperature");
     EngineeringNode massFlow = findOperatingValue(enriched, "operating feed", "massFlow");
+    EngineeringNode specificEnthalpy = findOperatingValue(enriched, "operating feed", "specificEnthalpy");
     assertNotNull(pressure);
     assertNotNull(temperature);
     assertNotNull(massFlow);
+    assertNotNull(specificEnthalpy);
     assertEquals(40.0, ((Number) pressure.getProperties().get("resultValue")).doubleValue(), 1.0e-12);
     assertEquals("bara", pressure.getProperties().get("resultUnit"));
     assertEquals("ABSOLUTE", pressure.getProperties().get("quantityBasis"));
@@ -241,6 +243,8 @@ class ProcessDiagramGraphAdapterTest {
     assertEquals("K", temperature.getProperties().get("resultUnit"));
     assertEquals(1000.0 / 3600.0, ((Number) massFlow.getProperties().get("resultValue")).doubleValue(), 1.0e-12);
     assertEquals("kg/s", massFlow.getProperties().get("resultUnit"));
+    assertEquals("J/kg", specificEnthalpy.getProperties().get("resultUnit"));
+    assertEquals("MASS_SPECIFIC", specificEnthalpy.getProperties().get("quantityBasis"));
     assertEquals("NORMAL-001", pressure.getProperties().get("designCaseId"));
     assertEquals("SIMULATION_RESULT", pressure.getProvenance().get(0).getSourceType());
     assertEquals("NORMAL-001", pressure.getProvenance().get(0).getDesignCaseId());
@@ -257,7 +261,7 @@ class ProcessDiagramGraphAdapterTest {
         "PLANT-MULTI-OPERATING", "A", "NORMAL-001");
 
     assertEquals(1, countNodeKind(result.getGraph(), EngineeringNode.Kind.DESIGN_CASE));
-    assertEquals(3, countNodeKind(result.getGraph(), EngineeringNode.Kind.CALCULATION));
+    assertEquals(4, countNodeKind(result.getGraph(), EngineeringNode.Kind.CALCULATION));
     assertNotNull(findOperatingValue(result.getGraph(), "deterministic feed", "pressure"));
     assertTrue(EngineeringPackageValidator.validateGraph(result.getGraph()).isValid());
   }
