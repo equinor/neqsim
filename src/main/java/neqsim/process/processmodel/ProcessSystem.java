@@ -5213,8 +5213,8 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * <p>
    * Duplicate registrations of the same Java object are counted once. State identities must be non-empty and unique
-   * among the participating objects. Recycle execution remains blocked until the shared {@link RecycleController} has
-   * an in-place snapshot contract in addition to each recycle unit's own state contract.
+   * among the participating objects. Shared {@link RecycleController} orchestration is captured separately and is not
+   * included in the process-element or participant counts; each recycle unit must still provide its own state contract.
    * </p>
    *
    * @return immutable quantitative coverage report
@@ -5266,10 +5266,6 @@ public class ProcessSystem extends SimulationBaseClass {
       }
     }
 
-    if (recycleController != null && recycleController.getRecycleCount() > 0) {
-      blockingIssues.add("shared RecycleController owns mutable convergence state for "
-          + recycleController.getRecycleCount() + " recycle unit(s) but has no in-place transient snapshot contract");
-    }
     if (parallelTransientEnabled) {
       blockingIssues.add("parallel transient execution may leave same-level workers running after one worker fails; "
           + "rollback cannot start until worker quiescence is guaranteed");
@@ -5319,9 +5315,12 @@ public class ProcessSystem extends SimulationBaseClass {
       participantCheckpoints.add(new TransientParticipantCheckpoint(participant, stateIdentity, snapshot));
     }
 
+    RecycleController capturedRecycleController = recycleController;
+    RecycleController.Snapshot recycleControllerSnapshot =
+        capturedRecycleController == null ? null : capturedRecycleController.captureTransientState();
     ProcessSystemStepTransaction transaction = new ProcessSystemStepTransaction(elements, participantCheckpoints,
-        eventScheduler, eventScheduler == null ? null : eventScheduler.snapshot(),
-        new ArrayList<>(alarmManager.getHistory()));
+        capturedRecycleController, recycleControllerSnapshot, eventScheduler,
+        eventScheduler == null ? null : eventScheduler.snapshot(), new ArrayList<>(alarmManager.getHistory()));
     activeTransientStepTransaction = transaction;
     return transaction;
   }
@@ -5463,17 +5462,23 @@ public class ProcessSystem extends SimulationBaseClass {
     private final double capturedPreviousTotalMass = previousTotalMass;
     private final double capturedMassBalanceError = massBalanceError;
     private final ProcessSystem capturedInitialStateSnapshot = initialStateSnapshot;
+    private final RecycleController capturedRecycleController;
+    private final RecycleController.Snapshot capturedRecycleControllerSnapshot;
     private final EventScheduler capturedEventScheduler;
     private final EventScheduler.Snapshot capturedEventSchedulerSnapshot;
     private final List<neqsim.process.alarm.AlarmEvent> capturedAlarmHistory;
     private Status status = Status.OPEN;
 
     private ProcessSystemStepTransaction(List<ProcessElementInterface> elementIdentities,
-        List<TransientParticipantCheckpoint> participantCheckpoints, EventScheduler capturedEventScheduler,
+        List<TransientParticipantCheckpoint> participantCheckpoints,
+        RecycleController capturedRecycleController,
+        RecycleController.Snapshot capturedRecycleControllerSnapshot, EventScheduler capturedEventScheduler,
         EventScheduler.Snapshot capturedEventSchedulerSnapshot,
         List<neqsim.process.alarm.AlarmEvent> capturedAlarmHistory) {
       this.elementIdentities = new ArrayList<ProcessElementInterface>(elementIdentities);
       this.participantCheckpoints = new ArrayList<TransientParticipantCheckpoint>(participantCheckpoints);
+      this.capturedRecycleController = capturedRecycleController;
+      this.capturedRecycleControllerSnapshot = capturedRecycleControllerSnapshot;
       this.capturedEventScheduler = capturedEventScheduler;
       this.capturedEventSchedulerSnapshot = capturedEventSchedulerSnapshot;
       this.capturedAlarmHistory = new ArrayList<neqsim.process.alarm.AlarmEvent>(capturedAlarmHistory);
@@ -5528,6 +5533,20 @@ public class ProcessSystem extends SimulationBaseClass {
             failure = accumulateTransactionFailure(failure,
                 "Failed to restore transient state participant '" + checkpoint.stateIdentity + "'", ex);
           }
+        }
+
+        try {
+          if (recycleController != capturedRecycleController) {
+            failure = accumulateTransactionFailure(failure,
+                "RecycleController identity changed during transient transaction",
+                new IllegalStateException("Expected the captured RecycleController instance"));
+            recycleController = capturedRecycleController;
+          }
+          if (capturedRecycleController != null) {
+            capturedRecycleController.restoreTransientState(capturedRecycleControllerSnapshot);
+          }
+        } catch (RuntimeException ex) {
+          failure = accumulateTransactionFailure(failure, "Failed to restore RecycleController state", ex);
         }
 
         try {
@@ -5610,6 +5629,9 @@ public class ProcessSystem extends SimulationBaseClass {
           return new IllegalStateException("Transient state identity changed during transaction from '"
               + checkpoint.stateIdentity + "' to '" + currentIdentity + "'");
         }
+      }
+      if (recycleController != capturedRecycleController) {
+        return new IllegalStateException("RecycleController identity changed during transient transaction");
       }
       return null;
     }
