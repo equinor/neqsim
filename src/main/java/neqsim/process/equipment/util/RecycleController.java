@@ -1,7 +1,9 @@
 package neqsim.process.equipment.util;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,6 +29,9 @@ public class RecycleController implements java.io.Serializable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
+  /** Fraction of each configured tolerance accepted for reusing a prior recycle state. */
+  private static final double ACCEPTED_STATE_TOLERANCE_FRACTION = 1.0e-6;
+
   ArrayList<Recycle> recycleArray = new ArrayList<Recycle>();
   ArrayList<Integer> priorityArray = new ArrayList<Integer>();
   private int currentPriorityLevel = 100;
@@ -38,6 +43,9 @@ public class RecycleController implements java.io.Serializable {
 
   /** Whether to use coordinated acceleration across all recycles at current priority. */
   private boolean useCoordinatedAcceleration = false;
+
+  /** Recycles whose previously accepted state can seed the first observation of this solve. */
+  private transient Map<Recycle, Boolean> acceptedRecycleSeeds = new IdentityHashMap<>();
 
   /**
    * Constructor for RecycleController.
@@ -51,8 +59,13 @@ public class RecycleController implements java.io.Serializable {
   public void init() {
     minimumPriorityLevel = 100;
     maximumPriorityLevel = 100;
+    acceptedRecycleSeeds().clear();
     for (Recycle recyc : recycleArray) {
+      boolean hadAcceptedState = hasReusableAcceptedState(recyc);
       recyc.resetIterations();
+      if (hadAcceptedState) {
+        acceptedRecycleSeeds().put(recyc, Boolean.TRUE);
+      }
       if (recyc.getPriority() < minimumPriorityLevel) {
         minimumPriorityLevel = recyc.getPriority();
       }
@@ -94,6 +107,9 @@ public class RecycleController implements java.io.Serializable {
    */
   public boolean doSolveRecycle(Recycle recycle) {
     if (recycle.getPriority() == getCurrentPriorityLevel()) {
+      if (recycle.iterations == 0 && acceptedRecycleSeeds().containsKey(recycle)) {
+        recycle.iterations = 1;
+      }
       return true;
     } else {
       return false;
@@ -199,7 +215,67 @@ public class RecycleController implements java.io.Serializable {
         return false;
       }
     }
+    normalizeAcceptedRecycleSeeds();
     return true;
+  }
+
+  /**
+   * Removes the internal accepted-state seed after a successful solve while retaining the legacy externally reported
+   * minimum of two recycle observations.
+   */
+  private void normalizeAcceptedRecycleSeeds() {
+    Map<Recycle, Boolean> seeds = acceptedRecycleSeeds();
+    for (Recycle recycle : seeds.keySet()) {
+      if (recycle.iterations > 0) {
+        recycle.iterations = Math.max(2, recycle.iterations - 1);
+      }
+    }
+    seeds.clear();
+  }
+
+  /**
+   * Returns the transient identity map, recreating it after deserialization.
+   *
+   * @return accepted recycle seeds for the active solve
+   */
+  private Map<Recycle, Boolean> acceptedRecycleSeeds() {
+    if (acceptedRecycleSeeds == null) {
+      acceptedRecycleSeeds = new IdentityHashMap<>();
+    }
+    return acceptedRecycleSeeds;
+  }
+
+  /**
+   * Checks whether a previously converged recycle is close enough to its fixed point to reuse its accepted state.
+   *
+   * <p>
+   * Merely satisfying the user-configured convergence tolerance is not sufficient: a second observation can still move
+   * process results measurably. Reuse is therefore limited to finite residuals within one millionth of every configured
+   * tolerance (with a numerical floor), which preserves the legacy confirmation pass for ordinary tolerance-level
+   * convergence.
+   * </p>
+   *
+   * @param recycle recycle to inspect before its iteration counter is reset
+   * @return true when its accepted state is effectively unchanged
+   */
+  private static boolean hasReusableAcceptedState(Recycle recycle) {
+    return recycle.getIterations() > 1 && recycle.solved()
+        && isWithinReuseTolerance(recycle.getErrorFlow(), recycle.getFlowTolerance())
+        && isWithinReuseTolerance(recycle.getErrorComposition(), recycle.getCompositionTolerance())
+        && isWithinReuseTolerance(recycle.getErrorTemperature(), recycle.getTemperatureTolerance())
+        && isWithinReuseTolerance(recycle.getErrorPressure(), recycle.getPressureTolerance());
+  }
+
+  /**
+   * Tests one stored residual against the conservative reuse threshold.
+   *
+   * @param error stored absolute residual
+   * @param tolerance configured convergence tolerance
+   * @return true when the residual is finite and effectively zero
+   */
+  private static boolean isWithinReuseTolerance(double error, double tolerance) {
+    double reuseTolerance = Math.max(1.0e-12, Math.abs(tolerance) * ACCEPTED_STATE_TOLERANCE_FRACTION);
+    return Double.isFinite(error) && Math.abs(error) <= reuseTolerance;
   }
 
   /**
@@ -242,6 +318,7 @@ public class RecycleController implements java.io.Serializable {
    */
   public void clear() {
     recycleArray.clear();
+    acceptedRecycleSeeds().clear();
     priorityArray.clear();
     minimumPriorityLevel = 100;
     maximumPriorityLevel = 100;
