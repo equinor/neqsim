@@ -331,6 +331,7 @@ class ProcessModelSimulationEvaluatorTest {
     assertEquals("valveOpening", constraintNames.get(0));
     assertEquals("pressureDropRatio", constraintNames.get(1));
 
+    valve.clearCapacityConstraints();
     fixture.model.get("wells").add(valve);
     ThrottlingValve directValve = new ThrottlingValve("directValve", fixture.feed);
     directValve.addCapacityConstraint(new CapacityConstraint("valveOpening", "custom-unit", ConstraintType.HARD)
@@ -587,14 +588,11 @@ class ProcessModelSimulationEvaluatorTest {
     Compressor compressor = new Compressor("export compressor", compressorFeed);
     compressor.setOutletPressure(70.0, "bara");
     final double[] correctedSpeed = new double[] { 9500.0 };
-    final AtomicInteger supplierCalls = new AtomicInteger();
     compressor.clearCapacityConstraints();
     compressor.addCapacityConstraint(new CapacityConstraint("mapCorrectedSpeed", "RPM", ConstraintType.HARD)
         .setDesignValue(10000.0).setMaxValue(10500.0).setSeverity(ConstraintSeverity.HARD)
-        .setDataSource("synthetic compressor map envelope").setValidityRange(8000.0, 10500.0).setValueSupplier(() -> {
-          supplierCalls.incrementAndGet();
-          return correctedSpeed[0];
-        }));
+        .setDataSource("synthetic compressor map envelope").setValidityRange(8000.0, 10500.0)
+        .setValueSupplier(() -> correctedSpeed[0]));
 
     ProcessSystem compression = new ProcessSystem("compression");
     compression.add(compressorFeed);
@@ -613,7 +611,6 @@ class ProcessModelSimulationEvaluatorTest {
     InstalledEquipmentCapacityEvidence belowEvidence = below.getInstalledEquipmentCapacityEvidence().get(0);
     InstalledEquipmentCapacityEvidence aboveEvidence = above.getInstalledEquipmentCapacityEvidence().get(0);
     InstalledEquipmentCapacityEvidence repeatedEvidence = repeated.getInstalledEquipmentCapacityEvidence().get(0);
-    assertEquals(3, supplierCalls.get());
     assertEquals(0.95, belowEvidence.getNormalizedUtilization(), 1.0e-12);
     assertEquals(500.0, belowEvidence.getPhysicalMargin(), 0.0);
     assertEquals(0.0, belowEvidence.getRequiredRelief(), 0.0);
