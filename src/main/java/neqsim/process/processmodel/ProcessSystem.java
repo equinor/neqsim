@@ -3111,8 +3111,8 @@ public class ProcessSystem extends SimulationBaseClass {
           }
         }
       }
-    } while (((!isConverged || (iter < 2 && hasRecycle && (requireRecycleConfirmation || hasAutoDeactivatedRecycle()))) && iter < 100) && !runStep
-        && !Thread.currentThread().isInterrupted());
+    } while (((!isConverged || (iter < 2 && hasRecycle && (requireRecycleConfirmation || hasAutoDeactivatedRecycle())))
+        && iter < 100) && !runStep && !Thread.currentThread().isInterrupted());
 
     // Publish simulation complete event
     publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.SIMULATION_COMPLETE, getName(),
@@ -4449,8 +4449,8 @@ public class ProcessSystem extends SimulationBaseClass {
       double recycleError = recycleController.getMaxResidualError();
       notifyIterationComplete(iter, isConverged, recycleError);
 
-    } while (((!isConverged || (iter < 2 && hasRecycle && (requireRecycleConfirmation || hasAutoDeactivatedRecycle()))) && iter < 100) && !runStep
-        && !Thread.currentThread().isInterrupted());
+    } while (((!isConverged || (iter < 2 && hasRecycle && (requireRecycleConfirmation || hasAutoDeactivatedRecycle())))
+        && iter < 100) && !runStep && !Thread.currentThread().isInterrupted());
 
     // Notify simulation complete
     notifySimulationComplete(iter, isConverged);
