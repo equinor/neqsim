@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.dynamics.TransientStepTransaction;
 import neqsim.process.dynamics.TransientTransactionCoverage;
 import neqsim.process.equipment.util.Recycle;
+import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -97,6 +98,42 @@ class StreamTransientStateTransactionTest extends neqsim.NeqSimTest {
     assertEquals(0.0, process.getTime(), TOLERANCE);
     assertEquals(0.0, feed.getTime(), TOLERANCE);
     assertEquals(0.0, recycle.getTime(), TOLERANCE);
+  }
+
+  @Test
+  void processModelCoordinatesStreamAndRecycleAreaRollback() {
+    Stream boundary = stream("boundary");
+    ProcessSystem boundaryArea = new ProcessSystem("boundary area");
+    boundaryArea.add(boundary);
+
+    Stream recycleInput = stream("area recycle input");
+    Stream recycleOutput = stream("area recycle output");
+    Recycle recycle = new Recycle("area recycle");
+    recycle.addStream(recycleInput);
+    recycle.setOutletStream(recycleOutput);
+    ProcessSystem recycleArea = new ProcessSystem("recycle area");
+    recycleArea.add(recycle);
+
+    ProcessModel model = new ProcessModel();
+    model.add("boundary", boundaryArea);
+    model.add("recycle", recycleArea);
+    TransientTransactionCoverage coverage = model.getTransientTransactionCoverage();
+    assertTrue(coverage.isComplete());
+    assertEquals(2, coverage.getProcessElementCount());
+    assertEquals(2, coverage.getParticipantCount());
+
+    TransientStepTransaction transaction = model.beginTransientStepTransaction();
+    boundary.setFlowRate(150.0, "kg/hr");
+    recycle.setPriority(99);
+    model.runTransient(0.5, UUID.randomUUID());
+    transaction.rollback();
+
+    assertSame(boundaryArea, model.get("boundary"));
+    assertSame(recycleArea, model.get("recycle"));
+    assertEquals(100.0, boundary.getFlowRate("kg/hr"), 1.0e-9);
+    assertEquals(100, recycle.getPriority());
+    assertEquals(0.0, boundaryArea.getTime(), TOLERANCE);
+    assertEquals(0.0, recycleArea.getTime(), TOLERANCE);
   }
 
   @Test
