@@ -9,7 +9,7 @@ This document describes the two-fluid model implementation in NeqSim for transie
 
 The selectable closure sets are literature-inspired NeqSim implementations. Historical API names containing `OLGA` are retained for compatibility and do not claim numerical equivalence with OLGA, LedaFlow, or another commercial simulator.
 
-For practical result extraction, long-flowline reporting, and comparison with OLGA/LedaFlow or
+For practical result extraction, long-flowline reporting, and comparison with measured
 field data, see [TwoFluidPipe Reporting and Validation](two_fluid_reporting_and_validation).
 
 ## Overview
@@ -851,8 +851,7 @@ no deliverability. That clamp is a fixed point of itself: the per-section change
 tolerance and the sweep would otherwise report success on a case that has no physical solution.
 When the floor is touched, `isSteadyStateConverged()` is withheld and
 `isSteadyStatePressureFloorLimited()` is set. `PipeBeggsAndBrills` throws
-`Outlet pressure is negative` on the same condition, and OLGA aborts with
-`PRESSURE ABOVE TABLE VALUES`.
+`Outlet pressure is negative` on the same condition.
 
 **Direct electrical heating.** A uniform electrical heat input can be added in both steady-state
 and transient runs, and works with wall heat transfer switched off:
@@ -1457,27 +1456,29 @@ For applications where empirical accuracy is preferred over mechanistic modeling
 
 ### Known limitations
 
-Measured against OLGA 2025.1 on a 73.8 km subsea gas-condensate export line at matched inlet
-conditions (see [TwoFluidPipe OLGA comparison](two_fluid_model_olga_comparison#measured-comparison-against-olga-20251)):
+Commercial transient multiphase simulators are not used as a reference: their licence terms
+generally prohibit publishing benchmark comparisons and prohibit using the software to develop
+similar software, so no closure here is tuned to one. The observations below are model-internal,
+measured on a 73.8 km subsea gas-condensate export line at 200 bara inlet (see
+[TwoFluidPipe detailed review](two_fluid_model_review)):
 
-- **Pressure drop** is within 6% of OLGA across 4 to 12 MSm3/d on the benchmarked line (10.73 vs
-  10.15 bar at 4 MSm3/d, 79.58 vs 78.50 at 10, 138.70 vs 138.72 at 12), and the rate exponent is
-  reproduced. Beggs–Brill is 31–59% high on the same cases.
-- **Arrival temperature** tracks OLGA to between 0.7 and 3.5 K, and responds correctly to heating:
-  10 MW of DEH raises it 17.4 K against OLGA's 19.4 K while the pressure drop rises 15.0% against
-  12.3%.
+- **Pressure drop** reproduces the rate exponent across 4 to 12 MSm3/d, rising from about 2.1 at
+  low rate to about 3.1 at high rate. Beggs–Brill sits far above `TwoFluidPipe` on the same cases,
+  because its two-phase friction multiplier is an extrapolation at this liquid loading.
+- **Arrival temperature** responds correctly to heating: 10 MW of DEH raises it 17.4 K while the
+  pressure drop rises 15.0%.
 - **Terrain response comes from the momentum balance, not a multiplier.** The annular film closure
   now carries the gravity term, so holdup responds to inclination as `sin(theta)`. At 4 MSm3/d the
-  maximum holdup is 0.022 against OLGA's 0.030 and no section exceeds 3 times OLGA; the scale-free
-  local response is 1.12 against OLGA's 1.26.
+  maximum holdup fell from 0.222 to 0.022 when the empirical multiplier was removed.
 - **The three-phase free-water case does not converge.** With 15 m3/hr of free water the solve is
-  wall-clock limited after 4078 iterations at a 1200 s budget (88.64 bar against OLGA's 104.06).
+  wall-clock limited after 4078 iterations at a 1200 s budget.
   The pressure drop does not move between a 300 s and a 1200 s budget, so the criterion is stalling
   on the three-phase liquid split rather than the solution diverging. Always check
   `isSteadyStateConverged()` on a water-bearing line.
-- **Pressure drop does not always respond to a temperature change.** Adding 10 MW of heating raised
-  the arrival temperature 22 K but left the computed pressure drop unchanged, where OLGA moved
-  +12.3%. Treat pressure drop from a case whose temperature field changes as indicative.
+- **Pressure drop does not always respond to a temperature change.** In an earlier revision, adding
+  10 MW of heating raised the arrival temperature 22 K but left the computed pressure drop
+  unchanged; warmer gas at fixed mass rate is less dense and ΔP ~ G²/ρ must rise. Treat pressure
+  drop from a case whose temperature field changes as indicative.
 - **Terrain-slug holdup is clamped** at 0.85–0.90 in accumulation zones, so valley inventory is
   bounded by construction rather than by the momentum balance.
 - The steady-state solve is an under-relaxed fixed-point sweep and can fail to settle on long

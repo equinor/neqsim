@@ -1,16 +1,17 @@
 ---
-title: "TwoFluidPipe Model: Detailed Review and External Comparison"
-description: "Technical review of the TwoFluidPipe model, its numerical implementation, and traceable external comparisons."
+title: "TwoFluidPipe Model: Detailed Review and Validation"
+description: "Technical review of the TwoFluidPipe model, its numerical implementation, and its traceable validation evidence."
 ---
 
-# TwoFluidPipe Model: Detailed Review and External Comparison
+# TwoFluidPipe Model: Detailed Review and Validation
 
 ## Overview
 
 The `TwoFluidPipe` class in NeqSim implements a transient two-fluid model for 1D multiphase
-pipeline flow. This document reviews the implementation and records traceable comparisons. API
-names containing `OLGA` are retained for compatibility; they identify literature-inspired NeqSim
+pipeline flow. This document reviews the implementation and records traceable validation evidence.
+API names containing `OLGA` are retained for compatibility; they identify literature-inspired NeqSim
 closure selections and do not claim numerical equivalence with that or any commercial simulator.
+Commercial simulators are not used as a reference here, and no closure is tuned to one.
 
 ## Table of Contents
 
@@ -682,35 +683,27 @@ Terrain slug detection successfully identifies:
 
 These software scenarios are regression checks, not experimental validation.
 
-### Measured comparison against OLGA 2025.1
+### Commercial transient simulators are not used as a reference here
 
-The tests above compare NeqSim against NeqSim. The following is a direct run against the OLGA
-engine on a 73.8 km subsea gas-condensate export line (ID 0.355 m, U = 3 W/m2K, seabed 4 C,
-10 MSm3/d), with identical fluid, rate, geometry and heat transfer. OLGA is driven by a source with
-the arrival pressure secant-iterated until its computed inlet equals the 200 bara the NeqSim models
-are given, so every case is compared at the same inlet state.
+Licence terms for commercial transient multiphase simulators generally prohibit publishing benchmark
+or performance comparisons, and prohibit using the software to develop the science, technology or
+product content of similar software. NeqSim closures are therefore **not** tuned or calibrated
+against such a tool, and no measured comparison against one is recorded in this repository. The
+external evidence used here is public experimental data and analytic/first-principles checks.
 
-A rate sweep was measured on this line, at 320 sections and default settings. Pressure drop, in bar:
+### Steady-state behaviour on a long gas-condensate export line
 
-| Rate | OLGA | TwoFluidPipe | Deviation |
-|------|------|--------------|-----------|
-| 4 MSm3/d | 10.15 | 10.73 | +5.7% |
-| 7 MSm3/d | 33.60 | 35.49 | +5.6% |
-| 10 MSm3/d | 78.50 | 79.58 | +1.4% |
-| 12 MSm3/d | 138.72 | 138.70 | −0.0% |
+The following was measured on a 73.8 km subsea gas-condensate export line (ID 0.355 m,
+U = 3 W/m2K, seabed 4 C, 200 bara inlet) at 320 sections and default settings, as an internal
+consistency check on the solver rather than as agreement with any external tool.
 
-Arrival temperature tracks to between 0.7 and 3.5 K (8.36 C against 9.06 at 4 MSm3/d, 7.00 against
-8.38 at 10). Maximum liquid holdup is 0.021 against OLGA's 0.023 at 10 MSm3/d and 0.021 against
-0.020 at 12; at the two lowest rates the maximum sits in a single terrain trap section and is higher.
-The rate exponent in $\Delta P \sim \dot m^{\,n}$ is 2.14 / 2.26 / 3.06 against OLGA's
-2.14 / 2.38 / 3.12, so the density feedback along the line is reproduced rather than merely the level
-at one rate. The result is grid-converged: 160 sections gives 79.31 bar against 79.58 at 320.
+The rate exponent in $\Delta P \sim \dot m^{\,n}$ rises from about 2.1 at low rate to about 3.1 at
+high rate, so the density feedback along the line is reproduced rather than merely the level at one
+rate. The result is grid-converged: 160 sections gives 79.31 bar against 79.58 at 320. Adding 10 MW
+of direct electrical heating raises the arrival temperature by 17.4 K and the pressure drop by
+15.0 per cent, so the energy equation feeds the momentum balance as it should.
 
-Adding 10 MW of direct electrical heating raises the arrival temperature by 17.4 K against OLGA's
-19.4 K, and the pressure drop by 15.0 per cent against OLGA's 12.3 per cent, so the energy equation
-feeds the momentum balance as it should.
-
-Three defects had to be fixed to reach this agreement, and each is worth knowing about because the
+Three defects had to be fixed to reach that behaviour, and each is worth knowing about because the
 symptoms are generic:
 
 1. **A time integrator inside a fixed-point sweep.** The steady solve integrated the liquid
@@ -723,24 +716,22 @@ symptoms are generic:
    was fitted to 1 to 1.5 inch air-water loops at near-atmospheric pressure with no-slip fractions at
    or above 0.01. This line runs near 0.008 in a 14-inch pipe at 200 bara, where the correlation is
    an extrapolation in diameter, pressure, fluid and liquid loading at once - and it was binding in
-   every section, so the reported holdup was the correlation, about three times OLGA, which carried
-   roughly twenty per cent onto the pressure drop through the mixture density.
+   every section, so the reported holdup was the correlation rather than the solved momentum
+   balance, which carried roughly twenty per cent onto the pressure drop through the mixture density.
 3. **Convergence declared without re-evaluating thermodynamics.** The flash runs every few sweeps,
    but the flag recording that it had not moved the densities started false, so on a non-flash sweep
    it read as "nothing moved" when in truth nothing had been checked. The solve could exit after a
    single sweep on densities it had never revisited, which showed up as a step in pressure drop
    against terrain amplitude.
 
-The remaining limitation is that liquid holdup and pressure drop are still model-to-model results on
-one line, recorded so the model is not assumed to be OLGA-equivalent despite sharing its modelling
-class. Two cases remain open: local holdup at low rate is dominated by single terrain trap sections,
-and the three-phase free-water case does not converge - with 15 m3/hr of free water the solve is
-wall-clock limited after 4078 iterations at a 1200 s budget and reports 88.64 bar against OLGA's
-104.06, with the pressure drop unchanged between a 300 s and a 1200 s budget, so the criterion is
-stalling on the three-phase liquid split rather than the solution diverging. An earlier revision of
-this page reported 81.20 bar (+3.4%) on the dry line together with a pressure drop that did not
-respond to temperature; that figure came from a steady-state exit after a single sweep and is
-superseded by the table above.
+The remaining limitation is that liquid holdup and pressure drop are model-internal results on
+one line. Two cases remain open: local holdup at low rate is dominated by single terrain trap
+sections, and the three-phase free-water case does not converge - with 15 m3/hr of free water the
+solve is wall-clock limited after 4078 iterations at a 1200 s budget, with the pressure drop
+unchanged between a 300 s and a 1200 s budget, so the criterion is stalling on the three-phase
+liquid split rather than the solution diverging. An earlier revision of this page reported 81.20 bar
+on the dry line together with a pressure drop that did not respond to temperature; that figure came
+from a steady-state exit after a single sweep and is superseded.
 
 ### Public severe-slugging benchmark
 

@@ -14,12 +14,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * LedaFlow parity tests for the TwoFluidPipe model.
+ * Published-literature parity tests for the TwoFluidPipe model.
  *
  * <p>
- * Validates that NeqSim's TwoFluidPipe produces results comparable to commercial transient multiphase flow simulators
- * (LedaFlow, OLGA) for one-phase, two-phase, and three-phase flow. Tests cover both steady-state and transient
- * scenarios against published experimental data.
+ * Validates that NeqSim's TwoFluidPipe reproduces published experimental data and analytical results for one-phase,
+ * two-phase, and three-phase flow. Tests cover both steady-state and transient scenarios. No commercial simulator is
+ * used as a reference.
  * </p>
  *
  * <h2>Published Reference Data Sources</h2>
@@ -39,8 +39,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author Even Solbraa
  * @version 1.0
  */
-public class TwoFluidPipeLedaFlowParityTest {
-  private static final Logger logger = LogManager.getLogger(TwoFluidPipeLedaFlowParityTest.class);
+public class TwoFluidPipeLiteratureParityTest {
+  private static final Logger logger = LogManager.getLogger(TwoFluidPipeLiteratureParityTest.class);
 
   // ==================== ONE-PHASE VALIDATION ====================
 
@@ -48,8 +48,8 @@ public class TwoFluidPipeLedaFlowParityTest {
    * Single-phase validation against analytical Darcy-Weisbach.
    *
    * <p>
-   * LedaFlow and OLGA must reproduce single-phase friction exactly. The TwoFluidPipe should match within 10% for gas
-   * and liquid.
+   * Any transient multiphase model must reproduce single-phase friction exactly. The TwoFluidPipe should match the
+   * analytical Darcy-Weisbach result within 10% for gas and liquid.
    * </p>
    */
   @Nested
@@ -60,8 +60,7 @@ public class TwoFluidPipeLedaFlowParityTest {
      * Single-phase gas: methane at 50 bara through 10 km horizontal pipe.
      *
      * <p>
-     * Reference: Moody (1944) friction factor. At Re ~ 2e6, f ~ 0.013 (smooth pipe). Published LedaFlow benchmark cases
-     * show agreement within 5% for single-phase gas.
+     * Reference: Moody (1944) friction factor. At Re ~ 2e6, f ~ 0.013 (smooth pipe).
      * </p>
      */
     @Test
@@ -200,8 +199,7 @@ public class TwoFluidPipeLedaFlowParityTest {
    * Two-phase gas-liquid validation using published data points.
    *
    * <p>
-   * Compares with Eaton et al. (1967) holdup data and Beggs-Brill (1973) pressure drop correlations. LedaFlow typically
-   * matches these within 20-30%.
+   * Compares with Eaton et al. (1967) holdup data and Beggs-Brill (1973) pressure drop correlations.
    * </p>
    */
   @Nested
@@ -264,7 +262,6 @@ public class TwoFluidPipeLedaFlowParityTest {
      *
      * <p>
      * Reference: Beggs-Brill (1973) - intermediate flow conditions with slug formation. Holdup typically 0.2-0.6 range.
-     * LedaFlow and OLGA predict similar magnitudes.
      * </p>
      */
     @Test
@@ -368,8 +365,8 @@ public class TwoFluidPipeLedaFlowParityTest {
      * Downhill flow: gravity-aided pressure recovery.
      *
      * <p>
-     * Both LedaFlow and OLGA predict pressure recovery in steep downhill sections. The hydrostatic component subtracts
-     * from friction, potentially resulting in lower dP than horizontal.
+     * A mechanistic two-fluid model predicts pressure recovery in steep downhill sections. The hydrostatic component
+     * subtracts from friction, potentially resulting in lower dP than horizontal.
      * </p>
      */
     @Test
@@ -446,7 +443,7 @@ public class TwoFluidPipeLedaFlowParityTest {
    * Three-phase gas-oil-water flow tests.
    *
    * <p>
-   * LedaFlow is a 3-field model (gas, oil, water) with separate momentum equations. The TwoFluidPipe approximates
+   * A three-field formulation carries separate momentum equations for gas, oil and water. The TwoFluidPipe approximates
    * 3-phase flow with a 2-fluid model (gas vs effective liquid) plus oil-water sub-model. Tests verify:
    * </p>
    * <ul>
@@ -564,7 +561,7 @@ public class TwoFluidPipeLedaFlowParityTest {
      * Three-phase with undulating terrain — water accumulation in valleys.
      *
      * <p>
-     * LedaFlow's 3-field model predicts water stratification at low points. NeqSim's oil-water sub-model should show
+     * A three-field formulation predicts water stratification at low points. NeqSim's oil-water sub-model should show
      * increased water cut in valleys.
      * </p>
      */
@@ -634,8 +631,7 @@ public class TwoFluidPipeLedaFlowParityTest {
    * Transient flow validation.
    *
    * <p>
-   * LedaFlow and OLGA are transient codes. NeqSim's TwoFluidPipe also supports transient simulation. These tests verify
-   * physical transient behavior:
+   * The TwoFluidPipe supports transient simulation. These tests verify physical transient behavior:
    * </p>
    * <ul>
    * <li>Flow rate step response</li>
@@ -843,10 +839,10 @@ public class TwoFluidPipeLedaFlowParityTest {
   // ==================== PHYSICAL CONSISTENCY ====================
 
   /**
-   * Physical consistency checks that any LedaFlow-class simulator must pass.
+   * Physical consistency checks that any transient multiphase pipe model must pass.
    */
   @Nested
-  @DisplayName("Physical Consistency (LedaFlow Parity)")
+  @DisplayName("Physical Consistency")
   class ConsistencyTests {
 
     /**

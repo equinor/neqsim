@@ -20,7 +20,7 @@ import neqsim.process.equipment.pipeline.TwoFluidPipe;
  *
  * <p>
  * The expected CSV columns are: {@code case,time_s,position_m,variable,value,abs_tolerance,rel_tolerance,source}. This
- * intentionally uses a simple numeric export format that can be produced from OLGA, LedaFlow, field historians, or
+ * intentionally uses a simple numeric export format that can be produced from field historians, laboratory rigs, or
  * spreadsheet post-processing.
  * </p>
  */

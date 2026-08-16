@@ -17,7 +17,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * fitted to 1 to 1.5 inch air-water loops at near-atmospheric pressure with no-slip liquid fractions at or above about
  * 0.01. On a 14-inch high-pressure gas-condensate export line running near a no-slip fraction of 0.008 it was binding
  * in every section, so the reported holdup was the correlation rather than the solved momentum balance: roughly three
- * times OLGA, which carried about twenty per cent onto the pressure drop through the mixture density.
+ * times the mechanistic value, which carried about twenty per cent onto the pressure drop through the mixture density.
  * </p>
  *
  * <p>

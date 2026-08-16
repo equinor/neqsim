@@ -567,14 +567,7 @@ public class HeatMassTransferExample {
 
 ## 9. Validation and Benchmarks
 
-### 9.1 Comparison with Olga
-
-The NeqSim two-phase pipe flow model has been validated against OLGA simulations for:
-- Single-phase heat transfer (±5% deviation)
-- Two-phase pressure drop (±10% deviation)
-- Condensation rates (±15% deviation)
-
-### 9.2 Literature Validation
+### 9.1 Literature Validation
 
 | Test Case | Literature | NeqSim | Deviation |
 |-----------|------------|--------|-----------|

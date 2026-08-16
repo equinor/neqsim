@@ -2677,10 +2677,10 @@ public class TwoFluidPipe extends Pipeline {
    * near-atmospheric pressure and no-slip liquid fractions at or above about 0.01. It is no longer used as a lower
    * bound on the solved holdup. On a 73.8 km 14-inch high-pressure gas-condensate line at a no-slip fraction near 0.008
    * it was binding in every section, so the reported holdup was the correlation rather than the momentum balance: about
-   * three times OLGA, which carried roughly twenty per cent onto the pressure drop through the mixture density.
-   * Restricting it to the regimes without a mechanistic closure is not a remedy either, because that makes the bound a
-   * discontinuous function of the flow map and a section flipping between annular and slug then steps between no floor
-   * and the full correlation. The remaining bound is the scale-free no-slip multiple
+   * three times the mechanistic value, which carried roughly twenty per cent onto the pressure drop through the mixture
+   * density. Restricting it to the regimes without a mechanistic closure is not a remedy either, because that makes the
+   * bound a discontinuous function of the flow map and a section flipping between annular and slug then steps between
+   * no floor and the full correlation. The remaining bound is the scale-free no-slip multiple
    * {@code lambdaL * minimumSlipFactor}.
    * </p>
    *
@@ -3402,10 +3402,9 @@ public class TwoFluidPipe extends Pipeline {
     // process. A converged steady state carries no net accumulation by definition, so its low-point
     // holdup is whatever the momentum balance holds there.
     //
-    // Measured on a 73.8 km export line at 4 MSm3/d against OLGA 2025.1, which resolves terrain
-    // through the momentum balance alone: OLGA raises its maximum holdup to 1.26 times its own
-    // median, while this multiplier raised it to 11.0 times and put four sections 4.6 to 8.8 times
-    // above OLGA.
+    // Measured on a 73.8 km export line at 4 MSm3/d: the multiplier raised the maximum holdup to
+    // 11.0 times the median of the same profile, which is far beyond what the momentum balance
+    // alone produces on that terrain.
     return baseHoldup;
   }
 

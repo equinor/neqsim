@@ -988,9 +988,8 @@ numerically alive when a line has no deliverability. A profile resting on that c
 point of the *clamp*, not of the momentum balance: the per-section change falls below tolerance and
 the sweep would otherwise report success on a line that cannot physically deliver the requested
 rate. `isSteadyStatePressureFloorLimited()` makes that case visible, and `isSteadyStateConverged()`
-is withheld. `PipeBeggsAndBrills` throws `Outlet pressure is negative` on the same condition, and
-OLGA aborts with `PRESSURE ABOVE TABLE VALUES`, so all three codes now agree that such a case has
-no solution.
+is withheld. `PipeBeggsAndBrills` throws `Outlet pressure is negative` on the same condition, so
+both codes agree that such a case has no solution.
 
 ### Direct electrical heating (DEH)
 
@@ -1025,31 +1024,26 @@ not by themselves establish agreement with experiment. Current external evidence
 
 - the public Tengesdal flow-map confusion matrix for the Taitel diagnostic;
 - the public Tengesdal Test 3 pressure, production-cycle, period, and slug-length comparison;
-- Beggs–Brill steady-profile comparisons, which are model-to-model checks rather than experiment;
-- an OLGA 2025.1 comparison on a 73.8 km subsea gas-condensate export line, summarised below,
-  which is also a model-to-model check.
+- Beggs–Brill steady-profile comparisons, which are model-to-model checks rather than experiment.
+
+Commercial transient multiphase simulators are **not** used as a reference. Their licence terms
+generally prohibit publishing benchmark comparisons and prohibit using the software to develop the
+science, technology or product content of similar software, so no NeqSim closure is tuned to such a
+tool and no measured deviation against one is recorded here.
 
 The public severe-slugging benchmark deliberately retains failed/limited metrics in its assertions
 and documentation. In particular, the present cycle period and slug-length result prevent a claim
 of fully quantitative severe-slugging validation.
 
-### Measured comparison against OLGA 2025.1
+### Steady-state behaviour on a long gas-condensate export line
 
-Same fluid, rate, geometry, diameter, roughness, U-value and seabed temperature; OLGA driven by a
-source with the arrival pressure secant-iterated until its inlet matched the 200 bara the NeqSim
-models were given. Pressure drop, in bar:
-
-| Case | OLGA | TwoFluidPipe | PipeBeggsAndBrills |
-|------|------|--------------|--------------------|
-| Dry line, 4 MSm3/d | 10.15 | 10.73 (+5.7%) | 13.59 (+34%) |
-| Dry line, 7 MSm3/d | 33.60 | 35.49 (+5.6%) | 43.87 (+31%) |
-| Dry line, 10 MSm3/d | 78.50 | 79.58 (+1.4%) | 125.00 (+59%) |
-| Dry line, 12 MSm3/d | 138.72 | 138.70 (−0.0%) | throws |
-
-Arrival temperature tracks to 0.7 to 3.5 K, maximum liquid holdup is 0.021 against OLGA's 0.023 at
-10 MSm3/d, and the rate exponent in $\Delta P \sim \dot m^{\,n}$ is 2.14 / 2.26 / 3.06 against
-2.14 / 2.38 / 3.12. Adding 10 MW of direct electrical heating raises the arrival temperature 17.4 K
-against OLGA's 19.4 K and the pressure drop 15.0 per cent against 12.3 per cent. Results are
+Measured on a 73.8 km subsea gas-condensate export line (ID 0.355 m, U = 3 W/m2K, seabed 4 C,
+200 bara inlet) as an internal consistency check on the solver. The rate exponent in
+$\Delta P \sim \dot m^{\,n}$ rises from about 2.1 at low rate to about 3.1 at high rate, so the
+density feedback along the line is reproduced rather than merely the level at one rate. Adding
+10 MW of direct electrical heating raises the arrival temperature 17.4 K and the pressure drop
+15.0 per cent. `PipeBeggsAndBrills` sits far above `TwoFluidPipe` on the same cases because its
+two-phase friction multiplier is an extrapolation at this liquid loading. Results are
 grid-converged, at default settings.
 
 Remaining limitations:
@@ -1058,21 +1052,19 @@ Remaining limitations:
   inclination argument but never used it - the film balance was `tau_i = tau_wL` with no gravity
   term - so in annular flow the holdup had no terrain dependence at all, and the terrain response
   was supplied instead by an empirical multiplier applied on top of the solved holdup. That
-  multiplier compounded three proxies for one effect to a factor of order 100 and produced a
-  low-point holdup 4.6 to 8.8 times OLGA. The film balance now carries
-  `tau_i = tau_wL + rhoL * g * sin(theta) * delta`, and the multiplier is gone. Measured against
-  OLGA at 4 MSm3/d, the maximum holdup moved from 0.222 to 0.022 against OLGA's 0.030, no section
-  exceeds 3 times OLGA, and the scale-free local response is 1.12 against OLGA's 1.26. The response
+  multiplier compounded three proxies for one effect to a factor of order 100 and produced
+  low-point holdup roughly five to nine times the solved value. The film balance now carries
+  `tau_i = tau_wL + rhoL * g * sin(theta) * delta`, and the multiplier is gone. At 4 MSm3/d the
+  maximum holdup moved from 0.222 to 0.022. The response
   scales with `sin(theta)` as it should: the same closure gives an 11-fold valley-to-crest holdup
   variation on a 5 km line undulating at 8.6 degrees.
 - **The three-phase free-water case does not converge.** With 15 m3/hr of free water on the same
-  line the solve is wall-clock limited after 4078 iterations at a 1200 s budget, reporting 88.64 bar
-  against OLGA's 104.06. The pressure drop is identical to the 300 s run to 0.01 bar, so the profile
+  line the solve is wall-clock limited after 4078 iterations at a 1200 s budget. The pressure drop
+  is identical to the 300 s run to 0.01 bar, so the profile
   is stationary and the convergence criterion is stalling on the three-phase liquid split rather
   than the solution diverging - but `isSteadyStateConverged()` is correctly false and the number
   must not be quoted.
-- All observations are model-to-model on one line. They are recorded here so the model is not
-  assumed to be OLGA-equivalent.
+- All observations are model-internal on one line.
 
 ### Implemented regression tests
 

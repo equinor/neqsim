@@ -20,8 +20,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  *
  * <p>
- * Measured against OLGA 2025.1 on a 73.8 km subsea gas-condensate export line at 10 MSm3/d, 10 MW of heating raises the
- * arrival temperature by 19.4 K and the pressure drop by 12.3 per cent.
+ * On a 73.8 km subsea gas-condensate export line at 10 MSm3/d, 10 MW of heating raises the arrival temperature by about
+ * 17 K and the pressure drop by about 15 per cent.
  * </p>
  *
  * @author NeqSim

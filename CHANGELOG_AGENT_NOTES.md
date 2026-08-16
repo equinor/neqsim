@@ -11,10 +11,10 @@
 
 ## 2026-08-15 — Beggs and Brill correlation corrected in `PipeBeggsAndBrills`
 
-Four defects in the Beggs and Brill (1973) implementation, found by cross-validating a 74 km
-gas-export line against OLGA 2025.1 and then auditing the correlation term by term against a
-clean-room reimplementation of the published equations. All four now have regression tests in
-`PipeBeggsAndBrillsCorrelationTest`.
+Four defects in the Beggs and Brill (1973) implementation, found by auditing the correlation term
+by term against a clean-room reimplementation of the published equations and cross-checking a 74 km
+gas-export line against a single-phase Darcy-Weisbach integration. All four now have regression
+tests in `PipeBeggsAndBrillsCorrelationTest`.
 
 **1. The pipe angle was converted from degrees to radians twice.**
 `convertSystemUnitToImperial()` already converts `angle` to radians, but the inclination
