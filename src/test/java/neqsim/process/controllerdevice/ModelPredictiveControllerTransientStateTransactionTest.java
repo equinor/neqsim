@@ -102,8 +102,8 @@ class ModelPredictiveControllerTransientStateTransactionTest extends neqsim.NeqS
     ModelPredictiveController controller = configuredSingleInput("restart", measurement);
     controller.enableMovingHorizonEstimation(8);
     for (int i = 0; i < 8; i++) {
-      measurement.setValue(25.0 + 1.5 * i);
-      controller.runTransient(controller.getResponse(), 1.0,
+      measurement.setValue(20.0 + 5.0 * Math.pow(0.75, i));
+      controller.runTransient(5.0, 1.0,
           TransientStepIdentifier.deterministicPhysicalStep("mpc-estimation", i));
     }
     assertNotNull(controller.getLastMovingHorizonEstimate());
