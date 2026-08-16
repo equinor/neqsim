@@ -31,8 +31,9 @@ import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.ObjectiveDe
  * <p>
  * The action-set identifier, name, provenance, ordered action definitions, per-action write/read-back evidence,
  * objective and constraint arrays, hydraulic and complete installed-capacity evidence, restoration status, and
- * diagnostics are retained in an immutable serializable result suitable for JPype/Python. Action identifiers and automation addresses must be unique so one
- * transaction cannot write the same control target twice under different metadata.
+ * diagnostics are retained in an immutable serializable result suitable for JPype/Python. Action identifiers and
+ * automation addresses must be unique so one transaction cannot write the same control target twice under different
+ * metadata.
  * </p>
  *
  * <p>
@@ -872,8 +873,7 @@ public final class ProcessModelOperatingActionSetEvaluator {
         double[] rawObjectives, double[] objectives, List<CandidateObjectiveEvidence> objectiveEvidence,
         double[] constraintValues, double[] constraintMargins, List<CandidateConstraintEvidence> constraintEvidence,
         List<HydraulicConstraintSnapshot> hydraulicConstraints,
-        List<InstalledEquipmentCapacityEvidence> installedEquipmentCapacityEvidence,
-        List<String> diagnostics) {
+        List<InstalledEquipmentCapacityEvidence> installedEquipmentCapacityEvidence, List<String> diagnostics) {
       this.id = id;
       this.name = name;
       this.provenance = provenance;
@@ -895,8 +895,8 @@ public final class ProcessModelOperatingActionSetEvaluator {
           .unmodifiableList(new ArrayList<CandidateConstraintEvidence>(constraintEvidence));
       this.hydraulicConstraints = Collections
           .unmodifiableList(new ArrayList<HydraulicConstraintSnapshot>(hydraulicConstraints));
-      this.installedEquipmentCapacityEvidence = Collections.unmodifiableList(
-          new ArrayList<InstalledEquipmentCapacityEvidence>(installedEquipmentCapacityEvidence));
+      this.installedEquipmentCapacityEvidence = Collections
+          .unmodifiableList(new ArrayList<InstalledEquipmentCapacityEvidence>(installedEquipmentCapacityEvidence));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<String>(diagnostics));
     }
 
@@ -1084,8 +1084,8 @@ public final class ProcessModelOperatingActionSetEvaluator {
      * @return fresh immutable descending-utilization evidence
      */
     public List<InstalledEquipmentCapacityEvidence> getInstalledEquipmentCapacityEvidence() {
-      return Collections.unmodifiableList(
-          new ArrayList<InstalledEquipmentCapacityEvidence>(installedEquipmentCapacityEvidence));
+      return Collections
+          .unmodifiableList(new ArrayList<InstalledEquipmentCapacityEvidence>(installedEquipmentCapacityEvidence));
     }
 
     /** @return fresh immutable diagnostics */
@@ -1094,3 +1094,4 @@ public final class ProcessModelOperatingActionSetEvaluator {
     }
   }
 }
+
