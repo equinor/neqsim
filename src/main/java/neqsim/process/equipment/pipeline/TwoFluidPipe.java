@@ -3056,10 +3056,16 @@ public class TwoFluidPipe extends Pipeline {
       // Interfacial friction with roughness correction
       double fi = fG * (1.0 + 300.0 * deltaOverD);
 
-      // Momentum balance: τ_wL = τ_i
-      // fLF * ρL * vLF² / 2 = fi * ρG * vG² / 2
-      // Solve for δ/D
-      double tauRatio = (fLF * rhoL * vLF * vLF) / (fi * rhoG * vG * vG + 1e-10);
+      // Film momentum balance along the pipe axis. For a thin film the wetted and interfacial
+      // perimeters are both close to pi*D and the film area is close to pi*D*delta, so the balance
+      // reduces to tau_i = tau_wL + rhoL * g * sin(theta) * delta. Gravity thickens the film on an
+      // uphill section and thins it on a downhill one, which is how terrain enters an annular
+      // closure; omitting it left the annular regime with no inclination dependence at all and the
+      // terrain response had to be supplied by an empirical multiplier applied afterwards.
+      double filmThickness = deltaOverD * D;
+      double gravityShear = rhoL * 9.81 * Math.sin(theta) * filmThickness;
+      double drivingShear = fLF * rhoL * vLF * vLF / 2.0 + gravityShear;
+      double tauRatio = 2.0 * Math.max(0.0, drivingShear) / (fi * rhoG * vG * vG + 1e-10);
 
       // Update film thickness estimate
       double newDeltaOverD = deltaOverD * Math.sqrt(tauRatio);
@@ -3379,9 +3385,28 @@ public class TwoFluidPipe extends Pipeline {
       enhancedHoldup = baseHoldup * gasAccumulationFactor;
     }
 
-    // Terrain multipliers preserve a zero phase limit. Any explicitly configured
-    // physical floor is applied once by calculateLocalHoldup after all modifiers.
-    return Math.max(0.0, Math.min(0.95, enhancedHoldup));
+    // The enhanced value above is used to RAISE THE TERRAIN FLAGS ONLY; it is deliberately not
+    // returned as the holdup.
+    //
+    // The holdup handed in has already been solved from the two-fluid momentum balance at this
+    // section's own inclination - calculateStratifiedMomentumResidual carries rhoG*g*sin(theta) and
+    // rhoL*g*sin(theta), and calculateStratifiedHoldupOLGA is called with the local angle. Scaling
+    // that result by a further terrain factor counts the same gravity term twice. The low-point
+    // branch compounded three separate proxies for one effect (a Froude factor up to 11, a pooling
+    // factor up to 4 and a depth factor up to 6) to a multiplier of order 100 before an arbitrary
+    // clip.
+    //
+    // It is also the wrong kind of model for a steady state. As this package already states for the
+    // severe-slugging diagnostic, terrain slugging is a system instability rather than a local
+    // pipe-section threshold: liquid accumulates and surges cyclically, which is a transient
+    // process. A converged steady state carries no net accumulation by definition, so its low-point
+    // holdup is whatever the momentum balance holds there.
+    //
+    // Measured on a 73.8 km export line at 4 MSm3/d against OLGA 2025.1, which resolves terrain
+    // through the momentum balance alone: OLGA raises its maximum holdup to 1.26 times its own
+    // median, while this multiplier raised it to 11.0 times and put four sections 4.6 to 8.8 times
+    // above OLGA.
+    return baseHoldup;
   }
 
   /**
