@@ -523,6 +523,10 @@ class ProcessModelSimulationEvaluatorTest {
     assertTrue(evidence.isNearLimit());
     assertEquals(evidence.getCurrentValue(), result.getActiveBottleneck().getCurrentValue(), 0.0);
     assertEquals(evidence.getNormalizedUtilization(), result.getActiveBottleneck().getUtilization(), 0.0);
+    CapacityConstraintAdapter adapter =
+        new CapacityConstraintAdapter("separation::separator/installedGasCapacity", installedCapacity);
+    assertEquals("1", adapter.getUnit());
+    assertEquals("kg/hr", adapter.getPhysicalUnit());
 
     installedCapacity.setDesignValue(20000.0).setUnit("t/day").setDataSource("mutated later");
     assertEquals(12000.0, evidence.getApplicableLimit(), 0.0);
