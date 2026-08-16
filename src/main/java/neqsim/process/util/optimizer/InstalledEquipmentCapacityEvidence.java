@@ -1,6 +1,7 @@
 package neqsim.process.util.optimizer;
 
 import java.io.Serializable;
+import neqsim.process.automation.ProcessAutomation;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 
 /**
