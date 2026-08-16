@@ -1084,4 +1084,3 @@ class ProcessModelSimulationEvaluatorTest {
     assertTrue(evaluator.toJson().contains("separation"));
   }
 }
-
