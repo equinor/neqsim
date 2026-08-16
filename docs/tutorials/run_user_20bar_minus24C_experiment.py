@@ -13,14 +13,18 @@ Output:
 - 3-Panel Plot with y-axis 0.0 to 20.0 ppm
 """
 
+import os
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-
 from neqsim_co2_kinetics import CO2ImpurityReactorExperiment
 
-def run_custom_20bar_minus24C_1hr_experiment():
+
+def run_custom_20bar_minus24C_1hr_experiment(output_dir=None):
+    output_path = Path(output_dir or os.environ.get("NEQSIM_TUTORIAL_OUTPUT_DIR", "."))
+    output_path.mkdir(parents=True, exist_ok=True)
+
     exp = CO2ImpurityReactorExperiment(
         target_pressure_bar=20.0,
         target_temp_C=-24.0,
@@ -48,10 +52,8 @@ def run_custom_20bar_minus24C_1hr_experiment():
     # Generate 1-HOUR STEP RESOLUTION TABLE (451 rows from 0.0 to 450.0 h)
     df_1hr = exp.get_table_results(resolution_hours=1.0)
 
-    # Save portable artifacts below the caller's working directory.
-    output_dir = Path.cwd() / "co2_impurity_kinetics_outputs"
-    output_dir.mkdir(parents=True, exist_ok=True)
-    csv_path = output_dir / "user_20bar_minus24C_1hr_table.csv"
+    # Save to CSV file
+    csv_path = output_path / "user_20bar_minus24C_1hr_table.csv"
     df_1hr.to_csv(csv_path, index=False)
     print(f"1-hour step resolution table saved to: {csv_path}")
 
@@ -94,11 +96,11 @@ def run_custom_20bar_minus24C_1hr_experiment():
             f'H2SO4 Acid Peak: {max_h2so4:.2f} ppm',
             xy=(max_t, max_h2so4),
             xytext=(max_t - 90.0, min(max_h2so4 + 3.0, 17.5)),
-            arrowprops=dict(facecolor='#FF0033', shrink=0.08, width=3.0, headwidth=10.0),
+            arrowprops={'facecolor': '#FF0033', 'shrink': 0.08, 'width': 3.0, 'headwidth': 10.0},
             fontsize=12,
             fontweight='bold',
             color='#B20000',
-            bbox=dict(boxstyle="round,pad=0.3", fc="#FFE6E6", ec="#FF0033", lw=1.5)
+            bbox={'boxstyle': 'round,pad=0.3', 'fc': '#FFE6E6', 'ec': '#FF0033', 'lw': 1.5}
         )
 
     ax3.plot(t_h, ppm['NO'],    label='NO Gas', linewidth=2.5, color='#8e44ad')
@@ -119,7 +121,7 @@ def run_custom_20bar_minus24C_1hr_experiment():
 
     plt.tight_layout()
 
-    save_path = output_dir / "user_20bar_minus24C_experiment.png"
+    save_path = output_path / "user_20bar_minus24C_experiment.png"
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
     print(f"Plot saved successfully to: {save_path}")
 
@@ -127,4 +129,3 @@ def run_custom_20bar_minus24C_1hr_experiment():
 
 if __name__ == "__main__":
     run_custom_20bar_minus24C_1hr_experiment()
-

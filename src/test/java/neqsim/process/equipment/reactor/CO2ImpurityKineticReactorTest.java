@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.NeqSimTest;
@@ -13,6 +15,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /** Regression tests for {@link CO2ImpurityKineticReactor}. */
 public class CO2ImpurityKineticReactorTest extends NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(CO2ImpurityKineticReactorTest.class);
   private static final String[] REACTION_IDS = { "R1", "R2", "R3A", "R3B", "R4", "R5", "R6", "R7", "R8CS", "R8SS" };
   private static final String[] MODELED_SPECIES = { "H2S", "SO2", "NO2", "NO", "oxygen", "water", "H2SO4", "HNO3", "S8",
       "ammonia" };
@@ -113,6 +116,29 @@ public class CO2ImpurityKineticReactorTest extends NeqSimTest {
     double calculatedSeconds = reactor.calculateGeometryResidenceTime(298.15, 100.0);
     assertEquals(expectedSeconds, calculatedSeconds, expectedSeconds * 1.0e-8);
     assertTrue(reactor.generateReactorReport().contains("NeqSim fluid density"));
+  }
+
+  @Test
+  void testLegacyGuideJavaExample() {
+    SystemInterface fluid = new SystemSrkEos(248.15, 25.0);
+    fluid.addComponent("CO2", 1.0);
+    fluid.addComponent("H2S", 10.0e-6);
+    fluid.addComponent("SO2", 10.0e-6);
+    fluid.addComponent("NO2", 10.0e-6);
+    fluid.addComponent("oxygen", 10.0e-6);
+    fluid.addComponent("water", 10.0e-6);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("CO2 feed", fluid);
+    feed.run();
+
+    CO2ImpurityKineticReactor guideReactor = new CO2ImpurityKineticReactor("CO2 impurity reactor", feed);
+    guideReactor.setReactorGeometry(6.50, 300.0, 50.0);
+    guideReactor.setReactionConstants("R3B", 2.13e8, 15.0);
+
+    String report = guideReactor.generateReactorReport();
+    logger.info("{}", report);
+    assertTrue(report.contains("Reactor geometry"));
   }
 
   @Test
