@@ -383,4 +383,3 @@ class ProcessModelAllocationOptimizerTest {
     assertThrows(IllegalArgumentException.class, () -> optimizer.setObjectiveImprovementTolerance(-1.0, "invalid"));
   }
 }
-
