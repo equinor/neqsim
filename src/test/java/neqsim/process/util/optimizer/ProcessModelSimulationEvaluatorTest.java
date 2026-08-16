@@ -357,6 +357,12 @@ class ProcessModelSimulationEvaluatorTest {
     assertTrue(Double.isNaN(ranked.get(1).getUtilization()));
     assertFalse(ranked.get(1).isFeasible());
     assertEquals(1, undefinedSupplierCalls.get());
+    List<InstalledEquipmentCapacityEvidence> evidence =
+        evaluator.snapshotInstalledEquipmentCapacityEvidence(fixture.model);
+    assertEquals(InstalledEquipmentCapacityEvidence.EvidenceStatus.NON_FINITE_CURRENT_VALUE,
+        evidence.get(1).getEvidenceStatus());
+    assertEquals(2, undefinedSupplierCalls.get(),
+        "a separate live snapshot call samples once again and does not reuse stale evidence");
   }
 
   /** Verifies snapshot selection preserves the legacy exclusion of invalid negative utilization. */
@@ -449,6 +455,12 @@ class ProcessModelSimulationEvaluatorTest {
     assertEquals(50.0, bottleneck.getCurrentValue(), 1.0e-12);
     assertEquals(45.0, bottleneck.getDesignValue(), 1.0e-12, "minimum limit must not be reported as Double.MAX_VALUE");
     assertTrue(bottleneck.isMinimumConstraint());
+    InstalledEquipmentCapacityEvidence evidence = result.getInstalledEquipmentCapacityEvidence().get(0);
+    assertEquals(InstalledEquipmentCapacityEvidence.LimitDirection.MINIMUM, evidence.getLimitDirection());
+    assertEquals(45.0, evidence.getApplicableLimit(), 0.0);
+    assertEquals(5.0, evidence.getPhysicalMargin(), 0.0);
+    assertEquals(0.0, evidence.getRequiredRelief(), 0.0);
+    assertEquals("m", evidence.getPhysicalUnit());
   }
 
   /**
