@@ -76,6 +76,28 @@ class EngineeringDiagramComponentBalanceTableTest {
   }
 
   @Test
+  void isDeterministicForConflictingDuplicateInputOrder() {
+    Fixture fixture = fixture();
+    List<ComponentFlow> forward = completeFlows(fixture.boundaries);
+    ComponentFlow original = forward.get(0);
+    forward.add(new ComponentFlow(original.getBalanceId(), original.getStreamSemanticObjectId(),
+        original.getComponentId(), original.getComponentName(), original.getResultValue() + 0.5,
+        original.getResultUnit(), original.getQuantityBasis(), original.getSourceReference(),
+        "simulation-case:NORMAL-02", original.getEvidenceState()));
+    List<ComponentFlow> reverse = new ArrayList<ComponentFlow>(forward);
+    Collections.reverse(reverse);
+
+    EngineeringDiagramComponentBalanceTable first = EngineeringDiagramComponentBalanceTable
+        .fromBalanceTable(fixture.balanceTable, forward);
+    EngineeringDiagramComponentBalanceTable second = EngineeringDiagramComponentBalanceTable
+        .fromBalanceTable(fixture.balanceTable, reverse);
+
+    assertFalse(first.isValid());
+    assertTrue(hasDiagnostic(first, "COMPONENT_FLOW_DUPLICATE"));
+    assertEquals(first.toJson(), second.toJson());
+  }
+
+  @Test
   void diagnosesMissingDuplicateUnknownAndWrongBasisValues() {
     Fixture fixture = fixture();
     List<ComponentFlow> flows = completeFlows(fixture.boundaries);
