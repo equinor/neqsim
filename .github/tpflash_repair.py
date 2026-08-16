@@ -12,6 +12,8 @@ def replace_once(path, old, new):
 
 tp = Path("src/main/java/neqsim/thermodynamicoperations/flashops/TPmultiflash.java")
 text = tp.read_text()
+ordinary_end = text.index("    int unstabcomp = 0;")
+prefix, suffix = text[:ordinary_end], text[ordinary_end:]
 anchor = """      if (Math.abs(xTrivialCheck0) < 1e-4 || Math.abs(xTrivialCheck1) < 1e-4) {
         tm[j] = 10.0;
       }
@@ -34,9 +36,9 @@ replacement = """      if (Math.abs(xTrivialCheck0) < 1e-4 || Math.abs(xTrivialC
         tm[j] = 10.0;
       }
 """
-if text.count(anchor) != 1:
-    raise RuntimeError(f"Expected one pure-trial anchor, found {text.count(anchor)}")
-tp.write_text(text.replace(anchor, replacement))
+if prefix.count(anchor) != 1:
+    raise RuntimeError(f"Expected one ordinary pure-trial anchor, found {prefix.count(anchor)}")
+tp.write_text(prefix.replace(anchor, replacement) + suffix)
 
 replace_once(
     "src/main/java/neqsim/thermo/system/SystemThermo.java",
