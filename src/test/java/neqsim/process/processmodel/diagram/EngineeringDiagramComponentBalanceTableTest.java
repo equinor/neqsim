@@ -56,6 +56,7 @@ class EngineeringDiagramComponentBalanceTableTest {
     assertThrows(UnsupportedOperationException.class, () -> table.getComponentFlows().clear());
     assertTrue(table.toJson().contains("\"massFlowUnit\": \"kg/s\""));
     assertTrue(table.toJson().contains("\"provenance\": \"simulation-case:NORMAL-01\""));
+    assertTrue(hasDiagnostic(table, "COMPONENT_TOTAL_MASS_MISMATCH"));
   }
 
   @Test
