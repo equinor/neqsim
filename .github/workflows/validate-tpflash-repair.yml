@@ -9,7 +9,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: fix/tpflash-local-stability-current
-          fetch-depth: 0
+          fetch-depth: 1
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
