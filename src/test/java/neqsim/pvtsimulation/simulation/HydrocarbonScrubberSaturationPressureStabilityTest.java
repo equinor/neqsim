@@ -113,7 +113,7 @@ class HydrocarbonScrubberSaturationPressureStabilityTest extends neqsim.NeqSimTe
         assertTrue(moleFraction >= 0.0);
         compositionSum += moleFraction;
       }
-      assertEquals(1.0, compositionSum, 1.0e-9);
+      assertEquals(1.0, compositionSum, 1.0e-12);
     }
     assertEquals(1.0, betaSum, 1.0e-12);
 
