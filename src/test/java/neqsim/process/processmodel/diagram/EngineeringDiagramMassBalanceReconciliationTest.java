@@ -39,8 +39,7 @@ class EngineeringDiagramMassBalanceReconciliationTest {
     String assessmentJson = fixture.assessment.toJson();
 
     EngineeringDiagramMassBalanceReconciliation reconciliation = EngineeringDiagramMassBalanceReconciliation
-        .fromSources(fixture.streamTable, fixture.balanceTable, fixture.assessment,
-            uncertainties(fixture, 2.0, 1.0));
+        .fromSources(fixture.streamTable, fixture.balanceTable, fixture.assessment, uncertainties(fixture, 2.0, 1.0));
 
     assertTrue(reconciliation.isValid());
     assertEquals(ResultStatus.RECONCILED, reconciliation.getResults().get(0).getStatus());
@@ -181,8 +180,7 @@ class EngineeringDiagramMassBalanceReconciliationTest {
     return EngineeringDiagramBalanceAssessment.fromBalanceTable(balanceTable, Collections.singletonList(criterion));
   }
 
-  private static List<Uncertainty> uncertainties(Fixture fixture, double feedUncertainty,
-      double productUncertainty) {
+  private static List<Uncertainty> uncertainties(Fixture fixture, double feedUncertainty, double productUncertainty) {
     return new ArrayList<Uncertainty>(Arrays.asList(uncertainty(fixture, fixture.feed, feedUncertainty),
         uncertainty(fixture, fixture.product, productUncertainty)));
   }

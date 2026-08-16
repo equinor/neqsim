@@ -83,9 +83,8 @@ public final class EngineeringDiagramMassBalanceReconciliation implements Serial
      * @param provenance uncertainty derivation or data lineage
      * @param evidenceState review evidence state without approval implication
      */
-    public Uncertainty(String balanceId, String streamSemanticObjectId, double standardUncertainty,
-        String resultUnit, String quantityBasis, String sourceReference, String provenance,
-        EvidenceState evidenceState) {
+    public Uncertainty(String balanceId, String streamSemanticObjectId, double standardUncertainty, String resultUnit,
+        String quantityBasis, String sourceReference, String provenance, EvidenceState evidenceState) {
       this.balanceId = requireText(balanceId, "balanceId");
       this.streamSemanticObjectId = requireText(streamSemanticObjectId, "streamSemanticObjectId");
       this.standardUncertainty = standardUncertainty;
@@ -283,9 +282,8 @@ public final class EngineeringDiagramMassBalanceReconciliation implements Serial
     private final boolean grossErrorsPresent;
     private final int adjustmentCount;
 
-    private Result(Balance balance, ResultStatus status, double reconciledResidual,
-        double reconciledRelativeResidual, double objectiveValue, boolean globalTestPassed,
-        boolean grossErrorsPresent, int adjustmentCount) {
+    private Result(Balance balance, ResultStatus status, double reconciledResidual, double reconciledRelativeResidual,
+        double objectiveValue, boolean globalTestPassed, boolean grossErrorsPresent, int adjustmentCount) {
       this.balanceId = balance.getBalanceId();
       this.status = status;
       this.measuredResidual = balance.getMassResidual();
@@ -509,8 +507,8 @@ public final class EngineeringDiagramMassBalanceReconciliation implements Serial
     }
     Collections.sort(adjustments, adjustmentComparator());
     Collections.sort(diagnostics, diagnosticComparator());
-    return new EngineeringDiagramMassBalanceReconciliation(streamTable, balanceTable, assessment,
-        sortedUncertainties, adjustments, results, diagnostics);
+    return new EngineeringDiagramMassBalanceReconciliation(streamTable, balanceTable, assessment, sortedUncertainties,
+        adjustments, results, diagnostics);
   }
 
   /** @return source controlled-document identity */
@@ -613,8 +611,8 @@ public final class EngineeringDiagramMassBalanceReconciliation implements Serial
   }
 
   private static void reconcileBalance(Balance balance, List<Boundary> boundaries, Map<String, Row> rowsById,
-      Map<String, Uncertainty> uncertaintyByKey, Criteria criterion, List<Adjustment> adjustments,
-      List<Result> results, List<Diagnostic> diagnostics) {
+      Map<String, Uncertainty> uncertaintyByKey, Criteria criterion, List<Adjustment> adjustments, List<Result> results,
+      List<Diagnostic> diagnostics) {
     if (boundaries == null || boundaries.size() < 2 || !hasBothDirections(boundaries)) {
       diagnostics.add(new Diagnostic(Severity.ERROR, "MASS_RECONCILIATION_BOUNDARY_UNDERSPECIFIED",
           "Reconciliation requires at least two boundaries including one inlet and one outlet",
@@ -667,8 +665,7 @@ public final class EngineeringDiagramMassBalanceReconciliation implements Serial
     ReconciliationResult engineResult = engine.reconcile();
     if (!engineResult.isConverged()) {
       diagnostics.add(new Diagnostic(Severity.ERROR, "MASS_RECONCILIATION_SOLVER_FAILED",
-          "Weighted-least-squares reconciliation failed: " + engineResult.getErrorMessage(),
-          balance.getBalanceId()));
+          "Weighted-least-squares reconciliation failed: " + engineResult.getErrorMessage(), balance.getBalanceId()));
       results.add(new Result(balance, ResultStatus.INVALID, balance.getMassResidual(),
           balance.getRelativeMassResidual(), 0.0, false, false, 0));
       return;
