@@ -680,4 +680,29 @@ public class ThrottlingValveTest {
     assertEquals(actualEntropy, valve.getEntropyProduction("J/K"), 0.0,
         "Repeated diagnostic calls must remain bit-identical");
   }
+
+  @Test
+  void testAcceptNegativeDPFlagLogic() {
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    testSystem.addComponent("methane", 1.0);
+    testSystem.setMixingRule(2);
+
+    Stream stream1 = new Stream("Stream1", testSystem);
+    stream1.setPressure(10.0, "bara");
+    stream1.run();
+
+    ThrottlingValve valve1 = new ThrottlingValve("valve1", stream1);
+    valve1.setOutletPressure(15.0, "bara");
+    valve1.setAcceptNegativeDP(false);
+    valve1.run();
+    assertEquals(10.0, valve1.getOutletStream().getPressure("bara"), 1e-4,
+        "When isAcceptNegativeDP is false, pressure must be clamped to inlet pressure");
+
+    ThrottlingValve valve2 = new ThrottlingValve("valve2", stream1);
+    valve2.setOutletPressure(15.0, "bara");
+    valve2.setAcceptNegativeDP(true);
+    valve2.run();
+    assertEquals(15.0, valve2.getOutletStream().getPressure("bara"), 1e-4,
+        "When isAcceptNegativeDP is true, negative DP (higher pressure) should be accepted");
+  }
 }
