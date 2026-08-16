@@ -21,6 +21,17 @@ from datetime import datetime
 from urllib.parse import quote
 
 NOTEBOOK_DOCUMENTATION_OVERRIDES = {
+    "MercuryRemoval_LNG_Pretreatment": {
+        "title": "Mercury Removal in LNG Pre-Treatment",
+        "description": (
+            "Executable NeqSim mercury-removal screening with transient "
+            "loading, preliminary design and cost boundaries, and internal "
+            "verification"
+        ),
+        "show_generated_title": False,
+        "strip_notebook_title": True,
+        "colab_link_text": "open it in Google Colab",
+    },
     "process equipmentutl": {
         "title": (
             "Reservoir-to-Market Optimisation with NeqSim Process Equipment"
@@ -109,7 +120,14 @@ def notebook_to_markdown(notebook_path):
         if documentation_metadata.get('show_generated_title', True)
         else ''
     )
-    strip_first_h1 = documentation_metadata.get('strip_first_h1', False)
+    colab_link_text = documentation_metadata.get(
+        'colab_link_text',
+        'open in Google Colab',
+    )
+    strip_first_h1 = documentation_metadata.get(
+        'strip_first_h1',
+        documentation_metadata.get('strip_notebook_title', False),
+    )
     title_yaml = json.dumps(str(title), ensure_ascii=False)
     description_yaml = json.dumps(str(description), ensure_ascii=False)
     encoded_notebook_filename = quote(
@@ -129,7 +147,7 @@ nav_order: 1
 {generated_title}> **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`{notebook_name}.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/{encoded_notebook_filename}).
 > You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/{encoded_notebook_filename})
-> or [open it in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/{encoded_notebook_filename}).
+> or [{colab_link_text}](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/{encoded_notebook_filename}).
 
 ---
 
