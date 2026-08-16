@@ -116,6 +116,102 @@ public class DistillationColumnModeTest {
   }
 
   /**
+   * Reject invalid terminal ratios without changing valid direct or stored ratio controls.
+   */
+  @Test
+  public void invalidTerminalRatiosFailAtomically() {
+    DistillationColumn column = createTerminalControlColumn("atomic terminal ratio column");
+    column.setReboilerBoilupRatio(0.8);
+
+    double condenserRatio = column.getCondenser().getRefluxRatio();
+    double reboilerRatio = column.getReboiler().getRefluxRatio();
+    ColumnSpecification topSpecification = column.getTopSpecification();
+    ColumnSpecification bottomSpecification = column.getBottomSpecification();
+
+    assertThrows(IllegalArgumentException.class, () -> column.getCondenser().setRefluxRatio(-1.0));
+    assertThrows(IllegalArgumentException.class, () -> column.getReboiler().setRefluxRatio(Double.NaN));
+    assertThrows(IllegalArgumentException.class, () -> column.setReboilerBoilupRatio(Double.POSITIVE_INFINITY));
+
+    assertEquals(condenserRatio, column.getCondenser().getRefluxRatio(), 0.0);
+    assertEquals(reboilerRatio, column.getReboiler().getRefluxRatio(), 0.0);
+    assertSame(topSpecification, column.getTopSpecification());
+    assertSame(bottomSpecification, column.getBottomSpecification());
+    assertEquals(DistillationColumn.CondenserMode.PARTIAL, column.getCondenserMode());
+    assertEquals(DistillationColumn.ReboilerMode.VAPOR_BOILUP_RATIO, column.getReboilerMode());
+  }
+
+  /**
+   * Qualify partial-condenser and vapor-boilup ratio control across a repeated solve and nearby operating point.
+   */
+  @Test
+  public void partialCondenserAndVaporBoilupRatiosRemainPhysicalAcrossNearbyPoints() {
+    DistillationColumn column = createTerminalControlColumn("nearby terminal ratio column");
+    column.setReboilerVaporBoilupRatio(1.20);
+
+    column.run(UUID.randomUUID());
+
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    assertEquals(DistillationColumn.CondenserMode.PARTIAL, column.getCondenserMode());
+    assertEquals(DistillationColumn.ReboilerMode.VAPOR_BOILUP_RATIO, column.getReboilerMode());
+    assertTerminalRatioProductsPhysicalAndBalanced(column);
+    double firstGasFlow = column.getGasOutStream().getFlowRate("mol/hr");
+    double firstLiquidFlow = column.getLiquidOutStream().getFlowRate("mol/hr");
+
+    column.run(UUID.randomUUID());
+
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    assertTerminalRatioProductsPhysicalAndBalanced(column);
+    assertEquals(firstGasFlow, column.getGasOutStream().getFlowRate("mol/hr"), Math.max(1.0e-8, 5.0e-5 * firstGasFlow));
+    assertEquals(firstLiquidFlow, column.getLiquidOutStream().getFlowRate("mol/hr"),
+        Math.max(1.0e-8, 5.0e-5 * firstLiquidFlow));
+
+    column.setReboilerVaporBoilupRatio(1.25);
+    column.run(UUID.randomUUID());
+
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    assertTerminalRatioProductsPhysicalAndBalanced(column);
+    double feedFlow = column.getFeedStreams(3).get(0).getFlowRate("mol/hr");
+    double nearbyGasFlow = column.getGasOutStream().getFlowRate("mol/hr");
+    assertTrue(Math.abs(nearbyGasFlow - firstGasFlow) > 1.0e-8 * feedFlow);
+  }
+
+  /**
+   * Verify conservation, bounds, diagnostics, and direct specification satisfaction for a terminal-ratio case.
+   *
+   * @param column solved ratio-controlled column
+   */
+  private void assertTerminalRatioProductsPhysicalAndBalanced(DistillationColumn column) {
+    StreamInterface feed = column.getFeedStreams(3).get(0);
+    StreamInterface gas = column.getGasOutStream();
+    StreamInterface liquid = column.getLiquidOutStream();
+    double feedFlow = feed.getFlowRate("mol/hr");
+    double gasFlow = gas.getFlowRate("mol/hr");
+    double liquidFlow = liquid.getFlowRate("mol/hr");
+
+    assertTrue(Double.isFinite(gasFlow) && gasFlow > 0.0);
+    assertTrue(Double.isFinite(liquidFlow) && liquidFlow > 0.0);
+    assertTrue(Double.isFinite(gas.getTemperature()) && gas.getTemperature() > 0.0);
+    assertTrue(Double.isFinite(liquid.getTemperature()) && liquid.getTemperature() > 0.0);
+    assertEquals(feedFlow, gasFlow + liquidFlow, 5.0e-3 * feedFlow);
+    assertTrue(Double.isFinite(column.getEnergyBalanceError()));
+    assertTrue(Double.isFinite(column.getLastMeshResidualNorm()));
+    assertTrue(Double.isFinite(column.getLastSpecificationResidual()));
+    assertTrue(column.getLastSpecificationResidual() <= column.getTopSpecification().getTolerance());
+
+    double[] feedComposition = feed.getThermoSystem().getMolarComposition();
+    double[] gasComposition = gas.getThermoSystem().getMolarComposition();
+    double[] liquidComposition = liquid.getThermoSystem().getMolarComposition();
+    for (int componentIndex = 0; componentIndex < feedComposition.length; componentIndex++) {
+      assertTrue(gasComposition[componentIndex] >= 0.0 && gasComposition[componentIndex] <= 1.0);
+      assertTrue(liquidComposition[componentIndex] >= 0.0 && liquidComposition[componentIndex] <= 1.0);
+      double feedComponentFlow = feedFlow * feedComposition[componentIndex];
+      double productComponentFlow = gasFlow * gasComposition[componentIndex]
+          + liquidFlow * liquidComposition[componentIndex];
+      assertEquals(feedComponentFlow, productComponentFlow, Math.max(1.0e-6, 5.0e-3 * Math.abs(feedComponentFlow)));
+    }
+  }
+
+  /**
    * Test that missing hardware is reported clearly.
    */
   @Test

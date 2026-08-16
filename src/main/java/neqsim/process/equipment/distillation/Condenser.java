@@ -185,9 +185,13 @@ public class Condenser extends SimpleTray {
   /**
    * Setter for the field <code>refluxRatio</code>.
    *
-   * @param refluxRatio the refluxRatio to set
+   * @param refluxRatio finite non-negative liquid-to-distillate reflux ratio
+   * @throws IllegalArgumentException if the ratio is negative or non-finite
    */
   public void setRefluxRatio(double refluxRatio) {
+    if (!Double.isFinite(refluxRatio) || refluxRatio < 0.0) {
+      throw new IllegalArgumentException("Condenser reflux ratio must be finite and >= 0");
+    }
     this.refluxRatio = refluxRatio;
     refluxIsSet = true;
   }
@@ -290,6 +294,9 @@ public class Condenser extends SimpleTray {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    if (refluxIsSet && !separation_with_liquid_reflux && (!Double.isFinite(refluxRatio) || refluxRatio < 0.0)) {
+      throw new IllegalStateException("Condenser " + getName() + " has invalid reflux ratio " + refluxRatio);
+    }
     if (totalCondenser && (!refluxIsSet || separation_with_liquid_reflux)) {
       throw new IllegalStateException(
           "Total condenser " + getName() + " requires an explicit reflux ratio before it can run");

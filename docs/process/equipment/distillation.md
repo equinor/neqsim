@@ -214,10 +214,15 @@ warm solves.
 
 `setReboilerVaporBoilupRatio(ratio)` configures the direct reboiler mode.
 `setReboilerBoilupRatio(ratio)` also records the target as the bottom `REFLUX_RATIO`
-specification. After either route, `setReboilerMode(DistillationColumn.ReboilerMode.EQUILIBRIUM)`
-clears the active reboiler ratio and any stored bottom reflux-ratio specification, so a later run
-cannot silently restore the old ratio. Bottom purity, recovery, product-flow, and duty
-specifications are preserved.
+specification. Terminal ratios supplied through either the column API or the condenser/reboiler
+objects must be finite and non-negative. Invalid values fail before the active ratio, stored
+specification, initialization flag, or accepted warm products are changed; invalid ratio state
+retained by an older serialized model also fails before a terminal flash. A valid legacy boilup
+setter call marks the column for reinitialization so the next nearby-point solve cannot reuse an
+incompatible terminal state. After either route,
+`setReboilerMode(DistillationColumn.ReboilerMode.EQUILIBRIUM)` clears the active reboiler ratio and
+any stored bottom reflux-ratio specification, so a later run cannot silently restore the old
+ratio. Bottom purity, recovery, product-flow, and duty specifications are preserved.
 
 `setCondenserLiquidReflux(value, unit)` configures the `LIQUID_REFLUX_SPLIT` mode. Use it instead
 of calling `setCondenserMode(LIQUID_REFLUX_SPLIT)` directly because the fixed reflux flow is
