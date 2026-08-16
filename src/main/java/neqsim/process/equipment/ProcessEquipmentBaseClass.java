@@ -1343,9 +1343,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
    */
   protected final ProcessEquipmentTransientState captureBaseTransientState() {
     return new ProcessEquipmentTransientState(getName(), calcIdentifier, calculateSteadyState, time, isRunInSteps(),
-        specification, copyTransientReport(report),
-        properties == null ? null : new HashMap<String, String>(properties), isSolved, isActive,
-        lockedInactive, minimumFlow, minimumFlowExplicitlyConfigured, minimumFlowAutoManaged,
+        specification, copyTransientReport(report), properties == null ? null : new HashMap<String, String>(properties),
+        isSolved, isActive, lockedInactive, minimumFlow, minimumFlowExplicitlyConfigured, minimumFlowAutoManaged,
         minimumFlowRecalculationPending, capacityAnalysisEnabled, referenceDesignation,
         copyTransientReferenceDesignation(referenceDesignation));
   }
@@ -1402,8 +1401,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
     return copy;
   }
 
-  private static void restoreTransientReferenceDesignation(ReferenceDesignation target,
-      ReferenceDesignation source) {
+  private static void restoreTransientReferenceDesignation(ReferenceDesignation target, ReferenceDesignation source) {
     if (target == null || source == null) {
       if (target != source) {
         throw new IllegalArgumentException("Reference-designation snapshot structure changed");
@@ -1440,9 +1438,9 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
     private final ReferenceDesignation referenceDesignationState;
 
     private ProcessEquipmentTransientState(String name, UUID calculationIdentifier, boolean calculateSteadyState,
-        double time, boolean runInSteps, String specification, String[][] report,
-        HashMap<String, String> properties, boolean solved, boolean active, boolean lockedInactive,
-        double minimumFlow, boolean minimumFlowExplicitlyConfigured, boolean minimumFlowAutoManaged,
+        double time, boolean runInSteps, String specification, String[][] report, HashMap<String, String> properties,
+        boolean solved, boolean active, boolean lockedInactive, double minimumFlow,
+        boolean minimumFlowExplicitlyConfigured, boolean minimumFlowAutoManaged,
         boolean minimumFlowRecalculationPending, boolean capacityAnalysisEnabled,
         ReferenceDesignation referenceDesignationReference, ReferenceDesignation referenceDesignationState) {
       this.name = name;
