@@ -3616,17 +3616,31 @@ public class ProcessModelSimulationEvaluator implements Serializable {
 
       double[] constraintValues = new double[constraints.size()];
       double[] margins = new double[constraints.size()];
-      List<InstalledEquipmentCapacityEvidence> installedCapacityEvidence = new ArrayList<InstalledEquipmentCapacityEvidence>();
+      List<InstalledEquipmentCapacityEvidence> installedCapacityEvidence = new ArrayList<InstalledEquipmentCapacityEvidence>(
+          snapshotInstalledEquipmentCapacityEvidence(processModel));
+      Map<String, InstalledEquipmentCapacityEvidence> installedCapacityByIdentity = new LinkedHashMap<String, InstalledEquipmentCapacityEvidence>();
+      for (InstalledEquipmentCapacityEvidence evidence : installedCapacityEvidence) {
+        installedCapacityByIdentity.put(evidence.getQualifiedConstraintName(), evidence);
+      }
       double penaltySum = 0.0;
       boolean feasible = processModel.isModelConverged();
       for (int constraintIndex = 0; constraintIndex < constraints.size(); constraintIndex++) {
         ConstraintDefinition constraint = constraints.get(constraintIndex);
-        InstalledEquipmentCapacityEvidence capacityEvidence = snapshotRegisteredCapacityConstraint(constraint);
+        InstalledEquipmentCapacityEvidence capacityEvidence = null;
+        if (constraint.isCapacityConstraint() && "1".equals(constraint.getUnit())) {
+          capacityEvidence = installedCapacityByIdentity.get(constraint.getName());
+          if (capacityEvidence == null) {
+            capacityEvidence = snapshotRegisteredCapacityConstraint(constraint);
+            if (capacityEvidence != null) {
+              installedCapacityEvidence.add(capacityEvidence);
+              installedCapacityByIdentity.put(capacityEvidence.getQualifiedConstraintName(), capacityEvidence);
+            }
+          }
+        }
         if (capacityEvidence == null) {
           constraintValues[constraintIndex] = constraint.evaluate(processModel);
         } else {
           constraintValues[constraintIndex] = capacityEvidence.getNormalizedUtilization();
-          installedCapacityEvidence.add(capacityEvidence);
         }
         margins[constraintIndex] = constraint.marginFromValue(constraintValues[constraintIndex]);
         if (margins[constraintIndex] < 0.0) {
