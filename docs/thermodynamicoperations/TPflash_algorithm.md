@@ -1800,13 +1800,15 @@ Commercial process simulators do not publish all implementation details, but pub
   live system to rebuild the cubic/aqueous storage mapping; a recursion guard prevents fallback ping-pong. Genuine
   OIL+AQUEOUS liquid-liquid endpoints, already-feasible multiphase states, and dry systems do not run the additional
   flash.
-- For an ordinary neutral non-CPA water-rich asymmetric feed, the reciprocal multiphase calculation retains the cold
-  pre-iteration state instead of cloning the final endpoint. A post-flash clone can preserve collapsed phase-storage
-  and cubic-root history even after beta and compositions are reset, causing it to revisit a rejected three-phase
-  stationary point while the unchanged cold feed reaches a feasible OIL+AQUEOUS equilibrium. The cold seed is allocated
-  only when water feed is at least `0.01` and the existing critical-temperature/composition screen identifies an
-  asymmetric neutral mixture. Dry, CPA, chemical, ionic, solid, wax, and non-asymmetric water-bearing flashes remain on
-  their existing initialization paths. Seed provenance does not relax acceptance: exactly two distinct phases,
+- For a neutral non-CPA water-rich asymmetric feed, ordinary and explicit-multiphase calculations retain the cold
+  pre-iteration state instead of relying on a clone of a final endpoint. A post-flash clone can preserve collapsed
+  phase-storage and cubic-root history even after beta and compositions are reset, causing it to revisit a rejected
+  stationary point while the unchanged cold feed reaches a feasible OIL+AQUEOUS equilibrium. If the explicit
+  multiphase calculation collapses to one phase, water-bearing recovery consumes the cold state for one ordinary
+  TP flash; the retained K-value clone fallback remains available for other eligible collapses. The cold seed is
+  allocated only when water feed is at least `0.01` and the existing critical-temperature/composition screen identifies
+  an asymmetric neutral mixture. Dry, CPA, chemical, ionic, solid, wax, and non-asymmetric water-bearing flashes remain
+  on their existing initialization paths. Seed provenance does not relax acceptance: exactly two distinct phases,
   bounded and normalized beta/compositions, material balance and log-fugacity residuals below `1e-8`, and lower Gibbs
   energy are still required.
 - Multiphase stability cleanup merges two same-type liquid phases when their maximum component-composition difference
