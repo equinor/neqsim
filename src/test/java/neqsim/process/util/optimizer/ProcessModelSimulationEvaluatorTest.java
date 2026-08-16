@@ -3,6 +3,7 @@ package neqsim.process.util.optimizer;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayInputStream;
@@ -448,6 +449,91 @@ class ProcessModelSimulationEvaluatorTest {
     assertEquals(50.0, bottleneck.getCurrentValue(), 1.0e-12);
     assertEquals(45.0, bottleneck.getDesignValue(), 1.0e-12, "minimum limit must not be reported as Double.MAX_VALUE");
     assertTrue(bottleneck.isMinimumConstraint());
+  }
+
+  /**
+   * Verifies one supplier sample drives normalized feasibility, immutable physical evidence, serialization, and legacy
+   * bottleneck reporting.
+   */
+  @Test
+  void evaluationReusesUnitSafeInstalledCapacityEvidence() throws Exception {
+    final ModelFixture fixture = createModelFixture();
+    final AtomicInteger supplierCalls = new AtomicInteger();
+    CapacityConstraint installedCapacity =
+        new CapacityConstraint("installedGasCapacity", "kg/hr", ConstraintType.HARD)
+            .setDesignValue(12000.0).setMaxValue(13200.0).setWarningThreshold(0.85)
+            .setSeverity(ConstraintSeverity.CRITICAL).setDescription("Synthetic separator gas handling limit")
+            .setDataSource("mechanicalDesign:test").setConfidence(0.95).setValidityRange(8000.0, 14000.0)
+            .setValueSupplier(() -> {
+              supplierCalls.incrementAndGet();
+              return 13000.0;
+            });
+    fixture.separator.clearCapacityConstraints();
+    fixture.separator.addCapacityConstraint(installedCapacity);
+
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
+    evaluator.setIncludeStrategyCapacityConstraints(false);
+    evaluator.addEquipmentCapacityConstraints();
+
+    ProcessModelSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[0]);
+
+    assertEquals(1, supplierCalls.get(), "one completed point must sample each installed supplier once");
+    assertEquals(13.0 / 12.0, result.getConstraintValues()[0], 1.0e-12);
+    assertEquals(-1.0 / 12.0, result.getConstraintMargins()[0], 1.0e-12);
+    assertEquals("1", evaluator.getConstraints().get(0).getUnit());
+    assertEquals("kg/hr", evaluator.getConstraints().get(0).getCapacityPhysicalUnit());
+    assertEquals(1, result.getInstalledEquipmentCapacityEvidence().size());
+
+    InstalledEquipmentCapacityEvidence evidence = result.getInstalledEquipmentCapacityEvidence().get(0);
+    assertEquals("separation::separator/installedGasCapacity", evidence.getQualifiedConstraintName());
+    assertEquals(fixture.separator.getClass().getName(), evidence.getEquipmentClassName());
+    assertEquals(InstalledEquipmentCapacityEvidence.ConstraintOrigin.DIRECT, evidence.getConstraintOrigin());
+    assertEquals(ConstraintType.HARD, evidence.getConstraintType());
+    assertEquals(ConstraintSeverity.CRITICAL, evidence.getSeverity());
+    assertTrue(evidence.isEnabled());
+    assertEquals(13.0 / 12.0, evidence.getNormalizedUtilization(), 1.0e-12);
+    assertEquals(-1.0 / 12.0, evidence.getNormalizedMargin(), 1.0e-12);
+    assertEquals("1", evidence.getNormalizedUnit());
+    assertEquals(13000.0, evidence.getCurrentValue(), 0.0);
+    assertEquals(12000.0, evidence.getDesignValue(), 0.0);
+    assertEquals(0.0, evidence.getMinimumValue(), 0.0);
+    assertEquals(13200.0, evidence.getMaximumValue(), 0.0);
+    assertEquals(12000.0, evidence.getApplicableLimit(), 0.0);
+    assertEquals(-1000.0, evidence.getPhysicalMargin(), 0.0);
+    assertEquals(1000.0, evidence.getRequiredRelief(), 0.0);
+    assertEquals(0.85, evidence.getWarningThreshold(), 0.0);
+    assertEquals("kg/hr", evidence.getPhysicalUnit());
+    assertEquals("mechanicalDesign:test", evidence.getDataSource());
+    assertEquals(InstalledEquipmentCapacityEvidence.EvidenceStatus.AVAILABLE, evidence.getEvidenceStatus());
+    assertEquals(InstalledEquipmentCapacityEvidence.EvidenceApplicability.WITHIN_VALIDITY_RANGE,
+        evidence.getEvidenceApplicability());
+    assertFalse(evidence.isFeasible());
+    assertTrue(evidence.isNearLimit());
+    assertEquals(evidence.getCurrentValue(), result.getActiveBottleneck().getCurrentValue(), 0.0);
+    assertEquals(evidence.getNormalizedUtilization(), result.getActiveBottleneck().getUtilization(), 0.0);
+
+    installedCapacity.setDesignValue(20000.0).setUnit("t/day").setDataSource("mutated later");
+    assertEquals(12000.0, evidence.getApplicableLimit(), 0.0);
+    assertEquals("kg/hr", evidence.getPhysicalUnit());
+    assertEquals("mechanicalDesign:test", evidence.getDataSource());
+
+    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    ObjectOutputStream output = new ObjectOutputStream(bytes);
+    output.writeObject(result);
+    output.close();
+    ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()));
+    ProcessModelSimulationEvaluator.EvaluationResult restored =
+        (ProcessModelSimulationEvaluator.EvaluationResult) input.readObject();
+    input.close();
+
+    InstalledEquipmentCapacityEvidence restoredEvidence =
+        restored.getInstalledEquipmentCapacityEvidence().get(0);
+    assertEquals("separation::separator/installedGasCapacity", restoredEvidence.getQualifiedConstraintName());
+    assertEquals(1000.0, restoredEvidence.getRequiredRelief(), 0.0);
+    assertNotSame(restored.getInstalledEquipmentCapacityEvidence(),
+        restored.getInstalledEquipmentCapacityEvidence());
+    assertThrows(UnsupportedOperationException.class,
+        () -> restored.getInstalledEquipmentCapacityEvidence().clear());
   }
 
   /**
