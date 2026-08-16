@@ -178,8 +178,10 @@ EngineeringDiagramComponentBalanceTable componentBalances =
 For each stable balance/component pair, the projection reports inlet and outlet component mass flow,
 their residual, the larger-total relative residual, declared and supplied boundary counts, and an
 explicit completeness flag. It does not derive composition from a live process object, infer omitted
-zeroes, apply tolerances, reconcile values, or close equipment heat/work terms. This separation keeps
-component data provenance explicit and leaves existing stream-table, balance-table, controlled
+zeroes, apply tolerances, reconcile values, or close equipment heat/work terms. The sum of supplied
+component inlet/outlet totals is also compared with the source total-mass balance; a difference is a
+warning with no inferred project tolerance. This separation keeps component data provenance explicit
+and leaves existing stream-table, balance-table, controlled
 document, Classic DOT/Graphviz, native SVG/PDF, DEXPI 2.0 Process, and Proteus/P&ID outputs unchanged.
 
 ### Explicit tolerance assessment
