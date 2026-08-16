@@ -2015,15 +2015,17 @@ public class ProcessSystem extends SimulationBaseClass {
    * @return true when at least one recycle does not have a previously accepted state
    */
   private boolean requiresRecycleConfirmation() {
+    boolean hasRecycle = false;
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof Recycle) {
+        hasRecycle = true;
         Recycle recycle = (Recycle) unit;
         if (recycle.getIterations() <= 1 || !recycle.solved()) {
           return true;
         }
       }
     }
-    return false;
+    return !hasRecycle;
   }
 
   /**
