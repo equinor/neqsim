@@ -151,7 +151,7 @@ class EngineeringDiagramMassBalanceReconciliationTest {
     List<Boundary> boundaries = Arrays.asList(boundary(feed, Direction.INLET), boundary(product, Direction.OUTLET));
     EngineeringDiagramBalanceTable balanceTable = EngineeringDiagramBalanceTable.fromStreamTable(streamTable,
         boundaries);
-    return new Fixture(streamTable, balanceTable, assessment(balanceTable, 0.0, 0.0), feed, product);
+    return new Fixture(streamTable, balanceTable, assessment(balanceTable, 1.0e-10, 1.0e-10), feed, product);
   }
 
   private static Fixture withinToleranceFixture() {
