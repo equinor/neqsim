@@ -13,6 +13,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import neqsim.process.engineering.model.EngineeringDiagramBalanceTable.Balance;
 import neqsim.process.engineering.model.EngineeringDiagramBalanceTable.Boundary;
 import neqsim.process.engineering.model.EngineeringDiagramBalanceTable.Direction;
 import neqsim.process.engineering.model.EngineeringDiagramBalanceTable.EvidenceState;
@@ -439,6 +440,7 @@ public final class EngineeringDiagramComponentBalanceTable implements Serializab
       }
     }
     Collections.sort(balances, componentBalanceComparator());
+    addMassCoverageDiagnostics(balanceTable, balances, diagnostics);
     Collections.sort(diagnostics, diagnosticComparator());
     return new EngineeringDiagramComponentBalanceTable(balanceTable, sortedFlows, balances, diagnostics);
   }
@@ -523,6 +525,38 @@ public final class EngineeringDiagramComponentBalanceTable implements Serializab
   private static boolean validFlow(ComponentFlow flow) {
     return Double.isFinite(flow.getResultValue()) && flow.getResultValue() >= 0.0
         && "kg/s".equals(flow.getResultUnit()) && "COMPONENT_MASS".equals(flow.getQuantityBasis());
+  }
+
+  private static void addMassCoverageDiagnostics(EngineeringDiagramBalanceTable balanceTable,
+      List<ComponentBalance> componentBalances, List<Diagnostic> diagnostics) {
+    Map<String, double[]> componentTotalsByBalance = new LinkedHashMap<String, double[]>();
+    for (ComponentBalance componentBalance : componentBalances) {
+      double[] totals = componentTotalsByBalance.get(componentBalance.getBalanceId());
+      if (totals == null) {
+        totals = new double[2];
+        componentTotalsByBalance.put(componentBalance.getBalanceId(), totals);
+      }
+      totals[0] += componentBalance.getInletMassFlow();
+      totals[1] += componentBalance.getOutletMassFlow();
+    }
+    for (Balance balance : balanceTable.getBalances()) {
+      double[] componentTotals = componentTotalsByBalance.get(balance.getBalanceId());
+      if (componentTotals == null) {
+        continue;
+      }
+      if (materiallyDifferent(balance.getInletMassFlow(), componentTotals[0])
+          || materiallyDifferent(balance.getOutletMassFlow(), componentTotals[1])) {
+        diagnostics.add(new Diagnostic(Severity.WARNING, "COMPONENT_TOTAL_MASS_MISMATCH",
+            "Summed component inlet or outlet mass flow differs from the source total-mass balance; no project "
+                + "tolerance was inferred",
+            balance.getBalanceId()));
+      }
+    }
+  }
+
+  private static boolean materiallyDifferent(double expected, double actual) {
+    double scale = Math.max(Math.max(Math.abs(expected), Math.abs(actual)), 1.0);
+    return Math.abs(expected - actual) > 16.0 * Math.ulp(scale);
   }
 
   private static String boundaryKey(String balanceId, String streamId) {
