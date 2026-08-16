@@ -184,6 +184,77 @@ warning with no inferred project tolerance. This separation keeps component data
 and leaves existing stream-table, balance-table, controlled
 document, Classic DOT/Graphviz, native SVG/PDF, DEXPI 2.0 Process, and Proteus/P&ID outputs unchanged.
 
+### Explicit heat-transfer and shaft-work closure
+
+`EngineeringDiagramEnergyBalanceTable` is an additive companion to an existing explicit-boundary
+balance table. It closes the source stream-enthalpy terms with explicitly declared heat-transfer and
+shaft-work ports. Every port retains a stable balance identity, canonical equipment or control-volume
+identity, distinct stable port identity, energy kind, direction relative to the control volume, source
+reference, and evidence state. Separate port identities preserve parallel energy connections without
+collapsing them.
+
+Energy-flow values are non-negative `W` values on an `ENERGY_RATE` basis. Direction comes only from
+the port declaration, never from a sign convention, drawing topology, or live equipment duty. Every
+declared port requires one explicit zero or non-zero flow with source, provenance, and evidence state.
+
+```java
+List<EngineeringDiagramEnergyBalanceTable.EnergyPort> energyPorts =
+    Arrays.asList(
+        new EngineeringDiagramEnergyBalanceTable.EnergyPort(
+            "BAL-AREA-01",
+            heaterSemanticObjectId,
+            "energy-port:heater-duty",
+            EngineeringDiagramEnergyBalanceTable.EnergyKind.HEAT_TRANSFER,
+            EngineeringDiagramEnergyBalanceTable.EnergyDirection.INTO_CONTROL_VOLUME,
+            "project-energy-register:BAL-AREA-01",
+            EngineeringDiagramBalanceTable.EvidenceState.PROPOSED),
+        new EngineeringDiagramEnergyBalanceTable.EnergyPort(
+            "BAL-AREA-01",
+            compressorSemanticObjectId,
+            "energy-port:compressor-shaft",
+            EngineeringDiagramEnergyBalanceTable.EnergyKind.SHAFT_WORK,
+            EngineeringDiagramEnergyBalanceTable.EnergyDirection.INTO_CONTROL_VOLUME,
+            "project-energy-register:BAL-AREA-01",
+            EngineeringDiagramBalanceTable.EvidenceState.PROPOSED));
+List<EngineeringDiagramEnergyBalanceTable.EnergyFlow> energyFlows =
+    Arrays.asList(
+        new EngineeringDiagramEnergyBalanceTable.EnergyFlow(
+            "BAL-AREA-01",
+            "energy-port:heater-duty",
+            250000.0,
+            "W",
+            "ENERGY_RATE",
+            "simulation-result:NORMAL-01:heater-duty",
+            "simulation-case:NORMAL-01",
+            EngineeringDiagramBalanceTable.EvidenceState.PROPOSED),
+        new EngineeringDiagramEnergyBalanceTable.EnergyFlow(
+            "BAL-AREA-01",
+            "energy-port:compressor-shaft",
+            125000.0,
+            "W",
+            "ENERGY_RATE",
+            "simulation-result:NORMAL-01:compressor-power",
+            "simulation-case:NORMAL-01",
+            EngineeringDiagramBalanceTable.EvidenceState.PROPOSED));
+EngineeringDiagramEnergyBalanceTable energyBalances =
+    EngineeringDiagramEnergyBalanceTable.fromBalanceTable(
+        balanceTable, energyPorts, energyFlows);
+```
+
+For each balance, total energy input is inlet stream enthalpy flow plus heat transfer and shaft work
+declared into the control volume. Total energy output is outlet stream enthalpy flow plus heat
+transfer and shaft work declared out of the control volume. The energy residual is total input minus
+total output in W; its relative residual divides by the larger absolute total and is zero when both
+totals are zero. A result is complete only when the source stream-enthalpy balance is complete, the
+balance has at least one explicit energy port, and every port has one usable flow value.
+
+Unknown or duplicate balances, ports, and flows; missing values; non-finite or negative rates; and
+wrong units or bases remain visible as structured diagnostics. A zero energy rate must be recorded
+explicitly. The companion does not read live equipment duties, infer absent heat/work terms, apply a
+project tolerance, reconcile data, or approve a balance. Existing balance/component APIs,
+controlled-document JSON, Classic DOT/Graphviz, native SVG/PDF, DEXPI 2.0 Process, and Proteus/P&ID
+outputs remain unchanged.
+
 ### Explicit tolerance assessment
 
 `EngineeringDiagramBalanceAssessment` evaluates existing residuals against explicit, sourced
@@ -406,7 +477,8 @@ Run the focused regression with:
 ./mvnw -Dtest=ProcessDiagramDocumentSetAdapterTest test
 ./mvnw -Dtest=NativeEngineeringDiagramRendererTest test
 ./mvnw -Dtest=EngineeringDiagramStreamTableTest,EngineeringDiagramBalanceTableTest,\
-EngineeringDiagramComponentBalanceTableTest,EngineeringDiagramBalanceAssessmentTest test
+EngineeringDiagramComponentBalanceTableTest,EngineeringDiagramEnergyBalanceTableTest,\
+EngineeringDiagramBalanceAssessmentTest test
 ```
 
 The regression verifies deterministic single- and multi-area output, immutable collections,
