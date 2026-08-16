@@ -33,8 +33,8 @@ import neqsim.util.NamedBaseClass;
  * operating on real process data without requiring external optimisation packages.
  * </p>
  */
-public class ModelPredictiveController extends NamedBaseClass implements ControllerDeviceInterface,
-    TransientStateParticipant<ModelPredictiveController.MpcTransientState> {
+public class ModelPredictiveController extends NamedBaseClass
+    implements ControllerDeviceInterface, TransientStateParticipant<ModelPredictiveController.MpcTransientState> {
   private static final long serialVersionUID = 1000L;
 
   private static final int MIN_ESTIMATION_SAMPLES = 5;
@@ -2115,8 +2115,8 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
       throw new IllegalArgumentException("MPC transient snapshot cannot be null");
     }
     if (!getTransientStateIdentity().equals(state.stateIdentity)) {
-      throw new IllegalArgumentException("MPC transient snapshot belongs to '" + state.stateIdentity
-          + "', not '" + getTransientStateIdentity() + "'");
+      throw new IllegalArgumentException(
+          "MPC transient snapshot belongs to '" + state.stateIdentity + "', not '" + getTransientStateIdentity() + "'");
     }
 
     setName(state.name);
