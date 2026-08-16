@@ -1,4 +1,4 @@
-name: Full verify PR 3036
+name: Validate scrubber tolerance repair
 
 on: [push]
 
@@ -6,118 +6,59 @@ permissions:
   contents: read
 
 jobs:
-  javadoc:
-    name: Javadoc Java 21 Ubuntu
+  exact_scrubber:
+    name: Exact scrubber regression
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: 2c426020094f8d1ddca973c789c8c165af4311ad
+          ref: 30ea45eb31582d8966790c0d831b3f422921b98a
           fetch-depth: 1
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
           cache: maven
-      - run: mvn javadoc:javadoc -ntp
+      - run: mvn -B test -ntp -Dtest=HydrocarbonScrubberSaturationPressureStabilityTest -Dgroups=slow "-DexcludedTestGroups=" "-Djacoco.skip=true"
 
-  fast_tests:
-    name: Fast tests Java 21 ${{ matrix.platform }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: Ubuntu
-            os: ubuntu-latest
-          - platform: Windows
-            os: windows-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: 2c426020094f8d1ddca973c789c8c165af4311ad
-          fetch-depth: 1
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: '21'
-          cache: maven
-      - name: Run fast tests
-        run: mvn -B test -ntp -DskipITs "-Djacoco.skip=true"
-
-  slow_tests:
-    name: Slow tests Java 21 shard ${{ matrix.label }}
+  affected_slow_shard:
+    name: Affected slow-test shard
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - shard: 0
-            label: 1/4
-          - shard: 1
-            label: 2/4
-          - shard: 2
-            label: 3/4
-          - shard: 3
-            label: 4/4
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: 2c426020094f8d1ddca973c789c8c165af4311ad
+          ref: 30ea45eb31582d8966790c0d831b3f422921b98a
           fetch-depth: 1
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
           cache: maven
-      - name: Run slow shard
+      - name: Discover and run containing shard
         shell: bash
         run: |
           mapfile -t slow_files < <(grep -rl --include='*.java' '@Tag("slow")' src/test/java | sort)
+          target='src/test/java/neqsim/pvtsimulation/simulation/HydrocarbonScrubberSaturationPressureStabilityTest.java'
+          target_index=-1
+          for index in "${!slow_files[@]}"; do
+            if [[ "${slow_files[$index]}" == "$target" ]]; then
+              target_index=$index
+              break
+            fi
+          done
+          if (( target_index < 0 )); then
+            echo 'Target slow test not found'
+            exit 1
+          fi
+          shard=$((target_index % 4))
+          echo "Scrubber test belongs to shard $((shard + 1))/4"
           selected=()
           for index in "${!slow_files[@]}"; do
-            if ((index % 4 == ${{ matrix.shard }})); then
+            if ((index % 4 == shard)); then
               class_name="${slow_files[$index]#src/test/java/}"
               class_name="${class_name%.java}"
               selected+=("${class_name//\//.}")
             fi
           done
-          if ((${#selected[@]} == 0)); then exit 1; fi
           test_pattern=$(IFS=,; echo "${selected[*]}")
           mvn -B test -ntp -Dtest="$test_pattern" -Dgroups=slow "-DexcludedTestGroups=" "-Djacoco.skip=true"
-
-  java8:
-    name: Java 8 tests ${{ matrix.platform }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: Ubuntu
-            os: ubuntu-latest
-          - platform: Windows
-            os: windows-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: 2c426020094f8d1ddca973c789c8c165af4311ad
-          fetch-depth: 1
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: '8'
-          cache: maven
-      - run: mvn -B test --file pomJava8.xml -ntp "-Djacoco.skip=true"
-
-  agent_refs:
-    name: Agent skill references
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: 2c426020094f8d1ddca973c789c8c165af4311ad
-          fetch-depth: 1
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.12'
-      - run: python devtools/verify_agent_skill_refs.py
