@@ -175,7 +175,7 @@ class RecycleAcceptedStateReuseTest {
     settle(fixture, ExecutionMode.SEQUENTIAL);
     long recycleCalls = calls(fixture.process, "recycle");
 
-    fixture.splitter.setFlowRates(new double[] {50000.0, 0.0}, "kg/hr");
+    fixture.splitter.setFlowRates(new double[] { 50000.0, 0.0 }, "kg/hr");
     run(fixture, ExecutionMode.SEQUENTIAL, UUID.randomUUID());
 
     assertTrue(calls(fixture.process, "recycle") - recycleCalls >= 2L);
