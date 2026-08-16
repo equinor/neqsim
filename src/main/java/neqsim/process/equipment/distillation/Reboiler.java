@@ -73,9 +73,13 @@ public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
   /**
    * Setter for the field <code>refluxRatio</code>.
    *
-   * @param refluxRatio the refluxRatio to set
+   * @param refluxRatio finite non-negative vapor boilup-to-bottoms ratio
+   * @throws IllegalArgumentException if the ratio is negative or non-finite
    */
   public void setRefluxRatio(double refluxRatio) {
+    if (!Double.isFinite(refluxRatio) || refluxRatio < 0.0) {
+      throw new IllegalArgumentException("Reboiler vapor boilup ratio must be finite and >= 0");
+    }
     this.refluxRatio = refluxRatio;
     refluxIsSet = true;
   }
@@ -120,6 +124,10 @@ public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    if (refluxIsSet && (!Double.isFinite(refluxRatio) || refluxRatio < 0.0)) {
+      throw new IllegalStateException(
+          "Reboiler " + getName() + " has invalid vapor boilup ratio " + refluxRatio);
+    }
     if (!refluxIsSet) {
       UUID oldid = getCalculationIdentifier();
       super.run(id);
