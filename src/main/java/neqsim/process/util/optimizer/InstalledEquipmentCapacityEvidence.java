@@ -129,8 +129,7 @@ public final class InstalledEquipmentCapacityEvidence implements Serializable {
     this.constraintType = constraint.getType();
     this.severity = constraint.getSeverity();
     this.enabled = constraint.isEnabled();
-    this.limitDirection =
-        constraint.isMinimumConstraint() ? LimitDirection.MINIMUM : LimitDirection.MAXIMUM;
+    this.limitDirection = constraint.isMinimumConstraint() ? LimitDirection.MINIMUM : LimitDirection.MAXIMUM;
     this.currentValue = currentValue;
     this.designValue = constraint.getDesignValue();
     this.minimumValue = constraint.getMinValue();
@@ -139,8 +138,7 @@ public final class InstalledEquipmentCapacityEvidence implements Serializable {
     this.normalizedUtilization = constraint.getUtilization(currentValue);
     this.normalizedMargin = 1.0 - this.normalizedUtilization;
     this.physicalMargin = calculatePhysicalMargin(currentValue, this.applicableLimit, this.limitDirection);
-    this.requiredRelief =
-        Double.isFinite(this.physicalMargin) ? Math.max(0.0, -this.physicalMargin) : Double.NaN;
+    this.requiredRelief = Double.isFinite(this.physicalMargin) ? Math.max(0.0, -this.physicalMargin) : Double.NaN;
     this.warningThreshold = constraint.getWarningThreshold();
     this.physicalUnit = safeText(constraint.getUnit());
     this.description = safeText(constraint.getDescription());
@@ -167,8 +165,7 @@ public final class InstalledEquipmentCapacityEvidence implements Serializable {
   }
 
   /** Calculates signed physical headroom with direction-aware sign. */
-  private static double calculatePhysicalMargin(double currentValue, double applicableLimit,
-      LimitDirection direction) {
+  private static double calculatePhysicalMargin(double currentValue, double applicableLimit, LimitDirection direction) {
     if (!Double.isFinite(currentValue) || !Double.isFinite(applicableLimit)) {
       return Double.NaN;
     }
@@ -388,3 +385,4 @@ public final class InstalledEquipmentCapacityEvidence implements Serializable {
         && normalizedUtilization > warningThreshold;
   }
 }
+
