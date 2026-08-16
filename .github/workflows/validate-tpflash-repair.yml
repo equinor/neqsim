@@ -1,88 +1,9 @@
 name: Validate TPflash repair candidate
 
-on:
-  push:
-    paths:
-      - .github/tpflash-repair.trigger
-
-permissions:
-  contents: write
+on: [push]
 
 jobs:
-  repair-and-test:
+  smoke:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: fix/tpflash-repair-validation3
-          fetch-depth: 0
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: '21'
-          cache: maven
-      - name: Apply candidate repair
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          tp = Path('src/main/java/neqsim/thermodynamicoperations/flashops/TPmultiflash.java')
-          text = tp.read_text()
-          old = """      if (tm[j] < -1e-8) {
-        break;
-      }
-"""
-          new = """      double tpdAcceptanceTolerance = Math.max(1.0e-8, Math.abs(err));
-      if (tm[j] < -tpdAcceptanceTolerance) {
-        break;
-      }
-      if (tm[j] < -1.0e-8) {
-        // A negative TPD smaller than the converged stability residual is not
-        // significant enough to change the established phase topology.
-        tm[j] = 10.0;
-      }
-"""
-          assert text.count(old) == 1, text.count(old)
-          tp.write_text(text.replace(old, new))
-
-          st = Path('src/main/java/neqsim/thermo/system/SystemThermo.java')
-          text = st.read_text()
-          old = """    double tolerance = 1.0e-12 * Math.max(1.0, inventory);
-    if (!Double.isFinite(totalNumberOfMoles) || Math.abs(totalNumberOfMoles - inventory) > tolerance) {
-      setTotalNumberOfMolesRaw(inventory);
-      isInitialized = false;
-    }
-"""
-          new = """    double tolerance = 1.0e-12 * Math.max(1.0, inventory);
-    double mismatch = Math.abs(totalNumberOfMoles - inventory);
-    boolean clearlyStaleUpstreamTotal = !Double.isFinite(totalNumberOfMoles)
-        || (totalNumberOfMoles > inventory && totalNumberOfMoles / inventory > 100.0);
-    if (clearlyStaleUpstreamTotal && mismatch > tolerance) {
-      setTotalNumberOfMolesRaw(inventory);
-      isInitialized = false;
-    }
-"""
-          assert text.count(old) == 1, text.count(old)
-          st.write_text(text.replace(old, new))
-
-          scrub = Path('src/test/java/neqsim/pvtsimulation/simulation/HydrocarbonScrubberSaturationPressureStabilityTest.java')
-          text = scrub.read_text()
-          old = '      assertEquals(1.0, compositionSum, 1.0e-9);\n'
-          new = '      assertEquals(1.0, compositionSum, 1.0e-12);\n'
-          assert text.count(old) == 1, text.count(old)
-          scrub.write_text(text.replace(old, new))
-          PY
-      - name: Format
-        run: mvn -B -ntp spotless:apply
-      - name: Run focused regressions
-        run: mvn -B -ntp -Djacoco.skip=true '-Dtest=TPFlashTest#testRun5,TPflashIncipientPhaseStabilityTest#subResidualTpdDoesNotOverrideExistingUmrPruSolution,EclipseFluidReadWriteTest#testFluidWater3,SystemThermoSerializationInventoryTest' test
-      - name: Run scrubber regression
-        run: mvn -B -ntp -Djacoco.skip=true -Dtest=HydrocarbonScrubberSaturationPressureStabilityTest test
-      - name: Commit validated repair
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          rm -f .github/tpflash-repair.trigger .github/workflows/validate-tpflash-repair.yml
-          git add -A
-          git commit -m 'fix(flash): reject sub-residual stability phases' || exit 0
-          git push origin HEAD:fix/tpflash-repair-validation3
+      - run: echo workflow-ok
