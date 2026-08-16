@@ -3,17 +3,33 @@ name: Validate TPflash repair candidate
 on: [push]
 
 jobs:
-  bisect-base:
+  bisect-focused-regressions:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: c9cb4c5824b34643bbe463e286d1f9399816801c
+          ref: 9a371fb1448bb713990072c2d3d4a291c71dab68
           fetch-depth: 0
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
           cache: maven
-      - name: Run pre-3026 focused regressions
-        run: mvn -B -ntp -Djacoco.skip=true '-Dtest=TPFlashTest#testRun5,TPflashIncipientPhaseStabilityTest#subResidualTpdDoesNotOverrideExistingUmrPruSolution,EclipseFluidReadWriteTest#testFluidWater3' test
+      - name: Prepare bisect oracle
+        run: |
+          cat > /tmp/bisect-test.sh <<'EOF'
+          #!/usr/bin/env bash
+          mvn -q -ntp -Djacoco.skip=true '-Dtest=TPFlashTest#testRun5,TPflashIncipientPhaseStabilityTest#subResidualTpdDoesNotOverrideExistingUmrPruSolution,EclipseFluidReadWriteTest#testFluidWater3' test
+          EOF
+          chmod +x /tmp/bisect-test.sh
+      - name: Bisect regression window
+        run: |
+          git bisect start 9a371fb1448bb713990072c2d3d4a291c71dab68 c9cb4c5824b34643bbe463e286d1f9399816801c
+          set +e
+          git bisect run /tmp/bisect-test.sh
+          rc=$?
+          echo '=== bisect log ==='
+          git bisect log
+          echo '=== current commit ==='
+          git show -s --format='%H%n%P%n%s%n%an%n%ad' HEAD
+          exit $rc
