@@ -294,10 +294,8 @@ public class Condenser extends SimpleTray {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    if (refluxIsSet && !separation_with_liquid_reflux
-        && (!Double.isFinite(refluxRatio) || refluxRatio < 0.0)) {
-      throw new IllegalStateException(
-          "Condenser " + getName() + " has invalid reflux ratio " + refluxRatio);
+    if (refluxIsSet && !separation_with_liquid_reflux && (!Double.isFinite(refluxRatio) || refluxRatio < 0.0)) {
+      throw new IllegalStateException("Condenser " + getName() + " has invalid reflux ratio " + refluxRatio);
     }
     if (totalCondenser && (!refluxIsSet || separation_with_liquid_reflux)) {
       throw new IllegalStateException(

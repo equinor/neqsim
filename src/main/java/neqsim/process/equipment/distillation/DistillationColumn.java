@@ -14633,17 +14633,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Convenience method to specify a reboiler boilup ratio (V/B).
    *
    * <p>
-   * The specification is validated before either terminal hardware or stored control state is
-   * changed, so rejected values leave an accepted warm column unchanged.
+   * The specification is validated before either terminal hardware or stored control state is changed, so rejected
+   * values leave an accepted warm column unchanged.
    * </p>
    *
    * @param boilupRatio finite non-negative boilup ratio
    * @throws IllegalArgumentException if the ratio is negative or non-finite
    */
   public void setReboilerBoilupRatio(double boilupRatio) {
-    ColumnSpecification specification =
-        new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
-            ColumnSpecification.ProductLocation.BOTTOM, boilupRatio);
+    ColumnSpecification specification = new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
+        ColumnSpecification.ProductLocation.BOTTOM, boilupRatio);
     if (hasReboiler) {
       getReboiler().setRefluxRatio(boilupRatio);
     }

@@ -125,8 +125,7 @@ public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
   @Override
   public void run(UUID id) {
     if (refluxIsSet && (!Double.isFinite(refluxRatio) || refluxRatio < 0.0)) {
-      throw new IllegalStateException(
-          "Reboiler " + getName() + " has invalid vapor boilup ratio " + refluxRatio);
+      throw new IllegalStateException("Reboiler " + getName() + " has invalid vapor boilup ratio " + refluxRatio);
     }
     if (!refluxIsSet) {
       UUID oldid = getCalculationIdentifier();
