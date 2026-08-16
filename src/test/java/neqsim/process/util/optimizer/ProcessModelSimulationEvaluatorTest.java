@@ -20,6 +20,7 @@ import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintSeverity;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
 import neqsim.process.equipment.capacity.ValveCapacityStrategy;
+import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
@@ -550,6 +551,61 @@ class ProcessModelSimulationEvaluatorTest {
         restored.getInstalledEquipmentCapacityEvidence());
     assertThrows(UnsupportedOperationException.class,
         () -> restored.getInstalledEquipmentCapacityEvidence().clear());
+  }
+
+  /** Verifies map-sourced compressor evidence is monotonic and deterministic at nearby operating points. */
+  @Test
+  void compressorMapCapacityEvidenceRetainsPhysicalResiduals() {
+    SystemInterface fluid = createFluid(5000.0);
+    Stream compressorFeed = new Stream("compressor feed", fluid);
+    Compressor compressor = new Compressor("export compressor", compressorFeed);
+    compressor.setOutletPressure(70.0, "bara");
+    final double[] correctedSpeed = new double[] {9500.0};
+    final AtomicInteger supplierCalls = new AtomicInteger();
+    compressor.clearCapacityConstraints();
+    compressor.addCapacityConstraint(
+        new CapacityConstraint("mapCorrectedSpeed", "RPM", ConstraintType.HARD)
+            .setDesignValue(10000.0).setMaxValue(10500.0).setSeverity(ConstraintSeverity.HARD)
+            .setDataSource("synthetic compressor map envelope").setValidityRange(8000.0, 10500.0)
+            .setValueSupplier(() -> {
+              supplierCalls.incrementAndGet();
+              return correctedSpeed[0];
+            }));
+
+    ProcessSystem compression = new ProcessSystem("compression");
+    compression.add(compressorFeed);
+    compression.add(compressor);
+    ProcessModel model = new ProcessModel();
+    model.add("compression", compression);
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(model);
+    evaluator.setIncludeStrategyCapacityConstraints(false);
+    evaluator.addEquipmentCapacityConstraints();
+
+    ProcessModelSimulationEvaluator.EvaluationResult below = evaluator.evaluate(new double[0]);
+    correctedSpeed[0] = 10500.0;
+    ProcessModelSimulationEvaluator.EvaluationResult above = evaluator.evaluate(new double[0]);
+    ProcessModelSimulationEvaluator.EvaluationResult repeated = evaluator.evaluate(new double[0]);
+
+    InstalledEquipmentCapacityEvidence belowEvidence =
+        below.getInstalledEquipmentCapacityEvidence().get(0);
+    InstalledEquipmentCapacityEvidence aboveEvidence =
+        above.getInstalledEquipmentCapacityEvidence().get(0);
+    InstalledEquipmentCapacityEvidence repeatedEvidence =
+        repeated.getInstalledEquipmentCapacityEvidence().get(0);
+    assertEquals(3, supplierCalls.get());
+    assertEquals(0.95, belowEvidence.getNormalizedUtilization(), 1.0e-12);
+    assertEquals(500.0, belowEvidence.getPhysicalMargin(), 0.0);
+    assertEquals(0.0, belowEvidence.getRequiredRelief(), 0.0);
+    assertEquals(1.05, aboveEvidence.getNormalizedUtilization(), 1.0e-12);
+    assertEquals(-500.0, aboveEvidence.getPhysicalMargin(), 0.0);
+    assertEquals(500.0, aboveEvidence.getRequiredRelief(), 0.0);
+    assertEquals(aboveEvidence.getNormalizedUtilization(), repeatedEvidence.getNormalizedUtilization(), 0.0);
+    assertEquals(aboveEvidence.getRequiredRelief(), repeatedEvidence.getRequiredRelief(), 0.0);
+    assertEquals("RPM", aboveEvidence.getPhysicalUnit());
+    assertEquals(compressor.getClass().getName(), aboveEvidence.getEquipmentClassName());
+    assertEquals("synthetic compressor map envelope", aboveEvidence.getDataSource());
+    assertEquals(9500.0, belowEvidence.getCurrentValue(), 0.0,
+        "the earlier operating point must remain immutable after later evaluations");
   }
 
   /**
