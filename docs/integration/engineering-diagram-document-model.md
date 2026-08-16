@@ -136,6 +136,52 @@ inlet total minus the outlet total, and its relative residual uses the same larg
 It intentionally excludes equipment heat duties and shaft work, so it is not a complete energy
 balance.
 
+### Explicit component-resolved mass balances
+
+`EngineeringDiagramComponentBalanceTable` is an additive companion to an existing explicit-boundary
+balance table. It binds user-supplied component mass-flow records to the same stable balance and
+stream identities. Every record retains the source component identity and name, explicit `kg/s`
+unit, `COMPONENT_MASS` basis, source reference, provenance, and `PROPOSED` or `REVIEWED` evidence
+state. A component requires one explicit zero or non-zero value on every declared boundary stream;
+missing, duplicate, unknown, non-finite, negative, wrongly based, or wrongly unitized values remain
+visible as structured diagnostics.
+
+```java
+List<EngineeringDiagramComponentBalanceTable.ComponentFlow> componentFlows =
+    Arrays.asList(
+        new EngineeringDiagramComponentBalanceTable.ComponentFlow(
+            "BAL-AREA-01",
+            feedStreamId,
+            "methane",
+            "methane",
+            8.5,
+            "kg/s",
+            "COMPONENT_MASS",
+            "project-component-register:BAL-AREA-01",
+            "simulation-case:NORMAL-01",
+            EngineeringDiagramBalanceTable.EvidenceState.PROPOSED),
+        new EngineeringDiagramComponentBalanceTable.ComponentFlow(
+            "BAL-AREA-01",
+            productStreamId,
+            "methane",
+            "methane",
+            8.5,
+            "kg/s",
+            "COMPONENT_MASS",
+            "project-component-register:BAL-AREA-01",
+            "simulation-case:NORMAL-01",
+            EngineeringDiagramBalanceTable.EvidenceState.PROPOSED));
+EngineeringDiagramComponentBalanceTable componentBalances =
+    EngineeringDiagramComponentBalanceTable.fromBalanceTable(balanceTable, componentFlows);
+```
+
+For each stable balance/component pair, the projection reports inlet and outlet component mass flow,
+their residual, the larger-total relative residual, declared and supplied boundary counts, and an
+explicit completeness flag. It does not derive composition from a live process object, infer omitted
+zeroes, apply tolerances, reconcile values, or close equipment heat/work terms. This separation keeps
+component data provenance explicit and leaves existing stream-table, balance-table, controlled
+document, Classic DOT/Graphviz, native SVG/PDF, DEXPI 2.0 Process, and Proteus/P&ID outputs unchanged.
+
 ### Explicit tolerance assessment
 
 `EngineeringDiagramBalanceAssessment` evaluates existing residuals against explicit, sourced
@@ -358,7 +404,7 @@ Run the focused regression with:
 ./mvnw -Dtest=ProcessDiagramDocumentSetAdapterTest test
 ./mvnw -Dtest=NativeEngineeringDiagramRendererTest test
 ./mvnw -Dtest=EngineeringDiagramStreamTableTest,EngineeringDiagramBalanceTableTest,\
-EngineeringDiagramBalanceAssessmentTest test
+EngineeringDiagramComponentBalanceTableTest,EngineeringDiagramBalanceAssessmentTest test
 ```
 
 The regression verifies deterministic single- and multi-area output, immutable collections,
