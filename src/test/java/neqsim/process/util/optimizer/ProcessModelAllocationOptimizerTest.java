@@ -164,18 +164,14 @@ class ProcessModelAllocationOptimizerTest {
         result.getRankedHydraulicConstraintsAtBestSampledObjective().get(0).getBinding().getConstraintName());
     assertEquals(800.0 / 700.0, result.getRankedHydraulicConstraintsAtBestSampledObjective().get(0).getUtilization(),
         1.0e-12);
-    InstalledEquipmentCapacityEvidence bestCapacity =
-        result.getInstalledCapacityEvidenceAtBestFeasible().get(0);
-    assertEquals("gathering::allocation sink/producer A installed rate",
-        bestCapacity.getQualifiedConstraintName());
+    InstalledEquipmentCapacityEvidence bestCapacity = result.getInstalledCapacityEvidenceAtBestFeasible().get(0);
+    assertEquals("gathering::allocation sink/producer A installed rate", bestCapacity.getQualifiedConstraintName());
     assertEquals(1.0, bestCapacity.getNormalizedUtilization(), 1.0e-12);
     assertEquals(0.0, bestCapacity.getPhysicalMargin(), 1.0e-8);
     assertEquals("kg/hr", bestCapacity.getPhysicalUnit());
-    assertEquals(InstalledEquipmentCapacityEvidence.ConstraintOrigin.DIRECT,
-        bestCapacity.getConstraintOrigin());
+    assertEquals(InstalledEquipmentCapacityEvidence.ConstraintOrigin.DIRECT, bestCapacity.getConstraintOrigin());
     assertEquals(800.0 / 700.0,
-        result.getInstalledCapacityEvidenceAtBestSampledObjective().get(0).getNormalizedUtilization(),
-        1.0e-12);
+        result.getInstalledCapacityEvidenceAtBestSampledObjective().get(0).getNormalizedUtilization(), 1.0e-12);
     for (CandidateRecord candidate : result.getCandidates()) {
       double[] values = candidate.getCandidateValues();
       assertEquals(1000.0, values[0] + values[1], 1.0e-10);
@@ -216,8 +212,8 @@ class ProcessModelAllocationOptimizerTest {
     AllocationSearchResult original = createOptimizer(fixture).optimize();
     fixture.evaluator.getSimulationEvaluator().getObjectives().get(0).setName("mutated later");
     fixture.evaluator.getSimulationEvaluator().getConstraints().get(0).setName("mutated constraint later");
-    fixture.evaluator.getSimulationEvaluator().getConstraints().get(0).getCapturedCapacityConstraint()
-        .setUnit("t/day").setDataSource("mutated later");
+    fixture.evaluator.getSimulationEvaluator().getConstraints().get(0).getCapturedCapacityConstraint().setUnit("t/day")
+        .setDataSource("mutated later");
 
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     ObjectOutputStream output = new ObjectOutputStream(bytes);
@@ -248,8 +244,7 @@ class ProcessModelAllocationOptimizerTest {
         restored.getRankedHydraulicConstraintsAtBestFeasible());
     assertNotSame(restored.getInstalledCapacityEvidenceAtBestFeasible(),
         restored.getInstalledCapacityEvidenceAtBestFeasible());
-    InstalledEquipmentCapacityEvidence restoredCapacity =
-        restored.getInstalledCapacityEvidenceAtBestFeasible().get(0);
+    InstalledEquipmentCapacityEvidence restoredCapacity = restored.getInstalledCapacityEvidenceAtBestFeasible().get(0);
     assertEquals("kg/hr", restoredCapacity.getPhysicalUnit());
     assertFalse("mutated later".equals(restoredCapacity.getDataSource()));
     assertThrows(UnsupportedOperationException.class, () -> restored.getCandidates().clear());
@@ -299,8 +294,8 @@ class ProcessModelAllocationOptimizerTest {
         "compatibility alias must retain the exact-evidence meaning");
     assertEquals("gathering::allocation sink/producer A installed rate",
         leading.getConstraintRelief().get(0).getInstalledCapacityEvidence().getQualifiedConstraintName());
-    assertEquals(100.0,
-        leading.getConstraintRelief().get(0).getInstalledCapacityEvidence().getRequiredRelief(), 1.0e-8);
+    assertEquals(100.0, leading.getConstraintRelief().get(0).getInstalledCapacityEvidence().getRequiredRelief(),
+        1.0e-8);
     assertEquals(3, leading.getInstalledCapacityEvidence().size());
     assertEquals("allocation value proxy", leading.getObjectiveEvidence().getName());
     assertFalse(leading.isAcceptedAsIncumbent());
@@ -388,3 +383,4 @@ class ProcessModelAllocationOptimizerTest {
     assertThrows(IllegalArgumentException.class, () -> optimizer.setObjectiveImprovementTolerance(-1.0, "invalid"));
   }
 }
+
