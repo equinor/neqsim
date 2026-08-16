@@ -1460,16 +1460,20 @@ For applications where empirical accuracy is preferred over mechanistic modeling
 Measured against OLGA 2025.1 on a 73.8 km subsea gas-condensate export line at matched inlet
 conditions (see [TwoFluidPipe OLGA comparison](two_fluid_model_olga_comparison#measured-comparison-against-olga-20251)):
 
-- **Pressure drop** is a consistent 19–23% above OLGA (12.15 vs 10.15 bar at 4 MSm3/d, 96.29 vs
-  78.50 at 10), and about 12% low when free water is present (91.31 vs 104.06 bar). The offset is
-  grid-converged. Beggs–Brill is 31–75% high on the same cases.
-- **Arrival temperature** runs cold by the amount the extra expansion implies (2.05 vs 8.38 C at
-  10 MSm3/d), and tracks OLGA to about 1 K once a DEH load dominates the thermal balance
-  (28.9 vs 27.8 C with 10 MW).
-- **Liquid holdup runs 2–4x OLGA** (0.064 vs 0.023 dry, 0.119 vs 0.034 with free water). The
-  three-phase bookkeeping is sound — gas, oil and water fractions sum to one and stay in range at
-  every node — so the gap is in the slip closure, and the inflated mixture density is the most
-  likely driver of the pressure-drop offset.
+- **Pressure drop** is within 6% of OLGA across 4 to 12 MSm3/d on the benchmarked line (10.73 vs
+  10.15 bar at 4 MSm3/d, 79.58 vs 78.50 at 10, 138.70 vs 138.72 at 12), and the rate exponent is
+  reproduced. Beggs–Brill is 31–59% high on the same cases.
+- **Arrival temperature** tracks OLGA to between 0.7 and 3.5 K, and responds correctly to heating:
+  10 MW of DEH raises it 17.4 K against OLGA's 19.4 K while the pressure drop rises 15.0% against
+  12.3%.
+- **Local liquid holdup at low rate is dominated by terrain trap sections.** Mean holdup and
+  pressure drop agree with OLGA, but the maximum holdup at 4 and 7 MSm3/d sits well above it, so
+  valley inventory is indicative rather than a design number.
+- **The three-phase free-water case does not converge.** With 15 m3/hr of free water the solve is
+  wall-clock limited after 4078 iterations at a 1200 s budget (88.64 bar against OLGA's 104.06).
+  The pressure drop does not move between a 300 s and a 1200 s budget, so the criterion is stalling
+  on the three-phase liquid split rather than the solution diverging. Always check
+  `isSteadyStateConverged()` on a water-bearing line.
 - **Pressure drop does not always respond to a temperature change.** Adding 10 MW of heating raised
   the arrival temperature 22 K but left the computed pressure drop unchanged, where OLGA moved
   +12.3%. Treat pressure drop from a case whose temperature field changes as indicative.

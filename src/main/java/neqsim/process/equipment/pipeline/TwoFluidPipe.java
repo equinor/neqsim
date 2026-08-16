@@ -1445,7 +1445,9 @@ public class TwoFluidPipe extends Pipeline {
       // TP-flash for every section is the dominant expense; sparse updates are sufficient
       // because properties change slowly with small pressure changes between iterations.
       boolean thermodynamicsRefreshed = false;
+      boolean thermodynamicsEvaluated = referenceFluid == null;
       if (referenceFluid != null && (iter % ssFlashInterval == 0)) {
+        thermodynamicsEvaluated = true;
         double[] densityBefore = new double[numberOfSections];
         for (int i = 0; i < numberOfSections; i++) {
           densityBefore[i] = sections[i].getGasDensity();
@@ -1487,7 +1489,13 @@ public class TwoFluidPipe extends Pipeline {
           : Math.abs(totalDrop - previousTotalDrop) / Math.max(Math.abs(totalDrop), 1.0e3);
       previousTotalDrop = totalDrop;
 
-      boolean profileSettled = !densityCouplingMatters || (dropChange < tolerance && !thermodynamicsRefreshed);
+      // The flash runs only every ssFlashInterval sweeps, and thermodynamicsRefreshed starts false, so on a
+      // non-flash sweep it reports "the flash moved nothing" when in truth no flash was performed. Convergence
+      // was therefore reachable on a sweep whose densities had never been re-evaluated - observed as an exit at
+      // iteration 1 that returned a pressure drop several per cent away from the settled value. Require a sweep
+      // in which the thermodynamics was actually evaluated and found stationary.
+      boolean profileSettled = !densityCouplingMatters
+          || (dropChange < tolerance && thermodynamicsEvaluated && !thermodynamicsRefreshed);
       if (maxChange < tolerance && profileSettled) {
         // A section resting on the pressure floor is a fixed point of the clamp, not of the
         // momentum balance: marchPressure keeps returning the floor, the under-relaxed update
@@ -2574,26 +2582,15 @@ public class TwoFluidPipe extends Pipeline {
       // Apply terrain accumulation enhancement
       alphaL = applyTerrainAccumulation(sec, prev, alphaL);
 
-      // Apply minimum slip constraint based on physics-based correlation
-      // Use Beggs-Brill type correlation: αL = C × λL^a / Fr^b
-      // This gives physically reasonable holdup that increases with λL
-      // and decreases with velocity (Froude number)
+      // Apply minimum slip constraint. The bound is a multiple of the no-slip fraction, which is a
+      // statement that the slip ratio cannot fall below a given value and is therefore scale-free.
+      // It deliberately does NOT include a correlation-based term: see calculateAdaptiveMinimumHoldup.
       if (enforceMinimumSlip) {
-        double froudeNumber = vMix * vMix / (g * diameter);
-        double adaptiveMin = calculateAdaptiveMinimumHoldup(lambdaL, froudeNumber, regime);
-
-        // Clamp to physical bounds
-        // For lean gas systems (low lambdaL), use adaptive minimum based on no-slip holdup
-        // to avoid artificially high holdup floors
         double effectiveMin;
         if (useAdaptiveMinimumOnly) {
-          // No absolute floor - use only correlation-based minimum
-          // Scale with lambdaL to handle very lean systems
-          double lambdaBasedMin = lambdaL * minimumSlipFactor;
-          effectiveMin = Math.max(lambdaBasedMin, adaptiveMin);
+          effectiveMin = lambdaL * minimumSlipFactor;
         } else {
-          // Apply absolute floor (original behavior)
-          effectiveMin = Math.max(minimumLiquidHoldup, adaptiveMin);
+          effectiveMin = minimumLiquidHoldup;
         }
         effectiveMin = Math.min(0.9, effectiveMin);
 
@@ -2620,19 +2617,14 @@ public class TwoFluidPipe extends Pipeline {
         alphaL = applyTerrainAccumulation(sec, prev, alphaL);
       }
 
-      // Apply minimum slip constraint using Beggs-Brill type correlation
+      // Apply minimum slip constraint; see the parallel block above for why no correlation term
+      // is included.
       if (enforceMinimumSlip) {
-        double froudeNumber = vMix * vMix / (g * diameter);
-        double adaptiveMin = calculateAdaptiveMinimumHoldup(lambdaL, froudeNumber,
-            isStratified ? FlowRegime.STRATIFIED_SMOOTH : regime);
-
-        // Clamp to physical bounds - adaptive for lean gas systems
         double effectiveMin;
         if (useAdaptiveMinimumOnly) {
-          double lambdaBasedMin = lambdaL * minimumSlipFactor;
-          effectiveMin = Math.max(lambdaBasedMin, adaptiveMin);
+          effectiveMin = lambdaL * minimumSlipFactor;
         } else {
-          effectiveMin = Math.max(minimumLiquidHoldup, adaptiveMin);
+          effectiveMin = minimumLiquidHoldup;
         }
         effectiveMin = Math.min(0.9, effectiveMin);
 
@@ -2679,6 +2671,23 @@ public class TwoFluidPipe extends Pipeline {
 
   /**
    * Calculate a correlation-based minimum that vanishes continuously with liquid input.
+   *
+   * <p>
+   * This is the Beggs and Brill horizontal holdup correlation, fitted to 1 to 1.5 inch air-water loops at
+   * near-atmospheric pressure and no-slip liquid fractions at or above about 0.01. It is no longer used as a lower
+   * bound on the solved holdup. On a 73.8 km 14-inch high-pressure gas-condensate line at a no-slip fraction near 0.008
+   * it was binding in every section, so the reported holdup was the correlation rather than the momentum balance: about
+   * three times OLGA, which carried roughly twenty per cent onto the pressure drop through the mixture density.
+   * Restricting it to the regimes without a mechanistic closure is not a remedy either, because that makes the bound a
+   * discontinuous function of the flow map and a section flipping between annular and slug then steps between no floor
+   * and the full correlation. The remaining bound is the scale-free no-slip multiple
+   * {@code lambdaL * minimumSlipFactor}.
+   * </p>
+   *
+   * <p>
+   * The method is retained because the stratified closure uses it as the trace-liquid asymptote, where the momentum
+   * balance degenerates and a correlation is the only available value.
+   * </p>
    *
    * <p>
    * The epsilon regularizes only the Froude-number denominator. No lower bound is applied to {@code lambdaL}, so the
