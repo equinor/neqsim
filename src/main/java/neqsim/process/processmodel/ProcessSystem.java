@@ -2012,9 +2012,12 @@ public class ProcessSystem extends SimulationBaseClass {
    * per-run iteration counters are reset so an unchanged process can reuse that accepted state.
    * </p>
    *
-   * @return true when at least one recycle does not have a previously accepted state
+   * @return true when the flowsheet is dirty or at least one recycle lacks a previously accepted state
    */
   private boolean requiresRecycleConfirmation() {
+    if (hasUnitsNeedingRecalculation()) {
+      return true;
+    }
     boolean hasRecycle = false;
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof Recycle) {
