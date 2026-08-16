@@ -10,19 +10,33 @@ def replace_once(path, old, new):
     file.write_text(text.replace(old, new))
 
 
-replace_once(
-    "src/main/java/neqsim/thermodynamicoperations/flashops/TPmultiflash.java",
-    "      if (tm[j] < -1e-8) {\n        break;\n      }\n",
-    "      double tpdAcceptanceTolerance = Math.max(1.0e-8, Math.abs(err));\n"
-    "      if (tm[j] < -tpdAcceptanceTolerance) {\n"
-    "        break;\n"
-    "      }\n"
-    "      if (tm[j] < -1.0e-8) {\n"
-    "        // A negative TPD smaller than the converged stability residual is not\n"
-    "        // significant enough to change the established phase topology.\n"
-    "        tm[j] = 10.0;\n"
-    "      }\n",
-)
+tp = Path("src/main/java/neqsim/thermodynamicoperations/flashops/TPmultiflash.java")
+text = tp.read_text()
+anchor = """      if (Math.abs(xTrivialCheck0) < 1e-4 || Math.abs(xTrivialCheck1) < 1e-4) {
+        tm[j] = 10.0;
+      }
+
+      if (tm[j] < -1e-8) {
+        break;
+      }
+"""
+replacement = """      if (Math.abs(xTrivialCheck0) < 1e-4 || Math.abs(xTrivialCheck1) < 1e-4) {
+        tm[j] = 10.0;
+      }
+
+      double tpdAcceptanceTolerance = Math.max(1.0e-8, Math.abs(err));
+      if (tm[j] < -tpdAcceptanceTolerance) {
+        break;
+      }
+      if (tm[j] < -1.0e-8) {
+        // A negative TPD smaller than the converged stability residual is not
+        // significant enough to change the established phase topology.
+        tm[j] = 10.0;
+      }
+"""
+if text.count(anchor) != 1:
+    raise RuntimeError(f"Expected one pure-trial anchor, found {text.count(anchor)}")
+tp.write_text(text.replace(anchor, replacement))
 
 replace_once(
     "src/main/java/neqsim/thermo/system/SystemThermo.java",
