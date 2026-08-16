@@ -2029,6 +2029,26 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Returns whether a recycle auto-deactivated during the current physical pass.
+   *
+   * <p>
+   * A recycle that collapses below its low-flow threshold reports itself solved and clears its residuals. When the run
+   * started from an accepted active recycle state, one additional process pass is still required to clear the prior
+   * loop inventory from upstream equipment.
+   * </p>
+   *
+   * @return true when at least one recycle is auto-deactivated but not explicitly locked inactive
+   */
+  private boolean hasAutoDeactivatedRecycle() {
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof Recycle && !unit.isLockedInactive() && !unit.isActive()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Runs the process using hybrid execution strategy.
    *
    * <p>
@@ -2160,7 +2180,7 @@ public class ProcessSystem extends SimulationBaseClass {
         } else {
           recycleNoProgress = 0;
         }
-      } while ((!isConverged || (iter < 2 && requireRecycleConfirmation)) && iter < 100
+      } while ((!isConverged || (iter < 2 && (requireRecycleConfirmation || hasAutoDeactivatedRecycle()))) && iter < 100
           && !Thread.currentThread().isInterrupted());
     }
 
@@ -3091,7 +3111,7 @@ public class ProcessSystem extends SimulationBaseClass {
           }
         }
       }
-    } while (((!isConverged || (iter < 2 && hasRecycle && requireRecycleConfirmation)) && iter < 100) && !runStep
+    } while (((!isConverged || (iter < 2 && hasRecycle && (requireRecycleConfirmation || hasAutoDeactivatedRecycle()))) && iter < 100) && !runStep
         && !Thread.currentThread().isInterrupted());
 
     // Publish simulation complete event
@@ -4429,7 +4449,7 @@ public class ProcessSystem extends SimulationBaseClass {
       double recycleError = recycleController.getMaxResidualError();
       notifyIterationComplete(iter, isConverged, recycleError);
 
-    } while (((!isConverged || (iter < 2 && hasRecycle && requireRecycleConfirmation)) && iter < 100) && !runStep
+    } while (((!isConverged || (iter < 2 && hasRecycle && (requireRecycleConfirmation || hasAutoDeactivatedRecycle()))) && iter < 100) && !runStep
         && !Thread.currentThread().isInterrupted());
 
     // Notify simulation complete
