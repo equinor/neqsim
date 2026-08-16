@@ -114,8 +114,7 @@ class ModelPredictiveControllerTransientStateTransactionTest extends neqsim.NeqS
     ProcessSystem process = new ProcessSystem("mpc restart");
     process.add(controller);
     ProcessSystem restartedProcess = process.copy();
-    ModelPredictiveController restarted =
-        (ModelPredictiveController) restartedProcess.getControllerDevices().get(0);
+    ModelPredictiveController restarted = (ModelPredictiveController) restartedProcess.getControllerDevices().get(0);
     assertTrue(restartedProcess.getTransientTransactionCoverage().isComplete());
     assertEquals(controller.getTransientStateIdentity(), restarted.getTransientStateIdentity());
 
@@ -173,8 +172,7 @@ class ModelPredictiveControllerTransientStateTransactionTest extends neqsim.NeqS
 
     ModelPredictiveController first = configuredSingleInput("first", new MutableMeasurement("first", "C", 1.0));
     ModelPredictiveController second = configuredSingleInput("second", new MutableMeasurement("second", "C", 1.0));
-    assertThrows(IllegalArgumentException.class,
-        () -> first.restoreTransientState(second.captureTransientState()));
+    assertThrows(IllegalArgumentException.class, () -> first.restoreTransientState(second.captureTransientState()));
     assertThrows(IllegalArgumentException.class, () -> first.restoreTransientState(null));
 
     MutableMeasurement online = new MutableMeasurement("online", "C", 1.0);
@@ -211,8 +209,8 @@ class ModelPredictiveControllerTransientStateTransactionTest extends neqsim.NeqS
     controller.setMoveWeights(2.0, 2.5);
     controller.setPreferredControlVector(5.0, 5.0);
     controller.addQualityConstraint(ModelPredictiveController.QualityConstraint.builder("product").measurement(quality)
-        .unit("ppm").limit(10.0).margin(0.5).controlSensitivity(-0.8, 0.4)
-        .compositionSensitivity("heavy", 3.0).rateSensitivity(0.5).build());
+        .unit("ppm").limit(10.0).margin(0.5).controlSensitivity(-0.8, 0.4).compositionSensitivity("heavy", 3.0)
+        .rateSensitivity(0.5).build());
     Map<String, Double> initialFeed = new LinkedHashMap<>();
     initialFeed.put("heavy", 0.10);
     controller.updateFeedConditions(initialFeed, 1.0);
