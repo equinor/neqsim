@@ -137,7 +137,7 @@ Coverage is quantitative: `getProcessElementCount()`, `getParticipantCount()`, a
 complete participation from API presence. Equipment-attached controllers are included even when they are not registered
 as standalone process controllers. Duplicate registration of the same object is counted once; duplicate or changing
 state identities are rejected. Systems containing a mutable process element without the participant contract, or a
-configured recycle whose shared `RecycleController` state cannot yet be restored in place, fail before opening a trial.
+configured recycle whose equipment or shared `RecycleController` state cannot be restored in place, fail before opening a trial.
 
 Concrete `TransferFunctionBlock` and `LogicBlock` instances are covered participants. Transfer-function snapshots
 include both lag states, the complete circular dead-time buffer and index, output, physical-step identifier, tuning,
@@ -571,13 +571,20 @@ controller and accelerator instances. Java serialization also retains coordinate
 instead of silently restarting those solver memories.
 
 The controller snapshot is orchestration state, so it is intentionally outside the quantitative process-element and
-participant counts reported by `TransientTransactionCoverage`. Every `Recycle` unit remains a separate
-registered process element and does not yet implement `TransientStateParticipant`; a realistic flowsheet that
-contains a recycle therefore still fails closed on that equipment state. This tranche removes only the additional shared
-controller blocker and establishes the reusable boundary needed before recycle equipment inventory, internal streams and
-acceleration state can be qualified.
+participant counts reported by `TransientTransactionCoverage`. Every configured `Recycle` remains a separate
+participant: its checkpoint preserves the same inlet, mixed, last-iteration and outlet stream identities while restoring
+independent thermodynamic clones, calculation identifiers, clocks, activation flags, convergence residuals and tolerances,
+adaptive/Wegstein memory, local Broyden continuation, priority and low-flow tuning. Java serialization retains the stable
+recycle identity and Broyden continuation rather than silently cold-starting the solver.
 
-Coverage includes exact in-memory rollback of priority and coordinated Broyden state, stable object identity, defensive
-matrix/vector copies, foreign/null snapshot rejection, recycle-registration restoration and exact Java-serialization
-continuation. It does not qualify recycle thermodynamics, convergence tolerances, strongly coupled DAE behaviour,
-timestep independence, external side effects, safety action, virtual commissioning or OTS use.
+`ProcessEquipmentBaseClass` supplies a protected reusable checkpoint for simulation identity/clock, activation,
+low-flow ownership, specification, report/properties, capacity-analysis enablement and IEC 81346 designation. It remains
+fail-closed when a concrete equipment snapshot would omit independently mutable attached controllers, active energy ports,
+failure state, design conditions or runtime capacity constraints. `Recycle` also fails closed for subclasses and
+incompletely connected streams. These diagnostics prevent a nominal participant count from overstating rollback coverage.
+
+Coverage includes exact in-memory rollback of controller priority and coordinated Broyden state plus recycle-owned stream,
+base-equipment, convergence and local acceleration state; stable object identity; defensive thermodynamic/matrix/vector
+copies; foreign/null snapshot rejection; recycle-registration restoration; and Java-serialization continuation. It does
+not qualify thermodynamic model accuracy, convergence of every recycle topology, strongly coupled DAE behaviour, timestep
+independence, external side effects, safety action, virtual commissioning or OTS use.

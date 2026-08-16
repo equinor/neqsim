@@ -1,12 +1,17 @@
 package neqsim.process.equipment.util;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
+import neqsim.process.dynamics.TransientStateParticipant;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.mixer.MixerInterface;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -27,9 +32,13 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface {
+public class Recycle extends ProcessEquipmentBaseClass
+    implements MixerInterface, TransientStateParticipant<Recycle.TransientState> {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+
+  /** Stable identity used for transaction provenance and foreign-snapshot rejection. */
+  private String transientStateIdentity = UUID.randomUUID().toString();
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Recycle.class);
 
@@ -111,7 +120,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
 
   // Broyden acceleration
   /** Broyden accelerator instance for multi-variable acceleration. */
-  private transient BroydenAccelerator broydenAccelerator = null;
+  private BroydenAccelerator broydenAccelerator = null;
 
   /**
    * Constructor for Recycle.
@@ -1305,6 +1314,264 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   public void setMinimumFlow(double minimumFlow) {
     this.minimumFlow = minimumFlow;
     super.setMinimumFlow(minimumFlow);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateIdentity() {
+    if (transientStateIdentity == null || transientStateIdentity.trim().isEmpty()) {
+      transientStateIdentity = UUID.randomUUID().toString();
+    }
+    return "equipment:recycle:" + transientStateIdentity;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateCoverageIssue() {
+    if (getClass() != Recycle.class) {
+      return "recycle subclass " + getClass().getName() + " must extend the snapshot for subclass-owned mutable state";
+    }
+    String baseIssue = getBaseTransientStateCoverageIssue();
+    if (baseIssue != null) {
+      return baseIssue;
+    }
+    if (numberOfInputStreams != streams.size()) {
+      return "input-stream count does not match the registered stream identities";
+    }
+    if (streams.isEmpty() || mixedStream == null || lastIterationStream == null || outletStream == null) {
+      return "recycle streams must be fully connected before transient state can be captured";
+    }
+    for (StreamInterface stream : streams) {
+      if (stream == null || stream.getThermoSystem() == null) {
+        return "recycle contains a null stream or thermodynamic system";
+      }
+    }
+    if (mixedStream.getThermoSystem() == null || lastIterationStream.getThermoSystem() == null
+        || outletStream.getThermoSystem() == null) {
+      return "recycle-owned stream thermodynamic state is incomplete";
+    }
+    return null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public TransientState captureTransientState() {
+    String coverageIssue = getTransientStateCoverageIssue();
+    if (coverageIssue != null) {
+      throw new IllegalStateException("Cannot capture recycle '" + getName() + "': " + coverageIssue);
+    }
+    return new TransientState(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreTransientState(TransientState snapshot) {
+    Objects.requireNonNull(snapshot, "recycle transient snapshot cannot be null");
+    if (!getTransientStateIdentity().equals(snapshot.stateIdentity)) {
+      throw new IllegalArgumentException("Transient snapshot belongs to another recycle");
+    }
+
+    restoreBaseTransientState(snapshot.baseState);
+    streams.clear();
+    streams.addAll(snapshot.streams);
+    downstreamProperty = new ArrayList<String>(snapshot.downstreamProperty);
+    numberOfInputStreams = snapshot.numberOfInputStreams;
+    mixedStream = snapshot.mixedStream;
+    lastIterationStream = snapshot.lastIterationStream;
+    outletStream = snapshot.outletStream;
+    for (StreamTransientState streamState : snapshot.streamStates) {
+      streamState.restore();
+    }
+
+    priority = snapshot.priority;
+    firstTime = snapshot.firstTime;
+    iterations = snapshot.iterations;
+    maxIterations = snapshot.maxIterations;
+    errorComposition = snapshot.errorComposition;
+    errorFlow = snapshot.errorFlow;
+    errorTemperature = snapshot.errorTemperature;
+    errorPressure = snapshot.errorPressure;
+    flowTolerance = snapshot.flowTolerance;
+    compositionTolerance = snapshot.compositionTolerance;
+    temperatureTolerance = snapshot.temperatureTolerance;
+    pressureTolerance = snapshot.pressureTolerance;
+    absoluteFlowChange = snapshot.absoluteFlowChange;
+    absoluteFlowTolerance = snapshot.absoluteFlowTolerance;
+    absoluteFlowToleranceExplicit = snapshot.absoluteFlowToleranceExplicit;
+    minimumFlow = snapshot.minimumFlow;
+    accelerationMethod = snapshot.accelerationMethod;
+    accelerationMethodExplicit = snapshot.accelerationMethodExplicit;
+    adaptiveAcceleration = snapshot.adaptiveAcceleration;
+    adaptiveAccelerationExplicit = snapshot.adaptiveAccelerationExplicit;
+    adaptiveAccelerationAutoManaged = snapshot.adaptiveAccelerationAutoManaged;
+    accelerationAutoUpgraded = snapshot.accelerationAutoUpgraded;
+    previousErrorFlow = snapshot.previousErrorFlow;
+    stallingPasses = snapshot.stallingPasses;
+    wegsteinQMaxExplicit = snapshot.wegsteinQMaxExplicit;
+    wegsteinQMin = snapshot.wegsteinQMin;
+    wegsteinQMax = snapshot.wegsteinQMax;
+    wegsteinDelayIterations = snapshot.wegsteinDelayIterations;
+    previousInputValues = copyTransientArray(snapshot.previousInputValues);
+    previousOutputValues = copyTransientArray(snapshot.previousOutputValues);
+    wegsteinQFactors = copyTransientArray(snapshot.wegsteinQFactors);
+    if (snapshot.broydenState == null) {
+      broydenAccelerator = null;
+    } else {
+      if (broydenAccelerator == null) {
+        broydenAccelerator = new BroydenAccelerator();
+      }
+      broydenAccelerator.restoreState(snapshot.broydenState);
+    }
+  }
+
+  private static double[] copyTransientArray(double[] source) {
+    return source == null ? null : source.clone();
+  }
+
+  private static ArrayList<StreamTransientState> captureStreamStates(Recycle source) {
+    ArrayList<StreamTransientState> states = new ArrayList<StreamTransientState>();
+    Map<StreamInterface, Boolean> captured = new IdentityHashMap<StreamInterface, Boolean>();
+    for (StreamInterface stream : source.streams) {
+      captureStreamState(stream, captured, states);
+    }
+    captureStreamState(source.mixedStream, captured, states);
+    captureStreamState(source.lastIterationStream, captured, states);
+    captureStreamState(source.outletStream, captured, states);
+    return states;
+  }
+
+  private static void captureStreamState(StreamInterface stream, Map<StreamInterface, Boolean> captured,
+      ArrayList<StreamTransientState> states) {
+    if (stream != null && captured.put(stream, Boolean.TRUE) == null) {
+      states.add(new StreamTransientState(stream));
+    }
+  }
+
+  /** Immutable serializable state for one configured recycle. */
+  public static final class TransientState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String stateIdentity;
+    private final ProcessEquipmentTransientState baseState;
+    private final ArrayList<StreamInterface> streams;
+    private final ArrayList<String> downstreamProperty;
+    private final int numberOfInputStreams;
+    private final StreamInterface mixedStream;
+    private final StreamInterface lastIterationStream;
+    private final StreamInterface outletStream;
+    private final ArrayList<StreamTransientState> streamStates;
+    private final int priority;
+    private final boolean firstTime;
+    private final int iterations;
+    private final int maxIterations;
+    private final double errorComposition;
+    private final double errorFlow;
+    private final double errorTemperature;
+    private final double errorPressure;
+    private final double flowTolerance;
+    private final double compositionTolerance;
+    private final double temperatureTolerance;
+    private final double pressureTolerance;
+    private final double absoluteFlowChange;
+    private final double absoluteFlowTolerance;
+    private final boolean absoluteFlowToleranceExplicit;
+    private final double minimumFlow;
+    private final AccelerationMethod accelerationMethod;
+    private final boolean accelerationMethodExplicit;
+    private final boolean adaptiveAcceleration;
+    private final boolean adaptiveAccelerationExplicit;
+    private final boolean adaptiveAccelerationAutoManaged;
+    private final boolean accelerationAutoUpgraded;
+    private final double previousErrorFlow;
+    private final int stallingPasses;
+    private final boolean wegsteinQMaxExplicit;
+    private final double wegsteinQMin;
+    private final double wegsteinQMax;
+    private final int wegsteinDelayIterations;
+    private final double[] previousInputValues;
+    private final double[] previousOutputValues;
+    private final double[] wegsteinQFactors;
+    private final BroydenAccelerator.Snapshot broydenState;
+
+    private TransientState(Recycle source) {
+      stateIdentity = source.getTransientStateIdentity();
+      baseState = source.captureBaseTransientState();
+      streams = new ArrayList<StreamInterface>(source.streams);
+      downstreamProperty = new ArrayList<String>(source.downstreamProperty);
+      numberOfInputStreams = source.numberOfInputStreams;
+      mixedStream = source.mixedStream;
+      lastIterationStream = source.lastIterationStream;
+      outletStream = source.outletStream;
+      streamStates = captureStreamStates(source);
+      priority = source.priority;
+      firstTime = source.firstTime;
+      iterations = source.iterations;
+      maxIterations = source.maxIterations;
+      errorComposition = source.errorComposition;
+      errorFlow = source.errorFlow;
+      errorTemperature = source.errorTemperature;
+      errorPressure = source.errorPressure;
+      flowTolerance = source.flowTolerance;
+      compositionTolerance = source.compositionTolerance;
+      temperatureTolerance = source.temperatureTolerance;
+      pressureTolerance = source.pressureTolerance;
+      absoluteFlowChange = source.absoluteFlowChange;
+      absoluteFlowTolerance = source.absoluteFlowTolerance;
+      absoluteFlowToleranceExplicit = source.absoluteFlowToleranceExplicit;
+      minimumFlow = source.minimumFlow;
+      accelerationMethod = source.accelerationMethod;
+      accelerationMethodExplicit = source.accelerationMethodExplicit;
+      adaptiveAcceleration = source.adaptiveAcceleration;
+      adaptiveAccelerationExplicit = source.adaptiveAccelerationExplicit;
+      adaptiveAccelerationAutoManaged = source.adaptiveAccelerationAutoManaged;
+      accelerationAutoUpgraded = source.accelerationAutoUpgraded;
+      previousErrorFlow = source.previousErrorFlow;
+      stallingPasses = source.stallingPasses;
+      wegsteinQMaxExplicit = source.wegsteinQMaxExplicit;
+      wegsteinQMin = source.wegsteinQMin;
+      wegsteinQMax = source.wegsteinQMax;
+      wegsteinDelayIterations = source.wegsteinDelayIterations;
+      previousInputValues = copyTransientArray(source.previousInputValues);
+      previousOutputValues = copyTransientArray(source.previousOutputValues);
+      wegsteinQFactors = copyTransientArray(source.wegsteinQFactors);
+      broydenState = source.broydenAccelerator == null ? null : source.broydenAccelerator.captureState();
+    }
+  }
+
+  /** Identity-preserving checkpoint for one stream owned or referenced by the recycle. */
+  private static final class StreamTransientState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final StreamInterface stream;
+    private final String name;
+    private final SystemInterface thermoSystem;
+    private final UUID calculationIdentifier;
+    private final boolean calculateSteadyState;
+    private final double time;
+    private final boolean runInSteps;
+    private final boolean active;
+    private final boolean lockedInactive;
+
+    private StreamTransientState(StreamInterface stream) {
+      this.stream = stream;
+      name = stream.getName();
+      thermoSystem = stream.getThermoSystem().clone();
+      calculationIdentifier = stream.getCalculationIdentifier();
+      calculateSteadyState = stream.getCalculateSteadyState();
+      time = stream.getTime();
+      runInSteps = stream.isRunInSteps();
+      active = stream.isActive();
+      lockedInactive = stream.isLockedInactive();
+    }
+
+    private void restore() {
+      stream.setName(name);
+      stream.setThermoSystem(thermoSystem.clone());
+      stream.setCalculationIdentifier(calculationIdentifier);
+      stream.setCalculateSteadyState(calculateSteadyState);
+      stream.setTime(time);
+      stream.setRunInSteps(runInSteps);
+      stream.setLockedInactive(lockedInactive);
+      stream.isActive(active);
+    }
   }
 
   /** {@inheritDoc} */
