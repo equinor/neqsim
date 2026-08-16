@@ -1,47 +1,123 @@
-name: Validate and publish TPflash beta rollback
+name: Full verify PR 3036
 
 on: [push]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  validate-and-publish:
+  javadoc:
+    name: Javadoc Java 21 Ubuntu
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: fix/tpflash-local-stability-current
+          ref: 2c426020094f8d1ddca973c789c8c165af4311ad
           fetch-depth: 1
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
           cache: maven
-      - name: Apply complete Wilson beta rollback
+      - run: mvn javadoc:javadoc -ntp
+
+  fast_tests:
+    name: Fast tests Java 21 ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: Ubuntu
+            os: ubuntu-latest
+          - platform: Windows
+            os: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: 2c426020094f8d1ddca973c789c8c165af4311ad
+          fetch-depth: 1
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Run fast tests
+        run: mvn -B test -ntp -DskipITs "-Djacoco.skip=true"
+
+  slow_tests:
+    name: Slow tests Java 21 shard ${{ matrix.label }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shard: 0
+            label: 1/4
+          - shard: 1
+            label: 2/4
+          - shard: 2
+            label: 3/4
+          - shard: 3
+            label: 4/4
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: 2c426020094f8d1ddca973c789c8c165af4311ad
+          fetch-depth: 1
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Run slow shard
+        shell: bash
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          p = Path('src/main/java/neqsim/thermodynamicoperations/flashops/TPmultiflash.java')
-          s = p.read_text()
-          old = 'system.setBeta(newPhaseIdx, getIncipientWilsonPhaseFraction(dominantComp));'
-          count = s.count(old)
-          assert count == 2, count
-          s = s.replace(old, 'system.setBeta(newPhaseIdx, system.getPhase(0).getComponent(dominantComp).getz());')
-          p.write_text(s)
-          PY
-      - name: Format
-        run: mvn -B -ntp spotless:apply
-      - name: Run focused failures and serialization guard
-        run: mvn -B -ntp -Djacoco.skip=true '-Dtest=TPFlashTest#testRun5,TPflashIncipientPhaseStabilityTest#subResidualTpdDoesNotOverrideExistingUmrPruSolution,EclipseFluidReadWriteTest#testFluidWater3,SystemThermoSerializationInventoryTest' test
-      - name: Run TPflash control regressions
-        run: mvn -B -ntp -Djacoco.skip=true '-Dtest=TPflashIncipientPhaseStabilityTest,TPFlashTest,TPmultiflashHighWaterGasSeedTest,PhaseUMRCPAvolcorTest,HydrateInhibitorFlashTest#testElectrolyteCPA' test
-      - name: Run scrubber regression
-        run: mvn -B -ntp -Djacoco.skip=true -DexcludedTestGroups= -Dtest=HydrocarbonScrubberSaturationPressureStabilityTest test
-      - name: Commit and push validated repair
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/main/java/neqsim/thermodynamicoperations/flashops/TPmultiflash.java
-          git commit -m 'fix(flash): restore Wilson phase beta initialization'
-          git push origin HEAD:fix/tpflash-local-stability-current
+          mapfile -t slow_files < <(grep -rl --include='*.java' '@Tag("slow")' src/test/java | sort)
+          selected=()
+          for index in "${!slow_files[@]}"; do
+            if ((index % 4 == ${{ matrix.shard }})); then
+              class_name="${slow_files[$index]#src/test/java/}"
+              class_name="${class_name%.java}"
+              selected+=("${class_name//\//.}")
+            fi
+          done
+          if ((${#selected[@]} == 0)); then exit 1; fi
+          test_pattern=$(IFS=,; echo "${selected[*]}")
+          mvn -B test -ntp -Dtest="$test_pattern" -Dgroups=slow "-DexcludedTestGroups=" "-Djacoco.skip=true"
+
+  java8:
+    name: Java 8 tests ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: Ubuntu
+            os: ubuntu-latest
+          - platform: Windows
+            os: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: 2c426020094f8d1ddca973c789c8c165af4311ad
+          fetch-depth: 1
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '8'
+          cache: maven
+      - run: mvn -B test --file pomJava8.xml -ntp "-Djacoco.skip=true"
+
+  agent_refs:
+    name: Agent skill references
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: 2c426020094f8d1ddca973c789c8c165af4311ad
+          fetch-depth: 1
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: python devtools/verify_agent_skill_refs.py
