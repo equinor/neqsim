@@ -59,7 +59,7 @@ public class RecycleControllerTransientStateTransactionTest extends neqsim.NeqSi
     process.recycleController.setCurrentPriorityLevel(999);
     process.recycleController.setUseCoordinatedAcceleration(false);
     accelerator.setRelaxationFactor(0.25);
-    accelerator.accelerate(new double[] {1.4, 2.3}, new double[] {1.6, 2.5});
+    accelerator.accelerate(new double[] { 1.4, 2.3 }, new double[] { 1.6, 2.5 });
     transaction.rollback();
 
     assertEquals(TransientStepTransaction.Status.ROLLED_BACK, transaction.getStatus());
@@ -117,8 +117,8 @@ public class RecycleControllerTransientStateTransactionTest extends neqsim.NeqSi
     assertMatrixEquals(original.getCoordinatedAccelerator().getInverseJacobian(),
         restarted.getCoordinatedAccelerator().getInverseJacobian());
 
-    double[] input = {1.4, 2.3};
-    double[] output = {1.6, 2.5};
+    double[] input = { 1.4, 2.3 };
+    double[] output = { 1.6, 2.5 };
     assertArrayEquals(original.getCoordinatedAccelerator().accelerate(input, output),
         restarted.getCoordinatedAccelerator().accelerate(input, output), TOLERANCE);
   }
@@ -139,9 +139,9 @@ public class RecycleControllerTransientStateTransactionTest extends neqsim.NeqSi
   }
 
   private static void accelerateThreeTimes(BroydenAccelerator accelerator) {
-    accelerator.accelerate(new double[] {1.0, 2.0}, new double[] {1.2, 2.2});
-    accelerator.accelerate(new double[] {1.2, 2.2}, new double[] {1.3, 2.25});
-    accelerator.accelerate(new double[] {1.3, 2.25}, new double[] {1.35, 2.28});
+    accelerator.accelerate(new double[] { 1.0, 2.0 }, new double[] { 1.2, 2.2 });
+    accelerator.accelerate(new double[] { 1.2, 2.2 }, new double[] { 1.3, 2.25 });
+    accelerator.accelerate(new double[] { 1.3, 2.25 }, new double[] { 1.35, 2.28 });
   }
 
   private static void assertMatrixEquals(double[][] expected, double[][] actual) {
@@ -152,14 +152,12 @@ public class RecycleControllerTransientStateTransactionTest extends neqsim.NeqSi
   }
 
   @SuppressWarnings("unchecked")
-  private static <T extends Serializable> T roundTrip(T value)
-      throws IOException, ClassNotFoundException {
+  private static <T extends Serializable> T roundTrip(T value) throws IOException, ClassNotFoundException {
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
       output.writeObject(value);
     }
-    try (ObjectInputStream input =
-        new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+    try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
       return (T) input.readObject();
     }
   }

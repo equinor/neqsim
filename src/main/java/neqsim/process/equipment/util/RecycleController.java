@@ -835,8 +835,8 @@ public class RecycleController implements Serializable {
     }
     return new Snapshot(getTransientStateIdentity(), new ArrayList<Recycle>(recycleArray),
         new ArrayList<Integer>(priorityArray), currentPriorityLevel, minimumPriorityLevel, maximumPriorityLevel,
-        useCoordinatedAcceleration,
-        coordinatedAccelerator == null ? null : coordinatedAccelerator.captureState(), acceptedSeedIndexes);
+        useCoordinatedAcceleration, coordinatedAccelerator == null ? null : coordinatedAccelerator.captureState(),
+        acceptedSeedIndexes);
   }
 
   /**
@@ -909,4 +909,3 @@ public class RecycleController implements Serializable {
     }
   }
 }
-

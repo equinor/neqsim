@@ -35,8 +35,7 @@ class RecycleControllerAcceptedSeedTransactionTest extends neqsim.NeqSimTest {
     Recycle restartedRecycle = restarted.getRecycles().get(0);
     assertEquals(0, restartedRecycle.getIterations());
     assertTrue(restarted.doSolveRecycle(restartedRecycle));
-    assertEquals(1, restartedRecycle.getIterations(),
-        "Java serialization must retain accepted seed membership");
+    assertEquals(1, restartedRecycle.getIterations(), "Java serialization must retain accepted seed membership");
   }
 
   private static RecycleController controllerWithAcceptedSeed() {
@@ -74,8 +73,7 @@ class RecycleControllerAcceptedSeedTransactionTest extends neqsim.NeqSimTest {
     try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
       output.writeObject(value);
     }
-    try (ObjectInputStream input =
-        new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+    try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
       return (T) input.readObject();
     }
   }

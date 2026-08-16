@@ -465,4 +465,3 @@ public class BroydenAccelerator implements Serializable {
     }
   }
 }
-

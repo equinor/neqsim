@@ -5316,8 +5316,8 @@ public class ProcessSystem extends SimulationBaseClass {
     }
 
     RecycleController capturedRecycleController = recycleController;
-    RecycleController.Snapshot recycleControllerSnapshot =
-        capturedRecycleController == null ? null : capturedRecycleController.captureTransientState();
+    RecycleController.Snapshot recycleControllerSnapshot = capturedRecycleController == null ? null
+        : capturedRecycleController.captureTransientState();
     ProcessSystemStepTransaction transaction = new ProcessSystemStepTransaction(elements, participantCheckpoints,
         capturedRecycleController, recycleControllerSnapshot, eventScheduler,
         eventScheduler == null ? null : eventScheduler.snapshot(), new ArrayList<>(alarmManager.getHistory()));
@@ -5470,8 +5470,7 @@ public class ProcessSystem extends SimulationBaseClass {
     private Status status = Status.OPEN;
 
     private ProcessSystemStepTransaction(List<ProcessElementInterface> elementIdentities,
-        List<TransientParticipantCheckpoint> participantCheckpoints,
-        RecycleController capturedRecycleController,
+        List<TransientParticipantCheckpoint> participantCheckpoints, RecycleController capturedRecycleController,
         RecycleController.Snapshot capturedRecycleControllerSnapshot, EventScheduler capturedEventScheduler,
         EventScheduler.Snapshot capturedEventSchedulerSnapshot,
         List<neqsim.process.alarm.AlarmEvent> capturedAlarmHistory) {
