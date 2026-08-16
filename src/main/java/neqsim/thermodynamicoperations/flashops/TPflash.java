@@ -2886,12 +2886,14 @@ public class TPflash extends Flash {
    * retry consumes the cold pre-iteration state rather than cloning phase-storage and cubic-root history from the
    * collapsed endpoint. Other eligible collapses retain the post-removal K-value screen and clone fallback. The
    * ordinary result replaces the collapsed state only after it passes the existing phase-fraction,
-   * distinct-composition, material-balance, fugacity, and lower-Gibbs acceptance checks.
+   * distinct-composition, material-balance, fugacity, and lower-Gibbs acceptance checks. Reciprocal candidates observe
+   * the same thread-local guard, preventing fallback ping-pong.
    * </p>
    */
   private void rescueSinglePhaseWaterBearingEndpoint() {
-    boolean hasScreenedColdSeed = system.doMultiPhaseCheck() && system.getNumberOfPhases() == 1
-        && multiphaseEndpointRescueSeed != null && hasPotentialWaterRichColdSeedInstability();
+    boolean hasScreenedColdSeed = !MULTIPHASE_RESCUE_ACTIVE.get().booleanValue() && system.doMultiPhaseCheck()
+        && system.getNumberOfPhases() == 1 && multiphaseEndpointRescueSeed != null
+        && hasPotentialWaterRichColdSeedInstability();
     if (waterBearingRescueAttempted || (!hasScreenedColdSeed && !shouldRetryCollapsedWaterBearingEndpoint())) {
       return;
     }
