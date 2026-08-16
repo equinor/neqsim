@@ -330,6 +330,32 @@ class ProcessModelSimulationEvaluatorTest {
     assertEquals(2, constraintNames.size());
     assertEquals("valveOpening", constraintNames.get(0));
     assertEquals("pressureDropRatio", constraintNames.get(1));
+
+    fixture.model.get("wells").add(valve);
+    ThrottlingValve directValve = new ThrottlingValve("directValve", fixture.feed);
+    directValve.addCapacityConstraint(
+        new CapacityConstraint("valveOpening", "custom-unit", ConstraintType.HARD)
+            .setDesignValue(1.0).setCurrentValue(0.5));
+    fixture.model.get("wells").add(directValve);
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
+    evaluator.addEquipmentCapacityConstraints();
+
+    InstalledEquipmentCapacityEvidence.ConstraintOrigin strategyOrigin = null;
+    InstalledEquipmentCapacityEvidence.ConstraintOrigin directOrigin = null;
+    for (ProcessModelSimulationEvaluator.ConstraintDefinition definition : evaluator.getConstraints()) {
+      if ("strategyValve".equals(definition.getEquipmentName())
+          && "valveOpening".equals(definition.getEquipmentConstraintName())) {
+        strategyOrigin = definition.getCapacityConstraintOrigin();
+      }
+      if ("directValve".equals(definition.getEquipmentName())
+          && "valveOpening".equals(definition.getEquipmentConstraintName())) {
+        directOrigin = definition.getCapacityConstraintOrigin();
+        assertEquals("custom-unit", definition.getCapacityPhysicalUnit());
+      }
+    }
+    assertEquals(InstalledEquipmentCapacityEvidence.ConstraintOrigin.STRATEGY, strategyOrigin);
+    assertEquals(InstalledEquipmentCapacityEvidence.ConstraintOrigin.DIRECT, directOrigin,
+        "a direct row with the same name must override the strategy row");
   }
 
   /** Verifies enabled constraints with undefined utilization remain visible at the end. */
