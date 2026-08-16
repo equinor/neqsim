@@ -140,10 +140,10 @@ public final class ProcessModelAllocationBottleneckAnalyzer {
     }
 
     List<HydraulicConstraintSnapshot> hydraulicEvidence = evaluation.getHydraulicConstraints();
-    List<InstalledEquipmentCapacityEvidence> installedCapacityEvidence =
-        evaluation.getInstalledEquipmentCapacityEvidence();
-    Map<String, InstalledEquipmentCapacityEvidence> installedCapacityByAddress =
-        indexInstalledCapacityEvidence(installedCapacityEvidence);
+    List<InstalledEquipmentCapacityEvidence> installedCapacityEvidence = evaluation
+        .getInstalledEquipmentCapacityEvidence();
+    Map<String, InstalledEquipmentCapacityEvidence> installedCapacityByAddress = indexInstalledCapacityEvidence(
+        installedCapacityEvidence);
     List<ConstraintReliefEvidence> violations = new ArrayList<ConstraintReliefEvidence>();
     for (CandidateConstraintEvidence constraint : evaluation.getConstraintEvidence()) {
       if (constraint.isHard() && isFinite(constraint.getMargin()) && constraint.getMargin() < 0.0) {
@@ -190,8 +190,7 @@ public final class ProcessModelAllocationBottleneckAnalyzer {
   /** Indexes complete candidate capacity evidence without joining to the selected hydraulic-binding subset. */
   private static Map<String, InstalledEquipmentCapacityEvidence> indexInstalledCapacityEvidence(
       List<InstalledEquipmentCapacityEvidence> evidence) {
-    Map<String, InstalledEquipmentCapacityEvidence> indexed =
-        new HashMap<String, InstalledEquipmentCapacityEvidence>();
+    Map<String, InstalledEquipmentCapacityEvidence> indexed = new HashMap<String, InstalledEquipmentCapacityEvidence>();
     for (InstalledEquipmentCapacityEvidence snapshot : evidence) {
       indexed.put(snapshot.getQualifiedConstraintName(), snapshot);
     }
@@ -224,9 +223,8 @@ public final class ProcessModelAllocationBottleneckAnalyzer {
     for (ConstraintReliefEvidence violation : violations) {
       InstalledEquipmentCapacityEvidence capacityEvidence = violation.getInstalledCapacityEvidence();
       if (violation.getConstraint().isCapacityConstraint()
-          && (!violation.isDerivedFromInstalledCapacityEvidence() || capacityEvidence == null
-              || capacityEvidence
-                  .getEvidenceApplicability() == InstalledEquipmentCapacityEvidence.EvidenceApplicability.OUTSIDE_VALIDITY_RANGE)) {
+          && (!violation.isDerivedFromInstalledCapacityEvidence() || capacityEvidence == null || capacityEvidence
+              .getEvidenceApplicability() == InstalledEquipmentCapacityEvidence.EvidenceApplicability.OUTSIDE_VALIDITY_RANGE)) {
         return EvidenceClass.EVIDENCE_LIMITED;
       }
     }
@@ -331,8 +329,7 @@ public final class ProcessModelAllocationBottleneckAnalyzer {
 
     /** Creates exact in-unit margin-relief evidence. */
     private ConstraintReliefEvidence(CandidateConstraintEvidence constraint, double requiredMarginRelief, String unit,
-        boolean derivedFromInstalledCapacityEvidence,
-        InstalledEquipmentCapacityEvidence installedCapacityEvidence) {
+        boolean derivedFromInstalledCapacityEvidence, InstalledEquipmentCapacityEvidence installedCapacityEvidence) {
       this.constraint = constraint;
       this.requiredMarginRelief = requiredMarginRelief;
       this.unit = unit;
@@ -425,8 +422,8 @@ public final class ProcessModelAllocationBottleneckAnalyzer {
       this.constraintRelief = Collections.unmodifiableList(new ArrayList<ConstraintReliefEvidence>(constraintRelief));
       this.hydraulicEvidence = Collections
           .unmodifiableList(new ArrayList<HydraulicConstraintSnapshot>(hydraulicEvidence));
-      this.installedCapacityEvidence = Collections.unmodifiableList(
-          new ArrayList<InstalledEquipmentCapacityEvidence>(installedCapacityEvidence));
+      this.installedCapacityEvidence = Collections
+          .unmodifiableList(new ArrayList<InstalledEquipmentCapacityEvidence>(installedCapacityEvidence));
     }
 
     /** @return source trace sequence index */
@@ -486,8 +483,7 @@ public final class ProcessModelAllocationBottleneckAnalyzer {
 
     /** @return fresh immutable complete installed-capacity evidence retained from the candidate */
     public List<InstalledEquipmentCapacityEvidence> getInstalledCapacityEvidence() {
-      return Collections.unmodifiableList(
-          new ArrayList<InstalledEquipmentCapacityEvidence>(installedCapacityEvidence));
+      return Collections.unmodifiableList(new ArrayList<InstalledEquipmentCapacityEvidence>(installedCapacityEvidence));
     }
   }
 
@@ -640,3 +636,4 @@ public final class ProcessModelAllocationBottleneckAnalyzer {
     }
   }
 }
+
