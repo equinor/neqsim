@@ -142,7 +142,12 @@ public final class EngineeringDiagramComponentBalanceTable implements Serializab
       result.put("streamSemanticObjectId", streamSemanticObjectId);
       result.put("componentId", componentId);
       result.put("componentName", componentName);
-      result.put("resultValue", Double.valueOf(resultValue));
+      if (Double.isFinite(resultValue)) {
+        result.put("resultValue", Double.valueOf(resultValue));
+      } else {
+        result.put("resultValue", null);
+        result.put("nonFiniteResult", nonFiniteLabel(resultValue));
+      }
       result.put("resultUnit", resultUnit);
       result.put("quantityBasis", quantityBasis);
       result.put("sourceReference", sourceReference);
@@ -525,6 +530,13 @@ public final class EngineeringDiagramComponentBalanceTable implements Serializab
   private static boolean validFlow(ComponentFlow flow) {
     return Double.isFinite(flow.getResultValue()) && flow.getResultValue() >= 0.0
         && "kg/s".equals(flow.getResultUnit()) && "COMPONENT_MASS".equals(flow.getQuantityBasis());
+  }
+
+  private static String nonFiniteLabel(double value) {
+    if (Double.isNaN(value)) {
+      return "NaN";
+    }
+    return value > 0.0 ? "POSITIVE_INFINITY" : "NEGATIVE_INFINITY";
   }
 
   private static void addMassCoverageDiagnostics(EngineeringDiagramBalanceTable balanceTable,
