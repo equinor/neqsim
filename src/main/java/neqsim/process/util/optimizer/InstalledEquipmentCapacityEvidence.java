@@ -386,4 +386,3 @@ public final class InstalledEquipmentCapacityEvidence implements Serializable {
         && normalizedUtilization > warningThreshold;
   }
 }
-
