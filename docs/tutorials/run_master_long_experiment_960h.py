@@ -8,7 +8,7 @@ Phases:
 • Phase 2 (101 to 215 h, dur 114h): H2O=47, H2S=0, SO2=20, NO2=8.5, O2=0 ppm
 • Phase 3 (215 to 409 h, dur 194h): H2O=47, H2S=20, SO2=20, NO2=8.5, O2=20 ppm
 • Phase 4 (409 to 447 h, dur 38h): H2O=47, H2S=20, SO2=20, NO2=16.0, O2=20 ppm
-• Phase 5 (447 to 575 h, dur 128h): H2O=47, H2S=20, SO2=20, NO2=16.0, O2=40 ppm (H2SO4 PEAK ~21.57 PPM!)
+• Phase 5 (447 to 575 h, dur 128h): H2O=47, H2S=20, SO2=20, NO2=16.0, O2=40 ppm
 • Phase 6 (575 to 676 h, dur 101h): H2O=47, H2S=20, SO2=20, NO2=16.0, O2=20 ppm
 • Phase 7 (676 to 773 h, dur 97h): H2O=47, H2S=20, SO2=20, NO2=8.5, O2=20 ppm
 • Phase 8 (773 to 863 h, dur 90h): H2O=47, H2S=20, SO2=20, NO2=0.0, O2=20 ppm
@@ -20,11 +20,16 @@ Features:
 - High-res 3-panel plot highlighting H2SO4 acid formation
 """
 
+import os
 from pathlib import Path
 
 from neqsim_co2_kinetics import CO2ImpurityReactorExperiment
 
-def run_960h_experiment():
+
+def run_960h_experiment(output_dir=None):
+    output_path = Path(output_dir or os.environ.get("NEQSIM_TUTORIAL_OUTPUT_DIR", "."))
+    output_path.mkdir(parents=True, exist_ok=True)
+
     exp = CO2ImpurityReactorExperiment(
         target_pressure_bar=98.0,
         target_temp_C=26.0,
@@ -72,10 +77,8 @@ def run_960h_experiment():
     # Generate 1-HOUR STEP RESOLUTION TABLE (961 rows from 0.0 to 960.0 h)
     df_1hr = exp.get_table_results(resolution_hours=1.0)
 
-    # Save portable artifacts below the caller's working directory.
-    output_dir = Path.cwd() / "co2_impurity_kinetics_outputs"
-    output_dir.mkdir(parents=True, exist_ok=True)
-    csv_path = output_dir / "user_960hr_1hr_table.csv"
+    # Save to CSV file
+    csv_path = output_path / "user_960hr_1hr_table.csv"
     df_1hr.to_csv(csv_path, index=False)
     print(f"1-hour step resolution table (961 rows) saved to: {csv_path}")
 
@@ -83,12 +86,9 @@ def run_960h_experiment():
     checkpoints = [0.0, 50.0, 101.0, 215.0, 409.0, 447.0, 575.0, 676.0, 773.0, 863.0, 960.0]
     df_checkpoints = df_1hr[df_1hr['Time (h)'].isin(checkpoints)]
 
-    # Save the plot beside the portable CSV artifact.
-    save_fig_path = output_dir / "co2_impurity_dynamics_960hr.png"
-    exp.plot_results(
-        save_path=str(save_fig_path),
-        title="960-Hour Multi-Phase CSTR CO2 Impurity Kinetics (98 bar, +26 °C)",
-    )
+    # Save the plot in the configured output directory.
+    save_fig_path = output_path / "co2_impurity_dynamics_960hr.png"
+    exp.plot_results(save_path=save_fig_path, title="960-Hour Multi-Phase CSTR CO2 Impurity Kinetics (98 bar, +26 °C)")
 
     print("=" * 120)
     print("960-HOUR MULTI-PHASE CSTR EXPERIMENT REPORT (98 BAR, +26 °C)")
@@ -104,4 +104,3 @@ def run_960h_experiment():
 
 if __name__ == "__main__":
     run_960h_experiment()
-
