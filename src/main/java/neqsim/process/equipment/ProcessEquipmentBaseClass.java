@@ -10,6 +10,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1303,4 +1304,166 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
     }
     return sb.toString();
   }
+
+  /**
+   * Reports whether base-equipment state can be captured without losing attached mutable objects.
+   *
+   * <p>
+   * The reusable base snapshot covers simulation clock/identifier state, activation and low-flow state, specification,
+   * reports, properties, capacity-analysis enablement and IEC 81346 designation. Equipment with attached controllers,
+   * active energy ports, failure state, design conditions or runtime capacity constraints remains fail-closed until the
+   * concrete participant explicitly composes those independently owned objects into its transaction.
+   * </p>
+   *
+   * @return {@code null} when the reusable base snapshot is complete, otherwise a deterministic blocking diagnostic
+   */
+  protected final String getBaseTransientStateCoverageIssue() {
+    if (controller != null || flowValveController != null || hasController || !controllerMap.isEmpty()) {
+      return "attached controller state must participate independently";
+    }
+    if (isSetEnergyStream || !energyPorts.isEmpty() || !externallyConnectedEnergyPorts.isEmpty()) {
+      return "connected energy-stream and energy-port state is not covered by the equipment snapshot";
+    }
+    if (failureMode != null || isFailed) {
+      return "equipment failure state is not covered by the reusable base snapshot";
+    }
+    if (designConditions != null) {
+      return "mutable design-condition state is not covered by the reusable base snapshot";
+    }
+    if (capacityConstraints != null && !capacityConstraints.isEmpty()) {
+      return "runtime capacity-constraint state is not covered by the reusable base snapshot";
+    }
+    return null;
+  }
+
+  /**
+   * Captures mutable state owned directly by {@code ProcessEquipmentBaseClass}.
+   *
+   * @return immutable, serializable base-equipment checkpoint
+   */
+  protected final ProcessEquipmentTransientState captureBaseTransientState() {
+    return new ProcessEquipmentTransientState(getName(), calcIdentifier, calculateSteadyState, time, isRunInSteps(),
+        specification, copyTransientReport(report),
+        properties == null ? null : new HashMap<String, String>(properties), isSolved, isActive,
+        lockedInactive, minimumFlow, minimumFlowExplicitlyConfigured, minimumFlowAutoManaged,
+        minimumFlowRecalculationPending, capacityAnalysisEnabled, referenceDesignation,
+        copyTransientReferenceDesignation(referenceDesignation));
+  }
+
+  /**
+   * Restores a checkpoint captured by {@link #captureBaseTransientState()} without replacing this equipment instance.
+   *
+   * @param snapshot base-equipment checkpoint
+   */
+  protected final void restoreBaseTransientState(ProcessEquipmentTransientState snapshot) {
+    Objects.requireNonNull(snapshot, "base-equipment transient snapshot cannot be null");
+    setName(snapshot.name);
+    calcIdentifier = snapshot.calculationIdentifier;
+    calculateSteadyState = snapshot.calculateSteadyState;
+    time = snapshot.time;
+    setRunInSteps(snapshot.runInSteps);
+    specification = snapshot.specification;
+    report = copyTransientReport(snapshot.report);
+    properties = snapshot.properties == null ? null : new HashMap<String, String>(snapshot.properties);
+    isSolved = snapshot.solved;
+    isActive = snapshot.active;
+    lockedInactive = snapshot.lockedInactive;
+    minimumFlow = snapshot.minimumFlow;
+    minimumFlowExplicitlyConfigured = snapshot.minimumFlowExplicitlyConfigured;
+    minimumFlowAutoManaged = snapshot.minimumFlowAutoManaged;
+    minimumFlowRecalculationPending = snapshot.minimumFlowRecalculationPending;
+    assigningAutoMinimumFlow = false;
+    capacityAnalysisEnabled = snapshot.capacityAnalysisEnabled;
+    referenceDesignation = snapshot.referenceDesignationReference;
+    restoreTransientReferenceDesignation(referenceDesignation, snapshot.referenceDesignationState);
+  }
+
+  private static String[][] copyTransientReport(String[][] source) {
+    if (source == null) {
+      return null;
+    }
+    String[][] copy = new String[source.length][];
+    for (int i = 0; i < source.length; i++) {
+      copy[i] = source[i] == null ? null : source[i].clone();
+    }
+    return copy;
+  }
+
+  private static ReferenceDesignation copyTransientReferenceDesignation(ReferenceDesignation source) {
+    if (source == null) {
+      return null;
+    }
+    ReferenceDesignation copy = new ReferenceDesignation();
+    copy.setFunctionDesignation(source.getFunctionDesignation());
+    copy.setProductDesignation(source.getProductDesignation());
+    copy.setLocationDesignation(source.getLocationDesignation());
+    copy.setLetterCode(source.getLetterCode());
+    copy.setSequenceNumber(source.getSequenceNumber());
+    return copy;
+  }
+
+  private static void restoreTransientReferenceDesignation(ReferenceDesignation target,
+      ReferenceDesignation source) {
+    if (target == null || source == null) {
+      if (target != source) {
+        throw new IllegalArgumentException("Reference-designation snapshot structure changed");
+      }
+      return;
+    }
+    target.setFunctionDesignation(source.getFunctionDesignation());
+    target.setProductDesignation(source.getProductDesignation());
+    target.setLocationDesignation(source.getLocationDesignation());
+    target.setLetterCode(source.getLetterCode());
+    target.setSequenceNumber(source.getSequenceNumber());
+  }
+
+  /** Serializable state owned directly by {@code ProcessEquipmentBaseClass}. */
+  protected static final class ProcessEquipmentTransientState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String name;
+    private final UUID calculationIdentifier;
+    private final boolean calculateSteadyState;
+    private final double time;
+    private final boolean runInSteps;
+    private final String specification;
+    private final String[][] report;
+    private final HashMap<String, String> properties;
+    private final boolean solved;
+    private final boolean active;
+    private final boolean lockedInactive;
+    private final double minimumFlow;
+    private final boolean minimumFlowExplicitlyConfigured;
+    private final boolean minimumFlowAutoManaged;
+    private final boolean minimumFlowRecalculationPending;
+    private final boolean capacityAnalysisEnabled;
+    private final ReferenceDesignation referenceDesignationReference;
+    private final ReferenceDesignation referenceDesignationState;
+
+    private ProcessEquipmentTransientState(String name, UUID calculationIdentifier, boolean calculateSteadyState,
+        double time, boolean runInSteps, String specification, String[][] report,
+        HashMap<String, String> properties, boolean solved, boolean active, boolean lockedInactive,
+        double minimumFlow, boolean minimumFlowExplicitlyConfigured, boolean minimumFlowAutoManaged,
+        boolean minimumFlowRecalculationPending, boolean capacityAnalysisEnabled,
+        ReferenceDesignation referenceDesignationReference, ReferenceDesignation referenceDesignationState) {
+      this.name = name;
+      this.calculationIdentifier = calculationIdentifier;
+      this.calculateSteadyState = calculateSteadyState;
+      this.time = time;
+      this.runInSteps = runInSteps;
+      this.specification = specification;
+      this.report = report;
+      this.properties = properties;
+      this.solved = solved;
+      this.active = active;
+      this.lockedInactive = lockedInactive;
+      this.minimumFlow = minimumFlow;
+      this.minimumFlowExplicitlyConfigured = minimumFlowExplicitlyConfigured;
+      this.minimumFlowAutoManaged = minimumFlowAutoManaged;
+      this.minimumFlowRecalculationPending = minimumFlowRecalculationPending;
+      this.capacityAnalysisEnabled = capacityAnalysisEnabled;
+      this.referenceDesignationReference = referenceDesignationReference;
+      this.referenceDesignationState = referenceDesignationState;
+    }
+  }
+
 }
