@@ -107,6 +107,10 @@ public final class ProcessGraphBuilder {
 
     // Build a map from stream objects to units that produce them (as outputs)
     Map<Object, ProcessEquipmentInterface> streamToProducer = new IdentityHashMap<>();
+    // Preserve the equipment source of streams that are also registered as explicit
+    // ProcessSystem units. The registered Stream becomes the producer seen by downstream
+    // consumers, while this map retains the preceding producer -> Stream dependency.
+    Map<Object, ProcessEquipmentInterface> registeredStreamSources = new IdentityHashMap<>();
 
     // First pass: identify stream producers.
     // We process non-Stream equipment FIRST so that streams produced by real
@@ -310,11 +314,17 @@ public final class ProcessGraphBuilder {
       }
     }
 
-    // Pass 1b: Stream units default to producing themselves, but only if no
-    // real producer has already claimed them (e.g., a Recycle's outlet).
+    // Pass 1b: a registered Stream is an executable alias boundary. Downstream consumers must
+    // depend on that Stream unit, not run beside it after only waiting for the equipment that
+    // originally created the same object. Preserve the original producer separately so pass 2
+    // can create producer -> Stream -> consumer edges.
     for (ProcessEquipmentInterface unit : units) {
       if (unit instanceof StreamInterface) {
-        streamToProducer.putIfAbsent(unit, unit);
+        ProcessEquipmentInterface source = streamToProducer.get(unit);
+        if (source != null && source != unit) {
+          registeredStreamSources.put(unit, source);
+        }
+        streamToProducer.put(unit, unit);
       }
     }
 
@@ -328,9 +338,9 @@ public final class ProcessGraphBuilder {
       // when the outlet stream of a Recycle is registered as its own unit.
       if (unit instanceof StreamInterface) {
         // Case 1: this stream is registered as an outlet of another equipment.
-        ProcessEquipmentInterface producer = streamToProducer.get(unit);
-        if (producer != null && producer != unit) {
-          createEdgeFromProducer(graph, streamToProducer, unit, unit);
+        ProcessEquipmentInterface producer = registeredStreamSources.get(unit);
+        if (producer != null) {
+          createEdgeFromKnownProducer(graph, producer, unit, unit);
         }
         // Case 2: Stream wraps another upstream Stream via the `stream` field.
         try {
@@ -1068,6 +1078,19 @@ public final class ProcessGraphBuilder {
   private static void createEdgeFromProducer(ProcessGraph graph,
       Map<Object, ProcessEquipmentInterface> streamToProducer, Object stream, ProcessEquipmentInterface consumer) {
     ProcessEquipmentInterface producer = streamToProducer.get(stream);
+    createEdgeFromKnownProducer(graph, producer, stream, consumer);
+  }
+
+  /**
+   * Creates an edge from a known producer to a consumer, preserving stream identity.
+   *
+   * @param graph process graph to add the edge to
+   * @param producer equipment producing the stream, or {@code null}
+   * @param stream stream object connecting producer and consumer
+   * @param consumer consuming process equipment
+   */
+  private static void createEdgeFromKnownProducer(ProcessGraph graph, ProcessEquipmentInterface producer, Object stream,
+      ProcessEquipmentInterface consumer) {
     if (producer != null && producer != consumer) {
       ProcessNode sourceNode = graph.getNode(producer);
       ProcessNode targetNode = graph.getNode(consumer);
