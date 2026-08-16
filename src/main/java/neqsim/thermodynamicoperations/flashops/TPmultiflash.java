@@ -17,7 +17,9 @@ import org.ejml.dense.row.NormOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseType;
+import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemUMRPRUMCEos;
 
 /**
  * TPmultiflash class.
@@ -485,7 +487,12 @@ public class TPmultiflash extends TPflash {
     // O2: Early exit — if all K ≈ 1.0 the system is near/above critical.
     // Only skip Wilson K-based trials; still fall through to pure-component trials
     // which use independent initial guesses not affected by K ≈ 1.
-    boolean skipWilsonKTrials = (maxAbsLogK < 0.01);
+    // Furst-electrolyte and UMR-PRU-MC systems retain their established local
+    // pure-component stability path unless enhanced checking is explicitly requested.
+    // Other model families still require Wilson trials for water-rich and vapor-like splits.
+    boolean preserveLocalStabilityPath = !system.doEnhancedMultiPhaseCheck()
+        && (system instanceof SystemFurstElectrolyteEos || system instanceof SystemUMRPRUMCEos);
+    boolean skipWilsonKTrials = preserveLocalStabilityPath || maxAbsLogK < 0.01;
 
     // O3: Wilson K-based trial phases — liquid-like (z/K) first, then vapor-like (K·z)
     // Liquid-like trial runs first because most multi-phase systems have liquid-driven
@@ -615,7 +622,7 @@ public class TPmultiflash extends TPflash {
             dominantComp = i;
           }
         }
-        system.setBeta(newPhaseIdx, getIncipientWilsonPhaseFraction(dominantComp));
+        system.setBeta(newPhaseIdx, system.getPhase(0).getComponent(dominantComp).getz());
         try {
           system.init(1);
         } catch (Exception ex) {
@@ -1202,7 +1209,7 @@ public class TPmultiflash extends TPflash {
               dominantComp = i;
             }
           }
-          system.setBeta(newPhaseIdx, getIncipientWilsonPhaseFraction(dominantComp));
+          system.setBeta(newPhaseIdx, system.getPhase(0).getComponent(dominantComp).getz());
           try {
             system.init(1);
           } catch (Exception ex) {
