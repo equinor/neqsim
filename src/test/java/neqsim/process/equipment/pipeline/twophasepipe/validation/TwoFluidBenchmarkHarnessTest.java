@@ -22,13 +22,13 @@ class TwoFluidBenchmarkHarnessTest {
   @Test
   void testReadsExternalSimulatorCsvFixture() throws Exception {
     Path csv = resourcePath(
-        "neqsim/process/equipment/pipeline/twophasepipe/validation/" + "ledaflow_olga_export_fixture.csv");
+        "neqsim/process/equipment/pipeline/twophasepipe/validation/" + "reference_export_fixture.csv");
 
     List<BenchmarkPoint> points = TwoFluidBenchmarkHarness.readCsv(csv);
 
     assertEquals(4, points.size());
     assertEquals("pressure_bara", points.get(0).getVariable());
-    assertEquals("OLGA/LedaFlow export fixture", points.get(0).getSource());
+    assertEquals("synthetic reference export fixture", points.get(0).getSource());
   }
 
   @Test

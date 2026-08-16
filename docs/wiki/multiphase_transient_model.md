@@ -128,20 +128,20 @@ public class MultiphasePipeSection {
     private double gasVelocity;        // m/s
     private double liquidVelocity;     // m/s (or separate oil/water)
     private double temperature;        // K
-    
+
     // Derived quantities
     private double gasDensity;
     private double liquidDensity;
     private double mixtureVelocity;
     private double liquidLevel;        // For stratified flow
     private FlowRegime flowRegime;
-    
+
     // Slug tracking
     private boolean isInSlug;
     private double slugFrontPosition;
     private double slugTailPosition;
     private double slugHoldup;
-    
+
     // Geometry
     private double diameter;
     private double area;
@@ -165,23 +165,23 @@ public enum FlowRegime {
 }
 
 public class MechanisticFlowRegime {
-    
+
     /**
      * Determine flow regime using Taitel-Dukler or similar mechanistic model.
      */
     public FlowRegime determine(double vsg, double vsl, double diameter,
                                  double inclination, PhaseProperties gas,
                                  PhaseProperties liquid) {
-        
+
         // Calculate dimensionless groups
         double froude = calcFroudeNumber(vsg, vsl, diameter);
         double lockhart = calcLockhartMartinelli(gas, liquid, vsg, vsl);
-        
+
         // Stratified stability (Kelvin-Helmholtz)
         double criticalGasVelocity = calcKelvinHelmholtzLimit(
-            liquid.getDensity(), gas.getDensity(), 
+            liquid.getDensity(), gas.getDensity(),
             liquidLevel, diameter, inclination);
-        
+
         if (vsg < criticalGasVelocity && inclination < Math.toRadians(10)) {
             // Check wavy vs smooth
             if (isWavyTransition(vsg, liquid)) {
@@ -189,21 +189,21 @@ public class MechanisticFlowRegime {
             }
             return FlowRegime.STRATIFIED_SMOOTH;
         }
-        
+
         // Slug formation criterion
         if (isSlugCondition(vsg, vsl, liquidLevel, diameter)) {
             return FlowRegime.SLUG;
         }
-        
+
         // Annular transition
         if (vsg > calcAnnularTransition(diameter, gas, liquid)) {
             return FlowRegime.ANNULAR;
         }
-        
+
         // ... other transitions
         return FlowRegime.INTERMITTENT;
     }
-    
+
     /**
      * Kelvin-Helmholtz instability criterion for stratified flow.
      */
@@ -213,11 +213,11 @@ public class MechanisticFlowRegime {
         double aG = calcGasArea(hL, D);
         double aL = calcLiquidArea(hL, D);
         double dAL_dhL = calcDerivativeArea(hL, D);
-        
+
         // Taitel-Dukler criterion
         double term1 = (rhoL - rhoG) * g * Math.cos(theta) * aG;
         double term2 = rhoG * aL * dAL_dhL;
-        
+
         return Math.sqrt(term1 / term2);
     }
 }
@@ -227,11 +227,11 @@ public class MechanisticFlowRegime {
 
 ```java
 public class SlugTracker {
-    
+
     private List<Slug> activeSlugs = new ArrayList<>();
     private double minSlugLength;       // Minimum stable slug length
     private double slugInitiationVoid;  // α_g threshold for slug formation
-    
+
     public class Slug {
         double frontPosition;    // m
         double tailPosition;     // m
@@ -241,21 +241,21 @@ public class SlugTracker {
         double frequency;        // slugs per unit time
         boolean isTerrainInduced;
     }
-    
+
     /**
      * Check for slug initiation at each grid point.
      */
     public void checkSlugInitiation(MultiphasePipeSection[] sections, double dt) {
         for (int i = 1; i < sections.length - 1; i++) {
             MultiphasePipeSection sec = sections[i];
-            
+
             // Terrain-induced slug: liquid accumulation at low point
             if (isLowPoint(sections, i) && sec.getLiquidHoldup() > slugInitiationVoid) {
                 if (!sec.isInSlug() && sec.getGasVelocity() > getMinGasVelocityForSlug(sec)) {
                     initiateSlug(sections, i);
                 }
             }
-            
+
             // Hydrodynamic slug: wave growth in stratified-wavy
             if (sec.getFlowRegime() == FlowRegime.STRATIFIED_WAVY) {
                 if (isWaveBlockage(sec)) {
@@ -264,7 +264,7 @@ public class SlugTracker {
             }
         }
     }
-    
+
     /**
      * Propagate existing slugs.
      */
@@ -272,29 +272,29 @@ public class SlugTracker {
         Iterator<Slug> iter = activeSlugs.iterator();
         while (iter.hasNext()) {
             Slug slug = iter.next();
-            
+
             // Slug front velocity (Bendiksen correlation)
             double vFront = calcSlugFrontVelocity(slug, sections);
             slug.frontPosition += vFront * dt;
-            
+
             // Slug tail velocity
             double vTail = calcSlugTailVelocity(slug, sections);
             slug.tailPosition += vTail * dt;
-            
+
             // Slug length
             double length = slug.frontPosition - slug.tailPosition;
-            
+
             // Slug dissipation
             if (length < minSlugLength || slug.frontPosition > getPipeLength()) {
                 iter.remove();
                 dissipateSlug(slug, sections);
             }
-            
+
             // Update holdup in slug region
             updateSlugHoldup(slug, sections);
         }
     }
-    
+
     /**
      * Bendiksen (1984) slug front velocity.
      */
@@ -312,64 +312,64 @@ public class SlugTracker {
 
 ```java
 public class LiquidAccumulation {
-    
+
     /**
      * Track liquid inventory and low-point accumulation.
      */
-    public void updateAccumulation(MultiphasePipeSection[] sections, 
+    public void updateAccumulation(MultiphasePipeSection[] sections,
                                     double dt, double inletLiquidRate) {
-        
+
         // Identify low points in terrain profile
         List<Integer> lowPoints = findLowPoints(sections);
-        
+
         for (int lowIdx : lowPoints) {
             MultiphasePipeSection low = sections[lowIdx];
-            
+
             // Liquid drainage into low point
             double drainageIn = calcDrainageRate(sections, lowIdx, -1);  // From upstream
             drainageIn += calcDrainageRate(sections, lowIdx, +1);        // From downstream
-            
+
             // Liquid carryover out of low point
             double carryover = calcCarryoverRate(low);
-            
+
             // Net accumulation
             double netRate = drainageIn - carryover;
-            
+
             // Update holdup
             double dHoldup = netRate * dt / (low.getArea() * getSegmentLength());
             low.setLiquidHoldup(low.getLiquidHoldup() + dHoldup);
-            
+
             // Check for slug initiation if holdup exceeds critical
             if (low.getLiquidHoldup() > getCriticalHoldup(low)) {
                 slugTracker.initiateSlug(sections, lowIdx);
             }
         }
     }
-    
+
     /**
      * Calculate liquid drainage rate into low point.
      */
-    private double calcDrainageRate(MultiphasePipeSection[] sections, 
+    private double calcDrainageRate(MultiphasePipeSection[] sections,
                                      int lowIdx, int direction) {
         int neighborIdx = lowIdx + direction;
         if (neighborIdx < 0 || neighborIdx >= sections.length) return 0;
-        
+
         MultiphasePipeSection neighbor = sections[neighborIdx];
         MultiphasePipeSection low = sections[lowIdx];
-        
+
         // Height difference drives drainage
         double dz = neighbor.getElevation() - low.getElevation();
         if (dz <= 0) return 0;  // No drainage if neighbor is lower
-        
+
         // Stratified film drainage (Wallis falling film)
         double holdup = neighbor.getLiquidHoldup();
         double filmThickness = calcFilmThickness(holdup, neighbor.getDiameter());
-        double drainageVelocity = calcFilmDrainageVelocity(filmThickness, 
+        double drainageVelocity = calcFilmDrainageVelocity(filmThickness,
             neighbor.getInclination(), neighbor.getLiquidViscosity());
-        
+
         return holdup * neighbor.getArea() * drainageVelocity;
     }
-    
+
     /**
      * Calculate liquid carryover (entrainment by gas).
      */
@@ -377,14 +377,14 @@ public class LiquidAccumulation {
         // Critical gas velocity for liquid removal (Turner correlation)
         double vgCrit = calcCriticalGasVelocity(section);
         double vg = section.getGasVelocity();
-        
+
         if (vg < vgCrit) return 0;
-        
+
         // Carryover rate increases with excess gas velocity
         double excessVelocity = vg - vgCrit;
         double entrainmentFraction = calcEntrainmentFraction(excessVelocity, section);
-        
-        return entrainmentFraction * section.getLiquidHoldup() * 
+
+        return entrainmentFraction * section.getLiquidHoldup() *
                section.getArea() * section.getLiquidVelocity();
     }
 }
@@ -394,44 +394,44 @@ public class LiquidAccumulation {
 
 ```java
 public class MultiphaseFluxCalculator {
-    
+
     public enum FluxScheme {
         AUSM_PLUS,      // Advection Upstream Splitting Method
         HLL,            // Harten-Lax-van Leer
         ROE,            // Roe approximate Riemann solver
         UPWIND          // First-order upwind
     }
-    
+
     /**
      * Calculate numerical flux at cell interface using AUSM+ scheme.
      * Good for multiphase flows with large density ratios.
      */
-    public double[] calcFluxAUSMPlus(double[] UL, double[] UR, 
+    public double[] calcFluxAUSMPlus(double[] UL, double[] UR,
                                       PhaseProperties propsL, PhaseProperties propsR) {
-        
+
         // Primitive variables
         double rhoL = UL[0], rhoR = UR[0];
         double vL = UL[1] / rhoL, vR = UR[1] / rhoR;
         double pL = propsL.getPressure(), pR = propsR.getPressure();
         double cL = propsL.getSoundSpeed(), cR = propsR.getSoundSpeed();
-        
+
         // Interface speed of sound
         double cHalf = 0.5 * (cL + cR);
-        
+
         // Mach numbers
         double ML = vL / cHalf;
         double MR = vR / cHalf;
-        
+
         // Split Mach numbers (AUSM+ splitting functions)
         double Mplus = calcMachPlus(ML);
         double Mminus = calcMachMinus(MR);
         double Mhalf = Mplus + Mminus;
-        
+
         // Split pressures
         double Pplus = calcPressurePlus(ML) * pL;
         double Pminus = calcPressureMinus(MR) * pR;
         double Phalf = Pplus + Pminus;
-        
+
         // Convective flux
         double[] flux = new double[3];
         if (Mhalf >= 0) {
@@ -443,23 +443,23 @@ public class MultiphaseFluxCalculator {
             flux[1] = cHalf * Mhalf * rhoR * vR + Phalf;
             flux[2] = cHalf * Mhalf * rhoR * propsR.getEnthalpy();
         }
-        
+
         return flux;
     }
-    
+
     /**
      * MUSCL reconstruction for second-order accuracy.
      */
     public double[] reconstructMUSCL(double[] U, int i, double[] dx) {
         // Slope limiter (minmod, van Leer, etc.)
         double slope = slopeLimiter(U[i-1], U[i], U[i+1], dx[i-1], dx[i]);
-        
+
         double[] UL = new double[U.length];
         double[] UR = new double[U.length];
-        
+
         UL[i] = U[i] - 0.5 * slope * dx[i];
         UR[i] = U[i] + 0.5 * slope * dx[i];
-        
+
         return new double[][] {UL, UR};
     }
 }
@@ -469,57 +469,57 @@ public class MultiphaseFluxCalculator {
 
 ```java
 public class MultiphaseTimeIntegrator {
-    
+
     /**
      * Explicit Runge-Kutta time stepping with CFL control.
      */
     public void stepRK4(MultiphasePipeSection[] sections, double dt) {
         int n = sections.length;
         double[][] U = getConservativeVariables(sections);
-        
+
         // RK4 stages
         double[][] k1 = calcRHS(sections, U);
         double[][] U1 = addArrays(U, scaleArray(k1, 0.5 * dt));
-        
+
         double[][] k2 = calcRHS(sections, U1);
         double[][] U2 = addArrays(U, scaleArray(k2, 0.5 * dt));
-        
+
         double[][] k3 = calcRHS(sections, U2);
         double[][] U3 = addArrays(U, scaleArray(k3, dt));
-        
+
         double[][] k4 = calcRHS(sections, U3);
-        
+
         // Combine stages
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < U[i].length; j++) {
                 U[i][j] += dt / 6.0 * (k1[i][j] + 2*k2[i][j] + 2*k3[i][j] + k4[i][j]);
             }
         }
-        
+
         setConservativeVariables(sections, U);
     }
-    
+
     /**
      * Calculate stable time step based on CFL condition.
      */
     public double calcTimeStep(MultiphasePipeSection[] sections, double cflNumber) {
         double dtMin = Double.MAX_VALUE;
-        
+
         for (MultiphasePipeSection sec : sections) {
             // Wave speeds
             double cGas = sec.getGasSoundSpeed();
             double cLiq = sec.getLiquidSoundSpeed();
             double vg = Math.abs(sec.getGasVelocity());
             double vl = Math.abs(sec.getLiquidVelocity());
-            
+
             // Maximum characteristic speed
             double maxSpeed = Math.max(vg + cGas, vl + cLiq);
-            
+
             // CFL condition
             double dt = cflNumber * sec.getSegmentLength() / maxSpeed;
             dtMin = Math.min(dtMin, dt);
         }
-        
+
         return dtMin;
     }
 }
@@ -529,7 +529,7 @@ public class MultiphaseTimeIntegrator {
 
 ```java
 public class ThermodynamicCoupling {
-    
+
     /**
      * Update phase properties using NeqSim flash calculations.
      */
@@ -538,12 +538,12 @@ public class ThermodynamicCoupling {
         SystemInterface system = section.getThermoSystem().clone();
         system.setPressure(section.getPressure() / 1e5);  // Convert to bar
         system.setTemperature(section.getTemperature());
-        
+
         // Flash calculation
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
         ops.TPflash();
         system.initPhysicalProperties();
-        
+
         // Extract phase properties
         if (system.hasPhaseType("gas")) {
             PhaseInterface gas = system.getPhase("gas");
@@ -553,33 +553,33 @@ public class ThermodynamicCoupling {
             section.setGasEnthalpy(gas.getEnthalpy("J/mol"));
             section.setGasMoleFraction(system.getMoleFraction(gas.getPhaseIndex()));
         }
-        
+
         if (system.hasPhaseType("oil")) {
             PhaseInterface oil = system.getPhase("oil");
             section.setOilDensity(oil.getDensity("kg/m3"));
             section.setOilViscosity(oil.getViscosity("kg/msec"));
             // ... other properties
         }
-        
+
         if (system.hasPhaseType("aqueous")) {
             PhaseInterface water = system.getPhase("aqueous");
             section.setWaterDensity(water.getDensity("kg/m3"));
             // ... other properties
         }
-        
+
         // Mass transfer rates (flashing/condensation)
         section.setMassTransferRate(calcMassTransferRate(section, system));
     }
-    
+
     /**
      * Calculate mass transfer between phases (simplified).
      */
-    private double calcMassTransferRate(MultiphasePipeSection section, 
+    private double calcMassTransferRate(MultiphasePipeSection section,
                                          SystemInterface system) {
         // Departure from equilibrium
         double pBubble = system.getBubblePointPressure();
         double pActual = section.getPressure() / 1e5;
-        
+
         if (pActual < pBubble) {
             // Flashing - liquid to gas
             double dP = pBubble - pActual;
@@ -599,20 +599,20 @@ public class ThermodynamicCoupling {
 
 ```java
 public class MultiphasePipe extends Pipeline {
-    
+
     private MultiphasePipeSection[] sections;
     private SlugTracker slugTracker;
     private LiquidAccumulation liquidAccumulation;
     private MultiphaseFluxCalculator fluxCalculator;
     private MultiphaseTimeIntegrator timeIntegrator;
     private ThermodynamicCoupling thermoCoupling;
-    
+
     private double cflNumber = 0.5;
     private int numberOfSections = 100;
     private double totalLength;
     private double[] elevationProfile;
     private double[] diameterProfile;
-    
+
     public MultiphasePipe(String name, StreamInterface inStream) {
         super(name, inStream);
         slugTracker = new SlugTracker();
@@ -621,59 +621,59 @@ public class MultiphasePipe extends Pipeline {
         timeIntegrator = new MultiphaseTimeIntegrator();
         thermoCoupling = new ThermodynamicCoupling();
     }
-    
+
     @Override
     public void run(UUID id) {
         // Initialize grid
         initializeSections();
-        
+
         // Steady-state initialization
         runSteadyState();
-        
+
         setCalculationIdentifier(id);
     }
-    
+
     @Override
     public void runTransient(double dt, UUID id) {
         // Adaptive time stepping
         double dtStable = timeIntegrator.calcTimeStep(sections, cflNumber);
         double dtActual = Math.min(dt, dtStable);
-        
+
         int subSteps = (int) Math.ceil(dt / dtActual);
         dtActual = dt / subSteps;
-        
+
         for (int step = 0; step < subSteps; step++) {
             // 1. Update thermodynamic properties
             for (MultiphasePipeSection sec : sections) {
                 thermoCoupling.updatePhaseProperties(sec);
             }
-            
+
             // 2. Detect flow regimes
             for (MultiphasePipeSection sec : sections) {
                 sec.setFlowRegime(flowRegimeMap.determine(sec));
             }
-            
+
             // 3. Calculate fluxes and advance solution
             timeIntegrator.stepRK4(sections, dtActual);
-            
+
             // 4. Track liquid accumulation
-            liquidAccumulation.updateAccumulation(sections, dtActual, 
+            liquidAccumulation.updateAccumulation(sections, dtActual,
                 getInletLiquidRate());
-            
+
             // 5. Track and propagate slugs
             slugTracker.checkSlugInitiation(sections, dtActual);
             slugTracker.propagateSlugs(sections, dtActual);
-            
+
             // 6. Apply boundary conditions
             applyBoundaryConditions();
         }
-        
+
         // Update outlet stream
         updateOutletStream();
-        
+
         setCalculationIdentifier(id);
     }
-    
+
     /**
      * Get liquid inventory in the pipeline.
      */
@@ -682,7 +682,7 @@ public class MultiphasePipe extends Pipeline {
         for (MultiphasePipeSection sec : sections) {
             volume += sec.getLiquidHoldup() * sec.getArea() * sec.getSegmentLength();
         }
-        
+
         switch (unit.toLowerCase()) {
             case "m3": return volume;
             case "bbl": return volume * 6.28981;
@@ -690,14 +690,14 @@ public class MultiphasePipe extends Pipeline {
             default: return volume;
         }
     }
-    
+
     /**
      * Get slug statistics.
      */
     public SlugStatistics getSlugStatistics() {
         return slugTracker.getStatistics();
     }
-    
+
     /**
      * Get holdup profile.
      */
@@ -743,7 +743,7 @@ public class MultiphasePipe extends Pipeline {
 - `TwoFluidPipe` class
 - `SlugTracker` with individual slug dynamics
 - Terrain-induced and hydrodynamic slugs
-- Validation against OLGA/LedaFlow
+- Validation against published experimental data
 
 ### Phase 3: Advanced Features (3-4 months)
 

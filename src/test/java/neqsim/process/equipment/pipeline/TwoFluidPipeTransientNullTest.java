@@ -96,8 +96,8 @@ public class TwoFluidPipeTransientNullTest {
    * </p>
    *
    * <p>
-   * The steady solver is not implicated: it lands within 7% of OLGA on mean liquid holdup for this case, while the
-   * transient runs away to nearly double it.
+   * The steady solver is not implicated: its mean liquid holdup for this case is stable and physically bounded, while
+   * the transient runs away to nearly double it.
    * </p>
    */
   @Test

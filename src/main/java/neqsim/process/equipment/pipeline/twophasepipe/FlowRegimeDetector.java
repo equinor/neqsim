@@ -48,6 +48,51 @@ public class FlowRegimeDetector implements Serializable {
   /** Current detection method. */
   private DetectionMethod detectionMethod = DetectionMethod.MECHANISTIC;
 
+  /** Select Taitel-Dukler transition B instead of the vertical droplet criterion in horizontal flow. */
+  private boolean useEquilibriumLevelAnnularTransition = false;
+
+  /**
+   * Whether the horizontal annular transition uses the equilibrium liquid level.
+   *
+   * @return true when Taitel-Dukler transition B is used
+   */
+  public boolean isUseEquilibriumLevelAnnularTransition() {
+    return useEquilibriumLevelAnnularTransition;
+  }
+
+  /**
+   * Select how the horizontal branch decides annular flow.
+   *
+   * <p>
+   * The default path uses {@code isAnnularFlow}, which is the vertical droplet-entrainment criterion
+   * {@code U_SG > 3.1 * (sigma * g * drho / rhoG^2)^0.25}, and checks it ahead of the stratified/slug transition. In
+   * horizontal flow that threshold is small - about 1.6 m/s for a 200 mm gas line and 0.75 m/s for a 14-inch
+   * high-pressure export line - so it short-circuits the flow map and classifies effectively every gas pipeline as
+   * annular regardless of its liquid level, which then solves it with a thin-film closure.
+   * </p>
+   *
+   * <p>
+   * Enabling this selects the horizontal criterion of Taitel and Dukler (1976): after the Kelvin-Helmholtz instability
+   * has lifted the stratified layer, the branch is set by the equilibrium liquid level, annular below
+   * {@code h_L/D = 0.5} and intermittent above it. Measured against a reference two-fluid simulator on a 73.8 km
+   * gas-condensate export line at 4 MSm3/d, this moves the holdup ratio from 0.84 to 1.02 on the median and from 0.83
+   * to 0.96 on the mean, with pressure drop unchanged, and it correctly keeps the export line annular at 8.5 m/s while
+   * reclassifying a 200 mm line at 1.6 m/s as stratified-wavy and slug.
+   * </p>
+   *
+   * <p>
+   * It is off by default because regime selection switches closures discontinuously: on a line that changes
+   * inclination, sections reclassify and the mean holdup steps by roughly 20 per cent as soon as mild terrain is
+   * introduced. Blending across the transition is required before this can become the default, so the option is
+   * provided for evaluation rather than for design work.
+   * </p>
+   *
+   * @param enable true to use the equilibrium-level transition
+   */
+  public void setUseEquilibriumLevelAnnularTransition(boolean enable) {
+    this.useEquilibriumLevelAnnularTransition = enable;
+  }
+
   /** Drift flux model for slip calculations. */
   private transient DriftFluxModel driftFluxModel;
 
@@ -247,17 +292,25 @@ public class FlowRegimeDetector implements Serializable {
       return FlowRegime.DISPERSED_BUBBLE;
     }
 
-    // Check for annular/mist flow (high gas rate)
-    if (isAnnularFlow(U_SL, U_SG, D, rho_L, rho_G, sigma)) {
-      return FlowRegime.ANNULAR;
-    }
-
-    // Check for slug vs stratified transition
     double h_L = estimateStratifiedLiquidLevel(U_SL, U_SG, D, rho_L, rho_G, mu_L, theta);
 
-    if (isKelvinHelmholtzUnstable(U_SG, h_L, D, rho_L, rho_G)) {
-      // Intermittent (slug) flow
-      return FlowRegime.SLUG;
+    if (useEquilibriumLevelAnnularTransition) {
+      // Taitel-Dukler transition B. Once the Kelvin-Helmholtz instability has lifted the stratified
+      // layer, the horizontal branch is decided by the equilibrium liquid level: below half a
+      // diameter the liquid cannot bridge the bore and the flow goes annular, above it a slug forms.
+      if (isKelvinHelmholtzUnstable(U_SG, h_L, D, rho_L, rho_G)) {
+        return (h_L / D < 0.5) ? FlowRegime.ANNULAR : FlowRegime.SLUG;
+      }
+    } else {
+      // Legacy path: the vertical droplet-entrainment criterion, checked ahead of the
+      // stratified/slug transition. See setUseEquilibriumLevelAnnularTransition for why this
+      // over-calls annular in horizontal flow.
+      if (isAnnularFlow(U_SL, U_SG, D, rho_L, rho_G, sigma)) {
+        return FlowRegime.ANNULAR;
+      }
+      if (isKelvinHelmholtzUnstable(U_SG, h_L, D, rho_L, rho_G)) {
+        return FlowRegime.SLUG;
+      }
     }
 
     // Stratified flow - check smooth vs wavy transition

@@ -276,7 +276,7 @@ severe_slug_potential_flag
 Example use:
 
 ```java
-Path reference = Path.of("olga_export.csv");
+Path reference = Path.of("reference_export.csv");
 List<TwoFluidBenchmarkHarness.BenchmarkPoint> points =
     TwoFluidBenchmarkHarness.readCsv(reference);
 
@@ -356,4 +356,4 @@ The current API is adequate for engineering studies and benchmark development. A
 industrial report workflow should still add:
 
 - Plot templates for pressure, temperature, holdup, water cut, flow regime, and slug events.
-- Direct import of OLGA/LedaFlow export formats where licensing allows it.
+- Direct import of additional third-party export formats where licensing allows it.

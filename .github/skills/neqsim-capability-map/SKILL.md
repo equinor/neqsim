@@ -175,7 +175,7 @@ transport properties (viscosity, thermal conductivity, density).
 | `PipeBeggsAndBrills` | Beggs & Brill correlation (+ formation temperature gradient) | `process.equipment.pipeline` |
 | `PipeGray` | Gray (1974) multiphase vertical flow for gas / gas-condensate wells (Woldesemayat-Ghajar holdup option) | `process.equipment.pipeline` |
 | `VoidFractionCorrelations` | Two-phase void-fraction / gas-holdup correlations (Woldesemayat-Ghajar 2007) | `process.equipment.pipeline` |
-| `TwoFluidPipe` | Transient two-fluid multiphase model (OLGA-like) with 7 conservation equations, AUSM+, boundary conditions, direct electrical heating (DEH). Holdup runs 2–4x OLGA — see `neqsim-flow-assurance` | `process.equipment.pipeline` |
+| `TwoFluidPipe` | Transient two-fluid multiphase model with 7 conservation equations, AUSM+, boundary conditions, direct electrical heating (DEH). See `neqsim-flow-assurance` for validity limits | `process.equipment.pipeline` |
 | `CO2InjectionWellAnalyzer` | CO2 injection well safety analysis | `process.equipment.pipeline` |
 | `TransientWellbore` | Shutdown cooling / depressurization transient | `process.equipment.pipeline` |
 | `CO2FlowCorrections` | CO2-specific two-phase flow corrections (static utility) | `process.equipment.pipeline` |

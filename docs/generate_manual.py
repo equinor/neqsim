@@ -655,7 +655,7 @@ FULL_MANUAL_STRUCTURE = {
             ("Piping Route Builder", "process/piping_route_builder.md"),
             ("Pipeline Simulation", "process/equipment/pipeline_simulation.md"),
             ("TwoFluidPipe Model", "process/TWOFLUIDPIPE_MODEL.md"),
-            ("TwoFluidPipe OLGA Comparison", "wiki/two_fluid_model_olga_comparison.md"),
+            ("TwoFluidPipe Detailed Review", "wiki/two_fluid_model_review.md"),
             ("Beggs & Brill", "process/PipeBeggsAndBrills.md"),
             ("Multiphase Choke Flow", "process/MultiphaseChokeFlow.md"),
             ("Networks", "process/equipment/networks.md"),

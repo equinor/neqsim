@@ -419,7 +419,8 @@ oil or water seeding. Check gas, oil, water, liquid, and total closure with
 and compare rigorous flash with `FlashTable`. The flash table must retain the oil/aqueous liquid mass
 split. Record EOS, mixing rule, composition, absolute pressure, temperature, mass-transfer
 relaxation time, and units. The current hydrodynamic state transports bulk phase inventories, not a
-full component-composition vector per cell, and does not establish OLGA or LedaFlow equivalence.
+full component-composition vector per cell, and does not establish equivalence with any commercial
+transient multiphase simulator.
 
 ## Running Dynamic Simulation
 

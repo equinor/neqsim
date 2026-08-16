@@ -385,11 +385,11 @@ for (double qgMSm3d : gasRates) {
 > discontinuity. Always pair `getSegmentFlowRegime(i)` with
 > `getSegmentLiquidHoldup(i)`.
 
-> **VALIDITY — low liquid loading.** Benchmarked against OLGA 2025.1 on a 73.8 km
-> wet-gas export line (ID 0.355 m, no-slip liquid fraction λ_L ≈ 0.006), Beggs &
-> Brill over-predicts ΔP by **30–60%** and the gap is entirely the two-phase
-> friction multiplier `exp(S)`: removing it brings ΔP within 11% of OLGA and 4%
-> of a single-phase Darcy-Weisbach integration. `S` is monotonically *increasing*
+> **VALIDITY — low liquid loading.** On a long wet-gas export line (ID 0.355 m,
+> no-slip liquid fraction λ_L ≈ 0.006), Beggs & Brill over-predicts ΔP well above
+> a single-phase Darcy-Weisbach integration of the same line, and the gap is
+> entirely the two-phase friction multiplier `exp(S)`: removing it brings ΔP
+> within 4% of that analytic integration. `S` is monotonically *increasing*
 > in `y = λ_L / H_L²`, so *less* liquid gives a *larger* multiplier — the
 > opposite of the physical trend — up to a bounded maximum of `exp(S) = 3.19` at
 > `y = 52.1`. B&B is calibrated for λ_L down to roughly 0.01–0.02; below that,
@@ -419,12 +419,18 @@ for (double qgMSm3d : gasRates) {
 > fractions (total mass over total volume) rather than mass fractions. Locked by
 > `PipeBeggsAndBrillsPhasePathsTest`.
 
-> **Validation status vs OLGA 2025.1** (73.8 km × ID 0.355 m export line):
-> on a **single-phase** gas line Beggs & Brill is within **0.1–0.3%** of OLGA on
-> pressure drop and within **0.15 K** on arrival temperature — the friction and
-> energy paths are sound. The 30–60% over-prediction seen on the *two-phase*
-> version of the same line is therefore entirely the two-phase friction
-> multiplier, not the solver.
+> **Where the error sits.** On a **single-phase** gas line Beggs & Brill matches a
+> Darcy-Weisbach integration to a few tenths of a per cent on pressure drop and to
+> ~0.15 K on arrival temperature — the friction and energy paths are sound. The
+> over-prediction seen on the *two-phase* version of the same line is therefore
+> entirely the two-phase friction multiplier, not the solver.
+
+> **Comparisons against commercial transient multiphase simulators are not
+> published in this repository.** Their licence terms generally prohibit
+> publishing benchmark results and prohibit using the software to develop
+> competing software, so no NeqSim closure is tuned to such a tool and no measured
+> deviation against one is recorded here. Validate against experimental,
+> laboratory or field data, or against an analytic/first-principles check.
 
 > **`TwoFluidPipe` steady-state usage.** The refinement loop needs a few hundred
 > sweeps to settle the pressure profile against the updated section densities
@@ -438,8 +444,8 @@ for (double qgMSm3d : gasRates) {
 > `setSteadyStateMaxWallClockTime(...)` (default 300 s) before blaming the model
 > if `isSteadyStateWallClockLimited()` is true.
 
-> **Three defects that made this model disagree with OLGA — all fixed, but the
-> symptoms are generic and worth recognising elsewhere.**
+> **Three defects found by auditing the solve against its own governing equations
+> — all fixed, but the symptoms are generic and worth recognising elsewhere.**
 > (1) *A time integrator inside a fixed-point sweep.* The steady solve integrated
 > `LiquidAccumulationTracker` once per iteration with a nominal `dt`; that tracker
 > only ever adds liquid, ratchets its volume up to what the sections already hold,
@@ -448,10 +454,11 @@ for (double qgMSm3d : gasRates) {
 > (2) *A correlation overriding a solved momentum balance.* The minimum-slip
 > constraint applied the Beggs and Brill horizontal holdup correlation as a lower
 > bound in every regime. It is fitted to 1–1.5 inch air-water loops at
-> near-atmospheric pressure with λ_L ≥ 0.01; the benchmark line runs λ_L ≈ 0.008
+> near-atmospheric pressure with λ_L ≥ 0.01; the line runs λ_L ≈ 0.008
 > in a 14-inch pipe at 200 bara, and the floor was binding in EVERY section — so
-> the reported holdup was the correlation (≈3x OLGA), worth ≈+20% on ΔP through the
-> mixture density. Only the scale-free `lambdaL * minimumSlipFactor` bound remains.
+> the reported holdup was the correlation, not the solved momentum balance, worth
+> ≈+20% on ΔP through the mixture density. Only the scale-free
+> `lambdaL * minimumSlipFactor` bound remains.
 > (3) *Convergence declared without re-evaluating thermodynamics.* The flash runs
 > every `ssFlashInterval` sweeps but the "flash moved nothing" flag started false,
 > so a non-flash sweep read as settled. The solve could exit after ONE sweep on
@@ -459,21 +466,18 @@ for (double qgMSm3d : gasRates) {
 > If you see a steady profile with a section sitting exactly on a cap, or
 > `getSteadyStateIterationsUsed()` returning 1 on a long line, suspect these.
 
-> **Measured ΔP accuracy vs OLGA 2025.1** on that line at default settings, after
-> those fixes: **within 6% across a 3x rate range** — 10.73 vs 10.15 bar at
-> 4 MSm3/d, 35.49 vs 33.60 at 7, 79.58 vs 78.50 at 10, 138.70 vs 138.72 at 12.
-> Arrival temperature within 0.7–3.5 K. The rate exponent in ΔP ~ rate^n is
-> 2.14 / 2.26 / 3.06 against OLGA's 2.14 / 2.38 / 3.12, so the density feedback
-> along the line is reproduced, not just the level at one rate. 10 MW of DEH raises
-> arrival T by 17.4 K (OLGA 19.4) and ΔP by 15.0% (OLGA 12.3%). Grid-converged.
-> Terrain response is now solved, not tuned: the annular film balance carries
-> `tau_i = tau_wL + rhoL*g*sin(theta)*delta`, so holdup responds to inclination.
-> Max holdup at 4 MSm3/d is 0.022 vs OLGA 0.030, local response 1.12 vs 1.26, and
-> no section exceeds 3x OLGA. Still open: **the three-phase free-water case does
-> not converge** — 15 m3/hr of free water on the same line is wall-clock limited
-> after 4078 iterations at a 1200 s budget (88.6 bar vs OLGA 104.1). ΔP is
-> identical between a 300 s and a 1200 s budget, so the profile is stationary and
-> the criterion is stalling on the three-phase liquid split — but
+> **Behaviour after those fixes**, on that line at default settings: the rate
+> exponent in ΔP ~ rate^n rises from about 2.1 to about 3.1 across a 3x rate
+> range, i.e. the density feedback along the line is reproduced, not just the
+> level at one rate; 10 MW of DEH raises arrival T by ~17 K and ΔP by ~15%, so the
+> energy equation feeds the momentum balance. Grid-converged (160 vs 320 sections
+> within 0.4%). Terrain response is solved, not tuned: the annular film balance
+> carries `tau_i = tau_wL + rhoL*g*sin(theta)*delta`, so holdup responds to
+> inclination and scales with `sin(theta)`. Still open: **the three-phase
+> free-water case does not converge** — 15 m3/hr of free water on the same line is
+> wall-clock limited after 4078 iterations at a 1200 s budget. ΔP is identical
+> between a 300 s and a 1200 s budget, so the profile is stationary and the
+> criterion is stalling on the three-phase liquid split — but
 > `isSteadyStateConverged()` is false, so the number must not be quoted. ALWAYS
 > check it on a water-bearing line.
 
@@ -483,12 +487,12 @@ for (double qgMSm3d : gasRates) {
 > sweep would report success on a case with no physical solution. Check
 > `pipe.isSteadyStatePressureFloorLimited()` — when it is true,
 > `isSteadyStateConverged()` is withheld and the profile must be discarded, not
-> reported. `PipeBeggsAndBrills` throws `Outlet pressure is negative` and OLGA
-> aborts with `PRESSURE ABOVE TABLE VALUES` on the same condition.
+> reported. `PipeBeggsAndBrills` throws `Outlet pressure is negative` on the same
+> condition.
 
 > **`TwoFluidPipe` holdup at low rate is dominated by terrain trap sections.**
-> Mean holdup and ΔP agree with OLGA on the benchmarked line, but the MAXIMUM
-> holdup at 4 and 7 MSm3/d sits well above it (a single valley section), so do not
+> The MAXIMUM holdup at 4 and 7 MSm3/d sits well above the line mean (a single
+> valley section), so do not
 > quote local `TwoFluidPipe` holdup or valley inventory as a design number. The
 > three-phase bookkeeping is sound — gas/oil/water fractions sum to one and stay in
 > range at every node.
@@ -500,10 +504,10 @@ for (double qgMSm3d : gasRates) {
 > `setDirectElectricalHeatingPowerPerMeter(wattsPerMetre)`. In `TwoFluidPipe`
 > steady state each segment decays toward the balance temperature
 > `T_surface + q/(U·π·D)` (exact for a uniform source, cannot overshoot); it also
-> works in transient and with wall heat transfer switched off. OLGA has no
-> distributed-DEH keyword, so to benchmark against it use the identity
-> `−UπD(T−T_surf) + q ≡ −UπD(T − [T_surf + q/(UπD)])` and raise OLGA's ambient
-> temperature by `q/(UπD)` instead.
+> works in transient and with wall heat transfer switched off. A tool with no
+> distributed-heating input can represent the same source through the identity
+> `−UπD(T−T_surf) + q ≡ −UπD(T − [T_surf + q/(UπD)])`, i.e. by raising the ambient
+> temperature by `q/(UπD)`.
 
 > **`TwoFluidPipe` transient is NOT usable for liquid-rich lines — including
 > severe slugging.** With every boundary condition held constant it leaves its
@@ -524,20 +528,16 @@ for (double qgMSm3d : gasRates) {
 > term with a Bestion interfacial pressure correction. It removes the backflow
 > entirely (0 of 40 cells versus 9 of 40) and stops the unbounded packing, but it
 > is acoustic in scale and evaluated explicitly, so it needs `setCflNumber(0.05)`
-> — at the default 0.5 it diverges. At that CFL it settles ~26% below the OLGA
-> holdup, so it is not yet a validated replacement. Finishing it means folding
+> — at the default 0.5 it diverges. At that CFL the holdup it settles on is not
+> yet validated, so it is not a drop-in replacement. Finishing it means folding
 > the term into the IMEX implicit pressure solve.
 >
-> **Three-phase (gas/oil/water) steady state is fixed and benchmarked.** Against
-> OLGA 2025.1 on a matched case: outlet temperature −0.05%, mean liquid holdup
-> +7.1%, liquid inventory +7.1%, mean water holdup +10.0%. The oil/water slip
+> **Three-phase (gas/oil/water) steady state is fixed.** The oil/water slip
 > ratio uses `S = 1 + 1.75·max(0, 1 − (Fr/3)²)`, a stratified plateau that rolls
 > off to no slip once the liquid disperses above a liquid Froude number of about
-> 3; the previous form cut off at Fr = 2 and under-predicted water holdup by 42%.
-> One gap remains open: the pressure drop is over-predicted ~3× in this
-> liquid-rich regime (the gas-dominated line is within 0.5–3.4%). Build the OLGA
-> side with `OLGApropertyTableGeneratorWaterKeywordFormat` (the `WaterEven`
-> generator throws on `bubPLOG` and then on a NaN compressibility factor).
+> 3; the previous form cut off at Fr = 2 and under-predicted water holdup badly.
+> One gap remains open: the pressure drop is over-predicted in this liquid-rich
+> regime, far more than on a gas-dominated line.
 >
 > **Exporting NeqSim to OLGA — the fluid basis is two files, not one.** The
 > `.tab` PVT table fixes the phase behaviour; the **hydrate boundary is separate**
@@ -579,8 +579,7 @@ for (double qgMSm3d : gasRates) {
 > saturates at 1 and the whole line responds in a single step. Use it for transport
 > delay in a flowsheet; use `TwoFluidPipe` for line pack, shut-in, ramps and
 > blowdown (0.00 bar drift on the same null test, mass balance closing to the
-> digit, and within 0.13% of OLGA on a line-pack step), and `WaterHammerPipe` for
-> surge.
+> digit), and `WaterHammerPipe` for surge.
 
 ### Gray (1974) Correlation — Gas / Gas-Condensate Vertical Wells
 

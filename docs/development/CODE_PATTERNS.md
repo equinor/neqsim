@@ -378,7 +378,7 @@ double[] holdups = pipe.getLiquidHoldupProfile();
 double inventory = pipe.getLiquidInventory("m3");
 ```
 
-> `TwoFluidPipe` matches OLGA within 6% on pressure drop across a 3x rate range on the benchmarked
+> `TwoFluidPipe` reproduces the rate exponent in pressure drop across a 3x rate range on a long
 > gas-condensate line, but local liquid holdup at low rate is still dominated by terrain trap
 > sections. See [Known limitations](../wiki/two_fluid_model#known-limitations) before quoting valley
 > inventory quantitatively.
