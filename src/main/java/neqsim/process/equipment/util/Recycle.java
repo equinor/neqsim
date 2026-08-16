@@ -1316,8 +1316,6 @@ public class Recycle extends ProcessEquipmentBaseClass
     super.setMinimumFlow(minimumFlow);
   }
 
-
-
   /** {@inheritDoc} */
   @Override
   public String getTransientStateIdentity() {
@@ -1331,8 +1329,7 @@ public class Recycle extends ProcessEquipmentBaseClass
   @Override
   public String getTransientStateCoverageIssue() {
     if (getClass() != Recycle.class) {
-      return "recycle subclass " + getClass().getName()
-          + " must extend the snapshot for subclass-owned mutable state";
+      return "recycle subclass " + getClass().getName() + " must extend the snapshot for subclass-owned mutable state";
     }
     String baseIssue = getBaseTransientStateCoverageIssue();
     if (baseIssue != null) {
