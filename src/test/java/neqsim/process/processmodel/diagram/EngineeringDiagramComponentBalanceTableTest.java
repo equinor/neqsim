@@ -88,6 +88,9 @@ class EngineeringDiagramComponentBalanceTableTest {
     flows.add(new ComponentFlow("BAL-SIMPLE-01", fixture.boundaries.get(0).getStreamSemanticObjectId(), "water",
         "water", 0.0, "kg/hr", "COMPONENT_MASS", "project-component-register:test",
         "simulation-case:NORMAL-01", EvidenceState.PROPOSED));
+    flows.add(new ComponentFlow("BAL-SIMPLE-01", fixture.boundaries.get(1).getStreamSemanticObjectId(), "nitrogen",
+        "nitrogen", Double.NaN, "kg/s", "COMPONENT_MASS", "project-component-register:test",
+        "simulation-case:NORMAL-01", EvidenceState.PROPOSED));
 
     EngineeringDiagramComponentBalanceTable table = EngineeringDiagramComponentBalanceTable
         .fromBalanceTable(fixture.balanceTable, flows);
@@ -97,6 +100,7 @@ class EngineeringDiagramComponentBalanceTableTest {
     assertTrue(hasDiagnostic(table, "COMPONENT_FLOW_UNKNOWN_BOUNDARY"));
     assertTrue(hasDiagnostic(table, "COMPONENT_FLOW_VALUE_INVALID"));
     assertTrue(hasDiagnostic(table, "COMPONENT_FLOW_MISSING"));
+    assertTrue(table.toJson().contains("\"nonFiniteResult\": \"NaN\""));
   }
 
   @Test
