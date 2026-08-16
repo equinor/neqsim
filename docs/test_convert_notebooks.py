@@ -61,6 +61,28 @@ class ConvertNotebooksTest(unittest.TestCase):
             self.assertNotIn(f"# {curated_title}", generated_content)
             self.assertEqual(generated_content.count("# Notebook title"), 1)
 
+    def test_converter_can_strip_notebook_h1_from_generated_page(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            examples_dir = Path(temp_dir)
+            notebook_path = examples_dir / "Curated.ipynb"
+            markdown_path = examples_dir / "Curated.md"
+            write_notebook(
+                notebook_path,
+                "Notebook title",
+                {
+                    "title": "Curated page title",
+                    "show_generated_title": False,
+                    "strip_first_h1": True,
+                },
+            )
+
+            convert_all_notebooks(examples_dir)
+
+            generated_content = markdown_path.read_text(encoding="utf-8")
+            self.assertIn('title: "Curated page title"', generated_content)
+            self.assertNotIn("# Curated page title", generated_content)
+            self.assertNotIn("# Notebook title", generated_content)
+
     def test_converter_preserves_legacy_mercury_guide_contract(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             examples_dir = Path(temp_dir)
@@ -135,6 +157,7 @@ class ConvertNotebooksTest(unittest.TestCase):
             self.assertIn('title: "Generated"', generated_content)
             self.assertIn("# Generated", generated_content)
             self.assertIn("# Current notebook title", generated_content)
+            self.assertIn("open in Google Colab", generated_content)
 
     def test_converter_ignores_non_mapping_documentation_metadata(self):
         with tempfile.TemporaryDirectory() as temp_dir:

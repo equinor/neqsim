@@ -1,6 +1,7 @@
 package neqsim.process.equipment.distillation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -123,6 +124,86 @@ public class DistillationColumnModeTest {
 
     assertThrows(IllegalStateException.class, () -> column.getCondenserMode());
     assertThrows(IllegalStateException.class, () -> column.getReboilerMode());
+  }
+
+  /**
+   * Preserve ratio control across partial/total mode selection and clear it without discarding an unrelated top spec.
+   */
+  @Test
+  public void condenserRatioControlHasExplicitLifecycle() {
+    DistillationColumn column = createTerminalControlColumn("ratio lifecycle column");
+
+    column.setCondenserMode(DistillationColumn.CondenserMode.TOTAL);
+    assertEquals(DistillationColumn.CondenserMode.TOTAL, column.getCondenserMode());
+    assertTrue(column.getCondenser().isRefluxSet());
+    assertEquals(1.8, column.getCondenser().getRefluxRatio(), 0.0);
+
+    column.setTopProductPurity("propane", 0.70);
+    ColumnSpecification topPurity = column.getTopSpecification();
+    column.clearCondenserRefluxRatio();
+
+    assertFalse(column.getCondenser().isRefluxSet());
+    assertSame(topPurity, column.getTopSpecification());
+  }
+
+  /**
+   * Reject an incomplete total-condenser declaration before a previously accepted tray state can be changed.
+   */
+  @Test
+  public void totalCondenserWithoutRatioFailsBeforeMutatingAcceptedProducts() {
+    DistillationColumn column = createTerminalControlColumn("total preflight column");
+    column.run(UUID.randomUUID());
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+
+    double gasFlow = column.getGasOutStream().getFlowRate("mol/hr");
+    double liquidFlow = column.getLiquidOutStream().getFlowRate("mol/hr");
+    double gasTemperature = column.getGasOutStream().getTemperature();
+    double liquidTemperature = column.getLiquidOutStream().getTemperature();
+
+    column.clearCondenserRefluxRatio();
+    column.setCondenserMode(DistillationColumn.CondenserMode.TOTAL);
+    ValidationResult validation = column.validateSpecifications();
+
+    assertFalse(validation.isValid());
+    assertTrue(
+        validation.getErrors().stream().anyMatch(error -> error.getCategory().equals("specification.terminalMode")));
+    IllegalStateException exception = assertThrows(IllegalStateException.class, () -> column.run(UUID.randomUUID()));
+    assertTrue(exception.getMessage().contains("requires an explicit reflux ratio"));
+    assertEquals(gasFlow, column.getGasOutStream().getFlowRate("mol/hr"), 0.0);
+    assertEquals(liquidFlow, column.getLiquidOutStream().getFlowRate("mol/hr"), 0.0);
+    assertEquals(gasTemperature, column.getGasOutStream().getTemperature(), 0.0);
+    assertEquals(liquidTemperature, column.getLiquidOutStream().getTemperature(), 0.0);
+  }
+
+  /**
+   * Reject outer product specifications whose endpoint temperature handle is disabled by active ratio control.
+   */
+  @Test
+  public void ratioControlledEndpointsRejectAdjustableProductSpecifications() {
+    DistillationColumn topControlled = createTerminalControlColumn("top ownership column");
+    topControlled.setTopProductPurity("propane", 0.70);
+
+    ValidationResult topValidation = topControlled.validateSpecifications();
+    assertFalse(topValidation.isValid());
+    assertTrue(topValidation.getErrors().stream()
+        .anyMatch(error -> error.getCategory().equals("specification.controlOwnership")));
+    assertThrows(IllegalStateException.class, () -> topControlled.run(UUID.randomUUID()));
+
+    topControlled.clearCondenserRefluxRatio();
+    assertTrue(topControlled.validateSpecifications().isValid());
+
+    DistillationColumn bottomControlled = createTerminalControlColumn("bottom ownership column");
+    bottomControlled.setBottomProductPurity("n-pentane", 0.70);
+    bottomControlled.setReboilerVaporBoilupRatio(1.2);
+
+    ValidationResult bottomValidation = bottomControlled.validateSpecifications();
+    assertFalse(bottomValidation.isValid());
+    assertTrue(bottomValidation.getErrors().stream()
+        .anyMatch(error -> error.getCategory().equals("specification.controlOwnership")));
+    assertThrows(IllegalStateException.class, () -> bottomControlled.run(UUID.randomUUID()));
+
+    bottomControlled.setReboilerMode(DistillationColumn.ReboilerMode.EQUILIBRIUM);
+    assertTrue(bottomControlled.validateSpecifications().isValid());
   }
 
   /**
@@ -298,6 +379,38 @@ public class DistillationColumnModeTest {
     column.addLiquidPumparound("PA-multistage", 3, 5, 0.02, temperatureDrop);
     column.setMaxPumparoundIterations(12);
     column.setPumparoundTolerance(1.0e-4);
+    return column;
+  }
+
+  /**
+   * Create a realistic three-component fractionator for terminal-control tests.
+   *
+   * @param name column name
+   * @return configured, unrun column with partial-condenser ratio control
+   */
+  private DistillationColumn createTerminalControlColumn(String name) {
+    SystemSrkEos fluid = new SystemSrkEos(273.15 + 45.0, 10.0);
+    fluid.addComponent("propane", 0.35);
+    fluid.addComponent("n-butane", 0.45);
+    fluid.addComponent("n-pentane", 0.20);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream(name + " feed", fluid);
+    feed.setFlowRate(250.0, "kg/hr");
+    feed.run();
+
+    DistillationColumn column = new DistillationColumn(name, 6, true, true);
+    column.addFeedStream(feed, 3);
+    column.setTopPressure(10.0);
+    column.setBottomPressure(10.2);
+    column.getCondenser().setOutTemperature(273.15 + 30.0);
+    column.getReboiler().setOutTemperature(273.15 + 90.0);
+    column.setCondenserRefluxRatio(1.8);
+    column.setSolverType(DistillationColumn.SolverType.AUTO);
+    column.setMaxNumberOfIterations(80);
+    column.setTemperatureTolerance(1.0e-1);
+    column.setMassBalanceTolerance(2.0e-1);
+    column.setEnthalpyBalanceTolerance(2.0e-1);
     return column;
   }
 

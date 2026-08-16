@@ -656,7 +656,7 @@ public class DistillationSolverBenchmarkTest {
     feed.setFlowRate(100.0, "kg/hr");
     feed.run();
 
-    DistillationColumn column = new DistillationColumn("mesh_spec_column", 5, true, false);
+    DistillationColumn column = new DistillationColumn("mesh_spec_column", 5, true, true);
     column.addFeedStream(feed, 5);
     column.getReboiler().setOutTemperature(105.0 + 273.15);
     applyDeethanizerTemperatureProfile(column, 5);

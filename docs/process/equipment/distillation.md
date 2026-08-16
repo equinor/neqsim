@@ -180,14 +180,37 @@ stages by default unless the user has configured another stage count.
 
 ```java
 column.setCondenserMode(DistillationColumn.CondenserMode.PARTIAL);
+
 column.setCondenserMode(DistillationColumn.CondenserMode.TOTAL);
+column.setCondenserRefluxRatio(1.5); // required split equation for total condensation
+
 column.setCondenserLiquidReflux(500.0, "kg/hr");
 DistillationColumn.CondenserMode condenserMode = column.getCondenserMode();
+column.clearCondenserRefluxRatio();
 
 column.setReboilerMode(DistillationColumn.ReboilerMode.EQUILIBRIUM);
 column.setReboilerVaporBoilupRatio(1.8);
 DistillationColumn.ReboilerMode reboilerMode = column.getReboilerMode();
 ```
+
+A total condenser requires an explicit reflux ratio so that the fully condensed liquid is divided
+between reflux and distillate. Mode selection preserves an already configured ratio, so the ratio
+and total-mode calls can be made in either order. An incomplete total-condenser declaration is an
+error in `validateSpecifications()` and fails the run preflight before feed assignment or accepted
+tray/product state can change. A failed total-condenser bubble-point calculation is also reported as
+an exception instead of continuing with a stale thermodynamic state.
+
+Ratio control and an adjustable endpoint product specification cannot be active at the same column
+end. The ratio flash does not use the endpoint temperature that the purity, recovery, or product-flow
+outer loop manipulates, so accepting both would create an ineffective control equation. Call
+`clearCondenserRefluxRatio()` before using an adjustable top specification, or select
+`ReboilerMode.EQUILIBRIUM` before using an adjustable bottom specification. Clearing a ratio
+preserves unrelated product specifications. Specifications on a column end without the matching
+condenser or reboiler are validation errors and fail during preflight.
+
+`getConvergenceDiagnostics()` reports the configured condenser and reboiler modes plus whether
+condenser ratio control is active. This makes retained/restarted models auditable before nearby-point
+warm solves.
 
 `setReboilerVaporBoilupRatio(ratio)` configures the direct reboiler mode.
 `setReboilerBoilupRatio(ratio)` also records the target as the bottom `REFLUX_RATIO`

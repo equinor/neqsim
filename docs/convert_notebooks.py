@@ -124,6 +124,10 @@ def notebook_to_markdown(notebook_path):
         'colab_link_text',
         'open in Google Colab',
     )
+    strip_first_h1 = documentation_metadata.get(
+        'strip_first_h1',
+        documentation_metadata.get('strip_notebook_title', False),
+    )
     title_yaml = json.dumps(str(title), ensure_ascii=False)
     description_yaml = json.dumps(str(description), ensure_ascii=False)
     encoded_notebook_filename = quote(
@@ -150,19 +154,24 @@ nav_order: 1
 """
 
     markdown_content = []
-    strip_notebook_title = documentation_metadata.get(
-        'strip_notebook_title',
-        False,
-    )
+    first_markdown_cell_seen = False
 
     for cell in nb.get('cells', []):
         cell_type = cell.get('cell_type', '')
         source = ''.join(cell.get('source', []))
 
         if cell_type == 'markdown':
-            if strip_notebook_title:
-                source = re.sub(r'\A# [^\n]+(?:\n+|\Z)', '', source, count=1)
-                strip_notebook_title = False
+            if not first_markdown_cell_seen:
+                first_markdown_cell_seen = True
+                if strip_first_h1:
+                    # The Jekyll page title is supplied by front matter. Keep the
+                    # notebook's H1 for Colab while avoiding a duplicate page H1.
+                    source = re.sub(
+                        r'\A# [^\r\n]*(?:\r?\n){0,2}',
+                        '',
+                        source,
+                        count=1,
+                    )
             # Add markdown content directly
             markdown_content.append(source)
             markdown_content.append('\n\n')
