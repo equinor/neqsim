@@ -3,7 +3,7 @@ name: Validate TPflash repair candidate
 on:
   push:
     paths:
-      - '.github/tpflash-repair.trigger'
+      - .github/tpflash-repair.trigger
 
 permissions:
   contents: write
@@ -22,17 +22,17 @@ jobs:
           java-version: '21'
           cache: maven
       - name: Apply candidate repair
-        shell: python
         run: |
+          python - <<'PY'
           from pathlib import Path
 
           tp = Path('src/main/java/neqsim/thermodynamicoperations/flashops/TPmultiflash.java')
           text = tp.read_text()
-          old = '''      if (tm[j] < -1e-8) {
+          old = """      if (tm[j] < -1e-8) {
         break;
       }
-'''
-          new = '''      double tpdAcceptanceTolerance = Math.max(1.0e-8, Math.abs(err));
+"""
+          new = """      double tpdAcceptanceTolerance = Math.max(1.0e-8, Math.abs(err));
       if (tm[j] < -tpdAcceptanceTolerance) {
         break;
       }
@@ -41,19 +41,19 @@ jobs:
         // significant enough to change the established phase topology.
         tm[j] = 10.0;
       }
-'''
+"""
           assert text.count(old) == 1, text.count(old)
           tp.write_text(text.replace(old, new))
 
           st = Path('src/main/java/neqsim/thermo/system/SystemThermo.java')
           text = st.read_text()
-          old = '''    double tolerance = 1.0e-12 * Math.max(1.0, inventory);
+          old = """    double tolerance = 1.0e-12 * Math.max(1.0, inventory);
     if (!Double.isFinite(totalNumberOfMoles) || Math.abs(totalNumberOfMoles - inventory) > tolerance) {
       setTotalNumberOfMolesRaw(inventory);
       isInitialized = false;
     }
-'''
-          new = '''    double tolerance = 1.0e-12 * Math.max(1.0, inventory);
+"""
+          new = """    double tolerance = 1.0e-12 * Math.max(1.0, inventory);
     double mismatch = Math.abs(totalNumberOfMoles - inventory);
     boolean clearlyStaleUpstreamTotal = !Double.isFinite(totalNumberOfMoles)
         || (totalNumberOfMoles > inventory && totalNumberOfMoles / inventory > 100.0);
@@ -61,7 +61,7 @@ jobs:
       setTotalNumberOfMolesRaw(inventory);
       isInitialized = false;
     }
-'''
+"""
           assert text.count(old) == 1, text.count(old)
           st.write_text(text.replace(old, new))
 
@@ -71,13 +71,11 @@ jobs:
           new = '      assertEquals(1.0, compositionSum, 1.0e-12);\n'
           assert text.count(old) == 1, text.count(old)
           scrub.write_text(text.replace(old, new))
+          PY
       - name: Format
         run: mvn -B -ntp spotless:apply
       - name: Run focused regressions
-        run: >-
-          mvn -B -ntp -Djacoco.skip=true
-          -Dtest=TPFlashTest#testRun5,TPflashIncipientPhaseStabilityTest#subResidualTpdDoesNotOverrideExistingUmrPruSolution,EclipseFluidReadWriteTest#testFluidWater3,SystemThermoSerializationInventoryTest
-          test
+        run: mvn -B -ntp -Djacoco.skip=true '-Dtest=TPFlashTest#testRun5,TPflashIncipientPhaseStabilityTest#subResidualTpdDoesNotOverrideExistingUmrPruSolution,EclipseFluidReadWriteTest#testFluidWater3,SystemThermoSerializationInventoryTest' test
       - name: Run scrubber regression
         run: mvn -B -ntp -Djacoco.skip=true -Dtest=HydrocarbonScrubberSaturationPressureStabilityTest test
       - name: Commit validated repair
