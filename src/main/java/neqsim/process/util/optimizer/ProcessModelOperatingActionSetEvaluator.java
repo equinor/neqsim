@@ -662,8 +662,10 @@ public final class ProcessModelOperatingActionSetEvaluator {
     private final String name;
     /** Constraint type. */
     private final ConstraintDefinition.Type type;
-    /** Constraint unit. */
+    /** Unit of the registered value and margin. */
     private final String unit;
+    /** Separate physical installed-capacity unit, or null for a general constraint. */
+    private final String physicalUnit;
     /** Whether violation makes the point infeasible. */
     private final boolean hard;
     /** Soft-penalty weight metadata. */
@@ -693,6 +695,7 @@ public final class ProcessModelOperatingActionSetEvaluator {
       this.name = definition.getName();
       this.type = definition.getType();
       this.unit = definition.getUnit();
+      this.physicalUnit = definition.getCapacityPhysicalUnit();
       this.hard = definition.isHard();
       this.penaltyWeight = definition.getPenaltyWeight();
       this.lowerBound = definition.getLowerBound();
@@ -724,6 +727,15 @@ public final class ProcessModelOperatingActionSetEvaluator {
     /** @return constraint and margin unit, possibly null when not declared */
     public String getUnit() {
       return unit;
+    }
+
+    /**
+     * Returns the physical engineering unit for installed-capacity evidence.
+     *
+     * @return physical unit, or null for a general constraint
+     */
+    public String getPhysicalUnit() {
+      return physicalUnit;
     }
 
     /** @return true when violation makes the evaluator point infeasible */
