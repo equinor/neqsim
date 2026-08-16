@@ -1,5 +1,7 @@
 package neqsim.process.controllerdevice;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -70,7 +72,7 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
   private double[] controlWeightsVector = new double[0];
   private double[] moveWeightsVector = new double[0];
   private int primaryControlIndex = 0;
-  private final List<QualityConstraint> qualityConstraints = new ArrayList<>();
+  private List<QualityConstraint> qualityConstraints = new ArrayList<>();
   private Map<String, Double> lastFeedComposition = new LinkedHashMap<>();
   private Map<String, Double> pendingFeedComposition = new LinkedHashMap<>();
   private double lastFeedRate = 0.0;
@@ -572,6 +574,20 @@ public class ModelPredictiveController extends NamedBaseClass implements Control
    */
   public ModelPredictiveController(String name) {
     super(name);
+  }
+
+  /**
+   * Restores fields introduced after the original MPC serialization contract.
+   *
+   * @param input serialized object input
+   * @throws IOException if the stream cannot be read
+   * @throws ClassNotFoundException if a serialized field type is unavailable
+   */
+  private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+    input.defaultReadObject();
+    if (qualityConstraints == null) {
+      qualityConstraints = new ArrayList<>();
+    }
   }
 
   /**
