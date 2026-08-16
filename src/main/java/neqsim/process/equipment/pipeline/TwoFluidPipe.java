@@ -2,6 +2,7 @@ package neqsim.process.equipment.pipeline;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -1271,7 +1272,7 @@ public class TwoFluidPipe extends Pipeline {
     // inlet-to-outlet one section at a time, using upstream gradient estimates.
     {
       for (TwoFluidSection sec : sections) {
-        sec.setFlowRegime(flowRegimeDetector.detectFlowRegime(sec));
+        flowRegimeDetector.classify(sec);
       }
 
       // Update inlet section holdup
@@ -1308,7 +1309,7 @@ public class TwoFluidPipe extends Pipeline {
           updateLiquidPhaseSplit(sec, prev, hi[0], area);
         }
 
-        sec.setFlowRegime(flowRegimeDetector.detectFlowRegime(sec));
+        flowRegimeDetector.classify(sec);
         sec.updateDerivedQuantities();
         sec.updateStratifiedGeometry();
       }
@@ -1341,7 +1342,7 @@ public class TwoFluidPipe extends Pipeline {
 
       // Update flow regimes
       for (TwoFluidSection sec : sections) {
-        sec.setFlowRegime(flowRegimeDetector.detectFlowRegime(sec));
+        flowRegimeDetector.classify(sec);
       }
 
       // Update inlet section (i=0) holdup using same momentum balance as other sections
@@ -2518,65 +2519,17 @@ public class TwoFluidPipe extends Pipeline {
       // ========== FULL CLOSURE SET ==========
       // Use flow-regime-specific literature correlations.
 
-      if (regime == FlowRegime.ANNULAR) {
-        // Annular-film closure
-        if (enableAnnularFilmModel) {
-          double[] annularResult = calculateAnnularHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter,
-              inclination);
-          alphaL = annularResult[0];
-        } else {
-          // Annular flow with slip model
-          // For annular flow, gas flows faster than liquid (S = vG/vL > 1)
-          // Holdup formula: αL = λL / (λL + S*(1-λL))
-          // Or equivalently: αL = λL / (S - (S-1)*λL)
-          //
-          // Typical slip ratios for annular flow: S = 1.5 to 4.0
-          // At high gas velocities, liquid film is thin and moves slower
-          double vsgRef = 8.0;
-          double velocityRatio = Math.max(0.5, Math.min(4.0, vsG / Math.max(vsgRef, 0.1)));
-
-          // Slip ratio increases with gas velocity (liquid film slows down)
-          double baseSlipRatio = 1.5; // Minimum slip ratio for annular
-          double maxSlipRatio = 4.0; // Maximum slip ratio
-          double slipRatio = baseSlipRatio
-              + (maxSlipRatio - baseSlipRatio) * Math.min(1.0, velocityRatio * velocityRatio / 4.0);
-
-          // Calculate holdup using slip model
-          // αL = λL / (λL + S*(1-λL)) = λL / (S - (S-1)*λL)
-          double denominator = slipRatio - (slipRatio - 1.0) * lambdaL;
-          if (denominator > 0.1) {
-            alphaL = lambdaL / denominator;
-          } else {
-            // Fallback for very high liquid loading
-            alphaL = lambdaL;
-          }
-
-          // A fixed wetting film is a user-selected physical model, not a universal
-          // numerical phase floor. Apply it only in explicit fixed-floor mode.
-          if (usesExplicitPhysicalFilmFloor()) {
-            double filmHoldup = 4.0 * minimumFilmThickness / diameter;
-            alphaL = Math.max(filmHoldup, alphaL);
-          }
-        }
-
-      } else if (regime == FlowRegime.SLUG || regime == FlowRegime.CHURN) {
-        // Slug unit-cell closure
-        alphaL = calculateSlugHoldupOLGA(vsG, vsL, rhoG, rhoL, muL, sigma, diameter, inclination);
-
-      } else if (regime == FlowRegime.STRATIFIED_SMOOTH || regime == FlowRegime.STRATIFIED_WAVY) {
-        // Stratified-flow momentum balance
-        alphaL = calculateStratifiedHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter, inclination);
-
-      } else if (regime == FlowRegime.DISPERSED_BUBBLE || regime == FlowRegime.BUBBLE) {
-        // Dispersed bubble: near-homogeneous flow
-        // αL ≈ λL with small correction for bubble rise
-        double vSlip = 1.53 * Math.pow(g * sigma * (rhoL - rhoG) / (rhoL * rhoL), 0.25);
-        alphaL = vsL / (vsL + vsG + vSlip * (1.0 - lambdaL));
-        alphaL = Math.max(lambdaL * 0.9, alphaL);
-
+      Map<FlowRegime, Double> regimeWeights = sec.getRegimeWeights();
+      if (regimeWeights == null) {
+        alphaL = holdupForRegime(regime, vsG, vsL, rhoG, rhoL, muG, muL, sigma, inclination, lambdaL);
       } else {
-        // Default to stratified momentum balance
-        alphaL = calculateStratifiedHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter, inclination);
+        // On a transition the section is partly each regime; blending the closures removes the
+        // step change a hard switch would impose on hold-up.
+        alphaL = 0.0;
+        for (Map.Entry<FlowRegime, Double> entry : regimeWeights.entrySet()) {
+          alphaL += entry.getValue()
+              * holdupForRegime(entry.getKey(), vsG, vsL, rhoG, rhoL, muG, muL, sigma, inclination, lambdaL);
+        }
       }
 
       // Apply terrain accumulation enhancement
@@ -2644,18 +2597,20 @@ public class TwoFluidPipe extends Pipeline {
     }
     alphaL = Math.max(0.0, Math.min(1.0, alphaL));
 
-    // Valley/peak terrain adjustments (existing logic)
+    // Valley/peak terrain adjustments. The strength ramps with how definite the slope reversal is:
+    // a hard threshold here steps the hold-up of a section as terrain drifts past it, which shows up
+    // as a pressure drop for an undulation that has zero net elevation change.
     if (prev != null) {
       double inclinationChange = inclination - prev.getInclination();
-      boolean isValley = prev.getInclination() < -0.05 && inclination > 0.05;
-      boolean isPeak = prev.getInclination() > 0.05 && inclination < -0.05;
+      double magnitude = 0.3 * Math.min(Math.abs(inclinationChange), 0.2);
+      double valleyStrength = slopeStrength(-prev.getInclination()) * slopeStrength(inclination);
+      double peakStrength = slopeStrength(prev.getInclination()) * slopeStrength(-inclination);
+      double factor = 1.0 + magnitude * (valleyStrength - peakStrength);
 
-      if (isValley) {
-        double valleyFactor = 1.0 + 0.3 * Math.min(Math.abs(inclinationChange), 0.2);
-        alphaL = Math.min(0.8, alphaL * valleyFactor); // Allow up to 80% in valleys
-      } else if (isPeak) {
-        double peakFactor = 1.0 - 0.3 * Math.min(Math.abs(inclinationChange), 0.2);
-        alphaL = Math.max(0.0, alphaL * peakFactor);
+      if (factor > 1.0) {
+        alphaL = Math.min(0.8, alphaL * factor); // Allow up to 80% in valleys
+      } else {
+        alphaL = Math.max(0.0, alphaL * factor);
       }
     }
 
@@ -2667,6 +2622,94 @@ public class TwoFluidPipe extends Pipeline {
     alphaL = Math.max(0.0, Math.min(1.0, alphaL));
 
     return new double[] { alphaL, 1.0 - alphaL };
+  }
+
+  /**
+   * How definitely a section slopes upward, ramped over the near-horizontal band.
+   *
+   * <p>
+   * Zero at or below horizontal, one once the slope is clearly upward. Used so a slope reversal enters and leaves the
+   * valley and peak corrections continuously rather than at a threshold.
+   * </p>
+   *
+   * @param inclination section inclination, in radians
+   * @return a weight between zero and one
+   */
+  private static double slopeStrength(double inclination) {
+    double lower = 0.02;
+    double upper = 0.08;
+    if (inclination <= lower) {
+      return 0.0;
+    }
+    if (inclination >= upper) {
+      return 1.0;
+    }
+    return (inclination - lower) / (upper - lower);
+  }
+
+  /**
+   * Liquid holdup from the closure belonging to a single flow regime.
+   *
+   * <p>
+   * Split out of the holdup calculation so a section sitting on a transition can evaluate more than one closure and
+   * blend the results, rather than switching between them at a point.
+   * </p>
+   *
+   * @param regime the regime whose closure is evaluated
+   * @param vsG superficial gas velocity, in m/s
+   * @param vsL superficial liquid velocity, in m/s
+   * @param rhoG gas density, in kg/m3
+   * @param rhoL liquid density, in kg/m3
+   * @param muG gas viscosity, in Pa.s
+   * @param muL liquid viscosity, in Pa.s
+   * @param sigma surface tension, in N/m
+   * @param inclination section inclination, in radians
+   * @param lambdaL no-slip liquid fraction
+   * @return liquid holdup for that regime
+   */
+  private double holdupForRegime(FlowRegime regime, double vsG, double vsL, double rhoG, double rhoL, double muG,
+      double muL, double sigma, double inclination, double lambdaL) {
+    double g = 9.81;
+
+    if (regime == FlowRegime.ANNULAR) {
+      if (enableAnnularFilmModel) {
+        double[] annularResult = calculateAnnularHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter,
+            inclination);
+        return annularResult[0];
+      }
+
+      // Annular slip model: the gas core outruns the film, so S = vG/vL is between about 1.5 and 4
+      // and holdup follows alphaL = lambdaL / (S - (S-1)*lambdaL).
+      double vsgRef = 8.0;
+      double velocityRatio = Math.max(0.5, Math.min(4.0, vsG / Math.max(vsgRef, 0.1)));
+      double baseSlipRatio = 1.5;
+      double maxSlipRatio = 4.0;
+      double slipRatio = baseSlipRatio
+          + (maxSlipRatio - baseSlipRatio) * Math.min(1.0, velocityRatio * velocityRatio / 4.0);
+
+      double denominator = slipRatio - (slipRatio - 1.0) * lambdaL;
+      double alphaL = denominator > 0.1 ? lambdaL / denominator : lambdaL;
+
+      // A fixed wetting film is a user-selected physical model, not a universal
+      // numerical phase floor. Apply it only in explicit fixed-floor mode.
+      if (usesExplicitPhysicalFilmFloor()) {
+        double filmHoldup = 4.0 * minimumFilmThickness / diameter;
+        alphaL = Math.max(filmHoldup, alphaL);
+      }
+      return alphaL;
+    }
+
+    if (regime == FlowRegime.SLUG || regime == FlowRegime.CHURN) {
+      return calculateSlugHoldupOLGA(vsG, vsL, rhoG, rhoL, muL, sigma, diameter, inclination);
+    }
+
+    if (regime == FlowRegime.DISPERSED_BUBBLE || regime == FlowRegime.BUBBLE) {
+      double vSlip = 1.53 * Math.pow(g * sigma * (rhoL - rhoG) / (rhoL * rhoL), 0.25);
+      double alphaL = vsL / (vsL + vsG + vSlip * (1.0 - lambdaL));
+      return Math.max(lambdaL * 0.9, alphaL);
+    }
+
+    return calculateStratifiedHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter, inclination);
   }
 
   /**

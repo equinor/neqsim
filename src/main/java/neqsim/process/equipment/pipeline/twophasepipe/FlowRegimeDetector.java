@@ -1,6 +1,8 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
 import java.io.Serializable;
+import java.util.EnumMap;
+import java.util.Map;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
 
 /**
@@ -51,6 +53,18 @@ public class FlowRegimeDetector implements Serializable {
   /** Select Taitel-Dukler transition B instead of the vertical droplet criterion in horizontal flow. */
   private boolean useEquilibriumLevelAnnularTransition = false;
 
+  /** Blend closures across horizontal regime transitions instead of switching at a point. */
+  private boolean blendRegimeTransitions = true;
+
+  /** Half-width of the Kelvin-Helmholtz blending band, as a fraction of the critical gas velocity. */
+  private static final double KH_TRANSITION_BAND = 0.15;
+
+  /** Equilibrium liquid level at which the bore bridges, as a fraction of the diameter. */
+  private static final double LEVEL_TRANSITION_CENTRE = 0.5;
+
+  /** Half-width of the equilibrium-level blending band, as a fraction of the diameter. */
+  private static final double LEVEL_TRANSITION_BAND = 0.08;
+
   /**
    * Whether the horizontal annular transition uses the equilibrium liquid level.
    *
@@ -91,6 +105,30 @@ public class FlowRegimeDetector implements Serializable {
    */
   public void setUseEquilibriumLevelAnnularTransition(boolean enable) {
     this.useEquilibriumLevelAnnularTransition = enable;
+  }
+
+  /**
+   * Whether closures are blended across horizontal regime transitions.
+   *
+   * @return true when transition blending is active
+   */
+  public boolean isBlendRegimeTransitions() {
+    return blendRegimeTransitions;
+  }
+
+  /**
+   * Selects blending of the closures across horizontal regime transitions.
+   *
+   * <p>
+   * Switching closure at a point steps hold-up and friction as an operating point drifts across a boundary, which shows
+   * up as a jump in pressure drop for a smooth change in terrain or rate. Blending ramps the weights over a band
+   * instead. Disable only to reproduce the hard-switching behaviour.
+   * </p>
+   *
+   * @param enable true to blend across transitions
+   */
+  public void setBlendRegimeTransitions(boolean enable) {
+    this.blendRegimeTransitions = enable;
   }
 
   /** Drift flux model for slip calculations. */
@@ -199,6 +237,100 @@ public class FlowRegimeDetector implements Serializable {
     } else {
       return detectHorizontalFlowRegime(U_SL, U_SG, D, theta, rho_L, rho_G, mu_L, sigma);
     }
+  }
+
+  /**
+   * Classifies a section, recording both the dominant regime and the transition blend.
+   *
+   * <p>
+   * A section sitting on a regime boundary is not wholly one regime or the other. Hard switching there steps hold-up
+   * and friction discontinuously as an operating point drifts across the boundary. This sets the regime and, where the
+   * section is on a horizontal transition, the fractional weights the closures should be blended with.
+   * </p>
+   *
+   * @param section section to classify; its regime and blend weights are updated
+   * @return the dominant flow regime
+   */
+  public FlowRegime classify(PipeSection section) {
+    FlowRegime regime = detectFlowRegime(section);
+    section.setFlowRegime(regime);
+
+    Map<FlowRegime, Double> weights = horizontalRegimeWeights(section, regime);
+    if (weights != null) {
+      section.setRegimeWeights(weights);
+    }
+    return section.getFlowRegime();
+  }
+
+  /**
+   * Fractional regime weights across the horizontal stratified, annular and slug transitions.
+   *
+   * <p>
+   * The stratified share follows the Kelvin-Helmholtz margin and the split of the remainder between annular and slug
+   * follows the equilibrium liquid level, both ramped over a band rather than switched at a point. Returns null when
+   * blending does not apply, in which case the single detected regime stands.
+   * </p>
+   *
+   * @param section section being classified
+   * @param regime the regime already detected for the section
+   * @return weights per regime, or null when a single regime applies
+   */
+  private Map<FlowRegime, Double> horizontalRegimeWeights(PipeSection section, FlowRegime regime) {
+    if (!blendRegimeTransitions || !useEquilibriumLevelAnnularTransition) {
+      return null;
+    }
+    if (detectionMethod != DetectionMethod.MECHANISTIC) {
+      return null;
+    }
+    if (regime == FlowRegime.SINGLE_PHASE_GAS || regime == FlowRegime.SINGLE_PHASE_LIQUID
+        || regime == FlowRegime.DISPERSED_BUBBLE || regime == FlowRegime.BUBBLE) {
+      return null;
+    }
+
+    double theta = section.getInclination();
+    if (Math.abs(theta) > Math.toRadians(10)) {
+      return null;
+    }
+
+    double U_SL = section.getSuperficialLiquidVelocity();
+    double U_SG = section.getSuperficialGasVelocity();
+    double D = section.getDiameter();
+    double rho_L = section.getLiquidDensity();
+    double rho_G = section.getGasDensity();
+    double mu_L = section.getLiquidViscosity();
+
+    double h_L = estimateStratifiedLiquidLevel(U_SL, U_SG, D, rho_L, rho_G, mu_L, theta);
+    double margin = kelvinHelmholtzMargin(U_SG, h_L, D, rho_L, rho_G);
+    if (margin <= 0.0) {
+      return null;
+    }
+
+    double unstableShare = rampWeight(margin, 1.0, KH_TRANSITION_BAND);
+    double slugShare = rampWeight(h_L / D, LEVEL_TRANSITION_CENTRE, LEVEL_TRANSITION_BAND);
+    FlowRegime stratified = isWavyTransition(U_SG, h_L, D, rho_L, rho_G, mu_L) ? FlowRegime.STRATIFIED_WAVY
+        : FlowRegime.STRATIFIED_SMOOTH;
+
+    Map<FlowRegime, Double> weights = new EnumMap<FlowRegime, Double>(FlowRegime.class);
+    weights.put(stratified, 1.0 - unstableShare);
+    weights.put(FlowRegime.ANNULAR, unstableShare * (1.0 - slugShare));
+    weights.put(FlowRegime.SLUG, unstableShare * slugShare);
+    return weights;
+  }
+
+  /**
+   * Linear ramp from zero to one across a band centred on a transition.
+   *
+   * @param value the criterion value
+   * @param centre the transition value
+   * @param halfWidth half the band width, in the same units as the value
+   * @return zero below the band, one above it, linear in between
+   */
+  private static double rampWeight(double value, double centre, double halfWidth) {
+    if (halfWidth <= 0.0) {
+      return value > centre ? 1.0 : 0.0;
+    }
+    double weight = (value - (centre - halfWidth)) / (2.0 * halfWidth);
+    return Math.max(0.0, Math.min(1.0, weight));
   }
 
   /**
@@ -567,62 +699,105 @@ public class FlowRegimeDetector implements Serializable {
    */
   private double estimateStratifiedLiquidLevel(double U_SL, double U_SG, double D, double rho_L, double rho_G,
       double mu_L, double theta) {
-    // Simplified momentum balance for stratified flow
-    // Iterative solution for liquid level h_L
+    double low = 0.01 * D;
+    double high = 0.99 * D;
 
-    double h_L = 0.5 * D; // Initial guess
+    double residLow = stratifiedMomentumResidual(low, U_SL, U_SG, D, rho_L, rho_G, mu_L, theta);
+    double residHigh = stratifiedMomentumResidual(high, U_SL, U_SG, D, rho_L, rho_G, mu_L, theta);
 
-    for (int iter = 0; iter < 20; iter++) {
-      double h_prev = h_L;
+    if (!isUsableResidual(residLow) || !isUsableResidual(residHigh)) {
+      return 0.5 * D;
+    }
 
-      // Geometric parameters
-      double beta = 2.0 * Math.acos(1.0 - 2.0 * h_L / D);
-      double A_L = D * D / 8.0 * (beta - Math.sin(beta));
-      double A_G = PI * D * D / 4.0 - A_L;
-      double S_L = D * beta / 2.0; // Wetted perimeter liquid
-      double S_G = D * (PI - beta / 2.0); // Wetted perimeter gas
-      double S_i = D * Math.sin(beta / 2.0); // Interface width
+    // No sign change means the balance has no interior root; the closer wall is the best estimate.
+    if (residLow * residHigh > 0.0) {
+      return Math.abs(residLow) <= Math.abs(residHigh) ? low : high;
+    }
 
-      if (A_L < 1e-10 || A_G < 1e-10) {
-        break;
+    for (int iter = 0; iter < 60; iter++) {
+      double mid = 0.5 * (low + high);
+      double residMid = stratifiedMomentumResidual(mid, U_SL, U_SG, D, rho_L, rho_G, mu_L, theta);
+      if (!isUsableResidual(residMid)) {
+        return mid;
       }
 
-      double U_L = U_SL * PI * D * D / 4.0 / A_L;
-      double U_G = U_SG * PI * D * D / 4.0 / A_G;
+      if (residLow * residMid <= 0.0) {
+        high = mid;
+        residHigh = residMid;
+      } else {
+        low = mid;
+        residLow = residMid;
+      }
 
-      // Friction factors
-      double D_hL = 4.0 * A_L / S_L;
-      double D_hG = 4.0 * A_G / (S_G + S_i);
-
-      double Re_L = rho_L * Math.abs(U_L) * D_hL / mu_L;
-      double Re_G = rho_G * Math.abs(U_G) * D_hG / (mu_L * 0.01);
-
-      double f_L = Re_L > 2000 ? 0.046 * Math.pow(Re_L, -0.2) : 16.0 / Math.max(Re_L, 1);
-      double f_G = Re_G > 2000 ? 0.046 * Math.pow(Re_G, -0.2) : 16.0 / Math.max(Re_G, 1);
-      double f_i = f_G; // Interface friction
-
-      // Shear stresses
-      double tau_wL = f_L * rho_L * U_L * Math.abs(U_L) / 2.0;
-      double tau_wG = f_G * rho_G * U_G * Math.abs(U_G) / 2.0;
-      double tau_i = f_i * rho_G * (U_G - U_L) * Math.abs(U_G - U_L) / 2.0;
-
-      // Combined momentum balance
-      double deltaRho = rho_L - rho_G;
-      double gravity_term = deltaRho * GRAVITY * Math.sin(theta);
-
-      // Residual
-      double resid = (-tau_wL * S_L + tau_i * S_i) / A_L - (-tau_wG * S_G - tau_i * S_i) / A_G - gravity_term;
-
-      // Adjust h_L
-      h_L = h_L - 0.1 * D * Math.signum(resid);
-      h_L = Math.max(0.01 * D, Math.min(0.99 * D, h_L));
-
-      if (Math.abs(h_L - h_prev) < 1e-6 * D) {
+      if (high - low < 1e-9 * D) {
         break;
       }
     }
 
-    return h_L;
+    return 0.5 * (low + high);
+  }
+
+  /**
+   * Whether a residual can be used to bracket a root.
+   *
+   * @param residual the momentum residual
+   * @return true when the value is finite
+   */
+  private static boolean isUsableResidual(double residual) {
+    return !Double.isNaN(residual) && !Double.isInfinite(residual);
+  }
+
+  /**
+   * Combined gas and liquid momentum residual for a stratified layer of a given depth.
+   *
+   * <p>
+   * The equilibrium level is the depth at which this vanishes.
+   * </p>
+   *
+   * @param h_L liquid height, in m
+   * @param U_SL superficial liquid velocity, in m/s
+   * @param U_SG superficial gas velocity, in m/s
+   * @param D pipe diameter, in m
+   * @param rho_L liquid density, in kg/m3
+   * @param rho_G gas density, in kg/m3
+   * @param mu_L liquid viscosity, in Pa.s
+   * @param theta inclination, in radians
+   * @return the momentum residual, or NaN when the geometry is degenerate
+   */
+  private double stratifiedMomentumResidual(double h_L, double U_SL, double U_SG, double D, double rho_L, double rho_G,
+      double mu_L, double theta) {
+    double beta = 2.0 * Math.acos(1.0 - 2.0 * h_L / D);
+    double A_L = D * D / 8.0 * (beta - Math.sin(beta));
+    double A_G = PI * D * D / 4.0 - A_L;
+    double S_L = D * beta / 2.0; // Wetted perimeter liquid
+    double S_G = D * (PI - beta / 2.0); // Wetted perimeter gas
+    double S_i = D * Math.sin(beta / 2.0); // Interface width
+
+    if (A_L < 1e-10 || A_G < 1e-10) {
+      return Double.NaN;
+    }
+
+    double U_L = U_SL * PI * D * D / 4.0 / A_L;
+    double U_G = U_SG * PI * D * D / 4.0 / A_G;
+
+    double D_hL = 4.0 * A_L / S_L;
+    double D_hG = 4.0 * A_G / (S_G + S_i);
+
+    double Re_L = rho_L * Math.abs(U_L) * D_hL / mu_L;
+    double Re_G = rho_G * Math.abs(U_G) * D_hG / (mu_L * 0.01);
+
+    double f_L = Re_L > 2000 ? 0.046 * Math.pow(Re_L, -0.2) : 16.0 / Math.max(Re_L, 1);
+    double f_G = Re_G > 2000 ? 0.046 * Math.pow(Re_G, -0.2) : 16.0 / Math.max(Re_G, 1);
+    double f_i = f_G; // Interface friction
+
+    double tau_wL = f_L * rho_L * U_L * Math.abs(U_L) / 2.0;
+    double tau_wG = f_G * rho_G * U_G * Math.abs(U_G) / 2.0;
+    double tau_i = f_i * rho_G * (U_G - U_L) * Math.abs(U_G - U_L) / 2.0;
+
+    double deltaRho = rho_L - rho_G;
+    double gravity_term = deltaRho * GRAVITY * Math.sin(theta);
+
+    return (-tau_wL * S_L + tau_i * S_i) / A_L - (-tau_wG * S_G - tau_i * S_i) / A_G - gravity_term;
   }
 
   /**
@@ -636,8 +811,27 @@ public class FlowRegimeDetector implements Serializable {
    * @return true if Kelvin-Helmholtz unstable condition exists
    */
   private boolean isKelvinHelmholtzUnstable(double U_SG, double h_L, double D, double rho_L, double rho_G) {
+    return kelvinHelmholtzMargin(U_SG, h_L, D, rho_L, rho_G) > 1.0;
+  }
+
+  /**
+   * Ratio of the actual gas velocity to the Kelvin-Helmholtz critical velocity.
+   *
+   * <p>
+   * The boolean instability test is the sign of this ratio about unity. Returning the ratio itself lets the caller
+   * blend closures across the transition instead of switching at a point.
+   * </p>
+   *
+   * @param U_SG superficial gas velocity, in m/s
+   * @param h_L liquid height, in m
+   * @param D pipe diameter, in m
+   * @param rho_L liquid density, in kg/m3
+   * @param rho_G gas density, in kg/m3
+   * @return the velocity ratio, or 0 when the geometry is degenerate
+   */
+  private double kelvinHelmholtzMargin(double U_SG, double h_L, double D, double rho_L, double rho_G) {
     if (h_L < 0.01 * D || h_L > 0.99 * D) {
-      return false;
+      return 0.0;
     }
 
     double beta = 2.0 * Math.acos(1.0 - 2.0 * h_L / D);
@@ -645,17 +839,22 @@ public class FlowRegimeDetector implements Serializable {
     double S_i = D * Math.sin(beta / 2.0);
 
     if (A_G < 1e-10) {
-      return false;
+      return 0.0;
     }
 
     double U_G = U_SG * PI * D * D / 4.0 / A_G;
-    double h_G = D - h_L;
 
-    // Kelvin-Helmholtz criterion
+    // Taitel and Dukler (1976) transition A. dA_L/dh_L is the interface width S_i, and C2 accounts
+    // for the gas being accelerated over the wave crest. Note there is no extra length inside the
+    // root: the group under it is a velocity squared.
     double deltaRho = rho_L - rho_G;
-    double U_G_crit = Math.sqrt(deltaRho * GRAVITY * h_G * A_G / (rho_G * S_i));
+    double C2 = 1.0 - h_L / D;
+    double U_G_crit = C2 * Math.sqrt(deltaRho * GRAVITY * A_G / (rho_G * S_i));
+    if (U_G_crit <= 0.0) {
+      return 0.0;
+    }
 
-    return U_G > U_G_crit;
+    return U_G / U_G_crit;
   }
 
   /**
