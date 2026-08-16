@@ -247,17 +247,20 @@ public class FlowRegimeDetector implements Serializable {
       return FlowRegime.DISPERSED_BUBBLE;
     }
 
-    // Check for annular/mist flow (high gas rate)
-    if (isAnnularFlow(U_SL, U_SG, D, rho_L, rho_G, sigma)) {
-      return FlowRegime.ANNULAR;
-    }
-
-    // Check for slug vs stratified transition
     double h_L = estimateStratifiedLiquidLevel(U_SL, U_SG, D, rho_L, rho_G, mu_L, theta);
 
+    // Transition A lifts the stratified layer through the Kelvin-Helmholtz instability. Which
+    // non-stratified regime follows is Taitel-Dukler transition B, and in a horizontal pipe that is
+    // decided by the equilibrium liquid level, not by a droplet-entrainment velocity: below half a
+    // diameter the liquid cannot bridge the bore and the flow goes annular, above it a slug forms.
+    //
+    // The droplet-entrainment criterion in isAnnularFlow is the vertical-flow transition and is
+    // deliberately not used here. Applied to horizontal flow it declared annular above roughly
+    // 3.1*(sigma*g*drho/rhoG^2)^0.25, which is about 1.6 m/s for a 200 mm gas line and 0.75 m/s for
+    // a 14-inch high-pressure export line - so effectively every gas pipeline was classified annular
+    // and solved with a thin-film closure regardless of its liquid level.
     if (isKelvinHelmholtzUnstable(U_SG, h_L, D, rho_L, rho_G)) {
-      // Intermittent (slug) flow
-      return FlowRegime.SLUG;
+      return (h_L / D < 0.5) ? FlowRegime.ANNULAR : FlowRegime.SLUG;
     }
 
     // Stratified flow - check smooth vs wavy transition
