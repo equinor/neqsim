@@ -53,6 +53,8 @@ public final class InstalledEquipmentCapacityEvidence implements Serializable {
     NON_FINITE_CURRENT_VALUE,
     /** The applicable installed limit is non-finite or absent. */
     NON_FINITE_APPLICABLE_LIMIT,
+    /** The applicable installed limit is zero or negative. */
+    INVALID_APPLICABLE_LIMIT,
     /** The derived normalized utilization is non-finite. */
     NON_FINITE_UTILIZATION
   }
@@ -190,6 +192,9 @@ public final class InstalledEquipmentCapacityEvidence implements Serializable {
     }
     if (!Double.isFinite(applicableLimit) || applicableLimit == Double.MAX_VALUE) {
       return EvidenceStatus.NON_FINITE_APPLICABLE_LIMIT;
+    }
+    if (applicableLimit <= 0.0) {
+      return EvidenceStatus.INVALID_APPLICABLE_LIMIT;
     }
     if (!Double.isFinite(utilization)) {
       return EvidenceStatus.NON_FINITE_UTILIZATION;
