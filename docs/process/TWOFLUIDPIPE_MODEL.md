@@ -1041,23 +1041,36 @@ models were given. Pressure drop, in bar:
 
 | Case | OLGA | TwoFluidPipe | PipeBeggsAndBrills |
 |------|------|--------------|--------------------|
-| Dry line, 10 MSm3/d | 78.50 | 81.20 (+3.4%) | 125.00 (+59%) |
-| 10 MW direct electrical heating | 88.19 | 81.20 (−7.9%) | 154.19 (+75%) |
-| 15 m3/hr free water | 104.06 | 91.31 (−12.3%) | 143.94 (+38%) |
+| Dry line, 4 MSm3/d | 10.15 | 12.09 (+19.1%) | 13.59 (+34%) |
+| Dry line, 7 MSm3/d | 33.60 | 40.09 (+19.3%) | 43.87 (+31%) |
+| Dry line, 10 MSm3/d | 78.50 | 96.29 (+22.6%) | 125.00 (+59%) |
+| Dry line, 12 MSm3/d | 138.72 | pressure floor | throws |
+| 15 m3/hr free water, 10 MSm3/d | 104.06 | 91.31 (−12.3%) | 143.94 (+38%) |
 
-Two limitations are visible in that table and should be assumed until shown otherwise:
+The TwoFluidPipe column requires `setEnableTerrainTracking(false)`. **At the default setting the
+solve does not converge on this line at any of these rates** — the terrain accumulation closure
+pins a valley section at its 0.85 holdup cap, and the reported ΔP is 43–219% high with the arrival
+either wall-clock limited or on the 1 bara floor. `isSteadyStateConverged()` is withheld in each
+case, so the failure is detectable, but the number must be discarded rather than reported.
 
-- **Liquid holdup runs 2–4x higher than OLGA** across dry and water-bearing cases (arrival holdup
-  0.064 vs 0.023 dry; 0.119 vs 0.034 with water). The slip closure, not the phase bookkeeping, is
-  responsible: gas/oil/water volume fractions sum correctly and stay in range in every case.
+Three limitations are visible in that table and should be assumed until shown otherwise:
+
+- **Pressure drop is a consistent +19 to +23% high** with terrain tracking off. The offset is
+  grid-converged (95.86 bar at 160 sections against 96.29 at 320 on the 10 MSm3/d case), so it is a
+  closure error rather than a discretisation error. Arrival temperature runs cold by the amount that
+  extra expansion implies (2.05 C against OLGA's 8.38 at 10 MSm3/d).
+- **Liquid holdup runs 2–4x higher than OLGA** across dry and water-bearing cases (0.064–0.072 vs
+  0.020–0.030 dry; 0.119 vs 0.034 with water). The slip closure, not the phase bookkeeping, is
+  responsible: gas/oil/water volume fractions sum correctly and stay in range in every case. The
+  inflated mixture density is the most likely driver of the pressure-drop offset above.
 - **Pressure drop does not always respond to temperature.** Adding 10 MW of heating raised the
   arrival temperature by 22 K but left the computed pressure drop unchanged, where OLGA moved
   +12.3% and Beggs–Brill +23.4%. Warmer gas at fixed mass rate is less dense and
   $\Delta P \sim G^2/\rho$, so a response is expected. Treat pressure drop from a case whose
   temperature field changes as indicative until this is resolved.
 
-Both observations are model-to-model and were taken at a single grid resolution on one line. They
-are recorded here so the model is not assumed to be OLGA-equivalent.
+All observations are model-to-model on one line. They are recorded here so the model is not assumed
+to be OLGA-equivalent.
 
 ### Implemented regression tests
 

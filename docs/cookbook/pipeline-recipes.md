@@ -454,11 +454,14 @@ for step in range(600):  # 5 minutes @ 0.5s steps
 | Direct electrical heating | ✅ | ✅ |
 
 **Accuracy caveats.** Benchmarked against OLGA 2025.1 on a 73.8 km subsea gas-condensate export
-line at matched inlet conditions, `TwoFluidPipe` predicts pressure drop within a few per cent on a
-dry line and about 12% low with free water, and arrival temperature within ~1.5 K — but **liquid
-holdup runs 2–4x OLGA**, and pressure drop did not respond to a 22 K temperature change from
-direct electrical heating. `PipeBeggsAndBrills` was 38–75% high on pressure drop for the same
-cases. See [Known limitations](../wiki/two_fluid_model#known-limitations).
+line at matched inlet conditions over 4–12 MSm3/d, `TwoFluidPipe` predicts pressure drop **19–23%
+high** on a dry line and about 12% low with free water, with arrival temperature cold by the amount
+that extra expansion implies — and **liquid holdup runs 2–4x OLGA**. Pressure drop also did not
+respond to a 22 K temperature change from direct electrical heating. `PipeBeggsAndBrills` was
+31–75% high on pressure drop for the same cases. **On a long undulating line call
+`setEnableTerrainTracking(false)`**: at the default setting a single valley section latches onto the
+0.85 terrain holdup cap and the steady solve does not converge at any of those rates.
+See [Known limitations](../wiki/two_fluid_model#known-limitations).
 
 **Always check the steady-state outcome** — `run()` does not throw when the solve fails:
 

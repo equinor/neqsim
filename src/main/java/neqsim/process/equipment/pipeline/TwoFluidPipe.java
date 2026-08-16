@@ -1461,12 +1461,18 @@ public class TwoFluidPipe extends Pipeline {
         thermodynamicsRefreshed = maxDensityChange > tolerance;
       }
 
-      // Update liquid accumulation zones and apply terrain-induced accumulation
-      // This is critical for detecting liquid pooling in valleys at low gas velocities
+      // Identify the accumulation zones so the terrain closure and the post-loop severe-slugging
+      // screen can use them, but do NOT integrate the accumulation tracker here. A steady state
+      // has zero net liquid accumulation by definition, and the tracker is a time integrator whose
+      // volume only ever grows: it adds a non-negative rate every call, ratchets its own volume up
+      // to the liquid already present, and then adds that volume back on top of the section holdup
+      // that already contains it. Driven once per sweep with a nominal dt it has no fixed point, so
+      // valley sections climb to the holdup cap and the profile can never settle. Terrain effects
+      // in steady state come from applyTerrainAccumulation, which is algebraic in the section's own
+      // Froude number and is therefore a fixed point. The tracker is still integrated in
+      // runTransient, where dt is physical time.
       if (enableTerrainTracking && accumulationTracker != null) {
         accumulationTracker.identifyAccumulationZones(sections);
-        accumulationTracker.updateAccumulation(sections, 1.0); // Use nominal time step for
-        // steady-state
       }
 
       // The pressure march above ran on the densities the sections had BEFORE the flash in

@@ -434,9 +434,23 @@ for (double qgMSm3d : gasRates) {
 > still carries the densities the sections were initialised with and understates
 > the pressure drop of a gas line by roughly ten per cent. Around 160 sections
 > (≈450 m) is the sweet spot on a long transmission line: it converges reliably
-> and lands within a few per cent of OLGA on pressure drop and within ~1.5 K on
-> arrival temperature. Raise `setSteadyStateMaxWallClockTime(...)` (default 300 s)
-> before blaming the model if `isSteadyStateWallClockLimited()` is true.
+> and is grid-converged to 0.4% against 320 sections. Raise
+> `setSteadyStateMaxWallClockTime(...)` (default 300 s) before blaming the model
+> if `isSteadyStateWallClockLimited()` is true.
+
+> **On a long undulating line, turn the terrain closure OFF or it will not
+> converge.** Measured on a 73.8 km subsea gas-condensate export line at 4, 7, 10
+> and 12 MSm3/d: at the default `enableTerrainTracking = true` **not one rate
+> converged** — a single valley section reaches the 0.85 terrain holdup cap, the
+> inflated mixture density steepens the gradient, and the solve ends either
+> wall-clock limited or with the arrival pinned on the 1 bara floor, reporting a
+> ΔP 43–219% above OLGA. `setEnableTerrainTracking(false)` makes the same cases
+> converge in 13–49 s, at a consistent **+19 to +23%** against OLGA (12.09 vs
+> 10.15 bar at 4 MSm3/d; 96.29 vs 78.50 at 10), with arrival temperature cold by
+> the amount that extra expansion implies (2.05 vs 8.38 C at 10 MSm3/d). The
+> offset is grid-converged, so it is a closure error, not a mesh error. Do not
+> quote `TwoFluidPipe` ΔP on such a line as a design number without stating which
+> setting produced it.
 
 > **`TwoFluidPipe` also fails silently when a line has no deliverability.** The
 > marching solver clamps section pressure at a 1 bara floor; that clamp is a

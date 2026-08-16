@@ -1460,13 +1460,20 @@ For applications where empirical accuracy is preferred over mechanistic modeling
 Measured against OLGA 2025.1 on a 73.8 km subsea gas-condensate export line at matched inlet
 conditions (see [TwoFluidPipe OLGA comparison](two_fluid_model_olga_comparison#measured-comparison-against-olga-20251)):
 
-- **Pressure drop** is within a few per cent of OLGA on a dry line (81.20 vs 78.50 bar) and
-  degrades to about 12% low when free water is present (91.31 vs 104.06 bar). Beggs–Brill is
-  38–75% high on the same cases.
-- **Arrival temperature** tracks OLGA well (6.8 vs 8.4 C dry, 28.9 vs 27.8 C with 10 MW of DEH).
+- **The terrain accumulation closure prevents convergence on a long undulating line.** At the
+  default `setEnableTerrainTracking(true)` the 73.8 km case does not converge at 4, 7, 10 or
+  12 MSm3/d: a single valley section reaches the 0.85 holdup cap and the pressure profile never
+  settles. Disable it, or discard any profile for which `isSteadyStateConverged()` is false.
+- **Pressure drop** is a consistent 19–23% above OLGA with terrain tracking off (12.09 vs 10.15 bar
+  at 4 MSm3/d, 96.29 vs 78.50 at 10), and about 12% low when free water is present (91.31 vs
+  104.06 bar). The offset is grid-converged. Beggs–Brill is 31–75% high on the same cases.
+- **Arrival temperature** runs cold by the amount the extra expansion implies (2.05 vs 8.38 C at
+  10 MSm3/d), and tracks OLGA to about 1 K once a DEH load dominates the thermal balance
+  (28.9 vs 27.8 C with 10 MW).
 - **Liquid holdup runs 2–4x OLGA** (0.064 vs 0.023 dry, 0.119 vs 0.034 with free water). The
   three-phase bookkeeping is sound — gas, oil and water fractions sum to one and stay in range at
-  every node — so the gap is in the slip closure.
+  every node — so the gap is in the slip closure, and the inflated mixture density is the most
+  likely driver of the pressure-drop offset.
 - **Pressure drop does not always respond to a temperature change.** Adding 10 MW of heating raised
   the arrival temperature 22 K but left the computed pressure drop unchanged, where OLGA moved
   +12.3%. Treat pressure drop from a case whose temperature field changes as indicative.
