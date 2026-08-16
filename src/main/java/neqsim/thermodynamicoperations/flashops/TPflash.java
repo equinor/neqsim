@@ -2305,10 +2305,10 @@ public class TPflash extends Flash {
    * Once a stability trial has collapsed a phase, cloning that endpoint also copies its local cubic-root and
    * phase-storage history. A later retry can then reproduce the same homogeneous minimum even though a cold flash finds
    * a lower-Gibbs split. The seed is therefore captured before the two-phase iteration for multiphase flashes, ordinary
-   * sour-gas flashes whose deterministic asymmetric and Wilson endpoint screens justify a possible retry, and ordinary
+   * sour-gas flashes whose deterministic asymmetric and Wilson endpoint screens justify a possible retry, and neutral
    * non-CPA water-rich asymmetric feeds whose post-flash clone may otherwise retain a collapsed phase history. It is
-   * consumed at most once and cleared when the operation returns. Ordinary dry, CPA, chemical, ionic, solid, wax, and
-   * non-asymmetric water-bearing flashes remain outside the additional cold-seed allocation.
+   * consumed at most once and cleared when the operation returns. Dry, CPA, chemical, ionic, solid, wax, and
+   * non-asymmetric water-bearing flashes remain outside the additional water-rich cold-seed allocation.
    * </p>
    */
   private void prepareMultiphaseEndpointRescueSeed() {
@@ -2328,21 +2328,18 @@ public class TPflash extends Flash {
   }
 
   /**
-   * Screens an ordinary cubic-EOS water-rich asymmetric feed for a cold reciprocal-stability seed.
+   * Screens a cubic-EOS water-rich asymmetric feed for a cold reciprocal-stability seed.
    *
    * <p>
    * This screen mirrors the existing neutral liquid-liquid composition/critical-temperature gate while permitting the
    * water component that defines this fallback. A substantial non-hydrocarbon fraction and a condensable hydrocarbon
-   * are both required, so ordinary hydrocarbon/water process flashes do not allocate a seed merely because water is
-   * present. The later multiphase solve and strict feasibility, equilibrium, and Gibbs gates decide stability.
+   * are both required, so hydrocarbon/water process flashes do not allocate a seed merely because water is present.
+   * The later reciprocal solve and strict feasibility, equilibrium, and Gibbs gates decide stability.
    * </p>
    *
    * @return true when retaining one cold pre-iteration state is justified
    */
   private boolean hasPotentialWaterRichColdSeedInstability() {
-    if (system.doMultiPhaseCheck()) {
-      return false;
-    }
     String modelName = system.getModelName();
     if (modelName != null && modelName.contains("CPA")) {
       return false;
@@ -2885,23 +2882,31 @@ public class TPflash extends Flash {
    *
    * <p>
    * In some high-pressure CO2/water states the multiphase solver removes an aqueous phase even though the ordinary
-   * flash converges to a feasible lower-Gibbs oil/aqueous split. The stored post-removal K-values retain a strong phase
-   * preference: water has a very small K-value while at least one non-water component has a large K-value. Only this
-   * inexpensive screen triggers the retry. The ordinary result replaces the collapsed state only after it passes the
-   * existing phase-fraction, distinct-composition, and lower-Gibbs acceptance checks.
+   * flash converges to a feasible lower-Gibbs oil/aqueous split. For a screened neutral non-CPA water-rich feed, the
+   * retry consumes the cold pre-iteration state rather than cloning phase-storage and cubic-root history from the
+   * collapsed endpoint. Other eligible collapses retain the post-removal K-value screen and clone fallback. The
+   * ordinary result replaces the collapsed state only after it passes the existing phase-fraction,
+   * distinct-composition, material-balance, fugacity, and lower-Gibbs acceptance checks.
    * </p>
    */
   private void rescueSinglePhaseWaterBearingEndpoint() {
-    if (waterBearingRescueAttempted || !shouldRetryCollapsedWaterBearingEndpoint()) {
+    boolean hasScreenedColdSeed = system.doMultiPhaseCheck() && system.getNumberOfPhases() == 1
+        && multiphaseEndpointRescueSeed != null && hasPotentialWaterRichColdSeedInstability();
+    if (waterBearingRescueAttempted
+        || (!hasScreenedColdSeed && !shouldRetryCollapsedWaterBearingEndpoint())) {
       return;
     }
     waterBearingRescueAttempted = true;
     system.init(1);
     double referenceGibbsEnergy = system.getGibbsEnergy();
-    SystemInterface candidate = system.clone();
+    SystemInterface candidate = hasScreenedColdSeed ? multiphaseEndpointRescueSeed : system.clone();
+    if (hasScreenedColdSeed) {
+      multiphaseEndpointRescueSeed = null;
+    }
     MULTIPHASE_RESCUE_ACTIVE.set(Boolean.TRUE);
     try {
       candidate.setMultiPhaseCheck(false);
+      candidate.setEnhancedMultiPhaseCheck(false);
       new TPflash(candidate, candidate.doSolidPhaseCheck()).run();
       if (isLowerGibbsMultiphaseCandidate(candidate, referenceGibbsEnergy)
           && isBalancedEquilibriumCandidate(candidate)) {
