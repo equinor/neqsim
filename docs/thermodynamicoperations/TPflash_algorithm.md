@@ -1800,6 +1800,20 @@ Commercial process simulators do not publish all implementation details, but pub
   live system to rebuild the cubic/aqueous storage mapping; a recursion guard prevents fallback ping-pong. Genuine
   OIL+AQUEOUS liquid-liquid endpoints, already-feasible multiphase states, and dry systems do not run the additional
   flash.
+- For an ordinary neutral non-CPA water-rich asymmetric feed, the reciprocal multiphase calculation retains the cold
+  pre-iteration state instead of cloning the final endpoint. A post-flash clone can preserve collapsed phase-storage
+  and cubic-root history even after beta and compositions are reset, causing it to revisit a rejected three-phase
+  stationary point while the unchanged cold feed reaches a feasible OIL+AQUEOUS equilibrium. The cold seed is allocated
+  only when water feed is at least `0.01` and the existing critical-temperature/composition screen identifies an
+  asymmetric neutral mixture. Dry, CPA, chemical, ionic, solid, wax, and non-asymmetric water-bearing flashes remain on
+  their existing initialization paths. Seed provenance does not relax acceptance: exactly two distinct phases,
+  bounded and normalized beta/compositions, material balance and log-fugacity residuals below `1e-8`, and lower Gibbs
+  energy are still required.
+- Multiphase stability cleanup merges two same-type liquid phases when their maximum component-composition difference
+  is below `1e-6` and they are either a supported CPA duplicate or the two hydrocarbon roots beside an aqueous phase in
+  a neutral cubic-EOS three-phase trial. Their phase fractions are added before the redundant phase is removed, so the
+  resulting two-phase endpoint retains material balance. Compositionally distinct gas/oil/aqueous equilibria remain
+  three phase.
 - A water-rich ordinary two-phase endpoint that fails the strict equilibrium gate can retain useful phase-composition
   information even when its cold multiphase candidate collapses to one phase. After that cold candidate is rejected,
   the existing split seeds one fully initialized `TPmultiflash` calculation. A water-rich multiphase endpoint that

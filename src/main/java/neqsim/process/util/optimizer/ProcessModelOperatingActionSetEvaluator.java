@@ -14,7 +14,9 @@ import neqsim.process.util.optimizer.ProcessModelOperatingActionEvaluator.Hydrau
 import neqsim.process.util.optimizer.ProcessModelOperatingActionEvaluator.HydraulicConstraintSnapshot;
 import neqsim.process.util.optimizer.ProcessModelOperatingActionEvaluator.HydraulicLimitRole;
 import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.BottleneckStatus;
+import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.ConstraintDefinition;
 import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.EvaluationResult;
+import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.ObjectiveDefinition;
 
 /**
  * Evaluates an ordered set of reversible operating actions as one steady-state transaction.
@@ -254,9 +256,15 @@ public final class ProcessModelOperatingActionSetEvaluator {
 
     Outcome outcome = Outcome.ACTION_REJECTED;
     EvaluationResult candidateEvaluation = null;
+    List<CandidateObjectiveEvidence> objectiveEvidence = Collections.emptyList();
+    List<CandidateConstraintEvidence> constraintEvidence = Collections.emptyList();
     List<HydraulicConstraintSnapshot> constraintSnapshots = Collections.emptyList();
     if (allApplied) {
       candidateEvaluation = evaluator.evaluate(new double[0]);
+      objectiveEvidence = CandidateSetEvaluationResult.snapshotObjectives(evaluator.getObjectives(),
+          candidateEvaluation);
+      constraintEvidence = CandidateSetEvaluationResult.snapshotConstraints(evaluator.getConstraints(),
+          candidateEvaluation);
       if (!candidateEvaluation.isSimulationConverged()) {
         outcome = Outcome.CANDIDATE_SIMULATION_FAILED;
         diagnostics.add(candidateEvaluation.getErrorMessage() == null ? "Candidate process model did not converge"
@@ -301,7 +309,8 @@ public final class ProcessModelOperatingActionSetEvaluator {
     List<ActionCandidateEvidence> actionEvidence = createActionEvidence(actions, baselines, candidates, applications,
         restorations);
     return CandidateSetEvaluationResult.from(id, name, provenance, actions, candidates, actionEvidence, outcome,
-        candidateEvaluation, constraintSnapshots, allRestored, baselineSimulationConverged, diagnostics);
+        candidateEvaluation, objectiveEvidence, constraintEvidence, constraintSnapshots, allRestored,
+        baselineSimulationConverged, diagnostics);
   }
 
   /** Creates a fixed-size list that accepts indexed restoration results. */
@@ -574,6 +583,210 @@ public final class ProcessModelOperatingActionSetEvaluator {
     }
   }
 
+  /** Immutable objective identity and sampled value for one candidate simulation. */
+  public static final class CandidateObjectiveEvidence implements Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1L;
+
+    /** Evaluator registration index. */
+    private final int index;
+    /** Objective name. */
+    private final String name;
+    /** Optimization direction. */
+    private final ObjectiveDefinition.Direction direction;
+    /** Objective unit. */
+    private final String unit;
+    /** Scalarization weight metadata. */
+    private final double weight;
+    /** Sampled raw value. */
+    private final double rawValue;
+    /** Sampled minimizer-sign value. */
+    private final double minimizerValue;
+
+    /** Creates frozen objective evidence in evaluator registration order. */
+    private CandidateObjectiveEvidence(int index, ObjectiveDefinition definition, double rawValue,
+        double minimizerValue) {
+      this.index = index;
+      this.name = definition.getName();
+      this.direction = definition.getDirection();
+      this.unit = definition.getUnit();
+      this.weight = definition.getWeight();
+      this.rawValue = rawValue;
+      this.minimizerValue = minimizerValue;
+    }
+
+    /** @return evaluator registration index */
+    public int getIndex() {
+      return index;
+    }
+
+    /** @return objective name */
+    public String getName() {
+      return name;
+    }
+
+    /** @return optimization direction */
+    public ObjectiveDefinition.Direction getDirection() {
+      return direction;
+    }
+
+    /** @return objective unit, possibly null when not declared */
+    public String getUnit() {
+      return unit;
+    }
+
+    /** @return scalarization weight metadata */
+    public double getWeight() {
+      return weight;
+    }
+
+    /** @return sampled raw objective value */
+    public double getRawValue() {
+      return rawValue;
+    }
+
+    /** @return sampled minimizer-sign objective value */
+    public double getMinimizerValue() {
+      return minimizerValue;
+    }
+  }
+
+  /** Immutable registered-constraint identity and sampled margin for one candidate simulation. */
+  public static final class CandidateConstraintEvidence implements Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1L;
+
+    /** Evaluator registration index. */
+    private final int index;
+    /** Registered constraint name. */
+    private final String name;
+    /** Constraint type. */
+    private final ConstraintDefinition.Type type;
+    /** Constraint unit. */
+    private final String unit;
+    /** Whether violation makes the point infeasible. */
+    private final boolean hard;
+    /** Soft-penalty weight metadata. */
+    private final double penaltyWeight;
+    /** Lower bound or equality target. */
+    private final double lowerBound;
+    /** Upper bound. */
+    private final double upperBound;
+    /** Equality tolerance. */
+    private final double equalityTolerance;
+    /** Whether generated from installed equipment capacity. */
+    private final boolean capacityConstraint;
+    /** Capacity process-area origin. */
+    private final String areaName;
+    /** Capacity equipment origin. */
+    private final String equipmentName;
+    /** Original equipment constraint name. */
+    private final String equipmentConstraintName;
+    /** Sampled evaluator value. */
+    private final double value;
+    /** Sampled signed margin. */
+    private final double margin;
+
+    /** Creates frozen constraint evidence in evaluator registration order. */
+    private CandidateConstraintEvidence(int index, ConstraintDefinition definition, double value, double margin) {
+      this.index = index;
+      this.name = definition.getName();
+      this.type = definition.getType();
+      this.unit = definition.getUnit();
+      this.hard = definition.isHard();
+      this.penaltyWeight = definition.getPenaltyWeight();
+      this.lowerBound = definition.getLowerBound();
+      this.upperBound = definition.getUpperBound();
+      this.equalityTolerance = definition.getEqualityTolerance();
+      this.capacityConstraint = definition.isCapacityConstraint();
+      this.areaName = definition.getAreaName();
+      this.equipmentName = definition.getEquipmentName();
+      this.equipmentConstraintName = definition.getEquipmentConstraintName();
+      this.value = value;
+      this.margin = margin;
+    }
+
+    /** @return evaluator registration index */
+    public int getIndex() {
+      return index;
+    }
+
+    /** @return registered constraint name */
+    public String getName() {
+      return name;
+    }
+
+    /** @return constraint type */
+    public ConstraintDefinition.Type getType() {
+      return type;
+    }
+
+    /** @return constraint and margin unit, possibly null when not declared */
+    public String getUnit() {
+      return unit;
+    }
+
+    /** @return true when violation makes the evaluator point infeasible */
+    public boolean isHard() {
+      return hard;
+    }
+
+    /** @return configured soft-penalty weight metadata */
+    public double getPenaltyWeight() {
+      return penaltyWeight;
+    }
+
+    /** @return configured lower bound or equality target */
+    public double getLowerBound() {
+      return lowerBound;
+    }
+
+    /** @return configured upper bound */
+    public double getUpperBound() {
+      return upperBound;
+    }
+
+    /** @return configured equality tolerance */
+    public double getEqualityTolerance() {
+      return equalityTolerance;
+    }
+
+    /** @return true when generated from installed equipment capacity metadata */
+    public boolean isCapacityConstraint() {
+      return capacityConstraint;
+    }
+
+    /** @return process-area origin, or null for a general model constraint */
+    public String getAreaName() {
+      return areaName;
+    }
+
+    /** @return equipment origin, or null for a general model constraint */
+    public String getEquipmentName() {
+      return equipmentName;
+    }
+
+    /** @return original equipment constraint name, or null */
+    public String getEquipmentConstraintName() {
+      return equipmentConstraintName;
+    }
+
+    /** @return sampled constraint value */
+    public double getValue() {
+      return value;
+    }
+
+    /** @return sampled margin; non-negative is satisfied */
+    public double getMargin() {
+      return margin;
+    }
+
+    /** @return true when the sampled margin is finite and non-negative */
+    public boolean isSatisfied() {
+      return !Double.isNaN(margin) && !Double.isInfinite(margin) && margin >= 0.0;
+    }
+  }
+
   /** Immutable serializable result for one coupled candidate. */
   public static final class CandidateSetEvaluationResult implements Serializable {
     /** Serialization version UID. */
@@ -618,11 +831,17 @@ public final class ProcessModelOperatingActionSetEvaluator {
     /** Sign-adjusted objective values at the candidate. */
     private final double[] objectives;
 
+    /** Frozen objective definitions and sampled values. */
+    private final List<CandidateObjectiveEvidence> objectiveEvidence;
+
     /** Registered constraint values at the candidate. */
     private final double[] constraintValues;
 
     /** Registered constraint margins at the candidate. */
     private final double[] constraintMargins;
+
+    /** Frozen constraint definitions and sampled values. */
+    private final List<CandidateConstraintEvidence> constraintEvidence;
 
     /** Required hydraulic snapshots. */
     private final List<HydraulicConstraintSnapshot> hydraulicConstraints;
@@ -635,7 +854,8 @@ public final class ProcessModelOperatingActionSetEvaluator {
         List<ProcessModelOperatingAction> actions, double[] candidateValues,
         List<ActionCandidateEvidence> actionEvidence, Outcome outcome, boolean candidateSimulationConverged,
         boolean candidateEvaluatorFeasible, boolean baselineRestored, boolean baselineSimulationConverged,
-        double[] rawObjectives, double[] objectives, double[] constraintValues, double[] constraintMargins,
+        double[] rawObjectives, double[] objectives, List<CandidateObjectiveEvidence> objectiveEvidence,
+        double[] constraintValues, double[] constraintMargins, List<CandidateConstraintEvidence> constraintEvidence,
         List<HydraulicConstraintSnapshot> hydraulicConstraints, List<String> diagnostics) {
       this.id = id;
       this.name = name;
@@ -650,8 +870,12 @@ public final class ProcessModelOperatingActionSetEvaluator {
       this.baselineSimulationConverged = baselineSimulationConverged;
       this.rawObjectives = Arrays.copyOf(rawObjectives, rawObjectives.length);
       this.objectives = Arrays.copyOf(objectives, objectives.length);
+      this.objectiveEvidence = Collections
+          .unmodifiableList(new ArrayList<CandidateObjectiveEvidence>(objectiveEvidence));
       this.constraintValues = Arrays.copyOf(constraintValues, constraintValues.length);
       this.constraintMargins = Arrays.copyOf(constraintMargins, constraintMargins.length);
+      this.constraintEvidence = Collections
+          .unmodifiableList(new ArrayList<CandidateConstraintEvidence>(constraintEvidence));
       this.hydraulicConstraints = Collections
           .unmodifiableList(new ArrayList<HydraulicConstraintSnapshot>(hydraulicConstraints));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<String>(diagnostics));
@@ -663,7 +887,8 @@ public final class ProcessModelOperatingActionSetEvaluator {
         List<String> diagnostics) {
       return new CandidateSetEvaluationResult(id, name, provenance, actions, candidateValues,
           Collections.<ActionCandidateEvidence>emptyList(), outcome, false, false, false, false, new double[0],
-          new double[0], new double[0], new double[0], Collections.<HydraulicConstraintSnapshot>emptyList(),
+          new double[0], Collections.<CandidateObjectiveEvidence>emptyList(), new double[0], new double[0],
+          Collections.<CandidateConstraintEvidence>emptyList(), Collections.<HydraulicConstraintSnapshot>emptyList(),
           diagnostics);
     }
 
@@ -671,17 +896,57 @@ public final class ProcessModelOperatingActionSetEvaluator {
     private static CandidateSetEvaluationResult from(String id, String name, String provenance,
         List<ProcessModelOperatingAction> actions, double[] candidateValues,
         List<ActionCandidateEvidence> actionEvidence, Outcome outcome, EvaluationResult evaluation,
+        List<CandidateObjectiveEvidence> objectiveEvidence, List<CandidateConstraintEvidence> constraintEvidence,
         List<HydraulicConstraintSnapshot> hydraulicConstraints, boolean baselineRestored,
         boolean baselineSimulationConverged, List<String> diagnostics) {
       if (evaluation == null) {
         return new CandidateSetEvaluationResult(id, name, provenance, actions, candidateValues, actionEvidence, outcome,
-            false, false, baselineRestored, baselineSimulationConverged, new double[0], new double[0], new double[0],
-            new double[0], hydraulicConstraints, diagnostics);
+            false, false, baselineRestored, baselineSimulationConverged, new double[0], new double[0],
+            Collections.<CandidateObjectiveEvidence>emptyList(), new double[0], new double[0],
+            Collections.<CandidateConstraintEvidence>emptyList(), hydraulicConstraints, diagnostics);
       }
       return new CandidateSetEvaluationResult(id, name, provenance, actions, candidateValues, actionEvidence, outcome,
           evaluation.isSimulationConverged(), evaluation.isFeasible(), baselineRestored, baselineSimulationConverged,
-          copy(evaluation.getObjectivesRaw()), copy(evaluation.getObjectives()), copy(evaluation.getConstraintValues()),
-          copy(evaluation.getConstraintMargins()), hydraulicConstraints, diagnostics);
+          copy(evaluation.getObjectivesRaw()), copy(evaluation.getObjectives()), objectiveEvidence,
+          copy(evaluation.getConstraintValues()), copy(evaluation.getConstraintMargins()), constraintEvidence,
+          hydraulicConstraints, diagnostics);
+    }
+
+    /** Snapshots objective definitions and sampled values without retaining evaluator callbacks. */
+    private static List<CandidateObjectiveEvidence> snapshotObjectives(List<ObjectiveDefinition> definitions,
+        EvaluationResult evaluation) {
+      if (evaluation == null) {
+        return Collections.emptyList();
+      }
+      double[] rawValues = copy(evaluation.getObjectivesRaw());
+      double[] minimizerValues = copy(evaluation.getObjectives());
+      List<CandidateObjectiveEvidence> evidence = new ArrayList<CandidateObjectiveEvidence>();
+      for (int index = 0; index < definitions.size(); index++) {
+        evidence.add(new CandidateObjectiveEvidence(index, definitions.get(index), valueAt(rawValues, index),
+            valueAt(minimizerValues, index)));
+      }
+      return Collections.unmodifiableList(evidence);
+    }
+
+    /** Snapshots constraint definitions and sampled margins without retaining evaluator callbacks. */
+    private static List<CandidateConstraintEvidence> snapshotConstraints(List<ConstraintDefinition> definitions,
+        EvaluationResult evaluation) {
+      if (evaluation == null) {
+        return Collections.emptyList();
+      }
+      double[] values = copy(evaluation.getConstraintValues());
+      double[] margins = copy(evaluation.getConstraintMargins());
+      List<CandidateConstraintEvidence> evidence = new ArrayList<CandidateConstraintEvidence>();
+      for (int index = 0; index < definitions.size(); index++) {
+        evidence.add(new CandidateConstraintEvidence(index, definitions.get(index), valueAt(values, index),
+            valueAt(margins, index)));
+      }
+      return Collections.unmodifiableList(evidence);
+    }
+
+    /** Returns an indexed scalar or NaN when a result array is shorter than its definition list. */
+    private static double valueAt(double[] values, int index) {
+      return index < values.length ? values[index] : Double.NaN;
     }
 
     /** Returns a defensive array or an empty array for null. */
@@ -768,6 +1033,11 @@ public final class ProcessModelOperatingActionSetEvaluator {
       return Arrays.copyOf(objectives, objectives.length);
     }
 
+    /** @return fresh immutable objective identity and sampled-value evidence */
+    public List<CandidateObjectiveEvidence> getObjectiveEvidence() {
+      return Collections.unmodifiableList(new ArrayList<CandidateObjectiveEvidence>(objectiveEvidence));
+    }
+
     /** @return defensive registered-constraint value array */
     public double[] getConstraintValues() {
       return Arrays.copyOf(constraintValues, constraintValues.length);
@@ -776,6 +1046,11 @@ public final class ProcessModelOperatingActionSetEvaluator {
     /** @return defensive registered-constraint margin array */
     public double[] getConstraintMargins() {
       return Arrays.copyOf(constraintMargins, constraintMargins.length);
+    }
+
+    /** @return fresh immutable registered-constraint identity and sampled-value evidence */
+    public List<CandidateConstraintEvidence> getConstraintEvidence() {
+      return Collections.unmodifiableList(new ArrayList<CandidateConstraintEvidence>(constraintEvidence));
     }
 
     /** @return fresh immutable hydraulic evidence in binding order */

@@ -488,6 +488,27 @@ also fail closed. This gate proves numerical rollback mechanics only; it does no
 input reliability, ESD action, safety integrity, external DCS/I/O, virtual commissioning or OTS
 use.
 
+## Thermodynamic-limit analyser transaction coverage
+
+Concrete local `CricondenbarAnalyser`, `HydrateEquilibriumTemperatureAnalyser`,
+`HydrocarbonDewPointAnalyser`, and `WaterDewPointAnalyser` instances participate when registered
+as measurement devices in a `ProcessSystem`. Every snapshot preserves stable transaction identity,
+the original stream binding and complete inherited measurement/alarm state. The hydrate analyser
+also preserves its reference pressure; both dew-point analysers preserve reference pressure and
+method.
+
+Together with the existing `EventScheduler` snapshot, this closes scheduled in-memory changes to
+those analyser bindings and settings. Quantitative evidence covers four coordinated
+`ProcessModel` areas, exact reference-pressure and method rollback, deterministic Bukacek result
+replay, delayed-alarm continuation, commit, foreign/null snapshots and Java-serialization restart
+for every family member.
+
+Concrete descendants and online/external-I/O operation fail closed. The thermodynamic calculations
+continue to use temporary fluid clones and are unchanged by this transaction contract. This gate
+does not newly validate phase-envelope, dew-point, hydrate or empirical-correlation physics, fluid
+characterization, sampling, analyser accuracy, alarm/trip integrity, external I/O, virtual
+commissioning or OTS use.
+
 ## State-mutating derived-instrument transaction coverage
 
 Concrete local `pHProbe`, `SoftSensor`, and `FlowInducedVibrationAnalyser` instances participate

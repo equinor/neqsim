@@ -17,7 +17,9 @@ import org.ejml.dense.row.NormOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseType;
+import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemUMRPRUMCEos;
 
 /**
  * TPmultiflash class.
@@ -314,9 +316,8 @@ public class TPmultiflash extends TPflash {
    *
    * <p>
    * EJML's raw common-operations solve can report success for a singular matrix while writing NaN values to the
-   * correction vector. The former {@link SimpleMatrix#solve(SimpleMatrix)} path raised a singular-matrix exception in
-   * that case, allowing enhanced mode to regularize the Hessian and ordinary mode to stop without corrupting phase
-   * fractions.
+   * correction vector. The former {@code SimpleMatrix.solve(...)} path raised a singular-matrix exception in that case,
+   * allowing enhanced mode to regularize the Hessian and ordinary mode to stop without corrupting phase fractions.
    * </p>
    *
    * @param betaHessian beta-Hessian matrix
@@ -486,7 +487,12 @@ public class TPmultiflash extends TPflash {
     // O2: Early exit — if all K ≈ 1.0 the system is near/above critical.
     // Only skip Wilson K-based trials; still fall through to pure-component trials
     // which use independent initial guesses not affected by K ≈ 1.
-    boolean skipWilsonKTrials = (maxAbsLogK < 0.01);
+    // Furst-electrolyte and UMR-PRU-MC systems retain their established local
+    // pure-component stability path unless enhanced checking is explicitly requested.
+    // Other model families still require Wilson trials for water-rich and vapor-like splits.
+    boolean preserveLocalStabilityPath = !system.doEnhancedMultiPhaseCheck()
+        && (system instanceof SystemFurstElectrolyteEos || system instanceof SystemUMRPRUMCEos);
+    boolean skipWilsonKTrials = preserveLocalStabilityPath || maxAbsLogK < 0.01;
 
     // O3: Wilson K-based trial phases — liquid-like (z/K) first, then vapor-like (K·z)
     // Liquid-like trial runs first because most multi-phase systems have liquid-driven
@@ -616,7 +622,7 @@ public class TPmultiflash extends TPflash {
             dominantComp = i;
           }
         }
-        system.setBeta(newPhaseIdx, getIncipientWilsonPhaseFraction(dominantComp));
+        system.setBeta(newPhaseIdx, system.getPhase(0).getComponent(dominantComp).getz());
         try {
           system.init(1);
         } catch (Exception ex) {
@@ -1203,7 +1209,7 @@ public class TPmultiflash extends TPflash {
               dominantComp = i;
             }
           }
-          system.setBeta(newPhaseIdx, getIncipientWilsonPhaseFraction(dominantComp));
+          system.setBeta(newPhaseIdx, system.getPhase(0).getComponent(dominantComp).getz());
           try {
             system.init(1);
           } catch (Exception ex) {
@@ -1228,8 +1234,8 @@ public class TPmultiflash extends TPflash {
    * A negative tangent-plane distance establishes that the current topology is unstable, but it does not determine the
    * equilibrium amount of the new phase. Seeding beta from the trial's dominant overall component can therefore
    * introduce an order-one material phase before the phase-fraction solve. Use the existing ordinary beta solver's
-   * regularization scale so the trial is incipient without being pinned below the solver's useful correction scale, then
-   * let the beta/equilibrium solve grow or remove it.
+   * regularization scale so the trial is incipient without being pinned below the solver's useful correction scale,
+   * then let the beta/equilibrium solve grow or remove it.
    * </p>
    *
    * @param dominantComponent index of the largest component in the trial composition
@@ -2689,10 +2695,10 @@ public class TPmultiflash extends TPflash {
       // avoids removing legitimate near-critical V/L pairs (issue #1980).
       //
       // CPA-family models may produce duplicate phases at material phase fractions
-      // (issue #2117). Cubic EOS can also retain an already-disappeared phase just
-      // above the generic beta-removal threshold. Extend the composition test to
-      // every model only for such trace phases; this cannot collapse a material
-      // near-critical V/L pair and still requires the same PhaseType and composition.
+      // (issue #2117). A neutral cubic-EOS aqueous trial can also converge two
+      // material liquid fractions to the same hydrocarbon root. Such a three-phase
+      // state is a two-phase equilibrium with duplicated phase storage. Chemical and
+      // ionic models keep the prior conservative trace-phase restriction.
       String modelName = system.getModelName();
       boolean isCpaModel = modelName != null && modelName.contains("CPA");
       boolean hasTracePhase = false;
@@ -2702,7 +2708,9 @@ public class TPmultiflash extends TPflash {
           break;
         }
       }
-      if (isCpaModel || hasTracePhase) {
+      boolean neutralAqueousThreePhaseDuplicate = system.getNumberOfPhases() == 3
+          && system.hasPhaseType(PhaseType.AQUEOUS) && !system.isChemicalSystem() && !hasIons;
+      if (isCpaModel || hasTracePhase || neutralAqueousThreePhaseDuplicate) {
         for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
           for (int j = i + 1; j < system.getNumberOfPhases(); j++) {
             if (system.getPhase(i).getType() != system.getPhase(j).getType()) {
@@ -2715,7 +2723,7 @@ public class TPmultiflash extends TPflash {
             }
             boolean traceDuplicatePair = Math.min(system.getBeta(i), system.getBeta(j)) < 10.0
                 * phaseFractionMinimumLimit;
-            if (maxCompDiff < 1.0e-6 && (isCpaModel || traceDuplicatePair)) {
+            if (maxCompDiff < 1.0e-6 && (isCpaModel || traceDuplicatePair || neutralAqueousThreePhaseDuplicate)) {
               mergeAndRemoveDuplicatePhase(i, j);
               doStabilityAnalysis = false;
               hasRemovedPhase = true;
