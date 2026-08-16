@@ -22,7 +22,14 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.optimizer.ProcessModelAllocationOptimizer.AllocationSearchResult;
 import neqsim.process.util.optimizer.ProcessModelAllocationOptimizer.CandidateRecord;
 import neqsim.process.util.optimizer.ProcessModelAllocationOptimizer.SearchOutcome;
+import neqsim.process.util.optimizer.ProcessModelAllocationBottleneckAnalyzer.AnalysisOutcome;
+import neqsim.process.util.optimizer.ProcessModelAllocationBottleneckAnalyzer.BottleneckAnalysisResult;
+import neqsim.process.util.optimizer.ProcessModelAllocationBottleneckAnalyzer.BottleneckReliefOpportunity;
+import neqsim.process.util.optimizer.ProcessModelAllocationBottleneckAnalyzer.EvidenceClass;
 import neqsim.process.util.optimizer.ProcessModelOperatingActionEvaluator.HydraulicLimitRole;
+import neqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator.CandidateConstraintEvidence;
+import neqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator.CandidateObjectiveEvidence;
+import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.ConstraintDefinition;
 import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.ObjectiveDefinition;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -196,6 +203,7 @@ class ProcessModelAllocationOptimizerTest {
     AllocationFixture fixture = createFixture();
     AllocationSearchResult original = createOptimizer(fixture).optimize();
     fixture.evaluator.getSimulationEvaluator().getObjectives().get(0).setName("mutated later");
+    fixture.evaluator.getSimulationEvaluator().getConstraints().get(0).setName("mutated constraint later");
 
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     ObjectOutputStream output = new ObjectOutputStream(bytes);
@@ -206,6 +214,13 @@ class ProcessModelAllocationOptimizerTest {
     input.close();
 
     assertEquals("allocation value proxy", restored.getObjective().getName());
+    CandidateObjectiveEvidence objectiveEvidence = restored.getBestFeasibleCandidate().getEvaluation()
+        .getObjectiveEvidence().get(0);
+    assertEquals("allocation value proxy", objectiveEvidence.getName());
+    assertEquals(1700.0, objectiveEvidence.getRawValue(), 1.0e-8);
+    CandidateConstraintEvidence constraintEvidence = restored.getBestSampledObjectiveCandidate().getEvaluation()
+        .getConstraintEvidence().get(0);
+    assertFalse("mutated constraint later".equals(constraintEvidence.getName()));
     assertEquals("synthetic installed-capacity allocation basis", restored.getProvenance());
     double[] allocation = restored.getBestFeasibleCandidate().getCandidateValues();
     allocation[0] = -1.0;
@@ -221,6 +236,108 @@ class ProcessModelAllocationOptimizerTest {
     assertThrows(UnsupportedOperationException.class, () -> restored.getDiagnostics().clear());
     assertThrows(UnsupportedOperationException.class,
         () -> restored.getRankedHydraulicConstraintsAtBestFeasible().clear());
+    assertThrows(UnsupportedOperationException.class,
+        () -> restored.getBestFeasibleCandidate().getEvaluation().getObjectiveEvidence().clear());
+    assertThrows(UnsupportedOperationException.class,
+        () -> restored.getBestFeasibleCandidate().getEvaluation().getConstraintEvidence().clear());
+  }
+
+  /** Verifies exact, direction-aware, in-unit bottleneck relief without rerunning the simulator. */
+  @Test
+  void identifiesTraceQualifiedBottleneckRelief() throws Exception {
+    AllocationFixture fixture = createFixture();
+    ConstraintDefinition softConstraint = new ConstraintDefinition("soft diagnostic", model -> 0.0, 1.0);
+    softConstraint.setHard(false);
+    softConstraint.setUnit("diagnostic-unit");
+    fixture.evaluator.getSimulationEvaluator().getConstraints().add(softConstraint);
+    AllocationSearchResult search = createOptimizer(fixture).optimize();
+    ProcessModelAllocationBottleneckAnalyzer analyzer = new ProcessModelAllocationBottleneckAnalyzer(
+        "allocation-relief", "Allocation bottleneck relief", "synthetic sampled-trace validation");
+
+    BottleneckAnalysisResult result = analyzer.analyze(search);
+
+    assertEquals(AnalysisOutcome.OPPORTUNITIES_IDENTIFIED, result.getOutcome());
+    assertEquals("producer-allocation", result.getSourceSearchId());
+    assertEquals("allocation-actions", result.getActionSetId());
+    BottleneckReliefOpportunity leading = result.getOpportunities().get(0);
+    assertEquals(100.0, leading.getObjectiveGain(), 1.0e-8);
+    assertEquals("value-unit/hr", leading.getObjective().getUnit());
+    assertArrayEquals(new double[] { 800.0, 200.0 }, leading.getCandidateValues(), 1.0e-10);
+    assertArrayEquals(new double[] { 100.0, -100.0 }, leading.getActionDeltasFromBestFeasible(), 1.0e-10);
+    assertEquals(EvidenceClass.ISOLATED, leading.getEvidenceClass());
+    assertEquals(1, leading.getConstraintRelief().size(), "soft constraint must not be reported");
+    assertEquals("producer A installed rate",
+        leading.getConstraintRelief().get(0).getConstraint().getEquipmentConstraintName());
+    assertEquals(100.0, leading.getConstraintRelief().get(0).getRequiredMarginRelief(), 1.0e-8);
+    assertEquals("kg/hr", leading.getConstraintRelief().get(0).getUnit());
+    assertTrue(leading.getConstraintRelief().get(0).isDerivedFromHydraulicEvidence());
+    assertEquals("allocation value proxy", leading.getObjectiveEvidence().getName());
+    assertFalse(leading.isAcceptedAsIncumbent());
+    assertEquals(500.0, fixture.producerA.getFlowRate("kg/hr"), 1.0e-8);
+    assertEquals(500.0, fixture.producerB.getFlowRate("kg/hr"), 1.0e-8);
+
+    BottleneckAnalysisResult repeated = analyzer.analyze(search);
+    assertEquals(result.getOutcome(), repeated.getOutcome());
+    assertEquals(result.getOpportunities().size(), repeated.getOpportunities().size());
+    assertEquals(result.getOpportunities().get(0).getObjectiveGain(),
+        repeated.getOpportunities().get(0).getObjectiveGain(), 0.0);
+
+    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    ObjectOutputStream output = new ObjectOutputStream(bytes);
+    output.writeObject(result);
+    output.close();
+    ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()));
+    BottleneckAnalysisResult restored = (BottleneckAnalysisResult) input.readObject();
+    input.close();
+    double[] candidateValues = restored.getOpportunities().get(0).getCandidateValues();
+    candidateValues[0] = -1.0;
+    assertArrayEquals(new double[] { 800.0, 200.0 }, restored.getOpportunities().get(0).getCandidateValues(), 0.0);
+    assertNotSame(restored.getOpportunities(), restored.getOpportunities());
+    assertThrows(UnsupportedOperationException.class, () -> restored.getOpportunities().clear());
+    assertThrows(UnsupportedOperationException.class,
+        () -> restored.getOpportunities().get(0).getConstraintRelief().clear());
+  }
+
+  /** Verifies coupled, evidence-limited, minimize-direction, and no-feasible classifications. */
+  @Test
+  void classifiesTraceEvidenceWithoutCausalClaims() {
+    ProcessModelAllocationBottleneckAnalyzer analyzer = new ProcessModelAllocationBottleneckAnalyzer(
+        "allocation-relief", "Allocation bottleneck relief", "synthetic sampled-trace validation");
+
+    AllocationFixture coupledFixture = createFixture();
+    coupledFixture.evaluator.getSimulationEvaluator().addConstraintUpperBound("producer A operating ceiling",
+        model -> coupledFixture.producerA.getFlowRate("kg/hr"), 750.0);
+    coupledFixture.evaluator.getSimulationEvaluator().getConstraints()
+        .get(coupledFixture.evaluator.getSimulationEvaluator().getConstraintCount() - 1).setUnit("kg/hr");
+    BottleneckAnalysisResult coupled = analyzer.analyze(createOptimizer(coupledFixture).optimize());
+    assertEquals(EvidenceClass.COUPLED, coupled.getOpportunities().get(0).getEvidenceClass());
+    assertEquals(2, coupled.getOpportunities().get(0).getConstraintRelief().size());
+
+    AllocationFixture limitedFixture = createFixture();
+    for (ConstraintDefinition constraint : limitedFixture.evaluator.getSimulationEvaluator().getConstraints()) {
+      if ("producer A installed rate".equals(constraint.getEquipmentConstraintName())) {
+        constraint.getCapturedCapacityConstraint().setValidityRange(200.0, 700.0);
+      }
+    }
+    BottleneckAnalysisResult limited = analyzer.analyze(createOptimizer(limitedFixture).optimize());
+    assertEquals(EvidenceClass.EVIDENCE_LIMITED, limited.getOpportunities().get(0).getEvidenceClass());
+
+    AllocationFixture minimizeFixture = createFixture();
+    ObjectiveDefinition minimizeObjective = minimizeFixture.evaluator.getSimulationEvaluator().getObjectives().get(0);
+    minimizeObjective.setDirection(ObjectiveDefinition.Direction.MINIMIZE);
+    minimizeObjective.setEvaluator(model -> -2.0 * minimizeFixture.producerA.getFlowRate("kg/hr")
+        - minimizeFixture.producerB.getFlowRate("kg/hr"));
+    BottleneckAnalysisResult minimize = analyzer.analyze(createOptimizer(minimizeFixture).optimize());
+    assertEquals(ObjectiveDefinition.Direction.MINIMIZE, minimize.getObjective().getDirection());
+    assertEquals(100.0, minimize.getOpportunities().get(0).getObjectiveGain(), 1.0e-8);
+
+    AllocationFixture infeasibleFixture = createFixture();
+    infeasibleFixture.evaluator.getSimulationEvaluator().addConstraintUpperBound("impossible hard limit", model -> 1.0,
+        0.0);
+    BottleneckAnalysisResult infeasible = analyzer.analyze(createOptimizer(infeasibleFixture).optimize());
+    assertEquals(AnalysisOutcome.NO_FEASIBLE_BASELINE, infeasible.getOutcome());
+    assertTrue(infeasible.getOpportunities().isEmpty());
+    assertTrue(infeasible.getDiagnostics().get(0).contains("not causal attribution"));
   }
 
   /** Verifies fail-fast unit, domain, fixed-total, and configuration contracts. */

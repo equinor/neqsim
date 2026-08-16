@@ -1809,6 +1809,11 @@ Commercial process simulators do not publish all implementation details, but pub
   their existing initialization paths. Seed provenance does not relax acceptance: exactly two distinct phases,
   bounded and normalized beta/compositions, material balance and log-fugacity residuals below `1e-8`, and lower Gibbs
   energy are still required.
+- Multiphase stability cleanup merges two same-type liquid phases when their maximum component-composition difference
+  is below `1e-6` and they are either a supported CPA duplicate or the two hydrocarbon roots beside an aqueous phase in
+  a neutral cubic-EOS three-phase trial. Their phase fractions are added before the redundant phase is removed, so the
+  resulting two-phase endpoint retains material balance. Compositionally distinct gas/oil/aqueous equilibria remain
+  three phase.
 - A water-rich ordinary two-phase endpoint that fails the strict equilibrium gate can retain useful phase-composition
   information even when its cold multiphase candidate collapses to one phase. After that cold candidate is rejected,
   the existing split seeds one fully initialized `TPmultiflash` calculation. A water-rich multiphase endpoint that

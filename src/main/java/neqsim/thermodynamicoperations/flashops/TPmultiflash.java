@@ -2695,10 +2695,10 @@ public class TPmultiflash extends TPflash {
       // avoids removing legitimate near-critical V/L pairs (issue #1980).
       //
       // CPA-family models may produce duplicate phases at material phase fractions
-      // (issue #2117). Cubic EOS can also retain an already-disappeared phase just
-      // above the generic beta-removal threshold. Extend the composition test to
-      // every model only for such trace phases; this cannot collapse a material
-      // near-critical V/L pair and still requires the same PhaseType and composition.
+      // (issue #2117). A neutral cubic-EOS aqueous trial can also converge two
+      // material liquid fractions to the same hydrocarbon root. Such a three-phase
+      // state is a two-phase equilibrium with duplicated phase storage. Chemical and
+      // ionic models keep the prior conservative trace-phase restriction.
       String modelName = system.getModelName();
       boolean isCpaModel = modelName != null && modelName.contains("CPA");
       boolean hasTracePhase = false;
@@ -2708,7 +2708,9 @@ public class TPmultiflash extends TPflash {
           break;
         }
       }
-      if (isCpaModel || hasTracePhase) {
+      boolean neutralAqueousThreePhaseDuplicate = system.getNumberOfPhases() == 3
+          && system.hasPhaseType(PhaseType.AQUEOUS) && !system.isChemicalSystem() && !hasIons;
+      if (isCpaModel || hasTracePhase || neutralAqueousThreePhaseDuplicate) {
         for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
           for (int j = i + 1; j < system.getNumberOfPhases(); j++) {
             if (system.getPhase(i).getType() != system.getPhase(j).getType()) {
@@ -2721,7 +2723,7 @@ public class TPmultiflash extends TPflash {
             }
             boolean traceDuplicatePair = Math.min(system.getBeta(i), system.getBeta(j)) < 10.0
                 * phaseFractionMinimumLimit;
-            if (maxCompDiff < 1.0e-6 && (isCpaModel || traceDuplicatePair)) {
+            if (maxCompDiff < 1.0e-6 && (isCpaModel || traceDuplicatePair || neutralAqueousThreePhaseDuplicate)) {
               mergeAndRemoveDuplicatePhase(i, j);
               doStabilityAnalysis = false;
               hasRemovedPhase = true;

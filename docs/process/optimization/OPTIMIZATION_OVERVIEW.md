@@ -634,6 +634,44 @@ declared step tolerance; it does not prove global optimality. Validate nearby al
 conservation, product specifications, rotating-equipment maps, utilities, safety and market limits,
 and use independent model/evaluator/optimizer instances for parallel searches.
 
+### Trace-qualified bottleneck-relief evidence
+
+`ProcessModelAllocationBottleneckAnalyzer` reads a completed
+`ProcessModelAllocationOptimizer.AllocationSearchResult`; it never runs the simulator or writes
+an operating action. It keeps only fully recovered candidates whose selected raw objective improves
+on the best feasible sample by more than the declared objective tolerance and which contain at
+least one exact finite hard-constraint violation.
+
+```java
+ProcessModelAllocationBottleneckAnalyzer analyzer =
+    new ProcessModelAllocationBottleneckAnalyzer(
+        "field-allocation-relief", "Field allocation bottleneck relief",
+        "approved allocation study revision A");
+ProcessModelAllocationBottleneckAnalyzer.BottleneckAnalysisResult relief =
+    analyzer.analyze(search);
+
+for (ProcessModelAllocationBottleneckAnalyzer.BottleneckReliefOpportunity opportunity :
+    relief.getOpportunities()) {
+  for (ProcessModelAllocationBottleneckAnalyzer.ConstraintReliefEvidence constraint :
+      opportunity.getConstraintRelief()) {
+    double requiredRelief = constraint.getRequiredMarginRelief();
+    String reliefUnit = constraint.getUnit();
+  }
+}
+```
+
+Candidate results freeze registered objective and constraint definitions beside their sampled values
+and margins, so serialization or later evaluator mutation cannot relabel the trace. Installed
+capacity relief uses exact current and design values in the hydraulic engineering unit; general
+constraints use the magnitude of their negative margin. Missing or invalid hydraulic evidence is
+reported as evidence-limited, soft constraints are excluded, and unlike relief units are never
+aggregated or ranked.
+
+The analyzer reports a sampled association, action deltas from the best feasible allocation, and an
+isolated/coupled/evidence-limited classification. It does not establish causality, capacity-sizing
+sufficiency, global optimality, a shadow price, production loss, economic value, or operating
+approval.
+
 ### ProcessOptimizationEngine Algorithms
 
 ```java

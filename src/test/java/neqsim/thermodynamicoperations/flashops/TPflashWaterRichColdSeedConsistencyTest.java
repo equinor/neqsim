@@ -65,13 +65,15 @@ class TPflashWaterRichColdSeedConsistencyTest extends neqsim.NeqSimTest {
   }
 
   @Test
-  void genuineThreePhaseCandidateIsNotForcedIntoTwoPhaseAcceptance() {
-    SystemInterface ordinary = flash(createSystem(230.0, 91.0, FEED, false), false);
+  void duplicateOilTrialIsMergedWithoutLosingMaterialBalance() {
     SystemInterface multiphase = flash(createSystem(230.0, 91.0, FEED, true), false);
 
-    assertTrue(ordinary.getNumberOfPhases() < 3);
-    assertEquals(3, multiphase.getNumberOfPhases());
-    assertTrue(maximumComponentBalanceResidual(multiphase) < 1.0e-10);
+    assertEquals(2, multiphase.getNumberOfPhases());
+    assertTrue(multiphase.hasPhaseType(PhaseType.OIL));
+    assertTrue(multiphase.hasPhaseType(PhaseType.AQUEOUS));
+    assertEquals(0.95019654, multiphase.getPhase("oil").getBeta(), 1.0e-8);
+    assertEquals(0.04980346, multiphase.getPhase("aqueous").getBeta(), 1.0e-8);
+    assertPhysicalEquilibrium(multiphase);
   }
 
   private static SystemInterface createSystem(double temperature, double pressure, double[] composition,
