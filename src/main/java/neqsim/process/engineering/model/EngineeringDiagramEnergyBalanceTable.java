@@ -21,23 +21,20 @@ import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.Severity;
  * Immutable, deterministic energy-balance closure projection.
  *
  * <p>
- * The projection adds explicit heat-transfer and shaft-work ports to the stream enthalpy terms in
- * an {@link EngineeringDiagramBalanceTable}. Port direction is always relative to the declared
- * control volume. Values are non-negative energy rates, so their sign is never inferred from an
- * equipment convention or drawing topology. Every declared port requires one explicit zero or
- * non-zero flow value.
+ * The projection adds explicit heat-transfer and shaft-work ports to the stream enthalpy terms in an
+ * {@link EngineeringDiagramBalanceTable}. Port direction is always relative to the declared control volume. Values are
+ * non-negative energy rates, so their sign is never inferred from an equipment convention or drawing topology. Every
+ * declared port requires one explicit zero or non-zero flow value.
  * </p>
  *
  * <p>
- * This class calculates first-law residuals only. It does not read live equipment duties, infer
- * missing ports, apply project tolerances, reconcile values, or promote review evidence to
- * engineering approval.
+ * This class calculates first-law residuals only. It does not read live equipment duties, infer missing ports, apply
+ * project tolerances, reconcile values, or promote review evidence to engineering approval.
  * </p>
  */
 public final class EngineeringDiagramEnergyBalanceTable implements Serializable {
   private static final long serialVersionUID = 1000L;
-  public static final String SCHEMA_VERSION =
-      "neqsim_engineering_diagram_energy_balance_table.v1";
+  public static final String SCHEMA_VERSION = "neqsim_engineering_diagram_energy_balance_table.v1";
 
   /** Type of energy crossing a declared control-volume port. */
   public enum EnergyKind {
@@ -76,15 +73,12 @@ public final class EngineeringDiagramEnergyBalanceTable implements Serializable 
      * @param direction explicit direction relative to the control volume
      * @param sourceReference source or register reference for the port declaration
      * @param evidenceState review evidence state
-     * @throws IllegalArgumentException if an identity, source, kind, direction, or evidence state
-     *         is missing
+     * @throws IllegalArgumentException if an identity, source, kind, direction, or evidence state is missing
      */
-    public EnergyPort(String balanceId, String equipmentSemanticObjectId,
-        String portSemanticObjectId, EnergyKind energyKind, EnergyDirection direction,
-        String sourceReference, EvidenceState evidenceState) {
+    public EnergyPort(String balanceId, String equipmentSemanticObjectId, String portSemanticObjectId,
+        EnergyKind energyKind, EnergyDirection direction, String sourceReference, EvidenceState evidenceState) {
       this.balanceId = requireText(balanceId, "balanceId");
-      this.equipmentSemanticObjectId =
-          requireText(equipmentSemanticObjectId, "equipmentSemanticObjectId");
+      this.equipmentSemanticObjectId = requireText(equipmentSemanticObjectId, "equipmentSemanticObjectId");
       this.portSemanticObjectId = requireText(portSemanticObjectId, "portSemanticObjectId");
       if (energyKind == null) {
         throw new IllegalArgumentException("energyKind must not be null");
@@ -172,12 +166,10 @@ public final class EngineeringDiagramEnergyBalanceTable implements Serializable 
      * @param sourceReference source calculation or register reference
      * @param provenance calculation or data lineage description
      * @param evidenceState review evidence state
-     * @throws IllegalArgumentException if an identity, source, provenance, or evidence state is
-     *         missing
+     * @throws IllegalArgumentException if an identity, source, provenance, or evidence state is missing
      */
-    public EnergyFlow(String balanceId, String portSemanticObjectId, double resultValue,
-        String resultUnit, String quantityBasis, String sourceReference, String provenance,
-        EvidenceState evidenceState) {
+    public EnergyFlow(String balanceId, String portSemanticObjectId, double resultValue, String resultUnit,
+        String quantityBasis, String sourceReference, String provenance, EvidenceState evidenceState) {
       this.balanceId = requireText(balanceId, "balanceId");
       this.portSemanticObjectId = requireText(portSemanticObjectId, "portSemanticObjectId");
       this.resultValue = resultValue;
@@ -278,15 +270,13 @@ public final class EngineeringDiagramEnergyBalanceTable implements Serializable 
       this.heatTransferOutOfControlVolume = accumulator.heatTransferOutOfControlVolume;
       this.shaftWorkIntoControlVolume = accumulator.shaftWorkIntoControlVolume;
       this.shaftWorkOutOfControlVolume = accumulator.shaftWorkOutOfControlVolume;
-      this.totalEnergyIn = inletStreamEnthalpyFlow + heatTransferIntoControlVolume
-          + shaftWorkIntoControlVolume;
-      this.totalEnergyOut = outletStreamEnthalpyFlow + heatTransferOutOfControlVolume
-          + shaftWorkOutOfControlVolume;
+      this.totalEnergyIn = inletStreamEnthalpyFlow + heatTransferIntoControlVolume + shaftWorkIntoControlVolume;
+      this.totalEnergyOut = outletStreamEnthalpyFlow + heatTransferOutOfControlVolume + shaftWorkOutOfControlVolume;
       this.energyResidual = totalEnergyIn - totalEnergyOut;
       double scale = Math.max(Math.abs(totalEnergyIn), Math.abs(totalEnergyOut));
       this.relativeEnergyResidual = scale == 0.0 ? 0.0 : energyResidual / scale;
-      this.complete = accumulator.complete && source.isStreamEnthalpyFlowComplete()
-          && declaredPortCount > 0 && declaredPortCount == suppliedFlowCount;
+      this.complete = accumulator.complete && source.isStreamEnthalpyFlowComplete() && declaredPortCount > 0
+          && declaredPortCount == suppliedFlowCount;
     }
 
     /** @return stable balance identity */
@@ -366,13 +356,10 @@ public final class EngineeringDiagramEnergyBalanceTable implements Serializable 
       result.put("suppliedFlowCount", Integer.valueOf(suppliedFlowCount));
       result.put("inletStreamEnthalpyFlow", Double.valueOf(inletStreamEnthalpyFlow));
       result.put("outletStreamEnthalpyFlow", Double.valueOf(outletStreamEnthalpyFlow));
-      result.put("heatTransferIntoControlVolume",
-          Double.valueOf(heatTransferIntoControlVolume));
-      result.put("heatTransferOutOfControlVolume",
-          Double.valueOf(heatTransferOutOfControlVolume));
+      result.put("heatTransferIntoControlVolume", Double.valueOf(heatTransferIntoControlVolume));
+      result.put("heatTransferOutOfControlVolume", Double.valueOf(heatTransferOutOfControlVolume));
       result.put("shaftWorkIntoControlVolume", Double.valueOf(shaftWorkIntoControlVolume));
-      result.put("shaftWorkOutOfControlVolume",
-          Double.valueOf(shaftWorkOutOfControlVolume));
+      result.put("shaftWorkOutOfControlVolume", Double.valueOf(shaftWorkOutOfControlVolume));
       result.put("totalEnergyIn", Double.valueOf(totalEnergyIn));
       result.put("totalEnergyOut", Double.valueOf(totalEnergyOut));
       result.put("energyResidual", Double.valueOf(energyResidual));
@@ -448,16 +435,15 @@ public final class EngineeringDiagramEnergyBalanceTable implements Serializable 
   private final List<Diagnostic> diagnostics;
 
   private EngineeringDiagramEnergyBalanceTable(EngineeringDiagramBalanceTable balanceTable,
-      List<EnergyPort> energyPorts, List<EnergyFlow> energyFlows,
-      List<EnergyBalance> energyBalances, List<Diagnostic> diagnostics) {
+      List<EnergyPort> energyPorts, List<EnergyFlow> energyFlows, List<EnergyBalance> energyBalances,
+      List<Diagnostic> diagnostics) {
     this.documentSetId = balanceTable.getDocumentSetId();
     this.sourceGraphFingerprint = balanceTable.getSourceGraphFingerprint();
     this.designCaseId = balanceTable.getDesignCaseId();
     this.sourceBalanceTableFingerprint = balanceTable.toMap().get("fingerprint").toString();
     this.energyPorts = Collections.unmodifiableList(new ArrayList<EnergyPort>(energyPorts));
     this.energyFlows = Collections.unmodifiableList(new ArrayList<EnergyFlow>(energyFlows));
-    this.energyBalances =
-        Collections.unmodifiableList(new ArrayList<EnergyBalance>(energyBalances));
+    this.energyBalances = Collections.unmodifiableList(new ArrayList<EnergyBalance>(energyBalances));
     this.diagnostics = Collections.unmodifiableList(new ArrayList<Diagnostic>(diagnostics));
   }
 
@@ -470,9 +456,8 @@ public final class EngineeringDiagramEnergyBalanceTable implements Serializable 
    * @return immutable energy-balance closure table with structured diagnostics
    * @throws IllegalArgumentException if an argument is null or a list contains null
    */
-  public static EngineeringDiagramEnergyBalanceTable fromBalanceTable(
-      EngineeringDiagramBalanceTable balanceTable, List<EnergyPort> energyPorts,
-      List<EnergyFlow> energyFlows) {
+  public static EngineeringDiagramEnergyBalanceTable fromBalanceTable(EngineeringDiagramBalanceTable balanceTable,
+      List<EnergyPort> energyPorts, List<EnergyFlow> energyFlows) {
     if (balanceTable == null) {
       throw new IllegalArgumentException("balanceTable must not be null");
     }
@@ -512,14 +497,12 @@ public final class EngineeringDiagramEnergyBalanceTable implements Serializable 
       balancesById.put(balance.getBalanceId(), balance);
     }
     Map<String, EnergyPort> portsByKey = new LinkedHashMap<String, EnergyPort>();
-    Map<String, List<EnergyPort>> portsByBalance =
-        new LinkedHashMap<String, List<EnergyPort>>();
+    Map<String, List<EnergyPort>> portsByBalance = new LinkedHashMap<String, List<EnergyPort>>();
     Set<String> invalidBalances = new LinkedHashSet<String>();
     for (EnergyPort port : sortedPorts) {
       if (!balancesById.containsKey(port.getBalanceId())) {
         diagnostics.add(new Diagnostic(Severity.ERROR, "ENERGY_PORT_UNKNOWN_BALANCE",
-            "An energy port references a balance absent from the source balance table",
-            port.getBalanceId()));
+            "An energy port references a balance absent from the source balance table", port.getBalanceId()));
         continue;
       }
       String key = portKey(port.getBalanceId(), port.getPortSemanticObjectId());
@@ -555,8 +538,7 @@ public final class EngineeringDiagramEnergyBalanceTable implements Serializable 
       }
       if (!validFlow(flow)) {
         diagnostics.add(new Diagnostic(Severity.ERROR, "ENERGY_FLOW_VALUE_INVALID",
-            "Energy flow must be finite, non-negative, in W, and on an ENERGY_RATE basis",
-            key));
+            "Energy flow must be finite, non-negative, in W, and on an ENERGY_RATE basis", key));
         invalidBalances.add(flow.getBalanceId());
         continue;
       }
@@ -566,8 +548,7 @@ public final class EngineeringDiagramEnergyBalanceTable implements Serializable 
     List<EnergyBalance> balances = new ArrayList<EnergyBalance>();
     for (Balance source : balanceTable.getBalances()) {
       Accumulator accumulator = new Accumulator();
-      accumulator.complete = balanceTable.isValid()
-          && !invalidBalances.contains(source.getBalanceId());
+      accumulator.complete = balanceTable.isValid() && !invalidBalances.contains(source.getBalanceId());
       List<EnergyPort> balancePorts = portsByBalance.get(source.getBalanceId());
       if (balancePorts == null || balancePorts.isEmpty()) {
         accumulator.complete = false;
@@ -582,8 +563,7 @@ public final class EngineeringDiagramEnergyBalanceTable implements Serializable 
           if (flow == null) {
             accumulator.complete = false;
             diagnostics.add(new Diagnostic(Severity.ERROR, "ENERGY_FLOW_MISSING",
-                "Every declared energy port requires one explicit zero or non-zero flow value",
-                key));
+                "Every declared energy port requires one explicit zero or non-zero flow value", key));
             continue;
           }
           accumulator.suppliedFlowCount++;
@@ -593,8 +573,7 @@ public final class EngineeringDiagramEnergyBalanceTable implements Serializable 
       balances.add(new EnergyBalance(source, accumulator));
     }
     Collections.sort(diagnostics, diagnosticComparator());
-    return new EngineeringDiagramEnergyBalanceTable(balanceTable, sortedPorts, sortedFlows,
-        balances, diagnostics);
+    return new EngineeringDiagramEnergyBalanceTable(balanceTable, sortedPorts, sortedFlows, balances, diagnostics);
   }
 
   /** @return source controlled-document identity */
@@ -684,8 +663,7 @@ public final class EngineeringDiagramEnergyBalanceTable implements Serializable 
     return new GsonBuilder().setPrettyPrinting().create().toJson(toMap());
   }
 
-  private static void addEnergyFlow(EnergyPort port, EnergyFlow flow,
-      Accumulator accumulator) {
+  private static void addEnergyFlow(EnergyPort port, EnergyFlow flow, Accumulator accumulator) {
     double value = flow.getResultValue();
     if (port.getEnergyKind() == EnergyKind.HEAT_TRANSFER) {
       if (port.getDirection() == EnergyDirection.INTO_CONTROL_VOLUME) {
@@ -701,8 +679,7 @@ public final class EngineeringDiagramEnergyBalanceTable implements Serializable 
   }
 
   private static boolean validFlow(EnergyFlow flow) {
-    return Double.isFinite(flow.getResultValue()) && flow.getResultValue() >= 0.0
-        && "W".equals(flow.getResultUnit())
+    return Double.isFinite(flow.getResultValue()) && flow.getResultValue() >= 0.0 && "W".equals(flow.getResultUnit())
         && "ENERGY_RATE".equals(flow.getQuantityBasis());
   }
 
@@ -729,8 +706,7 @@ public final class EngineeringDiagramEnergyBalanceTable implements Serializable 
         if (order != 0) {
           return order;
         }
-        order = left.getEquipmentSemanticObjectId()
-            .compareTo(right.getEquipmentSemanticObjectId());
+        order = left.getEquipmentSemanticObjectId().compareTo(right.getEquipmentSemanticObjectId());
         if (order != 0) {
           return order;
         }
