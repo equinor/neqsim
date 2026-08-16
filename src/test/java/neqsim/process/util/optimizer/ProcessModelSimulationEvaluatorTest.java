@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.DoubleSupplier;
 import java.util.function.ToDoubleFunction;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Isolated;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintSeverity;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
@@ -36,6 +37,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author NeqSim Development Team
  * @version 1.0
  */
+@Isolated("mutates the process-wide equipment capacity strategy registry")
 class ProcessModelSimulationEvaluatorTest {
 
   /**
