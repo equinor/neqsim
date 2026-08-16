@@ -438,19 +438,26 @@ for (double qgMSm3d : gasRates) {
 > `setSteadyStateMaxWallClockTime(...)` (default 300 s) before blaming the model
 > if `isSteadyStateWallClockLimited()` is true.
 
-> **On a long undulating line, turn the terrain closure OFF or it will not
-> converge.** Measured on a 73.8 km subsea gas-condensate export line at 4, 7, 10
-> and 12 MSm3/d: at the default `enableTerrainTracking = true` **not one rate
-> converged** — a single valley section reaches the 0.85 terrain holdup cap, the
-> inflated mixture density steepens the gradient, and the solve ends either
-> wall-clock limited or with the arrival pinned on the 1 bara floor, reporting a
-> ΔP 43–219% above OLGA. `setEnableTerrainTracking(false)` makes the same cases
-> converge in 13–49 s, at a consistent **+19 to +23%** against OLGA (12.09 vs
-> 10.15 bar at 4 MSm3/d; 96.29 vs 78.50 at 10), with arrival temperature cold by
-> the amount that extra expansion implies (2.05 vs 8.38 C at 10 MSm3/d). The
-> offset is grid-converged, so it is a closure error, not a mesh error. Do not
-> quote `TwoFluidPipe` ΔP on such a line as a design number without stating which
-> setting produced it.
+> **On a long undulating line, terrain used to prevent convergence — fixed, but
+> know the symptom.** The steady solve integrated `LiquidAccumulationTracker`
+> once per sweep with a nominal `dt`, and that tracker only ever adds liquid,
+> ratchets its volume up to what the sections already hold, then adds it back on
+> top of that holdup. It has no fixed point, so valley sections climbed to the
+> 0.85/0.95 cap and the profile never settled — measured on a 73.8 km export line
+> as a ΔP 43–219% above OLGA at 4/7/10/12 MSm3/d, none converged. The tracker is
+> no longer integrated during the steady solve (a steady state carries zero net
+> accumulation); terrain now acts only through the algebraic Froude-based
+> `applyTerrainAccumulation`, and it is still integrated in `runTransient` where
+> `dt` is physical time. If you ever see a `TwoFluidPipe` steady profile with a
+> section sitting exactly on a holdup cap, suspect this class of defect.
+
+> **Measured ΔP accuracy vs OLGA 2025.1** on that line at default settings:
+> a consistent **+19 to +23%** (12.15 vs 10.15 bar at 4 MSm3/d; 96.29 vs 78.50 at
+> 10), grid-converged (160 vs 320 sections within 0.4%), so it is a closure error,
+> not a mesh error. Arrival temperature is cold by the amount that extra expansion
+> implies (2.05 vs 8.38 C at 10 MSm3/d). 12 MSm3/d, which OLGA delivers, hits the
+> model's pressure floor — the same over-prediction expressed as lost
+> deliverability.
 
 > **`TwoFluidPipe` also fails silently when a line has no deliverability.** The
 > marching solver clamps section pressure at a 1 bara floor; that clamp is a

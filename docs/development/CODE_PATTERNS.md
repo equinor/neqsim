@@ -379,8 +379,7 @@ double inventory = pipe.getLiquidInventory("m3");
 ```
 
 > Holdup from `TwoFluidPipe` runs 2-4x OLGA on benchmarked gas-condensate lines, pressure drop runs
-> 19-23% high, and it does not always respond to a temperature change. On a long undulating line add
-> `pipe.setEnableTerrainTracking(false)` or the steady solve will not converge. See
+> 19-23% high, and it does not always respond to a temperature change. See
 > [Known limitations](../wiki/two_fluid_model#known-limitations) before using either quantitatively.
 
 ### Two-Fluid Pipe Benchmark (Cross-Validate vs Beggs & Brill)

@@ -1460,13 +1460,9 @@ For applications where empirical accuracy is preferred over mechanistic modeling
 Measured against OLGA 2025.1 on a 73.8 km subsea gas-condensate export line at matched inlet
 conditions (see [TwoFluidPipe OLGA comparison](two_fluid_model_olga_comparison#measured-comparison-against-olga-20251)):
 
-- **The terrain accumulation closure prevents convergence on a long undulating line.** At the
-  default `setEnableTerrainTracking(true)` the 73.8 km case does not converge at 4, 7, 10 or
-  12 MSm3/d: a single valley section reaches the 0.85 holdup cap and the pressure profile never
-  settles. Disable it, or discard any profile for which `isSteadyStateConverged()` is false.
-- **Pressure drop** is a consistent 19–23% above OLGA with terrain tracking off (12.09 vs 10.15 bar
-  at 4 MSm3/d, 96.29 vs 78.50 at 10), and about 12% low when free water is present (91.31 vs
-  104.06 bar). The offset is grid-converged. Beggs–Brill is 31–75% high on the same cases.
+- **Pressure drop** is a consistent 19–23% above OLGA (12.15 vs 10.15 bar at 4 MSm3/d, 96.29 vs
+  78.50 at 10), and about 12% low when free water is present (91.31 vs 104.06 bar). The offset is
+  grid-converged. Beggs–Brill is 31–75% high on the same cases.
 - **Arrival temperature** runs cold by the amount the extra expansion implies (2.05 vs 8.38 C at
   10 MSm3/d), and tracks OLGA to about 1 K once a DEH load dominates the thermal balance
   (28.9 vs 27.8 C with 10 MW).

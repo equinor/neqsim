@@ -690,44 +690,39 @@ engine on a 73.8 km subsea gas-condensate export line (ID 0.355 m, U = 3 W/m2K, 
 the arrival pressure secant-iterated until its computed inlet equals the 200 bara the NeqSim models
 are given, so every case is compared at the same inlet state.
 
-A rate sweep was re-measured on this line, at 320 sections, with the terrain accumulation closure
-in its two settings. Pressure drop, in bar:
+A rate sweep was re-measured on this line, at 320 sections. Pressure drop, in bar:
 
-| Rate | OLGA | TwoFluidPipe, terrain tracking on (default) | TwoFluidPipe, `setEnableTerrainTracking(false)` |
-|------|------|---------------------------------------------|--------------------------------------------------|
-| 4 MSm3/d | 10.15 | 23.08, **not converged** | 12.09 (+19.1%) |
-| 7 MSm3/d | 33.60 | 107.32, **not converged** | 40.09 (+19.3%) |
-| 10 MSm3/d | 78.50 | pressure floor, **not converged** | 96.29 (+22.6%) |
-| 12 MSm3/d | 138.72 | pressure floor, **not converged** | pressure floor |
+| Rate | OLGA | TwoFluidPipe | Deviation |
+|------|------|--------------|-----------|
+| 4 MSm3/d | 10.15 | 12.15 | +19.7% |
+| 7 MSm3/d | 33.60 | 40.09 | +19.3% |
+| 10 MSm3/d | 78.50 | 96.29 | +22.6% |
+| 12 MSm3/d | 138.72 | pressure floor | not delivered |
 
-**The default configuration does not converge on this line.** The terrain accumulation closure
-drives a single valley section to its 0.85 holdup cap; the mixture density there inflates the
-gradient, the pressure profile never settles, and the solve ends either wall-clock limited or with
-the arrival pinned on the 1 bara floor. `isSteadyStateConverged()` is correctly withheld in every
-one of those cases, so the failure is visible — but the reported ΔP is 43–219% high and must not be
-used. Disabling terrain tracking removes the cap, and the same case then converges in 13–49 s.
-
-**With terrain tracking off, ΔP is a consistent +19 to +23% against OLGA** across 4–12 MSm3/d. That
-offset is grid-converged: 160 sections gives 95.86 bar against 96.29 bar at 320 on the 10 MSm3/d
-case, a 0.4% spread. It is a closure error, not a discretisation error. 12 MSm3/d is delivered by
-OLGA at 138.72 bar but hits the model's pressure floor, which is the same over-prediction expressed
-as an apparent loss of deliverability.
+**ΔP is a consistent +19 to +23% against OLGA** across 4–10 MSm3/d. That offset is grid-converged:
+160 sections gives 95.86 bar against 96.29 bar at 320 on the 10 MSm3/d case, a 0.4% spread. It is a
+closure error, not a discretisation error. 12 MSm3/d is delivered by OLGA at 138.72 bar but hits the
+model's pressure floor, which is the same over-prediction expressed as an apparent loss of
+deliverability.
 
 **Arrival temperature runs cold by the amount the extra pressure drop implies** — 8.27 C against
 9.06 at 4 MSm3/d, 11.23 against 12.86 at 7, and 2.05 against 8.38 at 10, the error growing with the
 ΔP error through the extra Joule–Thomson expansion.
 
-**Liquid holdup is 2–4x OLGA.** Maximum holdup 0.064–0.072 against OLGA's 0.020–0.030 across the
-sweep, and 0.119 against 0.034 with 15 m3/hr free water (water 0.074 vs 0.020, oil 0.045 vs 0.013).
-The phase bookkeeping is sound — gas, oil and water volume fractions sum to one and stay in range at
-every node in both codes — so the discrepancy sits in the slip closure, not in the three-phase
-accounting. The slip ratio is roughly 10 against OLGA's 3, and it is the most likely driver of the
-ΔP offset through the mixture density.
+**Liquid holdup is 2–4x OLGA.** Maximum holdup 0.064–0.072 against OLGA's 0.020–0.030 in the
+terrain-free sections of the sweep, and 0.119 against 0.034 with 15 m3/hr free water (water 0.074 vs
+0.020, oil 0.045 vs 0.013). The phase bookkeeping is sound — gas, oil and water volume fractions sum
+to one and stay in range at every node in both codes — so the discrepancy sits in the slip closure,
+not in the three-phase accounting. The slip ratio is roughly 10 against OLGA's 3, and it is the most
+likely driver of the ΔP offset through the mixture density.
 
-An earlier revision of this page reported 81.20 bar (+3.4%) on the dry line. That figure came from a
+Two earlier figures on this page are superseded. The 81.20 bar (+3.4%) dry-line result came from a
 steady-state exit after a single sweep, before the section densities had been fed back into the
-momentum balance; the convergence gate that now catches this also removes the agreement. The
-+19–23% above supersedes it.
+momentum balance; the convergence gate that now catches this also removes the agreement. A later
+revision reported that the default configuration could not converge on this line at all — that was
+the liquid accumulation tracker being integrated once per steady-state sweep, which has since been
+removed from the steady solve (a steady state carries no net accumulation). The table above is
+produced at default settings.
 
 These are model-to-model comparisons on one line, and are recorded so the model is not assumed to be
 OLGA-equivalent despite sharing its modelling class.

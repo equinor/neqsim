@@ -1041,24 +1041,18 @@ models were given. Pressure drop, in bar:
 
 | Case | OLGA | TwoFluidPipe | PipeBeggsAndBrills |
 |------|------|--------------|--------------------|
-| Dry line, 4 MSm3/d | 10.15 | 12.09 (+19.1%) | 13.59 (+34%) |
+| Dry line, 4 MSm3/d | 10.15 | 12.15 (+19.7%) | 13.59 (+34%) |
 | Dry line, 7 MSm3/d | 33.60 | 40.09 (+19.3%) | 43.87 (+31%) |
 | Dry line, 10 MSm3/d | 78.50 | 96.29 (+22.6%) | 125.00 (+59%) |
 | Dry line, 12 MSm3/d | 138.72 | pressure floor | throws |
 | 15 m3/hr free water, 10 MSm3/d | 104.06 | 91.31 (−12.3%) | 143.94 (+38%) |
 
-The TwoFluidPipe column requires `setEnableTerrainTracking(false)`. **At the default setting the
-solve does not converge on this line at any of these rates** — the terrain accumulation closure
-pins a valley section at its 0.85 holdup cap, and the reported ΔP is 43–219% high with the arrival
-either wall-clock limited or on the 1 bara floor. `isSteadyStateConverged()` is withheld in each
-case, so the failure is detectable, but the number must be discarded rather than reported.
-
 Three limitations are visible in that table and should be assumed until shown otherwise:
 
-- **Pressure drop is a consistent +19 to +23% high** with terrain tracking off. The offset is
-  grid-converged (95.86 bar at 160 sections against 96.29 at 320 on the 10 MSm3/d case), so it is a
-  closure error rather than a discretisation error. Arrival temperature runs cold by the amount that
-  extra expansion implies (2.05 C against OLGA's 8.38 at 10 MSm3/d).
+- **Pressure drop is a consistent +19 to +23% high.** The offset is grid-converged (95.86 bar at 160
+  sections against 96.29 at 320 on the 10 MSm3/d case), so it is a closure error rather than a
+  discretisation error. Arrival temperature runs cold by the amount that extra expansion implies
+  (2.05 C against OLGA's 8.38 at 10 MSm3/d).
 - **Liquid holdup runs 2–4x higher than OLGA** across dry and water-bearing cases (0.064–0.072 vs
   0.020–0.030 dry; 0.119 vs 0.034 with water). The slip closure, not the phase bookkeeping, is
   responsible: gas/oil/water volume fractions sum correctly and stay in range in every case. The
