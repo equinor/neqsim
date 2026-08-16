@@ -1003,7 +1003,7 @@ public class TwoFluidPipe extends Pipeline {
           }
         }
 
-        logger.info("Three-phase flow detected: water cut = {:.1f}%, oil fraction = {:.1f}%", inletWaterCut * 100,
+        logger.info("Three-phase flow detected: water cut = {}%, oil fraction = {}%", inletWaterCut * 100,
             inletOilFraction * 100);
 
       } else if (hasOil || hasWater) {
@@ -1205,7 +1205,7 @@ public class TwoFluidPipe extends Pipeline {
     // Initialize accumulation tracker
     accumulationTracker.identifyAccumulationZones(sections);
 
-    logger.info("TwoFluidPipe initialized: {} sections, dx_min={:.2f}m{}", numberOfSections, dx,
+    logger.info("TwoFluidPipe initialized: {} sections, dx_min={}m{}", numberOfSections, dx,
         sectionLengths != null ? " (non-uniform mesh)" : "");
   }
 
@@ -1314,7 +1314,7 @@ public class TwoFluidPipe extends Pipeline {
         sec.updateStratifiedGeometry();
       }
 
-      logger.info("Forward-marching init complete. Outlet P estimate: {:.2f} bara",
+      logger.info("Forward-marching init complete. Outlet P estimate: {} bara",
           sections[numberOfSections - 1].getPressure() / 1e5);
     }
 
@@ -1330,8 +1330,7 @@ public class TwoFluidPipe extends Pipeline {
       long elapsed = System.currentTimeMillis() - startWallClock;
       if (elapsed > (long) (ssMaxWallClockTime * 1000)) {
         ssWallClockLimited = true;
-        logger.warn("Steady-state solver reached wall-clock limit ({:.1f}s) after {} iterations", ssMaxWallClockTime,
-            iter);
+        logger.warn("Steady-state solver reached wall-clock limit ({}s) after {} iterations", ssMaxWallClockTime, iter);
         break;
       }
 
@@ -1417,6 +1416,7 @@ public class TwoFluidPipe extends Pipeline {
         // Update water and oil holdups for three-phase flow
         // Check if this is a three-phase system (both oil and water densities set)
         if (sec.getWaterDensity() > 0 && sec.getOilDensity() > 0) {
+          double waterHoldupBefore = sec.getWaterHoldup();
           // Always update water/oil holdups when we have liquid and three-phase
           // properties
           if (alphaL_new > 0.0) {
@@ -1427,6 +1427,10 @@ public class TwoFluidPipe extends Pipeline {
             sec.setOilHoldup(0);
             sec.setWaterCut(prev != null ? prev.getWaterCut() : sec.getWaterCut());
           }
+
+          // The liquid split is a solved variable. Leaving it out of the residual lets the solver
+          // report convergence while oil and water are still redistributing.
+          maxChange = Math.max(maxChange, Math.abs(sec.getWaterHoldup() - waterHoldupBefore));
         }
 
         // Update derived quantities
@@ -2902,39 +2906,39 @@ public class TwoFluidPipe extends Pipeline {
 
     double lowerBound = Math.max(CLOSURE_SOLVER_HOLDUP_EPSILON, lambdaL * 1.0e-4);
     double upperBound = 1.0 - CLOSURE_SOLVER_HOLDUP_EPSILON;
-    double alphaL = Math.max(lowerBound, Math.min(upperBound, Math.max(lambdaL, asymptoticHoldup)));
-    double bestAlpha = alphaL;
-    double bestResidual = Double.POSITIVE_INFINITY;
 
-    for (int iter = 0; iter < 30; iter++) {
-      double residual = calculateStratifiedMomentumResidual(alphaL, vsG, vsL, rhoG, rhoL, muG, muL, D, theta);
-      if (Double.isFinite(residual) && Math.abs(residual) < bestResidual) {
-        bestResidual = Math.abs(residual);
-        bestAlpha = alphaL;
-      }
-      if (!Double.isFinite(residual) || Math.abs(residual) < 1.0) {
-        break;
-      }
+    // Bisection rather than a damped Newton step with an absolute residual tolerance: the residual is
+    // a pressure gradient, so any fixed threshold on it means something different on every line.
+    double residualLow = calculateStratifiedMomentumResidual(lowerBound, vsG, vsL, rhoG, rhoL, muG, muL, D, theta);
+    double residualHigh = calculateStratifiedMomentumResidual(upperBound, vsG, vsL, rhoG, rhoL, muG, muL, D, theta);
 
-      double dAlpha = Math.max(alphaL * 1.0e-3, 1.0e-12);
-      double perturbedAlpha = Math.min(upperBound, alphaL + dAlpha);
-      if (perturbedAlpha <= alphaL) {
-        break;
-      }
-      double perturbedResidual = calculateStratifiedMomentumResidual(perturbedAlpha, vsG, vsL, rhoG, rhoL, muG, muL, D,
-          theta);
-      double derivative = (perturbedResidual - residual) / (perturbedAlpha - alphaL);
-      if (!Double.isFinite(derivative) || Math.abs(derivative) < CLOSURE_DENOMINATOR_EPSILON) {
-        break;
-      }
-
-      double correction = -residual / derivative;
-      double maxCorrection = Math.max(0.5 * alphaL, 1.0e-12);
-      correction = Math.max(-maxCorrection, Math.min(maxCorrection, correction));
-      alphaL = Math.max(lowerBound, Math.min(upperBound, alphaL + 0.5 * correction));
+    if (!Double.isFinite(residualLow) || !Double.isFinite(residualHigh) || residualLow * residualHigh > 0.0) {
+      return Math.max(0.0, Math.min(1.0, Math.max(lambdaL, asymptoticHoldup)));
     }
 
-    return Math.max(0.0, Math.min(1.0, bestAlpha));
+    double low = lowerBound;
+    double high = upperBound;
+    for (int iter = 0; iter < 80; iter++) {
+      double mid = 0.5 * (low + high);
+      double residualMid = calculateStratifiedMomentumResidual(mid, vsG, vsL, rhoG, rhoL, muG, muL, D, theta);
+      if (!Double.isFinite(residualMid)) {
+        break;
+      }
+
+      if (residualLow * residualMid <= 0.0) {
+        high = mid;
+        residualHigh = residualMid;
+      } else {
+        low = mid;
+        residualLow = residualMid;
+      }
+
+      if (high - low < 1.0e-12) {
+        break;
+      }
+    }
+
+    return Math.max(0.0, Math.min(1.0, 0.5 * (low + high)));
   }
 
   /** Calculate the common-pressure-gradient residual for a stratified section. */
@@ -2952,8 +2956,9 @@ public class TwoFluidPipe extends Pipeline {
     double liquidPerimeter = D * beta / 2.0;
     double gasPerimeter = D * (Math.PI - beta / 2.0);
     double interfaceWidth = D * Math.sin(beta / 2.0);
-    double liquidHydraulicDiameter = 4.0 * liquidArea
-        / Math.max(CLOSURE_DENOMINATOR_EPSILON, liquidPerimeter + interfaceWidth);
+    // Taitel and Dukler hydraulic diameters: the interface is a shear surface for the gas but not a
+    // wall for the liquid, so it enters the gas perimeter only.
+    double liquidHydraulicDiameter = 4.0 * liquidArea / Math.max(CLOSURE_DENOMINATOR_EPSILON, liquidPerimeter);
     double gasHydraulicDiameter = 4.0 * gasArea / Math.max(CLOSURE_DENOMINATOR_EPSILON, gasPerimeter + interfaceWidth);
 
     double liquidVelocity = vsL / Math.max(CLOSURE_DENOMINATOR_EPSILON, alphaL);
