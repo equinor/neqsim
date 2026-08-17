@@ -97,6 +97,51 @@ class SimpleTEGAbsorberTest extends NeqSimTest {
     return new AbsorberCase(saturator.getOutletStream(), leanTeg, absorber);
   }
 
+  private static AbsorberCase runLowPressureWaterRichAbsorberCase() {
+    SystemSrkCPAstatoil gasFluid = new SystemSrkCPAstatoil(301.15, 29.0);
+    gasFluid.addComponent("nitrogen", 0.010000);
+    gasFluid.addComponent("CO2", 0.020000);
+    gasFluid.addComponent("methane", 0.730912);
+    gasFluid.addComponent("ethane", 0.100000);
+    gasFluid.addComponent("propane", 0.060000);
+    gasFluid.addComponent("i-butane", 0.025000);
+    gasFluid.addComponent("n-butane", 0.025000);
+    gasFluid.addComponent("i-pentane", 0.010000);
+    gasFluid.addComponent("n-pentane", 0.010000);
+    gasFluid.addComponent("n-hexane", 0.008000);
+    gasFluid.addComponent("water", 0.001088);
+    gasFluid.setMixingRule(10);
+
+    Stream wetGas = new Stream("water-rich gas", gasFluid);
+    wetGas.setFlowRate(215700.0, "kg/hr");
+    wetGas.setTemperature(28.0, "C");
+    wetGas.setPressure(29.0, "bara");
+
+    SystemSrkCPAstatoil tegFluid = new SystemSrkCPAstatoil(309.55, 29.0);
+    tegFluid.addComponent("TEG", 0.990);
+    tegFluid.addComponent("water", 0.010);
+    tegFluid.setMixingRule(10);
+
+    Stream leanTeg = new Stream("lean TEG", tegFluid);
+    leanTeg.setFlowRate(6700.0, "kg/hr");
+    leanTeg.setTemperature(36.4, "C");
+    leanTeg.setPressure(29.0, "bara");
+
+    SimpleTEGAbsorber absorber = new SimpleTEGAbsorber("low-pressure TEG contactor");
+    absorber.addGasInStream(wetGas);
+    absorber.addSolventInStream(leanTeg);
+    absorber.setNumberOfStages(3);
+    absorber.setStageEfficiency(0.8);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(wetGas);
+    process.add(leanTeg);
+    process.add(absorber);
+    process.run();
+
+    return new AbsorberCase(wetGas, leanTeg, absorber);
+  }
+
   private static void assertConservativeOutlets(AbsorberCase absorberCase) {
     StreamInterface dryGas = absorberCase.absorber.getGasOutStream();
     StreamInterface richTeg = absorberCase.absorber.getLiquidOutStream();
@@ -147,6 +192,13 @@ class SimpleTEGAbsorberTest extends NeqSimTest {
     assertConservativeOutlets(absorberCase);
     double dryGasWater = absorberCase.absorber.getGasOutStream().getFluid().getPhase(0).getComponent("water").getx();
     assertEquals(30.0e-6, dryGasWater, 2.0e-8);
+  }
+
+  @Test
+  void lowPressureWaterRichCpaCasePreservesEachComponent() {
+    AbsorberCase absorberCase = runLowPressureWaterRichAbsorberCase();
+
+    assertConservativeOutlets(absorberCase);
   }
 
   @Test
