@@ -13229,9 +13229,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Calculates total component mole amounts entering the column through all external feeds.
    *
    * <p>
-   * Feed systems may expose different component subsets or component ordering. Accumulation therefore uses the
-   * combined column product basis and matches components by name instead of assuming that every feed shares the first
-   * feed's array indices.
+   * Feed systems may expose different component subsets or component ordering. Accumulation therefore uses the combined
+   * column product basis and matches components by name instead of assuming that every feed shares the first feed's
+   * array indices.
    * </p>
    *
    * @return component mole amounts aligned with the current column product component basis
