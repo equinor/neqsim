@@ -158,16 +158,15 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
       double desiredTotal = entry.getValue();
       double tolerance = COMPONENT_INVENTORY_RELATIVE_TOLERANCE * Math.max(1.0, Math.abs(desiredTotal));
       double reportedTotal = referenceComponent.getNumberOfmoles();
-      boolean phaseInventoryChanged = !Double.isFinite(actualTotal)
-          || Math.abs(desiredTotal - actualTotal) > tolerance;
+      boolean phaseInventoryChanged = !Double.isFinite(actualTotal) || Math.abs(desiredTotal - actualTotal) > tolerance;
       boolean reportedInventoryChanged = !Double.isFinite(reportedTotal)
           || Math.abs(desiredTotal - reportedTotal) > tolerance;
       if (!phaseInventoryChanged && !reportedInventoryChanged) {
         continue;
       }
       if (!Double.isFinite(actualTotal) || actualTotal < 0.0) {
-        throw new IllegalStateException("SimpleTEGAbsorber flash returned invalid " + entry.getKey()
-            + " phase inventory: " + actualTotal + " mol");
+        throw new IllegalStateException(
+            "SimpleTEGAbsorber flash returned invalid " + entry.getKey() + " phase inventory: " + actualTotal + " mol");
       }
 
       corrected = true;

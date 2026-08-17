@@ -119,8 +119,7 @@ class SimpleTEGAbsorberTest extends NeqSimTest {
     wetGas.setPressure(29.0, "bara");
 
     SystemSrkCPAstatoil tegFluid = gasFluid.clone();
-    tegFluid.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.03,
-        0.97 });
+    tegFluid.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.03, 0.97 });
     Stream leanTeg = new Stream("low-pressure lean TEG", tegFluid);
     leanTeg.setFlowRate(6700.0, "kg/hr");
     leanTeg.setTemperature(36.4, "C");
