@@ -3,8 +3,6 @@ title: "Mixing Rules in NeqSim"
 description: "This guide provides comprehensive documentation on mixing rules available in NeqSim, including mathematical formulations, usage patterns, and recommendations for different applications."
 ---
 
-# Mixing Rules in NeqSim
-
 This guide provides comprehensive documentation on mixing rules available in NeqSim, including mathematical formulations, usage patterns, and recommendations for different applications.
 
 ## Table of Contents
@@ -137,10 +135,12 @@ fluid.setMixingRule(2);  // or fluid.setMixingRule("classic");
 Classic mixing rule with temperature-dependent binary interaction parameters:
 
 $$
-k_{ij}(T) = k_{ij,0} + k_{ij,T} \cdot T
+k_{ij}(T) = k_{ij,0} + k_{ij,T} \left(\frac{T}{273.15\ \mathrm{K}} - 1\right)
 $$
 
-Where $k_{ij,0}$ is the reference value and $k_{ij,T}$ is the temperature coefficient.
+Here, $T$ is absolute temperature in kelvin, $k_{ij,0}$ is the interaction parameter at
+273.15 K, and $k_{ij,T}$ is a dimensionless coefficient for the normalized temperature
+shift.
 
 **Use case:** Systems where kij varies significantly with temperature.
 
@@ -158,6 +158,9 @@ Alternative temperature-dependent formulation:
 $$
 k_{ij}(T) = k_{ij,0} + \frac{k_{ij,T}}{T}
 $$
+
+Here, $T$ is absolute temperature in kelvin. Because $k_{ij}$ is dimensionless,
+$k_{ij,T}$ has units of kelvin in this inverse-temperature formulation.
 
 **Use case:** Systems requiring inverse temperature dependency.
 
@@ -457,12 +460,25 @@ mixRule.setBinaryInteractionParameterji(0, 1, 0.12);  // kji
 
 ### 8.4 Setting Temperature-Dependent kij
 
+Select the temperature-dependent rule before obtaining its mixing-rule interface. The coefficient
+meaning depends on the selected formulation.
+
 ```java
-// For mixing rules 8, 9, 12
-// kij(T) = kij0 + kijT * f(T)
-mixRule.setBinaryInteractionParameter(0, 1, 0.10);    // kij0
-mixRule.setBinaryInteractionParameterT1(0, 1, 0.001); // kijT
+SystemInterface temperatureDependentFluid = new SystemSrkEos(300.0, 50.0);
+temperatureDependentFluid.addComponent("methane", 0.9);
+temperatureDependentFluid.addComponent("CO2", 0.1);
+temperatureDependentFluid.setMixingRule(EosMixingRuleType.CLASSIC_T);
+
+EosMixingRulesInterface temperatureDependentRule =
+    temperatureDependentFluid.getPhase(0).getMixingRule();
+temperatureDependentRule.setBinaryInteractionParameter(0, 1, 0.10);
+temperatureDependentRule.setBinaryInteractionParameterT1(0, 1, 0.001);
 ```
+
+For `CLASSIC_T`, the values above mean $k_{ij}(273.15\ \mathrm{K}) = 0.10$ and a
+dimensionless normalized-temperature coefficient of 0.001. For `CLASSIC_T2`, the second
+parameter instead has units of kelvin because it is divided by $T$. CPA rules 9 and 10 use the
+temperature-dependence type supplied by the interaction-parameter database.
 
 ### 8.5 Displaying kij Matrix
 
@@ -590,7 +606,7 @@ ops.TPflash();
 
 ## See Also
 
-- [Fluid Creation Guide](fluid_creation_guide) - Complete guide to creating fluids
-- [Mathematical Models](mathematical_models) - EoS equations and derivations
-- [Thermodynamic Workflows](thermodynamic_workflows) - Flash calculations and operations
-- [PVT and Fluid Characterization](pvt_fluid_characterization) - Heavy fraction handling
+- [Fluid Creation Guide](fluid_creation_guide.md) - Complete guide to creating fluids
+- [Mathematical Models](mathematical_models.md) - EoS equations and derivations
+- [Thermodynamic Workflows](thermodynamic_workflows.md) - Flash calculations and operations
+- [PVT and Fluid Characterization](pvt_fluid_characterization.md) - Heavy fraction handling
