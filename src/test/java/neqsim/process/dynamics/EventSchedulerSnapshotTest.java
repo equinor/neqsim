@@ -44,7 +44,7 @@ public class EventSchedulerSnapshotTest extends neqsim.NeqSimTest {
   public void snapshotRestoresIntermediateEventBoundary() {
     EventScheduler scheduler = new EventScheduler();
     scheduler.scheduleEvent(1.0, "first", new NoOpAction());
-    scheduler.scheduleTransactionalEvent(2.0, "second", new NoOpAction(), "area/device-2");
+    scheduler.scheduleEvent(2.0, "second", new NoOpAction());
     scheduler.scheduleEvent(3.0, "third", new NoOpAction());
 
     assertEquals(1, scheduler.fireDueEvents(1.0));
