@@ -8,8 +8,8 @@ import neqsim.process.equipment.network.NetworkQualityResult;
  * Immutable, unit-safe evidence for one process-boundary constraint at one completed operating point.
  *
  * <p>
- * Physical values and margins retain their engineering unit. {@link #getScaledViolation()} is the only
- * dimensionless quantity and is formed with the explicit positive {@link #getResidualScale()}.
+ * Physical values and margins retain their engineering unit. {@link #getScaledViolation()} is the only dimensionless
+ * quantity and is formed with the explicit positive {@link #getResidualScale()}.
  * </p>
  */
 public final class ProcessBoundaryConstraintEvidence implements Serializable {
@@ -17,36 +17,22 @@ public final class ProcessBoundaryConstraintEvidence implements Serializable {
 
   /** Boundary role. */
   public enum Kind {
-    INJECTION,
-    RECEIVING_CAPACITY,
-    EXPORT_CAPACITY,
-    PRODUCT_QUALITY,
-    NOMINATION
+    INJECTION, RECEIVING_CAPACITY, EXPORT_CAPACITY, PRODUCT_QUALITY, NOMINATION
   }
 
   /** Positive-flow direction relative to the modeled process. */
   public enum FlowDirection {
-    INTO_PROCESS,
-    OUT_OF_PROCESS,
-    BIDIRECTIONAL,
-    NOT_APPLICABLE
+    INTO_PROCESS, OUT_OF_PROCESS, BIDIRECTIONAL, NOT_APPLICABLE
   }
 
   /** Applicability of the registered validity period to this evaluation. */
   public enum ApplicabilityStatus {
-    APPLICABLE,
-    OUTSIDE_VALIDITY,
-    NOT_ASSESSED
+    APPLICABLE, OUTSIDE_VALIDITY, NOT_ASSESSED
   }
 
   /** Availability of the runtime sample used to calculate the residual. */
   public enum CalculationStatus {
-    AVAILABLE,
-    MISSING_VALUE,
-    NON_FINITE_VALUE,
-    NOT_CALCULABLE,
-    METADATA_MISMATCH,
-    OUTSIDE_VALIDITY
+    AVAILABLE, MISSING_VALUE, NON_FINITE_VALUE, NOT_CALCULABLE, METADATA_MISMATCH, OUTSIDE_VALIDITY
   }
 
   /** Immutable registration metadata, safe to retain independently of evaluator callbacks. */
@@ -203,8 +189,7 @@ public final class ProcessBoundaryConstraintEvidence implements Serializable {
     private final String diagnostic;
 
     /** Creates one immutable sample. */
-    public Sample(Double value, CalculationStatus status, Double sourceMargin, String provenance,
-        String diagnostic) {
+    public Sample(Double value, CalculationStatus status, Double sourceMargin, String provenance, String diagnostic) {
       this.value = value;
       this.status = status == null ? CalculationStatus.NOT_CALCULABLE : status;
       this.sourceMargin = sourceMargin;
@@ -220,11 +205,11 @@ public final class ProcessBoundaryConstraintEvidence implements Serializable {
     /** Adapts a network-quality result without retaining its mutable reference object. */
     public static Sample fromNetworkQualityResult(NetworkQualityResult result) {
       if (result == null) {
-        return new Sample(null, CalculationStatus.NOT_CALCULABLE, null, null,
-            "Network quality result was null");
+        return new Sample(null, CalculationStatus.NOT_CALCULABLE, null, null, "Network quality result was null");
       }
       CalculationStatus calculationStatus = result.getStatus() == NetworkQualityResult.Status.NOT_CALCULABLE
-          ? CalculationStatus.NOT_CALCULABLE : CalculationStatus.AVAILABLE;
+          ? CalculationStatus.NOT_CALCULABLE
+          : CalculationStatus.AVAILABLE;
       return new Sample(result.getValue(), calculationStatus, result.getMargin(), result.getProvenance(),
           result.getMessage());
     }
@@ -274,8 +259,8 @@ public final class ProcessBoundaryConstraintEvidence implements Serializable {
   private final String diagnostic;
 
   /** Creates one evaluated evidence row. */
-  ProcessBoundaryConstraintEvidence(Metadata metadata,
-      ProcessModelSimulationEvaluator.ConstraintDefinition definition, Sample sample, double residualScale) {
+  ProcessBoundaryConstraintEvidence(Metadata metadata, ProcessModelSimulationEvaluator.ConstraintDefinition definition,
+      Sample sample, double residualScale) {
     if (metadata == null || definition == null) {
       throw new IllegalArgumentException("Boundary metadata and constraint definition are required");
     }
@@ -283,8 +268,7 @@ public final class ProcessBoundaryConstraintEvidence implements Serializable {
       throw new IllegalArgumentException("Residual scale must be finite and positive");
     }
     this.metadata = metadata;
-    this.qualifiedConstraintName = metadata.getAreaName() + "::" + metadata.getPointName() + "/"
-        + definition.getName();
+    this.qualifiedConstraintName = metadata.getAreaName() + "::" + metadata.getPointName() + "/" + definition.getName();
     this.constraintType = definition.getType();
     this.hard = definition.isHard();
     this.unit = definition.getUnit();
@@ -293,7 +277,8 @@ public final class ProcessBoundaryConstraintEvidence implements Serializable {
     this.equalityTolerance = definition.getEqualityTolerance();
     this.residualScale = residualScale;
     Sample safeSample = sample == null
-        ? new Sample(null, CalculationStatus.MISSING_VALUE, null, null, "Boundary sampler returned null") : sample;
+        ? new Sample(null, CalculationStatus.MISSING_VALUE, null, null, "Boundary sampler returned null")
+        : sample;
     CalculationStatus status = safeSample.getStatus();
     Double value = safeSample.getValue();
     if (metadata.getApplicabilityStatus() == ApplicabilityStatus.OUTSIDE_VALIDITY) {

@@ -3110,8 +3110,8 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       if (processBoundaryConstraintEvidence == null || processBoundaryConstraintEvidence.isEmpty()) {
         return Collections.emptyList();
       }
-      return Collections.unmodifiableList(
-          new ArrayList<ProcessBoundaryConstraintEvidence>(processBoundaryConstraintEvidence));
+      return Collections
+          .unmodifiableList(new ArrayList<ProcessBoundaryConstraintEvidence>(processBoundaryConstraintEvidence));
     }
 
     /** Sets boundary evidence using a defensive immutable copy. */
@@ -3120,8 +3120,8 @@ public class ProcessModelSimulationEvaluator implements Serializable {
         processBoundaryConstraintEvidence = Collections.emptyList();
         return;
       }
-      processBoundaryConstraintEvidence = Collections.unmodifiableList(
-          new ArrayList<ProcessBoundaryConstraintEvidence>(evidence));
+      processBoundaryConstraintEvidence = Collections
+          .unmodifiableList(new ArrayList<ProcessBoundaryConstraintEvidence>(evidence));
     }
 
     /**
@@ -3433,8 +3433,8 @@ public class ProcessModelSimulationEvaluator implements Serializable {
    * Adds a fully qualified process-boundary constraint.
    *
    * <p>
-   * Bounds and units are frozen at registration. The structured sampler is invoked once after each completed model
-   * run; missing, non-finite, not-calculable, or out-of-validity evidence fails a hard constraint closed.
+   * Bounds and units are frozen at registration. The structured sampler is invoked once after each completed model run;
+   * missing, non-finite, not-calculable, or out-of-validity evidence fails a hard constraint closed.
    * </p>
    *
    * @param name human-readable constraint name
@@ -3510,9 +3510,9 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     double target = nomination.getValue(periodIndex);
     double tolerance = Math.abs(target) * Math.abs(nomination.getToleranceFraction());
     ProcessBoundaryConstraintEvidence.Metadata metadata = new ProcessBoundaryConstraintEvidence.Metadata(
-        areaName + "::" + nomination.getPointName() + "/nomination/" + periodIndex, areaName,
-        nomination.getPointName(), ProcessBoundaryConstraintEvidence.Kind.NOMINATION, flowDirection,
-        nomination.getBasis(), provenance, Double.NaN, Integer.toString(periodIndex), Integer.toString(periodIndex),
+        areaName + "::" + nomination.getPointName() + "/nomination/" + periodIndex, areaName, nomination.getPointName(),
+        ProcessBoundaryConstraintEvidence.Kind.NOMINATION, flowDirection, nomination.getBasis(), provenance, Double.NaN,
+        Integer.toString(periodIndex), Integer.toString(periodIndex),
         ProcessBoundaryConstraintEvidence.ApplicabilityStatus.APPLICABLE, "nominated rate", null, null, periodIndex);
     BoundarySampleEvaluator sampler = new BoundarySampleEvaluator() {
       private static final long serialVersionUID = 1L;
@@ -3540,8 +3540,8 @@ public class ProcessModelSimulationEvaluator implements Serializable {
    * @return this evaluator for chaining
    */
   public ProcessModelSimulationEvaluator addNetworkQualityConstraint(String name, String areaName, String pointName,
-      NetworkQualityResult specification, BoundarySampleEvaluator sampleEvaluator, boolean hard,
-      double penaltyWeight, double residualScale) {
+      NetworkQualityResult specification, BoundarySampleEvaluator sampleEvaluator, boolean hard, double penaltyWeight,
+      double residualScale) {
     if (specification == null || sampleEvaluator == null) {
       throw new IllegalArgumentException("Quality specification and sampler are required");
     }

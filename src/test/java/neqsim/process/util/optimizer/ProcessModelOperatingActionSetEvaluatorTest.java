@@ -104,10 +104,10 @@ class ProcessModelOperatingActionSetEvaluatorTest {
         "synthetic host receiving basis", 1.0, null, null,
         ProcessBoundaryConstraintEvidence.ApplicabilityStatus.NOT_ASSESSED, "total rate", null, null, -1);
     simulation.addBoundaryConstraint("host receiving rate", boundary,
-        model -> ProcessBoundaryConstraintEvidence.Sample.available(
-            fixture.producerA.getFlowRate("kg/hr") + fixture.producerB.getFlowRate("kg/hr")),
-        ProcessModelSimulationEvaluator.ConstraintDefinition.Type.UPPER_BOUND, Double.NEGATIVE_INFINITY, 2000.0,
-        0.0, "kg/hr", true, 10.0, 1000.0);
+        model -> ProcessBoundaryConstraintEvidence.Sample
+            .available(fixture.producerA.getFlowRate("kg/hr") + fixture.producerB.getFlowRate("kg/hr")),
+        ProcessModelSimulationEvaluator.ConstraintDefinition.Type.UPPER_BOUND, Double.NEGATIVE_INFINITY, 2000.0, 0.0,
+        "kg/hr", true, 10.0, 1000.0);
     ProcessModelOperatingAction actionA = ProcessModelOperatingAction.continuous("producer-a-rate", "Producer A rate",
         "wells::producer A.flowRate", 200.0, 1000.0, "kg/hr", "synthetic producer A envelope");
     ProcessModelOperatingAction actionB = ProcessModelOperatingAction.continuous("producer-b-rate", "Producer B rate",
@@ -228,8 +228,7 @@ class ProcessModelOperatingActionSetEvaluatorTest {
     assertThrows(UnsupportedOperationException.class, () -> restored.getActions().clear());
     assertThrows(UnsupportedOperationException.class, () -> restored.getActionEvidence().clear());
     assertThrows(UnsupportedOperationException.class, () -> restored.getHydraulicConstraints().clear());
-    assertThrows(UnsupportedOperationException.class,
-        () -> restored.getProcessBoundaryConstraintEvidence().clear());
+    assertThrows(UnsupportedOperationException.class, () -> restored.getProcessBoundaryConstraintEvidence().clear());
     assertThrows(UnsupportedOperationException.class, () -> restored.getDiagnostics().clear());
   }
 

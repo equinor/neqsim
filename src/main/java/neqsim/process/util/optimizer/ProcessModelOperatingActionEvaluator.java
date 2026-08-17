@@ -638,8 +638,8 @@ public final class ProcessModelOperatingActionEvaluator {
       this.constraintMargins = Arrays.copyOf(constraintMargins, constraintMargins.length);
       this.hydraulicConstraints = Collections
           .unmodifiableList(new ArrayList<HydraulicConstraintSnapshot>(hydraulicConstraints));
-      this.processBoundaryConstraintEvidence = Collections.unmodifiableList(
-          new ArrayList<ProcessBoundaryConstraintEvidence>(processBoundaryConstraintEvidence));
+      this.processBoundaryConstraintEvidence = Collections
+          .unmodifiableList(new ArrayList<ProcessBoundaryConstraintEvidence>(processBoundaryConstraintEvidence));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<String>(diagnostics));
     }
 
@@ -746,8 +746,8 @@ public final class ProcessModelOperatingActionEvaluator {
 
     /** @return fresh immutable qualified boundary evidence in constraint registration order */
     public List<ProcessBoundaryConstraintEvidence> getProcessBoundaryConstraintEvidence() {
-      return Collections.unmodifiableList(
-          new ArrayList<ProcessBoundaryConstraintEvidence>(processBoundaryConstraintEvidence));
+      return Collections
+          .unmodifiableList(new ArrayList<ProcessBoundaryConstraintEvidence>(processBoundaryConstraintEvidence));
     }
 
     /** @return fresh immutable snapshot of diagnostics */

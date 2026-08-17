@@ -46,17 +46,17 @@ class ProcessModelSimulationEvaluatorTest {
   void boundaryEvidenceRetainsQualifiedMetadataAndFailsClosed() {
     ModelFixture fixture = createModelFixture();
     ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
-    ProcessBoundaryConstraintEvidence.Metadata metadata = new ProcessBoundaryConstraintEvidence.Metadata(
-        "export-gas", "separation", "gas export", ProcessBoundaryConstraintEvidence.Kind.EXPORT_CAPACITY,
-        ProcessBoundaryConstraintEvidence.FlowDirection.OUT_OF_PROCESS,
-        NetworkDecisionVariable.RateBasis.MASS, "installed export contract", 0.9, "2026-01", "2026-12",
+    ProcessBoundaryConstraintEvidence.Metadata metadata = new ProcessBoundaryConstraintEvidence.Metadata("export-gas",
+        "separation", "gas export", ProcessBoundaryConstraintEvidence.Kind.EXPORT_CAPACITY,
+        ProcessBoundaryConstraintEvidence.FlowDirection.OUT_OF_PROCESS, NetworkDecisionVariable.RateBasis.MASS,
+        "installed export contract", 0.9, "2026-01", "2026-12",
         ProcessBoundaryConstraintEvidence.ApplicabilityStatus.APPLICABLE, "gas rate", "metered", null, -1);
     AtomicInteger samples = new AtomicInteger();
     evaluator.addBoundaryConstraint("maximum export", metadata, model -> {
       samples.incrementAndGet();
       return ProcessBoundaryConstraintEvidence.Sample.available(10500.0);
-    }, ProcessModelSimulationEvaluator.ConstraintDefinition.Type.UPPER_BOUND, Double.NEGATIVE_INFINITY, 10000.0,
-        0.0, "kg/hr", true, 25.0, 500.0);
+    }, ProcessModelSimulationEvaluator.ConstraintDefinition.Type.UPPER_BOUND, Double.NEGATIVE_INFINITY, 10000.0, 0.0,
+        "kg/hr", true, 25.0, 500.0);
 
     ProcessModelSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[0]);
     ProcessBoundaryConstraintEvidence evidence = result.getProcessBoundaryConstraintEvidence().get(0);
@@ -77,8 +77,9 @@ class ProcessModelSimulationEvaluatorTest {
     missingEvaluator.addBoundaryConstraint("required injection", metadata,
         model -> new ProcessBoundaryConstraintEvidence.Sample(null,
             ProcessBoundaryConstraintEvidence.CalculationStatus.NOT_CALCULABLE, null, "meter historian",
-            "sample unavailable"), ProcessModelSimulationEvaluator.ConstraintDefinition.Type.LOWER_BOUND, 100.0,
-        Double.POSITIVE_INFINITY, 0.0, "kg/hr", true, 7.0, 100.0);
+            "sample unavailable"),
+        ProcessModelSimulationEvaluator.ConstraintDefinition.Type.LOWER_BOUND, 100.0, Double.POSITIVE_INFINITY, 0.0,
+        "kg/hr", true, 7.0, 100.0);
     ProcessModelSimulationEvaluator.EvaluationResult missing = missingEvaluator.evaluate(new double[0]);
     assertFalse(missing.isFeasible());
     assertEquals(7.0, missing.getPenaltySum(), 0.0);
@@ -94,8 +95,8 @@ class ProcessModelSimulationEvaluatorTest {
         ProcessBoundaryConstraintEvidence.ApplicabilityStatus.APPLICABLE, "water rate", null, null, -1);
     lowerEvaluator.addBoundaryConstraint("minimum injection", injection,
         model -> ProcessBoundaryConstraintEvidence.Sample.available(50.0),
-        ProcessModelSimulationEvaluator.ConstraintDefinition.Type.LOWER_BOUND, 100.0,
-        Double.POSITIVE_INFINITY, 0.0, "kg/hr", true, 1.0, 25.0);
+        ProcessModelSimulationEvaluator.ConstraintDefinition.Type.LOWER_BOUND, 100.0, Double.POSITIVE_INFINITY, 0.0,
+        "kg/hr", true, 1.0, 25.0);
     ProcessModelSimulationEvaluator.EvaluationResult lower = lowerEvaluator.evaluate(new double[0]);
     assertFalse(lower.isFeasible());
     assertEquals(-50.0, lower.getConstraintMargins()[0], 0.0);
@@ -107,8 +108,8 @@ class ProcessModelSimulationEvaluatorTest {
   void nominationAndQualityAdaptersProduceFreshDeterministicEvidence() {
     ModelFixture fixture = createModelFixture();
     ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
-    NetworkNomination nomination = new NetworkNomination("sales meter", new double[] {10000.0, 12000.0},
-        "kg/hr", NetworkDecisionVariable.RateBasis.MASS, 0.02);
+    NetworkNomination nomination = new NetworkNomination("sales meter", new double[] { 10000.0, 12000.0 }, "kg/hr",
+        NetworkDecisionVariable.RateBasis.MASS, 0.02);
     AtomicInteger nominationSamples = new AtomicInteger();
     evaluator.addNominationConstraint("sales nomination", "separation", nomination, 0,
         ProcessBoundaryConstraintEvidence.FlowDirection.OUT_OF_PROCESS, model -> {
@@ -118,16 +119,15 @@ class ProcessModelSimulationEvaluatorTest {
 
     QualityReference reference = QualityReference.atPressureAndTemperature(70.0, "bara", 15.0, "C")
         .withBasis("synthetic sales-gas specification");
-    NetworkQualityResult specification = new NetworkQualityResult("water_dew_point", null, null, "C", reference,
-        null, -8.0, null, NetworkQualityResult.Status.NOT_CALCULABLE, "ISO synthetic", "sales contract", null);
+    NetworkQualityResult specification = new NetworkQualityResult("water_dew_point", null, null, "C", reference, null,
+        -8.0, null, NetworkQualityResult.Status.NOT_CALCULABLE, "ISO synthetic", "sales contract", null);
     AtomicInteger qualitySamples = new AtomicInteger();
-    evaluator.addNetworkQualityConstraint("water dew point", "separation", "sales meter", specification,
-        model -> {
-          qualitySamples.incrementAndGet();
-          return ProcessBoundaryConstraintEvidence.Sample.fromNetworkQualityResult(new NetworkQualityResult(
-              "water_dew_point", null, -10.0, "C", reference, null, -8.0, 2.0,
-              NetworkQualityResult.Status.PASS, "ISO synthetic", "online analyzer", "within limit"));
-        }, true, 10.0, 1.0);
+    evaluator.addNetworkQualityConstraint("water dew point", "separation", "sales meter", specification, model -> {
+      qualitySamples.incrementAndGet();
+      return ProcessBoundaryConstraintEvidence.Sample
+          .fromNetworkQualityResult(new NetworkQualityResult("water_dew_point", null, -10.0, "C", reference, null, -8.0,
+              2.0, NetworkQualityResult.Status.PASS, "ISO synthetic", "online analyzer", "within limit"));
+    }, true, 10.0, 1.0);
 
     ProcessModelSimulationEvaluator.EvaluationResult first = evaluator.evaluate(new double[0]);
     ProcessModelSimulationEvaluator.EvaluationResult second = evaluator.evaluate(new double[0]);
@@ -148,9 +148,9 @@ class ProcessModelSimulationEvaluatorTest {
 
     ProcessModelSimulationEvaluator failingQuality = new ProcessModelSimulationEvaluator(fixture.model);
     failingQuality.addNetworkQualityConstraint("water dew point", "separation", "sales meter", specification,
-        model -> ProcessBoundaryConstraintEvidence.Sample.fromNetworkQualityResult(new NetworkQualityResult(
-            "water_dew_point", null, -6.0, "C", reference, null, -8.0, -2.0,
-            NetworkQualityResult.Status.FAIL, "ISO synthetic", "online analyzer", "above limit")),
+        model -> ProcessBoundaryConstraintEvidence.Sample
+            .fromNetworkQualityResult(new NetworkQualityResult("water_dew_point", null, -6.0, "C", reference, null,
+                -8.0, -2.0, NetworkQualityResult.Status.FAIL, "ISO synthetic", "online analyzer", "above limit")),
         true, 10.0, 1.0);
     ProcessModelSimulationEvaluator.EvaluationResult failed = failingQuality.evaluate(new double[0]);
     assertFalse(failed.isFeasible());
@@ -160,9 +160,9 @@ class ProcessModelSimulationEvaluatorTest {
 
     ProcessModelSimulationEvaluator unavailableQuality = new ProcessModelSimulationEvaluator(fixture.model);
     unavailableQuality.addNetworkQualityConstraint("water dew point", "separation", "sales meter", specification,
-        model -> ProcessBoundaryConstraintEvidence.Sample.fromNetworkQualityResult(new NetworkQualityResult(
-            "water_dew_point", null, null, "C", reference, null, -8.0, null,
-            NetworkQualityResult.Status.NOT_CALCULABLE, "ISO synthetic", "online analyzer", "sample missing")),
+        model -> ProcessBoundaryConstraintEvidence.Sample.fromNetworkQualityResult(
+            new NetworkQualityResult("water_dew_point", null, null, "C", reference, null, -8.0, null,
+                NetworkQualityResult.Status.NOT_CALCULABLE, "ISO synthetic", "online analyzer", "sample missing")),
         true, 10.0, 1.0);
     ProcessModelSimulationEvaluator.EvaluationResult unavailable = unavailableQuality.evaluate(new double[0]);
     assertFalse(unavailable.isFeasible());
@@ -175,15 +175,15 @@ class ProcessModelSimulationEvaluatorTest {
   void boundaryEvidenceRoundTripsThroughJavaSerialization() throws Exception {
     ModelFixture fixture = createModelFixture();
     ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
-    ProcessBoundaryConstraintEvidence.Metadata metadata = new ProcessBoundaryConstraintEvidence.Metadata(
-        "receiving", "wells", "host inlet", ProcessBoundaryConstraintEvidence.Kind.RECEIVING_CAPACITY,
+    ProcessBoundaryConstraintEvidence.Metadata metadata = new ProcessBoundaryConstraintEvidence.Metadata("receiving",
+        "wells", "host inlet", ProcessBoundaryConstraintEvidence.Kind.RECEIVING_CAPACITY,
         ProcessBoundaryConstraintEvidence.FlowDirection.INTO_PROCESS, NetworkDecisionVariable.RateBasis.MASS,
-        "host design basis", Double.NaN, null, null,
-        ProcessBoundaryConstraintEvidence.ApplicabilityStatus.NOT_ASSESSED, "rate", null, null, -1);
+        "host design basis", Double.NaN, null, null, ProcessBoundaryConstraintEvidence.ApplicabilityStatus.NOT_ASSESSED,
+        "rate", null, null, -1);
     evaluator.addBoundaryConstraint("host capacity", metadata,
         model -> ProcessBoundaryConstraintEvidence.Sample.available(9000.0),
-        ProcessModelSimulationEvaluator.ConstraintDefinition.Type.RANGE, 1000.0, 10000.0, 0.0, "kg/hr", true,
-        1.0, 1000.0);
+        ProcessModelSimulationEvaluator.ConstraintDefinition.Type.RANGE, 1000.0, 10000.0, 0.0, "kg/hr", true, 1.0,
+        1000.0);
     ProcessBoundaryConstraintEvidence original = evaluator.evaluate(new double[0])
         .getProcessBoundaryConstraintEvidence().get(0);
 
