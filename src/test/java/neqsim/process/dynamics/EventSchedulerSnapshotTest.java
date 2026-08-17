@@ -44,7 +44,7 @@ public class EventSchedulerSnapshotTest extends neqsim.NeqSimTest {
   public void snapshotRestoresIntermediateEventBoundary() {
     EventScheduler scheduler = new EventScheduler();
     scheduler.scheduleEvent(1.0, "first", new NoOpAction());
-    scheduler.scheduleEvent(2.0, "second", new NoOpAction());
+    scheduler.scheduleTransactionalEvent(2.0, "second", new NoOpAction(), "area/device-2");
     scheduler.scheduleEvent(3.0, "third", new NoOpAction());
 
     assertEquals(1, scheduler.fireDueEvents(1.0));
@@ -97,7 +97,7 @@ public class EventSchedulerSnapshotTest extends neqsim.NeqSimTest {
   public void snapshotRoundTripsThroughJavaSerialization() throws Exception {
     EventScheduler scheduler = new EventScheduler();
     scheduler.scheduleEvent(1.0, "first", new NoOpAction());
-    scheduler.scheduleEvent(2.0, "second", new NoOpAction());
+    scheduler.scheduleTransactionalEvent(2.0, "second", new NoOpAction(), "area/device-2");
     scheduler.fireDueEvents(1.0);
 
     EventScheduler.Snapshot original = scheduler.snapshot();
@@ -118,6 +118,9 @@ public class EventSchedulerSnapshotTest extends neqsim.NeqSimTest {
     assertEquals(1, restoredSnapshot.getFiredEventCount());
     assertEquals(1, restoredScheduler.getPendingEvents().size());
     assertEquals("second", restoredScheduler.getPendingEvents().get(0).getLabel());
+    assertEquals(true, restoredScheduler.getPendingEvents().get(0).hasDeclaredTransientStateScope());
+    assertEquals(1, restoredScheduler.getPendingEvents().get(0).getTransientStateIdentities().size());
+    assertEquals("area/device-2", restoredScheduler.getPendingEvents().get(0).getTransientStateIdentities().get(0));
     assertEquals(1, restoredScheduler.getFiredEvents().size());
     assertEquals("first", restoredScheduler.getFiredEvents().get(0).getLabel());
   }
@@ -131,6 +134,30 @@ public class EventSchedulerSnapshotTest extends neqsim.NeqSimTest {
     assertThrows(IllegalArgumentException.class, () -> scheduler.restore(null));
     assertEquals(1, scheduler.getPendingEvents().size());
     assertEquals(0, scheduler.getFiredEvents().size());
+  }
+
+  /** Transaction-scoped scheduling validates and defensively copies stable participant identities. */
+  @Test
+  public void transactionScopeRequiresUniqueNonEmptyIdentities() {
+    EventScheduler scheduler = new EventScheduler();
+    NoOpAction action = new NoOpAction();
+
+    assertThrows(IllegalArgumentException.class,
+        () -> scheduler.scheduleTransactionalEvent(1.0, "none", action, new String[0]));
+    assertThrows(IllegalArgumentException.class,
+        () -> scheduler.scheduleTransactionalEvent(1.0, "null", action, (String[]) null));
+    assertThrows(IllegalArgumentException.class, () -> scheduler.scheduleTransactionalEvent(1.0, "empty", action, " "));
+    assertThrows(IllegalArgumentException.class,
+        () -> scheduler.scheduleTransactionalEvent(1.0, "duplicate", action, "area/device", "area/device"));
+
+    String[] identities = new String[] { " area/device " };
+    EventScheduler.ScheduledEvent event = scheduler.scheduleTransactionalEvent(1.0, "valid", action, identities);
+    identities[0] = "changed";
+
+    assertEquals(true, event.hasDeclaredTransientStateScope());
+    assertEquals(1, event.getTransientStateIdentities().size());
+    assertEquals("area/device", event.getTransientStateIdentities().get(0));
+    assertThrows(UnsupportedOperationException.class, () -> event.getTransientStateIdentities().add("other"));
   }
 
   private static final class NoOpAction implements Runnable, java.io.Serializable {
