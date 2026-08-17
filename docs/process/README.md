@@ -616,15 +616,24 @@ process.add(recycle);
 
 ### Calculators
 
-Perform custom calculations.
+Use an explicit Java callback; `Calculator` does not parse expression strings. Register the
+equipment objects themselves so optimized process execution can derive graph dependencies.
 
 ```java
-Calculator calc = new Calculator("MW Calculator");
+Calculator calc = new Calculator("heater target calculator");
 calc.addInputVariable(stream);
-calc.setOutputVariable(heater, "duty");
-calc.setExpression("molarMass * 1000");
+calc.setOutputVariable(heater);
+calc.setCalculationMethod((inputs, output) -> {
+    Stream feed = (Stream) inputs.get(0);
+    Heater target = (Heater) output;
+    target.setOutTemperature(feed.getTemperature("K") + 10.0, "K");
+});
 process.add(calc);
 ```
+
+See [Calculators and setters](equipment/util/calculators.md) for a complete executable example,
+preset calculations, recycle-coupling behavior, supported setter targets, and validation
+boundaries.
 
 ---
 
