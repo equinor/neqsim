@@ -30,9 +30,10 @@ import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.ObjectiveDe
  *
  * <p>
  * The action-set identifier, name, provenance, ordered action definitions, per-action write/read-back evidence,
- * objective and constraint arrays, hydraulic evidence, restoration status, and diagnostics are retained in an immutable
- * serializable result suitable for JPype/Python. Action identifiers and automation addresses must be unique so one
- * transaction cannot write the same control target twice under different metadata.
+ * objective and constraint arrays, hydraulic and complete installed-capacity evidence, restoration status, and
+ * diagnostics are retained in an immutable serializable result suitable for JPype/Python. Action identifiers and
+ * automation addresses must be unique so one transaction cannot write the same control target twice under different
+ * metadata.
  * </p>
  *
  * <p>
@@ -662,8 +663,10 @@ public final class ProcessModelOperatingActionSetEvaluator {
     private final String name;
     /** Constraint type. */
     private final ConstraintDefinition.Type type;
-    /** Constraint unit. */
+    /** Unit of the registered value and margin. */
     private final String unit;
+    /** Separate physical installed-capacity unit, or null for a general constraint. */
+    private final String physicalUnit;
     /** Whether violation makes the point infeasible. */
     private final boolean hard;
     /** Soft-penalty weight metadata. */
@@ -693,6 +696,7 @@ public final class ProcessModelOperatingActionSetEvaluator {
       this.name = definition.getName();
       this.type = definition.getType();
       this.unit = definition.getUnit();
+      this.physicalUnit = definition.getCapacityPhysicalUnit();
       this.hard = definition.isHard();
       this.penaltyWeight = definition.getPenaltyWeight();
       this.lowerBound = definition.getLowerBound();
@@ -724,6 +728,15 @@ public final class ProcessModelOperatingActionSetEvaluator {
     /** @return constraint and margin unit, possibly null when not declared */
     public String getUnit() {
       return unit;
+    }
+
+    /**
+     * Returns the physical engineering unit for installed-capacity evidence.
+     *
+     * @return physical unit, or null for a general constraint
+     */
+    public String getPhysicalUnit() {
+      return physicalUnit;
     }
 
     /** @return true when violation makes the evaluator point infeasible */
@@ -846,6 +859,9 @@ public final class ProcessModelOperatingActionSetEvaluator {
     /** Required hydraulic snapshots. */
     private final List<HydraulicConstraintSnapshot> hydraulicConstraints;
 
+    /** Complete unit-safe installed-capacity evidence from the candidate operating point. */
+    private final List<InstalledEquipmentCapacityEvidence> installedEquipmentCapacityEvidence;
+
     /** Immutable diagnostics. */
     private final List<String> diagnostics;
 
@@ -856,7 +872,8 @@ public final class ProcessModelOperatingActionSetEvaluator {
         boolean candidateEvaluatorFeasible, boolean baselineRestored, boolean baselineSimulationConverged,
         double[] rawObjectives, double[] objectives, List<CandidateObjectiveEvidence> objectiveEvidence,
         double[] constraintValues, double[] constraintMargins, List<CandidateConstraintEvidence> constraintEvidence,
-        List<HydraulicConstraintSnapshot> hydraulicConstraints, List<String> diagnostics) {
+        List<HydraulicConstraintSnapshot> hydraulicConstraints,
+        List<InstalledEquipmentCapacityEvidence> installedEquipmentCapacityEvidence, List<String> diagnostics) {
       this.id = id;
       this.name = name;
       this.provenance = provenance;
@@ -878,6 +895,8 @@ public final class ProcessModelOperatingActionSetEvaluator {
           .unmodifiableList(new ArrayList<CandidateConstraintEvidence>(constraintEvidence));
       this.hydraulicConstraints = Collections
           .unmodifiableList(new ArrayList<HydraulicConstraintSnapshot>(hydraulicConstraints));
+      this.installedEquipmentCapacityEvidence = Collections
+          .unmodifiableList(new ArrayList<InstalledEquipmentCapacityEvidence>(installedEquipmentCapacityEvidence));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<String>(diagnostics));
     }
 
@@ -889,7 +908,7 @@ public final class ProcessModelOperatingActionSetEvaluator {
           Collections.<ActionCandidateEvidence>emptyList(), outcome, false, false, false, false, new double[0],
           new double[0], Collections.<CandidateObjectiveEvidence>emptyList(), new double[0], new double[0],
           Collections.<CandidateConstraintEvidence>emptyList(), Collections.<HydraulicConstraintSnapshot>emptyList(),
-          diagnostics);
+          Collections.<InstalledEquipmentCapacityEvidence>emptyList(), diagnostics);
     }
 
     /** Creates a result from an optional candidate simulation. */
@@ -903,13 +922,14 @@ public final class ProcessModelOperatingActionSetEvaluator {
         return new CandidateSetEvaluationResult(id, name, provenance, actions, candidateValues, actionEvidence, outcome,
             false, false, baselineRestored, baselineSimulationConverged, new double[0], new double[0],
             Collections.<CandidateObjectiveEvidence>emptyList(), new double[0], new double[0],
-            Collections.<CandidateConstraintEvidence>emptyList(), hydraulicConstraints, diagnostics);
+            Collections.<CandidateConstraintEvidence>emptyList(), hydraulicConstraints,
+            Collections.<InstalledEquipmentCapacityEvidence>emptyList(), diagnostics);
       }
       return new CandidateSetEvaluationResult(id, name, provenance, actions, candidateValues, actionEvidence, outcome,
           evaluation.isSimulationConverged(), evaluation.isFeasible(), baselineRestored, baselineSimulationConverged,
           copy(evaluation.getObjectivesRaw()), copy(evaluation.getObjectives()), objectiveEvidence,
           copy(evaluation.getConstraintValues()), copy(evaluation.getConstraintMargins()), constraintEvidence,
-          hydraulicConstraints, diagnostics);
+          hydraulicConstraints, evaluation.getInstalledEquipmentCapacityEvidence(), diagnostics);
     }
 
     /** Snapshots objective definitions and sampled values without retaining evaluator callbacks. */
@@ -1056,6 +1076,16 @@ public final class ProcessModelOperatingActionSetEvaluator {
     /** @return fresh immutable hydraulic evidence in binding order */
     public List<HydraulicConstraintSnapshot> getHydraulicConstraints() {
       return Collections.unmodifiableList(new ArrayList<HydraulicConstraintSnapshot>(hydraulicConstraints));
+    }
+
+    /**
+     * Returns every enabled installed-equipment capacity sampled at the candidate point.
+     *
+     * @return fresh immutable descending-utilization evidence
+     */
+    public List<InstalledEquipmentCapacityEvidence> getInstalledEquipmentCapacityEvidence() {
+      return Collections
+          .unmodifiableList(new ArrayList<InstalledEquipmentCapacityEvidence>(installedEquipmentCapacityEvidence));
     }
 
     /** @return fresh immutable diagnostics */

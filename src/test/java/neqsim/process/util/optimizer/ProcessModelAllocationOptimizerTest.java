@@ -164,6 +164,14 @@ class ProcessModelAllocationOptimizerTest {
         result.getRankedHydraulicConstraintsAtBestSampledObjective().get(0).getBinding().getConstraintName());
     assertEquals(800.0 / 700.0, result.getRankedHydraulicConstraintsAtBestSampledObjective().get(0).getUtilization(),
         1.0e-12);
+    InstalledEquipmentCapacityEvidence bestCapacity = result.getInstalledCapacityEvidenceAtBestFeasible().get(0);
+    assertEquals("gathering::allocation sink/producer A installed rate", bestCapacity.getQualifiedConstraintName());
+    assertEquals(1.0, bestCapacity.getNormalizedUtilization(), 1.0e-12);
+    assertEquals(0.0, bestCapacity.getPhysicalMargin(), 1.0e-8);
+    assertEquals("kg/hr", bestCapacity.getPhysicalUnit());
+    assertEquals(InstalledEquipmentCapacityEvidence.ConstraintOrigin.DIRECT, bestCapacity.getConstraintOrigin());
+    assertEquals(800.0 / 700.0,
+        result.getInstalledCapacityEvidenceAtBestSampledObjective().get(0).getNormalizedUtilization(), 1.0e-12);
     for (CandidateRecord candidate : result.getCandidates()) {
       double[] values = candidate.getCandidateValues();
       assertEquals(1000.0, values[0] + values[1], 1.0e-10);
@@ -204,6 +212,8 @@ class ProcessModelAllocationOptimizerTest {
     AllocationSearchResult original = createOptimizer(fixture).optimize();
     fixture.evaluator.getSimulationEvaluator().getObjectives().get(0).setName("mutated later");
     fixture.evaluator.getSimulationEvaluator().getConstraints().get(0).setName("mutated constraint later");
+    fixture.evaluator.getSimulationEvaluator().getConstraints().get(0).getCapturedCapacityConstraint().setUnit("t/day")
+        .setDataSource("mutated later");
 
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     ObjectOutputStream output = new ObjectOutputStream(bytes);
@@ -232,10 +242,19 @@ class ProcessModelAllocationOptimizerTest {
     assertNotSame(restored.getDiagnostics(), restored.getDiagnostics());
     assertNotSame(restored.getRankedHydraulicConstraintsAtBestFeasible(),
         restored.getRankedHydraulicConstraintsAtBestFeasible());
+    assertNotSame(restored.getInstalledCapacityEvidenceAtBestFeasible(),
+        restored.getInstalledCapacityEvidenceAtBestFeasible());
+    InstalledEquipmentCapacityEvidence restoredCapacity = restored.getInstalledCapacityEvidenceAtBestFeasible().get(0);
+    assertEquals("kg/hr", restoredCapacity.getPhysicalUnit());
+    assertFalse("mutated later".equals(restoredCapacity.getDataSource()));
     assertThrows(UnsupportedOperationException.class, () -> restored.getCandidates().clear());
     assertThrows(UnsupportedOperationException.class, () -> restored.getDiagnostics().clear());
     assertThrows(UnsupportedOperationException.class,
         () -> restored.getRankedHydraulicConstraintsAtBestFeasible().clear());
+    assertThrows(UnsupportedOperationException.class,
+        () -> restored.getInstalledCapacityEvidenceAtBestFeasible().clear());
+    assertThrows(UnsupportedOperationException.class,
+        () -> restored.getBestFeasibleCandidate().getEvaluation().getInstalledEquipmentCapacityEvidence().clear());
     assertThrows(UnsupportedOperationException.class,
         () -> restored.getBestFeasibleCandidate().getEvaluation().getObjectiveEvidence().clear());
     assertThrows(UnsupportedOperationException.class,
@@ -270,7 +289,14 @@ class ProcessModelAllocationOptimizerTest {
         leading.getConstraintRelief().get(0).getConstraint().getEquipmentConstraintName());
     assertEquals(100.0, leading.getConstraintRelief().get(0).getRequiredMarginRelief(), 1.0e-8);
     assertEquals("kg/hr", leading.getConstraintRelief().get(0).getUnit());
-    assertTrue(leading.getConstraintRelief().get(0).isDerivedFromHydraulicEvidence());
+    assertTrue(leading.getConstraintRelief().get(0).isDerivedFromInstalledCapacityEvidence());
+    assertTrue(leading.getConstraintRelief().get(0).isDerivedFromHydraulicEvidence(),
+        "compatibility alias must retain the exact-evidence meaning");
+    assertEquals("gathering::allocation sink/producer A installed rate",
+        leading.getConstraintRelief().get(0).getInstalledCapacityEvidence().getQualifiedConstraintName());
+    assertEquals(100.0, leading.getConstraintRelief().get(0).getInstalledCapacityEvidence().getRequiredRelief(),
+        1.0e-8);
+    assertEquals(3, leading.getInstalledCapacityEvidence().size());
     assertEquals("allocation value proxy", leading.getObjectiveEvidence().getName());
     assertFalse(leading.isAcceptedAsIncumbent());
     assertEquals(500.0, fixture.producerA.getFlowRate("kg/hr"), 1.0e-8);
