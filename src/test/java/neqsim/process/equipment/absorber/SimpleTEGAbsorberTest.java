@@ -172,6 +172,11 @@ class SimpleTEGAbsorberTest extends NeqSimTest {
     assertEquals(1, richTeg.getFluid().getNumberOfPhases(), "The rich-TEG outlet must contain one phase");
     assertEquals(PhaseType.AQUEOUS, richTeg.getFluid().getPhase(0).getType(),
         "The rich-TEG outlet must retain its aqueous identity");
+
+    Stream richTegPassThrough = new Stream("rich TEG identity check", richTeg);
+    richTegPassThrough.run();
+    assertEquals(PhaseType.AQUEOUS, richTegPassThrough.getFluid().getPhase(0).getType(),
+        "A downstream TP-flashed stream must retain the rich-TEG aqueous identity");
   }
 
   @Test
