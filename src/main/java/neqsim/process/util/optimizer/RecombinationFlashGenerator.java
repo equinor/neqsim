@@ -105,9 +105,9 @@ public class RecombinationFlashGenerator implements Serializable {
     this.fluidCache = new ConcurrentHashMap<>();
 
     logger.info("RecombinationFlashGenerator initialized");
-    logger.info("  Gas molar volume: {:.4f} Sm3/kmol", gasStdVolumePerMole);
-    logger.info("  Oil molar volume: {:.4f} Sm3/kmol", oilStdVolumePerMole);
-    logger.info("  Water molar volume: {:.4f} Sm3/kmol", waterStdVolumePerMole);
+    logger.info("  Gas molar volume: {} Sm3/kmol", gasStdVolumePerMole);
+    logger.info("  Oil molar volume: {} Sm3/kmol", oilStdVolumePerMole);
+    logger.info("  Water molar volume: {} Sm3/kmol", waterStdVolumePerMole);
   }
 
   /**
@@ -174,8 +174,8 @@ public class RecombinationFlashGenerator implements Serializable {
     // Calculate gas rate from GOR (gas per oil volume)
     double gasRate = oilRate * targetGOR; // Sm3/hr gas
 
-    logger.debug("Generating fluid: GOR={:.0f}, WC={:.1f}%, Oil={:.1f}, Gas={:.1f}, Water={:.1f}", targetGOR,
-        waterCut * 100, oilRate, gasRate, waterRate);
+    logger.debug("Generating fluid: GOR={}, WC={}%, Oil={}, Gas={}, Water={}", targetGOR, waterCut * 100, oilRate,
+        gasRate, waterRate);
 
     // Create recombined fluid starting from gas phase composition
     SystemInterface recombined = createBaseFluid();
@@ -391,8 +391,7 @@ public class RecombinationFlashGenerator implements Serializable {
     double actualGOR = (oilVolume > 0) ? gasVolume / oilVolume : 0.0;
     double relativeError = Math.abs(actualGOR - targetGOR) / targetGOR;
 
-    logger.debug("GOR validation: target={:.1f}, actual={:.1f}, error={:.2f}%", targetGOR, actualGOR,
-        relativeError * 100);
+    logger.debug("GOR validation: target={}, actual={}, error={}%", targetGOR, actualGOR, relativeError * 100);
 
     return relativeError <= tolerance;
   }
