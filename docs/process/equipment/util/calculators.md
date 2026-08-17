@@ -15,7 +15,7 @@ string-expression language.
 | `CalculatorLibrary` | Reuse the energy-balance, dew-point-targeting, or anti-surge callback |
 | `Setter` | Apply one or more constant pressure or temperature specifications |
 | `SetPoint` | Copy or transform a supported value from source equipment to target equipment |
-| `MoleFractionControllerUtil` | Add or remove one component to reach a requested outlet composition |
+| `MoleFractionControllerUtil` | Add or remove one component to move toward a requested outlet composition |
 | `FlowSetter` | Match gas, oil, and water reference-condition rates through its internal separation workflow |
 
 `FlowSetter` is not a generic one-line flow assignment. Set a normal stream flow directly with
@@ -212,9 +212,12 @@ compositionTarget.setMoleFraction("CO2", 0.02);
 process.add(compositionTarget);
 ```
 
-During `run`, it clones the inlet fluid, changes the named component inventory, and performs a TP
-flash. Check `getMolesChange()`, outlet composition, and material-accounting intent before using
-the result. It has no name-bearing constructor and no `setTargetMoleFraction` method.
+During `run`, it clones the inlet fluid, adds the difference between the requested and current
+mole fractions multiplied by the current total moles, and performs a TP flash. Because that
+operation changes the total number of moles, the resulting outlet fraction is not algebraically
+guaranteed to equal the requested value. Verify the actual outlet composition and account for the
+component source or sink. It has no name-bearing constructor and no
+`setTargetMoleFraction` method.
 
 ## Validation checklist
 
