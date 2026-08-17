@@ -310,6 +310,19 @@ public final class ProcessGraphBuilder {
       }
     }
 
+    // A Calculator may own a standalone output Stream without that Stream being
+    // registered as a unit operation. Register that relationship after all
+    // physical producers have had first refusal, so downstream consumers still
+    // depend on the Calculator and recycle SCC detection can see the feedback.
+    for (ProcessEquipmentInterface unit : units) {
+      if (unit instanceof Calculator) {
+        ProcessEquipmentInterface output = ((Calculator) unit).getOutputVariable();
+        if (output instanceof StreamInterface) {
+          streamToProducer.putIfAbsent(output, unit);
+        }
+      }
+    }
+
     // Pass 1b: Stream units default to producing themselves, but only if no
     // real producer has already claimed them (e.g., a Recycle's outlet).
     for (ProcessEquipmentInterface unit : units) {
@@ -627,7 +640,12 @@ public final class ProcessGraphBuilder {
 
         // Signal edges: each input variable equipment -> Calculator
         for (ProcessEquipmentInterface inputEquip : calc.getInputVariable()) {
-          addSignalEdgeIfAbsent(graph, inputEquip, calc, "signal:" + safeName(inputEquip) + "->" + calc.getName());
+          ProcessEquipmentInterface signalSource = inputEquip;
+          if (graph.getNode(signalSource) == null && inputEquip instanceof StreamInterface) {
+            signalSource = streamToProducer.get(inputEquip);
+          }
+          addSignalEdgeIfAbsent(graph, signalSource, calc,
+              "signal:" + safeName(inputEquip) + "->" + calc.getName());
         }
 
         // Signal edge: Calculator -> output variable equipment
