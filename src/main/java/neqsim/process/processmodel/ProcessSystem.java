@@ -5302,7 +5302,7 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * @param blockingIssues destination for coverage diagnostics
    * @param events events to validate
-   * @param participants covered participants keyed by stable state identity
+   * @param participantStateIdentities covered participants keyed by stable state identity
    * @param eventKind diagnostic description such as {@code pending event}
    */
   private static void addEventTransactionCoverageIssues(List<String> blockingIssues,
@@ -5446,10 +5446,14 @@ public class ProcessSystem extends SimulationBaseClass {
     for (ProcessElementInterface element : getUniqueTransientElements()) {
       if (element instanceof TransientStateParticipant<?>) {
         TransientStateParticipant<?> participant = (TransientStateParticipant<?>) element;
-        String coverageIssue = normalizeTransientStateIdentity(participant.getTransientStateCoverageIssue());
-        String identity = normalizeTransientStateIdentity(participant.getTransientStateIdentity());
-        if (coverageIssue == null && identity != null) {
-          identities.add(identity);
+        try {
+          String coverageIssue = normalizeTransientStateIdentity(participant.getTransientStateCoverageIssue());
+          String identity = normalizeTransientStateIdentity(participant.getTransientStateIdentity());
+          if (coverageIssue == null && identity != null) {
+            identities.add(identity);
+          }
+        } catch (RuntimeException ex) {
+          // The area coverage audit below owns the deterministic diagnostic for this participant.
         }
       }
     }
