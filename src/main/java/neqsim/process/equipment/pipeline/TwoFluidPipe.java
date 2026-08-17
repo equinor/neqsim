@@ -149,9 +149,6 @@ public class TwoFluidPipe extends Pipeline {
   /** Whether the interfacial-pressure stabilizer is advanced implicitly by the time integrator. */
   private boolean implicitInterfacialPressureCoupling = true;
 
-  /** Whether transient pressure follows the conserved cell mass instead of a steady friction march. */
-  private boolean pressureFromCompressibility = false;
-
   /** Default closed-flow fluid-side heat-transfer coefficient in W/(m2 K). */
   private static final double DEFAULT_STAGNANT_INNER_HEAT_TRANSFER_COEFFICIENT = 50.0;
 
@@ -4216,7 +4213,6 @@ public class TwoFluidPipe extends Pipeline {
 
       // 2. Store previous state for rollback capability
       double[][] U_prev = equations.extractState(sections);
-      double[] previousMassPerLength = pressureFromCompressibility ? cellMassPerLength() : null;
 
       // 3. Calculate RHS and advance solution
       final double dtFinal = dtActual;
@@ -4345,11 +4341,7 @@ public class TwoFluidPipe extends Pipeline {
       // 6. Reconstruct pressure profile from evolved state
       // The conservative variables (mass, momentum) have evolved but pressure
       // must be reconstructed. March from outlet (fixed P BC) backward.
-      if (pressureFromCompressibility) {
-        updatePressureFromCompressibility(previousMassPerLength);
-      } else {
-        reconstructPressureProfile();
-      }
+      reconstructPressureProfile();
 
       // 7. Apply boundary conditions
       applyBoundaryConditions();
@@ -4863,75 +4855,6 @@ public class TwoFluidPipe extends Pipeline {
    * system to reach true equilibrium.
    * </p>
    */
-  /**
-   * Total mass per unit length of every cell.
-   *
-   * @return mass per length in kg/m, one entry per section
-   */
-  private double[] cellMassPerLength() {
-    double[] mass = new double[numberOfSections];
-    for (int i = 0; i < numberOfSections; i++) {
-      TwoFluidSection sec = sections[i];
-      mass[i] = sec.getGasMassPerLength() + sec.getOilMassPerLength() + sec.getWaterMassPerLength();
-    }
-    return mass;
-  }
-
-  /**
-   * Wood mixture sound speed of a section.
-   *
-   * @param sec section to evaluate
-   * @return sound speed in m/s, never below one
-   */
-  private double mixtureSoundSpeed(TwoFluidSection sec) {
-    double alphaG = Math.max(0.0, Math.min(1.0, sec.getGasHoldup()));
-    double alphaL = Math.max(0.0, Math.min(1.0, sec.getLiquidHoldup()));
-    double rhoG = Math.max(sec.getGasDensity(), 0.1);
-    double rhoL = Math.max(sec.getLiquidDensity(), 100.0);
-    double cG = Math.max(sec.getGasSoundSpeed(), 100.0);
-    double cL = Math.max(sec.getLiquidSoundSpeed(), 500.0);
-    double rhoMix = alphaG * rhoG + alphaL * rhoL;
-    double invC2 = alphaG / (rhoG * cG * cG) + alphaL / (rhoL * cL * cL);
-    double c = (invC2 > 0.0 && rhoMix > 0.0) ? Math.sqrt(1.0 / (rhoMix * invC2)) : cG;
-    return Math.max(c, 1.0);
-  }
-
-  /**
-   * Update the transient pressure from the change in conserved cell mass.
-   *
-   * <p>
-   * The alternative march from the outlet evaluates a steady mixture friction and gravity correlation, so pressure
-   * responds to velocity rather than to the conserved state and the momentum equations gain no compressibility
-   * feedback. Here the volume constraint is linearised instead: a cell holds a fixed volume, so a change in its mass is
-   * a change in its mixture density, and the pressure follows through the Wood sound speed as
-   * {@code dp = c^2 * d(rho)}. Packing a cell therefore raises its pressure and pushes back on the flow that filled it.
-   * </p>
-   *
-   * @param previousMassPerLength cell mass per length before the step, in kg/m
-   */
-  private void updatePressureFromCompressibility(double[] previousMassPerLength) {
-    if (sections == null || previousMassPerLength == null || previousMassPerLength.length != numberOfSections) {
-      return;
-    }
-    for (int i = 0; i < numberOfSections; i++) {
-      TwoFluidSection sec = sections[i];
-      double area = sec.getArea();
-      if (!(area > 0.0)) {
-        continue;
-      }
-      double mass = sec.getGasMassPerLength() + sec.getOilMassPerLength() + sec.getWaterMassPerLength();
-      double densityChange = (mass - previousMassPerLength[i]) / area;
-      double c = mixtureSoundSpeed(sec);
-      double pressure = sec.getPressure() + c * c * densityChange;
-      if (Double.isFinite(pressure)) {
-        sec.setPressure(Math.max(1.0e5, pressure));
-      }
-    }
-    if (outletBCType == BoundaryCondition.CONSTANT_PRESSURE && numberOfSections > 0) {
-      sections[numberOfSections - 1].setPressure(Math.max(1.0e5, outletPressure));
-    }
-  }
-
   private void reconstructPressureProfile() {
     if (sections == null || numberOfSections < 2) {
       return;
@@ -7539,31 +7462,6 @@ public class TwoFluidPipe extends Pipeline {
    */
   public boolean isImplicitInterfacialPressureCoupling() {
     return implicitInterfacialPressureCoupling;
-  }
-
-  /**
-   * Select how transient pressure is obtained.
-   *
-   * <p>
-   * By default the profile is marched from the outlet with a steady mixture friction and gravity correlation, so
-   * pressure responds to velocity rather than to the conserved state. Enabling this derives pressure from the change in
-   * conserved cell mass through the linearised volume constraint instead, which is what supplies the compressibility
-   * feedback the phase momentum equations need.
-   * </p>
-   *
-   * @param fromCompressibility true to derive pressure from the conserved cell mass
-   */
-  public void setPressureFromCompressibility(boolean fromCompressibility) {
-    this.pressureFromCompressibility = fromCompressibility;
-  }
-
-  /**
-   * Whether transient pressure is derived from the conserved cell mass.
-   *
-   * @return true when the volume-constraint closure is selected
-   */
-  public boolean isPressureFromCompressibility() {
-    return pressureFromCompressibility;
   }
 
   /** @return true when the interfacial pressure momentum term is applied */
