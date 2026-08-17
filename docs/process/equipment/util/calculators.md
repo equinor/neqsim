@@ -1,478 +1,248 @@
 ---
 title: Calculators and Setters
-description: Documentation for calculator and setter equipment in NeqSim process simulation.
+description: Configure source-verified calculation callbacks, constant specifications, set-point relations, and composition modifiers in NeqSim process simulations.
 ---
 
-# Calculators and Setters
+NeqSim process utilities can calculate custom values, apply constant specifications, copy values
+between equipment, or modify a stream composition. They are executable unit operations, not a
+string-expression language.
 
-Documentation for calculator and setter equipment in NeqSim process simulation.
+## Choose the appropriate utility
 
-## Table of Contents
-- [Overview](#overview)
-- [Calculator Class](#calculator-class)
-- [Functional Interface Mode](#functional-interface-mode)
-- [Calculator Library](#calculator-library)
-- [Setter Class](#setter-class)
-- [Flow Setter](#flow-setter)
-- [Set Point Class](#set-point-class)
-- [Usage Examples](#usage-examples)
+| Utility | Use |
+| --- | --- |
+| `Calculator` | Run a Java callback against registered input and output equipment |
+| `CalculatorLibrary` | Reuse the energy-balance, dew-point-targeting, or anti-surge callback |
+| `Setter` | Apply one or more constant pressure or temperature specifications |
+| `SetPoint` | Copy or transform a supported value from source equipment to target equipment |
+| `MoleFractionControllerUtil` | Add or remove one component to move toward a requested outlet composition |
+| `FlowSetter` | Match gas, oil, and water reference-condition rates through its internal separation workflow |
 
----
+`FlowSetter` is not a generic one-line flow assignment. Set a normal stream flow directly with
+`Stream.setFlowRate(value, unit)`; use `FlowSetter` only when its phase-rate reconciliation
+workflow is the engineering intent.
 
-## Overview
+## Calculator callback modes
 
-**Location:** `neqsim.process.equipment.util`
-
-**Classes:**
-| Class | Description |
-|-------|-------------|
-| `Calculator` | Custom calculation unit |
-| `CalculatorLibrary` | Pre-built calculation functions |
-| `Setter` | Variable setter |
-| `FlowSetter` | Flow rate setter |
-| `MoleFractionControllerUtil` | Composition control |
-
----
-
-## Calculator Class
-
-Performs custom calculations based on process variables. The Calculator supports two configuration modes:
-1. **Standard Mode** - Uses expression strings (limited support)
-2. **Functional Interface Mode** - Uses Java lambdas for full flexibility
-
-### Basic Usage
+`Calculator` registers whole `ProcessEquipmentInterface` objects:
 
 ```java
-import neqsim.process.equipment.util.Calculator;
-
-// Create calculator
-Calculator calc = new Calculator("Duty Calculator");
-
-// Add input variables
-calc.addInputVariable(stream1);
-calc.addInputVariable(stream2);
-
-// Set output variable
-calc.setOutputVariable(heater);
-
-// Add to process
-process.add(calc);
-```
-
-### Adding Multiple Inputs
-
-```java
-// Add streams individually
-calc.addInputVariable(stream1);
-calc.addInputVariable(stream2);
-
-// Or add multiple at once using varargs
-calc.addInputVariable(stream1, stream2, stream3);
-```
-
----
-
-## Functional Interface Mode
-
-The Calculator class supports lambda expressions for defining custom calculation logic. This provides full flexibility to implement any calculation without expression parsing limitations.
-
-### Available Methods
-
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `setCalculationMethod` | `BiConsumer<ArrayList<ProcessEquipmentInterface>, ProcessEquipmentInterface>` | Full access to registered inputs and output |
-| `setCalculationMethod` | `Runnable` | Simple lambda that captures variables from enclosing scope |
-
-### BiConsumer Pattern (Recommended)
-
-Use this pattern when you want to work with formally registered input/output variables:
-
-```java
-Calculator calculator = new Calculator("Energy Calculator");
 calculator.addInputVariable(inletStream);
+calculator.addInputVariable(secondStream);
 calculator.setOutputVariable(outletStream);
-
-calculator.setCalculationMethod((inputs, output) -> {
-    Stream in = (Stream) inputs.get(0);
-    Stream out = (Stream) output;
-    double energy = in.LCV() * in.getFlowRate("Sm3/hr");
-    out.setTemperature(350.0, "K");
-});
-
-calculator.run();
 ```
 
-### Multiple Inputs Example
+There are two callback overloads:
+
+- `setCalculationMethod(BiConsumer<ArrayList<ProcessEquipmentInterface>, ProcessEquipmentInterface>)`
+  exposes the registered inputs and output. Prefer it in a `ProcessSystem` because those
+  registrations also describe graph dependencies.
+- `setCalculationMethod(Runnable)` captures objects from the enclosing scope. It is concise, but
+  the graph cannot infer dependencies from captured variables.
+
+`Calculator` has no `setExpression(String)` method and no property-name overload of
+`addInputVariable` or `setOutputVariable`. Convert a formula to explicit Java in one of the
+callback overloads.
+
+### Complete Java 8 example
+
+This complete program increases a material stream's flow by 10%. The callback writes and runs its
+output so downstream equipment receives an initialized state.
 
 ```java
-Calculator calculator = new Calculator("Total Flow Calculator");
-
-// Add multiple inputs using varargs
-calculator.addInputVariable(inletStream1, inletStream2);
-calculator.setOutputVariable(outletStream);
-
-calculator.setCalculationMethod((inputs, output) -> {
-    double totalFlow = 0.0;
-    for (ProcessEquipmentInterface input : inputs) {
-        totalFlow += ((Stream) input).getFlowRate("kg/hr");
-    }
-    ((Stream) output).setFlowRate(totalFlow, "kg/hr");
-});
-
-calculator.run();
-```
-
-### Runnable Pattern (Simple)
-
-Use this pattern when you want to capture equipment directly in the lambda closure:
-
-```java
-Calculator calculator = new Calculator("Energy Calculator");
-// No need to register inputs/outputs - capture them directly
-
-calculator.setCalculationMethod(() -> {
-    double energy = inletStream.LCV() * inletStream.getFlowRate("Sm3/hr");
-    outletStream.setTemperature(350.0, "K");
-});
-
-calculator.run();
-```
-
-### When to Use Each Pattern
-
-| Pattern | Use When |
-|---------|----------|
-| `BiConsumer` | Building reusable calculations, working with variable number of inputs |
-| `Runnable` | Quick calculations, capturing specific equipment from scope |
-
----
-
-## Calculator Library
-
-Pre-built calculation presets for common thermodynamic operations. These presets provide declarative building blocks that encourage consistent logic across simulations.
-
-### Available Presets
-
-| Preset | Description |
-|--------|-------------|
-| `ENERGY_BALANCE` | Flashes output stream to match summed input enthalpy |
-| `DEW_POINT_TARGETING` | Sets output temperature to hydrocarbon dew point |
-
-### Using Presets
-
-```java
-import neqsim.process.equipment.util.CalculatorLibrary;
-
-// Using the preset directly
-Calculator calculator = new Calculator("Energy Balance");
-calculator.addInputVariable(inlet);
-calculator.setOutputVariable(outlet);
-calculator.setCalculationMethod(CalculatorLibrary.energyBalance());
-calculator.run();
-```
-
-### Energy Balance Preset
-
-Performs an enthalpy-based energy balance. The output stream is flashed at its current pressure to match the summed input enthalpies:
-
-```java
-SystemSrkEos fluid = new SystemSrkEos(280.0, 50.0);
-fluid.addComponent("methane", 0.9);
-fluid.addComponent("ethane", 0.1);
-fluid.createDatabase(true);
-fluid.setMixingRule(2);
-
-Stream inlet = new Stream("inlet", fluid);
-inlet.setTemperature(280.0, "K");
-inlet.setPressure(50.0, "bara");
-inlet.run();
-
-Stream outlet = new Stream("outlet", fluid.clone());
-outlet.setTemperature(320.0, "K");
-outlet.setPressure(50.0, "bara");
-outlet.run();
-
-Calculator calculator = new Calculator("Energy Balance");
-calculator.addInputVariable(inlet);
-calculator.setOutputVariable(outlet);
-calculator.setCalculationMethod(CalculatorLibrary.energyBalance());
-calculator.run();
-
-// Outlet enthalpy now matches inlet enthalpy
-```
-
-### Dew Point Targeting Preset
-
-Sets the output stream temperature to the hydrocarbon dew point of the first input stream at the output stream's pressure:
-
-```java
-Stream source = new Stream("source", fluid);
-source.setPressure(15.0, "bara");
-source.run();
-
-Stream target = new Stream("target", fluid.clone());
-target.setPressure(12.0, "bara");
-target.run();
-
-Calculator calculator = new Calculator("Dew Point Targeter");
-calculator.addInputVariable(source);
-calculator.setOutputVariable(target);
-calculator.setCalculationMethod(CalculatorLibrary.byName("dewPointTargeting"));
-calculator.run();
-
-// Target temperature now equals dew point at 12 bara
-```
-
-### Dew Point with Margin
-
-Add a safety margin above the dew point:
-
-```java
-// Add 5 K margin above dew point
-calculator.setCalculationMethod(CalculatorLibrary.dewPointTargeting(5.0));
-```
-
-### Resolving Presets by Name
-
-Useful for declarative configuration or AI-generated instructions:
-
-```java
-// Case-insensitive, supports various formats
-CalculatorLibrary.byName("energyBalance");
-CalculatorLibrary.byName("ENERGY_BALANCE");
-CalculatorLibrary.byName("energy-balance");
-CalculatorLibrary.byName("dewPointTargeting");
-```
-
----
-
-## Setter Class
-
-Sets process variables to specific values.
-
-### Basic Usage
-
-```java
-import neqsim.process.equipment.util.Setter;
-
-// Create setter
-Setter setter = new Setter("Temperature Setter");
-
-// Set target equipment and property
-setter.setEquipment(heater);
-setter.setProperty("outTemperature");
-setter.setValue(80.0);
-setter.setUnit("C");
-
-// Add to process
-process.add(setter);
-```
-
-### Use Cases
-
-```java
-// Set valve position
-Setter valveSetter = new Setter("Valve Opener");
-valveSetter.setEquipment(valve);
-valveSetter.setProperty("percentValveOpening");
-valveSetter.setValue(75.0);
-
-// Set compressor speed
-Setter speedSetter = new Setter("Speed Setter");
-speedSetter.setEquipment(compressor);
-speedSetter.setProperty("speed");
-speedSetter.setValue(5000.0);
-```
-
----
-
-## Flow Setter
-
-Specifically for setting flow rates.
-
-### Basic Usage
-
-```java
-import neqsim.process.equipment.util.FlowSetter;
-
-// Create flow setter
-FlowSetter flowSetter = new FlowSetter("Production Rate", stream);
-flowSetter.setFlowRate(10000.0, "kg/hr");
-
-// Add to process
-process.add(flowSetter);
-```
-
-### With Ramping
-
-```java
-// Ramp flow rate over time
-flowSetter.setRampRate(1000.0, "kg/hr/min");
-flowSetter.setTargetFlowRate(20000.0, "kg/hr");
-```
-
----
-
-## Mole Fraction Controller
-
-Control stream composition.
-
-### Basic Usage
-
-```java
-import neqsim.process.equipment.util.MoleFractionControllerUtil;
-
-// Control CO2 content
-MoleFractionControllerUtil co2Control = 
-    new MoleFractionControllerUtil("CO2 Spec", stream);
-co2Control.setTargetMoleFraction("CO2", 0.02);  // 2 mol%
-
-// Add to process
-process.add(co2Control);
-```
-
----
-
-## Usage Examples
-
-### Production Optimizer
-
-```java
-// Calculator to maximize production
-Calculator optimizer = new Calculator("Production Optimizer");
-optimizer.addInputVariable(separator, "pressure");
-optimizer.addInputVariable(feedStream, "flowRate");
-optimizer.setOutputVariable(exportValve, "percentValveOpening");
-optimizer.setExpression("calculateOptimalOpening(pressure, flowRate)");
-process.add(optimizer);
-```
-
-### Cascade Control
-
-```java
-// Primary controller output sets secondary setpoint
-Calculator cascade = new Calculator("Cascade");
-cascade.addInputVariable(temperatureController, "output");
-cascade.setOutputVariable(flowController, "setpoint");
-cascade.setExpression("output * flowGain + flowBias");
-process.add(cascade);
-```
-
-### Ratio Control
-
-```java
-// Maintain fuel/air ratio
-Calculator ratioCalc = new Calculator("F/A Ratio");
-ratioCalc.addInputVariable(fuelStream, "flowRate");
-ratioCalc.setOutputVariable(airDamper, "position");
-ratioCalc.setExpression("fuelFlow * stoichRatio * excessAir");
-process.add(ratioCalc);
-```
-
-### Duty Calculation
-
-```java
-// Calculate required cooling duty
-Calculator dutyCalc = new Calculator("Cooling Duty");
-dutyCalc.addInputVariable(inletStream, "temperature");
-dutyCalc.addInputVariable(inletStream, "flowRate");
-dutyCalc.addInputVariable(inletStream, "heatCapacity");
-dutyCalc.setOutputVariable(cooler, "duty");
-dutyCalc.setExpression("-flowRate * heatCapacity * (targetTemp - inletTemp)");
-process.add(dutyCalc);
-```
-
----
-
-## Set Point Class
-
-Sets the value of a variable in a target equipment based on a source equipment. Used for feed-forward control or copying values between equipment.
-
-### Basic Usage
-
-```java
-import neqsim.process.equipment.util.SetPoint;
-
-// Create set point to copy pressure
-SetPoint setPoint = new SetPoint("Pressure Copy");
-setPoint.setSourceVariable(sourceStream, "pressure");
-setPoint.setTargetVariable(targetStream, "pressure");
-
-// Add to process
-process.add(setPoint);
-```
-
-### Supported Target Variables
-
-| Equipment Type | Supported Variables |
-|----------------|---------------------|
-| `Stream` | `pressure`, `temperature` |
-| `ThrottlingValve` | `pressure` (outlet) |
-| `Compressor` | `pressure` (outlet) |
-| `Pump` | `pressure` (outlet) |
-| `Heater`/`Cooler` | `pressure`, `temperature` |
-
-### Functional Interface Mode
-
-Use `setSourceValueCalculator` to define a custom function that calculates the value to set on the target equipment:
-
-```java
-SetPoint setPoint = new SetPoint("Custom SetPoint");
-setPoint.setSourceVariable(sourceStream);
-setPoint.setTargetVariable(targetStream, "pressure");
-
-// Set target pressure based on source temperature: P = T / 10.0
-setPoint.setSourceValueCalculator((equipment) -> {
-    Stream s = (Stream) equipment;
-    return s.getTemperature("K") / 10.0;
-});
-
-setPoint.run();
-// Target pressure is now 30.0 bara (if source temp = 300 K)
-```
-
-### Method Signature
-
-| Method | Type | Description |
-|--------|------|-------------|
-| `setSourceValueCalculator` | `Function<ProcessEquipmentInterface, Double>` | Custom function to compute the value to set |
-
-### When to Use Functional Mode
-
-| Use Case | Example |
-|----------|---------|
-| Non-linear relationships | Pressure = f(temperature, flow) |
-| Unit conversions | Convert from source units to target units |
-| Computed ratios | Set valve to percentage of max flow |
-| Conditional logic | Different values based on operating mode |
-
----
-
-## Stream Transition
-
-Smooth transition between operating states.
-
-```java
-import neqsim.process.equipment.util.StreamTransition;
-
-// Create transition
-StreamTransition transition = new StreamTransition("Startup Ramp");
-transition.setStream(feedStream);
-transition.setInitialFlowRate(0.0, "kg/hr");
-transition.setFinalFlowRate(10000.0, "kg/hr");
-transition.setTransitionTime(3600.0);  // 1 hour ramp
-
-// Run transition
-for (double t = 0; t < 3600; t += 60) {
-    transition.setTime(t);
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.util.Calculator;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemSrkEos;
+
+public class CalculatorExample {
+  public static void main(String[] args) {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 20.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+
+    Stream adjusted = new Stream("adjusted", fluid.clone());
+    adjusted.setFlowRate(0.0, "kg/hr");
+
+    Calculator calculator = new Calculator("flow calculator");
+    calculator.addInputVariable(feed);
+    calculator.setOutputVariable(adjusted);
+    calculator.setCalculationMethod((inputs, output) -> {
+      Stream source = (Stream) inputs.get(0);
+      Stream target = (Stream) output;
+      target.setFlowRate(1.10 * source.getFlowRate("kg/hr"), "kg/hr");
+      target.run();
+    });
+
+    ProcessSystem process = new ProcessSystem("calculator example");
+    process.add(feed);
+    process.add(calculator);
     process.run();
+
+    System.out.printf("%.1f kg/hr%n", adjusted.getFlowRate("kg/hr"));
+  }
 }
 ```
 
----
+Expected output:
 
-## Related Documentation
+```text
+1100.0 kg/hr
+```
 
-- [Adjusters](adjusters) - Iterative adjustment
-- [Recycles](recycles) - Recycle handling
-- [Process Controllers](../../controllers) - Control systems
+### Process graph and recycle behavior
+
+Registered calculator inputs create dependencies into the calculator. A registered output stream
+is treated as calculator-produced even when that stream is not separately added as a unit. This
+lets optimized execution place downstream consumers after the callback.
+
+When those registered relationships close a material recycle cycle, optimized execution includes
+the calculator in the recycle strongly connected component and re-evaluates it as the recycle
+state changes. Do not use the `Runnable` form for this case: captured variables do not declare
+the graph edges needed to identify the coupling.
+
+The source implementation catches callback exceptions and logs them. A failed callback therefore
+does not provide a fail-fast process contract. Validate its output explicitly—for example, require
+finite values, expected units, and a material or energy balance—before using the result for an
+engineering decision.
+
+## CalculatorLibrary presets
+
+`CalculatorLibrary` exposes three current presets:
+
+| Preset | Inputs and output | Behavior |
+| --- | --- | --- |
+| `ENERGY_BALANCE` | One or more `Stream` inputs and one `Stream` output | PH-flashes the output at its current pressure to the sum of the input enthalpies |
+| `DEW_POINT_TARGETING` | First input `Stream` and output `Stream` | Sets the output temperature to the source hydrocarbon dew point at the output pressure, plus an optional kelvin margin |
+| `ANTI_SURGE` | First input `Compressor` and output `Splitter` | Updates split stream 1 in actual `m3/hr` relative to the compressor surge curve |
+
+Use a preset as a normal callback:
+
+```java
+Calculator energyBalance = new Calculator("energy balance");
+energyBalance.addInputVariable(inlet);
+energyBalance.setOutputVariable(outlet);
+energyBalance.setCalculationMethod(CalculatorLibrary.energyBalance());
+```
+
+Names are case-insensitive and accept camel case, underscores, or hyphens:
+
+```java
+calculator.setCalculationMethod(
+    CalculatorLibrary.byName("dew-point-targeting"));
+```
+
+An unknown name throws `IllegalArgumentException` during configuration. The energy-balance and
+dew-point callbacks require the concrete `Stream` class, not an arbitrary equipment type. For
+anti-surge design and control boundaries, use the dedicated
+[compressor anti-surge guide](../compressor_antisurge_control.md).
+
+## Setter
+
+`Setter` applies each configured parameter to every target equipment. Configure it with
+`addTargetEquipment` and `addParameter`:
+
+```java
+Setter setter = new Setter("feed conditions");
+setter.addTargetEquipment(feed);
+setter.addParameter("pressure", "bara", 35.0);
+setter.addParameter("temperature", "C", 25.0);
+process.add(setter);
+```
+
+Current supported combinations are:
+
+| Target | Supported parameter type |
+| --- | --- |
+| `Stream` | `pressure`, `temperature` |
+| `Compressor`, `Pump`, `ThrottlingValve` | `pressure` |
+| `Heater` | `temperature` |
+| `Cooler` | `pressure`, `temperature` |
+
+Unsupported combinations are logged and skipped. `Setter` does not expose `setEquipment`,
+`setProperty`, `setValue`, or `setUnit`.
+
+## SetPoint
+
+`SetPoint` reads a supported source value and writes it to target equipment:
+
+```java
+SetPoint pressureCopy = new SetPoint("pressure copy");
+pressureCopy.setSourceVariable(sourceStream, "pressure");
+pressureCopy.setTargetVariable(targetStream, "pressure");
+pressureCopy.setMultiplier(1.0);
+pressureCopy.setOffset(0.0);
+process.add(pressureCopy);
+```
+
+The relation is
+
+$$
+y_{\mathrm{target}} = a y_{\mathrm{source}} + b
+$$
+
+where `a` is the multiplier and `b` is the offset in the target variable's own unit. The
+built-in source path uses NeqSim's default numeric unit for the selected property; use the same
+physical quantity on both sides. A custom `setSourceValueCalculator` can supply the source value
+when an explicit conversion or derived quantity is required.
+
+Current target support is:
+
+| Target | Variable |
+| --- | --- |
+| `Stream` | `pressure`, `temperature`, `massFlow`, `molarFlow`, or `flow` |
+| `ThrottlingValve`, `Compressor`, `Pump` | `pressure` |
+| `Heater`, `Cooler` | `pressure`, `temperature`, or `outTemperature` |
+
+Unsupported stream variables are logged without changing the target. Unsupported non-stream
+variables throw at run time.
+
+## MoleFractionControllerUtil
+
+Despite its historical name, `MoleFractionControllerUtil` is a two-port composition modifier,
+not a closed-loop PID controller. Its constructor accepts only the inlet stream:
+
+```java
+MoleFractionControllerUtil compositionTarget =
+    new MoleFractionControllerUtil(feed);
+compositionTarget.setMoleFraction("CO2", 0.02);
+process.add(compositionTarget);
+```
+
+During `run`, it clones the inlet fluid, adds the difference between the requested and current
+mole fractions multiplied by the current total moles, and performs a TP flash. Because that
+operation changes the total number of moles, the resulting outlet fraction is not algebraically
+guaranteed to equal the requested value. Verify the actual outlet composition and account for the
+component source or sink. It has no name-bearing constructor and no
+`setTargetMoleFraction` method.
+
+## Validation checklist
+
+- Register `Calculator` inputs and output when execution order or recycle iteration matters.
+- Initialize or run callback outputs before downstream equipment reads them.
+- Assert finite results and balances because callback exceptions are logged rather than
+  propagated.
+- Use only supported `Setter` and `SetPoint` target-variable combinations.
+- Treat composition modification as a material source or sink and account for the component
+  change.
+- Keep units explicit at every stream or equipment setter.
+
+## Source contracts
+
+- [Calculator.java](../../../../src/main/java/neqsim/process/equipment/util/Calculator.java)
+- [CalculatorLibrary.java](../../../../src/main/java/neqsim/process/equipment/util/CalculatorLibrary.java)
+- [Setter.java](../../../../src/main/java/neqsim/process/equipment/util/Setter.java)
+- [SetPoint.java](../../../../src/main/java/neqsim/process/equipment/util/SetPoint.java)
+- [MoleFractionControllerUtil.java](../../../../src/main/java/neqsim/process/equipment/util/MoleFractionControllerUtil.java)
+- [ProcessGraphBuilder.java](../../../../src/main/java/neqsim/process/processmodel/graph/ProcessGraphBuilder.java)
+- [Calculator/recycle regression](../../../../src/test/java/neqsim/process/processmodel/CalculatorRecycleHybridExecutionTest.java)
+
+## Related documentation
+
+- [Equipment index](../README.md)
+- [Recycle utilities](recycles.md)
+- [Controllers](../../controllers.md)
+- [Process package](../../README.md)
