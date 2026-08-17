@@ -51,7 +51,7 @@ public class FlowRegimeDetector implements Serializable {
   private DetectionMethod detectionMethod = DetectionMethod.MECHANISTIC;
 
   /** Select Taitel-Dukler transition B instead of the vertical droplet criterion in horizontal flow. */
-  private boolean useEquilibriumLevelAnnularTransition = false;
+  private boolean useEquilibriumLevelAnnularTransition = true;
 
   /** Blend closures across horizontal regime transitions instead of switching at a point. */
   private boolean blendRegimeTransitions = true;
@@ -98,23 +98,22 @@ public class FlowRegimeDetector implements Serializable {
    * </p>
    *
    * <p>
-   * This is off by default, and the reason is not the one originally recorded here. Closure blending, which used to be
-   * named as the prerequisite, has been available and on by default since the transition work landed, and with it the
-   * condensation fixture that used to fail now passes. The remaining blocker is that the hold-up closures this
-   * transition routes to do not respond to inclination. On a 5 km 200 mm undulating fixture the equilibrium level
-   * itself swings from {@code h_L/D = 0.058} on a 4 degree downhill section to {@code 0.793} on a 4 degree uphill one,
-   * a factor of 47 in liquid area, while the hold-up returned for those same sections is 0.04303 and 0.04305 -
-   * identical to five figures. Selecting this transition therefore replaces the only inclination-sensitive closure in
-   * the model, the annular film balance with its gravity term, by closures that carry no terrain response at all: the
-   * fixture's maximum-to-minimum hold-up ratio falls from 11.3 to 1.45 and the valley and peak ordering becomes
-   * arbitrary. The bulk gain and the terrain loss are both real, so this stays selectable rather than default until the
-   * stratified and slug hold-up closures respond to the section inclination that the level solver already sees.
+   * This is the default. It was held back while the hold-up closures it routes to had no usable inclination response:
+   * on a 5 km 200 mm undulating fixture the equilibrium level itself swings from {@code h_L/D = 0.058} on a 4 degree
+   * downhill section to {@code 0.793} on a 4 degree uphill one, a factor of 47 in liquid area, while the hold-up
+   * returned for those same sections was 0.04303 and 0.04305, identical to five figures. Selecting the transition then
+   * replaced the annular film balance, the only closure carrying a gravity term, by closures that carried none, and the
+   * fixture's maximum-to-minimum hold-up ratio fell from 11.3 to 1.45 with the valley and peak ordering becoming
+   * arbitrary. Once the Taylor bubble film in the slug closure was given the same film balance the annular closure
+   * uses, that ratio returned to 11.6 with the valley above the peak, against 11.3 on the droplet path, so the two
+   * criteria now agree on the terrain response and differ only where they are meant to.
    * </p>
    *
    * <p>
    * The two paths differ only in the shallow-layer, sub-critical Kelvin-Helmholtz corner. On the export line above they
    * return identical profiles at 10 MSm3/d, where the margin exceeds one in every section and both branch to annular;
-   * they differ at 4 MSm3/d, where the margin is below one in 85 per cent of sections.
+   * they differ at 4 MSm3/d, where the margin is below one in 85 per cent of sections. Disable this to recover the
+   * droplet-criterion behaviour.
    * </p>
    *
    * @param enable true to use the equilibrium-level transition

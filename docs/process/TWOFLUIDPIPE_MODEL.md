@@ -325,35 +325,42 @@ The default **adaptive minimum** is a closure relation that scales with no-slip 
 | `setMinimumSlipFactor(double)` | 2.0 | Multiplier for no-slip holdup |
 | `setEnforceMinimumSlip(boolean)` | `true` | Enable/disable minimum constraint |
 
-> **Known limitation — the minimum is binding on inclined sections.** The bound
-> `alphaL >= lambdaL * minimumSlipFactor` is applied after the regime closures and carries no
-> inclination dependence. On a 5 km, 200 mm fixture undulating by +/-30 m, 85 of 100 sections
-> sit exactly on it, including 41 of 41 uphill sections, so the terrain response of the
-> momentum balance is overwritten by a constant there. It is inert on a near-horizontal
-> transmission line: on a 73.8 km export line at 4 MSm3/d, lowering the factor from 2.0 to 1.0
-> leaves both the pressure drop and the holdup profile unchanged. Lower the factor if you need
-> the solved inclination response on an undulating profile.
+> **Where the minimum applies.** The bound `alphaL >= lambdaL * minimumSlipFactor` states that the gas outruns the
+> liquid by at least that factor, which is a property of gas-driven transport. It is applied only on level and uphill
+> sections. On a downhill section gravity moves the liquid, the slip ratio legitimately falls, and the bound has no
+> basis; applying it there overwrote the momentum balance with a constant. On a 5 km, 200 mm fixture undulating by
+> +/-30 m it was binding on 39 of 42 downhill sections and on none of the uphill or level ones.
 
 ### Horizontal Annular Criterion
 
 | Method | Default | Description |
 |--------|---------|-------------|
-| `setUseEquilibriumLevelAnnularTransition(boolean)` | `false` | Branch on the equilibrium liquid level instead of the droplet-entrainment criterion |
+| `setUseEquilibriumLevelAnnularTransition(boolean)` | `true` | Branch on the equilibrium liquid level instead of the droplet-entrainment criterion |
 
-The default horizontal path decides annular flow with the vertical droplet-entrainment
-criterion `U_SG > 3.1 * (sigma * g * drho / rhoG^2)^0.25`, checked ahead of the stratified/slug
-transition. That threshold is around 0.75 m/s for a 14-inch high-pressure export line, so a
-horizontal gas pipeline is classified annular on gas velocity alone and a shallow stratified
-layer is then solved with a thin-film closure. Enabling the option selects the horizontal
-criterion of Taitel and Dukler (1976) instead.
+The horizontal branch of the flow map decides annular flow from the equilibrium liquid level, following Taitel and
+Dukler (1976). Disabling it restores the earlier path, which used the *vertical* droplet-entrainment criterion
+`U_SG > 3.1 * (sigma * g * drho / rhoG^2)^0.25` ahead of the stratified/slug transition. That threshold is around
+0.75 m/s for a 14-inch high-pressure export line, so it classified a horizontal gas pipeline as annular on gas velocity
+alone and solved a shallow stratified layer with a thin-film closure.
 
-The two paths differ only where the gas velocity clears the droplet threshold while the
-Kelvin-Helmholtz margin is still below one. On the export line above they are identical at
-10 MSm3/d; at 4 MSm3/d the option reclassifies 272 of 320 sections as stratified-wavy and moves
-the median holdup from 0.0198 to 0.0232 against a reference value near 0.0235. It stays opt-in
-because the slug closure it then selects on uphill sections returns less liquid than the
-stratified closure returns on downhill ones, so an undulating profile loses its terrain
-signature.
+The two paths differ only where the gas velocity clears the droplet threshold while the Kelvin-Helmholtz margin is
+still below one. On a 73.8 km export line they are identical at 10 MSm3/d; at 4 MSm3/d the equilibrium-level branch
+reclassifies 272 of 320 sections as stratified-wavy and moves the maximum holdup error from -25.5 to -2.4 per cent.
+
+### Friction Model
+
+| Method | Default | Description |
+|--------|---------|-------------|
+| `setSeparatedFrictionModel(boolean)` | `true` | Charge each phase its own wall shear where the phases are separated |
+
+The friction gradient uses per-phase wall shear, `-dP/dx = (tau_wG*S_G + tau_wL*S_L)/A`, in stratified flow, and the
+mixture correlation elsewhere. The mixture form charges the whole perimeter with a holdup-weighted density; on a
+stratified line that over-predicts the pressure drop by a factor of about 2.3 at 41 per cent holdup, and because it
+scales as `G^2 / rho_mix` it also makes extra liquid *reduce* the gradient, which inverts the terrain response.
+
+The separated form is scoped to stratified flow because its wetted perimeters come from a circular-segment layer at the
+bottom of the bore. Annular flow, whose film wets the whole perimeter, is not described by that geometry: including it
+moved the export-line error from +1.4 to +14.7 per cent at 10 MSm3/d and pushed 12 MSm3/d into the pressure floor.
 
 #### Lean Gas Systems
 
